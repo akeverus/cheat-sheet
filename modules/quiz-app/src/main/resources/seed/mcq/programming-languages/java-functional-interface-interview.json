@@ -1,0 +1,845 @@
+{
+  "topic_slug": "java-functional-interface-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое функциональный интерфейс?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Интерфейс с ровно одним абстрактным методом (SAM); default и static методы не учитываются и могут быть в любом количестве.",
+              "correct": true,
+              "sections": {
+                "explanation": "По JLS §9.8 функциональный интерфейс — это интерфейс с ровно одним явно или неявно объявленным абстрактным методом. Методы `Object` (`equals`, `hashCode`, `toString`), даже если объявлены в интерфейсе абстрактными, НЕ считаются, потому что они уже реализованы в `Object`. `default` и `static` методы — тоже не считаются. Именно поэтому `Comparator<T>` (абстрактный `compare()` плюс переопределённый абстрактный `equals()` из Object плюс множество default-ов) остаётся функциональным интерфейсом: компилятор «видит» только один настоящий SAM. Это даёт target type для лямбды или method reference, например `Comparator<String> c = String::compareTo`.",
+                "example": "```java\n@FunctionalInterface\npublic interface Transformer<T> {\n    T transform(T input);  // единственный абстрактный метод\n\n    default Transformer<T> andThen(Transformer<T> after) {\n        return t -> after.transform(this.transform(t));  // default — OK\n    }\n\n    static <T> Transformer<T> identity() {\n        return t -> t;  // static — OK\n    }\n}\n\nTransformer<String> upper = String::toUpperCase;  // лямбда работает\n```",
+                "when_to_apply": "Создавайте собственный SAM-интерфейс, когда нужна доменная операция с осмысленным именем (`Validator<T>`, `Renderer<T>`, `RequestHandler<Req,Resp>`), особенно если стандартные `Function`/`Predicate`/`Consumer` не передают семантику читателю кода, или когда нужны доменные default-методы для композиции (`and`, `or`, `then`). Это типичная задача автора библиотеки/API при проектировании точки расширения.",
+                "edge_cases": "Случайно добавленный второй абстрактный метод ломает SAM-статус — `@FunctionalInterface` ловит это на этапе компиляции. SAM с разной арностью (`R apply(T)` vs `R apply(T, U)`) — это разные интерфейсы, лямбда выбирается по target type.",
+                "related": "[[java-functional-interface-interview#Q2]] — @FunctionalInterface и compile-time проверка SAM-контракта; [[java-functional-interface-interview#Q4]] — стандартные интерфейсы java.util.function как готовые SAM."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Интерфейс, в котором есть только один метод любого вида (включая static и default).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Контракт функционального интерфейса учитывает ТОЛЬКО абстрактные методы. `default` и `static` методы можно добавлять без ограничений: `Function<T,R>` имеет один абстрактный `apply()` плюс целый набор default-ов (`andThen`, `compose`) и static `identity` — и остаётся функциональным интерфейсом.",
+                "source_of_confusion": "Мнемоника «один метод» воспринимается буквально, без различения abstract и default. Java 8 как раз ввела default-методы именно для того, чтобы интерфейсы могли расширяться, не ломая SAM-контракт, но эта деталь часто упускается.",
+                "if_it_were_true": "`Comparator<T>` (1 abstract `compare` + 10+ default + static `reversed`, `thenComparing`, `comparing`) не считался бы функциональным интерфейсом, и `list.sort((a,b) -> ...)` перестал бы компилироваться.",
+                "how_it_should_be": "Заменить «один метод любого вида» на «ровно один абстрактный метод, а default/static не учитываются» — тогда вариант стал бы верным."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Интерфейс с любым числом абстрактных методов, если хотя бы один из них помечен @Lambda.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотации `@Lambda` в Java не существует. Лямбда — это синтаксис реализации ЕДИНСТВЕННОГО абстрактного метода SAM-интерфейса. Если абстрактных методов больше одного, компилятор не может определить, какой из них реализует лямбда.",
+                "source_of_confusion": "Возможно смешение с механизмом SAM-conversion в Scala/Kotlin для Java-интерфейсов. Но даже там действует тот же принцип «один абстрактный метод» — никаких маркерных аннотаций для выбора метода нет.",
+                "if_it_were_true": "`interface Foo { void a(); void b(); }` можно было бы реализовать как `Foo f = () -> {...}`, но было бы непонятно, какой метод тут реализован, — компилятор просто не примет такой код.",
+                "how_it_should_be": "Убрать выдуманную аннотацию и ограничение «любое число» — оставить ровно один абстрактный метод, и вариант станет корректным."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Интерфейс с одним методом, но без default методов — иначе компилятор не разрешит лямбду.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Default-методы РАЗРЕШЕНЫ и не мешают компилятору вывести target type для лямбды. Лямбда матчится по единственному абстрактному методу, а default-ы просто игнорируются при выводе типа.",
+                "source_of_confusion": "До Java 8 интерфейсы вообще не имели default-методов, и миф «функциональный = одиночный метод без всего лишнего» унаследован из того времени. На деле default-методы — основной механизм расширения, которым пронизана вся `java.util.function`.",
+                "if_it_were_true": "`Function.andThen()`, `Predicate.and()`, `Consumer.andThen()` не могли бы существовать в самих интерфейсах — их пришлось бы выносить в utility-классы, и Java 8 functional API было бы куда беднее.",
+                "how_it_should_be": "Убрать запрет на default-методы — функциональным интерфейс делает один абстрактный метод, а default/static допустимы в любом количестве."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужна аннотация @FunctionalInterface?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Compiler warning, но компиляция успешна; ошибка возникнет только в runtime при вызове лямбды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это compile error, а не warning. Сборка модуля упадёт с ненулевым exit code, JAR не соберётся. До runtime дело не доходит — скомпилированного класса просто нет.",
+                "source_of_confusion": "Некоторые аннотации (`@SuppressWarnings`, `@Deprecated`) дают лишь warning, и эта модель ошибочно переносится на все аннотации. Но `@FunctionalInterface` и `@Override` — обе error-уровня.",
+                "if_it_were_true": "Разработчик мог бы накопить «битые» функциональные интерфейсы в кодовой базе и узнать о проблеме только когда кто-то попытается использовать их как лямбда-target в runtime.",
+                "how_it_should_be": "Заменить «warning + runtime» на «compile error на этапе сборки» — тогда формулировка станет соответствовать реальному поведению javac."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Compile error: Multiple non-overriding abstract methods found in interface.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@FunctionalInterface` — это проверяемая компилятором аннотация, как `@Override`. Если на интерфейсе с этой аннотацией оказывается два и более абстрактных метода, javac выдаёт ошибку компиляции на этапе сборки модуля. Без аннотации тот же интерфейс просто теряет статус «функциональный», но компиляция проходит. Аннотация фиксирует намерение и работает как fail-fast guard: ошибка ловится прямо при написании кода и в CI, а не потом, когда кто-то попытается передать лямбду в API, ожидающее этот интерфейс.",
+                "example": "```java\n// Скомпилируется БЕЗ аннотации (просто перестаёт быть functional):\npublic interface NotQuiteSAM {\n    void first();\n    void second();  // OK без @FunctionalInterface\n}\n\n// НЕ скомпилируется С аннотацией:\n@FunctionalInterface\npublic interface BadInterface {\n    void first();\n    void second();\n    // javac: Multiple non-overriding abstract methods found in interface BadInterface\n}\n```",
+                "when_to_apply": "Ставьте `@FunctionalInterface` на любой интерфейс, предназначенный для лямбд и method references, особенно на доменные SAM-интерфейсы (`Validator`, `Transformer`, `RetryStrategy`): это документирует намерение для читателя и защищает API от регрессий при будущих правках. Не нужно вешать её на интерфейсы, которые случайно оказались SAM, но не предназначены для лямбд.",
+                "edge_cases": "Аннотация не обязательна технически — интерфейс с одним абстрактным методом всё равно работает с лямбдой, но без неё добавление второго метода тихо ломает API без compile-error. Абстрактный `equals(Object)` из Object НЕ учитывается: `Comparator<T>` имеет такой метод и остаётся функциональным интерфейсом.",
+                "related": "[[java-functional-interface-interview#Q1]] — определение SAM, которое и проверяет аннотация; [[java-functional-interface-interview#Q14]] — практика создания собственных функциональных интерфейсов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Аннотация работает только для документации в Javadoc и не проверяется компилятором.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@FunctionalInterface` имеет `@Retention(RUNTIME)` и активно проверяется компилятором (JLS §9.8). Это не пассивный маркер для людей, а compile-time валидация SAM-контракта.",
+                "source_of_confusion": "Некоторые аннотации действительно нужны только людям/IDE (`@NotNull` без поддерживающего annotation processor'а). Отсюда обобщение, что и `@FunctionalInterface` декоративна, — но javac знает её нативно.",
+                "if_it_were_true": "Не было бы смысла её ставить вообще — IDE-подсветки хватило бы для документации. Реальная польза именно в compile-time guard'е против случайного второго абстрактного метода.",
+                "how_it_should_be": "Указать, что аннотация проверяется компилятором (а не только документирует) — и вариант станет верным."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Java автоматически удалит второй абстрактный метод и оставит первый объявленный.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Java никогда не «удаляет» объявленный код. Если контракт SAM нарушен, компиляция падает. Молчаливая модификация исходника или AST была бы катастрофой для отладки и предсказуемости.",
+                "source_of_confusion": "Возможно представление о «магическом» SAM-conversion в Kotlin/Scala. Но даже там нет удаления методов — есть выбор конкретного метода для лямбда-target по правилам языка.",
+                "if_it_were_true": "Разработчик не контролировал бы, что именно реализует его лямбда, а поведение в production стало бы непредсказуемым в зависимости от порядка объявления методов.",
+                "how_it_should_be": "Заменить «автоматически удалит метод» на «выдаст compile error» — javac не правит код, а отклоняет его."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем лямбда отличается от анонимного класса?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Анонимный объект Runnable@xxxx — лямбда захватывает свой собственный this.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В лямбде `this` ссылается на enclosing instance (внешний класс `OuterClass`), а не на сам лямбда-объект. У лямбды нет «себя» как отдельного объекта в обычном смысле — она компилируется в синтетический invokedynamic-вызов.",
+                "source_of_confusion": "В анонимных классах `this` действительно указывает на сам анонимный объект, и эта семантика по инерции переносится на лямбды как на «такие же объекты».",
+                "if_it_were_true": "Нельзя было бы вызвать `this.someMethod()` из лямбды для метода внешнего класса, хотя на практике это самая частая операция в коде с лямбдами.",
+                "how_it_should_be": "Указать, что выведется внешний экземпляр (`OuterClass@...`), потому что `this` в лямбде — это enclosing instance, а не сама лямбда."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "NullPointerException — this undefined в лямбде, так как она исполняется в отдельном контексте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Лямбда захватывает окружающий контекст лексически, включая `this`. Никакого «отдельного контекста» с null-ссылками нет — значение `this` определено спецификацией и равно enclosing instance.",
+                "source_of_confusion": "Ассоциация с JavaScript, где `this` зависит от call-site и часто оказывается `undefined`. Семантика Java принципиально иная: лексический scope гарантирован JLS.",
+                "if_it_were_true": "Любой код вида `forEach(x -> this.process(x))` падал бы с NPE, хотя это базовый идиоматичный паттерн Java 8+.",
+                "how_it_should_be": "Заменить «NPE / undefined this» на «выводится внешний экземпляр», так как лямбда лексически захватывает `this`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "OuterClass@<hashCode> — this в лямбде указывает на внешний экземпляр класса; лямбда не создаёт нового объекта.",
+              "correct": true,
+              "sections": {
+                "explanation": "Лямбда — это синтаксическое выражение, а не отдельный объект, как в случае анонимного класса. JVM компилирует её через `invokedynamic` и `LambdaMetafactory`, кэширует созданный объект (когда это возможно) и переиспользует его. Лексический scope лямбды полностью прозрачен: `this`, `super` и переменные внешнего метода доступны без квалификации, причём `this` — это enclosing instance. Анонимный класс ведёт себя иначе: каждый `new Runnable() {...}` создаёт новый объект класса вида `OuterClass$1`, внутри которого `this` ссылается на сам анонимный объект, а доступ к внешнему — через `OuterClass.this`.",
+                "example": "```java\npublic class OuterClass {\n    public void demo() {\n        Runnable r1 = () -> System.out.println(this);\n        // Печатает: OuterClass@1b6d3586\n\n        Runnable r2 = new Runnable() {\n            @Override public void run() {\n                System.out.println(this);            // OuterClass$1@xxx\n                System.out.println(OuterClass.this); // OuterClass@1b6d3586\n            }\n        };\n        r1.run();\n        r2.run();\n    }\n}\n```",
+                "when_to_apply": "Используйте лямбду в 99% современного кода — когда реализуете один метод SAM-интерфейса, нет собственного состояния и нет нужды в `this` на «себя». Анонимный класс берите, когда нужно реализовать несколько методов, иметь собственные поля, поддержать сериализацию или явно сослаться на сам объект (например, listener, который сам себя deregister'ит).",
+                "edge_cases": "Лямбда из instance-метода неявно удерживает `this`: сохранив её в long-lived registry (event bus), вы не дадите GC собрать весь внешний объект — источник утечек памяти. Stack trace показывает синтетические имена вида `OuterClass.lambda$demo$0`, что усложняет отладку.",
+                "related": "[[java-functional-interface-interview#Q12]] — effectively final и захват переменных лямбдой; [[java-functional-interface-interview#Q1]] — SAM-интерфейс как target для лямбды."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Compile error: лямбда не может ссылаться на this.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Код компилируется без проблем. JLS явно разрешает использовать `this` внутри лямбды, и его значение определено — это enclosing instance.",
+                "source_of_confusion": "Путаница с правилами для static-контекста, где `this` действительно недоступен. Если лямбда написана в static-методе — да, `this` нет; но в instance-методе он есть.",
+                "if_it_were_true": "Streams-код вида `.map(s -> this.transform(s))` не компилировался бы, хотя это core-паттерн Java 8+.",
+                "how_it_should_be": "Заменить «compile error» на «выведется внешний экземпляр» — `this` в лямбде из instance-метода полностью легален."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные функциональные интерфейсы есть в java.util.function?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Function<String, Boolean> — функция, возвращающая Boolean.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Stream.filter()` принимает `Predicate<T>`, а не `Function<T, Boolean>`. Это разные интерфейсы: `Predicate.test()` возвращает примитивный `boolean` без boxing, а `Function<String, Boolean>` — обёрнутый `Boolean` с автобоксингом. Сигнатура `filter(Predicate<? super T>)` ваш `Function` просто не примет.",
+                "source_of_confusion": "`Function<T, R>` действительно универсальна, поэтому кажется, что любая «T → R» функция подойдёт. Но Java выделила `Predicate<T>` отдельно ради примитивного boolean и удобной композиции (`and`, `or`, `negate`).",
+                "if_it_were_true": "`filter` принимал бы любую функцию, возвращающую `Boolean`, но при этом терял бы `negate()`, `and()`, `or()` и платил boxing на каждом элементе stream'а.",
+                "how_it_should_be": "Заменить тип на `Predicate<String>` с методом `test(String): boolean` — именно его ожидает `filter`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Consumer<String> — потребитель строки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Consumer<T>` имеет сигнатуру `void accept(T t)` и ничего не возвращает, тогда как `filter` нужен `true`/`false` для каждого элемента. Consumer годится для `forEach`, логирования и побочных эффектов, но не для предикатов.",
+                "source_of_confusion": "И Consumer, и Predicate «принимают T», поэтому их легко спутать. Различает их именно наличие возвращаемого значения: предикат решает оставить элемент или нет.",
+                "if_it_were_true": "`stream.filter(consumer)` не имел бы способа узнать «оставить элемент или отбросить» — нет возвращаемого значения. Filter принципиально не может работать с Consumer.",
+                "how_it_should_be": "Использовать `Predicate<String>` с возвращаемым `boolean` вместо `void`-возвращающего Consumer."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "BiPredicate<String, Integer> — двухаргументный предикат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`BiPredicate<T,U>` нужен, когда проверяется пара значений (например, ключ и значение в Map). Здесь же фильтруется `Stream<String>` — на элемент приходит один аргумент, поэтому `BiPredicate` не подходит по сигнатуре.",
+                "source_of_confusion": "Условие «длиннее 5» может казаться двухаргументным (строка + число 5). Но 5 — это захваченная константа внутри лямбды, а не отдельный параметр интерфейса.",
+                "if_it_were_true": "Метода `Stream.filter(BiPredicate)` в API не существует, и компилятор отверг бы такое использование.",
+                "how_it_should_be": "Свернуть до одноаргументного `Predicate<String>`, где порог длины захватывается замыканием, а не передаётся вторым параметром."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Predicate<String> с методом test(String): boolean — специально создан для условий и интегрирован с Stream.filter().",
+              "correct": true,
+              "sections": {
+                "explanation": "`Predicate<T>` — функциональный интерфейс специально под условные проверки: `boolean test(T t)`. Именно его принимают `Stream.filter()`, `Collection.removeIf()` и `Optional.filter()`. По сравнению с `Function<T, Boolean>` он даёт три преимущества: примитивный `boolean` без boxing на каждом элементе (важно на больших stream'ах); встроенную композицию через default-методы `.and()`, `.or()`, `.negate()` и static `Predicate.not(p)` (Java 11+); и семантическую ясность — сигнатура `filter(Predicate<? super T>)` сразу читается как «фильтр», а не как произвольная трансформация.",
+                "example": "```java\nPredicate<String> longerThan5 = s -> s.length() > 5;\n\nList<String> result = Stream.of(\"Java\", \"Kotlin\", \"Go\", \"Scala\", \"Haskell\")\n    .filter(longerThan5)\n    .collect(Collectors.toList());\n// [\"Kotlin\", \"Haskell\"]\n\n// Композиция и Java 11+ Predicate.not:\nPredicate<String> startsWithJ = s -> s.startsWith(\"J\");\nPredicate<String> longAndJ = longerThan5.and(startsWithJ);\nList<String> nonEmpty = stream.filter(Predicate.not(String::isEmpty)).toList();\n```",
+                "when_to_apply": "Берите `Predicate<T>` для любой операции «оставить/отбросить» в Stream API, для условных удалений (`list.removeIf(p)`, `map.entrySet().removeIf(...)`), для `optional.filter(p).map(...)` и как основу доменных валидаторов (`Validator<T>` поверх `Predicate<T>`). Это повседневный выбор разработчика при фильтрации коллекций и stream'ов.",
+                "edge_cases": "Для двух аргументов (например, ключ+значение) нужен `BiPredicate<T,U>`, а не `Predicate`. Для примитивных stream'ов используйте специализации `IntPredicate`/`LongPredicate`/`DoublePredicate` — обычный `Predicate<Integer>` с `IntStream` вызывает boxing на каждом элементе.",
+                "related": "[[java-functional-interface-interview#Q5]] — Consumer (void) против возвращающих значение интерфейсов; [[java-functional-interface-interview#Q6]] — Function и UnaryOperator как трансформации, в отличие от предикатов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем Consumer отличается от Supplier?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "optional.orElseGet(supplier) — ленивое вычисление default-значения только если Optional пуст.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Optional.orElseGet(Supplier<? extends T>)` — классическое применение Supplier: отложенное вычисление значения по требованию. Если Optional содержит значение, supplier не вызывается; если пуст — вызывается `get()`, и его результат становится значением. Это принципиально отличается от `orElse(T defaultValue)`, который всегда вычисляет default'нское выражение eagerly, даже если Optional не пуст. Supplier даёт lazy evaluation, что критично, когда вычисление default'а дорогое или имеет побочные эффекты (запрос в БД, генерация UUID, чтение файла).",
+                "example": "```java\n// Плохо: orElse — expensiveFetch() вызовется даже если userOpt непустой\nUser user = userOpt.orElse(expensiveFetch());\n\n// Хорошо: orElseGet — вызовется только если userOpt.isEmpty()\nUser user2 = userOpt.orElseGet(() -> expensiveFetch());\nUser user3 = userOpt.orElseGet(this::expensiveFetch);  // method ref\n\n// Другие места Supplier:\nStream<UUID> ids = Stream.generate(UUID::randomUUID).limit(10);\nSupplier<List<String>> listFactory = ArrayList::new;  // фабрика независимых экземпляров\n```",
+                "when_to_apply": "Применяйте Supplier для lazy default-значений (`orElseGet`, `requireNonNullElseGet`), когда вычисление дорогое или имеет side-effects; для lazy-логирования (SLF4J 2.x `log.debug(Supplier)` вычисляет сообщение только при включённом уровне); для `Stream.generate(...)` и как фабрику контейнеров (`ArrayList::new`). Это инструмент разработчика, когда нужно отложить или вовсе избежать дорогого вычисления.",
+                "edge_cases": "`Supplier.get()` не может бросать checked exceptions — для I/O лучше Callable. И `orElseGet` вызывает supplier при каждом обращении, так что для дорогого результата кешируйте его снаружи, а не полагайтесь на повторные вызовы.",
+                "related": "[[java-functional-interface-interview#Q4]] — все стандартные интерфейсы, включая Consumer и Supplier; [[java-functional-interface-interview#Q7]] — Supplier против Callable и Runnable по возврату и checked exceptions."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "list.forEach(supplier) — для каждого элемента применить supplier.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Collection.forEach()` принимает `Consumer<T>`, а не Supplier. forEach отдаёт каждый элемент в Consumer для side-effect'а, тогда как Supplier ничего не принимает — ему нечего «передать» от forEach.",
+                "source_of_confusion": "Название «forEach» может ассоциироваться с «производством действий», но семантически это поглотитель элементов, а не источник значений.",
+                "if_it_were_true": "`list.forEach(() -> \"hi\")` — supplier не получил бы ни одного элемента списка, превратившись в бессмысленное «for each X сделай нечто несвязанное».",
+                "how_it_should_be": "Использовать Supplier там, где значение порождается без входа (например, `optional.orElseGet(supplier)`), а forEach оставить за Consumer."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Map.merge(key, value, supplier) — для слияния значений по ключу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Map.merge` принимает `BiFunction<V, V, V>` (старое значение + новое → результат), а не Supplier. Supplier нигде в Map API не используется как функция слияния.",
+                "source_of_confusion": "Есть метод `computeIfAbsent(key, mappingFunction)`, где `mappingFunction` — это `Function<K, V>`, и его иногда воспринимают как «снабжение» значения. Но это всё ещё Function, зависящая от ключа, а не Supplier.",
+                "if_it_were_true": "`map.merge` не получал бы информацию о существующем значении, хотя именно это его основная семантика, — метод стал бы бесполезным.",
+                "how_it_should_be": "Применять Supplier для отложенного порождения значения без входа (`orElseGet`), а для merge оставить `BiFunction`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "executor.submit(supplier) — отправить задачу на выполнение в пуле потоков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ExecutorService.submit()` принимает `Runnable` или `Callable<T>`, но не `Supplier<T>`. Чтобы запустить Supplier асинхронно, его оборачивают: `CompletableFuture.supplyAsync(supplier, executor)`.",
+                "source_of_confusion": "И Supplier, и Callable дают «ноль аргументов → T» и семантически близки. Но Supplier — для синхронного lazy-вычисления без checked exceptions, а Callable — для async-задач, способных бросать checked Exception.",
+                "if_it_were_true": "`executor.submit(() -> 42)` компилятор всегда трактует как `Callable<Integer>`; перегрузки `submit(Supplier)` в API нет, поэтому код с Supplier не выбрался бы как валидная задача.",
+                "how_it_should_be": "Использовать Supplier в `CompletableFuture.supplyAsync(supplier)` либо `optional.orElseGet(supplier)`, а в `executor.submit` передавать Callable/Runnable."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем Function отличается от UnaryOperator?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "list.map(operator) — преобразовать все элементы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У List<T> нет метода map(). Это путаница со Stream.map(Function<T, R>) — и даже там метод принимает Function (можно менять тип: Stream<String> → Stream<Integer>), а не UnaryOperator. Преобразование коллекции с заменой элементов делает replaceAll.",
+                "source_of_confusion": "Во многих языках (Kotlin, JS) у коллекций есть .map() прямо на списке. В Java маппинг идёт через Stream API, а не через метод List.",
+                "if_it_were_true": "Код list.map(...) просто не скомпилируется — у java.util.List нет такого метода вообще, ошибка возникнет на этапе компиляции.",
+                "how_it_should_be": "Заменить на list.replaceAll(operator) — единственный метод List, принимающий UnaryOperator<E>."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "list.replaceAll(operator) — заменить каждый элемент результатом применения оператора к нему.",
+              "correct": true,
+              "sections": {
+                "explanation": "UnaryOperator<T> расширяет Function<T, T> — это частный случай, когда тип входа и выхода совпадают. List.replaceAll(UnaryOperator<E> op) — единственный стандартный API-метод, где UnaryOperator принципиально нужен вместо Function: элемент типа E заменяется новым значением того же типа E in-place. Если бы метод принимал Function<E, R>, можно было бы случайно вернуть несовместимый тип и сломать инвариант списка. Это type-safety через сужение типа: UnaryOperator<E> extends Function<E, E>, поэтому любой Function<E,E> совместим с UnaryOperator<E>, но не наоборот. Аналогично BinaryOperator<T> — частный случай BiFunction<T, T, T>.",
+                "example": "```java\nList<String> names = new ArrayList<>(List.of(\"  Alice \", \"Bob \", \" Charlie\"));\nnames.replaceAll(String::trim);     // [\"Alice\", \"Bob\", \"Charlie\"]\n// names.replaceAll(String::length); // ERROR: String::length — Function<String, Integer>\n\nMap<String, Integer> scores = new HashMap<>(Map.of(\"a\", 1, \"b\", 2));\nscores.replaceAll((k, v) -> v * 10);  // BiFunction<K,V,V>: {a=10, b=20}\n```",
+                "when_to_apply": "Используйте UnaryOperator (через replaceAll) когда нужно in-place преобразовать коллекцию без смены типа элементов: нормализация строк (trim, lowercase) в загруженном списке, округление чисел, sanitize пользовательского ввода перед сохранением. В API design выбирайте UnaryOperator<T> вместо Function<T,T>, чтобы строго зафиксировать «тип не меняется» для читателя и компилятора.",
+                "edge_cases": "replaceAll мутирует исходный список — на immutable List (List.of(...)) бросит UnsupportedOperationException; если нужна копия, используйте list.stream().map(op).toList(). Для примитивов берите IntUnaryOperator/LongUnaryOperator, иначе UnaryOperator<Integer> даёт boxing на каждом элементе.",
+                "related": "[[java-functional-interface-interview#Q4]] — UnaryOperator/BinaryOperator в таблице стандартных интерфейсов; [[java-functional-interface-interview#Q11]] — примитивные специализации (IntUnaryOperator); [[java-functional-interface-interview#Q9]] — andThen/compose для композиции функций."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "list.forEach(operator) — применить операцию к каждому элементу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Collection.forEach принимает Consumer<T> (void accept(T t)), а не UnaryOperator. forEach предназначен для побочных эффектов и игнорирует любое возвращаемое значение.",
+                "source_of_confusion": "UnaryOperator тоже «применяет операцию к T», поэтому формулировка звучит похоже на forEach. Но forEach не использует результат, а UnaryOperator существует именно ради возвращаемого нового T.",
+                "if_it_were_true": "Результат операции (новое значение T) молча отбрасывался бы — UnaryOperator вёл бы себя как Consumer, и in-place замена была бы невозможна.",
+                "how_it_should_be": "Использовать list.replaceAll(operator), который записывает результат UnaryOperator обратно в список."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "list.sort(operator) — сортировка с использованием UnaryOperator.",
+              "correct": false,
+              "sections": {
+                "what_actually": "List.sort(Comparator<? super E> c) принимает Comparator, а не UnaryOperator. Comparator — это (T, T) -> int (сравнение), тогда как UnaryOperator — T -> T (трансформация). Это семантически разные операции.",
+                "source_of_confusion": "Оба интерфейса параметризованы одним типом T, поэтому кажутся взаимозаменяемыми. Но Comparator возвращает порядок (отрицательное/0/положительное), а UnaryOperator — новое значение.",
+                "if_it_were_true": "sort не имел бы способа узнать порядок элементов — он получал бы «преобразованный» элемент, но не понимал «больше/меньше», и устойчивая сортировка была бы невозможна.",
+                "how_it_should_be": "Заменить на list.sort(comparator), а UnaryOperator передавать в list.replaceAll(...)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем Runnable отличается от Callable и Supplier?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Callable работает только в ExecutorService, Supplier — везде; функционально идентичны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главное отличие не в области применения, а в семантике исключений: Callable.call() throws Exception может бросать checked exceptions, а Supplier.get() — нет. При I/O, JDBC, network Callable не требует try/catch внутри, а Supplier требует обернуть проверяемое исключение в RuntimeException.",
+                "source_of_confusion": "Оба «производят значение без входных параметров», поэтому Callable выглядит как Supplier, заточенный под ExecutorService. Различие в throws легко упустить, пока код не упрётся в checked exception.",
+                "if_it_were_true": "Если бы они были функционально идентичны, не было бы смысла держать два разных интерфейса в разных пакетах — их бы объединили.",
+                "how_it_should_be": "Сформулировать отличие как «Callable поддерживает checked exceptions и живёт в java.util.concurrent, Supplier — нет, и живёт в java.util.function»."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Supplier всегда возвращает immutable, Callable может возвращать mutable.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ни один из интерфейсов не накладывает ограничений на mutability возвращаемого значения. Supplier<List<String>> спокойно возвращает изменяемый ArrayList, а Callable<String> — неизменяемый String. Это не связано с дизайном интерфейсов.",
+                "source_of_confusion": "Ассоциация с функциональным программированием, где «чистые функции» возвращают immutable. Но Java не enforce-ит immutability на уровне сигнатуры этих интерфейсов.",
+                "if_it_were_true": "Идиоматичный код Supplier<ArrayList<String>> factory = ArrayList::new не компилировался бы, ведь ArrayList мутабелен.",
+                "how_it_should_be": "Убрать привязку к mutability и говорить про различие в throws Exception и пакетах."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Callable.call() поддерживает checked exceptions, Supplier.get() — нет; Callable в java.util.concurrent, Supplier в java.util.function.",
+              "correct": true,
+              "sections": {
+                "explanation": "Хотя оба интерфейса не принимают аргументов и возвращают T, у них три ключевых отличия. (1) Checked exceptions: сигнатура T call() throws Exception позволяет бросать любое исключение без обёртки, а T get() — только unchecked; поэтому Callable<byte[]> r = () -> Files.readAllBytes(path) компилируется, а тот же код в Supplier — нет. (2) Пакет и назначение: Callable из java.util.concurrent — для async-задач в ExecutorService и CompletableFuture-подобных API, Supplier из java.util.function — для lazy values, фабрик и default-providers. (3) Интеграция: ExecutorService.submit(Callable) возвращает Future<T>, тогда как CompletableFuture.supplyAsync(Supplier) принимает именно Supplier, не Callable.",
+                "example": "```java\n// Callable: I/O с checked exception без try/catch внутри\nCallable<String> reader = () -> Files.readString(Path.of(\"/etc/hosts\"));\nFuture<String> future = executor.submit(reader);\n\n// Тот же I/O в Supplier НЕ компилируется без обёртки:\nSupplier<String> wrapped = () -> {\n    try { return Files.readString(Path.of(\"/etc/hosts\")); }\n    catch (IOException e) { throw new UncheckedIOException(e); }\n};\n\n// Supplier в Optional (lazy default):\nUser u = userOpt.orElseGet(() -> userRepo.findDefault());\n```",
+                "when_to_apply": "Выбирайте Callable когда фоновая задача в ExecutorService/ScheduledExecutorService делает I/O или JDBC и естественно бросает checked exceptions — call() освобождает от ручного оборачивания. Выбирайте Supplier для lazy-значений (Optional.orElseGet, ленивое логирование SLF4J 2.x log.debug(Supplier)), фабрик (ArrayList::new) и Stream.generate, где проверяемых исключений нет.",
+                "edge_cases": "executor.submit(() -> 42) компилятор разрешит как Callable<Integer>, а не Supplier — перегрузки submit(Supplier) не существует. CompletableFuture.supplyAsync принимает только Supplier, поэтому для checked-кода придётся оборачивать в RuntimeException или обрабатывать через handle().",
+                "related": "[[java-functional-interface-interview#Q5]] — Supplier vs Consumer и lazy orElseGet; [[java-functional-interface-interview#Q4]] — все стандартные интерфейсы и Callable в таблице; [[java-functional-interface-interview#Q13]] — checked exceptions в лямбдах."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Runnable идентичен Callable<Void> — оба void и без аргументов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Runnable.run() возвращает void и НЕ бросает checked exceptions. Callable<Void>.call() throws Exception формально возвращает Void (обычно return null) и МОЖЕТ бросать checked. Это разные интерфейсы, не взаимозаменяемые.",
+                "source_of_confusion": "Оба «не возвращают полезное значение», поэтому Callable<Void> выглядит как Runnable. Но Callable<Void> дополнительно умеет throws Exception и формально имеет тип результата.",
+                "if_it_were_true": "Не существовало бы отдельных перегрузок executor.submit(Runnable) и executor.submit(Callable<T>) — компилятор различает их по сигнатуре; не нужен был бы и адаптер Executors.callable(Runnable).",
+                "how_it_should_be": "Признать их разными: Runnable не бросает checked и не возвращает значение, Callable<Void> бросает checked и возвращает Void."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие 4 вида method references существуют?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Reference на статический метод — toUpperCase это static-метод класса String.",
+              "correct": false,
+              "sections": {
+                "what_actually": "toUpperCase() — instance-метод, вызываемый на конкретной строке, а не static. Static-методы String — это valueOf, format, join, copyValueOf. Static method reference синтаксически выглядит так же (ClassName::method), но семантика другая.",
+                "source_of_confusion": "Синтаксис ClassName::method идентичен для static и для unbound instance reference. Различить можно только по Javadoc: public String toUpperCase() (instance) vs public static String valueOf(int) (static).",
+                "if_it_were_true": "Компилятор интерпретировал бы выражение как s -> String.toUpperCase(s), но такого static-метода у String нет — код не скомпилировался бы.",
+                "how_it_should_be": "Классифицировать String::toUpperCase как unbound instance method reference, а не static."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Bound receiver reference — String это конкретный объект, на который привязан метод.",
+              "correct": false,
+              "sections": {
+                "what_actually": "String — это класс, а не конкретный объект-инстанс. Bound reference требует именно объект: \"hello\"::toUpperCase привязан к строке \"hello\". String::toUpperCase — unbound: любая String, переданная аргументом, получает этот метод.",
+                "source_of_confusion": "У bound и unbound одинаковый синтаксис Receiver::method. Различает только то, что стоит слева — класс (unbound) или конкретный instance (bound).",
+                "if_it_were_true": "Тип выражения был бы Supplier<String> (ноль аргументов → String), а не Function<String, String> — нельзя было бы присвоить его Function и использовать в .map(String::toUpperCase).",
+                "how_it_should_be": "Чтобы reference стал bound, слева должен стоять конкретный объект (например \"hello\"::toUpperCase), а не имя класса."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Constructor reference — :: всегда означает вызов конструктора.",
+              "correct": false,
+              "sections": {
+                "what_actually": ":: используется для всех четырёх видов method references, не только конструкторов. Constructor reference имеет специфичную форму ClassName::new с обязательным ключевым словом new. String::toUpperCase — instance method reference, слова new здесь нет.",
+                "source_of_confusion": ":: действительно встречается в ArrayList::new, поэтому кажется маркером конструктора. Но именно new, а не ::, обозначает конструктор.",
+                "if_it_were_true": "String::toUpperCase пытался бы вызвать конструктор с именем toUpperCase — такого конструктора нет, и toUpperCase даже не имя класса, поэтому компиляция упала бы.",
+                "how_it_should_be": "Считать конструкторными только references вида ClassName::new; String::toUpperCase отнести к instance method reference."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Reference на метод экземпляра на типе (unbound) — receiver предоставляется как первый аргумент Function.",
+              "correct": true,
+              "sections": {
+                "explanation": "Существует 4 вида method references: статический (Integer::parseInt), bound (на конкретном объекте, prefix::concat), unbound (instance-метод на типе, String::toUpperCase) и конструктор (ArrayList::new). String::toUpperCase в контексте Function<String, String> — это unbound receiver form ClassName::instanceMethod. Компилятор разворачивает его в s -> s.toUpperCase(): первый аргумент Function становится receiver-ом instance-метода. Отличие от bound (prefix::concat, где prefix — конкретный объект): если слева class name + справа instance-метод → unbound; если слева instance + справа метод → bound. Target type Function<String, String> и определяет, что один параметр уходит в receiver.",
+                "example": "```java\n// Static\nFunction<String, Integer> parser = Integer::parseInt;\n// Bound (конкретный объект до ::)\nString prefix = \"Hello: \";\nFunction<String, String> greet = prefix::concat;      // \"Hello: World\"\n// Unbound (тип до ::) — receiver = первый аргумент\nFunction<String, String> upper = String::toUpperCase;  // upper.apply(\"hi\") -> \"HI\"\nComparator<String> cmp = String::compareTo;            // (s1,s2) -> s1.compareTo(s2)\n// Constructor\nSupplier<ArrayList<String>> factory = ArrayList::new;\n```",
+                "when_to_apply": "Применяйте unbound method reference, когда метод вызывается на самом элементе потока/коллекции и логика сводится к одному вызову: .map(String::trim), Comparator.comparing(User::getName). Это компактнее и читабельнее эквивалентной лямбды s -> s.method(), а при переименовании метода ссылка ломается на этапе компиляции, что помогает рефакторингу.",
+                "edge_cases": "Перегруженные методы могут не разрешиться без явного target type: System.out::println неоднозначен сам по себе, но Consumer<String> c = System.out::println работает. Для двухаргументных unbound (String::compareTo) первый параметр становится receiver-ом, второй — аргументом метода, что требует Comparator/BiFunction, а не Function.",
+                "related": "[[java-functional-interface-interview#Q1]] — SAM как target для method reference; [[java-functional-interface-interview#Q3]] — лямбда vs анонимный класс; [[java-functional-interface-interview#Q4]] — стандартные функциональные интерфейсы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают compose() и andThen() в Function?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "13 — сначала times2 (5*2=10), потом plus3 (10+3=13); andThen применяет this, затем аргумент.",
+              "correct": true,
+              "sections": {
+                "explanation": "Function.andThen(after) возвращает композицию, в которой сначала выполняется текущая функция this, затем её результат передаётся в after. Формально: andThen(after) = x -> after.apply(this.apply(x)). Для times2.andThen(plus3).apply(5): сначала times2(5)=10, затем plus3(10)=13. Контраст с compose: times2.compose(plus3).apply(5) применяет аргумент первым — plus3(5)=8, затем times2(8)=16. Мнемоника: f.andThen(g) = g(f(x)) (читается слева направо, как pipeline); f.compose(g) = f(g(x)) — математическая композиция f∘g.",
+                "example": "```java\nFunction<Integer, Integer> times2 = x -> x * 2;\nFunction<Integer, Integer> plus3 = x -> x + 3;\n\ntimes2.andThen(plus3).apply(5);  // (5*2)+3 = 13\ntimes2.compose(plus3).apply(5);  // (5+3)*2 = 16\n\n// Цепочка andThen читается как конвейер:\nFunction<String, String> pipeline = ((Function<String, String>) String::trim)\n    .andThen(String::toLowerCase)\n    .andThen(s -> s.replace(\" \", \"_\"));\npipeline.apply(\"  Hello World  \");  // \"hello_world\"\n```",
+                "when_to_apply": "Используйте andThen для построения pipeline трансформаций, который читается сверху вниз в порядке выполнения: parse.andThen(validate).andThen(enrich). Используйте compose для pre-processing — когда нужно нормализовать вход перед основной обработкой: process.compose(normalize). Маленькие переиспользуемые функции так комбинируются в сложные конвейеры без вложенных вызовов.",
+                "edge_cases": "Типы должны стыковаться: Function<T,R>.andThen(Function<R,V>) даёт Function<T,V> — выход this обязан совпадать со входом after. andThen(null) бросит NullPointerException сразу при композиции (внутри Objects.requireNonNull), а не при apply; глубокие цепочки 5+ andThen лучше выносить в именованные переменные ради читаемости.",
+                "related": "[[java-functional-interface-interview#Q10]] — and/or/negate в Predicate (логическая композиция вместо функциональной); [[java-functional-interface-interview#Q4]] — Function в таблице стандартных интерфейсов; [[java-functional-interface-interview#Q6]] — Function vs UnaryOperator."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "16 — сначала plus3 (5+3=8), потом times2 (8*2=16).",
+              "correct": false,
+              "sections": {
+                "what_actually": "16 — это результат compose, а не andThen. times2.andThen(plus3) означает «сначала this (times2), потом plus3»: (5*2)+3 = 13. В варианте перепутан порядок применения.",
+                "source_of_confusion": "andThen и compose легко перепутать, поскольку оба комбинируют функции. Но andThen выполняет this первым, а compose — аргумент первым.",
+                "if_it_were_true": "andThen и compose были бы идентичны — но они специально определяют противоположный порядок, иначе один из них был бы лишним.",
+                "how_it_should_be": "Чтобы получить 16, нужно вызвать times2.compose(plus3).apply(5), а не andThen."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "25 — выражение вида (5+5)*2 или похожая арифметика.",
+              "correct": false,
+              "sections": {
+                "what_actually": "25 не получается ни при andThen (13), ни при compose (16). Заданы операции *2 и +3, а 25 потребовало бы (5+5)*2 или 5*5, которых в составе функций нет.",
+                "source_of_confusion": "Ответ выглядит как случайное угадывание числа без понимания семантики andThen и без подстановки конкретных значений.",
+                "if_it_were_true": "Потребовалась бы операция (5+5)*2 или 5*5 — то есть совсем другие функции, не times2 (x*2) и plus3 (x+3).",
+                "how_it_should_be": "Подставить значения по правилу andThen: (5*2)+3 = 13."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Compile error — нельзя комбинировать две Function одного типа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Комбинировать функции одного типа — это основной кейс andThen. Function<Integer,Integer>.andThen(Function<Integer,Integer>) полностью валиден и даёт Function<Integer,Integer>.",
+                "source_of_confusion": "Возможна мысль, что andThen требует разные типы входа/выхода. На деле типы должны лишь стыковаться (выход this = вход after), а одинаковые типы стыкуются тривиально.",
+                "if_it_were_true": "Базовый пример times2.andThen(plus3) не компилировался бы, и композиция Function стала бы почти бесполезной.",
+                "how_it_should_be": "Признать, что одинаковые типы стыкуются, и код компилируется, возвращая 13."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают and(), or(), negate() в Predicate?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "false — and возвращает результат только последнего предиката (even).",
+              "correct": false,
+              "sections": {
+                "what_actually": "even.test(4) сам по себе true (4 чётное), так что даже «только последний» дал бы true, а не false. Но главное: and возвращает конъюнкцию обоих предикатов, а не «только последний». 4 и положительное, и чётное → true.",
+                "source_of_confusion": "Возможна мысль, что .and() перезаписывает предикат, а не комбинирует его. На деле создаётся новый предикат с оператором &&.",
+                "if_it_were_true": "and() был бы бесполезен — эквивалентен простой замене первого предиката вторым. Весь смысл метода именно в комбинировании двух условий.",
+                "how_it_should_be": "Трактовать and как конъюнкцию обоих предикатов через && — тогда test(4) даёт true."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "true — 4 положительное И чётное; and требует выполнения обоих условий (short-circuit).",
+              "correct": true,
+              "sections": {
+                "explanation": "Predicate.and(other) возвращает новый составной предикат, истинный когда оба предиката истинны. Реализация: x -> this.test(x) && other.test(x). Используется short-circuit оператор &&: если this.test(x) = false, other не вычисляется вообще. Для positive.and(even).test(4): positive.test(4)=true (4>0), затем even.test(4)=true (4%2==0) → результат true. Все три метода (and, or, negate) возвращают новый Predicate, не мутируя исходные, поэтому базовые предикаты можно переиспользовать.",
+                "example": "```java\nPredicate<Integer> positive = n -> n > 0;\nPredicate<Integer> even = n -> n % 2 == 0;\n\npositive.and(even).test(4);   // true (оба)\npositive.and(even).test(3);   // false (не even)\npositive.and(even).test(-4);  // false (positive=false, even НЕ вычисляется)\npositive.or(even).test(-4);   // true (even компенсирует)\npositive.negate().test(-1);   // true\n```",
+                "when_to_apply": "Применяйте and/or/negate для сборки фильтров с несколькими условиями: users.stream().filter(active.and(premium)). Удобно динамически накапливать условия в цикле через .and(), а именованные предикаты (active.and(verified)) читаются яснее, чем инлайн u -> u.isActive() && u.isVerified(). negate и Predicate.not (Java 11+) дают отрицание без переписывания логики.",
+                "edge_cases": "Порядок в and/or важен из-за short-circuit: дешёвый предикат ставьте первым — cheap.and(expensive) сэкономит на expensive, когда cheap=false. negate применяется ко всему предикату: a.and(b).negate() = !(a&&b) = !a || !b (De Morgan), а не !a && !b; and(null) бросает NPE через Objects.requireNonNull.",
+                "related": "[[java-functional-interface-interview#Q9]] — compose/andThen в Function (функциональная композиция); [[java-functional-interface-interview#Q4]] — Predicate в таблице стандартных интерфейсов; [[java-functional-interface-interview#Q11]] — примитивные специализации (IntPredicate.and)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "true, но even вычисляется всегда, даже если positive уже false.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Результат для test(4) действительно true, но утверждение «even вычисляется всегда» неверно. and использует short-circuit &&: если positive=false, even НЕ вычисляется. Для входа 4 positive=true, поэтому even здесь всё же вычислится — но не «всегда» в общем случае.",
+                "source_of_confusion": "Смешение конкретного случая (4 проходит оба условия) с общим поведением (short-circuit пропускает even при positive=false).",
+                "if_it_were_true": "Не было бы оптимизации порядка предикатов: дорогой предикат нельзя было бы защитить дешёвым, поставленным первым.",
+                "how_it_should_be": "Уточнить, что even вычисляется только если positive=true (short-circuit), а не всегда."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Compile error — .and() не существует для Predicate, нужен Predicates.and().",
+              "correct": false,
+              "sections": {
+                "what_actually": "and() — встроенный default-метод Predicate начиная с Java 8. Утилитного класса Predicates в стандартной библиотеке нет (это Guava). Predicate.and/or/negate доступны прямо на интерфейсе.",
+                "source_of_confusion": "В Guava есть com.google.common.base.Predicates со статическими методами and/or. Этот класс смешивают со стандартным java.util.function.Predicate.",
+                "if_it_were_true": "positive.and(even) не компилировался бы, хотя это стандартный, повсеместно используемый Java 8 API.",
+                "how_it_should_be": "Использовать встроенный default-метод positive.and(even) — никакой Predicates.and() из Guava не нужен."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое примитивные специализации функциональных интерфейсов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "IntUnaryOperator быстрее, потому что использует SIMD-инструкции автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SIMD-оптимизации (auto-vectorization) — это работа JIT-компилятора (C2/Graal) на уровне bytecode, а не свойство интерфейса. `IntUnaryOperator` не «использует SIMD автоматически» — он лишь позволяет JIT легче применять SIMD из-за отсутствия boxing. Прямой связи «примитив → SIMD» нет.",
+                "source_of_confusion": "Связь «примитивы → SIMD» существует, но она косвенная: устранение boxing — необходимое, но не достаточное условие векторизации. Звучит правдоподобно для middle-разработчика, знающего про vectorization.",
+                "if_it_were_true": "Если бы это было правдой, любой код на примитивах в Java был бы безусловно SIMD'нут. На деле auto-vectorization — редкая оптимизация при удачных условиях (нет data-зависимостей), а явное SIMD требует Vector API (preview).",
+                "how_it_should_be": "Чтобы стать верным, утверждение должно говорить, что специализация устраняет boxing/unboxing и снижает аллокации, а не «автоматически включает SIMD»."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Java запрещает использовать Function<Integer, Integer> в IntStream — это compile error.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это не запрет, а несовместимость сигнатур. `Function<Integer, Integer>` можно использовать в `Stream<Integer>`, но не в `IntStream`, методы которого требуют `IntUnaryOperator`. Через `.boxed()` легко перейти от `IntStream` к `Stream<Integer>` и применить там `Function`.",
+                "source_of_confusion": "Ограничение действительно есть (IntStream.map не примет Function), и его легко принять за «запрет на уровне языка». Но это обычный API design, а не compile-error по причине запрета типа.",
+                "if_it_were_true": "Если бы Java запрещала Function в IntStream как класс, конструкция `IntStream.range(0,10).boxed().map(fn)` не компилировалась бы. Но это идиоматичный паттерн, который работает.",
+                "how_it_should_be": "Чтобы стать верным, формулировку нужно сменить с «запрещает» на «методы IntStream принимают примитивные специализации, а Function доступна после .boxed()»."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Function<Integer, Integer> создаёт boxing/unboxing на каждом вызове (int → Integer → int) — это аллокации и GC pressure; IntUnaryOperator работает с примитивами напрямую.",
+              "correct": true,
+              "sections": {
+                "explanation": "Примитивные специализации существуют исключительно ради производительности — они избегают boxing/unboxing. `Function<T, R>` — generic-интерфейс с `R apply(T t)`, а дженерики в Java реализованы через type erasure: на runtime это `Function<Object, Object>`, оперирующая ссылками. Для `int` это означает autoboxing на каждом вызове: `apply(intValue)` создаёт `Integer.valueOf(intValue)`, а результат `Integer` затем распаковывается обратно через `intValue()`. `IntUnaryOperator` — специализация с `int applyAsInt(int operand)`, работающая с примитивами напрямую, без обёрток. В hot-loop с миллионами элементов это устраняет миллионы временных `Integer`-объектов, снижает GC pressure и даёт JIT больше возможностей для inline'инга. `IntStream.map()` принимает именно `IntUnaryOperator` — это требование API, а не вопрос стиля.",
+                "example": "Boxing-путь — миллион временных Integer:\n```java\nFunction<Integer, Integer> squareBoxed = x -> x * x;\nint sum = IntStream.range(0, 1_000_000)\n    .boxed()                       // int -> Integer (1M аллокаций)\n    .map(squareBoxed)              // unbox + box обратно\n    .mapToInt(Integer::intValue)\n    .sum();\n```\nПримитивный путь — ноль boxing:\n```java\nIntUnaryOperator square = x -> x * x;\nint sumFast = IntStream.range(0, 1_000_000)\n    .map(square)                   // примитивы -> примитивы\n    .sum();\n```\nСемейство специализаций: `IntPredicate evens = x -> x % 2 == 0;`, `ToIntFunction<String> length = String::length;`, `IntBinaryOperator add = Integer::sum;`.",
+                "when_to_apply": "Применяйте всегда при работе с `IntStream`/`LongStream`/`DoubleStream` (там специализации обязательны по сигнатуре методов `.map`, `.filter`), в численных вычислениях над большими массивами (финансы, ML, image processing) и в hot-loop с миллионами итераций, где boxing убивает throughput. При дизайне числовых API предоставляйте примитивную версию рядом с generic. Наибольший эффект получают команды, обрабатывающие большие объёмы примитивов, где аллокации Integer создают заметную GC pressure.",
+                "edge_cases": "Специализации есть только для `int`, `long`, `double` — для `byte`, `short`, `float`, `char` их НЕТ (используют int-версии с приведением или boxing), а для `boolean` существует лишь `BooleanSupplier`. Кэш `Integer.valueOf` покрывает -128..127, поэтому boxing маленьких чисел дешевле, но overhead остаётся. Не путайте `IntFunction<R>` (int → R) и `ToIntFunction<T>` (T → int) — это разные интерфейсы; забытый `mapToObj` снова вернёт boxing.",
+                "related": "[[java-functional-interface-interview#Q4]] — generic функциональные интерфейсы и их сигнатуры; [[java-functional-interface-interview#Q5]] — Consumer vs Supplier; [[java-functional-interface-interview#Q9]] — composition (andThen/compose)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "IntUnaryOperator использует меньше памяти под объект-лямбду (16 байт vs 32 байт у Function).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Объект лямбды одинакового размера — он определяется LambdaMetafactory и invokedynamic, а не generic-параметрами. Экономия не в размере самой лямбды, а в отсутствии аллокаций Integer-объектов на каждый вызов `apply()`.",
+                "source_of_confusion": "Интуиция «специализированный = компактнее» подсказывает выигрыш именно по размеру лямбды. Но реальная разница лежит в другой части — в устранении boxing-аллокаций на горячем пути.",
+                "if_it_were_true": "Если бы экономия была в размере лямбды, она была бы фиксированной (16 байт) независимо от объёма данных. Реальная же разница пропорциональна числу элементов: 1M элементов → 1M аллокаций boxing.",
+                "how_it_should_be": "Чтобы стать верным, утверждение должно указывать на отсутствие boxing-аллокаций на каждый apply(), а не на меньший размер объекта-лямбды."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что значит effectively final для переменных в лямбде?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Лямбды вообще не могут изменять состояние — это чисто функциональный паттерн без mutation.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Лямбды могут изменять состояние: через поля объекта (heap), через массивы-holder'ы (`int[] arr = {0}; () -> arr[0]++`), через `AtomicInteger` и другие изменяемые контейнеры. Запрет касается только локальных переменных стек-фрейма.",
+                "source_of_confusion": "Функциональный стиль действительно поощряет immutability, и кажется, что Java его enforce'ит. Но язык лишь ограничивает мутацию captured локальных переменных, а не любое состояние.",
+                "if_it_were_true": "Если бы лямбды не могли менять состояние вообще, `list.forEach(x -> total[0] += x)` не компилировался бы. Но это легитимный приём для аккумуляции в однопоточном коде.",
+                "how_it_should_be": "Чтобы стать верным, утверждение должно ограничиться запретом на мутацию captured локальных переменных, а не отрицать всякую мутацию."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это требование Hibernate/JPA — они не могут сериализовать мутабельные captured-переменные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ограничение заложено в спецификацию языка Java (JLS §15.27.2), а не в Hibernate/JPA. Оно действует одинаково в любом коде, даже без persistence-фреймворков.",
+                "source_of_confusion": "У JPA есть свои ограничения (lazy fetching, proxy), и при работе в Spring-проектах легко связать любое непонятное правило с persistence-слоем. Но эти области не пересекаются.",
+                "if_it_were_true": "Если бы это было требованием JPA, лямбды в standalone-приложении без JPA вели бы себя иначе. Это легко проверить — поведение идентично везде.",
+                "how_it_should_be": "Чтобы стать верным, нужно указать источником правила спецификацию языка (захват локальных по значению), а не Hibernate/JPA."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это историческое ограничение из Java 8, отменённое в Java 17 — теперь можно изменять любые переменные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Правило effectively final действует и в Java 21. Это спецификация языка (JLS §15.27.2), а не временное ограничение — за все версии Java никаких изменений в нём не было.",
+                "source_of_confusion": "Java активно эволюционирует (records, sealed, pattern matching), поэтому кажется, что и это ограничение когда-то сняли. Привязка отмены к «Java 17» звучит конкретно и убедительно.",
+                "if_it_were_true": "Если бы ограничение сняли в Java 17, captured local можно было бы менять, и capture вёл бы себя как `var`-capture в Kotlin. Такого в Java нет — код с мутацией captured переменной не компилируется.",
+                "how_it_should_be": "Чтобы стать верным, утверждение должно признать, что правило неизменно во всех версиях Java и закреплено в JLS."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Локальные переменные хранятся в стеке метода и могут уйти до выполнения лямбды; capture делается by-value (захватывается копия значения), а поля объекта в heap доступны через ссылку.",
+              "correct": true,
+              "sections": {
+                "explanation": "Когда метод возвращает управление, его stack frame удаляется. Если лямбда захватила локальную переменную и пережила метод (например, сохранена в коллекции listener'ов), стека переменной уже нет — обращение по адресу было бы undefined behavior. Поэтому JVM копирует значение локальной переменной внутрь лямбда-объекта при создании (capture by-value). Поскольку это копия, изменение оригинала не было бы видно лямбде, а изменение копии — внешнему коду; чтобы избежать confusing semantics, Java требует, чтобы captured локальная была `final` или effectively final. Поля объекта (`this.counter`) — другая история: они в heap и доступны через ссылку `this`, которую лямбда тоже захватывает by-value (но это всего лишь ссылка), поэтому через неё поле можно мутировать. Это компилируется, но не thread-safe.",
+                "example": "```java\nclass Counter {\n    int field = 0;\n    void demo() {\n        int local = 0;\n        Runnable r1 = () -> System.out.println(local);  // чтение OK\n        // local++;  // сделало бы local не effectively final -> ошибка\n\n        Runnable r2 = () -> field++;   // мутация поля через this — OK, но не thread-safe\n        r2.run();\n\n        int[] holder = {0};            // массив — effectively final ссылка\n        Runnable r3 = () -> holder[0]++;  // workaround для mutable-«локального»\n\n        AtomicInteger atomic = new AtomicInteger(0);  // thread-safe вариант\n        Runnable r4 = () -> atomic.incrementAndGet();\n    }\n}\n```",
+                "when_to_apply": "Запрет мутации локальных чаще всего благо — он предотвращает race conditions в многопоточности. Для счётчиков в параллельных лямбдах используйте `AtomicInteger`/`AtomicReference` (`stream.parallel().forEach(x -> count.incrementAndGet())`). `int[1]`-holder применим в однопоточном коде как mutable «ячейка». Но идиоматичнее заменить мутирующий forEach на функциональные `reduce`/`collect`/`count`. Это типичный сценарий для разработчика, переписывающего императивный счётчик в цикле на stream и упирающегося в ошибку про effectively final.",
+                "edge_cases": "effectively final ≠ полная иммутабельность: ссылка может быть effectively final, но объект по ссылке мутируется (`final List<String> list = ...; list.add(...)` — лямбда видит изменения). `int[] counter = {0}; stream.parallel().forEach(x -> counter[0]++)` НЕ thread-safe — потеряете инкременты, нужен AtomicInteger. Захват `this` удерживает весь outer-объект, что чревато memory leak через долгоживущие listener'ы.",
+                "related": "[[java-functional-interface-interview#Q3]] — лямбда vs анонимный класс и захват this; [[java-functional-interface-interview#Q1]] — SAM как target type для лямбды; [[java-functional-interface-interview#Q13]] — checked exceptions в лямбдах."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Можно ли выбросить checked exception из лямбды?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Обернуть в try/catch внутри лямбды, бросая UncheckedIOException (или RuntimeException) — стандартный idiom Java для интеграции I/O со Stream API.",
+              "correct": true,
+              "sections": {
+                "explanation": "Стандартные функциональные интерфейсы (`Function`, `Predicate`, `Consumer`, `Supplier`) не объявляют `throws`, поэтому checked exception из лямбды нельзя бросить напрямую — только unchecked. Идиоматичное решение: обернуть вызов в try-catch внутри лямбды и пробросить unchecked-аналог. Для I/O в Java 8+ есть готовый `UncheckedIOException`, специально созданный для оборачивания `IOException`: он сохраняет исходное исключение как cause, и его можно извлечь через `getCause()` в catch выше по стеку. Для произвольных checked подходит `RuntimeException(e)`. Альтернатива при множестве таких лямбд — кастомный `ThrowingFunction` с `throws` и default-метод/утилита-обёртка, конвертирующая checked в unchecked, чтобы не дублировать try-catch.",
+                "example": "Idiomatic unchecked-wrapping:\n```java\nFunction<String, byte[]> reader = path -> {\n    try {\n        return Files.readAllBytes(Path.of(path));\n    } catch (IOException e) {\n        throw new UncheckedIOException(e);  // сохраняет оригинал как cause\n    }\n};\nMap<String, byte[]> data = paths.stream()\n    .collect(Collectors.toMap(p -> p, reader));\n```\nКастомный throwing-интерфейс + адаптер:\n```java\n@FunctionalInterface\ninterface ThrowingFunction<T, R, E extends Exception> {\n    R apply(T t) throws E;\n    default Function<T, R> unchecked() {\n        return t -> { try { return apply(t); }\n                      catch (Exception e) { throw new RuntimeException(e); } };\n    }\n}\nFunction<String, byte[]> wrapped =\n    ((ThrowingFunction<String, byte[], IOException>) Files::readAllBytes).unchecked();\n```",
+                "when_to_apply": "Используйте `UncheckedIOException` для I/O-операций (`Files`, потоки) в Java 8+ — это семантически прозрачный стандарт. `RuntimeException(e)` — для произвольных checked. Кастомный `ThrowingFunction` оправдан, когда нужно сохранять checked-семантику в публичном API или когда лямбд с checked много и хочется убрать дублирование try-catch. В production-grade проектах помогают библиотеки Vavr (`Try`) и jOOλ (`Unchecked`). Всегда передавайте оригинал как cause, а не `e.getMessage()`, чтобы не потерять stack trace.",
+                "edge_cases": "Потеря cause: `throw new RuntimeException(e.getMessage())` отбрасывает stack trace оригинала — оборачивайте через `new RuntimeException(e)` или `UncheckedIOException(e)`. Первый же exception прерывает весь stream, поэтому для сбора всех ошибок используйте `Either`/`Try` или `partitioningBy`. В parallel-stream исключение может обернуться дважды — распаковывайте через `getCause()`. `@SneakyThrows` (Lombok) скрывает checked от компилятора, и вышестоящий код не сможет их объявленно поймать — применяйте осторожно.",
+                "related": "[[java-functional-interface-interview#Q1]] — SAM-контракт и наследование throws от абстрактного метода; [[java-functional-interface-interview#Q14]] — кастомные функциональные интерфейсы с throws; [[java-functional-interface-interview#Q7]] — Callable как «throwing Supplier»."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Прямо передать Files::readAllBytes — Java автоматически оборачивает IOException.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Function.apply()` не объявляет `throws IOException`, поэтому `Files::readAllBytes` (бросающий IOException) несовместим с `Function<String, byte[]>` на уровне типов — compile error «unhandled exception: java.io.IOException». Никакой автоматической обёртки нет.",
+                "source_of_confusion": "Хочется верить, что Java «магически» обработает checked-исключения, как это делают некоторые языки. Но это противоречит дизайну стандартных функциональных интерфейсов, которые не объявляют throws.",
+                "if_it_were_true": "Если бы Java оборачивала IOException сама, не понадобились бы `UncheckedIOException`, кастомные `ThrowingFunction` и `Throwables.propagate` из Guava — все они существуют именно из-за этой проблемы.",
+                "how_it_should_be": "Чтобы стать верным, лямбду нужно обернуть в try-catch и пробросить unchecked-исключение вручную — автоматической конверсии не будет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Использовать Callable<byte[]> вместо Function<String, byte[]> — Callable поддерживает checked exceptions.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Callable<T>` — это `T call() throws Exception` без входных аргументов. Он не подходит как замена `Function<String, byte[]>`, потому что не принимает String. Callable применяется в другом scope (`ExecutorService.submit`), а Stream API его не принимает.",
+                "source_of_confusion": "И правда, Callable поддерживает checked exceptions, а Function — нет, поэтому он выглядит готовым решением. Но семантически Callable — «задача без входа», а не «функция от X».",
+                "if_it_were_true": "Если бы Callable заменял Function, можно было бы написать `paths.stream().collect(Collectors.toMap(p -> p, Callable::call))`. Но методы Stream принимают Function, а не Callable — такой код не скомпилируется.",
+                "how_it_should_be": "Чтобы стать верным, нужно оставить Function (так как требуется функция String → byte[]) и обернуть checked в unchecked внутри лямбды, а не подменять интерфейс на Callable."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Использовать @FunctionalInterface с throws — компилятор тогда разрешит лямбде бросать checked.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Добавить `throws` можно только в свой интерфейс. `Function<T, R>.apply()` — стандартный JDK-интерфейс, его сигнатуру изменить нельзя. Создание кастомного интерфейса с throws — валидный путь, но это не «добавить throws к Function»: с самим Function такой интерфейс не совмещается без обёртки.",
+                "source_of_confusion": "Ответ частично правильный — кастомный интерфейс с throws действительно работает. Поэтому легко поверить, что throws можно «прикрутить» прямо к существующему Function.",
+                "if_it_were_true": "Если бы это было правдой, мы могли бы аннотировать `Function` снаружи и менять его сигнатуру. В Java это невозможно — нет structural typing, и сигнатуру JDK-интерфейса не переопределить.",
+                "how_it_should_be": "Чтобы стать верным, нужно объявить отдельный кастомный @FunctionalInterface с throws (а не модифицировать Function) и адаптировать его к Stream API через обёртку."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как создать собственный функциональный интерфейс?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Никогда не нужно — стандартные интерфейсы покрывают все случаи; кастомные лишь усложняют код.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стандартные интерфейсы хороши для generic-операций, но имеют недостатки: не объявляют throws для checked exceptions, лишены доменной семантики (`Function<Order, Receipt>` — это валидация? трансформация? сериализация?) и доменно-специфичных default-методов. Кастомные интерфейсы решают именно эти проблемы.",
+                "source_of_confusion": "Разработчики часто используют `Function<Order, Receipt>` как универсальный молоток и считают, что этого достаточно. На практике через полгода читатель кода уже не понимает назначение такого Function.",
+                "if_it_were_true": "Если бы кастомные SAM никогда не были нужны, в самом JDK не существовало бы `Comparator<T>` (заменимого на `BiFunction<T,T,Integer>`), `Runnable` или `Callable` — они созданы именно ради ясности и checked-семантики.",
+                "how_it_should_be": "Чтобы стать верным, утверждение должно признать оправданные случаи: доменная семантика, throws и доменные default-методы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Когда нужна доменная семантика (Validator, Renderer, RetryStrategy), throws для checked exceptions или специфичные default-методы для домена.",
+              "correct": true,
+              "sections": {
+                "explanation": "Три категории оправданных случаев для кастомного функционального интерфейса. Первая — семантическая ясность: `Validator<Order>` мгновенно читается как «проверка валидности заказа», тогда как `Predicate<Order>` или `Function<Order, Boolean>` требуют контекста; это особенно важно для публичных API и DDD-кода. Вторая — checked exceptions: стандартные интерфейсы не объявляют throws, поэтому для callback'а, бросающего `SQLException`/`IOException`, нужен custom-интерфейс с `throws E`. Третья — доменно-специфичные default-методы: `Validator.and()`, `Validator.withMessage(...)`, `RetryStrategy.withMaxAttempts(int)` нельзя добавить к стандартным интерфейсам без обёрток. Во всех случаях `@FunctionalInterface` гарантирует SAM-контракт на этапе компиляции.",
+                "example": "```java\n@FunctionalInterface\npublic interface Validator<T> {\n    ValidationResult validate(T value);   // детализированный результат, не boolean\n\n    default Validator<T> and(Validator<T> other) {\n        return value -> {\n            ValidationResult r1 = this.validate(value);\n            return r1.isValid() ? other.validate(value) : r1;\n        };\n    }\n    default Validator<T> withMessage(String msg) {\n        return value -> {\n            ValidationResult r = this.validate(value);\n            return r.isValid() ? r : ValidationResult.fail(msg);\n        };\n    }\n}\n\n// Checked exceptions — невозможно через стандартный Function:\n@FunctionalInterface\npublic interface RestCallback<T> {\n    T call(HttpRequest req) throws IOException, HttpException;\n}\n```",
+                "when_to_apply": "Создавайте кастомный интерфейс в DDD, где интерфейсы — часть ubiquitous language (`OrderValidator`, `PaymentProcessor`, `EventHandler`); в публичных библиотечных API, где выразительность важна (`RetryStrategy.exponentialBackoff()` запоминается лучше, чем `Function<Integer, Duration>`); при работе с checked exceptions (SQL, JDBC, file I/O); и для fluent-композиции через доменные default-методы. Это решение команды/архитектора при проектировании контрактов, переиспользуемых по всему модулю.",
+                "edge_cases": "Не плодите интерфейсы без нужды — превращать каждый Function в свой тип контрпродуктивно; создавайте только при реальной семантической ценности. Кастомный `Validator<T>` не примется `stream.filter(Predicate)` напрямую — нужен адаптер `.filter(validator::isValid)`. Всегда ставьте `@FunctionalInterface`, иначе случайный второй abstract-метод тихо сломает SAM. Добавление нового abstract-метода позже сломает всех клиентов с лямбдами — расширяйте только default-методами.",
+                "related": "[[java-functional-interface-interview#Q1]] — определение SAM-контракта; [[java-functional-interface-interview#Q2]] — @FunctionalInterface и compile-time проверка; [[java-functional-interface-interview#Q13]] — checked exceptions и кастомные интерфейсы с throws."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только для serialization-целей — лямбды нельзя сериализовать без кастомного Serializable-интерфейса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Лямбды можно сериализовать через `Serializable`-cast: `Runnable r = (Runnable & Serializable) () -> ...`. Сериализация — не главный и далеко не единственный мотив для кастомных интерфейсов.",
+                "source_of_confusion": "Сериализация лямбд действительно имеет нюансы (компилятор-зависимая внутренняя структура), и это редкий, но реальный use-case, который легко переоценить как основную причину.",
+                "if_it_were_true": "Если бы кастомные интерфейсы были нужны только для сериализации, не имели бы смысла `Validator`, `RetryStrategy` и другие доменные SAM, которые вообще не сериализуются.",
+                "how_it_should_be": "Чтобы стать верным, утверждение должно перечислить главные мотивы (семантика, throws, default-методы), а сериализацию упомянуть как редкий частный случай."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только когда нужно более 2 аргументов — стандартные интерфейсы ограничены BiFunction (2 аргумента).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стандартные интерфейсы действительно ограничены arity 2 (BiFunction, BiPredicate, BiConsumer), и для tri-arity нужен custom (`TriFunction<A,B,C,R>`). Но это лишь одна из причин — семантическая ясность и throws не менее важны.",
+                "source_of_confusion": "Ответ частично верен (для трёх и более аргументов custom действительно нужен), поэтому слово «только» проскакивает незаметно. Но оно делает утверждение чрезмерно ограничительным.",
+                "if_it_were_true": "Если бы custom оправдывался только при >2 аргументах, нельзя было бы делать кастомные интерфейсы с 1-2 аргументами. Но `Comparator`, `Validator` имеют ровно 1-2 аргумента и полностью оправданы.",
+                "how_it_should_be": "Чтобы стать верным, слово «только» нужно убрать: arity >2 — одна из нескольких причин наряду с семантикой и throws."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

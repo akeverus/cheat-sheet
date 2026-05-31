@@ -1,0 +1,905 @@
+{
+  "topic_slug": "spring-messaging-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Spring Messaging — для чего нужна абстракция, какие проблемы решает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Spring Messaging даёт транспортно-независимую модель `Message<T>`/`MessageChannel`, отделяя бизнес-логику от конкретного брокера",
+              "correct": true,
+              "sections": {
+                "explanation": "Модуль `spring-messaging` вводит единый словарь обмена сообщениями: `Message<T>` (конверт payload + headers), `MessageChannel` (труба для отправки) и `MessageHandler` (обработчик). Бизнес-код пишется против этих интерфейсов, а не против API JMS, AMQP, Kafka или STOMP. Главная ценность — декаплинг: producer не знает, кто и как обработает сообщение, поэтому транспорт можно заменить без переписывания логики. Эта же абстракция лежит в основе Spring Integration, WebSocket-брокеров и event-driven архитектуры. Правило простое: программируй против `Message<T>`/`MessageChannel`, а не против конкретного брокера.",
+                "example": "Один и тот же обработчик `MessageHandler.handleMessage(Message<?> msg)` остаётся неизменным, переключаешь ли ты транспорт с JMS на AMQP — меняется лишь конфигурация канала, а `msg.getPayload()` и `msg.getHeaders()` работают одинаково.",
+                "when_to_apply": "Применяй, когда нужна свобода смены транспорта (например, миграция с ActiveMQ на RabbitMQ) или единый стиль обработки сообщений в разных интеграциях. Архитектор закладывает эту абстракцию на старте проекта, чтобы команда не привязывалась к API одного брокера и могла тестировать флоу на in-memory каналах.",
+                "edge_cases": "Абстракция не отменяет различий брокеров: гарантии доставки, упорядочивание и транзакционность у Kafka и RabbitMQ разные, и `Message<T>` их не нивелирует. Заголовки тоже мапятся по-разному — кастомный header может не пережить сериализацию в конкретном транспорте.",
+                "related": "[[spring-messaging-interview#Q2]] — из каких трёх компонентов (Message/MessageChannel/MessageHandler) собрана эта модель"
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Spring Messaging — это конкретный брокер сообщений, заменяющий Kafka и RabbitMQ",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: Spring Messaging — это абстракция поверх существующих брокеров, а не сам брокер. Он не хранит и не маршрутизирует сообщения по сети, а предоставляет интерфейсы, поверх которых работают адаптеры к JMS, AMQP, Kafka, STOMP.",
+                "source_of_confusion": "Слово «Messaging» в названии middle-разработчик легко принимает за самостоятельную систему очередей вроде Kafka, ведь модуль действительно оперирует сообщениями и каналами.",
+                "if_it_were_true": "Попытка «запустить Spring Messaging как брокер» закончится ничем — нет процесса брокера, некому принимать соединения, и producer без реального транспорта никуда не отправит сообщение.",
+                "how_it_should_be": "Стало бы верным, если переформулировать: Spring Messaging — это абстракция поверх брокеров (Kafka, RabbitMQ), а не их замена."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Модуль нужен только для STOMP/WebSocket и нигде больше не применяется",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring Messaging — фундамент для JMS, AMQP, Kafka и Spring Integration, а STOMP/WebSocket — лишь один из транспортов поверх него. Модель `Message`/`MessageChannel`/`MessageHandler` используется во всех этих сценариях.",
+                "source_of_confusion": "С Spring Messaging многие впервые сталкиваются именно через `@MessageMapping` и WebSocket-чаты, поэтому складывается впечатление, что модуль только про это.",
+                "if_it_were_true": "Если бы модуль был только про STOMP, ты упустил бы его применение в JMS/AMQP/Kafka и в integration-флоу Spring Integration, где он тоже базовый.",
+                "how_it_should_be": "Стало бы верным, если убрать слово «только»: STOMP/WebSocket — один из многих транспортов, использующих Spring Messaging."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Spring Messaging работает исключительно синхронно, без поддержки асинхронных каналов",
+              "correct": false,
+              "sections": {
+                "what_actually": "Модель поддерживает асинхронную доставку: `ExecutorSubscribableChannel` выполняет хендлеры в отдельном пуле потоков, а `PollableChannel` позволяет забирать сообщения по запросу, что развязывает producer и consumer по времени.",
+                "source_of_confusion": "Простейший `DirectChannel` действительно доставляет сообщение в потоке отправителя синхронно, и на нём легко сделать вывод, что весь модуль синхронный.",
+                "if_it_were_true": "При таком предположении ты проигноришь `ExecutorSubscribableChannel` и асинхронную доставку, а значит, не сможешь развязать поток producer-а от медленных обработчиков.",
+                "how_it_should_be": "Стало бы верным, если сказать: Spring Messaging поддерживает и синхронные, и асинхронные каналы (например, `ExecutorSubscribableChannel`)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "MessageChannel, MessageHandler, Message<T> — из чего состоит модель?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`MessageChannel` — это конверт с payload и headers, а `Message<T>` — труба для передачи",
+              "correct": false,
+              "sections": {
+                "what_actually": "Роли перепутаны: конверт — это `Message<T>` (payload + headers), а труба для передачи — `MessageChannel`. Метод `send()` определён на канале, а не на сообщении.",
+                "source_of_confusion": "Оба термина звучат как «контейнер для данных», и без практики легко поменять их местами, особенно если запоминать по названиям, а не по интерфейсам.",
+                "if_it_were_true": "Если перепутать роли, код просто не скомпилируется — у `Message<T>` нет метода `send()`, а у `MessageChannel` нет `getPayload()`.",
+                "how_it_should_be": "Стало бы верным, если поменять субъекты местами: `Message<T>` — конверт, а `MessageChannel` — труба."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Message<T>` = payload + headers (конверт), `MessageChannel` = труба для отправки, `MessageHandler` = обработчик `handleMessage()`",
+              "correct": true,
+              "sections": {
+                "explanation": "Модель Spring Messaging стоит на трёх китах с чёткими ролями. `Message<T>` — это конверт: `payload` (тело произвольного типа) плюс `headers` (метаданные — id, timestamp, кастомные ключи). `MessageChannel` — труба, в которую отправляют через `send(message)`; она бывает `SubscribableChannel` (pub-sub, push всем подписчикам) и `PollableChannel` (очередь, забираешь сам через `receive()`). `MessageHandler` — обработчик с единственным методом `handleMessage(Message<?>)`, который вызывает канал. Поток данных: producer → `channel.send(msg)` → канал доставляет → `handler.handleMessage(msg)`. Разделяй конверт, канал и обработчик — это основа любого messaging-флоу на Spring.",
+                "example": "```java\nMessage<String> msg = MessageBuilder.withPayload(\"hello\")\n    .setHeader(\"orderId\", 42).build();\nchannel.send(msg);          // MessageChannel — труба\n// MessageHandler:\nvoid handleMessage(Message<?> m) { log.info(\"{}\", m.getPayload()); }\n```",
+                "when_to_apply": "Применяй это разделение при проектировании любого messaging-флоу на Spring: разработчик строит граф каналов и хендлеров, выбирая `SubscribableChannel` для широковещательной рассылки событий и `PollableChannel` для очереди задач с контролируемым потреблением.",
+                "edge_cases": "Заголовки `Message` иммутабельны — нельзя поменять header у существующего сообщения, нужно пересобрать через `MessageBuilder`. На `SubscribableChannel` исключение в одном из подписчиков может прервать доставку остальным, если канал синхронный (`DirectChannel`).",
+                "related": "[[spring-messaging-interview#Q1]] — зачем вообще нужна эта транспортно-независимая абстракция"
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`SubscribableChannel` хранит сообщения до ручного `receive()`, как очередь",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SubscribableChannel` работает в режиме push: он сразу рассылает сообщение всем подписанным `MessageHandler`. Хранение до ручного `receive()` — это поведение `PollableChannel`.",
+                "source_of_confusion": "Оба интерфейса — это `MessageChannel`, и без знания разницы между push- и pull-моделью легко приписать одному поведение другого.",
+                "if_it_were_true": "Если ждать, что `SubscribableChannel` копит сообщения до `receive()`, подписчики не получат push-доставку, а вызов `receive()` на нём попросту недоступен.",
+                "how_it_should_be": "Стало бы верным, если заменить тип на `PollableChannel` — именно он хранит сообщения до ручного `receive()`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`PollableChannel` рассылает сообщение всем подписчикам одновременно (pub-sub)",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PollableChannel` — это очередь point-to-point: сообщение забирает тот, кто первым вызвал `receive()`, никакой широковещательной рассылки нет. Pub-sub — это `SubscribableChannel`.",
+                "source_of_confusion": "Слово «channel» ассоциируется с каналом вещания, и middle-разработчик может решить, что любой канал рассылает всем сразу.",
+                "if_it_were_true": "Если считать `PollableChannel` широковещательным, потеряешь модель point-to-point, в которой сообщение обрабатывается ровно одним consumer-ом.",
+                "how_it_should_be": "Стало бы верным, если заменить тип на `SubscribableChannel` — именно он реализует pub-sub рассылку всем подписчикам."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "@MessageMapping и STOMP/WebSocket — как Spring маршрутизирует сообщения?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@MessageMapping` работает только с HTTP REST и не имеет отношения к WebSocket",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@MessageMapping` маршрутизирует STOMP-сообщения поверх WebSocket, а не HTTP-запросы. За REST отвечает `@RequestMapping`/`@GetMapping` — это разные механизмы с разными диспетчерами.",
+                "source_of_confusion": "Аннотация внешне похожа на `@RequestMapping`, и обе живут в контроллерах, поэтому легко решить, что они про один и тот же HTTP-слой.",
+                "if_it_were_true": "Если спутать её с `@RequestMapping`, STOMP-маршрутизация не заработает: входящие фреймы не найдут обработчик, а WebSocket-эндпоинт останется молчаливым.",
+                "how_it_should_be": "Стало бы верным, если сказать: `@MessageMapping` работает с STOMP-over-WebSocket, а `@RequestMapping` — с HTTP REST."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "STOMP-сообщения нельзя направить во внешний брокер вроде RabbitMQ",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring умеет проксировать STOMP во внешний брокер через STOMP relay: RabbitMQ или ActiveMQ принимают подписки и рассылку, а приложение лишь ретранслирует фреймы. Это и есть штатный способ масштабирования.",
+                "source_of_confusion": "По умолчанию активен встроенный `SimpleBroker`, и без знания про `enableStompBrokerRelay` кажется, что внешний брокер не поддерживается.",
+                "if_it_were_true": "Если бы внешний брокер был невозможен, ты упустил бы STOMP relay и масштабирование брокера на несколько нод — подписки висели бы только в памяти одного инстанса.",
+                "how_it_should_be": "Стало бы верным, если убрать запрет: STOMP-сообщения можно направить во внешний брокер через STOMP relay."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@MessageMapping(\"/chat\")` ловит STOMP-фрейм с destination `/app/chat`, а результат уходит подписчикам через `@SendTo`/брокер",
+              "correct": true,
+              "sections": {
+                "explanation": "`@MessageMapping` — это аннотация контроллера для STOMP-over-WebSocket. Клиент шлёт STOMP-фрейм с `destination` (например, `/app/chat`); префикс `/app` отсекается, и Spring находит метод с `@MessageMapping(\"/chat\")`. Под капотом работает `SimpAnnotationMethodMessageHandler` (аналог `DispatcherServlet` для сообщений): он разбирает destination, биндит `@Payload` и `@Header`, вызывает метод. Возвращаемое значение по соглашению уходит в `/topic/...` через `@SendTo` или напрямую в брокер. Брокер (встроенный `SimpleBroker` или внешний RabbitMQ/ActiveMQ через STOMP relay) рассылает подписчикам `/topic` и `/queue`. Правило: вход — `@MessageMapping` с префиксом `/app`, выход — `@SendTo`/`/topic` через брокер.",
+                "example": "```java\n@MessageMapping(\"/chat\")\n@SendTo(\"/topic/messages\")\npublic ChatMessage handle(@Payload ChatMessage in) {\n    return in; // уйдёт всем подписчикам /topic/messages\n}\n```",
+                "when_to_apply": "Применяй для WebSocket-чатов, нотификаций и real-time дашбордов на STOMP: фронтенд-разработчик подписывается на `/topic/...`, а бэкенд принимает входящие фреймы через `@MessageMapping` и публикует обновления через брокер, когда нужна двунаправленная связь поверх одного TCP-соединения.",
+                "edge_cases": "Префиксы важны: если `applicationDestinationPrefixes` настроен на `/app`, клиент должен слать на `/app/chat`, иначе метод не найдётся. Встроенный `SimpleBroker` держит подписки в памяти одной ноды — при горизонтальном масштабировании сообщения не дойдут до подписчиков на других нодах без STOMP relay к внешнему брокеру.",
+                "related": "[[spring-messaging-interview#Q1]] — STOMP/WebSocket как один из транспортов поверх абстракции Spring Messaging"
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Возвращаемое значение `@MessageMapping`-метода всегда игнорируется Spring",
+              "correct": false,
+              "sections": {
+                "what_actually": "Возвращаемое значение по соглашению публикуется подписчикам — в destination из `@SendTo` или в дефолтный `/topic/...`. Игнорируется оно лишь если метод объявлен `void` и не публикует ничего сам.",
+                "source_of_confusion": "В простых примерах часто шлют ответ вручную через `SimpMessagingTemplate`, и возвращаемое значение там действительно `void`, что создаёт ложное обобщение.",
+                "if_it_were_true": "Если бы return всегда игнорировался, нельзя было бы настроить `@SendTo`, и ответ метода никогда не дошёл бы до подписчиков.",
+                "how_it_should_be": "Стало бы верным, если уточнить: возвращаемое значение уходит подписчикам через `@SendTo`, а не игнорируется."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "JmsTemplate — синхронный или асинхронный? Как работает acknowledge?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`JmsTemplate.receive()` неблокирующий и сразу возвращает `null`, если сообщения нет",
+              "correct": false,
+              "sections": {
+                "what_actually": "`receive()` блокирующий: он ждёт сообщения до прихода или до истечения `receiveTimeout`. Если таймаут не задан, поток заблокируется надолго, а не вернёт `null` мгновенно.",
+                "source_of_confusion": "Существует `receiveNoWait()`, который действительно сразу возвращает `null`, и его поведение ошибочно переносят на обычный `receive()`.",
+                "if_it_were_true": "Если считать `receive()` неблокирующим, построишь busy-loop, который будет жечь CPU и терять сообщения, приходящие между опросами.",
+                "how_it_should_be": "Стало бы верным, если заменить метод на `receiveNoWait()` — именно он сразу возвращает `null` при пустой очереди."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`AUTO_ACKNOWLEDGE` подтверждает сообщение ещё до входа в листенер",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AUTO_ACKNOWLEDGE` подтверждает сообщение после успешного возврата из листенера, а не до входа. Это даёт гарантию повторной доставки при исключении в обработчике.",
+                "source_of_confusion": "Слово «AUTO» создаёт впечатление, что подтверждение происходит автоматически и заранее, без учёта результата обработки.",
+                "if_it_were_true": "Если бы ack происходил до входа в листенер, при падении обработчика сообщение было бы потеряно навсегда, хотя по семантике AUTO_ACKNOWLEDGE ты ждёшь повторную доставку.",
+                "how_it_should_be": "Стало бы верным, если уточнить: `AUTO_ACKNOWLEDGE` подтверждает сообщение после успешного возврата из листенера."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "При исключении в `@JmsListener` сообщение всегда подтверждается и удаляется",
+              "correct": false,
+              "sections": {
+                "what_actually": "При исключении сообщение НЕ подтверждается, поэтому брокер повторно доставит его или отправит в DLQ. Подтверждение и удаление происходят только при успешном завершении листенера.",
+                "source_of_confusion": "Если в коде проглотить исключение (поймать и не пробросить), листенер завершится «успешно», и сообщение действительно подтвердится — отсюда ложное обобщение «всегда».",
+                "if_it_were_true": "Если бы сообщение всегда удалялось при ошибке, ты не получил бы ни повторной доставки, ни DLQ и терял бы данные при каждом сбое обработки.",
+                "how_it_should_be": "Стало бы верным, если убрать «всегда»: при проброшенном исключении сообщение НЕ подтверждается и уходит на повтор/в DLQ."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`JmsTemplate.receive()` блокирует поток до прихода сообщения или таймаута, а асинхронный приём даёт `@JmsListener`",
+              "correct": true,
+              "sections": {
+                "explanation": "`JmsTemplate` синхронен по своей природе: `send()` блокирует до отправки, `receive()` блокирует поток до получения сообщения или истечения таймаута. Для асинхронного приёма существует `@JmsListener` поверх `DefaultMessageListenerContainer`, который крутит пул потоков и сам забирает сообщения из очереди, вызывая твой метод. По части acknowledge: дефолт — `AUTO_ACKNOWLEDGE`, сообщение подтверждается после успешного возврата из листенера. Если бросить исключение, сообщение не подтверждается и (в зависимости от настроек брокера) уходит на повторную доставку или в DLQ. Для транзакционности применяют `SessionTransacted` или JTA. Правило: нужен async-приём — бери `@JmsListener`, а не `receive()` в цикле.",
+                "example": "```java\n// Синхронный запрос-ответ:\nMessage m = jmsTemplate.receive(\"orders\"); // блокирует до сообщения/таймаута\n// Асинхронное потребление:\n@JmsListener(destination = \"orders\")\npublic void onOrder(Order o) { process(o); }\n```",
+                "when_to_apply": "Применяй `JmsTemplate` для синхронного request-reply (например, RPC-обмен через временную очередь), а `@JmsListener` — для фонового непрерывного потребления событий. Бэкенд-разработчик выбирает листенер, когда сервис должен реактивно обрабатывать поток сообщений без блокировки рабочего потока.",
+                "edge_cases": "`receive()` без явного таймаута блокирует поток бесконечно — всегда задавай `receiveTimeout`. При `AUTO_ACKNOWLEDGE` ack происходит после возврата из листенера, поэтому при падении уже после фиксации побочного эффекта (но до ack) возможна повторная доставка — обработчик должен быть идемпотентным.",
+                "related": "[[spring-messaging-interview#Q5]] — типичные продакшн-грабли JmsTemplate и @JmsListener (кэширование, таймаут, concurrency)"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "JmsTemplate и @JmsListener — типичные грабли?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В проде оборачивай `ConnectionFactory` в `CachingConnectionFactory`, ставь конечный `receiveTimeout` и `concurrency` для параллелизма",
+              "correct": true,
+              "sections": {
+                "explanation": "Три ключевые продакшн-настройки JMS в Spring. Во-первых, `JmsTemplate` без кэширования создаёт новые `Connection`/`Session` на каждый вызов — в проде это убивает производительность и исчерпывает ресурсы брокера, поэтому оборачивай `ConnectionFactory` в `CachingConnectionFactory`. Во-вторых, `receiveTimeout` по умолчанию бесконечный, и `receive()` повиснет навсегда — задавай конечный таймаут. В-третьих, `@JmsListener` по умолчанию однопоточный; для параллелизма указывай `concurrency = \"3-10\"`. Дополнительно: сообщения по умолчанию `PERSISTENT` (пишутся на диск), для некритичных данных можно `NON_PERSISTENT` ради скорости. И не глотай исключения в листенере — иначе сломаешь retry-семантику acknowledge.",
+                "example": "```java\nvar caching = new CachingConnectionFactory(rawFactory);\nvar template = new JmsTemplate(caching);\ntemplate.setReceiveTimeout(5000); // не бесконечность\n\n@JmsListener(destination = \"orders\", concurrency = \"3-10\")\npublic void onOrder(Order o) { process(o); }\n```",
+                "when_to_apply": "Применяй при любой продакшн-настройке JMS под нагрузкой: DevOps/бэкенд-инженер закладывает `CachingConnectionFactory`, конечный `receiveTimeout` и явный `concurrency` перед выкаткой сервиса, который обрабатывает заметный поток сообщений, чтобы избежать деградации и зависаний.",
+                "edge_cases": "`CachingConnectionFactory` кэширует сессии и продюсеры, но осторожнее с `setSessionCacheSize` при больших `concurrency` — мало кэшированных сессий сведёт параллелизм на нет. Верхняя граница `concurrency` не должна превышать число партиций/потребителей, иначе лишние потоки простаивают.",
+                "related": "[[spring-messaging-interview#Q4]] — синхронность JmsTemplate, блокирующий receive() и семантика acknowledge"
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`JmsTemplate` сам кэширует `Connection`/`Session`, обёртка не нужна",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сам по себе `JmsTemplate` не кэширует соединения: без `CachingConnectionFactory` он открывает новые `Connection` и `Session` на каждый вызов. Кэширование добавляет именно обёртка фабрики.",
+                "source_of_confusion": "`JmsTemplate` позиционируется как «удобный высокоуровневый помощник», и кажется логичным, что он сам берёт на себя и управление ресурсами.",
+                "if_it_were_true": "Если положиться на несуществующее встроенное кэширование, на каждый вызов будет новый коннект — это деградация производительности и исчерпание ресурсов брокера под нагрузкой.",
+                "how_it_should_be": "Стало бы верным, если добавить обёртку: оборачивай `ConnectionFactory` в `CachingConnectionFactory`, тогда соединения кэшируются."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`receive()` по умолчанию имеет таймаут 30 секунд и не зависнет",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дефолтный `receiveTimeout` у `JmsTemplate` равен бесконечному ожиданию, а не 30 секундам. Без явной настройки `receive()` заблокирует поток навсегда, если сообщений нет.",
+                "source_of_confusion": "У многих сетевых клиентов есть разумный дефолтный таймаут вроде 30 секунд, и это ожидание по аналогии переносят на JMS.",
+                "if_it_were_true": "Если рассчитывать на несуществующий 30-секундный дефолт, поток повиснет навсегда на пустой очереди, и ты получишь зависший воркер вместо аккуратного таймаута.",
+                "how_it_should_be": "Стало бы верным, если явно задать таймаут: установи конечный `receiveTimeout` (например, 30000 мс), тогда `receive()` не зависнет."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@JmsListener` по умолчанию многопоточный и сам масштабируется",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@JmsListener` по умолчанию однопоточный: один поток потребляет очередь, пока ты явно не зададишь `concurrency`. Самостоятельного авто-масштабирования под нагрузку у него нет.",
+                "source_of_confusion": "Контейнер `DefaultMessageListenerContainer` поддерживает пул потоков, и кажется, что Spring включает параллелизм по умолчанию.",
+                "if_it_were_true": "Если ждать автоматического масштабирования, при росте трафика очередь будет копиться на единственном потоке, а latency и lag поползут вверх.",
+                "how_it_should_be": "Стало бы верным, если задать параллелизм вручную: выставь `concurrency = \"3-10\"`, тогда листенер потребляет в несколько потоков."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое idempotent consumer и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Idempotent consumer полностью исключает повторную доставку сообщений, делая Kafka exactly-once без дополнительной логики",
+              "correct": false,
+              "sections": {
+                "what_actually": "Idempotent consumer не отменяет повторную доставку — он делает обработку дубликата безвредной. Сообщение всё равно может прийти повторно (at-least-once), просто consumer спроектирован так, что результат не меняется.",
+                "source_of_confusion": "Слово «idempotent» звучит как «сообщение придёт один раз», и middle-разработчик путает идемпотентность обработки с гарантией доставки на уровне брокера.",
+                "if_it_were_true": "Если бы consumer сам исключал повторы, не нужны были бы ни таблицы дедупликации, ни UPSERT, ни транзакции — но при ребалансировке сразу появлялись бы реальные дубликаты с двойными побочными эффектами.",
+                "how_it_should_be": "Корректно: idempotent consumer не убирает дубликаты, а делает их обработку безопасной за счёт дедупликации или идемпотентной операции."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Idempotent consumer безопасно обрабатывает дубликаты: хранит ID обработанных сообщений или делает саму операцию идемпотентной",
+              "correct": true,
+              "sections": {
+                "explanation": "Kafka по умолчанию даёт at-least-once: сообщение может прийти повторно при ребалансировке или сбое коммита offset. Idempotent consumer проектируется так, чтобы повторная обработка одного и того же сообщения не меняла результат. Первый подход — дедупликация: сохранять ID уже обработанных сообщений в БД/Redis и пропускать повторы. Второй подход — делать саму операцию идемпотентной: UPSERT вместо INSERT, установка статуса в абсолютное значение вместо инкремента. Это критично, потому что точную exactly-once-доставку через внешнюю систему Kafka сама не гарантирует, и дубликаты — нормальная часть модели доставки.",
+                "example": "Дедупликация по ключу: `if (processedRepo.existsById(record.key())) return; process(record); processedRepo.save(record.key());` либо идемпотентная запись: `INSERT ... ON CONFLICT (id) DO UPDATE SET ...` (UPSERT) вместо чистого INSERT.",
+                "when_to_apply": "Применяйте всегда, когда обработка сообщения имеет побочные эффекты (запись в БД, отправка письма, списание денег) и работает в режиме at-least-once. Разработчик закладывает идемпотентность ещё на этапе дизайна consumer'а — это дешевле, чем разбирать инциденты с двойными списаниями в проде.",
+                "edge_cases": "Хранилище ID обработанных сообщений само должно быть транзакционно согласовано с бизнес-операцией, иначе можно записать ID и упасть до коммита бизнес-данных (или наоборот). Также таблица обработанных ID растёт бесконечно — нужен TTL/архивация по времени или offset.",
+                "related": "[[spring-messaging-interview#Q7]] — exactly-once через транзакции Kafka как более строгая альтернатива дедупликации; [[spring-messaging-interview#Q10]] — режимы acknowledgment, от которых зависит вероятность дубликатов"
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Idempotent consumer — это просто включённый флаг enable.idempotence=true у consumer'а, который активирует встроенную дедупликацию Kafka",
+              "correct": false,
+              "sections": {
+                "what_actually": "Флаг `enable.idempotence` относится к producer'у, а не consumer'у, и гарантирует отсутствие дубликатов при ретраях producer'а внутри партиции, а не дедупликацию на стороне consumer'а. Идемпотентность обработки реализуется кодом приложения, а не флагом.",
+                "source_of_confusion": "В Kafka действительно есть `enable.idempotence`, и название совпадает с термином «idempotent consumer», поэтому легко решить, что это одно и то же.",
+                "if_it_were_true": "Если бы такой флаг существовал у consumer'а, он бы магически дедуплицировал любые повторы по всему пайплайну, включая внешние записи в БД — чего брокер физически сделать не может, так как не знает семантику бизнес-операции.",
+                "how_it_should_be": "Корректно: идемпотентность обработки на стороне consumer'а реализуется логикой приложения (дедупликация по ID или UPSERT), а не конфигурационным флагом."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Idempotent consumer нужен только в режиме exactly-once и бесполезен при at-least-once доставке",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё ровно наоборот: idempotent consumer особенно нужен именно при at-least-once, потому что там и возникают дубликаты. В exactly-once дубликатов как раз меньше, но даже там идемпотентность остаётся страховкой.",
+                "source_of_confusion": "Кажется логичным связать «идемпотентность» с самым строгим режимом доставки, хотя на практике она компенсирует слабости менее строгого at-least-once.",
+                "if_it_were_true": "Если бы идемпотентность была не нужна при at-least-once, то любой типовой @KafkaListener с дефолтными настройками был бы уязвим к двойной обработке при каждой ребалансировке без всякой защиты.",
+                "how_it_should_be": "Корректно: idempotent consumer нужен прежде всего при at-least-once, где повторная доставка — штатное поведение."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать exactly-once семантику в Kafka?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно выставить acks=all у producer и enable.auto.commit=false у consumer — это и есть exactly-once",
+              "correct": false,
+              "sections": {
+                "what_actually": "`acks=all` и отключённый auto-commit дают надёжную at-least-once-доставку без потерь, но не exactly-once. Дубликаты при ретраях и ребалансировке всё равно возможны; для exactly-once нужны транзакции producer'а и `read_committed` у consumer'а.",
+                "source_of_confusion": "`acks=all` действительно усиливает гарантии доставки, и кажется, что максимальные acks автоматически означают «ровно один раз».",
+                "if_it_were_true": "Если бы этого хватало, транзакции Kafka и `transactional.id` были бы не нужны — но при повторной отправке после таймаута producer создал бы дубликат, который `acks=all` никак не предотвращает.",
+                "how_it_should_be": "Корректно: к надёжной доставке нужно добавить транзакции (`transactional.id` + `read_committed`), чтобы получить exactly-once."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Exactly-once в Kafka работает прозрачно и для внешней БД: одна Kafka-транзакция атомарно фиксирует и сообщение, и запись в PostgreSQL",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kafka-транзакция атомарна только внутри Kafka (сообщения + offset'ы). Внешняя БД в неё не входит, поэтому запись в PostgreSQL и коммит Kafka могут разойтись. Для согласованности с внешним хранилищем применяется паттерн outbox.",
+                "source_of_confusion": "Раз транзакция объединяет сообщения и offset'ы, кажется естественным, что туда же попадёт и запись в БД, как в распределённой XA-транзакции.",
+                "if_it_were_true": "Если бы одна Kafka-транзакция покрывала внешнюю БД, не было бы нужды в outbox-паттерне и CDC — но между коммитом в БД и коммитом в Kafka всегда есть окно, где возможен сбой и рассинхрон.",
+                "how_it_should_be": "Корректно: для атомарности с внешней БД нужен паттерн outbox, а не одна Kafka-транзакция."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Через транзакции Kafka: transactional.id у producer, isolation.level=read_committed у consumer, запись сообщений и offset'ов в одной транзакции",
+              "correct": true,
+              "sections": {
+                "explanation": "Exactly-once в Kafka строится на транзакциях. Producer получает `transactional.id` и пишет и полезные сообщения, и offset'ы прочитанных записей в рамках одной атомарной транзакции — это паттерн read-process-write. Consumer ставит `isolation.level=read_committed`, чтобы видеть только закоммиченные транзакцией сообщения и не читать «грязные» данные откатившихся транзакций. В Spring это оборачивается в `KafkaTransactionManager` плюс `@Transactional`. Важное ограничение: полноценный exactly-once работает только внутри Kafka; при записи результата во внешнюю БД одной Kafka-транзакции недостаточно — нужен паттерн outbox.",
+                "example": "Spring-конфигурация: `@Transactional` на методе listener'а + `KafkaTransactionManager`; у producer'а `transactional.id=tx-orders-1`, у consumer'а `isolation.level=read_committed`. Producer внутри транзакции вызывает `sendOffsetsToTransaction(...)`, объединяя коммит offset и запись результата.",
+                "when_to_apply": "Применяйте для read-process-write-конвейеров целиком внутри Kafka (например, агрегация одного топика в другой), где дубликаты и потери недопустимы. Команда платёжной/финансовой обработки выбирает этот режим, осознанно жертвуя throughput ради строгой корректности.",
+                "edge_cases": "Транзакции снижают throughput и увеличивают latency из-за координации; при зависании транзакции дольше `transaction.timeout.ms` она прерывается. При интеграции с внешней БД одна Kafka-транзакция не покрывает внешнюю запись — нужен outbox, иначе exactly-once иллюзорен.",
+                "related": "[[spring-messaging-interview#Q6]] — idempotent consumer как более лёгкая альтернатива при at-least-once; [[spring-messaging-interview#Q10]] — acknowledgment-режимы и коммит offset, который транзакция берёт на себя"
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Consumer для exactly-once должен использовать isolation.level=read_uncommitted, чтобы не пропустить ни одного сообщения",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для exactly-once consumer наоборот ставит `read_committed`, чтобы видеть только закоммиченные транзакцией сообщения. `read_uncommitted` показывает в том числе данные ещё не завершённых (и потенциально откатываемых) транзакций, что ломает гарантию.",
+                "source_of_confusion": "Звучит как «прочитаем всё, чтобы ничего не потерять», и middle путает полноту чтения с корректностью exactly-once.",
+                "if_it_were_true": "Если бы consumer читал `read_uncommitted`, он обрабатывал бы сообщения из транзакций, которые затем откатятся, и получал бы «фантомные» записи, исчезающие из лога.",
+                "how_it_should_be": "Корректно: для exactly-once у consumer'а должен стоять `isolation.level=read_committed`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое dead letter queue (DLQ) и как её настроить?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "DLQ автоматически переотправляет сбойные сообщения обратно в исходный топик до тех пор, пока обработка не пройдёт успешно",
+              "correct": false,
+              "sections": {
+                "what_actually": "DLQ/DLT — это терминальное хранилище для сообщений, которые уже исчерпали retry. Оно не зацикливает переотправку в исходный топик; разбор и повторная отправка из DLT — ручная или отдельный осознанный процесс.",
+                "source_of_confusion": "Retry и DLQ часто упоминают вместе, и кажется, что DLQ — это просто продолжение бесконечных повторов в тот же топик.",
+                "if_it_were_true": "Если бы DLQ бесконечно возвращала сообщение в исходный топик, poison pill крутился бы вечно и снова блокировал партицию — ровно та проблема, ради которой DLQ и придумана.",
+                "how_it_should_be": "Корректно: DLQ — конечная точка для исчерпавших retry сообщений, а не механизм автоматического зацикленного возврата в исходный топик."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В Spring Kafka DLQ включается одним свойством spring.kafka.dlq.enabled=true без error handler и recoverer",
+              "correct": false,
+              "sections": {
+                "what_actually": "Такого единственного свойства нет. DLT в Spring Kafka собирается явно из `DefaultErrorHandler` с `DeadLetterPublishingRecoverer` (или декларативно через `@RetryableTopic`), а не одним магическим флагом.",
+                "source_of_confusion": "Многие Spring-фичи действительно включаются одним property, поэтому ожидание `*.enabled=true` для DLQ выглядит правдоподобно.",
+                "if_it_were_true": "Если бы хватало одного флага, не существовало бы классов `DeadLetterPublishingRecoverer` и `DefaultErrorHandler`, а также аннотации `@RetryableTopic`, которые как раз и конфигурируют это поведение.",
+                "how_it_should_be": "Корректно: DLT настраивается через `DeadLetterPublishingRecoverer` + `DefaultErrorHandler` (или `@RetryableTopic`), а не одним свойством."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Имя DLT всегда совпадает с именем исходного топика, поэтому сбойные сообщения пишутся обратно в тот же топик",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имя DLT по умолчанию — это отдельный топик `<original-topic>.DLT`, а не тот же самый топик. Сбойные сообщения изолируются в отдельном топике именно чтобы не мешать основному потоку.",
+                "source_of_confusion": "Имя DLT производно от исходного топика, и легко решить, что это один и тот же топик с другим суффиксом-меткой, а не отдельная сущность.",
+                "if_it_were_true": "Если бы DLT совпадал с исходным топиком, poison pill снова попадал бы в общий поток и блокировал партицию, и весь смысл изоляции терялся бы.",
+                "how_it_should_be": "Корректно: DLT — отдельный топик (по умолчанию `<topic>.DLT`), изолированный от исходного."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "DLQ — топик для сообщений, не обработанных после нескольких попыток; в Spring Kafka настраивается DeadLetterPublishingRecoverer + DefaultErrorHandler",
+              "correct": true,
+              "sections": {
+                "explanation": "Dead letter queue (в Kafka — dead letter topic, DLT) — это отдельный топик, куда отправляются сообщения, которые не удалось обработать после исчерпания всех retry. В Spring Kafka механизм собирается из двух частей: `DefaultErrorHandler` управляет повторами (например, с `FixedBackOff`), а `DeadLetterPublishingRecoverer` публикует исчерпавшее попытки сообщение в `<topic>.DLT`. Главная цель — не дать «ядовитому» сообщению (poison pill) бесконечно перечитываться и блокировать всю партицию: остальные сообщения должны продолжать обрабатываться. В DLT сообщение сохраняется вместе с заголовками об исходном топике, исключении и стектрейсе для последующего разбора.",
+                "example": "`new DefaultErrorHandler(new DeadLetterPublishingRecoverer(kafkaTemplate), new FixedBackOff(1000L, 2L))` — 2 повтора с интервалом 1с, затем сообщение уходит в `orders.DLT`. Имя по умолчанию формируется как `<original-topic>.DLT`.",
+                "when_to_apply": "Применяйте для consumer'ов, где отдельные сообщения могут быть невалидны (битый JSON, нарушенный контракт), а останавливать всю партицию из-за одного сообщения недопустимо. Дежурная команда затем разбирает DLT, чинит данные или код и переотправляет сообщения.",
+                "edge_cases": "Сам топик DLT тоже надо мониторить и обрабатывать, иначе ошибки молча копятся и теряются. Если ошибка не в сообщении, а в недоступной зависимости (БД лежит), отправка в DLT преждевременно «выбросит» хорошие сообщения — для таких случаев нужен не DLT, а блокирующий backoff/пауза.",
+                "related": "[[spring-messaging-interview#Q9]] — retry и backoff, которые предшествуют отправке в DLT; [[spring-messaging-interview#Q6]] — идемпотентность важна при переотправке сообщений из DLT"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает retry и backoff при обработке сообщений?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "DefaultErrorHandler управляет повторами через FixedBackOff или ExponentialBackOff; для не-блокирующего retry применяется @RetryableTopic",
+              "correct": true,
+              "sections": {
+                "explanation": "В Spring Kafka повторами обработки управляет `DefaultErrorHandler`. Стратегия задержек настраивается через `BackOff`: `FixedBackOff` даёт фиксированный интервал между попытками, `ExponentialBackOff` — растущий, что снижает нагрузку при долгих сбоях зависимостей. Можно объявить не-retryable исключения через `addNotRetryableExceptions`, чтобы сразу отправлять заведомо безнадёжные сообщения дальше без лишних попыток. Ключевое различие: блокирующий retry держит партицию занятой, пока крутит повторы одного сообщения; для не-блокирующего повтора используется `@RetryableTopic`, который выносит ретраи в отдельные retry-топики, освобождая основную партицию.",
+                "example": "Блокирующий: `new DefaultErrorHandler(recoverer, new ExponentialBackOff(1000L, 2.0))`; список не-retryable: `errorHandler.addNotRetryableExceptions(IllegalArgumentException.class)`. Не-блокирующий: `@RetryableTopic(attempts = \"4\", backoff = @Backoff(delay = 1000, multiplier = 2.0))` над методом listener'а.",
+                "when_to_apply": "FixedBackOff — для быстрых транзиентных сбоев; ExponentialBackOff — когда зависимость может лежать долго и нельзя её добивать. `@RetryableTopic` выбирают, когда нельзя блокировать партицию (высокий throughput, важна обработка остальных сообщений), а команда готова к тому, что порядок при не-блокирующем retry не сохраняется.",
+                "edge_cases": "Блокирующий retry на медленном сбое может превысить `max.poll.interval.ms` и спровоцировать ребалансировку — partition забирают у consumer'а. Не-блокирующий `@RetryableTopic` нарушает порядок сообщений, так как повтор уходит в отдельный топик и обрабатывается позже исходных.",
+                "related": "[[spring-messaging-interview#Q8]] — после исчерпания retry сообщение уходит в DLT; [[spring-messaging-interview#Q5]] — не-блокирующий retry ломает гарантии порядка"
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Блокирующий retry не влияет на партицию: пока одно сообщение повторяется, остальные продолжают обрабатываться параллельно",
+              "correct": false,
+              "sections": {
+                "what_actually": "Блокирующий retry именно что держит партицию: consumer повторяет одно и то же сообщение, и пока попытки не исчерпаны, следующие сообщения этой партиции не обрабатываются. Параллельную обработку даёт не-блокирующий `@RetryableTopic`.",
+                "source_of_confusion": "Хочется верить, что фреймворк умно продолжает поток, и термин «блокирующий» воспринимается как незначительная деталь, а не как реальная остановка партиции.",
+                "if_it_were_true": "Если бы блокирующий retry не держал партицию, не было бы смысла в `@RetryableTopic` и отдельных retry-топиках, и долгий сбой не приводил бы к риску превышения `max.poll.interval.ms`.",
+                "how_it_should_be": "Корректно: блокирующий retry держит партицию; для продолжения обработки остальных сообщений нужен не-блокирующий `@RetryableTopic`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "ExponentialBackOff повторяет с постоянным интервалом, а FixedBackOff увеличивает задержку с каждой попыткой",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `FixedBackOff` даёт постоянный интервал между попытками, а `ExponentialBackOff` увеличивает задержку с каждой попыткой по множителю.",
+                "source_of_confusion": "Названия легко перепутать местами, если запоминать их без привязки к смыслу «fixed = фиксированный, exponential = растущий».",
+                "if_it_were_true": "Если бы Fixed рос, а Exponential был постоянным, выбор стратегии под долгий сбой зависимости (где нужен именно рост задержки) делался бы неправильно и добивал бы лежащий сервис.",
+                "how_it_should_be": "Корректно: `FixedBackOff` — постоянный интервал, `ExponentialBackOff` — растущий по множителю."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Список не-retryable исключений (addNotRetryableExceptions) заставляет повторять обработку именно для этих исключений настойчивее",
+              "correct": false,
+              "sections": {
+                "what_actually": "`addNotRetryableExceptions` помечает исключения как не подлежащие повтору: при них обработчик не делает retry, а сразу применяет recovery (например, отправку в DLT). Это сокращает бессмысленные повторы для заведомо невалидных сообщений.",
+                "source_of_confusion": "Название метода длинное, и без внимательного чтения «NotRetryable» можно прочитать как «настроить retry для этих исключений».",
+                "if_it_were_true": "Если бы метод усиливал повторы, то на детерминированной ошибке (битый JSON) consumer бесконечно повторял бы заведомо проигрышную обработку вместо быстрого ухода в DLT.",
+                "how_it_should_be": "Корректно: `addNotRetryableExceptions` отключает повторы для перечисленных исключений и сразу запускает recovery."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между acknowledgment режимами в Kafka?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Auto-commit (enable.auto.commit=true) — рекомендуемый и самый безопасный режим, гарантирующий отсутствие потерь и дубликатов",
+              "correct": false,
+              "sections": {
+                "what_actually": "Auto-commit в Spring как раз не рекомендуется: он коммитит offset'ы по таймеру независимо от того, успешно ли обработано сообщение. Это создаёт окна и для потери (закоммитили до обработки), и для дубликатов (упали после обработки, но до коммита).",
+                "source_of_confusion": "«Auto» звучит как «фреймворк сам всё сделает правильно», и автоматизм воспринимается как надёжность.",
+                "if_it_were_true": "Если бы auto-commit гарантировал отсутствие потерь и дубликатов, не существовало бы режимов RECORD/MANUAL и рекомендации их предпочитать — а на практике таймерный коммит легко рассинхронизируется с фактом обработки.",
+                "how_it_should_be": "Корректно: предпочтительны контейнерные режимы (BATCH/RECORD/MANUAL) с коммитом после обработки, а auto-commit — не рекомендуется."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "AckMode.BATCH коммитит после всего батча (дефолт), RECORD — после каждой записи, MANUAL — вручную через Acknowledgment.acknowledge()",
+              "correct": true,
+              "sections": {
+                "explanation": "В Spring Kafka `AckMode` определяет, когда контейнер коммитит offset. `AckMode.BATCH` (дефолт) коммитит после успешной обработки всего опрошенного батча — это эффективно по нагрузке, но при сбое в середине батч переобработается целиком. `AckMode.RECORD` коммитит после каждой записи — точнее, но дороже. `AckMode.MANUAL` и `MANUAL_IMMEDIATE` отдают коммит коду через `Acknowledgment.acknowledge()`, давая полный контроль над моментом подтверждения. Auto-commit (`enable.auto.commit=true`) в Spring не рекомендуется: он коммитит по таймеру независимо от факта обработки, из-за чего возможны и потери (закоммитили до обработки), и дубликаты.",
+                "example": "Ручной режим: фабрика с `factory.getContainerProperties().setAckMode(AckMode.MANUAL_IMMEDIATE)`, а в listener'е `void onMsg(String payload, Acknowledgment ack) { process(payload); ack.acknowledge(); }` — offset коммитится только после успешной обработки.",
+                "when_to_apply": "BATCH — для высокого throughput, где допустима переобработка батча. RECORD — когда переобработка дорога и нужна гранулярность. MANUAL/MANUAL_IMMEDIATE выбирают, когда коммит должен быть строго привязан к завершению бизнес-операции (например, после записи в БД), что важно команде в финансовых/критичных пайплайнах.",
+                "edge_cases": "В MANUAL легко забыть вызвать `acknowledge()` на каком-то пути выполнения — offset не продвинется, и при перезапуске сообщения перечитаются. В BATCH сбой в середине батча приводит к переобработке уже успешных сообщений, поэтому обработка должна быть идемпотентной.",
+                "related": "[[spring-messaging-interview#Q6]] — идемпотентность нужна, так как любой режим кроме строгого может дать переобработку; [[spring-messaging-interview#Q7]] — exactly-once через транзакции берёт коммит offset на себя"
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "AckMode.RECORD коммитит реже, чем AckMode.BATCH, поэтому он эффективнее по нагрузке на брокер",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `AckMode.RECORD` коммитит после каждой записи, то есть чаще и дороже, чем `BATCH`, который коммитит один раз на весь батч. По нагрузке эффективнее именно `BATCH`.",
+                "source_of_confusion": "Слово «RECORD» может ассоциироваться с «по одному», но при подсчёте частоты коммитов легко перепутать, какой режим даёт меньше коммитов.",
+                "if_it_were_true": "Если бы RECORD коммитил реже, он не давал бы гранулярного контроля над каждым сообщением, ради которого его и выбирают, и не было бы смысла иметь BATCH как дефолт для throughput.",
+                "how_it_should_be": "Корректно: `RECORD` коммитит чаще (после каждой записи), а по нагрузке эффективнее `BATCH`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В режиме MANUAL контейнер сам коммитит offset после возврата из метода, а Acknowledgment.acknowledge() лишь логирует факт обработки",
+              "correct": false,
+              "sections": {
+                "what_actually": "В режиме MANUAL коммит выполняется именно вызовом `Acknowledgment.acknowledge()` в коде — контейнер не коммитит автоматически после возврата из метода. Без явного вызова offset не продвинется.",
+                "source_of_confusion": "Привычка к автоматическому продвижению offset в других режимах заставляет думать, что и в MANUAL контейнер «доделает» коммит сам, а acknowledge() — необязательная формальность.",
+                "if_it_were_true": "Если бы acknowledge() лишь логировал, то любой listener в MANUAL коммитил бы по возврату из метода и был бы неотличим от RECORD — теряя весь смысл ручного контроля над моментом коммита.",
+                "how_it_should_be": "Корректно: в MANUAL offset продвигается только явным вызовом `Acknowledgment.acknowledge()`, а не автоматически после метода."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить кастомный MessageConverter?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Jackson2JsonMessageConverter работает без classMapper — Spring автоматически определяет тип при десериализации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без явного classMapper конвертер не знает, в какой Java-класс десериализовать входящий JSON. По умолчанию он опирается на заголовок `__TypeId__`, который записывает producer как FQCN класса. Если этого заголовка нет (сообщение пришло из другого сервиса/языка) или целевой класс называется иначе, десериализация падает или приводит к LinkedHashMap. Для управляемого маппинга используют `DefaultClassMapper` (с trusted packages и явным mapping заголовок→класс) либо `@JsonTypeInfo` в DTO.",
+                "source_of_confusion": "В простом случае, когда и producer, и consumer — одно и то же Spring-приложение с одинаковыми пакетами, всё «работает само»: producer пишет `__TypeId__` с полным именем класса, consumer его читает. Middle-разработчик обобщает этот удачный сценарий на все случаи и решает, что classMapper вообще не нужен.",
+                "if_it_were_true": "Тогда любое JSON-сообщение из внешней системы корректно превращалось бы в нужный DTO без настройки. На практике появляются ClassNotFoundException (чужой FQCN в `__TypeId__`), ClassCastException или молчаливая десериализация в Map вместо ожидаемого типа.",
+                "how_it_should_be": "Зарегистрируйте `DefaultClassMapper` с trusted packages (или явным mapping) на конвертере, либо используйте `@JsonTypeInfo` в DTO, чтобы тип определялся детерминированно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "MessageConverter достаточно зарегистрировать в Spring-контексте через аннотацию @Component.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Само по себе наличие бина MessageConverter в контексте не подключает его к отправке и приёму. Конвертер надо явно подставить в `RabbitTemplate.setMessageConverter()` (publisher side) и в listener container factory (`SimpleRabbitListenerContainerFactory.setMessageConverter()`, consumer side). Без этого обе стороны продолжат использовать дефолтный `SimpleMessageConverter` (byte[]/String/Serializable).",
+                "source_of_confusion": "Spring во многих местах действительно автоконфигурирует бины по типу: если в контексте есть один `MessageConverter`, Boot-автоконфигурация RabbitTemplate его подхватит. Это создаёт иллюзию, что `@Component` всегда достаточно — но при ручной конфигурации `@Bean RabbitTemplate` или собственной container factory автоподстановка не срабатывает.",
+                "if_it_were_true": "Тогда любой `@Component MessageConverter` автоматически использовался бы и на отправке, и на приёме во всех контейнерах. Реально при ручной конфигурации шаблона/фабрики сообщения сериализуются дефолтным конвертером, и POJO приходит как `byte[]`/`String`, ломая `@Payload`-биндинг.",
+                "how_it_should_be": "Внедрите конвертер явно через `RabbitTemplate.setMessageConverter()` и `SimpleRabbitListenerContainerFactory.setMessageConverter()`, а не полагайтесь только на `@Component`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Объявите Jackson2JsonMessageConverter как @Bean и подставьте его в RabbitTemplate.setMessageConverter(); для type-safe десериализации используйте DefaultClassMapper с trusted packages.",
+              "correct": true,
+              "sections": {
+                "explanation": "MessageConverter — это подключаемый сериализатор: он реализует `toMessage(Object, MessageProperties)` (POJO → байты + content-type) и `fromMessage(Message)` (байты → POJO). Spring AMQP по умолчанию ставит `SimpleMessageConverter` (только byte[]/String/Serializable), поэтому для JSON надо явно объявить `Jackson2JsonMessageConverter` как `@Bean` и подставить его в `RabbitTemplate.setMessageConverter()` и в listener container factory. Чтобы при приёме безопасно определять целевой класс, на конвертер вешают `DefaultClassMapper`: он сопоставляет заголовок `__TypeId__` с Java-классом и ограничивает разрешённые пакеты (trusted packages). Это разделяет ответственность: конвертер отвечает за сериализацию, ClassMapper — за резолвинг типа. Симметричная настройка на обеих сторонах гарантирует, что POJO уедет в JSON и вернётся тем же типом без ручного marshal/unmarshal.",
+                "example": "```java\n@Bean\npublic MessageConverter jsonMessageConverter() {\n    Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter();\n    DefaultClassMapper mapper = new DefaultClassMapper();\n    mapper.setTrustedPackages(\"com.example.dto\"); // защита от десериализации произвольных классов\n    converter.setClassMapper(mapper);\n    return converter;\n}\n\n@Bean\npublic RabbitTemplate rabbitTemplate(ConnectionFactory cf, MessageConverter converter) {\n    RabbitTemplate template = new RabbitTemplate(cf);\n    template.setMessageConverter(converter);\n    return template;\n}\n```",
+                "when_to_apply": "Применяйте, когда сервис обменивается с RabbitMQ доменными объектами (POJO/DTO) и хочется избавиться от ручной сериализации в каждом продьюсере/консьюмере. Типично для микросервисов на Spring, где команда задаёт единый JSON-формат сообщений: один общий `@Bean` конвертера подключается и к шаблону, и к фабрике слушателей, а `DefaultClassMapper` с trusted packages закрывает риск десериализации чужих классов.",
+                "edge_cases": "Если producer и consumer — разные сервисы с разными пакетами DTO, дефолтный `__TypeId__` (FQCN продьюсера) не найдётся у консьюмера — нужен явный mapping в `DefaultClassMapper.setIdClassMapping()` или общий контракт по логическому имени типа. Второй подводный камень: не указав trusted packages, вы открываете десериализацию произвольных классов из заголовка — это потенциальная уязвимость, поэтому список доверенных пакетов обязателен.",
+                "related": "[[spring-messaging-interview#Q4]] — RabbitTemplate.convertAndSend и публикация POJO опираются на настроенный MessageConverter\n[[spring-messaging-interview#Q2]] — в JMS аналогичную роль играет MessageConverter при convertAndSend"
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Кастомный MessageConverter заменяет стандартный Spring-конвертер только если в classpath нет Jackson.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Выбор конвертера определяется явной конфигурацией, а не присутствием библиотек. Конвертер используется тот, что подставлен в `RabbitTemplate.setMessageConverter()` и в container factory. Наличие или отсутствие Jackson в classpath влияет только на то, можно ли вообще создать `Jackson2JsonMessageConverter`, но не на автоматический выбор кастомного конвертера.",
+                "source_of_confusion": "Spring Boot действительно делает много условной автоконфигурации через `@ConditionalOnClass`: если Jackson на classpath, появляется JSON-маппинг в вебе. Разработчик переносит эту ментальную модель на AMQP и думает, что и тут выбор конвертера управляется наличием библиотек.",
+                "if_it_were_true": "Тогда добавление/удаление Jackson из зависимостей незаметно переключало бы формат сериализации сообщений в проде. На деле ваш Protobuf/кастомный конвертер не подхватится сам — он применяется только там, где вы его явно установили, независимо от Jackson.",
+                "how_it_should_be": "Подставьте кастомный конвертер явно через `setMessageConverter()` на шаблоне и фабрике слушателей — тогда он используется детерминированно, вне зависимости от содержимого classpath."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать retry механизм?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "RetryTemplate с maxAttempts=3 применяется автоматически к любому @RabbitListener.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Просто объявить бин `RetryTemplate` недостаточно. Retry подключается через advice chain контейнера: создаётся `SimpleRabbitListenerContainerFactory` с `setAdviceChain(RetryInterceptorBuilder...)`, и этот container factory указывается в `@RabbitListener(containerFactory = \"retryContainerFactory\")`. Без явной привязки слушатель использует дефолтную фабрику без retry-перехватчика.",
+                "source_of_confusion": "Spring Retry в других местах (например, `@Retryable` на сервисных методах) работает декларативно через AOP, и кажется, что наличие `RetryTemplate` в контексте автоматически обернёт обработку сообщений. Но для listener-контейнеров retry — это часть advice chain конкретной фабрики, а не глобальная магия.",
+                "if_it_were_true": "Тогда любой `@RabbitListener` начал бы повторять обработку при исключениях, как только в контексте появился `RetryTemplate`. На практике без указания нужной фабрики исключение сразу уходит в стандартный error handler (как правило, nack/requeue), и заданная стратегия backoff игнорируется.",
+                "how_it_should_be": "Соберите container factory с `RetryInterceptor` и пропишите её в `@RabbitListener(containerFactory = \"retryContainerFactory\")`, чтобы retry применился к конкретному слушателю."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "RejectAndDontRequeueRecoverer реквеует сообщение обратно в очередь после всех попыток.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RejectAndDontRequeueRecoverer` делает ровно противоположное: после исчерпания попыток он отвергает сообщение с `requeue=false`, в результате чего оно (при настроенном DLX) уходит в DLQ, а не возвращается в исходную очередь. Если бы он реквеил, сообщение крутилось бы в бесконечном цикле повторов. Для возврата в очередь существует отдельный `ImmediateRequeueRecoverer`.",
+                "source_of_confusion": "Слово «Recoverer» (восстановитель) подталкивает к мысли, что задача компонента — вернуть сообщение в обработку, то есть реквеить. На деле «recover» здесь значит «решить, что делать с сообщением, которое retry уже не спас», и стандартное безопасное решение — выкинуть в DLQ.",
+                "if_it_were_true": "Если бы recoverer реквеил, poison-pill сообщение (всегда падающее) попадало бы обратно в очередь, снова бралось консьюмером, снова исчерпывало 3 попытки — и так бесконечно, загружая брокер и блокируя обработку нормальных сообщений.",
+                "how_it_should_be": "Чтобы действительно реквеить после попыток, замените recoverer на `ImmediateRequeueRecoverer`; `RejectAndDontRequeueRecoverer` оставляйте для маршрутизации в DLQ."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В exponentialBackoff(1000, 2, 10000) первая цифра задаёт количество попыток.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аргументы `exponentialBackoff(initialInterval, multiplier, maxInterval)` — это параметры задержки: начальная пауза (1000 мс), множитель роста (2) и максимальная пауза (10000 мс). Получается 1с, 2с, 4с… с потолком 10с. Количество попыток задаётся отдельно методом `.maxAttempts(3)`, а не в backoff.",
+                "source_of_confusion": "Число 1000 идёт первым и легко прочитывается как «1000 чего-то» или как счётчик, особенно если разработчик не помнит сигнатуру и видит три числа подряд. Смешиваются два независимых параметра retry: сколько раз повторять (maxAttempts) и как ждать между повторами (backoff).",
+                "if_it_were_true": "Если бы 1000 было числом попыток, обработчик повторял бы упавшее сообщение тысячу раз без пауз, что мгновенно перегрузило бы и консьюмер, и падающий внешний ресурс, фактически устроив self-DoS на каждом сбое.",
+                "how_it_should_be": "Читайте сигнатуру как `(initialInterval, multiplier, maxInterval)`, а число повторов задавайте отдельно через `.maxAttempts(n)`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Соберите RetryTemplate с maxAttempts(3) и exponentialBackoff(), добавьте RejectAndDontRequeueRecoverer — после N попыток сообщение уйдёт в DLQ.",
+              "correct": true,
+              "sections": {
+                "explanation": "Автоматический retry в Spring AMQP — это stateless-перехватчик в advice chain контейнера. `RetryTemplate.builder().maxAttempts(3).exponentialBackoff(initial, multiplier, max)` задаёт число попыток и нарастающую паузу между ними (например, 1с → 2с → 4с с потолком), а `.retryOn(TransientException.class)` ограничивает retry только устранимыми ошибками. Перехватчик собирается через `RetryInterceptorBuilder.stateless().retryOperations(retryTemplate).recoverer(...)` и вешается на `SimpleRabbitListenerContainerFactory.setAdviceChain(...)`. Ключевая роль `RecoveryCallback` (`RejectAndDontRequeueRecoverer`) — определить судьбу сообщения после исчерпания попыток: оно отвергается с `requeue=false`, и при настроенном DLX уходит в DLQ. Так разделяются ответственности: RetryTemplate решает, сколько и как повторять, recoverer — что делать, когда повторы закончились.",
+                "example": "```java\nRetryTemplate retryTemplate = RetryTemplate.builder()\n    .maxAttempts(3)\n    .exponentialBackoff(1000, 2, 10000) // 1s → 2s → 4s (cap 10s)\n    .retryOn(TransientException.class)\n    .build();\n\nfactory.setAdviceChain(RetryInterceptorBuilder.stateless()\n    .retryOperations(retryTemplate)\n    .recoverer(new RejectAndDontRequeueRecoverer()) // после 3 попыток → DLQ\n    .build());\n```\nСлушатель привязывается к этой фабрике: `@RabbitListener(queues = \"orders\", containerFactory = \"retryContainerFactory\")`.",
+                "when_to_apply": "Применяйте для transient-ошибок: временно недоступна БД, таймаут внешнего API, кратковременный сетевой сбой — то, что с высокой вероятностью пройдёт через секунду-другую. Команда выносит retry на уровень инфраструктуры обработки, чтобы бизнес-код слушателя оставался простым (`orderService.process(order)`), а stateless-retry с exponential backoff гасил всплески нагрузки на падающий ресурс и в худшем случае аккуратно сбрасывал сообщение в DLQ.",
+                "edge_cases": "Stateless retry держит сообщение в памяти консьюмера и блокирует поток на время backoff — длинные паузы (десятки секунд) уменьшают эффективную пропускную способность и могут упереться в prefetch/concurrency. Альтернатива для долгих задержек — «delayed retry» через TTL + DLX (циклирование между очередями), описанный в Q7. Также важно через `.retryOn()` не повторять non-retryable ошибки (например, ошибку валидации) — иначе вы 3 раза прогоняете заведомо безнадёжное сообщение.",
+                "related": "[[spring-messaging-interview#Q7]] — RejectAndDontRequeueRecoverer отправляет исчерпавшее попытки сообщение в DLQ через DLX\n[[spring-messaging-interview#Q6]] — ручной ackMode=MANUAL даёт альтернативный контроль над requeue/DLQ при ошибках"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать Spring Messaging?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для JMS используйте @SpringBootTest с EmbeddedActiveMQ, для AMQP — Testcontainers RabbitMQContainer с @DynamicPropertySource; асинхронные ассерты делайте через await().",
+              "correct": true,
+              "sections": {
+                "explanation": "Messaging тестируется интеграционно, на реальном (или встроенном) брокере, потому что важна именно семантика доставки и маршрутизации. Для JMS дешевле всего embedded-брокер: `@SpringBootTest` поднимает встроенный ActiveMQ/Artemis в той же JVM. Для AMQP полноценный RabbitMQ запускают через Testcontainers (`@Container RabbitMQContainer`), а его динамические хост и порт прокидывают в Spring через `@DynamicPropertySource`, который регистрирует значения до старта контекста. Поскольку обработка сообщений асинхронна (слушатель срабатывает в отдельном потоке), нельзя проверять результат сразу после отправки — используют Awaitility: `await().atMost(5, SECONDS).untilAsserted(...)` опрашивает условие, пока оно не выполнится или не истечёт таймаут. Это даёт детерминированную проверку без хрупких `Thread.sleep()`.",
+                "example": "```java\n@SpringBootTest\n@Testcontainers\nclass RabbitIntegrationTest {\n    @Container\n    static RabbitMQContainer rabbit = new RabbitMQContainer(\"rabbitmq:3-management\");\n\n    @DynamicPropertySource\n    static void props(DynamicPropertyRegistry registry) {\n        registry.add(\"spring.rabbitmq.host\", rabbit::getHost);\n        registry.add(\"spring.rabbitmq.port\", rabbit::getAmqpPort);\n    }\n\n    @Test\n    void shouldProcessOrder() {\n        rabbitTemplate.convertAndSend(\"orders.exchange\", \"orders.created.retail\", order);\n        await().atMost(5, SECONDS).untilAsserted(() ->\n            verify(orderRepository).save(any()));\n    }\n}\n```",
+                "when_to_apply": "Применяйте, когда нужно проверить именно интеграцию с брокером — что слушатель поднимается, очереди и биндинги создаются, routing key ведёт в нужную очередь, а DLQ/retry отрабатывают. На CI это даёт уверенность, что конфигурация валидна на реальном RabbitMQ, а не только на моках; embedded-ActiveMQ выбирают для лёгких JMS-тестов, Testcontainers — когда важна точная AMQP-семантика.",
+                "edge_cases": "Testcontainers требует доступного Docker-демона в окружении CI — без него тесты не стартуют, поэтому такие классы часто помечают как медленные/опциональные. Второй подводный камень — таймаут `await()`: слишком маленький даёт флакающие падения под нагрузкой CI, слишком большой затягивает прогон; подбирайте `atMost` с запасом и проверяйте конкретное наблюдаемое условие, а не просто отсутствие исключений.",
+                "related": "[[spring-messaging-interview#Q6]] — тестируемые @RabbitListener-консьюмеры и их ack-логика\n[[spring-messaging-interview#Q3]] — @JmsListener-консьюмеры, проверяемые на embedded ActiveMQ"
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "@SpringBootTest с embedded JMS не требует внешнего брокера и работает из коробки без дополнительной конфигурации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Embedded-брокер не появляется автоматически. Нужна зависимость на брокер (например, `spring-boot-starter-activemq` или Artemis) и явное включение встроенного режима: `spring.activemq.embedded.enabled=true` (или соответствующий Artemis-property) в тестовом YAML. Без этого `@SpringBootTest` пытается подключиться к реальному брокеру по дефолтному broker-url и тест падает на старте контекста.",
+                "source_of_confusion": "Многие Spring-фичи в тестах работают «из коробки» (H2 как embedded БД подхватывается автоматически при наличии в classpath), и разработчик ожидает того же от JMS. Но для embedded-брокера нужны и зависимость, и явный флаг включения.",
+                "if_it_were_true": "Тогда любой `@SpringBootTest` поднимал бы встроенный брокер и слушатели начинали бы работать без настройки. Реально контекст не стартует (ConnectionException / отказ соединения), потому что приложение ищет внешний ActiveMQ на `tcp://localhost:61616`.",
+                "how_it_should_be": "Подключите стартер брокера и включите встроенный режим (`spring.activemq.embedded.enabled=true`) в тестовой конфигурации — тогда брокер поднимется внутри теста."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "RabbitMQ-тесты лучше всего писать с @MockBean RabbitTemplate.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@MockBean RabbitTemplate` проверяет лишь то, что код вызвал метод отправки, но не саму AMQP-семантику: правильность exchange, routing key, биндингов, срабатывание DLQ, TTL, конвертацию сообщений. Для проверки реальной конфигурации очередей и маршрутизации нужен настоящий брокер — его поднимают через Testcontainers (`RabbitMQContainer`).",
+                "source_of_confusion": "Мокать зависимости — стандартная практика юнит-тестов, и `@MockBean` действительно уместен, когда нужно изолировать бизнес-логику от инфраструктуры. Но интеграцию с брокером моком не проверишь: middle путает «изолировать unit» и «протестировать интеграцию».",
+                "if_it_were_true": "Если бы мок покрывал AMQP-семантику, тест проходил бы зелёным, а в проде сообщение уходило бы не в ту очередь из-за опечатки в routing key или отсутствующего биндинга — мок этого не ловит, и баг доезжает до прода.",
+                "how_it_should_be": "Для проверки маршрутизации, биндингов и DLQ используйте Testcontainers `RabbitMQContainer` вместо `@MockBean`; мок оставляйте только для чистых юнит-тестов бизнес-логики."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "@DynamicPropertySource доступен только в тестах, помеченных @Testcontainers.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@DynamicPropertySource` — общий механизм Spring Test для регистрации property с динамическими (вычисляемыми во время выполнения) значениями в любом `@SpringBootTest`/контекстном тесте. Он часто применяется вместе с Testcontainers, но не привязан к нему: им прокидывают и random-порты, и адреса любых внешне поднятых ресурсов, и значения, известные только в рантайме.",
+                "source_of_confusion": "В обучающих примерах `@DynamicPropertySource` почти всегда соседствует с `@Testcontainers` (прокидывание портов контейнера), поэтому возникает ложная ассоциация, что одно без другого не работает. Аннотации независимы: `@Testcontainers` управляет жизненным циклом контейнеров, `@DynamicPropertySource` — регистрацией property.",
+                "if_it_were_true": "Тогда нельзя было бы динамически задать property без Testcontainers — например, прокинуть случайно выбранный свободный порт встроенного сервера или адрес локально запущенного embedded-брокера; пришлось бы тянуть Docker туда, где он не нужен.",
+                "how_it_should_be": "Используйте `@DynamicPropertySource` в любом контекстном тесте для регистрации динамических property; `@Testcontainers` нужен лишь когда вы дополнительно управляете контейнерами."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем Spring JMS отличается от Spring AMQP?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "JMS и AMQP взаимозаменяемы — JmsTemplate и RabbitTemplate имеют одинаковый API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные модели и API. `JmsTemplate.convertAndSend(destination, object)` адресует сообщение по имени очереди/топика, тогда как `RabbitTemplate.convertAndSend(exchange, routingKey, object)` отправляет в exchange, который по routing key маршрутизирует в одну или несколько очередей. У AMQP есть слой exchange'ей (direct/topic/fanout/headers), которого в JMS попросту нет — там продьюсер пишет прямо в destination.",
+                "source_of_confusion": "Оба шаблона называются *Template, у обоих есть метод `convertAndSend`, оба используют MessageConverter — поверхностное сходство Spring-абстракций создаёт впечатление одинакового API. Но сигнатуры и модель адресации различаются принципиально.",
+                "if_it_were_true": "Если бы API были идентичны, можно было бы поменять `JmsTemplate` на `RabbitTemplate` без правок. На деле код, отправляющий по имени очереди, не задаст exchange/routingKey, и сообщение либо уйдёт в default exchange по имени очереди, либо вообще не смаршрутизируется — миграция требует переписывания.",
+                "how_it_should_be": "Учитывайте, что у AMQP отправка идёт через exchange + routing key, а у JMS — напрямую в destination; код и модель адресации между ними не переносятся один-в-один."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "JMS — это Java EE стандарт с direct queue (наследие enterprise); AMQP — открытый протокол с маршрутизацией через exchange (direct/topic/fanout), типичный для современных микросервисов.",
+              "correct": true,
+              "sections": {
+                "explanation": "JMS (Java Message Service) — это Java-специфичный стандарт (часть Java EE / Jakarta EE): единый API, под которым разные вендоры (ActiveMQ, IBM MQ, Oracle AQ, Artemis) дают свои реализации. Модель адресации в JMS простая — продьюсер пишет прямо в destination (Queue или Topic), маршрутизация ограничена именем и message selector'ами. AMQP (RabbitMQ) — открытый wire-протокол (0.9.1/1.0), не привязанный к языку: клиенты есть для Java, Python, Go и т.д. Его ключевая особенность — слой exchange'ей между продьюсером и очередями: продьюсер шлёт в exchange с routing key, а exchange по своему типу (direct — точное совпадение, topic — шаблоны, fanout — broadcast, headers — по заголовкам) решает, в какие очереди класть сообщение. Поэтому JMS тяготеет к legacy enterprise-интеграциям, а AMQP даёт гибкую маршрутизацию для современных микросервисов.",
+                "example": "JMS (адресация по имени destination):\n```java\njmsTemplate.convertAndSend(\"orders-queue\", order);\n```\nAMQP (адресация через exchange + routing key, маршрутизация по шаблону):\n```java\nrabbitTemplate.convertAndSend(\"orders.exchange\", \"orders.created.retail\", order);\n// TopicExchange с биндингом orders.created.# доставит сообщение в нужную очередь\n```",
+                "when_to_apply": "Выбирайте AMQP/RabbitMQ для новых сервисов, где нужна гибкая маршрутизация (topic-иерархии событий, fanout-broadcast) и кросс-языковые клиенты. JMS берите при интеграции с существующей Java EE-инфраструктурой и корпоративными брокерами (IBM MQ, Oracle AQ), где уже есть JMS-совместимость и команда привязана к стандарту. Архитектор делает этот выбор на старте, исходя из ландшафта интеграций и требований к маршрутизации.",
+                "edge_cases": "«JMS = стандарт, разные реализации» означает, что код переносим между JMS-брокерами, но вендорные расширения (специфичные свойства IBM MQ, политики Artemis) ломают эту переносимость, если на них опереться. Со стороны AMQP подвох в том, что гибкая маршрутизация требует аккуратного управления exchange'ами и биндингами: ошибка в routing key или забытый биндинг приводит к молчаливой потере сообщения (unroutable), поэтому в проде включают publisher returns/confirms.",
+                "related": "[[spring-messaging-interview#Q4]] — настройка RabbitMQ: exchange, routing key, биндинги\n[[spring-messaging-interview#Q5]] — типы exchange (direct/topic/fanout/headers), которых нет в JMS"
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "JMS не поддерживает pub-sub — только point-to-point очереди.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JMS изначально поддерживает обе модели: point-to-point через `javax.jms.Queue` и publish-subscribe через `javax.jms.Topic`, где сообщение получают все подписчики. В RabbitMQ аналог pub-sub реализуется через `fanout` exchange, рассылающий копию во все привязанные очереди.",
+                "source_of_confusion": "Слово «JMS-очередь» на слуху, и многие ассоциируют JMS исключительно с очередями (P2P). Но спецификация JMS с самого начала описывает два домена — Queue и Topic; pub-sub в JMS такой же первоклассный, как в AMQP.",
+                "if_it_were_true": "Тогда в JMS нельзя было бы реализовать broadcast-уведомления (одно событие → много получателей), и любую pub-sub задачу пришлось бы городить вручную через несколько очередей и дублирование отправки.",
+                "how_it_should_be": "Для pub-sub в JMS используйте `javax.jms.Topic` (а в RabbitMQ — `fanout` exchange); обе технологии поддерживают и P2P, и publish-subscribe."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Spring JMS работает только с ActiveMQ, а Spring AMQP — только с RabbitMQ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring JMS работает с любым JMS-совместимым брокером: ActiveMQ, ActiveMQ Artemis, IBM MQ, Oracle AQ и др. — в этом и смысл стандарта. Spring AMQP не привязан к конкретному продукту RabbitMQ, а реализует протокол AMQP 0.9.1 и работает с любым брокером, поддерживающим этот протокол (на практике это чаще всего RabbitMQ, но не исключительно он).",
+                "source_of_confusion": "ActiveMQ в примерах почти всегда соседствует с JMS, а RabbitMQ — с AMQP, поэтому возникает ложная жёсткая привязка «технология = один брокер». На деле JMS — это стандарт поверх многих брокеров, а AMQP — протокол поверх любых его реализаций.",
+                "if_it_were_true": "Тогда смысл JMS как переносимого стандарта исчез бы: нельзя было бы заменить ActiveMQ на IBM MQ без смены фреймворка, и весь enterprise-смысл «одного API для разных вендоров» терялся бы.",
+                "how_it_should_be": "Помните, что Spring JMS поддерживает любой JMS-брокер (IBM MQ, Oracle AQ, Artemis…), а Spring AMQP — любой AMQP 0.9.1 брокер, а не один конкретный продукт."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда использовать Spring Messaging vs Kafka?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Kafka лучше RabbitMQ для task queues, потому что у неё выше throughput.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Task queue требует семантики «задачу взял один консьюмер, выполнил и удалил из очереди». Kafka так не работает: она не удаляет обработанные сообщения, а хранит их как append-only log с retention, и внутри одной consumer group партиция закреплена за одним консьюмером. Это идеально для event log и replay, но неудобно для распределения задач между воркерами. Для task-семантики (competing consumers + удаление после ack) лучше подходит RabbitMQ.",
+                "source_of_confusion": "Высокий throughput Kafka — её самая известная характеристика, и из неё ошибочно выводят «значит, она лучше для всего, включая очереди задач». Но throughput не отменяет фундаментального различия моделей: log vs queue.",
+                "if_it_were_true": "Если бы Kafka была лучшей task-очередью, то для динамического масштабирования воркеров хватало бы добавлять консьюмеров. На деле параллелизм в одной consumer group ограничен числом партиций, обработанные сообщения не исчезают, а equal распределение коротких задач между воркерами реализуется хуже, чем в RabbitMQ.",
+                "how_it_should_be": "Для task queue (один консьюмер выполняет и удаляет задачу, динамическое масштабирование воркеров) выбирайте RabbitMQ; Kafka оставляйте для append-log/event streaming."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Spring Messaging (JMS/AMQP) поддерживает replay исторических событий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JMS и AMQP по модели — fire-and-forget доставка: после успешного ack сообщение удаляется из очереди и больше не доступно. Они не хранят обработанные сообщения, поэтому перечитать историю (replay) нельзя. Replay — это свойство Kafka, которая хранит сообщения в логе с настраиваемым retention, и консьюмер может сбросить offset назад и перечитать данные.",
+                "source_of_confusion": "Некоторые возможности RabbitMQ (durable queues, persistent messages) создают ощущение «сообщения сохраняются». Но durability защищает только недоставленные сообщения от потери при перезапуске брокера; уже обработанные и подтверждённые сообщения удаляются и для replay недоступны.",
+                "if_it_were_true": "Тогда можно было бы перечитать вчерашние события прямо из RabbitMQ-очереди для пересчёта аналитики или восстановления состояния нового сервиса. Реально таких сообщений в очереди уже нет — для подобных сценариев придётся внедрять Kafka с retention или event store.",
+                "how_it_should_be": "Для replay исторических событий используйте Kafka с настроенным retention; JMS/AMQP применяйте там, где перечитывать обработанные сообщения не нужно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "JMS/AMQP подходят для task queues, request-reply и гарантии доставки одному consumer; Kafka — для event streaming, множества независимых consumer groups, высокого throughput и replay.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это два разных класса систем. JMS/AMQP — это очереди (queue semantics): сообщение = команда/задача, которую один консьюмер берёт, выполняет и удаляет; поддерживаются competing consumers, request-reply (синхронный ответ), приоритеты, малая задержка. После ack сообщение исчезает — повторно его не прочитать. Kafka — это распределённый append-only log: сообщения остаются в топике на время retention, любая consumer group со своим offset читает их независимо от других, можно перечитать историю (replay) и масштабироваться до очень высокого throughput (>100K msg/sec), а сверху строить stream processing (Kafka Streams). Главный критерий выбора: нужно «выполнить задачу один раз и забыть» — это очередь (RabbitMQ/JMS); нужно «событие, которое много кто читает и можно перечитать» — это лог (Kafka).",
+                "example": "На практике в одной системе сочетают оба:\n```text\nRabbitMQ  → task queues: long-running jobs, рассылка писем, обработка заказов\n             (один воркер взял задачу, выполнил, удалил)\nKafka     → event streaming + audit log: OrderCreated, PaymentProcessed\n             (биллинг, аналитика и поиск читают одни события независимо, с replay)\n```",
+                "when_to_apply": "Выбирайте RabbitMQ/JMS, когда сообщение — это упорядоченная задача/команда, нужен request-reply или важнее низкая задержка, чем гигантский throughput. Выбирайте Kafka, когда строите event-driven архитектуру: несколько потребителей независимо читают один поток событий, нужен replay для восстановления/пересчёта и стрим-обработка. Архитектор принимает решение на этапе дизайна интеграций; в зрелых системах часто живут оба брокера под свои задачи.",
+                "edge_cases": "Гарантия «один раз» в очереди не означает exactly-once: при сбое после обработки, но до ack сообщение доставится повторно — консьюмер обязан быть идемпотентным. В Kafka подвох обратный: число параллельных консьюмеров в группе ограничено числом партиций, поэтому масштабирование обработки требует заранее заложенного партиционирования, а сохранение порядка гарантируется только в пределах партиции.",
+                "related": "[[spring-messaging-interview#Q1]] — Spring Messaging как абстракция над JMS/AMQP/Kafka и место каждого брокера"
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Kafka поддерживает request-reply паттерн нативно, как RabbitMQ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нативного request-reply в Kafka нет. Kafka — однонаправленный лог publish/subscribe, в нём нет встроенного механизма временной reply-очереди и коррелированного ответа. Request-reply поверх Kafka реализуют вручную: отдельный reply-топик, correlation ID в заголовках сообщения и ручное сопоставление ответа с запросом (в Spring — `ReplyingKafkaTemplate`). В RabbitMQ это работает из коробки через `convertSendAndReceive` с временной reply-очередью.",
+                "source_of_confusion": "Раз Kafka умеет и публиковать, и подписываться, кажется логичным, что «запрос-ответ» — частный случай. Но request-reply требует адресного ответа конкретному отправителю с корреляцией, а Kafka-модель — это broadcast в топик без понятия «ответить именно этому продьюсеру».",
+                "if_it_were_true": "Тогда синхронный RPC через Kafka работал бы так же просто, как `rabbitTemplate.convertSendAndReceive(...)` — отправил и получил типизированный ответ. На практике без ручной инфраструктуры (reply-топик + correlation ID + ожидание) ответ некуда и нечем сопоставить, и запрос-ответ не получится.",
+                "how_it_should_be": "Для нативного request-reply используйте RabbitMQ (`convertSendAndReceive`); в Kafka стройте его вручную через reply-топик и correlation ID (`ReplyingKafkaTemplate`)."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
