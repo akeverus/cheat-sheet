@@ -1,0 +1,2285 @@
+{
+  "topic_slug": "gradle-maven-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Maven` и какую основную проблему он решает в `Java`/`JVM`-проектах?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Maven` — инструмент автоматизации сборки и управления проектами по принципу convention over configuration: даёт стандартную структуру каталогов, автоматическое управление зависимостями из репозиториев и единый жизненный цикл `compile → test → package → deploy`, обеспечивая воспроизводимую сборку на любой машине.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главная идея — соглашение важнее конфигурации: если положить код в `src/main/java`, а тесты в `src/test/java`, `Maven` сам знает, что компилировать и где искать тесты, без ручного описания путей.",
+                "example": "Стандартный проект кладёт исходники в `src/main/java`, ресурсы в `src/main/resources`, результат сборки — в `target/`, а зависимости качаются из Maven Central в `~/.m2/repository`.",
+                "when_to_apply": "Использование `Maven` для backend-проектов почти всегда оправдано, но в нестандартных сборках с генерацией кода приходится тянуть кастомные плагины, и жёсткая конвенция начинает мешать.",
+                "edge_cases": "Граница convention over configuration видна на нестандартных шагах: тогда конфигурации становится больше, чем соглашений, и преимущество тает.",
+                "related": "[[gradle-maven-interview#Q2]] структура pom.xml; [[gradle-maven-interview#Q3]] жизненный цикл; [[gradle-maven-interview#Q14]] сравнение с Gradle."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Maven` — это система контроля версий исходного кода: он хранит историю изменений, ветки и теги, заменяя `Git` в `Java`-проектах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Maven` — инструмент сборки и управления зависимостями; историю кода ведёт `Git`, а не `Maven`.",
+                "source_of_confusion": "И `Maven`, и `Git` лежат в основе пайплайна, поэтому их роли иногда смешивают.",
+                "if_it_were_true": "Если бы `Maven` был VCS, в `pom.xml` хранились бы коммиты и diff-ы, но там только метаданные сборки и зависимости.",
+                "how_it_should_be": "Версионированием кода занимается `Git`; `Maven` лишь собирает проект и подтягивает библиотеки нужных версий."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Maven` — это контейнер сервлетов и application-сервер, который запускает `Java`-приложения в production вместо `Tomcat` или `Jetty`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Maven` собирает артефакт (`JAR`/`WAR`), но не выполняет роль рантайма; приложение запускает сервер приложений или embedded-контейнер.",
+                "source_of_confusion": "Плагин `spring-boot-maven-plugin` умеет запускать приложение для отладки, отсюда иллюзия, что `Maven` — сервер.",
+                "if_it_were_true": "Если бы `Maven` был рантаймом, он держал бы процесс приложения в production, но в проде крутится `JVM` с артефактом, а не `Maven`.",
+                "how_it_should_be": "`Maven` производит артефакт на этапе сборки; исполняет его уже `Tomcat`, `Jetty` или embedded-сервер `Spring Boot`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Maven` — это исключительно репозиторий библиотек (как Maven Central), куда складывают `JAR`-файлы, и ничего не собирает сам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Maven Central — это репозиторий, а `Maven` — инструмент сборки, который из этого репозитория тянет зависимости и выполняет lifecycle.",
+                "source_of_confusion": "Названия `Maven` и Maven Central совпадают, поэтому инструмент путают с хранилищем артефактов.",
+                "if_it_were_true": "Если бы `Maven` был только репозиторием, не существовало бы команд `mvn package` или `mvn install` для сборки.",
+                "how_it_should_be": "Maven Central — хранилище, `Maven` — клиент, который оттуда качает зависимости и собирает проект по фазам."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова структура файла `pom.xml` и за что отвечают его ключевые элементы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`pom.xml` описывает только список зависимостей проекта; координаты артефакта, плагины и профили задаются в отдельном файле `project.properties`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё — GAV, зависимости, плагины и профили — описывается внутри одного `pom.xml`; отдельного `project.properties` для координат не существует.",
+                "source_of_confusion": "В проектах встречается файл `*.properties`, и кажется, что метаданные вынесены туда, а не в `pom.xml`.",
+                "if_it_were_true": "Если бы координаты жили в отдельном файле, `Maven` не смог бы по `pom.xml` определить GAV артефакта при сборке.",
+                "how_it_should_be": "Координаты, зависимости, плагины и профили — всё внутри `pom.xml`; `.properties`-файлы хранят лишь переменные."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`pom.xml` (Project Object Model) — центральный конфиг проекта: координаты `groupId:artifactId:version` (GAV), необязательный `parent` для наследования, `properties` для переменных, `dependencies` с прямыми зависимостями, `dependencyManagement` для централизации версий, `build > plugins` и `profiles` для окружений.",
+              "correct": true,
+              "sections": {
+                "explanation": "GAV однозначно идентифицирует артефакт в репозитории: `com.example:my-app:1.0.0`. `dependencyManagement` лишь декларирует версии, а `dependencies` реально добавляет библиотеки в classpath.",
+                "example": "Минимальный валидный `pom.xml` содержит `modelVersion=4.0.0` и GAV; всё остальное (`parent`, `profiles`) опционально и добавляется по мере роста проекта.",
+                "when_to_apply": "В multi-module проектах часть элементов выносят в parent: дочерний `pom.xml` может не указывать `version` зависимости, если она задана в `dependencyManagement` родителя.",
+                "edge_cases": "Опускать `version` у зависимости можно только если она управляется в `parent` или импортированном `BOM`; иначе сборка упадёт с ошибкой о неизвестной версии.",
+                "related": "[[gradle-maven-interview#Q1]] что такое Maven; [[gradle-maven-interview#Q9]] dependencyManagement vs dependencies; [[gradle-maven-interview#Q13]] BOM."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `pom.xml` элемент `dependencyManagement` сразу добавляет зависимости в classpath, как и `dependencies`, — это просто два синонима.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`dependencyManagement` только декларирует версии и не добавляет зависимости в classpath; реально подключает их `dependencies`.",
+                "source_of_confusion": "Оба блока содержат теги `<dependency>`, поэтому их легко спутать по назначению.",
+                "if_it_were_true": "Если бы они были синонимами, объявление зависимости в `dependencyManagement` тянуло бы её в сборку, но этого не происходит.",
+                "how_it_should_be": "`dependencies` добавляет библиотеку в classpath; `dependencyManagement` лишь фиксирует версию для дочерних модулей."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Корневой элемент `pom.xml` — это `<dependencies>`; элемента `<project>` и `modelVersion` в файле нет, они нужны только для `Gradle`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Корневой элемент — `<project>` с обязательным `<modelVersion>4.0.0</modelVersion>`; `<dependencies>` вложен внутрь него.",
+                "source_of_confusion": "Разработчик чаще всего работает с блоком `<dependencies>`, поэтому его ошибочно считают корнем.",
+                "if_it_were_true": "Если бы корнем был `<dependencies>`, XML не прошёл бы валидацию схемы POM, требующей `<project>` и `modelVersion`.",
+                "how_it_should_be": "Корень — `<project>` с `modelVersion`; `Gradle` вообще не использует XML и `pom.xml` для своих скриптов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Опишите жизненный цикл сборки `Maven`: какие циклы есть и как выполняются фазы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "У `Maven` один-единственный жизненный цикл, и фаза `clean` входит в него как первый шаг перед `compile`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Циклов три (`clean`, `default`, `site`), и `clean` — отдельный цикл, а не первая фаза `default`.",
+                "source_of_confusion": "В команде часто пишут `mvn clean package`, и кажется, что `clean` — просто первая фаза одного цикла.",
+                "if_it_were_true": "Если бы `clean` входил в `default`, то `mvn package` всегда очищал бы `target/`, но это не так — `clean` надо указывать явно.",
+                "how_it_should_be": "Циклы `clean`, `default`, `site` независимы; чтобы очистить перед сборкой, `clean` указывают отдельно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Вызов фазы `package` выполняет только саму упаковку и не запускает предшествующие фазы вроде `compile` и `test`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вызов фазы выполняет её и **все** предшествующие фазы цикла, поэтому `mvn package` сначала компилирует и тестирует.",
+                "source_of_confusion": "Имя `package` звучит как одно действие, поэтому кажется, что предыдущие фазы пропускаются.",
+                "if_it_were_true": "Если бы `package` не запускал `compile`, он упаковывал бы пустой проект без скомпилированных классов.",
+                "how_it_should_be": "Любая фаза тянет за собой все предыдущие; `package` запускает `validate → compile → test → package`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "У `Maven` три встроенных цикла: `clean` (очистка), `default` (сборка и деплой) и `site` (документация). Ключевое правило: при вызове фазы выполняются все предшествующие фазы в цикле — `mvn package` пройдёт `validate → compile → test → package`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`mvn clean install` сначала очищает `target/` (цикл `clean`), затем проходит default-цикл до фазы `install`, копируя артефакт в `~/.m2`.",
+                "example": "`mvn clean package -DskipTests` очистит проект, пройдёт фазы до `package`, но пропустит запуск тестов — типичный быстрый локальный билд.",
+                "when_to_apply": "Циклы независимы: `mvn clean` не запускает `default`, а `mvn package` не делает `clean` — поэтому их часто комбинируют в одной команде `mvn clean package`.",
+                "edge_cases": "Вызов фазы из одного цикла не тянет фазы другого: чтобы и очистить, и собрать, нужно явно перечислить `clean package`.",
+                "related": "[[gradle-maven-interview#Q4]] фаза vs цель; [[gradle-maven-interview#Q5]] фазы default lifecycle; [[gradle-maven-interview#Q15]] фазы Gradle."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Цели плагинов нельзя вызвать напрямую — можно запускать только фазы, поэтому команды вида `mvn compiler:compile` недопустимы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Цель можно вызвать напрямую: `mvn compiler:compile` выполняет только компиляцию без прохождения предшествующих фаз.",
+                "source_of_confusion": "Обычно запускают фазы (`mvn package`), и прямой вызов целей встречается реже, отсюда вывод о его невозможности.",
+                "if_it_were_true": "Если бы прямой вызов целей был запрещён, не работали бы команды отладки вроде `mvn dependency:tree`.",
+                "how_it_should_be": "Прямой вызов цели `plugin:goal` валиден и выполняет ровно одну задачу без lifecycle; вызов фазы — другой режим."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое фаза (phase) и цель (goal) в `Maven` и чем вызов фазы отличается от вызова цели?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Фаза и цель — это одно и то же: каждая фаза `Maven` содержит ровно одну цель, и термины взаимозаменяемы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фаза — этап lifecycle, цель — задача плагина; к одной фазе может быть привязано несколько целей, и термины не равны.",
+                "source_of_confusion": "На практике фаза `compile` тесно связана с целью `compiler:compile`, отсюда иллюзия эквивалентности.",
+                "if_it_were_true": "Если бы фаза и цель совпадали, нельзя было бы привязать к `package` сразу `jar:jar` и `repackage` от Spring Boot.",
+                "how_it_should_be": "Фаза агрегирует одну или несколько целей; это разные сущности — этап цикла и конкретная задача плагина."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Цель (goal) выполняет все предшествующие фазы lifecycle, а вызов фазы запускает только одну привязанную цель — то есть наоборот.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: фаза тянет предшествующие фазы, а прямой вызов цели выполняет только её, без lifecycle.",
+                "source_of_confusion": "Понятия фазы и цели легко перепутать местами, особенно по похожим именам `compile`.",
+                "if_it_were_true": "Если бы цель запускала весь цикл, `mvn compiler:compile` каждый раз прогонял бы тесты, чего не происходит.",
+                "how_it_should_be": "Фаза запускает все предыдущие фазы; цель `plugin:goal` выполняется изолированно и быстрее."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Цели нельзя привязать к фазам — они существуют отдельно и вызываются только вручную через `mvn plugin:goal`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Цели привязываются к фазам через `executions` и дефолтные биндинги: например, `surefire:test` автоматически срабатывает в фазе `test`.",
+                "source_of_confusion": "Прямой вызов `mvn plugin:goal` возможен, поэтому кажется, что привязки к фазам нет вовсе.",
+                "if_it_were_true": "Если бы привязки не было, `mvn package` не запускал бы компиляцию и тесты автоматически.",
+                "how_it_should_be": "Цели привязаны к фазам биндингами; при запуске фазы её цели выполняются без ручного вызова."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Фаза — этап жизненного цикла (например, `compile`, `test`, `package`), фазы идут последовательно. Цель (goal) — конкретная задача плагина, привязанная к фазе (`maven-compiler-plugin:compile`). `mvn compile` запускает фазу со всеми предшествующими, а `mvn compiler:compile` — только одну цель без lifecycle.",
+              "correct": true,
+              "sections": {
+                "explanation": "К фазе `package` привязана цель `maven-jar-plugin:jar`; к `test` — `maven-surefire-plugin:test`. Один плагин может содержать несколько целей.",
+                "example": "`mvn compile` пройдёт `validate → compile` с привязанными целями, а `mvn compiler:compile` выполнит ровно компиляцию, не запуская `validate` и не уважая lifecycle.",
+                "when_to_apply": "Прямой вызов цели удобен для точечных операций (`mvn dependency:tree`), но он не гарантирует, что классы скомпилированы, — для этого нужна фаза.",
+                "edge_cases": "Вызов цели в обход фазы может работать с устаревшими классами, если перед ним не запускали `compile`; фаза же подтягивает все предшествующие шаги.",
+                "related": "[[gradle-maven-interview#Q3]] жизненный цикл; [[gradle-maven-interview#Q5]] стандартные фазы; [[gradle-maven-interview#Q10]] плагины и их goals."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие стандартные фазы входят в `default` lifecycle `Maven` и в чём разница между `install` и `deploy`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Ключевые фазы default-цикла по порядку: `validate → compile → test-compile → test → package → integration-test → verify → install → deploy`. `install` копирует артефакт в локальный `~/.m2/repository`, а `deploy` публикует его в удалённый репозиторий (`Nexus`, `Artifactory`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`mvn install` делает артефакт доступным другим проектам на той же машине; `mvn deploy` выкладывает его в корпоративный репозиторий для всей команды и CI.",
+                "example": "Unit-тесты идут в фазе `test` (через `Surefire`), а интеграционные — в `integration-test` (через `Failsafe`), что разводит быстрые и медленные проверки.",
+                "when_to_apply": "`deploy` обычно запускают только на CI после прохождения `verify`; локально чаще ограничиваются `install`, чтобы не засорять удалённый репозиторий.",
+                "edge_cases": "Запуск `deploy` без настроенного `distributionManagement` и credentials упадёт; `install` же работает всегда, так как пишет в локальный `~/.m2`.",
+                "related": "[[gradle-maven-interview#Q3]] жизненный цикл целиком; [[gradle-maven-interview#Q4]] фаза vs цель; [[gradle-maven-interview#Q6]] репозитории и .m2."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Фаза `install` публикует артефакт в удалённый `Nexus`, а `deploy` лишь устанавливает его в локальный `~/.m2`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `install` пишет в локальный `~/.m2`, а `deploy` публикует в удалённый репозиторий.",
+                "source_of_confusion": "Слово «install» в быту ассоциируется с установкой «куда-то наружу», отсюда путаница направлений.",
+                "if_it_were_true": "Если бы `install` ходил в `Nexus`, локальная сборка падала бы без сетевых credentials, но `install` работает офлайн.",
+                "how_it_should_be": "`install` — локальный `~/.m2`, `deploy` — удалённый репозиторий; направления ровно противоположны утверждению."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В default lifecycle нет фазы `test`; unit-тесты запускаются вручную отдельной командой `mvn surefire:test` вне цикла.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фаза `test` есть в default-цикле и автоматически запускает unit-тесты через `Surefire` перед `package`.",
+                "source_of_confusion": "Тесты можно запустить и напрямую через `surefire:test`, поэтому кажется, что фазы `test` нет.",
+                "if_it_were_true": "Если бы фазы `test` не было, `mvn package` собирал бы артефакт без прогона тестов по умолчанию.",
+                "how_it_should_be": "`test` — штатная фаза цикла; `Surefire` привязан к ней и выполняется автоматически."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Фазы default-цикла выполняются в произвольном порядке, который `Maven` выбирает на основе зависимостей между плагинами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Порядок фаз фиксирован и линеен: `validate → compile → test → package → ...`; `Maven` не переставляет их.",
+                "source_of_confusion": "В `Gradle` порядок задач определяется DAG, и это правило ошибочно переносят на `Maven`.",
+                "if_it_were_true": "Если бы порядок был произвольным, `package` мог бы выполниться до `compile`, упаковывая пустой `target/`.",
+                "how_it_should_be": "Фазы default-цикла строго упорядочены; вариативность графа задач — особенность `Gradle`, а не `Maven`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `Maven` управляет зависимостями: откуда он их берёт и в каком порядке разрешает репозитории?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Maven` всегда качает каждую зависимость напрямую из Maven Central при каждой сборке и не использует локальный кэш `~/.m2`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Maven` кэширует зависимости в `~/.m2` и при повторных сборках берёт их оттуда, не обращаясь к сети.",
+                "source_of_confusion": "Первая сборка действительно качает всё из сети, отсюда вывод, что так происходит всегда.",
+                "if_it_were_true": "Если бы кэша не было, офлайн-сборка `mvn package -o` была бы невозможна, но она работает.",
+                "how_it_should_be": "Сначала проверяется локальный `~/.m2`; в сеть `Maven` идёт лишь за отсутствующими артефактами."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Maven` разрешает зависимости из репозиториев и кэширует их в локальном `~/.m2/repository`. Порядок: сначала ищет в локальном `~/.m2`, затем в корпоративном `Nexus`/`Artifactory`, и только потом — в Maven Central. Дерево зависимостей смотрят командой `mvn dependency:tree`.",
+              "correct": true,
+              "sections": {
+                "explanation": "При первом `mvn package` библиотека качается из Maven Central и кладётся в `~/.m2`; повторные сборки берут её уже локально без сети.",
+                "example": "`mvn dependency:tree` показывает все прямые и транзитивные зависимости, а `mvn dependency:analyze` находит неиспользуемые и необъявленные.",
+                "when_to_apply": "Корпоративный `Nexus` обычно настраивают зеркалом Maven Central, чтобы кэшировать артефакты внутри сети и не зависеть от внешнего доступа.",
+                "edge_cases": "Если артефакт уже есть в `~/.m2`, `Maven` не пойдёт в сеть; повреждённый локальный артефакт приходится удалять вручную, чтобы он перекачался.",
+                "related": "[[gradle-maven-interview#Q5]] фаза install и .m2; [[gradle-maven-interview#Q7]] scope зависимостей; [[gradle-maven-interview#Q8]] транзитивные зависимости."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Порядок поиска такой: сначала Maven Central, затем корпоративный `Nexus`, и только в конце — локальный `~/.m2`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Порядок обратный: сначала локальный `~/.m2`, затем корпоративный `Nexus`, и лишь потом Maven Central.",
+                "source_of_confusion": "Maven Central — самый известный источник, поэтому его ошибочно ставят первым в цепочке.",
+                "if_it_were_true": "Если бы Central проверялся первым, каждая сборка делала бы сетевой запрос даже при наличии артефакта локально.",
+                "how_it_should_be": "Сначала локальный кэш, потом корпоративный репозиторий, в последнюю очередь — Maven Central."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Зависимости в `Maven` указываются только как пути к локальным `JAR`-файлам на диске; репозиториев и координат GAV не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Зависимости задаются координатами GAV, и `Maven` сам качает их из репозиториев; локальные пути — это редкий scope `system`.",
+                "source_of_confusion": "Старый scope `system` с `systemPath` создаёт впечатление, что так подключают все зависимости.",
+                "if_it_were_true": "Если бы всё подключалось файлами, не работало бы автоматическое разрешение транзитивных зависимостей.",
+                "how_it_should_be": "Обычные зависимости — это GAV из репозитория; прямые пути к `JAR` — антипаттерн scope `system`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие scope зависимостей существуют в `Maven` и чем отличаются `compile`, `provided`, `runtime` и `test`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Scope `test` означает, что зависимость попадёт и в основной артефакт, и в тесты — это просто более широкий вариант `compile`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`test`-зависимость доступна только в test classpath и не попадает в основной артефакт; она уже `compile`, а не шире.",
+                "source_of_confusion": "Слово «test» намекает на «дополнительно к основному», отсюда вывод о расширении `compile`.",
+                "if_it_were_true": "Если бы `test`-зависимость попадала в артефакт, `Mockito` и `JUnit` тащились бы в production-`JAR`.",
+                "how_it_should_be": "`test` — самый узкий scope: только test classpath; в основной код и артефакт он не проникает."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Scope `provided` включает зависимость в итоговый `WAR`/`JAR`, чтобы гарантировать её наличие в production.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`provided` как раз **исключает** зависимость из артефакта, рассчитывая, что её предоставит контейнер в рантайме.",
+                "source_of_confusion": "Само слово «provided» неоднозначно: непонятно, кто и когда «предоставляет» библиотеку.",
+                "if_it_were_true": "Если бы `provided` паковал зависимость в `WAR`, возникал бы конфликт с тем же `Servlet API` от `Tomcat`.",
+                "how_it_should_be": "`provided` доступен при компиляции и тестах, но не упаковывается; рантайм-копию даёт сервер приложений."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Основные scope: `compile` (default, везде и транзитивен), `provided` (нужен при компиляции, но контейнер предоставит в рантайме — `Servlet API`), `runtime` (только при запуске — `JDBC`-драйвер), `test` (только для тестов — `Mockito`), а также `system` и `import` (последний — только в `dependencyManagement`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`provided` для `jakarta.servlet-api`: код компилируется с ним, но в production его даёт `Tomcat`, поэтому в `WAR` он не попадает.",
+                "example": "`runtime` для `org.postgresql:postgresql`: компилируем по `JDBC`-интерфейсам из JDK, а конкретный драйвер нужен только при запуске.",
+                "when_to_apply": "`test`-зависимости (`mockito-core`) не попадают в итоговый артефакт и недоступны из основного кода — только из `src/test`.",
+                "edge_cases": "Ошибочный scope ломает сборку незаметно: `provided` для драйвера БД скомпилируется, но упадёт в рантайме с `ClassNotFoundException`, так как драйвера не будет в classpath.",
+                "related": "[[gradle-maven-interview#Q6]] управление зависимостями; [[gradle-maven-interview#Q8]] транзитивность; [[gradle-maven-interview#Q21]] конфигурации Gradle как аналог scope."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Scope `runtime`-зависимость доступна и в compile classpath, поэтому по `JDBC`-драйверу можно писать прямые `import` конкретного класса драйвера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`runtime` исключён из compile classpath: компилировать нужно по интерфейсам JDK, а конкретный драйвер подключается только при запуске.",
+                "source_of_confusion": "Драйвер физически нужен приложению, поэтому кажется логичным импортировать его класс напрямую.",
+                "if_it_were_true": "Если бы `runtime` был в compile classpath, привязка к классу `org.postgresql.Driver` прошла бы компиляцию, ломая переносимость.",
+                "how_it_should_be": "`runtime` есть только в runtime classpath; в коде используют интерфейс `java.sql.Driver`, а реализацию грузят рефлексией."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое транзитивные зависимости в `Maven` и по каким правилам разрешаются конфликты версий?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Транзитивные зависимости — это зависимости, которые надо прописать вручную для каждой библиотеки; автоматически `Maven` их не подтягивает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Maven` подтягивает транзитивные зависимости автоматически по их собственным `pom.xml`; вручную перечислять их не нужно.",
+                "source_of_confusion": "Иногда транзитивную зависимость объявляют явно для фиксации версии, отсюда вывод об обязательности ручного указания.",
+                "if_it_were_true": "Если бы их надо было прописывать вручную, подключение `spring-boot-starter-web` не тянуло бы за собой десятки библиотек само.",
+                "how_it_should_be": "Транзитивные зависимости разрешаются автоматически; ручное объявление нужно лишь для контроля версии."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "При конфликте версий `Maven` всегда выбирает самую новую версию библиотеки во всём дереве зависимостей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Maven` использует nearest-wins (ближайшую к корню), а не самую новую; новейшая версия может проиграть более близкой старой.",
+                "source_of_confusion": "Логика «новее — лучше» интуитивна, поэтому её приписывают и `Maven`.",
+                "if_it_were_true": "Если бы побеждала новейшая, прямая старая версия в `pom.xml` не могла бы переопределить транзитивную новую.",
+                "how_it_should_be": "Mediation выбирает ближайшую в дереве версию; при равной глубине — первую объявленную, независимо от номера."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Транзитивное объявление зависимости всегда перебивает прямое: версия из глубины дерева важнее указанной в вашем `pom.xml`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: прямое объявление в вашем `pom.xml` всегда перебивает любую транзитивную версию.",
+                "source_of_confusion": "Кажется, что «глубже спрятанная» версия более специфична и потому приоритетнее.",
+                "if_it_were_true": "Если бы транзитивное перебивало прямое, разработчик не мог бы зафиксировать версию, просто объявив её напрямую.",
+                "how_it_should_be": "Прямое объявление — высший приоритет; транзитивные версии участвуют в mediation только между собой."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Транзитивные зависимости — это зависимости ваших прямых зависимостей, `Maven` подтягивает их автоматически. Конфликты версий решаются так: nearest definition (побеждает версия ближе к корню дерева), при равной глубине — first declaration (объявленная раньше в `pom.xml`), а прямое объявление всегда перебивает транзитивное.",
+              "correct": true,
+              "sections": {
+                "explanation": "В дереве `A → B → C 2.0` и `A → D → E → C 1.0` побеждает `C 2.0`, потому что её глубина 2 меньше, чем 3 у `C 1.0`.",
+                "example": "Чтобы жёстко зафиксировать версию транзитивной зависимости, её объявляют напрямую в `dependencies` или через `dependencyManagement`.",
+                "when_to_apply": "Конфликты ищут командой `mvn dependency:tree -Dverbose`, которая показывает, какие версии были отброшены mediation-ом и почему.",
+                "edge_cases": "Nearest-wins может тихо понизить версию: прямая `C 1.0` на глубине 1 победит транзитивную `C 2.0` на глубине 2, даже если коду нужна 2.0 — это решается явным объявлением.",
+                "related": "[[gradle-maven-interview#Q6]] разрешение зависимостей; [[gradle-maven-interview#Q7]] scope и транзитивность; [[gradle-maven-interview#Q9]] dependencyManagement для фиксации версий."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `dependencyManagement` и `dependencies` в `Maven`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`dependencies` реально добавляет зависимость в classpath, а `dependencyManagement` только декларирует версию, ничего не подключая. В multi-module проектах версии централизуют в parent `dependencyManagement`, а дочерние модули объявляют зависимость без `version` — она берётся из родителя.",
+              "correct": true,
+              "sections": {
+                "explanation": "В parent POM в `dependencyManagement` задаётся `jackson-databind:2.17.0`; child POM пишет тот же `groupId:artifactId` без версии и автоматически получает 2.17.0.",
+                "example": "`dependencyManagement` используют, когда нужно единое место для версий и нет желания дублировать номера по десяткам модулей.",
+                "when_to_apply": "Если дочерний модуль не объявит зависимость в своих `dependencies`, она не попадёт в classpath — `dependencyManagement` сам по себе ничего не подключает.",
+                "edge_cases": "Декларация в `dependencyManagement` влияет и на транзитивные версии: она переопределяет версию, которую притянула бы другая библиотека, без прямого добавления зависимости.",
+                "related": "[[gradle-maven-interview#Q2]] структура pom.xml; [[gradle-maven-interview#Q8]] фиксация версий; [[gradle-maven-interview#Q13]] BOM как dependencyManagement."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`dependencyManagement` добавляет зависимость в classpath так же, как `dependencies`, но дополнительно делает её транзитивной для всех модулей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`dependencyManagement` не добавляет зависимость в classpath вовсе — он лишь фиксирует версию; подключает её `dependencies`.",
+                "source_of_confusion": "Оба блока используют теги `<dependency>`, поэтому кажется, что оба добавляют библиотеки.",
+                "if_it_were_true": "Если бы `dependencyManagement` подключал зависимости, объявление 50 версий в parent тянуло бы все 50 в каждый модуль.",
+                "how_it_should_be": "Версию декларирует `dependencyManagement`, а реальное подключение в classpath делает только `dependencies`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Дочерние модули автоматически наследуют все зависимости из `dependencyManagement` родителя без необходимости их объявлять.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Из `dependencyManagement` наследуются только версии; саму зависимость дочерний модуль обязан объявить в `dependencies` явно.",
+                "source_of_confusion": "Наследование parent POM реально, поэтому кажется, что зависимости тоже наследуются автоматически.",
+                "if_it_were_true": "Если бы модули наследовали все управляемые зависимости, в classpath каждого попадало бы всё, что объявлено в parent.",
+                "how_it_should_be": "`dependencyManagement` наследует версии; зависимость подключается, лишь когда модуль укажет её в своих `dependencies`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Разница чисто косметическая: `dependencyManagement` — это устаревший синоним `dependencies`, оставленный для обратной совместимости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это два разных механизма: один управляет версиями, другой подключает зависимости; ни один не устарел.",
+                "source_of_confusion": "Похожая вложенная структура XML создаёт впечатление дублирующего legacy-блока.",
+                "if_it_were_true": "Если бы это был устаревший синоним, multi-module проекты не использовали бы его для централизации версий.",
+                "how_it_should_be": "`dependencyManagement` — актуальный инструмент централизации версий, а не deprecated-алиас `dependencies`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают плагины в `Maven` и в чём разница между `plugins` и `pluginManagement`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Плагины `Maven` выполняются вне жизненного цикла и не привязаны к фазам — их можно запускать только вручную через `mvn plugin:goal`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Цели плагинов привязываются к фазам через `executions` и дефолтные биндинги, поэтому выполняются автоматически при запуске фазы.",
+                "source_of_confusion": "Ручной вызов `mvn plugin:goal` возможен, отсюда вывод об отсутствии привязки к фазам.",
+                "if_it_were_true": "Если бы плагины не были привязаны к фазам, `mvn package` не собирал бы fat JAR через `spring-boot:repackage` автоматически.",
+                "how_it_should_be": "Цели плагинов биндятся к фазам; при запуске фазы они выполняются без ручного вызова."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Плагины — основной механизм расширения `Maven`; каждый плагин содержит цели (goals), привязанные к фазам lifecycle. `maven-compiler-plugin:compile` срабатывает в фазе `compile`. Разница `plugins` vs `pluginManagement` аналогична зависимостям: `pluginManagement` декларирует конфигурацию плагина, но не применяет его.",
+              "correct": true,
+              "sections": {
+                "explanation": "`spring-boot-maven-plugin` с целью `repackage` собирает fat JAR; `maven-failsafe-plugin` с целями `integration-test` и `verify` гоняет интеграционные тесты.",
+                "example": "`pluginManagement` используют в parent POM, чтобы зафиксировать версию и конфигурацию плагина для всех модулей, а каждый модуль подключает плагин по необходимости.",
+                "when_to_apply": "Дочерний модуль наследует конфигурацию из `pluginManagement`, но должен явно подключить плагин в своём `build > plugins`, иначе плагин не выполнится.",
+                "edge_cases": "Без указания версии плагин может тихо подтянуться в новой версии при смене окружения; `pluginManagement` фиксирует версию и делает сборку воспроизводимой.",
+                "related": "[[gradle-maven-interview#Q4]] фазы и цели; [[gradle-maven-interview#Q9]] аналогия с dependencyManagement; [[gradle-maven-interview#Q19]] плагины в Gradle."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`pluginManagement` сразу применяет плагин ко всем дочерним модулям, тогда как `plugins` лишь декларирует его конфигурацию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `pluginManagement` только декларирует конфигурацию, а `plugins` реально применяет плагин к сборке.",
+                "source_of_confusion": "Названия `plugins` и `pluginManagement` похожи, и их назначение легко перепутать местами.",
+                "if_it_were_true": "Если бы `pluginManagement` применял плагины ко всем модулям, каждый модуль исполнял бы их без явного подключения.",
+                "how_it_should_be": "`pluginManagement` фиксирует версию и конфигурацию; применяет плагин блок `plugins` в каждом модуле."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Один плагин `Maven` может содержать только одну цель (goal), поэтому для каждой задачи нужен отдельный плагин.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один плагин содержит несколько целей: например, `maven-failsafe-plugin` имеет и `integration-test`, и `verify`.",
+                "source_of_confusion": "Часто используют по одной цели на плагин, отсюда вывод об ограничении в одну цель.",
+                "if_it_were_true": "Если бы плагин нёс одну цель, `maven-dependency-plugin` не предоставлял бы `tree`, `analyze` и `copy` одновременно.",
+                "how_it_should_be": "Плагин — это набор связанных целей; их число не ограничено единицей."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Maven Profiles`, как их активируют и когда используют?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Профили `Maven` можно активировать только вручную через флаг `-P`; автоматической активации по JDK, ОС или файлу не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Профили активируются и автоматически: по версии JDK, ОС, наличию файла или свойству — не только флагом `-P`.",
+                "source_of_confusion": "Ручная активация через `-P` самая наглядная, поэтому об автоматических способах забывают.",
+                "if_it_were_true": "Если бы автоактивации не было, блок `<activation>` с `<jdk>` и `<file>` в схеме POM был бы бесполезен.",
+                "how_it_should_be": "Кроме `-P`, профиль включается по JDK, ОС, свойству, файлу или `activeByDefault`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Профили задаются в отдельном файле `profiles.xml` и не могут располагаться внутри `pom.xml`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Профили объявляются прямо в `pom.xml` в секции `<profiles>`; отдельный `profiles.xml` — устаревшая и редкая опция.",
+                "source_of_confusion": "Исторически существовал `profiles.xml`, поэтому кажется, что это единственное место для профилей.",
+                "if_it_were_true": "Если бы профили нельзя было держать в `pom.xml`, пример с `<profile><id>prod</id>` не работал бы.",
+                "how_it_should_be": "Основное место профилей — секция `<profiles>` внутри `pom.xml`; `settings.xml` — для глобальных профилей пользователя."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Профили настраивают сборку под разные окружения или сценарии. Активируются явно через `-P`, по свойству (`-Denv=prod`), по версии JDK, по ОС, по наличию/отсутствию файла или по умолчанию (`activeByDefault`). Внутри профиля можно переопределять свойства, плагины и зависимости.",
+              "correct": true,
+              "sections": {
+                "explanation": "Профиль `prod` подключает `jib-maven-plugin` для сборки Docker-образа и задаёт `spring.profiles.active=prod`; активируется командой `mvn clean package -Pprod`.",
+                "example": "Профили применяют, когда нужно собрать один проект по-разному: dev/prod-конфигурация, дополнительные плагины для релиза, разный набор тестов.",
+                "when_to_apply": "Несколько профилей включают через запятую `-Pprod,docker`, а активные показывает `mvn help:active-profiles`.",
+                "edge_cases": "Профиль с `activeByDefault=true` отключается, как только активируется любой другой профиль в том же POM — это частый источник сюрпризов в сборке.",
+                "related": "[[gradle-maven-interview#Q2]] секция profiles в pom.xml; [[gradle-maven-interview#Q10]] плагины внутри профиля; [[gradle-maven-interview#Q12]] multi-module и профили."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Внутри профиля можно менять только свойства (`properties`); подключать плагины или зависимости в профиле нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В профиле можно переопределять свойства, добавлять зависимости и подключать плагины — например, `jib-maven-plugin` только для `prod`.",
+                "source_of_confusion": "Чаще всего в профилях правят именно свойства, отсюда вывод об ограничении только свойствами.",
+                "if_it_were_true": "Если бы плагины в профиле были запрещены, нельзя было бы собирать Docker-образ только в prod-профиле.",
+                "how_it_should_be": "Профиль может содержать `build > plugins`, `dependencies` и `properties` — полноценный фрагмент конфигурации сборки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать multi-module проект в `Maven` и как определяется порядок сборки модулей?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Порядок сборки модулей определяется исключительно их порядком в секции `<modules>`, и reactor его не меняет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reactor анализирует межмодульные зависимости и переставляет порядок сам; перечисление в `<modules>` — лишь список участников.",
+                "source_of_confusion": "Модули перечислены в `<modules>` сверху вниз, поэтому кажется, что это и есть порядок сборки.",
+                "if_it_were_true": "Если бы порядок диктовался списком, модуль `app` мог бы собраться раньше нужного ему `persistence` и упасть.",
+                "how_it_should_be": "Reactor строит порядок по зависимостям; список в `<modules>` лишь определяет состав, а не последовательность."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В multi-module проекте у parent POM должен быть `<packaging>jar</packaging>`, как и у обычного модуля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У parent POM `<packaging>pom</packaging>`; `jar` ставят у обычных модулей с кодом, а не у агрегатора.",
+                "source_of_confusion": "Большинство модулей имеют `packaging jar`, и это правило ошибочно переносят на parent.",
+                "if_it_were_true": "Если бы parent был `jar`, `Maven` попытался бы собрать из него артефакт, хотя кода в нём нет.",
+                "how_it_should_be": "Parent/aggregator POM имеет `packaging pom`; `jar`/`war` — у модулей, которые реально компилируют код."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Каждый модуль в multi-module проекте должен иметь собственную копию всех зависимостей, наследование от parent не работает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Модули наследуют от parent свойства, `dependencyManagement` и часть зависимостей; дублировать всё не нужно.",
+                "source_of_confusion": "Каждый модуль имеет свой `pom.xml`, отсюда вывод, что и зависимости в каждом свои и независимые.",
+                "if_it_were_true": "Если бы наследования не было, смысл выносить версии в parent `dependencyManagement` пропадал бы полностью.",
+                "how_it_should_be": "Наследование от parent работает: версии и общая конфигурация задаются один раз и переиспользуются модулями."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Multi-module проект состоит из parent POM с `<packaging>pom</packaging>` и секцией `<modules>`, и дочерних модулей, наследующих от него. Порядок сборки `Maven` определяет автоматически через reactor: анализирует межмодульные зависимости и выстраивает корректную последовательность.",
+              "correct": true,
+              "sections": {
+                "explanation": "Parent объявляет `<modules>domain, persistence, app</modules>`; если `app` зависит от `persistence`, reactor соберёт `persistence` раньше `app` независимо от порядка в `<modules>`.",
+                "example": "Multi-module применяют для разбиения большого приложения на слои (domain, persistence, app) с переиспользованием конфигурации из parent.",
+                "when_to_apply": "Собрать один модуль с его зависимостями можно через `mvn install -pl app -am`, а продолжить сборку с определённого модуля — `mvn install -rf persistence`.",
+                "edge_cases": "Reactor не справится при циклической зависимости между модулями — сборка упадёт с ошибкой о цикле, поэтому межмодульные зависимости должны быть ацикличны.",
+                "related": "[[gradle-maven-interview#Q9]] dependencyManagement для версий модулей; [[gradle-maven-interview#Q13]] BOM; [[gradle-maven-interview#Q27]] multi-module в Gradle."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `BOM` (Bill of Materials), зачем он нужен и чем отличается от `parent`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`BOM` — это POM с `<packaging>pom</packaging>`, содержащий только `<dependencyManagement>`; импортируется через `<scope>import</scope>` для централизованного управления версиями группы библиотек. В отличие от `parent` (даёт наследование плагинов, свойств, зависимостей), `BOM` управляет только версиями, и BOM-ов в проекте может быть несколько.",
+              "correct": true,
+              "sections": {
+                "explanation": "Импорт `spring-boot-dependencies` и `spring-cloud-dependencies` как BOM позволяет писать `spring-boot-starter-web` без версии — она берётся из BOM.",
+                "example": "BOM применяют, когда нужно согласовать версии множества библиотек одного фреймворка без наследования от единственного parent.",
+                "when_to_apply": "Главный плюс — обновление: смена версии BOM разом обновляет все управляемые им библиотеки, гарантируя их совместимость.",
+                "edge_cases": "Parent в проекте может быть только один, а BOM-ов — сколько угодно; это снимает ограничение единственного наследования при необходимости версий из нескольких источников.",
+                "related": "[[gradle-maven-interview#Q9]] dependencyManagement; [[gradle-maven-interview#Q12]] multi-module и parent; [[gradle-maven-interview#Q34]] создание и использование BOM."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`BOM` физически подключает все перечисленные в нём библиотеки в classpath проекта, заменяя секцию `dependencies`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`BOM` содержит только `dependencyManagement` и управляет версиями; реально подключить библиотеку всё равно надо в `dependencies`.",
+                "source_of_confusion": "После импорта BOM зависимости пишутся без версий, отсюда иллюзия, что BOM сам их подключает.",
+                "if_it_were_true": "Если бы BOM тянул все библиотеки, импорт `spring-boot-dependencies` тащил бы сотни ненужных артефактов в classpath.",
+                "how_it_should_be": "BOM фиксирует версии; подключение конкретной библиотеки делает блок `dependencies` проекта."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В проекте можно использовать только один `BOM` одновременно, как и только один `parent`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BOM-ов можно импортировать несколько (`spring-boot-dependencies`, `spring-cloud-dependencies`); ограничение «один» — про `parent`.",
+                "source_of_confusion": "Ограничение единственного `parent` ошибочно переносят и на BOM.",
+                "if_it_were_true": "Если бы BOM был только один, нельзя было бы совместить Spring Boot и Spring Cloud версии в одном проекте.",
+                "how_it_should_be": "Parent — один на проект; BOM-ов через `scope import` может быть много."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`BOM` импортируется через `<parent>`-наследование и даёт те же возможности, что обычный родительский POM: плагины, свойства, зависимости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`BOM` импортируется через `<scope>import</scope>` в `dependencyManagement` и даёт только версии, без наследования плагинов и свойств.",
+                "source_of_confusion": "И parent, и BOM централизуют конфигурацию, поэтому их механизмы путают.",
+                "if_it_were_true": "Если бы BOM работал через наследование, нельзя было бы импортировать несколько BOM (наследование — одиночное).",
+                "how_it_should_be": "Parent наследует плагины/свойства/зависимости; BOM через `scope import` приносит лишь управление версиями."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Gradle` и чем он принципиально отличается от `Maven`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Gradle` использует тот же XML-формат `pom.xml`, что и `Maven`, но добавляет к нему инкрементальную сборку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Gradle` использует `Groovy`/`Kotlin` DSL (`build.gradle`/`build.gradle.kts`), а не XML; `pom.xml` — формат `Maven`.",
+                "source_of_confusion": "Оба инструмента собирают `Java`-проекты, поэтому формат конфигурации ошибочно считают общим.",
+                "if_it_were_true": "Если бы `Gradle` читал `pom.xml`, не существовало бы команды миграции `gradle init --type pom`.",
+                "how_it_should_be": "Конфигурация `Gradle` — это DSL-скрипт на `Groovy`/`Kotlin`; XML `pom.xml` остаётся у `Maven`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Gradle` — инструмент сборки на `Groovy`/`Kotlin` DSL вместо XML. Ключевые отличия от `Maven`: программируемый DAG задач вместо фиксированного lifecycle, инкрементальная сборка, `Daemon` и `build cache` для производительности, произвольная логика прямо в билд-скрипте. `Maven` декларативен и предсказуем, `Gradle` гибче и быстрее на повторных сборках.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Maven` использует XML `pom.xml`, а `Gradle` — `build.gradle.kts`: `plugins { java; id(\"org.springframework.boot\") version \"3.3.0\" }` и `dependencies { implementation(\"...\") }`.",
+                "example": "`Gradle` выбирают для крупных multi-module проектов, `Android`, `Kotlin` и там, где важна скорость CI; `Maven` — для стандартных предсказуемых сборок.",
+                "when_to_apply": "У `Gradle` модель — DAG задач: `build` агрегирует `compileJava`, `test`, `jar`; lifecycle жёстко не зашит, как фазы в `Maven`.",
+                "edge_cases": "Гибкость `Gradle` оборачивается риском: произвольный код в билд-скрипте усложняет сопровождение, тогда как декларативный `Maven` ведёт себя одинаково всегда.",
+                "related": "[[gradle-maven-interview#Q1]] что такое Maven; [[gradle-maven-interview#Q15]] фазы Gradle; [[gradle-maven-interview#Q28]] когда что выбрать."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Gradle` имеет жёстко фиксированный набор фаз `compile → test → package`, идентичный `Maven`, и не позволяет добавлять произвольные задачи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `Gradle` программируемый DAG задач: можно регистрировать любые задачи и связи между ними, а не жёсткий фиксированный lifecycle.",
+                "source_of_confusion": "У `Gradle` тоже есть задачи `compileJava` и `test`, отсюда вывод о фиксированном lifecycle как в `Maven`.",
+                "if_it_were_true": "Если бы набор задач был фиксирован, нельзя было бы написать `tasks.register(\"deploy\")` с произвольной логикой.",
+                "how_it_should_be": "Задачи `Gradle` образуют гибкий DAG; добавление кастомных задач — штатная возможность, в отличие от фиксированных фаз `Maven`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Gradle` не поддерживает плагины: вся логика сборки пишется только инлайн в `build.gradle`, тогда как плагины есть только у `Maven`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Gradle` поддерживает и core-, и community-плагины (`java`, `org.springframework.boot`), плюс инлайн-код; плагины не исключают друг друга.",
+                "source_of_confusion": "Инлайн-логика в билд-скрипте `Gradle` заметна, отсюда вывод об отсутствии плагинов.",
+                "if_it_were_true": "Если бы плагинов не было, блок `plugins { id(\"...\") }` в `build.gradle.kts` не имел бы смысла.",
+                "how_it_should_be": "`Gradle` расширяется и плагинами, и инлайн-кодом; это его преимущество, а не отсутствие плагинов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Из каких фаз состоит жизненный цикл сборки `Gradle` и что на какой фазе выполняется?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Жизненный цикл `Gradle` состоит из двух фаз: компиляции и выполнения; отдельной фазы конфигурации задач нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фаз три: Initialization, Configuration и Execution; именно Configuration строит DAG задач перед выполнением.",
+                "source_of_confusion": "Конечный результат — компиляция и запуск, поэтому промежуточную Configuration-фазу упускают.",
+                "if_it_were_true": "Если бы Configuration не было, нельзя было бы построить граф зависимостей задач до их выполнения.",
+                "how_it_should_be": "Три фазы: Initialization → Configuration → Execution; конфигурация задач — отдельный важный этап."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Код внутри блока `doLast { }` выполняется на фазе Configuration, а код в теле `task { }` — на фазе Execution.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: тело `task { }` исполняется на Configuration, а `doLast`/`doFirst` — на Execution.",
+                "source_of_confusion": "Оба блока пишут внутри регистрации задачи, поэтому их фазы выполнения легко перепутать.",
+                "if_it_were_true": "Если бы `doLast` шёл на Configuration, его код выполнялся бы даже для незапущенных задач, ломая логику действий.",
+                "how_it_should_be": "Тело задачи — Configuration; `doFirst`/`doLast` — действия, выполняемые на Execution только при запуске задачи."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Gradle` build проходит три фазы: Initialization (читает `settings.gradle`, определяет участвующие проекты), Configuration (создаёт и конфигурирует все задачи, строит DAG; выполняется код в теле `task { }`), Execution (выполняет только запрошенные задачи в порядке DAG). Код в `doFirst`/`doLast` идёт на Execution.",
+              "correct": true,
+              "sections": {
+                "explanation": "В `tasks.register(\"hello\") { println(...) ; doLast { println(...) } }` первый `println` сработает на Configuration (даже если задача не запущена), а `doLast` — на Execution.",
+                "example": "Понимание фаз нужно при отладке: если тяжёлый код стоит в теле задачи, он замедляет каждую сборку, потому что Configuration выполняется всегда.",
+                "when_to_apply": "Чтобы код выполнялся только при запуске задачи, его помещают в `doLast`/`doFirst`, а не в тело `task { }`.",
+                "edge_cases": "Частая ошибка — обращение к результату другой задачи в Configuration-фазе: на этом этапе задачи ещё не выполнены, поэтому такой код берёт устаревшие или пустые данные.",
+                "related": "[[gradle-maven-interview#Q3]] фазы Maven; [[gradle-maven-interview#Q14]] отличия Gradle; [[gradle-maven-interview#Q18]] задачи и DAG."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "На фазе Execution `Gradle` выполняет абсолютно все зарегистрированные задачи проекта, независимо от того, какие запрошены.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На Execution выполняются только запрошенные задачи и их зависимости по DAG, а не все подряд.",
+                "source_of_confusion": "На Configuration действительно конфигурируются все задачи, отсюда вывод, что и выполняются все.",
+                "if_it_were_true": "Если бы выполнялись все задачи, `./gradlew compileJava` запускал бы ещё и `test`, и `jar` без надобности.",
+                "how_it_should_be": "Execution запускает лишь запрошенные задачи и их зависимости; конфигурируются все, но выполняются нужные."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `Groovy DSL` и `Kotlin DSL` в `Gradle` и что рекомендуется для новых проектов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Kotlin DSL` использует динамическую типизацию, а `Groovy DSL` — статическую, поэтому Groovy даёт лучший автокомплит в IDE.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `Kotlin DSL` статически типизирован и даёт лучший автокомплит, а `Groovy DSL` динамичен.",
+                "source_of_confusion": "Groovy и Kotlin оба JVM-языки, поэтому их свойства типизации легко перепутать местами.",
+                "if_it_were_true": "Если бы Kotlin был динамическим, IDE не могла бы предлагать типобезопасный автокомплит `libs.spring.boot...`.",
+                "how_it_should_be": "`Kotlin DSL` — статика и сильный автокомплит; `Groovy DSL` — динамика с ограниченной поддержкой IDE."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Файлы `Groovy DSL` имеют расширение `.gradle.kts`, а `Kotlin DSL` — расширение `.gradle`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Расширения наоборот: `Groovy DSL` — `.gradle`, `Kotlin DSL` — `.gradle.kts` (kts = Kotlin script).",
+                "source_of_confusion": "Оба расширения начинаются с `.gradle`, поэтому суффикс `.kts` легко привязать не к тому DSL.",
+                "if_it_were_true": "Если бы `.kts` означал Groovy, суффикс «kts» (Kotlin script) не имел бы смысла.",
+                "how_it_should_be": "`.gradle` — Groovy, `.gradle.kts` — Kotlin; суффикс `kts` прямо указывает на Kotlin script."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Начиная с `Gradle 8.x`, официально рекомендуется именно `Groovy DSL` для всех новых проектов как более производительный.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С `Gradle 8.x` рекомендуется `Kotlin DSL` для новых проектов — за типобезопасность и автодополнение в IDE.",
+                "source_of_confusion": "Groovy парсится чуть быстрее на холодную, отсюда вывод, что его и рекомендуют.",
+                "if_it_were_true": "Если бы рекомендовали Groovy, шаблоны `gradle init` не предлагали бы Kotlin DSL по умолчанию.",
+                "how_it_should_be": "Рекомендация для новых проектов — `Kotlin DSL`; `Groovy DSL` остаётся в основном в существующих проектах."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Groovy DSL` (`.gradle`) — динамическая типизация, менее строгий синтаксис, ограниченная IDE-поддержка. `Kotlin DSL` (`.gradle.kts`) — статическая типизация, полный автокомплит и рефакторинг в IDE, строгий синтаксис. С `Gradle 8.x` `Kotlin DSL` рекомендуется для новых проектов из-за типобезопасности.",
+              "correct": true,
+              "sections": {
+                "explanation": "В Groovy пишут `implementation 'org.springframework.boot:spring-boot-starter-web'`, а в Kotlin — `implementation(\"org.springframework.boot:spring-boot-starter-web\")` со скобками и кавычками.",
+                "example": "`Kotlin DSL` выбирают для новых проектов и команд, ценящих автодополнение; `Groovy DSL` остаётся в legacy-проектах и старых гайдах.",
+                "when_to_apply": "В Groovy скобки и кавычки часто опциональны, в Kotlin синтаксис строгий — это даёт предсказуемость, но требует точности.",
+                "edge_cases": "`Kotlin DSL` медленнее при первом парсинге скрипта, зато результат кэшируется; на холодной сборке разница в пару секунд заметна, на тёплой — нет.",
+                "related": "[[gradle-maven-interview#Q14]] DSL vs XML; [[gradle-maven-interview#Q17]] файлы Gradle-проекта; [[gradle-maven-interview#Q25]] version catalog в TOML."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова структура файлов `Gradle`-проекта и за что отвечают ключевые файлы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Основные файлы: `settings.gradle.kts` (список модулей и имя проекта, читается первым на Initialization), `build.gradle.kts` (билд-скрипт: плагины, зависимости, задачи), `gradle.properties` (свойства вроде `org.gradle.parallel=true`), `gradle/libs.versions.toml` (Version Catalog), `gradlew`/`gradlew.bat` (Wrapper) и опциональный `buildSrc/` для convention-плагинов.",
+              "correct": true,
+              "sections": {
+                "explanation": "`settings.gradle.kts` объявляет `rootProject.name = \"my-project\"` и `include(\"domain\", \"app\")`; `gradle.properties` хранит `org.gradle.daemon=true` и JVM-параметры.",
+                "example": "Эту структуру воспроизводят при инициализации нового проекта или при разборе чужого репозитория, чтобы понять, где какие настройки.",
+                "when_to_apply": "`libs.versions.toml` централизует версии (аналог `BOM` в `Maven`), а `buildSrc/` хранит переиспользуемую логику сборки для всех модулей.",
+                "edge_cases": "`settings.gradle.kts` обязателен для multi-module: без него `Gradle` не знает, какие модули включать, и видит только корневой проект.",
+                "related": "[[gradle-maven-interview#Q15]] Initialization читает settings; [[gradle-maven-interview#Q25]] Version Catalog; [[gradle-maven-interview#Q26]] convention plugins в buildSrc."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Список модулей multi-module проекта объявляется в `build.gradle.kts`, а файл `settings.gradle.kts` для этого не используется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Список модулей задаётся именно в `settings.gradle.kts` через `include(...)`; `build.gradle.kts` описывает сборку отдельного проекта.",
+                "source_of_confusion": "Оба файла лежат в корне и оба настраивают сборку, поэтому их роли путают.",
+                "if_it_were_true": "Если бы модули объявлялись в `build.gradle.kts`, файл `settings.gradle.kts` был бы не нужен, но он обязателен для multi-module.",
+                "how_it_should_be": "Состав модулей — в `settings.gradle.kts` (`include`); `build.gradle.kts` отвечает за плагины и зависимости проекта."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Файл `gradle.properties` содержит исходный код задач сборки на Kotlin, а свойства вроде `org.gradle.parallel` задаются в `build.gradle.kts`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`gradle.properties` — это файл свойств `key=value` (`org.gradle.parallel=true`), а не код; задачи пишут в `build.gradle.kts`.",
+                "source_of_confusion": "И тот, и другой файл влияют на сборку, поэтому их содержимое смешивают.",
+                "if_it_were_true": "Если бы в `gradle.properties` был Kotlin-код, его расширение `.properties` противоречило бы синтаксису.",
+                "how_it_should_be": "`gradle.properties` хранит свойства в формате `key=value`; логика задач живёт в `build.gradle.kts`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`gradle-wrapper.jar` не должен коммититься в репозиторий — его генерируют локально на каждой машине командой `gradle wrapper`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`gradle-wrapper.jar` обязательно коммитится: без него `gradlew` не сможет скачать нужную версию `Gradle` на CI.",
+                "source_of_confusion": "Это бинарный `.jar`, и кажется логичным не держать бинарники в Git.",
+                "if_it_were_true": "Если бы wrapper не коммитили, CI без предустановленного `Gradle` не смог бы запустить `./gradlew build`.",
+                "how_it_should_be": "Wrapper целиком (включая `gradle-wrapper.jar`) коммитится, чтобы сборка работала на любой машине без локального `Gradle`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое задача (task) в `Gradle`, как её создать и как задаются зависимости между задачами?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Задачи в `Gradle` нельзя связывать между собой: каждая выполняется независимо, и порядка между ними не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Задачи связывают через `dependsOn`, `mustRunAfter`, `finalizedBy`, образуя DAG с чётким порядком выполнения.",
+                "source_of_confusion": "Простые задачи кажутся изолированными, отсюда вывод об отсутствии связей.",
+                "if_it_were_true": "Если бы связей не было, `deploy` не мог бы гарантированно выполняться после `build`.",
+                "how_it_should_be": "Задачи образуют направленный граф зависимостей; порядок задаётся `dependsOn` и родственными методами."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Задача — единица работы в `Gradle` (компиляция, тесты, копирование). Создаётся через `tasks.register(\"name\") { ... }`, действия кладут в `doLast`/`doFirst`. Задачи образуют DAG через `dependsOn`, `mustRunAfter`, `finalizedBy`. Lifecycle-задачи (`build`, `check`) не делают работу сами, а агрегируют другие.",
+              "correct": true,
+              "sections": {
+                "explanation": "`tasks.register(\"deploy\") { dependsOn(\"build\"); doLast { println(\"Deploying...\") } }` — задача `deploy` сначала запустит `build`, затем выполнит своё действие.",
+                "example": "Кастомные задачи создают для шагов сборки, не покрытых плагинами: генерация конфигов, копирование артефактов, релизные операции.",
+                "when_to_apply": "Для инкрементальности задача объявляет `inputs` и `outputs`: если они не изменились, `Gradle` помечает её `UP-TO-DATE` и пропускает.",
+                "edge_cases": "Typed-задачи (`tasks.register<Copy>(\"copyDocs\")`) переиспользуют готовую логику; писать действие в `doLast` для копирования при наличии `Copy` — лишняя работа.",
+                "related": "[[gradle-maven-interview#Q15]] фазы и где выполняется doLast; [[gradle-maven-interview#Q19]] плагины добавляют задачи; [[gradle-maven-interview#Q24]] inputs/outputs и build cache."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Lifecycle-задачи `build` и `check` сами компилируют код и запускают тесты, не делегируя работу другим задачам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lifecycle-задачи не выполняют работу сами — они **агрегируют** другие задачи (`compileJava`, `test`, `jar`).",
+                "source_of_confusion": "`./gradlew build` действительно собирает и тестирует, отсюда вывод, что сам `build` это и делает.",
+                "if_it_were_true": "Если бы `build` делал всё сам, нельзя было бы запустить только `compileJava` без тестов.",
+                "how_it_should_be": "`build`/`check` — агрегаторы: они зависят от реальных задач, а компиляцию выполняет `compileJava`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Задачу создают командой `tasks.execute(\"name\")`, и весь её код выполняется немедленно при объявлении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Задачу регистрируют через `tasks.register(\"name\") { ... }`; действия в `doLast` выполняются на Execution, а не при объявлении.",
+                "source_of_confusion": "Тело `task { }` действительно исполняется на Configuration, отсюда вывод о немедленном выполнении всего кода.",
+                "if_it_were_true": "Если бы весь код выполнялся при объявлении, действия незапрошенных задач срабатывали бы на каждой сборке.",
+                "how_it_should_be": "Регистрация — `tasks.register`; действия откладываются до Execution и выполняются только при запуске задачи."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают плагины в `Gradle` и что плагин делает при применении?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все плагины `Gradle` обязательно скачиваются из Gradle Plugin Portal; встроенных core-плагинов, идущих с дистрибутивом, нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Core-плагины (`java`, `java-library`, `application`) встроены в `Gradle` и не требуют скачивания; из Portal тянут только community-плагины.",
+                "source_of_confusion": "Многие популярные плагины действительно из Portal, отсюда вывод, что и все остальные оттуда.",
+                "if_it_were_true": "Если бы core-плагинов не было, `plugins { java }` без версии и репозитория не работал бы.",
+                "how_it_should_be": "Core-плагины поставляются с `Gradle` и подключаются по имени; community-плагины — через `id(...)` с версией."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Применённый плагин не добавляет в проект ни задач, ни конфигураций — он только меняет имя проекта в отчётах сборки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Плагин при применении добавляет задачи, конфигурации зависимостей, conventions и extensions — это и есть его суть.",
+                "source_of_confusion": "Эффект плагина не всегда виден явно в скрипте, поэтому кажется, что он почти ничего не делает.",
+                "if_it_were_true": "Если бы `java`-плагин не добавлял задач, после его применения не появлялись бы `compileJava` и `test`.",
+                "how_it_should_be": "Плагин привносит задачи, конфигурации (`implementation`), conventions и DSL-extensions в проект."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Плагины бывают script (подключаемые `.gradle.kts` через `apply(from = ...)`) и binary (скомпилированные классы из репозиториев, подключаются в блоке `plugins {}`). При применении плагин добавляет задачи (`java` даёт `compileJava`, `test`, `jar`), создаёт конфигурации зависимостей (`implementation`, `testImplementation`), настраивает conventions и добавляет extensions (DSL-блоки).",
+              "correct": true,
+              "sections": {
+                "explanation": "`plugins { java; id(\"org.springframework.boot\") version \"3.3.0\" }` — core-плагин `java` и community-плагин Spring Boot из Plugin Portal.",
+                "example": "Плагины подключают, чтобы получить готовую функциональность: `java` для компиляции, `jacoco` для покрытия, `jib` для контейнеризации без Docker daemon.",
+                "when_to_apply": "Core-плагины (`java`, `application`) идут с `Gradle` и подключаются по имени; community-плагины требуют `id(...)` с версией.",
+                "edge_cases": "Применение `java-library` вместо `java` добавляет конфигурацию `api` — без неё нельзя выставить зависимости в API потребителей библиотеки.",
+                "related": "[[gradle-maven-interview#Q10]] плагины в Maven; [[gradle-maven-interview#Q18]] плагины добавляют задачи; [[gradle-maven-interview#Q21]] конфигурации от java-плагина."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Конфигурации зависимостей вроде `implementation` и `testImplementation` существуют в `Gradle` всегда, даже без применения `java`-плагина.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Конфигурации `implementation`/`testImplementation` создаёт именно `java`/`java-library`-плагин; без него их нет.",
+                "source_of_confusion": "Эти конфигурации встречаются в каждом `build.gradle.kts`, отсюда вывод об их безусловном наличии.",
+                "if_it_were_true": "Если бы они были всегда, можно было бы объявлять зависимости в проекте вообще без плагинов.",
+                "how_it_should_be": "`implementation` и подобные конфигурации появляются после применения `java`-плагина, а не сами по себе."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Gradle Wrapper`, зачем он нужен и нужно ли его коммитить?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Gradle Wrapper` — это плагин, который ускоряет сборку за счёт кэширования результатов задач между запусками.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Wrapper — это скрипт фиксации версии `Gradle`, а кэшированием результатов задач занимается `Build Cache`, не wrapper.",
+                "source_of_confusion": "И wrapper, и build cache влияют на сборку, поэтому их функции смешивают.",
+                "if_it_were_true": "Если бы wrapper кэшировал задачи, его не нужно было бы коммитить вместе с `gradle-wrapper.properties` (версией).",
+                "how_it_should_be": "Wrapper фиксирует версию `Gradle`; за переиспользование результатов отвечает отдельный механизм Build Cache."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Команда `./gradlew build` использует глобально установленную в системе версию `Gradle`, игнорируя `gradle-wrapper.properties`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`./gradlew` использует версию из `gradle-wrapper.properties`, скачивая её при необходимости, а не глобальный `gradle`.",
+                "source_of_confusion": "Локально часто стоит совместимая версия `gradle`, отсюда иллюзия, что используется именно она.",
+                "if_it_were_true": "Если бы wrapper брал глобальную версию, смысл фиксировать `distributionUrl` пропадал бы.",
+                "how_it_should_be": "Wrapper использует версию из своих properties; глобальный `gradle` при запуске через `./gradlew` не задействуется."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В репозиторий коммитят только скрипт `gradlew`, а файл `gradle-wrapper.jar` всегда добавляют в `.gitignore` как бинарник.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Коммитят весь wrapper, включая `gradle-wrapper.jar`: без `.jar` скрипт `gradlew` не сможет загрузить `Gradle`.",
+                "source_of_confusion": "Привычка не хранить бинарники в Git подталкивает игнорировать `.jar`.",
+                "if_it_were_true": "Если бы `.jar` был в `.gitignore`, клонированный на CI проект не собрался бы через `./gradlew`.",
+                "how_it_should_be": "Wrapper коммитят полностью (`gradlew`, `.bat`, `.properties` и `gradle-wrapper.jar`) ради воспроизводимости сборки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Gradle Wrapper` (`gradlew`/`gradlew.bat`) — скрипт, который автоматически скачивает и использует указанную в `gradle-wrapper.properties` версию `Gradle`, гарантируя одинаковую версию на всех машинах. Wrapper обязательно коммитится в репозиторий целиком, включая `gradle-wrapper.jar`, чтобы CI собирал проект без предустановленного `Gradle`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Версия задаётся строкой `distributionUrl=...gradle-8.7-bin.zip`; команда `./gradlew build` использует именно эту версию, а не глобальный `gradle`.",
+                "example": "Wrapper применяют всегда: запускают `./gradlew` вместо `gradle`, чтобы версия инструмента не зависела от того, что установлено локально.",
+                "when_to_apply": "Обновляют версию командой `./gradlew wrapper --gradle-version 8.7`, которая правит `gradle-wrapper.properties`.",
+                "edge_cases": "Если не закоммитить `gradle-wrapper.jar`, на чистом CI-агенте без `Gradle` сборка `./gradlew build` упадёт — wrapper не сможет себя загрузить.",
+                "related": "[[gradle-maven-interview#Q17]] файлы проекта и wrapper; [[gradle-maven-interview#Q23]] Daemon и запуск сборки; [[gradle-maven-interview#Q30]] ускорение сборки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие конфигурации зависимостей есть в `Gradle` и чем отличаются `api`, `implementation`, `compileOnly` и `runtimeOnly`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Основные конфигурации: `api` (виден потребителям, только в `java-library`), `implementation` (в compile+runtime, но скрыт от потребителей — инкапсуляция), `compileOnly` (только компиляция — `Lombok`, `Servlet API`), `runtimeOnly` (только запуск — `JDBC`-драйвер), плюс их `test*`-аналоги и `annotationProcessor`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`api(\"com.google.guava:guava\")` протекает в compile classpath потребителей библиотеки, а `implementation(\"...\")` остаётся внутренней деталью модуля.",
+                "example": "Правильный выбор конфигурации критичен для скорости сборки: `implementation` ограничивает перекомпиляцию потребителей при изменении транзитивной зависимости.",
+                "when_to_apply": "`compileOnly` + `annotationProcessor` для `Lombok`: первый даёт аннотации при компиляции, второй запускает обработку, и в рантайме `Lombok` не нужен.",
+                "edge_cases": "Если зависимость нужна потребителям, но объявлена как `implementation`, у них будет `ClassNotFoundException` на типах из API — тогда требуется `api`.",
+                "related": "[[gradle-maven-interview#Q7]] scope в Maven как аналог; [[gradle-maven-interview#Q19]] java-плагин создаёт конфигурации; [[gradle-maven-interview#Q22]] исключение транзитивных."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Конфигурации `api` и `implementation` полностью идентичны: обе делают зависимость видимой потребителям библиотеки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`api` протекает в compile classpath потребителей, а `implementation` скрыта от них — это ключевое различие, а не идентичность.",
+                "source_of_confusion": "Обе кладут зависимость в compile и runtime текущего модуля, отсюда вывод об их идентичности.",
+                "if_it_were_true": "Если бы они были одинаковы, не было бы смысла в отдельном `java-library`-плагине с конфигурацией `api`.",
+                "how_it_should_be": "`api` экспонирует зависимость потребителям; `implementation` инкапсулирует её внутри модуля."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`compileOnly`-зависимость попадает в runtime classpath и итоговый артефакт, поэтому `Lombok` тащится в production-`JAR`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`compileOnly` присутствует только в compile classpath и не попадает ни в runtime, ни в артефакт — `Lombok` в проде не нужен.",
+                "source_of_confusion": "Аннотации `Lombok` упоминаются в коде, поэтому кажется, что библиотека нужна и в рантайме.",
+                "if_it_were_true": "Если бы `compileOnly` попадал в артефакт, цель «не включать `Lombok` в JAR» была бы недостижима.",
+                "how_it_should_be": "`compileOnly` — только compile classpath; в runtime и артефакт зависимость не включается."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`runtimeOnly`-зависимость доступна и в compile classpath, поэтому по `JDBC`-драйверу можно ссылаться на его классы при компиляции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`runtimeOnly` исключён из compile classpath: код компилируется по интерфейсам, а драйвер подключается лишь при запуске.",
+                "source_of_confusion": "Драйвер реально нужен приложению, отсюда вывод, что он доступен и при компиляции.",
+                "if_it_were_true": "Если бы `runtimeOnly` был в compile classpath, прямая ссылка на `org.postgresql.Driver` скомпилировалась бы, ломая переносимость.",
+                "how_it_should_be": "`runtimeOnly` есть только в runtime classpath; в коде используют интерфейс `java.sql.Driver`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как исключить транзитивные зависимости в `Gradle` и как принудительно задать версию?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Исключить транзитивную зависимость в `Gradle` нельзя — поддерживается только глобальная замена версии через `resolutionStrategy`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Исключение есть: `exclude(group, module)` точечно или `isTransitive = false`; `resolutionStrategy` — это про версии, а не единственный способ.",
+                "source_of_confusion": "`resolutionStrategy.force` действительно управляет версиями, отсюда вывод, что исключений нет.",
+                "if_it_were_true": "Если бы `exclude` не существовал, нельзя было бы выкинуть `tomcat` ради альтернативного сервера.",
+                "how_it_should_be": "Транзитивные зависимости исключают через `exclude(...)` или `isTransitive = false`; `force` лишь фиксирует версию."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Точечно — через блок при объявлении: `implementation(\"...\") { exclude(group = \"...\", module = \"...\") }`. Полностью отключить транзитивность — `isTransitive = false`. Глобально для всех конфигураций — `configurations.all { exclude(...) }`. Принудительная версия — `resolutionStrategy { force(\"com.google.guava:guava:33.1.0-jre\") }`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Чтобы выкинуть `spring-boot-starter-tomcat` из `spring-boot-starter-web` (например, ради `Jetty`), пишут `exclude(group = \"org.springframework.boot\", module = \"spring-boot-starter-tomcat\")`.",
+                "example": "Исключения применяют при конфликте логирования (выкинуть `commons-logging`) или замене embedded-сервера; `force` — когда нужна конкретная версия вопреки mediation.",
+                "when_to_apply": "Причину выбора версии показывает `./gradlew dependencyInsight --dependency guava`, а дерево — `./gradlew dependencies`.",
+                "edge_cases": "Глобальный `exclude` в `configurations.all` мощный, но опасный: он уберёт зависимость из всех конфигураций, включая те, где она реально нужна.",
+                "related": "[[gradle-maven-interview#Q8]] конфликты версий в Maven; [[gradle-maven-interview#Q21]] конфигурации зависимостей; [[gradle-maven-interview#Q32]] dependency locking."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`isTransitive = false` исключает одну указанную транзитивную зависимость, оставляя остальные транзитивные на месте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`isTransitive = false` отключает **все** транзитивные зависимости для данного объявления, а одну убирает `exclude`.",
+                "source_of_confusion": "И `exclude`, и `isTransitive` управляют транзитивностью, поэтому их эффект путают.",
+                "if_it_were_true": "Если бы `isTransitive = false` убирал лишь одну, не было бы нужды в отдельном `exclude` с указанием модуля.",
+                "how_it_should_be": "`isTransitive = false` отрезает всю транзитивность зависимости; точечно одну выкидывают через `exclude`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Принудительно задать версию зависимости в `Gradle` невозможно: побеждает всегда самая новая версия в графе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Версию форсируют через `resolutionStrategy { force(...) }`; mediation `Gradle` по умолчанию выбирает наивысшую, но `force` это переопределяет.",
+                "source_of_confusion": "`Gradle` действительно по умолчанию берёт наибольшую версию, отсюда вывод о невозможности форсирования.",
+                "if_it_were_true": "Если бы `force` не работал, нельзя было бы зафиксировать `guava:33.1.0-jre` вопреки транзитивным версиям.",
+                "how_it_should_be": "`resolutionStrategy.force` жёстко задаёт версию; дефолтный highest-wins лишь поведение по умолчанию."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Gradle Daemon`, зачем он нужен и когда его отключают?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Gradle Daemon` — это удалённый сервер сборки, на который CI отправляет задачи для выполнения вместо локальной машины.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Daemon — это локальный фоновый процесс JVM на той же машине, а не удалённый build-сервер.",
+                "source_of_confusion": "Слово «daemon» ассоциируется с серверным процессом «где-то на хосте», отсюда идея об удалёнке.",
+                "if_it_were_true": "Если бы Daemon был удалённым сервером, команда `./gradlew --stop` не останавливала бы локальные процессы.",
+                "how_it_should_be": "Daemon — локальный резидентный JVM-процесс; удалённое выполнение — это про build farm/remote cache, а не Daemon."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Gradle Daemon` отключён по умолчанию и его нужно вручную включать флагом `--daemon` при каждой сборке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Daemon включён по умолчанию с `Gradle 3.0`; вручную чаще наоборот отключают через `--no-daemon` на CI.",
+                "source_of_confusion": "Флаг `--no-daemon` на CI создаёт впечатление, что по умолчанию Daemon выключен.",
+                "if_it_were_true": "Если бы Daemon был выключен по умолчанию, локальные повторные сборки не ускорялись бы автоматически.",
+                "how_it_should_be": "Daemon работает по умолчанию; для одноразовых CI-сборок его явно глушат флагом `--no-daemon`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Gradle Daemon` — фоновый процесс JVM, остающийся в памяти между сборками. Ускоряет повторные сборки за счёт прогретого JIT-компилятора, кэшей в памяти (модель проекта, classpath, разрешённые зависимости) и избегания холодного старта JVM. Включён по умолчанию с `Gradle 3.0`; на CI обычно используют `--no-daemon`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Настраивается в `gradle.properties`: `org.gradle.daemon=true`, память `org.gradle.jvmargs=-Xmx2g`; статус смотрят `./gradlew --status`, останавливают `./gradlew --stop`.",
+                "example": "Для локальной разработки Daemon оставляют включённым — он ускоряет повторные сборки в 2-3 раза; на CI его выключают.",
+                "when_to_apply": "На CI каждая сборка одноразовая в свежем контейнере, поэтому Daemon не успевает прогреться и только тратит память — отсюда `--no-daemon`.",
+                "edge_cases": "Несколько несовместимых версий `Gradle` или разные JVM-аргументы порождают отдельные Daemon-процессы, которые могут незаметно съедать память — их чистят через `--stop`.",
+                "related": "[[gradle-maven-interview#Q20]] запуск через wrapper; [[gradle-maven-interview#Q24]] build cache поверх Daemon; [[gradle-maven-interview#Q31]] configuration cache."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "На CI всегда рекомендуется оставлять `Gradle Daemon` включённым, так как он переиспользуется между независимыми пайплайнами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На CI рекомендуют `--no-daemon`: сборка одноразовая в свежем окружении, и Daemon не успевает себя окупить.",
+                "source_of_confusion": "Локально Daemon реально полезен, и это правило ошибочно переносят на CI.",
+                "if_it_were_true": "Если бы Daemon переиспользовался между пайплайнами, изолированные CI-контейнеры делили бы один процесс, что небезопасно.",
+                "how_it_should_be": "На CI обычно `--no-daemon`; переиспользование между пайплайнами в изолированных раннерах невозможно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `Build Cache` в `Gradle` и чем он отличается от инкрементальной сборки?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Build Cache` кэширует только скачанные зависимости из Maven Central и не имеет отношения к результатам выполнения задач.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Build Cache` кэширует именно результаты задач (`compileJava`, `test`), а кэш зависимостей — это отдельный механизм.",
+                "source_of_confusion": "У `Gradle` действительно есть кэш зависимостей в `~/.gradle`, отсюда смешение с Build Cache.",
+                "if_it_were_true": "Если бы Build Cache кэшировал только зависимости, метка `FROM-CACHE` не появлялась бы у задачи `compileJava`.",
+                "how_it_should_be": "Build Cache переиспользует outputs задач по cache key; кэш зависимостей хранится отдельно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Build Cache` бывает только локальным; удалённого кэша, разделяемого между CI и разработчиками, в `Gradle` не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть и удалённый кэш (`HttpBuildCache`), который разделяют CI и команда; локальный — лишь один из двух типов.",
+                "source_of_confusion": "Локальный кэш включён по умолчанию и виден чаще, поэтому об удалённом забывают.",
+                "if_it_were_true": "Если бы удалённого кэша не было, блок `remote<HttpBuildCache>` в `settings.gradle.kts` был бы бессмысленным.",
+                "how_it_should_be": "Кэш бывает локальным и удалённым; удалённый по HTTP даёт переиспользование между машинами и CI."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Build Cache` работает с любой задачей автоматически, даже если она не объявляет `inputs` и `outputs`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для кэширования задача обязана объявить `inputs` и `outputs` — без них `Gradle` не может вычислить cache key.",
+                "source_of_confusion": "Стандартные задачи кэшируются «из коробки», отсюда вывод, что и любая кастомная задача тоже.",
+                "if_it_were_true": "Если бы inputs/outputs были не нужны, `Gradle` не мог бы определить, изменились ли входные данные задачи.",
+                "how_it_should_be": "Кэшируются только задачи с объявленными `inputs`/`outputs`; cache key считается по хэшу входов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Build Cache` сохраняет результаты выполнения задач и переиспользует их, если входные данные (cache key — хэш inputs) не изменились. Работает поверх инкрементальной сборки. Бывает локальный (`~/.gradle/caches/build-cache-1/`, включён по умолчанию) и удалённый (HTTP-сервер, общий между разработчиками и CI). Включается `org.gradle.caching=true`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Если `compileJava` уже собирался с теми же исходниками на другой машине, его результат тянется из удалённого кэша как `FROM-CACHE` без перекомпиляции.",
+                "example": "Удалённый кэш даёт максимальный выигрыш на CI и в больших командах: первый, кто собрал, наполняет кэш для всех остальных.",
+                "when_to_apply": "Для работы кэша задача обязана объявлять `inputs` и `outputs`; стандартные задачи (`compileJava`, `test`, `jar`) уже настроены корректно.",
+                "edge_cases": "Инкрементальная сборка переиспользует результат только в пределах одной машины и каталога, а Build Cache — между машинами по контентному ключу; это разные уровни оптимизации.",
+                "related": "[[gradle-maven-interview#Q18]] inputs/outputs задач; [[gradle-maven-interview#Q23]] Daemon и кэши; [[gradle-maven-interview#Q31]] configuration cache как другой кэш."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Version Catalogs` в `Gradle`, какой формат у файла и какие возможности он даёт?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Version Catalogs` (с `Gradle 7.0`, стабильно с 7.4) — централизованный TOML-файл `gradle/libs.versions.toml` для объявления версий, библиотек, bundles и плагинов. Заменяет `ext`-блоки и `buildSrc`-константы, даёт типобезопасный доступ `libs.spring.boot.starter.web` с автодополнением в IDE и шарится между модулями.",
+              "correct": true,
+              "sections": {
+                "explanation": "В `[versions]` задают `spring-boot = \"3.3.0\"`, в `[libraries]` — `spring-boot-starter-web = { module = \"...\", version.ref = \"spring-boot\" }`, и в скрипте пишут `implementation(libs.spring.boot.starter.web)`.",
+                "example": "Version Catalog применяют в multi-module проектах, чтобы версии жили в одном файле (аналог `BOM` в `Maven`) и не дублировались по `build.gradle.kts`.",
+                "when_to_apply": "`[bundles]` группируют часто используемые зависимости: `testing = [\"junit-jupiter\", \"spring-boot-starter-test\"]`, подключаемые одной строкой `testImplementation(libs.bundles.testing)`.",
+                "edge_cases": "Дефис в имени библиотеки (`spring-boot-starter-web`) в DSL превращается в точку (`libs.spring.boot.starter.web`) — это автогенерируемые акцессоры, а не буквальное имя.",
+                "related": "[[gradle-maven-interview#Q13]] BOM в Maven как аналог; [[gradle-maven-interview#Q16]] Kotlin DSL и автокомплит; [[gradle-maven-interview#Q26]] convention plugins для общей конфигурации."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Version Catalog` объявляется прямо в `build.gradle.kts` в блоке `versionCatalog { }`, отдельного TOML-файла не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каталог по умолчанию живёт в отдельном файле `gradle/libs.versions.toml` в TOML-формате, а не внутри `build.gradle.kts`.",
+                "source_of_confusion": "Версии раньше держали в `ext`-блоках самого скрипта, отсюда вывод, что и каталог там же.",
+                "if_it_were_true": "Если бы каталог был в скрипте, не появлялись бы автогенерируемые акцессоры `libs.*` из внешнего TOML.",
+                "how_it_should_be": "Стандартное место — `gradle/libs.versions.toml`; именно из него генерируется типобезопасный `libs`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Version Catalog` хранит только номера версий; объявлять сами библиотеки, bundles или плагины в нём нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каталог содержит секции `[versions]`, `[libraries]`, `[bundles]` и `[plugins]` — то есть и версии, и библиотеки, и группы, и плагины.",
+                "source_of_confusion": "Название «version catalog» акцентирует версии, отсюда вывод, что только их он и хранит.",
+                "if_it_were_true": "Если бы хранились только версии, нельзя было бы писать `implementation(libs.spring.boot.starter.web)` с готовой библиотекой.",
+                "how_it_should_be": "Каталог описывает версии, библиотеки, bundles и плагины разом — это полноценный реестр зависимостей."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Доступ к зависимостям из каталога не типобезопасен: IDE не подсказывает `libs.*`, и опечатки выявляются только в рантайме сборки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Доступ типобезопасен: `Gradle` генерирует акцессоры, и IDE автодополняет `libs.spring.boot.starter.web`, ловя опечатки на этапе компиляции скрипта.",
+                "source_of_confusion": "В Groovy DSL автокомплит ограничен, отсюда обобщение об отсутствии типобезопасности.",
+                "if_it_were_true": "Если бы доступа с автокомплитом не было, главное преимущество каталога перед `ext` исчезло бы.",
+                "how_it_should_be": "Version Catalog даёт типобезопасные акцессоры `libs.*` с автодополнением — в этом его ключевая ценность."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Convention Plugins` в `Gradle` и чем они лучше `allprojects`/`subprojects`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Convention plugins — это просто `.gradle.kts`-файл с зависимостями, подключаемый через `apply(from = ...)`, и работает он только в single-module проектах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Convention plugins живут в `buildSrc`/`build-logic` как полноценные precompiled-плагины и предназначены именно для multi-module DRY, а не для single-module.",
+                "source_of_confusion": "Script-плагины через `apply(from)` тоже выносят конфигурацию, отсюда смешение с convention plugins.",
+                "if_it_were_true": "Если бы они работали лишь в single-module, не было бы смысла шарить их между десятком модулей.",
+                "how_it_should_be": "Convention plugins — precompiled-плагины в `buildSrc`/`build-logic`, применяемые в `plugins {}` многих модулей."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Convention plugins — плагины в `buildSrc/` или `build-logic/`, выносящие повторяющуюся конфигурацию сборки в переиспользуемые модули (`java-conventions.gradle.kts`). Это рекомендуемый DRY-подход для multi-module. Преимущества перед `allprojects`/`subprojects`: композируемость (модуль подключает только нужное), изоляция и тестируемость.",
+              "correct": true,
+              "sections": {
+                "explanation": "`java-conventions.gradle.kts` задаёт версию Java, `mavenCentral()`, `useJUnitPlatform()` и `jacoco`, а модуль подключает всё одной строкой `plugins { id(\"java-conventions\") }`.",
+                "example": "Convention plugins применяют, когда несколько модулей делят настройки компилятора, репозиториев и code quality, чтобы не копировать их в каждый `build.gradle.kts`.",
+                "when_to_apply": "Плагины можно композировать: `spring-app-conventions` подключает `java-conventions` плюс Spring-плагины, наращивая конфигурацию слоями.",
+                "edge_cases": "В отличие от `subprojects { }`, где изменение конвенции для одного типа модуля задевает все, convention plugins изолируют изменения: правка одного не ломает другие типы модулей.",
+                "related": "[[gradle-maven-interview#Q17]] buildSrc в структуре проекта; [[gradle-maven-interview#Q25]] version catalog для версий; [[gradle-maven-interview#Q35]] convention plugins подробно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Convention plugins ничем не лучше `allprojects`/`subprojects`: они дают ровно тот же эффект и существуют только как синтаксический сахар.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У convention plugins есть реальные преимущества — композируемость, изоляция и тестируемость, которых нет у `subprojects { }`.",
+                "source_of_confusion": "Оба подхода устраняют дублирование, отсюда вывод об их эквивалентности.",
+                "if_it_were_true": "Если бы разницы не было, `Gradle` не рекомендовал бы convention plugins вместо `subprojects` для крупных проектов.",
+                "how_it_should_be": "Convention plugins композируемы и изолированы: модуль берёт нужные плагины, а `subprojects` навязывает конфигурацию всем."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Convention plugins нельзя композировать друг с другом: один такой плагин не может подключать другой convention plugin.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Композиция поддерживается: `spring-app-conventions` спокойно подключает `java-conventions` в своём блоке `plugins`.",
+                "source_of_confusion": "Каждый convention plugin самодостаточен на вид, отсюда вывод о невозможности их вложения.",
+                "if_it_were_true": "Если бы композиции не было, пришлось бы дублировать общие настройки Java в каждом convention-плагине.",
+                "how_it_should_be": "Convention plugins композируемы: специализированный плагин наращивает базовый, переиспользуя его настройки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать multi-module проект в `Gradle` и какие настройки его ускоряют?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Модули multi-module проекта в `Gradle` объявляются в `build.gradle.kts` каждого модуля; файл `settings.gradle.kts` для этого не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Состав модулей объявляют в корневом `settings.gradle.kts` через `include(...)`; без него `Gradle` не увидит подпроекты.",
+                "source_of_confusion": "Каждый модуль имеет свой `build.gradle.kts`, отсюда вывод, что и состав объявляется там.",
+                "if_it_were_true": "Если бы модули объявлялись в `build.gradle.kts`, корневой `settings.gradle.kts` не требовался бы для multi-module.",
+                "how_it_should_be": "Список модулей — в `settings.gradle.kts` (`include`); `build.gradle.kts` описывает сборку конкретного модуля."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Зависимость одного модуля от другого задаётся через координаты `implementation(\"com.example:domain:1.0\")`, как для внешней библиотеки из репозитория.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Внутримодульную зависимость объявляют через `project(...)`: `implementation(project(\":modules:domain\"))`, а не через GAV из репозитория.",
+                "source_of_confusion": "Внешние зависимости пишут координатами, и этот синтаксис ошибочно переносят на внутренние модули.",
+                "if_it_were_true": "Если бы модули подключались по GAV, их пришлось бы публиковать в репозиторий перед каждой локальной сборкой.",
+                "how_it_should_be": "Модуль подключают через `project(\":path\")`; координаты GAV — для внешних артефактов, а не соседних модулей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Модули объявляют в `settings.gradle.kts` через `include(\"modules:domain\", \"modules:app\")`; каждый модуль имеет свой `build.gradle.kts` и подключает convention plugin. Межмодульные зависимости — `implementation(project(\":modules:domain\"))`. Ускоряют сборку `org.gradle.parallel=true` (параллельные модули) и `org.gradle.configureondemand=true`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`modules/persistence` объявляет `api(project(\":modules:domain\"))`, а `modules/app` — `implementation(project(\":modules:persistence\"))`; собрать один модуль можно `./gradlew :modules:app:build`.",
+                "example": "Multi-module применяют для слоистой архитектуры (domain/persistence/app) с чётким разделением ответственности и переиспользованием convention plugins.",
+                "when_to_apply": "Ключевое преимущество перед `Maven` — параллельная сборка модулей (`org.gradle.parallel=true`), что заметно ускоряет билд на многоядерных машинах.",
+                "edge_cases": "`configureondemand` конфигурирует только нужные для задачи модули, но может конфликтовать с плагинами, делающими cross-project настройки на фазе конфигурации.",
+                "related": "[[gradle-maven-interview#Q12]] multi-module в Maven; [[gradle-maven-interview#Q21]] api vs implementation между модулями; [[gradle-maven-interview#Q33]] composite builds."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Gradle`, как и `Maven`, собирает модули строго последовательно; флага параллельной сборки модулей у него нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Gradle` умеет собирать модули параллельно через `org.gradle.parallel=true`, что и есть его преимущество перед `Maven`.",
+                "source_of_confusion": "По умолчанию сборка идёт последовательно, отсюда вывод об отсутствии параллелизма вовсе.",
+                "if_it_were_true": "Если бы параллельной сборки не было, свойство `org.gradle.parallel` в `gradle.properties` не имело бы эффекта.",
+                "how_it_should_be": "Модули `Gradle` собираются параллельно при `org.gradle.parallel=true`; последовательность — лишь дефолт."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Сравните `Gradle` и `Maven`: когда выбирать каждый и в чём разница по производительности?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Gradle` стоит выбирать всегда: он быстрее `Maven` во всех без исключения сценариях, включая разовую чистую сборку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На чистой сборке `Maven` и `Gradle` сопоставимы; преимущество `Gradle` — на повторных и инкрементальных сборках, а не всегда.",
+                "source_of_confusion": "`Gradle` действительно быстрее на тёплых сборках, отсюда обобщение «быстрее всегда».",
+                "if_it_were_true": "Если бы `Gradle` всегда выигрывал, `Maven` не оставался бы стандартом для простых предсказуемых проектов.",
+                "how_it_should_be": "Выбор зависит от контекста: на разовых сборках разница мала, выигрыш `Gradle` — на повторных билдах."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Maven` поддерживает инкрементальную сборку и build cache наравне с `Gradle`, поэтому по скорости они полностью эквивалентны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `Maven` нет инкрементальной сборки и встроенного build cache; именно поэтому `Gradle` быстрее на повторных билдах.",
+                "source_of_confusion": "Оба кэшируют скачанные зависимости в `~/.m2`/`~/.gradle`, и это путают с кэшем результатов задач.",
+                "if_it_were_true": "Если бы у `Maven` был build cache, не было бы смысла мигрировать на `Gradle` ради скорости CI.",
+                "how_it_should_be": "Инкрементальная сборка и build cache — фичи `Gradle`; `Maven` каждый раз пересобирает модуль целиком."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Maven` нельзя использовать для `Spring Boot`-проектов — `Spring Boot` поддерживает только `Gradle`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Boot` отлично работает с `Maven` (`spring-boot-starter-parent`, `spring-boot-maven-plugin`) и с `Gradle` одинаково.",
+                "source_of_confusion": "Сам фреймворк `Spring` собирается `Gradle`, отсюда ошибочный вывод об эксклюзивности.",
+                "if_it_were_true": "Если бы `Maven` не поддерживал Spring Boot, не существовало бы `spring-boot-maven-plugin`.",
+                "how_it_should_be": "Spring Boot поддерживает оба инструмента; выбор между ними не зависит от использования Spring Boot."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Maven выбирают для простых стандартных проектов, где важна предсказуемость и привычность, а команда не хочет мигрировать. Gradle — для крупных multi-module проектов, где критична скорость сборки, нужна гибкая кастомизация, проект на `Kotlin`/`Android` или нужен build cache для CI. По производительности `Gradle` выигрывает на повторных сборках: инкрементальность, build cache и прогретый Daemon.",
+              "correct": true,
+              "sections": {
+                "explanation": "На повторной сборке `Maven` делает полную пересборку, а `Gradle` пересобирает только изменённое (incremental ~3s против clean ~45s).",
+                "example": "Выбор делают по контексту: микросервис на Spring Boot со стандартной структурой — `Maven`; монорепо с десятками модулей и жёсткими требованиями к скорости CI — `Gradle`.",
+                "when_to_apply": "По возможностям ускорения: у `Maven` нет инкрементальной сборки и build cache, а параллелизм ограничен (`-T 4`); `Gradle` даёт incremental, cache и полноценный `org.gradle.parallel`.",
+                "edge_cases": "На чистой сборке (`clean build`) разница невелика — оба сопоставимы; преимущество `Gradle` проявляется именно на повторных и инкрементальных сборках, поэтому для редких билдов выгода меньше.",
+                "related": "[[gradle-maven-interview#Q14]] отличия Gradle от Maven; [[gradle-maven-interview#Q24]] build cache; [[gradle-maven-interview#Q29]] миграция с Maven на Gradle."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как мигрировать проект с `Maven` на `Gradle` и как маппятся scope в конфигурации?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Gradle` даёт встроенную команду `gradle init --type pom`: она создаёт `build.gradle(.kts)` на основе `pom.xml`, конвертирует зависимости с правильными scope в конфигурации, генерирует `settings.gradle` и Wrapper. Маппинг: `compile → implementation`/`api`, `provided → compileOnly`, `runtime → runtimeOnly`, `test → testImplementation`, `system → files(...)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`mvn`-зависимость со `scope test` после `gradle init --type pom` станет `testImplementation(\"...\")`, а `provided` — `compileOnly(\"...\")`.",
+                "example": "Автоконвертацию запускают как стартовую точку, но затем дорабатывают вручную: меняют maven-specific плагины на аналоги, настраивают `buildSrc` и version catalog.",
+                "when_to_apply": "Ручная часть включает перевод профилей `Maven` в conditional-логику/properties и настройку convention plugins для DRY-конфигурации.",
+                "edge_cases": "`gradle init` конвертирует структуру, но не семантику кастомных плагинов: их аналоги в `Gradle` приходится искать и настраивать руками, иначе часть сборки не воспроизведётся.",
+                "related": "[[gradle-maven-interview#Q7]] scope в Maven; [[gradle-maven-interview#Q21]] конфигурации Gradle; [[gradle-maven-interview#Q28]] когда мигрировать."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Миграцию с `Maven` на `Gradle` можно выполнить только полностью вручную, переписав `pom.xml` в `build.gradle` с нуля; автоматики у `Gradle` нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Gradle` предоставляет автоматическую команду `gradle init --type pom`, которая конвертирует `pom.xml` в билд-скрипт.",
+                "source_of_confusion": "После автоконвертации действительно нужна ручная доработка, отсюда вывод об отсутствии автоматики вовсе.",
+                "if_it_were_true": "Если бы автоматики не было, `gradle init --type pom` не существовал бы как тип инициализации.",
+                "how_it_should_be": "Стартовая конвертация делается командой `gradle init --type pom`; вручную лишь дорабатывают плагины и профили."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "При миграции `Maven`-scope `test` маппится в `Gradle`-конфигурацию `implementation`, попадая в основной артефакт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`test` маппится в `testImplementation`, а не в `implementation`; в основной артефакт тестовые зависимости не попадают.",
+                "source_of_confusion": "И `implementation`, и `testImplementation` объявляют зависимости, отсюда путаница в маппинге.",
+                "if_it_were_true": "Если бы `test` стал `implementation`, тестовые библиотеки протекли бы в production-`JAR`.",
+                "how_it_should_be": "`compile → implementation`, а `test → testImplementation`; тестовый scope остаётся изолированным."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "После `gradle init --type pom` проект полностью готов и не требует никакой ручной доработки — все плагины и профили конвертируются автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Автоконвертация — лишь старт: кастомные плагины и профили `Maven` приходится дорабатывать вручную.",
+                "source_of_confusion": "Базовые зависимости конвертируются корректно, отсюда впечатление полной готовности.",
+                "if_it_were_true": "Если бы всё конвертировалось идеально, не было бы списка задач «что сделать вручную» после миграции.",
+                "how_it_should_be": "`gradle init` даёт черновик; maven-specific плагины и профили требуют ручной настройки в `Gradle`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как ускорить сборку в `Gradle` и `Maven`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Единственный способ ускорить сборку — купить более мощное железо; настройками `Gradle`/`Maven` повлиять на скорость нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Скорость сильно зависит от настроек: параллелизм, build cache, configuration cache, пропуск тестов и кэш зависимостей дают кратный выигрыш.",
+                "source_of_confusion": "Железо действительно влияет на время сборки, отсюда вывод, что только оно и важно.",
+                "if_it_were_true": "Если бы настройки не помогали, свойства `org.gradle.parallel` и `org.gradle.caching` не существовали бы.",
+                "how_it_should_be": "Большая часть ускорения — это параллелизм, кэширование и грамотная конфигурация, а не только апгрейд железа."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `Gradle`: `org.gradle.parallel=true`, `org.gradle.caching=true`, больше памяти Daemon (`-Xmx4g`), `org.gradle.configuration-cache=true`, `configureondemand`, плюс `./gradlew assemble`/`--parallel`. В `Maven`: параллельная сборка `mvn -T 1C`, пропуск тестов `-DskipTests`, offline `-o`, выборочная сборка модулей. Общее: кэш зависимостей в CI, корпоративный `Nexus`-зеркало, минимум плагинов на сборке.",
+              "correct": true,
+              "sections": {
+                "explanation": "`mvn -T 1C clean install` собирает в потоков по числу ядер, а `./gradlew test --parallel` параллелит тесты; обе команды используют все CPU.",
+                "example": "Эти приёмы применяют, когда сборка стала узким местом — локально замедляет цикл разработки или раздувает время CI-пайплайна.",
+                "when_to_apply": "Профилируют сборку через `./gradlew build --scan` или `mvn -X`, чтобы найти самые медленные задачи/плагины перед оптимизацией.",
+                "edge_cases": "Пропуск тестов `-DskipTests`/`./gradlew assemble` ускоряет билд, но опасен в CI: можно собрать и задеплоить артефакт без проверки — допустимо только локально.",
+                "related": "[[gradle-maven-interview#Q23]] Daemon; [[gradle-maven-interview#Q24]] build cache; [[gradle-maven-interview#Q31]] configuration cache."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Параллельная сборка модулей в `Maven` включается флагом `--parallel`, как и в `Gradle`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Maven` параллелизм задают флагом `-T` (`-T 4` или `-T 1C`), а `--parallel` — это синтаксис `Gradle`.",
+                "source_of_confusion": "Оба инструмента умеют параллелить, поэтому флаги легко перепутать между ними.",
+                "if_it_were_true": "Если бы `Maven` понимал `--parallel`, не нужен был бы отдельный синтаксис `-T 1C`.",
+                "how_it_should_be": "`Maven`: `-T <потоки>`; `Gradle`: `--parallel`/`org.gradle.parallel` — флаги у инструментов разные."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Configuration Cache` — это фича `Maven`, которую в `Gradle` включить нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Configuration Cache` — это возможность `Gradle` (с 7.4+), включается `org.gradle.configuration-cache=true`; у `Maven` её нет.",
+                "source_of_confusion": "Оба инструмента кэшируют зависимости, отсюда перенос названия кэша не на тот инструмент.",
+                "if_it_were_true": "Если бы это была фича `Maven`, в `gradle.properties` не было бы свойства `org.gradle.configuration-cache`.",
+                "how_it_should_be": "Configuration Cache принадлежит `Gradle`; в `Maven` ускоряются через `-T`, `-o` и `-DskipTests`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Gradle Configuration Cache`, что он кэширует и какие у него ограничения?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Configuration Cache` кэширует результаты выполнения задач (`compileJava`, `test`) — это просто другое название для `Build Cache`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Configuration Cache кэширует фазу конфигурации (граф задач), а результаты задач — это отдельный `Build Cache`.",
+                "source_of_confusion": "Оба механизма содержат слово «cache» и ускоряют сборку, поэтому их путают.",
+                "if_it_were_true": "Если бы он кэшировал результаты задач, не было бы отдельного `org.gradle.caching=true` для Build Cache.",
+                "how_it_should_be": "Configuration Cache хранит результат фазы конфигурации; outputs задач переиспользует Build Cache."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Configuration Cache` никак не влияет на скорость и существует только для отладки графа задач.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Configuration Cache даёт ощутимый прирост: пропуск фазы конфигурации экономит десятки секунд на больших проектах.",
+                "source_of_confusion": "Эффект незаметен на маленьких проектах с быстрой конфигурацией, отсюда вывод об отсутствии ускорения.",
+                "if_it_were_true": "Если бы он не ускорял сборку, его не позиционировали бы как оптимизацию вместе с build cache.",
+                "how_it_should_be": "Главная цель Configuration Cache — ускорение за счёт пропуска фазы конфигурации при повторных сборках."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Configuration Cache (с `Gradle 7.4`, стабильно в 8) кэширует результат фазы конфигурации — вычисление графа задач: парсинг `build.gradle`, регистрацию задач, вычисление их зависимостей. При повторных сборках с теми же входами эта фаза пропускается полностью. Включается `org.gradle.configuration-cache=true`. Ограничения: задачи не должны обращаться к `Project` во время Execution.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без кэша: `init → configuration → execution`; с кэшем: `init → [restore from cache] → execution`. На больших проектах фаза конфигурации 30-60с сокращается до < 1с.",
+                "example": "Configuration Cache включают на крупных multi-module проектах, где фаза конфигурации заметно тормозит каждый запуск даже инкрементальной сборки.",
+                "when_to_apply": "В период миграции ставят `org.gradle.configuration-cache-problems=warn`, чтобы нарушения логировались предупреждениями, а не падали ошибкой.",
+                "edge_cases": "Несовместимы старые плагины и задачи, хранящие `Project` в полях или обращающиеся к нему в `doLast`; такой код надо переписать, захватывая значения на фазе конфигурации.",
+                "related": "[[gradle-maven-interview#Q15]] фаза Configuration; [[gradle-maven-interview#Q24]] build cache как другой кэш; [[gradle-maven-interview#Q30]] ускорение сборки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "С `Configuration Cache` задачи могут свободно обращаться к объекту `Project` во время фазы Execution без всяких ограничений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Configuration Cache запрещает обращение к `Project` на Execution: значения нужно захватывать на фазе конфигурации, иначе будет ошибка.",
+                "source_of_confusion": "До кэша обращение к `project` в `doLast` работало, отсюда ожидание, что оно безопасно и с кэшем.",
+                "if_it_were_true": "Если бы ограничений не было, старые плагины с `project` в `doLast` не ломали бы Configuration Cache.",
+                "how_it_should_be": "Доступ к `Project` в Execution запрещён; нужные данные сохраняют в локальные переменные на конфигурации."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Dependency Locking` в `Gradle`, зачем он нужен и как им пользоваться?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Dependency Locking` нужен, чтобы заблокировать зависимость от изменения другими разработчиками через права доступа в репозитории.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Locking фиксирует **версии** зависимостей для детерминированных сборок, а не управляет правами доступа к коду.",
+                "source_of_confusion": "Слово «lock» ассоциируется с блокировкой доступа, отсюда подмена смысла.",
+                "if_it_were_true": "Если бы locking управлял доступом, в lock-файле были бы пользователи и права, а там — версии артефактов.",
+                "how_it_should_be": "Dependency Locking фиксирует точные версии в `gradle.lockfile`; контроль доступа — задача системы прав репозитория."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Lock-файл `Gradle` генерируется автоматически при каждой сборке и не должен коммититься в репозиторий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lock-файл создают явно через `--write-locks` и обязательно коммитят, иначе фиксация версий не работает для команды и CI.",
+                "source_of_confusion": "Многие кэши и метаданные действительно генерируются на лету, отсюда вывод об автогенерации lock-файла.",
+                "if_it_were_true": "Если бы lock-файл не коммитился, разные машины не получали бы одинаковые версии — цель locking терялась бы.",
+                "how_it_should_be": "`gradle.lockfile` пишут командой `--write-locks` и коммитят; при сборке он только читается и проверяется."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `Maven` есть точно такой же механизм lock-файлов, поэтому Dependency Locking — это общая фича обоих инструментов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `Maven` нет lock-файлов: там версии и так точные в `pom.xml`, а строгость добавляет Enforcer Plugin — это другой подход.",
+                "source_of_confusion": "Обе системы стремятся к воспроизводимости, отсюда вывод об одинаковом механизме.",
+                "if_it_were_true": "Если бы у `Maven` был lock-файл, не пришлось бы упоминать `dependencyManagement` + Enforcer как его аналог.",
+                "how_it_should_be": "Lock-файлы — особенность `Gradle` (динамические версии); в `Maven` детерминизм даёт сам формат `pom.xml`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Dependency Locking фиксирует точные версии всех разрешённых зависимостей в lock-файле (`gradle.lockfile`), который коммитится в репозиторий. Решает проблему недетерминированных сборок при динамических версиях (`1.+`, диапазоны). Включается `dependencyLocking { lockAllConfigurations() }`, lock пишут `./gradlew dependencies --write-locks`; при сборке версии проверяются автоматически.",
+              "correct": true,
+              "sections": {
+                "explanation": "Для `implementation(\"com.example:library:1.+\")` lock-файл зафиксирует `com.example:library:1.2.3`, и все машины получат именно её, пока lock не обновят.",
+                "example": "Locking применяют для воспроизводимых production-сборок, аудита изменений зависимостей через diff lock-файла в PR и сборок в air-gapped CI.",
+                "when_to_apply": "Конкретную зависимость обновляют точечно: `./gradlew dependencies --update-locks com.example:library`, не трогая остальные версии.",
+                "edge_cases": "Если реально разрешённые версии разойдутся с lock-файлом, сборка падает; в `Maven` аналог дают точные версии в `pom.xml` плюс Enforcer Plugin, а не lock-файл.",
+                "related": "[[gradle-maven-interview#Q22]] resolutionStrategy и версии; [[gradle-maven-interview#Q24]] воспроизводимость через кэш; [[gradle-maven-interview#Q38]] dependency verification как смежный механизм."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Gradle Composite Builds` и чем они отличаются от multi-project?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Composite Build объединяет несколько независимых `Gradle`-проектов (каждый со своим `settings.gradle`) в одну сборку через `includeBuild` с `dependencySubstitution`. В отличие от multi-project (все модули в одном `settings.gradle`, изменения сразу видны), composite build чаще используют для локальной разработки библиотеки без публикации в `Nexus`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`includeBuild(\"../my-library\")` с substitution заменяет зависимость `com.example:my-library` из Maven Central на локальный проект `../my-library`.",
+                "example": "Composite build применяют, когда правят библиотеку и приложение одновременно: изменения в `shared-lib` сразу подхватываются `my-app` без релиза.",
+                "when_to_apply": "Главное отличие — независимость: в composite каждый проект имеет свой `settings.gradle` и может собираться отдельно, тогда как multi-project — единый монорепо.",
+                "edge_cases": "При совпадении координат подставляемой библиотеки с реальной зависимостью нужна явная `dependencySubstitution`, иначе `Gradle` не поймёт, какую версию (локальную или из репозитория) использовать.",
+                "related": "[[gradle-maven-interview#Q27]] multi-module проект; [[gradle-maven-interview#Q17]] settings.gradle; [[gradle-maven-interview#Q36]] публикация библиотек в Nexus."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Composite Build и multi-project — это одно и то же: оба требуют единого `settings.gradle` для всех модулей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные модели: multi-project имеет один общий `settings.gradle`, а composite объединяет проекты, у каждого из которых свой `settings.gradle`.",
+                "source_of_confusion": "Оба объединяют несколько проектов в одну сборку, отсюда вывод об их эквивалентности.",
+                "if_it_were_true": "Если бы они совпадали, не существовало бы отдельного API `includeBuild` с `dependencySubstitution`.",
+                "how_it_should_be": "Multi-project — один `settings.gradle` на монорепо; composite — несколько независимых проектов через `includeBuild`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Composite Build используется в первую очередь для публикации артефактов в `Nexus`, заменяя `maven-publish`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Composite Build нужен для локальной разработки библиотеки без публикации; публикацию делает `maven-publish`, а не composite.",
+                "source_of_confusion": "И то, и другое связано с библиотеками, поэтому функции смешивают.",
+                "if_it_were_true": "Если бы composite публиковал в `Nexus`, не было бы смысла в `dependencySubstitution` на локальный проект.",
+                "how_it_should_be": "Composite позволяет работать с библиотекой локально без релиза; публикация в `Nexus` — отдельная задача плагина `maven-publish`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В Composite Build изменения в подключённой через `includeBuild` библиотеке видны основному проекту только после её ручной публикации в репозиторий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Изменения видны немедленно: `Gradle` строит единый граф задач, и `my-app` подхватывает правки `shared-lib` без публикации.",
+                "source_of_confusion": "В обычной зависимости из репозитория правки видны только после релиза, и это переносят на composite.",
+                "if_it_were_true": "Если бы требовалась публикация, composite не давал бы преимущества над зависимостью из `Nexus`.",
+                "how_it_should_be": "Composite build делает изменения библиотеки сразу видимыми; публикация в репозиторий при этом не нужна."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как создать и использовать `Maven BOM`, в том числе подключить его из `Gradle`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`BOM` создаётся с `<packaging>jar</packaging>` и содержит секцию `<dependencies>` со всеми библиотеками, которые он подключает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BOM имеет `<packaging>pom</packaging>` и содержит только `<dependencyManagement>` (версии), а не `<dependencies>` с реальными подключениями.",
+                "source_of_confusion": "Большинство артефактов — `jar` с `dependencies`, и это переносят на BOM.",
+                "if_it_were_true": "Если бы BOM был `jar` с `dependencies`, его импорт тащил бы все библиотеки в classpath, чего BOM не делает.",
+                "how_it_should_be": "BOM — это `packaging pom` с `dependencyManagement`; реальные подключения остаются в `dependencies` потребителя."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`BOM` создают как POM с `<packaging>pom</packaging>`, содержащий только `<dependencyManagement>` с версиями управляемых библиотек (можно импортировать другие BOM через `scope import`). Используют, импортируя BOM в `dependencyManagement` целевого POM через `scope import`, после чего версии зависимостей не указывают. В `Gradle` BOM подключают через `implementation(platform(\"com.example:my-platform:1.0.0\"))`.",
+              "correct": true,
+              "sections": {
+                "explanation": "BOM `my-platform` объявляет версии `module-a` и `module-b`; проект импортирует его и пишет `module-a` без версии — она берётся из BOM.",
+                "example": "BOM создают, когда несколько проектов делят общий набор библиотек: меняешь версию в одном `my-platform` — она применяется всюду, где BOM импортирован.",
+                "when_to_apply": "В `Gradle` ключевое слово `platform(...)` импортирует Maven BOM, и зависимость `implementation(\"com.example:module-a\")` берёт версию из него.",
+                "edge_cases": "Версии из BOM применяются только к зависимостям, которые проект реально объявил; BOM сам ничего не подключает, поэтому неиспользуемые версии не раздувают classpath.",
+                "related": "[[gradle-maven-interview#Q13]] что такое BOM и vs parent; [[gradle-maven-interview#Q9]] dependencyManagement; [[gradle-maven-interview#Q25]] version catalog как аналог в Gradle."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Maven BOM нельзя использовать в `Gradle` — он понимается только инструментом `Maven`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Gradle` подключает Maven BOM через `implementation(platform(\"...\"))`, и версии зависимостей берутся из него.",
+                "source_of_confusion": "BOM — формат `Maven`, отсюда вывод о его несовместимости с `Gradle`.",
+                "if_it_were_true": "Если бы `Gradle` не понимал BOM, ключевое слово `platform(...)` в `build.gradle.kts` было бы бесполезным.",
+                "how_it_should_be": "`Gradle` поддерживает Maven BOM через `platform(...)`; это штатный способ переиспользовать версии из BOM."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "После импорта `BOM` все объявленные в нём библиотеки автоматически попадают в classpath проекта, даже если проект их не использует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BOM лишь декларирует версии; в classpath попадают только те библиотеки, которые проект явно объявил в `dependencies`.",
+                "source_of_confusion": "Зависимости после импорта пишут без версий, отсюда иллюзия, что BOM сам их подключает.",
+                "if_it_were_true": "Если бы BOM тянул все библиотеки, импорт большого BOM раздувал бы classpath сотнями ненужных артефактов.",
+                "how_it_should_be": "BOM управляет версиями; подключение конкретной библиотеки делает только её явное объявление в проекте."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Convention Plugins в `Gradle` организуют переиспользуемую конфигурацию и в чём разница `buildSrc` vs `build-logic`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Convention plugins дублируют конфигурацию: их приходится копировать в каждый модуль, поэтому они не решают проблему повторения настроек.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Convention plugins как раз устраняют дублирование — конфигурация пишется один раз в `buildSrc`/`build-logic` и подключается одной строкой.",
+                "source_of_confusion": "Сам плагин — это файл с настройками, отсюда ошибочное впечатление, что его копируют в модули.",
+                "if_it_were_true": "Если бы их копировали, не было бы выигрыша над дублированием настроек в каждом `build.gradle.kts`.",
+                "how_it_should_be": "Convention plugin пишется единожды и переиспользуется через `plugins { id(...) }`, убирая копипаст конфигурации."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`buildSrc` — современный рекомендуемый подход с полной поддержкой Configuration Cache, а `build-logic` устарел.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `build-logic` — современный подход с полной поддержкой Configuration Cache, а `buildSrc` устаревает.",
+                "source_of_confusion": "`buildSrc` существует давно и широко используется, отсюда вывод, что именно он рекомендуемый.",
+                "if_it_were_true": "Если бы `buildSrc` имел полную поддержку Configuration Cache, не было бы смысла переходить на `build-logic`.",
+                "how_it_should_be": "`build-logic` (через `includeBuild`) рекомендуется и дружит с Configuration Cache; `buildSrc` — устаревающий вариант."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Convention plugins выносят соглашения (компилятор, репозитории, code quality) в `buildSrc` или `build-logic`, устраняя дублирование в каждом `build.gradle.kts`. Модуль подключает их одной строкой `plugins { id(\"java-conventions\") }`. Разница: `buildSrc` — зарезервированная директория с плохой поддержкой Configuration Cache (устаревающий подход); `build-logic` — любой каталог через `includeBuild`, с полной поддержкой Configuration Cache (современный подход).",
+              "correct": true,
+              "sections": {
+                "explanation": "`java-conventions.gradle.kts` задаёт `JavaVersion.VERSION_21`, `mavenCentral()`, `checkstyle` и `jacoco`; модуль `module-a` подключает его и не дублирует эти настройки.",
+                "example": "Convention plugins применяют в multi-module проектах с общими требованиями к компиляции, статическому анализу и тестам по всем модулям.",
+                "when_to_apply": "`buildSrc` подхватывается автоматически без `includeBuild`, но изменение в нём инвалидирует весь build; `build-logic` подключают явно и он дружелюбнее к кэшам.",
+                "edge_cases": "Любое изменение в `buildSrc` пересобирает и переконфигурирует весь проект, поэтому на больших кодовых базах предпочитают `build-logic` ради Configuration Cache и изоляции.",
+                "related": "[[gradle-maven-interview#Q26]] что такое convention plugins; [[gradle-maven-interview#Q17]] buildSrc в структуре; [[gradle-maven-interview#Q31]] configuration cache и совместимость."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чтобы подключить convention plugin из `buildSrc`, его нужно опубликовать в `Nexus` и добавить как внешнюю зависимость по координатам GAV.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Плагины из `buildSrc` подключаются по `id` без публикации: `Gradle` собирает `buildSrc` автоматически и делает их доступными в `plugins {}`.",
+                "source_of_confusion": "Community-плагины тянут из Plugin Portal, и это переносят на локальные convention plugins.",
+                "if_it_were_true": "Если бы требовалась публикация, локальная разработка convention plugins была бы крайне неудобной.",
+                "how_it_should_be": "`buildSrc`/`build-logic` плагины доступны локально по `id` без публикации в репозиторий."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как опубликовать артефакты в `Nexus`/`Artifactory` через `Gradle`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для публикации в `Nexus` через `Gradle` не нужен отдельный плагин — команда `./gradlew deploy` встроена в core и работает из коробки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Публикация требует плагина `maven-publish` (и `signing` для Central); встроенной задачи `deploy` в `Gradle` нет, есть `publish`.",
+                "source_of_confusion": "В `Maven` фаза `deploy` встроена, и это переносят на `Gradle`.",
+                "if_it_were_true": "Если бы `deploy` была встроена, не нужно было бы подключать `maven-publish` и настраивать `publishing {}`.",
+                "how_it_should_be": "Публикацию обеспечивает плагин `maven-publish` с задачей `publish`; в core без плагина её нет."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Credentials для `Nexus` обязательно хранятся прямо в `build.gradle.kts` в виде строк, иначе `Gradle` не сможет аутентифицироваться.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Credentials берут из переменных окружения (`System.getenv(\"NEXUS_USER\")`) или `gradle.properties`, а не хардкодят в скрипте.",
+                "source_of_confusion": "В примере credentials видны рядом с URL, отсюда вывод, что их пишут строками в скрипте.",
+                "if_it_were_true": "Если бы пароли хардкодили в `build.gradle.kts`, они утекали бы в Git вместе с кодом.",
+                "how_it_should_be": "Credentials читают из env-переменных или защищённых properties; хардкод в скрипте — антипаттерн безопасности."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Команда `./gradlew publishToMavenLocal` публикует артефакт в удалённый корпоративный `Nexus` для всей команды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`publishToMavenLocal` кладёт артефакт в локальный `~/.m2` для отладки; в удалённый `Nexus` публикует `./gradlew publish`.",
+                "source_of_confusion": "Слово «publish» в обеих командах создаёт впечатление одинакового назначения.",
+                "if_it_were_true": "Если бы `publishToMavenLocal` слал в `Nexus`, не нужна была бы отдельная задача `publish` с настройкой репозитория.",
+                "how_it_should_be": "`publishToMavenLocal` — локальный `~/.m2`; для удалённого `Nexus` используют `publish` с настроенным репозиторием."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Подключают плагин `maven-publish` (и `signing` для Maven Central), описывают `publishing { publications { create<MavenPublication>(...) { from(components[\"java\"]) } } }` и репозиторий с credentials из переменных окружения. URL releases/snapshots выбирают по версии. Публикуют командой `./gradlew publish` (или `publishToMavenLocal` для `~/.m2`); `withSourcesJar()`/`withJavadocJar()` добавляют sources и javadoc.",
+              "correct": true,
+              "sections": {
+                "explanation": "Репозиторий выбирается по версии: `if (version.endsWith(\"SNAPSHOT\")) snapshotsUrl else releasesUrl`, а `username`/`password` берутся из `System.getenv(\"NEXUS_USER\")`.",
+                "example": "Публикацию настраивают для внутренних библиотек, которые переиспользуются другими командами через корпоративный `Nexus`/`Artifactory`.",
+                "when_to_apply": "В CI credentials передают через секреты (`NEXUS_USER`, `NEXUS_PASSWORD` из `secrets`), не храня их в репозитории.",
+                "edge_cases": "`publishToMavenLocal` кладёт артефакт в локальный `~/.m2` для отладки, но не выкладывает наружу — для команды нужен именно `publish` в `Nexus`.",
+                "related": "[[gradle-maven-interview#Q33]] composite builds как локальная альтернатива публикации; [[gradle-maven-interview#Q34]] BOM для версий; [[gradle-maven-interview#Q5]] фаза deploy в Maven как аналог."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Gradle Test Fixtures`, какой плагин их включает и когда они нужны?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Test Fixtures (плагин `java-test-fixtures`) добавляют source set `src/testFixtures`, позволяющий публиковать тестовые утилиты (builders, mocks, helpers) вместе с библиотекой для использования в тестах других модулей. Другой модуль подключает их через `testImplementation(testFixtures(project(\":module-a\")))`. Нужны для переиспользуемых Test Data Builder, общих fakes/mocks и shared Testcontainers base-классов.",
+              "correct": true,
+              "sections": {
+                "explanation": "В `module-a/src/testFixtures/java` кладут `TestUserBuilder`, а `module-b` подключает `testImplementation(testFixtures(project(\":module-a\")))` и использует этот builder в своих тестах.",
+                "example": "Test Fixtures применяют, когда тестовые helper-ы нужны нескольким модулям: без них код из `src/test` одного модуля недоступен другому.",
+                "when_to_apply": "Плагин `java-test-fixtures` создаёт отдельный source set `testFixtures`, отделённый и от основного кода, и от собственных тестов модуля.",
+                "edge_cases": "Test Fixtures публикуются как отдельный артефакт-вариант; если не подключить их через `testFixtures(...)`, обычная зависимость на модуль их не увидит.",
+                "related": "[[gradle-maven-interview#Q27]] multi-module и project-зависимости; [[gradle-maven-interview#Q21]] конфигурации тестов; [[gradle-maven-interview#Q19]] плагины и source sets."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Test Fixtures позволяют использовать классы из `src/test` одного модуля в тестах другого напрямую, без отдельного source set и плагина.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Код из `src/test` недоступен другим модулям; именно поэтому нужен плагин `java-test-fixtures` с отдельным source set `src/testFixtures`.",
+                "source_of_confusion": "Кажется логичным, что тестовый код модуля доступен зависящим от него модулям, как и основной.",
+                "if_it_were_true": "Если бы `src/test` был доступен снаружи, плагин `java-test-fixtures` и `src/testFixtures` были бы не нужны.",
+                "how_it_should_be": "Для переиспользования тестовых утилит создают source set `src/testFixtures`; `src/test` остаётся приватным для модуля."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Test Fixtures включаются плагином `java-library`, и отдельный source set для них не создаётся — они живут в `src/main`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Их включает плагин `java-test-fixtures`, который создаёт отдельный source set `src/testFixtures`, не смешивая с `src/main`.",
+                "source_of_confusion": "`java-library` тоже добавляет конфигурации, отсюда путаница, какой плагин отвечает за fixtures.",
+                "if_it_were_true": "Если бы fixtures жили в `src/main`, тестовые builders попадали бы в production-артефакт.",
+                "how_it_should_be": "Плагин — `java-test-fixtures`; он заводит `src/testFixtures` отдельно от основного кода и тестов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чтобы использовать fixtures из другого модуля, достаточно обычной зависимости `implementation(project(\":module-a\"))` без обёртки `testFixtures(...)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нужна именно обёртка `testFixtures(project(...))`: обычная project-зависимость не видит вариант с тестовыми фикстурами.",
+                "source_of_confusion": "Обычное подключение модуля привычно, отсюда вывод, что оно подтянет и fixtures.",
+                "if_it_were_true": "Если бы хватало обычной зависимости, специальная функция `testFixtures(...)` не требовалась бы.",
+                "how_it_should_be": "Fixtures — отдельный вариант артефакта; их подключают через `testImplementation(testFixtures(project(...)))`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Dependency Verification` в `Gradle`, от чего защищает и какие режимы поддерживает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Dependency Verification проверяет, что все зависимости имеют последнюю версию, и автоматически обновляет устаревшие библиотеки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Verification проверяет **целостность** (checksum/подпись) скачанных артефактов, а не свежесть версий, и ничего не обновляет.",
+                "source_of_confusion": "Слово «verification» ассоциируется с проверкой на актуальность, отсюда подмена смысла.",
+                "if_it_were_true": "Если бы он обновлял версии, файл хранил бы не checksum-ы, а правила выбора новых версий.",
+                "how_it_should_be": "Dependency Verification сверяет SHA-256/PGP скачанных JAR с зафиксированными значениями; обновление версий — другая задача."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Dependency Verification проверяет целостность артефактов из Maven-репозиториев, защищая от supply chain атак (подменённые артефакты). Метаданные генерируют `./gradlew --write-verification-metadata sha256 help` в файл `gradle/verification-metadata.xml`, который коммитится. Режимы: только checksums (`sha256` — сверяет хэш JAR) или строже — PGP-подписи (`verify-signatures` с `trusted-keys`).",
+              "correct": true,
+              "sections": {
+                "explanation": "В `verification-metadata.xml` для `spring-core-6.1.0.jar` хранится `<sha256 value=\"a1b2c3d4...\"/>`; при скачивании `Gradle` сверяет хэш и падает при несовпадении.",
+                "example": "Verification включают в проектах с повышенными требованиями к безопасности цепочки поставок, где важно гарантировать неизменность скачанных библиотек.",
+                "when_to_apply": "Для внутренних библиотек доверие настраивают через `<trusted-artifacts>` с `<trust group=\"com.example\"/>`, не вычисляя checksum для каждой версии.",
+                "edge_cases": "Файл `verification-metadata.xml` коммитится, и любое обновление версии требует ручного переноса нового checksum — это намеренное friction, заставляющее явно подтвердить изменение зависимости.",
+                "related": "[[gradle-maven-interview#Q32]] dependency locking как смежный механизм; [[gradle-maven-interview#Q22]] управление зависимостями; [[gradle-maven-interview#Q24]] воспроизводимость сборки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Dependency Verification поддерживает только проверку по checksum (sha256); верификации по PGP-подписям в `Gradle` нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поддерживаются оба режима: checksums (`sha256`) и более строгая проверка PGP-подписей через `verify-signatures` и `trusted-keys`.",
+                "source_of_confusion": "Checksum-режим проще и используется чаще, отсюда вывод, что PGP не поддерживается.",
+                "if_it_were_true": "Если бы PGP не было, опция `--write-verification-metadata sha256,pgp` и блок `<trusted-keys>` не существовали бы.",
+                "how_it_should_be": "Verification работает и по SHA-256, и по PGP-подписям; PGP даёт более строгую проверку авторства артефакта."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Файл `verification-metadata.xml` не коммитят: его генерируют на каждой машине заново, поэтому обновление зависимости не требует ручных действий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Файл коммитится в репозиторий, и обновление версии требует ручного переноса нового checksum — это намеренное friction.",
+                "source_of_confusion": "Многие сгенерированные файлы не коммитят, и это переносят на verification-metadata.",
+                "if_it_were_true": "Если бы файл не коммитили, верификация на CI не имела бы эталона для сравнения checksum-ов.",
+                "how_it_should_be": "`verification-metadata.xml` коммитится как эталон; при смене версии checksum обновляют осознанно вручную."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1565 @@
+{
+  "topic_slug": "istio-service-mesh-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое service mesh?",
+          "options": [
+            {
+              "text": "`Service mesh` — это инфраструктурный слой для service-to-service коммуникации, реализованный через sidecar-прокси (по одному на pod) плюс control plane. Он берёт на себя traffic management (routing, retries, timeouts), security (`mTLS`, authorization) и observability (метрики, трейсы, логи) прозрачно для кода приложения.",
+              "correct": true,
+              "sections": {
+                "explanation": "Прокси перехватывают весь in/out трафик pod-а и применяют политики, а сам код приложения об этом не знает — поэтому resilience и security настраиваются декларативно, а не правками в каждом сервисе.",
+                "example": "В `Istio` Envoy-sidecar добавляет mTLS и retries между `Order` и `Payment` без единой строки в их коде: всё описано в `VirtualService` и `PeerAuthentication`.",
+                "when_to_apply": "Подходит, когда микросервисов много и нужны единые правила трафика, шифрование между сервисами и сквозная наблюдаемость без дублирования логики в каждом сервисе.",
+                "edge_cases": "За удобство платят сложностью и накладными расходами: каждый sidecar добавляет latency и потребляет память, поэтому для 3-5 сервисов mesh часто избыточен.",
+                "related": "[[istio-service-mesh-interview#Q2]] что такое Istio; [[istio-service-mesh-interview#Q4]] sidecar pattern; [[istio-service-mesh-interview#Q26]] когда нужен mesh."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Service mesh` — это API Gateway, который стоит на границе кластера и маршрутизирует только входящий внешний трафик к сервисам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mesh управляет в первую очередь трафиком service-to-service внутри кластера, а edge-маршрутизацию входящего трафика делает Gateway/Ingress — это отдельный компонент.",
+                "source_of_confusion": "И mesh, и API Gateway маршрутизируют HTTP, поэтому их функции часто смешивают в одну.",
+                "if_it_were_true": "Тогда mesh не давал бы mTLS и retries между внутренними сервисами, но именно это его ключевая ценность.",
+                "how_it_should_be": "Mesh — это инфраслой для внутренней коммуникации через sidecar-прокси; edge-трафик закрывает Gateway."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Service mesh` — это библиотека, которую подключают в код каждого сервиса, чтобы добавить retries и метрики на уровне приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mesh выносит эту логику в отдельные прокси и работает прозрачно для кода; библиотечный подход (Hystrix, Resilience4j) — это как раз альтернатива mesh, а не он сам.",
+                "source_of_confusion": "Раньше resilience реализовывали именно библиотеками, поэтому кажется, что mesh — это просто новая такая библиотека.",
+                "if_it_were_true": "Тогда пришлось бы менять и пересобирать код каждого сервиса, но mesh специально этого избегает.",
+                "how_it_should_be": "Mesh реализован как sidecar-прокси рядом с приложением, а не как зависимость внутри него."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Service mesh` — это система оркестрации контейнеров, которая планирует pod-ы по нодам и перезапускает упавшие.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Планированием и перезапуском занимается оркестратор (`Kubernetes`); mesh работает поверх него и отвечает за коммуникацию между уже запущенными сервисами.",
+                "source_of_confusion": "И mesh, и оркестратор живут в кластере и связаны с pod-ами, отсюда подмена понятий.",
+                "if_it_were_true": "Тогда mesh заменял бы `Kubernetes`, но `Istio` наоборот требует K8s как платформу.",
+                "how_it_should_be": "Оркестрация — задача K8s; mesh добавляет traffic management, security и observability поверх."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Istio?",
+          "options": [
+            {
+              "text": "`Istio` — это форк `Envoy`, то есть тот же L7-прокси, переименованный и распространяемый отдельным проектом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Istio не форк Envoy: он использует Envoy как готовый data plane, а сам добавляет control plane (`Istiod`) и CRD поверх него.",
+                "source_of_confusion": "Istio и Envoy всегда упоминаются вместе, поэтому кажется, что это один и тот же продукт.",
+                "if_it_were_true": "Тогда не было бы отдельного `Istiod` и CRD вроде `VirtualService`, но именно они и составляют Istio.",
+                "how_it_should_be": "`Envoy` — это data plane (sidecar), а Istio — это control plane плюс API поверх Envoy."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Istio` — самый популярный open-source service mesh (с 2017), созданный Google, IBM и Lyft. Его data plane — это `Envoy`-прокси в роли sidecar в каждом pod, а control plane — `Istiod`, который управляет этими Envoy. Даёт routing (canary, blue-green), zero-trust security (mTLS, authz), observability и resilience без изменения кода.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Istiod` раздаёт конфигурацию и сертификаты всем Envoy, а сами Envoy исполняют политики — поэтому Istio считается самым мощным, но и самым сложным mesh.",
+                "example": "Чтобы выкатить canary 90/10 между `reviews-v1` и `reviews-v2`, достаточно описать веса в `VirtualService` — Istiod раздаст это Envoy, код сервиса не меняется.",
+                "when_to_apply": "Выбирают, когда нужен максимум фич mesh на чистом Kubernetes: тонкий traffic management, mTLS, authz и observability одновременно.",
+                "edge_cases": "Богатство фич оборачивается крутой кривой обучения: большинство команд использует ~10% возможностей, а эксплуатация требует отдельной экспертизы.",
+                "related": "[[istio-service-mesh-interview#Q1]] что такое service mesh; [[istio-service-mesh-interview#Q3]] control vs data plane; [[istio-service-mesh-interview#Q24]] Istio vs Linkerd vs Consul."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Istio` — это проприетарный продукт от одной компании, доступный только в её облаке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Istio — open-source проект под Apache 2.0, изначально от Google/IBM/Lyft, и работает в любом Kubernetes-кластере.",
+                "source_of_confusion": "Многие managed-предложения mesh у облаков создают впечатление, что сам Istio проприетарен.",
+                "if_it_were_true": "Тогда его нельзя было бы поставить self-hosted через `istioctl install`, но это стандартный сценарий.",
+                "how_it_should_be": "Istio — открытый CNCF-проект, который ставится в любой K8s, а не привязан к одному вендору."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Istio` — это плагин для `Prometheus`, добавляющий дашборды по сервисам и больше ничего.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Observability — лишь одна из функций Istio; он также делает traffic management и security, а метрики лишь экспортирует в Prometheus.",
+                "source_of_confusion": "Istio действительно тесно интегрирован с Prometheus, что сужает восприятие до одной функции.",
+                "if_it_were_true": "Тогда у него не было бы `VirtualService`, `mTLS` и `AuthorizationPolicy`, но они — ядро Istio.",
+                "how_it_should_be": "Istio — полноценный service mesh; интеграция с Prometheus — лишь часть слоя observability."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Архитектура Istio: чем control plane отличается от data plane?",
+          "options": [
+            {
+              "text": "Control plane (`Istiod`) сам проксирует весь трафик между сервисами, а data plane только хранит конфигурацию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: трафик идёт через Envoy (data plane), а Istiod только раздаёт конфиг и сертификаты и в data path не участвует.",
+                "source_of_confusion": "Слово 'control' создаёт впечатление, что через него проходит управление каждым запросом.",
+                "if_it_were_true": "Тогда Istiod был бы единой точкой отказа на пути трафика, но он намеренно вынесен из data path.",
+                "how_it_should_be": "Трафик обрабатывает data plane (Envoy); control plane лишь конфигурирует прокси."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Data plane — это набор CRD (`VirtualService`, `DestinationRule`), а control plane — это Envoy-прокси.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Роли перепутаны: CRD — это декларативный input для control plane (`Istiod`), а Envoy-прокси — это и есть data plane.",
+                "source_of_confusion": "И CRD, и data plane относятся к 'данным конфигурации', что путает терминологию.",
+                "if_it_were_true": "Тогда Envoy управлял бы политиками, но он их только исполняет по конфигу от Istiod.",
+                "how_it_should_be": "CRD обрабатывает Istiod (control plane), а трафик гоняет Envoy (data plane)."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Data plane — это `Envoy`-sidecar (по одному на pod), которые обрабатывают реальный трафик in/out сервиса на L4 и L7. Control plane — это `Istiod`: он конфигурирует Envoy (push config), делает service discovery через K8s API, выступает Certificate Authority для mTLS-сертификатов и реализует CRD (`VirtualService` и др.).",
+              "correct": true,
+              "sections": {
+                "explanation": "Разделение классическое: control plane решает 'как должно быть' и раздаёт конфиг, а data plane (Envoy) исполняет это на каждом запросе. Сам трафик через Istiod не идёт.",
+                "example": "Когда вы применяете `VirtualService`, Istiod транслирует его в конфигурацию Envoy и push-ит во все нужные sidecar — дальше маршрутизацию делают сами Envoy.",
+                "when_to_apply": "Это разграничение важно при дебаге: проблемы конфигурации ищут в Istiod, а проблемы прохождения трафика и latency — в логах конкретного Envoy.",
+                "edge_cases": "До Istio 1.5 control plane состоял из `Pilot`, `Citadel`, `Galley` — их консолидировали в единый `Istiod`, чтобы упростить эксплуатацию.",
+                "related": "[[istio-service-mesh-interview#Q1]] что такое service mesh; [[istio-service-mesh-interview#Q4]] sidecar Envoy; [[istio-service-mesh-interview#Q14]] Istiod как CA для mTLS."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В Istio нет отдельного control plane: каждый Envoy самостоятельно читает CRD из etcd и конфигурирует себя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Envoy не ходит в etcd напрямую: централизованный `Istiod` читает K8s API, переводит CRD в xDS-конфиг и push-ит его в Envoy.",
+                "source_of_confusion": "Decentralized-подача конфигурации звучит правдоподобно для большого числа sidecar.",
+                "if_it_were_true": "Тогда не нужен был бы `Istiod` и единый CA, но без них Istio не выдаёт сертификаты и конфиг.",
+                "how_it_should_be": "Control plane (`Istiod`) централизованно раздаёт конфиг Envoy через xDS, а не каждый прокси сам по себе."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Sidecar pattern в Istio: что такое Envoy как sidecar?",
+          "options": [
+            {
+              "text": "Sidecar в Istio — это отдельный pod-прокси на namespace, через который ходит трафик всех pod-ов этого namespace.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sidecar — это контейнер внутри того же pod-а, что и приложение, по одному на pod, а не общий прокси на namespace.",
+                "source_of_confusion": "Per-namespace waypoint в ambient mode действительно существует, отсюда путаница с классическим sidecar.",
+                "if_it_were_true": "Тогда не было бы оверхеда 'на каждый pod', но именно per-pod sidecar — главный минус классического режима.",
+                "how_it_should_be": "Классический sidecar — контейнер в каждом pod; общий per-namespace прокси — это уже waypoint в ambient."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Envoy-sidecar перехватывает только исходящий (egress) трафик приложения, а входящий идёт в контейнер напрямую.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sidecar перехватывает и входящий, и исходящий трафик: iptables заворачивает оба направления через Envoy.",
+                "source_of_confusion": "Кажется логичным, что для исходящих вызовов прокси нужнее, чем для входящих.",
+                "if_it_were_true": "Тогда mTLS и authz на входе не работали бы, но именно входящий трафик они и защищают.",
+                "how_it_should_be": "Envoy перехватывает весь трафик in и out, обеспечивая политики в обе стороны."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Sidecar инжектится правкой исходного кода приложения при сборке образа — поэтому требуется пересборка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Инъекция происходит на уровне pod-спеки (admission webhook добавляет контейнер), без изменения кода или образа приложения.",
+                "source_of_confusion": "Слово 'injection' наводит на мысль о внедрении в код, а не в манифест pod-а.",
+                "if_it_were_true": "Тогда mesh нельзя было бы включить для готового образа, но это штатный сценарий через label namespace.",
+                "how_it_should_be": "Инъекция добавляет контейнер в pod-спеку через webhook; код и образ приложения не трогаются."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Envoy` — высокопроизводительный L7-прокси от Lyft (CNCF graduated). В роли Istio-sidecar он инжектится в каждый pod, перехватывает весь трафик in/out (через init-container, который правит iptables) и реализует политики Istio. Поток: External → Pod IP → Envoy → app-container, и обратно App → Envoy → external service.",
+              "correct": true,
+              "sections": {
+                "explanation": "Sidecar — отдельный контейнер рядом с приложением в том же pod; iptables-редирект заворачивает весь трафик через Envoy, поэтому политики применяются прозрачно, без правок кода.",
+                "example": "После инъекции в pod появляется контейнер `istio-proxy` с образом `istio/proxyv2`, а init-container настраивает перенаправление портов на Envoy.",
+                "when_to_apply": "Sidecar-режим выбирают, когда нужен полный L7-функционал per-pod: тонкая маршрутизация, retries, mTLS и метрики для каждого workload.",
+                "edge_cases": "Цена sidecar заметна: ~50-100 MB RAM на прокси и ~1-5 ms latency overhead на каждый hop — на большом mesh это суммируется, и тут помогает ambient mode.",
+                "related": "[[istio-service-mesh-interview#Q3]] data plane из Envoy; [[istio-service-mesh-interview#Q6]] sidecar injection; [[istio-service-mesh-interview#Q22]] ambient mode без sidecar."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие бывают installation profiles в Istio?",
+          "options": [
+            {
+              "text": "У `istioctl install` есть набор профилей: `default` — рекомендуемая база для production; `demo` — все фичи для evaluation; `minimal` — только `Istiod`; `empty` — только CRD; `ambient` — sidecar-less режим. Для тонкой настройки используется CRD `IstioOperator`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Профиль — это пресет компонентов и настроек: он определяет, что именно установится (gateways, telemetry, demo-сэмплинг и т.п.), чтобы не собирать конфиг с нуля.",
+                "example": "`istioctl install --set profile=demo` поднимает всё и сразу для песочницы, а `--set profile=default` ставит минимально-достаточный production-набор.",
+                "when_to_apply": "`default` берут для прода, `demo` — для обучения и тестов фич, `minimal` — когда нужен только control plane, а gateways ставятся отдельно.",
+                "edge_cases": "`demo` включает 100% трейсинг-сэмплинг и лишние компоненты — в проде это бьёт по производительности, поэтому его туда не катят.",
+                "related": "[[istio-service-mesh-interview#Q2]] что такое Istio; [[istio-service-mesh-interview#Q6]] sidecar injection; [[istio-service-mesh-interview#Q22]] ambient profile."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Профиль `default` устанавливает абсолютно все компоненты и включает 100% трейсинг — это самый полный набор для production.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Полный набор со 100% сэмплингом — это профиль `demo` для evaluation; `default` ставит минимально-достаточную production-базу.",
+                "source_of_confusion": "Слово 'default' воспринимается как 'максимально полный', а не как 'разумный минимум'.",
+                "if_it_were_true": "Тогда `default` грузил бы прод лишними компонентами и трейсингом, но он специально лёгкий.",
+                "how_it_should_be": "`default` — production-база; полный набор всех фич — это `demo`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Профиль `minimal` ставит только CRD без `Istiod`, чтобы потом подключить внешний control plane.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Только CRD ставит профиль `empty`; `minimal` устанавливает именно `Istiod` (control plane) без дополнительных компонентов.",
+                "source_of_confusion": "И `minimal`, и `empty` звучат как 'почти ничего', отсюда их путают.",
+                "if_it_were_true": "Тогда после `minimal` не было бы control plane, но он как раз и ставит `Istiod`.",
+                "how_it_should_be": "`minimal` = только `Istiod`; голые CRD без control plane — это `empty`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Профили Istio фиксированы и не настраиваются: чтобы изменить компоненты, нужно форкать сам Istio.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Профиль — это лишь стартовая точка; поверх него тонко настраивают через CRD `IstioOperator` без всякого форка.",
+                "source_of_confusion": "Готовые пресеты создают ощущение жёстко зашитой конфигурации.",
+                "if_it_were_true": "Тогда нельзя было бы кастомизировать установку, но `IstioOperator` именно для этого и существует.",
+                "how_it_should_be": "Профиль задаёт базу, а `IstioOperator` CRD позволяет fine-grained кастомизацию."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Sidecar injection в Istio: чем отличаются auto и manual режимы?",
+          "options": [
+            {
+              "text": "Auto-injection и manual injection отличаются только тем, что auto добавляет sidecar в существующие работающие pod-ы на лету, без перезапуска.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Инъекция применяется при создании pod-а; уже запущенные pod-ы sidecar не получают — их нужно пересоздать (rollout restart).",
+                "source_of_confusion": "Слово 'auto' создаёт впечатление мгновенного применения к живым pod-ам.",
+                "if_it_were_true": "Тогда не требовался бы рестарт deployment после включения label, но он необходим.",
+                "how_it_should_be": "Оба режима внедряют sidecar при создании pod-а; существующие pod-ы надо пересоздать."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Auto-injection (рекомендуемый) включается label-ом namespace `istio-injection=enabled` — все новые pod-ы в namespace получают sidecar автоматически через mutating admission webhook. Manual injection делается командой `istioctl kube-inject -f deploy.yaml | kubectl apply -f -`. В любом случае init-container правит iptables, заворачивая трафик на Envoy.",
+              "correct": true,
+              "sections": {
+                "explanation": "Auto-инъекция работает через admission webhook на этапе создания pod-а: webhook добавляет контейнер `istio-proxy` и init-container, не трогая исходный манифест в репозитории.",
+                "example": "`kubectl label namespace default istio-injection=enabled` — и любой новый deployment в `default` поднимется уже с Envoy-sidecar без правок YAML.",
+                "when_to_apply": "Auto предпочтителен в проде (единообразно и без ручных шагов); manual удобен для отладки или когда webhook недоступен/выключен.",
+                "edge_cases": "Для отдельного pod инъекцию отключают аннотацией `sidecar.istio.io/inject: \"false\"` — например, для job-ов, которым sidecar мешает завершиться.",
+                "related": "[[istio-service-mesh-interview#Q4]] sidecar Envoy и iptables; [[istio-service-mesh-interview#Q5]] installation profiles; [[istio-service-mesh-interview#Q22]] ambient без инъекции."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Manual injection требует вписать контейнер `istio-proxy` руками в каждый Deployment и поддерживать его версию вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Manual делается командой `istioctl kube-inject`, которая сама добавляет sidecar в манифест — руками контейнер прописывать не нужно.",
+                "source_of_confusion": "Слово 'manual' воспринимается как 'всё вручную, включая YAML контейнера'.",
+                "if_it_were_true": "Тогда обновление Istio ломало бы все вручную вписанные версии, но `kube-inject` берёт версию из конфига.",
+                "how_it_should_be": "Manual = прогон манифеста через `istioctl kube-inject`, а не ручное редактирование контейнера."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Инъекция перенаправляет трафик через Envoy путём подмены сетевого драйвера CNI на уровне ноды для всего namespace.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Перенаправление делает init-container, правящий iptables внутри сетевого namespace pod-а, а не подмена CNI-драйвера ноды.",
+                "source_of_confusion": "И CNI, и iptables связаны с сетью pod-ов, поэтому механизмы смешивают.",
+                "if_it_were_true": "Тогда инъекция затрагивала бы все pod-ы ноды, но она строго per-pod через iptables.",
+                "how_it_should_be": "Трафик на Envoy заворачивает init-container через iptables в namespace конкретного pod-а."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое VirtualService в Istio?",
+          "options": [
+            {
+              "text": "`VirtualService` определяет load balancing strategy, connection pool limits и outlier detection для хоста-назначения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эти политики (балансировка, пулы, outlier detection) задаёт `DestinationRule`; `VirtualService` отвечает только за маршрутизацию запроса.",
+                "source_of_confusion": "Обе CRD относятся к networking.istio.io и часто применяются вместе, отсюда смешение ролей.",
+                "if_it_were_true": "Тогда не нужен был бы отдельный `DestinationRule`, но именно он держит trafficPolicy и subsets.",
+                "how_it_should_be": "`VirtualService` — это маршрутизация (куда слать); load balancing и пулы — это `DestinationRule`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`VirtualService` создаёт и описывает версии сервиса (subsets v1, v2) по label-ам pod-ов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Subsets объявляются в `DestinationRule`; `VirtualService` лишь ссылается на готовый subset в `destination`.",
+                "source_of_confusion": "В route фигурирует `subset`, поэтому кажется, что VirtualService его и определяет.",
+                "if_it_were_true": "Тогда маршрут на несуществующий subset работал бы сам по себе, но subset обязан быть объявлен в DestinationRule.",
+                "how_it_should_be": "`VirtualService` ссылается на subset, а объявляет его (через label) `DestinationRule`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`VirtualService` — CRD, описывающий правила маршрутизации трафика к хостам: куда и как направлять запросы. Поддерживает path-based routing (`/api/v1/*`), header-based (например, по `user-agent`), method-based и weight-based (canary). В `spec.http` задаются `match`-условия и `route` с `destination` (host + subset).",
+              "correct": true,
+              "sections": {
+                "explanation": "VirtualService отвечает на вопрос 'как маршрутизировать запрос': по заголовкам, пути, весам. Реальные версии (subsets) и политики к ним описывает уже `DestinationRule`.",
+                "example": "Правило с `match` по `user-agent: .*Chrome.*` шлёт Chrome-пользователей на `subset: v2`, а остальной трафик (route без match) — на `subset: v1`.",
+                "when_to_apply": "Используют для canary/blue-green, A/B-тестов по заголовкам, маршрутизации по путям и для подключения трафика, входящего через `Gateway`.",
+                "edge_cases": "Порядок правил важен: первое подходящее `match` выигрывает, поэтому fallback-route без match всегда ставят последним, иначе он перехватит весь трафик.",
+                "related": "[[istio-service-mesh-interview#Q8]] DestinationRule и subsets; [[istio-service-mesh-interview#Q9]] Gateway; [[istio-service-mesh-interview#Q10]] traffic splitting (canary)."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`VirtualService` управляет только входящим внешним трафиком на ingress-gateway и не применим к internal mesh-трафику.",
+              "correct": false,
+              "sections": {
+                "what_actually": "VirtualService работает и для internal service-to-service трафика, и для трафика через Gateway — второе требует явного поля `gateways`.",
+                "source_of_confusion": "VirtualService часто показывают в связке с Gateway, отсюда вывод об 'только ingress'.",
+                "if_it_were_true": "Тогда canary между внутренними сервисами был бы невозможен, но это базовый сценарий VirtualService.",
+                "how_it_should_be": "VirtualService маршрутизирует и внутренний, и edge-трафик; для edge добавляют `gateways: [...]`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое DestinationRule в Istio?",
+          "options": [
+            {
+              "text": "`DestinationRule` задаёт правила маршрутизации запросов по заголовкам и путям к разным версиям сервиса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Маршрутизацию по заголовкам/путям делает `VirtualService`; `DestinationRule` описывает политики и subsets, но не выбирает маршрут.",
+                "source_of_confusion": "Обе CRD работают в паре над одним хостом, поэтому их функции путают.",
+                "if_it_were_true": "Тогда `VirtualService` был бы не нужен, но именно он держит `match` и `route`.",
+                "how_it_should_be": "Маршрутизация — это `VirtualService`; политики назначения и subsets — это `DestinationRule`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`outlierDetection` в `DestinationRule` — это активные health-пробы, которые периодически опрашивают `/health` каждого endpoint.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`outlierDetection` — passive health checking: endpoint выкидывается на основе ошибок в реальном трафике, без отдельных проб на `/health`.",
+                "source_of_confusion": "K8s liveness/readiness — это активные пробы, отсюда перенос модели на Istio.",
+                "if_it_were_true": "Тогда DestinationRule слал бы периодические health-запросы, но он реагирует на consecutive5xxErrors в живом трафике.",
+                "how_it_should_be": "`outlierDetection` — пассивное обнаружение по ошибкам трафика; активные пробы остаются у K8s."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`DestinationRule` управляет только ingress-трафиком на границе кластера и не влияет на mesh-internal вызовы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DestinationRule применяется к любому трафику к указанному host внутри mesh, а не только к ingress.",
+                "source_of_confusion": "Edge-настройки TLS часто показывают на Gateway, отсюда привязка DestinationRule к ingress.",
+                "if_it_were_true": "Тогда circuit breaking между внутренними сервисами не работал бы, но это типовой сценарий.",
+                "how_it_should_be": "DestinationRule действует на трафик к host где угодно в mesh, включая internal вызовы."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`DestinationRule` — CRD, задающий политики для хоста-назначения после маршрутизации: load balancing strategy (например, `LEAST_REQUEST`), connection pool limits, outlier detection (passive health checking), TLS-настройки (mTLS), а также объявляющий subsets (v1, v2) по label-ам pod-ов, на которые ссылается `VirtualService`.",
+              "correct": true,
+              "sections": {
+                "explanation": "DestinationRule отвечает на вопрос 'что делать с трафиком, дойдя до сервиса': как балансировать, какие лимиты соединений, как выкидывать нездоровые endpoints — и какие версии вообще существуют.",
+                "example": "В примере заданы `loadBalancer.simple: LEAST_REQUEST`, `connectionPool` с `maxConnections: 100`, `outlierDetection` (5 ошибок 5xx → eject на 30s) и subsets `v1`/`v2` по `version`-label.",
+                "when_to_apply": "Нужен всегда, когда VirtualService ссылается на subset, а также для circuit breaking (outlier detection) и тонкой настройки балансировки и пулов соединений.",
+                "edge_cases": "`outlierDetection` — это passive health checking: endpoint выкидывается по факту ошибок в реальном трафике, в отличие от active-проб; слишком агрессивные пороги могут выбить здоровые поды при всплеске.",
+                "related": "[[istio-service-mesh-interview#Q7]] VirtualService и subsets; [[istio-service-mesh-interview#Q11]] circuit breaking; [[istio-service-mesh-interview#Q14]] mTLS в TLS-настройках."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Gateway в Istio?",
+          "options": [
+            {
+              "text": "`Gateway` — CRD, управляющий ingress (или egress) трафиком на границе mesh: какие порты, протоколы и хосты принимать. Он работает в связке с `VirtualService` (тот должен указать `gateways: [my-gateway]`) и фактически заменяет Kubernetes Ingress для mesh-сервисов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Gateway описывает только точку входа (порт, протокол, TLS, хосты) через `selector` на ingressgateway-pod; саму маршрутизацию принятых запросов делает привязанный `VirtualService`.",
+                "example": "Gateway открывает `443/HTTPS` с `tls.mode: SIMPLE` и `credentialName: my-tls-cert` для `api.example.com`, а VirtualService с `gateways: [my-gateway]` раскидывает запросы по сервисам.",
+                "when_to_apply": "Используют для внешнего входа в mesh с терминацией TLS и host-based маршрутизацией — вместо или поверх стандартного K8s Ingress.",
+                "edge_cases": "Без привязки `gateways` в VirtualService входящий трафик не маршрутизируется: Gateway лишь принимает соединение, но не знает, куда его слать.",
+                "related": "[[istio-service-mesh-interview#Q7]] VirtualService и поле gateways; [[istio-service-mesh-interview#Q14]] TLS/mTLS; [[istio-service-mesh-interview#Q10]] canary через входящий трафик."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Gateway` сам определяет правила маршрутизации запросов по путям и заголовкам к конкретным сервисам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gateway описывает только точку входа (порты, протоколы, хосты, TLS); маршрутизацию принятых запросов делает привязанный `VirtualService`.",
+                "source_of_confusion": "Gateway и VirtualService применяются вместе для ingress, поэтому функции сливают.",
+                "if_it_were_true": "Тогда не требовалось бы поле `gateways` в VirtualService, но без него трафик не маршрутизируется.",
+                "how_it_should_be": "Gateway = точка входа (L4/TLS/хосты); маршрутизация принятых запросов — у VirtualService."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Gateway` в Istio полностью совместим с Kubernetes Ingress-объектом и является просто его алиасом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Istio Gateway — отдельная CRD со своей моделью (selector, servers, TLS), а не алиас стандартного Ingress; он его заменяет, а не дублирует.",
+                "source_of_confusion": "Обе сущности отвечают за вход в кластер, отсюда вывод об эквивалентности.",
+                "if_it_were_true": "Тогда любой Ingress-контроллер понимал бы Istio Gateway, но это разные API.",
+                "how_it_should_be": "Istio Gateway — собственная CRD, заменяющая K8s Ingress для mesh-сервисов, а не его синоним."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Gateway` обязательно требует отдельного выделенного pod на каждый хост и не может обслуживать несколько хостов сразу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один ingressgateway-pod через `selector` обслуживает множество Gateway и хостов; per-host pod не нужен.",
+                "source_of_confusion": "Кажется, что изоляция хостов требует отдельных инстансов прокси.",
+                "if_it_were_true": "Тогда каждый новый домен требовал бы нового pod, но один gateway тянет много `hosts`.",
+                "how_it_should_be": "Один ingressgateway-pod обслуживает множество Gateway/хостов через общий selector."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализуется traffic splitting (canary, blue-green) в Istio?",
+          "options": [
+            {
+              "text": "Traffic splitting в Istio задаётся в `DestinationRule` через поле `weight` у каждого subset.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Веса задаются в `route` внутри `VirtualService`; `DestinationRule` лишь объявляет subsets, но не распределяет трафик по процентам.",
+                "source_of_confusion": "Subsets живут в DestinationRule, поэтому кажется, что и веса там же.",
+                "if_it_were_true": "Тогда без VirtualService уже шёл бы canary, но распределение по весам делает именно он.",
+                "how_it_should_be": "Веса — в `route` у `VirtualService`; subsets (без весов) — в `DestinationRule`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Через `VirtualService`: в `route` указывают несколько `destination` с полем `weight` (например, v1=90, v2=10), и трафик делится по весам. Canary постепенно сдвигают: 90/10 → 50/50 → 0/100. Возможен header-based canary — по `match` (например, заголовок `x-canary: true`) направлять только определённых пользователей на новую версию.",
+              "correct": true,
+              "sections": {
+                "explanation": "Веса в route дают плавное процентное переключение без правок кода и без двух разных URL. Инструменты вроде `Argo Rollouts` и `Flagger` автоматизируют этот сдвиг на основе метрик.",
+                "example": "Сначала v1=90/v2=10, метрики ок → 50/50 → 0/100; либо header-based: `x-canary: true` идут на `subset: v2`, остальные на `v1`.",
+                "when_to_apply": "Применяют для безопасного раскатывания новых версий: процентный canary для случайной выборки, header-based — для внутренних тестировщиков или конкретных клиентов.",
+                "edge_cases": "Веса в одном route должны давать в сумме 100; для надёжного canary нужны и `DestinationRule`-subsets, и метрики/SLO, иначе сдвиг идёт вслепую.",
+                "related": "[[istio-service-mesh-interview#Q7]] VirtualService и weights; [[istio-service-mesh-interview#Q8]] subsets в DestinationRule; [[istio-service-mesh-interview#Q13]] mirroring как дополнение."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Canary в Istio возможен только процентным разбиением по весам; направить новую версию конкретным пользователям нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Помимо весов есть header-based canary: `match` по заголовку (например, `x-canary: true`) шлёт нужных пользователей на новую версию.",
+                "source_of_confusion": "Weight-based canary — самый известный сценарий, поэтому про header-based забывают.",
+                "if_it_were_true": "Тогда нельзя было бы выкатить версию только на тестировщиков, но header-based это и делает.",
+                "how_it_should_be": "Istio поддерживает и weight-based, и header-based canary через `match` в VirtualService."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Для blue-green в Istio обязательно поднимать два отдельных кластера и переключать DNS между ними.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Blue-green в Istio делается переключением весов/subsets в одном кластере (0/100), без второго кластера и DNS-свитча.",
+                "source_of_confusion": "Классический blue-green вне mesh часто и правда строят на двух средах и DNS.",
+                "if_it_were_true": "Тогда mesh не упрощал бы rollout, но он как раз убирает потребность во втором кластере.",
+                "how_it_should_be": "Blue-green в Istio — это сдвиг весов между subsets в одном кластере через VirtualService."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как в Istio настраиваются retries, timeouts и circuit breaking?",
+          "options": [
+            {
+              "text": "Retries и timeouts в Istio задаются в `DestinationRule`, а circuit breaking — в `VirtualService`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: retries/timeouts описывают в `VirtualService`, а circuit breaking (`outlierDetection`) — в `DestinationRule`.",
+                "source_of_confusion": "Обе CRD относятся к resilience, поэтому их роли легко перепутать местами.",
+                "if_it_were_true": "Тогда `retries` лежал бы в DestinationRule, но он часть `http`-route в VirtualService.",
+                "how_it_should_be": "Retries/timeouts → VirtualService; circuit breaking (outlierDetection) → DestinationRule."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Чтобы включить retries в Istio, нужно добавить retry-библиотеку (например, Resilience4j) в код каждого сервиса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Retries обеспечивает Envoy по конфигу из VirtualService — без библиотек и без изменения кода приложения.",
+                "source_of_confusion": "До mesh resilience реализовывали именно in-process библиотеками, отсюда привычка.",
+                "if_it_were_true": "Тогда mesh не давал бы 'no code changes', но именно это его преимущество.",
+                "how_it_should_be": "Retries настраиваются декларативно в VirtualService; Envoy исполняет их без кода."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Retries` и `timeouts` задаются в `VirtualService`: например, `retries` с `attempts: 3`, `perTryTimeout: 2s`, `retryOn: 5xx,gateway-error,connect-failure` и `timeout: 10s`. `Circuit breaking` настраивается через `DestinationRule` (`outlierDetection`, см. Q8). Всё — через CRD, без изменения кода приложения.",
+              "correct": true,
+              "sections": {
+                "explanation": "Resilience выносится из кода в конфигурацию mesh: Envoy сам повторяет запросы, обрывает по timeout и выкидывает нездоровые endpoints — приложение об этом не знает.",
+                "example": "`retries.attempts: 3` с `perTryTimeout: 2s` повторит запрос до 3 раз по 2s, а `timeout: 10s` ограничит общий бюджет ответа всего маршрута.",
+                "when_to_apply": "Применяют для устойчивости к временным сбоям зависимостей: retries для идемпотентных вызовов, timeouts против зависших запросов, circuit breaking против каскадных отказов.",
+                "edge_cases": "Retries опасны для неидемпотентных операций (двойные списания) и могут усиливать перегрузку (retry storm); поэтому их комбинируют с timeout и outlier detection.",
+                "related": "[[istio-service-mesh-interview#Q7]] VirtualService для retries/timeout; [[istio-service-mesh-interview#Q8]] outlierDetection как circuit breaker; [[istio-service-mesh-interview#Q12]] fault injection для проверки retry-логики."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`retryOn` в Istio повторяет запрос при любой ошибке, включая бизнес-4xx вроде 400 и 403.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`retryOn` повторяет только по заданным условиям (5xx, gateway-error, connect-failure и т.п.); 4xx по умолчанию не ретраятся, так как это ошибки клиента.",
+                "source_of_confusion": "Кажется, что 'retry on error' значит 'на любую ошибку HTTP'.",
+                "if_it_were_true": "Тогда невалидный запрос бессмысленно повторялся бы 3 раза, но 4xx исключают намеренно.",
+                "how_it_should_be": "`retryOn` ретраит по явному списку условий (обычно 5xx и сетевые), а не любые ошибки."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое fault injection в Istio?",
+          "options": [
+            {
+              "text": "`Fault injection` автоматически чинит сбойные сервисы, подменяя их ответы заглушками на лету.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fault injection наоборот вносит сбои (delay/abort) для тестирования, а не чинит сервисы и не подменяет реальные ответы заглушками.",
+                "source_of_confusion": "Слово 'injection' воспринимается позитивно — как 'подстановка рабочего ответа'.",
+                "if_it_were_true": "Тогда это был бы fallback-механизм, но fault injection специально ломает трафик.",
+                "how_it_should_be": "Fault injection вносит искусственные сбои для chaos testing, а не исправляет их."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Fault injection` в Istio задаётся в `DestinationRule` через `outlierDetection`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fault injection описывается в `VirtualService` через `http.fault`; `outlierDetection` в DestinationRule — это circuit breaking, другое.",
+                "source_of_confusion": "И то и другое связано с ошибками и 5xx, поэтому механизмы путают.",
+                "if_it_were_true": "Тогда `fault.delay/abort` лежали бы в DestinationRule, но они часть route в VirtualService.",
+                "how_it_should_be": "Fault injection — это `http.fault` в VirtualService; outlierDetection — отдельный circuit breaker."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Fault injection` может только задерживать запросы (`delay`), но не умеет возвращать ошибочные HTTP-коды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кроме `delay` есть `abort`, который возвращает заданный `httpStatus` (например, 500) для процента запросов.",
+                "source_of_confusion": "Delay — самый наглядный пример, поэтому про abort забывают.",
+                "if_it_were_true": "Тогда нельзя было бы проверить обработку 5xx клиентом, но `abort` именно для этого.",
+                "how_it_should_be": "Fault injection поддерживает и `delay` (задержка), и `abort` (возврат HTTP-ошибки)."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Fault injection` — встраивание искусственных сбоев для chaos testing через `VirtualService.http.fault`: `delay` (задержка для процента запросов) и `abort` (возврат заданного HTTP-статуса для процента запросов). Например, 10% запросов задерживаются на 5s, 5% возвращают 500. Используется, чтобы проверить retry-логику и обработку ошибок клиентом.",
+              "correct": true,
+              "sections": {
+                "explanation": "Fault injection позволяет смоделировать деградацию зависимости без её реальной поломки: вы заранее проверяете, как клиент переживёт задержки и ошибки, в контролируемых условиях.",
+                "example": "`fault.delay` с `percentage.value: 10` и `fixedDelay: 5s` плюс `fault.abort` с `percentage.value: 5` и `httpStatus: 500` — ровно сценарий из шпаргалки.",
+                "when_to_apply": "Применяют в pre-prod/chaos-днях, чтобы убедиться, что timeouts, retries и fallback в клиенте действительно срабатывают при сбоях зависимостей.",
+                "edge_cases": "На проде fault injection включают точечно и по фильтрам (заголовок/namespace), иначе можно реально уронить пользовательский трафик вместо теста.",
+                "related": "[[istio-service-mesh-interview#Q7]] VirtualService как место настройки; [[istio-service-mesh-interview#Q11]] проверка retry/timeout-логики; [[istio-service-mesh-interview#Q13]] mirroring как другой способ тестов."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое mirroring (shadow traffic) в Istio?",
+          "options": [
+            {
+              "text": "`Mirroring` (shadow traffic) — копирование трафика на вторичный destination через поле `mirror` в `VirtualService` (с `mirrorPercentage`). Основной трафик идёт на primary (например, `subset: v1`) и его ответ отдаётся пользователю; зеркало (`subset: v2`) получает копию запросов, но его ответы игнорируются. Используется для безопасного теста новой версии на боевом трафике.",
+              "correct": true,
+              "sections": {
+                "explanation": "Mirror шлёт fire-and-forget копию запроса на вторую версию: пользователь видит только ответ primary, а зеркальный сервис прогоняет реальный трафик без влияния на UX.",
+                "example": "`route` на `v1` плюс `mirror.host: reviews, subset: v2` с `mirrorPercentage.value: 100.0` — v2 получает копию 100% запросов, ответы v2 отбрасываются.",
+                "when_to_apply": "Применяют, чтобы проверить новую версию на реальной нагрузке и реальных данных до переключения трафика — ловят регрессии и проблемы производительности безопасно.",
+                "edge_cases": "Опасность с side-effects: если зеркало пишет в общую БД или шлёт письма, копия запросов вызовет двойные эффекты — для mirror нужен изолированный stateful-слой.",
+                "related": "[[istio-service-mesh-interview#Q7]] VirtualService как место mirror; [[istio-service-mesh-interview#Q10]] canary как следующий шаг; [[istio-service-mesh-interview#Q12]] fault injection для тестов."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "При mirroring ответ зеркального сервиса (v2) отдаётся пользователю, а primary (v1) лишь логируется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: пользователю отдаётся ответ primary (v1), а ответы зеркала (v2) игнорируются — на UX зеркало не влияет.",
+                "source_of_confusion": "Кажется логичным, что 'новую версию' и проверяют, показывая её ответ пользователю.",
+                "if_it_were_true": "Тогда mirror был бы тем же canary с риском для пользователя, но он специально безопасен.",
+                "how_it_should_be": "Пользователь видит ответ primary; зеркало получает копию, его ответы отбрасываются."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Mirroring перенаправляет (а не копирует) часть трафика на v2, поэтому primary этих запросов не получает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mirror именно копирует: один и тот же запрос обрабатывает и primary, и зеркало; перенаправление по процентам — это weight-based splitting.",
+                "source_of_confusion": "`mirrorPercentage` напоминает веса canary, отсюда мысль о перенаправлении.",
+                "if_it_were_true": "Тогда часть пользователей попадала бы на непроверенную v2, но mirror этого избегает.",
+                "how_it_should_be": "Mirror дублирует запрос на зеркало; primary продолжает получать весь трафик."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Mirroring безопасен при любых сценариях, включая запись в общую БД зеркальным сервисом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mirror безопасен только без side-effects; если зеркало пишет в общую БД или шлёт уведомления, копии запросов вызовут двойные эффекты.",
+                "source_of_confusion": "Раз ответы игнорируются, кажется, что и побочных эффектов нет.",
+                "if_it_were_true": "Тогда можно было бы зеркалить платёжный сервис в прод-БД, но это привело бы к двойным записям.",
+                "how_it_should_be": "Mirror безопасен для read-сценариев; stateful-зеркало нужно изолировать от общих данных."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое mutual TLS (mTLS) в Istio?",
+          "options": [
+            {
+              "text": "В mTLS сертификат проверяет только сервер (как в обычном TLS), а клиент остаётся неаутентифицированным.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В mutual TLS проверяют сертификаты обе стороны: и сервер клиента, и клиент сервера — в этом отличие от обычного одностороннего TLS.",
+                "source_of_confusion": "Привычный HTTPS аутентифицирует только сервер, отсюда перенос модели на mTLS.",
+                "if_it_were_true": "Тогда не было бы 'mutual', и identity клиента нельзя было бы проверить, но mTLS именно это и даёт.",
+                "how_it_should_be": "mTLS — взаимная проверка: сертификаты предъявляют и проверяют обе стороны соединения."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`mTLS` — взаимная аутентификация: и клиент, и сервер проверяют сертификаты друг друга. В Istio это автоматически: `Istiod` выступает CA, сертификаты auto-issued и auto-rotated (TTL — часы), а identity = service account (криптографически подтверждённый). Режим задаётся `PeerAuthentication` (`STRICT` — только mTLS, `PERMISSIVE` — оба для миграции, `DISABLE`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Istio снимает с команд боль PKI: Envoy-sidecar терминируют mTLS прозрачно, Istiod выдаёт и ротирует короткоживущие сертификаты, а identity берётся из K8s service account — это и есть zero-trust networking.",
+                "example": "`PeerAuthentication` с `mtls.mode: STRICT` заставляет workload принимать только mTLS-соединения; для постепенного перехода сначала ставят `PERMISSIVE`.",
+                "when_to_apply": "Включают, когда нужно шифрование и взаимная аутентификация между всеми сервисами без правок кода — основа zero-trust в кластере.",
+                "edge_cases": "Резкий `STRICT` рвёт связь с сервисами без sidecar (legacy, jobs); поэтому миграцию ведут через `PERMISSIVE`, пока все workload не получат прокси.",
+                "related": "[[istio-service-mesh-interview#Q3]] Istiod как CA; [[istio-service-mesh-interview#Q15]] AuthorizationPolicy поверх mTLS; [[istio-service-mesh-interview#Q16]] PeerAuthentication."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "В Istio сертификаты для mTLS нужно выпускать вручную через внешний CA и руками раскладывать по pod-ам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Istio делает это автоматически: `Istiod` сам CA, сертификаты auto-issued, auto-rotated с TTL в часы — ручная раскладка не нужна.",
+                "source_of_confusion": "Классический PKI ассоциируется с ручным выпуском и распространением ключей.",
+                "if_it_were_true": "Тогда исчезло бы главное удобство Istio-mTLS, но он специально автоматизирует PKI.",
+                "how_it_should_be": "Istiod автоматически выдаёт и ротирует короткоживущие сертификаты для каждого workload."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Режим `PERMISSIVE` означает, что mTLS полностью выключен и весь трафик идёт в открытом виде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PERMISSIVE` принимает и mTLS, и plaintext одновременно (для миграции); полное отключение — это `DISABLE`.",
+                "source_of_confusion": "Слово 'permissive' звучит как 'разрешает всё = без шифрования'.",
+                "if_it_were_true": "Тогда не было бы отдельного `DISABLE`, но он существует именно для полного отключения.",
+                "how_it_should_be": "`PERMISSIVE` — переходный режим (mTLS + plaintext); выключение mTLS — это `DISABLE`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Authorization Policies в Istio?",
+          "options": [
+            {
+              "text": "`AuthorizationPolicy` отвечает за аутентификацию (проверку сертификатов и JWT), а не за разграничение доступа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аутентификацию делают `PeerAuthentication` (mTLS) и `RequestAuthentication` (JWT); `AuthorizationPolicy` — это уже авторизация (кому что можно).",
+                "source_of_confusion": "Аутентификация и авторизация часто идут в паре и обе про 'безопасность', отсюда смешение.",
+                "if_it_were_true": "Тогда не нужны были бы отдельные Peer/RequestAuthentication, но именно они аутентифицируют.",
+                "how_it_should_be": "Аутентификация — Peer/RequestAuthentication; решение о доступе — AuthorizationPolicy."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`AuthorizationPolicy` умеет разрешать или запрещать доступ только по IP-адресу источника, без понятия service account.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главный механизм — identity по service account (`principals`), полученной из mTLS; правила также учитывают методы, пути и JWT-claims, не только IP.",
+                "source_of_confusion": "Классические firewall-правила оперируют IP, отсюда перенос модели на mesh-authz.",
+                "if_it_were_true": "Тогда нельзя было бы выразить 'только от сервиса web', но это базовый пример AuthorizationPolicy.",
+                "how_it_should_be": "Authz строится на криптографической identity (service account), а не на IP."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`AuthorizationPolicy` — service-to-service авторизация поверх аутентификации (mTLS): кто, какими методами и к каким путям может обращаться. В `rules` задают `from` (source.principals — service account), `to` (operation: methods, paths) и опционально `when` (условия). Поддерживается default-deny: пустой `spec: {}` запрещает всё, затем добавляют explicit Allow.",
+              "correct": true,
+              "sections": {
+                "explanation": "Authentication отвечает 'кто ты' (mTLS/JWT), а authorization — 'что тебе можно'. AuthorizationPolicy исполняется в Envoy и решает доступ по identity, методу и пути без кода приложения.",
+                "example": "Политика разрешает сервису `api` принимать только `GET /api/*` от service account `web` (`principals: [\"cluster.local/ns/default/sa/web\"]`) — остальное отклоняется.",
+                "when_to_apply": "Применяют для zero-trust внутри mesh: ограничить, какие сервисы и какими операциями могут вызывать друг друга, а не только зашифровать канал.",
+                "edge_cases": "Default-deny (`spec: {}`) — мощный, но рискованный шаг: если забыть explicit Allow для нужных вызовов, легально упадёт весь трафик к сервису.",
+                "related": "[[istio-service-mesh-interview#Q14]] mTLS как identity-основа; [[istio-service-mesh-interview#Q16]] PeerAuthentication; [[istio-service-mesh-interview#Q17]] authz по JWT-claims."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В Istio нельзя сделать default-deny: политики работают только в режиме явного запрета конкретных правил.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Default-deny делается пустой политикой (`spec: {}`), которая запрещает всё; затем добавляют explicit Allow для нужных вызовов.",
+                "source_of_confusion": "Кажется, что AuthorizationPolicy умеет только точечно что-то блокировать.",
+                "if_it_were_true": "Тогда zero-trust 'запретить всё, разрешить нужное' был бы невозможен, но Istio его поддерживает.",
+                "how_it_should_be": "Пустая AuthorizationPolicy даёт default-deny; поверх неё добавляют Allow-правила."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются PeerAuthentication и RequestAuthentication в Istio?",
+          "options": [
+            {
+              "text": "`PeerAuthentication` проверяет JWT-токены пользователей, а `RequestAuthentication` настраивает mTLS между сервисами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Роли перепутаны: `PeerAuthentication` — это mTLS между workload, а `RequestAuthentication` — валидация JWT в запросах.",
+                "source_of_confusion": "Оба CRD из security.istio.io про аутентификацию, отсюда зеркальная путаница.",
+                "if_it_were_true": "Тогда `jwtRules` лежали бы в PeerAuthentication, но они часть RequestAuthentication.",
+                "how_it_should_be": "PeerAuthentication = mTLS (workload identity); RequestAuthentication = JWT (end-user identity)."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`RequestAuthentication` сам по себе блокирует все запросы без валидного JWT, поэтому AuthorizationPolicy не нужна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RequestAuthentication только валидирует присутствующий токен; запросы без JWT он пропускает, а отклонять анонимов должна `AuthorizationPolicy`.",
+                "source_of_confusion": "Кажется, что 'проверка токена' автоматически означает 'отказ без токена'.",
+                "if_it_were_true": "Тогда AuthorizationPolicy с `requestPrincipals` была бы лишней, но она нужна именно для блокировки.",
+                "how_it_should_be": "RequestAuthentication валидирует JWT; блокировку запросов без него делает AuthorizationPolicy."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`PeerAuthentication` и `RequestAuthentication` — взаимоисключающие: в namespace можно включить только одну из них.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Их специально комбинируют: mTLS между сервисами (Peer) и JWT-проверка пользователей (Request) работают вместе для полного zero-trust.",
+                "source_of_confusion": "Похожие имена создают впечатление двух вариантов одной и той же настройки.",
+                "if_it_were_true": "Тогда нельзя было бы одновременно иметь mTLS и JWT-валидацию, но это типовая комбинация.",
+                "how_it_should_be": "Оба слоя комбинируются: Peer для service-to-service, Request для end-user JWT."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`PeerAuthentication` — workload-level конфигурация mTLS (режимы `STRICT`/`PERMISSIVE`/`DISABLE`): аутентификация service-to-service по сертификатам. `RequestAuthentication` — проверка JWT-токенов во входящих запросах (через `jwtRules` с `issuer` и `jwksUri`): аутентификация end-user/клиента. Оба слоя комбинируются для zero-trust.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это два разных уровня identity: PeerAuthentication подтверждает, что вызывающий — доверенный workload (mTLS), а RequestAuthentication — что в запросе валидный JWT конкретного пользователя. Сами по себе они аутентифицируют, но не авторизуют.",
+                "example": "`RequestAuthentication` с `jwtRules: issuer: https://auth.example.com, jwksUri: .../jwks.json` валидирует подпись токена; `PeerAuthentication` с `STRICT` требует mTLS между сервисами.",
+                "when_to_apply": "PeerAuthentication — для шифрования и identity между сервисами; RequestAuthentication — когда нужно проверять пользовательские JWT на входе в сервис.",
+                "edge_cases": "RequestAuthentication сам по себе не блокирует запросы без токена — он лишь валидирует присутствующий JWT; чтобы отклонять анонимов, нужна `AuthorizationPolicy` с `requestPrincipals`.",
+                "related": "[[istio-service-mesh-interview#Q14]] mTLS и режимы; [[istio-service-mesh-interview#Q15]] AuthorizationPolicy для решения о доступе; [[istio-service-mesh-interview#Q17]] JWT validation и claims."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как в Istio работает JWT validation?",
+          "options": [
+            {
+              "text": "Двухшаговая схема: `RequestAuthentication` (`jwtRules` с `issuer` и `jwksUri`) валидирует подпись JWT, а `AuthorizationPolicy` использует claims токена для решения о доступе (`requestPrincipals: [\"*\"]` — любой аутентифицированный; `when` по `request.auth.claims[role]: [\"admin\"]`). Вся валидация выполняется в Envoy — быстро и без кода приложения.",
+              "correct": true,
+              "sections": {
+                "explanation": "RequestAuthentication только проверяет подпись по JWKS и разбирает claims, но не блокирует; решение 'пускать/нет' и проверку ролей принимает AuthorizationPolicy — поэтому нужны оба объекта.",
+                "example": "`AuthorizationPolicy` с `requestPrincipals: [\"*\"]` требует валидный токен, а `when: request.auth.claims[role] in [\"admin\"]` пускает только админов.",
+                "when_to_apply": "Используют, когда нужно проверять пользовательские JWT (от внешнего IdP) на входе в сервис и авторизовывать по ролям/scopes без правок приложения.",
+                "edge_cases": "Только RequestAuthentication анонимов не отрежет: без AuthorizationPolicy с `requestPrincipals` запрос без токена пройдёт, так как валидировать просто нечего.",
+                "related": "[[istio-service-mesh-interview#Q16]] RequestAuthentication; [[istio-service-mesh-interview#Q15]] AuthorizationPolicy и claims; [[istio-service-mesh-interview#Q14]] mTLS как второй слой identity."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "JWT валидируется в коде приложения, а Istio лишь прокидывает заголовок `Authorization` дальше без проверки подписи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Валидацию подписи делает Envoy по `jwtRules` (RequestAuthentication) — fast, без кода приложения; прокидывание без проверки — это как раз отсутствие mesh-валидации.",
+                "source_of_confusion": "Исторически JWT проверяли в самом сервисе, отсюда привычный образ.",
+                "if_it_were_true": "Тогда не было бы смысла в RequestAuthentication, но она специально снимает валидацию с кода.",
+                "how_it_should_be": "Подпись JWT проверяет Envoy по JWKS; приложению код валидации не нужен."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Для авторизации по claims токена (например, `role=admin`) достаточно одной `RequestAuthentication`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RequestAuthentication только валидирует токен; проверку claims и решение о доступе делает `AuthorizationPolicy` через `when`.",
+                "source_of_confusion": "Кажется, что раз токен разобран, то и доступ по claims решается там же.",
+                "if_it_were_true": "Тогда AuthorizationPolicy была бы не нужна для ролей, но именно она проверяет `claims[role]`.",
+                "how_it_should_be": "RequestAuthentication валидирует подпись; авторизация по claims — в AuthorizationPolicy."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Istio сам выпускает и подписывает JWT для пользователей, выступая identity provider.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Istio не IdP: он только валидирует JWT, выданные внешним issuer, через его `jwksUri`; выпуск токенов — задача стороннего auth-сервера.",
+                "source_of_confusion": "Istio выдаёт mTLS-сертификаты как CA, отсюда ложный перенос на JWT.",
+                "if_it_were_true": "Тогда не требовался бы внешний `issuer`/`jwksUri`, но именно они указывают доверенный IdP.",
+                "how_it_should_be": "JWT выпускает внешний IdP; Istio лишь проверяет его подпись по JWKS."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие метрики Istio отдаёт в Prometheus?",
+          "options": [
+            {
+              "text": "Чтобы получить метрики из Istio, нужно вручную инструментировать код приложения клиентом Prometheus.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метрики `istio_*` генерирует Envoy автоматически на каждый запрос — инструментировать код не нужно.",
+                "source_of_confusion": "Application-метрики действительно требуют ручного инструментирования, отсюда перенос ожидания.",
+                "if_it_were_true": "Тогда mesh не давал бы 'uniform observability без кода', но именно это его сильная сторона.",
+                "how_it_should_be": "Istio-метрики собирает Envoy сам; код приложения трогать не нужно."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Envoy экспортирует метрики для Prometheus. Автогенерируются: `istio_requests_total` (counter), `istio_request_duration_milliseconds` (histogram), `istio_request_bytes` и `istio_response_bytes`, а также `istio_tcp_*` для TCP-трафика. У метрик богатые labels: source/destination service, response code, protocol и т.п. Это даёт дашборды, alerting (error rate, latency) и триггеры для авто-скейлинга (KEDA).",
+              "correct": true,
+              "sections": {
+                "explanation": "Метрики собирает Envoy на уровне каждого запроса, поэтому они единообразны для всех сервисов без инструментирования кода — это и есть 'observability без кода'.",
+                "example": "`istio_requests_total{response_code=\"500\"}` по `destination_service` мгновенно показывает error rate сервиса, а `istio_request_duration_milliseconds` — перцентили latency.",
+                "when_to_apply": "Используют для service-level дашбордов (Grafana), алертов по ошибкам и latency, а также как сигнал для авто-скейлинга через KEDA.",
+                "edge_cases": "Высокая cardinality labels (много source/destination/path) раздувает Prometheus; в больших mesh применяют агрегацию и снижают детализацию ярлыков.",
+                "related": "[[istio-service-mesh-interview#Q19]] distributed tracing; [[istio-service-mesh-interview#Q20]] access logs; [[istio-service-mesh-interview#Q21]] Kiali поверх метрик."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Istio отдаёт метрики только по TCP-трафику и не различает HTTP response codes.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Istio отдаёт богатые HTTP-метрики с labels по response code и protocol (`istio_requests_total`), а `istio_tcp_*` — лишь для TCP-трафика.",
+                "source_of_confusion": "Наличие `istio_tcp_*` создаёт впечатление, что L7-метрик нет.",
+                "if_it_were_true": "Тогда нельзя было бы строить error rate по 5xx, но это базовый use case метрик Istio.",
+                "how_it_should_be": "Есть и HTTP-метрики с response_code, и отдельные `istio_tcp_*` для TCP."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Метрики Istio нельзя использовать для авто-скейлинга — они только для ручного просмотра дашбордов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метрики Istio служат сигналом для авто-скейлинга через KEDA (например, по RPS или latency), а не только для дашбордов.",
+                "source_of_confusion": "Observability ассоциируется с пассивным мониторингом, а не с управлением.",
+                "if_it_were_true": "Тогда KEDA не мог бы скейлить по `istio_requests_total`, но это рабочий сценарий.",
+                "how_it_should_be": "Istio-метрики используют и для дашбордов/алертов, и как триггеры авто-скейлинга (KEDA)."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает distributed tracing в Istio (Jaeger, Tempo)?",
+          "options": [
+            {
+              "text": "Istio автоматически связывает trace-заголовки внутри приложения, поэтому код менять не нужно вообще.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Istio проставляет spans на уровне Envoy, но context propagation внутри приложения (проброс `B3`/W3C заголовков) обязан делать сам код.",
+                "source_of_confusion": "Раз метрики и mTLS работают без кода, кажется, что и трейсинг полностью бесплатен.",
+                "if_it_were_true": "Тогда не было бы знаменитого caveat про проброс заголовков, но он ключевой.",
+                "how_it_should_be": "Envoy делает spans, но приложение должно прокидывать trace-заголовки дальше."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Sampling в Istio задаётся в `VirtualService` на каждый маршрут отдельно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sampling настраивается глобально в `meshConfig.defaultConfig.tracing.sampling`, а не в VirtualService на маршрут.",
+                "source_of_confusion": "VirtualService держит много per-route настроек, отсюда ложный вывод и про sampling.",
+                "if_it_were_true": "Тогда трейсинг конфигурировался бы россыпью VirtualService, но он задаётся в meshConfig.",
+                "how_it_should_be": "Sampling — глобальная настройка в `meshConfig.defaultConfig.tracing`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Envoy генерирует trace spans и пробрасывает `B3` (или W3C) заголовки. Трейсинг настраивается через `meshConfig.defaultConfig.tracing` (`sampling` — % запросов, `zipkin.address` — коллектор, например `jaeger-collector:9411`). Важный caveat: код приложения ДОЛЖЕН пробрасывать trace-заголовки между входящим и исходящим запросами — Istio не делает context propagation внутри приложения.",
+              "correct": true,
+              "sections": {
+                "explanation": "Envoy создаёт span на каждый hop, но связать входящий запрос с исходящими вызовами может только приложение, прокинув полученные `B3`/W3C заголовки дальше — иначе трейс рвётся на границе сервиса.",
+                "example": "`tracing.sampling: 100` и `zipkin.address: jaeger-collector:9411` включат сбор, но если сервис не передаст `x-b3-traceid` в нижестоящий вызов, цепочка распадётся на отдельные spans.",
+                "when_to_apply": "Включают для анализа latency и поиска узких мест в цепочке микросервисов; в проде sampling обычно занижают (например, 1%), чтобы не утонуть в данных.",
+                "edge_cases": "Главная ловушка — ожидать полный трейс 'из коробки': без proxy-friendly проброса заголовков в коде трейсы будут фрагментированными, несмотря на корректную конфигурацию Istio.",
+                "related": "[[istio-service-mesh-interview#Q18]] метрики; [[istio-service-mesh-interview#Q20]] access logs; [[istio-service-mesh-interview#Q21]] Kiali и trace correlation."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Distributed tracing в Istio работает только с Jaeger и несовместим с другими бэкендами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Istio шлёт spans по Zipkin-совместимому протоколу/OTLP, поэтому работает с Jaeger, Tempo, Zipkin и другими совместимыми коллекторами.",
+                "source_of_confusion": "Jaeger — самый частый пример в доках, отсюда впечатление эксклюзивности.",
+                "if_it_were_true": "Тогда `Tempo` нельзя было бы подключить, но это поддерживаемый бэкенд.",
+                "how_it_should_be": "Istio совместим с Jaeger, Tempo, Zipkin и др. через Zipkin/OTLP-протокол."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое access logs в Istio и как они настраиваются?",
+          "options": [
+            {
+              "text": "Access logs в Istio пишет само приложение через свой logging-фреймворк, Envoy лишь пересылает их.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Access logs генерирует Envoy на каждый запрос независимо от логов приложения — это отдельный, единообразный для всех сервисов поток.",
+                "source_of_confusion": "В приложениях обычно есть свой request-logging, отсюда подмена источника.",
+                "if_it_were_true": "Тогда формат логов задавался бы в коде, но его описывает `accessLogFormat` в meshConfig.",
+                "how_it_should_be": "Access logs пишет Envoy по `accessLogFormat`; логи приложения — это отдельная вещь."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Формат access logs в Istio фиксирован и не настраивается — поля всегда одни и те же.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Формат полностью настраивается через `accessLogFormat` с набором `%...%`-плейсхолдеров (метод, путь, код, флаги и т.д.).",
+                "source_of_confusion": "Дефолтный формат встречается чаще всего, отсюда вывод о его 'жёсткости'.",
+                "if_it_were_true": "Тогда нельзя было бы добавить `%RESPONSE_FLAGS%`, но это штатная кастомизация.",
+                "how_it_should_be": "`accessLogFormat` позволяет задать произвольный набор полей в строке лога."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Access logs в Istio можно безопасно держать включёнными на 100% даже на самом высоконагруженном mesh.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Полное логирование на высоком RPS раздувает объём данных и бьёт по производительности — поэтому обычно применяют sampling или точечное включение.",
+                "source_of_confusion": "Логи кажутся 'дешёвыми', и про их стоимость на масштабе забывают.",
+                "if_it_were_true": "Тогда не нужна была бы оговорка про sampling, но именно она важна для high-volume mesh.",
+                "how_it_should_be": "На высоконагруженном mesh access logs сэмплируют или включают выборочно."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Access logs — пер-запросные логи Envoy. Настраиваются через `meshConfig.accessLogFile` (например, `/dev/stdout`) и `accessLogFormat` (шаблон с полями вроде `%START_TIME%`, `%REQ(:METHOD)%`, `%RESPONSE_CODE%`, `%BYTES_SENT%`). Envoy логирует каждый запрос, после чего логи отгружают в ELK / Loki / Datadog. На высоконагруженном mesh логирование даёт много данных — обычно используют sampling.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый sidecar пишет структурированную строку на каждый запрос: метод, путь, код, размеры, флаги Envoy — это даёт детальную картину трафика без логирования в коде сервиса.",
+                "example": "Формат с `%RESPONSE_FLAGS%` помогает диагностировать сбои: например, `UO` означает upstream overflow (circuit breaker), `UF` — upstream connection failure.",
+                "when_to_apply": "Включают для аудита и детального дебага конкретных запросов (по traceId/коду), когда метрик недостаточно и нужна строка на каждый запрос.",
+                "edge_cases": "На высоком RPS полное логирование раздувает объём и стоимость хранения, а ещё бьёт по производительности sidecar — поэтому access logs обычно сэмплируют или включают точечно.",
+                "related": "[[istio-service-mesh-interview#Q18]] метрики; [[istio-service-mesh-interview#Q19]] tracing и заголовки; [[istio-service-mesh-interview#Q21]] Kiali для визуализации."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Kiali и зачем он нужен в Istio?",
+          "options": [
+            {
+              "text": "`Kiali` — UI для Istio. Возможности: service graph (визуализация топологии mesh), traffic animation (потоки в реальном времени), валидация конфигурации (ловит ошибки в CRD), корреляция с трейсами и обзор health сервисов. Ставится манифестом и открывается через `istioctl dashboard kiali`. Практически essential для эксплуатации Istio — иначе вы 'слепы'.",
+              "correct": true,
+              "sections": {
+                "explanation": "Kiali агрегирует метрики, трейсы и конфигурацию в наглядный граф сервисов: видно, кто кого вызывает, где ошибки и латентность, и валидны ли применённые CRD.",
+                "example": "В service graph красное ребро между сервисами сразу показывает, где растёт error rate, а валидатор подсветит, что VirtualService ссылается на несуществующий subset.",
+                "when_to_apply": "Используют для повседневной эксплуатации mesh: разбор инцидентов, проверка корректности конфигурации и понимание реальной топологии трафика.",
+                "edge_cases": "Kiali не источник истины сам по себе — он строит граф из Prometheus и Istio-конфига; без метрик или при кривой интеграции граф будет неполным или пустым.",
+                "related": "[[istio-service-mesh-interview#Q18]] метрики как источник для графа; [[istio-service-mesh-interview#Q19]] корреляция с трейсами; [[istio-service-mesh-interview#Q7]] VirtualService, чью валидность проверяет Kiali."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Kiali` — это control plane Istio, который раздаёт конфигурацию Envoy вместо Istiod.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Конфигурацию Envoy раздаёт `Istiod`; Kiali — это observability-UI поверх mesh, он ничего не конфигурирует в data plane.",
+                "source_of_confusion": "И Kiali, и Istiod — части экосистемы Istio, отсюда путаница ролей.",
+                "if_it_were_true": "Тогда без Kiali sidecar не получали бы конфиг, но за это отвечает Istiod.",
+                "how_it_should_be": "Kiali — это UI/observability; раздача конфига Envoy — задача Istiod (control plane)."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Kiali` сам собирает метрики с Envoy и хранит их, заменяя Prometheus.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kiali не хранилище метрик: он читает данные из Prometheus и строит граф поверх них, а не заменяет его.",
+                "source_of_confusion": "Kiali показывает метрики на графе, отсюда вывод, что он их и собирает.",
+                "if_it_were_true": "Тогда Prometheus был бы не нужен для Kiali, но именно из него Kiali берёт данные.",
+                "how_it_should_be": "Kiali визуализирует метрики из Prometheus; сбор и хранение остаются за Prometheus."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Kiali` — это всего лишь дашборд статической документации Istio без данных о реальном трафике.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kiali показывает живой service graph и traffic animation по реальным метрикам, а не статическую документацию.",
+                "source_of_confusion": "Слово 'UI' может ассоциироваться с пассивной справкой.",
+                "if_it_were_true": "Тогда он был бы бесполезен для разбора инцидентов, но именно для этого его и держат.",
+                "how_it_should_be": "Kiali отображает реальную топологию и потоки трафика в реальном времени."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое ambient mode (sidecar-less) в Istio?",
+          "options": [
+            {
+              "text": "Ambient mode оставляет sidecar в каждом pod, но переписывает их на Rust для скорости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ambient как раз убирает per-pod sidecar: L4 уносится в per-node `ztunnel`, а L7 — в опциональный waypoint; на Rust написан именно ztunnel.",
+                "source_of_confusion": "Ztunnel действительно на Rust, отсюда ложный вывод, что это 'sidecar на Rust'.",
+                "if_it_were_true": "Тогда оверхед остался бы per-pod, но главная цель ambient — убрать его.",
+                "how_it_should_be": "Ambient убирает sidecar; L4 идёт через per-node ztunnel, L7 — через waypoint."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Ambient mode` (с 2022, GA 2024) — service mesh без sidecars. Архитектура двухслойная: L4 — `ztunnel` (DaemonSet по одному на ноду, делает mTLS и базовые L4-политики); L7 — `waypoint proxy` (опционально, per-namespace/service, для L7-фич). Плюсы над sidecar: нет модификации pod (только opt-in label), ниже потребление ресурсов (один ztunnel на ноду вместо прокси на pod), дешевле для большого mesh, мягче adoption.",
+              "correct": true,
+              "sections": {
+                "explanation": "Вместо прокси в каждом pod ambient выносит L4 (mTLS) в общий per-node ztunnel, а тяжёлый L7-Envoy поднимает только там, где реально нужны L7-фичи — это снижает оверхед и упрощает внедрение.",
+                "example": "Включение — это label на namespace/pod (без пересоздания контейнеров под новый sidecar); mTLS заработает через ztunnel ноды, а L7-маршрутизация — только при наличии waypoint.",
+                "when_to_apply": "Подходит для больших mesh, где per-pod sidecar дорог, и для постепенного внедрения mesh с минимальной инвазивностью; в 2025 рекомендуется для новых деплоев Istio.",
+                "edge_cases": "Режим новее и менее зрелый: часть фич всё ещё только в sidecar-режиме, поэтому для редких продвинутых сценариев может потребоваться waypoint или классический sidecar.",
+                "related": "[[istio-service-mesh-interview#Q4]] классический sidecar и его цена; [[istio-service-mesh-interview#Q23]] ztunnel и waypoint; [[istio-service-mesh-interview#Q25]] минусы Istio, которые снимает ambient."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "В ambient mode L7-функции (retries, L7-routing) работают всегда и бесплатно, без дополнительных прокси.",
+              "correct": false,
+              "sections": {
+                "what_actually": "L7-фичи требуют развёрнутого `waypoint proxy` (Envoy) per-namespace/service; без него работает только L4 (mTLS) через ztunnel.",
+                "source_of_confusion": "Раз ztunnel есть всегда, кажется, что и L7 доступен из коробки.",
+                "if_it_were_true": "Тогда waypoint был бы не нужен, но именно он добавляет L7 в ambient.",
+                "how_it_should_be": "L4 даёт ztunnel; L7-фичи появляются только с опциональным waypoint proxy."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Чтобы включить ambient mode для workload, нужно пересоздать pod с новым контейнером-прокси.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ambient включается opt-in label-ом без модификации pod и без добавления контейнера — в этом и смысл 'no pod modification'.",
+                "source_of_confusion": "Классический sidecar требует пересоздания pod, отсюда перенос ожидания на ambient.",
+                "if_it_were_true": "Тогда исчезло бы преимущество 'smoother adoption', но оно ключевое для ambient.",
+                "how_it_should_be": "Ambient включается label-ом без правки pod; контейнер-прокси в pod не добавляется."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое ztunnel и waypoint proxy в ambient mode?",
+          "options": [
+            {
+              "text": "`ztunnel` разворачивается per service и даёт L7-фичи (retries, routing), а `waypoint` — это L4 mTLS на ноде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Роли перепутаны: `ztunnel` — per-node L4 mTLS, а `waypoint` — per-service/namespace L7-прокси (Envoy) с retries и routing.",
+                "source_of_confusion": "Оба — прокси ambient-режима, отсюда зеркальная путаница их функций.",
+                "if_it_were_true": "Тогда L7-фичи были бы в ztunnel, но он намеренно лёгкий и только L4.",
+                "how_it_should_be": "ztunnel = per-node L4 mTLS; waypoint = per-service/namespace L7 (Envoy)."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`waypoint proxy` обязателен в ambient и разворачивается по одному на каждую ноду, как ztunnel.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Waypoint опционален и ставится per service/namespace только при потребности в L7; на каждой ноде сидит именно ztunnel.",
+                "source_of_confusion": "Раз ztunnel per-node, кажется, что и waypoint тоже привязан к ноде и обязателен.",
+                "if_it_were_true": "Тогда исчезла бы экономия 'только ztunnel для L4', но она ключевая для ambient.",
+                "how_it_should_be": "ztunnel — per-node и обязателен; waypoint — опциональный, per service/namespace."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`ztunnel` — DaemonSet (1 на ноду), написан на Rust (высокая производительность), отвечает за L4 mTLS и простую authz, присутствует в ambient всегда. `waypoint proxy` — это Envoy, разворачивается per service или per namespace, даёт L7-фичи (retries, traffic routing, RequestAuthentication) и опционален (только если нужен L7). Экономия: для small mesh с только L4 хватает ztunnel — дешевле, чем sidecars.",
+              "correct": true,
+              "sections": {
+                "explanation": "Разделение по слоям: лёгкий per-node ztunnel закрывает обязательный L4 (шифрование, базовая authz), а тяжёлый L7-Envoy (waypoint) поднимают точечно и только где нужны L7-возможности.",
+                "example": "Если сервисам нужен только mTLS — достаточно ztunnel на нодах; как только потребовались retries или L7-routing, для этого namespace/сервиса разворачивают waypoint.",
+                "when_to_apply": "ztunnel — всегда в ambient (обязательный L4); waypoint — выборочно, когда конкретному сервису/namespace реально нужны L7-функции.",
+                "edge_cases": "Waypoint — это дополнительный hop и Envoy-ресурсы: ставить его на всё подряд означает вернуть оверхед, близкий к sidecar, поэтому его держат точечно.",
+                "related": "[[istio-service-mesh-interview#Q22]] архитектура ambient; [[istio-service-mesh-interview#Q14]] mTLS, который делает ztunnel; [[istio-service-mesh-interview#Q4]] sidecar как альтернатива."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Оба компонента, `ztunnel` и `waypoint`, написаны на Envoy/C++ и идентичны по функциям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ztunnel` написан на Rust и делает L4, а `waypoint` — это Envoy для L7; функции у них разные, не идентичные.",
+                "source_of_confusion": "Оба прокси ambient, отсюда вывод об одинаковой реализации и роли.",
+                "if_it_were_true": "Тогда не было бы смысла в двух компонентах, но они закрывают разные слои.",
+                "how_it_should_be": "ztunnel — Rust/L4; waypoint — Envoy/L7; это разные компоненты с разными задачами."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем Istio отличается от Linkerd и Consul Connect?",
+          "options": [
+            {
+              "text": "`Linkerd` имеет больше фич, чем Istio, и поэтому считается самым сложным в эксплуатации mesh.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: самый богатый по фичам и самый сложный — Istio; Linkerd намеренно проще и покрывает subset фич.",
+                "source_of_confusion": "Хорошая репутация Linkerd создаёт впечатление 'больше и мощнее'.",
+                "if_it_were_true": "Тогда Linkerd не выбирали бы за простоту, но это его главный аргумент.",
+                "how_it_should_be": "Istio — максимум фич и сложности; Linkerd — проще и с меньшим набором фич."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Istio` единственный из трёх работает не только в Kubernetes, но и на голых VM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-platform (VM + K8s) — это про `Consul Connect`; Istio ориентирован на K8s, а Linkerd — K8s-only.",
+                "source_of_confusion": "Istio самый известный, отсюда приписывание ему всех сильных сторон.",
+                "if_it_were_true": "Тогда Consul терял бы своё ключевое преимущество, но оно как раз multi-platform.",
+                "how_it_should_be": "Multi-platform — у Consul Connect; Istio и Linkerd ориентированы на K8s."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Linkerd` тяжелее Istio по ресурсам, поскольку использует тот же Envoy-прокси.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Linkerd использует собственный лёгкий Rust-прокси (~30 MB, <1 ms), который легче тяжёлого Envoy у Istio (~50-100 MB).",
+                "source_of_confusion": "Кажется, что все mesh строятся на Envoy, отсюда вывод об одинаковой 'тяжести'.",
+                "if_it_were_true": "Тогда Linkerd не славился бы производительностью, но именно Rust-прокси даёт ему скорость.",
+                "how_it_should_be": "Linkerd — лёгкий Rust-прокси; тяжёлый Envoy — у Istio."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Istio` — максимум фич, но высокая сложность, тяжёлый Envoy (~50-100 MB sidecar, 5-10 ms latency), только K8s, самый зрелый и популярный. `Linkerd` — простой, отличная производительность (Rust-прокси, <1 ms, ~30 MB), K8s-only, subset фич. `Consul Connect` — multi-platform (VM + K8s), HashiCorp-стек, средняя сложность. Выбор: максимум фич на K8s → Istio; простота и скорость на K8s → Linkerd; multi-platform/HashiCorp → Consul.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это компромисс 'фичи vs простота/производительность': Istio даёт всё, но дорого в эксплуатации; Linkerd жертвует частью фич ради скорости и простоты; Consul выигрывает там, где есть не только K8s.",
+                "example": "Linkerd с Rust-прокси даёт latency <1 ms и ~30 MB на прокси против 5-10 ms и ~50-100 MB у Istio — для простых K8s-кейсов это решающий аргумент.",
+                "when_to_apply": "Istio — когда нужен полный набор фич на чистом K8s; Linkerd — когда важны простота и производительность; Consul — для гибридной инфраструктуры (VM + K8s) и HashiCorp-стека.",
+                "edge_cases": "В 2025 многие команды берут Linkerd для простых сценариев, оставляя Istio под full feature set; ambient mode в Istio частично сглаживает разрыв по оверхеду.",
+                "related": "[[istio-service-mesh-interview#Q2]] что такое Istio; [[istio-service-mesh-interview#Q25]] минусы Istio; [[istio-service-mesh-interview#Q26]] когда вообще нужен mesh."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные минусы у Istio?",
+          "options": [
+            {
+              "text": "Ключевые минусы: высокая сложность (крутая кривая обучения), ресурсный оверхед (Envoy-sidecars дороги на масштабе), операционная нагрузка (апгрейды, troubleshooting), latency overhead 5-10 ms на hop, сложный дебаг (много слоёв), configuration sprawl (много CRD), иногда ломающиеся обратная совместимость, и то, что большинство команд использует ~10% богатых фич. Многие из этих минусов смягчает ambient mode (ниже оверхед).",
+              "correct": true,
+              "sections": {
+                "explanation": "Минусы Istio — это в основном цена его мощности: больше возможностей означает больше CRD, слоёв, ресурсов и работы по эксплуатации, что и отпугивает команды без выделенной platform-экспертизы.",
+                "example": "На большом mesh ~50-100 MB RAM и 5-10 ms latency на каждый sidecar суммируются в заметные счета и задержки; при инциденте дебаг идёт через app → Envoy → Istiod → CRD.",
+                "when_to_apply": "Эти минусы учитывают при выборе mesh: если команда мала или сервисов немного, оверхед и операционная сложность часто перевешивают пользу.",
+                "edge_cases": "Ambient mode снимает значительную часть ресурсного и pod-оверхеда, но добавляет свою незрелость и не закрывает сложность конфигурации и совместимости.",
+                "related": "[[istio-service-mesh-interview#Q4]] стоимость sidecar; [[istio-service-mesh-interview#Q22]] ambient как смягчение; [[istio-service-mesh-interview#Q26]] когда mesh оправдан."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Главный минус Istio — он не поддерживает mTLS, поэтому шифрование трафика приходится настраивать вручную в коде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "mTLS — одна из сильнейших сторон Istio (автоматический, с ротацией); реальные минусы — сложность, оверхед и операционная нагрузка.",
+                "source_of_confusion": "Истории об отсутствии шифрования в других системах ошибочно переносят на Istio.",
+                "if_it_were_true": "Тогда Istio не называли бы основой zero-trust, но именно автоматический mTLS — его киллер-фича.",
+                "how_it_should_be": "mTLS у Istio автоматический; настоящие минусы — сложность, ресурсы и эксплуатация."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Istio практически не добавляет latency, так как Envoy работает на уровне ядра и не делает лишних hop.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Envoy-sidecar — user-space L7-прокси и добавляет заметную latency (5-10 ms на hop), что и числится среди минусов.",
+                "source_of_confusion": "Желание видеть mesh 'бесплатным' приводит к недооценке оверхеда.",
+                "if_it_were_true": "Тогда latency не входила бы в список минусов, но 5-10 ms на hop — реальная цена.",
+                "how_it_should_be": "Каждый sidecar добавляет 5-10 ms latency и потребляет ресурсы — это минус Istio."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Конфигурация Istio минималистична: одна-две CRD покрывают все сценарии, поэтому configuration sprawl ему не свойственен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот, у Istio множество CRD (VirtualService, DestinationRule, Gateway, Peer/RequestAuthentication, AuthorizationPolicy...), и их разрастание — известный минус.",
+                "source_of_confusion": "Отдельные примеры выглядят компактно, скрывая общее число объектов в проде.",
+                "if_it_were_true": "Тогда 'configuration sprawl' не упоминался бы среди минусов, но он там есть.",
+                "how_it_should_be": "У Istio много CRD, и их разрастание (configuration sprawl) — реальный минус."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда стоит использовать service mesh, а когда нет?",
+          "options": [
+            {
+              "text": "Service mesh нужно внедрять всегда, начиная даже с 2-3 сервисов, иначе систему нельзя считать cloud-native.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для 3-5 сервисов оверхед mesh обычно не оправдан; cloud-native не требует mesh, и часто хватает встроенных средств K8s.",
+                "source_of_confusion": "Хайп вокруг mesh создаёт ощущение, что без него архитектура 'неправильная'.",
+                "if_it_were_true": "Тогда не было бы списка 'когда mesh избыточен', но он явно присутствует.",
+                "how_it_should_be": "Mesh оправдан при масштабе и реальных требованиях; для пары сервисов он избыточен."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Mesh оправдан, когда: много микросервисов (10+) со сложными взаимодействиями; нужен mTLS между сервисами (zero trust); нужен тонкий контроль трафика (canary, A/B); нужна единообразная observability без кода; нужна cross-service authz (не только authn). Mesh избыточен, когда: сервисов мало (3-5); хватает K8s built-ins (NetworkPolicies, Services); у команды нет ресурсов эксплуатировать mesh; критична каждая ms. Альтернативы полегче: Linkerd, Cilium (eBPF, без sidecar) или просто NetworkPolicies + cert-manager + OpenTelemetry.",
+              "correct": true,
+              "sections": {
+                "explanation": "Правило простое: mesh окупается там, где его фичи (mTLS, тонкий трафик, observability, authz) реально нужны на масштабе; для пары сервисов его сложность и оверхед перевешивают пользу.",
+                "example": "Для системы из 20+ сервисов с требованием zero-trust и canary mesh оправдан; для 3-4 сервисов хватит K8s NetworkPolicies + cert-manager + OpenTelemetry.",
+                "when_to_apply": "Внедряют mesh, когда одновременно есть масштаб (много сервисов), требования безопасности (mTLS/authz) и зрелость команды для эксплуатации; иначе берут более лёгкий стек.",
+                "edge_cases": "В 2025 многие команды осознают, что mesh для их нужд overkill, и выбирают более простые стеки (Linkerd, Cilium eBPF) или вовсе обходятся встроенными средствами K8s.",
+                "related": "[[istio-service-mesh-interview#Q1]] возможности service mesh; [[istio-service-mesh-interview#Q24]] выбор между mesh; [[istio-service-mesh-interview#Q25]] минусы как аргумент против."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Если у команды всего 3-4 сервиса и нет ресурсов на эксплуатацию mesh, лучше обойтись K8s built-ins или лёгким стеком (Cilium, OpenTelemetry).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это и есть рекомендуемый подход: при малом числе сервисов и нехватке capacity берут NetworkPolicies + cert-manager + OpenTelemetry или Cilium вместо полноценного mesh.",
+                "source_of_confusion": "Может казаться, что 'правильный' ответ — всегда ставить mesh, но контекст решает.",
+                "if_it_were_true": "Это и есть верный сценарий — он прямо следует из критериев 'когда mesh не нужен'.",
+                "how_it_should_be": "При немногих сервисах и ограниченных ресурсах разумно остаться на K8s built-ins/лёгком стеке."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Service mesh нужен исключительно ради observability; для mTLS и контроля трафика он бесполезен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mesh даёт сразу три класса возможностей — traffic management, security (mTLS/authz) и observability; observability лишь одна из причин его взять.",
+                "source_of_confusion": "Дашборды Kiali и метрики — самая заметная фича, отсюда сужение до observability.",
+                "if_it_were_true": "Тогда zero-trust и canary не были бы причинами внедрения, но они в списке ключевых.",
+                "how_it_should_be": "Mesh берут ради комбинации трафика, безопасности и observability, а не только метрик."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
