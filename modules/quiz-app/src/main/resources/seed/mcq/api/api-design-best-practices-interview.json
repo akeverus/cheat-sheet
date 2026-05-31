@@ -1,0 +1,1805 @@
+{
+  "topic_slug": "api-design-best-practices-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как правильно именовать ресурсы в REST API?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Существительные во множественном числе в URL (`/users`, `/orders`), действие выражается HTTP-методом (`GET /users/123`, `DELETE /users/123`), иерархия через слэши (`/users/123/orders/456`).",
+              "correct": true,
+              "sections": {
+                "explanation": "REST трактует URL как идентификатор ресурса (существительное), а действие — как HTTP-метод (глагол). Plural-форма унифицирует коллекцию и элемент: `/users` — это коллекция, а `/users/123` — один элемент той же коллекции.",
+                "example": "Клиент строит путь единообразно: шаблон `${base}/users/${id}` работает и для list, и для get-one. `GET /users` — список, `POST /users` — создать, `GET /users/123/orders` — вложенная коллекция заказов пользователя.",
+                "when_to_apply": "Любой REST/HTTP API, описывающий CRUD над доменными сущностями: пользователи, заказы, продукты, документы. Это базовая конвенция Google, Stripe и GitHub.",
+                "edge_cases": "Для не-CRUD действий (отправить письмо, перевыпустить токен) plural-noun ложится плохо — тогда применяют sub-resource-as-action (`POST /users/123/password-resets`). Не злоупотреблять вложенностью глубже двух уровней.",
+                "related": "[[api-design-best-practices-interview#Q2]] структура URL целиком; [[api-design-best-practices-interview#Q5]] иерархия ресурсов; [[api-design-best-practices-interview#Q8]] non-CRUD действия."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`GET /getUsers` — глагол в URL для ясности намерения, чтобы по пути было видно, что это запрос списка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Действие в REST выражается HTTP-методом, а не словом в URL. `GET /getUsers` дублирует семантику `GET`, нарушает uniform interface и ломает routing и caching, которые опираются на правило «URL = ресурс».",
+                "source_of_confusion": "Привычка из RPC/SOAP-стиля, где endpoint = имя удалённой процедуры, переносится на REST, где эта модель заменена на «ресурс + метод».",
+                "if_it_were_true": "Тогда пришлось бы поддерживать `getUsers`, `listUsers`, `findUsers` как разные URL, кэш по методу перестал бы работать, а OpenAPI-генераторы создавали бы дублирующие операции.",
+                "how_it_should_be": "Правильно `GET /users`: ресурс — существительное в URL, действие — HTTP-метод. Глаголы в путях — это анти-паттерн, кроме явных action-эндпоинтов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`/user/123` — singular-форма, потому что речь идёт об одном конкретном пользователе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Правильно `/users/123` — это элемент коллекции `/users`. Singular-форма разрывает связь между коллекцией и элементом и заставляет клиента помнить две разные базы пути.",
+                "source_of_confusion": "Грамматическая логика «один = singular» переносится с естественного языка на URL, но URL обозначает не объект, а путь в коллекции ресурсов.",
+                "if_it_were_true": "Тогда SDK и path-helpers пришлось бы дублировать (`usersUrl()` и `userUrl(id)`), а вложенные ресурсы (`/user/123/orders` против `/users/123/orders`) разъезжались бы по конвенции.",
+                "how_it_should_be": "Единая plural-форма и для коллекции, и для элемента: `/users` и `/users/123`. Это даёт consistent path-building на клиенте."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`/Users/123` — с заглавной буквы, как имя класса в коде, для визуальной согласованности с моделью.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стандарт — lowercase URL (RFC 3986 плюс практика Stripe, GitHub, Google). Часть инфраструктуры case-sensitive (Nginx по умолчанию), часть нет — это рождает разъезжающиеся редиректы и дубликаты в кэше и логах.",
+                "source_of_confusion": "Code style (`PascalCase` для классов) переносится на URL-namespace, хотя это разные слои с разными конвенциями.",
+                "if_it_were_true": "Тогда `/Users/123` и `/users/123` считались бы одним ресурсом, но CDN и прокси кэшировали бы их раздельно, а аналитика разошлась бы по двум разным path.",
+                "how_it_should_be": "Использовать lowercase-пути и дефисы для multi-word (`/order-items`). Регистр в URL — источник скрытых багов кэширования."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая структура URL для REST API корректна?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`/users?version=1&status=active` — версия API и фильтры одинаково передаются query-параметрами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Версия API относится к routing и контракту, а не к фильтру выборки. Стандарт индустрии (Stripe, GitHub, Google Cloud) — версия в path (`/v1/users`), потому что это позволяет API Gateway маршрутизировать на разные backend и кэшировать ответы независимо.",
+                "source_of_confusion": "Query string выглядит универсальной «свалкой» для любых необязательных параметров, и версию кладут туда же.",
+                "if_it_were_true": "Тогда один и тот же путь `/users` отвечал бы разными схемами в зависимости от `?version=`, а CDN кэшировал бы их в одну запись — клиенты v1 получали бы тело v2.",
+                "how_it_should_be": "Версию выносить в path (`/v1/users`), а в query оставлять только фильтры и пагинацию, которые уточняют выборку, а не определяют контракт."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`https://api.example.com/v1/users/123/orders?status=pending&limit=10` — subdomain `api`, версия в path `/v1`, resource path с идентификатором, фильтры в query string.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый компонент URL отвечает за свою роль. Subdomain `api.` изолирует API от сайта (отдельные cert, CORS, rate-limit). `/v1/` даёт явный контракт и удобный routing. `/users/123/orders` — иерархия ресурсов. Query — всё, что не идентифицирует ресурс, а уточняет выборку.",
+                "example": "Полный пример: `GET https://api.example.com/v1/users/123/orders?status=pending&limit=10&sort=-created_at`. Path = identity, query = projection/filter; lowercase и дефисы для multi-word (`/order-items`), plural nouns.",
+                "when_to_apply": "Любой production REST API с явным versioning и filtering: public API или internal microservices с published contract.",
+                "edge_cases": "Не путать фильтр (query) с sub-resource (path): `/users/123/orders` — это коллекция заказов пользователя 123, а не фильтр. При очень большом числе фильтров (search) — `POST /users/search` с телом, чтобы не упереться в лимит длины URL (~2KB на прокси).",
+                "related": "[[api-design-best-practices-interview#Q1]] именование ресурсов; [[api-design-best-practices-interview#Q4]] формат дат; [[api-design-best-practices-interview#Q5]] иерархия ресурсов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`/users/status/active` — фильтры выражаются как сегменты path ради «красоты» URL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Path обозначает идентичность ресурса, query — выбор подмножества. `/users/status/active` ломает иерархию: непонятно, `status` это sub-resource или фильтр, и невозможно скомбинировать несколько фильтров (`status=active` плюс `country=ru`).",
+                "source_of_confusion": "SEO-friendly URL с frontend (`/blog/category/tech`) переносят на API, где у пути другая семантика.",
+                "if_it_were_true": "Тогда для двух фильтров пришлось бы изобретать `/users/status/active/country/ru`, и порядок сегментов стал бы значимым — две эквивалентные комбинации воспринимались бы как разные ресурсы.",
+                "how_it_should_be": "Фильтры передавать через query (`?status=active&country=ru`), а path оставлять для идентификаторов ресурсов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`/users_123_orders` — сегменты через underscore для краткости пути.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RFC 3986 определяет `/` как разделитель иерархии — именно так роутеры, прокси и OpenAPI строят дерево ресурсов. Underscore внутри сегмента допустим, но между уровнями иерархии нужен слэш.",
+                "source_of_confusion": "snake_case-конвенция из имён переменных переносится на структуру URL, хотя это разные слои.",
+                "if_it_were_true": "Тогда path-matching на API Gateway и в Spring `@PathVariable` сломался бы — нельзя извлечь `userId` и `orderId` без custom-парсера, а OpenAPI не смог бы описать ресурсы древовидно.",
+                "how_it_should_be": "Уровни иерархии разделять слэшем (`/users/123/orders`), а для multi-word внутри сегмента предпочитать дефис (`/order-items`)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выбрать конвенцию именования JSON-полей (snake_case vs camelCase) в REST API?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Смешивать snake_case и camelCase внутри одного response в зависимости от контекста поля (legacy против new).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Клиентские SDK десериализуют JSON в типизированные структуры по одному правилу маппинга (`@JsonNaming(SnakeCaseStrategy.class)` в Java, `keyDecodingStrategy` в Swift). Смешение конвенций ломает дефолтный маппинг — придётся для каждого поля писать `@JsonProperty`.",
+                "source_of_confusion": "«Временное решение» при миграции legacy → new часто превращается в постоянное и закрепляется в контракте.",
+                "if_it_were_true": "Тогда OpenAPI-генераторы создавали бы клиентов с разными конвенциями для разных полей одной модели, и type-safe код стал бы невозможен без ручных переопределений.",
+                "how_it_should_be": "Выбрать одну конвенцию на весь API и применять её ко всем полям; маппинг настраивать централизованно одной аннотацией или проперти."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Разные конвенции для разных эндпоинтов (`/v1/users` → snake_case, `/v1/products` → camelCase) — пусть каждая команда решает сама.",
+              "correct": false,
+              "sections": {
+                "what_actually": "API — это единый контракт, и DX страдает в первую очередь от inconsistency. SDK-генераторы (OpenAPI Generator, NSwag) применяют конвенцию глобально; mixed-style ломает type safety на уровне всего клиента.",
+                "source_of_confusion": "Микросервисная архитектура с отдельными командами выглядит как оправдание, хотя public-контракт нужно унифицировать на уровне API Gateway или style guide.",
+                "if_it_were_true": "Тогда на каждый вызов разработчику пришлось бы заглядывать в Swagger, и DX скатился бы к уровню недокументированного RPC.",
+                "how_it_should_be": "Унифицировать конвенцию на уровне всего API независимо от команды-владельца эндпоинта."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Выбрать ОДНУ конвенцию (snake_case ИЛИ camelCase) и применять её во всём API; в Java — поля внутри классов в camelCase, наружу через `@JsonNaming` или `spring.jackson.property-naming-strategy`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Consistency важнее личных предпочтений. Обе конвенции работают; выбор определяется экосистемой клиентов. snake_case — Python/Ruby/Rails, Stripe, Slack, Twitter API. camelCase — JS-первые SDK, Google Cloud, Microsoft Graph. Внутри Java поля всегда camelCase, а сериализация настраивается одной проперти.",
+                "example": "В `application.yml`: `spring.jackson.property-naming-strategy: SNAKE_CASE`; DTO `record UserDto(String firstName, Instant createdAt)` сериализуется в `{\"first_name\": \"Alice\", \"created_at\": \"2026-05-15T10:00:00Z\"}`.",
+                "when_to_apply": "Любой публичный или межсервисный REST API. Если клиенты — преимущественно JS/мобильные TypeScript-приложения, выбирай camelCase; если Python/Ruby/data-engineering — snake_case.",
+                "edge_cases": "Конвенцию нужно enforce-ить (ArchUnit/Checkstyle/Spotless), иначе за год наберётся «исключений». Конвенции в URL (`/order-items`, дефисы) и в JSON (`order_items`, underscores) различаются, и это нормально — это разные слои.",
+                "related": "[[api-design-best-practices-interview#Q1]] именование URL; [[api-design-best-practices-interview#Q4]] формат дат; [[api-design-best-practices-interview#Q2]] структура URL."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Отказаться от любых конвенций — каждый разработчик выбирает имя поля сам по ситуации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отсутствие конвенции — это технический долг с первого дня. Code review будет тратить время на bikeshedding `firstName` против `first_name` против `FirstName` в каждом PR, и API превратится в лоскутное одеяло без shared mental model.",
+                "source_of_confusion": "«Свобода равно производительность», но в командной разработке свобода без guard-rails означает несогласованность.",
+                "if_it_were_true": "Тогда автогенерация SDK и type-safe-клиентов стала бы невозможной, а OpenAPI как контракт перестал бы выполнять свою функцию.",
+                "how_it_should_be": "Зафиксировать единую конвенцию в style guide и автоматически проверять её линтером или форматтером."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой формат date/time использовать в REST API JSON?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Unix timestamp (`\"created_at\": 1745068800`) — число короче и парсится быстрее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Unix timestamp — числовая дельта от 1970 UTC, нечитаемая для людей; при debugging логов нужен конвертер. Хуже того, разные платформы используют разные единицы: JS `new Date(ts)` ждёт миллисекунды, а Java `Instant.ofEpochSecond` — секунды, и ошибка масштаба даёт off-by-1000 баг.",
+                "source_of_confusion": "В БД и логах timestamps часто хранятся как `bigint` ради компактности, и это переносят в API contract.",
+                "if_it_were_true": "Тогда OpenAPI-схема показывала бы `type: integer`, и валидатор не отличил бы `created_at` от `user_id`, а клиенты на разных языках интерпретировали бы единицу по-разному.",
+                "how_it_should_be": "Использовать ISO 8601 с timezone — машинно-читаемо, однозначно и сортируемо, без неоднозначности единиц."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Custom human-readable формат: `\"April 19, 2025 14:30\"` — удобно читать человеку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Этот формат не стандартизован и зависит от locale (`19 avril 2025` для FR, `19 апреля 2025` для RU). Парсинг требует i18n-aware парсера, а сравнение двух дат становится строковой операцией без гарантий; OpenAPI-генераторы не маппят такие поля на `Instant`/`OffsetDateTime`.",
+                "source_of_confusion": "API «для людей» путают с UI: представление для пользователя — задача frontend, а контракт API должен быть машинно-читаемым.",
+                "if_it_were_true": "Тогда один и тот же endpoint возвращал бы разные строки в зависимости от `Accept-Language`, и сервер с клиентом разъезжались бы в timezone.",
+                "how_it_should_be": "Возвращать ISO 8601, а человекочитаемое форматирование делать на клиенте по locale пользователя."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Local time без timezone: `\"2025-04-19T14:30:00\"` — клиент сам знает свой часовой пояс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без timezone строка неоднозначна — `14:30` это UTC, MSK, NY или Tokyo? Между микросервисами в разных регионах это сразу даёт расхождение «событие из будущего». ISO 8601 без суффикса `Z` или `±HH:MM` формально допустим, но интерпретация остаётся на клиенте.",
+                "source_of_confusion": "Legacy-системы возвращают local time в формате БД (`TIMESTAMP WITHOUT TIME ZONE`), и это просачивается в API.",
+                "if_it_were_true": "Тогда distributed system с серверами в разных регионах строила бы timeline событий с разбросом ±12 часов, а алерты по `created_at > now() - 1h` ловили бы фантомные события.",
+                "how_it_should_be": "Всегда указывать timezone: `Z` для UTC-событий или явный offset для локальной семантики."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "ISO 8601 с timezone: `\"2025-04-19T14:30:00Z\"` (UTC) или `\"2025-04-19T14:30:00+02:00\"`; в Java — `Instant`/`OffsetDateTime`, не `Date`.",
+              "correct": true,
+              "sections": {
+                "explanation": "ISO 8601 — международный стандарт, явно описывающий дату, время и timezone offset. Это даёт три свойства сразу: машинно-читаемость (один формат на все языки), однозначность (timezone в самой строке) и лексикографическую сортируемость (`\"2025-04-19\" < \"2025-04-20\"`).",
+                "example": "OpenAPI описывает такие поля как `type: string, format: date-time`. Java `record OrderDto(Instant createdAt, OffsetDateTime scheduledFor)` сериализуется Jackson в `\"2025-04-19T14:30:00Z\"` и `\"2025-04-19T14:30:00+02:00\"` (с `jackson-datatype-jsr310`).",
+                "when_to_apply": "Все date/time поля в REST/GraphQL API. UTC (`Z`) — для timestamps событий (created_at, updated_at), offset (`+02:00`) — когда важна локальная семантика (расписание магазина, бронирование рейса).",
+                "edge_cases": "Никогда не использовать `java.util.Date` — он mutable и хранит UTC, но `toString()` показывает local time, что путает в логах. Для дат без времени (день рождения) — `LocalDate` и `format: date`.",
+                "related": "[[api-design-best-practices-interview#Q3]] конвенции именования JSON; [[api-design-best-practices-interview#Q2]] структура URL."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какое правило выбрать для resource hierarchy (parent/child) в URL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Максимум 2 уровня вложенности: `/users/123/orders` и `/users/123/orders/456`; глубже — flat structure с filter-параметрами.",
+              "correct": true,
+              "sections": {
+                "explanation": "2-level rule — компромисс между выразительностью ownership и удобством работы с URL. Два уровня ясно выражают parent-child (`/users/{userId}/orders`), и при этом URL остаётся читаемым в логах, документации и SDK. Глубже nesting даёт методы SDK с 4-5 path-параметрами и монструозные сигнатуры.",
+                "example": "`GET /users/123/orders` и `GET /users/123/orders/456` — OK; `GET /refunds?order_id=456` вместо `/users/123/orders/456/refunds/1`. В Spring: `@GetMapping(\"/users/{userId}/orders/{orderId}\")`. Stripe следует тому же: `/customers/{id}/sources` (2 уровня), а refunds — flat (`/refunds`).",
+                "when_to_apply": "Strong containment (item существует только в контексте parent) — nesting; independent entity (refund имеет смысл сам по себе) — flat. Auth выигрывает: API Gateway легко проверяет, что `{userId}` в path совпадает с `sub` в JWT.",
+                "edge_cases": "Даже при nested URL стоит дублировать flat-вариант, когда parent неизвестен (`GET /orders/{id}` без userId — полезно для admin/support). Stripe именно так и делает: `/customers/cus_123/charges` и `/charges?customer=cus_123` сосуществуют.",
+                "related": "[[api-design-best-practices-interview#Q6]] sub-resources против flat; [[api-design-best-practices-interview#Q2]] структура URL; [[api-design-best-practices-interview#Q1]] именование ресурсов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Всегда делать 5+ уровней вложенности для максимально точного отражения иерархии данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Глубокая вложенность ломает практическое использование API. URL `/users/123/orders/456/items/789/refunds/1` нечитаем в логах, занимает много места в `access.log`, и SDK-генератор создаёт метод с 4 path-параметрами, которые легко перепутать местами.",
+                "source_of_confusion": "ER-модель в БД переносится 1-в-1 в URL — кажется, что «правильно» отразить все foreign keys.",
+                "if_it_were_true": "Тогда каждое изменение в иерархии БД ломало бы public API, а рефакторинг «вынести refunds в отдельный сервис» требовал бы breaking change для всех клиентов.",
+                "how_it_should_be": "Ограничивать вложенность двумя уровнями, а глубже переходить на flat structure с фильтрами."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Всегда flat: `/orders?user_id=123`, без иерархии в принципе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Теряется семантика ownership и scoping. API Gateway не может проверить доступ пользователя к ресурсу без парсинга query string (`?user_id=`) — это требует policy на уровне приложения, а не на уровне routing, и auth middleware сложнее писать и тестировать.",
+                "source_of_confusion": "REST-flat школа считает, что URL должен быть «плоским пространством имён ресурсов», а связи выражаются через filters.",
+                "if_it_were_true": "Тогда rate-limit per user (типа `/users/{userId}/*`) на API Gateway не реализовался бы без custom-plugin, а logging/audit терял бы parent context.",
+                "how_it_should_be": "Для strong containment использовать nesting (до 2 уровней), а flat оставлять для независимых сущностей."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Вложенность без ограничений — каждая команда определяет глубину по своим бизнес-объектам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отсутствие конвенции означает, что каждый endpoint уникален. Клиенты строят URL конкатенацией (template strings вместо SDK), нет единого стандарта в OpenAPI, и developer portal не может генерировать docs автоматически.",
+                "source_of_confusion": "«У нас микросервисы, каждый сам решает» — но API consumer один, и ему нужна предсказуемость.",
+                "if_it_were_true": "Тогда developer portal показывал бы 200 эндпоинтов с разной структурой, а onboarding нового клиента занимал бы недели вместо часов.",
+                "how_it_should_be": "Зафиксировать единое правило (2 уровня max) в API style guide для всех команд."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда выбирать sub-resources (nested) vs flat structure для API?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Всегда использовать только nested URL — это единственно правильный REST-стиль.",
+              "correct": false,
+              "sections": {
+                "what_actually": "REST не требует nesting — он требует resource-oriented design. Многие ресурсы существуют независимо (charge, refund, invoice), и forced nesting создаёт искусственную иерархию: `/users/123/orders/456` подразумевает, что order существует только в контексте user, но admin/support хочет открыть order по id без знания userId.",
+                "source_of_confusion": "Учебники по REST часто показывают только nested примеры (`/posts/{id}/comments`), и это запоминается как «правильный REST».",
+                "if_it_were_true": "Тогда Stripe не предоставлял бы `/charges/{id}` отдельно от `/customers/{id}/charges`, а admin-tools было бы невозможно построить без знания всей parent-chain.",
+                "how_it_should_be": "Выбирать nesting или flat по семантике containment, а не применять nested ко всему подряд."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Выбор по семантике: strong containment → nested, independent entity → flat; оба варианта могут co-exist.",
+              "correct": true,
+              "sections": {
+                "explanation": "Правило простое: если ресурс не существует без parent (комментарий без поста, address без user) — nested; если ресурс имеет независимую identity и используется в разных контекстах (charge, payment, order) — flat. И ничто не мешает поддерживать оба варианта одновременно.",
+                "example": "Strong containment — nested: `GET /users/123/addresses`. Independent — flat: `GET /orders?customer_id=123`. Co-exist (Stripe): `GET /customers/cus_123/charges` (SDK convenience), `GET /charges?customer=cus_123` (search), `GET /charges/ch_456` (direct access).",
+                "when_to_apply": "Проверить вопрос «Имеет ли ресурс смысл без знания parent?». Если нет — nested (`/posts/{id}/comments`); если да — flat (`/charges?customer=cus_123`). Для крупных API стоит сразу проектировать оба варианта при сильной containment.",
+                "edge_cases": "Дублирование эндпоинтов стоит maintenance, но окупается удобством. Главный риск — разъезжающаяся валидация (`POST /users/123/orders` валидирует существование user, а `POST /orders {\"user_id\": 123}` забывает). Решение: общий service-layer вызывается из обоих контроллеров.",
+                "related": "[[api-design-best-practices-interview#Q5]] иерархия ресурсов; [[api-design-best-practices-interview#Q7]] bulk-операции; [[api-design-best-practices-interview#Q2]] структура URL."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Решать по производительности БД — что быстрее JOIN-ится, то и nested.",
+              "correct": false,
+              "sections": {
+                "what_actually": "URL design определяется API contract, а не схемой БД. Behind the same URL может стоять JOIN, отдельный сервис, кэш или GraphQL-федерация — это деталь реализации. Если URL зависит от внутреннего storage, любая миграция БД (sharding, split table) ломает public API.",
+                "source_of_confusion": "В early-stage проектах API часто пишется как «обёртка над БД», и URL отражает структуру таблиц.",
+                "if_it_were_true": "Тогда разделение orders в отдельный сервис заставило бы менять `/users/{id}/orders` → `/orders?user_id={id}` — breaking change для всех клиентов из-за внутренней рефакторизации.",
+                "how_it_should_be": "Выбирать nested/flat по семантике ресурса (containment против independence), а не по плану выполнения SQL."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Использовать только flat URL, чтобы любой ресурс был доступен по одному и тому же шаблону.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Flat-only теряет выразительность scoping в URL. Проверка «у user 123 есть доступ к order 456» усложняется: нужно достать order из БД, прочитать `customer_id`, сравнить с JWT — вместо простого matching `{userId}` из path с `sub` claim. Это антипаттерн для API Gateway-based auth.",
+                "source_of_confusion": "GraphQL-mindset переносится на REST: «единое flat-namespace ресурсов».",
+                "if_it_were_true": "Тогда policy-as-code в API Gateway (типа `path(\"/users/${user.id}/*\")` в OPA/Cedar) не работала бы, и вся authz переехала бы в приложение и дублировалась между сервисами.",
+                "how_it_should_be": "Поддерживать оба варианта: nested для strong containment и flat для независимого доступа, как делает Stripe."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно спроектировать bulk-операции в REST API?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Отправлять каждый объект отдельным запросом `POST /users` в цикле — это и есть «bulk».",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это не bulk, а N отдельных запросов: пропадает атомарность и контроль над общим лимитом, клиент платит за N round-trip и упирается в rate-limit вместо одного запроса.",
+                "source_of_confusion": "«Bulk» путают с «много запросов подряд», потому что результат внешне похож — создано несколько объектов.",
+                "if_it_were_true": "Тогда при загрузке 10k записей API упёрся бы в rate limit и сетевой latency, и операция заняла бы минуты вместо секунд.",
+                "how_it_should_be": "Выделить один bulk-endpoint на ресурс, принимающий массив объектов в одном запросе с явной политикой атомарности."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Создать один endpoint `POST /bulk`, который принимает JSON с типом ресурса и массивом — universal bulk для всего API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "«Универсальный» bulk превращается в RPC-стиль, теряет ресурсную семантику REST и плохо валидируется: один endpoint обрабатывает разнородные типы.",
+                "source_of_confusion": "Желание DRY («один endpoint вместо многих») перевешивает требование ресурсной модели REST.",
+                "if_it_were_true": "Тогда контракт невозможно описать в OpenAPI без `oneOf`-кашицы, а middleware (authz, audit) не понимало бы, что именно создаётся.",
+                "how_it_should_be": "Делать bulk-endpoint на конкретный ресурс (`POST /users/batch`), сохраняя ресурсную семантику и валидируемость."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Выделить bulk-endpoint на ресурс (`POST /users/batch` или `POST /users` с `{\"users\": [...]}`) с явной политикой атомарности и форматом ответа per-item.",
+              "correct": true,
+              "sections": {
+                "explanation": "Такой подход сохраняет ресурсную модель REST, явно описывает контракт all-or-nothing против partial success и формат массива результатов/ошибок. Bulk остаётся привязан к одному типу ресурса, что валидируемо и описуемо в OpenAPI.",
+                "example": "`POST /users/batch` принимает массив, отвечает `{\"results\":[{\"status\":\"ok\",\"id\":1},{\"status\":\"error\",\"reason\":\"duplicate\"}]}` и общим статусом `207 Multi-Status`. JSON:API имеет conventions именно для bulk.",
+                "when_to_apply": "Массовый импорт, batch-update в админке, синхронизация каталога — там, где N>1 объектов одного типа создаются/обновляются за раз.",
+                "edge_cases": "Заранее зафиксировать: атомарность (all-or-nothing против partial success), max items per request и формат per-item ошибок. Иначе клиент не сможет корректно обработать частичный успех.",
+                "related": "[[api-design-best-practices-interview#Q6]] sub-resources против flat; [[api-design-best-practices-interview#Q8]] custom actions; [[api-design-best-practices-interview#Q15]] формат ошибок валидации."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Использовать `GET` с массивом ID в query string (`?ids=1,2,3,...`) для bulk create — экономит сетевой трафик.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GET` идемпотентен и кэшируем, он не должен создавать ресурсы; к тому же URL ограничен по длине (~2-8KB), и большой список ID просто не поместится.",
+                "source_of_confusion": "Кажется, что передать данные в query «дешевле», чем в теле POST, поэтому bulk пытаются сделать через GET.",
+                "if_it_were_true": "Тогда при bulk на 1000 объектов запрос обрезался бы прокси, и часть данных молча терялась бы без ошибки.",
+                "how_it_should_be": "Создание делать через `POST` с массивом в теле запроса; `GET` использовать только для чтения, а не для bulk-create."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как лучше всего моделировать non-CRUD action типа «publish article» в REST API?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Завести универсальный endpoint `POST /actions` с телом `{\"type\":\"publish\",\"article_id\":123}` — единая точка для всех действий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это чистый RPC: ресурсная модель REST полностью теряется, URL не отражает, что меняется, и невозможно навесить ресурсо-уровневую авторизацию или кэширование.",
+                "source_of_confusion": "Желание иметь «одну точку входа для всех команд» переносит RPC-мышление в REST.",
+                "if_it_were_true": "Тогда невозможно было бы навесить ресурсо-уровневую authz (`/articles/123/*`), не было бы URL-based кэширования и audit по ресурсу.",
+                "how_it_should_be": "Моделировать действие как sub-resource на конкретном ресурсе (`POST /articles/123/publish`), сохраняя ресурсную семантику."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Расширить HTTP кастомным методом: `PUBLISH /articles/123` — свой verb более выразителен, чем POST.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кастомные HTTP-методы не поддерживаются клиентами, прокси, CDN и API gateway — они режут неизвестные методы.",
+                "source_of_confusion": "Кажется логичным «выразить действие новым методом», по аналогии с тем, как REST использует PUT/DELETE.",
+                "if_it_were_true": "Тогда запросы блокировались бы на CloudFront/nginx с `405 Method Not Allowed`, и отладка занимала бы часы.",
+                "how_it_should_be": "Использовать стандартный `POST` на action-sub-resource (`POST /articles/123/publish`) — он проходит через всю инфраструктуру."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только `PATCH /articles/123` с `{\"status\":\"published\"}` — state machine через состояние ресурса единственно правильный путь.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PATCH со сменой поля подходит для простой смены состояния, но скрывает side-effects (отправка нотификаций, индексация) за неявной семантикой обновления поля.",
+                "source_of_confusion": "«Публикация — это просто смена статуса» — упрощение, которое игнорирует побочные эффекты действия.",
+                "if_it_were_true": "Тогда клиент мог бы случайно «опубликовать» статью, передав `status` в общем PATCH-запросе вместе с другими полями.",
+                "how_it_should_be": "Для действий с side-effects использовать явный action sub-resource (`POST /articles/123/publish`), а PATCH оставить для простой смены состояния без эффектов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Использовать sub-resource `POST /articles/123/publish` для action с побочными эффектами; PATCH — для простой смены состояния.",
+              "correct": true,
+              "sections": {
+                "explanation": "Sub-resource естественно выражает action как ресурс («publication» статьи), а POST подчёркивает not-idempotent side-effects. Это сохраняет ресурсную модель и не уводит API в RPC.",
+                "example": "`POST /orders/456/cancel` создаёт cancellation event и возвращает обновлённый order; `POST /articles/123/publish` триггерит indexation pipeline и нотификации.",
+                "when_to_apply": "Действия с workflow и эффектами: publish, archive, cancel, approve — когда есть нотификации, аудит или генерация дочерних сущностей.",
+                "edge_cases": "Ограничивать число таких verb-эндпоинтов несколькими ключевыми кейсами — иначе API скатывается в RPC-стиль с десятками action-URL.",
+                "related": "[[api-design-best-practices-interview#Q1]] именование ресурсов; [[api-design-best-practices-interview#Q7]] bulk-операции; [[api-design-best-practices-interview#Q16]] идемпотентность POST."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой подход к pagination коллекционных эндпоинтов корректен на старте проектирования API?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Всегда пагинировать коллекции (default limit 20-100, max 100-1000), выбрав стратегию (offset/page/cursor/time) под характер данных.",
+              "correct": true,
+              "sections": {
+                "explanation": "Возврат всей коллекции деградирует latency и memory под нагрузкой; default-лимит защищает от случайного «вернуть всё», а max-лимит — от злоупотребления огромным `?limit=`. Пагинация закладывается с первого дня, потому что менять контракт после релиза дорого.",
+                "example": "`GET /users?limit=20&cursor=abc123` — cursor-based для high-traffic; `GET /users?page=3&per_page=10` — page-based для админок с прыжками по страницам.",
+                "when_to_apply": "Любой `GET /<collection>` независимо от ожидаемого размера: данные растут, и endpoint без пагинации со временем становится миной замедленного действия.",
+                "edge_cases": "Стратегии под данные: offset/limit (простота), page/per_page (UI), cursor (большие/реалтайм датасеты), time-based (event feed по дате). Default нужно подбирать так, чтобы p99 оставался стабильным.",
+                "related": "[[api-design-best-practices-interview#Q10]] cursor против offset; [[api-design-best-practices-interview#Q11]] filtering и sorting; [[api-design-best-practices-interview#Q12]] field selection."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Пагинировать только если коллекция превышает 10k строк — для маленьких таблиц это overhead.",
+              "correct": false,
+              "sections": {
+                "what_actually": "«Маленькие сегодня» вырастают через год, и менять контракт API после релиза с breaking change дорого. Размер коллекции не статичен, поэтому пагинацию закладывают заранее.",
+                "source_of_confusion": "Преждевременная оптимизация наоборот: кажется, что для 50 строк пагинация — лишняя сложность.",
+                "if_it_were_true": "Тогда через год прод падал бы на эндпоинте, который раньше возвращал 50 записей, а теперь 500k — клиенты не готовы к пагинации.",
+                "how_it_should_be": "Пагинировать все коллекции с самого начала, даже если сейчас они маленькие."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Использовать только offset/limit как единый стандарт — это самый понятный подход для всех команд.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Offset деградирует на больших датасетах (`OFFSET 1000000` сканирует всю таблицу) и даёт inconsistent результат при конкурентных вставках — клиент видит дубликаты или пропуски.",
+                "source_of_confusion": "Offset действительно проще для понимания и поддерживает прыжки на любую страницу, поэтому кажется универсальным.",
+                "if_it_were_true": "Тогда на коллекции в 10M строк p99 latency рос бы до секунд, а клиенты получали бы дубликаты/пропуски при скролле.",
+                "how_it_should_be": "Выбирать стратегию под данные: cursor для больших/растущих наборов, offset/page — для маленьких и admin-UI."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Возвращать всю коллекцию, но добавить query-param `?limit=100`, чтобы клиент сам ограничивал — backend остаётся «прозрачным».",
+              "correct": false,
+              "sections": {
+                "what_actually": "Default без limit заставит backend готовить полный response, а лимит на клиенте не спасает сервер от OOM/timeout — данные уже материализованы в памяти сервера.",
+                "source_of_confusion": "Кажется, что «лимит на стороне клиента» снимает ответственность с сервера, раз клиент управляет объёмом.",
+                "if_it_were_true": "Тогда один клиент без `?limit` укладывал бы базу и память JVM, а остальные клиенты получали бы 503.",
+                "how_it_should_be": "Применять серверный default-лимит и max-лимит, не полагаясь на дисциплину клиента."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда выбирать cursor-based pagination вместо offset-based для REST API?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Всегда использовать offset-based — это проще и поддерживает прыжки на любую страницу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OFFSET N` в SQL заставляет БД сканировать и отбрасывать первые N строк перед возвратом. На миллионах строк `OFFSET 1000000 LIMIT 10` превращается в seq-scan ценой секунд CPU и read-IOPS. Дополнительно — при изменении данных между запросами клиент видит дубликаты или пропуски.",
+                "source_of_confusion": "На маленьких датасетах (до 10k строк) offset действительно работает быстро и удобно для admin-UI с произвольной навигацией.",
+                "if_it_were_true": "Тогда Stripe, Shopify, Twitter, GitHub API не переходили бы на cursor-based — а они все перешли именно из-за деградации offset на проде.",
+                "how_it_should_be": "Cursor для больших/растущих датасетов и feed, offset — только для маленьких таблиц и admin-UI с прыжками."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Cursor-based для больших/растущих датасетов и real-time feeds; offset-based — для маленьких таблиц и admin-интерфейсов с прыжками по страницам.",
+              "correct": true,
+              "sections": {
+                "explanation": "Cursor — это opaque-указатель на «последнюю отданную строку» (обычно `(sort_key, id)` в base64). Следующая страница достаётся через `WHERE (created_at, id) > (cursor_ts, cursor_id) ORDER BY created_at, id LIMIT N` — index range scan, O(log N) независимо от глубины. Offset даёт O(offset). Cursor также стабилен к вставкам и удалениям между запросами.",
+                "example": "`GET /events?cursor=eyJ0cyI6...&limit=20` отвечает `{\"data\": [...], \"next_cursor\": \"eyJ0cyI6...\", \"has_more\": true}`. Курсор закодирован и непрозрачен для клиента.",
+                "when_to_apply": "Event feeds, activity logs, infinite scroll, API с >100k строк, любые public API, где клиент не контролирует размер данных. Offset оставляй для admin-панелей с jump-to-page-42.",
+                "edge_cases": "Cursor должен быть opaque для клиента — иначе ломается обратная совместимость при смене схемы. Если sort-ключ не уникален, добавляй tie-breaker (`(created_at, id)`). Для bidirectional нужно отдавать `prev_cursor` отдельно.",
+                "related": "[[api-design-best-practices-interview#Q9]] стратегии pagination; [[api-design-best-practices-interview#Q11]] filtering и sorting; [[api-design-best-practices-interview#Q16]] идемпотентность."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Использовать только page-based (`?page=5&size=10`) — это компромисс между offset и cursor.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Page-based — синтаксический сахар над offset (`offset = (page-1) * size`). Внутри БД выполняется тот же `OFFSET` со всеми проблемами производительности и нестабильности. Это не отдельная стратегия, а offset с другим API.",
+                "source_of_confusion": "Spring Data `Pageable` оперирует page/size и автоматически конвертирует в offset — выглядит как третий вариант, но физически это offset.",
+                "if_it_were_true": "Тогда Stripe оставался бы на `?page=N`, но они явно документируют переход на cursor-based из-за scale-проблем page-based.",
+                "how_it_should_be": "Понимать page-based как разновидность offset и выбирать cursor для больших датасетов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cursor-based решает все проблемы и должен использоваться везде, включая admin-UI.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cursor не поддерживает прыжки на произвольную страницу — клиент обязан идти последовательно. Для admin-интерфейса с «Перейти на стр. 42» это unacceptable UX. Также cursor сложнее для total-count (`?include_total=true` требует отдельного запроса).",
+                "source_of_confusion": "«Cursor быстрее, значит лучше всегда» — игнорирует UX-требования к page jumping.",
+                "if_it_were_true": "Тогда Jira, Confluence и любые админки не использовали бы page-based — а они используют, потому что юзеру нужно прыгать по страницам.",
+                "how_it_should_be": "Cursor — для feed и больших данных, offset/page — для admin-UI, где нужны прыжки на конкретную страницу."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как правильно реализовать filtering и sorting в REST API?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все фильтры (включая сложные boolean-выражения с AND/OR/NOT) передавать через path-параметры: `/users/status/active/role/admin/age-gte/18`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Path-сегменты — это иерархия ресурсов, а не фильтры. Кодирование атрибутов в path ломает routing-таблицы (каждая комбинация — отдельный route), невозможно описать в OpenAPI как «коллекция с фильтрами» и нарушает RFC 3986 (path — hierarchy, query — non-hierarchical data).",
+                "source_of_confusion": "Clean-URL движение «убрать query-параметры ради красоты» применяют к фильтрам, хотя оно касается только идентификаторов ресурсов.",
+                "if_it_were_true": "Тогда Spring `@PathVariable`/Express router имели бы экспоненциальную сложность по числу комбинаций, а CDN не смог бы нормализовать URL для одной выборки в другом порядке параметров.",
+                "how_it_should_be": "Простые фильтры передавать через query-параметры, а path оставлять для идентичности ресурсов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Использовать единый универсальный query-language (RSQL/OData) для всех эндпоинтов, даже если фильтры простые.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RSQL (`?filter=age=gt=18;status==active`) и OData дают мощность SQL поверх REST, но платится сложностью клиента (парсер с обеих сторон), рисками безопасности (injection в фильтры) и деоптимизацией в БД (динамические WHERE без plan cache). Для 90% эндпоинтов достаточно `?status=active&role=admin`.",
+                "source_of_confusion": "«Один синтаксис на все случаи» выглядит как DRY, но de-facto переусложняет тривиальные эндпоинты.",
+                "if_it_were_true": "Тогда GitHub и Stripe API использовали бы RSQL/OData — а они оставили простые query-параметры и отдельный `POST /search` для сложных случаев.",
+                "how_it_should_be": "Простые фильтры через query, а сложный поиск выносить в отдельный `POST /search` с типизированным телом."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Простые фильтры — через query-параметры (`?status=active&role=admin`), сортировка — через `?sort=field` с `-` для DESC и комой для многоуровневой; сложный поиск выносить в `POST /search` с JSON-body.",
+              "correct": true,
+              "sections": {
+                "explanation": "Разделение по сложности даёт простой happy-path (GET кэшируемый, идемпотентный, читаемый) и отдельный мощный endpoint для нестандартных нужд. Query-параметры остаются плоскими (AND-семантика по умолчанию), сортировка использует знакомую ORDER BY-конвенцию, а булевы выражения и full-text идут через `POST /search`.",
+                "example": "`GET /users?status=active&role=admin&sort=-created_at,name&limit=20`; для сложного — `POST /users/search` с телом `{\"filter\": {\"and\": [{\"status\": \"active\"}, {\"or\": [{\"role\": \"admin\"}, {\"role\": \"owner\"}]}]}, \"sort\": [{\"field\": \"created_at\", \"order\": \"desc\"}]}`.",
+                "when_to_apply": "Любой REST API. Граница — когда число query-параметров превышает 5-7 или появляется потребность в OR/NOT: тогда переноси на `POST /search`.",
+                "edge_cases": "GET с query кэшируется (CDN, browser), POST /search — нет; не используй POST там, где хватает GET. Sanitize/whitelist sort-поля, иначе ORDER BY injection через `?sort=password` или полнотабличный скан по неиндексированному полю.",
+                "related": "[[api-design-best-practices-interview#Q9]] pagination; [[api-design-best-practices-interview#Q10]] cursor-based; [[api-design-best-practices-interview#Q12]] field selection."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Принимать произвольные SQL-фрагменты в query (`?where=age>18 AND status='active'`) — это максимально гибко.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это SQL injection by design — клиент диктует фрагмент WHERE напрямую БД. Даже с парсингом и whitelist это re-implementation парсера SQL на сервере, что эквивалентно построению полного query-builder, и всё равно с дырами безопасности.",
+                "source_of_confusion": "«Гибкость равно хорошо» без учёта security и cost — антипаттерн.",
+                "if_it_were_true": "Тогда PostgREST/Hasura имели бы prod-инциденты каждую неделю, а они избегают этого через RLS и whitelisted-поля.",
+                "how_it_should_be": "Использовать whitelisted query-параметры для простых фильтров и типизированный `POST /search` для сложных — без сырого SQL от клиента."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем в REST API нужен механизм sparse fieldsets (`?fields=id,name,email`) и когда его применять?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Sparse fieldsets — устаревший паттерн до появления HTTP-сжатия (gzip/brotli); современные API в нём не нуждаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "gzip уменьшает размер payload по проводу, но не размер payload до сжатия: сервер всё равно генерирует полный JSON (CPU, memory, serialization), а клиент парсит и держит в памяти все поля. Для мобильных клиентов с ограниченной RAM разница между 50KB и 5KB после парсинга заметна.",
+                "source_of_confusion": "«gzip решает bandwidth» — но bandwidth не единственная стоимость передачи и обработки.",
+                "if_it_were_true": "Тогда JSON:API, GitHub GraphQL и Stripe `expand` не имели бы field-selection в спецификации.",
+                "how_it_should_be": "Применять sparse fieldsets точечно для тяжёлых ресурсов и mobile-клиентов, понимая, что gzip покрывает только bandwidth."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Применять sparse fieldsets ко всем эндпоинтам обязательно, даже если клиент всегда запрашивает один и тот же набор полей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Field-selection добавляет сложность серверной логики (dynamic projection в БД-query, проверка прав на каждое поле, валидация имён против whitelist). Для внутренних API с фиксированной schema и контролируемыми клиентами это overhead без выгоды.",
+                "source_of_confusion": "«Опциональная фича не помешает» — но `?fields=...` без явного use-case увеличивает поверхность атаки и снижает кэшируемость (каждый набор полей — отдельный cache-key).",
+                "if_it_were_true": "Тогда все Spring/Rails-фреймворки имели бы field-projection встроенным, а не как edge-case.",
+                "how_it_should_be": "Включать sparse fieldsets только там, где есть реальная выгода — тяжёлые ресурсы и mobile-клиенты."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Sparse fieldsets — это альтернатива GraphQL; если используешь GraphQL, REST с `?fields=` не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GraphQL и REST sparse fieldsets — разные слои абстракции. GraphQL — отдельный protocol (query language, schema, resolvers), а sparse fieldsets — дополнение к REST для случаев, когда полный переход на GraphQL неоправдан. Stripe использует REST с `expand` без GraphQL.",
+                "source_of_confusion": "Оба механизма решают «верни только нужное», поэтому их считают взаимозаменяемыми, хотя GraphQL — это архитектурный выбор.",
+                "if_it_were_true": "Тогда GitHub не поддерживал бы одновременно REST API (с field-selection через media types) и GraphQL API.",
+                "how_it_should_be": "Понимать sparse fieldsets как точечную оптимизацию REST, а GraphQL — как отдельный архитектурный выбор; они сосуществуют."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Sparse fieldsets применять точечно — для тяжёлых ресурсов (с вложенными коллекциями, BLOB, дорогими computed-полями) и mobile-клиентов; синтаксис JSON:API (`?fields[user]=name,email`) или простой (`?fields=name,email`); серверу обязательно whitelist полей и проброс проекции в SQL `SELECT`, иначе экономии нет.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ценность sparse fieldsets в трёх измерениях: сетевой payload (после gzip всё равно меньше при разреженных объектах), serialization-cost на сервере (не материализуем 50 полей ради 3) и memory footprint на клиенте. Реальная экономия — только если проекция доходит до БД (`SELECT id, name, email` вместо `SELECT *`).",
+                "example": "`GET /users/123?fields=id,name,email` → `{\"id\": 123, \"name\": \"Alice\", \"email\": \"alice@example.com\"}`. На сервере — interface-based projection в Spring Data: `<T> T findById(Long id, Class<T> projection)` плюс whitelist `Set.of(\"id\", \"name\", \"email\")`.",
+                "when_to_apply": "Объекты более 20 полей, наличие вложенных коллекций (orders, attachments), mobile-API с константной полосой, public-API с большой долей repeat-запросов одного клиента. JSON:API `?fields[type]=...` — когда в response несколько типов ресурсов.",
+                "edge_cases": "Cache-key должен включать набор полей, иначе CDN отдаст «не тот» вариант; обязателен whitelist (иначе клиент пробует `?fields=password_hash`); обязательна проекция до БД, иначе только видимость оптимизации; комбинация со sparse `?include=` ломает кэш окончательно.",
+                "related": "[[api-design-best-practices-interview#Q3]] snake_case vs camelCase; [[api-design-best-practices-interview#Q9]] pagination; [[api-design-best-practices-interview#Q11]] filtering и sorting."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что обязательно должно быть в едином формате error response для production REST API?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Структурированный JSON с machine-readable `code`, human-readable `message`, опциональными `details` и `request_id`, без stack trace.",
+              "correct": true,
+              "sections": {
+                "explanation": "Клиенты пишут switch по `code` (стабильный контракт), `message` показывают пользователю, `details` парсят для подсветки полей, `request_id` нужен саппорту при разборе инцидента. Отсутствие stack trace — security: трасса раскрывает внутреннюю структуру, имена классов и версии библиотек.",
+                "example": "В Spring — `@RestControllerAdvice` плюс `ResponseEntityExceptionHandler`; тело `{\"error\": {\"code\": \"INVALID_PARAMETER\", \"message\": \"...\", \"request_id\": \"...\"}}`. В FastAPI — `exception_handler`.",
+                "when_to_apply": "Любой публичный или внутренний REST API; формат фиксируется на этапе дизайна и не меняется ретроактивно, потому что это breaking change для клиентов.",
+                "edge_cases": "Логировать полный stack на сервере с тем же `request_id` — иначе саппорт не найдёт корреляцию; `code` нельзя переименовывать после релиза (клиенты захардкодили); i18n `message` — на клиенте по `code`, а не на сервере по Accept-Language (иначе ломается кэширование).",
+                "related": "[[api-design-best-practices-interview#Q14]] Problem Details RFC 7807; [[api-design-best-practices-interview#Q15]] ошибки валидации; [[api-design-best-practices-interview#Q20]] rate-limit ответы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только HTTP status code (4xx/5xx) без тела, чтобы не раскрывать внутреннюю структуру.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Клиент не может различить «email невалиден» и «email уже занят» — оба 400. UX страдает: форма не подсветит конкретное поле, а support не получит контекст. Безопасность — миф: правильный формат тоже не раскрывает внутренности, если в нём нет stack trace.",
+                "source_of_confusion": "«Меньше тела — меньше leak» путают с безопасностью, хотя отсутствие тела просто лишает клиента информации.",
+                "if_it_were_true": "Тогда пользователи видели бы generic «Bad Request», не понимали бы, что чинить, нагрузка на support росла бы, а mobile-команда добавляла бы хаки парсинга строки.",
+                "how_it_should_be": "Возвращать структурированное тело с `code`, `message` и `request_id`, при этом без stack trace — этого достаточно для безопасности."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Произвольный текст в `message` без `code`, чтобы не сковывать backend.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Клиент не может стабильно реагировать — любая правка текста («email is invalid» → «invalid email») ломает switch на клиенте. i18n становится невозможной без дублирования логики.",
+                "source_of_confusion": "Кажется, что свободный текст «гибче» и backend проще менять формулировки.",
+                "if_it_were_true": "Тогда mobile-приложение падало бы после релиза backend, который «всего лишь поправил опечатку» в сообщении, и невозможно было бы строить metrics по типам ошибок.",
+                "how_it_should_be": "Обязательно включать стабильный machine-readable `code`, а `message` оставлять человекочитаемым дополнением."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Возвращать полный stack trace в production для упрощения debug.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это security leak — раскрываются версии библиотек (CVE-таргетинг), внутренние пути и имена классов; payload раздувается на килобайты, а клиент не умеет парсить stack.",
+                "source_of_confusion": "Удобство отладки на dev переносят в production, забывая про security и про клиента.",
+                "if_it_were_true": "Тогда это была бы прямая реализация OWASP A05:2021 (Security Misconfiguration), и атакующий получал бы карту внутренностей под известные эксплойты.",
+                "how_it_should_be": "Stack trace логировать только на сервере по `request_id`, а клиенту отдавать структурированную ошибку без трассы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что даёт RFC 7807 Problem Details поверх собственного error-формата?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Возможность не возвращать HTTP status code вообще, потому что `status` указан в теле.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RFC 7807 явно требует, чтобы значение поля `status` совпадало с HTTP status в response line. Прокси, CDN и retry-механики клиентов смотрят именно на HTTP status — игнорирование статуса сломает кэширование и observability.",
+                "source_of_confusion": "Наличие `status` в теле наводит на мысль, что HTTP-статус теперь избыточен.",
+                "if_it_were_true": "Тогда `200 OK` с `\"status\": 403` в теле клиентская библиотека (axios, OkHttp) посчитала бы успехом, circuit breaker не сработал бы, а mobile-аналитика не зафиксировала бы ошибку.",
+                "how_it_should_be": "Дублировать HTTP-статус в поле `status`, но именно HTTP status line остаётся источником истины для инфраструктуры."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Стандартный media type `application/problem+json` и единый словарь полей (`type`, `title`, `status`, `detail`, `instance`) с возможностью расширения.",
+              "correct": true,
+              "sections": {
+                "explanation": "RFC 7807 — IETF-стандарт error formats. `type` — URI категории проблемы (обычно ссылка на документацию), `title` — краткое human-readable описание, `status` дублирует HTTP, `detail` — конкретика инстанса, `instance` — URI конкретного происшествия. Расширения добавляются как дополнительные ключи (например `errors[]` для validation).",
+                "example": "Spring 6: `ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, \"Balance 30 < 50\")` — Content-Type `application/problem+json` выставляется автоматически. ASP.NET Core и Stripe поддерживают формат из коробки.",
+                "when_to_apply": "Новый сервис без legacy error-формата; экосистема с множеством клиентов на разных стэках (универсальные библиотеки парсят RFC 7807); требование совместимости с API Gateway и observability tooling, которые знают `problem+json`.",
+                "edge_cases": "`type` URI должен реально открываться (документация), иначе клиенты теряют пользу; расширения именовать snake_case и фиксировать в OpenAPI; RFC 7807 не описывает локализацию — i18n строить поверх через `type` как ключ.",
+                "related": "[[api-design-best-practices-interview#Q13]] формат error response; [[api-design-best-practices-interview#Q15]] ошибки валидации; [[api-design-best-practices-interview#Q20]] rate-limit ответы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Шифрование тела ошибки для предотвращения information disclosure.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RFC 7807 не имеет отношения к шифрованию — это про структуру JSON. Транспортное шифрование решает TLS, а ограничение раскрываемой информации — это дисциплина наполнения `detail`, а не формат.",
+                "source_of_confusion": "Слово «Problem» и тема безопасности наводят на мысль, что стандарт как-то защищает данные.",
+                "if_it_were_true": "Тогда разработчик ждал бы «магической защиты» от RFC, при этом в `detail` писал бы SQL-запрос с именами таблиц — leak состоялся бы несмотря на формат.",
+                "how_it_should_be": "Использовать TLS для транспорта и аккуратно наполнять `detail`, а RFC 7807 рассматривать только как структуру тела."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Автоматический retry со стороны клиента на любые 4xx ответы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RFC 7807 — это формат тела, никакой retry-семантики он не задаёт. Retry на 4xx обычно вреден (400/401/403/404 не починятся повтором); правильный retry — на 408/429/5xx согласно `Retry-After`.",
+                "source_of_confusion": "Стандартизация ошибок наводит на мысль, что стандарт ещё и управляет поведением клиента при ошибке.",
+                "if_it_were_true": "Тогда клиент бомбардировал бы сервер повторами на 400, получал бы rate-limit, путал бы метрики error-rate и удлинял latency пользователю.",
+                "how_it_should_be": "Retry-логику строить по HTTP-статусу и `Retry-After`, а RFC 7807 использовать только как структуру тела ошибки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как правильно возвращать ошибки валидации формы с несколькими невалидными полями?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Fail-fast: остановиться на первой ошибке и вернуть только её, сэкономив CPU на проверке остальных полей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для форм fail-fast ужасен для UX — пользователь чинит первое поле, шлёт запрос, узнаёт о втором, фиксит, узнаёт о третьем. Многошаговая «лестница» вместо одного цикла. CPU-экономия мнимая: bean-validation для одной формы — это микросекунды.",
+                "source_of_confusion": "Привычка fail-fast из бизнес-логики переносится на валидацию формы, где она вредна.",
+                "if_it_were_true": "Тогда росла бы конверсионная просадка на формах регистрации/чекаута, UX-команда жаловалась бы, а пользователи бросали бы форму на 2-3 итерации.",
+                "how_it_should_be": "Собирать все ошибки валидации сразу в массив и возвращать одним ответом."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Возвращать `500 Internal Server Error` с описанием первой найденной проблемы валидации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "500 предназначен для серверных сбоев — отсутствует БД, NPE, OOM. Валидация — клиентская ошибка (клиент прислал плохие данные). 500 триггерит алерты SRE, попадает в error-rate dashboard и путает on-call.",
+                "source_of_confusion": "Любая «ошибка обработки запроса» ошибочно маппится на 500, без различия server-fault и client-fault.",
+                "if_it_were_true": "Тогда false-positive алерты будили бы дежурного среди ночи, а SLO error-budget «горел» бы от пользовательских опечаток в email.",
+                "how_it_should_be": "Для ошибок валидации возвращать 400/422 (клиентская ошибка), а 500 оставлять для реальных серверных сбоев."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Собрать все валидационные ошибки в массив `errors[]` с полями `field` и `reason`, вернуть со статусом `400 Bad Request` или `422 Unprocessable Entity`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Один запрос — полный список того, что чинить; UI рисует красным каждое невалидное поле одновременно. 400 — синтаксически плохой запрос (malformed body), 422 — синтаксически валидный JSON, но семантически нарушает правила домена (оба широко используются, выбор по конвенции).",
+                "example": "Bean Validation `@Valid` в Spring собирает все нарушения: `ex.getBindingResult().getFieldErrors().stream().map(e -> Map.of(\"field\", e.getField(), \"reason\", e.getDefaultMessage())).toList()` — нужно только смаппить в тело `{\"error\": {\"code\": \"VALIDATION_FAILED\", \"errors\": [...]}}`.",
+                "when_to_apply": "Любой endpoint, принимающий форму или DTO с несколькими полями; особенно регистрация, profile-update, checkout — там UX-критично показать всё сразу.",
+                "edge_cases": "Порядок полей в `errors[]` должен быть детерминированным (по порядку DTO), иначе тесты flaky; `reason` локализовать на клиенте по коду правила; cross-field validation (`password == confirmPassword`) выносить отдельным error с `field: \"confirmPassword\"`.",
+                "related": "[[api-design-best-practices-interview#Q13]] формат error response; [[api-design-best-practices-interview#Q14]] Problem Details RFC 7807; [[api-design-best-practices-interview#Q25]] input validation."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Возвращать `200 OK` с флагом `success: false` и списком ошибок в теле, чтобы клиент не падал на HTTP-уровне.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это анти-паттерн «SOAP-style over REST». Ломает CDN, прокси, retry-логику и observability — все смотрят на HTTP status. Клиентские библиотеки (axios `validateStatus`, OkHttp `isSuccessful`) посчитают ответ успешным.",
+                "source_of_confusion": "Желание «не пугать клиента ошибкой на HTTP-уровне» переносит SOAP-практику в REST.",
+                "if_it_were_true": "Тогда circuit-breaker не открывался бы на росте 400-х (их «нет»), метрики error-rate показывали бы зелёный при красном UX, а регрессию ловили бы только в e2e.",
+                "how_it_should_be": "Использовать корректный HTTP-статус ошибки (400/422), а не маскировать ошибку под `200 OK`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая ключевая особенность отличает идемпотентный POST с Idempotency-Key от обычного POST?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Сервер выполняет операцию заново при каждом retry, но возвращает первый успешный ответ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это противоречит сути идемпотентности — повторное выполнение списало бы деньги дважды. Идемпотентность означает, что повтор не создаёт новый side-effect, а отдаёт сохранённый результат.",
+                "source_of_confusion": "Кажется, что «вернуть тот же ответ» достаточно, даже если операция выполняется заново.",
+                "if_it_were_true": "Тогда при сетевом retry платёж дублировался бы — клиента списывали бы N раз вместо одного.",
+                "how_it_should_be": "Сервер должен выполнить операцию один раз, сохранить результат и на повторе с тем же ключом отдать закэшированный ответ без повторного side-effect."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Idempotency-Key генерируется сервером и возвращается клиенту в Location header.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот — ключ создаёт клиент (обычно UUID), потому что только он знает, что это retry той же логической операции. Серверный ключ не помог бы: сервер не знает, дошёл ли первый запрос до клиента.",
+                "source_of_confusion": "По аналогии с server-generated resource ID кажется, что и ключ должен выдавать сервер.",
+                "if_it_were_true": "Тогда серверный ключ не защищал бы от ретраев из-за timeout — клиент не знает, дошёл ли запрос, и не смог бы переиспользовать ключ.",
+                "how_it_should_be": "Ключ генерирует клиент и шлёт в заголовке `Idempotency-Key`, переиспользуя его при ретраях той же операции."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Сервер хранит ключ навсегда в основной БД с уникальным индексом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ключи хранят ограниченное время (24h типично) в Redis или быстром storage — иначе таблица распухает, а старые ретраи никому не нужны. Хранение навсегда в основной БД замедляет горячий путь.",
+                "source_of_confusion": "Уникальный индекс в БД кажется естественным способом гарантировать «один ключ — одна операция».",
+                "if_it_were_true": "Тогда бесконечное хранение всех ключей раздувало бы БД и замедляло lookup на горячем пути платежей.",
+                "how_it_should_be": "Хранить ключи в быстром storage (Redis) с TTL около 24 часов — этого достаточно для защиты от ретраев."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Клиент передаёт уникальный ключ в `Idempotency-Key`, сервер при повторе возвращает закэшированный ответ.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это классический паттерн Stripe: ключ — отпечаток операции на стороне клиента, сервер либо выполняет впервые и сохраняет результат, либо отдаёт сохранённый ответ. Side-effect выполняется ровно один раз независимо от числа ретраев.",
+                "example": "`POST /payments` с `Idempotency-Key: 7f9c1d-...` и телом `{\"amount\": 100}`: сервер проверяет ключ, при первом разе списывает и сохраняет результат, при повторе отдаёт тот же ответ без второго списания.",
+                "when_to_apply": "Платежи, заказы, любые non-idempotent POST, которые клиент может ретраить при сетевых сбоях (timeout, 5xx).",
+                "edge_cases": "Storage ключей — Redis с TTL (24h типично); ключ генерирует клиент как UUID; без этого retry на 5xx/timeout приводит к дублированию side-effects — двойным списаниям и дублям заказов.",
+                "related": "[[api-design-best-practices-interview#Q8]] custom actions с side-effects; [[api-design-best-practices-interview#Q17]] optimistic concurrency ETag; [[api-design-best-practices-interview#Q30]] идемпотентность webhooks."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как ETag в связке с If-Match защищает от потерянных обновлений (lost update)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Клиент шлёт `If-Match` со старым ETag — сервер сравнивает с текущим и возвращает `412`, если ресурс изменился.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это классический optimistic concurrency control: ETag — версия ресурса; при PUT с `If-Match` сервер атомарно проверяет «версия совпадает?» и либо применяет изменение, либо отказывает `412 Precondition Failed`.",
+                "example": "Клиент A и B читают ресурс с ETag `\"abc123\"`; A обновляет (успех, новый ETag `\"def456\"`); B обновляет с `If-Match: \"abc123\"` и получает `412` — нужно перечитать и повторить.",
+                "when_to_apply": "REST API с конкурентными редакторами одного ресурса: документы, профили, конфигурация — там, где параллельные изменения реальны.",
+                "edge_cases": "Альтернатива ETag — поле версии (`{\"version\": 1, ...}`) с тем же сравнением. Без If-Match параллельные PUT затирают изменения друг друга, и клиент даже не узнаёт об этом.",
+                "related": "[[api-design-best-practices-interview#Q16]] идемпотентность POST; [[api-design-best-practices-interview#Q27]] caching и If-None-Match; [[api-design-best-practices-interview#Q13]] формат error response."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Сервер блокирует ресурс при чтении (GET) и снимает блокировку только после PUT того же клиента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это pessimistic locking, а не optimistic — ETag намеренно избегает блокировок, чтобы не держать долгоживущие транзакции и не блокировать читателей.",
+                "source_of_confusion": "Слово «защита от конфликтов» ассоциируется с блокировками, поэтому ETag путают с locking.",
+                "if_it_were_true": "Тогда брошенный клиент держал бы lock навсегда, остальные читатели/писатели стояли бы, а в распределённом окружении возникали бы deadlock.",
+                "how_it_should_be": "Использовать optimistic подход: не блокировать на чтении, а проверять версию через If-Match при записи."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "ETag вычисляется на клиенте и используется только для HTTP-кеширования через `If-None-Match`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кеширование (`If-None-Match` → 304) — другое применение того же заголовка; для concurrency нужен `If-Match`, и считает ETag сервер (хэш или version), а не клиент.",
+                "source_of_confusion": "ETag действительно используется и в кэшировании, поэтому его роль в concurrency теряется из виду.",
+                "if_it_were_true": "Тогда путаница между cache validation и concurrency control давала бы ложное ощущение защиты — lost update не предотвращались бы.",
+                "how_it_should_be": "Для concurrency использовать `If-Match` на запись, а `If-None-Match` оставить для conditional GET и кэширования."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Клиент при конфликте автоматически повторяет PUT с новым ETag без участия пользователя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Автоматический replay перетрёт чужие изменения — суть optimistic concurrency в том, чтобы вернуть конфликт наверх и дать клиенту/пользователю смержить изменения.",
+                "source_of_confusion": "Кажется, что «автоматический retry на 412» — это удобство, аналогичное retry на сетевые сбои.",
+                "if_it_were_true": "Тогда происходило бы тихое перезаписывание чужих правок без merge — те же lost update, только замаскированные.",
+                "how_it_should_be": "На 412 возвращать конфликт пользователю/клиенту для merge, а не молча перезаписывать с новым ETag."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой механизм авторизации лучше подходит для пользовательского веб-приложения, делегирующего доступ к третьесторонним API?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Долгоживущий API key, зашитый в JavaScript-бандл фронтенда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "API key в публичном клиентском коде — это утечка секрета: любой откроет DevTools и украдёт ключ. Обычно такие ключи не имеют expiration и не привязаны к пользователю.",
+                "source_of_confusion": "API key прост в использовании для server-to-server, и это переносят на фронтенд, забывая про публичность бандла.",
+                "if_it_were_true": "Тогда украденным ключом атакующий действовал бы от имени сервиса без аудита и без возможности отозвать его только для одного пользователя.",
+                "how_it_should_be": "Для делегированного пользовательского доступа использовать OAuth 2.0 с короткоживущим access token, а не зашитый в клиент API key."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "OAuth 2.0 Authorization Code Flow с короткоживущим access token и refresh token.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это стандартный паттерн делегированного доступа: пользователь явно даёт согласие у провайдера, фронтенд получает scoped access token с TTL, а refresh token продлевает сессию без повторного логина.",
+                "example": "«Войти через Google/GitHub», доступ к Google Drive/Slack API от имени пользователя, любой third-party access с consent screen.",
+                "when_to_apply": "User-facing приложения с делегированием доступа к сторонним API. Для internal services чаще API keys или mTLS, для public — API keys (simple) или OAuth (advanced).",
+                "edge_cases": "Scope ограничивает урон при компрометации, короткий TTL минимизирует окно атаки, а отзыв refresh token мгновенно вырубает сессию. Подробнее — в материалах по OAuth2 и JWT.",
+                "related": "[[api-design-best-practices-interview#Q19]] best practices для API key; [[api-design-best-practices-interview#Q24]] HTTPS only; [[api-design-best-practices-interview#Q26]] CORS для авторизованных SPA."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Basic Auth с логином/паролем пользователя в каждом запросе к API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Передача plaintext-пароля в каждом запросе означает, что любая утечка лога или прокси раскрывает пароль навсегда; плюс невозможно ограничить scope или отозвать только часть прав.",
+                "source_of_confusion": "Basic Auth прост и встроен в HTTP, поэтому кажется приемлемым для пользовательской авторизации.",
+                "if_it_were_true": "Тогда компрометация одного логфайла равнялась бы компрометации пароля пользователя ко всему сервису, без возможности отзыва без смены пароля.",
+                "how_it_should_be": "Использовать токены с ограниченным scope и TTL (OAuth/JWT), а не пересылать пароль в каждом запросе."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Самоподписанный JWT, выпущенный фронтендом со своим секретом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JWT должен подписывать доверенный auth-сервер своим приватным ключом — фронт не имеет права выпускать токены, иначе любая XSS даёт атакующему фабрику валидных токенов.",
+                "source_of_confusion": "JWT воспринимают как «токен, который можно сгенерировать где угодно», забывая про модель доверия к издателю.",
+                "if_it_were_true": "Тогда атакующий подделывал бы identity с клиента, и сервер не смог бы отличить настоящего пользователя от поддельного — полный обход auth.",
+                "how_it_should_be": "Токены должен выпускать доверенный auth-сервер (OAuth provider), а фронтенд лишь использует их, а не подписывает."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой набор практик хранения API-ключей минимизирует риск утечки и облегчает ротацию?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Хранить ключи в БД в открытом виде и отдавать админу при любом запросе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "«Show only on creation» — единственный способ гарантировать, что даже DB-админ не увидит plaintext-ключи клиентов. Открытое хранение делает любую утечку БД катастрофической.",
+                "source_of_confusion": "Кажется удобным «всегда показать ключ заново», как с обычным полем профиля.",
+                "if_it_were_true": "Тогда при компрометации БД утекли бы рабочие production-ключи всех клиентов одновременно.",
+                "how_it_should_be": "Хранить только хеш ключа, показывать plaintext один раз при создании и поддерживать revoke/rotate."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Использовать один общий API-ключ для всех клиентов и менять его раз в год.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Shared secret делает невозможным отзыв ключа одного скомпрометированного клиента без поломки остальных; смена раз в год — слишком редко для production.",
+                "source_of_confusion": "Один ключ кажется проще в управлении, чем per-customer ключи.",
+                "if_it_were_true": "Тогда утечка ключа у одного клиента форсила бы экстренную ротацию для всех, а окно эксплуатации составляло бы до 365 дней.",
+                "how_it_should_be": "Выдавать per-customer ключи с возможностью индивидуального revoke и регулярной ротации."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Хранить хеш ключа, показывать plaintext один раз при создании, давать revoke/rotate без downtime.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключи — это secrets: хеш в БД защищает от утечки, одноразовый показ снимает риск повторного просмотра, а revoke/rotate обязательны для incident response.",
+                "example": "На создание сервер генерирует случайный ключ (32+ байта), отдаёт клиенту один раз, в БД сохраняет SHA-256/HMAC; при запросе сравнивает хеши. Revoke = пометка `revoked_at`; rotate = новый ключ при старом, активном ещё N часов.",
+                "when_to_apply": "Любой публичный API с per-customer ключами (Stripe, GitHub, Twilio).",
+                "edge_cases": "Prefix ключа (`sk_live_abc123…`) указывает на тип/среду; в БД лежит `sha256(key)`. Дополнительно — scoped permissions, per-key rate limiting и audit logging «кто использовал когда».",
+                "related": "[[api-design-best-practices-interview#Q18]] auth strategies; [[api-design-best-practices-interview#Q20]] rate-limit headers; [[api-design-best-practices-interview#Q24]] HTTPS only."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Класть API-ключи в URL query string и логировать их в access-логах для audit.",
+              "correct": false,
+              "sections": {
+                "what_actually": "URL попадают в access-логи, browser history, Referer-header и прокси-логи — это утечка secrets по дизайну. Audit делается отдельным `audit_log` по `key_id`, а не по plaintext.",
+                "source_of_confusion": "Query string кажется простым местом передать ключ, а access-лог — удобным журналом обращений.",
+                "if_it_were_true": "Тогда ключи утекали бы через logs/Sentry/CDN-логи в десятки систем, а ротация после инцидента стоила бы дни.",
+                "how_it_should_be": "Передавать ключ в заголовке `Authorization`, а аудит вести по `key_id`, не сохраняя plaintext в логах."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что должен вернуть сервер на rate-limited запрос, чтобы клиент мог корректно отступить?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`HTTP 200 OK` с пустым телом и заголовком `X-Rate-Limited: true`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "200 говорит «успех» — клиент не поймёт, что запрос отклонён, и не сделает retry; custom-заголовок не покрывается стандартными HTTP-клиентами и middleware.",
+                "source_of_confusion": "Кажется, что «не ронять запрос ошибкой» мягче для клиента, а флаг в заголовке донесёт rate-limit.",
+                "if_it_were_true": "Тогда клиент сохранил бы «пустые данные» как валидный ответ, потерял бы реальные данные, и ретраев не было бы.",
+                "how_it_should_be": "Возвращать `429 Too Many Requests` с `Retry-After`, чтобы клиент понял отказ и корректно отступил."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`HTTP 503 Service Unavailable` без заголовков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "503 семантически означает «сервис недоступен» (downtime, перегрузка), а не «лимит превышен для этого клиента». Без `Retry-After` клиент ретраит с фиксированным интервалом, провоцируя retry storm.",
+                "source_of_confusion": "И 503, и 429 связаны с «нагрузкой», поэтому их смешивают.",
+                "if_it_were_true": "Тогда клиенты считали бы это инцидентом всего сервиса, эскалировали бы в саппорт, а retry-шторм усиливал бы нагрузку.",
+                "how_it_should_be": "Использовать `429` именно для rate-limit конкретного клиента и сопровождать его `Retry-After`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`HTTP 403 Forbidden` с описанием лимита в JSON body.",
+              "correct": false,
+              "sections": {
+                "what_actually": "403 означает «permission denied» — клиент решит, что у него отозваны права, и пойдёт re-auth/re-key, а не будет ждать. Сообщение в body не парсится стандартными middleware и прокси.",
+                "source_of_confusion": "403 кажется подходящим, потому что запрос «не пропустили».",
+                "if_it_were_true": "Тогда клиент инициировал бы key rotation/re-auth flow, а поддержка перегружалась бы ложными тикетами «отозвали ключ».",
+                "how_it_should_be": "Возвращать `429` с `Retry-After` — это говорит клиенту «подожди и повтори», а не «у тебя нет прав»."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`HTTP 429 Too Many Requests` с заголовком `Retry-After` и текущими `RateLimit-*` headers.",
+              "correct": true,
+              "sections": {
+                "explanation": "429 — стандартный статус для rate-limit; `Retry-After` (секунды или HTTP-date) даёт клиенту точный момент следующей попытки, а `RateLimit-Limit/Remaining/Reset` (RFC 9239) сообщают окно лимита.",
+                "example": "Клиентский SDK видит 429, читает `Retry-After: 60`, ждёт 60 секунд и повторяет; в фоне `RateLimit-Remaining` позволяет подготовить backoff до того, как лимит будет достигнут.",
+                "when_to_apply": "Любой API с rate-limiting (Stripe, GitHub, Twilio) — это де-факто стандарт поведения.",
+                "edge_cases": "Пример заголовков: `429 Too Many Requests` плюс `Retry-After: 60`, `RateLimit-Limit: 100`, `RateLimit-Remaining: 0`. Клиент обязан honor-ить `Retry-After` и делать backoff.",
+                "related": "[[api-design-best-practices-interview#Q19]] best practices для API key; [[api-design-best-practices-interview#Q21]] throttling против hard limit; [[api-design-best-practices-interview#Q13]] формат error response."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём ключевая разница между throttling и hard rate limit, и когда какой применять?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Throttling — soft, замедляет/queueing (token bucket с задержкой); hard limit — отклоняет с 429; применяются на разных уровнях и в комбинации.",
+              "correct": true,
+              "sections": {
+                "explanation": "Throttling сохраняет SLA при кратковременных всплесках (smoothing), а hard limit защищает от sustained abuse и переполнения. Типичный prod использует оба: throttle до ~80% capacity, hard limit на 100%.",
+                "example": "Token bucket с capacity=100 и refill=10/s: при умеренном превышении throttle добавляет delay, при превышении hard cap возвращает `429`. Stripe ограничивает создание users жёстче (10/s hard), чем чтение (100/s throttled).",
+                "when_to_apply": "Throttling — для предсказуемой деградации под нагрузкой, hard limit — для abuse protection; настраивается per-endpoint и per-key.",
+                "edge_cases": "Реализация на разных слоях: token bucket, sliding window или fixed window; инструменты — API Gateway (Kong, Apigee), Nginx, Envoy или код приложения. Лимиты задают per API key, IP, user или endpoint.",
+                "related": "[[api-design-best-practices-interview#Q20]] rate-limit headers; [[api-design-best-practices-interview#Q19]] best practices для API key; [[api-design-best-practices-interview#Q27]] caching для снижения нагрузки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Throttling и hard limit — это синонимы, оба отклоняют запросы с 429.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные механизмы: throttling замедляет (queue/delay), а hard limit отклоняет. Смешивание понятий ведёт к неверной конфигурации API gateway.",
+                "source_of_confusion": "Оба относятся к rate-limiting, поэтому их считают одним и тем же.",
+                "if_it_were_true": "Тогда клиент видел бы timeout вместо ясного 429, retry-логика ломалась бы, а observability фейлилась.",
+                "how_it_should_be": "Различать throttling (delay/queue) и hard limit (reject с 429) и применять их вместе на разных уровнях."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Throttling используется на проде, hard limit — на dev/staging.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба используются на проде в комбинации; среда не определяет тип ограничения. Hard limit (429) защищает от abuse, throttling — от нагрузки.",
+                "source_of_confusion": "Кажется, что «жёсткий» лимит уместен только в тестовых средах, а на проде нужно «мягкое» ограничение.",
+                "if_it_were_true": "Тогда на dev отключали бы защиту и пропускали баги, а на проде без hard limit один bad-actor консьюмер выжирал бы весь capacity.",
+                "how_it_should_be": "Применять оба на проде: throttling для smoothing нагрузки и hard limit для защиты от abuse."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Hard limit — это infrastructure-level (Nginx), throttling — application-level (код); они никогда не сочетаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба механизма реализуются на любом уровне: Nginx умеет и `limit_req` с burst+delay (throttling), и reject (hard); в проде их обычно сочетают на разных слоях (Nginx плюс app).",
+                "source_of_confusion": "Кажется, что разные механизмы жёстко закреплены за разными уровнями стека.",
+                "if_it_were_true": "Тогда терялся бы defense-in-depth — один уровень защиты обходился бы при misconfiguration или DDoS на нём.",
+                "how_it_should_be": "Понимать, что и throttling, и hard limit реализуемы на любом уровне, и сочетать их для defense-in-depth."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой подход к OpenAPI-спецификации даёт максимум пользы команде и интеграторам?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Генерировать OpenAPI из работающего кода в проде через introspection раз в неделю.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Code-first auto-generation приводит к тому, что спека всегда отстаёт; никто не ревьюит контракт до релиза, и breaking changes уходят в прод незамеченными.",
+                "source_of_confusion": "«Код — источник истины, спека — производная» кажется удобным, потому что не нужно писать YAML руками.",
+                "if_it_were_true": "Тогда интеграторы получали бы обновлённую спеку постфактум, их клиенты ломались бы, и не было бы процесса согласования API-changes.",
+                "how_it_should_be": "Писать спеку до кода (spec-first) и валидировать её в CI до релиза, чтобы ловить breaking changes заранее."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Spec-first: писать OpenAPI YAML/JSON до кода, валидировать в CI, генерировать клиенты и server-stubs.",
+              "correct": true,
+              "sections": {
+                "explanation": "Спека — source of truth для контракта; review до реализации ловит проблемы дёшево; авто-генерация клиентов даёт интеграторам SDK «бесплатно»; CI-валидация ловит дрейф между спекой и реализацией.",
+                "example": "PR с изменением `openapi.yaml` ревьюится → генерируется server-stub (Spring, FastAPI) и client SDK → реализация заполняет stub → contract-tests проверяют runtime-соответствие.",
+                "when_to_apply": "Любой public API, B2B-интеграции, microservices с несколькими консьюмерами — везде, где контракт важнее, чем скорость одной команды.",
+                "edge_cases": "Stripe и GitHub ведут OpenAPI как source-of-truth и генерируют 10+ SDK из неё. Дополнительно спека питает Swagger UI/Redoc и валидаторы request/response.",
+                "related": "[[api-design-best-practices-interview#Q23]] examples и SDK; [[api-design-best-practices-interview#Q13]] формат error response; [[api-design-best-practices-interview#Q4]] формат дат в схеме."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Писать OpenAPI вручную в `.md`-документации без машинной валидации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Markdown не валидируется тулингом, нет генерации SDK и клиентов, а дрейф между документацией и реализацией гарантирован.",
+                "source_of_confusion": "Кажется, что «документация — это просто текст», и markdown проще, чем структурированный YAML.",
+                "if_it_were_true": "Тогда документация устаревала бы за недели, integration partners жаловались бы на «non-working examples», а поддержка тонула бы в вопросах.",
+                "how_it_should_be": "Вести спеку в машинно-читаемом OpenAPI YAML/JSON с CI-валидацией и генерацией клиентов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Использовать Swagger UI только для внутренней разработки, без публикации спеки наружу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Swagger UI — удобный front, но без публичной спеки интеграторы лишены машинной генерации клиентов и contract-testing; «внутреннее использование» теряет 90% value.",
+                "source_of_confusion": "Кажется, что спека — внутренний артефакт, а наружу достаточно «человеческой» документации.",
+                "if_it_were_true": "Тогда каждый интегратор писал бы HTTP-клиент с нуля, contract-mismatches ловились бы в проде, а поддержка перегружалась бы ad-hoc вопросами.",
+                "how_it_should_be": "Публиковать OpenAPI-спеку наружу, чтобы интеграторы генерировали SDK и вели contract-testing."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что даёт интегратору авто-сгенерированный SDK сверх «голой» HTTP-документации?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только улучшение DX без влияния на надёжность интеграции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SDK даёт типизацию, retry-логику, обработку 429/5xx и аутентификацию из коробки — это не просто DX, а снижение integration bugs.",
+                "source_of_confusion": "SDK воспринимают как «удобную обёртку», недооценивая встроенную в него надёжность.",
+                "if_it_were_true": "Тогда команда недооценивала бы SDK и не вкладывалась бы в авто-генерацию, а интеграторы писали бы свои клиенты с багами retry/auth.",
+                "how_it_should_be": "Рассматривать SDK не только как DX, но и как способ снизить количество ошибок интеграции через готовые retry/auth/pagination."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Полную обратную совместимость SDK при breaking changes API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SDK генерируется из спеки — если API ломается, SDK тоже ломается (новая major version). SDK не «маскирует» breaking changes автоматически.",
+                "source_of_confusion": "Кажется, что слой SDK абстрагирует клиента от изменений API.",
+                "if_it_were_true": "Тогда ложное ожидание «обновим API, клиенты не заметят» приводило бы к падению интеграций при релизе.",
+                "how_it_should_be": "Понимать, что SDK следует за контрактом: breaking change в API означает новую major-версию SDK, а не прозрачную совместимость."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Типизированный клиент с готовым auth, retry, pagination, error-handling — снижает integration bugs и time-to-first-call.",
+              "correct": true,
+              "sections": {
+                "explanation": "SDK инкапсулирует HTTP-детали (auth headers, retry на 429/5xx с backoff, pagination cursor, парсинг ошибок), и интегратор работает с domain-объектами; авто-генерация из OpenAPI гарантирует синхронность с API.",
+                "example": "OpenAPI Generator/Speakeasy/Stainless парсят spec → создают типизированные модели (`User`, `Order`) и методы (`client.users.get(id)`); SDK включает middleware для auth/retry/logging.",
+                "when_to_apply": "Любой public API с более чем 5 эндпоинтами или 3+ языками интеграторов — там SDK резко снижает порог входа.",
+                "edge_cases": "Пример: `stripe.charges.create(amount=2000, currency='usd')` вместо ручного `POST /v1/charges` с form-encoded body. Инструменты авто-генерации — OpenAPI Generator, Speakeasy, Stainless.",
+                "related": "[[api-design-best-practices-interview#Q22]] OpenAPI spec-first; [[api-design-best-practices-interview#Q20]] rate-limit headers для retry; [[api-design-best-practices-interview#Q9]] pagination в SDK."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Защиту от утечки API-ключей через SDK-side encryption.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SDK не шифрует ключи — они хранятся в env vars или secrets manager у клиента; SDK только передаёт их в заголовке `Authorization` через HTTPS.",
+                "source_of_confusion": "От «обёртки вокруг auth» ждут заодно и защиты секретов.",
+                "if_it_were_true": "Тогда команда полагалась бы на «волшебную защиту SDK» и не вкладывалась бы в нормальное хранение ключей у интеграторов (docs, примеры с env vars).",
+                "how_it_should_be": "Хранить ключи в secrets manager/env vars на стороне интегратора, а от SDK ждать только корректной передачи через HTTPS."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как правильно поступить с HTTP-запросом к API в проде, который требует HTTPS?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Принять запрос на HTTP и обработать как обычно — клиент сам решит мигрировать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На HTTP API-ключ и payload передаются в открытом виде и перехватываются на любом hop; «клиент сам мигрирует» никогда не работает в реальности.",
+                "source_of_confusion": "Кажется проще «не ломать обратную совместимость» и принимать HTTP, чтобы старые клиенты работали.",
+                "if_it_were_true": "Тогда API-ключи утекали бы через wifi-сниффинг и compromised proxies, и secrets компрометировались бы у интеграторов.",
+                "how_it_should_be": "Отклонять HTTP-запросы с 400/426 без обработки и форсить HTTPS через HSTS."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Сделать 301/302 redirect на HTTPS-версию URL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При redirect клиент уже отправил secrets в HTTP-запросе — они утекли до того, как redirect случился. Стандартные клиенты вроде curl автоматически следуют redirect и могут «потерять» Authorization header.",
+                "source_of_confusion": "Redirect на HTTPS кажется «правильным» решением, как для веб-сайтов.",
+                "if_it_were_true": "Тогда secret уже был бы в открытом виде в логах, redirect не защищал бы, и возникало бы ложное чувство безопасности.",
+                "how_it_should_be": "Отклонять HTTP с 400/426 без redirect, чтобы клиент не отправлял secret повторно, и форсить HTTPS через HSTS."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Разрешить HTTP только для health-check эндпоинтов, остальное — HTTPS.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смешанная конфигурация усложняет defense; даже health-check может утекать internal-info (имена пулов, БД, версии). Современные load balancers и k8s делают health checks по HTTPS без проблем.",
+                "source_of_confusion": "Health-check кажется «безопасным исключением», ведь там нет auth.",
+                "if_it_were_true": "Тогда misconfigured proxy случайно отдал бы другой эндпоинт через :80, secret утёк бы, и security audit провалился бы.",
+                "how_it_should_be": "Запрещать HTTP полностью, включая health-check, и проводить проверки по HTTPS."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Отклонить HTTP-запрос с 400/426 без redirect, на HTTPS отдавать HSTS-заголовок.",
+              "correct": true,
+              "sections": {
+                "explanation": "Fail-fast предотвращает утечку secrets: клиент не отправит ключ повторно по HTTPS без явного решения. HSTS (`max-age=31536000; includeSubDomains; preload`) запоминается браузером и форсит HTTPS даже при попытке HTTP.",
+                "example": "На порту :80 listener возвращает 400/426 «HTTPS required» с минимальным телом без обработки auth; на :443 отдаёт `Strict-Transport-Security` с большим max-age и preload.",
+                "when_to_apply": "Production API с secrets/auth, особенно B2B и financial APIs, где утечка ключа критична.",
+                "edge_cases": "Stripe API возвращает 400 на HTTP и не редиректит — это форсит разработчиков починить URL сразу. Минимум TLS 1.2 (рекомендуется 1.3).",
+                "related": "[[api-design-best-practices-interview#Q18]] auth strategies; [[api-design-best-practices-interview#Q19]] best practices для API key; [[api-design-best-practices-interview#Q25]] input validation и output encoding."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Где должна происходить input validation в продакшен API, чтобы защитить от SQLi и malformed data?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "На границе API через schema (OpenAPI/JSON Schema) плюс типизированные queries (prepared statements/ORM).",
+              "correct": true,
+              "sections": {
+                "explanation": "Schema-валидация на entry-point режектит malformed JSON и неверные типы до бизнес-логики; prepared statements/ORM с параметризованными запросами делают SQLi структурно невозможным — значения не интерполируются в SQL-строку, а биндятся как данные.",
+                "example": "Контроллер парсит JSON по OpenAPI-схеме (type, range, format, length, pattern), невалидное отклоняет 400 с RFC 7807 detail; в БД-слое — `SELECT … WHERE id = ?` с bind-параметром вместо string-concat.",
+                "when_to_apply": "Каждый API-endpoint с user input; обязательно для public/B2B API, где данные приходят от недоверенных клиентов.",
+                "edge_cases": "Spring `@Valid @RequestBody UserDto` плюс JPA repository с named parameters; FastAPI Pydantic models плюс SQLAlchemy ORM. Output encoding (escape HTML/JS) добавляется, если возможен HTML-рендеринг.",
+                "related": "[[api-design-best-practices-interview#Q14]] Problem Details для 400; [[api-design-best-practices-interview#Q15]] ошибки валидации; [[api-design-best-practices-interview#Q24]] HTTPS only."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только на клиенте через JavaScript-валидаторы перед отправкой формы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Клиент-валидация — для UX (быстрый feedback), а не security; клиент модифицируется злоумышленником (curl, Postman, modified JS), и без серверной валидации SQL-injection пройдёт напрямую.",
+                "source_of_confusion": "Кажется, что раз форма уже проверяет ввод, серверу можно доверять данным.",
+                "if_it_were_true": "Тогда SQLi проходила бы через ручной POST с любым payload, а данные в БД утекали бы или повреждались.",
+                "how_it_should_be": "Валидировать на сервере (schema на границе API) и использовать prepared statements; клиентскую валидацию оставить только для UX."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только в БД через CHECK constraints и triggers.",
+              "correct": false,
+              "sections": {
+                "what_actually": "БД-constraints — последняя линия защиты, но они срабатывают после round-trip и не защищают от SQLi (если значения уходят через string-interpolation, constraints не помогают). Ошибка вылазит как DB exception вместо structured 400.",
+                "source_of_confusion": "Кажется, что раз БД — последний рубеж хранения, то именно её constraints и triggers должны полностью отвечать за корректность данных.",
+                "if_it_were_true": "Тогда был бы latency на каждом bad request, неинформативные 500-ошибки клиентам, а SQLi всё ещё была бы возможна.",
+                "how_it_should_be": "Валидировать на границе API схемой и использовать параметризованные запросы; constraints держать как дополнительную защиту."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Делать sanitize input удалением подозрительных символов (`'`, `;`, `--`) перед SQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Blacklist-санитизация легко обходится (encoding, double-encoding, comment variants); правильный подход — параметризованные запросы, которые делают значение данными, а не кодом. «Удаление кавычек» — антипаттерн.",
+                "source_of_confusion": "Кажется, что удаление «опасных» символов закрывает SQLi.",
+                "if_it_were_true": "Тогда возникало бы ложное чувство безопасности, а SQLi через `' OR 1=1/**/` или unicode-варианты обходила бы фильтр.",
+                "how_it_should_be": "Использовать prepared statements/ORM, где значение всегда биндится как данные, а не санитизировать blacklist-ом."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно настроить CORS для public API, который вызывается из browser-SPA авторизованных партнёров?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Access-Control-Allow-Origin: *` и `Access-Control-Allow-Credentials: true`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это невалидная комбинация — браузер отклонит response, если используется `withCredentials=true` (cookies, Authorization header) с wildcard origin. Это намеренное ограничение CORS spec.",
+                "source_of_confusion": "`*` кажется простым способом «разрешить всем», а credentials нужны для авторизации.",
+                "if_it_were_true": "Тогда запросы из SPA падали бы с CORS error, либо пришлось бы отключать credentials и переходить на менее безопасную auth.",
+                "how_it_should_be": "Использовать allowlist конкретных origin вместе с `Allow-Credentials: true`, а не wildcard с credentials."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Allowlist конкретных origin (по партнёрам), `Allow-Credentials: true`, preflight кешируется через `Max-Age`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Явный список allowed origins (`https://partner1.com`, `https://partner2.com`) предотвращает CSRF, `Allow-Credentials` позволяет cookie/Authorization, а `Max-Age: 3600` снижает число preflight OPTIONS-запросов.",
+                "example": "На каждый запрос сервер сравнивает `Origin` с allowlist и echo-ит при match; на OPTIONS отвечает `Allow-Methods/Headers/Max-Age` без вызова бизнес-логики; для не-allowed возвращает response без CORS-headers — браузер блокирует.",
+                "when_to_apply": "B2B API с авторизованными SPA-клиентами; partner integrations, где список origin известен и контролируем.",
+                "edge_cases": "Spring `CorsConfigurationSource` с `setAllowedOrigins(List.of(\"https://acme.com\"))` и `setAllowCredentials(true)`. Для authenticated API нельзя использовать `*`.",
+                "related": "[[api-design-best-practices-interview#Q18]] auth strategies; [[api-design-best-practices-interview#Q24]] HTTPS only; [[api-design-best-practices-interview#Q25]] input validation."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Полностью отключить CORS на сервере, проверяя Origin только в application-коде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "«Отключение CORS» обычно означает echo Origin в `Allow-Origin`, что эквивалентно `*` и открывает CSRF-like атаки; правильная проверка — на CORS-уровне через allowlist.",
+                "source_of_confusion": "Кажется, что ручная проверка Origin в коде «надёжнее» стандартного механизма.",
+                "if_it_were_true": "Тогда любой malicious сайт мог бы вызывать API от имени залогиненного пользователя через JavaScript, и данные утекали бы через CSRF.",
+                "how_it_should_be": "Настраивать CORS через явный allowlist origin на CORS-уровне, а не echo-ить любой Origin из кода."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Разрешить любой origin через regex `.*\\.partner\\.com` без allowlist.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Regex-based matching часто содержит баги (`.` без escape матчит любой символ, missing anchors); subdomain takeover у партнёра делает атаку тривиальной. Явный список безопаснее.",
+                "source_of_confusion": "Regex кажется «гибким allowlist» для множества поддоменов партнёра.",
+                "if_it_were_true": "Тогда пропущенный escape матчил бы `evil-partnerXcom.attacker.com`, и атакующий получал бы доступ к API от имени партнёра.",
+                "how_it_should_be": "Вести явный allowlist конкретных origin вместо regex, чтобы исключить ошибки экранирования и subdomain takeover."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что даёт связка `ETag` + `If-None-Match` для GET-эндпоинта пользовательского профиля?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Защиту от concurrent updates через optimistic locking.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это use-case `If-Match` (на PUT/PATCH для optimistic concurrency), а не `If-None-Match` (на GET для caching). Разные семантики и разные заголовки.",
+                "source_of_confusion": "Оба заголовка завязаны на ETag, поэтому их роли путают.",
+                "if_it_were_true": "Тогда путаница между caching и concurrency приводила бы к неверной реализации — либо потерянные updates, либо неработающее кеширование.",
+                "how_it_should_be": "Для caching использовать `If-None-Match` на GET, а для защиты от lost update — `If-Match` на запись."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Автоматическую инвалидацию CDN-кеша при изменении ресурса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ETag сам по себе не инвалидирует CDN-кеш; CDN использует TTL, purge API или `Cache-Control`. ETag — инструмент клиента для revalidation, а не push-инвалидация для CDN.",
+                "source_of_confusion": "Кажется, что смена ETag автоматически «сбрасывает» закэшированную версию везде.",
+                "if_it_were_true": "Тогда расчёт на «автоинвалидацию» приводил бы к stale data в CDN после updates; нужен явный purge или короткий max-age.",
+                "how_it_should_be": "Для CDN использовать TTL/purge/`Cache-Control`, а `ETag` + `If-None-Match` — для client-side revalidation."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Conditional GET: при unchanged ETag сервер возвращает `304 Not Modified` без тела, экономя bandwidth и render-cost.",
+              "correct": true,
+              "sections": {
+                "explanation": "Клиент посылает `If-None-Match: \"abc123\"`, сервер сравнивает с текущим ETag; при совпадении возвращает `304 Not Modified` без body, и клиент использует cached version. Экономятся bandwidth, serialization и render.",
+                "example": "На GET сервер считает ETag (hash от состояния ресурса) и отдаёт в response; клиент кеширует `(URL, ETag, body)`; на повторный запрос шлёт `If-None-Match`; сервер сравнивает (часто только проверка version в БД) и отдаёт 304.",
+                "when_to_apply": "Read-heavy ресурсы с редким обновлением (профиль, каталог, конфиг), особенно при больших payload.",
+                "edge_cases": "Пример: `GET /users/123` → `200 ETag: \"v42\"` плюс body; повторный `GET /users/123 If-None-Match: \"v42\"` → `304 Not Modified` (~100 байт вместо ~5KB). Уровни кэша: browser, CDN, API gateway, Redis.",
+                "related": "[[api-design-best-practices-interview#Q17]] optimistic concurrency If-Match; [[api-design-best-practices-interview#Q28]] compression; [[api-design-best-practices-interview#Q4]] Last-Modified и формат дат."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Шифрование ответа на уровне HTTP-кеширования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ETag — это hash для compare, а не шифрование; шифрование — это TLS (транспорт). Кешированный ответ хранится в plaintext в браузере и CDN.",
+                "source_of_confusion": "Слово «hash» в контексте ETag путают с криптографической защитой данных.",
+                "if_it_were_true": "Тогда возникало бы ложное чувство безопасности при размещении sensitive data в кешируемых endpoints — они доступны в browser cache и CDN.",
+                "how_it_should_be": "Для конфиденциальности использовать TLS и не кэшировать sensitive data, а ETag применять только для revalidation."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда корректно включать compression (gzip/brotli) на API-эндпоинтах?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только на статических файлах (CSS, JS) — для JSON это бессмысленно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JSON — текстовый формат с высокой избыточностью (повторяющиеся ключи, whitespace), и gzip даёт 60-90% reduction; именно для JSON-API compression наиболее эффективна.",
+                "source_of_confusion": "Compression ассоциируется со статикой (картинки, бандлы), и про JSON забывают.",
+                "if_it_were_true": "Тогда bandwidth-расходы CDN были бы в разы больше необходимого, а мобильные клиенты на медленных каналах долго грузили бы payload.",
+                "how_it_should_be": "Включать compression на всех JSON/text-ответах при `Accept-Encoding`, исключая уже сжатый/encrypted контент."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Compression нужно делать на уровне приложения вручную через `gzip.compress()` перед `response.write()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это работа reverse-proxy или фреймворка; ручное сжатие не учитывает `Accept-Encoding` negotiation, ломает streaming и конфликтует с middleware и CDN.",
+                "source_of_confusion": "Кажется, что «сжать в коде» даёт больше контроля над процессом.",
+                "if_it_were_true": "Тогда возникало бы double-compression (приложение плюс Nginx), ломались бы клиенты без `br`, и появлялись бы баги при HEAD-запросах с Content-Length.",
+                "how_it_should_be": "Делегировать compression reverse-proxy (Nginx) или framework-middleware с корректной negotiation по `Accept-Encoding`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Compression снижает latency на medium/высоких payload, но всегда тратит CPU больше, чем экономит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "gzip тратит микросекунды CPU при ratio 5-10x; на сетях с RTT >50ms compression-savings (меньше packets) сильно перевешивают CPU. Для cold mobile networks compression критична для UX.",
+                "source_of_confusion": "Звучит как разумный trade-off «CPU против bandwidth», но баланс почти всегда в пользу compression.",
+                "if_it_were_true": "Тогда отключение compression «ради CPU» утяжеляло бы mobile UX и увеличивало egress-bill в облаке.",
+                "how_it_should_be": "Включать compression для text/JSON: выигрыш по bandwidth и latency почти всегда перевешивает копеечный CPU-cost."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "На всех JSON/text-ответах, когда клиент шлёт `Accept-Encoding: gzip, br`, кроме encrypted/уже-compressed payload.",
+              "correct": true,
+              "sections": {
+                "explanation": "Text-формат (JSON/XML/HTML) сжимается в 5-10 раз; brotli (`br`) даёт лучше compression, чем gzip, при чуть большем CPU; для encrypted/binary (изображения, PDF) повторное сжатие даёт менее 5% эффекта и тратит CPU зря.",
+                "example": "Клиент шлёт `Accept-Encoding: gzip, br`; сервер выбирает поддерживаемый алгоритм и возвращает `Content-Encoding: br` плюс сжатый body. Negotiation через q-values: `gzip;q=0.5, br;q=1.0`.",
+                "when_to_apply": "Production API с JSON-ответами; включается на reverse proxy (Nginx) или framework-middleware (Spring `server.compression.enabled=true`).",
+                "edge_cases": "Nginx: `gzip on; gzip_types application/json text/plain; brotli on;`. Уже сжатые форматы (JPEG, PNG, gzip-архивы) повторно не сжимать.",
+                "related": "[[api-design-best-practices-interview#Q27]] caching headers; [[api-design-best-practices-interview#Q12]] field selection для уменьшения payload; [[api-design-best-practices-interview#Q9]] pagination."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда полная HATEOAS-реализация (hypermedia, link relations, RMM L3) даёт реальный value, а когда — overengineering?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Полезна для state-machine/workflow API, где доступные actions зависят от текущего state; для CRUD — overengineering.",
+              "correct": true,
+              "sections": {
+                "explanation": "HATEOAS-links динамически отражают transitions (`_links.publish`, `_links.cancel`), и клиент рендерит UI по актуальным actions; для простого CRUD (users, products) OpenAPI плюс URL conventions дают 95% того же при 10% сложности.",
+                "example": "В response поле `_links` с разрешёнными переходами: `{\"_links\": {\"approve\": {\"href\": \"/orders/123/approve\"}, \"cancel\": {\"href\": \"/orders/123/cancel\"}}}`; клиент рендерит кнопки по наличию ключей.",
+                "when_to_apply": "Order management, approval workflows, document lifecycle, payment state machines — там, где набор доступных действий меняется со state.",
+                "edge_cases": "PayPal API использует HATEOAS для payment-state transitions (`approve`, `capture`, `refund`). Для CRUD-ресурсов HATEOAS почти не оправдывает сложность.",
+                "related": "[[api-design-best-practices-interview#Q8]] custom actions; [[api-design-best-practices-interview#Q22]] OpenAPI как контракт; [[api-design-best-practices-interview#Q30]] webhooks для событий."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Всегда нужна — это требование REST, и без неё API не REST.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Чистый REST по Roy Fielding включает HATEOAS, но индустрия (Stripe, GitHub, AWS) повсеместно отказалась от полной HATEOAS в пользу OpenAPI плюс URL conventions; спор «не настоящий REST» — без практической ценности.",
+                "source_of_confusion": "Академическое определение REST (RMM Level 3) воспринимают как обязательное требование.",
+                "if_it_were_true": "Тогда команда тратила бы спринты на реализацию `_links` и `application/hal+json`, клиенты их игнорировали бы, а поддержка усложнялась бы без пользы.",
+                "how_it_should_be": "Применять HATEOAS точечно для workflow/state-machine API, а для CRUD ограничиться OpenAPI и URL-конвенциями."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Никогда не нужна, OpenAPI закрывает 100% use-cases.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для state-machines (approval workflows, order lifecycle) HATEOAS даёт реальный value — клиент видит actual available actions без захардкоженных правил «если status=draft, показать кнопку publish».",
+                "source_of_confusion": "Из-за того что для CRUD HATEOAS избыточен, делают вывод, что он бесполезен везде.",
+                "if_it_were_true": "Тогда для workflow API клиенты дублировали бы state-логику, и расхождения с сервером вели бы к показу недоступных действий и ошибкам 403/409.",
+                "how_it_should_be": "Использовать HATEOAS там, где доступные actions зависят от state, а для остального полагаться на OpenAPI."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "HATEOAS нужна для discoverability — клиенты находят новые endpoints автоматически без обновления документации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реальные клиенты не «discover» endpoints — они написаны под конкретный контракт; идея «self-discovering clients» популярна в академии, но в production-API не подтверждена. OpenAPI плюс SDK решают discoverability эффективнее.",
+                "source_of_confusion": "Идея гипермедиа-навигации звучит как «клиент сам найдёт всё», что преувеличивает реальную автономность клиентов.",
+                "if_it_were_true": "Тогда команда вкладывалась бы в discoverability-фичу, которая не востребована, тогда как реальные интеграторы используют SDK и OpenAPI explorer.",
+                "how_it_should_be": "Решать discoverability через OpenAPI и SDK, а HATEOAS применять для state-driven actions, а не как механизм авто-обнаружения endpoints."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что обязательно должно быть на принимающей стороне webhook, чтобы интеграция была надёжной в production?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только endpoint с публичным URL и логированием — retry и подпись делает сам отправитель.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подпись (HMAC) проверяется приёмником, иначе любой может подделать webhook и инициировать действия (создать платёж, изменить order); retry от отправителя бесполезен, если receiver не идемпотентен и обрабатывает event несколько раз.",
+                "source_of_confusion": "Кажется, что вся ответственность за надёжность лежит на отправителе, а приёмнику достаточно «принять и записать».",
+                "if_it_were_true": "Тогда атакующий слал бы fake webhook на публичный URL и инициировал бизнес-действие, а duplicate delivery дублировало бы charges/orders.",
+                "how_it_should_be": "На приёмнике обязательно проверять HMAC-подпись и обеспечивать идемпотентность по `event_id`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "HMAC-проверка подписи плюс идемпотентность по `event_id` плюс быстрый 2xx ответ с фоновой обработкой.",
+              "correct": true,
+              "sections": {
+                "explanation": "HMAC доказывает отправителя (shared secret в `X-Signature`), идемпотентность по `event_id` защищает от duplicate delivery (отправитель ретраит при non-2xx), а быстрый 2xx (<5s) предотвращает timeout-ретраи; тяжёлая работа уходит в очередь.",
+                "example": "Receiver проверяет `HMAC_SHA256(secret, body) == header.X-Signature` (timing-safe compare); сохраняет `event_id` в `processed_events` (`INSERT IGNORE`); если duplicate — `200 OK` без обработки; иначе enqueue в Kafka/SQS и сразу `200`.",
+                "when_to_apply": "Любой webhook-receiver (Stripe, GitHub, Twilio, custom B2B), где доставка at-least-once и публичный endpoint.",
+                "edge_cases": "Stripe шлёт `Stripe-Signature: t=...,v1=abc…` плюс Idempotency-Key в downstream-вызовах; receiver хранит `event_id` в Redis SET с TTL около 30 дней. Отправитель ретраит с exponential backoff и DLT после max retries.",
+                "related": "[[api-design-best-practices-interview#Q16]] идемпотентность через ключ; [[api-design-best-practices-interview#Q18]] auth strategies; [[api-design-best-practices-interview#Q13]] формат error response."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Достаточно проверки IP-адреса отправителя в whitelist.",
+              "correct": false,
+              "sections": {
+                "what_actually": "IP-whitelist хрупок (отправитель меняет инфру, NAT, CDN), не защищает от MITM и не покрывает duplicate delivery. HMAC-подпись плюс идемпотентность — стандарт индустрии.",
+                "source_of_confusion": "IP-whitelist кажется простым и достаточным способом «убедиться, что это наш отправитель».",
+                "if_it_were_true": "Тогда после миграции отправителя на новые IP интеграция тихо ломалась бы, а IP-spoofing на shared infra оставался бы возможен.",
+                "how_it_should_be": "Проверять подлинность через HMAC-подпись тела и обеспечивать идемпотентность, а не полагаться на IP."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Синхронная обработка прямо в request handler, без очереди, чтобы вернуть результат отправителю.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Webhook не ожидает результат бизнес-обработки — только подтверждение получения; синхронная обработка приводит к timeout (отправитель ждёт ~5-10s) и retry-шторму при downstream-падениях.",
+                "source_of_confusion": "Кажется, что отправитель хочет знать результат обработки, поэтому его «надо вернуть синхронно».",
+                "if_it_were_true": "Тогда при медленном downstream receiver отвечал бы дольше 5s → 504/timeout → отправитель ретраил бы несколько раз → duplicate processing плюс cascade failure.",
+                "how_it_should_be": "Быстро отвечать 2xx, подтверждая получение, и выносить тяжёлую обработку в фоновую очередь."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
