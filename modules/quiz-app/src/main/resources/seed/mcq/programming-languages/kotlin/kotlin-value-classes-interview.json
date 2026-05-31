@@ -1,0 +1,905 @@
+{
+  "topic_slug": "kotlin-value-classes-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `value class` в Kotlin и какую главную задачу он решает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Типобезопасная обёртка над одним значением, которую компилятор инлайнит в underlying-тип на сайте использования — обычно без выделения объекта в куче.",
+              "correct": true,
+              "sections": {
+                "explanation": "`value class` (до Kotlin 1.5 — `inline class`) существует в системе типов Kotlin, но на JVM компилятор подставляет underlying-значение напрямую, а методы превращает в статические с mangled-именами (`UserId.getValue-impl(String)`). Получаем одновременно type safety на этапе компиляции и нулевой runtime overhead в большинстве позиций.",
+                "example": "`@JvmInline value class UserId(val value: String)` и `value class OrderId(val value: String)` нельзя перепутать в `loadUser(id: UserId)`, хотя обе обёртки внутри — это `String`, передающийся как примитив без аллокации.",
+                "when_to_apply": "Применяют для domain primitives — `UserId`, `OrderId`, `Email`, `Money`, `Percentage`, `Port` — особенно там, где массово гоняют `String`/`Long` между сервисами и легко перепутать аргументы.",
+                "edge_cases": "Boxing включается в специальных позициях: `List<UserId>`, `UserId?`, generic, интерфейсный тип, рефлексия — там inline-преимущество теряется, и обёртка реально создаётся.",
+                "related": "[[kotlin-value-classes-interview#Q2]] отличия от `data class`; [[kotlin-value-classes-interview#Q3]] представление в байт-коде; [[kotlin-value-classes-interview#Q8]] типовые применения (UserId, Money, Email)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это синтаксический сахар над `data class` с одним полем: генерирует `equals/hashCode/copy`, но всегда живёт как обычный объект в куче.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`value class` — не `data class`: главное отличие в представлении в памяти, value class в большинстве позиций инлайнится в underlying-значение, а не аллоцируется в куче. `copy()` есть и у data class, поэтому это не отличительный признак.",
+                "source_of_confusion": "Оба класса автогенерируют `equals/hashCode`, имеют primary constructor с `val`-полями и поддерживают destructuring, поэтому внешне выглядят почти одинаково.",
+                "if_it_were_true": "Тогда обёртка `Money(cents)` в горячем цикле платежей плодила бы миллионы лишних объектов в Eden, GC pause рос бы, и единственный смысл фичи (zero-cost domain types) исчезал бы.",
+                "how_it_should_be": "Это самостоятельный тип, который инлайнится в underlying-значение в большинстве позиций; heap-allocated объект — это поведение `data class`, а не value class."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это `typealias` с проверкой типов на этапе компиляции — компилятор подставляет original type везде, семантика полностью совпадает с typealias.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`typealias UserId = String` не вводит новый тип и не ловит перепутывание, а `value class UserId(val value: String)` — новый тип с собственным `equals`, валидацией в `init`, методами и operator-функциями.",
+                "source_of_confusion": "В обоих случаях «оборачиваем строку и работаем как со строкой», и без реальной попытки передать `OrderId` вместо `UserId` разница не очевидна.",
+                "if_it_were_true": "Тогда нельзя было бы добавить валидацию в `init`, operator-функции (`Money + Money`) и перегрузку по value class — компилятор не различал бы `process(UserId)` и `process(OrderId)`.",
+                "how_it_should_be": "Это новый тип с поведением, а не синоним; inline в байт-коде — приятный побочный эффект, не определяющая характеристика как у typealias."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Класс, который JVM хранит на стеке вместо кучи — прямой аналог C# `struct` или Java Project Valhalla `value record`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Текущая реализация работает поверх обычной JVM, которая не умеет хранить произвольные пользовательские типы на стеке; компилятор делает compile-time inlining underlying-значения, а не JVM stack-allocation.",
+                "source_of_confusion": "Маркетинг «zero-overhead» вместе со знанием про C# struct и Valhalla естественно приводит к выводу «значит, оно на стеке».",
+                "if_it_were_true": "Тогда `@JvmInline value class` работал бы только на JVM с Valhalla preview, и JDK 17/21 LTS отказывали бы в компиляции, хотя реально он работает на JDK 8+.",
+                "how_it_should_be": "Это compile-time трюк подстановки значения, а не stack storage; настоящие JVM value types принесёт Project Valhalla в будущем."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём ключевое архитектурное отличие `value class` от `data class` в Kotlin (stable релизы)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Они полностью эквивалентны: `value class` — это `data class` с особой аннотацией, разница только в keyword.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные сущности: `data class` не ограничен числом полей и всегда heap-allocated, а value class в stable Kotlin требует ровно одного `val`-поля и в большинстве позиций инлайнится. Аннотация `@JvmInline` обязательна для JVM, не опциональна.",
+                "source_of_confusion": "Оба keyword генерируют `equals/hashCode`, поддерживают destructuring и `copy()`, а историческое имя `inline class` многие путают с `inline fun`.",
+                "if_it_were_true": "Тогда компилятор не отличал бы `data class A(val v: String)` от `value class A(val v: String)`, а команды, мигрирующие domain primitives на value class, не видели бы reduction в GC overhead — но на практике видят.",
+                "how_it_should_be": "value class ограничен одним полем и инлайнится; data class поддерживает много полей и всегда живёт как объект в куче — это фундаментальная, а не косметическая разница."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`value class` ограничен одним `val`-полем и в большинстве позиций инлайнится в underlying-тип; `data class` поддерживает несколько полей и всегда живёт как объект в куче.",
+              "correct": true,
+              "sections": {
+                "explanation": "Stable `value class`: ровно одно `val`-поле, `@JvmInline` обязателен для JVM, в локальных переменных и параметрах инлайнится, методы становятся static с mangled-именами. `data class`: любое число полей, всегда heap-allocated, полноценный `componentN()`. MFVC (несколько полей) — preview с Kotlin 1.8.20.",
+                "example": "`data class Point(val x: Double, val y: Double)` всегда даёт объект в куче, а `value class Celsius(val value: Double)` с `operator fun plus` обычно компилируется в чистую double-арифметику без аллокаций.",
+                "when_to_apply": "value class — для domain primitives (`UserId`, `Money`, `Email`); data class — для составных объектов (`Address`, `OrderLine`, DTO). Часто их комбинируют: `data class Order(val id: OrderId, val total: Money)`.",
+                "edge_cases": "Перенося primitives с data class на value class, проверьте `List<…>` — там boxing нивелирует выгоду; а в Spring `@RequestBody data class` Jackson читает из коробки, value class требует `KotlinModule`.",
+                "related": "[[kotlin-value-classes-interview#Q1]] что такое value class; [[kotlin-value-classes-interview#Q4]] конкретные ограничения; [[kotlin-value-classes-interview#Q8]] UserId/OrderId как value class."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`value class` всегда быстрее `data class` в любых сценариях, поэтому доменные обёртки нужно писать только через value class.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Преимущество есть только в позициях, где компилятор может заинлайнить значение; в `List<UserId>`, `Map<UserId, …>`, `UserId?`, через интерфейс и рефлексию активируется boxing, и value class может оказаться даже медленнее из-за mangling.",
+                "source_of_confusion": "Маркетинг «zero-cost abstraction» создаёт иллюзию «всегда быстрее», а простые бенчмарки (UserId как параметр функции) её подтверждают.",
+                "if_it_were_true": "Тогда Kotlin team давно deprecate-нул бы `data class` для одно-полевых случаев, но документация прямо подчёркивает выигрыш только в подходящих сценариях.",
+                "how_it_should_be": "value class выигрывает лишь в inline-позициях; на горячих путях с коллекциями и интерфейсами картина меняется, и для составных объектов он вообще неприменим."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`data class` ограничен одним полем, а `value class` может иметь любое число полей и хранит их в одной куче-структуре.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `data class Address(val street, city, zip)` — норма, а value class в stable Kotlin требует ровно одного `val`-поля; MFVC существует только в Kotlin 1.8.20+ как preview с флагом `-Xvalue-classes`.",
+                "source_of_confusion": "Это реверс правильного утверждения: если помнить «есть ограничение по полям», но забыть у какого из двух, путаница возникает легко.",
+                "if_it_were_true": "Тогда `value class Address(val street, city, zip)` компилировался бы без флагов и терял inline-преимущество, а `data class UserId(val value: String)` нельзя было бы создать — что сломало бы любой Spring Boot проект.",
+                "how_it_should_be": "Ограничение в одно поле — у value class; data class спокойно держит несколько полей; всё перевёрнуто относительно реальности."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `@JvmInline value class` представлен в JVM байт-коде и когда происходит boxing?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Компилятор всегда создаёт класс-обёртку с полем underlying-значения; никакого инлайнинга нет, `@JvmInline` влияет только на видимость в Java.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Класс действительно генерируется (для `equals/hashCode`, рефлексии, boxing-кейсов), но в локальных переменных, параметрах и return-типах компилятор подставляет underlying-значение напрямую, а методы делает static с mangled-именами. `@JvmInline` контролирует именно inlining.",
+                "source_of_confusion": "В «Show Kotlin Bytecode» виден сгенерированный класс `UserId`, и кажется, что объект создаётся всегда, хотя сигнатура `process(id: UserId)` в байт-коде — `process-XYZ(String)`.",
+                "if_it_were_true": "Тогда value class не давал бы выигрыша против data class (каждый раз new object), а бенчмарки JetBrains про ≤1% overhead не воспроизводились бы.",
+                "how_it_should_be": "Inlining реален в большинстве позиций; класс остаётся лишь для boxing/рефлексии/equals, а `@JvmInline` управляет представлением, а не только Java-видимостью."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Inlining работает только для value class над JVM-примитивами (`Int`, `Long`, `Double`); `value class Wrap(val s: String)` всегда боксится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Inlining работает для любого underlying-типа: `value class UserId(val value: String)` в параметре передаётся как `String`, без обёртки. Граница inline проходит по позиции использования, а не по примитивности underlying-типа.",
+                "source_of_confusion": "Аналогия с Java autoboxing (`Integer`) и primitive specializations Kotlin (`IntArray`) подталкивает к выводу «inline только где есть примитив».",
+                "if_it_were_true": "Тогда все value class для `UserId`/`Email`/`IpAddress` (80% применений) теряли бы преимущество, а фича была бы полезна лишь для редких `Money(val cents: Long)`.",
+                "how_it_should_be": "Решает не примитивность, а статически известный точный тип в позиции; reference-обёртки инлайнятся так же и доминируют в DDD-кодовых базах."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Компилятор инлайнит underlying-значение в параметрах функций, локальных переменных и return-типах; boxing происходит в позициях `List<UserId>`, `UserId?`, при вызове через интерфейс и в generic-функциях.",
+              "correct": true,
+              "sections": {
+                "explanation": "Inline происходит, когда компилятор статически знает точный тип. `fun process(id: UserId)` становится `process-ABC(String id)`. Boxing активируется там, где сигнатура работает с любым типом: дженерики (`List<T>`), nullable (нужно различать `null`), интерфейс (динамический dispatch), рефлексия (нужен Class object). Mangling разводит перегрузки по разным value class.",
+                "example": "`fun process(id: UserId)` → `process-XYZ(String)` без аллокации, а `fun batchProcess(ids: List<UserId>)` уже хранит каждый `UserId` упакованным, с unboxing при доступе в цикле.",
+                "when_to_apply": "Применяют там, где boxing не активируется: чистые цепочки function calls (`UserId` через Spring controller → service → repository), числовые типы с unit semantics (`Celsius`, `Meters`, `Money`).",
+                "edge_cases": "Перегрузки по value class дают коряво выглядящие mangled-имена для Java (`getValue-impl`) — нужен `@JvmName`; а `List<UserId>` на горячем пути лучше заменить на `LongArray`/`IntArray`.",
+                "related": "[[kotlin-value-classes-interview#Q1]] общее описание value class; [[kotlin-value-classes-interview#Q5]] boxing при использовании через интерфейс; [[kotlin-value-classes-interview#Q10]] value class в коллекциях."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Компилятор полностью удаляет value class на этапе типизации — в байт-коде остаётся только underlying-тип, никаких следов класса нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Класс остаётся в байт-коде: он нужен для boxing (передача через generic/interface), рефлексии (`KClass<UserId>`) и `equals/hashCode` через `Any`. Удаляется только обёртка в inline-позициях, сам класс — нет.",
+                "source_of_confusion": "Упрощённое «inline class инлайнится везде» приводит к выводу «значит, класса нет», по аналогии с C macros или Rust zero-cost abstractions.",
+                "if_it_were_true": "Тогда `memberProperties` не работала бы для value class, нельзя было бы написать `if (x is UserId)`, и сериализаторы не находили бы класс для регистрации.",
+                "how_it_should_be": "Класс физически присутствует в байт-коде для не-inline сценариев; убирается только обёртка там, где компилятор может подставить underlying-значение."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие ограничения накладывает Kotlin на `value class` в stable релизе?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Поле должно быть `var`, чтобы поддерживать `copy()`; наследование от классов разрешено; backing fields поддерживаются как у обычного класса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: поле обязано быть `val` (value class строго immutable), `copy()` работает через создание новой инстанции без `var`, наследование от классов запрещено (только интерфейсы), backing fields для доп. свойств запрещены — можно лишь computed properties.",
+                "source_of_confusion": "Из `data class`, где `copy()` есть и `var` поля разрешены, разработчик переносит интуицию на value class и получает этот неверный набор.",
+                "if_it_were_true": "Тогда value class стал бы mutable wrapper с риском thread-safety (`thread { sharedId.value = \"y\" }`), и immutability — фундамент domain-primitives паттерна — была бы потеряна.",
+                "how_it_should_be": "Поле строго `val`, наследование только от интерфейсов, backing fields запрещены — то есть противоположность тому, что описано в этом варианте."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Можно объявлять несколько `val`-полей — именно это стало причиной переименования из inline в value class.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Stable Kotlin (1.9, 2.0) поддерживает только одно `val`-поле в primary constructor. MFVC — preview с Kotlin 1.8.20 и флагом `-Xvalue-classes`. Переименование сделано для align с Project Valhalla и семантики «по значению», а не из-за числа полей.",
+                "source_of_confusion": "Новость о MFVC в 1.8.20 многие восприняли как «теперь много полей», не заметив пометку preview, а value records в Valhalla усиливают это ложное ощущение.",
+                "if_it_were_true": "Тогда `value class Point2D(val x: Double, val y: Double)` компилировался бы без флагов в Kotlin 1.9 stable, а гайды массово советовали бы это для DTO — но KEEP-237 всё ещё Preview.",
+                "how_it_should_be": "Ровно одно поле в stable; несколько полей — только в preview MFVC; причина переименования — семантика по значению, а не количество полей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Запрещены `init` блоки полностью — валидацию приходится делать в factory-методах через companion object.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`init` блоки разрешены и активно используются для validation invariants. Ограничение в другом: в `init` стоит избегать побочных эффектов (логирование, I/O), так как value class создаётся часто. Factory через companion — рекомендованный, но не единственный способ.",
+                "source_of_confusion": "Между «не побочные эффекты в init» и «не использовать init вовсе» один шаг, а DDD-гайды продвигают factory-методы (`Email.of(raw)`) как best practice.",
+                "if_it_were_true": "Тогда `value class Port(val v: Int) { init { require(v in 1..65535) } }` не компилировался бы, хотя это идиоматичный пример из каждого Kotlin-туториала, включая kotlinlang.org.",
+                "how_it_should_be": "`init` разрешён и поощряется для валидации; запрещены лишь побочные эффекты по соображениям производительности, а не сам блок."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Ровно одно `val`-поле в primary constructor; нельзя наследоваться от классов (только от интерфейсов); запрещены backing fields для доп. свойств; запрещён `var`; разрешены `init` (для валидации), computed properties и operator-функции.",
+              "correct": true,
+              "sections": {
+                "explanation": "Stable Kotlin (включая 2.0) задаёт: одно `val`-поле (var и MFVC недоступны), наследование только от интерфейсов, запрет backing fields (разрешены лишь `val foo get() = …`), `init` для validation поощряется, методы и operator-функции допустимы, реализация интерфейсов разрешена (но включает boxing через interface type).",
+                "example": "`value class Money(val cents: Long)` спокойно держит `init { require(cents >= 0) }`, computed `val dollars get() = cents / 100.0` и `operator fun plus`, но `val cached: String = …` и `var counter` дают ошибку компиляции.",
+                "when_to_apply": "Всегда добавляйте `init { require(...) }` для инвариантов (impossible states are unrepresentable), computed properties для derived data, operator-функции для domain arithmetic, companion factory для сложного создания с возможным null.",
+                "edge_cases": "Логирование в `init` — плохая идея при массовом создании; реализация интерфейса полезна, но даёт boxing через interface type; companion object — это обычный heap-объект, не value class.",
+                "related": "[[kotlin-value-classes-interview#Q1]] что такое value class; [[kotlin-value-classes-interview#Q5]] реализация интерфейсов и boxing; [[kotlin-value-classes-interview#Q15]] best practices (init validation, factory)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что происходит с inline-преимуществом `value class`, когда он реализует интерфейс и передаётся через interface type?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Происходит boxing — value class упаковывается в объект-обёртку, поскольку динамический dispatch через интерфейс требует JVM-объекта; для критичных по производительности путей этого надо избегать.",
+              "correct": true,
+              "sections": {
+                "explanation": "JVM делает динамический dispatch через `invokeinterface`/`invokevirtual`, работающие с reference-типами. Когда метод принимает interface type (`fun describe(id: Identifier)`), компилятор не знает конкретный тип статически и вставляет boxing, чтобы передать value class как реальную обёртку. Это документированный «interface-boxing».",
+                "example": "`fun byUserId(id: UserId)` компилируется в `byUserId-XYZ(String)` без аллокации, а `fun describeAny(i: Identifier)` принимает объект, поэтому `describeAny(u)` сначала делает `new UserId(\"u-1\")` и передаёт boxed-ссылку.",
+                "when_to_apply": "Применяют осознанно: если interface — часть API-контракта или polymorphism нужен в холодном пути, boxing допустим; в горячих путях лучше работать с конкретным value class напрямую или через sealed interface + when.",
+                "edge_cases": "Boxing на каждом вызове в hot path (Kafka consumer, миллионы вызовов/сек) даёт GC pressure; `if (x is Identifier)` для value class — тоже boxing, поскольку instanceof требует объекта.",
+                "related": "[[kotlin-value-classes-interview#Q3]] общая семантика inline/box; [[kotlin-value-classes-interview#Q4]] value class может implements interface; [[kotlin-value-classes-interview#Q10]] boxing в коллекциях."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Никакого boxing не происходит — компилятор использует mangled-имена для интерфейсных методов и сохраняет inline-преимущество через специальную таблицу методов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mangled names нужны для overload resolution на собственных методах value class, а не для интерфейсных вызовов. JVM не умеет «inline call через интерфейс» в обычном байт-коде, поэтому компилятор просто вставляет `Type.box-impl(value)` перед вызовом.",
+                "source_of_confusion": "Компилятор делает много магии с mangling и static-методами, и легко домыслить, что и интерфейсы покрыты; C# `where T : struct` и Valhalla усиливают это впечатление.",
+                "if_it_were_true": "Тогда не было бы warning «boxing happens when interface is used» и упоминаний этого ограничения на KotlinConf, но это поведение прямо описано в `kotlinlang.org/docs/inline-classes.html`.",
+                "how_it_should_be": "Через интерфейс boxing неизбежен; никаких «специальных таблиц методов», сохраняющих inline через interface, в Kotlin нет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Реализация интерфейса для value class запрещена компилятором — value class не может implements anything.",
+              "correct": false,
+              "sections": {
+                "what_actually": "value class может реализовывать интерфейсы: `value class UserId(val v: String) : Identifier, Comparable<UserId>` — валидный код. Запрет касается только наследования от классов (`value class A : SomeClass()`).",
+                "source_of_confusion": "Ограничение «нельзя наследоваться от классов» легко перепутать с «нельзя наследоваться вообще», а «специальность» value class усиливает ощущение множества запретов.",
+                "if_it_were_true": "Тогда `Comparable<UserId>` для сортировки списка UserId был бы невозможен, хотя `Money : Comparable<Money>` для `assertTrue(price1 < price2)` широко используется.",
+                "how_it_should_be": "Реализация интерфейсов разрешена и распространена; именно она и приводит к boxing при вызове через interface type."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Интерфейсные методы вызываются через `invokestatic` с underlying-значением, поэтому boxing не нужен — это специальное JVM-расширение в Kotlin 1.5+.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В JVM нет расширения для invoke на интерфейсе с inline-аргументом. Метод `Identifier.getId()` — виртуальный вызов через `invokeinterface`, требующий объект; никакого `invokestatic с underlying` для интерфейсов Kotlin не делает.",
+                "source_of_confusion": "Собственные методы value class действительно компилируются в static (`UserId.getValue-impl`), и можно предположить, что интерфейсные тоже; `invokestatic` ассоциируется с быстрыми вызовами без объекта.",
+                "if_it_were_true": "Тогда в decompile-выводе для каждого `identifier.id` стояли бы `INVOKESTATIC`, но реально там `INVOKEINTERFACE` плюс box-инструкции перед ним.",
+                "how_it_should_be": "Интерфейсные вызовы идут через `invokeinterface` с boxing; static-вызовы — только у собственных методов value class, не у интерфейсных."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём принципиальная разница между `typealias UserId = String` и `@JvmInline value class UserId(val value: String)`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Никакой разницы — оба создают новый тип, который компилятор различает; выбор сводится к стилевым предпочтениям команды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`typealias` НЕ создаёт новый тип — это синоним: компилятор трактует `UserId` и `String` как полностью взаимозаменяемые без проверки. `value class` создаёт настоящий новый тип, `UserId` и `String` несовместимы. Это фундаментальное различие, не стилевое.",
+                "source_of_confusion": "В IDE подсветка и автодополнение работают похоже, а без теста с случайной передачей `String` вместо `UserId` разницу не заметить.",
+                "if_it_were_true": "Тогда инцидент с перепутанными ID-аргументами (`processOrder(userId, orderId)` vs наоборот) решался бы и через typealias, но реально typealias такие баги не ловит, а value class ловит на компиляции.",
+                "how_it_should_be": "typealias не вводит тип и не даёт type safety; новый проверяемый тип создаёт только value class — разница принципиальная."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`typealias` — синоним без введения нового типа, компилятор не различает `UserId` и `String`; `value class` создаёт новый тип, проверяемый на этапе компиляции, плюс поддерживает `init`-валидацию, operator-функции и методы.",
+              "correct": true,
+              "sections": {
+                "explanation": "`typealias UserId = String` разворачивается в `String` на typecheck — никакой type safety, нельзя добавить `init`, operator-функцию или ограничить constructor. `value class UserId(val value: String)` — новый тип с явным конструктором и доступом через `.value`, валидацией, операторами и интерфейсами. Inline в байт-коде — приятный побочный эффект.",
+                "example": "`fun processUser(id: UserIdAlias)` примет любой `OrderIdAlias` и сырую строку, а `fun processUser(id: UserIdVc)` отклонит и `OrderIdVc`, и `\"raw-str\"` — нужен явный `UserIdVc(\"u-1\")`.",
+                "when_to_apply": "value class — для domain primitives с риском перепутывания (UserId vs OrderId vs ProductId); typealias — для именования сложных generic-/функциональных типов (`typealias ResultHandler = (Either<Error, Data>) -> Unit`).",
+                "edge_cases": "`typealias` не помогает с перепутыванием аргументов одного underlying-типа, а конверсия `String → UserId` в Spring (`@PathVariable id: UserId`) требует `Converter` или Kotlin Module, иначе 400 Bad Request.",
+                "related": "[[kotlin-value-classes-interview#Q1]] общее описание value class; [[kotlin-value-classes-interview#Q7]] value class в JPA/Spring; [[kotlin-value-classes-interview#Q14]] когда typealias достаточно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`value class` создаёт новый тип, но плохо работает с Java-кодом, поэтому в смешанных проектах правильнее всегда использовать `typealias`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "value class работает с Java через mangled-имена и underlying-тип: из Java видно `UserId.getValue-impl(String)`. Для красоты добавляют `@JvmName`/`@JvmField`. А typealias из Java вообще не виден — Java сразу видит underlying-тип, ничего не зная об alias.",
+                "source_of_confusion": "Mangled-имена в Java действительно неуклюжи, и `javap`-вывод пугает, создавая впечатление «избегать value class в смешанных проектах».",
+                "if_it_were_true": "Тогда Spring Boot Kotlin проекты с Java-частью не использовали бы value class, но они используют — решением служит `@JvmName(\"getId\")` или вынос Kotlin-only кода в отдельный модуль.",
+                "how_it_should_be": "value class совместим с Java (через mangling/`@JvmName`); typealias тут не альтернатива, потому что из Java он невидим вовсе."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`typealias` создаёт новый тип, проверяемый компилятором, а `value class` — лишь syntax sugar для wrapping без проверок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Утверждение перевёрнуто: `typealias` — синоним без введения типа, компилятор не различает alias и оригинал; `value class` — новый тип с компиляторной проверкой, и передача `String` туда, где ждут `UserId`, упадёт.",
+                "source_of_confusion": "Это реверс правильного утверждения: если помнить «одно даёт type safety, другое нет», но забыть какое — выбор падает на неверный вариант.",
+                "if_it_were_true": "Тогда книги по Kotlin DDD (Effective Kotlin, Kotlin in Action) учили бы использовать typealias для domain primitives, хотя они единодушно рекомендуют value class.",
+                "how_it_should_be": "Проверяемый новый тип — это value class; typealias лишь синоним без проверок — порядок в варианте перепутан."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что нужно сделать, чтобы JPA-entity с полем `value class OrderId` корректно работала с базой данных через Hibernate?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Ничего — Hibernate 6+ автоматически распаковывает любые Kotlin value classes в underlying-тип без дополнительной настройки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hibernate (включая 6.x) не имеет нативной поддержки Kotlin value classes: он работает с Java-типами через `BasicType`/`UserType`/`AttributeConverter`, и Kotlin-специфичный inline ему неизвестен. Без конфигурации `val id: OrderId` упадёт с `MappingException` или сохранится как Serializable blob.",
+                "source_of_confusion": "Hibernate 6 добавил умную автоконвертацию (`java.time`, enum, UUID), и кажется, что value class туда попал; `kotlin-jpa` plugin тоже создаёт иллюзию «всё из коробки», хотя он только добавляет no-arg конструкторы.",
+                "if_it_were_true": "Тогда не было бы массы StackOverflow-вопросов про «JPA + Kotlin value class converter», хотя это одна из самых частых проблем при миграции на типизированные id.",
+                "how_it_should_be": "Нативной распаковки нет — нужен явный `AttributeConverter` (или `UserType`), иначе Hibernate не определит тип `OrderId`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Нужно добавить `@JvmField` к полю в entity — это заставит Hibernate использовать прямой доступ к underlying-значению.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@JvmField` отключает Kotlin-getter/setter и делает поле public — это про Java-interop, не про JPA. Hibernate маппит через метаданные типов (`BasicType` lookup), и `@JvmField` не помогает с маппингом `OrderId` на BIGINT; к тому же он несовместим с единственным полем value class.",
+                "source_of_confusion": "`@JvmField` ассоциируется с «убрать обёртку, работать с raw полем», и кажется, что это решит «Hibernate не понимает value class».",
+                "if_it_were_true": "Тогда аннотация была бы документирована как JPA-фича в Hibernate User Guide, но реально упоминается только в Kotlin/Java interop секции.",
+                "how_it_should_be": "Проблема не в getter/setter, а в отсутствии BasicType для `OrderId`; решает её `AttributeConverter`, а не `@JvmField`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Зарегистрировать `AttributeConverter<OrderId, Long>` с `@Converter` и привязать его к полю через `@Convert(converter = OrderIdConverter::class)` (или `autoApply = true`).",
+              "correct": true,
+              "sections": {
+                "explanation": "JPA `AttributeConverter<X, Y>` — стандартный механизм маппинга кастомных типов на JDBC: реализуете `convertToDatabaseColumn(OrderId): Long` и `convertToEntityAttribute(Long): OrderId`, помечаете `@Converter`, затем `autoApply = true` или явный `@Convert`. Hibernate вызовет конвертер на каждый read/write, в БД — BIGINT, в коде — типобезопасный `OrderId`.",
+                "example": "`@Converter(autoApply = true) class OrderIdConverter : AttributeConverter<OrderId, Long>` с телом `attribute?.value` / `dbData?.let { OrderId(it) }` даёт `@Id val id: OrderId` без `@Convert`, и `findById(OrderId(42L))` работает прозрачно.",
+                "when_to_apply": "Применяют для любой Spring Data JPA / Hibernate entity с value class в поле (id, FK, доменный тип); `autoApply = true` — для глобального маппинга, явный `@Convert` — когда один value class маппится по-разному в разных entity.",
+                "edge_cases": "`autoApply = true` применяется глобально (не годится при разном маппинге одного value class), конвертер зовётся на каждый read/write (overhead на горячем пути), а для JSON всё равно нужен `KotlinModule` — Jackson и Hibernate настраиваются отдельно.",
+                "related": "[[kotlin-value-classes-interview#Q1]] общее описание value class; [[kotlin-value-classes-interview#Q8]] UserId/OrderId как типовое применение; [[kotlin-value-classes-interview#Q14]] когда value class неоправдан без конвертеров."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Заменить value class на `data class` — JPA понимает data class из коробки и обработает его как embeddable.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`data class` тоже не понимается JPA автоматически как embeddable — нужна `@Embeddable` и часто `@AttributeOverrides`. Замена решит проблему только с этой настройкой, но потеряет inline-преимущество (data class всегда heap-allocated). Правильное решение — оставить value class и добавить `AttributeConverter`.",
+                "source_of_confusion": "В Spring Boot туториалах `data class` используется массово для DTO и сущностей, создавая впечатление «JPA дружит с data class», хотя дружба ограничена аннотациями.",
+                "if_it_were_true": "Тогда обсуждения «JPA + Kotlin value class» не появлялись бы, а рекомендация «просто используйте data class» закрывала бы вопрос — но data class даёт похожий boilerplate и теряет inline.",
+                "how_it_should_be": "JPA не понимает и data class сам по себе; для single-value wrapper правильный путь — `@Convert`/`AttributeConverter` на value class."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой из перечисленных сценариев — НЕ типовое применение `value class`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Domain primitives: `UserId`, `OrderId`, `Email`, `Money(val cents: Long)` с operator-функциями и валидацией в init.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это самый распространённый use-case value class: domain primitives — основная мотивация фичи. Они дают type safety (`UserId` vs `OrderId`), валидацию инвариантов (`Email.init { require(contains(\"@\")) }`) и удобные operator-функции (`Money + Money`).",
+                "source_of_confusion": "Вопрос про «не типовое применение», а этот вариант как раз типовое — отсюда соблазн выбрать его по невнимательности.",
+                "if_it_were_true": "Тогда Kotlin community не строил бы вокруг этого паттерна библиотеки (kotools.types, arrow refinement types), хотя domain primitives — топовая причина перехода с raw String/Long.",
+                "how_it_should_be": "Это flagship-применение value class, а не исключение; ответ на вопрос про «не типовое» — composite DTO в варианте D."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Единицы измерения: `Meters(val value: Double)`, `Seconds(val value: Double)`, `Celsius(val value: Double)` для предотвращения смешивания систем единиц.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Unit types — классическое применение value class. Mars Climate Orbiter (1999, $327M) — потеря миссии из-за перепутывания imperial и metric, которое value class поймал бы на компиляции. В stdlib `kotlin.time.Duration` реализована именно через value class.",
+                "source_of_confusion": "Это тоже типовое применение, а вопрос ищет нетиповое — отсюда риск ошибиться.",
+                "if_it_were_true": "Тогда `kotlin.time.Duration` не была бы `@JvmInline value class Duration(val rawValue: Long)`, хотя она реализована именно так.",
+                "how_it_should_be": "Единицы измерения — каноничный value class; нетиповой сценарий — composite DTO на несколько полей (вариант D)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Параметры с ограничениями: `Percentage(val v: Int) { init { require(v in 0..100) } }`, `Port(val v: Int) { init { require(v in 1..65535) } }`, `NonEmptyString`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Refinement types через value class + init validation — стандартный паттерн «impossible states are unrepresentable». Если функция принимает `Port`, она гарантированно работает с валидным портом, без runtime-проверок на каждом вызове.",
+                "source_of_confusion": "Это типовое применение, но вопрос просит выбрать нетиповое.",
+                "if_it_were_true": "Тогда библиотеки вроде kotools.types (NonEmptyString, PositiveInt) были бы бессмысленны, хотя они построены именно на value class + init validation.",
+                "how_it_should_be": "Refinement types — типовое применение; нетиповым остаётся composite DTO с несколькими полями (вариант D)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Замена обычных составных DTO с 3-5 полями (`Address(street, city, zip, country)`) на multi-field value class для уменьшения GC pressure.",
+              "correct": true,
+              "sections": {
+                "explanation": "Composite DTO — НЕ применение value class. В stable Kotlin требуется ровно одно `val`-поле; MFVC — preview с флагом `-Xvalue-classes`. Даже когда MFVC станет stable, для `Address` адекватен `data class`: плоская immutable структура с marginal-выигрышем и лишними boxing-сюрпризами в коллекциях.",
+                "example": "`value class Address(val street, city, zip)` не компилируется (нужно одно поле), а правильно — `data class Address(val street: Street, val city: City, val zip: Zip)`, где Street/City/Zip — value class.",
+                "when_to_apply": "value class — для одно-полевых обёрток (ID, Email, Money, Percentage); data class — для составных immutable структур (Address, OrderLine, UserProfile); их комбинируют, но не подменяют.",
+                "edge_cases": "Соблазн «переписать все DTO на value class» — pitfall; GC pressure для composite решается профилированием и pooling, а не value class; обёртка value class в value class усложняет код.",
+                "related": "[[kotlin-value-classes-interview#Q1]] что такое value class; [[kotlin-value-classes-interview#Q2]] отличие от data class; [[kotlin-value-classes-interview#Q14]] когда не стоит использовать value class."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем Kotlin `@JvmInline value class` принципиально отличается от Java `record` (Java 16+)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`value class` в stable Kotlin ограничен одним полем и в большинстве позиций инлайнится в underlying-тип; у `record` любое число полей и он всегда heap-allocated. record оптимизирован под compact immutable data, value class — под type-safe обёртки без overhead.",
+              "correct": true,
+              "sections": {
+                "explanation": "Java `record` (стандарт с JDK 16) — immutable nominal data carrier: любое число полей, canonical constructor, accessor-ы `name()`, авто `equals/hashCode/toString`, наследник `java.lang.Record`, всегда в куче, плюс pattern matching в JDK 21. Kotlin value class — обёртка над одним `val`-полем, инлайнится в underlying-тип, без pattern matching, но с zero-overhead type safety.",
+                "example": "В Kotlin `value class UserId(val value: String)` — domain primitive, а `record User(String id, String email, int age)` в Java — составной immutable carrier; их часто комбинируют: `record Order(OrderId id, UserId customer, Money total)`.",
+                "when_to_apply": "record — для composite immutable data (DTO для REST, промежуточные агрегаты, value objects с >1 поля); value class — для domain primitives (ID-обёртки, единицы измерения, Percentage, Port); вместе record/data class композирует value class.",
+                "edge_cases": "Java record не решает MFVC-проблему — он всё равно heap-allocated; вызов методов Kotlin value class из Java идёт через mangled-имена (`getValue-impl`), тогда как Java record из Kotlin — обычные accessors.",
+                "related": "[[kotlin-value-classes-interview#Q1]] что такое value class; [[kotlin-value-classes-interview#Q2]] отличия от data class; [[kotlin-value-classes-interview#Q4]] ограничения value class."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Они полностью эквивалентны: `value class` — это Kotlin название для Java `record`, генерирующий тот же байт-код.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Байт-код разный: Kotlin value class — обычный class с mangled static-методами, инлайнящийся в большинстве позиций; Java record наследуется от `java.lang.Record`, имеет canonical constructor и accessor-ы и всегда heap-allocated.",
+                "source_of_confusion": "Оба keyword обозначают «упрощённый immutable type» и автогенерируют `equals/hashCode/toString`, поэтому поверхностно похожи.",
+                "if_it_were_true": "Тогда Kotlin/Java interop вокруг value class был бы тривиальным (общий байт-код), но реально требует `@JvmName` и понимания mangled names — значит, байт-код разный.",
+                "how_it_should_be": "Это разные типы с разным байт-кодом и use cases: record — heap-allocated composite carrier, value class — inline-обёртка над одним значением."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`value class` поддерживает любое число полей, а `record` ограничен одним полем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `record Point(int x, int y, int z)` — норма, а value class в stable Kotlin требует ровно одно `val`-поле; MFVC — preview-фича.",
+                "source_of_confusion": "Это реверс правильного утверждения, плюс bias «value class звучит как more advanced, значит мощнее».",
+                "if_it_were_true": "Тогда Java codebases с многими record для DTO (Spring Boot 3+ туториалы) были бы невозможны, хотя record — отличный инструмент для composite immutable DTO.",
+                "how_it_should_be": "Несколько полей держит record; одно поле — у value class в stable; ограничения перепутаны местами."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`record` доступен в Java 8+ и поддерживает наследование от любого класса; `value class` доступен только в Kotlin 1.9+ и не поддерживает destructuring.",
+              "correct": false,
+              "sections": {
+                "what_actually": "record доступен с JDK 16 (preview с JDK 14), не с Java 8, и не наследуется от классов (только implicit `Record` + интерфейсы). value class доступен с Kotlin 1.5 (а как `inline class` — с 1.3) и поддерживает destructuring через `component1()` (`val (v) = userId`).",
+                "source_of_confusion": "В варианте сразу несколько ошибок: легко поверить «record старый, value class новый» или «value class — это same as inline class из старых версий».",
+                "if_it_were_true": "Тогда record был бы в любом Java 8 проекте, хотя в legacy на JDK 8/11 его нет; а `val (id) = UserId(\"x\")` работает уже сейчас.",
+                "how_it_should_be": "record — с JDK 16 без наследования от классов; value class — с Kotlin 1.5 и с поддержкой destructuring; почти каждое утверждение варианта неверно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что происходит, когда `value class UserId(val value: String)` помещается в `List<UserId>`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Kotlin использует специализированную коллекцию `ValueClassList<UserId>`, которая хранит underlying-значения без boxing.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Kotlin stdlib нет `ValueClassList`. `List<UserId>` — это обычный `java.util.List<Object>` с обёрнутыми UserId-объектами. Specializations есть только для примитивов (`IntArray`, `LongArray`) — это JVM-native фича, не extension для value class.",
+                "source_of_confusion": "Kotlin делает много магии вокруг value class, и аналогия с `IntArray` подкрепляет иллюзию «они и коллекции придумали».",
+                "if_it_were_true": "Тогда в Kotlin docs упоминалась бы `ValueClassList`, и каждый второй вопрос про «boxing в List<UserId>» закрывался бы ссылкой на неё, но вопрос остаётся открытым.",
+                "how_it_should_be": "Специализированной коллекции для value class нет; в `List<UserId>` элементы боксятся, обходные решения — кастомные buffers поверх примитивных массивов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Происходит boxing — каждый `UserId` упаковывается в обычный объект-обёртку, поскольку generics в JVM используют erasure до `Object`; преимущество inline теряется, но type safety на этапе компиляции сохраняется.",
+              "correct": true,
+              "sections": {
+                "explanation": "JVM generics реализованы через type erasure: на уровне байт-кода `List<UserId>` неотличим от `List<Object>`. Элементы хранятся как reference-типы, поэтому value class упаковывается (`UserId.box-impl(value)`), при доступе — unboxing. Это та же проблема, что `List<Integer>` vs `IntArray`. Компилятор всё равно различает `List<UserId>` и `List<OrderId>`.",
+                "example": "`fun loadOne(id: UserId)` инлайнится без boxing, а `fun loadMany(ids: List<UserId>)` хранит каждый UserId упакованным и делает unbox на каждом `id.value` в цикле.",
+                "when_to_apply": "Для холодных путей (`List<UserId>` в DTO раз в запрос) boxing незаметен; для горячих (Kafka consumer, миллион сообщений/сек) рассмотрите `Array<String>` с inline accessor или `LongArray`, если underlying — Long.",
+                "edge_cases": "`Map<UserId, User>` боксит ключи, `flatMap/map/filter` боксят промежуточные коллекции, а JIT иногда устраняет boxing через escape analysis, но это не гарантировано.",
+                "related": "[[kotlin-value-classes-interview#Q3]] общая семантика inline/box; [[kotlin-value-classes-interview#Q5]] boxing через интерфейс; [[kotlin-value-classes-interview#Q12]] value class в suspend функциях."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Компилятор предупреждает об ошибке и требует использовать `Array<UserId>` вместо `List<UserId>` — `List` несовместим с value class.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`List<UserId>` — валидный код без ошибок и предупреждений; внутри просто происходит boxing, прозрачный для разработчика, но с performance implications. `Array<UserId>` тоже боксит (Array<RefType> = Object[]); без boxing работают лишь primitive arrays.",
+                "source_of_confusion": "Запрет звучит «защитнее» — если бы компилятор предупреждал, разработчики знали бы про boxing, но реально это silent поведение.",
+                "if_it_were_true": "Тогда Spring Data JPA не работал бы с value class в коллекциях, и `findByCustomerIdIn(List<CustomerId>)` давал бы compile errors, хотя это типовой рабочий паттерн.",
+                "how_it_should_be": "`List<UserId>` совместим и компилируется; boxing происходит молча, а `Array<UserId>` его не избегает — нужны primitive arrays."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Boxing происходит, но только при первом обращении к элементу — Kotlin использует lazy unboxing с кэшированием.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Boxing происходит при добавлении в коллекцию (`list.add(UserId.box-impl(userId))`), а unboxing — при каждом доступе (`((UserId)obj).getValue-impl()`). Никакого lazy/cached поведения нет: каждый элемент всегда хранится как boxed-объект.",
+                "source_of_confusion": "`lazy { }` и `LRUCache` — популярные паттерны в Kotlin, и хочется домыслить, что они применяются и тут, хотя boxing работает примитивно.",
+                "if_it_were_true": "Тогда memory footprint `List<UserId>` был бы оптимизирован, но реально каждый элемент = boxed UserId object (16-32 байта + обёртка + underlying String), что видно в heap dump.",
+                "how_it_should_be": "Boxing случается при вставке, unboxing — при каждом доступе, без кэширования; элементы всегда хранятся упакованными."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем для JVM target нужна аннотация `@JvmInline` перед `value class`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@JvmInline` опциональна — компилятор Kotlin сам решает, инлайнить ли value class в зависимости от размера underlying-типа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для JVM target `@JvmInline` обязательна: без неё `value class UserId(val value: String)` не компилируется («Value class without @JvmInline annotation is not yet supported»). Это не оптимизация, а обязательное указание target-платформе на конкретное представление.",
+                "source_of_confusion": "В Kotlin/Native и Kotlin/JS аннотация не требуется, и при multiplatform-опыте легко предположить, что и для JVM она опциональна.",
+                "if_it_were_true": "Тогда `value class UserId(val value: String)` компилировался бы без `@JvmInline` — но реально вы получите ошибку, это легко проверяемо.",
+                "how_it_should_be": "Для JVM аннотация обязательна и не зависит от размера underlying-типа; опциональна она лишь на Native/JS."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@JvmInline` нужна только для совместимости с Java — без неё value class работает, но Java не видит его как обычный класс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Java-видимость зависит от `@JvmName`/`@JvmField`/`@JvmStatic`, не от `@JvmInline`, который управляет inline-представлением на JVM. Без аннотации для JVM target — compile error, а не «работает, но Java не видит».",
+                "source_of_confusion": "Префикс `@Jvm…` ассоциируется с Java interop (`@JvmName`, `@JvmStatic`), и логично домыслить, что и `@JvmInline` про то же.",
+                "if_it_were_true": "Тогда Kotlin-only проекты могли бы писать `value class` без аннотации, но для JVM target это обязательно; видимость из Java в любом случае идёт через mangled-имена или `@JvmName`.",
+                "how_it_should_be": "`@JvmInline` управляет inline-представлением и обязательна для JVM; за Java-видимость отвечают другие аннотации."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@JvmInline` явно указывает компилятору использовать inline-представление на JVM; `value class` — более общий концепт (потенциально для будущих JVM value types через Project Valhalla), и `@JvmInline` фиксирует конкретный механизм для текущей реализации.",
+              "correct": true,
+              "sections": {
+                "explanation": "Kotlin team разделил «value class в системе типов» (общая семантика равенства по содержанию) и «механизм реализации на target». `@JvmInline` фиксирует: на JVM реализовать через compile-time inlining. Когда Valhalla принесёт настоящие JVM value types, может появиться другая стратегия, а `@JvmInline` останется для backward compatibility. На Native/JS аннотация не нужна.",
+                "example": "На JVM пишут `@JvmInline value class UserId(val value: String)`; без аннотации — ошибка «only supported in K/N and K/JS targets»; в multiplatform `@JvmInline` ставят только в `jvmMain` (`actual value class`).",
+                "when_to_apply": "Всегда для value class на JVM (иначе не скомпилируется); в multiplatform — только в `jvmMain`, не в `commonMain`; при миграции `inline class X {}` → `@JvmInline value class X {}`.",
+                "edge_cases": "Забыть `@JvmInline` после copy-paste из multiplatform-примеров — типичная ошибка; `@JvmInline` — binary marker, а не perf-hint, и к data class/обычному классу он неприменим.",
+                "related": "[[kotlin-value-classes-interview#Q1]] что такое value class; [[kotlin-value-classes-interview#Q3]] как inline проявляется в байт-коде; [[kotlin-value-classes-interview#Q4]] ограничения value class."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@JvmInline` нужна для активации автогенерации `equals`/`hashCode` — без неё value class имеет только default Object identity equals.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Автогенерация `equals`/`hashCode` активируется самим keyword `value class`, не аннотацией. Любой value class (с аннотацией или без, на JVM или Native) получает структурное равенство по единственному полю; `@JvmInline` управляет binary-представлением, не семантикой equals.",
+                "source_of_confusion": "По аналогии с `data class` (где keyword `data` включает equals/hashCode) логично домыслить, что и value class нужна «активирующая» аннотация.",
+                "if_it_were_true": "Тогда `value class Foo(val v: String)` без `@JvmInline` использовал бы identity equals и `Foo(\"x\") == Foo(\"x\")` давал бы false — но такой код на JVM вообще не компилируется, а на Native работает с правильным equals.",
+                "how_it_should_be": "Равенство по значению — часть семантики `value class` по определению и включается keyword-ом; `@JvmInline` отвечает за представление, а не за equals."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что происходит с inline-представлением value class в параметрах `suspend`-функции?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Suspend-функции не поддерживают value class — компилятор требует заменить value class на data class в любых suspend-сигнатурах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Suspend-функции прекрасно поддерживают value class: `suspend fun fetchUser(id: UserId): User` — валидная сигнатура, замена на data class не нужна. Корутины — это compile-time трансформация в Continuation-машину; value class остаётся value class.",
+                "source_of_confusion": "Suspend выглядят «специальными» (state machine, Continuation), и можно домыслить «значит, value class сюда не вписывается».",
+                "if_it_were_true": "Тогда Spring WebFlux Kotlin / Ktor с suspend handlers не использовали бы value class для path-params, хотя `suspend fun getUser(@PathVariable id: UserId)` — типовой паттерн.",
+                "how_it_should_be": "value class полностью валиден в suspend-сигнатурах; трансформация корутин работает на уровне функции, а не запрещает типы параметров."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Inline-представление полностью теряется в любой suspend функции, поскольку Continuation требует упаковки всех параметров в объект.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Хотя suspend компилируется в state machine с Continuation, на сайте вызова параметры (включая value class) передаются как inline-значения, если позиция позволяет. В Continuation они сохраняются как Object только при реальной приостановке — это разовый boxing на suspension point, а не overhead каждого вызова.",
+                "source_of_confusion": "Упоминание Continuation создаёт впечатление «всё всё равно в объекте», хотя Continuation создаётся только при реальной приостановке.",
+                "if_it_were_true": "Тогда value class в suspend не имел бы смысла, и доклады про DDD + Coroutines советовали бы его избегать, хотя это идеальное комбо type safety + async.",
+                "how_it_should_be": "Inline сохраняется на не-suspending fast-path; boxing в Continuation возникает лишь в момент реальной приостановки, а не «всегда»."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Корутины автоматически создают специальные `inline suspend`-обёртки, в которых value class работает быстрее, чем в обычных функциях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никаких `inline suspend`-обёрток корутины не создают. `inline fun` и `suspend fun` — разные модификаторы; `inline suspend fun` существует (inline lambda с suspend), но не относится к value class и не делает его «быстрее». Корутины влияют на flow управления, не на представление параметров.",
+                "source_of_confusion": "Слово «inline» встречается и в value class, и в `inline fun`, и в `inline suspend` — натуральная путаница, кажется, что все они связаны.",
+                "if_it_were_true": "Тогда в Kotlin docs упоминался бы «coroutine inline boost для value class», но такого нет — performance в suspend и non-suspend примерно одинаковая.",
+                "how_it_should_be": "Особых suspend-обёрток для ускорения value class нет; корутины не меняют его представление, лишь добавляют Continuation и state machine."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Inline-представление сохраняется в параметрах: `suspend fun fetchUser(id: UserId)` в bytecode становится `fetchUser-XYZ(String id, Continuation cont)` — UserId передаётся как primitive String; boxing активируется только в стандартных позициях (`List<UserId>`, `UserId?`, generic, interface).",
+              "correct": true,
+              "sections": {
+                "explanation": "Suspend-функция получает дополнительный параметр `Continuation<T>` и превращается в state machine. Mangling работает как обычно: `fetchUser-<hash>(String, Continuation)`, underlying-тип String подставляется напрямую без boxing самого UserId. При реальной приостановке состояние сохраняется в Continuation как Object (для всех параметров) — разовый boxing на suspension, не на каждом вызове.",
+                "example": "На fast-path (`cache.get(id)` вернул значение без `withContext`) inline-представление работает полностью без overhead, а boxing в Continuation происходит лишь при уходе в реальный `withContext(Dispatchers.IO)`.",
+                "when_to_apply": "Spring WebFlux/Ktor с suspend handlers и value class для path/query params, repository `suspend fun findById(id: UserId): User?`, service-слой на корутинах — идиоматичные паттерны Kotlin Spring Boot 3.",
+                "edge_cases": "`Flow<UserId>` и `Channel<UserId>` боксят элементы (generic), `Deferred<UserId>` из `async` тоже боксит UserId внутри; а частые suspension в горячем пути дают boxing при сохранении в Continuation.",
+                "related": "[[kotlin-value-classes-interview#Q3]] общая семантика inline/box; [[kotlin-value-classes-interview#Q10]] boxing в коллекциях (List<UserId>); [[kotlin-value-classes-interview#Q5]] boxing через интерфейс."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что именно нужно тестировать в `value class`, чтобы полноценно покрыть его поведение?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Валидацию в `init` (boundary cases — отрицательные, нулевые, граничные значения), симметрию `equals`/`hashCode`, поведение собственных методов и operator-функций; например `assertThrows<IllegalArgumentException> { Age(-1) }`, `assertThat(Age(25)).isEqualTo(Age(25))`, проверку `Money + Money`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Полноценные тесты покрывают четыре аспекта: (1) валидация в init на всех boundary cases (ниже минимума, выше максимума, точно на границах, null/empty/whitespace для строк); (2) контракт equals/hashCode (симметрия, согласованность); (3) собственные методы и computed properties; (4) operator-функции. JUnit 5, Kotest, AssertJ работают с value class без модификаций, boxing в тестах допустим.",
+                "example": "`Age(0)`/`Age(150)`/`Age(25)` проходят, `Age(-1)`/`Age(151)` бросают `IllegalArgumentException` с номером в message, `Age(30) == Age(30)` и совпадение hashCode, `Money(100) + Money(250) == Money(350)`.",
+                "when_to_apply": "Применяют для любого value class с init-валидацией (boundary cases обязательны), с собственными методами/operator-функциями, для каждого важного domain-primitive в Spring Boot Kotlin проектах; property-based testing (Kotest `forAll`, jqwik) хорош для числового underlying.",
+                "edge_cases": "Mockito не мокает final value class из коробки — используйте `mockk`; проверяйте overflow для underlying Int/Long (`Money(Long.MAX_VALUE) + Money(1)` даёт wraparound); тесты на сериализацию — отдельная категория через integration tests.",
+                "related": "[[kotlin-value-classes-interview#Q1]] общее описание value class; [[kotlin-value-classes-interview#Q4]] init блок и валидация; [[kotlin-value-classes-interview#Q15]] best practices (init, factory)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Тестировать value class не нужно — компилятор Kotlin гарантирует корректность всех value class в compile time.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Компилятор проверяет только структурные ограничения (одно `val`-поле, нет наследования от классов). Бизнес-логика в init и методах (`Email init { require(contains(\"@\")) }`, `Money + Money`) — это runtime behavior, тестируемое как любой код; компилятор не знает, что email должен содержать `@`.",
+                "source_of_confusion": "value class позиционируется как «type safety», и можно расширить это до «вся корректность гарантирована типом», хотя type safety — про межтиповые проверки, не про инварианты внутри типа.",
+                "if_it_were_true": "Тогда production-баги в domain primitives (валидный email становится `\"plain text\"`, money переполняется в negative) были бы невозможны, но они встречаются, и тесты их ловят.",
+                "how_it_should_be": "Тестировать нужно: компилятор покрывает лишь структуру, а валидацию, методы и equals/hashCode проверяют обычными unit-тестами."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Тестировать нужно только через рефлексию — value class в JVM хранится как обёртка, и обычные assertions не работают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычные assertions работают идеально: `assertThat(Age(25)).isEqualTo(Age(25))` — корректный AssertJ-код. value class имеет нормальный `equals`/`hashCode` по underlying-полю, assertions сравнивают значения штатно, рефлексия не нужна.",
+                "source_of_confusion": "value class имеет «специальное» представление в байт-коде, и хочется домыслить, что и тестирование «специальное».",
+                "if_it_were_true": "Тогда у Kotest/JUnit 5/AssertJ были бы отдельные секции «тестирование value class», но их нет — обычные паттерны работают.",
+                "how_it_should_be": "Assertions для value class — стандартные; рефлексия не требуется, equals/hashCode корректно сравнивают по underlying-значению."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Тестировать только поведение в коллекциях — это аспект с boxing-overhead и единственное место, где value class может вести себя неожиданно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поведение в коллекциях (boxing) — это performance-вопрос, а не correctness: `List<UserId>` работает корректно, просто с overhead. Главное для тестов — бизнес-логика: валидация, методы, equals/hashCode. Тестирование boxing — это профилирование, а не unit tests.",
+                "source_of_confusion": "«boxing» — known issue value class, и кажется, что именно его нужно «накрыть тестами», хотя это про performance.",
+                "if_it_were_true": "Тогда unit tests включали бы микробенчмарки и измерения GC, хотя это разные категории — JMH/JFR для performance, JUnit для correctness.",
+                "how_it_should_be": "Коллекции/boxing проверяют профилировщиком; unit-тесты покрывают валидацию, методы и equals/hashCode — именно там возможны баги корректности."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В каком сценарии `value class` принесёт больше проблем, чем пользы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Параметры контроллеров Spring WebFlux с `@PathVariable id: UserId` для type safety REST API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это идеальный use-case: `@PathVariable id: UserId` даёт type safety при работе с путём URL — нельзя передать `OrderId` где ждут `UserId`. Нужна разовая настройка `KotlinModule` или `Converter<String, UserId>` для path-binding, но это не проблема.",
+                "source_of_confusion": "Вопрос просит выбрать вредный сценарий, а этот вариант — хороший use-case, отсюда соблазн ошибиться.",
+                "if_it_were_true": "Тогда Kotlin Spring Boot туториалы не рекомендовали бы этот паттерн, хотя они рекомендуют его активно.",
+                "how_it_should_be": "Это полезное применение value class; проблемный сценарий — массовый boxing на hot path (вариант B)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Высокочастотный поток value class через `List<UserId>` / `Flow<UserId>` в hot path Kafka-consumer-а, где boxing на каждом элементе создаёт значительный GC overhead.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главная антимодель — массовое использование там, где компилятор вынужден боксить каждое значение. Hot path Kafka-consumer (миллион сообщений/сек) с `Flow<UserId>` создаёт миллион boxed-объектов в секунду — GC pressure, нивелирующая выгоду против raw String. Boxing активируется в generic, nullable, interface, рефлексии.",
+                "example": "`@KafkaListener` с `Flow<UserId>` боксит каждое сообщение, а `Flow<String>` с обёрткой `UserId(rawId)` на consumer-стороне инлайнится; для batch можно завести `UserIdBuffer(val rawIds: LongArray)` с inline `get`.",
+                "when_to_apply": "Анти-паттерны: не использовать value class на hot paths с коллекциями (raw тип внутри, обёртка на выходе), не как ID для очень больших Map (10M+ ключей), не в interface-heavy дизайне, не для функциональных типов (там typealias).",
+                "edge_cases": "Профилирование boxing — единственный надёжный способ (визуально неочевидно); micro-overhead при 10K сообщений/сек незаметен, так что правило «всегда оптимизируйте boxing» неверно — профилируйте до решений.",
+                "related": "[[kotlin-value-classes-interview#Q3]] общая семантика inline/box; [[kotlin-value-classes-interview#Q10]] value class в коллекциях; [[kotlin-value-classes-interview#Q12]] value class в suspend/Flow."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Domain primitive `Email(val value: String)` с валидацией в init — для предотвращения создания невалидных email.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это классический пример value class: невалидный email невозможно создать (`Email(\"not_an_email\")` упадёт в init), тип гарантирует валидность ниже по коду. Один из топовых примеров в Effective Kotlin / Kotlin in Action.",
+                "source_of_confusion": "Вопрос ищет вредный сценарий, а это хороший use-case — отсюда риск ошибиться.",
+                "if_it_were_true": "Тогда DDD-руководства советовали бы избегать value class для refinement types, хотя это flagship-применение.",
+                "how_it_should_be": "Email с init-валидацией — отличное применение; проблемный сценарий — массовый boxing на hot path (вариант B)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Money с operator-функциями (`Money + Money`, `Money * Int`) для типобезопасной финансовой арифметики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это правильное применение: Money с operator-функциями избегает Double-арифметики (round-off) и даёт type safety (нельзя сложить разные value class валют). Доменно-моделированный Money — стандартный паттерн в финансовых системах.",
+                "source_of_confusion": "Вопрос ищет сценарий, где value class вредит, а этот вариант — наоборот, образцовое применение, и его легко спутать с искомым «вредным» по невнимательности.",
+                "if_it_were_true": "Тогда Martin Fowler и DDD-сообщество не рекомендовали бы Money как первый пример value object, хотя рекомендуют его активно.",
+                "how_it_should_be": "Money с операторами — каноничное применение value class; проблемный сценарий — массовый boxing на hot path (вариант B)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая комбинация практик при разработке `value class` для domain primitives — наиболее правильная?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Делать поле `var` для возможности модификации, отказаться от валидации в `init` (она замедляет создание), не добавлять operator-функции (они вызывают boxing).",
+              "correct": false,
+              "sections": {
+                "what_actually": "`var` в value class запрещён компилятором — только `val`. Валидация в init рекомендуется и выполняется один раз на создание (overhead минимальный). Operator-функции сами по себе boxing не вызывают — инлайнятся как обычные методы. Каждый пункт этого «совета» — анти-best-practice.",
+                "source_of_confusion": "В комьюнити циркулируют мифы про «overhead валидации» и «boxing operator-функций», хотя `require(...)` — это один if + throw, а операторы компилируются в static-вызовы с inline-параметрами.",
+                "if_it_were_true": "Тогда `value class Age(var years: Int)` компилировался бы (он не компилируется), и туториалы советовали бы избегать operator-функций, хотя их рекомендуют как лучшую часть value class.",
+                "how_it_should_be": "Поле обязано быть `val`, init-валидация полезна и дешёва, operator-функции инлайнятся без boxing — правильно ровно противоположное."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Использовать value class только для одно-полевых случаев; обязательно добавлять `init { require(...) }`; использовать companion factory для сложного создания; добавлять operator-функции там, где они улучшают читаемость.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это почти полный список best practices, но не самый полный: не упомянуты избегание boxing на hot paths (List/Flow/interface), регистрация Jackson Module / JPA конвертеров для интеропа и `@JvmName` для красивых accessor-ов из Java. Более полный набор — в варианте C.",
+                "source_of_confusion": "Часто думают, что value class — это «просто wrapper с валидацией» плюс operator/factory как advanced practices, хотя комплексное использование включает ещё perf и interop слои.",
+                "if_it_were_true": "Тогда в Spring Boot Kotlin не возникало бы вопросов про MappingException на JPA-entity и path-binding в WebFlux, хотя они регулярны и требуют дополнительных практик, которых тут нет.",
+                "how_it_should_be": "Набор близок, но неполон; правильный ответ добавляет performance-awareness и interop (Jackson/JPA/`@JvmName`) — это вариант C."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Использовать для domain primitives (одно-полевые `UserId`, `Money`, `Email`); валидация инвариантов в `init`; operator-функции для domain-arithmetic; companion factory для сложного создания; явная регистрация Jackson `KotlinModule` и JPA `AttributeConverter` для interop; избегание массового использования в `List`/`Flow` на hot paths; `@JvmName` для красивых accessor-ов из Java.",
+              "correct": true,
+              "sections": {
+                "explanation": "Комплексная best practice включает несколько слоёв: применение только для одно-полевых primitives (composite — data class); валидация `init { require(...) }` для инвариантов (Percentage в 0..100, Port в 1..65535); API-дизайн (operator-функции, companion factory, computed properties); performance awareness (избегать boxing на hot paths); интероп (KotlinModule, AttributeConverter, `@JvmName`); сериализация для non-JVM target; документация «зачем value class, а не typealias».",
+                "example": "`value class Money private constructor(val cents: Long)` с init-проверками, `val dollars get() = cents / 100.0`, операторами `plus/minus/times/compareTo` и companion `fromDollars/zero`, плюс `ObjectMapper().registerModule(KotlinModule.Builder().build())` и `@Converter(autoApply = true)` для JPA.",
+                "when_to_apply": "Применяют в любой Kotlin-кодовой базе с domain-логикой и REST/JPA/Kafka интеграциями, в DDD-проектах с value object как фундаментальным концептом, в финансах/e-commerce/telecom, где type mixing аргументов = serious incident.",
+                "edge_cases": "Не каждое поле должно быть value class (`String name` в DTO часто не нужен), `Money + Int` спорно (лучше `Money.times(Int)`), factory `of(raw): Email?` навязывает обработку null, а `autoApply = true` глобален и не годится при разном маппинге одного типа.",
+                "related": "[[kotlin-value-classes-interview#Q4]] ограничения value class; [[kotlin-value-classes-interview#Q7]] JPA конвертеры; [[kotlin-value-classes-interview#Q14]] когда value class не нужен."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Использовать value class везде, где есть поле `String` или `Long` — для максимизации type safety, без оглядки на boxing и interop проблемы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "«Везде» — anti-best-practice: value class даёт type safety, но имеет реальные стоимости (boxing на hot paths, настройка Jackson/JPA, psychological overhead команды). Применять надо там, где есть риск перепутывания типов или нужна валидация; для внутренних ID и tail-логирования это overkill.",
+                "source_of_confusion": "«Type safety везде» звучит как universally good practice, хотя cost-benefit имеет смысл оценивать.",
+                "if_it_were_true": "Тогда все Kotlin кодовые базы перешли бы на 100% value class в полях, хотя типовой Spring Boot Kotlin проект оборачивает только ключевые primitives (UserId, OrderId, Money), оставляя `String`/`Long` для tail-полей.",
+                "how_it_should_be": "Применять value class избирательно — там, где есть type-confusion риск или нужна валидация; «везде» — overengineering с реальными costs."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

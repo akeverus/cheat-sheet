@@ -1,0 +1,905 @@
+{
+  "topic_slug": "kotlin-spring-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем в Kotlin+Spring проекте нужен плагин `kotlin-spring` (он же `all-open` для Spring-аннотаций)?",
+          "options": [
+            {
+              "text": "Он делает классы с Spring-аннотациями (`@Component`, `@Service`, `@Configuration`) `open`, чтобы CGLIB смог создать subclass-proxy для AOP, `@Transactional`, `@Async`.",
+              "correct": true,
+              "sections": {
+                "explanation": "В Kotlin классы по умолчанию `final`, а CGLIB-proxy для `@Transactional`/`@Async`/`@Cacheable` создаётся как subclass с переопределением методов — наследовать `final` нельзя. Плагин снимает `final` с Spring-аннотированных классов и их методов на этапе компиляции.",
+                "example": "Без плагина при старте контекста или первом вызове proxied-метода падает `Cannot subclass final class ... method 'X' is final and cannot be proxied`. С `kotlin(\"plugin.spring\")` это исчезает.",
+                "when_to_apply": "Он нужен во всех Spring Boot проектах на Kotlin — это де-факто стандарт, входящий в Kotlin-стартеры Spring Initializr.",
+                "edge_cases": "Интерфейсные JDK-proxy не требуют `open`, но если бин не реализует интерфейс — Spring падает на CGLIB; кастомные мета-аннотации поверх `@Component` нужно добавлять в `allOpen { annotation(...) }` вручную.",
+                "related": "[[kotlin-spring-interview#Q4]] плагин kotlin-jpa и no-arg; [[kotlin-spring-interview#Q14]] типичные ошибки с final-методами."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Он автоматически добавляет `@Autowired` ко всем конструкторам, чтобы Spring видел зависимости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Autowired` на единственном конструкторе в Spring 4.3+ вообще не требуется — это работает и в Java, и в Kotlin без плагинов. `kotlin-spring` занимается открытием классов, а не DI.",
+                "source_of_confusion": "Часть разработчиков считает, что плагины «магически делают DI», смешивая независимые механизмы регистрации бинов и снятия `final`.",
+                "if_it_were_true": "Тогда мы не могли бы явно ставить `@Autowired` на сеттер или поле, но это вполне рабочие сценарии в Spring.",
+                "how_it_should_be": "DI единственного конструктора работает сам по себе, а плагин лишь снимает `final`, чтобы CGLIB-proxy стал возможен."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Он подставляет no-arg конструктор в каждый `@Service`, чтобы Spring мог инстанцировать его рефлексией.",
+              "correct": false,
+              "sections": {
+                "what_actually": "No-arg конструктор генерирует другой плагин — `kotlin-jpa`, и только для `@Entity`/`@MappedSuperclass`/`@Embeddable`. Для Spring-бинов фреймворк сам вызывает primary-конструктор с инжектированными аргументами.",
+                "source_of_confusion": "Оба плагина из семейства `kotlin-*` и часто включаются вместе, поэтому их роли легко перепутать.",
+                "if_it_were_true": "Тогда Spring инжектил бы зависимости через сеттеры/поля после no-arg вызова, теряя immutability `val`-полей.",
+                "how_it_should_be": "Spring-бин создаётся через primary-конструктор, а задача `kotlin-spring` — открыть класс для proxy, а не дать no-arg."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Он включает Kotlin reflection для Spring, без него DI не находит beans.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring сканирует beans через стандартный classpath и Java-рефлексию, ему не нужен `kotlin-reflect` для DI. `kotlin-reflect` нужен для `KClass`/`KFunction`, но это отдельная зависимость.",
+                "source_of_confusion": "«Плагин Spring для Kotlin» звучит как «всё, что нужно для интеграции», и ему легко приписать любые функции.",
+                "if_it_were_true": "Тогда, убрав плагин, мы получили бы `bean not found`, а реально получаем `cannot subclass final class`.",
+                "how_it_should_be": "Поиск бинов работает на обычной JVM-рефлексии, а плагин снимает `final` ради CGLIB-proxy."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой способ инжектирования зависимостей в Kotlin-сервис считается идиоматичным для Spring Boot и почему?",
+          "options": [
+            {
+              "text": "Field injection через `@Autowired` с `lateinit var` — даёт максимум гибкости и работает «как в Java».",
+              "correct": false,
+              "sections": {
+                "what_actually": "Field injection с `lateinit var` ломает immutability, скрывает зависимости от компилятора и затрудняет unit-тесты без Spring-контекста — нужно подменять рефлексией или `@InjectMocks`.",
+                "source_of_confusion": "В старых туториалах поле с `@Autowired` — самый частый пример, поэтому привычка переносится из Java.",
+                "if_it_were_true": "Тогда unit-тесты писались бы без боли, но без рефлексии не получится даже подсунуть мок — это симптом плохого дизайна.",
+                "how_it_should_be": "Зависимости стоит передавать через primary-конструктор с `val`, а field injection официально не рекомендуется с Spring 4.x."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Constructor injection через primary constructor с `private val` — зависимости immutable, явные, легко тестируются.",
+              "correct": true,
+              "sections": {
+                "explanation": "Kotlin primary-конструктор естественно подходит под constructor injection: `class OrderService(private val repo: OrderRepository)` — это и конструктор, и поле сразу. `@Autowired` не нужен (Spring 4.3+ автовыбирает единственный конструктор), а `val` гарантирует immutability.",
+                "example": "В unit-тесте достаточно `OrderService(mockRepo)` без `@SpringBootTest`: `val service = OrderService(mockRepo, mockPublisher)`. Это базовый стиль в официальной Spring + Kotlin документации.",
+                "when_to_apply": "Применяй в любом Spring Boot сервисе на Kotlin — это стандарт по умолчанию для всех бинов.",
+                "edge_cases": "Циклические зависимости (A→B, B→A) ломают constructor injection — это намёк на проблему дизайна; решение — рефакторинг или ленивый прокси через `ObjectProvider<T>`, а не возврат к field injection.",
+                "related": "[[kotlin-spring-interview#Q14]] антипаттерны с lateinit; [[kotlin-spring-interview#Q7]] тестирование без Spring-контекста."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Setter injection через `@Autowired set` — позволяет менять зависимости в runtime.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Менять зависимости в runtime в Spring почти всегда плохо: это нарушает singleton-семантику, ломает кэширование proxy и делает поведение непредсказуемым. Setter оправдан лишь для опциональных зависимостей в legacy.",
+                "source_of_confusion": "«Гибкость» звучит привлекательно, но в DI-контейнере её дают `@Profile`/`@Conditional`, а не изменяемые сеттеры.",
+                "if_it_were_true": "Тогда Spring предлагал бы сеттеры как default, но primary-рекомендация в документации — constructor injection.",
+                "how_it_should_be": "Зависимости стоит фиксировать в конструкторе через `val`, а вариативность реализовывать профилями и условными бинами."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Inline-инжектирование через `applicationContext.getBean(...)` внутри методов сервиса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Прямое обращение к `ApplicationContext` — это Service Locator anti-pattern: зависимости невидимы извне, тесты требуют полного контекста, а DI теряет смысл.",
+                "source_of_confusion": "Этот стиль иногда встречается в legacy-кодовых базах с большим числом условных зависимостей.",
+                "if_it_were_true": "Тогда писать моки было бы невозможно — каждый раз пришлось бы поднимать `ApplicationContext`.",
+                "how_it_should_be": "Зависимости стоит объявлять в конструкторе явно, а `getBean` оставить только для редкого динамического выбора по qualifier."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему использование Kotlin `data class` для JPA-`@Entity` создаёт скрытые проблемы в Hibernate?",
+          "options": [
+            {
+              "text": "`data class` хранится в БД как одна строка с JSON-полем — нельзя делать JPA-запросы по индивидуальным полям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hibernate не сериализует `data class` как JSON. Маппинг полей в колонки идёт обычным путём через `@Column`, и SQL-запросы по полям проходят корректно. Проблема в семантике `equals`/`hashCode` и в `final`-полях.",
+                "source_of_confusion": "Разработчики из NoSQL-мира иногда смешивают модели сериализации и реляционный маппинг.",
+                "if_it_were_true": "Тогда мы вообще не могли бы использовать `@OneToMany`/`@JoinColumn`, а они работают отлично.",
+                "how_it_should_be": "Поля маппятся в колонки как обычно, а реальные проблемы — это auto-generated `equals`/`hashCode` и `final`-поля."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`data class` нельзя пометить `@Entity`, потому что компилятор Kotlin запрещает аннотации на data class.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотации на `data class` ставятся свободно — `@Entity data class Foo(...)` компилируется без ошибок. Проблема не в компиляции, а в runtime-семантике Hibernate.",
+                "source_of_confusion": "Некоторые думают, что плагины запрещают такие сочетания на этапе сборки.",
+                "if_it_were_true": "Тогда проблема ловилась бы compile-time, а не приводила к загадочным багам в коллекциях lazy-загруженных entity.",
+                "how_it_should_be": "Аннотация компилируется нормально, а опасны именно сгенерированные `equals`/`hashCode` и невозможность proxy на `final`."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`equals`/`hashCode` сгенерированы по всем полям, а `val`-поля (`final`) делают невозможным lazy-proxy и dirty-checking.",
+              "correct": true,
+              "sections": {
+                "explanation": "У `data class` `equals`/`hashCode` сгенерированы по всем primary-constructor полям, а Hibernate ожидает сравнение по `@Id` — иначе в `Set<Order>` одни и те же сущности дадут разный `hashCode` (lazy-поля ещё proxy/null). Кроме того `val` компилируется в `final`, а Hibernate должен перехватывать сеттеры для dirty-checking и lazy-load.",
+                "example": "Антипаттерн — `@Entity data class Order(@Id val id: Long = 0, val total: BigDecimal)`; корректно — обычный `class` с `equals` по `id`: `o is Order && id != 0L && id == o.id`.",
+                "when_to_apply": "Правило «обычный class для `@Entity`, data class для DTO» — стандарт в Spring + Kotlin, применяй его всегда.",
+                "edge_cases": "В R2DBC и Spring Data JDBC (без Hibernate proxy) ограничения мягче — там `data class` допустим; третий минус именно для Hibernate — `copy()` создаёт detached-копию без связи с persistence context.",
+                "related": "[[kotlin-spring-interview#Q4]] плагин kotlin-jpa для no-arg; [[kotlin-spring-interview#Q14]] типичные ошибки."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Hibernate не поддерживает `data class` вообще — приложение не стартует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Приложение прекрасно стартует, базовые CRUD проходят. Проблемы проявляются в специфичных сценариях: lazy-загрузка, `equals` в `Set`, `copy()`, дочерние proxy — это и есть самое опасное.",
+                "source_of_confusion": "Некоторые смешивают «не работает на тривиальном примере» с «работает, но скрытно ломается».",
+                "if_it_were_true": "Тогда проблема нашлась бы при первом же запуске, а реально она проявляется только под нагрузкой или с lazy-связями.",
+                "how_it_should_be": "Стартует и CRUD работает, но `data class` ломается на lazy/`Set`/`copy()`, поэтому для `@Entity` берут обычный класс."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какую конкретную задачу решает плагин `kotlin-jpa` в Spring Boot проекте на Kotlin?",
+          "options": [
+            {
+              "text": "Открывает классы `@Entity` (делает их `open`), чтобы Hibernate мог создать lazy-proxy.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Открытие классов — задача `kotlin-allopen` (с предконфигурацией под Spring — `kotlin-spring`). Чтобы lazy-загрузка работала, прописывают `allOpen { annotation(\"jakarta.persistence.Entity\") }`. Сам `kotlin-jpa` только генерирует no-arg.",
+                "source_of_confusion": "Оба плагина часто включают вместе, и эффект выглядит как «всё стало работать с JPA».",
+                "if_it_were_true": "Тогда без allOpen мы не получали бы `Cannot subclass final class`, но получаем именно её.",
+                "how_it_should_be": "За открытие классов отвечает allOpen/kotlin-spring, а kotlin-jpa добавляет лишь синтетический no-arg конструктор."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Регистрирует Kotlin-аналоги аннотаций `@Entity` и `@Id` в classpath Spring Data.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kotlin использует стандартные аннотации из `jakarta.persistence.*` (или `javax.persistence.*` в старых проектах) — никаких Kotlin-аналогов нет. Плагин работает на уровне bytecode-трансформации, а не аннотаций.",
+                "source_of_confusion": "Разработчики иногда думают, что под Kotlin нужны «свои» аннотации персистентности.",
+                "if_it_were_true": "Тогда мы импортировали бы `kotlin.persistence.Entity`, а импортируем стандартный `jakarta.persistence.Entity`.",
+                "how_it_should_be": "Аннотации остаются стандартными jakarta/javax, а плагин лишь добавляет no-arg конструктор в bytecode."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Конвертирует `data class` в обычный `class`, чтобы избежать проблем с `equals`/`hashCode` Hibernate.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`data class` остаётся `data class` — плагин не трогает сгенерированные `equals`/`hashCode`. Проблемы из Q3 решаются вручную: обычный class или переопределение `equals`/`hashCode` по `id`.",
+                "source_of_confusion": "Хотелось бы, чтобы плагин «магически» чинил все проблемы интеграции data class с Hibernate, но на деле он делает ровно одну узкую вещь — генерирует no-arg конструктор.",
+                "if_it_were_true": "Тогда можно было бы свободно использовать `data class @Entity` без последствий, но на практике это плохо работает.",
+                "how_it_should_be": "Тип класса плагин не меняет, а проблему data class+Hibernate чинят руками; kotlin-jpa лишь даёт no-arg."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Генерирует синтетический no-arg конструктор для `@Entity`, `@MappedSuperclass`, `@Embeddable`, доступный только через reflection.",
+              "correct": true,
+              "sections": {
+                "explanation": "Спецификация JPA требует public/protected no-arg конструктор — Hibernate использует его при гидратации из БД через reflection. Kotlin primary-конструктор обычно требует все аргументы, и плагин `kotlin-jpa` (под капотом — `noarg`) добавляет в bytecode скрытый no-arg, не открывая его для прямого вызова.",
+                "example": "С плагином `@Entity class User(val id: Long, var name: String)` гидратируется Hibernate'ом, а попытка `User()` из кода не скомпилируется — конструктор виден только рефлексии.",
+                "when_to_apply": "Применяй в любом проекте с Hibernate/JPA на Kotlin — это обязательная зависимость.",
+                "edge_cases": "Для кастомных мета-аннотаций нужно явно добавить `noArg { annotation(\"com.example.MyEntity\") }`; без плагина обходной путь — default-значения у всех полей, но это уродует доменную модель.",
+                "related": "[[kotlin-spring-interview#Q1]] плагин kotlin-spring и open-классы; [[kotlin-spring-interview#Q3]] почему обычный class, не data class."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что произойдёт, если объявить `@GetMapping`-метод как `suspend fun getOrder(id: String): Order` в Spring WebFlux контроллере?",
+          "options": [
+            {
+              "text": "Spring WebFlux адаптирует `suspend fun` к `Mono<T>` через `CoroutinesUtils`/`mono { }`, запуская корутину в реактивном контексте.",
+              "correct": true,
+              "sections": {
+                "explanation": "WebFlux различает return-типы через `HandlerAdapter`: для `suspend` используется `InvocableHandlerMethod` с `CoroutinesUtils.invokeSuspendingFunction(...)`, который создаёт `Mono` из корутины и поднимает reactor `ContextView` как coroutine context. `Flow<T>` аналогично адаптируется к `Flux<T>`.",
+                "example": "`suspend fun getOrder(@PathVariable id: String): Order?` вернётся как `Mono<Order>`, а `fun all(): Flow<Order>` — как `Flux<Order>`; код выглядит как обычная Kotlin-функция, а рантайму это `Mono`/`Flux`.",
+                "when_to_apply": "Применяй во всех новых WebFlux-проектах на Kotlin — это рекомендованный стиль вместо ручных `Mono`/`Flux`.",
+                "edge_cases": "WebMVC (`spring-webmvc`) не поддерживает `suspend` напрямую до Spring 6+; внутри `suspend` нельзя вызывать blocking I/O без `withContext(Dispatchers.IO)` — иначе заблокируешь worker.",
+                "related": "[[kotlin-spring-interview#Q6]] CoroutineCrudRepository; [[kotlin-spring-interview#Q14]] антипаттерн runBlocking в реактивном коде."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Spring выбросит ошибку «suspend functions are not supported in @RestController» при старте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring WebFlux официально поддерживает `suspend` с версии 5.2 (2019) — это первоклассная фича для Kotlin без обёрток. Ошибка возникает только в `spring-webmvc` (синхронный стек) старых версий, не в WebFlux.",
+                "source_of_confusion": "Разработчики, не работавшие с WebFlux + Kotlin, переносят сюда ограничения старого Spring MVC.",
+                "if_it_were_true": "Тогда официальная документация Spring + Kotlin не рекомендовала бы этот стиль повсеместно.",
+                "how_it_should_be": "WebFlux принимает `suspend` штатно и адаптирует его к `Mono`, никакой ошибки старта нет."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Метод выполнится в `runBlocking` на event-loop потоке Netty и заблокирует обработку других запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "WebFlux НЕ оборачивает `suspend` в `runBlocking`. Он создаёт `Mono` через `mono { }`-подобный механизм (`CoroutinesUtils`) и работает в реактивном контексте, не блокируя event loop.",
+                "source_of_confusion": "`runBlocking` действительно блокирует, и кажется логичным, что фреймворк «дёшево» использует его.",
+                "if_it_were_true": "Тогда пропускная способность падала бы до уровня blocking-стека, но suspend + WebFlux держит десятки тысяч RPS на инстансе.",
+                "how_it_should_be": "Адаптация идёт без блокирования через `CoroutinesUtils`, а `runBlocking` в WebFlux был бы антипаттерном."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Метод компилируется, но Spring всегда отдаёт `200 OK` с пустым body — `suspend` несовместим с сериализацией.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Возвращаемое значение `suspend`-функции сериализуется тем же `HttpMessageConverter` (Jackson, Kotlinx Serialization). Если `Order` возвращён — в body будет JSON, если `null` для `Order?` — `404 Not Found`.",
+                "source_of_confusion": "Разработчики ожидают, что `Continuation`-параметр (под капотом suspend) попадёт в сериализацию.",
+                "if_it_were_true": "Тогда реальные production WebFlux-приложения на Kotlin отдавали бы пустые ответы, но они работают.",
+                "how_it_should_be": "`Continuation` прячется в bytecode и снимается `CoroutinesUtils`, а результат сериализуется обычным конвертером."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что собой представляет `CoroutineCrudRepository<T, ID>` в Spring Data и поверх какого слоя он работает?",
+          "options": [
+            {
+              "text": "Это блокирующий репозиторий с `suspend`-обёрткой, под капотом вызывает JDBC через `runBlocking`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CoroutineCrudRepository` работает поверх реактивных Spring Data модулей (R2DBC, MongoDB Reactive, Cassandra Reactive, Redis Reactive), а не поверх JDBC. Никакого `runBlocking` нет — это адаптация `Mono`/`Flux` к `suspend`/`Flow`.",
+                "source_of_confusion": "JDBC более привычен, и кажется, что репозитории «должны» работать через него.",
+                "if_it_were_true": "Тогда под нагрузкой пул соединений быстро исчерпался бы, и реактивные плюсы исчезли.",
+                "how_it_should_be": "Под капотом — реактивный драйвер, а suspend/Flow получаются адаптацией Mono/Flux, без блокировок."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Это интерфейс Spring Data поверх реактивных драйверов (R2DBC/MongoDB Reactive), адаптирующий `Mono`/`Flux` к `suspend`/`Flow` через `kotlinx-coroutines-reactor`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`CoroutineCrudRepository<T, ID>` — наследник `ReactiveCrudRepository<T, ID>`, в котором методы переписаны как `suspend` (для одиночных результатов) и `Flow<T>` (для коллекций). Spring Data при создании прокси использует `ReactiveAdapterRegistry`, конвертируя `Mono.awaitSingleOrNull()` → `suspend ... : T?` и `Flux.asFlow()` → `Flow<T>`.",
+                "example": "`interface OrderRepository : CoroutineCrudRepository<Order, Long> { suspend fun findByCustomerId(id: String): Order?; fun findByStatus(s: OrderStatus): Flow<Order> }` — производные методы и `@Query` работают идентично.",
+                "when_to_apply": "Применяй в WebFlux + R2DBC проектах на Kotlin — это default для нового реактивного стека.",
+                "edge_cases": "Транзакции требуют `R2dbcTransactionManager` или `ReactiveMongoTransactionManager` — обычный `JpaTransactionManager` не работает; `@Transactional` на suspend-методе работает с Spring 6+, до этого нужен `TransactionalOperator`.",
+                "related": "[[kotlin-spring-interview#Q5]] WebFlux + suspend; [[kotlin-spring-interview#Q13]] security в suspend-контексте."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Это альтернатива `JpaRepository` поверх Hibernate с поддержкой корутин.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hibernate синхронный, основан на JDBC, и не имеет нативной поддержки корутин. Hibernate Reactive (Quarkus) использует Mutiny и Vert.x, а не Spring Data Coroutine. `CoroutineCrudRepository` живёт только в реактивных модулях.",
+                "source_of_confusion": "«Репозиторий» в большинстве проектов означает JPA, и легко предположить, что Coroutine-вариант тоже про JPA.",
+                "if_it_were_true": "Тогда у вас работал бы `@Entity` с `CoroutineCrudRepository`, но эта связка не существует в Spring Data JPA.",
+                "how_it_should_be": "Для JPA берут `JpaRepository`, а `CoroutineCrudRepository` обслуживает реактивные драйверы вроде R2DBC."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Это маркер-интерфейс, который заставляет Spring Boot стартовать в реактивном режиме автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запуск в reactive-режиме определяется наличием `spring-boot-starter-webflux` и отсутствием `spring-boot-starter-web` в classpath, а не наличием репозитория. Spring Data не управляет `WebApplicationType`.",
+                "source_of_confusion": "Есть auto-configuration зависимости, но они идут в обратную сторону: стартеры тянут модули, а не наоборот.",
+                "if_it_were_true": "Тогда добавление одной репозиторной зависимости меняло бы тип всего приложения, нарушая изоляцию модулей.",
+                "how_it_should_be": "Тип приложения задаёт стартер на classpath, а репозиторий лишь предоставляет реактивные методы доступа к данным."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно протестировать suspend-функцию `OrderService.findById(id)` в Kotlin без поднятия Spring-контекста?",
+          "options": [
+            {
+              "text": "Обернуть вызов в `runBlocking { ... }` внутри `@Test fun` — блокирует JUnit-поток, но даёт результат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Технически `runBlocking` отработает, но это анти-паттерн в тестах: блокируется тестовый поток, нельзя контролировать виртуальное время для `delay`, а тесты с `TestDispatcher` ломаются. Для корутин используется `runTest`.",
+                "source_of_confusion": "`runBlocking` исторически использовался в первых примерах корутин-тестов.",
+                "if_it_were_true": "Тогда тесты с `delay(1000)` работали бы в реальном времени и были бы медленными, а `runTest` пропускает виртуальное время мгновенно.",
+                "how_it_should_be": "Для unit-тестов suspend-кода берут `runTest` из `kotlinx-coroutines-test`, а `runBlocking` оставляют для редких блокирующих сценариев."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Вызвать `.await()` на результате — он автоматически развернёт suspend в значение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`await()` — метод `Deferred<T>` (результата `async { }`), а не способ вызова suspend-функции. `service.findById(\"1\").await()` не скомпилируется — `findById` сам suspend и его нельзя «развернуть» из обычной функции.",
+                "source_of_confusion": "Разработчики из JS-мира переносят семантику `await` на Kotlin.",
+                "if_it_were_true": "Тогда suspend можно было бы вызывать из любой функции, и весь смысл `suspend`-маркировки исчез бы.",
+                "how_it_should_be": "Suspend-функцию вызывают из другой suspend/корутины (например, внутри `runTest`), а `await()` применим только к `Deferred`."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Запустить тест внутри `runTest { ... }` из `kotlinx-coroutines-test` и использовать `TestDispatcher` для контроля времени.",
+              "correct": true,
+              "sections": {
+                "explanation": "`runTest` — официальный builder для тестирования корутин: запускает тест в `TestScope`, подменяет `Dispatchers.Main` на `TestDispatcher`, поддерживает виртуальное время (мгновенно «пропускает» `delay`) и дожидается завершения всех дочерних корутин перед возвратом.",
+                "example": "С MockK: `coEvery { repo.findById(\"1\") } returns Order(id = 1L)`, затем `val result = service.findById(\"1\")` и `coVerify(exactly = 1) { repo.findById(\"1\") }` — всё внутри `= runTest { ... }`.",
+                "when_to_apply": "Применяй для каждого unit-теста suspend-функции и всех корутинных сценариев, включая `Flow`.",
+                "edge_cases": "`runTest` не подходит для горячих источников (`StateFlow`, `SharedFlow`) — нужен `Turbine` или явный `collect` в `launch { }`; в `@SpringBootTest` с реальной БД виртуальное время теряет смысл.",
+                "related": "[[kotlin-spring-interview#Q5]] suspend-контроллеры; [[kotlin-spring-interview#Q6]] CoroutineCrudRepository."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Запустить через `GlobalScope.launch { ... }` и сразу проверить ассерт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GlobalScope.launch` запускает корутину fire-and-forget на отдельном диспетчере. Тестовый поток продолжается параллельно, ассерт сработает до завершения корутины, и тест станет flaky или всегда «зелёным».",
+                "source_of_confusion": "`GlobalScope.launch` — самый «короткий» способ запустить корутину, и его легко принять за тестовый сценарий.",
+                "if_it_were_true": "Тогда все тестовые сьюты с suspend-функциями были бы недетерминированными, но они стабильны при `runTest`.",
+                "how_it_should_be": "Корутину в тесте запускают через `runTest`, который дожидается завершения, а `GlobalScope` помечен `@DelicateCoroutinesApi` и не годится."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое «platform type» в Kotlin при интеграции с Spring/Java и почему это опасно?",
+          "options": [
+            {
+              "text": "Это особый тип, который Kotlin создаёт только для Spring-бинов — для каждого `@Service` генерируется `User!`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Platform type — вообще не «специальный для Spring» механизм. Он возникает, когда Kotlin видит Java-метод без аннотаций `@Nullable`/`@NotNull`. Spring — лишь массовый поставщик таких методов, потому что много Spring API написано на Java.",
+                "source_of_confusion": "Новички видят `User!` только в Spring-проектах и связывают это с фреймворком.",
+                "if_it_were_true": "Тогда platform types появлялись бы только в Spring-коде, но они возникают при работе с любым Java API (Guava, Apache Commons, JDK).",
+                "how_it_should_be": "Это общий эффект интеропа с Java без nullability-аннотаций, а не отдельная фича Spring-бинов."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Это runtime-исключение, которое Kotlin кидает при чтении nullable-значения как non-nullable.",
+              "correct": false,
+              "sections": {
+                "what_actually": "«Runtime-исключение» — это `NullPointerException`/`KotlinNullPointerException`, а «platform type» — явление времени компиляции. Это маркер «неизвестная nullability», влияющий на проверки компилятора, а не на runtime.",
+                "source_of_confusion": "Оба связаны с null, и легко смешать compile-time проверки с runtime-ошибками.",
+                "if_it_were_true": "Тогда код с `User!` падал бы всегда, но он падает только когда реально приходит `null`.",
+                "how_it_should_be": "Platform type — это compile-time состояние «nullability неизвестна», а NPE — отдельное runtime-следствие dereference."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Это специальный generic-тип для коллекций из Java, чтобы корректно работали `List<T>` ↔ `MutableList<T>`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Маппинг Java `List<T>` ↔ Kotlin `(Mutable)List<T>` — отдельный механизм mapped types. Platform types работают на уровне nullability одиночных значений, а не коллекций.",
+                "source_of_confusion": "Оба механизма «помогают совместимости с Java» и легко смешиваются в голове.",
+                "if_it_were_true": "Тогда platform types обсуждали бы в контексте generics, а не nullability, но в документации Kotlin это про nullability.",
+                "how_it_should_be": "Коллекциями занимаются mapped types, а platform type описывает неизвестную nullability возвращаемого значения."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Это тип `T!` от Java-API без nullability-аннотаций — Kotlin не знает, может ли он быть `null`, и не делает compile-time проверок.",
+              "correct": true,
+              "sections": {
+                "explanation": "Когда Java-метод возвращает `String` без `@Nullable`/`@NotNull`, Kotlin видит тип как `String!` — «не nullable и не non-nullable». Компилятор разрешает присвоить его и в `String`, и в `String?` без runtime-проверки. Если реально вернётся `null` и записан в `val s: String`, NPE возникнет при первом dereference.",
+                "example": "Java: `public User findOne(Long id) { return null; }` без аннотации. Kotlin: `val user: User = repo.findOne(1L)` компилируется, но даёт NPE в runtime; `val safe: User? = repo.findOne(1L)` безопасно.",
+                "when_to_apply": "Знать про platform types обязательно при работе с любым Java-API; лучшая защита — явно объявлять `User?` для методов без аннотаций.",
+                "edge_cases": "`JpaRepository.findById(...)` возвращает `Optional<User>` (не platform type), но `.get()` без проверки бросит `NoSuchElementException`; Spring добавил nullness-аннотации с 6.x, но многие сторонние библиотеки до сих пор без них.",
+                "related": "[[kotlin-spring-interview#Q14]] типичные ошибки; [[kotlin-spring-interview#Q3]] nullable-поля JPA-entity."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём принципиальная разница между `@Bean`-методами в `@Configuration`-классе и Kotlin Bean DSL (`beans { bean<X>() }`)?",
+          "options": [
+            {
+              "text": "`@Configuration` использует annotation-based scanning с reflection, а Bean DSL — это functional registration через `BeanDefinitionDsl` без CGLIB-proxy и аннотаций.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@Configuration` с `@Bean`-методами обрабатывается `ConfigurationClassPostProcessor` через reflection, а вокруг класса создаётся CGLIB-subclass-proxy, чтобы вызов `methodA()` из `methodB()` возвращал singleton. Bean DSL — builder, возвращающий `ApplicationContextInitializer` и регистрирующий бины программно через `registerBean`, без аннотаций и CGLIB.",
+                "example": "`fun beans() = beans { bean<OrderService>(); bean { OrderController(ref()) }; profile(\"dev\") { bean<InMemoryOrderRepo>(primary = true) } }`, затем `addInitializers(beans())` в `SpringApplication` — чистый Kotlin без component-scan.",
+                "when_to_apply": "Для GraalVM Native Image / AOT-сборок DSL предпочтительнее (меньше runtime-рефлексии); для обычного Spring Boot — на вкус команды.",
+                "edge_cases": "DSL не работает напрямую с `@Component`-сканированием — нужно либо одно, либо другое; смешивать можно, но аккуратно, а `profile`/`conditional` в DSL имеют свой синтаксис.",
+                "related": "[[kotlin-spring-interview#Q1]] kotlin-spring и open-классы; [[kotlin-spring-interview#Q13]] Security DSL."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Bean DSL быстрее работает в runtime, потому что Spring компилирует его в bytecode.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Runtime-производительность DSL и `@Configuration` практически одинакова: оба создают singleton-бины один раз при старте. DSL минимально быстрее на старте (нет CGLIB-proxy на класс), но это микро-оптимизация. Главная разница — в стиле и модели регистрации.",
+                "source_of_confusion": "«Новый DSL должен быть быстрее старого» — частое предположение без замеров.",
+                "if_it_were_true": "Тогда в production-бенчмарках был бы заметный выигрыш, но его нет.",
+                "how_it_should_be": "Оба подхода дают практически одинаковую runtime-скорость, потому что создают singleton-бины один раз при старте; отличаются они способом регистрации (annotation-scanning с reflection против functional `registerBean`), а не производительностью."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Bean DSL и `@Configuration` — это одно и то же, компилятор Kotlin транслирует их в идентичный bytecode.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные API с разными процессорами: `@Configuration` обрабатывается через `BeanFactoryPostProcessor`, а DSL вызывает `BeanDefinitionDsl.register(...)`, регистрируя бины прямо в `GenericApplicationContext`. Компилятор их не объединяет.",
+                "source_of_confusion": "Обе дают одинаковый итог в виде registered beans, и кажется, что раз результат одинаков, то под капотом работает один и тот же механизм.",
+                "if_it_were_true": "Тогда не имело бы смысла иметь оба API в Spring 5, ведь поддержка двух идентичных по байткоду путей была бы лишней.",
+                "how_it_should_be": "Это два самостоятельных механизма с разными процессорами: `@Configuration` обрабатывается `ConfigurationClassPostProcessor` через reflection и CGLIB, а DSL регистрирует бины напрямую через `BeanDefinitionDsl.register`, и компилятор их не объединяет в одинаковый bytecode."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Bean DSL не поддерживает `@Profile` и `@Conditional`, нужно использовать `@Configuration`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DSL поддерживает профили напрямую: `profile(\"dev\") { bean<X>() }`. Условную регистрацию делают через `Environment`-проверки в DSL-блоке. Возможностей меньше не становится.",
+                "source_of_confusion": "Документация по DSL короче, и не все возможности очевидны.",
+                "if_it_were_true": "Тогда разработчикам Spring пришлось бы выбирать между DSL и профилями, но в реальности работают оба.",
+                "how_it_should_be": "Профили и условия доступны и в DSL (`profile(...)`, проверки `Environment`), поэтому `@Configuration` для этого не обязателен."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем в Kotlin data class с Bean Validation нужен префикс `@field:NotBlank` вместо просто `@NotBlank`?",
+          "options": [
+            {
+              "text": "Префикс `@field:` обязателен по спецификации JSR-380 для всех языков, не только Kotlin.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JSR-380 (Bean Validation 2.0) ничего не знает про Kotlin use-site targets — это Java-спецификация. В Java `@NotBlank` на поле работает как есть. Префикс — Kotlin-специфичный механизм из-за множественности целей (field, getter, parameter, setter).",
+                "source_of_confusion": "Разработчики думают, что синтаксис диктует спецификация Bean Validation.",
+                "if_it_were_true": "Тогда Java-разработчики тоже писали бы `@field:NotBlank`, но они пишут просто `@NotBlank`.",
+                "how_it_should_be": "Спецификация про синтаксис целей не знает, а `@field:` нужен из-за Kotlin use-site targets для property."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "В Kotlin data class у property есть несколько JVM-targets (field, getter, constructor parameter), и без `@field:` аннотация попадёт на параметр конструктора, который Bean Validation не сканирует.",
+              "correct": true,
+              "sections": {
+                "explanation": "Property `val name: String` компилируется в три цели: приватное `field`, public-getter `getName()` и параметр конструктора. Без use-site target Kotlin выбирает первый из порядка `param → property → field` — то есть `param`, а Hibernate Validator сканирует field/method и не видит аннотацию на параметре конструктора.",
+                "example": "`data class CreateRequest(@NotBlank val name: String)` — валидация молча не срабатывает; `data class CreateRequest(@field:NotBlank val name: String)` — `@Valid @RequestBody` отработает.",
+                "when_to_apply": "Применяй во всех Kotlin data class, используемых как Request DTO с `@Valid` — это стандарт.",
+                "edge_cases": "Spring 6 / Hibernate Validator 8 начинают поддерживать сканирование параметров конструктора, но в большинстве проектов всё ещё нужен `@field:`; альтернатива — `@get:NotBlank` на getter.",
+                "related": "[[kotlin-spring-interview#Q14]] список типичных ошибок; [[kotlin-spring-interview#Q11]] обработка MethodArgumentNotValidException."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Префикс `@field:` нужен, чтобы Jackson правильно сериализовал поле в JSON.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Jackson по умолчанию использует getter-based (или field-based) сериализацию и не требует use-site targets. `@JsonProperty` тоже работает без `@field:` в большинстве случаев. Сериализация и валидация — разные подсистемы.",
+                "source_of_confusion": "Все эти аннотации часто стоят рядом в одном data class.",
+                "if_it_were_true": "Тогда Jackson был бы недоступен без use-site targets, а он работает «из коробки».",
+                "how_it_should_be": "Сериализацию Jackson выполняет без use-site target, а `@field:` нужен именно валидатору, чтобы найти аннотацию на field."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Без `@field:` Kotlin-компилятор выдаст ошибку «cannot resolve annotation target».",
+              "correct": false,
+              "sections": {
+                "what_actually": "Код компилируется без ошибок: компилятор молча выбирает default-target и не предупреждает. Это и опасно — валидация «тихо» не срабатывает, и баги доходят до production.",
+                "source_of_confusion": "Разработчики ожидают, что критическая семантическая разница ловится компилятором.",
+                "if_it_were_true": "Тогда `@NotBlank val name` давало бы compile-time ошибку, но её нет.",
+                "how_it_should_be": "Компилятор молча ставит аннотацию на параметр конструктора, поэтому проблему ловят только тестами, а решает её `@field:`."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой механизм Spring наиболее подходит для централизованной обработки исключений в REST API на Kotlin и как он работает?",
+          "options": [
+            {
+              "text": "Try/catch внутри каждого `@RestController`-метода с возвратом `ResponseEntity.status(...)` — самый явный подход.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Try/catch в каждом методе нарушает DRY, размазывает обработку ошибок по контроллерам и приводит к рассогласованию формата ошибки между эндпоинтами. Это анти-паттерн в Spring.",
+                "source_of_confusion": "«Явное лучше неявного» — здравая идея, но в Spring централизованная обработка тоже явная, просто вынесена в отдельный класс.",
+                "if_it_were_true": "Тогда в Spring не существовало бы `@ControllerAdvice`, а он есть с версии 3.2 (2012).",
+                "how_it_should_be": "Обработку выносят в `@RestControllerAdvice`, а try/catch в каждом методе оставляют только для редких локальных случаев."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Использование `ResponseStatusException`, бросая прямо из контроллера — Spring сам формирует JSON-ответ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ResponseStatusException` формирует базовый ответ, но не даёт контроля над форматом ошибки (нет `code`/`details`/`timestamp`) и нет места для cross-cutting логирования или метрик. Для прототипа годится, для продакшена нужен `@RestControllerAdvice`.",
+                "source_of_confusion": "`ResponseStatusException` упоминают как «удобный shortcut», и легко решить, что этого достаточно.",
+                "if_it_were_true": "Тогда можно было бы получить унифицированный формат ошибки без advice, но default-JSON минимален и не настраивается.",
+                "how_it_should_be": "Для единого формата ошибок берут `@RestControllerAdvice`, а `ResponseStatusException` — лишь быстрый shortcut без контроля над телом."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`@RestControllerAdvice` + `@ExceptionHandler(SomeException::class)` — централизованный перехват исключений всех контроллеров с маппингом на стандартный формат ошибки.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@RestControllerAdvice` — комбинация `@ControllerAdvice` и `@ResponseBody`. Класс сканируется при старте, методы с `@ExceptionHandler` регистрируются в `HandlerExceptionResolver`; при выбросе исключения DispatcherServlet ищет handler по типу (с учётом наследования), вызывает его, и результат сериализуется как response body.",
+                "example": "`@ExceptionHandler(UserNotFoundException::class) fun handleNotFound(ex) = ResponseEntity.status(NOT_FOUND).body(ErrorResponse(\"USER_NOT_FOUND\", ex.message ?: \"...\"))`; для единого формата используют `ProblemDetail` (RFC 7807, Spring 6+).",
+                "when_to_apply": "Применяй во всех REST API на Spring (MVC и WebFlux) — это стандарт централизованной обработки ошибок.",
+                "edge_cases": "Advice работает только для исключений из `@Controller`-слоя; ошибки в `Filter`-цепочке (security, CORS) обрабатываются раньше через `AuthenticationEntryPoint`/`AccessDeniedHandler`.",
+                "related": "[[kotlin-spring-interview#Q10]] валидация в контроллерах; [[kotlin-spring-interview#Q13]] обработка Security-ошибок."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Глобальный `@PostConstruct`-метод, который регистрирует error handlers через `WebMvcConfigurer.configureHandlerExceptionResolvers`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WebMvcConfigurer.configureHandlerExceptionResolvers` существует, но это низкоуровневый API для кастомных resolver'ов. Для бизнес-логики он практически не используется — `@ControllerAdvice` идиоматичнее и проще.",
+                "source_of_confusion": "В документации Spring упоминаются оба пути, и кажется, что они равноправны.",
+                "if_it_were_true": "Тогда все туториалы рекомендовали бы `WebMvcConfigurer`, но рекомендуют `@ControllerAdvice`.",
+                "how_it_should_be": "Стандартный путь — `@RestControllerAdvice` с `@ExceptionHandler`, а `WebMvcConfigurer` — для редких кастомных resolver'ов."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реально работают Kotlin extension functions в Spring-контексте — на уровне JVM bytecode и как Spring их видит?",
+          "options": [
+            {
+              "text": "Extension function динамически добавляет метод в class через reflection при первом вызове.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kotlin не модифицирует existing-классы в runtime. Extension — чисто статическая концепция: компилятор генерирует обычный `static`-метод с receiver-параметром и на каждом call site подставляет его вызов. Никакой динамической модификации и reflection.",
+                "source_of_confusion": "Синтаксис `obj.extensionFun()` выглядит как метод класса, и кажется, что класс «расширяется».",
+                "if_it_were_true": "Тогда Spring и AOP-proxy могли бы перехватывать extension-вызовы, но они их не видят.",
+                "how_it_should_be": "Это статический метод, генерируемый компилятором, а не runtime-инъекция в класс через reflection."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Это макрос Kotlin-компилятора, который inline-ит тело функции прямо на call site без вызова метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Extension без модификатора `inline` компилируется в обычный вызов статического метода, никакого inlining. С `inline fun ...` тело подставляется, но это эффект `inline`, а не самого extension — это ортогональные механизмы.",
+                "source_of_confusion": "Оба механизма генерируют «удобный» компактный bytecode и упрощают синтаксис на стороне вызова, поэтому их легко спутать друг с другом.",
+                "if_it_were_true": "Тогда обычные extension не появлялись бы в stack trace, а они появляются как `MyExtensionsKt.authToken`.",
+                "how_it_should_be": "По умолчанию extension компилируется в `INVOKESTATIC`-вызов статического метода синтетического класса, а подстановка тела на call site включается только отдельным модификатором `inline` — это два независимых механизма."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Extension — это псевдоним для interface method, который Kotlin генерирует через mixin.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Kotlin нет mixin'ов как в Ruby/Scala. Extension — отдельный механизм статических методов с syntactic sugar; никаких интерфейсов компилятор к receiver-классу не добавляет.",
+                "source_of_confusion": "«Расширение классов» звучит похоже на Ruby mixin или Scala implicit class.",
+                "if_it_were_true": "Тогда receiver-класс имел бы дополнительные методы в reflection, но `Class.getMethods()` для `ServerHttpRequest` не покажет extension.",
+                "how_it_should_be": "Это статический метод в синтетическом классе, а не mixin, поэтому receiver-класс не получает новых методов в своём типе."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Это статический метод в синтетическом классе (например, `MyExtensionsKt`) с первым параметром-receiver; вызов `req.authToken()` компилируется в `MyExtensionsKt.authToken(req)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Файл `MyExtensions.kt` с top-level extension компилируется в class `MyExtensionsKt` (имя файла + `Kt`) со статическим методом `authToken(ServerHttpRequest $this)`. На call site Kotlin генерирует `INVOKESTATIC MyExtensionsKt.authToken(...)`. Spring видит только классы, на которых умеет делать proxy, а extension — не часть target-класса.",
+                "example": "`fun ServerHttpRequest.authToken(): String? = headers[\"Authorization\"]?.firstOrNull()?.removePrefix(\"Bearer \")`, а call site `request.authToken()` превращается в `INVOKESTATIC com/example/WebExtensionsKt.authToken`.",
+                "when_to_apply": "Применяй для адаптации Java-API под Kotlin-стиль, конвертеров (`.toResponse()`) и хелперов без DI — там, где не нужны proxy.",
+                "edge_cases": "Extension не участвует в полиморфизме (resolved statically), а `@Transactional`/`@Async`/`@Cacheable` на нём не работают — это статика вне Spring-бина; backing field у extension быть не может.",
+                "related": "[[kotlin-spring-interview#Q1]] open-классы для proxy; [[kotlin-spring-interview#Q5]] extension `awaitSingle()` на `Mono`."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как получить текущего authenticated user в `suspend`-контроллере WebFlux + Spring Security?",
+          "options": [
+            {
+              "text": "Использовать параметр `@AuthenticationPrincipal` в контроллере или `ReactiveSecurityContextHolder.getContext().awaitSingle()` в suspend-коде.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring Security WebFlux хранит `SecurityContext` в reactor `ContextView` (не в `ThreadLocal`), и через `kotlinx-coroutines-reactor` контекст автоматически прокидывается в coroutine context при адаптации `suspend` ↔ `Mono`. Доступ — `ReactiveSecurityContextHolder.getContext().awaitSingle()` или проще параметр `@AuthenticationPrincipal jwt: Jwt`.",
+                "example": "`suspend fun me(@AuthenticationPrincipal jwt: Jwt) = userService.findByUsername(jwt.subject).toResponse()`, либо альтернатива: `val auth = ReactiveSecurityContextHolder.getContext().awaitSingle().authentication`.",
+                "when_to_apply": "Применяй во всех reactive/coroutine контроллерах с Spring Security — это идиоматичный путь.",
+                "edge_cases": "Kotlin DSL `http { authorizeHttpRequests { ... } }` требует корректного `import org.springframework.security.config.annotation.web.invoke`; для тестов нужны `@WithMockUser` или `WebTestClient.mutateWith(mockUser())`.",
+                "related": "[[kotlin-spring-interview#Q5]] suspend + WebFlux; [[kotlin-spring-interview#Q6]] CoroutineCrudRepository."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Использовать `SecurityContextHolder.getContext().authentication` напрямую — это standard Java способ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SecurityContextHolder` использует `ThreadLocal`. В корутинах поток меняется на каждом suspension point, и `ThreadLocal` теряет значение. В WebFlux + Coroutines нужен `ReactiveSecurityContextHolder`.",
+                "source_of_confusion": "Разработчики переносят опыт из синхронного Spring MVC + Java, где `SecurityContextHolder` через `ThreadLocal` действительно работает на одном потоке запроса.",
+                "if_it_were_true": "Тогда мы получали бы корректного пользователя на любом потоке, но при первом `delay` контекст теряется.",
+                "how_it_should_be": "В реактивном стеке текущего пользователя берут из `ReactiveSecurityContextHolder.getContext().awaitSingle()` или через параметр `@AuthenticationPrincipal`, потому что ThreadLocal-вариант после смены потока на suspension point оказывается пустым."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Передавать `Principal` через `currentCoroutineContext()` напрямую из CoroutineContext.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`currentCoroutineContext()` возвращает coroutine context (Job, Dispatcher), а Security-элементы лежат под ключом `ReactorContext`, и доступ к ним инкапсулирует именно `ReactiveSecurityContextHolder`. Прямой `currentCoroutineContext()[ReactorContext]` возможен, но низкоуровневый и хрупкий.",
+                "source_of_confusion": "Разработчики ищут «coroutine-native» способ доступа к principal и предполагают, что `currentCoroutineContext()` сам по себе вернёт security-данные напрямую.",
+                "if_it_were_true": "Тогда Spring Security предоставлял бы такой шорткат, но рекомендованное API — `ReactiveSecurityContextHolder`.",
+                "how_it_should_be": "Корректный путь — `ReactiveSecurityContextHolder.getContext().awaitSingle()` или параметр `@AuthenticationPrincipal`, который инкапсулирует доступ к `ReactorContext`, а ручной разбор `currentCoroutineContext()[ReactorContext]` оставляют как крайний хрупкий случай."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Делать `runBlocking { SecurityContextHolder.getContext() }`, чтобы вынуть значение из старого `ThreadLocal`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В WebFlux `SecurityContextHolder` (blocking) попросту пуст — security-цепочка туда ничего не клала. `runBlocking` ничего не вернёт; это путаница двух моделей security.",
+                "source_of_confusion": "Новички пытаются «починить» проблему обёртками вокруг старого API.",
+                "if_it_were_true": "Тогда Spring предлагал бы такие хаки в документации, но рекомендация ровно противоположная.",
+                "how_it_should_be": "Контекст берут из реактивного `ReactiveSecurityContextHolder`, а blocking ThreadLocal в WebFlux пуст и `runBlocking` тут не помогает."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что произойдёт, если использовать `runBlocking { ... }` внутри `suspend`-метода WebFlux контроллера для обхода чисто реактивного API?",
+          "options": [
+            {
+              "text": "Spring сам обнаружит `runBlocking` и переключит вызов на блокирующий пул `Schedulers.boundedElastic()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring не инспектирует тело suspend-функции. Он адаптирует suspend ↔ Mono на границе метода, не зная, что внутри. `runBlocking` блокирует ровно тот поток, на котором вызван — обычно Netty event-loop (`reactor-http-nio-*`), которых по числу ядер.",
+                "source_of_confusion": "Разработчики ожидают, что современный реактивный фреймворк сам защитит их от грубых блокирующих ошибок и аккуратно перенесёт работу на безопасный пул.",
+                "if_it_were_true": "Тогда не было бы legendary post-mortem про `runBlocking` в WebFlux, а они есть — это классический production-инцидент.",
+                "how_it_should_be": "Фреймворк не инспектирует и не переключает тело suspend-функции, поэтому ответственность на разработчике: чтобы не блокировать event loop, blocking-код выносят в `withContext(Dispatchers.IO)` или мигрируют на реактивный драйвер."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Поток Netty event-loop заблокируется, остальные запросы на нём встанут в очередь, throughput резко упадёт, и появятся `BlockHound`-warnings (если включён).",
+              "correct": true,
+              "sections": {
+                "explanation": "WebFlux работает на Netty event-loop (обычно `2 * availableProcessors()` потоков), каждый обслуживает тысячи запросов через non-blocking I/O. `runBlocking { ... }` блокирует вызывающий поток до завершения тела — один из event-loop потоков выпадает, и при медленном I/O внутри throughput падает в N раз.",
+                "example": "`runBlocking { orderRepo.findAll().toList() }` в `suspend`-методе блокирует Netty thread; правильно — просто `orderRepo.findAll().toList()` без `runBlocking`. BlockHound в dev ловит это как `Blocking call!`.",
+                "when_to_apply": "Никогда не используй `runBlocking` в WebFlux/reactive контексте; для адаптации blocking-кода — `withContext(Dispatchers.IO) { blockingCall() }`.",
+                "edge_cases": "Suspend-функция уже coroutine context, ей не нужен `runBlocking`; если приходится звать blocking JDBC из реактивного контроллера — `withContext(Dispatchers.IO)`, но лучшее решение — миграция на R2DBC.",
+                "related": "[[kotlin-spring-interview#Q5]] suspend в WebFlux; [[kotlin-spring-interview#Q6]] CoroutineCrudRepository."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Код просто не скомпилируется — Kotlin запрещает вложенные coroutine builders.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kotlin не запрещает `runBlocking` внутри `suspend`-функции (хотя IDE даёт warning «runBlocking inside a coroutine»). Код собирается и работает. Это runtime-проблема, не compile-time.",
+                "source_of_confusion": "Надежда, что компилятор поймает плохие практики.",
+                "if_it_were_true": "Тогда не было бы статей о том, как искать `runBlocking` в production-коде, а они есть.",
+                "how_it_should_be": "Компилятор `runBlocking` в suspend пропускает, и проблема проявляется только как блокировка event loop в runtime."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Сработает CoroutineContext propagation, и блокировка перейдёт в фоновый поток без вреда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`runBlocking` создаёт новый event-loop в текущем потоке и блокирует его до завершения. Это не «переключение», а blocking scope поверх существующего потока. Никакая propagation не помогает.",
+                "source_of_confusion": "Название `runBlocking` звучит как «запустить с блокированием в отдельном scope, не трогая текущий».",
+                "if_it_were_true": "Тогда `runBlocking` был бы безопасен везде, и не было бы предупреждений в документации.",
+                "how_it_should_be": "Чтобы безопасно вызвать blocking-код, используют `withContext(Dispatchers.IO)`, а `runBlocking` блокирует именно текущий поток."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какое главное практическое преимущество Kotlin для Spring Boot проекта по сравнению с Java, и есть ли реальная цена?",
+          "options": [
+            {
+              "text": "Kotlin полностью устраняет Spring boilerplate — больше не нужны `@Service`, `@Configuration`, `@Bean`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все стандартные Spring-аннотации остаются. Kotlin сокращает boilerplate Java-уровня (геттеры/сеттеры через data class, `val`-поля как DI), но не Spring-аннотации — без них фреймворк не понимает, что регистрировать как bean. Bean DSL — альтернатива, не замена.",
+                "source_of_confusion": "Маркетинг иногда обещает «no-boilerplate», и легко решить, что Spring-аннотации тоже исчезнут.",
+                "if_it_were_true": "Тогда Spring Boot Kotlin-проекты не имели бы `@Service`/`@Configuration`, а они везде.",
+                "how_it_should_be": "Kotlin убирает Java-бойлерплейт (DTO, конструкторы), но Spring-аннотации остаются обязательными для регистрации бинов."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Kotlin делает Spring-приложение в 2 раза быстрее за счёт нативной компиляции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kotlin компилируется в обычный JVM bytecode, и runtime-производительность сопоставима с Java (часто чуть медленнее на 1-3% из-за null-проверок и synthetic bridges). Нативная компиляция — отдельная фича GraalVM Native Image, доступная и Java, и Kotlin.",
+                "source_of_confusion": "Kotlin Multiplatform поддерживает native targets, но это не runtime для JVM-Spring.",
+                "if_it_were_true": "Тогда все Spring-проекты на Java мигрировали бы на Kotlin за неделю, но реальные benchmarks показывают схожие цифры.",
+                "how_it_should_be": "Скорость сопоставима с Java, а нативный образ даёт GraalVM независимо от языка, а не сам Kotlin."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Главные преимущества — null-safety на уровне типов, data class для DTO, suspend/Flow для реактивного кода без чейнов Mono/Flux, extension functions и DSL; цена — необходимость плагинов (kotlin-spring, kotlin-jpa) и осторожность с platform types и `final`-методами.",
+              "correct": true,
+              "sections": {
+                "explanation": "Kotlin даёт реальные выигрыши: `User?` vs `User` убирает класс NPE-багов; `data class CreateRequest(...)` заменяет десятки строк Java DTO; `suspend fun get(id): User?` читается линейно без `.flatMap().switchIfEmpty().onErrorResume()`; extension functions и типобезопасные DSL для beans/security.",
+                "example": "`data class CreateUserRequest(@field:NotBlank val name: String, @field:Email val email: String)` — 1 строка вместо Java DTO; `suspend fun create(@Valid @RequestBody req): UserResponse = userService.create(req).toResponse()`.",
+                "when_to_apply": "Новые Spring Boot проекты почти всегда выигрывают от Kotlin (особенно WebFlux + Coroutines); legacy Java мигрируют по модулям.",
+                "edge_cases": "Цена: обязательные плагины (`kotlin-spring`, `kotlin-jpa`) — без них `@Transactional` ломается с `Cannot subclass final class`; platform types скрывают `null`; компиляция чуть медленнее (улучшается с K2); часть Mockito-фич требует MockK.",
+                "related": "[[kotlin-spring-interview#Q1]] плагины и их роль; [[kotlin-spring-interview#Q14]] типичные ошибки."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Kotlin несовместим со Spring Boot 3.x и работает только до Spring Boot 2.x.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring Boot 3.x официально поддерживает Kotlin как first-class язык: плагины kotlin-spring/kotlin-jpa обновлены, suspend полностью интегрирован, Spring Native поддерживает Kotlin. На spring.io есть туториалы под Spring Boot 3 + Kotlin.",
+                "source_of_confusion": "Иногда путают номера версий Kotlin-компилятора и Spring и ошибочно привязывают язык к конкретной мажорной версии фреймворка.",
+                "if_it_were_true": "Тогда все Kotlin-Spring проекты были бы legacy, а они активно растут.",
+                "how_it_should_be": "Kotlin полноценно работает со Spring Boot 3.x как first-class язык с обновлёнными плагинами и интеграцией suspend, а версии Kotlin-компилятора и Spring развиваются независимо и не привязаны к версии 2.x."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
