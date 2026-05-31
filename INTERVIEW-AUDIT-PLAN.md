@@ -231,8 +231,8 @@
 | 10 | `flyway-liquibase` | 42 | 52 | ❌ нет JSON | 0 | ⬜ | ⬜ | ⬜ | ⬜ |
 | 11 | `hibernate-caching` | 15 | 21 | ✅ JSON | 15 | ⬜ | ⬜ | ⬜ | ⬜ |
 | 12 | `hibernate` | 48 | 49 | ✅ JSON | 48 | ⬜ | ⬜ | ⬜ | ⬜ |
-| 13 | `hibernate-jpql-criteria` | 15 | 15 | ✅ JSON | 15 | ⬜ | ⬜ | ⬜ | ⬜ |
-| 14 | `hibernate-relationships` | 15 | 15 | ✅ JSON | 15 | ⬜ | ⬜ | ⬜ | ⬜ |
+| 13 | `hibernate-jpql-criteria` | 15 | 0 | ✅ | 15 | ✅ | ✅ | ✅ | ✅ |
+| 14 | `hibernate-relationships` | 15 | 0 | ✅ | 15 | ✅ | ✅ | ✅ | ✅ |
 | 15 | `mongodb` | 46 | 46 | ✅ JSON | 46 | ⬜ | ⬜ | ⬜ | ⬜ |
 | 16 | `neo4j` | 30 | 30 | ❌ нет JSON | 0 | ⬜ | ⬜ | ⬜ | ⬜ |
 | 17 | `postgresql` | 55 | 55 | ✅ JSON | 55 | ⬜ | ⬜ | ⬜ | ⬜ |
@@ -273,11 +273,11 @@
 | 3 | `quarkus` | 1 | 31 | ❌ нет JSON | 0 | ⬜ | ⬜ | ⬜ | ⬜ |
 | 4 | `vertx` | 1 | 31 | ❌ нет JSON | 0 | ⬜ | ⬜ | ⬜ | ⬜ |
 | 5 | `resilience4j` | 20 | 20 | ✅ JSON | 20 | ⬜ | ⬜ | ⬜ | ⬜ |
-| 6 | `spring-ai` | 15 | 15 | ✅ JSON | 15 | ⬜ | ⬜ | ⬜ | ⬜ |
+| 6 | `spring-ai` | 15 | 0 | ✅ | 15 | ✅ | ✅ | ✅ | ✅ |
 | 7 | `spring-aop` | 22 | 22 | ✅ JSON | 22 | ⬜ | ⬜ | ⬜ | ⬜ |
-| 8 | `spring-async` | 15 | 15 | ✅ JSON | 15 | ⬜ | ⬜ | ⬜ | ⬜ |
+| 8 | `spring-async` | 15 | 0 | ✅ | 15 | ✅ | ✅ | ✅ | ✅ |
 | 9 | `spring-batch` | 43 | 43 | ✅ JSON | 43 | ⬜ | ⬜ | ⬜ | ⬜ |
-| 10 | `spring-boot-3-migration` | 15 | 15 | ✅ JSON | 15 | ⬜ | ⬜ | ⬜ | ⬜ |
+| 10 | `spring-boot-3-migration` | 15 | 0 | ✅ | 15 | ✅ | ✅ | ✅ | ✅ |
 | 11 | `spring-boot-actuator` | 43 | 54 | ✅ JSON | 43 | ⬜ | ⬜ | ⬜ | ⬜ |
 | 12 | `spring-boot` | 42 | 44 | ✅ JSON | 42 | ⬜ | ⬜ | ⬜ | ⬜ |
 | 13 | `spring-cache` | 17 | 18 | ✅ JSON | 17 | ⬜ | ⬜ | ⬜ | ⬜ |
@@ -286,18 +286,18 @@
 | 16 | `spring-data-jpa` | 42 | 48 | ✅ JSON | 42 | ⬜ | ⬜ | ⬜ | ⬜ |
 | 17 | `spring-events` | 16 | 16 | ✅ JSON | 16 | ⬜ | ⬜ | ⬜ | ⬜ |
 | 18 | `spring-framework` | 40 | 49 | ✅ JSON | 40 | ⬜ | ⬜ | ⬜ | ⬜ |
-| 19 | `spring-graphql` | 15 | 15 | ✅ JSON | 15 | ⬜ | ⬜ | ⬜ | ⬜ |
-| 20 | `spring-integration` | 15 | 15 | ✅ JSON | 15 | ⬜ | ⬜ | ⬜ | ⬜ |
-| 21 | `spring-kafka` | 15 | 15 | ✅ JSON | 15 | ⬜ | ⬜ | ⬜ | ⬜ |
-| 22 | `spring-messaging` | 15 | 15 | ✅ JSON | 15 | ⬜ | ⬜ | ⬜ | ⬜ |
+| 19 | `spring-graphql` | 15 | 0 | ✅ | 15 | ✅ | ✅ | ✅ | ✅ |
+| 20 | `spring-integration` | 15 | 0 | ✅ | 15 | ✅ | ✅ | ✅ | ✅ |
+| 21 | `spring-kafka` | 15 | 0 | ✅ | 15 | ✅ | ✅ | ✅ | ✅ |
+| 22 | `spring-messaging` | 15 | 0 | ✅ | 15 | ✅ | ✅ | ✅ | ✅ |
 | 23 | `spring-modulith` | 2 | 0 | ✅ JSON | 15 | ⬜ | ⬜ | ⬜ | ⬜ |
 | 24 | `spring-mvc` | 43 | 57 | ✅ JSON | 43 | ⬜ | ⬜ | ⬜ | ⬜ |
-| 25 | `spring-r2dbc` | 15 | 15 | ✅ JSON | 15 | ⬜ | ⬜ | ⬜ | ⬜ |
+| 25 | `spring-r2dbc` | 15 | 0 | ✅ | 15 | ✅ | ✅ | ✅ | ✅ |
 | 26 | `spring-rest-client` | 13 | 14 | ✅ JSON | 13 | ⬜ | ⬜ | ⬜ | ⬜ |
 | 27 | `spring-retry` | 17 | 17 | ✅ JSON | 17 | ⬜ | ⬜ | ⬜ | ⬜ |
 | 28 | `spring-scheduling` | 16 | 15 | ✅ JSON | 16 | ⬜ | ⬜ | ⬜ | ⬜ |
 | 29 | `spring-security` | 43 | 43 | ✅ JSON | 43 | ⬜ | ⬜ | ⬜ | ⬜ |
-| 30 | `spring-session` | 15 | 15 | ✅ JSON | 15 | ⬜ | ⬜ | ⬜ | ⬜ |
+| 30 | `spring-session` | 15 | 0 | ✅ | 15 | ✅ | ✅ | ✅ | ✅ |
 | 31 | `spring-state-machine` | 15 | 15 | ✅ JSON | 15 | ⬜ | ⬜ | ⬜ | ⬜ |
 | 32 | `spring-testing` | 1 | 15 | ❌ нет JSON | 0 | ⬜ | ⬜ | ⬜ | ⬜ |
 | 33 | `spring-transaction` | 15 | 22 | ✅ JSON | 15 | ⬜ | ⬜ | ⬜ | ⬜ |
@@ -388,7 +388,7 @@
 | 14 | `java-conditional-statements` | 1 | 42 | ❌ нет JSON | 0 | ⬜ | ⬜ | ⬜ | ⬜ |
 | 15 | `java-core` | 39 | 0 | ⚠️ cover −11Q | 28 | ⬜ | ⬜ | ⬜ | ⬜ |
 | 16 | `java-exceptions` | 42 | 0 | ⚠️ cover −35Q | 7 | ⬜ | ⬜ | ⬜ | ⬜ |
-| 17 | `java-functional-interface` | 14 | 14 | ❌ нет JSON | 0 | ⬜ | ⬜ | ⬜ | ⬜ |
+| 17 | `java-functional-interface` | 14 | 0 | ✅ | 14 | ✅ | ✅ | ✅ | ✅ |
 | 18 | `java-generics` | 40 | 0 | ⚠️ cover −33Q | 7 | ⬜ | ⬜ | ⬜ | ⬜ |
 | 19 | `java-initialization` | 1 | 27 | ❌ нет JSON | 0 | ⬜ | ⬜ | ⬜ | ⬜ |
 | 20 | `java-io-nio` | 40 | 51 | ❌ нет JSON | 0 | ⬜ | ⬜ | ⬜ | ⬜ |
