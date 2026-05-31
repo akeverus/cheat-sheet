@@ -475,7 +475,7 @@ Pass: `OK FILE.md`.
 | 137 | `devops` | `terraform` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 138 | `devops` | `vault` | 26 | 26 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 139 | `frameworks/jvm-alternatives` | `ktor` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 140 | `frameworks/jvm-alternatives` | `micronaut` | 25 | — | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 140 | `frameworks/jvm-alternatives` | `micronaut` | 25 | 25 | ✅ | ❌ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 141 | `frameworks/jvm-alternatives` | `quarkus` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 142 | `frameworks/jvm-alternatives` | `vertx` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 143 | `frameworks/spring` | `resilience4j` | 20 | 20 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
