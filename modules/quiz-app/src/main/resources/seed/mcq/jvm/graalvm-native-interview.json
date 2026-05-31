@@ -1,0 +1,905 @@
+{
+  "topic_slug": "graalvm-native-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `GraalVM Native Image`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Native Image` — это AOT-компиляция Java-кода в самодостаточный нативный исполняемый файл, который включает байткод приложения, нужные части JVM (`GC`, thread management) и нативный машинный код. На выходе единый бинарник, который запускается без установленного `JRE`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Бинарник содержит всё необходимое внутри себя, поэтому стартует за 10-100 мс вместо 3-10 с у `JVM`, потребляет в 2-5 раз меньше `RAM` и не нуждается в `JIT`-прогреве.",
+                "example": "Запускаешь как `./app` вместо `java -jar app.jar`; контейнер собирается «с нуля» без `JRE`, что заметно уменьшает размер образа.",
+                "when_to_apply": "Выбирают Native там, где важны cold start и малый footprint: serverless, `CLI`-утилиты, edge computing и контейнеры в `k8s` с autoscaling.",
+                "edge_cases": "Для долгоживущих сервисов с тяжёлой нагрузкой `JIT` может дать выше пиковый throughput, поэтому Native выигрывает не везде, а именно по старту и памяти.",
+                "related": "[[graalvm-native-interview#Q2]] разница AOT и JIT; [[graalvm-native-interview#Q5]] характеристики против JVM; [[graalvm-native-interview#Q6]] когда выбирать Native."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Native Image` — это просто упакованный `JRE`, склеенный с jar в один исполняемый файл, чтобы не ставить Java отдельно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Native Image не упаковывает `JRE`, а компилирует код AOT в нативный машинный код; бандлинг `JRE` — это совсем другой подход (`jpackage`).",
+                "source_of_confusion": "И bundling, и Native дают «один файл без отдельной установки Java», поэтому их легко перепутать.",
+                "if_it_were_true": "Если бы это был упакованный `JRE`, то старт оставался бы секундным и `RAM` не падал бы — а Native стартует за миллисекунды.",
+                "how_it_should_be": "Корректно: это AOT-компиляция в нативный код без `JRE` на runtime, а не упаковка интерпретатора рядом с jar."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Native Image` работает только для приложений на `Spring Boot` и не применим к другим фреймворкам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Native Image работает с любым Java-кодом; готовую поддержку дают `Quarkus`, `Micronaut`, `Helidon` и `Spring Native`.",
+                "source_of_confusion": "Spring Boot 3 громко продвигает native-поддержку, поэтому кажется, что технология привязана именно к нему.",
+                "if_it_were_true": "Если бы это было правдой, `Quarkus`-приложения нельзя было бы собрать в нативный бинарник, но они собираются штатно.",
+                "how_it_should_be": "Корректно: Native Image — это инструмент `GraalVM` для любого JVM-байткода, а Spring лишь один из поддерживаемых фреймворков."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Native Image` всегда медленнее обычной `JVM` на любой нагрузке, поэтому смысла в нём для производительности нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По пиковому throughput долгоживущих heavy-сервисов `JIT` действительно может опережать, но по старту и памяти Native стабильно выигрывает.",
+                "source_of_confusion": "Тезис «AOT без profiling медленнее JIT на пике» обобщают до «медленнее всегда», теряя контекст про startup и RAM.",
+                "if_it_were_true": "Если бы Native был медленнее всегда, его не использовали бы для serverless, где быстрый старт даёт прямой выигрыш.",
+                "how_it_should_be": "Корректно: Native проигрывает только в пиковом throughput горячих долгих сервисов, а в старте и `RAM` выигрывает."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем AOT-компиляция отличается от JIT-компиляции?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "AOT всегда быстрее `JIT` на любых нагрузках, поэтому выбирать стоит исключительно AOT и не думать про `JIT`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "AOT компилирует статически без runtime-профиля, поэтому на долгих heavy-нагрузках `JIT` с adaptive optimization часто опережает его по пику.",
+                "source_of_confusion": "AOT даёт мгновенный старт, и из этого ошибочно выводят «значит быстрее во всём».",
+                "if_it_were_true": "Если бы AOT был быстрее всегда, `JVM` с `JIT` не использовали бы для high-load сервисов, но именно там она выигрывает по throughput.",
+                "how_it_should_be": "Корректно: AOT выигрывает старт и память, `JIT` — пиковую производительность после прогрева; выбор зависит от типа нагрузки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`JIT` (Just-In-Time) компилирует в runtime и использует adaptive optimization по реальному профилю выполнения, давая выше пиковый throughput после warmup. AOT (Ahead-Of-Time) компилирует до запуска по статическому анализу: миллисекундный старт, меньше `RAM`, без warmup, но ниже пик.",
+              "correct": true,
+              "sections": {
+                "explanation": "`JIT` собирает профиль горячих методов и оптимизирует их (inlining, escape analysis, speculative optimizations), тогда как AOT фиксирует код заранее без runtime-данных.",
+                "example": "Через 1-5 минут под нагрузкой `JIT`-сервис выходит на пик и обгоняет AOT по throughput, тогда как AOT-бинарник стартует на максимуме сразу с первой секунды.",
+                "when_to_apply": "Serverless и `CLI`-утилиты выбирают AOT (важен cold start), а долгоживущие сервисы с пиковыми нагрузками — `JIT`.",
+                "edge_cases": "AOT тоже делает оптимизации (inlining, dead code elimination), просто без profiling-информации runtime, поэтому это не «голая трансляция».",
+                "related": "[[graalvm-native-interview#Q1]] что такое Native Image; [[graalvm-native-interview#Q3]] Closed World Assumption; [[graalvm-native-interview#Q5]] метрики против JVM."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "AOT не использует никаких оптимизаций — это просто прямая трансляция байткода в машинный код один-в-один.",
+              "correct": false,
+              "sections": {
+                "what_actually": "AOT выполняет статический анализ, inlining и dead code elimination, поэтому это полноценная оптимизирующая компиляция, а не пословный перевод.",
+                "source_of_confusion": "Раз у AOT нет runtime-профиля, кажется, что у него вообще нет оптимизаций.",
+                "if_it_were_true": "Если бы AOT не оптимизировал, бинарник был бы огромным и медленным, но tree shaking и inlining дают компактный быстрый код.",
+                "how_it_should_be": "Корректно: AOT оптимизирует статически; ему не хватает только profiling-данных, доступных `JIT` в runtime."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`JIT` компилирует всё приложение целиком сразу при старте, поэтому warmup — это компиляция всего кода в первые секунды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JIT` компилирует только горячие методы по достижении threshold (по умолчанию ~10K вызовов); холодный код остаётся интерпретируемым.",
+                "source_of_confusion": "Слово «компилятор» наводит на мысль, что компилируется всё и сразу, как у статического компилятора.",
+                "if_it_were_true": "Если бы `JIT` компилировал всё на старте, не было бы постепенного выхода на пик через 1-5 минут — но он именно постепенный.",
+                "how_it_should_be": "Корректно: `JIT` избирателен — греет и компилирует только hot paths, остальное исполняет интерпретатор."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Closed World Assumption`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Closed World Assumption` — это просто внутренняя оптимизация компилятора, никак не влияющая на то, как пишут приложение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CWA напрямую влияет на код: reflection, dynamic class loading и proxy не работают без явной регистрации, иначе будет `ClassNotFoundException` в runtime.",
+                "source_of_confusion": "Слово «assumption» звучит как незаметная деталь движка, не касающаяся прикладного разработчика.",
+                "if_it_were_true": "Если бы CWA ничего не значил для разработки, `Class.forName()` с динамическим именем работал бы как на `JVM` — но он падает.",
+                "how_it_should_be": "Корректно: CWA — это контракт, требующий заранее объявить всё динамическое, иначе native-бинарник упадёт в runtime."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Closed World Assumption` означает, что Native Image работает только в «закрытых» сетях без доступа в интернет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CWA не имеет отношения к сети: «Closed World» — это закрытое множество путей кода, известных на этапе сборки.",
+                "source_of_confusion": "Слово «closed» ассоциируется с закрытым сетевым периметром, отсюда подмена смысла.",
+                "if_it_were_true": "Если бы это было про сеть, native-приложения не могли бы ходить в `HTTP`-API, но они это спокойно делают.",
+                "how_it_should_be": "Корректно: «закрытый мир» — это полностью известный набор классов и путей кода во время сборки, а не сетевая изоляция."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Closed World Assumption` — ключевое допущение `GraalVM`: всё, что нужно приложению, известно во время сборки. Поэтому динамическая загрузка классов, рефлексия, dynamic proxy и runtime classpath scanning требуют явной регистрации (`reflect-config.json` / `RuntimeHints`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`GraalVM` строит граф достижимости и включает в бинарник только статически видимый код; всё, что «невидимо» анализу, в бинарник не попадёт и упадёт в runtime.",
+                "example": "Например, `Class.forName(name)` с именем из конфига даёт `ClassNotFoundException`, пока класс не объявлен в `reflect-config.json` или через `@RegisterForReflection`.",
+                "when_to_apply": "Понимание CWA нужно при миграции на native: заранее аудируешь весь динамический код и регистрируешь reflection/proxy/resources до сборки.",
+                "edge_cases": "Граница не всегда очевидна: сериализация и resource bundles тоже подпадают под CWA и требуют отдельной регистрации, не только классы.",
+                "related": "[[graalvm-native-interview#Q4]] построение графа достижимости; [[graalvm-native-interview#Q10]] ограничения Native; [[graalvm-native-interview#Q11]] регистрация рефлексии."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При `Closed World Assumption` можно динамически загружать классы по имени без всякой конфигурации — CWA это не запрещает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Class.forName()` с динамическим именем падает с `ClassNotFoundException`, потому что класс не попал в граф достижимости; нужна явная регистрация.",
+                "source_of_confusion": "На `JVM` динамическая загрузка работает свободно, и по привычке кажется, что и в Native так же.",
+                "if_it_were_true": "Если бы динамическая загрузка работала без конфига, не нужны были бы `reflect-config.json` и tracing agent, но они существуют именно для этого.",
+                "how_it_should_be": "Корректно: при CWA любой динамически загружаемый класс надо зарегистрировать заранее, иначе его не будет в бинарнике."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `GraalVM` строит граф достижимости (reachability analysis)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Native Image Tool` сканирует все `JAR`-зависимости и включает в бинарник весь найденный код целиком.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Инструмент выполняет reachability analysis от `main()` и включает только достижимый код; иначе бинарник был бы 500+ МБ.",
+                "source_of_confusion": "По аналогии с fat-jar кажется, что в бинарник кладётся всё содержимое classpath.",
+                "if_it_were_true": "Если бы включалось всё, не было бы экономии размера и tree shaking, ради которых Native и затевается.",
+                "how_it_should_be": "Корректно: включается только достижимое из `main()`, а недостижимый код отбрасывается (tree shaking)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Tracing agent` — это runtime-инструмент для production-деплоя, который динамически регистрирует рефлексию на проде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Agent предназначен для dev-окружения: на `JVM` он записывает `reflect-config.json`, а в production native build его уже нет.",
+                "source_of_confusion": "Раз agent «отслеживает рефлексию», кажется логичным запускать его и в проде для подстраховки.",
+                "if_it_were_true": "Если бы agent работал в production native, не нужно было бы заранее генерировать конфиги — но они нужны до сборки.",
+                "how_it_should_be": "Корректно: tracing agent гоняют на `JVM` в dev, чтобы получить JSON-конфиги, которые потом идут в native build."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Граф достижимости включает все классы из `CLASSPATH`, просто переупорядочивая их в бинарнике.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Анализ как раз отбрасывает недостижимые классы; tree shaking — это основная экономия размера Native Image.",
+                "source_of_confusion": "Слово «граф» создаёт впечатление, что он лишь связывает всё уже имеющееся, ничего не выкидывая.",
+                "if_it_were_true": "Если бы включался весь classpath, сам анализ был бы бессмысленным — он существует ровно для отсечения лишнего.",
+                "how_it_should_be": "Корректно: в бинарник попадает только достижимое из `main()`, а весь недостижимый classpath исключается."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Статический reachability analysis начинается с `main()` как точки входа, рекурсивно анализирует вызовы методов, поля и классы и строит граф всего достижимого кода. В бинарник попадают только достижимые элементы; рефлексия требует tracing agent или `@RegisterForReflection`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Класс, достигаемый только через незарегистрированную рефлексию, не виден статически, не попадёт в граф и вылетит `ClassNotFoundException` в runtime.",
+                "example": "`Native Image Tracing Agent` (`-agentlib:native-image-agent`) автоматически обнаруживает рефлексивные вызовы и записывает JSON-конфиги при прогоне приложения.",
+                "when_to_apply": "Анализ графа применяют, чтобы объяснить размер бинарника и отсутствие класса в runtime: если он не достижим из `main()`, его просто нет в образе.",
+                "edge_cases": "Агент видит только реально пройденные пути кода, поэтому при неполном прогоне часть reflection-путей останется незарегистрированной и упадёт в проде.",
+                "related": "[[graalvm-native-interview#Q3]] Closed World Assumption; [[graalvm-native-interview#Q11]] способы регистрации рефлексии; [[graalvm-native-interview#Q13]] JSON-конфиги native-image."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `Native Image` отличается от `JVM` по характеристикам?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Native Image даёт старт ~50-200 мс, idle heap ~50-100 МБ, нет warmup, но ниже пиковый throughput. `JVM`: старт 3-10 с, heap 250-400 МБ, выше пиковый throughput после `JIT`-прогрева. То есть характеристики во многом противоположны.",
+              "correct": true,
+              "sections": {
+                "explanation": "Native выигрывает по startup и памяти за счёт отсутствия `JVM`-metadata, `JIT`-структур и class loaders; `JVM` выигрывает пик за счёт adaptive optimization на горячих путях.",
+                "example": "Например, типичный Spring Boot REST-сервис на `JVM` стартует ~5 с с heap ~300 МБ и образом ~200 МБ, а тот же native — ~100 мс, ~70 МБ heap, образ ~60 МБ.",
+                "when_to_apply": "Для serverless выбирают Native (startup и RAM), для долгого high-load сервиса — `JVM` (пиковый throughput).",
+                "edge_cases": "Время сборки тоже различается радикально: ~30 с для обычного jar против ~3-5 мин для native, что бьёт по dev-итерации.",
+                "related": "[[graalvm-native-interview#Q1]] что такое Native Image; [[graalvm-native-interview#Q2]] AOT против JIT; [[graalvm-native-interview#Q6]] выбор сценария."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Native Image и `JVM` имеют практически идентичные характеристики по старту, памяти и throughput.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они различаются существенно: startup мс против секунд, `RAM` ~50 МБ против 200+ МБ; путаница ведёт к выбору неподходящей технологии.",
+                "source_of_confusion": "Оба исполняют один и тот же Java-код, поэтому кажется, что и метрики совпадают.",
+                "if_it_were_true": "Если бы характеристики совпадали, не было бы смысла переходить на Native ради cold start и экономии `RAM`.",
+                "how_it_should_be": "Корректно: метрики во многом противоположны — Native быстрее стартует и экономит память, `JVM` выше по пику."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Native Image всегда даёт лучший throughput, чем `JVM`, на любой нагрузке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JIT` с adaptive optimization может опережать AOT на пиковых нагрузках долгоживущих сервисов; нужны benchmarks под конкретную нагрузку.",
+                "source_of_confusion": "Быстрый старт Native ошибочно обобщают до «быстрее во всём, включая пик».",
+                "if_it_were_true": "Если бы Native всегда выигрывал throughput, `JVM` не оставалась бы выбором для high-load бэкендов, но она им остаётся.",
+                "how_it_should_be": "Корректно: по пиковому throughput долгих heavy-сервисов часто выигрывает `JIT`, а не Native."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Native Image потребляет больше `RAM`, чем `JVM`, из-за статически слинкованного кода в бинарнике.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: Native экономит `RAM` в 2-5 раз, потому что нет `JVM`-metadata, `JIT`-compiler структур и сложных class loaders.",
+                "source_of_confusion": "Большой размер бинарника на диске путают с потреблением оперативной памяти.",
+                "if_it_were_true": "Если бы Native жрал больше `RAM`, его не использовали бы ради сотен микроинстансов ради экономии памяти.",
+                "how_it_should_be": "Корректно: статическая линковка увеличивает файл на диске, но idle heap у Native заметно меньше, чем у `JVM`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В каких сценариях `Native Image` предпочтительнее `JVM`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Native Image подходит для всех типов приложений, поэтому его стоит выбирать всегда по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для долгих сервисов с тяжёлой рефлексией (`Hibernate`) пересборка медленная, а пиковый throughput ниже — выбор не универсален.",
+                "source_of_confusion": "Маркетинг про «мгновенный старт и малый RAM» создаёт впечатление, что Native хорош везде.",
+                "if_it_were_true": "Если бы Native был лучшим выбором всегда, `JVM` не оставалась бы стандартом для reflection-heavy и high-load бэкендов.",
+                "how_it_should_be": "Корректно: Native — для serverless, autoscaling, CLI и edge; для долгих heavy-сервисов лучше `JVM`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Native Image предпочтителен для serverless / `AWS Lambda` (критичен cold start), `Kubernetes` с autoscaling, сотен микросервисов (экономия `RAM`), `CLI`-утилит и edge computing. `JVM` лучше для долгих сервисов с heavy reflection (`Hibernate`) и для быстрых dev-итераций.",
+              "correct": true,
+              "sections": {
+                "explanation": "Cold start `JVM` в 5-30 с упирается в `AWS Lambda` timeout и заставляет пользователя ждать warmup, поэтому serverless требует AOT.",
+                "example": "Например, `CLI`-утилита на native откликается мгновенно при каждом вызове, а сотня микроинстансов в `k8s` экономит десятки гигабайт `RAM` против `JVM`.",
+                "when_to_apply": "Оценивай по типу нагрузки (короткие vs долгие) и зависимостям (reflection-heavy vs нет): cold start критичен → AOT, peak throughput на heavy load → `JVM`.",
+                "edge_cases": "Активная байт-генерация в runtime (`CGLib`, `Javassist`, `ASM`) несовместима с CWA, поэтому такие приложения остаются на `JVM`.",
+                "related": "[[graalvm-native-interview#Q5]] метрики Native против JVM; [[graalvm-native-interview#Q1]] что такое Native Image; [[graalvm-native-interview#Q10]] ограничения Native."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`JVM` лучше подходит для serverless, чем Native Image, благодаря `JIT`-оптимизациям на горячих путях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cold start `JVM` 5-30 с упирается в timeout `AWS Lambda`; за warmup пользователь платит и ждёт — serverless требует AOT.",
+                "source_of_confusion": "`JIT` действительно даёт высокий throughput, и это ошибочно переносят на serverless, где функции короткоживущие.",
+                "if_it_were_true": "Если бы `JVM` была лучше для serverless, AWS не продвигал бы GraalVM-рантаймы и custom runtimes под native.",
+                "how_it_should_be": "Корректно: для serverless выигрывает Native (cold start), а `JIT`-throughput важен лишь для долгих процессов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Native Image можно использовать для приложений с активной byte-code generation в runtime — нужно лишь правильно настроить.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Byte-code generation несовместим с CWA: `CGLib`, `Javassist`, `ASM` в runtime в Native не работают, никакой конфиг это не включит.",
+                "source_of_confusion": "Раз многие ограничения решаются hints, кажется, что и runtime-кодогенерацию можно «дорегистрировать».",
+                "if_it_were_true": "Если бы это работало, не было бы рекомендации держать такие приложения на `JVM`, но она существует.",
+                "how_it_should_be": "Корректно: динамическая генерация классов в runtime принципиально несовместима с закрытым миром Native Image."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `Spring Boot 3` поддерживает `Native Image`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Boot 3` не поддерживает Native Image — это отдельный экспериментальный проект `Spring Native`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Native` был экспериментом для Spring Boot 2; в Spring Boot 3 поддержка интегрирована first-class в ядро.",
+                "source_of_confusion": "Память о раннем `Spring Native` создаёт впечатление, что native по-прежнему живёт отдельно.",
+                "if_it_were_true": "Если бы поддержки не было в ядре, не существовало бы `process-aot` goal и `RuntimeHints API` прямо в Spring Boot 3.",
+                "how_it_should_be": "Корректно: в Spring Boot 3 native-поддержка встроена в core через AOT-движок, а `Spring Native` устарел."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `Spring Boot 3` нужно вручную писать `reflect-config.json` для каждого Spring-компонента отдельно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring AOT авто-генерирует hints для всех beans; вручную регистрируют только собственные reflection-вызовы.",
+                "source_of_confusion": "Тот факт, что reflection требует регистрации, обобщают до «всё вручную для каждого бина».",
+                "if_it_were_true": "Если бы каждый бин надо было прописывать руками, native-сборка Spring была бы непрактичной, но она работает из коробки.",
+                "how_it_should_be": "Корректно: AOT сам обнаруживает Spring-managed beans, а ручные hints нужны лишь для своего динамического кода."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Boot 3` даёт first-class native support через `Spring AOT Engine` (генерация кода на этапе сборки вместо runtime), `GraalVM Native Build Tools` (Maven/Gradle плагины), `RuntimeHints API` (декларативная регистрация рефлексии/ресурсов/прокси) и авто-детект большинства стандартных компонентов Spring.",
+              "correct": true,
+              "sections": {
+                "explanation": "На build time исходники проходят Spring AOT processing, которое анализирует context и генерирует hints и pre-computed конфиги, а затем `native-image` собирает исполняемый файл.",
+                "example": "Например, стандартный `@RestController` с `@Autowired`-сервисом и `Spring Data`-репозиторием собирается в native без единого ручного hint — всё подхватывает AOT.",
+                "when_to_apply": "Подключаешь native goal `spring-boot-maven-plugin` и `@ImportRuntimeHints` для своих hints; большинство компонентов работает без ручной настройки.",
+                "edge_cases": "Авто-детект покрывает стандартные beans, но кастомная рефлексия в своём коде всё равно требует явных hints, иначе упадёт в native runtime.",
+                "related": "[[graalvm-native-interview#Q8]] что делает AOT-процессинг; [[graalvm-native-interview#Q12]] RuntimeHints API; [[graalvm-native-interview#Q9]] сборка Spring Boot как Native."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Boot 3` запускает `GraalVM` `native-image` при каждом старте приложения для оптимизации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`native-image` работает только на этапе сборки; в runtime запускается уже скомпилированный native executable.",
+                "source_of_confusion": "Слово «native» в каждом запуске наводит на мысль, что компиляция происходит при старте.",
+                "if_it_were_true": "Если бы GraalVM запускался при каждом старте, выигрыша в cold start не было бы — а он именно ради старта.",
+                "how_it_should_be": "Корректно: компиляция в нативный код — это build-time шаг, а на runtime уже готовый бинарник."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое AOT-процессинг в `Spring Boot`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "AOT-процессинг работает в runtime, оптимизируя приложение на лету во время его работы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "AOT — это build-time шаг; runtime-оптимизация на лету — это `JIT`, противоположный по природе подход.",
+                "source_of_confusion": "Слово «оптимизация» ассоциируется с runtime-тюнингом, поэтому AOT путают с `JIT`.",
+                "if_it_were_true": "Если бы AOT работал в runtime, не было бы сгенерированных на сборке `BeanFactory`-классов, но они генерируются заранее.",
+                "how_it_should_be": "Корректно: AOT-процессинг выполняется на этапе сборки, а runtime-оптимизация — это `JIT`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "AOT можно безопасно отключить, если приложение медленно стартует — это просто опциональная настройка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "AOT обязателен для Native Image: без него runtime classpath scanning падает в native; без AOT приложение работает только на `JVM`.",
+                "source_of_confusion": "Раз AOT звучит как «ускоритель», кажется, что без него просто будет чуть медленнее.",
+                "if_it_were_true": "Если бы AOT был необязателен для native, reflection-heavy beans собирались бы и без него, но native build на них падает.",
+                "how_it_should_be": "Корректно: для native AOT обязателен; отключить его можно только оставаясь на классической `JVM`-сборке."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "AOT-процессинг совместим с динамической сменой `@Profile` в runtime, нужно лишь правильно сконфигурировать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Профили фиксируются на этапе AOT processing; смена профиля в runtime требует пересборки приложения.",
+                "source_of_confusion": "На `JVM` профили действительно переключаются переменными окружения, и это по привычке ждут и в native.",
+                "if_it_were_true": "Если бы профиль менялся в runtime, AOT не мог бы заранее зафиксировать bean definitions, но он именно это и делает.",
+                "how_it_should_be": "Корректно: `@Profile` и `@ConditionalOn*` вычисляются на build-time, а runtime-смена невозможна без пересборки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "AOT-процессинг — Spring Boot анализирует `ApplicationContext` во время сборки и генерирует pre-computed `BeanFactory`-код (без runtime classpath scanning), `RuntimeHints` для рефлексии/ресурсов/прокси, serialization- и native-конфиги. На старте идёт регистрация уже известных bean'ов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Вместо runtime classpath scan и создания прокси на старте AOT генерирует `AppContextInitializer` с заранее вычисленными bean definitions.",
+                "example": "Например, после `process-aot` в `target/spring-aot/` появляются сгенерированные источники и `reflect-config.json`, которые подхватывает `native-image`.",
+                "when_to_apply": "Запускаешь goal `spring-boot:process-aot` перед `native-image` build, чтобы получить сгенерированные источники и hints.",
+                "edge_cases": "Ограничение: `@ConditionalOnProperty`, `@Profile` и environment-зависимые beans фиксируются на сборке — сменить профиль в runtime без пересборки нельзя.",
+                "related": "[[graalvm-native-interview#Q7]] как Spring Boot 3 поддерживает Native; [[graalvm-native-interview#Q9]] сборка Native; [[graalvm-native-interview#Q12]] RuntimeHints."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как собрать `Spring Boot`-приложение как `Native Image`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Команда сборки: `mvn -Pnative native:compile` или `gradle nativeCompile`; Docker-образ — через `mvn spring-boot:build-image -Pnative` (buildpack без локального GraalVM). Требуется `GraalVM 22+` и `Spring Boot 3.x` с `native-maven-plugin` / `native-gradle-plugin`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Native build — это отдельный profile/goal плюс GraalVM toolchain: статический анализ и компиляция бинарника запускаются на этапе package.",
+                "example": "Например, `mvn spring-boot:build-image -Pnative` без локального `GraalVM` соберёт Docker-образ с нативным бинарником через `buildpack`, готовый к деплою в `k8s`.",
+                "when_to_apply": "Добавляешь native profile в `pom.xml` и гоняешь native build на `CI` отдельно от обычного dev build, чтобы не тормозить разработку.",
+                "edge_cases": "Сборка занимает 3-5 минут (анализ + компиляция), поэтому каждый коммит так собирать непрактично — лучше nightly или PR-merge.",
+                "related": "[[graalvm-native-interview#Q8]] AOT-процессинг перед сборкой; [[graalvm-native-interview#Q10]] ограничения Native; [[graalvm-native-interview#Q7]] поддержка в Spring Boot 3."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Сборка Native Image занимает несколько секунд, как обычная Java-компиляция в jar.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Native build занимает 3-5 минут из-за reachability analysis и нативной компиляции; это критично для `CI` и dev iteration loop.",
+                "source_of_confusion": "Команда `native:compile` внешне похожа на обычный `compile`, поэтому ждут такой же скорости.",
+                "if_it_were_true": "Если бы native собиралось за секунды, не было бы советов выносить его на nightly и не запускать на каждый коммит.",
+                "how_it_should_be": "Корректно: нативная сборка идёт минуты, а не секунды, поэтому её планируют отдельно от быстрых dev-сборок."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Native Image требует лишь `Spring Boot 2.7+`, а `Spring Boot 3` для этого не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для Spring Boot 2.7 существовал отдельный экспериментальный `Spring Native`; first-class native-поддержка появилась только в Spring Boot 3+.",
+                "source_of_confusion": "Раз `Spring Native` когда-то работал с Boot 2, кажется, что версии 3 необязательна.",
+                "if_it_were_true": "Если бы хватало 2.7, не было бы смысла переносить поддержку в core Spring Boot 3 и закрывать `Spring Native`.",
+                "how_it_should_be": "Корректно: штатная сборка через `native-maven-plugin` рассчитана на `Spring Boot 3` и `GraalVM 22+`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Можно запускать `native:compile` вместо `process-aot` — отдельный AOT-шаг не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`process-aot` обязателен: он генерирует hints и pre-computed конфиги, без которых native build падает на reflection-heavy beans.",
+                "source_of_confusion": "Раз обе команды относятся к native-сборке, кажется, что одна заменяет другую.",
+                "if_it_were_true": "Если бы AOT был лишним, Spring native build не падал бы без него, но он падает на динамических beans.",
+                "how_it_should_be": "Корректно: `process-aot` идёт перед `native:compile` и готовит метаданные для статической сборки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие ограничения у `Native Image`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "У Native Image нет ограничений — это просто оптимизированная `JVM`, ведущая себя так же.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ограничения серьёзны: reflection без hints, dynamic class loading, runtime-профили, `Mockito`, `JVMTI`-агенты; без их понимания production падает в runtime.",
+                "source_of_confusion": "Раз Native исполняет тот же Java-код, кажется, что он ведёт себя как обычная `JVM`.",
+                "if_it_were_true": "Если бы ограничений не было, не понадобились бы `RuntimeHints`, `reflect-config.json` и tracing agent.",
+                "how_it_should_be": "Корректно: Native накладывает ограничения на динамические возможности Java, и их надо учитывать до миграции."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Главные ограничения: рефлексия без `RuntimeHints`, dynamic class loading в runtime, фиксация `@Profile`/`@ConditionalOn*` на build-time, неработающий `Mockito` в native-тестах, `JVMTI`-агенты (профайлеры/дебагеры). Плюс сборка 3-5 минут. Решения — pre-registration через hints/JSON.",
+              "correct": true,
+              "sections": {
+                "explanation": "Все ограничения вытекают из CWA: то, что на `JVM` работает динамически (загрузка классов, байт-генерация, JVMTI), в закрытом мире native либо требует явной регистрации, либо невозможно вовсе.",
+                "example": "`Hibernate` требует регистрации всех entity, кастомные сериализаторы `Jackson` — hints, а `Mockito` заменяется на `@MockBean`, потому что байт-генерация в runtime недоступна.",
+                "when_to_apply": "До миграции проверяешь совместимость библиотек и заранее регистрируешь всё динамическое (reflection, proxy, resources, serialization).",
+                "edge_cases": "`Lombok` совместим, потому что работает на compile-time и его аннотации исчезают до native build — это исключение из «динамика не работает».",
+                "related": "[[graalvm-native-interview#Q3]] Closed World Assumption; [[graalvm-native-interview#Q11]] регистрация рефлексии; [[graalvm-native-interview#Q14]] native-тестирование без Mockito."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Lombok` не работает в Native Image, поэтому от него нужно отказываться при миграции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Lombok` работает на compile-time и генерирует код до native build; его аннотации исчезают к моменту компиляции, поэтому он совместим.",
+                "source_of_confusion": "`Lombok` ассоциируется с «магией» и аннотациями, что наводит на мысль о runtime-несовместимости.",
+                "if_it_were_true": "Если бы `Lombok` ломал native, его не включали бы в стандартные Spring Boot native-проекты, но он там работает.",
+                "how_it_should_be": "Корректно: `Lombok` безопасен для Native, потому что вся его работа завершается на этапе компиляции, а не в runtime."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Profile` в runtime в Native Image работает — нужно просто правильно его сконфигурировать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Профили фиксируются на build-time AOT processing; смена профиля в runtime не поддерживается — нужна пересборка или включение всех профилей сразу.",
+                "source_of_confusion": "На `JVM` профили переключаются переменной окружения, и этого же ждут от native.",
+                "if_it_were_true": "Если бы runtime-профили работали, AOT не фиксировал бы условия на сборке, но он именно это и делает.",
+                "how_it_should_be": "Корректно: `@Profile` и `@ConditionalOn*` решаются на build-time, и поменять их без пересборки нельзя."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как зарегистрировать рефлексию для `Native Image`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Рефлексия в Native Image работает автоматически без какой-либо регистрации, как на обычной `JVM`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Из-за CWA `Class.forName()` и `Method.invoke` без регистрации дают `ClassNotFoundException` в runtime; нужна явная регистрация.",
+                "source_of_confusion": "На `JVM` рефлексия работает свободно, поэтому по привычке кажется, что и в native так же.",
+                "if_it_were_true": "Если бы рефлексия работала сама, не существовало бы `reflect-config.json`, `RuntimeHints` и `@RegisterReflectionForBinding`.",
+                "how_it_should_be": "Корректно: при закрытом мире каждый рефлексивный доступ надо объявить заранее, иначе класс не попадёт в бинарник."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Достаточно зарегистрировать класс — его методы и поля становятся видны рефлексии автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый member регистрируется отдельно (constructors, methods, fields); `registerType` объявляет класс, но не открывает его публичные члены сам по себе.",
+                "source_of_confusion": "Кажется логичным, что регистрация класса «целиком» включает и его члены.",
+                "if_it_were_true": "Если бы члены открывались автоматически, не нужны были бы `MemberCategory` и флаги вроде `allDeclaredFields`, но они есть.",
+                "how_it_should_be": "Корректно: для рефлексии указывают конкретные категории членов, иначе доступ к ним в runtime упадёт."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Три способа: (1) `reflect-config.json` в `META-INF/native-image/`; (2) `RuntimeHintsRegistrar` через `@ImportRuntimeHints` — рекомендуемый в Spring Boot 3; (3) `@RegisterReflectionForBinding` для DTO/entity. Альтернатива — tracing agent для автогенерации конфигов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Все три способа делают одно: добавляют классы и их члены в граф достижимости, чтобы рефлексия не упала в runtime; различается лишь форма записи метаданных.",
+                "example": "Для своих DTO/entity вешают аннотацию, для библиотечного кода — программный `RuntimeHints`, для legacy без native-поддержки — tracing agent, записывающий JSON при прогоне.",
+                "when_to_apply": "Выбираешь по контексту: декларативный JSON, type-safe Java API или автоматический agent — в зависимости от того, свой это код, Spring-bean или сторонняя библиотека.",
+                "edge_cases": "Каждый member регистрируется отдельно (constructors, methods, fields), поэтому одной строки `registerType` без указания категорий членов недостаточно.",
+                "related": "[[graalvm-native-interview#Q12]] RuntimeHints API; [[graalvm-native-interview#Q13]] JSON-конфиги и tracing agent; [[graalvm-native-interview#Q3]] почему это нужно (CWA)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Tracing agent` работает в production и динамически регистрирует рефлексию во время реальной работы приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Agent — это dev-time инструмент для записи конфигов на `JVM`; в production native build он отсутствует.",
+                "source_of_confusion": "Раз agent «отслеживает рефлексию на лету», кажется уместным держать его и в проде.",
+                "if_it_were_true": "Если бы он регистрировал рефлексию в production, не нужно было бы заранее генерировать JSON-конфиги, но они нужны до сборки.",
+                "how_it_should_be": "Корректно: tracing agent гоняют в dev на `JVM`, а полученные конфиги используют при native-сборке."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `RuntimeHints` в `Spring`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`RuntimeHints` — это runtime API, доступное в production-коде для регистрации рефлексии во время работы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hints применяются на этапе AOT processing (build-time); `registerHints()` вызывается компилятором/процессором, а не в runtime.",
+                "source_of_confusion": "Само слово «Runtime» в названии наводит на мысль, что API работает во время выполнения.",
+                "if_it_were_true": "Если бы hints применялись в runtime, не было бы смысла в build-time AOT-анализе, но именно он их и собирает.",
+                "how_it_should_be": "Корректно: `RuntimeHints` описывают, что понадобится native-бинарнику в runtime, но регистрируются на сборке."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`RuntimeHints` полностью заменяют GraalVM JSON-конфиги — `reflect-config.json` и подобные больше не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для библиотек без Spring (например сторонних SDK) JSON-конфиги по-прежнему нужны; `RuntimeHints` — это Spring-абстракция поверх них.",
+                "source_of_confusion": "Раз `RuntimeHints` удобнее JSON, кажется, что они вытесняют его полностью.",
+                "if_it_were_true": "Если бы JSON был не нужен, GraalVM перестал бы читать `META-INF/native-image/*.json`, но он продолжает их читать.",
+                "how_it_should_be": "Корректно: `RuntimeHints` покрывают Spring-код, а чистый GraalVM JSON остаётся для не-Spring библиотек."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`RuntimeHints` автоматически обнаруживают всё, что нужно, поэтому их пишут крайне редко, только для экзотики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring AOT обнаруживает Spring-managed beans автоматически, но рефлексия в собственном коде требует явных hints.",
+                "source_of_confusion": "Авто-детект стандартных компонентов создаёт впечатление, что hints почти никогда не нужны.",
+                "if_it_were_true": "Если бы всё обнаруживалось само, native-сборки не падали бы на кастомной рефлексии, но они падают без hints.",
+                "how_it_should_be": "Корректно: авто-детект покрывает beans Spring, а свою динамику в коде надо объявлять hints явно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`RuntimeHints` — API `Spring Boot 3` для декларации метаданных, нужных Native Image в runtime: рефлексия, ресурсы, JDK/CGLIB-прокси, сериализация. Заменяет разрозненные JSON-конфиги единым type-safe Java DSL через `RuntimeHintsRegistrar`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Hints собираются на этапе AOT processing и затем превращаются в те же GraalVM-конфиги, но писать их через Java DSL безопаснее: ошибку в имени класса ловит компилятор.",
+                "example": "Реализуешь `RuntimeHintsRegistrar` и в `registerHints` вызываешь `hints.reflection()`, `hints.resources()`, `hints.proxies()`, `hints.serialization()` — вместо ручной правки нескольких JSON-файлов.",
+                "when_to_apply": "Объявляешь registrar через `@ImportRuntimeHints` или в `META-INF/spring/aot.factories` (для библиотек), чтобы Spring подхватил его на этапе AOT.",
+                "edge_cases": "Для библиотек без Spring (например сторонних SDK) чистые GraalVM JSON-конфиги всё ещё нужны — `RuntimeHints` это Spring-абстракция, а не полная замена.",
+                "related": "[[graalvm-native-interview#Q11]] способы регистрации рефлексии; [[graalvm-native-interview#Q13]] JSON-конфиги native-image; [[graalvm-native-interview#Q15]] тестирование hints."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают JSON-конфигурации для `native-image`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`GraalVM` читает пять JSON из `META-INF/native-image/`: `reflect-config.json` (рефлексия), `proxy-config.json` (динамические прокси), `resource-config.json` (ресурсы classpath), `serialization-config.json` (сериализация), `jni-config.json` (`JNI`). Их можно автогенерировать tracing-агентом через прогон кода.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый JSON покрывает свою динамическую возможность Java и говорит компилятору, что включить в граф достижимости: без записи в `reflect-config.json` класс просто не попадёт в бинарник.",
+                "example": "Agent (`-agentlib:native-image-agent`) на `JVM` записывает все пройденные рефлексивные/ресурсные пути в JSON, которые потом копируют в `src/main/resources/META-INF/native-image/`.",
+                "when_to_apply": "Подход особенно полезен для legacy-библиотек без Spring native-поддержки: smoke-тесты под агентом дают готовые конфиги.",
+                "edge_cases": "Agent видит только реально пройденные code paths, поэтому одного smoke-теста мало — нужны все use cases, иначе пропущенный путь упадёт в production.",
+                "related": "[[graalvm-native-interview#Q11]] три способа регистрации; [[graalvm-native-interview#Q12]] RuntimeHints как Spring-абстракция; [[graalvm-native-interview#Q4]] зачем нужен tracing agent."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "JSON-конфиги нужно писать вручную для каждой библиотеки — автоматизации тут нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tracing agent автоматизирует генерацию: ручное написание для большого приложения трудоёмко и подвержено ошибкам.",
+                "source_of_confusion": "Раз JSON выглядит как конфиг, кажется, что его обязательно набирают руками.",
+                "if_it_were_true": "Если бы автогенерации не было, не существовало бы `native-image-agent`, но он специально для этого создан.",
+                "how_it_should_be": "Корректно: конфиги автогенерируются агентом при прогоне кода, а ручная правка нужна лишь точечно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Tracing agent` работает прямо в native build, дописывая конфиги во время нативной компиляции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Agent работает только на `JVM`: код прогоняют под агентом на `JVM`, а сгенерированные конфиги затем подают в native build.",
+                "source_of_confusion": "Раз и agent, и native build относятся к одной технологии, кажется, что они выполняются вместе.",
+                "if_it_were_true": "Если бы agent работал в native build, не нужно было бы заранее прогонять приложение на `JVM`, но это обязательный шаг.",
+                "how_it_should_be": "Корректно: сначала прогон на `JVM` с агентом для конфигов, потом отдельная native-сборка с этими конфигами."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно одного smoke-теста под tracing-агентом — он покрывает все пути кода приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Agent видит только реально пройденные code paths; нужны все use cases (тесты + ручной smoke), иначе пропущенные пути упадут в production.",
+                "source_of_confusion": "Кажется, что один прогон «по основному сценарию» затрагивает весь нужный код.",
+                "if_it_were_true": "Если бы хватало одного теста, не было бы рекомендации прогонять полный набор сценариев под агентом.",
+                "how_it_should_be": "Корректно: покрытие конфигов равно покрытию пройденных путей, поэтому нужен максимально полный прогон."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать `Spring Boot Native`-приложения?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно обычных `JVM` unit-тестов — отдельные native-тесты не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Native-специфичные проблемы (отсутствующая регистрация рефлексии) проявляются только в native runtime; обычные `JVM`-тесты их пропускают.",
+                "source_of_confusion": "Раз unit-тесты зелёные на `JVM`, кажется, что приложение готово и к native.",
+                "if_it_were_true": "Если бы JVM-тестов хватало, не было бы goal `nativeTest`, но он существует ради ловли CWA-проблем.",
+                "how_it_should_be": "Корректно: помимо `JVM`-тестов нужен native test для smoke-проверки готовности к native deployment."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Запуск native-тестов: `mvn -Pnative test` или `gradle nativeTest` (полная нативная компиляция + тесты). В native не работает `Mockito.mock()` (нет байт-генерации) — используют `@MockBean` (Spring proxy). `@SpringBootTest` + `@AutoConfigureMockMvc` / `MockMvc` работают.",
+              "correct": true,
+              "sections": {
+                "explanation": "Native test = compile to native + run tests, что ловит CWA-проблемы вроде незарегистрированной рефлексии, невидимые обычным `JVM`-тестам.",
+                "example": "Например, `@SpringBootTest` с `@AutoConfigureMockMvc` и `@MockBean UserService` гоняется в native через `nativeTest` и проверяет контроллер на реально скомпилированном бинарнике.",
+                "when_to_apply": "Гоняешь native test как smoke-проверку готовности приложения к native deployment, обычно на nightly или PR-merge.",
+                "edge_cases": "Native-компиляция занимает 3-5 минут, поэтому запускать nativeTest на каждый коммит непрактично — это слишком медленно.",
+                "related": "[[graalvm-native-interview#Q10]] почему Mockito не работает (ограничения); [[graalvm-native-interview#Q15]] тестирование RuntimeHints без native-сборки; [[graalvm-native-interview#Q9]] сборка Native."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Mockito` работает в native-тестах, если использовать `@ExtendWith(MockitoExtension.class)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Mockito` создаёт прокси через byte-code generation в runtime — это несовместимо с CWA; в native используют `@MockBean`.",
+                "source_of_confusion": "Аннотация `@ExtendWith` ассоциируется с «правильной настройкой», и кажется, что она чинит совместимость.",
+                "if_it_were_true": "Если бы расширение всё чинило, не было бы рекомендации заменять `Mockito.mock()` на `@MockBean` в native.",
+                "how_it_should_be": "Корректно: байт-генерация Mockito в runtime принципиально несовместима с native; спасает только Spring-прокси `@MockBean`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Native test очень быстрый, поэтому его можно запускать на каждый коммит без проблем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Native-компиляция занимает 3-5 минут — запускать на каждый коммит непрактично; лучше nightly или PR-merge.",
+                "source_of_confusion": "Раз это «тоже тесты», кажется, что они идут так же быстро, как обычные unit-тесты.",
+                "if_it_were_true": "Если бы native test был быстрым, не было бы советов выносить его из основного dev-цикла, но они есть.",
+                "how_it_should_be": "Корректно: nativeTest медленный из-за полной нативной компиляции, поэтому его планируют отдельно от частых сборок."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать `RuntimeHints`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Чтобы проверить `RuntimeHints`, нужно каждый раз делать полную нативную сборку и запускать приложение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring предоставляет `RuntimeHintsPredicates` для unit-тестов hints прямо на `JVM`, без полной нативной компиляции.",
+                "source_of_confusion": "Раз hints нужны именно для native, кажется, что и проверять их можно только нативной сборкой.",
+                "if_it_were_true": "Если бы требовалась native-сборка, тестирование hints занимало бы 3-5 минут на прогон, что непрактично для unit-тестов.",
+                "how_it_should_be": "Корректно: hints проверяются быстро на `JVM` через `RuntimeHintsPredicates`, без нативной компиляции."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`RuntimeHintsPredicates` тестируют, что приложение реально стартует в native, фактически запуская native-бинарник.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они не запускают бинарник, а проверяют на `JVM`, зарегистрирован ли нужный тип/поле/ресурс в объекте `RuntimeHints`.",
+                "source_of_confusion": "Слово «predicates» рядом с native наводит на мысль о проверке самого запущенного бинарника.",
+                "if_it_were_true": "Если бы они запускали бинарник, тест был бы медленным, но он гоняется как обычный быстрый `JVM`-unit-тест.",
+                "how_it_should_be": "Корректно: предикаты валидируют содержимое объекта hints на `JVM`, а не поведение native-процесса."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Spring даёт `RuntimeHintsPredicates` для unit-тестирования hints без полной нативной сборки. Создаёшь пустой `RuntimeHints`, прогоняешь свой `registerHints(...)`, затем через `assertThat(RuntimeHintsPredicates.reflection().onField(...)).accepts(hints)` проверяешь регистрацию.",
+              "correct": true,
+              "sections": {
+                "explanation": "Идея в том, чтобы проверять конфигурацию hints обычным быстрым `JVM`-тестом: предикат принимает объект `RuntimeHints` и сообщает, есть ли в нём ожидаемая регистрация.",
+                "example": "Например, `RuntimeHintsPredicates.reflection().onField(PropertyNamingStrategies.class, \"SNAKE_CASE\")` или `.resource().forResource(\"templates/email.html\")` подтверждают, что поле/ресурс зарегистрированы.",
+                "when_to_apply": "Применяешь как быстрый `JVM`-тест, гарантирующий корректность конфигурации hints до долгой нативной сборки.",
+                "edge_cases": "Тест проверяет только то, что hints действительно добавлены, но не то, что зарегистрировано всё нужное — пропущенный в коде hint он не обнаружит.",
+                "related": "[[graalvm-native-interview#Q12]] что такое RuntimeHints; [[graalvm-native-interview#Q14]] native-тестирование приложения; [[graalvm-native-interview#Q11]] способы регистрации рефлексии."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`RuntimeHintsPredicates` автоматически находят все недостающие hints и сообщают, что забыли зарегистрировать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Предикаты лишь проверяют конкретные ожидаемые регистрации, которые ты сам перечислил; они не сканируют код на пропущенные hints.",
+                "source_of_confusion": "Хочется, чтобы инструмент сам подсказывал упущения, поэтому ему приписывают такую способность.",
+                "if_it_were_true": "Если бы они находили все пробелы, не нужны были бы native-тесты для ловли незарегистрированной рефлексии, но они нужны.",
+                "how_it_should_be": "Корректно: предикаты валидируют только заявленные тобой ожидания, а полноту покрытия ловит native test."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

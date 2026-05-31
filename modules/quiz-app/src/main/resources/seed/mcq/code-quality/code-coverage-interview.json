@@ -1,0 +1,1505 @@
+{
+  "topic_slug": "code-coverage-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое code coverage и зачем его измерять?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Code coverage` — метрика, показывающая, какой процент кода был выполнен во время тестов; её измеряют, чтобы находить непокрытые ветки, оценивать полноту тестов и задавать минимальный порог качества в `CI`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Coverage отвечает на вопрос «какой код вообще исполнялся под тестами». Это инструмент поиска слепых пятен и обратной связи, но он подтверждает только факт выполнения строк, а не корректность результата.",
+                "example": "Если `JaCoCo` показывает 0% по классу `PaymentService`, ясно, что ни один тест его не трогает — это явный сигнал о пробеле, ещё до разговоров о качестве assertion'ов.",
+                "when_to_apply": "Метрику включают на старте проекта и держат в `CI` как порог: она дёшево считается на каждом билде и быстро подсвечивает регрессии в полноте тестов.",
+                "edge_cases": "Высокий coverage не равен хорошим тестам: код может быть выполнен без единого assertion. Поэтому цифру всегда читают вместе с качеством проверок.",
+                "related": "[[code-coverage-interview#Q2]] виды coverage; [[code-coverage-interview#Q16]] coverage theater; [[code-coverage-interview#Q6]] какой процент считать хорошим."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Code coverage` — это метрика, гарантирующая корректность кода: если покрытие 100%, в коде не осталось багов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Coverage показывает только факт выполнения строк под тестами, но ничего не говорит о правильности результата — баг может жить в полностью покрытой строке.",
+                "source_of_confusion": "Высокая цифра психологически воспринимается как «всё проверено», поэтому покрытие путают с доказательством корректности.",
+                "if_it_were_true": "Тогда не нужны были бы assertion'ы и mutation testing — хватило бы прогнать код один раз, но практика показывает обратное.",
+                "how_it_should_be": "Coverage измеряет полноту исполнения, а корректность подтверждают осмысленные assertion'ы и проверка поведения."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Code coverage` измеряет производительность кода: процент строк, которые выполняются быстрее заданного порога латентности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Coverage считает долю выполненных под тестами строк, а не их скорость; латентность измеряют профайлеры и бенчмарки, а не покрытие.",
+                "source_of_confusion": "И coverage, и профилирование работают через инструментацию кода, поэтому их функции иногда смешивают.",
+                "if_it_were_true": "Тогда инструменты вроде `JaCoCo` выдавали бы миллисекунды по строкам, но они выдают только флаг «выполнено / нет».",
+                "how_it_should_be": "Покрытие — про полноту тестов, производительность — отдельная область с собственными инструментами вроде `JMH`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Code coverage` — это процент строк кода, прошедших проверку статического анализатора вроде `SonarQube` без замечаний.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Coverage считается во время выполнения тестов (runtime), а статический анализ работает без запуска кода — это два разных измерения.",
+                "source_of_confusion": "`SonarQube` показывает и coverage, и результаты статического анализа на одном дашборде, поэтому их легко перепутать.",
+                "if_it_were_true": "Тогда coverage можно было бы получить без единого теста, просто прогнав линтер, но без тестов покрытие равно нулю.",
+                "how_it_should_be": "Coverage — динамическая метрика от тестов; статический анализ ищет проблемы в коде без его выполнения."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие виды coverage существуют?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Существует ровно один вид coverage — line coverage; все остальные термины (`branch`, `path`) — это просто синонимы покрытия строк.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Виды реально различаются единицей подсчёта: branch считает ветви `if`, path — пути выполнения, и они дают разные проценты на одном коде.",
+                "source_of_confusion": "Line coverage чаще всего показывают по умолчанию, поэтому создаётся впечатление, что других видов нет.",
+                "if_it_were_true": "Тогда branch и line всегда совпадали бы, но строка `a ? b : c` даёт 100% line и 50% branch при одной ветке.",
+                "how_it_should_be": "Видов несколько (line, branch, condition, path, mutation), и они измеряют разные аспекты полноты тестов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Существует несколько видов: `statement/line` (выполненные строки/инструкции), `branch` (обе ветви каждого `if`), `condition` (каждое булево подвыражение), `path` (все пути выполнения), а также `method`, `class` и `mutation` coverage.",
+              "correct": true,
+              "sections": {
+                "explanation": "Виды различаются гранулярностью: от грубого line до строгого path и mutation. Чем тоньше единица измерения, тем точнее видны пробелы, но тем дороже считать.",
+                "example": "`JaCoCo` по умолчанию считает сразу несколько счётчиков: instruction, branch, line, method, class и cyclomatic complexity — это покрывает большинство практических нужд.",
+                "when_to_apply": "Знание видов нужно, когда задают порог: для критичной логики требуют branch, а не line, потому что line легко обмануть одной веткой `if`.",
+                "edge_cases": "`Path coverage` экспоненциален по числу ветвлений, поэтому на реальном коде его почти не считают полностью — ограничиваются branch и condition.",
+                "related": "[[code-coverage-interview#Q3]] line coverage; [[code-coverage-interview#Q4]] branch coverage; [[code-coverage-interview#Q12]] mutation testing."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Существуют только два вида: `frontend coverage` (покрытие UI-кода) и `backend coverage` (покрытие серверного кода).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Деление по слою приложения не является классификацией coverage; виды определяются единицей подсчёта — строка, ветвь, условие, путь, мутация.",
+                "source_of_confusion": "Команды часто отдельно меряют покрытие фронта и бэка, поэтому слой путают с типом метрики.",
+                "if_it_were_true": "Тогда branch coverage был бы неприменим к UI-коду, но `if` в JS-обработчике точно так же имеет две ветви.",
+                "how_it_should_be": "Frontend/backend — это про область кода, а виды coverage (line, branch, path...) применимы к любому коду одинаково."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Существует единственный вид — mutation coverage, а line и branch coverage давно устарели и инструментами не считаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Line и branch — самые распространённые и активно считаются (`JaCoCo`, `SonarQube`); mutation — отдельный, более дорогой вид, не замена остальным.",
+                "source_of_confusion": "Mutation testing считают «более честным», поэтому делают вывод, что прочие виды вытеснены.",
+                "if_it_were_true": "Тогда `JaCoCo` не выдавал бы line/branch в каждом отчёте, но он делает это по умолчанию на каждом билде.",
+                "how_it_should_be": "Line и branch — базовые и широко используемые; mutation дополняет их, оценивая качество assertion'ов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое line coverage?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Line coverage` считает, сколько строк кода покрыто комментариями и документацией относительно общего числа строк файла.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Line coverage меряет строки, выполненные тестами в runtime, а не наличие комментариев; комментарии вообще не исполняются.",
+                "source_of_confusion": "Слово «покрытие» бытово ассоциируется с документированием кода, отсюда подмена смысла.",
+                "if_it_were_true": "Тогда coverage рос бы от добавления комментариев без единого теста, но `JaCoCo` игнорирует не-исполняемые строки.",
+                "how_it_should_be": "Line coverage = доля исполнимых строк, реально выполненных тестами; комментарии в знаменатель не входят."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Line coverage` — это покрытие, при котором каждая строка должна быть выполнена строго в каждом тесте, иначе она не засчитывается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Строка засчитывается как покрытая, если её выполнил хотя бы один тест из всего набора, а не каждый тест по отдельности.",
+                "source_of_confusion": "Из формулы «выполненные / общие» кажется, будто требуется участие всех тестов в каждой строке.",
+                "if_it_were_true": "Тогда добавление узкого теста роняло бы coverage соседних строк, но покрытие агрегируется по всему прогону.",
+                "how_it_should_be": "Достаточно, чтобы строку выполнил один тест из набора; coverage суммируется по всем тестам."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Line coverage` (покрытие строк) = выполненные тестами строки / общее число строк × 100%; это простейший в понимании, но наименее строгий вид, потому что одна строка может содержать несколько ветвлений.",
+              "correct": true,
+              "sections": {
+                "explanation": "Метрика считает строку покрытой, если она исполнилась хотя бы раз. Она ничего не знает о ветвях внутри строки, поэтому переоценивает реальную полноту тестов.",
+                "example": "Строка `String r = v != null ? v.toUpperCase() : \"default\";` даёт 100% line coverage, даже если `v` всегда не `null` — ветка `else` остаётся непроверенной.",
+                "when_to_apply": "Line coverage берут как быстрый верхнеуровневый индикатор и стартовый порог, но для условной логики дополняют branch coverage.",
+                "edge_cases": "Одна строка с тернарным оператором или `&&` скрывает несколько веток: line покажет 100%, тогда как branch может быть 50%.",
+                "related": "[[code-coverage-interview#Q4]] чем branch строже; [[code-coverage-interview#Q5]] statement vs line; [[code-coverage-interview#Q2]] виды coverage."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Line coverage` — самый строгий вид покрытия, потому что учитывает все ветки внутри каждой строки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Line coverage наоборот наименее строгий: он не различает ветви внутри строки, эту работу делает branch coverage.",
+                "source_of_confusion": "«Строка» кажется мелкой единицей, поэтому ошибочно считают её самой детальной метрикой.",
+                "if_it_were_true": "Тогда строка с тернарником давала бы 50% при одной выполненной ветке, но line показывает 100%.",
+                "how_it_should_be": "Line — самый грубый вид; ветви внутри строки оценивает branch coverage, он строже."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое branch coverage и чем он важнее line coverage?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Branch coverage` считает количество git-веток (`branch`) в репозитории, покрытых тестами, относительно всех веток проекта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Branch здесь — это ветвь условного оператора в коде (`true`/`false` у `if`), а не git-ветка; coverage не имеет отношения к VCS.",
+                "source_of_confusion": "Слово «branch» одинаково звучит в git и в теории покрытия, отсюда смешение понятий.",
+                "if_it_were_true": "Тогда coverage менялся бы при создании feature-веток в git, но `JaCoCo` считает покрытие исполненного кода независимо от VCS.",
+                "how_it_should_be": "Branch coverage — про ветви `if/switch/?:` в исполняемом коде; git-ветки к метрике отношения не имеют."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Branch coverage` менее строг, чем line coverage, потому что игнорирует ветви `else` и считает только `then`-ветку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Branch строже line и требует именно обе ветви (`then` и `else`/«не вошли»); это line его не различает.",
+                "source_of_confusion": "Кажется, что раз `else` иногда не написан явно, branch его и не считает — но он считает «невход» как ветку.",
+                "if_it_were_true": "Тогда тест только с `paid=true` давал бы 100% branch, но реально он даёт 50%, требуя и ветку `else`.",
+                "how_it_should_be": "Branch строже line: проверяет обе ветви каждого условия, включая неявную «не вошли в `if`»."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Branch coverage` и line coverage всегда дают одинаковый процент, поэтому достаточно мерить любой из них.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они расходятся на условном коде: одна выполненная ветвь даёт полный line, но только половину branch у двухветочного `if`.",
+                "source_of_confusion": "На прямом коде без `if` цифры действительно совпадают, и это обобщают на весь код.",
+                "if_it_were_true": "Тогда `SonarQube` не показывал бы их раздельными колонками, но он делает это именно из-за расхождения.",
+                "how_it_should_be": "На ветвящемся коде branch обычно ниже line; поэтому их меряют и показывают отдельно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Branch coverage` считает, были ли выполнены обе ветви каждого условного оператора (`true` и `false`); он строже line coverage, потому что требует покрытия граничных случаев, а не только одного прохода через `if`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Branch смотрит на каждое ветвление отдельно: для `if (cond)` нужно выполнить и `cond == true`, и `cond == false`. Это ловит пропущенные ветки, которые line coverage маскирует.",
+                "example": "Для метода с `if (order.isPaid()) ship(...) else notifyUnpaid(...)` тест только с `paid=true` даёт 100% line, но лишь 50% branch — ветка `notifyUnpaid` не проверена.",
+                "when_to_apply": "Branch coverage требуют для условной и бизнес-логики, где важны граничные случаи; `SonarQube` и `JaCoCo` показывают его отдельным счётчиком.",
+                "edge_cases": "Одно `if` без `else` всё равно имеет две ветви: «вошли» и «не вошли». Branch требует проверить обе, даже когда `else` в коде не написан.",
+                "related": "[[code-coverage-interview#Q3]] line coverage; [[code-coverage-interview#Q2]] виды coverage; [[code-coverage-interview#Q6]] хороший процент."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое statement coverage vs line coverage?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Statement coverage` — каждая инструкция (statement) выполнена хотя бы раз; `line coverage` — каждая строка выполнена хотя бы раз. Разница проявляется, когда на одной строке несколько инструкций.",
+              "correct": true,
+              "sections": {
+                "explanation": "Statement оперирует логическими инструкциями, а line — физическими строками файла. Если в строке три инструкции через `;`, statement считает три единицы, а line — одну.",
+                "example": "Строка `int a = 1; int b = 2; int c = a + b;` — это 3 statements, но 1 line. `JaCoCo` использует близкое понятие instruction coverage, что точнее line.",
+                "when_to_apply": "Различие важно, когда команда сравнивает инструменты: одни считают строки, другие — инструкции/байткод, и проценты на одном проекте могут отличаться.",
+                "edge_cases": "При стиле «одна инструкция на строку» statement и line почти совпадают; расхождение растёт только при упаковке нескольких инструкций в строку.",
+                "related": "[[code-coverage-interview#Q3]] line coverage; [[code-coverage-interview#Q7]] как работает JaCoCo; [[code-coverage-interview#Q2]] виды coverage."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Statement coverage` считает только объявления переменных, а line coverage — только вызовы методов; вместе они дают полное покрытие.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Statement охватывает любые инструкции (присваивания, вызовы, возвраты), а line — любые физические строки; ни один не ограничен одним видом конструкций.",
+                "source_of_confusion": "Слово «statement» в английском бытово переводят как «объявление», отсюда сужение смысла до деклараций.",
+                "if_it_were_true": "Тогда метод без переменных имел бы 0% statement coverage, но его инструкции (вызовы, return) тоже считаются.",
+                "how_it_should_be": "Statement = любая инструкция, line = любая строка; оба покрывают весь исполняемый код, а не его части."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Statement coverage` всегда строго меньше line coverage, потому что инструкций в файле всегда больше, чем строк.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Соотношение зависит от стиля кода, и при «одна инструкция на строку» цифры почти совпадают, а не одна меньше другой систематически.",
+                "source_of_confusion": "Кажется логичным, что мелких единиц (инструкций) всегда больше, поэтому их процент должен быть ниже.",
+                "if_it_were_true": "Тогда нельзя было бы получить равные проценты, но при типичном форматировании Java они практически равны.",
+                "how_it_should_be": "Расхождение появляется лишь при нескольких инструкциях в строке; обычно statement и line близки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Line coverage` точнее statement coverage, потому что физическая строка — более мелкая единица, чем инструкция.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: инструкция мельче и точнее строки, поэтому `JaCoCo` использует instruction coverage как более детальную метрику.",
+                "source_of_confusion": "Интуитивно «строка» кажется мельче «инструкции», хотя одна строка может содержать несколько инструкций.",
+                "if_it_were_true": "Тогда `JaCoCo` мерил бы строки вместо инструкций, но он считает именно instruction coverage ради точности.",
+                "how_it_should_be": "Instruction/statement мельче строки и потому точнее; line — более грубая единица."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой процент coverage считается хорошим?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Хорошим считается ровно 100% coverage для любого кода — всё, что ниже, означает недостаточно протестированный проект.",
+              "correct": false,
+              "sections": {
+                "what_actually": "100% для всего кода нерентабельно: последние проценты требуют непропорциональных усилий, а DTO и main-методы вообще исключают из подсчёта.",
+                "source_of_confusion": "Круглая цифра 100% выглядит как очевидный идеал, поэтому её принимают за единственный «правильный» порог.",
+                "if_it_were_true": "Тогда `Sonar Way` требовал бы 100%, но он ставит 80% и именно на новом коде, а не на всём.",
+                "how_it_should_be": "Порог зависит от типа кода: 90%+ для критичной логики, 70–80% для обычного, исключения для DTO/config."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Универсального числа нет — контекст решает: критичная бизнес-логика 90%+ branch, обычный сервисный код 70–80%, утилиты 80%+, а DTO и конфигурацию исключают из подсчёта. Разумный общий стандарт — ≥ 80% на новом коде.",
+              "correct": true,
+              "sections": {
+                "explanation": "Порог зависит от риска и типа кода. Гнаться за единой цифрой для всего проекта бессмысленно: для платежей нужна одна планка, для контроллеров важнее интеграционные тесты.",
+                "example": "`SonarQube Sonar Way Quality Gate` ставит ≥ 80% coverage на **новом** коде — это блокирует merge кода без тестов, не требуя мгновенно покрыть всё legacy.",
+                "when_to_apply": "Дифференцированные пороги задают при настройке Quality Gate: высокий процент для критичной логики, исключения для DTO/config, фокус на новом коде.",
+                "edge_cases": "Интеграционный слой (контроллеры) плохо измеряется unit-покрытием — там осмысленнее интеграционные тесты, чем погоня за процентом line coverage.",
+                "related": "[[code-coverage-interview#Q19]] стоит ли гнаться за 100%; [[code-coverage-interview#Q23]] что не покрывать; [[code-coverage-interview#Q22]] coverage в code review."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Хорошим считается любой coverage выше 0% — сам факт наличия тестов важнее их доли, поэтому процент вообще не показателен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наличие тестов важно, но конкретные пороги (например, 80% на новом коде) задают как раз чтобы отличить осмысленное покрытие от символического.",
+                "source_of_confusion": "Реакция на «погоню за метрикой» иногда доводится до отрицания любых порогов вообще.",
+                "if_it_were_true": "Тогда Quality Gate с порогом coverage не имел бы смысла, но команды массово используют ≥ 80% на новом коде.",
+                "how_it_should_be": "Пороги нужны и дифференцируются по риску: критичной логике — 90%+, обычному коду — 70–80%."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Хороший порог — единое число 50% для всего проекта, одинаковое для платёжной логики, утилит и DTO.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Единый порог игнорирует риск: для критичной бизнес-логики 50% мало (нужно 90%+ branch), а DTO вообще исключают из подсчёта.",
+                "source_of_confusion": "Хочется простоты «одно число на всех», но разные типы кода несут разный риск регрессий.",
+                "if_it_were_true": "Тогда платёжный сервис и геттеры DTO требовали бы одинаковой планки, но их роли и риски несравнимы.",
+                "how_it_should_be": "Пороги дифференцируют по контексту: высокий для критичной логики, исключения для DTO и конфигурации."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое JaCoCo и как он работает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`JaCoCo` работает через статический анализ исходного кода: он парсит `.java`-файлы и оценивает покрытие, не запуская тесты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JaCoCo измеряет покрытие в runtime через инструментацию байткода во время прогона тестов; без запуска тестов он покрытие не получит.",
+                "source_of_confusion": "Многие инструменты качества (линтеры) работают статически, поэтому JaCoCo ошибочно относят к ним же.",
+                "if_it_were_true": "Тогда `.exec`-файл с данными прогона был бы не нужен, но JaCoCo именно из него строит отчёты.",
+                "how_it_should_be": "JaCoCo инструментирует байткод и собирает данные во время выполнения тестов, а не анализирует исходники статически."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`JaCoCo` модифицирует исходный код `.java`, вставляя в него специальные строки-счётчики, которые остаются в репозитории.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JaCoCo инструментирует байткод, а не исходники; в режиме on-the-fly классы на диске вообще не меняются, и репозиторий остаётся чистым.",
+                "source_of_confusion": "Слово «инструментация» наводит на мысль о правке именно исходного кода, который видит разработчик.",
+                "if_it_were_true": "Тогда после прогона тестов в git появлялись бы изменённые `.java`-файлы, но их не возникает.",
+                "how_it_should_be": "Инструментируется байткод (on-the-fly или offline); исходники не изменяются и в VCS ничего не попадает."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`JaCoCo` (Java Code Coverage) — de-facto стандарт измерения покрытия в Java; он работает через bytecode instrumentation: вставляет probe-инструкции в ветки, при прогоне тестов probes пишут факт выполнения в `.exec`-файл, из которого генерируются отчёты (XML/HTML/CSV).",
+              "correct": true,
+              "sections": {
+                "explanation": "JaCoCo не правит исходники, а инструментирует байткод. Probe в каждой ветке отмечает, исполнилась ли она; собранные данные агрегируются в `.exec`, а потом превращаются в человекочитаемые отчёты.",
+                "example": "В Gradle `test { finalizedBy jacocoTestReport }` подключает Java-агент on-the-fly, и после прогона в `build/reports/jacoco` появляется HTML с подсветкой непокрытых строк.",
+                "when_to_apply": "JaCoCo берут как дефолт для Java/JVM-проектов: он интегрируется с Maven, Gradle и `SonarQube` и даёт сразу line/branch/instruction/complexity счётчики.",
+                "edge_cases": "Есть два режима: on-the-fly (Java-агент, без правки классов на диске) и offline (классы инструментируются заранее) — последний нужен, когда агент подключить нельзя.",
+                "related": "[[code-coverage-interview#Q8]] настройка в Maven/Gradle; [[code-coverage-interview#Q9]] threshold; [[code-coverage-interview#Q11]] интеграция с SonarQube."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`JaCoCo` — это сервис в облаке, который принимает залитые тесты по сети и возвращает процент покрытия через API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JaCoCo — локальная библиотека/Java-агент, работающая внутри сборки; она не отправляет код в облако и не требует сети.",
+                "source_of_confusion": "Облачные сервисы вроде `Codecov` действительно так работают, и их функции переносят на JaCoCo.",
+                "if_it_were_true": "Тогда без интернета coverage было бы не получить, но `mvn verify` с JaCoCo считает покрытие полностью офлайн.",
+                "how_it_should_be": "JaCoCo выполняется локально как агент/плагин сборки; облачные сервисы (`Codecov`) — это отдельный слой поверх отчётов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить JaCoCo в Maven/Gradle?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В Maven достаточно добавить зависимость `org.jacoco:jacoco` в `<dependencies>` — отчёт сгенерируется сам без отдельных execution'ов плагина.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JaCoCo подключают как плагин с execution'ами `prepare-agent` и `report`, а не как обычную зависимость; без них отчёт не появится.",
+                "source_of_confusion": "Многие библиотеки в Maven подключаются именно через `<dependencies>`, и эту привычку переносят на JaCoCo.",
+                "if_it_were_true": "Тогда `mvn verify` сразу выдавал бы отчёт от одной зависимости, но без `prepare-agent` агент не запустится.",
+                "how_it_should_be": "JaCoCo настраивают как build-плагин с execution'ами prepare-agent и report; зависимости в `<dependencies>` тут не используют."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В Gradle нужно вручную скачать JaCoCo CLI, запускать тесты через него и парсить вывод скриптом — встроенного плагина нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gradle имеет встроенный плагин `jacoco`, подключаемый одной строкой `id 'jacoco'`; ручной CLI и парсинг не требуются.",
+                "source_of_confusion": "Для некоторых инструментов покрытия действительно нужен внешний CLI, и это обобщают на JaCoCo.",
+                "if_it_were_true": "Тогда в документации Gradle не было бы официального jacoco-плагина, но он входит в стандартную поставку.",
+                "how_it_should_be": "Достаточно `plugins { id 'jacoco' }` и связки `test` с `jacocoTestReport`; CLI вручную не нужен."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для `SonarQube` достаточно HTML-отчёта JaCoCo; XML-отчёт включать не нужно, так как Sonar парсит HTML напрямую.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SonarQube` читает именно XML-отчёт JaCoCo, поэтому нужен `xml.required = true`; HTML предназначен для людей, а не для Sonar.",
+                "source_of_confusion": "HTML-отчёт удобнее читать глазами, и из этого делают вывод, что его же потребляют инструменты.",
+                "if_it_were_true": "Тогда без XML Sonar показывал бы покрытие, но при отключённом XML он выдаёт 0% coverage.",
+                "how_it_should_be": "Для Sonar обязателен XML-отчёт (`xml.required = true`); HTML — это человекочитаемое представление."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В Maven подключают `jacoco-maven-plugin` с execution'ами `prepare-agent` (готовит Java-агент) и `report` (фаза `verify`); в Gradle добавляют `plugins { id 'jacoco' }`, привязывают `test { finalizedBy jacocoTestReport }` и включают `xml.required = true` для `SonarQube`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Минимальная настройка — два шага: подключить агент перед тестами и сгенерировать отчёт после. В Maven это два execution'а, в Gradle — плагин плюс связка задач `test` и `jacocoTestReport`.",
+                "example": "В Gradle блок `jacocoTestReport { dependsOn test; reports { xml.required = true; html.required = true } }` даёт и XML для Sonar, и HTML для людей.",
+                "when_to_apply": "Эту настройку делают на старте проекта, чтобы coverage считался автоматически на каждом билде, а отчёт был доступен и инструментам, и разработчикам.",
+                "edge_cases": "XML-отчёт обязателен именно для `SonarQube`: без `xml.required = true` Sonar не увидит покрытие, даже если HTML-отчёт успешно сгенерирован.",
+                "related": "[[code-coverage-interview#Q7]] как работает JaCoCo; [[code-coverage-interview#Q9]] threshold; [[code-coverage-interview#Q11]] интеграция с SonarQube."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить minimum coverage threshold в JaCoCo?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В Maven добавляют execution с goal `check` и блоком `<rules>`, где для элемента `BUNDLE` задают limit'ы по counter'ам `LINE`/`BRANCH` со значением `COVEREDRATIO` и `<minimum>` (например, 0.80); в Gradle то же делает `jacocoTestCoverageVerification` с `violationRules`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Threshold — это правило проверки: если фактическое покрытие ниже minimum, сборка падает. Правила задают по counter'у (LINE, BRANCH), значению (COVEREDRATIO) и элементу (BUNDLE, CLASS).",
+                "example": "В Maven `<limit><counter>BRANCH</counter><value>COVEREDRATIO</value><minimum>0.70</minimum></limit>` уронит билд, если branch coverage опустится ниже 70%.",
+                "when_to_apply": "Threshold ставят, чтобы coverage не падал со временем: правило в `CI` блокирует merge кода, снижающего покрытие ниже договорённого уровня.",
+                "edge_cases": "`COVEREDRATIO` задаётся долей (0.80 = 80%), а не процентом; перепутав 80 и 0.80, легко получить нереалистичный порог и постоянно красный билд.",
+                "related": "[[code-coverage-interview#Q8]] базовая настройка; [[code-coverage-interview#Q24]] threshold в legacy; [[code-coverage-interview#Q10]] исключения классов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Threshold в JaCoCo задаётся переменной окружения `JACOCO_MIN_COVERAGE=80` — плагин сам читает её и падает при недоборе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JaCoCo читает порог из конфигурации плагина (`<rules>` в Maven или `violationRules` в Gradle), а не из переменной окружения с таким именем.",
+                "source_of_confusion": "Многие инструменты конфигурируются env-переменными, и эту модель ошибочно приписывают JaCoCo.",
+                "if_it_were_true": "Тогда в документации фигурировал бы `JACOCO_MIN_COVERAGE`, но порог описывают через goal `check` и `violationRules`.",
+                "how_it_should_be": "Порог задают в конфигурации сборки: goal `check` с `<rules>` (Maven) или `jacocoTestCoverageVerification` (Gradle)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Threshold настраивается только в `SonarQube` Quality Gate; сам JaCoCo не умеет падать при недоборе покрытия.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JaCoCo умеет проваливать билд сам — через goal `check`/`jacocoTestCoverageVerification`, независимо от наличия `SonarQube`.",
+                "source_of_confusion": "Quality Gate в Sonar — заметный механизм блокировки, поэтому проверку порога приписывают только ему.",
+                "if_it_were_true": "Тогда без Sonar нельзя было бы завалить билд по coverage, но `mvn verify` с goal `check` делает это локально.",
+                "how_it_should_be": "JaCoCo проверяет порог встроенно (goal check / verification task); Sonar Quality Gate — отдельный, дополнительный механизм."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Минимальный порог в JaCoCo указывается в процентах целым числом, например `<minimum>80</minimum>` для 80% line coverage.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`COVEREDRATIO` задаётся долей от 0 до 1, поэтому 80% — это `<minimum>0.80</minimum>`, а не `80`.",
+                "source_of_confusion": "Люди мыслят покрытие в процентах, поэтому подставляют 80 вместо доли 0.80.",
+                "if_it_were_true": "Тогда `<minimum>80</minimum>` означало бы 80%, но JaCoCo трактует это как 8000% и билд всегда падает.",
+                "how_it_should_be": "Для COVEREDRATIO порог — доля (0.80 = 80%); целое число 80 ломает правило."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как исключить классы из подсчёта coverage в JaCoCo?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Чтобы исключить класс, на него вешают аннотацию `@JaCoCoIgnore` прямо в исходном коде — других способов нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стандартное исключение делают паттернами `<excludes>` в конфигурации плагина; аннотации `@JaCoCoIgnore` в JaCoCo не существует.",
+                "source_of_confusion": "В других инструментах встречаются ignore-аннотации, и по аналогии их выдумывают для JaCoCo.",
+                "if_it_were_true": "Тогда исключение требовало бы правки каждого класса, но `**/dto/**` исключает целый пакет одной строкой.",
+                "how_it_should_be": "Исключения задают паттернами в `<excludes>` (Maven) или фильтром classDirectories (Gradle), без аннотаций в коде."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Исключают DTO, generated-код, конфигурационные классы и main-методы: в Maven через `<excludes>` с паттернами вроде `/dto/`, `/config/`, `/*Application.class`, `/generated/`; в Gradle — фильтруя `classDirectories` через `fileTree(... exclude: [...])`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Исключения нужны, чтобы метрика отражала покрытие осмысленной логики, а не геттеров DTO и сгенерированного кода. Паттерны задаются по пути/имени класса в байткоде.",
+                "example": "Паттерн `**/dto/**` уберёт из знаменателя все классы пакета `dto`, а `**/*Application.class` — main-класс Spring Boot, который тестами не покрывают.",
+                "when_to_apply": "Исключения настраивают вместе с threshold: иначе непокрываемые DTO и config искусственно занижают процент и делают порог недостижимым.",
+                "edge_cases": "В Maven паттерны указывают по байткоду (`.class`, со слешами), а не по исходным `.java`; ошибка в синтаксисе паттерна тихо ничего не исключит.",
+                "related": "[[code-coverage-interview#Q23]] что не имеет смысла покрывать; [[code-coverage-interview#Q9]] threshold; [[code-coverage-interview#Q6]] хороший процент."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Исключение из coverage достигается удалением классов из репозитория перед запуском тестов, чтобы они не попали в подсчёт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Классы остаются в коде и продолжают компилироваться; из метрики их убирают конфигурацией excludes, а не удалением файлов.",
+                "source_of_confusion": "«Исключить из подсчёта» бытово понимают буквально как «убрать», отсюда идея удаления.",
+                "if_it_were_true": "Тогда приложение перестало бы собираться без DTO и config, но они нужны в рантайме и просто не учитываются в coverage.",
+                "how_it_should_be": "Файлы остаются на месте; excludes лишь исключают их из знаменателя метрики покрытия."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В Maven паттерны excludes указывают по исходным файлам с расширением `.java`, например `/dto/*.java`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JaCoCo работает с байткодом, поэтому паттерны указывают по `.class`-файлам (`**/dto/**`, `**/*Application.class`), а не по `.java`.",
+                "source_of_confusion": "Разработчики мыслят исходниками, поэтому интуитивно пишут `.java` в паттернах.",
+                "if_it_were_true": "Тогда `**/dto/*.java` исключал бы пакет, но JaCoCo матчит по байткоду и такой паттерн ничего не уберёт.",
+                "how_it_should_be": "Паттерны excludes пишут по `.class` (байткоду): `**/dto/**`, `**/*Application.class` и т. п."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как JaCoCo интегрируется с SonarQube?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`SonarQube` сам инструментирует байткод и считает coverage заново, а отчёт JaCoCo при этом не используется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sonar не считает покрытие сам — он импортирует готовый XML-отчёт JaCoCo через `sonar.coverage.jacoco.xmlReportPaths`.",
+                "source_of_confusion": "Sonar показывает coverage в своём UI, поэтому кажется, что он его и вычисляет с нуля.",
+                "if_it_were_true": "Тогда `xmlReportPaths` был бы не нужен, но без него Sonar показывает 0% покрытия.",
+                "how_it_should_be": "JaCoCo считает покрытие и генерирует XML, а Sonar лишь импортирует этот XML по указанному пути."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для интеграции Sonar читает бинарный `.exec`-файл JaCoCo напрямую, поэтому XML-отчёт генерировать не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Современный Sonar потребляет именно XML-отчёт (`sonar.coverage.jacoco.xmlReportPaths`), а не сырой `.exec`; XML обязателен.",
+                "source_of_confusion": "`.exec` — основной артефакт JaCoCo, поэтому думают, что Sonar читает его, минуя XML.",
+                "if_it_were_true": "Тогда свойство указывало бы путь к `.exec`, но оно явно называется `xmlReportPaths`.",
+                "how_it_should_be": "JaCoCo превращает `.exec` в XML, и именно XML Sonar импортирует для отображения покрытия."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`SonarQube` читает отчёт JaCoCo в XML-формате: нужно настроить JaCoCo на генерацию XML и указать путь к нему через свойство `sonar.coverage.jacoco.xmlReportPaths`; для многомодульных проектов задают агрегированный отчёт или пути к отчётам каждого модуля.",
+              "correct": true,
+              "sections": {
+                "explanation": "Sonar не считает покрытие сам — он импортирует данные из готового XML-отчёта JaCoCo. Связка строится через одно свойство, указывающее, где лежит этот XML.",
+                "example": "Для Maven путь по умолчанию `target/site/jacoco/jacoco.xml`, и его передают как `sonar.coverage.jacoco.xmlReportPaths=${project.build.directory}/site/jacoco/jacoco.xml`.",
+                "when_to_apply": "Интеграцию настраивают, когда coverage нужно видеть в дашборде Sonar и в Quality Gate (например, порог на новом коде), а не только в локальном HTML.",
+                "edge_cases": "В многомодульном проекте один модульный XML покроет лишь свой модуль — нужен агрегированный отчёт или перечисление путей всех модулей, иначе Sonar недосчитает покрытие.",
+                "related": "[[code-coverage-interview#Q8]] генерация XML-отчёта; [[code-coverage-interview#Q21]] coverage в многомодульном проекте; [[code-coverage-interview#Q25]] differential coverage."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В многомодульном проекте достаточно указать XML-отчёт любого одного модуля — Sonar автоматически найдёт покрытие всех остальных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один модульный XML покрывает только свой модуль; для всех нужен агрегированный отчёт или перечисление путей каждого модуля.",
+                "source_of_confusion": "Кажется, что Sonar «обходит» проект целиком, поэтому хватит одного отчёта-точки входа.",
+                "if_it_were_true": "Тогда покрытие остальных модулей появлялось бы само, но без их XML Sonar покажет по ним 0%.",
+                "how_it_should_be": "Нужен агрегированный отчёт или список путей ко всем модульным XML, чтобы Sonar учёл покрытие каждого модуля."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое mutation testing?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Mutation testing` — это случайное изменение входных данных тестов (фаззинг), чтобы найти падения на неожиданных значениях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mutation testing меняет сам код (мутирует операторы/возвраты), а не входные данные; подбор неожиданных входов — это фаззинг, другой подход.",
+                "source_of_confusion": "Оба метода вносят «случайные» изменения и ищут слабые места, поэтому их путают.",
+                "if_it_were_true": "Тогда мутации применялись бы к параметрам тестов, но PIT мутирует именно байткод тестируемого класса.",
+                "how_it_should_be": "Mutation testing мутирует код и проверяет, ловят ли это тесты; фаззинг подбирает входные данные."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Mutation testing` — это запуск тестов в нескольких потоках одновременно для поиска concurrency-багов и гонок данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mutation testing не про многопоточность: он по очереди создаёт версии кода с изменениями и проверяет реакцию тестов.",
+                "source_of_confusion": "Слово «mutation» иногда ассоциируют с мутирующим (изменяемым) состоянием в конкурентности.",
+                "if_it_were_true": "Тогда инструмент искал бы deadlock'и, но PIT сообщает про выживших мутантов, а не про гонки.",
+                "how_it_should_be": "Mutation testing оценивает строгость тестов через изменения кода; concurrency-баги ищут отдельными инструментами."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Mutation testing` — это автоматическое изменение тестов (а не кода) для повышения их coverage до 100%.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Инструмент мутирует тестируемый код, а не тесты, и оценивает качество тестов; он не редактирует тесты ради роста покрытия.",
+                "source_of_confusion": "Кажется логичным, что «улучшение тестов» означает их автоматическую правку.",
+                "if_it_were_true": "Тогда после прогона тесты были бы изменены, но PIT оставляет тесты как есть и лишь сообщает про выживших мутантов.",
+                "how_it_should_be": "Мутации вносятся в код; тесты не меняются — их строгость лишь оценивается через mutation score."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Mutation testing` — автоматическое введение мелких изменений (мутаций) в код с проверкой, обнаружат ли их тесты: инструмент создаёт «мутантов», прогоняет тесты против каждого, и если тесты падают — мутант «убит» (тесты хорошие), а если проходят — мутант «выжил» (тесты недостаточно строгие).",
+              "correct": true,
+              "sections": {
+                "explanation": "Mutation testing проверяет не код, а сами тесты: насколько они чувствительны к изменению поведения. Он отвечает на вопрос «а проверяют ли наши тесты то, что должны?», который line coverage обойти молчанием.",
+                "example": "Если в `return age >= 18` мутируют `>=` на `>` и все тесты по-прежнему зелёные — мутант выжил, значит граничный случай `age == 18` нигде не проверяется.",
+                "when_to_apply": "Mutation testing применяют, когда coverage высокий, но есть подозрение на coverage theater: он вскрывает тесты без реальных assertion'ов.",
+                "edge_cases": "Он дороже обычного coverage: на каждого мутанта прогоняется набор тестов, поэтому его часто ограничивают критичными пакетами, а не всем проектом.",
+                "related": "[[code-coverage-interview#Q13]] как работает PIT; [[code-coverage-interview#Q14]] mutation score; [[code-coverage-interview#Q18]] осмысленный coverage."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает PIT (Pitest)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`PIT (Pitest)` — самый популярный инструмент mutation testing для Java: его настраивают плагином (Maven `pitest-maven` с `targetClasses`, `targetTests`, `mutationThreshold`), запускают `mvn test-compile pitest:mutationCoverage`, и он генерирует HTML-отчёт о том, какие мутанты выжили и где.",
+              "correct": true,
+              "sections": {
+                "explanation": "PIT берёт целевые классы, создаёт их мутантов на уровне байткода и прогоняет против них целевые тесты. По результатам он строит отчёт с mutation score и подсветкой выживших мутаций.",
+                "example": "Конфигурация `<targetClasses>com.example.service.*</targetClasses>` плюс `<mutationThreshold>70</mutationThreshold>` уронит билд, если mutation score по сервисам ниже 70%.",
+                "when_to_apply": "PIT запускают по критичным пакетам (бизнес-логика), а не по всему проекту, так как mutation testing вычислительно дороже обычного прогона тестов.",
+                "edge_cases": "Команда `pitest:mutationCoverage` требует предварительного `test-compile`; запуск без скомпилированных тестов даст пустой или ошибочный отчёт.",
+                "related": "[[code-coverage-interview#Q12]] что такое mutation testing; [[code-coverage-interview#Q14]] mutation score; [[code-coverage-interview#Q15]] какие мутации создаёт Pitest."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`PIT` работает как Java-агент в проде: он мутирует код работающего приложения и смотрит, какие запросы пользователей падают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PIT — это инструмент сборки, мутирующий код в офлайн-прогоне тестов; он не подключается к проду и не трогает реальный трафик.",
+                "source_of_confusion": "JaCoCo действительно работает как агент, и эту модель ошибочно переносят на PIT.",
+                "if_it_were_true": "Тогда PIT требовал бы доступ к продакшену, но он запускается локально через `pitest:mutationCoverage`.",
+                "how_it_should_be": "PIT мутирует целевые классы и прогоняет против них unit-тесты в сборке, без участия прод-окружения."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`PIT` создаёт мутантов только в тестовых классах (`*Test`), проверяя, не сломаются ли сами тесты от изменений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PIT мутирует именно `targetClasses` (тестируемый код), а `targetTests` указывают, какими тестами их проверять; тесты не мутируются.",
+                "source_of_confusion": "Из наличия параметра `targetTests` делают вывод, что мутируют тесты.",
+                "if_it_were_true": "Тогда смысл mutation score терялся бы, но он считает убитых мутантов в продакшен-коде, а не в тестах.",
+                "how_it_should_be": "Мутируются `targetClasses`; `targetTests` — это набор тестов, которым проверяют выживание мутантов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`PIT` запускается одной командой без компиляции тестов: `mvn pitest:mutationCoverage` сразу работает на исходниках.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PIT работает с байткодом, поэтому тесты должны быть скомпилированы — типичный запуск это `mvn test-compile pitest:mutationCoverage`.",
+                "source_of_confusion": "Многие Maven-плагины не требуют явной фазы компиляции, и это обобщают на PIT.",
+                "if_it_were_true": "Тогда `mvn pitest:mutationCoverage` без `test-compile` давал бы корректный отчёт, но без байткода тестов он не отработает.",
+                "how_it_should_be": "Перед mutation-прогоном нужен `test-compile`, так как PIT мутирует и исполняет байткод."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое mutation score?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Mutation score` = выжившие мутанты / всего мутантов × 100%, то есть чем выше score, тем хуже тесты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Score считается по убитым мутантам, а не по выжившим; высокий score означает хорошие тесты, а не плохие.",
+                "source_of_confusion": "Логично спутать направление: «мутанты выжили» звучит как достижение, хотя выживание — это провал тестов.",
+                "if_it_were_true": "Тогда идеальные тесты давали бы 0% score, но цель — 90%+, что соответствует убитым мутантам.",
+                "how_it_should_be": "Mutation score = убитые / всего × 100%; чем больше убито, тем строже тесты."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Mutation Score` = убитые мутанты / всего мутантов × 100%; 90%+ — превосходное качество тестов, 70–90% — хороший уровень, < 50% — тесты есть, но они не проверяют поведение. Это более надёжный индикатор качества тестов, чем line coverage.",
+              "correct": true,
+              "sections": {
+                "explanation": "Mutation score измеряет, какую долю внесённых изменений поведения тесты заметили. В отличие от coverage, он реагирует именно на силу assertion'ов, а не на факт выполнения строк.",
+                "example": "При 90% line coverage, но mutation score 40% видно, что код выполняется, но assertion'ы слабые — это классический признак coverage theater.",
+                "when_to_apply": "На mutation score опираются, когда нужно отличить осмысленные тесты от формальных: высокий coverage с низким score — сигнал переписать тесты.",
+                "edge_cases": "Некоторые мутанты эквивалентны (не меняют наблюдаемое поведение) и убить их нельзя в принципе — из-за них 100% mutation score часто недостижим.",
+                "related": "[[code-coverage-interview#Q12]] mutation testing; [[code-coverage-interview#Q18]] осмысленный coverage; [[code-coverage-interview#Q16]] coverage theater."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Mutation score` — это просто другое название для line coverage, посчитанное тем же `JaCoCo`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные метрики: line coverage считает выполненные строки, а mutation score — долю обнаруженных изменений поведения, и они часто сильно расходятся.",
+                "source_of_confusion": "Обе выражаются в процентах и связаны с «качеством тестов», поэтому их отождествляют.",
+                "if_it_were_true": "Тогда они всегда совпадали бы, но 90% line при 40% mutation score — типичная картина coverage theater.",
+                "how_it_should_be": "Mutation score измеряет силу assertion'ов и считается mutation-инструментом (PIT), а не равен line coverage от JaCoCo."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Mutation score` 100% всегда достижим и обязателен; всё, что ниже, означает явные баги в тестах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "100% часто недостижим из-за эквивалентных мутантов, которые не меняют наблюдаемое поведение и которых нельзя убить.",
+                "source_of_confusion": "Круглые 100% кажутся обязательным идеалом, как и в случае с coverage.",
+                "if_it_were_true": "Тогда любой выживший мутант был бы дефектом тестов, но эквивалентные мутанты выживают по определению.",
+                "how_it_should_be": "Реалистичная цель — 70–90%+; эквивалентные мутанты делают полные 100% практически недостижимыми."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие мутации создаёт Pitest?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Pitest` создаёт мутации, переименовывая переменные и методы в коде, чтобы проверить, что тесты не зависят от имён.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Мутаторы Pitest меняют поведение (операторы сравнения, арифметику, возвращаемые значения), а не имена; переименование не влияет на исполнение и не имеет смысла как мутация.",
+                "source_of_confusion": "Рефакторинг-переименование тоже называют «изменением кода», поэтому его путают с мутацией.",
+                "if_it_were_true": "Тогда мутант с переименованной переменной отличался бы поведением, но семантика осталась бы прежней и тест не упал бы по делу.",
+                "how_it_should_be": "Мутаторы меняют семантику: `>`→`>=`, `+`→`-`, `return true`→`return false` и т. п., а не имена идентификаторов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Pitest` создаёт ровно один тип мутаций — замену всех чисел в коде на ноль, и больше ничего.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Мутаторов много и они разнообразны: Conditionals Boundary, Negate Conditionals, Math, Return Values, Void Method Calls и другие.",
+                "source_of_confusion": "Один наглядный пример мутации иногда принимают за единственный возможный.",
+                "if_it_were_true": "Тогда Negate Conditionals (`==`→`!=`) не существовал бы, но он входит в стандартный набор Pitest.",
+                "how_it_should_be": "Pitest применяет целый набор мутаторов к условиям, арифметике, возвратам и вызовам `void`-методов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Pitest` создаёт мутаторы вроде Conditionals Boundary (`>` → `>=`), Negate Conditionals (`==` → `!=`), Math (`+` → `-`), Return Values (`return true` → `return false`), Void Method Calls (удаление вызова `void`-метода), Increments (`i++` → `i--`) и Invert Negatives (`-x` → `x`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый мутатор — это маленькое осмысленное изменение поведения. Если тест зелёный после такой мутации, значит он не проверяет соответствующий аспект логики.",
+                "example": "Conditionals Boundary мутирует `return age >= 18` в `return age > 18` — граничный случай `age == 18` становится `false`, и если тест его не проверяет отдельно, мутант выживает.",
+                "when_to_apply": "Знание мутаторов помогает читать отчёт PIT: видя выжившего Negate Conditionals, сразу понимаешь, что не проверена противоположная ветвь условия.",
+                "edge_cases": "Void Method Calls удаляет вызов `void`-метода целиком — такие мутанты выживают, если тест не проверяет побочный эффект этого вызова (например, отправку события).",
+                "related": "[[code-coverage-interview#Q13]] как работает PIT; [[code-coverage-interview#Q12]] mutation testing; [[code-coverage-interview#Q14]] mutation score."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Pitest` мутирует только строковые литералы, заменяя текст сообщений, и не трогает условия и арифметику.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ключевые мутаторы как раз меняют условия (Negate/Boundary) и арифметику (Math), а не текст строк; именно это вскрывает слабые assertion'ы.",
+                "source_of_confusion": "Изменение видимого текста кажется самым «заметным», поэтому его принимают за основную мутацию.",
+                "if_it_were_true": "Тогда мутатор Conditionals Boundary (`>`→`>=`) был бы лишним, но он один из основных в Pitest.",
+                "how_it_should_be": "Pitest преимущественно мутирует логику: границы условий, отрицания, арифметику, возвраты и `void`-вызовы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое «coverage theater»?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Coverage theater` — это специальный режим `JaCoCo`, визуализирующий покрытие в виде анимированного дашборда для презентаций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это не функция инструмента, а антипаттерн: высокий процент покрытия при бессмысленных тестах; никакого «режима театра» в JaCoCo нет.",
+                "source_of_confusion": "Слово «театр» наводит на мысль о визуализации/презентации, а не о метафоре имитации.",
+                "if_it_were_true": "Тогда это была бы настройка отчёта, но термин описывает поведение команды, а не возможность инструмента.",
+                "how_it_should_be": "Coverage theater — это имитация качества: цифры растут, а тесты ничего реального не проверяют."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Coverage theater` — это когда coverage слишком низкий, и команда стыдливо скрывает отчёты от менеджмента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: при coverage theater процент высокий и его демонстрируют, но за цифрой нет реальных проверок поведения.",
+                "source_of_confusion": "«Театр» ассоциируют с притворством, и его ошибочно привязывают к сокрытию плохих цифр.",
+                "if_it_were_true": "Тогда проблема решалась бы простым ростом покрытия, но театр возникает именно при высоком coverage.",
+                "how_it_should_be": "Это высокий, но пустой coverage: тесты без assertion'ов и edge-cases дают красивую, но обманчивую цифру."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Coverage theater` — это практика запускать тесты только на CI и никогда локально, чтобы экономить время разработчиков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Где запускают тесты, к термину отношения не имеет; coverage theater — про бессмысленность самих тестов при высоком проценте покрытия.",
+                "source_of_confusion": "И то, и другое связано с «процессом тестирования», поэтому понятия смешивают.",
+                "if_it_were_true": "Тогда локальный прогон решал бы проблему, но театр сохраняется и при тестах на CI, если в них нет assertion'ов.",
+                "how_it_should_be": "Coverage theater — про качество тестов (нет проверок поведения), а не про место их запуска."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Coverage theater` — ситуация, когда команда достигает высокого процента coverage, но тесты не проверяют реальное поведение: «театр для метрик». Проявляется тестами без assertion'ов, только happy-path, тестами ради цифр и тотальным мокированием.",
+              "correct": true,
+              "sections": {
+                "explanation": "Суть в том, что метрика растёт, а защита от регрессий — нет. Код «покрыт» по line coverage, но никакой тест не упадёт, если поведение сломается.",
+                "example": "Тест, который просто вызывает `calc.calculate(10, 5, ADD)` без единого assertion, поднимает coverage, но не заметит, если метод начнёт возвращать неверный результат.",
+                "when_to_apply": "Термин вспоминают, когда высокий coverage соседствует с регулярными прод-багами: это сигнал проверить тесты mutation testing'ом.",
+                "edge_cases": "Coverage theater опаснее отсутствия тестов: он создаёт ложное чувство безопасности, и деградацию кода замечают только в проде.",
+                "related": "[[code-coverage-interview#Q17]] тест без проверок; [[code-coverage-interview#Q18]] осмысленный coverage; [[code-coverage-interview#Q14]] mutation score."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как написать тест, который увеличивает coverage, но не проверяет ничего?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно вызвать тестируемый метод без единого assertion: строки исполнятся и coverage вырастет, но тест ничего не утверждает; правильный вариант — проверить результат через `assertThat(result).isEqualTo(15)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Coverage растёт от факта выполнения строк, а не от проверок. Тест `calc.calculate(10, 5, ADD);` без assertion даёт покрытие, но не заметит изменения результата — это и есть пустой тест.",
+                "example": "`@Test void testCalculate(){ new Calculator().calculate(10,5,ADD); }` поднимает coverage, но `@Test ... { assertThat(calc.calculate(10,5,ADD)).isEqualTo(15); }` реально проверяет поведение.",
+                "when_to_apply": "Такой пример приводят, объясняя, почему coverage нельзя читать в отрыве от качества тестов: один и тот же процент бывает за осмысленными и за пустыми тестами.",
+                "edge_cases": "Тест без assertion всё же падает на брошенном исключении — поэтому он формально «что-то» ловит, но не проверяет корректность возвращаемого значения.",
+                "related": "[[code-coverage-interview#Q16]] coverage theater; [[code-coverage-interview#Q18]] осмысленный coverage; [[code-coverage-interview#Q14]] mutation score."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Невозможно написать тест без проверок: компилятор Java или JUnit потребуют хотя бы один `assert`, иначе тест не запустится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JUnit спокойно запускает `@Test`-метод без assertion'ов и считает его пройденным, если не было исключения; компилятор assertion'ы не требует.",
+                "source_of_confusion": "Кажется, что «тест» по определению обязан что-то утверждать, поэтому предполагают принудительную проверку.",
+                "if_it_were_true": "Тогда coverage theater был бы невозможен, но именно тесты без assertion'ов — его главное проявление.",
+                "how_it_should_be": "JUnit пропускает метод без assertion'ов как зелёный; ответственность за проверки лежит на авторе теста."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чтобы поднять coverage без проверок, нужно отключить assertion'ы флагом JVM `-da`; иначе строки не засчитываются как покрытые.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Покрытие считается по факту выполнения строк независимо от assertion'ов; флаг `-da` лишь отключает `assert`-инструкции языка и к coverage не относится.",
+                "source_of_confusion": "Java-флаг `-da/-ea` про `assert` путают с assertion'ами тестовых библиотек и с механикой coverage.",
+                "if_it_were_true": "Тогда при включённых assertion'ах пустой тест не давал бы покрытия, но он его даёт всегда при выполнении кода.",
+                "how_it_should_be": "Достаточно просто вызвать метод без проверок результата; флаги `-ea/-da` на coverage не влияют."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Тест без проверок не увеличивает coverage, потому что JaCoCo засчитывает строку только при наличии хотя бы одного assertion в тесте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JaCoCo засчитывает строку как покрытую по факту её исполнения, а не по наличию assertion'ов в тесте.",
+                "source_of_confusion": "Хочется верить, что инструмент сам отсекает «пустые» тесты, но он лишь фиксирует выполнение байткода.",
+                "if_it_were_true": "Тогда coverage theater не существовал бы, но пустой тест поднимает покрытие именно потому, что строки выполнились.",
+                "how_it_should_be": "Покрытие зависит от выполнения строк, а не от assertion'ов; качество проверок JaCoCo не оценивает."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как отличить осмысленный coverage от формального?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Осмысленность coverage определяется только его процентом: если покрытие выше 90%, тесты заведомо осмысленные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сам процент покрытия не отличает осмысленные тесты от формальных — даже 90% может быть набрано пустыми тестами без assertion'ов.",
+                "source_of_confusion": "Высокая цифра психологически воспринимается как доказательство качества.",
+                "if_it_were_true": "Тогда mutation testing был бы лишним, но он существует именно потому, что высокий coverage бывает пустым.",
+                "how_it_should_be": "Осмысленность проверяют по чувствительности тестов: assertion'ы, edge-cases, mutation score, падение при внесённом баге."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Признаки осмысленного coverage: каждый тест проверяет конкретный assertion, покрыты граничные случаи (а не только happy path), высокий mutation score при высоком coverage, и тест падает при намеренном введении бага. Инструментально — запустить Pitest: если mutation score сильно ниже coverage, тесты формальные.",
+              "correct": true,
+              "sections": {
+                "explanation": "Формальный coverage отличают по чувствительности тестов к изменению поведения. Самый надёжный признак — что тест краснеет, когда в код вносят баг, а не остаётся зелёным.",
+                "example": "Если намеренно поменять `>=` на `>` в `age >= 18` и набор тестов остаётся зелёным — coverage формальный: граничный случай `age == 18` не проверяется.",
+                "when_to_apply": "Эту проверку делают при подозрении на coverage theater: высокий процент покрытия сам по себе не доказывает качество тестов.",
+                "edge_cases": "Большой разрыв между coverage и mutation score (например, 90% против 40%) — почти однозначный индикатор формальных тестов без сильных assertion'ов.",
+                "related": "[[code-coverage-interview#Q16]] coverage theater; [[code-coverage-interview#Q14]] mutation score; [[code-coverage-interview#Q17]] тест без проверок."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Осмысленный coverage отличают по скорости тестов: быстрые тесты осмысленные, медленные — формальные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Скорость не связана с осмысленностью; быстрый тест может быть пустым, а медленный интеграционный — проверять реальное поведение.",
+                "source_of_confusion": "Быстрые unit-тесты ценят, и эту ценность ошибочно отождествляют с качеством проверок.",
+                "if_it_were_true": "Тогда замедление теста делало бы его осмысленным, но качество определяют assertion'ы, а не время прогона.",
+                "how_it_should_be": "Осмысленность определяют по проверкам поведения (assertion'ы, edge-cases, mutation score), а не по скорости."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Осмысленный coverage отличают по числу строк в тесте: чем длиннее тест, тем он осмысленнее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Длина теста не показатель качества: длинный тест без assertion'ов формален, а короткий с точным assertion — осмыслен.",
+                "source_of_confusion": "Объёмный код выглядит «серьёзнее», поэтому длину путают с тщательностью проверок.",
+                "if_it_were_true": "Тогда раздувание теста повышало бы его ценность, но без проверок поведения он останется формальным.",
+                "how_it_should_be": "Качество определяют assertion'ы и покрытие edge-cases, а не количество строк; короткий точный тест ценнее длинного пустого."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Стоит ли гнаться за 100% coverage?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Да, 100% coverage обязателен для любого проекта: только полное покрытие гарантирует отсутствие багов в коде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "100% покрытие не гарантирует отсутствие багов — покрытые строки могут содержать ошибки, а усилия на последние проценты непропорциональны пользе.",
+                "source_of_confusion": "Полнота 100% кажется логическим идеалом, а покрытие путают с доказательством корректности.",
+                "if_it_were_true": "Тогда проекты со 100% coverage не имели бы прод-багов, но баг легко живёт в полностью покрытой строке.",
+                "how_it_should_be": "Гнаться за 100% нерентабельно; разумнее высокий порог на критичной логике и исключения для нетестируемого кода."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Да, но только для тестового кода: 100% покрытие нужно требовать от самих тестов, а не от продакшен-кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Coverage измеряют для продакшен-кода тестами; «покрытие тестов тестами» — бессмысленная конструкция и не то, о чём идёт речь.",
+                "source_of_confusion": "Путаница в направлении измерения: кажется, что покрывать нужно именно тесты.",
+                "if_it_were_true": "Тогда инструменты считали бы покрытие тестов, но JaCoCo меряет покрытие продакшен-кода тестами.",
+                "how_it_should_be": "Coverage — это доля продакшен-кода, выполненного тестами; гнаться за его 100% обычно нерентабельно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Нет: действует закон убывающей отдачи (последние 10% требуют непропорциональных усилий), есть нетестируемый код (main-методы, конфигурация), погоня отвлекает от качества тестов, а dead code может быть покрыт. Исключение — safety-critical системы (авиация, медицина) с требованием 100% MC/DC.",
+              "correct": true,
+              "sections": {
+                "explanation": "100% как самоцель оптимизирует метрику, а не надёжность. Разумнее покрывать критичную логику и edge-cases, а инфраструктурные исключения и main-методы исключать из подсчёта.",
+                "example": "Покрыть последние проценты часто значит писать тесты на недостижимые `catch` инфраструктурных исключений — много усилий ради цифры, без реальной защиты от багов.",
+                "when_to_apply": "Этот аргумент приводят, когда руководство требует 100% «для красоты»: объясняют, что осмысленный порог 80%+ на новом коде даёт больше пользы.",
+                "edge_cases": "В авиации и медицине 100% MC/DC coverage — осознанное требование стандартов (например, DO-178C), а не погоня за метрикой; там цена дефекта несоизмерима.",
+                "related": "[[code-coverage-interview#Q6]] хороший процент; [[code-coverage-interview#Q23]] что не покрывать; [[code-coverage-interview#Q16]] coverage theater."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Нет, потому что 100% coverage технически недостижим: ни один инструмент не способен покрыть больше 95% любого кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "100% технически достижим (особенно после исключения нетестируемого кода); причина отказа — невыгодность, а не техническое ограничение в 95%.",
+                "source_of_confusion": "Реальную нерентабельность последних процентов принимают за жёсткий технический потолок инструментов.",
+                "if_it_were_true": "Тогда safety-critical системы не достигали бы 100% MC/DC, но стандарты авиации этого требуют и это выполнимо.",
+                "how_it_should_be": "100% достижим, но обычно невыгоден; в safety-critical областях его осознанно требуют стандарты."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что не покрывает обычный code coverage?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Обычный coverage не покрывает только комментарии и пустые строки — всю реальную логику, включая корректность результата, он проверяет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Coverage не проверяет корректность результата, concurrency, безопасность и интеграцию — он подтверждает лишь факт исполнения строк, а не верность поведения.",
+                "source_of_confusion": "Раз неисполнимые строки не учитываются, делают вывод, что всё «исполнимое» якобы проверено по существу.",
+                "if_it_were_true": "Тогда 100% coverage означал бы отсутствие багов, но баг живёт в полностью покрытой строке.",
+                "how_it_should_be": "Coverage не ловит correctness, concurrency, performance, security и интеграцию — только факт выполнения кода."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Обычный coverage не покрывает synchronous-код, но полностью проверяет асинхронный и многопоточный код, включая гонки данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: coverage как раз не видит concurrency-проблемы (гонки, deadlock'и), а синхронный код покрывает на общих основаниях.",
+                "source_of_confusion": "Сложность асинхронного кода ассоциируется с «особым» подходом, отсюда инверсия.",
+                "if_it_were_true": "Тогда coverage гарантировал бы отсутствие гонок, но многопоточный код с 100% покрытия легко падает на race condition.",
+                "how_it_should_be": "Coverage не обнаруживает concurrency-баги; их ищут специальными стресс- и concurrency-тестами."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Обычный coverage полностью покрывает security: если строка с SQL-запросом выполнена тестом, инъекции в ней быть не может.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Coverage не проверяет безопасность: SQL-injection спокойно живёт в «покрытой» строке, если тест выполнил её только на безопасных данных.",
+                "source_of_confusion": "Кажется, что «выполнено тестом» равно «проверено на все случаи», включая вредоносный ввод.",
+                "if_it_were_true": "Тогда покрытые SQL-запросы были бы иммунны к инъекциям, но уязвимость от покрытия не зависит.",
+                "how_it_should_be": "Security проверяют отдельными тестами и анализом (SAST/DAST); coverage уязвимости не видит."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Обычный coverage не ловит: correctness (строка выполнена, но результат неверный), concurrency-проблемы (гонки, deadlock'и), интеграцию компонентов в реальном окружении, performance, security (SQL-injection в «покрытой» строке) и error handling от внешних систем.",
+              "correct": true,
+              "sections": {
+                "explanation": "Coverage подтверждает только факт исполнения строк. Всё, что зависит от значений, времени, окружения или взаимодействия систем, метрика покрытия в принципе не проверяет.",
+                "example": "SQL-injection может находиться в строке со 100% line coverage: тест выполнил её на безопасных данных и зелёный, но уязвимость остаётся непроверенной.",
+                "when_to_apply": "Этот список приводят, объясняя, почему высокий coverage не отменяет интеграционных, нагрузочных и security-тестов: они проверяют то, что покрытие не видит.",
+                "edge_cases": "Concurrency-баги особенно коварны: код может показывать 100% coverage в однопоточном тесте, но падать на гонке данных под параллельной нагрузкой в проде.",
+                "related": "[[code-coverage-interview#Q1]] что измеряет coverage; [[code-coverage-interview#Q16]] coverage theater; [[code-coverage-interview#Q19]] погоня за 100%."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как измерять coverage в многомодульном проекте?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В Maven делают агрегированный отчёт в отдельном report-модуле через goal `report-aggregate` (фаза `verify`); в Gradle multi-project собирают объединённый отчёт задачей типа `JacocoReport`, склеивая все `/build/jacoco/*.exec` и подключая `sourceSets` подпроектов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Отдельные модули дают только своё покрытие, а кросс-модульные тесты (тест в модуле A исполняет код модуля B) теряются. Агрегация объединяет данные всех модулей в единый отчёт.",
+                "example": "В Gradle задача `jacocoMergedReport` берёт `fileTree(rootDir).include(\"**/build/jacoco/*.exec\")` и `sourceSets` подпроектов, давая суммарную картину по всему проекту.",
+                "when_to_apply": "Агрегацию настраивают, когда интеграционные тесты живут в одном модуле, а покрывают код другого, иначе модульные отчёты занижают реальное покрытие.",
+                "edge_cases": "Без объединения `.exec` тест из модуля A, исполняющий класс модуля B, не учтётся в отчёте B — покрытие класса будет ложно нулевым.",
+                "related": "[[code-coverage-interview#Q11]] интеграция с SonarQube; [[code-coverage-interview#Q8]] базовая настройка; [[code-coverage-interview#Q25]] differential coverage."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Coverage многомодульного проекта измеряют, просто складывая проценты модулей и деля на их количество — среднее арифметическое.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Простое среднее процентов некорректно: модули разного размера, и нужно агрегировать абсолютные данные (`.exec`/счётчики), а не усреднять проценты.",
+                "source_of_confusion": "Усреднить проценты кажется самым простым способом «сложить» покрытие модулей.",
+                "if_it_were_true": "Тогда крошечный модуль со 100% перевешивал бы огромный с 50%, искажая общую картину.",
+                "how_it_should_be": "Данные модулей объединяют (report-aggregate / merged report), считая покрытие по суммарным строкам, а не усредняя проценты."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В многомодульном проекте coverage можно мерить только по одному модулю за раз; объединить покрытие нескольких модулей технически невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JaCoCo умеет агрегировать: Maven `report-aggregate` и Gradle merged-report объединяют покрытие всех модулей в единый отчёт.",
+                "source_of_confusion": "Каждый модуль генерирует свой `.exec`, отсюда вывод о невозможности их слить.",
+                "if_it_were_true": "Тогда goal `report-aggregate` не существовал бы, но он входит в `jacoco-maven-plugin`.",
+                "how_it_should_be": "Покрытие модулей объединяют агрегированным отчётом; кросс-модульные тесты при этом учитываются."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно положиться на покрытие каждого модуля по отдельности — кросс-модульные тесты JaCoCo учитывает автоматически без агрегации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без агрегации тест из модуля A, исполняющий код модуля B, не попадёт в отчёт B; кросс-модульное покрытие теряется без объединения `.exec`.",
+                "source_of_confusion": "Кажется, что JaCoCo «видит» весь проект сразу, поэтому отдельных отчётов достаточно.",
+                "if_it_were_true": "Тогда класс модуля B, покрытый тестом из A, показывал бы ненулевое покрытие в B без настройки, но он будет нулевым.",
+                "how_it_should_be": "Нужна явная агрегация (report-aggregate / merged report), иначе кросс-модульное покрытие занижается."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать coverage в code review?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Coverage в code review используют, автоматически отклоняя любой PR, где общий coverage проекта не равен ровно 100%.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Практика — порог на новом коде (например, 80%) и вопросы про непокрытые ветки, а не требование абсолютных 100% по всему проекту на каждом PR.",
+                "source_of_confusion": "Жёсткое правило «100% или отклонить» звучит строго и потому кажется правильным для ревью.",
+                "if_it_were_true": "Тогда любой PR в проект с 85% покрытия был бы заблокирован, что сделало бы разработку невозможной.",
+                "how_it_should_be": "Quality Gate ставят на новый код (≥ 80%) и обсуждают непокрытые критичные ветки, не требуя 100% по всему проекту."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Практики: PR должен поддерживать или улучшать coverage (`SonarQube PR Decoration` это показывает), новая функциональность требует тестов на новый код, непокрытую ветку в ревью сопровождают вопросом «почему нет теста?», и не требуют 100%, но требуют тесты на критичную логику. Инструментально — Quality Gate «coverage on new code ≥ 80%» блокирует merge без тестов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Coverage в ревью — это инструмент диалога, а не самоцель. Он подсвечивает, какие изменения пришли без тестов, и помогает задать предметные вопросы про критичные ветки.",
+                "example": "`SonarQube PR Decoration` прямо в PR показывает coverage on new code; если он ниже порога, Quality Gate помечает PR красным и блокирует merge.",
+                "when_to_apply": "Эти практики применяют на каждом PR: требуют тесты на новый и критичный код, но не превращают ревью в погоню за абсолютной цифрой по всему проекту.",
+                "edge_cases": "Требовать 100% на PR контрпродуктивно: разумнее порог на новом коде (например, 80%), иначе авторы начинают писать пустые тесты ради зелёного gate.",
+                "related": "[[code-coverage-interview#Q25]] differential coverage; [[code-coverage-interview#Q6]] хороший процент; [[code-coverage-interview#Q11]] интеграция с SonarQube."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В code review coverage применяют, требуя от ревьюера вручную пересчитывать процент покрытия в голове для каждого изменённого файла.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Покрытие на PR показывают инструменты автоматически (`SonarQube PR Decoration`); ручной подсчёт не нужен и нереалистичен.",
+                "source_of_confusion": "Ревью ассоциируется с ручной работой, поэтому и подсчёт покрытия мыслят ручным.",
+                "if_it_were_true": "Тогда ревьюер тратил бы часы на арифметику, но PR Decoration выдаёт coverage on new code сам.",
+                "how_it_should_be": "Coverage on new code показывается автоматически в PR; ревьюер обсуждает результат, а не считает его вручную."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Coverage в ревью бесполезен: автоматические инструменты не умеют показывать покрытие на уровне отдельного PR, только по всему проекту.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Инструменты вроде `SonarQube` и `Codecov` как раз показывают coverage on new code прямо в PR — это и есть основной сценарий использования в ревью.",
+                "source_of_confusion": "Раз метрика глобальная, кажется, что разбить её по конкретному PR нельзя.",
+                "if_it_were_true": "Тогда PR Decoration не существовал бы, но он штатно показывает покрытие изменённого кода.",
+                "how_it_should_be": "Differential/new-code coverage отображается per-PR; именно это делает coverage полезным в ревью."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие компоненты не имеет смысла покрывать тестами?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Не имеет смысла покрывать сервисный слой и бизнес-логику — это самый изменчивый код, тесты для него быстро устаревают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Бизнес-логику покрывают в первую очередь — именно там живут дорогие баги; исключают наоборот шаблонный код без поведения (DTO, config).",
+                "source_of_confusion": "Изменчивость кода ошибочно трактуют как повод не тестировать, хотя она усиливает риск регрессий.",
+                "if_it_were_true": "Тогда критичную логику оставляли бы без тестов, но именно её требуют покрывать на 90%+ branch.",
+                "how_it_should_be": "Покрывают прежде всего бизнес-логику; из подсчёта исключают DTO, config, generated и main-методы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Не имеет смысла покрывать ничего: любой класс заслуживает теста, и исключать что-либо из coverage всегда вредно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Часть кода осмысленно исключать (геттеры DTO, сгенерированные мапперы, main-методы), иначе метрика искажается и усилия тратятся впустую.",
+                "source_of_confusion": "Принцип «тестируй всё» доводят до абсолюта, игнорируя стоимость и пользу тестов.",
+                "if_it_were_true": "Тогда excludes в JaCoCo были бы вредной фичей, но их штатно используют для honest-метрики.",
+                "how_it_should_be": "DTO без логики, generated-код, config и main-методы исключают; покрывают код с реальным поведением."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Не имеет смысла покрывать: DTO/Record/POJO с одними геттерами-сеттерами без логики, конфигурационные классы (`@Configuration`, binding `application.yml`), main()-методы Spring Boot, сгенерированный код (`Mapstruct`, `QueryDSL`, `Lombok`) и logging-only методы без бизнес-логики. Их явно исключают из JaCoCo через excludes.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти компоненты не содержат поведения, которое стоит проверять: тест геттера или сгенерированного маппера не ловит реальных багов, а лишь раздувает усилия и искажает метрику.",
+                "example": "Тестировать сгенерированный `Mapstruct`-маппер бессмысленно: его код синтезирован из аннотаций, а баги ищут в самой конфигурации маппинга, а не в шаблонном результате.",
+                "when_to_apply": "Этот список применяют при настройке excludes: исключив DTO и config, получают честную метрику покрытия именно бизнес-логики, а не шаблонного кода.",
+                "edge_cases": "Грань тонкая: как только в DTO появляется логика (валидация, нетривиальный `equals`), его уже стоит покрывать — исключают только классы без поведения.",
+                "related": "[[code-coverage-interview#Q10]] как исключать классы; [[code-coverage-interview#Q19]] погоня за 100%; [[code-coverage-interview#Q6]] хороший процент."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Не имеет смысла покрывать только приватные методы — все публичные методы, включая геттеры DTO, обязательно покрывать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Критерий — наличие поведения, а не модификатор доступа: геттер DTO (публичный) покрывать бессмысленно, а приватная логика тестируется через публичный API.",
+                "source_of_confusion": "Видимость метода путают с его значимостью для тестирования.",
+                "if_it_were_true": "Тогда публичный геттер требовал бы теста, но его покрытие не ловит никаких багов.",
+                "how_it_should_be": "Исключают код без поведения (DTO, generated, config) независимо от модификатора; приватную логику проверяют через публичный контракт."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как внедрить coverage в legacy-проект?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Сначала остановить всю разработку фич и за один спринт командой покрыть весь legacy-код до 80%, затем продолжить работу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Покрыть весь legacy разом нереалистично и невыгодно; внедряют постепенно — фиксируют baseline и наращивают покрытие на новом и затрагиваемом коде.",
+                "source_of_confusion": "«Закрыть техдолг одним рывком» звучит решительно и потому привлекательно.",
+                "if_it_were_true": "Тогда фокус на новом коде (`New Code Period`) был бы не нужен, но именно он делает внедрение реалистичным.",
+                "how_it_should_be": "Фиксируют baseline, запрещают снижение, постепенно поднимают порог и покрывают новый/затрагиваемый код (Boy Scout Rule)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Сразу установить абсолютный порог 80% на весь проект — это заставит команду быстро дописать недостающие тесты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Высокий абсолютный порог на legacy делает билд постоянно красным; стартуют от текущего baseline и поднимают его по 1–2% за sprint.",
+                "source_of_confusion": "Кажется, что жёсткий порог — лучший стимул, но на legacy он лишь блокирует всю работу.",
+                "if_it_were_true": "Тогда команда дописала бы тесты за пару дней, но реально покрыть 60% разрыва мгновенно невозможно.",
+                "how_it_should_be": "Порог ставят на уровне baseline и постепенно повышают; для нового кода — отдельные 80% через New Code Period."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Удалить весь непокрытый legacy-код, чтобы оставшийся автоматически показывал высокий процент покрытия.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Непокрытый код обычно рабочий и нужный; его не удаляют ради метрики, а постепенно покрывают тестами по мере касания.",
+                "source_of_confusion": "Формула «покрытые / все строки» подсказывает обманчивый трюк — убрать знаменатель.",
+                "if_it_were_true": "Тогда удаление работающего кода повышало бы качество, но оно сломало бы функциональность ради цифры.",
+                "how_it_should_be": "Legacy-код сохраняют и постепенно покрывают (baseline, рост порога, Boy Scout Rule), а не удаляют ради метрики."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Пошагово: измерить baseline (зафиксировать текущий уровень, например 20%), установить threshold = текущий уровень (запретить снижение), постепенно поднимать порог на 1–2% за sprint, фокусироваться на новом коде (`SonarQube New Code Period` — 80% только для нового), и применять Boy Scout Rule (добавлять тесты при касании файла).",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевая идея — не требовать сразу высокого покрытия всего legacy, а зафиксировать дно и не дать ему упасть, наращивая покрытие на новом и затрагиваемом коде.",
+                "example": "`SonarQube New Code Period` требует 80% только для строк, добавленных после заданной даты — старый код не блокирует merge, а новый приходит уже с тестами.",
+                "when_to_apply": "Этот подход применяют на больших legacy-кодовых базах, где требование «покрыть всё сразу» нереалистично и парализовало бы разработку.",
+                "edge_cases": "Если сразу поставить высокий абсолютный порог на весь legacy, билд будет постоянно красным и команда начнёт отключать проверку — поэтому стартуют от фактического baseline.",
+                "related": "[[code-coverage-interview#Q25]] differential coverage; [[code-coverage-interview#Q9]] threshold; [[code-coverage-interview#Q22]] coverage в code review."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое differential coverage?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Differential coverage` — измерение покрытия только изменённого кода (diff), а не всего проекта: в PR/MR анализируют лишь добавленные или изменённые строки. Инструменты — `SonarQube New Code` (встроенная поддержка), `Codecov` и `Coveralls` (сервисы для GitHub).",
+              "correct": true,
+              "sections": {
+                "explanation": "Differential coverage отвечает на вопрос «а покрыты ли именно те строки, что я сейчас меняю?». Это позволяет ставить строгий порог на новый код, не требуя мгновенно покрыть унаследованный.",
+                "example": "В PR с 90%-порогом differential coverage gate упадёт, если новые строки покрыты лишь на 70% — при этом старый код проекта проверку не блокирует.",
+                "when_to_apply": "Differential coverage применяют на legacy-проектах: он даёт строгий порог для нового кода и не парализует разработку требованием покрыть всё старое.",
+                "edge_cases": "Метрика касается только diff: если PR не добавил строк (например, чистый рефакторинг с переносом кода), differential coverage может быть неинформативным или 100% по нулю изменений.",
+                "related": "[[code-coverage-interview#Q24]] внедрение в legacy; [[code-coverage-interview#Q22]] coverage в code review; [[code-coverage-interview#Q11]] интеграция с SonarQube."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Differential coverage` — это разница между line coverage и branch coverage одного и того же проекта, выраженная в процентах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Differential coverage — это покрытие только изменённого кода (diff) в PR, а не арифметическая разность между видами покрытия.",
+                "source_of_confusion": "Слово «differential» наводит на мысль о вычитании одной метрики из другой.",
+                "if_it_were_true": "Тогда `SonarQube New Code` показывал бы дельту line минус branch, но он показывает покрытие новых строк.",
+                "how_it_should_be": "Это покрытие изменённых/добавленных строк PR; инструменты — `SonarQube New Code`, `Codecov`, `Coveralls`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Differential coverage` — это покрытие, посчитанное на разных версиях JVM, чтобы найти строки, ведущие себя по-разному.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Differential coverage касается diff кода в PR, а не сравнения поведения на разных JVM; версии JVM к этой метрике отношения не имеют.",
+                "source_of_confusion": "«Differential» ассоциируют с любым сравнением сред, в том числе рантаймов.",
+                "if_it_were_true": "Тогда метрика требовала бы прогона на нескольких JVM, но `Codecov` считает её из обычного diff.",
+                "how_it_should_be": "Это покрытие изменённых строк PR на одном прогоне; сравнение JVM — отдельная задача совместимости."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Differential coverage` измеряет весь проект целиком и поэтому требует мгновенно покрыть тестами весь унаследованный legacy-код.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: differential coverage меряет только diff, что и позволяет ставить строгий порог на новый код, не трогая legacy.",
+                "source_of_confusion": "«Coverage» по умолчанию ассоциируют с покрытием всего проекта, теряя слово «differential».",
+                "if_it_were_true": "Тогда он был бы бесполезен для legacy, но его главная ценность — именно фокус на изменённых строках.",
+                "how_it_should_be": "Differential coverage анализирует только изменённые строки PR, оставляя унаследованный код вне порога."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
