@@ -1,0 +1,1565 @@
+{
+  "topic_slug": "vault-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое HashiCorp Vault и какие задачи он решает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Vault` — система управления секретами: централизованное хранение кредов, динамические короткоживущие секреты, identity-based политики доступа, encryption-as-a-service, выпуск TLS-сертификатов (`PKI`) и сквозные audit-логи.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: вместо хардкода паролей в `.env` или коде приложение получает креды из `Vault` по политике, а доступ фиксируется в audit-логах.",
+                "example": "Пример: заменить захардкоженный `DB_PASSWORD` на чтение `vault kv get kv/myapp/db`, либо выдать короткоживущие креды БД через `database/creds/...`.",
+                "when_to_apply": "Применять, когда секреты раскиданы по конфигам и репозиториям и нужны единая точка контроля, ротация и аудит доступа.",
+                "edge_cases": "Подводный камень: `Vault` сам по себе — критичная зависимость и требует HA, unseal-процедуры и бэкапов, иначе становится единой точкой отказа.",
+                "related": "[[vault-interview#Q2]] static vs dynamic секреты; [[vault-interview#Q16]] sealing/unsealing как основа безопасности."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Vault` — это менеджер паролей для конечных пользователей (как `1Password`), который хранит пароли в браузере и автозаполняет формы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`1Password`/`Bitwarden` — потребительские менеджеры паролей для людей; `Vault` ориентирован на машинные секреты и инфраструктуру.",
+                "source_of_confusion": "Путаница из-за общего слова «vault» и идеи «хранилище секретов».",
+                "if_it_were_true": "Если бы это было так, у `Vault` не было бы dynamic secrets, PKI и encryption-as-a-service API.",
+                "how_it_should_be": "`Vault` — это machine-to-machine secrets management с динамическими кредами и политиками, а не браузерный автозаполнитель."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Vault` — это система резервного копирования баз данных, которая шифрует и хранит дампы по расписанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Бэкапы БД делают `pg_dump`/`Velero`/снапшоты; `Vault` управляет секретами, а не дампами данных.",
+                "source_of_confusion": "Из-за слова «encrypted storage» кажется, что речь о хранении данных, а не секретов.",
+                "if_it_were_true": "Тогда у `Vault` не было бы auth-методов, политик и engine'ов вроде `transit` и `database`.",
+                "how_it_should_be": "`Vault` хранит и выдаёт секреты; резервные копии данных — отдельная задача."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Vault` — это реестр артефактов сборки (`Docker`-образы, `JAR`), аналог `Nexus` или `Artifactory`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Артефакты сборки хранят `Nexus`/`Artifactory`/registry; `Vault` хранит секреты и ключи.",
+                "source_of_confusion": "Обе системы — «централизованное хранилище» в CI/CD, отсюда смешение ролей.",
+                "if_it_were_true": "Тогда `Vault` отдавал бы бинарники по координатам, а не креды по политикам с TTL.",
+                "how_it_should_be": "Для образов и пакетов нужен registry; `Vault` — для секретов доступа к ним."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем static-секреты отличаются от dynamic-секретов в Vault?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Static-секреты генерируются по запросу с коротким `TTL`, а dynamic-секреты хранятся постоянно и ротируются вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: по запросу с коротким TTL генерируются dynamic, а постоянно хранятся static.",
+                "source_of_confusion": "Термины легко перепутать местами, если не привязывать к engine'ам (`KV` vs `database`).",
+                "if_it_were_true": "Тогда `KV`-engine выдавал бы каждый раз новое значение, что сломало бы хранение конфигов.",
+                "how_it_should_be": "Static — постоянные и ручные; dynamic — по запросу, короткие, авто-отзываемые."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Static-секреты хранятся как есть (`KV`-engine), значение постоянно и ротируется вручную (API-ключи, конфиги); dynamic-секреты генерируются по запросу, имеют короткий `TTL` и авто-отзываются (`database`/`aws` creds).",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: ценность dynamic в том, что украденные креды быстро протухают и отзываются, ограничивая ущерб от утечки.",
+                "example": "Пример: `vault read database/creds/readonly` возвращает нового пользователя БД с паролем на 1 час, после чего `Vault` его удаляет.",
+                "when_to_apply": "Применять dynamic для доступа к БД и облакам, где важна короткая жизнь кредов; static — для редко меняющихся значений вроде внешних API-ключей.",
+                "edge_cases": "Подводный камень: dynamic-секреты требуют, чтобы целевая система (БД, AWS) умела создавать/удалять пользователей, и нагружают её операциями create/revoke.",
+                "related": "[[vault-interview#Q5]] database engine как пример dynamic; [[vault-interview#Q4]] KV-engine для static."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Разница только в шифровании: dynamic-секреты шифруются в хранилище, а static хранятся в открытом виде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба типа шифруются перед записью в backend; различие — в жизненном цикле, а не в шифровании.",
+                "source_of_confusion": "Кажется, что «динамический» значит «более защищённый», поэтому додумывают про шифрование.",
+                "if_it_were_true": "Тогда static-секреты были бы видны в storage backend открытым текстом, что неверно.",
+                "how_it_should_be": "Шифрование одинаково; отличаются генерация, TTL и отзыв."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Static-секреты предназначены для production, а dynamic — только для dev- и тестовых окружений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Dynamic-секреты особенно ценны именно в production, где важно ограничить ущерб от утечки.",
+                "source_of_confusion": "Звучит так, будто «динамическое» — это что-то экспериментальное и небезопасное для прода.",
+                "if_it_were_true": "Тогда самые чувствительные prod-доступы к БД нельзя было бы делать короткоживущими.",
+                "how_it_should_be": "Dynamic рекомендуется в production; деление по окружениям тут ни при чём."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроена архитектура Vault: состояния sealed/unsealed и storage backend?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Vault` сам хранит данные на диске в открытом виде, а `sealed` означает просто выключенный сервер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Vault` шифрует данные перед записью в backend, а `sealed` — это рабочее состояние с недоступным мастер-ключом.",
+                "source_of_confusion": "«Sealed» интуитивно читается как «остановлен», а не «зашифрован и заблокирован».",
+                "if_it_were_true": "Тогда доступ к диску сервера сразу раскрывал бы все секреты без ключей.",
+                "how_it_should_be": "Данные всегда зашифрованы; sealed — это запущенный, но запертый `Vault`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Unsealing — это обычный запуск сервиса (`systemctl start vault`), никакие ключи для этого не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Unseal требует ввода порогового числа unseal-ключей (или auto-unseal через KMS), а не просто старта процесса.",
+                "source_of_confusion": "Путают запуск процесса и криптографическую разблокировку хранилища.",
+                "if_it_were_true": "Тогда любой, кто запустил сервис, сразу получал бы доступ к расшифрованным секретам.",
+                "how_it_should_be": "Запуск процесса оставляет `Vault` sealed; нужен unseal ключами или KMS."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Vault` стартует в состоянии `sealed` (зашифрован, не принимает запросы); для перехода в `unsealed` нужны `M` из `N` unseal-ключей (`Shamir's Secret Sharing`). Данные `Vault` не хранит сам — он пишет их зашифрованными в storage backend (`Raft`, `Consul`, S3 и т.д.).",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: мастер-ключ собирается из частей при unseal, и только тогда `Vault` может расшифровать данные в backend.",
+                "example": "Пример: после рестарта `Vault` снова `sealed`; оператор вводит 3 из 5 ключей через `vault operator unseal`, и сервис становится рабочим.",
+                "when_to_apply": "Применять разделение ключей, чтобы компрометация одного оператора или сервера не давала доступа к секретам.",
+                "edge_cases": "Подводный камень: backend хранит только зашифрованные данные, но снапшоты при восстановлении содержат рабочие данные — их тоже нужно защищать.",
+                "related": "[[vault-interview#Q16]] детали sealing/unsealing; [[vault-interview#Q18]] Raft как backend для HA."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Storage backend хранит данные в открытом виде, а шифрование применяется только к трафику по сети (`TLS`).",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Vault` шифрует данные на уровне приложения перед записью; TLS защищает лишь транспорт.",
+                "source_of_confusion": "Смешивают шифрование «в покое» (at rest) и «в канале» (in transit).",
+                "if_it_were_true": "Тогда компрометация backend (например, S3-бакета) раскрывала бы все секреты.",
+                "how_it_should_be": "Данные шифруются до записи в backend; TLS — это дополнительный слой для транспорта."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между KV-engine версии v1 и v2?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`KV v1` поддерживает версионирование и историю, а `v2` убрал его ради производительности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Версионирование добавлено именно в `v2`; `v1` хранит лишь текущее значение.",
+                "source_of_confusion": "Кажется логичным, что более старая версия «полнее», а новая — «облегчённая».",
+                "if_it_were_true": "Тогда откат к прошлой версии работал бы в `v1` и отсутствовал в `v2`.",
+                "how_it_should_be": "`v2` — это версии, soft delete и метаданные; `v1` — простой перезаписываемый KV."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`v1` и `v2` функционально идентичны и отличаются только синтаксисом CLI-команд.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Различия существенны: версии, soft delete, метаданные, CAS и иной путь `data/` в `v2`.",
+                "source_of_confusion": "Команды `vault kv` выглядят одинаково, отсюда впечатление чисто синтаксической разницы.",
+                "if_it_were_true": "Тогда не было бы отдельного флага `-version` и истории значений.",
+                "how_it_should_be": "Отличия функциональные, а не косметические; `v2` богаче возможностями."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`KV v2` хранит секреты в открытом виде ради скорости, а `v1` их шифрует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба варианта шифруют данные через barrier `Vault`; уровень шифрования одинаков.",
+                "source_of_confusion": "Додумывают компромисс «скорость в обмен на безопасность», которого здесь нет.",
+                "if_it_were_true": "Тогда `v2` нарушал бы базовую гарантию шифрования всех данных `Vault`.",
+                "how_it_should_be": "Шифрование одинаково для обеих версий; `v2` добавляет версии и метаданные."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`KV v1` — простой key-value без версий: запись перезаписывает значение без истории. `KV v2` — версионирование (история значений), soft delete с восстановлением, метаданные и `CAS` (check-and-set). Для новых деплоев в 2025 — всегда `v2`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: версионирование `v2` позволяет откатиться к прошлому значению и не терять данные при случайной перезаписи.",
+                "example": "Пример: `vault kv get -version=1 kv/myapp/db` читает предыдущую версию секрета после того, как его обновили.",
+                "when_to_apply": "Применять `v2` по умолчанию; `v1` — только для совместимости со старыми путями, где версии не нужны.",
+                "edge_cases": "Подводный камень: у `v2` путь данных содержит сегмент `data/` (`kv/data/...`), что нужно учитывать в политиках, иначе доступ не сработает.",
+                "related": "[[vault-interview#Q2]] static-секреты живут в KV; [[vault-interview#Q14]] политики и путь kv/data."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает database secrets engine для динамических кредов БД?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`database`-engine генерирует креды БД по запросу: по `creation_statements` роли `Vault` создаёт нового пользователя БД с паролем и TTL, приложение его использует, а после истечения TTL `Vault` отзывает (удаляет) пользователя. Поддерживаются `PostgreSQL`, `MySQL`, `Mongo`, `Cassandra` и др.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: каждое приложение/запрос получает уникального короткоживущего пользователя, что упрощает аудит и отзыв доступа.",
+                "example": "Пример: `vault read database/creds/readonly` возвращает username/password на 1 час; по истечении `Vault` выполняет revoke в БД.",
+                "when_to_apply": "Применять, когда нужно убрать общий статичный пароль БД и иметь точечный отзыв и аудит по каждому потребителю.",
+                "edge_cases": "Подводный камень: у `Vault` должен быть привилегированный пользователь БД для create/drop ролей, и при всплеске запросов растёт число операций над БД.",
+                "related": "[[vault-interview#Q2]] dynamic-секреты в целом; [[vault-interview#Q6]] аналогичный AWS-engine."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`database`-engine хранит один статичный пароль БД и выдаёт его всем приложениям по запросу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Engine создаёт уникального временного пользователя на запрос, а не раздаёт общий статичный пароль.",
+                "source_of_confusion": "Привычная модель «один сервисный аккаунт на всех» переносится на динамический engine.",
+                "if_it_were_true": "Тогда исчезли бы TTL, авто-revoke и точечный аудит по каждому потребителю.",
+                "how_it_should_be": "Каждый запрос — отдельный короткоживущий пользователь БД с последующим revoke."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`database`-engine проксирует SQL-запросы к БД и шифрует трафик, но кредами не управляет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Engine управляет жизненным циклом кредов (create/revoke), а не проксирует запросы к БД.",
+                "source_of_confusion": "Смешивают роль secrets-engine с ролью прокси/пулера соединений.",
+                "if_it_were_true": "Тогда приложение ходило бы в БД через `Vault`, чего engine не делает.",
+                "how_it_should_be": "Приложение подключается к БД напрямую кредами, которые выдал engine."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`database`-engine делает резервные копии базы по расписанию и хранит их в Vault.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Engine не занимается бэкапами; он выпускает и отзывает учётные данные.",
+                "source_of_confusion": "Слово «database» наводит на мысль об операциях с самими данными БД.",
+                "if_it_were_true": "Тогда у роли были бы параметры расписания дампов, а не creation_statements.",
+                "how_it_should_be": "Бэкапы — отдельный инструмент; engine управляет только кредами."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как AWS secrets engine выдаёт динамические IAM-креды?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`aws`-engine хранит долгоживущие root access-key и просто раздаёт их приложениям по запросу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Engine создаёт временные креды с TTL и отзывает их, а не раздаёт постоянные root-ключи.",
+                "source_of_confusion": "Привычка к статичным access-key в `~/.aws/credentials` переносится на engine.",
+                "if_it_were_true": "Тогда не было бы авто-отзыва и ограничения ущерба при утечке.",
+                "how_it_should_be": "Выдаются ephemeral-креды с политикой и TTL, затем удаляются."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`aws`-engine по запросу динамически создаёт IAM-сущность и креды (например, `credential_type=iam_user` с привязанной политикой), приложение их использует, а после TTL `Vault` удаляет IAM-пользователя. Типичный кейс — выдать разработчику ephemeral-доступ к AWS на час.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: вместо долгоживущих access-key каждый потребитель получает временные креды с ограниченной политикой и сроком жизни.",
+                "example": "Пример: `vault read aws/creds/my-role` возвращает временные `access_key`/`secret_key`, которые `Vault` отзовёт по истечении TTL.",
+                "when_to_apply": "Применять для временного доступа людей и сервисов к AWS без раздачи постоянных ключей.",
+                "edge_cases": "Подводный камень: у IAM есть лимит на число пользователей и задержка propagation новых кредов, поэтому для частых выдач используют `assumed_role`/STS.",
+                "related": "[[vault-interview#Q5]] аналогичный database-engine; [[vault-interview#Q12]] облачная IAM-аутентификация."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`aws`-engine управляет только S3-бакетами и их доступом, но не IAM-кредами в целом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Engine выдаёт IAM-креды/STS-токены для произвольных AWS-сервисов, не только S3.",
+                "source_of_confusion": "S3 — самый знакомый AWS-сервис, поэтому им ошибочно ограничивают engine.",
+                "if_it_were_true": "Тогда нельзя было бы получить доступ к EC2, SQS и прочим сервисам.",
+                "how_it_should_be": "Engine выпускает универсальные IAM-креды по заданной политике."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`aws`-engine — это интеграция для деплоя самого `Vault` в AWS, а не для выдачи кредов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это secrets-engine для выдачи AWS-кредов; деплой `Vault` — отдельная задача (Helm/Terraform).",
+                "source_of_confusion": "Путают «engine для AWS-секретов» и «запуск Vault в инфраструктуре AWS».",
+                "if_it_were_true": "Тогда у engine не было бы путей `aws/creds/...` и ролей с политиками.",
+                "how_it_should_be": "Engine выдаёт креды для доступа к AWS; деплой настраивается отдельно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает PKI secrets engine и где он применяется?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`pki`-engine только хранит уже выпущенные где-то сертификаты, но сам их не выпускает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Engine выступает полноценным CA и выпускает сертификаты, а не просто их складирует.",
+                "source_of_confusion": "Кажется, что secrets-engine — это всегда хранилище, а не активный выпуск.",
+                "if_it_were_true": "Тогда не было бы путей `pki/root/generate` и `pki/issue`.",
+                "how_it_should_be": "Engine генерирует CA и подписывает/выпускает сертификаты по запросу."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`pki`-engine выпускает только самоподписанные сертификаты без иерархии CA.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Engine строит CA-иерархию (root/intermediate) и подписывает leaf-сертификаты доверенной цепочкой.",
+                "source_of_confusion": "Самоподписанные сертификаты — частый «быстрый» способ, его и приписывают engine.",
+                "if_it_were_true": "Тогда клиенты не могли бы валидировать сертификаты по доверенной цепочке.",
+                "how_it_should_be": "Engine поддерживает полноценную цепочку доверия, а не только self-signed."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`pki`-engine превращает `Vault` в Certificate Authority: генерирует root/intermediate CA и по запросу выдаёт короткоживущие TLS-сертификаты (`vault write pki/issue/...`). Кейсы — mTLS между микросервисами, внутренний HTTPS, подпись и SSH CA.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: короткий TTL сертификатов снижает потребность в CRL/отзыве — скомпрометированный сертификат быстро истекает сам.",
+                "example": "Пример: `vault write pki/issue/my-role common_name=api.example.com ttl=24h` выдаёт сертификат на сутки для сервиса.",
+                "when_to_apply": "Применять для внутренней инфраструктуры, где `Let's Encrypt` неудобен, а нужны автоматизированные короткоживущие сертификаты.",
+                "edge_cases": "Подводный камень: при компрометации intermediate CA нужно переустанавливать доверие; срок жизни выпускаемых сертификатов нельзя задавать больше max_ttl роли.",
+                "related": "[[vault-interview#Q1]] PKI как одна из core-возможностей; [[vault-interview#Q8]] transit для шифрования данных."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`pki`-engine управляет SSH-ключами пользователей, но не умеет в TLS-сертификаты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`pki` выпускает TLS-сертификаты; для SSH есть отдельный `ssh`-engine (SSH CA).",
+                "source_of_confusion": "И TLS, и SSH относятся к «сертификатам/ключам», отсюда смешение engine'ов.",
+                "if_it_were_true": "Тогда нельзя было бы выдать сертификат для HTTPS/mTLS микросервиса.",
+                "how_it_should_be": "Для TLS — `pki`-engine; для SSH-подписи — отдельный `ssh`-engine."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое transit engine (encryption-as-a-service)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`transit`-engine хранит зашифрованные пользовательские данные внутри `Vault`, как `KV`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`transit` не хранит данные — он возвращает ciphertext приложению, которое хранит его само.",
+                "source_of_confusion": "Привычка к KV как хранилищу переносится на криптографический engine.",
+                "if_it_were_true": "Тогда `Vault` рос бы по объёму вместе с данными приложения, чего не происходит.",
+                "how_it_should_be": "Engine отдаёт ciphertext наружу; хранение остаётся на стороне приложения."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`transit`-engine отдаёт ключ шифрования приложению, и оно шифрует данные локально.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ключи остаются в `Vault`; наружу выдаётся результат шифрования, а не сам ключ.",
+                "source_of_confusion": "Локальное шифрование с выданным ключом — привычная схема, её и додумывают.",
+                "if_it_were_true": "Тогда утечка приложения раскрывала бы ключ и обесценивала схему.",
+                "how_it_should_be": "Шифрование происходит внутри `Vault`; ключ не покидает его."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`transit`-engine — это TLS-терминация входящего трафика к `Vault`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`transit` — это encryption-as-a-service для данных приложения, а не сетевая TLS-терминация.",
+                "source_of_confusion": "Слово «transit» наводит на мысль о трафике/транспорте.",
+                "if_it_were_true": "Тогда у engine не было бы путей encrypt/decrypt и управления ключами.",
+                "how_it_should_be": "Транспортный TLS настраивается отдельно; `transit` шифрует данные через API."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`transit`-engine шифрует и расшифровывает данные, но сами данные НЕ хранит: ключи остаются в `Vault`, приложение шлёт plaintext/ciphertext через API. Ротация ключей прозрачна. Кейс — PCI/HIPAA: приложение шифрует данные перед записью в свою БД через `Vault`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: ключи никогда не покидают `Vault`, поэтому при утечке БД приложения данные остаются зашифрованными.",
+                "example": "Пример: `vault write transit/encrypt/my-key plaintext=<base64>` возвращает ciphertext вида `vault:v1:...`, а decrypt возвращает исходный текст.",
+                "when_to_apply": "Применять, когда нельзя доверять приложению хранение ключей, но нужно шифровать поля в его собственной БД.",
+                "edge_cases": "Подводный камень: каждый encrypt/decrypt — обращение к `Vault`, поэтому при высокой нагрузке нужны кэширование и батчинг; `Vault` становится критичным на пути данных.",
+                "related": "[[vault-interview#Q7]] PKI как другой криптографический engine; [[vault-interview#Q20]] Vault Agent для кэширования."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроена token-аутентификация в Vault?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Токен — дефолтный способ аутентификации: `vault token create -policy=... -ttl=...`. Токен имеет TTL (авто-истекает), привязанные политики (что разрешено), он renewable/revocable. Periodic-токены авто-продлеваются неограниченно, если их регулярно используют.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: все остальные auth-методы в итоге выдают токен `Vault`, которым и авторизуются запросы.",
+                "example": "Пример: `export VAULT_TOKEN=hvs.CAESI...` затем `vault kv get kv/myapp/db` — запрос авторизуется этим токеном и его политиками.",
+                "when_to_apply": "Применять короткие TTL и renewable-токены, чтобы ограничить окно компрометации и иметь возможность revoke.",
+                "edge_cases": "Подводный камень: root-токен всемогущ — его нельзя хранить или хардкодить; после bootstrap его отзывают и используют политики.",
+                "related": "[[vault-interview#Q10]] AppRole для машинной аутентификации; [[vault-interview#Q14]] политики, привязанные к токену."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Токены `Vault` вечные: они действуют, пока их явно не удалят, и не имеют срока истечения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У токенов есть TTL и они авто-истекают; бессрочность — исключение (например, root), а не норма.",
+                "source_of_confusion": "Привычка к долгоживущим API-ключам переносится на токены `Vault`.",
+                "if_it_were_true": "Тогда потерянный токен оставался бы валидным бесконечно, увеличивая риск.",
+                "how_it_should_be": "Токены ограничены TTL, renewable и revocable; вечных избегают."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Токен не несёт политик — права определяются IP-адресом клиента, который его предъявил.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Права задаются политиками, привязанными к токену, а не IP-адресом источника.",
+                "source_of_confusion": "Сетевые ACL по IP — знакомая модель, её ошибочно переносят на токены.",
+                "if_it_were_true": "Тогда один и тот же токен давал бы разные права с разных машин.",
+                "how_it_should_be": "Полномочия определяются политиками токена; IP — лишь дополнительный фактор при желании."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Аутентификация по токену доступна только в Enterprise-версии `Vault`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Token-auth — базовый механизм и в OSS-версии; он включён по умолчанию.",
+                "source_of_confusion": "Многие продвинутые фичи действительно Enterprise, отсюда обобщение.",
+                "if_it_were_true": "Тогда OSS-`Vault` нельзя было бы использовать вообще без оплаты.",
+                "how_it_should_be": "Token-auth есть в OSS; Enterprise добавляет лишь репликацию, namespaces и т.п."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое AppRole и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`AppRole` — это способ входа человека-оператора по логину и паролю через веб-UI `Vault`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AppRole` рассчитан на машины/приложения, а не на интерактивный вход людей.",
+                "source_of_confusion": "Пара `role_id`/`secret_id` похожа на username/password, отсюда ассоциация с человеком.",
+                "if_it_were_true": "Тогда не нужны были бы response-wrapping и доставка secret_id оркестратором.",
+                "how_it_should_be": "Для людей используют OIDC/LDAP; `AppRole` — для сервисов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`AppRole` — auth-метод для машин/приложений: сущность аутентифицируется парой `role_id` (не секрет, как username) + `secret_id` (секрет, как password) и получает токен с политиками. Подходит для CI/CD и сервисов без облачной identity.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: разделение `role_id` и `secret_id` позволяет доставлять их разными каналами, снижая риск компрометации обоих сразу.",
+                "example": "Пример: CI-пайплайн знает `role_id`, а одноразовый `secret_id` выдаётся trusted-оркестратором (response-wrapping), затем `vault write auth/approle/login` даёт токен.",
+                "when_to_apply": "Применять, когда у приложения нет нативной облачной/K8s-identity, но нужно безопасно логиниться в `Vault`.",
+                "edge_cases": "Подводный камень: если `secret_id` долгоживущий и лежит рядом с `role_id`, преимущество разделения теряется — используйте короткий TTL и response-wrapping.",
+                "related": "[[vault-interview#Q9]] токен как результат логина; [[vault-interview#Q11]] Kubernetes-auth как альтернатива в K8s."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`AppRole` хранит сами секреты приложения и отдаёт их вместо `KV`-engine.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AppRole` — это метод аутентификации, а не хранилище секретов; секреты лежат в engine'ах.",
+                "source_of_confusion": "Слово «role» путают с ролью-набором секретов в каком-нибудь engine.",
+                "if_it_were_true": "Тогда у `AppRole` были бы пути для чтения значений секретов, а не login.",
+                "how_it_should_be": "`AppRole` логинит приложение и выдаёт токен; секреты читаются отдельно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`AppRole` требует, чтобы приложение работало в Kubernetes, иначе он недоступен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AppRole` платформо-независим и работает где угодно: CI, VM, bare-metal, контейнеры.",
+                "source_of_confusion": "K8s-auth и AppRole оба про машины, поэтому их область применения смешивают.",
+                "if_it_were_true": "Тогда его нельзя было бы использовать в Jenkins на обычной VM.",
+                "how_it_should_be": "`AppRole` универсален; K8s-auth — отдельный метод именно для кластера."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает Kubernetes auth-метод в Vault?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Под передаёт `Vault` свой пароль из ConfigMap, и `Vault` сверяет его со списком разрешённых.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Под аутентифицируется ServiceAccount-токеном, который `Vault` валидирует через TokenReview, без статичных паролей в ConfigMap.",
+                "source_of_confusion": "Привычка хранить креды в ConfigMap/Secret переносится на механизм входа.",
+                "if_it_were_true": "Тогда снова появлялся бы статичный секрет, который мы и хотим убрать.",
+                "how_it_should_be": "Используется SA-токен пода и проверка в API кластера, а не пароль в ConfigMap."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Vault` сам запускается как DaemonSet на каждом узле и доверяет любому локальному поду.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Vault` валидирует конкретный SA/namespace через роль, а не доверяет всем подам узла.",
+                "source_of_confusion": "Идея «локальный, значит доверенный» ошибочно переносится на модель auth.",
+                "if_it_were_true": "Тогда любой под на узле получал бы доступ к чужим секретам.",
+                "how_it_should_be": "Доступ ограничен ролью с привязкой к ServiceAccount и namespace."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`kubernetes`-auth позволяет поду логиниться в `Vault` своим ServiceAccount-токеном: `Vault` через `TokenReview` API проверяет токен в кластере и, если ServiceAccount/namespace совпадает с ролью, выдаёт `Vault`-токен с политиками.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: identity пода (его ServiceAccount) становится способом аутентификации — не нужно заранее раздавать secret_id.",
+                "example": "Пример: под с SA `myapp` в namespace `prod` делает login по своему токену, `Vault` валидирует его в кластере и возвращает токен с политикой `myapp-policy`.",
+                "when_to_apply": "Применять для приложений в Kubernetes, чтобы убрать bootstrap-секрет и привязать доступ к SA/namespace.",
+                "edge_cases": "Подводный камень: у `Vault` должен быть доступ к `TokenReview` API кластера; при коротких projected-токенах нужно учитывать их срок и audience.",
+                "related": "[[vault-interview#Q10]] AppRole для не-K8s окружений; [[vault-interview#Q22]] sidecar injector поверх K8s-auth."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Kubernetes-auth работает только с kube-admin токеном и недоступен обычным подам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метод предназначен именно для обычных подов с их ServiceAccount; admin-токен не нужен.",
+                "source_of_confusion": "Кажется, что валидация токенов требует привилегий администратора.",
+                "if_it_were_true": "Тогда приложения не могли бы пользоваться методом без раздачи admin-прав.",
+                "how_it_should_be": "Любой под со своим SA-токеном логинится; `Vault` лишь проверяет его в кластере."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Vault аутентифицирует нагрузку через облачную IAM-identity (AWS/Azure/GCP)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Vault` хранит статический access-key облака на каждом хосте и сверяет его при логине.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смысл метода в отсутствии статичных секретов: используется нативная облачная identity, а не хранимый ключ.",
+                "source_of_confusion": "Привычка класть access-key в `~/.aws/credentials` переносится на auth-метод.",
+                "if_it_were_true": "Тогда метод не давал бы преимущества перед обычным AppRole с secret_id.",
+                "how_it_should_be": "Логин опирается на identity инстанса/функции, выданную облаком, без хранимого ключа."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Облачный auth-метод выдаёт сразу права облака (IAM-доступ к S3 и т.д.), а не токен `Vault`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метод выдаёт `Vault`-токен с политиками; облачные креды при необходимости даёт отдельный secrets-engine.",
+                "source_of_confusion": "Смешивают вход по облачной identity и выдачу облачных кредов.",
+                "if_it_were_true": "Тогда не было бы политик `Vault`, ограничивающих доступ к секретам.",
+                "how_it_should_be": "Auth-метод аутентифицирует и выдаёт токен `Vault`; облачные креды — задача `aws`-engine."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Метод работает только для виртуальных машин и неприменим к serverless вроде Lambda.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метод поддерживает и serverless: Lambda/Cloud Functions тоже имеют IAM/identity для входа.",
+                "source_of_confusion": "Кажется, что нужна «постоянная машина» с metadata-сервисом.",
+                "if_it_were_true": "Тогда функции не могли бы получать секреты без bootstrap-ключа.",
+                "how_it_should_be": "И VM, и serverless с облачной identity могут логиниться этим методом."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Облачные auth-методы (`aws`, `azure`, `gcp`) доверяют нативной identity инстанса/функции: например, EC2/IAM-роль или подписанный identity-документ доказывают `Vault`, что запрос идёт от конкретного облачного принципала, и он выдаёт токен с политиками — без хранения секретов на хосте.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: identity, которую и так выдаёт облако (instance profile, managed identity), становится фактором входа, устраняя bootstrap-секрет.",
+                "example": "Пример: EC2-инстанс с IAM-ролью делает `vault login -method=aws`, `Vault` проверяет подпись/идентичность через AWS и возвращает токен.",
+                "when_to_apply": "Применять для нагрузок в облаке (EC2, Lambda, GCE, Azure VM), где есть нативная metadata-identity.",
+                "edge_cases": "Подводный камень: нужно строго привязывать роль к конкретному account/role/region, иначе любой инстанс облака сможет залогиниться.",
+                "related": "[[vault-interview#Q6]] aws secrets engine для выдачи кредов; [[vault-interview#Q11]] аналогичная идея в Kubernetes."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает JWT/OIDC auth-метод и для чего он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`jwt`/`oidc`-метод доверяет внешнему identity-провайдеру: `Vault` валидирует подпись JWT (или проводит OIDC-flow с провайдером вроде `Keycloak`/`Okta`/`Google`) и по claim'ам токена сопоставляет роль и политики. Кейсы — SSO-вход людей в UI и аутентификация CI-джоб по их OIDC-токену.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: доверие делегируется проверенному IdP, а `Vault` лишь маппит claims (например, группы) на свои политики.",
+                "example": "Пример: GitHub Actions предъявляет свой OIDC-токен, `Vault` проверяет issuer/audience и выдаёт токен с политикой для нужного репозитория.",
+                "when_to_apply": "Применять для человеческого SSO и для keyless-аутентификации CI (GitHub/GitLab OIDC) без долгоживущих secret_id.",
+                "edge_cases": "Подводный камень: критично проверять `bound_audiences`, issuer и нужные claims, иначе чужой валидный JWT того же IdP получит доступ.",
+                "related": "[[vault-interview#Q10]] AppRole как secret-based альтернатива; [[vault-interview#Q15]] маппинг групп на identity-группы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Vault` сам становится identity-провайдером и хранит пароли пользователей для OIDC.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Vault` здесь — клиент/проверяющая сторона: он доверяет внешнему IdP, а не хранит пароли сам.",
+                "source_of_confusion": "Слово OIDC ассоциируется с «системой логина», и роль `Vault` переворачивают.",
+                "if_it_were_true": "Тогда не нужен был бы внешний `Keycloak`/`Okta` и проверка issuer.",
+                "how_it_should_be": "Внешний IdP аутентифицирует; `Vault` валидирует токен и маппит claims на политики."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "JWT-метод принимает любой корректно подписанный JWT без проверки issuer и audience.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метод обязан проверять issuer/`bound_audiences`/claims; иначе подойдёт любой посторонний токен.",
+                "source_of_confusion": "Кажется, что достаточно валидной подписи, без привязки к источнику.",
+                "if_it_were_true": "Тогда токен от другого приложения того же IdP давал бы доступ к секретам.",
+                "how_it_should_be": "Нужно строго ограничивать issuer, audience и обязательные claims в роли."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "OIDC-метод доступен только для машинных клиентов и не годится для входа людей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OIDC-flow как раз удобен для интерактивного SSO-входа людей в UI/CLI; JWT-вариант — чаще для машин.",
+                "source_of_confusion": "JWT и OIDC объединяют в один «машинный» метод и теряют человеческий сценарий.",
+                "if_it_were_true": "Тогда нельзя было бы залогиниться в `Vault` UI через корпоративный SSO.",
+                "how_it_should_be": "OIDC — для людей (браузерный flow), JWT — для машин; оба поддерживаются."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое политики (policies) в Vault и как они задают доступ?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `Vault` всё разрешено по умолчанию, а политики нужны лишь чтобы точечно что-то запретить (deny-list).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Модель обратная — deny-by-default: без явного allow доступа нет, политики именно разрешают.",
+                "source_of_confusion": "Многие системы исторически работают как deny-list (firewall allow-all + блок), отсюда инверсия.",
+                "if_it_were_true": "Тогда новый токен без политик имел бы доступ ко всему, что катастрофично.",
+                "how_it_should_be": "По умолчанию запрещено; политики выдают конкретные разрешения (allow-list)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Политика — это HCL-документ, который перечисляет пути и разрешённые capabilities (`create`, `read`, `update`, `delete`, `list`, `deny`). Доступ запрещён по умолчанию (deny-by-default): без явного `path` с capability запрос будет отклонён. Политики привязываются к токенам/ролям.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: модель безопасности `Vault` — allow-list: токен может только то, что явно разрешено его политиками.",
+                "example": "Пример: `path \"kv/data/myapp/*\" { capabilities = [\"read\"] }` даёт только чтение секретов приложения и ничего больше.",
+                "when_to_apply": "Применять least-privilege: отдельные узкие политики на сервис вместо одной широкой, чтобы ограничить радиус поражения.",
+                "edge_cases": "Подводный камень: для `KV v2` путь в политике содержит `data/` (`kv/data/...`), а явный `deny` всегда побеждает любой `allow`.",
+                "related": "[[vault-interview#Q9]] токены, к которым привязаны политики; [[vault-interview#Q4]] путь kv/data в KV v2."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Политики пишутся на SQL и хранятся в таблице прав внутри базы `Vault`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Политики пишутся на HCL (или JSON), а не на SQL; это файлы с путями и capabilities.",
+                "source_of_confusion": "Ассоциация «права доступа = таблица в БД» из мира РСУБД.",
+                "if_it_were_true": "Тогда нельзя было бы версионировать политики как код в Git.",
+                "how_it_should_be": "Политика — это HCL-документ с path и capabilities, управляемый как код."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Политика задаёт доступ по ролям пользователей, но не умеет ограничивать конкретные пути секретов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ядро политики — именно пути (`path`) с набором capabilities; ограничение по путям обязательно.",
+                "source_of_confusion": "RBAC-мышление «роль → набор действий» без привязки к ресурсам-путям.",
+                "if_it_were_true": "Тогда нельзя было бы выдать доступ только к `kv/myapp/*`.",
+                "how_it_should_be": "Политика всегда привязывает capabilities к конкретным путям секретов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужны Identity: entities и groups?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Entity — это синоним токена: каждый новый логин создаёт новую несвязанную entity.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Entity устойчива и объединяет несколько alias'ов/логинов одного субъекта; токенов у неё может быть много.",
+                "source_of_confusion": "Токен и entity путают, потому что оба представляют «кто делает запрос».",
+                "if_it_were_true": "Тогда аудит по человеку был бы невозможен — каждый вход выглядел бы новым субъектом.",
+                "how_it_should_be": "Entity — стабильная личность; токены и alias'ы привязаны к ней."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Группы в Identity нужны только для отображения в UI и не влияют на доступ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Группы раздают политики своим членам и реально определяют доступ, а не служат украшением.",
+                "source_of_confusion": "В некоторых системах группы — лишь визуальная организация, это переносят на `Vault`.",
+                "if_it_were_true": "Тогда нельзя было бы централизованно выдать право всей команде разом.",
+                "how_it_should_be": "Группы привязывают политики к набору entity и управляют доступом."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Identity-слой даёт пользователю/сервису единую сущность (`entity`), к которой привязываются несколько alias'ов из разных auth-методов (LDAP, OIDC, AppRole). Группы (`group`) объединяют entity и раздают им политики; внешние группы маппятся на группы IdP.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: один человек, логинящийся разными методами, — это одна entity, поэтому политики и аудит консистентны независимо от способа входа.",
+                "example": "Пример: пользователь входит и через OIDC, и через LDAP, но обе alias'а указывают на одну entity, которой группа `developers` даёт нужные политики.",
+                "when_to_apply": "Применять, чтобы централизованно управлять правами групп и не дублировать политики на каждый alias.",
+                "edge_cases": "Подводный камень: external-группы требуют корректного маппинга claim'ов/атрибутов IdP, иначе пользователь не попадёт в нужную группу и потеряет доступ.",
+                "related": "[[vault-interview#Q13]] OIDC-группы как источник external-групп; [[vault-interview#Q14]] политики, выдаваемые группам."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Identity-entities заменяют auth-методы: после их настройки логиниться через LDAP/OIDC уже не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Entity не заменяют auth-методы — они агрегируют identity поверх них; вход по-прежнему через метод.",
+                "source_of_confusion": "Кажется, что «единая сущность» сама по себе и есть способ входа.",
+                "if_it_were_true": "Тогда непонятно, откуда брались бы alias'ы, которые создаются именно при логине.",
+                "how_it_should_be": "Сначала вход через auth-метод (создаётся alias), затем он связывается с entity."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое sealing/unsealing и зачем нужен порог ключей?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Sealing — это просто остановка процесса `Vault`, а unsealing — его обычный запуск.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sealed — это запущенный, но криптографически запертый `Vault`; unseal — восстановление мастер-ключа, а не старт процесса.",
+                "source_of_confusion": "Интуитивно «sealed/unsealed» читается как «выключен/включён».",
+                "if_it_were_true": "Тогда не нужны были бы unseal-ключи и порог M-из-N.",
+                "how_it_should_be": "Процесс может работать, оставаясь sealed; unseal — это ввод ключей/KMS."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для unseal достаточно любого одного unseal-ключа из выданных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нужен порог `M` из `N` (например, 3 из 5); один ключ не разблокирует хранилище.",
+                "source_of_confusion": "Кажется, что любой «ключ» — это полный доступ, как обычный пароль.",
+                "if_it_were_true": "Тогда компрометация одного оператора сразу вскрывала бы `Vault`.",
+                "how_it_should_be": "Требуется кворум из нескольких частей по схеме Shamir."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Unseal-ключи — это и есть пароли для чтения секретов из `Vault`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Unseal-ключи только восстанавливают мастер-ключ; читать секреты позволяют токены и политики.",
+                "source_of_confusion": "Смешивают разблокировку хранилища и авторизацию доступа к данным.",
+                "if_it_were_true": "Тогда оператор с unseal-ключом автоматически читал бы все секреты.",
+                "how_it_should_be": "Unseal открывает `Vault`; доступ к секретам — отдельно через auth и политики."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Sealing — состояние, когда мастер-ключ недоступен и `Vault` не может расшифровать данные (после старта/рестарта он `sealed`). Unsealing восстанавливает мастер-ключ из `M` из `N` unseal-частей (Shamir), после чего сервис принимает запросы. Порог не даёт одному человеку единолично разблокировать хранилище.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: разделение мастер-ключа на части и порог `M`-из-`N` — защита от компрометации одного оператора или ноды.",
+                "example": "Пример: 5 ключей розданы 5 операторам, нужно ввести любые 3 (`vault operator unseal`), чтобы поднять `Vault` после перезапуска.",
+                "when_to_apply": "Применять Shamir-распределение, чтобы ни один человек не мог в одиночку получить доступ ко всем секретам.",
+                "edge_cases": "Подводный камень: при ручном unseal каждый рестарт требует кворума операторов — это операционно тяжело, поэтому в HA применяют auto-unseal.",
+                "related": "[[vault-interview#Q3]] sealed/unsealed в архитектуре; [[vault-interview#Q17]] auto-unseal через KMS."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое auto-unseal и как он работает через KMS?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Auto-unseal делегирует хранение/расшифровку мастер-ключа внешнему KMS/HSM (AWS KMS, GCP KMS, Azure Key Vault, Transit другого `Vault`): при старте `Vault` сам обращается к KMS и разблокируется без ручного ввода ключей. Это убирает операционную боль кворума на каждый рестарт.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: ответственность за защиту мастер-ключа переносится на управляемый облачный KMS с собственным контролем доступа и аудитом.",
+                "example": "Пример: в `seal \"awskms\"` указан KMS-ключ; после рестарта под `Vault` поднимается unsealed автоматически, без операторов.",
+                "when_to_apply": "Применять в HA/Kubernetes, где поды часто пересоздаются и ручной unseal каждой реплики неприемлем.",
+                "edge_cases": "Подводный камень: появляется зависимость и доверие к KMS; для recovery всё равно генерируются recovery-ключи, которые нужно беречь.",
+                "related": "[[vault-interview#Q16]] ручной Shamir-unseal как альтернатива; [[vault-interview#Q18]] HA, где auto-unseal почти обязателен."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Auto-unseal хранит unseal-ключи в открытом файле на диске сервера и читает их при старте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Мастер-ключ защищается внешним KMS/HSM, а не лежит открытым файлом на диске.",
+                "source_of_confusion": "«Автоматически» воспринимают как «ключи просто лежат рядом и читаются».",
+                "if_it_were_true": "Тогда доступ к диску сервера сразу компрометировал бы `Vault`.",
+                "how_it_should_be": "Расшифровка мастер-ключа делегируется KMS/HSM с контролем доступа."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Auto-unseal полностью убирает шифрование: `Vault` стартует с данными в открытом виде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Данные по-прежнему зашифрованы; auto-unseal лишь автоматизирует получение мастер-ключа.",
+                "source_of_confusion": "«Без ввода ключей» ошибочно трактуют как «без шифрования вообще».",
+                "if_it_were_true": "Тогда терялась бы базовая гарантия защиты данных в storage backend.",
+                "how_it_should_be": "Шифрование сохраняется; меняется только способ доступа к мастер-ключу."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Auto-unseal делает recovery-ключи ненужными — резервное восстановление больше не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При auto-unseal генерируются recovery-ключи (для rekey, восстановления), их нужно хранить безопасно.",
+                "source_of_confusion": "Кажется, что раз unseal автоматический, никакие ключи беречь не нужно.",
+                "if_it_were_true": "Тогда при недоступности KMS не было бы способа восстановить контроль.",
+                "how_it_should_be": "Recovery-ключи остаются критичными и при auto-unseal."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обеспечивается High Availability в Vault (Raft vs Consul)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В HA все узлы `Vault` обслуживают запись одновременно (active-active) и сами мёрджат данные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Модель active/standby: запись идёт только через единственный active-узел, остальные в standby.",
+                "source_of_confusion": "Знакомая по веб-серверам схема «все ноды равноправны» переносится на stateful `Vault`.",
+                "if_it_were_true": "Тогда возможны конфликты записи и расхождение состояния между узлами.",
+                "how_it_should_be": "Один active обрабатывает запись; consensus обеспечивает единого лидера."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В HA-режиме работает кластер `Vault`: один узел active (обслуживает запросы), остальные standby. Состояние согласуется через consensus-backend — встроенный `Integrated Storage` (`Raft`) либо внешний `Consul`. При падении active один из standby берёт лидерство.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: только active-узел обрабатывает запись; standby проксируют/ждут, а consensus гарантирует единого лидера и консистентность данных.",
+                "example": "Пример: `storage \"raft\"` поднимает 3–5 узлов с встроенным Raft; падение лидера приводит к авто-выбору нового без потери данных.",
+                "when_to_apply": "Применять `Raft` как современный дефолт (меньше внешних зависимостей); `Consul` — если он уже есть в инфраструктуре.",
+                "edge_cases": "Подводный камень: Raft требует нечётного числа узлов (3/5) для кворума; auto-unseal почти обязателен, иначе каждый перезапуск узла требует ручного unseal.",
+                "related": "[[vault-interview#Q17]] auto-unseal в HA-кластере; [[vault-interview#Q19]] снапшоты Raft для backup/DR."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для HA обязателен внешний `Consul`; встроенного storage у `Vault` нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть встроенный `Integrated Storage` на `Raft`; `Consul` — лишь одна из опций, и часто уже не дефолтная.",
+                "source_of_confusion": "Исторически `Consul` был основным backend, отсюда мнение о его обязательности.",
+                "if_it_were_true": "Тогда нельзя было бы поднять HA-кластер без отдельного кластера `Consul`.",
+                "how_it_should_be": "`Raft` (Integrated Storage) даёт HA без внешних зависимостей."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "HA в `Vault` означает, что данные не нужно бэкапить — кластер сам гарантирует сохранность навсегда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HA защищает от падения узла, но не заменяет backup: нужны снапшоты на случай порчи данных/ошибок.",
+                "source_of_confusion": "Репликацию путают с резервным копированием.",
+                "if_it_were_true": "Тогда логическая ошибка или повреждение реплицировались бы и теряли данные без шанса отката.",
+                "how_it_should_be": "HA + регулярные снапшоты (Raft snapshot) — это разные и обе нужные практики."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как делают backup и disaster recovery в Vault?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно скопировать файлы storage backend на лету (`cp` каталога) — это и есть валидный backup.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Простое копирование файлов работающего backend даёт несогласованный снимок; нужен консистентный `raft snapshot`.",
+                "source_of_confusion": "Привычка бэкапить обычные сервисы копированием файлов переносится на распределённый Raft.",
+                "if_it_were_true": "Тогда восстановленный кластер мог бы стартовать с битым/частичным состоянием.",
+                "how_it_should_be": "Используйте `raft snapshot save/restore` для согласованного backup."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Снапшот можно восстановить на любой кластер без unseal/recovery-ключей — он самодостаточен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Данные в снапшоте зашифрованы; восстановление требует соответствующих ключей и (при auto-unseal) доступа к KMS.",
+                "source_of_confusion": "Кажется, что раз снапшот «полный», в нём есть всё, включая ключи.",
+                "if_it_were_true": "Тогда любой, кто получил файл снапшота, читал бы все секреты.",
+                "how_it_should_be": "Храните и тестируйте снапшоты вместе с unseal/recovery-ключами."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для `Raft`-backend основной механизм — снапшоты: `vault operator raft snapshot save` создаёт согласованный снимок всего состояния, а `... snapshot restore` восстанавливает его. Снапшот содержит зашифрованные данные, но для восстановления нужны те же unseal/recovery-ключи (и доступ к KMS при auto-unseal).",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: снапшот — это полный консистентный слепок хранилища, поэтому DR сводится к restore снимка на новом кластере с теми же ключами.",
+                "example": "Пример: ночной cron делает `raft snapshot save backup.snap`, файл шифруется и кладётся в S3; при аварии его восстанавливают на новый кластер.",
+                "when_to_apply": "Применять регулярные автоматические снапшоты + проверку их восстановления, а не надеяться только на HA-репликацию.",
+                "edge_cases": "Подводный камень: снапшот бесполезен без соответствующих unseal/recovery-ключей и (для auto-unseal) доступа к тому же KMS — их нужно хранить и тестировать вместе.",
+                "related": "[[vault-interview#Q18]] Raft как источник снапшотов; [[vault-interview#Q17]] зависимость восстановления от KMS."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "HA-кластера достаточно для DR: реплики гарантируют, что данные никогда не потеряются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HA спасает от падения узла, но не от логического повреждения/удаления, которое реплицируется; нужны снапшоты.",
+                "source_of_confusion": "Репликацию ошибочно считают заменой резервного копирования.",
+                "if_it_were_true": "Тогда ошибочный `vault delete` мгновенно и необратимо терял бы данные на всех репликах.",
+                "how_it_should_be": "HA и снапшоты дополняют друг друга; для DR обязательны оба."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает Vault Agent и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Vault Agent — это серверный компонент кластера `Vault`, отвечающий за выбор active-узла.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Agent — клиентский демон рядом с приложением; выбор лидера в кластере делает consensus (Raft), а не Agent.",
+                "source_of_confusion": "Слово «agent» наводит на мысль о серверной/кластерной роли.",
+                "if_it_were_true": "Тогда он работал бы на узлах `Vault`, а не рядом с потребителями секретов.",
+                "how_it_should_be": "Agent живёт на стороне клиента и автоматизирует auth и доставку секретов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Vault Agent хранит мастер-ключ `Vault` и участвует в unseal-процедуре.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Agent не имеет отношения к мастер-ключу/unseal; он лишь логинится и получает обычные токены/секреты.",
+                "source_of_confusion": "Путают клиентскую аутентификацию с серверной разблокировкой хранилища.",
+                "if_it_were_true": "Тогда компрометация любого приложения с Agent вскрывала бы весь `Vault`.",
+                "how_it_should_be": "Unseal — серверная процедура с ключами/KMS; Agent к ней непричастен."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Vault Agent требует переписать приложение под специальный SDK, иначе он бесполезен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главная ценность Agent — работа с немодифицированными приложениями через файлы/env, без интеграции SDK.",
+                "source_of_confusion": "Кажется, что любой «агент» требует встраивания библиотеки в код.",
+                "if_it_were_true": "Тогда исчезла бы его польза для legacy-приложений.",
+                "how_it_should_be": "Agent рендерит секреты в файл/переменную; код приложения менять не нужно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Vault Agent — клиентский демон рядом с приложением: он сам аутентифицируется в `Vault` (auto-auth по AppRole/K8s/cloud), хранит и продлевает токен, а через `template` (Consul-Template) рендерит секреты в файлы/env и кэширует ответы. Приложение читает готовый файл и не знает про `Vault` API.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: Agent снимает с приложения заботу о логине, продлении токена и ротации секретов, превращая их в обычный файл/переменную.",
+                "example": "Пример: Agent по шаблону пишет `config.ini` с актуальным паролем БД и обновляет его при ротации, перезапуская приложение по `command`.",
+                "when_to_apply": "Применять для legacy-приложений, которые не умеют ходить в `Vault` напрямую, или чтобы централизовать auth и кэш.",
+                "edge_cases": "Подводный камень: отрендеренный секрет лежит на диске/в памяти узла — права на файл и tmpfs важны; кэш Agent тоже нужно защищать.",
+                "related": "[[vault-interview#Q8]] кэширование вызовов transit через Agent; [[vault-interview#Q22]] sidecar injector как обёртка над Agent."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает Vault через оператор/Helm в Kubernetes (deployment)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В Kubernetes `Vault` обычно ставят через официальный Helm-чарт (`hashicorp/vault`): он разворачивает StatefulSet с `Raft`-стораджем, headless-service для кластера, RBAC для `TokenReview` и (опционально) Agent Injector. Конфигурация и auto-unseal задаются values, а unseal-инициализация выполняется один раз после старта.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: чарт упаковывает все K8s-примитивы (StatefulSet, PVC, Service, RBAC), нужные для HA-`Vault`, в воспроизводимый деплой.",
+                "example": "Пример: `helm install vault hashicorp/vault --set server.ha.raft.enabled=true` поднимает 3-узловой Raft-кластер, после чего его инициализируют и unseal'ят.",
+                "when_to_apply": "Применять Helm-чарт, чтобы не собирать StatefulSet/Service/RBAC вручную и легко включать Injector и auto-unseal.",
+                "edge_cases": "Подводный камень: `Vault` — stateful, ему нужны постоянные PVC и аккуратные rolling-update'ы; первичный init/unseal — ручной шаг, его нельзя забыть автоматизировать.",
+                "related": "[[vault-interview#Q18]] Raft-HA, который разворачивает чарт; [[vault-interview#Q22]] Agent Injector из того же чарта."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Helm-чарт `Vault` ставит его как stateless `Deployment` без постоянных томов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Vault` развёртывается как StatefulSet с постоянными PVC, потому что хранит состояние (Raft).",
+                "source_of_confusion": "Большинство приложений в K8s stateless, эту привычку переносят на `Vault`.",
+                "if_it_were_true": "Тогда при пересоздании пода терялись бы данные Raft-хранилища.",
+                "how_it_should_be": "Нужен StatefulSet со стабильной identity и постоянными томами."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "После `helm install` `Vault` сразу готов к работе: init и unseal выполняются автоматически чартом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Первичная инициализация (`operator init`) и unseal — отдельный шаг после установки; чарт его не делает за вас.",
+                "source_of_confusion": "Кажется, что Helm «поднимает всё под ключ», включая криптографический init.",
+                "if_it_were_true": "Тогда unseal-ключи генерировались бы и хранились бы без участия оператора, что небезопасно.",
+                "how_it_should_be": "Чарт разворачивает поды; init/unseal выполняют отдельно (вручную или через auto-unseal)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чарт `Vault` обязательно требует внешний `Consul`-кластер и не умеет работать с Raft в K8s.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Современный чарт по умолчанию использует встроенный `Raft`; `Consul` — опциональный устаревающий вариант.",
+                "source_of_confusion": "Историческая связка `Vault`+`Consul` создаёт впечатление обязательности.",
+                "if_it_were_true": "Тогда нельзя было бы поднять `Vault` в кластере без отдельного `Consul`.",
+                "how_it_should_be": "Включите `server.ha.raft.enabled=true` — внешний `Consul` не нужен."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает Agent Sidecar Injector в Kubernetes?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Injector меняет образ приложения, встраивая в него Vault SDK на этапе сборки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Injector ничего не встраивает в образ — он на лету добавляет отдельный sidecar/init-контейнер Agent в под.",
+                "source_of_confusion": "«Inject» воспринимают как изменение бинарника/образа, а не манифеста пода.",
+                "if_it_were_true": "Тогда нужно было бы пересобирать образ под каждое приложение.",
+                "how_it_should_be": "Webhook мутирует спецификацию пода, добавляя контейнер Agent; образ не трогается."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Agent Injector — это mutating admission webhook: по аннотациям пода (`vault.hashicorp.com/agent-inject: \"true\"`, роль, какие секреты) он автоматически добавляет в под init- и/или sidecar-контейнер Vault Agent. Agent логинится по K8s-auth и рендерит секреты в общий volume (`/vault/secrets/...`), откуда их читает приложение.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: секреты доставляются в под как файлы без изменения образа приложения — достаточно навесить аннотации.",
+                "example": "Пример: добавив аннотации `agent-inject-secret-db: database/creds/role`, под получает файл `/vault/secrets/db` с актуальным паролем БД.",
+                "when_to_apply": "Применять, когда хочется секреты-как-файлы в подах без переписывания приложений и без ручной настройки Agent.",
+                "edge_cases": "Подводный камень: секреты лежат в shared-volume пода (память/tmpfs) — это расширяет attack surface; sidecar также добавляет ресурсы и задержку старта.",
+                "related": "[[vault-interview#Q11]] K8s-auth, которым логинится injected Agent; [[vault-interview#Q23]] ESO как альтернативный подход."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Injector кладёт секреты в Kubernetes `Secret`-объект, доступный всему namespace.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Agent рендерит секреты в приватный volume пода (`/vault/secrets`), а не в общий K8s `Secret`.",
+                "source_of_confusion": "Привычный способ доставки секретов в K8s — через объекты `Secret`, это переносят на Injector.",
+                "if_it_were_true": "Тогда секреты были бы видны другим подам namespace и в etcd как обычные Secret.",
+                "how_it_should_be": "Секреты попадают в volume конкретного пода, не в общий `Secret`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Injector работает без какого-либо auth: он доверяет всем подам с нужной аннотацией.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Injected Agent всё равно проходит K8s-auth по ServiceAccount пода; аннотация лишь включает инъекцию.",
+                "source_of_confusion": "Кажется, что раз достаточно аннотации, аутентификация не нужна.",
+                "if_it_were_true": "Тогда любой под с аннотацией читал бы любые секреты без проверки прав.",
+                "how_it_should_be": "Agent логинится через K8s-auth, и доступ ограничен политиками роли."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое External Secrets Operator (ESO) и чем он отличается от Vault Agent?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "ESO встраивает sidecar Vault Agent в каждый под, как это делает Agent Injector.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ESO работает как централизованный оператор и пишет в K8s `Secret`, без sidecar в каждом поде.",
+                "source_of_confusion": "Обе технологии «доставляют секреты в K8s», поэтому их механику смешивают.",
+                "if_it_were_true": "Тогда ESO добавлял бы контейнер в каждый под, а не один контроллер на кластер.",
+                "how_it_should_be": "ESO — оператор, синхронизирующий внешние секреты в `Secret`; sidecar'ов он не ставит."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "ESO хранит секреты только в памяти оператора и никогда не создаёт K8s-объекты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Суть ESO — именно материализация секрета в нативный `Secret`-объект, который потребляет приложение.",
+                "source_of_confusion": "Из соображений безопасности кажется, что секрет «не должен» попадать в объект.",
+                "if_it_were_true": "Тогда приложениям было бы нечего монтировать как env/volume.",
+                "how_it_should_be": "ESO создаёт и обновляет `Secret`; именно поэтому важна защита etcd и RBAC."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "ESO — это Kubernetes-оператor, который синхронизирует секреты из внешних хранилищ (`Vault`, AWS/GCP Secrets Manager и др.) в нативные Kubernetes `Secret`-объекты по CRD `ExternalSecret`. Приложение потребляет обычный `Secret` (env/volume) и вообще не знает про `Vault`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: ESO переносит модель «секрет как K8s `Secret`», тогда как Vault Agent доставляет секреты как файлы в под напрямую.",
+                "example": "Пример: ресурс `ExternalSecret` указывает путь `kv/data/myapp`, и ESO создаёт/обновляет `Secret myapp-secret`, который монтируется в под как env.",
+                "when_to_apply": "Применять ESO, когда экосистема уже завязана на K8s `Secret` (Helm, GitOps) и нужен мост к внешнему хранилищу без sidecar в каждом поде.",
+                "edge_cases": "Подводный камень: секрет материализуется в etcd как обычный K8s `Secret` (base64, не шифрование) — нужны encryption-at-rest для etcd и RBAC на `Secret`.",
+                "related": "[[vault-interview#Q22]] Agent Injector как sidecar-альтернатива; [[vault-interview#Q4]] путь kv/data как источник для ESO."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "ESO — это часть `Vault` Enterprise и работает только с `Vault` как источником.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ESO — независимый OSS-проект CNCF и поддерживает много backend'ов (AWS/GCP/Azure/Vault и др.).",
+                "source_of_confusion": "Тесная связка с `Vault` в примерах создаёт впечатление, что это его компонент.",
+                "if_it_were_true": "Тогда его нельзя было бы использовать с AWS Secrets Manager без `Vault`.",
+                "how_it_should_be": "ESO — отдельный проект и работает с разными внешними хранилищами."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие best practices по эксплуатации Vault стоит знать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Главная практика — держать один общий широкий admin-токен, чтобы любой сервис мог всё при необходимости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это анти-паттерн: нужны узкие least-privilege политики на сервис, а не общий всемогущий токен.",
+                "source_of_confusion": "Широкий доступ кажется удобным и снижает «трение» в эксплуатации.",
+                "if_it_were_true": "Тогда утечка одного токена компрометировала бы все секреты сразу.",
+                "how_it_should_be": "Раздавайте минимально необходимые права и отзывайте root после bootstrap."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Audit-логи лучше отключать, чтобы не хранить чувствительные данные и не нагружать `Vault`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Audit-логинг — обязательная практика для расследования инцидентов; значения в нём защищены HMAC.",
+                "source_of_confusion": "Страх «логи с секретами» приводит к мысли, что аудит лучше выключить.",
+                "if_it_were_true": "Тогда после инцидента нельзя было бы установить, кто и что запрашивал.",
+                "how_it_should_be": "Включайте audit-устройство и защищайте его вывод; значения хешируются HMAC."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Конфигурацию (политики, auth) надёжнее править вручную через UI, а не хранить как код.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Best practice — infrastructure-as-code: политики и auth в Git, применяются воспроизводимо (Terraform/CI).",
+                "source_of_confusion": "Ручная правка через UI кажется быстрее и понятнее для разовых изменений.",
+                "if_it_were_true": "Тогда не было бы ревью, истории изменений и воспроизводимости конфигурации.",
+                "how_it_should_be": "Держите конфигурацию `Vault` как код с review и версионированием."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Ключевые практики: least-privilege политики, короткие TTL и dynamic-секреты вместо статичных, auto-unseal + регулярные снапшоты, включённый audit-логинг, отзыв root-токена после bootstrap, изоляция через namespaces/mount'ы и инфраструктура-как-код для конфигурации (policies/auth в Git).",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: безопасность `Vault` — это сумма организационных практик (least-privilege, ротация, аудит), а не одна настройка.",
+                "example": "Пример: после первичной настройки root-токен отзывают (`vault token revoke`), а дальнейшие изменения делают через узкие admin-политики из Git.",
+                "when_to_apply": "Применять с самого начала проекта: ретроактивно навести least-privilege и аудит на работающем `Vault` гораздо сложнее.",
+                "edge_cases": "Подводный камень: без включённого audit-устройства теряется расследуемость инцидентов; при этом сами audit-логи содержат HMAC-данные и тоже требуют защиты.",
+                "related": "[[vault-interview#Q14]] least-privilege через политики; [[vault-interview#Q19]] снапшоты как часть best practices."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем Vault отличается от облачных secrets-менеджеров (AWS/GCP) и других решений?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Vault` — platform-agnostic: единый слой секретов поверх любых облаков и on-prem, с dynamic-секретами, encryption-as-a-service и PKI. Облачные менеджеры (AWS/GCP/Azure Secrets Manager) проще и нативно интегрированы, но привязаны к своему провайдеру и уже по возможностям. `Vault` мощнее, но требует развёртывания и эксплуатации.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: выбор — это компромисс между managed-простотой одного облака и переносимостью/глубиной `Vault` в multi-cloud.",
+                "example": "Пример: в чистом AWS-стеке часто хватает Secrets Manager + KMS; в multi-cloud/on-prem с динамическими БД-кредами и PKI выбирают `Vault`.",
+                "when_to_apply": "Применять `Vault`, когда нужны multi-cloud, dynamic secrets для многих систем, PKI и единый аудит; облачный менеджер — когда всё в одном облаке и важна простота.",
+                "edge_cases": "Подводный камень: `Vault` сам становится критичной системой (HA, unseal, бэкапы, обновления) — это операционная стоимость, которой нет у managed-сервиса.",
+                "related": "[[vault-interview#Q1]] возможности Vault как контекст сравнения; [[vault-interview#Q26]] смена лицензии как фактор выбора."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Vault` работает только в инфраструктуре HashiCorp Cloud и не может управлять секретами в AWS или GCP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Vault` платформо-независим: он управляет секретами и выдаёт креды для AWS/GCP/Azure и on-prem.",
+                "source_of_confusion": "Привязка имени к вендору HashiCorp создаёт впечатление замкнутости на его облако.",
+                "if_it_were_true": "Тогда не существовало бы `aws`/`gcp`/`azure` secrets-engine'ов.",
+                "how_it_should_be": "`Vault` — мультиоблачный слой секретов поверх любых провайдеров."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Облачные менеджеры (AWS Secrets Manager) полностью повторяют функциональность `Vault`, включая PKI и transit.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Облачные менеджеры уже по охвату: нет такого же PKI-CA, encryption-as-a-service и широких dynamic-engine'ов.",
+                "source_of_confusion": "Раз оба «хранят секреты», кажется, что функциональность эквивалентна.",
+                "if_it_were_true": "Тогда не было бы причин разворачивать и эксплуатировать `Vault` поверх облака.",
+                "how_it_should_be": "`Vault` шире по возможностям; облачные менеджеры проще, но ограниченнее и привязаны к провайдеру."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Vault` не требует эксплуатации — это полностью managed-сервис без забот об HA и бэкапах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Self-hosted `Vault` требует эксплуатации: HA, unseal, снапшоты, обновления; managed — это уже HCP Vault.",
+                "source_of_confusion": "Сравнение с managed-облаком создаёт ожидание, что и `Vault` «просто работает».",
+                "if_it_were_true": "Тогда не нужны были бы unseal-процедуры, кластеризация и DR-план.",
+                "how_it_should_be": "Self-hosted `Vault` несёт операционную стоимость; managed-вариант — это отдельный продукт HCP."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что произошло с лицензией Vault (BSL) и что такое OpenBao?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "HashiCorp сделала `Vault` полностью проприетарным и закрыла исходный код в 2023 году.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BSL — source-available: код остался открытым для просмотра/использования, ограничено лишь конкурирующее коммерческое применение.",
+                "source_of_confusion": "Смену лицензии часто упрощают до «закрыли код».",
+                "if_it_were_true": "Тогда нельзя было бы форкнуть исходники в `OpenBao`.",
+                "how_it_should_be": "Код доступен под BSL с ограничением на конкурентов; это не полное закрытие."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В августе 2023 HashiCorp сменила лицензию `Vault` (и других продуктов) с open-source `MPL 2.0` на `BSL 1.1` (Business Source License): исходники открыты, но запрещено использовать продукт для конкурирующего коммерческого предложения. В ответ сообщество создало форк `OpenBao` (под эгидой Linux Foundation), оставшийся под `MPL 2.0`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объяснение: BSL — это source-available, а не OSI-open-source; именно поэтому возник полностью открытый форк `OpenBao`.",
+                "example": "Пример: команда, которой важна OSI-лицензия (или которая строит на этом сервис), может выбрать `OpenBao` вместо `Vault` BSL.",
+                "when_to_apply": "Применять знание лицензии при выборе: для большинства внутренних применений BSL не мешает, но для вендоров/строгих policy важен `OpenBao`/MPL.",
+                "edge_cases": "Подводный камень: со временем `Vault` и `OpenBao` могут расходиться по фичам — нельзя считать их вечно взаимозаменяемыми drop-in заменами.",
+                "related": "[[vault-interview#Q25]] лицензия как фактор в сравнении решений; [[vault-interview#Q1]] базовые возможности, общие для обоих."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`OpenBao` — это коммерческая Enterprise-редакция `Vault` от самой HashiCorp.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OpenBao` — это community-форк под эгидой Linux Foundation на `MPL 2.0`, а не продукт HashiCorp.",
+                "source_of_confusion": "Похожие названия и общий код создают впечатление одного вендора.",
+                "if_it_were_true": "Тогда `OpenBao` наследовал бы BSL-ограничения, а не возвращался к MPL.",
+                "how_it_should_be": "`OpenBao` — независимый открытый форк сообщества под MPL 2.0."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Смена на BSL запрещает использовать `Vault` внутри собственной компании без покупки лицензии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BSL разрешает внутреннее использование; ограничение касается предложения `Vault` как конкурирующего сервиса третьим лицам.",
+                "source_of_confusion": "Слово «Business» в названии лицензии трактуют как «любое коммерческое использование запрещено».",
+                "if_it_were_true": "Тогда практически никто не мог бы пользоваться `Vault` BSL без оплаты.",
+                "how_it_should_be": "Внутреннее применение разрешено; запрещено строить на нём конкурирующий managed-сервис."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
