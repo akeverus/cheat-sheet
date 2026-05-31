@@ -75,3 +75,24 @@ A second review pass ran a **7-agent parallel visual review over 42 screenshots*
 
 ### Coverage gaps for a future pass (from the critic)
 Interaction states (post-answer "разбор по шагам", accordion/table toggles, hover/focus-visible) and **measured** a11y (keyboard order, ARIA) were not in this static pass. The post-answer state was separately verified to render in light (`screenshots/rev-answer-light-1440.png`).
+
+---
+
+## Resolution log — interaction-state + measured-a11y pass (2026-05-31)
+
+Closed the "future pass" gaps above by **exercising** the focus-training interaction flow live (Playwright, measured geometry/ARIA, real FLASHCARD + seeded-MCQ sessions), not by eye.
+
+### ✅ Fixed — `a979ff03` (flashcard fix actually served)
+- The committed flex-grow flashcard fix wasn't being served: CSS content had changed (clamp→flex-grow) under the same `?v=10`, so the running app/build served the stale clamp version. Bumped `ui-refinements.css` v10→v11. **Re-measured on a live FLASHCARD session @1440×900: `flex-grow:1` applied, void 391→17px, reveal-block margins 45.7/45.7 symmetric, no scroll.**
+
+### ✅ Fixed — `6cb8a3f` (`fix(a11y): aria-controls → #details`)
+- The "Показать доп. анализ" disclosure button (`#extra-analysis-toggle`) had `aria-controls="result-feedback"`, but `toggleDetails` (app.js) lazy-loads `/details` and shows/hides `#details` — a different region. Per the WAI-ARIA disclosure pattern `aria-controls` must reference the controlled element. Fixed to `aria-controls="details"`. **Live check: attribute now `details`, target exists, `aria-expanded` toggles.** (The two sibling disclosures — `toggle-code-btn`→`#codeBlock`, `browse-reveal-btn`→`#browse-answer` — were already correct.)
+
+### ✅ Fixed — `6e2a3c1` (`fix(ux): dead «доп. анализ» button`)
+- `renderResult` revealed the "доп. анализ" button after **every** answer ("показываем всегда"), but in seed-mode (AI off, the default) there is no explanation: `/answer.explanation` and `/details` both call the *same* `getExplanationText(questionId)` and return `""`. Result: a **dead button** that opened an empty block and flipped its label to "Скрыть". This violated the documented `AnswerResponse` contract ("explanation может быть пустым … фронт это учитывает и не показывает доп. анализ"). Now the button is gated on `data.explanation` (empty → hidden, present → shown). Bumped `app.js` v7→v8. **Live seed-session check (postgresql q-1, `/details`=200 `""`): button hidden, feedback "Неверно…" still shown, no regression.**
+
+### ✅ Verified clean — keyboard focus-visible + tab order (no change needed)
+- Tabbed through the focus-training page (16 stops) and measured each `document.activeElement`'s focus indicator: **every** interactive element (skip-link, theme-toggle, surface-tabs, MCQ radio + label, submit) shows a visible `solid 2px #7c8ff5` outline (some + box-shadow). Tab order is logical. `missingRing: []`.
+
+### ✅ Verified — Docker/cloud build
+- The repo's existing multi-stage `Dockerfile` + `docker-compose.yml` (`interview-prep` service) build successfully: `docker build` → image 610MB, exit 0. Seed-first prod profile boots without an AI key. No change needed.
