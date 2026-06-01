@@ -158,11 +158,11 @@
               "text": "Tool use (ReAct/ReWOO) — reasoning model не дёргает внешние tools изнутри thinking-блока, нужен внешний loop с function calling.",
               "correct": true,
               "sections": {
-                "explanation": "Reasoning model «думает» внутри `<thinking>` блока, но не вызывает external API/DB/file ops. Для tool use нужен внешний цикл (ReAct), который подаёт thinking-выход в function calling и кладёт observation обратно. Аналогично сохраняется потребность в external verification (CoVe с реальными запросами), long-horizon memory (Voyager), multi-agent orchestration и cost optimization (роутинг дешёвой модели на простые шаги).",
+                "explanation": "Reasoning model «думает» внутри `<thinking>` блока, но не вызывает external API/DB/file ops. Для tool use нужен внешний цикл (`ReAct`), который подаёт thinking-выход в function calling и кладёт observation обратно. Сохраняется потребность в external verification (`CoVe` с реальными запросами), long-horizon memory (`Voyager`), multi-agent orchestration и cost optimization.",
                 "example": "o1 + ReAct + tools (search, DB) — нормальная production-комбинация: reasoning model думает, ReAct loop действует. Anthropic Claude extended thinking тоже не вызывает tools изнутри thinking — нужен внешний tool_use loop.",
                 "when_to_apply": "Любая задача с external state (web, DB, files), реальная фактологическая проверка, long-horizon с памятью между сессиями, или cost-sensitive production (роутинг).",
                 "edge_cases": "Некоторые модели в 2025+ поддерживают tools внутри reasoning (например, o3 с native tool calling), но это всё равно внешний loop под капотом. ChatGPT с web search — внешний tool, не часть reasoning блока.",
-                "related": "[[agentic-patterns-interview#Q29]] reasoning models; [[agentic-patterns-interview#Q4]] ReAct."
+                "related": "[[agentic-patterns-interview#Q29]] что reasoning model заменяет, а что нет; [[agentic-patterns-interview#Q4]] `ReAct` для внешнего tool-use цикла поверх reasoning."
               }
             },
             {
@@ -230,11 +230,11 @@
               "text": "Thought → Action → Observation: модель пишет рассуждение, вызывает tool, получает результат обратно в контекст; повторяется до Final Answer.",
               "correct": true,
               "sections": {
-                "explanation": "Yao et al. 2022 «ReAct: Synergizing Reasoning and Acting in Language Models» формулирует pattern из трёх шагов: (1) Thought — модель проговаривает план; (2) Action — вызывает tool; (3) Observation — система кладёт результат tool обратно в context. Цикл идёт до явного Final Answer или max_iters. Thought нужен для прозрачности и для better tool selection (LLM меньше галлюцинирует args, когда сначала думает).",
+                "explanation": "Yao et al. 2022 «ReAct: Synergizing Reasoning and Acting» формулирует pattern из трёх шагов: (1) `Thought` — модель проговаривает план; (2) `Action` — вызывает tool; (3) `Observation` — система кладёт результат tool обратно в context. Цикл идёт до явного `Final Answer` или `max_iters`; `Thought` нужен для прозрачности и точного выбора tool.",
                 "example": "`Question: Сколько лет назад родился автор Reflexion paper?` → `Thought: Нужно узнать год рождения Shinn` → `Action: search['Noah Shinn birth year']` → `Observation: 1998` → `Thought: 2026 - 1998 = 28` → `Final Answer: 28`.",
                 "when_to_apply": "General-purpose tool use, exploratory задачи, когда последовательность шагов не известна заранее. Дефолт для любого агента с tools.",
                 "edge_cases": "Quadratic token growth с историей, нужен max_steps bound, при tool error модель видит ошибку только на следующей итерации. В современных API parse_action заменено на function calling (структурированный JSON).",
-                "related": "[[agentic-patterns-interview#Q5]] pseudo-code; [[agentic-patterns-interview#Q13]] ReWOO для сравнения."
+                "related": "[[agentic-patterns-interview#Q5]] pseudo-code `ReAct`-агента c `max_steps`; [[agentic-patterns-interview#Q13]] `ReWOO` для сравнения по токенам и планированию."
               }
             }
           ]
@@ -398,11 +398,11 @@
               "text": "Manual CoT — человек руками пишет 8-10 примеров `Question + Reasoning + Answer`; Auto-CoT — кластеризует вопросы (K-means на embeddings), берёт репрезентантов, для каждого генерирует CoT через `Let's think step by step` и использует как few-shot exemplars.",
               "correct": true,
               "sections": {
-                "explanation": "Zhang et al. 2022 «Automatic Chain of Thought Prompting in Large Language Models». Pipeline Auto-CoT: (1) пул вопросов задачи, (2) embedding каждого, K-means, (3) выбор представителя из кластера, (4) для каждого `Let's think step by step` → exemplar, (5) использование как few-shot. Покрывает разнообразие задач без ручной работы; минус — exemplars могут содержать ошибки в reasoning, которые распространяются.",
+                "explanation": "Zhang et al. 2022 «Automatic Chain of Thought Prompting». Pipeline Auto-CoT: (1) пул вопросов задачи, (2) embedding каждого и K-means, (3) выбор представителя из кластера, (4) для каждого `Let's think step by step` → exemplar, (5) использование как few-shot. Покрывает разнообразие задач без ручной работы; минус — ошибки в exemplars распространяются.",
                 "example": "Manual CoT: автор берёт 8 типовых GSM8K задач, для каждой пишет reasoning и кладёт в prompt. Auto-CoT: берём весь dev set GSM8K, embedd, кластеризуем на 8 кластеров, для центрального вопроса каждого кластера генерируем CoT и используем как exemplars — без ручной работы.",
                 "when_to_apply": "Manual: узкий домен, нужно высокое качество, есть эксперт. Auto: широкий разнородный пул задач, нет эксперта. К 2026 чаще используют zero-shot CoT, обе техники потеряли актуальность.",
                 "edge_cases": "Auto-CoT exemplars могут содержать ошибки → распространяются. Manual exemplars не покрывают edge cases домена. Поверх reasoning models оба дают мало.",
-                "related": "[[agentic-patterns-interview#Q3]] reasoning models делают CoT нативно."
+                "related": "[[agentic-patterns-interview#Q3]] reasoning models делают CoT нативно; [[agentic-patterns-interview#Q6]] Self-Consistency как pattern поверх CoT."
               }
             },
             {
@@ -447,7 +447,7 @@
               "correct": false,
               "sections": {
                 "what_actually": "ReAct и Reflexion — разные patterns. ReAct — single-attempt loop с Thought-Action-Observation. Reflexion — обёртка вокруг N попыток ReAct/CoT, с verbal reflection между попытками. Часто комбинируются: «ReAct + Reflexion» = ReAct внутри попытки + reflection между попытками.",
-                "source_of_confusion": "Оба — agentic patterns 2022-2023, часто упоминаются вместе.",
+                "source_of_confusion": "Оба — agentic patterns эпохи 2022-2023, их часто упоминают и рисуют на одной диаграмме рядом, поэтому границу между loop и мета-обёрткой легко стереть.",
                 "if_it_were_true": "Не было бы отдельного paper Shinn 2023 — он бы просто цитировал Yao 2022. Но это две разные работы.",
                 "how_it_should_be": "ReAct — loop внутри попытки; Reflexion — мета-обёртка с reflection между попытками."
               }
@@ -494,7 +494,7 @@
               "text": "Self-Refine — generate → critique → refine ВНУТРИ одной задачи без external verifier (модель сама критик); Reflexion — между задачами/попытками с бинарным verifier и memory buffer reflections.",
               "correct": true,
               "sections": {
-                "explanation": "Madaan et al. 2023 «Self-Refine: Iterative Refinement with Self-Feedback». Pseudo-code: `output = generate(task); for _ in range(max_iters): critique = llm.critique(output); if critique == 'OK': break; output = llm.refine(output, critique)`. Никакого external verifier — модель сама critic. Reflexion отличается: (1) бинарный signal успеха от external verifier, (2) reflections аккумулируются между попытками в memory buffer, (3) verbal RL формализм. Self-Refine работает на writing/coding draft; Reflexion — на coding с тестами, embodied tasks.",
+                "explanation": "Madaan et al. 2023 «Self-Refine: Iterative Refinement with Self-Feedback». Псевдокод: `output = generate(task); for _ in range(max_iters): critique = llm.critique(output); if critique == 'OK': break; output = llm.refine(output, critique)`. External verifier не нужен — модель сама critic. `Reflexion` отличается бинарным сигналом успеха от внешнего verifier и накоплением reflections между попытками в memory buffer.",
                 "example": "Self-Refine для writing: draft → «слишком формально, добавь примеры» → revised draft → «теперь хорошо, OK» → stop. Reflexion для coding: code v1 → tests fail → reflection в memory → code v2 с memory → tests pass.",
                 "when_to_apply": "Self-Refine: open-ended writing, summarization, code draft (без verifier). Reflexion: coding с unit-tests, embodied environments, любые задачи с external бинарным сигналом.",
                 "edge_cases": "Self-Refine без verifier рискован: confirmation bias (модель соглашается со своим draft), hallucinated issues (придумывает несуществующие проблемы), drift (тон уплывает). Эмпирика: для math Self-Refine часто УХУДШАЕТ результат (Huang 2023).",
@@ -638,11 +638,11 @@
               "text": "Sycophancy / confirmation bias и hallucinated issues: модель «соглашается» со своим черновиком (особенно если он длинный и уверенный), а критика становится формальной; либо «находит проблему», которой нет, и портит корректный ответ. Plus нет factual grounding — фактические ошибки не ловит.",
               "correct": true,
               "sections": {
-                "explanation": "Известные проблемы self-critique без external verifier: (1) sycophancy — модель защищает свой draft; (2) hallucinated issues — придумывает несуществующие баги; (3) no factual grounding — не знает истинных фактов; (4) drift — после нескольких итераций ответ уплывает от исходного вопроса; (5) false confidence — после self-refine модель уверена в ответе, даже если он не стал лучше. Эмпирика: Huang et al. 2023 «Large Language Models Cannot Self-Correct Reasoning Yet» — для математики self-critique без verifier часто УХУДШАЕТ результат.",
+                "explanation": "Известные проблемы self-critique без external verifier: (1) sycophancy — модель защищает свой draft; (2) hallucinated issues — придумывает несуществующие баги; (3) no factual grounding — не знает истинных фактов; (4) drift — ответ уплывает от исходного вопроса; (5) false confidence — после self-refine модель уверена даже без улучшения. Huang et al. 2023 показали: для математики self-critique без verifier часто УХУДШАЕТ результат.",
                 "example": "Math problem: модель вычислила 2+2=5, на self-critique говорит «всё верно, OK» (sycophancy). Или: модель верно вычислила 2+2=4, на self-critique говорит «возможно ошибка, исправлю на 5» (hallucinated issue).",
                 "when_to_apply": "Митигации: бинарный signal вместо free-form critique (tests pass yes/no), external verifier (tests/search/calculator), cap на iterations (3-5), diff-проверка (если новая = старой N раз — stop), разные модели для generator и critic.",
                 "edge_cases": "На writing/coding draft self-critique работает (там «правильность» субъективна). На math и factual QA — рискован. Reasoning models внутри thinking-блока делают self-critique лучше, чем external self-critique поверх non-reasoning модели.",
-                "related": "[[agentic-patterns-interview#Q9]] Self-Refine; [[agentic-patterns-interview#Q25]] anti-patterns."
+                "related": "[[agentic-patterns-interview#Q9]] Self-Refine как pattern critique→refine; [[agentic-patterns-interview#Q25]] anti-pattern «verifier weaker than generator» и митигации."
               }
             },
             {
@@ -734,7 +734,7 @@
               "text": "Planner строит DAG плана со ВСЕМИ tool calls upfront с placeholders (`#E1`, `#E2`); Worker выполняет tools (LLM не вызывается); Solver принимает вопрос + evidence и синтезирует ответ. Выигрыш: меньше токенов (нет re-prompt на каждом шаге) и параллелизация tool calls.",
               "correct": true,
               "sections": {
-                "explanation": "Xu et al. 2023 «ReWOO: Decoupling Reasoning from Observations for Efficient Augmented Language Models». Три роли: (1) Planner — один LLM-вызов строит DAG со всеми tool calls; (2) Worker — выполняет tool calls (LLM НЕ вызывается); (3) Solver — один LLM-вызов синтезирует ответ из всех evidence. Paper заявляет 5-10× снижение токенов на HotpotQA по сравнению с ReAct (нет growing history на каждом шаге). Параллелизация: независимые tool calls в DAG выполняются одновременно.",
+                "explanation": "Xu et al. 2023 «ReWOO: Decoupling Reasoning from Observations». Три роли: (1) `Planner` — один LLM-вызов строит DAG со всеми tool calls; (2) `Worker` — выполняет tool calls (LLM НЕ вызывается); (3) `Solver` — один LLM-вызов синтезирует ответ из evidence. Paper заявляет 5-10× снижение токенов на HotpotQA против `ReAct`, плюс параллелизацию независимых tool calls в DAG.",
                 "example": "Plan: `E1 = search('CEO Anthropic'); E2 = search('founding year Anthropic'); E3 = calculator('2026 - ' + E2)`. Worker запускает E1 и E2 параллельно, потом E3 (зависит от E2). Solver: «CEO #E1, компании #E3 лет».",
                 "when_to_apply": "Multi-hop QA с независимыми tool calls, агрегация из нескольких API, token-конкурентные задачи где tool calls известны заранее.",
                 "edge_cases": "Не подходит для задач, где следующее действие ЗАВИСИТ от наблюдения (exploratory). Если observation противоречит ожиданию planner — нужен fallback (re-plan) или Hybrid с ReAct.",
@@ -772,9 +772,9 @@
               "correct": false,
               "sections": {
                 "what_actually": "ReWOO — академический pattern из paper Xu et al. 2023 (Reasoning WithOut Observation), не библиотека. Реализуется в LangGraph, LlamaIndex и других — но это не имя библиотеки.",
-                "source_of_confusion": "Имя похоже на framework brand.",
-                "if_it_were_true": "Не было бы paper и академических benchmarks (HotpotQA, TriviaQA).",
-                "how_it_should_be": "ReWOO — это pattern из paper; framework-агностичен."
+                "source_of_confusion": "Имя `ReWOO` звучит как brand готового фреймворка, поэтому его принимают за устанавливаемую библиотеку, а не за академический pattern из статьи.",
+                "if_it_were_true": "Тогда существовал бы PyPI-пакет и документация `ReWOO`, но есть только paper и benchmarks вроде HotpotQA и TriviaQA, а сам pattern реализуют поверх LangGraph или LlamaIndex.",
+                "how_it_should_be": "`ReWOO` — это pattern из статьи Xu et al. 2023; он framework-агностичен и переносится на любой оркестратор, а не привязан к одной библиотеке."
               }
             }
           ]
@@ -806,7 +806,7 @@
               "text": "Когда реальность отличается от модели planner: tool error/empty, появились новые факты меняющие приоритет шагов, бюджет исчерпан без цели, user intervened, predicate goal-check провалился. Особенно важно для web automation, long-horizon embodied, research с неизвестным размером.",
               "correct": true,
               "sections": {
-                "explanation": "Pattern: `for step in plan: result = executor.run(step); if is_anomaly(result, expected=step.expected): plan = planner.replan(original_task, history, anomaly=result); continue`. Сигналы re-plan: tool error, inconsistent с ожиданием, missing data, user intervention, исчерпан бюджет. Где re-plan важнее: web automation (страница меняется), long-horizon embodied (Voyager — план превращается в curriculum), research-задачи с неизвестным размером.",
+                "explanation": "Pattern: `for step in plan: result = executor.run(step); if is_anomaly(result, expected=step.expected): plan = planner.replan(task, history, anomaly=result)`. Сигналы re-plan: tool error, inconsistent с ожиданием, missing data, user intervention, исчерпан бюджет. Re-plan важнее всего в web automation, long-horizon embodied (`Voyager`) и research с неизвестным размером.",
                 "example": "Web automation: planner ожидает кнопку «Submit», но страница обновилась и кнопка теперь «Send». Tool вернул «button not found» → re-plan: «найти любую кнопку с текстом Submit/Send/Continue».",
                 "when_to_apply": "Web automation, embodied agents (Voyager), research-задачи с unknown размером, любой long-horizon workflow где реальность меняется.",
                 "edge_cases": "Где можно жить без re-plan: структурированные workflow (ETL-like) с известными входными данными. Без re-plan агент при анормалии застрянет.",
@@ -927,9 +927,9 @@
               "correct": false,
               "sections": {
                 "what_actually": "Это разные алгоритмы поиска: BFS по уровням (frontier на каждой глубине), DFS вглубь (стек). В контексте ToT они выбирают разные стратегии исследования дерева.",
-                "source_of_confusion": "Оба — graph search, легко спутать роли.",
-                "if_it_were_true": "Не было бы двух терминов в CS literature и в ToT paper.",
-                "how_it_should_be": "BFS и DFS — разные алгоритмы с разными trade-offs."
+                "source_of_confusion": "Оба — классические graph-search алгоритмы, и в контексте дерева мыслей их легко перепутать ролями: кажется, что любой из них «просто обходит дерево» одинаково.",
+                "if_it_were_true": "Тогда в CS-литературе и в ToT paper не было бы двух разных терминов с разными trade-offs по памяти, глубине и порядку раскрытия узлов.",
+                "how_it_should_be": "BFS и DFS — разные алгоритмы: BFS идёт по уровням с frontier, DFS — вглубь со стеком и backtrack; в ToT они задают разные стратегии исследования."
               }
             },
             {
@@ -950,7 +950,7 @@
               "text": "BFS — для коротких оптимумов и game-like задач с фиксированной глубиной и надёжным scoring; DFS — для неизвестной глубины и path-finding в reasoning (мало памяти); beam-search — компромисс с ограниченным frontier, чаще всего используется на практике (beam=2-4).",
               "correct": true,
               "sections": {
-                "explanation": "BFS: на каждом уровне расширяем все кандидаты, сортируем по score, оставляем top-beam. Идеально для game-like (Game-of-24, шахматные позиции) — фиксированная глубина, можно сравнить варианты на одном уровне. DFS: идём в самую перспективную ветку до конца, при failure — backtrack. Хорошо для path-finding (последовательность шагов рассуждения с возможным dead-end). Beam-search — практичный компромисс: размер frontier ограничен (как BFS), но идём в глубину.",
+                "explanation": "BFS: на каждом уровне расширяем кандидатов, сортируем по score, оставляем top-beam — идеально для game-like (Game-of-24) с фиксированной глубиной. DFS: идём в самую перспективную ветку до конца, при failure backtrack — хорошо для path-finding с возможным dead-end. Beam-search — практичный компромисс: frontier ограничен (как BFS), но идём в глубину.",
                 "example": "Game-of-24: BFS — на каждом шаге пробуем все операции с парой чисел, отбираем top-2. Math proof: DFS — идём в одну стратегию доказательства до конца, при тупике backtrack к развилке. Production LLM-агенты: beam=2-4 как баланс exploration и cost.",
                 "when_to_apply": "BFS — известная глубина, можно сравнивать ветки на уровне. DFS — глубокий поиск с возможностью раннего успеха. Beam — большинство практических случаев.",
                 "edge_cases": "Чистый BFS с большим beam = exponential cost. Чистый DFS без bound = бесконечно. Beam — нужен evaluator достаточного качества, иначе отбрасывает правильные ветки.",
@@ -1190,7 +1190,7 @@
               "text": "Адаптация: Observe = чтение state (logs, sensors, tool outputs); Orient = LLM reasoning + retrieval из памяти/RAG; Decide = выбор tool/action; Act = вызов tool. По сути обобщение ReAct с явным разделением «интерпретации» (Orient) и «выбора» (Decide). Полезен как mental model для long-running agents (monitoring, incident response), а не как код-pattern.",
               "correct": true,
               "sections": {
-                "explanation": "OODA — John Boyd, 1970-е, военная доктрина для принятия решений в неопределённости. 4 шага в loop: Observe (собрать данные), Orient (интерпретировать в свете знаний/контекста — самый ёмкий шаг), Decide (выбрать курс действий), Act (выполнить) → Observe. Применение к LLM: Observe = state reading, Orient = reasoning + RAG, Decide = tool selection, Act = tool call. Это обобщение ReAct с явным разделением Orient и Decide, что полезно для дизайна incident-response/monitoring агентов.",
+                "explanation": "OODA — John Boyd, 1970-е, доктрина решений в неопределённости. 4 шага в loop: `Observe` (собрать данные), `Orient` (интерпретировать в контексте — самый ёмкий шаг), `Decide` (выбрать курс), `Act` (выполнить) → `Observe`. В LLM: Observe = state reading, Orient = reasoning + RAG, Decide = tool selection, Act = tool call. Это обобщение `ReAct` с явным разделением Orient и Decide.",
                 "example": "Incident response agent: Observe — читает alerts из PagerDuty. Orient — анализирует с историческими данными в БД (RAG). Decide — выбирает action (restart service / page on-call / collect logs). Act — вызывает соответствующий tool. Цикл повторяется до resolved.",
                 "when_to_apply": "Mental model на whiteboard при дизайне long-running agents с явной интерпретационной фазой. Полезен для monitoring, incident response, security agents — где «понять что происходит» (Orient) важно само по себе.",
                 "edge_cases": "В чистом виде «OODA-агента» в LangChain нет — это архитектурный шаблон, не код. Boundary между Orient и Decide часто размытая в LLM (обе делает одна модель).",
@@ -1241,7 +1241,7 @@
               "sections": {
                 "what_actually": "Toolformer — академический подход из paper, не framework. Реализаций в виде LangChain-like библиотеки нет; идея унесена в обучение современных моделей.",
                 "source_of_confusion": "«-former» суффикс ассоциируется с Transformer и его экосистемой.",
-                "if_it_were_true": "Была бы документация и PyPI package.",
+                "if_it_were_true": "Тогда существовали бы документация и PyPI-пакет `Toolformer`, который можно было бы поставить и импортировать, но ничего такого нет — есть только paper Schick et al. 2023.",
                 "how_it_should_be": "Toolformer — академическая training methodology, наследие — function calling в современных моделях."
               }
             },
@@ -1286,11 +1286,11 @@
               "text": "Research-агент с многошаговым планом «Найди A, потом B, потом сравни» — Planner строит high-level шаги, каждый под-шаг = ReAct с tools (поиск + чтение).",
               "correct": true,
               "sections": {
-                "explanation": "Реальные production-агенты редко используют один pattern — комбинируют по слоям. Plan-Execute (верх) + ReAct (executor) типично для multi-step research: Planner строит шаги «Найти X, потом Y, потом сравнить», каждый шаг исполняет ReAct-агент с tools (search, browse, read). Принцип: разные patterns решают разные задачи (control flow vs tool use), комбинируются по слоям, не альтернативно. Другие типичные композиции: ReAct + Reflexion (coding с тестами), Plan-Execute + Self-Critique (long-form report), ToT + Self-Consistency (math с подходами), ReWOO + CoVe (fact-heavy answers), Voyager + ReAct (skill execution).",
+                "explanation": "Production-агенты редко используют один pattern — комбинируют по слоям. `Plan-Execute` (верх) + `ReAct` (executor) типично для multi-step research: Planner строит шаги «Найти X, потом Y, потом сравнить», каждый шаг исполняет `ReAct`-агент с tools. Принцип: разные patterns решают разные задачи (control flow vs tool use) и комбинируются по слоям, а не как альтернативы.",
                 "example": "Perplexity Deep Research: Planner — «определи aspects темы», Executor для каждого aspect — ReAct с web search. Финальный synth собирает результаты. Anthropic Claude Research mode (2025) использует похожий pattern.",
                 "when_to_apply": "Когда задача имеет известную high-level структуру (план), но внутри шагов нужна tool use гибкость. Long workflows, research, code refactoring «разбей класс → добавь тесты → обнови doc».",
                 "edge_cases": "Granular planning может быть избыточным для коротких задач — упрощать до чистого ReAct. Re-planner нужен если шаги дают unexpected результаты.",
-                "related": "[[agentic-patterns-interview#Q12]] Plan-Execute; [[agentic-patterns-interview#Q4]] ReAct."
+                "related": "[[agentic-patterns-interview#Q12]] `Plan-Execute` как верхний слой; [[agentic-patterns-interview#Q4]] `ReAct` в роли executor каждого шага плана."
               }
             },
             {
@@ -1358,11 +1358,11 @@
               "text": "Stopping ТОЛЬКО по max_iterations без успешного критерия — это не stopping, это TIMEOUT. Должен быть хотя бы один успешный критерий (Final Answer marker / verifier / goal predicate) + max_iterations как safety net.",
               "correct": true,
               "sections": {
-                "explanation": "Stopping conditions — критический элемент. Типы: (1) max_iterations — ОБЯЗАТЕЛЬНЫЙ safety net; (2) final answer marker — модель явно выдаёт `FINAL_ANSWER` или вызывает `submit_answer` tool; (3) verifier passes — для Reflexion/Best-of-N; (4) goal predicate — функция от state (`len(results) >= n`, `payment_completed`); (5) token budget — кумулятивный лимит; (6) time budget — wall clock; (7) no progress — если N шагов повторяют действия — stop; (8) user confirmation — human-in-the-loop; (9) cost cap. Anti-pattern: stopping только по max_iterations — это timeout, не stopping. Высокая доля runs упёршихся в max_iterations — сигнал что pattern или prompt не работает.",
+                "explanation": "Типы stopping conditions: (1) max_iterations — ОБЯЗАТЕЛЬНЫЙ safety net; (2) final answer marker (`FINAL_ANSWER` / `submit_answer`); (3) verifier passes — для `Reflexion`/Best-of-N; (4) goal predicate от state; (5) token budget; (6) time budget; (7) no progress; (8) user confirmation; (9) cost cap. Anti-pattern: только max_iterations — это timeout, не stopping; высокая доля runs упёршихся в лимит сигналит, что pattern или prompt не работает.",
                 "example": "Wrap агент в `AgentExecutor`, который держит ВСЕ stopping centralized и пишет в лог какое сработало. Если 50% runs упираются в max_iterations — copy prompt и tools диагностируют, почему модель не возвращает Final Answer.",
                 "when_to_apply": "Всегда. Минимум: max_iterations + Final Answer marker. Для Reflexion/Best-of-N добавить verifier. Для долгих API-heavy агентов — time budget. Для cost-sensitive — token cap.",
                 "edge_cases": "No progress detection трудно реализовать корректно (агент может «думать молча»). Cost cap dynamic — токены растут с history. User confirmation вводит UX-сложность.",
-                "related": "[[agentic-patterns-interview#Q5]] max_steps в ReAct; [[agentic-patterns-interview#Q25]] anti-patterns."
+                "related": "[[agentic-patterns-interview#Q5]] `max_steps` как обязательный bound в `ReAct`; [[agentic-patterns-interview#Q25]] anti-pattern recursive без bound и context bloat."
               }
             },
             {
@@ -1454,11 +1454,11 @@
               "text": "Признак: 10 LLM-вызовов там, где хватило бы одного — простой Q&A решается одним промптом, а навешено Plan-Execute + Self-Refine + Verifier. Лечение: начинать с baseline (single prompt), добавлять pattern только при конкретно видимой проблеме.",
               "correct": true,
               "sections": {
-                "explanation": "Over-engineering — самый частый anti-pattern. Признак: cost растёт в 10× без пропорционального прироста качества. Anthropic «Building Effective Agents» формулирует: «complexity should be justified». Лечение: (1) начинать с baseline = одиночный CoT prompt, (2) измерять качество на regression suite, (3) добавлять pattern только когда видим конкретную проблему (hallucination → CoVe; код не проходит тесты → Reflexion; long-form quality → Self-Refine). Другие частые anti-patterns: recursive без bound (infinite loop), context bloat (rolling window/summarization), verifier weaker than generator (использовать другой провайдер), implicit state via history (explicit AgentState), tool name collision (чёткие docstrings), no instrumentation (structured tracing с первого дня), reflection «для галочки» (assertion в тестах).",
+                "explanation": "Over-engineering — самый частый anti-pattern; признак: cost растёт в 10× без прироста качества. Anthropic «Building Effective Agents»: «complexity should be justified». Лечение: (1) начинать с baseline = одиночный CoT prompt, (2) мерить качество на regression suite, (3) добавлять pattern только под конкретную проблему (hallucination → `CoVe`; тесты падают → `Reflexion`). Другие: recursive без bound, context bloat, слабый verifier, implicit state, no instrumentation.",
                 "example": "Простой `weather → температура в городе` нуждается в одном LLM call с function calling. Если добавляется Plan-Execute («сначала determine city, потом call weather API, потом format») — over-engineering. Cost 5×, latency 5×, прирост качества — ноль.",
                 "when_to_apply": "Audit любого agent: посчитать число LLM calls per task. Если >5 на простой задаче — пересмотреть. Baseline один prompt должен быть всегда в regression suite для сравнения.",
                 "edge_cases": "Иногда «избыточный» pattern оправдан для high-stakes (compliance, медицина), даже с 10× cost. Решает business priority.",
-                "related": "[[agentic-patterns-interview#Q26]] сравнение patterns по cost; [[agentic-patterns-interview#Q27]] выбор pattern."
+                "related": "[[agentic-patterns-interview#Q26]] сравнительная таблица patterns по cost и latency; [[agentic-patterns-interview#Q27]] decision-guide, какой pattern когда выбирать без over-engineering."
               }
             },
             {
@@ -1526,7 +1526,7 @@
               "text": "N+2 LLM-вызовов: 1 draft + 1 plan verifications + N (по одному на verification) + 1 revise.",
               "correct": true,
               "sections": {
-                "explanation": "Структура CoVe — N+2 LLM calls. (1) Draft answer — 1 call. (2) Plan verifications (список вопросов) — 1 call. (3) Answer verifications — N calls (по одному на вопрос, в ИЗОЛИРОВАННОМ контексте, без draft). (4) Revise draft с учётом answers — 1 call. Итого N+2. Cost: для 3-5 verification вопросов = 5-7 LLM calls против 1 baseline. Стоит для high-stakes ответов (биография, продукт, факты); для chat — overkill.",
+                "explanation": "Структура `CoVe` — N+2 LLM calls. (1) Draft answer — 1 call. (2) Plan verifications (список вопросов) — 1 call. (3) Answer verifications — N calls (по одному на вопрос, в ИЗОЛИРОВАННОМ контексте без draft). (4) Revise draft — 1 call. Для 3-5 verification-вопросов = 5-7 calls против 1 baseline; стоит для high-stakes ответов, для chat — overkill.",
                 "example": "Q: «Расскажи про Эйнштейна». Draft (1 call) → Plan: 3 verification questions (1 call) → 3 isolated verifications (3 calls) → Revise (1 call) = 6 calls total для N=3.",
                 "when_to_apply": "Fact-heavy ответы где hallucination дорого стоит. Биография, исторические факты, описание продукта, медицина, legal. Не для chat (overkill).",
                 "edge_cases": "Можно сократить, batching N verifications в один call (но теряется изоляция). Для math/code лучше Reflexion с verifier, не CoVe.",
@@ -1598,11 +1598,11 @@
               "text": "Reflexion — задачи с верифицируемым результатом (тесты, симулятор) и где модель должна УЧИТЬСЯ НА ПРОВАЛАХ — это canonical use case Reflexion. Alternative — Best-of-N с тестами как verifier (если compute не лимит).",
               "correct": true,
               "sections": {
-                "explanation": "Decision-guide: ReAct — general-purpose tool use; Reflexion — verifiable result + learning from failures (coding, game-like, RL-like); Plan-and-Execute — известная структура; ReWOO — независимые tool calls + экономия токенов; ToT — discrete reasoning + intermediate evaluation (math/puzzles); Best-of-N — есть программный verifier + compute не лимит; Self-Consistency — short factual/numeric; Self-Refine — open-ended writing без verifier (осторожно); CoVe — fact-heavy; Voyager — long-horizon agents; Generative Agents — persistent. Composition: 2-3 pattern в стеке типично, например Plan-Execute (верх) + ReAct (executor) + CoVe (финальный synth).",
+                "explanation": "Decision-guide: `ReAct` — general-purpose tool use; `Reflexion` — verifiable result + обучение на провалах (coding, game-like); `Plan-Execute` — известная структура; `ReWOO` — независимые tool calls + экономия токенов; `ToT` — discrete reasoning + оценка состояний (math/puzzles); Best-of-N — есть программный verifier; Self-Consistency — short numeric; Self-Refine — writing; `CoVe` — fact-heavy. В стеке обычно 2-3 pattern по слоям.",
                 "example": "SWE-bench coding agent: Reflexion с тестами как verifier, бинарный сигнал pass/fail, reflection «забыл edge case» → next attempt. Альтернатива — Best-of-N с N=10 sampled solutions + тесты как verifier.",
                 "when_to_apply": "Reflexion: coding agents, game environments, RL-like. Best-of-N: code generation + tests, math + symbolic verifier, RLHF data labeling.",
                 "edge_cases": "Reflexion дороже Best-of-N (k×R vs N), но даёт learning между попытками. Best-of-N — independent samples без learning. Можно комбинировать: Reflexion с Best-of-N внутри попытки.",
-                "related": "[[agentic-patterns-interview#Q8]] Reflexion; [[agentic-patterns-interview#Q17]] Best-of-N."
+                "related": "[[agentic-patterns-interview#Q8]] `Reflexion` для задач с verifier; [[agentic-patterns-interview#Q17]] Best-of-N как альтернатива с программной проверкой."
               }
             },
             {
@@ -1670,7 +1670,7 @@
               "text": "Базовые: success rate, # steps to solution, tokens per task, latency (p50/p95), cost per task, tool calls per task. Качественные: tool selection accuracy, tool argument accuracy, hallucination rate, stop-condition triggered. Robustness: re-run variance, adversarial inputs, tool failure resilience. Frameworks: LangSmith, OpenAI Evals, AgentBench/SWE-bench/GAIA/WebArena/ALFWorld для категорий агентов.",
               "correct": true,
               "sections": {
-                "explanation": "Agentic system нельзя оценивать одной метрикой. Минимальный harness: (1) Базовые — success rate, # steps, tokens, latency, cost, tool calls. (2) Качественные — tool selection accuracy, argument accuracy, hallucination rate, stop-condition triggered (высокая доля max_iters = плохой знак). (3) Robustness — re-run variance (std при T>0), adversarial inputs (malformed query, prompt injection), tool failure resilience. Eval-frameworks: LangSmith Evaluators (datasets + LLM-as-judge), OpenAI Evals (generic), AgentBench/SWE-bench/GAIA/WebArena/ALFWorld (стандартные benchmarks). Принцип: regression suite 30-100 задач разной сложности на каждое изменение pattern/prompt/model.",
+                "explanation": "Agentic system нельзя оценивать одной метрикой. Минимальный harness: (1) базовые — success rate, # steps, tokens, latency, cost, tool calls; (2) качественные — tool selection accuracy, hallucination rate, stop-condition triggered (много max_iters = плохой знак); (3) robustness — re-run variance, adversarial inputs, tool failure resilience. Frameworks: LangSmith Evaluators, OpenAI Evals, SWE-bench/GAIA/WebArena. Принцип: regression suite 30-100 задач на каждое изменение.",
                 "example": "SWE-bench-style harness: 50 GitHub issues с unit-tests как verifier. Метрики: % issues решённых (success), avg # ReAct iterations, total tokens, $/issue, % cases с max_iter timeout. Re-run каждое изменение prompt/model — детект regression.",
                 "when_to_apply": "Перед любым изменением agent (новый pattern, новый prompt, новая модель) — прогнать regression. Без harness нельзя обосновать «улучшение».",
                 "edge_cases": "LLM-as-judge для качественных метрик имеет bias — использовать сильную модель (Claude/GPT-4 как judge). Adversarial inputs ловят prompt injection / jailbreak — критично для security.",
@@ -1694,7 +1694,7 @@
               "text": "CoT (по определению), частичный Self-Refine («wait, let me check this»), эмерджентный backtracking, иногда tree-search-like exploration — всё на reasoning, без tools и без external state.",
               "correct": true,
               "sections": {
-                "explanation": "Reasoning models (o1/o3/R1, Claude extended thinking, Gemini Deep Think) делают внутри thinking-блока: (1) CoT — по определению, это основа reasoning models; (2) частичный Self-Refine — модель сама проговаривает «wait, let me check this»; (3) эмерджентный backtracking — при тупике пробует другой подход; (4) иногда tree-search-like exploration — рассматривает несколько вариантов перед выбором. Всё это БЕЗ tools и без external state. Что НЕ заменяет: tool use (ReAct/ReWOO внешний), external verification (CoVe с реальными запросами), long-horizon planning с реальным state (web/embodied), cost optimization (роутинг), multi-agent orchestration, memory/skill libraries.",
+                "explanation": "Reasoning models (o1/o3/R1, Claude extended thinking, Gemini Deep Think) делают внутри thinking-блока: (1) CoT — по определению; (2) частичный Self-Refine («wait, let me check»); (3) эмерджентный backtracking; (4) иногда tree-search-like exploration. Всё это БЕЗ tools и external state. Что НЕ заменяет: tool use (`ReAct`/`ReWOO`), external verification (`CoVe`), long-horizon planning с реальным state, cost optimization, multi-agent, memory/skill libraries.",
                 "example": "o1 решает math problem: внутри thinking рассматривает несколько подходов, выбирает один, проверяет ответ («wait, let me verify»), при ошибке backtrack — но всё это в одном LLM-вызове без tools. Чтобы запросить current weather, нужен внешний ReAct loop с function calling.",
                 "when_to_apply": "Reasoning model — для сложного reasoning без external state. Combine с ReAct для tool use, с CoVe для fact verification, с Voyager-like для memory.",
                 "edge_cases": "Поверх reasoning models даёт меньший прирост: Self-Consistency, Self-Refine без verifier, Auto-CoT, Manual CoT exemplars. Cost reasoning model 5-10× больше — используют для сложных шагов, не для routine.",
@@ -1766,7 +1766,7 @@
               "text": "Self-Consistency — теряет суть, если все «голоса» — копии ОДНОГО агента; для multi-agent имеет смысл, только если агенты РАЗНЫЕ (разные модели, разные prompts). Plus OODA — это mental model одного решателя, не паттерн распределения между агентами.",
               "correct": true,
               "sections": {
-                "explanation": "В multi-agent системах роли разделяются по агентам. Хорошо переносятся: Plan-Execute → Hierarchical (planner + executors); ReWOO → DAG-of-agents (естественная параллелизация); Self-Refine/Reflexion → Debater + Critic agents (снимает confirmation bias); Best-of-N → Proposer + Selector agents; ToT → Parallel exploration agents (каждая ветка = отдельный run); CoVe → Asker + Verifier agents; Voyager → Specialist library (pool of specialist agents). НЕ переносятся прямолинейно: Self-Consistency — теряет суть при копиях одного агента (но имеет смысл если агенты разные); OODA — это mental model одного решателя, не распределения. Главное усложнение multi-agent — communication protocol (message passing, blackboard, debate) и system-level stopping condition.",
+                "explanation": "В multi-agent роли разделяются по агентам. Хорошо переносятся: `Plan-Execute` → Hierarchical (planner + executors); `ReWOO` → DAG-of-agents; Self-Refine/`Reflexion` → Debater + Critic (снимает confirmation bias); Best-of-N → Proposer + Selector; `ToT` → Parallel exploration; `CoVe` → Asker + Verifier; `Voyager` → Specialist library. НЕ переносятся прямолинейно: Self-Consistency (теряет суть при копиях) и OODA (mental model одного решателя).",
                 "example": "Self-Consistency с 10 копиями одного prompt одной модели — теряет суть (все voices идентичны). Но Self-Consistency с GPT-4, Claude, Gemini голосующими над ответом — имеет смысл (разнообразие моделей дает разнообразие reasoning paths).",
                 "when_to_apply": "При проектировании multi-agent учитывать: какие single-agent patterns естественно мигрируют, какие нет. Communication protocol и stopping condition становятся критичными.",
                 "edge_cases": "Multi-agent добавляет orchestration overhead — message passing, debugging проще ниже. Anthropic советует: «start with single agent, escalate to multi-agent только при доказанной необходимости».",
