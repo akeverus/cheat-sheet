@@ -45,6 +45,14 @@ RUN chown -R app:app /app
 
 USER app
 ENV SPRING_PROFILES_ACTIVE=prod
+# JVM container-memory defaults НА УРОВНЕ ОБРАЗА (а не только в compose) —
+# чтобы `docker run` и K8s `image:` тоже были cgroup-aware без доп. настройки.
+# Без этого JVM берёт лишь ~25% лимита памяти под heap (дефолт MaxRAMPercentage),
+# а остальное простаивает. 75% оставляет место под metaspace/threads/direct-буферы.
+# ExitOnOutOfMemoryError: на OOM JVM сразу exit → оркестратор рестартует контейнер,
+#   а не держит degraded-инстанс в GC-thrashing. HeapDump в /tmp для post-mortem.
+# docker-compose.yml и K8s env переопределяют это значение (env > Dockerfile ENV).
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/heapdump.hprof"
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=5 \
   CMD curl -fsS http://localhost:8080/actuator/health/readiness || exit 1
