@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" data-design="editorial" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/head :: head(title='Итоги сессии', includeMermaid=false, includeChart=false)}"></head>
-<body>
+<body class="summary-page">
 <a class="skip-link" href="#main-content">Перейти к итогам сессии</a>
 <header th:replace="~{fragments/header :: header(pageTitle='Итоги сессии', statsPage=false, activePage='focus', showPrimaryNav=true)}"></header>
-<main id="main-content">
+<main id="main-content" class="ed-page">
 <section class="card summary-score">
     <div class="summary-mode-line" th:text="${summary.mode}"></div>
     <div class="summary-score-value"
          th:classappend="${summary.accuracy >= 80} ? 'text-success' : (${summary.accuracy >= 50} ? 'text-warning' : 'text-danger')"
          th:text="${summary.accuracyFormatted + '%'}">0%</div>
-    <div class="summary-score-label">Точность</div>
+    <div class="summary-score-label">Точность сессии</div>
     <div class="stats-grid">
         <div class="stat-item">
             <span class="stat-label">Всего</span>
@@ -28,11 +28,21 @@
     <div class="summary-duration" th:text="'Время: ' + ${summary.formattedDuration}"></div>
 </section>
 
+<!-- Действия: чиним тупик IA — даём явные пути дальше. Если были ошибки,
+     главное действие — повторить их (review), иначе — продолжить. -->
+<nav class="summary-actions" aria-label="Что дальше">
+    <a class="btn next-btn" th:if="${!summary.mistakes.isEmpty()}" th:href="@{/review}">Повторить ошибки →</a>
+    <a class="btn next-btn" th:if="${summary.mistakes.isEmpty()}" th:href="@{/}">Продолжить тренировку →</a>
+    <a class="btn secondary-btn" th:href="@{/settings}">Новая сессия</a>
+    <a class="btn secondary-btn" th:href="@{/stats}">Аналитика</a>
+    <a class="btn secondary-btn" th:if="${!summary.mistakes.isEmpty()}" th:href="@{/}">Продолжить</a>
+</nav>
+
 <!-- Результаты по темам -->
 <section class="card" th:if="${!summary.topicResults.isEmpty()}">
     <h2 class="summary-section-title">Результаты по темам</h2>
     <table class="summary-table">
-        <caption>Результаты по темам</caption>
+        <caption class="visually-hidden">Результаты по темам</caption>
         <thead>
         <tr>
             <th>Тема</th>
@@ -44,7 +54,10 @@
         </thead>
         <tbody>
         <tr th:each="tr : ${summary.topicResults}">
-            <td th:text="${@topicUtils.displayName(tr.topic())}">topic</td>
+            <td>
+                <a class="summary-topic-link" th:href="@{/(topic=${tr.topic()})}"
+                   th:text="${@topicUtils.displayName(tr.topic())}" th:title="${tr.topic()}">topic</a>
+            </td>
             <td class="summary-td-center" th:text="${tr.total()}">0</td>
             <td class="summary-td-center summary-td-correct" th:text="${tr.correct()}">0</td>
             <td class="summary-td-center summary-td-wrong" th:text="${tr.wrong()}">0</td>
@@ -56,26 +69,25 @@
     </table>
 </section>
 
-<!-- Ошибки -->
+<!-- Ошибки: кликабельны — ведут на тренировку по теме вопроса -->
 <section class="card" th:if="${!summary.mistakes.isEmpty()}">
     <h2 class="summary-section-title">Ошибки</h2>
+    <p class="summary-mistakes-hint">Нажми на вопрос, чтобы потренироваться по этой теме, или «Повторить ошибки» выше.</p>
     <div class="summary-mistakes">
-        <div th:each="m : ${summary.mistakes}" class="summary-mistake-item">
-            <div class="summary-mistake-question" th:text="${m.questionText()}">Вопрос</div>
-            <div class="summary-mistake-meta" th:text="${@topicUtils.displayName(m.topic())}">topic</div>
-        </div>
+        <a th:each="m : ${summary.mistakes}" class="summary-mistake-item" th:href="@{/(topic=${m.topic()})}">
+            <span class="summary-mistake-question" th:text="${m.questionText()}">Вопрос</span>
+            <span class="summary-mistake-meta" th:text="${@topicUtils.displayName(m.topic())}">topic</span>
+        </a>
     </div>
 </section>
 
 <!-- Рекомендации -->
 <section class="card summary-recommendations" th:if="${!summary.recommendations.isEmpty()}">
-    <h2>Рекомендации</h2>
-    <div th:each="rec : ${summary.recommendations}" class="summary-recommendation-item" th:text="${rec}">Рекомендация</div>
+    <h2 class="summary-section-title">Рекомендации</h2>
+    <ul class="summary-recommendations-list">
+        <li th:each="rec : ${summary.recommendations}" class="summary-recommendation-item" th:text="${rec}">Рекомендация</li>
+    </ul>
 </section>
-
-<div class="summary-actions">
-    <a class="btn next-btn" th:href="@{/}">Продолжить тренировку</a>
-</div>
 </main>
 </body>
 </html>
