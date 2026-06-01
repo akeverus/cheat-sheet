@@ -1,0 +1,258 @@
+/* =============================================================================
+   DESIGN TOKENS — Editorial-редизайн cheat-sheet quiz
+   Философия: Editorial / Magazine (тёплая дуо-тема). Спецификация токенов.
+   Этот файл — ИСТОЧНИК ПРАВДЫ. На этапе билда переносится в runtime-CSS под
+   static/css/ (с cache-bust в head.html). Контрасты подобраны под WCAG AA и
+   проверяются по факту в Playwright.
+
+   Принципы:
+   - Бумага + чернила + ОДИН акцент (терракота/охра). Тёплые тона, не холодные.
+   - Глубина через тонкие линейки (rules), не через тени-коробки.
+   - Семантика верно/ошибка/важно несёт цвет, но ВСЕГДА дублируется иконкой/текстом.
+   - Акцент-терракота ≠ красный, чтобы не путать с error.
+   ========================================================================== */
+
+:root {
+  /* ----------------------------------------------------------------------- */
+  /* ЦВЕТ — Light (тёплая бумага + чернила)                                   */
+  /* ----------------------------------------------------------------------- */
+  --color-bg-primary:      #F7F3EA;  /* бумага — основной фон */
+  --color-bg-secondary:    #FCF9F2;  /* приподнятая поверхность (карточки редко) */
+  --color-bg-tertiary:     #EFE8D9;  /* инпуты, колодцы, code-фон */
+  --color-bg-inverse:      #211C15;  /* инверсный фон (тёмные блоки в свете) */
+
+  --color-text-primary:    #211C15;  /* чернила — основной текст (~13:1 на бумаге) */
+  --color-text-secondary:  #5A5145;  /* приглушённый текст (~6:1) */
+  --color-text-tertiary:   #8A8073;  /* плейсхолдер / disabled (~3.3:1, только не-критичное) */
+  --color-text-inverse:    #F7F3EA;  /* текст на inverse-фоне */
+  --color-text-link:       #A8431F;  /* ссылки = акцент-терракота */
+
+  --color-border-primary:   #DDD5C4; /* основная линейка/рамка (hairline) */
+  --color-border-secondary: #E8E1D2; /* тонкая линейка */
+  --color-border-focus:     #A8431F; /* кольцо фокуса = акцент */
+
+  --color-accent-primary:        #A8431F; /* терракота — первичное действие/выбор (~5.5:1) */
+  --color-accent-primary-hover:  #8E3717;
+  --color-accent-primary-active: #7A2F13;
+  --color-accent-on:             #FFFFFF; /* текст на акценте (white на терракоте ~5.5:1) */
+  --color-accent-secondary:      #2C3A47; /* редкое вторичное действие (ink) */
+  --color-accent-wash:           #F0E3D6; /* тёплая заливка-подсветка выбранного (paper-tint) */
+
+  --color-status-success:    #2E6B45;  /* верно — глубокий зелёный */
+  --color-status-success-on: #FFFFFF;
+  --color-status-success-wash:#E3EEE5;
+  --color-status-warning:    #9A6B00;  /* охра-тёмная */
+  --color-status-error:      #B3261E;  /* ошибка — глубокий красный (чисто красный, не терракота) */
+  --color-status-error-on:   #FFFFFF;
+  --color-status-error-wash: #F4E0DE;
+  --color-status-info:       #2C5E8A;  /* ink-blue */
+
+  --color-surface-overlay:  rgba(33, 28, 21, 0.45); /* тёплый scrim под модалки */
+
+  /* ----------------------------------------------------------------------- */
+  /* ТИПОГРАФИКА                                                              */
+  /* ----------------------------------------------------------------------- */
+  --font-family-display: 'Fraunces', Georgia, 'Times New Roman', serif;       /* заголовки, pull-quote, drop-cap */
+  --font-family-body:    'Newsreader', Georgia, 'Times New Roman', serif;      /* длинное чтение, body */
+  --font-family-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace; /* код + eyebrow-метки (caps) */
+
+  /* шкала (драматичный editorial-контраст H1:body). base = 16px */
+  --font-size-xs:   0.75rem;   /* 12 — мелкие метки */
+  --font-size-sm:   0.875rem;  /* 14 — captions, мета */
+  --font-size-base: 1rem;      /* 16 — UI-текст, минимум на мобиле */
+  --font-size-md:   1.125rem;  /* 18 — основной reading-body длинных разборов */
+  --font-size-lg:   1.375rem;  /* 22 — подзаголовок */
+  --font-size-xl:   1.75rem;   /* 28 */
+  --font-size-2xl:  2.25rem;   /* 36 — заголовок раздела */
+  --font-size-3xl:  3rem;      /* 48 — заголовок вопроса */
+  --font-size-4xl:  4rem;      /* 64 — hero/обложка */
+
+  --font-weight-normal:   400;
+  --font-weight-medium:   500;
+  --font-weight-semibold: 600;
+  --font-weight-bold:     700;
+
+  --line-height-tight:   1.15;  /* display/заголовки */
+  --line-height-normal:  1.5;   /* UI-текст */
+  --line-height-relaxed: 1.7;   /* длинное чтение */
+
+  --letter-spacing-tight:  -0.02em; /* крупный display */
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide:    0.12em; /* mono-eyebrow, ALL-CAPS метки */
+
+  /* editorial-специфика */
+  --rule-weight:   1px;            /* тонкая линейка-разделитель */
+  --rule-weight-strong: 2px;       /* акцентная линейка (под заголовком) */
+  --measure:       68ch;           /* комфортная длина строки чтения (65–75ch) */
+  --measure-narrow:60ch;
+  --drop-cap-size: 3.2em;          /* буквица в разборе */
+  --column-gap:    2.5rem;         /* гаттер колоночной сетки */
+  --eyebrow-size:  var(--font-size-xs);
+
+  /* ----------------------------------------------------------------------- */
+  /* SPACING — база 8px (editorial = просторно)                              */
+  /* ----------------------------------------------------------------------- */
+  --space-0:  0;
+  --space-1:  0.25rem;  /* 4 */
+  --space-2:  0.5rem;   /* 8 — база */
+  --space-3:  0.75rem;  /* 12 */
+  --space-4:  1rem;     /* 16 */
+  --space-5:  1.5rem;   /* 24 */
+  --space-6:  2rem;     /* 32 */
+  --space-7:  3rem;     /* 48 */
+  --space-8:  4rem;     /* 64 */
+  --space-9:  6rem;     /* 96 */
+  --space-10: 8rem;     /* 128 */
+  --space-11: 12rem;    /* 192 */
+  --space-12: 16rem;    /* 256 */
+
+  /* ----------------------------------------------------------------------- */
+  /* LAYOUT                                                                   */
+  /* ----------------------------------------------------------------------- */
+  --max-width-content: 68ch;    /* колонка чтения */
+  --max-width-wide:    1080px;  /* широкий контент (таблицы, графики) */
+  --max-width-page:    1280px;  /* страница */
+
+  /* радиусы — editorial минимален: почти прямые углы */
+  --border-radius-sm:   3px;    /* инпуты, мелкие чипы */
+  --border-radius-md:   6px;    /* кнопки, карточки вариантов */
+  --border-radius-lg:   10px;   /* крупные блоки (редко) */
+  --border-radius-full: 999px;  /* пилюли/аватар */
+
+  /* тени — почти нет; глубина через линейки. Только мягкий lift при необходимости */
+  --shadow-sm:    0 1px 2px rgba(33, 28, 21, 0.05);
+  --shadow-md:    0 2px 8px rgba(33, 28, 21, 0.06);
+  --shadow-lg:    0 8px 28px rgba(33, 28, 21, 0.10);
+  --shadow-focus: 0 0 0 3px rgba(168, 67, 31, 0.35); /* кольцо фокуса = акцент */
+
+  /* ----------------------------------------------------------------------- */
+  /* MOTION (смысловая, не декоративная)                                      */
+  /* ----------------------------------------------------------------------- */
+  --duration-instant: 50ms;
+  --duration-fast:    150ms;
+  --duration-normal:  250ms;
+  --duration-slow:    400ms;
+  --duration-slower:  600ms;
+
+  --easing-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --easing-in:      cubic-bezier(0.4, 0, 1, 1);
+  --easing-out:     cubic-bezier(0, 0, 0.2, 1);
+  --easing-bounce:  cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ----------------------------------------------------------------------- */
+  /* BREAKPOINTS (для справки; в media-queries подставляются литералами)      */
+  /* ----------------------------------------------------------------------- */
+  --breakpoint-sm:  375px;
+  --breakpoint-md:  768px;
+  --breakpoint-lg:  1024px;
+  --breakpoint-xl:  1280px;
+  --breakpoint-2xl: 1536px;
+
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-dropdown: 20;
+  --z-overlay: 40;
+  --z-modal: 100;
+  --z-toast: 1000;
+}
+
+/* ===========================================================================
+   DARK — тёплый charcoal (коричнево-чёрный, НЕ синий navy). Не инверсия.
+   Текст — тёплый off-white (не #fff). Акцент — осветлённая терракота.
+   ========================================================================== */
+[data-theme="dark"] {
+  --color-bg-primary:      #16130D;
+  --color-bg-secondary:    #1F1B13;
+  --color-bg-tertiary:     #272117;
+  --color-bg-inverse:      #ECE4D4;
+
+  --color-text-primary:    #ECE4D4;  /* off-white тёплый (~13:1, не резкий) */
+  --color-text-secondary:  #A99E89;  /* ~6.5:1 */
+  --color-text-tertiary:   #7C7263;  /* ~3.5:1, только не-критичное */
+  --color-text-inverse:    #211C15;
+  --color-text-link:       #E0895C;  /* акцент-терракота осветлённый */
+
+  --color-border-primary:   #352E22;
+  --color-border-secondary: #2A2419;
+  --color-border-focus:     #E0895C;
+
+  --color-accent-primary:        #E0895C; /* светлая терракота (~7:1 на charcoal) */
+  --color-accent-primary-hover:  #EC9A6E;
+  --color-accent-primary-active: #C9764B;
+  --color-accent-on:             #1A1208; /* тёмный текст на светлом акценте */
+  --color-accent-secondary:      #9FB4C4;
+  --color-accent-wash:           #2A2014; /* тёплая заливка выбранного */
+
+  --color-status-success:    #6FB585;
+  --color-status-success-on: #14130D;
+  --color-status-success-wash:#1B271E;
+  --color-status-warning:    #D9A441;
+  --color-status-error:      #E5736B;
+  --color-status-error-on:   #14130D;
+  --color-status-error-wash: #2C1A18;
+  --color-status-info:       #6FA8D6;
+
+  --color-surface-overlay:  rgba(0, 0, 0, 0.6);
+
+  /* тени в тёмной — глубже и прозрачнее */
+  --shadow-sm:    0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md:    0 2px 8px rgba(0, 0, 0, 0.45);
+  --shadow-lg:    0 8px 28px rgba(0, 0, 0, 0.55);
+  --shadow-focus: 0 0 0 3px rgba(224, 137, 92, 0.45);
+}
+
+/* Системная тёмная тема — применяем dark, КРОМЕ случая явного выбора light.
+   Контракт совпадает с no-FOUC inline-скриптом в head.html. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg-primary:      #16130D;
+    --color-bg-secondary:    #1F1B13;
+    --color-bg-tertiary:     #272117;
+    --color-bg-inverse:      #ECE4D4;
+
+    --color-text-primary:    #ECE4D4;
+    --color-text-secondary:  #A99E89;
+    --color-text-tertiary:   #7C7263;
+    --color-text-inverse:    #211C15;
+    --color-text-link:       #E0895C;
+
+    --color-border-primary:   #352E22;
+    --color-border-secondary: #2A2419;
+    --color-border-focus:     #E0895C;
+
+    --color-accent-primary:        #E0895C;
+    --color-accent-primary-hover:  #EC9A6E;
+    --color-accent-primary-active: #C9764B;
+    --color-accent-on:             #1A1208;
+    --color-accent-secondary:      #9FB4C4;
+    --color-accent-wash:           #2A2014;
+
+    --color-status-success:    #6FB585;
+    --color-status-success-on: #14130D;
+    --color-status-success-wash:#1B271E;
+    --color-status-warning:    #D9A441;
+    --color-status-error:      #E5736B;
+    --color-status-error-on:   #14130D;
+    --color-status-error-wash: #2C1A18;
+    --color-status-info:       #6FA8D6;
+
+    --color-surface-overlay:  rgba(0, 0, 0, 0.6);
+
+    --shadow-sm:    0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md:    0 2px 8px rgba(0, 0, 0, 0.45);
+    --shadow-lg:    0 8px 28px rgba(0, 0, 0, 0.55);
+    --shadow-focus: 0 0 0 3px rgba(224, 137, 92, 0.45);
+  }
+}
+
+/* Уважение reduced-motion — переопределяем длительности в ноль на уровне токенов.
+   Компоненты используют var(--duration-*), поэтому это гасит анимации глобально. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-instant: 0ms;
+    --duration-fast:    0ms;
+    --duration-normal:  0ms;
+    --duration-slow:    0ms;
+    --duration-slower:  0ms;
+  }
+}
