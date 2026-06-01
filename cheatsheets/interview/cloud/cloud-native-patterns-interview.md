@@ -101,13 +101,6 @@ updated: "2026-04-25"
 
 **Не cloud-native:** lift-and-shift legacy apps в cloud (running monolith in EC2 — not cloud-native).
 
-
-> [!mcq]
-> - [ ] Lift-and-shift legacy монолит в EC2 без containerization | ❌ ПОСЛЕДСТВИЕ: нет elasticity и fault isolation; manual scaling и downtime при deployments
-> - [ ] Приложение с CDN и SPA-архитектурой без container orchestration | ❌ ПОСЛЕДСТВИЕ: CDN — не cloud-native; нет auto-scaling, fault isolation ограничена единственным сервером
-> - [x] Containerized microservices + dynamic orchestration (K8s) + DevOps practices + declarative APIs | ✓ ПРИМЕНЯТЬ: при построении scalable, resilient систем в public/private/hybrid cloud 📋 ПРАВИЛО: Cloud-native = containers + orchestration + stateless + observable 🔗 См. Q2
-> - [ ] Использование managed AWS сервисов при монолитной архитектуре | ❌ ПОСЛЕДСТВИЕ: cloud hosting ≠ cloud-native; монолит не масштабируется горизонтально, нет independent deployment
-
 ## Q2. (!) 12-factor app principles?
 
 **12-Factor App** (Heroku, 2012) — methodology для cloud-native apps.
@@ -129,13 +122,6 @@ updated: "2026-04-25"
 - API first
 - Telemetry
 - Authentication and authorization
-
-
-> [!mcq]
-> - [ ] Хранить config в application.properties внутри Docker image | ❌ ПОСЛЕДСТВИЕ: при смене окружения нужен rebuild image; разные envs = разные images → CI/CD overhead, нарушение 12-factor
-> - [x] 12 принципов: codebase в git, config в env vars, stateless processes, logs в stdout, port binding, fast startup/graceful shutdown | ✓ ПРИМЕНЯТЬ: при проектировании cloud-native приложений для K8s/PaaS 📋 ПРАВИЛО: Config = env vars; State = external store; Logs = stdout 🔗 См. Q13
-> - [ ] Писать session state в local JVM memory для производительности | ❌ ПОСЛЕДСТВИЕ: нельзя масштабировать горизонтально; sticky sessions обязательны, rolling update рвёт сессии
-> - [ ] Писать логи в /var/log/*.log файл для persistence | ❌ ПОСЛЕДСТВИЕ: логи теряются при restart контейнера; нет централизованного сбора, нет correlation across instances
 
 ## Q3. (!) Что такое CNCF?
 
@@ -160,13 +146,6 @@ updated: "2026-04-25"
 - **Harbor** — container registry
 
 100+ active projects. Standards de facto для cloud-native stack.
-
-
-> [!mcq]
-> - [ ] AWS-управляемый консорциум для облачных стандартов | ❌ ПОСЛЕДСТВИЕ: CNCF vendor-neutral, под Linux Foundation; AWS — один из многих участников, не управляет
-> - [ ] Только Kubernetes-ориентированный фонд | ❌ ПОСЛЕДСТВИЕ: CNCF содержит 100+ проектов: Prometheus, OPA, Argo, Cilium, Helm — далеко за рамками K8s
-> - [ ] Платная лицензионная программа для certified cloud vendors | ❌ ПОСЛЕДСТВИЕ: проекты CNCF open-source и бесплатны; certifications отдельны от membership
-> - [x] Vendor-neutral organization (Linux Foundation) управляющая cloud-native projects: K8s, Prometheus, Envoy, Helm, OPA, Argo | ✓ ПРИМЕНЯТЬ: при выборе cloud-native stack — CNCF Graduated = production-ready 📋 ПРАВИЛО: CNCF Graduated = battle-tested, vendor-neutral standard 🔗 См. Q1
 
 ## Q4. (!) Sidecar pattern?
 
@@ -196,13 +175,6 @@ Pod
 
 **Недостаток:** extra resources per pod.
 
-
-> [!mcq]
-> - [ ] Init container для database migrations перед стартом app | ❌ ПОСЛЕДСТВИЕ: init container завершается до старта main; sidecar работает параллельно постоянно — разные паттерны
-> - [x] Secondary container в том же pod, разделяет network namespace и volumes с main (logging, proxy, secrets injection). Vault Agent, Envoy, metrics exporter | ✓ ПРИМЕНЯТЬ: для cross-cutting concerns без изменения app code 📋 ПРАВИЛО: Sidecar = parallel container, shared network/volumes, separation of concerns 🔗 См. Q5
-> - [ ] DaemonSet для cluster-level логирования на каждой ноде | ❌ ПОСЛЕДСТВИЕ: DaemonSet — один pod per node, не per-application pod; нет доступа к конкретному app network namespace
-> - [ ] Отдельный микросервис для TLS termination на ingress уровне | ❌ ПОСЛЕДСТВИЕ: отдельный сервис не разделяет network namespace pod; TLS termination sidecar работает в localhost
-
 ## Q5. Ambassador pattern?
 
 **Ambassador** — sidecar specifically для **outbound** connections.
@@ -218,13 +190,6 @@ App → Ambassador (handles retry, auth, monitoring) → External service
 
 App думает, что говорит с simple service (`localhost:8080`), ambassador handles complexity.
 
-
-> [!mcq]
-> - [x] Sidecar для outbound connections: проксирует исходящие вызовы, добавляя retry, circuit breaker, auth. App думает что говорит с localhost | ✓ ПРИМЕНЯТЬ: для outbound proxy без изменения app кода; app → localhost:8080 → ambassador → external service 📋 ПРАВИЛО: Ambassador = outbound proxy sidecar (egress) 🔗 См. Q4
-> - [ ] API Gateway для incoming (north-south) трафика от клиентов | ❌ ПОСЛЕДСТВИЕ: API Gateway — ingress pattern для external clients; ambassador — egress (east-west outbound) от сервиса
-> - [ ] Adapter sidecar для конвертации формата метрик в Prometheus | ❌ ПОСЛЕДСТВИЕ: adapter трансформирует output format; ambassador проксирует outbound calls — разные цели
-> - [ ] Init container для ожидания зависимостей перед стартом | ❌ ПОСЛЕДСТВИЕ: init container завершается; ambassador постоянно active в runtime рядом с app
-
 ## Q6. Adapter pattern?
 
 **Adapter** — sidecar, **transforms** output app в standard format.
@@ -237,13 +202,6 @@ App (custom format) → Adapter → Standardized output
 **Use cases:**
 - Legacy app outputs custom logs → adapter transforms к JSON для logging stack
 - App exports custom metrics → adapter exposes Prometheus format
-
-
-> [!mcq]
-> - [ ] Ambassador pattern для проксирования исходящих запросов | ❌ ПОСЛЕДСТВИЕ: ambassador проксирует outbound calls; adapter трансформирует output format — разные задачи
-> - [x] Sidecar трансформирующий output app в стандартный формат: custom logs → JSON/ELK, custom metrics → Prometheus. Без изменения app кода | ✓ ПРИМЕНЯТЬ: для legacy apps с нестандартным форматом вывода 📋 ПРАВИЛО: Adapter = output transformer sidecar (standardize format) 🔗 См. Q5
-> - [ ] Ingress controller для routing по URL path на уровне кластера | ❌ ПОСЛЕДСТВИЕ: ingress controller — cluster-level entry point; adapter — per-pod output transformer
-> - [ ] DaemonSet для агрегации метрик с каждой ноды кластера | ❌ ПОСЛЕДСТВИЕ: DaemonSet один на ноду; adapter — sidecar рядом с конкретным pod для трансформации его output
 
 ## Q7. Init containers?
 
@@ -268,13 +226,6 @@ spec:
 
 Init container fails → pod restarts.
 
-
-> [!mcq]
-> - [ ] Sidecar containers работающие параллельно с main container | ❌ ПОСЛЕДСТВИЕ: sidecar работает параллельно; init container завершается до старта main — нельзя смешивать паттерны
-> - [ ] PostStart lifecycle hook выполняемый при старте main container | ❌ ПОСЛЕДСТВИЕ: PostStart — часть lifecycle main container; init container — отдельный container с гарантией порядка завершения
-> - [x] Containers запускаемые до main, завершаются и выходят. Для migrations, ожидания deps, setup volumes. Fail = pod restart | ✓ ПРИМЕНЯТЬ: для pre-start setup с гарантией порядка до старта main 📋 ПРАВИЛО: Init container fail = pod restart; завершается ДО main start 🔗 См. Q4
-> - [ ] Kubernetes Job для batch database migrations в отдельном Pod | ❌ ПОСЛЕДСТВИЕ: Job создаёт отдельный Pod; init container встроен в pod spec и координирован с app lifecycle
-
 ## Q8. (!) Circuit breaker?
 
 **Circuit breaker** — prevent cascade failures. Если downstream service failing → "open" circuit, fail fast.
@@ -293,13 +244,6 @@ def call_payment_service(order):
 **Tools:** Hystrix (legacy), Resilience4j, Polly (.NET), built-in service meshes.
 
 Подробнее — в [Resilience Patterns](../architecture/resilience-patterns-interview.md).
-
-
-> [!mcq]
-> - [ ] Retry без exponential backoff при каждой ошибке немедленно | ❌ ПОСЛЕДСТВИЕ: thundering herd — 1000 clients retry одновременно → recovering service захлёбывается повторными запросами
-> - [x] Closed → Open → Half-open. Open = fail fast без actual call. Half-open = probe. Resilience4j, Polly, Istio — при N failures в timewindow | ✓ ПРИМЕНЯТЬ: когда downstream stably failing; fail fast вместо ожидания N секунд timeout 📋 ПРАВИЛО: CB = fail fast when known-bad, states: Closed→Open→Half-open 🔗 См. Q9
-> - [ ] Load balancer с health check, удаляющий unhealthy instances | ❌ ПОСЛЕДСТВИЕ: LB убирает dead instance, но не предотвращает cascade failure в downstream chain микросервисов
-> - [ ] Timeout на каждый запрос к downstream вместо circuit breaker | ❌ ПОСЛЕДСТВИЕ: timeout ждёт N секунд каждый раз; CB fail-fast без ожидания при известном плохом состоянии downstream
 
 ## Q9. (!) Retry с exponential backoff?
 
@@ -322,13 +266,6 @@ def call_service():
 
 **Anti-pattern:** retry без jitter → 1000 clients hit failed service одновременно → bigger storm.
 
-
-> [!mcq]
-> - [x] wait_exponential с jitter (2→4→8→16→60s), только idempotent ops, только transient errors (5xx/timeouts), bounded total time | ✓ ПРИМЕНЯТЬ: при transient network/service errors с идемпотентными операциями 📋 ПРАВИЛО: Retry = jitter + exponential + idempotent only + не 4xx 🔗 См. Q8
-> - [ ] Retry с fixed delay 1s без jitter для простоты | ❌ ПОСЛЕДСТВИЕ: thundering herd — 1000 clients retry одновременно каждую секунду → повторно убивают recovering service
-> - [ ] Retry при 4xx ошибках (400, 404) | ❌ ПОСЛЕДСТВИЕ: 400/404 — не transient; retry бессмысленен и создаёт лишнюю нагрузку, ответ не изменится
-> - [ ] Retry non-idempotent POST /order без idempotency key | ❌ ПОСЛЕДСТВИЕ: дублирование заказов при каждом retry; финансовые потери, двойное списание средств
-
 ## Q10. (!) Bulkhead?
 
 **Bulkhead** — isolate failures, prevent одной части affecting другую.
@@ -345,13 +282,6 @@ Service B: thread pool 5 (для analytics)
 **Аналогия:** корабельные перегородки — пробоина в одной не утопит весь корабль.
 
 **В K8s:** resource limits per pod (CPU, memory).
-
-
-> [!mcq]
-> - [ ] Circuit breaker на одном общем thread pool | ❌ ПОСЛЕДСТВИЕ: CB — временное отключение; булкхед — постоянная изоляция ресурсов; без изоляции аналитика влияет на users API
-> - [ ] Единый large thread pool для всех downstream services | ❌ ПОСЛЕДСТВИЕ: thread leak в analytics занимает все потоки → users API тоже деградирует, полная потеря сервиса
-> - [ ] Load balancer для распределения нагрузки между instances | ❌ ПОСЛЕДСТВИЕ: LB распределяет нагрузку между instances; bulkhead изолирует ресурсы внутри одного instance
-> - [x] Отдельные thread pools для разных downstream: analytics dead → users API не affected. K8s: resource limits per pod | ✓ ПРИМЕНЯТЬ: при нескольких independent downstream с разными SLA 📋 ПРАВИЛО: Bulkhead = изолированные ресурсы, failure containment (ship bulkheads) 🔗 См. Q8
 
 ## Q11. Timeout, deadline propagation?
 
@@ -371,13 +301,6 @@ Client request: 10 sec timeout
 ```
 
 В **gRPC** built-in. В REST — through headers (`X-Request-Deadline`).
-
-
-> [!mcq]
-> - [ ] Только внешний timeout на уровне API Gateway | ❌ ПОСЛЕДСТВИЕ: без propagation внутренние сервисы продолжают обработку после ответа клиенту → лишние DB queries, waste resources
-> - [x] Timeout на каждый external call + passing remaining deadline через chain (gRPC built-in, REST: X-Request-Deadline header) | ✓ ПРИМЕНЯТЬ: в каждом микросервисе; уменьшать deadline по мере прохождения chain 📋 ПРАВИЛО: Всегда timeout; передавай remaining deadline downstream 🔗 См. Q8
-> - [ ] Очень большой timeout 60s на downstream DB запросы | ❌ ПОСЛЕДСТВИЕ: при DB slowdown все threads заняты ожиданием → connection pool exhausted → service unavailable
-> - [ ] Нет timeout вообще для упрощения кода | ❌ ПОСЛЕДСТВИЕ: service hangs на dead downstream → thread starvation → cascade failure → entire service unavailable
 
 ## Q12. Health checks (liveness, readiness, startup)?
 
@@ -403,13 +326,6 @@ startupProbe:
 - Readiness — check dependencies (DB connection)
 - Startup — для apps что long warm-up
 
-
-> [!mcq]
-> - [ ] Одинаковый endpoint /health для liveness и readiness проверок | ❌ ПОСЛЕДСТВИЕ: liveness проверяет DB → при DB slowdown K8s restarts pod → cascading loop рестартов при временной перегрузке
-> - [x] Liveness (restart if fail) + Readiness (remove from LB) + Startup (slow-start apps). Readiness проверяет зависимости; liveness — просто alive | ✓ ПРИМЕНЯТЬ: liveness = simple check; readiness = dependencies; startup = slow JVM warmup 📋 ПРАВИЛО: Liveness ≠ Readiness — разные последствия fail (restart vs remove from LB) 🔗 См. Q1
-> - [ ] Readiness probe без проверки зависимостей (DB, cache) | ❌ ПОСЛЕДСТВИЕ: requests идут на pod который ещё не готов подключиться к БД → 500 ошибки пользователей при rollout
-> - [ ] Startup probe failureThreshold=3 для Java app с 30s warmup | ❌ ПОСЛЕДСТВИЕ: 3 * periodSeconds (10s) = 30s; при JVM + Spring context warmup pod убивается до завершения инициализации
-
 ## Q13. (!) Stateless apps — почему важно?
 
 **Stateless app** — no local state. Each request handled independently.
@@ -428,13 +344,6 @@ startupProbe:
 - Session store (Redis, JWT в cookie)
 
 **Если есть state в memory:** sticky sessions → less flexible scaling.
-
-
-> [!mcq]
-> - [ ] Stateless apps проще масштабировать вертикально, а не горизонтально | ❌ ПОСЛЕДСТВИЕ: stateless позволяет горизонтальное масштабирование (добавлять instances); вертикальное (bigger VM) — противоположный подход с потолком
-> - [ ] Sticky sessions решают проблему stateful apps при scaling | ❌ ПОСЛЕДСТВИЕ: sticky sessions ограничивают scaling; если instance упадёт — сессии теряются; правильное решение — externalize state в Redis/DB
-> - [x] Stateless = каждый запрос независим; state во внешнем store (Redis, DB, S3); позволяет horizontal scaling, rolling updates, easy replacement | ✓ ПРИМЕНЯТЬ: все production web apps должны быть stateless; state externalize в Redis 📋 ПРАВИЛО: stateless = любой instance = любой запрос = горизонтальный scaling 🔗 См. Q14
-> - [ ] Stateless apps не могут иметь пользовательские сессии | ❌ ПОСЛЕДСТВИЕ: сессии возможны через externalized session store (Redis + session ID в cookie) или JWT; stateless ≠ no sessions
 
 ## Q14. Session state externalization?
 
@@ -455,13 +364,6 @@ Option 2: Stateless via JWT
 **JWT cons:** can't easily revoke.
 
 В **2025** — обычно combine: JWT для access token (short-lived), refresh token + Redis для revocation.
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. (!) Leader election? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 **Leader election** — выбор одного instance для exclusive task в cluster.
 
@@ -493,13 +395,6 @@ leader_election = leaderelection.LeaderElection(
 )
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q16. Distributed locking? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **Distributed lock** — coordinated mutex across multiple instances.
 
 **Tools:**
@@ -521,13 +416,6 @@ if acquire_lock("my-task"):
     finally:
         redis.delete("my-task")
 ```
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q17. (!) Horizontal vs vertical scaling? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 **Vertical (scale-up):**
 - Bigger machine (more CPU, RAM)
@@ -558,13 +446,6 @@ spec:
           averageUtilization: 70
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q18. Auto-scaling triggers? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **Common triggers:**
 - **CPU utilization** (> 70%)
 - **Memory utilization**
@@ -576,13 +457,6 @@ spec:
 - Kafka, Redis, RabbitMQ
 - Cloud queues (SQS, Service Bus, Pub/Sub)
 - Custom HTTP
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q19. Predictive vs reactive scaling? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 **Reactive:** scale **after** metric hits threshold. Lag of seconds-minutes.
 **Predictive:** scale **before** based on patterns / ML.
@@ -597,13 +471,6 @@ spec:
 - Pre-warming перед expected spike
 
 В **2025** — большинство — **reactive** + ручное scheduled scaling для known patterns (start of business day).
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q20. (!) Three pillars: metrics, logs, traces? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 **Metrics** — numerical, aggregated (counters, gauges, histograms).
 - Prometheus, Datadog, CloudWatch
@@ -620,13 +487,6 @@ spec:
 **Все three** complement each other. Production system needs all.
 
 Подробнее — в [Observability](../monitoring/observability-interview.md).
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q21. OpenTelemetry? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 **OpenTelemetry (OTel)** — CNCF standard для **vendor-neutral** observability.
 
@@ -645,13 +505,6 @@ Apps → OpenTelemetry SDK → OTel Collector → Backend (Datadog, Honeycomb, .
 - **Logs** (newer)
 
 В **2025** — OTel **the standard** для new projects. Заменяет vendor-specific instrumentation.
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q22. Service mesh (Istio, Linkerd)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 **Service mesh** — infrastructure layer для service-to-service communication. Sidecar proxies (Envoy) handle:
 
@@ -676,13 +529,6 @@ graph LR
 
 В **2025** многие используют **only mTLS + telemetry** (через Linkerd or Cilium), without full Istio complexity.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q23. (!) Blue-green deployment? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **Blue (current production)** + **Green (new version)** — оба running. Switch traffic от blue к green at once.
 
 ```
@@ -699,13 +545,6 @@ Time 5: If issues, instant rollback (switch back)
 **В K8s:** через services (route к blue или green selector).
 
 Подробнее — в [Deployment Strategies](../cicd/deployment-strategies-interview.md).
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q24. (!) Canary deployment? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 **Canary** — gradually increase traffic к new version.
 
@@ -725,13 +564,6 @@ Day 5: 100%
 - **Service mesh** (Istio, Linkerd) — traffic splitting
 
 **Auto-rollback** на metric thresholds — best practice.
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q25. Feature flags? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 **Feature flags** — toggle features в runtime, без redeploy.
 
@@ -754,13 +586,6 @@ else:
 - **Flagsmith**, **GrowthBook**, **Statsig**
 
 **Decoupling release из deploy** — modern best practice.
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q26. GitOps? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 **GitOps** — declarative infrastructure через Git как source of truth.
 
@@ -788,13 +613,6 @@ Auto-syncs cluster к desired state в git
 - Approval через PR review
 - Self-healing (drift detection)
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q27. (!) Configuration management в cloud-native? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **12-factor:** config через **env variables**.
 
 ```bash
@@ -815,13 +633,6 @@ LOG_LEVEL=info
 
 **Best practice:** **never commit secrets** в git. Use external store.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q28. Secrets management? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **Tools:**
 - **HashiCorp Vault** — enterprise standard
 - **AWS Secrets Manager**
@@ -837,13 +648,6 @@ LOG_LEVEL=info
 - **Encryption at rest** + in transit
 - **No secrets в env vars** в Docker images / git
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q29. (!) Какие частые анти-паттерны? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 1. **Distributed monolith** — microservices с tight coupling
 2. **Shared database** между services
 3. **Synchronous chains** — A → B → C → D (cascading failures)
@@ -858,13 +662,6 @@ LOG_LEVEL=info
 12. **No observability** — production black box
 13. **Manual deployments** — no GitOps
 14. **No backups testing**
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q30. Cloud-native maturity model? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 **Levels (CNCF Maturity Model):**
 
@@ -895,12 +692,6 @@ LOG_LEVEL=info
 
 ## See also
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [AWS](aws-interview.md) — primary cloud ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 - [GCP](gcp-interview.md) — alternative
 - [Azure](azure-interview.md) — alternative
 - [Serverless](serverless-interview.md) — cloud-native compute

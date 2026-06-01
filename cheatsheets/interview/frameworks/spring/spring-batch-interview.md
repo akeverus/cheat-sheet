@@ -141,13 +141,6 @@ updated: "2026-05-05"
 - **Отказоустойчивость** — возможность перезапуска с точки сбоя
 - **Планирование** — запуск по cron, событию или вручную
 
-
-> [!mcq]
-> - [ ] `Batch` обрабатывает данные в реальном времени с интерактивной сессией | Это описание `OLTP`, а не batch — путаница ломает SLA. ❌ ПОСЛЕДСТВИЕ: ETL-задача на 50M строк блокирует UI-поток `8` часов, операторы теряют доступ.
-> - [ ] `Batch` запускается только вручную и не имеет планировщика | Игнорирует `cron` и event-driven запуск. ❌ ПОСЛЕДСТВИЕ: ночной отчёт продаж не сформирован к `09:00`, бизнес узнаёт о падении выручки на сутки позже.
-> - [x] `Batch` — неинтерактивная обработка больших объёмов с commit по chunk и restart с точки сбоя | Запуск по `cron`/событию, транзакции на порции, идемпотентность. ✓ ПРИМЕНЯТЬ: ночные ETL в банках (`СберБатч`), генерация выписок, биллинг `Yota`. 📋 ПРАВИЛО: «batch = объём + автономность + restart». 🔗 См. Q2, Q4.
-> - [ ] `Batch` всегда работает в одной транзакции на весь dataset | Один rollback откатывает миллионы записей и не даёт прогресса. ❌ ПОСЛЕДСТВИЕ: на `10M` строк один bad record откатывает `9.9M` уже обработанных, повтор занимает `6` часов.
-
 ## Q2. (!) Что такое Spring Batch и какие задачи он решает?
 
 **`Spring Batch`** — фреймворк для пакетной обработки данных в экосистеме `Spring`. Он предоставляет набор повторно используемых компонентов для чтения, обработки и записи данных, а также инфраструктуру для управления заданиями.
@@ -176,13 +169,6 @@ graph TB
         JR -.-> S1
     end
 ```
-
-
-> [!mcq]
-> - [ ] `Spring Batch` — обёртка над `Spring Scheduler` без собственного state-store | Игнорирует `JobRepository` — restart невозможен. ❌ ПОСЛЕДСТВИЕ: после kill -9 на 80% прогресса задание стартует с нуля, биллинг считает повторно, double-charge клиентам.
-> - [x] Фреймворк с `Job`/`Step`/`ItemReader`/`Writer`, chunk-транзакциями, `JobRepository` для restart и retry/skip | Готовые компоненты + state в БД дают идемпотентный запуск. ✓ ПРИМЕНЯТЬ: ETL ночные jobs в `Тинькофф` для агрегации транзакций, отчётность `Альфа-Банк`. 📋 ПРАВИЛО: «Job + Repository + Chunk = restart-ready». 🔗 См. Q1, Q6.
-> - [ ] `Spring Batch` заменяет `Apache Kafka` для streaming | Kafka — это streaming, batch — порционная обработка по расписанию. ❌ ПОСЛЕДСТВИЕ: команда выбирает batch для real-time fraud-detection, latency p99 = `4` часа вместо `200ms`, фрод-мониторинг не работает.
-> - [ ] `Spring Batch` хранит state в памяти `JVM` без БД | Без `JobRepository` нет durable state, restart теряет прогресс. ❌ ПОСЛЕДСТВИЕ: pod рестартует на k8s, `12M` обработанных записей теряются, ETL стартует с нуля.
 
 ## Q3. Какие ключевые компоненты входят в архитектуру Spring Batch?
 
@@ -235,13 +221,6 @@ graph TB
 | `JobParameters` | Параметры конкретного запуска |
 | `ExecutionContext` | Контекст для обмена данными между шагами |
 
-
-> [!mcq]
-> - [ ] `Application Layer` содержит `JobRepository` и `JobLauncher` | Они в `Batch Core`, а не в Application. ❌ ПОСЛЕДСТВИЕ: команда дублирует `JobRepository` в бизнес-коде, теряется единая точка хранения state, два экземпляра job стартуют одновременно.
-> - [ ] `Batch Infrastructure` отвечает за бизнес-логику чтения CSV | Она даёт готовые компоненты, бизнес-логика — в Application. ❌ ПОСЛЕДСТВИЕ: разработчик расширяет `FlatFileItemReader` бизнес-валидацией, при upgrade Spring Batch `4→5` ломаются `30` job из-за изменений API.
-> - [ ] Архитектура состоит только из `Job` и `Step` без отдельного слоя инфраструктуры | Игнорирует `JobRepository`, `Reader`/`Writer`. ❌ ПОСЛЕДСТВИЕ: всё пишется руками, retry/skip велосипеды, OOM на `5M` записей из-за отсутствия paging.
-> - [x] Три уровня: `Application` (бизнес-Job/Step), `Batch Core` (`Job`/`Step`/`Launcher`/`Repository`), `Batch Infrastructure` (`Reader`/`Writer`/retry) | Слои изолируют изменения. ✓ ПРИМЕНЯТЬ: `Spring Batch 5` сохраняет deprecated API только в Infrastructure, Core стабильнее. 📋 ПРАВИЛО: «App → Core → Infrastructure». 🔗 См. Q2, Q6.
-
 ## Q4. (!) Что такое Job, JobInstance и JobExecution?
 
 Это три ключевых понятия, определяющие жизненный цикл задания:
@@ -275,13 +254,6 @@ public Job dailyReportJob(JobRepository jobRepository, Step extractStep, Step lo
             .build();
 }
 ```
-
-
-> [!mcq]
-> - [ ] `Job` и `JobInstance` — синонимы; одно `Job` = одно физическое выполнение | Игнорирует разделение определения и instance. ❌ ПОСЛЕДСТВИЕ: разработчик запускает Job дважды с одинаковыми params, ждёт два разных JobInstance — получает `JobInstanceAlreadyCompleteException`, ETL не запускается.
-> - [ ] `JobExecution` — это шаблон job, переиспользуется между runs | Execution — конкретный run, не template. ❌ ПОСЛЕДСТВИЕ: метрики `step_duration` пишутся в один Execution, графики в Grafana показывают агрегат за все запуски, deg detection не работает.
-> - [x] `Job` — определение, `JobInstance` — логический запуск (`Job` + уникальные `JobParameters`), `JobExecution` — физический run (попытка) | Один `JobInstance` может иметь много `JobExecution` при retry. ✓ ПРИМЕНЯТЬ: `Сбер` запускает daily-ETL, при сбое JobInstance того же дня стартует новый Execution с продолжением. 📋 ПРАВИЛО: «Job=template, Instance=logical run, Execution=physical attempt». 🔗 См. Q5, Q6.
-> - [ ] `JobInstance` уникален по имени Job без учёта параметров | Игнорирует роль `JobParameters` как identity. ❌ ПОСЛЕДСТВИЕ: ETL за `2025-04-01` и `2025-04-02` пишут в один JobInstance, restart восстанавливает не тот день, отчёт сломан.
 
 ## Q5. Что такое JobParameters и как они влияют на JobInstance?
 
@@ -317,13 +289,6 @@ public FlatFileItemReader<Transaction> reader(
 ```
 
 > **Важно:** аннотация `@StepScope` обязательна для late binding параметров — она создаёт proxy, который разрешает параметры в момент выполнения шага, а не при старте контекста.
-
-
-> [!mcq]
-> - [ ] `JobParameters` влияют только на логику внутри Step, на identity не влияют | Игнорирует, что параметры формируют ключ JobInstance. ❌ ПОСЛЕДСТВИЕ: scheduler retry запускает job с теми же params, попадает в существующий JobInstance, restart возобновляется с середины предыдущего дня.
-> - [ ] `non-identifying` параметры участвуют в формировании JobInstance | Это путаница: только identifying. ❌ ПОСЛЕДСТВИЕ: меняется trace-id в non-identifying, ожидается новый JobInstance — фактически создаётся ещё один Execution к тому же Instance, params overlap.
-> - [x] `JobParameters` — пары ключ-значение; identifying parameters формируют identity `JobInstance` (`JobName + identifying params`) | Уникальная комбинация = новый JobInstance. ✓ ПРИМЕНЯТЬ: в `ВТБ` параметр `runDate=2025-04-01` гарантирует один JobInstance в день, повторный запуск с тем же date кидает `JobInstanceAlreadyCompleteException`. 📋 ПРАВИЛО: «identity = name + identifying params». 🔗 См. Q4, Q32.
-> - [ ] Параметры всегда `String`, числа и даты не поддерживаются | Поддерживаются `Long`, `Double`, `Date`, `String`. ❌ ПОСЛЕДСТВИЕ: разработчик передаёт `runDate` как `String`, парсит вручную, при ошибке формата job падает в midnight без алерта.
 
 ## Q6. (!) Что такое JobRepository и какую роль он играет?
 
@@ -366,13 +331,6 @@ public class BatchConfig {
     }
 }
 ```
-
-
-> [!mcq]
-> - [ ] `JobRepository` — in-memory кэш job, очищается при рестарте | На самом деле — durable store в БД (`BATCH_*` таблицы). ❌ ПОСЛЕДСТВИЕ: ETL прерван на `70%`, после рестарта pod весь прогресс обнуляется, повторно обрабатывается `35M` записей, биллинг дублирует начисления.
-> - [x] Persistent store метаданных Job/Step/Execution в `BATCH_JOB_INSTANCE`, `BATCH_JOB_EXECUTION`, `BATCH_STEP_EXECUTION` | Хранит state для restart, идемпотентности и аудита. ✓ ПРИМЕНЯТЬ: `Сбер` использует PostgreSQL как `JobRepository`, при k8s rolling restart job восстанавливается с последнего commit. 📋 ПРАВИЛО: «Repository = БД-журнал прогресса». 🔗 См. Q4, Q7.
-> - [ ] `JobRepository` хранит только конфигурацию `Job`, не state выполнения | State обязательно сохраняется (chunk progress, ExecutionContext). ❌ ПОСЛЕДСТВИЕ: после crash скрипт не знает где остановился, читает CSV с начала, дубликаты в таблице receivers.
-> - [ ] `JobRepository` — это кастомная реализация, требуется писать самому | Spring Batch даёт `JdbcJobRepository` и `MapJobRepository` готовыми. ❌ ПОСЛЕДСТВИЕ: команда тратит спринт на велосипед, теряет атомарность update-ов state, race condition на параллельных Step.
 
 ## Q7. Что такое JobLauncher и как запускать задания?
 
@@ -429,13 +387,6 @@ public class JobController {
 }
 ```
 
-
-> [!mcq]
-> - [x] `JobLauncher.run(job, params)` синхронно или через `TaskExecutor` асинхронно запускает `Job` с params, возвращает `JobExecution` | По умолчанию `SyncTaskExecutor`, для REST-API нужен `SimpleAsyncTaskExecutor`. ✓ ПРИМЕНЯТЬ: Spring Boot REST-controller вызывает `jobLauncher.run` для on-demand перезапусков ETL. 📋 ПРАВИЛО: «Launcher = entry-point Job с params». 🔗 См. Q5, Q33.
-> - [ ] `JobLauncher` запускает Job только асинхронно через отдельный поток | По умолчанию синхронно. ❌ ПОСЛЕДСТВИЕ: разработчик ждёт async, делает HTTP `POST /run-job` — controller висит `4` часа, nginx отдаёт `504` клиенту.
-> - [ ] `JobLauncher` сам управляет cron-расписанием и не требует Scheduler | Cron — задача `@Scheduled` или Quartz. ❌ ПОСЛЕДСТВИЕ: команда полагается на «встроенный планировщик», ETL не запускается ночью, отчёт за квартал отсутствует.
-> - [ ] Можно вызвать `Job.run()` напрямую без `JobLauncher` | Job не имеет публичного `run()`, нужен Launcher. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `job.execute()`, обходит `JobRepository`, state не сохраняется, restart невозможен.
-
 ## Q8. Что такое ExecutionContext и зачем он нужен?
 
 **`ExecutionContext`** — key-value хранилище, сериализуемое в `JobRepository`. Позволяет сохранять состояние между шагами и между перезапусками задания.
@@ -471,13 +422,6 @@ public FlatFileItemWriter<Report> writer(
 ```
 
 > **Для перезапуска:** `ExecutionContext` сохраняется в `BATCH_STEP_EXECUTION_CONTEXT` и `BATCH_JOB_EXECUTION_CONTEXT`. При перезапуске фреймворк восстанавливает контекст, и, например, `ItemReader` знает, с какой строки продолжить чтение.
-
-
-> [!mcq]
-> - [ ] `ExecutionContext` живёт только в памяти и теряется при сбое | Persisted в `JobRepository` (BATCH_*_EXECUTION_CONTEXT). ❌ ПОСЛЕДСТВИЕ: Step упал на chunk `5000`, после рестарта читает с offset `0`, дубликаты в БД получателей рассылки.
-> - [ ] `JobExecutionContext` и `StepExecutionContext` — одно и то же | Это два разных scope: Job-уровень и Step-уровень. ❌ ПОСЛЕДСТВИЕ: разработчик кладёт offset в JobContext, при partition разные Step переписывают друг друга, partition обрабатывает не свой диапазон.
-> - [x] Persistent map ключ-значение для state Step/Job; Step-context для resume чанка, Job-context для shared state между Steps | Сериализуется в БД при commit chunk. ✓ ПРИМЕНЯТЬ: партиционирование пишет в Step-context границы (`startId`/`endId`), при restart partition продолжает свой диапазон. 📋 ПРАВИЛО: «Step-context для resume, Job-context для sharing». 🔗 См. Q6, Q25.
-> - [ ] `ExecutionContext` поддерживает только примитивы, нельзя сохранить кастомные объекты | Можно любой `Serializable`. ❌ ПОСЛЕДСТВИЕ: разработчик пишет hack-сериализацию через `JSON.stringify`, при schema-change ломается десериализация, restart падает с `ClassCastException`.
 
 ## Q9. (!) Что такое Step и какие модели обработки поддерживает Spring Batch?
 
@@ -530,13 +474,6 @@ public Step taskletStep(JobRepository jobRepository,
 }
 ```
 
-
-> [!mcq]
-> - [ ] `Step` поддерживает только chunk-модель, tasklet нет | Существуют обе: chunk и tasklet. ❌ ПОСЛЕДСТВИЕ: разработчик пишет «удалить временный файл» как chunk Reader/Processor/Writer, `200` строк boilerplate вместо одного метода `Tasklet`.
-> - [x] `Step` — фаза Job; модели: `Chunk` (read+process+write порциями) и `Tasklet` (один атомарный шаг) | Выбор зависит от характера операции. ✓ ПРИМЕНЯТЬ: ETL в `Тинькофф` — chunk для импорта `5M` транзакций, tasklet для cleanup временных таблиц. 📋 ПРАВИЛО: «Chunk для потока, Tasklet для одного действия». 🔗 См. Q10, Q11.
-> - [ ] Все Step выполняются параллельно по умолчанию | По умолчанию последовательно, параллелизм через split/multi-threaded. ❌ ПОСЛЕДСТВИЕ: команда ожидает параллельность, downstream Step читает из upstream незаконченных данных, рассогласование отчёта.
-> - [ ] `Step` не имеет своих транзакций, использует Job-уровень | У каждого Step свои транзакции на chunk. ❌ ПОСЛЕДСТВИЕ: ошибка в Step 5 откатывает результаты Step 1-4 — `8` часов работы потеряно.
-
 ## Q10. (!) Как работает chunk-oriented processing?
 
 **Chunk-oriented processing** — основная модель обработки данных в `Spring Batch`. Данные читаются по одному элементу, обрабатываются, накапливаются в chunk (порцию) заданного размера и записываются целиком за одну транзакцию.
@@ -585,13 +522,6 @@ public Step importStep(JobRepository jobRepository,
 
 > **Выбор размера chunk** — это баланс: слишком маленький размер увеличивает количество транзакций (оверхед), слишком большой — увеличивает время rollback при ошибке. Типичные значения: 100–1000.
 
-
-> [!mcq]
-> - [ ] Каждый item читается, обрабатывается и пишется в отдельной транзакции | На самом деле — chunk целиком в одной транзакции. ❌ ПОСЛЕДСТВИЕ: chunk size = 1, на `5M` записей `5M` коммитов, throughput падает с `10K/sec` до `300/sec`, ETL не успевает за окно.
-> - [x] `Reader` читает по одному, `Processor` обрабатывает по одному, `Writer` пишет всю порцию (chunk) одной транзакцией | Atomic commit/rollback на chunk. ✓ ПРИМЕНЯТЬ: импорт `100M` строк в `Yandex.Pay` — chunk=1000, трансакция = 1000 INSERT, `100K` commit за весь job. 📋 ПРАВИЛО: «read 1, process 1, write N в одной транзакции». 🔗 См. Q11, Q12.
-> - [ ] `Writer` пишет каждый item сразу в БД, commit в конце Step | Без chunk-границы нет промежуточного state. ❌ ПОСЛЕДСТВИЕ: ошибка на записи `4.9M`, rollback откатывает `4.9M` записей, restart с нуля, ETL не выполняется ночью.
-> - [ ] Размер chunk фиксирован равен `1` и не настраивается | Настраивается через `.chunk(size)`. ❌ ПОСЛЕДСТВИЕ: команда оставляет default, не зная что он = 10, для legacy code = 1, throughput блокирует SLA.
-
 ## Q11. Что такое Tasklet и когда его использовать?
 
 **`Tasklet`** — функциональный интерфейс для выполнения одной атомарной операции внутри `Step`. В отличие от chunk-модели, `Tasklet` не разделяет обработку на read/process/write.
@@ -634,13 +564,6 @@ public class CleanupTasklet implements Tasklet {
 }
 ```
 
-
-> [!mcq]
-> - [ ] `Tasklet` обязательно работает с порциями данных как chunk | Tasklet — один атомарный шаг, не порция. ❌ ПОСЛЕДСТВИЕ: разработчик пытается передать `chunk size` в `Tasklet`, не работает, переписывает на chunk-модель — ещё `200` строк boilerplate.
-> - [x] `Tasklet` — интерфейс с одним методом `execute()`, выполняется атомарно в одной транзакции, повторяется до `RepeatStatus.FINISHED` | Для одиночных операций (cleanup, archive, REST-call). ✓ ПРИМЕНЯТЬ: archive шаг в банке — `Tasklet` перемещает CSV в `s3://archive/` после успешного импорта. 📋 ПРАВИЛО: «Tasklet = одна атомарная операция в Step». 🔗 См. Q9, Q12.
-> - [ ] `Tasklet` всегда долгоживущий и не может вернуть `FINISHED` | Контракт требует FINISHED либо CONTINUABLE. ❌ ПОСЛЕДСТВИЕ: разработчик возвращает `null`, infinite loop, Step не завершается, k8s killer убивает pod через `1` час.
-> - [ ] `Tasklet` не имеет доступа к `StepContribution` и `ChunkContext` | Имеет — оба передаются в execute. ❌ ПОСЛЕДСТВИЕ: разработчик не знает, не пишет метрики через `StepContribution.incrementWriteCount`, мониторинг показывает `0` обработанных записей.
-
 ## Q12. (!) В чём разница между Chunk и Tasklet?
 
 | Критерий | Chunk | Tasklet |
@@ -657,13 +580,6 @@ public class CleanupTasklet implements Tasklet {
 - Если задача — обработка набора данных (чтение, трансформация, запись) → **chunk**
 - Если задача — одноразовое действие (очистка, вызов API, DDL) → **tasklet**
 - Если нужен перезапуск с точки сбоя → **chunk**
-
-
-> [!mcq]
-> - [x] `Chunk` — потоковая обработка `Reader→Processor→Writer` порциями; `Tasklet` — одна атомарная операция в `execute()` | Chunk для ETL, Tasklet для cleanup/archive. ✓ ПРИМЕНЯТЬ: ETL `СберДанные` — chunk для импорта; перед ETL запускается Tasklet «truncate staging table». 📋 ПРАВИЛО: «Chunk = поток, Tasklet = одна операция». 🔗 См. Q10, Q11.
-> - [ ] `Chunk` для маленьких объёмов, `Tasklet` для больших | Наоборот: Chunk масштабируется, Tasklet — одна операция. ❌ ПОСЛЕДСТВИЕ: разработчик кладёт обработку `100M` строк в Tasklet, не получает chunk-транзакций, OOM на pod после `2GB` heap.
-> - [ ] `Tasklet` поддерживает retry/skip из коробки, `Chunk` — нет | Наоборот: skip/retry — для chunk, не для Tasklet. ❌ ПОСЛЕДСТВИЕ: разработчик добавляет `.faultTolerant().skip(...)` к Tasklet — компилируется, но при ошибке Step падает целиком, ETL не докатывается.
-> - [ ] `Chunk` и `Tasklet` нельзя смешивать в одном Job | Можно: Job состоит из разных Step. ❌ ПОСЛЕДСТВИЕ: команда дублирует логику в один Step, теряет читаемость, code review занимает в `3` раза дольше.
 
 ## Q13. (!) Какие стандартные ItemReader предоставляет Spring Batch?
 
@@ -696,13 +612,6 @@ public class CleanupTasklet implements Tasklet {
 | `KafkaItemReader` | `Kafka` топик |
 | `AmqpItemReader` | `RabbitMQ` очередь |
 | `MongoItemReader` | `MongoDB` коллекция |
-
-
-> [!mcq]
-> - [ ] `Spring Batch` предоставляет только `FlatFileItemReader` | На самом деле есть JDBC, JPA, JSON, XML, Kafka, MongoDB readers. ❌ ПОСЛЕДСТВИЕ: команда пишет `JpaItemReader` руками, без paging, OOM при чтении `5M` Entity в один List.
-> - [x] `FlatFileItemReader`, `JdbcCursorItemReader`, `JdbcPagingItemReader`, `JpaPagingItemReader`, `JsonItemReader`, `StaxEventItemReader`, `KafkaItemReader`, `MongoItemReader` | Все наследуются от `ItemStreamReader` для restart-state. ✓ ПРИМЕНЯТЬ: `Yandex.Cloud` использует `JdbcPagingItemReader` для миграции `200M` строк биллинга. 📋 ПРАВИЛО: «готовый Reader для каждого источника». 🔗 См. Q14, Q15.
-> - [ ] Все Reader работают только синхронно, async-варианты отсутствуют | Существуют `AsyncItemProcessor`/`AsyncItemWriter`, асинхронность в pipeline. ❌ ПОСЛЕДСТВИЕ: команда не знает про `AsyncItemProcessor`, ETL не использует параллельность, читает + обрабатывает в одном потоке, throughput `2K/sec`.
-> - [ ] Кастомный `ItemReader` несовместим с restart-state | Достаточно реализовать `ItemStream`. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `Reader` без `open/close/update`, при restart читает с начала, обрабатывает `30M` строк дважды.
 
 ## Q14. Как работают JdbcCursorItemReader и JdbcPagingItemReader?
 
@@ -756,13 +665,6 @@ public JdbcPagingItemReader<Customer> pagingReader(DataSource dataSource) {
 | Масштабирование | Один поток | Многопоточность, партиционирование |
 | Производительность | Быстрее на одном потоке | Чуть медленнее из-за пагинации |
 
-
-> [!mcq]
-> - [x] `Cursor` держит открытый ResultSet по одному запросу, `Paging` делает множество запросов с `LIMIT/OFFSET` | Cursor быстрее на больших datasets, но требует длинной транзакции; Paging — короткие транзакции, restart-friendly. ✓ ПРИМЕНЯТЬ: `Yandex.Practicum` для `30M` строк использует `JdbcPagingItemReader` (короткие коннекты в RDS PostgreSQL). 📋 ПРАВИЛО: «Cursor=long Tx, Paging=short Tx + restart». 🔗 См. Q13, Q15.
-> - [ ] `JdbcCursorItemReader` использует `LIMIT/OFFSET` под капотом | Использует курсор Resultset, без OFFSET. ❌ ПОСЛЕДСТВИЕ: разработчик ставит chunk=100K и ожидает paging, держит коннект `4` часа, на shared RDS блокирует other workloads.
-> - [ ] `JdbcPagingItemReader` не требует sortKey | sortKey обязателен для воспроизводимости пагинации. ❌ ПОСЛЕДСТВИЕ: без sortKey RDBMS возвращает строки в любом порядке, дубликаты между страницами, отчёт на `5%` неточен.
-> - [ ] `Cursor` поддерживает restart-state, `Paging` — нет | Наоборот: Paging restart-friendly. ❌ ПОСЛЕДСТВИЕ: ETL на cursor падает на `80%`, restart не работает (cursor закрыт), весь ETL запускается заново.
-
 ## Q15. Как использовать JpaPagingItemReader для чтения из БД?
 
 **`JpaPagingItemReader`** — читает данные страницами через `JPA`. Работает аналогично `JdbcPagingItemReader`, но использует JPQL и `EntityManager`.
@@ -795,13 +697,6 @@ public JpaCursorItemReader<Order> jpaCursorReader(EntityManagerFactory emf) {
 ```
 
 > **Совет:** при работе с `JPA` читателями учитывайте, что сущности попадают в persistence context. Для read-only операций используйте проекции или `@Transactional(readOnly = true)`, чтобы избежать dirty checking. Подробнее в [Spring Data JPA](spring-data-jpa-interview.md).
-
-
-> [!mcq]
-> - [ ] `JpaPagingItemReader` сам кэширует Entity между страницами | EntityManager закрывается после страницы — кэш недействителен. ❌ ПОСЛЕДСТВИЕ: разработчик полагается на `@Cacheable`, после смены страницы ленивые ассоциации триггерят `LazyInitializationException`, ETL падает.
-> - [x] `JpaPagingItemReader` использует JPQL и переоткрывает `EntityManager` для каждой страницы | Параметры через `setParameterValues`, обязателен `ORDER BY` в JPQL. ✓ ПРИМЕНЯТЬ: `Хабр` импортирует `5M` комментариев через `JpaPagingItemReader` с JPQL `SELECT c FROM Comment c WHERE c.processed=false ORDER BY c.id`. 📋 ПРАВИЛО: «JPQL + ORDER BY + setParameterValues». 🔗 См. Q14, Q16.
-> - [ ] `JpaPagingItemReader` работает только с native SQL, JPQL не поддерживается | Поддерживает только JPQL, native — `JdbcPagingItemReader`. ❌ ПОСЛЕДСТВИЕ: команда копирует SQL из дебагера, читает Reader не запускается, тратит день на разбор.
-> - [ ] `JpaPagingItemReader` поддерживает only `findAll` без `WHERE` | Поддерживает любой JPQL с параметрами. ❌ ПОСЛЕДСТВИЕ: разработчик читает все `100M` Entity, фильтрует в Processor, OOM на `2GB` heap.
 
 ## Q16. Как читать и писать плоские файлы (CSV, TSV)?
 
@@ -855,13 +750,6 @@ public FlatFileItemReader<LegacyRecord> fixedWidthReader() {
 }
 ```
 
-
-> [!mcq]
-> - [ ] `FlatFileItemReader` сам определяет разделители без `DelimitedLineTokenizer` | Tokenizer обязателен для CSV. ❌ ПОСЛЕДСТВИЕ: партнёрский CSV с `;` парсится как одна колонка, `BeanWrapperFieldSetMapper` пишет null в `30` полей, импорт каталога ломается.
-> - [x] `FlatFileItemReader` + `DelimitedLineTokenizer` (CSV/TSV) или `FixedLengthTokenizer` (fixed-width) + `BeanWrapperFieldSetMapper` | Маппит строки в POJO; `FlatFileItemWriter` пишет с `LineAggregator`. ✓ ПРИМЕНЯТЬ: `Wildberries` принимает `300K` SKU/день в CSV от поставщиков через `FlatFileItemReader`. 📋 ПРАВИЛО: «Tokenizer + FieldSetMapper + LineAggregator». 🔗 См. Q13, Q17.
-> - [ ] CSV нельзя писать через Spring Batch, только читать | `FlatFileItemWriter` с `DelimitedLineAggregator` пишет CSV. ❌ ПОСЛЕДСТВИЕ: команда пишет CSV руками через `BufferedWriter`, забывает escape запятых, partner-система падает на парсинге.
-> - [ ] `FlatFileItemReader` не поддерживает skip строк (header/footer) | Поддерживает `linesToSkip` и `commentPrefix`. ❌ ПОСЛЕДСТВИЕ: разработчик не знает о `linesToSkip(1)`, header читается как data row, BeanWrapper кидает NumberFormatException на «id».
-
 ## Q17. (!) Какие стандартные ItemWriter предоставляет Spring Batch?
 
 | Writer | Назначение | Особенности |
@@ -900,13 +788,6 @@ public CompositeItemWriter<Report> compositeWriter() {
     return writer;
 }
 ```
-
-
-> [!mcq]
-> - [x] `JdbcBatchItemWriter`, `JpaItemWriter`, `FlatFileItemWriter`, `JsonFileItemWriter`, `MongoItemWriter`, `KafkaItemWriter`, `CompositeItemWriter`, `ClassifierCompositeItemWriter` | Готовые writers с поддержкой batch insert. ✓ ПРИМЕНЯТЬ: `Сбер` пишет агрегаты в `JdbcBatchItemWriter` (batch INSERT) и Kafka одновременно через `CompositeItemWriter`. 📋 ПРАВИЛО: «JdbcBatch + Composite для multi-target». 🔗 См. Q13, Q34.
-> - [ ] `JdbcItemWriter` пишет каждую строку отдельным INSERT | `JdbcBatchItemWriter` использует `addBatch/executeBatch`, single round-trip. ❌ ПОСЛЕДСТВИЕ: разработчик использует обычный `JdbcTemplate.update`, `5M` insert = `5M` round-trip, ETL занимает `12` часов вместо `40` минут.
-> - [ ] `CompositeItemWriter` нельзя использовать для записи в две системы одновременно | Это его прямое назначение. ❌ ПОСЛЕДСТВИЕ: команда дублирует Step (Step1: write to DB, Step2: write to Kafka), теряет atomic-семантику, БД и Kafka рассинхронизированы.
-> - [ ] `JpaItemWriter` сам делает batch insert через Hibernate | Hibernate не делает batch без `hibernate.jdbc.batch_size`. ❌ ПОСЛЕДСТВИЕ: команда полагается на «JPA сам оптимизирует», hibernate flush на каждый Entity, throughput `200/sec`.
 
 ## Q18. Как работает ItemProcessor и можно ли иметь несколько процессоров?
 
@@ -948,13 +829,6 @@ public CompositeItemProcessor<RawCustomer, Customer> compositeProcessor() {
 ```
 
 > **Важно:** в цепочке `CompositeItemProcessor` выходной тип одного процессора должен совпадать с входным типом следующего. Если любой процессор вернёт `null`, элемент пропускается полностью.
-
-
-> [!mcq]
-> - [ ] `ItemProcessor` обязателен в каждом chunk-Step | Опциональный — можно Reader → Writer без Processor. ❌ ПОСЛЕДСТВИЕ: разработчик пишет no-op Processor «потому что нужен», лишний `5M` вызовов добавляют `2` минуты к ETL.
-> - [x] `ItemProcessor.process(I)` трансформирует/фильтрует/валидирует item; `null` исключает элемент из chunk; цепочка через `CompositeItemProcessor` | Возврат `null` = filter, исключение = retry/skip. ✓ ПРИМЕНЯТЬ: `Тинькофф` использует chain «validate → enrich → transform» через `CompositeItemProcessor`. 📋 ПРАВИЛО: «return null = filter». 🔗 См. Q34, Q18.
-> - [ ] Возврат `null` из Processor падает с NullPointerException | `null` корректно интерпретируется как «исключить из chunk». ❌ ПОСЛЕДСТВИЕ: команда верит в NPE, кидает custom exception для фильтра, retries исчерпываются, job падает на валидной задаче.
-> - [ ] Цепочка процессоров требует руками вызывать предыдущий | `CompositeItemProcessor` оркестрирует автоматически. ❌ ПОСЛЕДСТВИЕ: разработчик внедряет один Processor в другой, циклическая зависимость, Spring context не стартует.
 
 ## Q19. (!) Какие типы слушателей существуют в Spring Batch?
 
@@ -1031,13 +905,6 @@ public Step step(JobRepository jobRepository, PlatformTransactionManager txManag
 }
 ```
 
-
-> [!mcq]
-> - [ ] Существует только `JobExecutionListener` | Также есть Step, Chunk, Read/Process/Write listeners. ❌ ПОСЛЕДСТВИЕ: команда не знает про `ItemReadListener.onReadError`, ошибки чтения не логируются с контекстом, debug в проде через `tail -f` без trace-id.
-> - [ ] `ChunkListener` срабатывает на каждый item | `ChunkListener` — на границе chunk; per-item — `ItemRead/Process/WriteListener`. ❌ ПОСЛЕДСТВИЕ: разработчик пишет per-item метрики в `ChunkListener`, недосчитывает `999` из `1000` записей в chunk.
-> - [x] `JobExecutionListener`, `StepExecutionListener`, `ChunkListener`, `ItemReadListener`, `ItemProcessListener`, `ItemWriteListener`, `SkipListener`, `RetryListener` | Перехват на каждом уровне выполнения. ✓ ПРИМЕНЯТЬ: `Альфа-Банк` логирует `SkipListener.onSkipInProcess` для аудита подозрительных транзакций. 📋 ПРАВИЛО: «listener на каждый уровень: Job/Step/Chunk/Item». 🔗 См. Q20, Q35.
-> - [ ] Listeners не могут читать/писать `ExecutionContext` | Могут — это распространённый паттерн. ❌ ПОСЛЕДСТВИЕ: разработчик пишет state в static-поле, при параллельных Step state перетирается, restart восстанавливает чужие данные.
-
 ## Q20. Как реализовать JobExecutionListener и StepExecutionListener?
 
 **`JobExecutionListener`** — перехватывает начало и завершение `Job`. Применяется для инициализации ресурсов, отправки уведомлений, логирования.
@@ -1082,13 +949,6 @@ public class ValidationStepListener implements StepExecutionListener {
     }
 }
 ```
-
-
-> [!mcq]
-> - [x] Реализовать интерфейс или использовать `@BeforeJob`/`@AfterJob`/`@BeforeStep`/`@AfterStep` аннотации, регистрировать через `.listener(...)` в builder | Аннотации удобнее для одного метода. ✓ ПРИМЕНЯТЬ: `Yandex.Cloud` биллинг — `@AfterStep` шлёт метрику `step_processed_count` в Prometheus. 📋 ПРАВИЛО: «@BeforeJob/@AfterStep + .listener()». 🔗 См. Q19, Q43.
-> - [ ] Аннотации `@BeforeJob` нельзя использовать, только интерфейсы | Поддерживаются оба способа. ❌ ПОСЛЕДСТВИЕ: разработчик реализует весь интерфейс ради одного callback, добавляет `5` пустых методов, читаемость падает.
-> - [ ] `JobExecutionListener.afterJob` не получает `JobExecution` | Получает — это его контракт. ❌ ПОСЛЕДСТВИЕ: разработчик не знает, читает status через статический контекст, теряет привязку к конкретному JobExecution, метрики неверны.
-> - [ ] Listener регистрируется только в XML-конфигурации | Регистрация через builder и Java config. ❌ ПОСЛЕДСТВИЕ: команда полагается на legacy XML, миграция на Spring Boot 3 ломает проект, переписывают конфиг под deadline.
 
 ## Q21. (!) Как настроить skip-логику в Spring Batch?
 
@@ -1156,13 +1016,6 @@ public class SkipTracker implements SkipListener<RawRecord, ProcessedRecord> {
 }
 ```
 
-
-> [!mcq]
-> - [ ] `.skip(Exception.class).skipLimit(Integer.MAX_VALUE)` — корректная конфигурация | Безлимитный skip скрывает массовые проблемы данных. ❌ ПОСЛЕДСТВИЕ: партнёрский CSV сбит, `99%` строк падает с FormatException, все skip-аются, ETL завершается «успешно», `2M` записей потеряно.
-> - [x] `.faultTolerant().skip(FlatFileParseException.class).skipLimit(100)` + `.noSkip(SQLException.class)` + `SkipListener` для аудита | Узкие исключения + лимит + журнал. ✓ ПРИМЕНЯТЬ: `Wildberries` для импорта SKU — skip только parse-errors, лимит `100`, остальное alert. 📋 ПРАВИЛО: «узкое исключение + лимит + аудит». 🔗 См. Q22, Q19.
-> - [ ] Skip без `SkipListener` корректен в production | Без listener потерянные строки не аудируются. ❌ ПОСЛЕДСТВИЕ: ETL «успешен», но `300` записей не дошли до БД, обнаруживают через месяц при сверке отчётов.
-> - [ ] `SkipPolicy` нужно реализовывать всегда вручную | Spring Batch даёт `LimitCheckingItemSkipPolicy` готовый. ❌ ПОСЛЕДСТВИЕ: команда тратит спринт на свой `SkipPolicy`, баги в логике лимита, в проде skip-аются `OutOfMemoryError`.
-
 ## Q22. (!) Как настроить retry-логику в Spring Batch?
 
 **Retry-логика** позволяет повторить обработку элемента при транзитных ошибках (таймауты, блокировки, временная недоступность сервиса).
@@ -1215,13 +1068,6 @@ public Step stepWithBackoff(JobRepository jobRepository,
 
 > **Важно:** retry применяется только к `ItemProcessor` и `ItemWriter`. Ошибки в `ItemReader` не ретраятся — для них используйте skip или обработку в самом reader.
 
-
-> [!mcq]
-> - [ ] `.retry(Exception.class)` без `retryLimit` — стандартный подход | Без лимита = infinite retry storm на single bad record. ❌ ПОСЛЕДСТВИЕ: одна транзакция падает с deadlock, retry бесконечно, ETL висит `8` часов, scheduler-окно пропущено.
-> - [x] `.faultTolerant().retry(TransientDataAccessException.class).retryLimit(3)` + exponential backoff через `RetryListener`/Spring Retry | Только transient ошибки, фиксированный лимит. ✓ ПРИМЕНЯТЬ: `Сбер` retry на `DeadlockLoserDataAccessException` `3` раза с backoff `100ms→1s`. 📋 ПРАВИЛО: «retry transient + лимит + backoff». 🔗 См. Q21, Q22.
-> - [ ] Retry применим к любым исключениям, включая `IllegalArgumentException` | Только transient (network, deadlock); programming errors не retry-ить. ❌ ПОСЛЕДСТВИЕ: bad-data вызывает IAE, retry × `5`, в логе `5×` дубликат, debug сложнее, ETL не успевает.
-> - [ ] Retry и Skip взаимоисключающие в одном Step | Можно комбинировать: retry первым, после исчерпания — skip. ❌ ПОСЛЕДСТВИЕ: команда выбирает только skip для transient deadlock, теряет `1000` валидных записей за ночь.
-
 ## Q23. (!) Какие стратегии масштабирования поддерживает Spring Batch?
 
 `Spring Batch` предлагает четыре стратегии масштабирования, от простых к сложным:
@@ -1254,13 +1100,6 @@ graph TB
 | **Parallel Steps** (Split/Flow) | Низкая | Независимые Step-ы можно выполнять одновременно |
 | **Partitioning** | Средняя | Данные естественно делятся на разделы (по ID, региону, дате) |
 | **Remote Chunking** | Высокая | Обработка = узкое место, распределение на несколько JVM |
-
-
-> [!mcq]
-> - [x] Multi-threaded Step, Parallel Steps (split/flow), Partitioning, Remote Chunking, Async Processor/Writer | Каждая стратегия для своей задачи: CPU/IO/distributed. ✓ ПРИМЕНЯТЬ: `Yandex` использует Partitioning по shard БД для импорта `1B` строк, Remote Chunking через Kafka для cross-region ETL. 📋 ПРАВИЛО: «multi-thread → parallel → partition → remote». 🔗 См. Q24, Q25, Q40.
-> - [ ] Spring Batch не поддерживает distributed-режим, только single JVM | Поддерживает через Remote Partitioning/Chunking + Kafka. ❌ ПОСЛЕДСТВИЕ: команда пишет свой broker для распределения работы, race condition на partition assignment, дубликаты обработки.
-> - [ ] Multi-threaded Step и Partitioning — одно и то же | Multi-threaded = много потоков на один Reader (без shard data); Partitioning = разделение data на partition. ❌ ПОСЛЕДСТВИЕ: команда ставит multi-threaded на `JdbcCursorItemReader` без paging, race на ResultSet, дубликаты записей.
-> - [ ] Async-режим включается флагом `spring.batch.async=true` | Такого флага нет, нужно явно конфигурировать `AsyncItemProcessor`. ❌ ПОСЛЕДСТВИЕ: команда добавляет несуществующий property, ждёт async, ETL остаётся single-threaded, миссится SLA.
 
 ## Q24. Как настроить многопоточный Step?
 
@@ -1305,13 +1144,6 @@ public SynchronizedItemStreamReader<Customer> synchronizedReader() {
     return syncReader;
 }
 ```
-
-
-> [!mcq]
-> - [ ] `taskExecutor(new SimpleAsyncTaskExecutor())` без `throttleLimit` | По умолчанию `throttleLimit=4`, но без явного контроля можно exhaust пул. ❌ ПОСЛЕДСТВИЕ: команда задаёт `Executors.newCachedThreadPool`, ETL стартует `5K` потоков на CSV `5M` строк, OOM на pod.
-> - [x] `.taskExecutor(taskExecutor).throttleLimit(8)` + thread-safe `Reader` (`SynchronizedItemStreamReader` поверх паджинирующего) | Несколько потоков читают/обрабатывают/пишут разные chunk одновременно. ✓ ПРИМЕНЯТЬ: `Тинькофф` запускает `8` потоков на `JdbcPagingItemReader` для агрегации balance — `4×` ускорение. 📋 ПРАВИЛО: «taskExecutor + throttleLimit + sync Reader». 🔗 См. Q23, Q25.
-> - [ ] Multi-threaded Step не требует thread-safe Reader | `JdbcCursorItemReader` не thread-safe, нужен `SynchronizedItemStreamReader`. ❌ ПОСЛЕДСТВИЕ: race condition на курсоре, дубликаты строк, отчёт по balance не сходится с источником на `2%`.
-> - [ ] Multi-threaded Step ломает restart, поэтому несовместим с `JobRepository` | Совместим, если Reader thread-safe. ❌ ПОСЛЕДСТВИЕ: команда отключает restart `restartable=false`, после kill-9 на `90%` запускают весь ETL заново.
 
 ## Q25. (!) Как работает партиционирование (Partitioning)?
 
@@ -1397,13 +1229,6 @@ public Step masterStep(JobRepository jobRepository, Step slaveStep,
 
 > **Преимущества партиционирования** перед многопоточным Step: поддержка restart, каждый slave имеет свой `ExecutionContext`, данные естественно изолированы.
 
-
-> [!mcq]
-> - [x] `Partitioner` делит работу на `n` `ExecutionContext`-партиций (по диапазону id, файлам, shard); `PartitionHandler` запускает worker Step на каждой | Каждая partition — отдельный StepExecution с restart-state. ✓ ПРИМЕНЯТЬ: `Yandex` партицирует `1B` строк биллинга по `customerId % 32`, `32` worker, `30×` ускорение. 📋 ПРАВИЛО: «Partitioner=split, PartitionHandler=run». 🔗 См. Q24, Q39.
-> - [ ] Партиционирование = многопоточность в одном Step | Это разные стратегии: партиционирование разделяет data на изолированные range. ❌ ПОСЛЕДСТВИЕ: команда выбирает multi-threaded на shared cursor вместо partition по shard, race condition, ETL не сходится.
-> - [ ] Каждая partition пишет в общий ExecutionContext без изоляции | Каждая partition имеет свой Step ExecutionContext. ❌ ПОСЛЕДСТВИЕ: разработчик хранит offset в общем context, partition `5` затирает offset partition `3`, restart обрабатывает не свой диапазон.
-> - [ ] Партиционирование работает только в одной JVM | Поддерживается Remote Partitioning через MQ (Kafka/RabbitMQ). ❌ ПОСЛЕДСТВИЕ: команда не знает про remote, всю нагрузку держит один pod, не масштабируется горизонтально.
-
 ## Q26. Как настроить параллельные шаги через Split/Flow?
 
 **Split/Flow** — выполнение независимых шагов параллельно. Полезно, когда шаги не зависят друг от друга (например, импорт из разных источников).
@@ -1450,13 +1275,6 @@ public Job parallelJob(JobRepository jobRepository,
 ```
 
 > **Важно:** все flow внутри `split` должны быть **независимы** — они работают в разных потоках и не должны конкурировать за общие ресурсы.
-
-
-> [!mcq]
-> - [ ] `Split` = последовательное выполнение Flow | Split — параллельное выполнение нескольких Flow. ❌ ПОСЛЕДСТВИЕ: команда ждёт параллельность через split, но не задаёт `taskExecutor`, Flow выполняются последовательно, ETL не успевает.
-> - [x] `JobBuilder.start(flow1).split(taskExecutor).add(flow2, flow3).next(finalStep)` — параллельно несколько `Flow` | Объединяются в `next` после завершения всех. ✓ ПРИМЕНЯТЬ: `Wildberries` параллельно импортирует продукты из `3` партнёрских CSV через split, далее merge-Step. 📋 ПРАВИЛО: «split = parallel Flows + taskExecutor». 🔗 См. Q23, Q27.
-> - [ ] `Split` без `TaskExecutor` запускает Flow параллельно | Без TaskExecutor Spring Batch выполняет последовательно. ❌ ПОСЛЕДСТВИЕ: разработчик думает что параллельно, latency p99 = sum всех Flow, ETL занимает `8` часов вместо `3`.
-> - [ ] Split может содержать только один Flow | Split требует минимум два Flow. ❌ ПОСЛЕДСТВИЕ: команда добавляет один Flow в split, fails fast при `IllegalStateException`, deploy откатывает, runbook незапущен ночью.
 
 ## Q27. Как настроить условный переход между шагами?
 
@@ -1513,13 +1331,6 @@ public class WeekdayDecider implements JobExecutionDecider {
     }
 }
 ```
-
-
-> [!mcq]
-> - [ ] Условные переходы возможны только в XML-конфигурации | Поддерживаются в Java DSL через `.on(...).to(...)`. ❌ ПОСЛЕДСТВИЕ: команда тащит legacy XML в Spring Boot 3, миграция блокирует upgrade, проект застревает на Spring Boot 2.7.
-> - [ ] `.on("FAILED").end()` приведёт к крушению Job без аудита | Корректно завершает Job со статусом FAILED, аудит пишется в JobRepository. ❌ ПОСЛЕДСТВИЕ: команда не использует `.on().end()`, ловит exception в каждом Step, теряет seamless flow control.
-> - [x] `.on("COMPLETED").to(stepB).from(stepA).on("FAILED").to(errorStep)` + `JobExecutionDecider` для сложной логики | ExitStatus определяет переход. ✓ ПРИМЕНЯТЬ: `Сбер` после ETL запускает `validation` Step; на FAILED — `notify-ops`, на COMPLETED — `archive`. 📋 ПРАВИЛО: «.on(status).to(step) + Decider для сложной логики». 🔗 См. Q9, Q26.
-> - [ ] Условный переход требует кастомной реализации `JobExecutionDecider` для каждого Step | Decider нужен для сложной логики; простые переходы — через `.on()`. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `5` Decider для тривиальных переходов, code review занимает день, читаемость падает.
 
 ## Q28. (!) Как интегрировать Spring Batch со Spring Boot?
 
@@ -1588,13 +1399,6 @@ public class ImportJobConfig {
 - Начиная со `Spring Boot 3.x`, `@EnableBatchProcessing` **не нужна** — автоконфигурация включена по умолчанию
 
 > **Важно:** в `Spring Boot 3.x` / `Spring Batch 5.x` конфигурация Job изменилась: `JobBuilderFactory` и `StepBuilderFactory` deprecated — используйте `JobBuilder` и `StepBuilder` с явным `JobRepository`.
-
-
-> [!mcq]
-> - [x] `spring-boot-starter-batch` + `@EnableBatchProcessing` (опционально с Spring Boot 3) + автоконфигурация `JobLauncher`/`JobRepository` + Flyway/Liquibase для `BATCH_*` schema | Boot стартует все `Job` бины при `spring.batch.job.enabled=true`. ✓ ПРИМЕНЯТЬ: `Тинькофф` ETL Boot-app — Flyway автоматом применяет `schema-postgresql.sql`, JobLauncher из autoconfig. 📋 ПРАВИЛО: «starter + autoconfig + Flyway/Liquibase». 🔗 См. Q6, Q33.
-> - [ ] Spring Boot не интегрируется с Spring Batch автоматически | Есть `spring-boot-starter-batch` с автоконфигурацией. ❌ ПОСЛЕДСТВИЕ: команда конфигурирует JobRepository/Launcher вручную, опечатка в qualifier, два разных Repository, state рассогласован.
-> - [ ] BATCH_* таблицы создаются автоматически без миграций | Только если `spring.batch.jdbc.initialize-schema=always`, что небезопасно для prod. ❌ ПОСЛЕДСТВИЕ: prod-конфиг с `always` пересоздаёт таблицы при rolling restart, теряются метаданные за неделю.
-> - [ ] При запуске Spring Boot все `Job` бины должны исполняться вручную через `JobLauncher` | По умолчанию Boot выполняет все Job на старте. ❌ ПОСЛЕДСТВИЕ: разработчик запускает приложение в IDE, ETL стартует и пишет в prod БД, инцидент.
 
 ## Q29. Как запускать batch-задания по расписанию?
 
@@ -1666,13 +1470,6 @@ spec:
 ```
 
 > **Совет:** в production предпочтительнее внешние планировщики (Kubernetes CronJob, Jenkins) — они обеспечивают retry, мониторинг, алерты и не зависят от JVM-процесса приложения.
-
-
-> [!mcq]
-> - [ ] `@Scheduled(cron="0 0 2 * * *")` достаточно без `@EnableScheduling` | Без `@EnableScheduling` cron не активен. ❌ ПОСЛЕДСТВИЕ: разработчик добавляет `@Scheduled`, ETL не запускается ночью, отчёт за неделю отсутствует, бизнес обнаруживает на review.
-> - [x] `@EnableScheduling` + `@Scheduled` для in-process; Quartz cluster для multi-node; внешние scheduler (k8s CronJob, Airflow) для прод | k8s CronJob предпочтительнее для distributed. ✓ ПРИМЕНЯТЬ: `Yandex.Cloud` запускает batch как k8s CronJob — нет single-point-of-failure scheduler. 📋 ПРАВИЛО: «k8s CronJob > Quartz cluster > @Scheduled». 🔗 См. Q7, Q33.
-> - [ ] `@Scheduled` корректен для multi-node deployment без leader election | На каждом pod запустится своя копия — дубликаты обработки. ❌ ПОСЛЕДСТВИЕ: ETL запускается на `3` pod, рассылка SMS уходит клиентам трижды, жалобы в support.
-> - [ ] k8s CronJob требует доработки image для запуска одного Job | Достаточно передать args/env с `--spring.batch.job.name=...`. ❌ ПОСЛЕДСТВИЕ: команда строит отдельный image на каждый Job, registry заполняется `15` похожими image, k8s ImagePullBackOff.
 
 ## Q30. (!) Как тестировать Spring Batch задания?
 
@@ -1774,13 +1571,6 @@ class ImportJobIntegrationTest {
 }
 ```
 
-
-> [!mcq]
-> - [ ] Достаточно `@SpringBootTest` без очистки `JobRepository` между тестами | Без `removeJobExecutions()` повторный launchJob с теми же params бросает `JobInstanceAlreadyCompleteException`. ❌ ПОСЛЕДСТВИЕ: второй прогон CI падает с `JobInstanceAlreadyCompleteException`, тест зелёный локально, флакающий в pipeline.
-> - [ ] `JobLauncherTestUtils.launchJob()` запускает Job вне Spring-контекста | Утилита использует тот же `JobLauncher` из контекста — бины `@StepScope` инициализируются полноценно. ❌ ПОСЛЕДСТВИЕ: команда дублирует production beans в `@TestConfiguration`, тесты проходят, а реальная конфигурация ломается на стенде.
-> - [ ] `launchStep("importStep")` нельзя — Step тестируется только через полный Job | `JobLauncherTestUtils.launchStep(name)` изолированно прогоняет один шаг с нужным `ExecutionContext`. ❌ ПОСЛЕДСТВИЕ: junior пишет 10-минутный полный Job-тест ради одного reader, обратная связь TDD теряется.
-> - [x] `@SpringBatchTest` + `JobLauncherTestUtils.launchJob/launchStep` + `JobRepositoryTestUtils.removeJobExecutions()` в `@BeforeEach` | Аннотация регистрирует утилиты и `StepScopeTestExecutionListener`, очистка гарантирует уникальность `JobInstance`. ✓ ПРИМЕНЯТЬ: `Тинькофф` тестирует ETL через `@SpringBatchTest` + `Testcontainers` PostgreSQL, отлавливая регрессии skip/retry до прода. 📋 ПРАВИЛО: «`@SpringBatchTest` + чистый JobRepository в `@BeforeEach`». 🔗 См. Q21, Q22, Q42.
-
 ## Q31. Как мониторить batch-задания и что такое Spring Cloud Task?
 
 **Мониторинг через `JobRepository`** — все метаданные уже хранятся в БД:
@@ -1841,13 +1631,6 @@ public class BatchTaskApplication {
 ```
 
 > **В enterprise** рекомендуется комбинировать: `Spring Batch` для бизнес-логики обработки, `Spring Cloud Task` для lifecycle-управления, `Micrometer` + `Prometheus`/`Grafana` для метрик и алертов. Подробнее о мониторинге в [Spring Boot Actuator](spring-boot-actuator-interview.md).
-
-
-> [!mcq]
-> - [ ] Логирование в `INFO` без структурных тегов достаточно для мониторинга прод-Job | Без тегов `jobName`/`status` в Prometheus нельзя построить SLA-дашборд и алерты. ❌ ПОСЛЕДСТВИЕ: ETL упал в `3:00`, on-call видит 100MB логов без фильтра, RCA занимает `4` часа вместо `15` минут.
-> - [x] `JobExplorer` для статусов + `Micrometer` метрики `spring.batch.job/step` + `Spring Cloud Task` для lifecycle короткоживущих JVM | `Spring Batch` сам экспортирует таймеры; `Spring Cloud Task` фиксирует start/end/exit-code в task-репозитории. ✓ ПРИМЕНЯТЬ: `Альфа-Банк` оркестрирует `Spring Cloud Task` через `Spring Cloud Data Flow`, метрики уходят в `Prometheus`/`Grafana`. 📋 ПРАВИЛО: «`JobExplorer` + `Micrometer` + `Spring Cloud Task` — три слоя observability batch». 🔗 См. Q6, Q43.
-> - [ ] `Spring Cloud Task` заменяет `Spring Batch` в облачных средах | `Cloud Task` — обёртка для lifecycle короткоживущих JVM, `Spring Batch` остаётся ядром обработки данных. ❌ ПОСЛЕДСТВИЕ: команда переписывает Job на `@Task`-методы без chunk/skip/retry, теряет restartability и метаданные. 
-> - [ ] `JobRepository` тащить через `JdbcTemplate` руками вместо `JobExplorer` | `JobExplorer` — read-only API над `JobRepository`, безопаснее raw SQL и переживает миграцию схемы Spring Batch 5. ❌ ПОСЛЕДСТВИЕ: после апгрейда на Spring Batch 5 запросы к `BATCH_JOB_EXECUTION_PARAMS` отваливаются из-за смены схемы, dashboard ломается.
 
 ## Q32. (!) Как настроить `JobParameters` и обеспечить уникальность запуска?
 
@@ -1932,13 +1715,6 @@ public class DateRangeItemReader implements ItemReader<Order> {
 - `@StepScope` — создаёт бин заново для каждого `Step`, даёт доступ к `stepExecutionContext` и `jobParameters`
 - `@JobScope` — создаёт бин заново для каждого `Job`, даёт доступ к `jobExecutionContext` и `jobParameters`
 - Без этих аннотаций `@Value("#{jobParameters[...]}")` работать не будет
-
-
-> [!mcq]
-> - [ ] Делать все параметры `addLong("ts", System.currentTimeMillis())` identifying — каждый запуск гарантированно уникален | Любой `JobParametersIncrementer` теряет смысл, restart упавшего job невозможен (новый ts = новый JobInstance, прогресс сброшен). ❌ ПОСЛЕДСТВИЕ: после OOM-крэша ETL не возобновляет с последнего commit, повторно импортирует `5M` строк, дубликаты в `BATCH_JOB_INSTANCE` растут на `~1K/сутки`.
-> - [ ] Передавать `JobParameters` без `JobParametersIncrementer`, повторно используя одинаковые identifying-параметры | При повторном запуске `Job` с identical identifying params получаем `JobInstanceAlreadyCompleteException` для COMPLETED instance. ❌ ПОСЛЕДСТВИЕ: cron каждый день стартует ETL с `runDate=2026-04-13`, на следующий день `runDate=2026-04-14` не создаётся — Spring Batch не знает, что параметр должен меняться, job не запускается.
-> - [ ] Использовать `@Value("#{jobParameters['date']}")` без `@StepScope` на reader-бине | Spring инжектит значение в момент создания singleton-бина, до запуска `Job`, поэтому SpEL-выражение возвращает `null`. ❌ ПОСЛЕДСТВИЕ: `JdbcPagingItemReader` стартует с `WHERE date IS NULL`, читает 0 строк, job завершается COMPLETED со статистикой `read=0` — silent data loss.
-> - [x] `identifying` параметры (по умолчанию) формируют identity `JobInstance`; `non-identifying` (3-й аргумент `false`) исключаются; `JobParametersIncrementer` (`RunIdIncrementer`) генерирует уникальность для cron-запусков; reader-бины с `@StepScope` + `@Value("#{jobParameters['x']}")` | Identifying = identity, incrementer = автоинкремент, `@StepScope` = late binding на запуске Step. ✓ ПРИМЕНЯТЬ: `Тинькофф` ETL запускает `dailyJob` через `RunIdIncrementer` + identifying `runDate`, повторный crash-restart того же дня корректно возобновляется с FAILED execution. 📋 ПРАВИЛО: «identifying = identity, Incrementer = новый запуск, `@StepScope` = late bind». 🔗 См. Q5, Q33, Q41.
 
 ## Q33. (!) Как работает `JobLauncher` и как запускать `Job` через `REST API`?
 
@@ -2044,13 +1820,6 @@ public class BatchStartupRunner implements CommandLineRunner {
 }
 ```
 
-
-> [!mcq]
-> - [x] Сконфигурировать отдельный `JobLauncher` с `SimpleAsyncTaskExecutor` (или `ThreadPoolTaskExecutor`), `run()` возвращает `JobExecution` со статусом `STARTING` сразу; HTTP `202 Accepted` + `executionId`; статус опрашивать через `JobExplorer.getJobExecution(id)`; обрабатывать `JobInstanceAlreadyCompleteException`/`JobExecutionAlreadyRunningException` | Async = неблокирующий REST, ID для polling, явная обработка checked-exceptions. ✓ ПРИМЕНЯТЬ: `Альфа-Банк` on-demand reconciliation Job — `POST /api/batch/reconcile` возвращает `202` + `executionId`, UI polls `/api/batch/{id}` каждые `5s` до `COMPLETED/FAILED`. 📋 ПРАВИЛО: «async launcher + 202 + polling по executionId». 🔗 См. Q7, Q32, Q42.
-> - [ ] Использовать default `SyncTaskExecutor` для REST-эндпоинта `POST /jobs/start` | `jobLauncher.run()` блокирует HTTP-поток на время всего job (часы для ETL); Tomcat-thread держится до конца, клиент таймаутит. ❌ ПОСЛЕДСТВИЕ: REST-клиент получает `504 Gateway Timeout` через `60s` Nginx-timeout, реальный job продолжает работать в Spring Batch — клиент думает «упало», запускает повторно, второй вызов кидает `JobExecutionAlreadyRunningException`.
-> - [ ] Запускать `Job` напрямую через `new SimpleJobOperator()` без `JobLauncher` бина | `JobLauncher` — единственный поддерживаемый entry-point; ручное создание ломает auto-config `JobRepository`/`TransactionManager`, теряет TX-границу при сохранении state. ❌ ПОСЛЕДСТВИЕ: `BATCH_STEP_EXECUTION` не обновляется при commit chunk, `JobExplorer.getJobExecution(id)` показывает stale `STARTED` для уже завершённого job, мониторинг врёт.
-> - [ ] Возвращать `executionId` сразу из `jobLauncher.run()` без ожидания состояния, не обрабатывая `JobInstanceAlreadyCompleteException` | Без обработки checked-exception API падает 500 на повторный вызов с identical params. ❌ ПОСЛЕДСТВИЕ: `JobOperator.start()` для уже COMPLETED instance кидает `JobInstanceAlreadyCompleteException`, без catch-блока сервис возвращает stack-trace в HTTP-ответе, утечка внутренних путей в Capital One-style infosec-incident.
-
 ## Q34. (!) Как настроить `CompositeItemProcessor` и цепочку процессоров?
 
 `CompositeItemProcessor` позволяет выстроить цепочку `ItemProcessor`-ов, применяя их последовательно к каждому элементу.
@@ -2147,13 +1916,6 @@ public Step processOrdersStep(
 - Типы должны «стыковаться»: выход одного = вход следующего
 - `CompositeItemProcessor` сам по себе thread-safe, но делегаты должны быть thread-safe или `@StepScope`
 
-
-> [!mcq]
-> - [ ] Использовать `List.of(validation, enrichment, discount)` без проверки соответствия типов входа/выхода | `setDelegates` не валидирует generics из-за type erasure в Java; runtime-каст в `ItemProcessor.process` падает `ClassCastException`. ❌ ПОСЛЕДСТВИЕ: при импорте `300K` SKU после рефакторинга output-типа `EnrichedOrder→PricedOrder` цепочка падает на 1-м chunk, `BATCH_STEP_EXECUTION.exit_code=FAILED`, ETL стоит до hotfix.
-> - [ ] Возвращать пустой `Optional`/`new EnrichedOrder()` вместо `null` для пропуска item | `CompositeItemProcessor` фильтрует только при `null`-возврате; пустой объект пройдёт всю цепочку и попадёт в writer. ❌ ПОСЛЕДСТВИЕ: невалидные orders с `amount=0` записываются в БД с `customerName=null`, downstream-биллинг кидает NPE при формировании отчётов, дневной reporting сломан.
-> - [ ] Делать делегаты singleton без `@StepScope`, но с зависимостями от `JobParameters` через `@Value("#{jobParameters['date']}")` | Singleton-бин создаётся на старте контекста, до запуска Job; SpEL разрешается в `null`. ❌ ПОСЛЕДСТВИЕ: `OrderEnrichmentProcessor` инжектит `customerService` синглтоном, но `processDate` остаётся `null`, обогащение использует устаревший snapshot, рассинхрон balance с CRM на сутки.
-> - [x] `CompositeItemProcessor.setDelegates(List.of(validator, enricher, discount))`; делегаты с stateful-зависимостями от `JobParameters` помечаются `@StepScope`; `null` из любого делегата = filter всей цепочки; типы стыкуются `In→Mid1→Mid2→Out` | Sequential apply, `null` = early-exit, types compose. ✓ ПРИМЕНЯТЬ: `Тинькофф` обрабатывает orders через chain «validate → enrich (CRM lookup, `@StepScope`) → discount» в `CompositeItemProcessor`, невалидные фильтруются на 1-м шаге без обращения в CRM. 📋 ПРАВИЛО: «Composite = sequential apply, `null` = filter, types compose». 🔗 См. Q18, Q11, Q35.
-
 ## Q35. Как реализовать `ChunkListener` и `ItemWriteListener` для аудита?
 
 **`ChunkListener`** — вызывается до/после каждого chunk (транзакции). `ItemWriteListener` — вызывается до/после/при ошибке записи каждого chunk.
@@ -2245,13 +2007,6 @@ public Step processStep(..., AuditChunkListener chunkListener,
         .build();
 }
 ```
-
-
-> [!mcq]
-> - [x] Реализовать `ChunkListener.beforeChunk/afterChunk/afterChunkError` (`ROLLBACK_EXCEPTION_KEY` для исключения) + `ItemWriteListener.beforeWrite/afterWrite/onWriteError`; `ThreadLocal` для per-thread state в multi-threaded Step; явная регистрация через `.listener(...)` в `StepBuilder` | Аудит на каждом уровне, error-hook ловит rollback, ThreadLocal — изоляция между потоками. ✓ ПРИМЕНЯТЬ: `Альфа-Банк` ETL орчестрирует chunk-метрики в Prometheus через `ChunkListener`, `ItemWriteListener.onWriteError` пишет failed order_ids в `dead_letter_table` для compliance-аудита. 📋 ПРАВИЛО: «ChunkListener для tx-границы, ItemWriteListener для аудита, ThreadLocal для multi-thread». 🔗 См. Q19, Q20, Q43.
-> - [ ] Хранить `chunkStartTime` в `private long` поле listener-бина без `ThreadLocal` | При multi-threaded Step (`taskExecutor + throttleLimit`) несколько потоков пишут в одно поле, `afterChunk` видит время чужого chunk. ❌ ПОСЛЕДСТВИЕ: метрика `batch.chunk.duration` показывает `-50ms` или `5min` на job с реальным `100ms` chunk, p99-алерты в Grafana ложно срабатывают, on-call поднимают по ночам.
-> - [ ] Использовать `afterWrite` для аудита БЕЗ `onWriteError`, считая что rollback откатит и аудит | `afterWrite` вызывается ПОСЛЕ commit транзакции writer; rollback chunk не откатывает уже записанный аудит. ❌ ПОСЛЕДСТВИЕ: при retry chunk audit-запись `recorded_at` ставится дважды, ОДИТ-комиссия видит дублированные order_ids в `audit_log`, расследование `2 недели` доказательной выгрузки.
-> - [ ] Регистрировать listener через `@Component` без `.listener(...)` в `StepBuilder` | Spring Batch не сканирует context для listener-ов автоматически; явная регистрация обязательна. ❌ ПОСЛЕДСТВИЕ: `AuditChunkListener` бин создан, инъекции работают, но `beforeChunk/afterChunk` НЕ вызываются — аудит молча отсутствует, при инциденте нечем доказать что job выполнялся.
 
 ## Q36. (!) Как настроить `Partitioning` с `RemotePartitioning` через `Kafka`?
 
@@ -2379,13 +2134,6 @@ public class OrderIdRangePartitioner implements Partitioner {
 }
 ```
 
-
-> [!mcq]
-> - [ ] Использовать общий `JobRepository` (одну БД) для Manager и Workers без `@StepScope` на Worker reader | Workers разных JVM пишут в один `BATCH_STEP_EXECUTION` без late-binding `minId/maxId` из своего `stepExecutionContext`, читают пересекающиеся диапазоны. ❌ ПОСЛЕДСТВИЕ: каждый из `10` workers читает orders `[1..1B]` целиком, дубликаты × `10` в target-таблице, реконсиляция `Сбер`-стиля занимает выходные.
-> - [ ] Запускать Workers с разным `application.yml` (разный `gridSize`) для горизонтального scaling | `gridSize` задаётся на Manager `PartitionHandler.setGridSize(N)`; Workers получают partition по сообщению, лишний gridSize у Worker не работает. ❌ ПОСЛЕДСТВИЕ: добавили 5-й worker pod в k8s, но Manager создаёт только `4` партиции (старый gridSize), новый worker простаивает, kubectl-мониторинг показывает healthy idle pod, scaling не работает.
-> - [ ] Использовать одну Kafka-партицию для requests-топика | Single partition сериализует доставку, теряется параллелизм Remote Partitioning, Workers ждут друг друга. ❌ ПОСЛЕДСТВИЕ: при `gridSize=32` все запросы идут через 1 partition, Kafka consumer offset сериализует обработку, ETL `1B` строк выполняется за `8h` вместо ожидаемых `15min`, SLA нарушен.
-> - [x] Manager Step с `MessageChannelPartitionHandler` отправляет `StepExecutionRequest` в Kafka requests-топик; Worker JVM (`@Profile("worker")`) через `IntegrationFlow` слушает, выполняет `workerStep` с `@StepScope`-reader получающим `minId/maxId` из `stepExecutionContext`, отвечает в replies-топик; общий `JobRepository` для координации | Distributed Workers через брокер, late-binding партиции в context. ✓ ПРИМЕНЯТЬ: `Yandex` распределяет ETL `1B` строк биллинга на `32` k8s-pod через Remote Partitioning Kafka, `30×` ускорение vs single-JVM. 📋 ПРАВИЛО: «Manager publish → Workers subscribe → shared JobRepository». 🔗 См. Q23, Q25, Q40.
-
 ## Q37. Как управлять транзакциями и `isolation level` в chunk-обработке?
 
 Каждый chunk в `Spring Batch` выполняется в одной транзакции. `ItemReader.read()` работает вне транзакции (по умолчанию), а `ItemProcessor` + `ItemWriter` — внутри.
@@ -2463,13 +2211,6 @@ return new StepBuilder("importStep", jobRepository)
 
 ---
 
-
-> [!mcq]
-> - [ ] Поставить `ISOLATION_SERIALIZABLE` для всех chunks ETL «на всякий случай» | Serializable заставляет PostgreSQL делать predicate locking, конкурентный writer-batch ловит `40001 serialization_failure`, ретраи каскадируют. ❌ ПОСЛЕДСТВИЕ: импорт `5M` orders с `chunk=500` под нагрузкой OLTP получает `~40%` chunks в retry-loop, общее время ETL вырастает с `15min` до `2h`, ночное окно превышено.
-> - [ ] Аннотировать `ItemWriter.write()` через `@Transactional` чтобы «гарантировать» транзакцию | Step сам открывает TX на chunk; `@Transactional` на writer создаёт вложенную TX с `PROPAGATION_REQUIRED`, что fine, НО `REQUIRES_NEW` (если случайно) разрывает chunk-границу. ❌ ПОСЛЕДСТВИЕ: при `REQUIRES_NEW` rollback chunk не откатывает успешные writes, частичные данные в target-таблице, после restart возникают unique constraint violations, миграция падает.
-> - [x] `chunk(N, transactionManager)` задаёт TX-границу; `DefaultTransactionAttribute` с `ISOLATION_READ_COMMITTED` (default) и `timeout` под размер chunk; `JdbcPagingItemReader` для restart-friendly чтения; `noRollback(ValidationException)` чтобы validation-ошибка не откатывала chunk; `JdbcTransactionManager` (Spring Batch 5) | Один TX на chunk, READ_COMMITTED для OLTP-baseline, paging для restart, noRollback для skip без отката. ✓ ПРИМЕНЯТЬ: `Сбер` ETL транзакций — `chunk=500`, READ_COMMITTED, timeout `5min`, noRollback на `ValidationException` для skip невалидных без потери batch. 📋 ПРАВИЛО: «chunk = 1 TX, READ_COMMITTED + Paging + noRollback на skip-исключения». 🔗 См. Q10, Q21, Q38.
-> - [ ] `JdbcCursorItemReader` с `saveState=false` для скорости | Cursor держит ResultSet в TX Step; при rollback chunk курсор может «уехать» (driver-зависимо); `saveState=false` отключает запись позиции в `ExecutionContext`, restart невозможен. ❌ ПОСЛЕДСТВИЕ: `5M` строк падают на 90% прогресса из-за transient error, restart начинает с 0, double-processing уже импортированных строк, FK violation в target.
-
 ## Q38. (!) Что нового в Spring Batch 5 — JobRepository, DataSourceTransactionManager?
 
 **Spring Batch 5** (выпущен вместе с Spring Boot 3) — мажорный релиз с рядом breaking changes и улучшений.
@@ -2533,13 +2274,6 @@ public PlatformTransactionManager transactionManager(DataSource dataSource) {
 **6. `JobExplorer` и `JobOperator` теперь автоконфигурируются** Spring Boot.
 
 **7. Миграция схемы БД** — для PostgreSQL/MySQL обновлены DDL-скрипты.
-
-
-> [!mcq]
-> - [ ] Оставить `@EnableBatchProcessing` на `@Configuration` при апгрейде на Spring Boot 3 + Spring Batch 5 | С Boot 3 BatchAutoConfiguration уже регистрирует JobRepository; явная аннотация перекрывает auto-config, ломает порядок инициализации beans. ❌ ПОСЛЕДСТВИЕ: после миграции `Boot 2.7→3.2` приложение стартует, но `JobLauncher` инжектится дважды, `NoUniqueBeanDefinitionException`, ETL не запускается до удаления `@EnableBatchProcessing`.
-> - [ ] Продолжать использовать `DataSourceTransactionManager` для batch-схемы при апгрейде | `DataSourceTransactionManager` теряет SQLWarning, не интегрируется с `JdbcClient` Spring Batch 5; работает, но deprecated path. ❌ ПОСЛЕДСТВИЕ: при ETL импорта `100M` строк теряются warnings о truncation/data conversion (ORA-24344-style), некорректные numeric overflow попадают в `BIGINT` колонки молча, отчётность врёт.
-> - [ ] Оставить `JobParameter` без типизации (Spring Batch 4 API) | В Spring Batch 5 `JobParameter` стал generic `JobParameter<T>`, raw-вариант не компилируется. ❌ ПОСЛЕДСТВИЕ: после `gradlew build` появляется `~50` compile errors на job-конфигурациях, миграция блокирована до полного рефакторинга `JobParametersBuilder` API.
-> - [x] Удалить `@EnableBatchProcessing` (autoconfig в Boot 3); заменить `DataSourceTransactionManager` на `JdbcTransactionManager`; адаптировать generics `JobParameter<T>`; обновить DDL `BATCH_*` через Flyway/Liquibase; Java 17+; `DefaultBatchConfiguration` для кастомизации без аннотации | Boot 3 = autoconfig, Jdbc-TM для SQLWarning, generic params, миграция схемы. ✓ ПРИМЕНЯТЬ: `Тинькофф` мигрировал ETL на Spring Boot 3 + Batch 5 — Flyway-скрипт пересоздаёт `BATCH_JOB_EXECUTION_PARAMS`, `JdbcTransactionManager` ловит data-conversion warnings в SBA. 📋 ПРАВИЛО: «Boot 3 → drop @EnableBatchProcessing → JdbcTransactionManager → DDL migration». 🔗 См. Q6, Q28, Q37.
 
 ## Q39. (!) Как работает Partitioning через PartitionHandler и GridSize?
 
@@ -2606,13 +2340,6 @@ public JdbcPagingItemReader<Order> workerReader(
 ```
 
 **GridSize** — количество параллельных партиций. Определяет степень параллелизма. Оптимальное значение зависит от числа CPU, размера данных и I/O.
-
-
-> [!mcq]
-> - [ ] Поставить `gridSize=1000` для maximum параллелизма на 8-CPU pod | Ограничение CPU/IO — пул TaskExecutor становится bottleneck, тысячи `StepExecution` создают шторм на `BATCH_STEP_EXECUTION` writes. ❌ ПОСЛЕДСТВИЕ: `JobRepository`-таблица захлёбывается на INSERT, deadlocks в `BATCH_STEP_EXECUTION_CONTEXT`, реальная пропускная способность хуже чем при `gridSize=8`, ETL висит.
-> - [ ] Делать `Partitioner` с одинаковыми диапазонами `[1..maxId]` для всех партиций | Каждая partition обрабатывает тот же диапазон, дублирующая работа × `gridSize`. ❌ ПОСЛЕДСТВИЕ: импорт `100M` orders с `gridSize=10` записывает каждую строку 10 раз, target-таблица содержит `1B` записей с PK violations, recovery — TRUNCATE + restart с нуля.
-> - [x] `Partitioner.partition(gridSize)` создаёт `Map<String, ExecutionContext>` с непересекающимися диапазонами `minId/maxId`; `TaskExecutorPartitionHandler.setGridSize(N)` запускает N параллельных `StepExecution`; Worker reader через `@StepScope + @Value("#{stepExecutionContext['minId']}")`; `gridSize` подбирается под CPU/IO-профиль | Disjoint partitions, late-binding context, gridSize tuned. ✓ ПРИМЕНЯТЬ: `Yandex` партицирует биллинг по `customerId % 32` (`gridSize=32`), `JdbcPagingItemReader` читает свой диапазон через `@StepScope`, `30×` ускорение vs single-thread. 📋 ПРАВИЛО: «Partitioner=disjoint ranges, gridSize=tuned, @StepScope для context». 🔗 См. Q23, Q25, Q36.
-> - [ ] Хранить partition-границы в global state (статической `Map`) вместо `ExecutionContext` | Static-state не сериализуется в `BATCH_STEP_EXECUTION_CONTEXT`, после restart partition не знает где остановился. ❌ ПОСЛЕДСТВИЕ: после k8s evict pod restart-job начинает с диапазона 0-N для partition 5 (вместо последнего checkpoint), повторная обработка `30M` строк, частичные дубликаты.
 
 ## Q40. (!) Что такое Remote Chunking и как реализовать Master-Worker через Kafka?
 
@@ -2698,13 +2425,6 @@ public class WorkerConfig {
 | Сложность | Выше | Ниже |
 | Применение | Reader bottleneck | I/O bottleneck на Workers |
 
-
-> [!mcq]
-> - [ ] Использовать Remote Chunking когда bottleneck — Reader (single big SELECT), а не Writer | Reader работает только на Master, Workers получают chunks через сеть; если Reader — bottleneck, добавление Workers не помогает. ❌ ПОСЛЕДСТВИЕ: ETL с `JdbcCursorItemReader` на Master читает `5K rows/sec`; добавили `10` Workers — пропускная способность остаётся `5K/sec` (Reader = ceiling), `90%` времени Workers idle, инфра-затраты × `10`.
-> - [ ] Применять Remote Chunking без acknowledgment Workers (`fire-and-forget` через Kafka) | Без подтверждения Master не знает завершилась ли обработка chunk; rollback невозможен. ❌ ПОСЛЕДСТВИЕ: Worker pod умирает в k8s посреди обработки chunk, `BATCH_STEP_EXECUTION` остаётся `STARTED` forever, monitoring показывает зависший job, restart кидает `JobExecutionAlreadyRunningException`.
-> - [ ] Делать Workers stateful (хранить Reader-курсор на Worker) | Reader должен быть только на Master в Remote Chunking; Workers stateless processors+writers. ❌ ПОСЛЕДСТВИЕ: после rebalance Kafka consumer на Worker pod-2 потерял курсор от pod-1, дублирующее чтение строк, FK violations при INSERT в target.
-> - [x] Master читает `ItemReader` и публикует chunks в Kafka requests; Workers (stateless: Processor + Writer) получают chunks через `IntegrationFlow`, обрабатывают и шлют ack в replies; `MessageChannelPartitionHandler` ждёт acks; применять когда Writer — bottleneck (CPU/IO-heavy enrichment, slow target БД), не Reader | Master read, Workers process+write, ack-based sync. ✓ ПРИМЕНЯТЬ: `Альфа-Банк` ETL обогащает orders ML-моделями (`200ms/item` CPU) — Master читает single Cursor, `10` Worker pods применяют ML-inference и пишут результат, `8×` ускорение. 📋 ПРАВИЛО: «Remote Chunking когда Writer = bottleneck; Master reads, Workers process». 🔗 См. Q23, Q25, Q39.
-
 ## Q41. Как работают JobParameters и инкрементальные задания?
 
 `JobParameters` — набор параметров, идентифицирующих `JobInstance`. Один `Job` + уникальные `JobParameters` = один `JobInstance`.
@@ -2760,13 +2480,6 @@ new JobParametersBuilder()
     .addString("logLevel", "DEBUG", false)               // non-identifying
     .toJobParameters();
 ```
-
-
-> [!mcq]
-> - [ ] Запускать `JobOperator.start(jobName, params)` для уже COMPLETED `JobInstance` (тот же `inputFile`) ожидая повторной обработки | Spring Batch блокирует повторный запуск завершённого instance, требуя уникальные identifying-params. ❌ ПОСЛЕДСТВИЕ: оператор пытается перезапустить вчерашний failed-job через UI, видит `JobInstanceAlreadyCompleteException`, не понимает что нужно `RunIdIncrementer`-bump, ETL не запускается, эскалация в support.
-> - [ ] Помечать ВСЕ параметры как non-identifying (`addString("file", path, false)`) для гибкости | Без identifying-params Spring Batch создаёт новый `JobInstance` КАЖДЫЙ запуск; restart упавшего job невозможен (нет identity для resume). ❌ ПОСЛЕДСТВИЕ: после OOM-крэша `Job` не возобновляется с последнего checkpoint, новый `JobInstance` стартует с 0, повторная обработка `5M` уже импортированных строк, дубликаты в target.
-> - [x] Identifying params (`addString` без `false`) формируют identity `JobInstance`; non-identifying (`addString(k, v, false)`) — для динамических `logLevel`/`debugFlag`; `RunIdIncrementer` для cron-запусков (новый instance каждый день); restart FAILED instance — БЕЗ изменения identifying params; `JobParametersIncrementer` кастомный для ежедневных дат | Identifying = identity, Incrementer = новый запуск, Restart = same params. ✓ ПРИМЕНЯТЬ: `Сбер` daily-reconciliation — `runDate=2026-04-13` identifying + `RunIdIncrementer`, FAILED-restart того же `runDate` возобновляет с last commit. 📋 ПРАВИЛО: «identifying = identity, Incrementer = next, restart = same params». 🔗 См. Q5, Q32, Q42.
-> - [ ] Использовать `RunIdIncrementer` для critical-restart-сценариев (FAILED job нужно возобновить) | Incrementer создаёт НОВЫЙ JobInstance с `run.id+1`, теряя связь с FAILED instance — restart невозможен, начинается новый job. ❌ ПОСЛЕДСТВИЕ: ETL упал на `90%` прогресса, оператор запускает с `RunIdIncrementer` ожидая resume, получает новый `JobInstance` с `run.id=2` от 0, потеря `5h` обработки.
 
 ## Q42. (!) Как тестировать Spring Batch задания с JobLauncherTestUtils и AssertJ?
 
@@ -2865,13 +2578,6 @@ class OrderItemReaderTest {
 - `JobRepositoryTestUtils` — очистка метаданных
 - `StepScopeTestExecutionListener` — активация `@StepScope` бинов в тестах
 
-
-> [!mcq]
-> - [ ] Использовать `@SpringBatchTest` без `JobRepositoryTestUtils.removeJobExecutions()` в `@BeforeEach` | Метаданные предыдущего теста остаются в `BATCH_JOB_INSTANCE`; повторный launch с тем же `run.id=1L` кидает `JobInstanceAlreadyCompleteException`. ❌ ПОСЛЕДСТВИЕ: тестовый класс с `5` тестами проходит зелёным локально, но в CI Surefire-параллельно ловит `JobInstanceAlreadyCompleteException` на 2-м тесте, флаки в pipeline блокируют merge MR.
-> - [ ] Тестировать `ItemReader` без `@StepScope`-инициализации (без `StepScopeTestExecutionListener`) | `@StepScope`-бины требуют активного `StepExecution` контекста; без listener инжекция `@Value("#{jobParameters['x']}")` падает `BeanCreationException`. ❌ ПОСЛЕДСТВИЕ: `OrderItemReaderTest` падает на `@Autowired ItemReader<Order>` с `Scope 'step' is not active for the current thread`, разработчик копипастит `@MockBean` всего chain — теряет ценность теста.
-> - [ ] Запускать full Job через `launchJob()` для каждого юнит-теста Step | Полный job-запуск инициализирует ALL Steps + listeners + JobRepository writes, медленный (`5-10s/тест`) и не изолирует Step-логику. ❌ ПОСЛЕДСТВИЕ: тестовый suite на `30` Step-тестов выполняется `5min` вместо `30s`, разработчики отключают тесты локально, регрессии прорываются в production через CI-блок «skip slow tests».
-> - [x] `@SpringBatchTest` (регистрирует `JobLauncherTestUtils`, `JobRepositoryTestUtils`, `StepScopeTestExecutionListener`) + `@SpringBootTest`; `@BeforeEach` чистит `JobRepositoryTestUtils.removeJobExecutions()`; `launchStep("stepName")` для unit-теста отдельного Step; `launchJob(params)` для integration; AssertJ `assertThat(execution.getStatus()).isEqualTo(BatchStatus.COMPLETED)`; Testcontainers PostgreSQL для real-DB | Ann + cleanup + Step-isolated test + AssertJ + Testcontainers. ✓ ПРИМЕНЯТЬ: `Тинькофф` тестирует ETL через `@SpringBatchTest` + Testcontainers PostgreSQL, `launchStep` для skip/retry-edge-cases, отлавливая регрессии до прода. 📋 ПРАВИЛО: «`@SpringBatchTest` + clean before each + launchStep для unit + Testcontainers». 🔗 См. Q21, Q22, Q30.
-
 ## Q43. Как мониторить Spring Batch через метрики и Spring Boot Actuator?
 
 **Spring Batch 5** автоматически публикует метрики через **Micrometer** при наличии `spring-boot-starter-actuator`.
@@ -2968,13 +2674,6 @@ public class BatchMetricsListener implements JobExecutionListener {
 ```
 
 **Интеграция с Spring Cloud Task** для мониторинга краткоживущих задач в распределённой среде (запись в централизованную БД Task Application Manager).
-
-
-> [!mcq]
-> - [ ] Парсить логи stdout job через Logstash regex для метрик длительности | Регулярки ломаются при изменении формата лога; long-running job >24h ловит rotation, парсер теряет события. ❌ ПОСЛЕДСТВИЕ: после Spring Boot upgrade меняется формат `%d{ISO8601}` на `%d{yyyy-MM-dd}`, regex не матчит, dashboards в Grafana пустые `~3 недели` пока DevOps замечает, SLA-репортинг невозможен.
-> - [ ] Тащить статусы Job через `JdbcTemplate` raw-запросы к `BATCH_JOB_EXECUTION` | Прямой SQL ломается при апгрейде Spring Batch 4→5 (схема изменилась: `BATCH_JOB_EXECUTION_PARAMS` имеет другие колонки). ❌ ПОСЛЕДСТВИЕ: после миграции на Boot 3 + Batch 5 dashboards `Альфа-Банк` показывают `column 'string_val' does not exist`, observability отключена на time of migration, инцидент остался невидим.
-> - [x] `spring-boot-starter-actuator` + Micrometer registry автоматически экспортирует `spring.batch.job/step/item.read/process/write` таймеры; expose `prometheus` endpoint; кастомные метрики через `JobExecutionListener` + `MeterRegistry`; `/actuator/health` через `BatchHealthIndicator`; для cross-JVM lifecycle — Spring Cloud Task в централизованную БД | Auto-Micrometer + Prometheus + listener для custom + Cloud Task для distributed. ✓ ПРИМЕНЯТЬ: `Альфа-Банк` оркестрирует ETL через Spring Cloud Data Flow + Cloud Task, метрики `spring.batch.step` уходят в Prometheus, Grafana алёртит на `p99 > 30s`. 📋 ПРАВИЛО: «Actuator + Micrometer + listener custom + Cloud Task для distributed». 🔗 См. Q20, Q31, Q42.
-> - [ ] Считать что `spring-boot-starter-actuator` сам экспортирует метрики Batch без `Micrometer` | Actuator endpoints (`/actuator/health`) — да, но per-Step таймеры требуют Micrometer-MeterRegistry; без него нет timer'ов `spring.batch.step`. ❌ ПОСЛЕДСТВИЕ: команда добавила Actuator ожидая «всё из коробки», `/actuator/metrics/spring.batch.step` возвращает 404, Prometheus-scrape не находит метрики, отсутствие `p99` алёртов на медленные Steps.
 
 ---
 

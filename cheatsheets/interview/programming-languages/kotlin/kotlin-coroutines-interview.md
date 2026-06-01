@@ -124,13 +124,6 @@ fun main() = runBlocking {
 
 На собеседовании важно подчеркнуть: корутины — это **не потоки**, а задачи, которые выполняются на потоках из пула. Один поток может обслуживать множество корутин благодаря приостановке и возобновлению.
 
-
-> [!mcq]
-> - [ ] Корутина — это лёгкий поток ОС, создаваемый библиотекой `kotlinx.coroutines` поверх `Thread` | Корутина это НЕ поток ОС, а абстракция над пулом потоков. ❌ ПОСЛЕДСТВИЕ: разработчик думает что 100k корутин = 100k потоков, ставит `Thread.sleep` вместо `delay` и ловит OOM на 5K соединениях.
-> - [ ] Корутина — асинхронный callback-механизм, основанный на `Future` и `CompletableFuture` | Корутины не используют callback-стиль; компилятор генерирует state machine через CPS. ❌ ПОСЛЕДСТВИЕ: команда мигрирует с `CompletableFuture` на корутины «один-к-одному» и сохраняет callback hell с `.thenCompose().thenApply()` вместо последовательного `suspend`-кода.
-> - [x] Корутина — приостанавливаемая единица выполнения, компилируется в state machine; тысячи корутин выполняются на пуле потоков благодаря `suspend`-точкам | Компилятор Kotlin превращает `suspend fun` в continuation-passing-style; в точке `suspend` поток освобождается и берёт другую корутину. ✓ ПРИМЕНЯТЬ: Ktor server обслуживает 50k+ одновременных HTTP-соединений на пуле в ~CPU-cores-потоков; Android `viewModelScope` для UI-логики. 📋 ПРАВИЛО: «корутина — задача, не поток; suspend = пауза без блокировки». 🔗 См. Q2, Q3, Q10.
-> - [ ] Корутина — это `Fiber` из Project Loom, заменяющий `Thread` в JVM 21+ | Корутины и virtual threads — независимые модели; корутины работают на любой JVM 8+. ❌ ПОСЛЕДСТВИЕ: разработчик в JVM 11 ждёт автоматического pinning detection как у Loom и ставит `synchronized` вокруг `delay()` — `IllegalStateException` в runtime.
-
 ## Q2. (!) В чём разница между потоками и корутинами?
 
 | Характеристика | `Thread` | `Coroutine` |
@@ -158,13 +151,6 @@ graph TD
 ```
 
 Ключевое отличие: поток блокируется при ожидании I/O и простаивает, а корутина **приостанавливается**, освобождая поток для другой работы. Это позволяет обслуживать тысячи одновременных запросов малым числом потоков.
-
-
-> [!mcq]
-> - [ ] `Thread` дешёвый (~несколько байт), а корутина дорогая (~1 МБ стека) | Перепутаны характеристики: это поток имеет ~1 МБ стека, а корутина — несколько сотен байт. ❌ ПОСЛЕДСТВИЕ: команда ставит `newFixedThreadPool(10000)` ожидая «легковесности» и получает `OutOfMemoryError: unable to create native thread`.
-> - [ ] `Thread` приостанавливается без блокировки ОС, а корутина блокирует поток ОС | Поведение перепутано: блокирующий именно поток, а корутина приостанавливается через `suspend`. ❌ ПОСЛЕДСТВИЕ: разработчик заменяет `delay(1000)` на `Thread.sleep(1000)` думая «так корректнее», блокирует `Dispatchers.Default` и ловит latency p99 5s вместо 50ms.
-> - [ ] Между ними нет разницы — `Coroutine` это синтаксический сахар поверх `Thread` | Это разные модели: корутина выполняется на потоках, но не отождествляется с ними. ❌ ПОСЛЕДСТВИЕ: junior смешивает `ThreadLocal` с корутинами, теряет контекст после `withContext` и получает «потерянного» текущего пользователя в request scope.
-> - [x] Поток — управляемая ОС preemptive-единица (~1 МБ стека), а корутина — кооперативная задача (~сотни байт), множество корутин выполняется на одном потоке через `suspend` | Поток переключается ОС, дорого; корутина переключается в user-space через state machine, дёшево. Один поток обслуживает много корутин, освобождаясь в каждой `suspend`-точке. ✓ ПРИМЕНЯТЬ: бэкенд на Ktor с `Dispatchers.IO` (до 64 потоков) держит десятки тысяч одновременных запросов; Spring WebFlux + coroutines использует ту же модель. 📋 ПРАВИЛО: «поток — ресурс ОС, корутина — задача; suspend освобождает поток». 🔗 См. Q1, Q8, Q14.
 
 ## Q3. (!) Что такое `suspend`-функция и как она работает под капотом?
 
@@ -196,13 +182,6 @@ stateDiagram-v2
 ```
 
 Компилятор добавляет скрытый параметр `Continuation<T>` к каждой `suspend`-функции. На уровне JVM сигнатура `suspend fun fetchUser(id: Long): User` превращается в `fun fetchUser(id: Long, cont: Continuation<User>): Any?`, где возвращаемое значение `COROUTINE_SUSPENDED` сигнализирует о приостановке.
-
-
-> [!mcq]
-> - [ ] Компилятор оборачивает `suspend fun` в новый `Thread`, который запускается при вызове | Никакой новый поток не создаётся; `suspend` — это компиляция в state machine, выполняемую на текущем потоке диспетчера. ❌ ПОСЛЕДСТВИЕ: на каждый вызов `suspend fun fetchUser()` команда ожидает создания потока, в логах видит «Thread-N» отсутствует и думает что корутины не работают.
-> - [ ] `suspend` — это runtime-аннотация, проверяемая JVM при загрузке класса | `suspend` — это compile-time преобразование, не runtime-проверка; в bytecode добавляется параметр `Continuation`. ❌ ПОСЛЕДСТВИЕ: разработчик пишет reflection-вызов `method.invoke()` для `suspend`-метода, не передаёт `Continuation` и получает `IllegalArgumentException: argument count mismatch`.
-> - [ ] `suspend`-функция выполняется только на `Dispatchers.IO`, потому что использует non-blocking I/O | `suspend` не привязан к диспетчеру; функция выполняется на диспетчере вызывающего scope. ❌ ПОСЛЕДСТВИЕ: команда вызывает CPU-heavy `suspend fun` на `Dispatchers.Main` Android и получает 200ms freeze UI на каждом фреймe.
-> - [x] Компилятор преобразует `suspend fun` в state machine через CPS, добавляя скрытый параметр `Continuation<T>`; возврат `COROUTINE_SUSPENDED` означает приостановку | Метод сигнатуры `suspend fun fetchUser(id: Long): User` в bytecode становится `fun fetchUser(id: Long, cont: Continuation<User>): Any?`; каждая `suspend`-точка — label в state machine. ✓ ПРИМЕНЯТЬ: Kotlin compiler plugin использует тот же CPS-механизм для интеграции с `Reactor.Mono.awaitSingle()`; декомпиляция в IntelliJ показывает сгенерированный switch по labels. 📋 ПРАВИЛО: «suspend = Continuation в сигнатуре + state machine в теле». 🔗 См. Q1, Q9, Q33.
 
 ## Q4. Как определить и запустить корутину?
 
@@ -244,13 +223,6 @@ suspend fun loadData() = coroutineScope {
 
 Не используйте `GlobalScope` в production-коде — это нарушает [structured concurrency](kotlin-coroutines-interview.md) и приводит к утечкам. Подробнее в вопросе Q12.
 
-
-> [!mcq]
-> - [ ] Достаточно вызвать `suspend fun` напрямую — корутина запустится автоматически | Без билдера и scope `suspend fun` нельзя вызвать из обычного кода — компилятор требует `Continuation`. ❌ ПОСЛЕДСТВИЕ: команда пишет `fun main() { fetchUser() }` в скрипте, получает ошибку компиляции «suspend function should be called only from a coroutine» и не понимает почему.
-> - [ ] Использовать `GlobalScope.launch` — это и есть рекомендуемый production-подход | `GlobalScope` нарушает structured concurrency и приводит к утечкам корутин, переживающих компонент. ❌ ПОСЛЕДСТВИЕ: Android-приложение использует `GlobalScope.launch` для загрузки в `ViewModel`, после rotation корутина продолжает работу, обращается к мёртвому `LiveData` и крашит app.
-> - [x] Нужны `CoroutineScope` (или `runBlocking`/`coroutineScope`) и билдер (`launch`/`async`); production-выбор — `CoroutineScope` с `SupervisorJob` или встроенный (`viewModelScope`, `lifecycleScope`) | Билдеры (`launch` для fire-and-forget, `async` для результата) расширяют `CoroutineScope`; scope управляет жизненным циклом и обеспечивает structured concurrency. ✓ ПРИМЕНЯТЬ: Android `viewModelScope` отменяет корутины при `onCleared()`; в Spring сервисе создают `CoroutineScope(Dispatchers.IO + SupervisorJob())` с `@PreDestroy { scope.cancel() }`. 📋 ПРАВИЛО: «scope + builder; scope живёт по жизненному циклу владельца». 🔗 См. Q5, Q11, Q12.
-> - [ ] `runBlocking { }` — рекомендованный способ запуска корутин в Spring-контроллерах | `runBlocking` блокирует поток и допустим только в `main`/тестах, не в production-обработчиках. ❌ ПОСЛЕДСТВИЕ: команда оборачивает каждый `@GetMapping` в `runBlocking`, исчерпывает 200 потоков Tomcat при пике трафика и получает thread starvation на 5K RPS.
-
 ## Q5. (!) В чём разница между `launch` и `async`?
 
 | | `launch` | `async` |
@@ -283,13 +255,6 @@ suspend fun loadDashboard(): Dashboard = coroutineScope {
 
 Частая ошибка: использование `async` без `await()`. В этом случае исключение внутри `async` будет потеряно (точнее, всё равно отменит родительский scope, но stacktrace может быть неочевидным).
 
-
-> [!mcq]
-> - [ ] `launch` возвращает `Deferred<T>`, `async` возвращает `Job` | Перепутаны типы: `launch` → `Job`, `async` → `Deferred<T>` (наследник `Job`). ❌ ПОСЛЕДСТВИЕ: разработчик пишет `val job: Job = scope.async { fetchUser() }` и теряет доступ к `await()`, не получает результат.
-> - [ ] `launch` параллелит автоматически, `async` — последовательный билдер | Оба билдера параллельны; последовательность определяется тем, где вызывается `await()`/`join()`. ❌ ПОСЛЕДСТВИЕ: команда переписывает `async { a } ; async { b }` на `launch` ради «параллельности», теряет результат и получает `Unit` вместо данных.
-> - [x] `launch` возвращает `Job` (fire-and-forget, исключение немедленно отменяет scope); `async` возвращает `Deferred<T>` (исключение пробрасывается на `await()`) | `launch` для побочных эффектов, `async` для параллельных вычислений с результатом; `async` без `await()` всё равно отменит scope, но stacktrace будет неочевидным. ✓ ПРИМЕНЯТЬ: Spring WebFlux dashboard-loader вызывает `async { fetchProfile() }` + `async { fetchOrders() }` параллельно, затем `Pair(p.await(), o.await())` для агрегации. 📋 ПРАВИЛО: «launch — Job без результата; async — Deferred с await». 🔗 См. Q4, Q9, Q19.
-> - [ ] `async` гарантированно ловит исключения внутри блока, `launch` пробрасывает их сразу | Без `await()` исключение в `async` не ловится в самом блоке — оно сохраняется в `Deferred` и/или ломает scope. ❌ ПОСЛЕДСТВИЕ: команда полагается на «безопасный async», не пишет `await()`, exception утекает в `CoroutineExceptionHandler` родителя и валит соседние задачи.
-
 ## Q6. В чём разница между асинхронностью и параллелизмом?
 
 **Асинхронность** (concurrency) — способность обрабатывать несколько задач, переключаясь между ними. Задачи могут выполняться на одном потоке, чередуясь в точках приостановки.
@@ -313,13 +278,6 @@ suspend fun loadParallel() = coroutineScope {
 ```
 
 Корутины дают **асинхронность** из коробки. **Параллелизм** зависит от диспетчера: `Dispatchers.Default` использует пул потоков, равный числу ядер CPU.
-
-
-> [!mcq]
-> - [ ] Асинхронность = параллелизм, оба термина означают одновременное выполнение | Это разные вещи: асинхронность — про переключение между задачами, параллелизм — про физическую одновременность на ядрах. ❌ ПОСЛЕДСТВИЕ: команда ставит `Dispatchers.Main.limitedParallelism(1)` для async-кода, ожидает «как async» и не понимает почему задачи всё равно сериализуются.
-> - [x] Асинхронность (concurrency) — переключение между задачами в точках suspend (возможно на одном потоке); параллелизм — реальное одновременное выполнение на разных ядрах CPU | Корутины дают concurrency из коробки; параллелизм зависит от диспетчера (`Default` ~CPU cores, `IO` до 64 потоков); `Dispatchers.Main.limitedParallelism(1)` — concurrency без parallelism. ✓ ПРИМЕНЯТЬ: Node.js single-thread event loop = concurrency без parallelism; `Dispatchers.Default` для CPU-bound — concurrency + parallelism. 📋 ПРАВИЛО: «concurrency — про структуру, parallelism — про железо». 🔗 См. Q5, Q8, Q10.
-> - [ ] Параллелизм возможен только при наличии нескольких ядер CPU; асинхронность требует SSD | Асинхронность не зависит от типа диска — это про suspend/resume, а не про hardware. ❌ ПОСЛЕДСТВИЕ: тимлид требует «SSD для асинхронности» в проде, тратит бюджет вместо профилирования и не находит реальной причины latency.
-> - [ ] Корутины обеспечивают параллелизм автоматически даже на `Dispatchers.Main` | `Dispatchers.Main` — однопоточный, корутины на нём дают только concurrency, не parallelism. ❌ ПОСЛЕДСТВИЕ: Android-разработчик запускает CPU-heavy `async(Dispatchers.Main) { sortMillionItems() }` и вешает UI на 2 секунды, ANR-репорт в Play Console.
 
 ## Q7. (!) Что такое `CoroutineContext` и из чего он состоит?
 
@@ -354,13 +312,6 @@ scope.launch(Dispatchers.Default) {
 ```
 
 Формула наследования: `childContext = parentContext + childOverrides + Job()`. Дочерняя корутина всегда получает новый `Job`, который становится потомком родительского.
-
-
-> [!mcq]
-> - [ ] `CoroutineContext` — это `ThreadLocal`-обёртка для передачи данных между потоками | `CoroutineContext` — это immutable map по ключам типов, не `ThreadLocal`; для пробрасывания `ThreadLocal` нужен `asContextElement()`. ❌ ПОСЛЕДСТВИЕ: команда хранит `MDC` для логирования в `ThreadLocal`, после `withContext(Dispatchers.IO)` теряет `traceId` в логах и не может корректлировать запросы.
-> - [ ] Контекст содержит только `Job` и `Dispatcher`, остальные элементы устарели | Контекст также включает `CoroutineName`, `CoroutineExceptionHandler` и custom-элементы через `AbstractCoroutineContextElement`. ❌ ПОСЛЕДСТВИЕ: разработчик не использует `CoroutineExceptionHandler`, исключения в `launch` валятся в `Thread.UncaughtExceptionHandler` без структурированного логирования.
-> - [x] `CoroutineContext` — immutable ассоциативная коллекция по ключам типов; основные элементы — `Job`, `CoroutineDispatcher`, `CoroutineName`, `CoroutineExceptionHandler`; складываются оператором `+`, наследуются как `parent + child + Job()` | Каждая корутина получает новый `Job` (потомок родительского); диспетчер и имя наследуются и могут переопределяться через параметр билдера. ✓ ПРИМЕНЯТЬ: production-логгер использует `MDCContext()` из `kotlinx-coroutines-slf4j` для traceId-пропагации между `withContext`; `CoroutineName("order-loader")` помогает в дампах потоков. 📋 ПРАВИЛО: «контекст = map ключ-тип → значение; child = parent + override + new Job». 🔗 См. Q8, Q11, Q21.
-> - [ ] Контекст мутируется через `context.set(key, value)` внутри корутины | Контекст immutable; для смены нужно создать новый через `+` и передать в билдер или `withContext`. ❌ ПОСЛЕДСТВИЕ: junior пытается `coroutineContext[Job]?.cancel()` чтобы заменить Job, ловит `UnsupportedOperationException` и не понимает immutable-семантику.
 
 ## Q8. (!) Какие `Dispatchers` существуют и когда какой использовать?
 
@@ -398,13 +349,6 @@ suspend fun queryDb() = withContext(dbDispatcher) {
 }
 ```
 
-
-> [!mcq]
-> - [ ] Для блокирующих JDBC-запросов следует использовать `Dispatchers.Default` | `Default` имеет пул размером с CPU cores; блокировка JDBC-вызовом займёт все потоки и заблокирует CPU-задачи. ❌ ПОСЛЕДСТВИЕ: команда ставит `withContext(Dispatchers.Default) { jdbc.query(...) }` на 8-ядерном проде, при 50 одновременных запросах thread pool забит, latency p99 растёт с 100ms до 5s.
-> - [x] `Default` — CPU-bound (пул = ядрам); `IO` — блокирующий I/O (эластичный, до 64); `Main` — UI-поток (Android); `Unconfined` — без привязки (тесты); для изоляции делают `Dispatchers.IO.limitedParallelism(N)` | `Default` для парсинга/сортировки; `IO` для JDBC/файлов/сети; `Main` для UI-обновлений; `IO.limitedParallelism(N)` создаёт выделенный пул, разделяющий потоки с общим IO. ✓ ПРИМЕНЯТЬ: Spring сервис с HikariCP размер 20 настраивает `Dispatchers.IO.limitedParallelism(20)` чтобы не превысить пул; Android `viewModelScope.launch(Dispatchers.Default) { sort() }`. 📋 ПРАВИЛО: «Default — CPU, IO — блокирующий, Main — UI; limitedParallelism для изоляции». 🔗 См. Q7, Q9, Q14.
-> - [ ] `Dispatchers.IO` использует non-blocking NIO под капотом, поэтому подходит для CPU | `IO` — это пул потоков для блокирующих вызовов, не NIO; для CPU-heavy он будет забит долгими задачами. ❌ ПОСЛЕДСТВИЕ: команда выполняет ML-inference на `Dispatchers.IO` ожидая «эластичности», 64 потока заняты parsing'ом, реальные I/O-запросы стоят в очереди.
-> - [ ] `Dispatchers.Main` доступен в любом приложении и подходит для бэкенда | `Main` — это UI-диспетчер Android/Swing, на сервере его инициализация падает с `IllegalStateException: Module with the Main dispatcher is missing`. ❌ ПОСЛЕДСТВИЕ: разработчик копирует Android-сниппет `viewModelScope.launch(Dispatchers.Main)` в Spring-сервис, при старте получает падение с непонятной ошибкой про missing dispatcher.
-
 ## Q9. Что такое `withContext` и чем отличается от `async`?
 
 `withContext` — suspend-функция, переключающая контекст выполнения и **последовательно** ожидающая результат. `async` — запускает **параллельную** корутину и возвращает `Deferred`.
@@ -424,13 +368,6 @@ suspend fun loadAll() = coroutineScope {
 ```
 
 Правило: если вам нужен один результат и последовательное переключение контекста — используйте `withContext`. Если нужно запустить несколько задач параллельно — используйте `async` + `await`.
-
-
-> [!mcq]
-> - [ ] `withContext(Dispatchers.IO) { ... }` запускает параллельную задачу и возвращает `Deferred` | `withContext` НЕ запускает параллельную задачу — он переключает контекст и последовательно ждёт результат, возвращая его напрямую. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `val d = withContext(Dispatchers.IO) { fetch() }; d.await()`, ловит ошибку компиляции и не понимает что `withContext` уже вернул значение.
-> - [x] `withContext` — `suspend`-функция, переключающая контекст и последовательно ждущая результата (одна задача); `async` запускает параллельную корутину и возвращает `Deferred<T>` для `await()` | Использовать `withContext` для одиночного переключения диспетчера; `async` — для нескольких параллельных задач с агрегацией. ✓ ПРИМЕНЯТЬ: типичный Spring service-метод `suspend fun findUser() = withContext(Dispatchers.IO) { repo.find() }`; для дашборда — `coroutineScope { val a = async {...}; val b = async {...}; ... }`. 📋 ПРАВИЛО: «withContext — переключи и жди; async — запусти и потом await». 🔗 См. Q5, Q8, Q33.
-> - [ ] `withContext` и `async` — синонимы, выбор зависит от стиля команды | Это разные инструменты с разной семантикой: последовательная vs параллельная. ❌ ПОСЛЕДСТВИЕ: команда заменяет 5 параллельных `async` на 5 последовательных `withContext`, latency дашборда растёт с 200ms до 1000ms.
-> - [ ] `withContext` блокирует поток на время выполнения блока | `withContext` НЕ блокирует — это `suspend`-функция, которая приостанавливает корутину и освобождает поток. ❌ ПОСЛЕДСТВИЕ: тимлид запрещает `withContext(Dispatchers.IO)` ради «не блокировать поток», команда пишет всё на `Default` и ловит pool starvation на JDBC-запросах.
 
 ## Q10. (!) Что такое `structured concurrency`?
 
@@ -468,13 +405,6 @@ suspend fun fetchAllData() = coroutineScope {
 
 Без structured concurrency (например, при использовании `GlobalScope`) легко получить «зомби-корутины», которые продолжают работать после уничтожения компонента.
 
-
-> [!mcq]
-> - [ ] Structured concurrency — это паттерн для запуска корутин на одном выделенном потоке | Concurrency-модель структуры жизненного цикла, не одного потока; работает с любым диспетчером и пулом. ❌ ПОСЛЕДСТВИЕ: команда запускает все корутины на `newSingleThreadContext("worker")` ради «structured», теряет параллелизм CPU-задач на 8 ядрах.
-> - [ ] `GlobalScope.launch` соответствует principles structured concurrency | `GlobalScope` явно нарушает structured concurrency, потому что не привязан к жизненному циклу владельца. ❌ ПОСЛЕДСТВИЕ: фоновая `GlobalScope.launch { syncToServer() }` живёт после закрытия Activity, держит ссылку на ViewModel и течёт ~50MB на каждый rotation.
-> - [x] Принцип «корутина не утекает: запускается в scope, родитель ждёт детей, отмена идёт вниз, ошибки идут вверх» — гарантирует, что иерархия корутин завершится синхронно с владельцем | Без structured concurrency возникают «зомби-корутины»; с ней — `cancel()` scope каскадно отменяет всех детей, исключение в ребёнке отменяет родителя (или останавливается на `SupervisorJob`). ✓ ПРИМЕНЯТЬ: Android `viewModelScope` отменяет всех детей при `onCleared()`; Spring `@PreDestroy { scope.cancel() }` гарантирует отсутствие фоновых задач после shutdown. 📋 ПРАВИЛО: «scope владеет корутинами; cancel — каскадно вниз, exception — каскадно вверх». 🔗 См. Q11, Q12, Q19.
-> - [ ] Это запрет на использование `async` — только `launch` обеспечивает structured concurrency | `async` тоже structured когда вызывается внутри scope/`coroutineScope`; запрет — только на запуск без scope. ❌ ПОСЛЕДСТВИЕ: тимлид запрещает `async` командно, команда теряет параллельные `await` и пишет последовательные `withContext`, latency растёт в N раз.
-
 ## Q11. (!) Что такое `CoroutineScope` и зачем он нужен?
 
 `CoroutineScope` — интерфейс с единственным свойством `coroutineContext`. Он задаёт границу жизненного цикла корутин и обеспечивает structured concurrency.
@@ -506,13 +436,6 @@ class OrderService : AutoCloseable {
 
 В серверных приложениях scope обычно создаётся вручную и привязывается к жизненному циклу сервиса или запроса.
 
-
-> [!mcq]
-> - [ ] `CoroutineScope` — статический singleton, доступный из любого места приложения | `CoroutineScope` — обычный интерфейс, экземпляры создаются под конкретный жизненный цикл; глобальный singleton — это `GlobalScope` (anti-pattern). ❌ ПОСЛЕДСТВИЕ: команда делает `object AppScope : CoroutineScope by CoroutineScope(...)` как singleton, забывает `cancel()`, на shutdown остаются фоновые HTTP-вызовы.
-> - [x] `CoroutineScope` — интерфейс с одним свойством `coroutineContext`; задаёт границу жизненного цикла; в production создают с `SupervisorJob` + диспетчером и отменяют в `close()/onCleared()/@PreDestroy` | Готовые scopes: `viewModelScope` (Android), `lifecycleScope`, custom через `CoroutineScope(Dispatchers.Default + SupervisorJob() + CoroutineName("..."))`; для serverside — привязка к жизненному циклу сервиса/запроса. ✓ ПРИМЕНЯТЬ: Android `viewModelScope` встроен в Architecture Components; в Spring `@Service` с `@PreDestroy { scope.cancel() }` гарантирует чистое завершение. 📋 ПРАВИЛО: «scope = граница жизни; всегда cancel в финализаторе владельца». 🔗 См. Q10, Q12, Q15.
-> - [ ] Scope можно использовать без `Job` — это рекомендованный production-подход | Без `Job` в контексте scope не сможет отменять корутины; `CoroutineScope(Dispatchers.IO)` без Job всё равно создаёт `Job()` неявно, но без `SupervisorJob` ошибка одного ребёнка валит scope. ❌ ПОСЛЕДСТВИЕ: команда создаёт `CoroutineScope(Dispatchers.IO)` для batch-импортов, одна неудача парсера отменяет все остальные импорты.
-> - [ ] `CoroutineScope` блокирует текущий поток при создании, как `runBlocking` | Создание scope не блокирует — это просто конструкция объекта; блокировка происходит только в `runBlocking`. ❌ ПОСЛЕДСТВИЕ: разработчик боится «блокировки» в `init { val scope = CoroutineScope(...) }`, лезет в `Thread { ... }.start()` и получает thread-leak.
-
 ## Q12. В чём разница между `GlobalScope` и scope с жизненным циклом?
 
 `GlobalScope` — scope с жизненным циклом приложения. Корутины в нём **не отменяются автоматически** при уничтожении компонента.
@@ -541,13 +464,6 @@ class MyViewModel : ViewModel() {
 
 `GlobalScope` допустим только для операций, которые должны жить всё время работы приложения (фоновая синхронизация, метрики). В остальных случаях — scope с жизненным циклом.
 
-
-> [!mcq]
-> - [x] `GlobalScope` — scope с жизненным циклом приложения; не отменяется автоматически и нарушает structured concurrency, поэтому в production-коде используют scope с явным жизненным циклом (`viewModelScope`, custom `CoroutineScope` с `cancel()`) | `GlobalScope.launch` живёт пока живо приложение, переживает компонент-владелец, ведёт к утечкам и crash при доступе к destroyed-объектам. ✓ ПРИМЕНЯТЬ: Android Architecture Components отменяют `viewModelScope` при `onCleared()`; Spring сервис с `@PreDestroy { scope.cancel() }` обеспечивает graceful shutdown; `GlobalScope` допустим только для метрик/синхронизации, живущих всё время жизни приложения. 📋 ПРАВИЛО: «GlobalScope = утечка по умолчанию; scope с lifecycle = безопасность по умолчанию». 🔗 См. Q10, Q11, Q34.
-> - [ ] `GlobalScope.launch` отменяется автоматически при выходе из enclosing-функции | `GlobalScope` живёт всё время приложения и не зависит от стека вызовов. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает «автоматической отмены» при выходе из функции, не пишет `cancel()`, корутины висят в памяти и ловят `IllegalStateException` при доступе к закрытым ресурсам.
-> - [ ] `GlobalScope` и `CoroutineScope(Dispatchers.IO)` функционально идентичны | `CoroutineScope(...)` создаёт явный объект для управления, `GlobalScope` — статический singleton без жизненного цикла. ❌ ПОСЛЕДСТВИЕ: команда меняет `CoroutineScope(Dispatchers.IO)` на `GlobalScope` ради «сокращения кода», теряет возможность `cancel()` при graceful shutdown.
-> - [ ] Современный Kotlin удалил `GlobalScope`, поэтому различия больше неактуальны | `GlobalScope` существует, но помечен `@DelicateCoroutinesApi` и требует opt-in. ❌ ПОСЛЕДСТВИЕ: senior отвечает на собеседовании «удалили», теряет балл, junior использует `@OptIn(DelicateCoroutinesApi::class) GlobalScope` без понимания почему API «delicate».
-
 ## Q13. Что такое `coroutineScope` (функция) и чем отличается от `CoroutineScope` (конструктор)?
 
 - `CoroutineScope(context)` — **конструктор**, создающий новый scope для запуска корутин. Не является suspend-функцией.
@@ -568,13 +484,6 @@ myScope.launch { /* живёт независимо от вызывающего 
 ```
 
 `coroutineScope` используют для параллельной декомпозиции внутри suspend-функций. `CoroutineScope` — для создания scope с явным управлением жизненным циклом.
-
-
-> [!mcq]
-> - [ ] `coroutineScope { }` и `CoroutineScope(...)` — два названия одной функции | Это разные сущности: одна — `suspend`-функция (нижний регистр), другая — конструктор интерфейса (верхний регистр). ❌ ПОСЛЕДСТВИЕ: junior пишет `val scope = coroutineScope { ... }` ожидая объект, ловит ошибку компиляции и не понимает разницу.
-> - [x] `coroutineScope { }` — `suspend`-функция, создающая вложенный scope, ждёт завершения всех детей перед возвратом; `CoroutineScope(context)` — конструктор для независимого scope с явным жизненным циклом | `coroutineScope` для параллельной декомпозиции внутри suspend-функций; `CoroutineScope(...)` — для сервисов/компонентов, где нужен явный `cancel()`. ✓ ПРИМЕНЯТЬ: Spring `suspend fun loadDashboard() = coroutineScope { val a = async{...}; ... }` — параллельная агрегация без утечек; `class OrderService : AutoCloseable { val scope = CoroutineScope(...) }` для долгоживущего сервиса. 📋 ПРАВИЛО: «coroutineScope — параллелизм внутри suspend; CoroutineScope — сервис с lifecycle». 🔗 См. Q11, Q12, Q19.
-> - [ ] `coroutineScope` запускается на отдельном потоке, `CoroutineScope` — на текущем | Оба используют диспетчер из контекста; различие — в семантике (suspend vs constructor), не в потоке. ❌ ПОСЛЕДСТВИЕ: разработчик ставит `coroutineScope { heavyWork() }` ожидая «отдельный поток», CPU-задача выполняется на `Main` и блокирует UI.
-> - [ ] `CoroutineScope` устарел, нужно использовать только `coroutineScope` | Оба активны и не взаимозаменяемы; `CoroutineScope` — единственный способ создать долгоживущий scope. ❌ ПОСЛЕДСТВИЕ: тимлид требует везде писать `coroutineScope { }`, команда теряет возможность отменять корутины из метода `close()` сервиса.
 
 ## Q14. Что такое `runBlocking` и когда его использовать?
 
@@ -601,13 +510,6 @@ scope.launch {
 ```
 
 В production-серверном коде `runBlocking` использовать не следует — он блокирует поток и может привести к `deadlock`. Используйте `suspend`-функции и `coroutineScope` вместо этого.
-
-
-> [!mcq]
-> - [ ] `runBlocking` — рекомендованный production-инструмент для каждого Spring-контроллера | `runBlocking` блокирует поток до завершения и ломает асинхронную модель; в Spring используют `suspend`-контроллеры WebFlux. ❌ ПОСЛЕДСТВИЕ: команда оборачивает каждый `@GetMapping` в `runBlocking`, при пике 10K RPS Tomcat threads заняты, latency p99 5s, throughput падает.
-> - [ ] `runBlocking` неблокирующий — он использует suspend и работает как `coroutineScope` | `runBlocking` явно блокирует текущий поток до завершения; имя отражает поведение. ❌ ПОСЛЕДСТВИЕ: разработчик ставит `runBlocking { delay(60_000) }` на `Dispatchers.Main` Android, UI замораживается на минуту, ANR в Play Console.
-> - [x] `runBlocking` — блокирующий билдер: блокирует текущий поток до завершения всех детей; допустим в `main`, тестах, Java-interop bridges; запрещён внутри корутин или на UI-потоках (deadlock) | Это мост из обычного кода в корутины; в production-серверном коде заменяется `suspend`-функциями и `coroutineScope`. ✓ ПРИМЕНЯТЬ: `fun main() = runBlocking { ... }` для CLI-утилит; `@Test fun `...` () = runBlocking { ... }` для legacy-тестов (или `runTest` из coroutines-test). 📋 ПРАВИЛО: «runBlocking — мост из sync в coroutine; только на границах, не в проде». 🔗 См. Q4, Q13, Q35.
-> - [ ] Вложенный `runBlocking` внутри корутины безопасен — компилятор оптимизирует | Вложенный `runBlocking` на ограниченном диспетчере (`Main`, `Default`) приводит к deadlock; компилятор не оптимизирует. ❌ ПОСЛЕДСТВИЕ: команда вкладывает `runBlocking` в `launch { runBlocking { ... } }`, на `Dispatchers.Default` (8 потоков) при 10 одновременных вызовах все потоки ждут друг друга, вечный deadlock.
 
 ## Q15. (!) Что такое `Job` и каков его жизненный цикл?
 
@@ -644,13 +546,6 @@ println(job.isCompleted)   // true (Cancelled — финальное состо�
 ```
 
 Разница между `Job` и `CoroutineScope`: `Job` управляет состоянием одной корутины (или иерархии), а `CoroutineScope` — контейнер контекста для запуска корутин. Scope содержит `Job` как элемент контекста.
-
-
-> [!mcq]
-> - [ ] `Job.cancel()` мгновенно завершает корутину с `InterruptedException` | Отмена кооперативна: `cancel()` устанавливает флаг, корутина проверяет его в suspend-точках и бросает `CancellationException`; `InterruptedException` тут ни при чём. ❌ ПОСЛЕДСТВИЕ: команда ловит `InterruptedException` после `job.cancel()`, никогда не срабатывает, ресурсы не освобождаются.
-> - [ ] `Job` имеет два состояния: `Active` и `Completed`, без промежуточных | `Job` имеет состояния New/Active/Completing/Cancelling/Cancelled/Completed; промежуточные нужны для каскадной отмены детей. ❌ ПОСЛЕДСТВИЕ: разработчик ждёт `job.isCompleted == true` после `cancel()`, не учитывает `Cancelling` фазу, в которой `isActive == false && isCompleted == false`, и пишет race condition в shutdown-логике.
-> - [x] `Job` — элемент `CoroutineContext`, представляющий управляемую единицу работы; жизненный цикл: New → Active → Completing → Completed (или Cancelling → Cancelled) | `cancel()` переводит в Cancelling, ждёт завершения детей, затем переходит в Cancelled — финальное состояние, при этом `isCompleted == true && isCancelled == true`. ✓ ПРИМЕНЯТЬ: Spring сервис `scope.coroutineContext[Job]?.cancelChildren()` отменяет все активные операции при shutdown, `job.invokeOnCompletion { ... }` — для callback'ов на завершение. 📋 ПРАВИЛО: «Job — управляемая работа: New→Active→Completing→Completed | Cancelling→Cancelled». 🔗 См. Q11, Q16, Q22.
-> - [ ] `Job` создаётся только через `Job()` фабрику; `launch` не создаёт `Job` | Каждый `launch`/`async` возвращает `Job`/`Deferred` (наследник Job); `Job()` — для root-job в кастомных scopes. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `Job().also { scope.launch(it) { ... } }` вручную для каждого launch, теряет parent-child связь и ломает structured concurrency.
 
 ## Q16. Как отменить корутину и почему отмена кооперативна?
 
@@ -693,13 +588,6 @@ val job = scope.launch(Dispatchers.Default) {
 
 Все стандартные suspend-функции (`delay`, `yield`, `withContext`, операции I/O) проверяют отмену.
 
-
-> [!mcq]
-> - [ ] Отмена прерывает корутину преимптивно — как `Thread.interrupt()` | Отмена кооперативна: устанавливает флаг, корутина должна сама проверить (через `isActive`/`yield`/`ensureActive`/любую suspend-функцию из stdlib). ❌ ПОСЛЕДСТВИЕ: команда запускает CPU-цикл `while (i < 1_000_000) i++` без `isActive`, `cancel()` ничего не делает, корутина «бессмертна» и держит память.
-> - [ ] `cancel()` работает только если корутина запущена через `async`, не `launch` | `cancel()` работает на любом `Job`, включая `launch` и `async`. ❌ ПОСЛЕДСТВИЕ: разработчик переписывает все корутины на `async` ради «возможности cancel», теряет fire-and-forget семантику и получает забытые `Deferred` без `await`.
-> - [x] `cancel()` устанавливает флаг отмены; корутина должна проверять его в suspend-точках (`delay`, `yield`, `withContext`, I/O) или явно через `isActive`/`ensureActive`; CPU-циклы без проверок не отменяются | Все стандартные suspend-функции уже бросают `CancellationException` при отмене; для tight-loop CPU-кода нужно вручную `while (isActive)` или `ensureActive()`. ✓ ПРИМЕНЯТЬ: батч-обработчик в Spring `forEach { item -> ensureActive(); process(item) }` гарантирует graceful cancel при `@PreDestroy`; Android image processing в `viewModelScope` использует `yield()` для отмены при rotation. 📋 ПРАВИЛО: «отмена = флаг + проверка в suspend; CPU-циклы зовут ensureActive вручную». 🔗 См. Q15, Q17, Q22.
-> - [ ] Если корутина «зависла» в `Thread.sleep()`, `cancel()` её разбудит | `Thread.sleep` блокирует поток, не приостанавливает корутину; cancel установит флаг, но корутина проверит его только после sleep. ❌ ПОСЛЕДСТВИЕ: команда пишет `delay(5000)` → `Thread.sleep(5000)` «для тестов», в production graceful shutdown ждёт 5 секунд каждой корутины перед k8s killing.
-
 ## Q17. Что такое `yield` и `ensureActive`?
 
 Обе функции обеспечивают кооперативную проверку отмены:
@@ -728,13 +616,6 @@ scope.launch {
 }
 ```
 
-
-> [!mcq]
-> - [ ] `yield()` и `ensureActive()` идентичны и взаимозаменяемы | Они различаются: `yield()` приостанавливает (отдаёт поток другим корутинам) + проверяет отмену; `ensureActive()` только бросает `CancellationException` при отмене, не приостанавливает. ❌ ПОСЛЕДСТВИЕ: команда ставит `yield()` в hot loop ради «только проверки cancel», получает context switching overhead и снижение throughput на 30%.
-> - [x] `yield()` — `suspend`-функция: приостанавливает, отдаёт поток другим, проверяет отмену; `ensureActive()` — обычная функция: только проверяет `isActive` и бросает `CancellationException`, не приостанавливает | `yield()` для cooperation в тяжёлых циклах; `ensureActive()` — лёгкая проверка отмены без overhead приостановки. ✓ ПРИМЕНЯТЬ: PDF-парсер бэкенда вызывает `ensureActive()` каждые 100 страниц для быстрой реакции на cancel; image-processor зовёт `yield()` между фильтрами, чтобы дать другим корутинам шанс. 📋 ПРАВИЛО: «yield — пауза + check; ensureActive — только check». 🔗 См. Q16, Q18, Q22.
-> - [ ] `yield()` блокирует поток, `ensureActive()` неблокирующий | `yield()` приостанавливает (suspend), не блокирует; оба не блокируют поток. ❌ ПОСЛЕДСТВИЕ: тимлид запрещает `yield()` ради «не блокировать», команда теряет cooperation и одна тяжёлая корутина монополизирует поток `Default`.
-> - [ ] `ensureActive()` доступен только внутри `withContext` блоков | `ensureActive()` — extension на `CoroutineContext`/`Job`; работает в любой корутине с доступом к `coroutineContext`. ❌ ПОСЛЕДСТВИЕ: разработчик оборачивает каждую проверку в `withContext(coroutineContext) { ensureActive() }`, добавляет ненужный overhead.
-
 ## Q18. Как обеспечить отмену при таймауте?
 
 `withTimeout` и `withTimeoutOrNull` ограничивают время выполнения блока:
@@ -756,13 +637,6 @@ val result = withTimeoutOrNull(3000) {
 ```
 
 Таймаут работает кооперативно: если внутри блока нет точек приостановки, отмена сработает только при следующей проверке. Для гарантии добавляйте `ensureActive()` или `yield()` в тяжёлых вычислениях.
-
-
-> [!mcq]
-> - [ ] Использовать `Thread { sleep(timeout); job.cancel() }.start()` для таймаута | Это создаёт лишний поток и не интегрирован с structured concurrency; коробочное решение — `withTimeout`. ❌ ПОСЛЕДСТВИЕ: команда стартует Thread на каждый запрос, при 1000 RPS получает 1000 лишних потоков OS, OOM `unable to create native thread`.
-> - [ ] `withTimeout` блокирует поток на указанное время | `withTimeout` — `suspend`-функция с виртуальным таймером; не блокирует поток. ❌ ПОСЛЕДСТВИЕ: разработчик боится `withTimeout(60_000)` ради «не блокировать минуту», вообще убирает таймауты, hung HTTP-запросы держат соединения 5 минут до TCP timeout.
-> - [x] `withTimeout(ms) { ... }` бросает `TimeoutCancellationException`, `withTimeoutOrNull(ms) { ... }` возвращает `null`; работает кооперативно — внутри блока должны быть suspend-точки или `ensureActive()` | Таймаут срабатывает только в точках приостановки; для CPU-циклов нужно вставлять `yield()`/`ensureActive()`. ✓ ПРИМЕНЯТЬ: микросервис на Ktor `withTimeout(3000) { httpClient.get(url) }` гарантирует SLA при медленном downstream; Resilience4j-style паттерн через `withTimeoutOrNull(...) ?: fallback`. 📋 ПРАВИЛО: «withTimeout — таймер на блок; withTimeoutOrNull — fallback null». 🔗 См. Q16, Q17, Q22.
-> - [ ] `withTimeout` отменяет родительский scope при истечении времени | `withTimeout` бросает `TimeoutCancellationException` (наследник `CancellationException`), отменяет только свой блок, не родителя. ❌ ПОСЛЕДСТВИЕ: разработчик ловит `try { withTimeout(...) }` ожидая что родитель тоже умер, при retry-логике бесконечный цикл, потому что родитель жив.
 
 ## Q19. (!) Как распространяются исключения в корутинах?
 
@@ -797,13 +671,6 @@ scope.launch {
 ```
 
 Подробнее об обработке исключений — в [вопросах по исключениям Kotlin](kotlin-exceptions-interview.md).
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q20. (!) Что такое `SupervisorJob` и `supervisorScope`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 `SupervisorJob` — разновидность `Job`, при которой **сбой одного ребёнка не отменяет остальных**. Ошибка распространяется вверх, но не «в стороны».
 
@@ -845,13 +712,6 @@ suspend fun loadDashboard() = supervisorScope {
 
 Частая ошибка: передача `SupervisorJob()` в `launch`. Это **не работает**, потому что создаётся новый `Job` — потомок `SupervisorJob`, а корутина получает обычный `Job`. Правильно — использовать `supervisorScope` или создавать `CoroutineScope(SupervisorJob())`.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q21. (!) Что такое `CoroutineExceptionHandler` и где его устанавливать? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 `CoroutineExceptionHandler` — элемент `CoroutineContext`, обрабатывающий **необработанные** исключения.
 
 ```kotlin
@@ -871,13 +731,6 @@ scope.launch {
 - Устанавливается на **корневой** корутине или на scope. На дочерней корутине — бесполезен
 - **Не перехватывает** `CancellationException` — отмена не считается ошибкой
 - С обычным `Job` — handler вызывается после того, как всё уже отменено. С `SupervisorJob` — до отмены других детей (потому что отмены и не будет)
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q22. Чем `CancellationException` отличается от обычных исключений? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 `CancellationException` — специальное исключение, означающее **нормальную отмену**, а не ошибку:
 
@@ -921,13 +774,6 @@ try {
 }
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q23. (!) Что такое `Flow` и чем он отличается от `Sequence`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 `Flow` — асинхронный холодный поток данных, аналог `Sequence`, но с поддержкой suspend-операций.
 
 | | `Sequence` | `Flow` |
@@ -966,13 +812,6 @@ scope.launch {
 
 `Flow` начинает выполнение только при вызове терминального оператора (`collect`, `toList`, `first` и др.) — это **холодный** поток.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q24. (!) Что такое cold и hot потоки? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **Cold поток** (`Flow`) — выполнение начинается только при подписке. Каждый коллектор получает свой экземпляр данных.
 
 **Hot поток** (`StateFlow`, `SharedFlow`, `Channel`) — данные эмитируются независимо от подписчиков.
@@ -1009,13 +848,6 @@ graph LR
         HP --> SC3[Subscriber 3]
     end
 ```
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q25. (!) В чём разница между `StateFlow` и `SharedFlow`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 | | `StateFlow` | `SharedFlow` |
 |---|---|---|
@@ -1056,13 +888,6 @@ class EventBus {
 ```
 
 Правило: `StateFlow` для **состояния** (всегда есть текущее значение, новый подписчик получает его сразу). `SharedFlow` для **событий** (навигация, уведомления, ошибки — не нужно повторять при переподписке).
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q26. Какие операторы `Flow` существуют и как они работают? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 Операторы `Flow` делятся на три категории:
 
@@ -1108,13 +933,6 @@ searchQuery
 // flatMapMerge — параллельно (concurrency параметр)
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q27. Как обрабатывать ошибки в `Flow`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 ```kotlin
 // catch — перехватывает исключения из upstream
 flow {
@@ -1148,13 +966,6 @@ flow { emit(fetchFromNetwork()) }
 ```
 
 Важно: `catch` перехватывает только **upstream** исключения (из операторов выше по цепочке). Исключения в `collect` нужно оборачивать в `try-catch`.
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q28. Как управлять backpressure в `Flow`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 Backpressure возникает, когда producer эмитирует быстрее, чем consumer обрабатывает. `Flow` решает это через suspend — `emit()` приостанавливается, пока collector не готов. Для тонкой настройки:
 
@@ -1191,13 +1002,6 @@ graph LR
     end
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q29. Как преобразовать cold `Flow` в hot (`shareIn`, `stateIn`)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 `shareIn` и `stateIn` превращают cold `Flow` в горячий, разделяя одну подписку между несколькими collectors:
 
 ```kotlin
@@ -1229,13 +1033,6 @@ class UserRepository(
 - `Eagerly` — запускается сразу
 - `Lazily` — при первом подписчике, никогда не останавливается
 - `WhileSubscribed(stopTimeout, replayExpiration)` — останавливается, когда нет подписчиков
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q30. (!) Что такое `Channel` и чем он отличается от `Flow`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 `Channel` — горячий примитив для передачи данных **между корутинами** по принципу «производитель-потребитель». Каждый элемент доставляется **одному** получателю.
 
@@ -1280,13 +1077,6 @@ repeat(3) { consumerId ->
 
 Правило: `Channel` — для коммуникации между корутинами (очередь задач, fan-out). `Flow` — для потока данных от источника к потребителю с операторами трансформации. Подробнее об аналогах в реактивном программировании — в [вопросах по RxJava](../../reactive/rxjava-interview.md).
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q31. Какие типы `Channel` существуют? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 | Тип | Capacity | Поведение `send` при полном буфере |
 |---|---|---|
 | `RENDEZVOUS` (0) | 0 | Приостанавливается, пока receiver не вызовет `receive` |
@@ -1311,13 +1101,6 @@ val channel = Channel<Int>(
     onBufferOverflow = BufferOverflow.DROP_OLDEST
 )
 ```
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q32. Что такое `produce` и `actor`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 `produce` — билдер корутины, создающий `ReceiveChannel` (producer-паттерн):
 
@@ -1359,13 +1142,6 @@ fun CoroutineScope.counterActor() = launch {
 }
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q33. Как вызывать suspend-функции из обычного кода? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 Из не-suspend кода suspend-функцию можно вызвать только через создание корутины:
 
 ```kotlin
@@ -1403,13 +1179,6 @@ fun fetchDataFuture(): CompletableFuture<Data> =
 ```
 
 Подробнее о взаимодействии с Java-кодом — в [вопросах по Kotlin-Java Interop](kotlin-interop-java-interview.md).
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q34. (!) Распространённые ошибки при работе с корутинами ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 **1. Использование `GlobalScope` вместо structured concurrency:**
 ```kotlin
@@ -1467,13 +1236,6 @@ lifecycleScope.launch {
     }
 }
 ```
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q35. Как тестировать корутины (`runTest`, `TestScope`)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 Библиотека `kotlinx-coroutines-test` предоставляет инструменты для тестирования с виртуальным временем:
 
@@ -1536,13 +1298,6 @@ fun `test periodic task`() = runTest {
 
 Рекомендация: всегда инжектируйте `CoroutineDispatcher` через конструктор, а в тестах подменяйте на `UnconfinedTestDispatcher` или `StandardTestDispatcher`.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q36. Как интегрировать корутины со `Spring`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 `Spring WebFlux` (начиная с Spring 5.2) нативно поддерживает `suspend`-функции и `Flow`:
 
 ```kotlin
@@ -1586,13 +1341,6 @@ implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
 
 Для блокирующего стека (`spring-boot-starter-web`) корутины можно запускать вручную через `CoroutineScope` в сервисе, но без нативной поддержки suspend-контроллеров.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q37. Чем `Flow` отличается от `RxJava`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 | | `Flow` | `RxJava` |
 |---|---|---|
 | Зависимость | Часть `kotlinx.coroutines` | Отдельная библиотека |
@@ -1622,13 +1370,6 @@ flow { emit(fetchData()) }
 ```
 
 `Flow` рекомендуется для новых Kotlin-проектов. `RxJava` по-прежнему актуален в крупных проектах с Java-кодом или богатой операторной базой. Подробнее — в [вопросах по RxJava](../../reactive/rxjava-interview.md).
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q38. Как работает `Mutex` в корутинах и когда использовать вместо `synchronized`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 `Mutex` — инструмент взаимного исключения для корутин. В отличие от `synchronized` и `ReentrantLock`, `Mutex` **не блокирует поток** — корутина приостанавливается при ожидании блокировки.
 
@@ -1681,13 +1422,6 @@ suspend fun safeFun() {
 | Применение | Java-legacy, non-coroutine код | Корутины |
 
 Для счётчиков без сложной логики предпочтительнее `AtomicInteger` или `AtomicLong` — они не требуют блокировки вовсе.
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q39. Как комбинировать несколько `Flow` — `combine`, `zip`, `merge`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 Три основных оператора для объединения потоков с разной семантикой:
 
@@ -1755,12 +1489,6 @@ ids.flatMapMerge { id ->
 - [RxJava](../../reactive/rxjava-interview.md) — реактивные потоки, сравнение с `Flow`
 - [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — интеграция корутин со Spring WebFlux
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Kotlin коллекции](kotlin-collections-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 - [DSL в Kotlin](kotlin-dsl-interview.md)
 - [исключения в Kotlin](kotlin-exceptions-interview.md)
 - [интероп Kotlin и Java](kotlin-interop-java-interview.md)

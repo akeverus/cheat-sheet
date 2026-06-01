@@ -159,12 +159,6 @@ redis-cli INFO server | head -5
 # os:Linux 5.15.0-91-generic x86_64
 ```
 
-> [!mcq]
-> - [ ] Redis — это реляционная база данных с поддержкой SQL-запросов и хранением данных на диске | Redis не поддерживает SQL и хранит данные прежде всего в оперативной памяти, что отличает его от реляционных СУБД. ❌ ПОСЛЕДСТВИЕ: разработчик пытается использовать Redis как primary database с complex JOIN queries — нет SQL, complex aggregations невозможны. Архитектурный mismatch, надо использовать PostgreSQL для relational + Redis для cache.
-> - [x] Redis — это высокопроизводительное in-memory хранилище типа key-value, обеспечивающее латентность менее 1 мс | Именно так: данные хранятся в RAM, операции занимают sub-millisecond время, что делает Redis незаменимым для кэширования и сессий. ✓ ПРИМЕНЯТЬ: distributed cache (Spring `@Cacheable` с Redis backend); session store (Spring Session Redis); rate limiter (INCR + EXPIRE); pub/sub messaging; leaderboards через Sorted Set; Twitter, Instagram, GitHub используют Redis для real-time features. 📋 ПРАВИЛО: «Redis = in-memory key-value, sub-1ms latency, RAM-based». 🔗 См. Q2 (data types), Q4 (use cases).
-> - [ ] Redis — это документоориентированная NoSQL база данных, аналогичная MongoDB | MongoDB хранит документы в BSON-формате на диске; Redis хранит структуры данных в памяти и не является документоориентированным. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает rich query API (find by complex JSON path) — Redis имеет только GET по key. Tries RedisJSON module — добавляет complexity vs использовать MongoDB напрямую.
-> - [ ] Redis — это колоночная база данных, оптимизированная для аналитических запросов типа OLAP | Колоночные БД (ClickHouse, Cassandra) оптимизированы для агрегаций по столбцам; Redis — key-value хранилище в памяти. ❌ ПОСЛЕДСТВИЕ: команда выбирает Redis для analytics workload (10TB data, complex queries), не помещается в RAM. Должны были использовать ClickHouse / BigQuery.
-
 ## Q2. (!) Какие типы данных поддерживает `Redis`?
 
 `Redis` поддерживает 10+ типов данных. Основные:
@@ -212,18 +206,6 @@ redis-cli ZREVRANGE leaderboard 0 -1 WITHSCORES
 # 1) "player2" 2) "200" 3) "player3" 4) "150" 5) "player1" 6) "100"
 ```
 
-> [!mcq]
-> - [ ] Redis поддерживает только String, List и Hash — остальные типы являются расширениями через модули | String, List, Hash входят в базовый набор, но Sorted Set, Set, Stream, Bitmap, HyperLogLog, Geo — тоже нативные типы ядра Redis. ❌ ПОСЛЕДСТВИЕ: разработчик ставит лишние Redis modules (RedisGears, RedisJSON), увеличивает image size, complicates deployment. Реально достаточно core types.
-> - [ ] Redis поддерживает только String, так как все данные хранятся как строки в бинарном виде | Хотя внутри все значения бинарны, Redis предоставляет 10+ типов данных с разной семантикой и набором команд. ❌ ПОСЛЕДСТВИЕ: команда хранит JSON в String и парсит на client side для каждого update. Должны были использовать Hash для partial updates через HSET — 10x более эффективно.
-> - [ ] Redis поддерживает только пять типов: String, List, Hash, Set, Sorted Set — остальное недоступно без модулей | Stream появился в Redis 5.0 как нативный тип ядра, Bitmap и HyperLogLog тоже встроены без каких-либо модулей. ❌ ПОСЛЕДСТВИЕ: команда не использует HyperLogLog для cardinality estimation, хранит каждый user в Set — memory expensive 100x. Реально HLL занимает 12KB для миллиардов uniques.
-> - [x] Redis поддерживает 10+ нативных типов данных, включая String, List, Hash, Set, Sorted Set, Stream, Bitmap, HyperLogLog, Geo | Все перечисленные типы являются частью ядра Redis и не требуют дополнительных модулей — каждый оптимизирован под свой сценарий. ✓ ПРИМЕНЯТЬ: leaderboards — Sorted Set; user profile — Hash; rate limiter counters — String INCR; recent items — List LPUSH/RTRIM; unique visitors — HyperLogLog (12KB constant size); ride-sharing nearest drivers — GEOADD/GEORADIUS. 📋 ПРАВИЛО: «выбирать тип под use case, не использовать только String». 🔗 См. Q1 (Redis overview), Q3 (single-threaded), Q4 (use cases).
-
-> [!mcq]
-> - [x] Sorted Set — это множество уникальных элементов, каждый из которых имеет числовой score, и элементы автоматически отсортированы по этому score | Именно так работает Sorted Set: уникальность элементов обеспечивается хеш-таблицей, порядок — skip list, доступ по диапазону score — O(log N). ✓ ПРИМЕНЯТЬ: leaderboards (game ranking by points), priority queues (delayed jobs by execution timestamp), rate limiting (sliding window counters), trending topics (engagement score). Twitter trending uses Sorted Set; Redis Streams для time-series. 📋 ПРАВИЛО: «Sorted Set = ranked, score-based ordering, O(log N)». 🔗 См. Q2 (data types), Q4 (use cases).
-> - [ ] Sorted Set — это упорядоченный список с дубликатами, аналогичный List, но с автоматической сортировкой по алфавиту | List — упорядоченный список с дубликатами, но не sorted. Sorted Set не допускает дубликатов и сортирует по числовому score. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает duplicate elements в leaderboard. ZADD с тем же elementId перезаписывает score — топ дубликаты не работают как ожидается.
-> - [ ] Sorted Set — это Hash, в котором ключи отсортированы в алфавитном порядке при обходе | Hash хранит поля-значения без какой-либо сортировки; Sorted Set — отдельный тип с числовыми score. ❌ ПОСЛЕДСТВИЕ: разработчик пытается использовать HSCAN для sorted access — Hash не sortable. Tries to sort на client side — O(N log N) на каждый запрос. ZRANGE правильнее.
-> - [ ] Sorted Set — это Set с дополнительным индексом на вставку, позволяющим извлекать элементы в порядке добавления | Порядок в Sorted Set определяется числовым score, а не временем вставки. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает FIFO order, использует insertion timestamp как score, но забывает обновить — elements выходят в произвольном порядке.
-
 ## Q3. Как `Redis` обрабатывает команды (однопоточность)?
 
 `Redis` использует **однопоточную** модель обработки команд — все команды выполняются последовательно в одном потоке event loop. Это даёт:
@@ -253,12 +235,6 @@ io-threads-do-reads yes
 ```
 
 **На интервью важно:** `Redis` не гарантирует атомарность *нескольких* команд — только каждой по отдельности. Для атомарности группы команд нужны транзакции (`MULTI/EXEC`) или Lua-скрипты.
-
-> [!mcq]
-> - [ ] Redis полностью многопоточен начиная с версии 6.0 — обработка команд выполняется параллельно в нескольких потоках | В Redis 6.0 добавился multi-threaded I/O для сетевых операций, но обработка команд по-прежнему однопоточная. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает linear scaling с количеством CPU cores в Redis. Реально 1 core — bottleneck для command processing. Tries to scale Redis vertically (16-core servers), не помогает — нужно sharding (Redis Cluster).
-> - [ ] Redis использует один поток для всего, включая сетевые операции, даже в современных версиях | С Redis 6.0 сетевые операции (чтение/запись сокетов) выполняются в нескольких I/O потоках; обработка команд остаётся однопоточной. ❌ ПОСЛЕДСТВИЕ: команда не включает `io-threads 4` в конфиге Redis 6+, упускает 30-50% throughput improvement. Network bottleneck остаётся.
-> - [x] Redis обрабатывает команды в одном потоке event loop, а с версии 6.0 сетевые операции вынесены в дополнительные I/O потоки | Это точная модель: один поток обеспечивает атомарность команд без блокировок, I/O потоки — масштабируемость сетевого слоя. ✓ ПРИМЕНЯТЬ: для Redis 6+ — `io-threads 4` в config (4-8 для production); понимание модели важно при оптимизации — нет смысла в connection pool size > number_of_io_threads * 4; команды атомарны без synchronization. 📋 ПРАВИЛО: «Redis = single-threaded commands + multi-threaded I/O (6+)». 🔗 См. Q1 (overview), Q4 (keys), Q14 (transactions).
-> - [ ] Redis использует пул потоков для параллельного выполнения независимых команд от разных клиентов | Пул потоков для выполнения команд не используется никогда — это могло бы привести к race conditions без механизмов блокировки. ❌ ПОСЛЕДСТВИЕ: разработчик ищет thread pool tuning options, не находит. Tries pipeline batching и misunderstanding architecture.
 
 ## Q4. (!) Что такое Key в `Redis` и какие конвенции именования?
 
@@ -305,12 +281,6 @@ EXISTS user:1001:profile
 ```
 
 **На интервью:** никогда не используйте `KEYS *` в продакшене — команда блокирующая и сканирует все ключи. Используйте `SCAN` с курсором.
-
-> [!mcq]
-> - [ ] Команда KEYS user:* является безопасным способом поиска ключей по паттерну в любом окружении | KEYS — блокирующая команда, сканирующая все ключи; в продакшене она заморозит Redis на время сканирования. ❌ ПОСЛЕДСТВИЕ: junior dev запускает `KEYS *` на production Redis с 50M ключей — Redis замораживается на 30 секунд. Все clients получают timeouts, downstream cascade failure. Twitch 2018 incident от unintentional `KEYS *` в admin tool.
-> - [ ] Максимальный размер ключа в Redis не ограничен, так как ключ — просто бинарная строка | Ключ ограничен 512 MB, но рекомендуются короткие осмысленные ключи; очень длинные ключи увеличивают потребление памяти и снижают производительность. ❌ ПОСЛЕДСТВИЕ: разработчик использует Base64-encoded JSON как ключ (5KB на key) для 100M записей = 500GB только на keys. Memory cost растёт, hashing slow. Должны быть короткие IDs.
-> - [ ] Рекомендуемая конвенция именования ключей использует точку как разделитель: user.1001.name | Точка не запрещена, но стандартная конвенция Redis использует двоеточие: user:1001:name. ❌ ПОСЛЕДСТВИЕ: команда смешивает `user.1001` и `user:1001` в codebase, инструменты типа RedisInsight группируют namespace incorrectly. Поиск по namespace breaks.
-> - [x] Для безопасного поиска ключей по паттерну в продакшене используется команда SCAN с курсором, а не KEYS | SCAN итерируется по ключам частями, не блокирует сервер и является правильным способом обхода keyspace. ✓ ПРИМЕНЯТЬ: `SCAN 0 MATCH user:* COUNT 1000` для batch processing; Spring Data Redis `template.scan(ScanOptions.scanOptions().match("user:*").count(1000).build())`; HSCAN/SSCAN/ZSCAN для сканирования внутри Hash/Set/Sorted Set. 📋 ПРАВИЛО: «production: SCAN, never KEYS». 🔗 См. Q1 (overview), Q5 (TTL).
 
 ## Q5. (!) Как работает механизм `TTL`?
 
@@ -359,18 +329,6 @@ public void cacheProduct(Long productId, String json) {
 }
 ```
 
-> [!mcq]
-> - [ ] Команда EXPIRE устанавливает TTL в миллисекундах, а PEXPIRE — в секундах | Противоположно! EXPIRE принимает секунды, PEXPIRE — миллисекунды (префикс P = precise/milliseconds). ❌ ПОСЛЕДСТВИЕ: разработчик путает префиксы, ставит `EXPIRE session 5000` ожидая 5 секунд — реально 83 минуты. Sessions живут дольше нужного, security risk + memory bloat. Twitch/Instagram наблюдали такие баги.
-> - [ ] Команда PERSIST увеличивает TTL ключа на заданное количество секунд | Неправильно. PERSIST не принимает аргументов и убирает TTL полностью, делая ключ постоянным (permanent). Для увеличения TTL используется PEXPIRE/EXPIRE. ❌ ПОСЛЕДСТВИЕ: разработчик вызывает PERSIST для «продления TTL», ключ становится permanent forever, занимает память. Memory leak detected через неделю monitoring.
-> - [ ] Значение TTL команды TTL возвращает -2, если ключ существует, но не имеет TTL | Неправильно! -2 означает, что ключ не существует; -1 означает, что ключ существует, но TTL не установлен (постоянный ключ). ❌ ПОСЛЕДСТВИЕ: error handling logic неправильно интерпретирует -2/-1, удаляет существующие ключи или пропускает несуществующие. Логика business action ломается.
-> - [x] Redis удаляет просроченные ключи двумя способами: lazy expiration при обращении и активным фоновым процессом каждые 100 мс | Lazy expiration работает при каждом GET/SET (если TTL истёк, ключ удаляется перед возвратом). Active expiration запускается в фоне каждые 100мс: выбирает до 20 случайных ключей с TTL, если >25% просрочены — повторяет немедленно. ✓ ПРИМЕНЯТЬ: мониторинг `expired_keys` через INFO stats; для time-sensitive cleanup (license expiration) — не полагаться на TTL precision, использовать explicit DEL; используется в Twitter, Netflix для session expiration; alerts на `keyspace_hits` vs `keyspace_misses` ratio. 📋 ПРАВИЛО: «expiration = lazy (on access) + active (every 100ms)». 🔗 См. Q4 (keys), Q6 (eviction), Q15 (memory).
-
-> [!mcq]
-> - [x] Команда SET key value EX 60 атомарно создаёт ключ и устанавливает TTL 60 секунд в одной операции | SET с EX атомарна, если сервер упадёт между SET и EXPIRE, TTL не потеряется. ✓ ПРИМЕНЯТЬ: production session storage — `SET session:abc data EX 3600` (атомарность); rate limiting с timestamp invalidation — `SET ratelimit:user1 1 EX 60`; distributed lock — `SET lock:resource owner NX EX 30`. Spring Data Redis `template.opsForValue().set(key, value, Duration.ofSeconds(60))`. 📋 ПРАВИЛО: «SET с EX атомарно, никогда не SETNX + EXPIRE». 🔗 См. Q4 (keys), Q5 (TTL), Q14 (transactions).
-> - [ ] Команда SET key value EX 60 эквивалентна последовательным командам SETNX key value и EXPIRE key 60 | Опасное заблуждение. SETNX + EXPIRE не атомарны — между ними возможно падение Redis-сервера. ❌ ПОСЛЕДСТВИЕ: SETNX выполнится, но EXPIRE не будет выполнена при crash, и ключ будет жить вечно, потребляя 1GB+ памяти за неделю. Memory leak, OOMKilled cluster. Production incident.
-> - [ ] Чтобы установить TTL на существующий ключ без изменения значения, используется команда SETEX | Неправильно. SETEX (или SET с EX/PX) устанавливает значение И TTL вместе, перезаписывая значение. Для установки TTL без изменения значения используется EXPIRE или PEXPIRE. ❌ ПОСЛЕДСТВИЕ: разработчик вызывает SETEX, думая только установить TTL, но перезаписывает значение ключа случайными данными. Real user data lost, customer support escalation.
-> - [ ] Команда TTL возвращает время жизни ключа в миллисекундах | Неправильно. TTL возвращает время в секундах; для получения TTL в миллисекундах нужна команда PTTL (precision TTL). ❌ ПОСЛЕДСТВИЕ: при работе с коротко-живущими ключами (<1 сек) TTL возвращает 0/1, теряя точность; PTTL даст 500ms. Неправильная единица в monitoring приводит к неверным алертам.
-
 ## Q6. Какие стратегии вытеснения ключей (`eviction policies`) поддерживает `Redis`?
 
 Когда `Redis` достигает лимита `maxmemory`, он применяет одну из стратегий вытеснения:
@@ -397,12 +355,6 @@ maxmemory-policy allkeys-lru
 ```
 
 **Рекомендации:** для кэша — `allkeys-lru` или `allkeys-lfu`. Для смешанных данных (кэш + постоянные) — `volatile-lru` (вытеснит только ключи с TTL). Подробнее о стратегиях кэширования — в [вопросах по стратегиям кэширования](../architecture/caching-strategies-interview.md).
-
-> [!mcq]
-> - [ ] Политика noeviction удаляет наименее недавно используемые ключи среди всех ключей при исчерпании maxmemory | Противоположно! noeviction не удаляет ключи — он возвращает ошибку при попытке записи (OOM: command not allowed when used memory > maxmemory). ❌ ПОСЛЕДСТВИЕ: production cache с noeviction достигает maxmemory, все writes fail, downstream services break. Cascading failure до restart Redis.
-> - [ ] Политика volatile-lru удаляет наименее недавно используемые ключи среди всех ключей независимо от TTL | Неправильно. volatile-lru работает только среди ключей с установленным TTL; это подходит для смешанных нагрузок (кэш + постоянные данные). ❌ ПОСЛЕДСТВИЕ: команда выбирает volatile-lru, но все ключи без TTL — ничего не удалится при OOM. Redis returns OOM на каждый write.
-> - [x] Политика allkeys-lru удаляет наименее недавно используемые ключи среди всех ключей и рекомендована для кэша | allkeys-lru — оптимальный выбор для read-heavy кэшей (memcached-like). При нехватке памяти вытесняется «холодный» кэш, используемый давно, независимо от TTL. ✓ ПРИМЕНЯТЬ: для standalone cache use case — `maxmemory-policy allkeys-lru`; для cache + permanent data — `volatile-lru`; для popularity-weighted (популярные ключи остаются дольше) — `allkeys-lfu` (Redis 4+); Twitch использует allkeys-lru для session cache. 📋 ПРАВИЛО: «cache only = allkeys-lru, mixed = volatile-lru, popularity = allkeys-lfu». 🔗 См. Q5 (TTL), Q15 (memory).
-> - [ ] Политика allkeys-lfu удаляет ключи с наибольшим числом обращений, освобождая место для новых данных | Противоположно! allkeys-lfu удаляет наименее часто используемые ключи (LFU = Least Frequently Used, не Most). ❌ ПОСЛЕДСТВИЕ: разработчик путает LFU = Least и Most, ожидает что popular ключи будут удалены. Логика приложения построена на ложном understanding.
 
 ## Q7. Как работают `String` и основные операции?
 
@@ -449,12 +401,6 @@ Long views = redis.opsForValue().increment("article:42:views");
 Boolean acquired = redis.opsForValue()
     .setIfAbsent("lock:order:123", "instance-1", Duration.ofSeconds(30));
 ```
-
-> [!mcq]
-> - [ ] Команда INCR возвращает предыдущее значение счётчика до инкремента | INCR возвращает новое значение после инкремента — это важно для паттернов типа «получи и увеличь». ❌ ПОСЛЕДСТВИЕ: разработчик ожидает старое значение, off-by-one в логике. Rate limiter «1000 запросов» реально допускает 999.
-> - [ ] Команда SET key value NX перезаписывает ключ только если он уже существует | NX (Not eXists) создаёт ключ только если он НЕ существует; для записи при существующем ключе используется XX. ❌ ПОСЛЕДСТВИЕ: distributed lock использует SET ... NX, разработчик путает с XX и думает что lock принимается всегда. Two clients считают что они владельцы lock — race condition.
-> - [ ] Максимальный размер String-значения в Redis составляет 64 MB | Максимальный размер String в Redis — 512 MB, хотя хранить значения такого размера не рекомендуется по соображениям производительности. ❌ ПОСЛЕДСТВИЕ: разработчик ставит 64MB как hard limit в коде, отбрасывает большие values. Реально нужно проектировать архитектуру так, чтобы values были небольшие (<1MB).
-> - [x] Команда SET key value NX EX 30 атомарно устанавливает ключ только если он не существует, с TTL 30 секунд | Это стандартный паттерн для захвата распределённой блокировки: атомарность и TTL предотвращают deadlock при падении держателя блокировки. ✓ ПРИМЕНЯТЬ: distributed lock pattern — `SET lock:resource owner NX EX 30`; используется в Redisson, Spring Integration RedisLockRegistry; Twitter, Instagram для critical section synchronization. Не заменять на SETNX + EXPIRE (не атомарно). 📋 ПРАВИЛО: «distributed lock = SET ... NX EX, atomic». 🔗 См. Q5 (TTL), Q14 (transactions), Q24 (Redlock).
 
 ## Q8. Как работает `Hash` и когда его использовать?
 
@@ -514,12 +460,6 @@ public String getUserName(Long userId) {
 
 **Когда `Hash` лучше нескольких `String`:** при хранении объекта с полями Hash использует `ziplist` (для малого кол-ва полей), что значительно экономит память. Порог: `hash-max-ziplist-entries 128`, `hash-max-ziplist-value 64`.
 
-> [!mcq]
-> - [ ] Hash эффективен по памяти только при большом количестве полей, когда Redis переключается на hashtable | На самом деле наоборот: при малом количестве полей Hash использует компактный ziplist; при превышении hash-max-ziplist-entries переключается на hashtable. ❌ ПОСЛЕДСТВИЕ: разработчик хранит 1000+ полей в одном Hash, ziplist deactivated, memory не оптимально. Performance также страдает — O(N) операции вместо O(1).
-> - [x] Hash с небольшим числом полей хранится в ziplist-формате, что значительно экономит память по сравнению с отдельными String-ключами | При числе полей меньше hash-max-ziplist-entries (128 по умолчанию) Redis использует сжатый ziplist вместо хеш-таблицы. ✓ ПРИМЕНЯТЬ: user profile (5-20 полей) — Hash вместо отдельных String ключей экономит 5-10x памяти; для batch-storage 100M+ объектов — критическая optimization; Instagram использует Hash для post metadata. 📋 ПРАВИЛО: «small Hash (<128 полей) = ziplist, экономит память». 🔗 См. Q2 (data types), Q15 (memory).
-> - [ ] Hash и несколько String-ключей потребляют одинаковый объём памяти, выбор между ними зависит только от удобства API | Hash при малом числе полей потребляет меньше памяти за счёт ziplist-оптимизации; каждый отдельный String-ключ добавляет накладные расходы ~80 байт. ❌ ПОСЛЕДСТВИЕ: разработчик использует `user:1:name`, `user:1:age`, `user:1:email` — 3 ключа на user × 80 байт overhead × 100M users = 24GB лишней памяти. Должны были использовать Hash.
-> - [ ] Команда HGETALL возвращает только ключи хеша без значений — для получения значений нужна отдельная команда | HGETALL возвращает чередующийся список field-value пар; только ключи возвращает HKEYS, только значения — HVALS. ❌ ПОСЛЕДСТВИЕ: разработчик пишет код, ожидая отдельный HVALS-вызов после HGETALL — двойной round-trip к Redis на каждое чтение.
-
 ## Q9. Как работает `List` и паттерны использования?
 
 `List` — упорядоченная коллекция строк (двусвязный список). Основные паттерны: очередь (FIFO), стек (LIFO), ограниченный список.
@@ -567,12 +507,6 @@ public String dequeueBlocking(String queueName, Duration timeout) {
 }
 ```
 
-> [!mcq]
-> - [ ] Паттерн FIFO-очереди на List реализуется через LPUSH для записи и LPOP для чтения | LPUSH + LPOP — это стек (LIFO). Для FIFO-очереди нужно LPUSH для записи и RPOP для чтения (или RPUSH + LPOP). ❌ ПОСЛЕДСТВИЕ: task queue с LPUSH+LPOP обрабатывает задачи в обратном порядке (LIFO). Старые задачи накапливаются и не выполняются — пока не возникает старший задач выходит timeout. Customer support escalation.
-> - [ ] Паттерн LIFO-стека на List реализуется через LPUSH для записи и RPOP для чтения | LPUSH + RPOP — это очередь (FIFO). Для стека (LIFO) нужно LPUSH + LPOP. ❌ ПОСЛЕДСТВИЕ: undo stack использует LPUSH+RPOP, операции undo возвращают самые первые действия вместо последних. UI logic broken.
-> - [ ] Команда BRPOP немедленно возвращает nil, если очередь пуста, не блокируя клиента | BRPOP — блокирующая команда, которая ожидает появления элемента до указанного таймаута. Для неблокирующего поведения используйте RPOP. ❌ ПОСЛЕДСТВИЕ: разработчик использует BRPOP в hot path, не задумываясь о blocking. На пустой очереди clients блокируются на timeout=30s каждый, connection pool exhausted.
-> - [x] Паттерн FIFO-очереди на List реализуется через LPUSH для записи и RPOP для чтения — элементы извлекаются в порядке добавления | LPUSH добавляет в начало списка, RPOP извлекает из конца — первый добавленный элемент извлекается первым (FIFO). ✓ ПРИМЕНЯТЬ: task queue (`LPUSH queue:emails msg, BRPOP queue:emails 5`); Sidekiq Ruby uses Redis List для job queue; Spring `@RabbitListener` аналог через RedisMessageListenerContainer. 📋 ПРАВИЛО: «FIFO = LPUSH + RPOP, LIFO = LPUSH + LPOP». 🔗 См. Q2 (data types), Q4 (use cases), Q11 (Sorted Set).
-
 ## Q10. Как работает `Set` и операции над множествами?
 
 `Set` — неупорядоченная коллекция уникальных строк. Поддерживает операции пересечения, объединения и разности.
@@ -607,12 +541,6 @@ SCARD tags:article:1
 ```
 
 **Практические применения:** отслеживание уникальных посетителей, теги, онлайн-пользователи, друзья/фолловеры, антиспам (чёрные списки IP).
-
-> [!mcq]
-> - [ ] Команда SINTER возвращает объединение двух множеств — все уникальные элементы из обоих | SINTER возвращает пересечение (только общие элементы); объединение — SUNION. ❌ ПОСЛЕДСТВИЕ: разработчик пишет recommendation engine с SINTER ожидая union — список рекомендаций оказывается пустым (нет общих интересов). Запрос обрабатывает 0 результатов вместо 100.
-> - [ ] Команда SUNION возвращает разность двух множеств — элементы, присутствующие только в первом | SUNION возвращает объединение (все элементы); разность (элементы только первого) — SDIFF. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает diff из SUNION, получает все элементы. Логика «удалить duplicates» сломана.
-> - [x] Команда SINTER возвращает пересечение множеств — элементы, присутствующие во всех указанных множествах | SINTER (Set INTERsection) — классическая операция пересечения; SUNION — объединение, SDIFF — разность. ✓ ПРИМЕНЯТЬ: friends-of-friends discovery (SINTER user:friends user:other:friends); products viewed by both users; common tags. Spring Data Redis `redisTemplate.opsForSet().intersect()`. 📋 ПРАВИЛО: «SINTER = AND, SUNION = OR, SDIFF = NOT». 🔗 См. Q2 (data types), Q4 (use cases).
-> - [ ] Команда SDIFF возвращает симметрическую разность двух множеств — элементы, уникальные для каждого из них | SDIFF возвращает элементы первого множества, отсутствующие во втором (асимметричная разность); симметрическую разность нужно строить комбинацией команд. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает symmetric difference, получает только asymmetric. Логика «найти разницу между списками» работает только в одну сторону.
 
 ## Q11. (!) Как работает `Sorted Set`?
 
@@ -666,18 +594,6 @@ public Long getPlayerRank(String playerId) {
 }
 ```
 
-> [!mcq]
-> - [ ] Sorted Set внутри реализован как двусвязный список с линейным поиском — поэтому операции O(N) | Sorted Set использует skip list + hash table: поиск элемента O(log N), добавление O(log N), диапазонные запросы O(log N + M). ❌ ПОСЛЕДСТВИЕ: разработчик ожидает O(N) и считает Sorted Set медленным для leaderboard 1M users. Реально O(log N) — миллион элементов = 20 операций. Performance assumptions wrong.
-> - [ ] Команда ZRANK возвращает score элемента в Sorted Set, а не его позицию | ZRANK возвращает 0-based позицию (ранг) элемента в порядке возрастания; для получения score используйте ZSCORE. ❌ ПОСЛЕДСТВИЕ: разработчик путает ZRANK и ZSCORE, отображает «#42 место с 15000 очками» — а реально #15000 место и score=42. UI broken.
-> - [ ] Команда ZREVRANGE возвращает элементы в порядке возрастания score — от минимального к максимальному | ZREVRANGE возвращает элементы в порядке убывания (reverse); для возрастания используйте ZRANGE. ❌ ПОСЛЕДСТВИЕ: leaderboard top-10 показывает worst 10 players вместо best 10. Confused users, support escalations.
-> - [x] Sorted Set внутри реализован как skip list + hash table: skip list обеспечивает порядок, hash table — быстрый доступ по элементу | Комбинация позволяет O(log N) для добавления/удаления/поиска по позиции и O(1) для получения score по элементу. ✓ ПРИМЕНЯТЬ: leaderboards до миллионов игроков с sub-1ms latency; priority queue с timestamp как score; trending topics ranking; understanding internal structure важно для capacity planning. 📋 ПРАВИЛО: «Sorted Set = skip list (order) + hash table (lookup), O(log N)». 🔗 См. Q2 (data types), Q11 (sorted set use cases).
-
-> [!mcq]
-> - [x] Команда ZINCRBY атомарно увеличивает score элемента в Sorted Set на заданное значение и поддерживает корректный порядок | ZINCRBY — стандартный способ обновить рейтинг: атомарна, автоматически пересортировывает элемент. ✓ ПРИМЕНЯТЬ: leaderboard increment при scoring event — `ZINCRBY leaderboard 100 player1`; trending topics — `ZINCRBY trending 1 topic`; voting system — `ZINCRBY votes 1 candidate1`; Spring Data Redis `redisTemplate.opsForZSet().incrementScore()`. 📋 ПРАВИЛО: «ZINCRBY атомарно для score updates, не GET+ADD+SET». 🔗 См. Q11 (Sorted Set), Q4 (use cases).
-> - [ ] Для увеличения score элемента в Sorted Set нужно использовать ZADD с новым значением, так как ZINCRBY не существует | ZINCRBY существует и именно для этого предназначена; ZADD с тем же элементом перезапишет score, а не прибавит к нему. ❌ ПОСЛЕДСТВИЕ: разработчик читает score через ZSCORE, прибавляет 1 на client, делает ZADD — race condition. Concurrent updates лишь одного из них видны. Lost updates.
-> - [ ] Команда ZRANGEBYSCORE возвращает элементы, отсортированные по алфавиту в заданном диапазоне score | ZRANGEBYSCORE фильтрует по числовому диапазону score и возвращает элементы в порядке возрастания score. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает alphabetical sort, видит numerical — UI sorting wrong.
-> - [ ] Sorted Set допускает дубликаты элементов с разными score, как список с числовыми весами | Sorted Set, как и Set, не допускает дубликатов: каждый элемент уникален. При повторной ZADD score обновляется. ❌ ПОСЛЕДСТВИЕ: leaderboard с попытками сохранить «historical snapshot» через `ZADD leaderboard 100 player1, ZADD leaderboard 200 player1` — старая запись перезаписана. История потеряна.
-
 ## Q12. Что такое `HyperLogLog`, `Bitmap` и `Geospatial`?
 
 **HyperLogLog** — вероятностная структура для подсчёта уникальных элементов. Использует ~12 KB памяти при погрешности ~0.81%.
@@ -723,18 +639,6 @@ GEODIST stores "store:moscow" "store:spb" km
 GEOSEARCH stores FROMLONLAT 37.62 55.75 BYRADIUS 50 km ASC
 ```
 
-> [!mcq]
-> - [ ] HyperLogLog точно подсчитывает уникальные элементы без погрешности и использует O(N) памяти | HyperLogLog — вероятностная структура с погрешностью ~0.81%, использует фиксированные ~12 KB независимо от числа элементов. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает 100% точности от PFCOUNT для billing — реально 0.81% error. На 1M unique events = 8K погрешности. Финансовые отчёты неточны.
-> - [ ] HyperLogLog хранит сами элементы и позволяет проверить принадлежность конкретного элемента к множеству | HyperLogLog не хранит элементы, только вероятностный счётчик. Для проверки membership нужен Bloom Filter. ❌ ПОСЛЕДСТВИЕ: разработчик пытается проверить «был ли user X в HLL», не работает. Нужен Set или Bloom Filter (RedisBloom module).
-> - [x] HyperLogLog использует ~12 KB памяти при погрешности ~0.81% и подходит для подсчёта миллиардов уникальных элементов | Фиксированные 12 KB — главное преимущество: Set потребовал бы гигабайты для тех же данных. ✓ ПРИМЕНЯТЬ: уникальные visitors per day (PFADD visitors:2026-04-27 ip1 ip2); ежемесячный rolling counter через PFMERGE; analytics без точности (counting articles read); Twitter использует HLL для unique users analytics. 📋 ПРАВИЛО: «HLL = 12KB constant, ~1% error, billions of uniques». 🔗 См. Q2 (data types), Q4 (use cases).
-> - [ ] HyperLogLog подходит для подсчёта уникальных элементов только если их количество не превышает 1 миллиона | Ограничений по числу элементов нет — HyperLogLog одинаково эффективен при 1 000 и 1 000 000 000 уникальных элементов. ❌ ПОСЛЕДСТВИЕ: разработчик заменяет HLL на Set после 1M, миграция ломает analytics queries. Без необходимости.
-
-> [!mcq]
-> - [ ] Bitmap в Redis — это отдельный тип данных, занимающий фиксированные 512 байт | Bitmap реализован поверх String (до 512 MB); размер определяется максимальным битовым смещением, не фиксирован. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает 512-byte fixed cost, реально SETBIT key 1000000 1 = 125KB allocated. Memory planning ошибочный.
-> - [ ] Команда BITCOUNT подсчитывает количество нулевых битов в строке | BITCOUNT подсчитывает количество установленных (единичных) битов — это операция population count (popcount). ❌ ПОСЛЕДСТВИЕ: подсчёт active users через BITCOUNT возвращает count неактивных. UI dashboard показывает inverted statistics.
-> - [ ] Геопространственные данные в Redis хранятся во внутреннем GEO-типе данных на основе B-дерева | GEO реализован поверх Sorted Set: координаты кодируются в 52-битный geohash, который становится score. ❌ ПОСЛЕДСТВИЕ: разработчик ищет dedicated GEO storage tuning, не находит — реально нужно тюнить ZSet (zset-max-ziplist-entries).
-> - [x] Геопространственный тип GEO в Redis внутренне реализован как Sorted Set, где score — это geohash координат | Это позволяет использовать операции над ZSet для диапазонных запросов и поиска по радиусу через Box-запросы. ✓ ПРИМЕНЯТЬ: Uber/Lyft nearest drivers через GEORADIUS; ride-sharing matching; nearby restaurants (`GEOSEARCH stores FROMLONLAT ... BYRADIUS 5 km`); Foursquare-like check-ins. Может комбинироваться с ZRANGEBYSCORE для filtered queries. 📋 ПРАВИЛО: «GEO = Sorted Set + geohash score». 🔗 См. Q2 (data types), Q11 (Sorted Set).
-
 ## Q13. (!) В чём разница между `RDB` и `AOF`?
 
 `Redis` поддерживает два механизма персистентности для сохранения данных на диск:
@@ -778,18 +682,6 @@ graph TD
 
 **Рекомендация для продакшена:** включить оба механизма. `RDB` для быстрого восстановления и бэкапов, `AOF` для минимальной потери данных.
 
-> [!mcq]
-> - [x] RDB создаёт компактный бинарный снимок данных по расписанию, AOF дописывает каждую команду записи в текстовый файл | Точное описание: RDB — snapshot с периодической записью и быстрым восстановлением; AOF — append-only лог каждой записи с минимальной потерей данных. ✓ ПРИМЕНЯТЬ: production setup — оба механизма; RDB для быстрого backup/restore (через AWS S3 backup); AOF для minimal data loss (everysec — 1 sec data loss); AWS ElastiCache использует RDB snapshots для backups. 📋 ПРАВИЛО: «RDB = snapshot, AOF = log; production = оба». 🔗 См. Q14 (hybrid persistence), Q15 (memory).
-> - [ ] RDB записывает каждую команду немедленно после выполнения, AOF делает снимки по расписанию | Это описание перепутано: RDB делает снимки по расписанию, AOF записывает каждую команду (или каждую секунду при appendfsync everysec). ❌ ПОСЛЕДСТВИЕ: разработчик настраивает RDB для real-time persistence, но при crash теряет последние 15 минут данных (между snapshots). Должен был AOF.
-> - [ ] AOF обеспечивает более быстрое восстановление после сбоя, чем RDB, так как файл меньше | RDB восстанавливается быстрее: загружается один бинарный снимок. AOF требует replay всех команд, что медленнее при большом AOF-файле. ❌ ПОСЛЕДСТВИЕ: команда выбирает только AOF, recovery после crash занимает 30 минут на 100GB AOF файле. Production downtime, customers waiting.
-> - [ ] RDB не поддерживает фоновое создание снимков — Redis блокируется до завершения BGSAVE | BGSAVE именно потому и называется Background SAVE: Redis делает fork() и дочерний процесс записывает RDB без блокировки основного потока. ❌ ПОСЛЕДСТВИЕ: разработчик отключает RDB ожидая что снимок будет блокировать. Реально fork() копирует только метаданные процесса, child записывает RDB без блокировки main thread.
-
-> [!mcq]
-> - [ ] Настройка appendfsync always обеспечивает максимальную производительность записи при AOF | appendfsync always — самая медленная настройка: каждая команда сбрасывается на диск синхронно. Максимальную производительность даёт appendfsync no. ❌ ПОСЛЕДСТВИЕ: разработчик ставит always для «производительности», получает 10x slower throughput из-за fsync на каждой команде. SLA латентности нарушается.
-> - [ ] Настройка appendfsync no запрещает AOF-персистентность и эквивалентна отключению appendonly | appendfsync no не отключает AOF, а позволяет ОС самой решать когда сбрасывать буфер на диск — максимально быстро, но с риском потери данных. ❌ ПОСЛЕДСТВИЕ: при crash теряется 30+ секунд данных (зависит от ОС buffer policy). Для финансовых систем критичная потеря.
-> - [x] Настройка appendfsync everysec сбрасывает AOF-буфер на диск каждую секунду, допуская потерю максимум одной секунды данных | Это компромисс между производительностью и надёжностью: в худшем случае теряется 1 секунда записей. ✓ ПРИМЕНЯТЬ: production default `appendfsync everysec`; для строго критичных данных (financial) — `always`; для bulk imports / cache rebuild — `no` с восстановлением через RDB. AWS ElastiCache, Redis Enterprise default everysec. 📋 ПРАВИЛО: «everysec = balance, always = strict, no = max throughput». 🔗 См. Q13 (RDB vs AOF), Q14 (hybrid).
-> - [ ] Настройка appendfsync always допускает потерю данных за последнюю секунду, аналогично everysec | appendfsync always сбрасывает на диск после каждой команды — потеря данных практически исключена, но производительность минимальна. ❌ ПОСЛЕДСТВИЕ: разработчик путает always и everysec, ожидает high throughput от always. Throughput 10x lower expected.
-
 ## Q14. Как настроить гибридную персистентность?
 
 Начиная с `Redis` 4.0 доступна **гибридная** персистентность — `AOF` файл начинается с `RDB`-снимка, а далее дописываются `AOF`-команды. Это сочетает быстроту восстановления `RDB` и минимальную потерю `AOF`.
@@ -802,12 +694,6 @@ appendfsync everysec
 ```
 
 При `BGREWRITEAOF` новый AOF начинается с RDB-формата, затем дописываются команды, полученные во время перезаписи.
-
-> [!mcq]
-> - [ ] Гибридная персистентность означает, что Redis одновременно записывает RDB и AOF в один общий файл | RDB и AOF остаются разными механизмами; гибридность в том, что AOF-файл начинается с RDB-блока, а затем дописываются команды. ❌ ПОСЛЕДСТВИЕ: разработчик ищет «один файл» в директории Redis для backup, не находит. Backup process incomplete (берёт только AOF, теряет RDB).
-> - [ ] Гибридная персистентность (aof-use-rdb-preamble) включена по умолчанию с Redis 4.0 без дополнительной настройки | aof-use-rdb-preamble yes включён по умолчанию с Redis 7.0; в 4.0 его нужно было включать явно. ❌ ПОСЛЕДСТВИЕ: команда на Redis 5.x ожидает hybrid by default, recovery медленный из-за полного AOF replay. Не активирована optimization. Должны были explicitly включать.
-> - [x] При гибридной персистентности AOF-файл начинается с RDB-снимка, а затем дописываются команды-дельты — это сочетает быстроту восстановления RDB и минимальную потерю AOF | При BGREWRITEAOF создаётся новый AOF с RDB-прологом и командами с момента начала перезаписи. ✓ ПРИМЕНЯТЬ: Redis 7+ default — recovery в 10x быстрее простого AOF; для AWS ElastiCache — `aof-use-rdb-preamble yes` enabled; production setup combines fast restart + minimal data loss. 📋 ПРАВИЛО: «Redis 7+ hybrid AOF default = best of RDB + AOF». 🔗 См. Q13 (RDB vs AOF).
-> - [ ] Гибридная персистентность позволяет одновременно записывать данные в RDB и PostgreSQL как внешнее хранилище | PostgreSQL не является частью архитектуры персистентности Redis; гибридность касается только форматов RDB и AOF внутри Redis. ❌ ПОСЛЕДСТВИЕ: разработчик ищет PostgreSQL persistence option в Redis config, не находит. Реально нужен Kafka Connect Redis Sink или custom replication.
 
 ## Q15. (!) Как работают транзакции `MULTI`/`EXEC`/`WATCH`?
 
@@ -854,12 +740,6 @@ List<Object> results = redisTemplate.execute(new SessionCallback<>() {
     }
 });
 ```
-
-> [!mcq]
-> - [ ] MULTI/EXEC в Redis поддерживает rollback: если одна из команд падает, все предыдущие команды откатываются | Redis транзакции не поддерживают rollback — при ошибке команды остальные продолжают выполняться. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает SQL-style rollback, money transfer logic ломается при mid-transaction error: списание выполнилось, зачисление failed, состояние inconsistent. Должны использовать Lua scripts для atomicity.
-> - [ ] Команда WATCH гарантирует пессимистичную блокировку: другие клиенты не могут изменить ключ до EXEC | WATCH реализует оптимистичную блокировку: другие клиенты могут изменять ключ, но EXEC вернёт nil, если это произошло. ❌ ПОСЛЕДСТВИЕ: разработчик не реализует retry loop при WATCH conflict, transaction silently fails. Logic полагается на гарантию WATCH блокировки.
-> - [ ] DISCARD отменяет транзакцию и откатывает все изменения, сделанные командами между MULTI и DISCARD | Команды между MULTI и DISCARD только буферизируются, но не выполняются. DISCARD просто очищает очередь. ❌ ПОСЛЕДСТВИЕ: разработчик не понимает что MULTI buffer'ит команды, ожидает «прямого выполнения». Удивлён что ничего не изменяется до EXEC.
-> - [x] Команда WATCH реализует оптимистичную блокировку: EXEC вернёт nil, если отслеживаемый ключ изменился после WATCH | Это compare-and-swap семантика: транзакцию нужно повторить при конфликте, как в оптимистичных версионных системах. ✓ ПРИМЕНЯТЬ: bank account transfer pattern — WATCH balance, MULTI, DECRBY, INCRBY, EXEC; retry loop при nil; для сложной логики предпочитать Lua scripts (атомарность + условная логика). Spring Data Redis `redisTemplate.execute(SessionCallback)`. 📋 ПРАВИЛО: «WATCH = optimistic lock, retry on EXEC=nil». 🔗 См. Q16 (Lua), Q24 (Redlock).
 
 ## Q16. (!) Как использовать Lua-скрипты для атомарных операций?
 
@@ -917,12 +797,6 @@ public boolean isAllowed(String userId, int limit, int windowSeconds) {
 ```
 
 **Преимущества Lua перед `MULTI/EXEC`:** условная логика (`if/else`), чтение + запись в одной атомарной операции, вычисления на стороне сервера. С `Redis` 7.0+ можно использовать `Redis Functions` вместо `EVAL`.
-
-> [!mcq]
-> - [ ] Lua-скрипты выполняются параллельно с другими командами Redis, не блокируя обработку запросов | Lua-скрипты выполняются атомарно: во время работы скрипта никакие другие команды не обрабатываются — это гарантирует атомарность. ❌ ПОСЛЕДСТВИЕ: разработчик пишет долгий Lua script (10 секунд), весь Redis instance блокируется. Все clients timeout, downstream cascade failure. Lua scripts должны быть короткими.
-> - [ ] Lua-скрипты в Redis менее мощны чем MULTI/EXEC, так как не поддерживают условную логику | Lua мощнее MULTI/EXEC именно потому, что поддерживает условную логику (if/else), циклы и вычисления на стороне сервера. ❌ ПОСЛЕДСТВИЕ: разработчик использует MULTI/EXEC для conditional logic — невозможно. Tries client-side workarounds с race conditions. Должны были Lua.
-> - [x] Lua-скрипты выполняются атомарно — во время выполнения скрипта Redis не обрабатывает другие команды | Атомарность гарантирована: скрипт выглядит как одна неделимая операция для всех остальных клиентов. ✓ ПРИМЕНЯТЬ: rate limiter (atomic INCR + EXPIRE only on first); CAS pattern (compare-and-swap); inventory decrement только если stock > 0; Spring Data Redis `RedisScript<Long>` + `DefaultRedisScript`. Best practice — короткие scripts (<1ms), сложную логику — на client side. 📋 ПРАВИЛО: «Lua = atomic, short, server-side logic». 🔗 См. Q15 (transactions), Q24 (Redlock).
-> - [ ] Redis Functions (Redis 7.0+) полностью заменили EVAL и Lua-скрипты, которые больше не поддерживаются | Redis Functions — альтернатива EVAL с поддержкой библиотек и именованных функций; EVAL со скриптами по-прежнему поддерживается. ❌ ПОСЛЕДСТВИЕ: разработчик мигрирует от EVAL ожидая deprecation. Реально EVAL поддерживается; Redis Functions добавляют features (named functions, library packaging), не заменяют.
 
 ## Q17. (!) Как работает механизм `Pub/Sub`?
 
@@ -993,18 +867,6 @@ public class NotificationPublisher {
 ```
 
 **Ограничения `Pub/Sub`:** fire-and-forget — если подписчик оффлайн, сообщение теряется. Нет персистентности, нет consumer groups. Для надёжной доставки используйте `Redis Streams` или [Kafka](../messaging/kafka-interview.md).
-
-> [!mcq]
-> - [ ] Pub/Sub в Redis гарантирует доставку сообщения подписчику, даже если тот временно оффлайн | Pub/Sub — fire-and-forget: если подписчик недоступен в момент публикации, сообщение теряется без возможности восстановления. ❌ ПОСЛЕДСТВИЕ: команда использует Pub/Sub для critical order events. Один offline consumer теряет 1000 заказов за минуту. Финансовые потери, должны были использовать Redis Streams или Kafka.
-> - [ ] Команда PSUBSCRIBE подписывает только на один конкретный канал по точному имени | PSUBSCRIBE — подписка по паттерну (glob): `order:*` подпишет на все каналы, начинающиеся с `order:`. ❌ ПОСЛЕДСТВИЕ: разработчик использует PSUBSCRIBE для точного канала, видит непредсказуемые messages из других channels с похожими именами.
-> - [x] Pub/Sub реализует модель fire-and-forget без персистентности — сообщение теряется, если подписчик оффлайн | Это принципиальное ограничение Pub/Sub; для гарантированной доставки используйте Redis Streams или Kafka. ✓ ПРИМЕНЯТЬ: real-time notifications для онлайн-пользователей (chat, presence updates); cache invalidation broadcasts; live dashboards. NE для critical messages — для них Redis Streams или Kafka. 📋 ПРАВИЛО: «Pub/Sub = fire-and-forget, online-only delivery». 🔗 См. Q18 (Streams), Q19 (Streams vs Pub/Sub).
-> - [ ] Число подписчиков на канал ограничено 1000 — превышение вызывает ошибку | Redis не ограничивает число подписчиков на канал; ограничения связаны только с ресурсами сервера (память, соединения). ❌ ПОСЛЕДСТВИЕ: команда добавляет sharding для «обхода 1000 limit», complexity без необходимости.
-
-> [!mcq]
-> - [ ] В Spring Data Redis подписка через RedisMessageListenerContainer выполняется в основном потоке приложения, блокируя его | RedisMessageListenerContainer создаёт отдельный поток для прослушивания сообщений, не блокируя основное приложение. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает blocking pattern, ставит subscription в @PostConstruct без `@Async`. Application starts up но subscription block startup поток.
-> - [x] В Spring Data Redis публикация в канал выполняется через метод convertAndSend(channel, message) объекта RedisTemplate | Именно этот метод является точкой входа для публикации в Pub/Sub из Spring-приложения. ✓ ПРИМЕНЯТЬ: cache invalidation broadcast — `redisTemplate.convertAndSend("cache:invalidate", productId)`; chat application — `redisTemplate.convertAndSend("chat:room:" + roomId, message)`; subscriber через `RedisMessageListenerContainer + MessageListenerAdapter`. 📋 ПРАВИЛО: «publish = convertAndSend, subscribe = MessageListenerContainer». 🔗 См. Q17 (Pub/Sub), Q18 (Streams).
-> - [ ] В Spring Data Redis для подписки по паттерну используется ChannelTopic, а для точного канала — PatternTopic | Всё наоборот: ChannelTopic — для точного имени канала, PatternTopic — для glob-паттерна. ❌ ПОСЛЕДСТВИЕ: разработчик использует ChannelTopic с glob, не подписывается на нужные каналы. Messages не приходят, debug часами.
-> - [ ] RedisMessageListenerContainer в Spring может одновременно обслуживать только одну подписку | Container поддерживает множество слушателей на разных каналах и паттернах одновременно. ❌ ПОСЛЕДСТВИЕ: разработчик создаёт N контейнеров под N подписок, лишние Redis connections. Connection pool exhausted.
 
 ## Q18. (!) Что такое `Redis Streams` и чем они отличаются от `Pub/Sub`?
 
@@ -1094,18 +956,6 @@ graph LR
     C2 -->|XACK| S
 ```
 
-> [!mcq]
-> - [ ] Redis Streams не поддерживают Consumer Groups — каждый потребитель получает все сообщения независимо | Consumer Groups — ключевая функция Streams: позволяют нескольким потребителям делить нагрузку, каждое сообщение обрабатывается одним потребителем группы. ❌ ПОСЛЕДСТВИЕ: команда не использует Consumer Groups, все consumers получают все messages. Дублирующая обработка orders, customer charged twice.
-> - [ ] Redis Streams удаляют сообщения сразу после отправки потребителю, как Pub/Sub | Streams персистентны: сообщения остаются в Stream после чтения. Consumer Group отслеживает прочитанные сообщения через ACK-механизм. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает Pub/Sub-like delete-after-deliver, удивлён что Stream растёт unboundedly. Должны использовать XTRIM или MAXLEN для ограничения size.
-> - [x] Redis Streams поддерживают Consumer Groups, персистентность и подтверждение обработки (ACK), в отличие от Pub/Sub | Это главные отличия: at-least-once доставка, возможность повторной обработки через XPENDING и XCLAIM. ✓ ПРИМЕНЯТЬ: lightweight Kafka alternative для микросервисов; transactional outbox pattern; CDC events; Spring Data Redis StreamMessageListenerContainer; Twitch использует Redis Streams для real-time chat events. 📋 ПРАВИЛО: «Streams = persistent log + Consumer Groups + ACK». 🔗 См. Q17 (Pub/Sub), Q19 (Streams vs Kafka).
-> - [ ] Pub/Sub и Streams предоставляют одинаковые гарантии доставки, разница только в API | Гарантии доставки принципиально разные: Pub/Sub — fire-and-forget (нет), Streams — at-least-once через ACK-механизм. ❌ ПОСЛЕДСТВИЕ: разработчик заменяет Pub/Sub на Streams без redesign — теперь сообщения накапливаются вместо потери, OOM. Нужно XTRIM/MAXLEN.
-
-> [!mcq]
-> - [x] Команда XACK подтверждает обработку сообщения в Consumer Group, после чего оно больше не числится pending | XACK — обязательный шаг в паттерне надёжной обработки; без ACK сообщение останется в pending list и будет передано другому потребителю через XCLAIM. ✓ ПРИМЕНЯТЬ: try-with-resources pattern: read message, process, ack on success; XCLAIM для re-processing после consumer crash; XPENDING для monitoring stuck messages. Spring Data Redis StreamMessageListenerContainer автоматически делает ACK через AcknowledgePolicy. 📋 ПРАВИЛО: «XACK после успешной обработки, иначе redelivery». 🔗 См. Q18 (Streams), Q19 (replication).
-> - [ ] Команда XACK удаляет сообщение из Stream после подтверждения обработки | XACK только помечает сообщение как обработанное в PEL (Pending Entry List); физически сообщение остаётся в Stream. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает что XACK освобождает память, не использует XTRIM. Stream растёт unboundedly до OOM.
-> - [ ] Автоматический ID сообщения в Streams (XADD key * ...) — это UUID случайного формата | ID формируется как `<unix-timestamp-ms>-<sequence>`, что обеспечивает монотонный порядок и содержит информацию о времени. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает UUID, парсит ID как UUID — fails. Реально это Snowflake-like ID с timestamp + sequence для total ordering.
-> - [ ] Consumer Group обрабатывает сообщения в режиме broadcast: каждый consumer получает каждое сообщение | Consumer Group распределяет сообщения между потребителями: каждое сообщение обрабатывается только одним consumer'ом (competing consumers паттерн). ❌ ПОСЛЕДСТВИЕ: команда ожидает broadcast, видит распределение messages. Каждый consumer обрабатывает 1/N. Architecture misunderstanding.
-
 ## Q19. (!) Как работает репликация `Master-Replica`?
 
 Репликация в `Redis` — асинхронное копирование данных с мастера на одну или несколько реплик. Реплики обслуживают запросы на чтение, разгружая мастер.
@@ -1145,12 +995,6 @@ redis-cli INFO replication
 ```
 
 **Важно:** репликация асинхронная — при падении мастера возможна потеря нескольких последних команд. Для автоматического failover используйте `Sentinel` или `Cluster`.
-
-> [!mcq]
-> - [ ] Репликация в Redis синхронная: мастер ожидает подтверждения от всех реплик перед ответом клиенту | Репликация асинхронная по умолчанию: мастер не ждёт реплики и может ответить клиенту до того, как реплика получила данные. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает strong consistency между master и replica. Read from replica после write to master — видит stale data. Tries `WAIT N timeout` для wait-for-replication.
-> - [x] При первом подключении реплики к мастеру происходит полная синхронизация: мастер делает BGSAVE, отправляет RDB, затем транслирует накопленные команды | Это стандартный процесс full resync; после него включается потоковая репликация каждой команды записи. ✓ ПРИМЕНЯТЬ: для horizontal read scaling — добавлять replicas; replica для analytics queries не нагружает master; AWS ElastiCache Redis Replication Group; Spring Data Redis support read-replicas через `LettuceClientConfigurationBuilder.readFrom(REPLICA_PREFERRED)`. 📋 ПРАВИЛО: «replica = read scaling, async replication, eventual consistency». 🔗 См. Q20 (Sentinel), Q21 (Cluster).
-> - [ ] Реплика в Redis может принимать команды записи, если мастер недоступен — для обеспечения доступности | По умолчанию replica-read-only yes: реплика принимает только чтение. Разрешать запись в реплику — антипаттерн, ведущий к расхождению данных. ❌ ПОСЛЕДСТВИЕ: команда отключает replica-read-only, при network partition writes to replica теряются после failover. Data loss и inconsistency.
-> - [ ] Репликация в Redis гарантирует zero data loss при падении мастера благодаря синхронной записи | Асинхронная репликация допускает потерю последних N команд; для минимизации потерь используйте настройку min-slaves-to-write + min-slaves-max-lag. ❌ ПОСЛЕДСТВИЕ: финансовая система ожидает zero data loss от Redis replication, теряет 100ms transactions при failover. Should use Redis with transactional storage or RDBMS.
 
 ## Q20. (!) Что такое `Redis Sentinel`?
 
@@ -1208,12 +1052,6 @@ spring:
 ```
 
 **Минимальная конфигурация:** 3 Sentinel-процесса (для кворума), 1 мастер + 2 реплики. Sentinel рекомендован для standalone-топологии; для горизонтального масштабирования используйте `Redis Cluster`.
-
-> [!mcq]
-> - [ ] Sentinel сам является мастером Redis и принимает команды записи от клиентов при failover | Sentinel — отдельный процесс мониторинга, не Redis-сервер; он не принимает команды данных, только управляющие команды Sentinel API. ❌ ПОСЛЕДСТВИЕ: разработчик подключается к Sentinel порту (26379) для writes, получает ERR. Confused client logic, downtime во время debug.
-> - [ ] Для кворума Sentinel достаточно одного Sentinel-процесса — он сам принимает решение о failover | Минимальный кворум — большинство из Sentinel-узлов; при одном Sentinel split-brain невозможно разрешить; рекомендуется 3 Sentinel. ❌ ПОСЛЕДСТВИЕ: команда деплоит 1 Sentinel, при network blip Sentinel ошибочно делает failover. Constant failovers, instability. Минимум 3 Sentinel для production.
-> - [ ] Клиенты подключаются напрямую к мастеру, а Sentinel только уведомляет администратора об отказах | Sentinel реализует service discovery: клиенты запрашивают текущего мастера у Sentinel и переподключаются при failover автоматически. ❌ ПОСЛЕДСТВИЕ: разработчик хардкодит master IP в config. После failover IP меняется, application читает stale config — connection failures до restart.
-> - [x] Redis Sentinel обеспечивает автоматический failover: при падении мастера реплика повышается до мастера на основании кворума Sentinel-узлов | Кворум предотвращает split-brain: failover происходит только когда большинство Sentinel согласны, что мастер недоступен. ✓ ПРИМЕНЯТЬ: production HA — 3 Sentinel + 1 master + 2 replicas (минимум); Spring Boot `spring.data.redis.sentinel.master + nodes`; AWS ElastiCache Redis (multi-AZ) использует похожую модель. 📋 ПРАВИЛО: «Sentinel = HA для standalone Redis, минимум 3 Sentinel». 🔗 См. Q19 (replication), Q21 (Cluster).
 
 ## Q21. (!) Что такое `Redis Cluster`?
 
@@ -1276,18 +1114,6 @@ spring:
 
 **Ограничения Cluster:** multi-key операции (`MGET`, `MSET`, транзакции) работают только если все ключи в одном слоте. `Pub/Sub` сообщения маршрутизируются по всем узлам (sharded pub/sub появился в Redis 7.0).
 
-> [!mcq]
-> - [ ] Redis Cluster делит данные по 65536 hash slots, каждый из которых может принадлежать нескольким мастерам | Redis Cluster использует ровно 16 384 hash slots (не 65536), каждый принадлежит ровно одному мастеру. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает другое slot count, capacity planning ошибочный.
-> - [ ] Hash slot ключа вычисляется по формуле MD5(key) mod 16384 | Формула: CRC16(key) mod 16384, не MD5. CRC16 выбран как быстрый алгоритм с равномерным распределением. ❌ ПОСЛЕДСТВИЕ: разработчик пишет client с MD5 для pre-routing, ключи попадают в неверный slot, MOVED redirects на каждом запросе. Throughput 50% ниже expected.
-> - [ ] Минимальная конфигурация Redis Cluster — 2 мастера без реплик | Минимально рекомендуемая конфигурация — 3 мастера + 3 реплики (6 узлов); меньшее число мастеров снижает устойчивость к отказам. ❌ ПОСЛЕДСТВИЕ: 2-master cluster без replicas — single broker failure делает 50% slots недоступными. Production must be 3+3.
-> - [x] В Redis Cluster ключ отображается в hash slot по формуле CRC16(key) mod 16384, и каждый слот принадлежит одному мастеру | Это точная формула шардирования; при обращении к неверному узлу клиент получает MOVED-редирект с адресом нужного узла. ✓ ПРИМЕНЯТЬ: для horizontal scaling 100+ GB workload — Redis Cluster 3+3 минимум; smart clients (Lettuce, Jedis) кешируют slot routing для избежания MOVED roundtrips; AWS ElastiCache Redis Cluster mode. 📋 ПРАВИЛО: «Cluster = 16384 slots, CRC16(key) mod, 1 slot = 1 master». 🔗 См. Q20 (Sentinel), Q22 (caching strategies).
-
-> [!mcq]
-> - [ ] Hash Tags в Redis Cluster позволяют ключам из разных hash slots выполнять многоключевые операции | Hash Tags делают противоположное: они гарантируют, что ключи попадут в ОДИН слот, что и позволяет многоключевые операции. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает что Hash Tags «cross slots», использует по-разному, MGET fails с CROSSSLOT.
-> - [x] Hash Tags гарантируют, что ключи с одинаковой частью в фигурных скобках попадут в один hash slot, позволяя атомарные многоключевые операции | Например, {order:123}:items и {order:123}:status — один слот, потому что хешируется только `order:123`. ✓ ПРИМЕНЯТЬ: shopping cart pattern — `{cart:user:123}:items, {cart:user:123}:total` для atomic operations; multi-step transactions; Lua scripts с multiple keys; Pipelining оптимизация (single-slot pipeline = single network roundtrip). 📋 ПРАВИЛО: «Hash Tag = same slot для multi-key ops». 🔗 См. Q21 (Cluster), Q15 (transactions).
-> - [ ] Hash Tags обязательны для всех ключей в Redis Cluster — без них ключи не принимаются | Hash Tags опциональны; без них каждый ключ хешируется целиком и может попасть в любой слот. ❌ ПОСЛЕДСТВИЕ: разработчик добавляет hash tags everywhere — все ключи попадают в один слот, single-master bottleneck. Должны быть только для related keys.
-> - [ ] В Redis Cluster команда MGET работает для любых ключей независимо от их слотов | MGET работает только если все ключи находятся в одном slot; иначе возвращается ошибка CROSSSLOT. ❌ ПОСЛЕДСТВИЕ: код MGET с random keys работает в Redis standalone, ломается в Cluster — `CROSSSLOT Keys in request don't hash to the same slot`. Migration headaches.
-
 ## Q22. (!) Какие стратегии кэширования применяются с `Redis`?
 
 Подробнее — в [вопросах по стратегиям кэширования](../architecture/caching-strategies-interview.md).
@@ -1345,12 +1171,6 @@ public class ProductService {
     }
 }
 ```
-
-> [!mcq]
-> - [ ] Write-Through стратегия означает запись сначала в Redis, затем асинхронно в БД — для повышения скорости записи | Асинхронная запись в БД — это Write-Behind. Write-Through синхронно записывает в кэш и БД одновременно. ❌ ПОСЛЕДСТВИЕ: команда выбирает Write-Through ожидая async behavior. Write latency растёт из-за DB sync write на каждое обновление кэша. Throughput падает.
-> - [ ] Cache-Aside стратегия означает, что кэш автоматически загружает данные из БД при cache miss | Автоматическую загрузку обеспечивает Read-Through. В Cache-Aside приложение само читает из БД и заполняет кэш. ❌ ПОСЛЕДСТВИЕ: разработчик забывает write-back код в Cache-Aside, приложение читает из БД на каждый запрос. Кэш всегда пуст.
-> - [ ] Write-Behind стратегия обеспечивает строгую консистентность между кэшем и БД в любой момент времени | Write-Behind асинхронен: кэш и БД могут временно расходиться. Строгую консистентность обеспечивает Write-Through. ❌ ПОСЛЕДСТВИЕ: финансовая система с Write-Behind теряет updates при crash. Customer balances out of sync, audit trail incomplete.
-> - [x] Cache-Aside — наиболее распространённая стратегия: при cache miss приложение читает из БД, записывает в кэш и возвращает результат | Приложение сохраняет полный контроль над кэшированием; подходит когда чтений значительно больше записей. ✓ ПРИМЕНЯТЬ: Spring `@Cacheable` реализует Cache-Aside; product catalog (читается часто, обновляется редко); user profile cache; SimpleKeyGenerator + custom KeyGenerator для composite keys. 📋 ПРАВИЛО: «Cache-Aside = read-heavy, app manages cache». 🔗 См. Q23 (cache problems), Q24 (invalidation).
 
 ## Q23. (!) Что такое `Cache Stampede`, `Cache Penetration` и `Cache Avalanche`?
 
@@ -1418,18 +1238,6 @@ private Duration randomTtl(Duration base) {
 redis.opsForValue().set(key, value, randomTtl(Duration.ofMinutes(30)));
 ```
 
-> [!mcq]
-> - [x] Cache Stampede возникает когда истекает TTL популярного ключа и множество запросов одновременно идут в БД — решается mutex lock или probabilistic early expiration | При высоком трафике «гонка за кэшем» может перегрузить БД; mutex позволяет одному запросу обновить кэш, остальные ждут. ✓ ПРИМЕНЯТЬ: distributed lock через SET NX EX для cache rebuild; probabilistic early expiration (XFetch algorithm) — некоторые requests рандомно регенерируют до TTL expiry; используется в Facebook Memcached. 📋 ПРАВИЛО: «cache stampede = mutex lock или early expiration». 🔗 См. Q22 (caching strategies), Q24 (invalidation).
-> - [ ] Cache Stampede возникает когда кэш возвращает устаревшие данные клиентам — решается уменьшением TTL | Возврат устаревших данных — это stale cache, не stampede; Stampede — это одновременный шквал запросов к БД. ❌ ПОСЛЕДСТВИЕ: разработчик путает stampede и stale cache, уменьшает TTL — stampede только усугубляется, БД на колени.
-> - [ ] Cache Penetration возникает когда слишком много запросов одновременно истекают в кэше — решается рандомизацией TTL | Одновременное истечение TTL — Cache Avalanche; Cache Penetration — это запросы по несуществующим ключам. ❌ ПОСЛЕДСТВИЕ: неправильная диагностика проблемы — Penetration mistaken for Avalanche, randomization не помогает с DB queries по non-existent keys.
-> - [ ] Cache Avalanche решается кэшированием null-значений с коротким TTL | Кэширование null — решение Cache Penetration. Cache Avalanche (волна истечений) решается рандомизацией TTL и предварительным прогревом кэша. ❌ ПОСЛЕДСТВИЕ: путаница с решениями приводит к incorrect fix, проблема возвращается через неделю.
-
-> [!mcq]
-> - [ ] Cache Penetration означает утечку данных из кэша — злоумышленник получает несанкционированный доступ к кэшированным данным | Cache Penetration — технический термин для паттерна, при котором запросы к несуществующим ключам «пробивают» кэш в БД. ❌ ПОСЛЕДСТВИЕ: разработчик называет security incident «Cache Penetration», команда не понимает технический термин. Communication breakdown.
-> - [ ] Cache Avalanche решается установкой maxmemory-policy noeviction — Redis перестаёт удалять кэш | noeviction не поможет при Cache Avalanche: это проблема одновременного истечения TTL, а не вытеснения. ❌ ПОСЛЕДСТВИЕ: разработчик ставит noeviction для борьбы с Avalanche, кэш растёт безгранично, OOM. Avalanche по-прежнему происходит.
-> - [x] Cache Avalanche возникает при одновременном истечении TTL множества ключей — решается рандомизацией TTL (добавление случайного jitter) | Рандомизация равномерно распределяет обновления кэша во времени, предотвращая волны запросов к БД. ✓ ПРИМЕНЯТЬ: production setup `Duration.ofMinutes(30 + ThreadLocalRandom.current().nextInt(10))` для jitter; Spring Cache можно настроить через CacheManager + custom TTL strategy; pre-warming cache на deploy для старта без cold cache. 📋 ПРАВИЛО: «Avalanche fix = TTL jitter + pre-warm». 🔗 См. Q22 (caching), Q23 (cache problems).
-> - [ ] Cache Penetration решается увеличением TTL кэша до бесконечности — тогда промахи кэша не случаются | Бесконечный TTL создаёт stale cache; Cache Penetration решается кэшированием null-значений или Bloom Filter. ❌ ПОСЛЕДСТВИЕ: бесконечный TTL = вечно stale data, выгорание памяти. Реальная проблема Penetration не решена — null-значения нужны.
-
 ## Q24. Как реализовать распределённый кэш с инвалидацией?
 
 Стратегии инвалидации кэша:
@@ -1466,12 +1274,6 @@ public class CacheInvalidationListener {
     }
 }
 ```
-
-> [!mcq]
-> - [ ] Event-driven инвалидация кэша через Pub/Sub работает только при одном инстансе приложения | Event-driven инвалидация именно для распределённого случая: все инстансы подписываются на канал и инвалидируют свои локальные записи. ❌ ПОСЛЕДСТВИЕ: разработчик использует event-driven только для single instance, при scaling до 10 instances stale cache в 9 из 10. Должны использовать broadcast.
-> - [x] Event-driven инвалидация через Redis Pub/Sub позволяет всем инстансам приложения получить уведомление об изменении данных и очистить соответствующий кэш | При изменении данных публикуется событие; все подписчики удаляют ключ из своего кэша, поддерживая консистентность. ✓ ПРИМЕНЯТЬ: distributed L1 cache invalidation в Spring Cache (combined `@Cacheable` + Redis Pub/Sub); CDN purge propagation; Hibernate Second Level Cache invalidation. 📋 ПРАВИЛО: «event-driven invalidation = consistency across instances». 🔗 См. Q17 (Pub/Sub), Q22 (caching).
-> - [ ] TTL-based инвалидация гарантирует строгую консистентность: данные всегда актуальны до истечения TTL | TTL-based инвалидация допускает staleness до истечения TTL; строгую консистентность обеспечивает только Write-Through или event-driven. ❌ ПОСЛЕДСТВИЕ: команда полагается на TTL для consistency, видит stale data в сценариях где данные обновляются чаще TTL. Customer support tickets из-за outdated profile info.
-> - [ ] Write-through инвалидация требует использования Redis Streams для надёжной передачи событий обновления | Write-through синхронно обновляет кэш при каждой записи в БД без отдельного механизма событий. ❌ ПОСЛЕДСТВИЕ: разработчик добавляет Streams для Write-Through, complexity растёт без необходимости. Реально достаточно sync write код в repository layer.
 
 ## Q25. (!) В чём разница между `Lettuce` и `Jedis`?
 
@@ -1512,12 +1314,6 @@ public class CacheInvalidationListener {
 ```
 
 **Рекомендация:** используйте `Lettuce` — он потокобезопасный, поддерживает реактивный стек ([Spring WebFlux](../frameworks/spring/spring-webflux-interview.md)), эффективнее использует соединения.
-
-> [!mcq]
-> - [ ] Jedis является потокобезопасным клиентом и может использоваться как синглтон без пула соединений | Jedis НЕ потокобезопасен; каждый поток должен использовать отдельное соединение из JedisPool. ❌ ПОСЛЕДSTVИЕ: разработчик использует Jedis singleton, под нагрузкой race conditions, поломанные responses. Production crashes под concurrency.
-> - [ ] Lettuce использует пул соединений как Jedis — по одному соединению на поток | Lettuce мультиплексирует команды через одно соединение без пула; это его ключевое преимущество для высококонкурентных приложений. ❌ ПОСЛЕДСТВИЕ: команда настраивает большой connection pool для Lettuce, лишние ресурсы — Lettuce не нужен pool. Connection limits на Redis достигнуты без необходимости.
-> - [x] Lettuce потокобезопасен и использует одно соединение с мультиплексированием, тогда как Jedis требует пул соединений | Lettuce на основе Netty поддерживает асинхронность и реактивность; Jedis синхронный и требует JedisPool. ✓ ПРИМЕНЯТЬ: Lettuce default в Spring Boot 2.x+; для reactive WebFlux обязательно Lettuce; для legacy sync кода с Jedis — pool=2*CPU cores; миграция на Lettuce — drop-in replacement без code changes для standard operations. 📋 ПРАВИЛО: «Lettuce = thread-safe + reactive + multiplexing». 🔗 См. Q26 (RedisTemplate), Q27 (Spring caching).
-> - [ ] Spring Boot по умолчанию использует Jedis как основной Redis-клиент в spring-boot-starter-data-redis | С Spring Boot 2.x по умолчанию используется Lettuce; для переключения на Jedis нужно явно исключить lettuce-core и добавить jedis. ❌ ПОСЛЕДСТВИЕ: разработчик добавляет jedis dependency не зная что Lettuce default, classpath conflict, runtime ошибки.
 
 ## Q26. (!) Как использовать `RedisTemplate` в `Spring`?
 
@@ -1593,12 +1389,6 @@ public class RedisExampleService {
 
 **`StringRedisTemplate`** — специализация `RedisTemplate<String, String>` с `StringRedisSerializer` для ключей и значений. Используйте, если значения — строки или JSON.
 
-> [!mcq]
-> - [ ] RedisTemplate по умолчанию использует StringRedisSerializer для ключей и значений | По умолчанию RedisTemplate использует JdkSerializationRedisSerializer для значений; для строк нужно явно настроить StringRedisSerializer. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает читаемые ключи в Redis CLI, видит binary serialized data типа `\xac\xed\x00\x05t\x00\x05user:1`. Debugging hard, monitoring tools confuse.
-> - [ ] StringRedisTemplate работает с любыми объектами Java через автоматическую сериализацию | StringRedisTemplate специализирован для String-значений; для объектов нужен RedisTemplate с Jackson2JsonRedisSerializer или аналогом. ❌ ПОСЛЕДСТВИЕ: разработчик пытается сохранить User объект через StringRedisTemplate, видит `toString()` представление — невозможно десериализовать. Должны переключиться на RedisTemplate.
-> - [x] RedisTemplate требует явной настройки сериализаторов: StringRedisSerializer для ключей и Jackson2JsonRedisSerializer или GenericJackson2JsonRedisSerializer для значений | Настройка сериализации критична: неправильный сериализатор может привести к нечитаемым ключам или ошибкам десериализации. ✓ ПРИМЕНЯТЬ: production setup всегда настраивает serializers явно; для polymorphic types — GenericJackson2JsonRedisSerializer (сохраняет class info); для performance-critical paths — Kryo serializer (более компактный); для SpringBoot defaults — StringRedisTemplate если values=String. 📋 ПРАВИЛО: «явная настройка serializers, key=String, value=JSON». 🔗 См. Q25 (Lettuce vs Jedis), Q27 (caching), Q28 (Spring Boot config).
-> - [ ] RedisTemplate является потоконебезопасным и должен создаваться заново для каждого запроса | RedisTemplate потокобезопасен после инициализации (afterPropertiesSet) и предназначен для использования как синглтон. ❌ ПОСЛЕДСТВИЕ: команда создаёт RedisTemplate per-request, ресурсы тратятся на initialization, connection pool overflow. Production performance degrades.
-
 ## Q27. Как настроить кэширование через `@Cacheable` с `Redis`?
 
 `Spring Cache` абстракция + `Redis` позволяет кэшировать результаты методов декларативно:
@@ -1660,12 +1450,6 @@ public class ProductService {
 }
 ```
 
-> [!mcq]
-> - [ ] Аннотация @CachePut удаляет запись из кэша при каждом вызове метода | @CachePut обновляет (перезаписывает) запись в кэше; для удаления записи используется @CacheEvict. ❌ ПОСЛЕДСТВИЕ: разработчик использует @CachePut вместо @CacheEvict для cache invalidation, кэш растёт. Stale data, дальнейшие @Cacheable читают obsolete value.
-> - [x] Аннотация @Cacheable кэширует результат метода и пропускает выполнение метода при cache hit, возвращая кэшированное значение | Это декларативное кэширование: Spring AOP перехватывает вызов, проверяет кэш и возвращает результат без вызова метода. ✓ ПРИМЕНЯТЬ: `@Cacheable(value="products", key="#id", unless="#result == null")` для skip null caching; `@Cacheable(condition="#id < 1000")` для conditional caching; SimpleKeyGenerator для composite keys. Spring AOP self-invocation issue — внутренний вызов `@Cacheable` метода не кеширует! 📋 ПРАВИЛО: «@Cacheable = декларативный кэш, осторожно с self-invocation». 🔗 См. Q25 (Lettuce), Q26 (RedisTemplate), Q22 (caching strategies).
-> - [ ] Аннотация @CacheEvict с allEntries=true удаляет только записи, созданные текущим пользователем | allEntries=true удаляет все записи из указанного кэша (все ключи), независимо от того, кто их создал. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает per-user cache evict через allEntries=true, очищает global cache. Performance regression — все users теряют кэш одновременно.
-> - [ ] Аннотация @Cacheable работает без @EnableCaching — Spring Boot автоматически активирует кэширование | @EnableCaching обязательна (обычно на @Configuration классе); без неё аннотации @Cacheable игнорируются. ❌ ПОСЛЕДСТВИЕ: разработчик ставит @Cacheable, но забывает @EnableCaching, аннотации silently игнорируются. Performance не улучшается, debugging часами.
-
 ## Q28. Как работать с `Redis` в `Spring Boot` (конфигурация)?
 
 ```yaml
@@ -1720,12 +1504,6 @@ spring:
 ```
 
 Подробнее о конфигурации Spring Boot — в [вопросах по Spring Boot](../frameworks/spring/spring-boot-interview.md).
-
-> [!mcq]
-> - [ ] Для подключения к Redis Cluster в Spring Boot достаточно указать один узел кластера в spring.data.redis.cluster.nodes | Рекомендуется указывать несколько узлов для отказоустойчивости; Lettuce сам обнаружит остальные узлы, но один узел создаёт single point of failure при старте. ❌ ПОСЛЕДСТВИЕ: на старте application указанный node недоступен — приложение не может connect к Redis Cluster. Деплой fails при single-node listed.
-> - [ ] При использовании Redis Sentinel Spring Boot автоматически определяет режим и не требует специальной конфигурации | Для Sentinel нужна явная конфигурация spring.data.redis.sentinel.master и spring.data.redis.sentinel.nodes. ❌ ПОСЛЕДСТВИЕ: команда настраивает только spring.data.redis.host:port, ожидая Sentinel auto-discovery. Реально нужен явный sentinel config, иначе приложение connects напрямую к Sentinel и failures.
-> - [x] В Spring Boot для Redis Sentinel указывается имя мастера (sentinel.master) и адреса Sentinel-узлов (sentinel.nodes), а клиент сам опрашивает Sentinel для получения текущего мастера | Это стандартная конфигурация: Lettuce автоматически следит за failover через Sentinel API. ✓ ПРИМЕНЯТЬ: production HA setup `spring.data.redis.sentinel.master=mymaster + nodes=sentinel1:26379,sentinel2:26379,sentinel3:26379`; Lettuce reconnects автоматически после failover; AWS ElastiCache Redis Multi-AZ работает похожим образом. 📋 ПРАВИЛО: «Sentinel = master name + 3 Sentinel addresses». 🔗 См. Q20 (Sentinel), Q26 (RedisTemplate).
-> - [ ] Spring Boot соединяется с Redis только через standalone-режим; Sentinel и Cluster требуют ручной конфигурации RedisConnectionFactory | Spring Boot поддерживает все три режима (standalone, Sentinel, Cluster) через автоконфигурацию на основе application.yml. ❌ ПОСЛЕДСТВИЕ: команда пишет custom RedisConfiguration вместо использования autoconfiguration, дублирующий код, error-prone.
 
 ## Q29. (!) Как реализовать распределённую блокировку (`Distributed Lock`)?
 
@@ -1783,12 +1561,6 @@ if (lockService.tryLock("order:123", owner, Duration.ofSeconds(30))) {
 
 **Redlock** — алгоритм от автора `Redis` для надёжной блокировки на нескольких независимых `Redis`-узлах. Реализация в Java — библиотека `Redisson` (`RLock`).
 
-> [!mcq]
-> - [ ] Для захвата распределённой блокировки в Redis используют SETNX, затем отдельный вызов EXPIRE — это атомарная операция | SETNX + EXPIRE — два отдельных вызова, не атомарных. Правильно: SET key value NX EX seconds — атомарная операция. ❌ ПОСЛЕДСТВИЕ: SETNX выполнится, между ним и EXPIRE Redis crash — ключ остаётся вечным. Lock зависает forever, manual cleanup необходим.
-> - [ ] Для освобождения блокировки достаточно вызвать DEL на ключе блокировки без проверки владельца | Простой DEL освобождает блокировку даже чужого процесса; нужна атомарная проверка через Lua: GET + DEL только если значение совпадает. ❌ ПОСЛЕДСТВИЕ: процесс A захватил lock, TTL истёк → процесс B захватил lock → процесс A finishes и DEL'ит lock процесса B. Race condition, two processes в critical section одновременно.
-> - [ ] Redlock — стандартный механизм Redis для блокировок в single-node конфигурации | Redlock специально разработан для multi-node (5 независимых Redis) надёжных блокировок; для single-node достаточно SET NX EX. ❌ ПОСЛЕДСТВИЕ: команда over-engineering single-node setup с Redlock complexity. 5 Redis instances вместо 1, costs растут без benefit.
-> - [x] Надёжное освобождение блокировки требует Lua-скрипта, атомарно проверяющего владельца и удаляющего ключ только если значение совпадает | Без атомарности GET + DEL могут освободить чужую блокировку: между GET и DEL может истечь TTL и другой процесс захватить блокировку. ✓ ПРИМЕНЯТЬ: stable lock pattern — UUID owner + Lua release script; Redisson `RLock` делает это автоматически + heartbeat для длинных операций; Spring Integration RedisLockRegistry. Production-grade libraries handle всё. 📋 ПРАВИЛО: «distributed lock = SET NX EX + Lua release с owner check». 🔗 См. Q15 (transactions), Q16 (Lua), Q22 (caching).
-
 ## Q30. Как использовать `Redis` для `Rate Limiting`?
 
 **Fixed Window** — простой счётчик с TTL:
@@ -1837,12 +1609,6 @@ public class RateLimiter {
 }
 ```
 
-> [!mcq]
-> - [ ] Fixed Window Rate Limiting на Redis реализуется через Sorted Set с score равным времени запроса | Fixed Window использует простой счётчик (INCR) с TTL равным размеру окна. Sorted Set используется для Sliding Window. ❌ ПОСЛЕДСТВИЕ: разработчик использует Sorted Set для simple Fixed Window — overhead 10x, memory grows fast. Должны были INCR.
-> - [x] Sliding Window Rate Limiting на Redis реализуется через Sorted Set: каждый запрос добавляется со score=timestamp, старые записи удаляются через ZREMRANGEBYSCORE, подсчёт через ZCARD | Sliding Window точнее Fixed Window: нет граничных эффектов; Sorted Set позволяет хранить временные метки запросов. ✓ ПРИМЕНЯТЬ: Spring Cloud Gateway RequestRateLimiter использует Lua + Sorted Set для sliding window; API Gateway rate limiting (10K req/sec); GitHub API rate limiter; для сильно ограниченных API — combine с queues для backpressure. 📋 ПРАВИЛО: «Sliding Window = Sorted Set + ZCARD, Fixed = INCR». 🔗 См. Q11 (Sorted Set), Q16 (Lua).
-> - [ ] Rate Limiting на Redis всегда требует Lua-скриптов — без них атомарность невозможна | Lua нужна для Fixed Window (INCR + EXPIRE атомарно); Sliding Window на Sorted Set можно реализовать транзакцией MULTI/EXEC. ❌ ПОСЛЕДСТВИЕ: разработчик пишет Lua для всего, code becomes complex. Реально достаточно simple commands в pipeline для sliding window.
-> - [ ] Fixed Window Rate Limiting гарантирует, что в любую секунду не будет превышен лимит запросов | Fixed Window имеет граничный эффект: в районе смены окна можно сделать 2×limit запросов; Sliding Window этого лишён. ❌ ПОСЛЕДСТВИЕ: API rate limit 100 req/min Fixed Window — burst 200 запросов в районе границы окна. DDoS-like behavior, downstream services overload.
-
 ## Q31. Как использовать `Redis` для хранения сессий?
 
 `Spring Session` + `Redis` — стандартное решение для распределённого хранения HTTP-сессий:
@@ -1886,12 +1652,6 @@ graph LR
 
 Сессия хранится в `Redis` как `Hash` с ключом `spring:session:sessions:<id>`. Любой инстанс может обслужить любой запрос — sticky sessions не нужны. Подробнее о [Spring Security](../frameworks/spring/spring-security-interview.md).
 
-> [!mcq]
-> - [ ] `Spring Session` с `Redis` требует `sticky sessions` — каждый запрос должен попадать на один и тот же инстанс | `Redis Session` именно для устранения `sticky sessions`: любой инстанс читает сессию из `Redis`. ❌ ПОСЛЕДСТВИЕ: при падении инстанса с активной сессией пользователь теряет корзину/авторизацию, rolling deploy роняет всех залогиненных.
-> - [ ] Сессия в `Redis` хранится как `String` с сериализованным `HttpSession` | `Spring Session` использует `Hash`: каждый атрибут — отдельное поле, обновляется атомарно без полного rewrite. ❌ ПОСЛЕДСТВИЕ: при `setAttribute("cart",...)` идёт полная сериализация всего объекта сессии — `p99` записи 200ms при больших корзинах, latency-spike под Black Friday.
-> - [x] `Spring Session` хранит `HTTP`-сессию как `Hash` с ключом `spring:session:sessions:<id>`, любой инстанс обслуживает любой запрос | Привязка к инстансу снята: `load balancer` распределяет запросы свободно, при падении pod-а сессия жива в Redis. ✓ ПРИМЕНЯТЬ: e-commerce при scale-out на Kubernetes (Wolt, Lavka) — сессии переживают rolling deploy. 📋 ПРАВИЛО: «Stateless pod, stateful Redis». 🔗 См. Q26, Q28.
-> - [ ] `Spring Session` автоматически настраивается при добавлении `spring-session-data-redis` без аннотаций | Требуется `@EnableRedisHttpSession` на `@Configuration` или `spring.session.store-type=redis`. ❌ ПОСЛЕДСТВИЕ: разработчик добавил зависимость, ждёт работы — а сессия по-прежнему в `MapSession` in-memory; обнаруживается только в проде после рестарта pod-а.
-
 ## Q32. Как реализовать очередь задач на `Redis`?
 
 Три подхода к реализации очередей:
@@ -1927,12 +1687,6 @@ XACK queue:tasks workers <message-id>
 | Pub/Sub | Нет | Нет | Нет |
 
 Для надёжной очереди с гарантией доставки и масштабированием рассмотрите [Kafka](../messaging/kafka-interview.md).
-
-> [!mcq]
-> - [ ] Очередь на `List` + `BRPOP` обеспечивает at-least-once с повторной обработкой | `List` + `BRPOP` даёт at-most-once: если consumer упал после `RPOP` но до обработки — задача потеряна. ❌ ПОСЛЕДСТВИЕ: платёжная задача теряется при OOM consumer, клиент ждёт SMS об оплате — обнаруживается через тикеты в саппорт.
-> - [ ] `Redis Streams` без `Consumer Groups` обеспечивают at-least-once через автоматический retry | Без `Consumer Groups` `Streams` дают только чтение без `ACK`; at-least-once требует `Consumer Group` + `XACK` + `XPENDING`. ❌ ПОСЛЕДСТВИЕ: при перезапуске consumer повторно читает все сообщения с самого начала — дубликаты заказов в БД.
-> - [ ] `Pub/Sub` — рекомендованный подход для очередей задач с гарантией доставки | `Pub/Sub` — fire-and-forget без персистентности и без replay; для надёжных очередей нужны `Streams` или специализированные MQ. ❌ ПОСЛЕДСТВИЕ: subscriber отвалился на 5 секунд — все события за это время потеряны навсегда, нет способа восстановить, manual reconciliation.
-> - [x] `Redis Streams` с `Consumer Groups` дают at-least-once: необработанные задачи остаются в `PEL` и передаются другому consumer через `XCLAIM` | Падение consumer не теряет задачу — она остаётся в Pending Entries List до `XACK`. ✓ ПРИМЕНЯТЬ: order pipeline в e-commerce (Booking.com, Wolt) — отправка email/SMS, обработка платежей. 📋 ПРАВИЛО: «`PEL` — TODO list consumer-а, `XACK` — done». 🔗 См. Q18, Q17.
 
 ## Q33. (!) Как использовать `Pipeline` для увеличения производительности?
 
@@ -1984,12 +1738,6 @@ List<Object> values = redisTemplate.executePipelined(
 
 **Производительность:** без pipeline — ~100-200 команд/сек (при RTT 5 мс), с pipeline — ~100 000+ команд/сек. Pipeline НЕ атомарен — другие клиенты могут выполнять команды между вашими.
 
-> [!mcq]
-> - [ ] `Pipeline` выполняет команды атомарно — другие клиенты не могут вставить свои команды между командами `Pipeline` | `Pipeline` НЕ атомарен: другие клиенты могут вклиниться между командами. Для атомарности — `MULTI`/`EXEC` или Lua. ❌ ПОСЛЕДСТВИЕ: race condition при `INCR` + `GET` через pipeline — счётчик баланса теряет инкремент, money lost.
-> - [ ] `Pipeline` ускоряет за счёт параллельного выполнения команд на стороне сервера | Сервер выполняет команды последовательно (Redis однопоточный); выигрыш только от сокращения сетевых RTT. ❌ ПОСЛЕДСТВИЕ: разработчик ждёт линейного ускорения от количества команд, в проде получает throughput limited серверным CPU.
-> - [x] `Pipeline` группирует команды и отправляет в одном `TCP`-пакете, устраняя накладные расходы на сетевые round-trip — пропускная способность растёт в 10-100 раз | При `RTT` 5ms без pipeline: 200 cmd/sec; с pipeline — 100 000+, задержка сети не суммируется. ✓ ПРИМЕНЯТЬ: bulk warmup кэша при старте приложения (Netflix EVCache patterns), batch-импорт каталога товаров. 📋 ПРАВИЛО: «Один TCP roundtrip — тысяча команд». 🔗 См. Q15, Q35.
-> - [ ] `Pipeline` доступен только с `Jedis` — `Lettuce` не поддерживает пакетную отправку | Оба клиента поддерживают `Pipeline`; в Spring Data Redis `executePipelined()` работает с любым клиентом. ❌ ПОСЛЕДСТВИЕ: команда мигрирует с `Jedis` на `Lettuce` ради async, выкидывает pipeline-код — латентность импорта вырастает в 50 раз.
-
 ## Q34. Как оптимизировать использование памяти?
 
 1. **Используйте `Hash` вместо множества `String`** — `Hash` с маленькими значениями хранится в `ziplist` (компактно)
@@ -2024,12 +1772,6 @@ set-max-intset-entries 512      # множество целых чисел → i
 zset-max-ziplist-entries 128    # sorted set → ziplist
 ```
 
-> [!mcq]
-> - [x] `Hash` с малым числом полей хранится в `ziplist`-формате и занимает меньше памяти, чем эквивалентное число `String`-ключей | `ziplist` — компактная структура без overhead хеш-таблицы; порог переключения `hash-max-ziplist-entries 128`. ✓ ПРИМЕНЯТЬ: профили пользователей в e-commerce — `HSET user:1001 name ... email ...` экономит ~70% RAM против `SET user:1001:name`. 📋 ПРАВИЛО: «Малый Hash живёт в ziplist — большой в hashtable». 🔗 См. Q8, Q35.
-> - [ ] Команда `MEMORY USAGE` возвращает размер значения в битах | `MEMORY USAGE` возвращает приблизительный размер ключа со значением в байтах, включая overhead структуры. ❌ ПОСЛЕДСТВИЕ: разработчик делит результат на 8 «чтобы получить байты» — алерт на размер ключа срабатывает в 8 раз позже, hot key замечают только при OOM.
-> - [ ] Для экономии памяти используйте длинные описательные ключи — они лучше сжимаются | `Redis` не сжимает ключи; длинные ключи увеличивают потребление RAM. Короткие (`u:1001` вместо `user:profile:1001`) экономят байты при миллионах ключей. ❌ ПОСЛЕДСТВИЕ: при 100M ключей длиной 50 байт против 10 — overhead 4GB extra RAM, `maxmemory` срабатывает раньше времени.
-> - [ ] Команда `--bigkeys` в `redis-cli` показывает ключи с наибольшим `TTL` | `--bigkeys` находит ключи с наибольшим размером значения (по количеству элементов для коллекций, по байтам для String). ❌ ПОСЛЕДСТВИЕ: ищут «hot key с долгим TTL», не понимают почему вывод показывает Hash на 100K полей — диагностика ушла не туда, OOM продолжается.
-
 ## Q35. (!) Какие best practices при работе с `Redis`?
 
 1. **Именование ключей:** используйте конвенцию `entity:id:field` с разделителем `:`
@@ -2053,12 +1795,6 @@ redis-cli CONFIG SET latency-monitor-threshold 100
 redis-cli LATENCY LATEST
 redis-cli LATENCY HISTORY command
 ```
-
-> [!mcq]
-> - [ ] `SLOWLOG` показывает команды, которые занимают более 1 секунды — более быстрые не логируются | Порог задаётся через `slowlog-log-slower-than` в микросекундах (10000 = 10 ms по умолчанию), не фиксирован в 1 секунду. ❌ ПОСЛЕДСТВИЕ: разработчик ждёт что SLOWLOG поймает деградацию p99 200ms, в логе пусто — ищет причины замедления вслепую.
-> - [ ] `SET NX EX` для блокировок хуже чем `SETNX` + `EXPIRE` — требует двух операций вместо одной | `SET key value NX EX` — одна атомарная операция; `SETNX` + `EXPIRE` — два вызова с риском потери `TTL` при сбое между ними. ❌ ПОСЛЕДСТВИЕ: клиент упал между `SETNX` и `EXPIRE` — lock остаётся навсегда, второй процесс висит, manual recovery в production.
-> - [ ] Для мониторинга production `Redis` рекомендуется команда `MONITOR` в реальном времени | `MONITOR` выводит все команды и снижает throughput на ~50%; для production — Redis Exporter + Prometheus + Grafana. ❌ ПОСЛЕДСТВИЕ: SRE запустил `MONITOR` для диагностики — latency p99 подскочила с 1ms до 50ms, инцидент усугубился вместо разрешения.
-> - [x] Команда `SCAN` — предпочтительная альтернатива `KEYS` для итерации: не блокирует сервер и возвращает ключи небольшими порциями | `SCAN` использует cursor-based итерацию с `COUNT` для контроля нагрузки; `KEYS *` блокирует `Redis` на время полного сканирования (секунды-минуты при млн+ ключей). ✓ ПРИМЕНЯТЬ: cleanup-задачи в Spring Boot `@Scheduled`, миграции схемы ключей в e-commerce. 📋 ПРАВИЛО: «KEYS — это рулетка с downtime, SCAN — итератор». 🔗 См. Q3, Q34.
 
 ## Q36. Как обеспечить безопасность `Redis`?
 
@@ -2106,12 +1842,6 @@ spring:
         enabled: true
 ```
 
-> [!mcq]
-> - [ ] `rename-command FLUSHALL ""` отключает команду только для неаутентифицированных клиентов | `rename-command` с пустой строкой полностью отключает команду для всех клиентов, включая аутентифицированных и admin-пользователей. ❌ ПОСЛЕДСТВИЕ: рассчитывают что admin сможет сделать `FLUSHALL` через пароль — после рестарта `Redis` команды нет вообще, нужна пересборка с патчем конфига.
-> - [ ] `ACL` в `Redis` 6+ позволяет ограничить доступ к определённым БД (`SELECT 0`, `SELECT 1`) | `ACL` управляет разрешениями на команды и ключи по паттерну, но не на номера БД; изоляция по БД — только через отдельные инстансы. ❌ ПОСЛЕДСТВИЕ: разработчик кладёт PII в `db1` думая что ACL изолирует от `db0` — pentest находит утечку через любого пользователя с `+SELECT`.
-> - [x] `ACL` в `Redis` 6+ создаёт пользователей с доступом к командам и ключам по паттерну — например, `+GET` `+SET` на `~cache:*` | Fine-grained контроль: каждый сервис получает свои права без общего пароля, аудит через `ACL LOG`. ✓ ПРИМЕНЯТЬ: multi-tenant сервисы (Capital One post-2019 least-privilege), отдельные ACL для billing и аналитики. 📋 ПРАВИЛО: «Один сервис — один ACL-пользователь, не общий пароль». 🔗 См. Q35, Q1.
-> - [ ] `protected-mode yes` открывает порт для всех сетевых интерфейсов с требованием пароля | `protected-mode yes` ограничивает подключения из внешних сетей если не задан `bind` или `requirepass`; это не аналог firewall. ❌ ПОСЛЕДСТВИЕ: админ полагается на `protected-mode` как на единственный security layer — Redis 6379 светит наружу из-за `bind 0.0.0.0`, инциденты 2019-2020.
-
 ## Q37. Как мониторить `Redis`?
 
 ```bash
@@ -2151,12 +1881,6 @@ redis-cli INFO keyspace
 
 Для production-мониторинга: `Redis Exporter` + `Prometheus` + `Grafana`. Подробнее о мониторинге — в [вопросах по Observability](../monitoring/observability-interview.md) и [метрикам и трейсингу](../monitoring/metrics-tracing-interview.md).
 
-> [!mcq]
-> - [ ] Метрика `keyspace_hits` в `INFO stats` показывает общее количество ключей в `Redis` | `keyspace_hits` — число успешных cache hits; число ключей показывает `DBSIZE` или `INFO keyspace`. ❌ ПОСЛЕДСТВИЕ: на дашборде «количество ключей растёт линейно» — на самом деле это счётчик попаданий, реальный размер базы вышел за `maxmemory` неделю назад.
-> - [ ] `Hit rate = keyspace_misses / (keyspace_hits + keyspace_misses)` — чем выше, тем лучше | Формула наоборот: `hit rate = hits / (hits + misses)`. Высокий hit rate (>90%) — эффективный кэш. ❌ ПОСЛЕДСТВИЕ: алерт срабатывает на «hit rate 5%», команда празднует — а реальный hit rate всего 5%, вся нагрузка падает на основную БД.
-> - [x] `Redis Exporter` + `Prometheus` + `Grafana` — рекомендованный стек для production-мониторинга `Redis`: метрики, алертинг, дашборды | `Redis Exporter` экспортирует `INFO` в формате Prometheus без нагрузки на сервер; `MONITOR` слишком дорог для прода. ✓ ПРИМЕНЯТЬ: SRE setup в Yandex/Avito — алерты на `used_memory` >80% `maxmemory`, `evicted_keys` rate, `connected_clients` near limit. 📋 ПРАВИЛО: «Метрики из INFO, не из MONITOR». 🔗 См. Q35, Q36.
-> - [ ] `LATENCY LATEST` показывает медленные команды за последние 24 часа в хронологическом порядке | `LATENCY LATEST` показывает последнее событие задержки по каждому event type; для истории — `LATENCY HISTORY <event>`. ❌ ПОСЛЕДСТВИЕ: дежурный смотрит `LATENCY LATEST` после инцидента, не видит spike час назад — думает что всё ОК, real cause упущен.
-
 ## Q38. (!) В чём разница между `Redis` и `Memcached`?
 
 | Характеристика | Redis | Memcached |
@@ -2177,12 +1901,6 @@ redis-cli INFO keyspace
 **Когда `Memcached`:** простой кэш строк с минимальным overhead на ключ, максимальная утилизация памяти. Multi-threaded из коробки — может быть быстрее на multi-core под чистым key-value кэшем.
 
 **На практике:** в большинстве Java/Spring-стеков выбирают `Redis` — единая инфраструктура для кэша, сессий, очередей и pub/sub.
-
-> [!mcq]
-> - [ ] `Redis` и `Memcached` одинаково поддерживают персистентность на диск — оба используют snapshots | `Memcached` не поддерживает персистентность вообще, всё хранится только в RAM; `Redis` поддерживает `RDB` snapshots и `AOF` log. ❌ ПОСЛЕДСТВИЕ: команда мигрировала сессии в `Memcached` ради «совместимой» персистентности — после рестарта pod-а все пользователи разлогинены, бизнес-инцидент.
-> - [ ] `Memcached` поддерживает `Sorted Set` и `List`, что делает его равноценным `Redis` для большинства задач | `Memcached` хранит только строки; богатые типы данных (List, Hash, ZSet, Stream) — это преимущество `Redis`. ❌ ПОСЛЕДСТВИЕ: lead инженер обещает leaderboard на `Memcached`, спустя спринт обнаруживает отсутствие ZSet — переписывание архитектуры под `Redis`.
-> - [ ] `Redis` и `Memcached` имеют одинаковый overhead памяти на ключ — около 80 байт | `Redis` требует ~80+ байт overhead на ключ; `Memcached` — ~48 байт, эффективнее при чистом кэше коротких строк с миллионами ключей. ❌ ПОСЛЕДСТВИЕ: capacity planning сделан как для `Memcached`, на проде Redis OOM при том же RAM — внеплановый scale-up.
-> - [x] `Redis` поддерживает персистентность (`RDB`/`AOF`), репликацию, `Pub/Sub`, транзакции и 10+ типов данных, `Memcached` — только строковый кэш | `Memcached` полностью multi-threaded и эффективнее для простого кэша строк. ✓ ПРИМЕНЯТЬ: Java/Spring стеки выбирают `Redis` (Wolt, Lavka) — единая инфра для кэша, сессий, очередей. 📋 ПРАВИЛО: «Memcached — узкий, Redis — швейцарский нож». 🔗 См. Q1, Q2.
 
 ## Q39. (!) Как работает `Redis Cluster` и что такое hash slots?
 
@@ -2246,18 +1964,6 @@ spring:
         max-redirects: 3
 ```
 
-> [!mcq]
-> - [ ] `Redis Cluster` делит пространство ключей на 16 384 hash slots по формуле `SHA256(key) mod 16384` | Формула `CRC16(key) mod 16384`. SHA256 не используется — `CRC16` значительно быстрее и достаточен для равномерного распределения. ❌ ПОСЛЕДСТВИЕ: разработчик пишет custom клиент на основе SHA256 — все запросы получают `MOVED`-редиректы, латентность p99 растёт с 1ms до 10ms.
-> - [x] В `Redis Cluster` каждый ключ отображается в один из 16 384 hash slots через `CRC16(key) mod 16384`, каждый master-узел владеет диапазоном слотов | Детерминированный алгоритм: ключ всегда попадает в один слот; smart-клиенты кэшируют slot-map для прямых запросов. ✓ ПРИМЕНЯТЬ: горизонтальное масштабирование Redis в Discord/Twitter, шардирование сессий e-commerce на 3+ master узлах. 📋 ПРАВИЛО: «16384 слота — детерминированный CRC16, а не SHA256». 🔗 См. Q21.
-> - [ ] `Redis Cluster` требует перезапуска всех узлов при добавлении нового master-узла | Resharding в `Redis Cluster` происходит в оперативном режиме: слоты мигрируют без downtime через `CLUSTER SETSLOT` и `MIGRATE` slot-by-slot. ❌ ПОСЛЕДСТВИЕ: команда планирует maintenance window на 2 часа для add-node, теряет SLO впустую — operation можно делать на горячую.
-> - [ ] При обращении к неверному узлу клиент получает ошибку и должен самостоятельно найти правильный узел | Клиент получает `MOVED`-редирект с адресом нужного узла; smart-клиенты (Lettuce, Jedis) обновляют slot-map и переподключаются. ❌ ПОСЛЕДСТВИЕ: команда пишет ручной retry-loop поверх error — race condition при resharding, dropped writes под нагрузкой.
-
-> [!mcq]
-> - [x] `Hash Tags` `{key}` размещают несколько ключей в одном hash slot — необходимо для многоключевых операций в `Redis Cluster` | Хешируется только часть в фигурных скобках: `{order:123}:items` и `{order:123}:status` попадут в один слот, можно делать `MULTI`/`EXEC`. ✓ ПРИМЕНЯТЬ: order pipeline в Wolt/Booking — все ключи одного заказа группируются для атомарных Lua-скриптов. 📋 ПРАВИЛО: «Фигурные скобки — это якорь к одному слоту». 🔗 См. Q21, Q15.
-> - [ ] `Hash Tags` обязательны для всех ключей в `Redis Cluster` — без них ключи не будут записаны | `Hash Tags` опциональны; без них ключ хешируется целиком и распределяется как обычно. ❌ ПОСЛЕДСТВИЕ: разработчик заворачивает все ключи в один тег `{global}` — все данные на одном master, кластер выродился в standalone, рост нагрузки убивает один узел.
-> - [ ] `MULTI`/`EXEC` работает в `Redis Cluster` для ключей из разных hash slots | `MULTI`/`EXEC` в Cluster требует, чтобы все ключи транзакции были в одном слоте; иначе `CROSSSLOT` error. ❌ ПОСЛЕДСТВИЕ: транзакция перевода между двумя счетами падает с `CROSSSLOT` только в проде после миграции на cluster — money lost при partial commit.
-> - [ ] Lua-скрипты в `Redis Cluster` могут обращаться к ключам из разных слотов через автоматическую маршрутизацию | Lua-скрипты в Cluster выполняются на одном узле и могут обращаться только к ключам одного слота. ❌ ПОСЛЕДСТВИЕ: rate limiter на Lua с ключами `user:1` и `global:counter` в разных слотах — `EVAL` падает с error в проде, rate limit не работает.
-
 ## Q40. (!) Как работает `HyperLogLog` и когда применять?
 
 `HyperLogLog` (`HLL`) — вероятностная структура данных для подсчёта числа **уникальных элементов** (cardinality) с погрешностью ~0.81% при использовании лишь **12 KB памяти** независимо от числа элементов.
@@ -2301,12 +2007,6 @@ Long count = template.opsForHyperLogLog().size("page:views");
 
 **Важно:** `HLL` не хранит сами элементы — нельзя получить список или проверить membership. Для этого нужен `Bloom Filter`.
 
-> [!mcq]
-> - [ ] `HyperLogLog` точно подсчитывает уникальные элементы без погрешности — идеален для биллинга | `HyperLogLog` вероятностный с погрешностью ~0.81%; для точного подсчёта — `Set` или счётчик в БД. ❌ ПОСЛЕДСТВИЕ: биллинг считает API-вызовы через `PFCOUNT`, клиенту выставляют счёт на 1% больше реального — массовые жалобы и refunds.
-> - [ ] `HyperLogLog` хранит сами элементы и позволяет перечислить значения через `PFRANGE` | `HyperLogLog` не хранит элементы, только вероятностный счётчик; команды `PFRANGE` не существует. ❌ ПОСЛЕДСТВИЕ: разработчик пишет endpoint «получить список уников» через `PFRANGE` — `unknown command` в проде, переписывание на `Set` под нагрузкой.
-> - [ ] `PFMERGE` объединяет два HLL путём суммирования счётчиков | `PFMERGE` создаёт новый HLL с cardinality объединения множеств, а не сумму счётчиков (учитывает пересечение). ❌ ПОСЛЕДСТВИЕ: ожидают `PFCOUNT(merge(a,b)) == PFCOUNT(a) + PFCOUNT(b)`, метрика «уники за неделю» в 2 раза меньше суммы дней — путаница в дашбордах.
-> - [x] `HyperLogLog` использует фиксированные 12 KB памяти независимо от числа уникальных элементов — подходит для подсчёта миллиардов уников | Ключевое свойство: `Set` с млрд уников требует сотни GB, HLL — всегда 12 KB с погрешностью 0.81%. ✓ ПРИМЕНЯТЬ: счётчики уникальных посетителей сайта (Avito, ВК аналитика), уникальные search queries за день. 📋 ПРАВИЛО: «12 KB на миллиард уников — точность жертвуется ради RAM». 🔗 См. Q12, Q2.
-
 ## Q41. Что такое `Redis Bloom Filter` и другие модули (`RedisBloom`, `RediSearch`)?
 
 `Redis Modules` — расширения, добавляющие новые типы данных и команды поверх ядра `Redis`. В `Redis Stack` (и `Redis Cloud`) они включены по умолчанию.
@@ -2348,12 +2048,6 @@ FT.SEARCH idx:products "Redis" RETURN 2 name price
 - `RedisTimeSeries` — временные ряды с агрегацией (`TS.ADD`, `TS.RANGE`)
 - `RedisJSON` — нативное хранение и запросы `JSON` (JSONPath)
 - `RedisGraph` — графовая БД поверх `Redis` (устарел, заменён другими)
-
-> [!mcq]
-> - [ ] `Bloom Filter` даёт ложноотрицательные результаты, но никогда ложноположительные | Всё наоборот: `Bloom Filter` может давать false positive, но никогда false negative. ❌ ПОСЛЕДСТВИЕ: разработчик использует BF для критичной проверки «email уже зарегистрирован» — false negative пропускает дубликат, нарушает уникальность БД, manual cleanup.
-> - [ ] `BF.EXISTS` возвращает 1, если элемент точно существует в `Bloom Filter` | `BF.EXISTS` возвращает 1 если элемент возможно существует (может быть false positive с error_rate ~1%); только 0 гарантирует отсутствие. ❌ ПОСЛЕДСТВИЕ: код «if BF.EXISTS then return user» отдаёт 200 OK для несуществующего user, frontend падает на null pointer.
-> - [x] `Bloom Filter` гарантирует отсутствие элемента при ответе 0 (false negative исключены), при ответе 1 элемент может отсутствовать (false positive возможны) | Это свойство делает фильтр идеальным для `Cache Penetration protection`: 0 = точно нет, 1 = проверить в БД. ✓ ПРИМЕНЯТЬ: pre-check существования user_id перед SQL-запросом в e-commerce, защита от scanner-атак в Avito/Netflix. 📋 ПРАВИЛО: «0 — твёрдое нет, 1 — может быть да». 🔗 См. Q23, Q22.
-> - [ ] `Bloom Filter` — встроенный тип данных ядра `Redis` без необходимости подключать модули | `Bloom Filter` доступен только через модуль `RedisBloom` (Redis Stack); в ядре `Redis` нет нативного BF-типа. ❌ ПОСЛЕДСТВИЕ: команда деплоит код с `BF.ADD` на vanilla Redis 7 — `unknown command` в проде, нужен пересоздать инстанс с RedisBloom.
 
 ## Q42. Как работают геопространственные команды в `Redis`?
 
@@ -2410,12 +2104,6 @@ results.getContent().forEach(r -> {
 
 **Ограничения:** нет поддержки полигонов, маршрутов и сложной геометрии. Для сложной геопространственной аналитики — `PostGIS` или `Elasticsearch Geo`.
 
-> [!mcq]
-> - [ ] Геопространственные команды `Redis` используют B-дерево для хранения координат — это обеспечивает точный поиск по радиусу | `GEO` использует `Sorted Set` с geohash в качестве score; B-деревья в `Redis` не применяются. ❌ ПОСЛЕДСТВИЕ: разработчик планирует индексы как в `PostgreSQL` (B-tree on lat/lon), удивляется отсутствию tuning-опций — wrong mental model приводит к ошибочной capacity planning.
-> - [ ] `GEODIST` возвращает расстояние между двумя точками только в метрах — изменить единицы нельзя | `GEODIST` принимает unit-параметр: `m`, `km`, `mi`, `ft` — расстояние можно получить в любых поддерживаемых единицах. ❌ ПОСЛЕДСТВИЕ: код делит результат на 1000 для километров, забывает округление — UI показывает «634.0742 km» вместо «634 km», UX-баг.
-> - [x] `GEO` в `Redis` внутренне реализован как `Sorted Set`, где score — 52-битный geohash, что обеспечивает эффективный радиусный поиск | Geohash даёт пространственную локальность: близкие точки имеют близкие geohash-значения, ускоряя range-поиск через `ZRANGEBYSCORE`. ✓ ПРИМЕНЯТЬ: поиск ближайших курьеров в Wolt/Lavka, ближайшие рестораны в Yandex.Eda — миллион точек, sub-ms ответ. 📋 ПРАВИЛО: «GEO — это ZSet с geohash вместо score». 🔗 См. Q11, Q12.
-> - [ ] `GEOSEARCH` поддерживает поиск по сложным полигонам и маршрутам между точками | `GEOSEARCH` поддерживает только `BYRADIUS` и `BYBOX`; для полигонов нужен `PostGIS` или `Elasticsearch Geo`. ❌ ПОСЛЕДСТВИЕ: команда обещает поиск ресторанов в district-полигоне на Redis — уже после спринта обнаруживает limitation, миграция в `PostGIS`.
-
 ## Q43. Что такое `RESP3` и чем он отличается от `RESP2`?
 
 `RESP` (`Redis Serialization Protocol`) — текстовый протокол для общения клиента с `Redis`. `RESP3` — третья версия, введена в `Redis 6.0`.
@@ -2457,12 +2145,6 @@ CLIENT TRACKING on BCAST PREFIX user:
 ```
 
 **В Spring Data Redis:** `Lettuce` поддерживает `RESP3` начиная с версии 6.x. Включается через конфигурацию соединения — улучшает производительность за счёт нативных типов и уменьшает аллокации на десериализацию.
-
-> [!mcq]
-> - [ ] `RESP3` полностью заменил `RESP2` начиная с `Redis` 6.0 — старый протокол больше не поддерживается | `RESP2` по-прежнему default; `RESP3` активируется командой `HELLO 3` и является опциональным fallback. ❌ ПОСЛЕДСТВИЕ: команда планирует срочный апгрейд клиента «потому что Redis 7 требует RESP3» — лишний риск migration на старом коде без реальной необходимости.
-> - [ ] `RESP3` ускоряет за счёт бинарного сжатия данных при передаче | `RESP3` не добавляет сжатие; главные преимущества — нативные типы данных (Map, Set, Boolean) и Push-уведомления для server-push. ❌ ПОСЛЕДСТВИЕ: ожидают сокращения трафика на ~50% после `HELLO 3`, дашборды не показывают изменений — ложные ожидания, разочарование на review.
-> - [ ] `RESP3` позволяет `Redis` отправлять Push-уведомления только для `Keyspace Events` | `RESP3` Push используется для `Pub/Sub`, `Keyspace Events` и `Client-side Caching` invalidation — общий server-push механизм. ❌ ПОСЛЕДСТВИЕ: разработчик делает client-side cache invalidation через polling, не использует Push tracking — лишняя нагрузка на Redis, latency инвалидации в секунды.
-> - [x] `RESP3` вводит нативные типы (Map, Set, Double, Boolean) и Push-уведомления — одно соединение получает команды и подписки одновременно | В `RESP2` подписка захватывала соединение полностью; `RESP3` Push мультиплексирует команды и pub/sub. ✓ ПРИМЕНЯТЬ: Lettuce 6.x в Spring Boot для client-side caching (`CLIENT TRACKING`), уменьшение connection pool. 📋 ПРАВИЛО: «RESP3 — нативные типы плюс Push, не сжатие». 🔗 См. Q25, Q17.
 
 ---
 

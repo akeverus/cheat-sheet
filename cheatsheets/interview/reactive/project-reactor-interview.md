@@ -150,12 +150,6 @@ return userRepository.findById(id)          // Mono<User>
     .flatMap(user -> orderRepository.findByUser(user)); // Mono<Order>
 ```
 
-
-> [!mcq]
-> - [ ] Реактивный подход — это многопоточность через `ExecutorService` и `CompletableFuture` | Многопоточность не равна реактивности: `CompletableFuture` блокирует поток в `.get()` и не поддерживает backpressure. ❌ ПОСЛЕДСТВИЕ: команда мигрирует на `CompletableFuture` и удивляется, что Tomcat-пул всё ещё забит при 5K rps.
-> - [x] Парадигма работы с асинхронными потоками данных через push-модель и backpressure | Поток данных течёт от `Publisher` к `Subscriber` сигналами `onNext`/`onComplete`/`onError`, потребитель управляет скоростью через `request(n)`. ✓ ПРИМЕНЯТЬ: Netflix использует `RxJava`/`Reactor` для streaming-API; Spring WebFlux — основа event-driven backend в banking/telecom. 📋 ПРАВИЛО: «Push с обратной связью, а не pull в цикле». 🔗 См. Q2, Q4, Q27.
-> - [ ] Это синоним функционального программирования с `Stream.map().filter()` | `Stream API` — pull-based и синхронный, не имеет сигналов завершения и backpressure. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает неблокирующий I/O от `stream().map(http::call)`, под нагрузкой получает thread starvation.
-> - [ ] Подход, при котором каждый запрос обрабатывается в отдельном потоке через `@Async` | `@Async` создаёт thread-per-request, что не масштабируется до 10K connections и не передаёт backpressure. ❌ ПОСЛЕДСТВИЕ: в e-commerce под Black Friday `@Async` кидает `RejectedExecutionException`, заказы теряются.
 ---
 
 ## Q2. (!) Что такое спецификация Reactive Streams?
@@ -187,12 +181,6 @@ Publisher                Subscriber
 
 `Project Reactor` полностью реализует спецификацию `Reactive Streams`. `Flux` и `Mono` реализуют интерфейс `Publisher<T>`.
 
-
-> [!mcq]
-> - [ ] `Publisher`, `Subscriber`, `Observer`, `Subject` — четыре интерфейса спецификации | `Observer`/`Subject` — термины `RxJava`, в спецификации их нет. ❌ ПОСЛЕДСТВИЕ: на собеседовании путают RxJava 2 API с Reactive Streams, проваливают вопрос про `java.util.concurrent.Flow`.
-> - [ ] `Publisher.subscribe()` сразу шлёт все элементы через `onNext` без участия подписчика | Без `request(n)` `Publisher` обязан ждать запрос: иначе нарушение Rule 1 спецификации. ❌ ПОСЛЕДСТВИЕ: самописный `Publisher` шлёт `onNext` до `request()`, TCK-тесты падают, интеграция с `Reactor` ломается.
-> - [ ] Спецификация определяет 4 интерфейса (`Publisher`, `Subscriber`, `Subscription`, `Processor`) и протокол с `request(n)` для backpressure | `JDK 9` включил эту спецификацию как `java.util.concurrent.Flow`; `Reactor`, `RxJava`, `Akka Streams` совместимы между собой. ✓ ПРИМЕНЯТЬ: `MongoDB Reactive Driver` и `R2DBC` реализуют `Publisher`, что позволяет использовать их с любой Reactive Streams-библиотекой. 📋 ПРАВИЛО: «4 интерфейса + request(n) = совместимость библиотек». 🔗 См. Q1, Q4, Q27.
-> - [ ] Реализация спецификации возможна только через `Project Reactor`, других нет | Спецификация многоплатформенная: `RxJava 3`, `Akka Streams`, `Mutiny` (Quarkus) — независимые реализации. ❌ ПОСЛЕДСТВИЕ: команда отказывается от Quarkus с `Mutiny` из-за ложного убеждения, что только `Reactor` совместим со Spring.
 ---
 
 ## Q3. Что такое Project Reactor и чем он отличается от RxJava?
@@ -212,12 +200,6 @@ Publisher                Subscriber
 
 `Reactor` разработан специально для экосистемы `Spring` и тесно интегрирован с `Spring WebFlux`, `Spring Data Reactive`, `Spring Security` и другими компонентами.
 
-
-> [!mcq]
-> - [ ] `Reactor` и `RxJava 3` идентичны: `Mono ≡ Single`, `Flux ≡ Observable` | `RxJava` различает `Single`/`Maybe`/`Observable`/`Flowable` (4 типа), `Reactor` — только `Mono`/`Flux`; `Observable` не имеет backpressure, `Flux` имеет всегда. ❌ ПОСЛЕДСТВИЕ: миграция RxJava→Reactor «один-в-один» теряет различие `Maybe` (0/1 без ошибки), nullable-семантику сломали в production.
-> - [ ] `Project Reactor` имеет встроенный backpressure во всех типах и не допускает `null` в потоке; `RxJava` поддерживает backpressure только в `Flowable` | `Reactor` спроектирован для Spring-экосистемы, имеет `Context` для propagation; `null` в `Mono.just(null)` бросает `NullPointerException` сразу. ✓ ПРИМЕНЯТЬ: Spring WebFlux/`R2DBC`/`WebClient` строятся на `Reactor`, а не RxJava — выбор сделан осознанно для backpressure-by-default. 📋 ПРАВИЛО: «Reactor для Spring, RxJava для Android». 🔗 См. Q1, Q5, Q33.
-> - [ ] `Project Reactor` — это просто Spring-обёртка над `RxJava 3` | `Reactor` — независимая библиотека от Pivotal/VMware с нуля, использует `reactive-streams` API, но без зависимости от RxJava. ❌ ПОСЛЕДСТВИЕ: разработчик добавляет `io.reactivex:rxjava` в WebFlux-проект «для совместимости» — конфликт классов, baggage в classpath.
-> - [ ] `RxJava` поддерживает реактивность, а `Reactor` — только функциональные стримы | Оба полностью реализуют Reactive Streams TCK; `Reactor.Flux` совместим с `RxJava.Flowable` через `Flux.from(publisher)`. ❌ ПОСЛЕДСТВИЕ: команда выбирает RxJava для «настоящей реактивности» в Spring WebFlux-проекте, теряет нативную интеграцию и `Context`.
 ---
 
 ## Q4. (!) Что такое backpressure и почему это важно?
@@ -255,12 +237,6 @@ flux.subscribe(new BaseSubscriber<String>() {
 });
 ```
 
-
-> [!mcq]
-> - [ ] Backpressure — это retry-механизм после `OutOfMemoryError` | Backpressure — превентивный контроль, а не post-mortem reaction; OOM наступает уже после нарушения. ❌ ПОСЛЕДСТВИЕ: команда «решает» OOM перезапуском пода каждый час, latency p99 деградирует до 10s.
-> - [ ] Это автоматическое сжатие данных в потоке для уменьшения нагрузки | Сжатие — отдельная техника (gzip, Snappy); backpressure управляет скоростью, а не размером. ❌ ПОСЛЕДСТВИЕ: разработчик добавляет gzip к Kafka-сообщениям и не понимает, почему consumer всё ещё в lag — сжатие не решает проблему скорости.
-> - [ ] Механизм запроса данных подписчиком через `Subscription.request(n)`: producer не шлёт больше, чем consumer запросил | Это Flow-control между Publisher и Subscriber; запрашивается ровно `n` элементов, что предотвращает буфер-overflow и OOM. ✓ ПРИМЕНЯТЬ: Kafka Streams reactor-bridge и `R2DBC` используют backpressure для plug-and-play protection от медленных consumer'ов. 📋 ПРАВИЛО: «Pull в push-обёртке через request(n)». 🔗 См. Q27, Q28, Q29.
-> - [ ] Это паттерн Circuit Breaker для отключения upstream при ошибках | Circuit Breaker (`Resilience4j`) реагирует на failure-rate; backpressure — на скорость потребления. ❌ ПОСЛЕДСТВИЕ: вместо `request(n)` команда обвешивает chain Circuit Breaker'ами, OOM не уходит — буферы продолжают расти между вызовами.
 ---
 
 ## Q5. (!) В чём разница между Mono и Flux?
@@ -287,12 +263,6 @@ Flux<String> flux = Mono.just("hello").flux();
 - `Mono` — поиск по ID, сохранение, HTTP-запрос, подсчёт
 - `Flux` — список результатов, стриминг событий, чтение файла построчно
 
-
-> [!mcq]
-> - [ ] `Mono` — синхронный, `Flux` — асинхронный | Оба асинхронные; разница только в количестве элементов: `Mono` ≤ 1, `Flux` 0..N. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `block()` на `Mono` «потому что синхронный» в WebFlux-controller, блокирует event-loop поток.
-> - [ ] `Mono<T>` — 0 или 1 элемент (как `Optional`/HTTP-ответ), `Flux<T>` — 0..N элементов (поток событий) | `Mono` подходит для `findById`, save, REST-response; `Flux` — для `findAll`, SSE, файлов построчно. ✓ ПРИМЕНЯТЬ: Spring Data R2DBC возвращает `Mono` для `findById` и `Flux` для `findAll`; WebFlux SSE-endpoint всегда `Flux<ServerSentEvent>`. 📋 ПРАВИЛО: «Mono = 0..1, Flux = 0..N». 🔗 См. Q1, Q6, Q7.
-> - [ ] `Mono` всегда содержит ровно 1 элемент, иначе бросает исключение | `Mono.empty()` валиден; `Mono` может завершиться `onComplete` без `onNext`. ❌ ПОСЛЕДСТВИЕ: вместо `switchIfEmpty` пишут `.map(x -> x != null ? x : default)`, маппинг не вызывается на empty Mono — баг в логике.
-> - [ ] `Flux` обязательно бесконечен, `Mono` всегда конечен | `Flux` может быть конечным (`Flux.just(1,2,3)`); бесконечность — частный случай (`Flux.interval`). ❌ ПОСЛЕДСТВИЕ: тест с `StepVerifier.expectComplete()` на конечном Flux считают «неправильным», переписывают на `expectNoEvent` и ловят false positive.
 ---
 
 ## Q6. Какие способы создания Mono существуют?
@@ -328,12 +298,6 @@ Mono<String> create = Mono.create(sink -> {
 });
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ---
 
 ## Q7. Какие способы создания Flux существуют?
@@ -379,12 +343,6 @@ Flux<String> create = Flux.create(sink -> {
 });
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ---
 
 ## Q8. (!) В чём разница между Mono.just() и Mono.defer()?
@@ -411,12 +369,6 @@ Mono<User> userMono = Mono.defer(() ->
 
 Правило: если создание значения имеет побочные эффекты или должно быть свежим для каждого подписчика — используйте `defer()`.
 
-
-> [!mcq]
-> - [ ] Оба идентичны: `just(supplier.get())` ≡ `defer(supplier)` | `just` вычисляет значение в момент вызова метода; `defer` — на каждом `subscribe`, что критично для `LocalDateTime.now()`/счётчиков. ❌ ПОСЛЕДСТВИЕ: `Mono.just(LocalDateTime.now())` отдаёт всем подписчикам один и тот же timestamp, кэш-busting не работает.
-> - [ ] `Mono.just(value)` — eager evaluation в момент создания; `Mono.defer(() -> Mono.just(...))` — lazy, supplier вызывается на каждой подписке | `defer` нужен когда значение зависит от состояния (now, counter, DB-call), `just` — для готовых констант. ✓ ПРИМЕНЯТЬ: `defer` обязателен в `retryWhen` для повторного вызова repository; кеш-валидация через `defer(() -> redis.get(key))`. 📋 ПРАВИЛО: «just = const, defer = supplier». 🔗 См. Q6, Q7, Q25.
-> - [ ] `defer` блокирует поток до получения значения, а `just` — нет | Оба не блокируют; разница только в моменте вычисления supplier. ❌ ПОСЛЕДСТВИЕ: команда боится `defer` из-за «блокировки», заворачивает всё в `just(blockingCall())` — каждый subscribe выполняется один раз, кэшируется stale value.
-> - [ ] `defer` создаёт горячий поток, `just` — холодный | Оба cold; hot-поведение даёт `share()`/`publish()`/`Sinks`. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает broadcast от `defer`, два подписчика не видят одинаковые события — путаница в SSE-сценарии.
 ---
 
 ## Q9. Что такое Flux.create() и Flux.push() и когда их использовать?
@@ -447,12 +399,6 @@ Flux<String> callbackFlux = Flux.push(sink -> {
 - `ERROR` — генерирует `IllegalStateException`
 - `IGNORE` — полностью игнорирует backpressure
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ---
 
 ## Q10. Что такое Flux.generate() и чем он отличается от Flux.create()?
@@ -483,12 +429,6 @@ fibonacci.take(10).subscribe(System.out::println);
 | Backpressure | Встроен (pull-based) | Через `OverflowStrategy` |
 | Применение | Синхронные генераторы | Async/callback-based API |
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ---
 
 ## Q11. (!) В чём разница между map() и flatMap()?
@@ -517,12 +457,6 @@ Flux<Order> correct = userFlux.flatMap(user -> orderService.findByUser(user));
 
 **Важно:** `flatMap()` не гарантирует порядок элементов в результирующем потоке, т.к. подписки конкурентны.
 
-
-> [!mcq]
-> - [ ] `map` для async, `flatMap` для sync | Наоборот: `map` синхронный (T→R), `flatMap` для async (T→Publisher<R>) и flattens результат. ❌ ПОСЛЕДСТВИЕ: `flux.map(id -> webClient.get(id).bodyToMono(User.class))` создаёт `Flux<Mono<User>>`, никто не подписывается на внутренние Mono — запросы не выполняются.
-> - [ ] `map(T → R)` — синхронная трансформация 1-к-1; `flatMap(T → Publisher<R>)` — асинхронная, разворачивает inner publisher (1-к-N) | `flatMap` подписывается на inner и flattens; нужен для I/O-операций (HTTP, DB). ✓ ПРИМЕНЯТЬ: WebFlux-controller `userIds.flatMap(userService::findById)` для параллельных DB-запросов; Booking.com использует `flatMap` для composite price-aggregation. 📋 ПРАВИЛО: «map для CPU, flatMap для I/O». 🔗 См. Q12, Q13, Q15.
-> - [ ] `flatMap` сохраняет порядок, `map` — нет | Наоборот: `map` сохраняет порядок (sync), `flatMap` — НЕ сохраняет (interleaved); порядок гарантирует `concatMap` или `flatMapSequential`. ❌ ПОСЛЕДСТВИЕ: банковский transfer-pipeline на `flatMap` обрабатывает дебет после кредита из-за разной latency, баланс уходит в минус.
-> - [ ] `map` доступен только для `Mono`, `flatMap` — для `Flux` | Оба доступны и в `Mono`, и в `Flux`. ❌ ПОСЛЕДСТВИЕ: разработчик дублирует `Mono.map().flux().flatMap()` вместо одного `flatMap`, читаемость падает, цепочка раздувается.
 ---
 
 ## Q12. (!) В чём разница между flatMap(), concatMap() и switchMap()?
@@ -559,12 +493,6 @@ inputFlux
 // Если пользователь быстро набирает, предыдущие запросы отменяются
 ```
 
-
-> [!mcq]
-> - [ ] Все три идентичны, отличие только в названии | Поведение различается принципиально: `flatMap` — параллельно/interleaved, `concatMap` — последовательно с сохранением порядка, `switchMap` — отменяет предыдущий при новом элементе. ❌ ПОСЛЕДСТВИЕ: команда меняет `concatMap` на `flatMap` для «оптимизации», ломает порядок транзакций в банковском pipeline.
-> - [ ] `flatMap` — параллельно (порядок не гарантирован), `concatMap` — последовательно (FIFO), `switchMap` — каждый новый upstream-элемент отменяет inner-обработку предыдущего | `flatMap` ≈ ConcurrencyN; `switchMap` идеален для search-as-you-type, где старые запросы уже не нужны. ✓ ПРИМЕНЯТЬ: Google Search/Algolia на frontend используют `switchMap` для cancel предыдущего запроса при новом keystroke; банковские системы — `concatMap` для строгого ордеринга. 📋 ПРАВИЛО: «flat — parallel, concat — order, switch — cancel». 🔗 См. Q11, Q13, Q15.
-> - [ ] `flatMap` сохраняет порядок строго, `concatMap` параллелит, `switchMap` буферизует | Перепутаны: `concatMap` — sequential, `flatMap` — parallel; `switchMap` отменяет, не буферизует. ❌ ПОСЛЕДСТВИЕ: при выборе оператора по неверной модели результат `flatMap` приходит в произвольном порядке, тесты с `expectNext("A","B")` нестабильны.
-> - [ ] `switchMap` блокирует поток до завершения inner; `concatMap` — non-blocking | Все три non-blocking; `switchMap` cancel'ит inner subscription, не блокирует. ❌ ПОСЛЕДСТВИЕ: разработчик ставит `subscribeOn(boundedElastic)` под `switchMap` «чтобы разблокировать», впустую тратит worker'ы из-за ложной модели.
 ---
 
 ## Q13. Что такое flatMapSequential()?
@@ -584,12 +512,6 @@ Flux.range(1, 5)
 | `concatMap()` | Медленный | Гарантирован |
 | `flatMapSequential()` | Быстрый | Гарантирован |
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ---
 
 ## Q14. Для чего используются операторы transform() и as()?
@@ -617,12 +539,6 @@ Mono<List<String>> list2 = Flux.just("a", "b", "c")
     .as(Flux::collectList);
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ---
 
 ## Q15. Что делают операторы doOnNext(), doOnComplete(), doOnError()?
@@ -653,12 +569,6 @@ Flux.just(1, 2, 3)
 | `doFinally()` | В любом случае (завершение, ошибка, отмена) |
 | `doOnEach()` | При любом сигнале |
 
-
-> [!mcq]
-> - [ ] `doOnNext` мутирует элемент и возвращает его дальше | `doOnNext` — это side-effect callback (`Consumer<T>`), он НЕ меняет downstream-значение; для трансформации нужен `map`. ❌ ПОСЛЕДСТВИЕ: разработчик мутирует поле в `doOnNext(user -> user.setEmail(...))` и удивляется race-condition с другим subscriber на shared объекте.
-> - [ ] `doOnNext` — side-effect callback (логи, метрики, audit), `map(T → R)` — трансформация значения с возвратом нового | `doOnNext` нельзя использовать для изменения потока; результат `doOnNext` игнорируется reactor'ом. ✓ ПРИМЕНЯТЬ: `doOnNext(req -> log.info("got {}", req))` в WebFlux-фильтре; Micrometer-метрики через `doOnNext(x -> meter.increment())`. 📋 ПРАВИЛО: «do = логи/метрики, map = трансформация». 🔗 См. Q11, Q14, Q43.
-> - [ ] `doOnNext` синхронен, `doOnComplete` асинхронен | Оба синхронны (вызываются в текущем executor), асинхронность даёт `publishOn`/`subscribeOn`. ❌ ПОСЛЕДСТВИЕ: команда оборачивает HTTP-вызов в `doOnNext` ожидая «асинхронности», блокирует event-loop поток в WebFlux.
-> - [ ] `doOnError` отлавливает и подавляет ошибку, как `onErrorResume` | `doOnError` — observation-only, ошибка идёт дальше; для подавления нужны `onErrorReturn`/`onErrorResume`. ❌ ПОСЛЕДСТВИЕ: разработчик ловит ошибку в `doOnError`, но клиент всё равно получает 500, никто не понимает «почему я же handle сделал».
 ---
 
 ## Q16. Какие операторы фильтрации предоставляет Project Reactor?
@@ -700,12 +610,6 @@ numbers.ignoreElements() // Mono<Integer> (empty)
 numbers.elementAt(4) // Mono<Integer>(5)
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ---
 
 ## Q17. Что делает оператор switchIfEmpty()?
@@ -725,12 +629,6 @@ Flux<Product> products = cache.getProducts()
 
 Важно: `switchIfEmpty` срабатывает только при **пустом** потоке, не при ошибке. Для ошибок используйте `onErrorResume()`.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ---
 
 ## Q18. Что делают операторы take() и skip()?
@@ -760,12 +658,6 @@ Flux.range(1, 10).skip(7) // 8, 9, 10
 Flux.interval(Duration.ofMillis(100)).skip(Duration.ofSeconds(1))
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ---
 
 ## Q19. (!) В чём разница между merge(), concat() и zip()?
@@ -799,12 +691,6 @@ Flux.zip(fast, slow, (f, s) -> f + "+" + s)
 // Результат: "F1+S1", "F2+S2"
 ```
 
-
-> [!mcq]
-> - [ ] `merge`, `concat`, `zip` — синонимы, разница только в API | Поведение фундаментально различается: `merge` interleaves параллельно, `concat` склеивает последовательно, `zip` ждёт по одному элементу с каждого источника. ❌ ПОСЛЕДСТВИЕ: команда заменяет `zip` на `merge` для «параллельности», теряет связку user+order и собирает мусорные пары.
-> - [ ] `merge(a,b)` — параллельная подписка, элементы interleaved; `concat(a,b)` — `b` подписывается после complete от `a`; `zip(a,b)` — попарная комбинация (ждёт по 1 элементу от каждого) | `merge` — full parallel, `concat` — strict order, `zip` — pairwise sync. ✓ ПРИМЕНЯТЬ: agreggator-сервисы с parallel external API через `merge`; `zip(userMono, settingsMono)` — типичный pattern для composition в WebFlux. 📋 ПРАВИЛО: «merge=parallel, concat=order, zip=pair». 🔗 См. Q11, Q20, Q21.
-> - [ ] `concat` подписывается на оба источника параллельно | Нет, `concat` — строго последовательный: `b` стартует только после `onComplete` от `a`. ❌ ПОСЛЕДСТВИЕ: команда ставит `concat` ожидая параллельности при aggregate-API, latency растёт в N раз вместо параллельных запросов.
-> - [ ] `zip` дожидается завершения обоих стримов и эмитит финальный список | `zip` эмитит попарно `Tuple2` на каждой паре; финальный список даёт `Mono.zip(a,b).map(...)` или `collectList`. ❌ ПОСЛЕДСТВИЕ: разработчик ждёт List от `zip` двух Flux, цепочка не реагирует, тест падает по таймауту.
 ---
 
 ## Q20. Что такое combineLatest() и когда его использовать?
@@ -828,12 +714,6 @@ Flux<SearchResult> results = Flux.combineLatest(
 - `zip()` — ждёт **нового элемента** от **каждого** источника (попарное соответствие)
 - `combineLatest()` — реагирует на любое обновление, используя последние значения
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ---
 
 ## Q21. В чём разница между zipWith() и withLatestFrom()?
@@ -851,12 +731,6 @@ ticks.withLatestFrom(updates, (tick, update) -> tick + ": " + update)
 // Если updates пуст — элементы ticks пропускаются
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ---
 
 ## Q22. (!) Какие операторы используются для обработки ошибок в Project Reactor?
@@ -884,12 +758,6 @@ Mono<User> result = userService.findUser(id)
     .timeout(Duration.ofSeconds(5));
 ```
 
-
-> [!mcq]
-> - [ ] Можно использовать только `try/catch` внутри `map` | В реактивной цепочке `try/catch` ловит исключение, но нужно вернуть `Publisher` или поглотить — лучше использовать declarative-операторы. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `try/catch` в `map`, throw'ит RuntimeException, получает `onError` без fallback'а — клиент видит 500.
-> - [ ] Достаточно одного `onErrorMap` для всех сценариев | `onErrorMap` только трансформирует тип ошибки; для fallback нужны `onErrorReturn`/`onErrorResume`, для retry — `retry`/`retryWhen`. ❌ ПОСЛЕДСТВИЕ: команда логирует ошибку через `onErrorMap` и считает «обработали», стрим прерывается, downstream не получает данных.
-> - [ ] `onErrorReturn(default)`, `onErrorResume(fallbackPublisher)`, `onErrorMap(transformer)`, `onErrorContinue`, `retry`/`retryWhen` — каждый под свой кейс | `Return` — статический default, `Resume` — fallback Publisher, `Map` — wrap exception, `Continue` — skip элемент (опасный), `retry` — повтор upstream. ✓ ПРИМЕНЯТЬ: WebFlux + Resilience4j: `onErrorResume` для fallback к cached response; `retryWhen(Retry.backoff(3, ofMillis(100)))` для transient HTTP-ошибок. 📋 ПРАВИЛО: «Return-default, Resume-fallback, Map-wrap, retry-replay». 🔗 См. Q23, Q24, Q25.
-> - [ ] Достаточно `subscribe(onNext, onError)` без операторов | Это терминальный handler, не позволяет продолжить chain — пригоден только в самом конце. ❌ ПОСЛЕДСТВИЕ: ошибка ловится в `subscribe`, но downstream-потребители уже подписаны — `onComplete` не приходит, ресурсы не освобождаются.
 ---
 
 ## Q23. В чём разница между onErrorReturn() и onErrorResume()?
@@ -920,12 +788,6 @@ Mono<User> result4 = dbRepository.findById(id)
         ex -> cacheRepository.findById(id));
 ```
 
-
-> [!mcq]
-> - [ ] `onErrorReturn(value)` всегда параметризуется Publisher'ом | `onErrorReturn` принимает значение `T`, не Publisher; для Publisher используется `onErrorResume`. ❌ ПОСЛЕДСТВИЕ: код `onErrorReturn(Mono.just(default))` возвращает `Mono<Mono<T>>`, downstream получает не `T`, а сам Publisher как value.
-> - [ ] Оба возвращают статическое значение | `onErrorResume` принимает функцию `Throwable → Publisher<T>`, что позволяет динамически выбирать fallback (cache, retry-API) на основе типа ошибки. ❌ ПОСЛЕДСТВИЕ: вместо `onErrorResume(NotFoundException.class, e -> cache.get())` команда пишет `onErrorReturn(emptyList)`, теряет cached данные.
-> - [ ] `onErrorReturn(value)` подменяет ошибку на статическое `T`; `onErrorResume(fn)` подписывается на новый Publisher из лямбды — позволяет динамический fallback | `Resume` мощнее: можно условно выбрать fallback или re-throw через `Mono.error(...)`. ✓ ПРИМЕНЯТЬ: Netflix Hystrix-style fallback через `onErrorResume(e -> cache.get(key))`; `onErrorReturn` для дефолтного списка settings при отсутствии записи. 📋 ПРАВИЛО: «Return — value, Resume — Publisher». 🔗 См. Q22, Q24, Q25.
-> - [ ] `onErrorResume` ловит только `RuntimeException`, `onErrorReturn` — все `Throwable` | Оба ловят `Throwable` (с overload по типу); поведение симметрично, отличие только в форме fallback. ❌ ПОСЛЕДСТВИЕ: разработчик ставит double-handler «для надёжности», ошибка ловится дважды, метрики error-rate удваиваются.
 ---
 
 ## Q24. Что делает оператор onErrorMap()?
@@ -945,12 +807,6 @@ Mono<User> result = operation()
     .onErrorMap(ex -> new CustomException("Operation failed", ex));
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ---
 
 ## Q25. (!) Как работают операторы retry() и retryWhen()?
@@ -980,12 +836,6 @@ Mono<String> result3 = apiCall()
 
 Важно: `retry()` повторно подписывается на весь `Publisher` с самого начала. Для `Flux` это означает повторение всей последовательности.
 
-
-> [!mcq]
-> - [ ] `retry(N)` повторяет N раз с фиксированной задержкой 1 секунда | `retry(N)` повторяет немедленно без backoff; задержку даёт `retryWhen(Retry.fixedDelay(N, dur))`. ❌ ПОСЛЕДСТВИЕ: при сбое downstream-API `retry(5)` шлёт 5 запросов за миллисекунды, добивает API под нагрузкой — retry storm.
-> - [ ] `retry(N)` — простой повтор upstream до N раз без задержки; `retryWhen(Retry.backoff(N, base))` — exponential backoff с jitter и фильтрацией по типу исключения | `retryWhen` принимает `Retry`-spec из Reactor: backoff, max, jitter, filter; обязателен для production. ✓ ПРИМЕНЯТЬ: AWS SDK/DynamoDB используют exponential backoff для transient errors; Spring Cloud `retryWhen(Retry.backoff(3, ofMillis(200)).jitter(0.5))` стандарт для WebClient. 📋 ПРАВИЛО: «retry(N) — для тестов, retryWhen(backoff) — для прода». 🔗 См. Q22, Q23, Q24.
-> - [ ] `retryWhen` повторяет цепочку и trigger'ит только при success | `retryWhen` срабатывает на error-сигнал; success не вызывает повтор. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает повторного обращения после `onComplete` для polling — никогда не сработает, polling реализуется через `Flux.interval`.
-> - [ ] `retry()` без аргументов повторяет ровно 3 раза | `retry()` без аргументов — `Long.MAX_VALUE` повторов (бесконечно); таймаут не остановит. ❌ ПОСЛЕДСТВИЕ: при downstream-сбое `retry()` зацикливает retry навсегда, под не падает по `livenessProbe`, hot loop съедает CPU.
 ---
 
 ## Q26. Что такое Exceptions.propagate() и когда его применять?
@@ -1013,12 +863,6 @@ try {
 }
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ---
 
 ## Q27. (!) Как Project Reactor реализует backpressure?
@@ -1052,12 +896,6 @@ Flux.range(1, 1000)
     .subscribe(this::process);
 ```
 
-
-> [!mcq]
-> - [ ] Через автоматическое сэмплирование событий | Sampling/throttle есть как операторы (`sample`, `throttleFirst`), но это не основной механизм backpressure. ❌ ПОСЛЕДСТВИЕ: разработчик использует `sample(1s)` вместо `request(n)` для real-time котировок, теряет половину событий — баг в trading-системе.
-> - [ ] Subscriber через `Subscription.request(n)` указывает producer'у, сколько может принять; стратегии overflow (`onBackpressureBuffer`/`Drop`/`Latest`/`Error`) | `Reactor` буферизует между операторами, прозрачно проксирует request от downstream к upstream; стратегии нужны для unbounded источников. ✓ ПРИМЕНЯТЬ: `R2DBC` пропагирует request от WebFlux к БД, БД отдаёт ровно нужное количество rows; Kafka reactor-bridge использует backpressure для committing offsets. 📋 ПРАВИЛО: «request(n) пропагирует от Subscriber к Publisher». 🔗 См. Q4, Q28, Q29.
-> - [ ] `Reactor` использует только pull-модель: subscriber тянет элементы из publisher | Это push-модель с feedback (`request`), не чистый pull; pull был бы блокирующим. ❌ ПОСЛЕДСТВИЕ: ложная модель приводит к ожиданию `next()`-метода как в Iterator, разработчик ищет несуществующий API.
-> - [ ] Backpressure активируется только если subscriber явно реализует `BaseSubscriber` | Стандартные методы (`subscribe(consumer)`) запрашивают `Long.MAX_VALUE`, но операторы (`flatMap`, `buffer`, `limitRate`) применяют backpressure прозрачно. ❌ ПОСЛЕДСТВИЕ: команда переписывает все subscribe на `BaseSubscriber` «ради backpressure», получает boilerplate без необходимости.
 ---
 
 ## Q28. Какие стратегии backpressure существуют?
@@ -1088,12 +926,6 @@ hotFlux.onBackpressureLatest();
 hotFlux.onBackpressureError();
 ```
 
-
-> [!mcq]
-> - [ ] Существует только одна стратегия: блокировать producer до request | Блокировка producer'а — антипаттерн в async; стратегии работают через буфер/drop/error. ❌ ПОСЛЕДСТВИЕ: производитель блокируется на `synchronized`-стеке, hot path встаёт колом, latency p99 уходит в 30s.
-> - [ ] `Buffer` (default), `Drop` (отбрасывать новые), `Latest` (хранить только последний), `Error` (бросать `OverflowException`) | Стратегии задаются через `onBackpressureBuffer/Drop/Latest/Error`; выбор зависит от семантики потерь. ✓ ПРИМЕНЯТЬ: real-time котировки на бирже используют `onBackpressureLatest` — старая цена не нужна; audit-лог использует `Buffer` или `Error`, потери недопустимы. 📋 ПРАВИЛО: «Buffer/Drop/Latest/Error — выбор по семантике потерь». 🔗 См. Q4, Q27, Q29.
-> - [ ] Все стратегии равнозначны, выбирать произвольно | Семантика разная: `Drop` теряет события, `Buffer` без лимита → OOM, `Error` ломает stream. ❌ ПОСЛЕДСТВИЕ: разработчик ставит default `Buffer` для unbounded Kafka-consumer, OOM через 2 часа высокой нагрузки.
-> - [ ] `Buffer` имеет встроенный лимит 256 элементов | Default `onBackpressureBuffer()` без аргументов — unbounded; лимит надо указать явно через `onBackpressureBuffer(maxSize)`. ❌ ПОСЛЕДСТВИЕ: команда верит, что buffer ограничен «дефолтом», под нагрузкой в production heap растёт линейно — OOM через 4 часа.
 ---
 
 ## Q29. Что делает оператор limitRate()?
@@ -1113,12 +945,6 @@ Flux.range(1, 10000)
     .subscribe(this::process);
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ---
 
 ## Q30. (!) Какие Schedulers существуют в Project Reactor?
@@ -1149,12 +975,6 @@ Flux.range(1, 1000)
     .subscribe();
 ```
 
-
-> [!mcq]
-> - [ ] Все Schedulers одинаковые, разница только в имени | Семантика принципиально различна: `parallel` фиксированный (CPU-bound), `boundedElastic` для I/O с лимитом, `single` — один поток, `immediate` — без переключения. ❌ ПОСЛЕДСТВИЕ: команда ставит `parallel()` для blocking JDBC, parallel-thread'ы блокированы, latency p99 → 30s.
-> - [ ] `immediate` (без переключения), `single` (один thread), `parallel` (CPU-bound, размер = кол-во CPU), `boundedElastic` (I/O, до 10×CPU thread'ов с очередью) | Каждый под свой класс задач: parallel — для CPU, boundedElastic — для blocking I/O. ✓ ПРИМЕНЯТЬ: WebFlux event-loop для non-blocking; `subscribeOn(Schedulers.boundedElastic())` для блокирующего JDBC через `R2DBC`-bridge. 📋 ПРАВИЛО: «parallel — CPU, boundedElastic — I/O, single — order, immediate — caller». 🔗 См. Q31, Q32, Q47.
-> - [ ] `boundedElastic` создаёт unbounded thread'ов под нагрузкой | `boundedElastic` ограничен (default 10×CPU + queue 100K); replacement для устаревшего unbounded `elastic()`. ❌ ПОСЛЕДСТВИЕ: команда верит «elastic — без лимита», запускает 100K параллельных задач, очередь переполняется, бросает `RejectedExecutionException`.
-> - [ ] `parallel` подходит для blocking I/O | `parallel` — для non-blocking CPU-задач; для blocking использовать `boundedElastic`. ❌ ПОСЛЕДСТВИЕ: блокирующий `JdbcTemplate` на `parallel(8)` блокирует все 8 потоков, весь WebFlux встаёт под нагрузкой.
 ---
 
 ## Q31. (!) В чём разница между subscribeOn() и publishOn()?
@@ -1188,12 +1008,6 @@ Mono.fromCallable(() -> blockingDbCall())
     .map(this::processResult);
 ```
 
-
-> [!mcq]
-> - [ ] `subscribeOn` влияет на downstream-операторы, `publishOn` — на upstream | Наоборот: `subscribeOn` влияет на ВСЮ цепочку (момент подписки идёт upstream, источник работает в указанном scheduler), `publishOn` переключает только downstream после себя. ❌ ПОСЛЕДСТВИЕ: разработчик ставит `subscribeOn` после `flatMap` ожидая локальный эффект, источник всё равно работает в parallel — neблокирующий код блокируется.
-> - [ ] `subscribeOn` задаёт scheduler для всего источника подписки (work upstream); `publishOn` переключает scheduler для downstream-операторов после себя | Множественные `subscribeOn` — побеждает первый (ближайший к источнику); `publishOn` можно ставить несколько раз, каждый меняет следующие операторы. ✓ ПРИМЕНЯТЬ: типичный pattern WebFlux — `Mono.fromCallable(blockingCall).subscribeOn(boundedElastic).publishOn(parallel)` для blocking-bridge. 📋 ПРАВИЛО: «subscribeOn — где source работает, publishOn — где downstream». 🔗 См. Q30, Q32, Q47.
-> - [ ] `subscribeOn` и `publishOn` идентичны, можно использовать любой | Поведение разное: `subscribeOn` идёт «вверх» к источнику, `publishOn` действует «вниз». ❌ ПОСЛЕДСТВИЕ: команда меняет `subscribeOn` на `publishOn` для blocking JDBC source, JDBC выполняется на event-loop вместо boundedElastic — pinning, OOM пулов.
-> - [ ] Множественные `publishOn` суммируются: каждый прибавляет thread | Каждый `publishOn` ПЕРЕопределяет scheduler для downstream, не суммируется; thread меняется в точке оператора. ❌ ПОСЛЕДСТВИЕ: разработчик ставит 5 `publishOn` подряд «для multi-threading», получает 5 переключений context'а — overhead и worse latency.
 ---
 
 ## Q32. Что такое ParallelFlux и когда его использовать?
@@ -1224,12 +1038,6 @@ Flux<Integer> result = Flux.range(1, 1000)
 - `ParallelFlux` — явное партиционирование данных по рельсам, предсказуемый параллелизм
 - `flatMap` + `Scheduler` — более гибкий, но менее предсказуемый параллелизм
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ---
 
 ## Q33. (!) Что такое Context в Project Reactor?
@@ -1248,12 +1056,6 @@ Source ←--- Context --- Operator ←--- Context --- Subscriber
 
 Типичное применение: передача `userId`, `traceId`, `locale` без явной передачи параметров.
 
-
-> [!mcq]
-> - [ ] Это `ThreadLocal`-замена внутри Reactor | `ThreadLocal` не работает в реактивных цепочках с переключением scheduler'ов; `Context` — иммутабельная карта, привязанная к Subscription, propagates через chain снизу вверх. ❌ ПОСЛЕДСТВИЕ: команда использует `ThreadLocal` для traceId в WebFlux, после `publishOn` traceId теряется — логи без correlation ID, debug невозможен.
-> - [ ] Иммутабельная key-value карта, привязанная к Subscription, доступная всем операторам в chain через `deferContextual` или `contextWrite` | Распространяется снизу вверх (от subscribe к источнику); используется для `traceId`, `securityContext`, `tenantId` в multi-tenant. ✓ ПРИМЕНЯТЬ: Spring Security WebFlux хранит `SecurityContext` в Reactor Context; Sleuth/Micrometer Tracing пробрасывают `traceId` через `Context` для distributed tracing. 📋 ПРАВИЛО: «Reactor Context = ThreadLocal реактивного мира». 🔗 См. Q31, Q34, Q46.
-> - [ ] Mutable хеш-таблица, изменяемая через `context.put()` | Context immutable; каждое `contextWrite` создаёт новую копию, существующая остаётся неизменной. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает `contextWrite` мутацию, теряет данные после `flatMap` — concurrent ChangeContext race.
-> - [ ] Глобальная переменная процесса JVM | Context привязан к каждой Subscription отдельно; нет «global Context». ❌ ПОСЛЕДСТВИЕ: разработчик пишет данные одного запроса в «global Context», другой запрос видит чужой `tenantId` — критический security-leak в multi-tenant.
 ---
 
 ## Q34. Как записывать и читать данные из Context?
@@ -1294,12 +1096,6 @@ Mono<String> loggedOperation() {
 }
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ---
 
 ## Q35. (!) В чём разница между Cold и Hot publisher?
@@ -1329,12 +1125,6 @@ Flux<StockPrice> hotFlux = stockService.priceStream(); // уже работае�
 
 По умолчанию все `Flux`/`Mono` в `Project Reactor` — **Cold**.
 
-
-> [!mcq]
-> - [ ] Hot publisher быстрее cold | Скорость не определяется hot/cold; разница в semantics: cold — каждый subscriber запускает свой источник заново, hot — общий источник для всех. ❌ ПОСЛЕДСТВИЕ: команда переводит API на hot «для скорости», теряет идемпотентность — два subscriber видят разные суб-наборы событий.
-> - [ ] Cold publisher запускает источник заново для каждого subscriber (`Flux.fromIterable`, HTTP-вызов); Hot вещает общий поток событий всем подписчикам (`Sinks.Many`, `share()`) | Cold идемпотентен — повторная подписка получает full sequence; Hot пропускает события, произошедшие до подписки. ✓ ПРИМЕНЯТЬ: WebFlux REST endpoint = cold (каждый запрос — свой Flux); Server-Sent Events broadcast = hot через `Sinks.many().multicast()`; Twitter timeline = hot. 📋 ПРАВИЛО: «Cold — replay, Hot — broadcast». 🔗 См. Q36, Q37, Q40.
-> - [ ] Cold = синхронный, Hot = асинхронный | Оба могут быть и тем, и другим; различие — в момент эмиссии относительно подписки. ❌ ПОСЛЕДСТВИЕ: команда заворачивает cold Flux в Mono.fromCallable «чтобы сделать асинхронным», получает double-subscribe error в `flatMap`.
-> - [ ] Cold нельзя превратить в Hot | Можно через `share()`, `publish().refCount()`, `Sinks.many()`, `replay()`. ❌ ПОСЛЕДСТВИЕ: команда дублирует API-запрос для двух consumer'ов вместо `cache()`/`share()`, нагрузка на upstream удваивается, бьёт rate limit.
 ---
 
 ## Q36. Как преобразовать Cold publisher в Hot?
@@ -1366,12 +1156,6 @@ Flux<String> cached = coldFlux.cache();
 Flux<String> cached3 = coldFlux.cache(3); // последние 3 элемента
 ```
 
-
-> [!mcq]
-> - [ ] Достаточно вызвать `.subscribe()` дважды | Двойной subscribe на cold Flux запустит источник дважды (два HTTP-запроса), не сделает hot. ❌ ПОСЛЕДСТВИЕ: разработчик «делает hot» через двойной subscribe, выполняет дорогой DB-запрос дважды, удваивает latency.
-> - [ ] Через `share()` (publish + refCount), `publish()` + `connect()`, `cache()` (replay) или `Sinks.many()` | `share()` — hot пока ≥1 subscriber; `publish().connect()` — manual control; `cache()` — hot с full replay; `Sinks` — programmatic emission. ✓ ПРИМЕНЯТЬ: SSE feed на `Sinks.many().multicast().onBackpressureBuffer()`; WebFlux endpoint с дорогим upstream через `cache(Duration.ofMinutes(5))`. 📋 ПРАВИЛО: «share — лайв, cache — replay, Sinks — programmatic». 🔗 См. Q35, Q37, Q42.
-> - [ ] Только через `Schedulers.parallel()` | Scheduler меняет thread, не меняет hot/cold-семантику. ❌ ПОСЛЕДСТВИЕ: команда ставит `subscribeOn(parallel)` для «hot-режима», семантика остаётся cold, broadcasts не работают.
-> - [ ] Hot — это всегда `Mono`, cold — `Flux` | Hot/cold не определяется типом; есть hot Flux и cold Mono (cold по умолчанию). ❌ ПОСЛЕДСТВИЕ: разработчик возвращает `Flux` ожидая «всегда hot», `WebClient` возвращает cold Flux — два subscriber'а делают два HTTP-запроса.
 ---
 
 ## Q37. Что такое ConnectableFlux?
@@ -1398,12 +1182,6 @@ connection.dispose();
 - `autoConnect(n)` — автозапуск при `n` подписчиках
 - `refCount(n)` — автозапуск/автоостановка
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ---
 
 ## Q38. Какие операторы для работы со временем предоставляет Project Reactor?
@@ -1443,12 +1221,6 @@ Flux.just("a", "b").timestamp()
 // Flux<Tuple2<Long, String>> — (Unix ms, значение)
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ---
 
 ## Q39. Что делает оператор timeout()?
@@ -1475,12 +1247,6 @@ Mono<Response> result = apiCall()
         ex -> Mono.just(Response.timeout()));
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ---
 
 ## Q40. (!) Что такое StepVerifier и как его использовать?
@@ -1533,12 +1299,6 @@ StepVerifier.create(Flux.range(1, 100))
     .verify();
 ```
 
-
-> [!mcq]
-> - [ ] `block()` в `assertEquals` достаточно для тестирования | `block()` теряет всю реактивную семантику (порядок, ошибки, signal'ы), не тестирует backpressure и timing. ❌ ПОСЛЕДСТВИЕ: команда покрывает WebFlux-код `assertEquals(flux.collectList().block(), expected)`, не ловит регрессии в `onError`/timing — баги уходят в production.
-> - [ ] Инструмент тестирования из `reactor-test`: `StepVerifier.create(publisher).expectNext(...).expectComplete().verify()` — пошагово описывает ожидаемые сигналы (`onNext`, `onComplete`, `onError`) и timing | Поддерживает `expectError`, `thenAwait`, `verifyComplete`, `verifyTimeout`; работает с virtual time через `withVirtualTime`. ✓ ПРИМЕНЯТЬ: стандарт для WebFlux unit-тестов; Spring Boot включает в `spring-boot-starter-webflux test`. 📋 ПРАВИЛО: «StepVerifier пошагово проверяет signals». 🔗 См. Q41, Q42, Q43.
-> - [ ] Это альтернатива `Mockito` для мокирования publishers | Для моков есть `TestPublisher`; `StepVerifier` — assertion-фреймворк, а не mock-framework. ❌ ПОСЛЕДСТВИЕ: команда использует `StepVerifier` для моков, дублирует функциональность `TestPublisher`, тесты становятся хрупкими.
-> - [ ] Заменяет `JUnit @Test` для реактивного кода | `StepVerifier` работает ВНУТРИ `@Test` метода, не заменяет JUnit. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `StepVerifier`-цепочку без `@Test` annotation, тест не запускается в CI, ложно-зелёный билд.
 ---
 
 ## Q41. Как тестировать потоки, зависящие от времени?
@@ -1580,12 +1340,6 @@ void testTimeout() {
 
 Важно: `Supplier` передаётся в `withVirtualTime()` — это обязательно для правильной подстановки виртуального планировщика.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ---
 
 ## Q42. Что такое TestPublisher?
@@ -1628,12 +1382,6 @@ TestPublisher<String> nonConforming = TestPublisher.createNoncompliant(
     TestPublisher.Violation.ALLOW_NULL);
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ---
 
 ## Q43. (!) Как отлаживать реактивные цепочки в Project Reactor?
@@ -1676,12 +1424,6 @@ Flux.just(1, 2, 3)
     });
 ```
 
-
-> [!mcq]
-> - [ ] Достаточно поставить breakpoint в IDE на `flatMap` | Breakpoint в реактивной цепочке не показывает upstream-stack из-за async-разрыва; видно только текущий operator-frame, не путь до источника ошибки. ❌ ПОСЛЕДСТВИЕ: разработчик 4 часа дебажит NullPointerException в WebFlux-controller, не может найти source — stack-trace обрывается на `OnNextRunnable.run`.
-> - [ ] `Hooks.onOperatorDebug()` (global, expensive), `checkpoint("name")` (точечный), `log()` (per-step), `doOnEach`, `Reactor Tools agent` (production-safe) | Глобальный `Hooks.onOperatorDebug()` — для dev (тяжёлый); `checkpoint` для prod точечно; ReactorDebugAgent — bytecode-инструментирование. ✓ ПРИМЕНЯТЬ: dev-профиль Spring Boot включает `Hooks.onOperatorDebug()`; production использует `ReactorDebugAgent.init()` (light overhead) либо точечные `checkpoint("transferMoney-step")`. 📋 ПРАВИЛО: «Hooks для dev, checkpoint для prod, log для chain-trace». 🔗 См. Q44, Q45, Q40.
-> - [ ] Использовать `e.printStackTrace()` в `onErrorResume` | Stack-trace в реактивке усечённый из-за async-разрыва без assembly-trace; `printStackTrace` без `Hooks.onOperatorDebug` бесполезен. ❌ ПОСЛЕДСТВИЕ: log содержит «UnsupportedOperationException» без места возникновения, root cause неуловим, fix откладывается на дни.
-> - [ ] Включить SQL-debug через `logging.level.sql=DEBUG` | SQL-debug к Reactor не имеет отношения; работает для `R2DBC`/JPA, но не для chain-debugging. ❌ ПОСЛЕДСТВИЕ: команда ловит SQL-логами «не тот» баг, реактивная цепочка остаётся непрозрачной.
 ---
 
 ## Q44. Что такое checkpoint() и как он помогает при отладке?
@@ -1710,12 +1452,6 @@ Flux.just(1, 0).map(i -> 10 / i)
     .checkpoint("division", true);
 ```
 
-
-> [!mcq]
-> - [ ] Это breakpoint в IDE для async-кода | `checkpoint` — оператор Reactor (не IDE-фича); добавляет assembly-information в stack trace при ошибке без перезапуска. ❌ ПОСЛЕДСТВИЕ: команда ставит breakpoint вместо checkpoint, теряет async-контекст; production-инцидент не воспроизвести в IDE.
-> - [ ] Оператор, добавляющий «traceback»-маркер в chain: при ошибке в stack trace появляется `Assembly trace from producer [Flux.checkpoint("name")]` | Light-weight (только для error-path), production-safe; альтернатива `Hooks.onOperatorDebug` без global overhead. ✓ ПРИМЕНЯТЬ: точечно на критичных шагах transfer-pipeline в банке: `.checkpoint("debit-step")` идентифицирует шаг падения; Spring Cloud Sleuth рекомендует для production. 📋 ПРАВИЛО: «checkpoint = ассерт-маркер в stack trace». 🔗 См. Q43, Q45, Q40.
-> - [ ] Аналог `assertEquals` для проверки значений в потоке | Для assertion'ов используется `StepVerifier`/`assertNext`; `checkpoint` маркирует, не проверяет значения. ❌ ПОСЛЕДСТВИЕ: команда пишет `.checkpoint(value -> value > 0)`, метод не существует — compile error либо ложная уверенность в проверке.
-> - [ ] Останавливает поток до его ручного продолжения | `checkpoint` non-blocking, не приостанавливает; работает только при ошибке. ❌ ПОСЛЕДСТВИЕ: разработчик ставит `checkpoint` в надежде «дождаться» события для дебага, поток продолжает идти, debug сессия теряется.
 ---
 
 ## Q45. Что такое Hooks и как использовать Hooks.onOperatorDebug()?
@@ -1746,12 +1482,6 @@ ReactorDebugAgent.init();
 
 `ReactorDebugAgent` — рекомендуемая альтернатива `Hooks.onOperatorDebug()` для продакшена: инструментирует байткод во время загрузки класса, минимальный overhead.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ---
 
 ## Q46. (!) Как Project Reactor интегрируется со Spring WebFlux?
@@ -1808,12 +1538,6 @@ public Mono<ResponseEntity<ErrorResponse>> handleNotFound(UserNotFoundException 
 }
 ```
 
-
-> [!mcq]
-> - [ ] WebFlux работает поверх Servlet API, как Spring MVC | WebFlux работает на Netty/Reactor Netty (default), не на Servlet API; есть бэкенд под Tomcat 8.5+, но non-blocking native — Reactor Netty. ❌ ПОСЛЕДСТВИЕ: команда добавляет `HttpServletRequest` в WebFlux-controller, получает compile error и непонимание API — недели на изучение «почему не работает».
-> - [ ] WebFlux построен на Reactor: controller возвращает `Mono`/`Flux`, request-цепочка работает на event-loop без thread-per-request, через `WebClient`/`R2DBC` для I/O | Reactor Netty event-loop (#CPU потоков) обрабатывает все запросы; blocking I/O нужно делать на `boundedElastic`. ✓ ПРИМЕНЯТЬ: high-load streaming (10K+ соединений на ноду) — WebFlux в Booking.com, Wolt; SSE-API через `Flux<ServerSentEvent>`. 📋 ПРАВИЛО: «WebFlux = Netty + Mono/Flux + non-blocking I/O». 🔗 См. Q31, Q33, Q47.
-> - [ ] WebFlux — это REST-template на Spring MVC с реактивной обёрткой | Это полностью отдельный стек: `RouterFunction`, `WebClient`, `WebFilter` вместо MVC-аналогов; вместе они не работают в одном приложении (выбор один). ❌ ПОСЛЕДСТВИЕ: команда инжектит `RestTemplate` в WebFlux, блокирует event-loop, latency p99 уходит в 30s под нагрузкой.
-> - [ ] WebFlux не поддерживает аннотации `@RestController`/`@GetMapping` | Поддерживает (annotation-based + functional через `RouterFunction`); работают идентично, отличается только thread model. ❌ ПОСЛЕДСТВИЕ: команда переписывает аннотированный controller на functional API «потому что WebFlux», тратит спринт на одно и то же поведение.
 ---
 
 ## Q47. Почему нельзя вызывать block() в WebFlux-приложении?
@@ -1860,12 +1584,6 @@ Mono<Result> result = Mono.fromCallable(() -> blockingOperation())
 - [Kotlin Coroutines](../programming-languages/kotlin/kotlin-coroutines-interview.md) — сравнение с корутинами как альтернативой реактивному программированию
 - [Распределённые системы](../architecture/distributed-systems-interview.md) — реактивное программирование в контексте микросервисов
 
-
-> [!mcq]
-> - [ ] Это normal pattern — block() безопасен внутри controller'а WebFlux | `block()` на event-loop потоке Netty бросает `IllegalStateException` (Reactor 3.2+ блокирует это явно). ❌ ПОСЛЕДСТВИЕ: разработчик ставит `.block()` в WebFlux controller, в логах `IllegalStateException: blocking is not supported in thread reactor-http-nio-1`, 100% запросов падают.
-> - [ ] `block()` блокирует Netty event-loop поток (всего #CPU потоков), что вызывает дедлок, deg latency и thread starvation; Reactor бросает `IllegalStateException` для защиты | `WebFlux` идеологически non-blocking; для bridge с blocking-кодом нужен `subscribeOn(Schedulers.boundedElastic())`, а не `block()`. ✓ ПРИМЕНЯТЬ: для legacy JDBC из WebFlux: `Mono.fromCallable(blockingCall).subscribeOn(boundedElastic())`; никогда `block()` в reactive controller. 📋 ПРАВИЛО: «block() в WebFlux — деградация и дедлок». 🔗 См. Q30, Q31, Q46.
-> - [ ] `block()` безопасен, если вызвать его на отдельном потоке через `new Thread()` | Создание потоков вручную — антипаттерн (нет управления, нет integration с reactor scheduler), всё равно блокирует. ❌ ПОСЛЕДСТВИЕ: команда плодит `new Thread()` для обхода защиты Reactor, JVM забивается thread'ами без bound, OOM thread stacks через 30 минут.
-> - [ ] Достаточно поставить `@Async` над методом с `block()` | `@Async` использует свой `TaskExecutor`, не интегрируется с Reactor backpressure/Context, под нагрузкой пул `@Async` не масштабируется. ❌ ПОСЛЕДСТВИЕ: `@Async` + `block()` создаёт thread-per-request, преимущества WebFlux теряются, latency и memory как у обычного MVC.
 - [Reactive Patterns](reactive-patterns-interview.md)
 - [Reactive Streams](reactive-streams-interview.md)
 - [Тестирование реактивного кода](reactive-testing-interview.md)

@@ -81,12 +81,6 @@ updated: "2026-04-25"
 
 ---
 
-> [!mcq]
-> - [ ] Spring Data JDBC использует Hibernate под капотом, но с отключённым кэшем | ❌ ПОСЛЕДСТВИЕ: Spring Data JDBC полностью независим от Hibernate — использует JdbcTemplate напрямую; Hibernate в classpath не нужен
-> - [x] Spring Data JDBC не имеет ORM: нет lazy loading, нет first-level cache, нет dirty checking — SQL явный и предсказуемый | ✓ ПРИМЕНЯТЬ: когда нужны предсказуемые запросы без Hibernate-магии 📋 ПРАВИЛО: "what you see is what you get" — нет скрытых SELECT 🔗 См. Q3
-> - [ ] Spring Data JPA и Spring Data JDBC оба поддерживают lazy loading — различие лишь в API | ❌ ПОСЛЕДСТВИЕ: в Spring Data JDBC lazy loading невозможен — агрегат загружается целиком; LazyInitializationException никогда не возникнет
-> - [ ] Spring Data JDBC поддерживает JPQL-запросы через @Query | ❌ ПОСЛЕДСТВИЕ: @Query принимает только plain SQL; JPQL не поддерживается — запросы пишутся с именами таблиц, не классов
-
 ## Q2. Что означает "нет lazy loading" на практике?
 
 В JPA связанные сущности загружаются лениво — первый доступ к коллекции выполняет SELECT. В Spring Data JDBC при загрузке агрегата **все дочерние объекты загружаются сразу** (eager, через JOIN или дополнительные SELECT).
@@ -104,12 +98,6 @@ Order order = orderRepository.findById(id).orElseThrow();
 ```
 
 ---
-
-> [!mcq]
-> - [ ] Spring Data JDBC загружает коллекции лениво только при первом обращении | ❌ ПОСЛЕДСТВИЕ: нет — eager-загрузка всегда; если коллекция не нужна — это лишний SQL, решается дизайном небольших агрегатов
-> - [ ] Нет lazy loading означает запрет на использование Set и List в сущностях | ❌ ПОСЛЕДСТВИЕ: Set и List разрешены через @MappedCollection — отсутствие lazy loading означает загрузку сразу, а не запрет коллекций
-> - [x] При findById агрегат загружается полностью: все @MappedCollection и вложенные объекты подгружаются сразу через отдельные SELECT | ✓ ПРИМЕНЯТЬ: ожидай eager-загрузку → проектируй небольшие агрегаты 📋 ПРАВИЛО: нет LazyInitializationException, но большой агрегат = дорогой SELECT 🔗 См. Q4
-> - [ ] Spring Data JDBC автоматически оптимизирует загрузку через JOIN, поэтому производительность лучше JPA | ❌ ПОСЛЕДСТВИЕ: Spring Data JDBC использует дополнительные SELECT (не JOIN) для коллекций — ручная оптимизация через @Query при необходимости
 
 ## Q3. Когда выбирать Spring Data JDBC вместо JPA?
 
@@ -130,12 +118,6 @@ Order order = orderRepository.findById(id).orElseThrow();
 **Итог:** Spring Data JDBC — отличный выбор для новых микросервисов с чистой DDD-архитектурой. JPA — для legacy-систем или сложных объектных графов.
 
 ---
-
-> [!mcq]
-> - [ ] Spring Data JDBC подходит для legacy-систем с большим количеством сложных JPQL-запросов | ❌ ПОСЛЕДСТВИЕ: JPQL не поддерживается — все запросы пришлось бы переписать на SQL; для legacy-систем с JPQL оставайтесь на JPA
-> - [ ] Spring Data JDBC лучше JPA для проектов, где нужна автогенерация схемы БД | ❌ ПОСЛЕДСТВИЕ: Spring Data JDBC не генерирует схему — нужны явные CREATE TABLE (Flyway/Liquibase); автогенерация только в JPA через hibernate.ddl-auto
-> - [ ] Оба фреймворка одинаково подходят для любых проектов — выбор лишь вопрос предпочтений | ❌ ПОСЛЕДСТВИЕ: есть реальные различия: JPA нужен при сложных графах, L2-cache, Criteria API; неправильный выбор → рефакторинг архитектуры
-> - [x] Spring Data JDBC предпочтителен для новых микросервисов с DDD-агрегатами и простой доменной моделью, где важна предсказуемость SQL | ✓ ПРИМЕНЯТЬ: новый сервис + DDD-агрегаты + нет нужды в L2-cache и сложных JPQL 📋 ПРАВИЛО: JDBC = простота и явность; JPA = сложные графы и legacy 🔗 См. Q1
 
 ## Q4. (!) Что такое Aggregate Root в Spring Data JDBC?
 
@@ -171,12 +153,6 @@ public class Order {        // Aggregate Root
 - Ссылки на другие агрегаты — через `AggregateReference` (не загружает объект)
 
 ---
-
-> [!mcq]
-> - [ ] В Spring Data JDBC у каждой сущности должен быть свой репозиторий | ❌ ПОСЛЕДСТВИЕ: создание OrderItemRepository нарушает принцип агрегата — Spring Data JDBC управляет дочерними сущностями только через корень, отдельный репозиторий создаст дублирующиеся INSERT
-> - [ ] AggregateReference и @MappedCollection — одно и то же, оба описывают связи внутри агрегата | ❌ ПОСЛЕДСТВИЕ: @MappedCollection — для сущностей ВНУТРИ агрегата (cascade save/delete); AggregateReference — для ссылок МЕЖДУ агрегатами (только ID, без cascade)
-> - [x] Aggregate Root — единственная точка входа для сохранения агрегата: только у корня есть репозиторий, дочерние объекты управляются через него | ✓ ПРИМЕНЯТЬ: один OrderRepository — не создавать OrderItemRepository; save(order) каскадирует на items 📋 ПРАВИЛО: корень = единственная точка записи, нет отдельных репозиториев для частей 🔗 См. Q6
-> - [ ] Aggregate Root — это сущность с @Table и @Id, других требований нет | ❌ ПОСЛЕДСТВИЕ: недостаточно — без понимания границ агрегата появятся дублирующиеся INSERT или нарушение инварианта при прямых операциях с дочерними объектами
 
 ## Q5. Как маппировать связь один-к-одному?
 
@@ -217,12 +193,6 @@ public class Order {
 Spring Data JDBC автоматически добавит FK `order_id` в таблицу `shipping_info`.
 
 ---
-
-> [!mcq]
-> - [ ] Один-к-одному маппируется через @OneToOne как в JPA | ❌ ПОСЛЕДСТВИЕ: @OneToOne не существует в Spring Data JDBC — использовать @Embedded или вложенный объект с idColumn; компиляция пройдёт, но маппинг не сработает
-> - [x] Один-к-одному реализуется через @Embedded (колонки в той же таблице) или через вложенный объект с FK в отдельной таблице, управляемый автоматически | ✓ ПРИМЕНЯТЬ: @Embedded когда данные логически часть сущности (Address); отдельная таблица когда объект самостоятелен 📋 ПРАВИЛО: нет @OneToOne как в JPA — вложение или @Embedded 🔗 См. Q8
-> - [ ] Spring Data JDBC не поддерживает один-к-одному — нужно использовать @MappedCollection | ❌ ПОСЛЕДСТВИЕ: @MappedCollection — для коллекций (один-ко-многим); один-к-одному реализуется через @Embedded или прямое вложение объекта
-> - [ ] @Embedded создаёт отдельную таблицу с FK | ❌ ПОСЛЕДСТВИЕ: @Embedded маппирует поля в ту же таблицу без JOIN; для отдельной таблицы используется вложенный объект без аннотации @Embedded
 
 ## Q6. (!) Как маппировать связь один-ко-многим через @MappedCollection?
 
@@ -268,12 +238,6 @@ CREATE TABLE order_items (
 
 ---
 
-> [!mcq]
-> - [ ] @MappedCollection работает только с List, для Set нужна другая аннотация | ❌ ПОСЛЕДСТВИЕ: @MappedCollection поддерживает Set, List и Map; для List с порядком добавляется keyColumn, для Map — keyColumn как ключ
-> - [x] @MappedCollection(idColumn="order_id") определяет FK-колонку в дочерней таблице; при каждом save() агрегата Spring Data JDBC удаляет все записи и вставляет заново | ✓ ПРИМЕНЯТЬ: один-ко-многим внутри агрегата — @MappedCollection с idColumn 📋 ПРАВИЛО: delete-then-insert на каждый save → не используй для огромных коллекций 🔗 См. Q4
-> - [ ] Spring Data JDBC при save() делает умный merge коллекции как JPA — только изменённые элементы обновляются | ❌ ПОСЛЕДСТВИЕ: нет — Spring Data JDBC всегда делает полный DELETE + INSERT для коллекции; при большой коллекции это может быть дороже, чем ожидается
-> - [ ] idColumn в @MappedCollection должен совпадать с именем поля в классе OrderItem | ❌ ПОСЛЕДСТВИЕ: idColumn — имя колонки в БД (order_id), не поля Java; поле orderId в OrderItem вообще не нужно — FK управляется автоматически через idColumn
-
 ## Q7. Что такое AggregateReference и когда его использовать?
 
 `AggregateReference<T, ID>` — ссылка на корень другого агрегата **по ID**, без загрузки объекта. Позволяет выразить связь между агрегатами не нарушая их границы.
@@ -299,12 +263,6 @@ public class Order {
 **Итог:** `@MappedCollection` — для сущностей внутри агрегата; `AggregateReference` — для ссылок между агрегатами.
 
 ---
-
-> [!mcq]
-> - [ ] AggregateReference автоматически загружает связанный объект при первом обращении (lazy) | ❌ ПОСЛЕДСТВИЕ: нет lazy loading в Spring Data JDBC — AggregateReference только хранит ID; для получения Customer нужен явный customerRepository.findById()
-> - [ ] Вместо AggregateReference лучше хранить прямое поле Long customerId | ❌ ПОСЛЕДСТВИЕ: Long теряет типобезопасность — нет гарантии что ID относится к Customer; AggregateReference<Customer, Long> явно выражает намерение в типовой системе
-> - [ ] @MappedCollection и AggregateReference взаимозаменяемы для связей между объектами | ❌ ПОСЛЕДСТВИЕ: @MappedCollection — для объектов ВНУТРИ агрегата (cascade save/delete); AggregateReference — для ссылок МЕЖДУ агрегатами (только ID, без cascade)
-> - [x] AggregateReference<Customer, Long> хранит только ID другого агрегата (не сам объект); загрузка данных Customer требует явного вызова customerRepository | ✓ ПРИМЕНЯТЬ: ссылка между агрегатами → AggregateReference, не прямая зависимость 📋 ПРАВИЛО: граница агрегата — только ID наружу, не объект 🔗 См. Q4
 
 ## Q8. Как работает @Embedded?
 
@@ -338,12 +296,6 @@ id, name, street, city, zip, billing_street, billing_city
 
 ---
 
-> [!mcq]
-> - [ ] @Embedded создаёт связанную таблицу и JOIN при каждом SELECT | ❌ ПОСЛЕДСТВИЕ: нет — @Embedded колонки в той же таблице без JOIN; для отдельной таблицы нужен вложенный объект без аннотации @Embedded
-> - [x] @Embedded маппирует поля вложенного объекта как колонки в той же таблице без JOIN; prefix позволяет иметь несколько embedded одного типа | ✓ ПРИМЕНЯТЬ: Address, Money, PhoneNumber — value objects в одной таблице 📋 ПРАВИЛО: embedded = плоская таблица, нет JOIN; onEmpty=USE_NULL — вся группа null 🔗 См. Q5
-> - [ ] Нельзя иметь два @Embedded одного типа в одном классе | ❌ ПОСЛЕДСТВИЕ: можно — через prefix="billing_" и prefix="shipping_" на разных полях; без prefix Spring Data JDBC использует имена полей класса как разделитель
-> - [ ] @Embedded(onEmpty=USE_NULL) означает, что при null-объекте все колонки будут пустыми строками | ❌ ПОСЛЕДСТВИЕ: onEmpty=USE_NULL означает null в Java если все колонки NULL в БД; USE_EMPTY создаёт пустой объект вместо null
-
 ## Q9. Какие основные аннотации Spring Data JDBC?
 
 | Аннотация | Назначение |
@@ -359,12 +311,6 @@ id, name, street, city, zip, billing_street, billing_city
 | `@PersistenceCreator` | Конструктор для создания сущности |
 
 ---
-
-> [!mcq]
-> - [ ] @Entity обязательна для всех сущностей Spring Data JDBC | ❌ ПОСЛЕДСТВИЕ: @Entity — JPA-аннотация, Spring Data JDBC её не использует; достаточно @Table для переопределения имени, без неё маппинг по имени класса
-> - [ ] @OneToMany заменяет @MappedCollection в Spring Data JDBC | ❌ ПОСЛЕДСТВИЕ: @OneToMany — JPA-аннотация; в Spring Data JDBC для один-ко-многим используется @MappedCollection(idColumn="..."); путаница ведёт к отсутствию маппинга коллекции
-> - [x] Основные аннотации: @Table, @Id (обязателен), @Column, @MappedCollection (1:N), @Embedded, @Version (оптимистичная блокировка), @Transient | ✓ ПРИМЕНЯТЬ: каждый агрегат root требует @Id; @Transient для вычисляемых полей 📋 ПРАВИЛО: нет @Entity, @JoinColumn, @OneToMany — это не JPA 🔗 См. Q1
-> - [ ] @Transactional на каждом методе репозитория обязательна — иначе сохранение не работает | ❌ ПОСЛЕДСТВИЕ: методы репозитория уже обёрнуты в транзакции по умолчанию; явная @Transactional нужна только для объединения нескольких операций в одной транзакции в сервисе
 
 ## Q10. Как работает именование таблиц и колонок по умолчанию?
 
@@ -391,12 +337,6 @@ public class JdbcConfig extends AbstractJdbcConfiguration {
 Или через `@Table` / `@Column` непосредственно на сущности.
 
 ---
-
-> [!mcq]
-> - [x] По умолчанию camelCase конвертируется в snake_case: OrderItem → order_item, firstName → first_name; переопределяется через @Table/@Column или кастомный NamingStrategy | ✓ ПРИМЕНЯТЬ: если таблица называется иначе → @Table("orders"); поле → @Column("created_at") 📋 ПРАВИЛО: camelCase → snake_case автоматически 🔗 См. Q9
-> - [ ] Spring Data JDBC использует имена Java-классов и полей без преобразования | ❌ ПОСЛЕДСТВИЕ: нет — автоматическое преобразование camelCase в snake_case; поле firstName ищет колонку first_name, а не firstname — без совпадения ошибка маппинга
-> - [ ] NamingStrategy задаётся только через application.properties | ❌ ПОСЛЕДСТВИЕ: нет такого свойства в application.properties — NamingStrategy переопределяется через @Configuration AbstractJdbcConfiguration.namingStrategy()
-> - [ ] @Column и @Table необязательны — Spring Data JDBC всегда корректно определяет маппинг | ❌ ПОСЛЕДСТВИЕ: при legacy-таблицах с нестандартными именами без @Table/@Column происходит "no matching column found" или silent data mismatch
 
 ## Q11. Как создать иммутабельную сущность?
 
@@ -434,12 +374,6 @@ Records автоматически поддерживаются — `@Persistenc
 
 ---
 
-> [!mcq]
-> - [ ] Spring Data JDBC не поддерживает иммутабельные сущности — нужны setter-ы | ❌ ПОСЛЕДСТВИЕ: иммутабельные сущности полностью поддерживаются через @PersistenceCreator или Java records; setter-ы не требуются
-> - [ ] @PersistenceCreator обязателен для всех конструкторов включая record | ❌ ПОСЛЕДСТВИЕ: для Java record @PersistenceCreator не нужен — Spring Data JDBC автоматически использует канонический конструктор; аннотация нужна только при нескольких конструкторах в классе
-> - [x] Иммутабельная сущность: все поля final, @PersistenceCreator на конструкторе; или использовать Java record (автоматически поддерживается) | ✓ ПРИМЕНЯТЬ: Java record для новых value objects; @PersistenceCreator для классов с final-полями 📋 ПРАВИЛО: records работают из коробки без @PersistenceCreator 🔗 См. Q9
-> - [ ] Иммутабельные сущности с final-полями не поддерживают @Version | ❌ ПОСЛЕДСТВИЕ: @Version совместим с иммутабельными сущностями — Spring Data JDBC создаёт новый объект с увеличенной версией через конструктор при обновлении
-
 ## Q12. Как работает оптимистичная блокировка через @Version?
 
 ```java
@@ -464,12 +398,6 @@ WHERE id = ? AND version = ?  -- проверяет версию
 **Отличие от JPA:** механизм одинаковый, но Spring Data JDBC не имеет Session — конфликт обнаруживается на уровне репозитория.
 
 ---
-
-> [!mcq]
-> - [ ] @Version в Spring Data JDBC работает только с типом Integer | ❌ ПОСЛЕДСТВИЕ: @Version поддерживает long, Long, int, Integer — тип не ограничен Integer; неверное утверждение на собеседовании показывает незнание документации
-> - [ ] При конфликте версий Spring Data JDBC автоматически повторяет операцию | ❌ ПОСЛЕДСТВИЕ: нет — бросается OptimisticLockingFailureException; retry-логика реализуется вручную в сервисе (Spring Retry или @Retryable)
-> - [ ] @Version защищает от всех видов конкурентного доступа включая read-skew | ❌ ПОСЛЕДСТВИЕ: оптимистичная блокировка защищает только от lost update при concurrent UPDATE; от read-skew нужна пессимистичная блокировка или Serializable isolation
-> - [x] @Version добавляет WHERE id=? AND version=? в UPDATE; при конкурентном обновлении другим потоком → OptimisticLockingFailureException | ✓ ПРИМЕНЯТЬ: для сущностей с конкурентным доступом без пессимистичных блокировок 📋 ПРАВИЛО: version++ на каждый UPDATE → конфликт = exception, поймай и retry 🔗 См. Q16
 
 ## Q13. Какие репозитории использует Spring Data JDBC?
 
@@ -496,12 +424,6 @@ public interface ProductRepository extends CrudRepository<Product, Long> {
 | `ListCrudRepository` | Как CrudRepository но возвращает `List` |
 
 ---
-
-> [!mcq]
-> - [ ] JpaRepository доступен в Spring Data JDBC | ❌ ПОСЛЕДСТВИЕ: JpaRepository — Spring Data JPA, требует Hibernate в classpath; в Spring Data JDBC только CrudRepository, PagingAndSortingRepository, ListCrudRepository
-> - [ ] Derived query methods в Spring Data JDBC не поддерживаются — только @Query | ❌ ПОСЛЕДСТВИЕ: derived methods поддерживаются: findByName, findByPriceGreaterThan генерируются автоматически через имя метода как в Spring Data JPA
-> - [x] Spring Data JDBC использует CrudRepository<T,ID>, PagingAndSortingRepository и ListCrudRepository; derived query methods и @Query с plain SQL | ✓ ПРИМЕНЯТЬ: extends CrudRepository для базовых CRUD; @Query для кастомного SQL 📋 ПРАВИЛО: только SQL в @Query — не JPQL; параметры :named, не ?1 🔗 См. Q14
-> - [ ] @Query в Spring Data JDBC принимает JPQL | ❌ ПОСЛЕДСТВИЕ: только plain SQL с именами таблиц и колонок; JPQL (с именами классов) вызовет "no such table: Product" — таблица называется products, не Product
 
 ## Q14. (!) Как написать кастомный SQL-запрос в Spring Data JDBC?
 
@@ -531,12 +453,6 @@ public record ProductStats(String name, long orderCount) {}
 
 ---
 
-> [!mcq]
-> - [ ] @Query в Spring Data JDBC поддерживает позиционные параметры ?1, ?2 | ❌ ПОСЛЕДСТВИЕ: только именованные параметры :param с @Param; ?1 вызовет ошибку компиляции или неверную подстановку значений
-> - [ ] Кастомный SQL пишется через @NativeQuery | ❌ ПОСЛЕДСТВИЕ: @NativeQuery — JPA-аннотация; в Spring Data JDBC используется @Query, который всегда native SQL
-> - [ ] Для маппинга результата в DTO нужно явно задать RowMapper bean | ❌ ПОСЛЕДСТВИЕ: Spring Data JDBC автоматически маппирует результат в record/class через конструктор или поля; явный RowMapper нужен только для нестандартных преобразований
-> - [x] @Query принимает plain SQL с именованными параметрами (:param); @Param обязателен; результат маппируется в record/class автоматически | ✓ ПРИМЕНЯТЬ: сложные JOIN и агрегации — @Query с plain SQL; DTO через record 📋 ПРАВИЛО: SQL именами таблиц, параметры :named не ?1 🔗 См. Q15
-
 ## Q15. Как выполнять modifying-запросы?
 
 ```java
@@ -554,12 +470,6 @@ void deleteByCategory(@Param("category") String category);
 Возвращаемые типы: `void`, `int` (количество затронутых строк), `boolean`.
 
 ---
-
-> [!mcq]
-> - [x] @Modifying обязателен для INSERT/UPDATE/DELETE; без него Spring Data JDBC ожидает ResultSet; возвращаемые типы: void, int, boolean | ✓ ПРИМЕНЯТЬ: любой DML без возврата результата — @Modifying + @Query 📋 ПРАВИЛО: SELECT → без @Modifying; DML → @Modifying обязателен 🔗 См. Q14
-> - [ ] @Modifying не нужен — достаточно @Query для всех типов запросов | ❌ ПОСЛЕДСТВИЕ: без @Modifying для UPDATE/DELETE Spring Data JDBC пытается прочитать ResultSet → UncategorizedSQLException или некорректное поведение
-> - [ ] @Transactional обязателен вместе с @Modifying на каждом методе | ❌ ПОСЛЕДСТВИЕ: методы репозитория автоматически транзакционны; @Transactional необязателен на методе репозитория; нужен в сервисе для объединения нескольких операций
-> - [ ] @Modifying требует явного flush() после выполнения | ❌ ПОСЛЕДСТВИЕ: нет flush() концепции в Spring Data JDBC — в отличие от JPA, SQL выполняется сразу при вызове метода, без отложенного flush
 
 ## Q16. Как работает транзакционность в Spring Data JDBC?
 
@@ -590,12 +500,6 @@ public class OrderService {
 Отличие от JPA: нет автоматического flush/merge — `save()` всегда явный SQL.
 
 ---
-
-> [!mcq]
-> - [ ] Spring Data JDBC не поддерживает транзакции — нужен ручной JDBC | ❌ ПОСЛЕДСТВИЕ: транзакции полностью поддерживаются через Spring Transaction Management; @Transactional работает так же, как в JPA
-> - [ ] При save() агрегата каждый SQL-запрос выполняется в отдельной транзакции | ❌ ПОСЛЕДСТВИЕ: нет — весь save() агрегата (DELETE items + INSERT items + UPDATE root) выполняется в одной транзакции; partial failure откатывает всё
-> - [ ] @Transactional(readOnly=true) запрещает использование методов репозитория | ❌ ПОСЛЕДСТВИЕ: readOnly=true разрешён и полезен для read-методов — подсказывает БД оптимизировать запрос; запись в read-only транзакции → TransactionSystemException
-> - [x] Методы репозитория транзакционны по умолчанию; при save(order) вся операция в одной транзакции; кастомная логика — @Transactional на сервисе | ✓ ПРИМЕНЯТЬ: несколько репозиториев в одном методе → @Transactional на сервисе 📋 ПРАВИЛО: нет auto-flush как в JPA; save() = явный SQL сразу 🔗 См. Q12
 
 ## See also
 

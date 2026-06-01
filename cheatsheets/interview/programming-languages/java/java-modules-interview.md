@@ -143,13 +143,6 @@ graph TB
 
 Сама платформа `JDK` разбита на модули: `java.base` (неявно подключается всегда), `java.sql`, `java.xml`, `java.logging` и др. Приложение может зависеть только от того, что реально использует.
 
-
-> [!mcq]
-> - [ ] JPMS запрещает использование classpath — все JAR должны быть переведены в модули | ❌ ПОСЛЕДСТВИЕ: unnamed module и automatic module позволяют legacy JAR работать на classpath/module path без module-info.java
-> - [x] JPMS решает JAR Hell (split packages запрещены), добавляет инкапсуляцию через exports, явные зависимости через requires, компактный runtime через jlink | ✓ ПРИМЕНЯТЬ: микросервисы на Java 9+ с jlink; библиотеки с чёткими API границами 📋 ПРАВИЛО: JPMS = явные границы модулей → нет JAR Hell 🔗 См. Q4
-> - [ ] JPMS заменяет Maven/Gradle — больше не нужны системы сборки | ❌ ПОСЛЕДСТВИЕ: JPMS и системы сборки решают разные задачи; Maven/Gradle управляют зависимостями при сборке, JPMS — модульностью в runtime
-> - [ ] JPMS добавляет вертикальное масштабирование JVM — больше heap на один модуль | ❌ ПОСЛЕДСТВИЕ: JPMS про модульность кода и runtime image, не про распределение памяти JVM
-
 ## Q2. (!) Что такое `module-info.java` и какие директивы в нём доступны?
 
 `module-info.java` — специальный файл-описание модуля, расположенный в корне исходного кода модуля (рядом с корневым пакетом). Компилируется в `module-info.class`. Содержит имя модуля и набор директив.
@@ -193,13 +186,6 @@ module com.example.app {
 
 Имя модуля должно быть уникальным; по соглашению используют обратное доменное имя (как для пакетов). На один модуль — ровно один `module-info.java`.
 
-
-> [!mcq]
-> - [ ] module-info.java должен находиться в папке src/main/resources | ❌ ПОСЛЕДСТВИЕ: module-info.java обязан быть в корне source root (src/main/java); в resources компилятор его не обнаружит
-> - [ ] Достаточно написать только `requires` — `exports` добавляется автоматически для public классов | ❌ ПОСЛЕДСТВИЕ: без явного `exports` даже public API недоступен другим модулям; отсутствие `exports` = closed module by default
-> - [ ] `opens` и `exports` — синонимы; оба делают пакет доступным | ❌ ПОСЛЕДСТВИЕ: `exports` — доступ для компиляции/runtime вызовов; `opens` — только рефлексия (setAccessible); Spring требует `opens`, не `exports`
-> - [x] module-info.java в корне source root содержит: `requires` (зависимости), `exports` (публичный API), `opens` (рефлексия), `uses`/`provides` (ServiceLoader) | ✓ ПРИМЕНЯТЬ: любой именованный модуль Java 9+ 📋 ПРАВИЛО: module-info.java = контракт модуля: что берёт и что отдаёт 🔗 См. Q5
-
 ## Q3. Как устроена модульная структура самого `JDK`?
 
 Начиная с `Java 9`, `JDK` разбит на ~70 модулей (в зависимости от дистрибутива). Ключевые модули:
@@ -227,13 +213,6 @@ graph BT
 
 Модули с префиксом `java.*` — стандартная спецификация (SE), `jdk.*` — специфичны для конкретной реализации JDK. Это важно при миграции между дистрибутивами.
 
-
-> [!mcq]
-> - [ ] java.base нужно явно указывать в `requires java.base` | ❌ ПОСЛЕДСТВИЕ: java.base подключается неявно ко всем модулям; явный `requires java.base` — лишний код, но не ошибка
-> - [x] java.base содержит java.lang/util/io/nio и подключается неявно; jdk.* модули специфичны для JDK (не SE-стандарт) | ✓ ПРИМЕНЯТЬ: при создании custom jlink image — только нужные java.* и jdk.* модули 📋 ПРАВИЛО: java.* = SE-стандарт; jdk.* = JDK-specific; java.base = неявный фундамент 🔗 См. Q19
-> - [ ] Все JDK модули начинаются с jdk.* | ❌ ПОСЛЕДСТВИЕ: стандартные модули начинаются с java.* (java.sql, java.xml, java.net.http); jdk.* — внутренние инструменты (jdk.jlink, jdk.jdeps)
-> - [ ] JDK разбит на 10 модулей | ❌ ПОСЛЕДСТВИЕ: JDK содержит ~70 модулей в зависимости от дистрибутива; это обеспечивает jlink гранулярность при создании custom runtime
-
 ## Q4. Чем отличается `module path` от `classpath`?
 
 | Характеристика | `classpath` | `module path` |
@@ -256,13 +235,6 @@ java --module-path lib -m com.example.app/com.example.Main
 # Гибрид
 java --module-path mods -cp lib/legacy.jar -m com.example.app
 ```
-
-
-> [!mcq]
-> - [ ] На classpath split packages приводят к ошибке компиляции | ❌ ПОСЛЕДСТВИЕ: на classpath split packages допускаются (первый найденный JAR побеждает); только JPMS запрещает их с ResolutionException
-> - [ ] На module path рефлексия (setAccessible) работает без ограничений | ❌ ПОСЛЕДСТВИЕ: на module path нужен `opens` или `--add-opens`; без него InaccessibleObjectException при setAccessible
-> - [x] classpath: нет инкапсуляции, split packages допускаются, ошибки в runtime; module path: exports-инкапсуляция, split packages запрещены, ошибки при старте | ✓ ПРИМЕНЯТЬ: переход на module path даёт fail-fast диагностику зависимостей 📋 ПРАВИЛО: classpath = cowboy mode; module path = explicit contracts 🔗 См. Q1
-> - [ ] module path несовместим с Maven — нужен специальный build tool | ❌ ПОСЛЕДСТВИЕ: Maven поддерживает module path через maven-compiler-plugin 3.6+ и maven-jar-plugin; стандартная конфигурация
 
 ## Q5. (!) В чём разница между `exports` и `opens`?
 
@@ -287,13 +259,6 @@ module com.example.service {
 
 **Ключевое отличие**: `exports` — «видно снаружи для вызова», `opens` — «разрешена глубокая рефлексия».
 
-
-> [!mcq]
-> - [ ] `exports` даёт доступ только для вызовов; рефлексия всегда запрещена даже для экспортированных пакетов | ❌ ПОСЛЕДСТВИЕ: экспортированные пакеты доступны для вызовов, но рефлексия (setAccessible) всё равно требует `opens`; exports и opens ортогональны
-> - [ ] Spring DI работает без `opens` — он использует только `exports` | ❌ ПОСЛЕДСТВИЕ: Spring использует рефлексию для инъекции зависимостей; без `opens com.example.service to spring.core` — InaccessibleObjectException
-> - [x] `exports` = публичный API для компиляции/runtime; `opens` = рефлексия (setAccessible) для Spring/Hibernate | ✓ ПРИМЕНЯТЬ: `exports` для API; `opens ... to spring.core, org.hibernate.orm` для DI-фреймворков 📋 ПРАВИЛО: exports = вызывай меня; opens = смотри внутрь меня 🔗 См. Q12
-> - [ ] `open module` = то же что `exports *`; всё доступно для компиляции | ❌ ПОСЛЕДСТВИЕ: `open module` = opens всех пакетов для рефлексии; это НЕ exports; компиляция пакетов всё равно требует явного `exports`
-
 ## Q6. Что такое `qualified exports` и `qualified opens`?
 
 `Qualified` (квалифицированные) директивы ограничивают доступ не для всех модулей, а только для перечисленных:
@@ -312,13 +277,6 @@ module com.example.core {
 - Тестовых модулей, которым нужен доступ к internal API
 - Модулей одного проекта, которые тесно связаны
 - Фреймворков, которым нужна рефлексия к конкретным пакетам
-
-
-> [!mcq]
-> - [ ] qualified exports открывает пакет для рефлексии только из указанных модулей | ❌ ПОСЛЕДСТВИЕ: `exports X to M` — это доступ для компиляции/вызовов; для рефлексии нужен `opens X to M`
-> - [x] `exports pkg to M1, M2` ограничивает доступ к internal API только доверенным модулям; `opens pkg to hibernate` — рефлексия только для hibernate | ✓ ПРИМЕНЯТЬ: test-модули нуждаются в internal API; фреймворки нуждаются в рефлексии 📋 ПРАВИЛО: qualified = friend-access pattern; меньше is more 🔗 См. Q5
-> - [ ] qualified exports нельзя использовать с Maven — только с jlink | ❌ ПОСЛЕДСТВИЕ: qualified exports — стандартная директива module-info.java; работает с любым build tool
-> - [ ] `exports X to M` транзитивен — клиенты M тоже видят X | ❌ ПОСЛЕДСТВИЕ: qualified exports не транзитивен; только модуль M может использовать X, его клиенты — нет
 
 ## Q7. (!) Что такое `requires` и `requires transitive`?
 
@@ -352,13 +310,6 @@ module com.example.app {
 
 **Правило**: если тип из зависимого модуля появляется в публичном API (параметры методов, возвращаемые типы, наследование), нужен `requires transitive`. Иначе клиенты не смогут скомпилировать код.
 
-
-> [!mcq]
-> - [ ] `requires transitive` автоматически делает все пакеты видимыми — `exports` не нужен | ❌ ПОСЛЕДСТВИЕ: `requires transitive` управляет читаемостью, но не видимостью; пакеты модуля C всё равно нужно явно `exports` в module-info.java модуля C
-> - [x] `requires M` — прямая зависимость (не транзитивная); `requires transitive M` — клиенты тоже видят M; нужен когда типы из M в публичном API | ✓ ПРИМЕНЯТЬ: `requires transitive model` в api-модуле когда DTO из model в сигнатурах методов API 📋 ПРАВИЛО: тип в публичном API = requires transitive 🔗 См. Q8
-> - [ ] `requires transitive` нужен всегда — без него ничего не скомпилируется | ❌ ПОСЛЕДСТВИЕ: `requires transitive` только когда типы зависимости в публичном API; избыточный transitive = нежелательная связность между модулями
-> - [ ] `requires` достаточно для транзитивного доступа клиентов | ❌ ПОСЛЕДСТВИЕ: без `transitive` клиент получит compile error при использовании типов из транзитивной зависимости; нужно явно указывать `requires transitive`
-
 ## Q8. Что такое `requires static` и когда это используется?
 
 `requires static` объявляет **optional** зависимость: модуль необходим при компиляции, но не обязателен при запуске.
@@ -390,13 +341,6 @@ public class OptionalFeature {
 }
 ```
 
-
-> [!mcq]
-> - [ ] `requires static M` — M загружается при старте если присутствует на classpath | ❌ ПОСЛЕДСТВИЕ: `requires static` — compile-only; если M отсутствует в runtime — модуль просто не загружается; это optional dependency, не eager loading
-> - [ ] `requires static` используется для тестовых зависимостей вместо test scope | ❌ ПОСЛЕДСТВИЕ: Lombok при compile-time обработке — типичный кейс; но test зависимости лучше управлять через scope в Maven/Gradle, не `requires static`
-> - [x] `requires static M` — M нужен при компиляции, но не при runtime; подходит для Lombok, annotation processors, compile-time-only frameworks | ✓ ПРИМЕНЯТЬ: `requires static lombok` — аннотации Lombok не нужны в runtime 📋 ПРАВИЛО: requires static = compile-time-only optional dependency 🔗 См. Q7
-> - [ ] `requires static` транзитивен по умолчанию | ❌ ПОСЛЕДСТВИЕ: `requires static` не транзитивен; клиенты не получают автоматически доступ к optional зависимости
-
 ## Q9. Что такое `open module`?
 
 `open module` — модуль, все пакеты которого открыты для рефлексии (как если бы каждый пакет имел `opens`). При этом `exports` по-прежнему нужно указывать явно для compile-time доступа.
@@ -413,13 +357,6 @@ open module com.example.webapp {
 **Когда использовать**: для приложений, активно использующих фреймворки с рефлексией (`Spring Boot`, `Hibernate`), где прописывать `opens` для каждого пакета слишком утомительно. Это компромисс: вы теряете часть инкапсуляции ради удобства.
 
 **Ограничение**: внутри `open module` нельзя использовать директивы `opens` — они конфликтуют с `open` на уровне модуля.
-
-
-> [!mcq]
-> - [ ] `open module` автоматически добавляет `exports *` — все пакеты доступны для компиляции | ❌ ПОСЛЕДСТВИЕ: `open module` открывает рефлексию, но НЕ добавляет exports; для compile-time доступа всё равно нужен явный `exports`
-> - [x] `open module M` открывает все пакеты для рефлексии (как opens для каждого); используется для Spring Boot apps где много DI-рефлексии | ✓ ПРИМЕНЯТЬ: Spring Boot приложения на Java 9+; вместо перечисления `opens` для каждого пакета 📋 ПРАВИЛО: open module = удобство рефлексии ценой потери инкапсуляции 🔗 См. Q5
-> - [ ] Внутри `open module` можно и нужно указывать `opens` для дополнительного контроля | ❌ ПОСЛЕДСТВИЕ: `opens` внутри `open module` запрещён — compile error; `open module` уже covers all packages
-> - [ ] `open module` нельзя комбинировать с `exports` | ❌ ПОСЛЕДСТВИЕ: `exports` и `open module` совместимы; `open module` только про рефлексию; `exports` контролирует compile-time видимость как обычно
 
 ## Q10. (!) Что такое `provides` и `uses` в контексте `ServiceLoader`?
 
@@ -476,13 +413,6 @@ graph LR
 
 Классический пример из `JDK`: `JDBC`-драйверы регистрируются через `provides java.sql.Driver with ...`.
 
-
-> [!mcq]
-> - [ ] `uses` в consumer-модуле необязателен — ServiceLoader.load() найдёт все implementations на classpath | ❌ ПОСЛЕДСТВИЕ: без `uses` в module-info.java модуль не может использовать ServiceLoader для этого интерфейса; JPMS проверяет uses при старте
-> - [ ] `provides X with Y` требует что Y должен экспортироваться через `exports` | ❌ ПОСЛЕДСТВИЕ: provider-класс Y не требует `exports`; ServiceLoader получает доступ через provides-декларацию, минуя обычный exports
-> - [x] Consumer: `uses PaymentProvider`; Provider: `provides PaymentProvider with StripeProvider`; ServiceLoader.load() находит все providers через JPMS | ✓ ПРИМЕНЯТЬ: plugin-архитектура; DI-контейнеры; расширяемые системы без жёстких зависимостей 📋 ПРАВИЛО: uses = хочу найти; provides = я реализую 🔗 См. Q11
-> - [ ] ServiceLoader в JPMS работает только если consumer и provider в одном JAR | ❌ ПОСЛЕДСТВИЕ: ServiceLoader специально для разных модулей; provider-модуль и consumer-модуль независимы, связываются только через provides/uses
-
 ## Q11. Как `ServiceLoader` работает в модульном мире по сравнению с `classpath`?
 
 | Аспект | `classpath` (до Java 9) | `module path` (JPMS) |
@@ -493,13 +423,6 @@ graph LR
 | **Безопасность** | Можно подменить файл в JAR | Декларация в `module-info` — часть модуля |
 
 В модульном мире `ServiceLoader` стал предсказуемее: реализации видны только если модуль объявил `provides`, а потребитель — `uses`. Файл `META-INF/services` по-прежнему поддерживается для обратной совместимости (в `automatic` и `unnamed` модулях).
-
-
-> [!mcq]
-> - [ ] В JPMS META-INF/services файлы больше не работают | ❌ ПОСЛЕДСТВИЕ: META-INF/services поддерживается для обратной совместимости в automatic и unnamed модулях; именованные модули должны использовать provides директиву
-> - [x] classpath: META-INF/services (сканирование JAR, ошибки в runtime); module path: `provides ... with` (декларативно, валидация при старте) | ✓ ПРИМЕНЯТЬ: именованные модули → provides/uses; legacy classpath → META-INF/services 📋 ПРАВИЛО: JPMS ServiceLoader = validates at startup, not runtime 🔗 См. Q10
-> - [ ] JPMS ServiceLoader работает медленнее classpath из-за модульной проверки | ❌ ПОСЛЕДСТВИЕ: JPMS ServiceLoader быстрее на старте т.к. нет сканирования всех JAR; только модули с `provides` проверяются
-> - [ ] `provides X with Y` требует явного `exports Y` в module-info | ❌ ПОСЛЕДСТВИЕ: provider-класс не должен быть экспортирован; ServiceLoader получает доступ внутренне; provides — специальный доступ вне exports
 
 ## Q12. (!) Как модули влияют на рефлексию и доступ к внутренним `API`?
 
@@ -524,13 +447,6 @@ java.lang.reflect.InaccessibleObjectException:
 ```
 
 В модульном приложении вместо глобального `--add-opens` нужно точечно указывать `opens` в `module-info.java`, снижая поверхность атаки. Подробнее об ограничениях рефлексии см. [вопросы по аннотациям Java](java-annotations-interview.md).
-
-
-> [!mcq]
-> - [ ] В JPMS setAccessible(true) полностью запрещён для всех полей | ❌ ПОСЛЕДСТВИЕ: setAccessible работает если пакет открыт через `opens`; запрещён только если пакет не экспортирован и не открыт
-> - [ ] `exports` пакета достаточно для setAccessible(true) на private поля | ❌ ПОСЛЕДСТВИЕ: exports даёт доступ к public API; для setAccessible на private нужен `opens`; иначе InaccessibleObjectException
-> - [x] Без `opens` → InaccessibleObjectException при setAccessible; нужен `opens com.example.entities to spring.core, org.hibernate.orm` | ✓ ПРИМЕНЯТЬ: Spring DI и Hibernate ORM требуют opens для entity пакетов 📋 ПРАВИЛО: exports = вызовы; opens = рефлексия на все члены включая private 🔗 См. Q5
-> - [ ] --add-opens работает только для модулей в самом JDK, не для пользовательских | ❌ ПОСЛЕДСТВИЕ: --add-opens работает для любых модулей: `--add-opens com.example.app/com.example.internal=ALL-UNNAMED`
 
 ## Q13. Какие флаги JVM используются для обхода модульных ограничений?
 
@@ -557,13 +473,6 @@ java --add-opens java.base/java.lang=ALL-UNNAMED \
 - `Java 9-15`: по умолчанию `permit` (с предупреждениями)
 - `Java 16`: по умолчанию `deny`
 - `Java 17+`: флаг удалён, строгая инкапсуляция
-
-
-> [!mcq]
-> - [ ] `--add-opens` в Java 17+ удалён вместе с `--illegal-access` | ❌ ПОСЛЕДСТВИЕ: `--add-opens` и `--add-exports` живут в Java 17+; удалён только `--illegal-access`; корректные JVM флаги работают для всех версий
-> - [ ] `--illegal-access=permit` включает pre-JPMS поведение в Java 17+ | ❌ ПОСЛЕДСТВИЕ: `--illegal-access` удалён в Java 17; попытка использовать его в Java 17 → JVM warning; нужно переходить на `--add-opens`
-> - [x] `--add-opens M/pkg=ALL-UNNAMED` открывает для рефлексии; `--add-exports M/pkg=ALL-UNNAMED` для compile/runtime; `--illegal-access` удалён в Java 17 | ✓ ПРИМЕНЯТЬ: при запуске Spring Boot на Java 17+ без opens в module-info 📋 ПРАВИЛО: --add-opens = runtime workaround; правильное решение = opens в module-info.java 🔗 См. Q12
-> - [ ] `--add-modules java.base` нужен явно для каждого запуска | ❌ ПОСЛЕДСТВИЕ: java.base добавляется автоматически; `--add-modules` нужен только для модулей не в default module graph (например java.xml.bind)
 
 ## Q14. (!) Что такое `unnamed module`?
 
@@ -595,13 +504,6 @@ graph TB
 
 Это обеспечивает **обратную совместимость**: старые приложения без `module-info.java` продолжают работать без изменений.
 
-
-> [!mcq]
-> - [ ] Именованный модуль может использовать `requires unnamed` для доступа к classpath | ❌ ПОСЛЕДСТВИЕ: `requires unnamed module` синтаксически невозможен; именованный модуль не может зависеть от unnamed module; нужен automatic module как мост
-> - [ ] Unnamed module не видит именованные модули из module path | ❌ ПОСЛЕДСТВИЕ: unnamed module неявно читает все именованные модули на module path; именованные не могут читать unnamed
-> - [x] Unnamed module = всё на classpath; exports/opens все пакеты; читает все именованные; именованные НЕ могут `requires` на него | ✓ ПРИМЕНЯТЬ: legacy code на classpath работает без изменений рядом с JPMS модулями 📋 ПРАВИЛО: unnamed = обратная совместимость; нет имени = нет requires 🔗 См. Q15
-> - [ ] Разные JAR на classpath создают разные unnamed modules | ❌ ПОСЛЕДСТВИЕ: все JAR на classpath объединяются в ОДИН unnamed module на один ClassLoader; это проблема при split packages
-
 ## Q15. (!) Что такое `automatic module` и как определяется его имя?
 
 **`Automatic module`** — обычный JAR (без `module-info.class`), помещённый на `module path`. JVM автоматически превращает его в модуль.
@@ -626,13 +528,6 @@ graph TB
 
 Это делает `automatic modules` ключевым мостом при миграции: именованные модули могут объявлять `requires` на `automatic module`, а тот может читать код из `classpath`.
 
-
-> [!mcq]
-> - [ ] Имя automatic module берётся из package declaration в коде | ❌ ПОСЛЕДСТВИЕ: имя берётся из MANIFEST.MF атрибута Automatic-Module-Name или из имени JAR-файла; из кода не читается
-> - [x] Automatic module = JAR на module path без module-info; имя из Automatic-Module-Name в MANIFEST.MF или из имени JAR файла; exports/opens всё | ✓ ПРИМЕНЯТЬ: переходный этап миграции; именованный модуль может `requires` automatic module 📋 ПРАВИЛО: automatic = мост между named и unnamed; выставляй Automatic-Module-Name в библиотеках 🔗 См. Q16
-> - [ ] Automatic module не поддерживает META-INF/services ServiceLoader | ❌ ПОСЛЕДСТВИЕ: automatic module поддерживает META-INF/services как legacy classpath; это одно из преимуществ при миграции
-> - [ ] Automatic module нельзя использовать в production — только для тестов | ❌ ПОСЛЕДСТВИЕ: automatic modules активно используются в production при поэтапной миграции; многие библиотеки (Guava, Jackson) выставляют Automatic-Module-Name
-
 ## Q16. В чём ключевые отличия между `unnamed module`, `automatic module` и именованным модулем?
 
 | Характеристика | Unnamed | Automatic | Named |
@@ -647,13 +542,6 @@ graph TB
 | **`ServiceLoader`** | `META-INF/services` | `META-INF/services` | `provides...with` |
 
 **Ключевая разница**: `automatic module` можно использовать из именованного модуля через `requires`, а `unnamed module` — нельзя. Это делает `automatic modules` критичными для поэтапной миграции.
-
-
-> [!mcq]
-> - [ ] Unnamed module может зависеть от automatic module через `requires` | ❌ ПОСЛЕДСТВИЕ: unnamed module не имеет module-info.java поэтому не может объявлять `requires`; читает все модули неявно
-> - [ ] Именованный модуль автоматически видит unnamed module через transitive | ❌ ПОСЛЕДСТВИЕ: именованный модуль не может `requires unnamed module`; для доступа к classpath нужен automatic module как мост
-> - [x] Unnamed: classpath, нет имени, нельзя requires; Automatic: module path без module-info, есть имя, можно requires; Named: module path + module-info, явные exports/requires | ✓ ПРИМЕНЯТЬ: понять взаимодействие при гибридной миграции 📋 ПРАВИЛО: unnamed ← automatic ← named; только в этом направлении через automatic 🔗 См. Q14
-> - [ ] Все три типа имеют одинаковую инкапсуляцию — разница только в месте на диске | ❌ ПОСЛЕДСТВИЕ: Named имеет строгую инкапсуляцию (только exports); Unnamed и Automatic — всё открыто; разница фундаментальная
 
 ## Q17. (!) Что такое `split package` и почему это проблема в `JPMS`?
 
@@ -677,13 +565,6 @@ java.lang.module.ResolutionException:
 3. **`--patch-module`** — добавить классы одного JAR в другой модуль (временный workaround)
 4. **Исключить дублирующую зависимость** в сборке (`Maven exclusions`)
 
-
-> [!mcq]
-> - [ ] Split packages на classpath запрещены так же как на module path | ❌ ПОСЛЕДСТВИЕ: на classpath split packages допускаются (первый JAR в порядке classpath побеждает); только JPMS запрещает их с ResolutionException
-> - [x] Split package = один пакет в нескольких модулях → ResolutionException при старте; решается переразбивкой пакетов или Maven exclusions | ✓ ПРИМЕНЯТЬ: диагностика через jdeps --check при миграции на JPMS 📋 ПРАВИЛО: один пакет = один модуль; нарушение = fail-fast при старте 🔗 См. Q1
-> - [ ] Split packages в тестах (test scope) тоже запрещены JPMS | ❌ ПОСЛЕДСТВИЕ: тестовый код может иметь split packages если тесты на classpath (unnamed module); JPMS строго только для named модулей
-> - [ ] --patch-module решает split packages навсегда — можно не трогать код | ❌ ПОСЛЕДСТВИЕ: --patch-module — временный workaround; в production нужно устранять split packages рефакторингом
-
 ## Q18. Что такое `multi-release JAR` и как он связан с модулями?
 
 **`Multi-release JAR`** (`MRJAR`, `JEP 238`) — JAR-файл, содержащий разные версии классов для разных версий Java. Структура:
@@ -706,13 +587,6 @@ my-lib.jar
 **Связь с модулями**: `MRJAR` позволяет добавить `module-info.class` в `META-INF/versions/9/`, сохраняя совместимость с Java 8 в базовом варианте. Это ключевой механизм для библиотек, которые хотят поддерживать и `classpath` (Java 8), и `module path` (Java 9+).
 
 **Важно для собеседования**: `MRJAR` — не замена модулям, а инструмент совместимости. JVM выбирает наиболее подходящую версию класса автоматически.
-
-
-> [!mcq]
-> - [ ] Multi-release JAR создаёт отдельные исполняемые файлы для каждой версии Java | ❌ ПОСЛЕДСТВИЕ: MRJAR — один JAR файл; JVM сама выбирает правильную версию класса из META-INF/versions/<version>/ в зависимости от runtime
-> - [ ] module-info.class в MRJAR должен быть в корне, не в META-INF/versions | ❌ ПОСЛЕДСТВИЕ: module-info.class для модульного MRJAR должен быть в META-INF/versions/9/ (или выше); базовая версия для Java 8 совместимости — в корне
-> - [x] MRJAR (`Multi-Release: true` в MANIFEST.MF) содержит разные классы для разных Java версий в META-INF/versions/<N>/; module-info.class там же для Java 9+ | ✓ ПРИМЕНЯТЬ: библиотеки поддерживающие Java 8 и 9+ одновременно 📋 ПРАВИЛО: MRJAR = один JAR, несколько Java-версий 🔗 См. Q19
-> - [ ] MRJAR не поддерживается Maven — нужен Gradle | ❌ ПОСЛЕДСТВИЕ: maven-compiler-plugin поддерживает MRJAR через multiRelease конфигурацию; это стандартный инструментарий
 
 ## Q19. (!) Что такое `jlink` и зачем собирать custom runtime image?
 
@@ -744,13 +618,6 @@ jlink --add-modules java.base,java.sql,com.example.app \
 **Ограничение**: `jlink` работает только с именованными модулями. Если приложение использует `automatic modules` или `unnamed module`, `jlink` не сможет их включить.
 
 **Для Docker/Kubernetes**: `jlink` image + `FROM scratch` или Alpine даёт контейнеры размером 40-60 MB вместо 200+ MB с полным JDK.
-
-
-> [!mcq]
-> - [ ] jlink работает с любыми JAR включая unnamed module | ❌ ПОСЛЕДСТВИЕ: jlink требует только именованные модули с module-info.java; automatic и unnamed modules не поддерживаются — это ограничение jlink
-> - [x] jlink создаёт custom runtime только с нужными модулями; Docker image 40-60MB vs 200+MB с полным JDK; требует только named modules | ✓ ПРИМЕНЯТЬ: контейнеризованные Java микросервисы на JPMS 📋 ПРАВИЛО: jlink = custom JRE = меньше размер + меньше attack surface 🔗 См. Q3
-> - [ ] jlink нельзя использовать в Docker — только на bare metal | ❌ ПОСЛЕДСТВИЕ: jlink + Docker = классическая комбинация; jlink образ кладут в FROM scratch или alpine контейнер
-> - [ ] jlink требует покупки коммерческой лицензии Oracle JDK | ❌ ПОСЛЕДСТВИЕ: jlink входит в OpenJDK бесплатно; все популярные дистрибутивы (Temurin, Corretto, Liberica) включают jlink
 
 ## Q20. Какие плагины и опции поддерживает `jlink`?
 
@@ -791,13 +658,6 @@ jdeps --module-path mods -s my-app.jar
 # Генерация module-info.java
 jdeps --generate-module-info out my-lib.jar
 ```
-
-
-> [!mcq]
-> - [ ] jlink --bind-services включает только явно перечисленные provides | ❌ ПОСЛЕДСТВИЕ: `--bind-services` автоматически включает ВСЕ провайдеры для объявленных `uses`; без него ServiceLoader не найдёт реализации
-> - [ ] --compress работает только для Java 17+ | ❌ ПОСЛЕДСТВИЕ: --compress доступен в jlink с Java 9; синтаксис изменился в Java 21 (zip-N вместо числовых уровней)
-> - [x] jlink плагины: --strip-debug, --compress zip-6, --no-header-files, --no-man-pages, --launcher name=module/main | ✓ ПРИМЕНЯТЬ: оптимизация Docker образов; --launcher создаёт удобный скрипт запуска 📋 ПРАВИЛО: jlink compress + strip-debug + no-headers = максимально компактный runtime 🔗 См. Q19
-> - [ ] jlink --add-modules нельзя комбинировать с --bind-services | ❌ ПОСЛЕДСТВИЕ: оба флага комбинируются; --add-modules указывает начальные модули, --bind-services автоматически расширяет граф через ServiceLoader
 
 ## Q21. (!) Какие существуют стратегии миграции на модули?
 
@@ -840,13 +700,6 @@ graph TB
 5. Создать `module-info.java` с `requires`, `exports`, `opens`
 6. Добавить `--add-opens` для фреймворков, использующих рефлексию
 7. Протестировать в модульном режиме
-
-
-> [!mcq]
-> - [ ] Bottom-Up миграция: начинаем с приложения верхнего уровня и спускаемся к библиотекам | ❌ ПОСЛЕДСТВИЕ: Bottom-Up = снизу вверх = начинаем с leaf-библиотек; то что описано — Top-Down стратегия
-> - [ ] Top-Down миграция невозможна пока все зависимости не переведены в named modules | ❌ ПОСЛЕДСТВИЕ: Top-Down использует automatic modules как мост; позволяет мигрировать до того как все зависимости получат module-info
-> - [x] Bottom-Up (рекомендован): leaf-библиотеки первыми → надёжно; Top-Down: app первым, зависимости как automatic → быстро видно границы | ✓ ПРИМЕНЯТЬ: Bottom-Up для библиотек с зависимостями только от JDK; Top-Down для быстрого прототипа 📋 ПРАВИЛО: Bottom-Up = надёжно медленно; Top-Down = быстро рискованно 🔗 См. Q15
-> - [ ] После миграции нельзя сохранить обратную совместимость с Java 8 | ❌ ПОСЛЕДСТВИЕ: Multi-Release JAR (MRJAR) позволяет иметь module-info.java для Java 9+ и Java 8 совместимый код в базовом JAR
 
 ## Q22. Как мигрировать проект с `Maven`/`Gradle` на модули?
 
@@ -899,13 +752,6 @@ tasks.withType(Test).configureEach {
 
 **Ключевой момент**: `Maven`/`Gradle` корректно обрабатывают `module-info.java`, если он находится в `src/main/java/`. Обе системы сборки поддерживают гибрид `classpath` + `module path`.
 
-
-> [!mcq]
-> - [ ] Maven не поддерживает module-info.java — нужен специальный плагин moditect | ❌ ПОСЛЕДСТВИЕ: maven-compiler-plugin 3.6+ нативно поддерживает module-info.java; moditect нужен только для legacy кода или специфических конфигураций
-> - [ ] Gradle modularity.inferModulePath = true нужно прописывать в каждом подпроекте вручную | ❌ ПОСЛЕДСТВИЕ: настройку можно сделать в корневом build.gradle через allprojects {}; Gradle 7+ часто автоматически определяет module path по наличию module-info.java
-> - [x] Maven: maven-compiler-plugin 3.6+ автоматически; maven-surefire с --add-opens для тестов; Gradle: modularity.inferModulePath = true | ✓ ПРИМЕНЯТЬ: module-info.java в src/main/java; обе системы поддерживают гибрид classpath + module path 📋 ПРАВИЛО: Maven/Gradle поддерживают JPMS без доп. плагинов начиная с 2017+ версий 🔗 См. Q21
-> - [ ] Module path не работает с fat JAR (Spring Boot jar) | ❌ ПОСЛЕДСТВИЕ: Spring Boot fat JAR и JPMS имеют ограниченную совместимость, но Spring Boot 3.x улучшил поддержку; для jlink нужна нестандартная конфигурация
-
 ## Q23. Что такое `ModuleLayer` и зачем он нужен?
 
 `ModuleLayer` — механизм для создания дополнительных слоёв модулей поверх boot layer. Позволяет динамически загружать модули в runtime.
@@ -948,13 +794,6 @@ graph TB
 
 `ModuleLayer` — продвинутая тема, но важная для понимания полной архитектуры `JPMS`.
 
-
-> [!mcq]
-> - [ ] ModuleLayer позволяет нескольким версиям одной библиотеки существовать одновременно в одном boot layer | ❌ ПОСЛЕДСТВИЕ: в boot layer один модуль = одна версия; ModuleLayer позволяет разные версии в РАЗНЫХ layers с изолированными ClassLoader
-> - [x] ModuleLayer = дополнительный слой поверх boot layer; каждый layer = свой ClassLoader; применяется для плагинных систем и мультиверсионности | ✓ ПРИМЕНЯТЬ: Eclipse plugin system, Jakarta EE server app isolation, hot-reload плагинов 📋 ПРАВИЛО: ModuleLayer.boot() = основа; новые layers = изолированные пространства модулей 🔗 См. Q1
-> - [ ] ModuleLayer нельзя выгрузить — модули загружаются навсегда | ❌ ПОСЛЕДСТВИЕ: ModuleLayer с отдельным ClassLoader может быть GC'd когда нет ссылок; это основа для плагин hot-reload в runtime
-> - [ ] ModuleLayer нужен только для тестирования — в production не используется | ❌ ПОСЛЕДСТВИЕ: IntelliJ IDEA, Eclipse, Jakarta EE серверы используют ModuleLayer в production для изоляции плагинов и deployments
-
 ## Q24. Как в `JPMS` обрабатываются циклические зависимости между модулями?
 
 `JPMS` **запрещает** циклические зависимости: `module A requires B` и `module B requires A` одновременно невозможны. При попытке сборки или запуска — ошибка:
@@ -986,13 +825,6 @@ graph LR
 4. **Объединить модули**, если они слишком тесно связаны
 
 Запрет циклов в `JPMS` заставляет проектировать чистую архитектуру с однонаправленными зависимостями — аналогично принципам в [паттернах проектирования](../../design-patterns/design-patterns-interview.md).
-
-
-> [!mcq]
-> - [ ] Циклические зависимости в JPMS разрешаются через `requires transitive` | ❌ ПОСЛЕДСТВИЕ: `requires transitive` только для транзитивного чтения; цикл A→B→A запрещён независимо от типа requires; ResolutionException при старте
-> - [x] JPMS запрещает циклы → ResolutionException; решение: выделить общий API-модуль, DIP через интерфейсы, или ServiceLoader | ✓ ПРИМЕНЯТЬ: принудительная чистая архитектура без циклических зависимостей 📋 ПРАВИЛО: цикл = нарушение clean architecture; JPMS enforce это явно 🔗 См. Q1
-> - [ ] Циклические зависимости допускаются если модули в одном jar | ❌ ПОСЛЕДСТВИЕ: JPMS проверяет циклы по именам модулей, независимо от физического расположения JAR
-> - [ ] Единственное решение цикла — объединить модули в один | ❌ ПОСЛЕДСТВИЕ: выделение общего контракта в api-модуль — лучший архитектурный подход; объединение модулей — крайний случай при невозможности рефакторинга
 
 ## Q25. Как тестировать модульное приложение?
 
@@ -1030,13 +862,6 @@ tasks.withType(Test).configureEach {
 **Whitebox vs Blackbox тестирование:**
 - **Blackbox** — тесты используют только экспортированный API модуля
 - **Whitebox** — тесты через `--add-opens` / `--add-exports` получают доступ к internal пакетам
-
-
-> [!mcq]
-> - [ ] Тесты в JPMS не могут тестировать неэкспортируемые пакеты | ❌ ПОСЛЕДСТВИЕ: --add-opens через maven-surefire/Gradle argLine открывает internal пакеты для тестов; whitebox testing возможен с JVM флагами
-> - [x] Unit тесты patch-module'd автоматически Maven/Gradle; для internal API нужен --add-opens в test argLine; интеграционные тесты лучше запускать в модульном режиме | ✓ ПРИМЕНЯТЬ: blackbox = только exports; whitebox = --add-opens для internal 📋 ПРАВИЛО: тесты видят module через --patch-module; internal = только через --add-opens 🔗 См. Q12
-> - [ ] Модульные тесты должны быть в отдельном named module | ❌ ПОСЛЕДСТВИЕ: тесты обычно живут в том же source set или в unnamed module (classpath); Maven Surefire поддерживает оба подхода
-> - [ ] JUnit 5 несовместим с JPMS | ❌ ПОСЛЕДСТВИЕ: JUnit 5 (junit.jupiter.*) поставляется с Automatic-Module-Name; работает как automatic module с JPMS
 
 ## Q26. (!) Как `Spring`/`Spring Boot` работает с модульной системой?
 
@@ -1079,13 +904,6 @@ module com.example.webapp {
 
 **На собеседовании**: важно понимать, что `Spring` полноценно работает с JPMS, но требует значительного количества `opens` директив. Подробнее о Spring — в вопросах по [Java Core](java-core-interview.md).
 
-
-> [!mcq]
-> - [ ] Spring Boot с JPMS не требует opens — Spring поддерживает JPMS без рефлексии | ❌ ПОСЛЕДСТВИЕ: Spring DI, AOP, @ComponentScan активно используют рефлексию; без opens com.example.app to spring.core — InaccessibleObjectException
-> - [x] Spring Boot + JPMS: нужен `open module` или точечные `opens ... to spring.core, spring.beans`; большинство Spring Boot apps работают на classpath без module-info | ✓ ПРИМЕНЯТЬ: для jlink + Spring Boot нужна полная модуляризация с open module 📋 ПРАВИЛО: Spring = heavy reflection = много opens; open module удобнее чем перечислять все пакеты 🔗 См. Q5
-> - [ ] Spring Boot 3.x полностью несовместим с JPMS | ❌ ПОСЛЕДСТВИЕ: Spring Boot 3.x улучшил поддержку JPMS; модульный режим возможен, но требует конфигурации opens; большинство приложений пока на classpath
-> - [ ] @ComponentScan не работает с модулями — нужен явный @Bean для каждого компонента | ❌ ПОСЛЕДСТВИЕ: @ComponentScan работает с unnamed module (classpath); в named module нужен `opens` для scan пакетов; или open module
-
 ## Q27. Как `Hibernate`/`JPA` взаимодействует с модулями?
 
 `Hibernate` — один из наиболее «рефлексивных» фреймворков. Для работы с модулями необходимо:
@@ -1116,13 +934,6 @@ org.hibernate.MappingException: Could not get constructor for
   org.hibernate.persister.entity.SingleTableEntityPersister
 Caused by: InaccessibleObjectException
 ```
-
-
-> [!mcq]
-> - [ ] Hibernate не требует opens — использует только экспортированные публичные поля | ❌ ПОСЛЕДСТВИЕ: Hibernate читает/пишет private поля entities через рефлексию (dirty checking, lazy loading); без `opens entity.pkg to org.hibernate.orm.core` → InaccessibleObjectException
-> - [x] Hibernate требует `opens com.example.entity to org.hibernate.orm.core` для доступа к private полям; без этого — InaccessibleObjectException при создании entity прокси | ✓ ПРИМЕНЯТЬ: `opens entity.pkg to org.hibernate.orm.core, com.fasterxml.jackson.databind` в module-info 📋 ПРАВИЛО: Hibernate = reflection-heavy; каждый entity-пакет нужен в opens 🔗 См. Q12
-> - [ ] JPA entity классы должны быть в exported пакетах для Hibernate | ❌ ПОСЛЕДСТВИЕ: entity классы не обязаны быть в exports; Hibernate получает доступ через opens; exports для внешних клиентов, opens для рефлексии — разные цели
-> - [ ] @Entity аннотация в JPMS заменяется на другой механизм | ❌ ПОСЛЕДСТВИЕ: @Entity и все JPA аннотации работают так же; изменяется только доступ через рефлексию (нужен opens)
 
 ## Q28. Какие практики проектирования модулей считаются хорошими?
 
@@ -1155,84 +966,6 @@ module com.example.service {
 }
 ```
 
-
-> [!mcq]
->
-> **Вопрос:** Какая практика модульного дизайна правильно сочетает инкапсуляцию реализации с публикуемым API?
->
-> ---
->
-> #### A) Экспортировать все пакеты модуля через `exports`, потому что иначе клиенты не смогут импортировать классы — ❌ Неверно
->
-> **Что на самом деле:** экспортировать нужно ТОЛЬКО API-пакеты (`com.example.api`). Internal-пакеты (`com.example.impl`, `com.example.internal`) намеренно остаются недоступными — это и есть главная цель JPMS: жёсткая инкапсуляция на уровне модуля, недостижимая через `public`-классы classpath. Клиентам нужны только контракты.
->
-> **Откуда путаница:** в classpath-мире любой `public` класс был «частью API» по факту, потому что был импортируем. JPMS меняет ментальную модель: `public` теперь означает «доступен внутри модуля», а межмодульная видимость — отдельное явное решение через `exports`.
->
-> **Если бы это было правдой:** через год команда обнаружит, что внешние потребители завязались на `Impl`-классы (через `import com.example.impl.UserServiceImpl`). Любой рефакторинг внутреннего слоя сломает обратную совместимость — то есть JPMS перестанет давать главную пользу: свободу менять реализацию без боязни.
->
-> ---
->
-> #### B) Использовать `open module` глобально вместо точечных `opens pkg to framework` — это упрощает работу с Spring/Hibernate — ❌ Неверно
->
-> **Что на самом деле:** это анти-практика. `open module` открывает ВСЕ пакеты для рефлексии любому модулю — полностью разрушает runtime-инкапсуляцию. Хороший дизайн: точечный `opens com.example.entity to org.hibernate.orm.core`, чтобы только Hibernate имел доступ к полям entity. Глобальный `open module` оправдан только на самом первом шаге миграции, как временный костыль.
->
-> **Откуда путаница:** на первых попытках модуляризации Spring Boot приложения `open module` спасает от каскада `InaccessibleObjectException`. Соблазн оставить так — велик.
->
-> **Если бы это было правдой:** инвестиции в JPMS обнуляются — модуль с `open module` функционально эквивалентен JAR на classpath с точки зрения рефлексии. Single-purpose `opens` — тот выигрыш, ради которого вообще стоит писать `module-info.java`.
->
-> ---
->
-> #### C) Группировать модули по техническим слоям: `com.example.controllers`, `com.example.services`, `com.example.repositories` — ❌ Неверно
->
-> **Что на самом деле:** хорошее правило — **модуль = осмысленная единица по домену** (`com.example.billing`, `com.example.users`, `com.example.notifications`), не по слою. Слоистая разбивка ведёт к тому, что любая бизнес-фича требует изменений во ВСЕХ модулях одновременно — модульность только мешает. Domain-driven разбивка локализует изменения внутри одного модуля.
->
-> **Откуда путаница:** Spring Boot туториалы часто демонстрируют 3-слойную архитектуру (`controller/service/repository`) в одном пакете. Кажется логичным масштабировать это до модулей.
->
-> **Если бы это было правдой:** добавление одного нового endpoint `/api/users/{id}/avatar` потребует изменения 4 модулей (controller, service, repository, dto). MR с 4 модулями вместо 1 — головная боль для code review и релизного цикла.
->
-> ---
->
-> #### D) Экспортировать только API-пакеты, скрывать `impl`/`internal`, использовать `requires transitive` для публичных зависимостей API, `opens` — точечно для конкретных фреймворков — ✓ Верно
->
-> **Развёрнутое объяснение:**
->
-> Хороший модульный дизайн опирается на четыре пары решений:
->
-> 1. **API vs impl** — пакет с контрактами (интерфейсы, DTO) экспортируется; пакеты с реализациями остаются внутренними. Это позволяет менять реализацию без слома потребителей.
-> 2. **Domain vs layer** — границы модуля проводятся по бизнес-доменам, а не по техническим слоям. Это локализует изменения.
-> 3. **`requires transitive` для API-зависимостей** — если в публичной сигнатуре метода используется тип из другого модуля, клиент должен видеть его автоматически.
-> 4. **`opens` точечно** — открывать только конкретный пакет конкретному фреймворку (`opens com.example.entity to org.hibernate.orm.core`), а не `open module` глобально.
->
-> **Пример:**
-> ```java
-> module com.example.billing {
->     requires transitive com.example.billing.api;  // публичный API виден клиентам
->     requires com.example.billing.impl;            // impl скрыт
->     requires org.hibernate.orm.core;
->
->     exports com.example.billing.api;              // только контракты
->     // НЕ экспортируем: com.example.billing.impl, com.example.billing.internal
->
->     opens com.example.billing.entity              // точечный opens
->         to org.hibernate.orm.core;
->
->     provides com.example.spi.PaymentProcessor
->         with com.example.billing.impl.StripeProcessor;
-> }
-> ```
->
-> **Когда применять:**
-> - Multi-module библиотеки (как `jackson-databind` + `jackson-core` + `jackson-annotations`) — каждый модуль с чёткими API-границами.
-> - Plugin-системы через `ServiceLoader`: SPI-модуль с интерфейсами, provider-модули с `provides...with`.
-> - JDK-style модули с очевидным контрактом (`java.sql`, `java.xml`).
->
-> **Подводные камни:**
-> - **`requires transitive` цепочки** — длинные цепи `requires transitive` создают неявные зависимости; клиент думает что использует один модуль, а тянет 15.
-> - **API-evolution** — если экспортируется `interface Foo`, добавление метода в Foo ломает реализации в downstream-модулях. Use `default`-методы или `sealed`-иерархии.
-> - **Module boundaries vs Maven module** — JPMS-модуль и Maven-модуль это разные понятия; один Maven-модуль может содержать несколько JPMS-модулей или наоборот.
->
-> **Связанные вопросы:** [[java-modules-interview#Q5]] — `exports` vs `opens`; [[java-modules-interview#Q7]] — `requires transitive`; [[java-modules-interview#Q10]] — `provides`/`uses`; [[java-modules-interview#Q29]] — типичные ошибки.
-
 ## Q29. Какие типичные ошибки допускают при работе с модулями?
 
 | Ошибка | Последствие | Решение |
@@ -1245,94 +978,6 @@ module com.example.service {
 | Имя automatic module из файла JAR | Нестабильное имя при обновлении | Попросить автора добавить `Automatic-Module-Name` |
 | Циклическая зависимость | `ResolutionException` | Выделить общий API-модуль |
 | Экспорт implementation-пакетов | Хрупкий API | Экспортировать только контракты |
-
-
-> [!mcq]
->
-> **Вопрос:** При запуске Spring Boot приложения с `module-info.java` падает `InaccessibleObjectException: ... module com.example.app does not "opens com.example.entity" to module org.hibernate.orm.core`. В чём корень проблемы и как правильно её устранить?
->
-> ---
->
-> #### A) Нужно добавить `requires org.hibernate.orm.core` в `module-info.java` — модуль ещё не подключён — ❌ Неверно
->
-> **Что на самом деле:** `requires` решает проблему **compile-time видимости типов**, а не runtime-рефлексии. Если бы `requires` отсутствовал, ошибка была бы на этапе компиляции: «module not found». `InaccessibleObjectException` — это runtime-ошибка от `setAccessible(true)`: модуль Hibernate уже подключён, но не имеет права обращаться к private-полям entity через reflection. Нужен **`opens`**, а не `requires`.
->
-> **Откуда путаница:** `requires` и `opens` оба объявляются в `module-info.java` и оба про «доступ». Кажется, что одно лечит другое. На самом деле это ортогональные оси: `requires` = «я зависим от модуля X», `opens` = «модуль X имеет право reflection в мой пакет».
->
-> **Если бы это было правдой:** разработчик добавит `requires` (если ещё нет), упадёт повторно, и потеряет время на тыканье в случайные директивы вместо понимания, что reflection требует именно `opens`.
->
-> ---
->
-> #### B) Нужно добавить `opens com.example.entity to org.hibernate.orm.core` — Hibernate использует рефлексию для lazy loading, dirty checking, доступа к private-полям entity — ✓ Верно
->
-> **Развёрнутое объяснение:**
->
-> Hibernate работает с entity через рефлексию по нескольким причинам:
-> 1. **Доступ к private-полям** — `@Column` обычно вешается на private-поля, и Hibernate читает/пишет их через `Field.setAccessible(true)`.
-> 2. **Lazy loading proxy** — для lazy-ассоциаций Hibernate создаёт CGLIB/Byte Buddy proxy через рефлексию.
-> 3. **Dirty checking** — сравнение snapshot и текущего состояния полей.
->
-> В classpath-мире `setAccessible(true)` работает для любого `public` класса. В JPMS — модуль-владелец должен явно дать разрешение через `opens`.
->
-> **Пример:**
-> ```java
-> module com.example.app {
->     requires spring.boot;
->     requires spring.context;
->     requires jakarta.persistence;
->     requires org.hibernate.orm.core;
->
->     // Hibernate должен видеть поля entity:
->     opens com.example.app.entity to org.hibernate.orm.core;
->
->     // Spring DI/AOP должен видеть бины:
->     opens com.example.app.service to spring.core, spring.beans;
->     opens com.example.app.config to spring.core, spring.context;
->
->     exports com.example.app.api;
-> }
-> ```
->
-> Если у вас несколько фреймворков, нуждающихся в reflection (Spring + Hibernate + Jackson), можно указать всех в одной директиве:
-> ```java
-> opens com.example.app.dto to com.fasterxml.jackson.databind, spring.web;
-> ```
->
-> **Когда применять:**
-> - JPA/Hibernate entity с private-полями (`@Column`, `@Id`, `@ManyToOne`).
-> - DTO для Jackson сериализации/десериализации.
-> - Spring beans с `@Autowired` на private-поля или приватных конструкторов.
-> - Mockito mock-генерация в тестах (часто требует `opens` в `build.gradle`).
->
-> **Подводные камни:**
-> - **`open module` соблазн** — глобально открывает всё. Это анти-практика: лучше точечные `opens pkg to framework`.
-> - **`--add-opens` JVM-флаг как костыль** — работает в runtime, но требует синхронизировать с deployment (Dockerfile, Kubernetes manifest). `opens` в `module-info.java` решает проблему «раз и навсегда».
-> - **Reflection cascade** — entity ссылается на embedded `@Embeddable` объект, который тоже надо `opens`. JVM не показывает второй уровень автоматически; внимательно читать stack trace.
-> - **`exports` ≠ `opens`** — даже если пакет уже `exports`, `setAccessible(true)` к private-полям всё равно требует `opens`. Это две разные оси доступа: compile-time vs runtime-reflection.
->
-> ---
->
-> #### C) Нужно запустить с JVM-флагом `--illegal-access=permit` — это разрешит всю рефлексию — ❌ Неверно
->
-> **Что на самом деле:** флаг `--illegal-access` был средством миграции в Java 9-15 и **удалён в Java 17**. На современных версиях JVM он либо игнорируется с предупреждением, либо запуск завершается ошибкой «Unrecognized option». Решение через `--add-opens` существует, но это runtime-костыль; декларативное `opens` в `module-info.java` лучше.
->
-> **Откуда путаница:** `--illegal-access=permit` был дефолтом в Java 9-15 и многие туториалы советуют его как «магическую» команду. Сейчас этот совет устарел.
->
-> **Если бы это было правдой:** на production с Java 17+ приложение просто не запустится — `Unrecognized VM option`. На Java 11 — запустится, но с warning, и при апгрейде на 17 сломается без предупреждения.
->
-> ---
->
-> #### D) Нужно убрать `module-info.java` и запускать на classpath — JPMS несовместим со Spring Boot — ❌ Неверно
->
-> **Что на самом деле:** Spring Boot **совместим** с JPMS (требуется правильная конфигурация `opens` и `requires`). Большинство Spring Boot проектов работают на classpath не потому, что JPMS «несовместим», а потому, что миграция на JPMS трудозатратна без существенного выигрыша для бизнес-приложения. Это инженерное решение, а не техническая блокировка.
->
-> **Откуда путаница:** в Spring 5 и ранних Spring Boot 2.x действительно были проблемы с automatic modules (`spring-core` не имел стабильного `Automatic-Module-Name`). Сейчас все основные Spring модули объявляют `Automatic-Module-Name`.
->
-> **Если бы это было правдой:** проекты вроде Quarkus Native, GraalVM native-image (которые требуют статической модульности) были бы невозможны со Spring. Однако они работают: значит, проблема не в принципиальной несовместимости, а в умении правильно настроить `opens`.
->
-> ---
->
-> **Связанные вопросы:** [[java-modules-interview#Q5]] — `exports` vs `opens`; [[java-modules-interview#Q12]] — рефлексия в JPMS; [[java-modules-interview#Q13]] — JVM-флаги обхода; [[java-modules-interview#Q37]] — Spring/Hibernate/Jackson с JPMS.
 
 ## Q30. Каковы перспективы развития модульной системы `Java`?
 
@@ -1349,93 +994,6 @@ module com.example.service {
 - Понимания ошибок `InaccessibleObjectException`
 - Оптимизации Docker-образов через `jlink`
 - Собеседований по глубоким знаниям [Java Core](java-core-interview.md) и [JVM](../../jvm/jvm-interview.md)
-
-
-> [!mcq]
->
-> **Вопрос:** Почему `JPMS` существует с Java 9 (2017), но массовое adoption в Spring Boot приложениях так и не произошло, и в каких случаях его понимание всё-таки критично?
->
-> ---
->
-> #### A) `JPMS` несовместим со Spring Boot — поэтому никто его не использует. Сейчас его планируют удалить — ❌ Неверно
->
-> **Что на самом деле:** `JPMS` совместим со Spring Boot (нужен `opens` для рефлексии), и **его не планируют удалять**. Наоборот: Project Leyden и Project Loom опираются на модульную информацию для AOT-компиляции и оптимизаций. Удаление JPMS невозможно — на нём построен сам JDK (модули `java.base`, `java.sql` и т.д.).
->
-> **Откуда путаница:** низкое adoption в application-коде создаёт иллюзию, что технология «умирает». На самом деле она используется JVM и крупными библиотеками невидимо для разработчика.
->
-> **Если бы это было правдой:** GraalVM native-image, Quarkus, Micronaut — все опираются на стабильную модульную модель JDK. Их существование доказывает, что JPMS — фундамент, а не deprecated experiment.
->
-> ---
->
-> #### B) Adoption низкий потому, что Java-сообщество ленивое. Через год-два все Spring Boot приложения мигрируют на JPMS — ❌ Неверно
->
-> **Что на самом деле:** причина не в «лени», а в **отсутствии бизнес-выгоды для типичного приложения**. Spring Boot уже даёт инкапсуляцию через DI и пакет-private классы. Добавление `module-info.java` требует написания `opens` для каждого фреймворка (Spring, Hibernate, Jackson, Mockito) и не даёт ничего, кроме декоративной строгости. Через 2 года ситуация качественно не изменится — приложения останутся на classpath.
->
-> **Откуда путаница:** OpenJDK команда продвигает JPMS, поэтому казалось, что adoption — вопрос времени. На практике технологии без явной бизнес-ценности не приживаются (см. Project Jigsaw — 9 лет от анонса до релиза, но adoption всё ещё низкий).
->
-> **Если бы это было правдой:** мы увидели бы массу tutorials и Spring Boot starter с `module-info`. По факту — `spring-boot-starter-web` до сих пор поставляется как automatic module без `module-info.class`.
->
-> ---
->
-> #### C) Adoption низкий потому, что миграция дорогая без выгоды для бизнес-приложений, но JPMS критичен для: понимания `InaccessibleObjectException`, оптимизации Docker-образов через `jlink`, работы с JDK internals, native-image инструментов — ✓ Верно
->
-> **Развёрнутое объяснение:**
->
-> JPMS — это инфраструктурная технология, не application-фича:
->
-> 1. **Бизнес-приложения остаются на classpath** — миграция требует написать `module-info.java`, добавить `opens` для каждого DI/ORM/serialization фреймворка, переписать Maven/Gradle конфиг. ROI близок к нулю.
->
-> 2. **JDK сам построен на модулях** — `java.base`, `java.sql`, `java.xml`, `java.net.http`. Любой разработчик сталкивается с этим, видя `InaccessibleObjectException: ... module java.base does not "opens java.lang"`.
->
-> 3. **`jlink` даёт реальный production-выигрыш** — Docker-образ Spring Boot на JDK 21 весит ~350 MB. Через `jlink` можно сделать custom runtime ~50 MB. Это economically viable для high-scale deployments.
->
-> 4. **Native-image инструменты опираются на JPMS** — GraalVM, Quarkus, Micronaut требуют чёткой модульной модели для AOT-компиляции и dead-code elimination.
->
-> 5. **Понимание JPMS — обязательно для собеседований** — даже если код не использует `module-info`, вопросы по JPMS встречаются практически на любом mid+/senior interview по Java.
->
-> **Пример (jlink для Docker):**
-> ```dockerfile
-> FROM eclipse-temurin:21-jdk AS builder
-> COPY build/libs/app.jar /app/
-> RUN $JAVA_HOME/bin/jdeps --print-module-deps --ignore-missing-deps \
->         --multi-release 21 /app/app.jar > /app/modules.txt
-> RUN $JAVA_HOME/bin/jlink \
->     --add-modules $(cat /app/modules.txt) \
->     --output /app/runtime --strip-debug --compress zip-6 \
->     --no-header-files --no-man-pages
->
-> FROM debian:bookworm-slim
-> COPY --from=builder /app/runtime /opt/jre
-> COPY --from=builder /app/app.jar /app/app.jar
-> ENV PATH=/opt/jre/bin:$PATH
-> ENTRYPOINT ["java", "-jar", "/app/app.jar"]
-> # Результат: ~70 MB вместо ~350 MB полного JDK-образа
-> ```
->
-> **Когда применять знание JPMS:**
-> - Отладка `InaccessibleObjectException` в любом Spring Boot/JPA приложении на современной JVM.
-> - Оптимизация Docker-образов для serverless (Lambda cold start) или большого количества микросервисов.
-> - GraalVM native-image: подготовка `reflect-config.json`, понимание `--initialize-at-build-time`.
-> - Разработка библиотек/SDK для внешних потребителей (нужен `Automatic-Module-Name` минимум).
->
-> **Подводные камни:**
-> - **`--illegal-access` удалён в Java 17** — старые workaround'ы перестают работать, нужно использовать `--add-opens`/`--add-exports` явно.
-> - **Project Leyden** ещё в разработке (preview-фичи в JDK 22+); рассчитывать на AOT через JPMS сейчас рано.
-> - **Library ecosystem** — большинство популярных библиотек (Jackson, Lombok, Mockito) долго не имели `module-info.class` или имели проблемные `Automatic-Module-Name`. Сейчас ситуация улучшилась, но проверять перед миграцией.
->
-> ---
->
-> #### D) JPMS будет полностью заменён Project Loom (virtual threads) — модули больше не нужны — ❌ Неверно
->
-> **Что на самом деле:** Project Loom и JPMS — ортогональные технологии. Loom решает задачу concurrency (lightweight threads), JPMS — encapsulation/dependency management. Они работают вместе, не заменяют друг друга. Virtual threads используют модули java.base, и `Thread.startVirtualThread()` живёт в модульной системе.
->
-> **Откуда путаница:** Loom получил много внимания в Java 21 (LTS), JPMS — обсуждается реже. Создаётся впечатление, что одно «вытесняет» другое в внимании сообщества.
->
-> **Если бы это было правдой:** в Java 21 убрали бы `module-info.java`. Этого не произошло — JDK 21 расширил поддержку модулей (например, для preview features).
->
-> ---
->
-> **Связанные вопросы:** [[java-modules-interview#Q1]] — что такое JPMS; [[java-modules-interview#Q19]] — jlink; [[java-modules-interview#Q21]] — стратегии миграции; [[java-modules-interview#Q37]] — Spring/Hibernate/Jackson; [[java-modules-interview#Q38]] — bottom-up vs top-down.
 
 ## Q31. Чем отличаются `unnamed module`, `automatic module` и `named module` на практике?
 
@@ -1474,101 +1032,6 @@ jar --describe-module --file=mylib.jar
 # Для automatic module: "No module descriptor found, not a modular JAR"
 # Unnamed: вообще не на module path
 ```
-
-
-> [!mcq]
->
-> **Вопрос:** Именованный модуль (с `module-info.java`) пытается объявить `requires legacy.lib`, где `legacy.lib` — обычный JAR на classpath без `module-info` и без `Automatic-Module-Name`. Компилятор выдаёт ошибку. Почему и как корректно решить проблему?
->
-> ---
->
-> #### A) Именованный модуль не может `requires` ни на что — это ограничение JPMS. Нужно убрать `module-info.java` и оставить всё на classpath — ❌ Неверно
->
-> **Что на самом деле:** именованный модуль может объявлять `requires` на ДРУГИЕ именованные модули и на automatic modules. Запрет действует только на `unnamed module` (classpath). Удалять `module-info.java` — выкидывать модульность ради одной зависимости. Правильно — перевести JAR в automatic module через `module path`.
->
-> **Откуда путаница:** ошибка компиляции после добавления `requires` создаёт впечатление, что весь подход неверен. На самом деле проблема локальна — нужно поднять конкретный JAR с classpath на module path.
->
-> **Если бы это было правдой:** JPMS был бы непригоден для миграции legacy-проектов, потому что в любом реальном проекте есть зависимости без `module-info`. Existence of `automatic modules` опровергает это.
->
-> ---
->
-> #### B) Положить `legacy.lib.jar` на `module path` — JVM автоматически превратит его в automatic module с именем из manifest `Automatic-Module-Name`, либо из имени JAR-файла (с предупреждением о нестабильности) — ✓ Верно
->
-> **Развёрнутое объяснение:**
->
-> Три типа модулей в JPMS определяют возможные связи:
->
-> | | Откуда | Имя | Может `requires` |
-> |--|--------|-----|------------------|
-> | **Named** | `module-info.class` в JAR | Из `module-info` | Named, Automatic |
-> | **Automatic** | JAR на module path без `module-info` | `Automatic-Module-Name` или из имени файла | Named, Automatic, Unnamed |
-> | **Unnamed** | JAR на classpath | Нет имени | Named, Automatic, Unnamed |
->
-> **Ключевой принцип:** именованный модуль не может `requires` на unnamed (classpath), но может на automatic. Поэтому automatic module — это «мост» между модульным миром и legacy classpath.
->
-> **Пример:**
-> ```bash
-> # Структура проекта
-> # mods/legacy-lib-1.2.jar          (без module-info, без Automatic-Module-Name)
-> # mods/app/module-info.class
-> # mods/app/com/example/app/Main.class
->
-> # 1. Узнаём, какое имя получит legacy-lib как automatic module:
-> jar --describe-module --file=mods/legacy-lib-1.2.jar
-> # Output:
-> # legacy.lib@1.2 automatic
-> # requires java.base mandated
-> # contains com.legacy.util
->
-> # JVM вывела имя "legacy.lib" из имени файла "legacy-lib-1.2.jar"
-> # (заменив дефисы на точки, отбросив версию)
->
-> # 2. Используем в module-info.java:
-> module com.example.app {
->     requires legacy.lib;           // имя automatic module
->     exports com.example.app;
-> }
->
-> # 3. Запуск:
-> java --module-path mods -m com.example.app/com.example.app.Main
-> ```
->
-> **Опасность derived имени:** если автор библиотеки в следующей версии переименует JAR (`legacy-2.0.jar` вместо `legacy-lib-1.2.jar`), имя automatic module изменится с `legacy.lib` на `legacy`, и ваш `requires` сломается. Правильное решение — попросить автора добавить в manifest `Automatic-Module-Name: org.example.legacy`, тогда имя стабильно.
->
-> **Когда применять:**
-> - Миграция bottom-up: библиотеки-зависимости поднимаются на module path как automatic, потом постепенно получают полноценный `module-info.class`.
-> - Использование SDK от вендоров, которые ещё не модуляризовались (часто финтех/банковский софт).
-> - Тестовые библиотеки (старые версии JUnit/Mockito без `module-info`).
->
-> **Подводные камни:**
-> - **`requires automatic.module` тянет ВСЕ его пакеты** — automatic module экспортирует всё, что в нём есть. Никакой инкапсуляции от legacy-зависимости вы не получите.
-> - **`jlink` НЕ работает с automatic modules** — для custom runtime все модули должны быть named. Это причина, по которой долго не получается перевести Spring Boot приложение под jlink.
-> - **Имя «выведено из файла» — нестабильно** — JDK печатает warning при загрузке такого модуля. Игнорировать опасно: при обновлении версии библиотеки имя может измениться.
-> - **Split package между automatic и named** — automatic module экспортирует все пакеты, и легко наступает split package с другим модулем. Диагностика — `jdeps --check`.
->
-> ---
->
-> #### C) Перенести `legacy.lib.jar` на classpath и оставить `module-info.java` — JVM сама свяжет их через unnamed module — ❌ Неверно
->
-> **Что на самом деле:** ровно наоборот — это типичная ошибка миграции. Именованный модуль НЕ МОЖЕТ объявить `requires` на классы из classpath (unnamed module). Это «стена» в архитектуре JPMS, специально введённая ради воспроизводимости сборки. Compiler выдаст ошибку «module not found», и единственный путь — поднять JAR на module path.
->
-> **Откуда путаница:** в classpath-мире JAR'ы автоматически связывались независимо от расположения. Кажется, что добавление module path — это просто новая опция, и classpath продолжит работать как раньше.
->
-> **Если бы это было правдой:** не было бы смысла в automatic modules — JVM могла бы автоматически «видеть» classpath из named module. Существование automatic modules — следствие того, что С classpath named module работать не умеет.
->
-> ---
->
-> #### D) Скомпилировать `legacy.lib` с флагом `--add-exports legacy.lib/*=ALL-UNNAMED` — это превратит его в named module — ❌ Неверно
->
-> **Что на самом деле:** `--add-exports` — это runtime/compile-time флаг для уже named модулей, который открывает их пакеты другим модулям. Он НЕ превращает JAR в named module и не работает на JAR без `module-info.class`. Превратить JAR в named можно только пересборкой с `module-info.java` или применением `jdeps --generate-module-info` (генерирует шаблон).
->
-> **Откуда путаница:** флаги `--add-exports`/`--add-opens` часто описывают как «способ преодолеть модульные ограничения». Возникает соблазн применить их к любой проблеме с модулями.
->
-> **Если бы это было правдой:** не существовало бы automatic modules и инструмента `jdeps --generate-module-info`. Их существование — признание, что превращение JAR в named module — нетривиальный процесс.
->
-> ---
->
-> **Связанные вопросы:** [[java-modules-interview#Q4]] — module path vs classpath; [[java-modules-interview#Q14]] — unnamed module; [[java-modules-interview#Q15]] — automatic module и его имя; [[java-modules-interview#Q16]] — сравнение трёх типов модулей; [[java-modules-interview#Q38]] — стратегии миграции.
 
 ## Q32. `Split packages`: почему запрещены в `JPMS` и как их устранить?
 
@@ -1610,104 +1073,6 @@ java --module-path mods \
      --patch-module java.xml.ws.annotation=javax.annotation-api.jar \
      -m com.example.app/com.example.Main
 ```
-
-
-> [!mcq]
->
-> **Вопрос:** На production запуск приложения падает с `java.lang.module.ResolutionException: Modules javax.annotation.api and java.xml.ws.annotation export package javax.annotation to module myapp`. Какое решение правильно устраняет split package?
->
-> ---
->
-> #### A) Исключить конфликтующую зависимость (Maven `<exclusion>` или Gradle `exclude`) или применить `--patch-module java.xml.ws.annotation=javax.annotation-api.jar` для слияния пакетов — ✓ Верно
->
-> **Развёрнутое объяснение:**
->
-> Split package — это состояние, при котором два модуля одновременно экспортируют один и тот же пакет (`javax.annotation`). JPMS жёстко запрещает такое: загрузчик не может однозначно выбрать модуль-владельца пакета. В classpath-мире эта проблема была «скрытой» (выигрывал JAR, оказавшийся первым в classpath), что приводило к плавающим багам.
->
-> **Стратегии устранения, от простой к радикальной:**
->
-> | Стратегия | Когда применять | Эффект |
-> |-----------|-----------------|--------|
-> | **`<exclusion>`/`exclude`** | Один из JAR — дубль/устаревший | Самое чистое решение |
-> | **`--patch-module`** | Нужно сохранить оба, но логически они — одно целое | Сливает классы из второго JAR в первый модуль |
-> | **`relocate` (Shade/Shadow)** | Свой код | Переименовывает пакет, чтобы не было конфликта |
-> | **Переход на Jakarta EE** | `javax.*` ↔ `jakarta.*` | Меняет namespace полностью |
-> | **Вынести общий пакет в свой модуль** | Собственный код | Долгосрочное решение, нужен рефакторинг |
->
-> **Пример (наиболее частый случай — `javax.annotation`):**
-> ```xml
-> <!-- Maven: исключить из транзитивной зависимости -->
-> <dependency>
->     <groupId>com.example</groupId>
->     <artifactId>some-lib</artifactId>
->     <exclusions>
->         <exclusion>
->             <groupId>javax.annotation</groupId>
->             <artifactId>javax.annotation-api</artifactId>
->         </exclusion>
->     </exclusions>
-> </dependency>
-> ```
->
-> **Workaround через `--patch-module` (когда исключить нельзя):**
-> ```bash
-> java --module-path mods \
->      --patch-module java.xml.ws.annotation=javax.annotation-api-1.3.2.jar \
->      -m com.example.app/com.example.Main
-> ```
->
-> **Диагностика через `jdeps`:**
-> ```bash
-> jdeps --multi-release 17 --module-path mods --check com.example.app
-> # Output:
-> # Modules javax.annotation.api and java.xml.ws.annotation export package
-> #   javax.annotation
-> ```
->
-> **Когда применять:**
-> - Apps на Java 8 → 11+ миграция (множество `javax.*` API стали split с JDK modules).
-> - Использование старых версий библиотек с дублирующими `javax.annotation`, `javax.xml.bind`.
-> - Сборка fat JAR с `relocate` для распространения as plugin (избежать конфликта с host application).
->
-> **Подводные камни:**
-> - **Транзитивные split packages** — не всегда видно сразу, что library A и library B оба тянут `javax.activation`. `mvn dependency:tree` + `jdeps --check` обязательны.
-> - **Java 11 встроенный `java.xml.ws.annotation` удалён в Java 11+** — пользователи `javax.annotation.PostConstruct` должны явно добавить `javax.annotation-api` или мигрировать на `jakarta.annotation`.
-> - **`--patch-module` не работает с jlink** — для custom runtime image придётся пересобрать JAR.
-> - **`relocate` ломает рефлексию** — если код использует `Class.forName("javax.annotation.PostConstruct")`, после relocate имя класса изменится.
->
-> ---
->
-> #### B) Игнорировать ошибку через `--ignore-module-conflict` JVM-флаг — split package не критичен — ❌ Неверно
->
-> **Что на самом деле:** **такого флага не существует**. Module resolution — обязательный этап загрузки JVM, и `ResolutionException` фатальна. JVM просто не запустит приложение. Никакой опции «продолжать с предупреждением» в JPMS нет принципиально — это одна из главных задач модульной системы (обеспечить детерминированность).
->
-> **Откуда путаница:** в classpath-мире многие ошибки можно было «приглушить» опциями. Возникает соблазн искать аналогичный флаг для JPMS.
->
-> **Если бы это было правдой:** теряется главное преимущество JPMS — однозначность загрузки классов. Зачем тогда вообще ввели запрет на split package?
->
-> ---
->
-> #### C) Поместить оба конфликтующих JAR в один общий `uber-jar` с pom-include — JVM сольёт пакеты сама — ❌ Неверно
->
-> **Что на самом деле:** uber-jar (fat jar) — это просто архив со всеми классами. Если в нём окажутся два класса с одинаковым FQN из разных пакетов — будет работать «первый найденный» (поведение classpath, не JPMS). А если оба JAR находятся на module path, fat jar их не объединяет — split package сохраняется. Sharing/Shadow plugin может слить, но это уже `relocate`, а не fat jar.
->
-> **Откуда путаница:** «положить в один архив» интуитивно кажется решением «один пакет — один источник». Но это иллюзия: JVM смотрит на manifest и `module-info`, а не на физический архив.
->
-> **Если бы это было правдой:** сборка любого Spring Boot fat jar автоматически решала бы все split packages, и проблема не существовала бы. На практике fat jar на classpath работает, на module path — нет (Spring Boot fat jar не работает напрямую как named module без специальной упаковки).
->
-> ---
->
-> #### D) Объявить оба пакета как `requires` в `module-info.java` — это явно разрешит split — ❌ Неверно
->
-> **Что на самом деле:** `requires` — это объявление зависимости от модуля, а не разрешение split package. Если модуль A и модуль B оба экспортируют `javax.annotation`, и потребитель C объявит `requires A, B`, resolver выбросит `ResolutionException` ДО того, как код потребителя выполнится. Никакая комбинация `requires` не разрешает конфликт — он архитектурный.
->
-> **Откуда путаница:** в большинстве проблем с модулями виновато либо `requires`, либо `exports`/`opens`. Возникает гипотеза, что и split package решается ими.
->
-> **Если бы это было правдой:** существовала бы директива `requires X | Y` (выбор реализации в runtime). Её нет, потому что JPMS принципиально требует уникальности пакета.
->
-> ---
->
-> **Связанные вопросы:** [[java-modules-interview#Q17]] — split package как понятие; [[java-modules-interview#Q22]] — миграция Maven/Gradle; [[java-modules-interview#Q35]] — `jdeps` для диагностики; [[java-modules-interview#Q38]] — стратегии миграции.
 
 ## Q33. `--add-opens` и `--add-exports`: когда и как использовать для рефлексии с `JPMS`?
 
@@ -1755,112 +1120,6 @@ tasks.withType<Test> {
 ```
 
 **Важно:** `--add-opens` и `--add-exports` — временные меры. Долгосрочное решение — добавить `opens`/`exports` в `module-info.java` или обновить зависимость с поддержкой JPMS.
-
-
-> [!mcq]
->
-> **Вопрос:** В чём принципиальная разница между `--add-exports` и `--add-opens` JVM-флагами, и какой использовать в каждом случае?
->
-> ---
->
-> #### A) `--add-exports` и `--add-opens` — синонимы; оба дают полный доступ к пакету, разница только в синтаксисе — ❌ Неверно
->
-> **Что на самом деле:** это два РАЗНЫХ уровня доступа, не синонимы. `--add-exports` даёт compile-time/runtime доступ к **public типам и членам** (как обычный `exports`). `--add-opens` дополнительно разрешает рефлексию через `setAccessible(true)` (как `opens`). Используя один вместо другого — получите либо «не вижу класс», либо «вижу класс, но рефлексия запрещена».
->
-> **Откуда путаница:** оба флага имеют одинаковый синтаксис `<module>/<package>=<target>` и оба «открывают» пакет. Лёгко перепутать на первый взгляд.
->
-> **Если бы это было правдой:** не было бы смысла в двух флагах. Существование пары `exports`/`opens` в `module-info.java` (которая зеркалит `--add-exports`/`--add-opens`) подчёркивает: это две разные оси доступа.
->
-> ---
->
-> #### B) `--add-opens` использовать только при компиляции, `--add-exports` — только в runtime — ❌ Неверно
->
-> **Что на самом деле:** наоборот относительно «когда применять», но и это не точно. ОБА флага можно передавать и `javac` (compile-time), и `java` (runtime). Разница не во времени применения, а в том, какой ВИД доступа открывается: types-and-members (`--add-exports`) или reflection (`--add-opens`). На compile-time нужен `--add-exports` (компилятору reflection не интересна). На runtime нужен тот, который требует ваш framework.
->
-> **Откуда путаница:** часто `--add-opens` указывается только в `java`-команде (для Spring Boot), а `--add-exports` — и в `javac`, и в `java`. Создаётся ассоциация «opens=runtime, exports=compile».
->
-> **Если бы это было правдой:** не существовало бы compile-only сценариев работы с reflection (например, статический анализ через `--add-opens` для AnnotationProcessor). На практике reflection ↔ `--add-opens` строго на runtime, но это потому что рефлексия — runtime-явление, не из-за ограничения флага.
->
-> ---
->
-> #### C) `--add-exports` для compile-time/runtime доступа к public API пакета (аналог `exports pkg to M`); `--add-opens` для дополнительного reflection-доступа через `setAccessible(true)` (аналог `opens pkg to M`); ALL-UNNAMED означает «все классы classpath» — ✓ Верно
->
-> **Развёрнутое объяснение:**
->
-> Понимать эти флаги легче через таблицу «что открывают»:
->
-> | Флаг | Доступ к public | Доступ к private/protected через reflection | Эквивалент в `module-info.java` |
-> |------|----------------|-------------------------------------------|------------------------------------|
-> | `--add-exports` | Да | Нет (для private нужен ещё `--add-opens`) | `exports pkg to M` |
-> | `--add-opens` | Да (включает в себя exports) | Да | `opens pkg to M` |
->
-> **Синтаксис:**
-> ```bash
-> --add-exports <module>/<package>=<target-module>
-> --add-opens   <module>/<package>=<target-module>
->
-> # ALL-UNNAMED — особое имя для classpath
-> # Один пакет можно открыть нескольким target:
-> --add-opens java.base/java.lang=ALL-UNNAMED,com.example.app
-> ```
->
-> **Пример типичного набора для Spring Boot на Java 17+:**
-> ```bash
-> java \
->   --add-opens java.base/java.lang=ALL-UNNAMED \
->   --add-opens java.base/java.lang.reflect=ALL-UNNAMED \
->   --add-opens java.base/java.util=ALL-UNNAMED \
->   --add-opens java.base/java.util.concurrent=ALL-UNNAMED \
->   --add-opens java.base/java.io=ALL-UNNAMED \
->   --add-opens java.base/java.nio=ALL-UNNAMED \
->   --add-opens java.base/sun.nio.ch=ALL-UNNAMED \
->   -jar spring-boot-app.jar
-> ```
->
-> **Использование для собственной кодовой базы (Hibernate видит entity):**
-> ```bash
-> # Если без module-info.java:
-> --add-opens com.example.app/com.example.entity=org.hibernate.orm.core
->
-> # ALL-UNNAMED — если приложение на classpath
-> --add-opens java.base/java.util.concurrent=ALL-UNNAMED
-> ```
->
-> **В Gradle для тестов (Mockito 5+ требует на Java 21):**
-> ```kotlin
-> tasks.withType<Test> {
->     jvmArgs(
->         "--add-opens", "java.base/java.lang=ALL-UNNAMED",
->         "--add-opens", "java.base/java.util=ALL-UNNAMED"
->     )
-> }
-> ```
->
-> **Когда применять:**
-> - Spring Boot/Hibernate/Mockito/Lombok с runtime-рефлексией к JDK internals.
-> - Доступ к `sun.misc.Unsafe`, `jdk.internal.*` — без флагов модуль `java.base` не пустит.
-> - Промежуточный шаг миграции: когда `module-info.java` ещё не добавлен, но Spring уже падает на современной JVM.
->
-> **Подводные камни:**
-> - **Capacity drift в Dockerfile** — флаги нужно прописать в `ENTRYPOINT` и продублировать в Kubernetes `args`. Легко забыть один — упадёт только в конкретной среде.
-> - **`--illegal-access` удалён в Java 17** — раньше многие проекты полагались на default `permit`. Сейчас миграция на Java 17+ ломает приложения без явных флагов.
-> - **`opens` для test classpath** — `mockito-core` 5.x требует `--add-opens java.base/java.lang=ALL-UNNAMED` в тестах. Без него все unit-тесты падают.
-> - **`--add-exports` к `sun.*` будет deprecated** — JEP 403 «Strongly Encapsulate JDK Internals» постепенно убирает доступ; рассчитывать на эти флаги в долгосрочной перспективе нельзя.
-> - **Долгосрочно** — лучше добавить `opens` в `module-info.java` или попросить вендора фреймворка использовать API без рефлексии (например, ASM/Byte Buddy создаёт классы вместо `setAccessible`).
->
-> ---
->
-> #### D) `--add-opens` работает только для модулей JDK; для пользовательских модулей нужно `--enable-native-access` — ❌ Неверно
->
-> **Что на самом деле:** `--add-opens` работает для ЛЮБЫХ модулей — JDK, named, automatic. Синтаксис идентичен: `--add-opens <module>/<package>=<target>`. Флаг `--enable-native-access` относится к Foreign Function & Memory API (JEP 442, Java 22) — это совсем другая тема (native code interop), не reflection.
->
-> **Откуда путаница:** в туториалах примеры `--add-opens` почти всегда показывают модуль `java.base` (`--add-opens java.base/java.lang=ALL-UNNAMED`). Кажется, что флаг ограничен JDK.
->
-> **Если бы это было правдой:** не было бы способа подружить custom-фреймворк с custom-entity без перезаписи `module-info.java` обоих модулей. На практике `--add-opens com.example.app/com.example.entity=org.hibernate.orm.core` работает прекрасно.
->
-> ---
->
-> **Связанные вопросы:** [[java-modules-interview#Q5]] — `exports` vs `opens`; [[java-modules-interview#Q12]] — рефлексия и JPMS; [[java-modules-interview#Q13]] — JVM-флаги обхода; [[java-modules-interview#Q37]] — Spring/Hibernate/Jackson сценарии.
 
 ## Q34. `jlink`: создание custom minimal JRE — практическое руководство
 
@@ -1914,125 +1173,6 @@ ENTRYPOINT ["/opt/myapp/bin/myapp"]
 - `Error: automatic module found in jlink` — один из модулей является automatic. Решение: заменить на именованный или собрать fat JAR.
 - `Module not found` — модуль не на module path. Проверить `--module-path`.
 
-
-> [!mcq]
->
-> **Вопрос:** Команда `jlink --add-modules com.example.app --module-path mods --output runtime` падает с ошибкой `Error: automatic module found in jlink: external-lib`. Что произошло и как корректно решить?
->
-> ---
->
-> #### A) `jlink` не поддерживает Java 17+, нужно использовать `jpackage` вместо этого — ❌ Неверно
->
-> **Что на самом деле:** `jlink` активно поддерживается во всех современных версиях Java (8+) и улучшается с каждым релизом (Java 21 добавил поддержку CDS, AOT-загрузку). `jpackage` решает СОВСЕМ другую задачу — упаковку приложения в native installer (`.dmg`, `.msi`, `.deb`). `jpackage` часто использует `jlink` под капотом, но не заменяет его.
->
-> **Откуда путаница:** Java tooling быстро меняется, и легко предположить deprecation. На самом деле `jlink` — стабильный production tool с 2017 года.
->
-> **Если бы это было правдой:** в `jdk-21/bin/` не было бы `jlink`. На практике он есть и работает корректно.
->
-> ---
->
-> #### B) Запустить `jlink` с флагом `--ignore-signing-info` — это позволит включить automatic modules — ❌ Неверно
->
-> **Что на самом деле:** такого флага не существует. `jlink` фундаментально требует, чтобы ВСЕ модули были named — у automatic module нет `module-info.class`, и `jlink` не знает, какие пакеты экспортировать, какие зависимости транзитивно подтянуть. Никакой опции «закрыть глаза» на этот факт нет.
->
-> **Откуда путаница:** `--ignore-missing-deps` существует (для `jdeps`, не для `jlink`), и `--ignore-signing-information` — для `jar` (не для `jlink`). Звучит правдоподобно.
->
-> **Если бы это было правдой:** не нужны были бы инструменты вроде `moditect` Maven plugin (генератор `module-info.java` для automatic modules). Их существование — следствие невозможности jlink с automatic modules.
->
-> ---
->
-> #### C) Объединить все JAR в один fat-jar через Maven Shade Plugin и передать его в `jlink` как один модуль — ❌ Неверно
->
-> **Что на самом деле:** fat-jar (uber-jar) — это JAR со всеми классами всех зависимостей. У него **всё ещё нет** `module-info.class` (он — automatic module со всеми пакетами своих зависимостей). `jlink` отклонит его так же, как любой другой automatic module. Кроме того, fat-jar часто конфликтует с JPMS из-за split packages.
->
-> **Откуда путаница:** Shade-plugin часто упоминается как «решение всех проблем сборки». В classpath-мире fat-jar действительно решает многое; в модульном — нет.
->
-> **Если бы это было правдой:** Spring Boot fat jar (`spring-boot-maven-plugin` repackage) работал бы с jlink из коробки. На практике этого нет — Spring Boot 3 предлагает `bootBuildImage` с buildpacks для оптимизации Docker, но не jlink-совместимость.
->
-> ---
->
-> #### D) Все модули в `--module-path` должны быть **named** (с `module-info.class`). Решение: запросить `module-info.java` у автора library, либо сгенерировать через `moditect` Maven plugin / `jdeps --generate-module-info`, либо заменить library на её модуляризованную альтернативу — ✓ Верно
->
-> **Развёрнутое объяснение:**
->
-> `jlink` создаёт custom runtime image — самодостаточный дистрибутив JVM, содержащий только нужные модули. Чтобы это работало, всё дерево зависимостей должно быть детерминированным, что возможно только с named modules.
->
-> **Полный workflow для production:**
-> 1. Анализ зависимостей: `jdeps --print-module-deps app.jar`.
-> 2. Идентификация automatic modules: `jar --describe-module --file=lib.jar` (если выводит «automatic» — проблема).
-> 3. Решения для automatic modules (от лучшего к худшему):
->    - Обновить до версии с `module-info.class`.
->    - Сгенерировать через `moditect`.
->    - Заменить на модуляризованную альтернативу.
->    - В крайнем случае — fork и пересборка.
->
-> **Пример (moditect):**
-> ```xml
-> <plugin>
->     <groupId>org.moditect</groupId>
->     <artifactId>moditect-maven-plugin</artifactId>
->     <executions>
->         <execution>
->             <id>add-module-info</id>
->             <goals><goal>add-module-info</goal></goals>
->             <configuration>
->                 <modules>
->                     <module>
->                         <artifact>
->                             <groupId>com.example</groupId>
->                             <artifactId>legacy-lib</artifactId>
->                             <version>1.5.0</version>
->                         </artifact>
->                         <moduleInfo>
->                             <name>com.example.legacy</name>
->                             <exports>com.example.legacy.api;</exports>
->                         </moduleInfo>
->                     </module>
->                 </modules>
->             </configuration>
->         </execution>
->     </executions>
-> </plugin>
-> ```
->
-> **Полный jlink-pipeline:**
-> ```bash
-> # 1. Анализ
-> jdeps --print-module-deps --ignore-missing-deps \
->     --multi-release 21 build/libs/app.jar
-> # Output: java.base,java.sql,java.logging
->
-> # 2. Сборка runtime
-> jlink \
->     --module-path $JAVA_HOME/jmods:mods \
->     --add-modules com.example.app,java.sql,java.logging \
->     --output dist/myapp-runtime \
->     --strip-debug \
->     --no-header-files --no-man-pages \
->     --compress zip-6 \
->     --launcher myapp=com.example.app/com.example.Main
->
-> # 3. Размер
-> du -sh dist/myapp-runtime
-> # ~50 MB вместо ~350 MB full JDK
-> ```
->
-> **Когда применять:**
-> - Docker-образы для serverless (AWS Lambda, Cloud Functions) — каждый MB образа = миллисекунды cold start.
-> - Раздача приложения end-user (как Eclipse IDE — поставляется со своим JRE через jlink).
-> - High-density Kubernetes deployments — экономия на размере образов при большом количестве реплик.
->
-> **Подводные камни:**
-> - **Spring Boot не jlink-friendly** — слишком много automatic modules в зависимостях; обычно используют GraalVM native-image вместо jlink.
-> - **`--strip-debug` ломает stack traces** — для production debugging оставить debug symbols или отдельно сохранить.
-> - **`--compress zip-6`** — даёт лучший размер, но `--compress zip-9` ещё лучше при медленнее старте (decompress overhead).
-> - **CDS/AppCDS в jlink runtime** — позволяет ускорить start time, но требует `--generate-cds-archive` при сборке.
-> - **Cross-platform jlink** — JDK 19+ позволяет собирать Linux runtime из macOS через `--target-platform linux-x64` (раньше нужен был JDK на target platform).
->
-> ---
->
-> **Связанные вопросы:** [[java-modules-interview#Q19]] — что такое jlink; [[java-modules-interview#Q20]] — плагины jlink; [[java-modules-interview#Q35]] — `jdeps` для анализа зависимостей; [[java-modules-interview#Q38]] — миграция и оценка.
-
 ## Q35. `jdeps`: анализ зависимостей модулей перед миграцией
 
 `jdeps` — инструмент статического анализа зависимостей JAR-файлов. Незаменим при подготовке к миграции на JPMS.
@@ -2083,93 +1223,6 @@ jdeps --generate-module-info generated/ --module-path lib lib/mylib.jar
 
 Этот файл — отправная точка: нужно доработать (добавить `opens` для рефлексии, проверить экспорт).
 
-
-> [!mcq]
->
-> **Вопрос:** При запуске `jdeps --jdk-internals myapp.jar` на legacy-проекте получили вывод `myapp.jar -> JDK internal API: sun.misc.Unsafe (java.base)`. Что это означает и каким должно быть правильное действие перед миграцией на Java 17+?
->
-> ---
->
-> #### A) Это предупреждение можно игнорировать — `sun.misc.Unsafe` поддерживается во всех версиях Java — ❌ Неверно
->
-> **Что на самом деле:** `sun.misc.Unsafe` — это JDK internal API, и хотя он **физически** доступен (по совместимости), JEP 403 «Strongly Encapsulate JDK Internals» (Java 17) закрыл доступ к internals по умолчанию. На Java 17+ обращение к `sun.misc.Unsafe` без `--add-exports java.base/sun.misc=ALL-UNNAMED` падает с `IllegalAccessError`. На Java 24+ планируется полностью удалить публичный доступ.
->
-> **Откуда путаница:** `Unsafe` действительно широко используется (Netty, Lucene, Spring's `ReflectionUtils`), и многие версии Java его «терпят». Но «терпит» — не «гарантирует обратную совместимость».
->
-> **Если бы это было правдой:** не существовало бы JEP 471 «Deprecate the Memory-Access Methods in sun.misc.Unsafe for Removal» (Java 23). Разработка `java.lang.foreign` (Foreign Function & Memory API) как замены — прямое доказательство, что Unsafe планируется удалить.
->
-> ---
->
-> #### B) Это критический сигнал перед миграцией: нужно либо найти замену из supported API (`MethodHandles`, `VarHandle`, `java.lang.foreign`), либо добавить `--add-exports java.base/sun.misc=ALL-UNNAMED` как временный workaround, либо обновить зависимость на версию без `Unsafe` — ✓ Верно
->
-> **Развёрнутое объяснение:**
->
-> `jdeps --jdk-internals` сканирует bytecode на использование `sun.*`, `jdk.internal.*`, `com.sun.*` (не из public API). Эти классы могут исчезнуть или быть запечатаны в любой версии JDK.
->
-> **Стратегии замены — таблица из вывода `jdeps`:**
->
-> | Internal API | Suggested replacement | Когда мигрировать |
-> |--------------|-----------------------|-------------------|
-> | `sun.misc.Unsafe.getInt/Object` | `java.lang.invoke.VarHandle` | Сейчас (Java 9+) |
-> | `sun.misc.Unsafe.allocateMemory` | `java.lang.foreign.Arena.allocate` | Java 22+ (stable) |
-> | `sun.misc.Unsafe.park/unpark` | `java.util.concurrent.locks.LockSupport` | Уже доступно |
-> | `sun.reflect.ReflectionFactory` | `MethodHandles.privateLookupIn` | Java 9+ |
-> | `sun.security.util.KeyUtil` | `java.security.KeyFactory` | Java 7+ |
->
-> **Пример вывода:**
-> ```bash
-> $ jdeps --jdk-internals --multi-release 17 myapp.jar
->
-> myapp.jar -> JDK internal API: sun.misc.Unsafe (java.base)
-> myapp.jar -> JDK internal API: sun.security.util.KeyUtil (java.base)
->
-> JDK Internal API                 Suggested Replacement
-> -----------------                 --------------------
-> sun.misc.Unsafe                  See https://openjdk.org/jeps/260
-> sun.security.util.KeyUtil        Use java.security.KeyFactory @since 1.5
-> ```
->
-> **Чеклист действий после `jdeps`:**
-> 1. Для своего кода — переписать на supported API.
-> 2. Для legacy-зависимости — проверить, есть ли версия библиотеки без internals (часто библиотеки выпускают «modular» branch).
-> 3. Если миграция невозможна — `--add-exports java.base/sun.misc=ALL-UNNAMED` как временный костыль, с тикетом для long-term fix.
->
-> **Когда применять:**
-> - Подготовка проекта к миграции с Java 8/11 → Java 17/21.
-> - Анализ third-party библиотек перед добавлением в проект (на их легальность с JEP 403).
-> - Compliance-аудит для проектов под Oracle commercial license.
->
-> **Подводные камни:**
-> - **Транзитивная проблема** — ваш код чист, но `mylib.jar` использует `Unsafe`. `jdeps` найдёт это, но решать должен автор библиотеки. Зафиксировать в issue tracker upstream.
-> - **`jdeps --jdk-internals` сканирует только compile-time** — runtime reflection-обращения к `sun.*` (через `Class.forName`) НЕ обнаруживаются. Использовать также `--multi-release 17` для проверки MR-JAR.
-> - **`--ignore-missing-deps`** — нужен, если в JAR есть зависимости, не присутствующие на module path. Без него jdeps падает с ошибкой.
-> - **`jdeps --generate-module-info` — только starter** — генерирует базовый шаблон, но `opens` для рефлексии нужно дописывать вручную, потому что jdeps не знает framework-специфики.
-> - **`jdeps` версии должен совпадать с target Java** — анализировать Java 21 bytecode через `jdeps` из JDK 8 даст неверные результаты.
->
-> ---
->
-> #### C) Это compile-time предупреждение, в runtime ничего не сломается — ❌ Неверно
->
-> **Что на самом деле:** `jdeps` — статический анализатор bytecode, и его предупреждения часто превращаются в `IllegalAccessError` или `NoClassDefFoundError` в runtime. На Java 17+ это уже не «warning», а отказ доступа: код упадёт при первом вызове `sun.misc.Unsafe.getUnsafe()`.
->
-> **Откуда путаница:** до Java 17 `--illegal-access=permit` (default) разрешал доступ к internals с warning. Многие проекты «привыкли» что warnings не критичны.
->
-> **Если бы это было правдой:** не было бы JEP 403 «Strongly Encapsulate JDK Internals» (Java 17, делает запрет default). Существование JEP — прямое доказательство, что internals закрываются и в runtime, не только compile-time.
->
-> ---
->
-> #### D) `jdeps` ошибся — `sun.misc.Unsafe` это публичный API через `Unsafe.getUnsafe()` — ❌ Неверно
->
-> **Что на самом деле:** хотя класс `sun.misc.Unsafe` действительно доступен через `getUnsafe()` reflection-хаком, он находится в пакете `sun.*` — JDK internals по определению. JEP 260 «Encapsulate Most Internal APIs» классифицировал его как deprecated for removal. `jdeps` правильно его флагирует.
->
-> **Откуда путаница:** `Unsafe.getUnsafe()` — public static метод; кажется, что класс — публичный API.
->
-> **Если бы это было правдой:** `Unsafe` был бы в `java.*` пакете, а не в `sun.*`. Расположение в пакете — формальная граница API.
->
-> ---
->
-> **Связанные вопросы:** [[java-modules-interview#Q22]] — миграция проектов; [[java-modules-interview#Q32]] — split packages; [[java-modules-interview#Q34]] — jlink требует named modules; [[java-modules-interview#Q38]] — bottom-up vs top-down стратегии.
-
 ## Q36. `ServiceLoader` с `JPMS`: директивы `uses` и `provides...with` в деталях
 
 `ServiceLoader` в модульном мире работает принципиально иначе: декларирование сервисов переносится из `META-INF/services/` в `module-info.java`.
@@ -2217,113 +1270,6 @@ Optional<PaymentProvider> stripe = loader.stream()
 | Валидация | В runtime | При разрешении модульного графа |
 
 **Важно:** модуль-провайдер должен быть на `module path`, иначе `provides` не работает. `META-INF/services` продолжает работать для `automatic` и `unnamed` модулей.
-
-
-> [!mcq]
->
-> **Вопрос:** Какое сочетание директив `module-info.java` правильно описывает SPI-архитектуру с интерфейсом `PaymentProvider`, реализацией `StripeProvider` и потребителем?
->
-> ---
->
-> #### A) Модуль-провайдер: `provides com.example.spi.PaymentProvider with com.example.stripe.StripeProvider`; модуль-потребитель: `uses com.example.spi.PaymentProvider`; обоим нужен `requires com.example.spi`; реализация НЕ экспортируется — ✓ Верно
->
-> **Развёрнутое объяснение:**
->
-> JPMS заменяет classpath-based ServiceLoader (через файлы `META-INF/services/<interface>`) на декларативные директивы в `module-info.java`. Это даёт несколько преимуществ: проверка корректности связей на этапе module graph resolution, скрытие реализации от потребителя, явное декларирование точек расширения.
->
-> **Полная архитектура (3 модуля):**
->
-> ```java
-> // 1. Модуль-контракт (SPI)
-> module com.example.spi {
->     exports com.example.spi;  // экспортируем ТОЛЬКО интерфейс
-> }
->
-> // 2. Модуль-реализация (provider)
-> module com.example.stripe {
->     requires com.example.spi;            // зависимость от контракта
->     // НЕ нужно exports — реализация скрыта!
->     provides com.example.spi.PaymentProvider
->         with com.example.stripe.StripeProvider,
->              com.example.stripe.StripeTestProvider;  // несколько реализаций
-> }
->
-> // 3. Модуль-потребитель (consumer)
-> module com.example.app {
->     requires com.example.spi;            // знает контракт
->     uses com.example.spi.PaymentProvider;  // декларирует потребление
->     // НЕ требуется requires com.example.stripe — реализации обнаруживаются
-> }
-> ```
->
-> **Использование в коде:**
-> ```java
-> // Java 9+ stream-API:
-> ServiceLoader<PaymentProvider> loader = ServiceLoader.load(PaymentProvider.class);
->
-> PaymentProvider stripe = loader.stream()
->     .filter(p -> p.type().getSimpleName().contains("Stripe"))
->     .map(ServiceLoader.Provider::get)
->     .findFirst()
->     .orElseThrow();
->
-> // Получить все реализации:
-> List<PaymentProvider> all = loader.stream()
->     .map(ServiceLoader.Provider::get)
->     .toList();
-> ```
->
-> **Ключевые правила:**
-> 1. **`uses` обязателен** — иначе `ServiceLoader.load()` бросит исключение или вернёт пустой поток. Это контракт «я буду искать сервис».
-> 2. **`provides...with` для провайдера** — может перечислить несколько реализаций через запятую.
-> 3. **Контракт (`PaymentProvider`) экспортируется**, реализации — нет. Это инкапсуляция: потребитель видит только интерфейс.
-> 4. **Резолвинг — при модульной загрузке** — JPMS строит граф провайдеров до запуска main; если `provides` указывает на несуществующий класс, JVM не стартует.
->
-> **Когда применять:**
-> - Плагин-системы (JDBC драйверы, charsets, log providers — JDK использует ServiceLoader повсеместно).
-> - Multi-vendor SDK (`PaymentProvider` для Stripe/Adyen/Braintree, переключаемые без перекомпиляции).
-> - Архитектура hexagonal/ports-and-adapters — порты как SPI, адаптеры как providers.
->
-> **Подводные камни:**
-> - **Дублирующая регистрация** — если library имеет и `META-INF/services/...`, и `provides` в `module-info.java`, в classpath-режиме сработают оба, могут появиться duplicates. JPMS-режим использует только `module-info`.
-> - **`uses` без `provides`** — `ServiceLoader.load()` вернёт пустой поток. Compile-time это не отловится; нужны интеграционные тесты.
-> - **Сортировка по приоритету** — `ServiceLoader` не гарантирует порядок реализаций. Если нужен приоритет — собственная аннотация `@Priority` + сортировка вручную.
-> - **`automatic module` как provider** — работает через `META-INF/services` (для совместимости), не через `provides`. Поэтому миграция legacy-SPI часто требует и `provides` (для named), и `META-INF/services` (для automatic).
-> - **Reflection-фабрика** — если provider требует параметризованного создания, можно использовать `provides ... with ClassWithProviderMethod`, где `provider()` static-метод возвращает экземпляр.
->
-> ---
->
-> #### B) Достаточно положить `META-INF/services/com.example.spi.PaymentProvider` в JAR с реализацией — `module-info.java` не нужен в named modules — ❌ Неверно
->
-> **Что на самом деле:** для **named modules** (`module-info.class` присутствует) обязательно использовать `provides...with` в `module-info.java`. `META-INF/services` игнорируется для named modules в module path-режиме (JPMS этот механизм заменил). `META-INF/services` продолжает работать только для `automatic` и `unnamed` модулей (на classpath).
->
-> **Откуда путаница:** до Java 9 механизм через `META-INF/services` был единственным. Многие туториалы и существующие библиотеки до сих пор используют его, создаётся ощущение универсальности.
->
-> **Если бы это было правдой:** не было бы директив `provides`/`uses` в `module-info.java`. Их существование — следствие того, что для named modules нужен новый декларативный механизм.
->
-> ---
->
-> #### C) `provides` нужен только в модуле-потребителе; модуль-реализация ничего не объявляет — ❌ Неверно
->
-> **Что на самом деле:** **наоборот**. `provides X with Y` объявляется в модуле-реализации (Y — это provider), `uses X` — в модуле-потребителе. Логика: provider «предоставляет», consumer «использует». Перепутать их = ServiceLoader не найдёт никаких реализаций.
->
-> **Откуда путаница:** в декларативных DSL часто путают direction. ServiceLoader к тому же двунаправлен по своей сути (consumer ищет provider), и легко поменять стороны местами.
->
-> **Если бы это было правдой:** consumer ВСЕГДА знал бы конкретную реализацию (Stripe), что разрушает смысл SPI — динамическое подключение реализаций без знания о них.
->
-> ---
->
-> #### D) Реализацию `StripeProvider` нужно экспортировать через `exports com.example.stripe;` чтобы ServiceLoader её увидел — ❌ Неверно
->
-> **Что на самом деле:** **наоборот** — экспорт реализации это анти-паттерн. SPI-архитектура должна скрывать реализацию: потребитель должен знать только интерфейс `PaymentProvider`. Если экспортировать `StripeProvider`, любой клиент сможет `import com.example.stripe.StripeProvider`, минуя ServiceLoader — теряется главная польза SPI (replacement без знания реализации).
->
-> **Откуда путаница:** «если что-то нужно показать наружу — экспортируем» — общее правило. Кажется логичным, что provider должен быть «виден».
->
-> **Если бы это было правдой:** `provides...with` была бы избыточной, потому что consumer уже видел бы класс через `exports`. Существование `provides` как отдельной директивы — признание, что provider предоставляется ServiceLoader'у в обход обычных `exports`.
->
-> ---
->
-> **Связанные вопросы:** [[java-modules-interview#Q10]] — `provides`/`uses` базовое определение; [[java-modules-interview#Q11]] — ServiceLoader в classpath vs JPMS; [[java-modules-interview#Q28]] — хорошие практики дизайна модулей.
 
 ## Q37. Совместимость `Spring`, `Hibernate` и `Jackson` с `JPMS`: типичные проблемы
 
@@ -2394,100 +1340,6 @@ module com.example.app {
 ```
 
 **Практический совет:** при первой попытке модуляризации Spring Boot приложения используйте `open module` — откроет всё для рефлексии. Затем постепенно заменяйте на точечные `opens`.
-
-
-> [!mcq]
->
-> **Вопрос:** В Spring Boot приложении с `module-info.java` Jackson не может сериализовать `UserDto`, Hibernate выбрасывает `InaccessibleObjectException` на entity, Spring AOP-прокси не работает на `@Service`. Какое из решений правильно лечит ВСЕ три проблемы?
->
-> ---
->
-> #### A) Перевести все DTO/entity/services в один общий пакет `com.example.app.shared` и сделать `exports com.example.app.shared;` — тогда reflection будет работать — ❌ Неверно
->
-> **Что на самом деле:** `exports` даёт compile-time/runtime доступ к public-членам, но НЕ разрешает рефлексию (`setAccessible(true)`). Jackson, Hibernate и Spring используют именно reflection для доступа к private-полям. Объединение в один пакет также разрушает архитектуру — domain entities, DTO и сервисы смешиваются.
->
-> **Откуда путаница:** «открыть пакет» интуитивно ассоциируется с одной директивой. На самом деле есть две оси: `exports` (видимость типов) и `opens` (рефлексия).
->
-> **Если бы это было правдой:** в `module-info.java` не было бы директивы `opens` отдельно от `exports`. Существование двух директив — признание, что они решают разные задачи.
->
-> ---
->
-> #### B) Добавить `open module com.example.app { ... }` — это лучшее долгосрочное решение, потому что упрощает работу со всеми фреймворками — ❌ Неверно
->
-> **Что на самом деле:** `open module` действительно решает проблему — открывает ВСЕ пакеты для рефлексии любому модулю. Это сработает в краткосрочной перспективе, но это **анти-практика**: модуль становится функционально эквивалентным JAR на classpath с точки зрения reflection. Долгосрочно — точечные `opens pkg to framework`.
->
-> **Откуда путаница:** при первой миграции `open module` экономит часы отладки `InaccessibleObjectException`. Соблазн оставить так — велик.
->
-> **Если бы это было правдой:** в Java best practices не было бы рекомендации избегать `open module`. Все Spring/Hibernate/Jackson туториалы для JPMS рекомендуют точечные `opens` для долгосрочного решения.
->
-> ---
->
-> #### C) Запустить с `--add-opens java.base/java.lang=ALL-UNNAMED` в JVM-аргументах — этого хватит для Spring, Hibernate и Jackson — ❌ Неверно
->
-> **Что на самом деле:** `--add-opens java.base/java.lang=ALL-UNNAMED` — это нужно для Spring (доступ к internals JDK), но **не решает** проблему доступа к ВАШИМ entity/DTO. Нужны ваши собственные `opens com.example.entity to org.hibernate.orm.core`, `opens com.example.dto to com.fasterxml.jackson.databind`. Один флаг не открывает все пакеты для всех фреймворков.
->
-> **Откуда путаница:** `--add-opens java.base/java.lang=ALL-UNNAMED` часто упоминается как «магическая» строка для Spring Boot. Кажется, что это панацея.
->
-> **Если бы это было правдой:** Spring Boot приложения на Java 17+ не нуждались бы в каскаде `--add-opens` для разных пакетов. На практике для full Spring Boot нужно 5-7 разных `--add-opens` (java.lang, java.util, java.util.concurrent, java.io, sun.nio.ch).
->
-> ---
->
-> #### D) Точечно открыть три пакета: `opens com.example.app.entity to org.hibernate.orm.core; opens com.example.app.dto to com.fasterxml.jackson.databind; opens com.example.app.service to spring.core, spring.beans;` — каждый фреймворк получает доступ только к своим пакетам — ✓ Верно
->
-> **Развёрнутое объяснение:**
->
-> Принцип «least privilege» в модульном дизайне: каждому фреймворку открыть РОВНО те пакеты, которые ему нужны, и больше ничего. Это сохраняет инкапсуляцию (главная цель JPMS) и при этом разрешает легитимный reflection.
->
-> **Полная конфигурация module-info.java для Spring Boot + Hibernate + Jackson:**
->
-> ```java
-> module com.example.app {
->     // === Compile-time зависимости ===
->     requires spring.boot;
->     requires spring.boot.autoconfigure;
->     requires spring.context;
->     requires spring.beans;
->     requires spring.core;
->     requires spring.web;
->     requires jakarta.persistence;
->     requires org.hibernate.orm.core;
->     requires com.fasterxml.jackson.databind;
->     requires com.fasterxml.jackson.annotation;
->
->     // === Runtime reflection (opens) — точечно по доменам ===
->     // Spring: для DI/AOP/configuration
->     opens com.example.app to spring.core, spring.beans, spring.context;
->     opens com.example.app.config to spring.core, spring.context;
->     opens com.example.app.service to spring.core, spring.beans;
->     opens com.example.app.controller to spring.core, spring.web;
->
->     // Hibernate: для entity (lazy loading, dirty checking)
->     opens com.example.app.entity to org.hibernate.orm.core;
->
->     // Jackson: для DTO (serialization/deserialization)
->     opens com.example.app.dto to com.fasterxml.jackson.databind;
->
->     // === Compile-time API ===
->     exports com.example.app.api;
-> }
-> ```
->
-> **Когда применять:**
-> - Production Spring Boot приложения, мигрирующие на JPMS (редко, но встречается в финтехе/банкинге).
-> - Библиотеки, которые должны быть совместимы с JPMS-проектами потребителей.
-> - Микросервисы на Quarkus/Helidon, где JPMS-совместимость встроена в фреймворк.
->
-> **Подводные камни:**
-> - **Forgot opens** — добавили новый `@Entity` → `InaccessibleObjectException` в runtime. Нужен интеграционный smoke test для каждого пакета с reflection.
-> - **Reflection cascade** — `@Embeddable` объект ВНУТРИ entity тоже требует `opens`. Hibernate не «прокидывает» доступ через границы пакета.
-> - **Mockito в тестах** — `opens com.example.app.entity to org.mockito;` в `test/module-info.java` или `--add-opens` через `build.gradle`.
-> - **Spring AOP CGLIB-прокси** — для класса с `@Transactional` Spring создаёт прокси через CGLIB, который требует `opens` на пакет. Без него — `IllegalAccessException: Class spring.aop ... cannot access class com.example.service.UserService`.
-> - **Lombok @Data** — генерирует public getter/setter, но Hibernate всё равно может обращаться к полям через reflection (зависит от `@Access(FIELD)` vs `@Access(PROPERTY)`).
-> - **Native compilation** — GraalVM native-image требует `reflect-config.json` отдельно; `opens` в `module-info` нужен для JVM-режима, для native — отдельный конфиг.
->
-> ---
->
-> **Связанные вопросы:** [[java-modules-interview#Q5]] — `exports` vs `opens`; [[java-modules-interview#Q9]] — `open module`; [[java-modules-interview#Q12]] — рефлексия в JPMS; [[java-modules-interview#Q26]] — Spring и JPMS; [[java-modules-interview#Q27]] — Hibernate и JPMS.
 
 ## Q38. Стратегии миграции legacy-кода: `Bottom-Up` vs `Top-Down` в деталях
 
@@ -2560,100 +1412,6 @@ jar --describe-module --file=lib/external.jar
 ```
 
 **Когда остановиться на classpath:** если проект использует много legacy-библиотек без `Automatic-Module-Name` или активно использует `sun.*` API, полная модуляризация может не стоить затрат. Компромисс: использовать `jlink` с `--add-modules` для оптимизации Docker-образов без полной модуляризации кода приложения.
-
-
-> [!mcq]
->
-> **Вопрос:** В legacy multi-module Spring Boot проекте (`utils.jar`, `service.jar`, `app.jar` + 20 внешних JAR без `module-info`) принято решение мигрировать на JPMS. Какая стратегия наиболее устойчива и снижает риск middle-game блокеров?
->
-> ---
->
-> #### A) Top-Down: первым делом написать `module-info.java` для `app.jar`, объявить все остальные модули как `requires automatic_name`. Постепенно добавлять `module-info` в `service.jar`, `utils.jar` — ❌ Неверно
->
-> **Что на самом деле:** Top-Down работает, но рискованно: когда дойдём до `service.jar` или `utils.jar`, обнаружим split packages, internal API, или невозможные имена automatic modules. К этому моменту уже написано много `requires automatic` — переписывать дорого. Bottom-Up снимает эти риски заранее. Top-Down оправдан только когда хочется быстро увидеть границы модулей для архитектурного обсуждения, но не для production-миграции.
->
-> **Откуда путаница:** Top-Down звучит логично («главное — приложение»), и часто рекомендуется в туториалах. Реальная практика крупных миграций (например, JDK переход на модули) шла Bottom-Up.
->
-> **Если бы это было правдой:** не существовало бы рекомендации Bottom-Up как «better strategy» в official Oracle guide on JPMS migration. Существование обеих стратегий — признание trade-off, и Bottom-Up выигрывает по survivability.
->
-> ---
->
-> #### B) Bottom-Up: начать с листьев графа зависимостей (`utils.jar` — нет зависимостей на свой код), сделать его named module, потом `service.jar`, потом `app.jar`. Внешние библиотеки временно подключаются как `automatic modules`, заменяются на named при наличии поддержки upstream — ✓ Верно
->
-> **Развёрнутое объяснение:**
->
-> Bottom-Up — стандартная стратегия инкрементальной миграции, потому что:
->
-> 1. **Локальность ошибок** — изменения в `utils.jar` влияют только на `utils.jar`. Если что-то ломается, проблема понятна и локальна.
-> 2. **Тестируемость каждого шага** — после модуляризации `utils.jar` можно прогнать тесты `utils`, потом `service`, потом `app`. Без необходимости менять всё сразу.
-> 3. **Гипотеза-провер раньше** — split packages и internal API всплывают на первом шаге (`utils`), не в последнюю минуту.
-> 4. **Реверсивность** — если шаг не получился, откат малый. В Top-Down откат означает выкинуть всю работу.
->
-> **Пример pipeline:**
-> ```bash
-> # Шаг 0: подготовка
-> jdeps --module-path lib --multi-release 17 -s app.jar
-> jdeps --jdk-internals --multi-release 17 app.jar
-> jdeps --check --module-path lib com.example.app  # split packages
->
-> # Шаг 1: utils.jar — листовой модуль
-> # Создаём utils/src/main/java/module-info.java
-> # module com.example.utils { exports com.example.utils; }
->
-> # Проверяем:
-> mvn -pl utils clean test
-> jar --describe-module --file=utils/target/utils-1.0.jar
->
-> # Шаг 2: service.jar — зависит от utils
-> # module com.example.service {
-> #     requires com.example.utils;
-> #     requires external.lib;  // automatic
-> #     exports com.example.service.api;
-> # }
->
-> # Шаг 3: app.jar — top-level
-> # module com.example.app {
-> #     requires com.example.service;
-> #     requires spring.boot;
-> #     opens com.example.app to spring.core;
-> # }
-> ```
->
-> **Когда применять:**
-> - Production-миграция multi-module Spring Boot проекта.
-> - Open-source библиотеки (Jackson, Hibernate проходили именно Bottom-Up).
-> - JDK сам мигрировался на JPMS Bottom-Up: модули `java.base` (нижний уровень) → `java.sql` → `java.xml`.
->
-> **Подводные камни:**
-> - **Циклические зависимости в листьях** — если `utils` ⇄ `service` циклична, Bottom-Up невозможен без рефакторинга. JPMS строго запрещает циклы.
-> - **Automatic modules в зависимостях** — Bottom-Up не помогает, если upstream-библиотека не модуляризована. `jlink` тогда невозможен, но это ограничение библиотек, не вашей стратегии.
-> - **Skip the top** — иногда `app.jar` так и остаётся на classpath, потому что в Spring Boot модуляризация контроллеров даёт мало пользы. Это нормально: hybrid-подход (нижние модули named, top — classpath) приемлем.
-> - **Maven multi-module ≠ JPMS module** — Maven-модуль может содержать один JPMS-модуль, и наоборот. Не путать.
-> - **Где остановиться** — если проект использует много legacy-JAR без `Automatic-Module-Name` или активно использует `sun.*` API, полная модуляризация может не стоить затрат. Компромисс: использовать `jlink` для Docker-оптимизации без полной модуляризации.
->
-> ---
->
-> #### C) Параллельная миграция: разработчики одновременно модуляризуют все JAR за один MR. Это сэкономит время и снимет промежуточные риски — ❌ Неверно
->
-> **Что на самом деле:** «Big Bang» миграция — самый рискованный подход. Все ошибки (split packages, transitive deps, циклы, internal API, reflection-проблемы Spring/Hibernate) обнаружатся одновременно, и невозможно изолировать причину. Code review и testing превращается в кошмар. На практике такие миграции либо проваливаются, либо тянутся месяцы.
->
-> **Откуда путаница:** «параллельность» звучит как «эффективность». В сложных системах с зависимостями параллельность часто = chaos.
->
-> **Если бы это было правдой:** в инженерных практиках не было бы концепции «iterative refactoring». Все рекомендации (Martin Fowler, Working Effectively with Legacy Code) — про малые шаги, не big bang.
->
-> ---
->
-> #### D) Сразу переходим на GraalVM native-image — он автоматически решит JPMS-проблемы — ❌ Неверно
->
-> **Что на самом деле:** GraalVM native-image имеет свой набор ограничений (reflection-config, dynamic proxies, classpath-scanning), которые требуют ещё более тщательной подготовки, чем JPMS. Native-image НЕ решает JPMS-проблемы — у него ортогональная задача (AOT-компиляция). Сочетание JPMS + native-image часто УВЕЛИЧИВАЕТ сложность, не уменьшает.
->
-> **Откуда путаница:** GraalVM подаётся как «решение всех runtime-проблем Java» (cold start, memory). Возникает иллюзия, что и архитектурные проблемы (JPMS) лечатся им.
->
-> **Если бы это было правдой:** Quarkus и Micronaut (фреймворки, оптимизированные под native-image) не нуждались бы в собственных модульных моделях. Они их имеют, потому что native-image решает только runtime-вопросы, не архитектурные.
->
-> ---
->
-> **Связанные вопросы:** [[java-modules-interview#Q21]] — стратегии миграции (overview); [[java-modules-interview#Q22]] — Maven/Gradle и модули; [[java-modules-interview#Q35]] — `jdeps` для подготовки; [[java-modules-interview#Q34]] — jlink требует named modules.
 
 ---
 

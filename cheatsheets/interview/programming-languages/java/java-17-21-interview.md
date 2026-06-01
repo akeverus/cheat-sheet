@@ -154,13 +154,6 @@ public record UserDto(String name, int age) {}
 
 ---
 
-
-> [!mcq]
-> - [ ] `record` — это сахар поверх Lombok `@Value`, добавляющий аннотации в classpath | `record` — часть спецификации языка, не зависит от Lombok и не использует annotation processing. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `@Value` рядом с `record` "для совместимости", получает дублирующиеся методы и ошибку компиляции на сборке.
-> - [ ] `record` заменяет любой POJO, включая JPA-сущности с mutable-полями и lifecycle | `record` неизменяем и финальный, JPA требует no-args конструктор и mutable proxy для lazy loading. ❌ ПОСЛЕДСТВИЕ: попытка пометить `record` как `@Entity` падает на старте Hibernate с `InstantiationException` либо ломает dirty checking.
-> - [ ] `record` — синтаксический сахар над `class`, после компиляции получается обычный POJO с `getX()`-методами | После компиляции `record` наследует `java.lang.Record` и имеет аксессоры без префикса `get` (`x()`, не `getX()`). ❌ ПОСЛЕДСТВИЕ: Jackson по дефолту ищет `getName()`, без `JsonProperty` или новой версии модуля сериализация в JSON падает / выдаёт пустой объект.
-> - [x] `record` — финальный класс-носитель неизменяемых данных, JDK сам генерирует канонический конструктор, аксессоры, `equals`/`hashCode`/`toString` | `record` декларирует прозрачный data-carrier контракт; компоненты неявно `private final`, наследоваться от `record` нельзя. ✓ ПРИМЕНЯТЬ: DTO в Spring Boot REST-контроллерах, события в Kafka, ключи кэша Caffeine. 📋 ПРАВИЛО: «`record` = data-class по спецификации, не по аннотации». 🔗 См. Q2, Q4.
-
 ## Q2. Какие ограничения есть у record?
 
 Records имеют ряд ограничений, связанных с их семантикой как неизменяемых носителей данных:
@@ -191,13 +184,6 @@ public record Point(double x, double y) {
 Подробнее об ограничениях наследования — в [вопросах по Java OOP](java-oop-interview.md).
 
 ---
-
-
-> [!mcq]
-> - [ ] `record` может быть `abstract` и наследоваться другими `record` для полиморфизма | `record` всегда конкретный и неявно `final`, наследование от другого `record` запрещено. ❌ ПОСЛЕДСТВИЕ: попытка `abstract record` падает на компиляции, junior пишет код-генератор, который дублирует структуру 5 раз вместо одного интерфейса.
-> - [ ] У `record` можно объявлять instance-поля прямо в теле, как в обычном классе | Все instance-состояние хранится только в компонентах заголовка; в теле допустимы только `static`-поля. ❌ ПОСЛЕДСТВИЕ: компилятор отвергает `private int counter` внутри `record`, разработчик "обходит" через `static Map<Record, Integer>` и получает memory leak на каждый созданный экземпляр.
-> - [x] `record` неявно `final`, нельзя добавлять instance-поля и быть `abstract`, но допустимы `implements` интерфейсов и `static`-члены | Полиморфизм у `record` достигается реализацией интерфейсов (часто `sealed`); компоненты — единственное instance-состояние. ✓ ПРИМЕНЯТЬ: `sealed interface Shape permits Circle, Rectangle` + `record Circle(double r) implements Shape` для алгебраических типов в API. 📋 ПРАВИЛО: «`record` — final, no instance fields, only implements». 🔗 См. Q1, Q5.
-> - [ ] `record` запрещает реализовывать интерфейсы — это нарушит транспарентность данных | `record` свободно реализует любые интерфейсы, в том числе `Comparable`, `Serializable`, `sealed`-интерфейсы. ❌ ПОСЛЕДСТВИЕ: команда дублирует `record` в "обёрточный класс" ради `implements Comparable`, теряет автогенерируемый `equals`/`hashCode` и ломает `TreeSet` инвариант.
 
 ## Q3. Можно ли кастомизировать конструктор record?
 
@@ -246,13 +232,6 @@ public record UserDto(String name, int age) {
 
 ---
 
-
-> [!mcq]
-> - [ ] В compact-конструкторе `public Range { ... }` нужно вручную написать `this.start = start;` иначе поле останется `0` | Присваивание полей в compact-конструкторе делается компилятором автоматически после тела блока. ❌ ПОСЛЕДСТВИЕ: разработчик копирует блок присваиваний из обычного класса, получает `final field assigned twice` на компиляции.
-> - [ ] Кастомный канонический конструктор должен иметь имя `canonical()` — это специальный метод JDK | Имя конструктора всегда совпадает с именем `record`-типа; `canonical()` — это не часть спецификации. ❌ ПОСЛЕДСТВИЕ: junior пишет `public canonical(String x)`, IDE видит обычный метод, валидация молча не вызывается, в БД попадает невалидный email.
-> - [ ] Дополнительный конструктор `record`-а может полностью заменить канонический и не делегировать ему | Любой не-канонический конструктор обязан вызывать `this(...)` первой строкой — делегирование каноническому обязательно. ❌ ПОСЛЕДСТВИЕ: попытка собрать `record User(name, age) { public User(String name) { this.name = name; } }` отвергается компилятором с явной ошибкой о делегировании.
-> - [x] Compact-конструктор позволяет валидацию без присваивания, кастомный канонический заменяет генерируемый, дополнительные конструкторы обязаны делегировать каноническому через `this(...)` | Это три механизма расширения, отвечающие за валидацию, нормализацию и удобные фабрики соответственно. ✓ ПРИМЕНЯТЬ: `record Email(String value) { public Email { Objects.requireNonNull(value); value = value.toLowerCase(); } }` для нормализации входных DTO в Spring `@RestController`. 📋 ПРАВИЛО: «compact — для checks, canonical — для transform, extra — для convenience». 🔗 См. Q1, Q2.
-
 ## Q4. Чем record отличается от обычного класса и от Lombok @Value?
 
 | Критерий | Обычный класс | Lombok `@Value` | `record` |
@@ -270,13 +249,6 @@ public record UserDto(String name, int age) {
 > **Для интервьюера**: ключевое отличие record от Lombok — record является частью спецификации языка и работает с pattern matching и sealed classes, формируя алгебраические типы данных.
 
 ---
-
-
-> [!mcq]
-> - [x] `record` — часть спецификации языка с value-семантикой и поддержкой record patterns; обычный класс даёт максимум гибкости (mutable, наследование); Lombok `@Value` — внешняя зависимость без интеграции с pattern matching | Каждый инструмент решает свою задачу: `record` для DTO/value-объектов, обычный класс для поведения, `@Value` остаётся для legacy на Java 8/11. ✓ ПРИМЕНЯТЬ: миграция Lombok DTO на `record` в Spring Boot 3 + Jackson 2.15+ с поддержкой record patterns. 📋 ПРАВИЛО: «record — language, @Value — library, class — behaviour». 🔗 См. Q1, Q11.
-> - [ ] `record` и Lombok `@Value` — синонимы: оба генерируют одинаковый байткод и работают с pattern matching | Только `record` интегрирован с pattern matching (`switch case Point(int x, int y)`); Lombok этого не умеет. ❌ ПОСЛЕДСТВИЕ: команда строит `switch` по `@Value`-классам, мигрирует на Java 21, обнаруживает что record patterns не работают — переписывает 40 классов под дедлайн релиза.
-> - [ ] Lombok `@Value` лучше, потому что аксессоры называются `getX()` и совместимы со старыми библиотеками | `record` использует `x()` без префикса — это часть контракта; `@Value` действительно даёт `getX()`, но это уже не плюс на Java 17+. ❌ ПОСЛЕДСТВИЕ: проект остаётся на Lombok ради старого Jackson 2.9, копится техдолг, Lombok ломается на каждом minor JDK update.
-> - [ ] `record` уступает обычному классу, потому что `equals`/`hashCode` на `record` слабее (только по identity) | `record` сравнивает компоненты через `Objects.equals` — это value-based equality, сильнее identity-сравнения обычного `Object`. ❌ ПОСЛЕДСТВИЕ: разработчик переопределяет `equals` "чтобы было правильно" и нарушает контракт `equals`/`hashCode`, ключи `HashMap` теряются.
 
 ## Q5. (!) Что такое sealed-классы и интерфейсы?
 
@@ -314,13 +286,6 @@ graph TD
 
 ---
 
-
-> [!mcq]
-> - [ ] `sealed` запрещает наследование вообще — это синоним `final` для интерфейсов | `sealed` разрешает наследование, но только перечисленным в `permits` типам; `final` запрещает любое наследование. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `sealed class Foo` ожидая `final`, удивляется что наследник компилируется, и закрытый домен начинает протекать.
-> - [x] `sealed` ограничивает наследование явным `permits`-списком, перечисленные подклассы обязаны быть `final`/`sealed`/`non-sealed` и находиться в том же модуле | Это даёт компилятору полный набор подтипов, что включает exhaustiveness в `switch` и enable алгебраические типы данных через record + sealed. ✓ ПРИМЕНЯТЬ: моделирование state-machine `sealed interface OrderState permits Created, Paid, Shipped, Cancelled` в Wolt order pipeline. 📋 ПРАВИЛО: «sealed = closed-world types для exhaustive switch». 🔗 См. Q6, Q7.
-> - [ ] `sealed` — это runtime-проверка через рефлексию: класс падает с `IllegalAccessException` если наследник не в `permits` | Проверка выполняется на этапе компиляции; runtime тоже знает permits через `getPermittedSubclasses()`, но это не источник security. ❌ ПОСЛЕДСТВИЕ: junior пишет тест "проверим что `sealed` ловит чужой подкласс в runtime" и получает зелёный тест из-за compile-time блокировки, ложное чувство защиты на security review.
-> - [ ] `sealed`-иерархия должна быть в том же пакете и не работает с модулями JPMS | В модульном проекте permits-подклассы должны быть в том же модуле (не пакете); в немодульном — в том же пакете. ❌ ПОСЛЕДСТВИЕ: разнесли `sealed` API по двум JPMS-модулям ради инкапсуляции, получили `cannot inherit from sealed class` и переписали структуру модулей под дедлайн.
-
 ## Q6. Какие модификаторы должны использовать подклассы sealed-класса?
 
 Каждый подкласс sealed-класса обязан явно указать один из трёх модификаторов:
@@ -353,13 +318,6 @@ public class Bitcoin extends Crypto { /* ... */ }
 
 ---
 
-
-> [!mcq]
-> - [ ] Подклассы могут опустить модификатор — компилятор сам выберет `final` по умолчанию | Каждый подкласс sealed-родителя обязан явно указать один из трёх модификаторов: `final`, `sealed` или `non-sealed`. ❌ ПОСЛЕДСТВИЕ: команда не указывает модификатор, проект перестаёт собираться на Java 17, в CI ловится ошибка `sealed, non-sealed or final modifiers expected`.
-> - [ ] Подкласс может быть `abstract` без других модификаторов — это закроет иерархию | `abstract` сам по себе не закрывает иерархию; нужен один из трёх — `final`, `sealed`, `non-sealed`. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `abstract class Discount extends Payment`, компиляция падает с требованием явного модификатора `sealed` контракта.
-> - [ ] `non-sealed` означает "псевдо-final, но открыто для рефлексии" | `non-sealed` явно открывает иерархию для свободного наследования любым классом — это полная противоположность `final`. ❌ ПОСЛЕДСТВИЕ: разработчик ставит `non-sealed` "для безопасности" на API класс, через год сторонний модуль создаёт неконтролируемые подклассы и `switch` теряет exhaustiveness.
-> - [x] Подкласс sealed-родителя обязан быть `final` (закрыт), `sealed` (продолжает цепочку с своим `permits`) или `non-sealed` (открыт для свободного наследования); `record` и `enum` неявно `final` | Эти три модификатора задают политику дальнейшего расширения; компилятор требует явного выбора. ✓ ПРИМЕНЯТЬ: `sealed interface Event permits OrderEvent, PaymentEvent` + `non-sealed class PaymentEvent` для расширяемости плагинами. 📋 ПРАВИЛО: «final/sealed/non-sealed — три выхода, по умолчанию никакого». 🔗 См. Q5, Q7.
-
 ## Q7. Как sealed-классы работают с pattern matching?
 
 Sealed-классы предоставляют компилятору информацию о полном наборе подтипов, что позволяет выполнять **exhaustiveness check** (проверку полноты) в `switch`:
@@ -388,13 +346,6 @@ public double area(Shape shape) {
 Это делает sealed-классы мощным инструментом для реализации **алгебраических типов данных (ADT)** в Java, аналогичных `enum` в Rust или `sealed trait` в Scala.
 
 ---
-
-
-> [!mcq]
-> - [ ] `switch` по `sealed` интерфейсу всегда требует `default`-ветки независимо от полноты | Если все permits-подклассы покрыты, компилятор не требует `default` — это и есть exhaustiveness. ❌ ПОСЛЕДСТВИЕ: команда добавляет `default -> throw new IllegalStateException()`, который маскирует пропущенный новый подкласс — баг проявляется только в продакшене после релиза.
-> - [x] Компилятор анализирует `permits`-список и проверяет, что `switch` покрывает все подтипы; иначе — ошибка `the switch expression does not cover all possible input values` | Это exhaustiveness check, благодаря которому добавление нового permits-подкласса немедленно сломает компиляцию во всех `switch` без покрытия — лучший рефакторинг-net. ✓ ПРИМЕНЯТЬ: моделирование `sealed Result permits Success, Failure` в Booking.com order processing — добавление `Pending` подсветит все switch-ветки на CI. 📋 ПРАВИЛО: «sealed + switch = compiler-checked exhaustiveness». 🔗 См. Q5, Q9.
-> - [ ] Pattern matching работает только с enum, sealed-классы должны проверяться через цепочку `if/else instanceof` | `sealed` интерфейсы и классы — основной use-case pattern matching for switch начиная с Java 21. ❌ ПОСЛЕДСТВИЕ: разработчик пишет 200 строк `if (x instanceof A) {} else if (x instanceof B) {}`, теряет exhaustiveness, добавление нового подкласса проходит ревью молча.
-> - [ ] Exhaustiveness работает только в runtime через `MatchException`, во время компиляции просто warning | `MatchException` бросается в runtime только если иерархия изменилась после компиляции (binary incompatibility); основная защита — compile-time error. ❌ ПОСЛЕДСТВИЕ: команда отключает `-Werror`, релизит без покрытия нового подтипа, ловит `MatchException` под нагрузкой и rolling-deploy откатывают.
 
 ## Q8. Что такое pattern matching для instanceof?
 
@@ -439,13 +390,6 @@ System.out.println(s.toUpperCase());
 
 ---
 
-
-> [!mcq]
-> - [ ] Pattern variable доступен только внутри блока `if`, после `if/else` он автоматически выходит из scope | Pattern variable имеет flow-sensitive scope: доступен там, где компилятор уверен что `instanceof` истинно (например после `if (!(o instanceof X x)) return;`). ❌ ПОСЛЕДСТВИЕ: разработчик дублирует `instanceof` + cast в каждой ветке, теряет 30% читаемости и иногда забывает обновить cast при правке типа.
-> - [x] `if (obj instanceof String s)` совмещает проверку типа и приведение, переменная `s` доступна там, где компилятор гарантирует истинность проверки (flow-scoping) | Это устраняет boilerplate `String s = (String) obj` и работает с `&&`-цепочками: `if (obj instanceof String s && !s.isEmpty())`. ✓ ПРИМЕНЯТЬ: парсинг JSON в Spring, обработка событий в Kafka consumer, замена visitor pattern в legacy AST. 📋 ПРАВИЛО: «instanceof X x — проверь и забери в одной строке». 🔗 См. Q9, Q11.
-> - [ ] Pattern matching работает только с финальными классами и записями, обычные классы запрещены | Pattern matching доступен с любым типом — class, interface, record, sealed; финальность не требование. ❌ ПОСЛЕДСТВИЕ: команда вводит запрет на `instanceof X x` в code style "ради безопасности", получает легаси-стиль на новом коде и теряет преимущества JEP 394.
-> - [ ] Pattern variable можно объявить с тем же именем, что и существующая переменная — она затенит внешнюю | Java запрещает shadowing pattern-переменной — компиляция упадёт с ошибкой о дубликате имени. ❌ ПОСЛЕДСТВИЕ: junior копирует `instanceof String s` в метод где `s` уже объявлена параметром, ловит compile error и тратит время на распознавание правила scoping.
-
 ## Q9. (!) Что такое pattern matching для switch?
 
 **Pattern matching для `switch`** (JEP 441, Java 21) позволяет использовать паттерны типов в case-метках switch-выражений и switch-инструкций:
@@ -482,13 +426,6 @@ return switch (obj) {
 
 ---
 
-
-> [!mcq]
-> - [ ] `switch` с pattern matching работает только в `switch`-statement (без yield), для expression нужен старый стиль | Pattern matching одинаково работает и в `switch`-statement, и в `switch`-expression (с `yield`/`->`). ❌ ПОСЛЕДСТВИЕ: команда дублирует логику в обычный `if/else if` "потому что switch-expression нельзя", получает 200-строчный if-каскад вместо 30-строчного switch.
-> - [ ] Pattern matching в `switch` запрещает `null` — для null-проверки нужна отдельная `if`-ветка перед switch | Java 21 явно разрешает `case null` (или комбинированный `case null, default`) — null-обработка стала частью switch. ❌ ПОСЛЕДСТВИЕ: NPE на проде, потому что разработчик предполагает что `switch` сам бросит NPE на `null` и защитная проверка не написана.
-> - [x] `switch` принимает паттерны типов (`case Integer i`), `case null`, и при `sealed`-иерархии требует exhaustiveness — компилятор проверяет полноту веток | Это превращает `switch` в полноценный pattern-matching механизм; `case` дополнительно поддерживает guards `when` и record-deconstruction. ✓ ПРИМЕНЯТЬ: обработка вариантов sealed `Event` в order pipeline; замена visitor-паттерна в AST-парсерах (Spring Expression Language). 📋 ПРАВИЛО: «case Type t — типобезопасная диспетчеризация без visitor». 🔗 См. Q7, Q10.
-> - [ ] `case` в pattern-matching switch обязательно требует `break` в конце каждой ветки | Стрелочный синтаксис `case X -> ...` исключает fall-through, `break` запрещён внутри стрелочных веток. ❌ ПОСЛЕДСТВИЕ: разработчик копирует старый switch со `break`, получает compile error `break outside switch or loop` и неделю переучивает команду на новый синтаксис.
-
 ## Q10. Что такое guarded patterns (when clause)?
 
 **Guarded patterns** (условные паттерны) позволяют добавлять дополнительные условия к case-меткам в switch с помощью ключевого слова `when`:
@@ -514,13 +451,6 @@ public String classify(Shape shape) {
 > До Java 21 для подобной логики приходилось использовать вложенные `if-else` внутри switch, что приводило к менее читаемому коду.
 
 ---
-
-
-> [!mcq]
-> - [x] `when` — guard-условие, выполняется после успешного матчинга паттерна; ветка выбирается только если паттерн матчится И guard истинен | Это позволяет точно дискриминировать варианты внутри одного типа: `case Integer i when i < 0 -> "neg"`. ✓ ПРИМЕНЯТЬ: дифференциация состояний `sealed Order` в Wolt: `case Pending p when p.timeout() < NOW -> cancel()`. 📋 ПРАВИЛО: «when = guard, не покрывает exhaustiveness». 🔗 См. Q9, Q11.
-> - [ ] `when` — это альтернатива `default` для непокрытых случаев | `when` — это guard, дополнительное boolean-условие после паттерна; `default` — это catch-all ветка. Это разные механизмы. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `case String s when -> ...` без условия, получает синтаксическую ошибку и тратит час на разбор различий.
-> - [ ] Guard в `when` влияет на exhaustiveness — `case Integer i when i > 0` считается покрытием всех `Integer` | Guard НЕ учитывается в exhaustiveness check; нужна минимум одна ветка без guard. ❌ ПОСЛЕДСТВИЕ: команда полагается на guarded ветки для покрытия, компилятор требует ещё одну `case Integer i ->` ветку, и в продакшене `Integer i = 0` падает в `default` с throw.
-> - [ ] `when` можно использовать только с record-патернами, для type-патернов он недоступен | `when` работает с любым паттерном — type, record, deconstruction, в любых сочетаниях. ❌ ПОСЛЕДСТВИЕ: junior пишет лишний `if` внутри `case String s -> { if (s.isEmpty()) ... }` вместо `case String s when s.isEmpty() ->`, что увеличивает вложенность и снижает читаемость.
 
 ## Q11. (!) Что такое record patterns и деконструкция записей?
 
@@ -564,13 +494,6 @@ public int eval(Expr expr) {
 
 ---
 
-
-> [!mcq]
-> - [ ] Record patterns — это новый синтаксис для создания `record` без `new` | Record patterns — это деконструкция (извлечение) компонентов в `instanceof`/`switch`, а не альтернативный конструктор. ❌ ПОСЛЕДСТВИЕ: команда ищет `record patterns` в документации по конструкторам и через час понимает, что искала не то — теряет день на онбоардинг.
-> - [ ] Record patterns работают только с одним уровнем — вложенные records нельзя деконструировать | Record patterns поддерживают произвольную вложенность: `case Box(Item(String name, int qty)) -> ...`. ❌ ПОСЛЕДСТВИЕ: разработчик пишет 5 уровней вложенных `instanceof` для деконструкции `Order(Customer(Address(...)))`, теряет 50 строк читаемости и допускает ошибку cast.
-> - [ ] Record patterns поддерживают переименование компонентов: `case Point(int a = x, int b = y)` | Имена в pattern фиксированы — это локальные переменные с произвольным именем, но синтаксиса `=` для переименования нет. ❌ ПОСЛЕДСТВИЕ: junior пишет несуществующий синтаксис, фиксит долго, в итоге пишет старый код с `p.x()` и теряет преимущества деконструкции.
-> - [x] Record patterns деконструируют `record` в `instanceof`/`switch`, привязывая компоненты к локальным переменным: `case Point(int x, int y) -> ...`; работают рекурсивно с вложенными records | Это даёт type-safe destructuring без ручных вызовов `p.x()`, `p.y()` и поддерживает sealed-иерархии. ✓ ПРИМЕНЯТЬ: парсинг событий Kafka `sealed interface Event` + record patterns в обработчике; AST-визиторы в компиляторах (например в Spring SpEL). 📋 ПРАВИЛО: «record + pattern = type-safe destructuring». 🔗 См. Q1, Q9.
-
 ## Q12. Что такое unnamed patterns и unnamed variables?
 
 **Unnamed patterns и unnamed variables** (JEP 456, Java 22, preview в Java 21) позволяют использовать `_` (underscore) для игнорирования неиспользуемых переменных и компонентов паттернов:
@@ -606,13 +529,6 @@ switch (shape) {
 Unnamed-переменные повышают читаемость кода, явно показывая, какие значения намеренно игнорируются.
 
 ---
-
-
-> [!mcq]
-> - [ ] `_` в Java 21 запрещён везде, как было до Java 9 | В Java 21 (preview) `_` снова разрешён — но как unnamed pattern/variable, обозначающий "не интересует". ❌ ПОСЛЕДСТВИЕ: команда блокирует `_` в code style, теряет читаемость pattern matching и пишет `case Point(int _x, int _y) -> 42` ради IDE warning о неиспользуемых переменных.
-> - [x] Unnamed pattern `_` и unnamed variable `_` обозначают компонент/переменную, которая нужна структурно, но значение не используется: `case Point(int x, _) -> x` | Это добавляет ясность намерения и подавляет "unused variable" предупреждения; обязательно `--enable-preview` в Java 21. ✓ ПРИМЕНЯТЬ: try-with-resources `try (var _ = lock.acquire())` для side-effect ресурсов; обработка событий с игнорируемыми полями. 📋 ПРАВИЛО: «`_` = "знаю, не использую, не предупреждай"». 🔗 См. Q11, Q14.
-> - [ ] `_` обязан использоваться вместо имени переменной всегда, когда переменная не читается | Это рекомендация, не требование; обычное имя по-прежнему допустимо. ❌ ПОСЛЕДСТВИЕ: команда пушит правило `_`-обязательно через checkstyle, ломает совместимость со старыми JDK на CI и тратит спринт на откат.
-> - [ ] Unnamed variable `_` нельзя читать после объявления — обращение к ней даёт runtime `NoSuchFieldError` | Чтение `_` запрещено компилятором — это compile-time error, а не runtime. ❌ ПОСЛЕДСТВИЕ: junior пишет тест `assertEquals(_, expected)`, ловит compile error, тратит время на disambiguation вместо того чтобы дать переменной имя.
 
 ## Q13. Что такое text blocks?
 
@@ -662,13 +578,6 @@ String html = """
 Подробнее о строках — в [вопросах по Java String](java-string-interview.md).
 
 ---
-
-
-> [!mcq]
-> - [ ] Text block `"""..."""` сохраняет ровно те пробелы, которые написаны в коде, без удаления отступа | Java удаляет минимальный общий отступ (incidental whitespace) у всех строк — это "интеллектуальная" обрезка по позиции закрывающих `"""`. ❌ ПОСЛЕДСТВИЕ: разработчик копирует SQL в text block с отступом 8 пробелов, отправляет в БД, СУБД-парсер на старой версии падает на лидирующих пробелах, query break после deploy.
-> - [x] Text block — многострочный литерал `"""..."""`, JDK удаляет общий incidental-отступ (по позиции закрывающего `"""`), `\` в конце склеивает строки, `\s` сохраняет пробел | Это даёт читаемый JSON/SQL/HTML без склейки `+ "\n"`. ✓ ПРИМЕНЯТЬ: SQL-запросы в Spring `@Query`, JSON-фикстуры в WireMock-тестах, GraphQL-схемы. 📋 ПРАВИЛО: «`"""` — multiline без `+`, отступ по правому краю». 🔗 См. Q14, Q27.
-> - [ ] Внутри text block нельзя использовать обычные escape-последовательности `\n`, `\t` | Все стандартные escape-последовательности работают; добавлены лишь два новых: `\` (line-continuation) и `\s` (sentinel space). ❌ ПОСЛЕДСТВИЕ: команда переписывает `\t` на 4 пробела вручную, генерируя инконсистентные таблицы в логах.
-> - [ ] Text block — это `String.format`-выражение, переменные подставляются через `${var}` | Переменные через `${}` — это String Templates (preview), а не часть text blocks; text block только литерал. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `"""Hello ${name}"""`, получает строку `Hello ${name}` буквально и баг с подстановкой обнаруживает только в логах продакшена.
 
 ## Q14. Что такое switch expressions и чем они отличаются от switch statement?
 
@@ -721,13 +630,6 @@ int numLetters = switch (day) {
 
 ---
 
-
-> [!mcq]
-> - [x] Switch expression возвращает значение через `->` (single result) или `yield` (block), требует exhaustive покрытия для `enum`/`sealed`, не падает в fall-through | В отличие от switch-statement, expression — выражение, использует стрелочный синтаксис, ловит compile error на пропущенный вариант. ✓ ПРИМЕНЯТЬ: маппинг `OrderStatus -> String label` в Spring REST DTO; маппинг enum в локализованный текст. 📋 ПРАВИЛО: «switch-expression — выражение, exhaustive, без fall-through». 🔗 См. Q9, Q35.
-> - [ ] Switch expression обязан иметь `default`, даже если все варианты `enum` покрыты | Для `enum` и `sealed`-типов компилятор выводит exhaustiveness; `default` не обязателен. ❌ ПОСЛЕДСТВИЕ: команда добавляет `default -> throw`, маскируя добавление нового enum-значения, и баг проявляется в продакшене вместо CI.
-> - [ ] Switch expression нельзя использовать в качестве правой части присваивания — только в `return` | Switch expression — полноценное выражение, его можно присваивать переменной, передавать в метод, использовать в `return`. ❌ ПОСЛЕДСТВИЕ: разработчик переписывает switch на if/else "потому что присвоить нельзя", дублируя ветки и теряя exhaustiveness.
-> - [ ] `yield` нужен для каждой ветки switch expression — без него код не скомпилируется | `yield` нужен только в block-форме `case X -> { ...; yield value; }`; для single-expression `case X -> value` `yield` не используется. ❌ ПОСЛЕДСТВИЕ: junior пишет `case A -> yield 1; case B -> yield 2;`, получает compile error и тратит час на чтение JLS.
-
 ## Q15. (!) Что такое виртуальные потоки и какую проблему они решают?
 
 **Виртуальные потоки** (Virtual Threads, JEP 444, Java 21) — это легковесные потоки, управляемые JVM, а не операционной системой. Они являются ключевым результатом **Project Loom**.
@@ -764,13 +666,6 @@ graph TD
 Подробнее о потоках и конкурентности — в [вопросах по Java Concurrency](java-concurrency-interview.md).
 
 ---
-
-
-> [!mcq]
-> - [ ] Virtual threads ускоряют CPU-bound вычисления — каждая задача физически выполняется параллельно | Virtual threads НЕ ускоряют CPU-bound: они мапятся на тот же набор carrier-threads (по числу CPU); ускорение только для I/O-bound. ❌ ПОСЛЕДСТВИЕ: команда переводит JIT-compute сервис на virtual threads, throughput падает на 10% из-за overhead continuation-stacks без выигрыша по latency.
-> - [ ] Virtual threads — это `ForkJoinPool` под капотом, идентичный `parallelStream` | Virtual threads используют отдельный `ForkJoinPool` carrier-pool и реализуют continuations + park/unpark на блокирующих операциях; `parallelStream` — synchronous fork-join. ❌ ПОСЛЕДСТВИЕ: разработчик включает `parallelStream` ожидая поведения virtual threads, перегружает default common pool, ломает Spring health-check.
-> - [x] Virtual threads — лёгкие потоки, мультиплексируемые JDK на ограниченном пуле carrier-threads; на блокирующих JDK-вызовах автоматически паркуются и освобождают carrier — высокий concurrency для I/O-bound нагрузки | Это решает проблему "поток-на-запрос" модели без перехода на reactive. ✓ ПРИМЕНЯТЬ: Spring Boot 3.2 `spring.threads.virtual.enabled=true` для Tomcat-обработчиков; Netflix перевод HTTP-клиентов с CompletableFuture на virtual threads. 📋 ПРАВИЛО: «virtual threads = thread-per-request без OOM». 🔗 См. Q17, Q19.
-> - [ ] Virtual threads автоматически делают любой код non-blocking, включая JNI и `synchronized` | `synchronized` всё ещё пинит carrier-thread (до Java 24); JNI блокирует carrier; только pure-Java JDK-API использует virtual unmount. ❌ ПОСЛЕДСТВИЕ: `synchronized` + I/O в Virtual Threads → carrier thread pinning, throughput drop 100×.
 
 ## Q16. Как создать и запустить виртуальный поток?
 
@@ -816,13 +711,6 @@ Thread.currentThread().isVirtual(); // true для виртуального по
 
 ---
 
-
-> [!mcq]
-> - [ ] `Thread.startVirtualThread(...)` создаёт пул из 1000 виртуальных потоков и ставит задачу в очередь | `startVirtualThread` создаёт ровно ОДИН virtual thread и сразу запускает Runnable; пула там нет. ❌ ПОСЛЕДСТВИЕ: команда вызывает `startVirtualThread` в цикле 1M раз "потому что пул", получает 1M потоков, JFR overhead растёт линейно.
-> - [x] `Thread.startVirtualThread(Runnable)`, `Thread.ofVirtual().start(Runnable)`, или `Executors.newVirtualThreadPerTaskExecutor()` для Executor-API; в Spring Boot 3.2 — флаг `spring.threads.virtual.enabled=true` | Это три уровня API: ad-hoc, builder и Executor-совместимый. ✓ ПРИМЕНЯТЬ: миграция Tomcat Connector в Spring Boot 3.2 на virtual threads без изменения бизнес-кода. 📋 ПРАВИЛО: «`startVirtualThread` = ad-hoc, `newVirtualThreadPerTaskExecutor` = pool-style». 🔗 См. Q15, Q20.
-> - [ ] Virtual thread можно создать только через прямую подмену `Thread.currentThread()` через JNI | Это не часть public API; стандартные способы — `Thread.startVirtualThread`, `Thread.ofVirtual()`, `Executors.newVirtualThreadPerTaskExecutor()`. ❌ ПОСЛЕДСТВИЕ: разработчик пишет JNI-обёртку "ради контроля", получает segfault на следующей JDK update.
-> - [ ] Для virtual threads нужен `ScheduledExecutorService.newScheduledThreadPool(N, virtualFactory)` — других способов нет | `ScheduledExecutorService` НЕ поддерживает virtual threads напрямую (это известное ограничение JDK 21); для async-планирования нужен `Executors.newScheduledThreadPool` (platform) + virtual threads через VirtualThreadPerTaskExecutor для тасков. ❌ ПОСЛЕДСТВИЕ: команда строит scheduled-pipeline на virtual threads, ловит warning "ScheduledExecutorService not supported with virtual threads" и переписывает планировщик.
-
 ## Q17. В чём архитектурное отличие виртуальных потоков от платформенных?
 
 | Характеристика | Платформенный поток | Виртуальный поток |
@@ -855,13 +743,6 @@ sequenceDiagram
 > **Ключевой принцип:** не пулируйте виртуальные потоки. Они настолько дешёвые, что правильный подход — создавать новый поток для каждой задачи. Антипаттерн: `Executors.newFixedThreadPool()` с виртуальными потоками.
 
 ---
-
-
-> [!mcq]
-> - [x] Platform thread — обёртка над OS thread (1:1, дорогой, ~1MB стек, ограничен ulimit), virtual thread — лёгкий JDK-управляемый продолжатель (continuation), исполняется на пуле carrier-threads (M:N) и паркуется на блокирующих JDK-вызовах | Это позволяет создавать миллионы virtual threads без затрат памяти и file descriptors. ✓ ПРИМЕНЯТЬ: HTTP-сервер на 1M concurrent соединений (Helidon/Vert.x на Loom без reactive); Discord переход с Erlang на Java 21 для message gateway. 📋 ПРАВИЛО: «platform = 1:1 OS, virtual = M:N JDK». 🔗 См. Q15, Q19.
-> - [ ] Virtual thread — это просто platform thread с маленьким стеком 4KB | Stack у virtual thread динамический и хранится в heap как continuation; это не "platform thread с уменьшенным стеком". ❌ ПОСЛЕДСТВИЕ: разработчик настраивает `-Xss512k` "для virtual threads", ломает platform threads в Tomcat и получает StackOverflow на каждом GC-callback.
-> - [ ] Virtual thread всегда быстрее platform thread, поэтому надо мигрировать всё подряд | Для CPU-bound кода virtual thread overhead замедляет; для I/O-bound выигрывает за счёт высокого concurrency. ❌ ПОСЛЕДСТВИЕ: команда мигрирует JIT-вычислительный сервис на virtual threads, получает p99 +20% и rolling rollback через 2 часа.
-> - [ ] Platform thread — это абстракция Loom, virtual thread — это реальный OS thread | Ровно наоборот: platform thread — обёртка над OS thread (1:1 mapping), virtual thread — JDK-managed continuation, мультиплексируемая M:N на carrier-threads. ❌ ПОСЛЕДСТВИЕ: junior строит ментальную модель неправильно, не понимает почему `synchronized` пинит carrier и пишет код с deadlock.
 
 ## Q18. (!) Когда НЕ стоит использовать виртуальные потоки?
 
@@ -896,13 +777,6 @@ try {
 > **На собеседовании:** виртуальные потоки идеальны для I/O-bound задач с thread-per-request моделью (веб-серверы, микросервисы). Для CPU-bound задач используйте платформенные потоки или `ForkJoinPool`.
 
 ---
-
-
-> [!mcq]
-> - [ ] Virtual threads подходят для всех задач без исключений; legacy thread-pool можно удалить | Для CPU-bound (compute, JIT, ML inference), для нагрузки с большим `ThreadLocal` state, и для кода с `synchronized` virtual threads дают регрессию. ❌ ПОСЛЕДСТВИЕ: команда удаляет `ForkJoinPool` для compute, throughput на batch-обработке падает 30%, на проде latency p99 растёт с 50ms до 5s.
-> - [ ] Virtual threads нельзя использовать с Spring Boot — фреймворк завязан на platform threads | Spring Boot 3.2+ официально поддерживает virtual threads через `spring.threads.virtual.enabled=true`. ❌ ПОСЛЕДСТВИЕ: команда отказывается от virtual threads "потому что Spring", упускает возможность убрать reactive WebFlux и упростить код.
-> - [x] Virtual threads НЕ подходят: для CPU-bound (нет выигрыша, есть overhead), при тяжёлых `ThreadLocal` (storage растёт линейно с числом threads), при `synchronized` + I/O (carrier pinning), при долгих native-вызовах JNI/file ops до Java 24 | Это известные anti-pattern сценарии — для них остаются platform thread pools. ✓ ПРИМЕНЯТЬ: ML-inference сервис на `ForkJoinPool` (CPU-bound), HTTP-handlers на virtual threads (I/O). 📋 ПРАВИЛО: «virtual для I/O, platform для CPU и legacy». 🔗 См. Q15, Q19.
-> - [ ] Virtual threads запрещены при использовании JDBC, потому что connection pool не работает с ними | Hikari и BoneCP полностью совместимы с virtual threads; pool блокировки используют корректные `LockSupport.park`, не пинят carrier. ❌ ПОСЛЕДСТВИЕ: команда вводит "JDBC только на platform threads" в архитектурный гайд, теряет основной use-case Loom — масштабирование REST-сервиса с БД.
 
 ## Q19. Что такое pinning виртуального потока?
 
@@ -940,13 +814,6 @@ try {
 > **Важно:** в Java 24 (Project Loom) планируется устранение pinning для `synchronized` блоков, но до этого времени рекомендуется использовать `java.util.concurrent.locks`.
 
 ---
-
-
-> [!mcq]
-> - [ ] Pinning — это маркетинговое название для cooperative-scheduling в Loom; работает прозрачно без проблем | Pinning — это известное ограничение, при котором virtual thread не может отлепиться от carrier и блокирует его OS-уровневой блокировкой. ❌ ПОСЛЕДСТВИЕ: команда не настраивает `-Djdk.tracePinnedThreads=full`, не видит pinning в production, throughput падает в 100× и причину ищут неделю.
-> - [x] Pinning — это ситуация, когда virtual thread не может выйти из carrier (через `synchronized`-блок или JNI-кадр на стеке), блокировка carrier'а превращает M:N в 1:1 и резко режет throughput; диагностика — `-Djdk.tracePinnedThreads=full` | До Java 24 `synchronized` всегда пинит; решение — заменить на `ReentrantLock`. ✓ ПРИМЕНЯТЬ: миграция legacy `synchronized` обёрток в Spring сервисах на `ReentrantLock` перед включением virtual threads. 📋 ПРАВИЛО: «`synchronized` + I/O в virtual = pinning, замени на ReentrantLock». 🔗 См. Q15, Q18.
-> - [ ] Pinning происходит только если использовать `wait`/`notify` — обычные блокировки `ReentrantLock` всегда пинят | `ReentrantLock` корректно паркует virtual thread без pinning; пинят `synchronized`-блоки и JNI-кадры. ❌ ПОСЛЕДСТВИЕ: разработчик заменяет `ReentrantLock` обратно на `synchronized` "ради простоты", получает pinning и regression на нагрузке.
-> - [ ] Pinning исправляется флагом `-XX:+UseVirtualThreadFix=true` | Такого флага не существует; решение — рефакторинг `synchronized` или ожидание Java 24 (JEP 491). ❌ ПОСЛЕДСТВИЕ: команда добавляет несуществующий флаг в production java args, JVM игнорирует, проблема pinning остаётся незамеченной до перегрузки прода.
 
 ## Q20. Как виртуальные потоки работают с Spring Boot?
 
@@ -989,13 +856,6 @@ public class VirtualThreadConfig {
 > **Практический совет:** при включении виртуальных потоков в Spring Boot убедитесь, что драйверы БД и HTTP-клиенты не используют `synchronized` с I/O — иначе pinning сведёт на нет все преимущества.
 
 ---
-
-
-> [!mcq]
-> - [ ] Spring Boot 3.2 включает virtual threads автоматически — флаг не нужен | Включение явное: `spring.threads.virtual.enabled=true` (или программно `setVirtualThreads(true)` для конкретного executor). ❌ ПОСЛЕДСТВИЕ: команда полагается на "автомат", в проде Tomcat работает на старом thread pool, expected throughput не достигается.
-> - [ ] Включение `spring.threads.virtual.enabled=true` автоматически переписывает `@Async` методы на virtual threads | `@Async` использует свой `TaskExecutor`; для virtual threads нужно явно сконфигурировать `AsyncTaskExecutor` с `VirtualThreadTaskExecutor`. ❌ ПОСЛЕДСТВИЕ: разработчик включает флаг ожидая что `@Async` ускорится, наблюдает то же самое поведение и теряет день на отладку.
-> - [x] `spring.threads.virtual.enabled=true` (Spring Boot 3.2+) включает virtual threads для встроенного Tomcat/Jetty (HTTP-обработчики), `@Scheduled`, `@Async`-executor по умолчанию; для Kafka/RabbitMQ-listenerов — отдельная конфигурация executor'ов | Это самый низкорисковый путь: thread-per-request модель сохраняется, требуется только тестирование под нагрузкой. ✓ ПРИМЕНЯТЬ: Detsky Mir BFF на Spring Boot 3.2 с virtual threads для синхронных REST-вызовов в legacy-сервисы. 📋 ПРАВИЛО: «`spring.threads.virtual.enabled=true` — single-flag миграция HTTP». 🔗 См. Q15, Q17.
-> - [ ] Spring Boot 3.0 уже поддерживает virtual threads — обновление до 3.2 не требуется | Нативная поддержка флагом — только с Spring Boot 3.2; в 3.0/3.1 нужен ручной `TomcatProtocolHandlerCustomizer`. ❌ ПОСЛЕДСТВИЕ: команда ставит `spring.threads.virtual.enabled=true` в Boot 3.0, флаг игнорируется, время на дебаг проблемы — час.
 
 ## Q21. (!) Что такое structured concurrency?
 
@@ -1045,13 +905,6 @@ graph TD
 
 ---
 
-
-> [!mcq]
-> - [x] Structured concurrency (JEP 453, preview в Java 21) — модель, в которой группа параллельных задач рассматривается как единое целое: parent дожидается всех детей, отмена parent отменяет всех детей, исключение в одном ребёнке отменяет других; реализация — `StructuredTaskScope` | Это устраняет проблему orphan-потоков и сложного error-propagation в `CompletableFuture`-чейнах. ✓ ПРИМЕНЯТЬ: параллельные fan-out вызовы 5 микросервисов с автоматической отменой остальных при первой ошибке (booking flow в Booking.com, search aggregation в Yandex). 📋 ПРАВИЛО: «SC = parent owns lifecycle всех детей». 🔗 См. Q22, Q23.
-> - [ ] Structured concurrency — это новое имя для `CompletableFuture.allOf()` без новых API | SC вводит новый класс `StructuredTaskScope` с явным lifecycle и propagation отмен; это не обёртка над `CompletableFuture`. ❌ ПОСЛЕДСТВИЕ: команда ищет SC в `java.util.concurrent.CompletableFuture`, не находит и считает фичу "ещё не релизной".
-> - [ ] SC отказался от virtual threads и работает только с platform threads | SC построен поверх virtual threads — каждый fork создаёт virtual thread; именно дешёвые virtual threads делают SC практичным. ❌ ПОСЛЕДСТВИЕ: разработчик отключает virtual threads "ради SC", получает per-task overhead 1MB и не масштабируется.
-> - [ ] SC требует ручного управления через `synchronized` блоки для безопасности | SC имеет встроенную синхронизацию через `join()` и `throwIfFailed()`; ручной `synchronized` нарушает контракт scope. ❌ ПОСЛЕДСТВИЕ: junior оборачивает `scope.fork(...)` в `synchronized(this)`, получает deadlock и потерю отмен в production.
-
 ## Q22. Как использовать StructuredTaskScope?
 
 `StructuredTaskScope` — основной API для structured concurrency:
@@ -1089,13 +942,6 @@ public ProductPage loadProductPage(String productId) throws Exception {
 5. Подзадачи нельзя `get()` до вызова `join()`
 
 ---
-
-
-> [!mcq]
-> - [ ] `StructuredTaskScope` управляется через `start()`/`stop()` — `try-with-resources` не нужен | `StructuredTaskScope` реализует `AutoCloseable`, должен использоваться в `try-with-resources` чтобы scope закрылся и дети были отменены. ❌ ПОСЛЕДСТВИЕ: разработчик создаёт scope без `try-with-resources`, при exception в parent дети остаются orphan и потоки утекают.
-> - [ ] `scope.fork(Callable)` запускает задачу синхронно и возвращает результат сразу | `fork` возвращает `Subtask<T>` — handle на async-задачу; результат доступен только после `join()`. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает синхронный результат, использует `subtask.get()` до `join()`, ловит `IllegalStateException` и тратит день на отладку.
-> - [x] Создаётся в `try-with-resources`: `try (var scope = new StructuredTaskScope.ShutdownOnFailure()) { var s1 = scope.fork(call1); var s2 = scope.fork(call2); scope.join(); scope.throwIfFailed(); ... }`; `fork` возвращает `Subtask<T>`, `join` ждёт всех, `throwIfFailed` пробрасывает первое исключение | Это даёт чёткий жизненный цикл и автоматическую отмену siblings при ошибке. ✓ ПРИМЕНЯТЬ: parallel calls на user-service + cart-service + recommendations-service в Spring `@RestController`. 📋 ПРАВИЛО: «fork → join → throwIfFailed → use results». 🔗 См. Q21, Q23.
-> - [ ] `scope.join()` нужно вызывать только если хотя бы одна задача упала; для успешных можно сразу читать результаты | `join()` обязателен всегда — это barrier для корректного завершения всех subtask и обновления их state. ❌ ПОСЛЕДСТВИЕ: команда пропускает `join()`, читает `subtask.get()`, на половине запусков получает `IllegalStateException: Owner did not join` и race condition.
 
 ## Q23. Какие стратегии завершения есть в StructuredTaskScope?
 
@@ -1139,13 +985,6 @@ try (var scope = new StructuredTaskScope.ShutdownOnSuccess<String>()) {
 
 ---
 
-
-> [!mcq]
-> - [ ] Стратегии — это enum-параметр `StructuredTaskScope.Policy.FAIL_FAST/SUCCESS_FAST/ALL` | API использует разные классы-наследники, не enum: `ShutdownOnFailure`, `ShutdownOnSuccess`, кастомные через extension. ❌ ПОСЛЕДСТВИЕ: разработчик ищет несуществующий enum в API, копирует пример из Stack Overflow для другого preview-вью, получает compile error.
-> - [x] `ShutdownOnFailure` (отмена siblings при первой ошибке, full barrier для join) и `ShutdownOnSuccess<T>` (отмена siblings при первом успехе — race-pattern); можно расширять через `StructuredTaskScope` подкласс с собственной логикой | Это две базовые built-in стратегии fan-out паттерна. ✓ ПРИМЕНЯТЬ: `ShutdownOnFailure` для booking flow (все услуги обязаны), `ShutdownOnSuccess` для multi-region DNS lookup (первый ответ выигрывает). 📋 ПРАВИЛО: «OnFailure = all-or-nothing, OnSuccess = race». 🔗 См. Q21, Q22.
-> - [ ] `ShutdownOnSuccess` ждёт пока все задачи закончатся, и возвращает первый успешный результат | `ShutdownOnSuccess` отменяет siblings СРАЗУ после первого успеха — это его суть; ожидать всех — это противоположный паттерн. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает все ответы, тратит ресурсы на отменённые subtask и теряет преимущество race-pattern в latency.
-> - [ ] Стратегия `ShutdownOnAll` отменяет задачи безусловно через 30 секунд | Такой стратегии нет; для timeout используется `scope.joinUntil(Instant)` или общий `scope.shutdown()` из другого потока. ❌ ПОСЛЕДСТВИЕ: команда ищет несуществующий API, реализует свой timeout-watcher через `ScheduledExecutorService`, дублирует логику и вносит race condition.
-
 ## Q24. Что такое Scoped Values и чем они лучше ThreadLocal?
 
 **Scoped Values** (JEP 464, preview в Java 21-23) — механизм передачи данных между методами в рамках одного потока (или scope), призванный заменить `ThreadLocal` для виртуальных потоков.
@@ -1188,13 +1027,6 @@ boolean bound = CURRENT_USER.isBound(); // Проверка наличия
 | Очистка | Ручная (`remove()`) | Автоматическая |
 
 ---
-
-
-> [!mcq]
-> - [ ] `ScopedValue` — это переименованный `ThreadLocal` с тем же API: `set/get/remove` | API кардинально другое: `ScopedValue.where(KEY, value).run(Runnable)`; нет `set`/`remove`, только immutable binding на длительность вызова. ❌ ПОСЛЕДСТВИЕ: разработчик ищет `set/remove`, не находит, перепиcывает контракт назад на `ThreadLocal`, не понимая зачем.
-> - [ ] `ScopedValue` хранит данные в heap-таблице по `Thread.currentThread()` — идентично `ThreadLocal` | `ScopedValue` использует stack-based binding (по фрейму вызова), а не map по thread; это снимает проблему GC утечек и неконтролируемого размера. ❌ ПОСЛЕДСТВИЕ: команда продолжает использовать `InheritableThreadLocal` для propagation в virtual threads, ловит memory pressure из-за линейного роста storage.
-> - [x] `ScopedValue` (JEP 446, preview Java 21) — immutable binding на время выполнения lambda через `where(KEY, val).run()`; в отличие от `ThreadLocal` не имеет утечек при virtual threads, не наследуется неявно, propagation в `StructuredTaskScope` явное | Это решает проблему `ThreadLocal` storage у миллиона virtual threads и обеспечивает ясную область видимости. ✓ ПРИМЕНЯТЬ: распространение `RequestId`/`TenantId` в Spring controller через virtual thread + `StructuredTaskScope` без ThreadLocal-leak. 📋 ПРАВИЛО: «ScopedValue = immutable, scoped, virtual-threads-safe». 🔗 См. Q15, Q21.
-> - [ ] `ScopedValue` мутируется через `set()` внутри scope, что делает его удобнее `ThreadLocal` | `ScopedValue` immutable; внутри `where(...).run()` значение нельзя изменить. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `KEY.set(newValue)`, ловит compile error на отсутствие метода и теряет час на изучение нового контракта.
 
 ## Q25. (!) Что такое Sequenced Collections?
 
@@ -1242,13 +1074,6 @@ seq.reversed();     // обратный вид коллекции
 Подробнее о коллекциях — в [вопросах по Java Collections](java-collections-interview.md).
 
 ---
-
-
-> [!mcq]
-> - [ ] Sequenced Collections — это новые типы коллекций, заменяющие `ArrayList` и `LinkedList` | Это новые интерфейсы `SequencedCollection`, `SequencedSet`, `SequencedMap`, добавленные к существующим коллекциям; `ArrayList`/`LinkedHashSet` сами реализуют их без замены. ❌ ПОСЛЕДСТВИЕ: команда массово мигрирует `ArrayList` на новый класс "SequencedList" (которого не существует), теряет неделю.
-> - [ ] Sequenced Collections доступны только начиная с Java 24 — в Java 21 это preview | Sequenced Collections (JEP 431) стабильно с Java 21, не preview. ❌ ПОСЛЕДСТВИЕ: разработчик не использует API, считая его preview, и продолжает писать `list.get(list.size() - 1)` для last element.
-> - [x] Sequenced Collections (JEP 431, Java 21 stable) — три новых интерфейса (`SequencedCollection`, `SequencedSet`, `SequencedMap`), унифицирующие API доступа к first/last/reversed для упорядоченных коллекций (`List`, `Deque`, `LinkedHashSet`, `LinkedHashMap`) | До Java 21 не было общего абстрактного типа "упорядоченная коллекция" — приходилось писать разный код для `LinkedHashSet` vs `Deque`. ✓ ПРИМЕНЯТЬ: универсальный обработчик "взять последний элемент" в Spring Cache, обработка LRU-эвикций. 📋 ПРАВИЛО: «Sequenced = first/last/reversed как контракт». 🔗 См. Q26, Q29.
-> - [ ] Sequenced Collections — это immutable-обёртки над `List`, аналог `List.copyOf()` | Sequenced — это интерфейсы, не immutable wrappers; mutability определяется реализацией. ❌ ПОСЛЕДСТВИЕ: разработчик использует `addFirst()` ожидая UnsupportedOperationException, вместо этого изменяет mutable list и получает баг concurrent modification.
 
 ## Q26. Какие методы добавляет интерфейс SequencedCollection?
 
@@ -1310,13 +1135,6 @@ map.pollLastEntry();   // удалить c=3
 
 ---
 
-
-> [!mcq]
-> - [ ] reversed() создаёт полную копию LinkedHashMap в обратном порядке | ❌ ПОСЛЕДСТВИЕ: reversed() возвращает view, не копию; изменения в оригинале видны через reversed() и наоборот
-> - [x] Java 21 добавила SequencedMap: LinkedHashMap.firstEntry(), lastEntry(), reversed(), putFirst(), pollLastEntry() | ✓ ПРИМЕНЯТЬ: когда нужен ordered map с O(1) доступом к первому/последнему элементу 📋 ПРАВИЛО: SequencedMap = LinkedHashMap + порядок как first-class 🔗 См. Q25
-> - [ ] SequencedMap доступна с Java 8 через Collections.synchronizedSortedMap() | ❌ ПОСЛЕДСТВИЕ: SequencedCollection/SequencedMap интерфейсы добавлены в Java 21 (JEP 431); в Java 8 их нет
-> - [ ] putFirst() работает только если map пуста; иначе бросает IllegalStateException | ❌ ПОСЛЕДСТВИЕ: putFirst() перемещает или вставляет элемент в начало всегда; не проверяет размер map
-
 ## Q27. Что такое String Templates?
 
 **String Templates** (JEP 430, preview в Java 21, **удалены в Java 23**) — механизм интерполяции строк, который был доступен как preview-фича:
@@ -1350,13 +1168,6 @@ String json = """
 ```
 
 ---
-
-
-> [!mcq]
-> - [ ] String Templates (STR."...") стабильны с Java 21 и доступны в Java 23+ | ❌ ПОСЛЕДСТВИЕ: String Templates удалены в Java 23 (JEP 465) как неудачный эксперимент; код с STR. не компилируется в Java 23+
-> - [ ] FMT и RAW template processors не существуют; только STR | ❌ ПОСЛЕДСТВИЕ: FMT (с форматированием), RAW (возвращает StringTemplate объект) — были доступны наравне с STR в Java 21-22
-> - [x] String Templates (preview Java 21-22) удалены в Java 23; текущая рекомендация — "Hello, %s".formatted(name) | ✓ ПРИМЕНЯТЬ: String.formatted() для интерполяции; text blocks для многострочных шаблонов 📋 ПРАВИЛО: String Templates = исторический preview; использовать formatted() 🔗 См. Q10
-> - [ ] String Templates заменяют StringBuilder и MessageFormat полностью в Java 21+ | ❌ ПОСЛЕДСТВИЕ: String Templates были experimental и убраны; StringBuilder и MessageFormat по-прежнему актуальны
 
 ## Q28. Что такое Foreign Function & Memory API?
 
@@ -1405,13 +1216,6 @@ try (Arena arena = Arena.ofConfined()) {
 > **Для собеседования:** FFM API — это не просто замена JNI. Это полноценный API для работы с off-heap памятью, полезный для высокопроизводительных приложений (сетевые буферы, сериализация, работа с GPU).
 
 ---
-
-
-> [!mcq]
-> - [ ] FFM API — просто ещё одна обёртка над JNI без принципиальных преимуществ | ❌ ПОСЛЕДСТВИЕ: FFM API исключает необходимость C-кода и JNI glue layer; работает через MethodHandle и MemorySegment без нативных заголовков
-> - [x] FFM API (Java 22 stable) заменяет JNI: нативные вызовы через Linker/SymbolLookup, off-heap память через MemorySegment с explicit scope lifetime | ✓ ПРИМЕНЯТЬ: нативные библиотеки (OpenSSL, LAPACK), off-heap буферы для производительности 📋 ПРАВИЛО: FFM = JNI без C-кода + безопасное управление native памятью 🔗 См. Q21
-> - [ ] MemorySegment — только для работы с файлами через mmap | ❌ ПОСЛЕДСТВИЕ: MemorySegment представляет любую непрерывную область памяти: heap, off-heap, mmapped файлы, native буферы; не только файлы
-> - [ ] FFM API доступен только в Java 21 preview; в Java 22 его убрали как String Templates | ❌ ПОСЛЕДСТВИЕ: FFM API (JEP 454) стал stable в Java 22; в отличие от String Templates не был удалён
 
 ## Q29. Какие улучшения появились в API коллекций и утилитах?
 
@@ -1468,13 +1272,6 @@ int pages = Math.ceilDiv(totalItems, pageSize);
 
 ---
 
-
-> [!mcq]
-> - [ ] Stream.toList() в Java 16 возвращает ArrayList — тот же результат что и collect(toList()) | ❌ ПОСЛЕДСТВИЕ: Stream.toList() возвращает unmodifiable список; collect(toList()) возвращает изменяемый ArrayList; добавление элементов бросит UnsupportedOperationException
-> - [x] Java 16+: Stream.toList() (unmodifiable), mapMulti(); Java 21: HashMap.newHashMap(n) (корректная ёмкость), Math.ceilDiv(), SequencedCollection APIs | ✓ ПРИМЕНЯТЬ: toList() вместо collect(toUnmodifiableList()); newHashMap(n) для избежания rehashing 📋 ПРАВИЛО: toList()=immutable; newHashMap(n)=no rehash for n elements 🔗 См. Q26
-> - [ ] HashMap.newHashMap(100) создаёт map с лимитом в 100 элементов | ❌ ПОСЛЕДСТВИЕ: newHashMap(100) устанавливает начальную ёмкость для 100 элементов без rehash; жёсткого лимита нет, map растёт дальше
-> - [ ] Math.ceilDiv() доступен с Java 8 через Math.ceil(a/(double)b) | ❌ ПОСЛЕДСТВИЕ: Math.ceilDiv(int,int) добавлен в Java 18; Math.ceil(a/(double)b) работает через double — теряет точность для больших чисел
-
 ## Q30. Что такое сильная инкапсуляция внутренних API JDK?
 
 **Strong encapsulation of JDK internals** (JEP 403, Java 17) — финальный шаг инкапсуляции внутренних API JDK, начатой в Java 9 с введением [модульной системы](java-modules-interview.md).
@@ -1502,13 +1299,6 @@ java --add-opens java.base/java.lang=ALL-UNNAMED \
 > **Для собеседования:** инкапсуляция — это не "сломали обратную совместимость", а завершение многолетнего перехода к модульной архитектуре JDK. Большинство библиотек уже адаптированы.
 
 ---
-
-
-> [!mcq]
-/> - [ ] Достаточно поднять JDK runtime — внутренние API JDK останутся доступны как раньше | ❌ ПОСЛЕДСТВИЕ: `--illegal-access=permit` удалён в Java 17, рефлексия на `sun.misc.*` бросает `InaccessibleObjectException`, старые библиотеки падают на старте
-> - [x] С Java 17 включена сильная инкапсуляция: внутренние API (`sun.misc.*`, `com.sun.*`, `jdk.internal.*`) недоступны через рефлексию; для legacy нужен явный `--add-opens`, а лучше — миграция на `VarHandle`/`MethodHandle` | ✓ ПРИМЕНЯТЬ: обновить Hibernate/Spring/Jackson до версий с поддержкой Java 17; `--add-opens` как временный workaround 📋 ПРАВИЛО: `--add-opens` — мост, а не дом 🔗 См. Q31
-> - [ ] `--add-opens` действует на весь classpath независимо от модуля — пишется один раз и забывается | ❌ ПОСЛЕДСТВИЕ: `--add-opens` указывается per-модуль (`java.base/sun.nio.ch=ALL-UNNAMED`); забыв один модуль, получим `InaccessibleObjectException` в продакшене после релиза
-> - [ ] `sun.misc.Unsafe` можно использовать в Java 17 без флагов — он по-прежнему public API | ❌ ПОСЛЕДСТВИЕ: `Unsafe` инкапсулирован, прямой доступ через рефлексию запрещён; правильно — `VarHandle` (read/write на разные memory orderings) или `MethodHandle`
 
 ## Q31. (!) Какова стратегия миграции с Java 8/11 на Java 17/21?
 
@@ -1552,13 +1342,6 @@ graph LR
 
 ---
 
-
-> [!mcq]
-> - [ ] javax.* пакеты переименованы в java.* при миграции на Java 17+ | ❌ ПОСЛЕДСТВИЕ: javax.* → jakarta.* только для Jakarta EE (Spring Boot 3); стандартные javax.crypto, javax.sql в JDK остались в javax.*
-> - [ ] Security Manager был убран в Java 21 — необходимо убрать все вызовы до Java 21 | ❌ ПОСЛЕДСТВИЕ: Security Manager deprecated с Java 17 и удалён в Java 24 (не 21); в Java 21 ещё присутствует с предупреждениями
-> - [ ] Нельзя мигрировать напрямую с Java 11 на Java 21 — нужно проходить каждую версию | ❌ ПОСЛЕДСТВИЕ: можно мигрировать напрямую на любую LTS; промежуточные версии не обязательны
-> - [x] Шаги миграции: обновить JDK → запустить тесты → InaccessibleObjectException → --add-opens → заменить javax→jakarta (если Jakarta EE) → убрать Nashorn/finalize() | ✓ ПРИМЕНЯТЬ: миграция legacy Java 8/11 кодовой базы на Java 21 LTS 📋 ПРАВИЛО: тесты первыми выявят проблемы; --add-opens как временная мера 🔗 См. Q30
-
 ## Q32. Что такое новый Random Generator API?
 
 **Enhanced Pseudo-Random Number Generators** (JEP 356, Java 17) — новый унифицированный API для генерации случайных чисел:
@@ -1594,13 +1377,6 @@ RandomGeneratorFactory.all()
 
 ---
 
-
-> [!mcq]
-> - [ ] java.util.Random deprecated in Java 17 — обязательно перейти на RandomGenerator | ❌ ПОСЛЕДСТВИЕ: java.util.Random не deprecated; теперь реализует RandomGenerator и полностью совместим с новым API
-> - [x] Java 17 (JEP 356): RandomGenerator интерфейс объединяет все PRNG; Xoshiro256PlusPlus/L128X256MixRandom; JumpableGenerator для параллельных симуляций | ✓ ПРИМЕНЯТЬ: параллельные Monte Carlo симуляции → JumpableGenerator; высокая скорость → Xoshiro; крипто → SecureRandom 📋 ПРАВИЛО: RandomGenerator = unified PRNG interface; old Random implements it 🔗 См. Q21
-> - [ ] JumpableGenerator используется для криптографических целей вместо SecureRandom | ❌ ПОСЛЕДСТВИЕ: JumpableGenerator — для параллельных симуляций; для крипто всегда SecureRandom; PRNG не подходит для ключей/токенов
-> - [ ] RandomGeneratorFactory нельзя использовать для перечисления алгоритмов — нужен ServiceLoader | ❌ ПОСЛЕДСТВИЕ: RandomGeneratorFactory.all() специально предназначен для перечисления доступных алгоритмов PRNG; ServiceLoader не нужен
-
 ## Q33. Какие улучшения получил NullPointerException?
 
 **Helpful NullPointerExceptions** (JEP 358, Java 14, по умолчанию с Java 17) — расширенные сообщения об ошибках, указывающие точную причину NPE:
@@ -1633,13 +1409,6 @@ a.method(b.value);
 
 ---
 
-
-> [!mcq]
-> - [ ] Helpful NPE в Java 17+ показывает имя локальной переменной, которая оказалась null | ❌ ПОСЛЕДСТВИЕ: разработчик ждёт `variable "user" is null`, а JVM пишет `Cannot invoke "User.getAddress()" because "user" is null` — анализ идёт по bytecode, не по локальным именам; неверные ожидания → теряются мин в чтении логов
-> - [ ] Helpful NPE требует флаг `-XX:+ShowCodeDetailsInExceptionMessages` в Java 17+ | ❌ ПОСЛЕДСТВИЕ: в Java 14-16 флаг был нужен, но с Java 15 включён по умолчанию; в Java 17 разработчики, добавляющие флаг «на всякий случай», лишь раздувают JAVA_OPTS
-> - [x] С Java 17 NPE по умолчанию печатает цепочку: `Cannot invoke "X" because the return value of "Y" is null` — JVM анализирует bytecode фрейма, чтобы указать точную позицию | ✓ ПРИМЕНЯТЬ: production логи без debugger, диагностика chained-вызовов в обработке ответов API; не нужен ручной `Objects.requireNonNull` для каждого звена 📋 ПРАВИЛО: «Helpful NPE = bytecode-анализ → точное место без stacktrace дайвинга» 🔗 См. Q34
-> - [ ] Helpful NPE можно отключить только пересборкой JVM из исходников | ❌ ПОСЛЕДСТВИЕ: разработчик считает, что нельзя выключить feature; на самом деле есть `-XX:-ShowCodeDetailsInExceptionMessages` — отключает фичу одной опцией, например в legacy-системах с custom-парсингом стектрейсов
-
 ## Q34. Что такое Compact Number Formatting?
 
 **Compact Number Formatting** — компактное форматирование чисел, полезное для UI:
@@ -1661,13 +1430,6 @@ System.out.println(ruFmt.format(1_000_000)); // "1 млн"
 ```
 
 ---
-
-
-> [!mcq]
-> - [ ] Helpful NPE по умолчанию включены начиная с Java 14 во всех JVM | ❌ ПОСЛЕДСТВИЕ: Helpful NPE включены по умолчанию с Java 17; в Java 14-16 требуют флага -XX:+ShowCodeDetailsInExceptionMessages
-> - [ ] Helpful NPE показывают имя переменной которая равна null в любом случае | ❌ ПОСЛЕДСТВИЕ: Helpful NPE показывают метод/поле которое вызвало NPE; точное имя переменной недоступно — JVM анализирует bytecode цепочки вызовов
-> - [x] Java 17+ по умолчанию: "Cannot invoke X because return value of Y is null" — точно указывает цепочку вызовов где встретился null | ✓ ПРИМЕНЯТЬ: диагностика chain NPE без дебаггера в production logs 📋 ПРАВИЛО: Helpful NPE = bytecode анализ → точное место NPE без стек трейса 🔗 См. Q30
-> - [ ] Helpful NPE работает только при запуске через IDE; в production отключены | ❌ ПОСЛЕДСТВИЕ: Helpful NPE работают в любой JVM 17+; IDE vs production не влияет
 
 ## Q35. (!) Какие ключевые отличия между Java 17 и Java 21?
 
@@ -1696,13 +1458,6 @@ System.out.println(ruFmt.format(1_000_000)); // "1 млн"
 - **Java 25** — следующая LTS (ожидается в сентябре 2025), где многие preview-фичи станут стабильными
 
 ---
-
-
-> [!mcq]
-> - [ ] Java 21 LTS полностью заменяет Java 17 — не стоит использовать Java 17 для новых проектов | ❌ ПОСЛЕДСТВИЕ: Java 17 ещё поддерживается до 2029; некоторые frameworks/libraries ещё не полностью совместимы с Java 21
-> - [x] Java 17 → 21: добавлены virtual threads (JEP 444), record patterns, switch pattern matching, sequenced collections; Java 17 — stable types, Java 21 — concurrency revolution | ✓ ПРИМЕНЯТЬ: новые проекты → Java 21; legacy migration → Java 17 как промежуточный шаг 📋 ПРАВИЛО: Java 17 = type system; Java 21 = concurrency + completed patterns 🔗 См. Q20
-> - [ ] Virtual Threads появились в Java 17 как stable feature | ❌ ПОСЛЕДСТВИЕ: Virtual Threads (JEP 444) stable в Java 21; в Java 17 были только в project Loom как incubator
-> - [ ] Pattern matching в switch stable в Java 17 | ❌ ПОСЛЕДСТВИЕ: Pattern matching в switch (JEP 441) stable в Java 21; в Java 17 — только instanceof pattern matching (JEP 394)
 
 ## Q36. Virtual Threads: детали реализации, Continuation и Carrier Threads
 
@@ -1789,13 +1544,6 @@ try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
 
 ---
 
-
-> [!mcq]
-> - [ ] StructuredTaskScope автоматически параллелизует все методы без изменений кода | ❌ ПОСЛЕДСТВИЕ: StructuredTaskScope требует явного scope.fork() для каждой задачи; существующий последовательный код надо рефакторить
-> - [ ] ShutdownOnFailure отменяет всё при первой ошибке; ShutdownOnSuccess ждёт все задачи | ❌ ПОСЛЕДСТВИЕ: ShutdownOnSuccess завершает scope при первом успехе (race pattern); ShutdownOnFailure — при первой ошибке
-> - [ ] StructuredTaskScope не позволяет получить результаты forked задач | ❌ ПОСЛЕДСТВИЕ: scope.fork() возвращает Subtask<T>; после scope.join() → subtask.get() возвращает результат
-> - [x] StructuredTaskScope ограничивает lifetime VT scope-ом try-with-resources; при выходе незавершённые VT автоматически cancel | ✓ ПРИМЕНЯТЬ: параллельные fetch с ограниченным временем жизни; fan-out с агрегацией 📋 ПРАВИЛО: structured concurrency = fork в scope + join + автоотмена при выходе 🔗 См. Q36
-
 ## Q37. (!) Scoped Values: альтернатива ThreadLocal в мире Virtual Threads
 
 **Scoped Values** (JEP 464, preview Java 21) решают проблему `ThreadLocal` в контексте virtual threads и structured concurrency.
@@ -1869,13 +1617,6 @@ ScopedValue.where(CURRENT_USER, adminUser).run(() -> {
 | API | `get()`/`set()`/`remove()` | `where(...).run(...)` / `get()` |
 
 ---
-
-
-> [!mcq]
-> - [ ] ScopedValue.get() выбрасывает исключение если значение не установлено в текущем scope | ❌ ПОСЛЕДСТВИЕ: верно — NoSuchElementException; это особенность дизайна: значение явно ограничено scope; проверяй ScopedValue.isBound()
-> - [x] ScopedValue иммутабельны в scope; child tasks автоматически наследуют значение в StructuredTaskScope; нет утечек (GC при выходе из scope) | ✓ ПРИМЕНЯТЬ: request-scoped данные (user, requestId, tenantId) в VT-приложении 📋 ПРАВИЛО: ScopedValue = ThreadLocal без set() + автоGC + автонаследование 🔗 См. Q21
-> - [ ] ScopedValue можно изменять внутри scope через ScopedValue.rebind() | ❌ ПОСЛЕДСТВИЕ: ScopedValue намеренно иммутабельны; rebind() не существует; для "переопределения" — вложенный ScopedValue.where(...).run(...)
-> - [ ] ThreadLocal совместим с Virtual Threads и не вызывает утечек памяти | ❌ ПОСЛЕДСТВИЕ: ThreadLocal с VT создаёт проблемы: значение живёт пока VT не завершится; pool VT = потенциальные утечки; также InheritableThreadLocal копирует значения при каждом fork
 
 ## Q38. Sequenced Collections: SequencedCollection и SequencedMap
 
@@ -1965,13 +1706,6 @@ Map.Entry<String, Product> oldest = lruCache.firstEntry();
 
 ---
 
-
-> [!mcq]
-> - [ ] SequencedCollection.getFirst() возвращает null для пустой коллекции | ❌ ПОСЛЕДСТВИЕ: getFirst() на пустой коллекции бросает NoSuchElementException; используй isEmpty() перед вызовом или Optional
-> - [ ] reversed() создаёт новую копию коллекции в обратном порядке | ❌ ПОСЛЕДСТВИЕ: reversed() возвращает view; изменения в оригинале отражаются в reversed(); копия не создаётся
-> - [x] Java 21 (JEP 431): единый API getFirst()/getLast()/addFirst()/reversed() для List, Deque, SortedSet через SequencedCollection | ✓ ПРИМЕНЯТЬ: вместо list.get(0), list.get(size-1), Collections.reverse() 📋 ПРАВИЛО: SequencedCollection = первый/последний + reversed view 🔗 См. Q26
-> - [ ] SequencedSet включает HashSet и TreeSet как реализации | ❌ ПОСЛЕДСТВИЕ: SequencedSet реализует только SortedSet (TreeSet); HashSet не имеет определённого порядка и не реализует SequencedSet
-
 ## Q39. Pattern Matching for switch: guards и exhaustiveness (Java 21)
 
 **Pattern Matching for switch** стал финальным в Java 21 (JEP 441). Ключевые возможности: **guards** (when clause), **exhaustiveness checking**, **null handling**.
@@ -2038,91 +1772,6 @@ switch (str) {
 ```
 
 ---
-
-
-> [!mcq]
->
-> **Вопрос:** Как Pattern Matching for `switch` обеспечивает exhaustiveness check, и почему это разрешает убрать `default`?
->
-> ---
->
-> #### A) Компилятор проверяет любую switch expression на exhaustiveness, требуя default для любых типов — ❌ Неверно
->
-> **Что на самом деле:** exhaustiveness check работает **только для sealed hierarchies** (sealed interface/class с конкретным списком permits). Для произвольных Object типов или открытых иерархий default ОБЯЗАТЕЛЕН — компилятор не может знать все возможные подтипы.
->
-> **Откуда путаница:** в Kotlin `when` сильнее: проверяет exhaustiveness и для enum. В Java это тоже работает (enum exhaustiveness был ещё в Java 7), но для open hierarchies (`Object`, `interface` без sealed) — нет.
->
-> **Если бы это было правдой:** мы могли бы писать `switch (any Object) { case Integer i -> ... case String s -> ... }` без default. На деле компилятор требует default — Object'ом может быть что угодно.
->
-> ---
->
-> #### B) Sealed hierarchy фиксирует список subtypes на compile-time через `permits`; компилятор проверяет что все varieties покрыты в switch, и доказывает exhaustiveness без default — ✓ Верно
->
-> **Развёрнутое объяснение:**
->
-> `sealed interface Shape permits Circle, Rectangle, Triangle` — это контракт: **только** эти три subtype могут реализовать Shape. Компилятор знает полный список, поэтому при `switch (shape)` он может проверить что все 3 case покрыты. Если нет — compile error «switch statement does not cover all possible input values».
->
-> Это сильнее runtime ассертов: если позже добавить `record Pentagon implements Shape` (для этого нужно расширить permits), все switch без case для Pentagon **перестанут компилироваться**. Это safe refactoring — компилятор укажет все места, которые нужно дополнить.
->
-> Без sealed (например, `interface Shape`) компилятор не может гарантировать exhaustiveness — кто-то может имплементировать Shape снаружи (даже через рефлексию). Поэтому default обязателен.
->
-> **Пример:**
-> ```java
-> sealed interface Shape permits Circle, Rectangle, Triangle {}
-> record Circle(double radius) implements Shape {}
-> record Rectangle(double w, double h) implements Shape {}
-> record Triangle(double base, double height) implements Shape {}
->
-> double area(Shape shape) {
->     return switch (shape) {
->         case Circle c -> Math.PI * c.radius() * c.radius();
->         case Rectangle r -> r.w() * r.h();
->         case Triangle t -> 0.5 * t.base() * t.height();
->         // default НЕ НУЖЕН — sealed обеспечивает exhaustiveness
->     };
-> }
->
-> // Если позже добавить:
-> // record Pentagon(...) implements Shape {} + добавить в permits
-> // ↓
-> // area() выше перестанет компилироваться:
-> // "switch expression does not cover Pentagon"
-> ```
->
-> **Когда применять:**
-> - **Domain models с конечным набором вариантов**: payment status (`Pending | Approved | Declined | Refunded`), order events, AST nodes — sealed + pattern matching заменяет visitor pattern.
-> - **API discriminated unions**: JSON-схемы с `type: "..."` дискриминатором — каждый type = record в sealed hierarchy.
-> - **Functional-style ADT** (Algebraic Data Types) в Java — sealed = sum type, record = product type.
-> - **Refactoring safety**: при добавлении нового case в business logic компилятор укажет все switch'ы которые нужно обновить.
->
-> **Подводные камни:**
-> - **Sealed + reflection** — рефлексия может обойти `permits`, но компилятор всё равно требует case только для permits-классов. Reflection-based subtypes — runtime fallback на default.
-> - **Cross-module sealed**: subtypes должны быть в том же module (или в одном package для non-modular code). Иначе compile error.
-> - **Pattern dominance order**: `case Number n -> ...` ДО `case Integer i -> ...` — compile error (Integer dominated). Специфичные кейсы раньше общих.
-> - **Null handling**: до Java 21 switch с null → NullPointerException. Java 21 разрешает `case null -> ...` явно. Без него null всё ещё NPE, даже с sealed hierarchy.
-> - **Sealed без permits clause**: в одном файле — permits implicit (все subtypes из файла). В разных файлах — нужно `permits A, B, C` явно.
->
-> **Связанные вопросы:** [[java-17-21-interview#Q40]] — Record Patterns как ortho­gonal feature; [[java-17-21-interview#Q41]] — String Templates (тоже Java 21); [[java-17-21-interview#Q35]] — sealed classes basics.
->
-> ---
->
-> #### C) Pattern matching работает только в `switch`, не в `instanceof` — `instanceof` остался как в Java 8 — ❌ Неверно
->
-> **Что на самом деле:** **Pattern Matching for `instanceof`** появилось раньше (Java 16 final): `if (obj instanceof Integer i)` — без явного cast. С Java 21 + Record Patterns можно деконструировать: `if (obj instanceof Point(int x, int y))`. Pattern matching работает в обоих местах.
->
-> **Откуда путаница:** часто связывают «pattern matching» именно со switch (как Scala/Kotlin/Rust). На деле Java расширяет постепенно: 16 — instanceof, 21 — switch + record patterns.
->
-> **Если бы это было правдой:** разработчики не могли бы использовать pattern matching в одиночных проверках. На практике именно `if (obj instanceof Type t)` чаще встречается, чем сложные switch.
->
-> ---
->
-> #### D) Pattern Matching for switch — синтаксический сахар над if-else, без bytecode оптимизаций — ❌ Неверно
->
-> **Что на самом деле:** Pattern matching switch компилируется в **invokedynamic** bytecode инструкции с table-based dispatch и type checks через `MethodHandles`. Это эффективнее чем if-else цепочки: O(1) dispatch для большинства случаев vs O(n) instanceof проверок.
->
-> **Откуда путаница:** синтаксис кажется «синтаксическим сахаром» (как diamond operator). На деле JIT и Hotspot реально оптимизируют pattern matching через type profile + inlining.
->
-> **Если бы это было правдой:** на больших sealed hierarchies switch был бы медленнее if-else. Реально benchmarks показывают равную или лучшую производительность.
 
 ## Q40. (!) Record Patterns: деконструкция в switch и instanceof
 
@@ -2209,92 +1858,6 @@ for (Object obj : shapes) {
 
 ---
 
-
-> [!mcq]
->
-> **Вопрос:** Что делает Record Patterns мощнее чем `instanceof` + getter calls для деконструкции nested records?
->
-> ---
->
-> #### A) Record Patterns делают cast быстрее на JIT-уровне — оптимизация bytecode — ❌ Неверно
->
-> **Что на самом деле:** генерируемый bytecode для record pattern и для `instanceof + getter()` практически идентичен на JIT-уровне после inlining. Главное преимущество — **type safety на compile-time и читаемость**, не производительность.
->
-> **Откуда путаница:** новые синтаксические возможности часто связывают с оптимизациями. На деле этот фичу проектировали для expressiveness, не speed.
->
-> **Если бы это было правдой:** мы бы предпочли record patterns ради микро-оптимизаций. Реальная мотивация — корректность кода и compile-time проверки.
->
-> ---
->
-> #### B) Record Patterns деконструируют record на компоненты прямо в pattern; nested patterns + exhaustiveness check позволяют compiler гарантировать что все варианты обработаны без runtime cast errors — ✓ Верно
->
-> **Развёрнутое объяснение:**
->
-> Record Patterns (JEP 440, финальный в Java 21) сочетают **type test** и **деструктуризацию**. Запись `obj instanceof ColoredPoint(Point(int x, int y), String color)` делает три вещи одновременно:
-> 1. Проверяет что `obj` имеет тип `ColoredPoint`.
-> 2. Извлекает компонент `point()` (типа `Point`) и проверяет его как `Point` с деконструкцией в `x, y`.
-> 3. Извлекает компонент `color()` (типа `String`) в переменную `color`.
->
-> Без record patterns тот же код требовал бы 3+ ручных cast + getter вызовов с explicit ClassCastException possibility. Record patterns делают это compile-time safe — типы выводит компилятор.
->
-> В switch с sealed hierarchy + record patterns получается **functional-style pattern matching** как в Scala/Haskell:
->
-> **Пример:**
-> ```java
-> sealed interface Expr permits Num, Add, Mul {}
-> record Num(int value) implements Expr {}
-> record Add(Expr left, Expr right) implements Expr {}
-> record Mul(Expr left, Expr right) implements Expr {}
->
-> int eval(Expr expr) {
->     return switch (expr) {
->         case Num(int v) -> v;                          // деконструкция Num
->         case Add(Expr l, Expr r) -> eval(l) + eval(r); // деконструкция Add
->         case Mul(Expr l, Expr r) -> eval(l) * eval(r); // деконструкция Mul
->     };
-> }
->
-> Expr e = new Add(new Mul(new Num(2), new Num(3)), new Num(4));
-> System.out.println(eval(e));  // 10
-> ```
->
-> Глубокая деконструкция работает рекурсивно — `instanceof User(String name, Address(String city, _))` достаёт `name` и `city` через два уровня записей. `_` (unnamed pattern) — Java 21 — игнорирует компонент.
->
-> **Когда применять:**
-> - **AST/IR в compiler-like коде**: switch eval'ит дерево выражений с компактной деконструкцией.
-> - **Domain events** в event-sourced системах: `case OrderPlaced(String orderId, Money amount) -> ...` — handler читается как pattern match.
-> - **Refactoring instanceof chains**: legacy код с цепочками `if (obj instanceof X) { X x = (X) obj; ... }` → switch с patterns в 2-3 раза короче и safer.
-> - **JSON-парсинг** в Jackson 3.x: `JsonNode pattern` для извлечения вложенных полей.
->
-> **Подводные камни:**
-> - **Type inference в nested**: `case Add(Expr l, Expr r)` — left/right объявлены как `Expr` явно. Если record `Add(int left, int right)` — нужно писать `Add(int l, int r)` (compiler не выводит автоматически).
-> - **Var patterns**: `case Num(var v) -> ...` — компилятор выводит тип. Удобно но скрывает информацию для читателя.
-> - **Поддержка только в record-like классах**: обычный класс без `record` declaration нельзя деконструировать через pattern. Нужно либо record, либо custom deconstruction (preview в Java 24+).
-> - **Generic record patterns**: `case Pair<String, Integer>(var key, var value)` — работает с явными генериками, но компилятор требует `<>` либо diamond.
-> - **Unnamed pattern `_`**: доступен с Java 21 в pattern контексте, с Java 22 — также для unused переменных. Не путать с `_` как identifier (запрещён в Java 9+).
->
-> **Связанные вопросы:** [[java-17-21-interview#Q39]] — pattern matching for switch и sealed hierarchy; [[java-17-21-interview#Q41]] — String Templates (тоже Java 21); [[java-17-21-interview#Q15]] — records basics.
->
-> ---
->
-> #### C) Record Patterns работают только в `switch`, не в `instanceof` — `if (obj instanceof Record(...))` не поддерживается — ❌ Неверно
->
-> **Что на самом деле:** record patterns работают **и в `instanceof`, и в `switch`**. Синтаксис `if (obj instanceof Point(int x, int y))` валиден — после проверки `x` и `y` доступны в then-блоке. Это естественное расширение pattern matching for instanceof (Java 16).
->
-> **Откуда путаница:** Pattern matching for switch более частый use-case в туториалах. Можно подумать что record patterns только для switch.
->
-> **Если бы это было правдой:** мы не могли бы делать compact деконструкцию в одиночных проверках. На практике `if (obj instanceof User(String name, _))` — частый short-circuit паттерн.
->
-> ---
->
-> #### D) Record Patterns заменяют `equals/hashCode` методы record — нужно использовать вместо них — ❌ Неверно
->
-> **Что на самом деле:** Record Patterns — это `synthetic` методы **для деконструкции** в pattern контексте. `equals/hashCode/toString` остаются авто-генерируемые методы records, независимы от patterns. Это разные механизмы для разных задач.
->
-> **Откуда путаница:** оба связаны с «компонентами record-а». Но `equals` сравнивает экземпляры, patterns — извлекают значения.
->
-> **Если бы это было правдой:** мы могли бы заменить `Objects.equals(a, b)` на pattern matching. На практике patterns — read-only извлечение, не сравнение.
-
 ## Q41. String Templates (preview): StringTemplate.STR
 
 **String Templates** (JEP 430, preview в Java 21, удалены из Java 23 на доработку) — безопасная интерполяция строк, избегающая SQL injection и XSS.
@@ -2357,106 +1920,6 @@ PreparedStatement stmt = SQL."SELECT * FROM users WHERE name = \{userName}";
 **Статус:** String Templates были в preview в Java 21, затем отозваны в Java 23 для пересмотра дизайна. На собеседовании важно упомянуть, что фича всё ещё развивается.
 
 ---
-
-
-> [!mcq]
->
-> **Вопрос:** Какое ключевое преимущество String Templates перед `String.format` для безопасности SQL?
->
-> ---
->
-> #### A) STR template processor автоматически экранирует SQL-инъекции — ❌ Неверно
->
-> **Что на самом деле:** `STR` processor — простой interpolator, **не делает escape** для SQL/HTML/JSON. `STR."WHERE name = '\{userName}'"` подставит userName as-is — SQL injection остаётся возможным, как и при конкатенации.
->
-> Защита от injection — задача **кастомного processor'а** (`SQL`, `HTML`, `JSON`), который автор пишет сам. Стандартная библиотека предоставляет только `STR` (raw) и `FMT` (format), без security-focused processor'ов.
->
-> **Откуда путаница:** «String Templates» звучит как «typed templating» с автоматической защитой (по аналогии с Mustache/Handlebars). Реально это low-level API для построения safe processor'ов, не сами processors.
->
-> **Если бы это было правдой:** мы могли бы заменить `PreparedStatement` на `STR."..."` и забыть про injection. На практике нужен custom SQL processor — иначе небезопасно.
->
-> ---
->
-> #### B) String Templates позволяют написать кастомный processor (типа `SQL.`), который видит `template.fragments()` и `template.values()` отдельно — fragments идут как SQL текст, values становятся PreparedStatement bind parameters — это compile-time гарантия safe SQL — ✓ Верно
->
-> **Развёрнутое объяснение:**
->
-> Ключевая идея String Templates — **разделение fragments и values на уровне runtime API**. Когда пишем `STR."Hello \{name}!"`, компилятор создаёт `StringTemplate` объект с:
-> - `fragments()` → `["Hello ", "!"]` (статические части)
-> - `values()` → `[name]` (динамические значения)
->
-> Кастомный processor получает оба списка и собирает результат **безопасным способом**. Для SQL это означает: fragments складываются с `?` placeholder между ними, values → bind parameters. Injection невозможен — values никогда не попадают в SQL text.
->
-> **Пример безопасного SQL processor:**
-> ```java
-> // Кастомный processor — типобезопасный SQL
-> static final StringTemplate.Processor<PreparedStatement, SQLException> SQL =
->     template -> {
->         // Собираем SQL с ? placeholder между fragments
->         String sql = String.join("?", template.fragments());
->         PreparedStatement ps = connection.prepareStatement(sql);
->         // Безопасно подставляем values через setObject — не строковая конкатенация!
->         List<Object> values = template.values();
->         for (int i = 0; i < values.size(); i++) {
->             ps.setObject(i + 1, values.get(i));
->         }
->         return ps;
->     };
->
-> // Использование — SQL injection невозможен:
-> String evilInput = "Robert'); DROP TABLE users; --";
-> PreparedStatement stmt = SQL."SELECT * FROM users WHERE name = \{evilInput}";
-> // SQL: "SELECT * FROM users WHERE name = ?"
-> // Bind: ?1 = "Robert'); DROP TABLE users; --"  (всего лишь литерал)
-> // Database executes SELECT с этим literal, drop НЕ срабатывает.
-> ```
->
-> Сравнение с обычной конкатенацией:
-> ```java
-> // ❌ String.format — небезопасно, всё в одну строку:
-> String query = String.format("WHERE name = '%s'", userName);
-> // userName = "Robert'); DROP" → SQL injection
->
-> // ✅ String Template + SQL processor:
-> PreparedStatement ps = SQL."WHERE name = \{userName}";
-> // userName всегда становится bind parameter
-> ```
->
-> **Когда применять:**
-> - **SQL queries** — DSL для типобезопасного SQL: `SQL."INSERT INTO orders \{order}"`.
-> - **HTML rendering** — `HTML."<div>\{userContent}</div>"` с escape via custom processor.
-> - **Shell commands** — `SHELL."rm \{filename}"` с правильным escape для shell metacharacters.
-> - **JSON serialization** — `JSON.{key: \{value}}` с экранированием quotes.
-> - **i18n templates** — `I18N."Hello, \{user.name()}"` с lookup перевода через template processor.
->
-> **Подводные камни:**
-> - **Статус preview**: JEP 430 был в Java 21 как preview, отозван из Java 23 после критики. Команда работает над переработкой. На production это значит — НЕЛЬЗЯ использовать без `--enable-preview`, а в 23+ вообще удалён.
-> - **`STR` без custom processor** — не более безопасен чем конкатенация. Custom processor обязателен для security.
-> - **Compile-time validation processor** — был задуман но не реализован в Java 21. Сейчас processor валидирует runtime, что снижает преимущество над `format`.
-> - **Performance**: STR делает аллокацию `StringTemplate` объекта на каждое использование. На hot path может быть медленнее чем StringBuilder + format. Бенчмарк перед production.
-> - **IDE поддержка**: IntelliJ показывает type inference, но syntax highlighting для template processors появилась только в 2024.
->
-> **Связанные вопросы:** [[java-17-21-interview#Q40]] — Record Patterns как другая Java 21 feature; [[java-17-21-interview#Q39]] — sealed hierarchies и pattern matching; [[java-17-21-interview#Q33]] — Text Blocks как ortho­gonal feature для multi-line strings.
->
-> ---
->
-> #### C) `String.format` и String Templates делают одно и то же — `STR."..."` это просто новый синтаксис — ❌ Неверно
->
-> **Что на самом деле:** `String.format` принимает **готовую строку** и подставляет значения через `%s/%d` — никакой структурной информации. String Templates дают processor доступ к **раздельным fragments и values**, что позволяет custom logic (validation, escaping, lazy evaluation).
->
-> **Откуда путаница:** базовое использование `STR."Hello \{name}"` похоже на `String.format("Hello %s", name)`. Но `STR` — самый простой processor; real power — в custom processors.
->
-> **Если бы это было правдой:** не было бы смысла в новой фиче. Реальная мотивация — type-safe templating с custom processors.
->
-> ---
->
-> #### D) `STR.` — это статический метод класса `String` для concatenation — ❌ Неверно
->
-> **Что на самом деле:** `STR` — это **template processor**, объект класса `StringTemplate.Processor<String, RuntimeException>`. Синтаксис `STR."..."` — специальная конструкция языка, которая создаёт `StringTemplate` и вызывает processor's `process()` метод.
->
-> **Откуда путаница:** `STR` пишется capital case как константа, похожа на static method. На деле это instance константа в `StringTemplate.Processor` namespace.
->
-> **Если бы это было правдой:** мы могли бы вызывать `STR.process(...)` напрямую. Реально синтаксис `STR."..."` — единственный способ использования (template literal syntax).
 
 ## Q42. Unnamed Classes и Instance Main Methods (preview)
 
@@ -2532,107 +1995,6 @@ java --enable-preview --source 21 hello.java
 ```
 
 **Статус:** Preview в Java 21-22, финализировано в Java 25 (ожидается) как часть Project Amber.
-
-> [!mcq]
->
-> **Вопрос:** Какая главная мотивация Unnamed Classes + Instance Main Methods, и какие ограничения у этой preview-фичи?
->
-> ---
->
-> #### A) Это просто синтаксический сахар — Hello World можно писать без `class` и `static` — ❌ Неверно (поверхностный ответ)
->
-> **Что на самом деле:** это **правильное наблюдение, но неполное**. Поверхностное объяснение: убрали boilerplate. Глубокое: уменьшается **когнитивная нагрузка для новичков**, которым иначе пришлось бы понимать `public`, `class`, `static`, `String[] args` до того, как написать первую программу. Это часть Project Amber — series JEPs для приближения Java к Python/JavaScript по low entry barrier.
->
-> Поверхностный ответ упускает реальную мотивацию: язык традиционно требовал OO-mental-model для тривиальных программ; теперь можно поэтапно вводить концепции.
->
-> **Откуда путаница:** «сахар» — частое описание новых syntactic features. Здесь это unfair simplification — есть design goal.
->
-> **Если бы это было правдой:** фича сводилась бы к removeing keywords. Реально дизайн затрагивает loading mechanism (unnamed top-level class), method resolution (priority: `static main(String[])` > `static main()` > `main(String[])` > `main()`).
->
-> ---
->
-> #### B) JEP 445/463 (Project Amber) уменьшает entry barrier для новичков: можно писать `void main()` без `public class`, без `static`, без `args` — компилятор обёртывает в unnamed top-level class; preview статус, требует `--enable-preview --source 21+` — ✓ Верно
->
-> **Развёрнутое объяснение:**
->
-> Цель — позволить программу typing `void main() { ... }` в `.java` файле и запустить без traditional Java boilerplate. Это снимает 4 концепции которые новичку нужно понять для Hello World:
-> 1. **`public`** — modifier visibility (зачем нужен — непонятно сразу)
-> 2. **`class`** — OO declaration (а почему просто не функция?)
-> 3. **`static`** — class-level vs instance (требует понимания экземпляров)
-> 4. **`String[] args`** — array параметр (зачем массив, зачем String?)
->
-> Java 21 unnamed class + instance main позволяют:
-> ```java
-> // Полноценный .java файл — никаких classes, никаких static
-> void main() {
->     System.out.println("Hello, World!");
-> }
-> ```
->
-> Компилятор делает synthetic anonymous top-level класс под капотом. Это **только для top-level** — в существующих классах поведение не меняется.
->
-> Приоритет method resolution (если есть несколько main):
-> 1. `public static void main(String[] args)` — классическая
-> 2. `public static void main()` — без args
-> 3. `void main(String[] args)` — instance с args
-> 4. `void main()` — instance без args
->
-> Для instance main компилятор создаёт инстанс класса (через default constructor) и вызывает `main()` на нём.
->
-> **Пример (быстрый скрипт без boilerplate):**
-> ```java
-> // CheckPort.java — однофайловая утилита
-> import java.net.Socket;
->
-> void main() throws Exception {
->     String host = "localhost";
->     int port = 8080;
->     try (var socket = new Socket(host, port)) {
->         System.out.println("Port " + port + " is open");
->     } catch (Exception e) {
->         System.out.println("Port " + port + " is closed");
->     }
-> }
-> // Запуск: java --enable-preview --source 21 CheckPort.java
-> ```
->
-> **Когда применять:**
-> - **Обучение Java**: новички могут писать программы, постепенно изучая `class`/`static`.
-> - **Однофайловые скрипты**: автоматизация, проверки, демо — Java конкурирует с Python для small scripting.
-> - **Live coding в presentations**: компактные примеры без отвлечения на boilerplate.
-> - **JEP 330 + unnamed classes**: `java MyScript.java` — Java как scripting platform для DevOps tasks.
-> - **Build files и migrations**: gradle-init, Liquibase Groovy — Java становится конкурентом.
->
-> **Подводные камни:**
-> - **Только top-level**: в named class instance main тоже работает, но без unnamed wrapper. Cannot mix unnamed-class syntax с regular class в одном файле.
-> - **`this` в unnamed class** — есть, но ограничен (anonymous instance не имеет имени для `MyClass.this`).
-> - **`extends`/`implements` запрещены** — unnamed class не может наследовать или реализовывать. Это by design (упрощение для начинающих).
-> - **Imports на top-level** — обязательны, но без package declaration — unnamed class не может быть в named package.
-> - **Preview статус (Java 21-23)** — требует `--enable-preview --source N` для компиляции и запуска. В Java 25 ожидается финализация (часть Project Amber roadmap).
-> - **IDE поддержка**: IntelliJ Idea 2024.1+, VSCode/Eclipse — позже. Для CI/CD нужен JDK 21+.
-> - **Performance**: на runtime разницы нет — обычный class instance + method invocation.
->
-> **Связанные вопросы:** [[java-17-21-interview#Q39]] — pattern matching, тоже Java 21 final feature; [[java-17-21-interview#Q40]] — Record Patterns; [[java-17-21-interview#Q41]] — String Templates (preview, изменения в 23+).
->
-> ---
->
-> #### C) Unnamed Classes — для embedded systems с ограниченной памятью (no class overhead) — ❌ Неверно
->
-> **Что на самом деле:** memory overhead не уменьшается. Класс всё равно создаётся компилятором (synthetic), просто имя не пишется в исходнике. JIT/Hotspot одинаково обрабатывает named и unnamed classes — это about ergonomics, не runtime.
->
-> **Откуда путаница:** «unnamed» звучит как «нет объекта». На деле — есть synthetic anonymous class, как и для лямбд/инноков anonymous classes.
->
-> **Если бы это было правдой:** мы могли бы использовать для IoT/microcontrollers. На практике Java на embedded — отдельный target (Java ME, GraalVM Native), независимый от Project Amber.
->
-> ---
->
-> #### D) Эта фича заменяет JShell для интерактивной разработки — JShell deprecated в Java 21 — ❌ Неверно
->
-> **Что на самом деле:** JShell **НЕ deprecated** — это интерактивный REPL для evaluation выражений, поставляется с JDK с Java 9. Unnamed classes — отдельная фича для **файловых** программ (не REPL). Они комплементарны, не конкурируют.
->
-> **Откуда путаница:** оба «упрощают входной порог». Но JShell — для experiments в memory, unnamed class — для simple .java файлов с main.
->
-> **Если бы это было правдой:** мы потеряли бы способ запустить `jshell` и попробовать `System.out.println(5 + 7)`. JShell живой в Java 21+.
 
 ---
 

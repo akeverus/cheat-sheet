@@ -150,12 +150,6 @@ graph LR
 
 На собеседовании важно упомянуть, что Kafka — это не просто очередь сообщений, а **распределённый коммит-лог** с гарантиями хранения и воспроизведения.
 
-> [!mcq]
-> - [ ] Apache Kafka — это классический message broker, который удаляет сообщения сразу после доставки потребителю. | Kafka не удаляет сообщения после чтения — она хранит их в логе в течение настроенного retention-периода. Именно это отличает Kafka от классических брокеров вроде RabbitMQ. ❌ ПОСЛЕДСТВИЕ: команда выбирает Kafka для transactional task queue (задачи удаляются после выполнения). После 7 дней retention топик переполняется неактивными task records, performance деградирует. Правильный выбор — RabbitMQ или Redis Stream для task queues.
-> - [x] Apache Kafka — это распределённый коммит-лог, который хранит сообщения на диске и позволяет потребителям воспроизводить их повторно. | Kafka проектировалась как append-only distributed log. Сообщения не удаляются при чтении, а остаются до истечения retention-периода, что делает возможным replay и поддержку нескольких независимых consumer group. ✓ ПРИМЕНЯТЬ: Event Sourcing (Netflix, LinkedIn — миллионы events/sec); replay при bug fix (re-process последнюю неделю с offset reset); analytics через Kafka Connect → BigQuery / S3; CDC через Debezium → Kafka. 📋 ПРАВИЛО: «Kafka = distributed log, retention-based, replay-able». 🔗 См. Q3 (topics), Q6 (partitions), Q7 (offset).
-> - [ ] Apache Kafka — это in-memory кэш сообщений, оптимизированный для минимальной задержки доставки. | Kafka хранит данные на диске с использованием page cache OS, а не является in-memory системой. Её сильная сторона — высокая пропускная способность, а не минимальная задержка. ❌ ПОСЛЕДСТВИЕ: разработчик выбирает Kafka для real-time трейдинговой платформы с p99 < 1ms. Kafka latency p99 ~5-20ms — не подходит для HFT. Правильно: ZeroMQ или Aeron для sub-ms latency.
-> - [ ] Apache Kafka — это очередь задач (task queue) с поддержкой приоритетов и маршрутизацией через exchange. | Описание соответствует RabbitMQ/AMQP, а не Kafka. Kafka использует топики и партиции без понятий exchange и priority queues. ❌ ПОСЛЕДСТВИЕ: команда мигрирует с RabbitMQ на Kafka, ожидает priority queues. Не находит, пишет custom logic с separate topics per priority. Сложность растёт, нет встроенной dead letter queue. RabbitMQ был правильным выбором.
-
 ## Q2. (!) Какие основные компоненты `Apache Kafka`?
 
 | Компонент | Описание |
@@ -191,12 +185,6 @@ graph TB
     B3 --> CG
 ```
 
-> [!mcq]
-> - [ ] В Kafka компонент Broker отвечает за маршрутизацию сообщений через exchange между Producer и Consumer. | Exchange и маршрутизация — понятия из AMQP (RabbitMQ). В Kafka брокер хранит данные в партициях и обслуживает запросы Producer и Consumer напрямую без промежуточного routing. ❌ ПОСЛЕДСТВИЕ: разработчик из RabbitMQ-мира пытается настроить «exchange» в Kafka, ищет соответствующий API. Часы потеряны на debugging. Правильно: routing в Kafka через topic naming + partition key.
-> - [ ] В Kafka компонент Kafka Streams — это отдельный кластер, который нужно развёртывать рядом с Kafka для потоковой обработки. | Kafka Streams — это клиентская библиотека, которая работает как обычное Java-приложение. Отдельный кластер не требуется — достаточно брокеров Kafka. ❌ ПОСЛЕДСТВИЕ: команда выделяет ресурсы под «Streams cluster», задерживает delivery на месяц. На самом деле достаточно регулярного Kubernetes Deployment с Kafka Streams библиотекой. Wasted effort из-за непонимания.
-> - [x] В Kafka компонент Consumer Group — это группа потребителей с общим group.id, которые совместно читают топик так, что каждая партиция обрабатывается только одним потребителем группы. | Consumer Group обеспечивает масштабируемое параллельное чтение: партиции распределяются между участниками группы, при этом разные группы читают независимо и каждая получает все сообщения. ✓ ПРИМЕНЯТЬ: для horizontal scaling — увеличивать количество consumer instances в одной group (до количества партиций); для multiple subscribers — different group.id (analytics, audit, primary processor); rebalance happens when consumer joins/leaves. 📋 ПРАВИЛО: «1 partition = 1 consumer in group, multiple groups = independent». 🔗 См. Q6 (partitions), Q14 (consumer), Q15 (rebalance).
-> - [ ] В Kafka компонент ZooKeeper/KRaft Controller хранит пользовательские сообщения и индексирует их для быстрого поиска. | ZooKeeper и KRaft хранят только метаданные кластера (топики, партиции, ACL, лидеры). Пользовательские сообщения хранятся исключительно на брокерах в сегментах партиций. ❌ ПОСЛЕДСТВИЕ: разработчик пытается «индексировать messages в ZooKeeper для search». Не работает, ZK для metadata only. Правильно: ksqlDB / Kafka Streams для stateful processing с RocksDB-индексами.
-
 ## Q3. Что такое `Topic`?
 
 `Topic` — логическая категория (канал), в которую `Producer` публикует сообщения, а `Consumer` из неё читает. Это аналог таблицы в базе данных.
@@ -220,12 +208,6 @@ kafka-topics.sh --bootstrap-server localhost:9092 \
 
 **Naming convention:** используйте чёткую структуру, например `<domain>.<entity>.<event>`: `shop.orders.created`.
 
-> [!mcq]
-> - [ ] В Kafka топик — это постоянное хранилище сообщений, которое никогда не удаляет данные и гарантирует их вечное хранение. | По умолчанию Kafka удаляет сообщения по истечении retention-периода (7 дней) или при достижении лимита размера. Вечное хранение возможно только при явной настройке retention.ms=-1. ❌ ПОСЛЕДСТВИЕ: команда полагается на Kafka как «вечное хранилище» для аудит-логов. Через 7 дней audit data исчезает, compliance audit failed (GDPR, SOX). Fix: явный `retention.ms=-1` + дополнительный sink в S3.
-> - [ ] В Kafka топик — это очередь FIFO, где каждое сообщение может быть прочитано только одним Consumer и затем удаляется. | Топик — не FIFO-очередь с эксклюзивным доступом. Несколько Consumer Group могут независимо читать один топик, и сообщение не удаляется после первого чтения. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает что после consumer.poll() сообщение «забирается» как из RabbitMQ. Пишет логику, которая полагается на отсутствие повторов. После рестарта consumer reads from committed offset — все сообщения после offset снова видны (если committed offset стар). Бизнес-логика дублирует payments.
-> - [x] В Kafka топик — это логическая категория для сообщений, которая делится на партиции, а сообщения хранятся ограниченное время согласно retention-политике. | Топик — основная единица организации данных в Kafka. Retention.ms (по умолчанию 7 дней) или retention.bytes определяют, сколько данных сохраняется. Compacted-топики хранят только последнее значение по ключу. ✓ ПРИМЕНЯТЬ: Naming convention `<domain>.<entity>.<event>` (e.g. `shop.orders.created`); compacted topic для CDC `shop.users.snapshot`; retention=7d default, 1h для high-volume click streams, -1 для critical event sourcing. 📋 ПРАВИЛО: «topic = logical category, partitions = parallel units, retention = TTL». 🔗 См. Q6 (partitions), Q14 (consumer group), Q41 (topology).
-> - [ ] В Kafka топик — это именованный exchange, к которому Producer привязывает сообщения через routing key. | Routing key и exchange — концепции из RabbitMQ/AMQP. В Kafka Producer публикует в топик напрямую, а маршрутизация осуществляется через ключ партиционирования. ❌ ПОСЛЕДСТВИЕ: разработчик ищет аналог RabbitMQ direct/topic exchange routing. Тратит время на изобретение Kafka «routing» через middleware. Правильно: использовать partition key для routing, multiple topics для разделения concerns.
-
 ## Q4. Что такое `ZooKeeper` и какова его роль в `Kafka`?
 
 `ZooKeeper` — распределённый координатор, который в классической архитектуре Kafka отвечал за:
@@ -235,12 +217,6 @@ kafka-topics.sh --bootstrap-server localhost:9092 \
 - Хранение информации о `Consumer Group` (в старых версиях)
 
 **Важно:** начиная с Kafka 3.3+ `ZooKeeper` является deprecated, а с Kafka 4.0 полностью заменён на `KRaft` (см. Q5).
-
-> [!mcq]
-> - [ ] ZooKeeper в Kafka отвечал за хранение пользовательских сообщений и обеспечивал их репликацию между брокерами. | Пользовательские сообщения никогда не хранились в ZooKeeper — только метаданные кластера. Репликацию сообщений между брокерами обеспечивали сами брокеры через механизм ISR. ❌ ПОСЛЕДСТВИЕ: команда выделяет огромный disk на ZooKeeper, ожидая что туда пойдут messages. Disk underutilized, broker disk переполняется. Sizing неправильный, costs растут.
-> - [ ] ZooKeeper в Kafka отвечал за балансировку нагрузки между Producer-клиентами и распределение сообщений по партициям. | Распределение сообщений по партициям — ответственность самого Producer (через Partitioner). ZooKeeper не участвует в этом процессе. ❌ ПОСЛЕДСТВИЕ: разработчик пытается настроить «ZooKeeper-based load balancing» для Kafka producer. Часы потеряны. Реально load balancing в Kafka client library — partitioner + bootstrap.servers.
-> - [ ] ZooKeeper в Kafka отвечал за сериализацию и десериализацию сообщений при передаче между Producer и Consumer. | Сериализация и десериализация — ответственность клиентских библиотек (Serializer/Deserializer). ZooKeeper не участвует в обработке пользовательских данных вообще. ❌ ПОСЛЕДСТВИЕ: при выборе serialization формата (Avro/Protobuf/JSON) разработчик ждёт «ZooKeeper решит». Реально нужен Schema Registry (Confluent) для централизованного schema management. Без него — schema drift между producer/consumer.
-> - [x] ZooKeeper в Kafka отвечал за хранение метаданных кластера, выбор лидера контроллера и управление ACL, но с Kafka 4.0 полностью заменён на KRaft. | ZooKeeper выполнял координирующую роль: хранил список брокеров, топиков, партиций и их лидеров, управлял ACL и конфигурацией. KRaft заменил его встроенным консенсусным протоколом Raft. ✓ ПРИМЕНЯТЬ: новые Kafka deployments — сразу KRaft mode без ZooKeeper; existing clusters до Kafka 4.0 — миграция через ZooKeeper-to-KRaft tool; production ready KRaft с Kafka 3.3+. 📋 ПРАВИЛО: «Kafka 3.3+ KRaft, Kafka 4.0+ no ZooKeeper». 🔗 См. Q2 (components), Q5 (KRaft), Q24 (transactions).
 
 ## Q5. (!) Что такое `KRaft` и зачем он нужен?
 
@@ -266,12 +242,6 @@ graph LR
     C1 -->|metadata updates| B2[Broker 2]
     C1 -->|metadata updates| B3[Broker 3]
 ```
-
-> [!mcq]
-> - [ ] KRaft хранит метаданные кластера в ZooKeeper через протокол Paxos. | KRaft принципиально заменяет ZooKeeper и не использует его вообще. Протокол консенсуса — Raft, а не Paxos. ❌ ПОСЛЕДСТВИЕ: разработчик путает Raft с Paxos (оба consensus algorithms), пишет в документации проекта «Paxos» — leads to confusion в архитектурных дискуссиях. Точные имена в distributed systems важны.
-> - [ ] KRaft хранит метаданные кластера в распределённой базе данных etcd по протоколу Raft. | KRaft не использует внешнее хранилище вроде etcd. Метаданные хранятся во внутреннем топике Kafka и реплицируются самими контроллерами. ❌ ПОСЛЕДСТВИЕ: команда выделяет etcd cluster для Kafka KRaft. Wasted resources. Реально KRaft встроен, дополнительного хранилища не нужно.
-> - [x] KRaft хранит метаданные кластера во внутреннем топике `__cluster_metadata` по протоколу Raft. | KRaft встроен в брокеры Kafka: специальный топик `__cluster_metadata` реплицируется между контроллерами через Raft-консенсус, обеспечивая ускоренное восстановление и масштабируемость без внешнего координатора. ✓ ПРИМЕНЯТЬ: для Kafka 3.3+ — `process.roles=broker,controller` (combined mode для small clusters) или `process.roles=controller` отдельно (production); minimum 3 controllers для quorum; metadata.log.dir отдельный для performance. 📋 ПРАВИЛО: «KRaft = built-in Raft + __cluster_metadata topic». 🔗 См. Q4 (ZooKeeper), Q2 (components), Q6 (partitions).
-> - [ ] KRaft хранит метаданные кластера в файловой системе каждого брокера без репликации. | Метаданные в KRaft обязательно реплицируются между контроллерами quorum-а. Без репликации не было бы отказоустойчивости координации. ❌ ПОСЛЕДСТВИЕ: команда настраивает 1 controller, считая что file-system достаточно. После failure controller — кластер недоступен (no quorum). Минимум 3 controllers для production.
 
 ## Q6. (!) Что такое `Partition` и как она устроена?
 
@@ -302,12 +272,6 @@ graph LR
 - Типичный диапазон: 6–30 партиций для среднего топика
 - Больше партиций = больше файловых дескрипторов и время rebalance
 
-> [!mcq]
-> - [ ] Партиция Kafka — это упорядоченный append-only лог, где порядок гарантируется глобально между всеми партициями топика. | Глобального порядка по топику нет — только внутри партиции. Для глобального порядка нужен топик с одной партицией, что исключает параллелизм. ❌ ПОСЛЕДСТВИЕ: команда строит business logic на ожидании global order between партициями. Race conditions: payment processed before user created (events in different partitions). Random failures, debugging weeks.
-> - [ ] Партиция Kafka — это упорядоченный append-only лог, где порядок гарантируется между топиками одного брокера. | Порядок не гарантируется между топиками вообще. Границы порядка — это всегда одна партиция одного топика. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает order between `users` topic and `orders` topic event flow на одном брокере. Реально topics независимы, no order guarantees. Логика «user created before order» ломается.
-> - [ ] Партиция Kafka — это упорядоченный append-only лог, где порядок гарантируется между всеми репликами ISR в режиме реального времени. | ISR обеспечивает репликацию, но порядок определяется самой партицией на Leader, а не согласованием между репликами. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает что follower ISR в реал-тайм видит сообщения. Реально follower имеет отставание (replica.lag.time.max.ms=30s default). При failover сообщения из последних 30s могут быть потеряны при unclean leader election.
-> - [x] Партиция Kafka — это упорядоченный append-only лог, где порядок гарантируется только внутри одной партиции. | Партиция — единица параллелизма и хранения. Записи в ней строго упорядочены по offset, но глобального порядка между партициями нет. Это фундаментальное свойство Kafka. ✓ ПРИМЕНЯТЬ: для order-related events использовать `userId` или `orderId` как partition key — все events для одного user/order попадают в одну партицию (порядок гарантирован); для analytics events — random partitioner для max parallelism. 📋 ПРАВИЛО: «order = partition + key, parallelism = partition count». 🔗 См. Q3 (topics), Q7 (offset), Q8 (order).
-
 ## Q7. Что такое `Offset`?
 
 `Offset` — уникальный последовательный номер каждого сообщения внутри партиции. Offset — это позиция `Consumer` в логе, по которой он отслеживает прогресс чтения.
@@ -323,12 +287,6 @@ graph LR
 - `latest` — только новые сообщения
 - `none` — ошибка, если нет сохранённого offset
 
-> [!mcq]
-> - [ ] При отсутствии committed offset параметр `auto.offset.reset=latest` заставит consumer читать с самого начала лога. | `latest` означает противоположное — чтение только новых сообщений, поступивших после подключения. Для чтения с начала используется `earliest`. ❌ ПОСЛЕДСТВИЕ: команда настраивает new consumer group для replay history с `latest` — consumer ничего не читает (ждёт новые messages). Часы потеряны на debug. Правильно: `earliest` для replay/initialization.
-> - [ ] При отсутствии committed offset параметр `auto.offset.reset=none` заставит consumer читать с самого начала лога. | `none` не означает чтение с начала — наоборот, consumer упадёт с исключением `NoOffsetForPartitionException`. Это строгий режим для предотвращения случайного чтения. ❌ ПОСЛЕДСТВИЕ: разработчик ставит `none` ожидая «безопасный default». Production crashes при первом запуске нового consumer group. Правильно: `earliest` для idempotent processing или `latest` для real-time.
-> - [ ] При отсутствии committed offset параметр `auto.offset.reset=auto` заставит consumer читать с самого начала лога. | Значение `auto` не существует в Kafka. Допустимые варианты только `earliest`, `latest` и `none`. ❌ ПОСЛЕДСТВИЕ: разработчик ставит `auto` (как в других системах). Kafka выдаёт `ConfigException` при старте. CI green, prod fails. Правильно: только `earliest`/`latest`/`none`.
-> - [x] При отсутствии committed offset параметр `auto.offset.reset=earliest` заставит consumer читать с самого начала лога. | `earliest` — значение по умолчанию для batch-пайплайнов: consumer прочитает всю историю партиции от offset 0. Это позволяет восстановить состояние при первом запуске без потери данных. ✓ ПРИМЕНЯТЬ: data ingestion pipelines (CDC через Debezium → BigQuery) — `earliest` для full replay; analytics через Kafka Connect → Elasticsearch — `earliest`; live dashboards — `latest` для real-time без backfill. 📋 ПРАВИЛО: «earliest = replay history, latest = only new, none = strict (throw)». 🔗 См. Q6 (partitions), Q14 (consumer group), Q16 (offset commit).
-
 ## Q8. (!) Как обеспечить порядок сообщений в `Kafka`?
 
 Порядок гарантируется **только внутри одной партиции**. Способы обеспечения порядка:
@@ -343,12 +301,6 @@ kafkaTemplate.send("orders", customerId, orderEvent);
 ```
 
 > На собеседовании часто спрашивают: «Можно ли обеспечить глобальный порядок?» — ответ: только при одной партиции, что убивает масштабируемость.
-
-> [!mcq]
-> - [ ] Для строго упорядоченной обработки заказов одного клиента ключ сообщения `orderId` — правильный выбор, потому что каждый заказ попадёт в свою партицию. | При использовании `orderId` как ключа заказы одного клиента распределятся по разным партициям, и их порядок не будет гарантирован. Нужен общий ключ, одинаковый для всех сообщений одной сущности. ❌ ПОСЛЕДСТВИЕ: payment events для customer проходят out-of-order: «refund» processed before «payment». Customer support получает жалобы, finance reconciliation ломается. Reproducer для любого e-commerce.
-> - [x] Для строго упорядоченной обработки заказов одного клиента ключ сообщения `customerId` — правильный выбор, потому что все его заказы попадут в одну партицию. | Kafka гарантирует порядок только внутри партиции. Используя `customerId` как ключ, все события этого клиента окажутся в одной партиции и будут обработаны строго последовательно. ✓ ПРИМЕНЯТЬ: Spring Cloud Stream + Kafka + `partitionKeyExpression='headers.customerId'`; для multi-tenancy — `tenantId` как key; для CDC — `pk_value` как key для PostgreSQL row updates. 📋 ПРАВИЛО: «order = entity ID as partition key». 🔗 См. Q3 (topics), Q6 (partitions), Q12 (idempotent producer).
-> - [ ] Для строго упорядоченной обработки заказов одного клиента ключ сообщения `timestamp` — правильный выбор, потому что время обеспечит правильный порядок. | Timestamp как ключ сгенерирует разный hash почти для каждого сообщения, из-за чего записи попадут в разные партиции и порядок будет потерян. ❌ ПОСЛЕДСТВИЕ: разработчик использует `System.currentTimeMillis()` как key для «временного порядка». Каждое event в свою партицию, no order. Confused, добавляет sleep между sends — поломан весь throughput design.
-> - [ ] Для строго упорядоченной обработки заказов одного клиента ключ сообщения `UUID.randomUUID()` — правильный выбор, потому что уникальный ключ гарантирует идентификацию. | Случайный UUID распределит сообщения равномерно по партициям, полностью разрушив гарантии порядка для конкретного клиента. ❌ ПОСЛЕДСТВИЕ: random UUID = max parallelism, но zero ordering. Saga pattern с UUID как key ломается при race condition между inventory и payment events. Производственный outage.
 
 ## Q9. Как выбирается `Partition` при отправке сообщения?
 
@@ -373,12 +325,6 @@ public class OrderPartitioner implements Partitioner {
     }
 }
 ```
-
-> [!mcq]
-> - [ ] По умолчанию при наличии ключа в сообщении Kafka Producer выбирает партицию через round-robin по списку партиций. | Round-robin применяется только при отсутствии ключа (до Kafka 2.4). При наличии ключа всегда используется hash-based стратегия для стабильности порядка. ❌ ПОСЛЕДСТВИЕ: разработчик пишет custom partitioner с round-robin, ломая order guarantee для key-based events. Production race conditions, hard to debug.
-> - [ ] По умолчанию при наличии ключа в сообщении Kafka Producer выбирает партицию через sticky partitioning в рамках batch. | Sticky partitioning работает только при отсутствии ключа, начиная с Kafka 2.4. При наличии ключа это не применяется — иначе нарушилась бы гарантия порядка по ключу. ❌ ПОСЛЕДСТВИЕ: разработчик настраивает sticky partitioning ожидая лучшей batching при keyed events. Реально partitioner ignores sticky setting когда key present. Wasted optimization effort.
-> - [x] По умолчанию при наличии ключа в сообщении Kafka Producer выбирает партицию через `hash(key) % numPartitions` с использованием Murmur2. | Hash-based partitioning гарантирует, что одинаковые ключи всегда попадают в одну и ту же партицию. Murmur2 — это быстрый non-cryptographic хеш, выбранный за равномерность распределения. ✓ ПРИМЕНЯТЬ: при добавлении партиций в существующий topic — все hashes пересчитываются, key→partition mapping ломается! Решение: pre-create достаточное количество партиций или migration через дублирование. Spring Kafka использует default `DefaultPartitioner` с Murmur2. 📋 ПРАВИЛО: «keyed = hash(key) % N, change N = mapping changes». 🔗 См. Q6 (partitions), Q8 (order), Q10 (Producer).
-> - [ ] По умолчанию при наличии ключа в сообщении Kafka Producer выбирает партицию через SHA-256 от ключа. | SHA-256 слишком медленный для высокопроизводительной партиционирования. Kafka использует Murmur2, который оптимизирован для скорости и равномерности, а не криптостойкости. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает SHA-256, пишет comparison code с SHA-256 для validation hashes — partition expectations не совпадают. Тестируют недели, не понимая почему. Реально Murmur2.
 
 ## Q10. (!) Что такое `Producer` и как он работает?
 
@@ -405,12 +351,6 @@ graph LR
 | `compression.type` | Сжатие | `lz4` или `zstd` |
 | `enable.idempotence` | Идемпотентность | `true` (по умолчанию c Kafka 3.0) |
 
-> [!mcq]
-> - [ ] Kafka Producer отправляет каждое сообщение синхронно в main thread сразу после вызова `send()`. | `send()` не блокирует main thread — вызов асинхронный и возвращает `Future`. Фактическая отправка происходит в Sender Thread и идёт батчами, а не по одному сообщению. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `producer.send(record).get()` в loop ожидая sequential send. Throughput падает с 100K msg/sec до 100 msg/sec из-за blocking на каждом sync. Fix: async send + callback или `producer.flush()` в end.
-> - [ ] Kafka Producer делает round-trip к брокеру для каждого отдельного сообщения и только после этого отправляет следующее. | Producer оптимизирован для высокой пропускной способности и не делает round-trip на каждое сообщение. Используется батчинг и pipelining через `max.in.flight.requests.per.connection`. ❌ ПОСЛЕДСТВИЕ: разработчик не использует idempotent producer + max.in.flight=1 «для надёжности» — throughput падает 5x. С idempotent можно безопасно держать max.in.flight=5+ без duplicate риска.
-> - [ ] Kafka Producer ожидает подтверждения от брокера перед сериализацией следующего сообщения. | Сериализация и накопление батчей происходят независимо от подтверждений. Producer может иметь несколько in-flight запросов без блокировки на acks. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает sequential serialize → ack → next, не понимает pipelining. При troubleshooting performance видит «много pending records» и думает что producer broken — реально нормальная work.
-> - [x] Kafka Producer накапливает сообщения в `RecordAccumulator` и отправляет их батчами через отдельный Sender Thread, что снижает network overhead. | Батчинг — ключевой оптимизация Producer: сообщения группируются по партициям в RecordAccumulator до достижения `batch.size` или `linger.ms`, а отдельный Sender Thread отправляет их на брокеры. Это кратно повышает throughput. ✓ ПРИМЕНЯТЬ: production tuning — `batch.size=32768, linger.ms=10, compression.type=lz4` для balance между latency и throughput; для high-throughput batch jobs — `linger.ms=100`; LinkedIn benchmark показал 5-10x throughput improvement от proper batching. 📋 ПРАВИЛО: «batch.size + linger.ms = throughput tuning». 🔗 См. Q11 (acks), Q12 (idempotent), Q13 (compression).
-
 ## Q11. (!) Что означает параметр `acks` у `Producer`?
 
 Параметр `acks` определяет, сколько брокеров должны подтвердить запись, прежде чем producer получит ответ:
@@ -424,12 +364,6 @@ graph LR
 **Рекомендация для production:** `acks=all` + `min.insync.replicas=2` + `replication.factor=3`.
 
 Это гарантирует, что даже при падении одного брокера данные не потеряются.
-
-> [!mcq]
-> - [ ] Для максимальной надёжности доставки Producer следует настроить `acks=0`. | `acks=0` — fire-and-forget режим, Producer не ждёт подтверждений вообще. Минимальная надёжность и высокий риск потери данных при сбоях. ❌ ПОСЛЕДСТВИЕ: финансовая система с `acks=0` теряет payment events при network glitches. $50K потерянных транзакций до обнаружения. SOX audit failed.
-> - [ ] Для максимальной надёжности доставки Producer следует настроить `acks=1`. | `acks=1` ждёт подтверждения только от Leader. При падении Leader до репликации на followers данные теряются — средняя надёжность. ❌ ПОСЛЕДСТВИЕ: при rolling restart Kafka cluster с `acks=1` теряются последние сообщения когда leader перезапускается до replication. Не критично для logs/metrics, критично для transactions. LinkedIn 2014 historical issue.
-> - [x] Для максимальной надёжности доставки Producer следует настроить `acks=all`. | `acks=all` (или `-1`) требует подтверждения от всех ISR реплик. В сочетании с `min.insync.replicas=2` и `replication.factor=3` данные сохраняются даже при падении одного брокера. ✓ ПРИМЕНЯТЬ: production transactional events (payments, orders) — `acks=all + min.insync.replicas=2 + replication.factor=3`; for analytics/logs — `acks=1` достаточно с приемлемой потерей; idempotent producer + acks=all = exactly-once semantics. 📋 ПРАВИЛО: «acks=all + ISR≥2 + RF=3 = production-grade». 🔗 См. Q12 (idempotent), Q14 (consumer), Q15 (rebalance).
-> - [ ] Для максимальной надёжности доставки Producer следует настроить `acks=2`. | Значение `acks=2` не существует в Kafka. Допустимы только `0`, `1` и `all`/`-1`. ❌ ПОСЛЕДСТВИЕ: разработчик ставит `acks=2`, JVM throws ConfigException at startup. Pod в crashloop в Kubernetes. Right values: 0, 1, all (-1).
 
 ## Q12. Что такое идемпотентный `Producer`?
 
@@ -448,12 +382,6 @@ props.put(ProducerConfig.RETRIES_CONFIG, Integer.MAX_VALUE);
 2. Каждое сообщение получает `sequence number`
 3. Broker отклоняет дубликаты (одинаковые PID + sequence)
 4. Гарантируется порядок даже при `max.in.flight.requests.per.connection = 5`
-
-> [!mcq]
-> - [x] Идемпотентный Producer использует пару `PID + sequence number` для отклонения дубликатов при retry на стороне брокера. | Каждый Producer получает уникальный PID при инициализации, и каждое сообщение нумеруется sequence number по партиции. Брокер отклоняет повторы с тем же PID+seq, предотвращая дубли при retry. ✓ ПРИМЕНЯТЬ: Kafka 3.0+ idempotent producer enabled by default — `enable.idempotence=true`; для exactly-once semantics — `enable.idempotence=true + acks=all + transactional.id`; защищает от network retries в e-commerce checkout от duplicate orders. 📋 ПРАВИЛО: «PID + seq num = no duplicates from retry». 🔗 См. Q11 (acks), Q23 (exactly-once), Q24 (transactions).
-> - [ ] Идемпотентный Producer использует пару `clientId + timestamp` для отклонения дубликатов при retry на стороне брокера. | clientId не уникален и timestamp может повторяться. Kafka использует именно PID, выданный брокером, и монотонный sequence number по партиции. ❌ ПОСЛЕДСТВИЕ: разработчик пишет custom dedup на основе clientId + timestamp. Дублирующиеся events проходят через — clock skew + same client. Отказывается от built-in idempotence.
-> - [ ] Идемпотентный Producer использует пару `topic + partition` для отклонения дубликатов при retry на стороне брокера. | Пара topic+partition определяет физическое расположение, но не уникальность конкретной записи от конкретного producer. Без PID+seq невозможно отличить оригинал от повтора. ❌ ПОСЛЕДСТВИЕ: misunderstanding модели дедупа = ложные expectations. Production duplicate processing.
-> - [ ] Идемпотентный Producer использует пару `key + value hash` для отклонения дубликатов при retry на стороне брокера. | Hash содержимого не используется для идемпотентности — два разных сообщения могут иметь одинаковый hash, а одно и то же может отправляться с разным value (коллизии). ❌ ПОСЛЕДСТВИЕ: разработчик предполагает content-based dedup, отправляет update payment status с тем же payload — система считает duplicate. Required updates lost.
 
 ## Q13. Как настроить батчинг и сжатие у `Producer`?
 
@@ -476,12 +404,6 @@ props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 67108864); // 64 MB буфер
 | `zstd` | Средняя | Отличная | Быстрая |
 
 **Рекомендация:** `lz4` для баланса скорости и сжатия, `zstd` для максимального сжатия.
-
-> [!mcq]
-> - [ ] Для оптимального баланса CPU/сжатия в Kafka Producer рекомендуется `compression.type=none`. | Без сжатия трафик и объём хранения значительно увеличиваются. Это приемлемо только при строгих CPU-ограничениях, но не для оптимального баланса. ❌ ПОСЛЕДСТВИЕ: 100MB/s without compression = 8.6TB/day storage; with lz4 (4x ratio) = 2.1TB/day. AWS S3 Kafka tier costs растут в 4x. CFO задаёт вопросы.
-> - [ ] Для оптимального баланса CPU/сжатия в Kafka Producer рекомендуется `compression.type=gzip`. | Gzip даёт лучшую степень сжатия, но высокую CPU-нагрузку и медленную работу. Это выбор для минимизации storage, а не для баланса. ❌ ПОСЛЕДСТВИЕ: high-throughput producer с gzip — CPU bottleneck, throughput падает с 100K msg/sec до 30K. Switch на lz4 даёт 80K без потери compression ratio.
-> - [x] Для оптимального баланса CPU/сжатия в Kafka Producer рекомендуется `compression.type=lz4`. | LZ4 обеспечивает низкое CPU-потребление при хорошей степени сжатия и очень высокой скорости. Это стандартная production-рекомендация для большинства Kafka-пайплайнов. ✓ ПРИМЕНЯТЬ: standard production setup `compression.type=lz4 + batch.size=32768 + linger.ms=10`; для extreme storage savings (CDC topics) — `zstd` (better compression, slightly more CPU); для real-time low-latency — `none`. Confluent рекомендует lz4 default. 📋 ПРАВИЛО: «lz4 = балансу скорости и сжатия». 🔗 См. Q10 (Producer), Q11 (acks), Q12 (idempotent).
-> - [ ] Для оптимального баланса CPU/сжатия в Kafka Producer рекомендуется `compression.type=snappy`. | Snappy — хороший, но более старый алгоритм с чуть худшим соотношением сжатия к скорости, чем LZ4. LZ4 обычно предпочтительнее в современных конфигурациях. ❌ ПОСЛЕДСТВИЕ: legacy Kafka 0.x cluster с snappy, миграция на 3.x не пересмотрена. lz4 даёт 15% better throughput на той же CPU. Performance opportunity упущена.
 
 ## Q14. (!) Что такое `Consumer` и `Consumer Group`?
 
@@ -517,12 +439,6 @@ graph TB
 - Если consumers < partitions → один consumer обрабатывает несколько партиций
 - Разные `Consumer Group` читают **независимо** (каждая получает все сообщения)
 
-> [!mcq]
-> - [ ] Если в топике 4 партиции и в Consumer Group 6 consumer, то каждый consumer получит по 2 партиции через round-robin. | Это невозможно: всего 4 партиции, и каждая партиция может быть назначена ровно одному consumer внутри группы. Нельзя назначить 12 партиций при наличии 4. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает «равномерное распределение partitions across all consumers». Получает 2 idle pods в Kubernetes — wasted resources, billing.
-> - [ ] Если в топике 4 партиции и в Consumer Group 6 consumer, то партиции будут разделены по времени между всеми consumer. | Kafka не распределяет партиции по времени — каждая партиция закреплена за одним consumer в группе до следующего rebalance. ❌ ПОСЛЕДСТВИЕ: команда ожидает time-sharing для better resource utilization, не понимает почему 2 consumers idle. Tries to add more consumers — все idle. Architectural misunderstanding.
-> - [ ] Если в топике 4 партиции и в Consumer Group 6 consumer, то 2 consumer получат по 2 партиции, а 4 consumer будут простаивать. | Kafka стремится распределить партиции равномерно — не будет концентрировать по 2 на одном consumer при наличии свободных. Каждая из 4 партиций попадёт к разному consumer. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает concentration на 2 consumers, удивляется когда видит 4 active consumers с 1 partition каждый. Кафка использует RangeAssignor / RoundRobinAssignor / StickyAssignor для уравновешенного распределения.
-> - [x] Если в топике 4 партиции и в Consumer Group 6 consumer, то 4 consumer получат по одной партиции, а 2 consumer будут простаивать. | Максимальный параллелизм внутри Consumer Group ограничен количеством партиций. Лишние consumer не получат партиций и будут бездействовать до изменения состава группы. ✓ ПРИМЕНЯТЬ: planning capacity — `partitions = peak_throughput / consumer_throughput * safety_factor`; не масштабировать consumers выше количества партиций; pre-create достаточные партиции для будущего scaling (24-48 для медиум topic). 📋 ПРАВИЛО: «consumers > partitions = idle workers». 🔗 См. Q3 (topics), Q6 (partitions), Q15 (rebalance).
-
 ## Q15. (!) Как происходит `Rebalance`?
 
 `Rebalance` — процесс перераспределения партиций между потребителями группы. Запускается при:
@@ -544,12 +460,6 @@ graph TB
 - `StickyAssignor` — минимизация перемещений
 - `CooperativeStickyAssignor` — cooperative + sticky (рекомендуемый)
 
-> [!mcq]
-> - [ ] Для минимизации простоя при rebalance в production рекомендуется `partition.assignment.strategy=RangeAssignor`. | RangeAssignor — стратегия по умолчанию с eager rebalance, который полностью останавливает всех consumer ("stop-the-world") при любом изменении состава группы. ❌ ПОСЛЕДСТВИЕ: при rolling deploy 50 consumer pods каждый rebalance — 30sec stop-the-world по всей группе. Total downtime = 30sec * 50 pods = 25 минут production unavailable.
-> - [ ] Для минимизации простоя при rebalance в production рекомендуется `partition.assignment.strategy=RoundRobinAssignor`. | RoundRobinAssignor обеспечивает равномерное распределение, но тоже использует eager-протокол с полным stop-the-world при rebalance. ❌ ПОСЛЕДСТВИЕ: при scale-out с 5 до 10 consumers — все 10 pods stop-the-world на rebalance, processing pause до завершения reassignment. Latency спайки во время deployment.
-> - [ ] Для минимизации простоя при rebalance в production рекомендуется `partition.assignment.strategy=StickyAssignor`. | StickyAssignor минимизирует перемещения партиций, но всё ещё работает по eager-протоколу и приостанавливает всех consumer на время rebalance. ❌ ПОСЛЕДСТВИЕ: разработчик ставит StickyAssignor ожидая «zero-downtime». Получает eager rebalance с stop-the-world, но меньше перемещений. Confusion с CooperativeSticky — частая ошибка в migration.
-> - [x] Для минимизации простоя при rebalance в production рекомендуется `partition.assignment.strategy=CooperativeStickyAssignor`. | CooperativeStickyAssignor сочетает sticky-стратегию с incremental (cooperative) протоколом: перемещаются только затронутые партиции, остальные consumer продолжают работать без downtime. ✓ ПРИМЕНЯТЬ: production high-availability — `partition.assignment.strategy=org.apache.kafka.clients.consumer.CooperativeStickyAssignor`; для Spring Kafka — устанавливается через KafkaConsumerFactory; rolling deploy без processing pause. 📋 ПРАВИЛО: «Cooperative + Sticky = zero-downtime rebalance». 🔗 См. Q14 (Consumer), Q17 (Cooperative), Q45 (Static Membership).
-
 ## Q16. В чём разница между auto-commit и manual commit?
 
 | Аспект | Auto-commit | Manual commit |
@@ -570,12 +480,6 @@ while (true) {
 }
 ```
 
-> [!mcq]
-> - [x] Для гарантии at-least-once доставки необходимо установить `enable.auto.commit=false` и вызывать `commitSync()` после обработки. | Manual commit после обработки гарантирует, что при падении до commit сообщение будет прочитано повторно при restart. Это и есть at-least-once: без потерь, но возможны дубликаты. ✓ ПРИМЕНЯТЬ: payment processing — `enable.auto.commit=false` + commit после успешной транзакции в БД; idempotent processing на consumer side (через unique key check); Spring Kafka @KafkaListener с `AckMode.MANUAL_IMMEDIATE` и Acknowledgment.acknowledge(). 📋 ПРАВИЛО: «at-least-once = manual commit ПОСЛЕ обработки + idempotent consumer». 🔗 См. Q11 (acks), Q15 (rebalance), Q22 (semantics).
-> - [ ] Для гарантии at-least-once доставки необходимо установить `enable.auto.commit=true` с `auto.commit.interval.ms=1000`. | При auto-commit offset коммитится по таймеру независимо от того, обработано сообщение или нет. Это даёт at-most-once: возможна потеря сообщений между commit и обработкой. ❌ ПОСЛЕДСТВИЕ: payment processing с auto-commit теряет 1-5% transactions при rolling restart. Customer support получает escalations, finance не bill correctly.
-> - [ ] Для гарантии at-least-once доставки необходимо установить `enable.auto.commit=true` с `auto.commit.interval.ms=100`. | Уменьшение интервала не меняет семантику — по-прежнему остаётся риск потери сообщений, которые уже закоммичены, но ещё не обработаны при сбое. ❌ ПОСЛЕДСТВИЕ: разработчик уменьшает interval ожидая «меньше потерь», получает 0.1% потерь вместо 1%, но всё ещё data loss. Архитектурная проблема, не tuning.
-> - [ ] Для гарантии at-least-once доставки необходимо установить `enable.auto.commit=false` и никогда не коммитить offset вручную. | Без commits consumer при рестарте всегда будет читать с `auto.offset.reset`, что приведёт либо к полному повтору истории, либо к пропуску. Это не at-least-once, а особая стратегия replay. ❌ ПОСЛЕДСТВИЕ: команда отключает auto-commit и забывает делать manual commit. На restart обрабатывает 7 дней истории заново, GC pressure, переполняется БД, downstream cascade failures.
-
 ## Q17. Что такое `Cooperative Sticky Assignor`?
 
 `CooperativeStickyAssignor` — стратегия назначения партиций, которая:
@@ -591,12 +495,6 @@ spring:
       properties:
         partition.assignment.strategy: org.apache.kafka.clients.consumer.CooperativeStickyAssignor
 ```
-
-> [!mcq]
-> - [ ] CooperativeStickyAssignor использует eager-протокол и перераспределяет все партиции при каждом rebalance. | Это описание обычного eager-подхода (RangeAssignor/RoundRobinAssignor). CooperativeStickyAssignor наоборот использует incremental-протокол и не трогает незатронутые назначения. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает eager поведение, видит partial rebalance — думает что bug. Логи показывают «only 2 partitions reassigned», но всё работает как надо.
-> - [x] CooperativeStickyAssignor использует cooperative-протокол и перемещает только затронутые партиции при rebalance. | Ключевое преимущество — incremental rebalance: consumer-ы не отпускают партиции, которые остаются за ними. Это обеспечивает zero-downtime rebalance для стабильных назначений. ✓ ПРИМЕНЯТЬ: production high-throughput consumer groups (Uber, Netflix) — обязательно CooperativeStickyAssignor; для Spring Kafka: `partition.assignment.strategy=org.apache.kafka.clients.consumer.CooperativeStickyAssignor`; Kafka 2.4+ default для streams. 📋 ПРАВИЛО: «cooperative + sticky = minimal disruption». 🔗 См. Q14 (consumer), Q15 (rebalance).
-> - [ ] CooperativeStickyAssignor использует eager-протокол и перемещает только затронутые партиции при rebalance. | Eager-протокол по определению требует полного stop-the-world. Incremental-подход возможен только с cooperative-протоколом — eager и incremental несовместимы. ❌ ПОСЛЕДСТВИЕ: разработчик путает протоколы, ставит conflicting config. JVM warning при старте, default fallback на RangeAssignor. Optimization не активирована.
-> - [ ] CooperativeStickyAssignor использует cooperative-протокол и перераспределяет все партиции при каждом rebalance. | Cooperative-протокол был создан именно для того, чтобы НЕ перераспределять все партиции. Полное перераспределение характерно для eager-стратегий. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает full reassignment, не понимает почему processing pause минимальный. Tries to «fix» через RangeAssignor — производительность падает.
 
 ## Q18. (!) Как работает репликация в `Kafka`?
 
@@ -620,12 +518,6 @@ graph LR
 - Followers постоянно fetch'ат данные у Leader
 - Если Follower отстаёт — он выпадает из ISR
 
-> [!mcq]
-> - [ ] В модели репликации Kafka Leader активно `push`-ит записи на всех Followers сразу после получения от Producer. | Kafka использует pull-модель, а не push. Leader не инициирует отправку — он только отвечает на fetch-запросы от followers. ❌ ПОСЛЕДСТВИЕ: разработчик тюнит «push throughput» на Leader, ищет несуществующий setting. Реально tune fetch behavior на followers. Time wasted on incorrect mental model.
-> - [ ] В модели репликации Kafka Followers реплицируют данные через протокол Raft-консенсуса с кворумом голосов. | Raft используется в KRaft для метаданных, но не для репликации данных партиций. Для данных применяется ISR-модель с Leader-follower, а не Raft. ❌ ПОСЛЕДСТВИЕ: разработчик путает KRaft (metadata Raft consensus) с data replication (ISR-based). Архитектурные документы неправильно описывают систему, новые joiners confused.
-> - [x] В модели репликации Kafka Followers реплицируют данные путём `fetch`-запросов к Leader — это pull-модель. | Followers инициируют репликацию сами: периодически отправляют `FetchRequest` к Leader и получают новые записи. Это упрощает backpressure и контроль скорости репликации на стороне followers. ✓ ПРИМЕНЯТЬ: replica.fetch.max.bytes для tuning replication throughput; replica.fetch.min.bytes для batching efficiency; understanding pull-модели важно при diagnosing replication lag в multi-DC setups (MirrorMaker 2). 📋 ПРАВИЛО: «Kafka replication = pull, Follower fetch from Leader». 🔗 См. Q19 (ISR), Q20 (failover), Q21 (unclean election).
-> - [ ] В модели репликации Kafka каждое сообщение реплицируется синхронно всеми брокерами кластера независимо от replication.factor. | Реплицируется только на количество брокеров, равное replication.factor, а не на весь кластер. И синхронность зависит от параметра `acks` на стороне Producer. ❌ ПОСЛЕДСТВИЕ: команда выбирает 50-broker cluster ожидая что все брокеры реплицируют каждое сообщение. Реально нужны 3 для RF=3, остальные просто host other partitions. Storage cost calculation off by 16x.
-
 ## Q19. (!) Что такое `ISR`, `OSR` и `High Watermark`?
 
 **`ISR` (In-Sync Replicas)** — набор реплик, которые полностью синхронизированы с Leader. Kafka считает сообщение committed, когда оно записано на все ISR.
@@ -644,12 +536,6 @@ Follower 2: [0] [1] [2] [3]                ← LEO = 4 (OSR — отстал)
 
 **`min.insync.replicas`** — минимальное число ISR для принятия записи при `acks=all`. Если ISR < `min.insync.replicas`, broker вернёт `NotEnoughReplicasException`.
 
-> [!mcq]
-> - [ ] Consumer в Kafka может читать сообщения до Log End Offset (LEO) Leader-реплики. | Consumer ограничен High Watermark (HW), а не LEO. Чтение до LEO было бы небезопасно: такие сообщения могут быть потеряны при падении Leader до репликации. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает что consumer видит сразу же после producer.send(). Реально есть гэп между Leader LEO и HW. Тесты flaky из-за timing assumptions.
-> - [x] Consumer в Kafka может читать сообщения только до High Watermark (HW) — offset, реплицированного на все ISR. | HW гарантирует, что сообщение надёжно сохранено на всех ISR. Чтение ограничено HW, чтобы избежать видимости данных, которые могут пропасть после failover Leader. ✓ ПРИМЕНЯТЬ: real-time pipelines tune `min.insync.replicas` для balance between durability и latency (HW advance); replication.lag.time.max.ms — допустимое отставание ISR; мониторинг `kafka_topic_partition_under_replicated_partitions`. 📋 ПРАВИЛО: «consumer reads up to HW, HW = min(LEO across ISR)». 🔗 См. Q18 (replication), Q20 (failover), Q21 (unclean).
-> - [ ] Consumer в Kafka может читать сообщения только до offset Follower с наибольшим отставанием. | Это не так: если один Follower сильно отстаёт, он выпадет из ISR. HW считается по текущему составу ISR, а не по самому медленному реплике вне ISR. ❌ ПОСЛЕДСТВИЕ: разработчик пишет alerts на отстающие followers ожидая что HW «застрянет». Реально follower выпадает из ISR через 30s, HW продолжает advance.
-> - [ ] Consumer в Kafka может читать сообщения до offset `__consumer_offsets` последнего commit. | `__consumer_offsets` хранит позиции commit самого consumer-а, а не границу читаемых данных. Границу задаёт HW партиции. ❌ ПОСЛЕДСТВИЕ: разработчик путает consumer offset c HW. При debugging думает что «offset is wrong» когда смотрит на committed offset, а не на HW. Часы на debug.
-
 ## Q20. Что произойдёт при падении Leader-брокера?
 
 1. `Controller` обнаруживает, что брокер недоступен (через heartbeat)
@@ -659,12 +545,6 @@ Follower 2: [0] [1] [2] [3]                ← LEO = 4 (OSR — отстал)
 5. Если ISR пуст, поведение зависит от `unclean.leader.election.enable`
 
 **Время восстановления** (failover) обычно составляет несколько секунд.
-
-> [!mcq]
-> - [ ] При падении Leader-брокера Kafka Controller выбирает нового Leader из любой живой реплики независимо от ISR. | Выбор из не-ISR реплик возможен только при `unclean.leader.election.enable=true`, что чревато потерей данных. По умолчанию Kafka выбирает только из ISR. ❌ ПОСЛЕДСТВИЕ: команда включает unclean.leader.election=true для «availability», теряет committed данные при failover. Финансовый incident, audit recommends rollback.
-> - [ ] При падении Leader-брокера Kafka Controller запускает голосование кворума среди всех брокеров кластера. | Kafka не использует голосование среди всех брокеров для выбора Leader партиции. Controller принимает решение единолично на основе метаданных ISR. ❌ ПОСЛЕДСТВИЕ: разработчик путает с Raft consensus, ожидает quorum vote. Тратит время на изобретение «Kafka quorum tuning» который не существует.
-> - [ ] При падении Leader-брокера Kafka Controller создаёт новую реплику на свободном брокере и назначает её Leader. | Создание новой реплики — долгая операция и не происходит при failover. Используется существующая ISR-реплика, у которой уже есть актуальные данные. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает «automatic replica creation» при failure. Реально нужен manual reassignment через kafka-reassign-partitions.sh; mistakes during reassignment могут break cluster.
-> - [x] При падении Leader-брокера Kafka Controller выбирает нового Leader из списка ISR текущей партиции. | Controller обнаруживает падение через heartbeat и выбирает нового Leader только среди ISR — реплик, синхронизированных с прежним Leader. Это гарантирует отсутствие потери committed данных. ✓ ПРИМЕНЯТЬ: production deploy с `replication.factor=3 + min.insync.replicas=2 + acks=all` — выживает падение 1 broker без потерь; Confluent best practice для critical topics; LinkedIn использует RF=3 across 3 racks для rack-failure tolerance. 📋 ПРАВИЛО: «failover from ISR only, RF=3 + min ISR=2 = 1-broker tolerance». 🔗 См. Q18 (replication), Q19 (ISR), Q21 (unclean election).
 
 ## Q21. Что такое `Unclean Leader Election`?
 
@@ -676,12 +556,6 @@ Follower 2: [0] [1] [2] [3]                ← LEO = 4 (OSR — отстал)
 | `false` (по умолчанию) | Партиция остаётся недоступной, пока ISR-реплика не вернётся → **данные не теряются** |
 
 **Рекомендация:** `false` для финансовых и критичных данных, `true` для систем, где доступность важнее целостности.
-
-> [!mcq]
-> - [ ] Для критичных финансовых данных рекомендуется `unclean.leader.election.enable=true`. | С включённым unclean leader election Kafka может выбрать отставший реплика и потерять уже committed сообщения. Для финансовых данных это недопустимо. ❌ ПОСЛЕДСТВИЕ: financial system с unclean=true теряет $10K transactions при network partition. SOX audit failure, compliance rebuilding процесс на месяцы.
-> - [x] Для критичных финансовых данных рекомендуется `unclean.leader.election.enable=false`. | Это значение по умолчанию: партиция остаётся недоступной, пока не вернётся хотя бы одна ISR-реплика. Целостность данных приоритетнее доступности, что критично для финансовых операций. ✓ ПРИМЕНЯТЬ: financial topics, audit logs, regulatory compliance — `unclean.leader.election.enable=false` (default Kafka 0.11+); analytics/metrics — может быть `true` для availability over consistency. JPMorgan, Goldman Sachs — strict false. 📋 ПРАВИЛО: «unclean=false для consistency, true для availability». 🔗 См. Q18 (replication), Q19 (ISR), Q20 (failover).
-> - [ ] Для критичных финансовых данных рекомендуется `unclean.leader.election.enable=auto`. | Такого значения в Kafka не существует. Параметр принимает только `true` или `false`. ❌ ПОСЛЕДСТВИЕ: разработчик ставит `auto`, JVM throws ConfigException at startup. Pod не запускается. Right values: только true / false.
-> - [ ] Для критичных финансовых данных рекомендуется `unclean.leader.election.enable=async`. | Такого значения в Kafka не существует. Параметр boolean: `true` или `false`, и нет асинхронного режима. ❌ ПОСЛЕДСТВИЕ: разработчик придумывает несуществующее значение, тратит дни на debugging — на самом деле допустимы только true/false.
 
 ## Q22. (!) Какие семантики доставки поддерживает `Kafka`?
 
@@ -695,12 +569,6 @@ Follower 2: [0] [1] [2] [3]                ← LEO = 4 (OSR — отстал)
 - Метрики, логи → `at-most-once` (допустимы потери)
 - Заказы, платежи → `at-least-once` + идемпотентная обработка на стороне consumer
 - Финансовые транзакции → `exactly-once` (Kafka Transactions)
-
-> [!mcq]
-> - [ ] Для обработки заказов с гарантией, что ни один заказ не потеряется, но возможны дубликаты, нужна семантика `at-most-once`. | At-most-once допускает потерю сообщений — ровно противоположное требованию. Это семантика `acks=0` или auto-commit до обработки. ❌ ПОСЛЕДСТВИЕ: команда выбирает at-most-once для orders, теряет 0.5% transactions при rolling deploy. $50K monthly losses до escalation.
-> - [ ] Для обработки заказов с гарантией, что ни один заказ не потеряется, но возможны дубликаты, нужна семантика `exactly-once`. | Exactly-once гарантирует отсутствие и потерь, и дубликатов — это более строгое требование с overhead транзакций. Если дубликаты допустимы, at-least-once проще и эффективнее. ❌ ПОСЛЕДСТВИЕ: команда over-engineering exactly-once с Kafka transactions для простых orders. Throughput падает 30% от transaction overhead, complexity растёт. Should be at-least-once + idempotent consumer.
-> - [x] Для обработки заказов с гарантией, что ни один заказ не потеряется, но возможны дубликаты, нужна семантика `at-least-once`. | At-least-once достигается через `acks=all` + commit после обработки. Дубликаты возможны при сбое между обработкой и commit, поэтому на стороне consumer требуется идемпотентная логика. ✓ ПРИМЕНЯТЬ: e-commerce orders с idempotent processing на consumer side (через unique orderId check в БД); event-driven microservices с at-least-once + idempotent consumers — стандартная архитектура; Spring Kafka @KafkaListener с manual ack. 📋 ПРАВИЛО: «at-least-once + idempotent consumer = practical exactly-once». 🔗 См. Q11 (acks), Q16 (commit), Q23 (exactly-once).
-> - [ ] Для обработки заказов с гарантией, что ни один заказ не потеряется, но возможны дубликаты, нужна семантика `best-effort`. | Такой семантики в Kafka нет. Поддерживаются только at-most-once, at-least-once и exactly-once. ❌ ПОСЛЕДСТВИЕ: разработчик ищет `best-effort` setting, не находит. Tries to invent custom logic, ломает existing semantics.
 
 ## Q23. (!) Как реализовать `Exactly-Once` семантику?
 
@@ -731,12 +599,6 @@ try {
 
 **Ограничения:** Exactly-once работает только **внутри Kafka** (read-process-write). Для внешних систем нужна идемпотентность на стороне приёмника.
 
-> [!mcq]
-> - [ ] Для включения exactly-once семантики в Kafka на стороне Consumer достаточно установить `isolation.level=read_uncommitted`. | `read_uncommitted` (значение по умолчанию) — наоборот, читает все сообщения включая uncommitted от aborted транзакций. Это нарушает exactly-once. ❌ ПОСЛЕДСТВИЕ: payment processing видит aborted transactions, обрабатывает rolled-back payments. Customer charged для cancelled order. Refund process triggered. Production support escalation.
-> - [x] Для включения exactly-once семантики в Kafka на стороне Consumer достаточно установить `isolation.level=read_committed`. | `read_committed` заставляет consumer читать только сообщения из успешно закоммиченных транзакций, пропуская uncommitted и aborted — обязательный параметр для exactly-once на стороне чтения. ✓ ПРИМЕНЯТЬ: для exactly-once read-process-write — `enable.idempotence=true + transactional.id (Producer) + isolation.level=read_committed (Consumer)`; Kafka Streams uses этот pattern; Confluent's Streams DSL автоматически настраивает. 📋 ПРАВИЛО: «exactly-once = idempotent + transactional + read_committed». 🔗 См. Q12 (idempotent), Q22 (semantics), Q24 (transactions).
-> - [ ] Для включения exactly-once семантики в Kafka на стороне Consumer достаточно установить `isolation.level=serializable`. | Такого значения у Kafka параметра `isolation.level` нет. Допустимые значения: `read_uncommitted` и `read_committed`. ❌ ПОСЛЕДСТВИЕ: разработчик из РСУБД-мира ставит `serializable`, JVM throws ConfigException. Pod не запускается. Right values: только read_uncommitted / read_committed.
-> - [ ] Для включения exactly-once семантики в Kafka на стороне Consumer достаточно установить `isolation.level=repeatable_read`. | Это уровень изоляции из SQL, а не Kafka. В Kafka только `read_uncommitted` и `read_committed`. ❌ ПОСЛЕДСТВИЕ: разработчик путает SQL и Kafka isolation levels. Тратит время на debugging «непонятного» ConfigException. SQL transaction model не applies к Kafka.
-
 ## Q24. Что такое транзакции в `Kafka`?
 
 Транзакции позволяют атомарно записывать сообщения в несколько топиков/партиций и коммитить consumer offsets.
@@ -752,12 +614,6 @@ try {
 3. `send()` — отправка сообщений
 4. `sendOffsetsToTransaction()` — привязка consumer offsets
 5. `commitTransaction()` / `abortTransaction()` — завершение
-
-> [!mcq]
-> - [x] Состояние Kafka-транзакций хранится во внутреннем топике `__transaction_state` под управлением Transaction Coordinator. | Transaction Coordinator — это специальный брокер, отвечающий за жизненный цикл транзакции. Все состояния транзакций (ongoing, prepare, commit, abort) persisted в `__transaction_state` с compaction. ✓ ПРИМЕНЯТЬ: при failover Transaction Coordinator (broker crash) состояние восстанавливается из `__transaction_state`; transaction.state.log.replication.factor=3 для production; для exactly-once read-process-write нужен `transactional.id` с retention. 📋 ПРАВИЛО: «transactions = __transaction_state topic + Coordinator». 🔗 См. Q22 (semantics), Q23 (exactly-once).
-> - [ ] Состояние Kafka-транзакций хранится во внутреннем топике `__consumer_offsets` под управлением Group Coordinator. | `__consumer_offsets` хранит committed offsets consumer-групп, а не состояние транзакций. Для транзакций выделен отдельный топик `__transaction_state`. ❌ ПОСЛЕДСТВИЕ: разработчик мониторит `__consumer_offsets` ожидая увидеть transaction state. Не находит, тратит часы на debugging. Правильно: `__transaction_state`.
-> - [ ] Состояние Kafka-транзакций хранится во внутреннем топике `__cluster_metadata` под управлением KRaft Controller. | `__cluster_metadata` — топик KRaft для метаданных кластера (топики, партиции, ACL). Состояние транзакций в нём не хранится. ❌ ПОСЛЕДСТВИЕ: команда смешивает все internal topics, делает неверные backup стратегии. Critical transaction state не backed up отдельно.
-> - [ ] Состояние Kafka-транзакций хранится в оперативной памяти Transaction Coordinator без persistence. | Без persistence транзакции бы терялись при падении координатора. Именно топик `__transaction_state` обеспечивает восстановление состояния после failover. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает что после crash Transaction Coordinator транзакции «исчезают». Реально они persist и восстанавливаются — может приводить к долгому recovery после crash при много active transactions.
 
 ## Q25. (!) Как интегрировать `Kafka` со `Spring Boot`?
 
@@ -789,12 +645,6 @@ spring:
 - `@KafkaListener` — аннотация для consumer'ов
 - `ProducerFactory` / `ConsumerFactory` — фабрики для конфигурации
 - `KafkaListenerContainerFactory` — управление контейнером listener'ов
-
-> [!mcq]
-> - [ ] В Spring Boot для отправки сообщений в Kafka используется бин `KafkaProducer`, создаваемый вручную. | Spring Kafka предоставляет высокоуровневую обёртку `KafkaTemplate`. Прямое использование `KafkaProducer` нетипично — теряются интеграция с tracing, метрики и обработка ошибок. ❌ ПОСЛЕДСТВИЕ: разработчик создаёт `new KafkaProducer<>()` вручную, теряет автоматический Micrometer metrics, OpenTelemetry tracing, transactional support. Дополнительно нужен manual lifecycle management.
-> - [x] В Spring Boot для отправки сообщений в Kafka используется бин `KafkaTemplate`, создаваемый через `ProducerFactory`. | `KafkaTemplate` — стандартная абстракция Spring Kafka, обёртка над `KafkaProducer` с поддержкой SpEL, tracing, callbacks и transactional. Создаётся автоматически из `ProducerFactory`. ✓ ПРИМЕНЯТЬ: Spring Boot 3+ автоматически создаёт `KafkaTemplate` через `KafkaAutoConfiguration` если есть `bootstrap-servers`; `@Transactional` для transactional sends; `kafkaTemplate.executeInTransaction()` для inline transactions. 📋 ПРАВИЛО: «Spring Kafka = KafkaTemplate, не KafkaProducer вручную». 🔗 См. Q24 (transactions), Q26 (Producer config), Q27 (Consumer).
-> - [ ] В Spring Boot для отправки сообщений в Kafka используется бин `KafkaSender`, создаваемый через `SenderFactory`. | Таких бинов в Spring Kafka нет. `KafkaSender` существует в проекте Reactor Kafka, но это другая библиотека, не стандартный Spring Kafka. ❌ ПОСЛЕДСТВИЕ: разработчик путает Spring Kafka и Reactor Kafka, ищет `KafkaSender` — не находит. Часы потеряны до выяснения правильной библиотеки.
-> - [ ] В Spring Boot для отправки сообщений в Kafka используется бин `KafkaPublisher`, создаваемый через Spring Cloud Stream. | Spring Cloud Stream имеет другие абстракции (binder, StreamBridge), и это отдельный модуль. Для прямой работы с Kafka используется `KafkaTemplate`. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает что Spring Cloud Stream — это Spring Kafka. Misalign конфигурации, конфликты dependencies. Spring Cloud Stream — для абстракции от broker (Kafka/RabbitMQ/AWS Kinesis).
 
 ## Q26. Как настроить `Producer` в `Spring Kafka`?
 
@@ -829,12 +679,6 @@ public class OrderEventProducer {
     }
 }
 ```
-
-> [!mcq]
-> - [ ] `KafkaTemplate.send()` блокирует поток до получения подтверждения от всех ISR-реплик. | Метод не блокирующий — он возвращает Future немедленно. Для синхронного ожидания нужно явно вызвать `.get()` на возвращённом Future. ❌ ПОСЛЕДСТВИЕ: разработчик не вызывает `.get()`, считает send blocking. На production ошибка отправки игнорируется silently. Messages теряются без logging.
-> - [ ] `KafkaTemplate.send()` возвращает `Mono<SendResult>` из Project Reactor для реактивной обработки. | `Mono` используется в Reactor Kafka, а не в стандартном Spring Kafka. `KafkaTemplate` возвращает `CompletableFuture`. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `.subscribe()` — compile error. Тратит время на разбирательство почему. Реально только Reactor Kafka использует Mono/Flux, обычный Spring Kafka — CompletableFuture.
-> - [ ] `KafkaTemplate.send()` возвращает `void` и сообщения отправляются полностью асинхронно без обратной связи. | Метод возвращает Future, через который можно получить информацию об отправке (partition, offset, timestamp) или ошибку. Fire-and-forget без обратной связи невозможен. ❌ ПОСЛЕДСТВИЕ: разработчик игнорирует возвращаемый Future, fire-and-forget код. Send errors silently lost, no observability. Production debugging кошмар при потере events.
-> - [x] `KafkaTemplate.send()` возвращает `CompletableFuture<SendResult>`, который завершается после подтверждения брокером. | С Spring Kafka 3.0+ метод возвращает `CompletableFuture` (ранее был `ListenableFuture`). Это позволяет асинхронно обрабатывать результат отправки и обрабатывать ошибки через `.exceptionally()`. ✓ ПРИМЕНЯТЬ: `kafkaTemplate.send(...).whenComplete((res, ex) -> { if (ex != null) handleError(ex); })` для async handling; для blocking — `.get(5, SECONDS)` с timeout; CompletableFuture composes well с другими async APIs (WebFlux, R2DBC). 📋 ПРАВИЛО: «Spring Kafka 3+ = CompletableFuture, не ListenableFuture». 🔗 См. Q25 (Spring), Q27 (Consumer), Q28 (errors).
 
 ## Q27. (!) Как настроить `Consumer` с `@KafkaListener`?
 
@@ -881,12 +725,6 @@ public ConcurrentKafkaListenerContainerFactory<String, OrderEvent>
 }
 ```
 
-> [!mcq]
-> - [ ] Параметр `factory.setConcurrency(3)` в Spring Kafka создаёт 3 `KafkaTemplate` для параллельной отправки сообщений. | Concurrency относится к Consumer, а не Producer. `KafkaTemplate` — это один объект, а параллелизм на стороне отправки регулируется многопоточностью приложения. ❌ ПОСЛЕДСТВИЕ: разработчик ставит concurrency для Producer factory ожидая throughput improvement. Setting ignored, дни на поиск bottleneck. Producer parallelism — через `@Async` методы или `parallelStream()`.
-> - [x] Параметр `factory.setConcurrency(3)` в Spring Kafka создаёт 3 потока consumer, которые параллельно читают партиции топика. | Concurrency указывает, сколько KafkaMessageListenerContainer-ов создать внутри `ConcurrentKafkaListenerContainerFactory`. Каждый контейнер — отдельный поток consumer, партиции распределяются между ними. ✓ ПРИМЕНЯТЬ: для топика с 10 партициями — `concurrency=10` (1 thread per partition); для I/O-bound processing — concurrency = partitions; для CPU-bound — concurrency = CPU cores. Spring Boot Actuator `kafka_listener_processing_time` показывает per-listener metrics. 📋 ПРАВИЛО: «concurrency = partition count для max parallelism». 🔗 См. Q14 (Consumer Group), Q27 (KafkaListener), Q15 (rebalance).
-> - [ ] Параметр `factory.setConcurrency(3)` в Spring Kafka создаёт 3 потока для параллельной обработки одного сообщения. | Одно сообщение обрабатывается одним потоком последовательно. Concurrency масштабирует количество consumer-ов в рамках одного приложения, а не обработку отдельного сообщения. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает что message processing parallelizable. Архитектурный misunderstanding, complex chunk processing logic не работает.
-> - [ ] Параметр `factory.setConcurrency(3)` в Spring Kafka создаёт 3 отдельных Consumer Group с разными `group.id`. | Concurrency не создаёт новые группы — все потоки используют одну и ту же Consumer Group. Новая группа требовала бы отдельного `group.id` в конфигурации. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает 3x message processing (3 groups получают каждое сообщение). Реально 3 threads share партиции в одной group. Misexpectation для broadcast scenarios.
-
 ## Q28. Как обрабатывать ошибки в `Spring Kafka`?
 
 **`DefaultErrorHandler`** (Spring Kafka 2.8+) — стандартный обработчик ошибок:
@@ -918,12 +756,6 @@ public DefaultErrorHandler errorHandler(KafkaTemplate<String, Object> kafkaTempl
 - **DLT (Dead Letter Topic)** — отправка в отдельный топик для анализа
 - **Skip** — пропуск проблемного сообщения
 - **Stop** — остановка consumer
-
-> [!mcq]
-> - [x] В Spring Kafka стандартный обработчик необрабатываемых сообщений — `DeadLetterPublishingRecoverer`, который отправляет сообщение в DLT. | `DeadLetterPublishingRecoverer` — рекомендуемый recoverer в `DefaultErrorHandler`: после исчерпания retry сообщение публикуется в топик `<original>.DLT` с сохранением headers (причина, stack trace). ✓ ПРИМЕНЯТЬ: production setup — DLT topic с 7-day retention, alerts на DLT message count > 0; manual reprocessing через консольный консьюмер DLT после fix; Spring Kafka 2.8+ default `DefaultErrorHandler`. 📋 ПРАВИЛО: «retry then DLT, не block consumer». 🔗 См. Q27 (Consumer), Q29 (testing), Q22 (semantics).
-> - [ ] В Spring Kafka стандартный обработчик необрабатываемых сообщений — `DeadLetterQueueRecoverer`, который отправляет сообщение в DLQ. | Класс называется `DeadLetterPublishingRecoverer`, а не `DeadLetterQueueRecoverer`. В Kafka терминологии обычно говорят DLT (Dead Letter Topic), а не DLQ. ❌ ПОСЛЕДСТВИЕ: разработчик из RabbitMQ ставит DLQ terminology, ищет соответствующие классы. Confusion с naming conventions.
-> - [ ] В Spring Kafka стандартный обработчик необрабатываемых сообщений — `FailedMessageRecoverer`, который логирует сообщение и продолжает обработку. | Такого класса в Spring Kafka нет. Recoverer по умолчанию — `DeadLetterPublishingRecoverer`, а альтернативы типа `ConsumerRecordRecoverer` — лишь интерфейс. ❌ ПОСЛЕДСТВИЕ: разработчик ищет несуществующий класс, тратит время на debug. Реально нужно использовать `DeadLetterPublishingRecoverer` или собственный `ConsumerRecordRecoverer`.
-> - [ ] В Spring Kafka стандартный обработчик необрабатываемых сообщений — `RetryRecoverer`, который отправляет сообщение повторно. | Retry выполняется через `DefaultErrorHandler` с `BackOff`, а не отдельным recoverer. Recoverer вызывается только после исчерпания retry. ❌ ПОСЛЕДСТВИЕ: разработчик путает retry и recovery, не понимает архитектуру error handling. Pipeline зависает на failed messages.
 
 ## Q29. Как тестировать `Kafka` в `Spring Boot`?
 
@@ -970,12 +802,6 @@ class KafkaIntegrationTest {
 }
 ```
 
-> [!mcq]
-> - [ ] Для unit-тестирования без внешней зависимости в Spring Boot используется аннотация `@Testcontainers` с `KafkaContainer`. | Testcontainers поднимает реальный Docker-контейнер Kafka — это интеграционный тест, не unit. И требует Docker как внешнюю зависимость. ❌ ПОСЛЕДСТВИЕ: команда использует Testcontainers в unit tests, CI медленный (Docker pull, container startup ~30s). Тесты flaky на CI без Docker daemon. Используют для integration tests только.
-> - [x] Для unit-тестирования без внешней зависимости в Spring Boot используется аннотация `@EmbeddedKafka` с `EmbeddedKafkaBroker`. | `@EmbeddedKafka` из spring-kafka-test поднимает встроенный брокер внутри JVM, без Docker и внешних зависимостей. Идеально для быстрых unit/integration тестов с минимальной инфраструктурой. ✓ ПРИМЕНЯТЬ: `@SpringBootTest @EmbeddedKafka(partitions=1, topics={"orders"})` — fast tests без Docker; для integration testing — Testcontainers с реальным Kafka image; production-grade testing — comparison против реального cluster. 📋 ПРАВИЛО: «unit = EmbeddedKafka, integration = Testcontainers». 🔗 См. Q25 (Spring), Q27 (KafkaListener).
-> - [ ] Для unit-тестирования без внешней зависимости в Spring Boot используется аннотация `@MockKafka` с `MockKafkaBroker`. | Таких аннотаций в Spring Kafka нет. Для тестирования без настоящего брокера можно мокать `KafkaTemplate` через Mockito, но не через `@MockKafka`. ❌ ПОСЛЕДСТВИЕ: разработчик ищет `@MockKafka`, не находит. Тратит время на debugging несуществующего API.
-> - [ ] Для unit-тестирования без внешней зависимости в Spring Boot используется аннотация `@KafkaTest` с автоматическим брокером. | Аннотации `@KafkaTest` не существует. Стандартный путь — `@EmbeddedKafka` для встроенного брокера в JVM. ❌ ПОСЛЕДСТВИЕ: разработчик путает с `@WebMvcTest`/`@DataJpaTest` слайсами Spring Boot. Не находит `@KafkaTest`, тратит часы.
-
 ## Q30. (!) Что такое `Kafka Streams`?
 
 `Kafka Streams` — клиентская библиотека для потоковой обработки данных, встроенная в Kafka. В отличие от `Apache Flink` или `Spark Streaming`, не требует отдельного кластера — работает как обычное Java-приложение.
@@ -993,12 +819,6 @@ class KafkaIntegrationTest {
 | Stateless | Stateful (KTable, state stores) |
 | Ручное управление offset | Автоматическое |
 | Нет join/aggregate | Полноценные join, aggregate, windowing |
-
-> [!mcq]
-> - [ ] Kafka Streams — это отдельный distributed processing cluster, который разворачивается рядом с Kafka. | Это описание Apache Flink или Spark Streaming, но не Kafka Streams. Kafka Streams специально спроектирован без необходимости отдельной инфраструктуры обработки. ❌ ПОСЛЕДСТВИЕ: команда выделяет 6 серверов под «Kafka Streams cluster». Wasted resources, infrastructure complexity. Realize через 2 недели — это library, не cluster.
-> - [ ] Kafka Streams — это плагин для Kafka Brokers, выполняющий обработку прямо на брокерах. | Kafka Streams не работает на брокерах — это чисто клиентская библиотека. Брокеры занимаются только хранением и доставкой данных. ❌ ПОСЛЕДСТВИЕ: разработчик пытается deploy Streams jars на broker side. Brokers OOM, cluster unstable. Architecture violation.
-> - [x] Kafka Streams — это клиентская библиотека, которая работает внутри JVM-приложения без отдельного кластера. | Kafka Streams не требует dedicated processing cluster: это обычная Java-библиотека, запускаемая как часть приложения. Масштабирование достигается запуском большего числа инстансов приложения. ✓ ПРИМЕНЯТЬ: вместо deploy Spark Streaming cluster (10+ серверов) — запустить Spring Boot app с Kafka Streams в Kubernetes (3 pods); LinkedIn использует Kafka Streams для real-time analytics; cost savings 5-10x от убирания отдельной инфраструктуры. 📋 ПРАВИЛО: «Kafka Streams = library, не cluster». 🔗 См. Q22 (semantics), Q31 (KStream/KTable), Q32 (Spring Streams).
-> - [ ] Kafka Streams — это UI-инструмент для визуального проектирования pipeline-обработки сообщений. | Kafka Streams — это API и runtime, а не UI. Для визуального проектирования есть другие инструменты (Confluent Flow), но это не часть Kafka Streams. ❌ ПОСЛЕДСТВИЕ: разработчик ищет «Kafka Streams UI», не находит. Уходит на Confluent Flow paid product. Реально нужен код через Streams DSL.
 
 ## Q31. Какие основные абстракции в `Kafka Streams`?
 
@@ -1027,12 +847,6 @@ KTable<String, Long> orderCounts = orders
 highValue.to("high-value-orders");
 orderCounts.toStream().to("order-statistics");
 ```
-
-> [!mcq]
-> - [ ] `KStream` представляет changelog-таблицу с upsert-семантикой по ключу. | Это описание `KTable`, а не `KStream`. KStream — это бесконечный append-only поток событий, где каждая запись независима. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает upsert behavior на KStream, видит дубликаты в результате. Архитектурный bug — нужен `KStream.toTable()` или `groupByKey().reduce()`.
-> - [x] `KStream` представляет бесконечный поток записей (insert-only) без семантики обновления по ключу. | KStream моделирует event stream: каждое сообщение — это независимый факт (событие), который добавляется к потоку. Одинаковые ключи не заменяют предыдущие — они сосуществуют. ✓ ПРИМЕНЯТЬ: KStream для events (orders, clicks, payments — каждое уникальное); KTable для state (current user profile, latest balance — upsert by key); GlobalKTable для reference data (countries, currencies); правильный выбор экономит RocksDB storage. 📋 ПРАВИЛО: «KStream = events (insert), KTable = state (upsert)». 🔗 См. Q30 (Kafka Streams), Q32 (Spring Streams).
-> - [ ] `KStream` представляет материализованное состояние, реплицированное на все инстансы приложения. | Это описание `GlobalKTable`, а не KStream. GlobalKTable доступен из всех инстансов целиком и используется для broadcast reference data. ❌ ПОСЛЕДСТВИЕ: разработчик путает KStream и GlobalKTable, использует KStream для reference data — joins не работают как ожидается, lookup logic ломается.
-> - [ ] `KStream` представляет локальное хранилище состояния на основе RocksDB. | Это описание `State Store`, а не KStream. State Store хранит accumulated state, тогда как KStream — это поток событий. ❌ ПОСЛЕДСТВИЕ: разработчик ищет «как читать из KStream как из RocksDB», не понимает архитектуру. Streaming model требует другого mental model.
 
 ## Q32. Как использовать `Kafka Streams` в `Spring Boot`?
 
@@ -1065,12 +879,6 @@ public class KafkaStreamsConfig {
 }
 ```
 
-> [!mcq]
-> - [x] Для включения Kafka Streams в Spring Boot необходима аннотация `@EnableKafkaStreams` на конфигурационном классе. | `@EnableKafkaStreams` активирует инфраструктуру Spring Kafka Streams: автоматический старт `StreamsBuilder` и управление жизненным циклом `KafkaStreams`. Без неё бины streams не будут созданы. ✓ ПРИМЕНЯТЬ: `@EnableKafkaStreams` + `KafkaStreamsConfiguration` бин = production setup; для exactly-once — `processing.guarantee=exactly_once_v2`; topology через `StreamsBuilder` injection. 📋 ПРАВИЛО: «@EnableKafkaStreams для Streams, @EnableKafka для Listener». 🔗 См. Q30 (Kafka Streams), Q31 (KStream/KTable).
-> - [ ] Для включения Kafka Streams в Spring Boot необходима аннотация `@EnableKafka` на конфигурационном классе. | `@EnableKafka` включает только поддержку `@KafkaListener` (consumer), но не Kafka Streams DSL. Для streams нужна специальная аннотация `@EnableKafkaStreams`. ❌ ПОСЛЕДСТВИЕ: разработчик ставит `@EnableKafka` ожидая Streams support, бины StreamsBuilder не создаются. Tries to debug autowire failure. Wrong annotation.
-> - [ ] Для включения Kafka Streams в Spring Boot необходима аннотация `@EnableStreams` на конфигурационном классе. | Такой аннотации в Spring Kafka не существует. Правильная — `@EnableKafkaStreams`. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `@EnableStreams`, compile error. Тратит время на поиск correct annotation.
-> - [ ] Для включения Kafka Streams в Spring Boot необходима аннотация `@KafkaStreamsConfig` на конфигурационном классе. | Такой аннотации нет. Активация — через `@EnableKafkaStreams`, а конфигурация — через бин `KafkaStreamsConfiguration`. ❌ ПОСЛЕДСТВИЕ: разработчик путает annotation и configuration class, не понимает разницу. Pipeline не запускается.
-
 ## Q33. Что такое `Kafka Connect`?
 
 `Kafka Connect` — фреймворк для интеграции Kafka с внешними системами без написания кода. Работает через **коннекторы** — плагины для чтения/записи данных.
@@ -1085,12 +893,6 @@ public class KafkaStreamsConfig {
 - `Elasticsearch Sink` — индексация в [Elasticsearch](../databases/elasticsearch-interview.md)
 - `S3 Sink` — сохранение в S3
 - `FileStream` — работа с файлами
-
-> [!mcq]
-> - [x] Для production-использования Kafka Connect рекомендуется режим `distributed`, с кластером воркеров и REST API. | Distributed mode обеспечивает отказоустойчивость (конфигурация и состояние connectors хранятся в Kafka), горизонтальное масштабирование и управление через REST API. Это стандарт production-развёртывания. ✓ ПРИМЕНЯТЬ: 3+ workers в Kubernetes Deployment с REST API behind Service; конфигурация через POST /connectors; Confluent Cloud Connect — managed distributed mode. 📋 ПРАВИЛО: «production = distributed, dev = standalone». 🔗 См. Q34 (Source/Sink), Q35 (Schema Registry), Q44 (production).
-> - [ ] Для production-использования Kafka Connect рекомендуется режим `standalone`, с одним процессом на одной машине. | Standalone — это режим для разработки и тестирования. Он не отказоустойчив: падение процесса останавливает все connectors, а конфигурация хранится в локальных файлах. ❌ ПОСЛЕДСТВИЕ: команда deploy standalone в production. Single point of failure: при падении сервера весь CDC pipeline останавливается, downstream сервисы получают stale data.
-> - [ ] Для production-использования Kafka Connect рекомендуется режим `embedded`, встроенный в ваше приложение. | Такого режима у Kafka Connect нет. Connect — отдельный процесс или кластер, а не библиотека для встраивания в приложения. ❌ ПОСЛЕДСТВИЕ: разработчик пытается встроить Kafka Connect в Spring Boot app. Не находит embedded API, тратит дни.
-> - [ ] Для production-использования Kafka Connect рекомендуется режим `cluster-less`, с serverless-моделью выполнения. | Такого режима у Apache Kafka Connect нет. Serverless-варианты существуют как отдельные managed-сервисы, но не стандартный Kafka Connect. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает serverless. Реально нужен managed service (Confluent Cloud, AWS MSK Connect) или self-hosted cluster.
 
 ## Q34. В чём разница между `Source` и `Sink Connector`?
 
@@ -1107,12 +909,6 @@ graph LR
     K -->|S3 Sink| S3[(Amazon S3)]
 ```
 
-> [!mcq]
-> - [ ] Для переноса данных из PostgreSQL в Kafka используется `Sink Connector` (например, JDBC Sink). | Sink Connector работает в обратном направлении: Kafka → внешняя система. Для чтения из PostgreSQL в Kafka нужен Source Connector. ❌ ПОСЛЕДСТВИЕ: разработчик настраивает JDBC Sink с PostgreSQL credentials, ожидая что данные потекут из БД в Kafka. Sink Connector ожидает Kafka topics как input, ошибки при startup. Wasted dev time.
-> - [x] Для переноса данных из PostgreSQL в Kafka используется `Source Connector` (например, Debezium CDC или JDBC Source). | Source Connector читает данные из внешней системы и публикует в Kafka. Debezium использует CDC через логический replication PostgreSQL, а JDBC Source — периодический polling запросов. ✓ ПРИМЕНЯТЬ: для real-time CDC — Debezium PostgreSQL Connector через wal2json/pgoutput logical replication; для batch sync — JDBC Source с timestamp.column для incremental polling; Schema Registry integration для Avro serialization. 📋 ПРАВИЛО: «Source = из external в Kafka, Sink = из Kafka в external». 🔗 См. Q33 (Kafka Connect), Q35 (Schema Registry).
-> - [ ] Для переноса данных из PostgreSQL в Kafka используется `Stream Connector`, выполняющий потоковую обработку. | Такого типа коннектора нет. Kafka Connect различает только Source и Sink connectors — обработка потоков отдельно, через Kafka Streams. ❌ ПОСЛЕДСТВИЕ: разработчик путает Kafka Connect и Kafka Streams. Архитектура misalign, complex pipeline без чёткого разделения.
-> - [ ] Для переноса данных из PostgreSQL в Kafka используется `Bridge Connector`, работающий двунаправленно. | Kafka Connect не имеет bi-directional connectors. Каждый connector — либо Source, либо Sink. Для двунаправленной интеграции нужны два отдельных connector. ❌ ПОСЛЕДСТВИЕ: команда ожидает один bi-directional connector для bi-directional sync. Реально нужны 2 connectors с риском infinite loop. Architecture review необходим.
-
 ## Q35. (!) Зачем нужен `Schema Registry`?
 
 `Schema Registry` — сервис для хранения и валидации схем данных (`Avro`, `Protobuf`, `JSON Schema`). Решает проблему совместимости между producer'ами и consumer'ами при эволюции схемы.
@@ -1124,12 +920,6 @@ graph LR
 - `NONE` — без проверок
 
 **Зачем на собеседовании:** показывает понимание проблем эволюции контрактов в [event-driven архитектуре](../architecture/event-driven-patterns-interview.md).
-
-> [!mcq]
-> - [x] Режим совместимости `BACKWARD` означает, что новая схема может читать данные, записанные старой схемой. | Backward — самый распространённый режим: consumer-ы обновляются первыми, и новая версия схемы умеет читать старые данные. Типично допускает добавление полей с default и удаление необязательных. ✓ ПРИМЕНЯТЬ: production schema evolution — `compatibility.level=BACKWARD` для consumers updated first deployment strategy; добавление nullable fields — backward compatible; удаление required field — breaking change. Confluent рекомендует BACKWARD по умолчанию. 📋 ПРАВИЛО: «BACKWARD = новый consumer читает старые данные». 🔗 См. Q33 (Kafka Connect), Q34 (Source/Sink), Q47 (Schema wire format).
-> - [ ] Режим совместимости `BACKWARD` означает, что старая схема может читать данные, записанные новой схемой. | Это описание `FORWARD`-совместимости. Backward работает в обратном направлении: новая схема читает старые данные. ❌ ПОСЛЕДСТВИЕ: команда выбирает FORWARD когда нужен BACKWARD. Producers обновляются первыми, старые consumers ломаются на новых fields.
-> - [ ] Режим совместимости `BACKWARD` означает, что обе схемы могут читать данные друг друга. | Это описание `FULL`-совместимости, которая объединяет BACKWARD и FORWARD. BACKWARD покрывает только одно направление. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает full compatibility, но allowed только BACKWARD changes. Schema validation rejects добавление required fields.
-> - [ ] Режим совместимости `BACKWARD` означает, что схемы не проверяются на совместимость перед регистрацией. | Это описание режима `NONE`. BACKWARD, наоборот, включает строгую проверку в одном направлении. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает что BACKWARD пропускает breaking changes. Реально blocks schema updates, deployment пайплайн застревает.
 
 ## Q36. (!) Что такое `Consumer Lag` и как его измерить?
 
@@ -1153,12 +943,6 @@ Consumer Lag:                 30 сообщений
 - Увеличить `max.poll.records`
 - Проверить backpressure и GC-паузы
 
-> [!mcq]
-> - [ ] Consumer Lag вычисляется как разница `committed_offset - current_offset`. | Формула обратная: LEO минус committed. Committed и current offset — это позиции consumer-а, а LEO — это конечная позиция лога, куда нужно догнать. ❌ ПОСЛЕДСТВИЕ: разработчик мониторит wrong formula, alerts triggered не вовремя. Production consumer reads с lag 1M, не получает alert.
-> - [x] Consumer Lag вычисляется как разница `log_end_offset - committed_offset` и показывает отставание consumer-а. | Lag — это количество непрочитанных consumer-ом сообщений: разница между последним записанным offset в партиции (LEO) и последним закоммиченным offset consumer-группы. ✓ ПРИМЕНЯТЬ: Prometheus + kafka-exporter — `kafka_consumergroup_lag`; алерты на `lag > 10K` или `lag growth > 1K/min`; Burrow от LinkedIn — production-grade lag monitoring; для AKHQ/Kafka UI — встроенный lag display. 📋 ПРАВИЛО: «lag = LEO - committed offset». 🔗 См. Q14 (Consumer), Q16 (commit), Q37 (metrics).
-> - [ ] Consumer Lag вычисляется как разница `log_end_offset - high_watermark` и показывает отставание репликации. | Разница между LEO и HW — это отставание репликации followers, а не consumer lag. Consumer lag измеряется относительно committed offset самого consumer-а. ❌ ПОСЛЕДСТВИЕ: разработчик путает replication lag и consumer lag, делает неправильные alerts. SLA monitoring сломан.
-> - [ ] Consumer Lag вычисляется как разница `current_timestamp - message_timestamp` и выражается в секундах. | Это lag во временных единицах (временной лаг), а не классический offset-based lag. В Kafka обычно говорят именно про offset-lag, а timestamp-lag — дополнительная метрика. ❌ ПОСЛЕДСТВИЕ: команда ставит alerts на time-based lag, но throughput skewed по времени (high message density). Real consumer health misrepresented.
-
 ## Q37. Какие ключевые метрики `Kafka` нужно мониторить?
 
 | Метрика | Что показывает | Порог тревоги |
@@ -1176,12 +960,6 @@ Consumer Lag:                 30 сообщений
 - `Prometheus` + `Grafana` + `kafka-exporter`
 - `Confluent Control Center`
 - `AKHQ` / `Kafka UI` / `Kafdrop`
-
-> [!mcq]
-> - [ ] Метрика `UnderReplicatedPartitions` > 0 означает, что consumer-ы читают быстрее, чем producer-ы записывают. | Эта метрика не связана со скоростью consumer-ов. Она отражает состояние репликации между брокерами, а не consumer lag. ❌ ПОСЛЕДСТВИЕ: разработчик путает с consumer lag, добавляет consumers ожидая решения. Реально проблема в брокере, добавление consumers только повышает нагрузку.
-> - [ ] Метрика `UnderReplicatedPartitions` > 0 означает, что в кластере слишком мало брокеров для создания новых топиков. | Метрика отражает текущее состояние существующих партиций, а не ёмкость кластера. Проблема с созданием новых топиков проявилась бы через другие метрики. ❌ ПОСЛЕДСТВИЕ: команда добавляет брокеры ожидая что метрика упадёт. Реальная проблема — slow disk на existing broker, новые брокеры не помогают.
-> - [x] Метрика `UnderReplicatedPartitions` > 0 означает, что часть реплик партиций отстала от Leader и требует внимания. | Под under-replicated подразумеваются партиции, где текущий ISR меньше полного replication factor. Это индикатор проблем с брокером, сетью или диском — критический алерт для production. ✓ ПРИМЕНЯТЬ: Prometheus alert `kafka_server_replicamanager_underreplicatedpartitions > 0 for 5m`; диагностика — broker logs, disk I/O, network throughput; Confluent рекомендует это metric №1 для health check. 📋 ПРАВИЛО: «UnderReplicated > 0 = критический алерт». 🔗 См. Q18 (replication), Q19 (ISR), Q20 (failover).
-> - [ ] Метрика `UnderReplicatedPartitions` > 0 означает, что schema registry недоступен для некоторых партиций. | Schema Registry — отдельный сервис и не связан с метрикой replication. UnderReplicatedPartitions — это чисто внутренний индикатор репликации в кластере Kafka. ❌ ПОСЛЕДСТВИЕ: команда дебажит Schema Registry, тратит часы. Реально нужно смотреть Kafka broker health.
 
 ## Q38. Как масштабировать `Kafka`-кластер?
 
@@ -1207,12 +985,6 @@ kafka-reassign-partitions.sh --bootstrap-server localhost:9092 \
 - Reassignment — ресурсоёмкий процесс (throttle через `--throttle`)
 - Больше партиций → дольше rebalance и leader election
 
-> [!mcq]
-> - [ ] После создания топика с N партициями в Kafka можно свободно уменьшить количество партиций до M < N. | Kafka не поддерживает уменьшение числа партиций. Такая операция нарушила бы гарантии порядка по ключу: сообщения с одним ключом могут оказаться в разных партициях. ❌ ПОСЛЕДСТВИЕ: разработчик создал 100 партиций «на всякий случай», throughput не растёт. Хочет уменьшить до 24 — нельзя. Решение: пересоздать топик и replay данные.
-> - [x] После создания топика с N партициями в Kafka можно только увеличить количество партиций до M > N. | Увеличение партиций поддерживается через `kafka-topics.sh --alter --partitions`. Однако старые сообщения остаются в своих партициях, и ключи могут перераспределиться по другим партициям — это может нарушить порядок. ✓ ПРИМЕНЯТЬ: при переходе с 12 на 24 партиций — order по customerId сломается! Решение: pre-create достаточные partitions с самого начала; для увеличения — graceful migration через mirror topic. 📋 ПРАВИЛО: «увеличить можно, уменьшить нет, ключи могут переместиться». 🔗 См. Q6 (partitions), Q9 (partitioner).
-> - [ ] После создания топика с N партициями в Kafka можно изменить количество партиций только на следующую степень двойки. | Ограничения по степени двойки в Kafka нет. Можно указать любое положительное число больше текущего. ❌ ПОСЛЕДСТВИЕ: разработчик ставит partition count в power of 2 для «оптимизации hash», теряет правильное sizing для actual throughput. Лучше — формула из throughput requirements.
-> - [ ] После создания топика с N партициями в Kafka нельзя изменить количество партиций вообще. | Увеличение партиций поддерживается полностью. Запрещено только уменьшение — и то по соображениям консистентности данных. ❌ ПОСЛЕДСТВИЕ: команда не масштабирует partitions (думая «нельзя»), throughput застревает на текущем уровне. Реально можно — kafka-topics.sh --alter.
-
 ## Q39. Как обеспечить безопасность в `Kafka`?
 
 | Уровень | Механизм | Описание |
@@ -1236,12 +1008,6 @@ spring:
       trust-store-location: classpath:kafka.truststore.jks
       trust-store-password: changeit
 ```
-
-> [!mcq]
-> - [x] Параметр `security.protocol=SASL_SSL` означает шифрование соединения через TLS и аутентификацию через SASL. | SASL_SSL — комбинация двух механизмов: SSL/TLS обеспечивает шифрование трафика, а SASL (например, SCRAM-SHA-256, OAUTHBEARER) — проверку личности клиента. Это production-стандарт для публичных сетей. ✓ ПРИМЕНЯТЬ: AWS MSK с SASL/SCRAM authentication; Confluent Cloud с OAUTHBEARER tokens; mTLS через `SSL` для сервис-сервис в Kubernetes (cert-manager); rotation tokens через Vault. 📋 ПРАВИЛО: «production = SASL_SSL, dev = PLAINTEXT». 🔗 См. Q40 (DLT), Q44 (production).
-> - [ ] Параметр `security.protocol=SASL_PLAINTEXT` означает шифрование соединения через TLS и аутентификацию через SASL. | SASL_PLAINTEXT использует SASL для аутентификации, но БЕЗ шифрования (данные идут plaintext). Подходит только для закрытых сетей. ❌ ПОСЛЕДСТВИЕ: команда использует SASL_PLAINTEXT в публичной сети, считая что «SASL значит security». Credentials и messages — в plaintext, intercepted. CVE / data breach.
-> - [ ] Параметр `security.protocol=PLAINTEXT` означает шифрование соединения через TLS и аутентификацию через SASL. | PLAINTEXT — это отсутствие и шифрования, и аутентификации. Это дефолтный режим для dev/localhost, но небезопасный для production. ❌ ПОСЛЕДСТВИЕ: разработчик копирует dev config в production, exposes Kafka cluster без защиты. Любой может read/write topics. Compliance violation, security audit failed.
-> - [ ] Параметр `security.protocol=SSL` означает шифрование соединения через TLS и аутентификацию через SASL. | SSL использует только TLS с mTLS-аутентификацией через сертификаты, но БЕЗ SASL. SASL подключается только через SASL_SSL или SASL_PLAINTEXT. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает SASL credentials в SSL-mode, не понимает почему authentication fails. Часы на debug. Mode-mixing typical issue.
 
 ## Q40. (!) Что такое `Dead Letter Queue` (DLQ) в `Kafka`?
 
@@ -1269,12 +1035,6 @@ public DefaultErrorHandler errorHandler(KafkaTemplate<String, Object> template) 
 - Мониторить DLT — алерт при появлении сообщений
 - Реализовать механизм replay из DLT
 
-> [!mcq]
-> - [ ] Dead Letter Topic в Kafka — это отдельный топик, в который сообщение попадает сразу при первом возникновении ошибки без retry. | DLT обычно используется ПОСЛЕ исчерпания всех retry-попыток. Отправка в DLT без retry возможна, но это не типичная стратегия — сначала нужно дать шанс восстановиться. ❌ ПОСЛЕДСТВИЕ: разработчик отправляет в DLT при первой ошибке. Transient errors (network blip) попадают в DLT, manual replay overhead растёт. Ops team perpetually overworked.
-> - [x] Dead Letter Topic в Kafka — это отдельный топик, в который сообщение попадает после исчерпания всех retry-попыток. | DLT — паттерн для изоляции «ядовитых» сообщений, которые не удаётся обработать даже после нескольких retry. Spring Kafka через `DeadLetterPublishingRecoverer` автоматизирует этот процесс. ✓ ПРИМЕНЯТЬ: production setup с retry attempts=3 + exponential backoff + DLT; alerts на DLT message count > 0; manual replay tool для DLT после fix; Spring Kafka `@RetryableTopic` для non-blocking retry pattern. 📋 ПРАВИЛО: «retry first, DLT last». 🔗 См. Q28 (errors), Q43 (retry patterns).
-> - [ ] Dead Letter Topic в Kafka — это отдельный топик, в который сообщение попадает после превышения retention-периода оригинального топика. | Retention и DLT — несвязанные механизмы. Просроченные сообщения просто удаляются, а в DLT попадают только те, которые не удалось обработать. ❌ ПОСЛЕДСТВИЕ: разработчик путает retention и error handling, ожидает что expired messages автоматически попадут в DLT. Реально просто удаляются. Audit logs missing.
-> - [ ] Dead Letter Topic в Kafka — это отдельный топик, в который автоматически копируются все успешно обработанные сообщения для аудита. | Это описание audit log, а не DLT. Dead Letter предназначен именно для проблемных сообщений, а не для аудита успешной обработки. ❌ ПОСЛЕДСТВИЕ: разработчик использует DLT как audit log, успешные messages забивают DLT. Real failures masked в noise, monitoring сломан.
-
 ## Q41. (!) Как спроектировать правильную топологию топиков?
 
 **Принципы проектирования:**
@@ -1290,12 +1050,6 @@ public DefaultErrorHandler errorHandler(KafkaTemplate<String, Object> template) 
 - Использование topic-per-consumer
 - Частая смена числа партиций
 - Отсутствие schema evolution стратегии
-
-> [!mcq]
-> - [x] Для топика со справочными данными (курсы валют, справочник пользователей) рекомендуется `cleanup.policy=compact`. | Compact сохраняет только последнее значение по ключу, что идеально для справочников: любой consumer может прочитать актуальное состояние с начала топика без ограничения retention по времени. ✓ ПРИМЕНЯТЬ: для CDC snapshots — `cleanup.policy=compact`; для GlobalKTable lookups в Kafka Streams; для config topics (Kafka Connect, MirrorMaker offsets); Kafka сам хранит `__consumer_offsets` как compacted. 📋 ПРАВИЛО: «reference data = compact, events = delete». 🔗 См. Q3 (topics), Q31 (KStream/KTable).
-> - [ ] Для топика со справочными данными (курсы валют, справочник пользователей) рекомендуется `cleanup.policy=delete`. | Delete удаляет старые сегменты по retention — но справочные данные должны оставаться доступны всегда. При delete consumer не сможет прочитать исторические справочники. ❌ ПОСЛЕДСТВИЕ: команда ставит delete на справочники. Через 7 дней consumer при rebuild state ничего не находит. Production outage.
-> - [ ] Для топика со справочными данными (курсы валют, справочник пользователей) рекомендуется `cleanup.policy=none`. | Такого значения у параметра `cleanup.policy` в Kafka нет. Допустимые: `delete`, `compact` и комбинированное `compact,delete`. ❌ ПОСЛЕДСТВИЕ: разработчик ставит несуществующее значение, JVM throws ConfigException. Topic creation fails, deployment blocked.
-> - [ ] Для топика со справочными данными (курсы валют, справочник пользователей) рекомендуется `cleanup.policy=archive`. | Такого значения у параметра `cleanup.policy` в Kafka нет. Архивация — это отдельный паттерн через S3 Sink или tiered storage, а не встроенная политика. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает auto-archive, реально нужен Kafka Connect S3 Sink или Kafka 3.6+ Tiered Storage отдельно.
 
 ## Q42. В чём разница между `Kafka` и `RabbitMQ`?
 
@@ -1313,12 +1067,6 @@ public DefaultErrorHandler errorHandler(KafkaTemplate<String, Object> template) 
 
 **Когда Kafka:** высокий throughput, event-sourcing, data pipeline, replay нужен.
 **Когда RabbitMQ:** task queues, сложный routing, request-reply, низкие объёмы.
-
-> [!mcq]
-> - [ ] В RabbitMQ сообщение после успешной доставки consumer-у по умолчанию сохраняется в очереди до истечения TTL. | В RabbitMQ после ACK от consumer сообщение сразу удаляется из очереди — оно считается обработанным. Сохранение до TTL — это поведение Kafka с retention. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает RabbitMQ replay capability, обнаруживает что messages исчезли. Архитектурный mismatch для use case, нужна migration на Kafka.
-> - [x] В RabbitMQ сообщение после успешной доставки consumer-у (ACK) удаляется из очереди немедленно. | Это фундаментальное отличие RabbitMQ от Kafka: классический message broker удаляет сообщения после подтверждения. Replay невозможен без специальных настроек (например, stream queues). ✓ ПРИМЕНЯТЬ: RabbitMQ для task queues (отправка email, image processing — обработал и забыл); Kafka для event streaming (analytics, audit, replay); для гибрида — RabbitMQ + Kafka Connect для archival. 📋 ПРАВИЛО: «RabbitMQ = task queue (delete after ACK), Kafka = event log (retention-based)». 🔗 См. Q1 (overview), Q22 (semantics).
-> - [ ] В RabbitMQ сообщение после успешной доставки consumer-у реплицируется на все брокеры для отказоустойчивости. | Репликация в RabbitMQ происходит при публикации (mirrored queues, quorum queues), а не после доставки consumer-у. После ACK сообщение удаляется даже с реплик. ❌ ПОСЛЕДСТВИЕ: команда ожидает replication как в Kafka, не настраивает quorum queues. При broker crash messages теряются.
-> - [ ] В RabbitMQ сообщение после успешной доставки consumer-у переносится в архивную очередь на 7 дней. | В RabbitMQ нет автоматической архивации сообщений после ACK. Удаление происходит сразу, архив — внешний паттерн (например, через shovel plugin). ❌ ПОСЛЕДСТВИЕ: команда ожидает auto-archive в RabbitMQ, audit log пуст. Нужно reimplement через shovel/federation plugins или migrate на Kafka.
 
 ## Q43. Какие паттерны retry применяются с `Kafka`?
 
@@ -1344,12 +1092,6 @@ orders → orders-retry-0 → orders-retry-1 → orders-DLT
 - Используйте `ScheduledExecutorService` или Kafka timestamp для delayed retry
 
 **Рекомендация:** `@RetryableTopic` в Spring Kafka — самый удобный вариант для non-blocking retry.
-
-> [!mcq]
-> - [ ] `@RetryableTopic` в Spring Kafka реализует blocking retry в том же потоке consumer-а с Thread.sleep. | Это описание blocking retry через `DefaultErrorHandler` с `FixedBackOff`. `@RetryableTopic` наоборот избегает блокировки потока, используя отдельные топики. ❌ ПОСЛЕДСТВИЕ: разработчик использует blocking retry с большим backoff (60s), весь Consumer Group застревает на одном сообщении. Throughput всех partitions падает. Решение: non-blocking retry.
-> - [ ] `@RetryableTopic` в Spring Kafka реализует retry через повторную отправку сообщения Producer-ом в оригинальный топик. | Повторная отправка в оригинальный топик нарушила бы порядок и затруднила отслеживание попыток. Spring Kafka использует отдельные retry-топики для изоляции. ❌ ПОСЛЕДСТВИЕ: команда пишет custom retry с re-publish в оригинальный топик. Order broken, infinite loop, downstream chaos.
-> - [ ] `@RetryableTopic` в Spring Kafka реализует retry через сохранение сообщения в Redis с периодическим опросом. | Redis не используется в этой схеме. Retry-состояние хранится в самих retry-топиках Kafka с помощью headers и timestamp. ❌ ПОСЛЕДСТВИЕ: разработчик добавляет Redis в архитектуру для retry, complexity растёт. Реально retry-топики достаточно — Kafka self-contained.
-> - [x] `@RetryableTopic` в Spring Kafka реализует non-blocking retry через отдельные retry-топики с растущей задержкой. | Сообщение при ошибке публикуется в `<topic>-retry-0`, `<topic>-retry-1` и т.д. Это освобождает основной поток consumer-а и позволяет обрабатывать другие сообщения во время backoff. ✓ ПРИМЕНЯТЬ: `@RetryableTopic(attempts="3", backoff=@Backoff(delay=1000, multiplier=2))` — exponential backoff non-blocking; для long-running retries (часы) — обязательно non-blocking; Spring Kafka 2.7+. 📋 ПРАВИЛО: «non-blocking retry через retry-топики, не Thread.sleep». 🔗 См. Q28 (errors), Q40 (DLT), Q42 (Kafka vs RabbitMQ).
 
 ## Q44. (!) Какие практические советы для production-использования `Kafka`?
 
@@ -1381,12 +1123,6 @@ orders → orders-retry-0 → orders-retry-1 → orders-DLT
 - Тестируйте failover-сценарии
 - Используйте `KRaft` (Kafka 4.0+) — избавьтесь от ZooKeeper
 - Schema Registry для эволюции контрактов
-
-> [!mcq]
-> - [ ] Рекомендуемая production-конфигурация брокеров: `replication.factor=1`, `min.insync.replicas=1`. | При replication.factor=1 нет репликации и любая потеря брокера = потеря данных. Это конфигурация для dev/тестов, абсолютно неприемлемая для production. ❌ ПОСЛЕДСТВИЕ: production cluster с RF=1, broker crash — потеря всех данных партиций crashed broker. SOX audit failure, business critical events lost.
-> - [ ] Рекомендуемая production-конфигурация брокеров: `replication.factor=2`, `min.insync.replicas=2`. | При RF=2 и MISR=2 любая недоступность одного брокера блокирует запись. Не хватает запаса для плановых обновлений — рекомендуется RF=3. ❌ ПОСЛЕДСТВИЕ: rolling restart cluster с RF=2, MISR=2 — каждый restart блокирует writes на 30+ секунд. Producer ошибки `NotEnoughReplicasException`, downstream cascade failures.
-> - [x] Рекомендуемая production-конфигурация брокеров: `replication.factor=3`, `min.insync.replicas=2`. | Это стандарт Kafka best practices: RF=3 обеспечивает отказоустойчивость к потере одного брокера, MISR=2 гарантирует, что данные всегда записаны минимум на 2 реплики перед ACK. ✓ ПРИМЕНЯТЬ: production setup `RF=3 + MISR=2 + acks=all + unclean.leader.election=false`; для multi-AZ (AWS) — replicas spread across 3 zones; LinkedIn, Netflix, Uber — все используют RF=3 standard. 📋 ПРАВИЛО: «production = RF=3, MISR=2, acks=all». 🔗 См. Q11 (acks), Q19 (ISR), Q20 (failover), Q21 (unclean).
-> - [ ] Рекомендуемая production-конфигурация брокеров: `replication.factor=5`, `min.insync.replicas=4`. | Такая конфигурация избыточна для большинства use case: увеличивает storage в 5 раз и latency записи. RF=3 достаточен для 99.9% сценариев. ❌ ПОСЛЕДСТВИЕ: команда выставляет RF=5 «для безопасности», storage costs 67% выше необходимого; latency p99 hub-to-hub растёт. AWS S3 archive cost растёт пропорционально.
 
 ## Q45. (!) Как работает `Consumer Group Rebalancing` и что такое `Static Membership`?
 
@@ -1447,12 +1183,6 @@ spring:
 | `session.timeout.ms` | Таймаут до объявления consumer мёртвым | 30000–60000 |
 | `max.poll.interval.ms` | Макс. время между poll() вызовами | 300000 (5 мин) |
 | `group.instance.id` | Статический ID для Static Membership | Имя pod/instance |
-
-> [!mcq]
-> - [ ] Static Membership через `group.instance.id` гарантирует консистентное чтение всех партиций одним consumer. | group.instance.id не меняет политику распределения — партиции по-прежнему делятся между consumer-ами группы. Он только делает membership «sticky» через рестарты. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает single-consumer behavior, ставит group.instance.id для multiple consumers, удивляется почему партиции делятся. Misunderstanding semantics.
-> - [ ] Static Membership через `group.instance.id` исключает необходимость heartbeat и session timeout. | Heartbeat и session timeout остаются: они требуются для обнаружения смерти consumer. Static Membership лишь даёт больше времени на рестарт до запуска rebalance. ❌ ПОСЛЕДСТВИЕ: разработчик отключает heartbeat ожидая что static membership «всё решит». Dead consumers занимают partitions, throughput падает.
-> - [ ] Static Membership через `group.instance.id` позволяет consumer-у читать из нескольких Consumer Group одновременно. | Один consumer может быть только в одной группе. `group.instance.id` — идентификатор внутри группы, а не механизм принадлежности к нескольким группам. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает multi-group membership, не находит. Реально нужно создать два consumers с разными group.id.
-> - [x] Static Membership через `group.instance.id` позволяет consumer-у переиспользовать membership при рестарте и избежать rebalance. | При установке `group.instance.id` consumer при перезапуске в пределах `session.timeout.ms` возвращается с тем же ID и получает назад свои партиции без rebalance. Критично для stateful приложений (Kafka Streams). ✓ ПРИМЕНЯТЬ: для Kafka Streams в Kubernetes — `group.instance.id=<pod-name>` через StatefulSet; rolling deploy без rebalance; Kafka 2.3+. 📋 ПРАВИЛО: «static membership = no rebalance при restart до session.timeout.ms». 🔗 См. Q14 (Consumer), Q15 (rebalance), Q49 (State Store).
 
 ## Q46. (!) Что такое `Log Compaction` и как работает `__consumer_offsets`?
 
@@ -1521,12 +1251,6 @@ kafka-consumer-groups.sh \
 ```
 
 **Compaction для `__consumer_offsets`:** при commit нового offset старый удаляется из топика — хранится только актуальный offset для каждой `(group, topic, partition)` тройки.
-
-> [!mcq]
-> - [ ] Чтобы удалить ключ из compacted-топика, необходимо отправить сообщение с этим ключом и `value="DELETE"`. | Строка "DELETE" не имеет специального значения в Kafka. Удаление происходит только через null-value tombstone, а не через значение-маркер. ❌ ПОСЛЕДСТВИЕ: разработчик пишет custom delete marker "DELETE", consumer интерпретирует как обычное value. GDPR compliance broken — данные не удалены.
-> - [ ] Чтобы удалить ключ из compacted-топика, необходимо вызвать `admin.deleteRecords()` с указанием ключа. | Admin API `deleteRecords` работает на уровне offset (удаляет диапазон до указанного offset), а не по ключу. Удаление по ключу в compacted — только через tombstone. ❌ ПОСЛЕДСТВИЕ: разработчик пытается deleteRecords для GDPR compliance, удаляет range offsets — также теряет data других ключей. Critical data loss.
-> - [x] Чтобы удалить ключ из compacted-топика, необходимо отправить сообщение с этим ключом и `value=null` (tombstone). | Tombstone — специальная запись в Kafka с null-value. После compaction она удаляет все предыдущие записи с этим ключом, а сама tombstone живёт `delete.retention.ms` (24 часа по умолчанию) и затем удаляется. ✓ ПРИМЕНЯТЬ: GDPR right-to-erasure — отправлять tombstone для удаления user data из compacted topic; CDC delete events — Debezium создаёт tombstone при DELETE row; KStream `groupByKey().reduce((a,b) -> b == null ? null : b)` для cleanup. 📋 ПРАВИЛО: «delete in compact = null-value tombstone». 🔗 См. Q3 (topics), Q41 (topology), Q49 (State Store).
-> - [ ] Чтобы удалить ключ из compacted-топика, необходимо дождаться истечения `retention.ms` для этого ключа. | В compacted-топиках retention по времени не применяется к отдельным ключам — compaction работает по правилу «последнее значение на ключ». Единственный способ удалить ключ — tombstone. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает что `retention.ms` удалит keys из compacted topic. Реально keys там вечно (пока не tombstone). Storage растёт безгранично.
 
 ## Q47. Как `Schema Registry` хранит схемы и обеспечивает совместимость?
 
@@ -1600,12 +1324,6 @@ curl -X POST http://schema-registry:8081/compatibility/subjects/orders-value/ver
 - `RecordNameStrategy`: по имени Avro record
 - `TopicRecordNameStrategy`: `<topic>-<record_name>`
 
-> [!mcq]
-> - [ ] Сообщение с Avro сериализацией содержит на диске: `[avro encoded payload]` без служебных байтов. | Без schema_id consumer не сможет узнать, какой схемой десериализовать сообщение. Формат обязательно включает magic byte и schema_id. ❌ ПОСЛЕДСТВИЕ: разработчик пишет Avro без Schema Registry, hardcoded schema на consumer side. Schema evolution невозможна — все breaking changes ломают consumers.
-> - [x] Сообщение с Avro сериализацией содержит на диске: `[magic byte 0x00][schema_id 4 bytes][avro encoded payload]`. | Это стандартный wire format Confluent: первый байт — magic number для идентификации формата, следующие 4 байта — schema_id из Schema Registry, далее — данные в Avro binary формате. Consumer запрашивает схему по schema_id. ✓ ПРИМЕНЯТЬ: Confluent Schema Registry + KafkaAvroSerializer/KafkaAvroDeserializer — стандарт для Avro в Kafka; protobuf и JSON Schema поддерживают такой же wire format; magic byte `0x00` — Confluent convention. 📋 ПРАВИЛО: «Confluent wire format = magic byte + schema_id + payload». 🔗 См. Q35 (Schema Registry), Q34 (Source/Sink), Q41 (topology).
-> - [ ] Сообщение с Avro сериализацией содержит на диске: `[schema JSON][avro encoded payload]`. | Вставка полной JSON-схемы в каждое сообщение многократно увеличит объём данных. Confluent подход специально использует короткий schema_id, запрашивая полную схему из Registry по требованию. ❌ ПОСЛЕДСТВИЕ: разработчик пишет custom serializer с inline JSON schema. Storage 5x bigger, network bandwidth 5x higher. AWS S3 archive cost растёт 5x.
-> - [ ] Сообщение с Avro сериализацией содержит на диске: `[topic name][schema_id][avro encoded payload]`. | Имя топика не входит в payload сообщения — оно известно из контекста (имя партиции/топика). В wire format только magic byte + schema_id + данные. ❌ ПОСЛЕДСТВИЕ: разработчик дублирует topic name в payload, ожидая использовать. Wasted bytes per message, накапливается significant overhead.
-
 ## Q48. (!) Как реализовать `Exactly-Once` с помощью транзакций `Kafka` и `idempotent producer`?
 
 **Три уровня гарантий:**
@@ -1677,12 +1395,6 @@ spring:
 ```
 
 `exactly_once_v2` использует одну транзакцию на партицию (vs одна на task в v1) — меньше overhead.
-
-> [!mcq]
-> - [ ] Для exactly-once в Kafka Streams рекомендуется `processing.guarantee=at_least_once`. | At-least-once допускает дубликаты — это не exactly-once. Для строгой exactly-once семантики нужен `exactly_once_v2`. ❌ ПОСЛЕДСТВИЕ: финансовая обработка с at_least_once дубликатами — double-charged customers. Refund process triggered, customer support escalations.
-> - [ ] Для exactly-once в Kafka Streams рекомендуется `processing.guarantee=exactly_once_beta`. | Значения `exactly_once_beta` в Kafka Streams нет. Было `exactly_once` (v1) и `exactly_once_v2`. Beta-название использовалось внутри разработки, но не в публичном API. ❌ ПОСЛЕДСТВИЕ: разработчик читает старую документацию с `exactly_once_beta`, JVM throws ConfigException at startup. Pod не запускается.
-> - [ ] Для exactly-once в Kafka Streams рекомендуется `processing.guarantee=strict_exactly_once`. | Такого значения у параметра `processing.guarantee` не существует. Допустимые: `at_least_once`, `exactly_once` (устаревшее) и `exactly_once_v2`. ❌ ПОСЛЕДСТВИЕ: разработчик придумывает несуществующее значение, тратит часы на debug. Допустимые только официальные значения.
-> - [x] Для exactly-once в Kafka Streams рекомендуется `processing.guarantee=exactly_once_v2`. | В v2 одна транзакция покрывает всю партицию (не отдельный task), что значительно снижает overhead. Требует Kafka 2.5+ и считается рекомендуемым вариантом вместо устаревшего `exactly_once`. ✓ ПРИМЕНЯТЬ: финансовые pipeline — `processing.guarantee=exactly_once_v2`; для high-throughput accept at-least-once + idempotent consumer; benchmark показал 30-50% throughput improvement v2 vs v1. 📋 ПРАВИЛО: «Kafka Streams 2.5+ = exactly_once_v2, не v1». 🔗 См. Q22 (semantics), Q23 (exactly-once), Q24 (transactions).
 
 ## Q49. Что такое `Kafka Streams State Store` и как реализовать `stateful`-обработку?
 
@@ -1756,12 +1468,6 @@ spring:
       properties:
         num.standby.replicas: 1  # 1 standby replica для каждого state store
 ```
-
-> [!mcq]
-> - [ ] State Store в Kafka Streams реплицируется через ZooKeeper для отказоустойчивости. | ZooKeeper не используется для State Store. Данные реплицируются через специальный changelog-топик Kafka с `cleanup.policy=compact`. ❌ ПОСЛЕДСТВИЕ: разработчик планирует ZooKeeper-based replication, рассчитывает sizing на ZooKeeper. Реально нужны Kafka topics для changelogs.
-> - [x] State Store в Kafka Streams реплицируется через changelog-топик Kafka с `cleanup.policy=compact`. | Для каждого state store Kafka Streams автоматически создаёт changelog-топик с compaction. При падении инстанса новый инстанс восстанавливает state из changelog, читая последнее значение по каждому ключу. ✓ ПРИМЕНЯТЬ: для production state restoration в reasonable time — `num.standby.replicas=1` для warm replicas; `acceptable.recovery.lag` для тюнинга; partition-aware replication через `group.instance.id`. 📋 ПРАВИЛО: «State Store recovery = changelog topic с compaction». 🔗 См. Q31 (KStream/KTable), Q32 (Spring Streams), Q45 (Static Membership).
-> - [ ] State Store в Kafka Streams реплицируется через Redis-кэш для быстрого восстановления. | Redis не используется. State Store реплицируется через сам Kafka — это одно из преимуществ: не требует внешних зависимостей для HA. ❌ ПОСЛЕДСТВИЕ: команда добавляет Redis для State Store backup, complexity растёт, дополнительная dependency. Реально Kafka self-sufficient.
-> - [ ] State Store в Kafka Streams реплицируется через прямую peer-to-peer связь между инстансами. | P2P-репликации между инстансами нет. Kafka Streams не напрямую общается между собой для данных — всё идёт через changelog-топик Kafka. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает что инстансы будут общаться через mesh для state sync. Реально recovery через Kafka — медленно для огромных state stores, но без external infra.
 
 ## Q50. Как организовать мониторинг `__consumer_offsets` и `Consumer Lag` алертинг?
 
@@ -1840,12 +1546,6 @@ groups:
 2. `max.poll.records` слишком велик — уменьшите или оптимизируйте обработку
 3. Downstream-зависимость (БД, внешний API) — circuit breaker, async processing
 4. GC паузы в JVM — настройка heap и GC-алгоритма
-
-> [!mcq]
-> - [x] Для production-алертинга Kafka Consumer Lag лучший подход — PromQL-алерт на метрику `kafka_consumer_fetch_manager_records_lag_max` с threshold и длительностью. | Метрика `records.lag.max` экспортируется клиентом Kafka через Micrometer и видна в Prometheus/Victoria Metrics. Алерт с `for: 5m` исключает ложные срабатывания при кратковременных всплесках. ✓ ПРИМЕНЯТЬ: production setup — `lag_max > 10000 for 5m` (warning), `lag_max > 100000 for 2m` (critical); Burrow от LinkedIn для advanced lag analysis (включая stalled consumer detection); AKHQ UI для quick check. 📋 ПРАВИЛО: «production alerting = Prometheus + records.lag.max metric». 🔗 См. Q36 (Consumer Lag), Q37 (metrics), Q44 (production).
-> - [ ] Для production-алертинга Kafka Consumer Lag лучший подход — периодический запуск `kafka-consumer-groups.sh --describe` через cron и парсинг вывода. | Скриптовый подход не масштабируется: требует ssh на брокер, нет истории метрик, нет группировки и визуализации. Подходит только для ad-hoc проверок. ❌ ПОСЛЕДСТВИЕ: команда пишет cron jobs с парсингом CLI output, на 100 consumer groups — flaky, не работает при network blip. Standard answer: Prometheus.
-> - [ ] Для production-алертинга Kafka Consumer Lag лучший подход — опрос `__consumer_offsets` напрямую как обычного топика. | Прямое чтение `__consumer_offsets` технически возможно, но сложно: нужно декодировать служебный формат ключей/значений. Метрики через Micrometer — стандартный и простой путь. ❌ ПОСЛЕДСТВИЕ: команда пишет custom decoder для `__consumer_offsets` binary format, сотни строк кода. Готовый Micrometer + Prometheus solution — 5 минут.
-> - [ ] Для production-алертинга Kafka Consumer Lag лучший подход — запрос к Transaction Coordinator через Admin API каждые 10 секунд. | Transaction Coordinator отвечает за транзакции, а не за consumer offsets. Для offsets используется Group Coordinator. Частые запросы к AdminClient создают нагрузку на брокер. ❌ ПОСЛЕДСТВИЕ: команда DDoS-ит Group Coordinator polling каждые 10s от 50 monitoring instances. Throughput всех partitions страдает.
 
 ---
 

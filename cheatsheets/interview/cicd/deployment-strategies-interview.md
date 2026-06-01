@@ -199,13 +199,6 @@ spec:
 
 **Практика:** образ тегировать по версии (`myapp:1.2.3`); перед переключением проверить readiness всех подов green и smoke-тесты. При откате — одна команда смены selector: `kubectl patch svc myapp -p '{"spec":{"selector":{"version":"blue"}}}'`; не удалять blue до стабилизации green.
 
-
-> [!mcq]
-> - [ ] Blue-Green требует даунтайм при переключении — нельзя избежать прерывания | ❌ ПОСЛЕДСТВИЕ: переключение Service selector мгновенное; именно для zero-downtime переключения 100% трафика и нужен Blue-Green
-> - [ ] После успешного переключения blue-окружение нужно сразу удалить для экономии | ❌ ПОСЛЕДСТВИЕ: удаление blue до стабилизации green = нет возможности мгновенного отката; держать blue как минимум несколько часов/дней
-> - [x] Два идентичных окружения; 100% трафика переключается одной командой (selector/DNS); old остаётся для instant rollback | ✓ ПРИМЕНЯТЬ: критичные сервисы с zero-downtime требованием + нужен мгновенный rollback 📋 ПРАВИЛО: Blue-Green = 2x infra cost + instant switch + instant rollback 🔗 См. Q2
-> - [ ] Blue-Green и Canary одно и то же — оба постепенно переключают трафик | ❌ ПОСЛЕДСТВИЕ: Canary — постепенная смена % трафика; Blue-Green — мгновенное переключение 100%; цель и механизм разные
-
 ## Q2. (!) Что такое Canary деплой и чем он отличается от Blue-Green?
 
 **Canary** — новая версия получает небольшую долю трафика (например, 5%); остальной трафик — на старую. Долю постепенно увеличивают при отсутствии ошибок.
@@ -271,13 +264,6 @@ spec:
 ```
 
 При стабильных метриках долю v2 увеличивают до 50%, затем 100%. При росте ошибок или latency трафик возвращают на v1. Инструменты `Flagger`, `Argo Rollouts` автоматизируют Canary: анализируют метрики из [Prometheus](../monitoring/metrics-tracing-interview.md) и продвигают или откатывают новую версию.
-
-
-> [!mcq]
-> - [ ] Canary требует двойной инфраструктуры как Blue-Green | ❌ ПОСЛЕДСТВИЕ: Canary добавляет только N% новых подов (5-10%); Blue-Green требует 2x; Canary экономичнее
-> - [ ] Canary нельзя автоматизировать — только ручное переключение процентов | ❌ ПОСЛЕДСТВИЕ: Flagger и Argo Rollouts автоматизируют Canary: анализируют метрики Prometheus и автоматически rollback при деградации
-> - [ ] При Canary нельзя откатиться — трафик уже на новой версии | ❌ ПОСЛЕДСТВИЕ: старая версия работает параллельно; при деградации трафик возвращается на 100% старой версии за секунды
-> - [x] Небольшой % трафика (5-10%) на новую версию; постепенное увеличение при стабильных метриках; Flagger/Argo Rollouts автоматизируют | ✓ ПРИМЕНЯТЬ: безопасное тестирование новой версии на реальном трафике без полного переключения 📋 ПРАВИЛО: Canary = A/B на метриках; auto-promote или auto-rollback 🔗 См. Q1
 
 ## Q3. (!) Что такое Rolling Update и как он работает в Kubernetes?
 
@@ -348,13 +334,6 @@ spec:
 
 **Плюсы:** не требует двойных ресурсов; постепенное обновление. **Минусы:** кратковременное сосуществование версий; откат — повторный rolling к предыдущей версии. При `maxUnavailable: 0` и `maxSurge: 1` обновление медленнее, но гарантирован нулевой простой. При `maxSurge: 25%` и `maxUnavailable: 25%` (значения по умолчанию) — быстрее, но допускается временная недоступность части подов.
 
-
-> [!mcq]
-> - [ ] Rolling update гарантирует zero-downtime при любых настройках | ❌ ПОСЛЕДСТВИЕ: при maxUnavailable > 0 возможны краткие недоступности; для zero-downtime нужен maxUnavailable: 0 + readinessProbe
-> - [ ] Rolling update не поддерживает откат — нужен Blue-Green для rollback | ❌ ПОСЛЕДСТВИЕ: kubectl rollout undo deployment/myapp откатывает к предыдущей версии; Rolling update поддерживает rollback через --to-revision
-> - [ ] При Rolling update все версии доступны одновременно — нет migration проблем | ❌ ПОСЛЕДСТВИЕ: две версии работают параллельно; БД-миграции и API-изменения должны быть backward-compatible иначе ошибки на старых подах
-> - [x] Поды обновляются постепенно: maxSurge=25% создаёт новые, maxUnavailable=25% убивает старые; обе версии работают параллельно | ✓ ПРИМЕНЯТЬ: ресурсоэффективное обновление без двойной инфраструктуры; требуется backward compatibility 📋 ПРАВИЛО: Rolling = постепенно + без 2x cost; нужна DB backward compat 🔗 См. Q1
-
 ## Q4. Что такое Recreate стратегия и когда её применять?
 
 **Recreate** — все старые поды (инстансы) останавливаются, затем создаются новые. Будет простой на время перезапуска.
@@ -388,13 +367,6 @@ spec:
 В отличие от `RollingUpdate` нет одновременной работы старых и новых подов — подходит для `StatefulSet` с общим хранилищем или для приложений, где миграция схемы несовместима со старой версией. Окно простоя можно минимизировать быстрым стартом приложения и readiness probe с коротким `initialDelaySeconds`.
 
 **Практика:** планировать `Recreate` в deployment window; перед применением выполнить миграцию БД (если нужна), затем обновить образ. Для минимизации простоя — быстрый старт приложения (Spring Boot с `spring.main.lazy-initialization=true` для dev).
-
-
-> [!mcq]
-> - [ ] Recreate — самая быстрая стратегия для production с минимальным риском | ❌ ПОСЛЕДСТВИЕ: Recreate создаёт downtime (все поды удаляются перед созданием новых); подходит только для dev/staging или когда backward-incompatible изменения обязательны
-> - [x] Recreate: все поды убиваются → downtime → новые поды создаются; применять при невозможности двух версий параллельно | ✓ ПРИМЕНЯТЬ: backward-incompatible DB schema change; singleton stateful services; когда downtime допустим 📋 ПРАВИЛО: Recreate = запланированный даунтайм; Blue-Green/Rolling = zero-downtime 🔗 См. Q1
-> - [ ] Recreate не поддерживается Kubernetes — нужен сторонний инструмент | ❌ ПОСЛЕДСТВИЕ: Kubernetes поддерживает Recreate нативно: spec.strategy.type: Recreate в Deployment
-> - [ ] После Recreate старые поды остаются в pending для быстрого rollback | ❌ ПОСЛЕДСТВИЕ: при Recreate все старые поды завершены; для rollback нужен новый деплой; нет instant rollback как в Blue-Green
 
 ## Q5. (!) Как обеспечить zero-downtime при деплое?
 
@@ -459,13 +431,6 @@ spring:
     timeout-per-shutdown-phase: 30s
 ```
 
-
-> [!mcq]
-> - [ ] Zero-downtime достигается автоматически без дополнительной настройки | ❌ ПОСЛЕДСТВИЕ: нужны readinessProbe + graceful shutdown + preStop hook; без них поды получают трафик до готовности и обрываются резко
-> - [ ] readinessProbe и livenessProbe — одно и то же | ❌ ПОСЛЕДСТВИЕ: readinessProbe убирает под из балансировщика при не-ready; livenessProbe рестартует под при зависании; разные цели и последствия
-> - [ ] preStop hook не нужен если есть readinessProbe | ❌ ПОСЛЕДСТВИЕ: без preStop под убивается сразу при SIGTERM; in-flight запросы обрываются; нужен preStop sleep + graceful shutdown timeout
-> - [x] readinessProbe + maxUnavailable:0 + preStop sleep + graceful shutdown обеспечивают zero-downtime | ✓ ПРИМЕНЯТЬ: любой production Rolling Update; readiness убирает из LB, preStop даёт время дочистить 📋 ПРАВИЛО: zero-downtime = readiness + graceful + preStop; все три вместе 🔗 См. Q3
-
 ## Q6. Что такое rollback и как его выполнить в Kubernetes?
 
 **Rollback** — возврат к предыдущей (или заданной) версии приложения. В [Kubernetes](../devops/kubernetes-interview.md):
@@ -487,13 +452,6 @@ kubectl rollout status deployment/myapp
 Ревизии хранятся в `Deployment` (`revisionHistoryLimit`, по умолчанию 10). Откат выполняет тот же механизм, что и деплой (`RollingUpdate` по умолчанию). При откате после миграции БД нужно учитывать обратную совместимость схемы: старая версия приложения должна работать с текущим состоянием БД или откатывать и миграции (`Flyway`/`Liquibase`).
 
 **Практика:** `revisionHistoryLimit` держать достаточным (например, 10); образы предыдущих версий не удалять из registry до истечения политики хранения.
-
-
-> [!mcq]
-> - [ ] kubectl rollout undo удаляет все revision history | ❌ ПОСЛЕДСТВИЕ: undo откатывает к предыдущей ревизии и сохраняет историю; удалить историю нельзя через undo
-> - [ ] После rollback в Kubernetes нужно вручную удалить новые поды | ❌ ПОСЛЕДСТВИЕ: kubectl rollout undo автоматически создаёт поды предыдущей версии и удаляет новые через Rolling Update механизм
-> - [x] kubectl rollout undo deployment/myapp (или --to-revision=N); ревизии хранятся в revisionHistoryLimit; DB миграции нужно проверять на backward compat | ✓ ПРИМЕНЯТЬ: при деградации после деплоя; откат в секунды 📋 ПРАВИЛО: rollback = undo + DB backward compat; образы не удалять до истечения политики 🔗 См. Q3
-> - [ ] revisionHistoryLimit=0 — оптимальная настройка для экономии ресурсов | ❌ ПОСЛЕДСТВИЕ: при revisionHistoryLimit=0 нет истории ревизий; kubectl rollout undo не работает; нет возможности быстрого rollback
 
 ## Q7. Что такое feature flags и как они связаны с деплоем?
 
@@ -528,13 +486,6 @@ feature:
 
 Инструменты: `LaunchDarkly`, `Unleash`, `Spring Cloud Config`, кастомные флаги в БД/конфиге. Для мгновенного отключения при инциденте — внешний сервис с низкой задержкой или `Redis` с TTL 10-30 с.
 
-
-> [!mcq]
-> - [ ] Feature flag — это то же самое что feature branch; оба требуют деплоя | ❌ ПОСЛЕДСТВИЕ: feature flag — runtime toggle без деплоя; feature branch — код в VCS, требует merge+деплой; разные механизмы
-> - [ ] Feature flags нужно хранить в коде; динамическое изменение небезопасно | ❌ ПОСЛЕДСТВИЕ: флаги в коде требуют деплоя для изменения; смысл флагов — изменять behavior без деплоя (Unleash, LaunchDarkly)
-> - [x] Код деплоится с выключенным флагом → флаг включается без деплоя; откат = выключить флаг; Unleash/LaunchDarkly для управления | ✓ ПРИМЕНЯТЬ: риск-снижение при деплое; A/B тестирование; постепенный rollout 📋 ПРАВИЛО: feature flag = deploy code dark + enable flag = zero-risk rollout 🔗 См. Q2
-> - [ ] Feature flags нельзя использовать в Java/Spring — только в JavaScript | ❌ ПОСЛЕДСТВИЕ: Spring Boot @Value + Unleash/FF4J — полноценная поддержка feature flags в Java; широко используется в enterprise
-
 ## Q8. Что такое A/B деплой и когда его использовать?
 
 **A/B деплой** — часть пользователей получает версию A, часть — версию B; сравнение метрик (конверсия, ошибки, latency). Реализуется через Canary (трафик по версиям) или feature flags (разные варианты в одной версии). Использовать для экспериментов (новый UI, алгоритм) и принятия решений на основе данных перед полным переходом.
@@ -565,13 +516,6 @@ spec:
 ```
 
 **Практика:** метрики помечать лейблом варианта (A/B) в [Prometheus / Grafana](../monitoring/metrics-tracing-interview.md); решение о полном переходе — по статистической значимости и минимальному времени эксперимента (1-2 недели). При регрессии по ошибкам или latency — откат варианта B.
-
-
-> [!mcq]
-> - [ ] A/B и Canary — одно и то же; оба делят трафик по % | ❌ ПОСЛЕДСТВИЕ: Canary = стабилизация новой версии (% трафика → 100%); A/B = эксперимент для сравнения (конверсия, UX); цели разные
-> - [ ] A/B тест можно завершить за один день при достаточном трафике | ❌ ПОСЛЕДСТВИЕ: статистическая значимость требует времени; преждевременное завершение — false positive; рекомендуется минимум 1-2 недели
-> - [x] A/B = эксперимент на части пользователей (by header/cookie/userId); сравнение метрик; решение по статзначимости | ✓ ПРИМЕНЯТЬ: новый UI/алгоритм; data-driven decision перед полным переходом 📋 ПРАВИЛО: A/B = experiment → metrics → decision; не путать с Canary = stabilization 🔗 См. Q2
-> - [ ] A/B тест требует два отдельных деплоя и не работает с feature flags | ❌ ПОСЛЕДСТВИЕ: A/B реализуется через feature flags (один деплой, разные варианты в коде) или Canary (разные версии); оба подхода валидны
 
 ## Q9. (!) Как настроить readiness и liveness probe для безопасного деплоя?
 
@@ -621,13 +565,6 @@ spec:
 
 Для Spring Boot приложений — использовать Actuator endpoints `/actuator/health/readiness` и `/actuator/health/liveness` (доступны из коробки с Spring Boot 2.3+). `startupProbe` (Kubernetes 1.20+) отключает readiness/liveness на время старта — полезно для медленно стартующих приложений.
 
-
-> [!mcq]
-> - [ ] liveness probe при неудаче убирает под из балансировщика — он перестаёт получать трафик | ❌ ПОСЛЕДСТВИЕ: liveness failure → контейнер рестартует; убирает из LB только readiness failure; разные последствия
-> - [ ] startupProbe не нужен если initialDelaySeconds достаточный | ❌ ПОСЛЕДСТВИЕ: без startupProbe медленно стартующий под может fail liveness probe до готовности → бесконечный restart loop; startupProbe отключает liveness до первого успешного старта
-> - [x] readinessProbe убирает из балансировщика при не-ready; livenessProbe рестартует контейнер при зависании; startupProbe защищает медленный старт | ✓ ПРИМЕНЯТЬ: всегда для production Spring Boot: /actuator/health/readiness + /actuator/health/liveness 📋 ПРАВИЛО: readiness=traffic; liveness=restart; startup=boot protection 🔗 См. Q5
-> - [ ] Один общий health endpoint /health достаточен для всех probe | ❌ ПОСЛЕДСТВИЕ: /actuator/health/readiness и /actuator/health/liveness — разные endpoints с разными стратегиями; один /health смешивает readiness и liveness семантику
-
 ## Q10. (!) Что такое deployment pipeline и какие этапы в него входят?
 
 **Deployment pipeline** — цепочка этапов от коммита до продакшена. Один и тот же артефакт (образ с тегом по git SHA) промотируется по окружениям.
@@ -658,13 +595,6 @@ graph LR
 
 **Практика:** один и тот же образ (`myapp:${GIT_SHA}` или semver) промотировать по окружениям; конфигурация — `ConfigMap / Secrets` по окружению. После деплоя в prod — этап проверки метрик (error rate, latency); при деградации — автоматический rollback (`Flagger`, `Argo Rollouts`) или алерт.
 
-
-> [!mcq]
-> - [ ] Deployment pipeline собирает разные артефакты для каждого окружения | ❌ ПОСЛЕДСТВИЕ: один образ с тегом по git SHA промотируется по всем окружениям; конфигурация меняется через ConfigMap/Secrets, не пересборкой
-> - [ ] В pipeline тесты запускаются только перед production деплоем | ❌ ПОСЛЕДСТВИЕ: unit тесты → после build; integration тесты → после dev deploy; E2E → после staging; ранняя проверка = дешёвый fix
-> - [ ] Pipeline нужно настраивать отдельно для каждого окружения | ❌ ПОСЛЕДСТВИЕ: один pipeline с параметром environment; образ один и тот же — promote паттерн; разные pipeline для окружений = дублирование и рассинхрон
-> - [x] Один образ (myapp:SHA) собирается один раз → promote по окружениям; конфигурация через ConfigMap/Secrets; smoke tests после prod деплоя | ✓ ПРИМЕНЯТЬ: любой production CI/CD; build once, deploy everywhere 📋 ПРАВИЛО: pipeline = build once + promote + smoke; конфиг снаружи образа 🔗 См. Q6
-
 ## Q11. Что такое immutable deployment и чем он лучше in-place update?
 
 **Immutable deployment** — сервер/контейнер не изменяется «на месте»; новая версия — новый образ/инстанс, старый уничтожается. **In-place update** — обновление кода и конфигурации на том же инстансе (SSH, замена jar).
@@ -680,13 +610,6 @@ graph LR
 В [Kubernetes](../devops/kubernetes-interview.md) деплой по сути immutable: при обновлении образа создаются новые поды с новым образом, старые удаляются; конфигурация инжектируется через `ConfigMap / Secrets`, не меняя образ. Откат — `kubectl rollout undo`.
 
 **Практика:** не менять образ «на месте» (не exec в под и не заменять бинарник); конфигурация только через `ConfigMap / Secrets` или переменные при старте. Образ собирать в CI из кода; тег образа = версия для трассируемости и отката.
-
-
-> [!mcq]
-> - [ ] Immutable deployment нельзя применить для stateful сервисов | ❌ ПОСЛЕДСТВИЕ: StatefulSet в Kubernetes — immutable образ + stateful storage через PVC; state в pod не хранится, а в отдельном volumes; immutable применимо везде
-> - [ ] В Kubernetes можно обновить образ на запущенном поде без его пересоздания | ❌ ПОСЛЕДСТВИЕ: kubectl exec + замена бинарника = violation of immutability; при рестарте под вернётся к образу; правильно — обновить image в Deployment
-> - [x] В Kubernetes нельзя изменять запущенный под: обновление образа = новый под + новый образ; конфигурация через ConfigMap/Secrets; тег образа = версия | ✓ ПРИМЕНЯТЬ: всегда в Kubernetes; не exec в под для изменений 📋 ПРАВИЛО: immutable = new image per change; конфиг снаружи образа через env/ConfigMap 🔗 См. Q3
-> - [ ] kubectl exec в под и замена jar — безопасный способ обновления | ❌ ПОСЛЕДСТВИЕ: изменения в под теряются при рестарте; нет истории версий; нарушение immutability; следующий deployment rollout перезапишет
 
 ## Q12. Как организовать деплой в несколько окружений (dev, staging, prod)?
 
@@ -734,13 +657,6 @@ images:
 
 **Практика:** образ один (`myapp:${GIT_SHA}`); в каждом окружении свои `ConfigMap`/`Secrets` (DB URL, feature flags). В GitOps — [Argo CD или Flux](pipeline-design-interview.md) синхронизируют кластер с выбранным overlay.
 
-
-> [!mcq]
-> - [ ] Immutable deployment и Rolling Update — взаимоисключающие подходы | ❌ ПОСЛЕДСТВИЕ: Rolling Update в Kubernetes — это immutable deployment; новые поды с новым образом, старые удаляются; образ неизменен
-> - [ ] In-place update проще для отката — достаточно перезаписать jar на сервере | ❌ ПОСЛЕДСТВИЕ: в-place нет истории версий; откат = ещё один in-place; нет гарантии идентичности окружения; сложнее чем kubectl rollout undo
-> - [x] Immutable: новый образ → новый под → старый удаляется; rollback = predefined image tag; гарантия идентичности среды | ✓ ПРИМЕНЯТЬ: Kubernetes (default); infrastructure as code; нет configuration drift 📋 ПРАВИЛО: immutable = new image, not in-place update; rollback = image tag 🔗 См. Q3
-> - [ ] Immutable требует хранить образы для всех версий навсегда | ❌ ПОСЛЕДСТВИЕ: политика retention: хранить N последних + tagged releases; старые untagged образы удаляются по политике registry
-
 ## Q13. Что такое database migration при деплое и как её выполнять?
 
 Миграция БД — изменение схемы или данных при выходе новой версии приложения. Инструменты: `Flyway`, `Liquibase`.
@@ -768,13 +684,6 @@ sequenceDiagram
 ```
 
 Подходы: (1) **Backward-compatible** миграции — новая версия работает со старой и новой схемой; миграция выполняется, затем деплой. (2) Миграция в момент деплоя (старт приложения) — риск при откате (нужны обратные миграции). Рекомендация: миграции идемпотентны; тестировать откат схемы отдельно. Expand-contract pattern: добавить → мигрировать данные → удалить старое.
-
-
-> [!mcq]
-> - [ ] Миграцию БД нужно запускать одновременно с деплоем нового кода | ❌ ПОСЛЕДСТВИЕ: при Rolling Update старые поды работают с новой схемой; нужна backward-compatible миграция ДО деплоя или expand-contract pattern
-> - [ ] DROP COLUMN можно выполнять сразу после деплоя новой версии | ❌ ПОСЛЕДСТВИЕ: если rollback нужен — старый код не работает без удалённой колонки; expand-contract: добавить → мигрировать данные → удалить только в следующем релизе
-> - [x] Backward-compatible миграция ПЕРЕД деплоем; expand-contract для breaking changes; Flyway/Liquibase для управления | ✓ ПРИМЕНЯТЬ: Rolling Update + DB schema change; нужен forward/backward compat 📋 ПРАВИЛО: миграция до деплоя + expand-contract = zero-risk DB change 🔗 См. Q3
-> - [ ] Liquibase и Flyway нельзя запускать в Kubernetes — только на отдельном сервере | ❌ ПОСЛЕДСТВИЕ: Flyway/Liquibase запускаются как initContainer или Job в Kubernetes до старта основного контейнера; полностью поддерживается
 
 ## Q14. Что такое smoke test и когда его запускать при деплое?
 
@@ -812,13 +721,6 @@ echo "All smoke tests passed"
 
 Сценарии: проверка health endpoint (200), один-два критичных API. Время выполнения — секунды, не минуты. Smoke test не заменяет интеграционные и e2e тесты — они запускаются до деплоя в prod (в staging).
 
-
-> [!mcq]
-> - [ ] Smoke tests заменяют integration и E2E тесты после деплоя в production | ❌ ПОСЛЕДСТВИЕ: smoke tests — минимальная проверка (health + 2-3 критичных API); integration/E2E тесты запускаются в staging до production деплоя
-> - [x] Smoke tests — минимальный набор быстрых проверок (секунды) после деплоя; при падении — rollback; не заменяют integration/E2E | ✓ ПРИМЕНЯТЬ: сразу после каждого деплоя в любое окружение; автоматический триггер 📋 ПРАВИЛО: smoke = health + critical path; seconds not minutes; fail = rollback 🔗 См. Q6
-> - [ ] Smoke tests нужно запускать только после prod деплоя | ❌ ПОСЛЕДСТВИЕ: smoke tests запускаются после деплоя в каждое окружение (dev, staging, prod); ранняя проверка = дешёвый откат
-> - [ ] Smoke test должен покрывать все API эндпоинты для надёжности | ❌ ПОСЛЕДСТВИЕ: полное покрытие = медленно; smoke = быстрая проверка критичных путей; полное E2E тестирование в staging
-
 ## Q15. Как обеспечить откат (rollback) при проблемах после деплоя?
 
 Меры: (1) Хранить предыдущие ревизии/образы (Kubernetes rollout history). (2) Автоматический rollback по [метрикам](../monitoring/metrics-tracing-interview.md) (ошибки, latency) — `Argo Rollouts`, `Flagger`. (3) Ручной rollback одной командой (`kubectl rollout undo`). (4) Feature flags — отключить фичу без отката деплоя. (5) Документированная процедура и права на откат без длительного согласования.
@@ -826,13 +728,6 @@ echo "All smoke tests passed"
 **Практика:** образы предыдущих версий не удалять из registry до истечения политики хранения; `revisionHistoryLimit` в `Deployment` держать достаточным (например, 10). `Flagger / Argo Rollouts` при Canary анализируют метрики (error rate, latency) из Prometheus; при превышении порога откатывают трафик на старую версию.
 
 Команды: `kubectl rollout undo` — откат на предыдущую ревизию; `kubectl rollout undo --to-revision=3` — к конкретной ревизии; `kubectl rollout status` — дождаться завершения. После отката проверить readiness и smoke; при миграциях БД убедиться, что старая версия приложения совместима с текущей схемой.
-
-
-> [!mcq]
-> - [ ] Argo Rollouts нужен только для Canary; Blue-Green откат делается только вручную | ❌ ПОСЛЕДСТВИЕ: Argo Rollouts поддерживает и Blue-Green с автоматическим анализом и rollback по метрикам
-> - [ ] Flagger/Argo Rollouts не работают с Prometheus — нужен отдельный инструмент | ❌ ПОСЛЕДСТВИЕ: Flagger и Argo Rollouts нативно интегрируются с Prometheus для metric analysis при Canary/Blue-Green
-> - [x] kubectl rollout undo + revisionHistoryLimit≥10 + feature flag disable + Flagger/Argo Rollouts автоматический rollback по метрикам | ✓ ПРИМЕНЯТЬ: слои rollback: мгновенный (flag) → секунды (undo) → auto (Flagger) 📋 ПРАВИЛО: rollback strategy = feature flag first, then undo, then auto by metrics 🔗 См. Q6
-> - [ ] После деплоя rollback невозможен если были миграции БД | ❌ ПОСЛЕДСТВИЕ: backward-compatible миграции позволяют код rollback при сохранении schema; expand-contract pattern специально для этого
 
 ## Q16. Что такое dark launch и когда его применять?
 
@@ -906,13 +801,6 @@ spec:
         value: 100.0
 ```
 
-
-> [!mcq]
-> - [ ] Dark launch и A/B тест — одно и то же; оба показывают результат пользователю | ❌ ПОСЛЕДСТВИЕ: dark launch — результат пользователю НЕ показывается; A/B — показывается один из вариантов; разные цели
-> - [ ] Shadow traffic нельзя применять для stateful операций (запись в БД) | ❌ ПОСЛЕДСТВИЕ: shadow запросы к читающим API безопасны; для записи нужна отдельная shadow БД или dry-run режим; но это техническая сложность, не запрет
-> - [x] Dark launch: новый код выполняется с реальным трафиком, результат пользователю не показывается; только метрики и логи; safe preproduction validation | ✓ ПРИМЕНЯТЬ: новый ML-алгоритм; major refactor; high-risk code path без user impact 📋 ПРАВИЛО: dark launch = execute hidden; shadow traffic = mirror copy; оба без user impact 🔗 См. Q7
-> - [ ] Dark launch требует отдельного кластера для new version | ❌ ПОСЛЕДСТВИЕ: dark launch реализуется в том же поде через feature flag и CompletableFuture; или Istio mirror; не требует отдельного кластера
-
 ## Q17. Как деплой связан с версионированием артефактов (semantic versioning)?
 
 **Semantic versioning** (`MAJOR.MINOR.PATCH`) задаёт версию артефакта (образ, jar). При деплое разворачивают конкретную версию (тег образа). В Kubernetes в `Deployment` указывают образ с конкретным тегом; при откате меняют тег на предыдущий.
@@ -939,25 +827,11 @@ spec:
           image: registry.example.com/myapp:1.2.3  # НЕ latest
 ```
 
-
-> [!mcq]
-> - [ ] image:latest — лучшая практика в Kubernetes для автоматического обновления | ❌ ПОСЛЕДСТВИЕ: latest без тега = non-deterministic; разные ноды могут получить разные версии при imagePullPolicy:Always; нет воспроизводимости
-> - [ ] MINOR increment (1.1.0 → 1.2.0) означает breaking change | ❌ ПОСЛЕДСТВИЕ: MINOR = новые backward-compatible features; MAJOR = breaking changes; PATCH = bug fixes; нарушение семантики = confusion у потребителей
-> - [x] Тег образа = версия (myapp:1.2.3 или myapp:git-SHA); НЕ latest в prod; аннотации пода с версией для аудита; rollback = смена тега | ✓ ПРИМЕНЯТЬ: всегда тегировать образы версией; latest только в dev 📋 ПРАВИЛО: tag = version = rollback point; latest = no rollback 🔗 См. Q11
-> - [ ] Semantic versioning не нужен для внутренних микросервисов | ❌ ПОСЛЕДСТВИЕ: contract testing, API compatibility и rollback требуют определённой версии; git SHA как тег + semver для публичных API = правильная комбинация
-
 ## Q18. Что такое deployment approval и когда его требовать?
 
 **Deployment approval** — ручное (или по правилам) подтверждение перехода к следующему этапу (часто деплой в prod). Требуют когда политика компании или регуляторика требует проверки перед продакшеном.
 
 В `GitLab`: protected environments с required approvals; в `GitHub Actions` — environment с reviewers; в `Jenkins` — input step. Для высокочастотных деплоев (несколько раз в день) ручной approval на каждый деплой становится узким местом — тогда оставляют approval только для критичных изменений (схема БД, инфраструктура) или используют автоматический деплой с жёсткими проверками в [pipeline](pipeline-design-interview.md) и автоматическим откатом по метрикам.
-
-
-> [!mcq]
-> - [ ] Ручной approval нужен для каждого деплоя для безопасности | ❌ ПОСЛЕДСТВИЕ: при высокочастотных деплоях ручной approval = бутылочное горлышко; автоматический деплой с жёсткими quality gates быстрее и надёжнее
-> - [ ] Deployment approval не поддерживается в GitLab и GitHub Actions | ❌ ПОСЛЕДСТВИЕ: GitLab protected environments + required approvals; GitHub Actions environment + reviewers — нативная поддержка
-> - [x] Approval только для критичных изменений (schema, infra) или по регуляторике; для routine deploys — автоматический с quality gates | ✓ ПРИМЕНЯТЬ: prod деплой с DB migration; compliance environment; high-risk changes 📋 ПРАВИЛО: approval = критичность + регуляторика; routine = auto+gates 🔗 См. Q10
-> - [ ] После настройки approval process скорость деплоя всегда замедляется в 2x | ❌ ПОСЛЕДСТВИЕ: approval только на production; dev/staging — автоматически; правильная конфигурация не замедляет routine pipeline
 
 ## Q19. Как деплоить приложение с зависимостями от внешних сервисов?
 
@@ -966,13 +840,6 @@ spec:
 **Практика:** Contract testing (`Pact`) проверяет совместимость до деплоя; при breaking change — сначала провайдер с поддержкой двух версий API, затем потребители.
 
 Порядок деплоя: при обратно совместимых изменениях (новые поля, старые не удалены) можно деплоить потребителей и провайдеров в любом порядке. При breaking change — сначала деплой провайдера с поддержкой старого и нового контракта, затем потребителей на новый контракт, затем удаление старого в провайдере.
-
-
-> [!mcq]
-> - [ ] При breaking change в API сначала деплоить потребителей (consumers) | ❌ ПОСЛЕДСТВИЕ: потребители с новым кодом вызывают ещё не обновлённый провайдер → 404/500; правильно: сначала провайдер с поддержкой обоих контрактов, потом потребители
-> - [ ] Contract testing (Pact) запускается только в production окружении | ❌ ПОСЛЕДСТВИЕ: Pact тесты запускаются в pipeline до деплоя; цель — поймать несовместимость до production
-> - [x] Сначала провайдер с поддержкой старого+нового контракта → потребители переходят на новый → удаление старого в провайдере; Pact для верификации | ✓ ПРИМЕНЯТЬ: breaking API change между микросервисами; expand-contract для inter-service 📋 ПРАВИЛО: provider first → consumers migrate → cleanup; Pact = автоверификация 🔗 См. Q13
-> - [ ] При backward-compatible изменениях порядок деплоя строго регламентирован | ❌ ПОСЛЕДСТВИЕ: backward-compatible changes (новые поля, старые не удалены) → потребители и провайдеры деплоятся в любом порядке
 
 ## Q20. Что такое blue-green для баз данных и в чём сложность?
 
@@ -991,13 +858,6 @@ graph TD
 ```
 
 Типичный сценарий: blue — текущая prod БД; green — копия (реплика или дамп + репликация). На green выполняют миграции; приложение переключают на green (смена connection string или переключение прокси). Риски: расхождение данных за время репликации; откат приложения требует отката и данных (если на green уже писали). Для нулевого простоя используют логическую репликацию (`pg_logical`) и переключение с минимальным окном.
-
-
-> [!mcq]
-> - [ ] Blue-Green для БД такой же простой как для приложений — просто переключить | ❌ ПОСЛЕДСТВИЕ: данные пишутся непрерывно; нужна логическая репликация (pg_logical) для синхронизации; без неё расхождение данных при переключении
-> - [ ] После переключения на green БД можно сразу удалить blue БД | ❌ ПОСЛЕДСТВИЕ: если приложение откатить → нужно переключиться обратно на blue; если данные уже писались в green — нужна обратная репликация или принятие data loss
-> - [x] Two БД; логическая репликация blue→green; миграции на green; переключение прокси/connection string; откат = переключить обратно, но риск data divergence | ✓ ПРИМЕНЯТЬ: когда нужна zero-downtime schema migration; сложно, предпочтительнее expand-contract 📋 ПРАВИЛО: Blue-Green DB = 2x storage + репликация + narrow switch window 🔗 См. Q13
-> - [ ] Blue-Green для БД не требует репликации — достаточно backup/restore | ❌ ПОСЛЕДСТВИЕ: backup/restore = downtime на время восстановления; logical replication позволяет переключиться без остановки записи
 
 ## Q21. Как настроить постепенный Canary в Kubernetes (Istio, Flagger)?
 
@@ -1043,25 +903,11 @@ spec:
 
 **Практика:** шаги (10% → 20% → 50% → 100%) и интервалы между шагами; пороги (допустимый рост error rate, p99). При превышении порога Flagger откатывает трафик на старую версию автоматически.
 
-
-> [!mcq]
-> - [ ] Flagger всегда требует Istio — без service mesh Canary невозможен | ❌ ПОСЛЕДСТВИЕ: Flagger работает с Nginx Ingress, Contour, Gloo без Istio; Istio — опция, не обязательное требование
-> - [ ] При Canary с Flagger нельзя задать кастомные метрики — только CPU/memory | ❌ ПОСЛЕДСТВИЕ: Flagger поддерживает кастомные метрики из Prometheus (error rate, latency P99) через webhookAnalysis и metricTemplates
-> - [x] Flagger: автоматически создаёт Canary Deployment, постепенно переносит трафик (10%→50%→100%), откатывает при превышении порогов error rate/latency | ✓ ПРИМЕНЯТЬ: automated Canary с Prometheus metrics; без ручного управления трафиком 📋 ПРАВИЛО: Flagger = controller + metrics + auto-rollback; stepWeight = % per interval 🔗 См. Q2
-> - [ ] Argo Rollouts и Flagger делают одно и то же — нет разницы в выборе | ❌ ПОСЛЕДСТВИЕ: Argo Rollouts — автономный; Flagger — controller для существующих Deployments; разная модель; Argo Rollouts богаче UI/CLI для анализа
-
 ## Q22. Что такое deployment slots (Azure) и аналог в Kubernetes?
 
 **Deployment slots** в Azure App Service — отдельные слоты (staging и production) с возможностью swap (мгновенная замена). В Kubernetes прямого аналога нет; ближе Blue-Green: два `Deployment` и переключение `Service` (selector) или трафика через `Ingress / Istio`.
 
 **Практика:** в Kubernetes два `Deployment` — `myapp-staging` и `myapp-prod`; один `Service` с selector по label `version: prod`. Для «swap» меняют selector на `version: staging` (теперь трафик идёт на staging-поды).
-
-
-> [!mcq]
-> - [ ] Deployment slots в Azure и Blue-Green в Kubernetes — разные концепции без аналогии | ❌ ПОСЛЕДСТВИЕ: Azure slots = Blue-Green нативно: staging slot → swap → production; Kubernetes Blue-Green = та же концепция через Service selector
-> - [ ] В Kubernetes нельзя сделать мгновенный swap как в Azure — нужен Canary | ❌ ПОСЛЕДСТВИЕ: Blue-Green в Kubernetes = смена selector в Service → мгновенный switch; kubectl patch сервиса занимает секунды
-> - [x] Azure slots — нативный Blue-Green: staging→swap→prod; в Kubernetes аналог — два Deployment + Service selector switch | ✓ ПРИМЕНЯТЬ: Azure App Service для managed Blue-Green; Kubernetes — Service selector для custom Blue-Green 📋 ПРАВИЛО: slots = managed Blue-Green; Kubernetes = DIY Blue-Green через selector 🔗 См. Q1
-> - [ ] Deployment slots создают downtime при swap операции | ❌ ПОСЛЕДСТВИЕ: Azure swap — мгновенная операция без downtime; именно для этого slots и предназначены
 
 ## Q23. Как обеспечить консистентность конфигурации при деплое?
 
@@ -1081,13 +927,6 @@ spec:
 ```
 
 **Практика:** в GitOps (Argo CD, Flux) конфигурация хранится в [Git](../devops/git-interview.md); смена коммита триггерит синхронизацию. Один источник правды на окружение (каталог `overlays/prod/`) устраняет расхождения.
-
-
-> [!mcq]
-> - [ ] Секреты в Kubernetes можно хранить в ConfigMap — они всё равно зашифрованы | ❌ ПОСЛЕДСТВИЕ: ConfigMap не зашифрован; Kubernetes Secret base64 — не шифрование; нужен Vault, Sealed Secrets или External Secrets для безопасного хранения
-> - [ ] Конфигурацию нужно хранить внутри Docker образа для каждого окружения | ❌ ПОСЛЕДСТВИЕ: образ с вшитой конфигурацией = отдельный build на каждое окружение; нарушение build-once, deploy-everywhere; конфиг через env/ConfigMap снаружи образа
-> - [x] GitOps (ConfigMap в Git) или Vault/Sealed Secrets; один источник правды; конфиг снаружи образа через env/ConfigMap/Secrets | ✓ ПРИМЕНЯТЬ: всегда; конфиг в Git + Sealed Secrets для секретов = reproducible environment 📋 ПРАВИЛО: config = GitOps/Vault; secrets = Sealed Secrets/External Secrets; никогда в образе 🔗 См. Q11
-> - [ ] Spring Cloud Config Server обязателен для управления конфигурацией в Kubernetes | ❌ ПОСЛЕДСТВИЕ: Spring Cloud Config — один из вариантов; нативный Kubernetes ConfigMap + Secrets достаточен; Vault — более безопасная альтернатива
 
 ## Q24. (!) Что такое deployment strategies в GitOps (Argo CD, Flux)?
 
@@ -1133,13 +972,6 @@ spec:
 
 Для Canary / Blue-Green используют `Argo Rollouts` — отдельный CRD `Rollout` вместо `Deployment`; в Git хранят `Rollout` с шагами Canary. Flux использует `Kustomization` с указанием на репо и путь; при изменении образа в репо Flux обновляет `Deployment`.
 
-
-> [!mcq]
-> - [ ] В GitOps изменение образа деплоится автоматически без push в Git | ❌ ПОСЛЕДСТВИЕ: в GitOps всё через Git: image update → commit в Git-репо манифестов → Argo CD/Flux синхронизирует кластер; нет kubectl apply напрямую
-> - [ ] Argo CD и Flux поддерживают только Rolling Update; Canary требует отдельного инструмента | ❌ ПОСЛЕДСТВИЕ: Argo Rollouts (часть Argo ecosystem) поддерживает Canary/Blue-Green в GitOps; Flagger работает с Flux для прогрессивного деплоя
-> - [x] GitOps: Git — источник правды; Argo CD/Flux синхронизируют кластер; Argo Rollouts для Canary в GitOps-стиле | ✓ ПРИМЕНЯТЬ: Kubernetes; audit trail через Git history; selfHeal = кластер возвращается к desired state 📋 ПРАВИЛО: GitOps = declarative + Git = source of truth + auto-sync 🔗 См. Q10
-> - [ ] В GitOps нельзя использовать kubectl применить изменения напрямую — Argo CD заблокирует | ❌ ПОСЛЕДСТВИЕ: kubectl можно, но Argo CD с selfHeal:true немедленно откатит к состоянию из Git; для постоянных изменений всегда через Git
-
 ## Q25. Как мониторить успешность деплоя и когда считать деплой неудачным?
 
 Метрики после деплоя: error rate, latency (p50, p99), throughput; сравнение с периодом до деплоя или с baseline. Деплой считают неудачным при: падении smoke test; превышении порога ошибок/latency в окне после деплоя (5-15 минут); ручном репорте инцидента.
@@ -1148,13 +980,6 @@ spec:
 
 В pipeline — этап «мониторинг после деплоя» (5-10 минут) с автоматическим откатом при нарушении условий. Окно наблюдения задают по опыту; слишком короткое может пропустить постепенную деградацию, слишком длинное — задержать откат.
 
-
-> [!mcq]
-> - [ ] Деплой считать неудачным только при падении сервиса (500 errors на всех запросах) | ❌ ПОСЛЕДСТВИЕ: постепенная деградация (рост p99 latency, увеличение error rate с 0.1% до 2%) — тоже неудача; нужен baseline comparison
-> - [ ] Мониторинг после деплоя нужен только в первые 30 секунд | ❌ ПОСЛЕДСТВИЕ: некоторые проблемы проявляются через минуты: memory leak, connection pool depletion; стандартное окно 5-15 минут
-> - [x] Мониторить error rate + p99 latency vs baseline; неудача при smoke test failure или превышении порогов в 5-15 минутном окне; Flagger автоматизирует | ✓ ПРИМЕНЯТЬ: все production деплои; Argo Rollouts/Flagger для автоматического rollback 📋 ПРАВИЛО: deploy = smoke + 5-15min metric window; rollback threshold заранее определить 🔗 См. Q15
-> - [ ] Prometheus достаточно для оценки деплоя; дополнительные инструменты не нужны | ❌ ПОСЛЕДСТВИЕ: traces (Jaeger/Zipkin) показывают где именно деградация; logs — конкретные ошибки; комбинация metrics+traces+logs = полная картина
-
 ## Q26. Что такое deployment window и как планировать деплой в production?
 
 **Deployment window** — согласованное временное окно (например, ночь, выходные), в которое разрешён деплой в production, чтобы минимизировать влияние на пользователей.
@@ -1162,13 +987,6 @@ spec:
 Планирование: выбор окна с учётом нагрузки и мониторинга; уведомление стейкхолдеров; подготовка rollback-плана; при необходимости — автоматизация в рамках окна. В высоконагруженных системах стремятся к деплою без окон (continuous deployment с Canary / Rolling).
 
 **Практика:** зафиксировать окно в runbook (например, «вторник/четверг 02:00-04:00 UTC»); перед окном — чек-лист (образ собран, тесты зелёные, rollback-план готов). При CD без окон — деплой в любое время с Canary + [Prometheus](../monitoring/metrics-tracing-interview.md).
-
-
-> [!mcq]
-> - [ ] Deployment window обязательно нужен даже при Canary деплое | ❌ ПОСЛЕДСТВИЕ: Canary + автоматический rollback по метрикам позволяет деплоить в любое время; deployment window нужен только при высокорисковых или Recreate деплоях
-> - [ ] Continuous deployment без deployment window невозможен для критичных систем | ❌ ПОСЛЕДСТВИЕ: Canary + Flagger/Argo Rollouts + Prometheus = CD без фиксированных окон в любых критичных системах (Uber, Netflix)
-> - [x] Deployment window — для Recreate/high-risk deploys; CD без окон = Canary+автоматический rollback; чек-лист перед окном: образ+тесты+rollback план | ✓ ПРИМЕНЯТЬ: Recreate стратегия; регуляторика; без mature CD процесса 📋 ПРАВИЛО: deployment window = когда нет auto-rollback или Recreate; mature CD → окна не нужны 🔗 См. Q3
-> - [ ] Deployment window всегда должен быть ночью в выходные — утром слишком рискованно | ❌ ПОСЛЕДСТВИЕ: окно выбирается по профилю нагрузки; для global products нет идеального времени; CD+Canary = деплой в любое время
 
 ## Q27. Как организовать деплой с нулевым даунтаймом для stateful приложений?
 
@@ -1211,13 +1029,6 @@ spec:
 
 Для лидер-выборов (leader election) — корректная передача лидерства при остановке. Для `Kafka` consumer group — корректная обработка `SIGTERM`: снятие с лидерства, commit офсетов, затем exit.
 
-
-> [!mcq]
-> - [ ] Stateful приложения нельзя деплоить с Rolling Update — только Recreate | ❌ ПОСЛЕДСТВИЕ: Rolling Update с maxUnavailable:0 + readinessProbe + внешний session store (Redis) = zero-downtime для stateful; Recreate нужен только при невозможности внешнего state
-> - [ ] Сессии в памяти пода работают нормально при Rolling Update | ❌ ПОСЛЕДСТВИЕ: при Rolling Update старый под удаляется; пользовательская сессия в его памяти теряется; sticky session или внешний store (Redis) обязателен
-> - [x] Вынести состояние во внешнее хранилище (Redis); graceful shutdown + preStop; SIGTERM → commit offsets (Kafka); readinessProbe убирает из LB | ✓ ПРИМЕНЯТЬ: Spring Session + Redis = externalized state; terminationGracePeriodSeconds≥60 📋 ПРАВИЛО: stateful zero-downtime = state outside pod + graceful shutdown 🔗 См. Q5
-> - [ ] StatefulSet в Kubernetes гарантирует zero-downtime при обновлении | ❌ ПОСЛЕДСТВИЕ: StatefulSet использует Rolling Update с ordered pod replacement; нет автоматического zero-downtime — нужны те же readinessProbe и graceful shutdown
-
 ## Q28. Что такое backward/forward compatibility при деплое API?
 
 **Backward compatibility:** новая версия сервера понимает запросы от старых клиентов (новые поля опциональны, старые не удаляются сразу). **Forward compatibility:** старый сервер не падает на неизвестных полях (игнорирование лишних полей).
@@ -1236,13 +1047,6 @@ sequenceDiagram
 ```
 
 Нарушение совместимости требует версионирования API или координации «big bang» деплоя. Contract testing (`Pact`) проверяет совместимость до деплоя.
-
-
-> [!mcq]
-> - [ ] Backward compatibility означает что новый клиент понимает старый сервер | ❌ ПОСЛЕДСТВИЕ: backward compatibility = новый СЕРВЕР понимает старых КЛИЕНТОВ; forward compatibility = старый сервер понимает новых клиентов; путаница — частая ошибка
-> - [ ] При breaking change в API все сервисы деплоятся одновременно (big bang) | ❌ ПОСЛЕДСТВИЕ: big bang деплой = высокий риск; трёхэтапный подход (сервер+оба контракта → мигрировать клиентов → убрать старый) безопаснее
-> - [x] Backward: новый сервер понимает старых клиентов; Forward: старый сервер не падает на новых полях; при breaking change — трёхэтапный деплой | ✓ ПРИМЕНЯТЬ: всегда при изменении API в микросервисах; Pact для верификации 📋 ПРАВИЛО: backward = server compat old clients; forward = server ignores unknown; 3-step for breaking 🔗 См. Q19
-> - [ ] Jackson автоматически обеспечивает backward compatibility — не нужны дополнительные настройки | ❌ ПОСЛЕДСТВИЕ: без @JsonIgnoreProperties(ignoreUnknown=true) Jackson выбросит UnrecognizedPropertyException при неизвестных полях; нужна явная настройка
 
 ## Q29. Как деплой связан с feature toggles и экспериментированием?
 
@@ -1281,13 +1085,6 @@ public ResponseEntity<?> checkout(@RequestBody CheckoutRequest request) {
 
 Экспериментирование: постепенное включение по процентам трафика или по сегментам; метрики (конверсия, ошибки) определяют успех; затем полное включение или откат. При инциденте отключить флаг в UI (`LaunchDarkly`, `Unleash`).
 
-
-> [!mcq]
-> - [ ] Feature flag и Canary — взаимоисключающие подходы для постепенного rollout | ❌ ПОСЛЕДСТВИЕ: часто используются вместе: Canary — new pods с new code; feature flag — включение фичи внутри new pods только для % пользователей
-> - [ ] Feature toggle нужно хранить в .properties файлах в образе | ❌ ПОСЛЕДСТВИЕ: toggle в образе требует rebuild для изменения; Unleash/LaunchDarkly — runtime change без деплоя; именно для этого external toggle service
-> - [x] Deploy = код за выключенным флагом в prod; Release = включение флага без деплоя; откат = выключить флаг; Unleash для per-user rollout | ✓ ПРИМЕНЯТЬ: разделение deploy и release; риск-снижение; A/B тестирование по userId 📋 ПРАВИЛО: flag = decouple deploy from release; rollback = toggle off 🔗 См. Q7
-> - [ ] Feature flags замедляют код из-за проверки при каждом запросе | ❌ ПОСЛЕДСТВИЕ: Unleash кэширует решения локально; проверка = map lookup O(1); overhead незначителен в production
-
 ## Q30. Как обеспечить идемпотентность и повторяемость деплоя?
 
 **Идемпотентность:** повторный запуск деплоя с теми же артефактами даёт тот же результат (не дублирует ресурсы, не ломает состояние).
@@ -1310,13 +1107,6 @@ helm upgrade --install myapp ./charts/myapp \
 ```
 
 **Практика:** не использовать императивные команды (`kubectl create`) в CI — только `kubectl apply` или `helm upgrade --install`. Образ с фиксированным тегом (не `latest`). Pipeline должен давать одинаковый результат при re-run.
-
-
-> [!mcq]
-> - [ ] kubectl create — идемпотентная операция, безопасна для повторного запуска | ❌ ПОСЛЕДСТВИЕ: kubectl create при существующем ресурсе = error; идемпотентная = kubectl apply (обновляет existing или создаёт new)
-> - [ ] Миграция БД без IF NOT EXISTS — нормально, Flyway не дублирует | ❌ ПОСЛЕДСТВИЕ: Flyway/Liquibase проверяют checksum и применённые версии; но сами скрипты должны быть idempotent для ручного запуска; IF NOT EXISTS = best practice
-> - [x] kubectl apply + helm upgrade --install + идемпотентные DB migrations + фиксированный image tag = повторяемый деплой | ✓ ПРИМЕНЯТЬ: CI/CD pipeline; нельзя использовать kubectl create; только declarative 📋 ПРАВИЛО: idempotent deploy = apply + fixed tag + idempotent migrations 🔗 См. Q17
-> - [ ] helm upgrade без --install безопаснее — не создаст новый релиз случайно | ❌ ПОСЛЕДСТВИЕ: helm upgrade без --install = error если релиз не существует; --install = create or upgrade; для CI/CD нужен --install
 
 ## Q31. (!) Как настроить Canary-деплой через Argo Rollouts?
 
@@ -1436,13 +1226,6 @@ kubectl argo rollouts abort myapp
 kubectl argo rollouts retry rollout myapp
 ```
 
-
-> [!mcq]
-> - [ ] Argo Rollouts использует стандартный Kubernetes Deployment — не нужен новый CRD | ❌ ПОСЛЕДСТВИЕ: Argo Rollouts использует CRD Rollout вместо Deployment; при замене нужно удалить Deployment и создать Rollout; нельзя использовать оба одновременно
-> - [ ] При Argo Rollouts Canary анализ запускается вручную после каждого step | ❌ ПОСЛЕДСТВИЕ: AnalysisTemplate + Prometheus metrics автоматически анализируются после каждого step; вручную только при autoPromotionEnabled:false
-> - [x] CRD Rollout вместо Deployment; steps: setWeight % → pause → setWeight; AnalysisTemplate с Prometheus для автоматического rollback | ✓ ПРИМЕНЯТЬ: Canary в Kubernetes с автоматическим metric analysis; Argo CD GitOps 📋 ПРАВИЛО: Rollout = Deployment+strategy; AnalysisTemplate = auto promote/rollback по метрикам 🔗 См. Q2
-> - [ ] Argo Rollouts несовместим с Argo CD — только один из них | ❌ ПОСЛЕДСТВИЕ: Argo Rollouts + Argo CD = рекомендованная комбинация для GitOps Canary; Rollout в Git → Argo CD sync → Rollout controller управляет прогрессией
-
 ## Q32. (!) Как настроить Blue-Green деплой через Argo Rollouts?
 
 `Argo Rollouts` поддерживает Blue-Green через CRD `Rollout` с указанием `activeService` и `previewService`. При обновлении новые поды создаются под preview; после проверки (или автоматически) трафик переключается.
@@ -1514,13 +1297,6 @@ spec:
 ```
 
 Workflow: обновление образа → Argo Rollouts создаёт preview-поды → prePromotionAnalysis (smoke tests на preview Service) → ручное `kubectl argo rollouts promote myapp` → трафик переключается → postPromotionAnalysis → старые поды удаляются через `scaleDownDelaySeconds`.
-
-
-> [!mcq]
-> - [ ] Argo Rollouts Blue-Green сразу переключает 100% трафика без probes | ❌ ПОСЛЕДСТВИЕ: prePromotionAnalysis (smoke tests на preview Service) запускается ДО переключения; после переключения — postPromotionAnalysis; нет прямого сразу-100%
-> - [ ] scaleDownDelaySeconds не нужен — Blue-Green сразу удаляет старые поды | ❌ ПОСЛЕДСТВИЕ: scaleDownDelaySeconds даёт время на rollback без нового деплоя; без него — если нужен rollback, придётся ждать нового promotion
-> - [x] activeService+previewService; ручное promote после prePromotionAnalysis; scaleDownDelaySeconds сохраняет старые поды для быстрого rollback | ✓ ПРИМЕНЯТЬ: Blue-Green с Argo Rollouts; autoPromotionEnabled:false для ручного контроля 📋 ПРАВИЛО: Rollout BG = preview→analysis→promote→scale down; ручной promote = safety gate 🔗 См. Q1
-> - [ ] prePromotionAnalysis замедляет деплой — лучше его не использовать | ❌ ПОСЛЕДСТВИЕ: prePromotionAnalysis — ключевой safety gate перед переключением 100% трафика; экономия времени не стоит пропущенных ошибок
 
 ## Q33. (!) Как использовать Helm для управления деплоями?
 
@@ -1645,13 +1421,6 @@ helm upgrade --install myapp ./charts/myapp \
   --dry-run --debug
 ```
 
-
-> [!mcq]
-> - [ ] helm rollback всегда откатывает к предыдущей версии — нельзя указать конкретную | ❌ ПОСЛЕДСТВИЕ: helm rollback myapp 2 откатывает к ревизии 2; helm rollback myapp 0 — к предыдущей; можно откатить к любой ревизии из helm history
-> - [ ] helm upgrade с --dry-run применяет изменения в тестовом режиме | ❌ ПОСЛЕДСТВИЕ: --dry-run рендерит шаблоны и валидирует без применения; --debug добавляет вывод; реальные изменения — без --dry-run
-> - [x] helm upgrade --install: idempotent; values.yaml + values-prod.yaml переопределение; --wait дождаться rollout; rollback через helm rollback | ✓ ПРИМЕНЯТЬ: Kubernetes deployments с конфигурацией по окружениям; версионирование через chart version 📋 ПРАВИЛО: helm = templating + release history + rollback; upgrade --install = idempotent 🔗 См. Q30
-> - [ ] Helm хранит release history в ConfigMap — занимает много памяти | ❌ ПОСЛЕДСТВИЕ: Helm v3 хранит history в Secrets (более безопасно, чем ConfigMap); revisionHistoryLimit контролирует количество хранимых ревизий
-
 ## Q34. Как настроить деплой через GitHub Actions в Kubernetes?
 
 **GitHub Actions** workflow для деплоя в Kubernetes с использованием Helm:
@@ -1749,13 +1518,6 @@ jobs:
 ```
 
 **Практика:** environment `production` с required reviewers обеспечивает approval gate; `--wait` ждёт готовности всех подов; при падении smoke test — автоматический `helm rollback`.
-
-
-> [!mcq]
-> - [ ] GitHub Actions без environment protection rules для prod | ❌ ПОСЛЕДСТВИЕ: любой PR с merge правами может задеплоить в prod без approval; нужен environment с required reviewers
-> - [ ] helm upgrade без --wait → деплой считается успешным сразу | ❌ ПОСЛЕДСТВИЕ: pipeline продолжается до появления готовых подов; если pods падают через 30s, jobs уже считают деплой успешным
-> - [x] GitHub Actions environments с required reviewers + helm upgrade --wait + smoke test → helm rollback при failure | ✓ ПРИМЕНЯТЬ: production deploy gating с автоматическим откатом 📋 ПРАВИЛО: prod environment = approval gate + --wait + smoke + auto-rollback 🔗 См. Q34
-> - [ ] kubectl apply -f напрямую без Helm релизов | ❌ ПОСЛЕДСТВИЕ: нет истории релизов для отката, нельзя сделать helm rollback; для прод нужны versioned releases
 
 ## Q35. Как настроить деплой через GitLab CI в Kubernetes?
 
@@ -1860,13 +1622,6 @@ deploy-prod:
 
 **Практика:** один и тот же образ (тег по git SHA) промотируется по окружениям; `when: manual` для prod обеспечивает ручной approval; `after_script` с проверкой статуса позволяет автоматический rollback при ошибке.
 
-
-> [!mcq]
-> - [ ] Разные образы для каждого окружения (dev/staging/prod) | ❌ ПОСЛЕДСТВИЕ: образы могут расходиться между окружениями (dev passed но prod не собрался); нет гарантии что прод-образ идентичен тестовому
-> - [x] Один image tag по git SHA промотируется по окружениям; when: manual для prod approval; after_script с auto-rollback при failure | ✓ ПРИМЕНЯТЬ: GitLab CI с staging→prod promotion, immutable artifacts 📋 ПРАВИЛО: build once, deploy many = тот же SHA-image везде 🔗 См. Q34
-> - [ ] Auto-deploy в prod без when: manual | ❌ ПОСЛЕДСТВИЕ: каждый merge в main триггерит prod deploy без approval; нет защиты от случайных регрессий
-> - [ ] kubectl set image без Helm rollback | ❌ ПОСЛЕДСТВИЕ: при ошибке нельзя автоматически откатиться; нужен ручной kubectl rollout undo с поиском предыдущей версии
-
 ## Q36. (!) Как реализовать feature flags с помощью Unleash или LaunchDarkly?
 
 **Feature flags** (feature toggles) — переключатели функциональности, которые управляются отдельно от деплоя. Позволяют деплоить код без активации фичи и откатить функциональность без rollback деплоя.
@@ -1966,13 +1721,6 @@ public class LegacyCheckoutController { ... }
 - Не вкладывать флаги друг в друга — exponential complexity
 - Документировать: имя, цель, ответственный, дата удаления
 
-
-> [!mcq]
-> - [ ] Feature flags навсегда оставлять в коде — ничего не удалять | ❌ ПОСЛЕДСТВИЕ: накопление "dead flags" → exponential complexity тестирования; код становится нечитаемым лабиринтом if/else
-> - [ ] Не тестировать flag-off путь — это уже old code | ❌ ПОСЛЕДСТВИЕ: при необходимости отката (kill switch) flag-off путь окажется сломанным; оба пути должны иметь тесты
-> - [ ] Вкладывать flags друг в друга для иерархии фич | ❌ ПОСЛЕДСТВИЕ: 3 вложенных flag = 8 комбинаций; 5 flags = 32 пути → невозможно тестировать; держи плоской структуру
-> - [x] Flags временные с deletion ticket; тестировать оба пути; не вкладывать; документировать имя/цель/owner/expiry | ✓ ПРИМЕНЯТЬ: kill switch, A/B testing, gradual rollout 📋 ПРАВИЛО: каждый flag = временный с владельцем и датой удаления 🔗 См. Q35
-
 ## Q37. Как работает GitOps-деплой через Argo CD на практике?
 
 **GitOps** — подход, при котором Git является единственным источником истины о desired state инфраструктуры. Argo CD отслеживает репозиторий и синхронизирует кластер с ним.
@@ -2062,13 +1810,6 @@ git push
 - Rollback = `git revert` в config-репо
 - Drift detection: Argo CD видит расхождение cluster vs Git
 - Ревью изменений через PR в config-репо
-
-
-> [!mcq]
-> - [ ] kubectl apply прямо из CI без Argo CD — простой подход | ❌ ПОСЛЕДСТВИЕ: drift между Git и кластером невидим; ручные kubectl edit не отслеживаются; нет single source of truth
-> - [ ] Хранить kubeconfig в CI напрямую с прод-доступом | ❌ ПОСЛЕДСТВИЕ: широкий blast radius — компрометация CI = доступ к кластеру; Argo CD pulls вместо CI pushes снижает риск
-> - [x] Argo CD синхронизирует кластер с Git config-репо; rollback = git revert; drift detection; review через PR | ✓ ПРИМЕНЯТЬ: GitOps workflow, audit trail в Git, automatic reconciliation 📋 ПРАВИЛО: GitOps = Git как single source of truth = pull-based sync 🔗 См. Q36
-> - [ ] Argo CD только для k8s, не подходит для других платформ | ❌ ПОСЛЕДСТВИЕ: Argo CD специфичен для Kubernetes; для других платформ есть аналоги (Flux, Spinnaker), но Argo доминирует в k8s exosystem
 
 ## Q38. Как настроить деплой через Jenkins Pipeline (Declarative)?
 
@@ -2183,13 +1924,6 @@ pipeline {
 - Тег по git SHA — трассируемость артефакта
 - `cleanWs()` — чистить workspace после каждого запуска
 
-
-> [!mcq]
-> - [ ] input без submitter → любой может одобрить деплой | ❌ ПОСЛЕДСТВИЕ: каждый с правом доступа к Jenkins может задеплоить в prod; нужен submitter='@release-team' или конкретные пользователи
-> - [ ] Jenkinsfile без post { failure { } } — rollback вручную | ❌ ПОСЛЕДСТВИЕ: при failure деплой остаётся в broken state; необходимо автоматическое kubectl rollout undo
-> - [x] input с submitter (approval gate) + post { failure { rollback } } + git SHA tag + cleanWs() | ✓ ПРИМЕНЯТЬ: Jenkins декларативный pipeline для prod-деплоя 📋 ПРАВИЛО: approval + auto-rollback + traceability (SHA) + clean workspace 🔗 См. Q37
-> - [ ] Использовать latest tag вместо git SHA | ❌ ПОСЛЕДСТВИЕ: невозможно понять какая версия в проде; rollback не сможет указать конкретный previous; SHA tag даёт immutable artifacts
-
 ## Q39. Как реализовать DORA-метрики для оценки процесса деплоя?
 
 **DORA metrics** (DevOps Research and Assessment) — четыре ключевые метрики зрелости процесса доставки:
@@ -2255,13 +1989,6 @@ ORDER BY 1;
 | Time to Restore | Мониторинг, rollback автоматизация, on-call процесс |
 
 **Практика:** использовать инструменты вроде `Four Keys` (Google), `Faros CE`, `LinearB`, `Cortex` для автоматического сбора. Не использовать метрики как KPI для отдельных людей — только для процесса в целом.
-
-
-> [!mcq]
-> - [ ] DORA метрики используются как KPI для разработчиков (доплата за высокую deployment frequency) | ❌ ПОСЛЕДСТВИЕ: разработчики начинают деплоить мусорные коммиты для увеличения частоты; метрики применимы к процессу, не к индивидам
-> - [ ] Достаточно одной метрики Deployment Frequency для оценки CI/CD | ❌ ПОСЛЕДСТВИЕ: высокая частота с длинным lead time или плохим MTTR — это плохо; нужны все 4 метрики DORA в комплексе
-> - [x] DORA: Deployment Frequency + Lead Time + MTTR + Change Failure Rate; собирать через Four Keys/Faros CE; оценка процесса, не людей | ✓ ПРИМЕНЯТЬ: оценка зрелости CI/CD команды, identification of bottlenecks 📋 ПРАВИЛО: 4 метрики DORA вместе = картина CI/CD, отдельно — обманчивы 🔗 См. Q38
-> - [ ] Lead Time = только время кодирования фичи | ❌ ПОСЛЕДСТВИЕ: Lead Time = от первого коммита до production; включает review, CI, deploy time; неполная метрика скрывает узкие места
 
 ---
 

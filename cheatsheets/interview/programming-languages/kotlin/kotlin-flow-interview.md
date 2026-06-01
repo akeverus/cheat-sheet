@@ -87,13 +87,6 @@ launch {
 
 **Cold flow**: код в `flow { }` не выполняется до вызова `collect`. Каждый новый коллектор запускает поток заново.
 
-
-> [!mcq]
-> - [ ] `Flow` запускается сразу при объявлении и буферизует элементы до первого `collect()` | Это поведение `Channel` или hot-stream, а не `flow { }`. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает кеш «уже эмитнутых» значений, ловит `IllegalStateException` про suspend вне корутины при первом prod-deploy.
-> - [x] `Flow` — холодный suspend-источник: код в `flow { }` стартует при `collect()` и каждый коллектор получает собственное выполнение | `emit()` вызывается из suspend-блока коллектора, поэтому backpressure встроен в saspend-машину корутин. ✓ ПРИМЕНЯТЬ: Spring WebFlux + R2DBC возвращает `Flow<Order>`, который материализуется только при подписке через `CoroutineCrudRepository`. 📋 ПРАВИЛО: «Cold Flow — рецепт, не блюдо». 🔗 См. Q2, Q13.
-> - [ ] `Flow.collect()` запускает эмиссию в отдельном потоке без участия корутины-коллектора | `collect` — обычная suspend-функция, она исполняется в текущем `CoroutineContext` без скрытых потоков. ❌ ПОСЛЕДСТВИЕ: попытка вызвать `flow.collect { }` в обычной Java-функции даёт «Suspension functions can be called only within coroutine body», падает review.
-> - [ ] `Flow` хранит все эмитнутые элементы и переотправляет их новым коллекторам | Это семантика `SharedFlow(replay = N)`, у обычного `flow { }` буфера нет. ❌ ПОСЛЕДСТВИЕ: late subscriber в чате не видит history; пользователь жалуется «открыл вторую вкладку — пусто», в логах нет ошибки.
-
 ## Q2. Чем Cold Flow отличается от Hot Flow?
 
 | Характеристика | Cold Flow | Hot Flow (StateFlow/SharedFlow) |
@@ -114,13 +107,6 @@ val hot = MutableStateFlow(0)
 hot.value = 42
 launch { hot.collect { println(it) } }  // получит 42, затем обновления
 ```
-
-
-> [!mcq]
-> - [ ] Cold Flow одинаков для всех подписчиков, Hot Flow создаёт новую копию для каждого | Поменяны местами: cold пересоздаёт исполнение per-collector, hot шарит общий source. ❌ ПОСЛЕДСТВИЕ: команда выбирает `flow { fetchPage() }` для общего кеша, каждый клиент бьёт API заново — счёт за внешний сервис вырастает в 10×.
-> - [ ] Cold Flow буферизует эмиссии в `Channel`, Hot Flow эмитит синхронно без буфера | Буферизация определяется `buffer()/conflate()`, а не cold/hot. ❌ ПОСЛЕДСТВИЕ: разработчик не добавляет `buffer()` к медленному `collect`, продюсер блокируется на каждом emit, throughput падает в 5 раз.
-> - [ ] Cold и Hot Flow различаются только наличием `replay`, всё остальное идентично | `replay` — параметр `SharedFlow`; cold/hot отличаются жизненным циклом и количеством producer-runs. ❌ ПОСЛЕДСТВИЕ: junior подменяет `MutableStateFlow` на `flow { }` «для упрощения», UI перестаёт получать актуальное состояние при ротации экрана.
-> - [x] Cold Flow перезапускает producer на каждый `collect()` и завершается сам, Hot Flow живёт независимо и шарит эмиссии между подписчиками | `flow { }` — cold (per-collector run); `StateFlow`/`SharedFlow` — hot (один producer, multicast late/current subscribers). ✓ ПРИМЕНЯТЬ: Android-ViewModel держит `MutableStateFlow<UiState>` для шаринга состояния между фрагментами, а repository отдаёт cold `flow { fetchPage() }` для on-demand загрузки. 📋 ПРАВИЛО: «Cold = run-per-collector, Hot = run-once-broadcast». 🔗 См. Q1, Q4, Q5.
 
 ## Q3. Какие основные операторы Flow вы знаете?
 
@@ -152,13 +138,6 @@ flow.reduce { acc, v -> acc + v }      // свёртка
 flow.fold(0) { acc, v -> acc + v }     // свёртка с начальным значением
 ```
 
-
-> [!mcq]
-> - [ ] `flow.toList()` — промежуточный оператор, добавляет преобразование, но не запускает collect | `toList()` — терминальный, он сам вызывает `collect` и блокирует suspend до завершения. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `flow.toList().map { }` ожидая lazy chain, при сценарии «бесконечный SSE-поток» сервис висит, наружу 504 timeout.
-> - [ ] `zip` и `combine` — синонимы: оба ждут пары и пересчитывают на любом emit | `zip` ждёт ровно по одному элементу из каждого, `combine` пересчитывает на каждое новое значение любого из потоков. ❌ ПОСЛЕДСТВИЕ: dashboard отрисовывает «orders × users» через `zip`, после рестарта users-flow завершается раньше — orders молча перестают показываться.
-> - [x] `map`/`filter` — промежуточные (cold, lazy), `collect`/`toList`/`first`/`reduce` — терминальные, запускающие выполнение | Промежуточные возвращают новый `Flow`, терминальные суспендят и вытягивают элементы; без терминального оператора ничего не выполняется. ✓ ПРИМЕНЯТЬ: WebFlux-контроллер возвращает `Flow<OrderDto>` без терминального оператора — Spring сам подписывается через адаптер `kotlinx-coroutines-reactor`. 📋 ПРАВИЛО: «Без terminal — Flow спит». 🔗 См. Q1, Q9.
-> - [ ] `flow.distinct()` сравнивает элементы по идентичности (`===`) и кешируется на JVM heap навсегда | `distinctUntilChanged` сравнивает только с предыдущим элементом по `equals`, без полного кеша. ❌ ПОСЛЕДСТВИЕ: попытка дедуплицировать сенсорный поток через ожидание глобального `distinct()` ведёт к OOM на устройствах после нескольких часов работы.
-
 ## Q4. Что такое StateFlow и когда его использовать?
 
 `StateFlow` — **hot flow** с одним текущим значением. Гарантирует, что коллектор всегда получит последнее состояние.
@@ -188,13 +167,6 @@ viewModel.orders.collect { orders ->
 - Отличается семантикой равенства: `emit(value)` игнорируется, если `value == currentValue`.
 - Аналог Android `LiveData` без привязки к жизненному циклу.
 
-
-> [!mcq]
-> - [ ] `StateFlow` доставляет каждое значение каждому коллектору, дубликаты не отбрасываются | `StateFlow` использует conflation по `equals`: повторный `emit` того же значения пропускается. ❌ ПОСЛЕДСТВИЕ: команда строит counter `loadingEvents` через `StateFlow<Int>`, два одинаковых события подряд теряются — метрики времени загрузки отчётливо ниже реальных.
-> - [x] `StateFlow` — hot flow с обязательным начальным значением и conflation по `equals`, идеален для UI-state | Новый коллектор сразу получает текущее `value`; идентичные эмиссии пропускаются. ✓ ПРИМЕНЯТЬ: Android-ViewModel выставляет `val uiState: StateFlow<UiState>`, Compose-экран подписывается через `collectAsStateWithLifecycle()` и не перерисовывается при идентичных update. 📋 ПРАВИЛО: «StateFlow = текущее value + skip equal». 🔗 См. Q5, Q14.
-> - [ ] `StateFlow` хранит историю всех значений и переотправляет её новым подписчикам | История хранится только последняя (replay = 1), полную историю даёт `SharedFlow(replay = N)`. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает audit-trail из `StateFlow`, аналитика теряет промежуточные состояния заказа, post-mortem невозможен.
-> - [ ] `StateFlow` создаётся без начального значения и эмитит только пользовательские события | Нельзя сконструировать `MutableStateFlow` без initial value — компилятор требует параметр. ❌ ПОСЛЕДСТВИЕ: попытка применить `StateFlow` для one-shot navigation events ведёт к показу первого события каждый раз при открытии экрана (toast «Заказ создан» при ротации).
-
 ## Q5. Что такое SharedFlow и чем отличается от StateFlow?
 
 `SharedFlow` — hot flow без обязательного начального значения, с настраиваемым буфером воспроизведения.
@@ -221,13 +193,6 @@ fun sendEvent(event: UiEvent) {
 | `collect` без `emit` | Получает текущее значение | Ждёт следующий `emit` |
 
 **Правило**: `StateFlow` — для данных (список, статус загрузки). `SharedFlow` — для one-shot событий (навигация, toast).
-
-
-> [!mcq]
-> - [ ] `SharedFlow(replay = 0)` гарантирует доставку всех событий late subscriber'ам | `replay = 0` означает, что новый подписчик НЕ увидит прошлые события вообще. ❌ ПОСЛЕДСТВИЕ: чат-фронт переподключается после network blip, последние 5 сообщений не приходят — пользователь видит «дыру» в timeline.
-> - [ ] `SharedFlow` всегда требует начального значения, как и `StateFlow` | `SharedFlow` создаётся без initial value, в этом и отличие от `StateFlow`. ❌ ПОСЛЕДСТВИЕ: разработчик копирует `MutableSharedFlow(emptyList())` из туториала, не компилируется, тратит час на отладку перед review.
-> - [x] `SharedFlow` — hot flow с настраиваемым `replay` и `extraBufferCapacity`, без начального значения; `StateFlow` — частный случай `SharedFlow(replay = 1, conflate)` для state | Использование: state → `StateFlow`, one-shot events → `SharedFlow(replay = 0)`. ✓ ПРИМЕНЯТЬ: ViewModel в Wolt-app шлёт `OrderEvent` через `MutableSharedFlow(replay = 0, extraBufferCapacity = 16, onBufferOverflow = DROP_OLDEST)` — toast «Доставка началась» показывается один раз. 📋 ПРАВИЛО: «State → StateFlow, Event → SharedFlow». 🔗 См. Q4, Q14.
-> - [ ] Разница только в имени: `SharedFlow` и `StateFlow` идентичны по семантике | У них разный contract: equality-conflation, replay, обязательность initial value. ❌ ПОСЛЕДСТВИЕ: миграция UI с `StateFlow` на `SharedFlow(replay = 1)` без conflation удваивает рекомпозиции в Compose, p95 frame time прыгает с 8 ms до 24 ms.
 
 ## Q6. Как обрабатывать ошибки в Flow?
 
@@ -260,13 +225,6 @@ flow.retryWhen { cause, attempt ->
 }
 ```
 
-
-> [!mcq]
-> - [ ] `try/catch` вокруг `flow { emit() }` ловит ошибки upstream корректно и отменяет downstream | Бросать или ловить исключения внутри `flow {}` запрещено `exception transparency`; исключение, попавшее в `try` в emitter, не пройдёт по downstream правильно. ❌ ПОСЛЕДСТВИЕ: pipeline тихо «съедает» exception, retry-логика не срабатывает, операция висит в consumer-lag, пока monitor не заметит через час.
-> - [ ] `catch { }` после `collect { }` перехватывает исключения внутри блока коллектора | `catch` ловит ТОЛЬКО upstream-исключения; ошибки в самом `collect` блоке не перехватываются. ❌ ПОСЛЕДСТВИЕ: разработчик полагается на `catch` для NPE в `updateUI()`, краш всё равно прилетает в Crashlytics, а тест зелёный — потому что unit-test упирается в `runTest`.
-> - [x] `catch { }` ставится перед `collect` и ловит upstream-исключения; `retry`/`retryWhen` повторяют сборку при ошибке; `onCompletion` вызывается всегда | Разделение upstream/downstream — основа exception-transparency. `retryWhen` поддерживает backoff. ✓ ПРИМЕНЯТЬ: Spring Cloud Gateway-фильтр оборачивает downstream-вызов через `flow.retryWhen { e, n -> e is IOException && n < 3 }.catch { emit(fallback) }`, давая 3 retries с экспоненциальным backoff. 📋 ПРАВИЛО: «catch перед collect — ловит upstream». 🔗 См. Q15.
-> - [ ] `flow.catch { e -> throw e }` корректно «ремитит» ошибку дальше и эквивалентен отсутствию `catch` | Внутри `catch` нельзя `throw` чужое exception — нарушается exception-transparency и завершение flow становится некорректным. ❌ ПОСЛЕДСТВИЕ: после миграции на coroutines 1.7 поведение меняется, тесты падают, post-mortem на 4 часа отладки в legacy-кодовой базе.
-
 ## Q7. Как работает backpressure в Kotlin Flow?
 
 В Kotlin Flow backpressure управляется через стратегии обработки переполнения буфера:
@@ -288,13 +246,6 @@ flow.collectLatest { value ->
 ```
 
 Flow по умолчанию синхронный (suspend функции): производитель приостанавливается, пока коллектор не готов. Это встроенный backpressure без явного буфера.
-
-
-> [!mcq]
-> - [ ] `buffer()`, `conflate()` и `collectLatest` — синонимы, выбор любого даёт идентичный результат | `buffer` — параллелизм с очередью, `conflate` — drop-old без обработки, `collectLatest` — отмена обработки при новом элементе. ❌ ПОСЛЕДСТВИЕ: команда меняет `buffer(Channel.UNLIMITED)` на `conflate()` «для упрощения», теряет 70% событий аналитики, метрики не сходятся с фронтом.
-> - [x] `buffer()` запускает producer и consumer параллельно с очередью; `conflate()` оставляет только последнее значение; `collectLatest` отменяет обработку при новом элементе | Каждая стратегия решает свою задачу: throughput, latest-only state, cancel-and-restart. ✓ ПРИМЕНЯТЬ: Android-поиск использует `searchFlow.debounce(300).flatMapLatest { api.search(it) }.collectLatest { renderResults(it) }` — отменяет старый запрос при новом вводе. 📋 ПРАВИЛО: «buffer = всё, conflate = последнее, collectLatest = отмени-и-перезапусти». 🔗 См. Q12.
-> - [ ] `Flow` не поддерживает backpressure: producer всегда быстрее consumer и переполняет heap | По умолчанию producer suspend'ится в `emit` пока collector не готов — это и есть встроенный backpressure без отдельной API. ❌ ПОСЛЕДСТВИЕ: разработчик добавляет «защитный» `Channel(UNLIMITED)` поверх `flow`, на проде heap уходит в OOM при медленном downstream через 30 минут.
-> - [ ] `collectLatest` ждёт завершения текущей обработки и буферизует все промежуточные элементы | `collectLatest` именно отменяет текущий блок-обработчик при следующем элементе, не буферизует. ❌ ПОСЛЕДСТВИЕ: команда строит «processing pipeline» через `collectLatest`, при росте RPS теряет 60% входных событий, фикс — переход на `buffer().collect`.
 
 ## Q8. Что такое channelFlow и callbackFlow?
 
@@ -318,13 +269,6 @@ fun observeConnectivity(): Flow<Boolean> = callbackFlow {
 ```
 
 `callbackFlow` — стандартный способ оборачивания listener-based API (Android LocationManager, Firebase, WebSocket) в Flow.
-
-
-> [!mcq]
-> - [ ] `flow { }` поддерживает `send()` из нескольких корутин, `channelFlow` — нет | Ровно наоборот: в `flow {}` `emit` запрещён вне корутины-сборщика, в `channelFlow` `send` доступен из любой launched корутины. ❌ ПОСЛЕДСТВИЕ: junior пишет fan-in через `flow {}` + `launch`, получает `IllegalStateException: Flow invariant is violated` при первом запуске тестов.
-> - [x] `channelFlow` поддерживает конкурентный `send` из дочерних корутин; `callbackFlow` — специализация для оборачивания callback-API с обязательным `awaitClose { }` | Внутренне используют `Channel`, поэтому emit потокобезопасен. `awaitClose` нужен для cleanup listener'а при отмене коллектора. ✓ ПРИМЕНЯТЬ: Android-обёртка `LocationManager` через `callbackFlow { val cb = ...; addListener(cb); awaitClose { removeListener(cb) } }` гарантирует отписку GPS при остановке экрана. 📋 ПРАВИЛО: «callbackFlow обязан awaitClose». 🔗 См. Q14.
-> - [ ] В `callbackFlow` достаточно вызвать `close()` и `awaitClose` не нужен — отписка произойдёт автоматически | Без `awaitClose` корутина внутри `callbackFlow` завершится сразу после регистрации listener'а, и cleanup при отмене коллектора не выполнится. ❌ ПОСЛЕДСТВИЕ: WebSocket-клиент не получает `unregister`, держит references на view, утечка памяти 50 MB/час, OOM в Crashlytics через сутки.
-> - [ ] `channelFlow` создаёт unbounded очередь по умолчанию и не имеет backpressure | По умолчанию ёмкость канала RENDEZVOUS (0), `send` суспендится — backpressure встроен. ❌ ПОСЛЕДСТВИЕ: команда полагается на «безопасную» очередь и не ставит `Channel.BUFFERED`, при burst-нагрузке упирается в неожиданное замедление producer'а, post-mortem за день.
 
 ## Q9. Как тестировать Kotlin Flow?
 
@@ -373,13 +317,6 @@ fun `state should update after load`() = runTest {
 }
 ```
 
-
-> [!mcq]
-> - [ ] `Thread.sleep(1000)` внутри `runTest` корректно ускоряется виртуальным временем | `runTest` ускоряет только корутинные `delay`, `Thread.sleep` всё ещё блокирует реальный поток. ❌ ПОСЛЕДСТВИЕ: `flow.debounce(5_000)` тестируется через `Thread.sleep`, прогон unit-тестов раздувается до 30 минут на CI, разработчики выключают локальные runs.
-> - [ ] `Turbine.test { }` достаточно вызывать без `awaitItem`/`awaitComplete` — он сам зачищает остаток | Turbine падает с `Expected complete or X items but received Y` если ожидания не явные. ❌ ПОСЛЕДСТВИЕ: тест зелёный локально, флакающий в CI — потому что emission приходит после assertion'а в зависимости от scheduler'а.
-> - [x] `runTest { }` + `Turbine.test { }` обеспечивают виртуальное время, контроль `awaitItem`/`awaitComplete` и явный `cancelAndIgnoreRemainingEvents` | `runTest` использует `TestCoroutineScheduler` для virtual time; Turbine форсит явные ожидания, исключая race'ы. ✓ ПРИМЕНЯТЬ: команда Cash App тестирует все Flow-pipelines через `Turbine` (это их собственная библиотека), CI прогоняет 5K тестов за 90 секунд. 📋 ПРАВИЛО: «runTest для virtual time, Turbine для явных await». 🔗 См. Q1, Q12.
-> - [ ] Тестирование `StateFlow` требует обязательного `Dispatchers.Main` через `Robolectric` | `StateFlow` тестируется в `runTest` без любых Android-зависимостей; `Dispatchers.Main` нужен только Android-UI коду. ❌ ПОСЛЕДСТВИЕ: домен-модуль тащит Robolectric в classpath «для тестов StateFlow», build time прыгает с 2 до 8 минут, CI-стоимость растёт.
-
 ## Q10. Чем Flow отличается от RxJava Observable?
 
 | Критерий | Kotlin Flow | RxJava Observable |
@@ -393,13 +330,6 @@ fun `state should update after load`() = runTest {
 | Тестирование | `Turbine` + `runTest` | `TestObserver` |
 
 Kotlin Flow предпочтительнее для нового Kotlin-кода. RxJava — если проект уже использует RxJava или нужна более богатая коллекция операторов.
-
-
-> [!mcq]
-> - [ ] `Flow` и `Observable` идентичны: одинаковая семантика, операторы, lifecycle | У них разные exception-transparency rules, отмена через корутины vs `Disposable`, встроенный backpressure (Flow) vs опциональный (`Flowable`). ❌ ПОСЛЕДСТВИЕ: миграция «один-в-один» из RxJava в Flow ломает обработку ошибок — `onErrorResumeNext` логика не воспроизводится через `catch`, post-mortem на 2 дня.
-> - [x] `Flow` встроен в корутины, отменяется через `cancel()` корутины, имеет встроенный backpressure через suspend; `Observable` — отдельная JVM-библиотека с `Disposable` и без backpressure (для backpressure нужен `Flowable`) | Размер kotlinx.coroutines ~100 KB против ~3 MB RxJava; экосистема Spring/Android идёт в сторону Flow. ✓ ПРИМЕНЯТЬ: новые сервисы Spring WebFlux на Kotlin используют `Flow<T>` вместо `Flux<T>` — Spring адаптирует автоматически через `kotlinx-coroutines-reactor`. 📋 ПРАВИЛО: «Flow = coroutines-native, Rx = standalone». 🔗 См. Q7, Q13.
-> - [ ] `RxJava` Observable работает только в Java, в Kotlin не используется | RxJava полностью совместим с Kotlin и активно использовался до релиза `kotlinx.coroutines.flow` 1.3 (2019). ❌ ПОСЛЕДСТВИЕ: новый разработчик не знает RxJava-историю проекта, ломает `Observable.create` в legacy-Android приложении при попытке «перевести на Kotlin».
-> - [ ] У `Flow` нет аналога `BehaviorSubject`/`PublishSubject`, нужно писать свой | `StateFlow` ≈ `BehaviorSubject` (текущее value), `SharedFlow(replay = 0)` ≈ `PublishSubject` (without replay). ❌ ПОСЛЕДСТВИЕ: разработчик тащит зависимость на RxJava ради `BehaviorSubject` в новый проект, увеличивает APK на 3 MB и duplicate-тесты на оба stream-API.
 
 ## Q11. Как использовать flowOn для смены контекста?
 
@@ -422,13 +352,6 @@ flow { emit(readFromDisk()) }
 ```
 
 `flowOn` создаёт внутренний канал между двумя частями пайплайна. Отличается от `withContext` — не переключает контекст для текущего блока кода.
-
-
-> [!mcq]
-> - [ ] `flowOn(Dispatchers.IO)` меняет контекст для всех downstream операторов и `collect` | `flowOn` влияет ТОЛЬКО на upstream (то, что объявлено выше по цепочке). ❌ ПОСЛЕДСТВИЕ: `flow.flowOn(IO).collect { updateUI(it) }` запускает `updateUI` всё ещё в IO-пуле, в Android — `CalledFromWrongThreadException`, в Spring — лишний context switch.
-> - [ ] `flowOn` эквивалентен `withContext` внутри `flow {}` | `flowOn` создаёт внутренний канал между двумя частями pipeline'а; `withContext` суспендит и переключает контекст текущего блока. ❌ ПОСЛЕДСТВИЕ: попытка `flow { withContext(IO) { emit(x) } }` бросает `IllegalStateException: Flow invariant is violated regarding context preservation`.
-> - [x] `flowOn(Dispatcher)` переключает контекст для UPSTREAM операторов через внутренний канал; downstream остаётся в контексте коллектора | Несколько `flowOn` создают сегменты с разными dispatcher'ами; правило размещения — ближе к источнику. ✓ ПРИМЕНЯТЬ: репозиторий читает файл и парсит JSON: `flow { emit(readFile()) }.flowOn(IO).map { parse(it) }.flowOn(Default).collect { showUi(it) }` — IO для диска, Default для CPU, Main для UI. 📋 ПРАВИЛО: «flowOn — для всего ВЫШЕ». 🔗 См. Q1, Q13.
-> - [ ] Несколько вызовов `flowOn` в одной цепочке всегда переопределяют друг друга, последний выигрывает | Каждый `flowOn` действует только на сегмент upstream до следующего `flowOn`; они НЕ переопределяют, а накладываются по сегментам. ❌ ПОСЛЕДСТВИЕ: команда «упрощает» pipeline до одного `flowOn(IO)` в конце, CPU-bound JSON-парсинг забивает IO-пул, p99 latency прыгает с 50 ms до 2 s под нагрузкой.
 
 ## Q12. Что такое flatMapLatest, flatMapMerge, flatMapConcat?
 
@@ -455,13 +378,6 @@ flow.flatMapConcat { id ->
 | `flatMapMerge` | Параллельно | Независимые запросы |
 | `flatMapConcat` | Последовательно | Зависимые операции |
 
-
-> [!mcq]
-> - [ ] `flatMapMerge` гарантирует порядок результатов в порядке исходных элементов | `flatMapMerge` запускает inner flows конкурентно, порядок результатов НЕ гарантирован — кто быстрее завершился, тот и приходит первым. ❌ ПОСЛЕДСТВИЕ: pipeline нумерует страницы pagination через `flatMapMerge`, отображение перемешивает страницы 5 → 2 → 7 → 1, пользователи жалуются «листание сломано».
-> - [ ] `flatMapLatest` буферизует все промежуточные эмиссии и обрабатывает их последовательно | `flatMapLatest` отменяет inner flow при появлении нового элемента в outer flow. ❌ ПОСЛЕДСТВИЕ: команда применяет `flatMapLatest` для аналитики событий, теряет 90% событий между быстрыми эмиссиями, метрика DAU съезжает.
-> - [x] `flatMapLatest` отменяет предыдущий inner flow при новом outer-элементе; `flatMapMerge(concurrency)` запускает до N параллельно; `flatMapConcat` ждёт завершения предыдущего | Применение: `Latest` — search-as-you-type, `Merge` — independent fan-out, `Concat` — sequential зависимости. ✓ ПРИМЕНЯТЬ: Booking.com search-bar — `query.debounce(300).flatMapLatest { searchApi(it) }`, отменяет старый запрос при печати новой буквы. 📋 ПРАВИЛО: «Latest = отмени старое, Merge = параллельно, Concat = в очередь». 🔗 См. Q8, Q12.
-> - [ ] `flatMapConcat` и `flatMapMerge` — синонимы и взаимозаменяемы | `Concat` — строго последовательный (waiting), `Merge` — параллельный (concurrent), под капотом разные scheduling-стратегии. ❌ ПОСЛЕДСТВИЕ: разработчик переходит с `Concat` на `Merge` «для скорости», нарушает порядок DB-операций, foreign key violation в production.
-
 ## Q13. Как интегрировать Kotlin Flow со Spring WebFlux?
 
 ```kotlin
@@ -485,91 +401,6 @@ interface OrderRepository : CoroutineCrudRepository<Order, Long> {
 ```
 
 `CoroutineCrudRepository` — Spring Data расширение для корутин/Flow: `findById` возвращает `Order?` (suspend), `findAll` — `Flow<Order>`.
-
-
-> [!mcq]
->
-> **Вопрос:** Как Spring WebFlux обрабатывает `Flow<T>` от controller и где разница с `Flux<T>`?
->
-> ---
->
-> #### A) WebFlux конвертирует `Flow` в `Flux` через `ReactiveAdapterRegistry` и обрабатывает как обычный reactive Publisher — ✓ Верно
->
-> **Развёрнутое объяснение:**
->
-> Spring WebFlux под капотом использует **Reactor** (`Flux`/`Mono` — реализация Reactive Streams). Kotlin `Flow` — другая абстракция (cold flow, suspend-based), но Spring предоставляет **bridge** через `kotlinx-coroutines-reactor` модуль: метод `.asFlux()` конвертирует Flow в Flux, `.asFlow()` обратно. `ReactiveAdapterRegistry` автоматически подхватывает Kotlin Flow type и применяет конверсию.
->
-> С точки зрения разработчика разницы между `fun get(): Flow<T>` и `fun get(): Flux<T>` для контроллера почти нет — Spring обрабатывает оба одинаково. Различия — на уровне идиоматики: Flow более естественно в Kotlin codebase, `suspend fun` для одиночных значений (вместо `Mono`).
->
-> **Пример:**
-> ```kotlin
-> @RestController
-> @RequestMapping("/orders")
-> class OrderController(private val service: OrderService) {
->     // Flow → Spring сам конвертирует в Flux при сериализации response
->     @GetMapping fun getOrders(): Flow<OrderDto> = service.streamOrders()
->
->     // SSE — Flow стримит события через event-stream
->     @GetMapping("/{id}/events", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
->     fun streamEvents(@PathVariable id: String): Flow<OrderEvent> =
->         service.getOrderEvents(id)
->
->     // suspend fun — эквивалент Mono<OrderDto>
->     @GetMapping("/{id}")
->     suspend fun getOrder(@PathVariable id: String): OrderDto =
->         service.findById(id) ?: throw NotFoundException()
-> }
->
-> // Spring Data R2DBC + coroutines — CoroutineCrudRepository
-> interface OrderRepository : CoroutineCrudRepository<Order, Long> {
->     fun findByStatus(status: OrderStatus): Flow<Order>
->     suspend fun findById(id: Long): Order?
-> }
-> ```
->
-> **Когда применять:**
-> - **Kotlin-first WebFlux проекты** — Flow + suspend читается чище чем Mono/Flux/`.flatMap{ }`.
-> - **Server-Sent Events / streaming endpoints** — Flow с backpressure через `kotlinx-coroutines-reactor`.
-> - **Spring Data R2DBC** — `CoroutineCrudRepository` для коротких запросов; для аналитики — `DatabaseClient` через `awaitSingle()`/`flow`.
-> - **Yandex/Wolt mobile API** — Kotlin Multiplatform клиент + Spring WebFlux backend с Flow.
->
-> **Подводные камни:**
-> - **Backpressure** в Flow — cooperative через `buffer()`, `conflate()`, `collectLatest`. В Flux — Reactor-style request/cancel. При конвертации Flow → Flux backpressure пробрасывается, но семантика может неожиданно отличаться (например, `collectLatest` ≠ `switchMap`).
-> - **Dispatcher leak**: Flow по умолчанию работает на dispatcher вызывающего. В WebFlux endpoint это event-loop поток. Если в Flow есть блокирующая операция (JDBC) — нужен `.flowOn(Dispatchers.IO)`.
-> - **`@PreAuthorize` + `suspend`**: работает, но требует `kotlin-reflect` и Spring Security ≥ 5.5; раньше нужны были workaround через `MonoSecurityContext`.
-> - **OpenAPI generation** для Flow: Springdoc корректно понимает `Flow<T>` → `Flux<T>` начиная с v2.0; на старых версиях документация генерируется неверно.
->
-> **Связанные вопросы:** [[kotlin-flow-interview#Q1]] — определение Flow vs Sequence; [[kotlin-flow-interview#Q5]] — Hot vs Cold flows и SharedFlow; [[kotlin-flow-interview#Q14]] — memory leak при подписке на SharedFlow в Spring beans.
->
-> ---
->
-> #### B) WebFlux не поддерживает Kotlin Flow — нужно вручную конвертировать `.asPublisher()` — ❌ Неверно
->
-> **Что на самом деле:** WebFlux поддерживает Flow **из коробки** (через `kotlinx-coroutines-reactor`, который автоматически подключается при наличии coroutines в classpath). Ручная конвертация `.asPublisher()` или `.asFlux()` не нужна — Spring справляется сам.
->
-> **Откуда путаница:** в старых версиях Spring (5.0-5.2) поддержка корутин была ограниченной, и приходилось вручную писать `.asFlux()`. С 5.3+ это работает прозрачно.
->
-> **Если бы это было правдой:** каждый controller с Flow требовал бы шаблонного `.asFlux()` в конце. На практике этот код пишется один раз в integration с библиотекой, не в коде приложения.
->
-> ---
->
-> #### C) `Flow<T>` блокирует event-loop в WebFlux — нужно использовать только `Flux<T>` — ❌ Неверно
->
-> **Что на самом деле:** Kotlin Flow — **non-blocking** suspend-based абстракция. Под капотом Flow использует continuation passing style (CPS) — это та же модель что у Reactor, не блокирующая. Spring Reactor Netty event-loop не блокируется при использовании Flow.
->
-> **Откуда путаница:** suspend functions «выглядят как» блокирующий код (`val x = repo.findById(id)`). Но это лишь синтаксический сахар над non-blocking continuation; компилятор Kotlin генерирует state machine.
->
-> **Если бы это было правдой:** Kotlin/Spring экосистема была бы непригодна для high-load reactive API. На практике Yandex/Wolt/Avito используют Kotlin+WebFlux+Flow в production на тысячах RPS.
->
-> ---
->
-> #### D) `Flow` работает только с `R2dbcRepository`, не с `WebFlux` controller — ❌ Неверно
->
-> **Что на самом деле:** Flow работает **везде в reactive Spring стеке**: controller, service, repository, WebClient, тесты. WebFlux принимает Flow в response, WebClient может возвращать Flow (`.bodyToFlow<T>()`), R2DBC репозитории возвращают Flow.
->
-> **Откуда путаница:** Flow часто демонстрируют именно с R2DBC. Но это просто популярный use-case — Flow универсален.
->
-> **Если бы это было правдой:** мы могли бы получать Flow от БД, но не возвращать его клиенту — пришлось бы конвертировать в Flux. На практике Flow → клиент идёт прозрачно.
 
 ## Q14. Как избежать memory leak при использовании SharedFlow?
 
@@ -599,113 +430,6 @@ override fun onStop() { job.cancel() }
 
 `repeatOnLifecycle` — стандартный Android-паттерн для безопасного сбора Flow с автоматической паузой/возобновлением.
 
-
-> [!mcq]
->
-> **Вопрос:** Почему `GlobalScope.launch` для коллектора `SharedFlow` приводит к memory leak в Android Activity?
->
-> ---
->
-> #### A) `GlobalScope` создаёт корутину которая работает быстрее чем lifecycleScope — это race condition — ❌ Неверно
->
-> **Что на самом деле:** проблема не в скорости. `GlobalScope` создаёт корутину **с lifetime = время жизни приложения**, не привязанную к жизненному циклу Activity. Когда Activity уничтожается (`onDestroy`), корутина продолжает работать, удерживая ссылку на Activity через лямбду `handleEvent(it)`.
->
-> **Откуда путаница:** memory leak интуитивно ассоциируется с многопоточностью и race conditions. На деле — про lifetime mismatch: subscriber переживает publisher's scope.
->
-> **Если бы это было правдой:** проблема решалась бы добавлением `delay()` или `yield()` — задержки. На практике замедление не помогает; нужно остановить корутину при `onDestroy`.
->
-> ---
->
-> #### B) `SharedFlow` хранит strong reference на collector lambda; при бесконечной жизни scope лямбда (и её захваченные `this`) не освобождаются GC, удерживая Activity и весь его VM — ✓ Верно
->
-> **Развёрнутое объяснение:**
->
-> `SharedFlow` — это hot flow, который ведёт **внутренний список подписчиков** (`flow.subscribers`). Когда мы делаем `flow.collect { handleEvent(it) }`, лямбда регистрируется в этом списке. Лямбда захватывает `this` (Activity) через выражение `handleEvent`.
->
-> Если корутина бежит в `GlobalScope`, она живёт до конца процесса. Соответственно, лямбда не удаляется из subscribers list, и сильная ссылка на Activity сохраняется. GC видит «Activity достижима через GlobalScope → flow.subscribers → lambda → this» и НЕ удаляет её.
->
-> Результат: Activity, ViewBinding, ViewModel, drawable, bitmaps — всё остаётся в памяти после `onDestroy`. На каждом orientation change или re-creation — новый leak.
->
-> **Пример (правильно vs неправильно):**
-> ```kotlin
-> // ❌ LEAK: GlobalScope живёт всю жизнь приложения
-> class BadActivity : AppCompatActivity() {
->     override fun onCreate(savedInstanceState: Bundle?) {
->         super.onCreate(savedInstanceState)
->         GlobalScope.launch {
->             viewModel.events.collect { event ->         // лямбда → this → Activity → ViewModel...
->                 updateUi(event)
->             }
->         }
->     }
-> }
->
-> // ✅ ПРАВИЛЬНО: lifecycle-aware scope
-> class GoodActivity : AppCompatActivity() {
->     override fun onCreate(savedInstanceState: Bundle?) {
->         super.onCreate(savedInstanceState)
->         lifecycleScope.launch {
->             repeatOnLifecycle(Lifecycle.State.STARTED) {
->                 viewModel.events.collect { event ->     // отменяется на onStop, рестартует на onStart
->                     updateUi(event)
->                 }
->             }
->         }
->     }
-> }
->
-> // ✅ Альтернатива: явный Job + cancel в onDestroy/onStop
-> class AlternativeActivity : AppCompatActivity() {
->     private var collectJob: Job? = null
->     override fun onStart() {
->         super.onStart()
->         collectJob = lifecycleScope.launch {
->             viewModel.events.collect { updateUi(it) }
->         }
->     }
->     override fun onStop() {
->         super.onStop()
->         collectJob?.cancel()                            // явно убираем подписку
->     }
-> }
-> ```
->
-> **Когда применять:**
-> - **Android**: всегда `lifecycleScope.launch` + `repeatOnLifecycle` для UI-коллекторов. Это стандартный паттерн с Lifecycle 2.4+ (2021).
-> - **Spring beans с SharedFlow**: используйте `@PreDestroy` для отмены корутин при остановке bean (`@Service` lifecycle).
-> - **Compose**: `LaunchedEffect(key)` или `collectAsState()` — Compose сам управляет lifecycle.
-> - **ViewModel**: `viewModelScope` — отменяется в `onCleared()` автоматически.
->
-> **Подводные камни:**
-> - **`StateFlow.collect` блокирует корутину навсегда** — даже без новых эмиссий, поскольку StateFlow никогда не завершается. Это by design, но удивляет начинающих.
-> - **`repeatOnLifecycle` ≠ `flowWithLifecycle`**: первый рестартует collector при resume, второй пропускает значения когда состояние ниже минимального. Выбор зависит от сценария (UI vs background work).
-> - **Multiple collectors на одной Flow** — каждый collect создаёт **отдельную subscribers entry** в SharedFlow. Параллельная подписка из 5 Activities = 5 lambda references.
-> - **Leak detection**: LeakCanary видит коллекторы с retained Activity. Но первопричина — `GlobalScope`, а не SharedFlow per se.
->
-> **Связанные вопросы:** [[kotlin-flow-interview#Q5]] — Hot vs Cold flow и SharedFlow basics; [[kotlin-flow-interview#Q6]] — StateFlow и conflation; [[kotlin-flow-interview#Q15]] — exception handling при collect отменяет коллектор автоматически.
->
-> ---
->
-> #### C) `SharedFlow` всегда вызывает memory leak — лучше использовать `StateFlow` — ❌ Неверно
->
-> **Что на самом деле:** memory leak зависит от scope сборки, не от типа flow. `StateFlow` имеет ту же проблему если коллектор в `GlobalScope`. Разница между StateFlow и SharedFlow — в semantics (conflated state vs broadcast events), не в безопасности по памяти.
->
-> **Откуда путаница:** StateFlow «выглядит проще», и для UI обычно подходит лучше. Но утечка возникает из-за scope коллектора, не из-за выбора типа.
->
-> **Если бы это было правдой:** мы бы могли использовать SharedFlow только для одноразовых событий через `consumeAsFlow()`. Но это бы заблокировало главное применение SharedFlow — event bus для multiple subscribers.
->
-> ---
->
-> #### D) `lifecycleScope` сам по себе достаточен; `repeatOnLifecycle` нужен только для производительности — ❌ Неверно
->
-> **Что на самом деле:** `lifecycleScope.launch` без `repeatOnLifecycle` стартует одну корутину при `onCreate`. Эта корутина живёт до **уничтожения Activity** (`onDestroy`), что означает collect продолжается **даже когда Activity на фоне** (`onStop`). Это растрата ресурсов: обновления UI идут, когда пользователь не видит экран.
->
-> `repeatOnLifecycle(STARTED)` отменяет корутину при `onStop` и пересоздаёт при `onStart` — экономит CPU/battery, что критично на mobile.
->
-> **Откуда путаница:** `lifecycleScope` звучит как «полное решение». На деле он лишь обеспечивает cancel при destroy, но не оптимизирует время жизни между start/stop.
->
-> **Если бы это было правдой:** background activities обрабатывали бы updates вхолостую. На Android 12+ это может приводить к ANR — система мониторит и убивает background workers.
-
 ## Q15. Что произойдёт при исключении внутри flow { } без catch?
 
 ```kotlin
@@ -733,101 +457,6 @@ flow.catch { emit(-1) }
     }
 ```
 
-
-> [!mcq]
->
-> **Вопрос:** Что ловит оператор `.catch { }` в Flow и что НЕ ловит?
->
-> ---
->
-> #### A) `.catch { }` ловит ВСЕ исключения в pipeline — включая внутри `.collect { }` — ❌ Неверно
->
-> **Что на самом деле:** `.catch { }` ловит исключения **upstream** — те, что бросаются до неё в цепочке (в `flow { }`, `.map`, `.filter`, любых операторах между источником и catch). Исключения **внутри `.collect { }`** (terminal lambda) НЕ перехватываются `.catch`.
->
-> **Откуда путаница:** имя «catch» предполагает универсальный try-catch. По факту это **downstream-aware** оператор, который видит только upstream errors.
->
-> **Если бы это было правдой:** мы могли бы поставить `.catch` в начале pipeline и забыть про error handling в collect. На практике bug в `updateUi(it)` внутри collect упадёт неперехваченным и убьёт coroutine.
->
-> ---
->
-> #### B) `.catch { }` ловит upstream исключения (в flow{}, map, filter перед ним); исключения внутри `.collect { }` нужно ловить try/catch вокруг collect или через `.onEach { }.catch { }.collect()` — ✓ Верно
->
-> **Развёрнутое объяснение:**
->
-> Flow exception transparency требует: `.catch { }` срабатывает только на исключения, бросаемые **вверх** по pipeline относительно её позиции. Это позволяет переподписаться, эмитнуть fallback значение, залогировать ошибку, не прерывая цепочку.
->
-> Внутри `.collect { lambda }` (terminal operation) — лямбда выполняется в потоке, в котором происходит сбор. Если она бросает — exception распространяется вверх по корутине, не задевая `.catch` оператор. Это by design: catch не должен «маскировать» баги downstream.
->
-> Идиоматичный паттерн — переместить обработку downstream в `.onEach { ... }` (intermediate, можно `.catch { }`), а в `.collect` оставить минимум (`.collect()` без аргументов).
->
-> **Пример:**
-> ```kotlin
-> val flow = flow {
->     emit(1)
->     throw RuntimeException("upstream!")
->     emit(2)
-> }
->
-> // ✅ catch ЛОВИТ upstream exception
-> flow.catch { e -> emit(-1) }
->     .collect { println(it) }      // prints: 1, -1
->
-> // ❌ catch НЕ ловит exception в collect lambda
-> flow.catch { emit(-1) }
->     .collect {
->         if (it == 1) throw IllegalStateException("downstream!")
->         println(it)
->     }                              // ⚠ IllegalStateException распространяется вверх
->
-> // ✅ Правильно: переместить логику в onEach + catch
-> flow.onEach {
->     if (it == 1) throw IllegalStateException("downstream!")
-> }
-> .catch { e -> println("caught: ${e.message}") }
-> .collect()                          // empty collect, exception обработан в catch
->
-> // ✅ Альтернатива: try/catch вокруг collect
-> try {
->     flow.collect { riskyOperation(it) }
-> } catch (e: Exception) {
->     logger.error("Flow failed", e)
-> }
-> ```
->
-> **Когда применять:**
-> - **Retry strategies**: `.catch { e -> if (isRetryable(e)) delay(1000); emit(fallback) else throw e }` — graceful degradation для transient failures.
-> - **Logging без прерывания**: `.catch { e -> logger.error("Pipeline error", e); throw e }` — re-throw после логирования.
-> - **Fallback values**: на ошибке БД — эмитнуть `cachedValue` вместо exception.
-> - **Spring WebFlux endpoint**: `.catch { e -> emit(ErrorResponse(e.message)) }` — конвертация ошибок в response без 500.
->
-> **Подводные камни:**
-> - **`.catch` после `.collect()` — синтаксическая ошибка**: catch только intermediate operator, должен быть до terminal.
-> - **`CancellationException`** НЕ ловится catch (by design, чтобы не нарушать cooperative cancellation). Если нужно — отдельная обработка через `runCatching` + `getOrNull`.
-> - **`SupervisorJob` vs default Job**: дочерние flow с обычным Job отменяют parent при exception. SupervisorJob изолирует ошибки между siblings.
-> - **`launchIn` + exception**: `flow.launchIn(scope)` запускает на scope; необработанные исключения завершают scope (если не SupervisorScope).
->
-> **Связанные вопросы:** [[kotlin-flow-interview#Q14]] — memory leak при подписке без правильного scope; [[kotlin-flow-interview#Q1]] — общая модель Flow и suspend; [[kotlin-flow-interview#Q9]] — `retry`/`retryWhen` операторы для recovery.
->
-> ---
->
-> #### C) `.catch { }` блокирует распространение exception дальше — после неё coroutine не падает — ❌ Неверно
->
-> **Что на самом деле:** `.catch { }` действительно может «проглотить» исключение если в её лямбде не вызывать `throw`. Но если внутри `.catch { throw e }` или просто реализация catch проброса не делает emit — Flow заканчивается без emit'а, и downstream НЕ получает значения. Это «нормальное» завершение, не блокировка.
->
-> **Откуда путаница:** «catch блокирует exception propagation» — да, для downstream Flow. Но для coroutine context — exception действительно остановлен. Не путать с try/catch в обычной Java/Kotlin.
->
-> **Если бы это было правдой:** мы могли бы поставить `.catch { }` без аргументов и Flow продолжил бы работать после ошибки. На практике без `emit` в catch lambda Flow завершается (как обычный flow после выхода из flow{}).
->
-> ---
->
-> #### D) `.catch { }` работает как глобальный exception handler — нужен только один на всё приложение — ❌ Неверно
->
-> **Что на самом деле:** `.catch { }` — **локальный** оператор для одного Flow pipeline. Один Flow — один catch (или несколько вложенных). Для глобального exception handling в coroutines используется `CoroutineExceptionHandler` через `CoroutineContext`.
->
-> **Откуда путаница:** аналогия с `@RestControllerAdvice` или global error handlers в HTTP-фреймворках. В корутинах локальная обработка плюс global handler — два разных уровня.
->
-> **Если бы это было правдой:** мы бы поставили один catch в `main()` и забыли. На практике нужно catch в каждом критичном pipeline + опционально CoroutineExceptionHandler для unhandled.
-
 ## Q16. Как работают zip и combine?
 
 ```kotlin
@@ -854,97 +483,6 @@ numbers.combine(letters) { n, l -> "$n$l" }
 
 `zip` — "двухрядная молния" (пара per pair). `combine` — "любое изменение → пересчёт".
 
-
-> [!mcq]
->
-> **Вопрос:** В чём ключевая разница между `zip` и `combine`, и когда каждый из них подходит для UI state?
->
-> ---
->
-> #### A) `zip` и `combine` идентичны — оба объединяют два Flow в один — ❌ Неверно
->
-> **Что на самом деле:** оба объединяют, но **триггерами эмиссии** работают по-разному:
-> - `zip(a, b) { x, y -> ... }` — попарно: ждёт ОБА flow эмитнуть, потом эмитит результат. Если a быстрее b — буферизирует. Завершается когда любой Flow завершается.
-> - `combine(a, b) { x, y -> ... }` — последние значения: эмитит при ЛЮБОМ обновлении в a или b, используя последнее значение другого flow.
->
-> **Откуда путаница:** оба берут «пару значений из двух потоков». Но семантика разная — попарное synchronized vs reactive recomputation.
->
-> **Если бы это было правдой:** разработчики использовали бы любой из них без последствий. На практике выбор неправильного даёт баги (zip для UI state буферизирует и теряет actuality, combine для парных результатов лжёт о соответствии).
->
-> ---
->
-> #### C) Когда нужно объединить два независимых пользовательских стейта (текст поиска + фильтр) и реагировать на любое изменение — `combine`; когда нужно строго попарно сопоставить два потока (одна запись = одна запись) — `zip` — ✓ Верно
->
-> **Развёрнутое объяснение:**
->
-> Аналогия:
-> - `zip` = "застёжка-молния" — звенья по парам, оба должны быть готовы.
-> - `combine` = "формула с двумя входами" — при изменении любого входа пересчитывается выход.
->
-> Для UI state (поисковая строка + фильтр + категория) — типично `combine`, потому что обновление любого должно пересчитать список:
->
-> ```kotlin
-> val searchQuery = MutableStateFlow("")
-> val category = MutableStateFlow("All")
-> val sortOrder = MutableStateFlow(SortOrder.NEWEST)
->
-> val results: Flow<List<Product>> = combine(
->     searchQuery.debounce(300),
->     category,
->     sortOrder
-> ) { query, cat, sort ->
->     productRepository.search(query, cat, sort)
-> }.flowOn(Dispatchers.IO)
-> ```
->
-> Для парного матчинга — `zip`. Например, две parallel API request возвращают связанные результаты (`userInfo + userPosts`), нужно объединить per index:
->
-> ```kotlin
-> val userIds: Flow<Long> = flowOf(1, 2, 3)
-> val userNames: Flow<String> = userIds.map { api.getName(it) }
-> val userEmails: Flow<String> = userIds.map { api.getEmail(it) }
->
-> // zip — попарно по индексу
-> userNames.zip(userEmails) { name, email ->
->     UserSummary(name, email)
-> }.collect { println(it) }
-> // UserSummary("Alice", "alice@x.com"), UserSummary("Bob", "bob@x.com"), ...
-> ```
->
-> **Когда применять:**
-> - **`combine` для reactive UI**: Compose `collectAsState()` + combine для derived state (Yandex Lavka, Wolt — поиск товаров с фильтрами).
-> - **`zip` для пакетных операций**: парсинг файлов параллельно (имя + содержимое из разных API), merge sorted streams.
-> - **`combine` для feature flags + user prefs**: при изменении любого триггерится UI rerender.
-> - **`zip` для barrier sync**: ждать пока ВСЕ subjective Flow эмитнут перед продолжением.
->
-> **Подводные камни:**
-> - **`combine` initial emission**: эмитит когда ВСЕ source flows эмитнули хотя бы один раз. Если один flow никогда не эмитит (cold flow с timeout) — combine молчит.
-> - **`zip` буферизация**: если a быстрее b, всё что эмитнул a буферизуется в памяти до момента когда b догонит. На большом disparity — OOM.
-> - **`combine` cardinality mismatch**: 3 эмиссии в a и 5 в b → combine выдаст 8 эмиссий (по одной на каждое изменение). Иногда удивляет.
-> - **`zip` early termination**: zip(short, infinite) завершается когда short закончится — infinite Flow отменяется. Это by design (попарно невозможно без короткого).
->
-> **Связанные вопросы:** [[kotlin-flow-interview#Q12]] — `flatMapLatest` тоже для reactive поиска; [[kotlin-flow-interview#Q6]] — `StateFlow` как основной источник для combine; [[kotlin-flow-interview#Q4]] — операторы преобразования.
->
-> ---
->
-> #### B) `zip` эмитит при изменении любого из flows, `combine` — попарно — ❌ Неверно (перепутаны определения)
->
-> **Что на самом деле:** **наоборот**. `combine` эмитит при любом изменении (reactive recomputation), `zip` — строго попарно (pairing). Это классическая путаница, поскольку имена не отражают семантику.
->
-> **Откуда путаница:** «combine» звучит как «объединять» (что близко к pairing), «zip» — как «zip-files» (тоже pairing). Семантика по поведению, не по этимологии имени.
->
-> **Если бы это было правдой:** все UI state pipelines работали бы наоборот — клик кнопки не обновлял бы список, а ждал бы matching элемент из другого Flow.
->
-> ---
->
-> #### D) `combine` нельзя использовать с более чем 2 flow — для 3+ нужен ручной `flatMap` — ❌ Неверно
->
-> **Что на самом деле:** `combine` поддерживает variadic: `combine(flow1, flow2, flow3, flow4, flow5) { a, b, c, d, e -> ... }`. До 5 параметров с typed lambda; для большего числа есть overloads с `vararg flows: Flow<T>` и `transform: suspend (Array<T>) -> R`.
->
-> **Откуда путаница:** в RxJava `combineLatest` имеет limit на 9 источников, что можно по аналогии распространить на Flow. На деле kotlinx-coroutines имеет gradual extension и vararg fallback.
->
-> **Если бы это было правдой:** мы не могли бы делать combine из 3+ user prefs или filters. На практике 5-7 sources в combine — норма для сложных дашбордов.
-
 ## Q17. Что такое scan и runningFold?
 
 `scan`/`runningFold` — накапливающие операторы, похожие на `reduce`, но **эмитируют каждый промежуточный результат**.
@@ -967,89 +505,6 @@ flowOf(1, 2, 3)
 - Накопленная статистика (running total, running average)
 - История изменений состояния
 - Прогрессивное построение списка
-
-> [!mcq]
->
-> **Вопрос:** В чём ключевое отличие `scan` (`runningFold`) от обычного `reduce`?
->
-> ---
->
-> #### A) `scan` быстрее чем `reduce` из-за optimизации Kotlin compiler — ❌ Неверно
->
-> **Что на самом деле:** оба оператора используют одну и ту же accumulating логику внутри. Производительность одинакова per element. **Семантика** отличается: `reduce` — terminal оператор, эмитит **один результат** в конце; `scan` — intermediate оператор, эмитит **каждый промежуточный шаг**.
->
-> **Откуда путаница:** `scan` для UI-обновлений может «казаться быстрее» потому что показывает результаты ИНКРЕМЕНТАЛЬНО. На деле total CPU work тот же; разница в timing наблюдаемых результатов.
->
-> **Если бы это было правдой:** мы бы предпочитали scan везде ради скорости. На практике выбор по semantics: нужны промежуточные значения — scan, только финал — reduce.
->
-> ---
->
-> #### B) `scan` эмитит каждый промежуточный аккумулятор (включая initial); `reduce` эмитит только финальное значение по завершении Flow — ✓ Верно
->
-> **Развёрнутое объяснение:**
->
-> Оба оператора накапливают значение функцией `(acc, value) -> acc'`. Разница:
->
-> | Оператор | Тип | Эмиссии |
-> |---|---|---|
-> | `reduce { acc, v -> acc + v }` | **Terminal** (suspend, не intermediate) | Один результат после завершения source flow |
-> | `scan(init) { acc, v -> acc + v }` | **Intermediate** | Initial + каждый промежуточный аккумулятор |
-> | `runningFold(init) { acc, v -> ... }` | **Intermediate** | То же что scan, более явное имя |
-> | `runningReduce { acc, v -> ... }` | **Intermediate** | Без initial (первое значение становится initial) |
->
-> Для `flowOf(1, 2, 3, 4, 5).scan(0) { a, v -> a + v }`:
-> - `scan` эмитит: `0` (initial), `1` (0+1), `3` (1+2), `6` (3+3), `10` (6+4), `15` (10+5) → 6 эмиссий
-> - `reduce` эмитит: `15` (только финал) → 1 эмиссия
->
-> **Пример (running total для UI progress bar):**
-> ```kotlin
-> val fileChunks: Flow<ByteArray> = downloadFileInChunks()
->
-> // ❌ reduce — UI обновится только когда всё скачается
-> val total: ByteArray = fileChunks.reduce { acc, chunk -> acc + chunk }
-> updateProgress(total.size)
->
-> // ✅ scan — UI получает обновления после каждого chunk
-> fileChunks
->     .scan(0) { acc, chunk -> acc + chunk.size }
->     .collect { downloadedBytes -> updateProgress(downloadedBytes) }
-> // 0, 1024, 2048, 3072, ... — пользователь видит прогресс
-> ```
->
-> **Когда применять:**
-> - **Running stats**: average, sum, max во время стрима событий — Discord live message count, чат-сообщения per second.
-> - **Progress tracking**: загрузка файлов, миграции БД — каждый шаг видим.
-> - **State machines**: `scan(initialState) { state, event -> reducer(state, event) }` — Redux-like architecture в Compose.
-> - **Audit trail**: история изменений объекта — `runningFold(emptyList<HistoryEntry>()) { history, change -> history + change }`.
-> - **Backpressure для batches**: `scan(emptyList<T>()) { batch, item -> if (batch.size < N) batch + item else listOf(item) }.filter { it.size == N }` — окно событий.
->
-> **Подводные камни:**
-> - **Memory growth**: `scan(emptyList<T>()) { acc, v -> acc + v }` — список растёт без bounded. При длинном flow — OOM.
-> - **`runningReduce` без initial** падает на пустом flow (NoSuchElementException), потому что нет первого значения. `scan` с initial безопасен.
-> - **`scan` сохраняет тип аккумулятора** — может отличаться от типа элементов: `Flow<Int>.scan("") { acc, v -> "$acc-$v" } : Flow<String>`.
-> - **`stateIn` + `scan` антипаттерн**: scan уже даёт continuous state stream, оборачивать в `stateIn` создаёт двойную buffering.
->
-> **Связанные вопросы:** [[kotlin-flow-interview#Q4]] — базовые intermediate операторы; [[kotlin-flow-interview#Q6]] — StateFlow как стандартная альтернатива scan для UI state; [[kotlin-flow-interview#Q16]] — combine для derived state из нескольких источников.
->
-> ---
->
-> #### C) `scan` блокирует Flow до завершения source — поэтому работает только на конечных flow — ❌ Неверно
->
-> **Что на самом деле:** `scan` — **non-blocking intermediate** оператор. Работает на любом Flow (cold/hot, finite/infinite) и эмитит каждый шаг сразу после получения нового значения. На бесконечном Flow (например, StateFlow) scan тоже работает — просто никогда не «завершается» в classical sense.
->
-> **Откуда путаница:** `reduce` действительно требует завершения Flow для эмиссии (нет завершения — нет результата). `scan` это не про финальное значение, а про intermediate, поэтому ограничения нет.
->
-> **Если бы это было правдой:** мы не могли бы использовать scan для UI state, который update'ится continuously. На практике именно для UI scan и применяется.
->
-> ---
->
-> #### D) `scan` и `runningFold` — разные операторы с разной семантикой — ❌ Неверно
->
-> **Что на самом деле:** `scan` и `runningFold` — **полные синонимы** в kotlinx-coroutines. `runningFold` появилось позже как более описательное имя (по аналогии с `runningReduce`); `scan` — оригинальное Reactor-подобное имя. Можно использовать любое.
->
-> **Откуда путаница:** наличие двух функций намекает на разную семантику. На деле это полная функциональная эквивалентность для дублирования по convention.
->
-> **Если бы это было правдой:** в документации kotlinx-coroutines была бы таблица различий. Реально — упоминается как «также известный как runningFold».
 
 ---
 

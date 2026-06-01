@@ -136,13 +136,6 @@ sequenceDiagram
 
 ---
 
-
-> [!mcq]
-> - [ ] WebSocket — это просто HTTP long polling с переименованием | ❌ ПОСЛЕДСТВИЕ: long polling использует обычный HTTP с reconnect; WebSocket — full-duplex протокол после Upgrade с persistent TCP соединением
-> - [x] WebSocket = bidirectional persistent TCP connection после HTTP Upgrade handshake; обычно ws:// или wss:// (TLS) | ✓ ПРИМЕНЯТЬ: real-time push (chat, trading, notifications), bidirectional communication 📋 ПРАВИЛО: WebSocket = полнодуплекс после Upgrade = единое соединение 🔗 См. Q2
-> - [ ] WebSocket работает только на портах 80 и 443 | ❌ ПОСЛЕДСТВИЕ: WebSocket использует те же порты что HTTP/HTTPS (80/443) для проксирования через файрволы; но технически любой порт
-> - [ ] WebSocket требует отдельного DNS — нельзя использовать тот же домен что HTTP | ❌ ПОСЛЕДСТВИЕ: WebSocket работает на том же домене и порте что HTTP — путь /ws запускает Upgrade
-
 ## Q2. (!) Как происходит WebSocket handshake?
 
 **WebSocket handshake** — это HTTP-запрос на переключение протокола. Стандарт требует заголовок `Upgrade: websocket`.
@@ -172,13 +165,6 @@ Sec-WebSocket-Protocol: stomp
 - После ответа `101 Switching Protocols` TCP-соединение переходит в режим WebSocket-фреймов
 
 ---
-
-
-> [!mcq]
-> - [ ] WebSocket handshake — это TCP handshake с дополнительными байтами | ❌ ПОСЛЕДСТВИЕ: WebSocket работает поверх TCP; handshake — это HTTP/1.1 GET с Upgrade: websocket; статус 101 Switching Protocols
-> - [x] HTTP GET с заголовками Upgrade: websocket + Connection: Upgrade + Sec-WebSocket-Key; ответ 101 + Sec-WebSocket-Accept = SHA-1(key + magic GUID) | ✓ ПРИМЕНЯТЬ: знать что handshake — это HTTP, проверять headers в proxy/lb 📋 ПРАВИЛО: 101 Switching Protocols + valid Accept = успешный handshake 🔗 См. Q3
-> - [ ] Sec-WebSocket-Accept — это случайное значение от сервера для проверки клиента | ❌ ПОСЛЕДСТВИЕ: Accept — это детерминистический хэш SHA-1 от Key + magic constant; клиент проверяет правильность хэша
-> - [ ] WebSocket handshake не требует HTTPS — wss:// устаревший протокол | ❌ ПОСЛЕДСТВИЕ: wss:// — стандарт для production (TLS); ws:// небезопасен и блокируется на сайтах с HTTPS (mixed content)
 
 ## Q3. Что такое WebSocket frames и какие типы существуют?
 
@@ -212,13 +198,6 @@ Sec-WebSocket-Protocol: stomp
 
 ---
 
-
-> [!mcq]
-> - [ ] WebSocket поддерживает только текстовые сообщения, не бинарные | ❌ ПОСЛЕДСТВИЕ: opcode 0x2 — Binary frames; протокол поддерживает оба типа; ограничение приведёт к лишнему base64 для бинарных данных
-> - [x] Frames: 0x0 Continuation, 0x1 Text (UTF-8), 0x2 Binary, 0x8 Close, 0x9 Ping, 0xA Pong; FIN bit для фрагментации; MASK обязателен от клиента | ✓ ПРИМЕНЯТЬ: понимать структуру для отладки и proxy конфигурации 📋 ПРАВИЛО: 6 типов фреймов: 3 data + 3 control 🔗 См. Q3
-> - [ ] Сервер обязан маскировать данные при отправке клиенту | ❌ ПОСЛЕДСТВИЕ: только клиент → сервер требует маскирования (защита от cache poisoning); сервер → клиент без маски
-> - [ ] Один фрейм не может быть фрагментирован на несколько TCP пакетов | ❌ ПОСЛЕДСТВИЕ: фреймы могут быть до 2^63 байт; TCP фрагментирует на сегменты автоматически; FIN бит обрамляет логические сообщения, не TCP пакеты
-
 ## Q4. Чем WebSocket отличается от HTTP Long Polling, SSE и gRPC Streaming?
 
 | | WebSocket | Long Polling | SSE | gRPC Streaming |
@@ -248,13 +227,6 @@ graph LR
 ```
 
 ---
-
-
-> [!mcq]
-> - [ ] WebSocket и Long Polling одинаковы по производительности | ❌ ПОСЛЕДСТВИЕ: Long Polling делает новый HTTP-запрос на каждое событие; WebSocket — единое соединение; накладные расходы Long Polling кратно больше
-> - [x] WebSocket: bidirectional, ws/wss, низкий overhead; SSE: server→client, HTTP стрим; gRPC: HTTP/2, типизация; Long Polling: legacy, высокий overhead | ✓ ПРИМЕНЯТЬ: выбор по сценарию — chat → WS; feed → SSE; межсервис → gRPC 📋 ПРАВИЛО: WebSocket = bidirectional persistent; SSE = server push only 🔗 См. Q5
-> - [ ] SSE поддерживает bidirectional коммуникацию как WebSocket | ❌ ПОСЛЕДСТВИЕ: SSE только server→client; для client→server нужны отдельные POST/PUT
-> - [ ] gRPC streaming работает в браузерах нативно как WebSocket | ❌ ПОСЛЕДСТВИЕ: gRPC требует HTTP/2 + protobuf; в браузере только через grpc-web прокси; WebSocket нативно поддерживается всеми браузерами
 
 ## Q5. (!) Что такое STOMP и зачем он нужен поверх WebSocket?
 
@@ -289,13 +261,6 @@ destination:/topic/greetings
 
 ---
 
-
-> [!mcq]
-> - [ ] WebSocket уже включает понятие топиков — STOMP избыточен | ❌ ПОСЛЕДСТВИЕ: WebSocket — низкоуровневый транспорт без семантики; topics, SUBSCRIBE, ACK — это всё STOMP добавляет
-> - [x] STOMP добавляет поверх WebSocket: topics/destinations, SUBSCRIBE/UNSUBSCRIBE, ACK/NACK, transactions, маршрутизация через брокер (RabbitMQ, ActiveMQ) | ✓ ПРИМЕНЯТЬ: pub/sub поверх WebSocket, интеграция с message broker 📋 ПРАВИЛО: WebSocket = транспорт; STOMP = семантика сообщений 🔗 См. Q6
-> - [ ] STOMP — это бинарный протокол как Protobuf | ❌ ПОСЛЕДСТВИЕ: STOMP именно текстовый (Simple Text Oriented Messaging Protocol); удобно для отладки, дороже по байтам чем бинарный
-> - [ ] STOMP работает только с RabbitMQ — для других брокеров несовместим | ❌ ПОСЛЕДСТВИЕ: STOMP поддерживается RabbitMQ, ActiveMQ, HornetQ, Apollo; открытый стандарт
-
 ## Q6. Какие команды определяет STOMP?
 
 **Команды клиента:**
@@ -322,13 +287,6 @@ destination:/topic/greetings
 
 ---
 
-
-> [!mcq]
-> - [ ] STOMP не имеет команды для отмены подписки — нужно закрыть соединение | ❌ ПОСЛЕДСТВИЕ: UNSUBSCRIBE — стандартная команда STOMP с указанием id; не нужно закрывать всё соединение
-> - [ ] ACK/NACK работают только с auto-acknowledge режимом | ❌ ПОСЛЕДСТВИЕ: ACK/NACK как раз для client-acknowledge режима (manual); auto-ack не требует ACK
-> - [x] Client: CONNECT, SUBSCRIBE, UNSUBSCRIBE, SEND, ACK/NACK, BEGIN/COMMIT/ABORT; Server: CONNECTED, MESSAGE, RECEIPT, ERROR | ✓ ПРИМЕНЯТЬ: использовать ACK для guaranteed delivery; transactions для атомарных операций 📋 ПРАВИЛО: SUBSCRIBE/MESSAGE/ACK — основа pub/sub в STOMP 🔗 См. Q7
-> - [ ] BEGIN/COMMIT — это для DB-транзакций | ❌ ПОСЛЕДСТВИЕ: в STOMP это для группировки нескольких SEND в атомарную операцию (все или ничего); не для DB
-
 ## Q7. Как устроен фрейм STOMP?
 
 ```
@@ -347,13 +305,6 @@ content-length:26
 - **`^@`** (NULL байт, `\0`) — терминатор фрейма
 
 ---
-
-
-> [!mcq]
-> - [ ] STOMP-фрейм заканчивается переводом строки (`\n`), как HTTP | ❌ ПОСЛЕДСТВИЕ: фрейм терминируется NULL-байтом `\0` (`^@`); парсер по `\n` примет первый header за конец и потеряет тело
-> - [ ] Заголовки разделены запятой, тело отделено двоеточием | ❌ ПОСЛЕДСТВИЕ: заголовки `key:value` по одному на строку, тело отделено пустой строкой; это не HTTP-форма
-> - [ ] Первый байт фрейма — длина в bigendian, дальше payload | ❌ ПОСЛЕДСТВИЕ: STOMP — текстовый протокол (Simple Text), без бинарного префикса длины; длина указывается опциональным `content-length` header
-> - [x] Текстовый формат: первая строка — команда, далее `key:value` заголовки, пустая строка, тело, терминатор `\0` | ✓ ПРИМЕНЯТЬ: для отладки можно прочитать фрейм глазами или telnet'ом; `content-length` обязателен для binary body 📋 ПРАВИЛО: STOMP = HTTP-подобный текст + NULL-терминатор 🔗 См. Q8
 
 ## Q8. (!) Как настроить WebSocket в Spring без STOMP?
 
@@ -379,13 +330,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
 ```
 
 ---
-
-
-> [!mcq]
-> - [ ] Нужно поднимать отдельный Netty-сервер на другом порту | ❌ ПОСЛЕДСТВИЕ: Spring Boot встроенный Tomcat/Jetty/Undertow уже поддерживают WebSocket Upgrade; отдельный сервер усложняет деплой и nginx-роутинг
-> - [ ] Достаточно `@RestController` с маппингом метода на `/ws` | ❌ ПОСЛЕДСТВИЕ: `@RestController` обрабатывает HTTP request/response; для WebSocket нужен `WebSocketHandler` с lifecycle-методами `afterConnectionEstablished`/`handleMessage`
-> - [ ] `@EnableWebSocketMessageBroker` подключает raw WebSocket без брокера | ❌ ПОСЛЕДСТВИЕ: эта аннотация включает STOMP-брокер; без STOMP нужен именно `@EnableWebSocket` + `WebSocketConfigurer`
-> - [x] `@EnableWebSocket` + `implements WebSocketConfigurer` + `registry.addHandler(handler, "/ws").setAllowedOrigins(...)` | ✓ ПРИМЕНЯТЬ: для простых echo/notification без брокера; SockJS-fallback для старых браузеров через `.withSockJS()` 📋 ПРАВИЛО: WebSocket = raw, STOMP = pub/sub поверх 🔗 См. Q9
 
 ## Q9. Что такое `WebSocketHandler` и его методы?
 
@@ -425,13 +369,6 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
 
 ---
 
-
-> [!mcq]
-> - [ ] `afterConnectionEstablished` вызывается перед HTTP Upgrade — там можно проверить токен | ❌ ПОСЛЕДСТВИЕ: метод вызывается ПОСЛЕ успешного upgrade; auth-проверку делают в `HandshakeInterceptor.beforeHandshake` или в Spring Security
-> - [ ] `handleTextMessage` блокирующий — Spring сам создаёт thread на каждое сообщение | ❌ ПОСЛЕДСТВИЕ: контейнер использует event-loop (Netty/NIO); долгая обработка в `handleTextMessage` блокирует IO-поток; нужно делегировать в `@Async`/executor
-> - [ ] `afterConnectionClosed` гарантированно вызывается при OOM или kill -9 | ❌ ПОСЛЕДСТВИЕ: при аварийном завершении JVM метод не вызывается; cleanup-логика должна полагаться на heartbeat/idle-timeout, не на `afterConnectionClosed`
-> - [x] Lifecycle: `afterConnectionEstablished` (open) → `handleTextMessage`/`handleBinaryMessage` (data) → `handleTransportError` (error) → `afterConnectionClosed` (close) | ✓ ПРИМЕНЯТЬ: расширять `TextWebSocketHandler` вместо raw `WebSocketHandler`; хранить sessions в `ConcurrentHashMap` 📋 ПРАВИЛО: один WebSocketHandler = singleton на все соединения, состояние — в WebSocketSession 🔗 См. Q10
-
 ## Q10. Что такое `WebSocketSession` и как отправить сообщение?
 
 `WebSocketSession` — объект, представляющий активное соединение. Позволяет отправлять сообщения, получать атрибуты, закрывать соединение.
@@ -464,13 +401,6 @@ synchronized (session) {
 ```
 
 ---
-
-
-> [!mcq]
-> - [ ] `sendMessage` потокобезопасен — Spring синхронизирует write поверх Netty | ❌ ПОСЛЕДСТВИЕ: метод НЕ thread-safe; конкурентные `sendMessage` могут смешать байты разных фреймов и порвать соединение
-> - [ ] `session.getAttributes()` возвращает HTTP-сессию контейнера | ❌ ПОСЛЕДСТВИЕ: это отдельный map, заполненный в `HandshakeInterceptor.beforeHandshake`; HTTP-сессия — это `session.getHandshakeHeaders()`/`getPrincipal()`
-> - [ ] `session.close()` без аргументов закрывает с кодом 1006 (abnormal) | ❌ ПОСЛЕДСТВИЕ: без аргументов — `CloseStatus.NORMAL` (1000); 1006 устанавливает само соединение при разрыве TCP без CLOSE-frame
-> - [x] `session.sendMessage(new TextMessage(payload))` — отправка; `session.isOpen()` — проверка; для конкурентных вызовов нужен `synchronized(session)` или `ConcurrentWebSocketSessionDecorator` | ✓ ПРИМЕНЯТЬ: оборачивать session в `ConcurrentWebSocketSessionDecorator(session, sendTimeLimit, bufferSizeLimit)` чтобы Spring сам синхронизировал и буферизировал 📋 ПРАВИЛО: один WebSocketSession = одно соединение, sendMessage не thread-safe 🔗 См. Q11
 
 ## Q11. (!) Как настроить STOMP поверх WebSocket в Spring Boot?
 
@@ -515,13 +445,6 @@ stompClient.connect({}, function(frame) {
 
 ---
 
-
-> [!mcq]
-> - [ ] `enableSimpleBroker` подключает RabbitMQ как брокер сообщений | ❌ ПОСЛЕДСТВИЕ: `enableSimpleBroker` — это in-memory брокер внутри Spring; для RabbitMQ/ActiveMQ нужен `enableStompBrokerRelay("/topic","/queue")` с указанием хоста брокера
-> - [ ] `setApplicationDestinationPrefixes("/app")` нужен для прямой адресации брокеру | ❌ ПОСЛЕДСТВИЕ: префикс `/app` направляет сообщения в `@MessageMapping`-методы контроллера, а не в брокер; брокер получает только `/topic`/`/queue`
-> - [ ] `addEndpoint("/ws").withSockJS()` обязателен — без SockJS WebSocket не работает | ❌ ПОСЛЕДСТВИЕ: `withSockJS()` — это fallback для браузеров без WebSocket (IE9, прокси); современные браузеры подключаются по нативному WS, SockJS опционален
-> - [x] `@EnableWebSocketMessageBroker` + `configureMessageBroker` (брокер) + `registerStompEndpoints` (HTTP-эндпоинт) | ✓ ПРИМЕНЯТЬ: для small-scale — `enableSimpleBroker`; для cluster — `enableStompBrokerRelay` с внешним RabbitMQ для масштабирования между нодами 📋 ПРАВИЛО: `/app` → controller, `/topic`/`/queue` → broker, `/user` → user-specific 🔗 См. Q12
-
 ## Q12. Как работает `@MessageMapping` и `@SendTo`?
 
 ```java
@@ -556,13 +479,6 @@ graph LR
 
 ---
 
-
-> [!mcq]
-> - [ ] `@MessageMapping("/hello")` слушает HTTP POST /hello, как `@PostMapping` | ❌ ПОСЛЕДСТВИЕ: `@MessageMapping` слушает STOMP-сообщения с destination `/app/hello` (с префиксом из `setApplicationDestinationPrefixes`), не HTTP
-> - [ ] `@SendTo("/topic/greetings")` отправляет только отправителю запроса | ❌ ПОСЛЕДСТВИЕ: `@SendTo` бродкастит ВСЕМ подписчикам топика; для адресации отправителю — `@SendToUser`
-> - [ ] Если метод возвращает `void`, ничего не отправляется на брокер | ❌ ПОСЛЕДСТВИЕ: можно явно отправить через `SimpMessagingTemplate.convertAndSend(...)` независимо от возвращаемого типа; `void` просто не использует `@SendTo`
-> - [x] `@MessageMapping("/hello")` принимает фрейм на `/app/hello`; возвращаемое значение отправляется на destination из `@SendTo`/`@SendToUser` | ✓ ПРИМЕНЯТЬ: `@SendTo("/topic/X")` для бродкаста всем; `@SendToUser("/queue/Y")` для адресации конкретному user.principal 📋 ПРАВИЛО: `/app` → MessageMapping, return → `/topic` или `/user/queue` 🔗 См. Q13
-
 ## Q13. Чем `@SubscribeMapping` отличается от `@MessageMapping`?
 
 `@SubscribeMapping` вызывается в момент подписки клиента (команда `SUBSCRIBE`), а не при отправке сообщения (`SEND`).
@@ -592,13 +508,6 @@ public class DataController {
 - `@MessageMapping` → ответ всегда идёт через брокер
 
 ---
-
-
-> [!mcq]
-> - [ ] `@SubscribeMapping` вызывается на КАЖДОЕ сообщение от клиента | ❌ ПОСЛЕДСТВИЕ: метод вызывается ОДИН раз — в момент команды STOMP `SUBSCRIBE`; для обработки сообщений нужен `@MessageMapping`
-> - [ ] `@SubscribeMapping` отправляет ответ всем подписчикам топика | ❌ ПОСЛЕДСТВИЕ: ответ идёт ТОЛЬКО подписавшемуся клиенту напрямую (через MESSAGE-фрейм с его subscription-id), минуя брокер
-> - [ ] `@SubscribeMapping` нельзя комбинировать с `@SendTo` | ❌ ПОСЛЕДСТВИЕ: можно — тогда ответ идёт через брокер, как у `@MessageMapping`; без `@SendTo` — напрямую клиенту
-> - [x] `@SubscribeMapping` вызывается при STOMP SUBSCRIBE и отправляет ответ напрямую клиенту (минуя брокер); `@MessageMapping` — при SEND и идёт через брокер | ✓ ПРИМЕНЯТЬ: `@SubscribeMapping` для отдачи initial-state (снапшот при подключении); `@MessageMapping` для бизнес-сообщений 📋 ПРАВИЛО: SUBSCRIBE → one-shot snapshot; SEND → continuous stream 🔗 См. Q14
 
 ## Q14. Как отправить сообщение конкретному пользователю через `@SendToUser`?
 
@@ -634,13 +543,6 @@ stompClient.send('/app/chat.private', {}, JSON.stringify({
 ```
 
 ---
-
-
-> [!mcq]
-> - [ ] `@SendToUser("/queue/messages")` отправляет ВСЕМ авторизованным юзерам | ❌ ПОСЛЕДСТВИЕ: отправляется только владельцу запроса (определяется по `Principal` из handshake); другие юзеры даже не подписаны на эту конкретную user-queue
-> - [ ] Клиент должен подписаться на `/queue/messages-user<sessionId>` напрямую | ❌ ПОСЛЕДСТВИЕ: клиент подписывается на `/user/queue/messages`; маппинг в `/queue/messages-user<sessionId>` делает `UserDestinationResolver` под капотом
-> - [ ] Принципал создаётся автоматически — auth не нужен | ❌ ПОСЛЕДСТВИЕ: без Spring Security `Principal` будет `null` и сообщение не доставится; нужен либо custom `HandshakeHandler`, либо Spring Security WebSocket-конфиг
-> - [x] `@SendToUser("/queue/X")` адресует ответ владельцу запроса (Principal); клиент подписан на `/user/queue/X`, Spring транслирует в `/queue/X-user<sessionId>` | ✓ ПРИМЕНЯТЬ: для private chat, личных нотификаций, ответов на команды конкретному юзеру 📋 ПРАВИЛО: `/user/...` префикс на клиенте + `@SendToUser` на сервере + Principal обязателен 🔗 См. Q15
 
 ## Q15. Как отправить сообщение из сервиса вне контроллера через `SimpMessagingTemplate`?
 
@@ -678,13 +580,6 @@ public class ScheduledPush {
 
 ---
 
-
-> [!mcq]
-> - [ ] Из @Service можно инжектить только `@MessageMapping` контроллер | ❌ ПОСЛЕДСТВИЕ: контроллер для входящих, а не исходящих сообщений; для push-уведомлений нужен `SimpMessagingTemplate` (Spring-bean)
-> - [ ] `convertAndSendToUser(username, "/queue/X", payload)` рассылает ВСЕМ юзерам с этим именем | ❌ ПОСЛЕДСТВИЕ: отправляется ВСЕМ открытым сессиям этого юзера (может быть несколько устройств); сообщение получит каждое устройство юзера
-> - [ ] `SimpMessagingTemplate` не работает в `@Scheduled` методах | ❌ ПОСЛЕДСТВИЕ: работает; типичный паттерн — periodic push метрик/notifications; ограничения только при использовании внешнего брокера (broker-relay должен быть UP)
-> - [x] Инжектить `SimpMessagingTemplate`, вызывать `convertAndSend("/topic/X", payload)` для broadcast или `convertAndSendToUser(username, "/queue/X", ...)` для адресации | ✓ ПРИМЕНЯТЬ: для server-initiated push из @Scheduled/event-handler; payload сериализуется через `MessageConverter` (по умолчанию Jackson JSON) 📋 ПРАВИЛО: входящие → @MessageMapping; исходящие из сервиса → SimpMessagingTemplate 🔗 См. Q16
-
 ## Q16. (!) Что такое SockJS и когда его использовать?
 
 **`SockJS`** — библиотека-обёртка, предоставляющая WebSocket-совместимый API с автоматическим fallback на HTTP-транспорты для браузеров или прокси, не поддерживающих WebSocket.
@@ -708,13 +603,6 @@ const stompClient = Stomp.over(socket);
 **SockJS Info Endpoint:** `GET /ws/info` — клиент проверяет доступность WebSocket перед подключением.
 
 ---
-
-
-> [!mcq]
-> - [ ] SockJS — это альтернативная реализация WebSocket-сервера на Java | ❌ ПОСЛЕДСТВИЕ: SockJS — это JavaScript-клиент + серверный протокол fallback, а не WebSocket-имплементация; работает поверх стандартного WebSocket-сервера (Spring/Netty)
-> - [ ] SockJS включается только на клиенте, на сервере ничего не меняется | ❌ ПОСЛЕДСТВИЕ: серверу нужен `.withSockJS()` для endpoint'а — он включает дополнительные HTTP-эндпоинты `/info`, `/xhr_streaming`, `/xhr_send` для fallback-транспортов
-> - [ ] SockJS лучше нативного WebSocket по производительности | ❌ ПОСЛЕДСТВИЕ: при WebSocket-транспорте идентичен нативному; на HTTP-fallback (xhr-polling/xhr-streaming) — заметно медленнее и дороже по байтам из-за HTTP-оверхеда
-> - [x] SockJS — wrapper с WS-совместимым API, автоматический fallback на HTTP-транспорты (xhr-streaming, xhr-polling) если WebSocket недоступен (corporate proxy, IE9) | ✓ ПРИМЕНЯТЬ: включать `.withSockJS()` если клиенты в корпоративных сетях с блокирующими прокси или поддерживается IE9- 📋 ПРАВИЛО: SockJS = страховка для networks без WebSocket; не использовать если контролируете сеть и браузеры 🔗 См. Q17
 
 ## Q17. Какие транспорты использует SockJS в порядке приоритета?
 
@@ -740,13 +628,6 @@ graph TD
 | 5 | `jsonp-polling` | JSONP для старых браузеров |
 
 ---
-
-
-> [!mcq]
-> - [ ] SockJS пробует HTTP-polling первым, чтобы убедиться в стабильности соединения | ❌ ПОСЛЕДСТВИЕ: первым пробуется WebSocket — самый эффективный транспорт; polling — крайний fallback
-> - [ ] Если WebSocket недоступен, SockJS переходит на gRPC streaming | ❌ ПОСЛЕДСТВИЕ: gRPC требует HTTP/2 и не в браузерных fallback; SockJS использует только HTTP/1.1 транспорты (xhr-streaming, eventsource, xhr-polling, jsonp)
-> - [ ] SockJS обнаруживает транспорт по User-Agent заголовку браузера | ❌ ПОСЛЕДСТВИЕ: транспорты пробуются последовательно по timeout — клиент пытается подключиться, при failure пробует следующий; решение динамическое, не по UA
-> - [x] Порядок: 1) `websocket` → 2) `xhr-streaming` → 3) `iframe-eventsource` → 4) `iframe-htmlfile` → 5) `xhr-polling` → 6) `jsonp-polling` | ✓ ПРИМЕНЯТЬ: можно отключить отдельные транспорты через `disabledTransports` если корпоративный прокси «зависает» на streaming-транспортах 📋 ПРАВИЛО: SockJS пробует от лучшего к худшему по latency 🔗 См. Q18
 
 ## Q18. (!) Чем отличается простой (in-memory) брокер от внешнего STOMP-брокера?
 
@@ -775,13 +656,6 @@ registry.enableStompBrokerRelay("/topic", "/queue")
 - Требует отдельного инфраструктурного компонента
 
 ---
-
-
-> [!mcq]
-> - [ ] Simple broker масштабируется горизонтально через session-replication | ❌ ПОСЛЕДСТВИЕ: SimpleBroker — in-memory одного инстанса; топики НЕ синхронизируются между нодами; клиент на ноде A не получит сообщение от ноды B
-> - [ ] Внешний брокер нужен только для durable-сообщений | ❌ ПОСЛЕДСТВИЕ: главная причина — масштабирование на N инстансов; durability — побочный эффект; также ACK, DLQ, retry-policy недоступны в SimpleBroker
-> - [ ] RabbitMQ через `enableStompBrokerRelay` требует AMQP-протокол | ❌ ПОСЛЕДСТВИЕ: relay использует STOMP-плагин RabbitMQ (`rabbitmq_stomp`, порт 61613), не AMQP; Spring разговаривает с брокером тем же STOMP, что и клиент
-> - [x] SimpleBroker: in-memory, single-instance, no persistence; ExternalBroker (RabbitMQ/ActiveMQ): cross-instance, persistence, ACK/DLQ, требует отдельной инфраструктуры | ✓ ПРИМЕНЯТЬ: dev/single-node → SimpleBroker; prod/HA → enableStompBrokerRelay с RabbitMQ или ActiveMQ 📋 ПРАВИЛО: scale-out WS → внешний broker обязателен 🔗 См. Q19
 
 ## Q19. Как настроить RabbitMQ как внешний STOMP-брокер в Spring?
 
@@ -824,13 +698,6 @@ public class RabbitMQWebSocketConfig implements WebSocketMessageBrokerConfigurer
 
 ---
 
-
-> [!mcq]
-> - [ ] Достаточно поменять `enableSimpleBroker` на `enableStompBrokerRelay("/topic")` — Spring сам подключится к RabbitMQ на localhost | ❌ ПОСЛЕДСТВИЕ: нужен включённый плагин `rabbitmq_stomp` (`rabbitmq-plugins enable rabbitmq_stomp`), иначе порт 61613 закрыт; также нужны хост/порт/credentials
-> - [ ] Spring подключается к RabbitMQ по AMQP-протоколу через `spring-amqp` | ❌ ПОСЛЕДСТВИЕ: relay использует именно STOMP-плагин RabbitMQ (порт 61613), не AMQP (5672); это позволяет не дублировать сообщения и не транслировать форматы
-> - [ ] Heart-beat между Spring и RabbitMQ настраивать не нужно — TCP keepalive хватает | ❌ ПОСЛЕДСТВИЕ: STOMP heart-beat работает на уровне приложения и обнаруживает «полузакрытые» соединения быстрее TCP keep-alive (TCP по умолчанию 2 часа); без heart-beat зависшее relay-соединение не восстановится автоматически
-> - [x] Включить плагин `rabbitmq_stomp` + `enableStompBrokerRelay("/topic","/queue").setRelayHost(...).setRelayPort(61613).setClientLogin(...).setSystemHeartbeatSendInterval(10000)` | ✓ ПРИМЕНЯТЬ: heart-beat 10s обе стороны; credentials через secret-manager; в prod ещё `.setUserDestinationBroadcast("/topic/unresolved-user-destination")` для user-destinations через relay 📋 ПРАВИЛО: external broker = STOMP plugin + relay config + heart-beat 🔗 См. Q20
-
 ## Q20. (!) Почему масштабирование WebSocket сложнее, чем REST? Как решается проблема sticky sessions?
 
 **Проблема:** WebSocket — постоянное соединение. Если у нас 3 инстанса и клиент подключился к инстансу A, то сообщение, пришедшее в инстанс B, не будет доставлено.
@@ -858,13 +725,6 @@ graph TD
 
 ---
 
-
-> [!mcq]
-> - [ ] REST stateless — масштабируется любым LB; WebSocket тоже, поскольку браузер автоматически переподключается на любой инстанс | ❌ ПОСЛЕДСТВИЕ: переподключение НЕ решает проблему: сообщение, посланное в инстанс B пока клиент висит на A, не дойдёт до клиента; нужен общий broker или sticky sessions
-> - [ ] Sticky sessions нужны только для WebSocket — для REST они не имеют смысла | ❌ ПОСЛЕДСТВИЕ: stateful REST (HTTP-сессии без Redis) тоже требует sticky; для stateless REST не нужны; для WS — желательны при SockJS HTTP-fallback (xhr-streaming делает несколько запросов в одну сессию)
-> - [ ] Sticky sessions делают WS отказоустойчивым: при падении инстанса LB переключит клиента | ❌ ПОСЛЕДСТВИЕ: наоборот — при падении sticky-инстанса клиент теряет соединение; для resilience нужны reconnect-логика на клиенте + external broker
-> - [x] WS = persistent stateful соединение, привязано к инстансу. Решения: sticky sessions (LB маршрутизирует по cookie/IP) + external broker (RabbitMQ/Redis Pub/Sub) для cross-instance доставки | ✓ ПРИМЕНЯТЬ: для HA — обязательно external broker; sticky sessions помогают SockJS-fallback'у держать сессию; reconnect-логика на клиенте обязательна 📋 ПРАВИЛО: WS scale = sticky + external broker + client reconnect 🔗 См. Q21
-
 ## Q21. Как работает pub/sub через внешний брокер при горизонтальном масштабировании?
 
 ```mermaid
@@ -886,13 +746,6 @@ sequenceDiagram
 Каждый инстанс Spring подписывается на брокер через TCP-соединение (`StompBrokerRelay`). При публикации брокер рассылает сообщение всем подписчикам — каждый инстанс получает копию и доставляет своим WebSocket-клиентам.
 
 ---
-
-
-> [!mcq]
-> - [ ] Spring сам выбирает мастер-инстанс, который рассылает сообщения остальным | ❌ ПОСЛЕДСТВИЕ: нет «мастера»; все инстансы равноправно подключены к брокеру через `StompBrokerRelay`; маршрутизация на стороне брокера
-> - [ ] Каждый инстанс держит TCP-соединение с каждым другим инстансом (mesh) | ❌ ПОСЛЕДСТВИЕ: соединения только с брокером (star-топология), не mesh; масштабирование O(N) соединений, не O(N²)
-> - [ ] Сообщение от Client1 не доходит до App2, только если оба инстанса подключены к одному брокеру | ❌ ПОСЛЕДСТВИЕ: брокер сам бродкастит подписчикам — App2 получит копию сообщения и доставит Client2 даже если они не знают друг о друге
-> - [x] Каждый Spring-инстанс держит TCP-соединение с брокером через StompBrokerRelay; SEND публикуется в broker → broker бродкастит MESSAGE всем инстансам, имеющим локальные подписки → каждый инстанс доставляет своим WS-клиентам | ✓ ПРИМЕНЯТЬ: для user-destinations (`/user/queue/X`) нужен `setUserDestinationBroadcast("/topic/unresolved-user-destination")` чтобы любой инстанс мог найти владельца user-queue 📋 ПРАВИЛО: relay = TCP к брокеру; broker = fan-out между инстансами 🔗 См. Q22
 
 ## Q22. (!) Как защитить WebSocket-соединение: CORS, аутентификация, Spring Security?
 
@@ -962,13 +815,6 @@ public class WebSocketSecurityConfig extends AbstractSecurityWebSocketMessageBro
 
 ---
 
-
-> [!mcq]
-> - [ ] WebSocket автоматически наследует Spring Security-контекст HTTP-сессии — никакой настройки не нужно | ❌ ПОСЛЕДСТВИЕ: после Upgrade `SecurityContext` не пробрасывается в каждое STOMP-сообщение; нужен либо `ChannelInterceptor` с `SecurityContextHolder.setContext`, либо `AbstractSecurityWebSocketMessageBrokerConfigurer` для авторизации
-> - [ ] `setAllowedOrigins("*")` безопасно если CSRF включен | ❌ ПОСЛЕДСТВИЕ: `*` отключает CORS-проверку Origin и открывает CSRF-вектор поскольку WS-handshake посылает cookies; в prod использовать `setAllowedOriginPatterns("https://*.myapp.com")`
-> - [ ] Достаточно проверить JWT при handshake — дальше WS считается доверенным | ❌ ПОСЛЕДСТВИЕ: JWT может истечь во время долгоживущего соединения; нужна периодическая проверка expiry либо force-reconnect при revocation
-> - [x] CORS через `setAllowedOriginPatterns`; auth через `HandshakeInterceptor` (HTTP-уровень) или `ChannelInterceptor` на `CONNECT` (STOMP-уровень) + JWT в headers; authz через `AbstractSecurityWebSocketMessageBrokerConfigurer.configureInbound` | ✓ ПРИМЕНЯТЬ: для JWT — `accessor.getNativeHeader("Authorization")` в pre-send interceptor; `simpDestMatchers("/app/admin/**").hasRole("ADMIN")` для destination-based authz 📋 ПРАВИЛО: WS auth = handshake (HTTP) или CONNECT (STOMP); WS authz = destination-matchers 🔗 См. Q23
-
 ## Q23. Почему нельзя использовать стандартный CSRF-токен для WebSocket?
 
 **Проблема:** CSRF-защита HTTP основана на том, что вредоносный сайт не может читать куки чужого домена. Для WebSocket `Sec-WebSocket-Key` не является CSRF-токеном, а браузеры автоматически включают куки в handshake-запрос.
@@ -996,13 +842,6 @@ stompClient.connect({'Authorization': 'Bearer ' + token}, callback);
 4. **`HandshakeInterceptor`** для проверки Origin вручную.
 
 ---
-
-
-> [!mcq]
-> - [ ] CSRF-токен можно положить в `Sec-WebSocket-Protocol` заголовок | ❌ ПОСЛЕДСТВИЕ: атакующий с того же origin может прочитать любой кастомный header через ws-API; правильнее проверять Origin handshake-заголовок и не полагаться на cookie-based auth
-> - [ ] Достаточно требовать `Authorization: Bearer` для WS — CSRF не нужен | ❌ ПОСЛЕДСТВИЕ: если auth по куке (как HTTP-сессия), Origin-чек обязателен; если по Bearer-токену в STOMP-CONNECT — да, CSRF неактуален, поскольку токен злоумышленник не достанет cross-origin
-> - [ ] WebSocket-handshake защищён `Sec-WebSocket-Key` от CSRF-атак | ❌ ПОСЛЕДСТВИЕ: `Sec-WebSocket-Key` — это часть протокола handshake (генерируется браузером для эхо-валидации), а НЕ CSRF-защита; браузер всё равно прикрепит cookies к WS-handshake
-> - [x] WS-handshake — обычный HTTP-запрос с куками, но `Sec-WebSocket-Key` ≠ CSRF-токен. Защита: `setAllowedOriginPatterns(...)` + JWT в STOMP CONNECT headers вместо cookies + `HandshakeInterceptor` для дополнительной проверки | ✓ ПРИМЕНЯТЬ: Origin-чек обязателен в prod; для cookie-auth — strict same-origin; для Bearer-token — допускается широкий Origin 📋 ПРАВИЛО: WS CSRF = Origin check, не token; либо переход на Bearer-token auth 🔗 См. Q24
 
 ## Q24. Как обрабатывать ошибки STOMP на сервере через `@MessageExceptionHandler`?
 
@@ -1040,13 +879,6 @@ public class WebSocketExceptionHandler {
 ```
 
 ---
-
-
-> [!mcq]
-> - [ ] Бросок exception из `@MessageMapping` отправит клиенту STOMP ERROR-фрейм и закроет соединение | ❌ ПОСЛЕДСТВИЕ: без `@MessageExceptionHandler` Spring логирует исключение, но соединение НЕ закрывается; клиент остаётся живым, но без обратной связи о причине ошибки
-> - [ ] `@MessageExceptionHandler` работает как `@ExceptionHandler` — может вернуть HTTP-статус | ❌ ПОСЛЕДСТВИЕ: WS не имеет HTTP-статусов после Upgrade; ответ — обычный STOMP MESSAGE-фрейм на destination из `@SendTo`/`@SendToUser`
-> - [ ] `@ControllerAdvice` с `@MessageExceptionHandler` НЕ работает для STOMP — только локальные хендлеры | ❌ ПОСЛЕДСТВИЕ: `@ControllerAdvice` поддерживается; глобальный обработчик ловит exceptions со всех контроллеров — типичный паттерн для централизованной обработки validation-ошибок
-> - [x] `@MessageExceptionHandler` в контроллере (local) или в `@ControllerAdvice` (global) + `@SendToUser("/queue/errors")` для адресации owner'у запроса | ✓ ПРИМЕНЯТЬ: клиент подписан на `/user/queue/errors`; глобальный @ControllerAdvice для валидации; локальный — для бизнес-ошибок конкретного контроллера 📋 ПРАВИЛО: STOMP errors → @SendToUser, не ERROR-фрейм 🔗 См. Q25
 
 ## Q25. Как реализовать автоматическое переподключение на клиенте (JS)?
 
@@ -1087,13 +919,6 @@ class ReconnectingWebSocket {
 
 ---
 
-
-> [!mcq]
-> - [ ] WebSocket API браузера сам переподключается при потере соединения | ❌ ПОСЛЕДСТВИЕ: нативный WebSocket НЕ переподключается — после `close` событие `onclose` срабатывает один раз, дальше — забота приложения; нужна обёртка с retry-логикой
-> - [ ] Постоянная попытка переподключения с задержкой 100ms максимально быстро восстановит сессию | ❌ ПОСЛЕДСТВИЕ: при массовом disconnect (например, рестарт сервера) thundering herd обрушит сервер; нужен exponential backoff + jitter
-> - [ ] При reconnect нужно создавать новый `SockJS` объект каждый раз — нельзя переиспользовать | ❌ ПОСЛЕДСТВИЕ: верно — старый SockJS закрыт; но после успешного connect ещё нужно повторно сделать SUBSCRIBE на все topics, иначе сообщения не пойдут
-> - [x] Обёртка с exponential backoff (1s → 2s → 4s → 8s, cap 30s) + jitter + повторный SUBSCRIBE после reconnect; сброс счётчика retry при успешном CONNECT | ✓ ПРИМЕНЯТЬ: jitter (random 0-500ms добавочно) против thundering herd; сохранять последний message-id для дедупликации после reconnect; готовая библиотека — reconnecting-websocket 📋 ПРАВИЛО: reconnect = exp.backoff + jitter + re-subscribe + dedup 🔗 См. Q26
-
 ## Q26. (!) Как работает heartbeat в STOMP и как его настроить в Spring?
 
 **Heartbeat** — механизм обнаружения разорванных соединений. Стороны договариваются об интервале в заголовке `heart-beat` при `CONNECT`/`CONNECTED`:
@@ -1126,13 +951,6 @@ public void configureMessageBroker(MessageBrokerRegistry registry) {
 - Прокси-серверы (nginx) могут закрывать idle соединения — `proxy_read_timeout` должен быть > heartbeat interval
 
 ---
-
-
-> [!mcq]
-> - [ ] Heartbeat нужен только клиенту — сервер всегда живой | ❌ ПОСЛЕДСТВИЕ: сервер тоже может зависнуть (GC pause, deadlock); клиент должен детектить и переподключаться при отсутствии heart-beat от сервера в течение `receive_interval`
-> - [ ] Spring сам добавляет heartbeat и `setTaskScheduler` не нужен | ❌ ПОСЛЕДСТВИЕ: для `enableSimpleBroker` нужен явный `setTaskScheduler` — иначе heartbeat не будет работать; для `enableStompBrokerRelay` scheduler не нужен (брокер сам делает)
-> - [ ] nginx `proxy_read_timeout` влияет только на REST, WebSocket не использует HTTP-прокси | ❌ ПОСЛЕДСТВИЕ: WebSocket идёт через тот же TCP, и nginx по `proxy_read_timeout` (по умолчанию 60s) закроет idle WS-соединение; heartbeat должен быть меньше этого таймаута
-> - [x] Heart-beat в STOMP CONNECT header `heart-beat:send,receive`, итоговый = `max(client_send, server_receive)`; в Spring — `setHeartbeatValue(new long[]{10000,10000})` + `setTaskScheduler` для SimpleBroker | ✓ ПРИМЕНЯТЬ: для прохода через nginx — heart-beat 10s, `proxy_read_timeout 3600s`; при relay — `setSystemHeartbeatSendInterval/Receive` отдельно для broker-side 📋 ПРАВИЛО: heart-beat interval << proxy idle timeout 🔗 См. Q27
 
 ## Q27. (!) Как работает WebSocket в Spring WebFlux (реактивный стек)?
 
@@ -1184,13 +1002,6 @@ public class ReactiveWebSocketHandler implements WebSocketHandler {
 
 ---
 
-
-> [!mcq]
-> - [ ] WebFlux WebSocket поддерживает STOMP так же, как `@EnableWebSocketMessageBroker` в MVC | ❌ ПОСЛЕДСТВИЕ: STOMP-сообщения и `@MessageMapping` нативно НЕ поддерживаются в WebFlux; для pub/sub в реактивном стеке используют RSocket или raw WebSocket с собственным протоколом
-> - [ ] WebFlux требует Tomcat 10 как контейнер | ❌ ПОСЛЕДСТВИЕ: WebFlux работает поверх Netty (default), Undertow или Jetty; Tomcat-NIO тоже возможен, но смысла нет — WebFlux нужен event-loop сервер
-> - [ ] `session.send(input)` отправит первое сообщение и закроет соединение | ❌ ПОСЛЕДСТВИЕ: `send(Flux<WebSocketMessage>)` подписывается на Flux и шлёт каждое emission как WS-фрейм; закрытие — когда Flux завершается (complete/error)
-> - [x] WebFlux WS = `WebSocketHandler.handle(WebSocketSession) → Mono<Void>`; вход — `session.receive() : Flux<WebSocketMessage>`, выход — `session.send(Flux)`; event-loop вместо thread-per-connection | ✓ ПРИМЕНЯТЬ: для push-streams (stock prices, live feed) с backpressure; десятки тысяч соединений на одной машине; HandlerMapping регистрирует URL → handler 📋 ПРАВИЛО: WebFlux WS = reactive streams; STOMP не из коробки 🔗 См. Q28
-
 ## Q28. Что такое `WebSocketHandler` в WebFlux и как он отличается от servlet-версии?
 
 | | Servlet WebSocket (`TextWebSocketHandler`) | WebFlux WebSocket (`WebSocketHandler`) |
@@ -1222,13 +1033,6 @@ public class StockPriceHandler implements WebSocketHandler {
 
 ---
 
-
-> [!mcq]
-> - [ ] WebFlux WebSocket поддерживает callbacks (`afterConnectionEstablished`) как и servlet-вариант | ❌ ПОСЛЕДСТВИЕ: модель полностью реактивная — один метод `handle(session)` возвращающий `Mono<Void>`; для lifecycle используются `doOnSubscribe`/`doOnTerminate` на Flux'е
-> - [ ] В WebFlux нет backpressure поскольку WebSocket frames неконтролируемы | ❌ ПОСЛЕДСТВИЕ: backpressure поддерживается через Reactor — slow consumer замедляет producer; в servlet-варианте slow client забивает send-buffer и приводит к OutOfMemoryError
-> - [ ] `Mono<Void>` из `handle` означает что соединение синхронное | ❌ ПОСЛЕДСТВИЕ: `Mono<Void>` — это сигнал завершения reactive pipeline; соединение остаётся открытым пока `send()`/`receive()` Flux'ы активны
-> - [x] Servlet: callbacks + thread-per-connection + блокирующий API + STOMP. WebFlux: `Mono<Void> handle(session)` + event-loop + Flux/Mono + backpressure (без STOMP, через RSocket) | ✓ ПРИМЕНЯТЬ: для streaming (live feed, stock prices, IoT) — WebFlux; для chat/pub-sub с готовым protocol — servlet+STOMP 📋 ПРАВИЛО: WebFlux WS = reactive streams, нет STOMP; Servlet WS = callbacks, есть STOMP 🔗 См. Q29
-
 ## Q29. Какие ограничения у WebSocket по количеству соединений и как их обойти?
 
 **Ограничения:**
@@ -1257,13 +1061,6 @@ public void configureWebSocketTransport(WebSocketTransportRegistration registry)
 ```
 
 ---
-
-
-> [!mcq]
-> - [ ] WebSocket-соединения не ограничены — TCP сам справляется | ❌ ПОСЛЕДСТВИЕ: лимит ОС на file descriptors (`ulimit -n` 65k default) + JVM heap (≈100KB на соединение для буферов) + thread pool в servlet-вариант (Tomcat 200 потоков); каждый уровень нужно учитывать
-> - [ ] Увеличение thread pool до 100k решит проблему 100k одновременных WS | ❌ ПОСЛЕДСТВИЕ: 100k потоков = 100GB stack memory (1MB на поток) → JVM упадёт; правильное решение — реактивный стек (Netty) с event-loop, где один поток обслуживает тысячи соединений
-> - [ ] Load balancer не имеет лимитов на WS-соединения | ❌ ПОСЛЕДСТВИЕ: LB держит TCP с клиентом и backend'ом — лимиты `worker_connections`/`max_clients` и idle timeout; nginx default 1024 connections per worker
-> - [x] Ограничения: OS file descriptors (`ulimit -n`), JVM thread pool (servlet), JVM heap (~100KB/connection буферы), LB idle timeout. Обход: `ulimit -n 1000000` + WebFlux/Netty + horizontal scale + tuning buffers через `configureWebSocketTransport` | ✓ ПРИМЕНЯТЬ: для 100k+ соединений — WebFlux + Netty, event-loop; для 10k — servlet с настроенным `ulimit` и thread pool 📋 ПРАВИЛО: WS scale = fd limit + event-loop + LB tuning 🔗 См. Q30
 
 ## Q30. Как настроить размер буферов и таймауты для WebSocket в Spring?
 
@@ -1303,13 +1100,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 ```
 
 ---
-
-
-> [!mcq]
-> - [ ] `setMessageSizeLimit(64 * 1024)` ограничивает только текстовые сообщения, бинарные не считаются | ❌ ПОСЛЕДСТВИЕ: лимит применяется к ОБОИМ типам — TextMessage и BinaryMessage; превышение → исключение и закрытие сессии
-> - [ ] `setSendBufferSizeLimit` — это размер TCP-буфера сокета | ❌ ПОСЛЕДСТВИЕ: это лимит на bufferization у Spring при медленном клиенте; TCP-буфер настраивается через JVM/OS; превышение Spring-лимита → CloseStatus.SESSION_NOT_RELIABLE
-> - [ ] `setTimeToFirstMessage` — таймаут между сообщениями после handshake | ❌ ПОСЛЕДСТВИЕ: это таймаут ТОЛЬКО на первое сообщение от клиента после handshake; idle-timeout между сообщениями настраивается через container (Tomcat: `WsServerContainer.setDefaultMaxSessionIdleTimeout`)
-> - [x] `setMessageSizeLimit` (макс размер фрейма), `setSendBufferSizeLimit` (буфер для slow clients), `setSendTimeLimit` (таймаут send), `setTimeToFirstMessage` (таймаут первого сообщения после handshake) | ✓ ПРИМЕНЯТЬ: для chat — `128KB`/`512KB`/`20s`; для streaming больших payload — `1MB`/`5MB`/`60s`; heartbeat scheduler обязателен для SimpleBroker 📋 ПРАВИЛО: буферы → защита от slow client, taskScheduler → heartbeat 🔗 См. Q31
 
 ## Q31. WebSocket в микросервисной архитектуре: service discovery, gateway, routing
 
@@ -1360,13 +1150,6 @@ server {
 
 ---
 
-
-> [!mcq]
-> - [ ] Spring Cloud Gateway работает с WebSocket из коробки на любом route | ❌ ПОСЛЕДСТВИЕ: нужен явный `uri: ws://` или `lb:ws://` для WebSocket; обычный `http://` НЕ обработает Upgrade-заголовок и вернёт 400
-> - [ ] Service Discovery (Eureka/Consul) проверяет каждый WS-фрейм | ❌ ПОСЛЕДСТВИЕ: Discovery участвует только в момент установки соединения (resolve host); после Upgrade соединение прямое и Discovery не вмешивается
-> - [ ] `proxy_http_version 1.1` в nginx опционально для WebSocket | ❌ ПОСЛЕДСТВИЕ: WebSocket Upgrade требует HTTP/1.1; nginx по умолчанию 1.0 для upstream, что блокирует upgrade; без `proxy_http_version 1.1` соединение не установится
-> - [x] Gateway: `lb:ws://service` для роутинга через discovery + sticky на gateway/LB; nginx: `proxy_http_version 1.1` + `Upgrade`/`Connection` headers + `proxy_read_timeout 3600s`; внешний broker для cross-instance fan-out | ✓ ПРИМЕНЯТЬ: Spring Cloud Gateway для K8s/cloud; nginx upstream с `ip_hash` для классических deploy; всегда — внешний RabbitMQ/Redis для cross-pod 📋 ПРАВИЛО: Gateway = ws-aware uri + sticky; nginx = HTTP/1.1 upgrade headers 🔗 См. Q32
-
 ## Q32. WebSocket vs SSE vs Long Polling: детальное сравнение
 
 | Характеристика | WebSocket | SSE | Long Polling |
@@ -1402,13 +1185,6 @@ public Flux<ServerSentEvent<String>> streamEvents() {
 **Вывод:** WebSocket — оптимален для интерактивных приложений с высокой частотой двустороннего обмена. SSE — для push-уведомлений от сервера. Long Polling — для legacy.
 
 ---
-
-
-> [!mcq]
-> - [ ] WebSocket — полная замена SSE: можно всегда использовать WS вместо SSE | ❌ ПОСЛЕДСТВИЕ: для server→client one-way push SSE проще: HTTP/2 multiplexing, auto-reconnect с Last-Event-ID, проще для LB; WS избыточен и сложнее в эксплуатации
-> - [ ] SSE поддерживает bidirectional общение через `EventSource.send()` | ❌ ПОСЛЕДСТВИЕ: SSE строго server→client; `EventSource` API не имеет `send()`; для отправки клиент → сервер нужен отдельный HTTP-запрос или WebSocket
-> - [ ] Long Polling эквивалентен WebSocket по производительности | ❌ ПОСЛЕДСТВИЕ: каждое сообщение в LP = новый HTTP-запрос с headers (~500 байт overhead); WS-фрейм 2-14 байт; LP в 30-100x дороже по сети
-> - [x] WS: full-duplex, ws://, минимальный overhead. SSE: server→client, HTTP, auto-reconnect с Last-Event-ID, нативно HTTP/2. LP: эмуляция через repeated HTTP, высокий overhead, для legacy | ✓ ПРИМЕНЯТЬ: chat/games → WS; news feed/notifications → SSE; IE11/strict corporate → LP fallback (через SockJS) 📋 ПРАВИЛО: WS = duplex, SSE = server push, LP = legacy 🔗 См. Q33
 
 ## Q33. Мониторинг WebSocket: метрики, количество соединений, health
 
@@ -1476,13 +1252,6 @@ public class WebSocketHealthIndicator implements HealthIndicator {
 
 ---
 
-
-> [!mcq]
-> - [ ] Достаточно мониторить общий CPU/RAM — отдельные метрики WS не нужны | ❌ ПОСЛЕДСТВИЕ: проблемы WS (slow consumer, утечка сессий, message backlog) не видны в CPU/RAM до катастрофы; нужны конкретные метрики `active_connections`, `messages_sent/received`, `errors`
-> - [ ] `WebSocketHandlerDecoratorFactory` нужен только для логирования | ❌ ПОСЛЕДСТВИЕ: декоратор — стандартный механизм для metrics, tracing, auth checks вокруг lifecycle-методов; для метрик это правильное место (afterConnectionEstablished/Closed)
-> - [ ] HealthIndicator должен возвращать DOWN при любом disconnect | ❌ ПОСЛЕДСТВИЕ: единичные disconnects — норма; индикатор должен реагировать только на аномалии (resource exhaustion, abnormal error rate); иначе K8s начнёт перезапускать поды при каждом отвалившемся клиенте
-> - [x] Метрики: `ws.connections.active` (gauge), `ws.messages.sent/received` (counter), `ws.errors` (counter), `ws.session.duration` (histogram); декоратор через `WebSocketHandlerDecoratorFactory` для wrapping lifecycle | ✓ ПРИМЕНЯТЬ: Micrometer + Prometheus + Grafana алерты на падение connections > 50% / резкий рост errors; HealthIndicator с порогом, не на каждый disconnect 📋 ПРАВИЛО: WS metrics = lifecycle hooks + Micrometer 🔗 См. Q34
-
 ## Q34. WebSocket в Kubernetes: sticky sessions, session affinity, проблемы
 
 **Проблема:** Kubernetes Service по умолчанию балансирует L4 round-robin — каждый новый TCP-коннект идёт к случайному поду. WebSocket — долгоживущий TCP, поэтому сам по себе "липнет" к поду после установки. Проблема возникает при реконнекте.
@@ -1524,13 +1293,6 @@ annotations:
 - Rolling update: настроить `preStop` hook с drain-периодом, чтобы существующие WS-сессии завершились перед остановкой пода
 
 ---
-
-
-> [!mcq]
-> - [ ] K8s Service по умолчанию правильно балансирует WS — sticky не нужен | ❌ ПОСЛЕДСТВИЕ: новый WS-connect — новый TCP, идёт по round-robin на любой под; для SockJS HTTP-fallback (несколько запросов в одну сессию) обязательно sticky, иначе разные запросы идут в разные поды
-> - [ ] `sessionAffinity: ClientIP` работает идеально за корпоративным NAT | ❌ ПОСЛЕДСТВИЕ: за NAT все клиенты выглядят с одним IP → попадают в один под → теряется балансировка; нужен cookie-based affinity через Ingress
-> - [ ] Rolling update в K8s сам корректно завершает WS-сессии без drain | ❌ ПОСЛЕДСТВИЕ: K8s посылает SIGTERM, под закрывается, существующие WS-сессии резко обрываются; нужен `preStop` hook с drain-периодом (10-30s) для graceful close
-> - [x] K8s WS: `sessionAffinity: ClientIP` или cookie-affinity через nginx-ingress (`affinity: cookie`); внешний broker для cross-pod fan-out; `preStop` hook + drain period для graceful rolling-update | ✓ ПРИМЕНЯТЬ: cookie-affinity предпочтительнее (работает за NAT); + RabbitMQ для broadcast между подами; всегда настраивать `proxy-read-timeout: 3600` 📋 ПРАВИЛО: K8s WS = cookie-sticky + external broker + preStop drain 🔗 См. Q35
 
 ## Q35. Binary vs text frames: MessagePack, Protobuf
 
@@ -1575,13 +1337,6 @@ session.sendMessage(new BinaryMessage(bytes));
 
 ---
 
-
-> [!mcq]
-> - [ ] Binary frames всегда быстрее и компактнее — text использовать не нужно | ❌ ПОСЛЕДСТВИЕ: для редких сообщений overhead на сериализацию binary не оправдан; JSON через TextMessage даёт readability в DevTools, debug и tooling; binary только когда throughput критичен
-> - [ ] Frame type определяется payload'ом — Spring сам выбирает text/binary | ❌ ПОСЛЕДСТВИЕ: тип фрейма выбирает разработчик: `new TextMessage(...)` (opcode 0x1) vs `new BinaryMessage(...)` (opcode 0x2); это разные методы и opcodes в WS-протоколе
-> - [ ] MessagePack и Protobuf — один и тот же формат | ❌ ПОСЛЕДСТВИЕ: MessagePack — schema-less binary JSON; Protobuf — schema-based с компиляцией .proto в код; Protobuf компактнее и быстрее, но требует schema management; MessagePack гибче
-> - [x] Text (opcode 0x1, UTF-8 JSON/XML) vs Binary (opcode 0x2, MessagePack/Protobuf/CBOR); binary компактнее (~50-70% size reduction), быстрее ser/deser, но хуже отладка | ✓ ПРИМЕНЯТЬ: chat/CRUD → JSON text (debugging); high-frequency (stock/IoT/gaming) → Protobuf binary; обработка через `handleTextMessage`/`handleBinaryMessage` 📋 ПРАВИЛО: binary = throughput, text = debuggability 🔗 См. Q36
-
 ## Q36. WebSocket и CDN: почему CDN не кэширует WS, CloudFlare
 
 **CDN и WebSocket:**
@@ -1607,13 +1362,6 @@ CDN (Content Delivery Network) строился для кэширования с
 - Настроить `proxy_read_timeout` достаточно большим
 
 ---
-
-
-> [!mcq]
-> - [ ] CloudFlare кэширует частые WS-сообщения для уменьшения трафика | ❌ ПОСЛЕДСТВИЕ: CloudFlare НЕ кэширует WS-фреймы — каждый фрейм уникален и stateful; CDN работает как прозрачный TCP-прокси, не как кэш
-> - [ ] WebSocket через CDN всегда медленнее чем direct connect | ❌ ПОСЛЕДСТВИЕ: edge-нода CDN ближе к клиенту → меньше latency на handshake; после установки overhead минимален; в большинстве случаев CDN ускоряет, а не замедляет
-> - [ ] Cloudflare idle timeout для WS — 1 час по умолчанию | ❌ ПОСЛЕДСТВИЕ: idle timeout — 100 секунд; без heartbeat соединение будет закрыто; нужно настроить heartbeat < 100s (например 30s) чтобы не оборвать сессию
-> - [x] CDN работает с WS как transparent TCP-proxy (не кэш): edge → origin tunnel; SSL termination на edge; Cloudflare idle timeout 100s — нужен heartbeat; теряется client IP (нужно X-Forwarded-For) | ✓ ПРИМЕНЯТЬ: heartbeat 30s < 100s edge-timeout; добавить `Cache-Control: no-store` для /ws endpoints; для affinity использовать cookie, не IP 📋 ПРАВИЛО: CDN + WS = TCP-proxy с heartbeat < idle-timeout 🔗 См. Q37
 
 ## Q37. Disconnect стратегии: exponential backoff reconnect на клиенте
 
@@ -1674,13 +1422,6 @@ class WebSocketClient {
 - **Готовые библиотеки:** `@stomp/stompjs` (автоматический reconnect + heartbeat), `reconnecting-websocket` (npm)
 
 ---
-
-
-> [!mcq]
-> - [ ] Reconnect с фиксированной задержкой 1 секунда — самое надёжное решение | ❌ ПОСЛЕДСТВИЕ: при массовом disconnect (рестарт сервера, network blip) тысячи клиентов будут DDoS'ить через секунду → сервер не поднимется; нужен exponential backoff
-> - [ ] Бесконечный reconnect — клиент должен пытаться вечно | ❌ ПОСЛЕДСТВИЕ: после `maxReconnectAttempts` нужно остановиться и показать UI «соединение потеряно, нажмите retry»; иначе клиент висит молча и пользователь думает что всё работает
-> - [ ] Jitter не нужен если у нас exponential backoff | ❌ ПОСЛЕДСТВИЕ: без jitter все клиенты с одинаковым `baseDelay=1000` после общего отказа попадут в одну и ту же минуту и накроют сервер пачкой — нужен random ±20% разброс
-> - [x] Reconnect: `onclose` (если `!wasClean`) → `delay = min(base * 2^attempts, maxDelay)` + `jitter (±20%)`; cap на `maxAttempts`; reset счётчика при успешном `onopen` | ✓ ПРИМЕНЯТЬ: `baseDelay=1s, maxDelay=30s, maxAttempts=10`; сохранять `Last-Event-ID` для дедупликации; готовая библиотека `@stomp/stompjs` (auto-reconnect + heartbeat) 📋 ПРАВИЛО: reconnect = exp backoff + jitter + cap + state preservation 🔗 См. Q38
 
 ## Q38. Testing WebSocket: TestWebSocketClient в Spring
 
@@ -1767,12 +1508,6 @@ WebSocketSession session = client.execute(
 
 session.sendMessage(new TextMessage("ping"));
 ```
-
-> [!mcq]
-> - [ ] Достаточно unit-теста с моком `WebSocketSession` — интеграционные тесты для WS избыточны | ❌ ПОСЛЕДСТВИЕ: mock не проверяет реальный handshake, frame parsing, heartbeat, STOMP protocol; для prod-readiness нужны integration-тесты с `@SpringBootTest(webEnvironment = RANDOM_PORT)` + `WebSocketStompClient`
-> - [ ] `WebSocketStompClient` блокирующий — не подходит для асинхронного теста | ❌ ПОСЛЕДСТВИЕ: клиент по сути асинхронен; для теста используют `CompletableFuture` или `CountDownLatch` для ожидания ответа с таймаутом
-> - [ ] Можно тестировать через `MockMvc` как REST endpoint | ❌ ПОСЛЕДСТВИЕ: `MockMvc` не делает HTTP Upgrade в WebSocket; для WS нужен реальный сервер (`@SpringBootTest` с `webEnvironment = RANDOM_PORT`) или `StandardWebSocketClient`
-> - [x] Unit: mock `WebSocketSession` + `ArgumentCaptor`. Integration: `@SpringBootTest(RANDOM_PORT)` + `WebSocketStompClient`/`StandardWebSocketClient` + `CompletableFuture`/`CountDownLatch` для асинхронного ожидания | ✓ ПРИМЕНЯТЬ: unit — для логики handler'а; integration — для проверки handshake, STOMP CONNECT, subscribe/send, error scenarios; всегда c timeout (3-5s) 📋 ПРАВИЛО: WS test = mock для unit + real server для integration 🔗 См. See also
 
 ## See also
 

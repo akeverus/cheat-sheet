@@ -124,12 +124,6 @@ updated: "2026-05-05"
 
 Начиная с `Spring Security 6` конфигурация основана на бине `SecurityFilterChain` (устаревший `WebSecurityConfigurerAdapter` удалён).
 
-> [!mcq]
-> - [ ] Spring Security — библиотека для работы только с JWT-токенами и не поддерживает другие механизмы аутентификации. | Airbnb, Google и Capital One используют Spring Security с OAuth2, JWT и form-based аутентификацией одновременно. JWT — лишь один из способов. Это крайне ограниченный взгляд на framework.
-> - [x] Spring Security решает задачи аутентификации, авторизации, защиты от CSRF/XSS и управления сессиями. | Yandex, Spotify, Netflix полагаются на Spring Security для: (1) OAuth2 SSO в масштабе; (2) CSRF-защиты REST API; (3) Rate limiting через SecurityFilterChain. De-facto стандарт для security в production.
-> - [ ] Spring Security — библиотека для работы только с формой входа и не поддерживает другие механизмы аутентификации. | Uber использует OAuth2 + JWT с Spring Security для микросервисов. Form-based auth — устаревший паттерн. Это показывает незнание современных паттернов.
-> - [ ] Spring Security решает задачи аутентификации и авторизации, но не обеспечивает защиту от CSRF/XSS и не управляет сессиями. | Capital One отловила CSRF-атаки, которые были бы предотвращены CsrfFilter. Отключение этой защиты в production = инцидент безопасности. Не бывает полной аутентификации без защиты.
-
 ## Q2. (!) Как устроена архитектура фильтров `Spring Security`?
 
 `Spring Security` реализован как цепочка `Servlet`-фильтров. Каждый фильтр отвечает за свою задачу:
@@ -163,12 +157,6 @@ graph TD
 
 `FilterChainProxy` может содержать несколько `SecurityFilterChain` для разных URL-паттернов (например, отдельно для `/api/**` и для остального приложения).
 
-> [!mcq]
-> - [ ] Spring Security реализован как цепочка Servlet-фильтров, где точкой входа является UsernamePasswordAuthenticationFilter, напрямую получающий запрос от клиента. | Yandex обнаружила дыру в логике безопасности именно потому, что неправильно поняла архитектуру входа. UsernamePasswordAuthenticationFilter — один из многих фильтров, а не вход.
-> - [x] Spring Security реализован как цепочка Servlet-фильтров, где точкой входа является DelegatingFilterProxy, делегирующий в FilterChainProxy. | Netflix использует именно эту архитектуру для множества SecurityFilterChain на разных микросервисах. DelegatingFilterProxy → FilterChainProxy выбирает правильный SecurityFilterChain по URL-паттерну.
-> - [ ] Spring Security реализован как цепочка Servlet-фильтров, где точкой входа является SecurityFilterChain, напрямую получающий запрос от клиента. | Неправильное понимание привело к ошибкам конфигурации в Uber. SecurityFilterChain — это набор фильтров, а не точка входа. Точка входа — всегда DelegatingFilterProxy.
-> - [ ] Spring Security реализован как цепочка Servlet-фильтров, где точкой входа является FilterChainProxy, напрямую получающий запрос от клиента. | Spotify столкнулась с проблемой, когда неправильно конфигурировала FilterChainProxy без DelegatingFilterProxy. Это привело к исключениям NoSuchBeanDefinition. Всегда требуется DelegatingFilterProxy как регистратор.
-
 ## Q3. (!) В чём разница между аутентификацией и авторизацией?
 
 | Аспект | Аутентификация | Авторизация |
@@ -201,13 +189,6 @@ sequenceDiagram
 ```
 
 Подробнее о паттернах авторизации — в [вопросах по паттернам аутентификации и авторизации](../../security/authentication-authorization-patterns-interview.md).
-
-> [!mcq]
-> - [ ] Аутентификация отвечает на вопрос «что тебе можно?» и возвращает объект Authentication с ролями, тогда как авторизация отвечает на вопрос «кто ты?» и завершается кодом 403. | Google API обнаружила, что путаница между 401/403 привела к утечкам данных. Аутентификация — «кто ты» (401), авторизация — «что можно» (403). Это critical знание.
-> - [x] Аутентификация отвечает на вопрос «кто ты?» и завершается кодом 401 при ошибке, тогда как авторизация отвечает на вопрос «что тебе можно?» и завершается кодом 403 при отказе. | Capital One, Airbnb и Yandex используют именно эту схему. Аутентификация устанавливает личность (401), авторизация проверяет права (403). Аутентификация всегда перед авторизацией.
-> - [ ] Аутентификация отвечает на вопрос «кто ты?» и завершается кодом 403 при ошибке, тогда как авторизация отвечает на вопрос «что тебе можно?» и завершается кодом 401 при отказе. | Коды ошибок перепутаны. Netflix отловила 401 вместо 403 как критическую конфиг-ошибку. 401 = проблема с credentials, 403 = есть credentials, но прав нет.
-> - [ ] Аутентификация отвечает на вопрос «кто ты?» и завершается кодом 401 при ошибке, тогда как авторизация отвечает на вопрос «что тебе можно?» и завершается кодом 401 при отказе. | Spotify столкнулась с 403-ошибками вместо 401 при отказе в доступе. Авторизация = 403 Forbidden (нехватка прав), не 401. Это критический баг в monitoring.
-
 
 ## Q4. (!) Как работает `SecurityFilterChain` и как его настроить?
 
@@ -257,12 +238,6 @@ public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
 }
 ```
 
-> [!mcq]
-> - [ ] SecurityFilterChain в Spring Security 6 конфигурируется наследованием от WebSecurityConfigurerAdapter и переопределением метода configure(HttpSecurity). | Netflix перешла на Spring Security 6 и нашла, что WebSecurityConfigurerAdapter удалён. Требуется @Bean с HttpSecurity. Это критический breaking change при миграции.
-> - [x] SecurityFilterChain в Spring Security 6 конфигурируется через @Bean-метод, принимающий HttpSecurity и возвращающий результат вызова http.build(). | Uber, Yandex и Google используют эту схему. @Bean public SecurityFilterChain filterChain(HttpSecurity http) → настройка через лямбды → http.build(). Это единственный способ в 6+.
-> - [ ] SecurityFilterChain в Spring Security 6 конфигурируется через @Bean-метод, принимающий HttpSecurity и возвращающий результат вызова http.configure(). | Spotify нашла ошибку: метода configure() не существует в HttpSecurity. Правильный метод — http.build(). Это приводит к NoSuchMethodError при старом коде.
-> - [ ] SecurityFilterChain в Spring Security 6 конфигурируется через @Bean-метод, принимающий WebSecurity и возвращающий результат вызова web.build(). | Yandex обнаружила, что WebSecurity — это не то. SecurityFilterChain требует HttpSecurity, а не WebSecurity. WebSecurity нужна только для WebSecurityCustomizer (исключения ресурсов).
-
 ## Q5. Что такое `SecurityContext` и `SecurityContextHolder`?
 
 **`SecurityContext`** хранит объект `Authentication` (текущий пользователь, роли). **`SecurityContextHolder`** — статический хелпер для доступа к контексту.
@@ -286,12 +261,6 @@ public UserDto currentUser(@AuthenticationPrincipal UserDetails user) {
 - **`MODE_GLOBAL`** — один контекст на всё приложение (редко)
 
 Для реактивного стека (`WebFlux`) используется `ReactiveSecurityContextHolder` — контекст в `Reactor Context`, не в `ThreadLocal` (подробнее в [Spring WebFlux](spring-webflux-interview.md)).
-
-> [!mcq]
-> - [ ] SecurityContextHolder по умолчанию хранит SecurityContext в стратегии MODE_GLOBAL, создавая единый контекст для всего приложения. | Uber столкнулась с режимом MODE_GLOBAL и потеряла изоляцию пользователей в многопоточной системе. MODE_THREADLOCAL по умолчанию. MODE_GLOBAL = критическая уязвимость.
-> - [ ] SecurityContextHolder по умолчанию хранит SecurityContext в стратегии MODE_INHERITABLETHREADLOCAL, автоматически передавая контекст дочерним потокам. | Yandex обнаружила утечку контекста при использовании MODE_INHERITABLETHREADLOCAL без явной настройки. По умолчанию MODE_THREADLOCAL. Это требует явной активации для async-сценариев.
-> - [x] SecurityContextHolder по умолчанию хранит SecurityContext в стратегии MODE_THREADLOCAL, привязывая контекст к текущему потоку выполнения. | Netflix, Spotify и Google используют MODE_THREADLOCAL по умолчанию. SecurityContext в ThreadLocal = потокобезопасность в servlet-моделе thread-per-request. Это стандарт production.
-> - [ ] SecurityContextHolder по умолчанию хранит SecurityContext в стратегии MODE_THREADLOCAL, при этом автоматически передавая контекст всем дочерним потокам. | Capital One обнаружила проблему: MODE_THREADLOCAL НЕ передаёт контекст дочерним потокам. Для этого нужна MODE_INHERITABLETHREADLOCAL или другие механизмы (Reactor Context в WebFlux).
 
 ## Q6. (!) Как работает процесс аутентификации (`AuthenticationManager`, `Provider`)?
 
@@ -349,13 +318,6 @@ public class CustomAuthProvider implements AuthenticationProvider {
 }
 ```
 
-> [!mcq]
-> - [ ] Точкой входа в процесс аутентификации выступает `SecurityContextHolder` — его метод `authenticate()` вызывается фильтром. | SecurityContextHolder только хранит контекст в ThreadLocal, не проверяет credentials. Это свидетельствует о незнании архитектуры Spring Security.
-> - [x] Точкой входа в процесс аутентификации выступает `AuthenticationManager` — его метод `authenticate()` вызывается фильтром. | Netflix, Uber и Yandex используют эту схему. AuthenticationManager (обычно ProviderManager) делегирует AuthenticationProvider. Это стандарт в production.
-> - [ ] Точкой входа в процесс аутентификации выступает `AuthenticationProvider` — его метод `authenticate()` вызывается фильтром. | Spotify обнаружила ошибку конфигурации: AuthenticationProvider внутри цепочки, его вызывает AuthenticationManager, не фильтр. Это приводит к NoAuthenticationException.
-> - [ ] Точкой входа в процесс аутентификации выступает `UserDetailsService` — его метод `authenticate()` вызывается фильтром. | UserDetailsService не имеет метода authenticate(). Yandex обнаружила эту ошибку при кастомизации Provider. UserDetailsService только загружает UserDetails.
-
-
 ## Q7. Как реализовать `UserDetailsService` для загрузки из БД?
 
 ```java
@@ -397,12 +359,6 @@ public AuthenticationManager authManager(HttpSecurity http,
 }
 ```
 
-> [!mcq]
-> - [x] Интерфейс `UserDetailsService` имеет единственный метод `loadUserByUsername(String)`, возвращающий `UserDetails`. | Netflix, Uber и Yandex реализуют свои UserDetailsService для загрузки из БД. UsernameNotFoundException при отсутствии = baseline pattern в production.
-> - [ ] Интерфейс `UserDetailsManager` имеет единственный метод `loadUserByUsername(String)`, возвращающий `UserDetails`. | UserDetailsManager расширяет UserDetailsService и добавляет CRUD. Это не то же самое. Google обнаружила ошибку при неправильном выборе интерфейса.
-> - [ ] Интерфейс `AuthenticationProvider` имеет единственный метод `loadUserByUsername(String)`, возвращающий `UserDetails`. | AuthenticationProvider имеет authenticate() и supports(), не loadUserByUsername(). Spotify столкнулась с ClassNotFoundException при этой ошибке.
-> - [ ] Интерфейс `UserDetails` имеет единственный метод `loadUserByUsername(String)`, возвращающий `UserDetails`. | UserDetails — это DTO пользователя (getUsername, getPassword). Yandex обнаружила, что он не загружает сам себя. Это просто контейнер данных.
-
 ## Q8. Как настроить хеширование паролей (`PasswordEncoder`)?
 
 ```java
@@ -430,12 +386,6 @@ public PasswordEncoder passwordEncoder() {
 ```
 
 При логине `Spring` через `PasswordEncoder.matches()` сравнивает введённый пароль с хешем из БД. Хранить пароли в открытом виде (`{noop}`) допустимо **только** в тестах.
-
-> [!mcq]
-> - [ ] Рекомендованным общим `PasswordEncoder` является `NoOpPasswordEncoder`, имеющий адаптивную стоимость. | NoOpPasswordEncoder хранит пароли в открытом виде. Capital One потеряла данные миллионов пользователей из-за этого. Это не тестовый сценарий.
-> - [ ] Рекомендованным общим `PasswordEncoder` является `MessageDigestPasswordEncoder`, имеющий адаптивную стоимость. | MD5/SHA уязвимы к rainbow-table атакам. Google обнаружила hashes в базе и потеряла 2+ недели на миграцию. MD5 = instant compromise.
-> - [x] Рекомендованным общим `PasswordEncoder` является `BCryptPasswordEncoder`, имеющий адаптивную стоимость. | Netflix, Spotify и Airbnb используют BCryptPasswordEncoder с cost factor 12+. Настраиваемая стоимость = устойчивость к GPU-атакам. Это production baseline.
-> - [ ] Рекомендованным общим `PasswordEncoder` является `StandardPasswordEncoder`, имеющий адаптивную стоимость. | StandardPasswordEncoder (SHA-256+соль) deprecated. Yandex нашла его в legacy-коде и мигрировала на BCrypt. SHA-256 = 2+ миллиарда iterations на GPU.
 
 ## Q9. Как настроить `form-based` аутентификацию?
 
@@ -468,12 +418,6 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 </form>
 ```
 
-> [!mcq]
-> - [ ] За обработку POST-запроса `/login` в form-based аутентификации отвечает фильтр `BasicAuthenticationFilter`. | BasicAuthenticationFilter парсит Authorization: Basic header, не form parameters. Uber попыталась использовать его и получила 401 вместо form login.
-> - [x] За обработку POST-запроса `/login` в form-based аутентификации отвечает фильтр `UsernamePasswordAuthenticationFilter`. | Netflix, Spotify и Yandex используют этот фильтр для form login. Он извлекает username/password из формы и создаёт UsernamePasswordAuthenticationToken. Это стандарт.
-> - [ ] За обработку POST-запроса `/login` в form-based аутентификации отвечает фильтр `BearerTokenAuthenticationFilter`. | BearerTokenAuthenticationFilter работает с JWT/OAuth2 tokens в Authorization: Bearer header. Это не form login. Google использует это только для API.
-> - [ ] За обработку POST-запроса `/login` в form-based аутентификации отвечает фильтр `RememberMeAuthenticationFilter`. | RememberMeAuthenticationFilter восстанавливает auth по cookie remember-me, не обрабатывает форму. Yandex обнаружила, что это срабатывает ПОСЛЕ login form.
-
 ## Q10. Как настроить `HTTP Basic` аутентификацию?
 
 ```java
@@ -489,13 +433,6 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 ```
 
 Credentials передаются в заголовке `Authorization: Basic <base64(user:pass)>`. В production обязательно использовать **HTTPS**, иначе пароль передаётся в открытом виде. Обычно используется для внутренних API или для простых интеграций; для публичных API предпочтительнее `JWT` или `OAuth2`.
-
-> [!mcq]
-> - [x] HTTP Basic передаёт логин и пароль как `base64(username:password)` в заголовке `Authorization: Basic ...`. | Base64 = encoding, not encryption. Capital One потеряла credentials при перехвате HTTP-трафика. Обязательно HTTPS. Это production baseline.
-> - [ ] HTTP Basic передаёт логин и пароль как `base64(username:password)` в заголовке `Authorization: Bearer ...`. | Bearer — это OAuth2/JWT scheme, не Basic. Airbnb столкнулась с ошибкой при путанице между ними. Совершенно разные форматы.
-> - [ ] HTTP Basic передаёт логин и пароль как `base64(username:password)` в заголовке `Authorization: Digest ...`. | Digest uses nonce+hash, не base64 от user:pass. Яндекс обнаружила, что Digest и Basic несовместимы. Это другая схема.
-> - [ ] HTTP Basic передаёт логин и пароль как `base64(username:password)` в заголовке `Proxy-Authorization: Basic ...`. | Proxy-Authorization предназначен для HTTP-proxy, а не целевого ресурса. Uber ошибочно использовала это и потеряла аутентификацию. Используйте Authorization.
-
 
 ## Q11. (!) Как интегрировать `Spring Security` с `JWT`?
 
@@ -541,13 +478,6 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http,
         .build();
 }
 ```
-
-> [!mcq]
-> - [ ] Для stateless JWT-API в `SecurityFilterChain` задают `SessionCreationPolicy.ALWAYS`. | ALWAYS создаёт HTTP-сессию на каждый запрос. Uber столкнулась с падением production (6TB сессионных данных в памяти). Это противоположность stateless.
-> - [ ] Для stateless JWT-API в `SecurityFilterChain` задают `SessionCreationPolicy.IF_REQUIRED`. | IF_REQUIRED — это дефолт для form login, создаёт сессию при необходимости. Netflix ошибочно использовала это и потеряла stateless архитектуру.
-> - [ ] Для stateless JWT-API в `SecurityFilterChain` задают `SessionCreationPolicy.NEVER`. | NEVER не создаёт сессию, но использует существующую. Это не полный stateless. Spotify обнаружила, что session still accessible.
-> - [x] Для stateless JWT-API в `SecurityFilterChain` задают `SessionCreationPolicy.STATELESS`. | Airbnb, Google и Capital One используют STATELESS. Сервер не создаёт/использует HTTP-сессию. Каждый запрос аутентифицируется по JWT. Это production standard.
-
 
 ## Q12. (!) Как написать `JWT`-фильтр (`JwtAuthenticationFilter`)?
 
@@ -596,13 +526,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 - Регистрируется **перед** `UsernamePasswordAuthenticationFilter` через `addFilterBefore`
 - При невалидном или отсутствующем токене — просто пропускает запрос дальше (авторизация сработает позже)
 
-> [!mcq]
-> - [x] Кастомный JWT-фильтр наследуется от `OncePerRequestFilter`, что гарантирует один вызов `doFilterInternal` на запрос. | Netflix, Uber и Yandex используют OncePerRequestFilter. Защита от повторного запуска на forward/include. Это production pattern.
-> - [ ] Кастомный JWT-фильтр наследуется от `GenericFilterBean`, что гарантирует один вызов `doFilterInternal` на запрос. | GenericFilterBean низкоуровневый, не защищает от повторного срабатывания. Spotify обнаружила, что JWT-check запустился дважды. Нужна OncePerRequestFilter.
-> - [ ] Кастомный JWT-фильтр наследуется от `BasicAuthenticationFilter`, что гарантирует один вызов `doFilterInternal` на запрос. | BasicAuthenticationFilter для Basic-схемы (user:pass), не для Bearer-токенов. Yandex столкнулась с классом, который не распознаёт JWT headers.
-> - [ ] Кастомный JWT-фильтр наследуется от `AbstractAuthenticationProcessingFilter`, что гарантирует один вызов `doFilterInternal` на запрос. | Этот класс для login-processing на specific URL (/login), не для per-request Bearer. Google ошибочно использовала и потеряла JWT при redirect.
-
-
 ## Q13. Как реализовать endpoint выдачи `JWT`-токена?
 
 ```java
@@ -642,13 +565,6 @@ public AuthenticationManager authenticationManager(
 }
 ```
 
-> [!mcq]
-> - [ ] В `/login`-endpoint для проверки пары логин/пароль вызывается `SecurityContextHolder.authenticate()`. | SecurityContextHolder не имеет метода authenticate(), это просто хранилище контекста. Uber пыталась это сделать и получила NoSuchMethodError.
-> - [x] В `/login`-endpoint для проверки пары логин/пароль вызывается `AuthenticationManager.authenticate()`. | Netflix, Yandex и Capital One используют это. AuthenticationManager → UsernamePasswordAuthenticationToken → провайдеры → Authentication. Это production endpoint pattern.
-> - [ ] В `/login`-endpoint для проверки пары логин/пароль вызывается `UserDetailsService.authenticate()`. | UserDetailsService не имеет authenticate(). Spotify ошибочно использовала это и потеряла проверку пароля. UserDetailsService только загружает данные пользователя.
-> - [ ] В `/login`-endpoint для проверки пары логин/пароль вызывается `PasswordEncoder.authenticate()`. | PasswordEncoder имеет только encode() и matches(), не authenticate(). Google обнаружила, что это не точка входа аутентификации.
-
-
 ## Q14. Как реализовать refresh-токен?
 
 Refresh-токен позволяет получить новый access-токен без повторного ввода credentials. Варианты хранения:
@@ -680,13 +596,6 @@ public ResponseEntity<AuthResponse> refresh(@RequestBody RefreshRequest request)
 ```
 
 Для revocable-токенов лучше хранить refresh-токены в БД или `Redis` и проверять при обновлении. Подробнее об OAuth2-потоках — в [вопросах по OAuth2](../../security/oauth2-interview.md).
-
-> [!mcq]
-> - [x] Чтобы отозвать refresh-токен до истечения его срока, его хранят в `Redis`/БД и проверяют при каждом обновлении. | Netflix, Uber и Capital One используют Redis revocation list. JWT stateless — revoke невозможен без хранилища. Это production pattern для токен-отзыва.
-> - [ ] Чтобы отозвать refresh-токен до истечения его срока, его хранят в `SecurityContextHolder` и проверяют при каждом обновлении. | SecurityContextHolder — это ThreadLocal за запрос, не персистентен. Spotify обнаружила, что после перезагрузки токен остаётся активным. Нужна БД.
-> - [ ] Чтобы отозвать refresh-токен до истечения его срока, его хранят в `HttpSession` и проверяют при каждом обновлении. | HttpSession привязана к одному узлу без Spring Session. Yandex столкнулась с тем, что revocation не синхронизировалась. Нужна распределённая база.
-> - [ ] Чтобы отозвать refresh-токен до истечения его срока, его хранят в JWT-payload и проверяют при каждом обновлении. | JWT неизменяем. Google обнаружила, что нельзя отозвать токен просто так. Требуется external blacklist в Redis/БД.
-
 
 ## Q15. (!) Как настроить `OAuth2 Login` (вход через `Google`/`GitHub`)?
 
@@ -750,13 +659,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 }
 ```
 
-> [!mcq]
-> - [ ] Для кастомной пост-обработки профиля после OAuth2-входа расширяют `UserDetailsService`. | UserDetailsService для form/Basic login, не для OAuth2. Uber ошибочно использовала это и потеряла профильные данные от Google. Это неправильный интерфейс.
-> - [x] Для кастомной пост-обработки профиля после OAuth2-входа расширяют `DefaultOAuth2UserService`. | Airbnb, Google и Netflix используют DefaultOAuth2UserService.loadUser(). Именно здесь в базу сохраняют профиль после получения от IdP. Это production hook.
-> - [ ] Для кастомной пост-обработки профиля после OAuth2-входа расширяют `AuthenticationManager`. | AuthenticationManager имеет только authenticate(), не профильную обработку OAuth2. Spotify обнаружила, что это не подходит. Нужна DefaultOAuth2UserService.
-> - [ ] Для кастомной пост-обработки профиля после OAuth2-входа расширяют `OAuth2AuthorizationRequestResolver`. | Этот класс формирует authorization-request к IdP, а не обрабатывает возвращённый профиль. Yandex нашла, что он вызывается раньше, чем loadUser().
-
-
 ## Q16. Как настроить `Spring Security` как `OAuth2 Resource Server`?
 
 Когда приложение — не provider, а принимает JWT-токены от внешнего IdP (Keycloak, Auth0 и т.д.):
@@ -799,13 +701,6 @@ public JwtAuthenticationConverter jwtAuthConverter() {
 
 `Spring Security` автоматически валидирует подпись JWT через JWKS-endpoint провайдера.
 
-> [!mcq]
-> - [ ] Проверка подписи JWT в Resource Server выполняется через `UserDetailsService`. | UserDetailsService работает с локальной БД, не с JWKS. Uber столкнулась с ошибкой, пытаясь использовать это для JWT валидации. Неправильный компонент.
-> - [x] Проверка подписи JWT в Resource Server выполняется через `JwtDecoder`, который подтягивает ключи из JWKS-endpoint. | Netflix, Capital One и Google используют NimbusJwtDecoder. Автоматически валидирует подпись, iss, exp, nbf. Это production standard для Resource Server.
-> - [ ] Проверка подписи JWT в Resource Server выполняется через `PasswordEncoder`. | PasswordEncoder для парольных хешей, не для JWT. Spotify обнаружила, что это не применимо. Совершенно разные цели.
-> - [ ] Проверка подписи JWT в Resource Server выполняется через `AuthenticationManager` без дополнительных компонентов. | AuthenticationManager делегирует JwtAuthenticationProvider, который требует JwtDecoder. Yandex обнаружила, что без JwtDecoder → NoSuchBeanDefinition.
-
-
 ## Q17. (!) Как настроить авторизацию по URL-паттернам?
 
 ```java
@@ -838,13 +733,6 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 **Важно**: порядок `requestMatchers` имеет значение — первое совпадение выигрывает. Более специфичные правила ставьте раньше.
 
 В `Spring Security 6` вместо `antMatchers()` используется `requestMatchers()` с `AntPathRequestMatcher` под капотом. Поддерживается также `MvcRequestMatcher` для точного соответствия маршрутам [Spring MVC](spring-mvc-interview.md).
-
-> [!mcq]
-> - [x] В Spring Security 6 для URL-авторизации применяется DSL `authorizeHttpRequests()` с вызовом `requestMatchers(...)`. | Netflix, Uber и Capital One мигрировали на Spring Security 6. authorizeRequests() и antMatchers() удалены. Новый DSL = AntPathRequestMatcher + MvcRequestMatcher.
-> - [ ] В Spring Security 6 для URL-авторизации применяется DSL `authorizeRequests()` с вызовом `requestMatchers(...)`. | authorizeRequests() deprecated в 5.8, удалён в 6.0. Yandex нашла это в legacy-коде. Нужна миграция на authorizeHttpRequests().
-> - [ ] В Spring Security 6 для URL-авторизации применяется DSL `authorizeHttpRequests()` с вызовом `antMatchers(...)`. | antMatchers() удалён вместе с WebSecurityConfigurerAdapter. Spotify столкнулась с NoSuchMethodError при обновлении. Используйте requestMatchers().
-> - [ ] В Spring Security 6 для URL-авторизации применяется DSL `httpSecurity()` с вызовом `matchers(...)`. | Метода httpSecurity() нет в этом контексте. Google обнаружила, что конфигурация идёт через @Bean SecurityFilterChain. Это неверный DSL.
-
 
 ## Q18. (!) Как работают `@PreAuthorize`, `@PostAuthorize` и `@Secured`?
 
@@ -896,13 +784,6 @@ public class ArticleService {
 | `@Secured` | Нет | До вызова | Нет |
 | `@RolesAllowed` | Нет | До вызова | Нет |
 
-> [!mcq]
-> - [ ] Для включения `@PreAuthorize`/`@PostAuthorize` в Spring Security 6 применяется аннотация `@EnableGlobalMethodSecurity(prePostEnabled = true)`. | @EnableGlobalMethodSecurity deprecated в 5.8, удалён в 6.0. Netflix и Uber мигрировали на @EnableMethodSecurity. Это критический breaking change.
-> - [x] Для включения `@PreAuthorize`/`@PostAuthorize` в Spring Security 6 применяется аннотация `@EnableMethodSecurity`. | Airbnb, Capital One и Google используют @EnableMethodSecurity. prePostEnabled=true по умолчанию. Это production standard в Spring Security 6+.
-> - [ ] Для включения `@PreAuthorize`/`@PostAuthorize` в Spring Security 6 применяется аннотация `@EnableWebSecurity`. | @EnableWebSecurity активирует HttpSecurity и SecurityFilterChain, не method-security. Spotify обнаружила, что @PreAuthorize не сработала без @EnableMethodSecurity.
-> - [ ] Для включения `@PreAuthorize`/`@PostAuthorize` в Spring Security 6 применяется аннотация `@EnableAuthenticationManager`. | Такой аннотации нет. Yandex нашла эту ошибку в legacy-коде. Это не является valid аннотацией.
-
-
 ## Q19. Как использовать `@PreFilter` и `@PostFilter`?
 
 `@PreFilter` фильтрует **входную** коллекцию, `@PostFilter` — **возвращаемую**:
@@ -926,13 +807,6 @@ public class DocumentService {
 ```
 
 **Осторожно**: `@PostFilter` загружает все данные из БД и потом фильтрует в памяти. Для больших коллекций лучше фильтровать в SQL-запросе.
-
-> [!mcq]
-> - [x] Внутри SpEL в `@PreFilter`/`@PostFilter` текущий элемент коллекции доступен под именем `filterObject`. | Netflix и Uber используют filterObject в @PostFilter для фильтрации результатов. Spring Security применяет выражение к каждому элементу. Это production pattern.
-> - [ ] Внутри SpEL в `@PreFilter`/`@PostFilter` текущий элемент коллекции доступен под именем `returnObject`. | returnObject — это результат метода для @PostAuthorize, не элемент коллекции. Spotify обнаружила ошибку, используя returnObject в @PostFilter.
-> - [ ] Внутри SpEL в `@PreFilter`/`@PostFilter` текущий элемент коллекции доступен под именем `principal`. | principal — это Authentication.getPrincipal(), пользователь, не элемент коллекции. Yandex столкнулась с ошибкой при неправильном выборе переменной.
-> - [ ] Внутри SpEL в `@PreFilter`/`@PostFilter` текущий элемент коллекции доступен под именем `authentication`. | authentication — это сам Authentication object, не элемент коллекции. Google обнаружила ClassCastException при неверном использовании.
-
 
 ## Q20. Как реализовать доступ на основе данных (domain object security)?
 
@@ -973,13 +847,6 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
 
 Для сложных ACL-сценариев существует модуль `spring-security-acl` с таблицами разрешений в БД.
 
-> [!mcq]
-> - [ ] Выражение вида `hasPermission(#id, 'Article', 'WRITE')` в `@PreAuthorize` обрабатывается `AuthenticationProvider`. | AuthenticationProvider — это аутентификация, не проверка прав на объекты. Uber ошибочно попыталась и получила ошибку вычисления SpEL.
-> - [x] Выражение вида `hasPermission(#id, 'Article', 'WRITE')` в `@PreAuthorize` обрабатывается `PermissionEvaluator`. | Netflix, Capital One и Google используют PermissionEvaluator для domain object security. Spring Security делегирует hasPermission() в DefaultMethodSecurityExpressionHandler.
-> - [ ] Выражение вида `hasPermission(#id, 'Article', 'WRITE')` в `@PreAuthorize` обрабатывается `UserDetailsService`. | UserDetailsService только загружает пользователя. Spotify обнаружила, что SpEL не вычисляется через него. Это неправильный компонент.
-> - [ ] Выражение вида `hasPermission(#id, 'Article', 'WRITE')` в `@PreAuthorize` обрабатывается `SecurityContextHolder`. | SecurityContextHolder — хранилище контекста, не обработчик SpEL. Yandex обнаружила, что это не применимо. Нужна PermissionEvaluator.
-
-
 ## Q21. (!) Как настроить `CORS` в `Spring Security`?
 
 ```java
@@ -1012,13 +879,6 @@ public CorsConfigurationSource corsConfigurationSource() {
 **Важно**: `CORS`-фильтр в `Spring Security` должен обрабатываться **до** аутентификации, иначе preflight `OPTIONS`-запросы (без credentials) получат `401`. При использовании `cors()` в `HttpSecurity` порядок фильтров настраивается автоматически.
 
 На уровне контроллера можно использовать `@CrossOrigin`, но `SecurityFilterChain` конфигурация имеет приоритет. Подробнее о безопасности веб-приложений — в [вопросах по безопасности приложений](../../security/application-security-interview.md).
-
-> [!mcq]
-> - [x] Чтобы preflight-запрос (`OPTIONS`) не получал 401, CORS должен обрабатываться фильтром `CorsFilter` до `UsernamePasswordAuthenticationFilter`. | Airbnb, Netflix и Google используют http.cors() в SecurityFilterChain. CorsFilter до security-фильтров = preflight без credentials. Это production pattern.
-> - [ ] Чтобы preflight-запрос (`OPTIONS`) не получал 401, CORS должен обрабатываться фильтром `CsrfFilter` до `UsernamePasswordAuthenticationFilter`. | CsrfFilter проверяет CSRF-токен, не обрабатывает Origin header. Spotify ошибочно использовала это и потеряла CORS preflight.
-> - [ ] Чтобы preflight-запрос (`OPTIONS`) не получал 401, CORS должен обрабатываться фильтром `BasicAuthenticationFilter` до `UsernamePasswordAuthenticationFilter`. | BasicAuthenticationFilter — это HTTP Basic auth, вернёт 401 для OPTIONS без credentials. Yandex обнаружила, что это неправильный фильтр.
-> - [ ] Чтобы preflight-запрос (`OPTIONS`) не получал 401, CORS должен обрабатываться фильтром `SecurityContextPersistenceFilter` до `UsernamePasswordAuthenticationFilter`. | SecurityContextPersistenceFilter загружает/сохраняет SecurityContext, не обрабатывает Origin header. Это неправильный фильтр для CORS.
-
 
 ## Q22. (!) Как работает `CSRF`-защита и когда её отключать?
 
@@ -1053,13 +913,6 @@ public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
 | Public API без аутентификации | **Отключён** |
 
 В `Thymeleaf` CSRF-токен подставляется автоматически при использовании `th:action`. Подробнее об атаках — в [OWASP Top 10](../../security/owasp-top10-interview.md).
-
-> [!mcq]
-> - [ ] CSRF-защиту безопасно отключать, когда клиент аутентифицируется через cookie-сессию в браузере. | Capital One потеряла данные из-за отключения CSRF при cookie-auth. Браузер отправляет cookie автоматически = максимальный риск CSRF.
-> - [ ] CSRF-защиту безопасно отключать, когда форма логина открыта публично без TLS. | Отсутствие TLS — это отдельная уязвимость. CSRF добавляется к MitM. Это не solution для CSRF. Яндекс обнаружила double-compromise.
-> - [x] CSRF-защиту безопасно отключать, когда API stateless и токен передаётся в заголовке `Authorization: Bearer`. | Netflix, Uber и Google используют JWT в Authorization header. Браузер не отправляет это автоматически при cross-site. CSRF невозможен. Production pattern.
-> - [ ] CSRF-защиту безопасно отключать, когда сервер обслуживает OAuth2 login через cookie. | OAuth2 cookie-based login требует CSRF-защиты для callback. Spotify обнаружила CSRF-уязвимость в OAuth2 flow. Это критическое событие.
-
 
 ## Q23. Как управлять сессиями (session management)?
 
@@ -1097,13 +950,6 @@ server:
       timeout: 30m
 ```
 
-> [!mcq]
-> - [x] Для REST API с JWT рекомендуют `SessionCreationPolicy.STATELESS` — сервер не создаёт и не читает HTTP-сессию. | Airbnb, Netflix и Capital One используют STATELESS. SecurityContext не сохраняется в сессии = экономия памяти + per-request JWT. Это production standard.
-> - [ ] Для REST API с JWT рекомендуют `SessionCreationPolicy.ALWAYS` — сервер не создаёт и не читает HTTP-сессию. | ALWAYS создаёт сессию на каждый запрос. Uber столкнулась с OutOfMemoryError. Это противоположность stateless.
-> - [ ] Для REST API с JWT рекомендуют `SessionCreationPolicy.IF_REQUIRED` — сервер не создаёт и не читает HTTP-сессию. | IF_REQUIRED — дефолт, создаёт сессию по требованию. Для чистого JWT недостаточно. Spotify обнаружила, что session ещё создавалась.
-> - [ ] Для REST API с JWT рекомендуют `SessionCreationPolicy.NEVER` — сервер не создаёт и не читает HTTP-сессию. | NEVER не создаёт, но использует если есть. Не полный stateless. Yandex обнаружила, что session всё ещё читалась. Нужна STATELESS.
-
-
 ## Q24. Как настроить `Remember Me`?
 
 ```java
@@ -1128,13 +974,6 @@ public PersistentTokenRepository persistentTokenRepository() {
 ```
 
 В форме входа нужен чекбокс с `name="remember-me"`. `Spring Security` создаёт cookie, по которому восстанавливает аутентификацию без повторного ввода пароля.
-
-> [!mcq]
-> - [ ] Для persistent-стратегии Remember-Me в БД используется репозиторий `JdbcUserDetailsManager`. | JdbcUserDetailsManager хранит пользователей, не remember-me tokens. Uber ошибочно использовала это и потеряла функционал remember-me.
-> - [x] Для persistent-стратегии Remember-Me в БД используется репозиторий `JdbcTokenRepositoryImpl`. | Netflix и Capital One используют JdbcTokenRepositoryImpl. Хранит series/token в persistent_logins. Позволяет инвалидировать token при краже cookie.
-> - [ ] Для persistent-стратегии Remember-Me в БД используется репозиторий `InMemoryTokenRepository`. | Такого стандартного класса нет. In-memory хранится в Map, не persistent. Spotify обнаружила, что tokens терялись после перезагрузки.
-> - [ ] Для persistent-стратегии Remember-Me в БД используется репозиторий `TokenBasedRememberMeServices`. | TokenBasedRememberMeServices — это signature-based без БД. Противоположен persistent-подходу. Yandex обнаружила, что это не persistent.
-
 
 ## Q25. Как обеспечить безопасность сессий в кластере?
 
@@ -1161,13 +1000,6 @@ public class SessionConfig {
 `SecurityContext` сериализуется в `Redis` вместе с сессией. При запросе на любой узел кластера контекст восстанавливается по cookie `SESSION`.
 
 **Альтернатива**: stateless-архитектура с `JWT` — сессии не нужны, каждый запрос несёт токен. В этом случае кластеризация сессий не требуется, но нужен механизм отзыва токенов (blacklist в `Redis`).
-
-> [!mcq]
-> - [x] Для шаринга сессий между узлами кластера используют `Spring Session` с бэкендом `Redis`. | Netflix, Uber и Airbnb используют Spring Session + Redis. SecurityContext сериализуется в Redis, восстанавливается по SESSION cookie. Production standard.
-> - [ ] Для шаринга сессий между узлами кластера используют `Spring Session` с бэкендом `ThreadLocal`. | ThreadLocal локален в одной JVM, не шарится между узлами. Spotify обнаружила, что session недоступна при failover. Нужна распределённая база.
-> - [ ] Для шаринга сессий между узлами кластера используют `Spring Session` с бэкендом `SecurityContextHolder`. | SecurityContextHolder — это ThreadLocal-обёртка, не распределённое хранилище. Yandex обнаружила, что context потерялся при переходе на другой узел.
-> - [ ] Для шаринга сессий между узлами кластера используют `Spring Session` с бэкендом `InMemoryUserDetailsManager`. | Это хранилище пользователей, не сессий. Google обнаружила, что sessions не реплицировались. Нужна Redis или БД.
-
 
 ## Q26. Как обработать ошибки аутентификации и авторизации?
 
@@ -1211,13 +1043,6 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 ```
 
 Для form-based приложений вместо JSON используют редирект: `failureUrl("/login?error")` и `accessDeniedPage("/403")`.
-
-> [!mcq]
-> - [ ] Для ответа `401 Unauthorized` неаутентифицированному пользователю настраивают `AccessDeniedHandler`. | AccessDeniedHandler отвечает за 403 (нет прав), не 401 (не аутентифицирован). Uber ошибочно использовала это и возвращала неправильный код.
-> - [x] Для ответа `401 Unauthorized` неаутентифицированному пользователю настраивают `AuthenticationEntryPoint`. | Netflix, Capital One и Google используют AuthenticationEntryPoint для 401. Вызывается quando запрос попадает в защищённый ресурс без auth. Production standard.
-> - [ ] Для ответа `401 Unauthorized` неаутентифицированному пользователю настраивают `AuthenticationSuccessHandler`. | AuthenticationSuccessHandler срабатывает при успешном логине, не при отсутствии auth. Spotify обнаружила, что это не подходит. Нужна AuthenticationEntryPoint.
-> - [ ] Для ответа `401 Unauthorized` неаутентифицированному пользователю настраивают `LogoutSuccessHandler`. | LogoutSuccessHandler запускается при выходе, не имеет отношения к 401. Yandex обнаружила, что это неправильный обработчик.
-
 
 ## Q27. (!) Как защитить `REST API` с помощью `Spring Security`?
 
@@ -1264,13 +1089,6 @@ public class RestSecurityConfig {
 
 Подробнее о конфигурации [Spring Boot](spring-boot-interview.md) и структуре контроллеров — в [Spring MVC](spring-mvc-interview.md).
 
-> [!mcq]
-> - [x] Кастомный JWT-фильтр регистрируют в цепочке через `http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)`. | Netflix, Airbnb и Capital One используют addFilterBefore(). Проверка JWT до form-login-фильтра = Bearer-токен работает. Это production pattern.
-> - [ ] Кастомный JWT-фильтр регистрируют в цепочке через `http.addFilterAfter(jwtFilter, UsernamePasswordAuthenticationFilter.class)`. | After уже поздно: неаутентифицированный запрос может быть отклонён до JWT-проверки. Uber столкнулась с 401 для Bearer-токенов.
-> - [ ] Кастомный JWT-фильтр регистрируют в цепочке через `http.addFilterAt(jwtFilter, SecurityContextHolderFilter.class)`. | addFilterAt ставит на ту же позицию, конфликт фильтров. Spotify обнаружила, что JWT и form-login конкурировали. Нужна addFilterBefore().
-> - [ ] Кастомный JWT-фильтр регистрируют в цепочке через `http.filter(jwtFilter)`. | Метода filter() нет в HttpSecurity. Yandex обнаружила NoSuchMethodError. API не существует.
-
-
 ## Q28. Как настроить rate limiting?
 
 Rate limiting не встроен в `Spring Security`, реализуется через фильтр или библиотеку:
@@ -1312,13 +1130,6 @@ http.addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class
 ```
 
 Для продакшена рекомендуется хранить счётчики в `Redis` (распределённый rate limiting) и использовать API Gateway (например, `Spring Cloud Gateway` с фильтром `RequestRateLimiter`).
-
-> [!mcq]
-> - [ ] Для распределённого rate limiting во многих инстансах лучше хранить счётчики в `ThreadLocal`. | ThreadLocal локален в одной JVM. Netflix обнаружила, что клиент обходит лимиты через разные узлы. Это не работает в кластере.
-> - [ ] Для распределённого rate limiting во многих инстансах лучше хранить счётчики в `InMemory Map`. | Map на каждом инстансе разная. Uber столкнулась с 20 запросами вместо 20 за minute при балансировке. Не синхронизируется.
-> - [x] Для распределённого rate limiting во многих инстансах лучше хранить счётчики в `Redis`. | Airbnb, Capital One и Google используют Redis. INCR и EXPIRE атомарны. Виден всем узлам. Это production standard для Bucket4j и Spring Cloud Gateway.
-> - [ ] Для распределённого rate limiting во многих инстансах лучше хранить счётчики в `HttpSession`. | HttpSession привязана к клиенту, без Spring Session не кластеризуется. Yandex обнаружила, что это не применимо. Нужна распределённая база.
-
 
 ## Q29. (!) Как тестировать защищённые эндпоинты?
 
@@ -1375,13 +1186,6 @@ class ArticleControllerTest {
 
 Для интеграционных тестов с `@SpringBootTest` и `TestRestTemplate`/`WebTestClient` используйте реальные токены или мок `JwtDecoder`.
 
-> [!mcq]
-> - [x] Для теста MVC-контроллера с фиксированным пользователем и ролью используют аннотацию `@WithMockUser`. | Netflix, Uber и Capital One используют @WithMockUser в unit-тестах. Создаёт UsernamePasswordAuthenticationToken в SecurityContext. Production testing standard.
-> - [ ] Для теста MVC-контроллера с фиксированным пользователем и ролью используют аннотацию `@MockBean`. | @MockBean заменяет бин на Mockito-мок, не подставляет Authentication. Spotify обнаружила, что @PreAuthorize не работал. Это неправильный инструмент.
-> - [ ] Для теста MVC-контроллера с фиксированным пользователем и ролью используют аннотацию `@SpringBootTest`. | @SpringBootTest загружает контекст, не подставляет пользователя. Yandex использовала это и получила 401 при тесте защищённого endpoint.
-> - [ ] Для теста MVC-контроллера с фиксированным пользователем и ролью используют аннотацию `@AutoConfigureMockMvc`. | @AutoConfigureMockMvc настраивает MockMvc, не подставляет Authentication. Google обнаружила, что нужна дополнительная @WithMockUser.
-
-
 ## Q30. Как настроить двухфакторную аутентификацию (2FA)?
 
 2FA в `Spring Security` реализуется через кастомный `AuthenticationProvider` или дополнительный фильтр:
@@ -1433,13 +1237,6 @@ public ResponseEntity<AuthResponse> verify2fa(
 ```
 
 Для TOTP используют библиотеки: `dev.samstevens.totp` (Java TOTP), `com.warrenstrange:googleauth`. Пользователь сканирует QR-код в Google Authenticator, Authy или аналогичном приложении.
-
-> [!mcq]
-> - [ ] 2FA в Spring Security реализуется через кастомный `UserDetailsService`, возвращающий «наполовину аутентифицированного» пользователя. | UserDetailsService только загружает пользователя, не проверяет TOTP. Uber ошибочно использовала это и потеряла second factor check.
-> - [x] 2FA в Spring Security реализуется через кастомный `AuthenticationProvider` или дополнительный фильтр, проверяющий TOTP-код. | Capital One и Google используют кастомный AuthenticationProvider для 2FA. Второй шаг возвращает полноценный Authentication после валидного TOTP. Production pattern.
-> - [ ] 2FA в Spring Security реализуется через кастомный `PasswordEncoder`, который сравнивает пароль и TOTP-код. | PasswordEncoder только для паролей. Spotify обнаружила, что это не применимо к TOTP. Нужна отдельная проверка.
-> - [ ] 2FA в Spring Security реализуется через кастомный `AccessDeniedHandler`, принимающий TOTP-код. | AccessDeniedHandler формирует 403 ответ, не обрабатывает 2FA-коды. Yandex нашла, что это не подходит. Нужна кастомная аутентификация.
-
 
 ## Q31. (!) Как работает `SecurityContext` в async-методах и `@Async`?
 
@@ -1513,13 +1310,6 @@ reportService.generateReport(ctx);
 | `MODE_INHERITABLETHREADLOCAL` | `new Thread()` | Не работает с пулами |
 | `DelegatingSecurityContextExecutor` | Пулы потоков | Требует конфигурации |
 | Явная передача | Любой сценарий | Boilerplate-код |
-
-> [!mcq]
-> - [x] Для пула потоков `@Async` контекст правильно пробрасывает обёртка `DelegatingSecurityContextAsyncTaskExecutor`. | Uber и Spotify используют эту обёртку. Захватывает SecurityContext в submitter-потоке и устанавливает в рабочий. Production pattern для @Async.
-> - [ ] Для пула потоков `@Async` контекст правильно пробрасывает обёртка `InheritableThreadLocalSecurityContextHolder`. | MODE_INHERITABLETHREADLOCAL работает только при new Thread(), не для пулов. Capital One обнаружила, что @Async потеряла контекст. Это не подходит.
-> - [ ] Для пула потоков `@Async` контекст правильно пробрасывает обёртка `ThreadLocalSecurityContextHolder`. | MODE_THREADLOCAL вообще не передаёт контекст. Netflix обнаружила NullPointerException в @Async методе. Нужна DelegatingSecurityContextAsyncTaskExecutor.
-> - [ ] Для пула потоков `@Async` контекст правильно пробрасывает обёртка `SecurityContextPersistenceFilter`. | Это web-фильтр, не имеет отношения к @Async пулам. Yandex нашла, что это не работает. Нужна кастомная обёртка executor.
-
 
 ## Q32. (!) Как настроить `OAuth2 Resource Server` с `JWT` и кастомными клеймами?
 
@@ -1626,13 +1416,6 @@ public ProfileDto getProfile(@AuthenticationPrincipal Jwt jwt) {
 }
 ```
 
-> [!mcq]
-> - [ ] Чтобы маппить claim `roles` из JWT в `GrantedAuthority` без префикса `SCOPE_`, настраивают бин `JwtDecoder`. | JwtDecoder валидирует и парсит, не маппит claims. Uber обнаружила, что это не помогает. Нужна JwtAuthenticationConverter.
-> - [x] Чтобы маппить claim `roles` из JWT в `GrantedAuthority` без префикса `SCOPE_`, настраивают бин `JwtAuthenticationConverter`. | Airbnb, Netflix и Capital One используют JwtAuthenticationConverter + JwtGrantedAuthoritiesConverter. setAuthoritiesClaimName("roles") + setAuthorityPrefix("ROLE_").
-> - [ ] Чтобы маппить claim `roles` из JWT в `GrantedAuthority` без префикса `SCOPE_`, настраивают бин `BearerTokenResolver`. | BearerTokenResolver извлекает token из запроса, не маппит claims. Spotify обнаружила, что это не подходит. Нужна JwtAuthenticationConverter.
-> - [ ] Чтобы маппить claim `roles` из JWT в `GrantedAuthority` без префикса `SCOPE_`, настраивают бин `JwkSetUriJwtDecoderBuilder`. | Это билдер для JwtDecoder, не для маппинга authorities. Yandex нашла, что это не помогает. Нужна отдельная JwtAuthenticationConverter.
-
-
 ## Q33. (!) Как работает `@PreAuthorize` с выражениями `SpEL` и кастомным `Permission Evaluator`?
 
 `@PreAuthorize` принимает `SpEL`-выражение, которое вычисляется до выполнения метода. Доступны встроенные объекты: `authentication`, `principal`, `hasRole()`, `hasAuthority()`, `#paramName`.
@@ -1730,13 +1513,6 @@ public List<Document> getAllDocuments() {
 }
 ```
 
-> [!mcq]
-> - [x] Чтобы интегрировать кастомный `PermissionEvaluator` в `@PreAuthorize`, его регистрируют через бин `MethodSecurityExpressionHandler`. | Google и Capital One используют DefaultMethodSecurityExpressionHandler.setPermissionEvaluator(). Подключает evaluator к SpEL в method-security. Production pattern.
-> - [ ] Чтобы интегрировать кастомный `PermissionEvaluator` в `@PreAuthorize`, его регистрируют через бин `WebSecurityExpressionHandler`. | WebSecurityExpressionHandler для URL-авторизации, не для аннотаций методов. Uber обнаружила, что hasPermission() не работал. Нужна MethodSecurityExpressionHandler.
-> - [ ] Чтобы интегрировать кастомный `PermissionEvaluator` в `@PreAuthorize`, его регистрируют через бин `JwtAuthenticationConverter`. | Этот конвертер только строит Authentication, не участвует в SpEL. Netflix обнаружила, что hasPermission() не вычисляется. Нужна MethodSecurityExpressionHandler.
-> - [ ] Чтобы интегрировать кастомный `PermissionEvaluator` в `@PreAuthorize`, его регистрируют через бин `AuthenticationEntryPoint`. | AuthenticationEntryPoint формирует 401-ответ, к SpEL отношения не имеет. Spotify нашла, что это не помогает. Это неправильный компонент.
-
-
 ## Q34. Как включить `Method Security` и в чём разница между `@PreAuthorize` и `@PostFilter`?
 
 **Включение Method Security (Spring Security 6+):**
@@ -1778,13 +1554,6 @@ public void deleteDocuments(List<Document> documents) {
 - `@PreFilter`/`@PostFilter` работают только с коллекциями (List, Set, array)
 - В `filterObject` — текущий элемент коллекции
 - В `returnObject` — возвращаемое значение метода
-
-> [!mcq]
-> - [ ] Основной риск `@PostAuthorize` в том, что проверка происходит до выполнения метода, поэтому дорогой SQL-запрос выполняется впустую. | @PostAuthorize проверяет ПОСЛЕ выполнения. Capital One обнаружила, что деньги уже переведены при отказе. Это критический баг.
-> - [x] Основной риск `@PostAuthorize` в том, что метод уже выполнился с побочными эффектами, прежде чем будет отказано в доступе. | Netflix и Uber столкнулись с данными уже запишущимися при отказе в доступе. SpEL видит returnObject, поэтому вызов обязателен. Это критическое применение.
-> - [ ] Основной риск `@PostAuthorize` в том, что SpEL не поддерживает параметры метода и `authentication`. | SpEL видит #paramName, returnObject и authentication. Это не ограничение. Spotify использует всё это в @PostAuthorize.
-
-> - [ ] Основной риск `@PostAuthorize` в том, что аннотация не работает на `@Service`-бинах, только на контроллерах. | `@PostAuthorize` применяется ко всем Spring-бинам при включённом `@EnableMethodSecurity` — service-layer аннотируется так же, как контроллеры. ❌ ПОСЛЕДСТВИЕ: разработчик дублирует security-логику в контроллере, ожидая что service-уровень не покрыт — копи-паста расходится с annotation на сервисе при рефакторинге, появляется bypass через прямой вызов сервиса из тестов или другого контроллера.
 
 ## Q35. Как одновременно настроить `CORS` и `CSRF` в `SecurityFilterChain`?
 
@@ -1854,13 +1623,6 @@ public class SecurityConfig {
 ))
 ```
 
-> [!mcq]
-> - [x] Чтобы SPA-клиент мог читать CSRF-токен из cookie и отправлять его в заголовке `X-XSRF-TOKEN`, применяется `CookieCsrfTokenRepository.withHttpOnlyFalse()`. | Netflix и Google используют это для double-submit. HttpOnly=false разрешает JS читать cookie XSRF-TOKEN. Production pattern.
-> - [ ] Чтобы SPA-клиент мог читать CSRF-токен из cookie и отправлять его в заголовке `X-XSRF-TOKEN`, применяется `HttpSessionCsrfTokenRepository`. | HttpSessionCsrfTokenRepository хранит в сессии, JS не может прочитать. Spotify ошибочно использовала это и потеряла CSRF-token доступ.
-> - [ ] Чтобы SPA-клиент мог читать CSRF-токен из cookie и отправлять его в заголовке `X-XSRF-TOKEN`, применяется `LazyCsrfTokenRepository`. | LazyCsrfTokenRepository — обёртка для lazy generation. Не решает HttpOnly-проблему. Uber обнаружила, что SPA всё ещё не может прочитать.
-> - [ ] Чтобы SPA-клиент мог читать CSRF-токен из cookie и отправлять его в заголовке `X-XSRF-TOKEN`, применяется `CookieCsrfTokenRepository.withHttpOnlyTrue()`. | HttpOnly=true блокирует JS-доступ. Capital One обнаружила, что SPA не может прочитать token. Это неправильный выбор.
-
-
 ## Q36. Как ограничить доступ к `Actuator`-эндпоинтам через `SecurityFilterChain`?
 
 Actuator-эндпоинты содержат чувствительную информацию — их нужно защищать в production.
@@ -1925,13 +1687,6 @@ public UserDetailsService actuatorUsers() {
 - Открывать только нужные эндпоинты (`include`), не использовать `include: "*"`
 - Эндпоинты `/shutdown`, `/env` (POST) — отключить в production или жёстко ограничить
 - Использовать `EndpointRequest.to(...)` вместо ручного матчинга путей — устойчиво к смене base-path
-
-> [!mcq]
-> - [ ] Чтобы выделить отдельный `SecurityFilterChain` именно для Actuator, в нём используют `securityMatcher(new AntPathRequestMatcher("/api/**"))`. | Такой матчер закроет business-API. Uber ошибочно использовала это вместо /actuator. Неправильный путь.
-> - [x] Чтобы выделить отдельный `SecurityFilterChain` именно для Actuator, в нём используют `securityMatcher(EndpointRequest.toAnyEndpoint())`. | Netflix, Capital One и Google используют EndpointRequest.toAnyEndpoint(). Покрывает все Actuator-эндпоинты + кастомный base-path. Production pattern.
-> - [ ] Чтобы выделить отдельный `SecurityFilterChain` именно для Actuator, в нём используют `securityMatcher(RequestMatcher.anyRequest())`. | anyRequest() заматчит всё и сломает приоритет. Spotify обнаружила, что другие цепочки перестали работать.
-> - [ ] Чтобы выделить отдельный `SecurityFilterChain` именно для Actuator, в нём используют `securityMatcher(new RegexRequestMatcher("/actuator.*"))`. | Ломается при смене base-path и не покрывает management.server.port. Yandex обнаружила, что не все endpoints покрыты.
-
 
 ---
 
@@ -2005,13 +1760,6 @@ public class SecurityConfig {
 | `cors()` | `.cors().and()` | `.cors(cors -> cors.configure...)` |
 | `httpBasic()` | `.httpBasic()` | `.httpBasic(Customizer.withDefaults())` |
 | Несколько цепочек | Override + `@Order` | Несколько `@Bean SecurityFilterChain` с `@Order` |
-
-> [!mcq]
-> - [x] В Spring Security 6 конфигурация строится через регистрацию бина `SecurityFilterChain` вместо наследования от базового класса. | Netflix и Uber мигрировали на @Bean SecurityFilterChain. WebSecurityConfigurerAdapter удалён. Это production standard в Spring Security 6.
-> - [ ] В Spring Security 6 конфигурация строится через наследование `WebSecurityConfigurerAdapter` и переопределение `configure(HttpSecurity)`. | WebSecurityConfigurerAdapter deprecated в 5.7, удалён в 6. Spotify нашла это в legacy-коде и мигрировала. Это broken в 6.
-> - [ ] В Spring Security 6 конфигурация строится через наследование `AbstractSecurityConfigurer` и переопределение `configure(HttpSecurity)`. | Такого публичного API нет. Это фабрикат. Yandex обнаружила ClassNotFoundException.
-> - [ ] В Spring Security 6 конфигурация строится через реализацию `SecurityConfigurer<HttpSecurity>` на своём конфиге. | SecurityConfigurer существует, но это низкоуровневый механизм. Рядовому пользователю предлагается @Bean SecurityFilterChain. Это не рекомендуется.
-
 
 ---
 
@@ -2087,13 +1835,6 @@ spring:
           client-secret: ${INTROSPECTION_SECRET}
 ```
 
-> [!mcq]
-> - [ ] Свойство `spring.security.oauth2.resourceserver.jwt.issuer-uri` нужно чтобы приложение могло **подписывать** выдаваемые JWT. | Resource Server не подписывает, только проверяет. Uber ошибочно попыталась и получила ошибку. Подпись — это Authorization Server.
-> - [x] Свойство `spring.security.oauth2.resourceserver.jwt.issuer-uri` нужно чтобы приложение могло auto-discovery получить `jwks_uri` и валидировать входящие JWT. | Capital One и Google используют это для auto-discovery. Spring Boot достаёт .well-known/openid-configuration и JWKS. Production pattern.
-> - [ ] Свойство `spring.security.oauth2.resourceserver.jwt.issuer-uri` нужно чтобы приложение могло редиректить на страницу логина провайдера. | Это функция OAuth2 Client, не Resource Server. Netflix обнаружила, что это не работает. Неправильный компонент.
-> - [ ] Свойство `spring.security.oauth2.resourceserver.jwt.issuer-uri` нужно чтобы приложение могло загружать `UserDetails` пользователя из БД провайдера. | Resource Server не трогает чужую БД. Yandex обнаружила, что это не подходит. Работает с claims в JWT.
-
-
 ---
 
 ## Q39. Как использовать JwtDecoder и BearerTokenAuthenticationFilter?
@@ -2164,12 +1905,6 @@ public JwtDecoder jwtDecoder() {
 }
 ```
 
-> [!mcq]
-> - [ ] Bearer-токен из заголовка `Authorization` извлекает фильтр `BasicAuthenticationFilter` и передаёт в `AuthenticationManager`. | `BasicAuthenticationFilter` парсит только схему `Basic ` (base64 user:pass), не `Bearer`; для Bearer есть отдельный фильтр в OAuth2 Resource Server. ❌ ПОСЛЕДСТВИЕ: разработчик настраивает только `httpBasic()` ожидая что Bearer тоже подхватится — все JWT-запросы получают 401, мобильное приложение не работает, hotfix в дежурстве.
-> - [ ] Bearer-токен из заголовка `Authorization` извлекает фильтр `UsernamePasswordAuthenticationFilter` и передаёт в `AuthenticationManager`. | `UsernamePasswordAuthenticationFilter` читает параметры формы (`username`/`password`), не `Authorization` header; работает на `/login` endpoint. ❌ ПОСЛЕДСТВИЕ: разработчик добавляет JWT через `formLogin()` chain — фильтр игнорирует header, токен не парсится, защита остаётся только для form-логина.
-> - [ ] Bearer-токен из заголовка `Authorization` извлекает фильтр `SecurityContextPersistenceFilter` и передаёт в `AuthenticationManager`. | `SecurityContextPersistenceFilter` загружает `SecurityContext` из хранилища (обычно сессии); это session restorer, не парсер токенов. ❌ ПОСЛЕДСТВИЕ: команда настраивает stateless API через session-фильтры — каждый запрос создаёт новую session, Redis раздувается, OOM на peak load.
-> - [x] Bearer-токен из заголовка `Authorization` извлекает фильтр `BearerTokenAuthenticationFilter` и передаёт в `AuthenticationManager`. | Это штатный фильтр Spring Security OAuth2 Resource Server: парсит схему `Bearer `, проверяет JWT через `JwtDecoder` или introspection через `OpaqueTokenIntrospector`. ✓ ПРИМЕНЯТЬ: REST API с JWT/OAuth2 — `oauth2ResourceServer(rs -> rs.jwt())` в SecurityFilterChain; для opaque tokens — `rs.opaqueToken()`. 📋 ПРАВИЛО: «Bearer = OAuth2 Resource Server filter, не Basic и не Form». 🔗 См. Q33 (CORS/CSRF), Q41 (JWT validation).
-
 ---
 
 ## Q40. CSRF защита — когда отключать и SameSite cookies как альтернатива?
@@ -2226,13 +1961,6 @@ http.csrf(csrf -> csrf
     .csrfTokenRequestHandler(new XorCsrfTokenRequestAttributeHandler())
 );
 ```
-
-> [!mcq]
-> - [ ] Значение `SameSite=None` полностью заменяет CSRF-защиту для cookie-сессии. | None разрешает отправку cookie при cross-site. Capital One обнаружила CSRF-уязвимость с None. Это открывает путь CSRF.
-> - [x] Значение `SameSite=Strict` блокирует отправку cookie при cross-site запросах и существенно снижает поверхность CSRF. | Netflix и Google используют Strict. Браузер не шлёт cookie даже при навигации со стороны. CSRF через forged-forms невозможен. Production pattern.
-> - [ ] Значение `SameSite=Lax` запрещает отправку cookie при GET-навигации по ссылке. | Lax разрешает cookie при top-level GET (навигация). Spotify обнаружила, что это недостаточно для POST-форм. Частичная защита.
-> - [ ] Значение `SameSite=Strict` нужно использовать без флага `Secure`, чтобы работало и по HTTP. | Современные браузеры требуют Secure для SameSite=None. Uber обнаружила, что по HTTP это не работает. HTTPS обязателен.
-
 
 ---
 
@@ -2330,13 +2058,6 @@ void adminCanDeleteOrder() throws Exception {
 }
 ```
 
-> [!mcq]
-> - [x] Для теста Resource Server со сформированным JWT в `MockMvc` используют `.with(jwt().authorities(...))` из `SecurityMockMvcRequestPostProcessors`. | Netflix и Uber используют jwt() в unit-тестах. Строит мок JwtAuthenticationToken в SecurityContext. Production testing pattern.
-> - [ ] Для теста Resource Server со сформированным JWT в `MockMvc` используют `.with(httpBasic(...))` из `SecurityMockMvcRequestPostProcessors`. | httpBasic — это Basic auth, не JWT. Capital One ошибочно использовала это и потеряла JWT-моки.
-> - [ ] Для теста Resource Server со сформированным JWT в `MockMvc` используют `.with(formLogin(...))` из `SecurityMockMvcRequestPostProcessors`. | formLogin симулирует /login POST, не JWT. Spotify обнаружила, что это не работает. Нужна jwt().
-> - [ ] Для теста Resource Server со сформированным JWT в `MockMvc` используют `.with(anonymous())` из `SecurityMockMvcRequestPostProcessors`. | anonymous() очищает Authentication (противоположный сценарий). Yandex обнаружила, что это неправильный выбор.
-
-
 ---
 
 ## Q42. Как передавать SecurityContext между потоками и в реактивном стеке?
@@ -2418,13 +2139,6 @@ public class AsyncService {
 }
 ```
 
-> [!mcq]
-> - [ ] В WebFlux для получения текущего пользователя внутри `Mono` используют `SecurityContextHolder.getContext()`. | В WebFlux нет ThreadLocal. Netflix обнаружила null при используемом SecurityContextHolder. Нужна ReactiveSecurityContextHolder.
-> - [x] В WebFlux для получения текущего пользователя внутри `Mono` используют `ReactiveSecurityContextHolder.getContext()`. | Airbnb и Google используют это в WebFlux. Контекст в Reactor Context, автоматически пробрасывается. Это production pattern для reactive.
-> - [ ] В WebFlux для получения текущего пользователя внутри `Mono` используют `SubscriberContext.current()`. | Такого API нет. Uber обнаружила NoSuchMethodError. Используйте ReactiveSecurityContextHolder.
-> - [ ] В WebFlux для получения текущего пользователя внутри `Mono` используют `InheritableThreadLocal` в `SecurityContextHolder`. | Поток меняется в каждом операторе. Spotify обнаружила null при чередовании потоков. ThreadLocal не работает в reactive.
-
-
 ---
 
 ## Q43. Что такое @PostAuthorize и @Secured — когда использовать вместо @PreAuthorize?
@@ -2487,13 +2201,6 @@ public List<User> getAllUsers() {
 )
 public class MethodSecurityConfig {}
 ```
-
-> [!mcq]
-> - [x] Ключевое отличие `@PostAuthorize` от `@PreAuthorize` — доступ к `returnObject` в SpEL-выражении. | Capital One использует @PostAuthorize для проверки owner объекта. Доступ к returnObject = ключевое отличие. Production pattern.
-> - [ ] Ключевое отличие `@PostAuthorize` от `@PreAuthorize` — поддержка параметров метода через `#paramName`. | #paramName доступны в обоих. Uber обнаружила, что это не отличие. Не уникально.
-> - [ ] Ключевое отличие `@PostAuthorize` от `@PreAuthorize` — способность работать без `@EnableMethodSecurity`. | Обе требуют method-security. Spotify обнаружила, что без @EnableMethodSecurity обе игнорируются. Это не отличие.
-> - [ ] Ключевое отличие `@PostAuthorize` от `@PreAuthorize` — автоматическое повторное выполнение метода при отказе. | Никакого авторетрая. Yandex обнаружила, что AccessDeniedException бросается один раз. Не repeat.
-
 
 ---
 

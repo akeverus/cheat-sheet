@@ -93,13 +93,6 @@ updated: "2026-04-25"
 - Real-time apps (chat, gaming)
 - Event-driven architectures
 
-
-> [!mcq]
-> - [ ] NATS — это только pub/sub без persistence — для durable messaging нужен другой broker | ❌ ПОСЛЕДСТВИЕ: JetStream даёт persistence + at-least-once / exactly-once с 2020; не нужен отдельный broker
-> - [x] Lightweight messaging system: Core NATS = pub/sub at-most-once + JetStream = persistence; microseconds latency, ~30MB binary | ✓ ПРИМЕНЯТЬ: microservices, IoT, edge с low latency и low resource budget 📋 ПРАВИЛО: NATS = Core (pub/sub) + JetStream (persistence) = два слоя 🔗 См. Q9
-> - [ ] NATS = Java-based messaging (как ActiveMQ/RabbitMQ) | ❌ ПОСЛЕДСТВИЕ: NATS написан на Go; Java у клиентов через nats.java; сам сервер не требует JVM (~30MB) — отсюда low resource usage
-> - [ ] NATS не подходит для production — только для prototyping | ❌ ПОСЛЕДСТВИЕ: NATS используют в production crores систем: Mastercard, Walmart, GE, Tesla; CNCF Incubating с зрелым ecosystem
-
 ## Q2. (!) NATS vs Kafka vs RabbitMQ?
 
 | Критерий | NATS | Kafka | RabbitMQ |
@@ -119,13 +112,6 @@ updated: "2026-04-25"
 - **Complex routing** — RabbitMQ
 - **Lightweight, edge** — NATS
 
-
-> [!mcq]
-> - [ ] Kafka лучше во всех случаях — выбирать только её | ❌ ПОСЛЕДСТВИЕ: для microservices с low-latency требованиями NATS быстрее на порядки; Kafka overkill для простых pub/sub
-> - [x] NATS = low latency (μs) + low resource (~30MB), microservices/IoT/edge; Kafka = stream processing big data; RabbitMQ = complex routing | ✓ ПРИМЕНЯТЬ: NATS для μs-latency и edge; Kafka для replay + big data; RabbitMQ для AMQP routing 📋 ПРАВИЛО: latency → NATS; volume → Kafka; routing → RabbitMQ 🔗 См. Q1
-> - [ ] RabbitMQ имеет наивысший throughput — выбирать его для high-volume | ❌ ПОСЛЕДСТВИЕ: RabbitMQ tens of K/sec, NATS millions; для high-volume RabbitMQ — bottleneck
-> - [ ] NATS не поддерживает persistence вообще — нужна Kafka | ❌ ПОСЛЕДСТВИЕ: JetStream (с 2020) даёт persistence; ограничение — limited stream replay vs Kafka first-class
-
 ## Q3. Архитектура NATS Server?
 
 **NATS Server** — single Go binary (~30 MB).
@@ -143,13 +129,6 @@ updated: "2026-04-25"
 - TLS
 
 Никаких external dependencies (Apache Kafka требует ZooKeeper, etc.).
-
-
-> [!mcq]
-> - [ ] NATS требует ZooKeeper как Kafka | ❌ ПОСЛЕДСТВИЕ: NATS не имеет внешних зависимостей; ZooKeeper нужен только Kafka < 3.x; NATS использует RAFT для clustering
-> - [x] Single Go binary ~30MB; standalone/cluster (full mesh)/super-cluster/leaf nodes; built-in auth, TLS, monitoring | ✓ ПРИМЕНЯТЬ: edge deployment (leaf), multi-region (super-cluster), HA (cluster) 📋 ПРАВИЛО: NATS Server = self-contained = no external deps 🔗 См. Q17
-> - [ ] NATS требует JVM в production | ❌ ПОСЛЕДСТВИЕ: NATS написан на Go и компилируется в native binary; никакого JVM не нужно — поэтому 30MB, не GBs
-> - [ ] Cluster mode требует master-slave топологии | ❌ ПОСЛЕДСТВИЕ: NATS cluster = full mesh всех peers; нет master node; любой peer обслуживает запросы
 
 ## Q4. (!) Subjects (вместо topics)?
 
@@ -170,13 +149,6 @@ user.456.profile
 - Wildcards для multi-subject matching
 - No partitions concept (для Core NATS)
 
-
-> [!mcq]
-> - [ ] Subject в NATS = Kafka topic — нет различий | ❌ ПОСЛЕДСТВИЕ: subjects hierarchical, dot-separated, поддерживают wildcards; topics flat без иерархии; subjects можно создавать миллионами без накладных расходов
-> - [x] Hierarchical dot-separated имена с wildcards (*, >); более granular чем Kafka topics; cheap создавать миллионы | ✓ ПРИМЕНЯТЬ: per-user subjects (user.123.profile), event hierarchy (orders.created/updated) 📋 ПРАВИЛО: subject = иерархическое имя для routing с wildcard поддержкой 🔗 См. Q5
-> - [ ] Subjects жёстко лимитированы (~100 на сервер) — нельзя миллионы | ❌ ПОСЛЕДСТВИЕ: NATS специально разработан для миллионов subjects; нет per-subject overhead в Core NATS
-> - [ ] Subjects не поддерживают wildcards — только exact match | ❌ ПОСЛЕДСТВИЕ: `*` (single token) и `>` (multi-token, last only) — стандартные wildcards для подписки на широкий range
-
 ## Q5. Wildcards в subjects (`*`, `>`)?
 
 **`*`** — single-token wildcard.
@@ -190,13 +162,6 @@ user.*.profile     — matches user.123.profile, user.456.profile
 ```
 
 **Use case:** subscribers можно подписаться на широкий range subjects.
-
-
-> [!mcq]
-> - [ ] `*` matches multiple tokens включая dots — `orders.*` matches orders.shipping.scheduled | ❌ ПОСЛЕДСТВИЕ: `*` matches только ONE token; для multiple — нужен `>` (multi-token)
-> - [ ] `>` можно использовать в любой позиции subject pattern | ❌ ПОСЛЕДСТВИЕ: `>` должен быть LAST в pattern; orders.>.scheduled — invalid pattern
-> - [x] `*` = один token, `>` = multi-token (только last); `orders.*` matches orders.created но не orders.shipping.scheduled; `orders.>` matches всё под orders | ✓ ПРИМЕНЯТЬ: подписка на event family (orders.>) или specific level (user.*.profile) 📋 ПРАВИЛО: * = один уровень; > = всё под = последний 🔗 См. Q4
-> - [ ] Wildcards замедляют subscription до O(N) на каждое сообщение | ❌ ПОСЛЕДСТВИЕ: NATS использует prefix tree (trie); subscription matching O(token count), не O(N subscribers)
 
 ## Q6. (!) Pub/Sub patterns?
 
@@ -215,13 +180,6 @@ nc.subscribe("orders.*", msg => {
 **Все subscribers** matching subject get message (broadcast).
 
 **Core NATS:** if no subscribers — message **dropped** (at-most-once).
-
-
-> [!mcq]
-> - [ ] Core NATS буферизует сообщения если subscribers offline — auto-replay | ❌ ПОСЛЕДСТВИЕ: Core NATS at-most-once; offline subscribers пропускают сообщения; для buffering нужен JetStream
-> - [ ] Только один subscriber получает сообщение в pub/sub | ❌ ПОСЛЕДСТВИЕ: classic pub/sub = ALL matching subscribers получают (broadcast); один получатель — только в queue groups (load balancing)
-> - [x] Все matching subscribers получают сообщение (broadcast); если subscribers нет — message dropped (at-most-once); для durability нужен JetStream | ✓ ПРИМЕНЯТЬ: real-time fanout событий, broadcasting status 📋 ПРАВИЛО: pub/sub = broadcast all matchers; no subscribers = lost (Core NATS) 🔗 См. Q9
-> - [ ] Publish блокируется до тех пор пока все subscribers не обработают | ❌ ПОСЛЕДСТВИЕ: publish неблокирующий, fire-and-forget; broker не ждёт processing у subscribers
 
 ## Q7. (!) Queue groups (load balancing)?
 
@@ -244,13 +202,6 @@ nc.publish("orders.process", data);
 **Эффективное load balancing** для work queues.
 
 **Combined с broadcast:** subscribers без queue + queue groups одновременно — каждая queue group получает 1 копию + non-queue subscribers получают каждое message.
-
-
-> [!mcq]
-> - [ ] Queue group и обычный subscribe идентичны — разные имена | ❌ ПОСЛЕДСТВИЕ: queue group делает round-robin (один из группы); обычный sub — broadcast (все); путаница приводит к unexpected duplicate processing
-> - [x] Multiple consumers в одной queue group → round-robin (один получает каждое сообщение); load balancing для work queues | ✓ ПРИМЕНЯТЬ: worker pool обработки jobs, scaling consumers горизонтально 📋 ПРАВИЛО: queue group = LB; non-queue sub = broadcast; combine = both 🔗 См. Q6
-> - [ ] Queue groups требуют ручной координации между workers | ❌ ПОСЛЕДСТВИЕ: NATS server сам распределяет сообщения round-robin внутри queue group; никакой client-side coordination
-> - [ ] При сбое worker сообщение теряется в queue group | ❌ ПОСЛЕДСТВИЕ: с JetStream + ack-based delivery → message redelivered другому worker; с Core NATS — да, теряется (at-most-once)
 
 ## Q8. Request-Reply?
 
@@ -275,13 +226,6 @@ NATS uses **temporary subjects** для replies — auto-managed.
 
 **Sub-millisecond** latency (vs HTTP).
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. (!) Что такое JetStream? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **JetStream** (с 2020) — persistence layer на NATS.
 
 **Adds:**
@@ -294,13 +238,6 @@ NATS uses **temporary subjects** для replies — auto-managed.
 **Backwards-compatible** с Core NATS — same protocol, добавлены commands.
 
 JetStream нужен для **persistent messaging** workloads. Без JetStream — NATS лучше для realtime / fire-and-forget.
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. Streams в JetStream? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 **Stream** — persistent storage для messages matching subjects.
 
@@ -319,13 +256,6 @@ nats stream add ORDERS \
 - **File** — disk-based, durable
 - **Memory** — fast, ephemeral
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. (!) Consumers (durable, ephemeral)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **Consumer** = view на stream messages.
 
 **Durable consumer** — survives restarts, NATS tracks position (last consumed sequence).
@@ -343,13 +273,6 @@ nats consumer add ORDERS order-processor \
 - **Push** consumer — NATS sends messages к subscriber
 - **Pull** consumer — subscriber requests messages (better для batch processing)
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. Retention policies? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **Limits-based** (default):
 ```
 max_age: 7 days
@@ -365,13 +288,6 @@ max_bytes: 100GB
 retention: limits | interest | workqueue
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. Replication через RAFT? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
-
 **JetStream** uses **RAFT consensus** для replication.
 
 ```bash
@@ -386,13 +302,6 @@ nats stream add ORDERS --replicas 3
 - 5 replicas: tolerate 2 failures
 
 **Storage:** quorum write (majority must persist) before ACK.
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Key-Value store (built-in)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 **JetStream KV** — simple key-value store на JetStream streams.
 
@@ -411,13 +320,6 @@ nats kv watch my_kv  # subscribe to changes
 
 **Watch API** — real-time updates (analog etcd watch).
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. Object Store? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **JetStream Object Store** — для **larger blobs** (files, images).
 
 ```bash
@@ -434,13 +336,6 @@ Splits objects в **chunks** (default 128 KB), stores в JetStream.
 - Edge caching
 
 **Не replacement** для S3 — для smaller objects, integrated с messaging.
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q16. NATS Mirroring и Sourcing? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 **Mirror** — exact replica другого stream.
 
@@ -459,13 +354,6 @@ nats stream add COMBINED --sources STREAM1 --sources STREAM2
 - Disaster recovery
 - Stream aggregation
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q17. (!) NATS clustering? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **Cluster** — multiple NATS Server instances connected как **full mesh**.
 
 ```yaml
@@ -481,13 +369,6 @@ cluster {
 **Single virtual broker** semantics — pub в одном node → subscribers на other nodes получают messages.
 
 **Scale:** до tens of nodes per cluster.
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q18. Leaf nodes (edge)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 **Leaf node** — NATS Server connected к main cluster as one-way leaf.
 
@@ -506,13 +387,6 @@ leafnodes {
 
 **Subjects scoped** — leaf нодa может только subjects из allowed accounts.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q19. Super-cluster (multi-region)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **Super-cluster** = multiple clusters connected в **mesh**.
 
 ```
@@ -525,13 +399,6 @@ Cluster A (us-east)  ←→  Cluster B (eu-west)
 **Gateway connections** между clusters. Clients connect locally → messages routed globally.
 
 **Multi-region** messaging без central broker.
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q20. Authentication (NATS auth, JWT)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 **Auth methods:**
 - **Token** — simple shared token
@@ -550,13 +417,6 @@ resolver: URL  # or memory
 
 **Production best practice** — JWT-based с NSC tool для management.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q21. Accounts (multi-tenancy)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **Account** = isolated namespace (subjects, streams, KVs).
 
 ```yaml
@@ -573,13 +433,6 @@ accounts: {
 
 **Use case:** SaaS multi-tenant — каждый customer = separate account, isolated.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q22. (!) Когда выбрать NATS? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **Выбирай когда:**
 - **Microservices** internal communication (replace HTTP/gRPC)
 - **IoT** — millions devices, low resource usage
@@ -589,13 +442,6 @@ accounts: {
 - **Multi-region** without expensive Kafka MirrorMaker
 - Need **request-reply + pub/sub + persistent streams** в одном stack
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q23. Когда не выбирать NATS? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **Не выбирай когда:**
 - Need **complex stream processing** (Kafka Streams better)
 - Need **rich ecosystem** integrations (Kafka has it)
@@ -603,13 +449,6 @@ accounts: {
 - **Big Data processing** — Kafka + Spark/Flink standard
 - Team **already invested** в Kafka / RabbitMQ
 - Need **enterprise features** что NATS не имеет (some Kafka Enterprise features)
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q24. Какие частые проблемы? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 1. **JetStream config** — wrong storage type (memory) → data loss
 2. **Insufficient replicas** — single point failure
@@ -641,12 +480,6 @@ accounts: {
 - [Saga Pattern](../architecture/saga-pattern-interview.md) — NATS для sagas
 - [Caching](../architecture/caching-strategies-interview.md) — NATS KV
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [AWS SQS и SNS](aws-sqs-sns-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 - [Apache Kafka](kafka-interview.md)
 - [Сравнение Message Brokers](message-brokers-comparison-interview.md)
 - [Apache Pulsar](pulsar-interview.md)

@@ -66,13 +66,6 @@ public final class Point {
 
 **Применение**: DTO, value objects, tuple-подобные структуры, ключи в Map, возврат multiple values из метода.
 
-
-> [!mcq]
-> - [x] Record — специальный final класс; компилятор генерирует constructor, accessor (без get), equals/hashCode/toString на основе компонентов | ✓ ПРИМЕНЯТЬ: для immutable DTO, value objects, ключей Map 📋 ПРАВИЛО: record = data без поведения → compiler does the boilerplate 🔗 См. Q2
-> - [ ] Record — это interface-маркер, как Serializable, но для data классов | ❌ ПОСЛЕДСТВИЕ: marker interface не генерирует код — equals/hashCode/constructor писать вручную, весь смысл record теряется
-> - [ ] Record — mutable JavaBean с автогенерированными геттерами/сеттерами | ❌ ПОСЛЕДСТВИЕ: record поля final — сеттер не скомпилируется; record не JavaBean, это противоположная концепция
-> - [ ] Record полностью идентичен Kotlin data class, включая метод copy() | ❌ ПОСЛЕДСТВИЕ: Java record НЕ генерирует copy() — для изменения одного поля нужны wither-методы вручную
-
 ## Q2. Чем record отличается от обычного класса с Lombok @Value?
 
 | Критерий | Lombok @Value | Record |
@@ -86,13 +79,6 @@ public final class Point {
 | Java < 14 | Работает | Недоступен |
 
 **Современный код на Java 17+**: предпочитайте records, они более предсказуемы и поддерживаются JVM.
-
-
-> [!mcq]
-> - [ ] @Value и record идентичны: accessor методы с префиксом get, требуют внешней библиотеки | ❌ ПОСЛЕДСТВИЕ: accessor record — x(), не getX(); Jackson без @JsonProperty будет игнорировать эти методы в некоторых конфигурациях
-> - [ ] Record проигрывает @Value — не поддерживает pattern matching, @Value поддерживает | ❌ ПОСЛЕДСТВИЕ: всё наоборот: record поддерживает deconstructing patterns (Java 21+), Lombok @Value не имеет поддержки pattern matching
-> - [x] Record встроен в JVM (Java 16+), не нужен Lombok; accessor без get-префикса; поддерживает pattern matching Java 21+; JPA @Entity предпочитает @Value из-за mutable требований | ✓ ПРИМЕНЯТЬ: для новых проектов на Java 17+ — record, для legacy или JPA — @Value 📋 ПРАВИЛО: record = языковая фича, @Value = кодогенерация 🔗 См. Q1
-> - [ ] @Value добавляет copy() метод которого нет в record — поэтому @Value предпочтительнее | ❌ ПОСЛЕДСТВИЕ: отсутствие copy() решается wither-методами в record; преимущества record (pattern matching, JVM-native) перевешивают
 
 ## Q3. Что такое Canonical Constructor и Compact Constructor?
 
@@ -129,13 +115,6 @@ public record Email(String value) {
 
 **Важно**: в compact constructor можно модифицировать параметры до автоматического присваивания, но не сами `this.X` поля.
 
-
-> [!mcq]
-> - [ ] В compact constructor нужно явно писать this.years = years в конце блока | ❌ ПОСЛЕДСТВИЕ: compile error — поля record final и присваиваются автоматически после compact constructor; явный this.x = x запрещён
-> - [x] Canonical constructor принимает все компоненты явно; compact constructor — сокращённая форма без параметров, параметры можно менять до автоматического присваивания this.X | ✓ ПРИМЕНЯТЬ: compact для валидации и нормализации (trim, toLowerCase) 📋 ПРАВИЛО: compact = validate before assign, no manual this.X= 🔗 См. Q4
-> - [ ] Compact constructor компилируется только если компоненты primitive типов | ❌ ПОСЛЕДСТВИЕ: compact constructor работает с любыми типами — String, Object, List; именно String value = value.trim().toLowerCase() — типичный use case
-> - [ ] Canonical constructor автоматически вызывается при добавлении дополнительного конструктора | ❌ ПОСЛЕДСТВИЕ: дополнительный конструктор ОБЯЗАН явно вызвать canonical через this(...); без этого — compile error "non-canonical record constructor must delegate to another constructor"
-
 ## Q4. Можно ли в record добавить методы и дополнительные конструкторы?
 
 ```java
@@ -169,13 +148,6 @@ public record Rectangle(double width, double height) {
 - Нельзя объявлять `native` методы.
 - Можно static поля и методы.
 
-
-> [!mcq]
-> - [ ] В record нельзя добавлять методы — только компоненты в заголовке | ❌ ПОСЛЕДСТВИЕ: это неверно; instance методы (area(), perimeter()), static поля и методы добавляются свободно; ограничение только на instance fields вне заголовка
-> - [ ] Дополнительный конструктор record может не вызывать canonical | ❌ ПОСЛЕДСТВИЕ: compile error "non-canonical record constructor must delegate to another constructor" — каждый не-canonical constructor обязан делегировать в canonical через this(...)
-> - [ ] Static поля в record запрещены — нельзя объявить static final UNIT | ❌ ПОСЛЕДСТВИЕ: static поля и методы в record разрешены; static final Rectangle UNIT = new Rectangle(1,1) — корректный код
-> - [x] Record поддерживает instance методы, static поля/методы, дополнительные конструкторы; дополнительный constructor обязан делегировать в canonical через this(...); instance fields вне заголовка запрещены | ✓ ПРИМЕНЯТЬ: добавлять методы-вычисления (area()), factory methods, validation конструкторы 📋 ПРАВИЛО: record = компоненты в заголовке + произвольные методы/static 🔗 См. Q3
-
 ## Q5. Можно ли наследоваться от record?
 
 **Нет**. Records неявно `final`. Также records не могут наследоваться от других классов (только от `java.lang.Record`, который добавляется автоматически).
@@ -206,13 +178,6 @@ public record Square(double side) implements Shape {}
 public record Triangle(double a, double b, double c) implements Shape {}
 ```
 
-
-> [!mcq]
-> - [x] Records неявно final — нельзя наследоваться; record может implements интерфейсы; альтернатива иерархии — sealed interface с несколькими record subtypes | ✓ ПРИМЕНЯТЬ: sealed interface + records для моделирования ADT (Result/Either/Shape) 📋 ПРАВИЛО: record = leaf node, sealed interface = union type 🔗 См. Q13
-> - [ ] Record можно пометить non-final чтобы разрешить наследование | ❌ ПОСЛЕДСТВИЕ: запрещено спецификацией JLS; record всегда расширяет java.lang.Record и всегда final — compile error при попытке снять final
-> - [ ] Record не может implements интерфейсы — только наследоваться от абстрактных классов | ❌ ПОСЛЕДСТВИЕ: всё наоборот: record implements interface разрешён, extends абстрактного класса — запрещён (только java.lang.Record)
-> - [ ] Для наследования record используют вложенные records | ❌ ПОСЛЕДСТВИЕ: вложенные records — это не наследование, а просто inner classes; для иерархии типов нужен sealed interface permits Circle, Square
-
 ## Q6. Как сериализовать records с Jackson?
 
 Jackson 2.12+ поддерживает records "из коробки":
@@ -239,13 +204,6 @@ public record ApiUser(
 ```
 
 Для `kotlinx.serialization` — `@Serializable` на record работает аналогично data class.
-
-
-> [!mcq]
-> - [ ] Jackson сериализует record через геттеры с префиксом get — accessor x() игнорируется | ❌ ПОСЛЕДСТВИЕ: accessor record называются x(), не getX(); Jackson 2.12+ специально обрабатывает record accessors без get-префикса
-> - [ ] Jackson < 2.12 требует @JsonDeserialize(builder=...) для record десериализации | ❌ ПОСЛЕДСТВИЕ: record не имеет builder — кастомный десериализатор или обновление Jackson до 2.12+; в 2.12+ canonical constructor используется автоматически
-> - [x] Jackson 2.12+ поддерживает records автоматически; @JsonProperty/@JsonIgnore ставятся прямо на компоненты; канонический constructor используется при десериализации | ✓ ПРИМЕНЯТЬ: records как DTO в REST API без лишних аннотаций 📋 ПРАВИЛО: Jackson 2.12+ = record-native, компоненты = поля JSON 🔗 См. Q7
-> - [ ] @JsonCreator обязателен на canonical constructor для десериализации record | ❌ ПОСЛЕДСТВИЕ: @JsonCreator не нужен — Jackson 2.12+ автоматически использует canonical constructor; лишняя аннотация только добавляет шум
 
 ## Q7. Как использовать records в Spring?
 
@@ -299,13 +257,6 @@ public interface OrderRepository extends JpaRepository<Order, String> {
 }
 ```
 
-
-> [!mcq]
-> - [ ] Record работает как JPA @Entity — @Column, @Id, @GeneratedValue поддерживаются | ❌ ПОСЛЕДСТВИЕ: JPA требует no-arg constructor и mutable fields — Spring Boot не запустится с "No default constructor for entity" при попытке использовать record как Entity
-> - [x] Records идеальны как @RequestBody DTO с @Valid; JPA @Entity не совместим с record (нет no-arg constructor); record-проекции в Spring Data 3.x поддерживаются | ✓ ПРИМЕНЯТЬ: records для Request/Response DTO, Spring Data проекций; @Entity — обычный класс 📋 ПРАВИЛО: record = DTO layer, class = entity layer 🔗 См. Q10
-> - [ ] @Valid не работает с records — Bean Validation не валидирует final поля | ❌ ПОСЛЕДСТВИЕ: @Valid работает с record — аннотации @NotBlank, @Email на компонентах обрабатываются Hibernate Validator корректно
-> - [ ] Record не может быть Spring @Bean или @Component — только обычные классы | ❌ ПОСЛЕДСТВИЕ: это фактически верно (stateless record как bean бессмысленен), но ограничения нет — record как @Component скомпилируется; проблема в архитектурном смысле
-
 ## Q8. Поддерживают ли records pattern matching?
 
 **Да, начиная с Java 21 (JEP 440)**:
@@ -342,13 +293,6 @@ public static String orderCity(Order order) {
 
 Pattern matching делает records мощным инструментом функционального программирования в Java.
 
-
-> [!mcq]
-> - [ ] Record patterns в switch поддерживаются с Java 14 (первый preview records) | ❌ ПОСЛЕДСТВИЕ: record patterns — JEP 440, stable в Java 21; в Java 14-20 были только preview самих records без pattern matching
-> - [ ] case Circle(double r) — синтаксис Kotlin, в Java switch такой код не скомпилируется | ❌ ПОСЛЕДСТВИЕ: record deconstruction patterns стабилизированы в Java 21 — этот синтаксис валидный Java код
-> - [ ] Pattern matching в switch с records требует явного default: case | ❌ ПОСЛЕДСТВИЕ: когда switch exhaustively covers все subtypes sealed interface (Circle, Square) — default не нужен; компилятор проверяет покрытие
-> - [x] Java 21 (JEP 440): record patterns в switch/instanceof деконструируют компоненты; case Circle(double r) → r доступен напрямую; вложенные patterns для nested records | ✓ ПРИМЕНЯТЬ: замена instanceof + cast + field access цепочек 📋 ПРАВИЛО: case Type(vars) = deconstructing, exhaustive switch без default 🔗 См. Q13
-
 ## Q9. Могут ли records быть generic?
 
 ```java
@@ -372,13 +316,6 @@ Pair<String, String> swapped = new Pair<>("key", "value").swap()  // ВНИМА�
 ```
 
 Generic records — удобный способ заменить `Map.Entry<K, V>` и Apache Commons `Pair`.
-
-
-> [!mcq]
-> - [x] Да — record Pair<A, B>(A first, B second) полностью рабочий; поддерживает type bounds <T extends Comparable<T>>; методы могут возвращать другие generic типы | ✓ ПРИМЕНЯТЬ: замена Map.Entry, Apache Commons Pair 📋 ПРАВИЛО: generic record = type-safe tuple 🔗 См. Q8
-> - [ ] Generic records при runtime стирают типы — equals/hashCode не различает Pair<String, Int> и Pair<Int, String> | ❌ ПОСЛЕДСТВИЕ: type erasure не влияет на equals; Pair("a", 1).equals(Pair(1, "a")) — false, компоненты сравниваются через equals каждого типа
-> - [ ] Record не поддерживает bounded wildcards <T extends Comparable<T>> | ❌ ПОСЛЕДСТВИЕ: record Sorted<T extends Comparable<T>>(List<T> items) компилируется нормально; bounded type parameters поддерживаются
-> - [ ] Для generic records нужно явно переопределять equals и hashCode | ❌ ПОСЛЕДСТВИЕ: компилятор автоматически генерирует equals/hashCode из компонентов; для Pair<A, B> — через first.equals() и second.equals(); дополнительного override не требуется
 
 ## Q10. Как сделать record с валидацией через Bean Validation?
 
@@ -406,13 +343,6 @@ public UserResponse register(@Valid @RequestBody UserRegistration req) { ... }
 Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 Set<ConstraintViolation<UserRegistration>> violations = validator.validate(req);
 ```
-
-
-> [!mcq]
-> - [ ] @NotBlank нельзя ставить на record component — нужен отдельный POJO с полями | ❌ ПОСЛЕДСТВИЕ: Bean Validation аннотации на record components работают в Spring Boot 3.x + Hibernate Validator; POJO не нужен
-> - [ ] Compact constructor выполняется ДО Bean Validation и поэтому @Min/@Max не работают | ❌ ПОСЛЕДСТВИЕ: Bean Validation работает через validator.validate() независимо от конструктора; compact constructor и @Valid — разные механизмы, могут дополнять друг друга
-> - [x] @NotBlank, @Email, @Min ставятся прямо на компоненты record; @Valid в @RequestBody вызывает валидацию; валидацию можно запустить программно через Validator.validate() | ✓ ПРИМЕНЯТЬ: для REST API DTO — декларативная валидация через аннотации без кода 📋 ПРАВИЛО: компоненты = Bean Validation target, @Valid = trigger 🔗 См. Q7
-> - [ ] Для record нужен @Validated на классе вместо @Valid в параметрах метода | ❌ ПОСЛЕДСТВИЕ: @Valid в @RequestBody record работает; @Validated нужен для AOP метод-уровневой валидации в service layer, не для REST DTO
 
 ## Q11. Что такое equals/hashCode в records?
 
@@ -447,13 +377,6 @@ d1.equals(d2);  // false! массивы сравниваются по reference
 
 Для массивов нужно переопределять `equals`/`hashCode` вручную или использовать `List<Integer>`.
 
-
-> [!mcq]
-> - [ ] equals() в record сравнивает по reference как Object.equals() — два Point(1,2) не равны | ❌ ПОСЛЕДСТВИЕ: record-equals сравнивает ВСЕ компоненты по значению; точно Point(1,2).equals(Point(1,2)) == true; это ключевое отличие от обычного класса
-> - [x] equals() сравнивает все компоненты через их equals(); для массивов — reference equality, не содержимое → использовать List вместо array компонентов | ✓ ПРИМЕНЯТЬ: records как ключи в HashMap, в equals-чувствительных коллекциях 📋 ПРАВИЛО: array в record = broken equals, замени на List 🔗 См. Q15
-> - [ ] hashCode() в record всегда возвращает константу для стабильности | ❌ ПОСЛЕДСТВИЕ: константный hashCode нарушил бы HashMap — все записи попадали бы в один bucket; hashCode вычисляется из всех компонентов через Objects.hash()
-> - [ ] Arrays.equals() автоматически используется для array-компонентов record | ❌ ПОСЛЕДСТВИЕ: стандартный record-equals вызывает Object.equals() для каждого компонента; для массивов это reference equality; Data(new int[]{1,2}).equals(Data(new int[]{1,2})) == false
-
 ## Q12. Как record взаимодействует с serialization?
 
 ```java
@@ -467,13 +390,6 @@ public record Event(String type, Instant timestamp) implements Serializable {}
 Для `Kryo`, `Protobuf`, Avro — обычно нужна генерация кода.
 
 **Лучшая практика**: JSON/MessagePack через Jackson или kotlinx.serialization вместо Java Serialization.
-
-
-> [!mcq]
-> - [ ] Records не поддерживают Java Serialization — implements Serializable не компилируется | ❌ ПОСЛЕДСТВИЕ: record implements Serializable работает; ограничение только в кастомных writeObject/readObject — они игнорируются
-> - [ ] serialVersionUID не нужен для record — автоматически вычисляется из структуры | ❌ ПОСЛЕДСТВИЕ: без явного serialVersionUID JVM вычисляет UID из структуры; добавление нового компонента изменит UID → InvalidClassException при десериализации старых данных
-> - [ ] Kryo автоматически поддерживает records без регистрации | ❌ ПОСЛЕДСТВИЕ: Kryo требует явной регистрации или кастомного сериализатора для records; без этого — InstantiatorStrategy exception или corrupt output
-> - [x] Record implements Serializable работает через canonical constructor; customization через writeObject/readObject недоступна; предпочтительнее JSON через Jackson | ✓ ПРИМЕНЯТЬ: для REST API и Kafka — Jackson/Avro; Java Serialization только при необходимости 📋 ПРАВИЛО: record + Serializable = basic, no customization; используй Jackson для гибкости 🔗 См. Q6
 
 ## Q13. Как использовать records для Algebraic Data Types?
 
@@ -505,13 +421,6 @@ public sealed interface JsonValue {
 }
 ```
 
-
-> [!mcq]
-> - [x] Sealed interface + records = ADT: sealed permits задаёт Sum type, exhaustive switch без default обязателен; record Success<T>(T value) и record Failure<T>(String error) как nested types | ✓ ПРИМЕНЯТЬ: для Result/Either/Option паттернов вместо try/catch и null 📋 ПРАВИЛО: sealed = union, record = product type, вместе = ADT 🔗 См. Q5
-> - [ ] ADT в Java только через enum — record не может быть частью иерархии типов | ❌ ПОСЛЕДСТВИЕ: enum с abstract методами ограничен константами; records + sealed interface дают полноценные sum types с произвольными данными в каждом варианте
-> - [ ] sealed interface без permits автоматически включает все records в пакете | ❌ ПОСЛЕДСТВИЕ: без permits любой класс в пакете может реализовать sealed interface; без permits нет exhaustiveness check в switch — теряется главное преимущество
-> - [ ] record Success<T>(T value) не скомпилируется — generic вложенные records не поддерживаются | ❌ ПОСЛЕДСТВИЕ: generic вложенные records (record Success<T>(T value) implements Result<T>) поддерживаются в Java 16+; это стандартный паттерн
-
 ## Q14. Когда НЕ стоит использовать records?
 
 1. **JPA сущности** — требуют no-arg constructor и mutable поля.
@@ -531,13 +440,6 @@ public record Order(...) {
 public class Order { ... }  // entity с поведением
 public record OrderSnapshot(String id, List<ItemDto> items, ...) {}  // DTO
 ```
-
-
-> [!mcq]
-> - [ ] Record подходит для JPA @Entity — аннотации @Column, @Id поддерживаются | ❌ ПОСЛЕДСТВИЕ: JPA требует no-arg constructor и mutable fields; record не имеет ни того ни другого — Spring Boot не запустится
-> - [ ] Records можно использовать когда нужно часто изменять отдельные поля объекта | ❌ ПОСЛЕДСТВИЕ: record поля final — нельзя изменить; каждое "изменение" создаёт новый объект через wither; для часто-изменяемых объектов это memory pressure
-> - [x] Не использовать для: JPA entity, mutable state, наследования классов, legacy Java < 14; идеально для: DTO, value objects, ADT, ключей Map | ✓ ПРИМЕНЯТЬ: record для data без поведения; класс — для entity с lifecycle 📋 ПРАВИЛО: record = immutable leaf, class = mutable stateful 🔗 См. Q1
-> - [ ] Record нельзя объявить как local class внутри метода | ❌ ПОСЛЕДСТВИЕ: local records поддерживаются с Java 16; record Point(int x, int y) {} внутри метода — валидный код, полезно для локальных data carriers
 
 ## Q15. Какие best practices при работе с records?
 
@@ -580,13 +482,6 @@ public record Config(String name, int timeout, boolean enabled) {
 ```
 
 ## See also
-
-
-> [!mcq]
-> - [ ] Record компоненты только simple types (String, int) — коллекции не поддерживаются | ❌ ПОСЛЕДСТВИЕ: List, Map, Optional как компоненты — нормально; проблема только с массивами (broken equals); List<Item> в record — рекомендованный подход
-> - [x] Best practices: compact constructor для валидации; List вместо array; wither-методы для "изменения"; sealed+records для ADT; static factory для сложного создания | ✓ ПРИМЕНЯТЬ: record = immutable value with validation, not plain struct 📋 ПРАВИЛО: List > array, compact > manual null check, sealed+record > instanceof chains 🔗 См. Q3
-> - [ ] Можно добавить instance setter в record для изменения конкретного поля | ❌ ПОСЛЕДСТВИЕ: поля record final — setter не скомпилируется; для "изменения" одного поля — wither-метод возвращающий новый record с изменённым значением
-> - [ ] Compact constructor не нужен если использовать @NotNull аннотации | ❌ ПОСЛЕДСТВИЕ: @NotNull — Bean Validation, срабатывает только при явном validate(); compact constructor — fail-fast в точке создания объекта; без него невалидный объект попадёт в систему
 
 - [Java 17-21](java-17-21-interview.md) — все новшества Java 17-21, sealed classes
 - [Java Pattern Matching](java-pattern-matching-interview.md) — record patterns, deconstruction

@@ -91,13 +91,6 @@ Stage 3: [Service A | Service B | Monolith 60%]
 Stage N: [Service A | Service B | Service C | Service D]  (monolith gone)
 ```
 
-
-> [!mcq]
-> - [ ] Полный переписывание системы с нуля и единовременный cutover в production | ❌ ПОСЛЕДСТВИЕ: big bang rewrite с 50%+ fail rate, месяцы без value, moving target.
-> - [ ] Wrap legacy в API без замены — facade навсегда, монолит не уходит | ❌ ПОСЛЕДСТВИЕ: получаем lipstick on a pig, технический долг растёт под красивым интерфейсом.
-> - [x] Постепенная замена legacy кусок-за-куском через proxy/facade; новые сервисы растут вокруг монолита, старый код умирает по частям | ✓ ПРИМЕНЯТЬ: миграция legacy → microservices, рискованные модернизации. 📋 ПРАВИЛО: «душит как фикус — медленно, но насмерть». 🔗 См. Q2
-> - [ ] Параллельная разработка двух систем с финальным голосованием за лучшую | ❌ ПОСЛЕДСТВИЕ: двойные затраты, нет реального progress, политические войны команд.
-
 ## Q2. (!) Зачем Strangler вместо big bang rewrite?
 
 **Big bang rewrite problems:**
@@ -133,13 +126,6 @@ Stage N: [Service A | Service B | Service C | Service D]  (monolith gone)
 
 **Industry consensus (Sam Newman, Fowler, Netflix blog):** strangler beats big bang in 95%+ cases.
 
-
-> [!mcq]
-> - [ ] Big bang быстрее — экономит на двойной поддержке и proxy infra | ❌ ПОСЛЕДСТВИЕ: 50%+ rewrite failures (Netscape), zero value до 100%, feature parity недостижим.
-> - [x] Strangler даёт incremental value, low risk per step, rollback per slice; big bang — годы без отдачи, moving target и часто не доезжает | ✓ ПРИМЕНЯТЬ: всё legacy modernization, особенно при живом бизнесе. 📋 ПРАВИЛО: «маленькие победы > великая мечта». 🔗 См. Q3
-> - [ ] Big bang предпочтительнее для small teams: меньше координации | ❌ ПОСЛЕДСТВИЕ: small team тонет в feature parity, бизнес теряет терпение на 6-м месяце.
-> - [ ] Strangler нужен только когда нет backup плана — fallback strategy | ❌ ПОСЛЕДСТВИЕ: смешивание понятий, strangler — это основная стратегия, а не план B.
-
 ## Q3. (!) Как работает механика?
 
 **Essential components:**
@@ -171,13 +157,6 @@ Client → Proxy
 5. Ramp to 100%
 6. Remove code from monolith
 7. Repeat for next slice
-
-
-> [!mcq]
-> - [x] Proxy/facade на entry point routes requests к old или new system по URL/flag/segment; новый сервис обрабатывает migrated slice, монолит — остальное; постепенный ramp traffic | ✓ ПРИМЕНЯТЬ: при наличии чёткого entry point и возможности routing. 📋 ПРАВИЛО: «proxy решает кто живёт». 🔗 См. Q4
-> - [ ] Монолит сам решает что делегировать новому сервису через внутренний switch | ❌ ПОСЛЕДСТВИЕ: монолит остаётся coupling-центром, проблемы routing на бизнес-логике.
-> - [ ] DNS-based routing: разные сабдомены для разных версий | ❌ ПОСЛЕДСТВИЕ: ломается user session, кеш браузера приклеивает к старой версии, A/B недоступен.
-> - [ ] Все клиенты переключают endpoint вручную при готовности | ❌ ПОСЛЕДСТВИЕ: невозможный coordination, mobile apps застревают на старой версии годами.
 
 ## Q4. (!) С чего начинать strangling?
 
@@ -214,13 +193,6 @@ Client → Proxy
 
 **Strategy:** deliver small early win → build team confidence + pattern.
 
-
-> [!mcq]
-> - [ ] Начинать с core business transactions для максимального impact | ❌ ПОСЛЕДСТВИЕ: огромный risk на старте, любой баг = потеря денег, команда без опыта.
-> - [ ] Брать самый сложный модуль — справимся, тренировка | ❌ ПОСЛЕДСТВИЕ: год без result, команда выгорает, потеря momentum и доверия бизнеса.
-> - [x] Loosely coupled + high value + isolated data + good test coverage; первые кандидаты — read-heavy endpoints, auth, notifications, reporting | ✓ ПРИМЕНЯТЬ: первая итерация миграции для накопления опыта. 📋 ПРАВИЛО: «low-hanging fruit сначала». 🔗 См. Q5
-> - [ ] Случайный выбор для objectivity | ❌ ПОСЛЕДСТВИЕ: попадание на core domain в первой итерации = провал миграции.
-
 ## Q5. (!) Какие функции выделять первыми?
 
 **By coupling:**
@@ -239,13 +211,6 @@ Client → Proxy
 3. Core domain (after team experienced)
 
 **Tip:** start с service where team has lowest risk tolerance. Perfect the migration process first on less critical stuff.
-
-
-> [!mcq]
-> - [ ] По размеру кода: маленькие классы первыми | ❌ ПОСЛЕДСТВИЕ: low-value migrations, бизнес не видит improvement, теряем поддержку.
-> - [x] По coupling: low coupling (search, notifications) → medium (user profile) → high (orders); bounded contexts по DDD задают boundaries | ✓ ПРИМЕНЯТЬ: планирование decomposition roadmap. 📋 ПРАВИЛО: «от периферии к ядру». 🔗 См. Q6
-> - [ ] Алфавитный порядок модулей monolith для предсказуемости | ❌ ПОСЛЕДСТВИЕ: random complexity, могут зайти на critical path в первой итерации.
-> - [ ] Только то что чаще всего падает в production | ❌ ПОСЛЕДСТВИЕ: чинить под огнём вместо проектирования — risk компаундится.
 
 ## Q6. Data migration и shared DB?
 
@@ -283,13 +248,6 @@ Client → Proxy
 - Kafka Connect
 - Custom ETL
 
-
-> [!mcq]
-> - [ ] Скопировать DB одним SQL dump и переключить cutover ночью | ❌ ПОСЛЕДСТВИЕ: big bang DB cutover; даунтайм, нет rollback, drift в данных.
-> - [ ] Shared DB навсегда — пусть оба сервиса пишут в одну таблицу | ❌ ПОСЛЕДСТВИЕ: tight coupling на уровне схемы, distributed monolith, любая migration ломает обоих.
-> - [ ] Прокинуть direct DB connection из нового сервиса к таблицам monolith | ❌ ПОСЛЕДСТВИЕ: монолит и сервис связаны через DDL, schema evolution блокируется.
-> - [x] Expand-contract: shared DB → views → CDC duplication (Debezium) → full ownership; новый сервис постепенно перенимает данные через outbox + events | ✓ ПРИМЕНЯТЬ: data migration в strangler. 📋 ПРАВИЛО: «сначала расширяй, потом сжимай». 🔗 См. Q7
-
 ## Q7. Dual-write и consistency?
 
 **Dual-write:** write к both old и new data store during migration.
@@ -326,13 +284,6 @@ Client → Proxy
 **Consistency level decision:**
 - Eventual OK для most
 - Strong required only для money/inventory — use careful tx patterns
-
-
-> [!mcq]
-> - [ ] Dual-write всегда безопасен — просто пишем в обе БД в одной транзакции | ❌ ПОСЛЕДСТВИЕ: distributed tx (2PC) дорогой, ordering bugs, latency растёт x2.
-> - [x] Dual-write рискован (ordering, partial failure); use CDC из старой к новой, transactional outbox для events, reconciliation periodic audit для drift | ✓ ПРИМЕНЯТЬ: миграция данных без даунтайма. 📋 ПРАВИЛО: «один writer, остальные через outbox». 🔗 См. Q8
-> - [ ] Достаточно retry на каждый write — eventual consistency сама исправит | ❌ ПОСЛЕДСТВИЕ: silent data corruption, retry без идемпотентности дублирует записи.
-> - [ ] Запускать 2PC между legacy и новым сервисом для атомарности | ❌ ПОСЛЕДСТВИЕ: блокировки, perf drop, любой network blip = stuck transaction.
 
 ## Q8. (!) Proxy / facade layer?
 
@@ -372,13 +323,6 @@ routes:
 - Auth token compatibility
 - Tracing propagation (same user, cross-system)
 
-
-> [!mcq]
-> - [ ] Proxy = просто DNS — сразу даёт routing без infrastructure | ❌ ПОСЛЕДСТВИЕ: DNS не умеет URL-based routing, нет per-user, нет canary, propagation 24-48ч.
-> - [x] Router в front обоих систем dispatches по URL/path/flag; типы — reverse proxy (Nginx/Envoy), API Gateway (Kong), app-level (Spring), service mesh (Istio); session affinity, auth compatibility, tracing — gotchas | ✓ ПРИМЕНЯТЬ: routing layer в strangler. 📋 ПРАВИЛО: «proxy — это switchboard». 🔗 См. Q9
-> - [ ] Использовать legacy load balancer — он и так стоит на пути | ❌ ПОСЛЕДСТВИЕ: LB не умеет content-based routing, no feature flags, no per-user logic.
-> - [ ] Application server сам решает кому форвардить запрос | ❌ ПОСЛЕДСТВИЕ: разрушает single responsibility, монолит знает про новые сервисы.
-
 ## Q9. Где жить proxy (gateway, reverse proxy)?
 
 **Options:**
@@ -406,13 +350,6 @@ routes:
 - Gradual traffic shifting (via VirtualService)
 
 **Typical:** API Gateway для public; service mesh для internal.
-
-
-> [!mcq]
-> - [x] API Gateway для public traffic + service mesh (Istio) для internal; edge proxy (CloudFront) для early routing, LB для simple path-based, application-level для max flexibility | ✓ ПРИМЕНЯТЬ: layered approach по типу трафика. 📋 ПРАВИЛО: «edge для public, mesh для internal». 🔗 См. Q10
-> - [ ] Только один proxy на edge — централизация всего | ❌ ПОСЛЕДСТВИЕ: SPOF, не масштабируется, internal traffic тоже идёт через edge — latency.
-> - [ ] Proxy не нужен — клиент сам выбирает endpoint | ❌ ПОСЛЕДСТВИЕ: невозможно сделать canary, нет single point для observability/auth.
-> - [ ] Базы данных делают routing через triggers | ❌ ПОСЛЕДСТВИЕ: смешивание DB и application concerns, debugging — ад.
 
 ## Q10. Feature flags для routing?
 
@@ -448,13 +385,6 @@ if (featureFlag('new-user-service', user)) {
 - Audit log (who changed what)
 - Scheduled removal (flag cleanup policy — don't accumulate)
 
-
-> [!mcq]
-> - [ ] Hardcode routing в коде — быстрее, без runtime overhead | ❌ ПОСЛЕДСТВИЕ: каждое изменение route = redeploy, no instant rollback, no canary.
-> - [ ] Flags только в новом сервисе — монолит ничего не знает | ❌ ПОСЛЕДСТВИЕ: routing decision на стороне нового сервиса = он получает ВСЕ запросы, defeats the purpose.
-> - [x] Feature flags (LaunchDarkly, Unleash, Split) на proxy уровне делают per-request decision; instant rollback flip OFF, per-user/region ramp, A/B testing, kill switch; rollout 0→1%→10%→50%→100% с мониторингом | ✓ ПРИМЕНЯТЬ: gradual traffic shifting. 📋 ПРАВИЛО: «flag = switch без redeploy». 🔗 См. Q11
-> - [ ] Использовать конфиг-файл в git и merge для смены роутинга | ❌ ПОСЛЕДСТВИЕ: ребут сервиса для применения, нет live rollback, audit log = git blame.
-
 ## Q11. (!) Преимущества?
 
 **1. Incremental progress:**
@@ -484,13 +414,6 @@ if (featureFlag('new-user-service', user)) {
 **7. Tech debt retirement:**
 - Old code removed as replaced
 - Cleaner codebase over time
-
-
-> [!mcq]
-> - [ ] Главное преимущество — экономия денег за счёт переиспользования инфраструктуры | ❌ ПОСЛЕДСТВИЕ: подмена тезиса, strangler дороже big bang short-term из-за двойной поддержки.
-> - [x] Incremental progress + low risk per step + easy rollback + team learning + parallel development + business continuity + technical debt retirement | ✓ ПРИМЕНЯТЬ: argumentation для бизнеса. 📋 ПРАВИЛО: «маленькие победы складываются». 🔗 См. Q12
-> - [ ] Strangler гарантирует ускорение latency на 10x | ❌ ПОСЛЕДСТВИЕ: фикция, proxy добавляет hop, до завершения миграции — даже медленнее.
-> - [ ] Strangler избавляет от тестов — новый сервис покрыт старыми | ❌ ПОСЛЕДСТВИЕ: новые тесты обязательны, старые не покрывают новый код.
 
 ## Q12. (!) Недостатки и риски?
 
@@ -530,13 +453,6 @@ if (featureFlag('new-user-service', user)) {
 - Team needs to adopt microservices mindset
 - Operations complexity grows
 
-
-> [!mcq]
-> - [ ] У strangler нет недостатков — это серебряная пуля | ❌ ПОСЛЕДСТВИЕ: переоценка pattern, команда не готовится к long timeline.
-> - [ ] Главный риск — это performance hit от proxy | ❌ ПОСЛЕДСТВИЕ: фокус не там, реальные риски — data consistency, последние 20%, dependency tangles.
-> - [x] Long timeline (годы), double maintenance, integration complexity, data consistency, proxy bottleneck SPOF, dependency tangles, «последние 20%» застревают, change freeze пушбэк, culture change | ✓ ПРИМЕНЯТЬ: risk management планирование. 📋 ПРАВИЛО: «90% готово ≠ готово». 🔗 См. Q13
-> - [ ] Strangler опасен только из-за rollback complexity | ❌ ПОСЛЕДСТВИЕ: rollback как раз простой (flip flag), реальные риски в data и timeline.
-
 ## Q13. (!) Как rollback если не работает?
 
 **Rollback per slice:**
@@ -570,13 +486,6 @@ if (featureFlag('new-user-service', user)) {
 - Dry-run tested (chaos game days)
 - On-call practiced
 
-
-> [!mcq]
-> - [ ] Rollback невозможен после миграции — только forward | ❌ ПОСЛЕДСТВИЕ: команда не готова к проблемам, panic mode при production issue.
-> - [ ] Делать DB restore из бэкапа и редеплоить старую версию | ❌ ПОСЛЕДСТВИЕ: даунтайм часы, потеря данных между snapshot и now, не подходит для slice rollback.
-> - [x] Per-slice: proxy config flip (минуты) или feature flag OFF (мгновенно); data — dual-write reversible если синхронизация, или migrate back; держать монолит functional X weeks после cutover; emergency plan + chaos game days | ✓ ПРИМЕНЯТЬ: rollback strategy. 📋 ПРАВИЛО: «не сжигать мосты слишком рано». 🔗 См. Q14
-> - [ ] Менять обратно DNS — все клиенты перейдут | ❌ ПОСЛЕДСТВИЕ: DNS propagation часы-дни, мобильные приложения кешируют, частичный rollback.
-
 ## Q14. Testing parallel run (shadow)?
 
 **Shadow mode:** send requests к both old и new; compare responses.
@@ -609,13 +518,6 @@ if (featureFlag('new-user-service', user)) {
 - Latency comparison
 - Error rate
 
-
-> [!mcq]
-> - [ ] Запустить нагрузочный тест на dev — этого достаточно | ❌ ПОСЛЕДСТВИЕ: dev ≠ prod, real traffic patterns не покрыты, edge cases пропущены.
-> - [x] Shadow mode: forward request к monolith (primary, response к user) И к new service (shadow, logged); compare responses; находит discrepancies без user impact; only idempotent / sanitize side effects; tools — GitHub Scientist, Envoy shadow | ✓ ПРИМЕНЯТЬ: верификация перед cutover. 📋 ПРАВИЛО: «тестируй на проде, но в тени». 🔗 См. Q15
-> - [ ] A/B test с 50/50 traffic — половина юзеров на старом, половина на новом | ❌ ПОСЛЕДСТВИЕ: 50% юзеров получают баги нового сервиса, user-visible regression.
-> - [ ] Полагаться на unit-тесты — они покроют edge cases | ❌ ПОСЛЕДСТВИЕ: unit-тесты не отражают реальные prod данные и interaction patterns.
-
 ## Q15. Как долго занимает migration?
 
 **Varies wildly:**
@@ -644,13 +546,6 @@ if (featureFlag('new-user-service', user)) {
 - Start with cleanest piece
 - Learn, document, refine process
 - Apply accelerated к rest
-
-
-> [!mcq]
-> - [ ] Strangler — это 3-6 месяцев максимум, иначе плохая команда | ❌ ПОСЛЕДСТВИЕ: нереалистичные ожидания, бизнес теряет терпение, миграция бросается на полпути.
-> - [x] Small (10 чел): 6-12 мес; medium (50+ инженеров): 1-2 года; large (Netflix, Amazon): 5+ лет (Netflix ~7 лет до 2015, Amazon 5+ лет в начале 2000-х); зависит от domain complexity, team size, data, regulations | ✓ ПРИМЕНЯТЬ: планирование roadmap. 📋 ПРАВИЛО: «последние 20% = первые 80%». 🔗 См. Q16
-> - [ ] 100% параллельно от размера — миграция всегда 6 месяцев | ❌ ПОСЛЕДСТВИЕ: команда измеряет в человеко-часах, игнорирует data/regulatory complexity.
-> - [ ] Strangler не имеет фиксированного срока — пока не наскучит | ❌ ПОСЛЕДСТВИЕ: нет milestones, нет бюджета, нет accountability.
 
 ## Q16. Когда считать migration complete?
 
@@ -686,13 +581,6 @@ if (featureFlag('new-user-service', user)) {
 - Reflect on decomposition (microservices right?)
 - Avoid over-decomposing (distributed monolith)
 
-
-> [!mcq]
-> - [x] Монолит обрабатывает < 5% трафика, редкие изменения, infra cost маленький; варианты — продолжить strangle, freeze monolith, или extract в legacy service для admin tools; sunset через business decision | ✓ ПРИМЕНЯТЬ: end-of-migration decision. 📋 ПРАВИЛО: «pragmatic > perfect». 🔗 См. Q17
-> - [ ] Migration complete = 0% монолит. Точка | ❌ ПОСЛЕДСТВИЕ: годы на последние 1-2%, ROI отрицательный, "perfect — враг good".
-> - [ ] Когда CTO решит — пишите ему | ❌ ПОСЛЕДСТВИЕ: subjective decision без metrics, политические игры.
-> - [ ] Migration complete = тимлид сказал «всё» | ❌ ПОСЛЕДСТВИЕ: opinion-based, нет measurable criteria, бизнес не верит.
-
 ## Q17. Anti-corruption layer?
 
 **Anti-corruption layer (ACL) — DDD term** — shield новой системы от legacy's bad model.
@@ -722,13 +610,6 @@ ACL:
 **Overuse:**
 - Adds layer; not always necessary
 - Use только when legacy genuinely ugly
-
-
-> [!mcq]
-> - [ ] ACL = тот же strangler proxy на уровне HTTP | ❌ ПОСЛЕДСТВИЕ: подмена понятий, ACL — это translation layer внутри домена, не routing.
-> - [ ] ACL не нужен — пусть новый сервис использует legacy schema | ❌ ПОСЛЕДСТВИЕ: legacy badness переползает в новый код, рефакторинг невозможен.
-> - [x] ACL (DDD) — translator между legacy и new domain types; скрывает legacy naming/schemas (CUST_NM → name); single point обновления при изменении legacy; decouple, но не abuse, добавляет layer | ✓ ПРИМЕНЯТЬ: когда legacy model уродлива. 📋 ПРАВИЛО: «прокладка против заражения». 🔗 См. Q18
-> - [ ] ACL = это просто DTO mapping в одном направлении | ❌ ПОСЛЕДСТВИЕ: тривиализация паттерна, ACL изолирует bounded contexts двусторонне.
 
 ## Q18. Branch by abstraction?
 
@@ -767,13 +648,6 @@ class StripePaymentProvider implements ... { ... }  // new
 4. Remove old impl
 
 **Prerequisite для strangler often** — refactor internals first, then extract.
-
-
-> [!mcq]
-> - [ ] Branch by abstraction = то же самое что strangler — синонимы | ❌ ПОСЛЕДСТВИЕ: смешивание понятий, branch — внутри кода, strangler — внешний HTTP split.
-> - [ ] Branch by abstraction требует двух деплоев одновременно | ❌ ПОСЛЕДСТВИЕ: путаница с blue-green, на самом деле один процесс с feature flag.
-> - [x] Внутренний рефакторинг: interface + старая impl + новая impl в одном коде, flag switch выбирает; после переключения старая impl удаляется; альтернатива/комплемент strangler когда нельзя decompose externally | ✓ ПРИМЕНЯТЬ: tight coupling не даёт extract, нужен refactor сначала. 📋 ПРАВИЛО: «branch внутри, strangler снаружи». 🔗 См. See also
-> - [ ] Branch by abstraction — это git workflow для legacy кода | ❌ ПОСЛЕДСТВИЕ: путаница с git branching, паттерн про runtime polymorphism, не VCS.
 
 ---
 

@@ -111,25 +111,11 @@ updated: "2026-05-07"
 
 Оба этих инструмента позволяют разработчикам создавать масштабируемые и отзывчивые приложения, которые эффективно обрабатывают большие нагрузки и высокую конкуренцию запросов.
 
-
-> [!mcq]
-> - [x] `Reactor` — реактивная библиотека (`Flux`/`Mono`); `WebFlux` — модуль `Spring`, который её использует для веб-стека | `Reactor` живёт в любом Java-приложении, `WebFlux` встраивает его в `DispatcherHandler` и `Netty`. ✓ ПРИМЕНЯТЬ: Netflix Zuul → Spring Cloud Gateway построен поверх `WebFlux` + `Reactor`. 📋 ПРАВИЛО: «Reactor — мотор, WebFlux — машина». 🔗 См. Q2, Q4.
-> - [ ] `Reactor` и `WebFlux` — синонимы, два названия одной библиотеки | Это разные артефакты в разных группах: `io.projectreactor:reactor-core` и `org.springframework:spring-webflux`. ❌ ПОСЛЕДСТВИЕ: разработчик добавляет только `spring-webflux` без `reactor-core` → `NoClassDefFoundError: reactor/core/publisher/Flux` при первом запросе.
-> - [ ] `Reactor` — это сервер, `WebFlux` — клиентская часть | `Netty` (внутри `Reactor Netty`) — сервер; `Reactor` сам по себе — библиотека потоков, не сервер. ❌ ПОСЛЕДСТВИЕ: команда ищет `reactor.start()` для запуска сервера и теряет час до первого запроса.
-> - [ ] `WebFlux` — старая версия `Reactor`, заменённая в `Spring 6` | `WebFlux` появился в `Spring 5` и активно развивается, замены нет. ❌ ПОСЛЕДСТВИЕ: миграционный план команды на «новый Reactor» при апгрейде на Spring 6 рушится при первом code review.
-
 ## Q2. (!) В чем отличие между `Project Reactor` и `Spring WebFlux`?
 
 **Project Reactor** — самостоятельная реактивная библиотека (`Flux`, `Mono`, операторы, `Reactive Streams`). **Spring WebFlux** — модуль `Spring`, который использует Reactor: аннотированные контроллеры (`@RestController`, возврат `Mono`/`Flux`) или функциональные маршруты (`RouterFunction`). `Reactor` применим везде, где нужны реактивные потоки; `WebFlux` — именно для веб-приложений и интеграции с `Spring`.
 
 Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-
-> [!mcq]
-> - [ ] `Reactor` зависит от `WebFlux`: без `spring-webflux` он не работает | Зависимость обратная — `WebFlux` тянет `reactor-core`. ❌ ПОСЛЕДСТВИЕ: команда отказывается использовать `Reactor` в Kafka-консьюмере без HTTP-сервера, теряя backpressure из коробки.
-> - [x] `Reactor` определяет `Flux`/`Mono` и операторы; `WebFlux` использует их в HTTP-стеке (`@RestController`, `RouterFunction`) | Граница: `Reactor` про потоки, `WebFlux` про маршрутизацию и I/O `Netty`. ✓ ПРИМЕНЯТЬ: Spring Cloud Gateway применяет `Reactor` для фильтров, `WebFlux` — для приёма запросов. 📋 ПРАВИЛО: «Reactor — что течёт, WebFlux — куда течёт». 🔗 См. Q1, Q4.
-> - [ ] `Reactor` работает только в `Spring`, вне `Spring` его использовать нельзя | `Reactor` — самостоятельная библиотека и работает в любом JVM-приложении, включая Kafka Streams. ❌ ПОСЛЕДСТВИЕ: команда тащит весь Spring Boot ради `Mono` в CLI-утилите → 50MB jar вместо 5MB.
-> - [ ] `Reactor` синхронный, `WebFlux` асинхронный | Оба асинхронные и неблокирующие — это часть контракта `Reactive Streams`. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `Flux.just(...).toStream().forEach(blockingCall())` → carrier thread заблокирован, латентность p99 растёт с 50ms до 5s.
 
 ## Q3. (!) Какова архитектура `Project Reactor`?
 
@@ -156,13 +142,6 @@ graph LR
 Связь с Java: `Reactive Streams` API включён в JDK 9+ как `java.util.concurrent.Flow` (см. [Java Concurrency](../../programming-languages/java/java-concurrency-interview.md)). `Project Reactor` реализует этот контракт и предоставляет мост через `JdkFlowAdapter`.
 
 При обсуждении архитектуры важно дополнить ответ явными trade-offs: что выигрываем, чем платим и как контролируем риски в production. Хорошей практикой считается привязка решения к измеримым SLO/SLI и плану эволюции при росте нагрузки.
-
-
-> [!mcq]
-> - [ ] `Publisher` сам решает, сколько данных отправить — потребитель только принимает | Это нарушает контракт `Reactive Streams`: `Subscriber` через `request(n)` диктует темп. ❌ ПОСЛЕДСТВИЕ: fast `Publisher` забивает медленного `Subscriber`, буфер растёт → OOM на 5K элементов в production.
-> - [ ] `Reactor` использует thread-per-subscriber: каждая подписка = новый поток | Подписка не привязана к новому потоку; `Schedulers` управляют контекстом явно через `subscribeOn`/`publishOn`. ❌ ПОСЛЕДСТВИЕ: при 10K подписок создаётся 10K потоков → OOM `unable to create native thread`.
-> - [x] Контракт `Reactive Streams`: `Publisher`/`Subscriber`/`Subscription`/`Processor`; данные передаются по `request(n)` с поддержкой backpressure | `Flux`/`Mono` — реализации `Publisher`; `Schedulers` отделяют логику от пула потоков. ✓ ПРИМЕНЯТЬ: JDK 9+ включает этот контракт как `java.util.concurrent.Flow`, `Reactor` — наиболее зрелая реализация. 📋 ПРАВИЛО: «Reactive Streams = Publisher + Subscriber + request(n)». 🔗 См. Q1, Q14.
-> - [ ] `Reactor` строится на `CompletableFuture` и расширяет его API | Это разные модели: `CompletableFuture` — «один результат», `Flux` — «поток с backpressure». ❌ ПОСЛЕДСТВИЕ: попытка обернуть `CompletableFuture` в `Mono` без `Mono.fromFuture()` ломает обработку ошибок.
 
 ## Q4. (!) Какова архитектура `Spring WebFlux`?
 
@@ -194,13 +173,6 @@ graph TB
 
 При обсуждении архитектуры важно дополнить ответ явными trade-offs: что выигрываем, чем платим и как контролируем риски в production. Хорошей практикой считается привязка решения к измеримым SLO/SLI и плану эволюции при росте нагрузки.
 
-
-> [!mcq]
-> - [ ] `WebFlux` использует `DispatcherServlet` и Servlet API так же, как `MVC` | `WebFlux` строится на `DispatcherHandler` и неблокирующем I/O — Servlet API не используется по умолчанию. ❌ ПОСЛЕДСТВИЕ: разработчик инжектит `HttpServletRequest` в реактивный контроллер → `NoSuchBeanDefinitionException` при старте.
-> - [ ] `WebFlux` создаёт по потоку на каждый запрос для изоляции | Это модель `MVC` (thread-per-request); `WebFlux` использует event loop с 1-2 потоками на ядро. ❌ ПОСЛЕДСТВИЕ: команда настраивает `server.tomcat.max-threads=200` для `WebFlux` и удивляется, почему параметр игнорируется.
-> - [ ] `DispatcherHandler` синхронно дожидается выполнения handler'а перед записью ответа | `DispatcherHandler` подписывается на `Mono`/`Flux` и пишет ответ асинхронно через `ResultHandler`. ❌ ПОСЛЕДСТВИЕ: блокирование event loop в handler'е останавливает обработку всех соединений на ядре, throughput падает 100×.
-> - [x] `DispatcherHandler` → `HandlerMapping` → `HandlerAdapter` → handler возвращает `Mono`/`Flux`; `Netty` event loop, маршруты — аннотации или `RouterFunction` | `ResultHandler` пишет ответ; внешние вызовы — `WebClient`, БД — `R2DBC`. ✓ ПРИМЕНЯТЬ: Spring Cloud Gateway, RSocket-серверы используют именно этот pipeline. 📋 ПРАВИЛО: «DispatcherHandler — реактивный близнец DispatcherServlet». 🔗 См. Q2, Q8.
-
 ## Q5. Что такое реактивное программирование?
 
 Реактивное программирование (`Reactive Programming`) — это программирование, основанное на обработке и реагировании на потоки данных, события и изменения состояния. Главная идея реактивного программирования состоит в том, чтобы создавать асинхронные, отзывчивые и эффективные приложения, которые могут эффективно обрабатывать потоки данных, приходящие из разных источников.
@@ -216,13 +188,6 @@ graph TB
 
 Реактивное программирование особенно полезно в разработке веб-приложений, микросервисов и других систем, где требуется обработка большого количества асинхронных событий и потоков данных. Оно помогает создавать более гибкие и масштабируемые приложения, которые могут эффективно работать с изменяющимися потоками данных.
 
-
-> [!mcq]
-> - [ ] Реактивное программирование = многопоточность с пулом из N потоков | Многопоточность — лишь один из инструментов; реактивное программирование про потоки данных и backpressure. ❌ ПОСЛЕДСТВИЕ: команда увеличивает пул потоков до 500 вместо использования event loop, тратит 2GB heap на стеки.
-> - [ ] Реактивное = асинхронное, поэтому любой `CompletableFuture` уже реактивный | `CompletableFuture` — single-value future без backpressure и операторов. ❌ ПОСЛЕДСТВИЕ: попытка стримить миллион записей через `CompletableFuture<List<T>>` → OOM на полном списке в памяти.
-> - [ ] Реактивное программирование требует обязательной перезаписи всего кода в функциональном стиле | Реактивные библиотеки спокойно интегрируются с императивным кодом через `block()`, `subscribeOn(boundedElastic)`. ❌ ПОСЛЕДСТВИЕ: команда отказывается от инкрементальной миграции, переписывает 100K строк за квартал, релиз сдвигается на полгода.
-> - [x] Парадигма обработки потоков данных и событий с асинхронностью, неблокирующим I/O и backpressure | Декларативные операторы (`map`, `flatMap`, `filter`) преобразуют поток без явного управления потоками. ✓ ПРИМЕНЯТЬ: Netflix построил Hystrix и RxJava для обработки миллионов событий рекомендаций реактивно. 📋 ПРАВИЛО: «Реактивное = поток + декларативно + backpressure». 🔗 См. Q6, Q14.
-
 ## Q6. Какие основные принципы реактивного программирования?
 
 Основные принципы реактивного программирования включают в себя:
@@ -236,13 +201,6 @@ graph TB
 
 Основные принципы реактивного программирования помогают создавать гибкие, эффективные и масштабируемые системы, которые могут обрабатывать большое количество событий и запросов, и обеспечивать отзывчивость в реальном времени.
 
-
-> [!mcq]
-> - [x] Responsive, Resilient, Elastic, Message Driven (Reactive Manifesto) | Сообщения асинхронные, ошибки изолируются, нагрузка масштабируется горизонтально, ответ предсказуем. ✓ ПРИМЕНЯТЬ: Lightbend (Akka, Play) сформулировали Reactive Manifesto на этих 4 столпах. 📋 ПРАВИЛО: «Reactive = R-R-E-M». 🔗 См. Q5, Q14.
-> - [ ] Synchronous, Sequential, Strict, Single-threaded | Это противоположность реактивных принципов — императивная блокирующая модель. ❌ ПОСЛЕДСТВИЕ: разработчик путает синхронный код и реактивный, использует `block()` в каждом операторе → throughput падает с 10K до 100 RPS.
-> - [ ] Только асинхронность — остальные принципы вторичны | Без elasticity и resilience асинхронность одна не даёт устойчивости под нагрузкой. ❌ ПОСЛЕДСТВИЕ: сервис масштабируется потоками, но при сбое одного компонента падает весь — нет circuit breaker.
-> - [ ] Параллелизм + кэширование как главные принципы | Кэширование вообще не упоминается в Reactive Manifesto; параллелизм — следствие elasticity. ❌ ПОСЛЕДСТВИЕ: команда добавляет Redis кеш и считает систему «реактивной», но при network partition теряет данные.
-
 ## Q7. (!) Как реализована асинхронность в `Project Reactor`?
 
 Асинхронность в `Project Reactor` реализуется с помощью использования реактивных потоков данных (`Flux` и `Mono`) и планировщиков (`Schedulers`).
@@ -255,13 +213,6 @@ graph TB
 При обработке реактивных потоков данных `Project Reactor` использует паттерн наблюдателя (`Observable` pattern), при котором поток данных оповещает своих подписчиков о появлении новых данных. Это позволяет выполнять операции неблокирующим способом и обрабатывать данные по мере их поступления.
 
 Благодаря асинхронной реализации `Project Reactor` достигает высокой производительности, эффективно используя ресурсы системы и обеспечивая отзывчивость приложений даже при обработке большого количества данных или одновременных запросов.
-
-
-> [!mcq]
-> - [ ] Каждый оператор `Reactor` создаёт новый поток для выполнения | Операторы выполняются на текущем потоке подписки; смену потока задают только `subscribeOn`/`publishOn`. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает параллелизм от `flux.map().filter()`, но код сериализуется на одном потоке, throughput не растёт.
-> - [ ] `Reactor` использует один глобальный поток для всех `Flux`/`Mono` | Поток выбирается через `Schedulers` (parallel/boundedElastic/single/immediate); единого глобального нет. ❌ ПОСЛЕДСТВИЕ: блокирующий вызов в одном `Mono` останавливает обработку всех других потоков, сервис «зависает».
-> - [ ] `Reactor` блокирует поток подписки до завершения цепочки | `subscribe()` неблокирующий; для блокировки нужен явный `block()`. ❌ ПОСЛЕДСТВИЕ: команда вызывает `mono.subscribe(...)` и сразу читает результат → `null`, потому что подписка ещё не отработала.
-> - [x] `Flux`/`Mono` — холодные `Publisher`, выполнение запускается `subscribe()`; `Schedulers` управляют пулом потоков для операторов | `subscribeOn` задаёт scheduler источника, `publishOn` — для downstream. ✓ ПРИМЕНЯТЬ: Spring Cloud Gateway использует `Schedulers.parallel()` для CPU-bound фильтров и `boundedElastic()` для блокирующих legacy-вызовов. 📋 ПРАВИЛО: «Subscribe запускает, Schedulers распределяют». 🔗 См. Q17, Q14.
 
 ## Q8. (!) Как реализована асинхронность в `Spring WebFlux`?
 
@@ -294,13 +245,6 @@ graph LR
 **Ключевое отличие:** в модели thread-per-request (см. [Spring MVC](spring-mvc-interview.md)) каждый запрос занимает отдельный поток на всё время обработки, включая ожидание I/O. В event loop модели один поток обрабатывает множество запросов, переключаясь между ними при завершении I/O-событий. Это позволяет обслуживать тысячи соединений малым числом потоков.
 
 Благодаря этим компонентам асинхронная обработка в `Spring WebFlux` обеспечивает эффективное использование ресурсов, высокую производительность и отзывчивость при обработке запросов, особенно в условиях высоких нагрузок.
-
-
-> [!mcq]
-> - [ ] `WebFlux` использует пул из 200 потоков `Tomcat`, как и `MVC` | По умолчанию `WebFlux` запускается на `Netty` с event loop (1-2 потока на ядро), не на `Tomcat`. ❌ ПОСЛЕДСТВИЕ: команда настраивает `server.tomcat.threads.max=500` для `WebFlux`, переменная игнорируется, проблема с throughput не решается.
-> - [ ] Контроллер блокирует поток до получения результата от `WebClient` | Контроллер возвращает `Mono`/`Flux`, фреймворк подписывается асинхронно — поток не блокируется. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `User u = webClient.get().block()` в контроллере → carrier thread заблокирован, throughput падает 100×.
-> - [x] Контроллер возвращает `Mono<T>`/`Flux<T>`, `Netty` event loop обрабатывает множество запросов малым числом потоков, неблокирующий I/O | Один поток обрабатывает тысячи соединений, переключаясь по I/O-событиям. ✓ ПРИМЕНЯТЬ: Spring Cloud Gateway держит 10K+ соединений на 4 ядрах event loop. 📋 ПРАВИЛО: «Event loop: один поток — много соединений». 🔗 См. Q4, Q15.
-> - [ ] `WebFlux` использует thread-per-request, но с virtual threads вместо платформенных | Virtual threads — отдельная фича Java 21, не основа `WebFlux`; их можно подключить опционально. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает пиннинг carrier thread на `synchronized`, не понимает, почему `WebFlux` ведёт себя иначе.
 
 ## Q9. Что такое `Flux` и `Mono` в `Project Reactor`?
 
@@ -343,13 +287,6 @@ graph LR
 
 Оба типа предоставляют методы `map`, `filter`, `flatMap`, `reduce` и другие. Аналогия со [Java Stream API](../../programming-languages/java/java-stream-interview.md): `Flux` похож на `Stream<T>`, а `Mono` — на `Optional<T>`, но с поддержкой асинхронности и backpressure.
 
-
-> [!mcq]
-> - [ ] `Flux<T>` всегда содержит хотя бы один элемент, `Mono<T>` — ровно один | `Flux` может быть пустым (`Flux.empty()`), `Mono` — тоже (`Mono.empty()`). ❌ ПОСЛЕДСТВИЕ: код полагается на `flux.next()` без `switchIfEmpty()` → `NoSuchElementException` при пустой выборке из БД.
-> - [ ] `Flux` синхронный, `Mono` асинхронный | Оба асинхронные и реализуют `Publisher`; различаются только по кардинальности (0..N vs 0..1). ❌ ПОСЛЕДСТВИЕ: разработчик заменяет `Flux` на `Mono` ради «асинхронности» и теряет стриминг ответа.
-> - [x] `Flux<T>` — 0..N элементов, `Mono<T>` — 0..1 элемент; оба `Publisher` с операторами `map`/`flatMap`/`filter` | Аналогия: `Flux` ≈ `Stream<T>`, `Mono` ≈ `Optional<T>`, но с асинхронностью и backpressure. ✓ ПРИМЕНЯТЬ: `WebClient.get().retrieve().bodyToMono(User.class)` — один объект; `bodyToFlux(Item.class)` — стриминг массива. 📋 ПРАВИЛО: «Mono — Optional с пропеллером, Flux — Stream с backpressure». 🔗 См. Q1, Q14.
-> - [ ] `Mono.just(null)` создаёт пустой `Mono` | `Mono.just(null)` бросает `NullPointerException`; для пустого нужен `Mono.empty()` или `Mono.justOrEmpty(null)`. ❌ ПОСЛЕДСТВИЕ: NPE на этапе подписки в production, всплывает только под нагрузкой при null-ответе из БД.
-
 ## Q10. Какие методы доступны для работы с реактивными потоками в `Spring WebFlux`?
 
 В `Spring WebFlux` доступно множество методов для работы с реактивными потоками. Некоторые из наиболее часто используемых методов включают:
@@ -366,13 +303,6 @@ graph LR
 Это всего лишь некоторые методы доступные в `Spring WebFlux` для работы с реактивными потоками. Их список довольно обширен, и каждый метод предоставляет различные возможности для преобразования и обработки реактивных потоков.
 
 Кроме того, `Spring WebFlux` также предоставляет операторы, которые могут быть использованы вместе с реактивными потоками для выполнения различных операций, таких как сетевые запросы, манипуляция данными, обработка ошибок и другие. Эти операторы включают `WebClient` для выполнения `HTTP`-запросов, `R2DBC` для взаимодействия с базами данных, а также множество других операторов и адаптеров.
-
-
-> [!mcq]
-> - [ ] `flatMap` всегда сохраняет порядок элементов исходного потока | `flatMap` параллелит подпотоки и порядок может нарушиться; для гарантии порядка нужен `concatMap`. ❌ ПОСЛЕДСТВИЕ: вывод записей в UI идёт не по timestamp, пользователь видит хаотичный порядок событий.
-> - [x] `map` (синхронное), `flatMap` (асинхронное 1:N), `filter`, `zip`, `merge`, `concat`, `onErrorResume`, `retry` | Каждый возвращает новый `Publisher` без модификации исходного — иммутабельная композиция. ✓ ПРИМЕНЯТЬ: Spring Cloud Gateway фильтры строятся как цепочка `filter` → `map` → `flatMap`. 📋 ПРАВИЛО: «map синхронно, flatMap асинхронно». 🔗 См. Q9, Q20.
-> - [ ] Все операторы `Reactor` блокирующие, как `Stream.collect()` | Большинство операторов ленивые и неблокирующие; блокирующий только `block()`. ❌ ПОСЛЕДСТВИЕ: разработчик добавляет `subscribeOn(boundedElastic)` под каждый `map` ради «асинхронности» → context switch overhead убивает throughput.
-> - [ ] `subscribe()` обязательно нужно вызывать в каждом операторе цепочки | `subscribe()` вызывается один раз в конце цепочки или фреймворком (Spring подписывается на `Mono` контроллера сам). ❌ ПОСЛЕДСТВИЕ: ручной `subscribe()` в контроллере → данные читаются дважды, Spring видит null body.
 
 ## Q11. Как обрабатывать ошибки в `Project Reactor`?
 
@@ -415,13 +345,6 @@ flux.doOnError(err -> {
 ```
 
 Это только несколько примеров методов для обработки ошибок в `Project Reactor`. Важно выбрать подходящий метод, который соответствует вашим потребностям и предоставляет необходимую логику для обработки ошибок в вашем потоке.
-
-
-> [!mcq]
-> - [ ] `try`/`catch` вокруг реактивной цепочки ловит ошибки оператора | `try`/`catch` срабатывает на синхронной фазе сборки цепочки, но не на runtime-ошибках во время подписки. ❌ ПОСЛЕДСТВИЕ: исключение из `flatMap` уходит в `Hooks.onErrorDropped`, логируется как `Operator called default onErrorDropped` без обработки.
-> - [x] `onErrorResume(ex -> fallback)` — заменить ошибку на альтернативный поток; `onErrorReturn(default)` — на значение; `retry(n)`/`retryWhen(...)` — повтор; `doOnError` — side-effect | Ошибка распространяется по цепочке как сигнал `onError` до первого обработчика. ✓ ПРИМЕНЯТЬ: Resilience4j `CircuitBreakerOperator` через `transformDeferred` для fallback на ошибку. 📋 ПРАВИЛО: «onErrorResume — лечит, doOnError — наблюдает». 🔗 См. Q12, Q25.
-> - [ ] `onError` без аргументов автоматически логирует и продолжает поток | Метода `onError()` без аргументов не существует; продолжение требует `onErrorResume` или `onErrorContinue`. ❌ ПОСЛЕДСТВИЕ: ошибка прерывает `Flux`, оставшиеся элементы не обрабатываются — потеря данных в Kafka-консьюмере.
-> - [ ] Все ошибки в `Reactor` нужно оборачивать в `RuntimeException` через `Exceptions.propagate()` | Это полезно только при работе с checked-исключениями в lambda; обычные unchecked распространяются автоматически. ❌ ПОСЛЕДСТВИЕ: команда переоборачивает каждое исключение, теряет оригинальный stack trace в логах.
 
 ## Q12. Как обрабатывать ошибки в `Spring WebFlux`?
 
@@ -477,13 +400,6 @@ public class GlobalExceptionHandler implements HandlerExceptionResolver {
 
 Это только некоторые из способов обработки ошибок в `Spring WebFlux`. Выбор метода зависит от вашей конкретной ситуации и требований.
 
-
-> [!mcq]
-> - [ ] `@ExceptionHandler` на сервлет-уровне ловит ошибки `WebFlux` так же, как в `MVC` | `WebFlux` использует `WebExceptionHandler` или `@ControllerAdvice` с реактивными возвратами; сервлет-API не работает. ❌ ПОСЛЕДСТВИЕ: глобальный обработчик из `MVC` копируется в `WebFlux` → ошибки уходят клиенту как 500 без кастомного формата.
-> - [ ] Все ошибки автоматически становятся `HTTP 500`, переопределить нельзя | Можно переопределить через `WebExceptionHandler`, `@ControllerAdvice` + `@ExceptionHandler` (с реактивными типами), `onStatus` в `WebClient`. ❌ ПОСЛЕДСТВИЕ: команда возвращает 500 на бизнес-ошибки (например, NotFound) → метрики 5xx подскакивают, alerting срабатывает ложно.
-> - [ ] Реактивная цепочка обязана иметь `try`/`catch` вокруг каждого `flatMap` | Ошибки распространяются как сигнал `onError`; явные `try`/`catch` нужны только для checked-исключений в lambda. ❌ ПОСЛЕДСТВИЕ: код засорён `try`/`catch`, реактивная декларативность теряется, читать невозможно.
-> - [x] `@ControllerAdvice` + `@ExceptionHandler` (возвращающие `Mono<ResponseEntity>`), `WebExceptionHandler` для глобальной обработки, `onErrorResume` в цепочке | На уровне `WebClient` — `onStatus(is4xx, ...)` для статус-кодов. ✓ ПРИМЕНЯТЬ: Spring Cloud Gateway использует `DefaultErrorWebExceptionHandler` для единообразного формата ошибок. 📋 ПРАВИЛО: «Глобально — Advice, локально — onErrorResume». 🔗 См. Q11, Q34.
-
 ## Q13. Как тестировать реактивные приложения, построенные на `Project Reactor` и `Spring WebFlux`?
 
 Для тестирования реактивных приложений, построенных на `Project Reactor` и `Spring WebFlux`, вы можете использовать следующие подходы и инструменты:
@@ -496,13 +412,6 @@ public class GlobalExceptionHandler implements HandlerExceptionResolver {
 Независимо от выбранного подхода, рекомендуется создать тесты, которые проверяют общую функциональность вашего приложения, а также отдельные тесты для каждой отдельной функции или компонента. Тестирование реактивных приложений требует особого внимания к синхронизации и времени. Запомните, что реактивные потоки могут выполняться асинхронно, и ваш код для тестирования должен учитывать это.
 
 В целом, тестирование реактивных приложений с использованием `Project Reactor` и `Spring WebFlux` следует общим принципам тестирования, но требует дополнительного внимания к асинхронности и объему данных, которые обрабатываются в потоках.
-
-
-> [!mcq]
-> - [ ] `MockMvc` подходит для тестирования `WebFlux`-контроллеров без изменений | `MockMvc` работает с Servlet API, `WebFlux` использует `WebTestClient`. ❌ ПОСЛЕДСТВИЕ: тесты падают с `IllegalStateException: No ServletContext` или вообще не запускаются.
-> - [ ] `flux.subscribe(System.out::println)` достаточно для проверки потока в JUnit-тесте | `subscribe()` асинхронный — тест завершится до получения элементов; нужен `StepVerifier.verify()` для блокирующего ожидания. ❌ ПОСЛЕДСТВИЕ: тест зелёный локально, флакающий в CI — race condition между assert и эмиссией.
-> - [ ] Тесты реактивных цепочек обязаны использовать `block()` для синхронного assert | `block()` блокирует поток и портит тест на `Schedulers.parallel()`; `StepVerifier` правильнее. ❌ ПОСЛЕДСТВИЕ: `IllegalStateException: block()/blockFirst()/blockLast() are blocking, which is not supported in thread parallel-1`.
-> - [x] `WebTestClient` для интеграционного теста контроллера, `StepVerifier` для unit-теста цепочки, `withVirtualTime()` для `delay`/`interval` | `@WebFluxTest` поднимает только web-слой с моками сервисов. ✓ ПРИМЕНЯТЬ: Spring Cloud Gateway тесты построены на `WebTestClient.bindToRouterFunction()` без HTTP-сервера. 📋 ПРАВИЛО: «WebTestClient — для HTTP, StepVerifier — для цепочки». 🔗 См. Q27, Q43.
 
 ## Q14. Что такое `backpressure` и как с ним работать?
 
@@ -564,13 +473,6 @@ Flux.range(1, 1000)
     .subscribe();
 ```
 
-
-> [!mcq]
-> - [x] Подписчик через `Subscription.request(n)` диктует темп; стратегии `onBackpressureBuffer/Drop/Latest`; `flatMap(maxConcurrency)` ограничивает параллелизм | Без request(n) нет понятия «потребитель не успевает». ✓ ПРИМЕНЯТЬ: Kafka-консьюмер с `flatMap(saveToDb, 10)` ограничивает параллельную запись в БД и не валит её. 📋 ПРАВИЛО: «Backpressure = request(n) от подписчика». 🔗 См. Q3, Q9.
-> - [ ] Backpressure = автоматический rate limiter на стороне продюсера | Продюсер сам не «решает», когда замедлиться — это говорит подписчик; rate limiter — внешний паттерн. ❌ ПОСЛЕДСТВИЕ: разработчик ждёт автоматического замедления `Flux.range(1, 1_000_000)` и получает OOM на буфере 64MB.
-> - [ ] Backpressure включается только при `onBackpressureBuffer()` | Backpressure есть всегда (контракт `Reactive Streams`); операторы лишь определяют стратегию переполнения. ❌ ПОСЛЕДСТВИЕ: команда не понимает, что `Flux.interval()` уже сообщает о переполнении через `MissingBackpressureException` без явных операторов.
-> - [ ] Backpressure не нужен в HTTP-стеке `WebFlux`, потому что HTTP синхронный | HTTP-чанки и SSE стримятся, нужно ограничивать поток к клиенту; `WebClient` поддерживает `request(n)`. ❌ ПОСЛЕДСТВИЕ: `Flux<Event>` в SSE генерирует элементы быстрее, чем сеть отдаёт клиенту → buffered events растут на heap, OOM через час стрима.
-
 ## Q15. Чем `WebClient` отличается от `RestTemplate`?
 
 | Критерий | `WebClient` | `RestTemplate` |
@@ -602,25 +504,11 @@ Flux<Item> items = client.get()
 User u = user.block(Duration.ofSeconds(5));
 ```
 
-
-> [!mcq]
-> - [ ] `WebClient` синхронный, как `RestTemplate`, но с fluent-API | `WebClient` асинхронный и неблокирующий, возвращает `Mono`/`Flux`. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `User u = webClient.get().retrieve().bodyToMono(User.class)` и ожидает `User` → получает `Mono<User>` и ловит ClassCastException.
-> - [ ] `RestTemplate` поддерживает реактивный стрим тела ответа через `Flux<T>` | `RestTemplate` блокирующий и не работает с `Flux<T>`; стриминг доступен только в `WebClient.bodyToFlux()`. ❌ ПОСЛЕДСТВИЕ: команда тратит день на попытки заставить `RestTemplate` работать с SSE и в итоге всё равно мигрирует на `WebClient`.
-> - [x] `WebClient` неблокирующий (`Mono`/`Flux`, Netty), `RestTemplate` блокирующий (один запрос — один поток); в `WebFlux`-стеке `RestTemplate` блокирует event loop | Без connection pool config `WebClient` тоже валится при 1000 RPS. ✓ ПРИМЕНЯТЬ: Netflix мигрировал внутренние клиенты с `RestTemplate` на `WebClient` ради экономии 3× потоков. 📋 ПРАВИЛО: «WebClient — Mono/Flux, RestTemplate — sync». 🔗 См. Q42, Q34.
-> - [ ] `RestTemplate` deprecated и вообще удалён в Spring 6 | `RestTemplate` в maintenance mode, но не удалён; рекомендуется `RestClient` (sync) или `WebClient` (async). ❌ ПОСЛЕДСТВИЕ: команда срочно мигрирует на ходу из-за «deprecation», ломает legacy-интеграции.
-
 ## Q16. Как использовать `R2DBC` с `Spring Data`?
 
 Подключить `spring-`boot-starter-data`-r2dbc`, настроить `ConnectionFactory`. Репозитории наследуют `ReactiveCrudRepository`. Методы возвращают `Mono / Flux`. Поддерживаются derived queries и `@Query`. Транзакции — через `TransactionalOperator` или аннотацию в сервисе. Нет кэша `L2` и lazy-связей как в `JPA`.
 
 Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-
-> [!mcq]
-> - [x] `spring-boot-starter-data-r2dbc` + драйвер (`r2dbc-postgresql`); `R2dbcRepository<T,ID>`/`ReactiveCrudRepository<T,ID>`; методы возвращают `Mono`/`Flux` | Нет lazy loading, нет `@OneToMany` join — связи через `@Query` или ручной join. ✓ ПРИМЕНЯТЬ: Trello мигрировал часть сервисов на `R2DBC` для устранения thread-pool exhaustion. 📋 ПРАВИЛО: «R2DBC = JPA без lazy и без сессии». 🔗 См. Q28, Q41.
-> - [ ] `R2DBC` использует тот же `JdbcTemplate`, только с реактивной обёрткой | `R2DBC` — отдельный API, `JdbcTemplate` блокирующий и не пригоден; используется `DatabaseClient` или `R2dbcEntityTemplate`. ❌ ПОСЛЕДСТВИЕ: код использует `JdbcTemplate` в реактивном сервисе → блок event loop, throughput падает 100×.
-> - [ ] `R2DBC` поддерживает `@OneToMany` и lazy loading как `JPA` | `R2DBC` намеренно отказался от lazy loading и кеша сессии — нет `Hibernate Session`. ❌ ПОСЛЕДСТВИЕ: команда мигрирует с `JPA`, ожидая lazy loading, и сталкивается с N+1, который нужно решать вручную.
-> - [ ] `Hibernate` 6 поддерживает `R2DBC` из коробки | `Hibernate Reactive` — отдельный проект; стандартный `Hibernate` синхронный и не работает с `R2DBC`. ❌ ПОСЛЕДСТВИЕ: разработчик ставит `hibernate-core` и `r2dbc-postgresql` вместе, ожидая магической работы → `BeanCreationException` при старте.
 
 ## Q17. Что такое `Schedulers` и когда какой использовать?
 
@@ -649,38 +537,17 @@ Mono.fromCallable(() -> blockingService.call())
     .subscribe();
 ```
 
-
-> [!mcq]
-> - [ ] `Schedulers.parallel()` для блокирующего I/O (JDBC, файлы) | `parallel()` — фиксированный пул для CPU-bound; для I/O нужен `boundedElastic()`. ❌ ПОСЛЕДСТВИЕ: блокирующий JDBC на `Schedulers.parallel()` (= 4 потока) → весь сервис стопорится через 4 одновременных запроса.
-> - [ ] `Schedulers.immediate()` для async-операций | `immediate()` выполняет на текущем потоке без переключения — это синоним «без scheduler». ❌ ПОСЛЕДСТВИЕ: разработчик ставит `subscribeOn(Schedulers.immediate())` для async, поток подписки блокируется I/O, throughput падает.
-> - [x] `parallel()` — CPU-bound, `boundedElastic()` — блокирующий I/O, `single()` — последовательно, `immediate()` — без переключения; `subscribeOn` — для всей цепочки, `publishOn` — для downstream | `boundedElastic()` имеет лимит ~`10×CPU` потоков. ✓ ПРИМЕНЯТЬ: Spring Cloud Gateway оборачивает legacy `RestTemplate` в `Mono.fromCallable().subscribeOn(boundedElastic())`. 📋 ПРАВИЛО: «CPU → parallel, I/O блок → boundedElastic». 🔗 См. Q8, Q30.
-> - [ ] `subscribeOn` и `publishOn` взаимозаменяемые | `subscribeOn` влияет на источник и всю цепочку, `publishOn` — только на downstream-операторы; путаница ломает thread context. ❌ ПОСЛЕДСТВИЕ: subscribeOn vs publishOn путаница → context не propagates, ThreadLocal теряется, MDC в логах пустой.
-
 ## Q18. Как реализовать `Server-Sent Events` (`SSE`) в `WebFlux`?
 
 Возвращать `Flux<ServerSentEvent<T>>` или `Flux<T>` с `MediaType.TEXT_EVENT_STREAM`. Контроллер: `@GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE) Flux<Event> stream()`. Клиент подписывается на поток; сервер шлёт события через `ServerSentEvent.builder().data(...).build()`. Подходит для push-уведомлений и стриминга.
 
 **Пример:** `@GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE) Flux<ServerSentEvent<String>> stream() { return Flux.interval(Duration.ofSeconds(1)).map(i -> ServerSentEvent.builder("event-" + i).build()); }`. Клиент: `EventSource` в браузере или `WebTestClient.bodyToFlux(ServerSentEvent.class)`. Соединение держится открытым; сервер шлёт события по мере появления.
 
-
-> [!mcq]
-> - [ ] `@GetMapping(produces = "application/json") Flux<Event>` отдаёт SSE | JSON-стрим без `text/event-stream` не парсится `EventSource` в браузере. ❌ ПОСЛЕДСТВИЕ: клиент получает один большой JSON-массив после закрытия соединения, а не поток событий — UX «зависшего экрана».
-> - [x] `@GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE) Flux<ServerSentEvent<T>> stream()` или `Flux<T>` с тем же media type | Соединение остаётся открытым; клиент использует `EventSource` или `WebTestClient.bodyToFlux(ServerSentEvent.class)`. ✓ ПРИМЕНЯТЬ: GitHub использует SSE для live-обновлений PR-статусов в браузере. 📋 ПРАВИЛО: «SSE = text/event-stream + Flux». 🔗 См. Q33, Q24.
-> - [ ] SSE требует `WebSocket` upgrade на стороне сервера | SSE — это обычный HTTP-стрим с keep-alive, без upgrade-протокола; `WebSocket` отдельный механизм. ❌ ПОСЛЕДСТВИЕ: команда настраивает `WebSocketHandler` для SSE → клиент не может подключиться через стандартный `EventSource`.
-> - [ ] Возврат `Mono<Flux<Event>>` из контроллера = SSE | Это двойная обёртка, которая ломает сериализацию; нужен просто `Flux<T>` с `text/event-stream`. ❌ ПОСЛЕДСТВИЕ: клиент получает `{"data": ["...]}` вместо событий, парсинг ломается.
-
 ## Q19. Что такое cold и hot publishers?
 
 `Cold` — данные начинают издаться при каждой подписке (например, `Flux.just`, `Mono.defer`). Hot — один поток данных, подписчики получают элементы с момента подписки (например, `share()`, `publish().refCount()`, `ConnectableFlux`). Hot используют для событий и широковещательной рассылки.
 
 Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-
-> [!mcq]
-> - [x] Cold — данные генерируются заново при каждой подписке (`Flux.just`, `Mono.defer`); hot — общий поток между подписчиками (`share()`, `publish().refCount()`, `Sinks`) | Hot применяют для broadcast-событий, cold — для отдельных HTTP-запросов. ✓ ПРИМЕНЯТЬ: WebSocket-чат использует `Sinks.many().multicast()` для рассылки сообщений всем подписчикам. 📋 ПРАВИЛО: «Cold — каждому свой, Hot — всем общий». 🔗 См. Q9, Q33.
-> - [ ] Cold publishers выполняются один раз для всех, hot — заново на подписку | Это перевёрнутое определение: cold — заново на подписку, hot — общий поток. ❌ ПОСЛЕДСТВИЕ: команда подписывается на cold-поток дважды, ожидая один HTTP-запрос → запрос уходит дважды, удваивая нагрузку на API.
-> - [ ] Cold = синхронный, hot = асинхронный | Холодность не связана с синхронностью: оба могут быть асинхронными. ❌ ПОСЛЕДСТВИЕ: разработчик использует cold для broadcast и удивляется, что каждый подписчик получает свою копию событий.
-> - [ ] Все `Flux` всегда hot, потому что асинхронные | По умолчанию `Flux.just/from/range` — cold; для hot нужен явный `share()` или `Sinks`. ❌ ПОСЛЕДСТВИЕ: при двух подписчиках кэш-`Flux` без `cache()` бьёт в БД дважды.
 
 ## Q20. Как комбинировать `Mono` и `Flux` (zip, merge, concat)?
 
@@ -747,13 +614,6 @@ Flux<Product> products = Flux.concat(
 ).take(10);
 ```
 
-
-> [!mcq]
-> - [ ] `merge` сохраняет порядок элементов из исходных потоков | `merge` чередует элементы по готовности, порядок между потоками не гарантирован; для порядка — `concat`. ❌ ПОСЛЕДСТВИЕ: `merge(eventsA, eventsB)` ломает порядок логов в audit-таблице, security-аналитика жалуется на «перемешанные» события.
-> - [x] `Mono.zip(a, b)` — попарно (параллельно), `Flux.merge` — по готовности (параллельно), `Flux.concat` — последовательно, `flatMap` — 1:N с concurrency, `concatMap` — 1:N без переупорядочения | `zip` ждёт всех источников; `concat` подписывается на следующий после `onComplete`. ✓ ПРИМЕНЯТЬ: API gateway комбинирует данные user/orders через `Mono.zip` параллельно, экономя 200ms на запросе. 📋 ПРАВИЛО: «zip — пара, merge — гонка, concat — очередь». 🔗 См. Q11, Q37.
-> - [ ] `Flux.concat` запускает оба `Flux` параллельно для скорости | `concat` строго последовательный: подписывается на второй только после `onComplete` первого. ❌ ПОСЛЕДСТВИЕ: cache+DB fallback `Flux.concat(cache, db)` всё равно запрашивает оба → нагрузка на БД не уменьшается.
-> - [ ] `Mono.zip` ждёт первого пришедшего источника, остальные отменяет | `zip` ждёт элемента от каждого источника; для «первого» — `Mono.firstWithSignal`/`Flux.firstWithValue`. ❌ ПОСЛЕДСТВИЕ: race-условие в кеше vs БД — обычно нужен `firstWithValue`, а используется `zip`, и быстрый ответ ждёт медленного.
-
 ## Q21. Как обеспечить безопасность в `WebFlux` (`Spring Security`)?
 
 Подробнее о `Spring Security` — в [Spring Security](spring-security-interview.md). В реактивном стеке используются реактивные аналоги:
@@ -767,38 +627,17 @@ Flux<Product> products = Flux.concat(
 
 Для production-систем дополнительно стоит описать модель угроз, контроль доступа по принципу least privilege и процесс реагирования на инциденты. На собеседовании обычно ожидают, что вы свяжете техническую меру с риском для бизнеса и с проверяемыми контрольными точками в CI/CD.
 
-
-> [!mcq]
-> - [ ] `SecurityFilterChain` с `HttpSecurity` работает в `WebFlux` без изменений | В `WebFlux` нужен `SecurityWebFilterChain` с `ServerHttpSecurity`; сервлет-API не подключается. ❌ ПОСЛЕДСТВИЕ: `BeanCreationException: No qualifying bean of type SecurityFilterChain` или security вообще не применяется → endpoints открыты.
-> - [ ] `SecurityContextHolder.getContext()` возвращает текущего юзера в реактивной цепочке | `ThreadLocal` не работает между потоками `Schedulers`; нужен `ReactiveSecurityContextHolder.getContext()` (Mono). ❌ ПОСЛЕДСТВИЕ: `getCurrentUser()` возвращает null после `subscribeOn(boundedElastic)`, авторизация рушится после переключения потока.
-> - [ ] `@PreAuthorize` не поддерживается в `WebFlux` | Поддерживается, но возвращаемое значение должно быть `Mono`/`Flux`; SpEL-выражения работают. ❌ ПОСЛЕДСТВИЕ: команда копирует логику авторизации в каждый сервис вручную, удваивая объём кода и риски ошибок.
-> - [x] `@EnableWebFluxSecurity`, `SecurityWebFilterChain` (`ServerHttpSecurity`), `ReactiveUserDetailsService`, `ReactiveSecurityContextHolder.getContext()`; контекст пробрасывается через `Reactor Context` | `ReactorContextWebFilter` помещает SecurityContext в Context каждого запроса. ✓ ПРИМЕНЯТЬ: Spring Cloud Gateway применяет `SecurityWebFilterChain` для JWT-валидации до маршрутизации. 📋 ПРАВИЛО: «Reactive = ReactiveSecurityContextHolder + ServerHttpSecurity». 🔗 См. Q40, Q4.
-
 ## Q22. Что такое `RouterFunction` vs `@RestController`?
 
 `RouterFunction` — декларативное описание маршрутов и обработчиков в коде (функциональная модель). `@RestController` — аннотационная модель, как в `MVC`. Оба поддерживаются в `WebFlux`. `RouterFunction` удобен для динамических маршрутов и тестирования; `@RestController` привычнее для `REST API`.
 
 Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
 
-
-> [!mcq]
-> - [x] `RouterFunction` — функциональная декларация (`route().GET("/api/users", handler::getAll).build()`); `@RestController` — аннотации, как в `MVC` | Оба работают в `WebFlux`; `RouterFunction` тестируется без HTTP-сервера через `WebTestClient.bindToRouterFunction()`. ✓ ПРИМЕНЯТЬ: Spring Cloud Gateway маршруты построены на `RouterFunction` для динамической композиции. 📋 ПРАВИЛО: «RouterFunction — код, RestController — аннотации». 🔗 См. Q31, Q4.
-> - [ ] `RouterFunction` работает только в `WebFlux`, `@RestController` — только в `MVC` | `@RestController` работает в обоих стеках; различие — в возвращаемом типе (`Mono`/`Flux` для `WebFlux`). ❌ ПОСЛЕДСТВИЕ: команда переписывает все аннотированные контроллеры под `RouterFunction` при миграции, теряя 2 недели на ненужный рефакторинг.
-> - [ ] `RouterFunction` асинхронный, `@RestController` синхронный | Оба асинхронные в `WebFlux`; различие в стиле декларации, не в исполнении. ❌ ПОСЛЕДСТВИЕ: разработчик ставит `RouterFunction` ради «производительности» в `MVC`-проекте → не работает.
-> - [ ] `RouterFunction` нельзя сочетать с `@RestController` в одном приложении | Можно: оба регистрируются в `DispatcherHandler`, маршруты не конфликтуют по path. ❌ ПОСЛЕДСТВИЕ: команда городит сложные mappings вместо точечного `RouterFunction` для нескольких endpoints.
-
 ## Q23. Как валидировать запросы в реактивном стеке?
 
 Использовать `@Valid` с телом запроса в `Mono / Flux`: например, `( `@Valid @RequestBody Mono`<Dto> `body` )`. Валидация срабатывает при подписке на `body`. Для кастомной обработки ошибок — `WebExchangeBindException` в `@ControllerAdvice`. `Reactive Validator` поддерживается `Spring`.
 
 Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-
-> [!mcq]
-> - [ ] Валидация в `WebFlux` работает автоматически без `@Valid` | Без `@Valid` Bean Validation не запускается; нужно явно аннотировать параметр. ❌ ПОСЛЕДСТВИЕ: invalid input проходит до бизнес-логики, в БД попадают мусорные данные с null username.
-> - [x] `@Valid @RequestBody Mono<Dto> body` запускает валидацию при подписке; ошибки — `WebExchangeBindException` ловится в `@ControllerAdvice` | `Validator` поддерживается; для `RouterFunction` — ручной вызов `validator.validate()`. ✓ ПРИМЕНЯТЬ: Hibernate Validator интегрирован с Spring через `LocalValidatorFactoryBean`. 📋 ПРАВИЛО: «@Valid + @ControllerAdvice = валидация». 🔗 См. Q12, Q4.
-> - [ ] `@Validated` на классе достаточно — параметры проверять не нужно | `@Validated` нужен для method-level validation, но `@Valid` на параметре отдельно обязателен для тела запроса. ❌ ПОСЛЕДСТВИЕ: контроллер пропускает невалидные DTO, проверки на @NotNull игнорируются.
-> - [ ] В `RouterFunction` валидация подключается через `@Valid` параметра handler-метода | `RouterFunction` не использует автоматическую валидацию параметров; нужен явный вызов `Validator.validate()` в handler. ❌ ПОСЛЕДСТВИЕ: команда мигрирует с `@RestController` на `RouterFunction`, валидация молча отключается, баги летят в production.
 
 ## Q24. Когда выбирать `WebFlux` вместо `Spring MVC`?
 
@@ -816,25 +655,11 @@ Flux<Product> products = Flux.concat(
 
 **Миграция** с `MVC` на `WebFlux` — не «просто поменять зависимость», а переписать цепочки на `Mono / Flux` и убрать все блокирующие вызовы.
 
-
-> [!mcq]
-> - [ ] `WebFlux` всегда быстрее `MVC` за счёт неблокирующего I/O | При CPU-bound нагрузке `WebFlux` не быстрее; реактивный код имеет overhead на операторах. ❌ ПОСЛЕДСТВИЕ: команда мигрирует CRUD на `WebFlux`, latency p99 даже растёт на 20% из-за overhead Reactor.
-> - [ ] `WebFlux` обязателен для микросервисов | Микросервис может работать на `MVC` с `RestClient`; `WebFlux` нужен при тысячах одновременных соединений или streaming. ❌ ПОСЛЕДСТВИЕ: команда переписывает простой CRUD-сервис на `WebFlux`, ловит блокирующие вызовы JDBC, тратит месяц на миграцию.
-> - [x] `WebFlux` — для тысяч одновременных соединений (long polling/SSE/WebSocket), streaming, gateway с множеством исходящих вызовов; `MVC` — для блокирующих стеков (JPA), простого CRUD, команд без опыта Reactor | Миграция требует убрать ВСЕ блокирующие вызовы. ✓ ПРИМЕНЯТЬ: Spring Cloud Gateway построен на `WebFlux` ради 10K+ соединений; обычный CRUD-сервис → `MVC` + Virtual Threads. 📋 ПРАВИЛО: «WebFlux = много соединений, MVC = простой CRUD». 🔗 См. Q4, Q38.
-> - [ ] `WebFlux` несовместим с `JPA`, `Hibernate`, `JDBC` | Совместим в смысле «можно использовать», но JDBC блокирует event loop; нужен `subscribeOn(boundedElastic)` или миграция на `R2DBC`. ❌ ПОСЛЕДСТВИЕ: команда оставляет `JPA` в `WebFlux` без `subscribeOn` → carrier thread blocked, throughput падает 100×.
-
 ## Q25. Как обрабатывать таймауты и retry в реактивных цепочках?
 
 `timeout(`Duration`)` — прервать с ошибкой, если нет элемента за заданное время. `timeout(`Duration`, `fallbackMono`)` — вернуть fallback. `retry(n)`, `retryWhen(Retry.backoff(...))` — повторы с задержкой. Комбинировать с `onErrorResume` для обработки таймаутов и повторных попыток.
 
 Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-
-> [!mcq]
-> - [ ] `retry(n)` повторяет с фиксированной задержкой 0ms между попытками | `retry(n)` повторяет немедленно, без задержки; для backoff нужен `retryWhen(Retry.backoff(...))`. ❌ ПОСЛЕДСТВИЕ: 3 retry за миллисекунды добивают перегруженный downstream-сервис, retry storm валит кластер.
-> - [ ] `timeout(Duration)` отменяет цепочку, но fallback нужно делать через `try`/`catch` | `try`/`catch` не работает на async; для fallback — второй аргумент `timeout(d, fallbackMono)` или `onErrorResume`. ❌ ПОСЛЕДСТВИЕ: TimeoutException не ловится, клиент получает 500 вместо graceful degradation.
-> - [x] `timeout(Duration)` бросает `TimeoutException`; `timeout(d, fallbackMono)` — fallback; `retryWhen(Retry.backoff(3, 100ms).maxBackoff(5s).jitter(0.5))` — retry с jitter | Filter retry по типу исключения, иначе retry на business-error. ✓ ПРИМЕНЯТЬ: Resilience4j `RetryOperator` оборачивает `Mono` для retry на 5xx, но не на 4xx. 📋 ПРАВИЛО: «timeout — лимит, retryWhen — backoff с jitter». 🔗 См. Q34, Q39.
-> - [ ] `retryWhen` без фильтра retry'ит все ошибки, включая `IllegalArgumentException` | По умолчанию да, retry на любые ошибки; нужен `.filter(ex -> ex instanceof IOException)` для семантики. ❌ ПОСЛЕДСТВИЕ: invalid input retry'ится 3 раза, нагрузка на сервис тройная без шанса на успех.
 
 ## Q26. Что такое `Reactor Context` и для чего он нужен?
 
@@ -842,25 +667,11 @@ Flux<Product> products = Flux.concat(
 
 Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
 
-
-> [!mcq]
-> - [ ] `Reactor Context` = синоним `ThreadLocal`, работает как обычная переменная между потоками | `ThreadLocal` теряется при `subscribeOn`/`publishOn`; `Context` распространяется через цепочку независимо от потока. ❌ ПОСЛЕДСТВИЕ: MDC traceId теряется после `subscribeOn(boundedElastic)`, в логах не видно request-id.
-> - [x] Иммутабельная key-value мапа подписки; `contextWrite(Context.of(...))` записывает (downstream к upstream); читают через `deferContextual`/`Mono.deferContextual` | Используют для трассировки, security context, MDC. ✓ ПРИМЕНЯТЬ: Spring Security `ReactorContextWebFilter` помещает `SecurityContext` в `Reactor Context` каждого запроса. 📋 ПРАВИЛО: «Context течёт снизу вверх, ThreadLocal — нет». 🔗 См. Q22, Q40.
-> - [ ] `Context` записывается в начале цепочки и читается всеми операторами downstream | `Context` распространяется снизу вверх: `contextWrite` в конце цепочки виден операторам выше. ❌ ПОСЛЕДСТВИЕ: разработчик ставит `contextWrite` в начале и удивляется, почему `deferContextual` ниже не видит ключа.
-> - [ ] Один `Context` шарится между всеми подписками одного `Flux` | `Context` привязан к конкретной подписке; разные `subscribe()` — разные `Context`. ❌ ПОСЛЕДСТВИЕ: два запроса с разными traceId получают одинаковый MDC из-за неправильного thread context propagation.
-
 ## Q27. Как тестировать с `StepVerifier`?
 
 `StepVerifier.create(`fluxOrMono`)` — создать верификатор. Затем: `expectNext(...)`, `expectNextCount(n)`, `expectComplete()`, `expectError()`, `expectNextMatches(...)`. Завершить вызовом `verify()` или `verify(`Duration`)`. Для виртуального времени — `StepVerifier.withVirtualTime(() -> flux).thenAwait(...).expectNext(...).verify()`.
 
 **Пример:** `StepVerifier.create(service.getUser(id)).expectNextMatches(u -> u.getName().equals("Alice")).expectComplete().verify(Duration.ofSeconds(2))` — проверяем, что `Mono` выдаёт один элемент и завершается. Для `Flux`: `expectNext(1).expectNext(2).expectNextCount(5).expectComplete().verify()`. Без вызова `verify()` подписка не выполняется — тест не проверит поток.
-
-
-> [!mcq]
-> - [x] `StepVerifier.create(monoOrFlux).expectNext(...).expectComplete().verify()`; `verify()` блокирует и запускает подписку | Без `verify()` цепочка не подписывается — тест ничего не проверяет. ✓ ПРИМЕНЯТЬ: Reactor own test suite опирается на `StepVerifier` для всех unit-тестов операторов. 📋 ПРАВИЛО: «Без verify() — нет теста». 🔗 См. Q13, Q43.
-> - [ ] `StepVerifier.create(...)` сразу запускает подписку и проверяет ассерты | Подписка запускается только при `verify()`/`verifyComplete()`/`verifyError()`. ❌ ПОСЛЕДСТВИЕ: тест зелёный без реальной проверки, баг проползает в production.
-> - [ ] Виртуальное время включается через `Schedulers.setFactory()` глобально для всего теста | Виртуальное время локально через `StepVerifier.withVirtualTime(() -> mono)` и `.thenAwait(Duration)`. ❌ ПОСЛЕДСТВИЕ: глобальная подмена ломает другие тесты в suite, флакающие билды в CI.
-> - [ ] `expectNext(value)` использует `==` для сравнения, как `assertSame` | Используется `equals()`; для record/POJO — стандартный contract. ❌ ПОСЛЕДСТВИЕ: тест сравнивает объекты с одинаковыми значениями, но разными ссылками → AssertionError, ложное падение теста.
 
 ## Q28. Как обеспечить транзакционность в `R2DBC`?
 
@@ -868,38 +679,17 @@ Flux<Product> products = Flux.concat(
 
 Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
 
-
-> [!mcq]
-> - [ ] `@Transactional` из `JPA` работает с `R2DBC` через тот же `PlatformTransactionManager` | `R2DBC` использует `ReactiveTransactionManager` (`R2dbcTransactionManager`); `JpaTransactionManager` блокирующий и несовместим. ❌ ПОСЛЕДСТВИЕ: `@Transactional` тихо игнорируется на реактивном методе → каждый repo-вызов в отдельной транзакции, нет atomicity, дубли в БД.
-> - [x] `@Transactional` (с `R2dbcTransactionManager`) на методе, возвращающем `Mono`/`Flux`; `TransactionalOperator` для программного управления; commit на `onComplete`, rollback на `onError` | Spring создаёт реактивный TM автоматически, если есть `ConnectionFactory`. ✓ ПРИМЕНЯТЬ: Trello R2DBC-сервисы используют `@Transactional` для batch-апдейта user+audit с откатом при ошибке audit. 📋 ПРАВИЛО: «Reactive @Transactional требует Mono/Flux возврат». 🔗 См. Q16, Q41.
-> - [ ] Транзакция в `R2DBC` коммитится на `subscribe()`, ещё до выполнения логики | Commit/rollback срабатывает по сигналу `onComplete`/`onError` от цепочки, а не на подписке. ❌ ПОСЛЕДСТВИЕ: разработчик подписывается на цепочку до её сборки и теряет данные при ошибке.
-> - [ ] `synchronized` на методе достаточно для атомарности в `R2DBC` | `synchronized` блокирует поток, но не является SQL-транзакцией; БД-уровневая атомарность не достигается. ❌ ПОСЛЕДСТВИЕ: race condition в БД остаётся, данные перезаписываются между конкурентными вызовами; `synchronized` к тому же блокирует carrier thread в virtual threads → pinning.
-
 ## Q29. Какие метрики и мониторинг для `WebFlux`?
 
 `Actuator`: `webflux` метрики (запросы, ошибки, таймауты). Метрики `Reactor`: `reactor.netty` (соединения, пул). Кастомные метрики через `MeterRegistry`, таймеры на критичных операторах. Логирование с `log()` в цепочке. Трассировка — `Reactor Context` + `Sleuth / Micrometer Tracing`.
 
 Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
 
-
-> [!mcq]
-> - [ ] Метрики `WebFlux` идентичны `MVC`, дополнительная настройка не нужна | `WebFlux` имеет свои метрики `reactor.netty.*` (соединения, пул) и `http.server.requests` с тегом `webflux`. ❌ ПОСЛЕДСТВИЕ: команда видит низкий thread count и считает, что всё ок, не замечая 10K active connections и backpressure-проблемы.
-> - [ ] Трассировка через `MDC.put(traceId)` работает в реактивной цепочке | `MDC` использует `ThreadLocal`, который теряется при смене потока в `Schedulers`; нужен `Reactor Context` + `Micrometer Context Propagation`. ❌ ПОСЛЕДСТВИЕ: traceId исчезает после `subscribeOn(boundedElastic)`, цепочку логов невозможно собрать в одну трассу.
-> - [x] Actuator `webflux` метрики (`http.server.requests`, `reactor.netty.connection.provider`); кастомные через `MeterRegistry`; распределённая трассировка — `Micrometer Tracing` + `Reactor Context` | `log()` оператор для отладки сигналов `onNext`/`onError`/`onComplete`. ✓ ПРИМЕНЯТЬ: Spring Boot Actuator автоматически экспортирует `reactor.netty.*` в Prometheus при подключении `micrometer-registry-prometheus`. 📋 ПРАВИЛО: «Actuator + Reactor metrics + Tracing context». 🔗 См. Q26, Q4.
-> - [ ] Reactor Netty не экспортирует метрики, нужно писать самому | Экспортирует автоматически: `reactor.netty.connection.provider.active`, `.idle`, `.pending`. ❌ ПОСЛЕДСТВИЕ: команда не настраивает alerting на pool exhaustion → WebClient без connection pool config → exhaustion при 1000 RPS.
-
 ## Q30. Какие best practices для реактивных приложений?
 
 Не блокировать в реактивной цепочке; блокирующие вызовы выносить в `subscribeOn(`boundedElastic`)`. Избегать пустых `subscribe()`. Обрабатывать ошибки через `onErrorResume / doOnError`. Использовать `backpressure`. Не создавать лишних подписок. Тестировать через `StepVerifier`. Документировать контракты (cold/hot, одноразовость).
 
 Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-
-> [!mcq]
-> - [x] Не блокировать в цепочке (или `subscribeOn(boundedElastic)`); обрабатывать ошибки `onErrorResume`; не делать пустых `subscribe()`; тестировать `StepVerifier`; учитывать backpressure | Документировать cold/hot контракт публичных API. ✓ ПРИМЕНЯТЬ: Netflix internal coding standards требуют `subscribeOn(boundedElastic)` для каждого блокирующего legacy-вызова. 📋 ПРАВИЛО: «Не блокируй, обрабатывай, тестируй». 🔗 См. Q17, Q14.
-> - [ ] Использовать `block()` в каждой цепочке для удобства отладки | `block()` блокирует event loop и недопустим в production коде; разрешён только в тестах. ❌ ПОСЛЕДСТВИЕ: `IllegalStateException: block()/blockFirst()/blockLast() are blocking, which is not supported in thread reactor-http-nio-2`.
-> - [ ] Каждый оператор оборачивать в `subscribeOn(parallel())` ради скорости | `subscribeOn` влияет только на источник; повторные вызовы внутри цепочки игнорируются и добавляют overhead. ❌ ПОСЛЕДСТВИЕ: throughput падает на 30% из-за лишних context switches между потоками.
-> - [ ] Игнорировать backpressure — `Reactor` справится сам | При несоответствии скоростей буфер растёт без явной стратегии; игнорирование ведёт к OOM. ❌ ПОСЛЕДСТВИЕ: producer overwhelms consumer, OOM на буфере 64MB через час нагрузки.
 
 ## Q31. (!) Как использовать `RouterFunction` для функционального стиля маршрутизации?
 
@@ -978,13 +768,6 @@ void shouldReturnUsers() {
 }
 ```
 
-
-> [!mcq]
-> - [ ] `RouterFunction` использует те же `@RequestMapping`-аннотации, что `@RestController` | `RouterFunction` декларирует маршруты программно через `RouterFunctions.route().GET(path, handler)`, без аннотаций. ❌ ПОСЛЕДСТВИЕ: разработчик копирует `@GetMapping` в handler-метод, маршрут не работает, 404 на endpoint.
-> - [ ] Handler возвращает `ResponseEntity<T>`, как в `MVC` | Handler возвращает `Mono<ServerResponse>`; `ResponseEntity` не используется. ❌ ПОСЛЕДСТВИЕ: ClassCastException при сериализации, 500 на каждом запросе.
-> - [x] `@Bean RouterFunction<ServerResponse>` с `RouterFunctions.route().GET("/api/users", handler::getAll).build()`; handler принимает `ServerRequest`, возвращает `Mono<ServerResponse>`; тест через `WebTestClient.bindToRouterFunction(router)` | Несколько роутеров автокомпозируются. ✓ ПРИМЕНЯТЬ: Spring Cloud Gateway маршруты — `RouterFunction` под капотом для дин. композиции. 📋 ПРАВИЛО: «route().GET(path, handler).build()». 🔗 См. Q22, Q4.
-> - [ ] `RouterFunction` нельзя тестировать без полноценного HTTP-сервера | Можно: `WebTestClient.bindToRouterFunction(router).build()` поднимает только router без Netty. ❌ ПОСЛЕДСТВИЕ: команда поднимает `@SpringBootTest` ради простого теста маршрута, тесты идут 10 секунд вместо 100ms.
-
 ## Q32. (!) Что такое `WebFilter` и как он работает?
 
 `WebFilter` — реактивный аналог `javax.servlet.Filter`. Встраивается в цепочку обработки до `DispatcherHandler` и работает с `ServerWebExchange`.
@@ -1055,13 +838,6 @@ RouterFunction<ServerResponse> routes = RouterFunctions.route()
     .build();
 ```
 
-
-> [!mcq]
-> - [x] `WebFilter` — реактивный аналог `Filter`; `Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain)`; передача данных через `chain.filter(exchange).contextWrite(Context.of(...))`; порядок — `@Order` | Срабатывает до `DispatcherHandler`. ✓ ПРИМЕНЯТЬ: Spring Cloud Gateway фильтры (Authentication, RateLimit) реализованы как `WebFilter`. 📋 ПРАВИЛО: «WebFilter — Servlet Filter для WebFlux». 🔗 См. Q40, Q26.
-> - [ ] `WebFilter` использует `javax.servlet.Filter` и `HttpServletRequest` | `WebFilter` использует `ServerWebExchange`/`ServerHttpRequest`; Servlet API в `WebFlux` отсутствует. ❌ ПОСЛЕДСТВИЕ: код из `MVC` не компилируется или фильтр не срабатывает.
-> - [ ] `WebFilter` блокирует поток до завершения handler'а | `WebFilter` асинхронный: возвращает `Mono<Void>`; следующий фильтр вызывается через `chain.filter(exchange)`. ❌ ПОСЛЕДСТВИЕ: `block()` внутри фильтра блокирует event loop, throughput падает 100×.
-> - [ ] `HandlerFilterFunction` и `WebFilter` — синонимы | `HandlerFilterFunction` работает только в `RouterFunction`-маршрутах; `WebFilter` — глобально для всех запросов. ❌ ПОСЛЕДСТВИЕ: команда применяет `HandlerFilterFunction` к `@RestController`-endpoints и удивляется, что фильтр не вызывается.
-
 ## Q33. Как реализовать `WebSocket` в `Spring WebFlux`?
 
 `Spring WebFlux` поддерживает `WebSocket` через `WebSocketHandler`.
@@ -1125,13 +901,6 @@ client.execute(uri, session ->
 ).block(Duration.ofSeconds(10));
 ```
 
-
-> [!mcq]
-> - [ ] `@MessageMapping` из STOMP подключается напрямую в `WebFlux` | `@MessageMapping` — для `spring-messaging` STOMP, не для голого WebSocket в `WebFlux`; нужен `WebSocketHandler`. ❌ ПОСЛЕДСТВИЕ: handler не регистрируется, клиент получает HTTP 404 на upgrade-запрос.
-> - [x] `WebSocketHandler` с `Mono<Void> handle(WebSocketSession session)`; `session.receive()` для входящих, `session.send(Flux<WebSocketMessage>)` для исходящих; `Sinks.many().multicast()` для broadcast | Регистрация — `SimpleUrlHandlerMapping` + `WebSocketHandlerAdapter`. ✓ ПРИМЕНЯТЬ: Slack, Discord используют WebSocket для real-time чата. 📋 ПРАВИЛО: «session.receive() + session.send() + Sinks». 🔗 См. Q19, Q4.
-> - [ ] WebSocket в `WebFlux` использует `@Endpoint` (JSR 356), как в Java EE | `WebFlux` имеет собственный `WebSocketHandler` API; JSR 356 не интегрирован. ❌ ПОСЛЕДСТВИЕ: команда копирует JSR 356 endpoint, контейнер его не видит.
-> - [ ] `Sinks.one()` подходит для broadcast многим подписчикам | `Sinks.one()` — single-value emitter; для broadcast — `Sinks.many().multicast()` или `Sinks.many().replay()`. ❌ ПОСЛЕДСТВИЕ: только первый подписчик получает сообщение, остальные — `IllegalStateException: emitter already terminated`.
-
 ## Q34. (!) Как настроить реактивный `WebClient` с retry и таймаутами?
 
 ```java
@@ -1194,13 +963,6 @@ public class PaymentClient {
 }
 ```
 
-
-> [!mcq]
-> - [ ] `retry(3)` с фиксированной задержкой 1 секунда между попытками | `retry(3)` — без задержки; для backoff — `retryWhen(Retry.backoff(3, Duration.ofSeconds(1)))`. ❌ ПОСЛЕДСТВИЕ: 3 retry за миллисекунды добивают перегруженный downstream → retry storm.
-> - [ ] Connection pool настраивается автоматически и не требует тюнинга | `Reactor Netty` имеет дефолтный пул, но при высокой нагрузке нужен явный `ConnectionProvider.builder().maxConnections(N)`. ❌ ПОСЛЕДСТВИЕ: WebClient без connection pool config → exhaustion при 1000 RPS, `PoolAcquirePendingLimitException`.
-> - [ ] `timeout(5s)` достаточно — нет смысла настраивать `responseTimeout` отдельно | `timeout` — общий лимит цепочки; `responseTimeout` — лимит ответа от сервера на сетевом уровне; нужны оба. ❌ ПОСЛЕДСТВИЕ: запрос висит 30s до сетевого таймаута OS, клиент уже отвалился, ресурсы заняты.
-> - [x] `HttpClient.create().option(CONNECT_TIMEOUT_MILLIS, 3000).responseTimeout(Duration.ofSeconds(10))` + `WebClient.builder().clientConnector(...)`; `retryWhen(Retry.backoff(3, 500ms).filter(ex -> ex instanceof IOException).maxBackoff(5s).jitter(0.5))` | Filter retry по типу ошибки, иначе retry на 4xx — бессмысленно. ✓ ПРИМЕНЯТЬ: Resilience4j `CircuitBreakerOperator` оборачивает `WebClient` для fallback на 5xx. 📋 ПРАВИЛО: «3 timeout: connect, response, total». 🔗 См. Q25, Q39.
-
 ## Q35. Как управлять `WebSession` в реактивном стеке?
 
 `WebSession` — реактивный аналог `HttpSession`. Управляется через `WebSessionManager` (по умолчанию — in-memory с `DefaultWebSessionManager`).
@@ -1261,13 +1023,6 @@ spring:
 @EnableRedisWebSession(maxInactiveIntervalInSeconds = 1800)
 public class SessionConfig {}
 ```
-
-
-> [!mcq]
-> - [x] `WebSession` (реактивный аналог `HttpSession`) — параметр контроллера или `exchange.getSession()`; `WebSessionManager`/`DefaultWebSessionManager`; для распределённых — Redis (`spring-session-data-redis` + `@EnableRedisWebSession`) | In-memory только для single-instance. ✓ ПРИМЕНЯТЬ: e-commerce сайты держат корзину в Redis-сессии для кластеризации. 📋 ПРАВИЛО: «WebSession = реактивный HttpSession + Redis для кластера». 🔗 См. Q22, Q40.
-> - [ ] `HttpSession` работает в `WebFlux` без модификаций | `HttpSession` — Servlet API; в `WebFlux` нужен `WebSession`. ❌ ПОСЛЕДСТВИЕ: `IllegalStateException: No WebSessionManager` или handler метод вообще не вызывается.
-> - [ ] In-memory `WebSession` сохраняется между перезапусками контейнера | In-memory не персистентна; при рестарте сессии теряются. ❌ ПОСЛЕДСТВИЕ: rolling deploy → пользователи разлогинены, корзины сброшены, support tickets взлетают.
-> - [ ] `WebSession.invalidate()` синхронно очищает данные сразу после вызова | Возвращает `Mono<Void>`; реальная инвалидация — после подписки и завершения. ❌ ПОСЛЕДСТВИЕ: разработчик не подписывается на `Mono<Void> logout()`, сессия не инвалидируется, security incident.
 
 ## Q36. (!) Как интегрировать `R2DBC` с `Spring Data` и получить полностью реактивный стек?
 
@@ -1341,13 +1096,6 @@ public class UserService {
 - Связи (`@OneToMany`) — только вручную через JOIN или отдельные запросы
 - Нет DDL auto-create — используется `Flyway` / `Liquibase` (или `spring.r2dbc.initialization-mode`)
 - Аннотация `@Transactional` работает через реактивный `ReactiveTransactionManager`
-
-
-> [!mcq]
-> - [ ] `R2DBC` поддерживает `@OneToMany`, `@ManyToOne` со стандартным lazy loading | Связи в `R2DBC` явные через `@Query` или `DatabaseClient`; lazy loading отсутствует. ❌ ПОСЛЕДСТВИЕ: команда мигрирует с `JPA` со схемой `@OneToMany`, ловит `NoSuchMethodError` или связи не работают.
-> - [ ] DDL генерируется автоматически из `@Table`, как в `JPA` | `R2DBC` не генерирует DDL; нужен `Flyway`/`Liquibase` или `spring.r2dbc.initialization-mode`. ❌ ПОСЛЕДСТВИЕ: при первом старте таблица не создана, все запросы падают с `relation does not exist`.
-> - [x] `spring-boot-starter-data-r2dbc` + `r2dbc-postgresql`; `@Table`/`@Id`/`@Column` (Spring Data); `R2dbcRepository<T,ID>` с `Mono`/`Flux`-методами; `@Transactional` на `Mono`-возвращающем методе с `R2dbcTransactionManager` | Связи через `@Query` или `DatabaseClient`. ✓ ПРИМЕНЯТЬ: Trello мигрировал часть API на `WebFlux`+`R2DBC` для устранения thread-pool exhaustion. 📋 ПРАВИЛО: «R2DBC = WebFlux + Repository + @Transactional». 🔗 См. Q16, Q41.
-> - [ ] `R2DBC` использует `EntityManager` из `JPA` для управления сущностями | `R2DBC` использует `DatabaseClient`/`R2dbcEntityTemplate`; `EntityManager` — JPA-специфичный. ❌ ПОСЛЕДСТВИЕ: `BeanCreationException: No qualifying bean of type EntityManager` при старте.
 
 ## Q37. Какие операторы `Project Reactor` важнее всего знать для собеседования?
 
@@ -1426,13 +1174,6 @@ Flux.just("a1", "b1", "a2", "b2")
 
 ---
 
-
-> [!mcq]
-> - [ ] `flatMap` всегда сохраняет исходный порядок элементов | `flatMap` параллелит подпотоки, порядок может нарушиться; для порядка — `concatMap`. ❌ ПОСЛЕДСТВИЕ: backend отдаёт список заказов в случайном порядке после `flatMap(orderService::getDetails)`, UI ломается.
-> - [x] `map`/`flatMap`/`concatMap`/`filter`/`zip`/`merge`/`concat`/`switchIfEmpty`/`onErrorResume`/`retry`/`timeout`/`cache`/`buffer`/`groupBy` | `concatMap` — последовательный аналог `flatMap`; `cache(Duration)` — мемоизация. ✓ ПРИМЕНЯТЬ: API gateway комбинирует user+orders через `Mono.zip`, fallback через `switchIfEmpty(Mono.error(...))`. 📋 ПРАВИЛО: «map sync, flatMap async, concatMap sequential async». 🔗 См. Q9, Q20.
-> - [ ] `subscribe()` без аргументов в `Flux` лучше, чем явные `onNext`/`onError` | Без обработчиков ошибки уходят в `Hooks.onErrorDropped` и логируются как warning; `onError`-handler обязателен в production. ❌ ПОСЛЕДСТВИЕ: `Operator called default onErrorDropped` забивает логи, реальные ошибки теряются.
-> - [ ] `cache()` без `Duration` кеширует значение навсегда без инвалидации | Это правда, но в production кеш без TTL ведёт к stale data; `cache(Duration)` обязателен. ❌ ПОСЛЕДСТВИЕ: устаревшие данные пользователю до перезапуска приложения, обнаруживается через жалобы клиентов.
-
 ## Q38. Как WebFlux работает совместно с Virtual Threads (Java 21)?
 
 **Virtual Threads** (Project Loom) и **WebFlux** решают одну проблему — масштабируемость при I/O-нагрузке, но разными способами. Важно понимать, когда их комбинирование имеет смысл, а когда нет.
@@ -1469,13 +1210,6 @@ spring:
 **Главный вывод:** WebFlux + Virtual Threads — не обязательная комбинация. Если весь стек реактивный, достаточно WebFlux. Если есть блокирующие зависимости — Virtual Threads помогают избежать `publishOn(Schedulers.boundedElastic())`.
 
 ---
-
-
-> [!mcq]
-> - [ ] Virtual Threads делают `WebFlux` ненужным — можно мигрировать назад на `MVC` без потерь | При streaming, SSE, WebSocket `WebFlux` всё равно удобнее; Virtual Threads решают только thread-pool exhaustion. ❌ ПОСЛЕДСТВИЕ: команда мигрирует со streaming-сервиса обратно на `MVC` + Virtual Threads, теряет SSE и backpressure.
-> - [ ] `WebFlux` несовместим с Virtual Threads — `Schedulers.boundedElastic()` использует только платформенные потоки | Spring Boot 3.2+ позволяет включить virtual threads для `boundedElastic` через `spring.threads.virtual.enabled=true`. ❌ ПОСЛЕДСТВИЕ: команда не использует virtual threads и держит блокирующий legacy в платформенном пуле.
-> - [x] `WebFlux` и Virtual Threads решают одну проблему (масштабируемость I/O) разными способами; комбинируются — для блокирующих legacy через `subscribeOn(Schedulers.boundedElastic())` (с `spring.threads.virtual.enabled=true`); чисто реактивный стек — без virtual threads | `MVC` + Virtual Threads — альтернатива для CRUD без streaming. ✓ ПРИМЕНЯТЬ: Spring Boot 3.2+ запускает Tomcat на virtual threads через одну property. 📋 ПРАВИЛО: «WebFlux = streaming, Loom = блок без боли». 🔗 См. Q17, Q24.
-> - [ ] `synchronized` в реактивной цепочке безопасен при включённых virtual threads | `synchronized` пиннит carrier thread в virtual threads → потоковая модель деградирует; нужен `ReentrantLock`. ❌ ПОСЛЕДСТВИЕ: pinning carrier thread → throughput не растёт под нагрузкой, virtual threads теряют преимущество.
 
 ## Q39. Как интегрировать Resilience4j с WebFlux?
 
@@ -1532,13 +1266,6 @@ public Mono<User> fallback(Long id, CallNotPermittedException ex) {
 **Ключевой принцип:** `transformDeferred` применяется лениво — circuit breaker проверяется при каждой подписке, что корректно для реактивного холодного publisher.
 
 ---
-
-
-> [!mcq]
-> - [x] `resilience4j-reactor` модуль; `transformDeferred(CircuitBreakerOperator.of(cb))`, `RetryOperator.of(retry)`, `RateLimiterOperator.of(rl)`; `transformDeferred` лениво — CB проверяется при каждой подписке | Через аннотации `@CircuitBreaker(name, fallbackMethod)` для упрощения. ✓ ПРИМЕНЯТЬ: Netflix Conductor использует Resilience4j для защиты внешних HTTP-вызовов. 📋 ПРАВИЛО: «transformDeferred = ленивый оборот CB». 🔗 См. Q34, Q25.
-> - [ ] `Hystrix` рекомендуется поверх `WebFlux` для circuit breaker | Hystrix в maintenance mode с 2018; рекомендуется Resilience4j. ❌ ПОСЛЕДСТВИЕ: команда тащит legacy Hystrix в новый проект, ловит CVE и баги.
-> - [ ] `transform()` вместо `transformDeferred()` для оборота `CircuitBreakerOperator` | `transform()` применяется один раз при сборке цепочки → CB фиксируется один раз; `transformDeferred()` — на каждую подписку. ❌ ПОСЛЕДСТВИЕ: при retry CB не учитывает новую подписку, состояние циркуляра не обновляется корректно.
-> - [ ] `@CircuitBreaker` на блокирующем `RestTemplate` работает в `WebFlux`-приложении без проблем | `@CircuitBreaker` сам по себе работает, но блокирующий `RestTemplate` блокирует event loop. ❌ ПОСЛЕДСТВИЕ: CB не помогает при блокировке carrier thread, throughput всё равно падает 100×.
 
 ## Q40. Как Spring Security работает в реактивном стеке?
 
@@ -1608,13 +1335,6 @@ public ReactiveUserDetailsService userDetailsService(UserRepository repo) {
 ```
 
 ---
-
-
-> [!mcq]
-> - [ ] `SecurityContextHolder.getContext().getAuthentication()` возвращает текущего юзера в `WebFlux` | `ThreadLocal` теряется при смене потока; нужен `ReactiveSecurityContextHolder.getContext()` (Mono). ❌ ПОСЛЕДСТВИЕ: `auth = null` после `subscribeOn(boundedElastic)`, авторизация ломается в legacy-вызовах.
-> - [x] `@EnableWebFluxSecurity`, `SecurityWebFilterChain` через `ServerHttpSecurity`, `ReactiveUserDetailsService`, `ReactiveAuthenticationManager`; контекст — `ReactiveSecurityContextHolder.getContext()` (Mono); пробрасывается через `Reactor Context` (`ReactorContextWebFilter`) | OAuth2: `oauth2ResourceServer().jwt()`. ✓ ПРИМЕНЯТЬ: Spring Cloud Gateway применяет `SecurityWebFilterChain` для JWT-валидации до маршрутизации. 📋 ПРАВИЛО: «Reactive Security = ServerHttpSecurity + Reactor Context». 🔗 См. Q21, Q26.
-> - [ ] `csrf().disable()` — обязательная настройка для всех `WebFlux`-приложений | CSRF полезен для UI с куками; для stateless JWT API можно отключить, но не «обязательно». ❌ ПОСЛЕДСТВИЕ: команда отключает CSRF на UI-приложении, открывает CSRF-уязвимость в форме логина.
-> - [ ] Spring Security автоматически кладёт `Authentication` в `MDC` для логирования | Не автоматически; нужна интеграция через `Reactor Context` + `Micrometer Context Propagation`. ❌ ПОСЛЕДСТВИЕ: в логах нет username, audit невозможен, security incident не расследуется.
 
 ## Q41. Чем R2DBC отличается от JDBC и как использовать R2dbcRepository?
 
@@ -1688,13 +1408,6 @@ public class UserService {
 
 ---
 
-
-> [!mcq]
-> - [ ] `R2DBC` использует JDBC под капотом, добавляя реактивную обёртку | `R2DBC` — независимый стандарт; драйверы (`r2dbc-postgresql`, `r2dbc-mssql`) написаны на неблокирующем I/O без JDBC. ❌ ПОСЛЕДСТВИЕ: команда настраивает `HikariCP` для `R2DBC`, ничего не работает, час тратится на отладку.
-> - [x] `R2DBC` — реактивный стандарт (`Mono`/`Flux`), JDBC — блокирующий; `R2dbcRepository<T,ID>` extends `ReactiveCrudRepository`; `@Query("SELECT...")` для кастома; `@Transactional` через `R2dbcTransactionManager` | Lazy loading и `@OneToMany` отсутствуют. ✓ ПРИМЕНЯТЬ: Trello мигрировал часть API на `WebFlux`+`R2DBC` для устранения thread-pool exhaustion. 📋 ПРАВИЛО: «R2DBC = JDBC без блокировки и без сессии». 🔗 См. Q16, Q36.
-> - [ ] `JpaRepository` подключается к `R2DBC` без изменений | `JpaRepository` синхронный и работает только с `JPA`/`Hibernate`. ❌ ПОСЛЕДСТВИЕ: `IllegalStateException: No EntityManagerFactory found` при старте.
-> - [ ] `@Transactional(readOnly = true)` не поддерживается в `R2DBC` | Поддерживается, как и в JDBC; передаётся в `R2dbcTransactionManager`. ❌ ПОСЛЕДСТВИЕ: разработчик использует ручное управление, теряет преимущества read-only оптимизации БД.
-
 ## Q42. WebClient vs RestTemplate vs RestClient — когда что выбирать?
 
 В Spring 6.1 появился **RestClient** — синхронный fluent API, похожий на WebClient по стилю, но без реактивности.
@@ -1746,13 +1459,6 @@ User user = restClient.get()
 - **Streaming / SSE** → только `WebClient` (умеет `Flux<T>`)
 
 ---
-
-
-> [!mcq]
-> - [ ] `RestTemplate` deprecated и удалён в Spring 6, надо мигрировать срочно | В maintenance mode, не удалён; рекомендуется миграция на `RestClient` (sync) или `WebClient` (async). ❌ ПОСЛЕДСТВИЕ: команда срочно мигрирует, ломая legacy-интеграции, теряет неделю на регрессии.
-> - [ ] `WebClient` подходит только в `WebFlux`-стеке, в `MVC` его не использовать | `WebClient` работает в любом стеке (включая `MVC`), `Mono`-результат можно `block()` в синхронном коде. ❌ ПОСЛЕДСТВИЕ: команда отказывается от streaming в `MVC`-проекте, переписывает на `RestTemplate`+цикл с polling.
-> - [x] `WebClient` — для `WebFlux` или streaming/SSE; `RestClient` (Spring 6.1+) — для `MVC` синхронно с fluent API; `RestTemplate` — legacy, новые проекты не использовать; `MockRestServiceServer` для `RestTemplate`/`RestClient`, `MockWebServer` для `WebClient` | Streaming `Flux<T>` — только `WebClient`. ✓ ПРИМЕНЯТЬ: Spring Cloud OpenFeign перешёл на использование `WebClient`/`RestClient` в зависимости от стека. 📋 ПРАВИЛО: «WebFlux→WebClient, MVC→RestClient, legacy→мигрируй». 🔗 См. Q15, Q34.
-> - [ ] `RestClient` асинхронный, как `WebClient`, только новее | `RestClient` синхронный, fluent-API; асинхронность только в `WebClient`. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает `Mono<T>` от `RestClient`, получает синхронный `T` и не понимает, почему в `WebFlux` event loop блокируется.
 
 ## Q43. Как тестировать WebFlux-приложения с WebTestClient и StepVerifier?
 
@@ -1888,13 +1594,6 @@ class UserServiceTest {
 
 ---
 
-
-> [!mcq]
-> - [ ] `MockMvc` достаточно для интеграционных тестов `WebFlux`-контроллеров | `MockMvc` работает только с Servlet API; для `WebFlux` нужен `WebTestClient`. ❌ ПОСЛЕДСТВИЕ: тесты падают с `IllegalStateException: No ServletContext`, час тратится на дебаг.
-> - [ ] `WebTestClient.get().uri(...).exchange()` синхронно блокирует поток для assert | `exchange()` асинхронный, но `expectStatus()`/`expectBody()` блокируют до получения ответа — это разрешено в тесте. ❌ ПОСЛЕДСТВИЕ: разработчик добавляет `block()` поверх `WebTestClient`, ловит `IllegalStateException` и не понимает почему.
-> - [ ] `StepVerifier.create(flux).expectNextCount(3)` достаточно — `verify()` не нужен | Без `verify()` подписки нет, тест ничего не проверяет. ❌ ПОСЛЕДСТВИЕ: тест зелёный без реальной проверки, баг проползает в production.
-> - [x] `@WebFluxTest(Controller.class)` + `@MockBean` сервиса + `WebTestClient` для интеграции; `StepVerifier` + `verifyComplete()` для unit; `withVirtualTime()` для `delay`/`interval` | `WebTestClient.bindToRouterFunction(router)` для тестов без HTTP-сервера. ✓ ПРИМЕНЯТЬ: Spring Cloud Gateway тесты построены на `WebTestClient.bindToRouterFunction()` без поднятия Netty. 📋 ПРАВИЛО: «WebTestClient — HTTP, StepVerifier — цепочка». 🔗 См. Q13, Q27.
-
 ## See also
 
 - [Spring Framework](spring-framework-interview.md) — IoC-контейнер, на котором стоит WebFlux
@@ -1907,7 +1606,6 @@ class UserServiceTest {
 - [Spring Batch](spring-batch-interview.md) — пакетная обработка vs. реактивные потоки
 - [Микросервисы](../../architecture/microservices-interview.md) — реактивные паттерны в распределённых системах
 - [Java Concurrency](../../programming-languages/java/java-concurrency-interview.md) — потоки и модели конкурентности
-
 
 - [Spring AOP](spring-aop-interview.md) — аспектно-ориентированное программирование
 - [Шпаргалка: Spring WebFlux для Java](../../../frameworks/java-frameworks/spring/spring-webflux.md) — теория

@@ -84,12 +84,6 @@ Secrets management — handling sensitive credentials (passwords, API keys, cert
 - OAuth tokens
 - SSH keys
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Зачем dedicated management:**
 - **Centralized** (one place vs scattered .env files)
 - **Audit logs** (who accessed когда)
@@ -114,12 +108,6 @@ Secrets management — handling sensitive credentials (passwords, API keys, cert
 
 **Real incidents** — GitHub leaks, mass-bruteforce attacks against committed secrets.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **GitGuardian** scans GitHub для leaked secrets daily — finds **millions per year**.
 
 ## Q3. Static vs dynamic secrets?
@@ -140,12 +128,6 @@ Secrets management — handling sensitive credentials (passwords, API keys, cert
 - SSH access
 - Third-party APIs (where supported)
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Effect:** breach impact limited (credentials short-lived).
 
 ## Q4. (!) HashiCorp Vault?
@@ -172,12 +154,6 @@ vault read database/creds/my-role
 # Returns NEW user/password, expires in 1 hour
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 Подробнее — в [Vault](../devops/vault-interview.md).
 
 ## Q5. (!) AWS Secrets Manager?
@@ -201,12 +177,6 @@ aws secretsmanager get-secret-value --secret-id myapp/db
 
 **Cost:** $0.40/secret/month + API calls.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Best для:** AWS-native apps.
 
 ## Q6. AWS Parameter Store vs Secrets Manager?
@@ -224,12 +194,6 @@ aws secretsmanager get-secret-value --secret-id myapp/db
 - **Parameter Store** для config (URLs, feature flags, non-sensitive)
 - **Secrets Manager** для credentials (DB, API keys)
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Both encrypted с KMS.**
 
 ## Q7. GCP Secret Manager?
@@ -248,12 +212,6 @@ gcloud secrets versions access latest --secret="my-secret"
 - **CMEK** (customer-managed encryption keys)
 - Audit logs (Cloud Audit Logs)
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Cost:** $0.06/secret/month + access fees.
 
 ## Q8. Azure Key Vault?
@@ -271,12 +229,6 @@ az keyvault secret show --vault-name MyVault --name MySecret
 
 **Cost:** $0.03/10K ops + cert costs.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Best для:** Azure-native apps, compliance-heavy.
 
 ## Q9. Doppler, Infisical, 1Password Secrets?
@@ -298,12 +250,6 @@ az keyvault secret show --vault-name MyVault --name MySecret
 - Developer-focused features
 - CLI integration
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Use case:** smaller teams, simpler than Vault, more features than Parameter Store.
 
 ## Q10. (!) K8s Secrets — насколько secure?
@@ -332,12 +278,6 @@ data:
 3. **Use external secret manager** (Vault, AWS Secrets Manager)
 4. **Sealed Secrets** для GitOps
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Best practice:** **don't use bare K8s Secrets для real secrets** — use external store + sync.
 
 ## Q11. (!) External Secrets Operator?
@@ -374,12 +314,6 @@ spec:
 - Doppler
 - And more
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Most popular pattern** для K8s + external secrets в 2025.
 
 ## Q12. Sealed Secrets (Bitnami)?
@@ -409,12 +343,6 @@ spec:
 
 **Sealed Secrets controller** в cluster decrypts → creates K8s Secret.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Pros:** GitOps-friendly. **Cons:** keys tied к specific cluster.
 
 ## Q13. SOPS для encrypted secrets в git?
@@ -442,12 +370,6 @@ db:
 - Flux
 - Terraform
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Use case:** GitOps, IaC secrets, multi-env configs.
 
 ## Q14. (!) Secret rotation?
@@ -471,12 +393,6 @@ db:
 3. Verify
 4. Revoke old
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Caveats:**
 - **Apps must reload** secrets (without restart ideally)
 - **Database** updates simultaneously
@@ -510,12 +426,6 @@ vault read database/creds/readonly
 - **Auto-revoked**
 - **Compromise window short**
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Supported:** PostgreSQL, MySQL, MongoDB, Cassandra, Oracle, Redis, AWS, GCP, etc.
 
 ## Q16. Secrets revocation?
@@ -534,12 +444,6 @@ vault read database/creds/readonly
 
 **Speed matters:** the faster revocation, the smaller breach impact.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Audit logs** — verify no further use after revocation.
 
 ## Q17. (!) Как app reads secrets?
@@ -568,12 +472,6 @@ secret = client.get_secret_value(SecretId='myapp/db')
 - К8s Secrets mounted as env
 - Vault Agent renders templates
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Best practice:** prefer files (mounted volumes) over env vars (env vars leak в child processes, logs).
 
 ## Q18. Vault Agent / Sidecar Injector?
@@ -597,12 +495,6 @@ metadata:
     vault.hashicorp.com/agent-inject-secret-db: "secret/myapp/db"
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Effect:** apps no Vault SDK needed — just file reads.
 
 ## Q19. AWS IRSA (IAM Roles for Service Accounts)?
@@ -628,12 +520,6 @@ metadata:
 - **GCP Workload Identity** — для GKE
 - **Azure Workload Identity** — для AKS
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Best practice:** prefer cloud-native IAM over secret distribution.
 
 ## Q20. (!) Как handle secrets в GitOps?
@@ -664,22 +550,10 @@ spec:
         key: secret/db
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Actual secret** только в Vault. Git contains **reference**, not value.
 
 ## Q21. (!) Best practices?
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 1. **Never commit** secrets к source control
 2. **Centralized** secret store (Vault, AWS Secrets Manager)
 3. **Auto-rotation** для long-lived secrets
@@ -738,12 +612,6 @@ spec:
 - [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — context
 - [Git](../devops/git-interview.md) — secret scanning
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 - [Application Security](application-security-interview.md)
 - [Authentication and Authorization Patterns](authentication-authorization-patterns-interview.md)
 - [JWT](jwt-interview.md)

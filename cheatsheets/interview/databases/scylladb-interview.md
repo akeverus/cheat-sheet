@@ -86,12 +86,6 @@ updated: "2026-04-25"
 
 **Created в 2014** by ex-KVM (Cloudius Systems), commercial company **ScyllaDB Inc.**
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Применения:** Same as Cassandra:
 - Time-series data
 - IoT
@@ -114,12 +108,6 @@ updated: "2026-04-25"
 | Maturity | 2008+ | 2014+ |
 | Adoption | Wider | Growing |
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Performance** — main differentiator. На **same hardware** Scylla typically 3-10x faster.
 
 ## Q3. (!) Что такое shard-per-core архитектура?
@@ -144,12 +132,6 @@ updated: "2026-04-25"
   ...
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Effect:**
 - **Linear scaling с cores** (Cassandra plateaus)
 - No GC pauses
@@ -165,12 +147,6 @@ updated: "2026-04-25"
 - **User-space networking** (DPDK option)
 - **Future/Promise** abstraction
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 Used не только для ScyllaDB — also Redis-like project, network apps.
 
 ## Q5. (!) Wide-column data model?
@@ -194,12 +170,6 @@ CREATE TABLE users (
 - **Clustering key** — sorting within partition
 - **Columns** — defined в schema
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 Подробнее — в [Apache Cassandra](cassandra-interview.md).
 
 ## Q6. Partition key, clustering key?
@@ -217,12 +187,6 @@ PRIMARY KEY ((user_id, date), timestamp)
 -- partition by combination, ordered by timestamp
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Best practices:**
 - High cardinality partition key (avoid hot partitions)
 - Partition size < 100 MB
@@ -258,12 +222,6 @@ DELETE FROM users WHERE user_id = uuid_value;
 - **WHERE only on partition key + clustering key** (or secondary index)
 - **No subqueries**
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ScyllaDB extensions:
 - **CDC (Change Data Capture)**
 - **Materialized Views**
@@ -285,12 +243,6 @@ Node 3: same
 - No single point of failure
 - Easy add/remove nodes
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Trade-off:** eventual consistency by default (tunable).
 
 ## Q9. Replication, consistency levels?
@@ -308,12 +260,6 @@ CREATE KEYSPACE mykeyspace WITH replication = {'class': 'NetworkTopologyStrategy
 - `LOCAL_QUORUM` — quorum в local DC
 - `EACH_QUORUM` — quorum в каждом DC
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ```sql
 SELECT * FROM users WHERE user_id = ? USING CONSISTENCY QUORUM;
 ```
@@ -336,12 +282,6 @@ R + W > N
 - Higher consistency → higher latency, lower availability
 - Lower consistency → faster, eventually consistent
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Common choice:** `LOCAL_QUORUM` для both — balance.
 
 ## Q11. Tokens, virtual nodes (vnodes)?
@@ -367,12 +307,6 @@ With 256 vnodes per node:
 - **Faster recovery** (parallel data transfer from many nodes)
 - **Easier scaling** (adding new node — pulls data from many)
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ScyllaDB supports vnodes (also tokens).
 
 ## Q12. (!) LSM-tree storage?
@@ -396,12 +330,6 @@ Write → MemTable (in-memory sorted)
 - **Read amplification** — need check several SSTables
 - **Compaction overhead** — background work
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Compaction strategies:**
 - **STCS (SizeTieredCompactionStrategy)** — default
 - **LCS (LeveledCompactionStrategy)** — better for read-heavy
@@ -418,12 +346,6 @@ Write → MemTable (in-memory sorted)
 7. **Tighter memory management** — no Java heap overhead
 8. **Custom networking** (DPDK option) — bypass kernel TCP stack
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Result:** на same hardware, Scylla often 3-10x faster Cassandra.
 
 ## Q14. No JVM = no GC pauses?
@@ -438,12 +360,6 @@ Write → MemTable (in-memory sorted)
 - Predictable latency
 - p99 latency 5-10x lower
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Major reason** Discord, Comcast, и других **migrated** Cassandra → Scylla.
 
 ## Q15. Workload prioritization?
@@ -457,12 +373,6 @@ Background analytics: 20% resources
 
 **Use case:** mixed workloads (OLTP + reporting) на одном cluster без impact.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 В Cassandra нет native equivalent — обычно separate clusters.
 
 ## Q16. (!) Cassandra drop-in replacement — насколько true?
@@ -482,12 +392,6 @@ ScyllaDB **highly compatible**:
 - Tuning parameters differ
 - Versions diverge over time
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Best practice:** test thoroughly. Use **Scylla Migration Tools**.
 
 ## Q17. (!) DynamoDB API (Alternator)?
@@ -507,12 +411,6 @@ table.put_item(Item={'PK': 'user#123', 'name': 'Alice'})
 - Run DynamoDB workloads on-premise / multi-cloud
 - Cheaper than DynamoDB at scale
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 В **2025** — viable alternative для apps already designed для DynamoDB.
 
 ## Q18. (!) Когда выбрать Scylla?
@@ -525,12 +423,6 @@ table.put_item(Item={'PK': 'user#123', 'name': 'Alice'})
 - Mixed workloads need isolation
 - IoT, time-series, ad-tech (typical Cassandra use cases)
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Не выбирай когда:**
 - Need full SQL (joins, aggregations, transactions)
 - Smaller scale (PostgreSQL достаточен)
@@ -556,12 +448,6 @@ CREATE TABLE sensor_data (
   AND compaction = {'class': 'TimeWindowCompactionStrategy', 'compaction_window_size': '1', 'compaction_window_unit': 'DAYS'};
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **TWCS** auto-compacts старые data efficiently. Old SSTables можно drop через TTL.
 
 ## Q20. IoT?
@@ -574,12 +460,6 @@ IoT = millions of devices sending data continuously.
 - Geo-distributed (multi-DC)
 - Auto-expire с TTL
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Adopters:** Comcast, Tubi, Discord, Numberly.
 
 ## Q21. (!) Open Source vs Enterprise vs ScyllaDB Cloud?
@@ -601,12 +481,6 @@ IoT = millions of devices sending data continuously.
 - Auto backups
 - Pay-as-you-go
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 В **2025** — Open Source отлично для most workloads. Enterprise для security/compliance heavy.
 
 ## Q22. (!) Migration Cassandra → Scylla?
@@ -623,12 +497,6 @@ IoT = millions of devices sending data continuously.
 
 **Зачастую** **transparent для app** — same CQL.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Tools:** Scylla Migrator, sstableloader, custom CDC.
 
 ## Q23. Какие частые проблемы Scylla в production?
@@ -650,12 +518,6 @@ IoT = millions of devices sending data continuously.
 
 ## See also
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 - [Apache Cassandra](cassandra-interview.md) — original same data model
 - [PostgreSQL](postgresql-interview.md) — для сравнения
 - [MongoDB](mongodb-interview.md) — alternative NoSQL

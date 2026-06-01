@@ -80,12 +80,6 @@ updated: "2026-04-25"
 - Having VPN access
 - Being on company laptop
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Каждый interaction** verified independently.
 
 ## Q2. (!) Perimeter security vs Zero Trust?
@@ -106,12 +100,6 @@ Internet → Firewall → Internal Network → Trusted (everything inside)
 - Каждое connection authenticated/authorized
 - **Lateral movement** prevented by default
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Why shift:**
 - Cloud (no perimeter)
 - Remote work (employees outside network)
@@ -123,12 +111,6 @@ Internet → Firewall → Internal Network → Trusted (everything inside)
 
 **Core principles (NIST 800-207):**
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 1. **All resources accessed regardless of location** require authentication
 2. **All communications secured** regardless of network
 3. **Access granted на per-session basis** (not permanent)
@@ -151,12 +133,6 @@ Internet → Firewall → Internal Network → Trusted (everything inside)
 - **Service** (microservice)
 - **Workload** (pod, container)
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Each identity:**
 - Strong authentication (MFA, certificates)
 - Granular authorization (least privilege)
@@ -181,12 +157,6 @@ WebApp → API Service → Database (allowed via API)
 - **Cloud security groups** (granular)
 - **Software-defined perimeter (SDP)**
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Effect:** breach of one service → limited blast radius.
 
 ## Q6. Policy Decision Point / Enforcement Point?
@@ -207,12 +177,6 @@ User → PEP (gateway) → PDP (policy engine) → "allowed"
 PEP allows or denies based on PDP response.
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Examples:**
 - **OPA (Open Policy Agent)** — popular PDP
 - **API Gateway** — common PEP
@@ -237,12 +201,6 @@ PEP allows or denies based on PDP response.
 - ID management
 - SIEM
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **All combined** для context-aware access decisions.
 
 ## Q8. (!) Google BeyondCorp model?
@@ -259,12 +217,6 @@ PEP allows or denies based on PDP response.
 
 **Result:** Google employees work from anywhere, securely.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Inspired:** entire Zero Trust industry. Most ZTNA products mimic BeyondCorp.
 
 ## Q9. (!) Identity Provider (IdP) role?
@@ -286,12 +238,6 @@ PEP allows or denies based on PDP response.
 - **Conditional access** policies
 - **OIDC / SAML protocols**
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Foundation Zero Trust:** without strong identity, can't implement.
 
 ## Q10. (!) mTLS as Zero Trust foundation?
@@ -308,12 +254,6 @@ PEP allows or denies based on PDP response.
 
 **Vault PKI** — issues short-lived certs.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 Подробнее — в [mTLS](mtls-interview.md).
 
 ## Q11. Service mesh roles (Istio, Linkerd)?
@@ -347,12 +287,6 @@ spec:
 # Then explicit allows
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 Подробнее — [Istio](../devops/istio-service-mesh-interview.md), [Linkerd](../devops/linkerd-interview.md).
 
 ## Q12. (!) ZTNA vs VPN?
@@ -371,12 +305,6 @@ spec:
 
 **ZTNA scope:** application-level access, not network-level.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Adoption:** ZTNA growing rapidly, VPN declining.
 
 ## Q13. ZTNA vendors (Cloudflare, Zscaler, Palo Alto)?
@@ -400,12 +328,6 @@ spec:
 - WireGuard-based
 - SMB / startups popular
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Choice:** depends на scale, budget, existing vendor relationships.
 
 ## Q14. (!) Implementing Zero Trust — где starting point?
@@ -437,12 +359,6 @@ spec:
 - SIEM integration
 - Continuous verification
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Years-long journey.** Start small, expand.
 
 ## Q15. Continuous verification?
@@ -461,12 +377,6 @@ spec:
 - Reduced blast radius
 - Stronger guarantees
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Tools:** UEBA (User Entity Behavior Analytics), risk-based authentication.
 
 ## Q16. Device posture?
@@ -487,22 +397,10 @@ Unhealthy device → limited access (read-only, no sensitive data)
 Compromised device → block
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **MDM (Mobile Device Management)** integrates с IdP для posture data.
 
 ## Q17. (!) Какие частые ошибки при adoption?
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 1. **Buying "Zero Trust product"** thinking it solves all
 2. **Big-bang approach** (boil the ocean — never finishes)
 3. **Identity foundation weak** (no MFA, no SSO)
@@ -530,12 +428,6 @@ Compromised device → block
 - Performance overhead (auth checks per request)
 - Complex troubleshooting
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Pays off** для large orgs или regulated industries (financial, healthcare).
 
 ## Q19. (!) Zero Trust для service-to-service?
@@ -578,12 +470,6 @@ Compromised device → block
 - [Kubernetes](../devops/kubernetes-interview.md) — NetworkPolicies
 - [Authentication & Authorization](authentication-authorization-patterns-interview.md)
 
-
-> [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
-> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 - [Application Security](application-security-interview.md)
 - [Authentication and Authorization Patterns](authentication-authorization-patterns-interview.md)
 - [JWT](jwt-interview.md)

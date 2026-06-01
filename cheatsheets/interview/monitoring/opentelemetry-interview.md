@@ -96,13 +96,6 @@ updated: "2026-04-25"
 
 **Цель:** **standardize** instrumentation — пишешь один раз, отправляешь куда угодно.
 
-
-> [!mcq]
-> - [ ] OpenTelemetry — это APM-tool вроде Datadog или New Relic | ❌ ПОСЛЕДСТВИЕ: OTel — стандарт API/SDK для инструментации, НЕ backend; backend — Jaeger, Tempo, Datadog, etc.; путаница приводит к ошибкам выбора инструментов
-> - [ ] OTel поддерживает только Java и Go — нет SDK для Python/Node | ❌ ПОСЛЕДСТВИЕ: OTel имеет official SDK для 11+ языков (Java, Go, Python, Node.js, .NET, Ruby, PHP, Rust, etc.); ограничивать выбор стека из-за неверного убеждения
-> - [ ] OTel — proprietary продукт от Google, не open source | ❌ ПОСЛЕДСТВИЕ: OTel — CNCF graduated project (vendor-neutral), Google один из contributors; восприятие как proprietary блокирует adoption
-> - [x] OTel — vendor-neutral CNCF стандарт инструментации (traces/metrics/logs); один SDK → любой backend через config | ✓ ПРИМЕНЯТЬ: новые проекты с опасением vendor lock-in; миграция между APM 📋 ПРАВИЛО: OTel = standardize instrumentation, vendor-agnostic 🔗 См. Q2
-
 ## Q2. (!) Зачем OTel вместо vendor SDK?
 
 **Vendor-specific SDK (Datadog, New Relic):**
@@ -119,13 +112,6 @@ updated: "2026-04-25"
 - Can send к multiple backends parallel
 
 **В 2025** — большинство vendors **support OTel input** (Datadog, NewRelic accept OTLP). OTel выиграл standards war.
-
-
-> [!mcq]
-> - [ ] Vendor SDK быстрее в разработке — выбирать его всегда | ❌ ПОСЛЕДСТВИЕ: при смене vendor (Datadog→Grafana stack) переписывание всей instrumentation; OTel позволяет переключиться через config без code changes
-> - [ ] OTel требует переписывания приложения с нуля для интеграции | ❌ ПОСЛЕДСТВИЕ: OTel auto-instrumentation (Java agent, Python instrumentation libraries) добавляется без изменений кода; миф препятствует adoption
-> - [x] OTel = single instrumentation, multi-backend через config; нет vendor lock-in; стандарт API across languages | ✓ ПРИМЕНЯТЬ: фирмы с multi-cloud, миграцией APM, или unsure о vendor 📋 ПРАВИЛО: OTel = write once, send anywhere 🔗 См. Q1
-> - [ ] OTel не поддерживается major vendors типа Datadog | ❌ ПОСЛЕДСТВИЕ: в 2025 Datadog/NewRelic/Splunk/Honeycomb принимают OTLP input; устаревшее представление о vendor support
 
 ## Q3. (!) Three pillars: traces, metrics, logs?
 
@@ -146,13 +132,6 @@ updated: "2026-04-25"
 
 В 2025 — **traces + metrics** mature, **logs** растёт.
 
-
-> [!mcq]
-> - [ ] OTel поддерживает только traces, metrics и logs реализуются отдельно | ❌ ПОСЛЕДСТВИЕ: все три pillars (traces+metrics+logs) — часть OTel; logs стали stable в 2024; разделение приведёт к дублирующим инструментам
-> - [ ] Метрики в OTel — это только counters, нет histogram/gauge | ❌ ПОСЛЕДСТВИЕ: OTel поддерживает Counter, UpDownCounter, Gauge, Histogram, ObservableCounter; ограничение даст плохое представление performance (без percentiles)
-> - [ ] Logs в OTel ещё experimental, не использовать в production | ❌ ПОСЛЕДСТВИЕ: OTel logs stable с 2024; устаревшее знание блокирует унификацию observability
-> - [x] Three pillars: Traces (request paths), Metrics (counter/gauge/histogram), Logs (events); все в одном SDK | ✓ ПРИМЕНЯТЬ: complete observability stack через единый OTel SDK 📋 ПРАВИЛО: traces + metrics + logs = full picture 🔗 См. Q5
-
 ## Q4. История (OpenTracing + OpenCensus = OpenTelemetry)?
 
 **OpenTracing** (2016) — спецификация tracing API. Ранний стандарт.
@@ -163,13 +142,6 @@ updated: "2026-04-25"
 **OpenTelemetry** (2019) — merge OpenTracing + OpenCensus. Backed by **CNCF + большинство major vendors** (Google, Microsoft, AWS, Datadog, Splunk, ...).
 
 В **2025** — OpenTracing и OpenCensus **deprecated**. OTel — единственный mainstream standard.
-
-
-> [!mcq]
-> - [ ] OpenTracing и OpenCensus всё ещё активно развиваются параллельно с OTel | ❌ ПОСЛЕДСТВИЕ: оба deprecated в 2025; начало нового проекта на OpenTracing/OpenCensus = технический долг с первого дня
-> - [ ] OpenTelemetry — это просто rebranding OpenTracing без изменений | ❌ ПОСЛЕДСТВИЕ: OTel = merge OpenTracing + OpenCensus + новый SDK; API несовместим напрямую; миграция требует переписывания
-> - [x] OTel (2019) = merge OpenTracing (tracing) + OpenCensus (metrics); CNCF graduated; победил в standards war | ✓ ПРИМЕНЯТЬ: миграция legacy OpenTracing/OpenCensus → OTel; новые проекты сразу на OTel 📋 ПРАВИЛО: OTel = OpenTracing + OpenCensus + Logs 🔗 См. Q1
-> - [ ] OTel создавали только Google и Microsoft без участия других vendor | ❌ ПОСЛЕДСТВИЕ: OTel поддерживается ВСЕМИ major vendors (Datadog, Splunk, AWS, Honeycomb, NewRelic); это broad CNCF coalition
 
 ## Q5. (!) Components: API, SDK, Collector?
 
@@ -184,13 +156,6 @@ updated: "2026-04-25"
 **Зачем split API/SDK:**
 - App code только зависит от API (минимальная dependency)
 - SDK можно swap (different sampling, exporting)
-
-
-> [!mcq]
-> - [ ] API и SDK — одна сущность, разделение на компоненты бессмысленно | ❌ ПОСЛЕДСТВИЕ: разделение позволяет app зависеть только от API (минимальная dependency); SDK можно swap без изменения app code
-> - [ ] Collector обязателен — без него OTel не работает | ❌ ПОСЛЕДСТВИЕ: Collector опционален: SDK может слать напрямую в backend (Direct Export); Collector нужен для batching, multi-backend fanout, central config
-> - [x] API (instrumentation interface) + SDK (implementation, batching, export) + Collector (central process для receive/process/export) | ✓ ПРИМЕНЯТЬ: app зависит от API; SDK + Collector через OTLP 📋 ПРАВИЛО: API stable; SDK swappable; Collector = optional centralizer 🔗 См. Q6
-> - [ ] Collector — это просто прокси без какой-либо обработки данных | ❌ ПОСЛЕДСТВИЕ: Collector делает sampling, filtering, batching, transformation, multi-backend fanout; восприятие как proxy недооценивает функционал
 
 ## Q6. (!) OTel Collector — что и зачем?
 
@@ -217,13 +182,6 @@ graph LR
 - **Agent** — sidecar / DaemonSet рядом с apps
 - **Gateway** — separate cluster, central
 - **Both** — Agent → Gateway
-
-
-> [!mcq]
-> - [ ] Collector используется только в Kubernetes — на VM не работает | ❌ ПОСЛЕДСТВИЕ: Collector — обычный binary; работает на VM, bare metal, containers, Lambda; миф ограничивает архитектурный выбор
-> - [ ] Прямая отправка телеметрии в backend всегда лучше Collector | ❌ ПОСЛЕДСТВИЕ: без Collector каждое app должно знать про каждый backend; смена backend = редеплой всех services; Collector decouples app от backend
-> - [x] Collector decouples apps от backends, делает sampling/filter/batch централизованно; modes: Agent (sidecar) или Gateway (cluster-wide) | ✓ ПРИМЕНЯТЬ: production deployment с multi-backend, централизованной конфигурацией 📋 ПРАВИЛО: Collector = central pipeline; Agent + Gateway = best practice 🔗 См. Q5
-> - [ ] Collector работает только в режиме Agent (sidecar) — Gateway невозможен | ❌ ПОСЛЕДСТВИЕ: Collector поддерживает Agent (per-app sidecar/DaemonSet) И Gateway (centralized cluster) modes; ограничение режима снижает архитектурную гибкость
 
 ## Q7. Receiver, Processor, Exporter в Collector?
 
@@ -272,13 +230,6 @@ service:
 
 **Pipelines** — соединяют receivers → processors → exporters.
 
-
-> [!mcq]
-> - [ ] Receiver и Exporter — синонимы, разделение искусственное | ❌ ПОСЛЕДСТВИЕ: Receiver принимает (server-side: OTLP server), Exporter отправляет (client-side: к Jaeger); путаница приведёт к неверной конфигурации pipeline
-> - [ ] Processor нельзя пропустить — обязателен в каждом pipeline | ❌ ПОСЛЕДСТВИЕ: processors опциональны (массив может быть пустой); хотя в production всегда нужен memory_limiter + batch для надёжности
-> - [x] Receiver (input: OTLP/Jaeger/Prometheus) → Processor (batch/filter/sampler) → Exporter (output: Jaeger/Prom/Loki); pipelines связывают трёх | ✓ ПРИМЕНЯТЬ: настройка Collector через service.pipelines в YAML 📋 ПРАВИЛО: Receiver→Processor→Exporter pipeline 🔗 См. Q6
-> - [ ] Один pipeline может обрабатывать только один signal type (только traces ИЛИ metrics) | ❌ ПОСЛЕДСТВИЕ: Collector разрешает несколько pipelines (traces, metrics, logs) одновременно с разными receivers/exporters; ограничение одним signal избыточно
-
 ## Q8. Agent vs Gateway deployment?
 
 **Agent (per-host):**
@@ -296,13 +247,6 @@ service:
 **Best practice:** **Agent + Gateway** combined:
 - Agent: local buffering, basic processing
 - Gateway: complex processing, fanout к backends
-
-
-> [!mcq]
-> - [ ] Agent всегда лучше Gateway — выбирать только Agent в production | ❌ ПОСЛЕДСТВИЕ: Agent даёт low-latency локально, но не централизует sampling/processing; на масштабе нужна комбинация Agent + Gateway для balance
-> - [ ] Gateway — единственный паттерн, Agent устарел | ❌ ПОСЛЕДСТВИЕ: Agent (DaemonSet/sidecar) даёт local buffering и низкую latency; чисто Gateway создаёт single point of failure
-> - [x] Best practice: Agent (local, low-latency, basic processing) + Gateway (centralized sampling, complex processing, multi-backend fanout) | ✓ ПРИМЕНЯТЬ: production K8s deployment с тысячами pods 📋 ПРАВИЛО: Agent для local, Gateway для central, оба для prod 🔗 См. Q6
-> - [ ] Sidecar Collector в Kubernetes увеличивает overhead и его нельзя использовать | ❌ ПОСЛЕДСТВИЕ: sidecar pattern — стандартный для OTel; overhead минимален; миф приведёт к direct export в backend без буферизации
 
 ## Q9. (!) Auto vs manual instrumentation?
 
@@ -334,13 +278,6 @@ try (Scope scope = span.makeCurrent()) {
 
 **Best practice:** **auto** для infrastructure (HTTP, DB), **manual** для business logic (key operations).
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. (!) Java auto-instrumentation (javaagent)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **Java agent** — JVM agent, instrumentates bytecode at startup.
 
 ```bash
@@ -367,13 +304,6 @@ java -javaagent:opentelemetry-javaagent.jar -jar app.jar
 - 100+ libraries
 
 **Без code changes!** Just attach agent.
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. Manual spans? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 ```java
 import io.opentelemetry.api.trace.Tracer;
@@ -405,13 +335,6 @@ try (Scope scope = span.makeCurrent()) {
 - Record exceptions
 - Set status (OK / ERROR)
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. Span attributes, events? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **Attributes** — key-value pairs (как tags). Static info про span.
 
 ```java
@@ -431,13 +354,6 @@ span.addEvent("Slow query detected", Attributes.of(
 
 **Standard attributes** — следуй [Semantic Conventions](https://opentelemetry.io/docs/specs/semconv/) для interoperability.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. (!) Trace, span, span context? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **Trace** — collection of spans for one request.
 
 **Span** — single operation (HTTP call, DB query, function call).
@@ -456,13 +372,6 @@ Trace 0123456789abcdef0123456789abcdef
 │       └── Span: SELECT FROM accounts
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. (!) Context propagation (W3C Trace Context)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **Context propagation** — passing trace context между services через HTTP headers.
 
 **W3C Trace Context** (standard 2020):
@@ -479,13 +388,6 @@ Headers:
 OTel SDKs **automatically** inject/extract при HTTP calls (with auto-instrumentation).
 
 **For async** (Kafka): inject context в message headers, extract в consumer.
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. Sampling — head vs tail? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 **Не каждый** request нужно trace (cost). Sampling.
 
@@ -518,13 +420,6 @@ processors:
 
 **Best practice 2025:** tail sampling для **production** apps с high traffic.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q16. (!) Metric instruments (Counter, Gauge, Histogram)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **Counter** — monotonically increasing.
 ```java
 LongCounter requests = meter.counterBuilder("http.requests")
@@ -552,13 +447,6 @@ latency.record(245.5, Attributes.of(...));
 
 **Histogram** даёт percentiles (p50, p95, p99) на backend.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q17. Aggregation, push vs pull? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **Push** — SDK sends metrics к backend periodically.
 - OTLP push к Collector
 - Collector → backend
@@ -572,13 +460,6 @@ latency.record(245.5, Attributes.of(...));
 
 **Aggregation periods:** how often metrics aggregated (default 60 sec).
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q18. Exemplars (linking metrics к traces)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **Exemplar** — sample trace ID attached к metric data point.
 
 ```
@@ -591,13 +472,6 @@ Histogram bucket: 1000-2000ms
 Bridging metrics → traces. Powerful debugging.
 
 Supported в Prometheus, Tempo, Datadog.
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q19. (!) OTel Logs — статус? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 **Logs** — newest pillar. **Stable since 2024** в OTel.
 
@@ -613,13 +487,6 @@ logger.info("Processing order {}", orderId);
 
 В **2025** — adoption растёт, но Logs всё ещё **более immature** чем traces/metrics.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q20. Log correlation с traces? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **Correlation** — log entry contains trace_id + span_id.
 
 ```
@@ -634,13 +501,6 @@ logger.info("Processing order {}", orderId);
 **OTel auto-correlates** при использовании Log Bridge.
 
 В **Datadog, Honeycomb, NewRelic** — UI links logs ↔ traces автоматически.
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q21. (!) Какие backends поддерживают OTel? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 **Open-source:**
 - **Jaeger** — traces
@@ -665,13 +525,6 @@ logger.info("Processing order {}", orderId);
 
 В **2025** — practically **все** observability vendors accept OTLP. Standard wars завершены.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q22. OTLP — wire protocol? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **OTLP (OpenTelemetry Protocol)** — wire format для transmission телеметрии.
 
 **Two transport options:**
@@ -694,13 +547,6 @@ exporters:
 
 OTLP — standard. Все vendor backends accept it.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q23. (!) Можно ли менять backend без code change? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **Да!** Это main value OTel.
 
 ```bash
@@ -722,13 +568,6 @@ exporters:
 
 Это **революционный shift** vs vendor SDK era.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q24. (!) Semantic conventions? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **Semantic Conventions** — standard names для attributes.
 
 ```
@@ -747,13 +586,6 @@ service.version = "1.2.3"
 
 **Manual:** import standard attribute keys из OTel package (`SemanticAttributes.HTTP_METHOD`).
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q25. Resource attributes? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **Resource** — info про **источник** телеметрии (service, host, container).
 
 ```yaml
@@ -771,13 +603,6 @@ deployment.environment: production
 
 **В K8s:** OTel resource detector auto-fills from K8s API.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q26. Что включить в traces (избежать noise)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 **Включай:**
 - HTTP requests (auto)
 - DB queries (auto)
@@ -794,13 +619,6 @@ deployment.environment: production
 
 **Sampling** для high-volume operations.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q27. (!) Какие частые проблемы OTel в production? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 1. **High overhead** — instrumentation eats 5-10% CPU. Sample aggressively.
 2. **Network costs** — sending все spans expensive. Use Collector batching.
 3. **Storage costs** — backends (Datadog, etc.) charge per ingested data.
@@ -809,13 +627,6 @@ deployment.environment: production
 6. **Different vendors handle differently** — даже OTLP-compatible имеют quirks.
 7. **Auto-instrumentation conflicts** — несколько agents fighting.
 8. **Versioning** — SDK / Agent / API version mismatches.
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q28. Cost optimization для OTel? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 1. **Sampling** — head + tail
 2. **Drop unnecessary spans** в Collector (filter processor)
@@ -847,12 +658,6 @@ deployment.environment: production
 - [Application Profiling](../performance/application-profiling-interview.md) — alternative для perf
 - [Spring Boot Actuator](../frameworks/spring/spring-boot-actuator-interview.md) — Actuator + OTel
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [ELK Stack](elk-stack-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 - [Jaeger и Zipkin](jaeger-zipkin-interview.md)
 - [Стратегии логирования](logging-strategies-interview.md)
 - [Loki и Grafana](loki-grafana-interview.md)
