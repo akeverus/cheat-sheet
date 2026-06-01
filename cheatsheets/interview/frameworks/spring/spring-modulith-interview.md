@@ -63,6 +63,8 @@ Spring Modulith — библиотека для построения **моду�
 **Модульный монолит** — один деплоируемый артефакт, но с явными границами между модулями, изоляцией и верифицируемыми зависимостями. Переходный шаг между монолитом и микросервисами.
 
 
+## Q2. Как Spring Modulith определяет модуль?
+
 Каждый **top-level пакет** рядом с классом, аннотированным `@SpringBootApplication`, — это отдельный модуль.
 
 ```
@@ -79,6 +81,8 @@ com.example.shop
 Классы в `internal/` недоступны другим модулям — это нарушение, которое `verify()` обнаружит.
 
 
+## Q3. Как проверить соблюдение архитектурных правил Spring Modulith в CI?
+
 ```java
 @Test
 void modulesAreCompliant() {
@@ -92,6 +96,8 @@ void modulesAreCompliant() {
 
 При нарушении выбрасывает исключение с описанием проблемы. Рекомендуется запускать как часть CI.
 
+
+## Q4. Как модули в Spring Modulith должны взаимодействовать между собой?
 
 Модули взаимодействуют **только через публичный API** (интерфейсы и классы не в `internal/`) и через **Spring Application Events** — без прямых вызовов через `internal/`.
 
@@ -120,12 +126,16 @@ public class InventoryListener {
 ```
 
 
+## Q5. Что такое @ApplicationModuleListener и чем отличается от @EventListener?
+
 `@ApplicationModuleListener` — составная аннотация:
 - `@TransactionalEventListener(phase = AFTER_COMMIT)` — обработка после успешного коммита транзакции.
 - `@Async` — выполнение в отдельном потоке.
 
 Это предотвращает выполнение побочных эффектов в рамках основной транзакции и повышает изоляцию модулей. Обычный `@EventListener` выполняется синхронно в той же транзакции.
 
+
+## Q6. Как работает персистентность событий в Spring Modulith?
 
 ```xml
 <dependency>
@@ -144,6 +154,8 @@ spring:
 
 Это даёт **гарантию доставки at-least-once** внутри монолита без внешнего брокера.
 
+
+## Q7. Как тестировать отдельный модуль Spring Modulith в изоляции?
 
 ```java
 @ApplicationModuleTest
@@ -164,6 +176,8 @@ class OrderModuleTests {
 `@ApplicationModuleTest` загружает только бины текущего модуля. Зависимости от других модулей автоматически мокируются.
 
 
+## Q8. Какие режимы bootstrap существуют в @ApplicationModuleTest?
+
 | Режим | Что загружается |
 |-------|-----------------|
 | `STANDALONE` | Только текущий модуль (по умолчанию) |
@@ -175,6 +189,8 @@ class OrderModuleTests {
 class OrderIntegrationTests { ... }
 ```
 
+
+## Q9. Что такое Scenarios API и для чего он нужен?
 
 Scenarios API — высокоуровневый DSL для интеграционного тестирования взаимодействия модулей через события:
 
@@ -197,6 +213,8 @@ class OrderScenarios {
 Удобен для тестирования асинхронных сценариев с `@ApplicationModuleListener`.
 
 
+## Q10. Как визуализировать зависимости между модулями?
+
 ```java
 // Вывод в консоль
 ApplicationModules modules = ApplicationModules.of(ShopApplication.class);
@@ -217,6 +235,8 @@ new Documenter(modules)
 ```
 
 
+## Q11. Когда использовать Spring Modulith, а когда — микросервисы?
+
 **Spring Modulith подходит, если:**
 - Команда небольшая (2–10 разработчиков) и работает над одним деплоем.
 - Хочется явных границ без накладных расходов микросервисов (сети, независимого деплоя, распределённых транзакций).
@@ -228,6 +248,8 @@ new Documenter(modules)
 - Изоляция данных на уровне БД (разные схемы или БД).
 
 
+## Q12. Как Spring Modulith облегчает переход к микросервисам?
+
 Модуль → микросервис:
 - Публичный API модуля становится REST/gRPC контрактом.
 - `ApplicationEvents` → Kafka/RabbitMQ-сообщения.
@@ -236,6 +258,8 @@ new Documenter(modules)
 
 Spring Modulith облегчает этот переход: границы чёткие с самого начала, нет сюрпризов при декомпозиции.
 
+
+## Q13. Что такое Named Interface в Spring Modulith и зачем он нужен?
 
 По умолчанию публичный API модуля — всё в корне пакета. Named Interface позволяет явно объявить несколько точек входа:
 
@@ -246,6 +270,8 @@ package com.example.shop.order.api;
 
 Другие модули могут зависеть только от конкретного named interface, а не от всего модуля. Полезно для больших модулей с разными аспектами (API, events, config).
 
+
+## Q14. Как включить Spring Modulith в существующий Spring Boot проект?
 
 1. Добавить зависимость `spring-modulith-starter-core`.
 2. Запустить `ApplicationModules.of(App.class).verify()` — получить список нарушений.
@@ -260,7 +286,6 @@ package com.example.shop.order.api;
 Spring Modulith реализует концепцию **Bounded Context** из DDD на уровне пакетов Java. Каждый модуль = bounded context с публичным API и изолированной реализацией.
 
 Hexagonal Architecture: `internal/` — адаптеры и реализации; публичный API модуля — порты. Spring Modulith не навязывает конкретную внутреннюю структуру, но хорошо сочетается с Hexagonal.
-
 
 ## See also
 
