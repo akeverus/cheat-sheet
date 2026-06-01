@@ -35,7 +35,7 @@
   --color-status-success:     #2E6B45;
   --color-status-success-on:  #FFFFFF;
   --color-status-success-wash:#E3EEE5;
-  --color-status-warning:     #9A6B00;
+  --color-status-warning:     #7A5400;
   --color-status-error:       #B3261E;
   --color-status-error-on:    #FFFFFF;
   --color-status-error-wash:  #F4E0DE;
@@ -73,6 +73,7 @@
 
   --rule-weight: 1px;
   --rule-weight-strong: 2px;
+  --rule-weight-accent: 3px;
   --measure: 68ch;
   --measure-narrow: 60ch;
   --drop-cap-size: 3.2em;
@@ -346,7 +347,7 @@ html[data-design="editorial"] pre {
   border-radius: var(--border-radius-md);
   border: var(--rule-weight) solid var(--color-border-primary);
   overflow-x: auto;
-  line-height: 1.55;
+  line-height: var(--line-height-normal);
   font-size: var(--font-size-sm);
 }
 
@@ -371,7 +372,6 @@ html[data-design="editorial"] ::selection {
 html[data-design="editorial"] :focus-visible {
   outline: 2px solid var(--color-border-focus);
   outline-offset: 2px;
-  border-radius: var(--border-radius-sm);
 }
 html[data-design="editorial"] :focus:not(:focus-visible) { outline: none; }
 
@@ -581,7 +581,7 @@ html[data-design="editorial"] .sr-only {
   gap: var(--space-4);
   flex-wrap: wrap;
 }
-.ed-masthead-brand { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ed-masthead-brand { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
 .ed-masthead-kicker { color: var(--color-accent-primary); }
 .ed-masthead-title {
   margin: 0;
@@ -640,9 +640,10 @@ html[data-design="editorial"] .ed-masthead-title {
   padding: var(--space-1) var(--space-2);
   border: var(--rule-weight) solid var(--color-border-primary);
   border-radius: var(--border-radius-sm);
-  min-height: 36px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
+  touch-action: manipulation;
 }
 .ed-nav-export:hover { color: var(--color-accent-primary); border-color: var(--color-accent-primary); }
 
@@ -681,7 +682,7 @@ html[data-design="editorial"] .ed-masthead-title {
 
 /* Трек прозрачен в покое (при 0% не рисует вторую линию под шапкой); виден только
    тонкий accent-fill при активной сессии. box-shadow:none гасит старый .progress-bar glow. */
-.ed-masthead-progress { height: 2px; width: 100%; background: transparent; border: 0; }
+.ed-masthead-progress { height: 2px; width: 100%; max-width: var(--max-width-page); margin: 0 auto; padding: 0 var(--space-5); box-sizing: border-box; background: transparent; border: 0; }
 .ed-masthead-progress-fill { height: 100%; width: 0; background: var(--color-accent-primary); box-shadow: none; border-radius: 0; transition: width var(--duration-slow) var(--easing-out); }
 
 .ed-noscript {
@@ -775,7 +776,6 @@ html[data-design="editorial"] .focus-question {
 
 /* Код-блок */
 html[data-design="editorial"] .question-code-wrap { margin-bottom: var(--space-5); }
-html[data-design="editorial"] #codeBlock.hidden, html[data-design="editorial"] .hidden { display: none; }
 html[data-design="editorial"] #codeBlock pre { margin-top: var(--space-3); }
 
 /* Варианты MCQ — editorial-строки с буквенным маркером */
@@ -853,18 +853,18 @@ html[data-design="editorial"] .option-explanation {
   font-size: var(--font-size-base);
   line-height: var(--line-height-relaxed);
   padding: var(--space-3) var(--space-4);
-  border-radius: var(--border-radius-sm);
+  border-radius: var(--border-radius-md);
   margin-top: var(--space-3);
 }
 html[data-design="editorial"] .explanation-correct {
   background: var(--color-status-success-wash);
   color: var(--color-text-primary);
-  border-left: 3px solid var(--color-status-success);
+  border-left: var(--rule-weight-accent) solid var(--color-status-success);
 }
 html[data-design="editorial"] .explanation-wrong {
   background: var(--color-bg-tertiary);
   color: var(--color-text-secondary);
-  border-left: 3px solid var(--color-text-tertiary);
+  border-left: var(--rule-weight-accent) solid var(--color-text-tertiary);
 }
 html[data-design="editorial"] .explanation-correct strong { color: var(--color-status-success); }
 html[data-design="editorial"] .explanation-wrong strong { color: var(--color-text-primary); }
@@ -891,11 +891,11 @@ html[data-design="editorial"] .flashcard-reveal-btn {
   cursor: pointer; touch-action: manipulation; text-transform: none;
   transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default), opacity var(--duration-fast) var(--easing-default);
 }
-html[data-design="editorial"] .focus-page #interview-submit:hover,
-html[data-design="editorial"] .flashcard-reveal-btn:hover { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); color: var(--color-accent-on); }
+html[data-design="editorial"] .focus-page #interview-submit:hover:not(:disabled),
+html[data-design="editorial"] .flashcard-reveal-btn:hover:not(:disabled) { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); color: var(--color-accent-on); }
 html[data-design="editorial"] .focus-page #interview-submit:disabled,
 html[data-design="editorial"] .focus-page #interview-submit.is-disabled {
-  background: var(--color-bg-tertiary); color: var(--color-text-tertiary);
+  background: var(--color-bg-tertiary); color: var(--color-text-secondary);
   border-color: var(--color-border-primary); opacity: 1; cursor: not-allowed;
 }
 
@@ -916,18 +916,18 @@ html[data-design="editorial"] #extra-analysis-toggle {
   text-decoration: none; cursor: pointer; touch-action: manipulation;
   transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
 }
-html[data-design="editorial"] .btn:hover,
-html[data-design="editorial"] .secondary-btn:hover,
+html[data-design="editorial"] .btn:hover:not(:disabled),
+html[data-design="editorial"] .secondary-btn:hover:not(:disabled),
 html[data-design="editorial"] .next-btn:hover,
-html[data-design="editorial"] #toggle-code-btn:hover,
-html[data-design="editorial"] #extra-analysis-toggle:hover { background: var(--color-bg-tertiary); border-color: var(--color-text-secondary); }
+html[data-design="editorial"] #toggle-code-btn:hover:not(:disabled),
+html[data-design="editorial"] #extra-analysis-toggle:hover:not(:disabled) { background: var(--color-bg-tertiary); border-color: var(--color-text-secondary); }
 html[data-design="editorial"] .next-btn { background: var(--color-accent-primary); color: var(--color-accent-on); border-color: var(--color-accent-primary); }
 html[data-design="editorial"] .next-btn:hover { background: var(--color-accent-primary-hover); color: var(--color-accent-on); }
 
 html[data-design="editorial"] .question-timer { font-family: var(--font-family-mono); font-size: var(--font-size-sm); color: var(--color-text-secondary); }
 /* text-secondary, не tertiary: 12px mono на фоне страницы должен держать AA 4.5:1
    (tertiary давал 3.5 — провал). */
-html[data-design="editorial"] .keyboard-hint { font-family: var(--font-family-mono); font-size: var(--font-size-xs); color: var(--color-text-secondary); margin: var(--space-3) 0 0; letter-spacing: 0.02em; }
+html[data-design="editorial"] .keyboard-hint { font-family: var(--font-family-mono); font-size: var(--font-size-xs); color: var(--color-text-secondary); margin: var(--space-3) 0 0; }
 
 /* Флешкарта. Старый styles.css даёт центрирование, лавандовые пилюли и
    well-панель — приводим к editorial (плоский eyebrow, тёплая панель ответа). */
@@ -946,7 +946,7 @@ html[data-design="editorial"] .flashcard-answer { margin-top: var(--space-5); te
 html[data-design="editorial"] .answer {
   background: var(--color-bg-secondary);
   border: var(--rule-weight) solid var(--color-border-primary);
-  border-left: 3px solid var(--color-accent-primary);
+  border-left: var(--rule-weight-accent) solid var(--color-accent-primary);
   border-radius: var(--border-radius-md);
   padding: var(--space-4) var(--space-5);
   margin-top: var(--space-3);
@@ -971,9 +971,16 @@ html[data-design="editorial"] .flashcard-grade-btn {
   cursor: pointer; touch-action: manipulation;
   transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
 }
-html[data-design="editorial"] .flashcard-grade-btn:hover { border-color: var(--color-text-secondary); background: var(--color-bg-tertiary); }
-html[data-design="editorial"] .flashcard-grade-btn.grade-1:hover { border-color: var(--color-status-error); background: var(--color-status-error-wash); }
-html[data-design="editorial"] .flashcard-grade-btn.grade-4:hover { border-color: var(--color-status-success); background: var(--color-status-success-wash); }
+html[data-design="editorial"] .flashcard-grade-btn:hover:not(:disabled) { border-color: var(--color-text-secondary); background: var(--color-bg-tertiary); }
+html[data-design="editorial"] .flashcard-grade-btn.grade-1:hover:not(:disabled) { border-color: var(--color-status-error); background: var(--color-status-error-wash); }
+html[data-design="editorial"] .flashcard-grade-btn.grade-4:hover:not(:disabled) { border-color: var(--color-status-success); background: var(--color-status-success-wash); }
+/* Единый disabled-аффорданс для focus-кнопок без спец-правила (#interview-submit
+   имеет своё на L896). app.js навешивает [disabled] на grade/reveal/toggle. */
+html[data-design="editorial"] .flashcard-reveal-btn:disabled,
+html[data-design="editorial"] .flashcard-grade-btn:disabled,
+html[data-design="editorial"] #toggle-code-btn:disabled,
+html[data-design="editorial"] #extra-analysis-toggle:disabled,
+html[data-design="editorial"] #extra-analysis-toggle-result:disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
 
 /* Reading-блок ответа/markdown */
 html[data-design="editorial"] .markdown-content { max-width: var(--measure); font-size: var(--font-size-md); line-height: var(--line-height-relaxed); }
@@ -1002,12 +1009,12 @@ html[data-design="editorial"] .result-wrong {
 html[data-design="editorial"] .result-correct {
   background: var(--color-status-success-wash);
   border-color: var(--color-status-success);
-  border-left: 3px solid var(--color-status-success);
+  border-left: var(--rule-weight-accent) solid var(--color-status-success);
 }
 html[data-design="editorial"] .result-wrong {
   background: var(--color-status-error-wash);
   border-color: var(--color-status-error);
-  border-left: 3px solid var(--color-status-error);
+  border-left: var(--rule-weight-accent) solid var(--color-status-error);
 }
 html[data-design="editorial"] .result-correct > strong,
 html[data-design="editorial"] .result-wrong > strong {
@@ -1070,7 +1077,7 @@ html[data-design="editorial"] .settings-page .control-section {
   border-top: var(--rule-weight) solid var(--color-border-primary);
 }
 html[data-design="editorial"] .settings-page #left-sidebar-filters { padding-top: 0; border-top: 0; }
-html[data-design="editorial"] .settings-page .control-section-tips { border-top: 0; padding-top: var(--space-4); }
+html[data-design="editorial"] .settings-page .control-section-tips { border-top: 0; padding-top: var(--space-6); }
 html[data-design="editorial"] .settings-page .control-title {
   font-family: var(--font-family-display);
   font-size: var(--font-size-xl); font-weight: var(--font-weight-semibold);
@@ -1082,7 +1089,7 @@ html[data-design="editorial"] .settings-page .control-inline-hint {
 
 /* Поля */
 html[data-design="editorial"] .settings-page .filters-fields { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-bottom: var(--space-4); }
-html[data-design="editorial"] .settings-page .field { display: flex; flex-direction: column; align-items: stretch; text-align: left; gap: var(--space-2); margin-bottom: var(--space-4); }
+html[data-design="editorial"] .settings-page .field { display: flex; flex-direction: column; align-items: stretch; text-align: left; gap: var(--space-2); margin-bottom: var(--space-4); min-width: 0; }
 html[data-design="editorial"] .settings-page .field-inline { max-width: 220px; align-items: flex-start; }
 html[data-design="editorial"] .settings-page .field-label {
   font-family: var(--font-family-mono); font-size: var(--font-size-xs);
@@ -1090,7 +1097,7 @@ html[data-design="editorial"] .settings-page .field-label {
 }
 html[data-design="editorial"] .settings-page select,
 html[data-design="editorial"] .settings-page input[type="number"] {
-  width: 100%; min-height: 44px; padding: var(--space-2) var(--space-3);
+  width: 100%; max-width: 100%; min-height: 44px; padding: var(--space-2) var(--space-3);
   font-family: var(--font-family-body); font-size: 16px;
   color: var(--color-text-primary); background: var(--color-bg-secondary);
   border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-sm);
@@ -1105,6 +1112,13 @@ html[data-design="editorial"] .settings-page select {
 html[data-design="editorial"] .settings-page select:focus,
 html[data-design="editorial"] .settings-page input[type="number"]:focus {
   outline: none; border-color: var(--color-border-focus); box-shadow: var(--shadow-focus);
+}
+/* Disabled-состояние селектов (app.js вешает .is-disabled-control). background-color,
+   не background — сохраняет custom dropdown-arrow; opacity гасит стрелку и текст вместе. */
+html[data-design="editorial"] .settings-page select:disabled,
+html[data-design="editorial"] .stats-page select:disabled,
+html[data-design="editorial"] .is-disabled-control {
+  opacity: 0.5; cursor: not-allowed; background-color: var(--color-bg-tertiary);
 }
 
 /* Переключатели */
@@ -1353,7 +1367,7 @@ html[data-design="editorial"] .stats-page .accuracy-low { color: var(--color-sta
 /* бейджи */
 html[data-design="editorial"] .stats-page .regen-badge,
 html[data-design="editorial"] .stats-page .maturity-badge {
-  display: inline-block; min-width: 28px; padding: 2px var(--space-2);
+  display: inline-block; min-width: 28px; padding: 0.15em var(--space-2);
   font-family: var(--font-family-mono); font-size: var(--font-size-xs);
   border-radius: var(--border-radius-sm); border: var(--rule-weight) solid var(--color-border-primary);
   color: var(--color-text-secondary); background: var(--color-bg-tertiary);
@@ -1526,7 +1540,7 @@ html[data-design="editorial"] .summary-page .summary-mistake-item {
   display: block; padding: var(--space-4);
   border: var(--rule-weight) solid var(--color-border-secondary); border-radius: var(--border-radius-md);
   text-decoration: none; color: inherit;
-  border-left: 3px solid var(--color-status-error);
+  border-left: var(--rule-weight-accent) solid var(--color-status-error);
   transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
 }
 html[data-design="editorial"] .summary-page .summary-mistake-item:hover { background: var(--color-bg-tertiary); border-left-color: var(--color-accent-primary); }
@@ -1655,7 +1669,8 @@ html[data-design="editorial"] .result-page .stat-item {
   background: transparent; border: 0; border-right: var(--rule-weight) solid var(--color-border-secondary);
   padding: 0 var(--space-4); text-align: center;
 }
-html[data-design="editorial"] .result-page .stat-value { font-family: var(--font-family-display); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); }
+html[data-design="editorial"] .result-page .stat-item:last-child { border-right: 0; }
+html[data-design="editorial"] .result-page .stat-value { font-family: var(--font-family-display); font-size: var(--font-size-xl); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); }
 html[data-design="editorial"] .result-page .stat-label { font-family: var(--font-family-mono); font-size: var(--font-size-xs); letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-secondary); }
 html[data-design="editorial"] .result-page .session-bar {
   display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4);
@@ -1664,7 +1679,7 @@ html[data-design="editorial"] .result-page .session-bar {
 html[data-design="editorial"] .result-page .session-bar strong { color: var(--color-text-primary); }
 /* .btn-finish: старый styles.css даёт white-on-white (невидимо на light) — чиним. */
 html[data-design="editorial"] .result-page .btn-finish {
-  display: inline-flex; align-items: center; min-height: 36px; padding: var(--space-1) var(--space-4);
+  display: inline-flex; align-items: center; min-height: 44px; padding: var(--space-1) var(--space-4); touch-action: manipulation;
   font-family: var(--font-family-body); font-size: var(--font-size-sm); font-weight: var(--font-weight-medium);
   background: transparent; color: var(--color-status-error);
   border: var(--rule-weight) solid var(--color-status-error); border-radius: var(--border-radius-md);
@@ -1677,7 +1692,7 @@ html[data-design="editorial"] .result-page .question-header { display: flex; ali
 html[data-design="editorial"] .result-page .question-header h2 {
   font-family: var(--font-family-display); font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-2xl); line-height: var(--line-height-tight);
-  color: var(--color-text-primary); margin: 0; flex: 1 1 60%; text-wrap: balance;
+  color: var(--color-text-primary); margin: 0; flex: 1 1 60%; min-width: 0; overflow-wrap: break-word; text-wrap: balance;
 }
 html[data-design="editorial"] .result-page .question-meta { display: inline-flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
 html[data-design="editorial"] .result-page .topic-badge {
@@ -1691,9 +1706,10 @@ html[data-design="editorial"] .result-page .btn-favorite,
 html[data-design="editorial"] .result-page .btn-regenerate {
   background: transparent; border: 0; color: var(--color-text-tertiary); cursor: pointer;
   font-size: var(--font-size-md); line-height: 1; padding: var(--space-1);
+  min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center;
 }
 html[data-design="editorial"] .result-page .btn-favorite.active { color: var(--color-accent-primary); }
-html[data-design="editorial"] .result-page .regen-badge { font-family: var(--font-family-mono); font-size: var(--font-size-xs); color: var(--color-text-tertiary); }
+html[data-design="editorial"] .result-page .regen-badge { font-family: var(--font-family-mono); font-size: var(--font-size-xs); color: var(--color-text-secondary); }
 
 /* Вердикт. Эмодзи ✅/❌ + слово несут смысл (не только цвет). */
 html[data-design="editorial"] .result-page .status {
@@ -1779,7 +1795,7 @@ html[data-design="editorial"] .result-page .related-question-item {
   font-family: var(--font-family-body); font-size: var(--font-size-base);
   color: var(--color-text-primary); text-decoration: none; background: transparent;
   border: var(--rule-weight) solid var(--color-border-secondary); border-radius: var(--border-radius-md);
-  border-left: 3px solid var(--color-accent-primary);
+  border-left: var(--rule-weight-accent) solid var(--color-accent-primary);
   transition: background var(--duration-fast) var(--easing-default);
 }
 html[data-design="editorial"] .result-page .related-question-item:hover { background: var(--color-bg-tertiary); }
