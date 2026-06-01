@@ -26,6 +26,25 @@
     return parts[parts.length - 1].replace(/-interview$/, '');
   }
 
+  // Читаем editorial-токены темы с :root, чтобы графики были читаемы в обеих
+  // темах (по умолчанию Chart.js рисует оси тёмно-серым — невидимо на тёмном фоне).
+  function themePalette() {
+    var cs = getComputedStyle(document.documentElement);
+    function tok(name, fallback) {
+      var v = cs.getPropertyValue(name);
+      return v && v.trim() ? v.trim() : fallback;
+    }
+    return {
+      text: tok('--color-text-secondary', '#5A5145'),
+      grid: tok('--color-border-secondary', 'rgba(0,0,0,0.08)'),
+      learned: tok('--color-status-success', '#2E6B45'),
+      remaining: tok('--color-text-tertiary', '#8A8073'),
+      accHigh: tok('--color-status-success', '#2E6B45'),
+      accMid: tok('--color-status-warning', '#9A6B00'),
+      accLow: tok('--color-status-error', '#B3261E')
+    };
+  }
+
   function initCharts() {
     var topicStats = getTopicStats();
     if (topicStats.length === 0) return;
@@ -70,63 +89,89 @@
       .sort(function (a, b) { return a.accuracy - b.accuracy || b.attempts - a.attempts; })
       .slice(0, MAX_BARS);
 
-    var commonOpts = {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
-      scales: {
-        x: { ticks: { maxRotation: 60, font: { size: 10 } } },
-        y: { beginAtZero: true }
-      }
-    };
-
     var el1 = document.getElementById('topicProgressChart');
-    if (el1 && typeof Chart !== 'undefined' && progressData.length > 0) {
-      try {
-        new Chart(el1, {
-        type: 'bar',
-        data: {
-          labels: progressData.map(function (t) { return t.name; }),
-          datasets: [
-            { label: 'Выучено', data: progressData.map(function (t) { return t.learned; }), backgroundColor: 'rgba(34,197,94,0.6)', borderRadius: 3 },
-            { label: 'Осталось', data: progressData.map(function (t) { return Math.max(0, t.total - t.learned); }), backgroundColor: 'rgba(148,163,184,0.35)', borderRadius: 3 }
-          ]
-        },
-        options: { scales: { x: Object.assign({}, commonOpts.scales.x, { stacked: true }), y: Object.assign({}, commonOpts.scales.y, { stacked: true }) }, responsive: commonOpts.responsive, maintainAspectRatio: commonOpts.maintainAspectRatio, plugins: commonOpts.plugins }
-        });
-      } catch (_) {
-        showChartFallback(el1, progressFallback, 'Не удалось отрисовать график прогресса. Используй таблицу ниже.');
+    var el2 = document.getElementById('topicAccuracyChart');
+    var charts = [];
+
+    // Полная перерисовка под текущую тему: уничтожаем старые инстансы, читаем
+    // свежие токены, строим заново. Вызывается на старте и при смене темы.
+    function render() {
+      var p = themePalette();
+      charts.forEach(function (c) { try { c.destroy(); } catch (_) {} });
+      charts = [];
+
+      var commonOpts = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, color: p.text, font: { size: 11 } } } },
+        scales: {
+          x: { ticks: { maxRotation: 60, color: p.text, font: { size: 10 } }, grid: { color: p.grid }, border: { color: p.grid } },
+          y: { beginAtZero: true, ticks: { color: p.text }, grid: { color: p.grid }, border: { color: p.grid } }
+        }
+      };
+
+      if (el1 && typeof Chart !== 'undefined' && progressData.length > 0) {
+        el1.classList.remove('hidden');
+        if (progressFallback) progressFallback.classList.add('hidden');
+        try {
+          charts.push(new Chart(el1, {
+            type: 'bar',
+            data: {
+              labels: progressData.map(function (t) { return t.name; }),
+              datasets: [
+                { label: 'Выучено', data: progressData.map(function (t) { return t.learned; }), backgroundColor: p.learned, borderRadius: 3 },
+                { label: 'Осталось', data: progressData.map(function (t) { return Math.max(0, t.total - t.learned); }), backgroundColor: p.remaining, borderRadius: 3 }
+              ]
+            },
+            options: { scales: { x: Object.assign({}, commonOpts.scales.x, { stacked: true }), y: Object.assign({}, commonOpts.scales.y, { stacked: true }) }, responsive: commonOpts.responsive, maintainAspectRatio: commonOpts.maintainAspectRatio, plugins: commonOpts.plugins }
+          }));
+        } catch (_) {
+          showChartFallback(el1, progressFallback, 'Не удалось отрисовать график прогресса. Используй таблицу ниже.');
+        }
+      } else if (el1 && typeof Chart !== 'undefined') {
+        showChartFallback(el1, progressFallback, 'Пока нет активных тем. Начни отвечать — и здесь появится твой прогресс.');
+      } else {
+        showChartFallback(el1, progressFallback, 'График прогресса недоступен в текущем окружении. Используй таблицу ниже.');
       }
-    } else if (el1 && typeof Chart !== 'undefined') {
-      showChartFallback(el1, progressFallback, 'Пока нет активных тем. Начни отвечать — и здесь появится твой прогресс.');
-    } else {
-      showChartFallback(el1, progressFallback, 'График прогресса недоступен в текущем окружении. Используй таблицу ниже.');
+
+      if (el2 && typeof Chart !== 'undefined' && accuracyData.length > 0) {
+        el2.classList.remove('hidden');
+        if (accuracyFallback) accuracyFallback.classList.add('hidden');
+        try {
+          var accVals = accuracyData.map(function (t) { return t.accuracy; });
+          charts.push(new Chart(el2, {
+            type: 'bar',
+            data: {
+              labels: accuracyData.map(function (t) { return t.name; }),
+              datasets: [{
+                label: 'Точность %',
+                data: accVals,
+                backgroundColor: accVals.map(function (v) { return v >= 80 ? p.accHigh : v >= 50 ? p.accMid : p.accLow; }),
+                borderRadius: 3
+              }]
+            },
+            options: { scales: { x: commonOpts.scales.x, y: Object.assign({}, commonOpts.scales.y, { max: 100 }) }, responsive: commonOpts.responsive, maintainAspectRatio: commonOpts.maintainAspectRatio, plugins: commonOpts.plugins }
+          }));
+        } catch (_) {
+          showChartFallback(el2, accuracyFallback, 'Не удалось отрисовать график точности. Используй таблицу ниже.');
+        }
+      } else if (el2 && typeof Chart !== 'undefined') {
+        showChartFallback(el2, accuracyFallback, 'Пока нет отвеченных вопросов. Ответь на несколько — и увидишь точность по темам.');
+      } else {
+        showChartFallback(el2, accuracyFallback, 'График точности недоступен в текущем окружении. Используй таблицу ниже.');
+      }
     }
 
-    var el2 = document.getElementById('topicAccuracyChart');
-    if (el2 && typeof Chart !== 'undefined' && accuracyData.length > 0) {
-      try {
-        var accVals = accuracyData.map(function (t) { return t.accuracy; });
-        new Chart(el2, {
-        type: 'bar',
-        data: {
-          labels: accuracyData.map(function (t) { return t.name; }),
-          datasets: [{
-            label: 'Точность %',
-            data: accVals,
-            backgroundColor: accVals.map(function (v) { return v >= 80 ? 'rgba(34,197,94,0.6)' : v >= 50 ? 'rgba(234,179,8,0.6)' : 'rgba(239,68,68,0.6)'; }),
-            borderRadius: 3
-          }]
-        },
-        options: { scales: { x: commonOpts.scales.x, y: Object.assign({}, commonOpts.scales.y, { max: 100 }) }, responsive: commonOpts.responsive, maintainAspectRatio: commonOpts.maintainAspectRatio, plugins: commonOpts.plugins }
-        });
-      } catch (_) {
-        showChartFallback(el2, accuracyFallback, 'Не удалось отрисовать график точности. Используй таблицу ниже.');
-      }
-    } else if (el2 && typeof Chart !== 'undefined') {
-      showChartFallback(el2, accuracyFallback, 'Пока нет отвеченных вопросов. Ответь на несколько — и увидишь точность по темам.');
-    } else {
-      showChartFallback(el2, accuracyFallback, 'График точности недоступен в текущем окружении. Используй таблицу ниже.');
+    render();
+
+    // Перерисовать графики при ручном переключении темы (data-theme на <html>),
+    // иначе оси/легенда остаются в цветах прежней темы до перезагрузки.
+    if (typeof MutationObserver !== 'undefined') {
+      var lastTheme = document.documentElement.getAttribute('data-theme');
+      new MutationObserver(function () {
+        var t = document.documentElement.getAttribute('data-theme');
+        if (t !== lastTheme) { lastTheme = t; render(); }
+      }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     }
   }
 
