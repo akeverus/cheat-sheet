@@ -862,6 +862,10 @@ html[data-design="editorial"] .next-btn,
 html[data-design="editorial"] #toggle-code-btn,
 html[data-design="editorial"] #extra-analysis-toggle {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  /* width:auto гасит протёкший .secondary-btn{width:100%} из styles.css —
+     editorial-кнопки по умолчанию shrink-to-content чипы (full-width задаём
+     точечно: мобилки/самодостаточные сабмиты). */
+  width: auto;
   min-height: 44px; padding: var(--space-2) var(--space-5);
   font-family: var(--font-family-body); font-size: var(--font-size-base); font-weight: var(--font-weight-medium);
   background: transparent; color: var(--color-text-primary);
@@ -1467,4 +1471,94 @@ html[data-design="editorial"] .summary-page .summary-recommendation-item { color
 @media (max-width: 600px) {
   html[data-design="editorial"] .summary-page .summary-actions .btn { width: 100%; }
   html[data-design="editorial"] .summary-page .summary-score-value { font-size: var(--font-size-3xl); }
+}
+
+/* =============================================================================
+   C7 — Страница ошибки (.error-page). Editorial-статусная страница 404/403/5xx.
+   Центрированная композиция: mono-eyebrow, призрачный Fraunces-номер статуса,
+   сериф-заголовок, reading-тело, dev-подробности (details), действия-чипы.
+   Старый styles.css даёт .error-card как карточку с тенью/лавандой — приводим
+   к плоской editorial-композиции (объявляем фон/границу/цвет явно). ========== */
+html[data-design="editorial"] .error-page .ed-page { max-width: 760px; }
+
+html[data-design="editorial"] .error-page .error-card {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  background: transparent; border: 0; box-shadow: none; border-radius: 0;
+  padding: var(--space-9) var(--space-4) var(--space-8); margin: 0;
+}
+
+html[data-design="editorial"] .error-page .error-eyebrow {
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
+  color: var(--color-accent-primary); margin: 0 0 var(--space-4);
+}
+
+/* Призрачный крупный номер статуса — декоративная типографика, не цвет-смысл. */
+html[data-design="editorial"] .error-page .error-code {
+  font-family: var(--font-family-display); font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-4xl); line-height: 1; letter-spacing: var(--letter-spacing-tight);
+  color: var(--color-text-tertiary);
+  /* гасим возможный градиент/заливку из styles.css */
+  background: none; -webkit-text-fill-color: currentColor;
+  margin: 0 0 var(--space-2);
+}
+
+html[data-design="editorial"] .error-page .error-title {
+  font-family: var(--font-family-display); font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-2xl); line-height: var(--line-height-tight);
+  color: var(--color-text-primary); margin: 0 0 var(--space-4);
+}
+
+html[data-design="editorial"] .error-page .error-body {
+  font-family: var(--font-family-body); font-size: var(--font-size-md);
+  line-height: var(--line-height-relaxed); color: var(--color-text-secondary);
+  max-width: 56ch; margin: 0 0 var(--space-6);
+}
+
+/* Подробности для разработчика — слева, mono, приглушённо. */
+html[data-design="editorial"] .error-page .error-details {
+  width: 100%; max-width: 56ch; text-align: left; margin: 0 0 var(--space-7);
+  border: var(--rule-weight) solid var(--color-border-secondary); border-radius: var(--border-radius-md);
+  background: var(--color-bg-secondary);
+}
+html[data-design="editorial"] .error-page .error-details summary {
+  cursor: pointer; padding: var(--space-3) var(--space-4);
+  font-family: var(--font-family-mono); font-size: var(--font-size-sm);
+  color: var(--color-text-secondary); list-style: none;
+}
+html[data-design="editorial"] .error-page .error-details summary::-webkit-details-marker { display: none; }
+html[data-design="editorial"] .error-page .error-details summary::before {
+  content: "▸ "; color: var(--color-text-tertiary);
+}
+html[data-design="editorial"] .error-page .error-details[open] summary::before { content: "▾ "; }
+html[data-design="editorial"] .error-page .error-details[open] summary {
+  border-bottom: var(--rule-weight) solid var(--color-border-secondary);
+}
+html[data-design="editorial"] .error-page .error-meta {
+  display: grid; grid-template-columns: auto 1fr; gap: var(--space-2) var(--space-4);
+  margin: 0; padding: var(--space-4);
+}
+html[data-design="editorial"] .error-page .error-meta dt {
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
+  color: var(--color-text-tertiary); margin: 0;
+}
+html[data-design="editorial"] .error-page .error-meta dd {
+  margin: 0; font-size: var(--font-size-sm); color: var(--color-text-primary);
+  word-break: break-word;
+}
+html[data-design="editorial"] .error-page .error-meta code {
+  font-family: var(--font-family-mono); font-size: var(--font-size-sm);
+  background: var(--color-bg-tertiary); padding: 0.1em 0.4em; border-radius: var(--border-radius-sm);
+  color: var(--color-text-primary);
+}
+
+html[data-design="editorial"] .error-page .error-actions {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3);
+}
+
+@media (max-width: 600px) {
+  html[data-design="editorial"] .error-page .error-card { padding: var(--space-7) var(--space-3) var(--space-6); }
+  html[data-design="editorial"] .error-page .error-actions { width: 100%; }
+  html[data-design="editorial"] .error-page .error-actions .btn { width: 100%; }
 }
