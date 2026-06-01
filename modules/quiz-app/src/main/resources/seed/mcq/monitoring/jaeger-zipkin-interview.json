@@ -1,0 +1,1385 @@
+{
+  "topic_slug": "jaeger-zipkin-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое distributed tracing (распределённая трассировка)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Distributed tracing` — отслеживание одного запроса по мере его прохождения через множество сервисов: каждый шаг (`HTTP`-вызов, запрос в БД) фиксируется как `span`, а все `span` одного запроса объединяются в `trace` по общему `trace_id`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Запрос вида `User → API Gateway → Service A → Service B → Database` порождает цепочку span'ов; трасса показывает, где время теряется и где запрос упал, восстанавливая полный путь по сети.",
+                "example": "Запрос `GET /orders/123` за 200 мс: span `SELECT FROM orders` 15 мс, span `POST /payment` 170 мс — сразу видно, что узкое место в платёжном вызове.",
+                "when_to_apply": "Применяют в микросервисах, когда логи отдельных сервисов не дают цельной картины: нужно найти bottleneck, точку отказа или построить карту зависимостей.",
+                "edge_cases": "Если context propagation сломан (особенно в async-коде), span'ы теряют связь и трасса разрывается на фрагменты вместо единого дерева.",
+                "related": "[[jaeger-zipkin-interview#Q2]] span, trace, context; [[jaeger-zipkin-interview#Q3]] зачем нужен tracing backend; [[jaeger-zipkin-interview#Q15]] карта зависимостей сервисов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Distributed tracing` — это сбор числовых метрик (CPU, RPS, latency) по каждому сервису и построение временных рядов в `Prometheus`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Числовые временные ряды — это метрики (`Prometheus`), отдельный pillar observability; tracing же отслеживает путь конкретного запроса через сервисы.",
+                "source_of_confusion": "И метрики, и трейсы измеряют latency, поэтому их легко перепутать как «одно и то же про производительность».",
+                "if_it_were_true": "Тогда по метрикам можно было бы восстановить путь конкретного запроса, но агрегаты не хранят связь span'ов в одну трассу.",
+                "how_it_should_be": "Tracing фиксирует каждый запрос как дерево span'ов с `trace_id`, а не агрегированные счётчики по сервису."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Distributed tracing` — это централизованный сбор текстовых логов со всех сервисов в одно хранилище для полнотекстового поиска.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Централизованные логи — это пайплайн вроде `ELK`/`Loki`; tracing структурирует данные как span'ы с причинно-следственными связями, а не строки логов.",
+                "source_of_confusion": "Логи тоже собираются со всех сервисов, поэтому tracing путают с агрегацией логов.",
+                "if_it_were_true": "Тогда по логам можно было бы автоматически построить timeline span'ов, но логи не несут `parent_span_id` и duration по умолчанию.",
+                "how_it_should_be": "Tracing связывает шаги запроса через `trace_id`/`span_id` в дерево, а логи — это отдельный pillar, который удобно коррелировать по `trace_id`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Distributed tracing` — это нагрузочное тестирование, при котором генерируется множество параллельных запросов для поиска предела пропускной способности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Генерация нагрузки — это load testing (`k6`, `JMeter`); tracing лишь наблюдает за реальными запросами, не создавая их.",
+                "source_of_confusion": "И то, и другое помогает находить узкие места по производительности, отсюда смешение понятий.",
+                "if_it_were_true": "Тогда включение трассировки само создавало бы трафик на сервисы, но трассировка только инструментирует существующие запросы.",
+                "how_it_should_be": "Tracing пассивно записывает путь запросов как span'ы; нагрузочное тестирование — отдельный инструмент генерации трафика."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое span, trace и context — кратко напомните?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Span` — это все операции одного запроса целиком, `trace` — одна отдельная операция внутри него, а `context` — это UI-вкладка в `Jaeger` для просмотра деталей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Определения перепутаны: `trace` — это весь запрос целиком, а `span` — одна отдельная операция; `context` — это не UI, а набор идентификаторов.",
+                "source_of_confusion": "Термины `span` и `trace` звучат похоже и легко меняются местами при беглом пересказе.",
+                "if_it_were_true": "Тогда один span содержал бы много trace'ов, но иерархия обратная: trace содержит дерево span'ов.",
+                "how_it_should_be": "`Trace` — весь запрос (общий `trace_id`), `span` — одна операция, `context` — идентификаторы для propagation."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Trace` — все span'ы одного запроса, связанные общим `trace_id`. `Span` — одна операция (`HTTP`-вызов, запрос в БД, функция) с timestamp, duration, attributes, events, status. `Context` — набор идентификаторов: `trace_id`, `span_id`, `parent_span_id` и sampling decision, передаваемых между сервисами.",
+              "correct": true,
+              "sections": {
+                "explanation": "Span'ы образуют дерево: root-span `GET /orders/123` (200 мс) содержит дочерние span'ы запросов к БД и платёжному сервису, а `parent_span_id` хранит связь родитель-потомок.",
+                "example": "Trace `abc123`: root `GET /orders/123` → `SELECT FROM orders` (15 мс), `SELECT FROM users` (10 мс), `POST /payment` (170 мс) → `SELECT FROM accounts` (5 мс).",
+                "when_to_apply": "Эти понятия используют при инструментировании кода и при чтении trace view: span'ы дают latency breakdown, context обеспечивает связность между сервисами.",
+                "edge_cases": "Если `context` не передан в исходящий запрос (забыли пробросить заголовки), дочерний сервис стартует новый trace и связь с родителем теряется.",
+                "related": "[[jaeger-zipkin-interview#Q1]] что такое distributed tracing; [[jaeger-zipkin-interview#Q23]] потеря span'ов из-за сломанного context propagation; [[jaeger-zipkin-interview#Q14]] как span'ы отображаются в trace view."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Trace` и `span` — это синонимы для одной и той же операции, а `context` — это конфигурационный файл sampling-стратегий на стороне `Collector`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Trace и span — разные уровни (целый запрос vs одна операция), а `context` — это не конфиг, а runtime-набор идентификаторов запроса.",
+                "source_of_confusion": "В разговорной речи «трейс» иногда называют любой span, отсюда ошибочное отождествление.",
+                "if_it_were_true": "Тогда у запроса был бы только один span без иерархии, но реальный trace — это дерево из множества span'ов.",
+                "how_it_should_be": "`Trace` — весь запрос, `span` — его шаг, `context` — `trace_id`/`span_id`/sampling decision, переносимые с запросом."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Span` хранит только имя операции без времени, `trace` — это просто счётчик количества запросов, а `context` нужен лишь для логов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Span хранит timestamp, duration, attributes, events и status; trace — это набор связанных span'ов, а не счётчик; context переносит идентификаторы, не только для логов.",
+                "source_of_confusion": "Кажется, что span — лёгкая запись «что вызвали», поэтому из него мысленно убирают тайминги.",
+                "if_it_were_true": "Тогда нельзя было бы построить timeline и найти медленный шаг, но именно duration делает trace полезным.",
+                "how_it_should_be": "Span несёт длительность и атрибуты, trace объединяет их в дерево, context обеспечивает propagation между сервисами."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужен tracing backend?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Tracing backend нужен для того, чтобы генерировать span'ы внутри приложения — без него приложение не умеет создавать трассы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Span'ы генерирует само приложение через SDK (`OpenTelemetry`, Jaeger client); backend нужен, чтобы их принять, сохранить и показать.",
+                "source_of_confusion": "Backend и SDK оба относятся к tracing, поэтому ответственность за генерацию span'ов ошибочно приписывают backend'у.",
+                "if_it_were_true": "Тогда без backend'а приложение вообще не создавало бы span'ов, но оно их создаёт и теряет в памяти при рестарте.",
+                "how_it_should_be": "Приложение генерирует span'ы, а backend их receive/store/query/visualize — это разделение ответственности."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Tracing backend нужен только для алертинга: он сам по себе шлёт уведомления при превышении порогов latency без дополнительных инструментов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Jaeger` сам не имеет встроенного алертинга — для оповещений нужны метрики (`Prometheus`) поверх трейсов; backend отвечает за хранение и визуализацию.",
+                "source_of_confusion": "Backend показывает latency, поэтому кажется логичным, что он и алертит по нему.",
+                "if_it_were_true": "Тогда не пришлось бы строить отдельный pipeline метрик для алертов, но на практике это частая проблема Jaeger.",
+                "how_it_should_be": "Backend принимает, индексирует, хранит и отдаёт span'ы; алертинг строят отдельно поверх метрик."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Приложения генерируют span'ы, и их нужно где-то хранить, искать и визуализировать. Tracing backend делает receive (через `OTLP`, Jaeger Thrift, Zipkin HTTP), index для быстрого поиска (по `trace_id`, сервису, времени), store в базе (`Cassandra`, `Elasticsearch`, `ClickHouse`), предоставляет query API и UI. Без backend span'ы остаются в памяти приложения и теряются при рестарте.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без хранилища трассировка бесполезна: span'ы живут только в RAM процесса и исчезают при перезапуске, поэтому нужен внешний долговременный store с индексом для поиска.",
+                "example": "`Jaeger Collector` принимает span'ы по `OTLP`, пишет их в `Elasticsearch`, а `Jaeger Query` + UI позволяют найти трассу по `trace_id` через минуты после запроса.",
+                "when_to_apply": "Backend разворачивают, как только нужно сохранять трассы между рестартами и искать их по сервису/времени — то есть практически в любом production-сетапе.",
+                "edge_cases": "In-memory storage (default у Zipkin и Jaeger memory) удобен для dev, но теряет данные при рестарте и не годится для production.",
+                "related": "[[jaeger-zipkin-interview#Q1]] что такое distributed tracing; [[jaeger-zipkin-interview#Q6]] storage backends; [[jaeger-zipkin-interview#Q5]] архитектура Jaeger (Collector, Query, UI)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Tracing backend нужен исключительно для хранения текстовых логов приложений; span'ы хранятся в самом приложении отдельно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tracing backend хранит именно span'ы/трассы, а не логи; логи — отдельный pipeline (`ELK`, `Loki`), хотя их и коррелируют по `trace_id`.",
+                "source_of_confusion": "Логи и трейсы — оба сигналы observability, поэтому их хранилища путают.",
+                "if_it_were_true": "Тогда span'ы не пропадали бы при рестарте приложения, но без backend'а они теряются именно потому, что лежат в памяти.",
+                "how_it_should_be": "Backend принимает и хранит span'ы, индексирует их и отдаёт через UI; логи обслуживает отдельная система."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Jaeger?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Jaeger` — это библиотека инструментирования для `Java`, аналог `Brave`, которая добавляет span'ы в код, но не имеет собственного backend и UI.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Jaeger` — это полноценная tracing-платформа с Collector, Query, UI и storage, а не только клиентская библиотека инструментирования.",
+                "source_of_confusion": "У Jaeger есть и клиентские SDK, поэтому его иногда сводят к одной лишь библиотеке вроде `Brave` у Zipkin.",
+                "if_it_were_true": "Тогда у Jaeger не было бы своего UI с service map, но именно богатый UI — одна из его сильных сторон.",
+                "how_it_should_be": "Jaeger — это backend-платформа (приём, хранение, query, UI), а инструментирование сейчас делают через `OpenTelemetry`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Jaeger` — проприетарный SaaS для трассировки от `Datadog`, доступный только по платной подписке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Jaeger` — open-source проект (CNCF graduated), который можно self-host бесплатно; платный SaaS — это, например, `Datadog APM`.",
+                "source_of_confusion": "Jaeger часто сравнивают с коммерческими APM вроде Datadog, отсюда ошибочный вывод о платности.",
+                "if_it_were_true": "Тогда нельзя было бы развернуть Jaeger у себя в кластере, но именно self-host — его основной сценарий.",
+                "how_it_should_be": "Jaeger — бесплатный open-source CNCF-проект; SaaS-альтернативы (Datadog, Honeycomb) — отдельная категория."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Jaeger` — система сбора метрик от `Uber`, конкурент `Prometheus`, хранящая числовые временные ряды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Jaeger` — система distributed tracing (span'ы и трассы), а не метрик; конкурент `Prometheus` в мире метрик — это другие TSDB.",
+                "source_of_confusion": "И Jaeger, и Prometheus родом из мира наблюдаемости и часто упоминаются вместе, отсюда путаница доменов.",
+                "if_it_were_true": "Тогда Jaeger хранил бы временные ряды, но он хранит span'ы с trace_id и иерархией.",
+                "how_it_should_be": "Jaeger — платформа трассировки; метрики — это домен Prometheus, и они дополняют друг друга, а не заменяют."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Jaeger` — open-source платформа distributed tracing от `Uber` (2017), CNCF graduated project (2019). Вдохновлён статьёй Google Dapper, production-ready, масштабируется до миллионов span'ов/сек, поддерживает несколько storage backends, имеет богатый UI с service maps и интегрированную поддержку `OpenTelemetry`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Jaeger создан в Uber для отладки latency и анализа зависимостей в микросервисах; статус CNCF graduated означает зрелость и широкое production-использование.",
+                "example": "Команда разворачивает Jaeger в `Kubernetes` и через UI находит, что p95 latency растёт из-за медленного `PaymentService`, видя это прямо на service map.",
+                "when_to_apply": "Jaeger выбирают для self-hosted трассировки микросервисов, когда нужны зрелость, масштаб и attribute-based поиск по трассам.",
+                "edge_cases": "На больших объёмах без sampling Jaeger быстро упирается в стоимость storage, а UI начинает тормозить на огромных datasets.",
+                "related": "[[jaeger-zipkin-interview#Q5]] архитектура Jaeger; [[jaeger-zipkin-interview#Q7]] Jaeger v2 с OTel; [[jaeger-zipkin-interview#Q10]] Jaeger vs Zipkin."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова архитектура Jaeger (Agent, Collector, Query, UI)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Jaeger Agent` (DaemonSet на хосте) принимает span'ы от приложений по UDP с низким overhead и форвардит в `Collector`. `Jaeger Collector` принимает span'ы (gRPC, HTTP, `OTLP`), валидирует, обрабатывает и пишет в storage. `Jaeger Query` читает из storage и отдаёт REST/gRPC API. `Jaeger UI` — веб-интерфейс для поиска, просмотра трасс и service map. В Jaeger v2 Agent deprecated — приложения пушат прямо в Collector по `OTLP`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поток данных: `App + SDK → (UDP) Agent → (gRPC) Collector → Storage → Query → UI`; Agent снимает с приложения заботу о доставке, Collector централизует запись, Query отделяет чтение.",
+                "example": "В Kubernetes Agent был DaemonSet'ом рядом с подами, приложение слало span'ы на localhost по UDP, а Collector батчами писал их в `Cassandra`.",
+                "when_to_apply": "Эту схему разбирают при развёртывании Jaeger v1; в v2 (2024+) Agent убирают и настраивают прямой `OTLP`-экспорт в Collector.",
+                "edge_cases": "UDP у Agent теряет span'ы при переполнении буфера без уведомления — это плата за низкий overhead, поэтому в v2 перешли на прямой `OTLP`.",
+                "related": "[[jaeger-zipkin-interview#Q4]] что такое Jaeger; [[jaeger-zipkin-interview#Q7]] Jaeger v2 (Agent deprecated); [[jaeger-zipkin-interview#Q6]] storage backends за Collector."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Архитектура Jaeger состоит из единственного компонента — одного процесса `Jaeger Server`, который и принимает, и хранит, и показывает span'ы, как у Zipkin.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это описание архитектуры Zipkin (единый сервер); Jaeger разделяет роли на Agent, Collector, Query и UI.",
+                "source_of_confusion": "Простота Zipkin (single JAR) подкупает, и её ошибочно переносят на Jaeger.",
+                "if_it_were_true": "Тогда Jaeger нельзя было бы масштабировать приём и чтение независимо, но именно разделение Collector/Query даёт масштабируемость.",
+                "how_it_should_be": "У Jaeger компоненты разделены: Agent/Collector для приёма, Query+UI для чтения, storage отдельно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Jaeger Collector` читает span'ы из storage и отдаёт их в UI, а `Jaeger Query` принимает span'ы от приложений и пишет их в базу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Роли перепутаны: Collector принимает и пишет span'ы, а Query читает из storage для UI.",
+                "source_of_confusion": "Оба компонента работают со storage, поэтому направление потока (write vs read) легко перепутать.",
+                "if_it_were_true": "Тогда запись и чтение шли бы через одни и те же компоненты наоборот, но Jaeger строго разделяет write-path и read-path.",
+                "how_it_should_be": "Collector — это write-path (приём + запись), Query — read-path (чтение для UI)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Jaeger Agent` хранит span'ы постоянно на диске хоста и сам отдаёт их в UI, поэтому Collector и storage не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Agent ничего не хранит — он лишь форвардит span'ы в Collector; долговременное хранение делает storage (`Cassandra`/`ES`), а UI работает через Query.",
+                "source_of_confusion": "Agent живёт на хосте рядом с приложением, отсюда иллюзия, что он же и хранит данные.",
+                "if_it_were_true": "Тогда span'ы не терялись бы при рестарте без backend'а, но без Collector+storage они не сохраняются.",
+                "how_it_should_be": "Agent — лёгкий форвардер; хранение — задача storage за Collector, а отдача — задача Query+UI."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие storage backends поддерживает Jaeger (Cassandra, Elasticsearch, Kafka)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Kafka` в Jaeger используется как постоянное долговременное хранилище трасс вместо `Cassandra` или `Elasticsearch`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Kafka` в Jaeger — это буфер между Collector и storage, а не permanent store; постоянное хранение делают `Cassandra`/`Elasticsearch`/`ClickHouse`.",
+                "source_of_confusion": "Kafka указан в списке storage-опций Jaeger, отсюда вывод, что он хранит трассы навсегда.",
+                "if_it_were_true": "Тогда не нужна была бы Cassandra/ES за Kafka, но Kafka лишь сглаживает пики записи и не индексирует трассы.",
+                "how_it_should_be": "Kafka — промежуточный буфер; permanent storage — это Cassandra, Elasticsearch или ClickHouse."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Cassandra` — высокая пропускная способность записи и масштабируемость, но сложная эксплуатация. `Elasticsearch`/`OpenSearch` — богатый поиск, но много памяти и дорого. `Kafka` — буфер между Collector и storage (не permanent). `ClickHouse` (Jaeger v2) — быстро и cost-efficient. `Memory` — быстрый старт без setup, но теряет данные при рестарте, только для dev. В production обычно Cassandra или Elasticsearch, в 2025 растёт adoption ClickHouse.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор storage — это компромисс write-throughput / стоимость / богатство поиска: Cassandra тянет запись, ES даёт поиск по атрибутам, ClickHouse выигрывает по цене и скорости.",
+                "example": "Команда с большим объёмом трасс выбирает `Cassandra` за write-throughput, а команда, которой важен поиск по тегам, — `Elasticsearch`, мирясь с расходами на память.",
+                "when_to_apply": "Эти варианты сравнивают при планировании production-кластера Jaeger, исходя из ожидаемого объёма span'ов и требований к поиску.",
+                "edge_cases": "Плохой partition key в Cassandra даёт hot partitions и деградацию, а ES при высокой кардинальности атрибутов теряет производительность.",
+                "related": "[[jaeger-zipkin-interview#Q5]] Collector пишет в storage; [[jaeger-zipkin-interview#Q11]] почему traces дорогие; [[jaeger-zipkin-interview#Q7]] ClickHouse в Jaeger v2."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Единственное поддерживаемое хранилище Jaeger — `PostgreSQL`; все трассы пишутся в реляционную таблицу со строгой схемой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Jaeger не использует `PostgreSQL` как основной store; production-варианты — Cassandra, Elasticsearch, ClickHouse, а для dev — memory.",
+                "source_of_confusion": "Реляционная БД кажется привычным выбором, поэтому её ошибочно записывают в storage Jaeger.",
+                "if_it_were_true": "Тогда Jaeger плохо масштабировался бы на миллионы span'ов/сек, но он специально опирается на NoSQL/columnar store.",
+                "how_it_should_be": "Storage Jaeger — это Cassandra, Elasticsearch/OpenSearch, ClickHouse или memory, а не Postgres."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Memory` storage в Jaeger — это production-grade хранилище с репликацией, рекомендованное для больших кластеров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Memory` теряет данные при рестарте и предназначен только для dev/quick start, а не для production.",
+                "source_of_confusion": "In-memory звучит как «быстро», и скорость путают с пригодностью для production.",
+                "if_it_were_true": "Тогда трассы переживали бы перезапуск пода, но memory-store очищается при каждом рестарте.",
+                "how_it_should_be": "Для production берут Cassandra/ES/ClickHouse; memory — только для локальной разработки и демо."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Jaeger v2 (с OTel)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Jaeger v2 — это просто переименование Jaeger v1 без изменений: тот же Agent, тот же протокол Jaeger Thrift, та же кодовая база.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Jaeger v2 — это major rewrite на базе `OpenTelemetry Collector`, с удалённым Agent и нативным `OTLP`, а не косметический ребрендинг.",
+                "source_of_confusion": "Смена мажорной версии иногда бывает чисто номинальной, поэтому реальный rewrite недооценивают.",
+                "if_it_were_true": "Тогда Agent остался бы на месте, но в v2 он именно deprecated в пользу прямого OTLP-экспорта.",
+                "how_it_should_be": "Jaeger v2 — переписан на OTel Collector framework, без Agent, с OTLP native и ClickHouse storage."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Jaeger v2 — это форк `Zipkin`, который отказался от OpenTelemetry и вернулся к B3-заголовкам как основному протоколу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Jaeger v2 построен на `OpenTelemetry Collector` и делает `OTLP` нативным протоколом, а B3 — это propagation Zipkin, не основа Jaeger v2.",
+                "source_of_confusion": "Jaeger и Zipkin часто сравнивают, отсюда ошибочное представление о форке и B3.",
+                "if_it_were_true": "Тогда v2 отдалялся бы от OTel-экосистемы, но он наоборот целиком встроен в OTel Collector.",
+                "how_it_should_be": "Jaeger v2 — это движение к OTel-стандарту (OTLP native), а не возврат к B3 из мира Zipkin."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Jaeger v2 (2024) — major rewrite на основе `OpenTelemetry Collector`. Ключевые изменения: построен на OTel Collector framework, нет `Jaeger Agent` (deprecated), `OTLP` как native-протокол, проще добавлять receivers/processors/exporters, ClickHouse storage (лучше cost/perf). В 2025 Jaeger v2 — рекомендованный, v1 в maintenance mode.",
+              "correct": true,
+              "sections": {
+                "explanation": "Переезд на OTel Collector делает Jaeger частью общей экосистемы: те же receivers/processors/exporters, что и у любого OTel-пайплайна, плюс нативный OTLP без конвертации.",
+                "example": "В v2 приложение экспортирует span'ы по `OTLP` прямо в Collector без Agent, а хранение настраивается на `ClickHouse` для лучшей цены за тот же объём.",
+                "when_to_apply": "Jaeger v2 выбирают для новых развёртываний в 2025; v1 оставляют только в legacy-сетапах, которые ещё не мигрировали.",
+                "edge_cases": "ClickHouse-интеграция новее и менее обкатана, чем Cassandra/ES, поэтому на самых нагруженных кластерах её внедряют осторожно.",
+                "related": "[[jaeger-zipkin-interview#Q5]] Agent deprecated в v2; [[jaeger-zipkin-interview#Q21]] OTLP в Jaeger; [[jaeger-zipkin-interview#Q6]] ClickHouse как storage."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Jaeger v2 — это enterprise-редакция Jaeger с платной лицензией, в отличие от бесплатного v1.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Jaeger v2 остаётся open-source CNCF-проектом; это технический rewrite на OTel Collector, а не платный enterprise-tier.",
+                "source_of_confusion": "Мажорные версии у коммерческих продуктов иногда означают платный апгрейд, и это переносят на Jaeger.",
+                "if_it_were_true": "Тогда переход на v2 требовал бы лицензии, но он бесплатен и рекомендован для всех.",
+                "how_it_should_be": "v2 — бесплатный open-source rewrite на OTel Collector с OTLP native и ClickHouse, без платных уровней."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Zipkin?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Zipkin` — это backend трассировки от `Uber`, ставший основой для CNCF graduated проекта Jaeger.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Zipkin` создан в `Twitter` (2012), а от `Uber` происходит Jaeger; это разные проекты с разными авторами.",
+                "source_of_confusion": "Jaeger и Zipkin — два главных open-source backend'а, поэтому их авторов путают местами.",
+                "if_it_were_true": "Тогда у Zipkin был бы статус CNCF, но в CNCF graduated именно Jaeger, а не Zipkin.",
+                "how_it_should_be": "Zipkin — от Twitter (2012), Jaeger — от Uber (2017, CNCF graduated); это независимые системы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Zipkin` — это формат заголовков propagation (как W3C Trace Context), а не самостоятельный tracing-backend.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Zipkin` — это backend (сервер + storage + UI); формат заголовков от Zipkin называется `B3`, и это отдельная вещь.",
+                "source_of_confusion": "Zipkin тесно связан с заголовками `B3`, отсюда сведение всего проекта к формату propagation.",
+                "if_it_were_true": "Тогда у Zipkin не было бы своего UI и storage, но они есть — это полноценная система.",
+                "how_it_should_be": "Zipkin — это tracing-система; `B3` — её формат propagation-заголовков, появившийся до W3C Trace Context."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Zipkin` в 2025 — самый активно развивающийся tracing-проект, обогнавший Jaeger по числу новых фич.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В 2025 Zipkin развивается менее активно, чем Jaeger; многие проекты мигрировали на Jaeger/OTel.",
+                "source_of_confusion": "Zipkin исторически был одним из первых, и эту раннюю популярность принимают за текущую активность.",
+                "if_it_were_true": "Тогда новые проекты выбирали бы Zipkin по умолчанию, но рекомендация 2025 — Jaeger или OTel + Tempo/SigNoz.",
+                "how_it_should_be": "Zipkin сейчас менее активен; для новых проектов берут Jaeger/OTel, Zipkin остаётся для legacy."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Zipkin` — open-source tracing-система от `Twitter` (2012), одна из первых популярных систем трассировки. Особенности: простой setup (single JAR), HTTP-based инструментирование, B3 propagation headers (появились до W3C Trace Context). В 2025 разработка менее активна, чем у Jaeger; многие проекты мигрировали на Jaeger/OTel.",
+              "correct": true,
+              "sections": {
+                "explanation": "Zipkin исторически задал многие паттерны трассировки: простой single-JAR сервер и заголовки `B3` (`X-B3-TraceId` и др.), которые предшествовали стандарту W3C Trace Context.",
+                "example": "Java-сервис с библиотекой `Brave` шлёт span'ы по HTTP в Zipkin Server, который из коробки хранит их in-memory и показывает в простом UI.",
+                "when_to_apply": "Zipkin встречают в legacy-системах, поднятых до распространения Jaeger/OTel, и его поддерживают там, где миграция ещё не сделана.",
+                "edge_cases": "Сервис-карта в Zipkin не встроена и строится через отдельный `DependencyLinker`, в отличие от Jaeger, где она из коробки.",
+                "related": "[[jaeger-zipkin-interview#Q9]] архитектура Zipkin; [[jaeger-zipkin-interview#Q10]] Jaeger vs Zipkin; [[jaeger-zipkin-interview#Q4]] что такое Jaeger."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова архитектура Zipkin?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Поток: `App (Brave / Zipkin libs) → HTTP/Kafka → Zipkin Server → Storage`, а из Storage данные идут в UI. Zipkin проще Jaeger: один `Zipkin Server` (вместо раздельных Collector и Query), storage — in-memory (default), MySQL, Cassandra или Elasticsearch. `Brave` — Java-библиотека для инструментирования под Zipkin.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главное архитектурное отличие от Jaeger — единый `Zipkin Server`, совмещающий приём, хранение и отдачу, тогда как Jaeger разносит это на Collector и Query.",
+                "example": "Java-приложение с `Brave` шлёт span'ы по HTTP в Zipkin Server, который пишет их в `MySQL` и тут же показывает в собственном UI — без отдельного query-сервиса.",
+                "when_to_apply": "Эту простую схему ценят, когда нужен быстрый single-JAR старт без оркестрации нескольких компонентов, например в небольших или legacy-проектах.",
+                "edge_cases": "In-memory storage у Zipkin по умолчанию теряет трассы при рестарте, поэтому для production переключают на MySQL/Cassandra/ES.",
+                "related": "[[jaeger-zipkin-interview#Q8]] что такое Zipkin; [[jaeger-zipkin-interview#Q10]] Jaeger vs Zipkin; [[jaeger-zipkin-interview#Q5]] более сложная архитектура Jaeger."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Архитектура Zipkin полностью повторяет Jaeger: отдельные Agent, Collector и Query, разнесённые по разным деплоям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У Zipkin единый `Zipkin Server`, объединяющий приём/хранение/отдачу; раздельные Agent/Collector/Query — это про Jaeger.",
+                "source_of_confusion": "Обе системы решают одну задачу трассировки, поэтому их архитектуры ошибочно считают идентичными.",
+                "if_it_were_true": "Тогда Zipkin не считался бы проще Jaeger, но его ключевое отличие — именно единый сервер.",
+                "how_it_should_be": "Zipkin — один сервер (приём+хранение+UI); многокомпонентность с Agent/Collector/Query — у Jaeger."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Brave` в архитектуре Zipkin — это storage backend на базе columnar-БД, куда Zipkin Server пишет трассы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Brave` — это Java-библиотека инструментирования (клиент), а не storage; хранилищем выступают in-memory, MySQL, Cassandra или ES.",
+                "source_of_confusion": "Brave всегда упоминается рядом с Zipkin, и его роль клиента путают с ролью хранилища.",
+                "if_it_were_true": "Тогда Brave принимал бы span'ы на сервере, но он работает в приложении и лишь отправляет их в Zipkin Server.",
+                "how_it_should_be": "Brave — клиентская библиотека для генерации/отправки span'ов; storage — это отдельные БД за Zipkin Server."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Zipkin вообще не имеет UI: трассы можно смотреть только через внешний `Grafana`, подключённый к его storage.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У Zipkin есть собственный (простой) web-UI для поиска и просмотра трасс; внешняя Grafana не требуется.",
+                "source_of_confusion": "Tempo и подобные backend'ы действительно смотрят через Grafana, и это переносят на Zipkin.",
+                "if_it_were_true": "Тогда single-JAR Zipkin не показывал бы трассы из коробки, но он именно это и делает.",
+                "how_it_should_be": "Zipkin Server включает свой UI; интеграция через Grafana характерна для Tempo, а не для Zipkin."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются Jaeger и Zipkin?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Jaeger создан в `Twitter` в 2012 году, а Zipkin — в `Uber` в 2017; при этом именно Zipkin имеет статус CNCF graduated.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: Jaeger — от `Uber` (2017, CNCF graduated), Zipkin — от `Twitter` (2012, не в CNCF); даты и авторы перепутаны.",
+                "source_of_confusion": "Две главные tracing-системы легко спутать по происхождению при беглом сравнении.",
+                "if_it_were_true": "Тогда CNCF graduated был бы Zipkin, но этот статус — у Jaeger.",
+                "how_it_should_be": "Jaeger: Uber, 2017, CNCF graduated; Zipkin: Twitter, 2012, не в CNCF."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Jaeger (2017, Uber, CNCF graduated, active) поддерживает Cassandra/ES/ClickHouse, протоколы gRPC/HTTP/OTLP, имеет современный UI и встроенную service map. Zipkin (2012, Twitter, не в CNCF, maintenance) — MySQL/Cassandra/ES, протокол HTTP (B3), более простой UI, service map через `DependencyLinker`. Adoption Jaeger выше; в 2025 для новых проектов берут Jaeger или OTel + Tempo/SigNoz, Zipkin — для legacy.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевые оси сравнения — зрелость (CNCF, активность), протоколы (OTLP у Jaeger vs B3 у Zipkin), богатство UI и встроенность service map.",
+                "example": "Для нового микросервисного проекта в 2025 выбирают Jaeger v2 за OTLP-native и встроенную карту зависимостей, а Zipkin оставляют там, где он уже стоит.",
+                "when_to_apply": "Это сравнение приводят при выборе backend'а для нового проекта или при оценке миграции с Zipkin на Jaeger/OTel.",
+                "edge_cases": "Zipkin всё ещё выигрывает простотой single-JAR для крошечных сетапов, где полноценный Jaeger-стек избыточен.",
+                "related": "[[jaeger-zipkin-interview#Q4]] что такое Jaeger; [[jaeger-zipkin-interview#Q8]] что такое Zipkin; [[jaeger-zipkin-interview#Q22]] какой backend выбрать."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Оба проекта используют один и тот же протокол B3 и одинаково встроенную service map, поэтому функционально неотличимы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Jaeger использует gRPC/HTTP/OTLP и имеет встроенную service map; B3 — это про Zipkin, а у Zipkin карта строится через DependencyLinker.",
+                "source_of_confusion": "Обе системы делают трассировку, и их фичи ошибочно считают идентичными.",
+                "if_it_were_true": "Тогда не было бы смысла выбирать между ними, но различия в протоколах, UI и активности существенны.",
+                "how_it_should_be": "Jaeger: OTLP/gRPC + встроенная карта; Zipkin: HTTP/B3 + карта через DependencyLinker."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Zipkin в 2025 — рекомендованный выбор для всех новых проектов, а Jaeger переведён в maintenance mode.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: активен Jaeger, а Zipkin развивается медленнее; для новых проектов рекомендуют Jaeger или OTel + Tempo/SigNoz.",
+                "source_of_confusion": "Ранняя популярность Zipkin создаёт впечатление, что он по-прежнему «дефолт».",
+                "if_it_were_true": "Тогда Jaeger v1/v2 не были бы рекомендованными, но именно Jaeger v2 — рекомендация 2025.",
+                "how_it_should_be": "Для новых проектов — Jaeger/OTel; Zipkin остаётся в maintenance и применяется для legacy."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему хранение трасс дорогое (storage costs)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Трассы дёшевы в хранении, потому что каждый запрос порождает ровно один маленький span, а индексация не нужна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один запрос порождает множество span'ов, каждый индексируется по trace_id/сервису/времени/атрибутам — объём растёт до сотен GB в день.",
+                "source_of_confusion": "Кажется, что «один запрос = одна запись», и масштаб данных сильно недооценивают.",
+                "if_it_were_true": "Тогда не понадобились бы sampling и короткий retention, но именно их применяют для борьбы с объёмом.",
+                "how_it_should_be": "Запрос даёт десятки span'ов с индексами; поэтому хранение дорогое и требует sampling/retention."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Дороговизна трасс объясняется только лицензией на Jaeger, а не объёмом данных; сам трафик span'ов незначителен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Jaeger бесплатен (open-source); дорогим хранение делает именно объём span'ов и стоимость storage (`Cassandra`/`ES`) на терабайтах.",
+                "source_of_confusion": "Расходы на observability ассоциируют с лицензиями SaaS, забывая про стоимость собственного storage.",
+                "if_it_were_true": "Тогда self-hosted Jaeger был бы бесплатен по итогу, но storage на TB всё равно стоит больших денег.",
+                "how_it_should_be": "Стоимость определяется объёмом span'ов и storage, а не лицензией: Jaeger сам по себе бесплатен."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Каждый запрос → много span'ов → индексация по `trace_id`, сервису, времени, атрибутам. Например, `1000 RPS × 10 span/request × 1 KB/span = 10 MB/sec = 864 GB/день`. Storage (Cassandra/ES) на терабайты стоит больших денег. Mitigations: sampling (head+tail, до 99% reduction), короткий retention (7-30 дней), компрессия, `ClickHouse` вместо ES (в ~10× дешевле), tail sampling (хранить ошибки/медленные, дропать обычные). В 2025 почти все sample к 1-10% трасс.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объём = RPS × span'ов на запрос × размер span'а, и при тысячах RPS это сотни GB в день; плюс индексы для поиска удваивают стоимость хранения.",
+                "example": "При `1000 RPS` и 10 span'ах по 1 KB набегает `864 GB/день`; sampling на 1% урезает это до ~8.6 GB/день, делая хранение реалистичным.",
+                "when_to_apply": "Эти расчёты приводят при планировании бюджета на трассировку и при настройке sampling/retention для контроля стоимости.",
+                "edge_cases": "Tail sampling в Collector держит память под все span'ы трассы до решения, поэтому даёт лучшую выборку, но дороже по ресурсам Collector.",
+                "related": "[[jaeger-zipkin-interview#Q12]] стратегии sampling; [[jaeger-zipkin-interview#Q13]] retention policies; [[jaeger-zipkin-interview#Q6]] выбор дешёвого storage (ClickHouse)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Главная статья расходов на трассы — это CPU на генерацию span'ов в приложении, а хранение почти ничего не стоит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Доминирует именно стоимость storage и индексации на терабайтах данных, а overhead генерации span'ов в приложении относительно мал.",
+                "source_of_confusion": "Инструментирование добавляет немного CPU, и этот видимый overhead принимают за главную статью расходов.",
+                "if_it_were_true": "Тогда хватило бы оптимизации кода инструментирования, но проблема в объёме хранимых данных, отсюда sampling.",
+                "how_it_should_be": "Основная стоимость — storage/индексы трасс; sampling и retention снижают именно её, а не CPU генерации."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие бывают стратегии sampling?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Head sampling всегда сохраняет все ошибочные и медленные трассы, потому что решение принимается уже после завершения всей трассы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Решение «по ошибкам/медленным после завершения трассы» — это tail sampling в Collector; head sampling решает в начале, ещё не зная исхода.",
+                "source_of_confusion": "Обе стратегии называются sampling, поэтому момент принятия решения (начало vs конец) путают.",
+                "if_it_were_true": "Тогда head sampling гарантированно ловил бы все ошибки, но в начале запроса исход ещё неизвестен.",
+                "how_it_should_be": "Head решает в начале (вероятностно/rate limit); сохранение ошибок и медленных — это tail sampling."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Probabilistic sampling означает, что сохраняются ровно 100% трасс, но из каждой удаляется случайный span.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Probabilistic sampling сохраняет случайную долю трасс целиком (например, 1%), а не удаляет случайные span'ы из каждой.",
+                "source_of_confusion": "Слово «случайный» в названии наводит на мысль о случайном дропе внутри трассы.",
+                "if_it_were_true": "Тогда объём данных почти не уменьшался бы, но цель sampling — снизить его в десятки раз.",
+                "how_it_should_be": "Probabilistic берёт фиксированный процент трасс целиком; частичное удаление span'ов внутри трассы не делают."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Tail sampling выполняется внутри приложения (in-app) ещё до отправки span'ов, а head sampling — в Collector после получения всех span'ов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: head sampling — in-app (в начале запроса), а tail sampling — в Collector, который видит уже собранную трассу.",
+                "source_of_confusion": "Оба термина про «где сэмплируем», и место (app vs Collector) легко поменять местами.",
+                "if_it_were_true": "Тогда приложение знало бы итог трассы до её завершения, но это знает только Collector с полной трассой.",
+                "how_it_should_be": "Head — in-app в начале; tail — в Collector по уже собранным span'ам."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Head sampling (in-app): probabilistic (`1%` random), rate limiting (max 100 traces/sec), adaptive (подстройка под трафик). Tail sampling (в Collector): всегда сохранять ошибки (5xx), всегда сохранять медленные (> 1 сек), сэмплировать 5% обычных. Combined (head + tail) — лучшее для production.",
+              "correct": true,
+              "sections": {
+                "explanation": "Head дёшев и снижает нагрузку в источнике, но слеп к исходу; tail видит всю трассу и умно сохраняет ценное (ошибки, медленные), поэтому их комбинируют.",
+                "example": "Конфиг `probabilistic_sampling: 0.01` даёт 1% baseline, а `per_service_strategies` поднимает critical-service до 0.1 (10%); tail-правило дополнительно ловит все 5xx.",
+                "when_to_apply": "Combined-подход применяют в production, где важно и резать объём (head), и не терять диагностически ценные трассы (tail).",
+                "edge_cases": "Adaptive sampling в Jaeger Collector подстраивает rate под трафик per-service, чтобы редкие сервисы не оказались полностью отсэмплированы в ноль.",
+                "related": "[[jaeger-zipkin-interview#Q11]] sampling как способ снизить стоимость; [[jaeger-zipkin-interview#Q13]] retention; [[jaeger-zipkin-interview#Q23]] отсутствие tail sampling как частая проблема."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое retention policies (политики хранения)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Retention определяет, как долго хранятся трассы. Типично 7-30 дней; короче для dev (1-3 дня), дольше для compliance (90+ дней). Cost-driven подход: hot storage (recent, queryable) — 7 дней, cold storage (archived, дорого запрашивать) — 30+ дней. Авто-удаление старых данных: Cassandra TTL, Elasticsearch ILM (Index Lifecycle Management).",
+              "correct": true,
+              "sections": {
+                "explanation": "Retention — это баланс между стоимостью storage и глубиной истории для отладки; механизмы вроде Cassandra TTL и ES ILM автоматически удаляют старые данные.",
+                "example": "Команда держит hot-индекс в `Elasticsearch` 7 дней через ILM, а для compliance архивирует трассы на 90 дней в более дешёвый cold-слой.",
+                "when_to_apply": "Retention настраивают исходя из требований отладки и регуляторики: чем дольше нужно искать инциденты, тем длиннее хранение, но дороже storage.",
+                "edge_cases": "Если забыть выставить TTL/ILM, старые данные копятся бесконечно и storage разрастается — это одна из частых эксплуатационных проблем.",
+                "related": "[[jaeger-zipkin-interview#Q11]] стоимость хранения трасс; [[jaeger-zipkin-interview#Q12]] sampling для снижения объёма; [[jaeger-zipkin-interview#Q23]] забытый TTL как частая проблема."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Retention policy — это правило, сколько процентов трасс сохранять при записи; например, retention 1% означает sampling 1%.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Retention — это срок хранения уже записанных трасс, а доля сохраняемых при записи — это sampling; это разные механизмы.",
+                "source_of_confusion": "И retention, и sampling уменьшают объём данных, поэтому их функции смешивают.",
+                "if_it_were_true": "Тогда retention настраивался бы в процентах, но он измеряется в днях (7-30+).",
+                "how_it_should_be": "Retention задаёт срок (дни) хранения; долю записываемых трасс задаёт sampling."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Retention в трассировке всегда фиксирован и равен «навсегда»: трассы нельзя удалять автоматически, только вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Retention настраиваемый (типично 7-30 дней), а удаление автоматизируют через Cassandra TTL и Elasticsearch ILM, без ручной чистки.",
+                "source_of_confusion": "Логи иногда хранят долго «на всякий случай», и эту привычку переносят на трассы.",
+                "if_it_were_true": "Тогда storage рос бы безгранично, но как раз поэтому и применяют TTL/ILM для авто-purge.",
+                "how_it_should_be": "Retention настраивается в днях, а старые данные удаляются автоматически (TTL/ILM)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Retention policy определяет, на какой storage backend (`Cassandra` или `Elasticsearch`) писать новые трассы в зависимости от их размера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Выбор backend'а — это вопрос конфигурации storage, а retention отвечает только за срок жизни данных, а не за маршрутизацию по размеру.",
+                "source_of_confusion": "Hot/cold-разделение в retention напоминает выбор разных хранилищ, отсюда путаница.",
+                "if_it_were_true": "Тогда retention переключал бы backend по объёму трассы, но он лишь задаёт, сколько дней хранить.",
+                "how_it_should_be": "Retention — это срок хранения (дни) и hot/cold-слои; выбор backend задаётся отдельно при конфигурации."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие views (представления) есть в Jaeger UI?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Jaeger UI имеет только одно представление — список trace_id без возможности раскрыть отдельную трассу или сравнить две.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Jaeger UI богат: Search, Trace view (timeline + иерархия), Trace comparison, System architecture (service map), Monitor (RED-метрики).",
+                "source_of_confusion": "Простота UI у Zipkin переносится на Jaeger, отсюда занижение его возможностей.",
+                "if_it_were_true": "Тогда нельзя было бы найти медленный span внутри трассы, но trace view именно это и показывает.",
+                "how_it_should_be": "У Jaeger несколько views: поиск, timeline трассы, сравнение трасс, service map и Monitor."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Search: по сервису, операции, тегам, диапазону времени, минимальной длительности (найти медленные), с лимитом по числу трасс. Trace view: timeline всех span'ов, иерархия parent-child, детали span'а (attributes, logs, errors). Trace comparison: side-by-side сравнение двух трасс. System architecture: service dependency map, авто-генерируемая из трасс. Monitor (новое): per-service RED-метрики (request rate, error rate, p95 latency).",
+              "correct": true,
+              "sections": {
+                "explanation": "Views покрывают весь цикл отладки: найти трассу (Search), разобрать её во времени (Trace view), сравнить с эталоном (Comparison), увидеть зависимости (Architecture) и общие RED-метрики (Monitor).",
+                "example": "Инженер фильтрует Search по `min duration > 1s`, открывает медленную трассу в Trace view, видит, что 80% времени ушло на один span запроса в БД.",
+                "when_to_apply": "Эти views используют при разборе latency-инцидентов: от поиска подозрительной трассы до сравнения нормального и медленного запроса.",
+                "edge_cases": "Monitor с RED-метриками требует включённого SPM (Service Performance Monitoring) и отдельного источника метрик, иначе вкладка пустая.",
+                "related": "[[jaeger-zipkin-interview#Q15]] service map; [[jaeger-zipkin-interview#Q16]] comparison view; [[jaeger-zipkin-interview#Q2]] span'ы в trace view."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В Jaeger UI service map нужно строить вручную через `DependencyLinker`, так как авто-генерации зависимостей нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Jaeger service map (System architecture) генерируется автоматически из трасс; ручной `DependencyLinker` — это про Zipkin.",
+                "source_of_confusion": "Механизм построения карты у Zipkin переносят на Jaeger, путая две системы.",
+                "if_it_were_true": "Тогда у Jaeger не было бы преимущества встроенной карты, но именно она — один из его плюсов.",
+                "how_it_should_be": "Service map в Jaeger авто-генерируется из трасс; DependencyLinker — особенность Zipkin."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Trace view в Jaeger показывает только метрики CPU и памяти по сервису, без timeline отдельных span'ов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Trace view показывает timeline и иерархию span'ов с их атрибутами/логами/ошибками; CPU/память — это домен метрик (Prometheus), а не trace view.",
+                "source_of_confusion": "Вкладка Monitor показывает метрики, и её путают с trace view трассы.",
+                "if_it_were_true": "Тогда нельзя было бы увидеть длительность каждого span'а, но именно span timeline — суть trace view.",
+                "how_it_should_be": "Trace view — это временная шкала span'ов и их детали; ресурсные метрики смотрят отдельно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое service map (карта сервисов)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Service map — это вручную нарисованная в `draw.io` диаграмма архитектуры, которую инженеры обновляют при каждом релизе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Service map в Jaeger авто-генерируется из реальных трасс, а не рисуется вручную; она отражает фактические вызовы, а не задуманную схему.",
+                "source_of_confusion": "Архитектурные диаграммы часто рисуют руками, и это ожидание переносят на service map.",
+                "if_it_were_true": "Тогда карта быстро устаревала бы между релизами, но авто-генерация держит её актуальной по трафику.",
+                "how_it_should_be": "Service map строится автоматически из span'ов и показывает реальные зависимости, а не ручную диаграмму."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Service map показывает только CPU-нагрузку каждого сервиса в виде heatmap, без рёбер зависимостей между сервисами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Service map — это граф зависимостей (узлы-сервисы и рёбра-вызовы), а не heatmap нагрузки; ресурсные метрики показывают отдельно.",
+                "source_of_confusion": "Слово «map» наводит на мысль о тепловой карте нагрузки, а не о графе вызовов.",
+                "if_it_were_true": "Тогда по карте нельзя было бы найти неожиданные зависимости или циклы, но именно для этого она и нужна.",
+                "how_it_should_be": "Service map — граф «кто кого вызывает» из трасс; нагрузка по ресурсам — это метрики."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Service dependency graph — авто-генерируемая из трасс визуализация связей между сервисами (Frontend → API Gateway → UserService/OrderService → PaymentService/Database/Redis). Использование: визуализировать архитектуру, найти неожиданные зависимости, выявить hot paths, обнаружить циклы. В Jaeger авто-генерируется; в Datadog/Honeycomb тоже есть.",
+              "correct": true,
+              "sections": {
+                "explanation": "Карта строится из реальных span'ов: каждое ребро — это наблюдённый вызов между сервисами, поэтому она показывает фактическую топологию, а не предполагаемую.",
+                "example": "На карте обнаруживается, что `OrderService` неожиданно ходит напрямую в `Redis` соседнего домена — скрытая зависимость, которой не было в дизайне.",
+                "when_to_apply": "Service map смотрят при анализе архитектуры, поиске лишних связей, выявлении hot paths и циклов в графе вызовов.",
+                "edge_cases": "Если трассировка покрывает не все сервисы (часть не инструментирована), карта будет неполной и может вводить в заблуждение.",
+                "related": "[[jaeger-zipkin-interview#Q14]] System architecture view; [[jaeger-zipkin-interview#Q1]] distributed tracing как источник карты; [[jaeger-zipkin-interview#Q9]] карта в Zipkin через DependencyLinker."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Service map в Jaeger доступна только в платной enterprise-версии и требует отдельной лицензии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Service map встроена в бесплатный open-source Jaeger и генерируется автоматически; никакой платной лицензии не нужно.",
+                "source_of_confusion": "Богатые фичи ассоциируют с платными APM (Datadog), и платность ошибочно приписывают Jaeger.",
+                "if_it_were_true": "Тогда self-hosted Jaeger не показывал бы карту, но это одна из его штатных возможностей.",
+                "how_it_should_be": "Service map — встроенная бесплатная фича Jaeger; платные SaaS лишь дополнительно её предлагают."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое comparison view (сравнение трасс)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Comparison view сравнивает две метрики (например, CPU и RPS) на одном графике во времени.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Comparison view сравнивает две трассы (структуру span'ов и latency), а не два метрических временных ряда.",
+                "source_of_confusion": "Слово «сравнение» ассоциируется с графиками метрик, а не с деревьями span'ов.",
+                "if_it_were_true": "Тогда это была бы фича дашборда метрик, но речь о сравнении трасс в Jaeger UI.",
+                "how_it_should_be": "Comparison view — это side-by-side двух трасс с разницей в структуре и таймингах span'ов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Comparison view позволяет сравнить два разных storage backend (Cassandra vs Elasticsearch) по скорости запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это представление сравнивает трассы между собой, а не storage backends; бенчмарк хранилищ — отдельная задача вне UI.",
+                "source_of_confusion": "Слово «comparison» широкое, поэтому его относят к сравнению инфраструктуры.",
+                "if_it_were_true": "Тогда view был бы инструментом capacity planning storage, но он про диагностику конкретных запросов.",
+                "how_it_should_be": "Comparison view сравнивает две трассы (slow vs normal) для поиска регрессии, а не backends."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Comparison view объединяет (мержит) две трассы в одну общую, удаляя дубли span'ов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "View не мержит трассы, а показывает их рядом и подсвечивает различия; исходные трассы остаются раздельными.",
+                "source_of_confusion": "«Сравнение» иногда понимают как объединение, отсюда идея слияния span'ов.",
+                "if_it_were_true": "Тогда терялась бы возможность увидеть разницу между запросами, но именно различия — цель view.",
+                "how_it_should_be": "Comparison view ставит трассы side-by-side и подсвечивает отличия, не сливая их в одну."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Сравнение двух трасс (например, медленной и нормальной): видеть различия в структуре span'ов, сравнивать latency, находить регрессию. Полезно для performance debugging.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сопоставляя нормальную и медленную трассы, видно, какой именно span появился или вырос по времени — это прямой путь к причине регрессии производительности.",
+                "example": "Сравнивают вчерашнюю быструю трассу `GET /orders` и сегодняшнюю медленную: в медленной добавился лишний последовательный вызов в БД, давший +150 мс.",
+                "when_to_apply": "Comparison view применяют при performance debugging, когда нужно понять, чем медленный запрос отличается от эталонного по структуре и таймингам.",
+                "edge_cases": "Если трассы относятся к разным версиям сервиса с изменённой структурой, различий будет много и придётся отделять регрессию от ожидаемых изменений.",
+                "related": "[[jaeger-zipkin-interview#Q14]] Trace comparison в списке views; [[jaeger-zipkin-interview#Q2]] структура span'ов трассы; [[jaeger-zipkin-interview#Q1]] поиск bottleneck через tracing."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Grafana Tempo?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Grafana Tempo` — tracing-backend от Grafana, главный конкурент Jaeger. Особенности: object storage based (S3, GCS, Azure Blob) — очень дешёвое хранение, cost-optimized под миллиарды span'ов, индексирует ТОЛЬКО `trace_id` (нет attribute-based поиска как в Jaeger), комбинируется с Loki + Mimir = full Grafana stack, OTel native. Trade-off: дёшево и масштабируемо, но ограниченный поиск (нужен trace_id). Workflow: Tempo + Loki — найти лог с trace_id → посмотреть трассу в Tempo. `TraceQL` (с 2023) добавил query language.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главная идея Tempo — радикально дешёвое хранение в object storage за счёт отказа от тяжёлых индексов: индексируется только `trace_id`, поэтому стоимость на миллиарды span'ов минимальна.",
+                "example": "Инженер находит ошибочный лог в `Loki`, копирует из него `trace_id` и открывает полную трассу в Tempo — типичный workflow Grafana-стека без attribute-поиска.",
+                "when_to_apply": "Tempo выбирают, когда уже есть Grafana-стек (Loki + Mimir) и важна минимальная стоимость хранения огромных объёмов трасс.",
+                "edge_cases": "Без `trace_id` поиск ограничен: до появления `TraceQL` (2023) нельзя было искать по атрибутам так же гибко, как в Jaeger по тегам.",
+                "related": "[[jaeger-zipkin-interview#Q11]] дешёвое хранение трасс; [[jaeger-zipkin-interview#Q22]] выбор backend; [[jaeger-zipkin-interview#Q4]] Jaeger как альтернатива с attribute-поиском."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Tempo` хранит трассы в `Elasticsearch` и индексирует все атрибуты span'ов, обеспечивая богатый attribute-based поиск как в Jaeger.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tempo хранит трассы в object storage (S3/GCS/Azure) и индексирует только `trace_id`; богатый attribute-поиск — это про Jaeger на ES.",
+                "source_of_confusion": "Оба — tracing-backend'ы, и возможности поиска Jaeger ошибочно приписывают Tempo.",
+                "if_it_were_true": "Тогда у Tempo не было бы его главного преимущества — дешевизны за счёт минимального индекса.",
+                "how_it_should_be": "Tempo: object storage + индекс только trace_id (дёшево); attribute-поиск на ES — особенность Jaeger."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Tempo` — это система метрик от Grafana, заменяющая `Prometheus`/`Mimir`, а не tracing-backend.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tempo — это backend для трасс; метрики в Grafana-стеке хранит `Mimir`/`Prometheus`, а логи — `Loki`.",
+                "source_of_confusion": "Все три (Loki, Tempo, Mimir) из экосистемы Grafana, и их роли путают.",
+                "if_it_were_true": "Тогда Tempo хранил бы временные ряды, но он хранит span'ы в object storage.",
+                "how_it_should_be": "Tempo — трассы, Loki — логи, Mimir — метрики; вместе они образуют full Grafana stack."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Tempo` требует дорогого высокопроизводительного блочного хранилища и не работает с object storage вроде S3.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tempo как раз спроектирован под object storage (S3/GCS/Azure Blob), что и делает его дешёвым; дорогой блочный storage не требуется.",
+                "source_of_confusion": "Высокую производительность поиска ассоциируют с дорогим хранилищем, но Tempo жертвует поиском ради дешевизны.",
+                "if_it_were_true": "Тогда Tempo не был бы cost-optimized под миллиарды span'ов, но именно дешёвое object storage — его суть.",
+                "how_it_should_be": "Tempo опирается на дешёвое object storage (S3/GCS) и индекс только trace_id, а не дорогой блочный диск."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое SigNoz, Aspecto, Lightstep?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`SigNoz` — это только система логирования (как `Loki`), не поддерживающая трассы и метрики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SigNoz` — full APM на базе ClickHouse: traces + metrics + logs сразу, а не только логирование.",
+                "source_of_confusion": "SigNoz сравнивают с разными open-source инструментами, и его сводят к одной функции.",
+                "if_it_were_true": "Тогда его не называли бы self-hosted альтернативой Datadog, но именно полнота APM — его суть.",
+                "how_it_should_be": "SigNoz покрывает все три pillar'а (traces/metrics/logs) на ClickHouse, а не только логи."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`SigNoz` — open-source full APM (traces + metrics + logs) на базе ClickHouse, self-hosted альтернатива `Datadog`, с растущей популярностью. `Aspecto` — managed OTel-платформа (developer-focused). `Lightstep` (куплен ServiceNow в 2021) — enterprise-grade tracing. `Honeycomb` — пионер «wide events», мощный query language, другая парадигма по сравнению с традиционным APM.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти продукты — альтернативы чистому Jaeger/Zipkin: SigNoz даёт полный self-hosted APM, Aspecto — managed OTel, Lightstep — enterprise, Honeycomb — парадигму wide events.",
+                "example": "Команда, не желающая платить за `Datadog`, поднимает `SigNoz` на ClickHouse и получает traces, metrics и logs в одном self-hosted инструменте.",
+                "when_to_apply": "Эти варианты рассматривают, когда нужен либо полный APM в одном инструменте (SigNoz), либо managed-опыт (Aspecto), либо exploration-парадигма (Honeycomb).",
+                "edge_cases": "Honeycomb с «wide events» отходит от классической модели trace/span, поэтому его подход к данным отличается от Jaeger и требует иного мышления.",
+                "related": "[[jaeger-zipkin-interview#Q19]] cloud SaaS APM; [[jaeger-zipkin-interview#Q17]] Grafana Tempo; [[jaeger-zipkin-interview#Q22]] выбор backend (SigNoz как single tool)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Lightstep` — это open-source библиотека инструментирования на Java, аналог `Brave`, а не tracing-платформа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Lightstep` — это enterprise-grade tracing-платформа (куплена ServiceNow в 2021), а не клиентская библиотека вроде Brave.",
+                "source_of_confusion": "В контексте трассировки часто упоминают и платформы, и библиотеки, отсюда смешение категорий.",
+                "if_it_were_true": "Тогда Lightstep не покупали бы как продукт за большие деньги, но это именно платформа.",
+                "how_it_should_be": "Lightstep — enterprise tracing-платформа; Brave — клиентская библиотека инструментирования под Zipkin."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Honeycomb` — это просто переименованный `Jaeger` с тем же UI и той же моделью trace/span.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Honeycomb` — отдельный продукт с парадигмой «wide events» и мощным query language, концептуально отличающийся от классической модели Jaeger.",
+                "source_of_confusion": "Оба — инструменты observability, и Honeycomb ошибочно приравнивают к ребрендингу Jaeger.",
+                "if_it_were_true": "Тогда у них была бы общая кодовая база и UI, но Honeycomb построен на иной модели данных.",
+                "how_it_should_be": "Honeycomb — самостоятельный продукт с wide events и своим языком запросов, не форк Jaeger."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что предлагают облачные SaaS (Datadog APM, New Relic, Honeycomb)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Главное преимущество SaaS-APM в том, что они радикально дешевле self-hosted решений на любом масштабе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SaaS-APM как раз очень дороги at scale (Datadog ~$30/host); их плюс — отсутствие ops и polished UI, а не дешевизна.",
+                "source_of_confusion": "«Без своей инфраструктуры» воспринимается как «дешевле», хотя по итогу at scale выходит дороже.",
+                "if_it_were_true": "Тогда не было бы тренда на self-hosted (Tempo, SigNoz) ради cost reduction, но он есть именно из-за цены SaaS.",
+                "how_it_should_be": "SaaS дают no-ops и UI, но дороги at scale; self-host (Tempo/SigNoz) выбирают для снижения стоимости."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "SaaS-APM полностью исключают vendor lock-in, потому что данные всегда остаются в вашей инфраструктуре.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У SaaS данные покидают вашу среду и есть риск lock-in (хотя OTel его снизил); хранение «у себя» — это про self-hosted.",
+                "source_of_confusion": "OTel действительно ослабил lock-in, и это преувеличивают до «полного отсутствия».",
+                "if_it_were_true": "Тогда не было бы пункта «data leaves your environment» среди минусов SaaS, но он есть.",
+                "how_it_should_be": "У SaaS данные уходят к вендору и lock-in остаётся (OTel лишь снижает его); данные у себя — у self-hosted."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Datadog` — full APM, много интеграций, хороший UI, но дорого (~$30/host). `New Relic` — pricing per ingest, проще, но меньше фич. `Honeycomb` — лучший UX для exploration, но менее polished GUI. `Splunk APM` — enterprise, много фич, дорого. `AWS X-Ray` — дёшево для AWS-only, но ограниченные фичи. Плюсы SaaS: no ops, polished UI, авто-корреляция traces↔logs↔metrics, alerting. Минусы: очень дорого at scale, vendor lock-in (но OTel снизил), данные покидают вашу среду. Тренд 2025: OTel + self-hosted (Tempo, SigNoz) для снижения стоимости.",
+              "correct": true,
+              "sections": {
+                "explanation": "SaaS-APM продают удобство: ноль ops, отполированный UI и автоматическую корреляцию трёх pillar'ов, расплачиваясь высокой ценой at scale и уходом данных к вендору.",
+                "example": "Стартап стартует на `Datadog` ради быстрого старта и UX, но при росте до сотен хостов счёт ~$30/host вынуждает смотреть на self-hosted SigNoz.",
+                "when_to_apply": "SaaS берут, когда важнее скорость запуска и UX, чем стоимость; при большом масштабе переходят на гибрид или self-host.",
+                "edge_cases": "Гибридный подход: sample-данные шлют в Datadog ради UX, а полный объём держат в self-hosted store для экономии — компромисс между ценой и удобством.",
+                "related": "[[jaeger-zipkin-interview#Q18]] SigNoz и другие альтернативы; [[jaeger-zipkin-interview#Q17]] Tempo для дешёвого self-host; [[jaeger-zipkin-interview#Q22]] выбор backend."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`AWS X-Ray` — самый дорогой и многофункциональный enterprise-APM, превосходящий Datadog по числу фич.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AWS X-Ray` — наоборот, дёшев для AWS-only и ограничен по фичам; самые богатые фичами — Datadog/Splunk.",
+                "source_of_confusion": "Раз это сервис AWS, его ошибочно считают тяжёлым enterprise-решением «на все случаи».",
+                "if_it_were_true": "Тогда X-Ray не позиционировался бы как «cheap для AWS-only», но именно так его и описывают.",
+                "how_it_should_be": "X-Ray — дешёвый и ограниченный, заточен под AWS; богатые фичами — Datadog и Splunk APM."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как мигрировать с Jaeger client на OTel?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Миграция требует полностью отказаться от Jaeger как backend'а: после перехода на OTel приходится менять и хранилище, и UI на сторонние.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Миграция касается клиентского SDK: меняют Jaeger client на OTel SDK, а Jaeger Collector остаётся backend'ом и принимает `OTLP` нативно.",
+                "source_of_confusion": "«Переход на OTel» звучит как смена всего стека, хотя backend Jaeger можно сохранить.",
+                "if_it_were_true": "Тогда нельзя было бы слать OTLP в Jaeger, но Collector принимает OTLP из коробки (v1.35+/v2).",
+                "how_it_should_be": "Меняют только клиентский SDK на OTel; Jaeger Collector остаётся и принимает OTLP."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для миграции достаточно переименовать пакеты импортов с `io.jaegertracing` на `io.opentelemetry`, не меняя конфигурацию экспортера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Помимо смены SDK нужно настроить OTel-экспортер на `OTLP`-endpoint и убедиться, что Collector принимает OTLP — простого переименования импортов мало.",
+                "source_of_confusion": "Похожие имена классов (`Tracer`) создают иллюзию, что достаточно поменять пакет.",
+                "if_it_were_true": "Тогда не было бы отдельного шага «configure OTel exporter to OTLP endpoint», но он обязателен.",
+                "how_it_should_be": "Нужно заменить SDK, настроить OTLP-экспортер и приём OTLP в Collector, а не только импорты."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Auto-instrumentation через Java agent невозможна при миграции на OTel — все span'ы придётся прописывать вручную в коде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OTel предлагает Java agent для auto-instrumentation, который заменяет Jaeger-библиотеки без ручной правки кода под каждый span.",
+                "source_of_confusion": "Ручное инструментирование привычно по Jaeger client, и его считают единственным способом.",
+                "if_it_were_true": "Тогда переход был бы крайне трудоёмким, но OTel agent как раз снижает ручную работу.",
+                "how_it_should_be": "OTel auto-instrumentation (Java agent) автоматически инструментирует приложение, заменяя Jaeger-библиотеки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "До: Jaeger client SDK в коде (`io.jaegertracing.Tracer`). После: OTel SDK + OTLP exporter к Jaeger Collector, который принимает OTLP (`io.opentelemetry.api.trace.Tracer`). Шаги: (1) заменить Jaeger client SDK на OTel SDK, (2) настроить OTel exporter на OTLP endpoint, (3) настроить Jaeger Collector на приём OTLP (native в v2), (4) проверить, что трассы появляются корректно. Auto-instrumentation: Java agent заменяет Jaeger-библиотеки.",
+              "correct": true,
+              "sections": {
+                "explanation": "Суть миграции — заменить вендорский Jaeger SDK на стандартный OTel SDK с OTLP-экспортом, сохранив Jaeger как backend, поскольку Collector принимает OTLP нативно.",
+                "example": "В коде `new Configuration(\"my-service\").getTracer()` заменяют на `GlobalOpenTelemetry.getTracer(\"my-service\")`, а экспортер настраивают на `jaeger-collector:4317`.",
+                "when_to_apply": "Миграцию делают, чтобы уйти от вендорского клиента к стандарту OTel, сохранив существующий Jaeger-backend и получив переносимость инструментирования.",
+                "edge_cases": "Важно убедиться, что версия Collector принимает OTLP (v1.35+ или v2), иначе после смены SDK трассы перестанут доходить до backend'а.",
+                "related": "[[jaeger-zipkin-interview#Q21]] приём OTLP в Jaeger; [[jaeger-zipkin-interview#Q7]] OTLP native в Jaeger v2; [[jaeger-zipkin-interview#Q4]] Jaeger как backend."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Можно ли отправлять OTLP в Jaeger?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Да! Jaeger Collector принимает `OTLP` (gRPC + HTTP) нативно с версии Jaeger v1.35+. Приложения экспортируют OTLP на endpoint `jaeger-collector:4317`, а Collector слушает OTLP. В Jaeger v2 `OTLP` — native protocol, без overhead на конвертацию.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поддержка OTLP в Collector означает, что любой OTel-инструментированный сервис шлёт span'ы прямо в Jaeger без вендорского клиента и без промежуточной конвертации в v2.",
+                "example": "В конфиге экспортера указывают `endpoint: jaeger-collector:4317`, и Collector принимает OTLP по gRPC; в v2 это нативный путь без преобразования форматов.",
+                "when_to_apply": "Этим пользуются при переходе на OTel: backend остаётся Jaeger, а приложения переходят на стандартный OTLP-экспорт.",
+                "edge_cases": "На версиях до v1.35 нативного OTLP-приёма не было — там требовался отдельный OTel Collector как мост, конвертирующий в Jaeger-формат.",
+                "related": "[[jaeger-zipkin-interview#Q20]] миграция с Jaeger client на OTel; [[jaeger-zipkin-interview#Q7]] OTLP native в Jaeger v2; [[jaeger-zipkin-interview#Q5]] Collector как приёмник span'ов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Нет, Jaeger принципиально не понимает `OTLP` — для него span'ы нужно конвертировать в Jaeger Thrift отдельным прокси.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Jaeger Collector принимает OTLP нативно с v1.35+, а в v2 OTLP — основной протокол; отдельный конвертер в Thrift не требуется.",
+                "source_of_confusion": "Исторически Jaeger использовал Thrift, и это устаревшее ограничение считают актуальным.",
+                "if_it_were_true": "Тогда не было бы смысла в OTLP-миграции на Jaeger-backend, но она как раз стандартна.",
+                "how_it_should_be": "Collector принимает OTLP из коробки (v1.35+), а в v2 OTLP — native, без конвертации в Thrift."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Отправлять `OTLP` в Jaeger можно только через платный плагин, недоступный в open-source версии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Приём OTLP — штатная бесплатная функция open-source Jaeger Collector, никаких платных плагинов не нужно.",
+                "source_of_confusion": "Расширенные возможности ассоциируют с платными уровнями, и это переносят на OTLP-приём.",
+                "if_it_were_true": "Тогда бесплатный Jaeger не подошёл бы для OTel-стека, но он принимает OTLP из коробки.",
+                "how_it_should_be": "OTLP-приём встроен в бесплатный Jaeger Collector (v1.35+) и нативен в v2."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`OTLP` в Jaeger поддерживается только по HTTP, а gRPC-приём span'ов невозможен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Jaeger Collector принимает OTLP и по gRPC, и по HTTP; gRPC (порт 4317) — типичный способ экспорта OTLP.",
+                "source_of_confusion": "HTTP кажется «универсальнее», и gRPC ошибочно исключают из поддерживаемых транспортов.",
+                "if_it_were_true": "Тогда стандартный `jaeger-collector:4317` (gRPC) не работал бы, но это рабочий endpoint.",
+                "how_it_should_be": "OTLP в Jaeger поддержан и по gRPC, и по HTTP; gRPC на 4317 — обычный вариант."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой tracing backend выбрать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Если уже используется Grafana-стек, правильный выбор — поставить рядом отдельный `Datadog`, а не использовать Tempo.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При уже существующем Grafana-стеке логичен `Tempo` (Loki + Mimir + Grafana), а не дорогой внешний Datadog рядом.",
+                "source_of_confusion": "Datadog — известный APM, и его предлагают как «универсальный» выбор без учёта существующего стека.",
+                "if_it_were_true": "Тогда ветка decision tree «already Grafana stack → Tempo» не имела бы смысла, но она ключевая.",
+                "how_it_should_be": "Есть Grafana-стек — берут Tempo; Datadog выбирают, когда нужен полный SaaS-APM и готовы платить."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Decision tree: ограничен бюджет и нужен self-host → Jaeger v2 + ClickHouse (best balance), или Tempo + S3 (дешевле всего), или SigNoz (full APM, single tool). Уже есть Grafana stack → Tempo + Loki + Mimir + Grafana. Нужен full APM и готовы платить → Datadog (лучший UI, больше интеграций) или Honeycomb (лучший query exploration). Vendor lock-in OK → cloud-native (X-Ray, Cloud Trace, Application Insights). Legacy Zipkin → остаться или мигрировать на Jaeger v2. Для новых проектов в 2025: self-host — Jaeger v2 (mature) или SigNoz (growing); SaaS — Datadog (polish) или Honeycomb (UX).",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор зависит от трёх факторов: бюджет/ops-готовность (self-host vs SaaS), существующая экосистема (Grafana → Tempo) и допустимость vendor lock-in.",
+                "example": "Команда с ограниченным бюджетом, желающая self-host, берёт `Jaeger v2 + ClickHouse` за баланс цены и зрелости, а не дорогой SaaS.",
+                "when_to_apply": "Этот decision tree применяют при старте нового проекта или при пересмотре стоимости observability в существующем.",
+                "edge_cases": "Гибрид: sample-данные держат в SaaS ради UX, а полный объём — в self-hosted store для экономии; чистого «единственно верного» выбора часто нет.",
+                "related": "[[jaeger-zipkin-interview#Q17]] Grafana Tempo; [[jaeger-zipkin-interview#Q18]] SigNoz; [[jaeger-zipkin-interview#Q19]] cloud SaaS APM."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для любого нового проекта в 2025 единственно правильный выбор — `Zipkin`, потому что он проще всех остальных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для новых проектов в 2025 рекомендуют Jaeger v2 или SigNoz (self-host) либо Datadog/Honeycomb (SaaS); Zipkin — для legacy.",
+                "source_of_confusion": "Простота single-JAR Zipkin подкупает и кажется достаточным основанием для дефолта.",
+                "if_it_were_true": "Тогда Zipkin не был бы в maintenance mode, но он именно там, а активно развивается Jaeger.",
+                "how_it_should_be": "Новые проекты — Jaeger v2/SigNoz или SaaS; Zipkin оставляют для legacy-сетапов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Самый дешёвый self-hosted вариант — это `Elasticsearch`-based Jaeger, потому что ES дешевле object storage.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Самый дешёвый self-host — Tempo + S3 (object storage) или ClickHouse; ES, наоборот, дорог по памяти и стоимости.",
+                "source_of_confusion": "ES привычен и распространён, поэтому его ошибочно считают и самым дешёвым.",
+                "if_it_were_true": "Тогда не было бы тренда на ClickHouse и object storage ради экономии, но он есть именно из-за дороговизны ES.",
+                "how_it_should_be": "Дешевле всего — Tempo + S3 или ClickHouse; ES — богатый поиск, но высокая стоимость."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие частые проблемы при работе с tracing?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Главная проблема трассировки — нехватка данных: без sampling трасс слишком мало, поэтому sampling нужно отключать в production.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот, частая проблема — storage explosion от избытка данных; sampling (особенно tail) как раз нужен в production, а его отсутствие — отдельная проблема.",
+                "source_of_confusion": "Кажется, что больше данных = лучше отладка, и роль sampling переворачивают.",
+                "if_it_were_true": "Тогда «no tail sampling in production» не значился бы среди проблем, но он там есть.",
+                "how_it_should_be": "Проблема — переизбыток данных и storage explosion; sampling включают, а не выключают."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Самая частая проблема — что Jaeger UI слишком быстрый на больших datasets, из-за чего пользователи не успевают читать трассы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот, Jaeger UI бывает медленным на больших datasets; «слишком быстрый UI» — не проблема и противоречит реальному списку.",
+                "source_of_confusion": "Формулировка «проблема с UI на больших данных» переворачивается в абсурдный «слишком быстро».",
+                "if_it_were_true": "Тогда производительность UI не значилась бы среди болей, но slow queries — реальная проблема.",
+                "how_it_should_be": "Реальная проблема — медленные запросы и тормозящий UI на больших datasets, а не избыточная скорость."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Частые проблемы: (1) storage explosion без sampling (быстро уходишь на TB), (2) slow queries — Jaeger UI медленный на больших datasets, (3) missing spans — сломан context propagation (особенно async), (4) inconsistent attributes — разные сервисы используют разные имена, (5) no alerting — у Jaeger нет встроенного alerting (нужен Prometheus + метрики из трейсов), (6) hot partitions в Cassandra — плохой partition key, (7) high cardinality убивает производительность, (8) no tail sampling в production — слишком много данных, (9) old data retention — забыли установить TTL, (10) network bandwidth — отправка всех трасс дорого.",
+              "correct": true,
+              "sections": {
+                "explanation": "Проблемы делятся на классы: стоимость/объём (storage explosion, bandwidth), корректность данных (missing spans, inconsistent attributes), эксплуатация storage (hot partitions, cardinality) и пробелы платформы (нет alerting/tail sampling).",
+                "example": "В async-коде забыли пробросить context — дочерние span'ы теряют `parent_span_id`, и трасса разрывается, оставляя «дыры» вместо полного дерева.",
+                "when_to_apply": "Этот чек-лист используют при эксплуатации production-трассировки и при разборе, почему трассы неполные, дорогие или медленно ищутся.",
+                "edge_cases": "High cardinality атрибутов (например, уникальный user_id в каждом span'е) раздувает индексы и убивает производительность поиска даже при умеренном объёме.",
+                "related": "[[jaeger-zipkin-interview#Q11]] storage explosion и стоимость; [[jaeger-zipkin-interview#Q12]] tail sampling против переизбытка; [[jaeger-zipkin-interview#Q2]] context propagation и missing spans."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "У Jaeger есть встроенный alerting, поэтому отдельный `Prometheus` для оповещений по трейсам не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У Jaeger нет встроенного alerting — отсутствие алертинга само по себе частая проблема, и его строят поверх метрик в `Prometheus`.",
+                "source_of_confusion": "Раз Jaeger показывает latency и ошибки, кажется логичным, что он и алертит по ним.",
+                "if_it_were_true": "Тогда «no alerting» не значился бы в списке частых проблем, но он там есть.",
+                "how_it_should_be": "Jaeger не алертит сам; алерты строят на метриках (Prometheus), извлечённых из трейсов."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1385 @@
+{
+  "topic_slug": "caching-performance-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие ключевые метрики кэша нужно мониторить?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Базовый набор: `hit_ratio = hits / (hits + misses)`, eviction rate, latency `GET`/`SET` по `p50/p95/p99`, throughput (ops/sec), memory usage (`used_memory` vs `maxmemory`), connection count и error rate. В `Redis` это `keyspace_hits/misses`, `evicted_keys`, `expired_keys`, `blocked_clients`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главная метрика — hit ratio: при её падении кэш перестаёт разгружать backend. Eviction rate и memory usage показывают давление на память, latency и throughput — упирается ли узел в сеть или CPU.",
+                "example": "Связка `redis_exporter` -> `Prometheus` -> `Grafana` отдаёт `keyspace_hits`, `evicted_keys` и `used_memory`; алерт ставят на hit ratio < target и memory usage > 80%.",
+                "when_to_apply": "Эти метрики собирают на любом продовом кэше с первого дня, чтобы ловить деградацию hit ratio, рост eviction и приближение к лимиту памяти заранее.",
+                "edge_cases": "`instantaneous_ops_per_sec` мгновенный и волатильный — для алертов берут усреднение за 5-15 минут, иначе будут ложные срабатывания на коротких всплесках.",
+                "related": "[[caching-performance-interview#Q2]] какой hit ratio считать хорошим; [[caching-performance-interview#Q3]] влияние кэша на latency; [[caching-performance-interview#Q5]] eviction-политики Redis."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Достаточно следить только за объёмом занятой памяти (`used_memory`): остальные метрики кэша вторичны и на практике не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Память — лишь одна из метрик; без hit ratio, eviction rate, latency и error rate нельзя понять, помогает ли кэш и где он деградирует.",
+                "source_of_confusion": "Память легко увидеть в `INFO memory`, поэтому её ошибочно считают единственным важным показателем.",
+                "if_it_were_true": "Тогда кэш с заполненной памятью, но hit ratio 5%, выглядел бы здоровым, хотя он бесполезен и только грузит сеть.",
+                "how_it_should_be": "Память мониторят вместе с hit ratio, eviction, latency и throughput — это взаимодополняющие сигналы, а не замена друг другу."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главная метрика кэша — это размер ключей в байтах (`MEMORY USAGE`), и именно по ней оценивают эффективность кэша.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MEMORY USAGE` полезна для поиска больших ключей, но эффективность кэша определяет hit ratio, а не средний размер значения.",
+                "source_of_confusion": "Размер ключа звучит как «производительность», ведь большие значения долго передаются, но это про big keys, а не про эффективность.",
+                "if_it_were_true": "Тогда кэш с маленькими ключами и нулевым hit ratio считался бы эффективным, что противоречит сути кэширования.",
+                "how_it_should_be": "Размер ключей — диагностика big keys; эффективность измеряют долей попаданий и влиянием на latency."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Ключевая метрика — количество открытых TCP-соединений; если оно стабильно, остальные показатели кэша можно не собирать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Connection count важен против исчерпания пула, но сам по себе ничего не говорит про hit ratio, eviction и latency.",
+                "source_of_confusion": "Исчерпание соединений даёт громкие инциденты, поэтому соединения переоценивают как единственную метрику.",
+                "if_it_were_true": "Тогда при стабильных соединениях, но просевшем hit ratio, проблему бы не заметили, пока не упадёт backend.",
+                "how_it_should_be": "Соединения — один из сигналов наряду с hit ratio, eviction, latency, throughput и error rate."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой hit ratio считается «хорошим» и от чего это зависит?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Хорошим считается ровно 100% hit ratio; любое значение ниже сигнализирует о неправильной настройке кэша, которую надо чинить.",
+              "correct": false,
+              "sections": {
+                "what_actually": "100% означает, что данные кэшируются навсегда и никогда не инвалидируются, что ведёт к stale-выдаче; реальные цели зависят от тира данных.",
+                "source_of_confusion": "Интуитивно «100% попаданий» кажется идеалом, ведь backend вообще не дёргается.",
+                "if_it_were_true": "Тогда нужно было бы выключить инвалидацию и TTL, и пользователи видели бы устаревшие данные бесконечно.",
+                "how_it_should_be": "Целевой ratio выбирают по use case (90-99% для hot, 50-80% для long-tail) и балансируют со свежестью."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "«Хорошо» зависит от use case: hot-данные (сессии, конфиг) — 99%+; кэш запросов к БД и API-ответов — 90-95%; статика на CDN — 95-99%; long-tail (user-generated, много уникальных ключей по Zipf) — 50-80% и кэш всё ещё полезен. Универсального числа нет.",
+              "correct": true,
+              "sections": {
+                "explanation": "Целевой hit ratio задаёт паттерн доступа: при горячих повторяющихся ключах достижимо 99%, при множестве уникальных запросов высокий ratio физически недостижим, и это нормально.",
+                "example": "Кэш сессий с коротким TTL и прогревом держит 99%+, а кэш профилей пользователей с длинным хвостом уникальных id даёт 60-70% — оба сценария рабочие.",
+                "when_to_apply": "Целевой ratio выбирают по тиру данных при настройке алертов: для hot-кэша порог высокий, для long-tail — низкий, иначе будут постоянные ложные алерты.",
+                "edge_cases": "Hit ratio != «больше всегда лучше»: 100% достигается кэшированием мусора навсегда, поэтому его балансируют со свежестью, чтобы не отдавать stale-данные.",
+                "related": "[[caching-performance-interview#Q1]] метрики кэша; [[caching-performance-interview#Q10]] выбор TTL влияет на ratio; [[caching-performance-interview#Q12]] прогрев и cold start."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Хороший hit ratio — это фиксированные 80% для абсолютно любого кэша, независимо от типа данных и паттерна доступа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Единого порога нет: для сессий нормой будет 99%+, а для long-tail и 60% — успех; 80% как универсал вводит в заблуждение.",
+                "source_of_confusion": "80% звучит как «разумная середина», поэтому его выдают за универсальную норму.",
+                "if_it_were_true": "Тогда кэш сессий с 90% считали бы недонастроенным, а long-tail с 60% — провальным, хотя оба в порядке.",
+                "how_it_should_be": "Порог привязывают к тиру данных и паттерну запросов, а не к одной магической цифре."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Hit ratio оценивают исключительно по мгновенному значению за последнюю секунду — усреднение за минуты искажает картину.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Мгновенный ratio волатилен; для оценки и алертов берут среднее за 5-15 минут, а посекундное значение скачет и даёт ложные выводы.",
+                "source_of_confusion": "Мгновенное значение кажется «самым свежим и точным», поэтому его предпочитают усреднению.",
+                "if_it_were_true": "Тогда любой короткий всплеск промахов выглядел бы как деградация кэша, и алерты звенели бы постоянно.",
+                "how_it_should_be": "Для стабильной оценки и алертов усредняют за 5-15 минут, мгновенное — только для дебага в моменте."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как измерить влияние кэша на latency?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Влияние кэша на latency измерить нельзя в принципе: кэш только ускоряет систему и никогда не добавляет собственных накладных расходов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кэш сам добавляет latency (RTT к Redis, сериализация), а влияние прекрасно измеряется прямым замером, A/B и анализом p99.",
+                "source_of_confusion": "Кэш ассоциируется только с ускорением, поэтому его собственный overhead забывают учитывать.",
+                "if_it_were_true": "Тогда remote-кэш с сетевым RTT 2ms всегда был бы быстрее in-memory вычисления за 0.1ms, что неверно.",
+                "how_it_should_be": "Влияние измеряют замером hit/miss, A/B-сравнением и формулой; учитывают и накладные расходы самого кэша."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Единственный корректный способ — посчитать средний размер закэшированных значений в байтах: чем он меньше, тем ниже latency.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Размер значений влияет на передачу больших ключей, но latency измеряют временем hit/miss и формулой через hit ratio, а не средним размером.",
+                "source_of_confusion": "Большие значения действительно медленнее, поэтому размер путают с прямой метрикой latency.",
+                "if_it_were_true": "Тогда кэш с крошечными значениями, но hit ratio 10%, был бы «быстрым», хотя 90% запросов идут в медленную БД.",
+                "how_it_should_be": "Latency меряют временем операций и долей попаданий; размер значений — отдельная проблема big keys."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Несколько методов: прямой замер времени hit и miss через `System.nanoTime()`; A/B (отключить кэш для части трафика и сравнить end-to-end); анализ p99 (хвост — часто промахи); и расчёт `avg_latency = hit_ratio × cache_lat + (1 - hit_ratio) × miss_lat`. Инструментуют `OpenTelemetry`-спанами с атрибутом `cache.hit=true/false`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Формула показывает, почему hit ratio — король: при cache=1ms и DB=100ms падение ratio с 95% до 90% поднимает avg latency с 5.95ms до 10.9ms, то есть почти вдвое.",
+                "example": "Спан с атрибутом `cache.hit` позволяет разбить p99 на попадания и промахи: видно, что хвост latency формируют именно miss-запросы, идущие в БД.",
+                "when_to_apply": "Такой замер делают, когда обосновывают наличие кэша или решают, стоит ли наращивать его размер: A/B и формула дают конкретную выгоду в миллисекундах.",
+                "edge_cases": "Сам кэш добавляет latency: сетевой RTT к `Redis` (1-2ms) и сериализация; in-proc `Caffeine` работает за микросекунды и практически бесплатен по сравнению с remote-кэшем.",
+                "related": "[[caching-performance-interview#Q2]] hit ratio как метрика; [[caching-performance-interview#Q14]] L1+L2 ради latency; [[caching-performance-interview#Q18]] вклад сериализации."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно один раз замерить время одного `GET` к кэшу и считать его latency всей системы — промахи на общую картину не влияют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Промахи как раз и формируют хвост latency: avg зависит от miss_lat и (1 - hit_ratio), один замер hit ничего не говорит про систему.",
+                "source_of_confusion": "Время одного быстрого `GET` создаёт ложное впечатление, что вся система такая же быстрая.",
+                "if_it_were_true": "Тогда при hit=1ms систему считали бы 1ms даже при ratio 50%, хотя половина запросов уходит в БД на 100ms.",
+                "how_it_should_be": "Учитывают и hit, и miss через формулу avg_latency и анализ p99, где сидят промахи."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница LRU / LFU / TinyLFU по производительности?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`LRU` всегда даёт лучший hit ratio на любых workload, потому что recency — единственный значимый сигнал, а frequency можно игнорировать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На Zipfian-нагрузке `TinyLFU` обгоняет `LRU` на 5-15% hit ratio именно потому, что учитывает частоту, а не только recency.",
+                "source_of_confusion": "`LRU` проще и популярнее как дефолт, поэтому его считают и самым эффективным.",
+                "if_it_were_true": "Тогда `Caffeine` не использовал бы `TinyLFU`, а бенчмарки не показывали бы преимущество частотных политик.",
+                "how_it_should_be": "Лучшую долю попаданий на реалистичных workload даёт `TinyLFU`, сочетающий recency и frequency."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`LFU` и `TinyLFU` — это полные синонимы: оба считают частоту обращений и ведут себя на нагрузке абсолютно одинаково.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Классический `LFU` никогда не забывает старую частоту, поэтому старое популярное вытесняет новое; `TinyLFU` использует windowed-подход и admission-фильтр.",
+                "source_of_confusion": "Оба используют «frequency» в названии, отсюда вывод об идентичности.",
+                "if_it_were_true": "Тогда у `LFU` не было бы проблемы устаревшей популярности, а `TinyLFU` не давал бы прироста hit ratio.",
+                "how_it_should_be": "`TinyLFU` отличается оценщиком частоты (`Count-Min Sketch`), окном и admission-фильтром против вымывания."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все три политики (`LRU`, `LFU`, `TinyLFU`) дают одинаковый hit ratio, а выбор между ними влияет только на потребление CPU.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hit ratio различается заметно: `LRU` ~70-80%, `LFU` ~75-82%, `TinyLFU` 85-95% на одном и том же Zipfian workload.",
+                "source_of_confusion": "Все три «вытесняют по какому-то признаку», что создаёт впечатление эквивалентности по результату.",
+                "if_it_were_true": "Тогда выбор политики был бы неважен, и бенчмарки `Caffeine` не выделяли бы `TinyLFU` как победителя.",
+                "how_it_should_be": "Политики дают разный hit ratio; `TinyLFU` обычно выигрывает, разница CPU вторична."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`LRU` вытесняет давно нетронутое (просто, но one-hit wonders засоряют кэш). «Классический» `LFU` хранит популярное, но никогда не забывает -> старое популярное вытесняет новое. `TinyLFU` (в `Caffeine`, в `Redis allkeys-lfu`) — оценщик частоты на `Count-Min Sketch` + windowed `LRU`: учитывает и recency, и frequency, и на реалистичных workload выигрывает по hit ratio.",
+              "correct": true,
+              "sections": {
+                "explanation": "`TinyLFU` использует admission-фильтр: новый элемент вытесняет старый только если его оценённая частота выше, что предотвращает вымывание тёплого кэша холодными one-hit-запросами.",
+                "example": "На типичном Zipfian web-workload: `LRU` ~70-80% hit ratio, `LFU` ~75-82%, `TinyLFU` 85-95% — заметно выше за счёт учёта частоты при низком расходе памяти.",
+                "when_to_apply": "`TinyLFU` выбирают по умолчанию для JVM in-proc кэша (`Caffeine`) и для `Redis` через `allkeys-lfu`, когда нагрузка имеет выраженный длинный хвост.",
+                "edge_cases": "В `Redis` `allkeys-lfu` (с 4.0) — аппроксимация LFU; точность регулируется `maxmemory-samples` (по умолчанию 5; выше — точнее аппроксимация, но больше CPU).",
+                "related": "[[caching-performance-interview#Q5]] политики maxmemory в Redis; [[caching-performance-interview#Q15]] tuning Caffeine на TinyLFU; [[caching-performance-interview#Q2]] как политика влияет на hit ratio."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выбрать `maxmemory-policy` в Redis?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для чистого кэша (все данные равнозначно вытесняемы) — `allkeys-lfu` (обычно лучший hit ratio) или `allkeys-lru` (проще, почти так же). Для смеси кэш + session store — `volatile-lru`/`volatile-lfu`: вытесняем только ключи с TTL, сессии сохраняем. Если `Redis` как storage с write-through — `noeviction` (приложение само управляет, принимает OOM-ошибки).",
+              "correct": true,
+              "sections": {
+                "explanation": "Политику выбирают по тому, есть ли среди ключей те, что нельзя вытеснять: `volatile-*` трогает только ключи с TTL, `allkeys-*` — любые, `noeviction` не вытесняет вовсе и отдаёт ошибку при OOM.",
+                "example": "Конфиг чистого кэша: `maxmemory 10gb`, `maxmemory-policy allkeys-lfu`, `maxmemory-samples 10` (по умолчанию 5; больше — точнее аппроксимация LFU).",
+                "when_to_apply": "`allkeys-lfu` ставят на pure cache; `volatile-lru` — когда в одном инстансе живут и кэш, и персистентные сессии с TTL; `noeviction` — когда Redis это primary storage.",
+                "edge_cases": "Анти-паттерн: `noeviction` с бесконечным TTL — память растёт до OOM и краша; при `volatile-*` персистентные ключи без TTL никогда не вытесняются и могут заполнить память — нужен мониторинг `evicted_keys`.",
+                "related": "[[caching-performance-interview#Q4]] LRU vs LFU vs TinyLFU; [[caching-performance-interview#Q1]] метрика evicted_keys; [[caching-performance-interview#Q6]] фрагментация памяти Redis."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для любого Redis-кэша всегда нужно ставить `noeviction`: так данные никогда не теряются, а ошибки OOM можно игнорировать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`noeviction` отдаёт ошибку при заполнении памяти и не освобождает место — для чистого кэша это приводит к отказам записи, а не к потере «важных» данных.",
+                "source_of_confusion": "«Ничего не вытеснять» звучит безопасно, ведь кэш не теряет записи.",
+                "if_it_were_true": "Тогда кэш с бесконечным TTL рос бы до OOM и краша, а новые ключи переставали бы писаться.",
+                "how_it_should_be": "Для чистого кэша берут `allkeys-lfu`/`allkeys-lru`; `noeviction` уместен только когда Redis — storage."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Политика `allkeys-random` всегда предпочтительнее LRU и LFU, потому что случайное вытеснение даёт самый высокий hit ratio.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Случайное вытеснение игнорирует и recency, и frequency, поэтому по hit ratio проигрывает `allkeys-lru` и особенно `allkeys-lfu`.",
+                "source_of_confusion": "`random` дешевле по CPU и кажется «честным», отсюда вывод о превосходстве.",
+                "if_it_were_true": "Тогда не было бы смысла в LRU/LFU-политиках, и Redis не предлагал бы их как рекомендованные для кэша.",
+                "how_it_should_be": "Для лучшего hit ratio выбирают `allkeys-lfu`; `allkeys-random` — крайний случай при экономии CPU."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`volatile-lru` подходит для чистого кэша, где ни один ключ не имеет TTL: он будет вытеснять ключи равномерно по всему пространству.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`volatile-lru` вытесняет только ключи с выставленным TTL; если TTL нет ни у кого, вытеснять нечего и Redis вернёт OOM-ошибку.",
+                "source_of_confusion": "Название «volatile» путают с «по всем ключам», хотя оно означает «только expiring».",
+                "if_it_were_true": "Тогда чистый кэш без TTL спокойно вытеснял бы ключи, а на деле упрётся в OOM при заполнении.",
+                "how_it_should_be": "Для кэша без TTL берут `allkeys-*`; `volatile-*` — когда часть ключей с TTL, а часть персистентна."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое фрагментация памяти в Redis и как её лечить?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Фрагментация — это всегда хорошо: `mem_fragmentation_ratio` ниже 1.0 означает, что Redis эффективно упаковал данные и память используется оптимально.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ratio < 1.0 означает swapping (память Redis выгружена ОС на диск) — это худший сценарий с катастрофической latency, а не эффективная упаковка.",
+                "source_of_confusion": "«Меньше — лучше» интуитивно переносят на ratio, хотя значение ниже 1.0 сигнализирует о swap.",
+                "if_it_were_true": "Тогда выгрузка памяти в swap считалась бы оптимизацией, хотя она резко увеличивает время отклика.",
+                "how_it_should_be": "Нормой считают 1.0-1.5; ниже 1.0 — swap (плохо), выше 1.5 — высокая фрагментация (тоже плохо)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Метрика `mem_fragmentation_ratio = used_memory_rss / used_memory`: 1.0 — нет фрагментации, 1.0-1.5 — норма, > 1.5 — высокая фрагментация (память тратится впустую), < 1.0 — swapping (OS выгрузила память Redis -> катастрофическая latency). Лечат `activedefrag yes` (фоновая дефрагментация) и аллокатором `jemalloc`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Фрагментацию создают значения переменного размера (арены `jemalloc`), удаления, оставляющие дыры, и долгоживущий процесс с большим числом записей; RSS растёт сильнее логического `used_memory`.",
+                "example": "Active defrag (Redis 4.0+) включают так: `activedefrag yes`, `active-defrag-ignore-bytes 100mb`, `active-defrag-threshold-lower 10`, `active-defrag-cycle-max 75` — фоновый процесс перемещает значения за счёт небольшого CPU.",
+                "when_to_apply": "Дефрагментацию включают, когда `mem_fragmentation_ratio` стабильно держится выше 1.5; при значении < 1.0 проблема в swap, и её лечат отключением swap, а не дефрагом.",
+                "edge_cases": "Крайний вариант — рестарт: чистит кэш, поэтому делают failover на реплику и перезапускают primary; libc malloc даёт худшую фрагментацию, чем дефолтный `jemalloc`, и его не используют.",
+                "related": "[[caching-performance-interview#Q1]] метрики памяти; [[caching-performance-interview#Q22]] big keys усиливают фрагментацию; [[caching-performance-interview#Q23]] swap в чеклисте масштабирования."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Фрагментацию памяти в Redis устранить невозможно: единственный путь — каждый раз полностью переустанавливать сервер с нуля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фрагментацию лечат фоновой active defrag (с 4.0) без остановки и правильным аллокатором `jemalloc`; полный рестарт — лишь крайняя мера.",
+                "source_of_confusion": "Фрагментация кажется фундаментальным свойством аллокатора, которое нельзя поправить онлайн.",
+                "if_it_were_true": "Тогда параметры `activedefrag` в конфиге Redis не существовали бы, а они есть и работают в фоне.",
+                "how_it_should_be": "Сначала включают `activedefrag yes`; рестарт с failover на реплику — нуклеарный вариант."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чтобы снизить фрагментацию, нужно заменить `jemalloc` на стандартный libc malloc — он всегда выделяет память плотнее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `jemalloc` (дефолт Redis) даёт лучшую борьбу с фрагментацией, а libc malloc обычно фрагментирует сильнее.",
+                "source_of_confusion": "libc malloc кажется «стандартным и проверенным», отсюда вывод о его превосходстве.",
+                "if_it_were_true": "Тогда Redis по умолчанию собирался бы с libc malloc, но он намеренно использует `jemalloc`.",
+                "how_it_should_be": "Оставляют `jemalloc` и включают active defrag; libc malloc для Redis не рекомендуется."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое thundering herd / cache stampede?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Thundering herd — это когда из-за DDoS-атаки на сам Redis сервер кэша перестаёт отвечать и все клиенты получают ошибки соединения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Stampede — это лавина легитимных промахов после протухания горячего ключа, бьющая в backend, а не внешняя атака на доступность Redis.",
+                "source_of_confusion": "«Стадо запросов» ассоциируется с перегрузкой сервера, и его путают с DDoS на кэш.",
+                "if_it_were_true": "Тогда защитой был бы rate limiting на входе в Redis, но реальная цель защиты — снизить нагрузку на БД при rebuild.",
+                "how_it_should_be": "Это одновременное перестроение значения многими запросами после miss; защищаются lock, probabilistic, stale-while-revalidate."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Cache stampede возникает, когда в кэш кладут слишком большое значение (big key), и его передача забивает сетевой канал.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Большое значение — это проблема big keys; stampede же про множество одновременных промахов и перестроений одного ключа, а не про размер.",
+                "source_of_confusion": "И big keys, и stampede ухудшают latency, поэтому их механизмы смешивают.",
+                "if_it_were_true": "Тогда защитой было бы сжатие значения, но оно не предотвращает тысячу одновременных rebuild после протухания.",
+                "how_it_should_be": "Stampede решают координацией перестроения (lock/probabilistic), а размер ключа — отдельная проблема big keys."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Сценарий: горячий ключ протух -> 1000 конкурентных запросов одновременно промахиваются -> все 1000 идут перестраивать значение (в БД/на вычисление) -> БД захлёбывается, latency скачет. Кэш отдавал 1000 RPS, а после промаха эти 1000 RPS бьют прямо в БД. Защита: distributed lock, probabilistic early expiration, stale-while-revalidate, request coalescing, warmup.",
+              "correct": true,
+              "sections": {
+                "explanation": "Проблема в том, что протухание одного популярного ключа мгновенно снимает защиту backend: вместо одного перестроения происходит тысяча одновременных, и это может вызвать каскадный отказ.",
+                "example": "Distributed lock: первый промах берёт `lock.tryLock(key, 5s)`, перестраивает значение и кладёт в кэш, остальные ждут и читают уже свежее значение, а не дублируют запрос в БД.",
+                "when_to_apply": "О защите от stampede думают для любого горячего ключа с дорогим перестроением: чем больше RPS на ключ и дольше rebuild, тем критичнее предусмотреть один из механизмов.",
+                "edge_cases": "Хуже всего, когда rebuild занимает секунды: за это время накапливается ещё больше ждущих запросов; здесь сильнее помогает stale-while-revalidate, отдающий старое значение во время асинхронного обновления.",
+                "related": "[[caching-performance-interview#Q8]] mutex и probabilistic early expiration; [[caching-performance-interview#Q9]] request coalescing; [[caching-performance-interview#Q11]] jittered TTL против массового протухания."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cache stampede — это когда кэш переполняется и начинает вытеснять (evict) ключи, из-за чего hit ratio постепенно снижается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Eviction под давлением памяти — это про политику вытеснения; stampede — резкий всплеск одновременных промахов и rebuild по одному протухшему горячему ключу.",
+                "source_of_confusion": "И eviction, и stampede приводят к промахам, поэтому причины путают.",
+                "if_it_were_true": "Тогда лечением было бы просто увеличить maxmemory, но stampede не уходит от размера — он про одновременность rebuild.",
+                "how_it_should_be": "Stampede гасят координацией перестроения и jittered TTL, а eviction-давление — размером и политикой maxmemory."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как защититься от stampede: mutex и probabilistic early expiration?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "При distributed mutex первый промах НЕ берёт никакого lock, а все запросы перестраивают значение параллельно — так быстрее заполнить кэш.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смысл mutex именно в том, что lock берёт только первый, а остальные ждут или читают stale; параллельное перестроение — это и есть stampede.",
+                "source_of_confusion": "«Параллельно быстрее» переносят на rebuild, забывая, что цель — не дать тысяче запросов ударить в БД.",
+                "if_it_were_true": "Тогда mutex не защищал бы от herd вообще, и БД получала бы всю лавину промахов, как без защиты.",
+                "how_it_should_be": "Lock берёт первый промах (`SET NX EX`), один перестраивает, остальные ждут или отдают stale."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Probabilistic early expiration работает за счёт того, что значение перестраивается строго в момент истечения TTL, одновременно для всех запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Суть метода в обновлении ВЕРОЯТНОСТНО и РАНЬШЕ истечения, чтобы размазать rebuild по окну; перестроение строго в момент expiry — это и есть herd.",
+                "source_of_confusion": "«Early expiration» воспринимают как «ровно при expiry», теряя смысл вероятностного опережения.",
+                "if_it_were_true": "Тогда все запросы перестраивали бы значение в одну точку времени, и метод не давал бы никакого преимущества над обычным TTL.",
+                "how_it_should_be": "Чем ближе к expiry, тем выше шанс ранней перестройки по формуле с `ln(random())`; rebuild распределяется по окну."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главное преимущество mutex перед probabilistic в том, что при mutex ни один запрос никогда не блокируется и не ждёт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: при mutex ждущие как раз блокируются (это его минус), а «никто не блокируется» — свойство probabilistic подхода.",
+                "source_of_confusion": "Свойства двух методов перепутаны: «без блокировки» приписали mutex вместо probabilistic.",
+                "if_it_were_true": "Тогда mutex и probabilistic были бы эквивалентны по latency, и не было бы смысла различать их в таблице сравнения.",
+                "how_it_should_be": "Mutex блокирует waiters (плюс — простота и один rebuilder); probabilistic не блокирует никого."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Distributed mutex (Redis): первый промах делает `SET lock:{key} 1 NX EX 10`, перестраивает значение и пишет его, остальные ждут или отдают stale — гарантирует единственного rebuilder, но waiters блокируются. Probabilistic (XFetch): хранят `delta` (время перестроения) рядом со значением и обновляют вероятностно раньше истечения по формуле `now - delta × β × ln(random()) >= expiry` — чем ближе к expiry, тем выше шанс rebuild, никто не блокируется.",
+              "correct": true,
+              "sections": {
+                "explanation": "Mutex прост и гарантирует одного перестраивающего, но ждущие блокируются; probabilistic размазывает rebuild по окну до expiry, поэтому herd не возникает и никто не ждёт.",
+                "example": "Формула XFetch с `BETA = 1.0`: по мере приближения к expiry вероятность ранней перестройки растёт к 1, и запросы распределяются по окну rebuild вместо одновременного удара.",
+                "when_to_apply": "Mutex берут, когда нужна простота и строгая гарантия одного rebuilder; probabilistic — когда нельзя блокировать waiters и важна гладкая нагрузка на backend.",
+                "edge_cases": "В `Caffeine` (Java in-proc) есть встроенный `refreshAfterWrite`: асинхронное обновление при возврате закэшированного значения; `Redlock` (multi-master) даёт более надёжный распределённый lock, но для большинства кэшей избыточен.",
+                "related": "[[caching-performance-interview#Q7]] суть thundering herd; [[caching-performance-interview#Q9]] request coalescing внутри процесса; [[caching-performance-interview#Q15]] refreshAfterWrite в Caffeine."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое request coalescing (single-flight)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Coalescing — дедупликация конкурентных одинаковых запросов внутри одного процесса. Без него запрос A промахивается и идёт в БД, запрос B через 1ms тоже промахивается и стартует второй идентичный запрос -> два обращения за одним результатом. С coalescing A запускает задачу, B видит in-flight future и ждёт тот же результат -> один запрос в БД, оба получают ответ. В Go это `singleflight.Group.Do`, в Java — кэш `CompletableFuture`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Coalescing экономит backend на уровне процесса: повторные одновременные запросы одного ключа не порождают дублирующих обращений, а присоединяются к уже летящему future.",
+                "example": "В Java: `inflight.computeIfAbsent(key, k -> CompletableFuture.supplyAsync(() -> { Value v = db.query(k); cache.put(k, v); inflight.remove(k); return v; })).join()` — все ждут один future.",
+                "when_to_apply": "Coalescing включают при высоком RPS на популярные ключи внутри процесса; в `Caffeine` это происходит автоматически при `build(CacheLoader)` без ручного кода.",
+                "edge_cases": "Per-process only: если 100 подов промахиваются одновременно, coalescing внутри каждого не спасёт — нужен distributed mutex поверх; gotcha: исключение в одном запросе уронит всех ждущих этот future.",
+                "related": "[[caching-performance-interview#Q7]] thundering herd; [[caching-performance-interview#Q8]] distributed mutex для cross-process; [[caching-performance-interview#Q15]] Caffeine coalesces автоматически."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Request coalescing работает между всеми инстансами приложения сразу: даже если 100 подов промахнутся одновременно, в БД уйдёт ровно один запрос.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Coalescing работает только внутри одного процесса; для дедупликации между подами нужен distributed mutex поверх кэша, сам по себе single-flight cross-process не покрывает.",
+                "source_of_confusion": "Хочется одного запроса в БД на весь кластер, и это свойство приписывают локальному coalescing.",
+                "if_it_were_true": "Тогда не нужен был бы distributed lock, но при 100 подах каждый сделает свой запрос — coalescing их не объединит.",
+                "how_it_should_be": "Coalescing — per-process; для cross-process дедупликации добавляют distributed mutex."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Coalescing — это объединение нескольких разных ключей в один сетевой пакет (как `MGET`), чтобы сократить число round-trip к Redis.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Объединение разных ключей в один round-trip — это batching/pipeline/`MGET`; coalescing же дедуплицирует конкурентные запросы одного и того же ключа.",
+                "source_of_confusion": "И batching, и coalescing «объединяют запросы», поэтому их смешивают.",
+                "if_it_were_true": "Тогда coalescing экономил бы RTT, но он экономит дублирующие обращения к backend за одним результатом, а не пакеты.",
+                "how_it_should_be": "Coalescing убирает дубли запросов одного ключа; объединение разных ключей — это `MGET`/pipeline."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Coalescing гарантирует, что если в одном из объединённых запросов произойдёт исключение, остальные ждущие всё равно получат корректный результат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот, это известный gotcha: исключение в перестраивающем запросе уронит всех, кто ждёт тот же future, — они получат ту же ошибку.",
+                "source_of_confusion": "Кажется, что разделение future должно изолировать ошибки, но они шарят один результат.",
+                "if_it_were_true": "Тогда не нужно было бы предупреждать про общий fail waiters, но на практике все ждущие падают вместе.",
+                "how_it_should_be": "Исключение в шаренном future валит всех ждущих; это допустимо, но про это знают и обрабатывают."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выбрать TTL для кэша?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Оптимальный TTL — всегда максимально возможный (например, год для всего), потому что чем дольше живёт значение, тем выше hit ratio и тем лучше.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Длинный TTL действительно повышает hit ratio, но без инвалидации он отдаёт устаревшие данные; TTL ограничивают допустимой staleness и стоимостью промаха.",
+                "source_of_confusion": "Формула «больше TTL -> выше hit ratio» подталкивает к максимизации без учёта свежести.",
+                "if_it_were_true": "Тогда кэш с TTL в год отдавал бы давно изменившиеся цены и конфиги, и пользователи видели бы неактуальное.",
+                "how_it_should_be": "TTL = баланс свежести и hit ratio; при отсутствии инвалидации он равен допустимой staleness."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "TTL определяют четыре фактора: требование к свежести (real-time — секунды, конфиг — часы), стоимость промаха (дешёвый — короткий TTL, дорогой multi-join за 500ms — длинный), скорость изменения данных и возможность инвалидации (умеете инвалидировать через pub/sub — длинный TTL допустим; нет — TTL = допустимая staleness). Прагматичные дефолты: API 5-60s, кэш запросов 1-5 min, конфиг 1h, сессии 24h.",
+              "correct": true,
+              "sections": {
+                "explanation": "TTL — это компромисс между свежестью и hit ratio: по формуле `hit_ratio = TTL_length / (TTL_length + request_interval)` рост TTL повышает долю попаданий, но увеличивает риск отдать устаревшие данные.",
+                "example": "Ключ запрашивают каждые 100ms: при TTL=5s ratio ≈ 5/5.1 ≈ 98%, при TTL=1s ≈ 1/1.1 ≈ 91% — увеличение TTL в 5 раз даёт +7 пунктов hit ratio.",
+                "when_to_apply": "TTL подбирают по тиру данных и стоимости промаха; затем измеряют hit ratio при разных TTL и строят график, чтобы найти «локоть», где дальнейший рост уже не окупается риском staleness.",
+                "edge_cases": "Слишком длинный TTL без инвалидации -> пользователь видит stale; перед выбором проверяют: допустимо ли отдавать данные час старыми; если нет — нужна событийная инвалидация, а не просто длинный TTL.",
+                "related": "[[caching-performance-interview#Q2]] TTL влияет на hit ratio; [[caching-performance-interview#Q11]] jittered TTL против синхронного протухания; [[caching-performance-interview#Q13]] паттерны инвалидации."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "TTL надо выставлять одинаковым (например, ровно 60 секунд) для всех типов данных — единое значение упрощает эксплуатацию и не влияет на качество.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TTL зависит от свежести, стоимости промаха и скорости изменения данных: для real-time нужны секунды, для конфига — часы; единое значение неоптимально.",
+                "source_of_confusion": "Единый TTL проще конфигурировать, поэтому кажется разумным дефолтом для всего.",
+                "if_it_were_true": "Тогда биржевые котировки и редко меняющийся конфиг кэшировались бы одинаково, что вредит и свежести, и hit ratio.",
+                "how_it_should_be": "TTL подбирают по тиру данных: API 5-60s, кэш запросов 1-5 min, конфиг 1h, сессии 24h."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "TTL вообще не влияет на hit ratio: доля попаданий определяется только размером кэша и политикой вытеснения, а время жизни ключа тут ни при чём.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TTL напрямую влияет на hit ratio: по формуле `TTL / (TTL + request_interval)` рост TTL с 1s до 5s поднимает ratio с ~91% до ~98%.",
+                "source_of_confusion": "Размер и eviction тоже влияют на hit ratio, поэтому роль TTL недооценивают.",
+                "if_it_were_true": "Тогда увеличение TTL не меняло бы долю попаданий, но на практике оно даёт измеримый прирост.",
+                "how_it_should_be": "TTL — один из главных рычагов hit ratio наряду с размером кэша и политикой вытеснения."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужен jittered TTL (защита от массового протухания)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Jittered TTL нужен, чтобы сделать TTL всех ключей строго одинаковым — так система становится предсказуемее, а протухание происходит синхронно и контролируемо.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Jitter, наоборот, добавляет случайный разброс к TTL, чтобы ключи протухали в окне, а не синхронно; синхронное протухание — это и есть исходная проблема.",
+                "source_of_confusion": "«Предсказуемость» путают с «одновременностью», хотя одновременное протухание вызывает stampede.",
+                "if_it_were_true": "Тогда 10000 ключей протухали бы в одну секунду, и БД получала бы лавину промахов — ровно то, что jitter предотвращает.",
+                "how_it_should_be": "Jitter намеренно делает TTL слегка разными, чтобы размазать протухание по окну."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Jittered TTL — это механизм, который при каждом чтении продлевает время жизни ключа на случайную величину, не давая горячим ключам протухать вообще.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Продление TTL при чтении — это `expireAfterAccess` (TTI), а jitter добавляет случайность к исходному TTL при записи, чтобы рассинхронизировать массовое протухание.",
+                "source_of_confusion": "И jitter, и TTI работают со временем жизни, поэтому их механизмы смешивают.",
+                "if_it_were_true": "Тогда jitter решал бы задачу удержания горячих ключей, а не проблему синхронного истечения батча из 10000 записей.",
+                "how_it_should_be": "Jitter рассинхронизирует протухание; продление при доступе — отдельная фича `expireAfterAccess`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Проблема: 10000 ключей записали в один момент с TTL=60s -> все протухают одновременно -> 10000 промахов и stampede на БД. Фикс — добавить случайный jitter к TTL: `ttl = TTL_BASE + random(-TTL_JITTER, TTL_JITTER)`, тогда ключи протухают в окне 50-70s, и нагрузка размазывается вместо пика. Нужно при batch-прогреве, ежечасном refresh и деплое (все поды прогревают кэш разом).",
+              "correct": true,
+              "sections": {
+                "explanation": "Без jitter синхронно записанные ключи протухают синхронно, превращая массовое истечение в одновременную лавину промахов; случайный разброс TTL раскидывает протухание по окну и сглаживает нагрузку.",
+                "example": "В `Caffeine` через интерфейс `Expiry` можно возвращать случайную длительность или добавлять jitter к `Duration.ofSeconds(60 + random())`, чтобы записи не истекали в одну точку.",
+                "when_to_apply": "Jitter добавляют, когда много ключей пишутся одновременно: batch-прогрев, ежедневный дамп, ежечасный refresh, деплой — везде, где TTL синхронизируются по природе.",
+                "edge_cases": "Альтернатива/дополнение — pre-expiry refresh: асинхронное обновление на ~80% TTL; оно работает как естественный jitter и одновременно избегает массового miss, превращая пилу нагрузки на БД в плоскую линию.",
+                "related": "[[caching-performance-interview#Q7]] stampede при синхронном протухании; [[caching-performance-interview#Q10]] выбор базового TTL; [[caching-performance-interview#Q12]] cache warming как источник синхронных TTL."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Jitter применяют только к одиночным редким ключам; для батчей из тысяч ключей, записанных одновременно, он бесполезен и не влияет на нагрузку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: jitter максимально полезен именно для батчей с синхронными TTL (прогрев, дамп, деплой), где иначе тысячи ключей протухнут разом.",
+                "source_of_confusion": "Кажется, что разброс важен для отдельных ключей, хотя проблема массового истечения — про батчи.",
+                "if_it_were_true": "Тогда batch-прогрев не нуждался бы в jitter, но именно он создаёт синхронные TTL и stampede.",
+                "how_it_should_be": "Jitter нужен прежде всего для батчей одновременно записанных ключей, чтобы размазать их протухание."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие стратегии прогрева кэша при cold start?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Cold start не требует никаких мер: новый инстанс надо сразу включать в полный трафик, кэш мгновенно сам заполнится с первого запроса без всплеска latency.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Холодный кэш направляет первые запросы в БД -> всплеск latency и риск перегрузки; поэтому используют warmup, gradual ramp и readiness-пробу.",
+                "source_of_confusion": "Кажется, что кэш «сам заполнится», и про переходный период с промахами забывают.",
+                "if_it_were_true": "Тогда после деплоя не было бы latency-спайков, но на практике холодный под захлёбывается промахами под полным трафиком.",
+                "how_it_should_be": "Перед полным трафиком прогревают кэш (eager warmup) или подают трафик постепенно (gradual ramp)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Единственный способ прогрева — увеличить TTL всех ключей до бесконечности, тогда кэш никогда не остынет даже после рестарта процесса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Бесконечный TTL не спасает от cold start: рестарт процесса с in-memory кэшем теряет данные независимо от TTL; нужны warmup, репликация или persistent cache.",
+                "source_of_confusion": "TTL и «остывание» оба про время, поэтому длинный TTL ошибочно считают защитой от рестарта.",
+                "if_it_were_true": "Тогда перезапуск пода с пустой памятью оставался бы тёплым, что невозможно для in-memory кэша.",
+                "how_it_should_be": "Cold start решают прогревом, gradual ramp, репликой или persistent cache (`AOF`/`RDB`), а не бесконечным TTL."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Лучшая стратегия — отдавать новому инстансу сразу 100% трафика и одновременно отключить readiness-пробу, чтобы балансировщик не задерживал включение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: readiness-проба должна возвращать healthy только ПОСЛЕ прогрева, иначе балансировщик отправит трафик на холодный под; gradual ramp подаёт трафик частями.",
+                "source_of_confusion": "Быстрое включение кажется выгодным для доступности, отсюда соблазн отключить readiness.",
+                "if_it_were_true": "Тогда холодный под получал бы полный трафик, лавину промахов и грузил бы БД сразу после старта.",
+                "how_it_should_be": "Readiness держат красным до завершения warmup; трафик наращивают постепенно (1%, 5%, 10%)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cold cache бывает после деплоя/рестарта, failover кластера, scale-up и массового протухания TTL. Стратегии: eager warmup (преднаполнить top-N ключей по логам до подачи трафика, readiness-проба успешна только после прогрева); gradual traffic ramp (новый инстанс получает 1%, 5%, 10% трафика); репликация (L2 Redis survive L1 restart, promote pre-warmed реплику); persistent cache (`AOF`/`RDB` переживают рестарт); background refresh из источника правды (`ETL`, `Kafka`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Холодный кэш направляет часть или весь трафик в БД -> всплеск latency и риск перегрузки; цель прогрева — успеть наполнить кэш до того, как трафик хлынет на горячий инстанс.",
+                "example": "В `K8s` readiness-проба возвращает healthy только после завершения warmup — иначе балансировщик отправит трафик на холодный под, и он захлебнётся промахами.",
+                "when_to_apply": "Прогрев настраивают для latency-чувствительных сервисов с дорогим промахом; если SLO допускает медленный первый запрос, можно «не кэшировать всё» и принять первичную медленность.",
+                "edge_cases": "Измеряют «warmup time» — время до достижения target hit ratio (например, 95%); оно должно быть меньше максимально допустимого холодного периода. `Memcached` не persistent — он всегда стартует холодным, в отличие от `Redis` с `AOF`/`RDB`.",
+                "related": "[[caching-performance-interview#Q2]] target hit ratio для warmup; [[caching-performance-interview#Q11]] jitter против синхронного протухания после прогрева; [[caching-performance-interview#Q14]] L2 переживает рестарт L1."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие паттерны инвалидации кэша и как они влияют на производительность?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Основные паттерны: TTL-based (нулевой overhead, staleness до окна TTL); write-through (синхронное обновление кэша при записи в БД, latency = max(БД, кэш), strong consistency); write-behind (обновляем кэш, БД пишем асинхронно — дёшево, но риск потери данных при краше); event-based pub/sub (изменение БД -> событие -> подписчики инвалидируют, consistency секунды); CDC через `Debezium` (читает WAL -> топик, near-realtime); tag-based и version-based.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор паттерна — компромисс между стоимостью, консистентностью и hit ratio: TTL дешёв, но допускает staleness; write-through строго консистентен, но удорожает запись; event/CDC дают near-realtime ценой инфраструктуры.",
+                "example": "CDC-цепочка: `Debezium` читает WAL базы -> пишет в `Kafka`-топик -> consumer инвалидации сбрасывает соответствующие ключи кэша почти в реальном времени и хорошо масштабируется.",
+                "when_to_apply": "Начинают с TTL (просто), добавляют инвалидацию там, где staleness недопустима; не инвалидируют всё подряд на каждую запись — действуют точечно, иначе hit ratio просядет.",
+                "edge_cases": "Broadcast-инвалидация = N×M сообщений (N кэшей × M ключей) — нужно следить за масштабируемостью; слишком агрессивная инвалидация роняет hit ratio, а лаг инвалидации означает временную stale-выдачу.",
+                "related": "[[caching-performance-interview#Q10]] TTL как простейшая инвалидация; [[caching-performance-interview#Q2]] агрессивная инвалидация роняет hit ratio; [[caching-performance-interview#Q19]] инвалидация на CDN (tag-based)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Единственный корректный паттерн инвалидации — инвалидировать абсолютно весь кэш целиком при каждой записи в БД, чтобы гарантированно не было stale-данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Полная инвалидация на каждую запись обрушивает hit ratio и провоцирует stampede; правильный подход — точечная инвалидация только затронутых ключей.",
+                "source_of_confusion": "Сброс всего кэша кажется самым «безопасным» способом избежать устаревших данных.",
+                "if_it_were_true": "Тогда после каждой записи кэш был бы пустым, все запросы шли бы в БД, и смысл кэширования терялся.",
+                "how_it_should_be": "Инвалидируют точечно (нужные ключи/теги/версию); начинают с TTL и добавляют адресную инвалидацию по необходимости."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Write-through и write-behind — это одно и то же: оба синхронно пишут в БД и кэш, разница только в названии у разных вендоров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Write-through пишет в БД синхронно (strong consistency, дороже по latency), write-behind — асинхронно (дёшево, но риск потери данных при краше); это разные паттерны.",
+                "source_of_confusion": "Оба содержат «write» и обновляют кэш при записи, отсюда вывод об идентичности.",
+                "if_it_were_true": "Тогда у write-behind не было бы риска потери данных при краше, но именно он отличает его от write-through.",
+                "how_it_should_be": "Write-through — синхронная запись в БД (консистентность); write-behind — асинхронная (дёшево, но риск потери)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "TTL-based инвалидация даёт строгую (strong) консистентность: пользователь всегда видит самые свежие данные сразу после изменения в БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TTL допускает staleness вплоть до окна TTL: после изменения в БД кэш отдаёт старое значение, пока ключ не протухнет; strong consistency даёт write-through.",
+                "source_of_confusion": "TTL кажется «автоматическим обновлением», поэтому его принимают за гарантию свежести.",
+                "if_it_were_true": "Тогда event-based и CDC были бы не нужны, но их и придумали, потому что TTL не обеспечивает свежесть.",
+                "how_it_should_be": "TTL — eventual consistency с окном до TTL; strong consistency обеспечивает синхронный write-through."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужна связка L1 (in-proc) + L2 (Redis)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "L1 и L2 имеют одинаковую latency и ёмкость; их разделяют только ради красоты архитектуры, реального выигрыша в производительности нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "L1 (in-proc) даёт наносекунды и ограничен heap, L2 (сеть) — 0.5-2ms и терабайты; разница принципиальна и даёт реальный выигрыш на hot-ключах.",
+                "source_of_confusion": "Оба называются «кэш», поэтому различия в latency и ёмкости недооценивают.",
+                "if_it_were_true": "Тогда не было бы смысла держать L1, но именно он отдаёт горячие ключи за микросекунды и разгружает Redis.",
+                "how_it_should_be": "L1 — локальная память (микросекунды, малая ёмкость), L2 — распределённый (миллисекунды, терабайты); связка даёт скорость и масштаб."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "L1 (in-process: `Caffeine`, `Guava`, локальный `HashMap`) — latency наносекунды-микросекунды, ёмкость ограничена heap (100MB-1GB), без сети. L2 (распределённый Redis/Memcached) — latency 0.5-2ms (сеть), ёмкость терабайты, общий для всех инстансов. Иерархия: `Request -> L1 -> L2 -> DB`. Даёт ультрабыстрые hot-ключи, разгружает Redis, экономит сеть и устойчивость к падению Redis (L1 продолжает отдавать).",
+              "correct": true,
+              "sections": {
+                "explanation": "Двухуровневый кэш сочетает скорость локальной памяти и ёмкость/общность распределённого: горячие ключи отдаются из L1 за микросекунды, а L2 хранит общий большой набор и переживает рестарт процесса.",
+                "example": "Read-heavy сценарий 10000+ RPS на один ключ: L1 (`Caffeine`) обслуживает почти всё из памяти процесса, и нагрузка на Redis драматически падает, освобождая его CPU и сеть.",
+                "when_to_apply": "Двухуровневый кэш применяют при read-heavy нагрузке, горячих ключах по Парето (20% ключей = 80% запросов) и sub-millisecond SLO; не применяют при низком RPS, где overhead L1 больше выгоды.",
+                "edge_cases": "Trade-off — консистентность: L1 и L2 могут рассинхронизироваться (L2 обновили -> L1 stale на свой TTL). L1 TTL делают короче L2 (например, L1=1min, L2=10min), а для строгой свежести публикуют invalidation-событие через Redis pub/sub, чтобы все L1 сбросили ключ.",
+                "related": "[[caching-performance-interview#Q15]] tuning Caffeine как L1; [[caching-performance-interview#Q21]] L1 против hot key; [[caching-performance-interview#Q12]] L2 переживает рестарт L1 при cold start."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главное преимущество связки L1+L2 — строгая консистентность: L1 и L2 всегда синхронны, поэтому после записи в L2 локальные L1 мгновенно видят свежее значение без задержки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "L1 и L2 как раз могут рассинхронизироваться: после обновления L2 локальный L1 отдаёт stale до своего TTL; преимущество связки — скорость и разгрузка Redis, а не строгая консистентность.",
+                "source_of_confusion": "Кажется, что раз источник один (L2), то L1 обязан мгновенно подхватывать изменения.",
+                "if_it_were_true": "Тогда не нужны были бы короткий L1 TTL и invalidation через pub/sub, но именно из-за рассинхронизации их и применяют.",
+                "how_it_should_be": "Связка даёт скорость и устойчивость ценой возможной рассинхронизации; свежесть L1 чинят коротким TTL или pub/sub-инвалидацией."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "L1 должен быть распределённым (общим для всех инстансов), а L2 — локальным в каждом процессе: так горячие ключи лежат ближе к сети, а холодные в памяти.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: L1 локальный in-process (быстрый, без сети), L2 распределённый общий (Redis); горячие ключи держат в L1, а не в сетевом слое.",
+                "source_of_confusion": "Номера L1/L2 путают, приписывая «первому уровню» распределённость.",
+                "if_it_were_true": "Тогда каждый hot-запрос шёл бы в сеть, теряя главный смысл L1 — обслуживать горячее из памяти процесса.",
+                "how_it_should_be": "L1 — локальный (микросекунды), L2 — распределённый общий Redis; горячее отдаёт L1 без сети."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тюнить Caffeine?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `Caffeine` опция `expireAfterWrite` и `expireAfterAccess` — это одно и то же: обе задают фиксированный TTL от момента создания записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`expireAfterWrite` — фиксированный TTL от создания, а `expireAfterAccess` (TTI) сбрасывает таймер при каждом чтении, поэтому горячие ключи живут дольше; это разные политики.",
+                "source_of_confusion": "Обе начинаются с `expireAfter` и про истечение, отсюда вывод об идентичности.",
+                "if_it_were_true": "Тогда горячий часто читаемый ключ протухал бы так же, как нечитаемый, и `expireAfterAccess` был бы бессмысленен.",
+                "how_it_should_be": "`expireAfterWrite` — TTL от создания; `expireAfterAccess` (TTI) обнуляется при чтении, удерживая горячее."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Чем больше `maximumSize`, тем лучше: ставить надо максимально возможное значение, ведь больший кэш всегда повышает производительность без побочных эффектов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Слишком большой `maximumSize` даёт GC-давление (заполняется old-gen), что бьёт по latency JVM; размер подбирают (старт 10× уникальных ключей) и следят за hit ratio.",
+                "source_of_confusion": "Интуиция «больше кэш — больше попаданий» игнорирует стоимость памяти и GC в JVM.",
+                "if_it_were_true": "Тогда не было бы предупреждения про GC-давление, но огромный кэш реально провоцирует длинные паузы сборщика.",
+                "how_it_should_be": "Размер подбирают по hit ratio и GC: старт ~10× уникальных ключей, без раздувания до GC-проблем."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Ключевые опции `Caffeine.newBuilder()`: `maximumSize`/`maximumWeight` (счёт записей или кастомный weigher по байтам), `expireAfterWrite` (фиксированный TTL от создания) vs `expireAfterAccess` (TTI, сброс при чтении — горячие живут), `refreshAfterWrite` (асинхронный фоновый reload, отдаёт stale пока грузит -> нет miss-штрафа, критично против stampede), `recordStats()` для метрик. Sizing: старт с 10× ожидаемых уникальных ключей, мониторят hit ratio.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Caffeine` использует `TinyLFU`, поэтому из коробки даёт высокий hit ratio; тюнинг сводится к выбору политики истечения (write vs access), включению `refreshAfterWrite` и правильному размеру против GC-давления.",
+                "example": "`Caffeine.newBuilder().maximumSize(10_000).expireAfterWrite(5, MINUTES).refreshAfterWrite(1, MINUTES).recordStats().build(key -> db.load(key))` — метрики через `CaffeineCacheMetrics.monitor(registry, cache, \"user_cache\")`.",
+                "when_to_apply": "`Caffeine` тюнят как L1 в JVM-сервисах: `refreshAfterWrite` для свежести без miss-штрафа, `expireAfterAccess` чтобы горячие ключи не вытеснялись, `maximumWeight` когда значения сильно различаются по размеру.",
+                "edge_cases": "Слишком большой `maximumSize` -> GC-давление (заполняется old-gen). В Spring Boot всё задаётся декларативно: `spring.cache.type: caffeine` и `spring.cache.caffeine.spec: maximumSize=1000,expireAfterWrite=10m`; `CacheLoader` к тому же coalesces конкурентные запросы за один ключ.",
+                "related": "[[caching-performance-interview#Q4]] Caffeine на TinyLFU; [[caching-performance-interview#Q8]] refreshAfterWrite против stampede; [[caching-performance-interview#Q14]] Caffeine как L1."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`refreshAfterWrite` в `Caffeine` синхронно блокирует все запросы к ключу до окончания перезагрузки значения, поэтому его избегают в горячем пути.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`refreshAfterWrite` обновляет значение асинхронно и отдаёт stale, пока идёт reload, — то есть без miss-штрафа и блокировки; именно поэтому он помогает против stampede.",
+                "source_of_confusion": "Слово «refresh» ассоциируется с блокирующей перезагрузкой, как при обычном miss.",
+                "if_it_were_true": "Тогда `refreshAfterWrite` не давал бы преимущества против stampede, но его как раз рекомендуют для сглаживания rebuild.",
+                "how_it_should_be": "`refreshAfterWrite` грузит значение в фоне и возвращает старое до готовности — без блокировки и miss-штрафа."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Каков overhead Redis Cluster по сравнению с single node?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В Redis Cluster команда `MGET key1 key2` всегда работает с любыми ключами без ограничений, так как кластер сам собирает данные со всех нужных узлов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MGET` в кластере падает, если ключи в разных слотах; для работы их сводят в один слот hash-тегами `{user:42}` или делают per-slot batching.",
+                "source_of_confusion": "В single-node `MGET` работает с любыми ключами, и это поведение ошибочно переносят на кластер.",
+                "if_it_were_true": "Тогда не нужны были бы hash tags, но именно из-за cross-slot ограничения их и применяют.",
+                "how_it_should_be": "Cross-slot `MGET` запрещён; ключи колоцируют hash-тегами в один слот или делят запрос по слотам."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Redis Cluster полностью решает проблему единого горячего ключа: нагрузка на hot key автоматически распределяется между всеми мастерами кластера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один ключ принадлежит одному слоту и живёт на одном узле, поэтому кластер не размазывает hot key; его решают L1-кэшем, репликами на чтение или шардингом ключа.",
+                "source_of_confusion": "Кластер ассоциируется с «распределением нагрузки», и это переносят даже на единичный ключ.",
+                "if_it_were_true": "Тогда hot key не был бы проблемой в кластере, но он остаётся, ведь ключ нельзя разрезать между узлами.",
+                "how_it_should_be": "Hot key решают L1-кэшем, read-репликами или дублированием ключа (`product:123:shardN`), а не самим кластером."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Redis Sentinel` — это режим шардинга: он разрезает датасет на несколько мастеров и таким образом наращивает суммарную ёмкость и write-throughput кластера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Sentinel` обеспечивает HA и авто-failover на реплику, но НЕ шардирует данные: ёмкость и запись остаются в пределах одного мастера; шардинг даёт Redis Cluster.",
+                "source_of_confusion": "И Cluster, и Sentinel — про несколько узлов Redis, поэтому их роли (шардинг vs HA) смешивают.",
+                "if_it_were_true": "Тогда `Sentinel` решал бы проблему датасета больше RAM одной машины, но он лишь переключает на реплику при падении мастера.",
+                "how_it_should_be": "Шардинг данных и записи даёт Redis Cluster (16384 слота); `Sentinel` — это HA с failover при той же ёмкости одного узла."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Single-node Redis — минимальная latency и простота, но лимит в 1 CPU-ядро и RAM одной машины. Redis Cluster шардирует по 16384 hash-слотам на N мастеров, даёт горизонтальное масштабирование данных и записи. Overhead: network hops (`MOVED`-редиректы, если клиент не SMART), cross-slot операции (`MGET` падает на ключах разных слотов — лечат hash tags `{user:42}:session`), resharding (краткие `MOVED`), невозможность cross-slot транзакций.",
+              "correct": true,
+              "sections": {
+                "explanation": "Кластер добавляет накладные расходы маршрутизации и ограничения на мультиключевые операции; SMART-клиенты (`Lettuce`, `JedisCluster`) кэшируют slot map и убирают лишние редиректы, делая p99 близким к single-node.",
+                "example": "Чтобы `MGET` и транзакции работали в кластере, связанные ключи сводят в один слот hash-тегами: `{user:42}:session` и `{user:42}:orders` попадают в один слот и обрабатываются вместе.",
+                "when_to_apply": "Кластер берут, когда датасет не влезает в RAM одной машины или write-throughput превышает CPU одного узла; не берут при едином hot-ключе (один слот = один узел) и малом объёме, влезающем на одну машину.",
+                "edge_cases": "`Sentinel` (HA, не шардинг) даёт авто-failover на реплику и производительность одного мастера, но та же ёмкость одного узла. Альтернатива кластеру — партиционирование на уровне приложения (consistent hashing) или Redis Enterprise с прозрачным шардингом.",
+                "related": "[[caching-performance-interview#Q17]] pipeline/MGET и слоты в кластере; [[caching-performance-interview#Q21]] hot key кластер не спасает; [[caching-performance-interview#Q23]] single-node bottleneck в чеклисте."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что даёт pipeline / MGET batching в Redis?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Проблема: 100 отдельных `GET` = 100 RTT (500ms+ при кросс-регионе). Pipeline: `p = redis.pipeline(); for key in keys: p.get(key); results = p.execute()` — один RTT на все команды любых типов. `MGET`: `redis.mget(keys)` — одна команда, один RTT, но только `GET` и ключи должны быть в одном слоте (в кластере). Выигрыш: 100 ops при RTT 1ms — 100ms последовательно против 2ms pipelined = 50× быстрее.",
+              "correct": true,
+              "sections": {
+                "explanation": "Batching убирает доминирующий вклад RTT: вместо N round-trip отправляется один, поэтому при сетевой latency, превышающей время самой операции, выигрыш кратный и растёт с расстоянием до Redis.",
+                "example": "Pipeline для смешанных команд: `p.get(key1); p.set(key2, val); p.incr(counter); res1, _, counter = p.execute()` — `GET`, `SET` и `INCR` уходят одним RTT, чего `MGET` (только GET) не умеет.",
+                "when_to_apply": "Batching применяют, когда ключи известны заранее и latency определяется RTT; чем дальше Redis (кросс-регион, 20+ ms RTT), тем сильнее эффект.",
+                "edge_cases": "Большие pipeline едят память клиента и сервера — батчи держат разумными (100-1000). `MGET` атомарен как одна команда, pipeline — нет (если не обёрнут в `MULTI`); в кластере `Lettuce` сам делит `mget` по слотам, а `Jedis` требует ручного разбиения.",
+                "related": "[[caching-performance-interview#Q16]] cross-slot MGET в кластере; [[caching-performance-interview#Q22]] большие батчи и память; [[caching-performance-interview#Q18]] сериализация при передаче значений."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Pipeline бесполезен для производительности: что 100 отдельных `GET`, что pipeline из 100 команд занимают одинаковое время, ведь число команд не меняется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pipeline отправляет все команды одним RTT вместо N: при 100 ops и RTT 1ms это 2ms против 100ms — до 50× быстрее, так как latency определяет RTT, а не число команд.",
+                "source_of_confusion": "Кажется, что важно число команд, а не число сетевых round-trip, которые pipeline и сокращает.",
+                "if_it_were_true": "Тогда не было бы смысла в pipeline и `MGET`, но они дают кратный выигрыш именно за счёт экономии RTT.",
+                "how_it_should_be": "Pipeline схлопывает N RTT в один; выигрыш кратный и растёт с сетевой latency."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`MGET` и pipeline идентичны во всём: оба умеют выполнять любые команды (`GET`, `SET`, `INCR`) и оба гарантируют атомарность всей пачки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MGET` — только чтение (`GET`) и атомарен как одна команда; pipeline выполняет любые команды, но не атомарен без обёртки `MULTI`. Это разные инструменты.",
+                "source_of_confusion": "Оба сокращают RTT до одного, отсюда вывод об их полной взаимозаменяемости.",
+                "if_it_were_true": "Тогда не нужен был бы pipeline для смешанных `GET`/`SET`/`INCR`, но именно для них `MGET` не подходит.",
+                "how_it_should_be": "`MGET` — атомарное мульти-чтение; pipeline — батч любых команд, не атомарный без `MULTI`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В Redis Cluster `MGET` работает с ключами из любых слотов без ограничений, поэтому hash-теги и ручное разбиение по слотам не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В кластере `MGET` требует, чтобы все ключи были в одном слоте; иначе нужны hash-теги или разбиение запроса по слотам (`Lettuce` делает это сам, `Jedis` — вручную).",
+                "source_of_confusion": "В single-node `MGET` всеяден, и это поведение ошибочно переносят на кластер.",
+                "if_it_were_true": "Тогда cross-slot `MGET` не падал бы, но именно из-за слотов в кластере применяют hash-теги.",
+                "how_it_should_be": "Для `MGET` в кластере ключи колоцируют в один слот hash-тегами либо делят запрос по слотам."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Каков overhead сериализации (JSON vs MessagePack vs protobuf)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "JSON — самый компактный и быстрый формат сериализации из всех: он всегда даёт меньший размер и большую скорость, чем бинарные `MessagePack` и `protobuf`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JSON как раз самый крупный (~1000B против ~600-700B) и медленный из перечисленных; бинарные `MessagePack`, `protobuf`, `Kryo`, `Fury` компактнее и быстрее.",
+                "source_of_confusion": "JSON повсеместен и привычен, что создаёт впечатление эффективности.",
+                "if_it_were_true": "Тогда не было бы смысла в `protobuf`/`MessagePack`, но их и используют ради меньшего размера и скорости.",
+                "how_it_should_be": "JSON — универсален и читаем, но крупнее и медленнее; бинарные форматы компактнее и быстрее."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для объекта ~1KB: JSON ~1000B (универсален, читаем, но крупнее и медленнее), `MessagePack` ~700B (бинарный JSON, лёгкая миграция), `Protobuf` ~600B (схема заранее -> version-safe и компактно), `Kryo` ~550B (JVM-specific, быстр, вопросы совместимости), `Fury` ~500B (лидер бенчмарков 2020-х), `Gzip(JSON)` ~400B (медленнее), Java Serialization ~1500B — медленный, CVE-prone, раздутый, его избегают.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор формата — компромисс размера, скорости и совместимости: JSON удобен и читаем, но самый крупный и медленный; схемные форматы (`Protobuf`, `Avro`) компактны и устойчивы к версиям ценой описания схемы заранее.",
+                "example": "Типичная разница на JVM: ~5k ops/sec на JSON против ~15k ops/sec на `protobuf`; для горячего ключа значение сериализуют один раз и кэшируют уже сериализованные байты.",
+                "when_to_apply": "Формат подбирают по профилю значения: для малых значений (<1KB) доминирует overhead сериализации (тут важна скорость), для больших (>10KB) — сетевой transfer, и тогда помогает сжатие (`LZ4` быстрый decompress, `Zstd` лучший ratio).",
+                "edge_cases": "Не переоптимизируют: если кэш занимает 0.5% времени запроса, удвоение скорости сериализации даёт лишь 0.25% — профилируют до смены формата. В Redis значения хранят бинарно; Java Serialization избегают из-за скорости и уязвимостей.",
+                "related": "[[caching-performance-interview#Q17]] передача значений в pipeline; [[caching-performance-interview#Q22]] сжатие больших значений; [[caching-performance-interview#Q3]] вклад сериализации в latency."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для значений любого размера всегда стоит включать сжатие (`gzip`/`Zstd`): оно бесплатно уменьшает размер и потому всегда ускоряет работу кэша.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сжатие тратит CPU и оправдано для крупных значений (>10KB), где доминирует сетевой transfer; для малых значений (<1KB) overhead сериализации/сжатия съедает выигрыш.",
+                "source_of_confusion": "«Меньше байт — быстрее» переносят на все случаи, игнорируя стоимость CPU на сжатие/распаковку.",
+                "if_it_were_true": "Тогда сжимали бы и крошечные значения, но на них CPU-стоимость сжатия превышает экономию сети.",
+                "how_it_should_be": "Сжатие включают для больших значений (`LZ4` — быстрый decompress, `Zstd` — лучший ratio); для малых оно невыгодно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Java Serialization — лучший выбор для кэша на JVM: он самый быстрый, самый компактный и не имеет проблем безопасности по сравнению с `protobuf` и `Kryo`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Java Serialization наоборот медленный, раздутый (~1500B) и CVE-prone; его рекомендуют избегать в пользу `protobuf`, `Kryo` или `Fury`.",
+                "source_of_confusion": "«Родной» для Java механизм кажется оптимальным и безопасным по умолчанию.",
+                "if_it_were_true": "Тогда его не помечали бы как «avoid» в сравнении форматов, но именно так его и характеризуют.",
+                "how_it_should_be": "Java Serialization избегают; для JVM берут `protobuf`/`Kryo`/`Fury` — быстрее, компактнее и безопаснее."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как CDN hit ratio зависит от cache-заголовков?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Заголовок `Vary: User-Agent` повышает CDN hit ratio, потому что отдаёт каждому браузеру оптимизированную версию ответа из кэша.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Vary: User-Agent` наоборот обрушивает hit ratio: CDN заводит отдельную запись на каждое значение UA (их тысячи), и почти каждый запрос промахивается.",
+                "source_of_confusion": "«Оптимизация под браузер» звучит полезно, маскируя взрывной рост числа вариантов кэша.",
+                "if_it_were_true": "Тогда `Vary: User-Agent` рекомендовали бы, но его как раз называют катастрофой для кэширования.",
+                "how_it_should_be": "`Vary: User-Agent`/`Cookie` избегают; безопасен `Vary: Accept-Encoding` для gzip/br."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Заголовки `ETag`/`Last-Modified` повышают CDN hit ratio, потому что при `304 Not Modified` объект отдаётся клиенту быстрее и без обращения к сети.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ETag`/`If-None-Match` экономят bandwidth (тело не передаётся при `304`), но не повышают сам hit ratio и не убирают сетевую ревалидацию; на долю edge-отдачи влияет `Cache-Control`/`s-maxage`.",
+                "source_of_confusion": "`304 Not Modified` ассоциируется с «попаданием в кэш», хотя это про ревалидацию и экономию тела ответа.",
+                "if_it_were_true": "Тогда `ETag` поднимал бы hit ratio, но он лишь убирает передачу тела при неизменном ресурсе, требуя round-trip на проверку.",
+                "how_it_should_be": "Hit ratio поднимают `Cache-Control`/`s-maxage` и аккуратные `Vary`; `ETag` экономит bandwidth, а не latency и не долю edge-отдачи."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "CDN hit ratio — доля запросов, отданных с edge, а не с origin (цель 90%+, для статики >98%). Влияют заголовки: `Cache-Control` (`max-age`, `s-maxage` для CDN, `public`/`private`, `no-cache`, `stale-while-revalidate`), `Vary` (`Vary: Accept-Encoding` нормально, а `Vary: User-Agent`/`Cookie` — катастрофа: запись на каждое значение), `ETag`/`Last-Modified` для ревалидации (`304 Not Modified`). Частые ошибки: `Set-Cookie` (CDN обычно не кэширует), query strings, `Cache-Control: private`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Заголовки управляют тем, что и как долго CDN кэширует на edge; неудачные `Vary` или `private` обрушивают hit ratio, заставляя запросы идти на origin вместо отдачи с ближайшего POP.",
+                "example": "Best practice для статики: `Cache-Control: max-age=31536000, immutable` с fingerprint в имени файла; для HTML — `max-age=0, s-maxage=60` (клиент всегда перепроверяет, CDN кэширует кратко).",
+                "when_to_apply": "Заголовки настраивают, когда CDN hit ratio ниже цели: проверяют `Cache-Control`, нормализуют query strings (срезают `utm_*`) и убирают вредные `Vary`, чтобы поднять долю edge-отдачи.",
+                "edge_cases": "`Vary: User-Agent` создаёт отдельную запись на каждый UA и убивает hit ratio — его избегают; `ETag`/`If-None-Match` экономят bandwidth (тело не передаётся при `304`), но не latency; query strings вроде `?ts=1` CDN может считать разными объектами.",
+                "related": "[[caching-performance-interview#Q20]] tiered caching и origin offload; [[caching-performance-interview#Q2]] target hit ratio по тирам; [[caching-performance-interview#Q13]] tag-based инвалидация на CDN."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Заголовок `Cache-Control: private` повышает CDN hit ratio, явно разрешая CDN кэшировать ответ как приватный и быстро отдавать его всем пользователям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`private` наоборот запрещает кэширование на общих CDN-узлах (ответ только для браузера конкретного клиента); для edge-кэша нужен `public`.",
+                "source_of_confusion": "Слово `private` кажется флагом «можно кэшировать приватно», хотя оно исключает shared-кэши.",
+                "if_it_were_true": "Тогда `private` улучшал бы CDN-кэширование, но именно его называют ошибкой, снижающей hit ratio.",
+                "how_it_should_be": "Для кэширования на CDN ставят `public`; `private` пропускает CDN и кэшируется только браузером."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое CDN tiered caching?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Tiered caching означает, что каждый edge-POP при промахе всегда идёт напрямую в origin, минуя любые промежуточные узлы, — так минимизируется latency.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Суть tiered как раз в промежуточном shield-POP: edge при промахе идёт в shield, а shield в origin лишь один раз, агрегируя промахи всех edge.",
+                "source_of_confusion": "«Прямо в origin» кажется быстрее, теряя смысл агрегации промахов на shield.",
+                "if_it_were_true": "Тогда origin получал бы по запросу с каждого из 100 POP, и origin offload в 9-100 раз был бы невозможен.",
+                "how_it_should_be": "Edge при промахе идёт в shield-POP; shield обращается к origin один раз и прогревает остальные edge."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Tiered caching максимально полезен при очень коротком TTL и крошечном CDN-footprint из 2-3 POP, где он даёт наибольший origin offload.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: tiered помогает при большом числе POP (100+) и не слишком коротком TTL; при малом footprint и очень коротком TTL shield сам часто промахивается и пользы мало.",
+                "source_of_confusion": "Кажется, что чем агрессивнее протухание и меньше узлов, тем нужнее экономия — но эффект обратный.",
+                "if_it_were_true": "Тогда tiered рекомендовали бы для маленьких CDN, но его ценность как раз в агрегации промахов многих POP.",
+                "how_it_should_be": "Tiered выгоден при 100+ POP, long-tail контенте и высокой origin-нагрузке; при коротком TTL shield часто мимо."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Shield-POP в tiered caching выбирают как можно дальше от origin и от пользователей одновременно — где-нибудь на отдельном континенте, так растёт надёжность кэширования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Shield, наоборот, размещают близко к origin (или ближе к пользователям, по паттерну), чтобы он быстро дотягивался до источника и эффективно прогревал edge; далёкий shield увеличивает latency промахов.",
+                "source_of_confusion": "«Промежуточный узел» представляют как «где-то посередине вдали от всех», теряя смысл близости к origin.",
+                "if_it_were_true": "Тогда shield на другом континенте ускорял бы resolution, но он лишь добавил бы лишний дальний hop к origin.",
+                "how_it_should_be": "Shield ставят близко к origin (например, origin в `us-east-1` -> shield там же) или ближе к пользователям, исходя из паттерна нагрузки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Без tiered: 100 edge-POP при промахе по одному объекту бьют в origin сотней запросов. С tiered/shield POP: `Edge POPs -> shield POP (региональный) -> origin` — первый промах edge тянет из shield, а shield идёт в origin ОДИН раз; остальные edge попадают в уже прогретый shield. Выигрыш: origin offload в 9-100 раз и быстрее resolution для последующих edge (shield ближе origin).",
+              "correct": true,
+              "sections": {
+                "explanation": "Промежуточный shield-уровень агрегирует промахи множества edge: origin получает один запрос вместо сотни, а edge, опоздавшие к origin, читают из ближнего прогретого shield.",
+                "example": "Вендоры: `Fastly` — shielding (выбираешь POP как shield), `CloudFront` — Origin Shield (включается per-distribution), `Cloudflare` — Argo Tiered Cache (авто-выбор лучшего shield).",
+                "when_to_apply": "Tiered включают при большом числе edge-POP (100+), long-tail контенте (не всё популярно) и высоких счетах за origin-нагрузку, где агрегирование промахов даёт максимальную экономию.",
+                "edge_cases": "Не помогает при малом CDN-footprint (мало POP) и очень коротком TTL (shield тоже часто промахивается). Стоит чуть дороже (запрос к shield тарифицируется), но экономия на origin это перекрывает.",
+                "related": "[[caching-performance-interview#Q19]] cache-заголовки и hit ratio; [[caching-performance-interview#Q7]] origin как защита от stampede; [[caching-performance-interview#Q2]] hit ratio статики по тирам."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое hot key problem и как её решать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Hot key — один ключ с непропорциональной нагрузкой (например, 80% всех `GET` на один товар). Проблемы: узел Redis с этим ключом упирается в CPU, NIC к узлу — в bottleneck, а ребалансировка кластера не помогает (ключ нельзя разрезать). Решения: in-process L1-кэш (`Caffeine`), read-реплики, key sharding (`product:123:shard0..9`), pre-compute/денормализация, client-side sampling (1% чтений в Redis, 99% из L1). Детект: `redis-cli --hotkeys`, `MONITOR`, per-key метрики.",
+              "correct": true,
+              "sections": {
+                "explanation": "Горячий ключ нельзя масштабировать шардингом, потому что он целиком в одном слоте на одном узле; нагрузку снимают, отдавая его из локальной памяти процесса или дублируя ключ на несколько инстансов.",
+                "example": "L1-кэш (`Caffeine`): горячий ключ почти всегда отдаётся из памяти процесса, и нагрузка на Redis резко падает — реальный кейс Twitter «Justin Bieber problem» решали кастомным шардингом.",
+                "when_to_apply": "С hot key борются, когда один ключ берёт более ~5% всех операций: read-heavy статику дублируют по shard-ключам, latency-критичную — выносят в L1 с инвалидацией через pub/sub.",
+                "edge_cases": "Key sharding (`product:123:shard0..9`) хорош для read-heavy статики: чтение выбирает случайный shard, но запись обязана обновить ВСЕ shard-копии; алерт ставят, если один ключ > 5% всех ops.",
+                "related": "[[caching-performance-interview#Q14]] L1-кэш против hot key; [[caching-performance-interview#Q16]] кластер не размазывает hot key; [[caching-performance-interview#Q23]] hot key в чеклисте масштабирования."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Hot key problem решается простым добавлением узлов в Redis Cluster: ребалансировка слотов автоматически распределит нагрузку с горячего ключа по всем мастерам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один ключ принадлежит одному слоту и одному узлу, поэтому добавление узлов и ребалансировка не размазывают hot key; нужны L1-кэш, реплики или дублирование ключа.",
+                "source_of_confusion": "Кластер ассоциируется с горизонтальным масштабированием, и это переносят на единичный горячий ключ.",
+                "if_it_were_true": "Тогда hot key не был бы проблемой в кластере, но Twitter решал «Justin Bieber problem» кастомным шардингом, а не добавлением узлов.",
+                "how_it_should_be": "Hot key снимают L1-кэшем, read-репликами или дублированием ключа (`product:123:shardN`), а не ребалансировкой."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Hot key — это ключ, значение которого слишком велико (несколько мегабайт), из-за чего его передача забивает сеть при каждом чтении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Большое значение — это big key problem; hot key же про непропорциональную ЧАСТОТУ обращений к одному ключу, а не про его размер.",
+                "source_of_confusion": "И hot key, и big key грузят сеть и узел, поэтому их путают.",
+                "if_it_were_true": "Тогда hot key лечили бы сжатием значения, но его решают L1-кэшем и дублированием ключа против частоты обращений.",
+                "how_it_should_be": "Hot key — про высокую частоту запросов к ключу; размер значения — это отдельная проблема big keys."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Лучший способ решить hot key — использовать `KEYS *` для регулярного поиска горячих ключей и их ручного удаления из кэша в проде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`KEYS *` блокирует Redis и в проде запрещён; для детекта hot key есть `redis-cli --hotkeys`, `MONITOR` и per-key метрики, а решают её L1/репликами/шардингом ключа.",
+                "source_of_confusion": "`KEYS *` кажется удобным способом «увидеть все ключи», но он сканирует всё пространство.",
+                "if_it_were_true": "Тогда `KEYS *` рекомендовали бы для диагностики, но его прямо помечают как «never use in prod».",
+                "how_it_should_be": "Детект — `redis-cli --hotkeys`/метрики; решение — L1-кэш, read-реплики, дублирование ключа."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое big keys problem и как её решать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Big key — это ключ, к которому приходит слишком много запросов в секунду, из-за чего один узел Redis перегружается по частоте обращений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Высокая частота обращений к ключу — это hot key problem; big key же про РАЗМЕР одного значения (>100KB), а не про частоту запросов.",
+                "source_of_confusion": "И big key, и hot key перегружают узел, поэтому их причины смешивают.",
+                "if_it_were_true": "Тогда big key решали бы L1-кэшем против частоты, но его решают дроблением значения и сжатием.",
+                "how_it_should_be": "Big key — про размер значения; частоту обращений к одному ключу решает hot key problem."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Big key — одно очень большое значение (>100KB, особенно мегабайты). Проблемы: latency-спайк (`GET` 10MB = 10MB transfer каждый запрос), блокировка (Redis однопоточен, чтение большого ключа блокирует другие операции), фрагментация памяти, replication lag (большой ключ шлёт 10MB репликам), дисбаланс слотов. Детект: `redis-cli --bigkeys`, `MEMORY USAGE key`, `DEBUG OBJECT key`. Решения: дробить на чанки, коллекции вместо blob, пагинация, сжатие, вынос в S3/БД.",
+              "correct": true,
+              "sections": {
+                "explanation": "Однопоточность Redis превращает большой ключ в проблему всей инстанции: его чтение блокирует все прочие операции, а каждый `GET` гоняет мегабайты по сети и нагружает репликацию.",
+                "example": "Вместо `SET user:42 {big_json}` -> `HSET user:42 field1 val1` или Redis List с `RPUSH`/`LRANGE 0 99` (пагинация) — обращение идёт к части данных, а не ко всему блобу.",
+                "when_to_apply": "С big keys борются, когда `MEMORY USAGE` ключа превышает ~1MB: блобы дробят на чанки или коллекции, большие листы читают постранично, а тяжёлые объекты выносят в object store с указателем в кэше.",
+                "edge_cases": "Для больших структур используют курсорный обход (`SSCAN` вместо блокирующего `SMEMBERS huge_set`, `LRANGE 0 99` вместо `LRANGE 0 -1`); Redis — не storage для больших блобов, их кладут в `S3`/БД, а в кэше держат указатель.",
+                "related": "[[caching-performance-interview#Q6]] big keys усиливают фрагментацию; [[caching-performance-interview#Q18]] сжатие больших значений; [[caching-performance-interview#Q23]] big keys в чеклисте масштабирования."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Большой ключ безопасен, потому что Redis многопоточен: чтение мегабайтного значения обрабатывается отдельным потоком и не мешает остальным операциям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redis обрабатывает команды в одном потоке, поэтому чтение большого ключа блокирует все прочие операции и даёт latency-спайк; «отдельного потока» под него нет.",
+                "source_of_confusion": "Современные версии Redis имеют I/O-треды, что создаёт ложное впечатление полноценной многопоточной обработки команд.",
+                "if_it_were_true": "Тогда big key не блокировал бы инстанс, но именно блокировка из-за однопоточности — одна из главных его проблем.",
+                "how_it_should_be": "Redis выполняет команды однопоточно; большой ключ блокирует остальных, поэтому его дробят, пагинируют или выносят в `S3`/БД."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Самый безопасный способ прочитать большой set или хэш в Redis — это блокирующие команды `SMEMBERS huge_set` и `LRANGE list 0 -1`, которые мгновенно возвращают все элементы без вреда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SMEMBERS`/`LRANGE 0 -1` на большой структуре блокируют однопоточный Redis и дают latency-спайк; для больших коллекций используют курсорный `SSCAN` и пагинацию.",
+                "source_of_confusion": "Эти команды просты и возвращают всё сразу, что кажется удобным и безопасным.",
+                "if_it_were_true": "Тогда не нужны были бы `SSCAN` и `LRANGE 0 99`, но именно их рекомендуют против блокировки на больших ключах.",
+                "how_it_should_be": "Большие структуры читают курсором (`SSCAN`) и постранично (`LRANGE 0 99`), избегая блокирующих full-сканов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Кэш не масштабируется — что проверить?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Команда `KEYS *` — главный инструмент диагностики масштабируемости в проде: её надо запускать регулярно, чтобы видеть полный список ключей под нагрузкой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`KEYS *` блокирует однопоточный Redis и сам становится причиной деградации — в проде запрещён; для диагностики используют `SLOWLOG GET`, `redis-cli --latency`, `--hotkeys`/`--bigkeys`.",
+                "source_of_confusion": "`KEYS *` кажется естественным способом «осмотреть весь кэш» при разборе проблем.",
+                "if_it_were_true": "Тогда его не помечали бы как «never use in prod», но он блокирует сервер на всё время скана.",
+                "how_it_should_be": "Диагностируют через `SLOWLOG`, `--latency`, `--hotkeys`, `--bigkeys` и Grafana; `KEYS *` в проде не запускают."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Вертикальное масштабирование (более мощный сервер с большим числом ядер) полностью решает проблему: Redis задействует все ядра и линейно нарастит throughput.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обработка команд в Redis однопоточна, поэтому лишние ядра почти не помогают одному инстансу (~100k ops/sec на ядро); для роста нужны кластер (шардинг) или реплики (read-scaling).",
+                "source_of_confusion": "«Больше ядер — больше производительности» верно для многопоточных систем, но не для однопоточного исполнения команд Redis.",
+                "if_it_were_true": "Тогда апгрейд на 32-ядерный сервер кратно поднял бы throughput одного инстанса, но он упирается в один поток.",
+                "how_it_should_be": "Вертикаль ограничена одним потоком; масштабируют горизонтально (кластер/реплики) и уровнями кэша (L1, CDN)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Симптомы: растёт latency под нагрузкой, падает hit ratio, насыщение CPU/памяти. Чеклист: single-node bottleneck (Redis однопоточен, ядро упирается на ~100k ops/sec -> кластер/реплики), сеть NIC (1 Gbps насыщен?), connection limit (`CONFIG GET maxclients`, пул на стороне приложения), hot key (Q21), big keys (Q22), медленные команды (`SLOWLOG GET 10`, `KEYS *`), persistence (`BGSAVE`/`AOF rewrite`, `fork()` и Copy-on-Write), фрагментация (`mem_fragmentation_ratio > 1.5`), swap (ratio < 1), client-side (пул, сериализация, GC-паузы).",
+              "correct": true,
+              "sections": {
+                "explanation": "Масштабирование кэша упирается в конкретные узкие места по слоям — CPU одного потока, NIC, лимит соединений, горячие/большие ключи, persistence и фрагментация; чеклист помогает локализовать, что именно держит рост.",
+                "example": "Диагностика медленных команд: `SLOWLOG GET 10` показывает недавние тяжёлые операции вроде `HGETALL` на большом хэше или запрещённого в проде `KEYS *`; `redis-cli --latency` меряет задержку в реальном времени.",
+                "when_to_apply": "Чеклист проходят, когда кэш перестаёт держать рост нагрузки: сначала смотрят single-thread CPU и NIC, затем hot/big keys, persistence-спайки и фрагментацию, и только потом клиентскую сторону.",
+                "edge_cases": "Варианты масштабирования: вертикальный (больший узел, но ограничен одним потоком), горизонтальный (кластер для шардинга данных или репликация для read-scaling) и добавление уровней кэширования (L1, CDN); на чистом кэше отключают persistence, чтобы убрать `fork()`-спайки.",
+                "related": "[[caching-performance-interview#Q21]] hot key в чеклисте; [[caching-performance-interview#Q22]] big keys блокируют; [[caching-performance-interview#Q6]] фрагментация и swap."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Persistence (`BGSAVE`, `AOF rewrite`) никак не влияет на производительность кэша под нагрузкой, поэтому в чеклисте масштабирования её проверять не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`BGSAVE`/`AOF rewrite` делают `fork()` на большом heap, создавая Copy-on-Write давление и latency-спайки; на чистом кэше persistence часто отключают именно поэтому.",
+                "source_of_confusion": "Persistence воспринимают как фоновую задачу, незаметную для основного трафика.",
+                "if_it_were_true": "Тогда не советовали бы отключать persistence на pure cache, но это типовая рекомендация против `fork()`-спайков.",
+                "how_it_should_be": "Persistence входит в чеклист: `BGSAVE`/`AOF` и `fork()` дают спайки, на чистом кэше их отключают."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
