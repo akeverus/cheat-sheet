@@ -1,0 +1,1445 @@
+{
+  "topic_slug": "network-performance-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между latency и bandwidth?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Latency` — задержка доставки пакета A→B (мс, `RTT` = 2× one-way), а `bandwidth` — пропускная способность канала (бит/с). Это **независимые** характеристики: толстый канал не уменьшает задержку, а низкий ping не увеличивает объём данных в секунду.",
+              "correct": true,
+              "sections": {
+                "explanation": "Latency определяется длиной пути и скоростью света и почти не зависит от ширины канала; bandwidth — это объём данных в секунду. Поэтому апгрейд fiber растит пропускную способность, но RTT оставляет прежним.",
+                "example": "Аналогия: грузовик из Лос-Анджелеса в Нью-Йорк. `Bandwidth` — вместимость кузова (сколько груза), `latency` — время доехать через всю страну. Bandwidth растёт (10→100 Gbps), а latency упирается в физику.",
+                "when_to_apply": "`Latency` почти физический предел (~20 км/мс в оптике), победить можно только географической близостью (`CDN`, edge ближе к пользователю). `Bandwidth` улучшается апгрейдом fiber/NIC или параллельными линками.",
+                "edge_cases": "Веб-страница из сотни мелких запросов — `latency-bound`: LA↔NY ~70 мс, 100 последовательных запросов = 7 секунд только на сеть. Bulk-передача больших файлов, наоборот, упирается в bandwidth; спутник — крайний случай, где высокая полоса не спасает от 500+ мс задержки.",
+                "related": "[[network-performance-interview#Q2]] типичные RTT-значения; [[network-performance-interview#Q3]] bandwidth-delay product; [[network-performance-interview#Q18]] CDN как способ сократить latency."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Latency` и `bandwidth` — синонимы: чем больше пропускная способность канала, тем меньше задержка, поэтому достаточно апгрейдить fiber до 100 Gbps и пинг упадёт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это независимые величины: апгрейд канала до 100 Gbps не уменьшает `RTT` ни на миллисекунду, потому что задержка определяется длиной пути и скоростью света, а не шириной трубы.",
+                "source_of_confusion": "Оба термина про «скорость сети», поэтому их сливают в одно, хотя один про объём в секунду, другой про время в пути.",
+                "if_it_were_true": "Тогда покупка более толстого канала чинила бы chatty-протоколы, но 100 последовательных запросов LA↔NY всё равно займут ~7 секунд при любой пропускной способности.",
+                "how_it_should_be": "`Latency` нужно лечить близостью (CDN, edge), а `bandwidth` — апгрейдом канала; это разные оси оптимизации."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Bandwidth` измеряется в миллисекундах и означает время доставки одного пакета, а `latency` измеряется в гигабитах и означает объём данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `bandwidth` измеряется в бит/с (Gbps) и означает объём в единицу времени, а `latency` — в миллисекундах и означает время в пути.",
+                "source_of_confusion": "Единицы измерения легко перепутать местами, если запоминать их без привязки к смыслу величины.",
+                "if_it_were_true": "Тогда `ping` показывал бы гигабиты, а `iperf3` — миллисекунды, но в реальности всё ровно наоборот.",
+                "how_it_should_be": "`Latency` — это время (мс, RTT), `bandwidth` — это поток данных (бит/с); единицы соответствуют смыслу."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Главный способ уменьшить `latency` — добавить больше параллельных линков и увеличить ширину канала, потому что задержка обратно пропорциональна bandwidth.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Параллельные линки увеличивают суммарный `bandwidth`, но не сокращают задержку одного пакета: свет всё равно идёт ~20 км/мс, а путь не становится короче.",
+                "source_of_confusion": "Кажется логичным, что «больше канала = быстрее», и это путают со снижением задержки.",
+                "if_it_were_true": "Тогда дата-центр с 100 Gbps имел бы near-zero RTT до другого континента, но реально US↔Asia остаётся ~120-180 мс независимо от ширины канала.",
+                "how_it_should_be": "Latency сокращают географической близостью и сокращением числа round-trip'ов, а не шириной канала."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типичные значения RTT для разных сетевых расстояний?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`RTT` практически одинаков везде — около 1-2 мс, потому что современные оптоволоконные сети устранили влияние расстояния на задержку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RTT сильно зависит от расстояния: localhost ~0.05-0.2 мс, intra-DC ~0.5-2 мс, cross-region US east↔west ~70 мс, US↔Asia ~120-180 мс — разброс в тысячи раз.",
+                "source_of_confusion": "Скорость света кажется «мгновенной», поэтому возникает иллюзия, что расстояние не влияет на задержку.",
+                "if_it_were_true": "Тогда деплой multi-region не давал бы выигрыша, но cross-continent 5 последовательных запросов = ~900 мс против ~2.5 мс локально.",
+                "how_it_should_be": "RTT растёт с географическим расстоянием: от долей мс на localhost до сотен мс между континентами."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Порядки `RTT`: localhost ~0.05-0.2 мс, intra-DC ~0.5-2 мс, intra-region ~2-10 мс, cross-region US east↔west ~70 мс, US↔Europe ~80-100 мс, US↔Asia ~120-180 мс. Мобильный 4G ~20-50 мс, 5G ~5-15 мс, спутник geostationary 500+ мс, Starlink (LEO) ~50 мс.",
+              "correct": true,
+              "sections": {
+                "explanation": "5 последовательных запросов (5× RTT): локально 0.5 мс → 2.5 мс (быстро), cross-region 70×5 = 350 мс (медленно), cross-continent 180×5 = 900 мс (болезненно).",
+                "example": "Эти числа держат в голове при дизайне distributed-систем: batch запросов чтобы сократить round-trips, параллелить независимые вызовы, деплоить multi-region для user-facing.",
+                "when_to_apply": "Спутник — крайний случай: geostationary даёт 500+ мс из-за высоты орбиты ~36000 км, а LEO-созвездия вроде Starlink сбивают это до ~50 мс благодаря низкой орбите.",
+                "edge_cases": "Цифры приблизительны и зависят от маршрутизации и congestion: реальные значения смотрят через `ping`/`traceroute`/`mtr`, а не берут из таблицы вслепую.",
+                "related": "[[network-performance-interview#Q1]] latency vs bandwidth; [[network-performance-interview#Q5]] handshake overhead на этих RTT; [[network-performance-interview#Q18]] CDN сокращает RTT до пользователя."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "RTT внутри одного дата-центра (intra-DC) составляет около 70 мс, примерно столько же, сколько между восточным и западным побережьями США.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Intra-DC RTT — это ~0.5-2 мс, а ~70 мс — это уже cross-region US east↔west; разница в два порядка.",
+                "source_of_confusion": "И то и другое называют «сетевой задержкой», поэтому числа путают между уровнями иерархии.",
+                "if_it_were_true": "Тогда вызовы внутри кластера были бы так же дороги, как cross-region, и микросервисы стали бы непригодны, но intra-DC реально ~1 мс.",
+                "how_it_should_be": "Intra-DC ~1 мс, cross-region ~70 мс; путать их нельзя, это разные масштабы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Мобильный 5G имеет RTT first hop около 200 мс — заметно хуже 4G, потому что новый стек добавляет overhead на шифрование радиоканала.",
+              "correct": false,
+              "sections": {
+                "what_actually": "5G как раз быстрее: ~5-15 мс first hop против ~20-50 мс у 4G; снижение задержки — одна из главных целей 5G.",
+                "source_of_confusion": "Новизна технологии ассоциируется с «сырым» стеком и доп.задержками, отсюда ложный вывод о деградации.",
+                "if_it_were_true": "Тогда переход на 5G ухудшал бы интерактивные приложения, но реально low-latency 5G — драйвер AR/VR и облачного гейминга.",
+                "how_it_should_be": "5G даёт ~5-15 мс first hop — это лучше, чем 4G; задержка снижена, а не выросла."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое bandwidth-delay product (BDP) и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`BDP` — это отношение bandwidth к latency, показывающее эффективность канала в процентах; чем выше BDP, тем меньше потерь пакетов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BDP — это **произведение** bandwidth × RTT (а не отношение), и измеряется он в байтах/битах «в полёте», а не в процентах эффективности.",
+                "source_of_confusion": "Слово «product» иногда трактуют как «показатель/метрика качества», а не как арифметическое произведение.",
+                "if_it_were_true": "Тогда BDP был бы безразмерным процентом, но 1 Gbps × 50 мс даёт конкретные 6.25 MB данных in flight.",
+                "how_it_should_be": "BDP = bandwidth × RTT, единица — байты; это объём данных, помещающийся в «трубе»."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`BDP` нужен только для расчёта стоимости трафика у провайдера и не влияет на размер TCP-буферов или throughput.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BDP напрямую определяет требуемый размер receive window: если rwnd < BDP, отправитель блокируется на ACK и реальный throughput падает ниже доступной полосы.",
+                "source_of_confusion": "BDP звучит как биллинговая метрика «объём × время», поэтому его привязывают к стоимости, а не к TCP-окну.",
+                "if_it_were_true": "Тогда на long fat networks можно было бы не тюнить буферы, но без тюнинга throughput упрётся в буфер, а не в bandwidth.",
+                "how_it_should_be": "BDP определяет минимальный размер TCP receive/send buffer для полной утилизации канала."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`BDP = bandwidth × RTT` — сколько данных «в полёте» помещается в канал. Например, 1 Gbps × 50 мс = 5e7 бит = 6.25 MB. `TCP` нуждается в достаточном receive window: если `rwnd` < BDP, отправитель блокируется на ACK и throughput падает ниже доступной полосы.",
+              "correct": true,
+              "sections": {
+                "explanation": "16-битное TCP-окно даёт максимум 64KB; расширение `RFC 1323` (window scaling) позволяет окна до гигабайтов. Linux по умолчанию авто-масштабирует буферы до ~4MB, но для high-BDP путей их тюнят явно.",
+                "example": "Тюнят `net.ipv4.tcp_rmem`/`tcp_wmem` на Long Fat Networks (LFN) — высокая полоса + высокая задержка (спутник, скоростной cross-continent). Правило: для 10 Gbps intercontinental receive buffer ≥ 10MB.",
+                "when_to_apply": "На LFN без тюнинга throughput ограничен буфером, а не полосой: BDP огромен, окно мало, канал простаивает. Проверить текущий `cwnd` и буферы можно через `ss -ti`, протестировать окно — `iperf3 -c server -w <window>`.",
+                "edge_cases": "Граничный случай — Long Fat Networks (спутник, скоростной cross-continent): BDP огромен, и при дефолтном окне канал простаивает, пока буферы не подняты под BDP.",
+                "related": "[[network-performance-interview#Q1]] bandwidth и latency как сомножители BDP; [[network-performance-interview#Q4]] slow start растит cwnd до уровня BDP; [[network-performance-interview#Q23]] sysctl-тюнинг буферов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`BDP` всегда равен 64KB, потому что таков фиксированный максимум TCP-окна и его нельзя превысить ни при каких настройках.",
+              "correct": false,
+              "sections": {
+                "what_actually": "64KB — это лимит **немасштабированного** 16-битного окна; window scaling из `RFC 1323` поднимает его до гигабайтов, а сам BDP зависит от полосы и RTT и может быть много больше 64KB.",
+                "source_of_confusion": "Историческое ограничение 16-битного поля окна запоминают как «вечный» предел, забывая про расширение RFC 1323.",
+                "if_it_were_true": "Тогда 10 Gbps intercontinental канал нельзя было бы утилизировать, но с window scaling buffer ≥ 10MB решает задачу.",
+                "how_it_should_be": "BDP вычисляется как bandwidth × RTT и ограничен не 64KB, а реальным размером масштабированного окна."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают TCP slow start и congestion control?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`TCP` сразу с первого пакета шлёт на полной пропускной способности канала, а congestion control включается только после первой потери пакета.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TCP стартует осторожно: initial cwnd ~10 MSS (~14KB), и окно растёт экспоненциально с каждым ACK именно чтобы **избежать** перегрузки, а не реагировать на неё постфактум.",
+                "source_of_confusion": "Кажется, что канал «свободен на старте», поэтому логично слать сразу всё — но это и есть рецепт congestion collapse.",
+                "if_it_were_true": "Тогда короткое cross-region соединение сразу достигало бы гигабита, но реально после 1 RTT cwnd ~28KB → лишь ~4.5 Mbps.",
+                "how_it_should_be": "TCP начинает со slow start (cwnd 10 MSS) и наращивает окно экспоненциально, а не шлёт сразу полную полосу."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "При slow start окно растёт **линейно** (cwnd += 1 MSS за RTT), а в congestion avoidance — **экспоненциально**, удваиваясь каждый RTT.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: slow start экспоненциальный (cwnd += 1 MSS на каждый ACK → удвоение за RTT), а congestion avoidance линейный (cwnd += 1 MSS за RTT) после ssthresh.",
+                "source_of_confusion": "Названия обманчивы: «slow» намекает на медленный линейный рост, хотя фаза как раз экспоненциальная.",
+                "if_it_were_true": "Тогда насыщение гигабита происходило бы за один RTT, но реально нужны секунды и несколько фаз роста.",
+                "how_it_should_be": "Slow start — экспоненциальный рост до ssthresh, congestion avoidance — линейный; loss → cwnd пополам."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`CUBIC` — это model-based алгоритм, оценивающий bandwidth × RTT и не реагирующий на потери, а `BBR` — loss-based, снижающий окно при каждом дропе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Перепутаны местами: `CUBIC` (Linux default) — loss-based с кубическим ростом окна, а `BBR` (Google 2016) — model-based, оценивающий bandwidth и min RTT, без опоры на потери.",
+                "source_of_confusion": "Оба — современные congestion-алгоритмы, поэтому их свойства легко перепутать между собой.",
+                "if_it_were_true": "Тогда CUBIC хорошо работал бы на lossy cellular без просадок, но именно loss-based природа делает его уязвимым к случайным потерям.",
+                "how_it_should_be": "CUBIC — loss-based (кубический рост), BBR — model-based (bandwidth × RTT); путать их свойства нельзя."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`TCP` не шлёт полную полосу на старте, чтобы избежать перегрузки. **Slow start:** initial cwnd ~10 MSS (~14KB), каждый ACK → cwnd += 1 MSS → экспоненциальный рост до потери или ssthresh. **Congestion avoidance:** после ssthresh линейный рост (cwnd += 1 MSS за RTT), потеря пакета → cwnd пополам (multiplicative decrease).",
+              "correct": true,
+              "sections": {
+                "explanation": "1 Gbps, 50 мс RTT: после 1 RTT cwnd = 20 MSS = 28KB → ~4.5 Mbps; после 5 RTT cwnd = 320 MSS = 450KB → ~70 Mbps. Нужны секунды, чтобы насытить гигабит — короткое соединение полную полосу так и не достигает.",
+                "example": "Главный вывод для приложений: **переиспользовать соединения** (HTTP keep-alive), чтобы cwnd оставался высоким между запросами; новое соединение = slow start с нуля. Cross-region + короткий запрос = долгий «налог» на slow start.",
+                "when_to_apply": "Алгоритмы: Reno/CUBIC (Linux default 2.6+) — loss-based, кубический рост; BBR (Google 2016) — model-based (bandwidth × RTT), без опоры на потери. Initial cwnd можно поднять: `ip route change default via <gw> initcwnd 30`.",
+                "edge_cases": "Краевой случай — короткое cross-region соединение: оно завершается ещё в фазе slow start и полную полосу не достигает, поэтому keep-alive здесь критичен.",
+                "related": "[[network-performance-interview#Q3]] BDP как цель для cwnd; [[network-performance-interview#Q7]] BBR vs CUBIC подробнее; [[network-performance-interview#Q12]] keep-alive сохраняет прогретый cwnd."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём overhead TCP handshake и как его уменьшить?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "3-way handshake (`SYN` → `SYN-ACK` → `ACK`) добавляет **1 RTT** мёртвого времени перед отправкой данных. Локально это 1-2 мс (незаметно), но cross-region ~70 мс простоя, а на мобильном плюс cellular latency. Без keep-alive каждый запрос = новый handshake (50 картинок на странице = 50 handshake'ов).",
+              "correct": true,
+              "sections": {
+                "explanation": "С TLS overhead складывается: TCP handshake (1 RTT) + TLS handshake (1-2 RTT) = 2-3 RTT до данных. Cross-region это 200-300 мс пустого времени — заметно для мелких запросов.",
+                "example": "Лечат переиспользованием соединений (keep-alive — handshake один раз), `TCP Fast Open` (TFO: данные в SYN на повторных соединениях, RFC 7413), `QUIC`/HTTP/3 (0-RTT на reconnect) и connection pooling на серверной стороне.",
+                "when_to_apply": "`TCP Fast Open` экономит 1 RTT, но требует поддержки клиента и сервера плюс cookie, и middlebox'ы часто его ломают → ограниченное распространение. `SO_REUSEPORT` балансирует входящие соединения между процессами для роста accept-throughput.",
+                "edge_cases": "Граничный случай — TFO: экономит 1 RTT только на повторных коннектах, требует cookie и поддержки обеих сторон, а middlebox'ы его часто ломают.",
+                "related": "[[network-performance-interview#Q8]] TLS handshake overhead поверх TCP; [[network-performance-interview#Q12]] keep-alive устраняет повторные handshake'и; [[network-performance-interview#Q14]] QUIC и 0-RTT."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`TCP` handshake — это 4-way обмен (`SYN`, `SYN-ACK`, `ACK`, `FIN`), и он добавляет 2 RTT перед отправкой данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Установка соединения — это 3-way handshake (SYN, SYN-ACK, ACK) с overhead 1 RTT; `FIN` относится к **закрытию** соединения, а не к открытию.",
+                "source_of_confusion": "Закрытие соединения (FIN/4-way) путают с открытием, склеивая две разные фазы в один обмен.",
+                "if_it_were_true": "Тогда даже на localhost установка стоила бы 2 RTT, но реально handshake там 1-2 мс (≈1 RTT).",
+                "how_it_should_be": "Открытие — 3-way handshake (1 RTT), закрытие — отдельный 4-way с FIN; смешивать их нельзя."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`TCP Fast Open` (TFO) включён по умолчанию везде и гарантированно убирает handshake даже на самом первом соединении с сервером.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TFO экономит RTT только на **повторных** соединениях (нужен заранее полученный cookie), требует поддержки обеих сторон, и middlebox'ы часто его ломают → распространение ограничено, не «везде по умолчанию».",
+                "source_of_confusion": "Название «Fast Open» создаёт впечатление, что любое открытие мгновенно и для всех.",
+                "if_it_were_true": "Тогда самый первый коннект к новому хосту шёл бы без RTT, но cookie ещё нет, поэтому первый handshake полный.",
+                "how_it_should_be": "TFO ускоряет только последующие соединения при наличии cookie и взаимной поддержки; первый коннект — обычный 1 RTT."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чтобы убрать overhead handshake, достаточно отключить `TLS`, тогда установка соединения станет нулевой и данные пойдут в первом же пакете.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отключение TLS убирает только TLS-часть (1-2 RTT), но сам TCP 3-way handshake (1 RTT) остаётся; нулевую установку даёт keep-alive, TFO или QUIC 0-RTT, а не отказ от шифрования.",
+                "source_of_confusion": "TLS — заметная доля задержки установки, поэтому кажется, что без него установка обнуляется.",
+                "if_it_were_true": "Тогда plain-HTTP соединение слало бы данные в SYN, но TCP всё равно требует SYN/SYN-ACK/ACK перед payload.",
+                "how_it_should_be": "Overhead снижают reuse-ом соединений (keep-alive/pooling), TFO и QUIC; TLS отключать ради скорости небезопасно и недостаточно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Nagle algorithm и delayed ACK, и в чём их конфликт?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Nagle` и delayed ACK — это два названия одного и того же механизма на стороне получателя, который буферизует входящие данные перед передачей в приложение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это два **разных** механизма на **разных** концах: Nagle буферизует мелкие записи на стороне отправителя, а delayed ACK откладывает подтверждение на стороне получателя.",
+                "source_of_confusion": "Оба «придерживают» данные/ACK ради экономии пакетов, поэтому их ошибочно считают одним механизмом.",
+                "if_it_were_true": "Тогда отключение TCP_NODELAY чинило бы обе стороны разом, но Nagle и delayed ACK настраиваются и живут независимо.",
+                "how_it_should_be": "Nagle — буферизация записей у отправителя; delayed ACK — отложенное подтверждение у получателя; это разные вещи."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Nagle's algorithm` (1984) буферизует мелкие записи на отправителе, пока не придёт ACK или не наберётся полный сегмент (включён по умолчанию, `TCP_NODELAY=0`). `Delayed ACK` на получателе откладывает подтверждение на ~200 мс в надежде слить его с данными. Вместе они дают «дедлок»: отправитель ждёт ACK, получатель ждёт данные → ~200 мс паузы на ровном месте.",
+              "correct": true,
+              "sections": {
+                "explanation": "Лечат отключением Nagle для latency-sensitive протоколов: в C — `setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &flag, ...)`, в Java — `socket.setTcpNoDelay(true)`.",
+                "example": "Отключают Nagle (`TCP_NODELAY=true`) для интерактива: SSH, игры, RPC, мелкие latency-чувствительные записи. Оставляют Nagle по умолчанию для bulk-передачи (file upload), где он экономит bandwidth.",
+                "when_to_apply": "Большинство RPC-фреймворков (`gRPC`, Netty по умолчанию) отключают Nagle; HTTP-клиенты обычно тоже отключают ради low-latency, а для bulk-download разницы почти нет.",
+                "edge_cases": "Краевой случай — bulk-передача: там Nagle, наоборот, полезен (экономит пакеты), поэтому отключать TCP_NODELAY стоит только для интерактива.",
+                "related": "[[network-performance-interview#Q5]] handshake тоже добавляет RTT-задержки; [[network-performance-interview#Q19]] gRPC отключает Nagle по умолчанию; [[network-performance-interview#Q22]] такие паузы бьют по tail latency."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Nagle's algorithm` нужно отключать для bulk-передачи больших файлов и обязательно оставлять включённым для интерактивных протоколов вроде SSH и игр.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ровно наоборот: для интерактива (SSH, игры, RPC) Nagle **отключают** (TCP_NODELAY=true), а для bulk-передачи его оставляют включённым, чтобы экономить bandwidth.",
+                "source_of_confusion": "Логика «большие данные = выключить буферизацию» кажется интуитивной, но именно для bulk буферизация Nagle полезна.",
+                "if_it_were_true": "Тогда интерактивный SSH страдал бы от 200 мс пауз с включённым Nagle, а это как раз тот случай, где его выключают.",
+                "how_it_should_be": "Disable Nagle для latency-sensitive интерактива, leave Nagle для bulk-передачи — приоритеты противоположны."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Конфликт Nagle + delayed ACK даёт паузу около 5 секунд, потому что delayed ACK по умолчанию ждёт полную секунду пять раз подряд.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пауза — порядка **200 мс** (типичный таймер delayed ACK), а не 5 секунд: отправитель ждёт ACK, получатель держит ACK до ~200 мс таймаута.",
+                "source_of_confusion": "Любая «зависшая» задержка субъективно кажется секундами, отсюда завышение на порядок.",
+                "if_it_were_true": "Тогда каждый мелкий RPC висел бы 5 секунд и система была бы неюзабельна, но реальная просадка ~200 мс.",
+                "how_it_should_be": "Delayed ACK таймер ~200 мс — именно столько длится пауза при конфликте с Nagle."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем BBR отличается от CUBIC как congestion control?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "И `CUBIC`, и `BBR` — loss-based алгоритмы: оба замедляются только при потере пакета и одинаково страдают от bufferbloat, заполняя буферы до отказа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Только CUBIC loss-based; BBR — model-based: он оценивает bandwidth и min RTT и шлёт с bandwidth × (1 − buffer_fill), поэтому **не заполняет** буферы и избегает bufferbloat.",
+                "source_of_confusion": "Оба — congestion-алгоритмы Linux, поэтому их поведение ошибочно считают одинаковым.",
+                "if_it_were_true": "Тогда BBR не давал бы выигрыша на bufferbloated-линках, но именно отказ заполнять буферы снижает queueing latency.",
+                "how_it_should_be": "CUBIC loss-based и копит буферы; BBR model-based и буферы не заполняет — это ключевое различие."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`BBR` нужно включать на низкоскоростных локальных сетях с малыми потерями, а `CUBIC` — на cellular и спутниковых каналах с потерями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рекомендации перепутаны: BBR выигрывает на high-bandwidth lossy/bufferbloated сетях (cellular, спутник, cross-region с jitter), а на low-bandwidth low-loss local CUBIC и так нормально работает.",
+                "source_of_confusion": "«Новое лучше везде» — частая эвристика, из-за которой BBR ошибочно ставят на простые локальные линки.",
+                "if_it_were_true": "Тогда на чистом DC-линке BBR давал бы заметный выигрыш, но там CUBIC справляется, а BBR ещё и может быть несправедлив к соседям.",
+                "how_it_should_be": "BBR — для lossy/bufferbloated high-BW путей; CUBIC достаточно для low-loss local. Сценарии противоположны."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`CUBIC` (Linux default с 2.6.19) — loss-based: замедляется при дропе, растёт по кубической функции (агрессивно, потом плато), честный и проверенный, но на bufferbloated-линках заполняет буферы до потери → высокая задержка. `BBR` (Google 2016) — model-based: оценивает bandwidth + min RTT, шлёт с bandwidth × (1 − buffer_fill), **не заполняет буферы** (избегает bufferbloat) и даёт лучший throughput на lossy-линках (cellular, WiFi).",
+              "correct": true,
+              "sections": {
+                "explanation": "Включить BBR: `sysctl net.core.default_qdisc=fq` и `sysctl net.ipv4.tcp_congestion_control=bbr`. Google сообщал о росте throughput до 2700% на некоторых cellular-путях, плюс ниже queueing latency (важно для видео и гейминга).",
+                "example": "BBR применяют на high-bandwidth lossy/bufferbloated сетях: cellular, спутник, cross-region с jitter. На low-bandwidth low-loss local CUBIC достаточно; там, где критична честность к CUBIC-отправителям, BBR деплоят осторожно.",
+                "when_to_apply": "BBRv1 агрессивен и может «голодом» давить CUBIC (несправедлив в смешанном трафике); BBRv2 (2019+) улучшил fairness. Проверить активный алгоритм: `sysctl net.ipv4.tcp_congestion_control`, per-connection инфо — `ss -ti`.",
+                "edge_cases": "Граничный случай — смешанный трафик: BBRv1 агрессивен и может голодом давить CUBIC-соседей, поэтому в shared-сетях его деплоят осторожно (или BBRv2).",
+                "related": "[[network-performance-interview#Q4]] slow start и базовый congestion control; [[network-performance-interview#Q14]] QUIC реализует congestion control в userland; [[network-performance-interview#Q23]] sysctl для включения BBR."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чтобы включить `BBR`, достаточно одной команды `sysctl net.ipv4.tcp_congestion_control=bbr`; qdisc менять не нужно, BBR работает с любым планировщиком.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для корректной работы BBR обычно также ставят `net.core.default_qdisc=fq` (fair queue) — это рекомендуемая пара; одного переключения congestion control часто недостаточно для ожидаемого поведения.",
+                "source_of_confusion": "Поскольку congestion control — отдельный параметр, кажется, что qdisc к нему отношения не имеет.",
+                "if_it_were_true": "Тогда BBR раскрывался бы полностью без `fq`, но официальная инструкция Google ставит оба параметра вместе.",
+                "how_it_should_be": "BBR включают парой: `default_qdisc=fq` + `tcp_congestion_control=bbr`; qdisc — часть рецепта."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём overhead TLS handshake и как его снизить?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`TLS 1.3` сделал handshake медленнее, чем `TLS 1.2`: теперь это 3 RTT вместо 2 из-за обязательного forward secrecy.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TLS 1.3 наоборот **ускорил** handshake до 1 RTT (против 2 RTT у TLS 1.2), а forward secrecy стал обязательным без увеличения числа round-trips.",
+                "source_of_confusion": "Усиление безопасности интуитивно ассоциируют с доп.задержкой, хотя 1.3 одновременно безопаснее и быстрее.",
+                "if_it_were_true": "Тогда апгрейд на TLS 1.3 ухудшал бы latency, но cross-region 100 мс RTT даёт 200 мс мёртвого времени против 300 мс на 1.2.",
+                "how_it_should_be": "TLS 1.3 — это 1 RTT (быстрее), TLS 1.2 — 2 RTT; forward secrecy в 1.3 обязателен и бесплатен по RTT."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Симметричное шифрование данных после handshake — главный источник CPU-overhead TLS, поэтому на нагруженных серверах его отключают, оставляя только асимметрику.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дорогая часть — **асимметричная** криптография (RSA/ECDSA) один раз за handshake; симметричное шифрование после на современных CPU с `AES-NI` почти бесплатно (несколько % overhead), и его не отключают.",
+                "source_of_confusion": "«Шифрование = дорого» переносят на постоянный поток данных, хотя тяжела именно разовая асимметрика.",
+                "if_it_were_true": "Тогда session resumption (пропуск асимметрики) не давал бы выигрыша, но он как раз убирает самую дорогую часть.",
+                "how_it_should_be": "CPU-дорога асимметрика на handshake; симметрика с AES-NI дёшева и обязательна для защиты данных."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`0-RTT` в TLS 1.3 полностью безопасен и его можно применять к любым запросам, включая `POST /payment`, без каких-либо рисков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "0-RTT несёт **replay-риск**: данные первого пакета злоумышленник может перехватить и переотправить, поэтому его используют только для идемпотентных GET, а не для POST /payment.",
+                "source_of_confusion": "Слово «resumption» создаёт ложное ощущение, что восстановленная сессия так же безопасна, как полный handshake.",
+                "if_it_were_true": "Тогда платёж через 0-RTT был бы безопасен, но replay мог бы выполнить его дважды.",
+                "how_it_should_be": "0-RTT применяют только к идемпотентным GET; для платежей и любых не-идемпотентных операций он запрещён."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`TLS 1.2` handshake — 2 RTT (поверх TCP), итого 3 RTT до данных. `TLS 1.3` (2018) — 1 RTT handshake (итого 2 RTT до данных), обязательный forward secrecy и лучшие cipher-suites по умолчанию. На 100 мс RTT это 300 мс мёртвого времени для 1.2 против 200 мс для 1.3.",
+              "correct": true,
+              "sections": {
+                "explanation": "CPU-overhead в основном из-за асимметричной криптографии (RSA/ECDSA) один раз за handshake; симметричное шифрование после на CPU с `AES-NI` почти бесплатно. ECDSA дешевле RSA; session tickets/IDs позволяют пропустить асимметрику в следующий раз.",
+                "example": "Тюнинг: session resumption (tickets/IDs — переиспользование сессии без асимметрики), `OCSP stapling` (сервер вкладывает OCSP-ответ, клиенту не нужен отдельный fetch), короткая цепочка сертификатов (меньше байт → меньше сегментов → быстрее).",
+                "when_to_apply": "`0-RTT` (TLS 1.3) кладёт данные в первый пакет восстановленной сессии (0 RTT до данных!), но несёт **replay-риск** — только для идемпотентных GET. Замерить можно через `curl -w \"%{time_connect} %{time_appconnect} %{time_starttransfer}\"`.",
+                "edge_cases": "Краевой случай — 0-RTT: данные первого пакета можно переотправить (replay), поэтому его применяют только для идемпотентных GET, не для POST.",
+                "related": "[[network-performance-interview#Q5]] TCP handshake под TLS; [[network-performance-interview#Q9]] session resumption и 0-RTT подробнее; [[network-performance-interview#Q14]] QUIC встраивает TLS 1.3 в транспорт."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают TLS session resumption и 0-RTT?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В TLS 1.2 два метода resumption: **Session ID** (сервер хранит state, клиент шлёт ID на reconnect — требует server-side state, sticky LB) и **Session Tickets** (RFC 5077: сервер шифрует state и отдаёт клиенту «билет», клиент шлёт его на reconnect — **stateless**, работает за любым LB). В TLS 1.3 их заменяет PSK (resumption key из прошлой сессии). `0-RTT` кладёт данные в первый пакет с билетом, экономя целый RTT.",
+              "correct": true,
+              "sections": {
+                "explanation": "0-RTT несёт replay-риск: атакующий записывает и переотправляет запрос → действие выполняется повторно. Митигация — только идемпотентные запросы (GET); никогда 0-RTT для `POST /payment`; браузеры обычно ограничивают 0-RTT до GET.",
+                "example": "Применяют для cross-region API: session resumption экономит 50-100 мс на запрос, может опустить latency статики ниже 100 мс глобально. В Nginx/Envoy/Apache включается `ssl_early_data on`.",
+                "when_to_apply": "Session ID плохо масштабируется (нужен sticky LB или общий стор state), тогда как Session Tickets stateless и переживают любой балансировщик. Проверить переиспользование: DevTools «Resumed TLS connection: yes» или лог Nginx `$ssl_session_reused`.",
+                "edge_cases": "Граничный случай — масштабирование: Session ID требует sticky LB или общего стора, тогда как Session Tickets stateless и переживают любой балансировщик.",
+                "related": "[[network-performance-interview#Q8]] базовый TLS handshake overhead; [[network-performance-interview#Q5]] handshake и связь с keep-alive; [[network-performance-interview#Q14]] QUIC 0-RTT нативно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Session Tickets требуют sticky load balancer и server-side state, поэтому за stateless-балансировщиком работает только Session ID.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: именно Session Tickets **stateless** (state зашифрован внутри билета у клиента) и работают за любым LB, а Session ID требует server-side state и sticky LB.",
+                "source_of_confusion": "Оба механизма про «возобновление сессии», поэтому их свойства по хранению state путают местами.",
+                "if_it_were_true": "Тогда tickets ломались бы за round-robin балансировщиком, но именно их для этого случая и придумали.",
+                "how_it_should_be": "Session Tickets — stateless (работают за любым LB), Session ID — stateful (нужен sticky); свойства противоположны."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`0-RTT` безопасно применять к платежам и любым изменяющим состояние запросам, так как билет криптографически защищён от подделки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Защита билета от подделки не устраняет **replay**: записанный 0-RTT-запрос можно переотправить, и платёж выполнится дважды, поэтому 0-RTT — только для идемпотентных GET.",
+                "source_of_confusion": "Криптографическая подпись билета создаёт ложное ощущение полной безопасности любых данных в 0-RTT.",
+                "if_it_were_true": "Тогда `POST /payment` через 0-RTT был бы безопасен, но replay привёл бы к двойному списанию.",
+                "how_it_should_be": "0-RTT допустим лишь для идемпотентных операций (GET); для POST/платежей он запрещён из-за replay."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В TLS 1.3 для resumption по-прежнему используются отдельно Session ID и Session Tickets, как в TLS 1.2, без какого-либо единого механизма.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TLS 1.3 заменил оба метода единым PSK (Pre-Shared Key) на основе resumption key из предыдущей сессии — это не «два старых механизма как было».",
+                "source_of_confusion": "Эволюцию протокола упускают, считая, что TLS 1.3 просто унаследовал схемы 1.2.",
+                "if_it_were_true": "Тогда в 1.3 не было бы PSK, но именно он лежит в основе и resumption, и 0-RTT в новой версии.",
+                "how_it_should_be": "TLS 1.3 объединяет resumption в PSK; отдельные Session ID/Tickets — это модель TLS 1.2."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются HTTP/1.1, HTTP/2 и HTTP/3?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все три версии работают поверх `TCP` и используют текстовый формат; разница только в наборе заголовков и в числе разрешённых параллельных соединений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HTTP/3 работает поверх **QUIC (UDP)**, а не TCP; HTTP/2 и HTTP/3 используют **бинарный** фрейминг, а не текст — различия фундаментальные, не косметические.",
+                "source_of_confusion": "Раз все они «HTTP», кажется, что транспорт и формат одинаковы, а меняются лишь детали.",
+                "if_it_were_true": "Тогда HTTP/3 не мог бы делать connection migration и убирать TCP HoL, но именно UDP/QUIC это и обеспечивает.",
+                "how_it_should_be": "HTTP/1.1 — TCP/текст, HTTP/2 — TCP/бинарь, HTTP/3 — UDP(QUIC)/бинарь; транспорт и формат различаются."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`HTTP/1.1` (1997): текстовый, 1 запрос за раз на соединение (pipelining почти не работает), keep-alive по умолчанию, браузеры держат ~6 параллельных соединений на origin. `HTTP/2` (2015): бинарный фрейминг, мультиплексирование многих запросов на одном соединении, HPACK-сжатие заголовков, тот же TCP+TLS стек. `HTTP/3` (2022): транспорт `QUIC` (UDP), встроенный TLS 1.3, нет HoL-блокировки на транспорте, 0-RTT resumption, миграция между сетями.",
+              "correct": true,
+              "sections": {
+                "explanation": "Handshake: HTTP/1.1 и HTTP/2 — TCP+TLS (~3 RTT), HTTP/3 — 1 RTT (или 0-RTT). Сжатие заголовков: нет / HPACK / QPACK. Mobility (смена сети без разрыва): только у HTTP/3.",
+                "example": "HTTP/1.1 — legacy/fallback; HTTP/2 — мейнстрим (поддержан почти везде); HTTP/3 — мобильные клиенты и latency-sensitive (Cloudflare, Google, Meta катят широко).",
+                "when_to_apply": "Gotcha: у HTTP/2 одно соединение — если оно падает, падает всё (против 6 независимых у 1.1). UDP блокируется в части сетей → HTTP/3 откатывается на HTTP/2. Server Push браузеры отключили к 2022 (сложность, маргинальная польза).",
+                "edge_cases": "Краевой случай — падение единственного HTTP/2-соединения роняет все мультиплексированные потоки сразу, тогда как 6 независимых TCP у 1.1 деградируют по одному.",
+                "related": "[[network-performance-interview#Q11]] head-of-line blocking по версиям; [[network-performance-interview#Q13]] server push и почему deprecated; [[network-performance-interview#Q14]] QUIC и почему он быстрее TCP."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`HTTP/2` использует текстовый формат, как и 1.1, а бинарный фрейминг впервые появляется только в `HTTP/3`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HTTP/2 уже **бинарный** (binary framing) — это одно из его ключевых нововведений; текстовым был только HTTP/1.1.",
+                "source_of_confusion": "Внешне HTTP/2 «выглядит как HTTP», поэтому его формат путают с текстовым 1.1.",
+                "if_it_were_true": "Тогда HPACK-сжатие заголовков было бы невозможно, но оно опирается именно на бинарный фрейминг 2.0.",
+                "how_it_should_be": "HTTP/2 — бинарный (binary framing, HPACK); текстовый только HTTP/1.1."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`HTTP/3` устраняет head-of-line blocking на уровне приложения, но на транспорте TCP HoL остаётся, так как QUIC построен поверх TCP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "QUIC построен поверх **UDP**, а не TCP, и делает потоки независимыми на транспорте — потеря пакета в одном потоке не блокирует другие, то есть HoL устранён и на транспортном уровне.",
+                "source_of_confusion": "Привычка «всё надёжное = TCP» заставляет думать, что QUIC тоже над TCP с его HoL.",
+                "if_it_were_true": "Тогда HTTP/3 на lossy mobile вёл бы себя как HTTP/2, но именно отсутствие TCP HoL даёт ему преимущество.",
+                "how_it_should_be": "QUIC над UDP делает потоки независимыми; TCP HoL в HTTP/3 отсутствует на транспорте."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое head-of-line blocking в HTTP/1.1 и HTTP/2?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `HTTP/2` head-of-line blocking полностью отсутствует на всех уровнях, потому что мультиплексирование делает потоки независимыми вплоть до транспорта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HTTP/2 решает HoL только на уровне **приложения**; на уровне TCP HoL остаётся — потеря пакета для потока A блокирует поток B, ведь оба на одном TCP-соединении.",
+                "source_of_confusion": "Раз мультиплексирование убрало блокировку запросов, делают вывод, что HoL исчез целиком.",
+                "if_it_were_true": "Тогда HTTP/2 всегда обгонял бы 1.1, но при 5% потерь HTTP/2 медленнее (у 1.1 было 6 независимых TCP).",
+                "how_it_should_be": "HTTP/2 убирает application-layer HoL, но TCP-layer HoL остаётся; полностью HoL-free только HTTP/3 (QUIC)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `HTTP/1.1` head-of-line blocking решён через pipelining, который позволяет слать несколько запросов параллельно по одному соединению.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pipelining в HTTP/1.1 теоретически есть, но на практике сломан; реальный обход HoL — это 6 параллельных соединений на origin, а не pipelining.",
+                "source_of_confusion": "Спецификация упоминает pipelining, поэтому кажется, что он рабочее решение, хотя браузеры его не используют.",
+                "if_it_were_true": "Тогда 1.1 не нуждался бы в 6 соединениях на origin, но именно из-за нерабочего pipelining их и открывают.",
+                "how_it_should_be": "В HTTP/1.1 HoL обходят 6 параллельными соединениями; pipelining на практике не работает."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `HTTP/1.1` запросы сериализованы: ответ должен завершиться до следующего запроса на соединении; pipelining теоретически есть, но на практике сломан — обход через 6 параллельных соединений на origin. В `HTTP/2` мультиплексирование решает HoL на уровне приложения, НО остаётся TCP-layer HoL: потеря пакета для потока A блокирует поток B (оба на одном TCP). При 5% потерь HTTP/2 **медленнее** 1.1, у которого было 6 независимых TCP.",
+              "correct": true,
+              "sections": {
+                "explanation": "В `HTTP/3` (QUIC) потоки независимы на транспорте: потерянный пакет потока A НЕ блокирует поток B → по-настоящему HoL-free. Это критично на lossy-сетях (mobile, congested WiFi) и при множестве мелких ресурсов (страница со 100 картинками).",
+                "example": "Применяют по уровню потерь: HTTP/2 нормально работает при loss < 2%; HTTP/3 выгоден где loss > 2%; при блокировке UDP откат на HTTP/2. На low-loss сетях (DC, хорошая оптика) и для одного большого запроса (видео-стрим) HoL почти не важен.",
+                "when_to_apply": "На практике: Google измеримо улучшает search/YouTube mobile через HTTP/3; Cloudflare включает HTTP/3 по умолчанию где поддерживается. Тонкость: единственное соединение HTTP/2 при потере одного пакета тормозит все мультиплексированные потоки сразу.",
+                "edge_cases": "Граничный случай — высокие потери: при loss > 2-5% HTTP/2 может оказаться медленнее 1.1 из-за TCP HoL, а HTTP/3 (QUIC) сохраняет скорость.",
+                "related": "[[network-performance-interview#Q10]] сравнение версий HTTP; [[network-performance-interview#Q14]] QUIC и независимые потоки; [[network-performance-interview#Q7]] congestion control на lossy-сетях."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Head-of-line blocking возникает только в `HTTP/3` из-за UDP, тогда как в HTTP/1.1 и HTTP/2 его нет благодаря надёжной доставке TCP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё перевёрнуто: HoL есть в 1.1 (сериализация запросов) и в 2 (на уровне TCP при потере пакета), а HTTP/3 (QUIC) как раз **устраняет** HoL за счёт независимых потоков.",
+                "source_of_confusion": "UDP считают «ненадёжным», поэтому ошибочно приписывают HTTP/3 худшее поведение по блокировкам.",
+                "if_it_were_true": "Тогда переход на HTTP/3 ухудшал бы mobile-опыт, но Google и Cloudflare видят обратное.",
+                "how_it_should_be": "HoL присутствует в 1.1 и 2; HTTP/3 (QUIC) — единственный по-настоящему HoL-free."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое keep-alive и connection reuse и зачем они нужны?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Keep-alive не даёт выигрыша при cross-region трафике, потому что переиспользование соединения всё равно требует нового TLS handshake перед каждым запросом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Keep-alive как раз избавляет от повторных TCP+TLS handshake'ов (2-3 RTT на запрос) и сохраняет прогретый cwnd — переиспользованное соединение НЕ делает новый handshake на каждый запрос.",
+                "source_of_confusion": "Кажется, что безопасность требует пересогласовывать TLS каждый раз, но сессия живёт на всём соединении.",
+                "if_it_were_true": "Тогда 10 запросов по 100 мс RTT занимали бы 2000 мс и с keep-alive, но reuse даёт ~1000 мс (2x быстрее).",
+                "how_it_should_be": "Keep-alive переиспользует одно соединение для многих запросов без повторных handshake'ов — это основной выигрыш."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Создание нового `HttpClient` на каждый запрос — рекомендуемая практика в Java, так как гарантирует свежее соединение без устаревшего состояния пула.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это классический senior-антипаттерн: новый `HttpClient` на запрос = новый TCP + TLS каждый раз; правильно держать пул и переиспользовать соединения.",
+                "source_of_confusion": "«Свежий объект = меньше багов» переносят на сетевые клиенты, игнорируя стоимость handshake'ов.",
+                "if_it_were_true": "Тогда сервис не страдал бы под нагрузкой, но без пула latency растёт и сокеты исчерпываются.",
+                "how_it_should_be": "HttpClient создают один раз и переиспользуют с пулом соединений; создание на запрос ломает производительность."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `HTTP/2` keep-alive не применяется: каждый мультиплексированный поток открывает собственное TCP-соединение, которое закрывается после ответа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HTTP/2 наоборот держит **одно** постоянное (persistent) соединение, по которому мультиплексируются все запросы; отдельных TCP на поток нет.",
+                "source_of_confusion": "Мультиплексирование путают с открытием множества соединений, как было в HTTP/1.1.",
+                "if_it_were_true": "Тогда HTTP/2 терял бы прогретый cwnd на каждом потоке, но он сохраняет его за счёт единственного соединения.",
+                "how_it_should_be": "HTTP/2 — одно persistent-соединение с мультиплексированием; новых TCP на поток оно не открывает."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Keep-alive: после ответа соединение остаётся открытым для следующего запроса. По умолчанию: HTTP/1.1 — keep-alive (`Connection: keep-alive`), HTTP/2 — одно postоянное мультиплексированное соединение, HTTP/3 — одно постоянное QUIC-соединение. Это избавляет от TCP+TLS handshake'ов (2-3 RTT на запрос) и сохраняет прогретый cwnd → последующие запросы быстрее.",
+              "correct": true,
+              "sections": {
+                "explanation": "Пример: 100 мс RTT, 10 запросов. Новое соединение на каждый: 10 × (TCP+TLS+req) = 10 × 200 мс+ = 2000 мс. Переиспользованное: 10 × 100 мс = 1000 мс → **2x быстрее**.",
+                "example": "Настраивают на клиенте (Apache HttpClient: `setMaxConnTotal`, `setMaxConnPerRoute`, `setConnectionTimeToLive`) и на сервере (Nginx `keepalive_timeout 65s;`). Выше timeout — эффективнее, но больше расход file descriptors/сокетов.",
+                "when_to_apply": "Антипаттерн: создавать новый `HttpClient` на каждый запрос (забыли про пул) → каждый = новый TCP + TLS, типичная senior-ловушка в Java. Мониторят `connections_active`, `connections_reused`; исчерпание пула → рост latency.",
+                "edge_cases": "Краевой случай — слишком высокий keepalive_timeout: соединения держатся дольше, расходуя file descriptors и сокеты, поэтому таймаут балансируют под трафик.",
+                "related": "[[network-performance-interview#Q5]] handshake overhead, который устраняет keep-alive; [[network-performance-interview#Q4]] slow start и прогретый cwnd; [[network-performance-interview#Q10]] persistent-соединения в HTTP/2 и HTTP/3."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое HTTP/2 server push и почему он deprecated?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Server Push (HTTP/2) — сервер проактивно шлёт ресурсы без явного запроса клиента (например, к HTML сразу пушит `style.css`), теоретически экономя RTT. На практике провалился: over-pushing (ресурс уже в кэше браузера → потраченный bandwidth), сервер не знает состояние кэша клиента, сложность настройки пар (что и когда пушить), проблемы приоритетов. Chrome убрал server push в 2022.",
+              "correct": true,
+              "sections": {
+                "explanation": "Замена — `Early Hints (HTTP 103)`: сервер шлёт preload-подсказки до основного ответа 200 (`103 Early Hints` + `Link: </style.css>; rel=preload`), а также HTML `<link rel=preload>`, где клиент сам решает с учётом кэша.",
+                "example": "Применяют Early Hints вместо push: широко поддержаны (Chrome, Fastly, Cloudflare, Vercel), проще HTTP/2 push, работают и с HTTP/2, и с HTTP/3. Cloudflare сообщал о 20-30% ускорении LCP.",
+                "when_to_apply": "Ключевая проблема push — сервер не видит кэш клиента и часто пушит уже имеющийся ресурс впустую; в реальных сайтах выигрыш был минимальным или отрицательным, поэтому от него и отказались.",
+                "edge_cases": "Граничный случай — over-pushing: сервер не знает кэш клиента и может запушить уже имеющийся ресурс, потратив bandwidth впустую — поэтому push и заменили.",
+                "related": "[[network-performance-interview#Q10]] server push в сравнении версий HTTP; [[network-performance-interview#Q15]] preconnect/dns-prefetch как смежные resource hints; [[network-performance-interview#Q18]] CDN и оптимизация доставки статики."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Server Push провалился из-за того, что HTTP/2 не поддерживает мультиплексирование, и пуш-потоки приходилось слать по отдельным TCP-соединениям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HTTP/2 как раз мультиплексирует потоки на одном соединении; провал push связан с over-pushing и незнанием кэша клиента, а не с отсутствием мультиплексирования.",
+                "source_of_confusion": "Любую проблему HTTP/2 удобно списать на «не хватило мультиплексирования», хотя оно у него есть.",
+                "if_it_were_true": "Тогда отдельные TCP на пуш ломали бы и обычные запросы, но они тоже мультиплексируются в HTTP/2.",
+                "how_it_should_be": "Push провалился из-за over-pushing и незнания кэша; мультиплексирование в HTTP/2 присутствует."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Замена server push — это исключительно HTTP/2 Server Push v2, доработанная версия того же механизма с учётом состояния кэша клиента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакого «push v2» нет; замены — это `Early Hints (103)` и `<link rel=preload>`, где решение о загрузке принимает клиент, знающий свой кэш.",
+                "source_of_confusion": "Логично ожидать «улучшенную версию» вместо отказа, но индустрия выбрала другой механизм.",
+                "if_it_were_true": "Тогда браузеры не удаляли бы push, а обновляли бы его, но Chrome его именно убрал в 2022.",
+                "how_it_should_be": "Push заменили Early Hints (103) и link preload; «server push v2» не существует."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Early Hints` отправляются строго после ответа 200, как трейлер, и поэтому не дают выигрыша в latency по сравнению с обычной загрузкой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Early Hints (`103`) шлются **до** финального ответа 200, давая браузеру преднамёк на preload заранее — именно это и экономит время (Cloudflare: 20-30% быстрее LCP).",
+                "source_of_confusion": "Промежуточный статус 103 путают с трейлерами/заголовками после тела ответа.",
+                "if_it_were_true": "Тогда 103 был бы бесполезен, но CDN-провайдеры замеряют реальный выигрыш LCP именно из-за раннего хинта.",
+                "how_it_should_be": "Early Hints (103) приходят до 200-ответа и запускают preload заранее, сокращая latency."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему QUIC быстрее TCP?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`QUIC` быстрее, потому что работает поверх TCP и просто увеличивает размер начального congestion window, отправляя больше данных в первом RTT.",
+              "correct": false,
+              "sections": {
+                "what_actually": "QUIC работает поверх **UDP**, а не TCP, и выигрывает за счёт 1-RTT handshake (транспорт+TLS вместе), независимых потоков и connection migration, а не увеличенного cwnd над TCP.",
+                "source_of_confusion": "«Быстрее = больше шлём сразу», поэтому преимущество сводят к размеру окна.",
+                "if_it_were_true": "Тогда QUIC наследовал бы TCP HoL, но он его как раз устраняет благодаря независимым потокам над UDP.",
+                "how_it_should_be": "QUIC построен над UDP и быстрее за счёт 1-RTT handshake, отсутствия TCP HoL и миграции соединений."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`QUIC` (Quick UDP Internet Connections) — транспорт HTTP/3 поверх UDP. Преимущества: **1-RTT handshake** (объединяет транспорт + TLS, 0-RTT на resumption); **нет TCP HoL** (потоки независимы на транспорте, потеря пакета потока A не блокирует B — огромный выигрыш на lossy mobile); **connection migration** (Connection ID вместо IP/port: ноут роумит WiFi→mobile тем же соединением, TCP бы порвался).",
+              "correct": true,
+              "sections": {
+                "explanation": "Дополнительно: congestion control (BBR, CUBIC) в userland → новые алгоритмы катятся быстрее; шифрование обязательно для каждого пакета (middlebox'ы не вмешиваются, нет ossification); восстановление после потерь быстрее за счёт монотонных packet numbers (у TCP sequence numbers переиспользуются при retransmit → неоднозначность).",
+                "example": "Применяют для mobile и latency-sensitive: к 2024 ~28% веб-трафика (Cloudflare), используют Gmail, YouTube, Meta, Instagram, Spotify; по умолчанию у большинства крупных CDN. Поддержка в Chrome, Firefox, Safari, curl.",
+                "when_to_apply": "Сложности: UDP блокируется в части сетей (~0.5-2%) → fallback на HTTP/2; выше CPU (userland-крипто, per-packet обработка) — улучшается с hardware offload; менее зрелый тулинг против TCP.",
+                "edge_cases": "Граничный случай — блокировка UDP в части сетей (~0.5-2%): тогда HTTP/3 откатывается на HTTP/2, поэтому fallback обязателен в проде.",
+                "related": "[[network-performance-interview#Q10]] HTTP/3 поверх QUIC; [[network-performance-interview#Q11]] независимые потоки против HoL; [[network-performance-interview#Q5]] 0-RTT против TCP handshake overhead."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главное преимущество `QUIC` — он отключает шифрование, чтобы убрать CPU-overhead TLS, и за счёт этого пакеты обрабатываются быстрее TCP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "QUIC наоборот **обязательно** шифрует каждый пакет (payload и частично заголовки) — это защищает от вмешательства middlebox'ов; CPU при этом скорее выше из-за userland-крипто.",
+                "source_of_confusion": "Раз QUIC быстрее, кажется, что он экономит на «дорогом» шифровании, хотя оно встроено и обязательно.",
+                "if_it_were_true": "Тогда QUIC был бы менее безопасен, чем TLS-over-TCP, но он включает TLS 1.3 нативно в транспорт.",
+                "how_it_should_be": "QUIC шифрует обязательно каждый пакет; ускорение даёт 1-RTT handshake и независимые потоки, а не отказ от крипто."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При смене сети (WiFi→mobile) `QUIC`-соединение рвётся и переустанавливается так же, как TCP, потому что идентифицируется по паре IP:port.",
+              "correct": false,
+              "sections": {
+                "what_actually": "QUIC использует **Connection ID** вместо IP/port, поэтому соединение **переживает** смену сети (connection migration) без переустановки — в отличие от TCP, который рвётся при смене IP.",
+                "source_of_confusion": "Привычка «соединение = 4-tuple IP:port» переносится на QUIC, хотя там идентификатор другой.",
+                "if_it_were_true": "Тогда мобильный роуминг WiFi→LTE прерывал бы загрузку, но QUIC её бесшовно продолжает.",
+                "how_it_should_be": "QUIC привязан к Connection ID и мигрирует между сетями без разрыва; рвётся при смене IP именно TCP."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему DNS lookup — источник latency и как его минимизировать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "DNS lookup всегда занимает 0 мс, потому что результат резолвинга вшит в HTTP-клиент при компиляции и не требует сетевых запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DNS lookup при cache hit ~0 мс (локальный/OS-кэш), но при cache miss — 20-200 мс на запрос к рекурсивному резолверу; адреса не «вшиты», они резолвятся в рантайме.",
+                "source_of_confusion": "Современный кэш создаёт иллюзию, что DNS «бесплатен» всегда, забывая про cold lookup.",
+                "if_it_were_true": "Тогда failover при смене IP не требовал бы инвалидации кэша, но stale DNS-кэш как раз мешает failover.",
+                "how_it_should_be": "DNS lookup: 0 мс на cache hit, но 20-200 мс на cache miss; результат резолвится в рантайме, а не зашит."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`preconnect` делает только DNS-резолвинг, а `dns-prefetch` дополнительно устанавливает TCP и TLS заранее — поэтому dns-prefetch мощнее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Перепутаны местами: `dns-prefetch` делает только DNS-резолвинг, а `preconnect` сильнее — выполняет DNS + TCP + TLS заранее.",
+                "source_of_confusion": "Названия похожи, поэтому их возможности легко переставить местами.",
+                "if_it_were_true": "Тогда preconnect экономил бы меньше времени, чем dns-prefetch, но он закрывает больше этапов установки.",
+                "how_it_should_be": "preconnect: DNS+TCP+TLS заранее; dns-prefetch — только DNS. preconnect мощнее."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "DNS lookup резолвит `api.example.com` → IP перед коннектом. Cache hit — ~0 мс (локальный/OS-кэш), cache miss — 20-200 мс (запрос к рекурсивному резолверу: browser → OS → резолвер (1.1.1.1/8.8.8.8/ISP) → root → TLD → authoritative, потенциально 3-4 запроса). TTL записи определяет длительность кэша: короткий TTL → частые lookup'ы, длинный → менее гибкий failover.",
+              "correct": true,
+              "sections": {
+                "explanation": "Митигации: `<link rel=dns-prefetch>` (браузер резолвит заранее), `<link rel=preconnect>` (ещё сильнее — DNS+TCP+TLS заранее), DoH/DoT (шифрование DNS, но возможна доп. задержка от TLS с резолвером), app-level DNS caching, Anycast DNS (ближайший POP отвечает — Cloudflare/Google DNS).",
+                "example": "Применяют resource hints для известных заранее доменов (API, CDN, шрифты) — экономят RTT в момент реального запроса. Anycast DNS географически распределяет резолверы для минимальной задержки.",
+                "when_to_apply": "Java-gotcha: старые JVM кэшировали DNS навсегда → пропускали failover'ы; `networkaddress.cache.ttl` нужно ставить не `-1` (например 30s), современные JVM по умолчанию 30s. Замерить DNS-время: `curl -w \"dns:%{time_namelookup} ...\"`.",
+                "edge_cases": "Краевой случай — старые JVM кэшировали DNS навсегда и пропускали failover; `networkaddress.cache.ttl` нужно ставить не `-1` (например 30s).",
+                "related": "[[network-performance-interview#Q13]] Early Hints как родственные resource hints; [[network-performance-interview#Q5]] TCP-коннект после резолва; [[network-performance-interview#Q24]] dig для отладки DNS."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "TTL DNS-записи влияет только на безопасность и не имеет отношения ни к частоте lookup'ов, ни к скорости failover при смене IP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TTL напрямую управляет частотой lookup'ов и гибкостью failover: длинный TTL → реже резолвим, но дольше держим устаревший IP; короткий → чаще lookup'ы, но быстрый failover.",
+                "source_of_confusion": "TTL воспринимают как чисто служебное поле, не связанное с производительностью и доступностью.",
+                "if_it_were_true": "Тогда выбор TTL был бы безразличен, но он — компромисс между числом lookup'ов и скоростью реакции на смену адреса.",
+                "how_it_should_be": "TTL определяет длительность кэша: баланс между частотой lookup'ов (latency) и скоростью failover."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем различаются gzip, brotli и zstd для HTTP-сжатия?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`brotli` даёт худший коэффициент сжатия, чем `gzip`, и поэтому его не включают на CDN, оставляя только gzip как более компактный.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: brotli сжимает на ~15-25% сильнее gzip и широко включён на CDN; именно brotli, а не gzip, даёт лучший ratio.",
+                "source_of_confusion": "Старый и привычный gzip кажется «эталоном компактности», хотя brotli его обгоняет.",
+                "if_it_were_true": "Тогда CDN не включали бы brotli массово, но они делают это ради меньшего размера ответов.",
+                "how_it_should_be": "brotli сжимает сильнее gzip (~15-25%); gzip быстрее, но компактнее именно brotli."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`zstd` — это официальный стандарт HTTP `Content-Encoding`, обязательный к поддержке всеми браузерами с 2016 года.",
+              "correct": false,
+              "sections": {
+                "what_actually": "zstd для HTTP `Content-Encoding` стандартизован поздно (RFC 8878) и распространён ограниченно; в вебе доминируют gzip и brotli, а zstd чаще используют внутри приложений (Kafka, ФС).",
+                "source_of_confusion": "Скорость и качество zstd создают впечатление, что он уже повсеместный веб-стандарт.",
+                "if_it_were_true": "Тогда `Accept-Encoding: zstd` поддерживался бы всеми браузерами, но в реальности HTTP-adoption у него ограничен.",
+                "how_it_should_be": "zstd силён, но для HTTP распространён слабо; стандарты веба — gzip и brotli."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Уже сжатые форматы (`JPEG`, `PNG`, `MP4`) нужно обязательно повторно сжимать gzip/brotli — это даёт ещё 20-30% экономии размера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Повторное сжатие уже сжатых данных почти не даёт выигрыша и только тратит CPU; такие форматы из HTTP-сжатия исключают.",
+                "source_of_confusion": "«Сжатие всегда уменьшает размер» — обобщение, неверное для уже сжатых медиа.",
+                "if_it_were_true": "Тогда двойное сжатие JPEG экономило бы трафик, но реально это CPU за нулевой выигрыш.",
+                "how_it_should_be": "JPEG/PNG/MP4 не сжимают повторно: выигрыша почти нет, а CPU тратится впустую."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`gzip` — повсеместный, ~5-10% экономии vs plaintext на типичных данных (для JSON до ~80%), быстрый, дешёвый по CPU, default quality 6. `brotli` (Google 2013) — лучше ratio чем gzip (~15-25% компактнее), медленнее на высоких уровнях сжатия, быстрый decompress, поддержан всеми современными браузерами; уровни 0-11 (типично 4-6 для динамики, 11 для пред-сжатой статики). `zstd` (Facebook 2016) — быстрый + хороший ratio, но для HTTP `Content-Encoding` стандартизован слабо (RFC 8878, ограниченный adoption); чаще внутри приложений (Kafka, ФС).",
+              "correct": true,
+              "sections": {
+                "explanation": "Negotiation: клиент шлёт `Accept-Encoding: gzip, br, zstd`, сервер выбирает лучший поддерживаемый. Best practice: статику пред-сжать brotli 11 + gzip 9 (платим один раз на деплое), динамику — brotli 4-6 (баланс CPU/ratio), минимальный порог (< 1KB не сжимать).",
+                "example": "Применяют с оговоркой: не сжимать уже сжатое (JPEG, PNG, MP4) — CPU за нулевой выигрыш. CDN часто отдают пред-сжатое (стоимость один раз на деплое), некоторые авто-сжимают ответ origin.",
+                "when_to_apply": "Edge case — `BREACH attack`: сжатие + HTTPS + секреты в ответе + управляемый пользователем ввод = извлечение секретов по изменению размера. Митигация: не сжимать чувствительные ответы или исключить пользовательский ввод из ответа с секретами.",
+                "edge_cases": "Граничный случай — BREACH attack: сжатие + HTTPS + секрет + управляемый ввод позволяют извлечь секрет по размеру, поэтому чувствительные ответы не сжимают.",
+                "related": "[[network-performance-interview#Q17]] Content-Encoding negotiation подробнее; [[network-performance-interview#Q18]] CDN и пред-сжатая статика; [[network-performance-interview#Q1]] сжатие уменьшает объём, но не RTT."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает Content-Encoding negotiation?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Клиент заявляет поддержку через `Accept-Encoding: gzip, deflate, br, zstd` (можно с весами: `gzip;q=0.5, br;q=1.0`), сервер выбирает один и ставит `Content-Encoding: br`. Сжаты могут быть и запрос (`Content-Encoding: gzip` при POST сжатых данных, редко), и ответ (типично). `Accept-Encoding: identity` явно просит несжатое.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главный gotcha для CDN — заголовок `Vary: Accept-Encoding`: без него CDN может отдать brotli-ответ gzip-only клиенту → поломка; с ним CDN кэширует отдельный вариант на каждую кодировку.",
+                "example": "Применяют `Vary: Accept-Encoding` всегда, когда контент проходит через кэширующий CDN/прокси и может сжиматься по-разному. `Content-Length` должен отражать сжатый размер. Проверка: `curl -H \"Accept-Encoding: br, gzip\" -I https://site.com/page` и смотреть `Content-Encoding`.",
+                "when_to_apply": "Edge cases: legacy-прокси (middlebox'ы) могут вырезать `Accept-Encoding` → сервер не видит поддержку (HTTPS это предотвращает, т.к. шифрует заголовки); brotli браузеры принимают только по HTTPS, не по plain HTTP.",
+                "edge_cases": "Граничный случай — legacy-прокси вырезают `Accept-Encoding`, и сервер не видит поддержку сжатия; HTTPS это предотвращает, шифруя заголовки.",
+                "related": "[[network-performance-interview#Q16]] gzip/brotli/zstd и их выбор; [[network-performance-interview#Q18]] CDN-кэширование вариантов; [[network-performance-interview#Q10]] HTTPS защищает заголовки от middlebox'ов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Сервер при negotiation обязан вернуть **все** поддерживаемые клиентом кодировки сразу, перечислив их через запятую в `Content-Encoding`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сервер выбирает и применяет **один** алгоритм и указывает его в `Content-Encoding: br`; перечислять несколько кодировок в этом заголовке для одного тела нельзя.",
+                "source_of_confusion": "`Accept-Encoding` со списком создаёт ощущение, что и ответ должен содержать список.",
+                "if_it_were_true": "Тогда клиент должен был бы уметь распаковывать стек кодировок на каждый ответ, но он ждёт ровно одну.",
+                "how_it_should_be": "`Content-Encoding` содержит одну выбранную кодировку; список — это `Accept-Encoding` со стороны клиента."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Заголовок `Vary: Accept-Encoding` не нужен при работе через CDN, потому что CDN автоматически различает варианты ответа по их размеру.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `Vary: Accept-Encoding` CDN может отдать brotli-ответ gzip-only клиенту → поломка; CDN различает варианты именно по этому заголовку, а не по размеру.",
+                "source_of_confusion": "Кажется, что CDN «умный» и сам разберётся, поэтому Vary считают необязательным.",
+                "if_it_were_true": "Тогда часть клиентов получала бы нераспаковываемый контент, что и происходит при отсутствии Vary.",
+                "how_it_should_be": "`Vary: Accept-Encoding` обязателен для CDN — он кэширует отдельный вариант на каждую кодировку."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`brotli` можно отдавать и по обычному HTTP, и по HTTPS — браузеры принимают его в любом случае, без ограничений на транспорт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Браузеры принимают brotli **только по HTTPS**; по plain HTTP brotli не используется, поэтому negotiation там сводится к gzip/identity.",
+                "source_of_confusion": "Раз кодировка не связана с шифрованием логически, ограничение на транспорт упускают.",
+                "if_it_were_true": "Тогда HTTP-сайт мог бы экономить трафик через brotli, но браузер откатится на gzip без TLS.",
+                "how_it_should_be": "brotli доступен браузерам лишь по HTTPS; по HTTP они его не принимают."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужен CDN с точки зрения latency-математики?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`CDN` не влияет на latency и нужен исключительно для снижения счёта за egress-трафик; время ответа остаётся таким же, как при прямом обращении к origin.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CDN кардинально снижает latency: пользователю в Tokyo origin в us-east-1 даёт ~130 мс на запрос, а edge в Tokyo при cache hit — 5-10 мс; экономия на трафике — лишь один из бонусов.",
+                "source_of_confusion": "Биллинг-выгода CDN заметна, поэтому latency-эффект ошибочно считают второстепенным или нулевым.",
+                "if_it_were_true": "Тогда страница из 50 запросов грузилась бы одинаково с CDN и без, но реально 3-5 секунд против 0.5-1 секунды.",
+                "how_it_should_be": "CDN прежде всего сокращает latency (edge ближе к пользователю), а снижение egress — побочный плюс."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Без CDN: origin в us-east-1, пользователь в Tokyo, RTT ~130 мс, каждый запрос ассета ≥ 130 мс + transfer. С CDN: edge в Tokyo (~5 мс от пользователя); первый запрос — user → edge (miss) → origin → ответ (~140 мс), последующие — user → edge (hit) → ответ (5-10 мс). Для страницы из 50 запросов: без CDN 3-5 секунд, с CDN (95% cached) — 0.5-1 секунда.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выгоды сверх latency: origin offload (95% cache hit → 95% трафика не доходит до origin, меньше bandwidth bill и кластер), DDoS-absorption (глобальная ёмкость размазывает атаку), TLS termination на edge (handshake рядом с пользователем — несколько мс vs 150 мс до origin, выигрыш даже для некэшируемого контента), edge compute (Workers/Lambda@Edge), resilience (origin упал → CDN отдаёт stale).",
+                "example": "Применяют для статики и кэшируемого контента, а TLS-termination на edge помогает и динамике. Cost: CDN egress ~$0.03-0.08/GB против origin egress AWS us-east-1 ~$0.09/GB → CDN часто **дешевле** прямой раздачи и при этом лучше по UX.",
+                "when_to_apply": "Не всё выигрывает: сильно персонализированный контент (уникален на пользователя) — всегда cache miss; real-time с низким TTL — выигрыш меньше; но edge TLS termination помогает даже там.",
+                "edge_cases": "Граничный случай — персонализированный или real-time контент: он почти всегда cache miss, но edge TLS termination ускоряет даже его за счёт близкого handshake.",
+                "related": "[[network-performance-interview#Q2]] RTT cross-continent, который убирает CDN; [[network-performance-interview#Q8]] TLS termination на edge; [[network-performance-interview#Q16]] пред-сжатая статика на CDN."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главная выгода `CDN` — экономия CPU на origin за счёт того, что edge выполняет всю бизнес-логику приложения вместо backend-сервера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CDN снижает нагрузку на origin за счёт **кэширования статики** (95% cache hit → меньше запросов до origin), а не переноса всей бизнес-логики; edge compute существует, но это узкая часть, не замена backend.",
+                "source_of_confusion": "Появление edge compute (Workers) создаёт впечатление, что вся логика уезжает на edge.",
+                "if_it_were_true": "Тогда origin вообще не нужен был бы для динамики, но он остаётся источником и данных, и логики.",
+                "how_it_should_be": "CDN разгружает origin кэшированием контента; edge compute — дополнение, а не перенос всего backend."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "TLS termination на edge `CDN` бесполезен для некэшируемого (динамического) контента, так как такой контент всё равно идёт до origin.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TLS termination на edge помогает даже динамике: handshake завершается рядом с пользователем (несколько мс vs ~150 мс до origin), экономя RTT установки независимо от кэшируемости тела.",
+                "source_of_confusion": "Раз тело всё равно тянется с origin, кажется, что edge ничего не ускоряет для динамики.",
+                "if_it_were_true": "Тогда CDN перед чисто динамическим API не давал бы выигрыша, но edge-TLS сокращает время установки соединения.",
+                "how_it_should_be": "TLS termination на edge ускоряет и динамику: handshake рядом с пользователем экономит RTT даже без кэша."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница в производительности gRPC и REST?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`gRPC` всегда медленнее `REST`, потому что бинарный protobuf требует дополнительной стадии декодирования, которой нет у текстового JSON.",
+              "correct": false,
+              "sections": {
+                "what_actually": "gRPC обычно **быстрее** REST-JSON (часто в 2-5x при высоком throughput): protobuf компактнее (на 30-50% меньше байт) и парсится быстрее, плюс HTTP/2 всегда.",
+                "source_of_confusion": "Кажется, что «бинарь надо декодировать = медленнее», хотя текстовый JSON-парсинг как раз дороже.",
+                "if_it_were_true": "Тогда внутренние hot-path сервисы не мигрировали бы на gRPC, но именно там его ROI высок.",
+                "how_it_should_be": "gRPC быстрее REST-JSON: protobuf компактнее и парсится быстрее, транспорт — HTTP/2."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`gRPC` отлично работает напрямую из браузера без прокси, а `REST` для браузера требует специального gRPC-Web шлюза.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Перевёрнуто: REST браузер вызывает напрямую, а для gRPC из браузера нужен gRPC-Web и прокси-транслятор (например, Envoy).",
+                "source_of_confusion": "Современность gRPC создаёт впечатление лучшей браузерной поддержки, хотя она как раз слабая.",
+                "if_it_were_true": "Тогда публичные браузерные API писали бы на чистом gRPC, но обычно их делают на REST из-за прямого вызова.",
+                "how_it_should_be": "REST вызывается из браузера напрямую; gRPC требует gRPC-Web + Envoy-прокси."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`gRPC` — RPC-фреймворк (protobuf + HTTP/2); `REST` — JSON поверх HTTP (1.1 или 2). Различия: сериализация (protobuf на 30-50% меньше байт и быстрее парсится; JSON универсален и человекочитаем); транспорт (gRPC всегда HTTP/2 с мультиплексированием; REST часто 1.1 или 2); стриминг (gRPC — двунаправленный нативно; REST — через SSE/WebSocket); код-ген из `.proto` → типобезопасные stub'ы. Бенчмарки грубо: gRPC ~10k req/s vs REST-JSON ~3k req/s (Java), часто 2-5x быстрее на запрос.",
+              "correct": true,
+              "sections": {
+                "explanation": "REST лучше для публичных API (браузер зовёт напрямую), простоты и тулинга (curl, Postman), HTTP-кэширования. gRPC лучше для внутренних микросервисов, высокого throughput, стриминга и строгой типизации/код-гена.",
+                "example": "Применяют по контексту: внутренние hot-path → gRPC (высокий ROI), публичный API → редко стоит ломать контракт ради gRPC. Перед миграцией мерить: часто REST не настоящий bottleneck.",
+                "when_to_apply": "Минусы gRPC: слабая браузерная поддержка (нужен gRPC-Web + Envoy-прокси), сложнее отладка (бинарь), беднее экосистема тулинга, ограниченные L7-фичи у части балансировщиков. gRPC-Web — сабсет (unary + server streaming) с трансляцией через Envoy.",
+                "edge_cases": "Граничный случай — браузерный клиент: чистый gRPC из браузера не работает, нужен gRPC-Web и Envoy-прокси, что сужает применимость для публичных API.",
+                "related": "[[network-performance-interview#Q10]] HTTP/2 как транспорт gRPC; [[network-performance-interview#Q6]] gRPC отключает Nagle по умолчанию; [[network-performance-interview#Q20]] gRPC streaming vs WebSocket."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`gRPC`-стриминг поддерживает только server→client направление (server streaming), а двунаправленный обмен данными требует перехода на REST + WebSocket.",
+              "correct": false,
+              "sections": {
+                "what_actually": "gRPC нативно поддерживает **двунаправленный** (bidirectional) стриминг; ограничение «только server streaming» относится к gRPC-Web в браузере, а не к полному gRPC.",
+                "source_of_confusion": "Браузерное ограничение gRPC-Web переносят на весь gRPC, занижая его возможности.",
+                "if_it_were_true": "Тогда чат на gRPC требовал бы WebSocket-обвязки, но full gRPC даёт двунаправленный поток из коробки.",
+                "how_it_should_be": "Полный gRPC умеет bidirectional streaming; ограничение server-only — это специфика gRPC-Web."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Каков overhead WebSockets и когда их применять?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`WebSocket` требует полного HTTP-handshake перед **каждым** сообщением, поэтому на высокочастотных потоках его overhead выше, чем у обычных HTTP-запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Handshake (HTTP/1.1 Upgrade, ~1 RTT) происходит **один раз** при установке; дальше соединение постоянное, а per-frame overhead минимален (~2-14 байт на сообщение).",
+                "source_of_confusion": "Слово «handshake» создаёт впечатление повторного согласования на каждое сообщение.",
+                "if_it_were_true": "Тогда WebSocket проигрывал бы long polling по эффективности, но он как раз эффективнее для потока событий.",
+                "how_it_should_be": "WebSocket делает handshake один раз при апгрейде; далее лишь ~2-14 байт фрейминга на сообщение."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`WebSocket` легко масштабируется горизонтально без sticky-сессий, потому что соединение stateless и любой инстанс может обслужить любой фрейм.",
+              "correct": false,
+              "sections": {
+                "what_actually": "WebSocket **stateful** и привязан к инстансу (connection affinity) → нужен sticky session (LB шлёт пользователя всегда на тот же WS-сервер); горизонтальное масштабирование как раз сложное.",
+                "source_of_confusion": "Привычка к stateless HTTP переносится на WebSocket, который после upgrade теряет HTTP-семантику.",
+                "if_it_were_true": "Тогда broadcast между инстансами не требовал бы Redis pub/sub, но именно affinity заставляет его использовать.",
+                "how_it_should_be": "WebSocket stateful, требует sticky session и брокера (Redis pub/sub) для масштабирования между инстансами."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`WebSocket` поддерживает только текстовые сообщения, а для бинарных данных, в отличие от SSE, его использовать нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Перевёрнуто: WebSocket передаёт и текст, и **бинарь**, тогда как именно SSE ограничен только текстом.",
+                "source_of_confusion": "Свойство SSE (text-only) ошибочно приписывают WebSocket.",
+                "if_it_were_true": "Тогда передача бинарных кадров (видео-чанки, protobuf) требовала бы отдельного канала, но WS их поддерживает.",
+                "how_it_should_be": "WebSocket поддерживает текст и бинарь; text-only — это ограничение SSE, а не WebSocket."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`WebSocket` (RFC 6455) — full-duplex постоянное соединение поверх TCP, апгрейд из HTTP/1.1 handshake, малый фрейминг (~2-14 байт на сообщение). Use cases: real-time bidirectional (чат, совместное редактирование, игры), server push (нотификации, тикеры), стриминг апдейтов (дашборды, live-спорт). Overhead: handshake один раз (1 RTT), дальше постоянное соединение без per-message handshake.",
+              "correct": true,
+              "sections": {
+                "explanation": "Vs альтернативы: SSE — только server→client (проще, авто-reconnect, дружелюбен к прокси), long polling — новый запрос на каждое событие (высокий overhead), gRPC bidi streaming — типизирован, но нужен gRPC-Web. WebSocket выигрывает там, где нужен настоящий двунаправленный обмен в браузере.",
+                "example": "Применяют для истинно двунаправленных сценариев. Сложности: stateful → нужна sticky session (affinity), сложно масштабировать горизонтально, прокси/файрволы могут дропать idle WS → нужны ping/keepalive, нет HTTP-кэширования (после upgrade это не HTTP семантически).",
+                "when_to_apply": "Масштабируют через Redis pub/sub для broadcast между инстансами или централизованный broker (EMQX, Centrifugo, MQTT). Современные серверы держат 100K+ конкурентных WS на инстанс (Netty, Node.js, Go); память на соединение ключевая, тюнят socket-буферы.",
+                "edge_cases": "Граничный случай — idle-соединения: прокси и файрволы могут дропать простаивающий WebSocket, поэтому нужны ping/keepalive для поддержания канала.",
+                "related": "[[network-performance-interview#Q21]] SSE как односторонняя альтернатива; [[network-performance-interview#Q19]] gRPC streaming vs WebSocket; [[network-performance-interview#Q5]] handshake overhead при установке."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Server-Sent Events (SSE) и когда их выбирать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`SSE` — однонаправленный поток server→client поверх HTTP (`Content-Type: text/event-stream`, события `event:`/`data:`). Браузер: `const es = new EventSource('/events'); es.onmessage = ...`. Главные отличия от WebSocket: направление (server→client vs bidirectional), протокол (обычный HTTP vs WebSocket после upgrade), reconnect (автоматический у SSE vs ручной у WS), event IDs (нативный `Last-Event-ID` у SSE), бинарь (SSE — только текст), proxy-friendly (SSE — это просто HTTP).",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбирают SSE для односторонних апдейтов (дашборды, нотификации, стриминг логов), когда нужна HTTP-семантика (заголовки, auth, прокси) и проще деплой. WebSocket берут для настоящего bidirectional (чат, игры), бинарных данных и минимального per-message overhead (хотя разница маргинальна).",
+                "example": "Применяют поверх HTTP/2: мультиплексирование позволяет многим SSE-потокам делить одно соединение → лучше масштабируется (HTTP/1.1 блокирует один поток на соединение). HTTP/3 без HoL — ещё лучше.",
+                "when_to_apply": "Частая ошибка — считать «WebSocket всегда лучше»: SSE часто идеально подходит и даёт более простой код (авто-reconnect, нативные event IDs из коробки). Edge case: SSE не передаёт бинарь, только текст.",
+                "edge_cases": "Граничный случай — бинарные данные: SSE передаёт только текст, поэтому для бинарных кадров (видео-чанки, protobuf) выбирают WebSocket.",
+                "related": "[[network-performance-interview#Q20]] WebSocket как двунаправленная альтернатива; [[network-performance-interview#Q10]] SSE поверх HTTP/2 и HTTP/3; [[network-performance-interview#Q11]] HoL влияет на множество SSE-потоков."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`SSE` — двунаправленный протокол: клиент и сервер могут слать сообщения друг другу по одному `EventSource`, как в WebSocket.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SSE строго **однонаправленный** (server→client); чтобы слать данные на сервер, клиент использует обычные HTTP-запросы отдельно — bidirectional это про WebSocket.",
+                "source_of_confusion": "Раз есть постоянный поток событий, кажется, что и обратный канал по тому же соединению доступен.",
+                "if_it_were_true": "Тогда чат целиком работал бы на SSE без доп. запросов, но обратное направление требует отдельного HTTP/WS.",
+                "how_it_should_be": "SSE — только server→client; двунаправленность даёт WebSocket, а не SSE."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `SSE` переподключение после обрыва нужно реализовывать вручную в JS, тогда как WebSocket переподключается автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: SSE/`EventSource` реконнектит **автоматически** (плюс шлёт `Last-Event-ID`), а вот WebSocket требует ручной логики reconnect.",
+                "source_of_confusion": "Свойства SSE и WebSocket по reconnect путают местами.",
+                "if_it_were_true": "Тогда SSE-дашборд после кратковременного обрыва оставался бы пустым, но EventSource сам восстановит поток.",
+                "how_it_should_be": "SSE реконнектит автоматически с Last-Event-ID; ручной reconnect — у WebSocket."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`SSE` хуже масштабируется на HTTP/2, чем на HTTP/1.1, потому что мультиплексирование вынуждает все потоки делить одно перегруженное соединение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На HTTP/2 SSE масштабируется **лучше**: мультиплексирование позволяет многим SSE-потокам делить одно соединение, тогда как HTTP/1.1 блокирует по одному потоку на соединение.",
+                "source_of_confusion": "Совместное соединение воспринимают как «бутылочное горлышко», хотя оно снимает лимит на число соединений.",
+                "if_it_were_true": "Тогда переход дашборда на HTTP/2 ухудшал бы масштабирование SSE, но он его улучшает.",
+                "how_it_should_be": "SSE поверх HTTP/2 масштабируется лучше за счёт мультиплексирования; HTTP/1.1 ограничивает один поток на соединение."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое tail latency, каковы её причины и как с ней бороться?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Tail latency — это медиана (p50) времени ответа, и её достаточно мониторить, потому что она представляет опыт типичного пользователя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tail latency — это p99/p99.9 (худшие проценты запросов), а не p50; при fan-out из 50 вызовов p99 страницы ≈ p99 самого медленного компонента, и опираться только на p50 опасно.",
+                "source_of_confusion": "p50 как «типичный пользователь» заслоняет факт, что одна страница агрегирует множество backend-вызовов.",
+                "if_it_were_true": "Тогда мониторинг p50 ловил бы все проблемы, но именно хвост (p99) определяет реальный пользовательский опыт при fan-out.",
+                "how_it_should_be": "Tail latency — это p99/p99.9; мониторить только p50 недостаточно, надо смотреть весь хвост."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Tail latency — p99, p99.9: худшие несколько процентов запросов. Почему важно: одна страница = 50 backend-вызовов (fan-out); если у каждого p99 = 100 мс, p50 = 20 мс, то **p99 страницы ≈ 100 мс почти всегда** — самый медленный компонент доминирует. Причины: GC-паузы (old-gen → 100 мс+), queueing (очередь thread pool, Little's law L = λ × W), networking (потеря+retransmit ~300 мс, congestion backoff), disk I/O (DB spill, fsync spike), CPU contention (noisy neighbor), bufferbloat, cache miss (L1/L2 → DB, 10-100x медленнее).",
+              "correct": true,
+              "sections": {
+                "explanation": "Пример fan-out: при p99 = 100 мс на компонент и 50 параллельных вызовах вероятность, что хотя бы один попадёт в хвост, велика → p99 страницы тянется к 100 мс, хотя медиана компонента всего 20 мс.",
+                "example": "Применяют комплекс приёмов: hedged requests (слать на 2 реплики, брать быструю — паттерны Spanner/MapReduce, тратит ~5-10% ресурсов, но режет p99), tied requests (отменить медленную реплику когда быстрая вернулась), circuit breaking (fail fast на плохом backend), load shedding (отклонять запросы у насыщения).",
+                "when_to_apply": "Мониторят весь хвост: p50, p90, p95, p99, p99.9 — **нельзя смотреть только p50**, алерты на рост p99. GC лечат тюнингом (G1, ZGC, Shenandoah) и снижением аллокаций; queueing — расчётом по Little's law.",
+                "edge_cases": "Граничный случай — hedged requests режут p99, но тратят ~5-10% лишних ресурсов; на 100% запросов их не применяют, чтобы не удвоить нагрузку.",
+                "related": "[[network-performance-interview#Q4]] congestion backoff как причина хвоста; [[network-performance-interview#Q23]] sysctl-тюнинг против сетевых причин; [[network-performance-interview#Q24]] инструменты диагностики медленной сети."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Hedged requests снижают p99, отправляя запрос на 2 реплики, но это **бесплатно** по ресурсам и не создаёт никакой дополнительной нагрузки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hedged requests тратят примерно 5-10% дополнительных ресурсов (дублируют часть работы), просто этот overhead окупается значительным срезом p99.",
+                "source_of_confusion": "Эффективность приёма создаёт иллюзию, что он не имеет цены.",
+                "if_it_were_true": "Тогда можно было бы хеджировать 100% запросов без последствий, но это удвоило бы нагрузку на backend.",
+                "how_it_should_be": "Hedged requests режут p99 ценой ~5-10% лишних ресурсов; tied requests уменьшают это дублирование."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При fan-out из 50 вызовов p99 итоговой страницы примерно равен p50 одного компонента, потому что медленные вызовы усредняются с быстрыми.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При fan-out p99 страницы тянется к **p99 самого медленного** компонента, а не к p50: достаточно одного попадания в хвост из 50 вызовов, чтобы вся страница замедлилась.",
+                "source_of_confusion": "Интуиция усреднения («много вызовов сгладят выбросы») неверна для параллельного fan-out, где ждут самого медленного.",
+                "if_it_were_true": "Тогда добавление вызовов улучшало бы p99 страницы, но каждый новый компонент только повышает шанс попасть в хвост.",
+                "how_it_should_be": "Fan-out: p99 страницы ≈ p99 самого медленного компонента; медиана не спасает, ждут отстающего."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой Linux sysctl-тюнинг применяют для high-throughput?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для high-throughput главное — включить `net.ipv4.tcp_tw_recycle = 1`, он безопасно ускоряет переиспользование TIME_WAIT-сокетов на любых сетях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`tcp_tw_recycle` **удалён в Linux 4.12+** и его никогда не используют — он ломает соединения за NAT; для клиентского переиспользования есть `tcp_tw_reuse = 1`.",
+                "source_of_confusion": "Похожие имена `tw_recycle` и `tw_reuse` путают, а старые гайды всё ещё советуют recycle.",
+                "if_it_were_true": "Тогда recycle был бы рабочей оптимизацией, но он ломает клиентов за NAT и потому изъят из ядра.",
+                "how_it_should_be": "Используют `tcp_tw_reuse`; `tcp_tw_recycle` запрещён (NAT-breaker) и удалён из ядра 4.12+."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "sysctl-настройки сети безопасно копировать целиком с любого high-throughput гайда — они универсальны и всегда улучшают производительность под любой нагрузкой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Слепо копировать нельзя: многие параметры помогают только конкретным workload'ам, нужно мерить before/after, иначе можно получить регрессию или лишний расход памяти.",
+                "source_of_confusion": "Готовые «магические» наборы sysctl создают иллюзию универсального ускорения.",
+                "if_it_were_true": "Тогда один профиль подходил бы и для DC, и для cellular, но оптимумы буферов и congestion control различаются.",
+                "how_it_should_be": "sysctl-тюнинг измеряют before/after под свой workload; универсального «скопировал и ускорил» не бывает."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Тюнинг сетевого стека: бóльшие socket-буферы (`net.core.rmem_max`/`wmem_max = 134217728` (128MB), `tcp_rmem`/`tcp_wmem` с верхней границей до 128MB), выше backlog (`net.core.somaxconn = 65535`, `netdev_max_backlog = 30000`), больше ephemeral-портов (`ip_local_port_range = 1024 65535`), TIME_WAIT reuse на клиенте (`tcp_tw_reuse = 1`), `tcp_fin_timeout = 15`, `tcp_max_syn_backlog = 65535`, TCP Fast Open (`tcp_fastopen = 3`), congestion control (`tcp_congestion_control = bbr` + `default_qdisc = fq`).",
+              "correct": true,
+              "sections": {
+                "explanation": "File descriptor limits в `/etc/security/limits.conf` (`* soft/hard nofile 1000000`); при netfilter/iptables — `net.netfilter.nf_conntrack_max = 1000000`. Application-level: число воркеров/event-loop под CPU, sizing thread pool, лимиты connection pool.",
+                "example": "Применяют осознанно: **не копировать вслепую** — мерить before/after, часть настроек помогает только конкретным workload'ам. Мониторят `ss -s` (socket summary), `netstat -s` (retransmits/drops), `nstat`.",
+                "when_to_apply": "Edge case: `tcp_tw_recycle` **удалён в Linux 4.12+** — никогда не использовать (ломает соединения за NAT). Это частая ловушка из устаревших гайдов; правильная альтернатива для клиента — `tcp_tw_reuse`.",
+                "edge_cases": "Граничный случай — `tcp_tw_recycle` удалён в Linux 4.12+ и ломает соединения за NAT; вместо него для клиента используют `tcp_tw_reuse`.",
+                "related": "[[network-performance-interview#Q3]] BDP определяет размер буферов; [[network-performance-interview#Q7]] BBR как congestion control; [[network-performance-interview#Q22]] queueing и tail latency."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Увеличивать `net.core.somaxconn` и `tcp_max_syn_backlog` для high-throughput не нужно — backlog влияет только на отказоустойчивость, но не на пропускную способность под нагрузкой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Backlog'и напрямую влияют на throughput при всплесках: малый `somaxconn`/`syn_backlog` приводит к дропу входящих соединений под нагрузкой, поэтому их и поднимают до 65535.",
+                "source_of_confusion": "Backlog воспринимают как «аварийный буфер», не связывая с обычной пропускной способностью.",
+                "if_it_were_true": "Тогда сервер с дефолтным backlog держал бы любой пик соединений, но при высокой rate он начнёт ронять SYN.",
+                "how_it_should_be": "`somaxconn`/`tcp_max_syn_backlog` поднимают для high-throughput — иначе под пиком теряются входящие соединения."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какими инструментами отлаживают медленные сети?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для отладки достаточно одного `ping`: он показывает не только RTT и потери, но и время DNS-резолва, TLS-handshake и first-byte сервера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ping` даёт только ICMP RTT и packet loss; DNS-время, TLS-handshake и first-byte измеряют другими инструментами — `dig`, `curl -w` (`time_namelookup`, `time_appconnect`, `time_starttransfer`).",
+                "source_of_confusion": "ping — первый и привычный инструмент, поэтому ему приписывают возможности, которых у ICMP нет.",
+                "if_it_were_true": "Тогда ровно по ping можно было бы локализовать любую стадию, но он не видит HTTP/TLS/DNS-этапы.",
+                "how_it_should_be": "ping показывает RTT и потери; для стадий используют dig (DNS), curl -w (connect/TLS/first-byte), iperf3 (bandwidth)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Чтобы локализовать медленную стадию, нужно сначала измерить bandwidth через `iperf3`, и если полоса в норме — проблема обязательно в DNS.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Диагностику ведут по стадиям сверху вниз: сначала DNS (`dig`), TCP (`time_connect`), TLS (`time_appconnect`), ответ сервера (`time_starttransfer`), и лишь затем bandwidth; нормальная полоса не указывает автоматически на DNS.",
+                "source_of_confusion": "Желание начать с «измеримой» метрики bandwidth ломает логичный порядок изоляции стадий.",
+                "if_it_were_true": "Тогда проблему медленного TLS-handshake искали бы в DNS, но `curl -w time_appconnect` указал бы прямо на TLS.",
+                "how_it_should_be": "Изолируют по этапам: DNS → TCP → TLS → first-byte → transfer; каждая стадия отсекает свой источник."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ss -ti` показывает только список открытых сокетов без какой-либо congestion-информации, поэтому cwnd и retransmits через него увидеть нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ss -ti` как раз выводит per-connection congestion info: текущий cwnd, rtt, retransmits — это его ключевая ценность для сетевой диагностики.",
+                "source_of_confusion": "Базовый `ss -tn` действительно даёт только список, и это переносят на флаг `-i`, теряя его смысл.",
+                "if_it_were_true": "Тогда для cwnd пришлось бы лезть в eBPF, но `ss -ti` отдаёт эту информацию напрямую.",
+                "how_it_should_be": "`ss -ti` показывает congestion info (cwnd, rtt, retransmits) на соединение; `-i` именно для этого."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Latency/throughput: `ping` (RTT, потери), `traceroute`/`mtr` (per-hop), `iperf3` (bandwidth), `tcpdump`/`wireshark` (захват пакетов). Состояние соединений: `ss -tn` (TCP-соединения), `ss -ti` (с congestion info: cwnd, rtt, retransmits), `ss -ltn` (listening). Stats: `netstat -s`/`nstat` (кумулятивные счётчики — retransmits, drops), `ip -s link` (интерфейс). HTTP: `curl -w \"dns:%{time_namelookup} conn:%{time_connect} tls:%{time_appconnect} first:%{time_starttransfer} ...\"`. DNS: `dig`, `dig +trace`. Low-level: `bpftrace`/eBPF.",
+              "correct": true,
+              "sections": {
+                "explanation": "Workflow для «сервис X тормозит»: 1) DNS резолвится быстро? (`dig` time), 2) TCP handshake быстрый? (`time_connect`), 3) TLS handshake быстрый? (`time_appconnect`), 4) сервер отвечает быстро? (`time_starttransfer`), 5) медленная передача payload? (bandwidth). Каждая стадия изолирует свой источник проблемы.",
+                "example": "Применяют по слоям: ICMP-инструменты для пути, `ss`/`netstat` для состояния стека, `curl -w` для разбивки HTTP-таймингов, `tcpdump`→Wireshark для глубокого разбора. Service mesh: Envoy/Istio access log `%RESPONSE_FLAGS%` (upstream timeouts).",
+                "when_to_apply": "Edge cases: synthetic monitoring (Pingdom, Datadog Synthetics) — непрерывные проверки из глобальных точек; `tcpdump -i eth0 port 443 -w capture.pcap` → Wireshark для пост-анализа TLS/HTTP. Каждый инструмент отсекает свой слой, поэтому их комбинируют.",
+                "edge_cases": "Граничный случай — synthetic monitoring (Pingdom, Datadog): непрерывные проверки из глобальных точек ловят региональные сетевые проблемы, невидимые с одного хоста.",
+                "related": "[[network-performance-interview#Q5]] curl -w разбивает время handshake; [[network-performance-interview#Q15]] dig для отладки DNS; [[network-performance-interview#Q23]] ss/netstat и sysctl-мониторинг."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

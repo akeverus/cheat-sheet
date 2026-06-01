@@ -1,0 +1,2345 @@
+{
+  "topic_slug": "memory-management-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроена память `JVM`? Какие основные области существуют?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Память `JVM` делится на логические области: `Heap` (объекты, под GC), `Metaspace` (метаданные классов в native memory), `Thread Stack` (фреймы вызовов, по одному на поток), `Direct Memory` (`allocateDirect`, вне heap) и `Code Cache` (JIT-код). Потребление процесса = сумма всех областей, а не только `-Xmx`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Heap` управляется через `-Xmx`/`-Xms`, `Metaspace` — через `-XX:MaxMetaspaceSize`, стек — через `-Xss`, direct — через `-XX:MaxDirectMemorySize`.",
+                "example": "Объект `new ArrayList<>()` живёт в `Heap`, метаданные класса `ArrayList` — в `Metaspace`, локальная ссылка на него — на `Thread Stack`, а `ByteBuffer.allocateDirect()` — в `Direct Memory`.",
+                "when_to_apply": "Эту карту памяти держат в голове при сайзинге контейнера и диагностике OOM: смотрят на весь набор областей, а не только на heap.",
+                "edge_cases": "В контейнере total RSS = heap + metaspace + stacks + direct + code cache + native GC structs: 2GB лимит при `-Xmx2g` гарантированно даст OOM-kill, потому что non-heap не учтён.",
+                "related": "[[memory-management-interview#Q2]] heap vs stack; [[memory-management-interview#Q3]] Metaspace; [[memory-management-interview#Q38]] container limits."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Вся память `JVM` — это один непрерывный `Heap`, управляемый только флагом `-Xmx`; стек, metaspace и direct memory выделяются внутри него.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стек, `Metaspace` и `Direct Memory` лежат ВНЕ heap: стек и direct — в native memory, metaspace тоже в native (с Java 8).",
+                "source_of_confusion": "`-Xmx` действительно ограничивает heap и кажется главным флагом, поэтому всю память сводят к нему.",
+                "if_it_were_true": "Тогда `-Xmx` = container limit был бы безопасен, но non-heap области выходят за heap и приводят к OOM-kill.",
+                "how_it_should_be": "`Heap` — лишь одна из областей; total = heap + metaspace + stacks + direct + code cache."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Metaspace` хранит сами объекты приложения, а `Heap` — только метаданные классов и constant pool.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `Heap` хранит объекты и массивы, а `Metaspace` — метаданные классов (`Class`-структуры, constant pool, аннотации).",
+                "source_of_confusion": "Оба слова про «память JVM» и оба под управлением GC, поэтому их роли путают местами.",
+                "if_it_were_true": "Тогда heap dump показывал бы метаданные классов, а не граф объектов, но MAT анализирует именно объекты в heap.",
+                "how_it_should_be": "Объекты `new Foo()` живут в heap; метаданные класса `Foo` — в metaspace."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Thread Stack` общий для всех потоков и управляется GC так же, как heap.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стек приватен для каждого потока и освобождается автоматически (LIFO) при выходе из метода, без участия GC.",
+                "source_of_confusion": "И стек, и heap — «память для данных метода», поэтому их режим управления смешивают.",
+                "if_it_were_true": "Тогда переполнение стека давало бы `OutOfMemoryError: Java heap space`, но реально это `StackOverflowError`.",
+                "how_it_should_be": "Каждый поток имеет свой стек (`-Xss`); общая для потоков область — это heap."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `heap` отличается от `stack` и когда какая область используется?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Heap` приватен для каждого потока и управляется по принципу LIFO, а `stack` общий для всех потоков и собирается GC.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ровно наоборот: `stack` приватен для потока и работает по LIFO, а `heap` общий для всех потоков и управляется GC.",
+                "source_of_confusion": "Свойства двух областей легко перепутать местами, если запоминать их списком без привязки.",
+                "if_it_were_true": "Тогда объект, созданный в одном потоке, был бы виден только ему через heap, но heap-объекты доступны всем потокам.",
+                "how_it_should_be": "`Stack` — приватный LIFO на поток; `heap` — общий и под GC."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Heap` хранит объекты (через `new`), общий для всех потоков, управляется GC, переполнение — `OutOfMemoryError: Java heap space`. `Stack` хранит фреймы вызовов, примитивы и ссылки, приватен для потока, освобождается автоматически (LIFO), переполнение — `StackOverflowError`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Примитив `int x` и ссылка `list` лежат на стеке, а сам объект `new ArrayList<>()` — в heap; стек быстрее (смещение указателя), heap — TLAB bump pointer.",
+                "example": "Рекурсия глубиной > ~5000 при дефолтном `-Xss` даёт `StackOverflowError`; а 1000 потоков × `-Xss1m` = 1GB только на стеки.",
+                "when_to_apply": "Различие важно при отладке `StackOverflowError` vs `OutOfMemoryError` и при выборе, что переиспользовать (heap-объекты) vs что дёшево создавать (стек-локали).",
+                "edge_cases": "Строковый литерал `\"hello\"` живёт в heap (string pool / intern table), хотя ссылка на него — на стеке.",
+                "related": "[[memory-management-interview#Q1]] области памяти JVM; [[memory-management-interview#Q5]] Thread Stack; [[memory-management-interview#Q7]] локальные переменные как GC roots."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "И `heap`, и `stack` управляются GC; разница только в том, что heap больше по размеру.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Stack` не управляется GC вообще — фреймы освобождаются автоматически при выходе из метода (LIFO), GC к нему не прикасается.",
+                "source_of_confusion": "Кажется, что раз обе области «память JVM», то обе обслуживает GC.",
+                "if_it_were_true": "Тогда `StackOverflowError` ловился бы и устранялся сборщиком, но GC не освобождает место на стеке.",
+                "how_it_should_be": "GC управляет только heap; стек освобождается детерминированно по выходу из метода."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все объекты, включая создаваемые через `new`, размещаются на стеке, а в heap попадают только примитивы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Объекты `new ...` идут в heap; на стеке лежат примитивы, ссылки и фреймы (Escape Analysis иногда стек-аллоцирует — но это оптимизация, не правило).",
+                "source_of_confusion": "Escape Analysis действительно может разместить не-escape объект на стеке, что наводит на ложное обобщение.",
+                "if_it_were_true": "Тогда `OutOfMemoryError: Java heap space` не существовал бы, но он возникает именно при заполнении heap объектами.",
+                "how_it_should_be": "Объекты — в heap; примитивы и ссылки — на стеке; стек-аллокация объектов — частный случай JIT."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Metaspace` и чем он отличается от старого `PermGen`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Metaspace` — это просто переименованный `PermGen`, расположенный, как и раньше, внутри heap с фиксированным размером 64-256MB.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Metaspace` (Java 8+) перенесён в native memory ВНЕ heap и по умолчанию не ограничен (растёт до лимита ОС), а `PermGen` был внутри heap.",
+                "source_of_confusion": "Переход выглядит как ребрендинг, поэтому кажется, что поменялось только имя.",
+                "if_it_were_true": "Тогда `-XX:MaxPermSize` всё ещё работал бы, но он удалён и заменён на `-XX:MaxMetaspaceSize`.",
+                "how_it_should_be": "`Metaspace` — в native memory, по умолчанию неограничен; настраивается через `-XX:MaxMetaspaceSize`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Metaspace` хранит объекты приложения, тогда как `PermGen` хранил метаданные классов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Metaspace`, как и `PermGen` до него, хранит метаданные классов (`Class`-структуры, constant pool, аннотации), а не объекты приложения.",
+                "source_of_confusion": "Слово «meta» сбивает: кажется, что это «главная» область под объекты.",
+                "if_it_were_true": "Тогда рост числа объектов раздувал бы metaspace, но его раздувает загрузка классов (Groovy, CGLIB, `Reflections`).",
+                "how_it_should_be": "Объекты — в heap; metaspace — это метаданные загруженных классов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Metaspace` (с Java 8) заменил `PermGen` и хранит метаданные классов: `Class`-структуры, constant pool, аннотации, информацию о методах. Главное отличие: `Metaspace` живёт в native memory вне heap и по умолчанию не ограничен, тогда как `PermGen` был фиксированным сегментом внутри heap.",
+              "correct": true,
+              "sections": {
+                "explanation": "`PermGen` настраивался `-XX:MaxPermSize` и собирался при Full GC; `Metaspace` — `-XX:MaxMetaspaceSize`, собирается при достижении порога `MetaspaceSize`.",
+                "example": "В production всегда ставят жёсткий лимит `-XX:MaxMetaspaceSize=256m`: без него приложение с динамической генерацией классов (Groovy, CGLIB-прокси) растёт неконтролируемо в native memory.",
+                "when_to_apply": "Знание различий нужно при тюнинге приложений с динамической генерацией классов (Spring, Groovy, ORM-прокси) и при диагностике роста native memory.",
+                "edge_cases": "Без лимита classloader leak в metaspace проявляется не как `Java heap space`, а как `OutOfMemoryError: Metaspace` или рост RSS вне heap-метрик.",
+                "related": "[[memory-management-interview#Q1]] область Metaspace; [[memory-management-interview#Q19]] classloader leaks; [[memory-management-interview#Q23]] klass pointer в header."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Metaspace` имеет жёсткий размер по умолчанию (256MB) и никогда не растёт за этот предел без перезапуска JVM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `Metaspace` НЕ ограничен и растёт до лимита ОС; жёсткий потолок появляется только при явном `-XX:MaxMetaspaceSize`.",
+                "source_of_confusion": "Рекомендация ставить 256m в проде создаёт впечатление, что это и есть дефолт.",
+                "if_it_were_true": "Тогда classloader leak был бы невозможен, но именно неограниченный рост metaspace и приводит к утечкам.",
+                "how_it_should_be": "Дефолт — без лимита; 256m нужно задать вручную через `-XX:MaxMetaspaceSize`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Direct Memory` и как ей управлять?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Direct Memory` — это часть heap, выделяемая через `ByteBuffer.allocate()` и полностью управляемая обычным GC.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Direct Memory` живёт ВНЕ heap, выделяется через `ByteBuffer.allocateDirect()` (не `allocate()`) и освобождается через `Cleaner`, а не напрямую GC.",
+                "source_of_confusion": "Методы `allocate` и `allocateDirect` различаются одним словом, поэтому их путают.",
+                "if_it_were_true": "Тогда direct-буферы были бы видны в стандартных heap-метриках, но их видно только через `BufferPoolMXBean`.",
+                "how_it_should_be": "`allocateDirect()` даёт буфер в native memory; `allocate()` — обычный heap-буфер."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Direct Memory` перемещается GC при компактизации heap, что делает её небезопасной для JNI.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: direct-буферы имеют стабильный адрес и НЕ перемещаются GC — именно поэтому они безопасны для JNI и zero-copy I/O.",
+                "source_of_confusion": "Раз память «под управлением Cleaner/GC», кажется, что GC двигает её, как обычные объекты.",
+                "if_it_were_true": "Тогда передавать адрес буфера в native-код было бы нельзя, но это одна из ключевых причин использовать direct memory.",
+                "how_it_should_be": "GC не двигает direct-буферы; стабильный адрес — их преимущество для I/O и JNI."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Превышение лимита direct memory приводит к `OutOfMemoryError: Java heap space`, как и обычная нехватка heap.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Превышение `-XX:MaxDirectMemorySize` даёт отдельную ошибку `OutOfMemoryError: Direct buffer memory`, а не `Java heap space`.",
+                "source_of_confusion": "Обе ошибки — `OutOfMemoryError`, поэтому их сообщение кажется одинаковым.",
+                "if_it_were_true": "Тогда heap dump показал бы причину, но direct-память невидима для MAT и heap-метрик.",
+                "how_it_should_be": "Лимит direct управляется `-XX:MaxDirectMemorySize`; ошибка — `Direct buffer memory`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Direct Memory` — память вне heap, выделяемая через `ByteBuffer.allocateDirect()`. Она не подчиняется GC напрямую и освобождается через `Cleaner` (бывший `sun.misc.Cleaner`). Нужна для I/O без копирования, стабильного адреса (JNI) и эффективных NIO-каналов; лимитируется флагом `-XX:MaxDirectMemorySize`.",
+              "correct": true,
+              "sections": {
+                "explanation": "При записи в сокет/файл JVM не копирует данные из heap в native-буфер (zero-copy); `FileChannel`/`SocketChannel` работают эффективнее с direct-буферами.",
+                "example": "Утечка возникает при потере ссылки без явного `((DirectBuffer) buf).cleaner().clean()`; мониторить через `BufferPoolMXBean` (`getMemoryUsed`).",
+                "when_to_apply": "Direct memory применяют, когда нужен быстрый сетевой/файловый I/O без копирования или стабильный адрес для JNI; иначе берут обычный heap-буфер.",
+                "edge_cases": "Превышение лимита даёт `OutOfMemoryError: Direct buffer memory`, и память не видна в стандартных heap-метриках — нужен отдельный мониторинг.",
+                "related": "[[memory-management-interview#Q1]] области JVM; [[memory-management-interview#Q20]] off-heap; [[memory-management-interview#Q21]] memory-mapped files."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен `Thread Stack` и что влияет на его размер?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Каждый поток имеет свой стек из фреймов вызовов; фрейм содержит локальные переменные, операндный стек и ссылку на constant pool. На размер влияют глубина рекурсии (каждый вызов = новый фрейм ~100-300 байт), число локальных переменных и количество потоков. Управляется флагом `-Xss`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`-Xss512k` уменьшают для приложений с тысячами потоков, `-Xss2m` — для глубокой рекурсии; дефолт ~1m зависит от платформы.",
+                "example": "1000 потоков × `-Xss1m` = 1GB только на стеки — поэтому в high-thread-count сервисах стек урезают, иначе native memory взрывается.",
+                "when_to_apply": "Размер стека настраивают при двух крайностях: тысячи потоков (уменьшать `-Xss`) и глубокая рекурсия/парсеры (увеличивать `-Xss`).",
+                "edge_cases": "В виртуальных потоках (`Project Loom`) стек хранится в heap и растёт динамически — проблема фиксированного `-Xss` снимается.",
+                "related": "[[memory-management-interview#Q2]] heap vs stack; [[memory-management-interview#Q1]] Thread Stacks в общей памяти; [[memory-management-interview#Q7]] locals как GC roots."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все потоки JVM используют один общий стек, размер которого задаётся флагом `-Xmx`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый поток имеет СВОЙ стек, а его размер задаётся `-Xss`, а не `-Xmx` (тот ограничивает heap).",
+                "source_of_confusion": "И heap, и stack — «память для выполнения», поэтому общий heap путают с общим стеком.",
+                "if_it_were_true": "Тогда `StackOverflowError` одного потока валил бы все, но переполнение стека локально для потока.",
+                "how_it_should_be": "Стек приватен на поток и настраивается `-Xss`; `-Xmx` — это про heap."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Размер фрейма зависит только от глубины рекурсии и никак не связан с числом локальных переменных в методе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Размер фрейма растёт и от числа локальных переменных (больше переменных = больше locals + operand stack), а не только от глубины рекурсии.",
+                "source_of_confusion": "Глубина рекурсии — самый наглядный фактор `StackOverflowError`, поэтому остальное игнорируют.",
+                "if_it_were_true": "Тогда метод с сотней локальных переменных занимал бы столько же, сколько пустой, но фрейм был бы заметно толще.",
+                "how_it_should_be": "Глубина рекурсии задаёт число фреймов; размер каждого фрейма зависит и от локальных переменных."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Стек освобождается сборщиком мусора так же, как heap, поэтому глубокая рекурсия создаёт нагрузку на GC.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стек освобождается автоматически (LIFO) при выходе из метода, без участия GC; рекурсия нагружает не GC, а сам стек.",
+                "source_of_confusion": "Раз и стек, и heap про «память», кажется, что оба обслуживает GC.",
+                "if_it_were_true": "Тогда глубокая рекурсия вызывала бы Full GC, но реально она ведёт к `StackOverflowError`.",
+                "how_it_should_be": "Фреймы освобождаются детерминированно по выходу из метода; GC к стеку не прикасается."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как объяснить generational hypothesis и зачем heap делят на поколения?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Generational hypothesis утверждает, что большинство объектов живут долго, поэтому весь heap нужно собирать одним проходом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Слабая гипотеза поколений говорит обратное: большинство объектов «умирают молодыми», поэтому Young собирают часто и дёшево, а Old — редко.",
+                "source_of_confusion": "Слово «hypothesis» абстрактно, и его смысл легко перевернуть.",
+                "if_it_were_true": "Тогда деление на Young/Old не имело бы смысла, но именно ранняя смертность объектов оправдывает Young GC.",
+                "how_it_should_be": "Большинство объектов короткоживущие; Young GC собирает их частыми дешёвыми проходами."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Generational hypothesis` (слабая гипотеза поколений): большинство объектов «умирают молодыми» — создаются и становятся мусором в рамках одного запроса/метода. Поэтому heap делят на Young (Eden + Survivor) и Old: Young GC (Minor) частые и быстрые (единицы мс), Old GC (Major/Mixed) редкие и дорогие, Full GC — аварийный сценарий с самыми длинными паузами.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выжившие Minor GC объекты переходят Eden → Survivor0 → Survivor1, и после `MaxTenuringThreshold` промотируются в Old; слишком большой объект идёт в Old сразу.",
+                "example": "Высокий promotion rate (временные объекты быстро попадают в Old) раздувает паузы — лечится увеличением Young gen или тюнингом `SurvivorRatio`.",
+                "when_to_apply": "Понимание поколений нужно при тюнинге размеров Young/Old и при объяснении, почему растут паузы при высоком promotion rate.",
+                "edge_cases": "Гипотеза «слабая»: она про статистическое большинство, а не про все объекты; долгоживущие кэши нарушают её и оседают в Old.",
+                "related": "[[memory-management-interview#Q7]] GC roots и tracing; [[memory-management-interview#Q8]] выбор GC; [[memory-management-interview#Q30]] promotion rate."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Деление heap на поколения нужно только для экономии адресного пространства, а не для оптимизации сборки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поколения нужны для скорости GC: короткоживущие объекты собираются дешёвым частым Minor GC, а не для экономии адресов.",
+                "source_of_confusion": "Любое «разбиение памяти» ассоциируется с управлением адресным пространством.",
+                "if_it_were_true": "Тогда single-generation сборщик был бы так же эффективен, но он платил бы полным обходом heap на каждой сборке.",
+                "how_it_should_be": "Цель поколений — дешёвый частый сбор молодых объектов, а не экономия адресов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Full GC — это обычная частая операция, которая собирает только Young generation за единицы миллисекунд.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Full GC собирает весь heap + metaspace, это самые длинные паузы и аварийный сценарий; единицы мс и Young — это про Minor GC.",
+                "source_of_confusion": "И Minor, и Full — «сборки мусора», поэтому их частоту и стоимость смешивают.",
+                "if_it_were_true": "Тогда частые Full GC были бы нормой, но в проде это сигнал проблемы (утечка, нехватка heap).",
+                "how_it_should_be": "Young собирает Minor GC (часто, дёшево); Full GC — редкий, дорогой, по всему heap."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое GC roots и как сборщик определяет, какие объекты живы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`GC roots` — это объекты, на которые есть хотя бы одна `WeakReference`; от них начинается обход графа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GC roots` — это сильные корневые ссылки (стек-локали, статические поля, активные потоки, JNI), а слабые ссылки как раз НЕ удерживают объект.",
+                "source_of_confusion": "И roots, и Reference API связаны с достижимостью, поэтому их смешивают.",
+                "if_it_were_true": "Тогда объект жил бы пока на него есть weak ref, но weak ref не препятствует сборке.",
+                "how_it_should_be": "GC roots — сильные корни (стек, static, потоки, JNI); weak/soft — отдельный механизм."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Сборщик определяет живые объекты по счётчику ссылок (reference counting): объект жив, пока счётчик > 0.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HotSpot использует tracing (mark-and-sweep от GC roots), а не reference counting; счётчик ссылок не справляется с циклами.",
+                "source_of_confusion": "Reference counting — известная техника (CPython, Swift), поэтому её приписывают и JVM.",
+                "if_it_were_true": "Тогда циклические ссылки (A→B→A) никогда не собирались бы, но tracing их собирает, если они недостижимы от roots.",
+                "how_it_should_be": "JVM делает tracing от GC roots; циклы мусора собираются, т.к. они недостижимы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`GC roots` — набор «корневых» ссылок, от которых начинается обход графа объектов (tracing). Объект жив, если до него можно добраться от хотя бы одного root. Виды roots: локальные переменные на стеке, активные потоки, статические поля, JNI-ссылки, объекты под `synchronized`, живые classloader-ы. Алгоритм — Mark-and-Sweep (опционально Compact).",
+              "correct": true,
+              "sections": {
+                "explanation": "Mark обходит граф от всех roots и помечает достижимые объекты; Sweep удаляет непомеченные; Compact уплотняет heap против фрагментации.",
+                "example": "При диагностике утечки в MAT смотрят «Paths to GC Roots» (исключая weak/soft): кто из roots держит «протёкший» объект — static `Map`, `ThreadLocal`, classloader.",
+                "when_to_apply": "Модель GC roots применяют при анализе утечек в MAT: ищут, какой именно root (static, ThreadLocal, classloader) удерживает «протёкший» объект.",
+                "edge_cases": "Частая ошибка: считать, что `finalize()` или `System.gc()` «гарантируют» сборку — `System.gc()` лишь hint, JVM вправе проигнорировать.",
+                "related": "[[memory-management-interview#Q6]] generational hypothesis; [[memory-management-interview#Q12]] типы ссылок; [[memory-management-interview#Q16]] paths to GC roots при утечке."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Объект считается живым, если на него есть хотя бы одна ссылка из любого другого объекта в heap, даже недостижимого.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Достижимость считается ТОЛЬКО от GC roots: ссылка из другого мусорного объекта не делает объект живым (тонущий остров).",
+                "source_of_confusion": "Кажется, что любая входящая ссылка спасает объект от сборки.",
+                "if_it_were_true": "Тогда два взаимно ссылающихся мусорных объекта (A↔B) жили бы вечно, но tracing их собирает.",
+                "how_it_should_be": "Жив тот, кто достижим от roots; ссылки внутри недостижимого подграфа не считаются."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выбрать GC под требования latency/throughput?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ZGC` всегда лучший выбор, потому что у него и максимальный throughput, и минимальные паузы одновременно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ZGC` даёт sub-ms паузы, но платит throughput-ом и CPU (load barriers ~5-15%); максимальный throughput — у `Parallel GC`.",
+                "source_of_confusion": "«Паузы < 1мс» звучат как абсолютное превосходство по всем осям.",
+                "if_it_were_true": "Тогда `Parallel GC` был бы не нужен для batch, но throughput-first задачи выигрывают именно от него.",
+                "how_it_should_be": "ZGC оптимизирует latency ценой throughput/CPU; для batch берут Parallel GC."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "GC выбирают по совету из блога или по дефолту, без замеров — настройки универсальны для любого workload.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Выбор делается по замерам p95/p99 и CPU cost под реальной нагрузкой, а не по советам: настройки зависят от workload.",
+                "source_of_confusion": "Готовые наборы флагов из блогов выглядят как universal best practice.",
+                "if_it_were_true": "Тогда одна конфигурация подходила бы всем, но latency-first и throughput-first требуют разных сборщиков.",
+                "how_it_should_be": "Выбирают по профилированию p95/p99 и CPU своего workload, а не по чужим советам."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Serial GC` — лучший выбор для больших heap (8GB+) с жёсткими SLA по latency, благодаря коротким паузам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Serial GC` даёт длинные STW-паузы и подходит для маленьких heap (<256MB), а под жёсткие SLA на больших heap берут `ZGC`/`Shenandoah`.",
+                "source_of_confusion": "«Serial» звучит как «простой и быстрый», поэтому его приписывают latency-критичным сервисам.",
+                "if_it_were_true": "Тогда микросервис с 16GB heap и SLA p99<1мс жил бы на Serial, но он давал бы многосекундные паузы.",
+                "how_it_should_be": "Serial — для маленьких heap с минимальным overhead; жёсткий latency-SLA → ZGC/Shenandoah."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Выбор зависит от приоритета latency vs throughput и размера heap: `Parallel GC` — максимальный throughput для batch; `G1` — баланс и дефолт с Java 9 (настраиваемый `MaxGCPauseMillis`); `ZGC`/`Shenandoah` — паузы <1-10мс под строгие SLA ценой CPU; `Serial` — маленький heap; `Epsilon` — без GC для бенчмарков.",
+              "correct": true,
+              "sections": {
+                "explanation": "`java -XX:+UseG1GC -XX:MaxGCPauseMillis=50` против `java -XX:+UseZGC` — выбор не «по совету», а по замерам p95/p99 и CPU под нагрузкой.",
+                "example": "Рекомендация: начинать с `G1`, переходить на `ZGC` только если p99 не укладывается в SLA; для коротких процессов — `Epsilon`.",
+                "when_to_apply": "Выбор GC делают на старте проекта и при нарушении SLA: сначала замеряют p95/p99 на текущем сборщике, затем меняют только при доказанной необходимости.",
+                "edge_cases": "`ZGC` стоит ~5-15% CPU на load barriers и больше памяти (colored pointers, multi-mapping) — это плата за sub-ms паузы.",
+                "related": "[[memory-management-interview#Q6]] поколения и паузы; [[memory-management-interview#Q9]] G1 mixed collections; [[memory-management-interview#Q10]] ZGC внутри."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `G1 GC` и что такое mixed collections?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`G1` (Garbage First) делит heap на одинаковые регионы (1-32MB) и работает инкрементально. Фазы: Young-only (только Eden + Survivor), Concurrent Marking (параллельно с приложением оценивает occupancy Old-регионов), Mixed Collection (собирает Young + часть Old-регионов с наибольшим мусором — отсюда «Garbage First»), и аварийный Full GC, если mixed не успевает.",
+              "correct": true,
+              "sections": {
+                "explanation": "Mixed collection берёт именно те Old-регионы, где больше всего мусора, давая максимум освобождённой памяти за ограниченную паузу `MaxGCPauseMillis`.",
+                "example": "`-XX:MaxGCPauseMillis=200` (target), `-XX:G1HeapRegionSize=16m`, `-XX:InitiatingHeapOccupancyPercent=45` (когда стартует concurrent marking) — основные рычаги G1.",
+                "when_to_apply": "G1 выбирают как сбалансированный дефолт для heap 4GB+; его настройки (`MaxGCPauseMillis`, region size) трогают при проблемах с паузами или humongous-фрагментацией.",
+                "edge_cases": "`Humongous objects` (> 50% размера региона) аллоцируются в спец-регионах и могут вызывать фрагментацию и преждевременные сборки.",
+                "related": "[[memory-management-interview#Q8]] выбор GC; [[memory-management-interview#Q10]] ZGC для меньших пауз; [[memory-management-interview#Q31]] String Dedup в G1."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`G1` собирает весь heap одним непрерывным STW-проходом, без деления на регионы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`G1` делит heap на регионы и работает инкрементально: собирает Young + наиболее «мусорные» Old-регионы, а не весь heap сразу.",
+                "source_of_confusion": "Имя «Garbage Collector» наводит на мысль о монолитной сборке всего heap.",
+                "if_it_were_true": "Тогда настройка `MaxGCPauseMillis` была бы бессмысленна, но G1 как раз дробит работу под этот target.",
+                "how_it_should_be": "G1 — региональный инкрементальный сборщик; mixed берёт часть Old-регионов, а не весь heap."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Mixed collection в `G1` собирает только Old generation, полностью игнорируя Young-регионы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mixed собирает Young + часть Old-регионов одновременно; чисто Old без Young G1 не делает (кроме Full GC).",
+                "source_of_confusion": "Слово «mixed» иногда читают как «только старое поколение».",
+                "if_it_were_true": "Тогда Young-мусор копился бы во время mixed, но G1 всегда включает Young в mixed-паузу.",
+                "how_it_should_be": "Mixed = Young + наиболее мусорные Old-регионы вместе."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Humongous objects` в `G1` — это объекты меньше 1KB, которые аллоцируются прямо в Eden без особенностей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Humongous objects` — наоборот, объекты > 50% размера региона; они идут в специальные humongous-регионы и провоцируют фрагментацию.",
+                "source_of_confusion": "Термин звучит экзотично, и его легко связать с любой нестандартной аллокацией.",
+                "if_it_were_true": "Тогда крупные массивы не вызывали бы проблем фрагментации, но именно они и есть humongous.",
+                "how_it_should_be": "Humongous — крупные объекты (> 50% региона) в отдельных регионах, источник фрагментации."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `ZGC` и почему он обеспечивает паузы менее 1 мс?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ZGC` достигает sub-ms пауз тем, что вообще не перемещает объекты и не делает compaction.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ZGC` — compacting сборщик: он перемещает объекты (concurrent relocation), но делает это параллельно приложению, а не в STW.",
+                "source_of_confusion": "Кажется, что короткие паузы возможны только без дорогой компактизации.",
+                "if_it_were_true": "Тогда heap фрагментировался бы со временем, но ZGC именно уплотняет его concurrent-но.",
+                "how_it_should_be": "ZGC перемещает объекты конкурентно; короткие паузы — за счёт concurrency, а не отказа от compaction."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`ZGC` — concurrent, region-based, compacting сборщик с sub-millisecond паузами независимо от размера heap (8MB-16TB). Ключевые технологии: colored pointers (метаданные состояния в самом указателе, 4 бита из 64-битного адреса), load barriers (при каждом чтении ссылки проверяется, не перемещён ли объект) и concurrent relocation (перемещение параллельно приложению).",
+              "correct": true,
+              "sections": {
+                "explanation": "Почти все фазы concurrent; в STW остаются только короткие Pause Mark Start и Pause Mark End (< 1мс каждая), остальное — mark, relocate, remap — идёт параллельно.",
+                "example": "`java -XX:+UseZGC -Xmx16g`; с Java 21 лучше `-XX:+UseZGC -XX:+ZGenerational` — generational ZGC эффективнее по CPU.",
+                "when_to_apply": "ZGC включают, когда p99 на `G1` не укладывается в строгий latency-SLA и есть запас CPU/памяти под его overhead.",
+                "edge_cases": "Плата: load barriers стоят ~5-15% CPU, а colored pointers требуют multi-mapping, увеличивая потребление памяти.",
+                "related": "[[memory-management-interview#Q8]] выбор GC под SLA; [[memory-management-interview#Q9]] G1 для баланса; [[memory-management-interview#Q11]] safepoint и TTSP."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ZGC` гарантирует паузы < 1мс только для heap до 4GB; на больших heap паузы растут линейно с размером.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Паузы `ZGC` остаются sub-ms независимо от размера heap (от 8MB до 16TB) — в этом его главное свойство.",
+                "source_of_confusion": "Интуиция «больше heap → длиннее пауза» верна для STW-сборщиков и переносится на ZGC ошибочно.",
+                "if_it_were_true": "Тогда ZGC не имел бы смысла на 16TB, но именно для огромных heap он и создан.",
+                "how_it_should_be": "Паузы ZGC не зависят от размера heap; они sub-ms и на 16TB."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Colored pointers в `ZGC` — это раскраска объектов в heap dump для удобства анализа в MAT.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Colored pointers — это биты состояния, закодированные в самом указателе (адресе) объекта во время работы, а не визуализация в дампе.",
+                "source_of_confusion": "Слово «colored» звучит как про инструменты визуализации.",
+                "if_it_were_true": "Тогда они влияли бы только на анализ, но они работают в рантайме вместе с load barriers для concurrent relocation.",
+                "how_it_should_be": "Colored pointers кодируют состояние объекта в битах адреса; это рантайм-механизм ZGC."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `safepoint` и почему он важен для latency?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Safepoint` — это точка, в которой JVM сохраняет heap dump на диск для последующего анализа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Safepoint` — момент, когда JVM может безопасно остановить все потоки для служебных операций (GC, deopt, class redefinition), а не точка снятия дампа.",
+                "source_of_confusion": "И safepoint, и heap dump связаны с «остановкой ради служебной работы», поэтому их путают.",
+                "if_it_were_true": "Тогда safepoint случался бы только при дампах, но он нужен на каждом GC и деоптимизации.",
+                "how_it_should_be": "Safepoint — безопасная остановка всех потоков для служебных операций JVM."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Counted loop с `int`-счётчиком всегда содержит safepoint poll на каждой итерации, поэтому не задерживает приход к safepoint.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: в counted loop JIT НЕ вставляет safepoint poll, и длинный такой цикл задерживает приход потока к safepoint (растит TTSP).",
+                "source_of_confusion": "Кажется логичным, что цикл должен проверять safepoint каждую итерацию.",
+                "if_it_were_true": "Тогда длинные счётные циклы не вызывали бы задержек GC, но именно они — классическая причина высокого TTSP.",
+                "how_it_should_be": "Counted loop без poll задерживает safepoint; это надо учитывать при больших итерациях."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Safepoint` — момент, когда JVM может безопасно остановить все потоки для служебных операций: GC, deoptimization, class redefinition, biased lock revocation. Важен для latency из-за TTSP (Time To Safepoint): GC начнётся только когда ВСЕ потоки придут к safepoint, и медленный поток задерживает всех.",
+              "correct": true,
+              "sections": {
+                "explanation": "Counted loop с `int`-счётчиком без safepoint poll, длинные JNI-вызовы и чтение большого массива в одном цикле задерживают приход потока к safepoint.",
+                "example": "`-Xlog:safepoint=debug` (JDK 11+) и `-XX:+PrintSafepointStatistics` показывают, сколько ушло на ожидание потоков vs сам GC.",
+                "when_to_apply": "Анализ safepoint нужен, когда latency-провалы не объясняются длительностью GC: тогда смотрят TTSP и ищут counted loops без poll.",
+                "edge_cases": "Иногда 90% задержки — это ожидание прихода потоков к safepoint, а не сама работа GC; смотреть надо total safepoint time, а не только GC pause.",
+                "related": "[[memory-management-interview#Q10]] паузы ZGC; [[memory-management-interview#Q34]] чтение GC-логов; [[memory-management-interview#Q35]] метрики пауз на дашборде."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "На safepoint останавливается только один поток — тот, который инициировал GC, остальные продолжают работу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На safepoint останавливаются ВСЕ потоки приложения (STW), иначе сборщик не сможет безопасно двигать объекты и сканировать стеки.",
+                "source_of_confusion": "Concurrent-сборщики создают впечатление, что останавливается только GC-поток.",
+                "if_it_were_true": "Тогда TTSP не имел бы смысла (ждать одного потока тривиально), но TTSP — это ожидание ВСЕХ потоков.",
+                "how_it_should_be": "Safepoint — это global STW: к нему приходят все потоки приложения."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типы ссылок существуют в Java и чем они отличаются?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`SoftReference` собирается GC при любом сборе мусора, а `WeakReference` — только перед `OutOfMemoryError`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `WeakReference` очищается при любом GC, а `SoftReference` держится до нехватки памяти (перед `OOME`).",
+                "source_of_confusion": "Названия weak/soft интуитивно не подсказывают, кто «слабее», поэтому их легко перепутать.",
+                "if_it_were_true": "Тогда weak-кэш переживал бы GC, а soft-кэш чистился бы постоянно — но поведение зеркальное.",
+                "how_it_should_be": "Weak очищается при любом GC; soft — только при нехватке памяти."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`PhantomReference.get()` возвращает сам объект, что позволяет «оживить» (resurrect) его перед сборкой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PhantomReference.get()` ВСЕГДА возвращает `null`; resurrection невозможен — её цель лишь уведомление через `ReferenceQueue`.",
+                "source_of_confusion": "Раз это «ссылка», кажется, что через неё можно достать объект, как у других типов.",
+                "if_it_were_true": "Тогда phantom использовали бы для доступа к объекту, но он нужен исключительно для cleanup-уведомлений.",
+                "how_it_should_be": "Phantom.get() всегда null; объект через неё недоступен, никакого resurrection."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В Java всего два типа ссылок: `Strong` и `Weak`; `Soft` и `Phantom` — это синонимы для `Weak`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Типов четыре: `Strong`, `SoftReference`, `WeakReference`, `PhantomReference` — каждый со своей политикой сборки, это не синонимы.",
+                "source_of_confusion": "Soft и weak звучат похоже, поэтому их объединяют в одну категорию.",
+                "if_it_were_true": "Тогда `SoftReference` и `WeakReference` вели бы себя одинаково, но soft переживает обычный GC, а weak — нет.",
+                "how_it_should_be": "Четыре типа: strong / soft / weak / phantom, у каждого своя сила удержания."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Java предоставляет четыре типа ссылок (`java.lang.ref`) с убывающей силой удержания: `Strong` (никогда не собирается, пока есть ссылка), `SoftReference` (собирается при нехватке памяти, перед `OOME` — memory-sensitive кэши), `WeakReference` (собирается при любом GC — канонические маппинги, listeners), `PhantomReference` (после финализации, `get()` всегда `null` — cleanup ресурсов, `Cleaner`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`SoftReference<byte[]> cache` переживёт обычный GC, но очистится перед OOME; `WeakReference<>` исчезнет на ближайшем GC, если нет strong ref.",
+                "example": "Soft — для кэшей, которые не жалко потерять при нехватке памяти; weak — для маппингов без удержания ключа; phantom — для детерминированной очистки native-ресурсов.",
+                "when_to_apply": "Выбор типа ссылки делают по задаче: soft — для кэша, weak — для маппинга без удержания ключа, phantom/`Cleaner` — для очистки native-ресурсов.",
+                "edge_cases": "`PhantomReference` всегда создаётся с `ReferenceQueue`, и `phantom.get()` возвращает `null` всегда — даже до сборки объекта.",
+                "related": "[[memory-management-interview#Q13]] WeakReference и WeakHashMap; [[memory-management-interview#Q14]] SoftReference; [[memory-management-interview#Q15]] PhantomReference и Cleaner."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать `WeakReference` и `WeakHashMap` для кэширования?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`WeakReference` ссылается на объект, не препятствуя его сборке GC; `WeakHashMap` использует weak-ссылки для КЛЮЧЕЙ. Пока на ключ есть strong reference — запись живёт; как только ключ становится недостижимым и проходит GC — запись удаляется автоматически. Подходит для канонических маппингов и кэшей, привязанных к жизни ключа.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Map<Key,Value> cache = new WeakHashMap<>()`; после `key = null; System.gc()` запись может исчезнуть, т.к. на ключ больше нет strong ref.",
+                "example": "Канонический маппинг: `Map<String, WeakReference<Metadata>>` — метаданные кэшируются, но не удерживаются принудительно и собираются при нехватке.",
+                "when_to_apply": "`WeakHashMap`/`WeakReference` применяют для канонических маппингов и кэшей, привязанных к жизни ключа, где принудительное удержание не нужно.",
+                "edge_cases": "`WeakHashMap` держит слабо КЛЮЧИ, а не значения: если значение ссылается на ключ — это утечка; плюс он не thread-safe, нужен `synchronizedMap`/`Caffeine`.",
+                "related": "[[memory-management-interview#Q12]] типы ссылок; [[memory-management-interview#Q14]] SoftReference для memory-sensitive кэша; [[memory-management-interview#Q17]] listener leak и weak refs."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`WeakHashMap` слабо держит ЗНАЧЕНИЯ, поэтому при GC из мапы исчезают значения, а ключи остаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WeakHashMap` слабо держит КЛЮЧИ: при сборке ключа удаляется вся запись (ключ+значение), а не одно значение.",
+                "source_of_confusion": "Кэш ассоциируется с «значениями, которые можно потерять», поэтому weak приписывают значениям.",
+                "if_it_were_true": "Тогда мапа копила бы пустые ключи без значений, но реально удаляется целая запись по слабому ключу.",
+                "how_it_should_be": "Слабые — ключи; при их сборке исчезает вся пара ключ-значение."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Строковый литерал `\"abc\"` как ключ `WeakHashMap` будет собран при первом же GC, освободив запись.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Литералы никогда не собираются — на них всегда есть strong ref из string pool (intern table), поэтому запись с таким ключом не исчезнет.",
+                "source_of_confusion": "Кажется, что weak-ключ слабый «всегда», независимо от других ссылок на него.",
+                "if_it_were_true": "Тогда кэш с литералами-ключами самоочищался бы, но эти записи живут вечно из-за string pool.",
+                "how_it_should_be": "Литерал-ключ держится strong-ссылкой из пула строк и не собирается."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`WeakHashMap` потокобезопасен по умолчанию, поэтому его можно использовать в конкурентном кэше без обёрток.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WeakHashMap` НЕ thread-safe; для конкурентного доступа нужен `Collections.synchronizedMap()` или `Caffeine.weakKeys()`.",
+                "source_of_confusion": "Многие коллекции в `java.util.concurrent` потокобезопасны, и это свойство ошибочно переносят.",
+                "if_it_were_true": "Тогда параллельные `put` были бы безопасны, но они могут привести к гонкам и порче структуры.",
+                "how_it_should_be": "WeakHashMap не потокобезопасен; оборачивать или брать Caffeine с weakKeys()."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `SoftReference` и когда GC её очищает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`SoftReference` очищается при каждом GC так же, как `WeakReference`, поэтому soft-кэш живёт ровно до следующей сборки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SoftReference` держится до нехватки памяти и очищается LRU-порядком перед `OOME`, а не на каждом GC, как weak.",
+                "source_of_confusion": "Soft и weak звучат похоже, и их политику сборки смешивают.",
+                "if_it_were_true": "Тогда soft-кэш не имел бы смысла (исчезал бы сразу), но он специально переживает обычные GC.",
+                "how_it_should_be": "Soft очищается при нехватке памяти (LRU), а не на каждом GC."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`SoftReference` гарантирует, что объект не будет собран, пока JVM не решит, что памяти мало — поэтому она идеальна для memory-sensitive кэшей. JVM очищает soft-ссылки в LRU-порядке (давно не читанные — первыми), а все оставшиеся soft-ссылки обязательно очищаются перед бросанием `OutOfMemoryError`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`-XX:SoftRefLRUPolicyMSPerMB=1000` (default): soft-ссылка живёт ~1 секунду на каждый MB свободной памяти — больше свободной памяти, дольше живут.",
+                "example": "Применяют для кэша, который не жалко сбросить под давлением памяти; на чтении проверяют `ref.get()`, и при `null` удаляют протухшую запись.",
+                "when_to_apply": "`SoftReference` берут для memory-sensitive кэшей, которые не жалко сбросить под давлением памяти; для контролируемого кэша — `Caffeine`.",
+                "edge_cases": "На практике `Caffeine`/`Guava Cache` лучше: soft-кэш не контролирует размер (растёт до OOM-границы), не имеет TTL/max-size и раздувает GC-паузы обработкой Reference-объектов.",
+                "related": "[[memory-management-interview#Q12]] сила ссылок; [[memory-management-interview#Q13]] WeakReference; [[memory-management-interview#Q31]] String Deduplication для повторяющихся строк."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`SoftReference` никогда не очищается автоматически — её нужно освобождать вручную методом `clear()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GC сам очищает soft-ссылки при нехватке памяти; ручной `clear()` не требуется (хотя доступен) — это автоматический механизм.",
+                "source_of_confusion": "Direct-буферы требуют ручной очистки через `Cleaner`, и это переносят на soft refs.",
+                "if_it_were_true": "Тогда soft-кэш всегда тёк бы до OOME без ручного clear, но GC гарантированно чистит soft перед OOME.",
+                "how_it_should_be": "GC очищает soft автоматически под давлением памяти; ручной clear не обязателен."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`SoftReference`-кэш автоматически ограничивает свой размер и имеет встроенный TTL, как `Caffeine`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Soft-кэш НЕ контролирует размер (растёт до OOM-границы) и не имеет TTL/eviction — именно поэтому советуют `Caffeine`/`Guava`.",
+                "source_of_confusion": "Раз soft чистится «при нехватке», кажется, что это и есть управление размером.",
+                "if_it_were_true": "Тогда `Caffeine` не давал бы преимуществ, но он добавляет ровно то, чего у soft-кэша нет: max-size и TTL.",
+                "how_it_should_be": "Soft-кэш без size/TTL; для контролируемого кэша берут Caffeine."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужен `PhantomReference` и как он связан с `Cleaner`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`PhantomReference.get()` возвращает объект, что позволяет выполнить финальную логику прямо над ним перед сборкой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PhantomReference.get()` ВСЕГДА `null`; финальную логику привязывают к `ReferenceQueue`/`Cleaner`, а не к доступу через `get()`.",
+                "source_of_confusion": "Все остальные ссылки дают доступ через `get()`, и это свойство приписывают phantom.",
+                "if_it_were_true": "Тогда можно было бы «оживить» объект в phantom-фазе, но resurrection невозможен.",
+                "how_it_should_be": "phantom.get() == null всегда; cleanup делается по уведомлению из очереди."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`finalize()` предпочтительнее `PhantomReference`, потому что он надёжнее и гарантирует порядок очистки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`finalize()` deprecated (Java 9) и removed (Java 18) — ненадёжен и непредсказуем; phantom + queue даёт явный контроль момента очистки.",
+                "source_of_confusion": "Исторически `finalize()` был штатным механизмом очистки, и его по привычке считают «правильным».",
+                "if_it_were_true": "Тогда не появился бы `Cleaner` API, но его ввели именно как замену ненадёжному `finalize()`.",
+                "how_it_should_be": "finalize() устарел и удалён; явная очистка — через PhantomReference/Cleaner."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`PhantomReference` — самая слабая ссылка: `get()` всегда `null`, единственная цель — получить уведомление (через `ReferenceQueue`), что объект финализирован и готов к сборке. `Cleaner` (Java 9+) — удобная обёртка поверх phantom: `CLEANER.register(this, cleanAction)` регистрирует действие очистки native-ресурсов, выполняемое, когда объект становится недостижим.",
+              "correct": true,
+              "sections": {
+                "explanation": "CleanAction обязан быть статическим классом и НЕ ссылаться на `this`, иначе объект никогда не станет недостижимым и очистка не сработает.",
+                "example": "Применяют для детерминированной очистки native-памяти/дескрипторов: `close()` вызывает `cleanable.clean()` явно, а Cleaner подстрахует, если `close()` забыли.",
+                "when_to_apply": "`PhantomReference`/`Cleaner` применяют для детерминированной очистки native-ресурсов (дескрипторы, off-heap) вместо устаревшего `finalize()`.",
+                "edge_cases": "В отличие от `finalize()`, нет проблемы resurrection (объект нельзя «оживить» в phantom-фазе) и нет непредсказуемых задержек финализатора.",
+                "related": "[[memory-management-interview#Q12]] сила ссылок; [[memory-management-interview#Q4]] Direct Memory и Cleaner; [[memory-management-interview#Q22]] Arena вместо ручного free."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Cleaner` напрямую вызывает `finalize()` объекта в отдельном потоке, поэтому он зависит от наличия финализатора.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Cleaner` построен на `PhantomReference` + `ReferenceQueue` и не использует `finalize()` вовсе — это и есть его замена.",
+                "source_of_confusion": "Раз оба «про очистку при сборке», кажется, что Cleaner — это надстройка над finalize().",
+                "if_it_were_true": "Тогда удаление `finalize()` в Java 18 сломало бы `Cleaner`, но Cleaner продолжает работать.",
+                "how_it_should_be": "Cleaner работает через phantom-ссылки, без finalize()."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выявлять memory leak системно?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Пилообразный паттерн heap (рост и резкое падение после GC) — это и есть memory leak, его надо устранять.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пилообразный паттерн — НОРМА (аллокация → сбор); утечка — это когда baseline после Full GC растёт линейно и не падает.",
+                "source_of_confusion": "Любой рост heap на графике пугает и трактуется как утечка.",
+                "if_it_were_true": "Тогда любое здоровое приложение считалось бы текущим, но пила — признак нормальной работы GC.",
+                "how_it_should_be": "Утечка = растущий baseline после Full GC; пила сама по себе здорова."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Достаточно одного heap dump в момент OOM, чтобы точно определить, что именно растёт со временем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Чтобы увидеть рост, нужны НЕСКОЛЬКО дампов с интервалом и сравнение dominator tree: один дамп не покажет динамику.",
+                "source_of_confusion": "Один дамп в MAT выглядит самодостаточным, ведь там видны крупные объекты.",
+                "if_it_were_true": "Тогда не нужно было бы снимать `heap1.hprof` и `heap2.hprof` через интервал, но именно их сравнение находит растущий объект.",
+                "how_it_should_be": "Берут несколько дампов с интервалом и сравнивают, что выросло."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`System.gc()` гарантированно соберёт всю недостижимую память, поэтому если после него heap не упал — это точно утечка нативной памяти.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`System.gc()` — лишь hint, JVM может проигнорировать; вывод об утечке делают по baseline после реальных Full GC, а не после ручного вызова.",
+                "source_of_confusion": "Кажется, что явный вызов GC даёт детерминированный замер «чистого» heap.",
+                "if_it_were_true": "Тогда `System.gc()` был бы надёжным инструментом диагностики, но он ничего не гарантирует.",
+                "how_it_should_be": "System.gc() — подсказка; baseline смотрят по фактическим Full GC."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Системный процесс: зафиксировать симптом (baseline heap после Full GC растёт линейно — это leak; пила — норма) → снять несколько heap dump с интервалом (`jcmd <pid> GC.heap_dump`) → сравнить dominator tree (что выросло между дампами) → Paths to GC Roots (exclude weak/soft, кто держит ссылку) → найти причину (unbounded кэш, `ThreadLocal` без `remove`, подписка без отписки) → fix + regression test.",
+              "correct": true,
+              "sections": {
+                "explanation": "`jcmd <pid> GC.heap_dump /tmp/heap1.hprof`, затем через 10 минут `heap2.hprof`, и сравнить в Eclipse MAT, какие объекты выросли.",
+                "example": "В production обязателен `-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=...`, чтобы автоматически получить дамп в момент OOM.",
+                "when_to_apply": "Этот процесс запускают, когда baseline heap после Full GC растёт линейно — то есть при подтверждённом подозрении на утечку, а не на каждый пик.",
+                "edge_cases": "Дамп пишут в отдельную filesystem (не `/tmp`), иначе дамп на десятки ГБ забьёт диск и усугубит инцидент.",
+                "related": "[[memory-management-interview#Q17]] частые причины утечек; [[memory-management-interview#Q18]] анализ дампа в MAT; [[memory-management-interview#Q7]] paths to GC roots."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие самые частые причины утечек памяти в Java?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Самые частые причины: unbounded кэш (`Map` растёт без eviction), `ThreadLocal` без `remove()` (в thread pool поток живёт «вечно» и держит значение), listener/callback без отписки, classloader leak (старый classloader не GC-ится), незакрытые ресурсы (`InputStream`, `Connection`), злоупотребление `String.intern()` и нестатический inner class, удерживающий outer.",
+              "correct": true,
+              "sections": {
+                "explanation": "`ThreadLocal` leak: `SESSION.set(...)` без `finally { SESSION.remove(); }` — в пуле потоков значение остаётся привязанным к живущему потоку навсегда.",
+                "example": "Обнаружение: dominator tree показывает огромный `HashMap` (unbounded кэш) или `ThreadLocalMap$Entry` с большим retained size; лечение — `Caffeine` с `maximumSize`+TTL и `try/finally remove()`.",
+                "when_to_apply": "Этот чек-лист причин проходят при анализе heap dump: сопоставляют крупный объект в dominator tree с типовым паттерном утечки.",
+                "edge_cases": "Inner-class leak коварен: нестатический внутренний класс неявно держит ссылку на outer — фикс делает класс `static`; незакрытые ресурсы лечат `try-with-resources`.",
+                "related": "[[memory-management-interview#Q16]] системный поиск утечки; [[memory-management-interview#Q18]] MAT и retained size; [[memory-management-interview#Q19]] classloader leak в Metaspace."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`ThreadLocal` сам по себе не может вызвать утечку, потому что значения очищаются автоматически при завершении запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ThreadLocal` НЕ очищается сам: в thread pool поток переживает запрос, и значение держится, пока не вызовут `remove()` явно.",
+                "source_of_confusion": "Кажется, что `ThreadLocal` «привязан к запросу» и живёт ровно столько же.",
+                "if_it_were_true": "Тогда `try/finally { threadLocal.remove(); }` был бы не нужен, но именно его отсутствие — классическая утечка.",
+                "how_it_should_be": "ThreadLocal в пуле течёт без явного remove() в finally."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Незакрытый `InputStream` или `Connection` не вызывает утечку памяти, потому что GC соберёт его, как любой объект.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Незакрытые ресурсы держат native-дескрипторы и буферы, которые GC не освобождает корректно — это утечка памяти и дескрипторов.",
+                "source_of_confusion": "Раз объект-обёртка собирается GC, кажется, что и ресурс освобождается автоматически.",
+                "if_it_were_true": "Тогда `try-with-resources` был бы не нужен, но его придумали именно для детерминированного закрытия.",
+                "how_it_should_be": "Незакрытые ресурсы текут; закрывать через try-with-resources."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Нестатический inner class безопасен и никогда не удерживает ссылку на внешний объект.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нестатический inner class НЕЯВНО держит ссылку на outer-экземпляр, что продлевает жизнь внешнего объекта — частая утечка.",
+                "source_of_confusion": "Синтаксически inner class выглядит независимым, и скрытую ссылку на outer не замечают.",
+                "if_it_were_true": "Тогда MAT не показывал бы unexpected retaining path через outer, но именно он там и виден.",
+                "how_it_should_be": "Inner class держит outer; фикс — сделать класс static."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как анализировать heap dump с помощью Eclipse MAT?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Shallow Size` объекта включает размер всех объектов, на которые он ссылается, поэтому равен `Retained Size`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Shallow Size` — размер только самого объекта; `Retained Size` — объект плюс всё, что держит ТОЛЬКО он. Это разные величины.",
+                "source_of_confusion": "Оба «про размер объекта», поэтому термины путают.",
+                "if_it_were_true": "Тогда не было бы смысла в двух колонках MAT, но retained как раз показывает, сколько освободится при удалении объекта.",
+                "how_it_should_be": "Shallow — сам объект; retained — он + эксклюзивно удерживаемое поддерево."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Eclipse MAT` — основной инструмент анализа heap dump. Ключевые представления: Leak Suspects Report (автоанализ объектов с большим retained size), Dominator Tree (объекты по retained heap; dominator X — ближайший объект на пути от root, удаление которого освободит X), Histogram (количество и shallow/retained по классам) и Paths to GC Roots (цепочка ссылок до root).",
+              "correct": true,
+              "sections": {
+                "explanation": "OQL-запросы помогают точечно: `SELECT * FROM java.util.HashMap WHERE size > 10000` находит раздутые мапы, кандидаты на unbounded-кэш.",
+                "example": "Для поиска `ThreadLocal` leak: `SELECT tl.value FROM java.lang.ThreadLocal$ThreadLocalMap$Entry tl WHERE tl.value != null` показывает забытые значения.",
+                "when_to_apply": "MAT применяют post-mortem: после OOM-дампа или при сравнении нескольких дампов для поиска растущего объекта.",
+                "edge_cases": "В production дамп снимают в отдельную filesystem (не `/tmp`), чтобы файл на десятки ГБ не забил диск во время инцидента.",
+                "related": "[[memory-management-interview#Q16]] когда снимать дамп; [[memory-management-interview#Q17]] что искать (кэши, ThreadLocal); [[memory-management-interview#Q24]] shallow vs retained size."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Dominator Tree сортирует объекты по shallow size, показывая самые «толстые» сами по себе объекты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Dominator Tree сортирует по RETAINED size — сколько памяти освободится при удалении объекта, а не по его собственному размеру.",
+                "source_of_confusion": "Histogram действительно про shallow, и это свойство переносят на dominator tree.",
+                "if_it_were_true": "Тогда крупный объект, ничего не удерживающий, был бы вверху, но dominator tree выводит держателей больших поддеревьев.",
+                "how_it_should_be": "Dominator Tree — по retained size; держатели крупных поддеревьев наверху."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "MAT может анализировать только живые JVM по JMX, но не умеет открывать сохранённые `.hprof` файлы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MAT работает именно с сохранёнными `.hprof` дампами (post-mortem), с нулевым overhead на анализ — это его основной режим.",
+                "source_of_confusion": "Профайлеры вроде VisualVM цепляются к живой JVM, и это ошибочно приписывают MAT.",
+                "if_it_were_true": "Тогда нельзя было бы анализировать дамп упавшего по OOM процесса, но это главный сценарий MAT.",
+                "how_it_should_be": "MAT открывает .hprof дампы offline; live-attach — не его роль."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как управлять `Metaspace` и предотвращать classloader leaks?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Classloader leak безопасен, потому что один протёкший classloader удерживает только сам себя, без классов и их данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Протёкший classloader удерживает ВСЕ свои классы, их статические поля и транзитивно — все объекты, на которые те ссылаются (могут быть сотни МБ).",
+                "source_of_confusion": "Classloader кажется «лёгким» служебным объектом без большого следа.",
+                "if_it_were_true": "Тогда classloader leak не раздувал бы memory, но именно он держит весь граф классов и их static-данных.",
+                "how_it_should_be": "Утёкший classloader тянет за собой классы + static-поля + их данные."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Metaspace` не растёт от загрузки классов, поэтому hot-reload и scripting-движки на него не влияют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Metaspace` растёт именно с загрузкой классов; hot-reload (DevTools, JRebel) и scripting (Groovy, Nashorn) — главные источники роста и classloader leak.",
+                "source_of_confusion": "Кажется, что метаданные классов фиксированы и не зависят от рантайма.",
+                "if_it_were_true": "Тогда `-Xlog:class+load` был бы бесполезен, но он нужен ровно чтобы поймать неконтролируемую загрузку.",
+                "how_it_should_be": "Каждая загрузка класса растит Metaspace; scripting/hot-reload особенно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Metaspace` растёт с загрузкой классов. Classloader leak — одна из коварнейших утечек: один «протёкший» classloader удерживает все свои классы, их статические поля и транзитивно все объекты, на которые они ссылаются. Типичные сценарии: hot-reload (Spring DevTools, JRebel), redeploy web-приложений в servlet container, scripting-движки (Groovy, Nashorn).",
+              "correct": true,
+              "sections": {
+                "explanation": "Защита: жёсткий лимит `-XX:MaxMetaspaceSize=256m`, начальный порог `-XX:MetaspaceSize=128m`, плюс `-Xlog:class+load=info` и `-Xlog:class+unload=info` для аудита.",
+                "example": "При redeploy утечку часто держат ссылки из `ThreadLocal`, JDBC-драйверов или logging — их надо явно подчищать при остановке контекста.",
+                "when_to_apply": "Управление Metaspace важно при hot-reload (DevTools, JRebel), redeploy в servlet container и scripting-движках — там classloader leak наиболее вероятен.",
+                "edge_cases": "Диагностика: `ManagementFactory.getClassLoadingMXBean().getLoadedClassCount()` растёт без выгрузки, в MAT видны дублирующиеся версии одного класса от разных classloader-ов.",
+                "related": "[[memory-management-interview#Q3]] Metaspace vs PermGen; [[memory-management-interview#Q17]] частые причины утечек; [[memory-management-interview#Q18]] поиск дублей классов в MAT."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чтобы предотвратить classloader leak, достаточно периодически вызывать `System.gc()` для выгрузки старых classloader-ов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`System.gc()` не гарантирует выгрузку; classloader не собирается, пока на него есть хоть одна ссылка (ThreadLocal, драйвер, listener) — нужно убрать ссылку, а не звать GC.",
+                "source_of_confusion": "Кажется, что выгрузка классов — это просто ещё одна задача для GC по запросу.",
+                "if_it_were_true": "Тогда любой leak лечился бы вызовом GC, но root cause — удерживающая ссылка, а не лень сборщика.",
+                "how_it_should_be": "Лечат удалением удерживающих ссылок, а не вызовом System.gc()."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда полезен off-heap и в чём риски?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Off-heap память управляется GC так же, как heap, поэтому утечки в ней невозможны и стандартные heap-метрики её показывают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Off-heap НЕ под GC: без явного `free`/`clean` память течёт, и стандартные heap-метрики её не показывают — нужен NMT/`BufferPoolMXBean`.",
+                "source_of_confusion": "Раз память выделяет JVM-код, кажется, что и управляет ей GC.",
+                "if_it_were_true": "Тогда MAT видел бы off-heap данные, но он их не видит — отладка off-heap сложнее.",
+                "how_it_should_be": "Off-heap вне GC; течёт без явного free и невидима в heap-метриках."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Главное преимущество off-heap — что при превышении памяти JVM бросит понятный `OutOfMemoryError` с heap dump.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: при исчерпании native-памяти процесс убивает ОС (OOM-killer) без heap dump, а не JVM с красивой ошибкой — это риск, а не плюс.",
+                "source_of_confusion": "Привычка к heap-OOM с дампом переносится на off-heap.",
+                "if_it_were_true": "Тогда диагностика off-heap была бы простой по дампу, но дампа как раз нет.",
+                "how_it_should_be": "Исчерпание off-heap → OOM-kill от ОС без дампа; это минус, не плюс."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Off-heap полезен только для маленьких буферов < 1KB; для больших кэшей он бесполезен из-за фрагментации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Off-heap как раз для БОЛЬШИХ кэшей без GC pressure (`Apache Ignite`, `Chronicle Map`) и высокоскоростного I/O (`Netty`), а не для крошечных буферов.",
+                "source_of_confusion": "Малые direct-буферы для I/O создают впечатление, что off-heap — про мелочь.",
+                "if_it_were_true": "Тогда не существовало бы off-heap кэшей на гигабайты, но именно они — главный сценарий.",
+                "how_it_should_be": "Off-heap — для крупных кэшей и быстрого I/O, не для микробуферов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Off-heap` — память вне managed heap, не подчиняющаяся GC. Полезна для: высокоскоростного I/O (`DirectByteBuffer`, `Netty` channel buffers), больших кэшей без GC pressure (`Apache Ignite`, `Chronicle Map`), IPC через shared memory/mmap и JNI/Foreign Function. Снижает паузы GC, т.к. данные не сканируются сборщиком.",
+              "correct": true,
+              "sections": {
+                "explanation": "`ByteBuffer.allocateDirect(64*1024)` + `channel.write(buffer)` даёт zero-copy путь heap → native; после использования важно `((DirectBuffer) buf).cleaner().clean()`.",
+                "example": "Применяют, когда GC-паузы от большого heap критичны (миллисекундные SLA) или нужен прямой доступ к памяти для native-кода/IPC.",
+                "when_to_apply": "Off-heap выбирают, когда GC-паузы от большого heap критичны (миллисекундные SLA), нужен zero-copy I/O или IPC через shared memory.",
+                "edge_cases": "Риски: невидимость для GC и heap-метрик, OOM-kill от ОС без дампа, утечки без явного `free`/`clean`, сложная отладка (MAT не видит off-heap); мониторят через `jcmd <pid> VM.native_memory summary` и `-XX:MaxDirectMemorySize`.",
+                "related": "[[memory-management-interview#Q4]] Direct Memory; [[memory-management-interview#Q21]] memory-mapped files; [[memory-management-interview#Q22]] Panama Foreign Memory API."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают memory-mapped files (`MappedByteBuffer`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Memory-mapped files` — механизм ОС, отображающий файл прямо в адресное пространство процесса; JVM даёт доступ через `FileChannel.map()`. Страницы файла загружаются лениво при обращении (page fault → read), без загрузки всего файла в память. Режимы: `READ_ONLY` и `READ_WRITE` (изменения пишутся в файл, `force()` делает flush на диск).",
+              "correct": true,
+              "sections": {
+                "explanation": "`channel.map(MapMode.READ_ONLY, 0, channel.size())` даёт доступ как к обычному `ByteBuffer`, но данные читаются страницами из файла по мере обращения.",
+                "example": "Используют для файлов больше RAM, shared memory между процессами (два процесса маппят один файл) и высокопроизводительного I/O — отсюда применение в `Kafka` (segment files), `Lucene`/`Elasticsearch`, `LMDB`.",
+                "when_to_apply": "mmap применяют для файлов больше RAM, shared memory между процессами и высокопроизводительного доступа (`Kafka`, `Lucene`, `LMDB`).",
+                "edge_cases": "Ограничения: нет явного `unmap()` (зависит от GC, проблема на Windows — файл держится залоченным), один `map()` ограничен `Integer.MAX_VALUE` (2GB), а I/O-ошибка даёт `SIGBUS` с крахом JVM.",
+                "related": "[[memory-management-interview#Q20]] off-heap и его риски; [[memory-management-interview#Q4]] Direct Memory; [[memory-management-interview#Q22]] Panama FFM для безопасного доступа."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`MappedByteBuffer` загружает весь файл целиком в heap при вызове `map()`, поэтому файл должен помещаться в `-Xmx`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "mmap НЕ грузит файл в heap: страницы подтягиваются лениво из файла по page fault, поэтому работают файлы больше RAM и больше `-Xmx`.",
+                "source_of_confusion": "Слово «mapped» воспринимают как «загруженный в память приложения».",
+                "if_it_were_true": "Тогда файл > heap нельзя было бы открыть, но mmap создан именно для файлов любого размера.",
+                "how_it_should_be": "mmap — ленивая постраничная загрузка вне heap; файл может быть больше RAM."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Один вызов `FileChannel.map()` может отобразить файл любого размера, включая терабайтные, за одну операцию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один `map()` ограничен `Integer.MAX_VALUE` (~2GB); для больших файлов нужно несколько маппингов сегментами.",
+                "source_of_confusion": "Раз mmap «работает с большими файлами», кажется, что и один маппинг неограничен.",
+                "if_it_were_true": "Тогда `Kafka` маппил бы весь лог одним вызовом, но он бьёт лог на segment-файлы ≤ 2GB.",
+                "how_it_should_be": "Один map() ≤ 2GB; крупные файлы — несколько сегментных маппингов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`MappedByteBuffer` имеет детерминированный метод `unmap()`, гарантирующий немедленное освобождение маппинга.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Явного `unmap()` НЕТ: освобождение зависит от GC, что особенно болезненно на Windows (файл остаётся залоченным).",
+                "source_of_confusion": "Раз есть `force()` для flush, кажется логичным, что есть и симметричный `unmap()`.",
+                "if_it_were_true": "Тогда не возникало бы проблемы удержания файла на Windows, но именно отсутствие unmap её и создаёт.",
+                "how_it_should_be": "Нет явного unmap(); освобождение через GC — известная боль на Windows."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что даёт Panama Foreign Memory API по сравнению с `Unsafe`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Unsafe` безопаснее Foreign Memory API, потому что делает bounds checking и кидает исключение при выходе за границы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `Unsafe` НЕ делает bounds checking (выход за границы → segfault), а Foreign Memory API как раз добавляет проверки и кидает исключение.",
+                "source_of_confusion": "Слово «Unsafe» иногда читают наоборот — как «защищённый низкоуровневый» API.",
+                "if_it_were_true": "Тогда не было бы причин заменять `Unsafe`, но его меняют именно из-за отсутствия проверок и ручного lifecycle.",
+                "how_it_should_be": "Unsafe без bounds checking (segfault); FFM проверяет границы и бросает исключение."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Foreign Memory API` (Panama, финализирован в Java 22) — безопасная замена `sun.misc.Unsafe` для off-heap. Ключевые улучшения: bounds checking (исключение вместо segfault), `Arena`-based lifecycle (автоматическое освобождение вместо ручного `freeMemory()`), thread-safety (`Arena.ofConfined()`/`ofShared()`) и статус стандартного API вместо internal.",
+              "correct": true,
+              "sections": {
+                "explanation": "`try (Arena arena = Arena.ofConfined()) { MemorySegment s = arena.allocate(1024); s.set(JAVA_INT, 0, 42); }` — память освобождается автоматически на выходе из try, в отличие от ручного `unsafe.freeMemory()`.",
+                "example": "Применяют для off-heap аллокаций и interop с native-кодом (`Linker` + `SymbolLookup`) там, где раньше тянулись к `Unsafe`, но без риска segfault и забытого `free`.",
+                "when_to_apply": "Foreign Memory API берут вместо `Unsafe` для новых off-heap аллокаций и interop с native-кодом, где важны безопасность и автоматический lifecycle.",
+                "edge_cases": "Типы `Arena`: `ofConfined()` (один поток, авто-release), `ofShared()` (многопоточный), `global()` (никогда не освобождается, для констант), `ofAuto()` (release при GC, как `DirectByteBuffer`).",
+                "related": "[[memory-management-interview#Q20]] off-heap; [[memory-management-interview#Q4]] Direct Memory и Cleaner; [[memory-management-interview#Q21]] memory-mapped files."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Foreign Memory API требует ручного `freeMemory()`, как и `Unsafe`, поэтому забытый вызов так же приводит к утечке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "FFM использует `Arena`-based lifecycle с автоматическим освобождением (try-with-resources), что и устраняет проблему забытого `free`.",
+                "source_of_confusion": "Привычка к ручному управлению из `Unsafe` переносится на новый API.",
+                "if_it_were_true": "Тогда главное преимущество FFM исчезло бы, но именно автоматический lifecycle — его суть.",
+                "how_it_should_be": "FFM освобождает память через Arena автоматически; ручной free не нужен."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Unsafe` — стандартный публичный API с гарантией обратной совместимости, а Foreign Memory API экспериментален и может быть удалён.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `Unsafe` — internal API без гарантий (может быть убран), а Foreign Memory API финализирован и стандартен с Java 22.",
+                "source_of_confusion": "Долгая фактическая распространённость `Unsafe` создаёт иллюзию его «официальности».",
+                "if_it_were_true": "Тогда не имело бы смысла мигрировать на FFM, но именно нестабильность `Unsafe` — причина миграции.",
+                "how_it_should_be": "Unsafe — internal и под угрозой удаления; FFM — стандартный финализированный API."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен объект в памяти JVM (object header, alignment)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Объект в HotSpot состоит только из instance fields, без всякого header — поэтому `new Object()` занимает 0 байт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый объект имеет header (Mark Word + Klass Pointer, для массива ещё длину); `new Object()` занимает 16 байт (12 header + 4 padding), а не 0.",
+                "source_of_confusion": "Поля кажутся единственным «полезным» содержимым объекта.",
+                "if_it_were_true": "Тогда пустой объект ничего не весил бы, но `new Object()` стабильно занимает 16 байт.",
+                "how_it_should_be": "Объект = header + fields + padding; даже пустой Object — 16 байт."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "JVM хранит поля объекта строго в порядке объявления в исходном коде, без переупорядочивания.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JVM переупорядочивает поля (field packing) для минимизации padding: `long`/`double` первыми, затем `int`, `short`, `byte`, ссылки — порядок объявления не сохраняется.",
+                "source_of_confusion": "Кажется естественным, что layout повторяет исходный код.",
+                "if_it_were_true": "Тогда чередование `byte`/`long` раздувало бы объект padding-ом, но JVM как раз пакует поля плотно.",
+                "how_it_should_be": "JVM сортирует поля по размеру для компактности; порядок в коде не гарантирован."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Объект в `HotSpot` состоит из трёх частей: Object Header (Mark Word ~8 байт — hash, age, lock-биты; Klass Pointer 4 байта с Compressed Oops; для массива ещё Array Length 4 байта), Instance Fields (переупорядочены JVM для компактности) и Padding (выравнивание до кратного 8 байт).",
+              "correct": true,
+              "sections": {
+                "explanation": "`new Object()` = 16 байт (12 header + 4 padding); `new Long(42L)` = 24 байта (12 header + 4 padding + 8 long); `new byte[1]` = 24 байта (16 header + 1 + 7 padding).",
+                "example": "Знание layout нужно при оптимизации памяти: упаковка полей и понимание padding позволяют ужать большие коллекции объектов на десятки процентов.",
+                "when_to_apply": "Знание layout нужно при оптимизации памяти больших коллекций объектов: упаковка полей и понимание padding экономят десятки процентов.",
+                "edge_cases": "JVM делает field packing (`long`/`double` → `int` → `short`/`char` → `byte`/`boolean` → ссылки), чтобы минимизировать потери на выравнивание.",
+                "related": "[[memory-management-interview#Q24]] измерение размера через JOL; [[memory-management-interview#Q25]] Compressed Oops; [[memory-management-interview#Q27]] padding против false sharing."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Mark Word хранит указатель на метаданные класса, а Klass Pointer хранит хэш-код и lock-биты объекта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Роли перепутаны: Mark Word хранит hash, age и lock-биты, а Klass Pointer указывает на метаданные класса (Class).",
+                "source_of_confusion": "Обе части — в header, и их назначения легко поменять местами.",
+                "if_it_were_true": "Тогда смена identity hash меняла бы класс объекта, но hash живёт в Mark Word, а класс — за Klass Pointer.",
+                "how_it_should_be": "Mark Word = hash/age/lock; Klass Pointer → метаданные класса."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как измерить реальный размер объекта в Java?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Instrumentation.getObjectSize()` возвращает deep size — размер объекта вместе со всеми объектами, на которые он ссылается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`getObjectSize()` даёт SHALLOW size (только сам объект); deep size считает `GraphLayout.parseInstance(obj).totalSize()` из JOL.",
+                "source_of_confusion": "Хочется, чтобы один вызов сразу дал «полный» размер со всеми ссылками.",
+                "if_it_were_true": "Тогда JOL `GraphLayout` был бы избыточен, но он существует именно для deep size.",
+                "how_it_should_be": "getObjectSize() — shallow; deep считает GraphLayout из JOL."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`JOL` измеряет размер только статически по классу и не умеет показывать layout конкретного экземпляра.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JOL` умеет именно по экземпляру: `ClassLayout.parseInstance(obj).toPrintable()` печатает offset/size полей конкретного объекта.",
+                "source_of_confusion": "Слово «layout» ассоциируется со статической структурой класса.",
+                "if_it_were_true": "Тогда нельзя было бы увидеть `(loss due to alignment)` для экземпляра, но JOL это показывает.",
+                "how_it_should_be": "JOL разбирает и экземпляр (parseInstance), показывая реальный layout с padding."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В Eclipse MAT `Retained Size` — это размер самого объекта, а `Shallow Size` — объект плюс всё, что он держит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `Shallow Size` — сам объект, `Retained Size` — объект плюс всё, что держит ТОЛЬКО он.",
+                "source_of_confusion": "Термины shallow/retained легко поменять местами при заучивании.",
+                "if_it_were_true": "Тогда retained был бы всегда ≤ shallow, но retained ≥ shallow по определению.",
+                "how_it_should_be": "Shallow — сам объект; retained — он + эксклюзивно удерживаемое."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Три подхода: (1) `Instrumentation.getObjectSize(obj)` через java-agent — shallow size; (2) `JOL` (Java Object Layout) — рекомендованный: `ClassLayout.parseInstance(obj).toPrintable()` показывает offset/size полей и padding, а `GraphLayout.parseInstance(obj).totalSize()` — deep size; (3) оценка через heap dump в MAT (Shallow vs Retained Size).",
+              "correct": true,
+              "sections": {
+                "explanation": "`ClassLayout.parseInstance(new Object())` печатает `12 (object header)` + `4 (loss due to alignment)` = Instance size 16 bytes — наглядно видно padding.",
+                "example": "Используют при оптимизации: понять реальный вес объекта перед тем, как держать миллионы экземпляров; JOL подходит для микро-анализа, MAT — для post-mortem.",
+                "when_to_apply": "Измеряют размер при оптимизации: перед тем как держать миллионы экземпляров, проверяют их реальный вес через JOL или retained size в MAT.",
+                "edge_cases": "`getObjectSize()` даёт только shallow (без referenced объектов); для полного веса графа нужен `GraphLayout.totalSize()` или retained size в MAT.",
+                "related": "[[memory-management-interview#Q23]] object header и layout; [[memory-management-interview#Q25]] Compressed Oops и размер ссылок; [[memory-management-interview#Q18]] shallow/retained в MAT."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Compressed Oops и как они экономят память?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Compressed Oops` (Ordinary Object Pointers) — оптимизация 64-bit JVM, позволяющая использовать 32-bit указатели вместо 64-bit. Объекты выровнены по 8 байт, поэтому 3 младших бита адреса всегда нулевые; JVM сдвигает адрес на 3 бита вправо, сжимая 35-битный адрес в 32 бита, что покрывает heap до 32GB (2^35).",
+              "correct": true,
+              "sections": {
+                "explanation": "С Compressed Oops ссылка = 4 байта (вместо 8) и object header = 12 байт (вместо 16) — экономия ~20-30% памяти на типичном приложении.",
+                "example": "Практический вывод: heap 31GB часто лучше, чем 33GB — при 33GB Compressed Oops отключаются, ссылки становятся 8-байтными, и реальное потребление памяти РАСТЁТ, несмотря на больший heap.",
+                "when_to_apply": "Границу 32GB учитывают при сайзинге heap: для экономии памяти держат heap ≤ 31GB, чтобы не потерять Compressed Oops.",
+                "edge_cases": "По умолчанию включены при heap ≤ 32GB (`-XX:+UseCompressedOops`); отдельно есть `-XX:+UseCompressedClassPointers` для сжатия klass pointer.",
+                "related": "[[memory-management-interview#Q23]] object header и klass pointer; [[memory-management-interview#Q24]] измерение размера; [[memory-management-interview#Q1]] heap и -Xmx."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Compressed Oops` сжимают сами объекты в heap алгоритмом вроде gzip, уменьшая их физический размер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Compressed Oops сжимают только УКАЗАТЕЛИ (ссылки) с 8 до 4 байт, а не содержимое объектов — никакого сжатия данных нет.",
+                "source_of_confusion": "Слово «compressed» наводит на мысль о компрессии данных.",
+                "if_it_were_true": "Тогда требовалась бы распаковка при чтении полей, но это лишь сдвиг адреса указателя.",
+                "how_it_should_be": "Сжимаются ссылки (8→4 байта) через сдвиг адреса, не данные объекта."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Compressed Oops` работают при любом размере heap, включая 64GB и больше, без потери эффективности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Compressed Oops покрывают heap только до ~32GB (2^35); выше они автоматически отключаются, и ссылки становятся 8-байтными.",
+                "source_of_confusion": "Кажется, что оптимизация безусловно полезна и не имеет предела.",
+                "if_it_were_true": "Тогда совет «31GB лучше 33GB» был бы бессмысленным, но он основан именно на границе 32GB.",
+                "how_it_should_be": "Предел Compressed Oops — ~32GB heap; выше они выключаются."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Включение `Compressed Oops` увеличивает потребление памяти, поэтому их выключают на больших серверах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Compressed Oops СНИЖАЮТ потребление (~20-30%): меньше ссылка, меньше header — поэтому их держат включёнными при heap ≤ 32GB.",
+                "source_of_confusion": "Раз есть «overhead на сдвиг адреса», кажется, что и память растёт.",
+                "if_it_were_true": "Тогда `-XX:+UseCompressedOops` был бы вредным дефолтом, но он включён по умолчанию ради экономии.",
+                "how_it_should_be": "Compressed Oops экономят память; их держат включёнными до 32GB."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое memory barrier и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Memory barrier — это лимит на объём памяти, который поток может выделить, заданный через `-Xss`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Memory barrier — инструкция CPU, запрещающая переупорядочивание операций чтения/записи через барьер ради видимости между потоками, а не лимит памяти.",
+                "source_of_confusion": "Слово «barrier» ассоциируется с «ограничением/границей памяти».",
+                "if_it_were_true": "Тогда барьер настраивался бы флагом размера, но он про порядок операций, а не про объём.",
+                "how_it_should_be": "Memory barrier — про упорядочивание чтений/записей между потоками, не про лимит памяти."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Memory barrier` (fence) — инструкция процессора, запрещающая переупорядочивание операций чтения/записи через барьер. Нужен для корректной видимости изменений между потоками: без барьеров CPU и компилятор могут переставить инструкции, и поток B увидит записи потока A в другом порядке.",
+              "correct": true,
+              "sections": {
+                "explanation": "Классика — double-checked locking без `volatile`: шаги «allocate / init fields / assign ref» могут переупорядочиться, и другой поток увидит частично инициализированный объект; `volatile` ставит store-load barrier и чинит это.",
+                "example": "`volatile` write — StoreStore+StoreLoad (предыдущие записи видны), `volatile` read — LoadLoad+LoadStore; `synchronized` enter/exit дают acquire/release; `VarHandle.setRelease()`/`getAcquire()` — лёгкие аналоги.",
+                "when_to_apply": "Барьеры (через `volatile`/`synchronized`/`VarHandle`) ставят там, где нужна видимость и упорядочивание между потоками — но осознанно, т.к. они не бесплатны.",
+                "edge_cases": "Барьеры не бесплатны: `volatile`/`synchronized` ограничивают оптимизации CPU и могут стоить производительности на hot-path — ставить их надо осознанно.",
+                "related": "[[memory-management-interview#Q27]] false sharing и cache lines; [[memory-management-interview#Q11]] safepoint; [[memory-management-interview#Q12]] сила ссылок."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`volatile` поле гарантирует атомарность составных операций вроде `count++`, поэтому memory barrier заменяет блокировки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`volatile` даёт видимость и упорядочивание (барьеры), но НЕ атомарность `count++` (read-modify-write) — для этого нужны `AtomicInteger`/`synchronized`.",
+                "source_of_confusion": "Раз `volatile` «решает проблемы многопоточности», его считают полной заменой блокировок.",
+                "if_it_were_true": "Тогда `count++` на volatile был бы потокобезопасен, но он теряет инкременты при гонке.",
+                "how_it_should_be": "volatile = видимость/порядок, не атомарность; для count++ нужен Atomic/synchronized."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Memory barrier нужен только на однопроцессорных машинах; на современных multi-core CPU переупорядочивание невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Именно на multi-core барьеры критичны: каждое ядро имеет свой кэш, и без барьера записи одного ядра не видны другому в нужном порядке.",
+                "source_of_confusion": "Кажется, что «мощные современные CPU» сами обеспечивают согласованность.",
+                "if_it_were_true": "Тогда `volatile` был бы не нужен на серверах, но многопроцессорность как раз и порождает проблему видимости.",
+                "how_it_should_be": "Барьеры особенно нужны на multi-core из-за раздельных кэшей ядер."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое false sharing и как с ним бороться?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`False sharing` — это когда два потока конкурентно пишут в одну и ту же переменную, вызывая гонку данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`False sharing` — это разные переменные в ОДНОЙ cache line; данные логически независимы, гонки нет, но кэш инвалидируется зря.",
+                "source_of_confusion": "Слово «sharing» наводит на мысль о настоящем разделении одной переменной.",
+                "if_it_were_true": "Тогда лечением был бы `volatile`/lock, но false sharing лечат padding-ом, а не синхронизацией.",
+                "how_it_should_be": "False sharing — независимые переменные в одной cache line, а не общая переменная."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "False sharing решается объявлением полей `volatile`, потому что это синхронизирует доступ к cache line.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`volatile` не помогает (и даже усугубляет инвалидацию); лечат разнесением полей по разным cache line через `@Contended` или padding.",
+                "source_of_confusion": "`volatile` — привычное «лекарство» от многопоточных проблем, его применяют и здесь.",
+                "if_it_were_true": "Тогда добавление `volatile` ускоряло бы код, но оно не разносит поля по cache line.",
+                "how_it_should_be": "Лечат @Contended/padding (разные cache line), а не volatile."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`False sharing` — ситуация, когда два потока модифицируют РАЗНЫЕ переменные, попавшие в одну cache line (обычно 64 байта). Каждая запись инвалидирует cache line в кэше другого ядра, хотя данные логически независимы — это резко бьёт по производительности (cache-line ping-pong).",
+              "correct": true,
+              "sections": {
+                "explanation": "Два `volatile long counter1/counter2` в одном объекте лягут в одну 64-байтную cache line: запись A в counter1 сбрасывает кэш counter2 у ядра B, и наоборот.",
+                "example": "Лечение: `@Contended` (JDK 8+, нужен `-XX:-RestrictContended`) или ручной padding (`long p1..p7` = 56 байт между полями), чтобы развести переменные по разным cache line.",
+                "when_to_apply": "Борьбу с false sharing ведут в высококонкурентных структурах: массивах счётчиков, ring buffers, per-thread state — где разные потоки пишут в соседние поля.",
+                "edge_cases": "Встречается в массивах атомарных счётчиков, `LongAdder`/`Striped64` (там padding внутри), ring buffers (`LMAX Disruptor`); диагностика — `perf stat -e cache-misses`, Intel VTune, JMH `@State(Scope.Group)`.",
+                "related": "[[memory-management-interview#Q26]] memory barriers и видимость; [[memory-management-interview#Q23]] padding в layout объекта; [[memory-management-interview#Q28]] NUMA и локальность памяти."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "False sharing проявляется только при чтении переменных; конкурентная запись в соседние поля на него не влияет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Проблему создаёт именно ЗАПИСЬ: каждая запись инвалидирует cache line у другого ядра; параллельные чтения общей cache line безболезненны.",
+                "source_of_confusion": "Кажется, что любой доступ к одной cache line одинаково затратен.",
+                "if_it_were_true": "Тогда read-only данные страдали бы от false sharing, но проблема — write-инвалидация.",
+                "how_it_should_be": "False sharing бьёт по записи (инвалидация), а не по чтению."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое NUMA и как JVM работает с NUMA-архитектурой?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`NUMA` означает, что доступ к любой памяти из любого процессорного сокета занимает одинаковое время.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`NUMA` (Non-Uniform Memory Access) — наоборот, доступ НЕ одинаков: local-память сокета быстрее (~80ns), remote-память другого сокета медленнее (~130ns).",
+                "source_of_confusion": "Аббревиатуру читают «как UMA», теряя приставку Non-Uniform.",
+                "if_it_were_true": "Тогда NUMA-aware GC не давал бы выигрыша, но он есть именно из-за разной latency local/remote.",
+                "how_it_should_be": "NUMA = неравномерный доступ: local быстрее, remote медленнее."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В NUMA-системах JVM всегда автоматически держит все объекты на одном сокете, поэтому миграция потоков не вредит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При миграции потока на другой NUMA-узел его объекты становятся «remote», и доступ деградирует — JVM не перемещает объекты вслед за потоком автоматически.",
+                "source_of_confusion": "Раз есть NUMA-aware allocation, кажется, что JVM полностью решает проблему сама.",
+                "if_it_were_true": "Тогда CPU pinning в K8s был бы не нужен, но его рекомендуют именно против миграции между узлами.",
+                "how_it_should_be": "Миграция потока делает его объекты remote; нужен CPU/memory pinning."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Включить NUMA-aware allocation можно только через `numactl` в ОС; JVM не имеет своих флагов для этого.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У JVM есть свои флаги: `-XX:+UseNUMA` для `G1`/`Parallel GC`, а `ZGC` NUMA-aware по умолчанию; `numactl` — дополнительный инструмент ОС, не единственный.",
+                "source_of_confusion": "`numactl --membind` — заметный внешний инструмент, поэтому JVM-флаги забывают.",
+                "if_it_were_true": "Тогда без `numactl` JVM не использовала бы NUMA, но `-XX:+UseNUMA` включает это внутри.",
+                "how_it_should_be": "JVM имеет -XX:+UseNUMA; ZGC NUMA-aware по умолчанию; numactl — в дополнение."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`NUMA` (Non-Uniform Memory Access) — архитектура серверов с несколькими сокетами, где каждый процессор имеет «свою» local-память (быстро, ~80ns) и может обращаться к remote-памяти других сокетов медленнее (~130ns, 1.5-2x latency). NUMA-aware GC аллоцирует Eden на том же узле, где работает поток, снижая latency доступа.",
+              "correct": true,
+              "sections": {
+                "explanation": "`-XX:+UseG1GC -XX:+UseNUMA` или `-XX:+UseParallelGC -XX:+UseNUMA` включают NUMA-aware allocation; `ZGC` (`-XX:+UseZGC`) использует NUMA автоматически.",
+                "example": "Важно в больших серверах и K8s: при размазывании pod по NUMA-узлам performance страдает, поэтому делают CPU pinning (`numactl --cpunodebind=0 --membind=0`).",
+                "when_to_apply": "NUMA учитывают на многосокетных серверах и в K8s: включают `-XX:+UseNUMA` и делают CPU pinning, чтобы потоки работали с local-памятью.",
+                "edge_cases": "Миграция потока на другой узел делает его объекты «remote» — возможна деградация; топологию смотрят через `numactl --hardware`.",
+                "related": "[[memory-management-interview#Q27]] cache lines и локальность; [[memory-management-interview#Q8]] выбор GC (ZGC NUMA-aware); [[memory-management-interview#Q6]] Eden и аллокация."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `allocation rate` и как на него влиять?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Allocation rate` — сколько памяти выделяется в единицу времени (`MB/s`). Высокий allocation rate нагружает Young GC и может каскадно ухудшить latency (частые Minor GC, рост promotion). Снижают его меньшим числом временных объектов в hot-path, переиспользованием буферов и контролем сериализации.",
+              "correct": true,
+              "sections": {
+                "explanation": "Антипаттерн `String result = \"\"` в цикле создаёт N объектов; замена на `StringBuilder` с предразмером даёт один объект и резко роняет allocation rate.",
+                "example": "Меряют по GC-логам (`-Xlog:gc*`: разница eden used / время между Minor GC) или через JFR (`jdk.ObjectAllocationInNewTLAB` / `OutsideTLAB`).",
+                "when_to_apply": "Allocation rate снижают, когда частые Minor GC и высокий promotion ухудшают latency: оптимизируют hot-path и переиспользуют буферы.",
+                "edge_cases": "Рычаги: избегать boxing (`Integer` вместо `int`), переиспользовать `ThreadLocal<byte[]>`/object pool, помнить что Stream API создаёт intermediate-объекты (lambda, Spliterator), переиспользовать `ObjectMapper`.",
+                "related": "[[memory-management-interview#Q30]] promotion rate и p99; [[memory-management-interview#Q6]] Young GC и поколения; [[memory-management-interview#Q32]] Escape Analysis убирает аллокацию."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Allocation rate` — это скорость, с которой GC ОСВОБОЖДАЕТ память, измеряемая в собранных MB/s.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Allocation rate — скорость ВЫДЕЛЕНИЯ памяти (`MB/s`), а не освобождения; освобождение характеризует reclaimed/throughput GC.",
+                "source_of_confusion": "Оба про «MB/s в GC-логах», поэтому выделение и освобождение смешивают.",
+                "if_it_were_true": "Тогда высокий allocation rate был бы признаком хорошей работы GC, но он, наоборот, нагрузка на Young GC.",
+                "how_it_should_be": "Allocation rate = скорость выделения; освобождение — отдельная метрика."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Высокий allocation rate всегда означает утечку памяти и растущий heap baseline.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Высокий allocation rate — про скорость создания КОРОТКОЖИВУЩИХ объектов; они собираются Young GC, baseline не растёт. Утечка — это растущий baseline, другая проблема.",
+                "source_of_confusion": "И утечка, и высокий allocation «грузят память», поэтому их объединяют.",
+                "if_it_were_true": "Тогда любой hot-loop считался бы утечкой, но он лишь даёт частые дешёвые Minor GC.",
+                "how_it_should_be": "Высокий allocation rate ≠ утечка; объекты умирают молодыми в Young."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Stream API всегда снижает allocation rate по сравнению с обычным for-loop, потому что работает лениво.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Stream API часто ПОВЫШАЕТ allocation rate: создаёт intermediate-объекты (lambda-инстансы, `Spliterator`, boxing) — на hot-path for-loop бывает экономнее.",
+                "source_of_confusion": "Лень и «функциональность» streams создают впечатление нулевых аллокаций.",
+                "if_it_were_true": "Тогда переписывание циклов на streams снижало бы GC pressure, но иногда оно его повышает.",
+                "how_it_should_be": "Streams создают промежуточные объекты; на hot-path это растит allocation rate."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `promotion rate` и почему он часто ломает p99?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Promotion rate` — это скорость аллокации новых объектов в Eden, измеряемая в MB/s.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Promotion rate` — скорость перехода объектов из Young в Old generation, а не аллокация в Eden (это allocation rate).",
+                "source_of_confusion": "Обе метрики в `MB/s` и обе про Young, поэтому их путают.",
+                "if_it_were_true": "Тогда снижать promotion можно было бы уменьшением Eden, но это, наоборот, повышает promotion.",
+                "how_it_should_be": "Promotion rate = Young → Old; аллокация в Eden — это allocation rate."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Promotion rate` — скорость перехода объектов из Young в Old generation (`MB/s`). Высокий promotion раздувает Old occupancy и ведёт к более тяжёлым сборкам (Mixed/Full GC), что убивает p99 latency. Причины: маленький Young (объекты не успевают умереть в Eden), долгоживущие промежуточные объекты, premature promotion из-за низкого tenuring threshold.",
+              "correct": true,
+              "sections": {
+                "explanation": "Увеличение Young gen с 512MB до 1GB (`-Xmn1g`) часто кардинально снижает promotion и стабилизирует p99 — объекты успевают умереть в Eden до промоушена.",
+                "example": "Диагностика: `-Xlog:gc+age=debug` показывает распределение по возрастам и «to-space overflow»; настройки — `-XX:MaxTenuringThreshold=15`, `-XX:SurvivorRatio=6`.",
+                "when_to_apply": "Promotion rate анализируют при деградации p99 и частых Mixed/Full GC: проверяют размер Young и tenuring threshold под нагрузкой.",
+                "edge_cases": "Premature promotion (слишком ранний переход в Old) особенно коварен: объект, который умер бы в Survivor, оседает в Old и ждёт дорогой Old/Full GC.",
+                "related": "[[memory-management-interview#Q29]] allocation rate; [[memory-management-interview#Q6]] поколения и tenuring; [[memory-management-interview#Q35]] метрика promotion на дашборде."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Высокий promotion rate улучшает p99, потому что объекты быстрее покидают часто собираемый Young.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Высокий promotion УХУДШАЕТ p99: он раздувает Old и провоцирует дорогие Mixed/Full GC с длинными паузами.",
+                "source_of_confusion": "Кажется, что «быстрее уйти из Young» — это разгрузка GC.",
+                "if_it_were_true": "Тогда стремились бы к высокому promotion, но цель обратная — держать объекты в Young и собирать дёшево.",
+                "how_it_should_be": "Высокий promotion ломает p99 через тяжёлые Old/Full GC."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чтобы снизить promotion rate, нужно УМЕНЬШИТЬ Young generation, чтобы объекты быстрее проходили через него.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Маленький Young — причина ВЫСОКОГО promotion: объекты не успевают умереть в Eden и промотируются; снижают promotion УВЕЛИЧЕНИЕМ Young (`-Xmn`).",
+                "source_of_confusion": "Интуиция «меньше Young → меньше нагрузка» вводит в заблуждение.",
+                "if_it_were_true": "Тогда `-Xmn` уменьшали бы для борьбы с promotion, но реально его увеличивают.",
+                "how_it_should_be": "Promotion снижают увеличением Young gen, а не уменьшением."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда имеет смысл `String Deduplication`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`String Deduplication` объединяет в один объект сами `String`-экземпляры, заменяя все дубли одной ссылкой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дедупликация объединяет не сами `String`-объекты, а их внутренние массивы `char[]/byte[]`: строки остаются разными объектами, но делят один массив данных.",
+                "source_of_confusion": "Кажется логичным, что дедупликация схлопывает целые объекты, как `intern()`.",
+                "if_it_were_true": "Тогда `==` между дублями стал бы true, но дедуплицируются только backing-массивы, не identity строк.",
+                "how_it_should_be": "Дедуплицируются backing char[]/byte[], а не сами объекты String."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`String Deduplication` работает на всех сборщиках, включая `Serial` и `Parallel GC`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`-XX:+UseStringDeduplication` поддерживается только `G1` и `ZGC`, а не `Serial`/`Parallel`.",
+                "source_of_confusion": "Кажется, что это универсальная фича GC, независимая от сборщика.",
+                "if_it_were_true": "Тогда её включали бы на любом GC, но на `Serial`/`Parallel` флаг не действует.",
+                "how_it_should_be": "String Deduplication — только для G1 и ZGC."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`-XX:+UseStringDeduplication` (G1/ZGC) — GC автоматически находит строки с одинаковым содержимым backing-массива `char[]/byte[]` и делает их ссылающимися на один массив. Полезно, когда строки занимают 25-50% heap и много повторяются: каталоги товаров, JSON-поля, коды стран/валют, повторяющиеся `status`/`category` из ORM/JDBC.",
+              "correct": true,
+              "sections": {
+                "explanation": "`-XX:+UseStringDeduplication -XX:StringDeduplicationAgeThreshold=3` — дедуплицировать после 3 GC-циклов (когда строка пережила несколько сборок и, вероятно, долгоживущая).",
+                "example": "Включают при большой доле повторяющихся строк и достаточном heap; для уникальных строк (UUID, hash, timestamps) или маленького heap — не окупается.",
+                "when_to_apply": "String Deduplication включают при большой доле повторяющихся строк (каталоги, JSON-поля, коды) и достаточном heap; для уникальных строк — нет.",
+                "edge_cases": "Когда НЕ полезно: уникальные строки, маленький heap (overhead не окупится), CPU-bound нагрузка (дедупликация тоже стоит CPU); антипаттерн — включать все GC-флаги «на всякий случай» без профилирования.",
+                "related": "[[memory-management-interview#Q14]] SoftReference для кэшей; [[memory-management-interview#Q29]] allocation rate строк; [[memory-management-interview#Q9]] G1 как носитель фичи."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`String Deduplication` особенно полезна для строк-UUID и хэшей, так как их в приложении очень много.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для UUID, hash и timestamps дедупликация бесполезна — они уникальны, дублей нет, и overhead не окупится.",
+                "source_of_confusion": "Раз таких строк много по количеству, кажется, что есть и что дедуплицировать.",
+                "if_it_were_true": "Тогда включение давало бы экономию на UUID, но дублей среди них нет.",
+                "how_it_should_be": "Дедупликация выгодна для ПОВТОРЯЮЩИХСЯ строк; для уникальных UUID — нет."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Escape Analysis и Scalar Replacement?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Escape Analysis` определяет, не превышает ли объект размер cache line, чтобы избежать false sharing.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Escape Analysis` определяет, «убегает» ли объект из метода/потока, чтобы применить оптимизации (scalar replacement, stack allocation, lock elision) — это не про cache line.",
+                "source_of_confusion": "Обе темы про оптимизацию памяти, поэтому их смешивают.",
+                "if_it_were_true": "Тогда EA лечил бы false sharing, но тем занимаются padding/`@Contended`.",
+                "how_it_should_be": "Escape Analysis — про «убегание» объекта из scope, не про cache line."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Scalar Replacement аллоцирует объект в Old generation напрямую, минуя Eden, чтобы снизить promotion.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Scalar Replacement вообще НЕ аллоцирует объект в heap: он разбивает его на скаляры (отдельные локальные переменные), которые живут в регистрах/на стеке.",
+                "source_of_confusion": "Раз это «про аллокацию», кажется, что речь о выборе поколения.",
+                "if_it_were_true": "Тогда такой объект попадал бы в heap dump, но его там нет — он не создаётся.",
+                "how_it_should_be": "Scalar Replacement убирает аллокацию вовсе, заменяя поля скалярами."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Escape Analysis работает для любых объектов, включая переданные в неинлайнированные методы и полиморфные вызовы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "EA работает только для объектов, которые JIT может ПОЛНОСТЬЮ проанализировать; полиморфные вызовы, большие методы и передача в неинлайнированные методы заставляют объект «убежать».",
+                "source_of_confusion": "Кажется, что оптимизация всеобъемлюща и не имеет ограничений.",
+                "if_it_were_true": "Тогда любой временный объект устранялся бы JIT, но «убегающие» объекты остаются в heap.",
+                "how_it_should_be": "EA ограничен анализируемыми объектами; убежавшие аллоцируются в heap."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Escape Analysis` — оптимизация JIT, определяющая, «убегает» ли объект из метода или потока. Если нет — JIT применяет три оптимизации: Scalar Replacement (разбивает объект на скаляры — объект не аллоцируется в heap вовсе), Stack Allocation (аллокация на стеке с авто-освобождением без GC) и Lock Elision (убирает синхронизацию на не-escape объекте).",
+              "correct": true,
+              "sections": {
+                "explanation": "`Point p = new Point(3,4); return p.x + p.y;` — после Scalar Replacement превращается в `int p_x=3, p_y=4; return p_x+p_y;` без всякой аллокации.",
+                "example": "Эффект — снижение allocation rate и GC pressure для короткоживущих локальных объектов; включено по умолчанию (`-XX:+DoEscapeAnalysis`, `-XX:+EliminateAllocations`, `-XX:+EliminateLocks`).",
+                "when_to_apply": "На Escape Analysis опираются, объясняя, почему короткоживущие локальные объекты не нагружают GC, и почему стоит писать инлайнящийся код.",
+                "edge_cases": "Ограничения: работает только для полностью анализируемых JIT объектов; полиморфные вызовы, большие методы или передача в неинлайнированные методы заставляют объект «убежать» и аллоцироваться в heap.",
+                "related": "[[memory-management-interview#Q29]] allocation rate; [[memory-management-interview#Q2]] стек vs heap аллокация; [[memory-management-interview#Q23]] layout объекта."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие инструменты выбрать для анализа памяти в dev и production?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Принцип: в production — минимальный overhead (`JFR` < 2%, `jcmd` ~0, `Async Profiler` < 5%); в dev — максимальная детализация (`Eclipse MAT`, `VisualVM`, `JProfiler`/`YourKit`, `JOL`). `MAT` анализирует дампы post-mortem (0 overhead), `JFR` пишет allocation/GC/locks/IO в проде, `jcmd` снимает разовые heap dump / native memory summary.",
+              "correct": true,
+              "sections": {
+                "explanation": "Минимальный prod-набор: `jcmd <pid> GC.heap_dump`, `jcmd <pid> VM.native_memory summary`, `jcmd <pid> GC.heap_info`, `jcmd <pid> JFR.start duration=60s`.",
+                "example": "В dev для детального allocation-tracking берут `JProfiler`/`YourKit` (call tree, heap walker), для layout — `JOL`; в проде ограничиваются low-overhead инструментами.",
+                "when_to_apply": "Инструмент выбирают по среде: в проде — low-overhead (`JFR`, `jcmd`, async-profiler), в dev — детальные профайлеры и `MAT`/`JOL`.",
+                "edge_cases": "`Async Profiler` (`./asprof -e alloc -d 30 -f alloc.html`) даёт allocation flamegraph с < 5% overhead и годится даже для prod, в отличие от тяжёлых dev-профайлеров.",
+                "related": "[[memory-management-interview#Q16]] снятие дампа для MAT; [[memory-management-interview#Q24]] JOL для layout; [[memory-management-interview#Q34]] чтение GC-логов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Eclipse MAT` подключается к живой production-JVM в реальном времени и показывает allocation flamegraph с нулевым overhead.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MAT` анализирует СОХРАНЁННЫЕ дампы (post-mortem), а не живую JVM в реальном времени; allocation flamegraph даёт `Async Profiler`/`JFR`.",
+                "source_of_confusion": "MAT мощный, и его роль расширяют до live-профилирования.",
+                "if_it_were_true": "Тогда не нужны были бы `JFR`/`async-profiler` в проде, но именно они работают на живой JVM.",
+                "how_it_should_be": "MAT — offline-анализ дампов; live-allocation — async-profiler/JFR."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`JFR` (Flight Recorder) даёт > 50% overhead, поэтому его нельзя включать в production.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JFR` спроектирован для production: overhead < 2%, его как раз включают на проде для allocation/GC/locks/IO.",
+                "source_of_confusion": "Профилировщики ассоциируются с большим overhead, и это переносят на JFR.",
+                "if_it_were_true": "Тогда JFR был бы dev-only, но его главная ценность — низкий overhead в проде.",
+                "how_it_should_be": "JFR — низкий overhead (< 2%), пригоден для production."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`jcmd` требует перезапуска JVM с агентом и даёт постоянный overhead на работающем процессе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`jcmd` — это разовые команды к уже работающей JVM без агента и без постоянного overhead (~0 между вызовами).",
+                "source_of_confusion": "Слово «команда к JVM» ассоциируется с постоянным подключённым агентом.",
+                "if_it_were_true": "Тогда нельзя было бы быстро снять дамп в инциденте, но `jcmd <pid> GC.heap_dump` делает это на лету.",
+                "how_it_should_be": "jcmd — одноразовые команды без агента и без постоянного overhead."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как читать GC-логи и не делать ложных выводов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Частый GC всегда означает проблему производительности, даже если паузы короткие и SLA соблюдается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Частота GC сама по себе не проблема: если паузы короткие и SLA выдержан, частые Minor GC — норма.",
+                "source_of_confusion": "«Частый GC» интуитивно звучит как «постоянная нагрузка».",
+                "if_it_were_true": "Тогда любое аллоцирующее приложение считалось бы больным, но важны паузы и SLA, а не голая частота.",
+                "how_it_should_be": "Частый GC при коротких паузах и соблюдённом SLA — норма."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Включают unified GC logging (`-Xlog:gc*:file=gc.log:time,uptime,level,tags`). В строке `1024M->256M(2048M) 8.123ms` читают: before→after(total) и длительность паузы. Ключевые метрики: pause time (p95/p99), частота, reclaimed, before→after (рост after = leak), allocation/promotion rate. Главное — не делать ложных выводов по одной метрике.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Pause Young (Normal) (G1 Evacuation Pause) 1024M->256M(2048M) 8.123ms`: тип сборки, heap до→после(всего), пауза 8мс — здоровый Minor GC.",
+                "example": "Читают при разборе latency-инцидентов и подборе GC: смотрят, растёт ли baseline after Full GC (утечка) и укладываются ли паузы в SLA; анализируют через `GCViewer`/`GCEasy`/`Censum`.",
+                "when_to_apply": "GC-логи читают при разборе latency-инцидентов и подборе GC: проверяют рост baseline после Full GC (утечка) и соответствие пауз SLA.",
+                "edge_cases": "Ловушки: «частый GC = плохо» (нет, если паузы коротки), «Full GC = катастрофа» (один при старте нормален), «увеличу heap — GC реже» (но паузы станут длиннее).",
+                "related": "[[memory-management-interview#Q11]] safepoint time vs GC pause; [[memory-management-interview#Q30]] promotion rate в логах; [[memory-management-interview#Q35]] те же метрики на дашборде."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Один Full GC при старте приложения — это всегда катастрофа и признак неправильной конфигурации памяти.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один Full GC при старте НОРМАЛЕН (загрузка классов, прогрев метаданных); катастрофа — это частые повторяющиеся Full GC.",
+                "source_of_confusion": "Слова «Full GC» звучат пугающе при любом появлении.",
+                "if_it_were_true": "Тогда стартовый Full GC требовал бы вмешательства, но он ожидаем при инициализации.",
+                "how_it_should_be": "Стартовый Full GC — норма; тревожны частые повторяющиеся Full GC."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Увеличение heap гарантированно делает GC и реже, и короче одновременно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Больший heap делает GC реже, но паузы при этом станут ДЛИННЕЕ (больше памяти сканировать) — это trade-off, а не чистый выигрыш.",
+                "source_of_confusion": "«Больше памяти — меньше проблем» воспринимается как универсальное правило.",
+                "if_it_were_true": "Тогда раздувание heap всегда улучшало бы latency, но длинные паузы могут сломать p99.",
+                "how_it_should_be": "Больший heap — реже GC, но длиннее паузы; это компромисс."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие метрики памяти обязательны на дашборде?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно одной метрики `jvm_memory_used_bytes{area=\"heap\"}`; old gen, GC-паузы и allocation rate не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Минимальный набор шире: heap usage, old gen occupancy, GC pause p99 и count, allocation/promotion rate, metaspace, direct buffers, thread count — одной heap-метрики мало.",
+                "source_of_confusion": "Heap usage — самая заметная метрика, остальные кажутся второстепенными.",
+                "if_it_were_true": "Тогда нельзя было бы отличить утечку от высокого allocation, но для этого нужны old gen и promotion rate.",
+                "how_it_should_be": "Нужен полный набор: heap, old gen, GC pause/count, alloc/promotion, metaspace, direct, threads."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Рост heap на дашборде всегда требует немедленного расследования, независимо от latency.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рост heap БЕЗ деградации latency — штатная работа GC; расследуют, когда рост heap СОВПАДАЕТ с ростом p99.",
+                "source_of_confusion": "Любой растущий график на дашборде воспринимается как тревога.",
+                "if_it_were_true": "Тогда здоровая пила heap поднимала бы алерты постоянно, но сама по себе она безопасна.",
+                "how_it_should_be": "Тревожит heap-рост + рост p99; один heap-рост — норма."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Минимальный набор метрик памяти JVM (через Micrometer/Prometheus): Heap Usage (`jvm_memory_used_bytes{area=\"heap\"}` used vs max), Old Gen Occupancy, GC Pause p99 и count, Allocation Rate и Promotion Rate, Metaspace, Direct Buffers (`jvm_buffer_memory_used_bytes`), Thread Count. Плюс сервисный контекст (latency/error rate), чтобы видеть реальный impact.",
+              "correct": true,
+              "sections": {
+                "explanation": "`histogram_quantile(0.99, jvm_gc_pause_seconds_bucket)` для p99 пауз и `rate(jvm_gc_memory_promoted_bytes_total[5m])` для promotion rate — связка показывает причину деградации.",
+                "example": "Дашборд используют, чтобы отличить штатную работу GC от проблемы: рост heap без роста p99 — норма, рост heap + рост p99 — сигнал к расследованию.",
+                "when_to_apply": "Этот набор метрик кладут на дашборд каждого JVM-сервиса, чтобы отличать штатную работу GC от проблемы по корреляции heap и p99.",
+                "edge_cases": "Direct buffers и metaspace часто забывают, но именно они дают невидимый в heap-метриках рост памяти (off-heap, classloader leak).",
+                "related": "[[memory-management-interview#Q30]] promotion rate; [[memory-management-interview#Q34]] те же метрики из GC-логов; [[memory-management-interview#Q36]] алерты по этим метрикам."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Direct buffers и metaspace не нужно мониторить, потому что они входят в общую heap-метрику.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Direct buffers и metaspace — НЕ heap (off-heap и native), их нет в `area=\"heap\"`; для них нужны отдельные метрики (`jvm_buffer_memory_used_bytes`, metaspace id).",
+                "source_of_confusion": "Раз всё это «память JVM», кажется, что одна heap-метрика покрывает всё.",
+                "if_it_were_true": "Тогда classloader leak в metaspace был бы виден на heap-графике, но он растёт вне heap.",
+                "how_it_should_be": "Direct/metaspace мониторят отдельными метриками — они вне heap."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как строить алерты по памяти без шума?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Правильный алерт срабатывает на каждый одиночный пик использования памяти, чтобы ничего не пропустить.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Алертить надо по ТРЕНДУ и impact (с `for: 10m`), а не на каждый пик — одиночные всплески создают шум и усталость от алертов.",
+                "source_of_confusion": "Кажется, что чем чувствительнее алерт, тем надёжнее мониторинг.",
+                "if_it_were_true": "Тогда дежурный тонул бы в ложных срабатываниях, но цель — алертить на устойчивую проблему.",
+                "how_it_should_be": "Алертят по устойчивому тренду (for: Nm), а не по одиночным пикам."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все алерты по памяти должны иметь severity `critical`; разделение на warning/critical только усложняет систему.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Разделение `warning`/`critical` обязательно: warning — наблюдать, critical — будить дежурного; без него теряется приоритизация.",
+                "source_of_confusion": "Хочется, чтобы «всё важное» было critical и точно не пропускалось.",
+                "if_it_were_true": "Тогда мелкий рост allocation будил бы ночью, как и реальная утечка, но их impact разный.",
+                "how_it_should_be": "Делят warning/critical, чтобы будить только на реальный impact."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Алерт `HighOldGenUsage` должен срабатывать мгновенно при первом превышении порога, без условия `for`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Используют `for: 10m`, чтобы алертить на УСТОЙЧИВОЕ превышение Old Gen > 85%, а не на мгновенный всплеск во время сборки.",
+                "source_of_confusion": "Мгновенное срабатывание кажется «быстрее реагирующим».",
+                "if_it_were_true": "Тогда нормальный пик Old Gen перед Mixed GC поднимал бы алерт, но `for: 10m` отсекает шум.",
+                "how_it_should_be": "Ставят for: 10m на устойчивое превышение, а не мгновенный триггер."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Правила без шума: алертить по тренду и impact (а не по одному пику), разделять `warning`/`critical`, привязывать к SLO, держать runbook прямо в алерте. Например, `HighOldGenUsage` (Old Gen > 85% с `for: 10m`, severity critical, runbook-ссылка), `HighAllocationRate` (> 2 GB/s, warning), `FrequentFullGC` (> 2 Full GC за 30 минут, critical).",
+              "correct": true,
+              "sections": {
+                "explanation": "`expr: jvm_memory_used_bytes{id=\"G1 Old Gen\"} / jvm_memory_max_bytes{id=\"G1 Old Gen\"} > 0.85` с `for: 10m` ловит устойчивую утечку, а не пик перед сборкой.",
+                "example": "Применяют, чтобы дежурный получал только actionable-алерты с готовым runbook, а не шквал ложных срабатываний; пороги привязывают к SLO сервиса.",
+                "when_to_apply": "Эти правила применяют при настройке алертинга, чтобы дежурный получал только actionable-сигналы с runbook, а не шквал ложных срабатываний.",
+                "edge_cases": "`runbook: \"https://wiki/runbooks/memory-leak\"` прямо в annotations алерта экономит минуты в инциденте — не надо искать инструкцию.",
+                "related": "[[memory-management-interview#Q35]] метрики для алертов; [[memory-management-interview#Q34]] FrequentFullGC из логов; [[memory-management-interview#Q16]] runbook-процесс поиска утечки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие anti-patterns memory tuning встречаются чаще всего?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Частые анти-паттерны: «увеличим heap и проблема уйдёт» (без root cause утечка просто растёт дольше), тюнинг 10 флагов сразу (невозможно понять, что помогло), игнор container limits, копирование настроек из блога, `-XX:+DisableExplicitGC` без анализа (ломает `DirectByteBuffer` cleanup), `System.gc()` в коде, и отсутствие regression-профилирования.",
+              "correct": true,
+              "sections": {
+                "explanation": "«Увеличим heap» при unbounded-кэше лишь отодвигает OOM: правильно — найти причину через heap dump и поставить eviction.",
+                "example": "Менять надо по ОДНОМУ флагу с замером A/B; копирование чужих настроек игнорирует то, что они зависят от конкретного workload.",
+                "when_to_apply": "Этот список анти-паттернов держат в голове при тюнинге памяти и code review, чтобы не лечить симптом вместо причины.",
+                "edge_cases": "`-XX:+DisableExplicitGC` опасен: он отключает и нужный `System.gc()`, которым освобождаются direct-буферы — может привести к утечке off-heap.",
+                "related": "[[memory-management-interview#Q16]] root cause вместо раздувания heap; [[memory-management-interview#Q38]] container limits и RAMPercentage; [[memory-management-interview#Q34]] измерять, а не гадать."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Менять сразу 10 GC-флагов — хорошая практика, потому что так быстрее находишь рабочую комбинацию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тюнинг 10 флагов одновременно — анти-паттерн: невозможно понять, что именно помогло; меняют по одному с A/B-замером.",
+                "source_of_confusion": "Кажется, что «больше изменений за раз — быстрее результат».",
+                "if_it_were_true": "Тогда любую проблему решали бы пачкой флагов, но без изоляции эффекта это гадание.",
+                "how_it_should_be": "Меняют по одному флагу с замером; пачкой — анти-паттерн."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`System.gc()` в коде — полезный приём, гарантирующий освобождение памяти в нужный момент.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`System.gc()` в коде — анти-паттерн: он не гарантирует сборку (лишь hint) и добавляет STW-паузу; его убирают и доверяются GC.",
+                "source_of_confusion": "Явный вызов выглядит как «контроль над памятью».",
+                "if_it_were_true": "Тогда `System.gc()` детерминированно чистил бы heap, но JVM вправе его проигнорировать.",
+                "how_it_should_be": "System.gc() в коде убирают; он не гарантирует сборку и тормозит."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`-XX:+DisableExplicitGC` — безопасный флаг, который стоит включать всегда для повышения производительности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`-XX:+DisableExplicitGC` без анализа опасен: он ломает `DirectByteBuffer` cleanup (который полагается на `System.gc()`), что ведёт к утечке direct memory.",
+                "source_of_confusion": "Раз `System.gc()` вреден, кажется логичным запретить его глобально.",
+                "if_it_were_true": "Тогда отключение явного GC было бы чистым выигрышем, но оно ломает освобождение off-heap буферов.",
+                "how_it_should_be": "DisableExplicitGC может сломать cleanup direct-буферов; включать осознанно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как память JVM взаимодействует с container limits в Docker/K8s?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Безопасно ставить `-Xmx` равным container memory limit, потому что JVM использует только heap.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`-Xmx` = container limit ведёт к OOM-kill: процесс тратит ещё metaspace, stacks, direct, code cache — non-heap не помещается в оставшееся.",
+                "source_of_confusion": "Кажется, что `-Xmx` контролирует всю память процесса.",
+                "if_it_were_true": "Тогда `MaxRAMPercentage=100` было бы безопасным, но оно гарантирует OOM-kill.",
+                "how_it_should_be": "-Xmx должен оставлять запас под non-heap; иначе OOM-kill."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "С Java 10+ JVM правильно читает cgroup limits (видит лимит контейнера, а не память хоста). Рекомендация — процентные настройки `-XX:MaxRAMPercentage=75.0` (75% от лимита под heap) + `-XX:InitialRAMPercentage`, либо явно задать `-Xmx` с запасом под non-heap (metaspace + direct + code cache + thread stacks + GC overhead).",
+              "correct": true,
+              "sections": {
+                "explanation": "В 2GB контейнере: `-Xmx1400m` + `-XX:MaxMetaspaceSize=128m` + `-XX:MaxDirectMemorySize=128m` + `-XX:ReservedCodeCacheSize=64m` ≈ 1720MB + стеки + GC — укладывается в 2GB.",
+                "example": "Применяют всегда при деплое JVM в Docker/K8s: иначе либо OOM-kill (если `-Xmx` = лимит), либо JVM на старом JDK видит память хоста.",
+                "when_to_apply": "Эти настройки применяют при каждом деплое JVM в Docker/K8s, чтобы избежать OOM-kill из-за неучтённой non-heap памяти.",
+                "edge_cases": "Критические ошибки: `-Xmx` = container limit (non-heap не учтён), JDK < 10 без `-XX:+UseContainerSupport` (видит всю память хоста), `MaxRAMPercentage=100` (гарантированный OOM-kill).",
+                "related": "[[memory-management-interview#Q1]] все области памяти процесса; [[memory-management-interview#Q3]] лимит Metaspace; [[memory-management-interview#Q37]] игнор container limits как анти-паттерн."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "На любой версии JDK JVM автоматически видит cgroup limits и никогда не путает их с памятью хоста.",
+              "correct": false,
+              "sections": {
+                "what_actually": "До Java 10 (без `-XX:+UseContainerSupport`) JVM видела ВСЮ память хоста, а не лимит контейнера — это классическая причина OOM-kill на старых образах.",
+                "source_of_confusion": "Современные JDK действительно container-aware, и это обобщают на все версии.",
+                "if_it_were_true": "Тогда старые образы не страдали бы от OOM-kill, но именно из-за этого их и страдали.",
+                "how_it_should_be": "Container-awareness — с Java 10+; на старых JDK JVM видит память хоста."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`-XX:MaxRAMPercentage=100` — рекомендованная настройка, отдающая всю память контейнера под heap для максимальной производительности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MaxRAMPercentage=100` — гарантированный OOM-kill: не остаётся места под metaspace, stacks, direct и code cache; берут ~75%.",
+                "source_of_confusion": "«Отдать всю память под heap» звучит как способ выжать максимум.",
+                "if_it_were_true": "Тогда 100% было бы оптимумом, но non-heap память выбьет процесс из лимита.",
+                "how_it_should_be": "Берут ~75% (MaxRAMPercentage=75), оставляя запас под non-heap."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 39,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как отвечать на memory-вопросы на senior-раунде?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Сильный ответ — это подробный пересказ теории GC и алгоритмов сборки без привязки к конкретному кейсу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Анти-паттерн как раз пересказ теории без кейса; сильный ответ связывает JVM-детали с реальным симптомом, диагностикой и бизнес-эффектом.",
+                "source_of_confusion": "Глубокое знание теории кажется главным сигналом seniority.",
+                "if_it_were_true": "Тогда заучивание GC-алгоритмов гарантировало бы успех, но интервьюер ждёт прикладной разбор.",
+                "how_it_should_be": "Сильный ответ — кейс с метриками, а не теория ради теории."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Достаточно назвать root cause проблемы; описывать диагностику и измеримый результат не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нужна вся цепочка: симптом → диагностика (инструменты) → root cause → решение → измеримый результат — root cause без остального неубедителен.",
+                "source_of_confusion": "Кажется, что «нашёл причину» — это и есть весь ответ.",
+                "if_it_were_true": "Тогда хватило бы одной фразы про unbounded-кэш, но интервьюер хочет процесс и метрику эффекта.",
+                "how_it_should_be": "Нужна полная цепочка симптом→данные→причина→решение→результат."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Шаблон сильного ответа — полная цепочка: (1) симптом («p99 вырос с 50ms до 200ms, Full GC участились»), (2) диагностика («включил JFR, снял heap dump через `jcmd`, разобрал в MAT»), (3) root cause («unbounded `ConcurrentHashMap` с сессиями, 2M записей, 800MB retained»), (4) решение («заменил на `Caffeine` с `maximumSize`+`expireAfterAccess`»), (5) измеримый результат («Full GC 10/ч → 0, heap baseline 1.8GB → 400MB, p99 < 50ms»).",
+              "correct": true,
+              "sections": {
+                "explanation": "Интервьюер хочет системный подход (симптом → данные → гипотеза → проверка → решение → метрика), знание конкретных команд `jcmd`/MAT dominator tree и trade-off мышление.",
+                "example": "Используют, когда просят «расскажи про сложный memory-инцидент»: связка JVM-деталей с эксплуатационным и бизнес-эффектом («error rate на checkout упал на 15%») отличает senior-ответ.",
+                "when_to_apply": "Этот шаблон используют на senior-собеседовании, когда просят разобрать сложный memory-инцидент: ведут от симптома к измеримому результату.",
+                "edge_cases": "Анти-паттерн — пересказывать теорию GC без привязки к реальному кейсу; сильный ответ всегда заземлён на конкретные числа и бизнес-результат.",
+                "related": "[[memory-management-interview#Q16]] системная диагностика утечки; [[memory-management-interview#Q17]] unbounded кэш как причина; [[memory-management-interview#Q14]] выбор Caffeine vs SoftReference."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Лучший ответ — перечислить как можно больше GC-флагов, которые кандидат знает наизусть.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Перечисление флагов наизусть не впечатляет; ценится системный процесс диагностики и привязка решения к измеримому результату.",
+                "source_of_confusion": "Знание множества `-XX:`-флагов выглядит как глубокая экспертиза.",
+                "if_it_were_true": "Тогда побеждал бы тот, кто помнит больше флагов, но интервьюер оценивает подход и trade-off мышление.",
+                "how_it_should_be": "Ценят процесс и метрику эффекта, а не список флагов наизусть."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
