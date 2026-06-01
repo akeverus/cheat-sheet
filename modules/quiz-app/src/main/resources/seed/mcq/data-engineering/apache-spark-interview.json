@@ -1,0 +1,2105 @@
+{
+  "topic_slug": "apache-spark-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Apache Spark`?",
+          "options": [
+            {
+              "text": "`Apache Spark` — distributed computing framework для обработки больших данных, созданный в `UC Berkeley AMPLab` (2009), написанный на `Scala` и работающий на JVM. Ключевое — in-memory processing, lazy evaluation и единый движок для batch, streaming, ML (`MLlib`) и graph (`GraphX`), до 100x быстрее `Hadoop MapReduce` на in-memory задачах.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spark держит промежуточные данные в RAM кластера вместо диска, строит ленивый план и оптимизирует его перед запуском — отсюда выигрыш в скорости на итеративных и интерактивных нагрузках по сравнению с дисковым `MapReduce`.",
+                "example": "Один движок закрывает ETL через `Spark SQL`, потоковую обработку через `Structured Streaming` и обучение моделей через `MLlib` — не нужно собирать зоопарк из отдельных инструментов под каждую задачу.",
+                "when_to_apply": "Берут Spark, когда объём данных не помещается в одну машину и нужна распределённая обработка с богатым API на `Scala`, `Java`, `Python` или `SQL`, особенно для ETL и аналитики.",
+                "edge_cases": "На маленьких данных (десятки мегабайт) Spark проигрывает обычному `pandas` или SQL-движку: накладные расходы на планирование и распределение съедают весь выигрыш от параллелизма.",
+                "related": "[[apache-spark-interview#Q2]] отличие от `Hadoop MapReduce`; [[apache-spark-interview#Q3]] архитектура Driver/Executor; [[apache-spark-interview#Q5]] что такое RDD."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Apache Spark` — это распределённое key-value хранилище с горизонтальным шардированием, конкурент `Cassandra` и `HBase` для оперативного доступа по ключу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spark — вычислительный движок без собственного постоянного хранилища; данные он читает из внешних источников (`HDFS`, S3, `Cassandra`), обрабатывает и пишет обратно.",
+                "source_of_confusion": "Spark часто разворачивают рядом с `Cassandra`/`HBase`, поэтому его роль обработчика путают с ролью базы данных.",
+                "if_it_were_true": "Тогда у Spark был бы свой формат хранения и API случайного доступа по ключу, но он лишь параллельно сканирует и трансформирует чужие данные.",
+                "how_it_should_be": "Spark — это compute-слой (engine), а хранение делегируется внешним системам; он не заменяет операционную БД."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Apache Spark` — это менеджер кластера, который распределяет CPU и память между приложениями, аналог `YARN` и `Kubernetes`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spark наоборот сам работает поверх cluster manager (`YARN`, `Kubernetes`, `Standalone`), запрашивая у него ресурсы, а не распределяя их.",
+                "source_of_confusion": "Spark действительно умеет планировать tasks внутри своего приложения, и это смешивают с распределением ресурсов между приложениями.",
+                "if_it_were_true": "Тогда Spark не нуждался бы в флаге `--master yarn` или `k8s://`, но именно так он указывает, какому менеджеру отдать управление ресурсами.",
+                "how_it_should_be": "Spark — приложение, которое просит ресурсы у cluster manager; раздачей ресурсов между приложениями занимаются `YARN`/`Kubernetes`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Apache Spark` — это исключительно SQL-движок для запросов к `Hive`-таблицам, без программных API на `Scala` или `Python`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spark SQL` — лишь один из API; есть ещё низкоуровневый RDD и высокоуровневые DataFrame/Dataset на `Scala`, `Java`, `Python`, `R`.",
+                "source_of_confusion": "`Spark SQL` популярен и совместим с `Hive`, поэтому весь Spark ошибочно сводят только к SQL-запросам.",
+                "if_it_were_true": "Тогда нельзя было бы написать `rdd.map(...)` или `MLlib`-пайплайн на Scala, но это базовые возможности Spark.",
+                "how_it_should_be": "Spark — многоязычный движок с несколькими API (RDD, DataFrame, SQL, streaming, ML), а не только SQL поверх `Hive`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `Spark` отличается от `Hadoop MapReduce`?",
+          "options": [
+            {
+              "text": "Главное отличие в том, что `Spark` написан на `Java`, а `Hadoop MapReduce` на `Scala`, поэтому Spark быстрее за счёт языка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: Spark написан на `Scala`, а `Hadoop`/`MapReduce` — на `Java`; и скорость определяется in-memory моделью, а не языком.",
+                "source_of_confusion": "И Scala, и Java работают на JVM, поэтому их легко перепутать при сравнении двух JVM-фреймворков.",
+                "if_it_were_true": "Тогда переписывание `MapReduce` на Scala давало бы те же 100x, но выигрыш даёт работа с памятью, а не язык реализации.",
+                "how_it_should_be": "Spark на `Scala`, `MapReduce` на `Java`; ускорение приходит от in-memory обработки и оптимизатора, а не от выбора языка."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Spark держит данные in-memory (если помещаются), `Hadoop MapReduce` пишет промежуточные результаты на диск (`HDFS`); поэтому Spark до 100x быстрее на in-memory и итеративных задачах. У Spark богатый API (RDD, DataFrame, SQL) против Map+Reduce, встроенный streaming и `MLlib`, latency секунды-минуты против минут-часов.",
+              "correct": true,
+              "sections": {
+                "explanation": "`MapReduce` после каждого шага сериализует результат на диск, и итеративные алгоритмы платят за это дисковым I/O; Spark кэширует промежуточные RDD в памяти, поэтому многократные проходы по данным дёшевы.",
+                "example": "Итеративный ML-алгоритм (логистическая регрессия с 20 итерациями) на Spark с `cache()` работает в разы быстрее, чем на `MapReduce`, где каждая итерация перечитывает данные с `HDFS`.",
+                "when_to_apply": "Выбирают Spark для новых big-data пайплайнов, итеративных вычислений и интерактивной аналитики; `MapReduce` остаётся в legacy-системах, которые дорого переписывать.",
+                "edge_cases": "На разовом простом проходе по данным, которые не влезают в память, разрыв сокращается: Spark вынужден спиллить на диск, и преимущество in-memory почти исчезает.",
+                "related": "[[apache-spark-interview#Q1]] что такое Spark; [[apache-spark-interview#Q22]] cache/persist для итеративных задач; [[apache-spark-interview#Q15]] стоимость shuffle."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Spark` и `Hadoop MapReduce` одинаковы по скорости, разница только в том, что у Spark удобнее синтаксис, но дисковый I/O у обоих идентичен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spark может держать промежуточные данные в RAM и избегать дискового I/O между шагами, поэтому на in-memory задачах он до 100x быстрее.",
+                "source_of_confusion": "Оба фреймворка читают исходные данные с `HDFS`, и из этого делают вывод, что весь pipeline одинаково дисковый.",
+                "if_it_were_true": "Тогда не было бы смысла в `cache()` и Tungsten, но именно они дают Spark преимущество в скорости.",
+                "how_it_should_be": "`MapReduce` пишет промежуточные результаты на диск каждый шаг, Spark — в память; отсюда принципиальная разница в скорости."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Hadoop MapReduce` поддерживает streaming и `MLlib` из коробки, а `Spark` умеет только batch-обработку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: у Spark есть `Structured Streaming` и `MLlib`, а у `MapReduce` нет встроенного streaming (нужны отдельные инструменты) и ML делается через `Mahout`.",
+                "source_of_confusion": "Вокруг `Hadoop` много отдельных проектов экосистемы, что создаёт впечатление, будто всё это часть `MapReduce`.",
+                "if_it_were_true": "Тогда не понадобились бы Spark `MLlib` и `Structured Streaming`, но именно их отсутствие в `MapReduce` подтолкнуло к Spark.",
+                "how_it_should_be": "Streaming и ML — сильные стороны Spark; `MapReduce` — это только batch Map+Reduce без встроенного streaming."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Архитектура `Spark` — `Driver`, `Executor`, `Cluster Manager`?",
+          "options": [
+            {
+              "text": "`Executor` — это главный процесс приложения, который содержит `SparkSession` и строит DAG, а `Driver` — это worker, выполняющий tasks на нодах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Роли перепутаны: `Driver` содержит `SparkSession` и строит DAG, а `Executor` — worker, который исполняет tasks и хранит кэш.",
+                "source_of_confusion": "Оба слова звучат как «исполнитель», поэтому их функции легко поменять местами.",
+                "if_it_were_true": "Тогда `collect()` стягивал бы данные в executor, но он стягивает их именно в driver, что и вызывает driver OOM.",
+                "how_it_should_be": "`Driver` — координатор с `SparkSession` и DAG; `Executor` — рабочий процесс на ноде, выполняющий tasks."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Cluster Manager` выполняет tasks и хранит cached data, а `Executor` лишь распределяет ресурсы между приложениями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Опять перепутано: `Executor` выполняет tasks и хранит кэш, а `Cluster Manager` (`YARN`/`K8s`) распределяет ресурсы между приложениями.",
+                "source_of_confusion": "И executor, и cluster manager — части кластера, поэтому их ответственности смешивают.",
+                "if_it_were_true": "Тогда `YARN` сам считал бы tasks, но он лишь выдаёт контейнеры, а вычисляют их executors.",
+                "how_it_should_be": "`Cluster Manager` раздаёт ресурсы (контейнеры); реальные вычисления и кэш — на executors."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Driver` — главный процесс с `SparkContext`/`SparkSession`, строит DAG, планирует execution и координирует executors. `Executor` — worker-процесс на каждой node, выполняет tasks, хранит cached data в памяти и возвращает результаты driver'у. `Cluster Manager` (`YARN`/`K8s`/`Standalone`) распределяет CPU и память между приложениями.",
+              "correct": true,
+              "sections": {
+                "explanation": "Driver — мозг приложения: он превращает код в DAG из stages и tasks и раздаёт tasks по executors. Executors — рабочие руки: считают tasks параллельно и держат кэш. Cluster manager стоит между ними, выделяя ресурсы.",
+                "example": "В `spark-submit --num-executors 10 --executor-cores 2` driver попросит у `YARN` 10 executor-контейнеров по 2 ядра, разошлёт им tasks и соберёт результаты обратно.",
+                "when_to_apply": "Понимание этих трёх ролей нужно при тюнинге ресурсов: сколько памяти дать driver'у (риск OOM на `collect()`), сколько executors и cores выделить под параллелизм.",
+                "edge_cases": "Если на driver вызвать `collect()` для огромного DataFrame, весь результат стянется в память driver-процесса и тот упадёт с OOM — executors тут не помогут.",
+                "related": "[[apache-spark-interview#Q4]] какие cluster managers бывают; [[apache-spark-interview#Q6]] action как триггер; [[apache-spark-interview#Q14]] partition = единица task."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В `Spark` нет отдельного `Driver`: все процессы равноправны, и любой executor может строить DAG и координировать остальных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Архитектура Spark master-worker: ровно один driver на приложение строит DAG и координирует, executors — подчинённые исполнители.",
+                "source_of_confusion": "Распределённость ассоциируется с peer-to-peer, и из этого ошибочно выводят равноправие узлов.",
+                "if_it_were_true": "Тогда не было бы единой точки сборки результата и параметра `spark.driver.memory`, но driver — обязательный единственный процесс.",
+                "how_it_should_be": "У приложения один driver-координатор и множество executors-исполнителей; это не равноправная P2P-схема."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие бывают `cluster managers` в `Spark`?",
+          "options": [
+            {
+              "text": "Единственный способ запустить `Spark` — это `YARN`; без `Hadoop`-кластера Spark вообще не стартует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spark работает с несколькими менеджерами: `Standalone`, `Kubernetes`, `Mesos` и `Local` — `Hadoop`/`YARN` совсем не обязателен.",
+                "source_of_confusion": "Исторически Spark часто разворачивали поверх `Hadoop YARN`, отсюда миф об обязательности `YARN`.",
+                "if_it_were_true": "Тогда нельзя было бы запустить `--master local[*]` на ноутбуке без `Hadoop`, но это штатный режим разработки.",
+                "how_it_should_be": "`YARN` — лишь один из вариантов; есть `Standalone`, `Kubernetes`, `Mesos` и `Local`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Local` mode — это полноценный распределённый менеджер для production-кластеров из сотен нод.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Local` запускает Spark в одной JVM на одной машине и предназначен для тестов и отладки, а не для production-кластеров.",
+                "source_of_confusion": "Слово «mode» создаёт впечатление полноценного развёртывания, хотя это просто однопроцессный режим.",
+                "if_it_were_true": "Тогда `local[*]` масштабировался бы на сотни нод, но он ограничен ядрами одной машины.",
+                "how_it_should_be": "`Local` — однопроцессный режим для тестов; для кластера нужны `YARN`, `Kubernetes` или `Standalone`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Kubernetes` в качестве cluster manager для `Spark` не поддерживается; Spark умеет работать только с `YARN` и `Mesos`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Kubernetes` официально поддерживается как cluster manager и в 2024 — самый популярный выбор для новых развёртываний.",
+                "source_of_confusion": "Поддержка `Kubernetes` появилась позже `YARN`/`Mesos`, и старые материалы её ещё не упоминают.",
+                "if_it_were_true": "Тогда не существовало бы схемы `--master k8s://`, но именно так Spark запускают в облаке.",
+                "how_it_should_be": "`Kubernetes` — полноценный, рекомендуемый для cloud-native cluster manager наряду с `YARN` и `Standalone`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Standalone` — встроенный простой менеджер без сторонних тулзов; `YARN` — традиционный в экосистеме `Hadoop`; `Kubernetes` — cloud-native, набирает популярность и в 2024 самый частый выбор для нового; `Mesos` — для большого scale, но редкий; `Local` — один JVM для тестов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Cluster manager — это то, кому Spark отдаёт раздачу ресурсов. Выбор задаётся флагом `--master`: `spark://` для Standalone, `yarn`, `k8s://`, `mesos://` или `local[*]`. Логика Spark при этом одна и та же.",
+                "example": "Для локальной отладки запускают `--master local[4]` (4 потока в одной JVM), а в проде на облаке — `--master k8s://https://...` для cloud-native деплоя.",
+                "when_to_apply": "`YARN` берут, если уже есть `Hadoop`-кластер; `Kubernetes` — для облака и контейнеров; `Standalone` — для простого выделенного Spark-кластера; `Local` — только для разработки и тестов.",
+                "edge_cases": "`Mesos` исторически использовался для очень большого масштаба, но сейчас фактически вытеснен `Kubernetes` и в новых проектах почти не встречается.",
+                "related": "[[apache-spark-interview#Q3]] роль cluster manager в архитектуре; [[apache-spark-interview#Q1]] Spark как движок; [[apache-spark-interview#Q32]] Spark UI для мониторинга."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `RDD` (`Resilient Distributed Dataset`)?",
+          "options": [
+            {
+              "text": "`RDD` — низкоуровневая абстракция Spark: отказоустойчивая (resilient — утраченные partitions пересчитываются по lineage), распределённая по nodes коллекция неизменяемых элементов с ленивыми операциями (откладываются до action) и хранением in-memory или на диске через `persist`. В современном Spark используется редко, в основном через DataFrame/Dataset.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждая буква в названии — это свойство: Resilient (восстановление через lineage вместо репликации), Distributed (разбит на partitions по кластеру), Dataset (immutable-коллекция). Ленивость означает, что трансформации копятся, пока не вызовут action.",
+                "example": "`sc.parallelize(List(1,2,3,4,5)).map(_ * 2).reduce(_ + _)` — `map` ленив и ничего не считает, а `reduce` как action запускает реальное вычисление и возвращает 30.",
+                "when_to_apply": "К RDD спускаются, когда нужен полный контроль: custom partitioning, нетипичные структуры данных или операции, которые неудобно выразить через DataFrame.",
+                "edge_cases": "RDD не проходит через Catalyst и Tungsten, поэтому те же операции на DataFrame обычно быстрее; писать новый код на RDD без причины — антипаттерн.",
+                "related": "[[apache-spark-interview#Q8]] lineage и fault tolerance; [[apache-spark-interview#Q6]] transformations vs actions; [[apache-spark-interview#Q10]] RDD vs DataFrame vs Dataset."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`RDD` — это изменяемая (mutable) коллекция, в которой можно править отдельные элементы на месте, как в обычном `ArrayList`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RDD неизменяем (immutable): любая трансформация создаёт новый RDD, а исходный остаётся прежним — это и делает возможным пересчёт по lineage.",
+                "source_of_confusion": "RDD похож на привычную коллекцию по API (`map`, `filter`), и из этого делают вывод о мутабельности.",
+                "if_it_were_true": "Тогда нельзя было бы безопасно восстановить partition по lineage, ведь исходные данные могли бы измениться.",
+                "how_it_should_be": "RDD immutable; трансформации возвращают новые RDD, а не меняют существующий на месте."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`RDD` всегда хранится только в оперативной памяти и не может спиллиться на диск ни при каких настройках.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Уровень хранения управляется через `persist`/storage levels: RDD можно держать в RAM, на диске (`DISK_ONLY`) или со спиллом (`MEMORY_AND_DISK`).",
+                "source_of_confusion": "In-memory подаётся как ключевая фишка Spark, поэтому забывают про дисковые storage levels.",
+                "if_it_were_true": "Тогда RDD, не влезший в RAM, всегда падал бы с OOM, но `MEMORY_AND_DISK` спасает спиллом на диск.",
+                "how_it_should_be": "Хранение RDD настраивается: память, диск или комбинация — через `persist` и storage levels."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Операции над `RDD` выполняются немедленно (eager): каждый `map` сразу запускает распределённое вычисление по кластеру.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RDD ленив: трансформации вроде `map`/`filter` лишь строят план, а вычисление запускает только action (`count`, `collect`, `reduce`).",
+                "source_of_confusion": "В обычных коллекциях `map` исполняется сразу, и эту привычку переносят на RDD.",
+                "if_it_were_true": "Тогда Catalyst/DAG-оптимизация теряла бы смысл, ведь оптимизировать нечего — всё уже посчитано.",
+                "how_it_should_be": "Трансформации RDD ленивы и копятся в DAG; реальное вычисление триггерит action."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `transformations` отличаются от `actions`?",
+          "options": [
+            {
+              "text": "`Transformations` сразу запускают вычисление и возвращают результат, а `actions` лишь строят план без выполнения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё ровно наоборот: трансформации ленивы и строят план, а actions запускают выполнение и возвращают/сохраняют результат.",
+                "source_of_confusion": "Слово «action» интуитивно кажется «подготовкой», а «transformation» — «реальной работой», хотя смысл обратный.",
+                "if_it_were_true": "Тогда `df.filter(...)` уже считал бы данные, и lazy evaluation не существовало бы как концепция.",
+                "how_it_should_be": "Трансформации ленивы (строят DAG), actions запускают вычисление — а не наоборот."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Transformations` создают новый RDD/DataFrame и ленивы — не запускают вычисление (`map`, `filter`, `flatMap`, `groupBy`, `reduceByKey`, `join`). `Actions` возвращают результат driver'у и запускают выполнение DAG (`count`, `collect`, `take`, `first`, `reduce`, `save*`). `collect()` опасен: стягивает все данные в driver и может вызвать OOM.",
+              "correct": true,
+              "sections": {
+                "explanation": "Трансформации лишь дописывают шаги в план (DAG) и ничего не считают; пока не вызван action, ни один task не запущен. Action — это команда «выполнить всё накопленное» и вернуть/сохранить результат.",
+                "example": "`rdd.filter(_.contains(\"error\")).map(_.toUpperCase)` ничего не выполняет; только `mapped.count()` или `mapped.saveAsTextFile(...)` запускают реальное вычисление всей цепочки.",
+                "when_to_apply": "Различать важно при отладке: если job «висит» именно на строке с action — это нормально, ведь вся работа отложена до неё, а не размазана по трансформациям.",
+                "edge_cases": "`collect()` на большом DataFrame тянет все строки в память driver и валит его OOM; вместо него используют `take(n)`, `show()` или запись в файл.",
+                "related": "[[apache-spark-interview#Q7]] lazy evaluation и DAG; [[apache-spark-interview#Q5]] RDD; [[apache-spark-interview#Q3]] driver как точка сбора результата."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "И `transformations`, и `actions` запускают вычисление сразу; разница лишь в том, что actions работают быстрее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Трансформации не запускают вычисление вообще — оно стартует только на action; «скорость» тут ни при чём.",
+                "source_of_confusion": "Кажется, что любая операция над данными что-то считает прямо сейчас, как в императивном коде.",
+                "if_it_were_true": "Тогда длинная цепочка `map`/`filter` без action нагружала бы кластер, но без action не запускается ничего.",
+                "how_it_should_be": "Трансформации ленивы и не считают ничего до action; именно action триггерит выполнение DAG."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`collect()` — безопасный action: он стягивает данные в driver потоково и не может вызвать OOM даже на терабайтном DataFrame.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`collect()` материализует ВСЕ строки в памяти driver одномоментно, поэтому на большом DataFrame это типичная причина driver OOM.",
+                "source_of_confusion": "`collect()` удобен в примерах на маленьких данных, и привычку переносят на прод-объёмы.",
+                "if_it_were_true": "Тогда не предупреждали бы «collect опасен» и не советовали `take(n)`/`show()` вместо него.",
+                "how_it_should_be": "`collect()` нужно избегать на больших данных; для просмотра брать `take(n)` или `show()`, для выгрузки — запись в файл."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `lazy evaluation` в `Spark`?",
+          "options": [
+            {
+              "text": "`Lazy evaluation` означает, что Spark выполняет каждую трансформацию немедленно, но кэширует результат, чтобы не считать повторно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lazy — это отсутствие выполнения до action: трансформации лишь строят DAG, а немедленного выполнения с кэшированием тут нет.",
+                "source_of_confusion": "Кэширование (`cache`) — отдельный механизм, и его путают с ленивостью, потому что оба влияют на повторные вычисления.",
+                "if_it_were_true": "Тогда Catalyst не мог бы переставить фильтры, ведь они уже выполнены при объявлении.",
+                "how_it_should_be": "Ленивость откладывает выполнение до action и даёт оптимизатору весь план; кэширование — это про `persist`, не про lazy."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Lazy evaluation` — это режим, в котором Spark пропускает оптимизацию плана ради скорости компиляции запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: ленивость как раз даёт Catalyst возможность оптимизировать план целиком (push down, объединение stages) перед запуском.",
+                "source_of_confusion": "Слово «lazy» в быту значит «небрежно», отсюда ложный вывод о пропуске оптимизаций.",
+                "if_it_were_true": "Тогда eager-режим давал бы лучшие планы, но именно ленивость включает оптимизатор.",
+                "how_it_should_be": "Ленивость — предпосылка оптимизации: Spark видит весь DAG и улучшает его до выполнения."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Трансформации не выполняются сразу — Spark строит DAG (Directed Acyclic Graph) операций, а action триггерит выполнение всего DAG. Это позволяет Catalyst реорганизовать операции (например, push down фильтра), объединить несколько операций в один stage и избежать ненужных вычислений (dead code elimination).",
+              "correct": true,
+              "sections": {
+                "explanation": "Откладывая выполнение до action, Spark видит весь план целиком и может оптимизировать его глобально: переставить фильтры ближе к источнику, слить операции, выкинуть неиспользуемые колонки — то, что невозможно при немедленном (eager) выполнении.",
+                "example": "В цепочке `read.parquet(...).filter($\"age\" > 18).select(\"id\",\"name\").repartition(10)` до `df.show(20)` не происходит ничего; на `show()` Spark выполняет уже оптимизированный план.",
+                "when_to_apply": "Понимание ленивости нужно при чтении логов и Spark UI: jobs стартуют на actions, а не на трансформациях, и тяжёлая строка — это часто именно action, запустивший всю цепочку.",
+                "edge_cases": "Из-за ленивости ошибка в данных может всплыть не там, где написана трансформация, а на далёком action — это усложняет отладку и сбивает с толку новичков.",
+                "related": "[[apache-spark-interview#Q6]] transformations vs actions; [[apache-spark-interview#Q11]] Catalyst и push down; [[apache-spark-interview#Q8]] lineage как основа DAG."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "При `lazy evaluation` action не нужен: DAG выполняется автоматически по таймеру через фиксированный интервал.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DAG выполняется именно по вызову action (`count`, `show`, `collect`, `save`), а не сам по таймеру.",
+                "source_of_confusion": "Триггеры из `Structured Streaming` (по интервалу) переносят на обычный batch, где такого нет.",
+                "if_it_were_true": "Тогда batch-job стартовал бы без `show()`/`collect()`, но без action Spark не запускает ничего.",
+                "how_it_should_be": "Выполнение DAG триггерит action; автоматического таймера в batch-режиме нет."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `lineage` и зачем он нужен?",
+          "options": [
+            {
+              "text": "`Lineage` — это репликация данных RDD на несколько нод по образцу `HDFS`, чтобы при потере одной копии взять другую.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lineage хранит рецепт (граф операций) для пересчёта, а не копии данных; это именно альтернатива репликации `HDFS`.",
+                "source_of_confusion": "И репликация, и lineage решают задачу fault tolerance, поэтому их механизмы смешивают.",
+                "if_it_were_true": "Тогда Spark тратил бы память/диск на дублирование данных, но он хранит лёгкий граф зависимостей.",
+                "how_it_should_be": "Lineage — это рецепт пересчёта (recompute), а репликация копий — подход `HDFS`; Spark по умолчанию использует первый."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Lineage` хранит только финальный результат вычисления и используется как кэш для ускорения повторных запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lineage хранит граф зависимостей (как получен RDD), а не результат; кэш результата — это `cache`/`persist`, другой механизм.",
+                "source_of_confusion": "И lineage, и кэш связаны с повторными вычислениями, отсюда путаница в их назначении.",
+                "if_it_were_true": "Тогда нельзя было бы восстановить потерянный partition без заранее сохранённого результата.",
+                "how_it_should_be": "Lineage — это граф операций для пересчёта; хранение результата — отдельный механизм `cache`/`persist`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Lineage` существует только в RDD API и полностью отсутствует в DataFrame/Dataset, где зависимости не отслеживаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DataFrame/Dataset тоже опираются на граф зависимостей (логический и физический план Catalyst строится на основе lineage).",
+                "source_of_confusion": "Термин «lineage» чаще звучит в контексте RDD, и его ошибочно считают исключительно RDD-понятием.",
+                "if_it_were_true": "Тогда DataFrame не восстанавливал бы потерянные partitions, но fault tolerance работает и для него.",
+                "how_it_should_be": "Lineage/граф зависимостей есть и в DataFrame/Dataset — на нём строится план и пересчёт partitions."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Lineage` — граф зависимостей RDD/DataFrame: каждый RDD знает, из какого RDD и через какую операцию он создан. Нужен для fault tolerance (потерянный partition пересчитывается по lineage) и для оптимизации (Catalyst строит план на основе lineage). Это альтернатива репликации `HDFS` — хранится рецепт, а не копии данных.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spark запоминает не сами данные, а последовательность операций, которыми они получены. Если node упала и partition потерян, движок повторяет ровно те шаги, что вели к нему, и восстанавливает данные без хранения копий.",
+                "example": "Для цепочки `parallelize → map → filter` lineage хранит «source → map → filter»; при потере partition'а rdd3 Spark пересчитает его из rdd2, а тот — из rdd1.",
+                "when_to_apply": "На lineage опираются, оценивая стоимость восстановления: очень длинный lineage делает пересчёт дорогим, и тогда ставят `checkpoint`, обрывающий цепочку.",
+                "edge_cases": "Бесконечно растущий lineage (например, в итеративных алгоритмах) грозит дорогим пересчётом и переполнением плана — его подрезают через `checkpoint()`, который материализует данные на надёжное хранилище.",
+                "related": "[[apache-spark-interview#Q5]] RDD и resilient; [[apache-spark-interview#Q7]] DAG из lineage; [[apache-spark-interview#Q9]] wide-зависимости и пересчёт."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `wide` transformations отличаются от `narrow`?",
+          "options": [
+            {
+              "text": "`Narrow` — каждый output partition зависит от малого числа input partitions (обычно одного): `map`, `filter`, `flatMap`; shuffle не нужен. `Wide` — output partition зависит от многих input partitions: `groupByKey`, `reduceByKey`, `join`, `repartition`, `distinct`; они требуют shuffle (перемещение данных по сети) и создают stage boundary. Минимизация wide ops — критическая оптимизация.",
+              "correct": true,
+              "sections": {
+                "explanation": "Narrow-операции применяются к каждому partition независимо, поэтому выполняются внутри одного stage без сети. Wide-операции перегруппировывают данные по ключу, заставляя двигать их между executors — это shuffle и граница нового stage.",
+                "example": "`map`/`filter` обрабатывают partition локально; `groupByKey` собирает все значения одного ключа вместе, поэтому записи летят между нодами по сети — это и есть wide-зависимость.",
+                "when_to_apply": "Деление на narrow/wide держат в голове при оптимизации: чем меньше wide-операций и shuffle, тем быстрее job; их стараются заменять или комбинировать.",
+                "edge_cases": "Каждая wide-операция режет план на stages, и число stages в Spark UI примерно равно числу shuffle; лишний `repartition` добавляет ненужный stage и тормозит job.",
+                "related": "[[apache-spark-interview#Q15]] что такое shuffle; [[apache-spark-interview#Q16]] как минимизировать shuffle; [[apache-spark-interview#Q14]] partition как единица параллелизма."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Narrow` transformations требуют shuffle по сети, а `wide` выполняются локально внутри одного partition без перемещения данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Перепутано: narrow выполняются локально без shuffle, а wide требуют shuffle и перемещения данных между partitions.",
+                "source_of_confusion": "Слова «narrow» и «wide» сами по себе не подсказывают, кто из них дешевле, поэтому их меняют местами.",
+                "if_it_were_true": "Тогда `map` создавал бы stage boundary, но границу stage даёт именно wide-операция вроде `groupByKey`.",
+                "how_it_should_be": "Narrow (`map`/`filter`) — локально без shuffle; wide (`join`/`groupByKey`) — с shuffle и stage boundary."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Все transformations в `Spark` одинаковы по стоимости: ни narrow, ни wide не вызывают сетевого обмена, всё считается в памяти.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Wide-операции вызывают shuffle — запись на диск и обмен по сети, что в 100–1000 раз дороже narrow-операций.",
+                "source_of_confusion": "Лозунг «Spark всё делает in-memory» создаёт иллюзию, что сети и диска в обработке нет.",
+                "if_it_were_true": "Тогда `groupByKey` на огромных данных был бы дёшев, но это классический источник медленных jobs.",
+                "how_it_should_be": "Wide-операции принципиально дороже narrow из-за shuffle (диск + сеть + сериализация)."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`reduceByKey` — это narrow transformation, потому что суммирование значений можно сделать без перемещения данных между partitions.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`reduceByKey` — wide-операция: финальная агрегация по ключу требует shuffle, хотя combiner на map-стороне его уменьшает.",
+                "source_of_confusion": "Наличие map-side combiner в `reduceByKey` создаёт впечатление полного отсутствия shuffle.",
+                "if_it_were_true": "Тогда `reduceByKey` не создавал бы stage boundary, но в DAG он его создаёт.",
+                "how_it_should_be": "`reduceByKey` — wide-операция с shuffle; combiner лишь сокращает его объём, но не убирает."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `DataFrame`, `Dataset` и `RDD` отличаются друг от друга?",
+          "options": [
+            {
+              "text": "`RDD` проходит через Catalyst optimizer так же, как DataFrame, поэтому по производительности они идентичны на любых операциях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RDD НЕ проходит через Catalyst и Tungsten, поэтому те же операции на DataFrame обычно быстрее за счёт оптимизатора и кодогенерации.",
+                "source_of_confusion": "Все три API — части Spark, и кажется, что оптимизатор применяется ко всем одинаково.",
+                "if_it_were_true": "Тогда не было бы смысла переходить с RDD на DataFrame ради скорости, но именно за этим и переходят.",
+                "how_it_should_be": "Catalyst оптимизирует только DataFrame/Dataset; RDD оптимизатор обходит, поэтому DataFrame обычно быстрее."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`RDD` — compile-time типы, без Catalyst и без schema, низкий уровень и custom partitioning. `DataFrame` — типы только в runtime, проходит через Catalyst, есть schema (`StructType`), подходит для большинства задач. `Dataset` — compile-time типы плюс Catalyst и schema, type-safe + performance, но только `Scala`/`Java`. В `PySpark` Dataset нет — только DataFrame.",
+              "correct": true,
+              "sections": {
+                "explanation": "DataFrame — это `Dataset[Row]`: schema и оптимизатор есть, но проверка типов только в runtime. Dataset добавляет compile-time типобезопасность (`as[User]`). RDD не знает schema и не оптимизируется Catalyst, зато даёт полный низкоуровневый контроль.",
+                "example": "`val ds: Dataset[User] = df.as[User]; ds.filter(_.age > 18).map(_.name)` — type-safe; та же логика на DataFrame (`df.filter($\"age\" > 18)`) проверяется только в runtime.",
+                "when_to_apply": "DataFrame — дефолт для большинства задач; Dataset — когда нужна типобезопасность на `Scala`/`Java`; RDD — для custom partitioning и нестандартных операций.",
+                "edge_cases": "В `PySpark` статической типизации нет, поэтому Dataset недоступен — там работают только DataFrame и RDD; перенос Scala-Dataset кода на Python невозможен один-в-один.",
+                "related": "[[apache-spark-interview#Q11]] Catalyst для DataFrame/Dataset; [[apache-spark-interview#Q12]] Tungsten; [[apache-spark-interview#Q5]] RDD как низкий уровень."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`DataFrame` даёт compile-time типобезопасность: ошибка в имени колонки ловится при компиляции, а не в runtime.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У DataFrame типы только в runtime: опечатка в имени колонки всплывёт при выполнении (`AnalysisException`), а не при компиляции; compile-time типы — у Dataset.",
+                "source_of_confusion": "DataFrame и Dataset близки по API, поэтому типобезопасность Dataset приписывают и DataFrame.",
+                "if_it_were_true": "Тогда не нужен был бы отдельный Dataset с `as[T]` ради типобезопасности.",
+                "how_it_should_be": "DataFrame проверяет типы в runtime; compile-time типобезопасность даёт Dataset на `Scala`/`Java`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Dataset` доступен в `PySpark` и даёт `Python`-разработчикам compile-time типы так же, как в `Scala`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `PySpark` Dataset нет — из-за отсутствия статической типизации в `Python` доступны только DataFrame и RDD.",
+                "source_of_confusion": "Scala-материалы активно показывают Dataset, и это переносят на PySpark по аналогии.",
+                "if_it_were_true": "Тогда в PySpark существовал бы `df.as[User]`, но такого API там нет.",
+                "how_it_should_be": "Dataset — только `Scala`/`Java`; в `PySpark` работают DataFrame и RDD."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Catalyst Optimizer`?",
+          "options": [
+            {
+              "text": "`Catalyst` — это менеджер памяти Spark, отвечающий за off-heap аллокации и обход `JVM GC`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Off-heap памятью и обходом GC занимается Tungsten; Catalyst — это оптимизатор логического и физического плана запроса.",
+                "source_of_confusion": "Catalyst и Tungsten работают вместе в пайплайне Spark SQL, поэтому их роли смешивают.",
+                "if_it_were_true": "Тогда Catalyst не имел бы стадий Parsing/Analysis/Optimization, но именно из них он и состоит.",
+                "how_it_should_be": "Catalyst оптимизирует план запроса; памятью и off-heap занимается Tungsten."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Catalyst` оптимизирует и RDD-операции тоже, поэтому `rdd.map(...).filter(...)` получает push down фильтров автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Catalyst работает только с DataFrame/Dataset/SQL; RDD его не проходит, поэтому push down фильтров на RDD не происходит автоматически.",
+                "source_of_confusion": "RDD и DataFrame — части одного движка, и кажется, что оптимизатор общий для всех API.",
+                "if_it_were_true": "Тогда RDD и DataFrame были бы одинаково быстры, но DataFrame выигрывает именно за счёт Catalyst.",
+                "how_it_should_be": "Catalyst оптимизирует DataFrame/Dataset/SQL; для RDD оптимизации нужно делать вручную."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Catalyst` — оптимизатор запросов в `Spark SQL`/DataFrame. Стадии: Parsing (SQL → Unresolved Logical Plan), Analysis (resolve columns/tables → Logical Plan), Logical Optimization (push down filters, constant folding, column pruning), Physical Planning (выбор операций, broadcast vs sort-merge join) и Code Generation через Tungsten (bytecode для горячих путей). Поэтому DataFrame обычно быстрее RDD.",
+              "correct": true,
+              "sections": {
+                "explanation": "Catalyst превращает декларативный запрос в эффективный физический план через серию правил: сначала разрешает имена, потом логически упрощает (сдвигает фильтры к источнику, складывает константы, убирает лишние колонки), затем выбирает физические операторы и генерирует код.",
+                "example": "`df.filter($\"age\" > 18).filter($\"country\" === \"US\").select(\"name\")` Catalyst свернёт в один фильтр и сделает column pruning, прочитав только нужные колонки.",
+                "when_to_apply": "На Catalyst полагаются, выбирая DataFrame/SQL вместо RDD: оптимизатор сам делает push down и выбор join-стратегии, чего на RDD пришлось бы добиваться руками.",
+                "edge_cases": "UDF — чёрный ящик для Catalyst: оптимизатор не видит их внутренности и не может протолкнуть фильтр сквозь UDF, поэтому встроенные функции почти всегда предпочтительнее.",
+                "related": "[[apache-spark-interview#Q12]] Tungsten и codegen; [[apache-spark-interview#Q13]] Spark SQL поверх Catalyst; [[apache-spark-interview#Q26]] почему UDF мешает оптимизации."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Catalyst` выполняет оптимизацию строго в runtime по фактической статистике данных, поэтому до запуска плана не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Catalyst строит логический и физический план до выполнения (rule-based); адаптация по runtime-статистике — это AQE, отдельный механизм Spark 3+.",
+                "source_of_confusion": "AQE и Catalyst оба про оптимизацию плана, и runtime-адаптацию AQE приписывают Catalyst.",
+                "if_it_were_true": "Тогда не было бы отдельной фичи AQE для рантайм-адаптации, но её ввели именно потому, что Catalyst планирует заранее.",
+                "how_it_should_be": "Catalyst планирует до выполнения; рантайм-адаптацию по статистике делает AQE (`spark.sql.adaptive.enabled`)."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Project Tungsten`?",
+          "options": [
+            {
+              "text": "`Tungsten` — это новый язык программирования для Spark, заменяющий `Scala` при написании пайплайнов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tungsten — это набор низкоуровневых оптимизаций исполнения (память, кэш, codegen), а не язык программирования.",
+                "source_of_confusion": "Громкое кодовое имя «Project» создаёт впечатление отдельного продукта или языка.",
+                "if_it_were_true": "Тогда существовал бы синтаксис Tungsten для пользователей, но это внутренний движок исполнения.",
+                "how_it_should_be": "Tungsten — внутренние оптимизации (off-heap, cache-aware, codegen); пишут на `Scala`/`Python`/`SQL` как и раньше."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Tungsten` хранит данные исключительно в `JVM heap` и опирается на стандартный сборщик мусора для управления памятью.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tungsten специально использует off-heap память через `sun.misc.Unsafe`, чтобы обойти накладные расходы `JVM GC`.",
+                "source_of_confusion": "Spark работает на JVM, и из этого делают вывод, что вся память у него heap-управляемая.",
+                "if_it_were_true": "Тогда не было бы выигрыша по GC-паузам, ради которого Tungsten и затевали.",
+                "how_it_should_be": "Tungsten держит данные off-heap в бинарном формате, минимизируя работу `JVM GC`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Tungsten` ускоряет в первую очередь RDD-операции, а DataFrame/Dataset от него почти не выигрывают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tungsten применяется через Catalyst именно к DataFrame/Dataset; RDD его оптимизаций (codegen, off-heap) не получает.",
+                "source_of_confusion": "Tungsten часто упоминают рядом с «5–10x быстрее RDD», и это читают как «ускоряет RDD».",
+                "if_it_were_true": "Тогда RDD был бы так же быстр, как DataFrame, но именно RDD остаётся медленнее без Tungsten.",
+                "how_it_should_be": "Tungsten ускоряет DataFrame/Dataset (через Catalyst); фраза «5–10x быстрее RDD» — это сравнение с неоптимизированным RDD."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Project Tungsten` (с Spark 1.4) — серия оптимизаций исполнения: off-heap memory (обход `JVM GC`, явное управление через `sun.misc.Unsafe`), cache-aware computation (учёт CPU cache в алгоритмах) и whole-stage code generation (генерация JIT-friendly кода для всей stage). Результат — 5–10x быстрее RDD-based операций для тех же задач.",
+              "correct": true,
+              "sections": {
+                "explanation": "Tungsten приближает Spark к «железу»: хранит данные в компактном бинарном формате вне JVM-кучи (меньше нагрузка на GC), учитывает кэш процессора и компилирует целую stage в один кусок байткода вместо цепочки виртуальных вызовов.",
+                "example": "Whole-stage codegen склеивает `filter` + `project` + агрегацию одной stage в единую сгенерированную функцию, убирая накладные расходы на вызовы итераторов между операторами.",
+                "when_to_apply": "Tungsten включается автоматически для DataFrame/Dataset через Catalyst; это ещё один аргумент предпочитать DataFrame перед RDD, который таких оптимизаций не получает.",
+                "edge_cases": "Off-heap память управляется вручную и не видна `JVM GC`, поэтому её нужно учитывать в `spark.memory.offHeap.size` отдельно — иначе можно упереться в лимит контейнера, минуя heap-настройки.",
+                "related": "[[apache-spark-interview#Q11]] Catalyst и стадия codegen; [[apache-spark-interview#Q10]] почему DataFrame быстрее RDD; [[apache-spark-interview#Q34]] GC-паузы в проде."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают `Spark SQL` queries?",
+          "options": [
+            {
+              "text": "`Spark SQL` — это DSL поверх DataFrame: `spark.sql(\"SELECT name, age FROM users WHERE age > 18\")` эквивалентен `spark.table(\"users\").filter($\"age\" > 18).select(\"name\",\"age\")`. Тот же Catalyst, тот же физический план. Таблицы регистрируют через `createOrReplaceTempView` (временные) или `write.saveAsTable` (постоянные).",
+              "correct": true,
+              "sections": {
+                "explanation": "SQL-запрос и эквивалентный DataFrame-код компилируются Catalyst в один и тот же логический и физический план, поэтому SQL в Spark — это лишь альтернативный синтаксис над тем же движком, а не отдельная подсистема.",
+                "example": "`df.createOrReplaceTempView(\"users\"); spark.sql(\"SELECT COUNT(*) FROM users\")` — DataFrame становится доступен как таблица, и SQL-запрос идёт через тот же Catalyst, что и DataFrame API.",
+                "when_to_apply": "SQL удобен аналитикам и для сложных агрегаций/джойнов, где декларативный синтаксис читабельнее; смешивать SQL и DataFrame API в одном пайплайне совершенно нормально.",
+                "edge_cases": "Temp view (`createOrReplaceTempView`) живёт только в рамках `SparkSession` и исчезает с её завершением; для постоянной таблицы в metastore нужен `write.saveAsTable`.",
+                "related": "[[apache-spark-interview#Q11]] Catalyst за SQL и DataFrame; [[apache-spark-interview#Q27]] Spark SQL vs DataFrame по perf; [[apache-spark-interview#Q25]] window functions в SQL."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Spark SQL` использует собственный движок выполнения, отдельный от DataFrame, поэтому SQL и DataFrame дают разные физические планы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SQL и DataFrame компилируются одним Catalyst в один и тот же физический план — отдельного движка у SQL нет.",
+                "source_of_confusion": "SQL выглядит как самостоятельный язык, и кажется, что под ним отдельная подсистема.",
+                "if_it_were_true": "Тогда SQL и DataFrame различались бы по производительности, но они идентичны.",
+                "how_it_should_be": "`Spark SQL` — синтаксис над DataFrame; оба идут через Catalyst в общий физический план."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Temp view, созданная через `createOrReplaceTempView`, сохраняется в metastore навсегда и доступна другим приложениям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Temp view живёт только в текущей `SparkSession` и исчезает с её завершением; постоянная таблица создаётся через `write.saveAsTable`.",
+                "source_of_confusion": "Слово «view» ассоциируется с постоянными объектами реляционной БД.",
+                "if_it_were_true": "Тогда не нужен был бы отдельный `saveAsTable` для постоянных таблиц.",
+                "how_it_should_be": "`createOrReplaceTempView` — временная view в рамках сессии; для постоянной таблицы — `saveAsTable`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Spark SQL` умеет читать только из `Hive` и не работает с DataFrame, полученными из `Parquet` или потоков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Любой DataFrame (из `Parquet`, JSON, потока и т.д.) можно зарегистрировать как view и запрашивать через SQL — источник не ограничен `Hive`.",
+                "source_of_confusion": "`Spark SQL` совместим с `Hive` metastore, и это сужают до «только Hive».",
+                "if_it_were_true": "Тогда `createOrReplaceTempView` над parquet-DataFrame не работал бы, но это обычная практика.",
+                "how_it_should_be": "Через temp view SQL доступен над любым DataFrame, независимо от источника данных."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `partition` в `Spark`?",
+          "options": [
+            {
+              "text": "`Partition` — это реплика данных на другой ноде для отказоустойчивости, как блок в `HDFS` с фактором репликации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Partition — это единица параллелизма (кусок данных под один task), а не реплика; отказоустойчивость в Spark обеспечивает lineage, а не репликация partitions.",
+                "source_of_confusion": "И partition, и блок `HDFS` — куски данных, поэтому их роли смешивают.",
+                "if_it_were_true": "Тогда число partitions определяло бы надёжность, а не параллелизм, но оно задаёт именно параллелизм.",
+                "how_it_should_be": "Partition — единица параллелизма (один task на partition); надёжность даёт lineage."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Partition` — единица параллелизма: каждый partition обрабатывается одним task. Слишком мало partitions — не используются все cores; слишком много — overhead на task scheduling. Best practice — ~2–4× числа cores в кластере. `repartition(N)` делает shuffle на N partitions, `coalesce(N)` объединяет без shuffle (только уменьшение).",
+              "correct": true,
+              "sections": {
+                "explanation": "Параллелизм Spark = число partitions: на каждый partition приходится один task, и tasks выполняются параллельно по ядрам executors. Поэтому число partitions напрямую определяет, сколько работы идёт одновременно.",
+                "example": "`sc.parallelize(1 to 1000, 10)` создаёт 10 partitions и, значит, до 10 параллельных tasks; для parquet-DataFrame число partitions зависит от количества и размера файлов.",
+                "when_to_apply": "Число partitions подбирают под кластер: ориентир ~2–4× cores, чтобы загрузить все ядра, но не утонуть в накладных расходах на планирование тысяч мелких tasks.",
+                "edge_cases": "Слишком много мелких partitions раздувает scheduling-overhead и shuffle-файлы; слишком мало — оставляет ядра простаивать и грозит OOM на огромных partition'ах.",
+                "related": "[[apache-spark-interview#Q17]] coalesce vs repartition; [[apache-spark-interview#Q15]] shuffle при repartition; [[apache-spark-interview#Q18]] skew как неравномерность partitions."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Каждый partition в `Spark` обрабатывается всеми executors одновременно, чтобы ускорить вычисление одного куска данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один partition обрабатывается ровно одним task на одном executor; параллелизм достигается за счёт множества partitions, а не дробления одного.",
+                "source_of_confusion": "Распределённость наводит на мысль, что любой кусок данных считается всем кластером сразу.",
+                "if_it_were_true": "Тогда skew (один тяжёлый partition) не был бы проблемой, но он именно потому и узкое место, что его тянет один task.",
+                "how_it_should_be": "Один partition = один task на одном executor; параллелизм даёт количество partitions."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Чем больше partitions, тем всегда быстрее job: оптимально дробить данные на десятки тысяч мелких partitions.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Слишком много partitions раздувает overhead на task scheduling и shuffle-файлы; оптимум — порядка 2–4× cores, а не десятки тысяч.",
+                "source_of_confusion": "Параллелизм кажется бесплатным, и из этого выводят «больше partitions — всегда лучше».",
+                "if_it_were_true": "Тогда не было бы рекомендации ~2–4× cores и проблемы «too many small tasks».",
+                "how_it_should_be": "Число partitions подбирают (~2–4× cores); и слишком мало, и слишком много одинаково вредно."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `shuffle` в `Spark`?",
+          "options": [
+            {
+              "text": "`Shuffle` — это процесс кэширования DataFrame в памяти всех executors для ускорения повторных вычислений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кэширование — это `cache`/`persist`; shuffle же перераспределяет данные между partitions по сети и диску при wide-операциях.",
+                "source_of_confusion": "И shuffle, и кэш связаны с памятью executors, поэтому их путают.",
+                "if_it_were_true": "Тогда shuffle ускорял бы job, но он, наоборот, главная причина медленных jobs.",
+                "how_it_should_be": "Shuffle — это дорогостоящее перемещение данных между partitions; кэширование — отдельный механизм `persist`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Shuffle` происходит при любой transformation, включая `map` и `filter`, поэтому narrow-операции тоже дорогие.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Shuffle возникает только при wide-операциях (`join`, `groupByKey`, `repartition`); `map`/`filter` — narrow и обходятся без shuffle.",
+                "source_of_confusion": "Слово «transformation» общее для narrow и wide, и shuffle ошибочно приписывают всем.",
+                "if_it_were_true": "Тогда `df.filter(...)` создавал бы shuffle-файлы и stage boundary, но он этого не делает.",
+                "how_it_should_be": "Shuffle вызывают только wide-операции; narrow (`map`/`filter`) выполняются локально без него."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Shuffle` — перераспределение данных между partitions, обычно через сеть и диск. Происходит при wide transformations (`groupByKey`, `join`, `repartition`, `distinct`). Этапы: map side (вычислить целевой partition для каждой записи), write to local disk (shuffle-файлы), reduce side fetch (reducers читают свои partitions по сети), reduce side process. В 100–1000 раз медленнее narrow — главная причина медленных jobs.",
+              "correct": true,
+              "sections": {
+                "explanation": "Чтобы собрать вместе записи с одинаковым ключом, Spark на map-стороне раскладывает их по целевым partitions, пишет на локальный диск, а reduce-сторона стягивает нужные куски по сети — отсюда плата за I/O, сеть и сериализацию.",
+                "example": "При `join` двух больших таблиц обе стороны репартиционируются по ключу: записи летят между executors по сети, временно оседая в shuffle-файлах на диске.",
+                "when_to_apply": "Про shuffle вспоминают, диагностируя медленные jobs: большие shuffle read/write в Spark UI — прямой сигнал, что узкое место именно в перемещении данных.",
+                "edge_cases": "Если данных в reduce-партиции не хватает памяти, происходит spill на диск, ещё сильнее замедляя shuffle; настройка `spark.sql.shuffle.partitions` напрямую влияет на размер этих партиций.",
+                "related": "[[apache-spark-interview#Q16]] как минимизировать shuffle; [[apache-spark-interview#Q9]] wide-операции как источник shuffle; [[apache-spark-interview#Q32]] shuffle read/write в Spark UI."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Shuffle` целиком выполняется в RAM без записи на локальный диск, поэтому его стоимость сопоставима с narrow-операциями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Shuffle пишет промежуточные данные на локальный диск (shuffle-файлы) и тянет их по сети, поэтому он в 100–1000 раз дороже narrow-операций.",
+                "source_of_confusion": "Маркетинг «Spark всё делает in-memory» создаёт иллюзию отсутствия дискового I/O в shuffle.",
+                "if_it_were_true": "Тогда shuffle не был бы главным узким местом, но именно он чаще всего тормозит jobs.",
+                "how_it_should_be": "Shuffle включает запись на диск, сетевой обмен и сериализацию — это дорого по сравнению с narrow."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как минимизировать `shuffle` в `Spark`?",
+          "options": [
+            {
+              "text": "Чтобы убрать shuffle, нужно заменить `reduceByKey` на `groupByKey` — последний агрегирует данные без сетевого обмена.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `reduceByKey` дешевле, потому что делает combiner на map-стороне; `groupByKey` тащит все значения по сети целиком.",
+                "source_of_confusion": "Оба метода группируют по ключу, и кажется, что разницы в стоимости shuffle нет.",
+                "if_it_were_true": "Тогда не советовали бы «`reduceByKey` вместо `groupByKey`» как базовую оптимизацию.",
+                "how_it_should_be": "`reduceByKey` минимизирует shuffle map-side combiner'ом; `groupByKey` — антипаттерн на больших данных."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Лучший способ убрать shuffle при join — это `broadcast` обеих таблиц на все executors, независимо от их размера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Broadcast применим только к маленькой таблице (по умолчанию < 10 MB); broadcast большой таблицы переполнит память executors и вызовет OOM.",
+                "source_of_confusion": "Broadcast действительно убирает shuffle, и из этого выводят «бродкастить всё подряд».",
+                "if_it_were_true": "Тогда sort-merge join был бы не нужен вовсе, но он существует именно для больших таблиц.",
+                "how_it_should_be": "Бродкастят только маленькую сторону; большие таблицы джойнят sort-merge join'ом."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Добавление лишних `repartition` перед каждой операцией всегда уменьшает shuffle и ускоряет job.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`repartition` — сам по себе wide-операция с полным shuffle; лишние вызовы добавляют shuffle, а не убирают его.",
+                "source_of_confusion": "`repartition` балансирует данные, и это путают с уменьшением сетевого обмена.",
+                "if_it_were_true": "Тогда чем больше `repartition`, тем быстрее job, но каждый из них — это дополнительный stage с shuffle.",
+                "how_it_should_be": "`repartition` применяют только когда нужно (балансировка/перед join по ключу); лишние вызовы вредят."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Использовать `reduceByKey` вместо `groupByKey` (combiner на map-стороне); `broadcast join` для маленьких таблиц вместо shuffle join; pre-partitioning одинаковыми ключами для join; фильтровать рано (push down, Catalyst делает сам); column pruning — выбирать только нужные колонки до join; применять `repartition` только когда действительно нужно.",
+              "correct": true,
+              "sections": {
+                "explanation": "Идея одна: уменьшить объём данных, которые двигаются по сети, и число самих перемещений. Предагрегация на map-стороне, broadcast маленькой таблицы, ранние фильтры и отбор колонок сокращают и количество, и размер shuffle.",
+                "example": "`rdd.reduceByKey(_ + _)` суммирует значения локально на каждой ноде до shuffle, тогда как `rdd.groupByKey().mapValues(_.sum)` сначала тащит ВСЕ значения по сети, а потом суммирует.",
+                "when_to_apply": "Эти приёмы применяют при тюнинге медленных jobs: сначала смотрят shuffle read/write в Spark UI, затем заменяют `groupByKey`, добавляют broadcast и ранние фильтры.",
+                "edge_cases": "`broadcast join` помогает только если маленькая таблица влезает в память каждого executor (по умолчанию < 10 MB); broadcast большой таблицы вызовет OOM вместо ускорения.",
+                "related": "[[apache-spark-interview#Q15]] что такое shuffle; [[apache-spark-interview#Q20]] broadcast join подробно; [[apache-spark-interview#Q17]] coalesce vs repartition."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `coalesce` отличается от `repartition`?",
+          "options": [
+            {
+              "text": "`coalesce(N)` объединяет partitions БЕЗ shuffle, но даёт возможно неравные partitions и только уменьшает число; `repartition(N)` делает полный shuffle и равномерное распределение, умеет и увеличивать; `repartition(col)` шафлит по hash от колонки (перед join по ней). Best practice — перед `write` использовать `coalesce` для уменьшения числа output-файлов.",
+              "correct": true,
+              "sections": {
+                "explanation": "`coalesce` дешёв, потому что просто склеивает соседние partitions локально, без перемещения по сети, — но не выравнивает их по размеру. `repartition` дороже (полный shuffle), зато даёт равномерные partitions и умеет увеличивать их число.",
+                "example": "Перед записью результата делают `df.coalesce(50)`, чтобы вместо 1000 мелких output-файлов получить 50, не платя за shuffle; для балансировки перекошенных данных берут `repartition`.",
+                "when_to_apply": "`coalesce` — для уменьшения числа output-файлов перед `write`; `repartition` — для увеличения параллелизма или балансировки skew; `repartition(col)` — перед join по этой колонке.",
+                "edge_cases": "`coalesce` до очень малого числа partitions (например, до 1) убивает параллелизм всей предшествующей цепочки и может вызвать OOM, так как всё схлопывается в один task.",
+                "related": "[[apache-spark-interview#Q14]] partition как единица параллелизма; [[apache-spark-interview#Q15]] shuffle при repartition; [[apache-spark-interview#Q16]] не злоупотреблять repartition."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`coalesce(N)` выполняет полный shuffle и гарантирует идеально равные partitions, а `repartition(N)` лишь склеивает соседние без сети.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Перепутано: `coalesce` склеивает без shuffle (partitions могут быть неравными), а `repartition` делает полный shuffle с равномерным распределением.",
+                "source_of_confusion": "Оба метода меняют число partitions, поэтому их свойства легко поменять местами.",
+                "if_it_were_true": "Тогда `coalesce` был бы дороже `repartition`, но всё наоборот — `coalesce` дешевле именно из-за отсутствия shuffle.",
+                "how_it_should_be": "`coalesce` — без shuffle, возможны неравные partitions; `repartition` — полный shuffle и равномерность."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`coalesce(N)` умеет как уменьшать, так и увеличивать число partitions, потому что выполняет полный shuffle при увеличении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`coalesce` предназначен для уменьшения числа partitions без shuffle; для надёжного увеличения нужен `repartition` (с shuffle).",
+                "source_of_confusion": "Раз `repartition` умеет в обе стороны, ожидают того же от `coalesce`.",
+                "if_it_were_true": "Тогда `repartition` для увеличения был бы не нужен, но именно он для этого и применяется.",
+                "how_it_should_be": "`coalesce` — про уменьшение без shuffle; увеличение partitions делает `repartition`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Перед `write` всегда лучше использовать `repartition`, потому что `coalesce` приводит к большему числу output-файлов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Перед `write` для уменьшения числа output-файлов рекомендуют `coalesce` — он избегает лишнего shuffle, который добавил бы `repartition`.",
+                "source_of_confusion": "Кажется, что равномерность `repartition` всегда лучше, и это переносят на запись файлов.",
+                "if_it_were_true": "Тогда best practice советовал бы `repartition` перед записью, но он советует именно `coalesce`.",
+                "how_it_should_be": "Перед `write` берут `coalesce` для меньшего числа файлов без накладного shuffle."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как решать `data skew` в `Spark`?",
+          "options": [
+            {
+              "text": "`Data skew` — это когда все partitions строго одинакового размера, из-за чего job выполняется максимально медленно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Skew — это, наоборот, неравномерность: одни partitions сильно больше других; одинаковый размер — это идеальная сбалансированность, а не skew.",
+                "source_of_confusion": "Слово «skew» (перекос) понимают наоборот — как чрезмерную равномерность.",
+                "if_it_were_true": "Тогда лекарством было бы делать partitions неравными, но лечат как раз неравномерность.",
+                "how_it_should_be": "Skew — неравномерность размеров partitions; цель оптимизации — выровнять их (salting, AQE)."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Data skew` — некоторые partitions гораздо больше других, и несколько tasks работают намного дольше (остальные простаивают). Симптомы: один task в 10x дольше, OOM на конкретном executor, stage не завершается. Решения: salting (случайный суффикс к hot key), AQE (Spark 3+ авто-разбивает skewed partitions), broadcast join (если одна таблица мала), custom partitioner.",
+              "correct": true,
+              "sections": {
+                "explanation": "Skew возникает, когда hot keys (например, NULL или один популярный id) стягивают непропорционально много данных в одну partition. Её тянет один task, и весь stage ждёт его, пока остальные tasks простаивают.",
+                "example": "Salting: к hot key добавляют случайный суффикс `concat($\"key\", lit(\"_\"), (rand()*100).cast(\"int\"))`, агрегируют по salted-ключу, потом убирают суффикс и доагрегируют — нагрузка размазывается по 100 partitions.",
+                "when_to_apply": "Skew лечат, когда в Spark UI видно один task, идущий 10x дольше остальных, или повторяющийся OOM на одном executor при `groupBy`/`join` по ключу с горячими значениями.",
+                "edge_cases": "NULL-ключи — частая причина skew: все NULL хешируются в одну partition; их часто фильтруют или обрабатывают отдельно перед join, иначе никакое salting равномерно их не размажет.",
+                "related": "[[apache-spark-interview#Q33]] AQE и skew join optimization; [[apache-spark-interview#Q20]] broadcast join против skew; [[apache-spark-interview#Q14]] неравномерные partitions."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Лучшее средство от skew — увеличить `spark.driver.memory`, потому что перекос данных нагружает именно driver.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Skew проявляется на executors (тяжёлый task/OOM на конкретном executor), а не на driver; лечат его salting, AQE и broadcast, а не памятью driver.",
+                "source_of_confusion": "OOM в Spark ассоциируют с driver (из-за `collect()`), и это переносят на skew.",
+                "if_it_were_true": "Тогда никакой salting был бы не нужен — хватило бы памяти driver, но перекос на executors так не лечится.",
+                "how_it_should_be": "Skew — проблема распределения по executors; решения — salting, AQE skew join, broadcast."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Salting от skew работает так: ко всем ключам добавляют один и тот же фиксированный суффикс, не меняя распределение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Salting добавляет СЛУЧАЙНЫЙ суффикс (`rand()`), чтобы записи hot key разошлись по многим partitions; одинаковый суффикс ничего бы не изменил.",
+                "source_of_confusion": "Идея «добавить суффикс» запоминается без важной детали — что он случайный.",
+                "if_it_were_true": "Тогда все записи всё равно попадали бы в одну partition, и skew не уходил бы.",
+                "how_it_should_be": "Salting использует случайный суффикс, размазывая hot key по нескольким partitions, с последующей доагрегацией."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типы `joins` есть в `Spark`?",
+          "options": [
+            {
+              "text": "В `Spark` есть только inner и outer joins; semi-, anti- и cross-joins не поддерживаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spark поддерживает inner, left/right/full outer, а также left_semi, left_anti и crossJoin — выбор шире, чем inner/outer.",
+                "source_of_confusion": "Inner и outer — самые известные join'ы из SQL, и о semi/anti часто забывают.",
+                "if_it_were_true": "Тогда нельзя было бы выразить «строки без пары» через `left_anti`, но это штатный режим.",
+                "how_it_should_be": "Кроме inner/outer есть left_semi, left_anti и crossJoin — полный набор семантик."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`left_semi` join возвращает строки `df1` вместе со всеми колонками `df2`, как обычный left outer join.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`left_semi` возвращает только строки `df1` (без колонок `df2`), где есть совпадение — это фильтр по наличию match, а не left outer.",
+                "source_of_confusion": "И left_semi, и left outer оставляют строки `df1`, поэтому их путают.",
+                "if_it_were_true": "Тогда left_semi был бы дубликатом left outer и не нужен как отдельный тип.",
+                "how_it_should_be": "`left_semi` отдаёт строки `df1` без колонок `df2` — это семантика «существует match»."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "По семантике: inner, left/right/full outer, left_semi (строки `df1`, где есть match), left_anti (строки `df1`, где match нет), crossJoin (cartesian). По стратегии исполнения Catalyst выбирает: Broadcast Hash Join (одна сторона < `spark.sql.autoBroadcastJoinThreshold`, default 10MB), Sort-Merge Join (обе большие, sorted/repartitioned), Shuffle Hash Join (редкая), Cartesian (без условия).",
+              "correct": true,
+              "sections": {
+                "explanation": "Важно различать два уровня: семантику join (какие строки оставить — inner/outer/semi/anti) и физическую стратегию (как именно соединять — broadcast, sort-merge). Семантику задаёт разработчик, стратегию выбирает Catalyst по размерам и статистике.",
+                "example": "`df1.join(df2, Seq(\"id\"), \"left_semi\")` вернёт строки `df1`, для которых есть совпадение в `df2`, но без колонок `df2` — удобно как фильтр «есть в справочнике».",
+                "when_to_apply": "Тип join выбирают по бизнес-логике: `left_anti` — найти записи без пары (антиджойн), `left_semi` — отфильтровать по наличию match, outer — сохранить несовпавшие строки с одной или обеих сторон.",
+                "edge_cases": "`crossJoin` (cartesian) без условия даёт N×M строк и легко взрывается комбинаторно; Spark по умолчанию требует явный `crossJoin` или флаг, чтобы случайно не запустить декартово произведение.",
+                "related": "[[apache-spark-interview#Q20]] broadcast join подробнее; [[apache-spark-interview#Q21]] sort-merge vs hash join; [[apache-spark-interview#Q18]] skew при join по hot key."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Стратегию join (broadcast или sort-merge) разработчик обязан указывать вручную; Catalyst сам её не выбирает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Catalyst автоматически выбирает физическую стратегию по размерам/статистике (broadcast при стороне < порога, иначе sort-merge); hint лишь подсказка.",
+                "source_of_confusion": "Существование hint'ов `BROADCAST` создаёт впечатление, что выбор всегда ручной.",
+                "if_it_were_true": "Тогда без hint'а join вообще не выполнялся бы, но он работает и без подсказок.",
+                "how_it_should_be": "Стратегию выбирает Catalyst автоматически; hint'ы — опциональная подсказка, а не обязанность."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда применяется `broadcast join`?",
+          "options": [
+            {
+              "text": "`Broadcast join` рассылает на каждый executor большую таблицу, а маленькую оставляет на месте без shuffle.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Перепутано: бродкастится именно МАЛЕНЬКАЯ таблица, а большая не шафлится и обрабатывается локально каждым executor.",
+                "source_of_confusion": "Слово «broadcast» (рассылка) не уточняет, что именно рассылают, поэтому стороны меняют местами.",
+                "if_it_were_true": "Тогда broadcast вызывал бы OOM на каждом executor от большой таблицы, а не ускорение.",
+                "how_it_should_be": "Бродкастится маленькая сторона; большая остаётся на месте без shuffle."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Broadcast join` применим к любым двум таблицам независимо от размера, поэтому им всегда заменяют sort-merge join.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Broadcast применим, только если одна сторона влезает в память executor (по умолчанию < 10 MB); для двух больших таблиц используется sort-merge.",
+                "source_of_confusion": "Broadcast быстрее sort-merge, и из этого выводят «всегда бродкастить».",
+                "if_it_were_true": "Тогда sort-merge join был бы не нужен вовсе, но он существует именно для больших таблиц.",
+                "how_it_should_be": "Broadcast — только для маленькой стороны; большие-большие джойнят sort-merge join'ом."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Broadcast join` всегда медленнее sort-merge join, потому что рассылка таблицы по сети дороже сортировки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Broadcast join обычно в 5–100x быстрее sort-merge, так как избегает shuffle большой таблицы; рассылка маленькой таблицы дёшева.",
+                "source_of_confusion": "Слово «рассылка по сети» звучит дорого, и broadcast кажется медленным.",
+                "if_it_were_true": "Тогда AQE не конвертировал бы sort-merge в broadcast ради ускорения, но он делает именно это.",
+                "how_it_should_be": "Broadcast быстрее sort-merge для маленькой стороны: исключается дорогой shuffle большой таблицы."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Broadcast join` — маленькая таблица копируется на каждый executor, большая не шафлится: `bigDf.join(broadcast(smallDf), \"id\")`. Условие — `smallDf` должна влезать в память каждого executor (по умолчанию < 10 MB, порог `spark.sql.autoBroadcastJoinThreshold`). Преимущества: нет shuffle большой таблицы, в 5–100x быстрее sort-merge. В Spark 3+ AQE может авто-конвертировать sort-merge → broadcast.",
+              "correct": true,
+              "sections": {
+                "explanation": "Идея — избежать дорогого shuffle большой таблицы. Маленькую таблицу целиком рассылают на все executors, и каждый локально джойнит свои partitions большой таблицы с этой копией; данные большой таблицы по сети не двигаются.",
+                "example": "Джойн фактов (миллиарды строк) со справочником стран (200 строк): `factsDf.join(broadcast(countriesDf), \"country_code\")` рассылает справочник на executors, и факты никуда не шафлятся.",
+                "when_to_apply": "Broadcast join выбирают, когда одна сторона мала (справочник, измерение) и влезает в память executor; для двух больших таблиц он неприменим — там sort-merge.",
+                "edge_cases": "Если бродкастить таблицу больше, чем влезает в память executor, получится OOM; поэтому порог авто-broadcast (10 MB) намеренно консервативен, а ручной `broadcast()` нужно применять осознанно.",
+                "related": "[[apache-spark-interview#Q21]] sort-merge как альтернатива; [[apache-spark-interview#Q16]] broadcast для минимизации shuffle; [[apache-spark-interview#Q33]] AQE авто-конвертирует в broadcast."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `sort-merge join` отличается от `hash join`?",
+          "options": [
+            {
+              "text": "`Sort-merge join` сортирует обе стороны по join key, затем сливает (merge) одновременно — сложность `O((n+m) log n)` (sort + merge). `Hash join`: build phase строит hash-таблицу из меньшей стороны, probe phase ищет в ней для каждой строки большей — `O(n+m)`, но требует памяти под hash-таблицу. В Spark по умолчанию sort-merge (стабильнее по памяти); broadcast hash join — для маленьких таблиц.",
+              "correct": true,
+              "sections": {
+                "explanation": "Sort-merge платит за сортировку обеих сторон, зато работает потоково и устойчив по памяти. Hash join быстрее по асимптотике (`O(n+m)`), но держит hash-таблицу одной стороны в памяти, что рискованно на больших данных.",
+                "example": "Для двух больших таблиц Spark сортирует обе по ключу и сливает их как два упорядоченных потока (sort-merge); для маленькой стороны строит hash-таблицу и пробит её большой (broadcast hash join).",
+                "when_to_apply": "Sort-merge — дефолт для двух больших таблиц, где hash-таблица не влезла бы в память; hash join (broadcast) — когда одна сторона мала и её хэш помещается в RAM executor.",
+                "edge_cases": "Hash join при недостатке памяти под build-сторону деградирует или падает OOM, поэтому Spark по умолчанию предпочитает более предсказуемый по памяти sort-merge даже ценой сортировки.",
+                "related": "[[apache-spark-interview#Q20]] broadcast hash join; [[apache-spark-interview#Q19]] стратегии join; [[apache-spark-interview#Q15]] shuffle перед sort-merge."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Sort-merge join` строит hash-таблицу из меньшей стороны и пробит её большей, а `hash join` сортирует обе стороны и сливает их.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Перепутаны определения: sort-merge сортирует и сливает обе стороны, а hash join строит hash-таблицу (build) и пробит её (probe).",
+                "source_of_confusion": "Оба — стратегии join, и их механики легко поменять местами по названию.",
+                "if_it_were_true": "Тогда sort-merge требовал бы много памяти под hash-таблицу, но он, наоборот, устойчив по памяти.",
+                "how_it_should_be": "Sort-merge: сортировка + merge обеих сторон; hash join: build hash-таблицы + probe."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "По умолчанию `Spark` для двух больших таблиц использует `hash join`, потому что он не требует сортировки и всегда дешевле по памяти.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию Spark выбирает sort-merge join как более стабильный по памяти; hash join требует держать hash-таблицу стороны в RAM.",
+                "source_of_confusion": "Hash join эффективнее по асимптотике (`O(n+m)`), и это принимают за дефолт Spark.",
+                "if_it_were_true": "Тогда не было бы предупреждений об OOM в hash join, но именно память делает его рискованным.",
+                "how_it_should_be": "Дефолт Spark — sort-merge (предсказуем по памяти); hash join применяется ограниченно (broadcast)."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Hash join` требует предварительной сортировки обеих сторон, поэтому его асимптотика — `O((n+m) log n)`, как у sort-merge.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hash join не сортирует стороны: build + probe дают `O(n+m)`; сортировка `O((n+m) log n)` — это про sort-merge.",
+                "source_of_confusion": "Обе стратегии часто описывают рядом, и сортировку sort-merge приписывают hash join.",
+                "if_it_were_true": "Тогда у hash join не было бы асимптотического преимущества, но оно есть именно из-за отсутствия сортировки.",
+                "how_it_should_be": "Hash join — `O(n+m)` без сортировки; сортировка и `O((n+m) log n)` — у sort-merge."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `cache()` отличается от `persist()`?",
+          "options": [
+            {
+              "text": "`cache()` и `persist()` — это совершенно разные механизмы: `cache()` хранит в памяти навсегда, а `persist()` только на диске.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`cache()` — это частный случай `persist()` с дефолтным storage level; оба используют один механизм хранения, просто `cache` без аргументов.",
+                "source_of_confusion": "Разные имена методов создают впечатление двух независимых механизмов.",
+                "if_it_were_true": "Тогда `cache()` нельзя было бы выразить через `persist(...)`, но `df.cache()` == `df.persist(MEMORY_AND_DISK)`.",
+                "how_it_should_be": "`cache()` — это `persist()` с уровнем по умолчанию; механизм один и тот же."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`cache()` — синоним `persist(MEMORY_AND_DISK)` для DataFrame (для RDD — `MEMORY_ONLY`), без аргументов. `persist(level)` принимает явный storage level: `MEMORY_ONLY`, `MEMORY_AND_DISK`, `DISK_ONLY`, `MEMORY_ONLY_SER` и т.д. `unpersist()` освобождает. То есть `cache` — частный случай `persist` с дефолтным уровнем хранения.",
+              "correct": true,
+              "sections": {
+                "explanation": "Функционально `cache()` — это `persist()` с уже выбранным storage level по умолчанию. `persist()` гибче: позволяет явно указать, где и как хранить данные — только в памяти, со спиллом на диск, сериализованно или с репликацией.",
+                "example": "`df.cache()` эквивалентно `df.persist(StorageLevel.MEMORY_AND_DISK)`; если нужен только диск, пишут `df.persist(StorageLevel.DISK_ONLY)`, чего `cache()` без аргументов не даст.",
+                "when_to_apply": "`cache()` берут, когда устраивает уровень по умолчанию; `persist(level)` — когда нужно осознанно выбрать storage level (например, `MEMORY_ONLY_SER` для компактности или `DISK_ONLY` при нехватке RAM).",
+                "edge_cases": "Дефолтный уровень `cache()` различается: для DataFrame это `MEMORY_AND_DISK`, а для RDD — `MEMORY_ONLY`; перепутав это, можно неожиданно получить OOM на RDD вместо спилла на диск.",
+                "related": "[[apache-spark-interview#Q23]] storage levels подробно; [[apache-spark-interview#Q24]] когда стоит кэшировать; [[apache-spark-interview#Q5]] RDD и persist."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`persist()` нельзя задать storage level — он всегда хранит данные только в RAM без спилла на диск.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`persist(level)` принимает явный storage level: `MEMORY_AND_DISK`, `DISK_ONLY`, `MEMORY_ONLY_SER` и др., включая спилл на диск.",
+                "source_of_confusion": "Кэширование ассоциируют исключительно с памятью, забывая про дисковые уровни.",
+                "if_it_were_true": "Тогда `DISK_ONLY` и `MEMORY_AND_DISK` не существовали бы как аргументы `persist`.",
+                "how_it_should_be": "`persist(level)` позволяет выбрать любой storage level, в том числе со спиллом на диск."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "После `cache()` данные материализуются немедленно, ещё до первого action, потому что `cache()` — это action.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`cache()` ленив: он лишь помечает DataFrame для кэширования, а реально кэш строится при первом action (часто прогревают `.count()`).",
+                "source_of_confusion": "Кажется, что `cache()` «сразу что-то делает», как императивная команда.",
+                "if_it_were_true": "Тогда не понадобился бы прогрев через `.count()` после `cache()`, но его делают именно из-за ленивости.",
+                "how_it_should_be": "`cache()` — трансформация-пометка; кэш материализуется на первом action."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие `storage levels` есть в `Spark`?",
+          "options": [
+            {
+              "text": "Суффикс `_2` в storage level означает удвоение объёма памяти на partition, а не репликацию на вторую ноду.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`_2` означает репликацию данных на 2 nodes для отказоустойчивости, а не удвоение памяти под один partition.",
+                "source_of_confusion": "Цифра 2 ассоциируется с «в два раза больше», что путают с фактором репликации.",
+                "if_it_were_true": "Тогда `_2` не давал бы устойчивости к падению ноды, но именно для этого реплика и нужна.",
+                "how_it_should_be": "`_2` — это replication factor 2 (копия на другой ноде) ради fault tolerance."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Суффикс `SER` (`MEMORY_ONLY_SER`) увеличивает потребление памяти, зато полностью убирает нагрузку на CPU.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `SER` хранит данные компактнее (меньше памяти), но добавляет CPU-нагрузку на сериализацию/десериализацию.",
+                "source_of_confusion": "Слово «сериализация» звучит как «дополнительные данные», отсюда ложный вывод про рост памяти.",
+                "if_it_were_true": "Тогда `SER` не имел бы смысла при нехватке RAM, но его берут именно для экономии памяти.",
+                "how_it_should_be": "`SER` экономит память ценой CPU на ser/deser — компромисс в обратную сторону."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Основные: `MEMORY_ONLY` (RAM, без диска), `MEMORY_AND_DISK` (RAM со спиллом на диск), `MEMORY_ONLY_SER` (RAM, сериализованно — компактнее), `MEMORY_AND_DISK_SER`, `DISK_ONLY`, `MEMORY_ONLY_2` (репликация на 2 nodes). `SER` — сериализация (меньше памяти, но CPU на ser/deser). `_2` — реплика на 2 nodes для отказоустойчивости. По умолчанию для DataFrame — `MEMORY_AND_DISK`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Storage level — это три независимых выбора: память и/или диск, сериализовать ли данные (`SER`) и сколько реплик (`_2`). Каждый — компромисс между объёмом памяти, нагрузкой на CPU и отказоустойчивостью.",
+                "example": "`MEMORY_ONLY_SER` хранит данные в RAM в сериализованном виде — занимает меньше места, чем `MEMORY_ONLY`, но тратит CPU на десериализацию при каждом доступе.",
+                "when_to_apply": "`MEMORY_AND_DISK` — безопасный дефолт; `MEMORY_ONLY_SER` — когда RAM в обрез и нужна компактность; `DISK_ONLY` — когда данные вообще не влезают в память; `_2` — когда важна устойчивость к падению ноды.",
+                "edge_cases": "`MEMORY_ONLY` при нехватке RAM не спиллит на диск, а просто пересчитывает невлезшие partitions по lineage при следующем доступе — это незаметно бьёт по производительности, в отличие от `MEMORY_AND_DISK`.",
+                "related": "[[apache-spark-interview#Q22]] cache vs persist; [[apache-spark-interview#Q24]] когда кэшировать; [[apache-spark-interview#Q8]] lineage для пересчёта невлезших partitions."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "По умолчанию DataFrame кэшируется на уровне `DISK_ONLY`, поэтому кэш никогда не занимает память.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дефолтный уровень для DataFrame — `MEMORY_AND_DISK` (сначала память, спилл на диск при нехватке), а не `DISK_ONLY`.",
+                "source_of_confusion": "Спилл на диск в `MEMORY_AND_DISK` принимают за чисто дисковое хранение.",
+                "if_it_were_true": "Тогда `cache()` не давал бы выигрыша in-memory, ради которого его и применяют.",
+                "how_it_should_be": "Дефолт DataFrame — `MEMORY_AND_DISK`: сначала RAM, диск только как спилл."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда стоит кэшировать данные в `Spark`?",
+          "options": [
+            {
+              "text": "Кэшировать нужно каждый DataFrame сразу после создания — это всегда ускоряет job независимо от числа обращений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кэш окупается только при повторном использовании (action > 1); при однократном он зря занимает память и не даёт выигрыша.",
+                "source_of_confusion": "«In-memory — быстро» воспринимают как «кэшировать всё подряд полезно».",
+                "if_it_were_true": "Тогда не было бы рекомендации «не кэшируй одноразовые DataFrame», но она есть.",
+                "how_it_should_be": "Кэшируют переиспользуемые/дорогие/итеративные данные; одноразовые — нет."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Кэш материализуется сразу при вызове `cache()`, поэтому прогрев через `.count()` после него не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`cache()` ленив: кэш строится при первом action, поэтому для прогрева часто специально вызывают `.count()`.",
+                "source_of_confusion": "Кажется, что `cache()` немедленно записывает данные в память.",
+                "if_it_were_true": "Тогда первое реальное действие после `cache()` не было бы медленным, но именно оно строит кэш.",
+                "how_it_should_be": "`cache()` ленив; данные попадают в память на первом action (часто прогревают `.count()`)."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Если кэш не помещается в память, `Spark` завершает job с ошибкой OOM, так как evict кэша невозможен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При нехватке памяти Spark вытесняет (evict) partitions кэша и пересчитывает их по lineage при следующем доступе, а не падает с OOM.",
+                "source_of_confusion": "Нехватку памяти ассоциируют с обязательным OOM, забывая про механизм eviction.",
+                "if_it_were_true": "Тогда любой слишком большой кэш ронял бы job, но Spark обходится eviction'ом и пересчётом.",
+                "how_it_should_be": "Невлезший кэш вытесняется и пересчитывается по lineage — это бьёт по perf, но не роняет job."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Кэшировать стоит, когда DataFrame используется несколько раз (action > 1), при дорогой трансформации (long lineage) или в итеративных алгоритмах (ML). НЕ стоит, когда DataFrame используется один раз, он очень маленький или памяти не хватает (кеш будет evict'иться). Подвох: cache ленив — не строится до первого action, поэтому часто делают `.count()` для прогрева.",
+              "correct": true,
+              "sections": {
+                "explanation": "Кэш окупается, только если данные переиспользуются: повторные actions берут готовый результат вместо пересчёта всей цепочки. При однократном использовании кэш лишь зря занимает память и ничего не экономит.",
+                "example": "`val e = df.groupBy(...).agg(...).cache(); e.count(); e.show(); e.write.parquet(...); e.unpersist()` — `count()` прогревает кэш, а `show` и `write` берут его без повторной агрегации.",
+                "when_to_apply": "Кэшируют дорогие промежуточные результаты, к которым обращаются больше одного раза, и итеративные данные в ML; одноразовые и крошечные DataFrame не кэшируют.",
+                "edge_cases": "Если кэш не влезает в память, partitions вытесняются (evict) и пересчитываются заново по lineage — кэш не помогает, а иногда вредит; поэтому важно вызывать `unpersist()`, освобождая память после использования.",
+                "related": "[[apache-spark-interview#Q22]] cache vs persist; [[apache-spark-interview#Q23]] storage levels; [[apache-spark-interview#Q8]] lineage и пересчёт."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `window functions` в `Spark`?",
+          "options": [
+            {
+              "text": "`Window functions` считают агрегаты/ранги в пределах окна (группы строк), не схлопывая строки: окно задаётся `Window.partitionBy(...).orderBy(...)`, функция применяется через `.over(window)`. Примеры: `rank()`, `lag()`/`lead()`, `sum().over(...)`. Применения: топ-N в группах, running totals, lag/lead для time-series, percentile rank.",
+              "correct": true,
+              "sections": {
+                "explanation": "В отличие от `groupBy`, который сворачивает группу в одну строку, оконная функция возвращает значение для каждой строки относительно её окна — поэтому можно посчитать ранг или скользящую сумму, сохранив все исходные строки.",
+                "example": "`Window.partitionBy(\"department\").orderBy($\"salary\".desc)` плюс `rank().over(window)` пронумерует сотрудников по зарплате внутри каждого отдела, не теряя ни одной строки.",
+                "when_to_apply": "Оконные функции берут для топ-N внутри групп, running totals, сравнения с предыдущим/следующим значением (`lag`/`lead`) и перцентилей — везде, где нужен агрегат «по соседям» без потери строк.",
+                "edge_cases": "Без `orderBy` в окне ранжирующие функции (`rank`, `lag`) бессмысленны, а агрегаты считают по всему partition; неверная partitionBy легко даёт огромное окно и тяжёлый shuffle.",
+                "related": "[[apache-spark-interview#Q26]] UDF против встроенных функций; [[apache-spark-interview#Q13]] window в Spark SQL; [[apache-spark-interview#Q11]] Catalyst оптимизирует оконные функции."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Window functions` работают как `groupBy`: они схлопывают каждую группу строк в одну агрегированную строку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оконные функции НЕ схлопывают строки: они возвращают значение для каждой строки в пределах окна, сохраняя исходное число строк.",
+                "source_of_confusion": "И window, и `groupBy` агрегируют по группам, поэтому их поведение смешивают.",
+                "if_it_were_true": "Тогда нельзя было бы добавить колонку `rank` к каждой строке, но именно это и делают оконные функции.",
+                "how_it_should_be": "`groupBy` сворачивает группу в строку; window-функция считает агрегат, оставляя все строки."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Окно в `Spark` нельзя ограничить группой: функция всегда применяется ко всему DataFrame целиком, без `partitionBy`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Window.partitionBy(...)` ограничивает окно группами (например, по отделу); без неё окно — весь DataFrame, но partitionBy доступна и обычна.",
+                "source_of_confusion": "Слово «window» воспринимают как глобальное, забывая про partitionBy.",
+                "if_it_were_true": "Тогда нельзя было бы посчитать топ-N внутри каждого отдела отдельно, но это типовой кейс.",
+                "how_it_should_be": "`partitionBy` задаёт группы окна; функция считается в пределах каждой партиции окна."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`lag()` и `lead()` — это обычные агрегатные функции вроде `sum`, не требующие сортировки окна через `orderBy`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`lag`/`lead` обращаются к предыдущей/следующей строке и имеют смысл только при упорядоченном окне (`orderBy`); без сортировки порядок не определён.",
+                "source_of_confusion": "`lag`/`lead` вызываются так же через `.over(window)`, как и `sum`, отсюда мысль, что порядок не важен.",
+                "if_it_were_true": "Тогда «предыдущее значение» было бы определено без сортировки, но без `orderBy` понятия «предыдущая строка» нет.",
+                "how_it_should_be": "`lag`/`lead` требуют `orderBy` в окне, иначе «соседняя строка» не определена."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `UDF` (User Defined Functions) в `Spark`?",
+          "options": [
+            {
+              "text": "`UDF` прозрачны для Catalyst: оптимизатор видит их внутреннюю логику и применяет push down фильтров сквозь UDF.",
+              "correct": false,
+              "sections": {
+                "what_actually": "UDF — чёрный ящик для Catalyst: оптимизатор не видит их внутренности и не может протолкнуть сквозь них фильтры, поэтому теряются оптимизации.",
+                "source_of_confusion": "UDF выглядят как обычные функции в DataFrame API, и кажется, что Catalyst их понимает.",
+                "if_it_were_true": "Тогда UDF не были бы медленнее встроенных функций, но именно непрозрачность их и замедляет.",
+                "how_it_should_be": "UDF непрозрачны для Catalyst; встроенные функции оптимизируются, а UDF — нет."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`UDF` — пользовательская функция: `udf((s: String) => s.toUpperCase)`, применяется через `withColumn` или регистрируется для SQL. Подводный камень: UDF — чёрный ящик для Catalyst, теряются оптимизации, поэтому когда возможно, используют встроенные функции (`upper($\"name\")`). В `PySpark` UDF особенно медленные (Python↔JVM serialization); с Spark 3+ есть `Pandas UDF` (Arrow-based) — намного быстрее.",
+              "correct": true,
+              "sections": {
+                "explanation": "Catalyst не видит логику внутри UDF и не может её оптимизировать (push down, codegen), поэтому UDF — барьер для оптимизатора. Встроенные функции прозрачны для Catalyst и почти всегда быстрее при той же семантике.",
+                "example": "Вместо `udf((s: String) => s.toUpperCase)` берут встроенную `upper($\"name\")`: результат тот же, но Catalyst оптимизирует встроенную функцию, а UDF выполнит как непрозрачный вызов.",
+                "when_to_apply": "UDF оправданы, только когда логику нельзя выразить встроенными функциями; во всех остальных случаях предпочитают нативные функции ради скорости и оптимизаций.",
+                "edge_cases": "В `PySpark` обычный UDF гоняет данные между JVM и Python-интерпретатором построчно (дорогая сериализация); `Pandas UDF` на Arrow обрабатывает данные пачками и почти закрывает этот разрыв.",
+                "related": "[[apache-spark-interview#Q11]] Catalyst и чёрный ящик UDF; [[apache-spark-interview#Q35]] PySpark UDF и Pandas UDF; [[apache-spark-interview#Q25]] встроенные функции в окне."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "В `PySpark` обычный UDF так же быстр, как встроенные функции, потому что Python-логика выполняется прямо в JVM без сериализации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычный PySpark UDF гоняет данные между JVM и Python построчно с дорогой сериализацией, поэтому он заметно медленнее встроенных функций.",
+                "source_of_confusion": "Кажется, что весь PySpark исполняется в JVM, без отдельного Python-процесса.",
+                "if_it_were_true": "Тогда не понадобились бы `Pandas UDF` (Arrow), которые вводили именно ради скорости PySpark UDF.",
+                "how_it_should_be": "PySpark UDF медленны из-за Python↔JVM сериализации; ускоряет ситуацию `Pandas UDF` на Arrow."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Встроенные функции вроде `upper()` использовать нельзя — любую трансформацию колонки в `Spark` нужно писать через UDF.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spark предоставляет богатый набор встроенных функций (`upper`, `concat`, `split` и др.), и их предпочитают UDF именно ради оптимизаций.",
+                "source_of_confusion": "UDF кажется универсальным инструментом «на все случаи», и про встроенные функции забывают.",
+                "if_it_were_true": "Тогда не было бы совета «когда возможно — используй встроенные функции вместо UDF».",
+                "how_it_should_be": "Сначала пробуют встроенные функции; UDF — только когда нужной встроенной нет."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`Spark SQL` vs DataFrame API — что быстрее по производительности?",
+          "options": [
+            {
+              "text": "`Spark SQL` всегда медленнее DataFrame API, потому что парсинг SQL добавляет накладные расходы в runtime каждой строки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SQL парсится один раз при построении плана, а не на каждую строку; после компиляции Catalyst план идентичен DataFrame, и скорость та же.",
+                "source_of_confusion": "Парсинг текста SQL кажется постоянным оверхедом, хотя он разовый на этапе планирования.",
+                "if_it_were_true": "Тогда аналитикам не советовали бы SQL для прод-запросов, но его используют наравне с DataFrame.",
+                "how_it_should_be": "Парсинг SQL разовый; физический план и производительность совпадают с DataFrame API."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "DataFrame API быстрее `Spark SQL`, потому что обходит Catalyst и сразу строит физический план без оптимизации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DataFrame API тоже проходит через Catalyst (он его не обходит); и SQL, и DataFrame получают один оптимизированный план — скорость одинакова.",
+                "source_of_confusion": "Программный API кажется «ближе к движку», отсюда миф об обходе оптимизатора.",
+                "if_it_were_true": "Тогда DataFrame терял бы оптимизации Catalyst, но он, наоборот, ими пользуется.",
+                "how_it_should_be": "DataFrame проходит через Catalyst так же, как SQL; план и скорость идентичны."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Производительность идентична: оба компилируются Catalyst в один и тот же физический план. `spark.sql(\"SELECT name FROM users WHERE age > 18\")` и `df.filter($\"age\" > 18).select(\"name\")` дают одинаковый план. Выбор — по предпочтениям: SQL для аналитиков (удобство), DataFrame API для разработчиков (type-safety с Dataset).",
+              "correct": true,
+              "sections": {
+                "explanation": "SQL и DataFrame API — два фасада над одним движком: Catalyst строит для них общий логический и физический план. Поэтому разницы в скорости нет, и выбор определяется читабельностью и предпочтениями команды.",
+                "example": "`spark.sql(\"SELECT name FROM users WHERE age > 18\")` и `df.filter($\"age\" > 18).select(\"name\")` после компиляции Catalyst — это буквально один и тот же физический план.",
+                "when_to_apply": "SQL удобен для аналитиков и сложных запросов с джойнами/агрегациями; DataFrame API — для разработчиков, особенно с type-safe Dataset; смешивать их в одном пайплайне нормально.",
+                "edge_cases": "Единственный реальный источник различий — UDF: если в одном варианте используется UDF, а в другом встроенная функция, планы и скорость разойдутся, но это про UDF, а не про SQL vs DataFrame.",
+                "related": "[[apache-spark-interview#Q13]] SQL как DSL над DataFrame; [[apache-spark-interview#Q11]] общий Catalyst; [[apache-spark-interview#Q26]] UDF как реальный источник разницы."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Производительность `Spark SQL` и DataFrame API радикально различается, поэтому выбор между ними критичен для скорости job.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Производительность идентична — оба компилируются Catalyst в один физический план; выбор делают по читабельности, а не по скорости.",
+                "source_of_confusion": "Два разных синтаксиса наводят на мысль о двух разных по скорости движках.",
+                "if_it_were_true": "Тогда нужно было бы бенчмаркать SQL против DataFrame для каждого запроса, но смысла в этом нет.",
+                "how_it_should_be": "Скорость одинакова; выбирают по удобству (SQL — аналитикам, DataFrame — разработчикам)."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `Spark Streaming` (DStream) отличается от `Structured Streaming`?",
+          "options": [
+            {
+              "text": "`Spark Streaming` (DStream) — это рекомендованный современный API, а `Structured Streaming` устарел и выведен из Spark.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `Structured Streaming` — рекомендованный (Spark 2+), а DStream считается legacy и не развивается.",
+                "source_of_confusion": "Название «Spark Streaming» звучит как основное и актуальное, хотя это старый API.",
+                "if_it_were_true": "Тогда новые фичи (watermark, continuous) добавляли бы в DStream, но их добавляют в Structured Streaming.",
+                "how_it_should_be": "`Structured Streaming` — актуальный выбор; DStream — устаревший legacy-API."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Structured Streaming` основан на RDD и не проходит через Catalyst, поэтому не оптимизируется так, как batch-запросы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Structured Streaming` — DataFrame-based и проходит через Catalyst; именно DStream основан на RDD и не оптимизируется.",
+                "source_of_confusion": "Оба — стриминговые API Spark, и их технологическую базу путают.",
+                "if_it_were_true": "Тогда Structured Streaming не давал бы выигрыша Catalyst, но он его как раз получает.",
+                "how_it_should_be": "`Structured Streaming` на DataFrame с Catalyst; RDD-основа — у DStream."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Оба API одинаково хорошо работают с late data через встроенный watermark, поэтому разницы в обработке опозданий нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Watermark и event-time окна — это про `Structured Streaming`; в DStream обработка late data сложна и не имеет нативного watermark.",
+                "source_of_confusion": "Оба умеют window-операции, и продвинутую обработку late data приписывают обоим.",
+                "if_it_were_true": "Тогда не было бы преимущества Structured Streaming в работе с опоздавшими данными, но оно есть.",
+                "how_it_should_be": "Нативный watermark/event-time — у Structured Streaming; в DStream late data обрабатывается вручную."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Spark Streaming` (DStream) — RDD-based API, без оптимизации Catalyst, только micro-batch, базовые window-операции, сложная работа с late data — это legacy (Spark 2 API). `Structured Streaming` — DataFrame-based, проходит через Catalyst, поддерживает micro-batch + continuous, богатые window-операции (event time), watermark для late data — рекомендованный (Spark 2+). Использовать Structured Streaming, DStream устарел.",
+              "correct": true,
+              "sections": {
+                "explanation": "Structured Streaming строит потоковую обработку как бесконечный DataFrame, поэтому получает Catalyst-оптимизацию, event-time окна и watermark. DStream работает на RDD, не оптимизируется и неуклюже обрабатывает опоздавшие данные — отсюда статус legacy.",
+                "example": "В Structured Streaming потоковый запрос пишется тем же DataFrame API, что и batch (`readStream...groupBy...writeStream`), и Catalyst оптимизирует его так же, как обычный batch-запрос.",
+                "when_to_apply": "Для любых новых стриминговых пайплайнов берут Structured Streaming; DStream трогают только при поддержке старого кода, который ещё на нём написан.",
+                "edge_cases": "DStream не умеет нативно работать с event time и watermark — обработка late data на нём требует ручных костылей, тогда как в Structured Streaming это встроенный механизм `withWatermark`.",
+                "related": "[[apache-spark-interview#Q29]] micro-batch модель; [[apache-spark-interview#Q30]] watermark и late data; [[apache-spark-interview#Q31]] continuous mode."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `micro-batch` в `Spark`?",
+          "options": [
+            {
+              "text": "`Micro-batch` — Spark обрабатывает streaming как серию маленьких batch jobs: входящие данные группируются в небольшие батчи (например, каждые ~1 сек) и обрабатываются как обычный batch. Trigger interval задаёт частоту запуска (по умолчанию — как только предыдущий батч закончился). Latency обычно 100ms–5 сек; для sub-100ms latency нужны `Flink`, `Apache Storm`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Вместо обработки каждого события по отдельности Spark копит поток за интервал в маленький батч и прогоняет его как обычный batch-job. Это переиспользует весь batch-движок и Catalyst, но добавляет задержку на размер интервала.",
+                "example": "С trigger каждые 1 секунду Spark раз в секунду формирует батч из накопленных за это время событий и обрабатывает его как маленький batch-запрос; результат появляется с задержкой порядка секунды.",
+                "when_to_apply": "Micro-batch подходит, когда допустима latency в сотни миллисекунд–секунды: near-real-time аналитика, агрегации по окнам, обогащение потоков — большинство стриминговых задач.",
+                "edge_cases": "Для жёсткой sub-100ms latency micro-batch не годится — минимальная задержка ограничена размером батча; там берут истинно потоковые движки (`Flink`, `Storm`) или continuous mode Spark.",
+                "related": "[[apache-spark-interview#Q28]] Structured Streaming и micro-batch; [[apache-spark-interview#Q31]] continuous mode для низкой latency; [[apache-spark-interview#Q30]] watermark внутри батчей."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Micro-batch` означает, что `Spark` обрабатывает каждое событие по отдельности в момент его поступления, без группировки в батчи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Micro-batch как раз группирует события за интервал в маленький батч и обрабатывает его целиком как batch-job, а не по одному событию.",
+                "source_of_confusion": "Слово «micro» воспринимают как «по одному событию», хотя это «маленький батч».",
+                "if_it_were_true": "Тогда latency была бы sub-миллисекундной, но micro-batch даёт 100ms–5 сек именно из-за группировки.",
+                "how_it_should_be": "Micro-batch копит события за интервал и обрабатывает пачкой; обработка по одному событию — это continuous/Flink."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Micro-batch` обеспечивает sub-100ms latency, поэтому `Flink` и `Storm` для низкой задержки не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Latency micro-batch обычно 100ms–5 сек и ограничена размером батча; для sub-100ms берут `Flink`/`Storm` или continuous mode.",
+                "source_of_confusion": "«Маленький батч» создаёт иллюзию почти мгновенной обработки.",
+                "if_it_were_true": "Тогда не существовало бы continuous mode и не советовали бы Flink для low latency.",
+                "how_it_should_be": "Micro-batch — latency 100ms–5 сек; для sub-100ms нужны Flink/Storm или continuous mode."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Trigger interval` в micro-batch задаёт объём данных в одном батче в мегабайтах, а не частоту запуска.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Trigger interval задаёт частоту запуска батча (как часто формировать и обрабатывать батч), а не его объём в мегабайтах.",
+                "source_of_confusion": "«Размер батча» путают с временным интервалом его формирования.",
+                "if_it_were_true": "Тогда trigger измерялся бы в МБ, но он задаётся во времени (например, каждые 1 сек).",
+                "how_it_should_be": "Trigger interval — это период запуска батча по времени; объём определяется тем, что накопилось за период."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `watermark` и `late data` в `Spark`?",
+          "options": [
+            {
+              "text": "`Watermark` — это фиксированная константа времени, заданная вручную и не зависящая от наблюдаемых timestamps данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Watermark динамичен: он вычисляется как `max(seen timestamps) - threshold`, то есть двигается вместе с самыми свежими данными потока.",
+                "source_of_confusion": "Слово «threshold» воспринимают как саму границу, хотя это лишь смещение от максимального timestamp.",
+                "if_it_were_true": "Тогда watermark не адаптировался бы к потоку и при перерыве в данных вёл себя неправильно.",
+                "how_it_should_be": "Watermark = `max(seen timestamps) - threshold`; он динамически следует за самыми свежими событиями."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "В streaming данные приходят с задержкой; `watermark` — порог «до этого времени все данные уже пришли», вычисляется как `max(seen timestamps) - threshold` (например, −10 минут). Данные с timestamp < watermark считаются late и отбрасываются (или учитываются по output mode). State старше watermark освобождается — это важно для memory. Задаётся `withWatermark(\"timestamp\", \"10 minutes\")`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Watermark — это компромисс между ожиданием опоздавших данных и освобождением памяти. Spark ждёт late-события до порога watermark, агрегирует их в нужное окно, а потом уверенно закрывает окно и чистит его state, не держа его вечно.",
+                "example": "`streamDf.withWatermark(\"timestamp\", \"10 minutes\").groupBy(window($\"timestamp\", \"5 minutes\"), $\"user_id\").count()` — события, опоздавшие более чем на 10 минут относительно watermark, отбрасываются.",
+                "when_to_apply": "Watermark обязателен при оконных агрегациях на потоке: без него state окон рос бы бесконечно; порог выбирают по реальной максимальной задержке данных в источнике.",
+                "edge_cases": "Слишком маленький threshold отбрасывает много легитимных late-событий; слишком большой держит state долго и раздувает память — баланс зависит от того, насколько поздно реально приходят данные.",
+                "related": "[[apache-spark-interview#Q28]] watermark в Structured Streaming; [[apache-spark-interview#Q29]] late data внутри micro-batch; [[apache-spark-interview#Q31]] continuous mode и семантика."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Watermark нужен только чтобы отбрасывать late data; на потребление памяти (state) он никак не влияет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Watermark как раз освобождает state старше его порога — это ключ к ограничению памяти при оконных агрегациях.",
+                "source_of_confusion": "Отбрасывание late data заметнее, чем фоновое освобождение state, поэтому про память забывают.",
+                "if_it_were_true": "Тогда оконный state рос бы бесконечно, и стриминг падал бы по памяти со временем.",
+                "how_it_should_be": "Watermark и отбрасывает late data, и освобождает устаревший state, ограничивая память."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Любые опоздавшие данные (late data) всегда учитываются в агрегации независимо от того, насколько поздно они пришли.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Данные с timestamp < watermark считаются late и отбрасываются (или обрабатываются по output mode); бесконечно опоздавшие не учитываются.",
+                "source_of_confusion": "Хочется верить, что стриминг «никогда не теряет данные», но за это пришлось бы держать state вечно.",
+                "if_it_were_true": "Тогда watermark не имел бы смысла, ведь ничего не отбрасывалось бы.",
+                "how_it_should_be": "События позже watermark отбрасываются — это цена ограниченного state и памяти."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Continuous Processing mode` в `Spark`?",
+          "options": [
+            {
+              "text": "`Continuous mode` даёт ту же latency, что и micro-batch (100ms–5 сек), и отличается только синтаксисом trigger.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Continuous mode даёт latency ~1 ms (на порядки ниже micro-batch), обрабатывая события без группировки в батчи, — это не косметика синтаксиса.",
+                "source_of_confusion": "Оба настраиваются через `trigger`, отсюда вывод о чисто синтаксической разнице.",
+                "if_it_were_true": "Тогда не было бы смысла вводить continuous mode, ведь micro-batch уже давал бы ту же latency.",
+                "how_it_should_be": "Continuous mode — latency ~1 ms против 100ms+ у micro-batch; разница принципиальная."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Continuous mode` поддерживает любые операции, включая агрегации с shuffle и джойны больших таблиц.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Continuous mode ограничен map-like операциями и некоторыми sources/sinks; агрегации с shuffle в нём недоступны.",
+                "source_of_confusion": "Раз это часть Structured Streaming, ожидают полного набора операций, как в micro-batch.",
+                "if_it_were_true": "Тогда continuous mode полностью заменил бы micro-batch, но его ограничения этого не позволяют.",
+                "how_it_should_be": "Continuous mode — только map-like операции и ограниченные коннекторы; тяжёлые агрегации идут в micro-batch."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "С Spark 2.3 — экспериментальный режим continuous: `trigger(Trigger.Continuous(\"1 second\"))`. Latency ~1 ms (vs 100ms+ в micro-batch), но с ограничениями: только map-like операции, только некоторые sources/sinks, at-least-once семантика (не exactly-once). В 2024 так и остался experimental; для низкой latency обычно берут `Apache Flink`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Continuous mode обрабатывает события по мере поступления (без группировки в батчи), что даёт миллисекундную latency. Цена — урезанный набор операций (только map-like), ограниченные коннекторы и слабее гарантии доставки (at-least-once).",
+                "example": "`streamDf.writeStream.trigger(Trigger.Continuous(\"1 second\")).start()` запускает непрерывную обработку с latency ~1 ms, но в нём нельзя использовать, например, агрегации с shuffle.",
+                "when_to_apply": "Continuous mode рассматривают только при жёстком требовании sub-100ms latency и простой map-like логике; для надёжного low-latency стриминга в проде чаще берут `Apache Flink`.",
+                "edge_cases": "Continuous mode даёт только at-least-once (возможны дубликаты), тогда как micro-batch Structured Streaming обеспечивает exactly-once; для финансовых подсчётов это критичное ограничение.",
+                "related": "[[apache-spark-interview#Q29]] micro-batch и его latency; [[apache-spark-interview#Q28]] continuous как режим Structured Streaming; [[apache-spark-interview#Q30]] ограничения по операциям и state."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Continuous mode` гарантирует exactly-once семантику, что делает его строго лучше micro-batch во всех сценариях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Continuous mode даёт at-least-once (возможны дубликаты); exactly-once обеспечивает именно micro-batch Structured Streaming.",
+                "source_of_confusion": "Низкая latency кажется признаком «более продвинутого и надёжного» режима.",
+                "if_it_were_true": "Тогда micro-batch был бы не нужен, но его держат как раз ради exactly-once и широкого набора операций.",
+                "how_it_should_be": "Continuous — at-least-once и experimental; для exactly-once берут micro-batch."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что смотреть в `Spark UI`?",
+          "options": [
+            {
+              "text": "`Spark UI` показывает только итоговый статус job (success/fail) и не даёт детализации по stages, tasks или shuffle.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spark UI детально раскрывает Jobs, Stages, tasks, Executors, Storage, shuffle read/write и spill — а не только финальный статус.",
+                "source_of_confusion": "Многие открывают UI лишь чтобы проверить, упала job или нет, и не замечают остальных вкладок.",
+                "if_it_were_true": "Тогда диагностировать skew и shuffle-bottleneck было бы негде, но именно UI для этого и нужен.",
+                "how_it_should_be": "Spark UI — полноценный профайлер: stages, tasks, shuffle, spill, кэш, executors."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Spill в `Spark UI` означает, что данные успешно поместились в RAM, поэтому его наличие — признак хорошей производительности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spill сигнализирует, что данные НЕ влезли в память и были сброшены на диск — это симптом проблемы, а не признак здоровья.",
+                "source_of_confusion": "Слово «spill» нейтрально и не подсказывает, что это вынужденный сброс из-за нехватки памяти.",
+                "if_it_were_true": "Тогда spill не упоминался бы как то, на что надо обращать внимание при тюнинге.",
+                "how_it_should_be": "Spill — это сброс на диск из-за нехватки RAM; его минимизируют, а не радуются ему."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Большие значения Shuffle Read/Write в UI — это хорошо: чем больше shuffle, тем эффективнее распараллелена job.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Большой Shuffle Read/Write — это узкое место (дорогой сетевой и дисковый обмен), его стараются уменьшать, а не наращивать.",
+                "source_of_confusion": "Большие числа интуитивно ассоциируют с «много полезной работы», а не с накладными расходами.",
+                "if_it_were_true": "Тогда оптимизация сводилась бы к увеличению shuffle, но реально его минимизируют.",
+                "how_it_should_be": "Большой shuffle — bottleneck; цель тюнинга — сократить shuffle read/write."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Spark UI` (на `http://driver:4040` или history server): Jobs tab (какие jobs, их время), Stages tab (самый долгий stage), SQL tab (план запроса — DAG, physical plan), Executors (память, CPU, tasks), Storage (что закэшировано). Обращать внимание на: skew (tasks с непропорционально долгим временем), spill (данные не влезли в RAM, идут на диск), shuffle read/write (большие = bottleneck), failed tasks.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spark UI — главный инструмент диагностики: он показывает, где job тратит время и память. По вкладкам видно медленные stages, перекошенные tasks, объём shuffle и spill — то есть прямые подсказки, что именно тормозит.",
+                "example": "В Stages tab один task идёт 10x дольше остальных — это skew; большие значения Shuffle Read/Write указывают на дорогой обмен данными как узкое место job.",
+                "when_to_apply": "Spark UI открывают при любой медленной или падающей job: сначала смотрят самый долгий stage, затем разбивку tasks на skew и spill, потом shuffle и failed tasks.",
+                "edge_cases": "После завершения приложения UI на порту 4040 пропадает, поэтому для разбора прошедших jobs нужен History Server, который читает сохранённые event-logs.",
+                "related": "[[apache-spark-interview#Q18]] skew по долгим tasks; [[apache-spark-interview#Q15]] shuffle read/write; [[apache-spark-interview#Q34]] частые проблемы прода через UI."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `AQE` (Adaptive Query Execution)?",
+          "options": [
+            {
+              "text": "С Spark 3.0 — AQE адаптирует план во время выполнения по фактической статистике (`spark.sql.adaptive.enabled=true`). Что делает: coalesces partitions после shuffle (если стали маленькими), switches join strategy (sort-merge → broadcast, если сторона оказалась маленькой), skew join optimization (разбивает skewed partitions). В Spark 3+ AQE — большой прирост perf «из коробки», включать всегда.",
+              "correct": true,
+              "sections": {
+                "explanation": "Catalyst строит план до выполнения по оценкам, которые бывают неточны. AQE пересматривает план в рантайме, увидев реальные размеры данных после shuffle: схлопывает мелкие partitions, меняет стратегию join и разбивает перекошенные partitions.",
+                "example": "Если после фильтра одна сторона join'а оказалась маленькой, AQE на лету переключает sort-merge join на broadcast join, экономя дорогой shuffle большой таблицы.",
+                "when_to_apply": "AQE включают практически всегда на Spark 3+ — он бесплатно улучшает планы по реальной статистике; особенно полезен при skew и при неточных оценках размеров до выполнения.",
+                "edge_cases": "AQE срабатывает только на границах shuffle (там появляется реальная статистика), поэтому на планах вообще без shuffle он почти ничего не меняет; для skew join нужен отдельный флаг `spark.sql.adaptive.skewJoin.enabled`.",
+                "related": "[[apache-spark-interview#Q18]] skew join optimization; [[apache-spark-interview#Q20]] авто sort-merge → broadcast; [[apache-spark-interview#Q11]] Catalyst планирует до выполнения."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`AQE` строит весь план запроса до выполнения и больше не меняет его, что бы ни показала реальная статистика данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "AQE как раз адаптирует план ВО ВРЕМЯ выполнения по фактической статистике (после shuffle), а не фиксирует его заранее.",
+                "source_of_confusion": "Планирование до выполнения — это про Catalyst; его статичность приписывают и AQE.",
+                "if_it_were_true": "Тогда AQE ничем не отличался бы от обычного Catalyst и был бы не нужен как отдельная фича.",
+                "how_it_should_be": "AQE пересматривает план в рантайме (coalesce, switch join, skew split); статичен — только базовый Catalyst."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`AQE` доступен начиная с самых первых версий Spark (1.x) и всегда был включён по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "AQE появился в Spark 3.0; в более ранних версиях его не было, и включается он флагом `spark.sql.adaptive.enabled`.",
+                "source_of_confusion": "Адаптивность кажется фундаментальной, поэтому её относят к самым ранним версиям.",
+                "if_it_were_true": "Тогда не было бы привязки AQE к Spark 3.0 во всех материалах, но она есть.",
+                "how_it_should_be": "AQE — фича Spark 3.0+, включаемая флагом `spark.sql.adaptive.enabled`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`AQE` умеет только coalesce partitions и не способен менять стратегию join или бороться со skew.",
+              "correct": false,
+              "sections": {
+                "what_actually": "AQE делает три вещи: coalesce partitions, switch join strategy (sort-merge → broadcast) и skew join optimization, а не только первое.",
+                "source_of_confusion": "Coalesce partitions — самый наглядный эффект AQE, и им ограничивают его возможности.",
+                "if_it_were_true": "Тогда AQE не помогал бы со skew, но `spark.sql.adaptive.skewJoin.enabled` существует именно для этого.",
+                "how_it_should_be": "AQE: coalesce partitions + смена join-стратегии + skew join optimization."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие частые проблемы возникают в production `Spark`?",
+          "options": [
+            {
+              "text": "Driver OOM в `Spark` чаще всего вызван слишком большими partitions на executors, а не операциями на driver.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Driver OOM обычно вызывает `collect()` (или подобное) большого DataFrame, стягивающего все данные в driver; большие partitions роняют executor, а не driver.",
+                "source_of_confusion": "Любой OOM в Spark валят в одну кучу, не разделяя driver и executor.",
+                "if_it_were_true": "Тогда лечением driver OOM было бы увеличение числа partitions, но лечат его отказом от `collect()`.",
+                "how_it_should_be": "Driver OOM — это про `collect()` большого df; большие partitions — проблема executor OOM."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Частые проблемы: OOM на executor (большие partitions — увеличить memory/partitions), долгие stages из-за skew (salting), медленный shuffle (увеличить `spark.sql.shuffle.partitions`, оптимизировать joins), медленный PySpark UDF (native/Pandas UDF), driver OOM (`collect()` большого df), медленные reads (columnar Parquet/ORC), GC-паузы (увеличить memory, G1GC), under/over-utilization кластера, `groupByKey` на огромных данных (→ `reduceByKey`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Большинство прод-проблем Spark сводятся к памяти, перекосу данных и дорогому shuffle. Диагностируют их через Spark UI (skew, spill, shuffle, failed tasks), а лечат тюнингом partitions, памяти, join-стратегий и заменой дорогих операций.",
+                "example": "Driver OOM почти всегда вызван `collect()` слишком большого DataFrame: вместо стягивания всех данных в driver результат пишут в файл или берут `take(n)`.",
+                "when_to_apply": "Этот чек-лист проходят при разборе медленной или падающей прод-job: смотрят, что именно тормозит (память, skew, shuffle, UDF, чтение), и применяют соответствующее лечение.",
+                "edge_cases": "Cluster underutilization (мало partitions — простаивают ядра) и overutilization (слишком много executors) — противоположные проблемы, и одно и то же «добавить ресурсов» лечит одну, но усугубляет другую.",
+                "related": "[[apache-spark-interview#Q18]] skew и salting; [[apache-spark-interview#Q16]] reduceByKey вместо groupByKey; [[apache-spark-interview#Q32]] Spark UI для диагностики."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Медленный shuffle лечат, уменьшая `spark.sql.shuffle.partitions` до 1, чтобы весь обмен данными шёл одним task.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один partition схлопнул бы весь shuffle в один task и убил параллелизм; настройку, наоборот, увеличивают, а ещё оптимизируют joins.",
+                "source_of_confusion": "«Меньше partitions — меньше обмена» звучит логично, но игнорирует потерю параллелизма.",
+                "if_it_were_true": "Тогда shuffle всегда был бы быстрее при 1 partition, но это вызовет OOM и простаивание кластера.",
+                "how_it_should_be": "Медленный shuffle лечат подбором (часто увеличением) `spark.sql.shuffle.partitions` и оптимизацией join'ов."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Медленный PySpark UDF исправляют, переписав его на ещё более сложный Python-код внутри того же UDF.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PySpark UDF медленны из-за Python↔JVM сериализации; их заменяют native-функциями или `Pandas UDF` (Arrow), а не усложняют Python-логику.",
+                "source_of_confusion": "Кажется, что проблема в самой логике UDF, а не в межпроцессной сериализации.",
+                "if_it_were_true": "Тогда оптимизация Python-кода внутри UDF убирала бы оверхед, но он лежит в сериализации, а не в логике.",
+                "how_it_should_be": "Медленный PySpark UDF заменяют native-функцией или `Pandas UDF` на Arrow."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`PySpark` vs `Spark Scala` — что насчёт производительности?",
+          "options": [
+            {
+              "text": "DataFrame-операции в `PySpark` всегда в разы медленнее, чем в `Scala`, из-за интерпретируемости Python.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DataFrame-операции идентичны по скорости: и PySpark, и Scala лишь строят план, который исполняет JVM через Catalyst; Python тут не на горячем пути.",
+                "source_of_confusion": "Python считается медленнее Scala в целом, и это переносят на DataFrame API.",
+                "if_it_were_true": "Тогда PySpark не годился бы для прод-аналитики на больших данных, но он там dominant.",
+                "how_it_should_be": "DataFrame-операции одинаковы; Python не исполняет их сам — это делает JVM-движок."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "RDD-операции в `PySpark` так же быстры, как в `Scala`, потому что RDD исполняется целиком в JVM без участия Python.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RDD-операции в PySpark медленнее: данные сериализуются между JVM и Python-процессом; в Scala RDD исполняется нативно на JVM.",
+                "source_of_confusion": "Раз DataFrame одинаков, ожидают того же и от RDD, забывая про Python↔JVM обмен.",
+                "if_it_were_true": "Тогда не было бы разницы PySpark/Scala вообще, но она есть именно на RDD и UDF.",
+                "how_it_should_be": "PySpark RDD медленнее из-за Python↔JVM сериализации; Scala RDD исполняется нативно."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "DataFrame operations — идентичная perf (оба компилируются Catalyst в один план). Разница только в RDD-операциях (PySpark медленнее из-за Python↔JVM сериализации) и UDF (обычный PySpark UDF медленный, в Scala — быстрый JVM). `Pandas UDF` (Arrow) почти закрывают gap. В 2024 PySpark dominant в data science, Scala — в data engineering.",
+              "correct": true,
+              "sections": {
+                "explanation": "Для DataFrame-операций язык не важен: и Python, и Scala лишь строят план, который исполняет один и тот же JVM-движок через Catalyst. Разрыв появляется только там, где код реально выполняется в Python-процессе — RDD-операции и обычные UDF.",
+                "example": "`df.filter(...).groupBy(...).agg(...)` работает одинаково быстро на PySpark и Scala; а вот построчный Python-UDF медленнее своего Scala-аналога из-за пересылки данных между JVM и Python.",
+                "when_to_apply": "Выбор языка делают по экосистеме и команде, а не по скорости DataFrame-операций: PySpark — для data science (интеграция с `pandas`, `scikit-learn`), Scala — для data engineering.",
+                "edge_cases": "`Pandas UDF` (Arrow-based) почти стирают разрыв по UDF, передавая данные пачками, но в Scala их аналога нет — там и так быстрый JVM-UDF, поэтому сравнение «Pandas UDF vs Scala UDF» не вполне симметрично.",
+                "related": "[[apache-spark-interview#Q26]] PySpark UDF и Pandas UDF; [[apache-spark-interview#Q10]] DataFrame одинаков в обоих языках; [[apache-spark-interview#Q34]] медленный PySpark UDF."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Обычный построчный `PySpark` UDF исполняется так же быстро, как нативный JVM-UDF в `Scala`, без накладных расходов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычный PySpark UDF сериализует данные между JVM и Python построчно, поэтому он заметно медленнее нативного Scala-UDF; разрыв закрывают `Pandas UDF` на Arrow.",
+                "source_of_confusion": "Раз DataFrame-операции одинаковы, ожидают того же паритета и для UDF.",
+                "if_it_were_true": "Тогда не было бы смысла вводить `Pandas UDF`, но их добавили именно ради скорости PySpark UDF.",
+                "how_it_should_be": "Обычный PySpark UDF медленнее Scala-UDF из-за Python↔JVM сериализации; ускоряет ситуацию `Pandas UDF`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

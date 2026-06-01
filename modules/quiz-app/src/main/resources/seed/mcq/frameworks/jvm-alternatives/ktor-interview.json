@@ -1,0 +1,1925 @@
+{
+  "topic_slug": "ktor-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Ktor` и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Ktor` — фреймворк от JetBrains для построения асинхронных серверных и клиентских приложений на Kotlin. Построен на корутинах, использует `DSL` для конфигурации и роутинга, расширяется через plugins; лёгкий, явный, multiplatform для клиента.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Ktor` делает ставку на минимум магии: вся конфигурация явная, обработчики — `suspend`-функции, функциональность подключается через `install()`. Это даёт быстрый cold start и тесную интеграцию с экосистемой Kotlin (Coroutines, Serialization).",
+                "example": "`embeddedServer(Netty, port = 8080) { routing { get(\"/\") { call.respondText(\"Hello, Ktor!\") } } }.start(wait = true)` — полноценный сервер без аннотаций и сканирования classpath.",
+                "when_to_apply": "Подходит для REST API, WebSocket, gateway-сервисов, мобильных клиентов и легковесных микросервисов, где важны простота и низкий старт.",
+                "edge_cases": "Из-за минимализма многое (DI, метрики, security best practices) приходится собирать руками — это плата за явность, заметная на крупных enterprise-проектах.",
+                "related": "[[ktor-interview#Q2]] отличия от Spring Boot; [[ktor-interview#Q5]] что такое plugin; [[ktor-interview#Q14]] роль корутин."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Ktor` — это аннотационный MVC-фреймворк от Google, который сканирует classpath и автоматически конфигурирует бины по `@Controller` и `@Service`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Ktor` создан JetBrains, не использует аннотации для роутинга и не делает classpath-сканирование — конфигурация задаётся явно через `DSL`.",
+                "source_of_confusion": "Аннотационный стиль и autoconfig — признаки Spring Boot, поэтому их ошибочно переносят на `Ktor`.",
+                "if_it_were_true": "Тогда `Ktor` имел бы `@RestController`-эндпойнты, но реальный API — это `routing { get(\"/\") { ... } }`.",
+                "how_it_should_be": "`Ktor` — это явный `DSL`-фреймворк JetBrains на корутинах, без аннотационного автосканирования."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Ktor` — это блокирующий синхронный веб-сервер, где каждый запрос обслуживается отдельным выделенным потоком из пула, как в классическом Servlet-стеке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все обработчики `Ktor` — `suspend`-функции, выполняемые в корутинах; поток не блокируется на время I/O, в отличие от thread-per-request.",
+                "source_of_confusion": "Многие JVM-серверы исторически работают по модели поток-на-запрос, и это поведение приписывают `Ktor`.",
+                "if_it_were_true": "Тогда тысячи одновременных запросов требовали бы тысяч потоков, но `Ktor` масштабируется на небольшом их числе.",
+                "how_it_should_be": "`Ktor` асинхронен по умолчанию: запросы выполняются в корутинах поверх немногих потоков."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Ktor` — это исключительно клиентская HTTP-библиотека без серверной части, аналог `OkHttp`, и поднять на нём сервер нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Ktor` включает и серверную, и клиентскую части; `embeddedServer(...)` поднимает полноценный HTTP-сервер.",
+                "source_of_confusion": "У `Ktor` действительно есть сильный multiplatform-клиент, и его иногда принимают за весь фреймворк.",
+                "if_it_were_true": "Тогда не существовало бы `routing { }` и engine'ов вроде `Netty`/`CIO`, но они — ядро серверного `Ktor`.",
+                "how_it_should_be": "`Ktor` покрывает оба сценария: и сервер (`embeddedServer`), и клиент (`HttpClient`)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `Ktor` отличается от `Spring Boot`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Различий по сути нет: `Ktor` — это просто Kotlin-обёртка над `Spring Boot`, использующая тот же контейнер бинов и autoconfiguration под капотом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Ktor` — самостоятельный фреймворк JetBrains на корутинах, он не использует Spring-контейнер и autoconfiguration.",
+                "source_of_confusion": "Оба — JVM-веб-фреймворки, и кажется, что один обязан строиться поверх другого.",
+                "if_it_were_true": "Тогда `Ktor`-артефакт тащил бы Spring-зависимости и стартовал бы 3-15 сек, но он весит ~5-10 MB и стартует < 1 сек.",
+                "how_it_should_be": "Это два независимых фреймворка с разными моделями: `DSL`+корутины против аннотаций+autoconfig."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Ktor` — functional + `DSL`, Kotlin first-class, DI внешний (`Koin`/`Kodein`), минимум магии, JAR ~5-10 MB, cold start < 1 сек, async на корутинах. `Spring Boot` — annotation-based, встроенный DI, много autoconfig/AOP, JAR 20-50 MB, старт 3-15 сек, огромное community.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевая ось различий — явность против магии: `Ktor` ничего не делает «за тебя», `Spring Boot` максимально автоматизирует через starters и autoconfiguration. Отсюда разница в размере артефакта, времени старта и кривой входа.",
+                "example": "Тот же эндпойнт: в `Ktor` это `routing { get(\"/users\") { call.respond(...) } }`, в `Spring Boot` — класс с `@RestController` и `@GetMapping(\"/users\")` плюс компонентное сканирование.",
+                "when_to_apply": "Сравнение приводят при выборе стека: чисто-Kotlin проект и быстрый старт тянут к `Ktor`, богатые enterprise-интеграции — к `Spring Boot`.",
+                "edge_cases": "Меньший cold start `Ktor` особенно важен в serverless (Lambda); зато у `Spring Boot` несравнимо больше готовых интеграций и материалов на StackOverflow.",
+                "related": "[[ktor-interview#Q1]] что такое Ktor; [[ktor-interview#Q23]] DI в Ktor; [[ktor-interview#Q29]] когда выбирать Ktor."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главное отличие в том, что у `Ktor` мощный встроенный DI-контейнер с автосканированием, а `Spring Boot` требует регистрировать все бины вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: встроенного DI у `Ktor` нет (берут `Koin`/`Kodein`), а у `Spring Boot` DI как раз встроен и сканирует компоненты.",
+                "source_of_confusion": "Признаки двух фреймворков перепутаны местами — легко ошибиться, кто чем владеет «из коробки».",
+                "if_it_were_true": "Тогда `Ktor` имел бы аналог `@Autowired` и component scan, но в нём зависимости передают явно или через сторонний DI.",
+                "how_it_should_be": "Встроенный DI — у `Spring Boot`; `Ktor` полагается на внешние решения вроде `Koin`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Ktor` отличается тем, что работает только на Java и не поддерживает Kotlin, тогда как `Spring Boot` — Kotlin-only фреймворк.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Ktor` — Kotlin-first фреймворк, а `Spring Boot` поддерживает и Java, и Kotlin — характеристики снова перепутаны.",
+                "source_of_confusion": "Языковую принадлежность фреймворков часто запоминают наоборот, особенно без практики.",
+                "if_it_were_true": "Тогда `Ktor`-`DSL` нельзя было бы написать на Kotlin, но именно Kotlin-`DSL` — его визитная карточка.",
+                "how_it_should_be": "`Ktor` — Kotlin first-class; `Spring Boot` — Java/Kotlin."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие движки (engines) поддерживает `Ktor`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Ktor` работает только на собственном проприетарном движке от JetBrains, и подключить `Netty` или `Jetty` под него невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Ktor` поддерживает несколько engine'ов: `Netty`, `Jetty`, `Tomcat`, `CIO`, и движок выбирается явно при создании сервера.",
+                "source_of_confusion": "`CIO` действительно pure-Kotlin от JetBrains, и его ошибочно считают единственным вариантом.",
+                "if_it_were_true": "Тогда не было бы перегрузок `embeddedServer(Netty, ...)` и `embeddedServer(Jetty, ...)`, но они существуют.",
+                "how_it_should_be": "Engine — сменный: `Netty` (default), `CIO`, `Jetty`, `Tomcat` на выбор."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Engine в `Ktor` — это синоним plugin'а: каждый `install()` добавляет новый engine, например `install(ContentNegotiation)` подключает JSON-движок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Engine — это реализация HTTP-сервера (`Netty`/`CIO`/...), а `install()` подключает plugin'ы вроде `ContentNegotiation`; это разные понятия.",
+                "source_of_confusion": "Оба слова звучат «технически», и engine путают с механизмом расширения через plugins.",
+                "if_it_were_true": "Тогда engine задавался бы внутри блока конфигурации, но он передаётся первым аргументом `embeddedServer`.",
+                "how_it_should_be": "Engine выбирается параметром `embeddedServer(Netty, ...)`, а plugins подключаются через `install()`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Engine — это реализация HTTP-сервера. `Ktor` запускается на `Netty` (default, async non-blocking), `Jetty` и `Tomcat` (Servlet API, деплой в контейнер), `CIO` (pure-Kotlin на корутинах) и `ServletApplicationEngine` (для WAR/Servlet-контейнера).",
+              "correct": true,
+              "sections": {
+                "explanation": "Engine выбирается первым аргументом `embeddedServer(...)`. `Netty` быстрее на high-throughput, `CIO` легче и pure-Kotlin (нет Java reflection в hot path), `Jetty`/`Tomcat` нужны когда требуется Servlet API или деплой в существующий контейнер.",
+                "example": "`embeddedServer(Netty, port = 8080) { ... }` — самый частый выбор; `embeddedServer(CIO, port = 8080) { ... }` — pure-Kotlin вариант без Netty/Jetty.",
+                "when_to_apply": "`Netty` — дефолт для большинства сервисов; `CIO` — для multiplatform и минимального стека; `Jetty`/`Tomcat`/`ServletApplicationEngine` — когда обязателен Servlet API или WAR-деплой.",
+                "edge_cases": "Под high-load `Netty` обычно обгоняет `CIO`, но `CIO` выигрывает по весу и чистоте Kotlin-стека; смена engine не требует переписывать обработчики.",
+                "related": "[[ktor-interview#Q1]] что такое Ktor; [[ktor-interview#Q18]] client engines; [[ktor-interview#Q4]] минимальное приложение."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Netty` и `CIO` идентичны по реализации: оба — это обёртки над Java NIO с одинаковым использованием рефлексии в hot path.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Netty` — Java-библиотека, а `CIO` — pure-Kotlin реализация на корутинах без Java reflection в hot path; их реализации различаются.",
+                "source_of_confusion": "Оба дают async non-blocking сервер, поэтому кажется, что внутри они одинаковы.",
+                "if_it_were_true": "Тогда выбор между ними не влиял бы ни на вес, ни на производительность, но `Netty` обычно быстрее под high-load.",
+                "how_it_should_be": "`Netty` — на базе Java NIO; `CIO` — pure-Kotlin на корутинах, легче и без рефлексии в горячем пути."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как создать простейшее `Ktor`-приложение?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Создать класс с аннотацией `@SpringBootApplication`, добавить `@RestController` и запустить через `SpringApplication.run(...)` — это и есть стандартный способ поднять `Ktor`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@SpringBootApplication` и `@RestController` — это Spring Boot; в `Ktor` сервер поднимается через `embeddedServer(...).start()` без аннотаций.",
+                "source_of_confusion": "Привычка запускать JVM-сервис через Spring переносится на любой фреймворк.",
+                "if_it_were_true": "Тогда `Ktor` зависел бы от `spring-boot-starter`, но его старт — это вызов `embeddedServer`, а не `SpringApplication.run`.",
+                "how_it_should_be": "Минимальное `Ktor`-приложение — `embeddedServer(Netty, port = 8080) { routing { ... } }.start(wait = true)`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Нужно описать роуты в XML-файле `web.xml` и зарегистрировать сервлеты, после чего `Ktor` подхватит их при старте контейнера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Ktor` определяет роуты в коде через `routing { }`-`DSL`, а не в `web.xml`; XML-конфигурация сервлетов здесь не используется.",
+                "source_of_confusion": "Классический Servlet-стек настраивался через `web.xml`, и это ожидание переносят на `Ktor`.",
+                "if_it_were_true": "Тогда без `web.xml` сервер не стартовал бы, но `embeddedServer` поднимается чисто из Kotlin-кода.",
+                "how_it_should_be": "Роуты задаются Kotlin-`DSL` внутри `routing { }`, а не XML-дескриптором."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Ktor` не позволяет запускать встроенный сервер из `main()`: приложение обязательно деплоится как WAR в внешний `Tomcat`, иного способа нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`embeddedServer(...)` как раз поднимает встроенный сервер прямо из `main()`; WAR-деплой — лишь один из опциональных вариантов.",
+                "source_of_confusion": "Поддержка `ServletApplicationEngine` создаёт впечатление, что внешний контейнер обязателен.",
+                "if_it_were_true": "Тогда не существовало бы примера `embeddedServer(Netty, port = 8080)`, но это канонический запуск `Ktor`.",
+                "how_it_should_be": "По умолчанию `Ktor` запускает встроенный сервер из `main()`; WAR — необязательная альтернатива."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Добавить зависимости `ktor-server-core` и engine (`ktor-server-netty`), затем в `main()` вызвать `embeddedServer(Netty, port = 8080) { routing { get(\"/\") { call.respondText(\"Hello, World!\") } } }.start(wait = true)`. Запуск — `./gradlew run`, без аннотаций и автосканирования.",
+              "correct": true,
+              "sections": {
+                "explanation": "Минимальное приложение — это вызов `embeddedServer` с указанием engine, порта и лямбды-конфигурации `Application`. Внутри `routing` определяются обработчики; path-параметры читаются из `call.parameters`.",
+                "example": "`get(\"/greet/{name}\") { val name = call.parameters[\"name\"] ?: \"stranger\"; call.respondText(\"Hello, $name!\") }` — эндпойнт с path-параметром в том же блоке `routing`.",
+                "when_to_apply": "Такой starter подходит для быстрого прототипа, демо или микросервиса, где не нужны DI-контейнер и сложная конфигурация.",
+                "edge_cases": "`start(wait = true)` блокирует `main`-поток до остановки; без `wait = true` процесс завершится сразу, и сервер не успеет обслужить запросы.",
+                "related": "[[ktor-interview#Q3]] выбор engine; [[ktor-interview#Q8]] маршрутизация; [[ktor-interview#Q10]] чтение параметров."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое plugin в `Ktor`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Plugin` (до версии 2.0 — `Feature`) — переиспользуемый компонент, расширяющий функциональность `Ktor`. Подключается через `install(...)` и может вешать обработчики на стадии запроса: `Setup`, `Monitoring`, `Plugins`, `Call`, `Fallback`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Plugins — основной механизм расширения: вместо аннотаций и autoconfig функциональность добавляется явным `install()`. Каждый plugin перехватывает определённые стадии pipeline обработки запроса.",
+                "example": "`install(ContentNegotiation) { json() }`, `install(CallLogging) { level = Level.INFO }`, `install(Compression) { gzip(); deflate() }` — типичный набор подключаемых plugins.",
+                "when_to_apply": "Plugin подключают, когда нужна сквозная функциональность: сериализация, логирование, сжатие, аутентификация, CORS — всё, что должно работать поверх многих эндпойнтов.",
+                "edge_cases": "Порядок `install()` важен: plugins выполняются по стадиям pipeline, и неверный порядок (например, аутентификация после обработки) может дать неожиданное поведение.",
+                "related": "[[ktor-interview#Q6]] основные plugins; [[ktor-interview#Q7]] свой plugin; [[ktor-interview#Q13]] ContentNegotiation."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Plugin` в `Ktor` — это сторонний `.jar`-файл, который кладётся в каталог `plugins/` сервера и подхватывается рантаймом без изменения кода, как в WordPress.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Plugin в `Ktor` — это компонент, подключаемый в коде через `install(...)`, а не drop-in `.jar` в специальной папке.",
+                "source_of_confusion": "Слово «plugin» в других системах (CMS, IDE) означает файловое расширение, отсюда перенос.",
+                "if_it_were_true": "Тогда не было бы блоков `install(ContentNegotiation) { ... }`, но именно так plugins и активируются.",
+                "how_it_should_be": "Plugin подключается явным вызовом `install()` в конфигурации `Application`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Plugin` — это синоним engine'а: подключая `install(Netty)`, вы добавляете HTTP-сервер как plugin к приложению.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Engine (`Netty`/`CIO`) задаётся аргументом `embeddedServer`, а plugins (`ContentNegotiation` и т.п.) подключаются `install()`; это разные сущности.",
+                "source_of_confusion": "И то, и другое расширяет сервер, поэтому понятия engine и plugin смешивают.",
+                "if_it_were_true": "Тогда писали бы `install(Netty)`, но engine передаётся как `embeddedServer(Netty, ...)`.",
+                "how_it_should_be": "Engine — реализация сервера (аргумент `embeddedServer`); plugin — расширение через `install()`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Plugin` — это аннотация уровня класса (`@Plugin`), которой помечают компоненты, чтобы `Ktor` автоматически просканировал и зарегистрировал их.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Ktor` нет аннотации `@Plugin` и автосканирования; plugin активируется явным `install(...)` в коде конфигурации.",
+                "source_of_confusion": "Аннотационная регистрация привычна по Spring, и её ожидают и в `Ktor`.",
+                "if_it_were_true": "Тогда был бы component scan по `@Plugin`, но `Ktor` принципиально явный и обходится без него.",
+                "how_it_should_be": "Plugin регистрируется императивно через `install()`, без аннотаций и сканирования."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные plugins существуют в `Ktor`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `Ktor` существует ровно один plugin — `KtorCore`, который включает всё сразу: и сериализацию, и аутентификацию, и CORS; отдельных plugins нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Plugins разделены по назначению: `ContentNegotiation`, `Authentication`, `CORS` и десятки других подключаются по отдельности.",
+                "source_of_confusion": "Кажется, что фреймворк должен предлагать один «всё-в-одном» модуль, как big starter.",
+                "if_it_were_true": "Тогда не было бы отдельных `install(CORS)` и `install(Authentication)`, но они существуют как независимые plugins.",
+                "how_it_should_be": "Функциональность разбита на множество узких plugins, каждый со своим `install()`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Среди ключевых: `ContentNegotiation` (сериализация JSON/XML/YAML), `Authentication` (JWT/OAuth/Basic/Session), `CORS`, `Compression` (gzip/deflate), `CallLogging`, `StatusPages` (обработка ошибок), `WebSockets`, `Sessions`, `Metrics-Micrometer`, `RateLimit`, `RequestValidation`, `Resources` (type-safe routing) и security-headers (`HSTS`, `DefaultHeaders`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти plugins покрывают сквозные задачи веб-сервиса: формат данных, безопасность, наблюдаемость, ограничение нагрузки и валидацию. Каждый подключается отдельным `install()`, что делает набор функций приложения явным.",
+                "example": "Типичный production-набор: `install(ContentNegotiation) { json() }`, `install(CallLogging)`, `install(StatusPages) { exception<Throwable> { call, e -> ... } }`, `install(CORS) { ... }`.",
+                "when_to_apply": "Plugins выбирают под задачу: `ContentNegotiation` — для JSON API, `Authentication` — для защищённых эндпойнтов, `StatusPages` — для единой обработки ошибок, `RateLimit` — для защиты от перегрузки.",
+                "edge_cases": "`RateLimit` доступен только с Ktor 2.2+, YAML в `ContentNegotiation` — с 2.3+; в старых версиях этих plugins нет, и их пишут вручную или обновляют фреймворк.",
+                "related": "[[ktor-interview#Q5]] что такое plugin; [[ktor-interview#Q20]] схемы аутентификации; [[ktor-interview#Q22]] CORS и headers."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Основные plugins `Ktor` — это `@RestController`, `@Service` и `@Repository`: они задают слои приложения и подключаются аннотациями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это стереотипы Spring; в `Ktor` plugins — это `ContentNegotiation`, `Authentication`, `CORS` и подобные, без аннотационных слоёв.",
+                "source_of_confusion": "Аннотации Spring настолько привычны, что их принимают за «plugins» любого фреймворка.",
+                "if_it_were_true": "Тогда `Ktor` имел бы `@Service`-бины, но он расширяется через `install()`, а не стереотипы.",
+                "how_it_should_be": "Ключевые plugins — `ContentNegotiation`, `Authentication`, `Compression`, `StatusPages` и т.п."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ContentNegotiation` и `Authentication` — это не plugins, а обязательные части ядра, всегда активные и не требующие `install()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба — именно plugins: без явного `install(ContentNegotiation)` авто-сериализации не будет, без `install(Authentication)` нет схем auth.",
+                "source_of_confusion": "Эти возможности настолько типичны, что кажутся встроенными по умолчанию.",
+                "if_it_were_true": "Тогда `call.receive<User>()` работал бы без `install(ContentNegotiation)`, но без него он упадёт.",
+                "how_it_should_be": "И сериализация, и аутентификация подключаются как plugins через `install()`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как написать собственный plugin в `Ktor`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Нужно реализовать интерфейс `javax.servlet.Filter` и зарегистрировать его в `web.xml` — `Ktor` подхватит фильтр как кастомный plugin.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Ktor` не основан на Servlet API в общем случае и не использует `Filter`/`web.xml`; свой plugin создают через `createApplicationPlugin`.",
+                "source_of_confusion": "Servlet-фильтры — классический способ перехвата запросов, отсюда ожидание того же в `Ktor`.",
+                "if_it_were_true": "Тогда конфигурация шла бы через `web.xml`, но `Ktor`-plugin — это Kotlin-значение, подключаемое `install()`.",
+                "how_it_should_be": "Свой plugin пишут через `createApplicationPlugin(...) { onCall { ... } }`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Достаточно пометить класс аннотацией `@KtorPlugin` — фреймворк просканирует classpath и зарегистрирует его автоматически без вызова `install()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотации `@KtorPlugin` и автосканирования нет; plugin создаётся функцией `createApplicationPlugin` и подключается явным `install()`.",
+                "source_of_confusion": "Аннотационная авто-регистрация привычна по Spring и ожидается и здесь.",
+                "if_it_were_true": "Тогда plugin активировался бы сам, но в `Ktor` его обязательно подключают `install(MyPlugin)`.",
+                "how_it_should_be": "Plugin определяют через `createApplicationPlugin` и активируют вызовом `install()`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "С Ktor 2.0 — через `createApplicationPlugin(name, createConfiguration = ::Config) { ... }`, внутри которого доступны hooks `onCall`, `onCallReceive`, `onCallRespond`. Конфигурация читается через `pluginConfig`, а подключается plugin обычным `install(MyPlugin) { ... }`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`createApplicationPlugin` даёт декларативный способ перехватывать стадии запроса: `onCall` — на каждый вызов, `onCallReceive` — при чтении тела, `onCallRespond` — перед отправкой ответа. Конфиг-класс задаёт настраиваемые параметры.",
+                "example": "`val MyPlugin = createApplicationPlugin(\"MyPlugin\", ::MyPluginConfig) { val cfg = pluginConfig; onCall { call -> if (cfg.enabled) call.response.header(\"X-Custom-Header\", \"value\") } }`.",
+                "when_to_apply": "Свой plugin пишут для переиспользуемой сквозной логики: добавления заголовков, аудита, трейсинга, кастомной авторизации — всего, что должно работать поверх многих эндпойнтов.",
+                "edge_cases": "`createApplicationPlugin` доступен только с Ktor 2.0; в 1.x использовался иной API (`ApplicationFeature`) с ручной установкой interceptor'ов в pipeline.",
+                "related": "[[ktor-interview#Q5]] что такое plugin; [[ktor-interview#Q6]] готовые plugins; [[ktor-interview#Q8]] стадии pipeline."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Свой plugin в `Ktor` написать нельзя: набор plugins фиксирован JetBrains, и расширять его можно только через pull request в репозиторий `Ktor`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кастомные plugins — штатная возможность: `createApplicationPlugin` специально предназначен для собственных расширений.",
+                "source_of_confusion": "Богатый список встроенных plugins создаёт впечатление закрытого набора.",
+                "if_it_were_true": "Тогда не было бы публичного API `createApplicationPlugin`, но он есть и документирован.",
+                "how_it_should_be": "Любой может написать свой plugin локально через `createApplicationPlugin` без правок фреймворка."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает маршрутизация в `Ktor`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Маршруты в `Ktor` задаются аннотациями `@GetMapping`/`@PostMapping` над методами контроллера, которые фреймворк находит при сканировании classpath.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@GetMapping` — это Spring MVC; в `Ktor` маршруты определяются `DSL`-функциями `get`/`post` внутри `routing { }`.",
+                "source_of_confusion": "Аннотационный роутинг Spring настолько распространён, что его приписывают и `Ktor`.",
+                "if_it_were_true": "Тогда были бы классы-контроллеры с `@GetMapping`, но в `Ktor` это `routing { get(\"/users\") { ... } }`.",
+                "how_it_should_be": "Маршрутизация — это `DSL` `routing { get/post/route { ... } }`, без аннотаций."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Ktor` использует линейный список регулярных выражений: каждый входящий запрос последовательно сравнивается со всеми зарегистрированными regex по очереди, без какой-либо структуры.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Под капотом строится routing tree (дерево) с матчингом по сегментам пути и методам, а не плоский список regex.",
+                "source_of_confusion": "Regex-маршруты в `Ktor` действительно поддерживаются, и их принимают за основной механизм.",
+                "if_it_were_true": "Тогда вложенные `route(\"/api/v1\") { ... }` не давали бы выигрыша, но они образуют узлы дерева.",
+                "how_it_should_be": "Матчинг идёт по routing tree; regex — лишь частный случай узла."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Вложенные `route(\"/api/v1\") { route(\"/users\") { ... } }` запрещены: в `Ktor` каждый эндпойнт нужно объявлять полным абсолютным путём без группировки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вложение `route` — штатный способ группировать общий префикс; пути склеиваются автоматически (`/api/v1/users`).",
+                "source_of_confusion": "Без практики кажется, что плоский список путей — единственный вариант.",
+                "if_it_were_true": "Тогда нельзя было бы навесить `authenticate(...)` на поддерево, но именно так и делают.",
+                "how_it_should_be": "`route` можно вкладывать; это группирует префиксы и общие требования к поддереву."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`routing { }` — это `DSL` для определения обработчиков HTTP-запросов (`get`, `post`, `route` и т.д.). Под капотом строится routing tree с матчингом по path, методам и content-type; вложенные `route(\"/api/v1\")` группируют префиксы, а `call.respond(...)` отправляет ответ.",
+              "correct": true,
+              "sections": {
+                "explanation": "Маршруты образуют дерево: каждый сегмент пути и каждый метод — узел. Запрос матчится сверху вниз по дереву; вложенность `route` позволяет переиспользовать общий префикс и применять plugins (auth, headers) к поддереву.",
+                "example": "`route(\"/api/v1\") { route(\"/users\") { get { call.respond(userService.findAll()) }; get(\"{id}\") { val id = call.parameters[\"id\"]?.toLongOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest); ... } } }`.",
+                "when_to_apply": "Вложенные `route` применяют для версионирования API, группировки ресурсов и навешивания общих требований (`authenticate`, заголовки) на целые поддеревья маршрутов.",
+                "edge_cases": "Порядок и специфичность маршрутов влияют на матчинг: более общий путь, объявленный раньше, может перехватить запрос; `return@get` нужен, чтобы прервать обработчик после раннего ответа.",
+                "related": "[[ktor-interview#Q9]] вложенные маршруты и параметры; [[ktor-interview#Q10]] path и query параметры; [[ktor-interview#Q11]] type-safe routing."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Routing DSL: как описывать вложенные маршруты и параметры?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `routing`-`DSL` поддерживаются path-параметры `{id}`, wildcard `{path...}` (через `parameters.getAll`), опциональный `{lang?}`, regex-маршруты (`get(Regex(...))`) и группировка по `authenticate(...)` или `route(...)`. Параметры читаются из `call.parameters`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`DSL` позволяет гибко описывать сегменты пути: фиксированные, параметризованные, опциональные и regex с именованными группами. Группировка через `authenticate`/`route` применяет общие правила к поддереву маршрутов.",
+                "example": "`get(\"/files/{path...}\") { val path = call.parameters.getAll(\"path\") }` — захват хвоста пути; `get(\"/articles/{lang?}\") { val lang = call.parameters[\"lang\"] ?: \"en\" }` — опциональный сегмент.",
+                "when_to_apply": "Wildcard — для проксирования файловых путей, опциональные параметры — для дефолтов, regex — для строгих форматов (год/месяц), `authenticate` — для защиты группы маршрутов.",
+                "edge_cases": "Опциональный `{lang?}` может быть `null`, поэтому всегда нужен дефолт; regex с именованными группами читается тоже через `call.parameters[\"groupName\"]`, а не позиционно.",
+                "related": "[[ktor-interview#Q8]] как работает маршрутизация; [[ktor-interview#Q10]] path и query параметры; [[ktor-interview#Q11]] type-safe routing."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Path-параметры в `Ktor` извлекаются только через аннотацию `@PathVariable` на аргументе метода-обработчика, как в Spring MVC.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Ktor` читает path-параметры из `call.parameters[\"id\"]` внутри лямбды-обработчика, без аннотации `@PathVariable`.",
+                "source_of_confusion": "`@PathVariable` — стандарт Spring MVC, и его механику переносят на `Ktor`.",
+                "if_it_were_true": "Тогда обработчик был бы методом с аннотированными аргументами, но это лямбда с доступом к `call.parameters`.",
+                "how_it_should_be": "Параметры берут из `call.parameters` по имени сегмента, заданного в шаблоне пути."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Wildcard-сегмент `{path...}` в `Ktor` запрещён: захватить произвольный хвост пути одним маршрутом невозможно, нужно перечислять все варианты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`{path...}` — поддерживаемый wildcard; весь хвост читается через `call.parameters.getAll(\"path\")`.",
+                "source_of_confusion": "Синтаксис с многоточием выглядит необычно, и его принимают за невалидный.",
+                "if_it_were_true": "Тогда нельзя было бы проксировать файловые пути одним обработчиком, но `{path...}` именно для этого.",
+                "how_it_should_be": "Wildcard `{path...}` захватывает остаток пути, доступный через `getAll`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Группировка `authenticate(\"auth-jwt\") { route(\"/admin\") { ... } }` невозможна: аутентификацию в `Ktor` нельзя применить к группе маршрутов, только к каждому эндпойнту отдельно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`authenticate(...)` оборачивает целое поддерево маршрутов, применяя проверку ко всем вложенным эндпойнтам сразу.",
+                "source_of_confusion": "Кажется, что auth — это свойство одного эндпойнта, а не группы.",
+                "if_it_were_true": "Тогда защиту `/admin/*` пришлось бы дублировать на каждый путь, но `authenticate` группирует их.",
+                "how_it_should_be": "`authenticate` применяется к поддереву `route`, защищая все вложенные маршруты разом."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обрабатывать path и query параметры, заголовки и тело запроса?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "И path-, и query-параметры в `Ktor` читаются из одной и той же коллекции `call.allParameters`, которая объединяет их без различия источника.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные коллекции: path — `call.parameters`, query — `call.request.queryParameters`; единого `call.allParameters` нет.",
+                "source_of_confusion": "Оба — «параметры запроса», поэтому кажется логичным объединить их в один источник.",
+                "if_it_were_true": "Тогда не было бы отдельного `request.queryParameters`, но именно через него читают query.",
+                "how_it_should_be": "Path и query берут из разных коллекций — `call.parameters` и `call.request.queryParameters`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Path-параметры — через `call.parameters[\"id\"]`, query — через `call.request.queryParameters[\"q\"]`, заголовки — `call.request.header(\"Authorization\")`, тело — `call.receive<User>()` (через `ContentNegotiation`), `call.receiveText()` (raw) или `call.receiveParameters()` (form-urlencoded).",
+              "correct": true,
+              "sections": {
+                "explanation": "`Ktor` разделяет источники данных: path и query — отдельные коллекции параметров, заголовки — методом `header(...)`, тело — семейством `receive*`. Типобезопасный `receive<T>()` десериализует через подключённый `ContentNegotiation`.",
+                "example": "`val page = call.request.queryParameters[\"page\"]?.toIntOrNull() ?: 1` — чтение query-параметра с дефолтом; `val user = call.receive<User>()` — десериализация JSON-тела в data-класс.",
+                "when_to_apply": "Query — для фильтров и пагинации, path — для идентификаторов ресурса, `receive<T>()` — для JSON API, `receiveParameters()` — для HTML-форм.",
+                "edge_cases": "`call.parameters` и `call.request.queryParameters` — разные коллекции; обращение к query через `call.parameters` (и наоборот) вернёт `null` и тихо сломает логику.",
+                "related": "[[ktor-interview#Q9]] параметры в DSL; [[ktor-interview#Q12]] сериализаторы; [[ktor-interview#Q13]] ContentNegotiation."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Десериализация тела `call.receive<User>()` работает всегда из коробки, даже без подключённого plugin'а — `Ktor` сам распознаёт JSON по содержимому.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`receive<User>()` требует установленного `ContentNegotiation` с зарегистрированным форматом; без него вызов завершится ошибкой.",
+                "source_of_confusion": "Авто-десериализация выглядит как встроенная магия, не требующая настройки.",
+                "if_it_were_true": "Тогда `install(ContentNegotiation) { json() }` был бы лишним, но без него `receive<T>()` падает.",
+                "how_it_should_be": "Типобезопасный `receive<T>()` опирается на подключённый `ContentNegotiation`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Заголовки запроса в `Ktor` доступны только как единая строка `call.rawHeaders`, и получить конкретный заголовок по имени нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Конкретный заголовок читается через `call.request.header(\"Authorization\")` по имени, а не парсингом одной общей строки.",
+                "source_of_confusion": "В низкоуровневых API заголовки иногда приходят сырой строкой, что переносят на `Ktor`.",
+                "if_it_were_true": "Тогда пришлось бы вручную разбирать `rawHeaders`, но есть метод `header(name)`.",
+                "how_it_should_be": "Заголовок получают по имени через `call.request.header(...)`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое type-safe routing через `@Resource`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Resource` — это аннотация JAX-RS из спецификации Java EE, и `Ktor` использует именно её через библиотеку `Jersey`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Ktor` использует собственную аннотацию `@Resource` из plugin'а `Resources`, не связанную с JAX-RS/`Jersey`.",
+                "source_of_confusion": "В JAX-RS есть похожие аннотации ресурсов, отсюда ложная ассоциация.",
+                "if_it_were_true": "Тогда нужна была бы зависимость `Jersey`, но type-safe routing — это нативный plugin `Ktor`.",
+                "how_it_should_be": "`@Resource` — часть `Ktor`-plugin'а `Resources`, со своей семантикой и `kotlinx.serialization`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Type-safe routing работает без подключения plugin'а: достаточно навесить `@Resource` на класс, и `get<Users>` сразу заработает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нужен явный `install(Resources)`; без него аннотированные классы не превращаются в рабочие типобезопасные маршруты.",
+                "source_of_confusion": "Аннотация на классе создаёт впечатление самодостаточности без установки plugin'а.",
+                "if_it_were_true": "Тогда `install(Resources)` был бы не нужен, но он обязателен для работы `get<Users>`.",
+                "how_it_should_be": "Сначала `install(Resources)`, затем `@Resource`-классы и `get<...>`-обработчики."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "С plugin'ом `Resources` маршруты описываются классами с аннотацией `@Resource`: компилятор проверяет параметры, исчезают magic strings, а URL генерируются типобезопасно через `application.href(...)`. Обработчики регистрируются как `get<Users> { ... }` и `get<Users.Id> { req -> ... }`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@Resource`-классы кодируют структуру URL в типах: вложенные классы задают сегменты пути, поля — параметры. Это даёт compile-time проверку и обратную генерацию ссылок без ручной конкатенации строк.",
+                "example": "`@Resource(\"/users\") class Users { @Resource(\"{id}\") class Id(val parent: Users = Users(), val id: Long) }`, затем `application.href(Users.Id(id = 42L))` вернёт `\"/users/42\"`.",
+                "when_to_apply": "Type-safe routing удобен, когда важна согласованность URL по кодовой базе и генерация ссылок (редиректы, HATEOAS-подобные ответы) без риска опечаток в путях.",
+                "edge_cases": "`Resources` нужно явно `install(Resources)`; без этого `get<Users>` не скомпилируется в рабочий маршрут — plugin обязателен, как и аннотации `kotlinx.serialization` на ресурсах.",
+                "related": "[[ktor-interview#Q8]] базовая маршрутизация; [[ktor-interview#Q9]] параметры в DSL; [[ktor-interview#Q6]] plugin Resources."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Главный плюс `@Resource` в том, что он автоматически кэширует ответы эндпойнтов в Redis, снижая нагрузку на БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Resource` отвечает за типобезопасное описание и генерацию URL, а не за кэширование ответов в Redis.",
+                "source_of_confusion": "Слово «Resource» ассоциируется с ресурсами/кэшем, что уводит от сути.",
+                "if_it_were_true": "Тогда подключение `Resources` включало бы кэш, но его задача — compile-time проверка путей.",
+                "how_it_should_be": "`Resources` даёт type-safe маршруты и `href`-генерацию URL, без кэширования."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие сериализаторы поддерживает `Ktor`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Ktor` поддерживает сериализацию только в собственном бинарном формате `Ktor-Binary` и не умеет работать с JSON или XML.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Ktor` поддерживает JSON, XML, YAML, CBOR, ProtoBuf через `kotlinx.serialization`/`Jackson`/`Gson`; формата `Ktor-Binary` не существует.",
+                "source_of_confusion": "Многие фреймворки имеют «родной» формат, и его выдумывают для `Ktor`.",
+                "if_it_were_true": "Тогда `json()` в `ContentNegotiation` был бы недоступен, но это базовый сценарий.",
+                "how_it_should_be": "Поддерживаются стандартные форматы: JSON, XML, YAML, CBOR, ProtoBuf."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Единственный поддерживаемый JSON-сериализатор — `Jackson`; `kotlinx.serialization` с `Ktor` несовместим.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`kotlinx.serialization` не только совместим, но и рекомендуется как основной; `Jackson` и `Gson` — альтернативы.",
+                "source_of_confusion": "`Jackson` доминирует в Spring-мире, и его принимают за единственный вариант.",
+                "if_it_were_true": "Тогда не было бы функции `json(Json { ... })` от `kotlinx.serialization`, но она штатная.",
+                "how_it_should_be": "JSON можно сериализовать `kotlinx.serialization` (предпочтительно), `Jackson` или `Gson`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`kotlinx.serialization` в `Ktor` работает через рантайм-рефлексию, как `Gson`, поэтому не требует аннотации `@Serializable`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`kotlinx.serialization` генерирует код на этапе компиляции и требует `@Serializable`; рефлексию в hot path он не использует.",
+                "source_of_confusion": "Привычные JSON-библиотеки (`Gson`/`Jackson`) рефлексивны, и это переносят на `kotlinx`.",
+                "if_it_were_true": "Тогда модель без `@Serializable` сериализовалась бы, но компилятор потребует аннотацию.",
+                "how_it_should_be": "`kotlinx.serialization` — compile-time, с обязательным `@Serializable` и без рефлексии."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для JSON — `kotlinx.serialization`, `Jackson`, `Gson`; для XML — `kotlinx.serialization` и `Jackson XML`; YAML — `kotlinx.serialization` (с 2.3+); также CBOR и ProtoBuf через `kotlinx.serialization`. Рекомендуемый выбор — `kotlinx.serialization` (compile-time, без рефлексии).",
+              "correct": true,
+              "sections": {
+                "explanation": "Сериализатор регистрируется внутри `ContentNegotiation`. `kotlinx.serialization` предпочтителен, потому что генерирует код на этапе компиляции, не использует рефлексию и хорошо ложится на корутины и data-классы с `@Serializable`.",
+                "example": "`install(ContentNegotiation) { json(Json { prettyPrint = true; ignoreUnknownKeys = true; encodeDefaults = false }) }`, а модель — `@Serializable data class User(val id: Long, val name: String)`.",
+                "when_to_apply": "`kotlinx.serialization` — для чисто-Kotlin проектов и multiplatform; `Jackson`/`Gson` — когда нужна совместимость с существующим Java-кодом или специфичные фичи этих библиотек.",
+                "edge_cases": "`kotlinx.serialization` требует аннотации `@Serializable` на модели; без неё компиляция или рантайм упадут, тогда как `Jackson`/`Gson` работают по рефлексии без аннотаций.",
+                "related": "[[ktor-interview#Q13]] настройка ContentNegotiation; [[ktor-interview#Q10]] чтение тела; [[ktor-interview#Q1]] интеграция с экосистемой Kotlin."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настраивается `ContentNegotiation`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ContentNegotiation` отвечает за автоматическую сериализацию/десериализацию по заголовкам `Content-Type` и `Accept`. Внутри `install(ContentNegotiation) { ... }` регистрируют форматы: `json()`, `xml()`, `register(ContentType, Converter())`. Если ни один formatter не подходит — ответ `406 Not Acceptable`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Plugin сопоставляет запрошенный/присланный тип контента с зарегистрированными конвертерами и сам вызывает нужный при `call.receive`/`call.respond`. Это убирает ручной парсинг и формирование тела ответа.",
+                "example": "`install(ContentNegotiation) { json(); xml() }`, затем `get(\"/user\") { call.respond(User(1, \"Alice\")) }` вернёт JSON или XML в зависимости от `Accept`-заголовка клиента.",
+                "when_to_apply": "Подключают всегда, когда API обменивается структурированными данными (JSON/XML) — это основа типобезопасных `receive<T>()`/`respond(obj)`.",
+                "edge_cases": "Если клиент прислал `Accept`, для которого нет конвертера, `Ktor` вернёт `406 Not Acceptable`; для нескольких форматов важен порядок и точность регистрации `ContentType`.",
+                "related": "[[ktor-interview#Q12]] сериализаторы; [[ktor-interview#Q10]] чтение тела; [[ktor-interview#Q6]] основные plugins."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`ContentNegotiation` — это plugin для согласования версий API между клиентом и сервером по заголовку `API-Version`, не связанный с форматами данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ContentNegotiation` согласует формат данных (JSON/XML/...) по `Content-Type`/`Accept`, а не версии API.",
+                "source_of_confusion": "Слово «negotiation» ассоциируется и с версионированием, отсюда подмена смысла.",
+                "if_it_were_true": "Тогда внутри настраивали бы версии, но настраивают `json()`/`xml()`-конвертеры.",
+                "how_it_should_be": "Plugin отвечает за выбор формата сериализации, а не версии API."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "При отсутствии подходящего конвертера `Ktor` молча отдаёт пустое тело со статусом `200 OK`, не сигнализируя об ошибке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Если ни один formatter не подходит под `Accept`, `Ktor` отвечает `406 Not Acceptable`, а не пустым `200 OK`.",
+                "source_of_confusion": "Кажется, что фреймворк «как-нибудь» отдаст ответ вместо явной ошибки.",
+                "if_it_were_true": "Тогда клиент не узнал бы о несовместимости формата, но статус `406` явно сигнализирует о ней.",
+                "how_it_should_be": "Несоответствие `Accept` зарегистрированным форматам даёт `406 Not Acceptable`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ContentNegotiation` нельзя настраивать несколькими форматами одновременно: либо `json()`, либо `xml()`, но не оба в одном `install`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В одном `install(ContentNegotiation)` регистрируют несколько форматов (`json(); xml()`), и выбор идёт по `Accept`.",
+                "source_of_confusion": "Кажется, что один plugin обязан обслуживать ровно один формат.",
+                "if_it_were_true": "Тогда контент-негоциация по `Accept` теряла бы смысл, но именно для неё регистрируют несколько форматов.",
+                "how_it_should_be": "Можно зарегистрировать сразу несколько конвертеров; `Ktor` выберет нужный по заголовкам."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `Ktor` использует корутины?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Ktor` использует корутины только в клиентской части (`HttpClient`); серверные обработчики остаются обычными блокирующими функциями на thread-per-request.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Серверные обработчики `Ktor` — тоже `suspend`-функции в корутинах; асинхронность распространяется и на сервер, и на клиент.",
+                "source_of_confusion": "Корутины ассоциируют с сетевыми вызовами клиента, забывая про серверную сторону.",
+                "if_it_were_true": "Тогда сервер требовал бы поток на запрос, но `Ktor` масштабируется на малом числе потоков.",
+                "how_it_should_be": "И серверные обработчики, и клиент `Ktor` построены на корутинах."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все обработчики `Ktor` — `suspend`-функции; каждый запрос запускается в отдельной корутине. Это позволяет обслуживать тысячи одновременных запросов на небольшом числе потоков, не блокируя поток на время I/O — в отличие от модели thread-per-request в Spring MVC.",
+              "correct": true,
+              "sections": {
+                "explanation": "Корутины приостанавливаются на `suspend`-точках (I/O, ожидание), освобождая поток для других запросов. Тяжёлую блокирующую работу выносят в `withContext(Dispatchers.IO)`, а параллельные вызовы организуют через `async` в `coroutineScope`.",
+                "example": "`get(\"/aggregate\") { coroutineScope { val users = async { userService.findAll() }; val products = async { productService.findAll() }; call.respond(mapOf(\"users\" to users.await(), \"products\" to products.await())) } }`.",
+                "when_to_apply": "Корутинная модель раскрывается на I/O-bound нагрузке (много сетевых/БД-вызовов): высокая конкурентность достигается без раздувания пула потоков.",
+                "edge_cases": "Блокирующий вызов прямо в обработчике (без `Dispatchers.IO`) занимает поток event-loop и убивает преимущество async; долгие CPU-задачи тоже нужно выносить с основного диспетчера.",
+                "related": "[[ktor-interview#Q15]] CoroutineScope у ApplicationCall; [[ktor-interview#Q16]] structured concurrency; [[ktor-interview#Q2]] async-модель против Spring."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Каждый запрос в `Ktor` создаёт новый ОС-поток через `Thread.start()`, и корутины здесь — лишь синтаксический сахар над этими потоками.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Корутины не создают поток на запрос: они мультиплексируют тысячи запросов на небольшой пул потоков, приостанавливаясь на I/O.",
+                "source_of_confusion": "Корутины внешне похожи на потоки, отсюда вывод об отображении один-к-одному.",
+                "if_it_were_true": "Тогда смысла в корутинах не было бы вовсе, но их цель — именно избежать потока-на-запрос.",
+                "how_it_should_be": "Корутины — легковесные, много их живёт на одном потоке; новый ОС-поток на запрос не создаётся."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чтобы выполнить блокирующий вызов БД, в `Ktor` достаточно вызвать его напрямую в обработчике — корутины автоматически переносят блокировку в фоновый пул.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Блокирующий вызов нужно явно обернуть в `withContext(Dispatchers.IO)`; иначе он займёт поток диспетчера и сломает конкурентность.",
+                "source_of_confusion": "Кажется, что корутины «магически» делают любой код неблокирующим.",
+                "if_it_were_true": "Тогда `Dispatchers.IO` был бы не нужен, но его как раз применяют для блокирующих операций.",
+                "how_it_should_be": "Блокирующую работу выносят через `withContext(Dispatchers.IO)`, а не зовут напрямую."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `CoroutineScope` у `ApplicationCall`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ApplicationCall` — это глобальный singleton-scope на всё приложение, и корутины, запущенные в нём, живут до остановки сервера независимо от запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Scope `call` привязан к одному запросу, а не к приложению; его корутины отменяются при завершении/обрыве этого запроса.",
+                "source_of_confusion": "Слово «Application» в названии наводит на мысль о глобальном уровне.",
+                "if_it_were_true": "Тогда обрыв соединения не отменял бы дочерние корутины, но он именно отменяет их.",
+                "how_it_should_be": "`call`-scope живёт ровно столько, сколько обрабатывается конкретный запрос."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "При обрыве соединения клиентом дочерние корутины запроса продолжают выполняться до конца — `Ktor` не отменяет их автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Благодаря structured concurrency обрыв соединения отменяет scope запроса и все его дочерние корутины автоматически.",
+                "source_of_confusion": "Кажется, что начатая работа должна завершиться, даже если результат уже некому отдавать.",
+                "if_it_were_true": "Тогда брошенные клиентом запросы копили бы фоновую работу и текли, но scope их отменяет.",
+                "how_it_should_be": "Отмена запроса каскадно отменяет дочерние корутины через structured concurrency."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ApplicationCall` (он же `call` в обработчиках) реализует `CoroutineScope`, привязанный к жизненному циклу запроса. При отмене запроса (клиент закрыл соединение) все дочерние корутины автоматически отменяются — это structured concurrency на уровне запроса.",
+              "correct": true,
+              "sections": {
+                "explanation": "Scope, привязанный к вызову, гарантирует, что фоновые корутины не переживут запрос: оборвалось соединение — отменилась и связанная работа. Это предотвращает утечки корутин и лишнюю нагрузку на уже неактуальные запросы.",
+                "example": "`get(\"/long\") { call.application.launch { /* отменится при обрыве соединения */ backgroundTask() }; call.respondText(\"Started\") }` — fire-and-forget в scope запроса.",
+                "when_to_apply": "Scope вызова используют для побочной работы, которая должна жить ровно столько, сколько актуален запрос: стриминг, дочерние задачи, агрегация ответов.",
+                "edge_cases": "Если фоновая задача должна пережить запрос (например, отправка события), её нельзя запускать в scope `call` — нужен application-scope или внешний `CoroutineScope`, иначе её отменят при завершении ответа.",
+                "related": "[[ktor-interview#Q14]] как Ktor использует корутины; [[ktor-interview#Q16]] structured concurrency; [[ktor-interview#Q8]] жизненный цикл запроса."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ApplicationCall` не является `CoroutineScope`, поэтому запустить корутину, привязанную к запросу, в `Ktor` принципиально нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ApplicationCall` реализует `CoroutineScope`, что и позволяет запускать привязанные к запросу корутины (`call.application.launch`).",
+                "source_of_confusion": "Не все объекты являются scope, и это обобщают на `call`.",
+                "if_it_were_true": "Тогда не существовало бы scope, отменяемого с запросом, но он есть и используется.",
+                "how_it_should_be": "`call` — это `CoroutineScope`, привязанный к жизненному циклу запроса."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обработать structured concurrency в эндпойнте?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для параллельных вызовов в эндпойнте нужно создать `ExecutorService` с фиксированным пулом потоков и вручную собирать `Future` через `get()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Ktor` параллелизм оформляют через `async`/`await` в `coroutineScope`, а не через `ExecutorService` и `Future`.",
+                "source_of_confusion": "Классический Java-параллелизм на `ExecutorService` переносят на корутинный код.",
+                "if_it_were_true": "Тогда не использовали бы `async { ... }.await()`, но это идиоматичный путь в `Ktor`.",
+                "how_it_should_be": "Параллельные задачи запускают `async` внутри `coroutineScope` и собирают через `await`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Если один из `async`-вызовов в `coroutineScope` бросит исключение, остальные продолжат выполняться независимо до своего завершения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При исключении одного `async` structured concurrency отменяет соседние дочерние корутины и пробрасывает ошибку наверх.",
+                "source_of_confusion": "Кажется, что независимо запущенные задачи изолированы друг от друга.",
+                "if_it_were_true": "Тогда после сбоя продолжалась бы лишняя работа, но scope её отменяет ради консистентности.",
+                "how_it_should_be": "Ошибка одной дочерней корутины отменяет остальные в том же `coroutineScope`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Таймаут на операцию в `Ktor` задаётся аннотацией `@Timeout(5)` над обработчиком, и фреймворк сам прерывает выполнение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Таймаут оформляют функцией `withTimeoutOrNull(5.seconds) { ... }` в теле обработчика; аннотации `@Timeout` в `Ktor` нет.",
+                "source_of_confusion": "Аннотационные таймауты есть в других стеках, и их ожидают здесь.",
+                "if_it_were_true": "Тогда был бы декларативный `@Timeout`, но `Ktor` использует функциональный `withTimeout(OrNull)`.",
+                "how_it_should_be": "Лимит времени задают `withTimeout`/`withTimeoutOrNull` прямо в коде обработчика."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Внутри обработчика открывают `coroutineScope { ... }` и запускают параллельные `async { ... }`; если любой бросит исключение — остальные автоматически отменяются. Таймаут оформляют через `withTimeoutOrNull(5.seconds) { ... } ?: return@get call.respond(HttpStatusCode.GatewayTimeout)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`coroutineScope` создаёт область, которая завершается только когда завершились все дочерние корутины; ошибка одной отменяет соседей и пробрасывается наверх. Это гарантирует отсутствие «висящих» задач при частичном сбое.",
+                "example": "`coroutineScope { val a = async { fetchA() }; val b = async { fetchB() }; val c = async { fetchC() }; call.respond(Dashboard(a.await(), b.await(), c.await())) }` — параллельная агрегация трёх источников.",
+                "when_to_apply": "Применяют для агрегации нескольких независимых вызовов (дашборды, fan-out к сервисам) и для ограничения времени операции таймаутом без ручного управления потоками.",
+                "edge_cases": "`withTimeoutOrNull` вернёт `null` при превышении лимита, и забыть обработать этот `null` (ранний `respond`) — частая ошибка; `async` без последующего `await` проглотит исключение до выхода из scope.",
+                "related": "[[ktor-interview#Q14]] корутины в Ktor; [[ktor-interview#Q15]] scope запроса; [[ktor-interview#Q17]] параллельные вызовы клиента."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Ktor Client` и какие у него возможности?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Ktor Client` — multiplatform HTTP-клиент на корутинах (JVM, Android, iOS, JS, Native). Создаётся через `HttpClient(engine) { ... }` с plugins (`ContentNegotiation`, `Logging`, `HttpTimeout`); запросы — `suspend`-функции `client.get(...)`/`client.post(...)`, ответ десериализуется `.body()`. Клиент нужно `close()` по завершении.",
+              "correct": true,
+              "sections": {
+                "explanation": "Клиент симметричен серверу: те же plugins и `DSL`. `suspend`-вызовы не блокируют поток, `.body<T>()` десериализует через `ContentNegotiation`, а `setBody(obj)` + `contentType(...)` формируют тело запроса.",
+                "example": "`val client = HttpClient(CIO) { install(ContentNegotiation) { json() } }; suspend fun fetchUser(id: Long): User = client.get(\"https://api.example.com/users/$id\").body()`.",
+                "when_to_apply": "Используют для исходящих HTTP-вызовов из сервиса и в мобильных/multiplatform клиентах, где важна единая корутинная модель и переиспользование `kotlinx.serialization`.",
+                "edge_cases": "`HttpClient` — тяжёлый ресурс с пулом соединений: создавать его на каждый запрос и не вызывать `close()` ведёт к утечке соединений и потоков.",
+                "related": "[[ktor-interview#Q18]] client engines; [[ktor-interview#Q19]] retry/timeout/logging; [[ktor-interview#Q14]] корутины в Ktor."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Ktor Client` работает только на JVM и не поддерживает Android, iOS или JS — для них нужен отдельный сторонний клиент.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Ktor Client` именно multiplatform: JVM, Android, iOS, JS, Native — это одно из его ключевых преимуществ.",
+                "source_of_confusion": "Серверная часть `Ktor` живёт на JVM, и это ограничение переносят на клиент.",
+                "if_it_were_true": "Тогда не было бы engine'ов `Darwin` (iOS) и `Js` (browser), но они существуют.",
+                "how_it_should_be": "Клиент кросс-платформенный и работает в том числе на iOS, Android и в браузере."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Ktor Client` блокирует вызывающий поток на время запроса, поэтому его нельзя использовать внутри корутины без отдельного пула потоков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запросы клиента — `suspend`-функции; они приостанавливают корутину, не блокируя поток, и естественно живут внутри корутин.",
+                "source_of_confusion": "Многие HTTP-клиенты (старый `HttpURLConnection`) блокирующие, и это обобщают.",
+                "if_it_were_true": "Тогда `client.get(...)` нельзя было бы звать прямо в обработчике, но это штатный сценарий.",
+                "how_it_should_be": "Вызовы клиента неблокирующие (`suspend`) и вызываются прямо из корутин."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Десериализация ответа в `Ktor Client` всегда возвращает сырую строку; распарсить JSON в объект клиент не умеет, нужен ручной `Json.decodeFromString`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`.body<T>()` десериализует ответ в типизированный объект через установленный `ContentNegotiation`, без ручного парсинга.",
+                "source_of_confusion": "Низкоуровневые клиенты отдают строку, и это поведение приписывают `Ktor`.",
+                "if_it_were_true": "Тогда `install(ContentNegotiation)` на клиенте был бы бесполезен, но он включает типизированный `.body<T>()`.",
+                "how_it_should_be": "`.body<User>()` сам десериализует ответ через подключённый конвертер."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие client engines доступны в `Ktor`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "У клиента `Ktor` есть только один engine — `CIO`; подключить `OkHttp` или системный `NSURLSession` в качестве транспорта нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Клиент поддерживает несколько engine'ов: `CIO`, `OkHttp`, `Apache`, `Java`, `Curl`, `Js`, `Darwin` — выбираются под платформу.",
+                "source_of_confusion": "`CIO` — дефолтный universal engine, и его принимают за единственный.",
+                "if_it_were_true": "Тогда не было бы `HttpClient(OkHttp)` и `HttpClient(Darwin)`, но они доступны.",
+                "how_it_should_be": "Клиентский engine сменный; `OkHttp`, `Java`, `Darwin` и др. — валидные варианты."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для клиента доступны `CIO` (multiplatform, pure-Kotlin), `OkHttp` (JVM/Android, зрелый), `Apache` (JVM, HttpComponents), `Java` (JDK 11+ `HttpClient`), `Curl` (Native, libcurl), `Js` (browser fetch), `Darwin` (iOS/macOS, NSURLSession). Engine выбирается аргументом `HttpClient(engine) { ... }`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Как и на сервере, клиентский engine — сменная реализация транспорта. Выбор зависит от платформы и требований: `OkHttp` богат фичами на Android, `Darwin` использует системный NSURLSession на iOS, `CIO` универсален и pure-Kotlin.",
+                "example": "`val client = HttpClient(OkHttp) { engine { config { followRedirects(true) } } }` — выбор engine с его специфичной конфигурацией через блок `engine { config { ... } }`.",
+                "when_to_apply": "`OkHttp`/`Apache`/`Java` — на JVM/Android; `Darwin` — на iOS/macOS; `Js` — в браузере; `CIO` — когда нужен единый pure-Kotlin transport во всех таргетах.",
+                "edge_cases": "Не каждый engine доступен на каждой платформе: `OkHttp` — только JVM/Android, `Darwin` — только Apple-таргеты; в multiplatform-коде engine задают per-target.",
+                "related": "[[ktor-interview#Q17]] что такое Ktor Client; [[ktor-interview#Q3]] серверные engines; [[ktor-interview#Q19]] retry и timeout."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Engine клиента задаётся через `install(OkHttp)` внутри блока конфигурации, как обычный plugin.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Engine передаётся первым аргументом `HttpClient(OkHttp) { ... }`, а `install(...)` подключает plugins (`Logging`, `ContentNegotiation`).",
+                "source_of_confusion": "И engine, и plugins настраивают клиент, поэтому их способы подключения путают.",
+                "if_it_were_true": "Тогда был бы `install(OkHttp)`, но engine — это аргумент конструктора `HttpClient`.",
+                "how_it_should_be": "Engine — аргумент `HttpClient(engine)`, plugins — через `install()`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все клиентские engines доступны на всех платформах: `Darwin` можно использовать на JVM, а `OkHttp` — в браузере.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Engines платформо-зависимы: `Darwin` — только Apple, `OkHttp` — JVM/Android, `Js` — браузер; универсальной доступности нет.",
+                "source_of_confusion": "Multiplatform-природа `Ktor` создаёт иллюзию, что любой engine работает везде.",
+                "if_it_were_true": "Тогда выбор engine не зависел бы от таргета, но в multiplatform его задают per-target.",
+                "how_it_should_be": "Каждый engine привязан к набору платформ; `CIO` — наиболее универсальный."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать retry, timeout и logging в `Ktor Client`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Retry в `Ktor Client` реализуется только вручную: нужно писать цикл `for` с `try/catch` и `delay`, готового plugin'а для повторов нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть готовый `HttpRequestRetry` с `retryOnServerErrors` и `exponentialDelay()`; самописный цикл не нужен.",
+                "source_of_confusion": "Во многих клиентах retry действительно пишут руками, и это обобщают на `Ktor`.",
+                "if_it_were_true": "Тогда не было бы `install(HttpRequestRetry) { ... }`, но этот plugin штатный.",
+                "how_it_should_be": "Повторы настраивают plugin'ом `HttpRequestRetry` с backoff'ом."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`HttpTimeout` задаёт единый общий таймаут на всё; разделить connect-, request- и socket-таймауты в `Ktor` невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`HttpTimeout` различает `requestTimeoutMillis`, `connectTimeoutMillis`, `socketTimeoutMillis` — их настраивают по отдельности.",
+                "source_of_confusion": "Простые клиенты имеют один таймаут, и это ожидание переносят на `Ktor`.",
+                "if_it_were_true": "Тогда был бы один параметр, но plugin предоставляет три независимых лимита.",
+                "how_it_should_be": "Connect/request/socket таймауты конфигурируются раздельно в `HttpTimeout`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Через plugins: `install(HttpTimeout) { requestTimeoutMillis/connectTimeoutMillis/socketTimeoutMillis }`, `install(HttpRequestRetry) { retryOnServerErrors(maxRetries = 3); exponentialDelay() }`, `install(Logging) { level = LogLevel.HEADERS; sanitizeHeader { it == HttpHeaders.Authorization } }`. Базовый URL и заголовки задают через `install(DefaultRequest)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`HttpRequestRetry` поддерживает кастомные условия и экспоненциальный backoff, `HttpTimeout` разделяет request/connect/socket лимиты, а `Logging` с `sanitizeHeader` маскирует чувствительные заголовки — всё декларативно, без ручного цикла повторов.",
+                "example": "`install(HttpRequestRetry) { retryOnServerErrors(maxRetries = 3); exponentialDelay() }` — три повтора на 5xx с растущей задержкой вместо самописного retry-цикла.",
+                "when_to_apply": "Эти plugins ставят для устойчивого взаимодействия с внешними API: таймауты против зависаний, retry против временных 5xx, logging для отладки исходящих вызовов.",
+                "edge_cases": "`Logging` на уровне `BODY` может залогировать секреты — поэтому `sanitizeHeader` для `Authorization`; ретраить неидемпотентные POST по умолчанию опасно (риск дублей), нужно ограничивать условие.",
+                "related": "[[ktor-interview#Q17]] возможности клиента; [[ktor-interview#Q18]] client engines; [[ktor-interview#Q30]] production-настройки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Логирование исходящих запросов всегда печатает заголовок `Authorization` в открытом виде, и скрыть его средствами `Ktor` нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Logging` поддерживает `sanitizeHeader { it == HttpHeaders.Authorization }`, который маскирует чувствительные заголовки в логах.",
+                "source_of_confusion": "Кажется, что лог всегда печатает всё как есть, без фильтрации.",
+                "if_it_were_true": "Тогда секреты неизбежно утекали бы в логи, но `sanitizeHeader` это предотвращает.",
+                "how_it_should_be": "Чувствительные заголовки скрывают через `sanitizeHeader` в plugin'е `Logging`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие схемы аутентификации поддерживает `Ktor`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Ktor` поддерживает только HTTP Basic auth; JWT, OAuth и сессии в нём не реализованы и требуют сторонних библиотек целиком.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Ktor` штатно поддерживает `basic`, `digest`, `bearer`, `jwt`, `oauth`, `session`, `form`, `ldap` — далеко не только Basic.",
+                "source_of_confusion": "Basic — самый простой пример из туториалов, и его принимают за единственный.",
+                "if_it_were_true": "Тогда не было бы `jwt(\"auth-jwt\") { ... }`, но это документированная встроенная схема.",
+                "how_it_should_be": "Поддерживается множество схем, включая JWT, OAuth, session и form."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Защитить группу маршрутов нельзя: каждую схему аутентификации применяют глобально ко всему приложению сразу, без выбора эндпойнтов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Маршруты защищают избирательно блоком `authenticate(\"name\") { ... }`; глобального обязательного применения нет.",
+                "source_of_confusion": "Кажется, что аутентификация — это свойство всего сервера, а не отдельных путей.",
+                "if_it_were_true": "Тогда публичные эндпойнты тоже требовали бы токен, но `authenticate` оборачивает только нужные.",
+                "how_it_should_be": "Защиту навешивают точечно на маршруты через `authenticate(...)`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `validate`-блоке схемы нужно возвращать `true`/`false`; вернуть объект-`Principal` с данными пользователя `Ktor` не позволяет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`validate` возвращает `Principal` (например, `UserIdPrincipal`/`JWTPrincipal`) при успехе или `null` при отказе, а не булево.",
+                "source_of_confusion": "Логически проверка кажется булевой, отсюда ожидание `Boolean`.",
+                "if_it_were_true": "Тогда нельзя было бы прочитать `call.principal<JWTPrincipal>()`, но это штатно.",
+                "how_it_should_be": "`validate` отдаёт `Principal` или `null`, передавая данные дальше в обработчик."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Ktor` поддерживает `basic` (HTTP Basic), `digest`, `bearer` (custom token), `jwt` (RS256/HS256...), `oauth` (1.0/2.0, для клиента), `session` (cookie), `form` (form-login) и `ldap`. Схемы регистрируют в `install(Authentication) { ... }`, а защищают маршруты блоком `authenticate(\"name\") { ... }`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждая схема — именованный провайдер с собственной логикой `validate`, возвращающей `Principal` (или `null` при отказе). Имя провайдера связывает конфигурацию с `authenticate(...)`-блоком, защищающим конкретные маршруты.",
+                "example": "`install(Authentication) { basic(\"auth-basic\") { validate { creds -> if (creds.name == \"admin\" && creds.password == \"secret\") UserIdPrincipal(creds.name) else null } } }`.",
+                "when_to_apply": "`basic`/`form` — для простых внутренних админок, `jwt`/`bearer` — для stateless API, `session` — для классических web-приложений с куками, `oauth` — для интеграции с внешними провайдерами.",
+                "edge_cases": "Имена провайдеров (`\"auth-jwt\"`) должны совпадать в `install` и `authenticate`; опечатка даёт маршрут без защиты или ошибку — типичный источник дыр в безопасности.",
+                "related": "[[ktor-interview#Q21]] реализация JWT; [[ktor-interview#Q22]] CORS и headers; [[ktor-interview#Q9]] группировка через authenticate."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать JWT в `Ktor`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `install(Authentication) { jwt(\"auth-jwt\") { ... } }` задают `realm`, `verifier(JWT.require(Algorithm.HMAC256(secret)).withAudience(...).withIssuer(...).build())`, `validate { credential -> ... JWTPrincipal(...) }` и `challenge { ... call.respond(Unauthorized) }`. Токен генерируют `JWT.create().withClaim(...).withExpiresAt(...).sign(Algorithm.HMAC256(secret))`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`verifier` проверяет подпись, issuer и audience; `validate` решает, валиден ли payload, и возвращает `JWTPrincipal`; `challenge` определяет ответ при невалидном/просроченном токене. Секрет и параметры обычно читают из `application.conf`.",
+                "example": "`JWT.create().withIssuer(jwtIssuer).withAudience(jwtAudience).withClaim(\"username\", username).withExpiresAt(Date(System.currentTimeMillis() + 60_000)).sign(Algorithm.HMAC256(jwtSecret))` — генерация токена на минуту.",
+                "when_to_apply": "JWT применяют для stateless-аутентификации API, когда не хочется хранить серверные сессии: токен самодостаточен и проверяется по подписи.",
+                "edge_cases": "Без `withExpiresAt` токен бессрочен — серьёзная уязвимость; рассинхрон `issuer`/`audience` между генерацией и `verifier` приведёт к отклонению валидных токенов.",
+                "related": "[[ktor-interview#Q20]] схемы аутентификации; [[ktor-interview#Q25]] конфигурация секретов; [[ktor-interview#Q22]] прочие security-настройки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для JWT в `Ktor` достаточно навесить аннотацию `@JwtSecured` на обработчик, и фреймворк сам проверит подпись токена без конфигурации провайдера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JWT настраивают через `jwt(\"auth-jwt\") { verifier(...); validate { ... } }` в `Authentication`; аннотации `@JwtSecured` нет.",
+                "source_of_confusion": "Аннотационная защита есть в Spring Security, и её ожидают в `Ktor`.",
+                "if_it_were_true": "Тогда не нужен был бы `verifier(...)`, но проверка подписи задаётся именно им.",
+                "how_it_should_be": "JWT конфигурируют провайдером `jwt(...)` с `verifier` и `validate`, без аннотаций."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Ktor` сам выпускает и подписывает JWT при логине — отдельный код генерации токена через `JWT.create()` писать не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Выпуск токена пишут вручную через `JWT.create()....sign(...)`; `Ktor` отвечает за проверку входящих токенов, а не за их генерацию автоматически.",
+                "source_of_confusion": "Кажется, что раз фреймворк проверяет JWT, он же их и выдаёт.",
+                "if_it_were_true": "Тогда не было бы примера `generateToken` с `JWT.create()`, но его пишут разработчики.",
+                "how_it_should_be": "Генерацию токена реализуют сами (`JWT.create().sign(...)`); `Ktor` лишь верифицирует."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "JWT в `Ktor` поддерживает только алгоритм `none` (без подписи), поэтому токены нельзя криптографически защитить.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поддерживаются `HMAC256` (HS256), `RS256` и другие алгоритмы; токены подписываются и проверяются криптографически.",
+                "source_of_confusion": "Алгоритм `none` встречается в уязвимых конфигурациях JWT, и его ошибочно считают единственным.",
+                "if_it_were_true": "Тогда `Algorithm.HMAC256(secret)` был бы недоступен, но именно он используется в примерах.",
+                "how_it_should_be": "JWT подписывают полноценными алгоритмами (`HMAC256`/`RS256`), а не `none`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить CORS, CSRF и security headers в `Ktor`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Ktor` включает CSRF-защиту автоматически для всех POST-запросов, как `Spring Security`, и отключать её не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Встроенной CSRF-защиты в `Ktor` нет: её реализуют через `Sessions` или собственную middleware вручную.",
+                "source_of_confusion": "Авто-CSRF в `Spring Security` создаёт ожидание того же поведения по умолчанию.",
+                "if_it_were_true": "Тогда не пришлось бы писать защиту руками, но `Ktor` оставляет это на разработчика.",
+                "how_it_should_be": "CSRF в `Ktor` настраивают самостоятельно; готового plugin'а по умолчанию нет."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "CORS — `install(CORS) { allowMethod(...); allowHeader(...); allowHost(\"client.example.com\", schemes = listOf(\"https\")); allowCredentials = true }`. Заголовки — `install(DefaultHeaders) { header(\"X-Frame-Options\", \"DENY\") }`, `install(HSTS) { maxAgeInSeconds = ... }`. CSRF встроенной защиты нет — через `Sessions` или свою middleware.",
+              "correct": true,
+              "sections": {
+                "explanation": "Безопасность в `Ktor` собирается из отдельных plugins: `CORS` управляет cross-origin доступом, `DefaultHeaders`/`HSTS` добавляют защитные заголовки. CSRF, в отличие от Spring Security, не идёт из коробки и реализуется вручную.",
+                "example": "`install(CORS) { allowMethod(HttpMethod.Put); allowHeader(HttpHeaders.Authorization); allowHost(\"client.example.com\", schemes = listOf(\"https\")); allowCredentials = true }` — разрешение конкретного origin и метода.",
+                "when_to_apply": "`CORS` — для SPA/мобильных клиентов с другого origin; `HSTS`/`DefaultHeaders` — для базового hardening; ручной CSRF — для form-based сессионных приложений.",
+                "edge_cases": "`allowCredentials = true` несовместим с wildcard `allowHost(\"*\")` по спецификации CORS; отсутствие встроенного CSRF — частая дыра, если о ней забыть в сессионных приложениях.",
+                "related": "[[ktor-interview#Q20]] схемы аутентификации; [[ktor-interview#Q21]] JWT; [[ktor-interview#Q32]] отсутствие auto security best practices."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "CORS в `Ktor` настраивается единственным флагом `enableCors = true`, без возможности указать конкретные методы, заголовки или хосты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`install(CORS)` детально настраивается: `allowMethod`, `allowHeader`, `allowHost`, `allowCredentials` — а не одним булевым флагом.",
+                "source_of_confusion": "Кажется, что CORS — это просто «вкл/выкл» без тонкой настройки.",
+                "if_it_were_true": "Тогда нельзя было бы ограничить origin одним хостом, но `allowHost(...)` это позволяет.",
+                "how_it_should_be": "CORS конфигурируют гранулярно: разрешённые методы, заголовки, хосты, credentials."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Security-заголовки вроде `X-Frame-Options` `Ktor` проставляет сам по умолчанию, и `DefaultHeaders`/`HSTS` для этого не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Защитные заголовки добавляют явно через `DefaultHeaders`/`HSTS`; автоматически `Ktor` их не выставляет.",
+                "source_of_confusion": "Ожидание «secure by default» переносят на минималистичный `Ktor`.",
+                "if_it_were_true": "Тогда `install(DefaultHeaders) { header(\"X-Frame-Options\", \"DENY\") }` был бы лишним, но его пишут осознанно.",
+                "how_it_should_be": "Security-заголовки добавляют вручную через `DefaultHeaders` и `HSTS`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать DI в `Ktor`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `Ktor` есть встроенный DI-контейнер с аннотацией `@Inject` и автосканированием бинов, аналогичный Spring.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Встроенного DI в `Ktor` нет; используют Manual DI или сторонние `Koin`/`Kodein`, без `@Inject` и сканирования.",
+                "source_of_confusion": "Привычка к Spring-DI заставляет ожидать контейнер и в `Ktor`.",
+                "if_it_were_true": "Тогда не нужен был бы `Koin`, но его как раз подключают за отсутствием встроенного DI.",
+                "how_it_should_be": "DI решают вручную или сторонним контейнером; встроенного нет."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "DI в `Ktor` реализуется только через `Spring`-контекст: подключают `spring-context` и используют `ApplicationContext` внутри обработчиков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Типичные решения — Manual DI и `Koin`/`Kodein`; тащить `Spring`-контекст в `Ktor` не требуется и не идиоматично.",
+                "source_of_confusion": "Spring-`ApplicationContext` ассоциируется с DI вообще, отсюда перенос.",
+                "if_it_were_true": "Тогда `Ktor`-проекты зависели бы от `spring-context`, но они используют `Koin`.",
+                "how_it_should_be": "В Kotlin-экосистеме `Ktor` берут `Koin`/`Kodein` или Manual DI, а не Spring-контекст."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `Ktor` нет встроенного DI. Подходы: Manual DI (передавать зависимости в функции конфигурации `Application`), `Koin` (самый популярный для Kotlin), `Kodein-DI` (альтернатива) и реже `Dagger/Hilt` (для multiplatform).",
+              "correct": true,
+              "sections": {
+                "explanation": "Отсутствие DI-контейнера — следствие философии минимализма: зависимости явно конструируют и прокидывают. Для роста проекта подключают сторонний контейнер (`Koin`), который интегрируется как plugin.",
+                "example": "Manual DI: `fun Application.module(userService: UserService = UserService()) { routing { get(\"/users\") { call.respond(userService.findAll()) } } }` — зависимость передаётся параметром модуля.",
+                "when_to_apply": "Manual DI достаточно для небольших сервисов; `Koin`/`Kodein` берут, когда граф зависимостей разрастается и ручное конструирование становится громоздким.",
+                "edge_cases": "Manual DI без дисциплины приводит к «прокидыванию» зависимостей через много слоёв; сторонний DI добавляет рантайм-инициализацию, но решает проблему разрастания графа.",
+                "related": "[[ktor-interview#Q24]] Koin vs встроенные средства; [[ktor-interview#Q2]] отличие от встроенного DI Spring; [[ktor-interview#Q32]] минусы Ktor."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Передавать зависимости через параметры функции `Application.module(...)` нельзя — `Ktor` запрещает аргументы у модуля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Manual DI как раз и работает через параметры модуля: `fun Application.module(userService: UserService = ...)` — валидный и распространённый приём.",
+                "source_of_confusion": "Кажется, что модуль обязан быть функцией без аргументов.",
+                "if_it_were_true": "Тогда Manual DI был бы невозможен, но это базовый способ внедрения в `Ktor`.",
+                "how_it_should_be": "Зависимости штатно прокидывают параметрами `Application.module`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`Koin` или встроенные средства: что использовать для DI?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Koin` подключается импортом библиотеки без `install(Koin)`: достаточно объявить `module { ... }`, и зависимости разрешатся автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Koin` интегрируют через `install(Koin) { modules(appModule) }`; без этого `inject` в роутинге работать не будет.",
+                "source_of_confusion": "Кажется, что объявления модуля достаточно без подключения plugin'а.",
+                "if_it_were_true": "Тогда `install(Koin)` был бы лишним, но именно он связывает контейнер с `Ktor`.",
+                "how_it_should_be": "Сначала `install(Koin) { modules(...) }`, затем `by inject<...>()`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Koin` использует рантайм-рефлексию и кодогенерацию через annotation processor, поэтому требует `kapt`/`ksp` и заметно замедляет сборку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Koin` — это `DSL`-контейнер без кодогенерации и рефлексии в hot path; `kapt`/`ksp` для базового использования не нужны.",
+                "source_of_confusion": "`Dagger`/`Hilt` действительно используют annotation processing, и это переносят на `Koin`.",
+                "if_it_were_true": "Тогда `module { single { ... } }` требовал бы кодогенерации, но это чистый Kotlin-`DSL`.",
+                "how_it_should_be": "`Koin` разрешает зависимости через `DSL` и `get()`, без annotation processor."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`single` в `Koin` создаёт новый экземпляр на каждый вызов `get()`, поэтому для синглтона нужно использовать `factory`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `single` даёт один экземпляр на контейнер, а `factory` — новый на каждый запрос зависимости.",
+                "source_of_confusion": "Названия `single`/`factory` легко перепутать по смыслу.",
+                "if_it_were_true": "Тогда `single { UserService(...) }` плодил бы копии, но он возвращает один и тот же объект.",
+                "how_it_should_be": "`single` — singleton на контейнер; `factory` — новый экземпляр на каждый `get()`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Встроенного DI нет, поэтому выбор между Manual DI и `Koin`. `Koin` подключается как plugin: `install(Koin) { slf4jLogger(); modules(appModule) }`, где `appModule = module { single { UserRepository() }; single { UserService(get()) } }`, а зависимости получают через `by inject<UserService>()`. Manual DI достаточно для маленьких проектов.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Koin` — DSL-контейнер без кодогенерации и рефлексии в стиле Kotlin: `single`/`factory` объявляют провайдеры, `get()` разрешает зависимости. Интеграция через `install(Koin)` делает `inject` доступным в роутинге.",
+                "example": "`val appModule = module { single { UserRepository() }; single { UserService(get()) } }`, затем в `routing { val userService by inject<UserService>(); get(\"/users\") { call.respond(userService.findAll()) } }`.",
+                "when_to_apply": "Manual DI — для небольших сервисов с коротким графом; `Koin` — когда зависимостей много, нужны области видимости и тестовая подмена модулей.",
+                "edge_cases": "`single` создаёт один экземпляр на весь app — для запросно-зависимых объектов нужен `factory` или scope; забытый `get()` в конструкторе приводит к ошибке разрешения на старте.",
+                "related": "[[ktor-interview#Q23]] подходы к DI; [[ktor-interview#Q5]] подключение через install; [[ktor-interview#Q2]] контраст со встроенным DI Spring."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать конфигурацию через `application.conf`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Конфигурацию пишут в HOCON-файле `application.conf` (секции `ktor.deployment.port`, `application.modules`, плюс свои — `jwt`, `database`). Подстановка из env — `${?VAR}`. В коде читают через `environment.config.property(\"jwt.secret\").getString()` или `propertyOrNull(...)`. Доступен и YAML (`application.yaml`) с `ktor-server-config-yaml`.",
+              "correct": true,
+              "sections": {
+                "explanation": "HOCON — формат конфигурации `Ktor`: иерархические секции, подстановки и переопределение из окружения. `property` бросает при отсутствии ключа, `propertyOrNull` возвращает `null` — это разделяет обязательные и опциональные настройки.",
+                "example": "`jwt { secret = \"secret\"; secret = ${?JWT_SECRET} }` — дефолт с переопределением из env; в коде `val secret = environment.config.property(\"jwt.secret\").getString()`.",
+                "when_to_apply": "`application.conf` используют для портов, секретов, строк подключения к БД и любых внешних параметров, которые должны меняться без пересборки артефакта.",
+                "edge_cases": "`property(...)` на отсутствующем ключе бросит исключение на старте; для опциональных значений берут `propertyOrNull(...)?.getString()?.toInt() ?: default`, иначе приложение не поднимется.",
+                "related": "[[ktor-interview#Q26]] env vars и profiles; [[ktor-interview#Q21]] чтение секретов JWT; [[ktor-interview#Q30]] production-конфигурация."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Конфигурация `Ktor` задаётся только в `application.properties` в формате `key=value`, как в Spring Boot; HOCON и YAML не поддерживаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Ktor` использует HOCON (`application.conf`) и опционально YAML (`application.yaml`); плоский `application.properties` — это формат Spring.",
+                "source_of_confusion": "`application.properties` Spring Boot настолько распространён, что его ожидают везде.",
+                "if_it_were_true": "Тогда не было бы иерархических секций `ktor { deployment { ... } }`, но HOCON их даёт.",
+                "how_it_should_be": "Конфигурацию пишут в HOCON `application.conf` (или YAML), а не в `.properties`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Подстановка значений из переменных окружения в `application.conf` невозможна — env читают только напрямую через `System.getenv` в коде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HOCON поддерживает подстановку `${?VAR}` прямо в `application.conf`, переопределяя дефолтные значения из окружения.",
+                "source_of_confusion": "Кажется, что конфиг-файл статичен и не знает про окружение.",
+                "if_it_were_true": "Тогда `port = ${?PORT}` не работал бы, но это штатный синтаксис HOCON.",
+                "how_it_should_be": "Env подставляют прямо в конфиг через `${?VAR}`, без обязательного `System.getenv`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`environment.config.property(\"x\")` на отсутствующем ключе тихо вернёт `null`, поэтому проверять наличие обязательных параметров не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`property(...)` бросает исключение, если ключа нет; `null` безопасно возвращает только `propertyOrNull(...)`.",
+                "source_of_confusion": "Методы `property` и `propertyOrNull` похожи, и их поведение путают.",
+                "if_it_were_true": "Тогда забытый обязательный ключ прошёл бы незаметно, но `property` упадёт на старте.",
+                "how_it_should_be": "Для обязательных ключей — `property` (бросает), для опциональных — `propertyOrNull`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работать с environment variables и profiles в `Ktor`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `Ktor` есть встроенные profiles, активируемые через `ktor.profiles.active=prod`, полностью аналогичные `spring.profiles.active`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Встроенных profiles у `Ktor` нет; среды разделяют выбором конфиг-файла, env-переменными или `withFallback`.",
+                "source_of_confusion": "`spring.profiles.active` привычен, и аналог ищут в `Ktor`.",
+                "if_it_were_true": "Тогда был бы ключ `ktor.profiles.active`, но его не существует.",
+                "how_it_should_be": "Среды разделяют разными конфигами/`-Dconfig.file` и env, без понятия profile."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Env подставляют синтаксисом `${?VAR_NAME}` в HOCON. Встроенных profiles, как в Spring, нет: используют разные конфиги (`application-prod.conf` через `-Dconfig.file=...`), переменные окружения (`KTOR_DEPLOYMENT_PORT=9090`) или условия в HOCON через `Config.withFallback`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Ktor` не имеет понятия активного профиля. Разделение сред достигается выбором конфиг-файла на запуске, env-переменными и слиянием конфигов (`withFallback`), а не аннотацией `@Profile`.",
+                "example": "`java -Dconfig.file=application-prod.conf -jar app.jar` запускает с prod-конфигом; `KTOR_DEPLOYMENT_PORT=9090 ./gradlew run` переопределяет порт через env.",
+                "when_to_apply": "Подход с отдельными файлами/env применяют для разделения dev/staging/prod без перекомпиляции: меняется только внешняя конфигурация или переменные окружения.",
+                "edge_cases": "Так как активного профиля нет, нельзя «по ошибке» оставить dev-профиль в prod, но и удобной `@Profile`-логики тоже нет — приходится дисциплинированно выбирать файл/env на деплое.",
+                "related": "[[ktor-interview#Q25]] конфигурация application.conf; [[ktor-interview#Q30]] production-настройки; [[ktor-interview#Q2]] отсутствие магии против Spring."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Переопределить настройку из переменной окружения нельзя: единственный способ изменить порт — пересобрать артефакт с новым `application.conf`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Порт и другие параметры переопределяются env (`KTOR_DEPLOYMENT_PORT=9090`) и `${?VAR}`, без пересборки артефакта.",
+                "source_of_confusion": "Кажется, что значения в конфиге «вшиты» в собранный JAR.",
+                "if_it_were_true": "Тогда `port = ${?PORT}` не имел бы смысла, но он как раз для переопределения из env.",
+                "how_it_should_be": "Настройки меняют через env и подстановки без перекомпиляции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Указать альтернативный конфиг-файл на запуске невозможно: `Ktor` всегда читает только `application.conf` из classpath и игнорирует системные свойства.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Альтернативный файл задают `-Dconfig.file=application-prod.conf`; `Ktor` уважает это системное свойство.",
+                "source_of_confusion": "Кажется, что имя конфига жёстко зашито в фреймворк.",
+                "if_it_were_true": "Тогда нельзя было бы держать отдельный prod-конфиг, но `-Dconfig.file` это позволяет.",
+                "how_it_should_be": "Конфиг-файл выбирают через `-Dconfig.file=...` на старте."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать `Ktor`-приложения?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Ktor`-приложения тестируют, поднимая реальный сервер на случайном TCP-порту и обращаясь к нему через внешний `curl` в integration-тесте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`testApplication` поднимает сервер in-memory без открытия порта; реальный TCP-порт и внешний `curl` не нужны.",
+                "source_of_confusion": "Многие фреймворки тестируют через `RANDOM_PORT`, и это обобщают на `Ktor`.",
+                "if_it_were_true": "Тогда тесты зависели бы от свободных портов и сети, но `testApplication` работает в памяти.",
+                "how_it_should_be": "Тесты идут через in-memory `testApplication`, без открытия порта."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для тестов в `Ktor` нужен отдельный mock-фреймворк (например, `MockK`) для подмены HTTP-слоя, так как обращаться к эндпойнтам напрямую нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `testApplication` обращаются к эндпойнтам напрямую через `client.get/post`; мокать HTTP-слой не требуется.",
+                "source_of_confusion": "Привычка мокать всё подряд заставляет искать mock и для HTTP.",
+                "if_it_were_true": "Тогда не было бы встроенного тестового `client`, но он предоставляется `testApplication`.",
+                "how_it_should_be": "Эндпойнты тестируют реальным тестовым `HttpClient`, без мока транспорта."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "С Ktor 2.0+ — функция `testApplication { ... }`: внутри настраивают `application { module() }` и обращаются к эндпойнтам через тот же `HttpClient` (`client.get(\"/users\")`). Сервер поднимается in-memory, без открытия порта; для типизированного тела создают клиент с `install(ContentNegotiation) { json() }`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`testApplication` запускает приложение в памяти и даёт идиоматичный `HttpClient`, идентичный production-API. Это позволяет писать end-to-end-тесты маршрутов без реального сетевого порта и без моков транспорта.",
+                "example": "`@Test fun test() = testApplication { application { module() }; client.get(\"/users\").apply { assertEquals(HttpStatusCode.OK, status); assertTrue(body<List<User>>().isNotEmpty()) } }`.",
+                "when_to_apply": "Используют для интеграционного тестирования роутинга, сериализации и аутентификации: проверяют реальные HTTP-ответы приложения быстро и без внешней инфраструктуры.",
+                "edge_cases": "Для отправки JSON-тела нужен `createClient { install(ContentNegotiation) { json() } }` — дефолтный тестовый `client` без plugin'ов не сериализует body; отсюда частые ошибки `415/400` в тестах.",
+                "related": "[[ktor-interview#Q28]] testApplication vs withTestApplication; [[ktor-interview#Q13]] ContentNegotiation; [[ktor-interview#Q17]] тот же HttpClient API."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Тестовый `client` внутри `testApplication` всегда сам сериализует любые объекты в JSON, даже без подключения `ContentNegotiation`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дефолтный тестовый `client` не сериализует body без `ContentNegotiation`; для JSON-тела создают `createClient { install(ContentNegotiation) { json() } }`.",
+                "source_of_confusion": "Кажется, что тестовый клиент «умнее» и настраивать его не надо.",
+                "if_it_were_true": "Тогда `createClient { install(ContentNegotiation) }` был бы лишним, но без него body не сериализуется.",
+                "how_it_should_be": "Для JSON-тела тестовый клиент конфигурируют `ContentNegotiation`, как и production."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличается `testApplication` от `withTestApplication`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`testApplication` — это API для нагрузочного тестирования (load testing), а `withTestApplication` — для unit-тестов; они решают принципиально разные задачи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба — про функциональное тестирование приложения; различие в версии и API, а не в нагрузочном vs unit назначении.",
+                "source_of_confusion": "Слово «test» широкое, и функции принимают за разные виды тестирования.",
+                "if_it_were_true": "Тогда `testApplication` генерировал бы нагрузку, но он шлёт обычные запросы через `client`.",
+                "how_it_should_be": "Оба тестируют поведение эндпойнтов; `testApplication` — современный, `withTestApplication` — устаревший."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`withTestApplication` — это новый рекомендованный API Ktor 2.x, а `testApplication` — устаревший из Ktor 1.x, который удалили.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `testApplication` — новый (Ktor 2.x+), а `withTestApplication` — deprecated из Ktor 1.x.",
+                "source_of_confusion": "Похожие имена легко перепутать местами по «новизне».",
+                "if_it_were_true": "Тогда новые проекты писали бы `withTestApplication`, но рекомендуют `testApplication`.",
+                "how_it_should_be": "`testApplication` — актуальный API; `withTestApplication` — устаревший."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Оба API идентичны и взаимозаменяемы: разница только в названии, а внутри `withTestApplication` просто алиас для `testApplication`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные API: `withTestApplication` использует `handleRequest`, а `testApplication` — полноценный `HttpClient`; они не алиасы.",
+                "source_of_confusion": "Похожие имена создают впечатление синонимов.",
+                "if_it_were_true": "Тогда один не был бы deprecated относительно другого, но `withTestApplication` именно устарел.",
+                "how_it_should_be": "У них разные модели вызова (`handleRequest` против `client.get`) и разный статус поддержки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`withTestApplication { handleRequest(...) }` — старый API Ktor 1.x (deprecated). `testApplication { client.get(...) }` — новый API Ktor 2.x+, использующий тот же `HttpClient`, что и в production. Новый подход проще и идиоматичнее, старый — менее удобный и устаревший.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главное различие — модель взаимодействия: `withTestApplication` оперировал низкоуровневым `handleRequest`, а `testApplication` даёт полноценный `HttpClient`-API. Унификация с production-клиентом снижает дублирование и упрощает миграцию тестов.",
+                "example": "Старый: `withTestApplication { handleRequest(HttpMethod.Get, \"/users\") { ... } }`; новый: `testApplication { client.get(\"/users\").apply { assertEquals(HttpStatusCode.OK, status) } }`.",
+                "when_to_apply": "В новых проектах и при миграции на Ktor 2.x используют `testApplication`; `withTestApplication` встречается только в legacy-коде на Ktor 1.x.",
+                "edge_cases": "`withTestApplication` помечен deprecated и со временем удаляется; смешивать оба API в одном проекте не стоит — стиль тестов и доступные возможности у них различаются.",
+                "related": "[[ktor-interview#Q27]] как тестировать; [[ktor-interview#Q17]] тот же HttpClient API; [[ktor-interview#Q5]] версии и plugins."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда выбирать `Ktor` вместо `Spring Boot`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Ktor` выбирают для: чисто-Kotlin команды/проекта, низкого cold start (AWS Lambda, Cloud Functions), микросервиса без heavy enterprise needs, простоты и минимума магии, multiplatform-клиента (iOS + JVM) и контроля над всем без autoconfig. `Spring Boot` — для смешанных команд, готовых интеграций (Data JPA, Security, Batch) и enterprise-стандартов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Решение строится на оси «контроль/простота против готовых интеграций/масштаба команды». `Ktor` выигрывает, когда ценны быстрый старт и явность; `Spring Boot` — когда важны экосистема и declarative-подходы.",
+                "example": "Serverless-функция на Kotlin с холодным стартом < 1 сек и парой эндпойнтов — кандидат на `Ktor`; крупный сервис с JPA, Security и Kafka «из коробки» — на `Spring Boot`.",
+                "when_to_apply": "Критерий применяют на старте проекта при выборе стека, исходя из языка команды, требований к старту, нужных интеграций и зрелости enterprise-стандартов.",
+                "edge_cases": "Граница не жёсткая: команда с Java-бэкграундом даже на простом сервисе чаще продуктивнее в `Spring Boot`; а тяжёлые enterprise-нужды на `Ktor` потребуют много ручной работы.",
+                "related": "[[ktor-interview#Q2]] отличия от Spring Boot; [[ktor-interview#Q31]] производительность; [[ktor-interview#Q32]] минусы Ktor."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Ktor` следует выбирать всегда, когда нужны готовые enterprise-интеграции — Spring Data JPA, Spring Security, Batch — потому что у `Ktor` их больше.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Готовых enterprise-интеграций больше как раз у `Spring Boot`; именно ради них чаще выбирают его, а не `Ktor`.",
+                "source_of_confusion": "Кажется, что более новый фреймворк обязан иметь больше интеграций.",
+                "if_it_were_true": "Тогда `Ktor` имел бы аналоги Spring Data/Security из коробки, но их приходится собирать руками.",
+                "how_it_should_be": "За богатыми интеграциями идут к `Spring Boot`; `Ktor` берут за простоту и быстрый старт."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Ktor` стоит брать ради максимально быстрого старта только в монолитах на 50+ модулей с большой Java-командой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сильные стороны `Ktor` (cold start, простота) раскрываются в небольших Kotlin-сервисах и serverless, а не в крупных Java-монолитах.",
+                "source_of_confusion": "Большой монолит ассоциируется с «серьёзным» фреймворком, и сюда же тянут `Ktor`.",
+                "if_it_were_true": "Тогда `Ktor` рекомендовали бы для тяжёлого enterprise, но там обычно уместнее `Spring Boot`.",
+                "how_it_should_be": "`Ktor` подходит для лёгких Kotlin-микросервисов и serverless, а не больших Java-монолитов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Выбор между `Ktor` и `Spring Boot` определяется исключительно лицензией: `Ktor` платный для коммерческого использования, поэтому его берут реже.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба фреймворка open-source и бесплатны; выбор определяют язык команды, cold start и нужные интеграции, а не лицензия.",
+                "source_of_confusion": "Принадлежность `Ktor` к JetBrains (продающей IDE) наводит на мысль о платности.",
+                "if_it_were_true": "Тогда `Ktor` не был бы на GitHub под открытой лицензией, но он именно там.",
+                "how_it_should_be": "Решение принимают по техническим критериям; оба фреймворка бесплатны."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как сделать `Ktor`-приложение production-ready (метрики, healthcheck, graceful shutdown)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Ktor` из коробки предоставляет полный набор Actuator-эндпойнтов (`/actuator/health`, `/actuator/metrics`, `/actuator/info`), как `Spring Boot`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Готового набора Actuator-эндпойнтов в `Ktor` нет; `/health` и `/metrics` пишут вручную, метрики подключают `MicrometerMetrics`.",
+                "source_of_confusion": "Spring Boot Actuator настолько привычен, что его наличие ожидают и в `Ktor`.",
+                "if_it_were_true": "Тогда не пришлось бы вручную писать `get(\"/health\")`, но именно так и делают.",
+                "how_it_should_be": "Production-эндпойнты в `Ktor` собирают руками; авто-Actuator отсутствует."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Метрики — `install(MicrometerMetrics) { registry = PrometheusMeterRegistry(...) }` плюс эндпойнт `/metrics` со `scrape()`. Healthcheck — свой `get(\"/health\") { call.respond(mapOf(\"status\" to \"UP\")) }`. Graceful shutdown — `server.stop(gracePeriodMillis, timeoutMillis)` в shutdown-hook. Готового набора endpoints, как у Spring Actuator, нет — собирают руками.",
+              "correct": true,
+              "sections": {
+                "explanation": "Production-обвязка в `Ktor` не идёт из коробки: метрики подключают plugin'ом `MicrometerMetrics`, health- и metrics-эндпойнты пишут вручную, корректное завершение оформляют через `stop()` с grace-периодом в `addShutdownHook`.",
+                "example": "`Runtime.getRuntime().addShutdownHook(Thread { server.stop(gracePeriodMillis = 1000, timeoutMillis = 5000) })` — завершение с грейс-периодом перед остановкой сервера.",
+                "when_to_apply": "Эту обвязку добавляют перед выкаткой в prod/k8s: `/health` для liveness/readiness-проб, `/metrics` для Prometheus, graceful shutdown для безболезненного rolling-деплоя.",
+                "edge_cases": "Без graceful shutdown активные запросы оборвутся при деплое; `gracePeriodMillis`/`timeoutMillis` нужно согласовать с настройками k8s (`terminationGracePeriodSeconds`), иначе под убьют раньше срока.",
+                "related": "[[ktor-interview#Q6]] plugin метрик; [[ktor-interview#Q32]] минусы и ручная обвязка; [[ktor-interview#Q29]] когда выбирать Ktor."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Graceful shutdown в `Ktor` невозможен: при остановке сервер мгновенно обрывает все активные соединения, и `gracePeriodMillis` не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Корректное завершение есть: `server.stop(gracePeriodMillis, timeoutMillis)` даёт активным запросам время завершиться перед остановкой.",
+                "source_of_confusion": "Минимализм `Ktor` создаёт впечатление отсутствия graceful-механизмов.",
+                "if_it_were_true": "Тогда rolling-деплой всегда ронял бы запросы, но `stop()` с grace-периодом это предотвращает.",
+                "how_it_should_be": "Graceful shutdown оформляют через `server.stop(gracePeriodMillis, timeoutMillis)` в shutdown-hook."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Метрики в `Ktor` собираются автоматически без plugin'ов: фреймворк сам публикует Prometheus-метрики на `/metrics` при старте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метрики подключают явно через `install(MicrometerMetrics) { registry = ... }` и сами выставляют `/metrics`; автоматически их нет.",
+                "source_of_confusion": "Ожидание «observability из коробки» переносят на минималистичный `Ktor`.",
+                "if_it_were_true": "Тогда `install(MicrometerMetrics)` был бы лишним, но без него метрик не будет.",
+                "how_it_should_be": "Метрики включают plugin'ом `MicrometerMetrics` и публикуют вручную."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова производительность `Ktor` по сравнению со `Spring WebFlux`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Ktor` на порядок (в 10+ раз) быстрее `Spring WebFlux` во всех сценариях, потому что корутины полностью устраняют переключение контекста.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Разница обычно в пределах 5-15%, а не на порядок; оба на `Netty` дают сопоставимую пропускную способность.",
+                "source_of_confusion": "Энтузиазм вокруг корутин преувеличивает реальный выигрыш в числах.",
+                "if_it_were_true": "Тогда `WebFlux` не имел бы смысла под нагрузкой, но он остаётся конкурентоспособным.",
+                "how_it_should_be": "`Ktor` чуть быстрее на простых запросах, но разница умеренная (5-15%)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring MVC` (синхронный) под высокой конкурентностью работает быстрее обоих async-стеков, так как не тратит время на корутины и реактивные операторы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Синхронный `Spring MVC` под high concurrency заметно медленнее async-стеков из-за модели поток-на-запрос и блокировок.",
+                "source_of_confusion": "Простота синхронной модели создаёт ложное ощущение её большей скорости.",
+                "if_it_were_true": "Тогда async-фреймворки не давали бы выигрыша, но под нагрузкой `MVC` проседает.",
+                "how_it_should_be": "Под high concurrency async (`Ktor`/`WebFlux`) обгоняет синхронный `Spring MVC`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Оба построены на async-модели. `Ktor` (`Netty` + coroutines) — ~150-200K req/s в простых benchmark'ах; `Spring WebFlux` (`Netty` + Reactor) — ~140-180K req/s. Разница 5-15%, зависит от workload и настройки; `Ktor` обычно чуть быстрее на простых запросах за счёт меньшего overhead. `Spring MVC` (синхронный) заметно медленнее обоих под high concurrency.",
+              "correct": true,
+              "sections": {
+                "explanation": "На одном транспорте (`Netty`) разница между корутинами `Ktor` и Reactor `WebFlux` невелика и не критична; реальная пропасть — между async-стеками и синхронным `Spring MVC` при высокой конкурентности.",
+                "example": "В простом echo/JSON-benchmark'е `Ktor` может выдать ~180K req/s против ~160K у `WebFlux` — разница в пределах настройки, тогда как `Spring MVC` под той же нагрузкой проседает сильнее.",
+                "when_to_apply": "Этими цифрами оперируют при выборе async-стека под high-load: если нагрузка I/O-bound и важна конкурентность, оба async-варианта предпочтительнее синхронного `MVC`.",
+                "edge_cases": "Бенчмарки сильно зависят от сценария (размер тела, число хопов, GC); 5-15% разницы легко перекрываются неоптимальной конфигурацией, поэтому решать только по синтетике рискованно.",
+                "related": "[[ktor-interview#Q14]] корутины как основа async; [[ktor-interview#Q2]] async-модель vs Spring; [[ktor-interview#Q29]] критерии выбора."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Ktor` и `Spring WebFlux` нельзя сравнивать: `WebFlux` синхронный и блокирующий, поэтому всегда обслуживает максимум один запрос за раз.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring WebFlux` — async non-blocking стек на `Netty` + Reactor; он обслуживает множество одновременных запросов, как и `Ktor`.",
+                "source_of_confusion": "`WebFlux` путают с синхронным `Spring MVC`.",
+                "if_it_were_true": "Тогда `WebFlux` не выдавал бы ~140-180K req/s, но он именно высококонкурентный.",
+                "how_it_should_be": "Оба — async non-blocking; сравнивать их корректно, разница невелика."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие минусы у `Ktor`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Главный минус `Ktor` — тяжёлый артефакт (50+ MB) и медленный cold start (10-15 сек), из-за чего он не подходит для serverless.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `Ktor` лёгкий (~5-10 MB) и быстро стартует (< 1 сек), что делает его удобным для serverless — это его сильная сторона.",
+                "source_of_confusion": "Характеристики `Spring Boot` (тяжёлый JAR, долгий старт) ошибочно приписывают `Ktor`.",
+                "if_it_were_true": "Тогда `Ktor` не рекомендовали бы для AWS Lambda, но именно туда его и берут.",
+                "how_it_should_be": "Лёгкость и быстрый старт — плюс `Ktor`; минусы лежат в интеграциях и community."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Минус `Ktor` в том, что он навязывает слишком много магии и autoconfiguration, лишая разработчика контроля над поведением приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `Ktor` как раз минимум магии и явная конфигурация; избыток autoconfig — это претензия к `Spring Boot`, а не к `Ktor`.",
+                "source_of_confusion": "Критику «магии» автоматически переносят на любой фреймворк.",
+                "if_it_were_true": "Тогда в `Ktor` был бы autoconfig, но он принципиально явный.",
+                "how_it_should_be": "`Ktor` даёт контроль и явность; его минус — не магия, а нехватка готовых решений."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Серьёзный минус `Ktor` — встроенный, но крайне медленный DI-контейнер, который нельзя заменить на `Koin` или Manual DI.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Встроенного DI в `Ktor` нет вовсе; минус именно в его отсутствии, а `Koin`/Manual DI — штатная замена.",
+                "source_of_confusion": "Наличие DI считают обязательным, поэтому выдумывают «медленный встроенный».",
+                "if_it_were_true": "Тогда не пришлось бы подключать `Koin`, но его как раз и берут из-за отсутствия DI.",
+                "how_it_should_be": "Минус — отсутствие встроенного DI; решается `Koin`/`Kodein`/Manual DI."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Меньше готовых интеграций (для PostgreSQL/Redis/Kafka пишут обёртки сами); нет встроенного DI (берут `Koin`/`Kodein`); меньше документации и ответов на StackOverflow; нет авто-security best practices (CORS/CSRF/rate limit — руками); меньшее community; production-обвязка (метрики, health, graceful shutdown) требует ручной работы; нет официальной интеграции с ORM; нет аннотаций. Плата за контроль и простой стек — больше написанного кода.",
+              "correct": true,
+              "sections": {
+                "explanation": "Минусы — обратная сторона минимализма: то, что Spring даёт автоматически, в `Ktor` собирают вручную. Это даёт контроль, но требует больше кода и зрелости команды, особенно на крупных enterprise-задачах.",
+                "example": "Чтобы получить то, что в Spring идёт из коробки (Data JPA, Security, Actuator), в `Ktor` подключают `Exposed`/Hibernate, пишут auth-обвязку и вручную делают `/health` и метрики.",
+                "when_to_apply": "Эти минусы взвешивают при выборе стека: если команде нужны готовые интеграции и declarative-подход, перевес может быть в пользу `Spring Boot`.",
+                "edge_cases": "Часть «минусов» субъективна: отсутствие аннотаций и магии кому-то плюс; но дефицит community и интеграций — объективная нагрузка на команду при росте проекта.",
+                "related": "[[ktor-interview#Q23]] отсутствие встроенного DI; [[ktor-interview#Q30]] ручная production-обвязка; [[ktor-interview#Q2]] сравнение со Spring Boot."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
