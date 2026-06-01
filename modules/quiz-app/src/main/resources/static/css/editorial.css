@@ -989,3 +989,161 @@ html[data-design="editorial"] .empty-actions { display: flex; gap: var(--space-3
   html[data-design="editorial"] .flashcard-grade-buttons { grid-template-columns: 1fr 1fr; }
   html[data-design="editorial"] .action-footer button[type="submit"] { width: 100%; }
 }
+
+/* ===========================================================================
+   SETTINGS (C4) — «Настроить сессию». Старый .app-layout — сломанный sidebar-rail
+   (всё в 230px). В editorial разворачиваем в чистую читаемую колонку. Структуру и
+   ID шаблона сохраняем (app.js: #sidebar-collapse-toggle, #filter-mode-hint,
+   #shuffle-checkbox, streak-*, data-sidebar-form) — только relayout+restyle.
+   Гейт под .settings-page, чтобы не задеть .app-layout на ещё не мигрированных
+   страницах (stats/result, если используют).
+   ========================================================================== */
+html[data-design="editorial"] .settings-page .app-layout {
+  display: block; grid-template-columns: none;
+  max-width: 860px; margin: 0 auto; padding: 0; gap: 0;
+}
+html[data-design="editorial"] .settings-page .main-content,
+html[data-design="editorial"] .settings-page .settings-content { width: auto; max-width: none; margin: 0; padding: 0; }
+
+/* Карточки-секции: убираем rail-хром, делаем editorial-блоки */
+html[data-design="editorial"] .settings-page .control-card,
+html[data-design="editorial"] .settings-page .card {
+  width: auto; max-width: none; position: static;
+  background: transparent; border: 0; border-radius: 0;
+  box-shadow: none; backdrop-filter: none; padding: 0; margin: 0 0 var(--space-7);
+}
+/* В одной колонке свернуть-панель не нужна */
+html[data-design="editorial"] .settings-page .sidebar-toggle-btn { display: none; }
+html[data-design="editorial"] .settings-page #left-sidebar-content { display: block !important; }
+
+html[data-design="editorial"] .settings-page .control-section {
+  padding: var(--space-6) 0 0; margin: 0;
+  border-top: var(--rule-weight) solid var(--color-border-primary);
+}
+html[data-design="editorial"] .settings-page #left-sidebar-filters { padding-top: 0; border-top: 0; }
+html[data-design="editorial"] .settings-page .control-section-tips { border-top: 0; padding-top: var(--space-4); }
+html[data-design="editorial"] .settings-page .control-title {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-xl); font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary); margin: 0 0 var(--space-4);
+}
+html[data-design="editorial"] .settings-page .control-inline-hint {
+  color: var(--color-text-secondary); font-size: var(--font-size-sm); margin: var(--space-3) 0 0; max-width: var(--measure);
+}
+
+/* Поля */
+html[data-design="editorial"] .settings-page .filters-fields { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-bottom: var(--space-4); }
+html[data-design="editorial"] .settings-page .field { display: flex; flex-direction: column; align-items: stretch; text-align: left; gap: var(--space-2); margin-bottom: var(--space-4); }
+html[data-design="editorial"] .settings-page .field-inline { max-width: 220px; align-items: flex-start; }
+html[data-design="editorial"] .settings-page .field-label {
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-secondary);
+}
+html[data-design="editorial"] .settings-page select,
+html[data-design="editorial"] .settings-page input[type="number"] {
+  width: 100%; min-height: 44px; padding: var(--space-2) var(--space-3);
+  font-family: var(--font-family-body); font-size: 16px;
+  color: var(--color-text-primary); background: var(--color-bg-secondary);
+  border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-sm);
+  transition: border-color var(--duration-fast) var(--easing-default), box-shadow var(--duration-fast) var(--easing-default);
+}
+html[data-design="editorial"] .settings-page select {
+  appearance: none; -webkit-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--color-text-secondary) 50%), linear-gradient(135deg, var(--color-text-secondary) 50%, transparent 50%);
+  background-position: calc(100% - 18px) center, calc(100% - 12px) center;
+  background-size: 6px 6px, 6px 6px; background-repeat: no-repeat; padding-right: var(--space-7);
+}
+html[data-design="editorial"] .settings-page select:focus,
+html[data-design="editorial"] .settings-page input[type="number"]:focus {
+  outline: none; border-color: var(--color-border-focus); box-shadow: var(--shadow-focus);
+}
+
+/* Переключатели */
+html[data-design="editorial"] .settings-page .filters-toggles { display: grid; width: 100%; grid-template-columns: 1fr 1fr; justify-items: start; gap: var(--space-2) var(--space-4); margin-bottom: var(--space-5); }
+html[data-design="editorial"] .settings-page .toggle-item {
+  display: flex; align-items: center; justify-content: flex-start; gap: var(--space-2); min-height: 44px; cursor: pointer;
+  color: var(--color-text-primary); background: transparent; border: 0; padding: 0; font-size: var(--font-size-base);
+}
+html[data-design="editorial"] .settings-page .toggle-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--color-accent-primary); cursor: pointer; }
+
+/* Кнопки форм */
+html[data-design="editorial"] .settings-page #filters-form button[type="submit"],
+html[data-design="editorial"] .settings-page .btn-finish-small {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; padding: var(--space-2) var(--space-5);
+  font-family: var(--font-family-body); font-size: var(--font-size-base); font-weight: var(--font-weight-medium);
+  background: transparent; color: var(--color-text-primary);
+  border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-md);
+  cursor: pointer; box-shadow: none; text-transform: none; letter-spacing: 0; touch-action: manipulation;
+  transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
+}
+html[data-design="editorial"] .settings-page #filters-form button[type="submit"]:hover,
+html[data-design="editorial"] .settings-page .btn-finish-small:hover { background: var(--color-bg-tertiary); border-color: var(--color-text-secondary); }
+html[data-design="editorial"] .settings-page #session-form button[type="submit"] {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 48px; padding: var(--space-3) var(--space-6); margin-top: var(--space-2);
+  font-family: var(--font-family-body); font-size: var(--font-size-md); font-weight: var(--font-weight-medium);
+  background: var(--color-accent-primary); color: var(--color-accent-on);
+  border: var(--rule-weight) solid var(--color-accent-primary); border-radius: var(--border-radius-md);
+  cursor: pointer; box-shadow: none; text-transform: none; letter-spacing: 0; touch-action: manipulation;
+  transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
+}
+html[data-design="editorial"] .settings-page #session-form button[type="submit"]:hover { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); }
+html[data-design="editorial"] .settings-page .btn-finish-small { margin-top: var(--space-3); }
+
+/* Данные: экспорт + опасный сброс */
+html[data-design="editorial"] .settings-page .data-export-block { margin: var(--space-3) 0 var(--space-5); }
+html[data-design="editorial"] .settings-page .data-export-actions { display: flex; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-3); }
+html[data-design="editorial"] .settings-page .data-export-actions .btn {
+  width: auto; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; padding: var(--space-2) var(--space-5);
+  font-family: var(--font-family-body); font-size: var(--font-size-base); font-weight: var(--font-weight-medium);
+  background: transparent; color: var(--color-text-primary); text-decoration: none;
+  border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-md);
+  box-shadow: none; text-transform: none; letter-spacing: 0;
+  transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
+}
+html[data-design="editorial"] .settings-page .data-export-actions .btn:hover { background: var(--color-bg-tertiary); border-color: var(--color-text-secondary); }
+html[data-design="editorial"] .settings-page .data-management-form { padding-top: var(--space-5); border-top: var(--rule-weight) solid var(--color-border-primary); }
+html[data-design="editorial"] .settings-page .data-management-form p { color: var(--color-text-secondary); max-width: var(--measure); }
+html[data-design="editorial"] .settings-page .danger-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; padding: var(--space-2) var(--space-5);
+  font-family: var(--font-family-body); font-size: var(--font-size-base); font-weight: var(--font-weight-medium);
+  background: transparent; color: var(--color-status-error);
+  border: var(--rule-weight) solid var(--color-status-error); border-radius: var(--border-radius-md);
+  cursor: pointer; box-shadow: none; text-transform: none; letter-spacing: 0; touch-action: manipulation;
+  transition: background var(--duration-fast) var(--easing-default), color var(--duration-fast) var(--easing-default);
+}
+html[data-design="editorial"] .settings-page .danger-btn:hover { background: var(--color-status-error); color: var(--color-status-error-on); }
+
+/* Прогресс: streak + stats-grid */
+html[data-design="editorial"] .settings-page .streak-bar {
+  display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;
+  padding: var(--space-3) var(--space-4); margin-bottom: var(--space-4);
+  border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-md);
+  background: var(--color-bg-secondary);
+}
+html[data-design="editorial"] .settings-page .streak-bar.hidden { display: none; }
+html[data-design="editorial"] .settings-page .streak-days,
+html[data-design="editorial"] .settings-page .streak-count-text { font-family: var(--font-family-mono); font-size: var(--font-size-sm); color: var(--color-text-secondary); }
+html[data-design="editorial"] .settings-page .streak-progress { flex: 1; min-width: 80px; height: 4px; background: var(--color-bg-tertiary); border-radius: var(--border-radius-full); overflow: hidden; }
+html[data-design="editorial"] .settings-page .streak-progress-fill { height: 100%; background: var(--color-accent-primary); }
+
+html[data-design="editorial"] .settings-page .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--space-3); }
+html[data-design="editorial"] .settings-page .stat-item,
+html[data-design="editorial"] .settings-page .stat-card {
+  padding: var(--space-3) var(--space-4); border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-md); background: var(--color-bg-secondary); text-align: left;
+}
+html[data-design="editorial"] .settings-page .stat-value { font-family: var(--font-family-display); font-size: var(--font-size-xl); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); display: block; }
+html[data-design="editorial"] .settings-page .stat-label { font-family: var(--font-family-mono); font-size: var(--font-size-xs); letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-secondary); }
+
+html[data-design="editorial"] .settings-page .toast { padding: var(--space-3) var(--space-4); border-radius: var(--border-radius-md); margin-bottom: var(--space-4); }
+html[data-design="editorial"] .settings-page .toast-success { background: var(--color-status-success-wash); border: var(--rule-weight) solid var(--color-status-success); color: var(--color-text-primary); }
+
+@media (max-width: 600px) {
+  html[data-design="editorial"] .settings-page .filters-fields,
+  html[data-design="editorial"] .settings-page .filters-toggles { grid-template-columns: 1fr; }
+  html[data-design="editorial"] .settings-page #session-form button[type="submit"] { width: 100%; }
+}
