@@ -78,6 +78,8 @@ updated: "2026-04-25"
 
 ## Q1. (!) Ключевые метрики cache?
 
+(!) Ключевые метрики cache?
+
 **Must-have метрики:**
 
 **Hit ratio:**
@@ -127,12 +129,7 @@ hit_ratio = hits / (hits + misses)
 
 **Export:** `redis_exporter` / `memcached_exporter` → Prometheus → Grafana.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q2. (!) Hit ratio — что считается "хорошо"? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q2. (!) Hit ratio — что считается "хорошо"?
 
 **Зависит от use case:**
 
@@ -173,12 +170,7 @@ hit_ratio = hits / (hits + misses)
 - 100% hit можно achieve by caching garbage forever
 - Balance с freshness (stale serving)
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. (!) Как измерить cache impact на latency? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+## Q3. (!) Как измерить cache impact на latency?
 
 **Метод 1: direct measurement:**
 ```java
@@ -229,12 +221,7 @@ Example:
 - Serialization
 - In-proc cache (Caffeine) — microseconds, essentially free
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q4. (!) LRU / LFU / TinyLFU — performance разница? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q4. (!) LRU / LFU / TinyLFU — performance разница?
 
 **LRU (Least Recently Used):**
 - Evict oldest touched
@@ -270,12 +257,7 @@ Example:
 
 **Verdict:** на типичном Zipfian web workload — **TinyLFU superior** к LRU by 5-15% hit ratio.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. (!) Redis `maxmemory-policy` — выбор? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q5. (!) Redis `maxmemory-policy` — выбор?
 
 **Policies:**
 
@@ -313,12 +295,7 @@ maxmemory-samples 10  # default 5; higher = better approximation
 
 **Monitor:** `evicted_keys` counter; spikes indicate under-provisioned.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. Memory fragmentation Redis? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q6. Memory fragmentation Redis?
 
 **Fragmentation ratio:**
 ```
@@ -357,12 +334,7 @@ active-defrag-cycle-max 75
 
 **Monitor:** alert if `mem_fragmentation_ratio > 1.5` for extended period.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. (!) Thundering herd / cache stampede? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+## Q7. (!) Thundering herd / cache stampede?
 
 **Scenario:**
 1. Hot key expires
@@ -417,12 +389,7 @@ now - (delta × β × ln(random())) >= expiry
 **5. Warmup:**
 - Pre-populate cache before releasing traffic
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. (!) Защита: mutex, probabilistic early expiration? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q8. (!) Защита: mutex, probabilistic early expiration?
 
 **Distributed mutex (Redis):**
 
@@ -483,12 +450,7 @@ def xfetch(key, ttl, compute_fn):
 | Stale-while-revalidate | Easy | High (for tolerant apps) | None blocked |
 | Warmup | Easy | High (if feasible) | One-time |
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. Request coalescing? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q9. Request coalescing?
 
 **Coalescing** — de-duplicate **concurrent identical requests** within single process.
 
@@ -537,12 +499,7 @@ public Value get(String key) {
 
 **Gotcha:** exception in one request → all sharing waiters fail. Often OK but know it.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. (!) Как выбрать TTL? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q10. (!) Как выбрать TTL?
 
 **Factors:**
 
@@ -587,12 +544,7 @@ Example:
 
 **Gotcha:** too long TTL + no invalidation → user sees stale. Test: does 1-hour stale OK?
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. Jittered TTL (prevent mass expiration)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q11. Jittered TTL (prevent mass expiration)?
 
 **Problem:**
 - 10,000 keys set at same time with TTL=60s
@@ -627,12 +579,7 @@ redis.set(key, val, ex=ttl)
 
 **Effect:** smooth rebuild rate instead of spike — DB usage graph changes from sawtooth to flat.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. (!) Cold start — cache warming strategies? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+## Q12. (!) Cold start — cache warming strategies?
 
 **Cold cache after:**
 - Deploy / restart
@@ -676,12 +623,7 @@ redis.set(key, val, ex=ttl)
 
 **K8s:** readiness probe returns healthy only после warmup. Otherwise load balancer sends traffic to cold pod.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. Invalidation performance (patterns)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q13. Invalidation performance (patterns)?
 
 **"There are only two hard things in Computer Science: cache invalidation and naming things."** — Phil Karlton.
 
@@ -730,12 +672,7 @@ redis.set(key, val, ex=ttl)
 - Add invalidation where staleness unacceptable
 - Not "invalidate everything on write" — be targeted
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. (!) L1 (in-proc) + L2 (Redis) — зачем? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q14. (!) L1 (in-proc) + L2 (Redis) — зачем?
 
 **L1: in-process** (Caffeine, Guava, local HashMap):
 - Latency: nanoseconds-microseconds
@@ -779,12 +716,7 @@ Request → L1 (check in-proc) → L2 (check Redis) → DB
 - Low RPS (L1 overhead > benefit)
 - Every read needs exact latest value
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. Caffeine tuning? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q15. Caffeine tuning?
 
 **Caffeine** — high-performance Java cache lib (SLF4J-style simplicity).
 
@@ -843,12 +775,7 @@ spring.cache.type: caffeine
 spring.cache.caffeine.spec: maximumSize=1000,expireAfterWrite=10m
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q16. (!) Redis cluster overhead vs single node? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q16. (!) Redis cluster overhead vs single node?
 
 **Single-node Redis:**
 - Lowest latency
@@ -901,12 +828,7 @@ spring.cache.caffeine.spec: maximumSize=1000,expireAfterWrite=10m
 - Partition at app layer (consistent hashing across Redis instances)
 - Redis Enterprise (commercial) — transparent sharding
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q17. Pipeline / MGET batching? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q17. Pipeline / MGET batching?
 
 **Problem:** 100 Redis GETs = 100 RTTs (500ms + if cross-region).
 
@@ -954,12 +876,7 @@ res1, _, counter = p.execute()
 
 **Limit:** big pipelines consume memory (client + server); keep batches sensible (100-1000).
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q18. Serialization overhead (JSON vs MessagePack vs protobuf)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q18. Serialization overhead (JSON vs MessagePack vs protobuf)?
 
 **Measurement** (1KB object):
 
@@ -1001,12 +918,7 @@ res1, _, counter = p.execute()
 - If cache takes 0.5% of request time, 2× faster ser = 0.25% win
 - Profile before switching
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q19. (!) CDN hit ratio и cache headers? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+## Q19. (!) CDN hit ratio и cache headers?
 
 **CDN hit ratio** — % of requests served from edge vs origin.
 
@@ -1052,12 +964,7 @@ res1, _, counter = p.execute()
 - HTML: `max-age=0, s-maxage=60` (clients always re-fetch, CDN caches briefly)
 - API: per-endpoint; often `private, max-age=0`
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q20. CDN tiered caching? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q20. CDN tiered caching?
 
 **Without tiered:**
 ```
@@ -1096,12 +1003,7 @@ Other edges hit shield (shield pre-populated)
 
 **Cost:** enable costs slightly more (shield request billed), but offset by origin savings.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q21. (!) Hot key problem? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q21. (!) Hot key problem?
 
 **Hot key:** single key receiving disproportionate load (e.g., 80% of GETs для one product).
 
@@ -1141,12 +1043,7 @@ Other edges hit shield (shield pre-populated)
 
 **Real-world:** Twitter "Justin Bieber problem" — single user timeline caused hot shard; solution custom sharding.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q22. (!) Big keys problem? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q22. (!) Big keys problem?
 
 **Big key:** single value very large (> 100KB, especially MB).
 
@@ -1191,12 +1088,7 @@ Other edges hit shield (shield pre-populated)
 
 **Monitor:** alert on `MEMORY USAGE > 1MB` for any key.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q23. Cache not scaling — что проверить? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+## Q23. Cache not scaling — что проверить?
 
 **Symptoms:**
 - Latency rising with load
@@ -1253,8 +1145,6 @@ Other edges hit shield (shield pre-populated)
 - Horizontal: cluster (data sharding) или replication (read scaling)
 - Caching layers (L1, CDN, more levels)
 
----
-
 ## See also
 
 - [Caching Strategies](../architecture/caching-strategies-interview.md) — patterns (write-through, aside)
@@ -1268,12 +1158,6 @@ Other edges hit shield (shield pre-populated)
 - [Load Balancing](../architecture/load-balancing-interview.md) — session affinity, cache locality
 - [Scalability Patterns](../architecture/scalability-patterns-interview.md) — caching as scale tool
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Application Profiling](application-profiling-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 - [Database Performance](database-performance-interview.md)
 - [JVM Performance Tuning](jvm-performance-tuning-interview.md)
 - [Memory Management](memory-management-interview.md)

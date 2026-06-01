@@ -79,6 +79,8 @@ updated: "2026-04-25"
 
 ## Q1. (!) Latency vs Bandwidth — разница?
 
+(!) Latency vs Bandwidth — разница?
+
 **Latency** — задержка (time for packet to travel A→B).
 - Измеряется в ms
 - RTT (round-trip time) = 2× one-way
@@ -114,12 +116,7 @@ updated: "2026-04-25"
 - For 100 requests sequentially: 7 seconds just для network
 - Parallelize (HTTP/2 multiplexing) → all within 1 RTT + transfer time
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q2. (!) Типичные RTT-значения? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q2. (!) Типичные RTT-значения?
 
 **Localhost:** 0.05 - 0.2 ms
 
@@ -160,12 +157,7 @@ updated: "2026-04-25"
 - `traceroute <host>` — per-hop latency
 - `mtr <host>` — continuous
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. (!) Что такое bandwidth-delay product? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q3. (!) Что такое bandwidth-delay product?
 
 **BDP = bandwidth × round-trip time**
 
@@ -200,12 +192,7 @@ net.ipv4.tcp_wmem = 4096 65536 16777216
 
 **Rule of thumb:** для 10 Gbps intercontinental → receive buffer ≥ 10MB.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q4. (!) TCP slow start и congestion control? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q4. (!) TCP slow start и congestion control?
 
 **TCP не шлёт full bandwidth на старте** — avoids congestion.
 
@@ -241,12 +228,7 @@ ip route change default via <gw> initcwnd 30
 ```
 Linux 3.10+ default 10; some tune higher (20-40) для better page load.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. (!) TCP handshake overhead? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q5. (!) TCP handshake overhead?
 
 **3-way handshake:**
 ```
@@ -288,12 +270,7 @@ Client → ACK → Server     (1.5 RTT; но data piggyback возможно)
 
 **SO_REUSEPORT:** load balance incoming connections across multiple processes; improves accept throughput.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. Nagle algorithm и delayed ACK? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q6. Nagle algorithm и delayed ACK?
 
 **Nagle's algorithm (1984):**
 - Buffer small writes until ACK received or full segment
@@ -329,12 +306,7 @@ socket.setTcpNoDelay(true);
 
 **HTTP clients:** usually disable Nagle для low-latency; bulk download OK either way.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. BBR vs CUBIC congestion control? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q7. BBR vs CUBIC congestion control?
 
 **CUBIC (Linux default since 2.6.19):**
 - Loss-based: slow down on packet drop
@@ -379,12 +351,7 @@ sysctl net.ipv4.tcp_congestion_control
 ss -ti  # shows per-connection congestion info
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. (!) TLS handshake overhead? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q8. (!) TLS handshake overhead?
 
 **TLS 1.2 handshake:**
 - 2 RTT (after TCP handshake)
@@ -427,12 +394,7 @@ curl -o /dev/null -s -w "%{time_connect} %{time_appconnect} %{time_starttransfer
 # time_connect — TCP handshake; time_appconnect — TLS handshake; time_starttransfer — first byte
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. TLS session resumption, 0-RTT? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q9. TLS session resumption, 0-RTT?
 
 **TLS 1.2 methods:**
 
@@ -472,12 +434,7 @@ curl -o /dev/null -s -w "%{time_connect} %{time_appconnect} %{time_starttransfer
 - Cross-region API calls: 50-100ms savings per request
 - Can push latency under 100ms for static content globally
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. (!) HTTP/1.1 vs HTTP/2 vs HTTP/3? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q10. (!) HTTP/1.1 vs HTTP/2 vs HTTP/3?
 
 **HTTP/1.1 (1997):**
 - Text-based
@@ -522,12 +479,7 @@ curl -o /dev/null -s -w "%{time_connect} %{time_appconnect} %{time_starttransfer
 - UDP blocked на некоторых networks → HTTP/3 falls back to HTTP/2
 - Server Push — browsers disabled by 2022 (complexity, marginal benefit)
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. (!) Head-of-line blocking в HTTP/1.1 и HTTP/2? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q11. (!) Head-of-line blocking в HTTP/1.1 и HTTP/2?
 
 **HTTP/1.1:**
 - Request serialized: must finish response before next request on connection
@@ -562,12 +514,7 @@ curl -o /dev/null -s -w "%{time_connect} %{time_appconnect} %{time_starttransfer
 - Google: HTTP/3 improves search/YouTube mobile experience measurably
 - Cloudflare: default HTTP/3 where supported
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. (!) Keep-alive и connection reuse? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q12. (!) Keep-alive и connection reuse?
 
 **Keep-alive:** после response, connection stays open для next request.
 
@@ -613,12 +560,7 @@ HttpClientBuilder.create()
 
 **Anti-pattern:** creating new `HttpClient` per request (forgot pooling) → each = new TCP + TLS. Senior gotcha в Java.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. HTTP/2 server push (и почему deprecated)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q13. HTTP/2 server push (и почему deprecated)?
 
 **Server Push (HTTP/2):**
 - Server proactively sends resources без client request
@@ -652,12 +594,7 @@ HttpClientBuilder.create()
 - Don't rely на HTTP/2 Push (deprecated)
 - Use Early Hints or link preload
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. QUIC — почему быстрее TCP? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q14. QUIC — почему быстрее TCP?
 
 **QUIC (Quick UDP Internet Connections) — HTTP/3 transport.**
 
@@ -704,12 +641,7 @@ HttpClientBuilder.create()
 - curl, browsers — standard
 - Mobile apps — library-dependent
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. (!) DNS lookup как latency source? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q15. (!) DNS lookup как latency source?
 
 **DNS lookup:** resolve `api.example.com` → IP before connecting.
 
@@ -765,12 +697,7 @@ DNS + TCP + TLS done upfront.
 curl -o /dev/null -s -w "dns:%{time_namelookup} connect:%{time_connect} start:%{time_starttransfer}\n" https://api.site.com
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q16. (!) gzip vs brotli vs zstd? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q16. (!) gzip vs brotli vs zstd?
 
 **Compression для HTTP responses:**
 
@@ -813,12 +740,7 @@ curl -o /dev/null -s -w "dns:%{time_namelookup} connect:%{time_connect} start:%{
 
 **Measure:** `Content-Length` vs raw size = compression ratio.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q17. Content-Encoding negotiation? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q17. Content-Encoding negotiation?
 
 **Client indicates support:**
 ```
@@ -866,12 +788,7 @@ curl -H "Accept-Encoding: br, gzip" -I https://site.com/page
 # check Content-Encoding header
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q18. (!) Зачем CDN — latency math? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q18. (!) Зачем CDN — latency math?
 
 **Без CDN:**
 - Origin in us-east-1
@@ -918,12 +835,7 @@ curl -H "Accept-Encoding: br, gzip" -I https://site.com/page
 - Real-time (low TTL) — reduced benefit
 - But edge TLS termination still helps
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q19. (!) gRPC vs REST performance? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q19. (!) gRPC vs REST performance?
 
 **gRPC:** RPC framework; protobuf + HTTP/2.
 
@@ -982,12 +894,7 @@ curl -H "Accept-Encoding: br, gzip" -I https://site.com/page
 - Internal hot paths — high ROI
 - Public API — rarely worth breaking contract
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q20. WebSockets — overhead и use cases? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q20. WebSockets — overhead и use cases?
 
 **WebSocket (RFC 6455):**
 - Full-duplex persistent connection over TCP
@@ -1033,12 +940,7 @@ curl -H "Accept-Encoding: br, gzip" -I https://site.com/page
 - Modern servers handle 100K+ concurrent WS per instance (Netty, Node.js, Go)
 - Memory per connection key; tune socket buffers
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q21. Server-Sent Events (SSE)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q21. Server-Sent Events (SSE)?
 
 **SSE:** unidirectional server→client over HTTP.
 
@@ -1090,12 +992,7 @@ es.onmessage = (e) => console.log(e.data);
 
 **Common mistake:** assume "WebSocket always better." SSE often fits perfectly, simpler code.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q22. (!) Tail latency — причины и борьба? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q22. (!) Tail latency — причины и борьба?
 
 **Tail latency:** p99, p99.9 latencies — worst few percent of requests.
 
@@ -1155,12 +1052,7 @@ es.onmessage = (e) => console.log(e.data);
 - **Don't just track p50!**
 - Alerts on p99 rises
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q23. (!) Linux sysctl tuning для high-throughput? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q23. (!) Linux sysctl tuning для high-throughput?
 
 **Network stack tuning:**
 
@@ -1221,12 +1113,7 @@ net.netfilter.nf_conntrack_max = 1000000
 - Thread pool sizing
 - Connection pool limits
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q24. Debugging slow networks (tools)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q24. Debugging slow networks (tools)?
 
 **Latency and throughput:**
 - `ping <host>` — RTT, packet loss
@@ -1272,8 +1159,6 @@ curl -o /dev/null -s -w "dns:%{time_namelookup} conn:%{time_connect} tls:%{time_
 
 **Each stage isolates different culprit.**
 
----
-
 ## See also
 
 - [Database Performance](database-performance-interview.md) — client-server network matters
@@ -1287,12 +1172,6 @@ curl -o /dev/null -s -w "dns:%{time_namelookup} conn:%{time_connect} tls:%{time_
 - [Resilience Patterns](../architecture/resilience-patterns-interview.md) — timeouts, retries
 - [Observability](../monitoring/observability-interview.md) — network metrics и tracing
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Application Profiling](application-profiling-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 - [Caching Performance](caching-performance-interview.md)
 - [Database Performance](database-performance-interview.md)
 - [JVM Performance Tuning](jvm-performance-tuning-interview.md)

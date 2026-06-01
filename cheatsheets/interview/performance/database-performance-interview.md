@@ -82,6 +82,8 @@ updated: "2026-04-25"
 
 ## Q1. (!) Как диагностировать slow query?
 
+(!) Как диагностировать slow query?
+
 **Систематический approach:**
 
 **1. Identify:**
@@ -125,12 +127,7 @@ SELECT * FROM orders WHERE user_id = 123 AND status = 'PAID';
 - Query returns reasonable row count (not SELECT *)?
 - Type mismatches (function on indexed col: `WHERE LOWER(email) =` breaks index)?
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q2. (!) EXPLAIN vs EXPLAIN ANALYZE? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q2. (!) EXPLAIN vs EXPLAIN ANALYZE?
 
 **EXPLAIN:** shows **planned** execution plan (estimates).
 - Fast, no actual execution
@@ -166,12 +163,7 @@ SELECT ...;
 
 **Gotcha:** cold run != warm. Run 2x — first hits disk, second from cache. Use `BUFFERS` to see.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. (!) Как читать execution plan? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q3. (!) Как читать execution plan?
 
 **Plan — tree of operations**, bottom-up execution:
 
@@ -210,12 +202,7 @@ Nested Loop  (cost=0.42..8.46 rows=1 width=128) (actual time=0.05..0.12 rows=1 l
 - `Nested Loop` с large outer → bad; expected Hash Join
 - High `Rows Removed by Filter` — filter должен быть в index condition
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q4. Seq Scan vs Index Scan vs Bitmap Scan? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+## Q4. Seq Scan vs Index Scan vs Bitmap Scan?
 
 **Seq Scan (Sequential Scan):**
 - Read table page-by-page от start to end
@@ -254,12 +241,7 @@ EXPLAIN SELECT * FROM orders WHERE user_id = 42;
 EXPLAIN SELECT * FROM orders WHERE amount > 10;
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. (!) Когда index помогает, когда не помогает? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+## Q5. (!) Когда index помогает, когда не помогает?
 
 **Index помогает:**
 - `WHERE col = value` (equality)
@@ -312,12 +294,7 @@ Fix: index на оба OR UNION queries
 SELECT * FROM pg_stat_user_indexes WHERE idx_scan = 0;  -- unused indexes
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. (!) Composite index column order? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+## Q6. (!) Composite index column order?
 
 **Rule:** **most selective first** is myth — **real rule: query access pattern.**
 
@@ -357,12 +334,7 @@ Include frequently selected cols:
 CREATE INDEX idx ON orders (user_id, created_at) INCLUDE (amount, status);
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. Covering index (INCLUDE)? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+## Q7. Covering index (INCLUDE)?
 
 **Covering index** — contains all columns query needs (SELECT + WHERE), позволяя **Index Only Scan**.
 
@@ -403,12 +375,7 @@ Index Only Scan using idx on orders
 - Write overhead
 - Best для hot read paths
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. Partial index? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+## Q8. Partial index?
 
 **Partial index** — index только subset rows (`WHERE` clause в CREATE INDEX).
 
@@ -448,12 +415,7 @@ SELECT ... FROM orders WHERE created_at > ...;
 - `WHERE deleted_at IS NULL`
 - `WHERE region = 'US'` for region-specific queries
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. Index bloat и REINDEX? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+## Q9. Index bloat и REINDEX?
 
 **Index bloat** — pages частично заполнены (UPDATE/DELETE оставляют dead tuples). Index grows beyond data size → slower scans, more I/O.
 
@@ -500,12 +462,7 @@ ALTER INDEX idx_new RENAME TO idx_old;
 - Avoid very long transactions (xmin horizon blocks cleanup)
 - **HOT updates** (no indexed col changed) don't grow indexes
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. (!) N+1 problem — как обнаружить и исправить? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q10. (!) N+1 problem — как обнаружить и исправить?
 
 **N+1:** 1 query для list + N queries (one per item) для related entity.
 
@@ -557,12 +514,7 @@ Direct flat query, no entity graph.
 
 **Not only Hibernate:** any ORM + loops has this.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. JOIN FETCH vs subselect vs batch size? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+## Q11. JOIN FETCH vs subselect vs batch size?
 
 **Сценарий:** load `Order` + `OrderItems`.
 
@@ -614,12 +566,7 @@ SELECT * FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE ...)
 - Multiple collections: batch_fetch_size=20 default
 - Very large: DTO projection
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. (!) Connection pooling — зачем? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q12. (!) Connection pooling — зачем?
 
 **Connection open** = expensive:
 - TCP handshake
@@ -658,12 +605,7 @@ SELECT * FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE ...)
 
 **Warning:** serverless (Lambda) without pooling = DB connection explosion; always use RDS Proxy.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. (!) HikariCP settings? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q13. (!) HikariCP settings?
 
 **HikariCP** — default в Spring Boot. Minimal config, fast.
 
@@ -707,12 +649,7 @@ hikaricp.connections.acquire  # time histogram
 
 **Alerts:** `pending > 0` sustained → pool undersized.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. PgBouncer transaction vs session pooling? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+## Q14. PgBouncer transaction vs session pooling?
 
 **PgBouncer** — lightweight PostgreSQL connection pooler (proxy).
 
@@ -758,12 +695,7 @@ spring:
 [App instances × N] → [PgBouncer pool: 500 client conns / 30 DB conns] → [PostgreSQL]
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. (!) Partitioning — когда применять? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q15. (!) Partitioning — когда применять?
 
 **Partitioning** — split large table на smaller physical chunks (partitions) by criterion (range, list, hash).
 
@@ -811,12 +743,7 @@ CREATE TABLE logs_2024_01 PARTITION OF logs
 
 **Automation:** `pg_partman` extension для auto-creation.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q16. Range / List / Hash partitioning? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q16. Range / List / Hash partitioning?
 
 **Range:**
 - Values within range go to partition
@@ -858,12 +785,7 @@ PARTITION BY HASH (user_id);
 
 **Hash: can't re-partition easily** — choose count carefully (power of 2 for easy doubling later).
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q17. (!) ANALYZE и статистика оптимизатора? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q17. (!) ANALYZE и статистика оптимизатора?
 
 **Statistics** — summary data о table/column distribution used by planner для estimates:
 - Number of rows
@@ -910,12 +832,7 @@ Helps planner for **correlated columns** (city + zip).
 
 **Production issue:** после major data change (migration, restore) → `ANALYZE` immediately; planning time drops, queries faster.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q18. VACUUM, autovacuum, bloat? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q18. VACUUM, autovacuum, bloat?
 
 **VACUUM:** reclaim dead tuples from UPDATE/DELETE (MVCC).
 
@@ -967,12 +884,7 @@ ALTER TABLE t SET (autovacuum_vacuum_scale_factor = 0.05);
 
 **Tune:** `autovacuum_max_workers=6`, `autovacuum_naptime=10s` for busy DBs.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q19. (!) shared_buffers, work_mem, effective_cache_size? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q19. (!) shared_buffers, work_mem, effective_cache_size?
 
 **shared_buffers:** PostgreSQL's block cache (shared memory).
 - Default: 128MB (way too small!)
@@ -1010,12 +922,7 @@ maintenance_work_mem = 1GB
 
 **Tool:** `pgtune` — config calculator by workload type.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q20. WAL и checkpoint tuning? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q20. WAL и checkpoint tuning?
 
 **WAL (Write-Ahead Log):** all changes logged first → can recover.
 
@@ -1055,12 +962,7 @@ maintenance_work_mem = 1GB
 - `pg_stat_bgwriter`: checkpoints, buffers
 - High `checkpoints_req` vs `checkpoints_timed` → max_wal_size too small
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q21. (!) LIMIT + OFFSET проблема pagination? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q21. (!) LIMIT + OFFSET проблема pagination?
 
 **Problem:**
 ```sql
@@ -1104,12 +1006,7 @@ LIMIT 20;
 - Infinite scroll / "next" → keyset
 - "Jump to page 500" → accept slowness или rethink UX
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q22. JOIN vs subquery vs EXISTS? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+## Q22. JOIN vs subquery vs EXISTS?
 
 **Semantic equivalent examples:**
 
@@ -1150,12 +1047,7 @@ WHERE EXISTS (SELECT 1 FROM users u WHERE u.id = o.user_id AND u.country = 'US')
 - Often planner converts `IN` → `Semi Hash Join` = ~= `EXISTS`
 - Use whichever reads clearest; measure.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q23. Window functions performance? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q23. Window functions performance?
 
 **Window functions** — compute per-row using "window" of rows (not aggregate that collapses).
 
@@ -1200,12 +1092,7 @@ WITH aggregated AS MATERIALIZED (...)
 SELECT ... FROM aggregated;
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q24. Materialized views vs views? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q24. Materialized views vs views?
 
 **View:** stored query; executed every time.
 ```sql
@@ -1245,12 +1132,7 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY user_summary_mv;  -- needs unique index
 
 **Watch:** refresh time can become bottleneck — if view takes 10 min, how often refresh? May need partition-based incremental rebuild.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q25. (!) Read replicas — когда и как? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q25. (!) Read replicas — когда и как?
 
 **Read replica:** copy of DB following primary's WAL, servicing read queries.
 
@@ -1292,12 +1174,7 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY user_summary_mv;  -- needs unique index
 
 **Cloud:** RDS/Aurora make replicas trivial; Aurora — shared storage, minimal lag.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q26. (!) Как находить slow queries в prod? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q26. (!) Как находить slow queries в prod?
 
 **PostgreSQL:**
 
@@ -1357,12 +1234,7 @@ Logs full EXPLAIN for slow queries → rich diagnosis.
 5. Fix (index, rewrite, config)
 6. Deploy, measure
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q27. Database load test (pgbench, sysbench)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q27. Database load test (pgbench, sysbench)?
 
 **pgbench** (PostgreSQL bundled):
 - Built-in TPC-B-like benchmark
@@ -1413,8 +1285,6 @@ sysbench --db-driver=pgsql oltp_read_write run --threads=64 --time=60
 
 **Capacity planning:** extrapolate "at 5k TPS load, p99 = 50ms" — compare against SLO.
 
----
-
 ## See also
 
 - [JVM Performance Tuning](jvm-performance-tuning-interview.md) — application side
@@ -1428,12 +1298,6 @@ sysbench --db-driver=pgsql oltp_read_write run --threads=64 --time=60
 - [Memory Management](memory-management-interview.md) — JVM ↔ DB interplay
 - [Consistency Patterns](../architecture/consistency-patterns-interview.md) — read replicas trade-offs
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Application Profiling](application-profiling-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 - [Caching Performance](caching-performance-interview.md)
 - [JVM Performance Tuning](jvm-performance-tuning-interview.md)
 - [Memory Management](memory-management-interview.md)

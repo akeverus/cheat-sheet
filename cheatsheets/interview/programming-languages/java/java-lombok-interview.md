@@ -82,7 +82,9 @@ updated: "2026-04-25"
 
 ---
 
-## Q1. Что такое Lombok и как он работает?
+## Q1. (!) Что такое Lombok и как он работает?
+
+Что такое Lombok и как он работает?
 
 `Project Lombok` — аннотационный процессор Java (JSR 269), работающий на этапе компиляции. Он встраивается в AST (Abstract Syntax Tree) компилятора через internal API и **добавляет/модифицирует узлы дерева** — фактически дописывает код в `.class`-файл без создания промежуточного `.java`-файла.
 
@@ -99,12 +101,7 @@ javac → читает @Data на классе → Lombok дополняет AST
 
 **Итог:** Lombok работает как AST-трансформер, а не как обычный annotation processor.
 
-
-> [!mcq]
-> - [ ] Lombok — runtime agent: загружается JVM-агентом и генерирует методы через рефлексию во время выполнения | ❌ ПОСЛЕДСТВИЕ: такого агента нет, @Data не распознаётся, compile error на первом поле с @Getter
-> - [x] Lombok — AST-трансформер: встраивается в javac через internal API и модифицирует синтаксическое дерево до генерации .class | ✓ ПРИМЕНЯТЬ: объяснение отличает Lombok от MapStruct/Dagger (генерируют файлы) 📋 ПРАВИЛО: Lombok = AST modification, не генерация .java-файлов 🔗 См. Q24
-> - [ ] Lombok генерирует новые .java-файлы рядом с исходниками, как MapStruct | ❌ ПОСЛЕДСТВИЕ: .java-файлы не создаются, геттеры есть только в .class; delombok создаёт файлы, но это отдельная утилита
-> - [ ] Lombok использует bytecode-weaving через ASM уже после компиляции .class | ❌ ПОСЛЕДСТВИЕ: weaving не вызывается, методы отсутствуют в .class, NoSuchMethodError при первом обращении
+## Q2. Как подключить Lombok к Maven/Gradle-проекту?
 
 **Gradle (Kotlin DSL):**
 
@@ -145,12 +142,7 @@ dependencies {
 
 `optional = true` в Maven важно: Lombok нужен только для компиляции, не для runtime. Если Lombok попадёт в transitive dependencies — потребители вашей библиотеки тоже получат его.
 
-
-> [!mcq]
-> - [ ] Lombok добавить в implementation scope — и компилятор, и runtime увидят аннотации | ❌ ПОСЛЕДСТВИЕ: Lombok попадает в transitive deps, потребители библиотеки получают ненужную зависимость
-> - [ ] Только annotationProcessor без compileOnly — processor сам найдёт аннотации через classpath | ❌ ПОСЛЕДСТВИЕ: compile error — @Data/@Slf4j символы не видны в исходниках, SymbolNotFound
-> - [x] compileOnly + annotationProcessor (Gradle) или optional=true + annotationProcessorPaths (Maven) | ✓ ПРИМЕНЯТЬ: все проекты с Lombok 📋 ПРАВИЛО: compileOnly — Lombok нужен только при компиляции, не в runtime 🔗 См. Q25
-> - [ ] Lombok в runtimeOnly scope — аннотации нужны при выполнении для рефлексии | ❌ ПОСЛЕДСТВИЕ: annotation processor не вызывается при компиляции, @Data не генерирует геттеры, NoSuchMethodError
+## Q3. Что генерируют `@Getter` и `@Setter`?
 
 `@Getter` — генерирует `getFieldName()` для каждого поля. Для `boolean` генерирует `isFieldName()`.  
 `@Setter` — генерирует `setFieldName(Type value)`.
@@ -180,12 +172,7 @@ public class User {
 
 Можно навешивать на класс (применяется ко всем полям) или на конкретное поле.
 
-
-> [!mcq]
-> - [ ] @Getter на boolean-поле генерирует getActive() вместо isActive() | ❌ ПОСЛЕДСТВИЕ: Jackson не может связать JSON "active" с геттером getActive(), поле игнорируется при десериализации
-> - [ ] @Setter(AccessLevel.NONE) генерирует private сеттер вместо полного отключения | ❌ ПОСЛЕДСТВИЕ: сеттер всё равно присутствует в классе — нарушается намерение запретить мутацию поля
-> - [ ] @Getter и @Setter работают только на уровне класса, не на отдельном поле | ❌ ПОСЛЕДСТВИЕ: AccessLevel.NONE на конкретном поле не применяется, у поля остаётся public setter
-> - [x] @Getter → getX()/isX() для boolean; @Setter → setX(Type); AccessLevel контролирует видимость; NONE отключает генерацию | ✓ ПРИМЕНЯТЬ: точечный контроль по полям 📋 ПРАВИЛО: @Setter(AccessLevel.NONE) = «не генерировать» 🔗 См. Q5
+## Q4. Что делает `@ToString` и как настроить вывод?
 
 `@ToString` генерирует `toString()` включая имена и значения всех нестатических полей:
 
@@ -213,12 +200,7 @@ public class Order {
 
 **Важно:** `@ToString` с `callSuper = false` (default) не вызывает `super.toString()`. В иерархии классов это может скрыть данные родителя.
 
-
-> [!mcq]
-> - [ ] @ToString без параметров безопасен для JPA-сущностей — он просто выводит поля | ❌ ПОСЛЕДСТВИЕ: @ToString включает lazy-loaded коллекции — каждый вызов toString() триггерит N+1 запрос к БД
-> - [x] @ToString генерирует toString() для всех нестатических полей; exclude убирает поля; callSuper=false по умолчанию — поля родителя игнорируются | ✓ ПРИМЕНЯТЬ: всегда exclude lazy-коллекции в JPA 📋 ПРАВИЛО: @ToString(exclude="items") для @OneToMany — иначе StackOverflow 🔗 См. Q22
-> - [ ] callSuper=true по умолчанию в @ToString — родительские поля включаются автоматически | ❌ ПОСЛЕДСТВИЕ: callSuper=false по умолчанию, поля BaseEntity (id) не попадут в toString, потеря данных в логах
-> - [ ] @ToString.Include на поле вызывает eager загрузку этой ассоциации | ❌ ПОСЛЕДСТВИЕ: @ToString.Include — это просто маркер для включения в вывод, не влияет на fetch стратегию JPA
+## Q5. Что генерирует `@EqualsAndHashCode` и каковы риски?
 
 `@EqualsAndHashCode` генерирует `equals()` и `hashCode()` на основе всех нестатических нетранзиентных полей.
 
@@ -240,12 +222,7 @@ public class Product extends BaseEntity {
 
 **Риск 3 — наследование:** по умолчанию `callSuper = false`. Если подкласс добавляет поля, `equals` игнорирует поля родителя — нужен `callSuper = true`.
 
-
-> [!mcq]
-> - [ ] @EqualsAndHashCode безопасен для JPA-сущностей, если id-поле не null после persist | ❌ ПОСЛЕДСТВИЕ: до persist id=null → все новые сущности имеют одинаковый hashCode, HashSet содержит только одну запись
-> - [ ] callSuper=true используется по умолчанию в @EqualsAndHashCode | ❌ ПОСЛЕДСТВИЕ: callSuper=false по умолчанию — поля родителя игнорируются в equals, объекты с разными id могут считаться равными
-> - [ ] @EqualsAndHashCode на mutable объектах в HashMap безопасен, если поля не меняются после put | ❌ ПОСЛЕДСТВИЕ: если изменить поле после put, hashCode меняется — объект «теряется» в коллекции, get вернёт null
-> - [x] Три риска: mutable objects в HashMap (hash изменился), JPA id=null до persist, inheritance callSuper=false | ✓ ПРИМЕНЯТЬ: JPA-сущности — только @NaturalId или onlyExplicitlyIncluded; mutable — не в HashSet 📋 ПРАВИЛО: @Data на Entity = антипаттерн 🔗 См. Q22
+## Q6. (!) Чем отличаются `@NoArgsConstructor`, `@RequiredArgsConstructor` и `@AllArgsConstructor`?
 
 | Аннотация | Что генерирует | Когда используют |
 |---|---|---|
@@ -264,12 +241,7 @@ public class OrderService {
 
 `@RequiredArgsConstructor` + `final` поля — стандартный способ внедрения зависимостей в Spring без `@Autowired` на конструкторе.
 
-
-> [!mcq]
-> - [ ] @AllArgsConstructor — предпочтительный способ DI в Spring Boot, принимает все поля | ❌ ПОСЛЕДСТВИЕ: @AllArgsConstructor хрупкий — порядок параметров фиксирован, добавление поля ломает все вызовы
-> - [ ] @NoArgsConstructor нельзя использовать совместно с @Builder, они конфликтуют | ❌ ПОСЛЕДСТВИЕ: совместимы, JPA требует оба: @NoArgsConstructor для ORM, @Builder для удобного создания объектов
-> - [x] @NoArgsConstructor — для JPA/Jackson; @RequiredArgsConstructor — final+@NonNull поля (Spring DI); @AllArgsConstructor — все поля | ✓ ПРИМЕНЯТЬ: @RequiredArgsConstructor + final поля = рекомендованный Spring DI без @Autowired 📋 ПРАВИЛО: RequiredArgs = final+NonNull, NoArgs = ORM/Jackson 🔗 См. Q8
-> - [ ] @RequiredArgsConstructor включает поля с default-значениями в конструктор | ❌ ПОСЛЕДСТВИЕ: только final и @NonNull поля включаются; non-final поля с дефолтами — нет, иначе конструктор слишком широкий
+## Q7. Что делает `@NonNull` и где используется?
 
 `@NonNull` на параметре или поле — Lombok вставляет `null`-проверку с `NullPointerException`:
 
@@ -294,12 +266,7 @@ public class OrderMapper {
 
 **Важно:** `@NonNull` от Lombok (`lombok.NonNull`) и JSR 305 (`javax.annotation.NonNull`) или JetBrains `@NotNull` — разные аннотации. Lombok реагирует только на свой `@NonNull`.
 
-
-> [!mcq]
-> - [ ] @NonNull от Lombok и @NotNull от javax.validation взаимозаменяемы — оба генерируют проверку | ❌ ПОСЛЕДСТВИЕ: @NotNull (Bean Validation) — только для валидации в Spring MVC; Lombok реагирует только на lombok.NonNull, null-check не генерируется
-> - [x] @NonNull вставляет null-check в начало метода/конструктора: if (param == null) throw NullPointerException | ✓ ПРИМЕНЯТЬ: @RequiredArgsConstructor + @NonNull = автоматическая защита от null в конструкторе 📋 ПРАВИЛО: lombok.NonNull ≠ javax.annotation.NonNull — только Lombok добавляет runtime-проверку 🔗 См. Q6
-> - [ ] @NonNull на final поле в @RequiredArgsConstructor — поле НЕ включается в конструктор | ❌ ПОСЛЕДСТВИЕ: @NonNull + final = включается в @RequiredArgsConstructor С null-проверкой; без @NonNull final всё равно включается, но без проверки
-> - [ ] @NonNull подавляет предупреждения компилятора, но не генерирует runtime-проверку | ❌ ПОСЛЕДСТВИЕ: @NonNull именно добавляет runtime NPE-проверку — если не хочешь проверки, нужен @SuppressWarnings иного рода
+## Q8. (!) Что генерирует `@Data`?
 
 `@Data` — комбинированная аннотация, аналог применения сразу:
 
@@ -322,12 +289,7 @@ public class Address {
 
 `@Data` — удобно для простых DTO/POJO, но не для JPA-сущностей.
 
-
-> [!mcq]
-> - [ ] @Data = @Getter + @Setter + @ToString + @EqualsAndHashCode (конструктор не генерируется) | ❌ ПОСЛЕДСТВИЕ: @Data также генерирует @RequiredArgsConstructor — без него конструктор придётся добавлять вручную
-> - [ ] @Data на JPA-сущности безопасен, если избегать двунаправленных ассоциаций | ❌ ПОСЛЕДСТВИЕ: @Data всё равно включает @EqualsAndHashCode с проблемой id=null — HashSet сломается даже без bidirectional
-> - [x] @Data = @Getter + @Setter + @RequiredArgsConstructor + @ToString + @EqualsAndHashCode; удобен для DTO, опасен на JPA-Entity | ✓ ПРИМЕНЯТЬ: DTO/POJO без JPA 📋 ПРАВИЛО: @Data на @Entity = StackOverflow (toString) + broken equals (id=null) → используй только @Getter/@Setter 🔗 См. Q22
-> - [ ] @Data автоматически добавляет @NoArgsConstructor, чтобы JPA и Jackson работали | ❌ ПОСЛЕДСТВИЕ: @Data добавляет @RequiredArgsConstructor, не @NoArgsConstructor; для JPA нужно явно добавить @NoArgsConstructor
+## Q9. Чем `@Value` отличается от `@Data`?
 
 `@Value` — иммутабельный вариант `@Data`:
 
@@ -353,12 +315,7 @@ public class Money {
 
 `@Value` — хорош для Value Objects в DDD, DTO-responses, record-подобных классов (до появления `record` в Java 16).
 
-
-> [!mcq]
-> - [ ] @Value генерирует @RequiredArgsConstructor, как и @Data | ❌ ПОСЛЕДСТВИЕ: @Value использует @AllArgsConstructor (все поля финализируются), а не RequiredArgs — порядок параметров фиксирован
-> - [x] @Value = @Getter + @AllArgsConstructor + @ToString + @EqualsAndHashCode + все поля final; без сеттеров | ✓ ПРИМЕНЯТЬ: Value Objects в DDD, immutable DTO, record-аналог до Java 16 📋 ПРАВИЛО: @Value = иммутабельный @Data 🔗 См. Q15
-> - [ ] @Value и @Data оба генерируют сеттеры, разница только в final | ❌ ПОСЛЕДСТВИЕ: @Value сеттеров не генерирует вообще, все поля final — попытка вызвать сеттер = compile error
-> - [ ] @Value совместим с JPA-сущностями в отличие от @Data | ❌ ПОСЛЕДСТВИЕ: @Value делает все поля final, JPA требует mutable поля и no-arg конструктор — @Value ещё менее совместим с JPA чем @Data
+## Q10. Что такое `@Accessors` и зачем нужен?
 
 `@Accessors` меняет стиль сгенерированных геттеров/сеттеров:
 
@@ -394,12 +351,7 @@ public class Config {
 
 **Важно:** `fluent = true` ломает совместимость с Jackson и JPA, которые ожидают `getXxx()`/`setXxx()` конвенцию.
 
-
-> [!mcq]
-> - [ ] @Accessors(fluent = true) совместим с Jackson — геттеры host() и port() правильно сериализуются | ❌ ПОСЛЕДСТВИЕ: Jackson ищет getXxx()/setXxx(), fluent-методы без prefix не находятся → поля не включаются в JSON
-> - [ ] @Accessors(chain = true) создаёт новый объект при каждом сеттер-вызове (immutable style) | ❌ ПОСЛЕДСТВИЕ: chain = true возвращает this, не копию; объект mutable — вместо immutable нужен @With
-> - [x] @Accessors(chain=true) → сеттеры возвращают this (fluent API); fluent=true → без get/set префиксов; несовместим с Jackson/JPA | ✓ ПРИМЕНЯТЬ: fluent API при явном отсутствии Jackson и JPA 📋 ПРАВИЛО: fluent=true ломает стандартные соглашения — Jackson/JPA не видят поля 🔗 См. Q11
-> - [ ] @Accessors(prefix = "m_") убирает префикс из имён полей при объявлении класса | ❌ ПОСЛЕДСТВИЕ: prefix убирает его только из имён геттеров/сеттеров, поле по-прежнему называется m_field
+## Q11. (!) Как работает `@Builder`?
 
 `@Builder` генерирует статический inner class `Builder` с методом `build()`:
 
@@ -428,12 +380,7 @@ Order order = Order.builder()
 
 `@Builder` совместим с `@Value` для immutable builder-паттерна.
 
-
-> [!mcq]
-> - [ ] @Builder генерирует конструктор публично, чтобы создавать объекты напрямую кроме билдера | ❌ ПОСЛЕДСТВИЕ: @Builder генерирует package-private all-args конструктор; публичный конструктор нарушает паттерн, обходя nullable-поля
-> - [ ] @Builder(toBuilder = true) создаёт новый объект только при вызове .build(), не копирует существующий | ❌ ПОСЛЕДСТВИЕ: toBuilder=true добавляет instance-метод toBuilder() — копирует текущий объект в builder для изменения
-> - [x] @Builder генерирует статический inner класс Builder, фабричный метод builder(), fluent-сеттеры и build() | ✓ ПРИМЕНЯТЬ: объекты с >3 параметрами, особенно с nullable-полями 📋 ПРАВИЛО: @Builder + @Value = immutable builder pattern 🔗 См. Q12
-> - [ ] @Builder несовместим с @Value — иммутабельные объекты не поддерживают builder | ❌ ПОСЛЕДСТВИЕ: @Builder и @Value совместимы и рекомендуются вместе для immutable объектов с builder API
+## Q12. Что такое `@Builder.Default`?
 
 По умолчанию `@Builder` не инициализирует поля значениями из объявления — они будут `null`/0/false:
 
@@ -460,12 +407,7 @@ public class Config {
 
 `@Builder.Default` также меняет сигнатуру конструктора — нужно учитывать при совместном использовании с `@AllArgsConstructor`.
 
-
-> [!mcq]
-> - [ ] Поле с дефолтным значением в @Builder-классе автоматически получает это значение при build() | ❌ ПОСЛЕДСТВИЕ: @Builder игнорирует инициализаторы полей — без @Builder.Default поле будет null/0/false
-> - [x] @Builder.Default явно сохраняет дефолтные значения полей; без него @Builder инициализирует поля null/0/false | ✓ ПРИМЕНЯТЬ: List, Map, timeout и другие поля с default-значениями в @Builder-классе 📋 ПРАВИЛО: @Builder без @Default = поля null, даже если написал = new ArrayList<>() 🔗 См. Q13
-> - [ ] @Builder.Default несовместим с @AllArgsConstructor — конструктор конфликтует с Builder | ❌ ПОСЛЕДСТВИЕ: @Builder.Default меняет сигнатуру конструктора — это предупреждение, не ошибка; нужно добавить @AllArgsConstructor(onConstructor=@__(@JsonCreator)) осторожно
-> - [ ] @Builder.Default применяется к final-полям, чтобы Builder не ломал immutability | ❌ ПОСЛЕДСТВИЕ: @Builder.Default работает с любыми полями; final-поля в @Builder-классах вообще нетипичны
+## Q13. Что такое `@Singular` в Builder?
 
 `@Singular` позволяет добавлять элементы в коллекцию по одному вместо передачи всей коллекции:
 
@@ -486,12 +428,7 @@ Report report = Report.builder()
 
 Коллекция создаётся `Collections.unmodifiableList(...)` — immutable. Попытка добавить элемент после `build()` → `UnsupportedOperationException`.
 
-
-> [!mcq]
-> - [ ] @Singular позволяет передать коллекцию целиком методом с суффиксом -s (errors(list)) | ❌ ПОСЛЕДСТВИЕ: @Singular генерирует метод для добавления ОДНОГО элемента; для передачи коллекции нужен clearErrors() + addAll-like паттерн
-> - [x] @Singular генерирует метод для поштучного добавления элементов в коллекцию; build() создаёт unmodifiable список | ✓ ПРИМЕНЯТЬ: накопление ошибок, метрик, правил через builder API 📋 ПРАВИЛО: @Singular → метод в единственном числе, список после build() — immutable (UnsupportedOperationException при add) 🔗 См. Q14
-> - [ ] @Singular совместим с mutable списками — после build() можно добавлять элементы | ❌ ПОСЛЕДСТВИЕ: @Singular создаёт unmodifiableList; попытка list.add() после build() → UnsupportedOperationException
-> - [ ] @Singular("metric") задаёт имя метода во множественном числе для добавления коллекции | ❌ ПОСЛЕДСТВИЕ: параметр задаёт имя метода в единственном числе (metric), не во множественном
+## Q14. (!) Что такое `@SuperBuilder` и зачем нужен?
 
 `@Builder` не работает с наследованием — parent fields не попадают в builder дочернего класса. `@SuperBuilder` решает эту проблему:
 
@@ -520,12 +457,7 @@ Dog dog = Dog.builder()
 - Не совместим с обычным `@Builder` в той же иерархии
 - Нельзя комбинировать с `@Builder.Default` в некоторых случаях
 
-
-> [!mcq]
-> - [ ] Обычный @Builder работает с иерархией классов — Builder дочернего класса автоматически включает поля родителя | ❌ ПОСЛЕДСТВИЕ: @Builder не поддерживает наследование — поля Animal не будут доступны в Dog.builder()
-> - [ ] @SuperBuilder можно комбинировать с обычным @Builder в той же иерархии | ❌ ПОСЛЕДСТВИЕ: @SuperBuilder и @Builder в одной иерархии — compile error; все классы должны использовать @SuperBuilder
-> - [x] @SuperBuilder решает проблему наследования: Builder дочернего класса включает поля родителя; все классы в иерархии должны иметь @SuperBuilder | ✓ ПРИМЕНЯТЬ: иерархии DTO/Entity с общими полями 📋 ПРАВИЛО: @SuperBuilder требует аннотацию на всех классах цепочки 🔗 См. Q11
-> - [ ] @SuperBuilder автоматически добавляет callSuper=true в @EqualsAndHashCode | ❌ ПОСЛЕДСТВИЕ: @SuperBuilder решает только проблему Builder-а; equals/hashCode callSuper нужно настраивать отдельно
+## Q15. Что такое `@With`?
 
 `@With` генерирует методы `withFieldName(value)` — создают **копию объекта** с одним изменённым полем (функциональный стиль):
 
@@ -552,12 +484,7 @@ User deactivated = alice.withActive(false);
 
 В Java 14+ `record` решает ту же задачу встроенными средствами.
 
-
-> [!mcq]
-> - [ ] @With изменяет текущий объект, устанавливая новое значение поля | ❌ ПОСЛЕДСТВИЕ: @With создаёт КОПИЮ с изменённым полем; оригинал не мутирует — это copy-on-write паттерн
-> - [x] @With генерирует withField(value) — возвращает новый объект с одним изменённым полем; оригинал неизменён | ✓ ПРИМЕНЯТЬ: @Value + @With для immutable объектов, Event Sourcing 📋 ПРАВИЛО: with = copy constructor с одним другим полем 🔗 См. Q9
-> - [ ] @With требует @Builder на том же классе — иначе не может создать копию | ❌ ПОСЛЕДСТВИЕ: @With независим от @Builder; генерирует конструктор с изменённым полем напрямую
-> - [ ] @With работает на mutable объектах — меняет поле и возвращает this | ❌ ПОСЛЕДСТВИЕ: @With всегда создаёт новый объект (как record.withField); для mutable изменений достаточно сеттера
+## Q16. Какие аннотации логирования есть в Lombok?
 
 Lombok генерирует `private static final Logger log = ...` с полем `log`:
 
@@ -583,12 +510,7 @@ private static final org.slf4j.Logger log =
     org.slf4j.LoggerFactory.getLogger(OrderService.class);
 ```
 
-
-> [!mcq]
-> - [ ] @Log4j2 и @Slf4j — взаимозаменяемы; оба используют API Log4j2 | ❌ ПОСЛЕДСТВИЕ: @Slf4j использует SLF4J-фасад (реализация подключается отдельно), @Log4j2 — прямой Log4j2 API; привязка к конкретной реализации нарушает переносимость
-> - [ ] Lombok создаёт поле log с именем класса, в котором аннотация написана | ❌ ПОСЛЕДСТВИЕ: Logger создаётся с именем класса, содержащего аннотацию — это корректно и ожидаемо; проблема если скопировать класс без переименования
-> - [ ] @Log генерирует SLF4J-логгер для максимальной совместимости | ❌ ПОСЛЕДСТВИЕ: @Log генерирует java.util.logging.Logger; для SLF4J нужен @Slf4j
-> - [x] @Slf4j (SLF4J-фасад), @Log4j2 (Log4j2 напрямую), @Log (JUL) — генерируют private static final Logger log | ✓ ПРИМЕНЯТЬ: @Slf4j — стандарт в Spring Boot, реализация (Logback/Log4j2) подключается отдельно 📋 ПРАВИЛО: @Slf4j = log; не нужно объявлять поле вручную 🔗 См. Q21
+## Q17. Что делает `@Cleanup`?
 
 `@Cleanup` автоматически вызывает `.close()` в `finally`-блоке:
 
@@ -603,12 +525,7 @@ public void readFile(String path) throws IOException {
 
 Аналог try-with-resources, но чуть более явный синтаксически. В современном Java (`try-with-resources` с Java 7) `@Cleanup` практически не нужен — лучше использовать стандартный `try (InputStream in = ...)`.
 
-
-> [!mcq]
-> - [ ] @Cleanup лучше try-with-resources в Java 7+ — он более явный и читаемый | ❌ ПОСЛЕДСТВИЕ: try-with-resources — языковой стандарт; @Cleanup добавляет лишнюю зависимость от Lombok без преимуществ
-> - [x] @Cleanup вставляет finally-блок с resource.close(); аналог try-with-resources, но в современном Java предпочтительнее стандартный синтаксис | ✓ ПРИМЕНЯТЬ: только если нужен close() нестандартного метода 📋 ПРАВИЛО: try(InputStream in = ...) предпочтительнее @Cleanup в Java 7+ 🔗 См. Q18
-> - [ ] @Cleanup подходит для ресурсов, которые не реализуют AutoCloseable | ❌ ПОСЛЕДСТВИЕ: без AutoCloseable нужно явно задать @Cleanup("shutdown"); если метод не существует — compile error
-> - [ ] @Cleanup(value = "disconnect") не работает — поддерживается только .close() | ❌ ПОСЛЕДСТВИЕ: @Cleanup("disconnect") работает корректно; Lombok вызывает указанный метод в finally-блоке
+## Q18. Что делает `@SneakyThrows` и когда его использовать?
 
 `@SneakyThrows` позволяет бросать checked exceptions без объявления в `throws`:
 
@@ -630,12 +547,7 @@ Lombok оборачивает тело в `try-catch`, перебрасывае�
 - Когда exception нужно обработать — `@SneakyThrows` скрывает это
 - В большинстве обычных случаев — лучше явный `throws` или обёртка в `RuntimeException`
 
-
-> [!mcq]
-> - [ ] @SneakyThrows безопасен для public API — checked exception всплывёт как обычно | ❌ ПОСЛЕДСТВИЕ: потребитель public API не знает о возможном checked exception — catch(Exception e) его не поймает как ожидается
-> - [ ] @SneakyThrows оборачивает exception в RuntimeException перед броском | ❌ ПОСЛЕДСТВИЕ: @SneakyThrows использует type erasure обход компилятора, бросает оригинальный checked exception без обёртки — стек трейс другой
-> - [x] @SneakyThrows позволяет бросать checked exception без объявления в throws — через erasure trick; полезен для Runnable/lambda | ✓ ПРИМЕНЯТЬ: реализация интерфейса без throws (Runnable, Function) где checked exception нельзя объявить 📋 ПРАВИЛО: не использовать в public API — потребитель не ожидает checked exception 🔗 См. Q25
-> - [ ] @SneakyThrows(IOException.class) — компилятор проверяет, что метод действительно throws IOException | ❌ ПОСЛЕДСТВИЕ: @SneakyThrows именно СНИМАЕТ проверку компилятора; если IOException не бросается — compile error без SneakyThrows
+## Q19. Что такое `@Delegate`?
 
 `@Delegate` реализует паттерн делегирования — генерирует методы, проксирующие вызовы к полю:
 
@@ -659,12 +571,7 @@ public void save(User user) { repository.save(user); }
 
 **Ограничение:** работает только с типами (интерфейсами), которые представлены в compile scope.
 
-
-> [!mcq]
-> - [ ] @Delegate реализует наследование — UserService наследует все методы UserRepository | ❌ ПОСЛЕДСТВИЕ: @Delegate реализует делегирование, не наследование — UserService не является UserRepository, только проксирует вызовы
-> - [x] @Delegate генерирует методы, проксирующие вызовы к полю; UserService получает все методы UserRepository без наследования | ✓ ПРИМЕНЯТЬ: composition over inheritance; декорирование или адаптация интерфейсов 📋 ПРАВИЛО: @Delegate = delegation pattern без boilerplate forwarding-методов 🔗 См. Q6
-> - [ ] @Delegate работает с любыми типами включая concrete classes | ❌ ПОСЛЕДСТВИЕ: @Delegate требует тип представленный в compile scope; конкретный класс без interface может не делегировать все ожидаемые методы
-> - [ ] @Delegate(excludes = X.class) удаляет методы X из класса-делегата | ❌ ПОСЛЕДСТВИЕ: excludes исключает методы указанного типа из ПРОКСИРОВАНИЯ (они не генерируются в UserService), а не удаляет из UserRepository
+## Q20. Что такое `@FieldNameConstants`?
 
 `@FieldNameConstants` генерирует inner class `Fields` (или `Constants`) с константами строк — именами полей:
 
@@ -689,12 +596,7 @@ criteriaBuilder.equal(root.get(User.Fields.name), "Alice");
 
 Полезен при работе с JPA Criteria API, QueryDSL, Spring Data Specifications, чтобы избежать строк-магических констант.
 
-
-> [!mcq]
-> - [ ] @FieldNameConstants генерирует enum с именами полей вместо строковых констант | ❌ ПОСЛЕДСТВИЕ: @FieldNameConstants по умолчанию генерирует inner class Fields со String-константами, не enum; это важно для JPA Criteria API
-> - [x] @FieldNameConstants генерирует inner class Fields с String-константами именами полей; исключает magic strings в JPA Criteria, QueryDSL | ✓ ПРИМЕНЯТЬ: JPA Criteria API, Spring Data Specifications, где нужны typesafe имена полей 📋 ПРАВИЛО: User.Fields.name вместо "name" — опечатки обнаруживаются при компиляции 🔗 См. Q22
-> - [ ] @FieldNameConstants нужен для QueryDSL — он генерирует Q-классы | ❌ ПОСЛЕДСТВИЕ: Q-классы для QueryDSL генерирует QueryDSL APT-processor, а не @FieldNameConstants
-> - [ ] @FieldNameConstants включает все статические поля в генерацию | ❌ ПОСЛЕДСТВИЕ: статические поля по умолчанию исключаются; в Fields попадают только нестатические поля класса
+## Q21. Что такое `lombok.config` и как его использовать?
 
 `lombok.config` — конфигурационный файл в корне проекта (или в любой директории — применяется к пакету и подпакетам):
 
@@ -719,12 +621,7 @@ lombok.addSuppressWarnings = false
 
 `lombok.addLombokGeneratedAnnotation = true` — ключевая настройка для JaCoCo: сгенерированные методы помечаются `@Generated` и исключаются из покрытия тестами.
 
-
-> [!mcq]
-> - [ ] lombok.config в корне проекта применяется только к классам в корневом пакете | ❌ ПОСЛЕДСТВИЕ: lombok.config применяется к пакету где находится файл И всем подпакетам рекурсивно
-> - [x] lombok.config в корне проекта — конфигурация для всего проекта: запрет @Data, настройка JaCoCo, имя поля логгера | ✓ ПРИМЕНЯТЬ: установить addLombokGeneratedAnnotation=true для корректного JaCoCo coverage 📋 ПРАВИЛО: lombok.data.flagUsage=error запрещает @Data на Entity 🔗 См. Q25
-> - [ ] lombok.addLombokGeneratedAnnotation = true нужен для того, чтобы сгенерированный код попал в JaCoCo coverage | ❌ ПОСЛЕДСТВИЕ: наоборот — этот флаг добавляет @Generated, что ИСКЛЮЧАЕТ методы из JaCoCo coverage report
-> - [ ] lombok.config можно использовать только в Maven-проектах, Gradle игнорирует его | ❌ ПОСЛЕДСТВИЕ: lombok.config работает независимо от build tool — это файл, который читает сам Lombok-processor
+## Q22. (!) Какие проблемы у Lombok с JPA-сущностями?
 
 **Проблема 1 — `@EqualsAndHashCode` на основе `id`:**
 
@@ -760,12 +657,7 @@ JPA требует no-arg конструктор. Если поля `final`, `@N
 
 **Рекомендация:** для JPA-сущностей использовать Lombok осторожно: только `@Getter`, `@Setter`, `@ToString(exclude=...)`, без `@Data`, `@EqualsAndHashCode`.
 
-
-> [!mcq]
-> - [ ] @Data на JPA-сущности безопасен, если не использовать @OneToMany ассоциации | ❌ ПОСЛЕДСТВИЕ: @Data включает @EqualsAndHashCode с id=null до persist → HashSet с новыми Entity всегда содержит одну запись
-> - [ ] @EqualsAndHashCode на Entity нужно настроить с callSuper=true — тогда equals корректен | ❌ ПОСЛЕДСТВИЕ: для JPA-Entity проблема в id=null до persist, не в callSuper; нужен @NaturalId или onlyExplicitlyIncluded по uuid/sku
-> - [ ] @NoArgsConstructor(force=true) безопасен для JPA-Entity с final полями | ❌ ПОСЛЕДСТВИЕ: force=true инициализирует final поля null/0 — нарушается invariant домена, @NonNull поля могут оказаться null
-> - [x] Три проблемы: @EqualsAndHashCode (id=null), @ToString (StackOverflow на bidirectional), @NoArgsConstructor с final полями | ✓ ПРИМЕНЯТЬ: JPA-Entity — только @Getter/@Setter/@ToString(exclude=...), без @Data/@EqualsAndHashCode 📋 ПРАВИЛО: @Data на @Entity = StackOverflow + broken HashSet 🔗 См. Q5
+## Q23. Как Lombok интегрируется с MapStruct?
 
 Проблема: компилятор вызывает annotation processors в неопределённом порядке. MapStruct может запуститься **до** Lombok, когда геттеры/сеттеры ещё не сгенерированы.
 
@@ -793,14 +685,9 @@ annotationProcessor("org.mapstruct:mapstruct-processor:${mapstructVersion}")
 
 `lombok-mapstruct-binding` — специальный артефакт, гарантирующий правильный порядок запуска.
 
-
-> [!mcq]
-> - [ ] Достаточно подключить `mapstruct-processor` — Lombok и MapStruct сами договорятся о порядке | ❌ ПОСЛЕДСТВИЕ: MapStruct запускается до Lombok, не видит сгенерированных геттеров → `No property named "x" exists` на этапе компиляции
-> - [ ] Использовать `@Mapping(source = "field")` с прямым доступом к private-полям — обход проблемы порядка | ❌ ПОСЛЕДСТВИЕ: MapStruct не умеет читать private-поля без аксессоров, генерирует пустой mapper, маппинг возвращает `null` в production
-> - [x] Добавить `lombok-mapstruct-binding` между Lombok и MapStruct processor в `annotationProcessorPaths` — гарантирует, что Lombok отработает первым | ✓ ПРИМЕНЯТЬ: любой проект с Lombok + MapStruct (Spring Boot, Quarkus); порядок в Gradle/Maven строго: Lombok → binding → MapStruct 📋 ПРАВИЛО: `lombok-mapstruct-binding` = клей порядка annotation processors 🔗 См. Q24
-> - [ ] Сгенерировать DTO без Lombok вручную — MapStruct работает только с обычным Java | ❌ ПОСЛЕДСТВИЕ: теряется выгода Lombok, дублируется boilerplate в десятках DTO, увеличивается стоимость поддержки
-
 ## Q24. Что такое `delombok` и зачем он нужен?
+
+Что такое `delombok` и зачем он нужен?
 
 `delombok` — инструмент Lombok, который разворачивает аннотации в обычный Java-код:
 
@@ -825,14 +712,9 @@ tasks.register<JavaExec>("delombok") {
 }
 ```
 
-
-> [!mcq]
-> - [ ] `delombok` — это IDE-плагин, который показывает сгенерированный код в IntelliJ | ❌ ПОСЛЕДСТВИЕ: разработчик ищет плагин в Marketplace, теряет время; на самом деле IDE сама знает Lombok, а `delombok` — это отдельный CLI-инструмент
-> - [x] `delombok` — CLI-утилита Lombok, разворачивающая аннотации в обычный Java-код; используется для миграции, Javadoc и статанализаторов, не знающих о Lombok | ✓ ПРИМЕНЯТЬ: миграция с Lombok на records/ручной код; генерация Javadoc для библиотеки; SonarQube без Lombok-плагина 📋 ПРАВИЛО: `delombok` = annotation → real Java source 🔗 См. Q25
-> - [ ] `delombok` — runtime-агент, который убирает Lombok-зависимость из jar при сборке | ❌ ПОСЛЕДСТВИЕ: jar собирается с Lombok в classpath, потребители получают transitive dep; правильное решение — `compileOnly` + `optional=true`
-> - [ ] `delombok` запускается автоматически при каждой компиляции и заменяет аннотации в исходниках | ❌ ПОСЛЕДСТВИЕ: разработчик ждёт автозамены, обнаруживает что .java-файлы не меняются → теряет полдня на разбор «почему Lombok не работает»
-
 ## Q25. Каковы критика и ограничения Lombok?
+
+Каковы критика и ограничения Lombok?
 
 **Технические:**
 - Использует internal compiler API (AST manipulation) — может сломаться при обновлении JDK
@@ -855,14 +737,9 @@ tasks.register<JavaExec>("delombok") {
 - Команда принципиально против "магического" кода
 - Java 16+ `record` покрывает большинство use cases для DTO
 
-
-> [!mcq]
-> - [ ] Lombok безопасен везде — это просто синтаксический сахар без рисков | ❌ ПОСЛЕДСТВИЕ: команда лепит `@Data` на JPA-Entity → StackOverflow на bidirectional, broken `equals` для новых сущностей с `id=null`; в production HashSet хранит одну запись вместо тысячи
-> - [ ] Lombok можно безопасно публиковать в API публичной библиотеки — потребители его не увидят | ❌ ПОСЛЕДСТВИЕ: при ошибке в `compileOnly` Lombok попадает в transitive deps, потребители библиотеки получают ненужную зависимость и риск конфликта версий
-> - [ ] `@SneakyThrows` и `@Delegate` — это рекомендованные паттерны для production | ❌ ПОСЛЕДСТВИЕ: `@SneakyThrows` скрывает checked exceptions, разработчики не обрабатывают `IOException`, ресурсы текут; во многих style guide эти аннотации запрещены
-> - [x] Lombok использует internal compiler API (риск при обновлении JDK), усложняет code review, имеет ловушки (`@Data`+JPA, `@Builder.Default`+`@AllArgsConstructor`); `record` в Java 16+ покрывает большинство DTO use-cases | ✓ ПРИМЕНЯТЬ: оценить риски до внедрения Lombok; для новых проектов на Java 17+ предпочесть `record` для иммутабельных DTO 📋 ПРАВИЛО: «Lombok удобен, но не магия — взвешивай команду и платформу» 🔗 См. Q26
-
 ## Q26. Как работает `@EqualsAndHashCode.Include` / `@EqualsAndHashCode.Exclude`?
+
+Как работает `@EqualsAndHashCode.Include` / `@EqualsAndHashCode.Exclude`?
 
 Позволяют точечно контролировать, какие поля участвуют в `equals/hashCode`:
 
@@ -889,14 +766,9 @@ public String normalizedName() {
 }
 ```
 
-
-> [!mcq]
-> - [ ] `@EqualsAndHashCode.Include` и `.Exclude` можно использовать вместе без `onlyExplicitlyIncluded` — оба работают одновременно | ❌ ПОСЛЕДСТВИЕ: без `onlyExplicitlyIncluded=true` аннотация `.Include` игнорируется, в `equals` попадают все поля → бизнес-ключ не работает как уникальный, дубликаты в `HashSet`
-> - [ ] `.Include` на методе включает результат вызова метода в `equals` так же, как любую `transient`-переменную | ❌ ПОСЛЕДСТВИЕ: разработчик ожидает что метод дёргается один раз, а Lombok вызывает его при каждом `equals`/`hashCode` → деградация performance в hot-path, особенно при чтении из БД
-> - [x] `.Include` точечно выбирает поля/методы (требует `onlyExplicitlyIncluded=true`), `.Exclude` убирает поля из дефолтного набора; метод-`.Include` участвует в сравнении по своему возвращаемому значению | ✓ ПРИМЕНЯТЬ: бизнес-ключ для domain Entity (sku, uuid), нормализация значений (`toLowerCase`); JPA — `onlyExplicitlyIncluded=true` + бизнес-ключ вместо id 📋 ПРАВИЛО: `.Include` без `onlyExplicitlyIncluded` = no-op 🔗 См. Q27
-> - [ ] `.Exclude` на поле автоматически исключает его и из `@ToString`, и из `@Builder` | ❌ ПОСЛЕДСТВИЕ: разработчик думает что одной аннотации хватит, password утекает в логи через `toString()`; нужны отдельно `@ToString.Exclude` и `@EqualsAndHashCode.Exclude`
-
 ## Q27. Как Lombok обрабатывает наследование в `@EqualsAndHashCode` и `@ToString`?
+
+Как Lombok обрабатывает наследование в `@EqualsAndHashCode` и `@ToString`?
 
 По умолчанию `callSuper = false` — поля родительского класса игнорируются.
 
@@ -925,15 +797,6 @@ class Order extends BaseEntity {
 ```
 
 **Lombok предупреждение:** при `@Data` в классах с родителем (не `Object`) Lombok по умолчанию выдаёт предупреждение о том, что `callSuper = false` может быть ошибкой. Это предупреждение можно убрать явным `@EqualsAndHashCode(callSuper = false)` — если это действительно intended.
-
-
-> [!mcq]
-> - [ ] `callSuper=true` ставится автоматически, если родительский класс не `Object` | ❌ ПОСЛЕДСТВИЕ: на самом деле `callSuper=false` по умолчанию всегда; в `equals` потомка поля родителя (включая `id` из `BaseEntity`) игнорируются → broken equality в иерархиях
-> - [ ] При `callSuper=true` Lombok дублирует поля родителя в сгенерированном `equals` без вызова `super` | ❌ ПОСЛЕДСТВИЕ: дублирование сломалось бы при изменении родителя; на самом деле Lombok делает `super.equals(o)` — изменение родителя пробрасывается автоматически
-> - [x] По умолчанию `callSuper=false` — поля родителя игнорируются; для корректного `equals/toString` в иерархии нужно явно указать `callSuper=true` в `@EqualsAndHashCode` и `@ToString` | ✓ ПРИМЕНЯТЬ: любая иерархия с `BaseEntity`, audit-полями, DDD aggregate root; всегда `callSuper=true` если родитель не `Object` 📋 ПРАВИЛО: «есть extends — значит callSuper=true» 🔗 См. See also
-> - [ ] `callSuper=true` нельзя использовать с JPA-Entity — это вызывает StackOverflow на lazy-загрузке | ❌ ПОСЛЕДСТВИЕ: разработчик отказывается от `callSuper` и теряет учёт `id` из `BaseEntity`; StackOverflow возникает из-за bidirectional коллекций в `@ToString`, а не из-за `callSuper`
-
----
 
 ## See also
 

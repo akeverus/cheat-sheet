@@ -83,6 +83,8 @@ updated: "2026-04-25"
 
 ## Q1. (!) Что такое ELK Stack?
 
+(!) Что такое ELK Stack?
+
 **ELK Stack** = **Elasticsearch + Logstash + Kibana**. Сейчас официально **Elastic Stack** (включая Beats и других).
 
 **Components:**
@@ -100,14 +102,9 @@ updated: "2026-04-25"
 
 В **2010-х** — undisputed standard для log management. В **2020-х** — конкурент **Loki, ClickHouse, OpenSearch**.
 
-
-> [!mcq]
-> - [ ] ELK используется только для логов — для APM и search нужны отдельные инструменты | ❌ ПОСЛЕДСТВИЕ: Elastic APM и Elasticsearch search — часть того же Elastic Stack; единый стек охватывает logs, APM, SIEM, vector search
-> - [ ] Logstash обязателен в ELK — без него данные не попадут в Elasticsearch | ❌ ПОСЛЕДСТВИЕ: Filebeat может писать напрямую в ES минуя Logstash; Logstash optional — нужен только для сложного transform
-> - [ ] Elasticsearch — реляционная БД с SQL, поддерживает JOIN и foreign keys | ❌ ПОСЛЕДСТВИЕ: Elasticsearch — document-based NoSQL с inverted index; JOIN ограничен nested/parent-child; SQL поддержан только через Elasticsearch SQL plugin
-> - [x] Elasticsearch (distributed search) + Logstash (pipeline) + Kibana (UI) + Beats (shippers) — log aggregation, search, SIEM, APM | ✓ ПРИМЕНЯТЬ: когда нужен full-text search + log aggregation + visualization в одном стеке 📋 ПРАВИЛО: ELK = store(ES) + ingest(Logstash) + ship(Beats) + viz(Kibana) 🔗 См. Q2
-
 ## Q2. (!) Архитектура ELK для логов?
+
+(!) Архитектура ELK для логов?
 
 ```mermaid
 graph LR
@@ -131,14 +128,9 @@ graph LR
 - **Kafka** между Filebeat и Logstash (buffer)
 - **Elastic Agent** (newer) — replaces Beats + Logstash
 
-
-> [!mcq]
-> - [ ] Apps должны писать логи напрямую в Elasticsearch через HTTP клиент | ❌ ПОСЛЕДСТВИЕ: без Filebeat нет buffering; при ES перегрузке 429 — логи теряются; прямая запись создаёт tight coupling между приложением и ES
-> - [ ] Logstash обязателен между Filebeat и ES — без него pipeline не работает | ❌ ПОСЛЕДСТВИЕ: Filebeat имеет встроенные processors (grok, add_fields); может писать напрямую в ES; Logstash нужен только для сложного transform
-> - [x] Apps → Filebeat (DaemonSet/sidecar) → optional Logstash → Elasticsearch → Kibana; Filebeat читает файлы/stdout | ✓ ПРИМЕНЯТЬ: K8s log collection через Filebeat DaemonSet → ES → Kibana dashboards 📋 ПРАВИЛО: Filebeat = lightweight shipper; Logstash = heavy transform; ES = store; Kibana = viz 🔗 См. Q1
-> - [ ] Kibana — это ingestion сервис принимающий логи от приложений | ❌ ПОСЛЕДСТВИЕ: Kibana — только UI/visualization layer; ingestion делает Filebeat; хранение — Elasticsearch
-
 ## Q3. ELK vs EFK vs other stacks?
+
+ELK vs EFK vs other stacks?
 
 **ELK** — Elasticsearch + Logstash + Kibana + Filebeat.
 **EFK** — Elasticsearch + **Fluentd** + Kibana (popular в K8s, более flexible).
@@ -152,14 +144,9 @@ graph LR
 
 В **K8s** — **Fluentd / Fluent Bit** более популярны чем Filebeat (better ecosystem).
 
-
-> [!mcq]
-> - [ ] Fluentd = Logstash с другим именем — оба одинаковы по возможностям | ❌ ПОСЛЕДСТВИЕ: Fluentd написан на Ruby, более lightweight, нативный для K8s; Logstash на JVM — heavyweight, но больший ecosystem plugins
-> - [ ] EFK нельзя использовать в K8s — только ELK совместим с Kubernetes | ❌ ПОСЛЕДСТВИЕ: EFK (Elasticsearch + Fluentd + Kibana) — наиболее популярный choice именно в K8s из-за нативного Fluentd DaemonSet
-> - [x] EFK использует Fluentd вместо Logstash (более K8s-friendly); PLG (Promtail+Loki+Grafana) — дешевле но без full-text search | ✓ ПРИМЕНЯТЬ: EFK в K8s если нужен flexible routing; PLG если бюджет ограничен и достаточно label-based query 📋 ПРАВИЛО: ELK=heavyweight+fulltext; EFK=K8s-friendly; PLG=cheap+labels 🔗 См. Q24
-> - [ ] OpenSearch — это полная копия ELK без изменений, создана AWS | ❌ ПОСЛЕДСТВИЕ: OpenSearch — форк ES 7.10 + Kibana 7.10 с отдельным development roadmap; diverged в security features, API совместимость не гарантирована
-
 ## Q4. (!) Что такое Elasticsearch?
+
+(!) Что такое Elasticsearch?
 
 **Elasticsearch** — distributed search engine на **Apache Lucene**. Open-source (но license changed в 2021).
 
@@ -173,14 +160,9 @@ graph LR
 
 **Не just for logs:** general-purpose search engine. Но **logging** — main use case.
 
-
-> [!mcq]
-> - [ ] Elasticsearch — специализированная БД только для логов, не подходит для product search | ❌ ПОСЛЕДСТВИЕ: Elasticsearch — general-purpose search engine; активно используется для e-commerce product search (Amazon, eBay), knowledge bases, vector search
-> - [x] Distributed search engine на Apache Lucene: full-text search через inverted index, horizontal scaling через sharding, REST API | ✓ ПРИМЕНЯТЬ: full-text search, log aggregation, analytics aggregations, vector similarity search 📋 ПРАВИЛО: ES = Lucene + REST + distribution; searchable ≈ real-time после index 🔗 См. Q8
-> - [ ] Elasticsearch не поддерживает aggregations — только поиск документов | ❌ ПОСЛЕДСТВИЕ: Elasticsearch имеет мощную aggregations API (terms, histogram, date_histogram, percentiles); активно используется для analytics
-> - [ ] Elasticsearch хранит данные в реляционных таблицах для эффективных JOIN | ❌ ПОСЛЕДСТВИЕ: ES — document store с JSON; JOIN реализован через nested objects или parent-child, не через реляционные таблицы
-
 ## Q5. (!) Index, shards, replicas?
+
+(!) Index, shards, replicas?
 
 **Index** — namespace для documents (~ table в SQL).
 
@@ -203,12 +185,7 @@ my-logs-2025-04-19  (index)
 - Replicas: 1 (одна копия)
 - Don't over-shard (overhead)
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. (!) Document, mapping, types? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q6. (!) Document, mapping, types?
 
 **Document** — JSON record.
 
@@ -237,12 +214,7 @@ my-logs-2025-04-19  (index)
 
 **Types** — концепция removed в ES 7+. Один тип на index.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. Cluster, nodes, master vs data? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q7. Cluster, nodes, master vs data?
 
 **Cluster** — group of nodes (1+).
 
@@ -257,12 +229,7 @@ my-logs-2025-04-19  (index)
 
 **Split-brain** — нужно `discovery.zen.minimum_master_nodes = (N/2 + 1)`.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. (!) Inverted index — как работает? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q8. (!) Inverted index — как работает?
 
 **Inverted index** — структура для **fast text search**.
 
@@ -285,12 +252,7 @@ doc2 → "the dog ran"
 
 Лежит в основе ES. Trade-off: **slow writes**, **fast reads**.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. (!) Что такое Logstash? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q9. (!) Что такое Logstash?
 
 **Logstash** — server-side data processing pipeline. Ingest → transform → output.
 
@@ -329,12 +291,7 @@ output {
 
 **Heavyweight** (JVM, ~1 GB RAM). Из-за этого многие переходят на Fluent Bit (lighter).
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. Input, Filter, Output stages? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q10. Input, Filter, Output stages?
 
 **Inputs** (50+):
 - file, syslog, beats, kafka, http, tcp, udp, ...
@@ -353,12 +310,7 @@ output {
 
 **Multiple pipelines** в одном Logstash instance.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. Grok patterns для парсинга? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q11. Grok patterns для парсинга?
 
 **Grok** — regex с named patterns для structured parsing.
 
@@ -385,12 +337,7 @@ output {
 
 **Подвох:** grok medленный для huge log volumes. Лучше — **structured logging from app** (JSON logs), no parsing нужен.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. (!) Filebeat, Metricbeat, Packetbeat? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q12. (!) Filebeat, Metricbeat, Packetbeat?
 
 **Beats** — lightweight shippers (написаны на Go, ~50 MB RAM).
 
@@ -416,12 +363,7 @@ output.elasticsearch:
 # Or output.logstash для processing
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. Beats vs Logstash для shipping? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q13. Beats vs Logstash для shipping?
 
 **Beats:**
 - Lightweight (50 MB RAM)
@@ -441,12 +383,7 @@ Apps → Filebeat (ship) → Kafka (buffer) → Logstash (transform) → Elastic
 
 В K8s — Fluent Bit / Fluentd часто заменяют **оба**.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. (!) Что такое Kibana? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q14. (!) Что такое Kibana?
 
 **Kibana** — web UI для Elasticsearch.
 
@@ -462,12 +399,7 @@ Apps → Filebeat (ship) → Kafka (buffer) → Logstash (transform) → Elastic
 - **APM** — application monitoring
 - **Alerting** — rule-based alerts
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. KQL (Kibana Query Language)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q15. KQL (Kibana Query Language)?
 
 **KQL** — modern query language Kibana (с 7.0+).
 
@@ -486,12 +418,7 @@ service:order-* (wildcard)
 
 **Search via Kibana → Elasticsearch** REST API.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q16. Dashboards, visualizations? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q16. Dashboards, visualizations?
 
 **Visualization types:**
 - Line / area chart
@@ -511,12 +438,7 @@ service:order-* (wildcard)
 - Drill-down (click → filter to subset)
 - Don't overcrowd (10-15 panels max)
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q17. (!) ILM (Index Lifecycle Management)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q17. (!) ILM (Index Lifecycle Management)?
 
 **ILM** — automation для managing indices через жизненный цикл.
 
@@ -563,12 +485,7 @@ Delete
 
 **Cost optimization** — старые data на cheaper storage.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q18. Hot-Warm-Cold-Frozen architecture? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q18. Hot-Warm-Cold-Frozen architecture?
 
 **Hot nodes** — fast disks (NVMe SSD), recent indices, high I/O.
 **Warm nodes** — slower SSDs, indices > 7 days old.
@@ -584,12 +501,7 @@ Frozen (100 TB): только S3, ¢
 
 **Massive cost savings** для logs с long retention.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q19. Index templates? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q19. Index templates?
 
 **Template** — auto-applied settings + mappings для new indices matching pattern.
 
@@ -615,12 +527,7 @@ PUT _index_template/logs-template
 
 Когда new `logs-2025-04-19` index created → template auto-applied.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q20. (!) Какие частые проблемы performance? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q20. (!) Какие частые проблемы performance?
 
 1. **Heavy queries** — wildcards, regex, аggregations на huge indices
 2. **Mapping explosion** — too many fields (deep nested objects)
@@ -633,12 +540,7 @@ PUT _index_template/logs-template
 9. **Replication лагает** — too few writes nodes
 10. **Cluster split-brain** — wrong master configuration
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q21. Sharding strategy — как выбрать? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q21. Sharding strategy — как выбрать?
 
 **Time-based indices:** один index per day (`logs-2025-04-19`).
 - Pros: easy retention (delete old indices)
@@ -654,12 +556,7 @@ PUT _index_template/logs-template
 - Per node: < 600 shards (heap memory)
 - For 100 GB/day, 30 days retention → ~10 indices × 5 shards × 2 (replica) = 100 shards
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q22. (!) Что такое OpenSearch и почему появился? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q22. (!) Что такое OpenSearch и почему появился?
 
 **OpenSearch** — fork Elasticsearch, создан **AWS** в **2021**.
 
@@ -674,12 +571,7 @@ PUT _index_template/logs-template
 
 **Compatible** с Elasticsearch APIs (mostly), но diverging.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q23. OpenSearch vs Elasticsearch differences? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q23. OpenSearch vs Elasticsearch differences?
 
 | Критерий | OpenSearch | Elasticsearch |
 |----------|------------|---------------|
@@ -696,12 +588,7 @@ PUT _index_template/logs-template
 - **Want Elastic-supported, paid features** — Elasticsearch
 - Migration legacy ES → OpenSearch — обычно smooth
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q24. (!) Loki vs ELK? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q24. (!) Loki vs ELK?
 
 | Критерий | ELK | Loki |
 |----------|-----|------|
@@ -718,12 +605,7 @@ PUT _index_template/logs-template
 
 Подробнее — в [Loki + Grafana](loki-grafana-interview.md).
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q25. Когда выбрать ELK? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q25. Когда выбрать ELK?
 
 **Выбирай ELK когда:**
 - Need **fast complex queries** на logs
@@ -740,12 +622,7 @@ PUT _index_template/logs-template
 - Не нужен полный feature set
 - Operations team малая (ELK сложно ops)
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q26. Какие частые ошибки в ELK production? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q26. Какие частые ошибки в ELK production?
 
 1. **No ILM** — indices растут forever → cluster crash
 2. **No retention policy** — cost runaway
@@ -762,8 +639,6 @@ PUT _index_template/logs-template
 
 **Best practice:** ILM, dedicated master nodes, monitoring (yes, monitor your monitoring), backups.
 
----
-
 ## See also
 
 - [OpenTelemetry](opentelemetry-interview.md) — modern standard
@@ -779,12 +654,6 @@ PUT _index_template/logs-template
 - [Apache Kafka](../messaging/kafka-interview.md) — buffer для ingest
 - [Application Security](../security/application-security-interview.md) — SIEM
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Jaeger и Zipkin](jaeger-zipkin-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 - [Стратегии логирования](logging-strategies-interview.md)
 - [Loki и Grafana](loki-grafana-interview.md)
 - [Метрики и трейсинг](metrics-tracing-interview.md)
