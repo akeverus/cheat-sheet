@@ -50,6 +50,20 @@ services:
       - /tmp:size=128m,mode=1777
     ports:
       - "${APP_PORT:-8080}:8080"
+    # .env прокидывается ВНУТРЬ контейнера, а не только в интерполяцию compose.
+    # Без этого документированные в .env.example knob'ы (APP_CORS_ALLOWED_ORIGINS,
+    # SERVER_FORWARD_HEADERS, APP_ENV, DB_POOL_MAX_SIZE/MIN_IDLE,
+    # REGENERATE_RATE_LIMIT_PER_MINUTE, HEALTH_CACHE_SECONDS, SHUTDOWN_TIMEOUT и т.п.)
+    # молча не доходили до приложения — compose читает .env только для ${...}-подстановки.
+    # required:false — свежий клон без .env поднимется (app упадёт явной ошибкой про
+    #   обязательный APP_ADMIN_TOKEN, а не «тихо проигнорированный конфиг»).
+    # Закомментированные строки .env.example НЕ передаются → app берёт yaml-дефолт
+    #   (важно для типизированных int-проперти: пустая строка сломала бы binding).
+    # Явный environment: ниже имеет приоритет над env_file (prod-профиль и
+    #   datasource-URL на хост postgres остаются авторитетными).
+    env_file:
+      - path: .env
+        required: false
     environment:
       # MaxRAMPercentage=75: heap = 75% от лимита контейнера (cgroup-aware).
       # ExitOnOutOfMemoryError: на OOM JVM сразу exit, K8s/compose рестартанёт
