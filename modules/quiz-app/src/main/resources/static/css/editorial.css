@@ -1562,3 +1562,161 @@ html[data-design="editorial"] .error-page .error-actions {
   html[data-design="editorial"] .error-page .error-actions { width: 100%; }
   html[data-design="editorial"] .error-page .error-actions .btn { width: 100%; }
 }
+
+/* =============================================================================
+   C3 — Результат ответа (.result-page, no-JS полностраничный POST /answer).
+   Делит карточку вопроса с фокусом, но через .result-page-скоуп (фокус-правила
+   привязаны к #interview-options/.focus-page). Старый styles.css тянет холодный
+   navy/лаванду — приводим к editorial тёплой палитре. Состояния вариантов
+   (.option-correct/.option-wrong/.explanation-*) уже глобальные — не дублируем. */
+html[data-design="editorial"] .result-page .ed-page { max-width: 880px; }
+
+/* Карточки — тёплые плоские панели (гасим navy-border + cold shadow). */
+html[data-design="editorial"] .result-page .card {
+  background: var(--color-bg-secondary);
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-lg); box-shadow: none;
+  padding: var(--space-6);
+}
+
+/* Верхняя строка: stats-grid + session-bar — слим editorial-полоса. */
+html[data-design="editorial"] .result-page .top-row { gap: var(--space-4); margin-bottom: var(--space-5); }
+html[data-design="editorial"] .result-page .top-row .card { padding: var(--space-4) var(--space-5); }
+html[data-design="editorial"] .result-page .stat-item {
+  background: transparent; border: 0; border-right: var(--rule-weight) solid var(--color-border-secondary);
+  padding: 0 var(--space-4); text-align: center;
+}
+html[data-design="editorial"] .result-page .stat-value { font-family: var(--font-family-display); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); }
+html[data-design="editorial"] .result-page .stat-label { font-family: var(--font-family-mono); font-size: var(--font-size-xs); letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-secondary); }
+html[data-design="editorial"] .result-page .session-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4);
+  font-family: var(--font-family-mono); font-size: var(--font-size-sm); color: var(--color-text-secondary);
+}
+html[data-design="editorial"] .result-page .session-bar strong { color: var(--color-text-primary); }
+/* .btn-finish: старый styles.css даёт white-on-white (невидимо на light) — чиним. */
+html[data-design="editorial"] .result-page .btn-finish {
+  display: inline-flex; align-items: center; min-height: 36px; padding: var(--space-1) var(--space-4);
+  font-family: var(--font-family-body); font-size: var(--font-size-sm); font-weight: var(--font-weight-medium);
+  background: transparent; color: var(--color-status-error);
+  border: var(--rule-weight) solid var(--color-status-error); border-radius: var(--border-radius-md);
+  cursor: pointer; box-shadow: none; transition: background var(--duration-fast) var(--easing-default);
+}
+html[data-design="editorial"] .result-page .btn-finish:hover { background: var(--color-status-error-wash); }
+
+/* Заголовок вопроса */
+html[data-design="editorial"] .result-page .question-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; }
+html[data-design="editorial"] .result-page .question-header h2 {
+  font-family: var(--font-family-display); font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-2xl); line-height: var(--line-height-tight);
+  color: var(--color-text-primary); margin: 0; flex: 1 1 60%; text-wrap: balance;
+}
+html[data-design="editorial"] .result-page .question-meta { display: inline-flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+html[data-design="editorial"] .result-page .topic-badge {
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
+  color: var(--color-text-secondary); background: transparent;
+  border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-full);
+  padding: 0.25em 0.75em;
+}
+html[data-design="editorial"] .result-page .btn-favorite,
+html[data-design="editorial"] .result-page .btn-regenerate {
+  background: transparent; border: 0; color: var(--color-text-tertiary); cursor: pointer;
+  font-size: var(--font-size-md); line-height: 1; padding: var(--space-1);
+}
+html[data-design="editorial"] .result-page .btn-favorite.active { color: var(--color-accent-primary); }
+html[data-design="editorial"] .result-page .regen-badge { font-family: var(--font-family-mono); font-size: var(--font-size-xs); color: var(--color-text-tertiary); }
+
+/* Вердикт. Эмодзи ✅/❌ + слово несут смысл (не только цвет). */
+html[data-design="editorial"] .result-page .status {
+  font-family: var(--font-family-display); font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-xl); color: var(--color-text-primary);
+  margin: var(--space-4) 0 0; padding-top: var(--space-4);
+  border-top: var(--rule-weight) solid var(--color-border-primary);
+}
+
+/* Варианты-результат (.options[role=list], без #interview-options-маркера). */
+html[data-design="editorial"] .result-page .options { display: flex; flex-direction: column; gap: var(--space-3); }
+html[data-design="editorial"] .result-page .options label {
+  display: block; padding: var(--space-4);
+  border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-md);
+  background: var(--color-bg-primary); color: var(--color-text-primary);
+  font-size: var(--font-size-md); box-shadow: none;
+}
+html[data-design="editorial"] .result-page .option-other { opacity: 0.85; }
+html[data-design="editorial"] .result-page .option-status-label {
+  display: inline-block; margin-top: var(--space-2);
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
+  padding: 0.15em 0.6em; border-radius: var(--border-radius-sm); background: transparent;
+}
+html[data-design="editorial"] .result-page .option-status-correct { color: var(--color-status-success); border: var(--rule-weight) solid var(--color-status-success); }
+html[data-design="editorial"] .result-page .option-status-selected { color: var(--color-status-error); border: var(--rule-weight) solid var(--color-status-error); }
+
+/* «📖 Пояснение» */
+html[data-design="editorial"] .result-page .question-main h3 {
+  font-family: var(--font-family-display); font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-lg); color: var(--color-text-primary);
+  margin: var(--space-5) 0 var(--space-3); padding-top: var(--space-5);
+  border-top: var(--rule-weight) solid var(--color-border-secondary);
+}
+
+/* SM-2 details — как dev-панель ошибки */
+html[data-design="editorial"] .result-page .sm2-details {
+  border: var(--rule-weight) solid var(--color-border-secondary); border-radius: var(--border-radius-md);
+  background: var(--color-bg-primary); margin-top: var(--space-5);
+}
+html[data-design="editorial"] .result-page .sm2-details summary {
+  cursor: pointer; padding: var(--space-3) var(--space-4); list-style: none;
+  font-family: var(--font-family-mono); font-size: var(--font-size-sm); color: var(--color-text-secondary);
+}
+html[data-design="editorial"] .result-page .sm2-details summary::-webkit-details-marker { display: none; }
+html[data-design="editorial"] .result-page .sm2-details summary::before { content: "▸ "; color: var(--color-text-tertiary); }
+html[data-design="editorial"] .result-page .sm2-details[open] summary::before { content: "▾ "; }
+html[data-design="editorial"] .result-page .sm2-grid {
+  display: grid; grid-template-columns: auto 1fr; gap: var(--space-2) var(--space-4);
+  margin: 0; padding: var(--space-4); border-top: var(--rule-weight) solid var(--color-border-secondary);
+}
+html[data-design="editorial"] .result-page .sm2-grid dt { font-family: var(--font-family-mono); font-size: var(--font-size-xs); letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-tertiary); margin: 0; }
+html[data-design="editorial"] .result-page .sm2-grid dd { margin: 0; font-size: var(--font-size-sm); color: var(--color-text-primary); }
+
+/* Код вопроса (CODE-тип) */
+html[data-design="editorial"] .result-page .question-code {
+  background: var(--color-bg-tertiary); color: var(--color-text-primary);
+  border: var(--rule-weight) solid var(--color-border-secondary); border-radius: var(--border-radius-md);
+  padding: var(--space-4); overflow-x: auto;
+}
+html[data-design="editorial"] .result-page .question-code code { font-family: var(--font-family-mono); font-size: var(--font-size-sm); background: transparent; }
+
+/* Действия результата. Старый styles.css даёт flex-direction:column → кнопки
+   во всю ширину; форсим row (на мобиле media ниже возвращает column). */
+html[data-design="editorial"] .result-page .result-actions { display: flex; flex-direction: row; align-items: center; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-6); }
+/* #extra-analysis-toggle-result бьёт width:100% по ID (1,0,0) — перебиваем с
+   .result-page-префиксом (1,2,1), иначе кнопка тянется во всю строку. */
+html[data-design="editorial"] .result-page #extra-analysis-toggle-result { width: auto; }
+
+/* Похожие вопросы — тёплый блок-список (гасим indigo). */
+html[data-design="editorial"] .result-page #result-related-questions,
+html[data-design="editorial"] .result-page .related-questions {
+  background: transparent; border: 0; border-top: var(--rule-weight-strong) solid var(--color-border-primary);
+  margin-top: var(--space-7); padding-top: var(--space-5);
+}
+html[data-design="editorial"] .result-page .related-questions-title {
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
+  color: var(--color-accent-primary); margin: 0 0 var(--space-3);
+}
+html[data-design="editorial"] .result-page .related-question-item {
+  display: block; padding: var(--space-3) var(--space-4); margin: 0 0 var(--space-2);
+  font-family: var(--font-family-body); font-size: var(--font-size-base);
+  color: var(--color-text-primary); text-decoration: none; background: transparent;
+  border: var(--rule-weight) solid var(--color-border-secondary); border-radius: var(--border-radius-md);
+  border-left: 3px solid var(--color-accent-primary);
+  transition: background var(--duration-fast) var(--easing-default);
+}
+html[data-design="editorial"] .result-page .related-question-item:hover { background: var(--color-bg-tertiary); }
+
+@media (max-width: 600px) {
+  html[data-design="editorial"] .result-page .result-actions { flex-direction: column; }
+  html[data-design="editorial"] .result-page .result-actions .btn { width: 100%; }
+  html[data-design="editorial"] .result-page .question-header h2 { flex-basis: 100%; }
+}
