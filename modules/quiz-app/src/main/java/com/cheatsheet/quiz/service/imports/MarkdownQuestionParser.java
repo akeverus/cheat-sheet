@@ -76,7 +76,13 @@ public class MarkdownQuestionParser {
      * @throws IOException при ошибке чтения файла
      */
     public List<ParsedQuestion> parse(Path filePath) throws IOException {
-        List<String> lines = Files.readAllLines(filePath, StandardCharsets.UTF_8);
+        // NUL-байты (0x00) недопустимы в PostgreSQL text/UTF8: один битый байт в одном
+        // cheatsheet ронял весь импорт (а с ним и старт приложения). Чистим на входе —
+        // все производные поля (вопрос, ответ, код, хеш) получаются уже без NUL.
+        List<String> lines = Files.readAllLines(filePath, StandardCharsets.UTF_8)
+                .stream()
+                .map(TextUtils::stripNulChars)
+                .toList();
 
         boolean hasLegacyMcq = lines.stream().anyMatch(l -> l.trim().startsWith("> [!mcq]"));
         if (hasLegacyMcq) {

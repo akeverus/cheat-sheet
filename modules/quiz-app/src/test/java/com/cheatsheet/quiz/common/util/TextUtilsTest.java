@@ -82,4 +82,26 @@ class TextUtilsTest {
         assertThat(result).hasSize(11); // 10 + ellipsis
         assertThat(result).endsWith("…");
     }
+
+    // NUL задаём через (char) 0, чтобы не вносить сам 0x00-байт в исходник теста.
+    private static final String NUL = String.valueOf((char) 0);
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    void stripNulCharsReturnsInputForNullOrEmpty(String input) {
+        assertThat(TextUtils.stripNulChars(input)).isEqualTo(input);
+    }
+
+    @Test
+    void stripNulCharsRemovesNulByte() {
+        String input = "abc" + NUL + "def" + NUL;
+        assertThat(TextUtils.stripNulChars(input)).isEqualTo("abcdef");
+        assertThat(TextUtils.stripNulChars(input)).doesNotContain(NUL);
+    }
+
+    @Test
+    void stripNulCharsKeepsCleanTextUnchanged() {
+        String clean = "обычный текст без мусора";
+        assertThat(TextUtils.stripNulChars(clean)).isSameAs(clean);
+    }
 }

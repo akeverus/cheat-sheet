@@ -114,4 +114,23 @@ public class TextUtils {
         }
         return text.substring(0, cut).trim() + "…";
     }
+
+    /**
+     * Удаляет NUL-байты ({@code 0x00}) из текста.
+     *
+     * <p>PostgreSQL не хранит {@code 0x00} в text/varchar (UTF8): любой INSERT/UPDATE
+     * с таким байтом падает с {@code invalid byte sequence for encoding "UTF8": 0x00}.
+     * NUL в markdown/импортируемом контенте — всегда повреждение (невидимый битый
+     * байт), поэтому удаляется безопасно. Применяется на входе импорта, чтобы один
+     * битый байт в одном cheatsheet-файле не ронял старт всего приложения.</p>
+     *
+     * @param text исходный текст (может быть {@code null})
+     * @return текст без NUL-байтов; {@code null} если на входе {@code null}
+     */
+    public static String stripNulChars(String text) {
+        if (text == null || text.indexOf((char) 0) < 0) {
+            return text;
+        }
+        return text.replace(String.valueOf((char) 0), StringUtils.EMPTY);
+    }
 }
