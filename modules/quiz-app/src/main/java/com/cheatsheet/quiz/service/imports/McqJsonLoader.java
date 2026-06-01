@@ -206,7 +206,7 @@ public class McqJsonLoader {
      * переинсёртился на каждом старте. Нормализуем до сравнения и вставки.
      */
     private static String stripNul(String s) {
-        return s == null ? null : s.replace(" ", "");
+        return s == null ? null : s.replace(String.valueOf((char) 0), "");
     }
 
     /**
