@@ -567,12 +567,23 @@ html[data-design="editorial"] .sr-only {
   line-height: var(--line-height-tight);
   letter-spacing: var(--letter-spacing-tight);
   color: var(--color-text-primary);
+  /* Длинные русские слова («собеседованию») не должны распирать шапку на узких
+     экранах — разрешаем перенос (старый h1 тянул nowrap → гориз. скролл 375). */
+  white-space: normal;
+  overflow-wrap: break-word;
   /* Сброс старого gradient-text fill (header h1) — глобально, чтобы шапка была
      корректной и на ещё не мигрированных страницах. */
   background: none;
   -webkit-background-clip: border-box;
   background-clip: border-box;
   -webkit-text-fill-color: currentColor;
+}
+/* Размер заголовка-шапки: глобальное html[data-design] h1 {3xl=48px} (0,1,2)
+   бьёт плоский .ed-masthead-title (0,1,0) и держит 48px даже на мобиле. Даём
+   адаптивный clamp с бóльшей специфичностью (0,2,1): ~25px на 360px → 48px на
+   десктопе. clamp сам отвечает за мобилу — отдельный media-override не нужен. */
+html[data-design="editorial"] .ed-masthead-title {
+  font-size: clamp(1.55rem, 1.1rem + 2.2vw, var(--font-size-3xl));
 }
 .ed-masthead-actions { display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
 
