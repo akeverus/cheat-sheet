@@ -22,7 +22,6 @@ class TemplateFragmentContractTest {
         String resultZoneHead = readTemplate("templates/fragments/result-zone-head.html");
         String postAnswerControls = readTemplate("templates/fragments/post-answer-controls.html");
         String inlineAlert = readTemplate("templates/fragments/inline-alert.html");
-        String focusSurfaceTabs = readTemplate("templates/fragments/focus-surface-tabs.html");
 
         assertThat(trainingActions).contains("data-ui-fragment=\"training-actions\"");
         assertThat(trainingActions).contains("id=\"action-footer\"");
@@ -43,14 +42,6 @@ class TemplateFragmentContractTest {
         assertThat(inlineAlert).contains("data-ui-fragment=\"inline-alert\"");
         assertThat(inlineAlert).contains("role=\"alert\"");
         assertThat(inlineAlert).contains("aria-live=\"assertive\"");
-
-        assertThat(focusSurfaceTabs).contains("data-ui-fragment=\"focus-surface-tabs\"");
-        assertThat(focusSurfaceTabs).contains("aria-label=\"Навигация по режимам фокуса\"");
-        assertThat(focusSurfaceTabs).contains("aria-current=\"page\"");
-        assertThat(focusSurfaceTabs).contains("class=\"surface-tabs\"");
-        assertThat(focusSurfaceTabs).contains(">Фокус<");
-        assertThat(focusSurfaceTabs).contains(">Аналитика<");
-        assertThat(focusSurfaceTabs).contains(">Настройки<");
     }
 
     @Test
@@ -71,10 +62,12 @@ class TemplateFragmentContractTest {
         assertThat(stats).contains("stats-search-action");
 
         assertThat(focusTraining).contains("fragments/training-actions :: training-actions");
-        assertThat(focusTraining).contains("showPrimaryNav=false");
+        // Editorial IA: единая навигация в шапке на всех страницах (showPrimaryNav=true),
+        // дубль-навигация focus-surface-tabs удалена.
+        assertThat(focusTraining).contains("showPrimaryNav=true");
         assertThat(focusTraining).contains("fragments/result-zone-head :: result-zone-head");
         assertThat(focusTraining).contains("fragments/post-answer-controls :: post-answer-controls");
-        assertThat(focusTraining).contains("fragments/focus-surface-tabs :: focus-surface-tabs");
+        assertThat(focusTraining).doesNotContain("focus-surface-tabs");
         assertThat(focusTraining).contains("chipText='Пост-разбор'");
         assertThat(focusTraining).contains("hintText='Сначала итог, затем объяснение и дополнительные блоки'");
         assertThat(focusTraining).contains("extraButtonText='Показать доп. анализ'");
@@ -87,9 +80,9 @@ class TemplateFragmentContractTest {
         assertThat(focusTraining).doesNotContain("data-progress=\"0\"");
         assertThat(focusTraining).contains("th:href=\"${focusEmptyRetryHref}\"");
         assertThat(focusTraining).contains("th:text=\"${focusEmptyRetryText}\"");
-        assertThat(focusTraining).contains("th:if=\"${!reviewMode and interviewSession == null}\"");
-        assertThat(focusTraining).contains("th:if=\"${!reviewMode and interviewSession != null and !interviewSession.finished}\"");
-        assertThat(focusTraining).contains("th:if=\"${!reviewMode and interviewSession != null and interviewSession.finished}\"");
+        assertThat(focusTraining).contains("th:if=\"${!generationUnavailable and !reviewMode and interviewSession == null}\"");
+        assertThat(focusTraining).contains("th:if=\"${!generationUnavailable and !reviewMode and interviewSession != null and !interviewSession.finished}\"");
+        assertThat(focusTraining).contains("th:if=\"${!generationUnavailable and !reviewMode and interviewSession != null and interviewSession.finished}\"");
         assertThat(focusTraining).contains("Сессия запущена, но вопрос пока недоступен. Попробуй обновить тренировку.");
         assertThat(focusTraining).contains("🏁 Сессия завершена.");
         assertThat(focusTraining).doesNotContain("chipText='Результат'");
@@ -144,52 +137,28 @@ class TemplateFragmentContractTest {
     }
 
     @Test
-    void cssScopesFocusOverridesToFocusPage() throws IOException {
-        String styles = readTemplate("static/css/styles.css");
-        assertThat(styles).contains(".focus-page .app-layout");
-        assertThat(styles).contains(".focus-page .main-content");
-        assertThat(styles).contains(".focus-page .empty-actions");
-        assertThat(styles).contains(".focus-page .surface-toolbar");
-        assertThat(styles).contains(".focus-page .surface-tab");
-        assertThat(styles).contains(".focus-page .session-progress-track");
-        assertThat(styles).contains(".focus-page .focus-progress-strip");
-        assertThat(styles).contains(".focus-page .next-btn");
-        assertThat(styles).contains(".result-page .result-zone-head");
-        assertThat(styles).contains(".result-page .zone-hint");
-        assertThat(styles).contains(".result-page .result-feedback");
-        assertThat(styles).contains(".result-page .result-actions");
-        assertThat(styles).contains(".result-page .next-btn");
-        assertThat(styles).contains(".stats-page .charts-row");
-        assertThat(styles).contains(".stats-page .chart-fallback");
-        assertThat(styles).contains(".stats-page .topic-table");
-        assertThat(styles).contains(".stats-page .topic-table th.sortable:focus-visible");
-        assertThat(styles).contains(".stats-page .search-form");
-        assertThat(styles).contains(".stats-page .stats-filters-form");
-        assertThat(styles).contains(".stats-page .stats-search-form");
-        assertThat(styles).contains(".stats-page .search-results > div");
-        assertThat(styles).contains(".stats-page .stats-filter-row");
-        assertThat(styles).contains(".stats-page .stats-action-btn");
-        assertThat(styles).contains(".stats-page .stats-apply-action");
-        assertThat(styles).contains(".stats-page .stats-search-action");
-        assertThat(styles).contains(".stats-page .nav-export");
-        assertThat(styles).contains(".stats-page .nav-export:hover");
-        assertThat(styles).contains(".settings-page .settings-content");
-        assertThat(styles).contains(".settings-page #main-content");
-        assertThat(styles).contains(".settings-page .app-layout");
-        assertThat(styles).contains(".settings-page .sidebar-toggle-btn");
-        assertThat(styles).contains(".settings-page .compact-sidebar.control-card");
-        assertThat(styles).contains(".settings-page .compact-sidebar.is-collapsed");
-        assertThat(styles).contains(".settings-page .control-section-tips");
-        assertThat(styles).contains(".settings-page .control-card .streak-bar");
-        assertThat(styles).contains(".flow-stack-md");
-        assertThat(styles).contains(".focus-page .training-shell .question-zone-head");
-        assertThat(styles).contains(".focus-page .training-shell .focus-question");
-        assertThat(styles).contains(".result-page .question-main.flow-stack-md");
-        assertThat(styles).contains(".training-shell .options");
-        assertThat(styles).contains(".training-shell .options label");
-        assertThat(styles).contains(".training-shell .action-footer");
-        assertThat(styles).contains(".training-shell #interview-submit");
-        assertThat(styles).contains(".training-shell .question-timer");
-        assertThat(styles).contains(".training-shell .next-btn");
+    void editorialCssScopesPageOverridesToBodyClassAndIsSelfContained() throws IOException {
+        // R3: старый styles.css/mobile-fixes.css/ui-refinements.css удалены —
+        // editorial.css теперь единственная таблица стилей. Контракт:
+        // (1) страничные оверрайды неймспейснуты body-классом под data-design
+        //     (чтобы не протекать между страницами и не цеплять чужой каркас),
+        // (2) файл самодостаточен (bare-reset + порт утилит после сноса styles.css).
+        String css = readTemplate("static/css/editorial.css");
+
+        assertThat(css).contains("html[data-design=\"editorial\"] .focus-page");
+        assertThat(css).contains("html[data-design=\"editorial\"] .result-page");
+        assertThat(css).contains("html[data-design=\"editorial\"] .stats-page");
+        assertThat(css).contains("html[data-design=\"editorial\"] .settings-page");
+        assertThat(css).contains("html[data-design=\"editorial\"] .summary-page");
+        assertThat(css).contains("html[data-design=\"editorial\"] .error-page");
+
+        // Самодостаточность: глобальный reset + утилиты, на которые опираются шаблоны.
+        assertThat(css).contains("box-sizing: border-box");
+        assertThat(css).contains(".d-inline");
+        assertThat(css).contains(".flex-shrink-0");
+        assertThat(css).contains(".flex-1");
+        assertThat(css).contains(".mt-3");
+        assertThat(css).contains(".overflow-x-auto");
+        assertThat(css).contains(".hidden");
     }
 }

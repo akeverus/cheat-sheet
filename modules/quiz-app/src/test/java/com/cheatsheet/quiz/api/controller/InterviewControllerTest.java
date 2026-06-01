@@ -121,7 +121,7 @@ class InterviewControllerTest {
         assertThat(body).contains("Подготовка к собеседованию");
         if (result.getStatus() == 200) {
             assertThat(body).doesNotContain("id=\"left-sidebar-card\"");
-            assertThat(body).contains("class=\"surface-tabs\"");
+            assertThat(body).contains("aria-label=\"Основная навигация\"");
             assertThat(body).contains(">Фокус<");
             assertThat(body).contains(">Аналитика<");
             assertThat(body).contains(">Настройки<");
@@ -705,7 +705,6 @@ class InterviewControllerTest {
         assertThat(index.getStatus()).isIn(200, 503);
         if (index.getStatus() == 200) {
             String body = index.getContentAsString();
-            assertThat(body).contains("data-ui-fragment=\"focus-surface-tabs\"");
             if (body.contains("id=\"interview-form\"")) {
                 assertThat(body).contains("data-ui-fragment=\"training-actions\"");
                 assertThat(body).contains("data-ui-fragment=\"result-zone-head\"");
@@ -718,7 +717,6 @@ class InterviewControllerTest {
         assertThat(training.getStatus()).isIn(200, 503);
         if (training.getStatus() == 200) {
             String body = training.getContentAsString();
-            assertThat(body).contains("data-ui-fragment=\"focus-surface-tabs\"");
             if (body.contains("id=\"interview-form\"")) {
                 assertThat(body).contains("data-ui-fragment=\"training-actions\"");
                 assertThat(body).contains("data-ui-fragment=\"result-zone-head\"");
@@ -729,23 +727,25 @@ class InterviewControllerTest {
     }
 
     @Test
-    void focusPagesAvoidDuplicatePrimaryNavigationWhenSurfaceTabsPresent() throws Exception {
+    void focusPagesExposeSingleUnifiedPrimaryNavigation() throws Exception {
+        // Editorial IA: дубль-навигация устранена — единая «Основная навигация» в
+        // шапке на всех страницах; surface-tabs («Навигация по режимам фокуса») удалена.
         var index = mockMvc.perform(get("/")).andReturn().getResponse();
         assertThat(index.getStatus()).isIn(200, 503);
         if (index.getStatus() == 200) {
             String body = index.getContentAsString();
-            assertThat(body).contains("data-ui-fragment=\"focus-surface-tabs\"");
-            assertThat(countOccurrences(body, "aria-label=\"Основная навигация\"")).isEqualTo(0);
-            assertThat(countOccurrences(body, "aria-label=\"Навигация по режимам фокуса\"")).isEqualTo(1);
+            assertThat(body).doesNotContain("data-ui-fragment=\"focus-surface-tabs\"");
+            assertThat(countOccurrences(body, "aria-label=\"Основная навигация\"")).isEqualTo(1);
+            assertThat(countOccurrences(body, "aria-label=\"Навигация по режимам фокуса\"")).isEqualTo(0);
         }
 
         var training = mockMvc.perform(get("/training")).andReturn().getResponse();
         assertThat(training.getStatus()).isIn(200, 503);
         if (training.getStatus() == 200) {
             String body = training.getContentAsString();
-            assertThat(body).contains("data-ui-fragment=\"focus-surface-tabs\"");
-            assertThat(countOccurrences(body, "aria-label=\"Основная навигация\"")).isEqualTo(0);
-            assertThat(countOccurrences(body, "aria-label=\"Навигация по режимам фокуса\"")).isEqualTo(1);
+            assertThat(body).doesNotContain("data-ui-fragment=\"focus-surface-tabs\"");
+            assertThat(countOccurrences(body, "aria-label=\"Основная навигация\"")).isEqualTo(1);
+            assertThat(countOccurrences(body, "aria-label=\"Навигация по режимам фокуса\"")).isEqualTo(0);
         }
     }
 
