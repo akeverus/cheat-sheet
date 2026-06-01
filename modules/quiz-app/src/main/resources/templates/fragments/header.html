@@ -1,40 +1,50 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-<header th:fragment="header(pageTitle, statsPage, activePage, showPrimaryNav)">
+<!-- Editorial masthead. Сигнатуру фрагмента сохраняем (pageTitle, statsPage,
+     activePage, showPrimaryNav) — старые вызовы не ломаются. Навигация теперь
+     ЕДИНАЯ и видна всегда (showPrimaryNav больше не гейтит её — конец дубля с
+     surface-tabs). theme-toggle (id/aria/скрипт) и progressbar-контракт целы. -->
+<header th:fragment="header(pageTitle, statsPage, activePage, showPrimaryNav)" class="ed-masthead">
     <noscript>
-        <div class="inline-alert" role="alert">
+        <div class="inline-alert ed-noscript" role="alert">
             <strong>JavaScript отключён.</strong> Без него часть интерактивных элементов
-            (раскрытие подсказок, hotkey-навигация, графики на /stats) работать не будут.
+            (раскрытие подсказок, hotkey-навигация, графики на Аналитике) работать не будут.
             Базовый flow (вопрос → ответ → результат) останется доступен через формы.
         </div>
     </noscript>
-    <h1 th:text="${pageTitle}">Подготовка к собеседованию</h1>
-    <div class="progress-container" th:if="${progressPercent != null}">
-        <div class="progress-bar" th:attr="data-progress=${progressPercent}"></div>
+    <div class="ed-masthead-inner">
+        <a class="ed-masthead-brand" th:href="@{/}" style="text-decoration:none">
+            <span class="ed-eyebrow ed-masthead-kicker">Cheat&nbsp;·&nbsp;Sheet</span>
+            <h1 class="ed-masthead-title" th:text="${pageTitle}">Подготовка к собеседованию</h1>
+        </a>
+        <div class="ed-masthead-actions">
+            <nav class="ed-nav" aria-label="Основная навигация">
+                <a th:href="@{/}" class="ed-nav-link"
+                   th:classappend="${activePage == 'focus'} ? 'is-active'"
+                   th:attr="aria-current=${activePage == 'focus'} ? 'page' : null">Фокус</a>
+                <a th:href="@{/stats}" class="ed-nav-link"
+                   th:classappend="${activePage == 'analytics'} ? 'is-active'"
+                   th:attr="aria-current=${activePage == 'analytics'} ? 'page' : null">Аналитика</a>
+                <a th:href="@{/settings}" class="ed-nav-link"
+                   th:classappend="${activePage == 'settings'} ? 'is-active'"
+                   th:attr="aria-current=${activePage == 'settings'} ? 'page' : null">Настройки</a>
+            </nav>
+            <div class="ed-export" th:if="${statsPage}">
+                <a href="/export?format=json" th:href="@{/export(format='json')}" class="ed-nav-export" title="Экспорт JSON" aria-label="Экспорт в JSON">JSON ↓</a>
+                <a href="/export?format=csv" th:href="@{/export(format='csv')}" class="ed-nav-export" title="Экспорт CSV" aria-label="Экспорт в CSV">CSV ↓</a>
+            </div>
+            <button type="button" class="theme-toggle ed-theme-toggle" id="theme-toggle"
+                    aria-label="Переключить тему" aria-pressed="false" title="Светлая / тёмная тема">
+                <span class="theme-toggle-icon" aria-hidden="true"></span>
+            </button>
+        </div>
     </div>
-    <div class="header-actions">
-        <nav aria-label="Основная навигация" th:if="${showPrimaryNav}">
-            <a href="/" th:href="@{/}"
-               th:classappend="${activePage == 'focus'} ? 'active'"
-               th:attr="aria-current=${activePage == 'focus'} ? 'page' : null">Фокус</a>
-            <a href="/stats" th:href="@{/stats}"
-               th:classappend="${activePage == 'analytics'} ? 'active'"
-               th:attr="aria-current=${activePage == 'analytics'} ? 'page' : null">Аналитика</a>
-            <a href="/settings" th:href="@{/settings}"
-               th:classappend="${activePage == 'settings'} ? 'active'"
-               th:attr="aria-current=${activePage == 'settings'} ? 'page' : null">Настройки</a>
-            <a th:if="${statsPage}" href="/export?format=json" th:href="@{/export(format='json')}" class="nav-export" title="Экспорт JSON" aria-label="Экспорт в JSON">📥 JSON</a>
-            <a th:if="${statsPage}" href="/export?format=csv" th:href="@{/export(format='csv')}" class="nav-export" title="Экспорт CSV" aria-label="Экспорт в CSV">📥 CSV</a>
-        </nav>
-        <button type="button" class="theme-toggle" id="theme-toggle"
-                aria-label="Переключить тему" aria-pressed="false" title="Светлая / тёмная тема">
-            <span class="theme-toggle-icon" aria-hidden="true"></span>
-        </button>
+    <div class="ed-masthead-progress progress-container" th:if="${progressPercent != null}">
+        <div class="progress-bar ed-masthead-progress-fill" th:attr="data-progress=${progressPercent}"></div>
     </div>
     <!-- Переключатель темы: меняет data-theme на <html>, пишет выбор в
-         localStorage, синхронит aria-pressed и meta[theme-color]. Инлайн в
-         фрагменте — кнопка уже в DOM выше, скрипт есть на каждой странице. -->
+         localStorage, синхронит aria-pressed и meta[theme-color]. -->
     <script>
       (function () {
         var btn = document.getElementById('theme-toggle');
@@ -52,7 +62,7 @@
           var next = (root.getAttribute('data-theme') === 'light') ? 'dark' : 'light';
           root.setAttribute('data-theme', next);
           try { localStorage.setItem('theme', next); } catch (e) {}
-          if (meta) meta.setAttribute('content', next === 'light' ? '#edf0f7' : '#07101f');
+          if (meta) meta.setAttribute('content', next === 'light' ? '#F7F3EA' : '#16130D');
           sync();
         });
       })();

@@ -1,15 +1,12 @@
 <!DOCTYPE html>
-<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" data-design="editorial" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/head :: head(title='Подготовка к собеседованию', includeMermaid=true, includeChart=false)}"></head>
 <body class="focus-page">
 <a class="skip-link" href="#main-content">Перейти к вопросу</a>
-<header th:replace="~{fragments/header :: header(pageTitle='Подготовка к собеседованию', statsPage=false, activePage='focus', showPrimaryNav=false)}"></header>
+<header th:replace="~{fragments/header :: header(pageTitle='Подготовка к собеседованию', statsPage=false, activePage='focus', showPrimaryNav=true)}"></header>
 
-<main id="main-content">
-    <section class="surface-toolbar card" aria-label="Режимы экрана">
-        <div th:replace="~{fragments/focus-surface-tabs :: focus-surface-tabs}"></div>
-    </section>
-    <section class="focus-training card" th:if="${current != null}">
+<main id="main-content" class="ed-page">
+    <section class="focus-training" th:if="${current != null}">
         <div class="focus-progress-line">
             <span th:if="${interviewSession != null}">
                 <span class="session-progress" th:text="${interviewSession.getIndex() + 1}">1</span>/<span th:text="${interviewSession.getTotal()}">1</span>
@@ -67,9 +64,9 @@
                     <form method="post" th:action="@{/flashcard-grade}" class="d-contents">
                         <input type="hidden" name="questionId" th:value="${current.question.id}">
                         <button type="submit" name="grade" value="1" class="flashcard-grade-btn grade-1" aria-label="Оценка 1: Не помню">Не помню</button>
-                        <button type="submit" name="grade" value="2" class="flashcard-grade-btn grade-2" aria-label="Оценка 2: Плохо">Плохо</button>
+                        <button type="submit" name="grade" value="2" class="flashcard-grade-btn grade-2" aria-label="Оценка 2: Трудно">Трудно</button>
                         <button type="submit" name="grade" value="3" class="flashcard-grade-btn grade-3" aria-label="Оценка 3: Хорошо">Хорошо</button>
-                        <button type="submit" name="grade" value="4" class="flashcard-grade-btn grade-4" aria-label="Оценка 4: Отлично">Отлично</button>
+                        <button type="submit" name="grade" value="4" class="flashcard-grade-btn grade-4" aria-label="Оценка 4: Легко">Легко</button>
                     </form>
                 </div>
             </div>
@@ -116,7 +113,7 @@
         )}"></div>
     </section>
 
-    <section class="card empty empty-card-inner" th:if="${current == null}">
+    <section class="empty empty-card-inner" th:if="${current == null}">
         <h2 class="empty-title">Вопросы временно недоступны</h2>
         <!-- Ветки взаимоисключающие: generationUnavailable имеет высший приоритет,
              иначе при недоступном AI во время запущенной сессии показывались два
