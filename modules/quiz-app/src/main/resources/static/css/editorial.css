@@ -307,9 +307,13 @@ html[data-design="editorial"] samp {
 }
 html[data-design="editorial"] :not(pre) > code {
   background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
   padding: 0.1em 0.38em;
   border-radius: var(--border-radius-sm);
 }
+/* старый .markdown-content code красит инлайн-код холодным индиго — перебиваем */
+html[data-design="editorial"] .markdown-content code,
+html[data-design="editorial"] .markdown-content :not(pre) > code { color: var(--color-text-primary); }
 html[data-design="editorial"] pre {
   font-family: var(--font-family-mono);
   background: var(--color-bg-tertiary);
@@ -798,6 +802,30 @@ html[data-design="editorial"] .option-wrong { border-color: var(--color-status-e
 html[data-design="editorial"] .option-wrong::before { background: var(--color-status-error) !important; border-color: var(--color-status-error) !important; color: var(--color-status-error-on) !important; }
 html[data-design="editorial"] .option-dimmed { opacity: 0.55; }
 
+/* Объяснения вариантов (app.js/result.html: .option-explanation +
+   .explanation-correct/.explanation-wrong). Старые правила тянут холодный
+   лавандовый фон/текст — приводим к тёплой палитре. */
+html[data-design="editorial"] .option-explanation {
+  font-family: var(--font-family-body);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-relaxed);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--border-radius-sm);
+  margin-top: var(--space-3);
+}
+html[data-design="editorial"] .explanation-correct {
+  background: var(--color-status-success-wash);
+  color: var(--color-text-primary);
+  border-left: 3px solid var(--color-status-success);
+}
+html[data-design="editorial"] .explanation-wrong {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  border-left: 3px solid var(--color-text-tertiary);
+}
+html[data-design="editorial"] .explanation-correct strong { color: var(--color-status-success); }
+html[data-design="editorial"] .explanation-wrong strong { color: var(--color-text-primary); }
+
 /* Кнопки в фокусе. Старый styles.css бьёт по ID/фикс-позиционированию
    (#interview-submit (1,0,0); .focus-page .focus-training #interview-submit (1,2,0);
    .focus-page .focus-training .action-footer fixed). Перебиваем, добавляя .focus-page
@@ -910,6 +938,44 @@ html[data-design="editorial"] .result-zone-head { display: flex; flex-direction:
 html[data-design="editorial"] .result-zone-head.hidden { display: none; }
 html[data-design="editorial"] .result-feedback { margin-top: var(--space-4); }
 html[data-design="editorial"] .result-feedback.hidden { display: none; }
+
+/* Вердикт ответа (.result-correct/.result-wrong, app.js рендерит в #result-feedback).
+   Editorial: статус-wash + левая цветная линейка, крупный сериф-вердикт.
+   Вложенный .answer делаем плоским, чтобы не было панели-в-панели и терракоты
+   внутри зелёного/красного. */
+html[data-design="editorial"] .result-correct,
+html[data-design="editorial"] .result-wrong {
+  padding: var(--space-4) var(--space-5);
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-md);
+  margin-top: var(--space-2);
+}
+html[data-design="editorial"] .result-correct {
+  background: var(--color-status-success-wash);
+  border-color: var(--color-status-success);
+  border-left: 3px solid var(--color-status-success);
+}
+html[data-design="editorial"] .result-wrong {
+  background: var(--color-status-error-wash);
+  border-color: var(--color-status-error);
+  border-left: 3px solid var(--color-status-error);
+}
+html[data-design="editorial"] .result-correct > strong,
+html[data-design="editorial"] .result-wrong > strong {
+  display: block;
+  font-family: var(--font-family-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--space-2);
+}
+html[data-design="editorial"] .result-correct > strong { color: var(--color-status-success); }
+html[data-design="editorial"] .result-wrong > strong { color: var(--color-status-error); }
+html[data-design="editorial"] .result-correct .answer,
+html[data-design="editorial"] .result-wrong .answer,
+html[data-design="editorial"] .option-correct .answer,
+html[data-design="editorial"] .option-wrong .answer {
+  background: transparent; border: 0; padding: 0; margin-top: var(--space-2);
+}
 html[data-design="editorial"] .inline-alert { padding: var(--space-3) var(--space-4); border: var(--rule-weight) solid var(--color-status-error); border-radius: var(--border-radius-md); background: var(--color-status-error-wash); color: var(--color-text-primary); margin: var(--space-3) 0; }
 html[data-design="editorial"] .inline-alert.hidden { display: none; }
 
