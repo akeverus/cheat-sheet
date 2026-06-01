@@ -6,55 +6,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие functional и non-functional требования критично зафиксировать в первые минуты LLD-интервью по vending machine?",
+          "question_text": "Сформулируй functional и non-functional требования к торговому автомату (`vending machine`).",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Functional: select/insert money/dispense/return change/cancel/restock. Non-functional: real-time response, точная сдача, audit log, инвариант 'никогда не отдать продукт без оплаты'.",
+              "text": "Functional: выбрать товар по слоту (`A3`), принять монеты/банкноты и карту (`NFC`), выдать товар после оплаты, точно вернуть сдачу, отменить покупку до выдачи, restock админом, перевод в `OutOfService`. Non-functional: response < 1 сек (это hardware), инвариант «никогда не отдать товар без оплаты», точная сдача без `float`, audit log для reconciliation, явный `OutOfService` вместо silent fail, admin-доступ через auth.",
               "correct": true,
               "sections": {
-                "explanation": "Functional описывают use-cases (что машина делает), non-functional — качественные ограничения (real-time, точность денег, audit, безопасный инвариант).",
-                "example": "Select A3 → insert $2 в Coke за $1.25 → dispense + return $0.75 сдачи; audit log: timestamp/slot/amount/status.",
-                "when_to_apply": "На старте интервью за 2-3 минуты: разделить requirements на функциональные и качественные перед классами.",
-                "edge_cases": "Не забыть инвариант 'никогда не отдать продукт без оплаты' — это маркер senior-уровня.",
-                "related": "Q2 (actors), Q5 (BigDecimal для денег), Q21 (audit log)."
+                "explanation": "Требования делятся на functional (что машина умеет: select, pay, dispense, change, cancel, restock) и non-functional (как: latency, корректность денег, безопасность, audit). Для `LLD`-задачи 30-45 мин это первый шаг — задать рамки.",
+                "example": "Инвариант «не отдать товар без оплаты» означает: `decrement` инвентаря и физическая выдача происходят только после успешного `charge`, иначе автомат теряет деньги на каждой покупке.",
+                "when_to_apply": "С этого начинают любое OO-design интервью: явно проговорить use-cases и нефункциональные ограничения, прежде чем рисовать классы.",
+                "edge_cases": "Real-time response < 1 сек важен потому, что это embedded-контроллер, а не cloud: нельзя ждать сетевой round-trip на каждый шаг, кроме cashless-charge.",
+                "related": "[[design-vending-machine-oo-interview#Q2]] актёры и use-cases; [[design-vending-machine-oo-interview#Q5]] точность денег через `BigDecimal`; [[design-vending-machine-oo-interview#Q21]] audit log транзакций."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Достаточно перечислить только функциональные требования — non-functional на этапе LLD не обсуждают.",
+              "text": "Главное нефункциональное требование — горизонтальная масштабируемость на тысячи узлов и эвентуальная консистентность реплик через консенсус `Raft`.",
               "correct": false,
               "sections": {
-                "what_actually": "Non-functional (real-time, точность сдачи, audit) определяют выбор технологий: BigDecimal vs float, synchronized vs lock-free.",
-                "source_of_confusion": "Путают LLD с HLD — но и в LLD non-functional влияют на дизайн классов.",
-                "if_it_were_true": "Получили бы float-математику и race-conditions при concurrent restocking.",
-                "how_it_should_be": "Сразу декларировать non-functional: точность денег, audit, отсутствие silent failures."
+                "what_actually": "Автомат — это один embedded-контроллер у физической машины, а не распределённый кластер; ключевые NFR — это latency, точность денег и audit, а не консенсус реплик.",
+                "source_of_confusion": "`Vending machine` путают с большой distributed-системой, потому что слово «system design» ассоциируется с горизонтальным масштабированием.",
+                "if_it_were_true": "Тогда у каждой машины был бы кластер из узлов и `Raft`-кворум, но реально это single-controller hardware с локальным `SQLite`.",
+                "how_it_should_be": "NFR здесь — real-time response, инвариант оплаты, точная сдача и audit; масштабирование уместно лишь для central reporting backend, не для самой машины."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Главное non-functional требование — высокая throughput (1000+ покупок/сек на машину).",
+              "text": "Достаточно одного функционального требования — «выдать товар»; приём денег, сдача и отмена — это детали реализации, не отдельные use-cases.",
               "correct": false,
               "sections": {
-                "what_actually": "Vending machine — single-user device, throughput ~1 покупка/30 сек. Главное — real-time response и точность.",
-                "source_of_confusion": "Перепутали с distributed system или payment gateway по throughput.",
-                "if_it_were_true": "Дизайнили бы concurrency-heavy систему вместо чистого State pattern.",
-                "how_it_should_be": "Признать single-user nature: один customer одновременно, admin параллельно через сервисный port."
+                "what_actually": "Приём денег, точная сдача и отмена — самостоятельные use-cases с собственными edge cases (refund, out-of-change), их нельзя свернуть в «выдать товар».",
+                "source_of_confusion": "Кажется, что выдача товара — это «суть» автомата, а всё остальное второстепенно, поэтому остальные сценарии опускают.",
+                "if_it_were_true": "Тогда не было бы state machine с переходами `cancel`/`refund`, но именно эти сценарии — половина сложности задачи.",
+                "how_it_should_be": "Каждый сценарий (select, insert money, dispense, change, cancel, restock) — отдельный use-case, и каждый влияет на дизайн состояний."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Restock и maintenance — не часть функциональных требований, это infrastructure.",
+              "text": "Деньги можно держать в `double`, если нефункционально заявить «точность до цента» — округление при выдаче решит проблему.",
               "correct": false,
               "sections": {
-                "what_actually": "Restock (admin refill) и maintenance — обязательные use-cases с отдельными actors; влияют на дизайн (concurrency, auth).",
-                "source_of_confusion": "Сфокусировались только на customer-flow и забыли operations.",
-                "if_it_were_true": "Получили бы machine без admin-API — нельзя пополнить или починить.",
-                "how_it_should_be": "Включить Restocker и Admin как actors с правами refill/maintenance/setPrice."
+                "what_actually": "`double` принципиально не представляет десятичные дроби точно (`0.1 + 0.2 = 0.30000000000000004`), поэтому требование точности денег как раз запрещает `float`/`double`.",
+                "source_of_confusion": "Округление в конце кажется достаточным, но накопленная ошибка от многих операций уже искажает баланс до округления.",
+                "if_it_were_true": "Тогда reconciliation в конце дня сходился бы, но на практике суммы расходятся на копейки из-за binary floating-point.",
+                "how_it_should_be": "Для денег обязателен `BigDecimal` со `scale=2` (или integer cents); `double` запрещён независимо от формулировки NFR."
               }
             }
           ]
@@ -66,55 +66,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие actors и use-cases стоит выделить для vending machine?",
+          "question_text": "Какие актёры (`actors`) взаимодействуют с автоматом и какие у них use-cases?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Единственный actor — Customer; restock и maintenance — это implementation detail без отдельного actor-а.",
+              "text": "Единственный актёр — `Customer`; restocking и аудит выполняет сама машина автоматически, без участия людей.",
               "correct": false,
               "sections": {
-                "what_actually": "Restocker и Admin — внешние пользователи системы с собственными use-cases (refill, audit, set price).",
-                "source_of_confusion": "Видят только consumer-facing операции и забывают про operations.",
-                "if_it_were_true": "Не было бы auth, audit-actor, разделения прав — security дыра.",
-                "how_it_should_be": "Три actor-а: Customer (open), Restocker (authenticated), Admin (authenticated с расширенными правами)."
+                "what_actually": "Кроме `Customer` есть `Restocker` (пополняет товар, забирает наличность) и `Admin` (конфигурация, цены, отчёты) — это разные актёры с разными правами.",
+                "source_of_confusion": "Покупатель — самый заметный актёр, поэтому про сервисный персонал и админа забывают.",
+                "if_it_were_true": "Тогда не нужна была бы admin-авторизация и команды restock, но физический товар кто-то должен загружать.",
+                "how_it_should_be": "Три актёра: `Customer` (основной, один за раз), `Restocker` (refill, collect cash), `Admin` (maintenance, audit, prices)."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Customer (select/insert/cancel), Restocker (refill/collect cash), Admin (maintenance/audit/set price) — три actor-а с разными правами.",
+              "text": "Актёры: `Customer` — основной (select product, insert money, cancel), один за раз; `Restocker` — пополняет товар (refill inventory) и забирает наличность (collect cash); `Admin` — переводит в maintenance, смотрит audit log, обновляет цены (set price).",
               "correct": true,
               "sections": {
-                "explanation": "Customer — основной flow покупки; Restocker — пополнение и снятие наличности; Admin — конфигурация и отчёты. У каждого свой набор операций и auth.",
-                "example": "Customer → selectProduct → insertMoney → dispense. Restocker → authenticate (RFID) → refill(\"A3\", 10).",
-                "when_to_apply": "При проектировании API: customer-методы публичные, admin/restocker — за auth.",
-                "edge_cases": "Restocker и Admin могут совпадать в одном лице, но прав разный — Restocker не меняет цены.",
-                "related": "Q19 (concurrent restocking), Q21 (audit log с actor-id)."
+                "explanation": "Разделение актёров определяет границы доступа: customer-операции публичны, а restock/audit/pricing требуют auth. Это влияет и на дизайн API (отдельный `adminCommand`).",
+                "example": "`Admin` через сервисный port вызывает `SetPriceCommand(\"A3\", new BigDecimal(\"1.50\"))`, тогда как `Customer` физически жмёт кнопки выбора слота.",
+                "when_to_apply": "Список актёров фиксируют сразу после требований — он подсказывает, какие use-cases нужны и где нужна авторизация.",
+                "edge_cases": "`Customer` всегда один за раз (физически один человек у машины), но admin-операции могут идти параллельно через remote port — отсюда нужна thread safety на inventory.",
+                "related": "[[design-vending-machine-oo-interview#Q1]] функциональные требования; [[design-vending-machine-oo-interview#Q13]] `Command` для admin-операций; [[design-vending-machine-oo-interview#Q19]] concurrent restock vs purchase."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Actors: ProductManufacturer, Customer, Vendor — это maps to supply chain.",
+              "text": "Актёры — это `IdleState`, `DispensingState` и прочие состояния машины; именно они инициируют use-cases.",
               "correct": false,
               "sections": {
-                "what_actually": "Manufacturer не взаимодействует с машиной напрямую; supply chain — за пределами scope LLD одной машины.",
-                "source_of_confusion": "Размыли границы системы за пределы device.",
-                "if_it_were_true": "LLD превратился бы в supply chain design — другая задача.",
-                "how_it_should_be": "Ограничить scope: только actors, взаимодействующие с самим автоматом."
+                "what_actually": "Состояния (`State`) — это внутренняя реализация поведения, а не актёры; актёры — внешние сущности (люди/системы), которые шлют события машине.",
+                "source_of_confusion": "И состояния, и актёры участвуют в диаграммах, поэтому их роли смешивают.",
+                "if_it_were_true": "Тогда use-case диаграмма совпадала бы с state-диаграммой, но это два разных уровня моделирования.",
+                "how_it_should_be": "Актёры — `Customer`, `Restocker`, `Admin`; состояния — внутренний механизм, которым машина обрабатывает события от актёров."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Достаточно только actor-а Operator с правами на всё; разделение Customer/Admin — overengineering.",
+              "text": "`Restocker` и `Admin` — это один и тот же актёр, так как оба обслуживают машину и имеют полный доступ.",
               "correct": false,
               "sections": {
-                "what_actually": "Customer не должен иметь прав refill/setPrice — это нарушит security и invariants.",
-                "source_of_confusion": "Путают LLD с прототипом без security model.",
-                "if_it_were_true": "Любой покупатель мог бы пополнить inventory или поменять цены.",
-                "how_it_should_be": "Чёткое разделение Customer (без auth) vs Restocker/Admin (с auth)."
+                "what_actually": "Это разные роли: `Restocker` грузит товар и собирает наличность, `Admin` конфигурирует цены и читает аудит; разделение нужно для least-privilege.",
+                "source_of_confusion": "Оба — «персонал», поэтому кажется логичным слить их в одного актёра с общими правами.",
+                "if_it_were_true": "Тогда у грузчика был бы доступ к ценам и финансовым отчётам, что нарушает принцип минимальных привилегий.",
+                "how_it_should_be": "Разделять: `Restocker` — операционные действия с товаром/кэшем, `Admin` — конфигурация и отчётность, с разными уровнями auth."
               }
             }
           ]
@@ -126,55 +126,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие core entities выделить для vending machine: VendingMachine, Product, Inventory, Slot?",
+          "question_text": "Какие core entities образуют доменную модель (`VendingMachine`, `Product`, `Inventory`, `Slot`) и как они связаны?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно одного класса VendingMachine со всеми полями: products list, prices map, quantities map.",
+              "text": "`Product` и `Slot` — это одно и то же: товар хранит своё количество прямо в себе через поле `quantity`.",
               "correct": false,
               "sections": {
-                "what_actually": "God-class нарушает SRP — VendingMachine должна быть Context для State, а inventory/product/slot — отдельные сущности.",
-                "source_of_confusion": "Не разделяют responsibilities: координация vs данные.",
-                "if_it_were_true": "Невозможно тестировать inventory изолированно; изменения price затрагивают весь класс.",
-                "how_it_should_be": "Выделить Inventory, Product, Slot — каждый со своей responsibility."
+                "what_actually": "`Product` — иммутабельное описание товара (`id`, `name`, `price`), а `Slot` — физическая ячейка с `quantity`; количество принадлежит слоту, не товару.",
+                "source_of_confusion": "Кажется естественным держать остаток рядом с товаром, поэтому `Product` и `Slot` сливают.",
+                "if_it_were_true": "Тогда один и тот же `Product` в двух слотах имел бы общий счётчик, что неверно для физического автомата.",
+                "how_it_should_be": "`Product` иммутабелен и переиспользуем; изменяемое `quantity` живёт в `Slot`, привязанном к конкретному `slotId`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Product и Slot — это одно и то же; разделение избыточно.",
+              "text": "`VendingMachine` должен напрямую хранить `Map<String, Integer>` со счётчиками товара — отдельный класс `Inventory` избыточен.",
               "correct": false,
               "sections": {
-                "what_actually": "Product — это SKU (что продаётся), Slot — где это физически лежит (с quantity). Один Product может быть в нескольких Slot, и Slot имеет state (qty).",
-                "source_of_confusion": "Не видят разницы между abstraction (что) и instance (где).",
-                "if_it_were_true": "Нельзя представить ситуацию 'тот же Coke в A3 и B7' или 'slot A3 пуст, но Product всё ещё в каталоге'.",
-                "how_it_should_be": "Product immutable, Slot mutable с qty; Inventory маппит slotId → Slot."
+                "what_actually": "Голая `Map` не инкапсулирует инварианты и не потокобезопасна; `Inventory` нужен как класс с `synchronized`-методами `decrement`/`refill` и проверками.",
+                "source_of_confusion": "`Map` кажется проще, поэтому инвентарь моделируют как сырую структуру данных без поведения.",
+                "if_it_were_true": "Тогда любой код мог бы напрямую менять счётчики и ломать инварианты при concurrent restock.",
+                "how_it_should_be": "Инвентарь — отдельный класс `Inventory` с инкапсулированной `Map<String,Slot>` и потокобезопасными операциями."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "VendingMachine (Context), Product (SKU+price), Slot (физическое место с qty), Inventory (Map<slotId, Slot>) — это core entities.",
+              "text": "`VendingMachine` — Context (хранит `currentState`, `inventory`, `changeDispenser`, `auditLog` и транзакционный контекст: `selectedProduct`, `currentBalance`, `paymentStrategy`) и делегирует события текущему состоянию. `Product` — иммутабельный (`id`, `name`, `price`). `Slot` — физическая ячейка (`slotId`, `product`, `quantity`). `Inventory` — `Map<String,Slot>` с методами `getSlot`, `isAvailable`, `synchronized decrement`/`refill`.",
               "correct": true,
               "sections": {
-                "explanation": "VendingMachine — Context для State pattern. Product — immutable value (id/name/price). Slot — связка product+физическое место+quantity. Inventory — коллекция slots с access API.",
-                "example": "Slot(\"A3\", Product(\"COKE-330\", \"Coke 330ml\", BigDecimal(\"1.25\")), qty=5). Inventory.getSlot(\"A3\") → Optional<Slot>.",
-                "when_to_apply": "После сбора requirements — рисовать классы с responsibilities.",
-                "edge_cases": "Slot ≠ Product: один и тот же Product может быть в разных Slot (но обычно нет).",
-                "related": "Q4 (Money types), Q6 (UML), Q19 (synchronized inventory)."
+                "explanation": "`VendingMachine` — Context паттерна State: держит ссылки на коллабораторов и транзакционное состояние покупки, а поведение делегирует объекту `currentState` через `currentState.onInsertMoney(...)`.",
+                "example": "`vm.selectProduct(\"A3\")` внутри делает `currentState.onSelectProduct(\"A3\")` — машина не решает сама, что делать, а перекладывает на текущее состояние.",
+                "when_to_apply": "Эту декомпозицию рисуют сразу после требований: разделение `VendingMachine`/`Inventory`/`Slot`/`Product` даёт чистый SRP и точки для State/Strategy.",
+                "edge_cases": "`currentBalance`, `selectedProduct` и `paymentStrategy` — это транзакционный контекст одной покупки, который сбрасывается (`clearTransaction`) при возврате в `Idle`.",
+                "related": "[[design-vending-machine-oo-interview#Q6]] UML class diagram этих сущностей; [[design-vending-machine-oo-interview#Q8]] `State`-интерфейс и его реализации; [[design-vending-machine-oo-interview#Q18]] SRP по классам."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Класс Currency нужно сделать главной entity, остальное — атрибуты.",
+              "text": "`VendingMachine` сам реализует логику каждого состояния через большой `switch`, поэтому отдельный `currentState` ему не нужен.",
               "correct": false,
               "sections": {
-                "what_actually": "Currency — это enum/value type для денег, не центральная entity. Главное — VendingMachine + State + Inventory.",
-                "source_of_confusion": "Перепутали важность: деньги важны, но не структурно центральны.",
-                "if_it_were_true": "Невозможно понять flow покупки — куда деньги идут.",
-                "how_it_should_be": "Currency/Money как поддерживающий тип, VendingMachine как Context."
+                "what_actually": "Цель дизайна — убрать `switch` по состоянию: `VendingMachine` держит `currentState` и делегирует, а логику инкапсулируют отдельные State-классы.",
+                "source_of_confusion": "Кажется проще держать всё в одном классе, но это и есть anti-pattern, от которого уходят через State.",
+                "if_it_were_true": "Тогда добавление нового состояния правило бы `VendingMachine` во всех методах — нарушение OCP.",
+                "how_it_should_be": "`VendingMachine` — тонкий Context, который только делегирует `currentState`; поведение — в классах состояний."
               }
             }
           ]
@@ -186,55 +186,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как смоделировать Coin/Note/Money и Payment method в OO дизайне vending machine?",
+          "question_text": "Как смоделировать валюту (`Coin`, `Note`, способ оплаты) в доменной модели?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно одного класса Money с полем amount: double — все типы оплаты идентичны.",
+              "text": "Монеты и банкноты лучше хранить как `double` номиналы (`0.25`, `1.0`), а способ оплаты — как строку `\"cash\"`/`\"card\"`.",
               "correct": false,
               "sections": {
-                "what_actually": "Cash и Card — разные механики (физические монеты vs gateway charge); float запрещён для денег.",
-                "source_of_confusion": "Не различают денежную единицу (amount) и способ оплаты (mechanism).",
-                "if_it_were_true": "Floating-point ошибки при сложении сумм; нет места для tokenized card data.",
-                "how_it_should_be": "BigDecimal + sealed interface для разных payment типов."
+                "what_actually": "Номиналы хранят в `BigDecimal` (`new BigDecimal(\"0.25\")`), а способ оплаты — через интерфейс `PaymentStrategy`, а не stringly-typed строку.",
+                "source_of_confusion": "`double` и строки кажутся самым лёгким способом, но оба ломают типобезопасность и точность.",
+                "if_it_were_true": "Тогда суммирование номиналов накапливало бы floating-point ошибку, а опечатка в `\"crd\"` молча проходила бы.",
+                "how_it_should_be": "Номиналы — `enum` с `BigDecimal`-значением; способ оплаты — `PaymentStrategy` (Cash/Card/NFC), а не строка."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Coin и Note — обычные классы с конструктором, не enum; так гибче для разных валют.",
+              "text": "`Coin` и `Note` достаточно описать как обычные `int`-константы в центах, а интерфейс `Money` и `sealed` — избыточная сложность.",
               "correct": false,
               "sections": {
-                "what_actually": "Coin/Note для одной валюты — конечное множество (QUARTER/DIME/NICKEL/PENNY), enum идеально подходит. Multi-currency — отдельный layer.",
-                "source_of_confusion": "Перепутали extensibility с over-engineering.",
-                "if_it_were_true": "Type safety теряется: можно создать new Coin(BigDecimal(\"0.07\")) — невалидно для US.",
-                "how_it_should_be": "Enum для US/EUR, при необходимости multi-currency — отдельный CurrencyConfig."
+                "what_actually": "`enum Coin`/`Note` дают типобезопасные номиналы, а `sealed interface Money` (permits `CoinMoney`, `NoteMoney`, `CardCharge`) даёт исчерпывающий pattern matching и единый `amount()`.",
+                "source_of_confusion": "`int`-константы кажутся проще, но теряют различие монета/банкнота/карта и исчерпывающую проверку типов.",
+                "if_it_were_true": "Тогда нельзя было бы единообразно обрабатывать `Money.amount()` и компилятор не ловил бы пропущенный вариант.",
+                "how_it_should_be": "`enum` для номиналов + `sealed interface Money` с записями-реализациями для exhaustive switch."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "PaymentStrategy не нужен — switch (paymentMethod) внутри VendingMachine достаточно.",
+              "text": "Способ оплаты надо зашить в `VendingMachine` через флаг `boolean isCard` и `if`-ветки, без отдельной абстракции.",
               "correct": false,
               "sections": {
-                "what_actually": "Switch нарушает OCP (новый payment → правка VM), смешивает payment-логику с state machine.",
-                "source_of_confusion": "Преждевременная оптимизация — 'один if быстрее интерфейса'.",
-                "if_it_were_true": "Добавить Apple Pay = править VendingMachine; невозможно подменить strategy в тестах.",
-                "how_it_should_be": "Strategy: PaymentStrategy interface, VM вызывает strategy.charge(amount)."
+                "what_actually": "Способ оплаты выносят в `PaymentStrategy` (Strategy pattern), чтобы добавлять Cash/Card/NFC без правки `VendingMachine` — это OCP/DIP.",
+                "source_of_confusion": "Один `boolean` кажется достаточным для «нал/безнал», пока не появляется третий способ (NFC, QR).",
+                "if_it_were_true": "Тогда добавление `NFC` или `QR` требовало бы новых `if`-веток в коде машины каждый раз.",
+                "how_it_should_be": "Каждый способ оплаты — реализация `PaymentStrategy` с `charge`/`refund`; `VendingMachine` зависит от интерфейса."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Coin/Note — enum с BigDecimal value; Money — sealed interface (CoinMoney/NoteMoney/CardCharge); PaymentStrategy — Strategy для Cash/Card/NFC.",
+              "text": "`Coin` и `Note` — `enum`-ы с `BigDecimal`-номиналом (`QUARTER(new BigDecimal(\"0.25\"))`). `Money` — `sealed interface permits CoinMoney, NoteMoney, CardCharge` с методом `amount()`; реализации — `record`-ы. Способ оплаты — `PaymentStrategy` (`charge`/`refund`) с реализациями `CashPaymentStrategy`, `CardPaymentStrategy` (через `PaymentGateway` вроде `Stripe`/`Adyen`), `NfcPaymentStrategy`.",
               "correct": true,
               "sections": {
-                "explanation": "Enum для denominations (типобезопасно), sealed interface Money объединяет разные способы оплаты в один тип, PaymentStrategy инкапсулирует механику charge/refund.",
-                "example": "enum Coin { QUARTER(BigDecimal(\"0.25\")), ... }; CashPaymentStrategy физически принимает, CardPaymentStrategy через Stripe.charge().",
-                "when_to_apply": "Когда нужно поддерживать разные payment methods без расщепления state machine.",
-                "edge_cases": "Sealed interface гарантирует exhaustive switch — компилятор поймает забытый payment type.",
-                "related": "Q5 (BigDecimal), Q13 (Strategy), Q22 (cashless integration)."
+                "explanation": "Деньги моделируют типобезопасно: номиналы — `enum` с `BigDecimal`, само платёжное средство — `sealed Money` с `record`-вариантами, а способ оплаты — отдельный Strategy-интерфейс `PaymentStrategy`.",
+                "example": "`record CoinMoney(Coin coin) implements Money { public BigDecimal amount() { return coin.getValue(); } }` — монета знает свой номинал, а `CardCharge` несёт сумму и tokenized-карту.",
+                "when_to_apply": "Эту структуру вводят при моделировании оплаты: она отделяет «что вставили» (`Money`) от «как списать» (`PaymentStrategy`).",
+                "edge_cases": "`CardCharge(BigDecimal amount, String tokenizedCard)` хранит токен, а не саму карту — это требование PCI-DSS; сама карта никогда не попадает в домен.",
+                "related": "[[design-vending-machine-oo-interview#Q5]] почему `BigDecimal`, а не `float`; [[design-vending-machine-oo-interview#Q13]] Strategy среди GoF-паттернов; [[design-vending-machine-oo-interview#Q22]] cashless через `Stripe`."
               }
             }
           ]
@@ -246,55 +246,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Почему BigDecimal или integer cents, а не float/double для денег в vending machine?",
+          "question_text": "Почему деньги хранят в `BigDecimal`/cents, а не в `float`/`double`?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "BigDecimal (или long cents) — точное десятичное представление; float/double используют IEEE 754 binary и теряют precision (0.1+0.2 ≠ 0.3).",
+              "text": "`float`/`double` — это IEEE 754 binary, который не представляет десятичные дроби точно: `0.1 + 0.2 == 0.30000000000000004`, а `0.1` в binary — бесконечная периодическая дробь. Для денег используют `BigDecimal` со `scale=2` и явным `RoundingMode.HALF_UP`, либо `long cents` (integer). `double` для денег запрещён — это маркер отсутствия senior-опыта.",
               "correct": true,
               "sections": {
-                "explanation": "Деньги — точные десятичные значения. Float/double не представляют 0.1 точно (бесконечная двоичная дробь), что даёт ошибки при суммировании, сравнении и округлении. BigDecimal со scale=2 + RoundingMode.HALF_UP — стандарт.",
-                "example": "0.1 + 0.2 = 0.30000000000000004 в double; new BigDecimal(\"0.1\").add(new BigDecimal(\"0.2\")) = 0.3 точно.",
-                "when_to_apply": "Всегда для любых денежных операций — это маркер senior-уровня на собесе.",
-                "edge_cases": "BigDecimal(\"0.1\") vs BigDecimal(0.1) — второй вариант создаёт через double и теряет точность; всегда string-конструктор.",
-                "related": "Q4 (Money types), Q15 (change-making с BigDecimal)."
+                "explanation": "Бинарная floating-point арифметика не может точно хранить большинство десятичных дробей, поэтому накопление операций даёт ошибку. `BigDecimal` хранит число в десятичном виде с заданным scale.",
+                "example": "`new BigDecimal(\"0.1\").add(new BigDecimal(\"0.2\"))` даёт ровно `0.3`, тогда как `double a = 0.1 + 0.2` даёт `0.30000000000000004`.",
+                "when_to_apply": "На собеседовании сразу декларируют `BigDecimal` + `RoundingMode.HALF_UP` для всех ценовых операций — это ожидаемый ответ.",
+                "edge_cases": "Альтернатива — `long cents`: быстро и нативно для БД, но теряет mixed-currency safety и требует ручного форматирования; `Money`-value-object (`Joda`/`Moneta`) добавляет зависимость.",
+                "related": "[[design-vending-machine-oo-interview#Q4]] моделирование номиналов через `BigDecimal`; [[design-vending-machine-oo-interview#Q15]] change-making на `BigDecimal`; [[design-vending-machine-oo-interview#Q24]] `double price` как anti-pattern."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Float достаточно точен — современные процессоры дают 15+ значащих цифр.",
+              "text": "`float` точен для денег, если всегда округлять результат через `Math.round` после каждой операции.",
               "correct": false,
               "sections": {
-                "what_actually": "Дело не в количестве цифр, а в невозможности точно представить десятичные дроби 0.1, 0.2, 0.25 в binary IEEE 754.",
-                "source_of_confusion": "Путают precision (count of digits) с representation accuracy (точность представления значения).",
-                "if_it_were_true": "0.1 + 0.2 == 0.3 было бы true. На практике false. Суммирование 1000 цен накапливает ошибку.",
-                "how_it_should_be": "Использовать BigDecimal или integer cents — точное представление гарантировано."
+                "what_actually": "Округление не лечит причину: промежуточные значения уже неточны, и накопленная ошибка может перешагнуть половину цента до округления.",
+                "source_of_confusion": "Кажется, что округление «исправляет» неточность, но оно лишь маскирует её на одном шаге.",
+                "if_it_were_true": "Тогда `0.1 + 0.2` после округления всегда давало бы `0.30`, но при длинных цепочках операций ошибка накапливается.",
+                "how_it_should_be": "Не округлять `double`, а вообще не использовать его для денег — брать `BigDecimal` или integer cents."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Достаточно округлить результат до 2 знаков через Math.round — float станет точным.",
+              "text": "`BigDecimal` нужен только из-за скорости — он быстрее `double` в денежных расчётах.",
               "correct": false,
               "sections": {
-                "what_actually": "Округление маскирует, но не устраняет ошибку: при суммировании 100 цен ошибки накапливаются ДО округления.",
-                "source_of_confusion": "Думают, что одна операция округления спасёт от floating-point.",
-                "if_it_were_true": "Все аудиты по миру использовали бы float — но они используют BigDecimal/integer cents.",
-                "how_it_should_be": "BigDecimal с явным RoundingMode на каждой операции деления; для сложения округление не нужно."
+                "what_actually": "`BigDecimal` как раз медленнее `double`; его выбирают ради точности десятичных дробей, а не ради производительности.",
+                "source_of_confusion": "Раз `BigDecimal` рекомендуют для денег, ошибочно думают, что он во всём лучше, включая скорость.",
+                "if_it_were_true": "Тогда `double` нигде бы не использовали, но для научных вычислений он быстрее и достаточен.",
+                "how_it_should_be": "`BigDecimal` выбирают за точность; цена — небольшая потеря производительности, приемлемая для денег."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "BigDecimal медленный, на embedded vending machine — недопустимо.",
+              "text": "Проблема `double` только в выводе на экран — внутренне он хранит десятичные значения корректно.",
               "correct": false,
               "sections": {
-                "what_actually": "BigDecimal медленнее float в ~10-100x, но vending machine делает 1 операцию в секунды — производительность не критична.",
-                "source_of_confusion": "Преждевременная оптимизация без profiling.",
-                "if_it_were_true": "Все банки и платёжные системы использовали бы float, но используют BigDecimal или decimal types.",
-                "how_it_should_be": "BigDecimal для денег; на embedded можно long cents (integer) — тоже точно."
+                "what_actually": "Неточность не в форматировании вывода, а в самом внутреннем binary-представлении: `0.1` физически не хранится точно в IEEE 754.",
+                "source_of_confusion": "Артефакт виден при печати, поэтому проблему ошибочно списывают на форматтер.",
+                "if_it_were_true": "Тогда сравнение `0.1 + 0.2 == 0.3` возвращало бы `true`, но оно возвращает `false`.",
+                "how_it_should_be": "Корень — в binary floating-point хранении; решает это десятичный `BigDecimal`, а не настройка вывода."
               }
             }
           ]
@@ -306,55 +306,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как корректно отобразить UML class diagram для VendingMachine + State + Strategy: composition или inheritance?",
+          "question_text": "Как выглядит UML class diagram автомата (связи `VendingMachine` с `State`, `Strategy`, `Inventory`)?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "VendingMachine наследует State — упрощает архитектуру.",
+              "text": "`VendingMachine` наследуется (`extends`) от каждого состояния — `IdleState`, `DispensingState` и т.д., чтобы получить их поведение.",
               "correct": false,
               "sections": {
-                "what_actually": "Наследование от State — нарушение и State pattern, и ООП: VM это Context (HAS state), а не специализация State.",
-                "source_of_confusion": "Путают composition (HAS-A) и inheritance (IS-A).",
-                "if_it_were_true": "VM пришлось бы переписывать при каждом смене состояния — невозможно.",
-                "how_it_should_be": "VM HAS State (композиция), не IS State. setState меняет конкретный объект состояния."
+                "what_actually": "`VendingMachine` не наследует состояния, а композирует одно текущее через `*-- State : currentState`; состояния реализуют общий интерфейс `State`.",
+                "source_of_confusion": "Наследование кажется способом «получить поведение состояний», но State pattern строится на композиции, а не на иерархии.",
+                "if_it_were_true": "Тогда нельзя было бы менять состояние в рантайме (наследование статично), а State-машина требует динамической смены.",
+                "how_it_should_be": "`VendingMachine` композирует `currentState: State`, а конкретные состояния через `State <|.. IdleState` реализуют интерфейс."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "VendingMachine (Context) композирует State (currentState), Inventory, ChangeDispenser, AuditLog; ассоциирует PaymentStrategy и Observer-ы.",
+              "text": "`VendingMachine` композирует (`*--`) `State` (currentState), `Inventory`, `ChangeDispenser`, `AuditLog` и держит `o--` ссылку на `PaymentStrategy` и `*` `InventoryObserver`. Интерфейс `State` реализуют (`<|..`) пять классов: `IdleState`, `ProductSelectedState`, `AcceptingPaymentState`, `DispensingState`, `OutOfServiceState`. `PaymentStrategy` реализуют `CashPaymentStrategy`, `CardPaymentStrategy`, `NfcPaymentStrategy`. `Inventory` агрегирует `Product`.",
               "correct": true,
               "sections": {
-                "explanation": "Composition (filled diamond): State/Inventory/ChangeDispenser/AuditLog — части VM, lifecycle одинаковый. Association (open diamond): PaymentStrategy — подменяется, Observer-ы добавляются динамически.",
-                "example": "VendingMachine *-- State; VendingMachine *-- Inventory; VendingMachine o-- PaymentStrategy; VendingMachine o-- \"*\" InventoryObserver.",
-                "when_to_apply": "На UML diagram-е на доске — показать composition vs association корректно.",
-                "edge_cases": "Inventory нельзя заменить runtime (composition), но PaymentStrategy — можно (association с setter).",
-                "related": "Q3 (entities), Q8 (State реализация), Q13 (паттерны)."
+                "explanation": "Диаграмма показывает Context (`VendingMachine`) с композицией коллабораторов и две точки расширения — иерархию `State` и иерархию `PaymentStrategy`, плюс наблюдателей инвентаря.",
+                "example": "`State <|.. IdleState` (реализация интерфейса) и `VendingMachine *-- State : currentState` (композиция) — две ключевые связи State pattern на диаграмме.",
+                "when_to_apply": "Class diagram рисуют после выделения сущностей, чтобы наглядно показать паттерны (State/Strategy/Observer) интервьюеру.",
+                "edge_cases": "Связь `o--` (агрегация) для `PaymentStrategy` означает, что стратегия может приходить извне и переживать одну транзакцию, в отличие от композиции состояний.",
+                "related": "[[design-vending-machine-oo-interview#Q3]] core entities на диаграмме; [[design-vending-machine-oo-interview#Q8]] реализация `State`-классов; [[design-vending-machine-oo-interview#Q13]] паттерны GoF на схеме."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Inventory должна наследовать Product — это естественная иерархия.",
+              "text": "На диаграмме `State` и `PaymentStrategy` — это конкретные классы без подтипов; вся вариативность зашита внутри них через `if`.",
               "correct": false,
               "sections": {
-                "what_actually": "Inventory это коллекция Product (composition), не специализация. Inventory IS NOT A Product.",
-                "source_of_confusion": "Любая иерархия классов кажется наследованием.",
-                "if_it_were_true": "LSP нарушение: Inventory не заменяет Product в контексте 'товара'.",
-                "how_it_should_be": "Inventory contains Slots, Slot contains Product. Композиция, не наследование."
+                "what_actually": "`State` и `PaymentStrategy` — интерфейсы (`<<interface>>`) с несколькими реализациями; именно подтипы дают полиморфизм вместо `if`.",
+                "source_of_confusion": "Кажется, что можно обойтись одним классом на каждую абстракцию, но тогда теряется смысл State/Strategy.",
+                "if_it_were_true": "Тогда диаграмма не показывала бы стрелки реализации `<|..`, а паттерны выродились бы в обычные классы с условиями.",
+                "how_it_should_be": "`State` и `PaymentStrategy` — интерфейсы с реализациями (5 состояний, 3 стратегии), показанными стрелками реализации."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Все классы должны быть в одном модуле без интерфейсов — для скорости.",
+              "text": "`Inventory` композирует `VendingMachine` (`Inventory *-- VendingMachine`), потому что инвентарь управляет всей машиной.",
               "correct": false,
               "sections": {
-                "what_actually": "Интерфейсы (State, PaymentStrategy, InventoryObserver) — суть OO-дизайна; убрать = убить OCP и тестируемость.",
-                "source_of_confusion": "Думают, что интерфейсы — overhead.",
-                "if_it_were_true": "Добавить новое состояние или payment method = править VendingMachine.",
-                "how_it_should_be": "Интерфейсы для всего, что может меняться: State, PaymentStrategy, InventoryObserver."
+                "what_actually": "Связь обратная: `VendingMachine` композирует `Inventory`, а не наоборот; машина — Context, инвентарь — её коллаборатор.",
+                "source_of_confusion": "Кажется, что инвентарь «главнее», раз он хранит товар, поэтому направление композиции переворачивают.",
+                "if_it_were_true": "Тогда инвентарь отвечал бы за состояния и оплату, что разрушает SRP и роль Context.",
+                "how_it_should_be": "`VendingMachine *-- Inventory`: машина владеет инвентарём как одним из своих коллабораторов."
               }
             }
           ]
@@ -366,55 +366,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие состояния и переходы у vending machine: Idle → ProductSelected → AcceptingPayment → Dispensing?",
+          "question_text": "Какие состояния и переходы образуют state machine автомата (`Idle → ProductSelected → ...`)?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно двух состояний: Active (idle+selected+paying+dispensing) и Inactive (out of service).",
+              "text": "Состояний всего два: `Idle` и `Busy`; всё, что между выбором и выдачей, — это один `Busy`-режим с внутренними флагами.",
               "correct": false,
               "sections": {
-                "what_actually": "Active объединяет несовместимые поведения: в idle нельзя insertMoney, в dispensing нельзя cancel — невозможно описать одним состоянием.",
-                "source_of_confusion": "Стремление упростить state machine ниже минимально необходимого.",
-                "if_it_were_true": "Логика в каждом методе превратилась бы в большой if по 'sub-state' — фактически тот же switch.",
-                "how_it_should_be": "Минимум 5 состояний: Idle, ProductSelected, AcceptingPayment, Dispensing, OutOfService."
+                "what_actually": "Состояний пять-шесть (`Idle`, `ProductSelected`, `AcceptingPayment`, `Dispensing`, `ReturningChange`, `OutOfService`), каждое с разрешёнными операциями; `Busy` с флагами — это и есть anti-pattern, от которого уходят.",
+                "source_of_confusion": "Сведение к `Idle`/`Busy` кажется упрощением, но возвращает к stringly/flag-логике вместо явных состояний.",
+                "if_it_were_true": "Тогда внутри `Busy` пришлось бы держать `switch`/флаги для select/pay/dispense, что и есть проблема.",
+                "how_it_should_be": "Каждый режим — отдельное состояние с явными переходами; флаги внутри одного `Busy` запрещены."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Cancel из AcceptingPayment должен бросать exception — после оплаты возврат невозможен.",
+              "text": "Из `Dispensing` всегда переходим сразу в `Idle`; отдельного состояния для выдачи сдачи не нужно — сдачу выдают синхронно в том же шаге.",
               "correct": false,
               "sections": {
-                "what_actually": "Оплата ещё не списана (deposited but not charged). Cancel должен refund balance и вернуть в Idle.",
-                "source_of_confusion": "Путают AcceptingPayment (накопление баланса) с Dispensing (после charge).",
-                "if_it_were_true": "Customer не мог бы отменить — потерял бы деньги при ошибке выбора. Это reputational disaster.",
-                "how_it_should_be": "Cancel разрешён до Dispensing с автоматическим refund вставленных денег."
+                "what_actually": "Когда `change > 0`, из `Dispensing` идёт переход в `ReturningChange`, который вычисляет монеты и может уйти в `OutOfService` при нехватке монет; это отдельное состояние.",
+                "source_of_confusion": "Выдача сдачи кажется частью dispense, поэтому отдельное состояние опускают.",
+                "if_it_were_true": "Тогда некуда было бы перейти при `InsufficientCoinsException` во время выдачи сдачи.",
+                "how_it_should_be": "`Dispensing → ReturningChange` при `change > 0`; `ReturningChange → Idle` или `→ OutOfService` при нехватке монет."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Idle → ProductSelected → AcceptingPayment → Dispensing → ReturningChange → Idle; OutOfService параллельно. Cancel из ProductSelected/AcceptingPayment возвращает в Idle с refund.",
+              "text": "`Idle → ProductSelected` (selectProduct в наличии), `ProductSelected → AcceptingPayment` (первая монета), `AcceptingPayment → AcceptingPayment` (balance < price) или `→ Dispensing` (balance >= price), `* → Idle` по cancel/timeout с refund, `Dispensing → ReturningChange` (change > 0) или `→ Idle` (точная сумма), `ReturningChange → Idle` (сдача выдана) или `→ OutOfService` (мало монет), и `→ OutOfService` при mechanical failure / admin maintenance.",
               "correct": true,
               "sections": {
-                "explanation": "Линейный happy path с двумя ответвлениями: cancel (refund + back to Idle) и OutOfService (admin maintenance). ReturningChange — только если change > 0, иначе сразу Idle.",
-                "example": "Idle --selectProduct(in-stock)--> ProductSelected --insertMoney--> AcceptingPayment --balance>=price--> Dispensing --change>0--> ReturningChange --> Idle.",
-                "when_to_apply": "Рисовать state diagram на доске сразу после requirements — это backbone дизайна.",
-                "edge_cases": "Timeout в ProductSelected/AcceptingPayment → автоматический cancel + refund.",
-                "related": "Q8 (State классы), Q9 (illegal-state guards), Q11 (cancel)."
+                "explanation": "State machine описывает все легальные переходы: выбор → накопление баланса → выдача → сдача, с ветками cancel/timeout (refund) и OutOfService при сбоях. Каждый переход имеет trigger и side effect.",
+                "example": "`AcceptingPayment → Dispensing` срабатывает по условию `balance >= price` с side effect `charge` + `decrement inventory`; `* → Idle` по `cancel()` делает refund `currentBalance`.",
+                "when_to_apply": "Диаграмму состояний рисуют до кода State-классов: она задаёт, какие методы какое состояние реализует и куда переходит.",
+                "edge_cases": "`AcceptingPayment → Idle` по timeout (30 сек бездействия) с refund — важный edge case: покупатель ушёл, не доплатив, деньги нельзя «зажать».",
+                "related": "[[design-vending-machine-oo-interview#Q8]] реализация переходов в State-классах; [[design-vending-machine-oo-interview#Q9]] illegal-state guards; [[design-vending-machine-oo-interview#Q11]] cancel с refund."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "OutOfService переходит только в Idle при reboot — admin-команды недоступны.",
+              "text": "`OutOfService` — это конечное состояние без выхода: после него машину можно только заменить.",
               "correct": false,
               "sections": {
-                "what_actually": "OutOfService → Idle через admin resolve (после refill/repair), не reboot. Admin-команды в OutOfService наоборот доступны (восстановление).",
-                "source_of_confusion": "Думают, что OutOfService полностью dead state.",
-                "if_it_were_true": "Невозможно вывести машину из OutOfService без перезагрузки.",
-                "how_it_should_be": "Admin API доступен всегда; OutOfService → Idle после resolve()."
+                "what_actually": "`OutOfService → Idle` происходит, когда admin разрешает проблему (`resolve()`); это не терминальное состояние.",
+                "source_of_confusion": "«Out of service» звучит как окончательная поломка, поэтому переход назад в `Idle` упускают.",
+                "if_it_were_true": "Тогда любая нехватка монет навсегда выводила бы автомат из строя без возможности ремонта.",
+                "how_it_should_be": "`OutOfService` — временное состояние; admin вызывает `resolve()`, и машина возвращается в `Idle`."
               }
             }
           ]
@@ -426,55 +426,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как корректно реализовать State pattern для vending machine: интерфейс + 5 конкретных классов?",
+          "question_text": "Как реализовать State pattern: интерфейс `State` и пять конкретных классов?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Один большой класс State с if-else по type field — это и есть State pattern.",
+              "text": "Интерфейс `State` должен объявлять методы абстрактными без реализации, чтобы каждое состояние обязательно реализовало все четыре операции.",
               "correct": false,
               "sections": {
-                "what_actually": "Это anti-pattern, тот же switch замаскированный. State pattern требует отдельный класс на каждое состояние.",
-                "source_of_confusion": "Не дочитали GoF — State это структурный паттерн с полиморфизмом.",
-                "if_it_were_true": "Все недостатки switch (дублирование, OCP) сохраняются.",
-                "how_it_should_be": "Отдельный класс на каждое состояние, реализующий общий интерфейс."
+                "what_actually": "Методы `State` делают `default` с реализацией `illegal(...)`, бросающей `IllegalStateException`; тогда состояние переопределяет только разрешённые операции, остальные fail-fast автоматически.",
+                "source_of_confusion": "Абстрактные методы кажутся «строже», но заставляют каждое состояние писать болерплейт-броски на запрещённые операции.",
+                "if_it_were_true": "Тогда `IdleState` пришлось бы вручную переопределять `onInsertMoney`/`onCancel`/`onDispense` только чтобы кинуть исключение.",
+                "how_it_should_be": "`default`-методы интерфейса бросают `IllegalStateException`; состояние переопределяет лишь те операции, что в нём легальны."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Все 4 метода — abstract в интерфейсе, каждое состояние обязано реализовать всё.",
+              "text": "Каждое состояние должно само создавать `VendingMachine` в конструкторе, чтобы иметь к нему доступ.",
               "correct": false,
               "sections": {
-                "what_actually": "Тогда в IdleState придётся писать boilerplate 'throw IllegalStateException' для onInsertMoney/onCancel/onDispense — дублирование.",
-                "source_of_confusion": "Старый стиль до Java 8 default methods.",
-                "if_it_were_true": "Каждое из 5 состояний имело бы 3-4 boilerplate-метода. Шум, маскирующий бизнес-логику.",
-                "how_it_should_be": "Default-методы в интерфейсе бросают illegal; concrete states overridет только разрешённые."
+                "what_actually": "Наоборот: `VendingMachine` (Context) передаёт себя в конструктор состояния (`new IdleState(vm)`), а состояние хранит ссылку `vm`; машина одна, состояний много.",
+                "source_of_confusion": "Раз состоянию нужен доступ к машине, кажется, что оно его «создаёт», но зависимость направлена от Context к State.",
+                "if_it_were_true": "Тогда на каждое состояние создавалась бы новая машина, и контекст покупки терялся бы при каждом переходе.",
+                "how_it_should_be": "Context (`VendingMachine`) внедряет себя в состояние через конструктор; состояние лишь хранит ссылку на единственную машину."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "State хранит ссылку на VM и сам меняет state через vm.setState() — это нарушает encapsulation.",
+              "text": "Переход между состояниями состояние делает, напрямую присваивая `vm.currentState = new XxxState()` через публичное поле.",
               "correct": false,
               "sections": {
-                "what_actually": "Это стандартный State pattern: State знает VM (Context) и меняет состояние через setState. Encapsulation сохраняется делая setState package-private.",
-                "source_of_confusion": "Перепутали encapsulation с 'видимостью между классами одного package'.",
-                "if_it_were_true": "Невозможно сделать transition — State не мог бы переключить VM.",
-                "how_it_should_be": "vm.setState() package-private или friend-метод, доступный только State классам."
+                "what_actually": "Переход идёт через `vm.setState(new XxxState(vm))`, причём `setState` package-private — только State-классы могут менять FSM, внешний код не может.",
+                "source_of_confusion": "Прямое присваивание поля кажется короче, но открывает FSM для поломки любым кодом.",
+                "if_it_were_true": "Тогда любой клиент мог бы выставить произвольное состояние и сломать инварианты автомата.",
+                "how_it_should_be": "Менять состояние только через package-private `setState(...)`, доступный лишь State-классам."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "interface State с 4 default-методами (throw IllegalStateException) + 5 классов (Idle/ProductSelected/AcceptingPayment/Dispensing/ReturningChange/OutOfService); каждый реализует только нужные операции.",
+              "text": "Интерфейс `State` имеет `default`-методы `onSelectProduct`/`onInsertMoney`/`onCancel`/`onDispense`, по умолчанию вызывающие `illegal(op)` → `IllegalStateException`. Пять классов реализуют только легальные операции: `IdleState` (onSelectProduct → ProductSelected), `ProductSelectedState` (onInsertMoney → AcceptingPayment, onCancel), `AcceptingPaymentState` (накопление баланса, при `balance >= price` → Dispensing), `DispensingState` (charge, release, decrement, audit, → ReturningChange/Idle), `OutOfServiceState` (показывает сообщение, admin `resolve()`).",
               "correct": true,
               "sections": {
-                "explanation": "Default-методы интерфейса бросают illegal — каждое состояние overridет только разрешённые операции. Это и fail-fast (illegal ловится сразу), и DRY (общий guard в интерфейсе).",
-                "example": "IdleState переопределяет только onSelectProduct; onInsertMoney/onCancel/onDispense — default → IllegalStateException.",
-                "when_to_apply": "Когда illegal-операций больше, чем разрешённых — default-методы экономят boilerplate.",
-                "edge_cases": "Java 8+ default-методы; в Kotlin — abstract methods + extension в interface body.",
-                "related": "Q9 (illegal-state guards), Q14 (почему не switch)."
+                "explanation": "Каждое состояние — отдельный класс со ссылкой на `vm`, переопределяющий только разрешённые операции; запрещённые наследуют `default`-бросок исключения. Переходы делаются через `vm.setState(...)`.",
+                "example": "В `DispensingState.onDispense()`: `charge(price)` → `releaseProduct` → `inventory.decrement` → `auditLog.record(...)`, затем при `change > 0` → `setState(new ReturningChangeState(vm, change))`.",
+                "when_to_apply": "Эту структуру кодят после диаграммы состояний: интерфейс с default-guards плюс по классу на состояние — каркас всего решения.",
+                "edge_cases": "`AcceptingPaymentState.onCancel()` вызывает `paymentStrategy.refund(currentBalance)` и `clearTransaction()` — отмена в середине оплаты обязана вернуть деньги, иначе нарушается инвариант.",
+                "related": "[[design-vending-machine-oo-interview#Q7]] переходы, которые реализуют эти классы; [[design-vending-machine-oo-interview#Q9]] какие операции illegal в каждом состоянии; [[design-vending-machine-oo-interview#Q14]] почему State, а не switch."
               }
             }
           ]
@@ -486,55 +486,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие illegal-state guards должны быть в каждом состоянии vending machine?",
+          "question_text": "Какие illegal-state guards нужны: какие операции блокировать в каждом состоянии?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Idle: только onSelectProduct OK; ProductSelected: select (re-select) + insertMoney + cancel; AcceptingPayment: insertMoney + cancel; Dispensing/ReturningChange: только internal triggers; OutOfService: только admin.",
+              "text": "В `Idle` легален только `onSelectProduct`, остальные → `IllegalStateException`. В `ProductSelected`: select (re-select), insertMoney (→ AcceptingPayment), cancel (refund 0); dispense illegal. В `AcceptingPayment`: insertMoney и cancel (refund balance) легальны; select illegal. В `Dispensing` все внешние операции illegal (только internal trigger). В `OutOfService` select показывает сообщение, остальное illegal. Реализация — через default-метод интерфейса, бросающий `IllegalStateException` (fail-fast).",
               "correct": true,
               "sections": {
-                "explanation": "Каждое состояние разрешает только осмысленные операции. Illegal → IllegalStateException (fail-fast). UI должен disable кнопки, но domain слой защищается defence-in-depth.",
-                "example": "В Dispensing customer не может cancel — продукт уже выдаётся. В Idle нельзя insertMoney — нет выбранного продукта.",
-                "when_to_apply": "Таблица guards — это backbone state machine; рисуется до кода как защита от багов.",
-                "edge_cases": "В ProductSelected re-select разрешён до payment — customer передумал; после insert первой монеты — уже cancel + новый select.",
-                "related": "Q7 (transitions), Q8 (default-методы), Q14 (fail-fast)."
+                "explanation": "Каждое состояние явно разрешает лишь часть операций; всё остальное бросает `IllegalStateException` через default-метод. Это fail-fast: баг в логике вскрывается сразу, а не приводит к загадочному поведению.",
+                "example": "`insertMoney` в `Idle` бросает `IllegalStateException(\"insertMoney not allowed in IdleState\")`, потому что нельзя платить, пока товар не выбран.",
+                "when_to_apply": "Таблицу guard-ов составляют параллельно с диаграммой состояний — она определяет, какие методы переопределять в каждом классе.",
+                "edge_cases": "UI должен disable-ить кнопки по состоянию, но domain всё равно проверяет — defence in depth: даже если UI забагован, домен не нарушит инвариант.",
+                "related": "[[design-vending-machine-oo-interview#Q7]] какие переходы порождают эти guard-ы; [[design-vending-machine-oo-interview#Q8]] реализация default-исключений; [[design-vending-machine-oo-interview#Q24]] почему fail-fast лучше тихого прохода."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Cancel должен быть разрешён в любом состоянии — это user-friendly.",
+              "text": "Достаточно проверять состояние в `VendingMachine` через `if (state == IDLE) return;` перед каждой операцией — guard-ы в самих состояниях не нужны.",
               "correct": false,
               "sections": {
-                "what_actually": "В Dispensing/ReturningChange cancel невозможен: продукт уже выдан или сдача уже отсчитывается. Нельзя 'отозвать' физическое действие.",
-                "source_of_confusion": "Путают UX-принцип 'дать выход' с физическими ограничениями.",
-                "if_it_were_true": "Customer мог бы получить продукт И вернуть деньги — fraud.",
-                "how_it_should_be": "Cancel разрешён до Dispensing; после — невозможен, transaction finalized."
+                "what_actually": "Guard-ы живут внутри состояний (через default-методы интерфейса), а не в `if` внутри Context; это и есть смысл State pattern — убрать условные проверки состояния из машины.",
+                "source_of_confusion": "Кажется логичным сторожить операции в одном месте — в машине, но это возвращает дублирующий `switch`/`if` по состоянию.",
+                "if_it_were_true": "Тогда добавление состояния требовало бы новых `if`-веток во всех методах `VendingMachine` — нарушение OCP.",
+                "how_it_should_be": "Запреты выражают в самих State-классах: легальные операции переопределяют, нелегальные наследуют default-бросок исключения."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Illegal операции должны логировать warning и игнорироваться (silent fail), чтобы не пугать customer-а.",
+              "text": "Запрещённые операции должны молча игнорироваться (вернуть `void` без действия), чтобы не падать на пользователе.",
               "correct": false,
               "sections": {
-                "what_actually": "Silent fail скрывает баги в UI/контроллере. Fail-fast (exception) ловит проблему сразу.",
-                "source_of_confusion": "Думают, что 'дружелюбно' = не падать.",
-                "if_it_were_true": "Баги в UI вызывают illegal-операции, которые тихо игнорятся — невозможно debug.",
-                "how_it_should_be": "Throw IllegalStateException; UI ловит и показывает 'Operation not allowed'. Domain логирует."
+                "what_actually": "Запрещённые операции бросают `IllegalStateException` (fail-fast); тихое игнорирование скрывает баги и приводит к загадочному поведению.",
+                "source_of_confusion": "Кажется, что «не падать» дружелюбнее, но молчаливый no-op маскирует ошибку в логике вызывающего кода.",
+                "if_it_were_true": "Тогда `dispense()` в `Idle` ничего бы не делал, и баг в state-логике остался бы незамеченным до продакшена.",
+                "how_it_should_be": "Domain бросает исключение на illegal-операцию; за дружелюбный UX отвечает UI, disable-я кнопки заранее."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Достаточно одного guard-а в VendingMachine — каждый State не должен проверять.",
+              "text": "В `Dispensing` нужно разрешить `onCancel`, чтобы покупатель мог отменить уже идущую выдачу товара.",
               "correct": false,
               "sections": {
-                "what_actually": "Тогда логика guard-а — switch по состоянию в VM (anti-pattern). State pattern требует, чтобы поведение было в State.",
-                "source_of_confusion": "Хотят централизовать validation, теряя benefits State pattern.",
-                "if_it_were_true": "Дублирование switch-а в каждом методе VM — то же, что без State pattern.",
-                "how_it_should_be": "Guard в default-методе интерфейса State; concrete states overridет разрешённые операции."
+                "what_actually": "В `Dispensing` все внешние операции, включая `cancel`, illegal: выдача уже началась, товар списан и заряжен, отменять нечего — это только internal trigger.",
+                "source_of_confusion": "Кажется, что отмена должна быть доступна «в любой момент», но точка невозврата — начало выдачи.",
+                "if_it_were_true": "Тогда можно было бы отменить транзакцию после `charge` и `decrement`, и автомат потерял бы и деньги, и товар.",
+                "how_it_should_be": "Cancel легален только до `Dispensing` (в `ProductSelected`/`AcceptingPayment`); в `Dispensing` все внешние операции illegal."
               }
             }
           ]
@@ -546,55 +546,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как выглядит happy path: select → pay → dispense → change в sequence diagram?",
+          "question_text": "Опиши happy path-последовательность: select → pay → dispense → change.",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "VendingMachine сама проверяет state в каждом методе и выполняет логику без делегирования State.",
+              "text": "Машина сразу списывает деньги при выборе товара (на `selectProduct`), а монеты принимает уже после выдачи как пост-оплату.",
               "correct": false,
               "sections": {
-                "what_actually": "Это нарушение State pattern — switch на state в каждом методе.",
-                "source_of_confusion": "Не понимают, что VM это Context — она делегирует, а не выполняет.",
-                "if_it_were_true": "Возвращаемся к anti-pattern из Q14: дублирование switch.",
-                "how_it_should_be": "VM делегирует все события currentState; State решает, что делать и куда переходить."
+                "what_actually": "Сначала идёт `selectProduct` (переход в `ProductSelected`), затем накопление баланса через `insertMoney`, и только при `balance >= price` — `charge`, выдача и сдача; пост-оплаты нет.",
+                "source_of_confusion": "Аналогия с онлайн-чекаутом сбивает: там сначала «оформить», но автомат требует деньги до выдачи.",
+                "if_it_were_true": "Тогда нарушался бы главный инвариант «не отдать товар без оплаты», и пост-оплата позволила бы уйти, не заплатив.",
+                "how_it_should_be": "Порядок: select → накопить баланс монетами → при достижении цены charge + dispense + change; деньги всегда до выдачи."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "selectProduct → State.onSelectProduct → setState(ProductSelected) → insertMoney → onInsertMoney → balance накопление → balance>=price → setState(Dispensing) → onDispense → charge + decrement + audit → setState(ReturningChange or Idle).",
+              "text": "`selectProduct(\"A3\")` → состояние читает slot, сохраняет `selectedProduct`, → `ProductSelectedState`. `insertMoney(Quarter)` → `balance = 0.25`, → `AcceptingPaymentState`. `insertMoney(Dollar)` → `balance = 1.25 >= price 1.25` → `DispensingState`, `onDispense()`: `decrement(\"A3\")` + `releaseProduct` + `auditLog.record(...)`. `change = 0` → `setState(IdleState)`. Если бы вставили $2 — `change = 0.75` → `ReturningChangeState` вычисляет 3×Quarter и выдаёт.",
               "correct": true,
               "sections": {
-                "explanation": "Customer вызывает методы VM, она делегирует currentState. State сам решает transition (setState). Dispensing → ReturningChange при change>0, иначе Idle.",
-                "example": "Coke $1.25, customer вставил $2: Idle→ProductSelected→AcceptingPayment ($1)→AcceptingPayment ($2)→Dispensing→ReturningChange($0.75)→Idle.",
-                "when_to_apply": "Sequence diagram на доске — показать interaction между customer, VM, State, Inventory.",
-                "edge_cases": "Если balance == price точно — пропускаем ReturningChange, сразу в Idle.",
-                "related": "Q11 (cancel), Q12 (out-of-stock), Q15 (change-making)."
+                "explanation": "Happy path проходит select → накопление баланса → автоматический переход в Dispensing при достижении цены → выдача и запись в audit → возврат сдачи при `change > 0` → Idle.",
+                "example": "При цене Coke $1.25 и вставленных Quarter + Dollar баланс ровно `1.25`, `change = 0`, поэтому из `Dispensing` идём прямо в `Idle` без `ReturningChange`.",
+                "when_to_apply": "Sequence-диаграмму happy path рисуют, чтобы показать координацию `VendingMachine`/`State`/`Inventory`/`ChangeDispenser`/`AuditLog`.",
+                "edge_cases": "Если вставлено больше цены (например $2 при цене $1.25), `change = 0.75` → переход в `ReturningChange`, который выдаёт `3×Quarter`; точная сумма пропускает этот шаг.",
+                "related": "[[design-vending-machine-oo-interview#Q7]] переходы happy path; [[design-vending-machine-oo-interview#Q11]] cancel-ветка с refund; [[design-vending-machine-oo-interview#Q15]] как считается сдача `0.75`."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Charge через PaymentStrategy происходит при insertMoney, не при dispense — деньги списываются сразу.",
+              "text": "После выдачи товара `decrement` инвентаря не нужен — количество уменьшается само при следующем `getSlot`.",
               "correct": false,
               "sections": {
-                "what_actually": "В Cash — деньги уже в hopper (deposited). В Card — charge только при готовности dispense, иначе refund при cancel.",
-                "source_of_confusion": "Путают deposit (накопление баланса) с charge (списание).",
-                "if_it_were_true": "Cancel после charge = нужен external refund через gateway — медленнее и сложнее.",
-                "how_it_should_be": "Cash — deposit at insert; Card — charge только в Dispensing после success подтверждения."
+                "what_actually": "`decrement(\"A3\")` вызывается явно при выдаче в `DispensingState`; `getSlot` только читает слот и ничего не меняет.",
+                "source_of_confusion": "Кажется, что чтение и списание можно объединить, но `getSlot` — query без побочных эффектов.",
+                "if_it_were_true": "Тогда количество товара никогда не уменьшалось бы, и автомат продавал бы один и тот же слот бесконечно.",
+                "how_it_should_be": "Выдача явно вызывает `inventory.decrement(...)`; чтение слота (`getSlot`) остаётся чистым query."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Decrement inventory нужно делать первым, до charge — резервирование товара.",
+              "text": "Запись в `auditLog` происходит только при ошибке транзакции; успешные покупки не логируются ради экономии.",
               "correct": false,
               "sections": {
-                "what_actually": "Если decrement до charge и charge fail — товар 'забронирован', но не выдан; нужен rollback. Лучше charge первым.",
-                "source_of_confusion": "Логика 'забронировать ресурс' из distributed systems.",
-                "if_it_were_true": "Каждый fail charge требует rollback inventory — race-условия и сложность.",
-                "how_it_should_be": "Charge → release product → decrement → audit log. Если любой шаг failed — откат предыдущих."
+                "what_actually": "`auditLog.record(...)` вызывается на каждой успешной выдаче (со статусом SUCCESS) — это нужно для reconciliation и подсчёта выручки, а не только при ошибках.",
+                "source_of_confusion": "Логи ассоциируются с ошибками, поэтому кажется, что успешные операции писать не надо.",
+                "if_it_were_true": "Тогда reconciliation `cash = sum(paid) - sum(change)` был бы невозможен — нет записей об успешных продажах.",
+                "how_it_should_be": "Логируется каждая транзакция (SUCCESS/CANCELLED/FAILED/REFUNDED); успешные продажи — основа финансовой сверки."
               }
             }
           ]
@@ -606,55 +606,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как корректно обработать cancel mid-payment с refund?",
+          "question_text": "Как обработать cancel в середине оплаты (`mid-payment`) с возвратом денег?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Те же физические монеты возвращаются customer-у — они хранятся в отдельном escrow до подтверждения.",
+              "text": "При cancel деньги не возвращаются — баланс зачисляется как credit на следующую покупку этого же автомата.",
               "correct": false,
               "sections": {
-                "what_actually": "Большинство автоматов сразу отправляют монеты в hopper (общий). Escrow возможен, но усложняет hardware; обычно — refund из change pool.",
-                "source_of_confusion": "Думают, что 'возврат' = тех же монет.",
-                "if_it_were_true": "Нужен отдельный физический escrow + sensors — сложнее и дороже.",
-                "how_it_should_be": "Refund эквивалентной суммы из change pool, не тех же монет."
+                "what_actually": "При cancel баланс возвращается покупателю: для cash — выдаётся эквивалент монетами из change pool, для card/NFC — `paymentStrategy.refund(amount)` через gateway.",
+                "source_of_confusion": "Credit-модель из приложений лояльности сбивает, но физический автомат не хранит баланс между сессиями анонимного покупателя.",
+                "if_it_were_true": "Тогда анонимный покупатель потерял бы деньги, уйдя от машины, что нарушает инвариант «no money loss».",
+                "how_it_should_be": "Cancel немедленно возвращает `currentBalance`: монетами (cash) или через `refund` gateway (card)."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "В AcceptingPayment.onCancel(): refund balance (cash → coins из change pool, card → gateway.refund), record audit, clearTransaction, setState(IdleState).",
-              "correct": true,
+              "text": "Refund при cash возвращает покупателю те же самые физически вставленные монеты, которые он опустил.",
+              "correct": false,
               "sections": {
-                "explanation": "Cancel = refund deposited balance + log + reset. Cash refund через ChangeDispenser (физически другие монеты из pool). Card refund через payment gateway API.",
-                "example": "Customer вставил $1, cancel → ChangeDispenser выдаёт 4×Quarter из change pool (не те же монеты — они в hopper).",
-                "when_to_apply": "В каждом State, где cancel разрешён: ProductSelected (no balance), AcceptingPayment (with refund).",
-                "edge_cases": "Если ChangeDispenser.computeChange не может выдать — fallback на купон или OutOfService.",
-                "related": "Q15 (computeChange), Q17 (exact change), Q21 (audit)."
+                "what_actually": "Вставленные монеты уже в hopper и физически не возвращаются; выдаётся эквивалентная сумма из change pool через `computeChange`.",
+                "source_of_confusion": "Кажется, что монеты «лежат отдельно» до подтверждения, но валидатор сразу отправляет их в общий hopper.",
+                "if_it_were_true": "Тогда автомату не нужен был бы change pool для refund, но он именно из него формирует возврат.",
+                "how_it_should_be": "Refund cash формируется заново из change pool (`computeChange(toRefund)` + `dispense`), а не теми же монетами."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "При card-оплате cancel невозможен — деньги уже у банка.",
-              "correct": false,
+              "text": "В `AcceptingPaymentState.onCancel()`: взять `toRefund = currentBalance`; если `> 0`, вычислить монеты `changeDispenser.computeChange(toRefund)` и выдать их; записать `TransactionRecord.cancelled(toRefund)` в audit; `clearTransaction()`; перейти в `IdleState`. Edge case: если оплата была card/NFC — refund через gateway (`paymentStrategy.refund(amount)`); при cash те же монеты не возвращаются (они в hopper), выдаётся эквивалент из change pool.",
+              "correct": true,
               "sections": {
-                "what_actually": "До charge (которое в Dispensing) карта только authorized/tokenized; cancel = release authorization без charge.",
-                "source_of_confusion": "Не различают authorize и capture/charge.",
-                "if_it_were_true": "Customer не мог бы отменить выбор после tap card — UX disaster.",
-                "how_it_should_be": "Charge при confirm dispense; cancel до confirm = release authorization."
+                "explanation": "Cancel в `AcceptingPayment` возвращает весь накопленный баланс, логирует отмену и сбрасывает транзакцию. Источник возврата зависит от способа оплаты: change pool для cash, gateway-refund для card.",
+                "example": "Покупатель вставил $1.00 и нажал cancel — `computeChange(1.00)` даёт `4×Quarter`, они выдаются, в audit пишется CANCELLED, машина возвращается в `Idle`.",
+                "when_to_apply": "Эту ветку реализуют для timeout и явного cancel: любой выход из оплаты без выдачи обязан вернуть деньги.",
+                "edge_cases": "При card/NFC физических монет нет — refund идёт через `paymentStrategy.refund(amount)` в gateway; для cash возврат формируется из change pool, а не из вставленных монет.",
+                "related": "[[design-vending-machine-oo-interview#Q7]] переход `* → Idle` по cancel; [[design-vending-machine-oo-interview#Q12]] timeout-cancel при бездействии; [[design-vending-machine-oo-interview#Q17]] что делать, если на refund не хватает монет."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Audit log при cancel не нужен — транзакция не состоялась.",
+              "text": "Cancel не нужно логировать в audit — логируются только успешные продажи и выдача сдачи.",
               "correct": false,
               "sections": {
-                "what_actually": "Cancel — это тоже транзакция (со status CANCELLED). Нужно для reconciliation: cash_in ≠ revenue, cash_out includes refunds.",
-                "source_of_confusion": "Думают, что log только для successful sales.",
-                "if_it_were_true": "Reconciliation в конце дня не сойдётся: cash_in включает refunded amounts.",
-                "how_it_should_be": "Audit log записывает все события: SUCCESS, CANCELLED, REFUNDED, FAILED."
+                "what_actually": "Cancel пишется в audit как `TransactionRecord.cancelled(...)` (статус CANCELLED); без этого reconciliation наличности не сойдётся.",
+                "source_of_confusion": "Отмена кажется «несостоявшейся» операцией, которую незачем фиксировать.",
+                "if_it_were_true": "Тогда выданные при refund монеты исчезли бы из учёта, и cash в hopper не совпал бы с расчётным.",
+                "how_it_should_be": "Каждая отмена логируется как CANCELLED с суммой возврата — это часть финансовой сверки."
               }
             }
           ]
@@ -666,55 +666,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как обработать out-of-stock и insufficient funds сценарии?",
+          "question_text": "Как обрабатывать out-of-stock и insufficient funds (покупатель не доплатил)?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Out-of-stock → переход в OutOfService для всей машины.",
+              "text": "При out-of-stock машина переходит в `OutOfService`, потому что продать товар невозможно.",
               "correct": false,
               "sections": {
-                "what_actually": "Один пустой slot не делает всю машину неработоспособной — другие продукты доступны.",
-                "source_of_confusion": "Преждевременная глобализация ошибки одного slot.",
-                "if_it_were_true": "Машина закрывается из-за пустоты Coke, хотя Pepsi есть. Бизнес-катастрофа.",
-                "how_it_should_be": "Per-slot 'sold out' message, остальные slots доступны. OutOfService только при системных проблемах."
+                "what_actually": "Out-of-stock одного слота не выводит автомат из строя: `IdleState` показывает «Sold out» и остаётся в `Idle`, другие слоты доступны.",
+                "source_of_confusion": "Нехватка товара кажется «поломкой», поэтому путают с `OutOfService`.",
+                "if_it_were_true": "Тогда пустой один слот блокировал бы продажу всех остальных товаров в автомате.",
+                "how_it_should_be": "Out-of-stock слота → сообщение «Sold out» и возврат в `Idle` без смены состояния; `OutOfService` — только при реальной поломке."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Insufficient funds — customer должен решить сам, timeout не нужен.",
+              "text": "Если покупатель ушёл с балансом меньше цены, деньги остаются в машине как прибыль — это нормальная потеря пользователя.",
               "correct": false,
               "sections": {
-                "what_actually": "Если customer ушёл с балансом — деньги застряли в машине, следующий покупатель получит unfair бонус или confusion.",
-                "source_of_confusion": "Думают, что 'no action' = безопасно.",
-                "if_it_were_true": "Случайный другой customer мог бы dispense за чужие деньги.",
-                "how_it_should_be": "Timeout (30с-2мин) → автоматический cancel + refund + log; защита от brokerage."
+                "what_actually": "При бездействии срабатывает timeout (30 сек) в `AcceptingPaymentState`, который вызывает `onCancel()` и возвращает баланс — деньги нельзя удерживать.",
+                "source_of_confusion": "Кажется, что «брошенные» деньги достаются автомату, но удержание чужих денег нарушает инвариант no-money-loss.",
+                "if_it_were_true": "Тогда автомат систематически «зажимал» бы недоплаты, что и юридически, и по инвариантам недопустимо.",
+                "how_it_should_be": "Timeout-планировщик автоматически отменяет незавершённую оплату и возвращает накопленный баланс."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Out-of-stock: в Idle.onSelectProduct проверка qty==0 → сообщение 'Sold out', остаёмся в Idle. Insufficient funds: timeout 30с в AcceptingPayment → автоматический cancel + refund.",
-              "correct": true,
+              "text": "Race condition на последнем товаре решается тем, что customer всегда один — синхронизация `Inventory.decrement` не требуется.",
+              "correct": false,
               "sections": {
-                "explanation": "Out-of-stock не переводит state (нет валидного selection). Insufficient funds = customer оставил deposit и ушёл; scheduler через timeout автоматически refund.",
-                "example": "Slot A3 qty=0 → 'Sold out: A3', UI блокирует выбор. Customer вставил $0.50, ушёл → 30с timeout → refund $0.50 + back to Idle.",
-                "when_to_apply": "При проектировании error-handling и UX edge cases.",
-                "edge_cases": "Race: customer покупает последний item, admin одновременно refill — synchronized decrement гарантирует консистентность.",
-                "related": "Q19 (concurrency), Q20 (power failure recovery)."
+                "what_actually": "Даже при одном покупателе admin-restock идёт параллельно через сервисный port, поэтому `synchronized` на `decrement` нужен против гонки покупка/пополнение.",
+                "source_of_confusion": "«Физически один человек у машины» создаёт ложное ощущение, что конкуренции нет вообще.",
+                "if_it_were_true": "Тогда одновременные `decrement` (покупка) и `refill` (admin) могли бы привести к lost update счётчика.",
+                "how_it_should_be": "`Inventory.decrement`/`refill` синхронизированы, потому что admin-операции конкурируют с покупкой на одном слоте."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Достаточно проверить qty в Dispensing, а не в Idle.",
-              "correct": false,
+              "text": "Out-of-stock: в `IdleState.onSelectProduct` при `quantity == 0` показать «Sold out» и остаться в `Idle` (no state change), другие слоты доступны. Insufficient funds: timeout 30 сек в `AcceptingPaymentState`/`ProductSelectedState` через scheduler вызывает `currentState.onCancel()` — автоматический cancel + refund. Race на последнем товаре: `synchronized` на `Inventory.decrement` гарантирует, что при конкуренции покупка/restock только один получит товар.",
+              "correct": true,
               "sections": {
-                "what_actually": "Проверять в Dispensing = customer вставил деньги, потом узнал 'sold out' — нужен refund. Лучше отсечь в Idle.",
-                "source_of_confusion": "Откладывают валидацию на максимально поздний момент.",
-                "if_it_were_true": "Customer вставляет $1.25, потом 'sold out, here is your refund'. Bad UX, лишняя транзакция.",
-                "how_it_should_be": "Validate qty в Idle.onSelectProduct (fail-fast); в Dispensing — повторный check на race."
+                "explanation": "Три разных кейса: пустой слот → сообщение без смены состояния; брошенная оплата → timeout-cancel с возвратом; гонка на последнем товаре → synchronized decrement. Каждый решается на своём уровне.",
+                "example": "`if (slot.getQuantity() == 0) { vm.showMessage(\"Sold out\"); return; }` — машина не уходит в `ProductSelected`, customer выбирает другой слот.",
+                "when_to_apply": "Эти guard-ы добавляют при проработке негативных сценариев — они отличают наивное решение от продуманного.",
+                "edge_cases": "Timeout реализуют через `ScheduledExecutorService`, а не `Thread.sleep`, чтобы не блокировать поток; cancel по таймеру делает refund так же, как явный cancel.",
+                "related": "[[design-vending-machine-oo-interview#Q11]] механика refund при cancel; [[design-vending-machine-oo-interview#Q19]] synchronized против гонки restock/purchase; [[design-vending-machine-oo-interview#Q9]] illegal-операции вне разрешённых."
               }
             }
           ]
@@ -726,55 +726,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие GoF паттерны применить в vending machine: State, Strategy, Observer, Command, Singleton?",
+          "question_text": "Какие паттерны GoF применяются в дизайне автомата и зачем каждый?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно одного паттерна — Strategy для payment, остальное лишнее.",
-              "correct": false,
+              "text": "State (главный) — `VendingMachine` + интерфейс `State` + 5 концретов, убирает `switch` по состоянию. Strategy — `PaymentStrategy` (Cash/Card/NFC), подмена способа оплаты. Observer — `InventoryObserver` слушает `decrement`, low-stock алерт. Command — `AdminCommand` (`RefillCommand`, `SetPriceCommand`), undo/audit. Singleton — `VendingMachine` один на физический автомат (hardware-bound). Опционально Factory (`StateFactory`) и Template Method (`AbstractPaymentStrategy.process`).",
+              "correct": true,
               "sections": {
-                "what_actually": "Без State — switch-case anti-pattern. Без Observer — нет low-stock алертов. Каждый паттерн решает конкретную проблему.",
-                "source_of_confusion": "Минимализм без понимания, что каждая часть решает.",
-                "if_it_were_true": "Вся state machine в одном switch, никаких alerts, audit размазан.",
-                "how_it_should_be": "Минимум State + Strategy + Observer; Command/Singleton — желательно."
+                "explanation": "Набор GoF: State (состояния), Strategy (оплата и pricing), Observer (инвентарь), Command (admin-операции), Singleton (один контроллер на машину). Каждый решает свою точку вариативности или связности.",
+                "example": "Observer: `Inventory.decrement` при `quantity == 0` вызывает `observers.forEach(o -> o.onOutOfStock(slotId))`, и `AdminDashboard` шлёт алерт.",
+                "when_to_apply": "Эти паттерны называют на этапе обоснования дизайна — интервьюер ждёт явного маппинга «паттерн → место → зачем».",
+                "edge_cases": "Singleton тут обоснован hardware-bound природой (один контроллер на машину), а не как универсальный приём; в распределённых системах Singleton часто anti-pattern.",
+                "related": "[[design-vending-machine-oo-interview#Q8]] State в деталях; [[design-vending-machine-oo-interview#Q4]] Strategy для оплаты; [[design-vending-machine-oo-interview#Q14]] почему State лучше switch."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Главный паттерн — Singleton (VendingMachine); State не нужен.",
+              "text": "Главный паттерн здесь — Singleton; именно он определяет переходы между состояниями автомата.",
               "correct": false,
               "sections": {
-                "what_actually": "Singleton тут оправдан, но он не структурный для логики — это lifecycle. Главный — State для управления режимами.",
-                "source_of_confusion": "Спутали 'один экземпляр' (Singleton) с 'один режим работы' (State).",
-                "if_it_were_true": "Singleton без State = god-class с switch-case по режимам.",
-                "how_it_should_be": "State центральный; Singleton — деталь lifecycle."
+                "what_actually": "Главный паттерн — State (он управляет переходами); Singleton лишь гарантирует один экземпляр `VendingMachine` на физическую машину и к переходам отношения не имеет.",
+                "source_of_confusion": "Singleton — самый узнаваемый паттерн, поэтому его ошибочно ставят в центр решения.",
+                "if_it_were_true": "Тогда переходы кодировались бы внутри одного singleton-объекта через `switch`, что и есть anti-pattern.",
+                "how_it_should_be": "State отвечает за переходы и поведение; Singleton — лишь за единственность контроллера машины."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Decorator для добавления состояний — каждое состояние wrap-ит предыдущее.",
+              "text": "Strategy и State — это один и тот же паттерн под разными именами, поэтому достаточно применить любой из них.",
               "correct": false,
               "sections": {
-                "what_actually": "Decorator — для динамического добавления responsibilities. Состояния VM mutually exclusive (одно за раз), не сумма поведений. Это State.",
-                "source_of_confusion": "Путают State (один из) с Decorator (сумма).",
-                "if_it_were_true": "Невозможно представить 'отмена выбора' — нужно unwrap Decorator-ы.",
-                "how_it_should_be": "State pattern: одно активное состояние на момент времени, transitions через setState."
+                "what_actually": "Это разные паттерны: State меняет поведение при смене внутреннего состояния и сам инициирует переходы; Strategy подменяет алгоритм извне без переходов между стратегиями.",
+                "source_of_confusion": "Оба построены на полиморфизме и композиции интерфейса, поэтому их путают структурно.",
+                "if_it_were_true": "Тогда `PaymentStrategy` сама бы решала, когда стать другой стратегией, но способ оплаты выбирает клиент, а не алгоритм.",
+                "how_it_should_be": "State управляет жизненным циклом и переходами; Strategy — взаимозаменяемые алгоритмы, выбираемые снаружи."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "State (главный, состояния), Strategy (PaymentStrategy), Observer (InventoryObserver→Admin), Command (admin actions для undo/audit), Singleton (VendingMachine — один на железо).",
-              "correct": true,
+              "text": "Observer здесь не нужен — low-stock алерты проще сделать, опросив `Inventory` по таймеру (polling).",
+              "correct": false,
               "sections": {
-                "explanation": "State центральный; Strategy для payment; Observer для low-stock alerts; Command для admin operations с undo; Singleton оправдан (hardware bound). Опционально Factory для States, Template Method для PaymentStrategy базы.",
-                "example": "AdminDashboard implements InventoryObserver.onLowStock(slotId, qty) → send alert.",
-                "when_to_apply": "На собесе перечислить 4-5 паттернов с объяснением где и зачем — это маркер senior.",
-                "edge_cases": "Singleton тут оправдан (одна VM=одно железо), но в общем случае избегать Singleton.",
-                "related": "Q8 (State), Q14 (почему не switch), Q19 (thread safety)."
+                "what_actually": "Observer уведомляет подписчиков push-ом прямо в момент `decrement`, что точнее и дешевле периодического polling и сразу даёт `onLowStock`/`onOutOfStock`.",
+                "source_of_confusion": "Polling кажется проще в реализации, но он либо запаздывает, либо грузит систему частыми опросами.",
+                "if_it_were_true": "Тогда между опросами товар мог бы закончиться незаметно, и алерт пришёл бы с задержкой.",
+                "how_it_should_be": "Observer (`InventoryObserver`) реагирует на событие изменения сразу, без опросов и задержек."
               }
             }
           ]
@@ -786,55 +786,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Почему State pattern, а не switch-case по state field?",
+          "question_text": "Почему предпочитают State pattern, а не `switch-case` по состоянию?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Switch дублируется в каждом методе (insertMoney, cancel, dispense, select), нарушает OCP (новое состояние = правки во всех методах), невозможно тестировать состояние изолированно, размазывает поведение по 25 веткам (5 методов × 5 состояний).",
-              "correct": true,
+              "text": "Switch-case быстрее State pattern в рантайме, поэтому для embedded-автомата он предпочтительнее.",
+              "correct": false,
               "sections": {
-                "explanation": "Switch концентрирует логику по операциям, State — по состояниям. Группировка по состояниям естественнее: всё поведение Idle в одном классе, легко добавить новое состояние, тестировать.",
-                "example": "Switch версия: 5 методов × switch(state). State версия: 5 классов × 1-2 метода. Чтобы добавить MaintenanceState — в switch правишь 5 мест, в State создаёшь 1 класс.",
-                "when_to_apply": "Когда поведение зависит от состояния И операций несколько — State выигрывает.",
-                "edge_cases": "Для 2 состояний и 1 операции — switch допустим (overhead State не оправдан).",
-                "related": "Q8 (State реализация), Q24 (anti-patterns)."
+                "what_actually": "Разница в производительности ничтожна и не является аргументом; State выбирают за поддерживаемость (нет дублирования, соблюдён OCP, изолированное тестирование).",
+                "source_of_confusion": "На embedded важна скорость, поэтому микрооптимизацию ошибочно ставят выше структуры кода.",
+                "if_it_were_true": "Тогда любой полиморфизм заменяли бы на switch ради скорости, но цена — нечитаемый и хрупкий код.",
+                "how_it_should_be": "State выбирают за устранение дублирования и OCP; performance-разница здесь несущественна."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Switch быстрее по performance — это главное преимущество.",
-              "correct": false,
+              "text": "Switch-case по состоянию дублируется в каждом из ~5 методов (select/insertMoney/cancel/dispense), нарушает OCP (новое состояние → правки во всех методах), размазывает поведение по ~25 веткам и не позволяет тестировать состояние изолированно. State pattern: каждое состояние — отдельный класс с поведением в одном месте; добавление состояния = новый класс без правки существующего; юнит-тест на каждое состояние независим.",
+              "correct": true,
               "sections": {
-                "what_actually": "Разница в наносекундах — irrelevant для vending machine (1 операция в секунды). Maintainability важнее.",
-                "source_of_confusion": "Преждевременная оптимизация.",
-                "if_it_were_true": "Все ООП-системы использовали бы switch вместо полиморфизма.",
-                "how_it_should_be": "Использовать State за maintainability; performance оптимизировать после profiling."
+                "explanation": "Switch-подход дублирует `switch (state)` в каждом методе, и новое состояние требует правок везде (OCP-нарушение). State локализует поведение состояния в одном классе и делает его тестируемым изолированно.",
+                "example": "Добавить `MaintenanceCalibrationState` со switch — значит дописать ветку в каждый из методов; со State — просто новый класс, реализующий `State`.",
+                "when_to_apply": "Этот аргумент приводят, обосновывая выбор паттерна: интервьюер часто специально предлагает «а почему не switch».",
+                "edge_cases": "При 5 состояниях × 4 операций switch-вариант даёт ~20 веток в разных методах; поведение размазано, и забыть ветку легко — компилятор не подскажет.",
+                "related": "[[design-vending-machine-oo-interview#Q8]] как State устраняет switch; [[design-vending-machine-oo-interview#Q18]] OCP через State; [[design-vending-machine-oo-interview#Q24]] huge switch как anti-pattern."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Switch проще для junior-разработчиков — это плюс.",
+              "text": "State pattern лучше потому, что полностью исключает `IllegalStateException` — невалидных переходов в нём быть не может.",
               "correct": false,
               "sections": {
-                "what_actually": "Switch выглядит проще локально, но через 5 состояний и 5 операций junior захлёбывается в дублировании. State pattern с GoF — стандарт.",
-                "source_of_confusion": "Optimize for write, not for read/maintain.",
-                "if_it_were_true": "Все CS курсы преподавали бы switch как best practice.",
-                "how_it_should_be": "State pattern — небольшой entry cost окупается через 1-2 итерации."
+                "what_actually": "State не исключает невалидные операции, а делает их явными: default-методы интерфейса как раз бросают `IllegalStateException` на запрещённую операцию.",
+                "source_of_confusion": "Кажется, что «правильный» паттерн вообще убирает ошибки, но он лишь структурирует их обработку.",
+                "if_it_were_true": "Тогда вызов `dispense()` в `Idle` молча проходил бы, но он обязан fail-fast бросить исключение.",
+                "how_it_should_be": "State не устраняет illegal-операции, а локализует их обработку (default-броски) и убирает дублирующий switch."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Switch и State эквивалентны — это вопрос стиля.",
+              "text": "Главное преимущество State — что всё поведение собрано в одном большом классе, и его легко читать целиком.",
               "correct": false,
               "sections": {
-                "what_actually": "Они не эквивалентны: switch нарушает OCP (open-closed), State — нет. Это объективная разница, а не стиль.",
-                "source_of_confusion": "Все паттерны кажутся 'вкусовщиной'.",
-                "if_it_were_true": "Robert Martin не написал бы 'switch is a code smell'.",
-                "how_it_should_be": "State для динамического поведения по состоянию — стандарт; switch — только для финальных enum-веток."
+                "what_actually": "Наоборот: State распределяет поведение по отдельным классам-состояниям; «всё в одном классе» — это как раз switch-anti-pattern с высокой cognitive load.",
+                "source_of_confusion": "«Одно место» звучит как плюс, но для FSM это означает раздутый God-класс.",
+                "if_it_were_true": "Тогда State и switch были бы эквивалентны по структуре, но они противоположны: распределение против централизации.",
+                "how_it_should_be": "State разносит поведение по классам (по одному на состояние), что снижает связность и упрощает тесты."
               }
             }
           ]
@@ -846,55 +846,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Почему greedy алгоритм работает для canonical coin systems (US/EUR) для выдачи сдачи?",
+          "question_text": "Как работает greedy-алгоритм сдачи и почему он корректен для canonical coin systems (US/EUR)?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Greedy работает для любых наборов номиналов — это математически доказано.",
+              "text": "Greedy всегда даёт минимальное число монет для любого набора номиналов, поэтому DP для сдачи вообще не нужен.",
               "correct": false,
               "sections": {
-                "what_actually": "Greedy оптимален только для canonical систем. Контрпример: {1, 3, 4}, change 6 → greedy 4+1+1=3 монеты, optimal 3+3=2 монеты.",
-                "source_of_confusion": "Путают 'часто работает' с 'всегда оптимально'.",
-                "if_it_were_true": "DP-алгоритм для change-making был бы не нужен.",
-                "how_it_should_be": "Greedy для canonical (US/EUR), DP для non-canonical и lab-задач."
+                "what_actually": "Greedy оптимален только для canonical coin systems (US/EUR); для произвольных номиналов он может ошибаться, и тогда нужен DP.",
+                "source_of_confusion": "На привычных US/EUR-монетах greedy всегда оптимален, что создаёт иллюзию универсальности.",
+                "if_it_were_true": "Тогда контрпример {1,3,4} для суммы 6 не существовал бы, но greedy даёт там 3 монеты (4+1+1) против оптимума 2 (3+3).",
+                "how_it_should_be": "Greedy корректен лишь для canonical-систем; для arbitrary denominations переходят на DP."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Greedy всегда O(1), независимо от amount.",
+              "text": "Greedy перебирает номиналы по возрастанию (от penny к quarter), беря как можно больше мелких монет.",
               "correct": false,
               "sections": {
-                "what_actually": "O(n × k): для большого amount нужно много итераций (например, $100 в pennies — 10000 монет в worst case).",
-                "source_of_confusion": "Думают, что 'просто посчитать' = O(1).",
-                "if_it_were_true": "Любой денежный алгоритм был бы O(1).",
-                "how_it_should_be": "O(n × k); на практике n маленькое (≤10 номиналов), k ограничен max-change."
+                "what_actually": "Greedy идёт по убыванию номинала (quarter → dime → nickel → penny), беря как можно больше крупных монет, чтобы минимизировать их число.",
+                "source_of_confusion": "Слово «greedy» путают с направлением перебора; жадность здесь — к крупному номиналу, не к мелкому.",
+                "if_it_were_true": "Тогда сдача `0.75` набралась бы 75 пенни вместо 3 quarter — это максимум монет, а не минимум.",
+                "how_it_should_be": "Перебор номиналов по убыванию: сначала берём максимум quarter-ов, потом dime, и так далее."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Greedy не нужно проверять stock — coin pool безграничен.",
-              "correct": false,
+              "text": "Greedy идёт по номиналам по убыванию (`QUARTER → DIME → NICKEL → PENNY`): пока `remaining >= coin.value` и монета есть в stock, добавляет монету и вычитает её из остатка; если в конце `remaining > 0`, бросает `InsufficientCoinsException`. Это оптимально для canonical coin systems (US: 1/5/10/25, EUR: 1/2/5/10/20/50 — canonical). Контрпример non-canonical: номиналы {1,3,4} и сдача 6 — greedy даёт `4+1+1` (3 монеты), оптимум `3+3` (2 монеты). Сложность `O(n×k)`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Реальный автомат имеет ограниченный запас каждого номинала; если иссяк Quarter — нужно брать Dime+Nickel.",
-                "source_of_confusion": "Идеализируют algorithmic problem (бесконечная casa).",
-                "if_it_were_true": "Изредка ChangeDispenser отказывал бы без диагностики.",
-                "how_it_should_be": "Greedy + check stock на каждом шаге; fallback на DP с bounded coins при необходимости."
+                "explanation": "Greedy жадно берёт максимально крупный подходящий номинал. Для canonical-систем (US, EUR) это всегда даёт минимум монет; проверка stock не даёт выдать монету, которой нет.",
+                "example": "Сдача `0.75`: `QUARTER` подходит трижды (`0.75 → 0.50 → 0.25 → 0`), итог `3×Quarter` — оптимально.",
+                "when_to_apply": "Greedy применяют как основной алгоритм сдачи для реальных валют (US/EUR), они canonical и greedy там всегда оптимален.",
+                "edge_cases": "Контрпример {1,3,4}, сдача 6: greedy берёт `4+1+1` (3 монеты), а оптимум `3+3` (2 монеты) — поэтому для non-canonical нужен DP.",
+                "related": "[[design-vending-machine-oo-interview#Q16]] DP для arbitrary denominations; [[design-vending-machine-oo-interview#Q17]] что делать при нехватке монет; [[design-vending-machine-oo-interview#Q5]] почему остаток считают на `BigDecimal`."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Жадно брать максимальный номинал, пока remaining >= value. US/EUR — canonical (greedy всегда оптимум). Сложность O(n × k), где n — номиналов, k — макс. монет в сдаче.",
-              "correct": true,
+              "text": "Canonical coin system — это система, где все номиналы являются степенями двойки (1, 2, 4, 8).",
+              "correct": false,
               "sections": {
-                "explanation": "Canonical coin systems гарантируют, что greedy = optimal. Алгоритм: сортировать desc, для каждого номинала брать сколько помещается. Для US {1,5,10,25} — canonical, для {1,3,4} — нет.",
-                "example": "Change $0.75: Quarter(25) ×3 = 75¢. Greedy: 3×Quarter. Optimal: 3×Quarter (same).",
-                "when_to_apply": "Real US/EUR автоматы: greedy + проверка stock на каждом шаге.",
-                "edge_cases": "Если запас одного номинала иссяк — пропустить и взять меньший; greedy с stock-check.",
-                "related": "Q16 (DP для non-canonical), Q17 (insufficient coins)."
+                "what_actually": "Canonical — это система, в которой greedy всегда даёт оптимум (US 1/5/10/25, EUR 1/2/5/10/20/50); это не про степени двойки.",
+                "source_of_confusion": "«Canonical» звучит как математически «правильная» прогрессия, отсюда ассоциация со степенями 2.",
+                "if_it_were_true": "Тогда US-система (1/5/10/25) не была бы canonical, но она именно canonical и широко используется.",
+                "how_it_should_be": "Canonical — свойство «greedy оптимален», определяемое набором номиналов, а не их привязкой к степеням двойки."
               }
             }
           ]
@@ -906,55 +906,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как реализовать DP алгоритм для arbitrary denominations при выдаче сдачи?",
+          "question_text": "Как устроен DP-алгоритм сдачи для arbitrary denominations и когда он нужен вместо greedy?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "DP считает все возможные комбинации монет рекурсивно без memoization.",
+              "text": "DP-сдачу считают прямо на `BigDecimal`-суммах, индексируя массив `dp` дробными значениями вроде `dp[0.25]`.",
               "correct": false,
               "sections": {
-                "what_actually": "Без memoization — экспоненциальная сложность; DP = memoized recursion или bottom-up table.",
-                "source_of_confusion": "Путают DP (с memoization) и brute-force recursion.",
-                "if_it_were_true": "DP был бы непрактичен для больших amounts.",
-                "how_it_should_be": "Bottom-up table dp[0..target] или top-down recursion + memo."
+                "what_actually": "Сумму конвертируют в целые центы (`amount.movePointRight(2).intValueExact()`) и индексируют `dp` целыми, потому что массив не индексируется дробями.",
+                "source_of_confusion": "Раз деньги хранят в `BigDecimal`, кажется, что и DP должен работать на дробях.",
+                "if_it_were_true": "Тогда `dp` пришлось бы заменить на `Map<BigDecimal,...>`, теряя скорость и простоту integer-DP.",
+                "how_it_should_be": "Для DP суммы переводят в integer cents и используют массив `dp[target+1]` с целыми индексами."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "dp[i] = min(dp[i-c]+1) для каждого coin c ≤ i. Конвертация amount → integer cents. Сложность O(target × n). prev[i] для восстановления решения.",
-              "correct": true,
+              "text": "DP даёт минимум монет за `O(n)`, так же как greedy, поэтому разницы в сложности между ними нет.",
+              "correct": false,
               "sections": {
-                "explanation": "Unbounded knapsack: для каждой суммы i от 1 до target — пробуем каждый coin; берём минимум. prev[] хранит последний использованный coin для backtracking.",
-                "example": "Coins {1,3,4}, target 6: dp[6]=2 (3+3). prev[6]=3, prev[3]=3, prev[0]=stop. Backtrack: 3,3.",
-                "when_to_apply": "Non-canonical coin systems, exotic денежные системы, currency exchange с произвольными ratios.",
-                "edge_cases": "Bounded coins (ограниченный запас каждого номинала) → DP с третьим измерением stock; O(target × n × max_stock).",
-                "related": "Q15 (greedy для canonical), Q17 (exact change)."
+                "what_actually": "DP unbounded knapsack — это `O(target × n)` (а bounded — `O(target × n × max_stock)`), тогда как greedy — `O(n)`; DP дороже.",
+                "source_of_confusion": "Оба решают одну задачу, поэтому кажется, что и стоят одинаково.",
+                "if_it_were_true": "Тогда не было бы смысла предпочитать greedy для canonical-систем ради скорости.",
+                "how_it_should_be": "Greedy — `O(n)` и применим к canonical; DP — `O(target × n)`, нужен для arbitrary denominations."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Сложность DP всегда O(n!) — это NP-hard задача.",
+              "text": "DP находит только сам факт, можно ли набрать сумму, но восстановить конкретный набор монет он не способен.",
               "correct": false,
               "sections": {
-                "what_actually": "Change-making — pseudo-polynomial: O(target × n). NP-hard только если target представлен как binary string (compact representation).",
-                "source_of_confusion": "Слышали 'knapsack NP-hard', не различают subset-sum и change-making.",
-                "if_it_were_true": "Невозможно решить за разумное время для $100.",
-                "how_it_should_be": "Pseudo-polynomial O(target × n) — для практических target (≤$100) и n (≤10) мгновенно."
+                "what_actually": "DP восстанавливает решение через массив `prev[i]` (какая монета использована для суммы `i`), проходя от `target` назад: `for (i = target; i > 0; i -= prev[i])`.",
+                "source_of_confusion": "Базовый `dp[]` хранит только количество, поэтому кажется, что сам набор монет теряется.",
+                "if_it_were_true": "Тогда нельзя было бы физически выдать монеты, зная лишь их число, но `prev[]` хранит, какую монету брали.",
+                "how_it_should_be": "Дополнительный массив `prev[i]` позволяет восстановить точный список монет обратным проходом."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "DP даёт только минимальное количество монет, не сами монеты.",
-              "correct": false,
+              "text": "Сумму переводят в центы (`target = amount.movePointRight(2).intValueExact()`); `dp[i]` = минимум монет для суммы `i`, `dp[0]=0`, остальное `MAX_VALUE`. Для каждого `i` и каждой монеты `c`: если `dp[i-c]+1 < dp[i]`, обновляем `dp[i]` и `prev[i]=c`. Если `dp[target]==MAX_VALUE` — `InsufficientCoinsException`. Решение восстанавливают обратным проходом по `prev[]`. Сложность `O(target × n)` (unbounded) или `O(target × n × max_stock)` (bounded). Нужен для arbitrary/non-canonical номиналов.",
+              "correct": true,
               "sections": {
-                "what_actually": "С prev[] массивом (parent pointer) восстанавливаем сами монеты через backtracking от prev[target] до prev[0].",
-                "source_of_confusion": "Знают базовый DP, но не parent pointers.",
-                "if_it_were_true": "DP был бы бесполезен для реальной выдачи сдачи.",
-                "how_it_should_be": "Параллельный prev[] массив + backtracking даёт список coins."
+                "explanation": "Это unbounded knapsack на целых центах: `dp[i]` хранит минимум монет на сумму `i`, `prev[i]` — последнюю взятую монету для восстановления. Гарантирует оптимум даже для non-canonical номиналов.",
+                "example": "Для номиналов {1,3,4} и суммы 6 DP найдёт `3+3` (2 монеты), тогда как greedy ошибся бы (`4+1+1`).",
+                "when_to_apply": "DP включают для arbitrary denominations или когда нужен учёт реального запаса монет (bounded-вариант с `max_stock`).",
+                "edge_cases": "Bounded-версия с ограниченным запасом каждого номинала стоит `O(target × n × max_stock)`; на практике берут greedy + stock-check и fallback на DP при необходимости.",
+                "related": "[[design-vending-machine-oo-interview#Q15]] greedy и почему его мало для non-canonical; [[design-vending-machine-oo-interview#Q17]] обработка нехватки монет; [[design-vending-machine-oo-interview#Q5]] перевод в integer cents."
               }
             }
           ]
@@ -966,55 +966,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как обработать exact-change-only mode и edge cases при невозможности выдать сдачу?",
+          "question_text": "Как работает exact-change-only mode и какие edge cases у выдачи сдачи?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "При невозможности сдачи — округлить вниз и выдать продукт; разница — gain машины.",
-              "correct": false,
+              "text": "`ChangeDispenser.computeChange` пытается greedy и бросает `InsufficientCoinsException`, если набрать монеты нельзя; `canMakeChange` — pre-check без выдачи. В `IdleState` при `changeDispenser.lowOnCoins()` показывается «EXACT CHANGE ONLY». Правильный подход: при невозможности сдачи отказаться от транзакции до dispense (вернуть деньги), товар не выдаётся; перевод в `OutOfService` — только при критическом low. Round-down без согласия покупателя юридически недопустим.",
+              "correct": true,
               "sections": {
-                "what_actually": "Это де-факто кража у customer-а; юридически — недопустимо без явного согласия.",
-                "source_of_confusion": "Бизнес-greed без правовой оценки.",
-                "if_it_were_true": "Customer вставил $5 за $1.25 продукт, нет сдачи → потерял $3.75. Reputational catastrophe.",
-                "how_it_should_be": "Refund deposit без выдачи продукта; либо купон с явным opt-in."
+                "explanation": "Exact-change mode включают, когда монет на сдачу мало. Главный инвариант: лучше отказать в транзакции и вернуть деньги до выдачи, чем выдать товар и не суметь дать сдачу.",
+                "example": "Машина с пустым запасом nickel при сдаче `0.05` бросает `InsufficientCoinsException`; транзакция отменяется, деньги возвращаются, товар не выдаётся.",
+                "when_to_apply": "Pre-check `canMakeChange` вызывают до перехода в `Dispensing`, чтобы не оказаться в ситуации «товар выдан, сдачи нет».",
+                "edge_cases": "Round-down (выдать меньше сдачи) недопустим без согласия покупателя; купон/credit требует персистентности; `OutOfService` обнуляет выручку, поэтому его берегут для критического low.",
+                "related": "[[design-vending-machine-oo-interview#Q15]] greedy, который может не набрать сдачу; [[design-vending-machine-oo-interview#Q16]] DP-fallback; [[design-vending-machine-oo-interview#Q7]] переход `ReturningChange → OutOfService`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Сдача невозможна → перевести машину в OutOfService.",
+              "text": "При нехватке монет правильно выдать товар, а сдачу округлить вниз (round-down) — покупатель потеряет копейки, зато транзакция пройдёт.",
               "correct": false,
               "sections": {
-                "what_actually": "Перевод в OutOfService — overkill для одной проблемы со сдачей; ECO-mode (cash блок) сохраняет revenue через NFC.",
-                "source_of_confusion": "All-or-nothing подход.",
-                "if_it_were_true": "Машина закрывается из-за нехватки никелей, теряя весь revenue.",
-                "how_it_should_be": "Per-transaction отказ + ECO-mode индикатор; OutOfService только при критических состояниях."
+                "what_actually": "Round-down без явного согласия покупателя юридически недопустим; правильно — отказать в транзакции до выдачи и вернуть деньги полностью.",
+                "source_of_confusion": "Кажется, что «недодать копейку» — мелочь ради завершения продажи, но это удержание чужих денег.",
+                "if_it_were_true": "Тогда автомат систематически недоплачивал бы сдачу, что нарушает права потребителя и инвариант no-money-loss.",
+                "how_it_should_be": "При невозможности дать точную сдачу транзакцию отменяют до dispense и возвращают деньги целиком."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "При невозможности сдачи — либо отказ от транзакции (refund deposit, не выдавать продукт), либо показать 'EXACT CHANGE ONLY' заранее (pre-check coin pool). OutOfService — только при критическом low.",
-              "correct": true,
+              "text": "Проверять возможность сдачи нужно уже после выдачи товара — если монет не хватило, машина просто оставит сдачу должной.",
+              "correct": false,
               "sections": {
-                "explanation": "Главный принцип: не выдавать продукт без точного payment. Round-down (выдать меньше сдачи) — юридически проблематично. Купон/credit — нужна персистентность. ECO-mode — превентивно блокирует cash, NFC доступен.",
-                "example": "$1.25 product, customer вставил $2, change pool пуст по Dime → отказ + refund $2 (cash). Или pre-check: coins low → 'EXACT CHANGE ONLY'.",
-                "when_to_apply": "Real-world автоматы имеют ECO-mode индикатор; админ должен мониторить.",
-                "edge_cases": "Совсем нет монет — disable cash полностью, разрешить только NFC/card.",
-                "related": "Q15 (greedy с stock), Q16 (DP fallback), Q22 (cashless)."
+                "what_actually": "Проверку (`canMakeChange`) делают до выдачи: иначе товар уже отдан и заряжен, а сдачу выдать нечем — нарушается инвариант.",
+                "source_of_confusion": "Кажется естественным сначала выдать товар, потом считать сдачу, но это создаёт точку невозврата без сдачи.",
+                "if_it_were_true": "Тогда покупатель получал бы товар, но не получал бы законную сдачу, и автомат «зависал» бы в долгу.",
+                "how_it_should_be": "Pre-check сдачи выполняют до `Dispensing`; при невозможности — отмена транзакции до выдачи товара."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Сдачу всегда можно выдать через DP алгоритм — нет 'insufficient coins'.",
+              "text": "Exact-change mode означает, что машина вообще перестаёт принимать монеты и работает только по картам.",
               "correct": false,
               "sections": {
-                "what_actually": "DP находит оптимальное количество монет, но если запас каждого номинала иссяк — алгоритм не помогает.",
-                "source_of_confusion": "Игнорируют bounded stock — алгоритм vs физическая реальность.",
-                "if_it_were_true": "Машина выдавала бы виртуальные монеты, которые физически отсутствуют.",
-                "how_it_should_be": "DP с bounded stock как constraint; если решение не найдено — InsufficientCoinsException."
+                "what_actually": "Exact-change mode сообщает «EXACT CHANGE ONLY» — покупатель должен внести сумму без сдачи; приём монет не отключается, отключается лишь выдача сдачи.",
+                "source_of_confusion": "«Exact change» путают с «cashless only», хотя это про невозможность дать сдачу, а не про отказ от наличных.",
+                "if_it_were_true": "Тогда покупатель с точной суммой монетами не смог бы купить товар, хотя сдача ему не нужна.",
+                "how_it_should_be": "Машина продолжает принимать монеты, но требует точную сумму; cashless — отдельный независимый способ оплаты."
               }
             }
           ]
@@ -1026,55 +1026,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как применяются SOLID-принципы (SRP/OCP/LSP/ISP/DIP) в vending machine?",
+          "question_text": "Как принципы SOLID применяются в дизайне автомата (SRP/OCP/LSP/ISP/DIP)?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "SOLID применим только к большим enterprise-системам; vending machine — слишком мала.",
+              "text": "OCP здесь соблюдается тем, что в `VendingMachine` есть один большой метод `process()`, который правят при добавлении любой новой функции.",
               "correct": false,
               "sections": {
-                "what_actually": "SOLID — fractal: работает на любом уровне. Vending machine LLD — отличная демонстрация всех 5 принципов.",
-                "source_of_confusion": "Привязали SOLID к scale, а не к качеству дизайна.",
-                "if_it_were_true": "Невозможно было бы оценить small-scale OO design.",
-                "how_it_should_be": "Применять SOLID на любом scale; vending machine — типичный пример."
+                "what_actually": "OCP как раз требует расширять без правки существующего: новое состояние = новый State-класс без изменения `VendingMachine`; единый правимый `process()` — это нарушение OCP.",
+                "source_of_confusion": "«Одно место для изменений» ошибочно принимают за OCP, хотя OCP — про закрытость к модификации.",
+                "if_it_were_true": "Тогда каждое новое состояние означало бы правку центрального метода, что и есть open-for-modification.",
+                "how_it_should_be": "OCP достигают добавлением классов (новое State/Strategy) без изменения существующего кода машины."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Главный SOLID-принцип здесь — Singleton (S из SOLID).",
-              "correct": false,
+              "text": "SRP: `VendingMachine` — координация, каждый `State` — поведение одного режима, `Inventory` — товар, `ChangeDispenser` — сдача, `AuditLog` — логирование. OCP: новое состояние (`MaintenanceCalibrationState`) = новый класс без правки машины. LSP: все `State`-реализации заменяемы, default-методы гарантируют `IllegalStateException` вместо тихого прохода. ISP: `State` узкий (4 метода), admin-операции — отдельный API. DIP: `VendingMachine` зависит от интерфейса `PaymentStrategy`, не от `StripeClient`; тесты подменяют `FakePaymentStrategy`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Singleton — это паттерн GoF, не SOLID-принцип. S в SOLID = Single Responsibility Principle.",
-                "source_of_confusion": "Путают SOLID (5 принципов) и GoF (паттерны).",
-                "if_it_were_true": "В SOLID было бы 'Singleton' как принцип — но это не принцип.",
-                "how_it_should_be": "SOLID = SRP/OCP/LSP/ISP/DIP. Singleton — паттерн, не принцип."
+                "explanation": "Каждый принцип реализован конкретной структурой: SRP — разделение классов, OCP — расширение через State/Strategy, LSP — взаимозаменяемость состояний, ISP — узкий интерфейс, DIP — зависимость от абстракций оплаты.",
+                "example": "DIP: `VendingMachine` принимает `PaymentStrategy`, поэтому в тестах подставляют `FakePaymentStrategy` вместо реального `StripeClient` — оплата изолирована от сети.",
+                "when_to_apply": "Маппинг SOLID на дизайн приводят, обосновывая архитектуру: интервьюер ждёт конкретики «принцип → где именно».",
+                "edge_cases": "ISP здесь важен: если бы `State` содержал admin-методы (refill, setPrice), каждое состояние тащило бы ненужные операции — поэтому admin вынесен в `adminCommand(...)`.",
+                "related": "[[design-vending-machine-oo-interview#Q14]] OCP как аргумент против switch; [[design-vending-machine-oo-interview#Q8]] LSP через default-методы State; [[design-vending-machine-oo-interview#Q4]] DIP через `PaymentStrategy`."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "DIP здесь нарушен — VendingMachine зависит от конкретных State классов.",
+              "text": "DIP соблюдается, если `VendingMachine` напрямую создаёт `new StripeClient()` внутри себя — так зависимость инкапсулирована.",
               "correct": false,
               "sections": {
-                "what_actually": "VM зависит от State interface, а конкретные классы (IdleState и др.) создаются State сами (через setState(new ProductSelectedState(vm))). DIP соблюдён.",
-                "source_of_confusion": "Видят 'new ConcreteState' где-то и думают DIP нарушен.",
-                "if_it_were_true": "Невозможно подменить State в тестах через mock.",
-                "how_it_should_be": "VM знает только State интерфейс; конкретные классы — детали реализации State pattern."
+                "what_actually": "DIP требует зависеть от абстракции (`PaymentStrategy`), а не от конкретного `StripeClient`; прямое `new StripeClient()` — это жёсткая зависимость от детали.",
+                "source_of_confusion": "«Инкапсулировал создание внутри» путают с инверсией зависимостей, хотя это противоположные вещи.",
+                "if_it_were_true": "Тогда тесты не могли бы подменить оплату на fake, и любой вызов `charge` ходил бы в реальный Stripe.",
+                "how_it_should_be": "`VendingMachine` зависит от интерфейса `PaymentStrategy`, а конкретную реализацию внедряют снаружи."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "SRP: каждый State/Inventory/ChangeDispenser/AuditLog — одна ответственность. OCP: новое состояние = новый класс без правок VM. LSP: все State взаимозаменяемы через интерфейс. ISP: State интерфейс узкий (4 метода). DIP: VM зависит от PaymentStrategy interface, не StripeClient.",
-              "correct": true,
+              "text": "SRP нарушится, если `AuditLog` сделать отдельным классом — логирование должно жить прямо в `VendingMachine`.",
+              "correct": false,
               "sections": {
-                "explanation": "Все пять SOLID-принципов естественно вытекают из State+Strategy дизайна. Это маркер senior-уровня — назвать каждый принцип на конкретном элементе.",
-                "example": "OCP: добавить MaintenanceCalibrationState — новый класс implements State, без правок VendingMachine. DIP: вместо new StripeClient() — constructor injection PaymentStrategy.",
-                "when_to_apply": "В завершении интервью — связать дизайн с SOLID, показать осознанность.",
-                "edge_cases": "Singleton иногда нарушает DIP (трудно подменить в тестах) — приемлемо только для hardware-bound.",
-                "related": "Q13 (паттерны), Q14 (почему State)."
+                "what_actually": "Ровно наоборот: вынос логирования в отдельный `AuditLog` и есть SRP; держать его в `VendingMachine` смешало бы координацию с записью журнала.",
+                "source_of_confusion": "Кажется, что «всё в машине» проще, но это перегружает Context несколькими ответственностями.",
+                "if_it_were_true": "Тогда `VendingMachine` отвечал бы и за переходы, и за оплату, и за персистентность лога — три причины для изменения.",
+                "how_it_should_be": "Каждая ответственность — отдельный класс; `AuditLog` логирует, `VendingMachine` координирует."
               }
             }
           ]
@@ -1086,55 +1086,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как обеспечить thread safety при concurrent restocking vs purchase: synchronized или ReentrantLock?",
+          "question_text": "Как обеспечить thread safety при конкурентном restocking и покупке (synchronized/ReentrantLock)?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Synchronized не нужен — vending machine single-threaded, customer один.",
+              "text": "Достаточно объявить `Map<String,Slot>` как `ConcurrentHashMap` — тогда `decrement` и `refill` автоматически потокобезопасны без синхронизации.",
               "correct": false,
               "sections": {
-                "what_actually": "Customer один, но admin может одновременно через сервисный port (remote или physical). Также UI thread + business thread.",
-                "source_of_confusion": "Игнорируют admin/restocker concurrency.",
-                "if_it_were_true": "Race condition при concurrent refill+purchase даёт lost updates.",
-                "how_it_should_be": "Synchronized минимум на критичных mutate-операциях Inventory."
+                "what_actually": "`ConcurrentHashMap` защищает только отдельные операции с самой map, но read-modify-write слота (прочитать quantity, уменьшить, записать) — составная операция и требует `synchronized`/lock.",
+                "source_of_confusion": "Кажется, что concurrent-коллекция решает все гонки, но она не делает атомарной последовательность «read → modify → write».",
+                "if_it_were_true": "Тогда два `decrement` могли бы прочитать одно и то же `quantity` и оба списать, дав lost update.",
+                "how_it_should_be": "Помимо `ConcurrentHashMap` нужен `synchronized` (или `ReentrantLock`/CAS) вокруг составной операции изменения количества."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Lock-free CAS — обязательно для производительности.",
+              "text": "Lock-free вариант через `AtomicInteger.compareAndSet` всегда предпочтительнее `synchronized` — он быстрее и проще.",
               "correct": false,
               "sections": {
-                "what_actually": "Vending machine — 1 операция в секунды. Synchronized overhead (~nanoseconds) irrelevant. Lock-free сложнее в debug.",
-                "source_of_confusion": "Cargo-cult lock-free из high-frequency trading.",
-                "if_it_were_true": "Все vending machines использовали бы Disruptor-style queues.",
-                "how_it_should_be": "Synchronized для простоты; lock-free только при доказанной необходимости."
+                "what_actually": "Для реального автомата (по сути single-user у машины) `synchronized` достаточно; lock-free CAS — это overengineering при отсутствии реальной высокой конкуренции.",
+                "source_of_confusion": "Lock-free звучит «продвинутее», поэтому его выбирают, не оценив реальную нагрузку.",
+                "if_it_were_true": "Тогда простой `synchronized` нигде не применяли бы, но он покрывает большинство умеренно-конкурентных случаев проще.",
+                "how_it_should_be": "Выбирать инструмент по нагрузке: `synchronized` достаточно; CAS оправдан лишь при доказанной высокой контеншн."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Inventory.decrement и refill — synchronized методы (или ReentrantLock); либо AtomicInteger в Slot для lock-free CAS. ConcurrentHashMap для slots. На практике synchronized достаточно — vending machine single-user.",
+              "text": "Сценарий: customer покупает Coke (qty=1), одновременно admin делает `refill(\"A3\", 10)`. `Inventory.decrement` и `refill` помечают `synchronized` — `decrement` проверяет `quantity > 0` и уменьшает атомарно. Альтернатива — `ReentrantLock` с `tryLock(100ms)` для timeout/tryLock-контроля. Lock-free вариант — `AtomicInteger` с `compareAndSet` в цикле. Practical: реальный автомат фактически single-user, `synchronized` достаточно, lock-free — overengineering; самый чистый вариант — на время refill переводить машину в `OutOfService`.",
               "correct": true,
               "sections": {
-                "explanation": "Concurrent access: customer (decrement) и admin (refill) — оба mutate Inventory. Без sync — lost updates, double-dispense. Synchronized — простое решение; lock-free overengineering для нагрузки.",
-                "example": "synchronized boolean decrement(slotId) { if (qty==0) return false; qty--; return true; } — atomic read-modify-write.",
-                "when_to_apply": "Любая mutable shared state с возможностью concurrent access — sync обязателен.",
-                "edge_cases": "Lock-free через AtomicInteger.compareAndSet — для high-concurrency, но overkill для vending machine.",
-                "related": "Q12 (race condition), Q20 (power failure)."
+                "explanation": "Гонка возникает между покупкой (`decrement`) и пополнением (`refill`) одного слота. `synchronized` делает read-modify-write атомарным; `ReentrantLock` и CAS — более тонкие альтернативы, но для автомата избыточны.",
+                "example": "`public synchronized boolean decrement(String slotId)` сначала проверяет `quantity == 0`, и только потом `setQuantity(quantity-1)` — два потока не пройдут проверку одновременно.",
+                "when_to_apply": "Синхронизацию обязательно обсуждают, потому что admin-restock идёт параллельно покупке через сервисный/remote port.",
+                "edge_cases": "Самый надёжный приём — на время refill перевести машину в `OutOfService`, тогда гонки покупка/пополнение не возникает вовсе; `ReentrantLock.tryLock` нужен, если важен timeout.",
+                "related": "[[design-vending-machine-oo-interview#Q12]] race на последнем товаре; [[design-vending-machine-oo-interview#Q23]] concurrency-тесты на отсутствие lost update; [[design-vending-machine-oo-interview#Q20]] восстановление состояния при сбое."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Достаточно ConcurrentHashMap — синхронизация автоматическая.",
+              "text": "Синхронизация не нужна вовсе: раз у машины физически один покупатель, конкурентного доступа к инвентарю быть не может.",
               "correct": false,
               "sections": {
-                "what_actually": "ConcurrentHashMap синхронизирует операции с самой Map, но не композитные read-modify-write на Slot (e.g., qty-- — не атомарно).",
-                "source_of_confusion": "Думают, что 'thread-safe collection' = автоматическая thread-safety для всего.",
-                "if_it_were_true": "Compound operations (check qty, decrement, notify) были бы атомарны автоматически.",
-                "how_it_should_be": "ConcurrentHashMap + synchronized на Slot методах или AtomicInteger в Slot."
+                "what_actually": "Покупатель один, но admin-операции (`refill`, `setPrice`) идут параллельно через сервисный/remote port, поэтому гонка покупка/пополнение реальна.",
+                "source_of_confusion": "«Один человек у машины» создаёт ложное чувство полного отсутствия конкуренции.",
+                "if_it_were_true": "Тогда одновременные `decrement` и `refill` были бы невозможны, но admin может пополнять слот во время покупки.",
+                "how_it_should_be": "Синхронизировать изменения инвентаря, потому что admin-поток конкурирует с потоком покупки за один слот."
               }
             }
           ]
@@ -1146,55 +1146,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как обработать power failure mid-dispense, money jam и fraud detection?",
+          "question_text": "Как обрабатывать power failure mid-dispense, money jam и fraud?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Power failure — игнорировать; customer вернётся утром.",
+              "text": "При power failure состояние восстанавливать не нужно — после reboot машина просто стартует в `Idle`, незавершённая транзакция забывается.",
               "correct": false,
               "sections": {
-                "what_actually": "Без recovery — деньги customer-а застряли, товар может быть выдан или нет в неопределённом состоянии.",
-                "source_of_confusion": "Преуменьшают важность state persistence.",
-                "if_it_were_true": "Customer теряет деньги при power failure; legal/reputational disaster.",
-                "how_it_should_be": "Persistent transaction state + recovery + automated refund/finalize при boot."
+                "what_actually": "Текущая транзакция пишется в non-volatile storage до выдачи; при reboot `recover()` читает её, проверяет сенсор выдачи и доделывает или делает refund — терять транзакцию нельзя.",
+                "source_of_confusion": "Кажется, что после сбоя проще «начать с чистого листа», но тогда деньги уже взяты, а товар мог не выйти.",
+                "if_it_were_true": "Тогда покупатель, заплативший до отключения питания, не получил бы ни товар, ни возврат.",
+                "how_it_should_be": "Транзакцию персистят до выдачи; `recover()` после reboot проверяет сенсор и завершает либо возвращает деньги."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Power failure: persistent state (EEPROM/flash) + recover() при boot — check sensor, finalize/refund pending. Money jam: sensor timeout → OutOfService + admin alert. Fraud: validator hardware (IR/magnetic), rate limiting, audit, tokenization для card.",
-              "correct": true,
+              "text": "Money jam (застрявшая монета) лучше всего обрабатывать, просто увеличивая balance — раз монета внутри, значит оплачено.",
+              "correct": false,
               "sections": {
-                "explanation": "Каждая категория edge cases требует разных defenсе: persistence (power), hardware sensors (jam), validator+software detection (fraud). Audit log — общий слой для post-mortem analysis.",
-                "example": "Customer вставил $1.25, нажал dispense, power off. Reboot → recover() читает last pending transaction, sensor показывает product не выдан → refund $1.25.",
-                "when_to_apply": "На вопрос 'a что если power off mid-dispense' — описать recovery flow.",
-                "edge_cases": "Counterfeit detection не 100% — bills_rejected counter, manual review threshold.",
-                "related": "Q21 (audit log), Q22 (PCI-DSS tokenization)."
+                "what_actually": "Если deposit-валидатор не подтвердил приём монеты, balance увеличивать нельзя; при jam без подтверждения сенсора машина уходит в `OutOfService` + alert админу.",
+                "source_of_confusion": "«Монета физически внутри» путают с «оплата принята», хотя застрявшая монета не зачтена валидатором.",
+                "if_it_were_true": "Тогда застревание монеты ошибочно зачлось бы как оплата, и покупатель получил бы товар за незачтённые деньги.",
+                "how_it_should_be": "Balance растёт только при подтверждении валидатора; неподтверждённый jam → `OutOfService` и алерт."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Counterfeit detection через software ML — анализ изображения банкноты с камеры.",
+              "text": "Защита от card fraud сводится к хранению полного номера карты в БД автомата, чтобы сверять повторные попытки.",
               "correct": false,
               "sections": {
-                "what_actually": "Real vending machines используют hardware bill validators (IR, magnetic, UV) — это специализированное железо, не ML.",
-                "source_of_confusion": "Применяют trendy ML без знания specific domain.",
-                "if_it_were_true": "Каждый vending machine имел бы $1000+ камеру и GPU.",
-                "how_it_should_be": "Bill validator hardware + audit log + rate limiting; ML — для centralized fraud analytics, не on-device."
+                "what_actually": "Карту целиком хранить нельзя (нарушение PCI-DSS) — используют tokenization (только token), 3DS и velocity-check для повторов.",
+                "source_of_confusion": "Кажется, что для борьбы с фродом нужно «помнить карту», но хранение PAN запрещено стандартом.",
+                "if_it_were_true": "Тогда компрометация автомата сразу сливала бы номера карт, что и есть худший сценарий PCI.",
+                "how_it_should_be": "Хранят только token (PCI-DSS), для повторов применяют velocity-check и 3DS, а не полный PAN."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Money jam — пользователь сам разберётся, machine не должна реагировать.",
-              "correct": false,
+              "text": "Power failure: транзакцию пишут в non-volatile storage (EEPROM/flash) до выдачи; при reboot `recover()` читает last pending, по сенсору `productDelivered` либо `markComplete`, либо `markFailed` + `scheduleRefund`. Money jam: при отсутствии срабатывания сенсора по timeout → `OutOfService` + alert; balance не растёт без подтверждения валидатора. Fraud: bill validator (IR/magnetic), anti-pullback против «монеты на нитке», rate limiting, audit. Card fraud: tokenization (PCI-DSS, только token), 3DS, velocity-check.",
+              "correct": true,
               "sections": {
-                "what_actually": "Money jam = transaction в неопределённом состоянии. Без sensor timeout и OutOfService — следующий customer попадёт в broken state.",
-                "source_of_confusion": "Думают, что hardware failure не affect software.",
-                "if_it_were_true": "Jam → silent fail, money lost, customer без recourse.",
-                "how_it_should_be": "Sensor timeout → OutOfService + admin alert + audit log событий jam."
+                "explanation": "Три класса отказов: сбой питания решают персистентностью + recovery по сенсору; jam — переходом в `OutOfService` без зачёта; fraud — валидацией купюр, anti-pullback, токенизацией карт и velocity-проверками.",
+                "example": "`recover()`: если `sensors.productDelivered(pending.slotId())` истинно — `markComplete`, иначе `markFailed` + `scheduleRefund` — покупатель получает деньги назад, если товар не вышел.",
+                "when_to_apply": "Эти сценарии разбирают в секции reliability/edge cases — они отличают «игрушечный» дизайн от продакшен-готового.",
+                "edge_cases": "«Монета на нитке» (string pull attack) решают hardware-anti-pullback; на software-уровне — rate limiting (медленный drop за 10 сек подозрителен) и audit подозрительных событий.",
+                "related": "[[design-vending-machine-oo-interview#Q21]] audit log и `findLastPendingTransaction`; [[design-vending-machine-oo-interview#Q19]] thread safety при восстановлении; [[design-vending-machine-oo-interview#Q4]] tokenized-карта в `CardCharge`."
               }
             }
           ]
@@ -1206,55 +1206,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какой audit log транзакций должен быть в vending machine и где его хранить?",
+          "question_text": "Как устроен audit log транзакций и зачем он нужен?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "TransactionRecord (id, timestamp, slot, product, price, paid, change, method, status). Хранение локально SQLite на контроллере + периодическая sync в central. Reconciliation: cash_in - change - refunds = product_revenue.",
+              "text": "`TransactionRecord` (`id`, `timestamp`, `slotId`, `productName`, `price`, `paid`, `change`, `method`, `status` ∈ {SUCCESS, CANCELLED, FAILED, REFUNDED}). Интерфейс `AuditLog`: `record(...)`, `between(from, to)`, `totalRevenue(date)`, `findLastPendingTransaction()`. Хранилище: локально `SQLite` на контроллере (WAL, durable), периодический sync в central system. Reconciliation: cash в hopper в конце дня = `sum(paid) - sum(change) - sum(refunds)`.",
               "correct": true,
               "sections": {
-                "explanation": "Audit log — основа для reconciliation, fraud detection, finance reporting. Локально durable (WAL) — не теряется при power off; sync в central — для analytics. Reconciliation формула — sanity check.",
-                "example": "End of day: machine собрала $250 cash, выдала $50 change, $10 refunds → revenue должен быть $190 (sum of product prices sold).",
-                "when_to_apply": "Каждая transaction (success, cancel, fail, refund) — отдельная запись в log.",
-                "edge_cases": "Power off перед audit-записью → recovery читает sensor и финализирует пост-фактум.",
-                "related": "Q20 (recovery), Q11 (cancel audit)."
+                "explanation": "Audit log фиксирует каждую транзакцию с её статусом и суммами для финансовой сверки и восстановления. `findLastPendingTransaction` нужен для recovery после сбоя, `totalRevenue` — для отчётности.",
+                "example": "Reconciliation в конце дня: фактический cash в hopper должен сойтись с `sum(paid) - sum(change) - sum(refunds)`; расхождение сигналит о фроде или сбое.",
+                "when_to_apply": "Audit-слой добавляют как обязательное non-functional требование — без него нет ни сверки, ни восстановления, ни fraud-детекта.",
+                "edge_cases": "Локально пишут в `SQLite` с write-ahead logging ради durability при внезапном отключении; центральная система получает данные периодическим sync, а не на каждую транзакцию.",
+                "related": "[[design-vending-machine-oo-interview#Q20]] `findLastPendingTransaction` для recovery; [[design-vending-machine-oo-interview#Q11]] запись CANCELLED при cancel; [[design-vending-machine-oo-interview#Q10]] запись SUCCESS на happy path."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Audit log хранить только в RAM — после power off очищается, это OK.",
+              "text": "Audit log можно хранить только в оперативной памяти (in-memory list) — при перезагрузке он не нужен.",
               "correct": false,
               "sections": {
-                "what_actually": "Без persistence — reconciliation невозможен; legal/finance требования нарушены; recovery после power off broken.",
-                "source_of_confusion": "Думают, что 'логи это temporary'.",
-                "if_it_were_true": "Финансовая отчётность невозможна, fraud не detect.",
-                "how_it_should_be": "Persistent storage (SQLite/EEPROM) + WAL для durability."
+                "what_actually": "Лог должен быть durable (локальный `SQLite` с WAL): он нужен для recovery после сбоя и для reconciliation, поэтому переживать reboot обязан.",
+                "source_of_confusion": "In-memory кажется проще и быстрее, но теряет данные ровно тогда, когда они нужнее всего — при сбое.",
+                "if_it_were_true": "Тогда `findLastPendingTransaction()` после power failure вернул бы пусто, и refund по незавершённой транзакции стал бы невозможен.",
+                "how_it_should_be": "Лог персистят локально (durable storage) и периодически синхронизируют в central system."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Достаточно логировать только successful transactions; cancel и fail не нужны.",
+              "text": "В `TransactionRecord` достаточно хранить только сумму `paid`; цена, сдача и статус — избыточные поля.",
               "correct": false,
               "sections": {
-                "what_actually": "Reconciliation требует все события: cancel = refund cash out; failed = money received but no product. Без них cash_in/cash_out не сойдётся.",
-                "source_of_confusion": "Audit = только revenue events.",
-                "if_it_were_true": "End-of-day cash count не сойдётся с log → manual investigation каждый день.",
-                "how_it_should_be": "Log ВСЕ события transaction lifecycle: SUCCESS/CANCELLED/FAILED/REFUNDED."
+                "what_actually": "Для reconciliation нужны `paid`, `change`, `price` и `status`: сверка считает `sum(paid) - sum(change) - sum(refunds)`, и без статуса нельзя отличить SUCCESS от REFUNDED.",
+                "source_of_confusion": "Кажется, что «сколько внесли» — единственное важное число, но баланс не сойдётся без сдачи и возвратов.",
+                "if_it_were_true": "Тогда нельзя было бы вычислить выручку и отделить отменённые транзакции от успешных.",
+                "how_it_should_be": "Запись хранит `price`, `paid`, `change`, `method` и `status`, чтобы сверка и отчётность были корректны."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Сразу записывать в облако — local storage не нужен.",
+              "text": "Reconciliation проверяет, что cash в hopper = `sum(paid)`, без вычета сдачи и возвратов.",
               "correct": false,
               "sections": {
-                "what_actually": "Network может быть unavailable (выключенный wifi, dead spot). Local-first + async sync — стандарт.",
-                "source_of_confusion": "Cloud-first без учёта offline-режима.",
-                "if_it_were_true": "Каждая сделка зависит от network — machine offline = no sales.",
-                "how_it_should_be": "Local-first (SQLite/WAL) + eventual sync в central system."
+                "what_actually": "Формула сверки — `sum(paid) - sum(change) - sum(refunds)`: выданная сдача и возвраты физически уменьшают наличность в hopper.",
+                "source_of_confusion": "Кажется, что «сколько заплатили» и есть остаток кассы, но часть денег ушла обратно сдачей и refund.",
+                "if_it_were_true": "Тогда расчётный остаток всегда был бы больше фактического на сумму всей выданной сдачи.",
+                "how_it_should_be": "Остаток в hopper = `sum(paid) - sum(change) - sum(refunds)`; только так сверка сходится с реальностью."
               }
             }
           ]
@@ -1266,55 +1266,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как расширить дизайн на cashless (NFC/Stripe), loyalty, multi-product cart, dynamic pricing?",
+          "question_text": "Как расширить автомат на cashless (NFC/Stripe), loyalty, multi-product cart и dynamic pricing?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Cashless integration требует полной переписки state machine — Card flow слишком отличается.",
+              "text": "Чтобы добавить оплату через `Stripe`, нужно переписать `VendingMachine` и зашить вызовы `Stripe API` прямо в `DispensingState`.",
               "correct": false,
               "sections": {
-                "what_actually": "PaymentStrategy абстракция изолирует разницу. State machine та же: AcceptingPayment накапливает balance (cash) или ждёт tap (card).",
-                "source_of_confusion": "Видят разный hardware и думают, что нужен разный flow.",
-                "if_it_were_true": "Strategy pattern был бы бесполезен — каждая integration = новая система.",
-                "how_it_should_be": "Strategy инкапсулирует разницу; state machine унифицирован."
+                "what_actually": "Cashless добавляют новой реализацией `PaymentStrategy` (`StripeCardPaymentStrategy`) через Strategy+Adapter — без правки `VendingMachine` и состояний (OCP).",
+                "source_of_confusion": "Кажется, что новая интеграция требует трогать ядро, но точка расширения уже есть — интерфейс `PaymentStrategy`.",
+                "if_it_were_true": "Тогда каждый новый провайдер (Adyen, PayPal) правил бы `DispensingState`, нарушая OCP.",
+                "how_it_should_be": "Новый способ оплаты — отдельная реализация `PaymentStrategy`; `VendingMachine` зависит от интерфейса и не меняется."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Cashless: StripeCardPaymentStrategy implements PaymentStrategy через Stripe SDK. Loyalty: LoyaltyAccount entity, скидка в onSelectProduct. Multi-cart: список Product в VendingMachine, multiple dispenses. Dynamic pricing: PricingStrategy interface.",
+              "text": "Cashless — новая реализация `PaymentStrategy` (`StripeCardPaymentStrategy` через Strategy+Adapter, `charge` создаёт `PaymentIntent` с суммой в центах). Loyalty — отдельная entity `LoyaltyAccount`, скидка применяется в `IdleState.onSelectProduct` корректировкой `effectivePrice`. Multi-product cart — `selectedProduct` заменяется на `List<Product> cart` с `cartTotal()`, state machine та же, но `Dispensing` делает несколько выдач. Dynamic pricing — ещё одна Strategy `PricingStrategy` (time-of-day, inventory pressure, demand), вызывается в `IdleState.onSelectProduct`.",
               "correct": true,
               "sections": {
-                "explanation": "Все extensions добавляются ОТКРЫТО (OCP) — новый Strategy/Observer/класс. State machine не меняется; меняются лишь parts (payment method, pricing rules, cart vs single product).",
-                "example": "Loyalty: customer scan QR → vm.applyLoyalty(account) → effective price = base_price × discount.",
-                "when_to_apply": "Когда interviewer спрашивает 'как расширить' — ответ: OCP + Strategy/Observer.",
-                "edge_cases": "Multi-cart требует расширения state machine (multiple Dispensing iterations) — больше изменений, но без слома существующих.",
-                "related": "Q13 (Strategy/Observer), Q18 (OCP)."
+                "explanation": "Все расширения ложатся на существующие точки вариативности: оплата и pricing — это Strategy, loyalty — отдельная entity со скидкой в момент выбора, cart — замена одиночного товара на список. Ядро state machine не меняется.",
+                "example": "`StripeCardPaymentStrategy.charge` делает `stripe.paymentIntents().create(...)` с `amount.movePointRight(2).longValueExact()` (Stripe принимает сумму в центах) и возвращает success/failure по статусу intent.",
+                "when_to_apply": "Эти расширения обсуждают в финале интервью («как добавить X»), демонстрируя, что дизайн открыт к расширению без переписывания.",
+                "edge_cases": "Dynamic pricing вводит ещё одну `PricingStrategy` (happy hour −20%, последние 2 шт +10%, popular +5%), вызываемую при выборе товара, чтобы посчитать `effectivePrice`.",
+                "related": "[[design-vending-machine-oo-interview#Q4]] `PaymentStrategy` как база для cashless; [[design-vending-machine-oo-interview#Q13]] Strategy/Adapter среди паттернов; [[design-vending-machine-oo-interview#Q18]] OCP, дающий расширяемость."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Loyalty не имеет места в LLD — это marketing feature, отдельная система.",
+              "text": "Multi-product cart невозможно реализовать без полного переписывания state machine — корзина ломает все переходы.",
               "correct": false,
               "sections": {
-                "what_actually": "Loyalty влияет на effective_price в transaction — это часть LLD. Скидка применяется в onSelectProduct.",
-                "source_of_confusion": "Разделяют business и technical слои слишком жёстко.",
-                "if_it_were_true": "Loyalty всегда post-fact, не влияет на immediate price.",
-                "how_it_should_be": "LoyaltyAccount integrated в transaction flow; discount applied перед charge."
+                "what_actually": "State machine остаётся той же: меняется лишь `selectedProduct` на `List<Product> cart` и `cartTotal()`, а `Dispensing` делает несколько выдач вместо одной.",
+                "source_of_confusion": "Кажется, что корзина — фундаментальное изменение, но переходы select→pay→dispense сохраняются.",
+                "if_it_were_true": "Тогда добавление cart требовало бы новых состояний и переходов, но достаточно расширить транзакционный контекст.",
+                "how_it_should_be": "Cart — это замена одиночного товара на список с суммой; FSM не меняется, `Dispensing` выдаёт несколько позиций."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Dynamic pricing нарушает legal requirements (price на ценнике).",
+              "text": "Loyalty-скидку применяют уже в `DispensingState` при выдаче, потому что только там известна финальная цена.",
               "correct": false,
               "sections": {
-                "what_actually": "Dynamic pricing допустим (Uber surge, AWS), при условии явного отображения текущей цены на UI.",
-                "source_of_confusion": "Жёсткое толкование 'price labeling' законов.",
-                "if_it_were_true": "Surge pricing был бы illegal — но нет.",
-                "how_it_should_be": "PricingStrategy + always показывать current effective price до payment."
+                "what_actually": "Скидку применяют раньше — в `IdleState.onSelectProduct`, корректируя `effectivePrice`, чтобы покупатель видел итоговую цену до оплаты.",
+                "source_of_confusion": "Кажется логичным считать цену «в самом конце», но покупателю нужно знать сумму до внесения денег.",
+                "if_it_were_true": "Тогда покупатель платил бы по полной цене, а скидку узнавал бы только при выдаче — плохой UX и неверный баланс.",
+                "how_it_should_be": "`effectivePrice` со скидкой считают в момент выбора товара (`onSelectProduct`), до накопления баланса."
               }
             }
           ]
@@ -1326,55 +1326,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какой testing approach для state machine vending machine: state-transition + property-based?",
+          "question_text": "Какой подход к тестированию автомата: state-transition таблицы и property-based?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "End-to-end тесты на UI достаточно — нет смысла unit-тестировать State.",
+              "text": "Достаточно одного end-to-end теста happy path; отдельные тесты на каждый переход и illegal-операции избыточны.",
               "correct": false,
               "sections": {
-                "what_actually": "E2E медленные, fragile, не покрывают edge cases. Unit на State + integration на VM — пирамида тестирования.",
-                "source_of_confusion": "Игнорируют test pyramid.",
-                "if_it_were_true": "Bug в IdleState ловится только через UI clicks — медленно и фрагментарно.",
-                "how_it_should_be": "Unit на каждое State + integration на VM + малое количество E2E happy path."
+                "what_actually": "Нужны параметризованные state-transition тесты по всей матрице переходов плюс тесты illegal-операций (бросок `IllegalStateException`), а не один happy-path сценарий.",
+                "source_of_confusion": "Один «зелёный» E2E создаёт ложное чувство покрытия, не проверяя негативные переходы.",
+                "if_it_were_true": "Тогда баг вроде «cancel в `Dispensing` не бросает исключение» остался бы незамеченным.",
+                "how_it_should_be": "Покрывают полную матрицу переходов параметризованно и отдельно проверяют, что illegal-операции бросают исключение."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Property-based тесты overkill — example-based достаточно.",
+              "text": "Property-based тесты проверяют конкретные заранее заданные входы, как и обычные unit-тесты, только с большим числом ассертов.",
               "correct": false,
               "sections": {
-                "what_actually": "Example-based ловит только подуманные сценарии. Property 'cash_in == cash_out + revenue' для random sequences ловит unforeseen edge cases.",
-                "source_of_confusion": "Не знакомы с jqwik/QuickCheck.",
-                "if_it_were_true": "Property-based не использовали бы Stripe, Twitter, Facebook (но используют).",
-                "how_it_should_be": "Mix: example для known cases + property для invariants."
+                "what_actually": "Property-based (`jqwik`) генерирует случайные последовательности событий и проверяет инвариант (например, `cashIn == productsCost + cashOut`) на всех них, а не фиксированные входы.",
+                "source_of_confusion": "Кажется, что «больше кейсов» — это просто больше примеров, но property-based проверяет свойство на сгенерированном пространстве.",
+                "if_it_were_true": "Тогда не было бы смысла в `@ForAll`-генерации, но именно она находит неожиданные комбинации событий.",
+                "how_it_should_be": "Property-based формулирует инвариант и проверяет его на множестве случайно сгенерированных последовательностей событий."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "State-transition table tests (@ParameterizedTest), illegal-transition тесты (IllegalStateException), property-based (jqwik): cash_in == products_value + change_out; concurrency: concurrent decrement/refill без lost updates.",
+              "text": "1) State-transition table tests: `@ParameterizedTest` + `@MethodSource`, матрица `(from, event, expectedTo)` — например `(idle, selectProduct(\"A3\"), ProductSelectedState)`. 2) Illegal transitions: `insertMoney` в `Idle` → `assertThatThrownBy(...).isInstanceOf(IllegalStateException.class)`. 3) Property-based (`jqwik`): инвариант no-money-loss — `cashIn == productsCost + cashOut` на случайных последовательностях событий. 4) Concurrency: 10 потоков по 100 `decrement` на слот с qty=100 → итог `0`, без lost update.",
               "correct": true,
               "sections": {
-                "explanation": "State machine идеально тестируется transition table. Property-based ловит edge cases, которые example-based пропускают (e.g., 'для любой последовательности events деньги балансируют').",
-                "example": "@ParameterizedTest stateTransition(from, event, expectedTo) → matrix всех валидных переходов. Property: noMoneyLoss(@ForAll List<Event>).",
-                "when_to_apply": "State machines, payment systems, любые domain с invariants — property-based обязателен.",
-                "edge_cases": "Concurrency tests — Executors + CountDownLatch для воспроизводимых race conditions.",
-                "related": "Q9 (illegal-state), Q19 (concurrency)."
+                "explanation": "Тестирование многослойное: параметризованная матрица переходов проверяет корректные переходы, отдельные тесты — illegal-операции, property-based — денежный инвариант, concurrency-тесты — отсутствие lost update.",
+                "example": "Concurrency-тест: `inventory.refill(\"A3\", 100)`, затем `10 потоков × 100 decrement` через executor, и `assertThat(getSlot(\"A3\").getQuantity()).isZero()` — проверка synchronized.",
+                "when_to_apply": "Эту стратегию описывают в секции testing — она показывает, что кандидат покрывает и FSM, и деньги, и конкуренцию.",
+                "edge_cases": "Property-based инвариант `cashIn == productsCost + cashOut` ловит баги, которые ручные кейсы пропускают, — например потерю денег при нестандартной последовательности cancel-ов.",
+                "related": "[[design-vending-machine-oo-interview#Q7]] матрица переходов как источник тестов; [[design-vending-machine-oo-interview#Q9]] illegal-операции для негативных тестов; [[design-vending-machine-oo-interview#Q19]] synchronized, который проверяет concurrency-тест."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Concurrency тесты — невозможны (non-determinism), просто использовать synchronized и надеяться.",
+              "text": "Concurrency-тесты не нужны, если код использует `synchronized` — компилятор сам гарантирует отсутствие гонок.",
               "correct": false,
               "sections": {
-                "what_actually": "Concurrency тесты возможны: Executors + CountDownLatch + множество iterations. JUnit + jcstress для stress-testing.",
-                "source_of_confusion": "Известная трудность concurrency = 'не тестируется'.",
-                "if_it_were_true": "Все concurrency bugs были бы поверхностные.",
-                "how_it_should_be": "Stress test с большим N iterations; jcstress для systematic race exploration."
+                "what_actually": "Компилятор не проверяет корректность синхронизации; concurrency-тест (много потоков `decrement`, проверка финального счётчика) нужен, чтобы реально подтвердить отсутствие lost update.",
+                "source_of_confusion": "Наличие `synchronized` в коде создаёт ложную уверенность, что гонки исключены по построению.",
+                "if_it_were_true": "Тогда ошибка вроде синхронизации не на том объекте никогда не проявлялась бы, но тест с 1000 декрементов её вскрывает.",
+                "how_it_should_be": "Конкурентность подтверждают нагрузочным тестом (потоки + проверка инварианта), а не верой в ключевое слово."
               }
             }
           ]
@@ -1386,55 +1386,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие anti-patterns избегать в vending machine LLD: huge switch, float money, exposed mutable state?",
+          "question_text": "Какие anti-patterns надо избегать: huge switch, float money, exposed mutable state?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Float для денег — приемлемо при двойной precision (double).",
+              "text": "`switch (state)` в каждом методе — нормальная практика для FSM, если состояний немного; State pattern избыточен для пяти состояний.",
               "correct": false,
               "sections": {
-                "what_actually": "Double тоже IEEE 754 binary — не представляет 0.1 точно. Та же ошибка precision, просто меньше.",
-                "source_of_confusion": "Думают, что double 'достаточно для денег'.",
-                "if_it_were_true": "Все банки использовали бы double вместо BigDecimal — но не используют.",
-                "how_it_should_be": "Никогда float/double для денег; всегда BigDecimal или integer cents."
+                "what_actually": "`switch (state)` в каждом методе — anti-pattern (дублирование, OCP-нарушение) уже при нескольких состояниях; правильно — State pattern с классом на состояние.",
+                "source_of_confusion": "«Состояний немного» создаёт иллюзию, что switch проще, но дублирование растёт как состояния × операции.",
+                "if_it_were_true": "Тогда добавление состояния не требовало бы правок везде, но при switch его дописывают в каждый метод.",
+                "how_it_should_be": "Даже при 5 состояниях используют State pattern; switch по состоянию — признак будущего технического долга."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Stringly-typed state (\"idle\") — нормально для простоты.",
+              "text": "`vm.setState(...)` стоит сделать публичным методом, чтобы UI мог напрямую переключать состояния машины.",
               "correct": false,
               "sections": {
-                "what_actually": "Опечатка \"idle\" vs \"Idle\" компилятор не поймает; refactoring (rename) хрупкий; auto-complete не помогает.",
-                "source_of_confusion": "Думают, что enum/класс — overhead.",
-                "if_it_were_true": "Все ООП-кодовые базы использовали бы string consts.",
-                "how_it_should_be": "Enum или классы State; type-safety + auto-complete."
+                "what_actually": "`setState` делают package-private, чтобы только State-классы меняли FSM; публичный доступ позволил бы любому коду сломать инварианты автомата.",
+                "source_of_confusion": "Кажется удобным дать UI прямой контроль над состоянием, но это открывает машину для некорректных переходов.",
+                "if_it_were_true": "Тогда UI мог бы выставить `DispensingState` без оплаты, нарушив инвариант «не отдать товар без денег».",
+                "how_it_should_be": "`setState` package-private; UI вызывает доменные методы (`selectProduct`/`insertMoney`), а переходы делает только домен."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Хранение полной card data в audit log — для compliance.",
+              "text": "`vm.getInventory().getSlots()` должен возвращать изменяемую `Map`, чтобы внешний код мог удобно пополнять товар.",
               "correct": false,
               "sections": {
-                "what_actually": "PCI-DSS запрещает хранить full PAN (Primary Account Number), CVV, magnetic stripe data. Только tokenized references.",
-                "source_of_confusion": "Думают, что 'более данных = более compliance'.",
-                "if_it_were_true": "PCI auditor сразу отзовёт сертификацию.",
-                "how_it_should_be": "Tokenization (Stripe/Adyen возвращает token), last4 для UX, никогда full card."
+                "what_actually": "Возврат изменяемой `Map` — anti-pattern (exposed mutable state): caller может сломать инварианты; отдают `unmodifiableMap`/DTO, а пополнение — через `refill(...)`.",
+                "source_of_confusion": "Прямой доступ к коллекции кажется удобным, но он обходит синхронизацию и инкапсуляцию `Inventory`.",
+                "if_it_were_true": "Тогда внешний код менял бы количество в обход `synchronized decrement`, создавая гонки и нарушая учёт.",
+                "how_it_should_be": "Наружу отдают неизменяемое представление; любые изменения — через контролируемые методы `Inventory`."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Huge switch (без State pattern), float money, stringly-typed state, публичный setState, бизнес-логика в UI, exposed mutable Map<>, хранение полной card data, Thread.sleep для timeout, god-метод process(), много instanceof.",
+              "text": "Ключевые anti-patterns: `switch (state)` в каждом методе (→ State pattern), `double price` (→ `BigDecimal` scale=2), `String state` (→ enum/классы), публичный `setState` (→ package-private), бизнес-логика в UI (→ domain отделён), `Map<String,Integer>` для inventory (→ класс `Inventory` с synchronized), хранение карты целиком (→ tokenization), `Thread.sleep` для timeout (→ `ScheduledExecutorService`), God-метод `process()` (→ метод на операцию), возврат изменяемой `Map` (→ `unmodifiableMap`/DTO). Запах «много `instanceof`» → поведение должно быть в State.",
               "correct": true,
               "sections": {
-                "explanation": "Каждый anti-pattern имеет конкретный лекарственный паттерн: switch → State, float → BigDecimal, string state → enum, public setState → package-private, exposed Map → unmodifiable/DTO, raw card → tokenization.",
-                "example": "Anti: double price; switch(state). Fix: BigDecimal price; vm.currentState.onInsertMoney(m).",
-                "when_to_apply": "В конце интервью — продемонстрировать осознанность 'что НЕ делать' это маркер senior.",
-                "edge_cases": "Singleton сам может быть anti-pattern в общем случае, но для VendingMachine (hardware bound) — оправдан.",
-                "related": "Q5 (BigDecimal), Q8 (State), Q14 (vs switch)."
+                "explanation": "Каждый anti-pattern имеет конкретное правильное решение: switch→State, double→BigDecimal, stringly-typed→enum, публичный setState→package-private, in-UI логика→domain, raw Map→Inventory, PAN→token, sleep→scheduler.",
+                "example": "Запах «много `instanceof`»: `if (state instanceof IdleState) {...} else if (state instanceof ProductSelectedState) {...}` означает, что поведение вытащено из State наружу — его надо вернуть в метод состояния.",
+                "when_to_apply": "Чек-лист anti-patterns проговаривают в конце дизайна, демонстрируя осознанность типичных ловушек LLD.",
+                "edge_cases": "`Thread.sleep` для timeout блокирует поток — заменяют на `ScheduledExecutorService` с возможностью cancellation, иначе таймер мешает обработке событий.",
+                "related": "[[design-vending-machine-oo-interview#Q14]] huge switch против State; [[design-vending-machine-oo-interview#Q5]] float money как ошибка; [[design-vending-machine-oo-interview#Q8]] package-private `setState` в State-классах."
               }
             }
           ]
