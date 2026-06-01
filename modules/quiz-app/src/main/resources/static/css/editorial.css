@@ -225,10 +225,18 @@ html[data-design="editorial"] {
   scroll-behavior: smooth;
 }
 
-html[data-design="editorial"] *,
-html[data-design="editorial"] *::before,
-html[data-design="editorial"] *::after {
+/* Глобальный reset (порт из styles.css). БАРЕ-селектор со специфичностью (0,0,0):
+   так он НЕ перебивает layout-примитивы .ed-page / .ed-masthead-inner (0,1,0),
+   которые задают `margin: 0 auto` и горизонтальные padding'и. Скоупить под
+   html[data-design] нельзя — это поднимает специфичность до (0,1,1) и ломает
+   центрирование шапки и контентной колонки. Весь app теперь editorial-only,
+   протекать некуда. */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 html[data-design="editorial"] body {
@@ -298,6 +306,22 @@ html[data-design="editorial"] a:hover { color: var(--color-accent-primary-hover)
 html[data-design="editorial"] ul,
 html[data-design="editorial"] ol { margin: 0 0 var(--space-4); padding-left: var(--space-5); max-width: var(--measure); }
 html[data-design="editorial"] li { margin-bottom: var(--space-2); }
+
+/* ===== Утилиты (порт из styles.css — нужны шаблонам после сноса старого CSS) =====
+   Скоупим под html[data-design="editorial"], чтобы не протекать на нескоупленные
+   страницы во время миграции; .hidden с !important — забивает любой display. */
+html[data-design="editorial"] .hidden { display: none !important; }
+html[data-design="editorial"] .d-inline { display: inline; }
+html[data-design="editorial"] .text-center { text-align: center; }
+html[data-design="editorial"] .flex-1 { flex: 1; }
+html[data-design="editorial"] .flex-shrink-0 { flex-shrink: 0; }
+html[data-design="editorial"] .mt-0 { margin-top: 0; }
+html[data-design="editorial"] .mt-3 { margin-top: var(--space-3); }
+html[data-design="editorial"] .overflow-x-auto { overflow-x: auto; }
+html[data-design="editorial"] .w-50 { width: 50px; }
+html[data-design="editorial"] .w-60 { width: 60px; }
+html[data-design="editorial"] .w-80 { width: 80px; }
+html[data-design="editorial"] .min-w-140 { min-width: 140px; }
 
 html[data-design="editorial"] code,
 html[data-design="editorial"] kbd,
