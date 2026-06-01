@@ -975,6 +975,11 @@
 
   // Горячие клавиши: 1-9 выбор варианта, Enter — отправка
   document.addEventListener('keydown', (event) => {
+    // Открыта модалка справки (role=dialog/aria-modal) → горячие клавиши страницы
+    // не срабатывают: иначе «1-9» выбирали бы вариант ПОД оверлеем, а фокус утекал
+    // из модалки (нарушение focus-trap). Подтверждено замером: «2» при открытой
+    // справке выделяла вариант и уводила фокус на radio под оверлеем.
+    if (document.querySelector('.kbd-help-overlay:not(.hidden)')) return;
     if (answered) return;
     if (event.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName) && event.target.type !== 'radio') {
       return;
@@ -1715,6 +1720,9 @@ function initFlashcardShortcuts() {
   const revealBtn = phase.querySelector('.flashcard-reveal-btn');
   const gradeBtns = phase.querySelectorAll('.flashcard-grade-btn');
   document.addEventListener('keydown', (event) => {
+    // Та же защита, что и для MCQ: при открытой модалке справки флешкард-шорткаты
+    // (Space/Enter/1-4) не должны утекать под оверлей.
+    if (document.querySelector('.kbd-help-overlay:not(.hidden)')) return;
     if (event.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName)) {
       return;
     }
