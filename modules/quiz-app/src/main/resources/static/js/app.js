@@ -1262,9 +1262,9 @@
     confidenceDiv.className = 'confidence-buttons';
     confidenceDiv.innerHTML = `
       <span class="confidence-label">Насколько ты уверен по этому вопросу?</span>
-      <button type="button" class="confidence-btn confidence-guess" data-grade="3" aria-label="Уровень уверенности: угадал">🎲 Угадал</button>
-      <button type="button" class="confidence-btn confidence-hard" data-grade="4" aria-label="Уровень уверенности: с трудом">🤔 С трудом</button>
-      <button type="button" class="confidence-btn confidence-sure" data-grade="5" aria-label="Уровень уверенности: знал точно">💪 Знал точно</button>
+      <button type="button" class="confidence-btn confidence-guess" data-grade="3" aria-pressed="false" aria-label="Уровень уверенности: угадал">🎲 Угадал</button>
+      <button type="button" class="confidence-btn confidence-hard" data-grade="4" aria-pressed="false" aria-label="Уровень уверенности: с трудом">🤔 С трудом</button>
+      <button type="button" class="confidence-btn confidence-sure" data-grade="5" aria-pressed="false" aria-label="Уровень уверенности: знал точно">💪 Знал точно</button>
     `;
     feedbackDiv.after(confidenceDiv);
 
@@ -1295,9 +1295,14 @@
 
         confidenceDiv.querySelectorAll('.confidence-btn').forEach(b => {
           b.classList.remove('selected');
+          b.setAttribute('aria-pressed', 'false');
           b.disabled = true;
         });
         btn.classList.add('selected');
+        // Скринридеру нужно знать, КАКОЙ уровень выбран: .selected — чисто
+        // визуальный класс. aria-pressed=true на нажатой (теперь disabled)
+        // кнопке озвучивает выбор как нажатое состояние toggle-кнопки.
+        btn.setAttribute('aria-pressed', 'true');
       });
     });
   }
