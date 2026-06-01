@@ -1226,8 +1226,8 @@ html[data-design="editorial"] .stats-page .stats-search-pane {
   background: transparent; box-shadow: none; border-radius: 0;
 }
 html[data-design="editorial"] .stats-page .stats-filter-row { display: flex; flex-wrap: wrap; gap: var(--space-6); border: 0; }
-html[data-design="editorial"] .stats-page .stats-filter-pane { flex: 2 1 360px; border: 0; padding: 0; }
-html[data-design="editorial"] .stats-page .stats-search-pane { flex: 1 1 240px; border: 0; padding: 0; }
+html[data-design="editorial"] .stats-page .stats-filter-pane { flex: 2 1 360px; min-width: 0; border: 0; padding: 0; }
+html[data-design="editorial"] .stats-page .stats-search-pane { flex: 1 1 240px; min-width: 0; border: 0; padding: 0; }
 @media (min-width: 761px) {
   html[data-design="editorial"] .stats-page .stats-search-pane { border-left: var(--rule-weight) solid var(--color-border-primary); padding-left: var(--space-6); }
 }
@@ -1252,7 +1252,14 @@ html[data-design="editorial"] .stats-page input[type="search"] {
   color: var(--color-text-primary); background: var(--color-bg-primary);
   border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-sm);
   transition: border-color var(--duration-fast) var(--easing-default), box-shadow var(--duration-fast) var(--easing-default);
+  /* select сайзится по самой широкой <option> (у группы это длинная строка
+     «Title - Description (N)») — без max-width он распирает колонку фильтров
+     и даёт горизонтальный скролл на мобиле. Кап + min-width:0 у label/pane
+     позволяют полю ужаться до ширины контейнера. */
+  max-width: 100%;
 }
+html[data-design="editorial"] .stats-page .filter-row > label,
+html[data-design="editorial"] .stats-page .search-form > label { min-width: 0; }
 html[data-design="editorial"] .stats-page select {
   appearance: none; -webkit-appearance: none;
   background-image: linear-gradient(45deg, transparent 50%, var(--color-text-secondary) 50%), linear-gradient(135deg, var(--color-text-secondary) 50%, transparent 50%);
@@ -1295,8 +1302,12 @@ html[data-design="editorial"] .stats-page .accuracy-bar-fill { height: 100%; bac
 
 /* Графики */
 html[data-design="editorial"] .stats-page .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); margin-bottom: var(--space-6); }
-html[data-design="editorial"] .stats-page .chart-card { margin: 0; }
-html[data-design="editorial"] .stats-page .chart-wrapper { position: relative; height: 320px; }
+/* min-width:0 — grid-айтем по умолчанию имеет min-width:auto и не даёт 1fr-треку
+   ужаться ниже min-content контента. Внутри лежит canvas Chart.js с фиксированной
+   width=300 → трек распирало до 366px и страница уезжала вправо на мобиле. */
+html[data-design="editorial"] .stats-page .chart-card { margin: 0; min-width: 0; }
+html[data-design="editorial"] .stats-page .chart-wrapper { position: relative; height: 320px; min-width: 0; }
+html[data-design="editorial"] .stats-page .chart-wrapper canvas { max-width: 100%; }
 html[data-design="editorial"] .stats-page .chart-fallback { color: var(--color-text-secondary); font-size: var(--font-size-sm); padding: var(--space-4) 0; }
 
 /* Таблица тем */
@@ -1388,6 +1399,16 @@ html[data-design="editorial"] .stats-page .search-result-item a:hover { text-dec
   html[data-design="editorial"] .stats-page .charts-row { grid-template-columns: 1fr; }
   html[data-design="editorial"] .stats-page .stats-filter-row { flex-direction: column; gap: var(--space-5); }
   html[data-design="editorial"] .stats-page .forecast-row { grid-template-columns: 84px 1fr 36px; }
+  /* На мобиле фильтр/поиск складываются в одну колонку: поля и кнопки на всю
+     ширину — ровно, крупные таргеты, без горизонтального скролла. */
+  html[data-design="editorial"] .stats-page .filter-row,
+  html[data-design="editorial"] .stats-page .search-form { flex-direction: column; align-items: stretch; }
+  html[data-design="editorial"] .stats-page .filter-row > label:not(:has(input[type="checkbox"])),
+  html[data-design="editorial"] .stats-page .search-form > label { width: 100%; }
+  html[data-design="editorial"] .stats-page select,
+  html[data-design="editorial"] .stats-page input[type="text"],
+  html[data-design="editorial"] .stats-page input[type="search"] { width: 100%; }
+  html[data-design="editorial"] .stats-page .stats-action-btn { width: 100%; }
 }
 
 /* ==========================================================================
