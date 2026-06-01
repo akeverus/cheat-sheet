@@ -359,3 +359,21 @@ html[data-theme="light"] .stats-page .accuracy-mid {
 html[data-theme="light"] .streak-days {
     color: #946000;            /* тёмно-янтарный, ≈5:1 (вместо #fbbf24 = 1.55:1) */
 }
+
+/* ── Touch-эргономика (skill ui-ux-pro-max: touch-target-size=High, tap-delay=Medium) ──
+   touch-action нигде в проекте не выставлен. Аудит на 360px нашёл контролы 40–42px.
+
+   1) touch-action: manipulation — убирает 300ms tap-delay (double-tap-zoom) на
+      мобильных: тап ощущается мгновенным. Безопасно глобально — влияет только на
+      touch-ввод, мышь/клавиатуру не трогает; pinch-zoom сохраняется (масштаб не ломаем).
+   2) На touch-вьюпортах поднимаем мелкие контролы до 44×44 (WCAG 2.5.5 / Apple HIG):
+      .theme-toggle был 40×40, .surface-tab был ~42px высотой. */
+button, a[href], label[data-option-id], input, select,
+.surface-tab, .confidence-btn, .theme-toggle, .flashcard-grade-btn {
+    touch-action: manipulation;
+}
+
+@media (max-width: 768px), (pointer: coarse) {
+    .theme-toggle { width: 44px; height: 44px; }
+    .focus-page .surface-tab { min-height: 44px; }
+}
