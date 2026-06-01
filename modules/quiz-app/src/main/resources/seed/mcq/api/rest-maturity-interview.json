@@ -6,55 +6,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое Richardson Maturity Model и как устроена её шкала уровней?",
+          "question_text": "Что такое `Richardson Maturity Model`?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "RMM описывает 5 уровней зрелости от Level 0 до Level 4 (REST + WebSub).",
-              "correct": false,
+              "text": "`Richardson Maturity Model (RMM)` — модель оценки RESTful API через 4 уровня зрелости (0-3): Level 0 — HTTP как транспорт (RPC-стиль), Level 1 — отдельный URI на ресурс, Level 2 — корректная семантика HTTP-глаголов и кодов, Level 3 — гипермедиа-ссылки (HATEOAS). Автор — `Leonard Richardson`, популяризировал `Martin Fowler`.",
+              "correct": true,
               "sections": {
-                "what_actually": "В RMM ровно 4 уровня — 0, 1, 2, 3. Level 3 (HATEOAS) — самый верхний; WebSub или Level 4 в модели нет вообще.",
-                "source_of_confusion": "Путают с другими ladder-моделями (CMMI, OWASP ASVS), где уровней 4-5. Иногда добавляют voodoo-уровень `Level 4 = events/Webhooks`, но это не часть RMM.",
-                "if_it_were_true": "Если бы был Level 4, в литературе Fowler/Webber/Parastatidis он бы упоминался; на собесе кандидат, ссылающийся на Level 4, сразу выдаёт что не читал первоисточник.",
-                "how_it_should_be": "Корректно: 0=POX, 1=Resources, 2=Verbs+Status codes, 3=HATEOAS — ровно 4 ступени."
+                "explanation": "Модель раскладывает «RESTful» на измеримые ступени: каждый следующий уровень добавляет одно свойство — ресурсы, затем семантику HTTP, затем гипермедиа. Это даёт общий язык, чтобы обсуждать, насколько API близок к REST.",
+                "example": "API с единственным `POST /endpoint` — Level 0; `GET /users/123` с кодом `200 OK` и `DELETE /users/123` — уже Level 2; добавьте `_links` в ответ — и это Level 3.",
+                "when_to_apply": "Применяют при ревью дизайна API и на собеседованиях, чтобы оценить, на какой ступени находится текущий API и стоит ли двигаться выше.",
+                "edge_cases": "Модель описательная, а не нормативная: «выше» не всегда «лучше», и большинство промышленных API сознательно останавливаются на Level 2.",
+                "related": "[[rest-maturity-interview#Q2]] зачем нужна модель; [[rest-maturity-interview#Q5]] Level 2 подробно; [[rest-maturity-interview#Q6]] Level 3 и HATEOAS."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Level 0 — это API с правильными HTTP-verbs, но без HATEOAS.",
+              "text": "`RMM` — это обязательный стандарт `IETF`, который API должен пройти полностью (все 4 уровня), иначе он не имеет права называться HTTP-сервисом.",
               "correct": false,
               "sections": {
-                "what_actually": "Level 0 (Swamp of POX) — RPC поверх HTTP: один URL, всё POST, никаких HTTP-verbs по семантике. Правильные verbs появляются только на Level 2.",
-                "source_of_confusion": "Кандидат запоминает «без HATEOAS = низкий уровень» и проецирует это на Level 0, забывая что между Level 0 и 3 есть ещё Level 1 (resources) и Level 2 (verbs).",
-                "if_it_were_true": "Тогда любой современный CRUD-API (`GET /users`, `POST /users`) был бы Level 0, что обесценивает модель — она перестаёт что-либо различать.",
-                "how_it_should_be": "API с правильными verbs/status codes, но без HATEOAS = Level 2, а не Level 0."
+                "what_actually": "RMM — описательная модель `Leonard Richardson`, а не нормативный стандарт `IETF`; она ничего не предписывает и не запрещает.",
+                "source_of_confusion": "Слово «maturity» (зрелость) звучит как сертификация, которую надо «сдать», отсюда мысль про обязательный стандарт.",
+                "if_it_were_true": "Тогда Level 2 API без HATEOAS считались бы вне закона, но именно они составляют большинство промышленных REST API.",
+                "how_it_should_be": "Это инструмент оценки и общий словарь для обсуждения степени соответствия REST, а не обязательная спецификация."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "RMM — 4 уровня (0: POX/RPC через HTTP → 1: Resources/multiple URIs → 2: HTTP Verbs + Status Codes → 3: HATEOAS); descriptive-модель.",
-              "correct": true,
+              "text": "`RMM` — это модель из 7 уровней, где каждый уровень соответствует одному HTTP-статус-коду (200, 201, 400 и так далее).",
+              "correct": false,
               "sections": {
-                "explanation": "Richardson Maturity Model (Leonard Richardson, 2008; популяризировал Martin Fowler) — descriptive-модель для оценки степени RESTful-ности HTTP-API. Уровни кумулятивные: каждый следующий добавляет к предыдущему. Level 0 — туннель RPC через HTTP. Level 1 — разнесение по URL-ресурсам. Level 2 — корректное использование HTTP-методов и status codes (кэш, idempotency работают). Level 3 — HATEOAS, навигация через hypermedia links.",
-                "example": "Pre-2014 SOAP-сервисы (`POST /endpoint` с XML envelop) = Level 0. JSON-RPC = тоже Level 0. Современный `GET /users/123` с 404 при отсутствии = Level 2. PayPal v2 API с `_links` блоком в responses = Level 3.",
-                "when_to_apply": "Как teaching-tool на дизайн-ревью: оценить свой API по уровням, понять где compromise. Level 2 — pragmatic target для большинства; Level 3 — для public/long-lived API с независимыми consumer'ами.",
-                "edge_cases": "Модель descriptive, не prescriptive — не используется как gate в CI/CD. Кумулятивность не строгая: можно иметь Level 2 verbs, но без полного Level 1 (один resource).",
-                "related": "[[rest-maturity-interview#Q2]] зачем модель нужна; [[rest-maturity-interview#Q3]] детали Level 0; [[rest-maturity-interview#Q15]] критика Fielding."
+                "what_actually": "В модели ровно 4 уровня (0-3), и они про свойства API (ресурсы, глаголы, гипермедиа), а не про отдельные статус-коды.",
+                "source_of_confusion": "Статус-коды появляются на Level 2, поэтому их ошибочно делают самостоятельными ступенями.",
+                "if_it_were_true": "Тогда добавление кода `429 Too Many Requests` поднимало бы API на новый уровень зрелости, что бессмысленно.",
+                "how_it_should_be": "Уровней четыре; корректные коды статусов — лишь часть Level 2 наряду с правильными глаголами."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "RMM — это prescriptive-модель: API должен достичь Level 3, иначе он не считается RESTful.",
+              "text": "`RMM` — это метрика производительности REST API, измеряющая количество запросов в секунду, которое выдерживает сервис.",
               "correct": false,
               "sections": {
-                "what_actually": "RMM именно descriptive — описывает паттерны существующих API, не предписывает достичь Level 3. Прескриптивный взгляд («только Level 3 — REST») принадлежит Roy Fielding, а не самой модели.",
-                "source_of_confusion": "Смешивают позицию Fielding (academic purist: только Level 3 = REST) с самой моделью Richardson (descriptive ladder). Это две разные точки зрения.",
-                "if_it_were_true": "Тогда 95% production API в индустрии не были бы RESTful, и термин потерял бы смысл; Fowler не позиционировал бы Level 2 как pragmatic norm.",
-                "how_it_should_be": "Корректнее: RMM — descriptive; Fielding-критика — отдельный prescriptive взгляд поверх модели."
+                "what_actually": "RMM измеряет архитектурную зрелость (соответствие принципам REST), а не пропускную способность или latency.",
+                "source_of_confusion": "Слово «модель» в контексте сервисов ассоциируется с нагрузочными моделями и benchmarking.",
+                "if_it_were_true": "Тогда уровень API менялся бы при апгрейде железа, но Level зависит только от дизайна интерфейса.",
+                "how_it_should_be": "Это качественная модель дизайна API; производительность измеряют отдельными нагрузочными тестами."
               }
             }
           ]
@@ -66,55 +66,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какую главную роль играет Richardson Maturity Model в обсуждениях про REST?",
+          "question_text": "Зачем нужна `Richardson Maturity Model`?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Дифференцирует уровни «RESTful»: большинство «REST APIs» на самом деле Level 1-2; модель помогает понять смысл HTTP-verbs/status codes/HATEOAS и используется как descriptive teaching-tool.",
-              "correct": true,
+              "text": "Модель нужна, чтобы заставить все команды обязательно мигрировать на Level 3 (HATEOAS), так как только он считается допустимым в продакшене.",
+              "correct": false,
               "sections": {
-                "explanation": "RMM полезна тем, что задаёт общий язык для обсуждения «насколько RESTful» API. Без неё разговор сваливается в «у нас REST, потому что JSON over HTTP». Модель показывает что между POX-туннелем и HATEOAS есть осмысленная градация, и большинство production API сознательно останавливаются на Level 2. Это позволяет команде явно обсудить trade-off pragmatic Level 2 vs idealistic Level 3 при design review.",
-                "example": "На дизайн-ревью внутреннего сервиса: «нам нужен hypermedia? — нет, consumer один, OpenAPI достаточно → Level 2 финал». Для public API типа GitHub/PayPal: «у нас 1000+ external clients, хотим менять URLs → нужен Level 3».",
-                "when_to_apply": "Architecture review, обучение junior'ов, дискуссии о versioning vs HATEOAS, выбор формата (HAL/JSON:API). Хорошо ложится в onboarding.",
-                "edge_cases": "Модель ничего не говорит про authentication, transport-level (TLS), rate limiting, pagination — это всё ортогональные concerns; не пытайтесь укладывать всё API design в RMM.",
-                "related": "[[rest-maturity-interview#Q1]] определение уровней; [[rest-maturity-interview#Q10]] почему HATEOAS редок; [[rest-maturity-interview#Q15]] критика Fielding."
+                "what_actually": "RMM ничего не предписывает и не требует Level 3; на практике стандартом индустрии остаётся Level 2.",
+                "source_of_confusion": "`Roy Fielding` называет «truly RESTful» только Level 3, и это путают с обязательным требованием модели.",
+                "if_it_were_true": "Тогда подавляющее большинство публичных API (`GitHub`, `Stripe`) были бы «неправильными», что абсурдно.",
+                "how_it_should_be": "Модель лишь описывает уровни; выбор целевого уровня остаётся за командой исходя из задач."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Модель prescriptive: без достижения Level 3 API не считается REST и не должен называться RESTful.",
-              "correct": false,
+              "text": "Модель разводит разные утверждения о «REST API»: многие называют REST даже Level 0-1, Level 2 — типичный прагматичный REST, Level 3 — академически «truly RESTful». Она помогает глубже понять, что значит RESTful, почему важны HTTP-глаголы и коды, и какие следствия даёт HATEOAS. Ничего не предписывает — описательная, а не нормативная.",
+              "correct": true,
               "sections": {
-                "what_actually": "RMM — descriptive, описывает реальность индустрии. Большинство production APIs живут на Level 2 без проблем и считаются RESTful в pragmatic смысле.",
-                "source_of_confusion": "Смешение с позицией Roy Fielding (он действительно жёстко требует Level 3), но это его персональная критика, а не сама модель.",
-                "if_it_were_true": "Тогда Stripe API, GitHub API v3, AWS REST API формально не RESTful — что противоречит индустриальной норме и здравому смыслу.",
-                "how_it_should_be": "Модель ладдер, не gate; pragmatic Level 2 — норма; prescriptive позицию выражает Fielding, не Richardson."
+                "explanation": "Главная польза — общий словарь: спор «это REST или нет» превращается в конкретное «это Level 1, потому что только ресурсы, но без семантики глаголов». Это снимает терминологические недопонимания в команде.",
+                "example": "Один разработчик зовёт `POST /getUser` «REST API», другой возражает; RMM ставит точку: это Level 0, RPC поверх HTTP, а не уровень с глаголами.",
+                "when_to_apply": "Применяют на собеседованиях и архитектурных ревью, чтобы объективно классифицировать API и обсуждать целесообразность движения к более высокому уровню.",
+                "edge_cases": "Модель не говорит, какой уровень «правильный»: для внутреннего сервиса Level 2 может быть осознанно достаточным, а Level 3 — избыточным.",
+                "related": "[[rest-maturity-interview#Q1]] что такое RMM; [[rest-maturity-interview#Q15]] критика модели; [[rest-maturity-interview#Q16]] прагматичный vs идеалистичный REST."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "RMM нужна чтобы выбрать между REST и SOAP при дизайне нового API.",
+              "text": "Модель нужна исключительно для автоматической генерации `OpenAPI`-спецификаций из кода контроллеров.",
               "correct": false,
               "sections": {
-                "what_actually": "RMM сравнивает разные уровни RESTful-ности, а не REST vs SOAP. SOAP в RMM попадает на Level 0, но модель не предназначена для сравнения архитектурных стилей.",
-                "source_of_confusion": "Кандидат собирает всё, что слышал про API-стили, в одну корзину. RMM, REST vs SOAP, REST vs GraphQL/gRPC — это три разных дискуссии.",
-                "if_it_were_true": "В литературе Fowler/Webber тогда были бы детальные сравнения SOAP-функций (WS-Security, WS-AtomicTransaction) с REST, чего там нет.",
-                "how_it_should_be": "REST vs SOAP — отдельная тема; для REST vs GraphQL/gRPC см. Q17; RMM — про степень RESTful-ности внутри REST-стиля."
+                "what_actually": "RMM — концептуальная модель оценки зрелости, она не связана с генерацией `OpenAPI` и не является инструментом.",
+                "source_of_confusion": "И RMM, и `OpenAPI` относятся к теме «качество API», поэтому их функции смешивают.",
+                "if_it_were_true": "Тогда без RMM нельзя было бы получить `OpenAPI`-документ, но его генерируют из аннотаций кода независимо.",
+                "how_it_should_be": "RMM описывает уровни зрелости; генерацию спецификаций делают `springdoc`, `swagger` и подобные инструменты."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Модель — это формальная спецификация описания контракта (как OpenAPI/Swagger).",
+              "text": "Модель нужна, чтобы измерять покрытие API unit-тестами и блокировать деплой при покрытии ниже порога.",
               "correct": false,
               "sections": {
-                "what_actually": "OpenAPI — format описания API (schemas, paths, responses); RMM — оценка архитектурного стиля. Это полностью ортогональные сущности.",
-                "source_of_confusion": "Оба связаны со словом «REST», и оба применяются на этапе design — но один описывает контракт, другой оценивает зрелость.",
-                "if_it_were_true": "Тогда был бы YAML/JSON dialect RMM с инструментами вроде swagger-codegen, чего не существует.",
-                "how_it_should_be": "RMM можно применять к API независимо от того, описан он в OpenAPI или нет; OpenAPI описывает Level 2 контракт, не задавая степень RESTful."
+                "what_actually": "RMM не про тестовое покрытие; она классифицирует архитектурный стиль API, а не качество тестов.",
+                "source_of_confusion": "Слово «maturity» ассоциируется с зрелостью процессов, включая тестирование и CI-гейты.",
+                "if_it_were_true": "Тогда уровень API падал бы при удалении тестов, но Level определяется только дизайном интерфейса.",
+                "how_it_should_be": "Покрытие тестами меряют `JaCoCo` и подобные; RMM отвечает на вопрос «насколько API соответствует REST»."
               }
             }
           ]
@@ -126,55 +126,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что характеризует Level 0 (The Swamp of POX) в Richardson Maturity Model?",
+          "question_text": "Что такое Level 0: The Swamp of POX?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Level 0 — это «правильный REST», просто с одним endpoint'ом и одним методом.",
+              "text": "Level 0 — это API, где уже используются разные URI под каждый ресурс (`/users`, `/orders`), но все запросы по-прежнему идут методом `POST`.",
               "correct": false,
               "sections": {
-                "what_actually": "Level 0 — это RPC через HTTP, не REST. HTTP используется только как транспорт, method и resource переданы в теле запроса; ничего «RESTful» в этом нет.",
-                "source_of_confusion": "Кандидат верит, что любой HTTP-API уже REST. На самом деле REST требует resource orientation (Level 1+) и HTTP-semantics (Level 2+).",
-                "if_it_were_true": "Тогда XML-RPC 1998 года был бы REST, что хронологически невозможно (REST описан Fielding в 2000).",
-                "how_it_should_be": "Level 0 = «HTTP как dump pipe» для RPC; не REST, хотя технически использует HTTP."
+                "what_actually": "Отдельные URI на ресурс — это уже Level 1; на Level 0 эндпоинт один и URL не различает ресурсы.",
+                "source_of_confusion": "Level 0 и Level 1 оба используют только `POST`, и единственное отличие (один URL vs много) легко упустить.",
+                "if_it_were_true": "Тогда между Level 0 и Level 1 не было бы разницы, но именно появление URI на ресурс отделяет их.",
+                "how_it_should_be": "На Level 0 — один URL для всего; разделение на `/users`, `/orders` — это переход на Level 1."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Level 0 (Swamp of POX): один URL, всё через POST, HTTP только как транспорт; method и resource в request body; примеры — SOAP, XML-RPC, JSON-RPC.",
-              "correct": true,
+              "text": "Level 0 — это уровень, на котором API уже корректно использует `GET` для чтения и `DELETE` для удаления, но ещё без гипермедиа-ссылок.",
+              "correct": false,
               "sections": {
-                "explanation": "POX = Plain Old XML. На Level 0 HTTP используется как туннель: все запросы летят POST'ом на один endpoint (например `/api`), а метод (`getUser`, `createOrder`) и параметры передаются внутри XML/JSON envelope. Никакой URL-структуры, никаких status codes по семантике, кэширование невозможно. Caching/idempotency/HTTP tooling (proxy, CDN) не работают — для них всё это просто POST на один URL.",
-                "example": "Классический SOAP: `POST /soap/endpoint` с XML envelope содержащим `<soap:Body><getUserById id=\"123\"/></soap:Body>`. Также JSON-RPC: `POST /rpc` с `{\"method\": \"users.get\", \"params\": [123]}`. Старые SOAP-системы Sabre, многие enterprise B2B integration'ы.",
-                "when_to_apply": "Намеренно — никогда для новых API. На практике встречается в legacy enterprise (банки, страховые), gRPC через HTTP/1.1 fallback, миграции SOAP → REST когда первая итерация ещё на старой архитектуре.",
-                "edge_cases": "Технически POST с одним URL имеет преимущество — простой firewall config (только один path whitelist). Поэтому в строго-зарегулированных средах (банки) Level 0 встречается дольше.",
-                "related": "[[rest-maturity-interview#Q4]] переход к Level 1 (resources); [[rest-maturity-interview#Q1]] обзор уровней."
+                "what_actually": "Корректная семантика глаголов (`GET`, `DELETE`) появляется только на Level 2; на Level 0 всё делается через `POST`.",
+                "source_of_confusion": "Кажется, что «нет HATEOAS» автоматически означает самый низкий уровень, хотя глаголы уже могут использоваться.",
+                "if_it_were_true": "Тогда Level 0 и Level 2 различались бы только наличием ссылок, но они отличаются ещё и использованием глаголов.",
+                "how_it_should_be": "Использование `GET`/`DELETE` по назначению — это Level 2; Level 0 знает только `POST` на один URL."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "SOAP и XML-RPC относятся к Level 2 в RMM, потому что используют HTTP правильно.",
-              "correct": false,
+              "text": "Level 0 (`The Swamp of POX`, Plain Old XML) — RPC-стиль поверх HTTP: один URL, все запросы идут через `POST`, HTTP используется только как транспорт, а семантика метода зашита в тело запроса. Примеры: `SOAP`, `XML-RPC`, `JSON-RPC`. Совсем не RESTful, хотя технически использует HTTP.",
+              "correct": true,
               "sections": {
-                "what_actually": "SOAP и XML-RPC — классические примеры Level 0 (POX): один URL, всё POST, semantics в body. Это явно описано Фаулером в оригинальной статье.",
-                "source_of_confusion": "SOAP «использует HTTP» формально, поэтому кажется правильным. Но «использует» означает «как транспорт», без HTTP-semantics.",
-                "if_it_were_true": "Тогда SOAP-сервис с одним endpoint `/soap` мог бы кэшироваться браузером, что не работает (POST не cacheable).",
-                "how_it_should_be": "SOAP/XML-RPC = Level 0; Level 2 — это REST APIs с правильными GET/POST/PUT/DELETE и URL-ресурсами."
+                "explanation": "На этом уровне HTTP не несёт смысла: глагол всегда `POST`, URL не различает ресурсы, а что именно делать (`getUser`, `deleteUser`) сервер узнаёт из payload. Это туннелирование RPC через HTTP-транспорт.",
+                "example": "`POST /endpoint` с телом `<request><method>getUser</method><id>123</id></request>` — классический Level 0: и чтение, и запись идут одним глаголом на один URL.",
+                "when_to_apply": "Распознают Level 0, когда видят единый эндпоинт и `POST` на всё; обычно это легаси `SOAP`-сервисы или самописные RPC.",
+                "edge_cases": "`JSON-RPC` тоже Level 0, несмотря на «современный» JSON: формат данных не повышает уровень, важна семантика HTTP, а её здесь нет.",
+                "related": "[[rest-maturity-interview#Q4]] Level 1 — ресурсы; [[rest-maturity-interview#Q5]] Level 2 — глаголы и коды; [[rest-maturity-interview#Q1]] обзор всех уровней."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "На Level 0 GET используется свободно для чтения данных, просто все resources идут через один URL.",
+              "text": "Level 0 — это REST API, которое отдаёт данные исключительно в формате XML, а не JSON; переход на JSON автоматически повышает его до Level 1.",
               "correct": false,
               "sections": {
-                "what_actually": "На Level 0 традиционно весь POX-трафик идёт через POST с method-name в теле. Именно поэтому caching/idempotency не работают — proxy не видит, что это «безопасное чтение».",
-                "source_of_confusion": "Формально на одном URL можно использовать GET (`GET /endpoint?method=getUser&id=123`), но это уже сдвиг в сторону Level 1; чистый Level 0 — всё POST.",
-                "if_it_were_true": "Тогда Level 0 SOAP-сервисы кэшировались бы CDN, что противоречит реальности SOAP-development.",
-                "how_it_should_be": "Чистый Level 0 = всё POST через один URL; смешанный режим с GET — это уже частичный переход к Level 1."
+                "what_actually": "Уровень не зависит от формата (XML/JSON): «POX» означает RPC-стиль, а не запрет JSON; смена формата уровень не меняет.",
+                "source_of_confusion": "Расшифровка POX как «Plain Old XML» создаёт впечатление, что дело именно в XML-формате.",
+                "if_it_were_true": "Тогда `JSON-RPC` был бы выше `XML-RPC`, но оба остаются Level 0 — формат данных не влияет на уровень.",
+                "how_it_should_be": "Level зависит от использования URI, глаголов и гипермедиа, а не от того, XML это или JSON."
               }
             }
           ]
@@ -186,55 +186,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что добавляет Level 1 (Resources) к Level 0 в Richardson Maturity Model?",
+          "question_text": "Что такое Level 1: Resources?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "На Level 1 уже используются все HTTP-методы (GET/POST/PUT/DELETE) по семантике.",
+              "text": "Level 1 — это уровень, на котором API уже правильно использует `GET`, `PUT`, `DELETE` и возвращает осмысленные коды статусов вроде `201 Created`.",
               "correct": false,
               "sections": {
-                "what_actually": "Правильное использование HTTP-методов появляется только на Level 2. Level 1 всё ещё может ограничиваться POST'ом, но уже на per-resource URLs.",
-                "source_of_confusion": "Кандидат склеивает «URL-структура» и «HTTP-методы» в один шаг. RMM разделяет их специально: переход 0→1 — это про URL, 1→2 — про HTTP semantics.",
-                "if_it_were_true": "Тогда Level 1 и Level 2 были бы одно и то же; модель имела бы 3 уровня, а не 4.",
-                "how_it_should_be": "Level 1 = только per-resource URLs (`/users`, `/orders`); HTTP verbs корректно использовать — это уже Level 2."
+                "what_actually": "Корректные глаголы и коды статусов — признак Level 2; на Level 1 ресурсы получили URI, но операции всё ещё идут через `POST`.",
+                "source_of_confusion": "Появление структурированных URI кажется «уже почти REST», и к нему ошибочно приписывают семантику глаголов.",
+                "if_it_were_true": "Тогда Level 1 и Level 2 были бы неотличимы, но именно использование глаголов и кодов отделяет второй от первого.",
+                "how_it_should_be": "На Level 1 есть только ресурсные URI и `POST`; глаголы и коды статусов — это уже Level 2."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Level 1 = добавление правильных status codes 2xx/4xx/5xx к Level 0.",
+              "text": "Level 1 — это уровень, на котором ответы сервера содержат гипермедиа-ссылки `_links`, по которым клиент обнаруживает доступные действия.",
               "correct": false,
               "sections": {
-                "what_actually": "Правильные status codes — это аспект Level 2, не Level 1. Level 1 — только URL-структура (multiple resources). На Level 1 ответы могут всё ещё быть «200 OK + error в body».",
-                "source_of_confusion": "Статусы часто упоминают рядом с verbs, поэтому их относят на тот же шаг. На самом деле RMM объединяет verbs+codes в один Level 2.",
-                "if_it_were_true": "Тогда Level 1 API возвращал бы 404 при отсутствии resource, что характеризует уже Level 2 поведение.",
-                "how_it_should_be": "Level 1 — только URL-структура; status codes и verbs идут вместе на Level 2."
+                "what_actually": "Гипермедиа-ссылки в ответах — это Level 3 (HATEOAS); Level 1 добавляет только отдельные URI на ресурсы.",
+                "source_of_confusion": "И URI, и ссылки связаны с адресами ресурсов, поэтому понятие «ресурсы» путают с гипермедиа-навигацией.",
+                "if_it_were_true": "Тогда Level 1 совпал бы с вершиной модели, но между ними ещё два уровня (глаголы и гипермедиа).",
+                "how_it_should_be": "Level 1 — только URI на ресурс; ссылки `_links` для навигации появляются на Level 3."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Кэширование на Level 1 в принципе невозможно, потому что все запросы остаются POST.",
+              "text": "Level 1 — это по-прежнему один общий URL, как на Level 0, но теперь запросы можно отправлять не только `POST`, а ещё и `GET`.",
               "correct": false,
               "sections": {
-                "what_actually": "Полноценный HTTP-cache (по resource URL + GET) появляется на Level 2. Но уже на Level 1 появляется resource-based URL, который можно использовать как ключ в application-level cache, и possibility partial caching.",
-                "source_of_confusion": "Кандидат категорично заявляет «POST → cache invalid», но забывает, что cache бывает не только HTTP, а ещё app-level (Redis, in-memory) — и для этого resource-based URL уже полезен.",
-                "if_it_were_true": "Тогда между Level 0 и Level 1 не было бы практической разницы для cache strategy.",
-                "how_it_should_be": "На Level 1 HTTP-cache всё ещё ограничен (POST не cacheable), но resource-based URL даёт key для app-level cache."
+                "what_actually": "Суть Level 1 — именно появление отдельного URI на каждый ресурс; единый URL — это всё ещё Level 0.",
+                "source_of_confusion": "Переход между соседними уровнями кажется добавлением «чего-то одного», и легко перепутать, что именно добавляется.",
+                "if_it_were_true": "Тогда Level 1 не давал бы ни кэширования по URL ресурса, ни удобной организации API, ради которых он и нужен.",
+                "how_it_should_be": "Level 1 вводит отдельные URI на ресурсы; разнообразие глаголов — это отличительная черта Level 2."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Level 1 (Resources): per-resource URLs (`/users`, `/orders`, `/products`), но всё ещё преимущественно POST; разделение endpoint'ов улучшает organization, monitoring и partial caching.",
+              "text": "Level 1 (`Resources`) — у каждого ресурса появляется отдельный URI: `POST /users`, `POST /orders`, `POST /products` вместо единого `/endpoint`. По-прежнему всё через `POST`, но URL теперь идентифицирует ресурс. Эффект: лучше организация API, появляется кэширование (у ресурсов есть URL), API проще исследовать. Большой шаг вперёд относительно Level 0.",
               "correct": true,
               "sections": {
-                "explanation": "Level 1 — это шаг от «одного URL для всего» к «URL на ресурс». Сами HTTP-методы пока могут оставаться все одним POST, но появляется ключевое свойство: разные ресурсы (users, orders, products) имеют разные URLs. Это даёт первый осмысленный benefit: можно разделить ownership endpoint'ов по командам, считать метрики per-resource, частично кэшировать на уровне приложения. По сути — это «адресность» появилась.",
-                "example": "API в переходный период: `POST /api/users` (создать или прочитать — определяется body), `POST /api/orders`, `POST /api/products`. Конкретно так выглядел Twitter API v1 в раннюю эпоху до перехода на честный REST.",
-                "when_to_apply": "Первый шаг при миграции legacy SOAP/RPC → REST. Сначала разделяем endpoint'ы по ресурсам (это малая инвазивная правка), потом во второй итерации добавляем правильные verbs (это уже Level 2).",
-                "edge_cases": "На Level 1 monitoring и tracing уже значительно проще — в логах видно, к какому ресурсу шёл запрос. Но debugging «зачем этот POST?» (read/write?) всё ещё сложен — semantics в body.",
-                "related": "[[rest-maturity-interview#Q3]] что было на Level 0; [[rest-maturity-interview#Q5]] следующий шаг к Level 2 verbs."
+                "explanation": "Ключевое отличие от Level 0 — ресурс-ориентированность адресов. Сервер перестаёт быть «одной дверью», за которой всё; теперь URL — это адрес конкретной сущности, что упрощает навигацию и роутинг.",
+                "example": "Вместо `POST /endpoint` с `method=createOrder` в теле — `POST /orders`; URL уже говорит, с каким ресурсом работаем, даже если глагол всё ещё один.",
+                "when_to_apply": "Распознают Level 1, когда видят осмысленные ресурсные URI, но при этом операции (создать, удалить, обновить) всё ещё кодируются в теле или в имени, а не в HTTP-глаголе.",
+                "edge_cases": "Level 1 редко встречается «в чистом виде»: команды, разделившие URI, обычно сразу начинают использовать и глаголы, перескакивая на Level 2.",
+                "related": "[[rest-maturity-interview#Q3]] Level 0 — один URL; [[rest-maturity-interview#Q5]] Level 2 — глаголы и коды; [[rest-maturity-interview#Q1]] обзор уровней."
               }
             }
           ]
@@ -246,55 +246,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что определяет Level 2 (HTTP Verbs + Status Codes) в Richardson Maturity Model?",
+          "question_text": "Что такое Level 2: HTTP Verbs + Status Codes?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Level 2: правильные HTTP-verbs (GET=read, POST=create, PUT=replace, PATCH=partial, DELETE=remove) + правильные status codes (2xx/3xx/4xx/5xx); кэширование, idempotency и стандартный tooling работают.",
+              "text": "Level 2 — правильное использование семантики HTTP: `GET /users/123` для чтения, `POST /users` для создания, `PUT`/`PATCH` для обновления, `DELETE` для удаления, плюс осмысленные коды (`200`, `201`, `204`, `400`, `404`, `500`). Эффект: работает кэширование (`GET` кэшируется), клиент знает про идемпотентность `PUT`/`DELETE`, доступен стандартный инструментарий (браузеры, прокси, CDN). Большинство «REST API» — это Level 2.",
               "correct": true,
               "sections": {
-                "explanation": "Level 2 — это про корректную семантику HTTP. API использует verb'ы по назначению: GET для безопасного чтения (cacheable), POST для создания, PUT для полной замены, PATCH для partial update, DELETE для удаления. Status codes тоже несут семантику: 201 Created при создании, 204 No Content при пустом ответе, 404/409/422 для разных типов client errors, 503 при недоступности с Retry-After. Главный выигрыш — вся HTTP-инфраструктура (CDN, proxy, browser cache, retry-libraries) начинает работать корректно «бесплатно».",
-                "example": "Stripe API: `GET /v1/charges/ch_123` (cacheable), `POST /v1/charges` (create), `DELETE /v1/customers/cus_123` (idempotent retry safe). Возвращают 201 на create, 402 Payment Required при card decline, 429 + Retry-After при rate limit.",
-                "when_to_apply": "Target для подавляющего большинства production REST API: разумный баланс между чистотой REST и pragmatic простотой. OpenAPI/Swagger покрывают design-time нужды без необходимости в HATEOAS.",
-                "edge_cases": "PATCH семантически unsafe и не всегда idempotent — RFC 7396 (JSON Merge Patch) idempotent, RFC 6902 (JSON Patch) с array-операциями нет. POST для actions, не укладывающихся в CRUD (`POST /orders/123/cancel`) — pragmatic compromise.",
-                "related": "[[rest-maturity-interview#Q11]] детали HTTP verbs; [[rest-maturity-interview#Q12]] status codes; [[rest-maturity-interview#Q6]] переход к Level 3."
+                "explanation": "Здесь HTTP перестаёт быть просто транспортом и начинает нести смысл: глагол сообщает намерение, код статуса — результат. Это даёт прокси, кэшам и клиентам понимать поведение API без знания бизнес-логики.",
+                "example": "`DELETE /users/123` → `204 No Content`; `GET /users/123` → `200 OK` и кэшируется CDN; `POST /users` → `201 Created` с заголовком `Location` на новый ресурс.",
+                "when_to_apply": "Level 2 — разумный целевой уровень для большинства публичных и внутренних API: баланс практичности и соответствия REST, поддержанный всем HTTP-инструментарием.",
+                "edge_cases": "Частая ошибка — отдавать `200 OK` с телом `{\"error\": ...}` на всё подряд: формально Level 2 нарушен, прокси и клиенты не видят, что произошла ошибка.",
+                "related": "[[rest-maturity-interview#Q11]] HTTP-глаголы подробно; [[rest-maturity-interview#Q12]] коды статусов по категориям; [[rest-maturity-interview#Q6]] следующий уровень — HATEOAS."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Level 2 = Level 1 + HATEOAS (hypermedia links в responses).",
+              "text": "Level 2 — это уровень, на котором ответы обязаны содержать гипермедиа-ссылки `_links`, иначе API не считается достигшим второго уровня.",
               "correct": false,
               "sections": {
-                "what_actually": "HATEOAS — это ровно Level 3, не Level 2. Level 2 — корректное использование HTTP verbs (GET/POST/PUT/PATCH/DELETE) и status codes (2xx/4xx/5xx) без hypermedia.",
-                "source_of_confusion": "Кандидат знает «HATEOAS = верх RMM» и склонен размазать его на ранее уровни. Или путает с термином «hypermedia constraint».",
-                "if_it_were_true": "Тогда GitHub API v3, Stripe API, Twilio — все Level 2 — содержали бы `_links` блоки в каждом ответе, чего нет.",
-                "how_it_should_be": "Level 2 — это HTTP semantics без hypermedia; Level 3 добавляет hypermedia links к Level 2."
+                "what_actually": "Гипермедиа-ссылки — признак Level 3 (HATEOAS); Level 2 не требует ссылок, ему достаточно правильных глаголов и кодов.",
+                "source_of_confusion": "Level 2 и Level 3 оба «продвинутые», и требования вершины модели ошибочно переносят на предыдущую ступень.",
+                "if_it_were_true": "Тогда подавляющее большинство REST API (без HATEOAS) не дотягивали бы даже до Level 2, что неверно.",
+                "how_it_should_be": "Level 2 — это глаголы и коды статусов; обязательные `_links` появляются только на Level 3."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "PATCH введён в HTTP 2.0 и недоступен на Level 2.",
+              "text": "Level 2 — это уровень, где все запросы идут через `POST`, но сервер возвращает разные коды статусов (`200`, `404`, `500`) в зависимости от результата.",
               "correct": false,
               "sections": {
-                "what_actually": "PATCH описан в RFC 5789 (2010) как расширение HTTP/1.1. «HTTP 2.0» не существует — есть HTTP/2 (2015, RFC 7540) и HTTP/3 (RFC 9114), но они про транспорт (binary framing, multiplexing), а не про новые методы.",
-                "source_of_confusion": "Путают версию протокола (HTTP/1.1, HTTP/2, HTTP/3) и год появления методов. PATCH доступен в любой HTTP-версии.",
-                "if_it_were_true": "Тогда PATCH-операции в Stripe/GitHub API не работали бы у клиентов, использующих HTTP/1.1 — что не так.",
-                "how_it_should_be": "PATCH доступен в HTTP/1.1 (RFC 5789) и используется на Level 2 полноценно; HTTP/2 не добавляет новых методов."
+                "what_actually": "Суть Level 2 — именно разнообразие глаголов (`GET`, `PUT`, `DELETE`); «всё через POST» — это Level 0-1.",
+                "source_of_confusion": "Коды статусов действительно часть Level 2, и их наличие принимают за достаточный признак уровня.",
+                "if_it_were_true": "Тогда не работало бы кэширование `GET` и идемпотентность `PUT`/`DELETE`, ради которых Level 2 и ценен.",
+                "how_it_should_be": "На Level 2 используются оба: и корректные глаголы по назначению, и осмысленные коды статусов."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "201 Created должен возвращаться только из PUT-запросов, а POST всегда возвращает 200 OK.",
+              "text": "Level 2 — это уровень, на котором у каждого ресурса появляется отдельный URI, но операции по-прежнему кодируются в теле запроса, а не в HTTP-глаголе.",
               "correct": false,
               "sections": {
-                "what_actually": "201 Created возвращается из любого метода, создавшего ресурс. Каноничный случай — POST /users → 201 + Location: /users/123. PUT тоже может возвращать 201, если создал ресурс (PUT to new URL).",
-                "source_of_confusion": "Кандидат запомнил что-то про PUT-idempotency и 201, но не до конца. На практике POST → 201 — самая частая комбинация в REST API.",
-                "if_it_were_true": "Тогда Stripe, GitHub, Twilio при POST /resource возвращали бы 200 — что неверно, они возвращают 201 + Location.",
-                "how_it_should_be": "201 = «создано» (любой метод); 200 OK = чтение/обновление; 204 No Content = успех без body (DELETE, PUT)."
+                "what_actually": "Отдельный URI без использования глаголов — это Level 1; Level 2 как раз добавляет семантику HTTP-методов.",
+                "source_of_confusion": "Соседние уровни добавляют по одному свойству, и легко перепутать, на каком именно появляются глаголы.",
+                "if_it_were_true": "Тогда между Level 1 и Level 2 не было бы различий, но именно глаголы и коды отличают второй от первого.",
+                "how_it_should_be": "Отдельные URI — это Level 1; корректное использование `GET`/`POST`/`PUT`/`DELETE` — Level 2."
               }
             }
           ]
@@ -306,55 +306,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что характеризует Level 3 (Hypermedia Controls / HATEOAS) в Richardson Maturity Model?",
+          "question_text": "Что такое Level 3: Hypermedia Controls (HATEOAS)?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "HATEOAS требует строго HAL формат — другие hypermedia форматы не поддерживаются.",
+              "text": "Level 3 — это уровень, на котором API наконец-то начинает использовать `GET`, `POST`, `PUT`, `DELETE` по их прямому назначению и возвращать корректные коды статусов.",
               "correct": false,
               "sections": {
-                "what_actually": "HATEOAS — это концепция, не привязанная к одному формату. Реально используются HAL (`_links`, `_embedded`), JSON:API (`links`, `relationships`), Siren (`actions`, `entities`), Collection+JSON, UBER. HAL популярнее остальных, но не единственный.",
-                "source_of_confusion": "HAL чаще всего встречается в Spring HATEOAS примерах, поэтому ассоциируется с «единственным правильным» форматом. На деле выбор — open trade-off.",
-                "if_it_were_true": "Тогда JSON:API spec (jsonapi.org) и Siren spec (kevinswiber/siren) не существовали бы — а они активно используются.",
-                "how_it_should_be": "HATEOAS — концепция navigation через links; конкретный формат (HAL/JSON:API/Siren) выбирается под задачу."
+                "what_actually": "Корректные глаголы и коды — это Level 2; Level 3 добавляет поверх него гипермедиа-ссылки в ответах.",
+                "source_of_confusion": "Level 3 — вершина модели, и к нему приписывают сразу все «правильные» практики, включая те, что появились раньше.",
+                "if_it_were_true": "Тогда Level 2 и Level 3 были бы неотличимы, но второй уже использует глаголы — отличие именно в гипермедиа.",
+                "how_it_should_be": "Глаголы и коды — это Level 2; уникальная черта Level 3 — ссылки `_links` для навигации клиента."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Level 3: ответы содержат hypermedia links (`_links`, `actions`) для discoverable navigation; клиент следует links вместо hardcoded URLs; server может evolve API без breaking changes.",
+              "text": "Level 3 (`HATEOAS` — Hypermedia as the Engine of Application State) — ответы содержат ссылки, и клиент обнаруживает действия по ним, а не хардкодит URL. Клиент стартует с известной точки входа, переходит по ссылкам к ресурсам и использует ссылки для действий. В отличие от хардкода URL, навигацией управляет сервер: он может переименовывать URL и менять структуру ресурсов — клиенты продолжают работать.",
               "correct": true,
               "sections": {
-                "explanation": "Level 3 = Level 2 + HATEOAS (Hypermedia As The Engine Of Application State). Ответы API содержат блок с links/actions, описывающий что можно делать с этим ресурсом дальше. Клиент знает только entry-point URL; остальное он discover через ссылки. Это даёт серверу свободу менять URL-схему, переименовывать endpoint'ы, разделять/объединять resources — клиент всё ещё работает, потому что следует presented links, а не hardcoded paths.",
-                "example": "PayPal v2 REST API: при создании payment возвращается `{\"id\": \"PAY-...\", \"links\": [{\"href\": \"...\", \"rel\": \"approve\", \"method\": \"GET\"}, {\"href\": \"...\", \"rel\": \"capture\", \"method\": \"POST\"}]}`. Клиент идёт на approve-link, не строит URL сам. Также Atom Publishing Protocol — классический Level 3 пример.",
-                "when_to_apply": "Public API с длинным жизненным циклом (5+ лет), несколько независимых consumer'ов (разные компании пишут клиентов), state-machine endpoints (заказ: PENDING → approve/cancel → APPROVED → ship → SHIPPED). Spring HATEOAS для Java.",
-                "edge_cases": "Link relations нужно стандартизовать (IANA registered link relations: self, next, prev, edit, delete) — иначе каждый клиент трактует rel'ы по-своему. HATEOAS не отменяет necessity API versioning при breaking schema changes.",
-                "related": "[[rest-maturity-interview#Q7]] детали HATEOAS; [[rest-maturity-interview#Q8]] форматы (HAL/JSON:API/Siren); [[rest-maturity-interview#Q10]] почему редко применяется."
+                "explanation": "Гипермедиа делает API самоописательным во время выполнения: вместо документации «вот все URL» сервер сам в каждом ответе говорит, какие переходы доступны сейчас. Это снижает связанность клиента и сервера.",
+                "example": "Ответ `GET /users/123` содержит `\"_links\": {\"orders\": {\"href\": \"/users/123/orders\"}, \"delete\": {\"href\": \"/users/123\", \"method\": \"DELETE\"}}` — клиент идёт по ссылкам, не зная их заранее.",
+                "when_to_apply": "Level 3 оправдан для долгоживущих публичных API с множеством независимых клиентов и для workflow с явной машиной состояний (заказ: pending → approved → shipped).",
+                "edge_cases": "Даже на Level 3 клиент должен понимать смысл `rel` ссылок (`orders`, `cancel`); сами по себе ссылки не избавляют от контракта на их семантику.",
+                "related": "[[rest-maturity-interview#Q7]] что такое HATEOAS; [[rest-maturity-interview#Q9]] преимущества HATEOAS; [[rest-maturity-interview#Q10]] почему HATEOAS редко применяют."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Level 3 = HTTPS + JWT-аутентификация + rate limiting в headers.",
+              "text": "Level 3 — это уровень, на котором сервер обязан вернуть клиенту полный список ВСЕХ URL API в первом же ответе, чтобы клиент закэшировал их и больше не запрашивал.",
               "correct": false,
               "sections": {
-                "what_actually": "Всё это полностью ортогонально RMM. Security (TLS, JWT, OAuth), transport (HTTP/2), rate limiting — это cross-cutting concerns, не относятся к maturity модели. Level 3 — конкретно про hypermedia controls в response payload.",
-                "source_of_confusion": "Кандидат собирает «современные best practices REST API» в одну корзину «высокий уровень». Но maturity по Richardson — узко про hypermedia, не про общую качество.",
-                "if_it_were_true": "Тогда любой API с HTTPS+JWT был бы Level 3, что обесценивает модель — Stripe (Level 2) удовлетворяет критерию.",
-                "how_it_should_be": "Level 3 = hypermedia links в responses; security/transport/rate limiting — отдельные ортогональные темы."
+                "what_actually": "HATEOAS не отдаёт «карту всех URL» разом: каждый ответ содержит ссылки, релевантные текущему состоянию ресурса.",
+                "source_of_confusion": "Идею «ссылки в ответе» доводят до крайности как «все ссылки сразу», хотя смысл — контекстная навигация по состоянию.",
+                "if_it_were_true": "Тогда ссылки `approve`/`cancel` показывались бы и для уже отгруженного заказа, ломая машину состояний.",
+                "how_it_should_be": "Сервер отдаёт только допустимые сейчас переходы; набор ссылок меняется вместе с состоянием ресурса."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Hypermedia links в responses избыточны, потому что клиент уже знает контракт API через OpenAPI документацию.",
+              "text": "Level 3 — это переход с JSON на бинарный формат (`Protobuf`) и `HTTP/2`, что делает API «truly RESTful» за счёт скорости.",
               "correct": false,
               "sections": {
-                "what_actually": "OpenAPI и HATEOAS решают разные задачи. OpenAPI = design-time контракт: клиент знает URLs upfront, генерирует SDK, имеет tight coupling к API-схеме. HATEOAS = runtime discovery: server может менять URLs без breaking changes; клиент адаптируется.",
-                "source_of_confusion": "Pragmatic индустриальная норма — OpenAPI + Level 2, и кажется что HATEOAS «не нужен». Это валидный pragmatic выбор, но не значит что HATEOAS = redundant; цели разные.",
-                "if_it_were_true": "Тогда не было бы API типа PayPal v2, Amazon AppStream — они используют HATEOAS осознанно для evolvability.",
-                "how_it_should_be": "OpenAPI и HATEOAS дополняют друг друга или используются для разных целей; HATEOAS оправдан для long-lived public API с независимой server evolution."
+                "what_actually": "HATEOAS — про гипермедиа-ссылки в ответах, а не про формат сериализации или версию HTTP; `Protobuf`/`HTTP/2` — это про `gRPC`.",
+                "source_of_confusion": "«Самый продвинутый уровень» ассоциируют с самыми современными технологиями транспорта, путая зрелость REST со стеком.",
+                "if_it_were_true": "Тогда `gRPC` был бы вершиной REST-зрелости, но `gRPC` вообще не про REST и не содержит гипермедиа.",
+                "how_it_should_be": "Level 3 определяется наличием гипермедиа-навигации, независимо от формата данных и версии протокола."
               }
             }
           ]
@@ -366,55 +366,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое HATEOAS и как меняется взаимодействие клиента с API при его применении?",
+          "question_text": "Что такое HATEOAS?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "HATEOAS — это аббревиатура HTTP Authentication, Encryption и Origin Access Standard.",
+              "text": "`HATEOAS` означает, что клиент обязан заранее захардкодить все URL ресурсов (`/users/{id}`, `/users/{id}/orders`), чтобы максимально быстро обращаться к ним без лишних запросов.",
               "correct": false,
               "sections": {
-                "what_actually": "HATEOAS = Hypermedia As The Engine Of Application State. Концепция из Roy Fielding'овой диссертации (2000), не имеет отношения к authentication/encryption — это transport-level concerns.",
-                "source_of_confusion": "Аббревиатура необычная, кандидат пытается reverse-engineer из созвучных слов (HTTP, Auth, Encryption).",
-                "if_it_were_true": "Тогда HATEOAS было бы стандартом IETF/W3C про security, а не архитектурным принципом из академической работы.",
-                "how_it_should_be": "HATEOAS = Hypermedia As The Engine Of Application State — клиент navigate state через hypermedia links от сервера."
+                "what_actually": "Это описание API БЕЗ HATEOAS; смысл HATEOAS прямо противоположен — клиент не хардкодит URL, а обнаруживает их по ссылкам.",
+                "source_of_confusion": "Хардкод URL — привычная практика, и её по инерции принимают за «нормальный REST», в том числе за HATEOAS.",
+                "if_it_were_true": "Тогда любое переименование URL на сервере ломало бы клиентов — ровно та проблема, которую HATEOAS и устраняет.",
+                "how_it_should_be": "Клиент знает только точку входа и идёт по ссылкам из ответов; знание всех URL заранее — это анти-HATEOAS."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "HATEOAS — это форма server-side rendering, аналог Server-Side Includes для генерации HTML на сервере.",
+              "text": "`HATEOAS` — это механизм аутентификации, при котором сервер выдаёт клиенту токен доступа в каждом ответе для следующего запроса.",
               "correct": false,
               "sections": {
-                "what_actually": "HATEOAS — про runtime navigation через ссылки в API-responses (обычно JSON). SSR — про HTML-рендеринг на сервере для browser-консьюмера. Они вообще про разное.",
-                "source_of_confusion": "Слово «hypermedia» ассоциируется с HTML, отсюда переход к SSR. Но hypermedia в HATEOAS — это структурированные links в любом формате, не HTML.",
-                "if_it_were_true": "Тогда HATEOAS применялся бы только в браузерных приложениях, а не в API-to-API integration.",
-                "how_it_should_be": "HATEOAS — про links/actions внутри API response payload (JSON или другой формат); SSR — отдельная веб-техника, не связана."
+                "what_actually": "HATEOAS — про гипермедиа-навигацию (ссылки на действия), а не про аутентификацию или передачу токенов.",
+                "source_of_confusion": "И HATEOAS, и токен-схемы передают «что-то для следующего запроса» в ответе, отсюда смешение.",
+                "if_it_were_true": "Тогда HATEOAS заменял бы `OAuth2`/`JWT`, но аутентификация — отдельный слой, не связанный с гипермедиа.",
+                "how_it_should_be": "HATEOAS отдаёт ссылки на доступные действия; токены и сессии относятся к безопасности, а не к навигации."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "HATEOAS = клиент navigate state через hypermedia links от сервера; аналогия с web browsing (follow links вместо typing URLs); клиент знает только entry point, остальное discover через `_links`/`actions` в ответах.",
+              "text": "`HATEOAS` — клиент перемещается по состояниям приложения через гипермедиа-ссылки, которые отдаёт сервер. Аналогия — просмотр веба: вы кликаете по ссылкам, а не набираете полные URL руками; сервер сам подсказывает, куда идти дальше. Без HATEOAS клиент заранее знает ВСЕ URL и сильно связан с сервером; с HATEOAS клиент знает только точку входа, остальное обнаруживает по ссылкам, а сервер может эволюционировать, не ломая клиентов.",
               "correct": true,
               "sections": {
-                "explanation": "HATEOAS — ключевая идея REST по Fielding: «hypermedia as the engine of application state». Сервер в каждом response даёт ссылки на возможные следующие шаги. Клиент следует этим ссылкам, не строит URL сам. Аналогия — браузер: вы не печатаете URL вручную, вы кликаете ссылки. Если сервер переименовал URL, клиент следует новой ссылке прозрачно. Это даёт сильное decoupling между сервером и клиентом.",
-                "example": "Заказ в системе e-commerce: `GET /orders/123` возвращает state `PENDING` + `_links: {approve, cancel}`. После approve следующий GET возвращает state `APPROVED` + `_links: {ship}`, без cancel — потому что отменять уже нельзя. Клиент не зашивает business rules; они encoded в links.",
-                "when_to_apply": "Long-lived public API (5+ лет lifecycle), несколько внешних consumer'ов которых нельзя обновить синхронно, state-machine workflows. Также для self-documenting/discoverable API (developer experience).",
-                "edge_cases": "Без стандартизации link relations (IANA registry) клиенты не понимают что значит `rel: approve` vs `rel: confirm`. Generated SDK (через HAL parser) может частично снижать complexity для клиентов.",
-                "related": "[[rest-maturity-interview#Q6]] Level 3 = HATEOAS; [[rest-maturity-interview#Q8]] форматы hypermedia; [[rest-maturity-interview#Q9]] преимущества."
+                "explanation": "Суть в инверсии контроля над URL: при обычном API клиент хардкодит маршруты, при HATEOAS маршруты диктует сервер в рантайме. Это ослабляет связанность и переносит знание о структуре API на сервер.",
+                "example": "Браузер не знает заранее URL всех страниц `wikipedia.org` — он стартует с главной и идёт по ссылкам; HATEOAS-клиент так же стартует с `/` и переходит по `_links`.",
+                "when_to_apply": "Подход полезен, когда клиентов много и они обновляются несинхронно с сервером: сервер меняет URL, а клиенты, ходящие по ссылкам, не ломаются.",
+                "edge_cases": "Полная развязка недостижима: клиент всё равно «знает» смысл ссылок (`rel=\"next\"`, `rel=\"cancel\"`), то есть контракт на семантику переходов остаётся.",
+                "related": "[[rest-maturity-interview#Q6]] HATEOAS как Level 3; [[rest-maturity-interview#Q8]] форматы гипермедиа; [[rest-maturity-interview#Q9]] преимущества HATEOAS."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "При HATEOAS клиент жёстко зашивает все URLs из документации API, как это принято в большинстве REST-клиентов.",
+              "text": "`HATEOAS` — это формат сжатия HTTP-ответов, уменьшающий размер JSON за счёт удаления повторяющихся ключей.",
               "correct": false,
               "sections": {
-                "what_actually": "Это ровно противоположное HATEOAS. Hardcoded URLs из доки = pragmatic REST (Level 2), где клиент тесно связан с конкретной URL-схемой. HATEOAS как раз освобождает клиента от этого: знает только entry point, остальное discover через response links.",
-                "source_of_confusion": "Кандидат описывает текущую indistry-практику и считает её правильной; забывает, что HATEOAS — про обратное.",
-                "if_it_were_true": "Тогда не было бы decoupling между server и client; URL-changes на сервере ломали бы клиентов; смысл HATEOAS теряется.",
-                "how_it_should_be": "С HATEOAS клиент знает только entry-point; остальные URLs приходят в `_links`/`actions` в ответах."
+                "what_actually": "HATEOAS не сжимает ответы — наоборот, добавляет в них ссылки, увеличивая payload; сжатием занимается `gzip`/`brotli`.",
+                "source_of_confusion": "Аббревиатура звучит технически, и её ошибочно относят к транспортному уровню и оптимизации трафика.",
+                "if_it_were_true": "Тогда HATEOAS уменьшал бы размер ответа, но добавление `_links` его как раз раздувает.",
+                "how_it_should_be": "HATEOAS — про навигацию через ссылки; сжатие ответов делают `Content-Encoding: gzip` и подобные."
               }
             }
           ]
@@ -426,55 +426,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Чем отличаются hypermedia форматы HAL, JSON:API и Siren?",
+          "question_text": "Какие бывают форматы гипермедиа (HAL, JSON:API, Siren)?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "HAL и JSON:API — это синонимы, описывающие один и тот же формат разными словами.",
+              "text": "`HAL`, `JSON:API` и `Siren` — это три разных HTTP-метода (наряду с `GET` и `POST`), используемых для передачи гипермедиа-ссылок.",
               "correct": false,
               "sections": {
-                "what_actually": "Это разные spec'ы. HAL (Mike Kelly, draft-kelly-json-hal) — минималистичный, простой формат с `_links` и `_embedded`. JSON:API (jsonapi.org) — opinionated полная спецификация со строгими правилами `data`, `relationships`, `included`, pagination, error format и многим другим.",
-                "source_of_confusion": "Оба про hypermedia в JSON, поэтому смешиваются. Но они отличаются как «hello world» и «полный framework»: HAL — лёгкая концепция, JSON:API — multi-page spec.",
-                "if_it_were_true": "Тогда не было бы fragmentation проблемы (см. Q10) — все использовали бы один формат.",
-                "how_it_should_be": "HAL = minimalistic links/embedded; JSON:API = полная opinionated спецификация; разные форматы для разных задач."
+                "what_actually": "Это форматы тела ответа (media types) в JSON, а не HTTP-методы; глаголов в HTTP всего несколько (`GET`, `POST`, `PUT`, ...).",
+                "source_of_confusion": "Незнакомые названия в контексте HTTP принимают за расширения протокола, а не за схемы JSON.",
+                "if_it_were_true": "Тогда сервер обрабатывал бы запрос `SIREN /users/123`, но таких HTTP-методов не существует.",
+                "how_it_should_be": "Это media types для гипермедиа в теле ответа; передаются они обычными `GET`/`POST` и т. д."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Siren — это XML-версия HAL для legacy enterprise-систем, требующих XML.",
+              "text": "`HAL`, `JSON:API` и `Siren` — это конкурирующие базы данных, в которых принято хранить ресурсы REST API.",
               "correct": false,
               "sections": {
-                "what_actually": "Siren — JSON формат, не XML. Главное отличие от HAL — наличие блока `actions` (с method, href, fields), который хорошо описывает state machine transitions. HAL описывает только ресурсы и связи; Siren добавляет actions с input schemas.",
-                "source_of_confusion": "Название Siren (греческая сирена) звучит «старомодно», ассоциируется с XML/SOAP. На самом деле это JSON-spec, описанный Kevin Swiber в 2012.",
-                "if_it_were_true": "Тогда Siren использовался бы только для миграции SOAP → REST, а не для современных state-machine API.",
-                "how_it_should_be": "Siren = JSON формат с focus на actions; XML-hypermedia форматы (Atom, XHTML) существуют отдельно от Siren."
+                "what_actually": "Это форматы сериализации гипермедиа в ответах API, а не СУБД; к хранилищу данных они отношения не имеют.",
+                "source_of_confusion": "Технические аббревиатуры легко спутать с названиями инфраструктурных продуктов вроде БД.",
+                "if_it_were_true": "Тогда выбор формата ответа диктовал бы выбор СУБД, но они находятся на разных слоях системы.",
+                "how_it_should_be": "Это media types для представления ссылок и действий в JSON-ответе, независимые от хранилища."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Spring HATEOAS поддерживает строго один формат — HAL, остальные форматы нужно реализовывать вручную.",
+              "text": "`HAL`, `JSON:API` и `Siren` полностью идентичны: это просто три названия одного и того же формата, отличающиеся только страной происхождения.",
               "correct": false,
               "sections": {
-                "what_actually": "Spring HATEOAS поддерживает несколько форматов из коробки: HAL (default), HAL-FORMS (расширение HAL с template'ами для POST/PUT), Collection+JSON, UBER. Конфигурируется через `@EnableHypermediaSupport(type = HypermediaType.HAL_FORMS_JSON)`.",
-                "source_of_confusion": "HAL — default в Spring HATEOAS, поэтому в туториалах преимущественно показывают только его. Но остальные форматы тоже из коробки.",
-                "if_it_were_true": "Тогда `MediaTypes.HAL_FORMS_JSON` константа в Spring HATEOAS не существовала бы — а она есть.",
-                "how_it_should_be": "Spring HATEOAS поддерживает HAL, HAL-FORMS, Collection+JSON, UBER через `@EnableHypermediaSupport`."
+                "what_actually": "Форматы реально различаются: `HAL` минималистичен (`_links`/`_embedded`), `JSON:API` строго структурирует связи, `Siren` ещё описывает `actions`.",
+                "source_of_confusion": "Все три решают близкую задачу (гипермедиа в JSON), и поверхностно кажутся взаимозаменяемыми синонимами.",
+                "if_it_were_true": "Тогда клиент под `HAL` без проблем читал бы `Siren`, но без отдельного парсера он не поймёт чужую структуру.",
+                "how_it_should_be": "Это три разных формата с разной выразительностью; именно их несовместимость и создаёт фрагментацию."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "HAL (`_links`/`_embedded`) — минималистичен; JSON:API (`data`/`relationships`/`links`) — opinionated full spec; Siren (`class`/`actions`/`links`) — action-oriented для state machines; Spring HATEOAS реализует HAL + HAL-FORMS.",
+              "text": "Это три популярных формата представления гипермедиа в JSON. `HAL` — минималистичный, ссылки в `_links`, вложенные ресурсы в `_embedded`. `JSON:API` — строго стандартизирует `data`, `attributes`, `relationships` со ссылками `related`. `Siren` — самый богатый: помимо ссылок описывает `actions` с методом и `href` для выполнения операций, плюс `class` сущности. На Java их реализуют `Spring HATEOAS`, `RestEasy`.",
               "correct": true,
               "sections": {
-                "explanation": "Три форматами для разных потребностей. HAL — простейший: добавил `_links` block, готово; хорош когда нужно «положить ссылки куда-то рядом с данными». JSON:API — opinionated спецификация: жёстко регламентирует структуру (`data` envelope, `relationships`, `included`, `meta`, error format, sparse fieldsets, pagination); хороша для стандартизации между командами. Siren — focus на `actions`: каждое action имеет method, href, fields с input schema; отлично описывает state machines (заказы, workflows).",
-                "example": "GitHub API v3 использует HAL-подобный формат с pagination links. JSON:API — Drupal REST modules, Ember Data backend. Siren — реже, но используется в hypermedia-first проектах типа RoadRunner.",
-                "when_to_apply": "HAL — для простых hypermedia потребностей (links + embedded). JSON:API — когда нужна жёсткая стандартизация между разными командами/языками (PHP backend ↔ JS frontend). Siren — для state-machine API где actions важнее данных (workflow systems).",
-                "edge_cases": "JSON:API диктует pagination format (`links.next`), что может конфликтовать с существующими конвенциями. HAL и Siren оставляют это на усмотрение разработчика. HAL-FORMS добавляет input schemas к HAL — middle ground.",
-                "related": "[[rest-maturity-interview#Q7]] HATEOAS концепция; [[rest-maturity-interview#Q9]] преимущества hypermedia; [[rest-maturity-interview#Q10]] почему редко применяется."
+                "explanation": "Форматы различаются богатством: `HAL` даёт только ссылки и встраивание, `JSON:API` добавляет жёсткую структуру связей и включений, `Siren` идёт дальше всех, описывая выполнимые действия. Выбор — компромисс между простотой и выразительностью.",
+                "example": "`HAL`: `{\"name\": \"Alice\", \"_links\": {\"self\": {\"href\": \"/users/123\"}}}`; `Siren` к этому добавит `\"actions\": [{\"name\": \"update\", \"method\": \"PUT\", \"href\": \"/users/123\"}]`.",
+                "when_to_apply": "`HAL` берут для простых гипермедиа-API (его поддерживает `Spring HATEOAS` из коробки), `JSON:API` — когда важна жёсткая стандартизация связей, `Siren` — когда нужно описывать действия, а не только ссылки.",
+                "edge_cases": "Фрагментация форматов сама по себе тормозит HATEOAS: клиент под `HAL` не поймёт `Siren` без отдельного парсера, единого стандарта де-факто нет.",
+                "related": "[[rest-maturity-interview#Q7]] что такое HATEOAS; [[rest-maturity-interview#Q9]] преимущества HATEOAS; [[rest-maturity-interview#Q10]] почему HATEOAS редок."
               }
             }
           ]
@@ -486,55 +486,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие главные преимущества даёт HATEOAS для архитектуры API?",
+          "question_text": "Какие преимущества у HATEOAS?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Преимущества HATEOAS: decoupling (server может менять URLs), server-driven evolution, discoverability/self-documenting, state machine encoded в links (только valid actions), упрощённая client navigation от entry point.",
+              "text": "Главные преимущества: 1) слабая связанность — клиенты знают только точку входа; 2) эволюция сервера — можно менять URL, не ломая клиентов; 3) обнаруживаемость — API самодокументируется; 4) машина состояний прямо в ссылках — в ответе присутствуют только допустимые сейчас действия; 5) проще версионирование — ссылки несут информацию о версии. Клиент видит доступные действия прямо по ссылкам, без дублирования бизнес-логики.",
               "correct": true,
               "sections": {
-                "explanation": "HATEOAS даёт несколько архитектурных выигрышей. Decoupling: клиент знает только entry point, поэтому переименование URL на сервере не ломает клиента. Server-driven evolution: сервер может добавлять/удалять endpoints, и клиент адаптируется через ссылки. Discoverability: API self-documenting — explore через links, можно генерировать SDK на лету. State machine encoded в links — только valid next actions present (заказ в SHIPPED state не имеет cancel link). Client navigation простая — иди по ссылкам.",
-                "example": "Order state machine: PENDING → `_links: {approve, cancel}`, после approve → `_links: {ship}`, после ship → `_links: {track, refund}`. Клиенту не нужно знать правила: «можно ли отменить SHIPPED order?» — просто проверить наличие cancel link. Бизнес-логика на сервере, клиент тонкий.",
-                "when_to_apply": "Public API с длинным lifecycle, workflow/state-machine endpoints (order management, payment flows), integration scenarios где clients независимы и не обновляются синхронно с сервером.",
-                "edge_cases": "Преимущества дороги: HATEOAS увеличивает payload, client должен парсить links, нужна стандартизация link relations. Для internal API с одним consumer'ом overhead не оправдан — выбирают Level 2.",
-                "related": "[[rest-maturity-interview#Q7]] что такое HATEOAS; [[rest-maturity-interview#Q10]] почему редко применяется; [[rest-maturity-interview#Q8]] форматы."
+                "explanation": "Самое сильное преимущество — машина состояний в ссылках: сервер сам решает, какие переходы доступны, и клиенту не нужно дублировать бизнес-правила «когда можно отменить заказ». Это убирает рассинхрон логики между клиентом и сервером.",
+                "example": "Заказ в `PENDING` отдаёт `_links` с `approve` и `cancel`; тот же заказ в `SHIPPED` отдаёт только `track` — клиент не показывает «Отменить», потому что ссылки нет.",
+                "when_to_apply": "Преимущества раскрываются на API с явным workflow и многими клиентами: сервер централизованно управляет допустимыми переходами и спокойно меняет URL.",
+                "edge_cases": "Самодокументируемость частична: ссылки говорят «куда можно», но не описывают форматы тел запросов — для этого всё равно нужна документация или схема.",
+                "related": "[[rest-maturity-interview#Q7]] что такое HATEOAS; [[rest-maturity-interview#Q10]] почему HATEOAS редок; [[rest-maturity-interview#Q8]] форматы гипермедиа."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Главное преимущество HATEOAS — уменьшение размера payload по сравнению с традиционным REST.",
+              "text": "Главное преимущество HATEOAS — он значительно уменьшает размер HTTP-ответов, убирая из них лишние поля и ускоряя передачу по сети.",
               "correct": false,
               "sections": {
-                "what_actually": "HATEOAS наоборот УВЕЛИЧИВАЕТ payload, потому что добавляет `_links` (а иногда `_embedded`) к каждому ответу. Это один из недостатков HATEOAS, который часто упоминается как контр-аргумент.",
-                "source_of_confusion": "Кандидат думает «hypermedia заменяет multiple round trips» (как GraphQL) и проецирует это на HATEOAS. Но HATEOAS добавляет, а не убирает данные.",
-                "if_it_were_true": "Тогда HATEOAS активно применялся бы для mobile/bandwidth-constrained сценариев — но обычно для них выбирают GraphQL/gRPC, а не HATEOAS.",
-                "how_it_should_be": "Преимущества HATEOAS — это decoupling и evolvability; payload size наоборот растёт, это trade-off."
+                "what_actually": "HATEOAS, наоборот, увеличивает payload, добавляя секцию ссылок; это считается его недостатком, а не преимуществом.",
+                "source_of_confusion": "Любую «продвинутую» технику склонны записывать в плюсы по производительности, хотя здесь эффект обратный.",
+                "if_it_were_true": "Тогда «раздувание payload» не упоминалось бы среди причин редкого применения HATEOAS, но именно оно там и стоит.",
+                "how_it_should_be": "Преимущества HATEOAS — слабая связанность и эволюция сервера; размер ответа он увеличивает, а не уменьшает."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Главное преимущество HATEOAS — автоматическая авторизация: links показываются только для permitted actions.",
+              "text": "Главное преимущество HATEOAS — он автоматически шифрует трафик между клиентом и сервером, делая отдельный `TLS` ненужным.",
               "correct": false,
               "sections": {
-                "what_actually": "Это побочное следствие, а не главное преимущество. Сервер действительно может фильтровать links по permissions (admin видит delete link, обычный user — нет), но это не основная идея HATEOAS. Главное — decoupling клиента от server URL structure.",
-                "source_of_confusion": "Permission-based link visibility — удобный side-effect, который иногда демонстрируется в туториалах. Кандидат может принять его за главное.",
-                "if_it_were_true": "Тогда HATEOAS использовался бы как authorization-mechanism, что небезопасно: клиент может вызвать удалённый URL и без link (security through obscurity).",
-                "how_it_should_be": "Authorization должна быть на server-side (проверка permissions при call); HATEOAS даёт UI hints, но не security boundary. Главное преимущество — decoupling."
+                "what_actually": "HATEOAS — про гипермедиа-навигацию и не имеет отношения к шифрованию; конфиденциальность по-прежнему обеспечивает `TLS`.",
+                "source_of_confusion": "Безопасность и зрелость API часто упоминают рядом, отсюда ложная связь HATEOAS с шифрованием.",
+                "if_it_were_true": "Тогда HATEOAS-API можно было бы безопасно гонять по `http://`, но без `TLS` трафик всё равно открыт.",
+                "how_it_should_be": "HATEOAS даёт развязку клиента и сервера; шифрование — отдельная ответственность `HTTPS`/`TLS`."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "HATEOAS полностью убирает необходимость API versioning, потому что сервер может менять всё что угодно.",
+              "text": "Главное преимущество HATEOAS — он полностью устраняет необходимость в версионировании API, так как ссылки делают любые изменения обратносовместимыми.",
               "correct": false,
               "sections": {
-                "what_actually": "HATEOAS упрощает URL-evolution (можно переименовать /users → /accounts без breaking changes), но не заменяет versioning для breaking schema changes (поле переименовали, тип данных изменили). Семантические изменения всё ещё требуют versioning.",
-                "source_of_confusion": "Утверждение «server can evolve without breaking» преувеличивают до «versioning не нужен». На практике HATEOAS освобождает только от URL-coupling, не от schema-coupling.",
-                "if_it_were_true": "Тогда PayPal/Amazon никогда не было бы v1/v2/v3 API — а они есть, несмотря на использование HATEOAS-элементов.",
-                "how_it_should_be": "HATEOAS упрощает URL-evolution; versioning всё равно нужен для schema/semantic breaking changes; они дополняют друг друга."
+                "what_actually": "Встроенные ссылки упрощают, но не отменяют версионирование; смена форматов тел или семантики всё равно требует версий.",
+                "source_of_confusion": "Один из плюсов — «проще версионирование», и его преувеличивают до «версии больше не нужны».",
+                "if_it_were_true": "Тогда необходимость версий не упоминалась бы среди причин редкого применения HATEOAS, но она там есть.",
+                "how_it_should_be": "HATEOAS облегчает эволюцию URL, однако версионирование контракта остаётся необходимым."
               }
             }
           ]
@@ -546,55 +546,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Почему HATEOAS редко применяется в production API в 2025 году?",
+          "question_text": "Почему HATEOAS редко применяется?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Главная причина — HATEOAS слишком сложен для реализации на сервере, существующие библиотеки не справляются с нагрузкой.",
+              "text": "HATEOAS редко применяется, потому что он официально запрещён спецификацией `HTTP/2` и не поддерживается современными браузерами и прокси.",
               "correct": false,
               "sections": {
-                "what_actually": "Server-side библиотеки (Spring HATEOAS для Java, RoarPHP для PHP, hal-fastapi для Python) достаточно зрелые. Основная сложность HATEOAS — именно на клиенте: логика парсинга `_links`, action selection, fallback при отсутствии link.",
-                "source_of_confusion": "Кандидат предполагает что любая сложная фича сложна на сервере. Но HATEOAS server-side — это buildLink() + декларативная конфигурация; client-side — runtime navigation logic.",
-                "if_it_were_true": "Тогда Spring HATEOAS / Drupal JSON:API не использовались бы в production — а они применяются, server-side не блокер.",
-                "how_it_should_be": "Server-side зрел; client complexity (frontend не привыкли к runtime discovery) — настоящий барьер."
+                "what_actually": "Никакого запрета нет: HATEOAS — обычный JSON с ссылками поверх стандартного HTTP, его поддерживает любой клиент; причины редкости — сложность и фрагментация.",
+                "source_of_confusion": "«Редко используется» интерпретируют как «технически невозможно», хотя дело в трудозатратах, а не в запрете.",
+                "if_it_were_true": "Тогда `Spring HATEOAS` и формат `HAL` просто не работали бы по HTTP, но они работают штатно.",
+                "how_it_should_be": "HATEOAS полностью совместим с HTTP; редок он из-за сложности клиента, отсутствия стандарта и инструментов."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "HATEOAS редко применяется из-за: client complexity (нужно парсить links), отсутствия единого стандарта (HAL/JSON:API/Siren), достаточности OpenAPI для design-time, performance overhead, frontend developers предпочитают type-safe SDK с hardcoded routes.",
+              "text": "В реальности доминирует Level 2, HATEOAS встречается редко. Причины: 1) сложность клиента — ему приходится парсить ссылки; 2) нет единого стандарта — `HAL` vs `JSON:API` vs `Siren`, фрагментация; 3) версионирование — встроенные ссылки не отменяют версий; 4) не хватает инструментов — фронтенд предпочитает хардкодить пути; 5) производительность — ссылки раздувают payload; 6) потребители хотят `OpenAPI` — схемы, а не обнаружение в рантайме; 7) `GraphQL` решает часть задач иначе. Консенсус: HATEOAS академически чист, но прагматичный дизайн = Level 2 + `OpenAPI`.",
               "correct": true,
               "sections": {
-                "explanation": "Сочетание факторов делает HATEOAS непопулярным. На клиенте нужно научиться парсить link relations, выбирать right action, обрабатывать missing links — это сложнее, чем `fetch('/users/123')`. Фрагментация форматов (HAL vs JSON:API vs Siren) затрудняет ecosystem-tools. OpenAPI решает 80% задач документации без HATEOAS-сложности. Frontend developers предпочитают TypeScript types из OpenAPI codegen — type-safe и понятно. Performance: extra payload + extra parsing. GraphQL покрывает часть HATEOAS-кейсов (single endpoint + discoverable).",
-                "example": "Stripe (Level 2 + OpenAPI), GitHub API v3 (частично hypermedia в pagination, но не Level 3), Twilio (Level 2) — все осознанно остаются на Level 2. PayPal v2 — единственный из major payments, который декларирует HATEOAS, но и там значительная часть клиентов игнорирует links.",
-                "when_to_apply": "Pragmatic выбор для большинства проектов — Level 2 + OpenAPI. HATEOAS оправдан только для public/long-lived API с независимыми consumer'ами (государственные сервисы, sector с regulatory stability).",
-                "edge_cases": "Микросервисы внутри одной организации редко используют HATEOAS — обе стороны контролируются одной командой, decoupling не critical. Public B2B integration — чаще candidate для HATEOAS.",
-                "related": "[[rest-maturity-interview#Q9]] преимущества HATEOAS; [[rest-maturity-interview#Q15]] критика Fielding; [[rest-maturity-interview#Q16]] pragmatic vs idealistic."
+                "explanation": "Корень редкости — стоимость превышает выгоду для большинства команд: сложный клиент, фрагментация форматов и отсутствие инструментов перевешивают развязку клиента и сервера, особенно когда клиентов мало.",
+                "example": "Фронтенд-команда предпочтёт сгенерировать типизированный клиент из `OpenAPI` и захардкодить `/users/{id}`, чем писать рантайм-парсер `_links` под гипотетическую смену URL.",
+                "when_to_apply": "Эти аргументы приводят, обосновывая выбор Level 2 + `OpenAPI` как дефолта и отказ от HATEOAS, если нет явного workflow с множеством независимых клиентов.",
+                "edge_cases": "HATEOAS не «мёртв»: в нишах с долгоживущими гипермедиа-API (некоторые платёжные и enterprise-системы) развязка окупается, несмотря на сложность.",
+                "related": "[[rest-maturity-interview#Q9]] преимущества HATEOAS; [[rest-maturity-interview#Q8]] фрагментация форматов; [[rest-maturity-interview#Q16]] прагматичный vs идеалистичный REST."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "HATEOAS принципиально не работает с современными SPA (React, Vue, Angular).",
+              "text": "HATEOAS редко применяется, потому что он работает только с XML и несовместим с JSON, а индустрия перешла на JSON.",
               "correct": false,
               "sections": {
-                "what_actually": "Технически работает — fetch ответ с `_links`, follow link для action. Apollo (для GraphQL) — пример complex client state management. Проблема — frontend devs привыкли к hardcoded paths и type-safe SDK; runtime link parsing менее convenient, но не невозможен.",
-                "source_of_confusion": "Кандидат сводит «редко используется» к «технически невозможно», но это два разных утверждения.",
-                "if_it_were_true": "Тогда SPA-фреймворки не имели бы интеграций с HAL/JSON:API — а они есть (ember-data, react-jsonapi-loader).",
-                "how_it_should_be": "Технически работает; реально не используется из-за привычек frontend community и достаточности OpenAPI."
+                "what_actually": "HATEOAS прекрасно работает с JSON: `HAL`, `JSON:API`, `Siren` — это именно JSON-форматы гипермедиа.",
+                "source_of_confusion": "HATEOAS ассоциируют со «старым строгим REST», а тот мысленно связывают с эпохой XML/SOAP.",
+                "if_it_were_true": "Тогда `HAL` (`application/hal+json`) не существовал бы, но это самый распространённый JSON-формат HATEOAS.",
+                "how_it_should_be": "Гипермедиа-форматы основаны на JSON; редкость HATEOAS объясняется сложностью и фрагментацией, а не форматом."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "HATEOAS заменён HTTP/2 Server Push, который выполняет те же функции более эффективно.",
+              "text": "HATEOAS редко применяется, потому что он требует обязательного перехода на `gRPC` и `Protobuf`, что слишком дорого для большинства команд.",
               "correct": false,
               "sections": {
-                "what_actually": "HTTP/2 Server Push — это про предварительную доставку response payload (CSS, JS) до того, как клиент его попросил. HATEOAS — про hypermedia content semantics (links в ответах). Они вообще про разное; HTTP/2 Push не заменяет HATEOAS. Кроме того, HTTP/2 Push был deprecated в большинстве браузеров в 2022 году.",
-                "source_of_confusion": "Кандидат знает что HTTP/2 «push something to client» и предполагает что это про push'ить hypermedia. Но push'ат response payload, не link semantics.",
-                "if_it_were_true": "Тогда HTTP/3 спецификация унаследовала бы Server Push и развивала его — но HTTP/3 этой фичи не имеет вообще.",
-                "how_it_should_be": "HTTP/2 Server Push (deprecated) и HATEOAS — ортогональны; одно не заменяет другое."
+                "what_actually": "HATEOAS не связан с `gRPC`/`Protobuf` — это гипермедиа поверх обычного REST/HTTP; `gRPC` вообще не содержит гипермедиа-ссылок.",
+                "source_of_confusion": "«Продвинутое» и «дорогое» в API смешивают со сменой транспорта на бинарный `gRPC`.",
+                "if_it_were_true": "Тогда нельзя было бы сделать HATEOAS-API на `Spring MVC` + JSON, но именно так его чаще всего и делают.",
+                "how_it_should_be": "HATEOAS реализуется поверх HTTP/JSON без `gRPC`; редкость объясняется сложностью клиента и отсутствием единого стандарта."
               }
             }
           ]
@@ -606,55 +606,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие свойства (idempotent, safe) имеют основные HTTP verbs?",
+          "question_text": "Опишите HTTP-глаголы: GET, POST, PUT, PATCH, DELETE.",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "PUT и PATCH полностью взаимозаменяемы — выбор любого из них корректен для обновления ресурса.",
+              "text": "`POST` и `PUT` — полные синонимы: оба создают ресурс и оба идемпотентны, поэтому в REST можно использовать любой из них взаимозаменяемо.",
               "correct": false,
               "sections": {
-                "what_actually": "PUT отправляет ВЕСЬ ресурс и заменяет его целиком (поля, отсутствующие в теле, обнуляются); PATCH отправляет только изменения (partial update). Перепутывание ведёт к data loss: `PUT /user/123 {\"name\": \"Alice\"}` обнулит email, age и всё остальное.",
-                "source_of_confusion": "Оба «обновляют» ресурс, поэтому кажутся взаимозаменяемыми. Семантически они разные операции: replace vs modify.",
-                "if_it_were_true": "Тогда не было бы RFC 5789 (PATCH) и RFC 7396/6902 (Merge Patch / JSON Patch) — а они появились именно потому что PUT не подходит для partial update.",
-                "how_it_should_be": "PUT = full replace (опасно для partial update); PATCH = partial; выбирать по семантике операции."
+                "what_actually": "`POST` не идемпотентен (повтор создаёт новый ресурс), а `PUT` идемпотентен (повтор даёт тот же результат); это разные по семантике глаголы.",
+                "source_of_confusion": "Оба «небезопасные» и оба могут создавать ресурс, отсюда впечатление взаимозаменяемости.",
+                "if_it_were_true": "Тогда повторная отправка платежа через `POST /payments` была бы безопасной, но она создала бы дубль платежа.",
+                "how_it_should_be": "`PUT` идемпотентен и заменяет по известному URL; `POST` не идемпотентен и создаёт новый ресурс."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "POST становится идемпотентным, если клиент использует свой UUID в качестве primary key.",
+              "text": "`GET` может безопасно изменять состояние на сервере (например, `GET /users/123/delete`), если так удобнее реализовать клиента.",
               "correct": false,
               "sections": {
-                "what_actually": "POST по семантике HTTP не идемпотентен — независимо от UUID. Client-generated UUID + server-side dedupe-логика даёт effective idempotency на application level, но HTTP semantics остаются «non-idempotent». Стандартный паттерн — Idempotency-Key header (Stripe, IETF draft RFC 9110bis).",
-                "source_of_confusion": "Кандидат знает паттерн «UUID на клиенте предотвращает дубли» и считает что это и есть idempotency. Но idempotency формально про HTTP-семантику метода, не про business logic.",
-                "if_it_were_true": "Тогда proxies/CDN могли бы retry'ить POST'ы с UUID без опасений — что они не делают, потому что HTTP semantics всё ещё non-idempotent.",
-                "how_it_should_be": "POST formal-not-idempotent; для retry safety — Idempotency-Key header или PUT (если знаешь target URL)."
+                "what_actually": "`GET` — безопасный метод и не должен менять состояние; удаление через `GET` нарушает семантику HTTP и опасно (краулеры, прокси, префетч).",
+                "source_of_confusion": "Технически URL `GET /.../delete` работает, и кажется, что «раз отвечает — значит допустимо».",
+                "if_it_were_true": "Тогда поисковый краулер, пройдя по ссылке `GET .../delete`, мог бы случайно удалить данные.",
+                "how_it_should_be": "Изменяющие операции делают небезопасными глаголами (`POST`/`PUT`/`DELETE`); `GET` остаётся только для чтения."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "GET (safe, idempotent, читает), POST (unsafe, non-idempotent, создаёт), PUT (unsafe, idempotent, full replace), PATCH (unsafe, может быть idempotent, partial update), DELETE (unsafe, idempotent, удаляет); HEAD = GET без body, OPTIONS = discover методов.",
+              "text": "`GET` — получить, идемпотентный и безопасный. `POST` — создать или произвольное действие, не идемпотентный, небезопасный. `PUT` — полная замена или создание, идемпотентный, небезопасный. `PATCH` — частичное обновление, иногда идемпотентный, небезопасный. `DELETE` — удалить, идемпотентный, небезопасный. Идемпотентный — несколько одинаковых запросов дают тот же эффект; безопасный — не меняет состояние. `PUT` отправляет весь ресурс (замещается целиком), `PATCH` — только изменения.",
               "correct": true,
               "sections": {
-                "explanation": "Каждый verb имеет два формальных свойства. Safe — не изменяет state ресурса (только GET, HEAD, OPTIONS). Idempotent — повторный вызов даёт тот же финальный state (GET, HEAD, OPTIONS, PUT, DELETE; POST/PATCH — нет в общем случае). Эти свойства критичны для HTTP-инфраструктуры: cache работает для safe (cache GET response), retry-логика безопасна для idempotent (retry PUT/DELETE без опасений), proxy/CDN могут оптимизировать на основе свойств метода.",
-                "example": "`GET /users/123` — кэшируется CDN, безопасен retry. `PUT /users/123 {full body}` — повтор даёт тот же state, retry safe. `DELETE /users/123` — первый раз вернёт 204, второй — 404 или 204 (final state одинаков). `POST /orders` без Idempotency-Key — повтор создаст два заказа.",
-                "when_to_apply": "PATCH с JSON Merge Patch (RFC 7396) — idempotent; JSON Patch (RFC 6902) с array ops — не idempotent. PUT для full update с known URL. POST для create + Idempotency-Key header для safe retry в payments/orders.",
-                "edge_cases": "PATCH idempotency зависит от конкретной операции: `{\"counter\": 5}` (merge patch) idempotent, `[{\"op\": \"add\", \"path\": \"/items/-\", \"value\": x}]` (JSON Patch append) — нет, каждый повтор добавит item. HEAD безопасен для discovery (например проверить существование).",
-                "related": "[[rest-maturity-interview#Q12]] status codes; [[rest-maturity-interview#Q13]] детали idempotency; [[rest-maturity-interview#Q14]] safe vs unsafe."
+                "explanation": "Ключевые оси — идемпотентность и безопасность: `GET` единственный и безопасный (ничего не меняет), и идемпотентный; `POST` не идемпотентен (каждый раз новый ресурс); `PUT`/`DELETE` идемпотентны, хотя и меняют состояние.",
+                "example": "`PUT /users/123` с полным телом дважды → один и тот же результат (идемпотентно); `POST /users` дважды → два разных пользователя (не идемпотентно).",
+                "when_to_apply": "Выбор глагола делают по намерению: создание без известного URL — `POST`, замена по известному URL — `PUT`, точечное изменение поля — `PATCH`, удаление — `DELETE`.",
+                "edge_cases": "`PATCH` идемпотентен не всегда: `{\"op\": \"increment\", \"field\": \"counter\"}` при повторе даёт другой результат, тогда как `{\"name\": \"Bob\"}` — идемпотентен.",
+                "related": "[[rest-maturity-interview#Q13]] идемпотентность подробно; [[rest-maturity-interview#Q14]] safe vs unsafe; [[rest-maturity-interview#Q5]] Level 2 и семантика HTTP."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "GET может изменять состояние ресурса, если изменение — это side-effect логирования или аналитики.",
+              "text": "`PUT` отправляет только изменённые поля ресурса, а `PATCH` — весь ресурс целиком для полной замены.",
               "correct": false,
               "sections": {
-                "what_actually": "GET формально safe — no state change observable клиентом. Внутренние logging/metrics — это implementation detail, не client-visible state change. Опасность: если GET выполняет business-action (`GET /users/123/delete`), CDN/proxy/crawler могут вызвать delete случайно при prefetch или indexing.",
-                "source_of_confusion": "Кандидат рассматривает logging как «изменение state» и расширяет это до «GET можно использовать для actions». На практике logging — implementation detail.",
-                "if_it_were_true": "Тогда `GET /users/123/delete` был бы acceptable в REST APIs — но это classic anti-pattern, ломающий весь HTTP-стек.",
-                "how_it_should_be": "GET safe = no client-observable state change; внутренний logging OK, business actions — never GET (используй POST/DELETE)."
+                "what_actually": "Всё наоборот: `PUT` отправляет ресурс целиком (полная замена), а `PATCH` — только изменения (частичное обновление).",
+                "source_of_confusion": "Названия `PUT` и `PATCH` похожи по «обновляющему» смыслу, и их легко перепутать местами.",
+                "if_it_were_true": "Тогда `PUT` с одним полем обнулял бы остальные не сильнее, чем `PATCH`, но `PUT` как раз замещает весь ресурс.",
+                "how_it_should_be": "`PUT` — полная замена (весь ресурс), `PATCH` — частичное обновление (только переданные поля)."
               }
             }
           ]
@@ -666,55 +666,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие категории HTTP status codes существуют и как правильно их использовать?",
+          "question_text": "Какие категории HTTP status codes существуют?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Все ошибки можно возвращать как 200 OK с error в body — это упрощает обработку на клиенте.",
+              "text": "Коды `4xx` означают ошибку сервера (бэкенд упал), а коды `5xx` означают ошибку клиента (невалидный запрос).",
               "correct": false,
               "sections": {
-                "what_actually": "При 200 на всех ответах ломается вся HTTP-инфраструктура: CDN/proxy кэшируют ошибки как success, retry-libraries не понимают что нужно retry'ить (200 = success), monitoring не различает ok от fail. Standard tooling (Datadog, New Relic) считают 5xx/4xx как ошибки автоматически — теряем эту функциональность.",
-                "source_of_confusion": "GraphQL действительно возвращает 200 + errors в body (но это его собственное расхождение с HTTP semantics, не «правильный REST»). Кандидат проецирует GraphQL-практику на REST.",
-                "if_it_were_true": "Тогда Stripe/GitHub/Twilio возвращали бы 200 для всех ошибок — но они возвращают 400/401/403/404/409/422/429/500 с осмысленной семантикой.",
-                "how_it_should_be": "Status codes должны соответствовать семантике: 2xx success, 4xx client error, 5xx server error; tooling работает корректно."
+                "what_actually": "Всё наоборот: `4xx` — ошибка клиента (`400`, `404`), а `5xx` — ошибка сервера (`500`, `503`).",
+                "source_of_confusion": "Цифры `4` и `5` идут подряд, и их роли (клиент/сервер) легко поменять местами в памяти.",
+                "if_it_were_true": "Тогда `404 Not Found` указывал бы на падение сервера, но это типичная клиентская ошибка — запросили несуществующий ресурс.",
+                "how_it_should_be": "`4xx` — вина клиента (плохой запрос), `5xx` — вина сервера (внутренний сбой)."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "401 Unauthorized означает «пользователь известен, но нет доступа к этому ресурсу».",
+              "text": "Существует только 2 категории кодов: `2xx` для всех успешных ответов и `4xx` для всех ошибок; коды `1xx`, `3xx` и `5xx` не используются.",
               "correct": false,
               "sections": {
-                "what_actually": "401 Unauthorized = «нет/неправильная аутентификация» (анонимный или invalid token). 403 Forbidden = «известен, но нет доступа». Имена ровно перепутаны исторически: 401 must include WWW-Authenticate header.",
-                "source_of_confusion": "Английское слово «Unauthorized» интуитивно звучит как «нет полномочий» (= forbidden). Но в HTTP-семантике 401 — это про authentication, 403 — про authorization. Это классическая путаница.",
-                "if_it_were_true": "Тогда WWW-Authenticate header был бы required для 403, а не 401 — но в RFC 7235 этот header обязателен именно для 401.",
-                "how_it_should_be": "401 = authentication failed/missing (client должен re-login); 403 = authenticated but not allowed (contact admin); разные действия клиента."
+                "what_actually": "Категорий пять (`1xx`-`5xx`); в частности `3xx` (редиректы) и `5xx` (ошибки сервера) активно используются.",
+                "source_of_confusion": "На практике чаще всего видят `2xx` и `4xx`, и из этого делают вывод, что остальных классов нет.",
+                "if_it_were_true": "Тогда не существовало бы `301 Moved Permanently` и `500 Internal Server Error`, но они повсеместны.",
+                "how_it_should_be": "Классов пять; `3xx` отвечает за перенаправления, а `5xx` — за серверные ошибки."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "503 Service Unavailable и 504 Gateway Timeout — это синонимы, можно использовать любой при недоступности upstream.",
+              "text": "Код `200 OK` — единственно правильный ответ на любой запрос; ошибки следует возвращать тоже как `200` с полем `error` в теле.",
               "correct": false,
               "sections": {
-                "what_actually": "Разные семантики. 503 = upstream сам отвечает «я не доступен» (обычно с Retry-After header — деплой, maintenance, перегрузка). 504 = gateway/proxy не дождался ответа от upstream (timeout, upstream вообще не ответил). Клиент реагирует по-разному.",
-                "source_of_confusion": "Оба про «сервер недоступен», поэтому кажутся одинаковыми. Но разница в том, кто диагностировал проблему — сам сервис (503) или gateway (504).",
-                "if_it_were_true": "Тогда не было бы смысла различать их в RFC 7231 — но оба кода описаны отдельно с разной семантикой.",
-                "how_it_should_be": "503 = «я знаю что недоступен» (часто + Retry-After); 504 = «gateway timeout, не достучался до upstream»; разные диагнозы."
+                "what_actually": "`200` на всё подряд — антипаттерн: прокси и клиенты не видят ошибку, кэш ведёт себя неверно; для ошибок нужны коды `4xx`/`5xx`.",
+                "source_of_confusion": "В Level 0/RPC-стиле так часто и делают (`200` + `error` в теле), и привычка переносится на REST.",
+                "if_it_were_true": "Тогда CDN кэшировал бы ответ с ошибкой как успешный, и клиент не смог бы отличить успех от сбоя по статусу.",
+                "how_it_should_be": "Успех — `2xx`, клиентские ошибки — `4xx`, серверные — `5xx`; это и есть корректный Level 2."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Категории: 1xx info, 2xx success (200/201/204/202), 3xx redirect (301/304), 4xx client error (400/401/403/404/409/422/429), 5xx server error (500/502/503/504); правильные коды дают работу caching, retry, monitoring.",
+              "text": "Коды делятся на 5 категорий по первой цифре: `1xx` — информационные (редко); `2xx` — успех (`200 OK`, `201 Created`, `202 Accepted`, `204 No Content`); `3xx` — перенаправления (`301 Moved Permanently`, `304 Not Modified`); `4xx` — ошибка клиента (`400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found`, `409 Conflict`, `422 Unprocessable Entity`, `429 Too Many Requests`); `5xx` — ошибка сервера (`500`, `502`, `503`, `504`). Не используйте `200` на всё подряд — правильные коды информируют клиентов и прокси.",
               "correct": true,
               "sections": {
-                "explanation": "Пять категорий status codes. 1xx Informational — редко используются (например 100 Continue для chunked upload). 2xx Success: 200 OK (read), 201 Created (POST/PUT создал, обычно + Location header), 202 Accepted (async — принято, обрабатывается), 204 No Content (успех без body, DELETE/PUT). 3xx Redirection: 301 Moved Permanently, 304 Not Modified (cache valid). 4xx Client errors: 400 Bad Request (validation), 401 Unauthorized (нет auth), 403 Forbidden (auth ok, нет прав), 404 Not Found, 405 Method Not Allowed, 409 Conflict (version mismatch), 422 Unprocessable Entity (validation), 429 Too Many Requests (rate limit). 5xx Server errors: 500 Internal Server Error, 502 Bad Gateway, 503 Service Unavailable (+ Retry-After), 504 Gateway Timeout.",
-                "example": "Stripe: `POST /v1/charges` 402 Payment Required при card decline; `POST /v1/charges` без idempotency 409 Conflict при collision; rate limit 429 + Retry-After: 5. AWS S3: 503 SlowDown при throttling + Retry-After.",
-                "when_to_apply": "201 + Location на create; 204 на delete без body; 422 для domain validation errors (vs 400 для syntax); 429 + Retry-After для rate limiting; 503 + Retry-After для planned maintenance.",
-                "edge_cases": "422 Unprocessable Entity vs 400 Bad Request: 400 = синтаксически invalid (malformed JSON); 422 = синтаксически ок, но semantically invalid (валидация бизнес-правил не прошла). 409 Conflict — для optimistic locking (If-Match header).",
-                "related": "[[rest-maturity-interview#Q11]] HTTP verbs; [[rest-maturity-interview#Q13]] idempotency и retry; [[rest-maturity-interview#Q5]] Level 2."
+                "explanation": "Первая цифра задаёт класс ответа, и клиенты/прокси полагаются именно на неё: `2xx` — всё хорошо, `4xx` — виноват клиент (нет смысла повторять без изменений), `5xx` — виноват сервер (можно повторить позже).",
+                "example": "Создание ресурса → `201 Created`; невалидное тело → `400 Bad Request` (или `422`); нет прав при наличии аутентификации → `403 Forbidden`; упал бэкенд → `500 Internal Server Error`.",
+                "when_to_apply": "Категории используют при проектировании ответов API и обработке ошибок на клиенте: по классу кода решают, повторять ли запрос, чинить ли ввод или эскалировать на сервер.",
+                "edge_cases": "`401` и `403` путают: `401` — «не аутентифицирован» (кто ты?), `403` — «аутентифицирован, но нет прав» (тебе нельзя); разница важна для UX и безопасности.",
+                "related": "[[rest-maturity-interview#Q5]] Level 2 и коды статусов; [[rest-maturity-interview#Q11]] HTTP-глаголы; [[rest-maturity-interview#Q13]] идемпотентность и повторы."
               }
             }
           ]
@@ -726,55 +726,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое idempotency у HTTP методов и какие из них идемпотентны?",
+          "question_text": "Что такое идемпотентность HTTP-методов?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Idempotent означает, что метод можно вызывать только один раз — повторный вызов вернёт ошибку.",
-              "correct": false,
+              "text": "Идемпотентные методы: `GET`, `HEAD`, `OPTIONS`, `PUT`, `DELETE` — несколько одинаковых запросов приводят к тому же конечному состоянию. Неидемпотентные: `POST` (и обычно `PATCH`). Пример: `DELETE /users/123` первый раз → `204`, второй раз → `404` или `204`, но конечное состояние то же. `POST` создаёт новый ресурс каждый раз. Сделать `POST` идемпотентным помогают ключи идемпотентности (`Idempotency-Key`): сервер сохраняет ключ и возвращает тот же ответ на повтор.",
+              "correct": true,
               "sections": {
-                "what_actually": "Idempotent означает прямо противоположное: можно вызывать N раз, и финальный state ресурса будет одинаков. Это критично для retry-логики при сетевых сбоях — клиент может повторить запрос без опасения испортить state.",
-                "source_of_confusion": "Латинский корень «idem» (тот же) + «potens» (мощный) интуитивно даёт «одна сила = один вызов». На самом деле «idem-potent» = «тот же эффект».",
-                "if_it_were_true": "Тогда retry-libraries (Apache HttpClient retry policy) не использовали бы idempotency как критерий для safe retry — но они используют именно так.",
-                "how_it_should_be": "Idempotent = N вызовов дают тот же финальный state; важно для retry на network failure."
+                "explanation": "Идемпотентность — про конечное состояние, а не про идентичность ответов: повторный `DELETE` может вернуть `404` вместо `204`, но ресурс всё равно удалён — состояние одинаково. Это позволяет клиенту безопасно ретраить запрос при таймауте.",
+                "example": "Платёж через `POST /payments` с `Idempotency-Key: 7f9c1d-...`: если сеть оборвалась и клиент повторил запрос с тем же ключом, сервер вернёт прежний ответ и не спишет деньги дважды.",
+                "when_to_apply": "На идемпотентность опираются при проектировании ретраев: безопасно повторять `GET`/`PUT`/`DELETE`, а для `POST` вводят `Idempotency-Key`, особенно в платежах и заказах.",
+                "edge_cases": "`PATCH` идемпотентен не всегда: `set name=Bob` — да, а `increment counter` — нет; идемпотентность зависит от семантики самой операции, а не только от глагола.",
+                "related": "[[rest-maturity-interview#Q11]] глаголы и их свойства; [[rest-maturity-interview#Q14]] safe vs unsafe; [[rest-maturity-interview#Q12]] коды статусов."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Idempotent verbs: GET/HEAD/OPTIONS/PUT/DELETE; non-idempotent: POST, PATCH (зависит); workaround для POST idempotency — `Idempotency-Key` header, сервер хранит key и возвращает same response для duplicate request.",
-              "correct": true,
+              "text": "Идемпотентность означает, что метод возвращает абсолютно идентичный код ответа при каждом вызове; раз второй `DELETE` отдал `404` вместо `204`, метод не идемпотентен.",
+              "correct": false,
               "sections": {
-                "explanation": "Idempotency — формальное свойство HTTP метода: повтор даёт тот же финальный state. GET/HEAD/OPTIONS — safe (не меняют state) и idempotent. PUT — заменяет ресурс на полное тело, повтор не меняет результат. DELETE — после первого вызова ресурс удалён; повтор вернёт 404 или 204, но state одинаков. POST по умолчанию non-idempotent — каждый вызов создаёт новый ресурс. PATCH зависит от типа (см. edge cases). Для POST idempotency используют header Idempotency-Key (Stripe, IETF draft).",
-                "example": "Stripe payment: `POST /v1/charges` с header `Idempotency-Key: 7f9c1d-...` — Stripe хранит key 24 часа, при повторе с тем же key возвращает закэшированный response (не создаёт второй charge). Critical для recovery после network timeout: клиент ретраит без риска двойного списания.",
-                "when_to_apply": "Для payment/order/critical mutations POST обязательно использовать Idempotency-Key; TTL обычно 24h, хранилище Redis или DB table. Retry policy на клиенте — retry только idempotent verbs или POST с Idempotency-Key.",
-                "edge_cases": "PATCH idempotency зависит от формата: JSON Merge Patch (RFC 7396) idempotent (`{\"name\": \"Alice\"}` всегда даёт name=Alice); JSON Patch (RFC 6902) с array operations (`[{\"op\": \"add\", \"path\": \"/items/-\", \"value\": x}]`) НЕ idempotent — каждый повтор добавляет item.",
-                "related": "[[rest-maturity-interview#Q11]] HTTP verbs; [[rest-maturity-interview#Q14]] safe vs unsafe; [[rest-maturity-interview#Q12]] status codes для retry."
+                "what_actually": "Идемпотентность — про одинаковое конечное состояние ресурса, а не про идентичность кодов ответа; `DELETE` идемпотентен, даже если второй раз вернул `404`.",
+                "source_of_confusion": "«Тот же эффект» интерпретируют как «тот же ответ», смешивая состояние ресурса с HTTP-статусом.",
+                "if_it_were_true": "Тогда `DELETE` не считался бы идемпотентным, но он классический пример идемпотентного метода.",
+                "how_it_should_be": "Важно, что после повторов ресурс в одном и том же состоянии (удалён); код ответа при этом может отличаться."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "POST с одинаковым request body всегда идемпотентен, потому что результат не меняется.",
+              "text": "`POST` идемпотентен по умолчанию: повторная отправка `POST /users` с тем же телом всегда вернёт уже существующего пользователя, а не создаст дубль.",
               "correct": false,
               "sections": {
-                "what_actually": "POST по семантике HTTP создаёт новый ресурс при каждом вызове, независимо от body. Два POST с одним body → два разных charge/order. Для idempotent POST нужен Idempotency-Key header (Stripe pattern, IETF RFC 9110bis draft).",
-                "source_of_confusion": "Кандидат интуитивно думает что «то же входное → то же выходное» = idempotent. Но HTTP semantics определяют что POST = create-new, независимо от input.",
-                "if_it_were_true": "Тогда не было бы Idempotency-Key (Stripe, Adyen, PayPal) — а они есть именно потому что POST с одним body создаёт дубли.",
-                "how_it_should_be": "POST = non-idempotent по умолчанию; для idempotent semantics — Idempotency-Key header."
+                "what_actually": "`POST` не идемпотентен: каждый вызов создаёт новый ресурс; чтобы избежать дублей при повторе, нужен `Idempotency-Key`.",
+                "source_of_confusion": "Хочется верить, что сервер «узнает» одинаковое тело, но без явного ключа он этого не делает.",
+                "if_it_were_true": "Тогда `Idempotency-Key` был бы не нужен, но именно его вводят, чтобы сделать `POST` безопасным к повторам.",
+                "how_it_should_be": "`POST` по умолчанию создаёт новый ресурс на каждый запрос; идемпотентность достигается ключом идемпотентности."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "PATCH всегда идемпотентен независимо от типа операции.",
+              "text": "`GET` — неидемпотентный метод, потому что между двумя запросами данные на сервере могут измениться, и ответы будут разными.",
               "correct": false,
               "sections": {
-                "what_actually": "PATCH idempotency зависит от типа: JSON Merge Patch (RFC 7396, `{\"name\": \"Alice\"}`) idempotent — повтор даёт тот же state. JSON Patch (RFC 6902) с array-операциями (`{\"op\": \"add\", \"path\": \"/items/-\", \"value\": x}`) НЕ idempotent — повтор сдвигает array, добавляет ещё один item.",
-                "source_of_confusion": "Кандидат запомнил «PATCH = update existing» и предполагает что update всегда idempotent. Но `add at index -1` (append) изменяет array длину каждый раз.",
-                "if_it_were_true": "Тогда retry на JSON Patch с array operations был бы safe — но это создаёт duplicates, и retry policy для PATCH должна различать тип.",
-                "how_it_should_be": "PATCH idempotency зависит от операции: JSON Merge Patch — yes; JSON Patch с array mutations — no; нужно знать конкретный формат."
+                "what_actually": "`GET` идемпотентен и безопасен: сам он не меняет состояние; изменение данных другими запросами не делает `GET` неидемпотентным.",
+                "source_of_confusion": "Разные ответы из-за параллельных изменений путают с неидемпотентностью самого `GET`.",
+                "if_it_were_true": "Тогда нельзя было бы кэшировать `GET`, но он кэшируется как раз потому, что считается безопасным и идемпотентным.",
+                "how_it_should_be": "Идемпотентность про эффект самого метода: `GET` ничего не меняет, поэтому идемпотентен независимо от чужих записей."
               }
             }
           ]
@@ -786,55 +786,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что означает свойство Safe у HTTP методов и какие методы являются safe?",
+          "question_text": "Чем safe-методы отличаются от unsafe?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Safe методы: GET, HEAD, OPTIONS (read-only). Unsafe: POST, PUT, PATCH, DELETE (modify state). CDN/proxy кэшируют safe-методы, browser prefetch'ит safe URLs; никогда не использовать GET для side-effect actions.",
-              "correct": true,
+              "text": "Safe-методы — это методы, защищённые `TLS`-шифрованием, а unsafe — те, что ходят по открытому `http://` без шифрования.",
+              "correct": false,
               "sections": {
-                "explanation": "Safe — HTTP-семантика: метод не должен изменять observable state ресурса. Safe methods могут быть закэшированы, ре-вызваны без consequences, prefetched браузером, indexed crawler'ами. GET/HEAD/OPTIONS — single source of truth для read-only. Внутренние side-effects (logging, metrics) — это implementation detail, не нарушает safe-семантику. Critical: GET для action endpoint (`GET /users/123/delete`) — anti-pattern: CDN/proxy/Google bot/browser prefetch вызовут случайно.",
-                "example": "Browser autocomplete prefetch'ит результаты `GET /search?q=test` — это OK для safe GET. Если бы это был `GET /products/123/buy`, prefetch покупки случилось бы при наведении на результат. Реальный bug в 2005: Google Web Accelerator prefetch'ил все GET-ссылки на странице, включая admin actions типа `GET /article/123/delete` — массовое удаление контента.",
-                "when_to_apply": "Admin UI / CRUD interfaces: delete-button должен вызывать DELETE через AJAX/fetch, не быть GET-ссылкой `<a href=\"/delete?id=123\">`. Аналогично для edit/update/cancel — используй POST/PUT/DELETE.",
-                "edge_cases": "Safe ≠ idempotent (понятия ортогональны): PUT/DELETE — unsafe (меняют state), но idempotent (повтор даёт тот же state). GET — и safe и idempotent. POST — и unsafe и не idempotent. Это два независимых свойства.",
-                "related": "[[rest-maturity-interview#Q11]] HTTP verbs; [[rest-maturity-interview#Q13]] idempotency; [[rest-maturity-interview#Q15]] критика Fielding (важность HTTP semantics)."
+                "what_actually": "«Safe» в HTTP означает «не меняет состояние», а не «зашифрован»; шифрование обеспечивает `HTTPS`/`TLS` независимо от глагола.",
+                "source_of_confusion": "Слово «safe» в обиходе ассоциируется с безопасностью данных, а не с отсутствием побочных эффектов.",
+                "if_it_were_true": "Тогда `GET` по `https://` был бы safe, а `GET` по `http://` — unsafe, но safe-статус глагола от транспорта не зависит.",
+                "how_it_should_be": "Safe — про отсутствие изменения состояния (`GET`, `HEAD`, `OPTIONS`); шифрование — отдельный слой `TLS`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Safe означает быстрый/легковесный метод с малым response size.",
-              "correct": false,
+              "text": "Safe (безопасные) методы не меняют состояние: `GET`, `HEAD`, `OPTIONS`. Unsafe (небезопасные) меняют состояние: `POST`, `PUT`, `PATCH`, `DELETE`. Следствия: CDN и прокси кэшируют безопасные методы, краулеры переходят по безопасным ссылкам, браузер предзагружает безопасные URL. Критично: никогда не используйте `GET` для действий с побочными эффектами — `GET /users/123/delete` плохо, `DELETE /users/123` правильно.",
+              "correct": true,
               "sections": {
-                "what_actually": "Safe — про семантику (no state change), не про perf. GET может возвращать огромный full-report в 100MB и всё равно быть safe. Lightweight POST (создание пустого ресурса) — unsafe.",
-                "source_of_confusion": "Английское слово «safe» интуитивно означает «безопасно/легко». Кандидат проецирует это на performance. На самом деле safe — про state-change semantics.",
-                "if_it_were_true": "Тогда heavy GET-запросы (analytics dashboards) считались бы unsafe — но они safe, просто долгие.",
-                "how_it_should_be": "Safe = no state change (read-only); orthogonal к performance; даже тяжёлый GET — safe."
+                "explanation": "Безопасность — про отсутствие наблюдаемого изменения состояния по вине метода. Именно поэтому инфраструктура (кэши, краулеры, префетч) свободно дёргает безопасные методы: предполагается, что вреда не будет.",
+                "example": "Браузер может предзагрузить `GET /products?prefetch` без последствий; но если бы `GET /cart/clear` чистил корзину, предзагрузка очистила бы её у пользователя.",
+                "when_to_apply": "Различие учитывают при дизайне URL и при настройке кэширования: на безопасные методы вешают кэш и префетч, изменяющие операции прячут за небезопасными глаголами.",
+                "edge_cases": "Все safe-методы идемпотентны, но не наоборот: `PUT` и `DELETE` идемпотентны, но небезопасны (меняют состояние) — это два разных свойства.",
+                "related": "[[rest-maturity-interview#Q13]] идемпотентность; [[rest-maturity-interview#Q11]] HTTP-глаголы; [[rest-maturity-interview#Q12]] коды статусов."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "PUT и DELETE — это safe методы, потому что они идемпотентны.",
+              "text": "`DELETE` — это safe-метод, потому что он идемпотентен: повтор удаления не меняет конечного состояния, значит, его можно кэшировать как `GET`.",
               "correct": false,
               "sections": {
-                "what_actually": "Safe и idempotent — разные понятия. Safe = no state change (только GET/HEAD/OPTIONS). Idempotent = same result on retry (GET/HEAD/OPTIONS + PUT/DELETE). PUT/DELETE — unsafe (изменяют state — replace или удаляют ресурс), но idempotent.",
-                "source_of_confusion": "Кандидат смешивает свойства метода. Обе категории про «retry-friendly», но разные: safe = «retry не имеет наблюдаемых последствий вообще»; idempotent = «retry приводит к тому же state».",
-                "if_it_were_true": "Тогда CDN кэшировали бы PUT-responses (так как safe = cacheable), но они не кэшируют — потому что PUT unsafe.",
-                "how_it_should_be": "Safe ≠ idempotent; PUT/DELETE — unsafe и idempotent одновременно; GET — и то и то; POST — ни то ни другое."
+                "what_actually": "`DELETE` небезопасен (меняет состояние — удаляет ресурс), хотя и идемпотентен; safe и идемпотентность — разные свойства.",
+                "source_of_confusion": "Идемпотентность и безопасность путают, считая, что «безвредный повтор» означает «безопасный метод».",
+                "if_it_were_true": "Тогда CDN кэшировал бы `DELETE`, но кэшировать изменяющую операцию нельзя — это исказило бы состояние.",
+                "how_it_should_be": "`DELETE` идемпотентен, но unsafe; кэшируются и предзагружаются только safe-методы (`GET`, `HEAD`)."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`GET /users/123/delete` приемлемо, если URL содержит auth-token — токен защищает от случайного вызова.",
+              "text": "Использовать `GET /users/123/delete` для удаления абсолютно нормально, ведь это просто URL, а буквальный глагол значения не имеет.",
               "correct": false,
               "sections": {
-                "what_actually": "GET с side effects — фундаментальное нарушение HTTP-семантики. Auth-token не защищает от CDN/proxy/browser-prefetch/crawler — они вызовут URL автоматически (browser prefetch на hover, Google bot при indexing). Также auth в URL утечёт в логи, referer headers, browser history.",
-                "source_of_confusion": "Кандидат думает что «секретный URL = безопасно», но это security through obscurity. Reality — браузеры/proxy ничего не знают про вашу логику.",
-                "if_it_were_true": "Тогда Google Web Accelerator 2005 incident (массовое удаление контента через GET-prefetch) не случился бы — но именно так и было, несмотря на auth.",
-                "how_it_should_be": "GET для side-effect actions — никогда; используй DELETE/POST через AJAX, не GET-ссылки."
+                "what_actually": "`GET` обязан быть safe; удаление через `GET` опасно — краулер, прокси или префетч браузера могут случайно его выполнить.",
+                "source_of_confusion": "URL действительно «просто строка», и кажется, что глагол не важен, если эндпоинт работает.",
+                "if_it_were_true": "Тогда поисковый бот, обойдя ссылки сайта, мог бы массово удалить ресурсы, перейдя по `GET .../delete`.",
+                "how_it_should_be": "Удаление выполняют небезопасным `DELETE /users/123`; `GET` оставляют только для чтения без побочных эффектов."
               }
             }
           ]
@@ -846,55 +846,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какова позиция Roy Fielding относительно Richardson Maturity Model и pragmatic Level 2 REST?",
+          "question_text": "В чём заключается критика модели со стороны Roy Fielding?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Fielding похвалил RMM как точное описание его REST-архитектуры из 2000 thesis.",
+              "text": "`Roy Fielding` критикует модель за то, что в ней слишком мало уровней, и предлагает расширить её до 10 уровней, добавив отдельные ступени для кэширования и аутентификации.",
               "correct": false,
               "sections": {
-                "what_actually": "Fielding был критичен, не похвалил. Его пост 2008 «REST APIs must be hypertext-driven» — манифест против Level 2 APIs, которые называются REST но не используют HATEOAS. Цитата: «If the engine of application state is not being driven by hypertext, then it cannot be RESTful».",
-                "source_of_confusion": "RMM популяризировал Fowler, и кандидат может предположить что Fielding согласен. Но Fielding явно дистанцировался от popular interpretation своей работы.",
-                "if_it_were_true": "Тогда его пост 2008 не существовал бы — но он cite'ется как канонический источник критики.",
-                "how_it_should_be": "Fielding критикует Level 2 как «недо-REST»; настаивает на Level 3 (HATEOAS) как обязательном."
+                "what_actually": "Fielding не предлагал расширять модель до 10 уровней; его тезис — что REST требует гипертекста (Level 3), иначе это не REST.",
+                "source_of_confusion": "Критику легко вообразить как «давайте детализируем модель», хотя суть в определении REST, а не в числе ступеней.",
+                "if_it_were_true": "Тогда существовала бы известная «10-уровневая модель Fielding», но её нет — есть 4 уровня Richardson.",
+                "how_it_should_be": "Fielding критикует то, что Level 2 называют REST; по нему настоящий REST — только гипертекст-driven Level 3."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Roy Fielding (REST creator, 2000 thesis) считает что только Level 3 — true REST; Level 2 без HATEOAS не является RESTful (цитата «if not driven by hypertext, not REST»); индустрия pragmatic выбирает Level 2 — это валидный compromise для разных контекстов.",
-              "correct": true,
+              "text": "`Roy Fielding` полностью одобряет RMM и считает Level 2 идеальным целевым уровнем, рекомендуя командам не тратить силы на HATEOAS.",
+              "correct": false,
               "sections": {
-                "explanation": "Roy Fielding в своей PhD-диссертации (2000) сформулировал REST как architectural style с шестью constraints, включая «hypermedia as the engine of application state». В 2008 он опубликовал пост «REST APIs must be hypertext-driven», где явно критикует индустрию: APIs без hypermedia не должны называться RESTful. Это академически чистая позиция: hypermedia constraint — central, без неё это что-то другое (HTTP-based RPC). Индустрия de facto выбрала pragmatic Level 2 + OpenAPI: дешевле, понятнее, decoupling достигается через versioning, а не HATEOAS. Оба валидны в разных контекстах.",
-                "example": "Цитата Fielding (2008): «If the engine of application state (and hence the API) is not being driven by hypertext, then it cannot be RESTful and cannot be a REST API». При этом Stripe/Twilio/AWS (все Level 2) — успешные production APIs с миллионами пользователей. Academic vs industrial мнения здесь расходятся осознанно.",
-                "when_to_apply": "Понимать обе позиции для дискуссий: «truly RESTful» = Fielding (Level 3); «pragmatic REST» = индустрия (Level 2 + OpenAPI). Не отстаивать «единственно правильное» — context определяет выбор.",
-                "edge_cases": "Некоторые public APIs пытаются compromise — partial hypermedia (links в pagination, но не в state machines). GitHub API v3 — пример: `Link: <...>; rel=\"next\"` header для pagination, но без HATEOAS в payload.",
-                "related": "[[rest-maturity-interview#Q1]] определение уровней; [[rest-maturity-interview#Q10]] почему HATEOAS редок; [[rest-maturity-interview#Q16]] pragmatic vs idealistic."
+                "what_actually": "Наоборот: Fielding настаивает, что без гипертекста (HATEOAS) API не RESTful; рекомендацию «остановиться на Level 2» дают прагматики, а не он.",
+                "source_of_confusion": "Индустриальный консенсус «Level 2 достаточно» ошибочно приписывают самому Fielding.",
+                "if_it_were_true": "Тогда его знаменитая цитата про «cannot be RESTful» без гипертекста не имела бы смысла, но она центральна для его критики.",
+                "how_it_should_be": "Fielding требует Level 3; именно индустрия (а не он) считает Level 2 + `OpenAPI` достаточным."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Fielding считает Level 2 правильным pragmatic компромиссом и не критикует APIs без HATEOAS.",
-              "correct": false,
+              "text": "`Roy Fielding` (создатель REST, диссертация 2000 года) утверждает: если движок состояния приложения (а значит и API) не управляется гипертекстом, он не может быть RESTful — то есть настоящий REST по Fielding только Level 3. Критика самой RMM: лестница зрелости намекает «выше = лучше», что верно не всегда; Level 2 — прагматичный стандарт, а не провал; уровни не являются универсальной целью. Большинство современных API = Level 2 + `OpenAPI`/`Swagger`: индустрия выбирает прагматику, а не чистоту.",
+              "correct": true,
               "sections": {
-                "what_actually": "Fielding жёстко: без HATEOAS API не RESTful. Его 2008 пост — explicit критика «REST» APIs без hypermedia. Цитата: «I am getting frustrated by the number of people calling any HTTP-based interface a REST API».",
-                "source_of_confusion": "Кандидат проецирует pragmatic industry-консенсус на Fielding. Но академическая и индустриальная позиции разошлись осознанно.",
-                "if_it_were_true": "Тогда не было бы цитат Fielding о «truly RESTful» — а они активно используются в защиту HATEOAS.",
-                "how_it_should_be": "Fielding критичен к Level 2; pragmatic compromise — industry-выбор, не его одобрение."
+                "explanation": "Две разные критики: Fielding критикует индустрию (то, что зовут REST, на деле Level 2, а не REST), а критики RMM — саму модель за ложную импликацию «больше уровень — всегда лучше».",
+                "example": "Fielding прямо писал, что API без гипертекста «не может быть RESTful»; при этом `GitHub`/`Stripe` (Level 2) успешны, что показывает: Level 2 — не провал, а сознательный выбор.",
+                "when_to_apply": "Эту критику приводят, объясняя расхождение между академическим определением REST и индустриальной практикой, и обосновывая выбор Level 2 без чувства вины.",
+                "edge_cases": "Парадокс: формально «правы» обе стороны — Fielding по букве определения, индустрия по прагматике; спор не о фактах, а о том, считать ли Level 2 «настоящим REST».",
+                "related": "[[rest-maturity-interview#Q6]] Level 3 как «truly RESTful»; [[rest-maturity-interview#Q16]] прагматичный vs идеалистичный REST; [[rest-maturity-interview#Q2]] зачем нужна модель."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Критика Fielding устарела с появлением OpenAPI, который покрывает все нужды документации API.",
+              "text": "`Roy Fielding` критикует RMM за то, что она поощряет использование XML вместо JSON и тем самым тормозит развитие современных API.",
               "correct": false,
               "sections": {
-                "what_actually": "Критика Fielding об архитектурном стиле, а не о документации. OpenAPI = design-time контракт; HATEOAS = runtime discovery. Fielding бы возразил что OpenAPI не заменяет hypermedia constraint — это разные вещи, ортогональные.",
-                "source_of_confusion": "Кандидат думает что OpenAPI «закрыл» нужду в HATEOAS. Но цели разные: OpenAPI документирует фиксированный API, HATEOAS даёт runtime evolvability.",
-                "if_it_were_true": "Тогда Fielding отозвал бы свою 2008 критику после появления OpenAPI 3.0 — но публичных коррекций его позиции не было.",
-                "how_it_should_be": "Критика Fielding не устарела; OpenAPI и HATEOAS — разные tools для разных задач; они не заменяют друг друга."
+                "what_actually": "Критика Fielding — про отсутствие гипертекста (гипермедиа), а не про формат данных; RMM форматы не предписывает.",
+                "source_of_confusion": "REST и форматы часто обсуждают вместе, и критику уровней путают с дискуссией XML vs JSON.",
+                "if_it_were_true": "Тогда переход на JSON «исправлял» бы претензию Fielding, но его тезис про гипертекст к формату не сводится.",
+                "how_it_should_be": "Суть критики — что API без гипермедиа-навигации не RESTful; формат (XML/JSON) здесь ни при чём."
               }
             }
           ]
@@ -906,55 +906,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Чем pragmatic REST отличается от idealistic REST?",
+          "question_text": "Чем прагматичный REST отличается от идеалистичного?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Pragmatic REST = REST без правильного использования HTTP-методов.",
+              "text": "Прагматичный REST использует только `POST` на единственный URL, а идеалистичный — отдельные URI на ресурсы; разница между ними в наличии ресурсных адресов.",
               "correct": false,
               "sections": {
-                "what_actually": "Pragmatic REST соответствует Level 2 — корректные HTTP verbs и status codes есть. Без правильных методов это Level 0/1, и это не «pragmatic», а «недоделанный».",
-                "source_of_confusion": "Кандидат связывает «pragmatic» с «допускает срезание углов» и предполагает что pragmatic = «можно использовать только POST».",
-                "if_it_were_true": "Тогда Stripe/GitHub (pragmatic REST examples) использовали бы только POST — но они полноценно используют GET/POST/PUT/DELETE.",
-                "how_it_should_be": "Pragmatic REST = Level 2 (verbs+status codes есть, без HATEOAS); недоделанный REST — Level 0/1."
+                "what_actually": "«Всё через POST на один URL» — это Level 0, а не прагматичный REST; прагматичный REST — это Level 2 с глаголами и кодами.",
+                "source_of_confusion": "«Прагматичный» звучит как «упрощённый до предела», и его ошибочно опускают до RPC-стиля Level 0.",
+                "if_it_were_true": "Тогда прагматичный REST не давал бы кэширования `GET` и идемпотентности `PUT`, ради которых его и выбирают.",
+                "how_it_should_be": "Прагматичный REST — это Level 2 (глаголы, коды, чистые URI, `OpenAPI`); отличие от идеалистичного — только в HATEOAS."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Idealistic REST избегает использования OpenAPI документации.",
+              "text": "Прагматичный и идеалистичный REST отличаются языком программирования: прагматичный пишут на Java, а идеалистичный — обязательно на функциональных языках.",
               "correct": false,
               "sections": {
-                "what_actually": "Idealistic Level 3 как раз больше нуждается в documentation — link relations нужно описать где-то. OpenAPI + HATEOAS не противоречат: OpenAPI описывает schema/types, HATEOAS добавляет runtime navigation.",
-                "source_of_confusion": "Кандидат думает что HATEOAS = self-documenting = doc-free. На практике hypermedia self-documenting на runtime, но link relations всё равно нужно документировать вне response.",
-                "if_it_were_true": "Тогда Spring HATEOAS не имел бы интеграции с Spring REST Docs / springdoc-openapi — но они интегрированы.",
-                "how_it_should_be": "Idealistic REST дополняется OpenAPI для design-time контракта + HATEOAS для runtime navigation."
+                "what_actually": "Разница между прагматичным и идеалистичным REST — в наличии HATEOAS (Level 2 vs Level 3), а не в языке реализации.",
+                "source_of_confusion": "Архитектурные различия иногда приписывают технологическому стеку, хотя REST-уровень от языка не зависит.",
+                "if_it_were_true": "Тогда нельзя было бы сделать HATEOAS на Java, но `Spring HATEOAS` — это как раз Java-реализация Level 3.",
+                "how_it_should_be": "Оба подхода реализуемы на любом языке; их разделяет именно наличие гипермедиа-навигации."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Pragmatic (Level 2): HTTP verbs + status codes + clean URIs + JSON + OpenAPI docs. Idealistic (Level 3): всё выше + HATEOAS + hypermedia format (HAL/JSON:API). Реальность 2025: pragmatic доминирует, OpenAPI — de facto standard.",
-              "correct": true,
+              "text": "Идеалистичный REST полностью отказывается от HTTP-глаголов и кодов статусов, заменяя их гипермедиа-ссылками, поэтому он проще прагматичного.",
+              "correct": false,
               "sections": {
-                "explanation": "Pragmatic REST — Level 2 + индустриальные конвенции: чистые URIs (`/users/123`, не `/user.php?id=123`), JSON bodies, OpenAPI/Swagger для документации, проверка contract в CI/CD через openapi-validator. Idealistic REST — pragmatic + HATEOAS: ответы включают `_links` или `actions`, клиент discover через links, hypermedia format (HAL/JSON:API/Siren). В 2025 году pragmatic доминирует: Stripe, GitHub, Twilio, AWS — все pragmatic. Public APIs с HATEOAS — единицы (PayPal v2). OpenAPI стал de facto стандартом, частично закрыв нужды HATEOAS для design-time scenarios.",
-                "example": "Stripe API: `POST /v1/charges` → 201 + JSON body без `_links`; полностью документирован OpenAPI; клиент знает URLs upfront. PayPal Payments v2: `POST /v2/checkout/orders` → 201 + `links: [{href, rel: approve, method: GET}]`; клиент следует approve link, не строит URL сам.",
-                "when_to_apply": "Pragmatic для team-internal/SaaS API: один-два consumer'а, контролируемая evolution, OpenAPI достаточно. Idealistic для public API с независимыми consumer'ами (открытое API, marketplace), state-machine workflows, long-lived integration scenarios.",
-                "edge_cases": "Возможен hybrid: pragmatic в основном теле + hypermedia только для pagination (`Link: <...>; rel=\"next\"` header). GitHub API v3 — пример этого compromise.",
-                "related": "[[rest-maturity-interview#Q15]] критика Fielding; [[rest-maturity-interview#Q10]] почему HATEOAS редок; [[rest-maturity-interview#Q17]] alternative styles."
+                "what_actually": "Идеалистичный REST (Level 3) включает в себя всё из Level 2 (глаголы, коды) и добавляет HATEOAS сверху — он сложнее, а не проще.",
+                "source_of_confusion": "Кажется, что ссылки «заменяют» глаголы, хотя на деле HATEOAS их дополняет, а не отменяет.",
+                "if_it_were_true": "Тогда Level 3 не был бы надстройкой над Level 2, но модель устроена накопительно: каждый уровень добавляет, не убирая предыдущее.",
+                "how_it_should_be": "Идеалистичный REST = прагматичный (глаголы + коды) + HATEOAS; это более полный и более сложный вариант."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Pragmatic REST использует только JSON, idealistic REST — только XML.",
-              "correct": false,
+              "text": "Прагматичный REST (RMM Level 2): HTTP-глаголы и коды статусов, чистые URI, тела в JSON, документация `OpenAPI`. Идеалистичный REST (RMM Level 3): всё перечисленное плюс HATEOAS, гипермедиа-формат (`HAL` и т. п.), самообнаружение. Реальность 2025: доминирует прагматичный подход. `OpenAPI` — де-факто стандарт документации API, закрывающий часть задач HATEOAS.",
+              "correct": true,
               "sections": {
-                "what_actually": "Формат body (JSON/XML/Protobuf) ортогонален maturity level. И Pragmatic, и Idealistic могут использовать JSON или XML. Разница — в hypermedia (HATEOAS), не в формате сериализации.",
-                "source_of_confusion": "Кандидат связывает «современное» с JSON, «академическое» с XML (исторически Atom Publishing использовал XML+hypermedia). Но это случайная корреляция, не правило.",
-                "if_it_were_true": "Тогда HAL JSON spec не существовал бы — но это spec для JSON формата с hypermedia.",
-                "how_it_should_be": "Format ортогонален maturity; и Level 2 и Level 3 могут быть JSON или XML; разница только в hypermedia."
+                "explanation": "Разница ровно в одном слое — гипермедиа: прагматик останавливается на корректной семантике HTTP плюс статической схеме `OpenAPI`, идеалист добавляет рантайм-обнаружение действий через ссылки.",
+                "example": "Прагматичный `GitHub`-стиль: документированные `GET /repos/{owner}/{repo}` в `OpenAPI`; идеалистичный стиль вернул бы те же данные с `_links` на доступные действия прямо в ответе.",
+                "when_to_apply": "Прагматичный подход выбирают по умолчанию (Level 2 + `OpenAPI`); идеалистичный — когда нужен явный workflow и развязка множества независимых клиентов.",
+                "edge_cases": "`OpenAPI` и HATEOAS решают пересекающиеся, но не тождественные задачи: схема описывает контракт статически, HATEOAS — допустимые переходы динамически по состоянию.",
+                "related": "[[rest-maturity-interview#Q15]] критика Fielding; [[rest-maturity-interview#Q10]] почему HATEOAS редок; [[rest-maturity-interview#Q5]] Level 2 как прагматичный REST."
               }
             }
           ]
@@ -966,55 +966,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Чем отличаются REST, GraphQL и gRPC и в каких случаях выбирать каждый из них?",
+          "question_text": "Чем GraphQL и gRPC отличаются от REST?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "GraphQL заменяет REST во всех случаях — REST устарел и используется только в legacy.",
-              "correct": false,
+              "text": "`REST` (RMM Level 2): на основе HTTP, ресурсо-ориентированный, много round-trip-ов (over/under-fetch), естественное кэширование через HTTP. `GraphQL`: единственный эндпоинт, клиент сам задаёт нужные данные (нет over/under-fetch), строгая схема, подписки (real-time), меньше семантики HTTP. `gRPC`: бинарный (`Protobuf`), `HTTP/2`, строгая типизация, стриминг, чаще для сервис-сервис, не нативен для браузера. Выбор: публичные API — REST, мобильные/сложные запросы — `GraphQL`, внутренние микросервисы — `gRPC`; часто гибрид (REST наружу + `gRPC` внутри).",
+              "correct": true,
               "sections": {
-                "what_actually": "GraphQL не «лучше» REST — он решает другие задачи. REST подходит для resource-oriented public API с HTTP caching. GraphQL — для mobile/complex queries с over-fetching проблемой. Каждый style для своего use-case; они coexist в большинстве крупных компаний.",
-                "source_of_confusion": "Хайп вокруг GraphQL 2017-2019 создал впечатление «REST умер». На практике GraphQL занял нишу (mobile, complex aggregation), не вытеснил REST.",
-                "if_it_were_true": "Тогда Stripe/Twilio/GitHub API v3 (все REST) были бы legacy и не получали бы обновлений — но они активно развиваются.",
-                "how_it_should_be": "REST для public API + HTTP caching; GraphQL для mobile/complex queries; coexist, не замена."
+                "explanation": "Три подхода оптимизируют разное: REST — простоту и HTTP-кэширование, `GraphQL` — гибкость выборки данных одним запросом, `gRPC` — скорость и строгие контракты для внутренней коммуникации. У каждого своя цена.",
+                "example": "Мобильный клиент через `GraphQL` одним запросом берёт `user { name, orders { total } }` без лишних полей; те же данные в REST потребовали бы `GET /users/1` плюс `GET /users/1/orders`.",
+                "when_to_apply": "REST берут для публичных кэшируемых API, `GraphQL` — для мобильных/агрегирующих клиентов со сложными выборками, `gRPC` — для внутренней связи микросервисов с низкой задержкой.",
+                "edge_cases": "`GraphQL` ломает HTTP-кэширование (всё через один `POST`-эндпоинт), а `gRPC` не работает в браузере напрямую (нужен `grpc-web`-прокси) — это плата за их преимущества.",
+                "related": "[[rest-maturity-interview#Q5]] REST как Level 2; [[rest-maturity-interview#Q12]] HTTP-кэширование и коды; [[rest-maturity-interview#Q16]] прагматичный REST."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "gRPC работает в браузере нативно без дополнительной прослойки или proxy.",
+              "text": "`GraphQL` лучше REST во всём и кэшируется средствами HTTP даже эффективнее, поэтому публичные API стоит всегда делать на `GraphQL`, а REST считать устаревшим.",
               "correct": false,
               "sections": {
-                "what_actually": "gRPC использует HTTP/2 features (trailers, binary framing, server streaming через HTTP/2 trailers), которые недоступны в browser fetch API. Для браузерного клиента нужен gRPC-Web + proxy (Envoy, gRPC-Web Gateway), который переводит gRPC ↔ HTTP/1.1.",
-                "source_of_confusion": "gRPC использует HTTP/2, который браузеры поддерживают, и кандидат предполагает что значит и gRPC браузер поддерживает. Но gRPC использует low-level HTTP/2 features, не exposed в fetch API.",
-                "if_it_were_true": "Тогда gRPC-Web spec / Envoy gRPC-Web proxy не существовали бы — а они существуют именно для решения этой проблемы.",
-                "how_it_should_be": "gRPC в браузере = gRPC-Web + Envoy proxy; внутренние service-to-service напрямую."
+                "what_actually": "`GraphQL` как раз ломает естественное HTTP-кэширование (всё идёт через один `POST`-эндпоинт), тогда как REST кэшируется через HTTP из коробки; «лучше во всём» — миф.",
+                "source_of_confusion": "Гибкость выборки данных в `GraphQL` впечатляет, и её обобщают до превосходства по всем критериям, включая кэширование.",
+                "if_it_were_true": "Тогда у `GraphQL` не было бы известного минуса «сложно кэшировать», но именно потеря HTTP-кэша — его типичная плата.",
+                "how_it_should_be": "`GraphQL` силён гибкостью запросов, но проигрывает REST в простоте HTTP-кэширования; у каждого подхода своя ниша."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "GraphQL имеет лучший HTTP caching по сравнению с REST.",
+              "text": "`GraphQL` и `gRPC` — это просто два более высоких уровня той же `Richardson Maturity Model`: Level 4 и Level 5 соответственно, идущие после HATEOAS.",
               "correct": false,
               "sections": {
-                "what_actually": "HTTP caching работает на уровне URL+method (GET cacheable). GraphQL обычно POST на `/graphql` с query в request body → HTTP cache не работает out of the box. Кэширование на клиенте (Apollo Client cache, Relay store) или сервере (Persisted Queries + GET).",
-                "source_of_confusion": "Apollo Client делает sophisticated client-side caching, и кандидат может проецировать это на HTTP cache. На уровне HTTP REST с GET намного лучше cacheable.",
-                "if_it_were_true": "Тогда CDN (Cloudflare, Fastly) активно кэшировали бы GraphQL ответы — но они не могут (POST + body-specific), это известная пробема GraphQL в edge caching.",
-                "how_it_should_be": "REST = natural HTTP caching через GET; GraphQL = client-side cache (Apollo) или Persisted Queries для GET-based caching."
+                "what_actually": "В RMM всего 4 уровня (0-3); `GraphQL` и `gRPC` — самостоятельные технологии, а не ступени модели Richardson.",
+                "source_of_confusion": "И RMM, и сравнение протоколов — про «зрелость» API, отсюда соблазн выстроить их в одну лестницу.",
+                "if_it_were_true": "Тогда `gRPC` был бы «выше» HATEOAS по RESTfulness, но `gRPC` вообще не про REST и не содержит гипермедиа.",
+                "how_it_should_be": "RMM описывает 4 уровня REST; `GraphQL` и `gRPC` — альтернативы REST, а не его продолжение."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "REST: HTTP-based, resource-oriented, natural HTTP caching, может over/under-fetch. GraphQL: single endpoint, client picks fields, schema-driven, subscriptions, слабее HTTP semantics. gRPC: binary Protobuf, HTTP/2, strong typing, streaming, для internal service-to-service.",
-              "correct": true,
+              "text": "`gRPC` нативно работает в браузере без всяких прокси и предназначен в первую очередь для публичных API, тогда как REST годится только для внутренних вызовов.",
+              "correct": false,
               "sections": {
-                "explanation": "Три API стиля для разных задач. REST — HTTP+JSON, resource-oriented, многократные round trips, HTTP caching работает естественно (CDN кэширует GET). GraphQL — single endpoint (`/graphql`), POST с query в body; клиент выбирает нужные поля (no over/under-fetch); strong schema через SDL; subscriptions для real-time через WebSocket. gRPC — binary protocol (Protobuf), требует HTTP/2; strong typing, code generation для клиентов; bidirectional streaming; ориентирован на service-to-service internal communication; не browser-native (нужен gRPC-Web + proxy).",
-                "example": "Netflix: REST для public API (CDN-кэшируемые GET), GraphQL для mobile (один endpoint для сложных аггрегаций), gRPC для internal microservices (сотни сервисов общаются binary Protobuf). Stripe: REST публичный API; gRPC внутри для billing engine.",
-                "when_to_apply": "Public APIs → REST (familiar, cacheable, OpenAPI docs). Mobile/complex queries → GraphQL (Apollo, Relay, single endpoint). Internal microservices → gRPC (binary efficiency, code generation, streaming). Hybrid pattern: public REST + internal gRPC + mobile GraphQL — типичная архитектура крупной компании.",
-                "edge_cases": "GraphQL не вытесняет REST даже на mobile — для simple CRUD REST проще. gRPC через gRPC-Web доступен браузеру, но overhead на proxy. REST + OpenAPI generate'ит клиентов почти как gRPC (openapi-generator), сокращая разрыв.",
-                "related": "[[graphql-interview#Q1]] детали GraphQL; [[grpc-interview#Q1]] детали gRPC; [[rest-maturity-interview#Q16]] pragmatic REST."
+                "what_actually": "Всё наоборот: `gRPC` не работает в браузере напрямую (нужен `grpc-web`) и чаще используется внутри, а REST — стандарт для публичных API.",
+                "source_of_confusion": "«Современный и быстрый» `gRPC` интуитивно записывают в «лучший для всего», включая публичный веб.",
+                "if_it_were_true": "Тогда браузерные приложения вызывали бы `gRPC` напрямую, но из-за бинарного `HTTP/2`-протокола им нужен `grpc-web`-прокси.",
+                "how_it_should_be": "Для публичных и браузерных API берут REST; `gRPC` — для сервис-сервис и требует прокси в браузере."
               }
             }
           ]
