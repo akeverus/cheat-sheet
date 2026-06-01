@@ -1,10 +1,10 @@
 ---
 title: "ULTRATHINK v5 — exhaustive per-file audit plan (всё с нуля)"
-description: "Полный план аудита всех 304 interview-файлов. Прогресс сброшен в ноль. Детализированные критерии по 8 группам (A-H) с конкретными метриками."
-updated: "2026-05-29"
+description: "Полный аудит всех 305 interview-файлов на 2026-06-01: оформление + человекочитаемость + наличие выровненных human-readable MCQ-json. Детальные критерии A-H + пофайловая таблица + findings."
+updated: "2026-06-01"
 status: "active"
 audit_version: 5
-progress: "MCQ-сидеры: 195/306 .md имеют выровненный JSON; 111 NO-JSON в работе (Phase 2). Готовы кластеры: Spring (28), Security (10/10), Architecture (17/17), testing 12/14 (только property-based+test-automation DEFER-md), databases 12/12 ✓, devops 12/12 ✓ (vault+terraform ✓). Дальше: java SEVERE-regen + programming-languages, api (6), monitoring (9), cloud (6)."
+progress: "MCQ-json gate-кампания ЗАВЕРШЕНА: 250/250 PASS (W1-W19). Проза читаема корпусно (0 wall-of-text). Остаток: 151 файл с legacy callouts в .md (strip=auto-improve lane), 54 single-blob без json (restore+migrate lane), 9 gap-нумерация. 1 генерируемый (searching-algorithms) в работе. Полный snapshot ниже."
 ---
 
 # ULTRATHINK v5 — exhaustive per-file audit plan
@@ -305,343 +305,348 @@ Pass: `OK FILE.md`.
 5. **COMMIT** логический (1-3 файла на коммит).
 6. **UPDATE** статус в этой таблице `⬜ TODO` → `✅ DONE`.
 
-## Snapshot аудита (только для информации, не для preserving progress)
+## Snapshot аудита — обновлено 2026-06-01 (детерминированный полный проход)
+
+> Прогон: `/tmp/audit_full.py` (оформление + json + gate) + `/tmp/readability_metrics.py` (читаемость прозы). Числа отражают РЕАЛЬНОЕ состояние, не план.
 
 | Метрика | Значение |
 |---|---|
-| Total файлов | 304 |
-| NO-JSON (нет парного сидера) | 217 |
-| STUB (Q < 5) | 52 |
-| THIN (5 ≤ Q < 20) | 56 |
-| MCQ-callout dirty | 0 |
-| Tier1 эмодзи | 0 |
-| Real wikilinks (вне code blocks) | 0 |
-| See-also < 5 ссылок | 1 |
-| Frontmatter incomplete | 0 |
-| JSON Q count mismatch с MD | 12 |
+| Total interview .md | 305 |
+| 🟢 Полностью чистые (json gate-PASS, без callouts, seq, без blob) | 97 |
+| 🟡 json gate-PASS, но legacy `> [!mcq]` callouts в .md | 151 (callouts: 5282) |
+| 🔴 НЕТ json + single-blob (вопросы зарыты в callouts) | 54 (callouts: 1697) |
+| 🟠 НЕТ json, но генерируемо (h≥8) | 1 |
+| 🟠 ## Q непоследовательны (есть json, gate-PASS — gap косметический) | 2 |
+| **MCQ-json gate-PASS (структура/ротация/ratio)** | **250 / 250** |
+| Frontmatter incomplete (A1) | 0 |
+| Нет H1 / нет See-also | 0 / 0 |
+| Wall-of-text (параграф >140 слов) | 0 |
+| Запрещённые Tier1 эмодзи-маркеры | 0 |
 
-> Эти цифры не означают что файлы готовы — каждый требует проверки **всех** 35 критериев A1-H2, а не только тех, которые detected audit-скриптом.
+### Ключевые выводы аудита (2026-06-01)
 
-## Пофайловая таблица (304 строки)
+1. **Структурное качество MCQ-json — 250/250 PASS.** Gate-кампания (волны W1–W19) завершена: alignment, строгая ротация, info-ratio ≤ 4, без bold-артефактов, валидные `related`. 3 ORPHAN-файла восстановлены (заголовки) и регенерированы.
+2. **Проза читаема по всему корпусу.** Метрики: 0 wall-of-text, макс. параграф 77 слов, короткие абзацы + bullet-списки. Earlier readability-волны (auto-improve + пользователь) отработали структуру прозы.
+3. **🟡 Главный остаточный дефект оформления — 151 файлов с legacy `> [!mcq]` callouts в .md** (5282 штук). У этих файлов json УЖЕ есть и gate-PASS → callouts избыточны (дублируют интерактивный MCQ из json). Запрещены `scripts/verify-md-no-mcq.sh`. **Strip-полоса = lane auto-improve** (правка interview .md; memory: «Claude interview-файлы НЕ мигрирует»).
+4. **🔴 54 файлов без json (single-blob)** — вопросы Q2..QN зарыты в 1697 callouts без `## Q`-заголовков. Чтобы дать выровненный json, сперва нужна реставрация `## Q`-заголовков в .md (как сделано для 3 ORPHAN под явной авторизацией) = lane auto-improve / нужна авторизация пользователя.
+5. **🟠 9 файлов с gap в нумерации ## Q** — у всех есть json + gate-PASS (сид зеркалит номера, MCQ работают). Gap чисто косметический в отображаемой нумерации; renumber = правка .md (lane auto-improve). Список: graphs, cap-theorem, micronaut, spring-cache, observability, java-8, java-lombok, kotlin-collections, integration-testing.
 
-**Machine-audit status (critery A/B/D/E/F):**
-- 🟢 STRUCT-PASS: 16 (5%) — прошли все machine-checkable; semantic review (C, G) ещё не сделан.
-- ⚠️ PARTIAL: 47 (15%) — JSON есть, но E (importance markers) вне 10-45% диапазона.
-- ⚠️ JSON-ISSUES: 25 (8%) — Q count mismatch или schema invalid.
-- ❌ NO-JSON: 209 (69%) — нет парного JSON-сидера.
-- ❌ STUB: 3 (Q < 5).
-- ❌ THIN: 4 (5 ≤ Q < 20).
+### Что в lane Claude (JSON, без правки .md) vs lane auto-improve (.md)
 
-Колонки: **A** frontmatter, **B** структура+seealso, **D** markdown clean, **E** Q count+importance, **F** JSON-сидер. Semantic critery C (content quality) и G (MCQ content quality) **не проверяются автоматически** — требуют ручного review.
+- **Claude (сделано/делается):** генерация/регенерация json-сидеров, gate, ротация — всё через `seed/mcq/*.json`. Остался 1 генерируемый файл (`searching-algorithms`, h=8) — в работе.
+- **auto-improve / нужна авторизация:** strip 5282 callouts из 151 .md; реставрация заголовков + миграция 54 single-blob; renumber 9 gap-файлов. Это правки interview .md — конфликтная зона по memory.
 
-| # | Category | File | Q | JSON Q | A | B | D | E | F | Status |
-|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | `ai-ml` | `agentic-patterns` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 2 | `ai-ml` | `ai-agents` | 38 | 28 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
-| 3 | `ai-ml` | `ai-application-architecture` | 32 | 32 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 4 | `ai-ml` | `ai-compliance-governance` | 32 | 32 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 5 | `ai-ml` | `ai-observability` | 28 | 28 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 6 | `ai-ml` | `ai-safety-guardrails` | 32 | 32 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 7 | `ai-ml` | `code-agents` | 31 | 31 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 8 | `ai-ml` | `embeddings` | 39 | 29 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
-| 9 | `ai-ml` | `fine-tuning-llm` | 35 | 35 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 10 | `ai-ml` | `function-calling` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 11 | `ai-ml` | `inference-optimization` | 36 | 36 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 12 | `ai-ml` | `llm-basics` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 13 | `ai-ml` | `llm-evaluation` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 14 | `ai-ml` | `llm-integration-patterns` | 38 | 28 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
-| 15 | `ai-ml` | `long-context-vs-rag` | 30 | 30 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 16 | `ai-ml` | `mcp` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 17 | `ai-ml` | `mlops` | 38 | 28 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
-| 18 | `ai-ml` | `model-serving` | 38 | 28 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
-| 19 | `ai-ml` | `multi-agent-orchestration` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 20 | `ai-ml` | `multimodal-ai` | 31 | 31 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 21 | `ai-ml` | `open-source-llms` | 34 | 34 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 22 | `ai-ml` | `prompt-engineering` | 38 | 28 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
-| 23 | `ai-ml` | `rag` | 40 | 30 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
-| 24 | `ai-ml` | `reasoning-models` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 25 | `ai-ml` | `vector-databases` | 28 | 28 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 26 | `algorithms` | `algorithms` | 16 | 16 | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ THIN |
-| 27 | `algorithms/algorithmic-paradigms` | `backtracking` | 24 | 23 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
-| 28 | `algorithms/algorithmic-paradigms` | `divide-and-conquer` | 21 | 21 | ✅ | ❌ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
-| 29 | `algorithms/algorithmic-paradigms` | `dynamic-programming` | 33 | 33 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 30 | `algorithms/algorithmic-paradigms` | `greedy-algorithms` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 31 | `algorithms/algorithmic-paradigms` | `recursion` | 27 | 27 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 32 | `algorithms/algorithmic-paradigms` | `two-pointers-sliding-window` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 33 | `algorithms/complexity` | `complexity-analysis` | 31 | 31 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 34 | `algorithms/data-structures` | `arrays-strings` | 36 | 36 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
-| 35 | `algorithms/data-structures` | `graphs` | 33 | 31 | ✅ | ❌ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
-| 36 | `algorithms/data-structures` | `hash-tables` | 34 | 32 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
-| 37 | `algorithms/data-structures` | `heaps` | 29 | 29 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 38 | `algorithms/data-structures` | `linked-lists` | 32 | 32 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 39 | `algorithms/data-structures` | `stacks-queues` | 25 | 25 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 40 | `algorithms/data-structures` | `trees` | 34 | 34 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 41 | `algorithms/data-structures` | `tries` | 28 | 28 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 42 | `algorithms/sorting-searching` | `searching-algorithms` | 8 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 43 | `algorithms/sorting-searching` | `sorting-algorithms` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 44 | `api` | `api-design-best-practices` | 30 | 30 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 45 | `api` | `api-versioning` | 20 | 20 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
-| 46 | `api` | `graphql` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 47 | `api` | `grpc` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 48 | `api` | `http-rest` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 49 | `api` | `openapi-swagger` | 33 | 33 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 50 | `api` | `rest-maturity` | 17 | 17 | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ THIN |
-| 51 | `api` | `websocket` | 38 | 38 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 52 | `architecture` | `api-gateway` | 38 | 38 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 53 | `architecture` | `bff-pattern` | 17 | 17 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 54 | `architecture` | `caching-strategies` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 55 | `architecture` | `cap-theorem` | 41 | 41 | ✅ | ❌ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 56 | `architecture` | `cdn` | 30 | 30 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 57 | `architecture` | `clean-architecture` | 41 | 41 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 58 | `architecture` | `consistency-patterns` | 31 | 31 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 59 | `architecture` | `cqrs-event-sourcing` | 41 | 41 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 60 | `architecture` | `ddd` | 38 | 38 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 61 | `architecture` | `distributed-systems` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 62 | `architecture` | `dns` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 63 | `architecture` | `edge-computing` | 18 | 18 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 64 | `architecture` | `event-driven-patterns` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 65 | `architecture` | `hexagonal-architecture` | 45 | 45 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 66 | `architecture` | `latency-numbers` | 24 | 24 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 67 | `architecture` | `load-balancing` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 68 | `architecture` | `microservices` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 69 | `architecture` | `networking` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 70 | `architecture` | `resilience-patterns` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 71 | `architecture` | `reverse-proxy` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 72 | `architecture` | `saga-pattern` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 73 | `architecture` | `scalability-patterns` | 41 | 41 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 74 | `architecture` | `service-discovery` | 30 | 30 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 75 | `architecture` | `strangler-fig` | 18 | 18 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 76 | `behavioral` | `behavioral` | 38 | 38 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 77 | `behavioral` | `conflict-stories` | 22 | 22 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
-| 78 | `behavioral` | `culture-fit` | 22 | 22 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
-| 79 | `behavioral` | `failure-stories` | 22 | 22 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 80 | `behavioral` | `leadership-stories` | 22 | 22 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 81 | `behavioral` | `star-method` | 22 | 22 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 82 | `cicd` | `deployment-strategies` | 39 | 39 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 83 | `cicd` | `pipeline-design` | 38 | 38 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 84 | `cloud` | `aws` | 16 | 16 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 85 | `cloud` | `aws-lambda` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 86 | `cloud` | `azure` | 25 | 25 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 87 | `cloud` | `cloud-native-patterns` | 14 | 14 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 88 | `cloud` | `gcp` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 89 | `cloud` | `serverless` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 90 | `code-quality` | `clean-code-practices` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 91 | `code-quality` | `code-coverage` | 25 | 25 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 92 | `code-quality` | `code-review` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 93 | `code-quality` | `code-smells` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 94 | `code-quality` | `refactoring-patterns` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 95 | `code-quality` | `static-analysis` | 6 | 6 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 96 | `code-quality` | `technical-debt` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 97 | `data-engineering` | `apache-airflow` | 28 | 28 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 98 | `data-engineering` | `apache-flink` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 99 | `data-engineering` | `apache-spark` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 100 | `data-engineering` | `data-lake-lakehouse` | 28 | 28 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 101 | `data-engineering` | `data-warehousing` | 30 | 30 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 102 | `data-engineering` | `dbt` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 103 | `data-engineering` | `kafka-streams` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 104 | `data-engineering` | `stream-processing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 105 | `databases` | `cassandra` | 44 | 44 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 106 | `databases` | `clickhouse` | 28 | 28 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 107 | `databases` | `cockroachdb` | 24 | 24 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 108 | `databases` | `database-architecture` | 41 | 41 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 109 | `databases` | `database-replication` | 31 | 31 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 110 | `databases` | `database-sharding` | 34 | 34 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 111 | `databases` | `database-transactions` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 112 | `databases` | `dynamodb` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 113 | `databases` | `elasticsearch` | 44 | 44 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 114 | `databases` | `flyway-liquibase` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 115 | `databases` | `hibernate-caching` | 15 | 15 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 116 | `databases` | `hibernate` | 48 | 48 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 117 | `databases` | `hibernate-jpql-criteria` | 15 | 15 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 118 | `databases` | `hibernate-relationships` | 15 | 15 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 119 | `databases` | `mongodb` | 46 | 46 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 120 | `databases` | `neo4j` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 121 | `databases` | `postgresql` | 55 | 55 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 122 | `databases` | `redis` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 123 | `databases` | `scylladb` | 23 | 23 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 124 | `databases` | `sql` | 53 | 0 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
-| 125 | `design-patterns` | `design-patterns` | 48 | 48 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 126 | `devops` | `ansible` | 25 | 25 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 127 | `devops` | `argocd` | 42 | 42 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 128 | `devops` | `consul` | 24 | 24 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 129 | `devops` | `docker` | 41 | 41 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 130 | `devops` | `git` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 131 | `devops` | `gradle-maven` | 38 | 38 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 132 | `devops` | `helm` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 133 | `devops` | `istio-service-mesh` | 26 | 26 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 134 | `devops` | `kubernetes` | 45 | 45 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 135 | `devops` | `linkerd` | 20 | 20 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 136 | `devops` | `linux` | 33 | 33 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 137 | `devops` | `terraform` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 138 | `devops` | `vault` | 26 | 26 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 139 | `frameworks/jvm-alternatives` | `ktor` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 140 | `frameworks/jvm-alternatives` | `micronaut` | 25 | 25 | ✅ | ❌ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 141 | `frameworks/jvm-alternatives` | `quarkus` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 142 | `frameworks/jvm-alternatives` | `vertx` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 143 | `frameworks/spring` | `resilience4j` | 20 | 20 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 144 | `frameworks/spring` | `spring-ai` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 145 | `frameworks/spring` | `spring-aop` | 22 | 22 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 146 | `frameworks/spring` | `spring-async` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 147 | `frameworks/spring` | `spring-batch` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 148 | `frameworks/spring` | `spring-boot-3-migration` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 149 | `frameworks/spring` | `spring-boot-actuator` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 150 | `frameworks/spring` | `spring-boot` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 151 | `frameworks/spring` | `spring-cache` | 17 | 17 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 152 | `frameworks/spring` | `spring-cloud` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 153 | `frameworks/spring` | `spring-data-jdbc` | 16 | 16 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 154 | `frameworks/spring` | `spring-data-jpa` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 155 | `frameworks/spring` | `spring-events` | 16 | 16 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 156 | `frameworks/spring` | `spring-framework` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 157 | `frameworks/spring` | `spring-graphql` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 158 | `frameworks/spring` | `spring-integration` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 159 | `frameworks/spring` | `spring-kafka` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 160 | `frameworks/spring` | `spring-messaging` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 161 | `frameworks/spring` | `spring-modulith` | 2 | 15 | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ STUB |
-| 162 | `frameworks/spring` | `spring-mvc` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 163 | `frameworks/spring` | `spring-r2dbc` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 164 | `frameworks/spring` | `spring-rest-client` | 13 | 13 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 165 | `frameworks/spring` | `spring-retry` | 17 | 17 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 166 | `frameworks/spring` | `spring-scheduling` | 16 | 16 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 167 | `frameworks/spring` | `spring-security` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 168 | `frameworks/spring` | `spring-session` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 169 | `frameworks/spring` | `spring-state-machine` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 170 | `frameworks/spring` | `spring-testing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 171 | `frameworks/spring` | `spring-transaction` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 172 | `frameworks/spring` | `spring-validation` | 16 | 16 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 173 | `frameworks/spring` | `spring-vault` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 174 | `frameworks/spring` | `spring-webflux` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 175 | `jvm` | `graalvm-native` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 176 | `jvm` | `jvm` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 177 | `leadership` | `code-review-practices` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 178 | `leadership` | `conflict-resolution` | 20 | 20 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 179 | `leadership` | `estimations-planning` | 20 | 20 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 180 | `leadership` | `mentoring` | 1 | 25 | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ STUB |
-| 181 | `leadership` | `team-leadership` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 182 | `leadership` | `teching` | 20 | 20 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
-| 183 | `leadership` | `technical-decisions` | 1 | 22 | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ STUB |
-| 184 | `logging` | `logging` | 9 | 9 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 185 | `messaging` | `aws-sqs-sns` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 186 | `messaging` | `kafka` | 50 | 50 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 187 | `messaging` | `message-brokers-comparison` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 188 | `messaging` | `nats` | 8 | 8 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 189 | `messaging` | `pulsar` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 190 | `messaging` | `rabbitmq` | 41 | 41 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 191 | `messaging` | `redpanda` | 20 | 20 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
-| 192 | `monitoring` | `elk-stack` | 5 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=5) |
-| 193 | `monitoring` | `jaeger-zipkin` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 194 | `monitoring` | `logging-strategies` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 195 | `monitoring` | `loki-grafana` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 196 | `monitoring` | `metrics-tracing` | 6 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=6) |
-| 197 | `monitoring` | `micrometer` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 198 | `monitoring` | `observability` | 15 | 15 | ✅ | ❌ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 199 | `monitoring` | `opentelemetry` | 9 | 9 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 200 | `monitoring` | `prometheus-grafana` | 39 | 39 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 201 | `performance` | `application-profiling` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 202 | `performance` | `caching-performance` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 203 | `performance` | `database-performance` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 204 | `performance` | `jvm-performance-tuning` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 205 | `performance` | `memory-management` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 206 | `performance` | `network-performance` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 207 | `performance` | `performance-testing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 208 | `programming-languages/go` | `go-concurrency` | 35 | 35 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 209 | `programming-languages/go` | `go-generics` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 210 | `programming-languages/go` | `go` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 211 | `programming-languages/go` | `go-memory-gc` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 212 | `programming-languages/go` | `go-modules` | 27 | 27 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 213 | `programming-languages/go` | `go-stdlib` | 30 | 30 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 214 | `programming-languages/go` | `go-testing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 215 | `programming-languages/java` | `java-17-21` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 216 | `programming-languages/java` | `java-8` | 41 | 31 | ✅ | ❌ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
-| 217 | `programming-languages/java` | `java-annotations` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 218 | `programming-languages/java` | `java-collections` | 46 | 34 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
-| 219 | `programming-languages/java` | `java-completable-future` | 13 | 13 | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ THIN |
-| 220 | `programming-languages/java` | `java-concurrency` | 56 | 56 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 221 | `programming-languages/java` | `java-conditional-statements` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 222 | `programming-languages/java` | `java-core` | 39 | 28 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
-| 223 | `programming-languages/java` | `java-exceptions` | 42 | 7 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
-| 224 | `programming-languages/java` | `java-functional-interface` | 14 | 14 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 225 | `programming-languages/java` | `java-generics` | 40 | 7 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
-| 226 | `programming-languages/java` | `java-initialization` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 227 | `programming-languages/java` | `java-io-nio` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 228 | `programming-languages/java` | `java-jackson` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 229 | `programming-languages/java` | `java-lombok` | 5 | — | ✅ | ❌ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=5) |
-| 230 | `programming-languages/java` | `java-mapstruct` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 231 | `programming-languages/java` | `java-modules` | 38 | 38 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 232 | `programming-languages/java` | `java-oop` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 233 | `programming-languages/java` | `java-optional` | 15 | 15 | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ THIN |
-| 234 | `programming-languages/java` | `java-pattern-matching` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 235 | `programming-languages/java` | `java-records` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 236 | `programming-languages/java` | `java-reflection` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 237 | `programming-languages/java` | `java-serialization` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 238 | `programming-languages/java` | `java-stream` | 42 | 6 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
-| 239 | `programming-languages/java` | `java-string` | 39 | 39 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 240 | `programming-languages/java` | `java-types` | 38 | 38 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 241 | `programming-languages/java` | `java-virtual-threads` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 242 | `programming-languages/kotlin` | `kotlin-collections` | 42 | 42 | ✅ | ❌ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 243 | `programming-languages/kotlin` | `kotlin-coroutines` | 19 | 19 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 244 | `programming-languages/kotlin` | `kotlin-dsl` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 245 | `programming-languages/kotlin` | `kotlin-exceptions` | 7 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=7) |
-| 246 | `programming-languages/kotlin` | `kotlin-flow` | 17 | 17 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 247 | `programming-languages/kotlin` | `kotlin-interop-java` | 38 | 38 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 248 | `programming-languages/kotlin` | `kotlin` | 27 | 27 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 249 | `programming-languages/kotlin` | `kotlin-sealed-classes` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 250 | `programming-languages/kotlin` | `kotlin-serialization` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 251 | `programming-languages/kotlin` | `kotlin-spring` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 252 | `programming-languages/kotlin` | `kotlin-value-classes` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 253 | `programming-languages/scala` | `scala` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 254 | `reactive` | `project-reactor` | 47 | 47 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 255 | `reactive` | `reactive-patterns` | 26 | 26 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 256 | `reactive` | `reactive-streams` | 30 | 30 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 257 | `reactive` | `reactive-testing` | 28 | 28 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 258 | `reactive` | `rxjava` | 46 | 46 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 259 | `reactive` | `webflux` | 28 | 28 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 260 | `security` | `application-security` | 45 | 45 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 261 | `security` | `authentication-authorization-patterns` | 45 | 45 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 262 | `security` | `jwt` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 263 | `security` | `mtls` | 20 | 20 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 264 | `security` | `oauth2` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 265 | `security` | `owasp-top10` | 45 | 45 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 266 | `security` | `secrets-management` | 22 | 22 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 267 | `security` | `supply-chain-security` | 24 | 24 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 268 | `security` | `tls-ssl` | 45 | 45 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 269 | `security` | `zero-trust` | 19 | 19 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 270 | `system-design` | `design-chat-system` | 21 | 21 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 271 | `system-design` | `design-dropbox` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 272 | `system-design` | `design-elevator-oo` | 26 | 26 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 273 | `system-design` | `design-feed-system` | 30 | 30 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 274 | `system-design` | `design-google-maps` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 275 | `system-design` | `design-instagram` | 27 | 27 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 276 | `system-design` | `design-key-value-store` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 277 | `system-design` | `design-netflix` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 278 | `system-design` | `design-parking-lot-oo` | 28 | 28 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 279 | `system-design` | `design-pastebin` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 280 | `system-design` | `design-payment-system` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 281 | `system-design` | `design-rate-limiter` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 282 | `system-design` | `design-search` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 283 | `system-design` | `design-twitter` | 27 | 27 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 284 | `system-design` | `design-typeahead` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 285 | `system-design` | `design-uber` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 286 | `system-design` | `design-url-shortener` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 287 | `system-design` | `design-vending-machine-oo` | 24 | 24 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 288 | `system-design` | `design-web-crawler` | 26 | 26 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 289 | `system-design` | `design-youtube` | 28 | 28 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 290 | `system-design` | `system-design` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 291 | `testing` | `chaos-engineering` | 44 | 44 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 292 | `testing` | `contract-testing` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 293 | `testing` | `integration-testing` | 39 | 39 | ✅ | ❌ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 294 | `testing` | `junit` | 15 | 15 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 295 | `testing` | `load-testing` | 22 | 22 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 296 | `testing` | `mockito` | 45 | 45 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 297 | `testing` | `mutation-testing` | 20 | 20 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 298 | `testing` | `property-based-testing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER (малформ: только Q1 + ~400 строк неструктур. прозы (TOC обещает Q1-21)) |
-| 299 | `testing` | `rest-assured` | 15 | 15 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 300 | `testing` | `selenium` | 15 | 15 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 301 | `testing` | `test-automation` | 7 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER (неполный: реальны Q1-Q7, TOC обещает Q1-30 (Q8-30 отсутствуют)) |
-| 302 | `testing` | `test-strategies` | 45 | 45 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 303 | `testing` | `testcontainers` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 304 | `testing` | `unit-testing` | 45 | 45 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+## Пофайловая таблица (305 строк) — оформление + json + читаемость
 
----
+Колонки: **## Q** реальных заголовков, **json** наличие сида, **gate** результат gate_clean, **callouts** число legacy `> [!mcq]`, **blob** single-blob defect, **seq** последовательность нумерации, **ru** доля кириллицы в прозе, **вердикт** оформления.
+
+| # | файл | ## Q | json | gate | callouts | blob | seq | ru | вердикт |
+|---|------|------|------|------|----------|------|-----|----|---------|
+| 1 | ai-ml/agentic-patterns-interview | 30 | ✓ | PASS | 0 |  | ✓ | 0.531 | 🟢 clean |
+| 2 | ai-ml/ai-agents-interview | 28 | ✓ | PASS | 0 |  | ✓ | 0.221 | 🟢 clean |
+| 3 | ai-ml/ai-application-architecture-interview | 32 | ✓ | PASS | 0 |  | ✓ | 0.409 | 🟢 clean |
+| 4 | ai-ml/ai-compliance-governance-interview | 32 | ✓ | PASS | 0 |  | ✓ | 0.215 | 🟢 clean |
+| 5 | ai-ml/ai-observability-interview | 28 | ✓ | PASS | 0 |  | ✓ | 0.481 | 🟢 clean |
+| 6 | ai-ml/ai-safety-guardrails-interview | 32 | ✓ | PASS | 0 |  | ✓ | 0.47 | 🟢 clean |
+| 7 | ai-ml/code-agents-interview | 31 | ✓ | PASS | 0 |  | ✓ | 0.64 | 🟢 clean |
+| 8 | ai-ml/embeddings-interview | 29 | ✓ | PASS | 0 |  | ✓ | 0.258 | 🟢 clean |
+| 9 | ai-ml/fine-tuning-llm-interview | 35 | ✓ | PASS | 0 |  | ✓ | 0.495 | 🟢 clean |
+| 10 | ai-ml/function-calling-interview | 30 | ✓ | PASS | 0 |  | ✓ | 0.523 | 🟢 clean |
+| 11 | ai-ml/inference-optimization-interview | 36 | ✓ | PASS | 0 |  | ✓ | 0.377 | 🟢 clean |
+| 12 | ai-ml/llm-basics-interview | 30 | ✓ | PASS | 27 |  | ✓ | 0.433 | 🟡 callouts-in-md |
+| 13 | ai-ml/llm-evaluation-interview | 30 | ✓ | PASS | 0 |  | ✓ | 0.52 | 🟢 clean |
+| 14 | ai-ml/llm-integration-patterns-interview | 28 | ✓ | PASS | 0 |  | ✓ | 0.191 | 🟢 clean |
+| 15 | ai-ml/long-context-vs-rag-interview | 30 | ✓ | PASS | 0 |  | ✓ | 0.41 | 🟢 clean |
+| 16 | ai-ml/mcp-interview | 30 | ✓ | PASS | 0 |  | ✓ | 0.541 | 🟢 clean |
+| 17 | ai-ml/mlops-interview | 28 | ✓ | PASS | 0 |  | ✓ | 0.203 | 🟢 clean |
+| 18 | ai-ml/model-serving-interview | 28 | ✓ | PASS | 0 |  | ✓ | 0.207 | 🟢 clean |
+| 19 | ai-ml/multi-agent-orchestration-interview | 30 | ✓ | PASS | 0 |  | ✓ | 0.492 | 🟢 clean |
+| 20 | ai-ml/multimodal-ai-interview | 31 | ✓ | PASS | 0 |  | ✓ | 0.603 | 🟢 clean |
+| 21 | ai-ml/open-source-llms-interview | 34 | ✓ | PASS | 0 |  | ✓ | 0.443 | 🟢 clean |
+| 22 | ai-ml/prompt-engineering-interview | 28 | ✓ | PASS | 0 |  | ✓ | 0.31 | 🟢 clean |
+| 23 | ai-ml/rag-interview | 30 | ✓ | PASS | 0 |  | ✓ | 0.373 | 🟢 clean |
+| 24 | ai-ml/reasoning-models-interview | 30 | ✓ | PASS | 0 |  | ✓ | 0.472 | 🟢 clean |
+| 25 | ai-ml/vector-databases-interview | 28 | ✓ | PASS | 28 |  | ✓ | 0.357 | 🟡 callouts-in-md |
+| 26 | algorithms/algorithmic-paradigms/backtracking-interview | 24 | ✓ | PASS | 0 |  | ✓ | 0.542 | 🟢 clean |
+| 27 | algorithms/algorithmic-paradigms/divide-and-conquer-interview | 21 | ✓ | PASS | 0 |  | ✓ | 0.567 | 🟢 clean |
+| 28 | algorithms/algorithmic-paradigms/dynamic-programming-interview | 33 | ✓ | PASS | 0 |  | ✓ | 0.583 | 🟢 clean |
+| 29 | algorithms/algorithmic-paradigms/greedy-algorithms-interview | 1 | — | NA | 28 | ⚠ | ✓ | 0.642 | 🔴 NO-JSON single-blob |
+| 30 | algorithms/algorithmic-paradigms/recursion-interview | 27 | ✓ | PASS | 0 |  | ✓ | 0.593 | 🟢 clean |
+| 31 | algorithms/algorithmic-paradigms/two-pointers-sliding-window-interview | 1 | — | NA | 33 | ⚠ | ✓ | 0.576 | 🔴 NO-JSON single-blob |
+| 32 | algorithms/algorithms-interview | 16 | ✓ | PASS | 0 |  | ✓ | 0.435 | 🟢 clean |
+| 33 | algorithms/complexity/complexity-analysis-interview | 31 | ✓ | PASS | 0 |  | ✓ | 0.704 | 🟢 clean |
+| 34 | algorithms/data-structures/arrays-strings-interview | 36 | ✓ | PASS | 0 |  | ✓ | 0.682 | 🟢 clean |
+| 35 | algorithms/data-structures/graphs-interview | 33 | ✓ | PASS | 0 |  | ✗ | 0.673 | 🟠 ## Q gap |
+| 36 | algorithms/data-structures/hash-tables-interview | 34 | ✓ | PASS | 0 |  | ✓ | 0.58 | 🟢 clean |
+| 37 | algorithms/data-structures/heaps-interview | 29 | ✓ | PASS | 0 |  | ✓ | 0.56 | 🟢 clean |
+| 38 | algorithms/data-structures/linked-lists-interview | 32 | ✓ | PASS | 0 |  | ✓ | 0.646 | 🟢 clean |
+| 39 | algorithms/data-structures/stacks-queues-interview | 25 | ✓ | PASS | 0 |  | ✓ | 0.563 | 🟢 clean |
+| 40 | algorithms/data-structures/trees-interview | 34 | ✓ | PASS | 0 |  | ✓ | 0.643 | 🟢 clean |
+| 41 | algorithms/data-structures/tries-interview | 28 | ✓ | PASS | 0 |  | ✓ | 0.544 | 🟢 clean |
+| 42 | algorithms/sorting-searching/searching-algorithms-interview | 8 | — | NA | 31 |  | ✓ | 0.558 | 🟠 NO-JSON (generatable) |
+| 43 | algorithms/sorting-searching/sorting-algorithms-interview | 1 | — | NA | 31 | ⚠ | ✓ | 0.565 | 🔴 NO-JSON single-blob |
+| 44 | api/api-design-best-practices-interview | 30 | ✓ | PASS | 30 |  | ✓ | 0.043 | 🟡 callouts-in-md |
+| 45 | api/api-versioning-interview | 20 | ✓ | PASS | 0 |  | ✓ | 0.071 | 🟢 clean |
+| 46 | api/graphql-interview | 40 | ✓ | PASS | 40 |  | ✓ | 0.721 | 🟡 callouts-in-md |
+| 47 | api/grpc-interview | 40 | ✓ | PASS | 40 |  | ✓ | 0.666 | 🟡 callouts-in-md |
+| 48 | api/http-rest-interview | 43 | ✓ | PASS | 43 |  | ✓ | 0.657 | 🟡 callouts-in-md |
+| 49 | api/openapi-swagger-interview | 33 | ✓ | PASS | 33 |  | ✓ | 0.613 | 🟡 callouts-in-md |
+| 50 | api/rest-maturity-interview | 17 | ✓ | PASS | 0 |  | ✓ | 0.631 | 🟢 clean |
+| 51 | api/websocket-interview | 38 | ✓ | PASS | 38 |  | ✓ | 0.599 | 🟡 callouts-in-md |
+| 52 | architecture/api-gateway-interview | 38 | ✓ | PASS | 38 |  | ✓ | 0.642 | 🟡 callouts-in-md |
+| 53 | architecture/bff-pattern-interview | 17 | ✓ | PASS | 17 |  | ✓ | 0.038 | 🟡 callouts-in-md |
+| 54 | architecture/caching-strategies-interview | 42 | ✓ | PASS | 42 |  | ✓ | 0.707 | 🟡 callouts-in-md |
+| 55 | architecture/cap-theorem-interview | 41 | ✓ | PASS | 42 |  | ✗ | 0.743 | 🟡 callouts-in-md |
+| 56 | architecture/cdn-interview | 30 | ✓ | PASS | 0 |  | ✓ | 0.411 | 🟢 clean |
+| 57 | architecture/clean-architecture-interview | 41 | ✓ | PASS | 41 |  | ✓ | 0.669 | 🟡 callouts-in-md |
+| 58 | architecture/consistency-patterns-interview | 31 | ✓ | PASS | 42 |  | ✓ | 0.728 | 🟡 callouts-in-md |
+| 59 | architecture/cqrs-event-sourcing-interview | 41 | ✓ | PASS | 41 |  | ✓ | 0.766 | 🟡 callouts-in-md |
+| 60 | architecture/ddd-interview | 38 | ✓ | PASS | 38 |  | ✓ | 0.717 | 🟡 callouts-in-md |
+| 61 | architecture/distributed-systems-interview | 40 | ✓ | PASS | 50 |  | ✓ | 0.738 | 🟡 callouts-in-md |
+| 62 | architecture/dns-interview | 30 | ✓ | PASS | 0 |  | ✓ | 0.496 | 🟢 clean |
+| 63 | architecture/edge-computing-interview | 18 | ✓ | PASS | 18 |  | ✓ | 0.02 | 🟡 callouts-in-md |
+| 64 | architecture/event-driven-patterns-interview | 40 | ✓ | PASS | 40 |  | ✓ | 0.722 | 🟡 callouts-in-md |
+| 65 | architecture/hexagonal-architecture-interview | 45 | ✓ | PASS | 45 |  | ✓ | 0.716 | 🟡 callouts-in-md |
+| 66 | architecture/latency-numbers-interview | 24 | ✓ | PASS | 0 |  | ✓ | 0.436 | 🟢 clean |
+| 67 | architecture/load-balancing-interview | 40 | ✓ | PASS | 40 |  | ✓ | 0.667 | 🟡 callouts-in-md |
+| 68 | architecture/microservices-interview | 42 | ✓ | PASS | 42 |  | ✓ | 0.74 | 🟡 callouts-in-md |
+| 69 | architecture/networking-interview | 43 | ✓ | PASS | 41 |  | ✓ | 0.672 | 🟡 callouts-in-md |
+| 70 | architecture/resilience-patterns-interview | 43 | ✓ | PASS | 43 |  | ✓ | 0.674 | 🟡 callouts-in-md |
+| 71 | architecture/reverse-proxy-interview | 30 | ✓ | PASS | 0 |  | ✓ | 0.486 | 🟢 clean |
+| 72 | architecture/saga-pattern-interview | 43 | ✓ | PASS | 43 |  | ✓ | 0.658 | 🟡 callouts-in-md |
+| 73 | architecture/scalability-patterns-interview | 41 | ✓ | PASS | 41 |  | ✓ | 0.749 | 🟡 callouts-in-md |
+| 74 | architecture/service-discovery-interview | 30 | ✓ | PASS | 0 |  | ✓ | 0.463 | 🟢 clean |
+| 75 | architecture/strangler-fig-interview | 18 | ✓ | PASS | 18 |  | ✓ | 0.044 | 🟡 callouts-in-md |
+| 76 | behavioral/behavioral-interview | 38 | ✓ | PASS | 38 |  | ✓ | 0.911 | 🟡 callouts-in-md |
+| 77 | behavioral/conflict-stories-interview | 22 | ✓ | PASS | 0 |  | ✓ | 0.943 | 🟢 clean |
+| 78 | behavioral/culture-fit-interview | 22 | ✓ | PASS | 0 |  | ✓ | 0.941 | 🟢 clean |
+| 79 | behavioral/failure-stories-interview | 22 | ✓ | PASS | 0 |  | ✓ | 0.926 | 🟢 clean |
+| 80 | behavioral/leadership-stories-interview | 22 | ✓ | PASS | 0 |  | ✓ | 0.945 | 🟢 clean |
+| 81 | behavioral/star-method-interview | 22 | ✓ | PASS | 0 |  | ✓ | 0.893 | 🟢 clean |
+| 82 | cicd/deployment-strategies-interview | 39 | ✓ | PASS | 39 |  | ✓ | 0.675 | 🟡 callouts-in-md |
+| 83 | cicd/pipeline-design-interview | 38 | ✓ | PASS | 38 |  | ✓ | 0.619 | 🟡 callouts-in-md |
+| 84 | cloud/aws-interview | 16 | ✓ | PASS | 34 |  | ✓ | 0.148 | 🟡 callouts-in-md |
+| 85 | cloud/aws-lambda-interview | 1 | — | NA | 32 | ⚠ | ✓ | 0.16 | 🔴 NO-JSON single-blob |
+| 86 | cloud/azure-interview | 25 | ✓ | PASS | 25 |  | ✓ | 0.105 | 🟡 callouts-in-md |
+| 87 | cloud/cloud-native-patterns-interview | 14 | ✓ | PASS | 30 |  | ✓ | 0.077 | 🟡 callouts-in-md |
+| 88 | cloud/gcp-interview | 1 | — | NA | 28 | ⚠ | ✓ | 0.146 | 🔴 NO-JSON single-blob |
+| 89 | cloud/serverless-interview | 1 | — | NA | 28 | ⚠ | ✓ | 0.114 | 🔴 NO-JSON single-blob |
+| 90 | code-quality/clean-code-practices-interview | 1 | — | NA | 27 | ⚠ | ✓ | 0.846 | 🔴 NO-JSON single-blob |
+| 91 | code-quality/code-coverage-interview | 25 | ✓ | PASS | 25 |  | ✓ | 0.681 | 🟡 callouts-in-md |
+| 92 | code-quality/code-review-interview | 1 | — | NA | 40 | ⚠ | ✓ | 0.808 | 🔴 NO-JSON single-blob |
+| 93 | code-quality/code-smells-interview | 1 | — | NA | 27 | ⚠ | ✓ | 0.746 | 🔴 NO-JSON single-blob |
+| 94 | code-quality/refactoring-patterns-interview | 1 | — | NA | 42 | ⚠ | ✓ | 0.763 | 🔴 NO-JSON single-blob |
+| 95 | code-quality/static-analysis-interview | 6 | ✓ | PASS | 26 |  | ✓ | 0.643 | 🟡 callouts-in-md |
+| 96 | code-quality/technical-debt-interview | 1 | — | NA | 40 | ⚠ | ✓ | 0.853 | 🔴 NO-JSON single-blob |
+| 97 | data-engineering/apache-airflow-interview | 28 | ✓ | PASS | 28 |  | ✓ | 0.397 | 🟡 callouts-in-md |
+| 98 | data-engineering/apache-flink-interview | 1 | — | NA | 31 | ⚠ | ✓ | 0.376 | 🔴 NO-JSON single-blob |
+| 99 | data-engineering/apache-spark-interview | 1 | — | NA | 35 | ⚠ | ✓ | 0.42 | 🔴 NO-JSON single-blob |
+| 100 | data-engineering/data-lake-lakehouse-interview | 28 | ✓ | PASS | 28 |  | ✓ | 0.312 | 🟡 callouts-in-md |
+| 101 | data-engineering/data-warehousing-interview | 30 | ✓ | PASS | 30 |  | ✓ | 0.391 | 🟡 callouts-in-md |
+| 102 | data-engineering/dbt-interview | 1 | — | NA | 28 | ⚠ | ✓ | 0.384 | 🔴 NO-JSON single-blob |
+| 103 | data-engineering/kafka-streams-interview | 1 | — | NA | 28 | ⚠ | ✓ | 0.373 | 🔴 NO-JSON single-blob |
+| 104 | data-engineering/stream-processing-interview | 1 | — | NA | 28 | ⚠ | ✓ | 0.316 | 🔴 NO-JSON single-blob |
+| 105 | databases/cassandra-interview | 44 | ✓ | PASS | 68 |  | ✓ | 0.683 | 🟡 callouts-in-md |
+| 106 | databases/clickhouse-interview | 28 | ✓ | PASS | 38 |  | ✓ | 0.109 | 🟡 callouts-in-md |
+| 107 | databases/cockroachdb-interview | 24 | ✓ | PASS | 37 |  | ✓ | 0.084 | 🟡 callouts-in-md |
+| 108 | databases/database-architecture-interview | 41 | ✓ | PASS | 41 |  | ✓ | 0.714 | 🟡 callouts-in-md |
+| 109 | databases/database-replication-interview | 31 | ✓ | PASS | 0 |  | ✓ | 0.487 | 🟢 clean |
+| 110 | databases/database-sharding-interview | 34 | ✓ | PASS | 0 |  | ✓ | 0.495 | 🟢 clean |
+| 111 | databases/database-transactions-interview | 42 | ✓ | PASS | 53 |  | ✓ | 0.707 | 🟡 callouts-in-md |
+| 112 | databases/dynamodb-interview | 30 | ✓ | PASS | 30 |  | ✓ | 0.104 | 🟡 callouts-in-md |
+| 113 | databases/elasticsearch-interview | 44 | ✓ | PASS | 50 |  | ✓ | 0.714 | 🟡 callouts-in-md |
+| 114 | databases/flyway-liquibase-interview | 42 | ✓ | PASS | 52 |  | ✓ | 0.686 | 🟡 callouts-in-md |
+| 115 | databases/hibernate-caching-interview | 15 | ✓ | PASS | 21 |  | ✓ | 0.509 | 🟡 callouts-in-md |
+| 116 | databases/hibernate-interview | 48 | ✓ | PASS | 49 |  | ✓ | 0.635 | 🟡 callouts-in-md |
+| 117 | databases/hibernate-jpql-criteria-interview | 15 | ✓ | PASS | 0 |  | ✓ | 0.487 | 🟢 clean |
+| 118 | databases/hibernate-relationships-interview | 15 | ✓ | PASS | 0 |  | ✓ | 0.494 | 🟢 clean |
+| 119 | databases/mongodb-interview | 46 | ✓ | PASS | 46 |  | ✓ | 0.692 | 🟡 callouts-in-md |
+| 120 | databases/neo4j-interview | 30 | ✓ | PASS | 30 |  | ✓ | 0.095 | 🟡 callouts-in-md |
+| 121 | databases/postgresql-interview | 55 | ✓ | PASS | 55 |  | ✓ | 0.722 | 🟡 callouts-in-md |
+| 122 | databases/redis-interview | 43 | ✓ | PASS | 53 |  | ✓ | 0.689 | 🟡 callouts-in-md |
+| 123 | databases/scylladb-interview | 23 | ✓ | PASS | 23 |  | ✓ | 0.072 | 🟡 callouts-in-md |
+| 124 | databases/sql-interview | 53 | ✓ | PASS | 55 |  | ✓ | 0.7 | 🟡 callouts-in-md |
+| 125 | design-patterns/design-patterns-interview | 48 | ✓ | PASS | 56 |  | ✓ | 0.64 | 🟡 callouts-in-md |
+| 126 | devops/ansible-interview | 25 | ✓ | PASS | 25 |  | ✓ | 0.073 | 🟡 callouts-in-md |
+| 127 | devops/argocd-interview | 42 | ✓ | PASS | 42 |  | ✓ | 0.643 | 🟡 callouts-in-md |
+| 128 | devops/consul-interview | 24 | ✓ | PASS | 24 |  | ✓ | 0.069 | 🟡 callouts-in-md |
+| 129 | devops/docker-interview | 41 | ✓ | PASS | 41 |  | ✓ | 0.662 | 🟡 callouts-in-md |
+| 130 | devops/git-interview | 43 | ✓ | PASS | 43 |  | ✓ | 0.687 | 🟡 callouts-in-md |
+| 131 | devops/gradle-maven-interview | 38 | ✓ | PASS | 38 |  | ✓ | 0.664 | 🟡 callouts-in-md |
+| 132 | devops/helm-interview | 43 | ✓ | PASS | 43 |  | ✓ | 0.631 | 🟡 callouts-in-md |
+| 133 | devops/istio-service-mesh-interview | 26 | ✓ | PASS | 26 |  | ✓ | 0.06 | 🟡 callouts-in-md |
+| 134 | devops/kubernetes-interview | 45 | ✓ | PASS | 48 |  | ✓ | 0.629 | 🟡 callouts-in-md |
+| 135 | devops/linkerd-interview | 20 | ✓ | PASS | 20 |  | ✓ | 0.061 | 🟡 callouts-in-md |
+| 136 | devops/linux-interview | 33 | ✓ | PASS | 33 |  | ✓ | 0.619 | 🟡 callouts-in-md |
+| 137 | devops/terraform-interview | 42 | ✓ | PASS | 42 |  | ✓ | 0.646 | 🟡 callouts-in-md |
+| 138 | devops/vault-interview | 26 | ✓ | PASS | 26 |  | ✓ | 0.041 | 🟡 callouts-in-md |
+| 139 | frameworks/jvm-alternatives/ktor-interview | 1 | — | NA | 32 | ⚠ | ✓ | 0.513 | 🔴 NO-JSON single-blob |
+| 140 | frameworks/jvm-alternatives/micronaut-interview | 25 | ✓ | PASS | 26 |  | ✗ | 0.464 | 🟡 callouts-in-md |
+| 141 | frameworks/jvm-alternatives/quarkus-interview | 1 | — | NA | 31 | ⚠ | ✓ | 0.47 | 🔴 NO-JSON single-blob |
+| 142 | frameworks/jvm-alternatives/vertx-interview | 1 | — | NA | 31 | ⚠ | ✓ | 0.434 | 🔴 NO-JSON single-blob |
+| 143 | frameworks/spring/resilience4j-interview | 20 | ✓ | PASS | 20 |  | ✓ | 0.519 | 🟡 callouts-in-md |
+| 144 | frameworks/spring/spring-ai-interview | 15 | ✓ | PASS | 0 |  | ✓ | 0.551 | 🟢 clean |
+| 145 | frameworks/spring/spring-aop-interview | 22 | ✓ | PASS | 22 |  | ✓ | 0.567 | 🟡 callouts-in-md |
+| 146 | frameworks/spring/spring-async-interview | 15 | ✓ | PASS | 0 |  | ✓ | 0.52 | 🟢 clean |
+| 147 | frameworks/spring/spring-batch-interview | 43 | ✓ | PASS | 43 |  | ✓ | 0.598 | 🟡 callouts-in-md |
+| 148 | frameworks/spring/spring-boot-3-migration-interview | 15 | ✓ | PASS | 0 |  | ✓ | 0.399 | 🟢 clean |
+| 149 | frameworks/spring/spring-boot-actuator-interview | 43 | ✓ | PASS | 54 |  | ✓ | 0.59 | 🟡 callouts-in-md |
+| 150 | frameworks/spring/spring-boot-interview | 42 | ✓ | PASS | 44 |  | ✓ | 0.583 | 🟡 callouts-in-md |
+| 151 | frameworks/spring/spring-cache-interview | 17 | ✓ | PASS | 18 |  | ✗ | 0.597 | 🟡 callouts-in-md |
+| 152 | frameworks/spring/spring-cloud-interview | 43 | ✓ | PASS | 44 |  | ✓ | 0.545 | 🟡 callouts-in-md |
+| 153 | frameworks/spring/spring-data-jdbc-interview | 16 | ✓ | PASS | 16 |  | ✓ | 0.63 | 🟡 callouts-in-md |
+| 154 | frameworks/spring/spring-data-jpa-interview | 42 | ✓ | PASS | 48 |  | ✓ | 0.639 | 🟡 callouts-in-md |
+| 155 | frameworks/spring/spring-events-interview | 16 | ✓ | PASS | 16 |  | ✓ | 0.59 | 🟡 callouts-in-md |
+| 156 | frameworks/spring/spring-framework-interview | 40 | ✓ | PASS | 49 |  | ✓ | 0.61 | 🟡 callouts-in-md |
+| 157 | frameworks/spring/spring-graphql-interview | 15 | ✓ | PASS | 0 |  | ✓ | 0.449 | 🟢 clean |
+| 158 | frameworks/spring/spring-integration-interview | 15 | ✓ | PASS | 0 |  | ✓ | 0.521 | 🟢 clean |
+| 159 | frameworks/spring/spring-kafka-interview | 15 | ✓ | PASS | 0 |  | ✓ | 0.539 | 🟢 clean |
+| 160 | frameworks/spring/spring-messaging-interview | 15 | ✓ | PASS | 0 |  | ✓ | 0.422 | 🟢 clean |
+| 161 | frameworks/spring/spring-modulith-interview | 15 | ✓ | PASS | 0 |  | ✓ | 0.68 | 🟢 clean |
+| 162 | frameworks/spring/spring-mvc-interview | 43 | ✓ | PASS | 57 |  | ✓ | 0.601 | 🟡 callouts-in-md |
+| 163 | frameworks/spring/spring-r2dbc-interview | 15 | ✓ | PASS | 0 |  | ✓ | 0.51 | 🟢 clean |
+| 164 | frameworks/spring/spring-rest-client-interview | 13 | ✓ | PASS | 14 |  | ✓ | 0.546 | 🟡 callouts-in-md |
+| 165 | frameworks/spring/spring-retry-interview | 17 | ✓ | PASS | 17 |  | ✓ | 0.574 | 🟡 callouts-in-md |
+| 166 | frameworks/spring/spring-scheduling-interview | 16 | ✓ | PASS | 15 |  | ✓ | 0.583 | 🟡 callouts-in-md |
+| 167 | frameworks/spring/spring-security-interview | 43 | ✓ | PASS | 43 |  | ✓ | 0.556 | 🟡 callouts-in-md |
+| 168 | frameworks/spring/spring-session-interview | 15 | ✓ | PASS | 0 |  | ✓ | 0.522 | 🟢 clean |
+| 169 | frameworks/spring/spring-state-machine-interview | 15 | ✓ | PASS | 15 |  | ✓ | 0.613 | 🟡 callouts-in-md |
+| 170 | frameworks/spring/spring-testing-interview | 1 | — | NA | 15 | ⚠ | ✓ | 0.513 | 🔴 NO-JSON single-blob |
+| 171 | frameworks/spring/spring-transaction-interview | 15 | ✓ | PASS | 22 |  | ✓ | 0.551 | 🟡 callouts-in-md |
+| 172 | frameworks/spring/spring-validation-interview | 16 | ✓ | PASS | 15 |  | ✓ | 0.509 | 🟡 callouts-in-md |
+| 173 | frameworks/spring/spring-vault-interview | 15 | ✓ | PASS | 15 |  | ✓ | 0.601 | 🟡 callouts-in-md |
+| 174 | frameworks/spring/spring-webflux-interview | 43 | ✓ | PASS | 43 |  | ✓ | 0.733 | 🟡 callouts-in-md |
+| 175 | jvm/graalvm-native-interview | 15 | ✓ | PASS | 14 |  | ✓ | 0.549 | 🟡 callouts-in-md |
+| 176 | jvm/jvm-interview | 40 | ✓ | PASS | 53 |  | ✓ | 0.654 | 🟡 callouts-in-md |
+| 177 | leadership/code-review-practices-interview | 1 | — | NA | 40 | ⚠ | ✓ | 0.801 | 🔴 NO-JSON single-blob |
+| 178 | leadership/conflict-resolution-interview | 20 | ✓ | PASS | 0 |  | ✓ | 0.916 | 🟢 clean |
+| 179 | leadership/estimations-planning-interview | 20 | ✓ | PASS | 0 |  | ✓ | 0.868 | 🟢 clean |
+| 180 | leadership/mentoring-interview | 25 | ✓ | PASS | 0 |  | ✓ | 0.915 | 🟢 clean |
+| 181 | leadership/team-leadership-interview | 1 | — | NA | 40 | ⚠ | ✓ | 0.917 | 🔴 NO-JSON single-blob |
+| 182 | leadership/tech-interviewing-interview | 20 | ✓ | PASS | 0 |  | ✓ | 0.897 | 🟢 clean |
+| 183 | leadership/technical-decisions-interview | 22 | ✓ | PASS | 0 |  | ✓ | 0.879 | 🟢 clean |
+| 184 | logging/logging-interview | 9 | ✓ | PASS | 41 |  | ✓ | 0.647 | 🟡 callouts-in-md |
+| 185 | messaging/aws-sqs-sns-interview | 1 | — | NA | 22 | ⚠ | ✓ | 0.074 | 🔴 NO-JSON single-blob |
+| 186 | messaging/kafka-interview | 50 | ✓ | PASS | 50 |  | ✓ | 0.587 | 🟡 callouts-in-md |
+| 187 | messaging/message-brokers-comparison-interview | 1 | — | NA | 26 | ⚠ | ✓ | 0.107 | 🔴 NO-JSON single-blob |
+| 188 | messaging/nats-interview | 8 | ✓ | PASS | 24 |  | ✓ | 0.107 | 🟡 callouts-in-md |
+| 189 | messaging/pulsar-interview | 1 | — | NA | 22 | ⚠ | ✓ | 0.078 | 🔴 NO-JSON single-blob |
+| 190 | messaging/rabbitmq-interview | 41 | ✓ | PASS | 60 |  | ✓ | 0.604 | 🟡 callouts-in-md |
+| 191 | messaging/redpanda-interview | 20 | ✓ | PASS | 0 |  | ✓ | 0.074 | 🟢 clean |
+| 192 | monitoring/elk-stack-interview | 5 | — | NA | 26 |  | ✓ | 0.129 | 🔴 NO-JSON single-blob |
+| 193 | monitoring/jaeger-zipkin-interview | 1 | — | NA | 23 | ⚠ | ✓ | 0.137 | 🔴 NO-JSON single-blob |
+| 194 | monitoring/logging-strategies-interview | 1 | — | NA | 38 | ⚠ | ✓ | 0.708 | 🔴 NO-JSON single-blob |
+| 195 | monitoring/loki-grafana-interview | 1 | — | NA | 28 | ⚠ | ✓ | 0.115 | 🔴 NO-JSON single-blob |
+| 196 | monitoring/metrics-tracing-interview | 6 | — | NA | 41 |  | ✓ | 0.653 | 🔴 NO-JSON single-blob |
+| 197 | monitoring/micrometer-interview | 1 | — | NA | 20 | ⚠ | ✓ | 0.549 | 🔴 NO-JSON single-blob |
+| 198 | monitoring/observability-interview | 15 | ✓ | PASS | 40 |  | ✗ | 0.62 | 🟡 callouts-in-md |
+| 199 | monitoring/opentelemetry-interview | 9 | ✓ | PASS | 28 |  | ✓ | 0.126 | 🟡 callouts-in-md |
+| 200 | monitoring/prometheus-grafana-interview | 39 | ✓ | PASS | 39 |  | ✓ | 0.631 | 🟡 callouts-in-md |
+| 201 | performance/application-profiling-interview | 42 | ✓ | PASS | 42 |  | ✓ | 0.608 | 🟡 callouts-in-md |
+| 202 | performance/caching-performance-interview | 1 | — | NA | 23 | ⚠ | ✓ | 0.033 | 🔴 NO-JSON single-blob |
+| 203 | performance/database-performance-interview | 1 | — | NA | 27 | ⚠ | ✓ | 0.046 | 🔴 NO-JSON single-blob |
+| 204 | performance/jvm-performance-tuning-interview | 1 | — | NA | 38 | ⚠ | ✓ | 0.62 | 🔴 NO-JSON single-blob |
+| 205 | performance/memory-management-interview | 1 | — | NA | 39 | ⚠ | ✓ | 0.611 | 🔴 NO-JSON single-blob |
+| 206 | performance/network-performance-interview | 1 | — | NA | 24 | ⚠ | ✓ | 0.028 | 🔴 NO-JSON single-blob |
+| 207 | performance/performance-testing-interview | 1 | — | NA | 42 | ⚠ | ✓ | 0.598 | 🔴 NO-JSON single-blob |
+| 208 | programming-languages/go/go-concurrency-interview | 35 | ✓ | PASS | 35 |  | ✓ | 0.497 | 🟡 callouts-in-md |
+| 209 | programming-languages/go/go-generics-interview | 1 | — | NA | 26 | ⚠ | ✓ | 0.471 | 🔴 NO-JSON single-blob |
+| 210 | programming-languages/go/go-interview | 1 | — | NA | 36 | ⚠ | ✓ | 0.503 | 🔴 NO-JSON single-blob |
+| 211 | programming-languages/go/go-memory-gc-interview | 1 | — | NA | 27 | ⚠ | ✓ | 0.52 | 🔴 NO-JSON single-blob |
+| 212 | programming-languages/go/go-modules-interview | 27 | ✓ | PASS | 27 |  | ✓ | 0.587 | 🟡 callouts-in-md |
+| 213 | programming-languages/go/go-stdlib-interview | 30 | ✓ | PASS | 30 |  | ✓ | 0.444 | 🟡 callouts-in-md |
+| 214 | programming-languages/go/go-testing-interview | 1 | — | NA | 28 | ⚠ | ✓ | 0.497 | 🔴 NO-JSON single-blob |
+| 215 | programming-languages/java/java-17-21-interview | 42 | ✓ | PASS | 42 |  | ✓ | 0.618 | 🟡 callouts-in-md |
+| 216 | programming-languages/java/java-8-interview | 41 | ✓ | PASS | 0 |  | ✗ | 0.702 | 🟠 ## Q gap |
+| 217 | programming-languages/java/java-annotations-interview | 43 | ✓ | PASS | 53 |  | ✓ | 0.65 | 🟡 callouts-in-md |
+| 218 | programming-languages/java/java-collections-interview | 46 | ✓ | PASS | 0 |  | ✓ | 0.641 | 🟢 clean |
+| 219 | programming-languages/java/java-completable-future-interview | 13 | ✓ | PASS | 0 |  | ✓ | 0.53 | 🟢 clean |
+| 220 | programming-languages/java/java-concurrency-interview | 56 | ✓ | PASS | 57 |  | ✓ | 0.635 | 🟡 callouts-in-md |
+| 221 | programming-languages/java/java-conditional-statements-interview | 1 | — | NA | 42 | ⚠ | ✓ | 0.643 | 🔴 NO-JSON single-blob |
+| 222 | programming-languages/java/java-core-interview | 39 | ✓ | PASS | 0 |  | ✓ | 0.67 | 🟢 clean |
+| 223 | programming-languages/java/java-exceptions-interview | 42 | ✓ | PASS | 0 |  | ✓ | 0.65 | 🟢 clean |
+| 224 | programming-languages/java/java-functional-interface-interview | 14 | ✓ | PASS | 0 |  | ✓ | 0.645 | 🟢 clean |
+| 225 | programming-languages/java/java-generics-interview | 40 | ✓ | PASS | 0 |  | ✓ | 0.676 | 🟢 clean |
+| 226 | programming-languages/java/java-initialization-interview | 1 | — | NA | 27 | ⚠ | ✓ | 0.681 | 🔴 NO-JSON single-blob |
+| 227 | programming-languages/java/java-io-nio-interview | 40 | ✓ | PASS | 51 |  | ✓ | 0.666 | 🟡 callouts-in-md |
+| 228 | programming-languages/java/java-jackson-interview | 1 | — | NA | 31 | ⚠ | ✓ | 0.547 | 🔴 NO-JSON single-blob |
+| 229 | programming-languages/java/java-lombok-interview | 5 | — | NA | 27 |  | ✗ | 0.554 | 🔴 NO-JSON single-blob |
+| 230 | programming-languages/java/java-mapstruct-interview | 1 | — | NA | 28 | ⚠ | ✓ | 0.616 | 🔴 NO-JSON single-blob |
+| 231 | programming-languages/java/java-modules-interview | 38 | ✓ | PASS | 38 |  | ✓ | 0.682 | 🟡 callouts-in-md |
+| 232 | programming-languages/java/java-oop-interview | 43 | ✓ | PASS | 43 |  | ✓ | 0.742 | 🟡 callouts-in-md |
+| 233 | programming-languages/java/java-optional-interview | 15 | ✓ | PASS | 0 |  | ✓ | 0.606 | 🟢 clean |
+| 234 | programming-languages/java/java-pattern-matching-interview | 15 | ✓ | PASS | 15 |  | ✓ | 0.47 | 🟡 callouts-in-md |
+| 235 | programming-languages/java/java-records-interview | 15 | ✓ | PASS | 15 |  | ✓ | 0.52 | 🟡 callouts-in-md |
+| 236 | programming-languages/java/java-reflection-interview | 1 | — | NA | 16 | ⚠ | ✓ | 0.549 | 🔴 NO-JSON single-blob |
+| 237 | programming-languages/java/java-serialization-interview | 40 | ✓ | PASS | 39 |  | ✓ | 0.697 | 🟡 callouts-in-md |
+| 238 | programming-languages/java/java-stream-interview | 42 | ✓ | PASS | 0 |  | ✓ | 0.632 | 🟢 clean |
+| 239 | programming-languages/java/java-string-interview | 39 | ✓ | PASS | 43 |  | ✓ | 0.669 | 🟡 callouts-in-md |
+| 240 | programming-languages/java/java-types-interview | 38 | ✓ | PASS | 37 |  | ✓ | 0.736 | 🟡 callouts-in-md |
+| 241 | programming-languages/java/java-virtual-threads-interview | 15 | ✓ | PASS | 15 |  | ✓ | 0.587 | 🟡 callouts-in-md |
+| 242 | programming-languages/kotlin/kotlin-collections-interview | 42 | ✓ | PASS | 43 |  | ✗ | 0.639 | 🟡 callouts-in-md |
+| 243 | programming-languages/kotlin/kotlin-coroutines-interview | 19 | ✓ | PASS | 39 |  | ✓ | 0.676 | 🟡 callouts-in-md |
+| 244 | programming-languages/kotlin/kotlin-dsl-interview | 1 | — | NA | 40 | ⚠ | ✓ | 0.666 | 🔴 NO-JSON single-blob |
+| 245 | programming-languages/kotlin/kotlin-exceptions-interview | 7 | — | NA | 40 |  | ✓ | 0.682 | 🔴 NO-JSON single-blob |
+| 246 | programming-languages/kotlin/kotlin-flow-interview | 17 | ✓ | PASS | 17 |  | ✓ | 0.552 | 🟡 callouts-in-md |
+| 247 | programming-languages/kotlin/kotlin-interop-java-interview | 38 | ✓ | PASS | 38 |  | ✓ | 0.636 | 🟡 callouts-in-md |
+| 248 | programming-languages/kotlin/kotlin-interview | 27 | ✓ | PASS | 45 |  | ✓ | 0.611 | 🟡 callouts-in-md |
+| 249 | programming-languages/kotlin/kotlin-sealed-classes-interview | 15 | ✓ | PASS | 15 |  | ✓ | 0.532 | 🟡 callouts-in-md |
+| 250 | programming-languages/kotlin/kotlin-serialization-interview | 1 | — | NA | 43 | ⚠ | ✓ | 0.638 | 🔴 NO-JSON single-blob |
+| 251 | programming-languages/kotlin/kotlin-spring-interview | 15 | ✓ | PASS | 15 |  | ✓ | 0.501 | 🟡 callouts-in-md |
+| 252 | programming-languages/kotlin/kotlin-value-classes-interview | 15 | ✓ | PASS | 15 |  | ✓ | 0.542 | 🟡 callouts-in-md |
+| 253 | programming-languages/scala/scala-interview | 1 | — | NA | 40 | ⚠ | ✓ | 0.467 | 🔴 NO-JSON single-blob |
+| 254 | reactive/project-reactor-interview | 47 | ✓ | PASS | 47 |  | ✓ | 0.634 | 🟡 callouts-in-md |
+| 255 | reactive/reactive-patterns-interview | 26 | ✓ | PASS | 26 |  | ✓ | 0.651 | 🟡 callouts-in-md |
+| 256 | reactive/reactive-streams-interview | 30 | ✓ | PASS | 30 |  | ✓ | 0.582 | 🟡 callouts-in-md |
+| 257 | reactive/reactive-testing-interview | 28 | ✓ | PASS | 28 |  | ✓ | 0.572 | 🟡 callouts-in-md |
+| 258 | reactive/rxjava-interview | 46 | ✓ | PASS | 46 |  | ✓ | 0.645 | 🟡 callouts-in-md |
+| 259 | reactive/webflux-interview | 28 | ✓ | PASS | 28 |  | ✓ | 0.563 | 🟡 callouts-in-md |
+| 260 | security/application-security-interview | 45 | ✓ | PASS | 45 |  | ✓ | 0.66 | 🟡 callouts-in-md |
+| 261 | security/authentication-authorization-patterns-interview | 45 | ✓ | PASS | 45 |  | ✓ | 0.618 | 🟡 callouts-in-md |
+| 262 | security/jwt-interview | 43 | ✓ | PASS | 43 |  | ✓ | 0.654 | 🟡 callouts-in-md |
+| 263 | security/mtls-interview | 20 | ✓ | PASS | 20 |  | ✓ | 0.039 | 🟡 callouts-in-md |
+| 264 | security/oauth2-interview | 42 | ✓ | PASS | 42 |  | ✓ | 0.556 | 🟡 callouts-in-md |
+| 265 | security/owasp-top10-interview | 45 | ✓ | PASS | 45 |  | ✓ | 0.675 | 🟡 callouts-in-md |
+| 266 | security/secrets-management-interview | 22 | ✓ | PASS | 22 |  | ✓ | 0.042 | 🟡 callouts-in-md |
+| 267 | security/supply-chain-security-interview | 24 | ✓ | PASS | 24 |  | ✓ | 0.048 | 🟡 callouts-in-md |
+| 268 | security/tls-ssl-interview | 45 | ✓ | PASS | 45 |  | ✓ | 0.638 | 🟡 callouts-in-md |
+| 269 | security/zero-trust-interview | 19 | ✓ | PASS | 19 |  | ✓ | 0.036 | 🟡 callouts-in-md |
+| 270 | system-design/design-chat-system-interview | 21 | ✓ | PASS | 21 |  | ✓ | 0.021 | 🟡 callouts-in-md |
+| 271 | system-design/design-dropbox-interview | 30 | ✓ | PASS | 0 |  | ✓ | 0.078 | 🟢 clean |
+| 272 | system-design/design-ecommerce-delivery-interview | 36 | ✓ | PASS | 0 |  | ✓ | 0.751 | 🟢 clean |
+| 273 | system-design/design-elevator-oo-interview | 26 | ✓ | PASS | 0 |  | ✓ | 0.475 | 🟢 clean |
+| 274 | system-design/design-feed-system-interview | 30 | ✓ | PASS | 0 |  | ✓ | 0.315 | 🟢 clean |
+| 275 | system-design/design-google-maps-interview | 30 | ✓ | PASS | 0 |  | ✓ | 0.105 | 🟢 clean |
+| 276 | system-design/design-instagram-interview | 27 | ✓ | PASS | 0 |  | ✓ | 0.349 | 🟢 clean |
+| 277 | system-design/design-key-value-store-interview | 30 | ✓ | PASS | 0 |  | ✓ | 0.594 | 🟢 clean |
+| 278 | system-design/design-netflix-interview | 30 | ✓ | PASS | 0 |  | ✓ | 0.117 | 🟢 clean |
+| 279 | system-design/design-parking-lot-oo-interview | 28 | ✓ | PASS | 0 |  | ✓ | 0.606 | 🟢 clean |
+| 280 | system-design/design-pastebin-interview | 30 | ✓ | PASS | 0 |  | ✓ | 0.102 | 🟢 clean |
+| 281 | system-design/design-payment-system-interview | 30 | ✓ | PASS | 0 |  | ✓ | 0.266 | 🟢 clean |
+| 282 | system-design/design-rate-limiter-interview | 30 | ✓ | PASS | 0 |  | ✓ | 0.245 | 🟢 clean |
+| 283 | system-design/design-search-interview | 30 | ✓ | PASS | 0 |  | ✓ | 0.169 | 🟢 clean |
+| 284 | system-design/design-twitter-interview | 27 | ✓ | PASS | 0 |  | ✓ | 0.412 | 🟢 clean |
+| 285 | system-design/design-typeahead-interview | 30 | ✓ | PASS | 0 |  | ✓ | 0.382 | 🟢 clean |
+| 286 | system-design/design-uber-interview | 30 | ✓ | PASS | 0 |  | ✓ | 0.466 | 🟢 clean |
+| 287 | system-design/design-url-shortener-interview | 30 | ✓ | PASS | 0 |  | ✓ | 0.162 | 🟢 clean |
+| 288 | system-design/design-vending-machine-oo-interview | 24 | ✓ | PASS | 0 |  | ✓ | 0.381 | 🟢 clean |
+| 289 | system-design/design-web-crawler-interview | 26 | ✓ | PASS | 0 |  | ✓ | 0.441 | 🟢 clean |
+| 290 | system-design/design-youtube-interview | 28 | ✓ | PASS | 0 |  | ✓ | 0.281 | 🟢 clean |
+| 291 | system-design/system-design-interview | 1 | — | NA | 41 | ⚠ | ✓ | 0.611 | 🔴 NO-JSON single-blob |
+| 292 | testing/chaos-engineering-interview | 44 | ✓ | PASS | 43 |  | ✓ | 0.639 | 🟡 callouts-in-md |
+| 293 | testing/contract-testing-interview | 42 | ✓ | PASS | 0 |  | ✓ | 0.657 | 🟢 clean |
+| 294 | testing/integration-testing-interview | 39 | ✓ | PASS | 40 |  | ✗ | 0.666 | 🟡 callouts-in-md |
+| 295 | testing/junit-interview | 15 | ✓ | PASS | 15 |  | ✓ | 0.564 | 🟡 callouts-in-md |
+| 296 | testing/load-testing-interview | 22 | ✓ | PASS | 22 |  | ✓ | 0.052 | 🟡 callouts-in-md |
+| 297 | testing/mockito-interview | 45 | ✓ | PASS | 45 |  | ✓ | 0.67 | 🟡 callouts-in-md |
+| 298 | testing/mutation-testing-interview | 20 | ✓ | PASS | 19 |  | ✓ | 0.084 | 🟡 callouts-in-md |
+| 299 | testing/property-based-testing-interview | 1 | — | NA | 21 | ⚠ | ✓ | 0.053 | 🔴 NO-JSON single-blob |
+| 300 | testing/rest-assured-interview | 15 | ✓ | PASS | 15 |  | ✓ | 0.5 | 🟡 callouts-in-md |
+| 301 | testing/selenium-interview | 15 | ✓ | PASS | 15 |  | ✓ | 0.569 | 🟡 callouts-in-md |
+| 302 | testing/test-automation-interview | 7 | — | NA | 50 |  | ✓ | 0.676 | 🔴 NO-JSON single-blob |
+| 303 | testing/test-strategies-interview | 45 | ✓ | PASS | 45 |  | ✓ | 0.656 | 🟡 callouts-in-md |
+| 304 | testing/testcontainers-interview | 40 | ✓ | PASS | 39 |  | ✓ | 0.659 | 🟡 callouts-in-md |
+| 305 | testing/unit-testing-interview | 45 | ✓ | PASS | 44 |  | ✓ | 0.683 | 🟡 callouts-in-md |
 
 ## Phase rollout (priority by impact)
 
