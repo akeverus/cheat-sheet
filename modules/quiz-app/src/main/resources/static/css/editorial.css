@@ -783,7 +783,10 @@ html[data-design="editorial"] #interview-options { counter-reset: opt; display: 
 html[data-design="editorial"] #interview-options label {
   counter-increment: opt;
   display: grid;
-  grid-template-columns: auto 1fr;
+  /* minmax(0, 1fr): без 0-минимума у 1fr-трека сидит implicit min-width:auto =
+     min-content текста варианта (длинное слово/код), и колонка не ужимается —
+     на 375px грид распирало карточку (badge 109 + текст 203 > 280). */
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: baseline;
   gap: var(--space-3);
   padding: var(--space-4);
@@ -836,6 +839,11 @@ html[data-design="editorial"] .option-correct::before { background: var(--color-
 html[data-design="editorial"] .option-wrong { border-color: var(--color-status-error) !important; background: var(--color-status-error-wash) !important; }
 html[data-design="editorial"] .option-wrong::before { background: var(--color-status-error) !important; border-color: var(--color-status-error) !important; color: var(--color-status-error-on) !important; }
 html[data-design="editorial"] .option-dimmed { opacity: 0.55; }
+/* Пост-ответный статус-лейбл и объяснение тянем на всю ширину карточки
+   (под строку «[A] текст»), чтобы auto-колонка badge не раздувалась статусом
+   до 109px и не зажимала текст в узкую колонку на мобиле. */
+html[data-design="editorial"] #interview-options label .option-status-label,
+html[data-design="editorial"] #interview-options label .option-explanation { grid-column: 1 / -1; min-width: 0; }
 
 /* Объяснения вариантов (app.js/result.html: .option-explanation +
    .explanation-correct/.explanation-wrong). Старые правила тянут холодный
