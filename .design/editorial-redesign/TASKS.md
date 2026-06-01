@@ -126,3 +126,20 @@ Generated from: `.design/editorial-redesign/` (BRIEF · TOKENS · SERVER_CONTRAC
   ✅ commit 01384a67 — focus отвеченные варианты: `grid-template-columns: auto minmax(0,1fr)` +
   статус-лейбл/объяснение `grid-column: 1 / -1`.
   ✅ commit dffb46eb — summary-table `display:block; overflow-x:auto` (скролл внутри карточки).
+- [x] **P2 — Multi-agent OCD harmony audit** (workflow `editorial-harmony-audit`, 72 агента,
+  8 измерений × адверсариальная верификация → 27 подтверждённых находок + 2 ручные).
+  ✅ commit 982e4177 — единый размер заголовков секций settings (bare h2 36px → .control-title 28px);
+  KPI-лейблы «Верно/Ошибки» вместо эмодзи ✅/❌ (общий фрагмент stats-grid → чинит stats+settings).
+  ✅ commit ea9dde93 — 22 находки: тач-таргеты 44px (.ed-nav-export/.btn-finish/.btn-favorite/
+  .btn-regenerate); AA-контраст (--color-status-warning light #9A6B00→#7A5400, disabled-сабмит/
+  regen-badge text-tertiary→secondary); токены (--rule-weight-accent для 7 линеек, pre line-height,
+  masthead-brand gap, badge padding em, keyboard-hint трекинг); :focus-visible без border-radius
+  (кольцо огибает свой радиус); .ed-masthead-progress max-width+центр (flush с шапкой >1280);
+  settings .field min-width:0 + select max-width (overflow на 360px устранён); generic :disabled +
+  :hover:not(:disabled) гварды; .control-section-tips ритм; удалено мёртвое .hidden-правило.
+  ✅ commit b483bcfe — рефактор: снос мёртвой ed-* библиотеки (~110 строк, 0 ссылок) с переносом
+  :active press-state на реальные кнопки; per-page max-width → семантические токены
+  (--max-width-focus/-reading/-result/-settings/-data, pixel-identical); result.html two-col
+  (.question-layout через :has(.question-side)) + .top-row display:flex; снят мёртвый class=w-60.
+  Верифицировано живьём: 360/375/753/1440/1920 обе темы, 0 overflow, focus-ring огибает радиус,
+  все токены резолвятся, braces 420/420. prefers-reduced-motion уже покрыт (2 блока).
