@@ -1,0 +1,1865 @@
+{
+  "topic_slug": "sorting-algorithms-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие свойства характеризуют алгоритм сортировки?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Алгоритм характеризуют сразу несколько ортогональных свойств: временная и пространственная сложность (best/avg/worst), стабильность (сохраняет ли порядок равных), in-place (доп. память не больше `O(log n)`), adaptive (быстрее на частично отсортированных данных), online (умеет принимать поток по одному элементу), comparison-based vs non-comparison и external (работа с данными, не влезающими в память).",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти характеристики независимы: алгоритм может быть стабильным, но не in-place (`Merge`), или быстрым в среднем, но без гарантии worst-case (`Quick`). Поэтому выбор сортировки — это компромисс между ними под конкретную задачу.",
+                "example": "`Insertion Sort` одновременно stable, in-place, adaptive и online — потому его и используют для коротких runs внутри `TimSort`.",
+                "when_to_apply": "Полный список свойств перебирают, когда подбирают сортировку под ограничения: мало памяти → in-place, поток данных → online, важен повторный порядок ключей → stable.",
+                "edge_cases": "Стабильность зависит от реализации: наивный `Selection Sort` unstable, но его можно сделать stable ценой `O(n)` памяти — свойство не жёстко привязано к алгоритму.",
+                "related": "[[sorting-algorithms-interview#Q2]] stable vs unstable; [[sorting-algorithms-interview#Q3]] что такое in-place; [[sorting-algorithms-interview#Q4]] сводная таблица свойств."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Единственное значимое свойство сортировки — её средняя временная сложность; всё остальное (память, стабильность) на практике не важно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Память, стабильность, adaptivity и worst-case не менее важны: `Quick` и `Heap` оба `O(n log n)` в среднем, но различаются по cache locality, стабильности и гарантиям.",
+                "source_of_confusion": "В учебных задачах часто сравнивают только Big-O среднего случая, создавая иллюзию, что им всё и определяется.",
+                "if_it_were_true": "Тогда `Merge` и `Quick` были бы взаимозаменяемы, но `Merge` выбирают именно ради стабильности и работы на linked list.",
+                "how_it_should_be": "Свойств много (сложность, stable, in-place, adaptive, online, external), и выбор — компромисс между ними."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Свойства сортировки сводятся к двум: стабильна она или нет, и рекурсивна она или итеративна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рекурсивность — деталь реализации, а не свойство в этом смысле; ключевые оси — сложность, память, adaptivity, online и comparison vs non-comparison.",
+                "source_of_confusion": "Рекурсия бросается в глаза в `Merge`/`Quick`, поэтому её ошибочно ставят в один ряд со стабильностью.",
+                "if_it_were_true": "Тогда итеративный и рекурсивный `Quick Sort` считались бы разными алгоритмами, но это одна сортировка с одинаковыми свойствами.",
+                "how_it_should_be": "Рекурсивность не входит в список характеризующих свойств; важны сложность, stable, in-place, adaptive, online, external."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Любой алгоритм сортировки либо in-place, либо stable, но не может обладать обоими свойствами одновременно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Insertion` и `Bubble` одновременно in-place и stable, так что эти свойства не взаимоисключающие.",
+                "source_of_confusion": "Кажется, что стабильность всегда требует доп. буфера (как в `Merge`), отсюда ложный вывод о несовместимости.",
+                "if_it_were_true": "Тогда `Insertion Sort` не мог бы использоваться в `TimSort`, где нужны и stable, и in-place runs.",
+                "how_it_should_be": "Свойства ортогональны: алгоритм может быть и in-place, и stable (например, `Insertion Sort`)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем stable отличается от unstable сортировки?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Stable сортировка работает быстрее unstable, потому что не делает лишних обменов равных элементов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стабильность — про сохранение порядка, а не про скорость: stable `Merge` `O(n log n)` бывает медленнее unstable `Quick` из-за `O(n)` памяти и cache locality.",
+                "source_of_confusion": "Слово «stable» звучит как «оптимально/эффективно», отсюда ложная связь со скоростью.",
+                "if_it_were_true": "Тогда всегда выбирали бы stable ради скорости, но unstable `Quick`/`Heap` часто быстрее на практике.",
+                "how_it_should_be": "Stable гарантирует сохранение относительного порядка равных; на производительность это влияет отдельно и неоднозначно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В stable сортировке относительный порядок равных по ключу элементов сохраняется тем же, что и во входе; в unstable он может произвольно перемешаться. Stable: `Insertion`, `Merge`, `Tim`, `Bubble`, `Counting`. Unstable: `Quick`, `Heap`, наивный `Selection`. Стабильность критична при многоэтапной сортировке — она сохраняет результат предыдущего прохода.",
+              "correct": true,
+              "sections": {
+                "explanation": "Если отсортировать список людей `(Alice,30),(Bob,25),(Carol,30)` по возрасту stable-алгоритмом, `Alice` останется раньше `Carol` (как во входе). Unstable может поставить `Carol` раньше `Alice`.",
+                "example": "Сначала сортируем заказы по сумме, затем stable-сортировкой по дате — внутри одной даты заказы остаются упорядочены по сумме, потому что stable не трогает порядок равных.",
+                "when_to_apply": "Stable выбирают для multi-key сортировок и когда порядок равных несёт смысл (например, исходный порядок поступления записей).",
+                "edge_cases": "`Counting Sort` стабилен только при правильной реализации (обход справа налево по cumulative count); неаккуратная версия теряет стабильность.",
+                "related": "[[sorting-algorithms-interview#Q26]] стабильность `thenComparing`; [[sorting-algorithms-interview#Q8]] `Merge` как stable; [[sorting-algorithms-interview#Q4]] колонка Stable в таблице."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Stable сортировка гарантирует, что одинаковых элементов в результате не будет — дубликаты схлопываются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стабильность не удаляет дубликаты: все равные элементы остаются, просто в исходном относительном порядке.",
+                "source_of_confusion": "«Stable» путают с дедупликацией или с поведением `Set`, где дубликаты исчезают.",
+                "if_it_were_true": "Тогда stable-сортировка массива `[2,2,2]` дала бы `[2]`, но она вернёт `[2,2,2]`.",
+                "how_it_should_be": "Stable сохраняет все элементы и порядок равных; удаление дубликатов — отдельная операция (distinct)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Unstable сортировка — это сортировка, которая иногда выдаёт неверный (не отсортированный) результат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Unstable всегда сортирует корректно; «нестабильность» касается лишь порядка равных по ключу элементов, а не правильности.",
+                "source_of_confusion": "«Unstable» звучит как «ненадёжная/глючная», отсюда вывод о неверном результате.",
+                "if_it_were_true": "Тогда `Quick Sort` нельзя было бы использовать в `Arrays.sort` для примитивов, но он там стандарт.",
+                "how_it_should_be": "Unstable всегда даёт отсортированный массив; меняется лишь относительный порядок элементов с равным ключом."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое in-place сортировка?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "In-place означает, что алгоритм вообще не использует никакой дополнительной памяти — строго `O(0)` байт сверх входа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "In-place допускает `O(1)` или `O(log n)` доп. памяти: `Quick Sort` in-place, но тратит `O(log n)` на стек рекурсии.",
+                "source_of_confusion": "Буквальное прочтение «на месте» наводит на мысль о нулевой памяти, хотя речь о сублинейной.",
+                "if_it_were_true": "Тогда рекурсивный `Quick Sort` не считался бы in-place, но он классический пример in-place сортировки.",
+                "how_it_should_be": "In-place — это `O(1)` или `O(log n)` дополнительной памяти, а не строго ноль."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "In-place сортировка — это та, что сортирует массив прямо при чтении из файла, не загружая его целиком в память.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это описание external sort, а не in-place: in-place про объём доп. памяти относительно входа, уже находящегося в памяти.",
+                "source_of_confusion": "«На месте» и «на диске/потоково» звучат похоже, поэтому in-place смешивают с external/online.",
+                "if_it_were_true": "Тогда `Heap Sort` в RAM не был бы in-place, но он именно `O(1)` доп. памяти на массиве в памяти.",
+                "how_it_should_be": "In-place — про `O(1)`/`O(log n)` доп. памяти; работа с данными не из памяти — это external sort."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "In-place сортировка использует лишь `O(1)` или `O(log n)` дополнительной памяти помимо самого входного массива — она переставляет элементы прямо на месте. `Bubble`, `Selection`, `Insertion`, `Heap` дают `O(1)`; `Quick` — `O(log n)` на стек рекурсии. `Merge`, `Counting`, `Radix`, `Tim` не in-place — им нужен буфер `O(n)`/`O(k)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Критерий — порядок ДОПОЛНИТЕЛЬНОЙ памяти, а не нулевая память: `Quick Sort` считается in-place, хотя тратит `O(log n)` на стек рекурсии, потому что это сублинейно от входа.",
+                "example": "На массиве в 10 ГБ при ограниченной RAM `Heap Sort` (`O(1)` доп. памяти) пройдёт, а `Merge Sort` потребует ещё 10 ГБ под буфер и может не влезть.",
+                "when_to_apply": "In-place выбирают в memory-constrained окружении: embedded, обработка огромных массивов, когда копия входа недопустима.",
+                "edge_cases": "Существует in-place merge за `O(n log n)` без буфера, но он сложен и медленнее обычного `Merge`, поэтому на практике почти не применяется.",
+                "related": "[[sorting-algorithms-interview#Q8]] `Merge` не in-place; [[sorting-algorithms-interview#Q11]] `Heap` in-place; [[sorting-algorithms-interview#Q4]] колонка In-place в таблице."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "In-place сортировка обязательно стабильна, потому что не создаёт копий и не переставляет равные элементы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "In-place и stable независимы: `Quick`, `Heap`, наивный `Selection` все in-place, но unstable.",
+                "source_of_confusion": "Кажется, что раз нет копирования в буфер, порядок равных «не может» сбиться, но swap'ы его как раз ломают.",
+                "if_it_were_true": "Тогда `Heap Sort` был бы stable, но он unstable из-за прыжков siftDown по дереву.",
+                "how_it_should_be": "In-place ничего не говорит о стабильности; `Quick`/`Heap` in-place, но unstable."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие сложности и свойства у основных сортировок (сводная таблица)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все comparison-сортировки имеют одинаковую сложность `O(n log n)` во всех случаях — best, average и worst совпадают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Bubble`/`Insertion` это `O(n²)` в среднем, а `Quick` деградирует до `O(n²)` в worst; одинакового `O(n log n)` у всех нет.",
+                "source_of_confusion": "Известный барьер `O(n log n)` для сравнений ошибочно переносят на все случаи и все алгоритмы.",
+                "if_it_were_true": "Тогда `Bubble Sort` был бы так же быстр, как `Merge`, но на больших данных он катастрофически медленнее.",
+                "how_it_should_be": "Барьер `O(n log n)` — нижняя граница worst-case; конкретные алгоритмы варьируются от `O(n)` best до `O(n²)` worst."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Merge Sort` имеет худший случай `O(n²)`, поэтому он опаснее `Quick Sort`, у которого worst всегда `O(n log n)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `Merge` гарантирует `O(n log n)` во всех случаях, а именно `Quick` может скатиться в `O(n²)` worst.",
+                "source_of_confusion": "Worst-case `O(n²)` `Quick`'а по ошибке приписывают `Merge`, путая два алгоритма местами.",
+                "if_it_were_true": "Тогда `Introsort` падал бы с `Quick` на `Merge`, но он переключается на `Heap` именно потому, что worst-case проблема у `Quick`.",
+                "how_it_should_be": "`Merge` всегда `O(n log n)`; `O(n²)` worst — это у `Quick` (и `Bucket`)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Counting Sort` имеет сложность `O(n log n)`, как и все остальные эффективные сортировки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Counting Sort` это `O(n + k)` — линейная сортировка, обходящая `O(n log n)` барьер, потому что не основана на сравнениях.",
+                "source_of_confusion": "Привычка, что «хорошая сортировка = `O(n log n)`», заставляет приписать ту же сложность `Counting`.",
+                "if_it_were_true": "Тогда не было бы смысла в `Counting`/`Radix`, но их используют именно ради линейности на подходящих данных.",
+                "how_it_should_be": "`Counting Sort` это `O(n + k)`; non-comparison сортировки могут быть линейными ценой ограничений на данные."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Comparison-сортировки: `Bubble`/`Insertion` — best `O(n)`, avg/worst `O(n²)`, `O(1)`, stable, in-place; `Selection` — `O(n²)` всегда, unstable. `Merge` — `O(n log n)` всегда, `O(n)`, stable, не in-place; `Quick` — avg `O(n log n)`, worst `O(n²)`, `O(log n)`, unstable, in-place; `Heap` — `O(n log n)` всегда, `O(1)`, unstable. `Tim` — best `O(n)`, stable. Non-comparison: `Counting` `O(n+k)`, `Radix` `O(d(n+k))`, `Bucket` avg `O(n+k)`/worst `O(n²)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевые различия в таблице: только `Quick` и `Bucket` имеют worst `O(n²)` при том что в среднем быстры; `Merge`/`Heap`/`Tim` дают гарантию `O(n log n)`; non-comparison обходят барьер `O(n log n)` ценой ограничений на данные.",
+                "example": "`Quick` avg `O(n log n)`, но worst `O(n²)` на уже отсортированном массиве с плохим pivot — именно поэтому в production его защищают random/median-of-three pivot.",
+                "when_to_apply": "Таблицу держат в голове на интервью, чтобы быстро выбрать алгоритм по ограничениям: гарантия worst-case → `Merge`/`Heap`, стабильность + adaptivity → `Tim`, целые в малом диапазоне → `Counting`.",
+                "edge_cases": "`Bucket Sort` `O(n+k)` только при равномерном распределении входа; при перекосе все элементы попадут в один bucket и он деградирует до `O(n²)`.",
+                "related": "[[sorting-algorithms-interview#Q9]] worst-case `Quick`; [[sorting-algorithms-interview#Q15]] параметр `k` в `Counting`; [[sorting-algorithms-interview#Q16]] параметр `d` в `Radix`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает Bubble Sort и какова его сложность?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Bubble Sort` сравнивает соседние элементы и меняет их местами, если они в неправильном порядке; проходы повторяются, пока за полный проход не случится ни одного обмена. Это `O(n²)` в среднем и worst, но `O(n)` на уже отсортированном (с флагом `swapped`). На практике не используется — `Insertion Sort` быстрее на тех же данных; `Bubble` держат как учебный пример.",
+              "correct": true,
+              "sections": {
+                "explanation": "Самый большой элемент «всплывает» в конец за каждый внешний проход, поэтому внутренний цикл можно сокращать (`n - i - 1`). Флаг `swapped` даёт ранний выход и `O(n)` best-case.",
+                "example": "На `[5,1,4,2,8]` первый проход даёт `[1,4,2,5,8]` (8 всплыл в конец), затем массив досортировывается за следующие проходы.",
+                "when_to_apply": "`Bubble` уместен только в обучении и на крошечных массивах, где простота кода важнее производительности.",
+                "edge_cases": "Без флага `swapped` `Bubble` остаётся `O(n²)` даже на отсортированном входе — оптимизация ранним выходом обязательна для best-case `O(n)`.",
+                "related": "[[sorting-algorithms-interview#Q7]] `Insertion` как лучшая `O(n²)`; [[sorting-algorithms-interview#Q6]] `Selection`; [[sorting-algorithms-interview#Q4]] строка `Bubble` в таблице."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Bubble Sort` делит массив пополам, рекурсивно сортирует половины и сливает — это `O(n log n)` всегда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это описание `Merge Sort`; `Bubble` не делит и не рекурсивен, он итеративно обменивает соседей за `O(n²)`.",
+                "source_of_confusion": "Все сортировки сваливают в один ряд, а divide-and-conquer звучит «солидно» и его приписывают `Bubble`.",
+                "if_it_were_true": "Тогда `Bubble` был бы конкурентоспособен на больших данных, но он один из самых медленных.",
+                "how_it_should_be": "`Bubble` — попарный обмен соседей за `O(n²)`; деление пополам и слияние — это `Merge Sort`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Bubble Sort` имеет сложность `O(n)` во всех случаях, потому что делает всего один проход по массиву.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Одного прохода не хватает: в среднем и worst нужно до `n` проходов, итого `O(n²)`; `O(n)` лишь best-case на отсортированном.",
+                "source_of_confusion": "Видят простой одиночный внутренний цикл и забывают про внешний цикл повторных проходов.",
+                "if_it_were_true": "Тогда `Bubble` был бы быстрее `Merge`/`Quick`, но он на порядки медленнее на больших массивах.",
+                "how_it_should_be": "`Bubble` это `O(n²)` avg/worst и `O(n)` только best-case с флагом раннего выхода."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Bubble Sort` нестабилен, потому что обмены соседей произвольно меняют порядок равных элементов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Bubble` стабилен: он меняет соседей только при строгом `>`, поэтому равные элементы никогда не перепрыгивают друг друга.",
+                "source_of_confusion": "Наличие swap'ов наводит на мысль о нестабильности, как у `Selection`/`Quick`.",
+                "if_it_were_true": "Тогда `Bubble` не попадал бы в список stable-сортировок, но он там стандартно присутствует.",
+                "how_it_should_be": "При сравнении строго `>` `Bubble` стабилен; равные не меняются местами."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает Selection Sort и в чём его особенность?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Selection Sort` делает `O(n²)` обменов — по обмену на каждое сравнение, поэтому он самый «тяжёлый» по записям в память.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `Selection` делает всего `O(n)` обменов (один на проход), что и есть его преимущество при дорогих swap'ах.",
+                "source_of_confusion": "`O(n²)` сравнений по ошибке переносят и на число обменов, хотя обмен происходит лишь раз за внешний проход.",
+                "if_it_were_true": "Тогда `Selection` не имел бы смысла при дорогих swap, но его выбирают именно ради минимума обменов.",
+                "how_it_should_be": "`Selection` это `O(n²)` сравнений, но только `O(n)` обменов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Selection Sort` на каждом шаге ищет минимум в неотсортированной части массива и ставит его на текущую позицию одним обменом. Это `O(n²)` всегда (даже на отсортированном), но число обменов всего `O(n)` — это его главное преимущество при дорогих swap'ах (большие записи). Наивная реализация unstable, потому что обмен может «перепрыгнуть» равные элементы.",
+              "correct": true,
+              "sections": {
+                "explanation": "В отличие от `Bubble`/`Insertion`, `Selection` делает ровно `n-1` обменов независимо от входа — сравнений всегда `O(n²)`, но записей в память минимум.",
+                "example": "На `[3,1,2,1]` первый проход находит минимум 1 на позиции 1 и меняет с позицией 0 — этот swap перебрасывает первую единицу за вторую, ломая стабильность.",
+                "when_to_apply": "`Selection` оправдан, когда сама операция swap дорогая (например, перемещение крупных объектов или запись на медленный носитель), а число записей хочется минимизировать.",
+                "edge_cases": "На уже отсортированном массиве `Selection` всё равно `O(n²)` сравнений — он не adaptive, в отличие от `Insertion`/`Bubble` с их best-case `O(n)`.",
+                "related": "[[sorting-algorithms-interview#Q5]] `Bubble`; [[sorting-algorithms-interview#Q7]] `Insertion`; [[sorting-algorithms-interview#Q2]] почему unstable важно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Selection Sort` adaptive: на почти отсортированном массиве он работает за `O(n)`, как `Insertion`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Selection` не adaptive — он всегда `O(n²)` сравнений, потому что ищет минимум во всей оставшейся части независимо от порядка.",
+                "source_of_confusion": "Все простые `O(n²)` сортировки кажутся похожими, а adaptivity `Insertion`/`Bubble` ошибочно приписывают и `Selection`.",
+                "if_it_were_true": "Тогда `Selection` использовали бы для почти отсортированных данных, но там берут `Insertion`.",
+                "how_it_should_be": "`Selection` всегда `O(n²)` сравнений и не ускоряется на отсортированных данных."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Selection Sort` стабилен в наивной реализации, потому что ищет минимум слева направо.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наивный `Selection` unstable: обмен минимума с текущей позицией может перебросить равный элемент за другой такой же.",
+                "source_of_confusion": "Поиск минимума слева направо создаёт иллюзию сохранения порядка, но именно swap его и ломает.",
+                "if_it_were_true": "Тогда `Selection` был бы в списке stable рядом с `Insertion`, но он в списке unstable.",
+                "how_it_should_be": "Наивный `Selection` unstable; стабильным он становится лишь при вставке вместо swap ценой доп. сдвигов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает Insertion Sort и когда он применяется?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Insertion Sort` не adaptive: он всегда выполняет `O(n²)` операций независимо от того, отсортирован вход или нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Insertion` adaptive: на отсортированном входе внутренний цикл сразу останавливается, давая `O(n)` best-case.",
+                "source_of_confusion": "`Selection` действительно не adaptive, и это свойство ошибочно переносят на `Insertion`.",
+                "if_it_were_true": "Тогда `TimSort` не использовал бы `Insertion` для почти отсортированных runs, но именно adaptivity делает его там идеальным.",
+                "how_it_should_be": "`Insertion` adaptive: best-case `O(n)` на отсортированном, avg/worst `O(n²)`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Insertion Sort` не in-place и требует `O(n)` дополнительной памяти под буфер вставки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Insertion` in-place с `O(1)` доп. памяти: он сдвигает элементы прямо в массиве, никакого буфера нет.",
+                "source_of_confusion": "Слово «вставка» наводит на мысль о копировании в отдельную структуру, как в `Merge`.",
+                "if_it_were_true": "Тогда `Insertion` не использовали бы в memory-constrained окружении, но его выбирают как раз за `O(1)` память.",
+                "how_it_should_be": "`Insertion` in-place: сдвиги происходят внутри того же массива, доп. память `O(1)`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Insertion Sort` берёт каждый элемент и сдвигает его влево по уже отсортированной части, пока не найдёт своё место. Это `O(n²)` в среднем, но `O(n)` на отсортированном входе — он stable, in-place и adaptive. Применяется на малых массивах (< ~50), почти отсортированных данных, внутри `TimSort` для коротких runs и в online-режиме (элементы поступают по одному).",
+              "correct": true,
+              "sections": {
+                "explanation": "Adaptive-природа `Insertion` в том, что на почти отсортированном входе внутренний `while` почти не сдвигает элементы — отсюда близкий к `O(n)` реальный обход.",
+                "example": "На `[2,4,1,3]` элемент 1 вставляется сдвигом 4 и 2 вправо → `[1,2,4,3]`; затем 3 встаёт между 2 и 4.",
+                "when_to_apply": "`Insertion` берут для коротких подмассивов внутри гибридов (`TimSort`, `Introsort`), для почти отсортированных данных и для online-вставки в поддерживаемый отсортированный буфер.",
+                "edge_cases": "На обратно отсортированном массиве `Insertion` деградирует до полного `O(n²)` — каждый элемент сдвигается до самого начала.",
+                "related": "[[sorting-algorithms-interview#Q12]] `Insertion` внутри `TimSort`; [[sorting-algorithms-interview#Q28]] когда `O(n²)` выигрывает; [[sorting-algorithms-interview#Q5]] `Bubble` для сравнения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Insertion Sort` непригоден для малых массивов и online-данных — там всегда быстрее `Merge`/`Quick`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На малых массивах `Insertion` обычно быстрее `Merge`/`Quick` из-за меньших констант, а его online-природа позволяет вставлять элементы по одному.",
+                "source_of_confusion": "Асимптотика `O(n²)` создаёт впечатление, что `Insertion` всегда хуже `O(n log n)`-алгоритмов.",
+                "if_it_were_true": "Тогда `TimSort`/`Introsort` не переключались бы на `Insertion` на коротких подмассивах, но они это делают ради скорости.",
+                "how_it_should_be": "На малых и почти отсортированных данных `Insertion` выигрывает; гибриды специально к нему переключаются."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает Merge Sort и каковы его свойства?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Merge Sort` имеет худший случай `O(n²)`, потому что слияние может выродиться при неудачном разбиении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Merge` всегда `O(n log n)`: деление строго пополам не зависит от данных, а merge линеен — вырождения нет.",
+                "source_of_confusion": "Worst-case `O(n²)` `Quick`'а (зависит от pivot) ошибочно переносят на `Merge`.",
+                "if_it_were_true": "Тогда `Merge` не использовали бы как гарантированный `O(n log n)` fallback, но именно за это его и ценят.",
+                "how_it_should_be": "`Merge` это `O(n log n)` во всех случаях; разбиение пополам детерминировано и не зависит от входа."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Merge Sort` in-place и использует `O(1)` дополнительной памяти, как `Quick Sort`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Merge` не in-place: слияние требует буфера `O(n)` под результат, что и отличает его от `Quick`.",
+                "source_of_confusion": "Оба divide-and-conquer, поэтому in-place свойство `Quick` ошибочно приписывают `Merge`.",
+                "if_it_were_true": "Тогда `Merge` использовали бы на массиве в 10 ГБ без доп. памяти, но ему нужен ещё `O(n)` буфер.",
+                "how_it_should_be": "`Merge` тратит `O(n)` доп. памяти на буфер слияния; in-place — это `Quick`/`Heap`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Merge Sort` нестабилен, поэтому не годится для многоэтапных (multi-key) сортировок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Merge` стабилен: при слиянии равных берут элемент из левой половины (`<=`), сохраняя исходный порядок.",
+                "source_of_confusion": "Нестабильность `Quick`/`Heap` обобщают на все `O(n log n)` сортировки, включая `Merge`.",
+                "if_it_were_true": "Тогда `TimSort` (на базе merge) не был бы stable, но он стабилен именно благодаря стабильному слиянию.",
+                "how_it_should_be": "`Merge` стабилен; `<=` при слиянии гарантирует сохранение порядка равных."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Merge Sort` — это divide-and-conquer: массив делится пополам, половины рекурсивно сортируются, затем сливаются за линейный проход (`<=` при слиянии обеспечивает стабильность). Сложность `O(n log n)` во всех случаях, stable, но не in-place — нужен буфер `O(n)`. Применяется для linked lists (не нужен random access), внешней сортировки на диске и параллельной сортировки.",
+              "correct": true,
+              "sections": {
+                "explanation": "Глубина рекурсии `log n` уровней, на каждом уровне суммарный merge — `O(n)`, отсюда `O(n log n)` гарантированно, без зависимости от расположения входа.",
+                "example": "Слияние `[1,4]` и `[2,3]`: сравниваем головы (1<2 → берём 1, 2<4 → берём 2, 3<4 → берём 3, остаётся 4) → `[1,2,3,4]`.",
+                "when_to_apply": "`Merge` выбирают, когда нужна гарантия `O(n log n)` + стабильность, при сортировке linked list и при external sort, где данные не влезают в память.",
+                "edge_cases": "На linked list `Merge` особенно хорош — слияние делается перецеплением указателей за `O(1)` доп. памяти, тогда как `Quick` страдает без random access.",
+                "related": "[[sorting-algorithms-interview#Q9]] сравнение с `Quick`; [[sorting-algorithms-interview#Q22]] external merge sort; [[sorting-algorithms-interview#Q3]] почему `Merge` не in-place."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает Quick Sort и каковы его сложность и свойства?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Quick Sort` выбирает pivot, делает partition (меньшие — слева, большие — справа), затем рекурсивно сортирует половины. Сложность `O(n log n)` в среднем, но `O(n²)` в худшем (отсортированный массив + плохой pivot). In-place (`O(log n)` стек), unstable. В среднем в 2-3 раза быстрее `Merge Sort` за счёт лучшей cache locality и работы на месте без буфера.",
+              "correct": true,
+              "sections": {
+                "explanation": "Скорость `Quick` идёт от in-place partition с последовательным доступом к памяти; worst-case `O(n²)` возникает, когда pivot регулярно оказывается минимумом/максимумом и разбиение даёт `n-1` и 0.",
+                "example": "С pivot = последний элемент на `[3,1,4,1,5]`: partition вокруг 5 не разбивает удачно, а на отсортированном `[1,2,3,4,5]` каждый pivot — максимум, давая деградацию в `O(n²)`.",
+                "when_to_apply": "`Quick` берут как сортировку по умолчанию для массивов в памяти, когда стабильность не нужна (например, примитивы в `Arrays.sort`).",
+                "edge_cases": "На отсортированном или обратном входе с naive pivot (`arr[right]`) `Quick` скатывается в `O(n²)` — поэтому в production обязателен random или median-of-three pivot.",
+                "related": "[[sorting-algorithms-interview#Q10]] оптимизации `Quick`; [[sorting-algorithms-interview#Q30]] защита от worst-case; [[sorting-algorithms-interview#Q8]] сравнение с `Merge`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Quick Sort` гарантирует `O(n log n)` во всех случаях, включая отсортированный массив с любым pivot.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Quick` гарантии нет: на отсортированном входе с плохим pivot разбиение вырождается и сложность падает до `O(n²)`.",
+                "source_of_confusion": "В среднем `Quick` действительно `O(n log n)`, и это обобщают на все случаи, забывая про worst.",
+                "if_it_were_true": "Тогда не нужен был бы `Introsort` с переключением на `Heap`, но он существует именно из-за `O(n²)` worst у `Quick`.",
+                "how_it_should_be": "`Quick` это avg `O(n log n)`, но worst `O(n²)`; гарантию даёт `Merge`/`Heap`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Quick Sort` стабилен, потому что partition сохраняет относительный порядок равных элементов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Quick` unstable: обмены при partition перебрасывают равные элементы через границу pivot, ломая исходный порядок.",
+                "source_of_confusion": "Кажется, что раз элементы лишь делятся на `<` и `>`, равные не двигаются, но swap'ы их перемешивают.",
+                "if_it_were_true": "Тогда `Arrays.sort(Integer[])` использовал бы `Quick`, но для объектов берут stable `TimSort`.",
+                "how_it_should_be": "`Quick` unstable; для стабильности на объектах используют `Merge`/`TimSort`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Quick Sort` не in-place — он копирует обе половины в отдельные массивы перед рекурсией, тратя `O(n)` памяти.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Quick` in-place: partition переставляет элементы внутри того же массива; доп. память — лишь `O(log n)` стека рекурсии.",
+                "source_of_confusion": "Копирование половин — это про `Merge Sort`, и его ошибочно приписывают `Quick`.",
+                "if_it_were_true": "Тогда `Quick` не имел бы преимущества по памяти и cache locality над `Merge`, но именно это его сильная сторона.",
+                "how_it_should_be": "`Quick` in-place с `O(log n)` доп. памяти; копирование в буферы — это `Merge`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие оптимизации применяют к Quick Sort?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Главная оптимизация `Quick Sort` — всегда брать pivot как первый элемент массива, это быстрее и проще всего.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фиксированный pivot (первый/последний) как раз провоцирует worst-case `O(n²)` на отсортированных данных; оптимизация — random или median-of-three.",
+                "source_of_confusion": "Первый элемент действительно прост в коде, и простоту путают с оптимальностью.",
+                "if_it_were_true": "Тогда `Quick` деградировал бы на отсортированном входе, что и происходит при naive pivot — это анти-оптимизация.",
+                "how_it_should_be": "Pivot выбирают случайно или как median-of-three именно чтобы избежать worst-case фиксированного pivot."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Основные оптимизации `Quick Sort`: random pivot (защита от worst-case на отсортированных данных), median-of-three (медиана из first/mid/last как pivot), 3-way partition / Dutch flag (разбиение на `<`, `=`, `>` для массивов с дубликатами), переключение на `Insertion Sort` для малых подмассивов, tail-call optimization (рекурсия в меньшую половину, итерация в большую → `O(log n)` стек) и Dual-Pivot Quicksort (два pivot, три части).",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти приёмы бьют по разным слабостям: pivot-стратегии снижают вероятность `O(n²)`, 3-way partition ускоряет дубликаты, переключение на `Insertion` режет overhead рекурсии, tail-call гарантирует `O(log n)` глубину стека.",
+                "example": "`Dual-Pivot Quicksort` из `Arrays.sort` для примитивов выбирает `p1 < p2` и делит массив на три части `[<p1] [p1..p2] [>p2]` — обычно быстрее одиночного pivot.",
+                "when_to_apply": "Комбинацию этих оптимизаций применяют в production-сортировках (`Arrays.sort`, `std::sort`), где нужна и средняя скорость, и устойчивость к патологическим входам.",
+                "edge_cases": "Без tail-call optimization рекурсия в большую половину может дать глубину стека `O(n)` и StackOverflow на патологическом входе — поэтому рекурсивят только в меньшую часть.",
+                "related": "[[sorting-algorithms-interview#Q9]] базовый `Quick`; [[sorting-algorithms-interview#Q21]] 3-way partition подробно; [[sorting-algorithms-interview#Q30]] защита от worst-case."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Единственный способ ускорить `Quick Sort` — распараллелить рекурсию на потоки; алгоритмических оптимизаций нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть множество алгоритмических оптимизаций: pivot-стратегии, 3-way partition, переключение на `Insertion`, tail-call, Dual-Pivot — все они работают и в один поток.",
+                "source_of_confusion": "Параллелизм — заметный способ ускорения, и его ошибочно считают единственным.",
+                "if_it_were_true": "Тогда однопоточный `Arrays.sort` не отличался бы от наивного `Quick`, но он использует Dual-Pivot и Insertion-fallback.",
+                "how_it_should_be": "Основные оптимизации алгоритмические (pivot, 3-way, Insertion, tail-call); параллелизм — отдельное измерение."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "3-way partition (Dutch flag) замедляет `Quick Sort` на массивах с дубликатами и потому не применяется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "3-way partition наоборот ускоряет дубликаты: равные pivot элементы группируются и исключаются из дальнейшей рекурсии.",
+                "source_of_confusion": "Дополнительная ветка `=` выглядит как лишняя работа, но она экономит рекурсивные вызовы на повторах.",
+                "if_it_were_true": "Тогда на массиве `[2,2,2,2]` обычный `Quick` был бы быстрее, но он скатывается в `O(n²)`, а 3-way даёт `O(n)`.",
+                "how_it_should_be": "3-way partition ускоряет массивы с дубликатами и входит в стандартный набор оптимизаций."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает Heap Sort и каковы его сильные и слабые стороны?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Heap Sort` имеет худший случай `O(n²)`, поэтому он не годится как гарантированный fallback.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Heap Sort` это `O(n log n)` во всех случаях, включая worst — именно поэтому он и служит worst-case fallback в `Introsort`.",
+                "source_of_confusion": "`O(n²)` worst `Quick`'а переносят на `Heap`, хотя у `Heap` гарантия твёрдая.",
+                "if_it_were_true": "Тогда `Introsort` переключался бы на что-то другое, но он берёт `Heap` именно ради гарантии `O(n log n)`.",
+                "how_it_should_be": "`Heap Sort` это `O(n log n)` во всех случаях; `O(n²)` worst — это у `Quick`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Heap Sort` стабилен и поэтому используется в `Arrays.sort` для объектов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Heap Sort` unstable (siftDown перемешивает равные), а для объектов в `Arrays.sort` используется stable `TimSort`, а не `Heap`.",
+                "source_of_confusion": "Гарантию `O(n log n)` ошибочно приравнивают к стабильности и роли в сортировке объектов.",
+                "if_it_were_true": "Тогда multi-key сортировка объектов работала бы на `Heap`, но Java берёт `TimSort` ради стабильности.",
+                "how_it_should_be": "`Heap` unstable; для объектов в Java используется `TimSort`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Heap Sort` строит max-heap за `O(n)`, затем многократно извлекает максимум в конец массива и восстанавливает кучу siftDown — итого `O(n log n)` во всех случаях. In-place (`O(1)`), unstable. Главное преимущество — гарантия `O(n log n)` worst-case (`Quick` может скатиться в `O(n²)`). На практике медленнее `Quick` из-за плохой cache locality, поэтому используется в `Introsort` как worst-case fallback.",
+              "correct": true,
+              "sections": {
+                "explanation": "Build-heap снизу вверх занимает `O(n)`, а фаза извлечения — `n` раз по `O(log n)` siftDown = `O(n log n)`; зависимости от входа нет, что и даёт твёрдую гарантию.",
+                "example": "На `[3,1,4,1,5]` сначала строится max-heap с 5 в корне, затем 5 обменивается с последним элементом, куча сужается, и siftDown поднимает новый максимум.",
+                "when_to_apply": "`Heap Sort` берут, когда нужна гарантия `O(n log n)` без `O(n)` доп. памяти `Merge`'а — например, как fallback в `Introsort` при глубокой рекурсии.",
+                "edge_cases": "Несмотря на ту же асимптотику, `Heap Sort` на практике в 2-3 раза медленнее `Quick` именно из-за плохой cache locality — siftDown прыгает по дереву, ломая последовательный доступ.",
+                "related": "[[sorting-algorithms-interview#Q13]] `Introsort` использует `Heap`; [[sorting-algorithms-interview#Q29]] cache locality; [[sorting-algorithms-interview#Q9]] почему `Quick` быстрее на практике."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Heap Sort` на практике быстрее `Quick Sort` благодаря отличной cache locality.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `Heap` обычно в 2-3 раза медленнее `Quick` из-за плохой cache locality — siftDown скачет по дереву, ломая последовательный доступ.",
+                "source_of_confusion": "Одинаковая асимптотика `O(n log n)` создаёт впечатление одинаковой реальной скорости.",
+                "if_it_were_true": "Тогда production-сортировки строились бы на `Heap`, но базой берут `Quick`/`Dual-Pivot`, а `Heap` лишь как fallback.",
+                "how_it_should_be": "`Heap` медленнее `Quick` на практике из-за плохой cache locality, несмотря на ту же асимптотику."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое TimSort и где он используется в Java?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`TimSort` — это чистый `Quick Sort` с random pivot, используемый в Java для примитивов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`TimSort` — гибрид `Merge` + `Insertion`, а не `Quick`; для примитивов в Java используется Dual-Pivot Quicksort, не `TimSort`.",
+                "source_of_confusion": "И `TimSort`, и `Quick` — «быстрые сортировки Java», поэтому их роли путают.",
+                "if_it_were_true": "Тогда `TimSort` был бы unstable, но он стабилен и применяется именно для объектов, где стабильность нужна.",
+                "how_it_should_be": "`TimSort` это `Merge`+`Insertion` гибрид для объектов; Dual-Pivot Quicksort — для примитивов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`TimSort` нестабилен, поэтому он не подходит для multi-key сортировок объектов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`TimSort` стабилен (наследует стабильность от merge), что и делает его пригодным для multi-key сортировок объектов.",
+                "source_of_confusion": "Гибридность с разными подалгоритмами создаёт ложное впечатление потери стабильности.",
+                "if_it_were_true": "Тогда `Collections.sort` не сохранял бы порядок при `thenComparing`, но он его гарантирует.",
+                "how_it_should_be": "`TimSort` стабилен; именно поэтому его выбрали для сортировки объектов в Java."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`TimSort` не adaptive: на уже отсортированном массиве он всё равно делает полные `O(n log n)` операций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`TimSort` adaptive: на отсортированном входе он находит один большой run и завершается за `O(n)` best-case.",
+                "source_of_confusion": "Гарантия worst-case `O(n log n)` обобщается и на best-case, скрывая adaptivity.",
+                "if_it_were_true": "Тогда не было бы смысла в поиске runs, но именно runs дают `O(n)` на упорядоченных данных.",
+                "how_it_should_be": "`TimSort` adaptive: best-case `O(n)` благодаря обнаружению уже отсортированных runs."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`TimSort` (Tim Peters, 2002) — гибрид `Merge Sort` и `Insertion Sort`: он ищет уже отсортированные runs (возрастающие/убывающие подпоследовательности), достраивает короткие через `Insertion` и сливает. Best `O(n)` (уже отсортирован), avg/worst `O(n log n)`, space `O(n)`, stable. В Java используется в `Arrays.sort()` для объектов, `Collections.sort()` и `Stream.sorted()`; также в Python, Android, V8.",
+              "correct": true,
+              "sections": {
+                "explanation": "`TimSort` adaptive именно за счёт runs: на реальных данных, где часто есть отсортированные участки, он приближается к `O(n)`, оставаясь stable и с гарантией `O(n log n)` worst-case.",
+                "example": "Вход `[1,2,3,9,8,7,4,5,6]` распадается на runs `[1,2,3]`, убывающий `[9,8,7]` (разворачивается) и `[4,5,6]`, которые затем сливаются — это быстрее полного `O(n log n)` с нуля.",
+                "when_to_apply": "`TimSort` — выбор по умолчанию для объектов и реальных данных, где важны стабильность (multi-key) и adaptivity, а вход часто частично упорядочен.",
+                "edge_cases": "Короткие runs `TimSort` достраивает `Insertion Sort`'ом до минимальной длины (обычно 32-64) — поэтому `Insertion` встроен в него как составная часть.",
+                "related": "[[sorting-algorithms-interview#Q7]] `Insertion` для runs; [[sorting-algorithms-interview#Q18]] `TimSort` в `Arrays.sort`; [[sorting-algorithms-interview#Q8]] `Merge` как основа."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Introsort и где он используется?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Introsort` (Musser, 1997) — гибрид `Quick Sort`, `Heap Sort` и `Insertion Sort`: начинает с `Quick Sort`, но если глубина рекурсии превышает `2·log n`, переключается на `Heap Sort` (защита от worst-case `O(n²)`), а для малых подмассивов использует `Insertion Sort`. Даёт `O(n log n)` worst-case. Используется в C++ STL `std::sort` (libstdc++) и .NET `Array.Sort()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Идея в том, чтобы взять скорость `Quick` в типичном случае, но не дать ему скатиться в `O(n²)`: счётчик глубины рекурсии — это «предохранитель», который при срабатывании переводит сортировку на гарантированный `Heap`.",
+                "example": "На патологическом входе, где `Quick` пошёл бы в `O(n²)`, после `2·log n` уровней рекурсии `Introsort` переключает текущий подмассив на `Heap Sort`, сохраняя общий `O(n log n)`.",
+                "when_to_apply": "`Introsort` — стандарт для системных сортировок массивов в C++/.NET, где нужны и средняя скорость `Quick`, и твёрдая гарантия worst-case.",
+                "edge_cases": "Порог глубины `2·log n` подобран так, чтобы переключение на `Heap` срабатывало только на реально патологических входах, не мешая быстрому `Quick` в норме.",
+                "related": "[[sorting-algorithms-interview#Q9]] `Quick` как старт; [[sorting-algorithms-interview#Q11]] `Heap` как fallback; [[sorting-algorithms-interview#Q31]] гибридные сортировки в целом."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Introsort` — это чистый `Merge Sort`, используемый в C++ STL для гарантии стабильности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Introsort` — гибрид `Quick`+`Heap`+`Insertion` и unstable; стабильную сортировку в C++ даёт отдельный `std::stable_sort`.",
+                "source_of_confusion": "`std::sort` и `std::stable_sort` соседствуют в STL, поэтому их алгоритмы и свойства путают.",
+                "if_it_were_true": "Тогда `std::sort` был бы stable, но стандарт C++ этого не гарантирует — для стабильности есть `stable_sort`.",
+                "how_it_should_be": "`Introsort` это `Quick`+`Heap`+`Insertion`, unstable; стабильность даёт `std::stable_sort`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Introsort` переключается на `Insertion Sort` при глубокой рекурсии, чтобы избежать worst-case `O(n²)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При глубокой рекурсии `Introsort` переключается на `Heap Sort` (гарантия `O(n log n)`); `Insertion` он использует лишь для малых подмассивов.",
+                "source_of_confusion": "Обе сортировки — части гибрида, и их роли (по глубине vs по размеру) путают.",
+                "if_it_were_true": "Тогда worst-case остался бы `O(n²)`, ведь `Insertion` `O(n²)`, но цель — именно `O(n log n)` через `Heap`.",
+                "how_it_should_be": "При превышении глубины переключение на `Heap` (worst-case гарантия); `Insertion` — для малых подмассивов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Introsort` имеет худший случай `O(n²)`, потому что всегда остаётся в `Quick Sort`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Introsort` даёт worst-case `O(n log n)` именно потому, что не остаётся в `Quick`, а при глубокой рекурсии уходит в `Heap`.",
+                "source_of_confusion": "Старт с `Quick` создаёт впечатление, что он унаследует его `O(n²)` worst.",
+                "if_it_were_true": "Тогда не было бы смысла в гибриде, и `std::sort` не давал бы гарантии `O(n log n)`, но стандарт её требует.",
+                "how_it_should_be": "`Introsort` это `O(n log n)` worst-case благодаря fallback на `Heap` при глубокой рекурсии."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему сравнительные сортировки не могут быть быстрее O(n log n)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Сравнительные сортировки не быстрее `O(n log n)`, потому что любой массив физически нельзя прочитать быстрее, чем за `n log n` операций ввода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Чтение массива — `O(n)`, а не `n log n`; барьер идёт из числа сравнений (высоты дерева решений), а не из стоимости ввода.",
+                "source_of_confusion": "`log n` ассоциируют с обходом данных, хотя он берётся из `log(n!)` числа различимых перестановок.",
+                "if_it_were_true": "Тогда `Counting Sort` тоже не был бы `O(n)`, ведь он читает тот же массив, но он линеен.",
+                "how_it_should_be": "Барьер из высоты дерева решений (`log(n!) = Θ(n log n)`), а не из стоимости чтения входа."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Любой алгоритм на сравнениях представим бинарным деревом решений: каждый внутренний узел — сравнение, каждый лист — одна из `n!` возможных перестановок. Высота дерева равна минимальному числу сравнений в worst-case, а дерево с `n!` листьями имеет высоту не меньше `log(n!)`. По формуле Стирлинга `log(n!) = Θ(n log n)`, поэтому никакая comparison-сортировка не быстрее `O(n log n)` в worst-case.",
+              "correct": true,
+              "sections": {
+                "explanation": "Логика — это нижняя граница (lower bound): чтобы различить все `n!` перестановок, нужно минимум `log₂(n!)` бинарных ответов, а `log₂(n!) ≈ n log n` — отсюда барьер для любого алгоритма на сравнениях.",
+                "example": "Для `n=3` существует `3! = 6` перестановок; дерево решений должно иметь ≥ 6 листьев, а значит высоту ≥ `⌈log₂ 6⌉ = 3` сравнения в худшем случае.",
+                "when_to_apply": "Этот аргумент приводят, когда обосновывают, почему non-comparison сортировки (`Counting`/`Radix`) могут быть `O(n)`, а универсальные сравнительные — нет.",
+                "edge_cases": "Барьер про worst-case и про сравнения: non-comparison сортировки обходят его, не сравнивая элементы напрямую, а используя их значения как индексы (ценой ограничений на тип данных).",
+                "related": "[[sorting-algorithms-interview#Q15]] `Counting` обходит барьер; [[sorting-algorithms-interview#Q16]] `Radix`; [[sorting-algorithms-interview#Q4]] почему все comparison `O(n log n)`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Барьер `O(n log n)` доказывается через decision tree, но на практике любой алгоритм можно ускорить кэшированием результатов сравнений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кэширование не помогает: нижняя граница `log(n!)` фундаментальна — нужно столько бинарных решений, чтобы различить все перестановки, независимо от реализации.",
+                "source_of_confusion": "Инженерные ускорения (кэш, SIMD) создают иллюзию, что асимптотический барьер тоже преодолим.",
+                "if_it_were_true": "Тогда существовала бы comparison-сортировка `O(n)`, но decision-tree аргумент это запрещает.",
+                "how_it_should_be": "Барьер `Ω(n log n)` фундаментален для сравнений; константы улучшаются, асимптотика — нет."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Барьер не относится к worst-case: в среднем comparison-сортировки могут работать за `O(n)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нижняя граница `Ω(n log n)` верна и для среднего случая: средняя высота листа в дереве с `n!` листьями тоже `Θ(n log n)`.",
+                "source_of_confusion": "Best-case `O(n)` у adaptive-сортировок (`Insertion`/`Tim`) ошибочно обобщают на average.",
+                "if_it_were_true": "Тогда существовала бы сортировка сравнениями со средним `O(n)` на случайных данных, но её нет.",
+                "how_it_should_be": "Барьер `Ω(n log n)` держится и для average; `O(n)` бывает лишь в best-case на почти упорядоченном входе."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает Counting Sort и когда он применим?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Counting Sort` работает за `O(n log n)`, потому что внутри сортирует счётчики обычной comparison-сортировкой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Counting` это `O(n + k)`: он не сортирует счётчики сравнениями, а раскладывает элементы по индексам — никаких `log n` нет.",
+                "source_of_confusion": "Привычка, что любая сортировка `O(n log n)`, мешает увидеть линейную природу `Counting`.",
+                "if_it_were_true": "Тогда `Counting` не имел бы преимущества над `Quick`, но его берут именно ради линейности на узком диапазоне.",
+                "how_it_should_be": "`Counting Sort` это `O(n + k)` без сравнений; значения служат индексами в массиве счётчиков."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Counting Sort` универсален и одинаково эффективен для любых данных, включая строки и числа с плавающей точкой в большом диапазоне.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Counting` применим только к целым в узком диапазоне: на больших `k` он съедает память `O(k)`, а floats/строки напрямую индексировать нельзя.",
+                "source_of_confusion": "Линейная сложность создаёт впечатление универсальной применимости без ограничений.",
+                "if_it_were_true": "Тогда `Counting` вытеснил бы `Quick`/`Merge`, но на разреженном диапазоне `int` он требует терабайты памяти.",
+                "how_it_should_be": "`Counting` ограничен целыми в малом диапазоне `k = O(n)`; иначе память `O(k)` неподъёмна."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Counting Sort` подходит для целых чисел в малом диапазоне `[min, max]`: он считает частоту каждого значения в массиве `count`, строит cumulative count (для стабильности) и раскладывает элементы по местам обходом справа налево. Сложность `O(n + k)` время и память, где `k` — размер диапазона; stable. Хорош, когда `k = O(n)` (оценки 0-100, частоты), и плох на разреженных больших диапазонах.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Counting` не сравнивает элементы, а использует их значения как индексы в массиве счётчиков — поэтому обходит барьер `O(n log n)` ценой ограничения на тип и диапазон данных.",
+                "example": "Массив `[2,5,3,0,2,3,0,3]` с диапазоном 0-5: count = `[2,0,2,3,0,1]`, cumulative даёт позиции, и обход справа налево раскладывает элементы стабильно.",
+                "when_to_apply": "`Counting Sort` берут, когда ключи — целые в узком известном диапазоне (`k = O(n)`): возрастные группы, оценки, символы — и нужна линейность + стабильность.",
+                "edge_cases": "На диапазоне `int` от 0 до `10⁹` `Counting` запросил бы массив `count` в миллиарды ячеек — терабайты памяти; здесь он непригоден, нужен `Radix` или comparison-сортировка.",
+                "related": "[[sorting-algorithms-interview#Q16]] `Radix` на базе `Counting`; [[sorting-algorithms-interview#Q14]] обход барьера `O(n log n)`; [[sorting-algorithms-interview#Q17]] `Bucket` как родственник."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Counting Sort` нестабилен, потому что элементы раскладываются по счётчикам без учёта исходного порядка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Правильный `Counting` стабилен: cumulative count + обход справа налево сохраняют исходный порядок равных элементов.",
+                "source_of_confusion": "Кажется, что счётный подход «теряет» индивидуальность равных элементов, но cumulative count как раз её сохраняет.",
+                "if_it_were_true": "Тогда `Counting` нельзя было бы использовать как стабильный проход в `Radix Sort`, но именно там он и нужен.",
+                "how_it_should_be": "`Counting` стабилен при cumulative count и обходе справа налево; это ключ для `Radix`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает Radix Sort и какова его сложность?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Radix Sort` сортирует элементы попарным сравнением соседних цифр, поэтому он comparison-based и ограничен `O(n log n)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Radix` non-comparison: он раскладывает по цифрам через `Counting`, не сравнивая ключи напрямую, и может быть `O(n)` при константном `d`.",
+                "source_of_confusion": "«Сортировка по цифрам» звучит как сравнение разрядов, хотя на деле это индексация в bucket'ы.",
+                "if_it_were_true": "Тогда `Radix` не обходил бы барьер `O(n log n)`, но его и берут ради линейности на подходящих ключах.",
+                "how_it_should_be": "`Radix` non-comparison через `Counting` по цифрам; `O(d·(n+k))` ≈ `O(n)` при константном `d`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Каждая стадия `Radix Sort` может использовать любую сортировку — стабильность отдельных проходов не важна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стабильность критична: если проход по очередной цифре нестабилен, он разрушит порядок, установленный предыдущими цифрами, и результат будет неверным.",
+                "source_of_confusion": "Кажется, что каждый проход независим, но они накапливают результат, и порядок предыдущих разрядов нужно сохранять.",
+                "if_it_were_true": "Тогда внутри `Radix` можно было бы взять `Quick`, но unstable-проход сломает LSD-сортировку.",
+                "how_it_should_be": "Каждая стадия `Radix` обязана быть стабильной (`Counting`), иначе младшие разряды теряются."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Radix Sort` имеет сложность `O(n log n)`, как и все эффективные сортировки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Radix` это `O(d·(n + k))`, что при константном числе цифр `d` даёт ≈ `O(n)` — линейнее `O(n log n)` барьера сравнений.",
+                "source_of_confusion": "Привычное `O(n log n)` для «хороших» сортировок переносят и на `Radix`.",
+                "if_it_were_true": "Тогда не было бы смысла применять `Radix` вместо `Quick`, но его выбирают именно ради линейности.",
+                "how_it_should_be": "`Radix` это `O(d·(n + k))` ≈ `O(n)` при малом `d`; non-comparison сортировки обходят барьер."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Radix Sort` сортирует числа по цифрам — от младшей к старшей (LSD) или наоборот (MSD); каждая стадия — это стабильный `Counting Sort` по одной цифре. Сложность `O(d·(n + k))`, где `d` — число цифр, `k` — основание (обычно 10); при константном `d` это ≈ `O(n)`. Stable. Применяется для строк фиксированной длины, IPv4-адресов, дат — там, где ключи раскладываются на ограниченное число разрядов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевое требование — стабильность каждого прохода: `Radix` опирается на то, что `Counting` по текущей цифре сохраняет порядок, установленный предыдущими (младшими) цифрами; иначе результат был бы неверным.",
+                "example": "LSD на `[170,45,75,90,802,24,2,66]`: сначала сортируем по единицам, потом по десяткам, потом по сотням — после трёх стабильных проходов массив полностью отсортирован.",
+                "when_to_apply": "`Radix Sort` берут, когда ключи имеют фиксированное небольшое число разрядов и нужна линейность: целые ограниченной длины, фиксированные строки, IP-адреса, даты.",
+                "edge_cases": "При большом числе цифр `d` (например, очень длинные ключи) множитель `d` перестаёт быть константой, и `Radix` теряет преимущество над `O(n log n)` comparison-сортировками.",
+                "related": "[[sorting-algorithms-interview#Q15]] `Counting` как стадия; [[sorting-algorithms-interview#Q14]] обход барьера; [[sorting-algorithms-interview#Q4]] параметр `d` в таблице."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает Bucket Sort и когда он эффективен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Bucket Sort` распределяет элементы по `k` bucket'ам (например, по диапазонам значений), сортирует каждый bucket отдельно (обычно `Insertion Sort`), затем конкатенирует. Сложность `O(n + k)` в среднем при равномерном распределении, но `O(n²)` в worst (всё в один bucket). Stable, если внутренняя сортировка stable. Лучше всего работает на равномерно распределённых real numbers в `[0, 1)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Идея — разнести элементы на много мелких bucket'ов так, чтобы в каждом оказалось `O(1)` элементов; тогда сортировка bucket'ов суммарно линейна. Всё держится на равномерности распределения входа.",
+                "example": "Для чисел в `[0,1)` индекс bucket'а = `(int)(x * n)`: `0.21` → bucket 2 при `n=10`; после сортировки bucket'ов их конкатенируют в отсортированный массив.",
+                "when_to_apply": "`Bucket Sort` применяют, когда вход равномерно распределён по известному диапазону (например, координаты, нормированные вероятности), и можно гарантировать малое заполнение bucket'ов.",
+                "edge_cases": "При перекошенном распределении все элементы попадают в один bucket, и его внутренняя `Insertion`-сортировка деградирует до `O(n²)` — `Bucket` теряет всё преимущество.",
+                "related": "[[sorting-algorithms-interview#Q15]] `Counting` как родственник; [[sorting-algorithms-interview#Q7]] `Insertion` внутри bucket'ов; [[sorting-algorithms-interview#Q16]] `Radix` для другого случая."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Bucket Sort` гарантирует `O(n + k)` во всех случаях, независимо от распределения входных данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`O(n + k)` только в среднем при равномерном распределении; при перекосе всё попадает в один bucket и сложность падает до `O(n²)`.",
+                "source_of_confusion": "Среднюю линейную сложность ошибочно принимают за гарантию во всех случаях.",
+                "if_it_were_true": "Тогда `Bucket` был бы лучше `Merge` всегда, но на перекошенных данных он деградирует в `O(n²)`.",
+                "how_it_should_be": "`Bucket` это `O(n+k)` average при равномерности, но `O(n²)` worst при перекосе в один bucket."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Bucket Sort` применим только к целым числам и не работает с числами с плавающей точкой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Классический `Bucket Sort` как раз чаще применяют к real numbers в `[0,1)`, распределяя их по bucket'ам по дробному значению.",
+                "source_of_confusion": "`Counting`/`Radix` ограничены целыми, и это ограничение ошибочно переносят на `Bucket`.",
+                "if_it_were_true": "Тогда нельзя было бы сортировать координаты в `[0,1)` через `Bucket`, но это его канонический пример.",
+                "how_it_should_be": "`Bucket` хорошо работает с равномерными float в `[0,1)`; целые — лишь частный случай."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Bucket Sort` всегда нестабилен, потому что элементы перемешиваются при распределении по bucket'ам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Bucket` стабилен, если стабильна внутренняя сортировка bucket'а: распределение сохраняет относительный порядок, а stable `Insertion` его не нарушает.",
+                "source_of_confusion": "Разбиение на bucket'ы выглядит как перемешивание, хотя порядок внутри bucket'а сохраняется.",
+                "if_it_were_true": "Тогда `Bucket` нельзя было бы использовать там, где нужна стабильность, но при stable внутренней сортировке он stable.",
+                "how_it_should_be": "`Bucket` стабилен при стабильной внутренней сортировке (например, `Insertion`)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие алгоритмы использует Java Arrays.sort() для примитивов и объектов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Arrays.sort()` использует один и тот же `Merge Sort` и для примитивов, и для объектов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Алгоритмы разные: Dual-Pivot Quicksort для примитивов и `TimSort` для объектов; единого `Merge` для всех типов нет.",
+                "source_of_confusion": "Кажется логичным, что один метод = один алгоритм, и про разделение по типу забывают.",
+                "if_it_were_true": "Тогда сортировка примитивов была бы stable и `O(n)` по памяти, но она unstable и in-place.",
+                "how_it_should_be": "Примитивы — Dual-Pivot Quicksort, объекты — `TimSort`; метод один, алгоритмы разные."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В Java `Arrays.sort()` использует разные алгоритмы по типу: для примитивов (`int[]`, `long[]`, ...) — Dual-Pivot Quicksort, для `Object[]` — `TimSort`. Причина: примитивам не нужна стабильность (равные числа неотличимы) → быстрый `Quick`; объектам стабильность важна (multi-key sort) → `TimSort`. Параллельная версия `Arrays.parallelSort()` (с Java 8) использует Fork/Join и выгодна на больших массивах (>8K).",
+              "correct": true,
+              "sections": {
+                "explanation": "Разделение по типу — это оптимизация под семантику: для примитивов стабильность бессмысленна, поэтому берут более быстрый in-place Dual-Pivot `Quick`; для объектов нужна и стабильность, и adaptivity, что даёт `TimSort`.",
+                "example": "`Arrays.sort(int[])` идёт через Dual-Pivot Quicksort, а `Arrays.sort(Integer[])` — через `TimSort`; внешне один метод, внутри два разных алгоритма по типу аргумента.",
+                "when_to_apply": "Это знание нужно, когда объясняют, почему сортировка объектов в Java стабильна (можно делать multi-key), а сортировка примитивов — нет, но быстрее.",
+                "edge_cases": "`Arrays.parallelSort` выгоден только на больших массивах (>8K) и многоядерных CPU; на малых массивах overhead Fork/Join делает его медленнее обычного `sort`.",
+                "related": "[[sorting-algorithms-interview#Q12]] `TimSort` подробно; [[sorting-algorithms-interview#Q19]] `Arrays.sort` vs `Collections.sort`; [[sorting-algorithms-interview#Q20]] parallel sort."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Arrays.sort()` использует `TimSort` для примитивов (чтобы было стабильно) и Dual-Pivot Quicksort для объектов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: для примитивов Dual-Pivot Quicksort (стабильность не нужна), для объектов `TimSort` (стабильность нужна).",
+                "source_of_confusion": "Названия алгоритмов запоминают, но путают, какой к какому типу относится.",
+                "if_it_were_true": "Тогда multi-key сортировка объектов ломалась бы, ведь `Quick` unstable, но Java её гарантирует через `TimSort`.",
+                "how_it_should_be": "Примитивы → Dual-Pivot Quicksort; объекты → стабильный `TimSort`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Arrays.sort()` для примитивов использует стабильный алгоритм, чтобы сохранять порядок равных чисел.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для примитивов используется unstable Dual-Pivot Quicksort: равные числа неотличимы, поэтому стабильность бессмысленна и не нужна.",
+                "source_of_confusion": "Стабильность считают всегда желательной, не замечая, что для примитивов она не имеет смысла.",
+                "if_it_were_true": "Тогда примитивы сортировались бы медленнее, чем нужно, но Java берёт быстрый unstable `Quick`.",
+                "how_it_should_be": "Примитивы сортируются unstable Dual-Pivot Quicksort; стабильность для неразличимых чисел не нужна."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются Arrays.sort и Collections.sort?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Collections.sort` использует принципиально другой алгоритм (`Quick Sort`), чем `Arrays.sort` для объектов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Collections.sort` внутри вызывает тот же `Arrays.sort` для объектов, то есть `TimSort` — алгоритм один и тот же.",
+                "source_of_confusion": "Разные имена методов создают впечатление разных алгоритмов под капотом.",
+                "if_it_were_true": "Тогда `Collections.sort` был бы unstable, но он стабилен, потому что использует `TimSort`.",
+                "how_it_should_be": "`Collections.sort` делегирует `Arrays.sort` (`TimSort`); отличие лишь в копированиях список↔массив."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Collections.sort` работает на месте в списке без какого-либо копирования, поэтому он всегда эффективнее `List.sort`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Collections.sort` как раз делает копирования (`toArray` → сортировка → `set` обратно); напрямую без них работает `List.sort`, который и эффективнее.",
+                "source_of_confusion": "Кажется, что метод по списку обязан работать «в списке» без промежуточного массива.",
+                "if_it_were_true": "Тогда не было бы причин вводить `List.sort` в Java 8, но его добавили именно ради устранения копирований.",
+                "how_it_should_be": "`Collections.sort` копирует список в массив и обратно; `List.sort` сортирует напрямую и предпочтительнее."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Collections.sort(list)` под капотом делает `list.toArray()`, вызывает `Arrays.sort(array)` (это `TimSort`, объекты!) и через `ListIterator.set()` записывает элементы обратно в список. `Arrays.sort(int[])` — это Dual-Pivot Quicksort, `Arrays.sort(Integer[])` — `TimSort`. С Java 8+ предпочтителен `List.sort(Comparator)`: он сортирует список напрямую, без лишних копирований через массив.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главное отличие — `Collections.sort` тратит дополнительные копирования (список → массив → список), тогда как `List.sort` модифицирует список на месте; оба для объектов используют один и тот же `TimSort`.",
+                "example": "`list.sort(Comparator.comparing(User::getName))` сортирует напрямую, а `Collections.sort(list)` сначала делает `toArray()`, сортирует массив `TimSort`'ом и копирует обратно — лишние проходы.",
+                "when_to_apply": "Различие важно при выборе API: на современных коллекциях берут `list.sort(...)` ради меньшего overhead, а `Arrays.sort` — когда данные уже в массиве.",
+                "edge_cases": "`list.sort(null)` означает natural ordering (через `Comparable`), а не отсутствие сортировки — `null` здесь это сигнал «использовать `compareTo`», а не ошибка.",
+                "related": "[[sorting-algorithms-interview#Q18]] что внутри `Arrays.sort`; [[sorting-algorithms-interview#Q25]] custom comparator; [[sorting-algorithms-interview#Q27]] natural ordering."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Arrays.sort(int[])` и `Arrays.sort(Integer[])` используют один и тот же алгоритм с одинаковыми свойствами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они различаются: `int[]` сортируется unstable Dual-Pivot Quicksort, а `Integer[]` — стабильным `TimSort`.",
+                "source_of_confusion": "Одинаковая сигнатура `Arrays.sort` маскирует выбор алгоритма по типу элемента (примитив vs объект).",
+                "if_it_were_true": "Тогда сортировка `Integer[]` была бы unstable, но для объектов Java гарантирует стабильность через `TimSort`.",
+                "how_it_should_be": "`int[]` → Dual-Pivot Quicksort (unstable); `Integer[]` → `TimSort` (stable)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Arrays.parallelSort и когда он выигрывает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Arrays.parallelSort` всегда быстрее обычного `Arrays.sort`, поэтому его стоит использовать по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На малых массивах и single-core `parallelSort` медленнее из-за overhead Fork/Join; выигрыш только на больших данных и нескольких ядрах.",
+                "source_of_confusion": "Слово «parallel» ассоциируют с «всегда быстрее», игнорируя стоимость распараллеливания.",
+                "if_it_were_true": "Тогда `Arrays.sort` был бы не нужен, но на малых массивах он быстрее `parallelSort`.",
+                "how_it_should_be": "`parallelSort` выигрывает лишь на больших массивах (>8K) при нескольких ядрах; иначе проигрывает."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Arrays.parallelSort` использует отдельные потоки на каждый элемент массива, создавая по потоку на число.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`parallelSort` использует Fork/Join pool с ограниченным числом потоков (≈ числу ядер) и рекурсивным делением, а не поток на элемент.",
+                "source_of_confusion": "«Параллельно» наводит на мысль о потоке на каждый элемент, что было бы катастрофой по overhead.",
+                "if_it_were_true": "Тогда сортировка миллиона чисел создала бы миллион потоков и упала, но Fork/Join работает на пуле фиксированного размера.",
+                "how_it_should_be": "`parallelSort` делит работу между ограниченным числом потоков Fork/Join, а не по потоку на элемент."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Arrays.parallelSort` особенно выгоден на малых массивах, где overhead распараллеливания минимален.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На малых массивах всё наоборот: overhead Fork/Join больше выигрыша, и `parallelSort` ниже порога ~8K просто делает обычную последовательную сортировку.",
+                "source_of_confusion": "Кажется, что меньше данных = меньше overhead, но фиксированная стоимость задач доминирует именно на малых объёмах.",
+                "if_it_were_true": "Тогда `parallelSort` имел бы смысл для крошечных массивов, но порог переключения как раз отсекает их.",
+                "how_it_should_be": "`parallelSort` выгоден на больших массивах; на малых overhead съедает выигрыш."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Arrays.parallelSort()` (Java 8) работает на Fork/Join pool, применяя divide-and-conquer с параллельным merge. Он выигрывает на больших массивах (>8K элементов — порог переключения на параллелизм), при наличии нескольких CPU-ядер и когда чтение/запись не bottleneck. Проигрывает на малых массивах (overhead распараллеливания) и на single-core или сильно загруженном CPU. В Stream аналог — `parallelStream().sorted()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Параллелизм окупается, только когда выигрыш от деления работы между ядрами превышает фиксированный overhead на создание задач Fork/Join — отсюда порог ~8K и требование нескольких ядер.",
+                "example": "На `int[1_000_000]` и многоядерном CPU `Arrays.parallelSort(arr)` заметно быстрее `Arrays.sort(arr)`, а на массиве в 100 элементов он наоборот медленнее из-за overhead.",
+                "when_to_apply": "`parallelSort` берут для больших массивов на многоядерных машинах, когда сортировка — горячая точка и есть свободные ядра.",
+                "edge_cases": "На single-core или загруженном CPU `parallelSort` не даёт выигрыша и может проиграть обычному `sort` — параллелизм там лишь добавляет накладные расходы без распараллеливания.",
+                "related": "[[sorting-algorithms-interview#Q18]] `Arrays.sort` базовый; [[sorting-algorithms-interview#Q8]] `Merge`/divide-and-conquer; [[sorting-algorithms-interview#Q19]] sorted() в стримах."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Dutch National Flag (3-way partition) и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Dutch National Flag (Дейкстра) — приём сортировки массива с тремя значениями (`0`, `1`, `2`) за `O(n)` времени и `O(1)` памяти одним проходом тремя указателями `low/mid/high`: `0` уходят влево, `2` — вправо, `1` остаются в середине. Применяется в 3-way Quick Sort для эффективной обработки массивов с множеством дубликатов — равные pivot элементы группируются и исключаются из рекурсии.",
+              "correct": true,
+              "sections": {
+                "explanation": "Три указателя поддерживают инварианты: всё до `low` — нули, между `low` и `mid` — единицы, после `high` — двойки; `mid` идёт вперёд, обменивая текущий элемент в нужную зону за один проход.",
+                "example": "На `[2,0,2,1,1,0]` указатели `low/mid/high` за один проход дают `[0,0,1,1,2,2]` без вложенных циклов и без доп. памяти.",
+                "when_to_apply": "3-way partition применяют в `Quick Sort` на данных с большим числом повторов и в задачах вида «sort colors»/«partition by category» с малым числом категорий.",
+                "edge_cases": "Когда `arr[mid] == 2`, после обмена с `high` указатель `mid` НЕ продвигают — пришедший справа элемент ещё не проверен; это типичная ошибка реализации.",
+                "related": "[[sorting-algorithms-interview#Q10]] 3-way partition как оптимизация `Quick`; [[sorting-algorithms-interview#Q9]] базовый `Quick`; [[sorting-algorithms-interview#Q30]] защита от worst-case дубликатами."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Dutch National Flag сортирует произвольный массив целых чисел за `O(n)`, обходя барьер `O(n log n)` для любых данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Приём работает за `O(n)` только для трёх (малого числа) различных значений; на произвольных данных он неприменим, барьер `O(n log n)` остаётся.",
+                "source_of_confusion": "Линейность на трёх значениях обобщают на любой массив целых.",
+                "if_it_were_true": "Тогда существовала бы универсальная `O(n)` comparison-сортировка, что запрещено decision-tree аргументом.",
+                "how_it_should_be": "Dutch flag это `O(n)` лишь для малого фиксированного числа категорий (например, 0/1/2)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Dutch National Flag требует `O(n)` дополнительной памяти под три отдельных массива для значений 0, 1 и 2.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Приём in-place с `O(1)` памяти: три указателя `low/mid/high` переставляют элементы в том же массиве без отдельных буферов.",
+                "source_of_confusion": "Три «зоны» наводят на мысль о трёх отдельных массивах, хотя это просто границы в одном.",
+                "if_it_were_true": "Тогда его не использовали бы как in-place partition в `Quick`, но он именно `O(1)` по памяти.",
+                "how_it_should_be": "Dutch flag in-place: один проход тремя указателями, `O(1)` доп. памяти."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Dutch National Flag делает два прохода по массиву: первый отделяет нули, второй — двойки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Приём делает ровно один проход: указатель `mid` за один обход распределяет элементы по трём зонам, нули и двойки не требуют отдельных проходов.",
+                "source_of_confusion": "Кажется, что для трёх категорий нужно несколько проходов, но инварианты указателей решают всё за один.",
+                "if_it_were_true": "Тогда сложность была бы `2n`, но смысл приёма как раз в single-pass `O(n)`.",
+                "how_it_should_be": "Dutch flag — один проход тремя указателями; нули, единицы и двойки расставляются одновременно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое внешняя сортировка (external sort) и как она устроена?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Внешняя сортировка загружает весь файл в RAM целиком, сортирует `Quick Sort`'ом и записывает обратно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смысл external sort именно в том, что файл НЕ влезает в RAM: его разбивают на куски, сортируют по частям и сливают на диске.",
+                "source_of_confusion": "Привычка сортировать «всё в памяти» переносят на сценарий, где это физически невозможно.",
+                "if_it_were_true": "Тогда не нужна была бы отдельная категория external sort, но её придумали именно для данных больше RAM.",
+                "how_it_should_be": "External sort разбивает данные на куски по размеру RAM, сортирует каждый и делает multi-way merge на диске."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Внешняя сортировка применяется, когда данные не помещаются в память и сортируются на диске. External merge sort: файл разбивают на куски, влезающие в RAM, каждый сортируют in-memory (например, `TimSort`) и пишут на диск, затем делают multi-way merge — открывают все куски, читают по одному элементу и выбирают минимум через `PriorityQueue`. Сложность `O(n log n)` сравнений + `O(n log n)` I/O. Используется в Hadoop MapReduce и в БД при `ORDER BY` на больших таблицах.",
+              "correct": true,
+              "sections": {
+                "explanation": "Узкое место внешней сортировки — не CPU, а disk I/O, поэтому алгоритм минимизирует число проходов по диску: сначала формирует отсортированные runs в памяти, потом сливает их за минимальное число merge-проходов.",
+                "example": "Файл 100 ГБ при 8 ГБ RAM разбивают на ~13 кусков по 8 ГБ, каждый сортируют в памяти и пишут на диск, затем multi-way merge сливает все 13 потоков через min-heap.",
+                "when_to_apply": "External sort нужен, когда объём данных превышает RAM: сортировка больших файлов, `ORDER BY`/`GROUP BY` в СУБД на терабайтных таблицах, shuffle-фаза в MapReduce.",
+                "edge_cases": "Multi-way merge через `PriorityQueue` позволяет сливать сразу `k` кусков за один проход вместо попарного слияния — это сокращает число дорогих проходов по диску.",
+                "related": "[[sorting-algorithms-interview#Q8]] `Merge` как основа; [[sorting-algorithms-interview#Q3]] почему важна память; [[sorting-algorithms-interview#Q23]] min-heap для частичной сортировки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "External merge sort сливает отсортированные куски строго попарно, как обычный binary merge, и не использует multi-way merge.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Внешнюю сортировку делают именно multi-way merge через `PriorityQueue` (сразу `k` кусков), чтобы сократить число дорогих проходов по диску; попарное слияние их бы умножило.",
+                "source_of_confusion": "Внутримашинный `Merge Sort` действительно бинарный, и эту схему ошибочно переносят на external sort.",
+                "if_it_were_true": "Тогда для 13 кусков понадобилось бы много проходов по диску, но multi-way merge сливает их за один.",
+                "how_it_should_be": "External sort использует multi-way merge через min-heap, а не попарное слияние, ради меньшего disk I/O."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Узкое место внешней сортировки — скорость CPU при сравнении элементов, а disk I/O несущественен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: bottleneck внешней сортировки — disk I/O (медленный носитель), поэтому алгоритм минимизирует число проходов по диску, а не сравнений.",
+                "source_of_confusion": "Для in-memory сортировок узкое место — действительно CPU/сравнения, и это переносят на external.",
+                "if_it_were_true": "Тогда не имело бы смысла делать multi-way merge ради меньшего числа проходов, но именно I/O его и оправдывает.",
+                "how_it_should_be": "В external sort bottleneck — disk I/O; алгоритм оптимизируют по числу проходов по диску."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как эффективно отсортировать почти отсортированный массив (каждый элемент сдвинут не более чем на k)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для почти отсортированного массива нет специального приёма — всегда придётся делать полную сортировку `O(n log n)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть приём с min-heap размера `k+1` за `O(n log k)`, который заметно быстрее `O(n log n)` при малом `k`.",
+                "source_of_confusion": "Кажется, что раз массив всё же неупорядочен, без полной сортировки не обойтись.",
+                "if_it_were_true": "Тогда `Insertion`/`TimSort` не давали бы выигрыша на почти отсортированных данных, но они adaptive именно для этого.",
+                "how_it_should_be": "Min-heap размера `k+1` сортирует k-sorted массив за `O(n log k)` — быстрее `O(n log n)`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Оптимальное решение — отсортировать массив `Counting Sort`'ом за `O(n + k)`, используя `k` как диапазон значений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Здесь `k` — это максимальный сдвиг позиции, а не диапазон значений; правильный приём — min-heap размера `k+1` за `O(n log k)`.",
+                "source_of_confusion": "Буква `k` в `Counting Sort` (диапазон) и в k-sorted (сдвиг) совпадает, поэтому подходы смешивают.",
+                "if_it_were_true": "Тогда метод работал бы для произвольных типов ключей, но `Counting` ограничен целыми в узком диапазоне.",
+                "how_it_should_be": "Для k-sorted массива применяют min-heap `O(n log k)`; `k` здесь — сдвиг, а не диапазон значений."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Если каждый элемент сдвинут не более чем на `k` позиций от своего места, используют min-heap размера `k+1`: кладём первые `k+1` элементов в кучу, затем на каждом шаге извлекаем минимум (это очередной отсортированный элемент) и добавляем следующий из массива. Сложность `O(n log k)` времени и `O(k)` памяти — гораздо быстрее `O(n log n)` при малом `k`. `Insertion Sort` даёт `O(n·k)` — хуже для умеренных `k`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Инвариант: при сдвиге не более чем на `k`, минимальный из оставшихся гарантированно находится среди ближайших `k+1` элементов — поэтому куча размера `k+1` всегда содержит правильный следующий элемент.",
+                "example": "Для `k=2` на `[3,2,1,5,4,7,6,5]` куча из 3 элементов на каждом шаге отдаёт минимум и принимает следующий — массив сортируется за `O(n log k)` вместо `O(n log n)`.",
+                "when_to_apply": "Этот приём применяют для k-sorted потоков: данные из почти упорядоченного источника (логи с небольшим джиттером времени, near-sorted результаты), где `k` много меньше `n`.",
+                "edge_cases": "При `k → n` метод вырождается в обычную heap-сортировку `O(n log n)`; выигрыш есть только пока `k` существенно меньше `n`.",
+                "related": "[[sorting-algorithms-interview#Q11]] `Heap`/min-heap; [[sorting-algorithms-interview#Q7]] `Insertion` для очень малых `k`; [[sorting-algorithms-interview#Q22]] `PriorityQueue` в external sort."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно использовать max-heap размера `n`: построить кучу из всего массива и извлекать максимумы — это даст `O(n log k)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Куча из всего массива — это обычный `Heap Sort` `O(n log n)`, а не `O(n log k)`; выигрыш даёт именно маленькая куча размера `k+1`.",
+                "source_of_confusion": "И там, и там используется куча, поэтому размер `k+1` подменяют на полный `n`, теряя смысл оптимизации.",
+                "if_it_were_true": "Тогда обычный `Heap Sort` уже был бы `O(n log k)`, но он `O(n log n)` независимо от near-sortedness.",
+                "how_it_should_be": "Нужна min-heap именно размера `k+1`; куча из всего массива вырождается в `Heap Sort` `O(n log n)`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем топологическая сортировка отличается от обычной?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Топологическая сортировка — это просто обычная сортировка значений вершин графа по возрастанию их номеров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Топологическая сортировка упорядочивает по зависимостям (рёбрам), а не по величине номеров; узлы с большими номерами могут идти раньше, если они — зависимости.",
+                "source_of_confusion": "Слово «сортировка» наводит на мысль об упорядочивании по значению, как у чисел.",
+                "if_it_were_true": "Тогда результат был бы единственным (по номерам), но топологических порядков обычно несколько.",
+                "how_it_should_be": "Топологическая сортировка упорядочивает вершины DAG по зависимостям, а не по величине значений."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Топологическая сортировка применима к любому графу, включая графы с циклами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Топологическая сортировка существует только для DAG: при наличии цикла валидного линейного порядка нет, и это сигнализирует об ошибке зависимостей.",
+                "source_of_confusion": "Кажется, что «упорядочить можно всё», но цикл `A→B→A` делает порядок невозможным.",
+                "if_it_were_true": "Тогда build-система с циклической зависимостью собиралась бы, но она как раз падает с ошибкой цикла.",
+                "how_it_should_be": "Топологическая сортировка работает только на DAG; цикл делает её невозможной."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Топологическая сортировка всегда даёт единственный правильный результат, как и обычная сортировка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Топологических порядков обычно несколько: независимые вершины можно расположить в любом относительном порядке, и все варианты валидны.",
+                "source_of_confusion": "Единственность результата обычной сортировки переносят на топологическую.",
+                "if_it_were_true": "Тогда для `A→B`, `A→C` был бы один порядок, но валидны и `A,B,C`, и `A,C,B`.",
+                "how_it_should_be": "Топологический порядок не единственный; независимые вершины дают несколько валидных вариантов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Обычная сортировка упорядочивает значения по их порядку (числовому, лексикографическому). Топологическая сортировка строит линейный порядок вершин ориентированного ациклического графа (DAG), при котором каждая зависимость идёт раньше зависящего от неё узла. Она работает не с величинами, а с отношениями зависимости. Применяется для разрешения зависимостей: build systems, course schedules, порядок инициализации Spring beans.",
+              "correct": true,
+              "sections": {
+                "explanation": "Топологическая сортировка не сравнивает элементы по величине — она опирается на рёбра графа (`A → B` значит «A должно идти раньше B»); поэтому результат не единственный, в отличие от обычной сортировки.",
+                "example": "Для зависимостей задач `A→B`, `A→C`, `B→D` валидный топологический порядок — `A,B,C,D` или `A,C,B,D`; оба корректны, потому что C и B независимы.",
+                "when_to_apply": "Топологическую сортировку применяют, когда нужно упорядочить узлы с зависимостями: компиляция модулей, планирование курсов с пререквизитами, порядок создания bean'ов в DI-контейнере.",
+                "edge_cases": "Топологическая сортировка возможна только на DAG: если в графе зависимостей есть цикл (`A→B→A`), валидного порядка не существует — это и детектируют как ошибку циклических зависимостей.",
+                "related": "[[sorting-algorithms-interview#Q1]] обычная сортировка значений; [[sorting-algorithms-interview#Q8]] сравнение с comparison-сортировками; [[sorting-algorithms-interview#Q14]] барьер для сравнений неприменим тут."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как сортировать коллекцию кастомным компаратором в Java?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В Java 8+ используют `Comparator.comparing(User::getName)` и цепочку `thenComparing`/`thenComparingInt` для нескольких критериев, `reversed()` для обратного порядка и `Comparator.nullsLast(...)` для null-safety. Для произвольной логики передают лямбду `(a, b) -> ...`, возвращающую отрицательное/0/положительное. Затем вызывают `list.sort(comparator)` или `Collections.sort(list, comparator)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Comparator.comparing` извлекает ключ через метод-ссылку и сравнивает его natural ordering'ом; `thenComparing` добавляет вторичные критерии, применяемые только при равенстве по предыдущим.",
+                "example": "`users.sort(Comparator.comparing(User::getName).thenComparingInt(User::getAge).reversed())` сортирует по имени, затем по возрасту, и разворачивает весь результат.",
+                "when_to_apply": "Эти API применяют для multi-key сортировок доменных объектов: сортировка пользователей, заказов, записей по нескольким полям с контролем null и направления.",
+                "edge_cases": "`reversed()` после `thenComparing` разворачивает ВСЮ цепочку, а не только последний критерий — частый источник багов; для частичного разворота `reversed()` вешают на конкретный ключ.",
+                "related": "[[sorting-algorithms-interview#Q26]] стабильность `thenComparing`; [[sorting-algorithms-interview#Q27]] natural ordering; [[sorting-algorithms-interview#Q19]] `list.sort` vs `Collections.sort`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Кастомный компаратор должен возвращать `true`/`false` — больше или меньше один элемент другого.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Comparator.compare` возвращает `int` (отрицательное/0/положительное), а не `boolean`; булев результат не различил бы случай равенства.",
+                "source_of_confusion": "Лямбды часто возвращают `boolean` (как в `Predicate`), и это переносят на компаратор.",
+                "if_it_were_true": "Тогда нельзя было бы выразить «равны» для стабильной сортировки, но `compare` возвращает 0 именно для равенства.",
+                "how_it_should_be": "Компаратор возвращает `int`: <0, 0 или >0; `boolean` тут не подходит."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для нескольких критериев нужно вызывать `sort` несколько раз подряд — по одному критерию за раз, без `thenComparing`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Хотя последовательные stable-сортировки тоже работают, идиоматично и безопаснее одна сортировка с `thenComparing`, объединяющая все критерии.",
+                "source_of_confusion": "Multi-pass stable-сортировка действительно валидна, и её принимают за единственный способ.",
+                "if_it_were_true": "Тогда `Comparator.thenComparing` был бы не нужен, но его и добавили ради единого многокритериального компаратора.",
+                "how_it_should_be": "Критерии объединяют через `thenComparing` в один компаратор и сортируют один раз."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Comparator.nullsLast` сортирует так, что элементы со значением `null` ключа выбрасываются из результата.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`nullsLast` не выбрасывает `null`, а помещает элементы с null-ключом в конец, безопасно сравнивая остальные.",
+                "source_of_confusion": "«nulls last» путают с фильтрацией null, хотя это лишь правило их позиции.",
+                "if_it_were_true": "Тогда размер списка менялся бы после сортировки, но сортировка не удаляет элементы.",
+                "how_it_should_be": "`nullsLast` ставит элементы с null-ключом в конец, сохраняя их в результате."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Стабильна ли сортировка с Comparator.thenComparing?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Нет, `thenComparing` делает сортировку нестабильной, потому что добавляет второй проход сравнения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`thenComparing` не влияет на стабильность алгоритма: сортировка объектов остаётся `TimSort` (stable), а второй критерий лишь доразрешает ничьи.",
+                "source_of_confusion": "«Второй критерий» воспринимают как «второй проход сортировки», который якобы ломает стабильность.",
+                "if_it_were_true": "Тогда multi-key сортировка была бы непредсказуема, но Java гарантирует сохранение порядка полностью равных.",
+                "how_it_should_be": "`thenComparing` стабилен: `TimSort` сохраняет порядок входа для элементов, равных по всем ключам."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Да. Сортировка объектов в Java идёт через `TimSort`, который stable, поэтому `thenComparing` сохраняет порядок входа для элементов, равных по всем критериям. `thenComparing` работает так: если по первому критерию элементы равны → используется второй; если равны и по нему — остаётся исходный порядок поступления. Это и делает многокритериальную сортировку предсказуемой.",
+              "correct": true,
+              "sections": {
+                "explanation": "Стабильность здесь двухуровневая: `thenComparing` детерминированно разрешает ничьи по дополнительным ключам, а сам `TimSort` гарантирует сохранение входного порядка для элементов, равных по всем ключам сразу.",
+                "example": "`Comparator.comparing(User::getDepartment).thenComparing(User::getName)` сортирует по отделу, внутри отдела — по имени, а полных тёзок из одного отдела оставляет в порядке входа.",
+                "when_to_apply": "На стабильность `thenComparing` полагаются, когда финальный критерий не покрывает все элементы и нужно, чтобы «ничьи» сохраняли осмысленный исходный порядок.",
+                "edge_cases": "Стабильность даёт именно `TimSort` для объектов; если бы сортировка шла unstable-алгоритмом, порядок полностью равных элементов был бы непредсказуем, несмотря на `thenComparing`.",
+                "related": "[[sorting-algorithms-interview#Q25]] построение компаратора; [[sorting-algorithms-interview#Q2]] что такое stable; [[sorting-algorithms-interview#Q18]] `TimSort` для объектов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Стабильность `thenComparing` зависит от того, реализует ли объект интерфейс `Cloneable`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стабильность определяется алгоритмом (`TimSort`), а не реализацией `Cloneable`; клонирование к порядку сортировки отношения не имеет.",
+                "source_of_confusion": "Случайно связывают несвязанные Java-интерфейсы со свойствами сортировки.",
+                "if_it_were_true": "Тогда сортировка объектов без `Cloneable` была бы unstable, но `Collections.sort` стабилен для любых объектов.",
+                "how_it_should_be": "Стабильность даёт `TimSort` независимо от `Cloneable`; интерфейс клонирования тут ни при чём."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`thenComparing` применяет второй критерий ко всем элементам сразу, игнорируя результат первого компаратора.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`thenComparing` применяет второй критерий ТОЛЬКО к элементам, равным по первому; иначе результат первого был бы бессмысленным.",
+                "source_of_confusion": "Кажется, что цепочка компараторов комбинирует критерии равноправно, без приоритета первого.",
+                "if_it_were_true": "Тогда первичный критерий не имел бы силы, но `comparing(...).thenComparing(...)` строго приоритезирует первый.",
+                "how_it_should_be": "Второй критерий разрешает только ничьи по первому; первый компаратор имеет приоритет."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое natural ordering в Java?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Natural ordering — это порядок, в котором элементы были добавлены в коллекцию (insertion order).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Natural ordering задаётся `compareTo`, а не порядком вставки; insertion order — это про `LinkedHashMap`/`ArrayList`, а не про `Comparable`.",
+                "source_of_confusion": "«Natural» (естественный) ассоциируют с «как пришло», то есть с порядком добавления.",
+                "if_it_were_true": "Тогда `TreeSet` хранил бы элементы в порядке вставки, но он держит их по `compareTo`.",
+                "how_it_should_be": "Natural ordering определяется `compareTo` интерфейса `Comparable`, а не порядком вставки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Natural ordering задаётся внешним `Comparator`, переданным в `Collections.sort`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Внешний `Comparator` — это противоположность natural ordering; natural задаётся внутри типа через `compareTo` без компаратора.",
+                "source_of_confusion": "И компаратор, и `Comparable` определяют порядок, поэтому их роли (внешний vs встроенный) путают.",
+                "if_it_were_true": "Тогда `Collections.sort(list)` без компаратора не имел бы порядка, но он использует именно natural ordering.",
+                "how_it_should_be": "Natural ordering встроен в тип через `compareTo`; внешний компаратор его переопределяет, но сам им не является."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Natural ordering — порядок, определённый методом `compareTo()` интерфейса `Comparable`. Для встроенных типов: `Integer`/`Double` — численный, `String` — лексикографический, `LocalDate` — хронологический. Свой класс реализует `Comparable<T>` и `compareTo`, после чего `Collections.sort(list)` без компаратора и `TreeMap`/`TreeSet` используют этот порядок по умолчанию.",
+              "correct": true,
+              "sections": {
+                "explanation": "Natural ordering — это «встроенный» порядок типа, заданный самим классом через `compareTo`; компаратор же задаёт порядок извне и может его переопределить, не трогая класс.",
+                "example": "`class User implements Comparable<User>` с `compareTo`, сравнивающим по `name`, позволяет `Collections.sort(users)` и `new TreeMap<User,Integer>()` сортировать пользователей по имени без явного компаратора.",
+                "when_to_apply": "Natural ordering задают, когда у типа есть один очевидный «канонический» порядок (числа, даты, строки) и его хотят использовать по умолчанию в сортировках и `TreeMap`/`TreeSet`.",
+                "edge_cases": "`compareTo` должен быть согласован с `equals` (рекомендация): если `a.compareTo(b) == 0`, но `a.equals(b)` false, то `TreeSet` будет вести себя «странно», считая такие элементы одинаковыми ключами.",
+                "related": "[[sorting-algorithms-interview#Q25]] компаратор как внешний порядок; [[sorting-algorithms-interview#Q19]] `list.sort(null)` = natural; [[sorting-algorithms-interview#Q26]] стабильность сортировки объектов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Natural ordering любого типа всегда лексикографический, как у строк.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Natural ordering зависит от типа: у `Integer` он численный, у `LocalDate` — хронологический; лексикографический — только у `String`.",
+                "source_of_confusion": "Знакомый порядок строк обобщают на все типы.",
+                "if_it_were_true": "Тогда `Integer` 10 шёл бы раньше 2 (как строки), но численно 2 < 10.",
+                "how_it_should_be": "Natural ordering определяется `compareTo` конкретного типа; лексикографический — частный случай (`String`)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда O(n²) сортировка выиграет у O(n log n)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`O(n²)` сортировка выигрывает у `O(n log n)` всегда, потому что у неё проще код и меньше накладных расходов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Выигрыш только на малых или почти отсортированных данных; на больших случайных массивах `O(n²)` катастрофически проигрывает.",
+                "source_of_confusion": "Меньшие константы на малом `n` обобщают на все размеры входа.",
+                "if_it_were_true": "Тогда `Bubble Sort` использовали бы для миллионов элементов, но там берут `O(n log n)`.",
+                "how_it_should_be": "`O(n²)` выигрывает лишь на малых/почти отсортированных данных; на больших `n` `O(n log n)` быстрее."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`O(n²)` сортировка выигрывает только на полностью случайных больших массивах, где `O(n log n)` деградирует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: на больших случайных массивах побеждает `O(n log n)`; `O(n²)` выигрывает на малых и почти отсортированных входах.",
+                "source_of_confusion": "Worst-case `O(n²)` `Quick`'а на отсортированных данных ошибочно связывают со случайными большими массивами.",
+                "if_it_were_true": "Тогда `TimSort` переключался бы на `Insertion` для больших случайных runs, но он делает это лишь для коротких.",
+                "how_it_should_be": "`O(n²)` хорош на малых/упорядоченных данных; на больших случайных выигрывает `O(n log n)`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`O(n²)` `Insertion Sort` не используется в реальных библиотеках, так как его нигде не комбинируют с быстрыми сортировками.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Insertion` как раз встроен в production-гибриды (`TimSort`, `Introsort`) для коротких подмассивов — именно там его константы дают выигрыш.",
+                "source_of_confusion": "Плохая асимптотика создаёт впечатление, что `Insertion` вообще не применяется на практике.",
+                "if_it_were_true": "Тогда `TimSort` и `Introsort` не содержали бы Insertion-фазы, но она у них есть.",
+                "how_it_should_be": "`Insertion` активно используется внутри гибридов для малых runs, где он быстрее `O(n log n)`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`O(n²)` `Insertion Sort` выигрывает у `O(n log n)` в нескольких случаях: на малых массивах (< ~50) — меньшие константы (поэтому `TimSort` берёт `Insertion` для runs < 32-64); на почти отсортированных данных — `Insertion` там `O(n)`; в online-сортировке — элементы поступают по одному; в memory-constrained окружении — `O(1)` память `Insertion` против `O(n)` `Merge`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Асимптотика скрывает константы: на малом `n` накладные расходы рекурсии и буферов `O(n log n)`-алгоритмов перевешивают, и простой `Insertion` с маленькой константой оказывается быстрее.",
+                "example": "На массиве из 20 элементов `Insertion Sort` обычно быстрее `Merge`/`Quick`, поэтому `TimSort` и переключается на него для коротких runs длиной до 32-64.",
+                "when_to_apply": "`O(n²)` `Insertion` выбирают для малых, почти отсортированных или поступающих по одному данных, а также когда критична `O(1)` память.",
+                "edge_cases": "Преимущество держится только пока `n` мал или данные почти упорядочены; на больших случайных массивах `O(n²)` неизбежно проигрывает `O(n log n)`.",
+                "related": "[[sorting-algorithms-interview#Q7]] `Insertion` подробно; [[sorting-algorithms-interview#Q12]] `Insertion` в `TimSort`; [[sorting-algorithms-interview#Q29]] cache locality `Insertion`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое cache locality в контексте сортировки и как она влияет на скорость?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "CPU читает память блоками (cache lines, ~64 байта), поэтому алгоритмы с последовательным доступом к памяти выигрывают за счёт меньшего числа cache miss'ов. У `Insertion` и `Quick` (in-place, соседние элементы) — отличная cache locality; у `Merge`/`Tim` — хорошая (последовательно по двум массивам); у `Heap Sort` — плохая (siftDown прыгает по дереву). Именно поэтому `Heap Sort` при той же `O(n log n)` на практике в 2-3 раза медленнее `Quick`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Cache locality определяет реальную скорость при равной асимптотике: последовательный доступ попадает в уже загруженную cache line, а скачки по памяти вызывают дорогие промахи и обращения к RAM.",
+                "example": "`Quick Sort` сканирует соседние элементы при partition (всё в одной cache line), а `Heap Sort` при siftDown прыгает к индексам `2i+1`/`2i+2`, разбросанным по памяти — отсюда разница в разы.",
+                "when_to_apply": "Cache locality учитывают при выборе сортировки на больших массивах в памяти: при равной `O(n log n)` предпочитают алгоритм с последовательным доступом (`Quick`/`Tim`).",
+                "edge_cases": "Эффект cache locality проявляется именно на больших массивах, не влезающих в кэш; на крошечных данных, целиком сидящих в L1, разница между алгоритмами по этому фактору исчезает.",
+                "related": "[[sorting-algorithms-interview#Q11]] почему `Heap` медленнее на практике; [[sorting-algorithms-interview#Q9]] cache locality `Quick`; [[sorting-algorithms-interview#Q7]] последовательный доступ `Insertion`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Cache locality — это свойство алгоритма хранить отсортированный результат в кэше CPU, чтобы не писать его в RAM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cache locality — про паттерн доступа к памяти (последовательный vs разбросанный), а не про хранение результата в кэше; результат всё равно в RAM.",
+                "source_of_confusion": "Слово «cache» наводит на мысль, что алгоритм «держит» данные в кэше как в хранилище.",
+                "if_it_were_true": "Тогда любой массив больше кэша нельзя было бы отсортировать, но сортируют и гигабайтные массивы.",
+                "how_it_should_be": "Cache locality — это про последовательность доступа к памяти; хорошая локальность снижает число cache miss'ов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "У `Heap Sort` отличная cache locality, поэтому он на практике быстрее `Quick Sort`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `Heap Sort` плохая cache locality (siftDown прыгает по дереву), и именно поэтому он на практике в 2-3 раза медленнее `Quick`.",
+                "source_of_confusion": "Одинаковая `O(n log n)` создаёт впечатление одинаковой скорости и хорошей локальности у обоих.",
+                "if_it_were_true": "Тогда production-сортировки строились бы на `Heap`, но базой берут `Quick`/`Dual-Pivot`.",
+                "how_it_should_be": "У `Heap` плохая cache locality из-за прыжков siftDown; на практике он медленнее `Quick`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cache locality не влияет на скорость сортировки — при равной асимптотике все алгоритмы одинаково быстры.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cache locality сильно влияет: `Heap` и `Quick` оба `O(n log n)`, но `Quick` в разы быстрее именно из-за лучшего паттерна доступа к памяти.",
+                "source_of_confusion": "Веру в то, что Big-O полностью определяет скорость, переносят на реальные замеры.",
+                "if_it_were_true": "Тогда `Heap` и `Quick` показывали бы одинаковое время, но на практике `Quick` в 2-3 раза быстрее.",
+                "how_it_should_be": "При равной асимптотике cache locality решает: последовательный доступ даёт кратный выигрыш по времени."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как защититься от worst-case O(n²) в Quick Sort?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Чтобы избежать worst-case, нужно всегда брать первый элемент как pivot — это гарантирует сбалансированное разбиение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фиксированный первый pivot как раз ПРОВОЦИРУЕТ worst-case на отсортированных данных; защищают random или median-of-three pivot.",
+                "source_of_confusion": "Простоту фиксированного выбора путают с устойчивостью разбиения.",
+                "if_it_were_true": "Тогда `Quick` не деградировал бы на отсортированном входе, но именно там фиксированный pivot даёт `O(n²)`.",
+                "how_it_should_be": "Pivot выбирают случайно или как median-of-three; фиксированный первый pivot — источник worst-case."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "От worst-case `Quick Sort` защищаются комбинацией техник: random pivot (случайный выбор → вероятность worst-case стремится к нулю), median-of-three (медиана из first/mid/last как pivot), `Introsort` (переключение на `Heap Sort` при глубине рекурсии > `2·log n`), 3-way partition (для массивов с дубликатами) и Dual-Pivot (два pivot, три части — как в `Arrays.sort`). В production обычно используют сразу несколько из них.",
+              "correct": true,
+              "sections": {
+                "explanation": "Worst-case `O(n²)` возникает, когда pivot систематически минимален/максимален; все эти техники либо рандомизируют выбор pivot, либо ставят жёсткий потолок на глубину рекурсии через fallback на гарантированный алгоритм.",
+                "example": "`Introsort` (`std::sort`) считает глубину рекурсии и при превышении `2·log n` переводит подмассив на `Heap Sort`, гарантируя `O(n log n)` даже на патологическом входе.",
+                "when_to_apply": "Эти защиты применяют в системных и библиотечных сортировках, где вход может быть подобран злоумышленником (DoS через worst-case) или просто оказаться отсортированным.",
+                "edge_cases": "Без защиты naive `Quick` с фиксированным pivot уязвим к algorithmic complexity attack: отсортированный или специально построенный вход гарантированно даёт `O(n²)` и может положить сервис.",
+                "related": "[[sorting-algorithms-interview#Q9]] почему возникает worst-case; [[sorting-algorithms-interview#Q10]] оптимизации `Quick`; [[sorting-algorithms-interview#Q13]] `Introsort` как защита."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Достаточно увеличить размер стека JVM — тогда `Quick Sort` не сможет выродиться в `O(n²)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Размер стека влияет лишь на риск StackOverflow при глубокой рекурсии, но не на временную сложность: worst-case `O(n²)` останется из-за плохих разбиений.",
+                "source_of_confusion": "Глубокую рекурсию `Quick` связывают с StackOverflow и думают, что больше стека = быстрее.",
+                "if_it_were_true": "Тогда отсортированный вход с большим стеком сортировался бы за `O(n log n)`, но он всё равно `O(n²)`.",
+                "how_it_should_be": "От `O(n²)` защищают pivot-стратегии и fallback на `Heap`; размер стека на сложность не влияет."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Единственная надёжная защита — отказаться от `Quick Sort` и всегда использовать `Bubble Sort`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Bubble Sort` это `O(n²)` всегда — он хуже даже worst-case `Quick`; защита это рандомизация pivot и `Introsort`, а не отказ в пользу `Bubble`.",
+                "source_of_confusion": "Желание «избежать `O(n²)` `Quick`» абсурдно приводит к ещё более медленному `O(n²)` `Bubble`.",
+                "if_it_were_true": "Тогда библиотеки заменили бы `Quick` на `Bubble`, но они берут `Introsort`/Dual-Pivot.",
+                "how_it_should_be": "`Quick` защищают рандомизацией pivot и fallback на `Heap`; `Bubble` `O(n²)` ещё медленнее."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое hybrid sorting и почему в production используют именно гибриды?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Hybrid sorting — это запуск двух сортировок параллельно на разных ядрах с выбором того результата, что готов раньше.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Гибрид комбинирует алгоритмы внутри одного процесса по сценарию (размер подмассива, глубина рекурсии), а не гоняет две сортировки параллельно «на скорость».",
+                "source_of_confusion": "«Hybrid» и «parallel» оба звучат как «несколько сразу», поэтому их смешивают.",
+                "if_it_were_true": "Тогда `TimSort` дублировал бы работу на двух ядрах, но он один поток с переключением Merge↔Insertion.",
+                "how_it_should_be": "Гибрид переключается между алгоритмами по контексту в одном проходе, а не запускает их в гонку."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Hybrid sorting хуже чистых алгоритмов, потому что переключение между ними добавляет накладные расходы и теряет гарантии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Гибрид как раз даёт лучшие гарантии: `Introsort` гарантирует `O(n log n)` worst-case, чего чистый `Quick` не может; накладные расходы переключения ничтожны.",
+                "source_of_confusion": "Кажется, что любая дополнительная логика замедляет, но здесь она устраняет worst-case.",
+                "if_it_were_true": "Тогда `Arrays.sort`/`std::sort` использовали бы чистые алгоритмы, но они оба гибриды.",
+                "how_it_should_be": "Гибрид сильнее чистых алгоритмов: он сохраняет их лучшие случаи и добавляет гарантию worst-case."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Hybrid sorting комбинирует несколько алгоритмов под разные сценарии: `TimSort` = `Merge` + `Insertion` (короткие runs), `Introsort` = `Quick` + `Heap` (worst-case) + `Insertion` (малые), Pdqsort = `Quick` + `Insertion` + 3-way + smart pivot. Преимущества: используется лучший случай каждого алгоритма, гарантируется `O(n log n)` worst-case и достигается adaptivity на реальных данных. Поэтому в современном production не применяют «чистый» `Quick` или `Merge` — всегда hybrid.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый базовый алгоритм силён в одном и слаб в другом: `Quick` быстр, но имеет `O(n²)` worst; `Insertion` хорош на малых/упорядоченных; `Heap` даёт гарантию. Гибрид берёт сильные стороны каждого и закрывает слабые.",
+                "example": "`Introsort` стартует с `Quick` (скорость), при глубокой рекурсии уходит в `Heap` (гарантия `O(n log n)`), а малые подмассивы дочищает `Insertion` (меньшие константы) — три алгоритма в одном.",
+                "when_to_apply": "Гибриды — стандарт для библиотечных сортировок общего назначения (`Arrays.sort`, `std::sort`), где вход заранее неизвестен и нужны и скорость, и гарантии, и adaptivity.",
+                "edge_cases": "Гибрид «всегда лучший выбор» именно для general-purpose библиотек; для узких задач (целые в малом диапазоне) специализированный `Counting`/`Radix` может обойти любой comparison-гибрид.",
+                "related": "[[sorting-algorithms-interview#Q12]] `TimSort`; [[sorting-algorithms-interview#Q13]] `Introsort`; [[sorting-algorithms-interview#Q30]] worst-case защиты в гибридах."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Hybrid sorting означает чередование возрастающей и убывающей сортировки на каждом проходе массива.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Чередование направлений — это про cocktail/bidirectional bubble sort, а не про hybrid; гибрид комбинирует РАЗНЫЕ алгоритмы, а не направления.",
+                "source_of_confusion": "«Гибрид» по ошибке трактуют как смешение направлений обхода, а не алгоритмов.",
+                "if_it_were_true": "Тогда `TimSort` чередовал бы asc/desc проходы, но он переключается между `Merge` и `Insertion`.",
+                "how_it_should_be": "Hybrid комбинирует разные алгоритмы (`Merge`+`Insertion` и т.п.), а не направления сортировки."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1925 @@
+{
+  "topic_slug": "aws-lambda-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое AWS Lambda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`AWS Lambda` — это **Function as a Service (FaaS)**: сервис запускает ваш код по событию без управления серверами. Модель event-driven (запуск на HTTP, `S3`, `SQS`), pay-per-use (платите только за выполнение), auto-scaling, stateless и short-lived (до 15 минут).",
+              "correct": true,
+              "sections": {
+                "explanation": "Lambda убирает заботу о серверах: вы загружаете функцию, а провайдер сам аллоцирует окружение под каждый event и масштабирует число конкурентных вызовов. Биллинг идёт за миллисекунды выполнения, а не за простой.",
+                "example": "Загрузка фото в `S3` генерирует event, Lambda на лету создаёт thumbnail и кладёт обратно в bucket — без единого постоянно работающего сервера.",
+                "when_to_apply": "Подходит для API-бэкендов с `API Gateway`, обработки событий (`S3`, `DynamoDB streams`), cron-задач, webhooks и ETL-преобразований.",
+                "edge_cases": "Stateless-природа означает, что между вызовами нельзя надёжно хранить состояние локально, а лимит 15 минут отсекает по-настоящему долгие задачи.",
+                "related": "[[aws-lambda-interview#Q2]] lifecycle и cold/warm start; [[aws-lambda-interview#Q30]] когда использовать Lambda; [[aws-lambda-interview#Q22]] лимиты сервиса."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`AWS Lambda` — это managed-сервис виртуальных машин, где вы арендуете EC2-инстанс по часам и сами ставите на него ОС, runtime и приложение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это описание `EC2`, а не Lambda: в Lambda нет ни выбора ОС, ни почасовой аренды инстанса — провайдер сам управляет окружением функции.",
+                "source_of_confusion": "И то и другое — compute в AWS, поэтому Lambda путают с обычной арендой виртуальных машин.",
+                "if_it_were_true": "Тогда пришлось бы патчить ОС и платить за простой инстанса, но именно от этого Lambda и избавляет.",
+                "how_it_should_be": "Lambda — это FaaS без управления серверами и с оплатой за время выполнения функции, а не аренда VM."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`AWS Lambda` — это система оркестрации контейнеров наподобие `Kubernetes`, где вы описываете Deployment и ReplicaSet для своих подов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оркестрацией контейнеров занимаются `EKS`/`ECS`, а Lambda исполняет функции по событию и сама управляет окружением без манифестов подов.",
+                "source_of_confusion": "Lambda внутри использует изоляцию вроде микро-VM, поэтому её ошибочно приравнивают к оркестратору контейнеров.",
+                "if_it_were_true": "Тогда вы бы писали `Deployment` YAML и следили за подами, но в Lambda этого нет — есть только функция и триггер.",
+                "how_it_should_be": "Lambda — FaaS: загружаете функцию, она запускается на event; оркестрация контейнеров — это `EKS`/`ECS`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`AWS Lambda` — это реляционная база данных serverless-формата, которая хранит таблицы и автоматически масштабирует storage.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Хранением данных занимаются `RDS`/`Aurora Serverless`/`DynamoDB`, а Lambda — это compute-сервис, исполняющий код, и сам по себе ничего не хранит.",
+                "source_of_confusion": "Слово serverless встречается и у баз, и у Lambda, поэтому их функции смешивают.",
+                "if_it_were_true": "Тогда у Lambda были бы SQL-запросы и таблицы, но у неё есть только handler, event и context.",
+                "how_it_should_be": "Lambda исполняет функции по событию; serverless-БД — это отдельные сервисы вроде `Aurora Serverless` и `DynamoDB`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Опишите Lambda lifecycle и разницу между cold start и warm start.",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Каждый вызов Lambda всегда проходит полный Init phase заново, поэтому warm start как явления не существует — окружение уничтожается сразу после handler.",
+              "correct": false,
+              "sections": {
+                "what_actually": "AWS переиспользует окружение для последующих вызовов: init пропускается, и это и есть warm start, который заметно быстрее.",
+                "source_of_confusion": "Stateless-модель создаёт впечатление, что каждое окружение одноразовое, хотя оно живёт несколько минут.",
+                "if_it_were_true": "Тогда вынос init-кода за handler не давал бы выигрыша, но именно поэтому клиенты и пулы создают вне handler.",
+                "how_it_should_be": "После cold start окружение остаётся тёплым 5–15 минут, и повторные вызовы идут как warm без init-фазы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Жизненный цикл состоит из **Init phase** (cold start: аллокация окружения, download кода, инициализация runtime, прогон init-кода вне handler) и **Invoke phase** (прогон handler). Если следующий вызов попадает в то же окружение, init пропускается — это **warm start**: остаётся только выполнение handler.",
+              "correct": true,
+              "sections": {
+                "explanation": "При cold start выполняется тяжёлая часть (создание окружения и init-код), а при warm — окружение переиспользуется и тратится только handler. AWS держит окружение тёплым 5–15 минут после последнего вызова.",
+                "example": "Создание `boto3`-клиента вне handler выполняется один раз за cold start, а внутри handler идёт только дешёвый `get_item`, который при warm-вызовах не пересоздаёт клиент.",
+                "when_to_apply": "Понимание lifecycle нужно, чтобы выносить дорогую инициализацию (пулы, SDK-клиенты) за пределы handler и снижать латентность повторных вызовов.",
+                "edge_cases": "Cold start длится от ~100 мс до нескольких секунд (особенно `Java`/.NET), а после простоя или scale-up окружение снова создаётся с нуля.",
+                "related": "[[aws-lambda-interview#Q5]] что такое cold start; [[aws-lambda-interview#Q6]] как его уменьшить; [[aws-lambda-interview#Q1]] основы Lambda."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Cold start — это когда handler выполняется медленнее обычного из-за высокой нагрузки на CPU, а warm start — когда нагрузка спала; само окружение тут ни при чём.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cold vs warm определяется тем, создаётся ли новое execution environment, а не текущей загрузкой CPU.",
+                "source_of_confusion": "И то и другое влияет на латентность, поэтому разницу ошибочно объясняют через нагрузку, а не через init-фазу.",
+                "if_it_were_true": "Тогда cold start исчезал бы при низком трафике, но первый вызов после простоя всё равно холодный.",
+                "how_it_should_be": "Cold start — это создание нового окружения с init-фазой; warm — переиспользование уже инициализированного окружения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Init-код (импорты, создание клиентов) выполняется на каждом вызове внутри handler, поэтому выносить его за пределы handler бессмысленно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Код вне handler выполняется один раз за cold start и переиспользуется при warm-вызовах, что экономит время.",
+                "source_of_confusion": "Кажется, что весь код функции — это и есть handler, поэтому различие init/invoke упускают.",
+                "if_it_were_true": "Тогда не было бы смысла в паттерне «init outside handler», но он явно рекомендуется как best practice.",
+                "how_it_should_be": "Код вне handler — это init-фаза (раз за cold start); внутри handler — то, что выполняется на каждый вызов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие runtimes поддерживает Lambda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Lambda поддерживает только `Python` и `Node.js`; любые другие языки запустить нельзя даже через дополнительные механизмы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нативно поддерживаются также `Java`, `.NET`, `Ruby`, а через custom runtime и контейнеры — практически любой язык.",
+                "source_of_confusion": "`Python` и `Node.js` действительно самые популярные, поэтому их ошибочно считают единственными.",
+                "if_it_were_true": "Тогда не существовало бы `Java`-функций со `SnapStart`, но они есть и активно используются.",
+                "how_it_should_be": "Список нативных языков шире, плюс custom runtime и container image снимают ограничение по языку."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Custom runtime — это платная enterprise-фича, недоступная в обычном аккаунте, поэтому небазовые языки запустить нельзя без отдельной лицензии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Custom runtime через Lambda Runtime API доступен любому аккаунту без отдельной лицензии и не требует enterprise-тарифа.",
+                "source_of_confusion": "Слово custom воспринимают как премиум-опцию, хотя это штатный открытый механизм.",
+                "if_it_were_true": "Тогда `Go`/`Rust` на Lambda были бы недоступны массово, но они спокойно работают через custom runtime.",
+                "how_it_should_be": "Custom runtime — бесплатный штатный способ запускать любой язык; лицензия для этого не нужна."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Lambda поддерживает **нативные runtimes** — `Python`, `Node.js`, `Java`, `.NET`, `Ruby` — плюс **custom runtime** для любого языка через Lambda Runtime API. Также можно деплоить **container images** (свой Docker-образ до 10 GB). `Go` и `Rust` сейчас идут через custom runtime или контейнер.",
+              "correct": true,
+              "sections": {
+                "explanation": "Набор языков покрывает популярные стеки нативно, а всё нестандартное (например `Rust`, `Go`) запускается через custom runtime или контейнер. Это даёт свободу выбора языка без потери serverless-модели.",
+                "example": "`Python` и `Node.js` дают быстрый cold start и потому самые популярные, а `Java`/.NET медленнее на старте, но `SnapStart` это смягчает.",
+                "when_to_apply": "Выбор runtime делают по скорости cold start, экосистеме библиотек и тому, есть ли язык в списке нативных или нужен custom runtime.",
+                "edge_cases": "`Go` потерял отдельный нативный runtime и теперь идёт как custom; для крупных зависимостей (ML-модели) удобнее container image до 10 GB.",
+                "related": "[[aws-lambda-interview#Q4]] container vs ZIP; [[aws-lambda-interview#Q7]] SnapStart для Java; [[aws-lambda-interview#Q5]] cold start по runtime."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Container images в Lambda ограничены теми же 250 MB, что и ZIP, поэтому смысла в них для больших зависимостей нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Container image допускает до 10 GB, что как раз и нужно для тяжёлых зависимостей вроде ML-моделей и native-библиотек.",
+                "source_of_confusion": "Лимит 250 MB для ZIP запоминается и ошибочно переносится на контейнеры.",
+                "if_it_were_true": "Тогда упаковка крупной ML-модели была бы невозможна, но именно ради этого и используют образ до 10 GB.",
+                "how_it_should_be": "ZIP ограничен 250 MB unzipped, а container image — 10 GB, что и оправдывает его для больших зависимостей."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Container images vs ZIP deployment в Lambda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Container images всегда дают более быстрый cold start, чем ZIP, потому что образ уже содержит весь runtime и его не нужно инициализировать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: образ обычно стартует медленнее из-за image pull; ZIP, как правило, холодно стартует быстрее.",
+                "source_of_confusion": "Кажется, что «всё внутри образа» = быстрее, но скачивание и распаковка крупного образа добавляют задержку.",
+                "if_it_were_true": "Тогда ради скорости все переходили бы на контейнеры, но дефолт для быстрого старта — именно ZIP.",
+                "how_it_should_be": "ZIP обычно быстрее на cold start; контейнер берут ради размера и кастомизации, а не ради скорости старта."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "ZIP-деплой позволяет упаковать до 10 GB зависимостей, поэтому контейнеры в Lambda практически не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ZIP ограничен 250 MB unzipped; именно лимит 10 GB у container image и оправдывает контейнеры для тяжёлых зависимостей.",
+                "source_of_confusion": "Лимиты ZIP и контейнера путают местами, приписывая ZIP контейнерный объём.",
+                "if_it_were_true": "Тогда крупные ML-зависимости лезли бы в ZIP, но на практике для них и берут контейнер до 10 GB.",
+                "how_it_should_be": "ZIP — до 250 MB, container image — до 10 GB; контейнер нужен именно для больших зависимостей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Container image в Lambda нельзя собрать тем же `Dockerfile`, что и локально, — нужен особый проприетарный формат образа, несовместимый с обычным Docker.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lambda принимает обычный OCI/Docker-образ, и можно использовать практически тот же образ, что и локально.",
+                "source_of_confusion": "Кажется, что serverless требует особого формата, хотя поддерживается стандартный Docker-образ.",
+                "if_it_were_true": "Тогда нельзя было бы переиспользовать существующие Docker-сборки, но это одно из преимуществ контейнерного деплоя.",
+                "how_it_should_be": "Используется стандартный Docker/OCI-образ — тот же, что и локальный, с базовым Lambda runtime interface."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "**ZIP** — стандартный способ: до 250 MB unzipped, быстрее деплой и cold start, штатный runtime. **Container image** — до 10 GB, любые custom-зависимости и языки, тот же образ, что и локальный Docker, но cold start медленнее из-за pull образа. По умолчанию выбирают ZIP как более простой и быстрый.",
+              "correct": true,
+              "sections": {
+                "explanation": "ZIP оптимален для типовых функций с умеренными зависимостями: меньше размер — быстрее старт. Контейнеры решают проблему больших и нестандартных зависимостей ценой более медленного cold start.",
+                "example": "Функция с ML-моделью и native-библиотеками не влезает в 250 MB ZIP, поэтому её упаковывают в container image до 10 GB.",
+                "when_to_apply": "Контейнер берут при больших зависимостях (ML-модели, native libs), нестандартных языках или когда приложение уже containerized; иначе — ZIP.",
+                "edge_cases": "Cold start у образа выше из-за image pull; при этом и контейнер, и ZIP работают на одном и том же Lambda-runtime по той же модели исполнения.",
+                "related": "[[aws-lambda-interview#Q3]] runtimes и языки; [[aws-lambda-interview#Q5]] cold start; [[aws-lambda-interview#Q22]] лимиты на размер."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое cold start в Lambda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "**Cold start** — это вызов, требующий создания **нового execution environment**. Он проходит стадии: provision окружения, download кода, инициализация runtime, прогон вашего init-кода и затем handler. Случается при первом вызове, после простоя (5–15 мин), при росте concurrency, обновлении кода или конфигурации.",
+              "correct": true,
+              "sections": {
+                "explanation": "Холодный вызов несёт всю тяжёлую инициализацию, поэтому ощутимо медленнее тёплого. Длительность сильно зависит от runtime: `Python`/`Node.js` стартуют за сотни миллисекунд, `Java` без `SnapStart` — секунды.",
+                "example": "После 10 минут простоя первый вызов `Java`-функции может занять 1–5 секунд на инициализацию JVM, тогда как `Python` уложится в ~200–500 мс.",
+                "when_to_apply": "Концепцию учитывают при проектировании latency-чувствительных API: оценивают худший случай первого запроса и решают, нужен ли provisioned concurrency.",
+                "edge_cases": "Cold start возникает не только на первом вызове, но и при scale-up (нужны новые окружения) и после любого обновления версии или конфигурации.",
+                "related": "[[aws-lambda-interview#Q2]] lifecycle и warm start; [[aws-lambda-interview#Q6]] как уменьшить cold start; [[aws-lambda-interview#Q8]] provisioned concurrency."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Cold start — это вызов, который выполняется в уже прогретом окружении, но впервые за день, поэтому он не отличается по скорости от обычного warm-вызова.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cold start — это как раз создание нового окружения с init-фазой, и он заметно медленнее warm-вызова.",
+                "source_of_confusion": "Слово «впервые» сбивает: первый вызов ассоциируют с прогретым окружением, хотя оно создаётся с нуля.",
+                "if_it_were_true": "Тогда не было бы смысла бороться с cold start через provisioned concurrency, но эта борьба реальна.",
+                "how_it_should_be": "Cold start = новое execution environment с полной инициализацией, и он медленнее тёплого вызова."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Cold start случается исключительно при самом первом вызове функции после деплоя и больше не повторяется в течение жизни функции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cold start повторяется после простоя, при scale-up под нагрузкой и при каждом обновлении версии или конфигурации.",
+                "source_of_confusion": "Первый вызов — самый очевидный случай cold start, поэтому остальные триггеры забывают.",
+                "if_it_were_true": "Тогда после первого запроса латентность была бы стабильной, но всплески трафика снова порождают холодные старты.",
+                "how_it_should_be": "Cold start происходит при первом вызове, после idle, при росте concurrency и при апдейтах кода/конфига."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Длительность cold start одинакова для всех runtimes (около 100 мс), потому что инициализация окружения не зависит от языка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Длительность сильно зависит от языка: `Python`/`Node.js` — сотни мс, `Java` без `SnapStart` — секунды.",
+                "source_of_confusion": "Стадия provision окружения действительно схожа, и из неё ошибочно делают вывод о равенстве всех runtimes.",
+                "if_it_were_true": "Тогда `SnapStart` для `Java` был бы не нужен, но он создан именно из-за медленной инициализации JVM.",
+                "how_it_should_be": "Init runtime зависит от языка: интерпретируемые стартуют быстро, тяжёлые JVM/.NET — медленнее."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как уменьшить cold start в Lambda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Лучший способ убрать cold start — уменьшать выделенную память до минимума (128 MB), потому что меньше памяти означает более лёгкое и быстрое окружение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CPU в Lambda пропорционален памяти, поэтому больше памяти обычно ускоряет init, а урезание до 128 MB замедляет старт.",
+                "source_of_confusion": "Интуиция «меньше ресурсов = легче» неверна: CPU привязан к объёму памяти.",
+                "if_it_were_true": "Тогда все ставили бы 128 MB ради скорости, но рекомендуют наоборот добавлять память для ускорения init.",
+                "how_it_should_be": "Больше памяти даёт больше CPU и обычно ускоряет cold start, а не замедляет."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Способов несколько: уменьшать размер пакета и lazy-load зависимостей, давать **больше памяти** (CPU растёт пропорционально → быстрее init), использовать **ARM (Graviton)**, держать окружения тёплыми через **provisioned concurrency**, избегать тяжёлых фреймворков, выбирать быстрый runtime (`Node`, `Python`, `Go`) и применять **SnapStart для Java**.",
+              "correct": true,
+              "sections": {
+                "explanation": "Cold start складывается из размера кода, скорости runtime и init-логики, поэтому атакуют каждый компонент: меньше код, легче фреймворк, больше CPU, прогретые окружения. SnapStart и provisioned concurrency дают самый сильный эффект для медленных стеков.",
+                "example": "Перевод `Java`-функции на `SnapStart` уменьшает cold start с 5–10 секунд до примерно 200–500 мс за счёт восстановления готового снапшота.",
+                "when_to_apply": "Эти приёмы применяют для latency-чувствительных API, где даже редкий холодный старт в несколько секунд недопустим для пользователя.",
+                "edge_cases": "Pre-warming через scheduled-вызовы — это хак, не дающий гарантий; раньше советовали избегать VPC, но сейчас VPC-overhead минимален.",
+                "related": "[[aws-lambda-interview#Q5]] что такое cold start; [[aws-lambda-interview#Q7]] SnapStart; [[aws-lambda-interview#Q8]] provisioned concurrency."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Cold start уменьшают, добавляя больше тяжёлых фреймворков вроде `Spring Boot`, так как они кешируют инициализацию между вызовами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тяжёлые фреймворки как раз удлиняют init; их избегают, а `Spring Boot` на Lambda медленный без `SnapStart`.",
+                "source_of_confusion": "Кеширование в фреймворках на серверах путают с поведением в эфемерных Lambda-окружениях.",
+                "if_it_were_true": "Тогда `Spring Boot` ускорял бы старт, но именно он — классический пример тяжёлого старта на Lambda.",
+                "how_it_should_be": "Тяжёлые фреймворки увеличивают cold start; для `Java`/`Spring` спасает `SnapStart`, а не сам фреймворк."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Единственный надёжный способ — перейти с ARM (Graviton) обратно на x86, потому что ARM всегда стартует медленнее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ARM (Graviton) обычно быстрее и дешевле, поэтому его как раз рекомендуют для снижения cold start, а не наоборот.",
+                "source_of_confusion": "ARM-совместимость зависимостей путают со скоростью старта самой архитектуры.",
+                "if_it_were_true": "Тогда дефолтом для новых функций оставался бы x86, но в 2025 рекомендуют ARM при поддержке зависимостей.",
+                "how_it_should_be": "ARM/Graviton обычно быстрее и дешевле; его выбирают для ускорения, если зависимости совместимы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое SnapStart для Java в Lambda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "SnapStart ускоряет cold start за счёт того, что отключает init-фазу полностью: init-код просто не выполняется, поэтому и снапшота никакого нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Init-код выполняется один раз при publish версии и сохраняется в snapshot; при вызове его восстанавливают, а не пропускают.",
+                "source_of_confusion": "Эффект «как будто init не было» путают с тем, что init якобы не выполняется вовсе.",
+                "if_it_were_true": "Тогда зависимости из init не были бы готовы к работе, но snapshot как раз сохраняет уже инициализированное состояние.",
+                "how_it_should_be": "SnapStart снимает snapshot после init и при вызове восстанавливает его, а не выключает инициализацию."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "SnapStart полностью безопасен по состоянию: значения вроде `Random()` и уникальные seed-ы, заданные в init, у каждого вызова будут разными автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Состояние init шарится между восстановлениями, поэтому `Random()`, заданный в init, повторится и сломает uniqueness — это известный подвох.",
+                "source_of_confusion": "Кажется, что каждый restore полностью независим, хотя он стартует из одного и того же снапшота.",
+                "if_it_were_true": "Тогда не пришлось бы переинициализировать randomness в handler, но AWS прямо предупреждает об этом.",
+                "how_it_should_be": "Init-state фиксируется в снапшоте; уникальные/случайные значения нужно генерировать в handler, а не в init."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "**SnapStart** берёт **snapshot** уже инициализированного окружения после init-фазы и переиспользует его. Вместо прогона тяжёлого старта (`Java` + `Spring Boot` = 5–10 сек) Lambda при вызове делает **restore from snapshot** (через `Firecracker` MicroVM) за ~200–500 мс. Подвох: state шарится между вызовами, поэтому нельзя инициализировать, например, `Random()` в init.",
+              "correct": true,
+              "sections": {
+                "explanation": "SnapStart разрывает связь между дорогой инициализацией и латентностью вызова: snapshot снимается при publish версии, а каждый вызов лишь восстанавливает память и диск. Это даёт многократное ускорение для медленных JVM/.NET-стеков.",
+                "example": "Spring Boot функция без SnapStart стартует 5–10 секунд; со SnapStart restore снапшота укладывается в 200–500 мс.",
+                "when_to_apply": "Используют для `Java`-/`Spring`-функций с латентностью на cold start, а в 2025 SnapStart доступен также для `Python` и `.NET`.",
+                "edge_cases": "Снапшот фиксирует состояние init, поэтому случайность и уникальные значения, заданные в init (`Random`, seeds), повторятся между восстановлениями и нарушат uniqueness.",
+                "related": "[[aws-lambda-interview#Q6]] способы уменьшить cold start; [[aws-lambda-interview#Q5]] cold start по runtime; [[aws-lambda-interview#Q3]] runtimes Lambda."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "SnapStart доступен только для `Node.js` и `Python`, а для `Java`, ради которого он и создавался, поддержки нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SnapStart создавался именно для `Java` и в 2025 расширен на `Python` и `.NET`; для `Java` он работает.",
+                "source_of_confusion": "Список языков SnapStart запоминают неверно, исключая из него как раз `Java`.",
+                "if_it_were_true": "Тогда медленный `Java`-старт нечем было бы лечить, но SnapStart — основной ответ именно для `Java`.",
+                "how_it_should_be": "SnapStart изначально для `Java`, а позже добавлены `Python` и `.NET`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Provisioned Concurrency в Lambda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Provisioned Concurrency — это бесплатная настройка, которая просто ставит верхний лимит на число одновременных вызовов функции и не влияет на cold start.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Лимит на число вызовов — это reserved concurrency; PC же держит окружения тёплыми и стоит дополнительно, устраняя cold start.",
+                "source_of_confusion": "Reserved и provisioned concurrency легко путают, приписывая PC роль лимита.",
+                "if_it_were_true": "Тогда PC не помогал бы с латентностью, но его и берут ради устранения холодных стартов.",
+                "how_it_should_be": "PC — это платные pre-warmed окружения против cold start; лимит на конкурентность — это reserved concurrency."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Provisioned Concurrency бесплатна и стоит ровно столько же, сколько обычные вызовы, потому что прогретые среды не потребляют ресурсов в простое.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PC берёт дополнительную плату (~$0.015 per GB-hour) даже за idle, ведь среды реально держатся аллоцированными.",
+                "source_of_confusion": "Кажется, что «прогретая, но не вызванная» среда ничего не стоит, хотя она занимает ресурсы.",
+                "if_it_were_true": "Тогда PC включали бы всем по умолчанию, но из-за стоимости его применяют точечно.",
+                "how_it_should_be": "PC оплачивается дополнительно за время прогретых сред, в том числе за их простой."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Provisioned Concurrency нельзя масштабировать — число прогретых сред задаётся один раз навсегда и не меняется по расписанию или метрикам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PC поддерживает auto-scaling по расписанию или метрикам, что и используют для предсказуемых пиков нагрузки.",
+                "source_of_confusion": "Статичная цифра в конфиге создаёт впечатление неизменности, хотя есть автоскейлинг.",
+                "if_it_were_true": "Тогда нельзя было бы экономить, снижая PC в нерабочие часы, но именно так и оптимизируют стоимость.",
+                "how_it_should_be": "PC можно автоскейлить по расписанию или метрикам, подстраивая число прогретых сред под нагрузку."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "**Provisioned Concurrency (PC)** — это набор **pre-initialized окружений**, которые всегда держатся тёплыми. Вы задаёте число заранее прогретых сред (например 10), и вызовы попадают в них без cold start. За это берётся дополнительная плата (~$0.015 per GB-hour даже при простое), а масштабировать PC можно по расписанию или метрикам.",
+              "correct": true,
+              "sections": {
+                "explanation": "PC решает проблему предсказуемой латентности: окружения уже прошли init, поэтому холодных стартов нет. Платить приходится и за idle-время прогретых сред, что отличает PC от обычной оплаты за вызовы.",
+                "example": "Для критичного API ставят 10 provisioned-сред, чтобы утренний всплеск запросов обслуживался без задержки на cold start.",
+                "when_to_apply": "PC применяют для latency-sensitive API и предсказуемых burst-нагрузок (например start-of-day rush), где cold start неприемлем.",
+                "edge_cases": "PC стоит дополнительно даже когда среды простаивают, поэтому при непредсказуемой нагрузке выгоднее auto-scaling PC по расписанию или метрикам.",
+                "related": "[[aws-lambda-interview#Q20]] reserved vs provisioned; [[aws-lambda-interview#Q6]] другие способы против cold start; [[aws-lambda-interview#Q5]] что такое cold start."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как в Lambda связаны memory, CPU и timeout?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Память настраивается от **128 MB до 10 GB** (шаг 1 MB), а **CPU выделяется пропорционально памяти** (отдельно его задать нельзя): ~1769 MB ≈ 1 vCPU, 10240 MB ≈ 6 vCPU. **Timeout** — до 15 минут, по умолчанию 3 секунды. Поэтому больше памяти иногда дешевле: функция завершается быстрее за счёт большего CPU.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главная неочевидность — CPU нельзя выставить независимо: он жёстко связан с объёмом памяти. Для CPU-bound задач увеличение памяти даёт больше ядер и может сократить время и итоговую стоимость.",
+                "example": "CPU-bound функция на 1769 MB получает ~1 vCPU и считает быстрее, чем на 512 MB; меньшая длительность при per-ms-биллинге иногда перекрывает рост цены за память.",
+                "when_to_apply": "Память подбирают под профиль нагрузки: CPU-bound → больше памяти ради CPU, memory-bound → столько, сколько нужно для данных; timeout ставят с запасом, но не максимальный без нужды.",
+                "edge_cases": "Меньшая память не всегда дешевле: большая память может завершить работу настолько быстрее, что суммарно выйдет дешевле — это и проверяет `Lambda Power Tuning`.",
+                "related": "[[aws-lambda-interview#Q22]] полный список лимитов; [[aws-lambda-interview#Q29]] анализ стоимости; [[aws-lambda-interview#Q23]] обход timeout 15 минут."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В Lambda CPU задаётся отдельным параметром (числом vCPU), независимо от объёма памяти, поэтому можно взять 128 MB и 4 vCPU одновременно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CPU нельзя задать отдельно — он пропорционален памяти; чтобы получить больше ядер, нужно увеличить память.",
+                "source_of_confusion": "Привычка из `ECS`/`EC2`, где CPU и память задаются независимо, переносится на Lambda.",
+                "if_it_were_true": "Тогда не было бы смысла повышать память ради скорости, но именно так и добывают CPU в Lambda.",
+                "how_it_should_be": "CPU привязан к памяти: 1769 MB ≈ 1 vCPU; отдельной настройки числа ядер нет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Максимальный timeout у Lambda — 60 минут, а память можно поднять до 64 GB, поэтому Lambda годится и для долгих тяжёлых задач.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Timeout ограничен 15 минутами, а память — 10 GB; для по-настоящему долгих задач берут `Step Functions`, `Batch` или `Fargate`.",
+                "source_of_confusion": "Лимиты Lambda завышают по аналогии с контейнерными сервисами без жёсткого лимита времени.",
+                "if_it_were_true": "Тогда не нужен был бы обход 15-минутного лимита, но именно его и обходят через другие сервисы.",
+                "how_it_should_be": "Timeout — максимум 15 минут, память — максимум 10 GB; долгие задачи выносят за пределы Lambda."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Меньшая память всегда означает меньшую стоимость, поэтому для экономии нужно ставить минимально возможные 128 MB на любую функцию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Не всегда: большая память даёт больше CPU и может завершить работу настолько быстрее, что итог дешевле.",
+                "source_of_confusion": "Цена за GB-секунду растёт с памятью, и из этого делают вывод, что минимум всегда дешевле.",
+                "if_it_were_true": "Тогда `Lambda Power Tuning` был бы бессмысленным, но он как раз ищет оптимум, а не минимум памяти.",
+                "how_it_should_be": "Оптимум по стоимости подбирают замером (Power Tuning): иногда больше памяти выходит дешевле за счёт скорости."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают environment variables в Lambda и какие best practices?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Environment variables в Lambda не имеют лимита по объёму, поэтому в них можно складывать любые большие конфиги и даже файлы целиком.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Суммарный лимит ENV — 4 KB; большие конфиги хранят в `Parameter Store`/`S3`, а не в переменных окружения.",
+                "source_of_confusion": "ENV кажутся «просто строками без ограничений», хотя у них есть жёсткий суммарный лимит.",
+                "if_it_were_true": "Тогда не было бы причин выносить конфиг в `Parameter Store`, но из-за лимита 4 KB это и делают.",
+                "how_it_should_be": "Общий лимит ENV — 4 KB; всё крупное держат во внешних хранилищах конфигурации."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Переменные окружения доступны через `os.environ`, общий лимит — **4 KB**. Best practices: **не хранить секреты** в plain ENV (использовать `Secrets Manager` / `Parameter Store`), включать **KMS-шифрование** для чувствительных значений и держать **разные ENV** для dev/prod. Секреты подтягивают в рантайме, например через `ssm.get_parameter(..., WithDecryption=True)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "ENV удобны для конфигурации, но небезопасны для секретов и ограничены 4 KB суммарно. Чувствительные данные выносят в управляемые хранилища с KMS-шифрованием и аудитом доступа.",
+                "example": "Вместо `DB_PASSWORD` в plain ENV функция вызывает `ssm.get_parameter(Name='/myapp/prod/db_url', WithDecryption=True)`, получая значение из `Parameter Store` уже расшифрованным.",
+                "when_to_apply": "ENV используют для неконфиденциального конфига (флаги, URL без секретов), а пароли и ключи — для `Secrets Manager`/`Parameter Store` с KMS.",
+                "edge_cases": "Суммарный лимит 4 KB на все переменные легко превысить большим конфигом, и plain-ENV видны тем, у кого есть доступ к описанию функции.",
+                "related": "[[aws-lambda-interview#Q32]] частые ошибки (hardcoded credentials); [[aws-lambda-interview#Q22]] лимиты Lambda; [[aws-lambda-interview#Q31]] best practices."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Секреты безопаснее всего хранить прямо в plain environment variables, потому что они автоматически шифруются и недоступны никому, кроме самой функции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Plain ENV не предназначены для секретов и видны тем, у кого есть доступ к конфигурации функции; для секретов берут `Secrets Manager`/`Parameter Store` с KMS.",
+                "source_of_confusion": "Кажется, что переменные окружения «внутренние» и потому скрытые, но они отображаются в конфиге функции.",
+                "if_it_were_true": "Тогда не было бы рекомендации шифровать ENV через KMS и выносить секреты, но она существует.",
+                "how_it_should_be": "Секреты держат в `Secrets Manager`/`Parameter Store` с KMS, а не в plain environment variables."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все environment variables в Lambda шифруются end-to-end по умолчанию и доступны только во время cold start, поэтому KMS настраивать не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для чувствительных значений KMS-шифрование настраивают явно, а ENV доступны на каждом вызове, не только на cold start.",
+                "source_of_confusion": "Наличие опции KMS создаёт ложное впечатление, что строгое шифрование включено всегда и автоматически.",
+                "if_it_were_true": "Тогда best practice «KMS encryption для sensitive ENV» был бы лишним, но он явно рекомендуется.",
+                "how_it_should_be": "KMS для чувствительных ENV включают осознанно; переменные доступны при каждом вызове, не только холодном."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Lambda Layers и зачем они нужны?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Lambda Layer — это отдельный сетевой слой (Layer 3/4 OSI) для маршрутизации трафика между функциями внутри VPC.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Layer в Lambda — это пакет переиспользуемого кода/зависимостей, а не сетевой уровень; маршрутизация — это VPC/ENI.",
+                "source_of_confusion": "Слово «layer» вызывает ассоциацию с моделью OSI, хотя здесь это упаковка зависимостей.",
+                "if_it_were_true": "Тогда слои настраивали бы в `VpcConfig`, но они подключаются как артефакты с кодом.",
+                "how_it_should_be": "Layer — переиспользуемый код/библиотеки, общий для функций; сеть Lambda задаётся через VPC и security groups."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "К одной функции можно подключить неограниченное число слоёв любого суммарного размера, так как слои не считаются в лимите пакета.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Лимит — 5 слоёв на функцию, и суммарно с кодом действует потолок 250 MB unzipped; слои считаются в этом размере.",
+                "source_of_confusion": "Слои кажутся «внешними» по отношению к функции, поэтому их размер ошибочно выносят за лимит.",
+                "if_it_were_true": "Тогда через слои можно было бы обойти лимит 250 MB, но он распространяется и на них.",
+                "how_it_should_be": "Максимум 5 слоёв на функцию, и общий распакованный размер (код + слои) ограничен 250 MB."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "**Layer** — это переиспользуемый код или зависимости, общие для нескольких функций. Например, основной код функции — 1 MB, а слои — `numpy`/`pandas` (50 MB) и shared-утилиты (5 MB). Преимущества: DRY (общий код в одном месте), меньше размер deployment-пакетов, переиспользование. Лимиты: до **5 слоёв** на функцию, суммарно до 250 MB unzipped.",
+              "correct": true,
+              "sections": {
+                "explanation": "Слои выносят тяжёлые зависимости и общий код из самой функции, уменьшая её пакет и убирая дублирование между функциями. Это упрощает обновление общих библиотек в одном месте.",
+                "example": "Десять функций используют один слой с `pandas`/`numpy`, поэтому 50 MB зависимостей не дублируются в каждом пакете, а лежат в одном переиспользуемом слое.",
+                "when_to_apply": "Слои берут для общих библиотек (`Pandas`, `NumPy`, `Lambda Powertools`) и кастомных утилит, разделяемых между функциями.",
+                "edge_cases": "Лимит — 5 слоёв на функцию и общий потолок 250 MB unzipped (вместе с кодом); `AWS SDK` обычно и так встроен, поэтому отдельный слой под него часто не нужен.",
+                "related": "[[aws-lambda-interview#Q4]] container vs ZIP; [[aws-lambda-interview#Q22]] лимиты; [[aws-lambda-interview#Q31]] best practices."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Layer нужен в первую очередь для установки `AWS SDK`, так как без отдельного слоя SDK в рантайме недоступен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AWS SDK` обычно встроен в managed-runtime, поэтому отдельный слой под него чаще не требуется; слои берут для прочих общих библиотек.",
+                "source_of_confusion": "SDK — самая частая зависимость, и из этого делают вывод, что её обязательно тащить слоем.",
+                "if_it_were_true": "Тогда каждая функция тянула бы SDK-слой, но он доступен из коробки в стандартных runtimes.",
+                "how_it_should_be": "Слои используют для `Pandas`/`NumPy`/`Powertools` и своих утилит; `AWS SDK` уже встроен в runtime."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "ARM (Graviton2) vs x86 в Lambda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "x86 в Lambda всегда дешевле и быстрее ARM, поэтому Graviton2 берут только в исключительных случаях ради совместимости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычно наоборот: ARM/Graviton2 примерно на 20% дешевле и на 15–20% быстрее, и потому стал дефолтом для новых функций.",
+                "source_of_confusion": "x86 привычнее и кажется «основной» архитектурой, отсюда вывод о её преимуществе.",
+                "if_it_were_true": "Тогда AWS не делал бы ARM рекомендованным дефолтом, но именно его и советуют в 2025.",
+                "how_it_should_be": "ARM/Graviton2 обычно дешевле и производительнее; x86 оставляют ради несовместимых зависимостей."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Любой код, включая `Go` и `Rust`, переносится на ARM без пересборки, потому что Lambda сама перекомпилирует бинарники под архитектуру.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Скомпилированные `Go`/`Rust` и native-библиотеки нужно собирать под ARM самостоятельно; Lambda не перекомпилирует чужие бинарники.",
+                "source_of_confusion": "Лёгкий перенос интерпретируемых языков распространяют и на компилируемые.",
+                "if_it_were_true": "Тогда не было бы оговорки «recompile for ARM», но она прямо присутствует.",
+                "how_it_should_be": "Интерпретируемое (`Python`/`Node`) переносится как есть; `Go`/`Rust`/native-библиотеки требуют ARM-сборки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "ARM (Graviton2) недоступен для `Java`-функций, поскольку JVM работает только на x86-инструкциях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JVM есть и под ARM, поэтому `Java`-функции спокойно работают на Graviton2 как интерпретируемый/байткод-стек.",
+                "source_of_confusion": "JVM считают завязанной на x86, хотя есть ARM-сборки JVM.",
+                "if_it_were_true": "Тогда `Java` исключалась бы из ARM-совместимых, но она в списке работающих как есть.",
+                "how_it_should_be": "`Java` (байткод на JVM) работает на ARM; проблемы возможны лишь у native-зависимостей без ARM-версий."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "**Graviton2 (ARM)** — ARM-процессор AWS, который обычно на **~20% дешевле** и на **15–20% производительнее** на большинстве нагрузок. Совместимость: чистый `Python`/`Node.js`/`Java` работают как есть (интерпретируемые), а `Go`/`Rust` и native-библиотеки нужно пересобрать/взять под ARM. В 2025 **ARM — дефолт** для новых функций, если зависимости его поддерживают.",
+              "correct": true,
+              "sections": {
+                "explanation": "Graviton даёт лучшую цену и производительность, поэтому его выбирают по умолчанию. Ключевой нюанс — совместимость зависимостей: интерпретируемый код переносится без изменений, а скомпилированные артефакты требуют ARM-сборки.",
+                "example": "Чисто питоновская функция переключается на `arm64` без правок кода и сразу даёт ~20% экономии; функция с native-расширением вроде `PIL` требует ARM-версии библиотеки.",
+                "when_to_apply": "ARM берут для новых функций ради цены и скорости; остаются на x86, когда критичная зависимость не имеет ARM-сборки.",
+                "edge_cases": "Native-библиотеки (`PIL`, `numpy` с C-расширениями) и скомпилированные языки (`Go`, `Rust`) требуют ARM-вариантов; забытая x86-зависимость ломает рантайм на `arm64`.",
+                "related": "[[aws-lambda-interview#Q6]] ARM против cold start; [[aws-lambda-interview#Q29]] экономия на ARM; [[aws-lambda-interview#Q3]] runtimes."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроена интеграция API Gateway → Lambda и чем REST API отличается от HTTP API?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Самая частая схема: HTTP-запрос → `API Gateway` → Lambda → ответ. Два типа: **REST API (v1)** — полный набор фич (caching, throttling, request validation), дороже ($3.50 за млн запросов), зрелее; **HTTP API (v2)** — на ~70% дешевле ($1.00 за млн), быстрее и проще, но меньше фич (нет request validation и т.п.). В 2025 для простых кейсов дефолт — HTTP API.",
+              "correct": true,
+              "sections": {
+                "explanation": "API Gateway превращает HTTP-запрос в event для Lambda и возвращает её ответ клиенту. Выбор между REST и HTTP API — это компромисс между богатством фич и стоимостью/латентностью.",
+                "example": "Handler читает `event['httpMethod']`, `event['path']`, `event['body']` и возвращает объект с `statusCode`, `headers` и `body` в виде JSON-строки.",
+                "when_to_apply": "HTTP API берут для простых дешёвых эндпоинтов, REST API — когда нужны caching, request validation, продвинутый throttling и зрелые фичи.",
+                "edge_cases": "HTTP API дешевле и быстрее, но не умеет request validation и часть фич REST API; перенос с REST на HTTP может потребовать переноса этой логики в код.",
+                "related": "[[aws-lambda-interview#Q14]] Function URLs как альтернатива; [[aws-lambda-interview#Q21]] поведение при throttling; [[aws-lambda-interview#Q17]] EventBridge для роутинга."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "REST API (v1) дешевле HTTP API (v2) примерно на 70%, поэтому для экономии всегда выбирают REST API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: HTTP API (v2) примерно на 70% дешевле REST API; ради экономии для простых кейсов берут HTTP API.",
+                "source_of_confusion": "REST API старее и «полнее», из чего ошибочно выводят, что он же и дешевле.",
+                "if_it_were_true": "Тогда HTTP API не позиционировали бы как дешёвый вариант, но именно так его и описывают.",
+                "how_it_should_be": "HTTP API дешевле (~$1.00/млн против ~$3.50/млн) и быстрее; REST API богаче по фичам, но дороже."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "HTTP API (v2) поддерживает полный набор фич, включая request validation и кеширование, и потому полностью заменяет REST API без компромиссов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HTTP API проще и не имеет части фич REST API (например request validation), поэтому замена не всегда полная.",
+                "source_of_confusion": "Новизну v2 принимают за функциональное превосходство во всём.",
+                "if_it_were_true": "Тогда REST API был бы не нужен совсем, но его держат именно ради недостающих в HTTP API фич.",
+                "how_it_should_be": "HTTP API — быстрый и дешёвый, но без request validation и ряда фич REST API."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Lambda за API Gateway получает не event-объект, а сырой TCP-сокет, и handler сам должен разбирать HTTP-протокол вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "API Gateway передаёт в Lambda структурированный event (`httpMethod`, `path`, `headers`, `body`), а не сырой сокет.",
+                "source_of_confusion": "Работу с HTTP на серверах путают с моделью Lambda, где запрос уже распарсен в event.",
+                "if_it_were_true": "Тогда пришлось бы парсить HTTP-заголовки байтами, но handler читает готовые поля event.",
+                "how_it_should_be": "Lambda получает разобранный event с полями запроса и возвращает объект с `statusCode`/`headers`/`body`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Lambda Function URLs?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Function URLs предоставляют полный набор фич API Gateway (throttling, caching, request validation) прямо из коробки, поэтому шлюз больше не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Function URLs как раз не имеют throttling, caching и request validation — за этими фичами идут к `API Gateway`.",
+                "source_of_confusion": "Раз это HTTP-эндпоинт, ему приписывают все возможности полноценного шлюза.",
+                "if_it_were_true": "Тогда API Gateway был бы избыточен, но его держат именно ради этих недостающих в Function URL фич.",
+                "how_it_should_be": "Function URL — простой HTTPS без шлюзовых фич; throttling/caching/validation остаются у API Gateway."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "**Function URLs** (с 2022) — это встроенный HTTPS-эндпоинт для функции **без `API Gateway`**, вида `https://abc123.lambda-url.us-east-1.on.aws/`. Создаётся с `--auth-type AWS_IAM` или `NONE`. Плюсы: бесплатно (нет costs API Gateway), ниже латентность, проще. Минусы: нет throttling, caching, request validation и сложного роутинга. Идеальны для простых webhooks и public-эндпоинтов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Function URL даёт прямой HTTPS-доступ к функции без промежуточного API Gateway, экономя деньги и латентность. Платить за это приходится отсутствием продвинутых фич шлюза.",
+                "example": "Для webhook от внешнего сервиса создают Function URL с `--auth-type NONE`, и сервис шлёт POST напрямую на `*.lambda-url.<region>.on.aws` без настройки шлюза.",
+                "when_to_apply": "Function URLs берут для простых webhooks и публичных эндпоинтов, где не нужны throttling, кеш, валидация и сложный роутинг.",
+                "edge_cases": "Нет встроенного throttling и request validation, поэтому защиту от перегруза и проверку входа придётся делать в коде; маршрутизация ограничена одним URL.",
+                "related": "[[aws-lambda-interview#Q13]] API Gateway как полнофункциональная альтернатива; [[aws-lambda-interview#Q21]] throttling; [[aws-lambda-interview#Q24]] доступ и сеть."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Function URLs всегда публичны и не поддерживают аутентификацию, поэтому их нельзя защитить через IAM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Function URL поддерживает `--auth-type AWS_IAM` для защиты доступа, а не только `NONE`.",
+                "source_of_confusion": "Вариант `NONE` (открытый доступ) запоминают как единственный, упуская режим IAM.",
+                "if_it_were_true": "Тогда нельзя было бы сделать приватный Function URL, но режим `AWS_IAM` это позволяет.",
+                "how_it_should_be": "Function URL умеет `auth-type AWS_IAM` (защищённый) или `NONE` (публичный) на выбор."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Function URLs дороже, чем связка с API Gateway, потому что AWS берёт отдельную плату за каждый сгенерированный URL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Function URLs бесплатны и убирают costs API Gateway; отдельной платы за URL нет.",
+                "source_of_confusion": "Любую дополнительную фичу склонны считать платной по умолчанию.",
+                "if_it_were_true": "Тогда их не позиционировали бы как способ сэкономить, но именно экономия — одно из преимуществ.",
+                "how_it_should_be": "Function URLs бесплатны и дают ниже латентность, чем платный путь через API Gateway."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Lambda работает с триггерами S3, DynamoDB Streams и Kinesis?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "S3, DynamoDB Streams и Kinesis всегда вызывают Lambda строго по одному событию на вызов — батчинга для этих источников не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эти источники доставляют события батчами в `event['Records']`, а размер регулируется `BatchSize`/`BatchWindow`.",
+                "source_of_confusion": "Простая модель «один event — один вызов» переносится и на потоковые источники.",
+                "if_it_were_true": "Тогда параметры `BatchSize`/`BatchWindow` были бы лишними, но они существуют именно ради батчинга.",
+                "how_it_should_be": "Источники шлют батч записей в `Records`; число записей на вызов настраивается `BatchSize`/`BatchWindow`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для S3-триггера Lambda получает в event само содержимое файла целиком, поэтому скачивать объект из бакета не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В event приходят метаданные (bucket и key), а не содержимое; сам объект функция читает из `S3` отдельно.",
+                "source_of_confusion": "Кажется логичным, что «триггер на файл» приносит и файл, хотя приходит лишь ссылка на него.",
+                "if_it_were_true": "Тогда большие файлы раздували бы payload, но в event лежат только `bucket`/`key`.",
+                "how_it_should_be": "Event несёт `bucket`+`key`; содержимое объекта скачивают из S3 по этим координатам."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это классический event-driven паттерн. **S3**: `PUT` объекта (например `photo.jpg`) триггерит функцию обработки. **DynamoDB Streams**: `INSERT`/`UPDATE`/`DELETE` порождают record об изменении. **Kinesis Data Streams**: опубликованные records обрабатываются батчами. Handler перебирает `event['Records']`, а настройки батча — `BatchSize`, `BatchWindow`, `MaxRetries`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Все три источника поставляют события в массиве `Records`, и Lambda обрабатывает их батчами. Это даёт реактивную обработку изменений в storage и потоках без постоянного polling вручную.",
+                "example": "На `PUT /my-bucket/uploads/photo.jpg` функция читает `record['s3']['bucket']['name']` и `record['s3']['object']['key']` и запускает обработку изображения.",
+                "when_to_apply": "Такие триггеры применяют для обработки загрузок в S3, реакции на изменения в `DynamoDB` и потоковой обработки записей из `Kinesis`.",
+                "edge_cases": "Поведение батчинга и ретраев регулируется `BatchSize`/`BatchWindow`/`MaxRetries`; для stream-источников порядок и ретраи завязаны на шарды.",
+                "related": "[[aws-lambda-interview#Q16]] SQS как trigger; [[aws-lambda-interview#Q17]] EventBridge поверх S3; [[aws-lambda-interview#Q21]] поведение stream-триггеров при throttling."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "DynamoDB Streams и Kinesis работают только при наличии API Gateway перед функцией, иначе события не дойдут.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это event source mappings: Lambda сама подключается к стримам без `API Gateway`, который нужен лишь для HTTP.",
+                "source_of_confusion": "Опыт «всё в Lambda идёт через API Gateway» ошибочно распространяют на потоковые источники.",
+                "if_it_were_true": "Тогда нельзя было бы обрабатывать стримы без HTTP-фронта, но они работают напрямую.",
+                "how_it_should_be": "Stream-источники подключаются через event source mapping; API Gateway нужен только для HTTP-триггеров."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает SQS как trigger для Lambda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Чтобы Lambda получала сообщения из SQS, нужно в коде функции вручную вызывать `receive_message` в бесконечном цикле — автоматического polling нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lambda автоматически опрашивает `SQS` через event source mapping и передаёт сообщения в `event['Records']`; ручной цикл не нужен.",
+                "source_of_confusion": "Опыт ручной работы с SQS-клиентом переносят на Lambda-триггер.",
+                "if_it_were_true": "Тогда функция должна была бы работать постоянно, что противоречит модели короткоживущих вызовов.",
+                "how_it_should_be": "Lambda сама polls очередь и вызывает handler с батчем сообщений; ручной `receive_message` не требуется."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "При ошибке обработки сообщение SQS сразу безвозвратно удаляется, поэтому ретраи и DLQ для SQS-триггера не применимы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При ошибке сообщение возвращается в очередь и повторяется, а после max retries уходит в DLQ.",
+                "source_of_confusion": "Успешный путь «обработал — удалил» распространяют и на ошибочный, теряя логику возврата.",
+                "if_it_were_true": "Тогда любая ошибка теряла бы данные, но именно для этого и предусмотрены retry и DLQ.",
+                "how_it_should_be": "Ошибка → сообщение возвращается в очередь (retry); после лимита попыток — в Dead Letter Queue."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Visibility timeout не влияет на SQS-триггер Lambda, поэтому его можно оставлять равным времени обработки или меньше без последствий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Слишком малый visibility timeout приводит к повторной выдаче сообщения и дубликатам; рекомендуют visibility ≈ 6 × Lambda timeout.",
+                "source_of_confusion": "Visibility timeout воспринимают как настройку только самой очереди, не связанную с обработкой.",
+                "if_it_were_true": "Тогда не было бы правила «visibility = 6 × timeout», но оно существует именно из-за этого риска.",
+                "how_it_should_be": "Visibility timeout ставят с запасом (≈6× времени функции), иначе сообщение всплывёт повторно и обработается дважды."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Lambda **автоматически polls** очередь `SQS`. Сообщение → функция → обработка → ack (удаление из очереди). При ошибке сообщение возвращается в очередь (retry), а после max retries уходит в **DLQ**. Батчинг: `BatchSize` до 10000 (standard) и 10 (FIFO); `ReportBatchItemFailures` даёт partial failure. Подвох: concurrency может упереться в visibility timeout — ставят visibility = 6 × timeout функции.",
+              "correct": true,
+              "sections": {
+                "explanation": "Lambda сама опрашивает очередь и подтверждает успешные сообщения их удалением. Частичные сбои в батче можно вернуть на повтор через `batchItemFailures`, не теряя удачно обработанные записи.",
+                "example": "Handler ловит исключение по сообщению и добавляет `{'itemIdentifier': record['messageId']}` в `batchItemFailures`, чтобы повторно обработать только упавшие записи, а не весь батч.",
+                "when_to_apply": "SQS-триггер берут для буферизации и сглаживания нагрузки, надёжной обработки с ретраями и DLQ для «битых» сообщений.",
+                "edge_cases": "Если visibility timeout мал относительно времени обработки, сообщение станет видимым повторно и вызовет дубликаты — поэтому ставят visibility ≈ 6 × Lambda timeout.",
+                "related": "[[aws-lambda-interview#Q15]] другие event-источники; [[aws-lambda-interview#Q21]] возврат сообщения при throttling; [[aws-lambda-interview#Q32]] частые ошибки (нет DLQ)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое EventBridge и зачем он поверх прямого S3 → Lambda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "**EventBridge** — это event bus с rules. Правило фильтрует события (например `source: aws.s3`, `detail-type: Object Created`) и триггерит Lambda. Поверх прямой связи S3 → Lambda он даёт: **несколько подписчиков** (Lambda + SNS + …), **фильтрацию** (только PDF), schemas/replay/archive, cross-account и cross-region, плюс 100+ SaaS-интеграций. В 2025 EventBridge предпочтителен для сложного роутинга событий.",
+              "correct": true,
+              "sections": {
+                "explanation": "EventBridge разводит события по правилам между многими потребителями, тогда как прямой триггер связывает источник с одной функцией. Это делает архитектуру слабосвязанной и расширяемой без переписывания источника.",
+                "example": "Одно событие `Object Created` из `S3` правило EventBridge рассылает сразу в Lambda и `SNS`, а фильтр пропускает только PDF-файлы.",
+                "when_to_apply": "EventBridge берут, когда у события несколько подписчиков, нужна фильтрация по содержимому, cross-account/region доставка или интеграция с SaaS.",
+                "edge_cases": "Для простейшего «один источник → одна функция» прямой триггер проще; archive/replay и schema registry — преимущества именно EventBridge, а не прямой привязки.",
+                "related": "[[aws-lambda-interview#Q15]] прямые триггеры S3/streams; [[aws-lambda-interview#Q18]] Step Functions для оркестрации; [[aws-lambda-interview#Q16]] SQS как источник."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "EventBridge — это сервис, заменяющий CloudWatch Logs: он собирает текстовые логи функций и индексирует их для поиска.",
+              "correct": false,
+              "sections": {
+                "what_actually": "EventBridge — это event bus для маршрутизации событий по правилам, а сбором логов занимается `CloudWatch Logs`.",
+                "source_of_confusion": "Оба относятся к экосистеме событий/наблюдаемости AWS, поэтому их роли смешивают.",
+                "if_it_were_true": "Тогда EventBridge не имел бы rules и подписчиков, но именно роутинг событий — его суть.",
+                "how_it_should_be": "EventBridge маршрутизирует события между подписчиками по rules; логи — это `CloudWatch Logs`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "EventBridge позволяет подписать на событие только одного потребителя, поэтому он не лучше прямого S3 → Lambda для fan-out.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главное преимущество EventBridge — множество подписчиков (Lambda + SNS + …) на одно событие, чего прямой триггер не даёт.",
+                "source_of_confusion": "Прямую модель «один источник — одна функция» переносят на event bus.",
+                "if_it_were_true": "Тогда не было бы смысла ставить EventBridge ради fan-out, но именно для этого его и берут.",
+                "how_it_should_be": "EventBridge раздаёт одно событие нескольким подписчикам сразу — это и есть его выигрыш над прямым триггером."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "EventBridge работает только внутри одного аккаунта и региона и не умеет фильтровать события по содержимому.",
+              "correct": false,
+              "sections": {
+                "what_actually": "EventBridge поддерживает cross-account/cross-region доставку и фильтрацию по `detail-type`/полям (например только PDF).",
+                "source_of_confusion": "Ограничения прямых триггеров приписывают и шине событий.",
+                "if_it_were_true": "Тогда исчезли бы его ключевые фичи (фильтрация, cross-account), но они и составляют его ценность.",
+                "how_it_should_be": "EventBridge умеет фильтрацию по содержимому и cross-account/region маршрутизацию событий."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужны Step Functions для оркестрации Lambda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Step Functions — это просто более быстрый рантайм для одной Lambda-функции, ускоряющий её выполнение, но не связывающий несколько функций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Step Functions оркестрируют несколько функций/сервисов в workflow, а не ускоряют исполнение одной функции.",
+                "source_of_confusion": "Слово «functions» в названии наводит на мысль об одной функции, хотя речь о цепочке states.",
+                "if_it_were_true": "Тогда не было бы states вроде `Validate`/`Process`/`Notify`, но они и составляют workflow.",
+                "how_it_should_be": "Step Functions связывают множество шагов (Lambda и сервисы) в управляемый state machine с ретраями."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "**Step Functions** — это визуальный workflow для связывания Lambda и AWS-сервисов в цепочку states (`Validate` → `Process` → `Notify`). Применяют для long-running workflows (заказы, approvals), Saga-паттерна, параллельной обработки и встроенной обработки ошибок/ретраев. Два типа: **Express** — high-volume, короткие (<5 мин), at-least-once; **Standard** — длинные (до 1 года), exactly-once.",
+              "correct": true,
+              "sections": {
+                "explanation": "Step Functions выносят логику оркестрации из кода функций в декларативный state machine, давая видимый граф, ретраи и обработку ошибок на уровне workflow. Это заменяет хрупкие цепочки вызовов «Lambda дёргает Lambda».",
+                "example": "Workflow обработки заказа описывает states `Validate`, `Process`, `Notify` через `arn` соответствующих функций, и Step Functions сам ведёт переходы и ретраи между ними.",
+                "when_to_apply": "Берут для долгих многошаговых процессов, Saga с компенсациями, параллельной обработки и там, где нужны декларативные retry/error-handling.",
+                "edge_cases": "Express подходит для коротких высокочастотных потоков (<5 мин, at-least-once), Standard — для долгих процессов до года с exactly-once; путать их семантику нельзя.",
+                "related": "[[aws-lambda-interview#Q23]] обход 15-минутного timeout; [[aws-lambda-interview#Q17]] EventBridge для роутинга; [[aws-lambda-interview#Q30]] когда использовать Lambda."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Express и Standard workflows идентичны по семантике: оба гарантируют exactly-once и оба рассчитаны на процессы длительностью до года.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Express — короткие (<5 мин), high-volume, at-least-once; Standard — до года, exactly-once; их семантика различается.",
+                "source_of_confusion": "Два типа workflow воспринимают как просто разные тарифы одного и того же.",
+                "if_it_were_true": "Тогда выбор типа не имел бы значения, но семантика доставки и длительность принципиально разные.",
+                "how_it_should_be": "Express: <5 мин, at-least-once, высокий объём; Standard: до 1 года, exactly-once."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Step Functions не умеют обрабатывать ошибки и ретраи — всю логику повторов нужно реализовывать вручную внутри каждой Lambda.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обработка ошибок и retry — встроенная фича Step Functions на уровне state machine, и это одна из причин их использовать.",
+                "source_of_confusion": "Ответственность за ретраи по привычке возлагают только на код функции.",
+                "if_it_were_true": "Тогда не было бы смысла выносить оркестрацию в Step Functions, но именно ради error-handling это и делают.",
+                "how_it_should_be": "Step Functions декларативно описывают retry/catch на уровне workflow, снимая эту логику с кода функций."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое concurrent executions в Lambda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Concurrent executions — это суммарное число запросов к функции за день; 1000 concurrent означает 1000 вызовов за сутки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Concurrency — это число одновременно выполняющихся вызовов в момент времени, а не суточный счётчик запросов.",
+                "source_of_confusion": "«1000» интуитивно читают как объём за период, а не как мгновенную одновременность.",
+                "if_it_were_true": "Тогда высоконагруженный сервис мгновенно упирался бы в лимит за день, но считается именно одновременность.",
+                "how_it_should_be": "Concurrent executions = число вызовов, исполняющихся прямо сейчас; за период их может быть сколько угодно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "У каждой функции по умолчанию есть собственный изолированный лимит concurrency, не зависящий от других функций аккаунта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию лимит общий на аккаунт; per-function изоляцию задают через reserved concurrency, иначе функции делят один пул.",
+                "source_of_confusion": "Кажется, что лимит привязан к функции, хотя по умолчанию он аккаунтный и общий.",
+                "if_it_were_true": "Тогда одна функция не могла бы выесть пул у других, но именно от этого защищает reserved concurrency.",
+                "how_it_should_be": "Пул concurrency общий на аккаунт; изоляция отдельной функции достигается reserved concurrency."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "**Concurrent executions** — это число функций, выполняющихся **в один момент времени**: 1000 concurrent = 1000 одновременно работающих вызовов. **Default account limit** — 1000 (увеличивается через support). Лимит **shared на весь аккаунт**: per-function отдельного лимита по умолчанию нет — все функции конкурируют за общий пул аккаунта.",
+              "correct": true,
+              "sections": {
+                "explanation": "Concurrency измеряет одновременность, а не суммарное число запросов. Поскольку пул общий на аккаунт, «жадная» функция может выесть весь лимит и затроттлить остальные, если не задать reserved concurrency.",
+                "example": "Если 1000 вызовов идут одновременно при лимите 1000, тысяча первый вызов будет затроттлен, пока какой-нибудь из текущих не завершится.",
+                "when_to_apply": "Понимание concurrency нужно при планировании пиков, настройке reserved concurrency и алармов на throttle, чтобы одна функция не положила остальные.",
+                "edge_cases": "Лимит — на аккаунт и регион; без reserved concurrency одна функция может занять весь пул, и тогда другие функции аккаунта начнут получать throttling.",
+                "related": "[[aws-lambda-interview#Q20]] reserved vs provisioned; [[aws-lambda-interview#Q21]] что при превышении лимита; [[aws-lambda-interview#Q22]] лимиты Lambda."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Default account limit на concurrent executions равен 100000 и его нельзя изменить ни через support, ни иначе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дефолтный лимит — 1000 на аккаунт, и его можно увеличить через support; 100000 по умолчанию неверно.",
+                "source_of_confusion": "Большие числа из других лимитов (например BatchSize) переносят на лимит concurrency.",
+                "if_it_were_true": "Тогда продакшен не упирался бы в 1000 и не было бы инцидентов «hit 1000 → service down», но они случаются.",
+                "how_it_should_be": "По умолчанию 1000 одновременных вызовов на аккаунт; лимит повышается по запросу в support."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем reserved concurrency отличается от provisioned concurrency?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Reserved concurrency делает окружения функции всегда тёплыми и устраняет cold start, а provisioned concurrency лишь ставит лимит на число вызовов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: provisioned держит окружения тёплыми (против cold start), а reserved — это лимит на одновременные вызовы.",
+                "source_of_confusion": "Оба термина содержат «concurrency», поэтому их роли легко поменять местами.",
+                "if_it_were_true": "Тогда reserved стоил бы дополнительно за прогрев, но платный прогрев — это именно provisioned.",
+                "how_it_should_be": "Reserved — лимит на конкурентность; provisioned — pre-warmed окружения против cold start."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Reserved concurrency не влияет на общий пул аккаунта: зарезервированные слоты добавляются сверх лимита и не уменьшают доступную остальным concurrency.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reserved вычитается из общего пула аккаунта, поэтому доступная остальным функциям concurrency уменьшается.",
+                "source_of_confusion": "Слово «reserved» наводит на мысль о дополнительной квоте сверху, хотя это доля общего пула.",
+                "if_it_were_true": "Тогда можно было бы резервировать бесконечно без последствий, но пул аккаунта конечен.",
+                "how_it_should_be": "Reserved concurrency вычитается из аккаунтного пула, ограничивая доступное другим функциям."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Provisioned concurrency бесплатна и не отличается по стоимости от обычных вызовов, поэтому её включают по умолчанию для всех функций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Provisioned concurrency стоит дополнительно (за прогретые среды, в том числе idle), поэтому её применяют точечно.",
+                "source_of_confusion": "Reserved-лимит действительно бесплатен, и это переносят на provisioned.",
+                "if_it_were_true": "Тогда cold start исчез бы у всех бесплатно, но прогрев сред оплачивается отдельно.",
+                "how_it_should_be": "Provisioned concurrency — платная фича за тёплые среды; reserved-лимит при этом бесплатен."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "**Reserved concurrency** — это **лимит** для конкретной функции (максимум одновременных вызовов), который **вычитается** из общего пула аккаунта; нужен, чтобы функция не съела всю concurrency. **Provisioned concurrency** — **pre-warmed окружения** (всегда готовы), за дополнительную плату; нужен для latency-sensitive эндпоинтов без cold start. Это два разных механизма.",
+              "correct": true,
+              "sections": {
+                "explanation": "Reserved управляет тем, *сколько* вызовов функции разрешено одновременно (и резервирует/ограничивает долю пула), а provisioned — тем, *насколько быстро* они стартуют, держа среды тёплыми. Один про лимит, другой про латентность.",
+                "example": "`put-function-concurrency --reserved-concurrent-executions 100` ограничивает функцию сотней одновременных вызовов; `put-provisioned-concurrency-config --provisioned-concurrent-executions 10` держит 10 сред прогретыми.",
+                "when_to_apply": "Reserved берут, чтобы изолировать функцию и не дать ей выесть пул аккаунта; provisioned — для критичных по латентности эндпоинтов, где cold start неприемлем.",
+                "edge_cases": "Reserved не делает окружения тёплыми (cold start остаётся), а provisioned стоит дополнительно даже в простое; их часто путают именно потому, что оба про «concurrency».",
+                "related": "[[aws-lambda-interview#Q8]] provisioned concurrency подробнее; [[aws-lambda-interview#Q19]] concurrent executions; [[aws-lambda-interview#Q21]] throttling при лимите."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что происходит при превышении concurrency limit в Lambda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Поведение зависит от типа триггера. **Synchronous (`API Gateway`)** — клиент получает HTTP 429 и ретраит сам. **Async (`S3`, `SNS`)** — Lambda ретраит (до 6 часов), затем шлёт в DLQ. **SQS** — сообщение возвращается в очередь и повторяется. **Kinesis/DynamoDB Streams** — Lambda ретраит, блокируя обработку шарда. Best practice: мониторить concurrency-метрики и ставить алармы на throttle-ошибки.",
+              "correct": true,
+              "sections": {
+                "explanation": "При throttling Lambda не теряет события молча: для каждого типа источника есть своя стратегия (429 клиенту, async-ретраи с DLQ, возврат в очередь, блокировка шарда). Понимание этих веток нужно, чтобы не потерять данные при пиках.",
+                "example": "При всплеске трафика через `API Gateway` лишние запросы получают HTTP 429, и клиент должен ретраить с backoff; те же события из `S3` (async) Lambda сама повторяет до 6 часов.",
+                "when_to_apply": "Эти различия учитывают при проектировании отказоустойчивости: настраивают DLQ для async/SQS, ретраи на клиенте для sync и алармы на метрики throttle.",
+                "edge_cases": "Для Kinesis/DynamoDB Streams throttling блокирует обработку шарда (упорядоченность), поэтому застрявший батч может тормозить весь поток до успешной обработки или истечения ретраев.",
+                "related": "[[aws-lambda-interview#Q19]] concurrent executions; [[aws-lambda-interview#Q16]] SQS-ретраи и DLQ; [[aws-lambda-interview#Q22]] лимиты Lambda."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "При превышении лимита Lambda всегда молча отбрасывает событие без ретраев и без DLQ, независимо от типа триггера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поведение зависит от типа: sync → 429, async → ретраи и DLQ, SQS → возврат в очередь, streams → блокировка шарда; молчаливой потери нет.",
+                "source_of_confusion": "Throttling упрощённо воспринимают как «запрос потерян», игнорируя разные стратегии источников.",
+                "if_it_were_true": "Тогда async-события терялись бы навсегда, но Lambda ретраит их до 6 часов и шлёт в DLQ.",
+                "how_it_should_be": "У каждого типа триггера своя реакция на throttle: 429, async-retry+DLQ, возврат в SQS, блокировка шарда."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для синхронного вызова через API Gateway при throttling Lambda сама бесконечно ретраит запрос на стороне сервера, ничего не возвращая клиенту.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для sync-вызова клиент получает HTTP 429 и должен ретраить сам; серверных ретраев у синхронного пути нет.",
+                "source_of_confusion": "Логику async-ретраев ошибочно распространяют на синхронный путь.",
+                "if_it_were_true": "Тогда клиент висел бы в ожидании без ответа, но он получает явный 429 для собственного retry.",
+                "how_it_should_be": "Sync (API Gateway): возвращается 429, ретрай — ответственность клиента; серверные ретраи — у async."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При throttling сообщения из SQS немедленно удаляются и отправляются в DLQ, минуя возврат в очередь.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При throttling сообщение возвращается в очередь и повторяется; в DLQ оно попадает лишь после исчерпания ретраев.",
+                "source_of_confusion": "Финальный исход (DLQ) принимают за немедленную реакцию, пропуская промежуточный возврат в очередь.",
+                "if_it_were_true": "Тогда первая же перегрузка отправляла бы сообщения в DLQ, но сперва идут повторные попытки из очереди.",
+                "how_it_should_be": "SQS при throttle возвращает сообщение в очередь для retry; DLQ — только после max retries."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные лимиты у Lambda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Максимальный timeout Lambda — 1 час, а размер sync-payload не ограничен, поэтому можно передавать гигабайтные тела запросов напрямую.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Timeout — 15 минут, а sync-payload ограничен 6 MB; большие данные передают через `S3`, а не телом запроса.",
+                "source_of_confusion": "Лимиты Lambda завышают по аналогии с менее ограниченными сервисами.",
+                "if_it_were_true": "Тогда не было бы паттерна «ссылка на S3 вместо payload», но он применяется именно из-за лимита 6 MB.",
+                "how_it_should_be": "Timeout — 15 минут, sync-payload — 6 MB; крупные данные идут через `S3`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Ключевые лимиты: память **128 MB – 10 GB**, timeout **15 минут**, ZIP-пакет **250 MB unzipped**, container image **10 GB**, `/tmp` **512 MB – 10 GB**, concurrent executions **1000** (default, увеличивается), environment variables **4 KB** суммарно, **5 layers** на функцию, payload sync-запроса **6 MB**, async-запроса **256 KB**, response **6 MB**. При упоре в лимит меняют архитектуру (split, Step Functions, ECS).",
+              "correct": true,
+              "sections": {
+                "explanation": "Лимиты задают границы применимости Lambda: размер кода, времени, payload и concurrency. Когда задача в них не помещается, это сигнал переразбить работу или вынести её в другой сервис.",
+                "example": "Sync-вызов с payload >6 MB не пройдёт, поэтому большие данные передают через `S3` (по ссылке), а не в теле запроса.",
+                "when_to_apply": "Лимиты держат в голове при дизайне: подбирают память/timeout, выбирают ZIP vs container, решают, когда уходить в `Step Functions`/`Fargate`/`ECS`.",
+                "edge_cases": "Payload-лимиты различаются для sync (6 MB) и async (256 KB); `/tmp` можно расширять до 10 GB, а concurrency 1000 — мягкий лимит, повышаемый через support.",
+                "related": "[[aws-lambda-interview#Q23]] обход 15-минутного timeout; [[aws-lambda-interview#Q9]] memory/CPU/timeout; [[aws-lambda-interview#Q19]] concurrent executions."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Размер `/tmp` в Lambda жёстко равен 512 MB и не настраивается, поэтому больше временного места получить нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`/tmp` настраивается от 512 MB до 10 GB, поэтому при необходимости временное хранилище можно расширить.",
+                "source_of_confusion": "Старое дефолтное значение 512 MB запоминают как единственно возможное.",
+                "if_it_were_true": "Тогда задачи с большими временными файлами не помещались бы, но `/tmp` поднимают до 10 GB.",
+                "how_it_should_be": "`/tmp` конфигурируется в диапазоне 512 MB – 10 GB под нужды функции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Лимит concurrent executions (1000) является жёстким и неизменяемым, поэтому масштабировать сервис выше 1000 одновременных вызовов невозможно в принципе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "1000 — это мягкий дефолтный лимит на аккаунт, который повышается через support при необходимости.",
+                "source_of_confusion": "Дефолтное значение принимают за абсолютный потолок платформы.",
+                "if_it_were_true": "Тогда крупные продакшены не работали бы на Lambda, но лимит штатно увеличивают по запросу.",
+                "how_it_should_be": "1000 concurrent — мягкий дефолт; его поднимают через support под высоконагруженные сценарии."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обойти 15-минутный timeout Lambda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно поднять timeout функции в настройках до 60 минут — Lambda официально поддерживает это для длинных задач.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Максимальный timeout — 15 минут и его нельзя превысить; для более долгих задач уходят в `Step Functions`/`Batch`/`Fargate`.",
+                "source_of_confusion": "Наличие настройки timeout создаёт иллюзию, что её можно поднять сколь угодно высоко.",
+                "if_it_were_true": "Тогда не было бы паттернов обхода лимита, но они существуют именно потому, что 15 минут — потолок.",
+                "how_it_should_be": "Timeout жёстко ограничен 15 минутами; долгие задачи выносят в другие сервисы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Единственный способ — переписать задачу так, чтобы она всегда укладывалась в 15 минут; никакие другие сервисы для long-running на AWS не подходят.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для длинных задач есть `AWS Batch`, `ECS/Fargate`, `EC2` без лимита времени и `Step Functions` до года; переписывание не единственный путь.",
+                "source_of_confusion": "Фокус на самой Lambda заслоняет соседние сервисы для тяжёлых нагрузок.",
+                "if_it_were_true": "Тогда видеотранскодинг и большие ETL были бы невозможны на AWS, но их и гоняют на Batch/Fargate.",
+                "how_it_should_be": "Долгие задачи переносят в Batch/Fargate/EC2 или дробят через Step Functions, а не только переписывают."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Если задача дольше 15 минут, её выносят за пределы одной функции: **split** на меньшие Lambda, **Step Functions** (цепочка функций до 1 года), **AWS Batch** для настоящих long-running jobs, **ECS/Fargate** (контейнеры без лимита времени) или **EC2** (полный контроль). Частый паттерн: Lambda триггерит `Fargate`-task для тяжёлой работы.",
+              "correct": true,
+              "sections": {
+                "explanation": "15 минут — жёсткий лимит исполнения функции, поэтому долгие задачи либо дробят на шаги, либо переносят в сервисы без лимита времени. Lambda при этом часто остаётся как оркестратор/триггер.",
+                "example": "Lambda принимает запрос и запускает `Fargate`-task, который часами обрабатывает большой датасет, тогда как сама функция завершается за секунды.",
+                "when_to_apply": "Эти варианты применяют для batch-обработки, ETL, видеотранскодинга и любых процессов, не укладывающихся в 15 минут.",
+                "edge_cases": "Split и Step Functions сохраняют serverless-модель, но добавляют сложность координации; `EC2`/`Fargate` снимают лимит времени ценой управления инфраструктурой.",
+                "related": "[[aws-lambda-interview#Q22]] лимиты Lambda; [[aws-lambda-interview#Q18]] Step Functions; [[aws-lambda-interview#Q30]] когда не использовать Lambda."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Можно бесконечно продлевать выполнение, рекурсивно вызывая ту же Lambda из самой себя перед истечением 15 минут без какой-либо координации состояния.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наивная самопересекающаяся рекурсия теряет контекст и рискует runaway-вызовами; для шагов используют `Step Functions` с управляемым состоянием.",
+                "source_of_confusion": "Идея «продолжить с того же места» кажется простой, но состояние между вызовами не сохраняется автоматически.",
+                "if_it_were_true": "Тогда не нужны были бы Step Functions, но именно они дают надёжную передачу состояния между шагами.",
+                "how_it_should_be": "Многошаговые длинные процессы оркестрируют через Step Functions с явным state, а не слепой self-recursion."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как и зачем запускать Lambda в VPC?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Lambda по умолчанию уже находится внутри вашего VPC и имеет прямой доступ ко всем приватным ресурсам без дополнительной настройки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию Lambda НЕ в VPC; для доступа к приватным ресурсам её явно конфигурируют через `VpcConfig`.",
+                "source_of_confusion": "Привычка, что «всё в облаке внутри VPC», ложно распространяется на Lambda по умолчанию.",
+                "if_it_were_true": "Тогда не нужен был бы `VpcConfig` с `SubnetIds`, но именно он и включает VPC-режим.",
+                "how_it_should_be": "По умолчанию функция вне VPC; доступ к приватным ресурсам даёт явная `VpcConfig`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "После помещения в VPC Lambda автоматически сохраняет прямой выход в интернет, и NAT Gateway для исходящих запросов не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В VPC функция теряет дефолтный интернет; для исходящего трафика нужен NAT Gateway (или VPC endpoints).",
+                "source_of_confusion": "Дефолтный интернет вне VPC ошибочно считают сохраняющимся и внутри VPC.",
+                "if_it_were_true": "Тогда не было бы классической ошибки «VPC без NAT — нет интернета», но она частая.",
+                "how_it_should_be": "VPC-функции для выхода наружу нужен NAT Gateway; иначе исходящие запросы в интернет не пройдут."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Размещение Lambda в VPC задаётся одним флагом `--internet-only` и не требует ни subnets, ни security groups.",
+              "correct": false,
+              "sections": {
+                "what_actually": "VPC-конфигурация задаётся через `SubnetIds` и `SecurityGroupIds` в `VpcConfig`; такого флага `--internet-only` нет.",
+                "source_of_confusion": "Желание простого тумблера подменяет реальную сетевую конфигурацию subnets/SG.",
+                "if_it_were_true": "Тогда не пришлось бы указывать подсети и группы безопасности, но без них VPC-режим не настроить.",
+                "how_it_should_be": "VPC включают, указывая `SubnetIds` и `SecurityGroupIds`; функция получает ENI в подсети."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Lambda помещают в VPC через `VpcConfig` (`SubnetIds` + `SecurityGroupIds`), чтобы получить доступ к ресурсам внутри VPC (`RDS` в private subnet, внутренние сервисы). По умолчанию Lambda **не в VPC** и имеет интернет через AWS-managed сеть. В VPC функция получает **ENI в subnet**, и для выхода в интернет ей нужен **NAT Gateway**.",
+              "correct": true,
+              "sections": {
+                "explanation": "VPC-конфигурация даёт сетевую изоляцию и доступ к приватным ресурсам, но меняет модель сети: функция теряет дефолтный интернет и ходит наружу только через NAT. Это компромисс между приватным доступом и интернет-связностью.",
+                "example": "Чтобы функция читала `RDS` в private subnet, ей задают `SubnetIds`/`SecurityGroupIds`; для исходящих вызовов к внешнему API в той же конфигурации нужен NAT Gateway.",
+                "when_to_apply": "В VPC помещают функции, которым нужен доступ к приватным `RDS`, внутренним сервисам или ресурсам без публичного эндпоинта.",
+                "edge_cases": "Без NAT Gateway VPC-функция теряет выход в интернет — частая ошибка конфигурации; вне VPC интернет есть из коробки через managed-сеть AWS.",
+                "related": "[[aws-lambda-interview#Q25]] cold start в VPC раньше и сейчас; [[aws-lambda-interview#Q32]] частые ошибки (VPC misconfig); [[aws-lambda-interview#Q6]] VPC и cold start."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Cold start в VPC — раньше был проблемой, что изменилось?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "**До 2019**: ENI прикреплялся при cold start → добавлял ~10–15 секунд задержки, что было очень болезненно, и потому советовали избегать VPC. **С 2019 (Hyperplane ENI)**: ENI стал **shared** между вызовами Lambda → overhead упал до ~10–50 мс, то есть минимален. В 2025 Lambda в VPC — это нормально, прежний совет «избегайте VPC» больше не актуален.",
+              "correct": true,
+              "sections": {
+                "explanation": "Раньше создание ENI на каждый cold start добавляло секунды, поэтому VPC реально вредил латентности. Hyperplane ENI сделал сетевой интерфейс общим, и накладные расходы упали до десятков миллисекунд.",
+                "example": "До 2019 первый VPC-вызов мог стоить лишних ~10–15 секунд на привязку ENI; после Hyperplane тот же оверхед — порядка ~10–50 мс, незаметных для пользователя.",
+                "when_to_apply": "Это знание применяют, опровергая устаревший совет «не используйте VPC из-за cold start»: сегодня VPC выбирают по требованиям доступа, а не по страху латентности.",
+                "edge_cases": "Старые статьи и собеседники могут ссылаться на ~10–15 сек оверхеда — это доисторический pre-2019 расклад, не относящийся к современной Lambda.",
+                "related": "[[aws-lambda-interview#Q24]] Lambda в VPC; [[aws-lambda-interview#Q5]] что такое cold start; [[aws-lambda-interview#Q6]] минимизация cold start и VPC."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "VPC и сейчас добавляет к cold start фиксированные ~10–15 секунд, поэтому в 2025 Lambda в VPC по-прежнему стоит избегать любой ценой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С 2019 (Hyperplane ENI) оверхед упал до ~10–50 мс, поэтому совет избегать VPC устарел.",
+                "source_of_confusion": "Старые рекомендации pre-2019 пересказывают как актуальные.",
+                "if_it_were_true": "Тогда VPC-функции были бы непригодны для API, но сегодня они работают с минимальной задержкой.",
+                "how_it_should_be": "Современный VPC-оверхед — порядка ~10–50 мс; прежние ~10–15 сек остались до 2019 года."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Hyperplane ENI ускорил VPC-холодный старт за счёт того, что полностью убрал необходимость в ENI для Lambda в VPC.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ENI не исчез — он стал shared между вызовами; именно общий интерфейс, а не его отсутствие, снизил оверхед.",
+                "source_of_confusion": "«Стало быстро» трактуют как «ENI больше нет», хотя он просто переиспользуется.",
+                "if_it_were_true": "Тогда функция не получала бы сетевой интерфейс в подсети, но ENI по-прежнему присутствует.",
+                "how_it_should_be": "Hyperplane сделал ENI общим между вызовами, убрав привязку на каждый cold start, но не сам ENI."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Проблема VPC cold start была решена ещё в 2014 году вместе с запуском Lambda, поэтому она никогда не была заметной.",
+              "correct": false,
+              "sections": {
+                "what_actually": "До 2019 оверхед VPC был очень болезненным (~10–15 сек) и решился именно с Hyperplane ENI, а не в 2014.",
+                "source_of_confusion": "Хронологию улучшений сдвигают к запуску сервиса, стирая реальный период проблемы.",
+                "if_it_were_true": "Тогда не существовало бы массового совета «избегайте VPC», но он годами был общепринятым.",
+                "how_it_should_be": "Проблема была острой до 2019 и устранена Hyperplane ENI, а не на старте Lambda в 2014."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "SAM, CDK, Serverless Framework — чем отличаются инструменты деплоя Lambda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "AWS CDK — это декларативный YAML-формат без возможности писать логику на языке программирования, фактически синоним SAM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CDK как раз императивный: инфраструктуру описывают кодом на `Python`/`TypeScript`, а декларативный YAML — это SAM.",
+                "source_of_confusion": "Оба — AWS-нативные IaC, поэтому их парадигмы смешивают.",
+                "if_it_were_true": "Тогда в CDK нельзя было бы использовать циклы и абстракции языка, но это его ключевое преимущество.",
+                "how_it_should_be": "CDK — императивный код (`Python`/`TS`); SAM — декларативный YAML; это разные подходы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "**AWS SAM** — AWS-нативный, простой YAML (`AWS::Serverless::Function`), деплой через `sam deploy`. **AWS CDK** — императивный (код на `Python`/`TS`), мощный. **Serverless Framework** — multi-cloud (AWS, GCP, Azure). **Terraform** — multi-cloud со state management. В 2025: CDK для серьёзных AWS-only проектов, Serverless Framework для multi-cloud.",
+              "correct": true,
+              "sections": {
+                "explanation": "Инструменты различаются парадигмой (декларативный YAML vs императивный код) и охватом (AWS-only vs multi-cloud). Выбор определяется тем, нужен ли вам только AWS, нужна ли логика на языке программирования и переносимость между облаками.",
+                "example": "В CDK функцию описывают кодом: `lambda_.Function(self, 'MyFn', runtime=PYTHON_3_11, handler='app.handler', code=Code.from_asset('src/'))` — это полноценный `Python`, а не YAML.",
+                "when_to_apply": "SAM/CDK берут для AWS-only (SAM проще, CDK мощнее), Serverless Framework и Terraform — когда нужна переносимость на несколько облаков.",
+                "edge_cases": "CDK даёт всю мощь языка (циклы, абстракции), но сложнее декларативного SAM; Serverless Framework универсален, но менее «AWS-родной», чем SAM/CDK.",
+                "related": "[[aws-lambda-interview#Q27]] versions/aliases/traffic shifting; [[aws-lambda-interview#Q31]] best practices; [[aws-lambda-interview#Q3]] runtimes."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "AWS SAM поддерживает деплой в AWS, GCP и Azure из одного шаблона, поэтому это лучший выбор для multi-cloud.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SAM — AWS-нативный и AWS-only; multi-cloud дают `Serverless Framework` и `Terraform`.",
+                "source_of_confusion": "Слово «Serverless» в названиях разных инструментов путает их охват.",
+                "if_it_were_true": "Тогда не было бы смысла в Serverless Framework для multi-cloud, но именно он покрывает несколько облаков.",
+                "how_it_should_be": "SAM — только AWS; для AWS+GCP+Azure берут Serverless Framework или Terraform."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Serverless Framework работает исключительно с AWS Lambda и не умеет деплоить функции в другие облака.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Serverless Framework как раз multi-cloud и поддерживает AWS, GCP и Azure; AWS-only — это SAM/CDK.",
+                "source_of_confusion": "Название «Serverless» ассоциируют только с Lambda, упуская поддержку других провайдеров.",
+                "if_it_were_true": "Тогда у него не было бы преимущества переносимости, но именно multi-cloud — его сильная сторона.",
+                "how_it_should_be": "Serverless Framework — multi-cloud (AWS/GCP/Azure); AWS-only инструменты — это SAM и CDK."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают Lambda versions, aliases и traffic shifting?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Lambda versions изменяемы: опубликованную версию `my-fn:2` можно переписать новым кодом, не создавая `my-fn:3`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Versions неизменяемы — это снапшоты; новый код публикуется как новая версия, а старую переписать нельзя.",
+                "source_of_confusion": "Привычка к мутабельным деплоям переносится на immutable-версии Lambda.",
+                "if_it_were_true": "Тогда canary и откат были бы ненадёжны, но именно immutability версий и делает их безопасными.",
+                "how_it_should_be": "Каждая публикация — новая неизменяемая версия; правок «на месте» у версий нет."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Alias — это просто человекочитаемое имя одной версии без возможности распределять трафик между версиями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Alias поддерживает traffic shifting между версиями (`AdditionalVersionWeights`), что и используют для canary.",
+                "source_of_confusion": "Алиас воспринимают как статический указатель, упуская weighted-роутинг.",
+                "if_it_were_true": "Тогда canary-деплой был бы невозможен через алиасы, но он строится именно на них.",
+                "how_it_should_be": "Alias умеет распределять трафик между версиями (например 90/10) для постепенного выката."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "**Versions** — неизменяемые снапшоты функции (`my-fn:1`, `my-fn:2`, …). **Aliases** — указатели на версии (`prod → my-fn:2`, `staging → my-fn:3`). **Traffic shifting** на alias распределяет трафик между версиями (`prod: 90% v2 + 10% v3` — canary). Настраивается через `update-alias` с `--routing-config AdditionalVersionWeights`. Use case: безопасные деплои через canary.",
+              "correct": true,
+              "sections": {
+                "explanation": "Версии фиксируют immutable-состояние кода, алиасы дают стабильное имя поверх версий, а traffic shifting на алиасе позволяет постепенно переливать трафик на новую версию. Вместе это даёт безопасный canary-деплой.",
+                "example": "`update-alias --name prod --function-version 3 --routing-config AdditionalVersionWeights={'2'=0.9}` отправляет 10% трафика на v3 и 90% на v2 для проверки новой версии.",
+                "when_to_apply": "Versions/aliases/traffic shifting используют для канареечных и blue-green деплоев, чтобы выкатывать новый код порциями и быстро откатываться.",
+                "edge_cases": "Versions неизменяемы — нельзя «поправить» опубликованную версию, только выпустить новую; алиас же можно мгновенно переключить обратно на старую версию при проблеме.",
+                "related": "[[aws-lambda-interview#Q26]] инструменты деплоя; [[aws-lambda-interview#Q31]] best practices (versioning); [[aws-lambda-interview#Q28]] наблюдаемость для деплоев."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Traffic shifting в Lambda настраивается только на уровне API Gateway и не имеет отношения к alias функции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Weighted traffic shifting задаётся на alias функции через `--routing-config`, независимо от API Gateway.",
+                "source_of_confusion": "Маршрутизацию трафика привычно связывают со шлюзом, а не с самой функцией.",
+                "if_it_were_true": "Тогда canary не работал бы для не-HTTP триггеров, но alias-роутинг от шлюза не зависит.",
+                "how_it_should_be": "Traffic shifting настраивается на alias функции и работает для любых триггеров, не только HTTP."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроены CloudWatch Logs и X-Ray для наблюдаемости Lambda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Логирование в Lambda нужно настраивать вручную: подключать агент и явно отправлять логи в CloudWatch, иначе `print` никуда не попадёт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CloudWatch Logs работает автоматически: каждый `print`/`console.log` уходит в log group `/aws/lambda/<function-name>` без агента.",
+                "source_of_confusion": "Опыт настройки логирующих агентов на серверах переносят на Lambda.",
+                "if_it_were_true": "Тогда без настройки не было бы вообще никаких логов функции, но они появляются из коробки.",
+                "how_it_should_be": "CloudWatch Logs включён автоматически; stdout/stderr handler-а попадают в CloudWatch без агента."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "По умолчанию логи в CloudWatch автоматически удаляются через 24 часа, поэтому о стоимости их хранения можно не думать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию retention — never expire, и логи копятся, увеличивая счёт; поэтому TTL ставят вручную.",
+                "source_of_confusion": "Кажется логичным, что временные логи функций должны быстро удаляться, но дефолт — вечное хранение.",
+                "if_it_were_true": "Тогда не было бы рекомендации настраивать retention, но она присутствует ради экономии.",
+                "how_it_should_be": "Дефолтный retention — бессрочный; чтобы не платить лишнее, явно задают TTL на log group."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "X-Ray — это альтернатива CloudWatch Logs для хранения текстовых логов, а никакой трассировки запросов он не делает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "X-Ray — это distributed tracing (спаны, путь запроса через сервисы), а текстовые логи остаются в CloudWatch Logs.",
+                "source_of_confusion": "Оба относятся к observability, поэтому роли логов и трейсинга смешивают.",
+                "if_it_were_true": "Тогда не было бы декораторов `capture` для спанов, но трассировка — основная функция X-Ray.",
+                "how_it_should_be": "X-Ray трассирует запросы (спаны/латентность по сервисам); логи хранит CloudWatch Logs."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "**CloudWatch Logs** включается автоматически: log group `/aws/lambda/<function-name>`, каждый `print`/`console.log` уходит в CloudWatch, retention настраивается (по умолчанию — never expire = $$$). **X-Ray** — distributed tracing (`@xray_recorder.capture(...)`). **Lambda Insights** — system-метрики (CPU, память). **Lambda Powertools** (Python/TS/Java/.NET) — утилиты для logging, metrics, tracing через декораторы handler.",
+              "correct": true,
+              "sections": {
+                "explanation": "CloudWatch Logs даёт логи из коробки, X-Ray — трассировку запросов через сервисы, Insights — системные метрики, Powertools — удобные обёртки для структурированных логов/метрик/трейсов. Вместе это покрывает наблюдаемость функции.",
+                "example": "Декораторы `@tracer.capture_lambda_handler`, `@logger.inject_lambda_context`, `@metrics.log_metrics` из `Lambda Powertools` автоматически добавляют трассировку, контекст и метрики к handler.",
+                "when_to_apply": "X-Ray и Powertools включают для отладки латентности и распределённых вызовов; retention в CloudWatch настраивают, чтобы не платить за вечное хранение логов.",
+                "edge_cases": "По умолчанию логи в CloudWatch не истекают и копят стоимость; избыточное логирование тоже дорого — поэтому ставят TTL и не логируют лишнее.",
+                "related": "[[aws-lambda-interview#Q29]] скрытые costs (логи); [[aws-lambda-interview#Q31]] best practices (retention); [[aws-lambda-interview#Q32]] частые ошибки (logging too much)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как анализировать стоимость Lambda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Pricing складывается из **per-invocation** ($0.20 за 1M вызовов) и **per-duration** ($0.0000166667 за GB-секунду). Например, 1M вызовов × 100ms × 512 MB ≈ $0.20 + $0.83 = ~$1.03. Оптимизация: right memory (`Lambda Power Tuning`), ARM (Graviton2, −20%), избегать лишних cold start. Скрытые costs: ingestion CloudWatch Logs, VPC ENI, data transfer, API Gateway.",
+              "correct": true,
+              "sections": {
+                "explanation": "Счёт за Lambda — это сумма платы за число вызовов и за длительность × память. Поэтому подбор памяти, архитектуры ARM и контроль cold start напрямую влияют на стоимость, а скрытые расходы (логи, трафик, шлюз) часто недооценивают.",
+                "example": "1M вызовов по 100 мс на 512 MB дают ~$0.20 (invocations) + ~$0.83 (duration) ≈ $1.03 — без учёта логов и API Gateway.",
+                "when_to_apply": "Анализ стоимости делают при росте счёта: подбирают память Power Tuning-ом, переходят на ARM, режут лишние логи и пересматривают provisioned concurrency.",
+                "edge_cases": "Скрытые статьи (CloudWatch ingestion, VPC ENI, data transfer, API Gateway) могут превысить стоимость самих вызовов — их нельзя забывать в расчёте.",
+                "related": "[[aws-lambda-interview#Q12]] ARM для экономии; [[aws-lambda-interview#Q9]] память и стоимость; [[aws-lambda-interview#Q28]] стоимость логов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Стоимость Lambda зависит только от числа вызовов и не зависит от длительности выполнения или объёма памяти.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Биллинг включает per-duration составляющую (GB-секунды), поэтому время и память напрямую влияют на счёт.",
+                "source_of_confusion": "Простую модель «платим за запросы» переносят на Lambda, игнорируя duration-компонент.",
+                "if_it_were_true": "Тогда подбор памяти не влиял бы на цену, но `Lambda Power Tuning` существует именно ради этого.",
+                "how_it_should_be": "Цена = per-invocation + per-duration (GB-секунды); длительность и память влияют на стоимость."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Скрытых costs у Lambda нет: счёт всегда равен ровно сумме invocation + duration, а логи, трафик и API Gateway бесплатны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CloudWatch ingestion, VPC ENI, data transfer и API Gateway — реальные скрытые статьи расходов сверх стоимости вызовов.",
+                "source_of_confusion": "Видимую формулу принимают за полный счёт, забывая о сопутствующих сервисах.",
+                "if_it_were_true": "Тогда не было бы предупреждений о скрытых costs, но они явно перечислены.",
+                "how_it_should_be": "К стоимости вызовов добавляются логи, VPC ENI, data transfer и API Gateway — их учитывают в расчёте."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Переход на ARM (Graviton2) увеличивает стоимость примерно на 20%, поэтому ради экономии нужно оставаться на x86.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ARM/Graviton2 как раз дешевле примерно на 20%, поэтому его и рекомендуют для снижения стоимости.",
+                "source_of_confusion": "Направление эффекта ARM на цену путают, считая новую архитектуру дороже.",
+                "if_it_were_true": "Тогда ARM не значился бы в способах оптимизации, но он там как раз ради экономии.",
+                "how_it_should_be": "ARM/Graviton2 дешевле примерно на 20% — это инструмент снижения, а не роста стоимости."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда использовать Lambda, а когда нет?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Lambda оптимальна для любого стабильно высокого throughput с постоянной нагрузкой 24/7 — это всегда дешевле, чем EC2 или Fargate.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На постоянной высокой нагрузке EC2/Fargate обычно дешевле; Lambda выгодна на нерегулярном и всплесковом трафике.",
+                "source_of_confusion": "Auto-scaling Lambda принимают за универсальное экономическое преимущество на любом профиле.",
+                "if_it_were_true": "Тогда не было бы break-even ~50K req/day, но он существует именно как граница выгодности.",
+                "how_it_should_be": "Lambda дешевле на спайках и нерегулярной нагрузке; на стабильном высоком трафике берут EC2/Fargate."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "**Использовать** для event-driven обработки (`S3`, `DynamoDB streams`), HTTP API с непредсказуемым трафиком, cron/scheduled-задач, webhooks, glue-кода, real-time stream-обработки и spike-трафика (auto-scale). **Не использовать** для задач >15 минут, стабильно высокого throughput (дешевле EC2/Fargate), WebSocket-соединений, ML-инференса с большими моделями, тяжёлых фреймворков (Spring Boot) и stateful-приложений. Break-even ≈ **50K req/day** или постоянная нагрузка.",
+              "correct": true,
+              "sections": {
+                "explanation": "Lambda сильна на нерегулярной, событийной и всплесковой нагрузке, где auto-scaling и pay-per-use выгодны. На постоянном высоком трафике и долгих/stateful-задачах дешевле и удобнее EC2/Fargate.",
+                "example": "Webhook с редкими всплесками идеален для Lambda, а сервис с постоянными тысячами RPS дешевле держать на `Fargate`/`EC2`, где не платишь премию за serverless.",
+                "when_to_apply": "Выбор делают по профилю нагрузки: нерегулярный/событийный → Lambda; стабильно высокий/долгий/stateful → контейнеры или инстансы.",
+                "edge_cases": "Ориентир break-even — ~50K req/day или постоянная нагрузка: ниже — Lambda дешевле, выше — выгоднее EC2; WebSocket и большие ML-модели плохо ложатся на Lambda.",
+                "related": "[[aws-lambda-interview#Q23]] обход 15-минутного лимита; [[aws-lambda-interview#Q29]] анализ стоимости; [[aws-lambda-interview#Q32]] частые ошибки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Lambda идеально подходит для долгоживущих WebSocket-соединений, так как держит соединение открытым сколько угодно долго.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lambda короткоживущая (до 15 минут) и не держит постоянные соединения; для WebSocket берут API Gateway WebSocket или ALB.",
+                "source_of_confusion": "Способность обрабатывать запросы путают со способностью держать длительные соединения.",
+                "if_it_were_true": "Тогда WebSocket не значился бы в «не использовать», но он там именно из-за лимита времени.",
+                "how_it_should_be": "Постоянные WebSocket-соединения держат через API Gateway WebSocket/ALB, а не на самой Lambda."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Lambda — лучший выбор для ML-инференса с большими моделями, потому что cold start и память не создают здесь никаких проблем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Большие ML-модели страдают от cold start и лимита памяти 10 GB, поэтому Lambda для них плохо подходит.",
+                "source_of_confusion": "Удобство развёртывания Lambda распространяют и на тяжёлый инференс без учёта ограничений.",
+                "if_it_were_true": "Тогда ML-инференс не попал бы в список «не use Lambda», но он там из-за cold start и памяти.",
+                "how_it_should_be": "Тяжёлый ML-инференс лучше держать на сервисах без жёстких ограничений по памяти и старту."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие best practices для Lambda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Лучшая практика — создавать SDK-клиенты и пулы соединений внутри handler на каждом вызове, чтобы гарантировать свежее состояние.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Клиенты и пулы создают вне handler (в init), чтобы переиспользовать их при warm-вызовах и не платить за пересоздание.",
+                "source_of_confusion": "Стремление к «чистому» состоянию на каждом вызове противоречит модели переиспользования окружения.",
+                "if_it_were_true": "Тогда warm-вызовы не давали бы выигрыша, но именно init вне handler делает их быстрыми.",
+                "how_it_should_be": "Дорогую инициализацию выносят вне handler — она переиспользуется тёплыми вызовами."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`/tmp` в Lambda — надёжное persistent-хранилище: данные в нём гарантированно сохраняются между всеми вызовами функции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`/tmp` не надёжен между вызовами — новое окружение его обнуляет; для состояния используют внешние хранилища.",
+                "source_of_confusion": "Переиспользование тёплого окружения создаёт иллюзию, что `/tmp` всегда сохраняется.",
+                "if_it_were_true": "Тогда не было бы правила «не хранить state в /tmp», но оно входит в best practices.",
+                "how_it_should_be": "`/tmp` — эфемерный кеш в рамках окружения; постоянное состояние держат в `S3`/`DynamoDB`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Ключевые практики: держать функции **маленькими** (single responsibility), **init вне handler** (пулы соединений, SDK-клиенты), **переиспользовать соединения**, async-invoke для fire-and-forget (с DLQ), использовать **Layers** для общих зависимостей, **не хранить state в `/tmp`** между вызовами, применять **Powertools** для observability, **versioning + aliases** для безопасных деплоев, подбирать **right memory** через Power Tuning и ставить **retention** на CloudWatch Logs.",
+              "correct": true,
+              "sections": {
+                "explanation": "Best practices бьют по типичным болям Lambda: cold start (init вне handler, маленький код), надёжность (DLQ, идемпотентность), стоимость (right memory, retention) и безопасные релизы (versions/aliases). Это инженерная дисциплина, а не отдельные трюки.",
+                "example": "Создание `boto3`-клиента и пула соединений вне handler переиспользуется при warm-вызовах, что снижает латентность и нагрузку на БД по сравнению с пересозданием на каждом вызове.",
+                "when_to_apply": "Их применяют при проектировании любой продакшен-функции: от вынесения init до настройки retention и алиасов для деплоя.",
+                "edge_cases": "`/tmp` не гарантирует сохранность между вызовами (новое окружение его обнуляет), поэтому на него нельзя полагаться как на persistent state.",
+                "related": "[[aws-lambda-interview#Q2]] init вне handler и lifecycle; [[aws-lambda-interview#Q27]] versions/aliases; [[aws-lambda-interview#Q32]] частые ошибки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Versioning и aliases — лишняя сложность: для безопасных деплоев достаточно перезаписывать `$LATEST` напрямую без версий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Versions+aliases дают canary и мгновенный откат; перезапись `$LATEST` лишает безопасной стратегии релиза.",
+                "source_of_confusion": "Простота прямой перезаписи кажется достаточной, пока не нужен откат или canary.",
+                "if_it_were_true": "Тогда versioning не значился бы в best practices, но он там ради безопасных деплоев.",
+                "how_it_should_be": "Деплои ведут через неизменяемые версии и алиасы с traffic shifting для canary и быстрого отката."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие частые ошибки при работе с Lambda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Lambda гарантирует ровно одну доставку каждого события, поэтому идемпотентность не нужна и дубликатов при retry не бывает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Retry — штатное поведение Lambda, и без идемпотентности повторная обработка даёт дубликаты; это одна из частых ошибок.",
+                "source_of_confusion": "Желаемую exactly-once семантику принимают за фактическую гарантию платформы.",
+                "if_it_were_true": "Тогда «no idempotency» не значилось бы в частых ошибках, но именно дубликаты при retry и ловят.",
+                "how_it_should_be": "Обработку проектируют идемпотентной, потому что событие может прийти повторно при ретраях."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Hardcoded credentials прямо в коде или env vars — безопасная и рекомендуемая практика, ведь окружение Lambda изолировано.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Хардкод секретов — классическая ошибка; их хранят в `Secrets Manager`/`Parameter Store`, а доступ дают через IAM-роли.",
+                "source_of_confusion": "Изоляцию исполнения путают с защитой секретов, которые видны в конфигурации функции.",
+                "if_it_were_true": "Тогда hardcoded credentials не были бы в списке ошибок, но они там как явная антипрактика.",
+                "how_it_should_be": "Секреты держат в managed-хранилищах с KMS, а права выдают IAM-ролью, а не хардкодом."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Достичь account concurrency limit (1000) безопасно: лишние вызовы просто ждут в очереди и сервис не деградирует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Упор в 1000 вызывает throttling и может положить сервис (например 429 у sync-вызовов), а не безболезненное ожидание.",
+                "source_of_confusion": "Лимит представляют как мягкую очередь, хотя для sync-пути это отказ запросов.",
+                "if_it_were_true": "Тогда «hit 1000 → service down» не было бы среди частых ошибок, но это реальный инцидент.",
+                "how_it_should_be": "Достижение лимита ведёт к throttling/429; нужны reserved concurrency, повышение лимита и алармы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Типичные ошибки: **cold start surprises** (таймаут первого запроса), **нет DLQ** (потерянные сообщения), **hardcoded credentials** в env vars, **memory mistakes** (слишком мало — медленно, слишком много — дорого), **нет идемпотентности** (retry → дубликаты), долгие задачи против 15-минутного лимита, **VPC misconfig** (нет NAT — нет интернета), **тяжёлые фреймворки** без SnapStart, избыточное логирование и упор в **concurrency limit** (1000 → service down).",
+              "correct": true,
+              "sections": {
+                "explanation": "Большинство провалов на Lambda — это игнорирование её природы: эфемерность (идемпотентность, DLQ), лимиты (timeout, concurrency), биллинг (логи, память) и сеть (VPC/NAT). Зная эти грабли, их легко обойти на этапе дизайна.",
+                "example": "Без идемпотентности повторная доставка SQS-сообщения приводит к двойному списанию или дубликату записи, потому что retry — нормальное поведение Lambda, а не исключение.",
+                "when_to_apply": "Этот чек-лист используют при ревью и проектировании, чтобы заранее закрыть DLQ, идемпотентность, VPC/NAT, retention и concurrency-алармы.",
+                "edge_cases": "Упор в concurrency 1000 в проде кладёт сервис целиком (throttling всех функций аккаунта), а забытый NAT в VPC тихо лишает функцию выхода в интернет.",
+                "related": "[[aws-lambda-interview#Q21]] поведение при превышении concurrency; [[aws-lambda-interview#Q24]] VPC и NAT; [[aws-lambda-interview#Q31]] best practices."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
