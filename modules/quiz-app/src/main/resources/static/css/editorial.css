@@ -98,6 +98,14 @@
   --max-width-content: 68ch;
   --max-width-wide:    1080px;
   --max-width-page:    1280px;
+  /* Per-page контентные колонки — семантические токены вместо россыпи magic-px.
+     Значения 1:1 текущим (pixel-identical), но именованы по назначению: ширина
+     растёт с плотностью контента. focus и error делят «сфокусированную» узкую. */
+  --max-width-focus:    760px;  /* фокус-вопрос / статус-страница ошибки */
+  --max-width-reading:  820px;  /* итоги сессии — score + таблица */
+  --max-width-result:   880px;  /* разбор — вопрос + сайдбар (2 колонки) */
+  --max-width-settings: 860px;  /* настройки — формы в одну колонку */
+  --max-width-data:    1180px;  /* аналитика — графики + широкая таблица */
 
   --border-radius-sm: 3px;
   --border-radius-md: 6px;
@@ -423,8 +431,6 @@ html[data-design="editorial"] .sr-only {
   margin: 0 auto;
   padding: var(--space-6) var(--space-5) var(--space-9);
 }
-.ed-measure { max-width: var(--max-width-content); }
-.ed-wide { max-width: var(--max-width-wide); margin-inline: auto; }
 
 /* Eyebrow — mono caps подпись (FOCUS, Q14/50, лейблы) */
 .ed-eyebrow {
@@ -438,116 +444,10 @@ html[data-design="editorial"] .sr-only {
 
 /* Линейка-разделитель */
 .ed-rule { border: 0; border-top: var(--rule-weight) solid var(--color-border-primary); margin: var(--space-6) 0; }
-.ed-rule--accent { border-top: var(--rule-weight-strong) solid var(--color-accent-primary); }
 
-/* Кнопки */
-.ed-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  min-height: 44px;
-  padding: var(--space-2) var(--space-5);
-  font-family: var(--font-family-body);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
-  line-height: 1.2;
-  border: var(--rule-weight) solid transparent;
-  border-radius: var(--border-radius-md);
-  background: transparent;
-  color: var(--color-text-primary);
-  cursor: pointer;
-  text-decoration: none;
-  touch-action: manipulation;
-  transition: background var(--duration-fast) var(--easing-default),
-              border-color var(--duration-fast) var(--easing-default),
-              color var(--duration-fast) var(--easing-default),
-              transform var(--duration-instant) var(--easing-default);
-}
-.ed-btn:active { transform: translateY(1px); }
-.ed-btn:disabled, .ed-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
-
-.ed-btn--primary {
-  background: var(--color-accent-primary);
-  color: var(--color-accent-on);
-  border-color: var(--color-accent-primary);
-}
-.ed-btn--primary:hover { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); color: var(--color-accent-on); }
-.ed-btn--primary:active { background: var(--color-accent-primary-active); }
-
-.ed-btn--ghost {
-  background: transparent;
-  border-color: var(--color-border-primary);
-  color: var(--color-text-primary);
-}
-.ed-btn--ghost:hover { background: var(--color-bg-tertiary); border-color: var(--color-text-secondary); color: var(--color-text-primary); }
-
-.ed-btn--quiet { border-color: transparent; color: var(--color-text-secondary); padding-inline: var(--space-3); }
-.ed-btn--quiet:hover { color: var(--color-text-primary); background: var(--color-bg-tertiary); }
-
-.ed-btn--danger { background: transparent; border-color: var(--color-status-error); color: var(--color-status-error); }
-.ed-btn--danger:hover { background: var(--color-status-error); color: var(--color-status-error-on); }
-
-.ed-btn--block { width: 100%; }
-
-/* Поля форм */
-.ed-field { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-4); }
-.ed-label {
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide);
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
-}
-.ed-input, .ed-select, .ed-textarea {
-  width: 100%;
-  min-height: 44px;
-  padding: var(--space-2) var(--space-3);
-  font-family: var(--font-family-body);
-  font-size: 16px; /* ≥16px — нет iOS-зума */
-  color: var(--color-text-primary);
-  background: var(--color-bg-secondary);
-  border: var(--rule-weight) solid var(--color-border-primary);
-  border-radius: var(--border-radius-sm);
-  transition: border-color var(--duration-fast) var(--easing-default), box-shadow var(--duration-fast) var(--easing-default);
-}
-.ed-input:focus, .ed-select:focus, .ed-textarea:focus {
-  outline: none;
-  border-color: var(--color-border-focus);
-  box-shadow: var(--shadow-focus);
-}
-.ed-select { appearance: none; -webkit-appearance: none; background-image:
-  linear-gradient(45deg, transparent 50%, var(--color-text-secondary) 50%),
-  linear-gradient(135deg, var(--color-text-secondary) 50%, transparent 50%);
-  background-position: calc(100% - 18px) center, calc(100% - 12px) center;
-  background-size: 6px 6px, 6px 6px;
-  background-repeat: no-repeat;
-  padding-right: var(--space-7);
-}
-
-/* Чекбоксы — акцентная галка */
-.ed-check { display: inline-flex; align-items: center; gap: var(--space-2); cursor: pointer; min-height: 44px; }
-.ed-check input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--color-accent-primary); cursor: pointer; }
-
-/* Чип/метка */
-.ed-chip {
-  display: inline-flex; align-items: center; gap: var(--space-1);
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide);
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
-  border: var(--rule-weight) solid var(--color-border-primary);
-  border-radius: var(--border-radius-full);
-  padding: 0.2em 0.7em;
-}
-.ed-chip--accent { color: var(--color-accent-primary); border-color: var(--color-accent-primary); }
-
-/* Утилиты */
-.ed-stack > * + * { margin-top: var(--space-4); }
-.ed-flex { display: flex; gap: var(--space-3); align-items: center; }
-.ed-flex-between { display: flex; gap: var(--space-3); align-items: center; justify-content: space-between; }
-.ed-flex-wrap { flex-wrap: wrap; }
+/* Примечание: библиотека ed-* примитивов (.ed-btn/.ed-field/.ed-chip/.ed-stack/…)
+   удалена как мёртвая — шаблоны её не используют. Реальные кнопки/поля стилизуются
+   по своим классам ниже; :active press-feedback перенесён туда (см. .btn:active). */
 
 /* ===========================================================================
    SHELL — masthead/nav/theme-toggle. ГЛОБАЛЬНО (header.html общий для всех
@@ -713,7 +613,7 @@ html[data-design="editorial"] .surface-toolbar,
 html[data-design="editorial"] .surface-tabs { display: none; }
 
 html[data-design="editorial"] .focus-training {
-  max-width: 760px;
+  max-width: var(--max-width-focus);
   margin: 0 auto;
 }
 
@@ -923,6 +823,20 @@ html[data-design="editorial"] #toggle-code-btn:hover:not(:disabled),
 html[data-design="editorial"] #extra-analysis-toggle:hover:not(:disabled) { background: var(--color-bg-tertiary); border-color: var(--color-text-secondary); }
 html[data-design="editorial"] .next-btn { background: var(--color-accent-primary); color: var(--color-accent-on); border-color: var(--color-accent-primary); }
 html[data-design="editorial"] .next-btn:hover { background: var(--color-accent-primary-hover); color: var(--color-accent-on); }
+/* Press-feedback — лёгкий «нажим» на все реальные кнопки (перенесён с мёртвого
+   .ed-btn). Disabled-кнопки :active не получают (браузер не шлёт событие). */
+html[data-design="editorial"] .btn:active,
+html[data-design="editorial"] .secondary-btn:active,
+html[data-design="editorial"] .next-btn:active,
+html[data-design="editorial"] #toggle-code-btn:active,
+html[data-design="editorial"] #extra-analysis-toggle:active,
+html[data-design="editorial"] #extra-analysis-toggle-result:active,
+html[data-design="editorial"] .focus-page #interview-submit:active,
+html[data-design="editorial"] .flashcard-reveal-btn:active,
+html[data-design="editorial"] .flashcard-grade-btn:active,
+html[data-design="editorial"] .danger-btn:active,
+html[data-design="editorial"] .stats-action-btn:active,
+html[data-design="editorial"] .table-expander:active { transform: translateY(1px); }
 
 html[data-design="editorial"] .question-timer { font-family: var(--font-family-mono); font-size: var(--font-size-sm); color: var(--color-text-secondary); }
 /* text-secondary, не tertiary: 12px mono на фоне страницы должен держать AA 4.5:1
@@ -1056,7 +970,7 @@ html[data-design="editorial"] .empty-actions { display: flex; gap: var(--space-3
    ========================================================================== */
 html[data-design="editorial"] .settings-page .app-layout {
   display: block; grid-template-columns: none;
-  max-width: 860px; margin: 0 auto; padding: 0; gap: 0;
+  max-width: var(--max-width-settings); margin: 0 auto; padding: 0; gap: 0;
 }
 html[data-design="editorial"] .settings-page .main-content,
 html[data-design="editorial"] .settings-page .settings-content { width: auto; max-width: none; margin: 0; padding: 0; }
@@ -1217,7 +1131,7 @@ html[data-design="editorial"] .settings-page .toast-success { background: var(--
 /* Одна колонка, широкий контейнер под графики/таблицы */
 html[data-design="editorial"] .stats-page .app-layout {
   display: block; grid-template-columns: none;
-  max-width: 1180px; margin: 0 auto; padding: 0; gap: 0;
+  max-width: var(--max-width-data); margin: 0 auto; padding: 0; gap: 0;
 }
 html[data-design="editorial"] .stats-page .main-content { width: auto; max-width: none; margin: 0; padding: 0; }
 
@@ -1436,7 +1350,7 @@ html[data-design="editorial"] .stats-page .search-result-item a:hover { text-dec
 /* ==========================================================================
    C6 — SESSION SUMMARY / Итоги сессии (editorial). Scoped .summary-page
    ========================================================================== */
-html[data-design="editorial"] .summary-page .ed-page { max-width: 820px; }
+html[data-design="editorial"] .summary-page .ed-page { max-width: var(--max-width-reading); }
 
 html[data-design="editorial"] .summary-page .card {
   background: var(--color-bg-secondary);
@@ -1562,7 +1476,7 @@ html[data-design="editorial"] .summary-page .summary-recommendation-item { color
    сериф-заголовок, reading-тело, dev-подробности (details), действия-чипы.
    Старый styles.css даёт .error-card как карточку с тенью/лавандой — приводим
    к плоской editorial-композиции (объявляем фон/границу/цвет явно). ========== */
-html[data-design="editorial"] .error-page .ed-page { max-width: 760px; }
+html[data-design="editorial"] .error-page .ed-page { max-width: var(--max-width-focus); }
 
 html[data-design="editorial"] .error-page .error-card {
   display: flex; flex-direction: column; align-items: center; text-align: center;
@@ -1652,7 +1566,19 @@ html[data-design="editorial"] .error-page .error-actions {
    привязаны к #interview-options/.focus-page). Старый styles.css тянет холодный
    navy/лаванду — приводим к editorial тёплой палитре. Состояния вариантов
    (.option-correct/.option-wrong/.explanation-*) уже глобальные — не дублируем. */
-html[data-design="editorial"] .result-page .ed-page { max-width: 880px; }
+html[data-design="editorial"] .result-page .ed-page { max-width: var(--max-width-result); }
+
+/* Двухколоночная раскладка вопроса: основной столбец + узкий сайдбар (диаграмма/код).
+   Грид включаем через :has(.question-side) — а НЕ .has-side — потому что .has-side
+   вешается уже при наличии diagram/code, тогда как .question-side рендерится только в
+   AI-режиме; :has гарантирует, что второй столбец появляется лишь когда есть контент.
+   minmax(0,…) на обеих дорожках страхует от overflow широкой диаграммы/кода. */
+html[data-design="editorial"] .result-page .question-layout:has(.question-side) {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 340px);
+  gap: var(--space-6); align-items: start;
+}
+html[data-design="editorial"] .result-page .question-side { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
+html[data-design="editorial"] .result-page .question-diagram { overflow-x: auto; }
 
 /* Карточки — тёплые плоские панели (гасим navy-border + cold shadow). */
 html[data-design="editorial"] .result-page .card {
@@ -1663,7 +1589,8 @@ html[data-design="editorial"] .result-page .card {
 }
 
 /* Верхняя строка: stats-grid + session-bar — слим editorial-полоса. */
-html[data-design="editorial"] .result-page .top-row { gap: var(--space-4); margin-bottom: var(--space-5); }
+html[data-design="editorial"] .result-page .top-row { display: flex; flex-wrap: wrap; align-items: stretch; gap: var(--space-4); margin-bottom: var(--space-5); }
+html[data-design="editorial"] .result-page .top-row > * { flex: 1 1 320px; min-width: 0; }
 html[data-design="editorial"] .result-page .top-row .card { padding: var(--space-4) var(--space-5); }
 html[data-design="editorial"] .result-page .stat-item {
   background: transparent; border: 0; border-right: var(--rule-weight) solid var(--color-border-secondary);
@@ -1804,4 +1731,5 @@ html[data-design="editorial"] .result-page .related-question-item:hover { backgr
   html[data-design="editorial"] .result-page .result-actions { flex-direction: column; }
   html[data-design="editorial"] .result-page .result-actions .btn { width: 100%; }
   html[data-design="editorial"] .result-page .question-header h2 { flex-basis: 100%; }
+  html[data-design="editorial"] .result-page .question-layout:has(.question-side) { grid-template-columns: 1fr; }
 }
