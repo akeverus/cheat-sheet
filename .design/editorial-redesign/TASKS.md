@@ -97,12 +97,32 @@ Generated from: `.design/editorial-redesign/` (BRIEF · TOKENS · SERVER_CONTRAC
   ✅ commit 7e6ce2bb — контраст AA обе темы (keyboard-hint 7.0, maturity-low 6.0+); 1 h1/стр,
   без скипов заголовков; main/nav/header landmarks; 0 unlabeled inputs; 0 icon-btn без aria;
   вердикты ✅/❌ = эмодзи+текст (не только цвет). Disabled-сабмит — WCAG-exempt.
-- [ ] **R3 — Снос старого**: удалить `styles.css`, `mobile-fixes.css`, `ui-refinements.css`,
+- [x] **R3 — Снос старого**: удалить `styles.css`, `mobile-fixes.css`, `ui-refinements.css`,
   `focus-surface-tabs.html`, `.design/cheat-sheet-ui/`, мусорные PNG в корне; убрать их includes
   из head.html; убрать Syne/DM Sans; бампнуть cache-bust. **Done:** старого дизайна физически нет,
   все страницы зелёные на новом CSS.
+  ✅ commit 9d28ebb9 — editorial.css самодостаточна (bare-reset 0,0,0 + порт утилит +
+  все шрифты), head.html v=16 без мёртвых <link>; старый CSS отдаёт 404; fix регрессии
+  центрирования (scoped-reset перебивал .ed-page/.ed-masthead-inner). 6 страниц зелёные
+  обе темы. Файлы удалены чужим git add -A в c0059df8, доведено отдельным коммитом.
+  ✅ commit a54d7e9b — контрактные тесты приведены к editorial (focus-surface-tabs снят,
+  showPrimaryNav=true, cssScopes→editorial.css, focus-shell.txt baseline regenerated).
+  _Не сделано:_ `.design/cheat-sheet-ui/` (дизайн-доки — оставлены, recoverable из git),
+  мусорные PNG в корне — отдельной уборкой при необходимости.
 
 ## Review
 - [ ] **V1 — Финальное ревью**: `/design-review` против брифа + ui-ux-pro-max Pre-Delivery Checklist
   (§1–§10) + тех-аудит (Lighthouse через chrome-devtools-mcp: a11y/perf/CLS). Пофиксить находки,
   итоговые скрины 375/768/1280/1440 обе темы.
+
+## Ongoing polish (OCD-harmony, бесконечный self-review)
+- [x] **P1 — Mobile overflow audit**: горизонтальный скролл = 0 на ВСЕХ страницах
+  (focus question/answered, settings, stats, error, session-summary) × 375/768/1280.
+  Корневая причина у всех — flex/grid-айтемы с дефолтным `min-width:auto`, не дающим треку
+  ужаться ниже min-content фикс-широкого ребёнка (select с длинной option / canvas Chart.js /
+  5-колоночная таблица). Замер через elementsFromPoint-free scan (right>clientWidth && !clipped-ancestor).
+  ✅ commit 2fa69fc5 — stats: select `max-width:100%` + панели/chart-card `min-width:0` + canvas
+  `max-width:100%`; мобильная раскладка фильтра в колонку.
+  ✅ commit 01384a67 — focus отвеченные варианты: `grid-template-columns: auto minmax(0,1fr)` +
+  статус-лейбл/объяснение `grid-column: 1 / -1`.
+  ✅ commit dffb46eb — summary-table `display:block; overflow-x:auto` (скролл внутри карточки).
