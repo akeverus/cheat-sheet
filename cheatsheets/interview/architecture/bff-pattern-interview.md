@@ -18,7 +18,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `BFF Pattern`
 
-`BFF (Backend for Frontend)` — pattern: **separate backend per client type** (web, mobile, TV), tailored для specific UX requirements. Aggregates microservices, shapes responses, hides complexity. Popularized SoundCloud/Netflix. Contrasts с generic API Gateway.
+`BFF (Backend for Frontend)` — паттерн: **отдельный бэкенд под каждый тип клиента** (web, mobile, TV), заточенный под конкретные UX-требования. Агрегирует микросервисы, формирует ответы, прячет сложность. Популяризован SoundCloud/Netflix. Противопоставляется обобщённому API Gateway.
 
 ## Полезные ссылки
 
@@ -64,12 +64,12 @@ updated: "2026-04-25"
 
 ## Q1. (!) Что такое BFF pattern?
 
-**BFF (Backend for Frontend):** dedicated API service tailored для specific client (web, iOS, Android, TV).
+**BFF (Backend for Frontend):** выделенный API-сервис, заточенный под конкретного клиента (web, iOS, Android, TV).
 
-**Core idea:** instead of single generic API serving all clients, have **one BFF per client type**. Each BFF:
-- Talks к same underlying microservices
-- Aggregates / transforms data для что client needs
-- Optimized под UI requirements of that client
+**Базовая идея:** вместо единого обобщённого API, обслуживающего всех клиентов, — **по одному BFF на тип клиента**. Каждый BFF:
+- Обращается к тем же базовым микросервисам
+- Агрегирует / преобразует данные под то, что нужно клиенту
+- Оптимизирован под UI-требования этого клиента
 
 **Diagram:**
 ```
@@ -79,75 +79,75 @@ updated: "2026-04-25"
 [Smart TV] ←→ [TV BFF]      ┘
 ```
 
-**Vs monolithic API:**
-- One API tried to serve all → clients make multiple calls, discard data они не использует
+**В сравнении с монолитным API:**
+- Один API пытался обслужить всех → клиенты делают много вызовов, отбрасывают данные, которые не используют
 
-**Coined by SoundCloud engineers (2015):** solved problem where Android app needed different data shapes than web.
+**Придуман инженерами SoundCloud (2015):** решал проблему, когда Android-приложению нужны были иные формы данных, чем web.
 
 ## Q2. (!) Зачем BFF — проблема, которую решает?
 
-**Problems without BFF (generic API):**
+**Проблемы без BFF (обобщённый API):**
 
-**1. Over-fetching:**
-- Mobile needs 3 fields; API returns 30
-- Waste bandwidth (critical on mobile/slow networks)
+**1. Over-fetching (избыточная выборка):**
+- Мобильному нужно 3 поля; API возвращает 30
+- Трата трафика (критично на mobile/медленных сетях)
 
 **2. Under-fetching (N+1):**
-- Client needs data from 5 services
-- Makes 5 HTTP calls → 5 round trips (very slow on mobile)
+- Клиенту нужны данные из 5 сервисов
+- Делает 5 HTTP-вызовов → 5 round trips (очень медленно на мобильном)
 
-**3. Client-specific features конфликтуют:**
-- TV: needs simpler navigation, sparse data
-- Web: rich interactivity
-- One API can't satisfy both cleanly
+**3. Клиент-специфичные фичи конфликтуют:**
+- TV: нужна более простая навигация, разреженные данные
+- Web: богатая интерактивность
+- Один API не может аккуратно угодить обоим
 
-**4. Client coupling:**
-- Change API → break clients
-- Versioning painful
+**4. Связанность с клиентами (client coupling):**
+- Меняешь API → ломаешь клиентов
+- Версионирование болезненное
 
-**5. Generic API fat от all client needs:**
-- Accumulates every field anyone asked for
-- Unclear ownership
+**5. Обобщённый API раздут под нужды всех клиентов:**
+- Накапливает каждое поле, которое кто-то когда-либо просил
+- Неясное владение (ownership)
 
-**BFF solves:**
-- Each client gets tailored responses
-- Single call aggregates backend data (fewer round trips)
-- Changes к client = change only its BFF
-- Clean contract per client
+**BFF решает:**
+- Каждый клиент получает заточенные под него ответы
+- Один вызов агрегирует данные бэкенда (меньше round trips)
+- Изменения под клиента = правка только его BFF
+- Чистый контракт на каждого клиента
 
 ## Q3. (!) BFF vs API Gateway?
 
-**API Gateway:** general-purpose edge proxy.
-- Auth, rate limit, logging, routing
-- Generic — serves all clients same way
-- Cross-cutting concerns
+**API Gateway:** прокси общего назначения на границе сети (edge).
+- Auth, rate limit, логирование, маршрутизация
+- Обобщённый — обслуживает всех клиентов одинаково
+- Сквозные задачи (cross-cutting concerns)
 
-**BFF:** client-specific aggregation layer.
-- Tailored response shapes
-- Business logic (composing услуг)
-- Per-client
+**BFF:** клиент-специфичный слой агрегации.
+- Заточенные формы ответов
+- Бизнес-логика (композиция сервисов)
+- На каждого клиента
 
-**Comparison:**
+**Сравнение:**
 
-| Aspect | API Gateway | BFF |
+| Аспект | API Gateway | BFF |
 |--------|-------------|-----|
-| Scope | All clients | One client type |
-| Logic | Cross-cutting (auth, rate) | Aggregation, shaping |
-| Per client | No | Yes |
-| Business logic | No | Some |
-| Owner | Platform team | Client team |
+| Область | Все клиенты | Один тип клиента |
+| Логика | Сквозная (auth, rate) | Агрегация, формирование |
+| На клиента | Нет | Да |
+| Бизнес-логика | Нет | Немного |
+| Владелец | Платформенная команда | Клиентская команда |
 
-**Can coexist:**
+**Могут сосуществовать:**
 ```
 Client → API Gateway → BFF → Microservices
 ```
 
 - Gateway: auth, WAF, rate limit
-- BFF: assemble response
+- BFF: сборка ответа
 
-**Simplistic cases:**
-- Just need routing/auth? API Gateway enough
-- Different responses per client? Add BFF
+**Простые случаи:**
+- Нужна только маршрутизация/auth? Хватит API Gateway
+- Разные ответы под каждого клиента? Добавь BFF
 
 ## Q4. (!) Architecture с BFF?
 
@@ -161,164 +161,164 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
                                            ─→ [Recommendation Service]
 ```
 
-**Each BFF:**
-- HTTP server (REST или GraphQL)
-- Calls multiple internal services (HTTP/gRPC)
-- Aggregates, transforms
-- Returns client-shaped response
+**Каждый BFF:**
+- HTTP-сервер (REST или GraphQL)
+- Вызывает несколько внутренних сервисов (HTTP/gRPC)
+- Агрегирует, преобразует
+- Возвращает ответ в форме под клиента
 
-**Internal services:**
-- Focused на domain
-- Don't know about clients
-- Called by any BFF
+**Внутренние сервисы:**
+- Сфокусированы на домене
+- Ничего не знают о клиентах
+- Вызываются любым BFF
 
-**Example flow (mobile home screen):**
-1. User opens app → BFF `GET /home`
-2. Mobile BFF parallel calls:
-   - User Service: profile
-   - Feed Service: top 20 items
-   - Notification Service: unread count
-3. BFF composes single response: `{user, feed, notifications: {unread: 5}}`
-4. Mobile renders; one round trip
+**Пример потока (главный экран мобильного):**
+1. Пользователь открывает приложение → BFF `GET /home`
+2. Mobile BFF параллельно вызывает:
+   - User Service: профиль
+   - Feed Service: топ-20 элементов
+   - Notification Service: число непрочитанных
+3. BFF собирает единый ответ: `{user, feed, notifications: {unread: 5}}`
+4. Мобильный рендерит; один round trip
 
 ## Q5. Сколько BFF нужно?
 
-**Count:** per **client experience**, not per technology.
+**Количество:** по **клиентскому опыту (experience)**, а не по технологии.
 
-**Common splits:**
-- Web + Mobile (2 BFFs)
+**Типичные разбиения:**
+- Web + Mobile (2 BFF)
 - Web + iOS + Android (3)
 - Web + Mobile + TV + Partner API (4)
 
-**Guidelines:**
-- Different UX → separate BFF
-- Same UX, different tech (React native iOS+Android) → maybe one BFF
-- Business partner integration → typically own BFF (different auth, rate)
+**Ориентиры:**
+- Разный UX → отдельный BFF
+- Тот же UX, другая технология (React Native iOS+Android) → возможно, один BFF
+- Интеграция с бизнес-партнёром → обычно свой BFF (другие auth, rate)
 
-**Anti-patterns:**
-- Too many (each screen own BFF) → operational overhead
-- Too few (one BFF for все) → same generic API problem
+**Антипаттерны:**
+- Слишком много (на каждый экран свой BFF) → операционная нагрузка
+- Слишком мало (один BFF на всё) → та же проблема обобщённого API
 
-**Trick:** start с one BFF; split when diverging requirements cause friction.
+**Приём:** начни с одного BFF; разделяй, когда расходящиеся требования начинают мешать.
 
 ## Q6. Technology stack для BFF?
 
-**BFF should be lightweight, I/O-heavy:**
-- Node.js (typical — matches web/mobile team skills)
-- Kotlin (typed, good for mobile teams)
-- Go (performance)
-- Typescript universally
+**BFF должен быть лёгким, I/O-bound:**
+- Node.js (типично — совпадает с навыками web/mobile-команды)
+- Kotlin (типизирован, удобен для мобильных команд)
+- Go (производительность)
+- Typescript повсеместно
 
-**Framework choices:**
+**Выбор фреймворка:**
 - Node.js: Express, Fastify, NestJS
-- Java/Kotlin: Spring Boot (reactive preferred)
+- Java/Kotlin: Spring Boot (предпочтительно реактивный)
 - GraphQL: Apollo Server, Netflix DGS
 
-**Why I/O-heavy matters:**
-- BFF mostly forwarding + aggregating
-- CPU light
-- Async I/O critical
+**Почему I/O-нагруженность важна:**
+- BFF в основном проксирует + агрегирует
+- CPU нагружен слабо
+- Асинхронный I/O критичен
 
-**Same language as client team:**
-- iOS team writes iOS BFF (usually Node или Kotlin)
-- Team owns end-to-end stack
+**Тот же язык, что и у клиентской команды:**
+- iOS-команда пишет iOS BFF (обычно Node или Kotlin)
+- Команда владеет стеком от начала до конца
 
 ## Q7. (!) Что должен делать BFF?
 
-**Core responsibilities:**
+**Основные обязанности:**
 
-**1. API aggregation:**
-- Compose responses from multiple microservices
-- Single request to BFF → multiple backend calls
+**1. Агрегация API:**
+- Собирает ответы из нескольких микросервисов
+- Один запрос к BFF → несколько вызовов бэкенда
 
-**2. Response shaping:**
-- Exclude fields client doesn't need
-- Rename для client conventions
-- Flatten nested structures
+**2. Формирование ответа (response shaping):**
+- Исключает поля, не нужные клиенту
+- Переименовывает под соглашения клиента
+- Уплощает вложенные структуры
 
-**3. Protocol translation:**
-- Internal: gRPC / Protobuf
-- External: REST / JSON / GraphQL
+**3. Трансляция протоколов:**
+- Внутри: gRPC / Protobuf
+- Снаружи: REST / JSON / GraphQL
 
-**4. Client-specific adaptation:**
-- Mobile: smaller payloads
-- TV: simpler nav structure
-- Web: rich metadata
+**4. Клиент-специфичная адаптация:**
+- Mobile: меньшие payload-ы
+- TV: более простая структура навигации
+- Web: богатые метаданные
 
-**5. Client-specific logic:**
-- Feature flags per platform
-- Compatibility shims
+**5. Клиент-специфичная логика:**
+- Feature flags по платформам
+- Прослойки совместимости (compatibility shims)
 
-**6. Resilience:**
-- Fallbacks when backend fails
-- Stale data serving
+**6. Устойчивость (resilience):**
+- Fallback-и при сбое бэкенда
+- Отдача устаревших данных
 
-**7. Caching specific к client:**
-- Session state
-- Per-device preferences
+**7. Кэширование, специфичное для клиента:**
+- Состояние сессии
+- Настройки под устройство
 
 ## Q8. (!) Что НЕ должен делать BFF?
 
-**Should not:**
+**Не должен:**
 
-**1. Core business logic:**
-- Stays в domain services
-- BFF is glue, not logic holder
+**1. Ключевая бизнес-логика:**
+- Остаётся в доменных сервисах
+- BFF — это клей, а не держатель логики
 
-**2. Authentication (fully):**
-- Often done in API Gateway before BFF
-- BFF may extract user, но not validate tokens
+**2. Аутентификация (полностью):**
+- Часто делается в API Gateway до BFF
+- BFF может извлечь пользователя, но не валидировать токены
 
-**3. Data persistence:**
-- No DB of its own (mostly)
-- State в domain services
+**3. Персистентность данных:**
+- Своей БД нет (в основном)
+- Состояние — в доменных сервисах
 
-**4. Cross-client logic:**
-- Shared code goes в services, not BFF
-- Don't duplicate between BFFs
+**4. Кросс-клиентская логика:**
+- Общий код идёт в сервисы, а не в BFF
+- Не дублируй между BFF
 
-**5. Heavy compute:**
-- CPU-intensive work → dedicated service
+**5. Тяжёлые вычисления:**
+- CPU-интенсивная работа → отдельный сервис
 
-**BFF = thin orchestrator, not smart layer.**
+**BFF = тонкий оркестратор, а не «умный» слой.**
 
-**Anti-pattern: "fat BFF"** — BFF becomes monolith over time, absorbing business logic. Refactor back к services.
+**Антипаттерн: «жирный BFF» (fat BFF)** — со временем BFF превращается в монолит, вбирая бизнес-логику. Рефактори обратно в сервисы.
 
 ## Q9. (!) GraphQL as BFF?
 
-**GraphQL naturally fits BFF role:**
-- Client specifies exact shape they want
-- No over-fetch, no under-fetch
-- Single endpoint
+**GraphQL естественно подходит на роль BFF:**
+- Клиент указывает точную форму, которую хочет
+- Ни over-fetch, ни under-fetch
+- Единый endpoint
 
-**Implementation:**
-- GraphQL server = BFF
-- Resolvers call microservices
-- Schema defines client-view of domain
+**Реализация:**
+- GraphQL-сервер = BFF
+- Резолверы вызывают микросервисы
+- Схема задаёт клиентский взгляд на домен
 
-**Benefits:**
-- No need for multiple endpoints per use case
-- Clients evolve UI without backend changes (as long as data available)
-- Strong typing
+**Плюсы:**
+- Не нужны отдельные endpoint-ы под каждый сценарий
+- Клиенты развивают UI без изменений бэкенда (пока данные доступны)
+- Строгая типизация
 
-**Drawbacks:**
-- Complexity (schema stitching, N+1 resolver problem)
-- Caching harder (POST requests, dynamic queries)
-- Learning curve
+**Минусы:**
+- Сложность (schema stitching, проблема N+1 в резолверах)
+- Кэширование сложнее (POST-запросы, динамические запросы)
+- Порог входа
 
-**Per-client BFF still needed?**
-- If all clients similar → one GraphQL BFF enough
-- If clients very divergent → per-client GraphQL schema
+**Нужен ли всё ещё BFF на каждого клиента?**
+- Если все клиенты похожи → хватит одного GraphQL BFF
+- Если клиенты сильно расходятся → GraphQL-схема на каждого клиента
 
-**Caching:**
-- Persisted queries (hash) — caches identified queries
-- DataLoader pattern — batches + dedupes backend calls
+**Кэширование:**
+- Persisted queries (хэш) — кэширует идентифицированные запросы
+- Паттерн DataLoader — батчит + дедуплицирует вызовы бэкенда
 
 ## Q10. GraphQL Federation?
 
-**Federation:** multiple teams own parts of single GraphQL schema; composed into federated graph.
+**Federation:** несколько команд владеют частями единой GraphQL-схемы; собираются в федеративный граф.
 
-**Netflix, GitHub use.**
+**Используют Netflix, GitHub.**
 
 **Architecture:**
 ```
@@ -327,232 +327,232 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
                              → [Order Subgraph] (Order team)
 ```
 
-**Each subgraph:**
-- Own GraphQL server
-- Owns part of schema
-- Deployed independently
+**Каждый subgraph:**
+- Свой GraphQL-сервер
+- Владеет частью схемы
+- Деплоится независимо
 
 **Gateway:**
-- Composes from subgraphs
-- Plans query across services
+- Собирает из subgraph-ов
+- Планирует запрос по сервисам
 - Apollo Federation, GraphQL Mesh
 
-**Vs monolith GraphQL:**
-- Federation scales to many teams
-- Lower central bottleneck
-- Schema evolution distributed
+**В сравнении с монолитным GraphQL:**
+- Federation масштабируется на много команд
+- Меньше центрального узкого места
+- Эволюция схемы распределена
 
-**Vs BFF:**
-- BFF: client-driven tailoring
-- Federation: domain-driven decomposition
-- Can coexist (federated graph accessed by client-specific BFFs или directly)
+**В сравнении с BFF:**
+- BFF: заточка под клиента (client-driven)
+- Federation: декомпозиция по доменам (domain-driven)
+- Могут сосуществовать (к федеративному графу обращаются клиент-специфичные BFF или напрямую)
 
 ## Q11. (!) Преимущества BFF?
 
-**1. Client-specific optimization:**
-- Mobile: small payloads
-- TV: simplified nav
-- Performance per platform
+**1. Клиент-специфичная оптимизация:**
+- Mobile: маленькие payload-ы
+- TV: упрощённая навигация
+- Производительность под каждую платформу
 
-**2. Faster client development:**
-- Client team owns BFF → no waiting on backend team
-- Iterate independently
+**2. Более быстрая разработка клиента:**
+- Клиентская команда владеет BFF → не ждёт бэкенд-команду
+- Итерирует независимо
 
-**3. Reduced round trips:**
-- 1 BFF call instead of 10 direct service calls
-- Critical on mobile networks
+**3. Меньше round trips:**
+- 1 вызов BFF вместо 10 прямых вызовов сервисов
+- Критично на мобильных сетях
 
-**4. Clean domain services:**
-- Services don't know about clients
-- Domain-focused, reusable
+**4. Чистые доменные сервисы:**
+- Сервисы ничего не знают о клиентах
+- Сфокусированы на домене, переиспользуемы
 
-**5. Independent evolution:**
-- Change one client's BFF без affecting others
-- API versioning simpler
+**5. Независимая эволюция:**
+- Меняешь BFF одного клиента, не задевая остальных
+- Версионирование API проще
 
-**6. Resilience per client:**
-- Fallbacks tailored
-- Failure modes designed per UX
+**6. Устойчивость под каждого клиента:**
+- Fallback-и подобраны под клиента
+- Сценарии отказа спроектированы под UX
 
-**7. Security scoping:**
-- BFF filters what client can see
-- Internal services expose more (trusted network)
+**7. Ограничение видимости (security scoping):**
+- BFF фильтрует, что видит клиент
+- Внутренние сервисы отдают больше (доверенная сеть)
 
 ## Q12. (!) Недостатки BFF?
 
-**1. Code duplication:**
-- Multiple BFFs may have similar aggregation
-- Risk: drift (bugs on one BFF, not other)
+**1. Дублирование кода:**
+- У нескольких BFF может быть похожая агрегация
+- Риск: расхождение (баг есть в одном BFF, нет в другом)
 
-**2. Operational overhead:**
-- N services to deploy, monitor
-- Each has own CI/CD, runtime
+**2. Операционная нагрузка:**
+- N сервисов деплоить и мониторить
+- У каждого свой CI/CD, рантайм
 
-**3. Ownership confusion:**
-- Who owns BFF when web+mobile teams share scope?
-- Boundaries unclear
+**3. Путаница во владении:**
+- Кто владеет BFF, когда web- и mobile-команды делят зону ответственности?
+- Границы нечёткие
 
-**4. Latency addition:**
-- Extra hop (client→BFF→services) adds 5-20ms
-- Usually offset by aggregation win
+**4. Добавочная задержка (latency):**
+- Лишний хоп (client→BFF→services) добавляет 5-20 мс
+- Обычно компенсируется выигрышем от агрегации
 
-**5. Temptation to add logic:**
-- BFF grows into mini-monolith
+**5. Соблазн добавить логику:**
+- BFF разрастается в мини-монолит
 
-**6. Repetitive auth / error handling:**
-- Need shared middleware libs
+**6. Повторяющиеся auth / обработка ошибок:**
+- Нужны общие middleware-библиотеки
 
-**7. Coordination при schema changes:**
-- Add field → update all BFFs using it
+**7. Координация при изменениях схемы:**
+- Добавил поле → обнови все BFF, которые его используют
 
 ## Q13. Code duplication между BFFs?
 
-**Problem:** 3 BFFs make same call к User Service, handle errors same way.
+**Проблема:** 3 BFF делают одинаковый вызов к User Service, одинаково обрабатывают ошибки.
 
-**Solutions:**
+**Решения:**
 
-**1. Shared libraries:**
-- Internal SDK for User Service client
-- Shared error handling, logging, retry
-- Versioned (semver)
+**1. Общие библиотеки:**
+- Внутренний SDK для клиента User Service
+- Общие обработка ошибок, логирование, retry
+- С версионированием (semver)
 
-**2. gRPC + generated clients:**
-- .proto definitions shared
-- Code gen produces typed client
-- DRY at call-site
+**2. gRPC + сгенерированные клиенты:**
+- Общие `.proto`-определения
+- Кодогенерация выдаёт типизированный клиент
+- DRY в точке вызова
 
-**3. Shared middleware:**
-- Auth, logging, tracing — as NPM / Maven package
-- Apply universally
+**3. Общий middleware:**
+- Auth, логирование, трейсинг — как NPM / Maven-пакет
+- Применяется повсеместно
 
-**4. Template / scaffold:**
-- `create-bff` generator
-- New BFF starts with standard middleware
+**4. Шаблон / scaffold:**
+- Генератор `create-bff`
+- Новый BFF стартует со стандартным middleware
 
-**5. Extract common to gateway:**
-- If auth, rate, logging same → do в gateway, BFFs stay thin
+**5. Вынести общее в gateway:**
+- Если auth, rate, логирование одинаковы → делай в gateway, BFF остаются тонкими
 
-**Don't extract business logic:**
-- Aggregation logic per-client = OK to duplicate
-- Attempt to unify → one BFF again
+**Не выноси бизнес-логику:**
+- Логику агрегации на каждого клиента дублировать нормально
+- Попытка унифицировать → снова один BFF
 
 ## Q14. (!) Ownership — кто пишет BFF?
 
-**Common pattern:** **frontend / client team owns BFF.**
+**Типичный паттерн:** **BFF владеет frontend / клиентская команда.**
 
-**Rationale:**
-- BFF serves their UI; they know requirements
-- Frontend changes often require BFF changes
-- Reduces cross-team dependency
+**Обоснование:**
+- BFF обслуживает их UI; они знают требования
+- Изменения фронтенда часто требуют изменений BFF
+- Снижает межкомандную зависимость
 
-**Anti-pattern: backend team owns BFF.**
-- Frontend waits для changes
-- Backend doesn't understand UX needs well
-- Becomes bottleneck
+**Антипаттерн: BFF владеет бэкенд-команда.**
+- Фронтенд ждёт изменений
+- Бэкенд плохо понимает UX-потребности
+- Становится узким местом
 
-**Skills needed:**
-- Node.js / Kotlin / Go — pick stack familiar к team
-- Understanding of I/O, async, HTTP/gRPC clients
-- Monitoring / observability
+**Нужные навыки:**
+- Node.js / Kotlin / Go — выбери стек, привычный команде
+- Понимание I/O, async, HTTP/gRPC-клиентов
+- Мониторинг / observability
 
-**Organizational model:**
-- "Full-stack" or "product" team: owns UI + BFF
-- Domain teams: own microservices
-- Platform team: gateway, shared libs
+**Организационная модель:**
+- «Full-stack» или «product»-команда: владеет UI + BFF
+- Доменные команды: владеют микросервисами
+- Платформенная команда: gateway, общие библиотеки
 
 ## Q15. Caching в BFF?
 
-**Layers:**
+**Слои:**
 
-**1. Upstream caching:**
-- BFF calls services с caching (e.g., HTTP ETag, Redis)
-- Reduces backend load
+**1. Кэширование апстрима (upstream):**
+- BFF вызывает сервисы с кэшированием (например, HTTP ETag, Redis)
+- Снижает нагрузку на бэкенд
 
-**2. BFF-level cache:**
-- Aggregated responses cached (Redis)
-- Per-user or anonymous
-- TTL short (seconds-minutes)
+**2. Кэш на уровне BFF:**
+- Агрегированные ответы кэшируются (Redis)
+- Под пользователя или анонимно
+- TTL короткий (секунды-минуты)
 
-**3. CDN cache:**
-- Public content (no user context)
-- Long TTL
+**3. CDN-кэш:**
+- Публичный контент (без пользовательского контекста)
+- Долгий TTL
 
-**Example:**
-- Home page BFF call combines feed + user
-- Base feed (not personalized) cached 30s
-- Per-user personalization added on top
-- Total response не cached (personalized)
+**Пример:**
+- Вызов BFF для главной комбинирует feed + user
+- Базовый feed (не персонализированный) кэшируется на 30 с
+- Персонализация под пользователя добавляется сверху
+- Итоговый ответ не кэшируется (персонализированный)
 
-**Invalidation:**
-- Event-driven (user post → invalidate user's feed cache)
-- TTL (simplest)
+**Инвалидация:**
+- Событийная (пользователь запостил → инвалидируем кэш его feed)
+- По TTL (самое простое)
 
-**Hot vs cold data:**
-- Hot (frequent): in-proc cache
-- Medium: Redis
-- Rarely: always call service
+**Горячие vs холодные данные:**
+- Горячие (частые): in-proc кэш
+- Средние: Redis
+- Редкие: всегда вызываем сервис
 
 ## Q16. BFF at edge (Cloudflare, Vercel)?
 
-**Trend:** run BFF at edge for globally low latency.
+**Тренд:** запускать BFF на edge ради глобально низкой задержки.
 
 **Vercel Edge Functions:**
-- Next.js app router API routes run at edge
+- API-роуты Next.js app router выполняются на edge
 - Server components / server actions
 
 **Cloudflare Workers:**
-- BFF in V8 isolate
-- 300+ POPs
+- BFF в V8-изоляте
+- 300+ POP
 
-**Benefits:**
-- BFF call к client ~20ms (vs central 100-200ms)
-- Backend services called from edge (100-150ms round trip to origin)
+**Плюсы:**
+- Вызов BFF к клиенту ~20 мс (против центральных 100-200 мс)
+- Бэкенд-сервисы вызываются с edge (round trip до origin 100-150 мс)
 
-**Trade-off:**
-- Edge compute limited (30s, 128MB)
-- Cold-path to origin services still slow
-- Cache at edge amplifies benefit
+**Компромисс:**
+- Edge-вычисления ограничены (30 с, 128 МБ)
+- Холодный путь до origin-сервисов всё равно медленный
+- Кэш на edge усиливает выигрыш
 
-**Typical edge BFF:**
-- Small, thin
-- Heavy caching
+**Типичный edge BFF:**
+- Маленький, тонкий
+- Активное кэширование
 - Auth, feature flags
-- Aggregation of already-cached data
+- Агрегация уже закэшированных данных
 
-**Pattern:**
+**Паттерн:**
 ```
 Client ←20ms→ Edge BFF (cached) ←150ms→ Services (cold path)
 ```
 
 ## Q17. Testing BFF?
 
-**Unit tests:**
-- Resolver / handler functions
-- Mock service clients
+**Unit-тесты:**
+- Функции резолверов / хендлеров
+- Мокаем клиентов сервисов
 
-**Integration tests:**
-- Real HTTP to test services (TestContainers)
-- Or WireMock / Mock Service Worker
+**Интеграционные тесты:**
+- Реальный HTTP к тестовым сервисам (TestContainers)
+- Или WireMock / Mock Service Worker
 
-**Contract tests:**
-- BFF ↔ backend services (Pact)
-- Prevent breaking changes
+**Контрактные тесты:**
+- BFF ↔ бэкенд-сервисы (Pact)
+- Предотвращают ломающие изменения
 
 **E2E:**
-- Browser tests (Cypress, Playwright)
-- Verify BFF → client flow works
+- Браузерные тесты (Cypress, Playwright)
+- Проверяют, что поток BFF → клиент работает
 
-**Smoke tests в prod:**
-- Synthetic checks (hit BFF endpoints continuously)
-- Alert on 5xx rise
+**Smoke-тесты в prod:**
+- Синтетические проверки (непрерывно дёргают endpoint-ы BFF)
+- Алерт при росте 5xx
 
-**Chaos testing:**
-- Inject latency / errors в backend
-- Verify BFF fallbacks work
+**Chaos-тестирование:**
+- Вбрасываем задержки / ошибки в бэкенд
+- Проверяем, что fallback-и BFF срабатывают
 
-**Observability tests:**
-- Spans created correctly
-- Metrics exposed
+**Тесты observability:**
+- Span-ы создаются корректно
+- Метрики экспонируются
 
 ---
 

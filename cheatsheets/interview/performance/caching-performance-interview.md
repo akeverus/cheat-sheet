@@ -80,42 +80,42 @@ updated: "2026-04-25"
 
 (!) Ключевые метрики cache?
 
-**Must-have метрики:**
+**Обязательные метрики:**
 
 **Hit ratio:**
 ```
 hit_ratio = hits / (hits + misses)
 ```
-- Главная метрика; target зависит от workload (80-99%)
+- Главная метрика; целевое значение зависит от workload (80-99%)
 - Низкое значение = cache бесполезен
 
-**Eviction rate:**
-- Rate of keys evicted (LRU/LFU)
-- High = memory under pressure → increase size или tune TTL
+**Eviction rate (частота вытеснения):**
+- Сколько ключей вытесняется в секунду (LRU/LFU)
+- Высокая = память под давлением → увеличить размер или подстроить TTL
 
 **Latency:**
-- Get / Set time p50/p95/p99
-- Redis single-digit ms norm; > 10ms = problem (network, big keys)
+- Время Get / Set по перцентилям p50/p95/p99
+- Для Redis норма — единицы миллисекунд; > 10ms = проблема (сеть, big keys)
 
 **Throughput (ops/sec):**
-- GET/SET per second
-- Watch для capacity planning
+- GET/SET в секунду
+- Следить ради планирования ёмкости
 
-**Memory usage:**
+**Использование памяти:**
 - `used_memory` vs `maxmemory`
-- > 80% = eviction pressure
+- > 80% = давление на вытеснение
 
-**Connection count:**
-- Open connections (limit на server side)
-- Too many = connection exhaustion
+**Число соединений:**
+- Открытые соединения (лимит на стороне сервера)
+- Слишком много = исчерпание пула соединений
 
-**Network bandwidth:**
-- Can hit NIC limits before CPU
+**Пропускная способность сети:**
+- Можно упереться в лимиты NIC раньше, чем в CPU
 
 **Error rate:**
-- Failed ops (connection refused, timeout, OOM)
+- Сбойные операции (connection refused, timeout, OOM)
 
-**Redis-specific:**
+**Специфика Redis:**
 - `instantaneous_ops_per_sec`
 - `keyspace_hits` / `keyspace_misses`
 - `evicted_keys`
@@ -127,52 +127,52 @@ hit_ratio = hits / (hits + misses)
 - `bytes` / `limit_maxbytes`
 - `evictions`
 
-**Export:** `redis_exporter` / `memcached_exporter` → Prometheus → Grafana.
+**Экспорт метрик:** `redis_exporter` / `memcached_exporter` → Prometheus → Grafana.
 
 ## Q2. (!) Hit ratio — что считается "хорошо"?
 
-**Зависит от use case:**
+**Зависит от сценария использования:**
 
-**Tier 1 (hot data, e.g. session, config):** **99%+**
-- Almost everything cached; miss rare
-- Short TTL, pre-warmed
+**Tier 1 (hot data — сессии, конфиг):** **99%+**
+- Почти всё закэшировано; miss редок
+- Короткий TTL, прогрев заранее
 
-**Tier 2 (DB query cache, API response):** **90-95%**
-- Most requests cached; некоторая invalidation
-- Typical web app
+**Tier 2 (кэш DB-запросов, ответы API):** **90-95%**
+- Большинство запросов из кэша; есть некоторая инвалидация
+- Типичное веб-приложение
 
-**Tier 3 (CDN, static content):** **95-99%**
-- Static rarely changes
+**Tier 3 (CDN, статика):** **95-99%**
+- Статика меняется редко
 
-**Tier 4 (long-tail data, e.g. user-generated):** **50-80%**
-- Many unique keys, few repeats (Zipfian)
-- Cache still useful, но не доминирует
+**Tier 4 (long-tail данные, например пользовательский контент):** **50-80%**
+- Много уникальных ключей, мало повторов (распределение Zipf)
+- Кэш всё ещё полезен, но не доминирует
 
-**Metric calculation:**
-- **Instantaneous:** last 1 min — volatile
-- **5-15 min avg** — stable for alerting
-- **Daily** — trend analysis
+**Расчёт метрики:**
+- **Мгновенное значение:** за последнюю 1 минуту — волатильно
+- **Среднее за 5-15 мин** — стабильно для алертинга
+- **За сутки** — анализ тренда
 
-**Poor hit ratio causes:**
-- TTL too short (eviction before reuse)
-- Cache size too small (LRU eviction)
-- Many unique keys (long tail, cache useless)
-- Invalidation too aggressive
-- Cold start (after deploy / restart)
+**Причины низкого hit ratio:**
+- TTL слишком короткий (вытеснение до повторного использования)
+- Размер кэша слишком мал (вытеснение по LRU)
+- Много уникальных ключей (long tail, кэш бесполезен)
+- Слишком агрессивная инвалидация
+- Cold start (после деплоя / рестарта)
 
-**Fix workflow:**
-1. Measure current hit ratio per cache
-2. If < target → investigate
-3. Check top-N misses (if possible) → patterns
-4. Adjust: size, TTL, or restructure keys
+**Порядок устранения:**
+1. Измерить текущий hit ratio по каждому кэшу
+2. Если < целевого → разбираться
+3. Посмотреть top-N промахов (если возможно) → искать паттерны
+4. Подстроить: размер, TTL или реструктурировать ключи
 
-**Hit ratio ≠ always "higher = better":**
-- 100% hit можно achieve by caching garbage forever
-- Balance с freshness (stale serving)
+**Hit ratio ≠ всегда «чем выше, тем лучше»:**
+- 100% попаданий можно получить, вечно кэшируя мусор
+- Нужен баланс со свежестью данных (риск отдачи устаревшего)
 
 ## Q3. (!) Как измерить cache impact на latency?
 
-**Метод 1: direct measurement:**
+**Метод 1: прямое измерение:**
 ```java
 long start = System.nanoTime();
 Value v = cache.get(key);
@@ -186,135 +186,135 @@ if (v == null) {
 }
 ```
 
-Log/metric both.
+Логировать/собирать метрики по обоим путям.
 
 **Метод 2: A/B / feature flag:**
-- Disable cache для subset of traffic
-- Compare end-to-end latency
-- Measures "real" impact (including cache overhead)
+- Отключить кэш для части трафика
+- Сравнить end-to-end latency
+- Показывает «реальный» эффект (включая накладные расходы самого кэша)
 
-**Метод 3: p99 analysis:**
-- Sort requests by latency
-- P99 = slowest 1% — often cache misses
-- Delta (P99 vs P50) = cache effectiveness
+**Метод 3: анализ p99:**
+- Отсортировать запросы по latency
+- P99 = самый медленный 1% — часто это промахи кэша
+- Дельта (P99 vs P50) = эффективность кэша
 
-**Calculate theoretical max:**
+**Расчёт теоретического максимума:**
 ```
 avg_latency = hit_ratio × cache_lat + (1 - hit_ratio) × miss_lat
 ```
 
-Example:
-- Cache hit = 1ms
+Пример:
+- Попадание в кэш = 1ms
 - DB = 100ms
 - Hit ratio 95% → avg = 0.95×1 + 0.05×100 = 5.95ms
-- Hit ratio 90% → avg = 10.9ms (2x slower!)
-- **5% drop in hit ratio nearly doubled latency**
+- Hit ratio 90% → avg = 10.9ms (в 2 раза медленнее!)
+- **Падение hit ratio на 5% почти удвоило latency**
 
-**Показывает why hit ratio is king.**
+**Это и показывает, почему hit ratio — король метрик.**
 
-**Instrumentation:**
-- OpenTelemetry spans с `cache.hit=true/false` attribute
-- Split p99 по attribute → clear picture
+**Инструментирование:**
+- Спаны OpenTelemetry с атрибутом `cache.hit=true/false`
+- Разбить p99 по этому атрибуту → ясная картина
 
-**Watch:** cache itself может add latency:
-- Network RTT for Redis (1-2ms)
-- Serialization
-- In-proc cache (Caffeine) — microseconds, essentially free
+**Внимание:** сам кэш тоже может добавлять latency:
+- Сетевой RTT до Redis (1-2ms)
+- Сериализация
+- In-proc кэш (Caffeine) — микросекунды, по сути бесплатно
 
 ## Q4. (!) LRU / LFU / TinyLFU — performance разница?
 
 **LRU (Least Recently Used):**
-- Evict oldest touched
-- Pros: simple, good для sequential workloads
-- Cons: one-hit wonders pollute cache (recent but low-value)
+- Вытесняет давно не использованное
+- Плюсы: простота, хорош для последовательных workload-ов
+- Минусы: «однодневки» (one-hit wonders) засоряют кэш — свежие, но малоценные
 
 **LFU (Least Frequently Used):**
-- Evict lowest count
-- Pros: keeps popular items
-- Cons: "classic" LFU never forgets → stale popular displaces new
+- Вытесняет с наименьшим счётчиком обращений
+- Плюсы: удерживает популярные элементы
+- Минусы: «классический» LFU ничего не забывает → устаревшие популярные вытесняют новые
 
-**TinyLFU (Caffeine, modern Redis `allkeys-lfu`):**
-- Frequency estimator (Count-Min Sketch) + windowed LRU
-- Approximates LFU с low memory
-- Handles both recency + frequency
-- **Benchmark winner** на realistic workloads
+**TinyLFU (Caffeine, современный Redis `allkeys-lfu`):**
+- Оценщик частоты (Count-Min Sketch) + оконный LRU
+- Аппроксимирует LFU при малом расходе памяти
+- Учитывает и свежесть, и частоту
+- **Победитель в бенчмарках** на реалистичных workload-ах
 
-**Hit ratio comparison (realistic workload, e.g. database/search):**
+**Сравнение hit ratio (реалистичный workload, например база/поиск):**
 - LRU: ~70-80% hit ratio
 - LFU: ~75-82%
-- **TinyLFU: 85-95%** — noticeably better
+- **TinyLFU: 85-95%** — заметно лучше
 
-**Admission filter:**
-- New item замещает incumbent only if estimated frequency > incumbent
-- Prevents cold-hit flushing warm cache
+**Admission filter (фильтр допуска):**
+- Новый элемент вытесняет текущего жильца только если оценочная частота нового выше
+- Не даёт холодному попаданию вымыть прогретый кэш
 
-**Redis modes:**
-- `allkeys-lru` (default in many configs)
-- `allkeys-lfu` (since 4.0) — approximated LFU
-- Combine с `maxmemory-samples` (default 5; higher = better approx, more CPU)
+**Режимы Redis:**
+- `allkeys-lru` (дефолт во многих конфигах)
+- `allkeys-lfu` (с 4.0) — приближённый LFU
+- Комбинируется с `maxmemory-samples` (дефолт 5; больше = точнее приближение, но больше CPU)
 
-**Caffeine:** uses TinyLFU — usually right choice for JVM in-proc.
+**Caffeine:** использует TinyLFU — обычно верный выбор для in-proc на JVM.
 
-**Verdict:** на типичном Zipfian web workload — **TinyLFU superior** к LRU by 5-15% hit ratio.
+**Вердикт:** на типичном веб-workload с распределением Zipf — **TinyLFU превосходит** LRU на 5-15% по hit ratio.
 
 ## Q5. (!) Redis `maxmemory-policy` — выбор?
 
-**Policies:**
+**Политики:**
 
-- **`noeviction`** — return error on OOM (default in some configs)
-- **`allkeys-lru`** — evict LRU across all keys
-- **`allkeys-lfu`** — evict LFU across all keys (4.0+)
-- **`allkeys-random`** — random eviction
-- **`volatile-lru`** — LRU only among keys with TTL
-- **`volatile-lfu`** — LFU with TTL
-- **`volatile-random`** — random with TTL
-- **`volatile-ttl`** — shortest TTL first
+- **`noeviction`** — возвращать ошибку при OOM (дефолт в некоторых конфигах)
+- **`allkeys-lru`** — вытеснять по LRU среди всех ключей
+- **`allkeys-lfu`** — вытеснять по LFU среди всех ключей (4.0+)
+- **`allkeys-random`** — случайное вытеснение
+- **`volatile-lru`** — LRU только среди ключей с TTL
+- **`volatile-lfu`** — LFU среди ключей с TTL
+- **`volatile-random`** — случайное среди ключей с TTL
+- **`volatile-ttl`** — сначала с наименьшим TTL
 
 **Выбор:**
 
-**Pure cache (all data cacheable, no distinction):**
-- `allkeys-lfu` — usually best hit ratio
-- `allkeys-lru` — simpler, ~ as good
+**Чистый кэш (все данные кэшируемы, без различий):**
+- `allkeys-lfu` — обычно лучший hit ratio
+- `allkeys-lru` — проще, примерно так же хорош
 
-**Cache + session store (mixed):**
-- `volatile-lru` or `volatile-lfu` — sessions have TTL; evict cache; preserve session
-- But! Persistent keys (no TTL) never evicted → can fill memory — monitor!
+**Кэш + хранилище сессий (смешанно):**
+- `volatile-lru` или `volatile-lfu` — у сессий есть TTL; вытесняем кэш, сохраняем сессию
+- Но! Постоянные ключи (без TTL) никогда не вытесняются → могут заполнить память — следить!
 
-**Write-through persistence:**
-- `noeviction` — app must manage; accept OOM errors
-- Use Redis как **storage**, not cache
+**Сквозная запись (write-through) с персистентностью:**
+- `noeviction` — приложение само управляет; миритесь с ошибками OOM
+- Redis используется как **хранилище**, а не кэш
 
-**Tuning:**
+**Настройка:**
 ```
 maxmemory 10gb
 maxmemory-policy allkeys-lfu
 maxmemory-samples 10  # default 5; higher = better approximation
 ```
 
-**Anti-pattern:** `noeviction` with unlimited TTL — grows until OOM → crash.
+**Антипаттерн:** `noeviction` с неограниченным TTL — растёт до OOM → падение.
 
-**Monitor:** `evicted_keys` counter; spikes indicate under-provisioned.
+**Мониторинг:** счётчик `evicted_keys`; всплески указывают на нехватку ресурсов.
 
 ## Q6. Memory fragmentation Redis?
 
-**Fragmentation ratio:**
+**Коэффициент фрагментации:**
 ```
 mem_fragmentation_ratio = used_memory_rss / used_memory
 ```
 
-- 1.0 = no frag
-- 1.0-1.5 = normal
-- \> 1.5 = high frag (waste)
-- < 1.0 = swapping (BAD!) — OS has swapped Redis memory → terrible latency
+- 1.0 = фрагментации нет
+- 1.0-1.5 = норма
+- \> 1.5 = высокая фрагментация (расход впустую)
+- < 1.0 = свопинг (ПЛОХО!) — ОС выгрузила память Redis в swap → ужасная latency
 
 **Причины:**
-- Variable-sized keys/values (jemalloc arenas)
-- Deletes leave holes
-- Long-running process с lots writes
+- Ключи/значения переменного размера (арены jemalloc)
+- Удаления оставляют «дыры»
+- Долгоживущий процесс с большим числом записей
 
-**Fix:**
+**Как исправить:**
 
-**Active defrag (Redis 4.0+):**
+**Активная дефрагментация (Redis 4.0+):**
 ```
 activedefrag yes
 active-defrag-ignore-bytes 100mb
@@ -323,39 +323,39 @@ active-defrag-threshold-upper 100
 active-defrag-cycle-min 5
 active-defrag-cycle-max 75
 ```
-- Background process relocates values
-- CPU overhead (tune cycle-max)
+- Фоновый процесс перемещает значения
+- Накладные расходы по CPU (регулируется через cycle-max)
 
-**Restart:**
-- Nuclear option; clears cache
-- Failover to replica, restart primary
+**Рестарт:**
+- Крайняя мера; очищает кэш
+- Сделать failover на реплику, перезапустить primary
 
-**Allocator:** jemalloc (Redis default) — best fragmentation; don't use libc malloc.
+**Аллокатор:** jemalloc (дефолт Redis) — наименьшая фрагментация; не используйте libc malloc.
 
-**Monitor:** alert if `mem_fragmentation_ratio > 1.5` for extended period.
+**Мониторинг:** алерт, если `mem_fragmentation_ratio > 1.5` держится продолжительное время.
 
 ## Q7. (!) Thundering herd / cache stampede?
 
-**Scenario:**
-1. Hot key expires
-2. 1000 concurrent requests miss cache
-3. All 1000 rebuild value (hit DB/compute)
-4. DB crushed; latencies spike
+**Сценарий:**
+1. Истекает hot key
+2. 1000 одновременных запросов промахиваются мимо кэша
+3. Все 1000 перестраивают значение (бьют в DB / пересчитывают)
+4. DB раздавлена; latency взлетает
 
-**Problem:** cache was serving at 1000 RPS; miss → 1000 RPS slams DB.
+**Проблема:** кэш отдавал на 1000 RPS; промах → 1000 RPS обрушиваются на DB.
 
-**Consequences:**
-- DB overload
-- Cascade failure
-- Latency spike
-- Worse if rebuild takes seconds
+**Последствия:**
+- Перегрузка DB
+- Каскадный отказ
+- Всплеск latency
+- Хуже, если перестройка занимает секунды
 
-**Prevention:**
+**Защита:**
 
-**1. Distributed lock (mutex):**
-- First miss acquires lock; others wait
-- One rebuilds; others read fresh value
-- Code sketch:
+**1. Распределённый лок (mutex):**
+- Первый промах берёт лок; остальные ждут
+- Один перестраивает; остальные читают свежее значение
+- Набросок кода:
 ```java
 if (cache.get(key) == null) {
     if (lock.tryLock(key, 5s)) {
@@ -369,29 +369,29 @@ if (cache.get(key) == null) {
 }
 ```
 
-**2. Probabilistic early expiration:**
-- Rebuild probabilistically before expiration
-- Near expiry → higher chance to rebuild
-- Formula (Vattani et al. 2015):
+**2. Вероятностное досрочное истечение:**
+- Перестраивать вероятностно ещё до истечения
+- Ближе к истечению → выше шанс перестроить
+- Формула (Vattani et al. 2015):
 ```
 now - (delta × β × ln(random())) >= expiry
 ```
-- **Pros:** no lock, smooths rebuild load
+- **Плюсы:** нет лока, сглаживает нагрузку на перестройку
 
 **3. Stale-while-revalidate:**
-- Serve stale, trigger async rebuild
-- OK if slight staleness acceptable (typical)
+- Отдавать устаревшее, асинхронно запускать перестройку
+- Подходит, если допустима лёгкая несвежесть (обычно так)
 
-**4. Request coalescing (in-process):**
-- Single-flight: deduplicate concurrent requests
-- Go `singleflight`, Java `CompletableFuture` cache
+**4. Request coalescing (внутри процесса):**
+- Single-flight: дедупликация одновременных запросов
+- В Go — `singleflight`, в Java — кэш на `CompletableFuture`
 
-**5. Warmup:**
-- Pre-populate cache before releasing traffic
+**5. Прогрев (warmup):**
+- Заполнить кэш заранее, до подачи трафика
 
 ## Q8. (!) Защита: mutex, probabilistic early expiration?
 
-**Distributed mutex (Redis):**
+**Распределённый mutex (Redis):**
 
 ```python
 def get_with_lock(key):
@@ -413,12 +413,12 @@ def get_with_lock(key):
         return redis.get(key) or get_with_lock(key)  # recursion limit
 ```
 
-**Pros:** simple; guarantees single rebuilder.
-**Cons:** waiters block; lock release critical (use short TTL).
+**Плюсы:** просто; гарантирует единственного, кто перестраивает.
+**Минусы:** ждущие блокируются; критично освобождение лока (использовать короткий TTL).
 
-**Redlock (Redis multi-master):** more robust distributed lock; overkill для most cache use.
+**Redlock (Redis multi-master):** более надёжный распределённый лок; избыточен для большинства кэш-сценариев.
 
-**Probabilistic (XFetch) algorithm:**
+**Вероятностный алгоритм (XFetch):**
 ```python
 def xfetch(key, ttl, compute_fn):
     data, expiry, delta = redis.get_with_meta(key)
@@ -434,35 +434,35 @@ def xfetch(key, ttl, compute_fn):
     return data
 ```
 
-- `delta` = time to recompute (stored alongside)
-- `BETA` = tuning constant (1.0 typical)
-- As near expiry → probability rebuild → 1
-- No herd: requests spread over rebuild window
+- `delta` = время на пересчёт (хранится рядом)
+- `BETA` = настроечная константа (обычно 1.0)
+- Чем ближе к истечению → тем выше вероятность перестройки → стремится к 1
+- Нет «стада»: запросы размазаны по окну перестройки
 
-**Caffeine** (Java in-proc) — built-in `refreshAfterWrite`: async refresh while returning cached.
+**Caffeine** (Java in-proc) — встроенный `refreshAfterWrite`: асинхронное обновление с одновременной отдачей закэшированного.
 
-**Comparison:**
+**Сравнение:**
 
-| Approach | Simplicity | Effectiveness | Latency |
+| Подход | Простота | Эффективность | Latency |
 |----------|-----------|---------------|---------|
-| Mutex | Medium | High | Waiters blocked |
-| Probabilistic | Complex | High | None blocked |
-| Stale-while-revalidate | Easy | High (for tolerant apps) | None blocked |
-| Warmup | Easy | High (if feasible) | One-time |
+| Mutex | Средняя | Высокая | Ждущие заблокированы |
+| Вероятностный | Сложно | Высокая | Никто не блокируется |
+| Stale-while-revalidate | Легко | Высокая (для толерантных приложений) | Никто не блокируется |
+| Прогрев | Легко | Высокая (если реализуемо) | Разовый |
 
 ## Q9. Request coalescing?
 
-**Coalescing** — de-duplicate **concurrent identical requests** within single process.
+**Coalescing** — дедупликация **одновременных идентичных запросов** внутри одного процесса.
 
 **Без coalescing:**
-- Request A: miss, starts DB query
-- Request B (1ms later): miss, starts another identical DB query
-- 2 DB queries for same result
+- Запрос A: промах, запускает DB-запрос
+- Запрос B (через 1ms): промах, запускает ещё один такой же DB-запрос
+- 2 DB-запроса ради одного результата
 
 **С coalescing:**
-- Request A starts task
-- Request B detects A's in-flight task, **awaits same future**
-- 1 DB query; both get result
+- Запрос A запускает задачу
+- Запрос B видит уже выполняющуюся задачу A, **ждёт тот же future**
+- 1 DB-запрос; оба получают результат
 
 **Go `singleflight`:**
 ```go
@@ -491,69 +491,69 @@ public Value get(String key) {
 }
 ```
 
-**Caffeine** does automatic coalescing when using `.build(CacheLoader)`.
+**Caffeine** делает coalescing автоматически при использовании `.build(CacheLoader)`.
 
-**Limits:**
-- Per-process only (не помогает если 100 pods miss одновременно)
-- Combine с distributed mutex для cross-process
+**Ограничения:**
+- Только в пределах процесса (не поможет, если 100 подов промахиваются одновременно)
+- Комбинируется с распределённым mutex для межпроцессного случая
 
-**Gotcha:** exception in one request → all sharing waiters fail. Often OK but know it.
+**Подвох:** исключение в одном запросе → падают все ждущие, разделяющие future. Часто это приемлемо, но нужно об этом помнить.
 
 ## Q10. (!) Как выбрать TTL?
 
-**Factors:**
+**Факторы:**
 
-**1. Freshness requirement:**
-- Real-time (stock prices) → seconds
-- Product details → minutes-hours
-- User profile → hours-days
-- Config → hours-day
+**1. Требование к свежести:**
+- Реальное время (биржевые котировки) → секунды
+- Детали товара → минуты-часы
+- Профиль пользователя → часы-дни
+- Конфиг → часы-сутки
 
-**2. Backend cost of miss:**
-- Cheap (in-memory app) → short TTL OK
-- Expensive (multi-join DB query, 500ms) → long TTL
+**2. Стоимость промаха на бэкенде:**
+- Дёшево (in-memory приложение) → короткий TTL ок
+- Дорого (DB-запрос с кучей join-ов, 500ms) → длинный TTL
 
-**3. Rate of change:**
-- Rarely changes → long TTL (days)
-- Frequently changes → short TTL или event-driven invalidation
+**3. Частота изменений:**
+- Меняется редко → длинный TTL (дни)
+- Меняется часто → короткий TTL или event-driven инвалидация
 
-**4. Invalidation capability:**
-- Если умеете invalidate (pub/sub, event bus) → long TTL acceptable
-- Без invalidation → TTL = staleness tolerance
+**4. Возможность инвалидации:**
+- Если умеете инвалидировать (pub/sub, шина событий) → длинный TTL допустим
+- Без инвалидации → TTL = допустимая несвежесть
 
-**Pragmatic defaults:**
-- API responses: 5-60 seconds
-- DB query cache: 1-5 min
-- Config / reference data: 1h
-- Sessions: 24h
+**Прагматичные дефолты:**
+- Ответы API: 5-60 секунд
+- Кэш DB-запросов: 1-5 мин
+- Конфиг / справочные данные: 1ч
+- Сессии: 24ч
 
-**Calculation:**
+**Расчёт:**
 ```
 hit_ratio = TTL_length / (TTL_length + request_interval)
 ```
 
-Example:
-- Key requested every 100ms
+Пример:
+- Ключ запрашивается каждые 100ms
 - TTL = 5s → ratio = 5 / 5.1 ≈ 98%
 - TTL = 1s → ratio = 1 / 1.1 ≈ 91%
-- Increasing TTL 5x → hit ratio +7 points
+- Увеличение TTL в 5 раз → hit ratio +7 пунктов
 
-**Tune by workload:**
-- Measure hit ratio at different TTLs
-- Plot → find elbow
+**Подстраивать под workload:**
+- Измерить hit ratio при разных TTL
+- Построить график → найти точку перегиба
 
-**Gotcha:** too long TTL + no invalidation → user sees stale. Test: does 1-hour stale OK?
+**Подвох:** слишком длинный TTL + нет инвалидации → пользователь видит устаревшее. Проверка: нормально ли, что данные устарели на час?
 
 ## Q11. Jittered TTL (prevent mass expiration)?
 
-**Problem:**
-- 10,000 keys set at same time with TTL=60s
-- All expire simultaneously
-- 10,000 misses → stampede on DB
+**Проблема:**
+- 10 000 ключей выставлены одновременно с TTL=60s
+- Все истекают разом
+- 10 000 промахов → stampede по DB
 
-**Fix:** add random jitter to TTL.
+**Решение:** добавить случайный джиттер к TTL.
 
-**Implementation:**
+**Реализация:**
 ```python
 TTL_BASE = 60
 TTL_JITTER = 10  # ±10s
@@ -561,166 +561,166 @@ ttl = TTL_BASE + random.randint(-TTL_JITTER, TTL_JITTER)
 redis.set(key, val, ex=ttl)
 ```
 
-- Keys now expire over 50-70s window
-- Smooth load instead of spike
+- Теперь ключи истекают в окне 50-70s
+- Плавная нагрузка вместо всплеска
 
-**Why commonly needed:**
-- Batch warming / cache build → all TTLs sync
-- Daily dump / hourly refresh → sync TTLs
-- Deploy event (все pods warm up cache concurrently)
+**Почему часто нужно:**
+- Пакетный прогрев / построение кэша → все TTL синхронизированы
+- Ежедневный дамп / почасовое обновление → синхронные TTL
+- Событие деплоя (все поды прогревают кэш одновременно)
 
 **Caffeine:**
-- `expireAfterWrite` with `Expiry` interface can return random duration
-- Or add jitter to `Duration.ofSeconds(60 + random())`
+- `expireAfterWrite` через интерфейс `Expiry` может возвращать случайную длительность
+- Или добавить джиттер: `Duration.ofSeconds(60 + random())`
 
-**Another pattern — pre-expiry refresh:**
-- Refresh at 80% of TTL (async)
-- Acts как natural jitter + avoids mass miss
+**Ещё один паттерн — обновление до истечения:**
+- Обновлять на 80% TTL (асинхронно)
+- Работает как естественный джиттер + избегает массового промаха
 
-**Effect:** smooth rebuild rate instead of spike — DB usage graph changes from sawtooth to flat.
+**Эффект:** плавный темп перестройки вместо всплеска — график нагрузки на DB превращается из «пилы» в ровную линию.
 
 ## Q12. (!) Cold start — cache warming strategies?
 
-**Cold cache after:**
-- Deploy / restart
-- Cache cluster failover
-- Scaling up (new instance)
-- TTL expires en masse
+**Холодный кэш бывает после:**
+- Деплоя / рестарта
+- Failover кэш-кластера
+- Масштабирования (новый инстанс)
+- Массового истечения TTL
 
-**Impact:** fraction (or all) requests hit DB → latency spike, potential overload.
+**Эффект:** часть (или все) запросов бьют в DB → всплеск latency, возможна перегрузка.
 
-**Strategies:**
+**Стратегии:**
 
-**1. Eager warmup (pre-load):**
-- Before exposing new instance to traffic, populate cache с most-requested keys
-- Query top-N from access logs
-- Readiness probe succeeds after warmup done
+**1. Жадный прогрев (предзагрузка):**
+- До подачи трафика на новый инстанс заполнить кэш самыми запрашиваемыми ключами
+- Взять top-N из логов доступа
+- Readiness probe проходит только после завершения прогрева
 
-**2. Gradual traffic ramp:**
-- Load balancer: new instance gets 1%, 5%, 10%... traffic over minutes
-- Cache fills naturally without overload
+**2. Постепенный набор трафика:**
+- Балансировщик: новый инстанс получает 1%, 5%, 10%... трафика за несколько минут
+- Кэш заполняется естественно, без перегрузки
 
-**3. Replication:**
-- Cache replica alongside primary (Redis replica)
-- On primary restart → promote replica (pre-warmed)
-- L2 cache remote (Redis) + L1 local (Caffeine): L2 survives L1 restart
+**3. Репликация:**
+- Реплика кэша рядом с primary (Redis replica)
+- При рестарте primary → промоутить реплику (она уже прогрета)
+- Удалённый L2-кэш (Redis) + локальный L1 (Caffeine): L2 переживает рестарт L1
 
-**4. Persistent cache:**
-- Redis AOF / RDB — survives restart (though load takes time)
-- Memcached — не persistent; cold always
+**4. Персистентный кэш:**
+- Redis AOF / RDB — переживает рестарт (хотя загрузка занимает время)
+- Memcached — непостоянный; всегда холодный
 
-**5. Background refresh from sources of truth:**
-- ETL/batch job writes cache
-- Event stream (Kafka) → cache update
+**5. Фоновое обновление из источников истины:**
+- ETL/batch-задача пишет в кэш
+- Поток событий (Kafka) → обновление кэша
 
-**6. Don't cache everything:**
-- Accept first-request slowness
-- SLO allows, maybe OK
+**6. Кэшировать не всё:**
+- Смириться с медлительностью первого запроса
+- Если SLO позволяет — возможно, нормально
 
 **Измерение:**
-- Time to reach target hit ratio (e.g. 95%)
-- "Warmup time" должен быть < max allowable cold period
+- Время достижения целевого hit ratio (например 95%)
+- «Время прогрева» должно быть < максимально допустимого холодного периода
 
-**K8s:** readiness probe returns healthy only после warmup. Otherwise load balancer sends traffic to cold pod.
+**K8s:** readiness probe возвращает healthy только после прогрева. Иначе балансировщик шлёт трафик на холодный под.
 
 ## Q13. Invalidation performance (patterns)?
 
-**"There are only two hard things in Computer Science: cache invalidation and naming things."** — Phil Karlton.
+**«В Computer Science есть только две сложные вещи: инвалидация кэша и придумывание имён».** — Phil Karlton.
 
-**Patterns и performance:**
+**Паттерны и производительность:**
 
-**1. TTL-based:**
-- Simplest, no explicit invalidation
-- Accept staleness (up to TTL)
-- **Cost:** zero overhead; **inconsistency:** up to TTL window
+**1. На основе TTL:**
+- Простейший вариант, без явной инвалидации
+- Миримся с несвежестью (в пределах TTL)
+- **Стоимость:** нулевые накладные расходы; **рассогласование:** в пределах окна TTL
 
 **2. Write-through:**
-- On DB write → update cache synchronously
-- **Cost:** write latency = max(DB, cache); fail if cache down
-- **Consistency:** strong
+- При записи в DB → синхронно обновить кэш
+- **Стоимость:** latency записи = max(DB, кэш); сбой, если кэш недоступен
+- **Согласованность:** строгая
 
 **3. Write-behind:**
-- Update cache; async DB write
-- **Cost:** cheap; **risk:** data loss on crash
+- Обновить кэш; запись в DB асинхронно
+- **Стоимость:** дёшево; **риск:** потеря данных при падении
 
-**4. Event-based (pub/sub):**
-- DB change → event → subscribers invalidate caches
-- **Cost:** infra (Kafka/Redis pub/sub); **consistency:** seconds
-- Good fit for CQRS, event sourcing
+**4. Событийная (pub/sub):**
+- Изменение в DB → событие → подписчики инвалидируют кэши
+- **Стоимость:** инфраструктура (Kafka/Redis pub/sub); **согласованность:** секунды
+- Хорошо ложится на CQRS, event sourcing
 
 **5. CDC (Change Data Capture):**
-- Debezium reads DB WAL → topic → cache invalidation consumer
-- **Cost:** complex; **consistency:** near-realtime
-- Scales well
+- Debezium читает WAL базы → топик → консьюмер инвалидации кэша
+- **Стоимость:** сложно; **согласованность:** почти в реальном времени
+- Хорошо масштабируется
 
-**6. Tag-based (Varnish, Fastly):**
-- Group keys by tag; invalidate tag = invalidate all
-- Example: tag "user:42" on all user 42 pages; write → tag invalidation → all caches drop
+**6. По тегам (Varnish, Fastly):**
+- Группируем ключи по тегу; инвалидация тега = инвалидация всех
+- Пример: тег "user:42" на всех страницах пользователя 42; запись → инвалидация тега → все кэши сбрасывают
 
-**7. Version-based:**
-- Include version in cache key: `product:v5:123`
-- Update DB → increment version → effectively new cache entry
-- Old keys eventually expire
+**7. По версии:**
+- Включить версию в ключ кэша: `product:v5:123`
+- Обновление DB → инкремент версии → фактически новая запись в кэше
+- Старые ключи со временем истекут
 
-**Performance考量:**
-- Broadcast invalidation = N×M messages (N caches × M keys) — scale?
-- Invalidation lag = stale serving
-- Too aggressive = low hit ratio
+**Что учесть по производительности:**
+- Broadcast-инвалидация = N×M сообщений (N кэшей × M ключей) — масштабируется ли?
+- Лаг инвалидации = отдача устаревшего
+- Слишком агрессивная = низкий hit ratio
 
-**Best practice:**
-- Start с TTL (simple)
-- Add invalidation where staleness unacceptable
-- Not "invalidate everything on write" — be targeted
+**Лучшая практика:**
+- Начинать с TTL (просто)
+- Добавлять инвалидацию там, где несвежесть недопустима
+- Не «инвалидировать всё при записи» — действовать прицельно
 
 ## Q14. (!) L1 (in-proc) + L2 (Redis) — зачем?
 
-**L1: in-process** (Caffeine, Guava, local HashMap):
-- Latency: nanoseconds-microseconds
-- Capacity: limited by JVM heap (100MB-1GB typical)
-- No network
+**L1: внутрипроцессный** (Caffeine, Guava, локальный HashMap):
+- Latency: наносекунды-микросекунды
+- Ёмкость: ограничена heap JVM (обычно 100MB-1GB)
+- Без сети
 
-**L2: distributed** (Redis, Memcached):
-- Latency: 0.5-2ms (network)
-- Capacity: terabytes
-- Shared across app instances
+**L2: распределённый** (Redis, Memcached):
+- Latency: 0.5-2ms (сеть)
+- Ёмкость: терабайты
+- Общий для всех инстансов приложения
 
-**Hierarchy:**
+**Иерархия:**
 ```
 Request → L1 (check in-proc) → L2 (check Redis) → DB
          hit → return (μs)    hit → return (ms)    miss → rebuild
 ```
 
-**Benefits:**
-- **Ultra-fast** для hot keys (L1 hits)
-- **Relieve Redis load** (Redis CPU freed)
-- **Network savings** (fewer Redis GETs)
-- **Resilient** к Redis outage (L1 keeps serving)
+**Преимущества:**
+- **Сверхбыстро** для hot keys (попадания в L1)
+- **Разгрузка Redis** (освобождается CPU Redis)
+- **Экономия сети** (меньше GET-ов в Redis)
+- **Устойчивость** к отказу Redis (L1 продолжает отдавать)
 
-**Trade-off: consistency:**
-- L1 и L2 могут desync
-- L2 updated → L1 stale (for its TTL)
-- OK для most use cases (short L1 TTL)
+**Компромисс: согласованность:**
+- L1 и L2 могут рассинхронизироваться
+- L2 обновлён → L1 устарел (на свой TTL)
+- Приемлемо для большинства сценариев (короткий TTL у L1)
 
-**L1 TTL:** shorter than L2 (e.g. L1=1min, L2=10min).
+**TTL для L1:** короче, чем у L2 (например L1=1мин, L2=10мин).
 
-**Invalidation:**
-- Can publish invalidation event (Redis pub/sub) → all L1s drop key
-- Or just accept L1 staleness for brief period
+**Инвалидация:**
+- Можно публиковать событие инвалидации (Redis pub/sub) → все L1 сбрасывают ключ
+- Или просто мириться с кратковременной несвежестью L1
 
-**When use:**
-- Read-heavy (10,000+ RPS to one key) → L1 critical
-- Hot keys (Pareto distribution) — 20% keys = 80% requests
-- Latency-sensitive (SLO in sub-millisecond)
+**Когда применять:**
+- Read-heavy (10 000+ RPS на один ключ) → L1 критичен
+- Hot keys (распределение Парето) — 20% ключей = 80% запросов
+- Чувствительность к latency (SLO в долях миллисекунды)
 
-**When not:**
-- Low RPS (L1 overhead > benefit)
-- Every read needs exact latest value
+**Когда нет:**
+- Низкий RPS (накладные расходы L1 > выгоды)
+- Каждое чтение должно отдавать точно последнее значение
 
 ## Q15. Caffeine tuning?
 
-**Caffeine** — high-performance Java cache lib (SLF4J-style simplicity).
+**Caffeine** — высокопроизводительная Java-библиотека кэширования (простота в духе SLF4J).
 
-**Config:**
+**Конфигурация:**
 ```java
 Cache<K, V> cache = Caffeine.newBuilder()
     .maximumSize(10_000)         // LFU-based eviction
@@ -732,21 +732,21 @@ Cache<K, V> cache = Caffeine.newBuilder()
 ```
 
 **`maximumSize` vs `maximumWeight`:**
-- Size: count entries
-- Weight: custom weigher function (`entry.size()` for bytes)
-- Pick based на whether values vary significantly
+- Size: считает число записей
+- Weight: своя функция-весовщик (`entry.size()` в байтах)
+- Выбор зависит от того, сильно ли различаются размеры значений
 
 **`expireAfterWrite` vs `expireAfterAccess`:**
-- Write: fixed TTL from creation
-- Access: reset on read (hot keys stay)
-- Combine with `expireAfter(Expiry)` для custom logic
+- Write: фиксированный TTL от момента создания
+- Access: сбрасывается при чтении (hot keys остаются)
+- Комбинируется с `expireAfter(Expiry)` для своей логики
 
 **`refreshAfterWrite`:**
-- After X, async reload in background
-- Return stale while loading → no miss penalty
-- Critical for stampede prevention
+- Спустя X — асинхронная фоновая перезагрузка
+- Отдаёт устаревшее, пока грузит → нет штрафа за промах
+- Критично для защиты от stampede
 
-**Stats:**
+**Статистика:**
 ```java
 CacheStats stats = cache.stats();
 stats.hitRate();       // e.g., 0.94
@@ -754,20 +754,20 @@ stats.evictionCount();
 stats.missRate();
 ```
 
-Export via Micrometer to Prometheus:
+Экспорт через Micrometer в Prometheus:
 ```java
 CaffeineCacheMetrics.monitor(registry, cache, "user_cache");
 ```
 
-**Sizing:**
-- Start с 10x expected unique keys
-- Monitor hit ratio → adjust
-- Too large → GC pressure (old-gen fills)
+**Подбор размера:**
+- Начать с 10x от ожидаемого числа уникальных ключей
+- Следить за hit ratio → корректировать
+- Слишком большой → давление на GC (заполняется old-gen)
 
-**Loading cache:**
-- `CacheLoader` — sync load on miss
-- `AsyncCacheLoader` — non-blocking
-- Coalesces concurrent requests for same key (no herd)
+**Загрузка кэша:**
+- `CacheLoader` — синхронная загрузка при промахе
+- `AsyncCacheLoader` — неблокирующая
+- Объединяет одновременные запросы по одному ключу (нет «стада»)
 
 **Spring Boot:**
 ```yaml
@@ -777,60 +777,60 @@ spring.cache.caffeine.spec: maximumSize=1000,expireAfterWrite=10m
 
 ## Q16. (!) Redis cluster overhead vs single node?
 
-**Single-node Redis:**
-- Lowest latency
-- Simple
-- Limit: 1 CPU core (mostly) + single-machine RAM
+**Одноузловой Redis:**
+- Минимальная latency
+- Просто
+- Лимит: (в основном) 1 ядро CPU + RAM одной машины
 
 **Redis Cluster:**
-- Shard across N masters
-- 16384 hash slots
-- Horizontal scale (data + writes)
+- Шардирование по N мастерам
+- 16384 хэш-слота
+- Горизонтальное масштабирование (данные + записи)
 
-**Overhead:**
+**Накладные расходы:**
 
-**1. Network hops:**
-- Client → wrong node? → redirect (MOVED) → correct node
-- SMART client caches slot map; avoids
+**1. Сетевые хопы:**
+- Клиент → попал не на тот узел? → редирект (MOVED) → нужный узел
+- Умный клиент кэширует карту слотов; редиректов нет
 
-**2. Cross-slot operations:**
-- `MGET key1 key2` — fails if keys in different slots
-- Fix: **hash tags** `{user:42}:session`, `{user:42}:orders` → same slot
-- Or use Lua / pipeline per-slot batching
+**2. Кросс-слотовые операции:**
+- `MGET key1 key2` — падает, если ключи в разных слотах
+- Решение: **hash tags** `{user:42}:session`, `{user:42}:orders` → один слот
+- Или Lua / пакетирование по слотам через pipeline
 
-**3. Resharding:**
-- Moving slots = brief MOVED redirects
-- Well-handled by cluster-aware clients (Lettuce, Jedis JedisCluster)
+**3. Решардинг:**
+- Перенос слотов = кратковременные MOVED-редиректы
+- Хорошо обрабатывается cluster-aware клиентами (Lettuce, Jedis JedisCluster)
 
-**4. Multi-key transactions (MULTI/EXEC):**
-- Cross-slot = impossible
-- Plan data colocation
+**4. Многоключевые транзакции (MULTI/EXEC):**
+- Кросс-слот = невозможно
+- Планировать колокацию данных
 
-**Measurement:**
-- Single-node p99: ~1ms (localhost) / 2-3ms (within VPC)
-- Cluster p99: similar if slot map cached; worse if not
+**Измерение:**
+- p99 одного узла: ~1ms (localhost) / 2-3ms (внутри VPC)
+- p99 кластера: сопоставимо при закэшированной карте слотов; хуже без неё
 
-**Sentinel (HA, не shard):**
-- Auto-failover на replica
-- Single-master performance + HA
-- Still 1 node capacity
+**Sentinel (HA, не шардирование):**
+- Авто-failover на реплику
+- Производительность одного мастера + HA
+- Ёмкость всё равно одного узла
 
-**Cluster won't help:**
-- Single hot key (one slot = one node)
-- Low data volume that fits на single machine
+**Кластер не поможет:**
+- Один hot key (один слот = один узел)
+- Малый объём данных, помещающийся на одну машину
 
-**Cluster helps:**
-- Total dataset > RAM limit
-- Write throughput > single node CPU
-- Spread load
+**Кластер помогает:**
+- Весь датасет > лимита RAM
+- Пропускная способность записи > CPU одного узла
+- Распределить нагрузку
 
-**Alternatives:**
-- Partition at app layer (consistent hashing across Redis instances)
-- Redis Enterprise (commercial) — transparent sharding
+**Альтернативы:**
+- Партиционирование на уровне приложения (consistent hashing по инстансам Redis)
+- Redis Enterprise (коммерческий) — прозрачное шардирование
 
 ## Q17. Pipeline / MGET batching?
 
-**Problem:** 100 Redis GETs = 100 RTTs (500ms + if cross-region).
+**Проблема:** 100 GET-ов в Redis = 100 RTT (500ms+ при cross-region).
 
 **Pipeline:**
 ```python
@@ -845,16 +845,16 @@ results = p.execute()  # 1 RTT for all
 results = redis.mget(keys)  # single command, 1 RTT
 ```
 
-**Differences:**
+**Различия:**
 
-| Aspect | Pipeline | MGET |
+| Аспект | Pipeline | MGET |
 |--------|----------|------|
-| RTT | 1 (all cmds batched) | 1 |
-| Command types | Any (GET, SET, ...) | GET only |
-| Atomicity | No (unless MULTI wrapped) | Single command |
-| Cluster support | Needs cluster-aware client | Keys must share slot |
+| RTT | 1 (все команды пакетом) | 1 |
+| Типы команд | Любые (GET, SET, ...) | Только GET |
+| Атомарность | Нет (если не обёрнуто в MULTI) | Одна команда |
+| Поддержка кластера | Нужен cluster-aware клиент | Ключи в одном слоте |
 
-**Pipeline for mixed:**
+**Pipeline для смешанных команд:**
 ```python
 p = redis.pipeline()
 p.get(key1)
@@ -863,287 +863,287 @@ p.incr(counter)
 res1, _, counter = p.execute()
 ```
 
-**Cluster pipeline:**
-- Keys split across nodes by slot
-- Lettuce: `RedisClusterAsyncCommands.mget(keys...)` splits automatically
-- Jedis: manual split
+**Pipeline в кластере:**
+- Ключи распределяются по узлам согласно слотам
+- Lettuce: `RedisClusterAsyncCommands.mget(keys...)` разбивает автоматически
+- Jedis: разбивать вручную
 
-**Performance gain:**
-- 100 ops, 1ms RTT → 100ms sequential vs 2ms pipelined = **50x faster**
-- Savings grow with cross-region (20+ ms RTT)
+**Выигрыш в производительности:**
+- 100 операций, RTT 1ms → 100ms последовательно vs 2ms через pipeline = **в 50 раз быстрее**
+- Выигрыш растёт при cross-region (RTT 20+ ms)
 
-**Rule of thumb:** batch when you know multiple keys upfront; latency dominated by RTT.
+**Правило большого пальца:** пакетировать, когда несколько ключей известны заранее; latency определяется RTT.
 
-**Limit:** big pipelines consume memory (client + server); keep batches sensible (100-1000).
+**Ограничение:** большие pipeline-ы потребляют память (на клиенте и сервере); держать разумный размер пакета (100-1000).
 
 ## Q18. Serialization overhead (JSON vs MessagePack vs protobuf)?
 
-**Measurement** (1KB object):
+**Замеры** (объект 1KB):
 
-| Format | Size | Ser speed | Deser speed | Human readable |
+| Формат | Размер | Скорость сериализации | Скорость десериализации | Человекочитаемость |
 |--------|------|-----------|-------------|----------------|
-| JSON | 1000B | Fast | Fast | Yes |
-| MessagePack | 700B | Fast | Fast | No |
-| Protobuf | 600B | Fast | Fast | No |
-| Kryo (Java) | 550B | Fastest JVM | Fastest JVM | No |
-| Avro | 600B | Medium | Medium | No (schema) |
-| Fury (Apache) | 500B | Fastest | Fastest | No |
-| Gzip(JSON) | 400B | Slow | Slow | No |
-| Java Serialization | 1500B | Slow | Slow | No |
+| JSON | 1000B | Быстро | Быстро | Да |
+| MessagePack | 700B | Быстро | Быстро | Нет |
+| Protobuf | 600B | Быстро | Быстро | Нет |
+| Kryo (Java) | 550B | Быстрее всех на JVM | Быстрее всех на JVM | Нет |
+| Avro | 600B | Средне | Средне | Нет (схема) |
+| Fury (Apache) | 500B | Быстрее всех | Быстрее всех | Нет |
+| Gzip(JSON) | 400B | Медленно | Медленно | Нет |
+| Java Serialization | 1500B | Медленно | Медленно | Нет |
 
-**Trade-offs:**
-- JSON: universal, readable, но largest + slowest
-- MessagePack: binary JSON, easy adoption
-- Protobuf: schema upfront → version-safe + compact
-- Kryo: JVM-specific; fast; backward compat questions
-- Fury: 2020s benchmark leader
-- **Avoid:** Java Serialization (slow, CVE-prone, bloated)
+**Компромиссы:**
+- JSON: универсален, читаем, но самый большой и медленный
+- MessagePack: бинарный JSON, легко внедрить
+- Protobuf: схема заранее → безопасность версий + компактность
+- Kryo: только для JVM; быстрый; вопросы к обратной совместимости
+- Fury: лидер бенчмарков 2020-х
+- **Избегать:** Java Serialization (медленно, подвержена CVE, раздута)
 
-**Cache-specific:**
-- Small value (< 1KB): serialization overhead dominates
-- Large value (> 10KB): network transfer dominates → compression helps
-- **Hot key:** serialize once, cache serialized bytes
+**Специфика для кэша:**
+- Маленькое значение (< 1KB): доминируют накладные расходы сериализации
+- Большое значение (> 10KB): доминирует передача по сети → помогает сжатие
+- **Hot key:** сериализовать один раз, кэшировать сериализованные байты
 
-**Redis specifics:**
-- Store as binary (bytes)
-- Compression at serialization (gzip, lz4, zstd) — trade CPU for network
-- LZ4 — fast decompression; Zstd — better ratio
+**Специфика Redis:**
+- Хранить в бинарном виде (байты)
+- Сжатие при сериализации (gzip, lz4, zstd) — обмен CPU на сеть
+- LZ4 — быстрая распаковка; Zstd — лучший коэффициент сжатия
 
-**Benchmark своего workload:**
+**Бенчмарк своего workload:**
 ```java
 // ~ 5k ops/sec JSON vs 15k ops/sec protobuf типично
 ```
 
-**Don't over-optimize:**
-- If cache takes 0.5% of request time, 2× faster ser = 0.25% win
-- Profile before switching
+**Не переоптимизируйте:**
+- Если кэш занимает 0.5% времени запроса, ускорение сериализации в 2× = выигрыш 0.25%
+- Сначала профилировать, потом менять
 
 ## Q19. (!) CDN hit ratio и cache headers?
 
-**CDN hit ratio** — % of requests served from edge vs origin.
+**CDN hit ratio** — % запросов, отданных с edge, а не с origin.
 
-**Goal:** 90%+ typical; static-heavy >98%.
+**Цель:** обычно 90%+; для статики >98%.
 
-**Влияющие headers:**
+**Влияющие заголовки:**
 
 **`Cache-Control`:**
-- `max-age=3600` — cache 1 hour
-- `s-maxage=7200` — CDN-specific TTL (vs browser)
-- `public` / `private` — CDN cacheable vs not
-- `no-cache` — revalidate each time
-- `no-store` — don't cache at all
-- `must-revalidate` — strict после expiry
-- `stale-while-revalidate=60` — serve stale для 60s while revalidating
+- `max-age=3600` — кэшировать 1 час
+- `s-maxage=7200` — TTL именно для CDN (отдельно от браузера)
+- `public` / `private` — кэшируется CDN или нет
+- `no-cache` — ревалидировать каждый раз
+- `no-store` — не кэшировать вовсе
+- `must-revalidate` — строго после истечения
+- `stale-while-revalidate=60` — отдавать устаревшее 60s, пока идёт ревалидация
 
 **`Vary`:**
-- List headers that vary cached response
-- `Vary: Accept-Encoding` — separate cache for gzip/br
-- `Vary: User-Agent` — disaster (one entry per UA) — avoid!
-- `Vary: Cookie` — also often disaster
+- Перечисляет заголовки, от которых зависит кэшированный ответ
+- `Vary: Accept-Encoding` — отдельный кэш для gzip/br
+- `Vary: User-Agent` — катастрофа (по записи на каждый UA) — избегать!
+- `Vary: Cookie` — тоже часто катастрофа
 
 **`ETag` / `Last-Modified`:**
-- Revalidation: `If-None-Match: "etag"` → 304 Not Modified (no body)
-- Saves bandwidth, не latency
+- Ревалидация: `If-None-Match: "etag"` → 304 Not Modified (без тела)
+- Экономит трафик, но не latency
 
-**Common mistakes:**
-- `Set-Cookie` — by default most CDNs don't cache responses with Set-Cookie
-- Query strings (CDN may treat `?ts=1`, `?ts=2` as different objects)
-- `Cache-Control: private` — skip CDN; want `public`
+**Частые ошибки:**
+- `Set-Cookie` — по умолчанию большинство CDN не кэшируют ответы с Set-Cookie
+- Query-строки (CDN может считать `?ts=1` и `?ts=2` разными объектами)
+- `Cache-Control: private` — пропускает CDN; нужно `public`
 
-**Optimizations:**
-- **Normalize query strings:** strip analytics params (`utm_*`)
-- **Cache key engineering:** include only важные params
-- **Tiered caching:** see next question
+**Оптимизации:**
+- **Нормализация query-строк:** убирать аналитические параметры (`utm_*`)
+- **Проектирование ключа кэша:** включать только значимые параметры
+- **Многоуровневое кэширование:** см. следующий вопрос
 
-**Measurement:**
-- CDN dashboard (CloudFront, Fastly) shows hit ratio
-- Low hit ratio → check headers, cache key config, expiration
+**Измерение:**
+- Дашборд CDN (CloudFront, Fastly) показывает hit ratio
+- Низкий hit ratio → проверить заголовки, конфиг ключа кэша, истечение
 
-**Cache-Control best practices:**
-- Static assets (JS/CSS/images): `max-age=31536000, immutable` + fingerprint filename
-- HTML: `max-age=0, s-maxage=60` (clients always re-fetch, CDN caches briefly)
-- API: per-endpoint; often `private, max-age=0`
+**Лучшие практики Cache-Control:**
+- Статика (JS/CSS/изображения): `max-age=31536000, immutable` + имя файла с фингерпринтом
+- HTML: `max-age=0, s-maxage=60` (клиенты всегда перезапрашивают, CDN кэширует ненадолго)
+- API: по эндпоинтам; часто `private, max-age=0`
 
 ## Q20. CDN tiered caching?
 
-**Without tiered:**
+**Без многоуровневого:**
 ```
 100 edge POPs → origin
 All 100 miss same object → origin slammed with 100 requests
 ```
 
-**Tiered / shield POP:**
+**Многоуровневое / shield POP:**
 ```
 Edge POPs → shield POP (regional) → origin
 First edge miss fetches from shield; shield fetches from origin ONCE
 Other edges hit shield (shield pre-populated)
 ```
 
-**Benefits:**
-- **Origin offload** (9x to 100x reduction)
-- Faster miss resolution для later edges (shield closer than origin)
+**Преимущества:**
+- **Разгрузка origin** (снижение в 9-100 раз)
+- Быстрее разрешается промах для последующих edge (shield ближе, чем origin)
 
-**Vendors:**
-- **Fastly:** shielding — choose a POP as shield
-- **CloudFront:** Origin Shield — enable per-distribution
-- **Cloudflare:** Argo Tiered Cache — auto-select best shield
+**Вендоры:**
+- **Fastly:** shielding — назначить POP как shield
+- **CloudFront:** Origin Shield — включается на distribution
+- **Cloudflare:** Argo Tiered Cache — авто-выбор лучшего shield
 
-**Configuration:**
-- Pick shield closer to origin than edges (e.g., origin in us-east-1 → shield in us-east-1)
-- Or closer to users (depends on pattern)
+**Конфигурация:**
+- Выбрать shield ближе к origin, чем edge (например, origin в us-east-1 → shield в us-east-1)
+- Или ближе к пользователям (зависит от паттерна)
 
-**When helps:**
-- Large number of edge POPs (100+)
-- Long-tail content (not everything popular)
-- High origin load bills
+**Когда помогает:**
+- Большое число edge POPs (100+)
+- Long-tail контент (популярно не всё)
+- Большие счета за нагрузку на origin
 
-**When not:**
-- Small CDN footprint (few POPs)
-- Cache TTL очень short (shield also misses often)
+**Когда нет:**
+- Малый охват CDN (мало POPs)
+- TTL кэша очень короткий (shield тоже часто промахивается)
 
-**Cost:** enable costs slightly more (shield request billed), but offset by origin savings.
+**Стоимость:** включение стоит чуть дороже (запрос к shield тарифицируется), но окупается экономией на origin.
 
 ## Q21. (!) Hot key problem?
 
-**Hot key:** single key receiving disproportionate load (e.g., 80% of GETs для one product).
+**Hot key:** один ключ получает непропорциональную нагрузку (например, 80% GET-ов на один товар).
 
-**Problem:**
-- Redis node serving that key CPU-bound
-- Network NIC to that node bottleneck
-- Cluster rebalancing won't help (key can't split)
+**Проблема:**
+- Узел Redis с этим ключом упирается в CPU
+- Сетевой NIC к этому узлу — бутылочное горлышко
+- Ребалансировка кластера не поможет (ключ не разделить)
 
-**Detection:**
-- `redis-cli --hotkeys` (sampling-based)
-- `MONITOR` — capture commands (careful, high overhead)
-- Application metrics: per-key hit count
+**Обнаружение:**
+- `redis-cli --hotkeys` (на основе сэмплинга)
+- `MONITOR` — захват команд (осторожно, высокие накладные расходы)
+- Метрики приложения: счётчик попаданий по ключу
 
-**Solutions:**
+**Решения:**
 
-**1. In-process L1 cache (Caffeine):**
-- Hot key mostly served from process memory
-- Redis load drops dramatically
+**1. Внутрипроцессный L1-кэш (Caffeine):**
+- Hot key отдаётся в основном из памяти процесса
+- Нагрузка на Redis резко падает
 
-**2. Read replicas:**
-- Route reads к replica for that key
-- Redis Cluster replica reads (RE-only) — application opt-in
+**2. Read-реплики:**
+- Маршрутизировать чтения этого ключа на реплику
+- Чтение с реплик в Redis Cluster (только RE) — приложение включает явно
 
-**3. Key sharding (multi-key):**
-- Duplicate key across N instances: `product:123:shard0`...`product:123:shard9`
-- App chooses random shard for read; writes must update all
-- Good for read-heavy static
+**3. Шардирование ключа (multi-key):**
+- Дублировать ключ по N экземплярам: `product:123:shard0`...`product:123:shard9`
+- Приложение выбирает случайный shard для чтения; запись обновляет все
+- Хорошо для read-heavy статики
 
-**4. Pre-compute / denormalize:**
-- If hot key = expensive query → materialize elsewhere
+**4. Предрасчёт / денормализация:**
+- Если hot key = дорогой запрос → материализовать в другом месте
 
-**5. Client-side sampling:**
-- 1% of reads hit Redis; 99% served from L1 cache в process
-- Invalidate L1 on Redis pub/sub
+**5. Сэмплинг на стороне клиента:**
+- 1% чтений идёт в Redis; 99% отдаётся из L1-кэша в процессе
+- Инвалидировать L1 через Redis pub/sub
 
-**Monitor:** alert if single key > 5% of total ops.
+**Мониторинг:** алерт, если один ключ > 5% всех операций.
 
-**Real-world:** Twitter "Justin Bieber problem" — single user timeline caused hot shard; solution custom sharding.
+**Из практики:** «проблема Джастина Бибера» у Twitter — таймлайн одного пользователя создавал горячий шард; решение — кастомное шардирование.
 
 ## Q22. (!) Big keys problem?
 
-**Big key:** single value very large (> 100KB, especially MB).
+**Big key:** одно значение очень большое (> 100KB, особенно мегабайты).
 
-**Problems:**
-- **Latency spike:** GET на 10MB key = 10MB network transfer each request
-- **Blocking:** Redis single-threaded; reading big key blocks other ops
-- **Memory fragmentation:** allocation/deallocation pain
-- **Replication lag:** big key write sends 10MB к replicas
-- **Hash slot imbalance:** if large key in one slot, that node bigger
+**Проблемы:**
+- **Всплеск latency:** GET на ключ 10MB = передача 10MB по сети на каждый запрос
+- **Блокировка:** Redis однопоточный; чтение big key блокирует другие операции
+- **Фрагментация памяти:** боль с выделением/освобождением
+- **Лаг репликации:** запись big key шлёт 10MB на реплики
+- **Дисбаланс хэш-слотов:** если большой ключ в одном слоте, этот узел толще
 
-**Detection:**
-- `redis-cli --bigkeys` (sampling)
-- `MEMORY USAGE key` (exact size)
-- `DEBUG OBJECT key` (detailed)
+**Обнаружение:**
+- `redis-cli --bigkeys` (сэмплинг)
+- `MEMORY USAGE key` (точный размер)
+- `DEBUG OBJECT key` (детально)
 
-**Common causes:**
-- Large list (millions of elements)
-- Large hash (thousands of fields)
-- Large set
-- Large serialized blob
+**Частые причины:**
+- Большой list (миллионы элементов)
+- Большой hash (тысячи полей)
+- Большой set
+- Большой сериализованный blob
 
-**Solutions:**
+**Решения:**
 
-**1. Split into smaller chunks:**
-- Instead of `SET user:42 {big_json}` → `HSET user:42 field1 val1` (access patterns may improve)
-- Or shard manually: `chunk1`, `chunk2`...
+**1. Разбить на меньшие части:**
+- Вместо `SET user:42 {big_json}` → `HSET user:42 field1 val1` (паттерны доступа могут улучшиться)
+- Или шардировать вручную: `chunk1`, `chunk2`...
 
-**2. Use collections instead of blobs:**
-- Instead of JSON list → Redis List (RPUSH/LRANGE) — O(1) per element
+**2. Использовать коллекции вместо blob-ов:**
+- Вместо JSON-списка → Redis List (RPUSH/LRANGE) — O(1) на элемент
 
-**3. Pagination:**
-- `LRANGE list 0 99` instead of `LRANGE list 0 -1` (all)
+**3. Пагинация:**
+- `LRANGE list 0 99` вместо `LRANGE list 0 -1` (весь список)
 
-**4. Compression:**
-- Store compressed blob; decompress client-side
+**4. Сжатие:**
+- Хранить сжатый blob; распаковывать на стороне клиента
 
-**5. Move to real DB / object store:**
-- Redis not storage for big blobs; use S3 / DB + pointer in cache
+**5. Перенести в настоящую БД / объектное хранилище:**
+- Redis не хранилище для больших blob-ов; использовать S3 / DB + указатель в кэше
 
-**6. Scan instead of MEMBERS:**
-- `SMEMBERS huge_set` → blocks; use `SSCAN` cursor
+**6. Сканировать вместо MEMBERS:**
+- `SMEMBERS huge_set` → блокирует; использовать курсор `SSCAN`
 
-**Monitor:** alert on `MEMORY USAGE > 1MB` for any key.
+**Мониторинг:** алерт на `MEMORY USAGE > 1MB` для любого ключа.
 
 ## Q23. Cache not scaling — что проверить?
 
-**Symptoms:**
-- Latency rising with load
-- Hit ratio dropping
-- CPU / memory saturation
+**Симптомы:**
+- Latency растёт с нагрузкой
+- Hit ratio падает
+- Насыщение CPU / памяти
 
-**Debug checklist:**
+**Чек-лист отладки:**
 
-**1. Single node bottleneck:**
-- Redis single-threaded — CPU core saturated at ~100k ops/sec
-- Fix: cluster, replica reads
+**1. Бутылочное горлышко одного узла:**
+- Redis однопоточный — ядро CPU насыщается на ~100k ops/sec
+- Решение: кластер, чтения с реплик
 
-**2. Network NIC:**
-- 1 Gbps saturated; 10 Gbps available?
-- Big values → multiply RPS × size = bandwidth need
+**2. Сетевой NIC:**
+- 1 Gbps насыщен; есть ли 10 Gbps?
+- Большие значения → RPS × размер = потребность в полосе
 
-**3. Connection limit:**
-- `CONFIG GET maxclients` — hit limit?
-- App side connection pool too small → queueing
+**3. Лимит соединений:**
+- `CONFIG GET maxclients` — упёрлись в лимит?
+- Слишком маленький пул соединений на стороне приложения → очереди
 
-**4. Hot key (see Q21):**
-- One key overwhelming
-- Spread via L1
+**4. Hot key (см. Q21):**
+- Один ключ перегружает
+- Размазать через L1
 
-**5. Big keys (see Q22):**
-- Blocking ops
+**5. Big keys (см. Q22):**
+- Блокирующие операции
 
-**6. Slow commands:**
-- `SLOWLOG GET 10` — recent slow commands
-- `KEYS *` (never use in prod!), `HGETALL` on big hash, `SMEMBERS`
+**6. Медленные команды:**
+- `SLOWLOG GET 10` — недавние медленные команды
+- `KEYS *` (никогда не используйте в проде!), `HGETALL` на большом hash, `SMEMBERS`
 
-**7. Persistence:**
-- `BGSAVE` spike? `RDB` sync? `AOF` rewrite?
-- Fork() on large heap: Copy-on-Write pressure
-- Disable persistence на pure cache
+**7. Персистентность:**
+- Всплеск `BGSAVE`? Синхронизация `RDB`? Перезапись `AOF`?
+- Fork() на большом heap: давление Copy-on-Write
+- Отключить персистентность на чистом кэше
 
-**8. Memory fragmentation:**
-- `mem_fragmentation_ratio > 1.5` — see Q6
+**8. Фрагментация памяти:**
+- `mem_fragmentation_ratio > 1.5` — см. Q6
 
 **9. Swap:**
-- `mem_fragmentation_ratio < 1` — swapped out; BAD; disable swap
+- `mem_fragmentation_ratio < 1` — выгружено в swap; ПЛОХО; отключить swap
 
-**10. Client-side issue:**
-- Connection pool too small
-- Serialization CPU bound
-- GC pauses in app (cache look-ups blocked)
+**10. Проблема на стороне клиента:**
+- Слишком маленький пул соединений
+- Сериализация упирается в CPU
+- Паузы GC в приложении (обращения к кэшу заблокированы)
 
-**Tool:**
+**Инструменты:**
 - `redis-cli --latency`, `redis-cli --latency-history`
-- Grafana dashboard for Redis
+- Дашборд Grafana для Redis
 
-**Scaling options:**
-- Vertical: bigger box (limited by single-thread)
-- Horizontal: cluster (data sharding) или replication (read scaling)
-- Caching layers (L1, CDN, more levels)
+**Варианты масштабирования:**
+- Вертикальное: машина мощнее (ограничено однопоточностью)
+- Горизонтальное: кластер (шардирование данных) или репликация (масштабирование чтений)
+- Слои кэширования (L1, CDN, больше уровней)
 
 ## See also
 

@@ -18,7 +18,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Edge Computing`
 
-`Edge Computing` — run logic **близко к users** (CDN edge locations, IoT gateways). Cloudflare Workers, AWS Lambda@Edge, Fastly Compute@Edge: latency 10-50ms (vs origin 100-300ms), global scale, serverless. Growing importance: API gateway, personalization, A/B testing, image optimization, auth at edge.
+`Edge Computing` — выполнение логики **близко к пользователям** (edge-локации CDN, IoT-шлюзы). Cloudflare Workers, AWS Lambda@Edge, Fastly Compute@Edge: latency 10-50 мс (против 100-300 мс у origin), глобальный масштаб, serverless. Роль растёт: API gateway, персонализация, A/B-тестирование, оптимизация изображений, авторизация на edge.
 
 ## Полезные ссылки
 
@@ -65,22 +65,22 @@ updated: "2026-04-25"
 
 ## Q1. (!) Что такое Edge Computing?
 
-**Edge Computing** — run application logic **at edge of network** (close to users), not central DC/cloud.
+**Edge Computing** — выполнение прикладной логики **на краю сети** (близко к пользователям), а не в центральном DC/облаке.
 
-**Origin (traditional):**
-- Centralized: 1-few regions
-- User → 150ms RTT globally
+**Origin (традиционный подход):**
+- Централизованно: один или несколько регионов
+- Пользователь → 150 мс RTT по миру
 
 **Edge:**
-- Distributed: 100-300+ points of presence (POPs)
-- User → 10-50ms RTT from any location
+- Распределённо: 100-300+ точек присутствия (POP)
+- Пользователь → 10-50 мс RTT из любой точки
 
-**Types:**
-1. **CDN edge functions** (Cloudflare Workers, Lambda@Edge)
-2. **IoT edge** (device-level processing, AWS Greengrass)
-3. **Telco edge / MEC** (5G base station compute)
+**Типы:**
+1. **Edge-функции CDN** (Cloudflare Workers, Lambda@Edge)
+2. **IoT edge** (обработка на уровне устройства, AWS Greengrass)
+3. **Telco edge / MEC** (вычисления на базовой станции 5G)
 
-**Focus here:** CDN edge functions — most relevant для backend interviews.
+**Фокус здесь:** edge-функции CDN — наиболее релевантны для backend-собеседований.
 
 **Architecture:**
 ```
@@ -88,86 +88,86 @@ User → CDN Edge (runs edge function) → optionally → Origin
          ↓ 10ms                             ↓ 150ms
 ```
 
-**Key point:** edge function может answer без going к origin. Full roundtrip avoided.
+**Ключевой момент:** edge-функция может ответить, не обращаясь к origin. Полный roundtrip исключается.
 
 ## Q2. (!) Edge vs CDN vs серверlessless?
 
-**CDN:** static content caching at edge.
-- Stored objects (images, CSS, JS)
-- No logic execution
+**CDN:** кэширование статического контента на edge.
+- Хранимые объекты (изображения, CSS, JS)
+- Логика не выполняется
 
-**Edge compute:** CDN + code execution at edge.
-- Modify request/response
-- Dynamic personalization
-- Auth, routing decisions
+**Edge compute:** CDN + выполнение кода на edge.
+- Модификация request/response
+- Динамическая персонализация
+- Авторизация, решения о маршрутизации
 
 **Serverless (Lambda, Cloud Functions):**
-- Centralized regions (us-east-1 etc.)
-- Full runtime (containers)
-- Longer cold starts, less distributed
+- Централизованные регионы (us-east-1 и т.д.)
+- Полноценный runtime (контейнеры)
+- Дольше cold start, меньше распределённость
 
 **Edge serverless (Workers, Lambda@Edge):**
-- Serverless + at edge
-- V8 isolates (Workers) — microsecond startup
-- Full platform: KV store, crons, durable objects
+- Serverless + на edge
+- V8-изоляты (Workers) — старт за микросекунды
+- Полная платформа: KV store, cron-ы, durable objects
 
-**Comparison:**
+**Сравнение:**
 
-| Aspect | CDN | Lambda | Edge Worker |
+| Аспект | CDN | Lambda | Edge Worker |
 |--------|-----|--------|-------------|
-| Location | Edge | Region | Edge |
-| Logic | No | Full | Limited |
-| Startup | — | 100s ms | ~0 ms |
-| Runtime | — | Full OS | JS/Wasm only |
-| State | Static | External | KV / DO |
+| Расположение | Edge | Регион | Edge |
+| Логика | Нет | Полная | Ограниченная |
+| Старт | — | сотни мс | ~0 мс |
+| Runtime | — | Полная ОС | Только JS/Wasm |
+| Состояние | Статика | Внешнее | KV / DO |
 
 ## Q3. (!) Benefits и когда применять?
 
-**Benefits:**
+**Преимущества:**
 
-**1. Low latency:**
-- 10-50ms vs 100-300ms
-- Critical for perceived speed (LCP < 2.5s)
+**1. Низкая latency:**
+- 10-50 мс против 100-300 мс
+- Критично для воспринимаемой скорости (LCP < 2.5 с)
 
-**2. Offload origin:**
-- Edge handles logic → origin handles less traffic → cheaper, more stable
+**2. Разгрузка origin:**
+- Edge берёт на себя логику → origin обрабатывает меньше трафика → дешевле и стабильнее
 
-**3. Global scale instant:**
-- Deploy once; runs в 300 POPs
-- No multi-region deployment complexity
+**3. Мгновенный глобальный масштаб:**
+- Деплой один раз; работает в 300 POP
+- Нет сложности мультирегионального деплоя
 
-**4. Cost (often):**
-- Pay per invocation; no idle cost
-- Cloudflare Workers: $5 / 10M requests
+**4. Стоимость (зачастую):**
+- Оплата за вызов; нет платы за простой
+- Cloudflare Workers: $5 за 10M запросов
 
-**5. DDoS absorption:**
-- Cloudflare network absorbs 71 Tbps attacks
-- Edge functions run post-mitigation
+**5. Поглощение DDoS:**
+- Сеть Cloudflare поглощает атаки в 71 Tbps
+- Edge-функции выполняются уже после митигации
 
-**When применять:**
-- Static site personalization (inject user-specific data)
-- Auth at edge (reject unauthorized before origin)
-- A/B testing, feature flags
-- Image/video transformations
-- API proxying / aggregation (BFF at edge)
-- IoT ingestion
+**Когда применять:**
+- Персонализация статичного сайта (внедрение данных под пользователя)
+- Авторизация на edge (отсечь неавторизованных до origin)
+- A/B-тестирование, feature-флаги
+- Преобразование изображений/видео
+- Проксирование / агрегация API (BFF на edge)
+- Приём данных IoT
 
-**When NOT:**
-- Heavy compute (ML inference at scale) — CPU limits
-- Long-running (> 30s) — not supported
-- Stateful applications с high consistency — hard
+**Когда НЕ стоит:**
+- Тяжёлые вычисления (ML-инференс под нагрузкой) — лимиты CPU
+- Долгие операции (> 30 с) — не поддерживаются
+- Stateful-приложения с высокой консистентностью — сложно
 
 ## Q4. (!) Cloudflare Workers — как работает?
 
-**V8 isolate** — lightweight JavaScript sandbox (same as Chrome tabs).
+**V8-изолят** — лёгкая JavaScript-песочница (та же, что у вкладок Chrome).
 
-**Architecture:**
-- Worker code (JS/TS/Wasm)
-- Deployed to all Cloudflare POPs (300+)
-- First request to POP → load worker (~1ms)
-- Subsequent requests → reuse isolate (microseconds)
+**Архитектура:**
+- Код воркера (JS/TS/Wasm)
+- Развёрнут на всех POP Cloudflare (300+)
+- Первый запрос к POP → загрузка воркера (~1 мс)
+- Последующие запросы → переиспользование изолята (микросекунды)
 
-**Example:**
+**Пример:**
 ```js
 export default {
   async fetch(request, env) {
@@ -180,131 +180,131 @@ export default {
 }
 ```
 
-**Features:**
-- Fetch API (web standard)
+**Возможности:**
+- Fetch API (веб-стандарт)
 - KV store (eventually consistent key-value)
 - Durable Objects (strongly consistent, stateful)
-- Cron triggers
-- D1 (SQLite at edge)
-- R2 (S3-compatible storage, zero egress)
+- Cron-триггеры
+- D1 (SQLite на edge)
+- R2 (S3-совместимое хранилище, нулевой egress)
 - Queues, AI
 
-**Runtime limits:**
-- CPU time: 10ms free / 30s paid
-- Memory: 128MB
-- Request size: 100MB
+**Лимиты runtime:**
+- CPU-время: 10 мс бесплатно / 30 с на платном тарифе
+- Память: 128MB
+- Размер запроса: 100MB
 
-**Languages:** JS, TS, WASM (Rust, C, Go → wasm)
+**Языки:** JS, TS, WASM (Rust, C, Go → wasm)
 
 ## Q5. (!) Lambda@Edge vs CloudFront Functions?
 
 **CloudFront Functions:**
-- Newer (2021)
-- JavaScript only
-- < 1 ms execution
-- Viewer request/response only
-- Simple use cases (header manipulation, redirects)
-- Cheap ($0.10 / million)
+- Новее (2021)
+- Только JavaScript
+- Выполнение < 1 мс
+- Только viewer request/response
+- Простые сценарии (манипуляции с заголовками, редиректы)
+- Дёшево ($0.10 за миллион)
 
 **Lambda@Edge:**
-- Older, more powerful
+- Старше и мощнее
 - Node.js, Python
-- Up to 5s (viewer) / 30s (origin) execution
-- Full Lambda capabilities (call services, longer)
-- 4 trigger points:
-  - Viewer request (before cache)
-  - Origin request (after cache miss)
-  - Origin response (before cache)
-  - Viewer response (after cache)
-- More expensive ($0.6 / million)
+- Выполнение до 5 с (viewer) / 30 с (origin)
+- Полные возможности Lambda (вызов сервисов, дольше работа)
+- 4 точки-триггера:
+  - Viewer request (до кэша)
+  - Origin request (после промаха кэша)
+  - Origin response (до кэша)
+  - Viewer response (после кэша)
+- Дороже ($0.6 за миллион)
 
-**Use cases:**
-- CloudFront Functions: URL rewrite, header manipulation, simple auth
-- Lambda@Edge: personalization, complex routing, image resize
+**Сценарии:**
+- CloudFront Functions: переписывание URL, манипуляции с заголовками, простая авторизация
+- Lambda@Edge: персонализация, сложная маршрутизация, ресайз изображений
 
-**Cold start:** Lambda@Edge slower (50-200ms cold); Functions instant.
+**Cold start:** Lambda@Edge медленнее (50-200 мс на холодную); Functions запускаются мгновенно.
 
-**Deployment propagation:**
-- Lambda@Edge: 2-5 min worldwide
-- CF Functions: faster
+**Распространение деплоя:**
+- Lambda@Edge: 2-5 мин по миру
+- CF Functions: быстрее
 
 ## Q6. V8 isolates vs containers?
 
-**V8 isolate (Workers):**
-- Light sandbox inside V8 engine
-- Memory-isolated, not process-isolated
-- Multiple isolates share one V8 process
-- Startup: microseconds
-- Good for short, JS/WASM code
+**V8-изолят (Workers):**
+- Лёгкая песочница внутри движка V8
+- Изоляция по памяти, а не по процессам
+- Несколько изолятов делят один V8-процесс
+- Старт: микросекунды
+- Подходит для короткого JS/WASM-кода
 
-**Container (Lambda):**
-- Full OS / runtime
-- Process isolation, VM-level separation (Firecracker)
-- Startup: 100ms-few seconds
-- Supports any language / binary
+**Контейнер (Lambda):**
+- Полноценная ОС / runtime
+- Изоляция процессов, разделение на уровне VM (Firecracker)
+- Старт: от 100 мс до нескольких секунд
+- Поддержка любого языка / бинаря
 
-**Trade-offs:**
+**Компромиссы:**
 
-| Aspect | Isolate | Container |
+| Аспект | Изолят | Контейнер |
 |--------|---------|-----------|
-| Startup | μs | 100ms+ |
-| Density | 1000s / machine | 10s |
-| Security | Process-shared (V8) | VM-level |
-| Languages | JS, WASM | Any |
-| Runtime | Limited | Full |
+| Старт | мкс | 100 мс+ |
+| Плотность | тысячи на машину | десятки |
+| Безопасность | Общий процесс (V8) | Уровень VM |
+| Языки | JS, WASM | Любые |
+| Runtime | Ограниченный | Полный |
 
-**Security:** isolates rely on V8 correctness. V8 exploits → cross-tenant. Rare but exists.
+**Безопасность:** изоляты опираются на корректность V8. Эксплойты V8 → пересечение между тенантами. Редко, но возможно.
 
-**Modern trend:** hybrid — Workers for hot paths, Lambda для complex.
+**Современный тренд:** гибрид — Workers для горячих путей, Lambda для сложного.
 
 ## Q7. (!) Typical use cases?
 
-**1. Auth / JWT validation:**
-- Reject unauthorized requests at edge
-- Save origin load (not waste compute on 401s)
+**1. Авторизация / валидация JWT:**
+- Отклонять неавторизованные запросы на edge
+- Беречь нагрузку origin (не тратить вычисления на 401)
 
-**2. URL rewriting / routing:**
-- A/B test: 50% users → v2 backend
-- Geographic routing: EU users → EU origin
+**2. Переписывание URL / маршрутизация:**
+- A/B-тест: 50% пользователей → backend v2
+- Географическая маршрутизация: пользователи из EU → EU-origin
 
-**3. Personalization:**
-- Inject user-specific snippets into HTML
-- Cached base page + dynamic injection at edge
+**3. Персонализация:**
+- Вставка пользовательских сниппетов в HTML
+- Закэшированная базовая страница + динамическая вставка на edge
 
-**4. Image optimization:**
-- Resize on fly based on device/screen
-- WebP/AVIF conversion
+**4. Оптимизация изображений:**
+- Ресайз на лету в зависимости от устройства/экрана
+- Конвертация в WebP/AVIF
 - Cloudflare Image Resizing, AWS Lambda@Edge
 
-**5. Bot detection / WAF:**
-- Analyze request patterns
-- Block bots without origin hit
+**5. Детектирование ботов / WAF:**
+- Анализ паттернов запросов
+- Блокировка ботов без обращения к origin
 
-**6. API gateway / BFF at edge:**
-- Aggregate multiple backends
-- Transform responses for client
-- See [BFF pattern](bff-pattern-interview.md)
+**6. API gateway / BFF на edge:**
+- Агрегация нескольких бэкендов
+- Преобразование ответов под клиента
+- См. [паттерн BFF](bff-pattern-interview.md)
 
-**7. Geo-blocking / compliance:**
-- Block specific countries
-- Serve GDPR-consent banners only в EU
+**7. Гео-блокировка / комплаенс:**
+- Блокировка конкретных стран
+- Показ GDPR-баннеров согласия только в EU
 
-**8. Caching с custom logic:**
-- Cache key customization
+**8. Кэширование с кастомной логикой:**
+- Кастомизация ключа кэша
 - Stale-while-revalidate
-- Edge purge on demand
+- Edge-purge по требованию
 
-**9. Real-time features:**
-- WebSocket termination at edge
+**9. Real-time-функции:**
+- Терминация WebSocket на edge
 - Pub/sub (Cloudflare Realtime)
 
-**10. AI inference:**
-- Lightweight models at edge (Cloudflare AI, Vercel AI)
-- Low-latency completions
+**10. AI-инференс:**
+- Лёгкие модели на edge (Cloudflare AI, Vercel AI)
+- Low-latency-генерация
 
 ## Q8. Auth/JWT validation at edge?
 
-**Flow:**
+**Поток:**
 ```
 Request → Edge Worker
   ├─ No token → 401
@@ -312,7 +312,7 @@ Request → Edge Worker
   ├─ Valid → forward to origin with verified claims
 ```
 
-**Code (Cloudflare Workers):**
+**Код (Cloudflare Workers):**
 ```js
 export default {
   async fetch(request, env) {
@@ -331,23 +331,23 @@ export default {
 };
 ```
 
-**Benefits:**
-- Origin always receives pre-authenticated requests
-- Attack traffic doesn't hit origin
-- Simplifies backend (trust header from edge)
+**Преимущества:**
+- Origin всегда получает уже аутентифицированные запросы
+- Атакующий трафик не доходит до origin
+- Упрощает backend (доверие заголовку от edge)
 
-**Pitfalls:**
-- Secret management (distribute к edge safely) — use Cloudflare Secrets
-- Token revocation hard (cache per edge) — short TTLs
-- Key rotation coordination
+**Подводные камни:**
+- Управление секретами (безопасно раздать на edge) — использовать Cloudflare Secrets
+- Отзыв токенов сложен (кэш на каждом edge) — короткие TTL
+- Координация ротации ключей
 
 ## Q9. Image optimization, resize?
 
-**Requirement:** serve right size/format per device/connection.
+**Требование:** отдавать правильный размер/формат под устройство/соединение.
 
-**Without edge:** client downloads large file → wastes bandwidth, time.
+**Без edge:** клиент скачивает крупный файл → теряет трафик и время.
 
-**With edge:**
+**С edge:**
 ```
 Request /image.jpg?w=500&format=webp
   ↓
@@ -359,37 +359,37 @@ Edge worker:
   - Return
 ```
 
-**Tools:**
+**Инструменты:**
 - Cloudflare Image Resizing (managed)
 - AWS Lambda@Edge + Sharp
 - Fastly Image Optimizer
 - Vercel Image Optimization
 
-**Benefits:**
-- Bandwidth savings (10-50% smaller)
-- Faster page loads
-- Device-appropriate (retina vs 1x)
+**Преимущества:**
+- Экономия трафика (на 10-50% меньше)
+- Быстрее загрузка страниц
+- Соответствие устройству (retina против 1x)
 
-**Caching:**
-- Cache per variant (URL includes params)
-- CDN cache handles hit ratio
+**Кэширование:**
+- Кэш на каждый вариант (параметры в URL)
+- За hit ratio отвечает CDN-кэш
 
-**Format negotiation:**
-- `Accept: image/webp` → edge serves WebP
-- `Accept: image/avif` → AVIF (even smaller)
-- Fall back to JPEG for old browsers
+**Согласование формата:**
+- `Accept: image/webp` → edge отдаёт WebP
+- `Accept: image/avif` → AVIF (ещё меньше)
+- Откат на JPEG для старых браузеров
 
 ## Q10. A/B testing, personalization?
 
-**Problem:** A/B tests require dynamic content, but caching breaks that.
+**Проблема:** A/B-тесты требуют динамического контента, но кэширование это ломает.
 
-**Edge approach:**
-1. Cache base HTML at edge
-2. Edge function determines variant (user cookie, random)
-3. Injects variant-specific content into response
-4. Returns modified HTML
+**Подход на edge:**
+1. Кэшировать базовый HTML на edge
+2. Edge-функция определяет вариант (cookie пользователя, случайно)
+3. Внедряет в ответ контент конкретного варианта
+4. Возвращает изменённый HTML
 
-**Code:**
+**Код:**
 ```js
 export default {
   async fetch(request, env) {
@@ -409,68 +409,68 @@ export default {
 };
 ```
 
-**HTMLRewriter** (Cloudflare): DOM-like streaming API, more performant than replace.
+**HTMLRewriter** (Cloudflare): потоковый API в стиле DOM, производительнее, чем replace.
 
-**Feature flags:**
-- Edge checks flag service (cached)
-- Toggles features per-user / per-region
+**Feature-флаги:**
+- Edge опрашивает сервис флагов (закэшированно)
+- Включает функции по пользователю / по региону
 
-**Personalization without flash:**
-- No client-side fetch needed (content ready on arrival)
-- No FOUC (flash of unstyled content)
+**Персонализация без мерцания:**
+- Не нужен клиентский fetch (контент готов сразу при доставке)
+- Нет FOUC (flash of unstyled content)
 
 ## Q11. (!) Как handle state at edge?
 
-**Challenge:** edge nodes stateless by default; 300+ POPs.
+**Сложность:** edge-узлы по умолчанию stateless; 300+ POP.
 
-**Options:**
+**Варианты:**
 
-**1. No state:**
-- Everything through origin
-- Simplest
+**1. Без состояния:**
+- Всё через origin
+- Простейший вариант
 
-**2. Cache (ephemeral):**
-- Edge cache (CDN-level)
-- TTL-based
-- Multi-POP: each POP has own cache → redundant but fast
+**2. Кэш (эфемерный):**
+- Edge-кэш (уровень CDN)
+- На основе TTL
+- Multi-POP: у каждого POP свой кэш → дублирование, но быстро
 
 **3. KV store (eventually consistent):**
 - Cloudflare Workers KV, DynamoDB global tables
-- Write → eventually replicates to all POPs
-- Read latency ~1ms
-- Low write throughput (per-key limits)
+- Запись → со временем реплицируется на все POP
+- Latency чтения ~1 мс
+- Низкая пропускная способность записи (лимиты на ключ)
 
 **4. Durable Objects (strongly consistent):**
-- Single instance per object, anywhere in network
-- Pinning to specific POP
-- Useful for coordination (chat room, counter)
+- Один инстанс на объект, в любой точке сети
+- Привязка к конкретному POP
+- Полезно для координации (чат-комната, счётчик)
 
-**5. External DB:**
-- Call Postgres, DynamoDB from worker
-- Adds round-trip (edge→DB)
+**5. Внешняя БД:**
+- Вызов Postgres, DynamoDB из воркера
+- Добавляет round-trip (edge→БД)
 
-**Pick by use case:**
-- User session tokens: KV (read-heavy, eventual OK)
-- Chat room state: Durable Objects (strong consistency)
-- Counter across all nodes: Durable Objects or Redis atomic
+**Выбор по сценарию:**
+- Токены сессий пользователей: KV (много чтения, eventual допустим)
+- Состояние чат-комнаты: Durable Objects (строгая консистентность)
+- Счётчик по всем узлам: Durable Objects или атомарный Redis
 
 ## Q12. Cloudflare Durable Objects?
 
-**Durable Object:** single-instance stateful service pinned к one POP.
+**Durable Object:** stateful-сервис в одном инстансе, привязанный к одному POP.
 
-**Model:**
-- Named object (`getDurableObject("chat-room-123")`)
-- One instance globally; all writes go there
-- Persists в storage (key-value, transactional)
-- WebSocket support
+**Модель:**
+- Именованный объект (`getDurableObject("chat-room-123")`)
+- Один инстанс глобально; все записи идут туда
+- Сохраняется в storage (key-value, транзакционно)
+- Поддержка WebSocket
 
-**Use cases:**
-- Chat rooms (shared state)
-- Real-time collaboration (Google Docs-like)
-- Atomic counters (race-free)
-- Coordination (leader election)
+**Сценарии:**
+- Чат-комнаты (общее состояние)
+- Real-time-совместная работа (как Google Docs)
+- Атомарные счётчики (без гонок)
+- Координация (выбор лидера)
 
-**Code:**
+**Код:**
 ```js
 export class ChatRoom {
   constructor(state, env) {
@@ -491,177 +491,177 @@ export class ChatRoom {
 }
 ```
 
-**Trade-off:** DO pins к single POP → higher latency для users в other regions, but strong consistency.
+**Компромисс:** DO привязан к одному POP → выше latency для пользователей в других регионах, зато строгая консистентность.
 
-**Pricing:** $0.20 per million requests.
+**Стоимость:** $0.20 за миллион запросов.
 
 ## Q13. KV stores (Workers KV, DynamoDB Global)?
 
 **Workers KV:**
 - Eventually consistent key-value
-- Reads: ~1ms (cached at edge)
-- Writes: ~1 min to propagate globally
-- Read-optimized (tolerate stale)
-- 100 writes/sec per key limit
+- Чтение: ~1 мс (кэшируется на edge)
+- Запись: ~1 мин до распространения по миру
+- Оптимизирован под чтение (терпит устаревшие данные)
+- Лимит 100 записей/сек на ключ
 
-**Use cases:**
-- Feature flags
-- Config
-- Static content
-- Route mappings
+**Сценарии:**
+- Feature-флаги
+- Конфигурация
+- Статический контент
+- Маппинги маршрутов
 
 **DynamoDB Global Tables:**
-- Multi-region replication
-- Eventually consistent cross-region
-- Heavier API (slower than KV)
-- Used from Lambda@Edge
+- Мультирегиональная репликация
+- Eventually consistent между регионами
+- Более тяжёлый API (медленнее KV)
+- Используется из Lambda@Edge
 
 **FaunaDB, PlanetScale:**
-- Global SQL databases
-- Strong consistency regional, eventual cross-region
+- Глобальные SQL-базы
+- Строгая консистентность внутри региона, eventual между регионами
 
-**Choose by:**
-- Consistency needed?
-- Write frequency?
-- Complexity (KV vs SQL)?
+**Выбор по:**
+- Нужна ли консистентность?
+- Частота записи?
+- Сложность (KV против SQL)?
 
 ## Q14. (!) Ограничения edge runtime?
 
 **Cloudflare Workers:**
-- CPU: 10-30s (depending tier)
-- Memory: 128MB
-- No access to filesystem (beyond bundled assets)
-- No native Node APIs (workerd — subset)
-- Some npm packages unsupported
+- CPU: 10-30 с (в зависимости от тарифа)
+- Память: 128MB
+- Нет доступа к файловой системе (кроме встроенных в бандл ассетов)
+- Нет нативных Node-API (workerd — подмножество)
+- Часть npm-пакетов не поддерживается
 
 **Lambda@Edge:**
-- CPU: 5-30s
-- Memory: 128MB-10GB
-- Viewer request/response: 5s, 1MB body
+- CPU: 5-30 с
+- Память: 128MB-10GB
+- Viewer request/response: 5 с, тело 1MB
 
-**Runtime features (Workers):**
+**Возможности runtime (Workers):**
 - Fetch API ✅
 - Web Streams ✅
 - Crypto (SubtleCrypto) ✅
 - TextEncoder/Decoder ✅
-- No `fs`, no direct TCP (fetch only)
-- No child processes
+- Нет `fs`, нет прямого TCP (только fetch)
+- Нет дочерних процессов
 
-**Languages:**
-- JS/TS primarily
-- WASM (Rust, Go, C++) — but limited bindings
-- Python (newer, via Pyodide in Workers)
+**Языки:**
+- В основном JS/TS
+- WASM (Rust, Go, C++) — но ограниченные bindings
+- Python (новее, через Pyodide в Workers)
 
-**Deployment size:**
-- Workers: 10MB compressed
+**Размер деплоя:**
+- Workers: 10MB в сжатом виде
 - Lambda@Edge: 50MB
 
-**Known limitations:**
-- No long-polling / long-lived HTTP (30s max)
-- No disk — must use KV/DO/R2
-- Regional compliance (data residency)
+**Известные ограничения:**
+- Нет long-polling / долгоживущего HTTP (максимум 30 с)
+- Нет диска — нужно использовать KV/DO/R2
+- Региональный комплаенс (резидентность данных)
 
 ## Q15. Cold starts?
 
 **Workers:**
-- Essentially zero (V8 isolate = μs)
-- First request to POP may have ~1-5ms load
+- Практически нулевой (V8-изолят = мкс)
+- Первый запрос к POP может дать ~1-5 мс на загрузку
 
 **Lambda@Edge:**
-- 50-500ms cold start
-- Node.js warmer than Java/.NET
-- Reduce: smaller package, Provisioned Concurrency
+- Cold start 50-500 мс
+- Node.js прогревается быстрее, чем Java/.NET
+- Снизить: меньше пакет, Provisioned Concurrency
 
-**Mitigation:**
-- Keep packages small
-- Share runtime (don't dynamically import large modules)
-- Workers don't need this concern
+**Митигация:**
+- Держать пакеты маленькими
+- Переиспользовать runtime (не импортировать крупные модули динамически)
+- Для Workers это не проблема
 
-**Warm instance:**
-- After first request, POP keeps isolate/container warm ~5-15 min
-- Frequent traffic = always warm
+**Тёплый инстанс:**
+- После первого запроса POP держит изолят/контейнер тёплым ~5-15 мин
+- Частый трафик = всегда тёплый
 
 ## Q16. Compute cost vs traditional?
 
 **Cloudflare Workers (2024):**
-- Paid: $5/mo, 10M requests included
-- Extra: $0.50 / million
-- CPU: 30s max, 50ms median billable
+- Платный: $5/мес, 10M запросов включено
+- Сверх лимита: $0.50 за миллион
+- CPU: максимум 30 с, медианно тарифицируется 50 мс
 
 **AWS Lambda@Edge:**
-- $0.60 / million requests
-- + $0.0000125128 / GB-second
+- $0.60 за миллион запросов
+- + $0.0000125128 за GB-секунду
 
-**Comparison (100M requests/month):**
+**Сравнение (100M запросов/мес):**
 - Workers: ~$50
-- Lambda@Edge: ~$60 + compute
-- EC2 (always-on): depends on size ($100s-$1000s)
+- Lambda@Edge: ~$60 + вычисления
+- EC2 (always-on): зависит от размера (сотни-тысячи $)
 
-**Edge cheaper за:**
-- Traffic that's 90%+ edge-cacheable
-- Spiky workloads (scales to 0)
-- Globally distributed (vs deploying multi-region EC2)
+**Edge дешевле для:**
+- Трафика, на 90%+ кэшируемого на edge
+- Пиковых нагрузок (масштабируется до 0)
+- Глобальной распределённости (вместо деплоя мультирегионального EC2)
 
-**Edge expensive для:**
-- Heavy compute (CPU-bound)
-- Long-running requests
-- Stateful apps
+**Edge дорог для:**
+- Тяжёлых вычислений (CPU-bound)
+- Долгих запросов
+- Stateful-приложений
 
 ## Q17. (!) Debugging и observability?
 
-**Logs:**
-- Cloudflare: `wrangler tail` live stream
-- Lambda@Edge: CloudWatch (from region где executed — may be many!)
+**Логи:**
+- Cloudflare: live-стрим `wrangler tail`
+- Lambda@Edge: CloudWatch (из региона, где выполнялось — их может быть много!)
 
-**Metrics:**
-- Cloudflare dashboard: requests, errors, CPU time per worker
-- CloudFront metrics: cache hit ratio, errors
+**Метрики:**
+- Дашборд Cloudflare: запросы, ошибки, CPU-время на воркер
+- Метрики CloudFront: cache hit ratio, ошибки
 
-**Tracing:**
-- Harder than traditional — cross-region
-- OpenTelemetry export to Honeycomb, Datadog
+**Трассировка:**
+- Сложнее, чем обычно — кросс-регионально
+- Экспорт OpenTelemetry в Honeycomb, Datadog
 - Workers Trace Events API
 
-**Local dev:**
-- `wrangler dev` — runs locally с miniflare (workerd emulator)
-- `sam local` for Lambda@Edge — limited
+**Локальная разработка:**
+- `wrangler dev` — запускается локально с miniflare (эмулятор workerd)
+- `sam local` для Lambda@Edge — ограничен
 
-**Testing:**
-- Unit: mock Fetch, KV
-- Integration: deployed to staging worker
+**Тестирование:**
+- Unit: мокать Fetch, KV
+- Integration: деплой на staging-воркер
 
-**Error handling:**
-- Try/catch in worker; report to Sentry
-- Return graceful error response (don't 5xx)
+**Обработка ошибок:**
+- Try/catch в воркере; репорт в Sentry
+- Возвращать корректный ответ об ошибке (не 5xx)
 
 ## Q18. Deployment strategies?
 
 **Cloudflare Workers:**
-- `wrangler deploy` — instant, global (5-30s propagation)
-- Gradual rollout (canary) via % routing:
+- `wrangler deploy` — мгновенно, глобально (распространение 5-30 с)
+- Постепенный rollout (canary) через %-маршрутизацию:
 ```
 routes: [
   { pattern: "example.com/*", script: "worker-v2", percent: 10 }
 ]
 ```
-- Rollback fast (redeploy previous version)
+- Откат быстрый (передеплой предыдущей версии)
 
 **Lambda@Edge:**
-- Version pinning (1 version per distribution path)
-- Propagation 2-5 min worldwide
-- Rollback: update CloudFront к prior version
+- Пиннинг версии (1 версия на путь дистрибуции)
+- Распространение 2-5 мин по миру
+- Откат: переключить CloudFront на прежнюю версию
 
 **CI/CD:**
 - GitHub Actions → `wrangler deploy`
-- Tests in preview environment first
+- Сначала тесты в preview-окружении
 
-**Environment variables / secrets:**
-- Per-environment configs
-- `wrangler secret put` encrypted storage
+**Переменные окружения / секреты:**
+- Конфиги под каждое окружение
+- `wrangler secret put` — зашифрованное хранилище
 
-**A/B deploy (feature flag):**
-- Same worker, branching on flag from KV
-- Instant toggle без deploy
+**A/B-деплой (feature-флаг):**
+- Тот же воркер, ветвление по флагу из KV
+- Мгновенное переключение без деплоя
 
 ---
 

@@ -18,7 +18,7 @@ updated: "2026-05-15"
 ---
 # Вопросы на собеседовании: `Design Chat System`
 
-`Chat System` (WhatsApp, Slack, Telegram, Messenger) — популярный system design. **Stateful connections** (WebSockets), ordering, delivery guarantees, scale. Обсуждается presence, groups, encryption, storage, push notifications.
+`Chat System` (WhatsApp, Slack, Telegram, Messenger) — популярная задача на system design. Ключевые темы: **stateful-соединения** (WebSockets), упорядочивание (ordering), гарантии доставки, масштаб. Обсуждаются presence, групповые чаты, шифрование, хранение, push-уведомления.
 
 ## Полезные ссылки
 
@@ -70,89 +70,89 @@ updated: "2026-05-15"
 
 ## Q1. (!) Functional и non-functional requirements?
 
-**Functional:**
-- 1:1 messaging
-- Group chat (10-100 users typical, up to 500)
-- Online/offline presence
-- Message delivery (real-time если online, push если offline)
-- Read receipts
-- Message history
-- Typing indicators
-- Media sharing (photos, files)
+**Функциональные:**
+- Переписка 1:1
+- Групповой чат (обычно 10–100 человек, до 500)
+- Статус online/offline (presence)
+- Доставка сообщений (real-time если online, push если offline)
+- Read receipts (отметки о прочтении)
+- История сообщений
+- Индикаторы набора текста (typing indicators)
+- Обмен медиа (фото, файлы)
 
-**Non-functional:**
-- **Low latency** (< 500ms message delivery)
-- **High reliability** (no messages lost)
-- **Availability** (99.99%)
-- **Scalability** (billions users — WhatsApp 2B+)
-- **Ordering** (messages in correct sequence)
-- **Encryption** (E2E для privacy)
+**Нефункциональные:**
+- **Низкая задержка** (доставка сообщения < 500 мс)
+- **Высокая надёжность** (сообщения не теряются)
+- **Доступность** (99.99%)
+- **Масштабируемость** (миллиарды пользователей — у WhatsApp 2B+)
+- **Упорядочивание** (сообщения в правильной последовательности)
+- **Шифрование** (E2E для приватности)
 
 ## Q2. (!) Capacity estimation?
 
-**Assumptions:**
-- 1B active users (WhatsApp-scale)
-- Avg 50 messages/user/day
-- 500M simultaneously online (peak)
+**Допущения:**
+- 1B активных пользователей (масштаб WhatsApp)
+- В среднем 50 сообщений на пользователя в день
+- 500M одновременно online (пик)
 
-**Messages:**
-- 1B × 50 = **50B messages/day**
-- 50B / 86400 = **580K msg/sec average**
-- Peak ~2M msg/sec
+**Сообщения:**
+- 1B × 50 = **50B сообщений/день**
+- 50B / 86400 = **580K msg/sec в среднем**
+- Пик ~2M msg/sec
 
-**Storage:**
-- 100B per message (text + metadata)
-- 50B × 100B = **5 TB/day**
-- 5 years → 9 PB
-- With media: 10-100x more
+**Хранилище:**
+- 100B на сообщение (текст + метаданные)
+- 50B × 100B = **5 TB/день**
+- 5 лет → 9 PB
+- С медиа: в 10–100 раз больше
 
-**Bandwidth:**
-- Avg: 50K/s × 1KB = 50 MB/s
-- Peak: 200 MB/s — modest
+**Пропускная способность:**
+- Среднее: 50K/s × 1KB = 50 MB/s
+- Пик: 200 MB/s — скромно
 
-**Connection count:**
-- 500M concurrent WebSocket connections
-- ~1M connections per server (tuned) → 500 servers for connection tier
-- More conservative: 50K/server → 10K servers
+**Число соединений:**
+- 500M одновременных WebSocket-соединений
+- ~1M соединений на сервер (после тюнинга) → 500 серверов для connection-яруса
+- Консервативнее: 50K на сервер → 10K серверов
 
-**Memory:**
-- Presence: user_id → server_id map → 1B × 16B = 16GB
-- Redis fits
+**Память:**
+- Presence: карта user_id → server_id → 1B × 16B = 16GB
+- Помещается в Redis
 
 ## Q3. (!) WebSockets vs long polling vs SSE?
 
-**WebSockets:** bidirectional persistent.
-- **Best** для chat (messages in+out)
-- Single TCP connection
-- Low overhead
+**WebSockets:** двунаправленное постоянное соединение.
+- **Лучший выбор** для чата (сообщения и туда, и обратно)
+- Одно TCP-соединение
+- Низкие накладные расходы
 
-**Long polling:** client requests, server holds until event.
-- Fallback для environments где WS blocked
-- Higher overhead (HTTP overhead per event)
+**Long polling:** клиент делает запрос, сервер удерживает его до наступления события.
+- Запасной вариант для окружений, где WS заблокирован
+- Выше накладные расходы (HTTP-оверхед на каждое событие)
 
-**SSE (Server-Sent Events):** server → client one-way.
-- Not bidirectional (need separate POST для sending)
-- Works с HTTP/2 for scale
+**SSE (Server-Sent Events):** односторонний канал server → client.
+- Не двунаправленный (для отправки нужен отдельный POST)
+- Работает по HTTP/2 для масштаба
 
-**Push (mobile):** APNs (iOS), FCM (Android) для offline notifications.
-- Device wake, show notification
-- App fetches actual messages when opened
+**Push (mobile):** APNs (iOS), FCM (Android) для уведомлений в offline.
+- Будят устройство, показывают уведомление
+- Само приложение забирает реальные сообщения при открытии
 
-**Hybrid (real-world):**
-- Primary: WebSocket when app active
-- Fallback: polling where WS fails
-- Offline: push notification → next open syncs
+**Гибрид (как в реальности):**
+- Основной канал: WebSocket, пока приложение активно
+- Запасной: polling там, где WS не работает
+- Offline: push-уведомление → при следующем открытии происходит синхронизация
 
-**Disconnect handling:**
-- Heartbeat (ping) every 30s
-- Detect dead connection → reconnect
-- Exponential backoff
+**Обработка разрывов:**
+- Heartbeat (ping) каждые 30 с
+- Обнаружение мёртвого соединения → переподключение
+- Экспоненциальный backoff
 
 ## Q4. (!) Connection routing и load balancing?
 
-**Challenge:** WebSockets are **stateful** — user's connection lives on one server. Messages для user X must route to that server.
+**Сложность:** WebSockets **stateful** — соединение пользователя живёт на одном конкретном сервере. Сообщения для пользователя X нужно маршрутизировать именно на этот сервер.
 
-**Architecture:**
+**Архитектура:**
 
 ```
 Client → LB → WebSocket server (holds connection)
@@ -162,46 +162,46 @@ Client → LB → WebSocket server (holds connection)
 Other user's WebSocket server publishes message for X
 ```
 
-**Routing:**
-- User X connects → assigned to WS server S1
-- Presence service: user_id:X → server:S1 (Redis)
-- When Y sends to X:
-  - Message arrives at Y's WS server
-  - Publish to channel or lookup presence
-  - X's server pushes to X's WebSocket
+**Маршрутизация:**
+- Пользователь X подключается → назначается на WS-сервер S1
+- Presence-сервис: user_id:X → server:S1 (Redis)
+- Когда Y пишет X:
+  - Сообщение приходит на WS-сервер пользователя Y
+  - Публикуется в канал либо ищется через presence
+  - Сервер X пушит сообщение в WebSocket пользователя X
 
-**Load balancing:**
-- Consistent hashing (user_id → server) — sticky but scalable
-- Or round-robin + central routing via broker
+**Балансировка нагрузки:**
+- Consistent hashing (user_id → server) — sticky, но масштабируемо
+- Либо round-robin + центральная маршрутизация через брокер
 
-**Connection limits:**
-- 500K-1M concurrent per server (with tuning)
-- Horizontal scale
+**Лимиты соединений:**
+- 500K–1M одновременных на сервер (после тюнинга)
+- Горизонтальное масштабирование
 
 **Failover:**
-- Server dies → WebSockets drop
-- Clients reconnect → routed to new server
-- Update presence registry
+- Сервер падает → WebSockets рвутся
+- Клиенты переподключаются → маршрутизируются на новый сервер
+- Обновляется реестр presence
 
 ## Q5. Sticky session проблема?
 
-**Problem:** user reconnects → must go to same server? Or any?
+**Проблема:** пользователь переподключается → должен попасть на тот же сервер? Или подойдёт любой?
 
-**Option A: sticky (consistent hash):**
-- User → server by `hash(user_id) % N`
-- Same server across reconnects
-- Pro: predictable
-- Con: rebalance when scale (user's server changes)
+**Вариант A: sticky (consistent hash):**
+- Пользователь → сервер по `hash(user_id) % N`
+- Тот же сервер при переподключениях
+- Плюс: предсказуемо
+- Минус: ребалансировка при масштабировании (сервер пользователя меняется)
 
-**Option B: any server (broker-routed):**
-- User → any server (round-robin)
-- Messages for user routed via broker (pub-sub on user's channel)
-- Pro: flexible scaling
-- Con: extra hop per message
+**Вариант B: любой сервер (маршрутизация через брокер):**
+- Пользователь → любой сервер (round-robin)
+- Сообщения для пользователя маршрутизируются через брокер (pub-sub на канале пользователя)
+- Плюс: гибкое масштабирование
+- Минус: лишний hop на каждое сообщение
 
-**Real-world:** Option B more common (Slack, Discord) — more flexible.
+**Как в реальности:** вариант B встречается чаще (Slack, Discord) — он гибче.
 
-**Presence update on reconnect:**
+**Обновление presence при переподключении:**
 ```
 On connect: SET user:X server:S2
 On disconnect: DEL user:X
@@ -227,19 +227,19 @@ Clients (mobile/web)
 [Push Service] — APNs, FCM integration
 ```
 
-**Components:**
+**Компоненты:**
 
-- **WS Gateway:** terminates WebSocket; handles connection lifecycle
-- **Chat Service:** message persist, lookup
-- **Presence Service:** online status
-- **User Service:** profile, auth
-- **Group Service:** group management
-- **Notification Service:** push sender
-- **Search Service:** Elasticsearch for history search
+- **WS Gateway:** терминирует WebSocket; управляет жизненным циклом соединения
+- **Chat Service:** запись и выборка сообщений
+- **Presence Service:** статус online
+- **User Service:** профиль, аутентификация
+- **Group Service:** управление группами
+- **Notification Service:** отправка push
+- **Search Service:** Elasticsearch для поиска по истории
 
 ## Q7. (!) Message delivery flow?
 
-**1:1 chat, both online:**
+**Чат 1:1, оба online:**
 
 ```
 User A writes → A's WebSocket
@@ -255,47 +255,47 @@ S3 subscribed → pushes via WebSocket to B
 B ACKs → read receipt back to A
 ```
 
-**Latency:** typically < 200ms end-to-end.
+**Задержка:** обычно < 200 мс end-to-end.
 
-**Offline delivery:**
-- Presence: B offline → don't route via WS
-- Write to B's message queue (DB / Redis)
-- Trigger push notification (FCM/APNs)
-- B opens app → WS connect → fetch undelivered messages
+**Доставка в offline:**
+- Presence: B offline → не маршрутизируем через WS
+- Пишем в очередь сообщений пользователя B (DB / Redis)
+- Триггерим push-уведомление (FCM/APNs)
+- B открывает приложение → WS-соединение → забирает недоставленные сообщения
 
-**Resilience:**
-- ACK at each hop
-- Message broker retries on failure
-- Persist before push — if push fails, still in storage
+**Устойчивость:**
+- ACK на каждом hop
+- Брокер сообщений делает retry при сбое
+- Сначала персист, потом push — если push упал, сообщение всё равно в хранилище
 
 ## Q8. Message broker между серверами?
 
-**Why broker:**
-- Decouples sender server from recipient server
-- Scalability (publish, don't lookup)
-- Retry on transient failure
+**Зачем брокер:**
+- Развязывает сервер отправителя и сервер получателя
+- Масштабируемость (публикуем, а не ищем напрямую)
+- Retry при временном сбое
 
-**Options:**
+**Варианты:**
 
 **Redis pub/sub:**
-- Super fast (microseconds)
-- Fire-and-forget (no persistence)
-- Good for presence + signaling
-- Not guaranteed delivery (если subscriber momentarily disconnects)
+- Очень быстро (микросекунды)
+- Fire-and-forget (без персистентности)
+- Хорошо для presence + сигналинга
+- Доставка не гарантируется (если подписчик на мгновение отвалился)
 
 **Kafka:**
-- Durable (replay possible)
-- Higher latency (10-100ms)
-- Better for async pipelines (analytics, notifications)
+- Durable (возможен replay)
+- Выше задержка (10–100 мс)
+- Лучше для асинхронных пайплайнов (аналитика, уведомления)
 
 **NATS:**
-- In-between (fast + at-least-once)
+- Нечто среднее (быстро + at-least-once)
 
-**Hybrid:**
-- Redis pub/sub для real-time signaling
-- Kafka для persistence + analytics
+**Гибрид:**
+- Redis pub/sub для real-time сигналинга
+- Kafka для персистентности + аналитики
 
-**Pattern:**
+**Паттерн:**
 ```
 Each user has a channel: user:{id}
 S1 publishes: PUBLISH user:X "msg"
@@ -304,7 +304,7 @@ S3 (where X connected) SUBSCRIBE user:X → push to X's WS
 
 ## Q9. (!) Schema для messages?
 
-**Simple (Cassandra):**
+**Простая схема (Cassandra):**
 
 ```sql
 CREATE TABLE messages (
@@ -317,10 +317,10 @@ CREATE TABLE messages (
 ) WITH CLUSTERING ORDER BY (message_id DESC);
 ```
 
-- Partition: conversation — all messages на одном node
-- Cluster: time → efficient range queries (recent messages)
+- Partition: conversation — все сообщения на одной node
+- Cluster: time → эффективные range-запросы (свежие сообщения)
 
-**Conversations:**
+**Беседы (conversations):**
 ```sql
 CREATE TABLE conversations (
     conversation_id UUID,
@@ -331,7 +331,7 @@ CREATE TABLE conversations (
 );
 ```
 
-**User → conversations index:**
+**Индекс «пользователь → беседы»:**
 ```sql
 CREATE TABLE user_conversations (
     user_id UUID,
@@ -341,355 +341,355 @@ CREATE TABLE user_conversations (
 ) WITH CLUSTERING ORDER BY (last_message_at DESC);
 ```
 
-Allows "list conversations by recent activity."
+Позволяет «вывести список бесед по недавней активности».
 
-**Messages не индексируются по content в operational DB** — separate Elasticsearch.
+**Сообщения не индексируются по content в операционной БД** — для этого отдельный Elasticsearch.
 
 ## Q10. (!) SQL vs NoSQL для chat?
 
-**Chat messages:**
-- **Write-heavy** (every msg)
-- **Time-series** access (recent msgs)
-- **Partition by conversation** ideal
+**Сообщения чата:**
+- **Write-heavy** (каждое сообщение — запись)
+- Доступ как к **time-series** (свежие сообщения)
+- Идеально **партиционировать по беседе**
 
-→ **NoSQL (Cassandra, DynamoDB) fits:**
-- Horizontal scale
-- High write throughput
-- Low latency at scale
+→ **NoSQL (Cassandra, DynamoDB) подходит:**
+- Горизонтальное масштабирование
+- Высокая пропускная способность на запись
+- Низкая задержка при масштабе
 
-**User data (profile, auth):**
-- Relational (users, friends)
-- Consistency matters
-- **SQL** OK (Postgres)
+**Данные пользователя (профиль, аутентификация):**
+- Реляционные (users, friends)
+- Важна согласованность
+- **SQL** подходит (Postgres)
 
 **Presence:**
-- Ephemeral, small
+- Эфемерные, маленькие
 - **Redis** (in-memory)
 
-**Group memberships:**
-- Small relational data
-- SQL or document
+**Членство в группах:**
+- Небольшие реляционные данные
+- SQL или document-БД
 
-**Real world:**
-- WhatsApp: custom (Erlang + Mnesia)
+**Как в реальности:**
+- WhatsApp: своё решение (Erlang + Mnesia)
 - Messenger: HBase
-- Slack: MySQL (sharded)
+- Slack: MySQL (шардированный)
 
 ## Q11. Shard strategy?
 
-**Messages sharded by conversation_id:**
-- All messages 1 conversation → 1 partition
-- Reads: one node
-- Writes: same
-- Hot conversation = hot shard (rare for normal use; celeb chat может be)
+**Сообщения шардируются по conversation_id:**
+- Все сообщения одной беседы → 1 partition
+- Чтения: одна node
+- Записи: туда же
+- Горячая беседа = горячий шард (для обычного использования редкость; чат знаменитости — может случиться)
 
-**Users/groups sharded by user_id.**
+**Пользователи/группы шардируются по user_id.**
 
-**Scaling:**
-- Cassandra token ring handles
-- Virtual nodes для evenness
+**Масштабирование:**
+- Token ring в Cassandra справляется
+- Virtual nodes для равномерности
 
-**Cross-shard queries (e.g., search across all user's chats):**
-- Fan-out: query все relevant shards
-- Or pre-compute timeline
+**Кросс-шардовые запросы (например, поиск по всем чатам пользователя):**
+- Fan-out: запрос ко всем релевантным шардам
+- Либо предвычисленный timeline
 
-**Tombstones in Cassandra:**
-- Deleted messages → tombstones
-- TTL-based retention (keep 90 days, auto-expire)
+**Tombstones в Cassandra:**
+- Удалённые сообщения → tombstones
+- Хранение по TTL (держим 90 дней, авто-истечение)
 
 ## Q12. (!) At-most-once, at-least-once, exactly-once?
 
 **At-most-once:**
-- Send, don't retry на failure
-- Message могут lost
-- Unacceptable для chat
+- Отправили, при сбое не повторяем
+- Сообщения могут теряться
+- Для чата неприемлемо
 
 **At-least-once:**
-- Send, retry until ACK
-- **May duplicate** (ACK lost → retry)
-- Typical для chat
+- Отправили, повторяем до получения ACK
+- **Возможны дубликаты** (потерян ACK → retry)
+- Типично для чата
 
 **Exactly-once:**
-- Idempotency + dedup
-- Harder, but achievable
+- Идемпотентность + дедупликация
+- Сложнее, но достижимо
 
-**Chat implementation:**
-- **At-least-once** delivery
-- **Idempotent processing** (dedup on message_id):
-  - Client generates UUID per message
-  - Server: `INSERT IF NOT EXISTS` (idempotency key)
-  - Duplicate retry → no-op
+**Реализация в чате:**
+- Доставка **at-least-once**
+- **Идемпотентная обработка** (дедупликация по message_id):
+  - Клиент генерирует UUID на каждое сообщение
+  - Сервер: `INSERT IF NOT EXISTS` (ключ идемпотентности)
+  - Повтор-дубликат → no-op
 
-**Result:** effective exactly-once.
+**Итог:** фактически exactly-once.
 
 **End-to-end ACK:**
-- Client → server: msg with ID
-- Server persists, ACK back
-- Server delivers to recipient
-- Recipient ACK → sender "delivered"
+- Клиент → сервер: сообщение с ID
+- Сервер сохраняет, отвечает ACK
+- Сервер доставляет получателю
+- Получатель шлёт ACK → отправитель видит «доставлено»
 
 ## Q13. (!) Read receipts и delivery receipts?
 
-**Events:**
-- **Sent:** message arrived at server (single check ✓)
-- **Delivered:** recipient device received (double check ✓✓)
-- **Read:** recipient opened chat (blue ticks ✓✓)
+**События:**
+- **Sent:** сообщение дошло до сервера (одна галочка ✓)
+- **Delivered:** устройство получателя приняло (две галочки ✓✓)
+- **Read:** получатель открыл чат (синие галочки ✓✓)
 
-**Implementation:**
-- Status field per message + recipient
-- Updates flow back to sender
+**Реализация:**
+- Поле статуса на каждое сообщение + получателя
+- Обновления возвращаются отправителю
 
-**For groups:**
-- Status per recipient
-- Sender UI shows: read by N of M
+**Для групп:**
+- Статус на каждого получателя
+- UI отправителя показывает: прочитано N из M
 
-**Privacy:**
-- Users can disable read receipts (bilateral)
+**Приватность:**
+- Пользователи могут отключить read receipts (двусторонне)
 
-**Storage:**
+**Хранение:**
 ```
 message_status: (message_id, user_id, status, timestamp)
 ```
 
-**Update propagation:**
-- Async (doesn't block main delivery)
-- Batch updates (read 10 messages at once)
+**Распространение обновлений:**
+- Асинхронно (не блокирует основную доставку)
+- Пакетные обновления (прочитали 10 сообщений разом)
 
-**Scale:**
-- Multiply messages × participants = N-fold status records
-- Groups с 100 members → 100x status per message
+**Масштаб:**
+- Сообщения × участники = кратно больше записей статусов
+- Группа из 100 человек → 100× статусов на сообщение
 
 ## Q14. Ordering guarantees?
 
-**Per-conversation ordering:**
-- Messages в один chat must be ordered consistently для all participants
-- Use timestamps + tiebreaker (message_id UUID)
-- Cassandra TIMEUUID: sortable + unique
+**Упорядочивание в рамках беседы:**
+- Сообщения одного чата должны быть упорядочены одинаково для всех участников
+- Используем timestamps + tiebreaker (message_id UUID)
+- Cassandra TIMEUUID: сортируемый + уникальный
 
-**Clock skew:** different devices различные clocks.
-- Server timestamp authoritative (when received)
-- Client shows local estimated
+**Clock skew:** у разных устройств разные часы.
+- Авторитетный timestamp — серверный (момент получения)
+- Клиент показывает локальную оценку
 
-**Out-of-order arrivals:**
-- Client receives message M2 before M1 (network)
-- Reorder on client by timestamp
+**Приход не по порядку:**
+- Клиент получает сообщение M2 раньше M1 (сеть)
+- Клиент пересортировывает по timestamp
 
-**Global ordering:** unnecessary; per-conversation enough.
+**Глобальное упорядочивание:** не нужно; достаточно в рамках беседы.
 
-**Group chat:**
-- Shared sequence (conversation_id partition)
-- Everyone sees same order
+**Групповой чат:**
+- Общая последовательность (partition по conversation_id)
+- Все видят один и тот же порядок
 
 ## Q15. (!) Online status / presence?
 
-**Data:**
+**Данные:**
 - user_id → status (online/away/offline) + last_seen
 
-**Storage:**
-- Redis (ephemeral)
+**Хранение:**
+- Redis (эфемерно)
 - `SET user:X "online" EX 60`
-- TTL 60s — heartbeat keeps alive
-- TTL expires → considered offline
+- TTL 60 с — heartbeat поддерживает запись живой
+- TTL истёк → считаем offline
 
 **Heartbeat:**
-- Client sends ping every 30s via WebSocket
-- Server renews Redis TTL
+- Клиент шлёт ping каждые 30 с по WebSocket
+- Сервер продлевает TTL в Redis
 
-**Change notifications:**
-- User X online/offline → pub/sub event
-- Friends subscribe → UI updates
+**Уведомления об изменениях:**
+- X стал online/offline → событие в pub/sub
+- Друзья подписаны → UI обновляется
 
-**Scale:**
-- 500M users × few bytes = few GB Redis
-- Sharded по user_id
+**Масштаб:**
+- 500M пользователей × несколько байт = несколько GB в Redis
+- Шардировано по user_id
 
-**Privacy:**
-- Users can hide online status
-- WhatsApp: last seen visible/hidden setting
+**Приватность:**
+- Пользователи могут скрыть статус online
+- WhatsApp: настройка видимости last seen
 
 **Away:**
-- No activity 5 min → "away"
-- Client reports activity (mouse move, typing)
+- Нет активности 5 минут → «away»
+- Клиент сообщает об активности (движение мыши, набор текста)
 
 ## Q16. Typing indicators?
 
-**Event:**
-- User typing → ephemeral event to conversation members
-- Not persistent (discard after few seconds)
+**Событие:**
+- Пользователь печатает → эфемерное событие участникам беседы
+- Не персистится (отбрасывается через несколько секунд)
 
-**Implementation:**
-- WebSocket `typing` event
-- Broadcast to chat participants (via broker)
-- Client shows "John is typing..."
-- Timeout: if no follow-up in 5s → hide
+**Реализация:**
+- WebSocket-событие `typing`
+- Рассылка участникам чата (через брокер)
+- Клиент показывает «John is typing...»
+- Таймаут: если нет продолжения в течение 5 с → скрываем
 
-**Rate limit:**
-- Don't send event per keystroke
-- Throttle: one event per 3s max
+**Ограничение частоты:**
+- Не слать событие на каждое нажатие клавиши
+- Throttle: максимум одно событие в 3 с
 
-**Broker:**
+**Брокер:**
 - Fire-and-forget (Redis pub/sub)
-- No persistence; OK to drop
+- Без персистентности; потерять не страшно
 
 ## Q17. Group chat design?
 
-**Challenges beyond 1:1:**
-- 100 recipients → 100x fan-out
-- Member list management
-- Ordering shared
+**Сложности сверх 1:1:**
+- 100 получателей → 100× fan-out
+- Управление списком участников
+- Общее упорядочивание
 
-**Fan-out approaches:**
+**Подходы к fan-out:**
 
-**1. Write-time fan-out:**
-- Sender's server publishes to all group members' channels
-- Each member's server pushes via WS
-- Works well < 1000 members
+**1. Fan-out на запись (write-time):**
+- Сервер отправителя публикует во все каналы участников группы
+- Сервер каждого участника пушит через WS
+- Хорошо работает при < 1000 участников
 
-**2. Read-time fan-out (pull):**
-- Write message once (group-level storage)
-- Recipients pull on poll / open
-- Works for large groups (10k+)
+**2. Fan-out на чтение (read-time, pull):**
+- Записываем сообщение один раз (хранилище на уровне группы)
+- Получатели подтягивают при опросе / открытии
+- Подходит для больших групп (10k+)
 
-**3. Hybrid:**
-- Small groups: push
-- Large groups: pull (or broadcast channel)
+**3. Гибрид:**
+- Маленькие группы: push
+- Большие группы: pull (или broadcast-канал)
 
 **WhatsApp:**
-- Small groups (256): server fans out
-- Larger ("broadcast lists"): different model
+- Маленькие группы (256): сервер делает fan-out
+- Крупнее («broadcast lists»): другая модель
 
-**Slack channels:**
-- Can have thousands of members
-- Channel = topic in broker; subscribers fan-out at edge
+**Каналы Slack:**
+- Могут насчитывать тысячи участников
+- Канал = topic в брокере; подписчики получают fan-out на краю (at edge)
 
-**Membership:**
-- Group service manages add/remove
-- Cache group members list
+**Членство:**
+- Group-сервис управляет добавлением/удалением
+- Кэшируем список участников группы
 
 ## Q18. Push notifications для offline?
 
-**Offline detected:** presence shows offline → send push.
+**Обнаружен offline:** presence показывает offline → шлём push.
 
-**Flow:**
-1. Message persisted
-2. Presence lookup: offline
-3. Notification service → APNs (iOS) / FCM (Android)
-4. Provider delivers to device
-5. Device wakes, shows notification
-6. User opens app → WebSocket connects → fetch pending
+**Поток:**
+1. Сообщение сохранено
+2. Запрос presence: offline
+3. Notification-сервис → APNs (iOS) / FCM (Android)
+4. Провайдер доставляет на устройство
+5. Устройство просыпается, показывает уведомление
+6. Пользователь открывает приложение → WebSocket подключается → забирает ожидающие сообщения
 
 **APNs / FCM:**
-- App must register token с push service
-- Token stored per device
-- Server sends POST to APNs/FCM with token + payload
+- Приложение должно зарегистрировать токен в push-сервисе
+- Токен хранится на каждое устройство
+- Сервер шлёт POST в APNs/FCM с токеном + payload
 
-**Deduplication:**
-- If user reconnects before push arrives → still get push + WS message
-- Client dedups by message_id
+**Дедупликация:**
+- Если пользователь переподключился до прихода push → получит и push, и WS-сообщение
+- Клиент дедуплицирует по message_id
 
-**Content:**
-- Sender name + preview
-- Privacy: iOS lock screen preview toggleable
+**Содержимое:**
+- Имя отправителя + превью
+- Приватность: превью на lock screen в iOS можно переключать
 
 **Silent push:**
-- iOS background-only notification
-- Wakes app briefly to fetch; no banner
+- Фоновое уведомление iOS (только в фоне)
+- Ненадолго будит приложение для подгрузки; без баннера
 
-**Rate limits:**
-- APNs/FCM throttle per-app
-- Consolidation: one push "5 new messages" vs 5 pushes
+**Лимиты частоты:**
+- APNs/FCM троттлят по приложению
+- Консолидация: один push «5 новых сообщений» вместо 5 пушей
 
 ## Q19. (!) End-to-end encryption?
 
-**E2E:** only sender + recipient can read; server can't.
+**E2E:** прочитать могут только отправитель + получатель; сервер не может.
 
-**Signal Protocol** (WhatsApp, Signal, Messenger optional):
+**Signal Protocol** (WhatsApp, Signal, опционально Messenger):
 
-**Key concepts:**
-- Each user: long-term identity key + ephemeral keys
-- Message encrypted with **per-session** key
-- **Forward secrecy:** key rotates each message; past messages safe if current key compromised
-- **Deniability:** can't prove who sent (no signature by long-term key)
+**Ключевые понятия:**
+- У каждого пользователя: долговременный identity key + эфемерные ключи
+- Сообщение шифруется **посессионным** ключом
+- **Forward secrecy:** ключ ротируется на каждое сообщение; прошлые сообщения в безопасности, даже если текущий ключ скомпрометирован
+- **Deniability:** нельзя доказать, кто отправил (нет подписи долговременным ключом)
 
-**Flow:**
-1. User A registers: uploads public keys (identity + pre-keys) к server
-2. A wants to message B: fetches B's public keys
-3. A does X3DH key agreement → session keys
-4. Messages encrypted AES-GCM + authenticated
-5. Server sees only ciphertext
+**Поток:**
+1. Пользователь A регистрируется: загружает публичные ключи (identity + pre-keys) на сервер
+2. A хочет написать B: забирает публичные ключи B
+3. A выполняет согласование ключей X3DH → сессионные ключи
+4. Сообщения шифруются AES-GCM + аутентифицируются
+5. Сервер видит только ciphertext
 
-**Group E2E:**
-- "Sender Keys" protocol: symmetric key per sender, encrypted pairwise to members
-- Rekey on membership change
+**Групповое E2E:**
+- Протокол «Sender Keys»: симметричный ключ на каждого отправителя, зашифрованный попарно для участников
+- Rekey при изменении состава
 
-**Trade-offs:**
-- **Server can't:** search content, compute stats, backup messages directly
-- **Client-side backup:** encrypted blob, user holds key
-- **Metadata still visible:** who's messaging whom, when, size
+**Компромиссы:**
+- **Сервер не может:** искать по content, считать статистику, бэкапить сообщения напрямую
+- **Бэкап на стороне клиента:** зашифрованный blob, ключ держит пользователь
+- **Метаданные всё равно видны:** кто кому пишет, когда, какого размера
 
-**WhatsApp:** E2E since 2016.
-**Telegram:** only "secret chats" E2E; regular chats server-side encrypted but readable.
-**Signal:** all E2E.
+**WhatsApp:** E2E с 2016 года.
+**Telegram:** E2E только в «секретных чатах»; обычные чаты шифруются на стороне сервера, но читаемы.
+**Signal:** всё E2E.
 
 ## Q20. Media (images, video) handling?
 
-**Not sent inline** (too big):
+**Не передаётся inline** (слишком большое):
 
-**Upload flow:**
-1. Client requests presigned S3 URL from server
-2. Client uploads directly to S3
-3. Client sends message: `{type: "image", url: "s3://..."}`
-4. Recipient downloads directly from S3 (or CDN in front)
+**Поток загрузки:**
+1. Клиент запрашивает у сервера presigned S3 URL
+2. Клиент загружает напрямую в S3
+3. Клиент шлёт сообщение: `{type: "image", url: "s3://..."}`
+4. Получатель скачивает напрямую из S3 (или через CDN перед ним)
 
-**Benefits:**
-- No proxy through chat servers (they'd saturate bandwidth)
-- CDN cache
-- Parallel uploads/downloads
+**Преимущества:**
+- Нет проксирования через чат-серверы (иначе они забьют пропускную способность)
+- Кэш CDN
+- Параллельные загрузки/скачивания
 
-**Thumbnails:**
-- Generated server-side (Lambda, ffmpeg)
-- Multiple sizes (thumb, medium, full)
+**Превью (thumbnails):**
+- Генерируются на стороне сервера (Lambda, ffmpeg)
+- Несколько размеров (thumb, medium, full)
 
-**E2E encryption challenges:**
-- File encrypted client-side before upload
-- Recipient downloads encrypted blob + decrypts locally
-- CDN caches ciphertext (no useful inspection)
+**Сложности с E2E-шифрованием:**
+- Файл шифруется на клиенте перед загрузкой
+- Получатель скачивает зашифрованный blob и расшифровывает локально
+- CDN кэширует ciphertext (полезной инспекции нет)
 
-**Video streaming:**
-- Not chat messages typical; offload к separate service
+**Видеостриминг:**
+- Обычно не как сообщения чата; выносится в отдельный сервис
 
-**Retention:**
+**Хранение (retention):**
 - S3 lifecycle policies
-- Delete после N years
+- Удаление через N лет
 
 ## Q21. Search in chat history?
 
-**Challenge:** E2E encryption → server can't search.
+**Сложность:** E2E-шифрование → сервер не может искать.
 
-**Options:**
+**Варианты:**
 
-**1. Client-side search:**
-- Download messages, index locally (SQLite FTS)
-- Works for small-medium history
-- Slow для very long histories
+**1. Поиск на клиенте:**
+- Скачиваем сообщения, индексируем локально (SQLite FTS)
+- Подходит для небольшой-средней истории
+- Медленно для очень длинной истории
 
-**2. Server-side (non-E2E systems):**
-- Elasticsearch индекс
-- Per-user shards
-- Real-time updates from message stream
+**2. На стороне сервера (системы без E2E):**
+- Индекс Elasticsearch
+- Шарды на каждого пользователя
+- Обновления в реальном времени из потока сообщений
 
-**3. E2E + encrypted search:**
-- Encrypted search indexes (client generates encrypted tokens)
-- Server performs encrypted search operations
-- Complex cryptography (Signal hasn't implemented fully)
+**3. E2E + зашифрованный поиск:**
+- Зашифрованные поисковые индексы (клиент генерирует зашифрованные токены)
+- Сервер выполняет операции зашифрованного поиска
+- Сложная криптография (в Signal полностью не реализовано)
 
-**Slack / Messenger (not E2E by default):**
-- Full-text search via Elasticsearch
-- User's channels shards
+**Slack / Messenger (по умолчанию не E2E):**
+- Полнотекстовый поиск через Elasticsearch
+- Шарды по каналам пользователя
 
 **WhatsApp:**
-- Client-side only (E2E)
-- "Chat backup" feature: encrypted blob в iCloud/Drive; user can search after download
+- Только на клиенте (E2E)
+- Функция «Chat backup»: зашифрованный blob в iCloud/Drive; пользователь может искать после скачивания
 
 ---
 

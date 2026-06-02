@@ -18,7 +18,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Strangler Fig Pattern`
 
-`Strangler Fig` — pattern для **gradual migration** монолита → microservices (или legacy → modern). Вместо "big bang rewrite" — new functionality wraps old, progressively replacing. Name от Martin Fowler (2004), inspired by strangler fig trees. Industry standard для risk-managed modernization.
+`Strangler Fig` — паттерн **постепенной миграции** монолита → microservices (или legacy → modern). Вместо "big bang rewrite" новая функциональность оборачивает старую и постепенно её замещает. Название придумал Martin Fowler (2004), вдохновившись деревьями-душителями (strangler fig). Индустриальный стандарт для модернизации с управляемым риском.
 
 ## Полезные ссылки
 
@@ -65,24 +65,24 @@ updated: "2026-04-25"
 
 ## Q1. (!) Что такое Strangler Fig pattern?
 
-**Strangler Fig Application** (Martin Fowler, 2004) — **incremental migration pattern**:
-- New system **gradually replaces** old, piece by piece
-- Old system **strangled** out over time
-- No "big bang" switch
+**Strangler Fig Application** (Martin Fowler, 2004) — **паттерн инкрементальной миграции**:
+- Новая система **постепенно замещает** старую, кусок за куском
+- Старая система со временем оказывается **задушена** (strangled)
+- Без переключения "big bang"
 
-**Named** after strangler fig trees (in rainforest):
-- Seeds germinate on host tree
-- Grow around trunk
-- Eventually original tree dies inside; fig remains
+**Назван** в честь деревьев-душителей (strangler fig, в тропическом лесу):
+- Семена прорастают на дереве-хозяине
+- Растут вокруг ствола
+- В итоге исходное дерево гибнет внутри; остаётся фикус
 
-**Migration analog:**
-- New services grow around legacy monolith
-- One piece at a time replaced
-- Legacy retires gradually
+**Аналогия с миграцией:**
+- Новые сервисы растут вокруг legacy-монолита
+- За раз заменяется один кусок
+- Legacy выводится из эксплуатации постепенно
 
-**End state:** legacy fully replaced; new system stands alone.
+**Конечное состояние:** legacy полностью заменён; новая система работает самостоятельно.
 
-**Diagram (progression):**
+**Диаграмма (прогрессия):**
 ```
 Stage 1: [Monolith 100%]
 Stage 2: [New Service A | Monolith 80%]
@@ -93,55 +93,55 @@ Stage N: [Service A | Service B | Service C | Service D]  (monolith gone)
 
 ## Q2. (!) Зачем Strangler вместо big bang rewrite?
 
-**Big bang rewrite problems:**
+**Проблемы big bang rewrite:**
 
-**1. Huge risk:**
-- Months/years of work before any value
-- Often never ships ("Netscape rewrite" cautionary tale)
-- 50%+ fail rate для large rewrites
+**1. Огромный риск:**
+- Месяцы/годы работы прежде, чем появится хоть какая-то ценность
+- Часто так и не выходит в прод (поучительная история "Netscape rewrite")
+- 50%+ доля провалов для крупных переписываний
 
-**2. Feature parity:**
-- New must match all old features before switching
-- Old continues evolving — moving target
+**2. Паритет функциональности:**
+- Новое должно повторить все старые фичи до переключения
+- Старое продолжает развиваться — цель движется
 
-**3. No incremental value:**
-- Zero benefit until 100% done
-- Can't learn, can't adjust
+**3. Нет инкрементальной ценности:**
+- Ноль выгоды, пока не готово на 100%
+- Нельзя учиться, нельзя корректировать курс
 
-**4. Team morale:**
-- Long tunnel без wins
-- Business impatient
+**4. Боевой дух команды:**
+- Длинный туннель без побед
+- Бизнес теряет терпение
 
-**5. Hard to test:**
-- Until fully replaced, can't integrate-test
-- Reality divergence от spec
+**5. Тяжело тестировать:**
+- Пока не заменено полностью, нельзя прогнать integration-тесты
+- Расхождение реальности со спецификацией
 
-**Strangler advantages:**
-- Incremental value delivery
-- Risk per piece small
-- Early feedback / learning
-- Rollback per-piece possible
-- Business sees progress
-- Dev team retains momentum
+**Преимущества strangler:**
+- Инкрементальная поставка ценности
+- Риск на каждый кусок мал
+- Раннее получение обратной связи и обучение
+- Возможен rollback по отдельным кускам
+- Бизнес видит прогресс
+- Команда разработки сохраняет темп
 
-**Industry consensus (Sam Newman, Fowler, Netflix blog):** strangler beats big bang in 95%+ cases.
+**Консенсус индустрии (Sam Newman, Fowler, блог Netflix):** strangler выигрывает у big bang в 95%+ случаев.
 
 ## Q3. (!) Как работает механика?
 
-**Essential components:**
+**Ключевые компоненты:**
 
-**1. Proxy / Facade layer** (entry point для traffic):
-- Routes requests к old or new system
-- Based on URL, feature flag, user segment
+**1. Proxy / Facade layer** (точка входа для трафика):
+- Маршрутизирует запросы в старую или новую систему
+- На основе URL, feature flag, сегмента пользователя
 
-**2. New service** (replacement):
-- Implements subset of old functionality
-- Deployed independently
+**2. Новый сервис** (замена):
+- Реализует часть старой функциональности
+- Деплоится независимо
 
-**3. Old monolith:**
-- Still running; handles non-migrated paths
+**3. Старый монолит:**
+- Всё ещё работает; обслуживает немигрированные пути
 
-**Flow:**
+**Поток:**
 ```
 Client → Proxy
          ├─ /users (migrated) → [New User Service]
@@ -149,167 +149,167 @@ Client → Proxy
          └─ /rest → [Old Monolith]
 ```
 
-**Progressive steps:**
-1. Deploy proxy (transparent initially)
-2. Build new service for slice (e.g., user profile endpoint)
-3. Route small % traffic к new
-4. Monitor, fix issues
-5. Ramp to 100%
-6. Remove code from monolith
-7. Repeat for next slice
+**Пошаговая прогрессия:**
+1. Задеплоить proxy (поначалу прозрачный)
+2. Построить новый сервис для среза (например, endpoint профиля пользователя)
+3. Направить небольшой % трафика на новый сервис
+4. Мониторить, чинить проблемы
+5. Нарастить до 100%
+6. Удалить код из монолита
+7. Повторить для следующего среза
 
 ## Q4. (!) С чего начинать strangling?
 
-**Pick first slice carefully:**
+**Выбирай первый срез аккуратно:**
 
-**Criteria:**
+**Критерии:**
 
-**1. Loosely coupled:**
-- Few dependencies
-- Clean interface (can wrap behind API)
+**1. Слабая связанность:**
+- Мало зависимостей
+- Чистый интерфейс (можно обернуть за API)
 
-**2. High value / high pain:**
-- Has bugs or scalability issues in monolith
-- Business priority
+**2. Высокая ценность / высокая боль:**
+- Есть баги или проблемы масштабируемости в монолите
+- Приоритет для бизнеса
 
-**3. Isolated data:**
-- Own tables / minimal joins к other domains
-- DB migration simpler
+**3. Изолированные данные:**
+- Свои таблицы / минимум join к другим доменам
+- Миграция БД проще
 
-**4. Good test coverage:**
-- Verify equivalence easier
+**4. Хорошее покрытие тестами:**
+- Проще проверить эквивалентность
 
-**Typical first candidates:**
-- Read-heavy endpoints (low risk to read replication)
-- Edge endpoints (not core transaction path)
-- Authentication (well-bounded)
-- Notifications (async, recoverable)
-- Reporting (separate data store)
+**Типичные первые кандидаты:**
+- Read-heavy endpoints (низкий риск при репликации на чтение)
+- Краевые endpoints (не основной transaction path)
+- Аутентификация (хорошо ограничена)
+- Уведомления (асинхронные, восстановимые)
+- Отчётность (отдельное хранилище данных)
 
-**Avoid first:**
-- Core business transactions
-- Highly coupled (needs half the monolith's DB)
-- Compliance-critical (payment, identity — high risk early)
+**Чего избегать в первую очередь:**
+- Основные бизнес-транзакции
+- Сильно связанное (нужна половина БД монолита)
+- Критичное для комплаенса (платежи, identity — высокий риск на раннем этапе)
 
-**Strategy:** deliver small early win → build team confidence + pattern.
+**Стратегия:** доставить небольшую раннюю победу → нарастить уверенность команды и отработать паттерн.
 
 ## Q5. (!) Какие функции выделять первыми?
 
-**By coupling:**
-- Low: external-facing search → own service
-- Medium: user profile (shared с many but discrete data)
-- High: order processing (touches payment, inventory, shipping)
+**По связанности:**
+- Низкая: внешний поиск → отдельный сервис
+- Средняя: профиль пользователя (разделяется со многими, но данные обособлены)
+- Высокая: обработка заказов (затрагивает платежи, склад, доставку)
 
 **Bounded contexts (DDD):**
-- Identify natural boundaries в domain
-- Each bounded context → candidate service
-- Event Storming workshop helps map
+- Выявить естественные границы в домене
+- Каждый bounded context → кандидат на сервис
+- Воркшоп Event Storming помогает их разметить
 
-**Order of decomposition:**
-1. Peripheral (notification, reports, search)
-2. Supporting (auth, user management)
-3. Core domain (after team experienced)
+**Порядок декомпозиции:**
+1. Периферийное (уведомления, отчёты, поиск)
+2. Вспомогательное (auth, управление пользователями)
+3. Ядро домена (когда команда уже набралась опыта)
 
-**Tip:** start с service where team has lowest risk tolerance. Perfect the migration process first on less critical stuff.
+**Совет:** начинай с сервиса, где у команды наименьшая толерантность к риску. Сначала отточи процесс миграции на менее критичных вещах.
 
 ## Q6. Data migration и shared DB?
 
-**Hardest part.** Shared DB = tight coupling.
+**Самая сложная часть.** Shared DB = тесная связанность.
 
-**Strategies:**
+**Стратегии:**
 
-**1. Shared DB phase (temporary):**
-- Both monolith и new service read/write same DB
-- Fast to start; coupling remains
-- Must evolve carefully
+**1. Фаза shared DB (временная):**
+- И монолит, и новый сервис читают/пишут в одну БД
+- Быстрый старт; связанность сохраняется
+- Развивать схему нужно осторожно
 
-**2. Database views / APIs для isolation:**
-- New service reads монолith's DB через view (not direct tables)
-- Easier to eventually split
+**2. Database views / API для изоляции:**
+- Новый сервис читает БД монолита через view (а не напрямую таблицы)
+- В итоге проще разделить
 
-**3. Data duplication (sync):**
-- New service owns own DB
-- Monolith writes also replicated (CDC, events)
+**3. Дублирование данных (синхронизация):**
+- Новый сервис владеет своей БД
+- Записи монолита тоже реплицируются (CDC, события)
 - Eventually consistent
 
-**4. Full ownership migration:**
-- New service owns data (authoritative)
-- Monolith reads через API / event stream
-- Most work; cleanest end state
+**4. Полная миграция владения:**
+- Новый сервис владеет данными (authoritative)
+- Монолит читает через API / event stream
+- Больше всего работы; самое чистое конечное состояние
 
-**Pattern: expand-contract:**
-- **Expand:** add columns / tables for new service; both read
-- **Move writes:** new service writes; monolith catches via events
-- **Migrate reads:** monolith stops reading old path; reads from new
-- **Contract:** remove old columns/tables
+**Паттерн: expand-contract:**
+- **Expand:** добавить колонки / таблицы для нового сервиса; читают оба
+- **Move writes:** новый сервис пишет; монолит подхватывает через события
+- **Migrate reads:** монолит перестаёт читать по старому пути; читает из нового
+- **Contract:** удалить старые колонки/таблицы
 
-**Tools:**
+**Инструменты:**
 - Debezium (CDC)
 - Kafka Connect
-- Custom ETL
+- Кастомный ETL
 
 ## Q7. Dual-write и consistency?
 
-**Dual-write:** write к both old и new data store during migration.
+**Dual-write:** запись в оба хранилища (старое и новое) во время миграции.
 
-**Risks:**
-- Ordering (write to A succeeds, B fails → inconsistent)
-- Latency (two writes)
-- Complexity (if one fails, retry where?)
+**Риски:**
+- Порядок (запись в A прошла, в B упала → несогласованность)
+- Задержка (две записи)
+- Сложность (если одна упала — где делать retry?)
 
-**Patterns:**
+**Паттерны:**
 
-**1. Write к old, CDC к new:**
-- Old DB is source of truth
-- Changes streamed к new via Debezium
+**1. Запись в старое, CDC в новое:**
+- Старая БД — source of truth
+- Изменения стримятся в новое через Debezium
 - Eventually consistent
 
-**2. Write к new, replicate к old:**
-- New DB authoritative
-- Monolith reads new via API or sees replica
-- When monolith no longer needs → stop replication
+**2. Запись в новое, репликация в старое:**
+- Новая БД authoritative
+- Монолит читает новое через API или видит реплику
+- Когда монолиту это больше не нужно → остановить репликацию
 
 **3. Transactional outbox:**
-- Write к primary DB + outbox table в single tx
-- Event publisher reads outbox, publishes
-- Other side consumes
+- Запись в основную БД + таблицу outbox в одной транзакции
+- Event publisher читает outbox и публикует
+- Другая сторона consume-ит
 
-**4. Saga/2PC (rare):**
-- Distributed tx — expensive, avoid
+**4. Saga/2PC (редко):**
+- Распределённая транзакция — дорого, избегать
 
-**Reconciliation:**
-- Periodic audit: compare records in old vs new
-- Fix drift automatically where safe; alert для significant
+**Сверка (reconciliation):**
+- Периодический аудит: сравнить записи в старом и новом
+- Автоматически чинить drift, где безопасно; алертить о значимых расхождениях
 
-**Consistency level decision:**
-- Eventual OK для most
-- Strong required only для money/inventory — use careful tx patterns
+**Решение об уровне согласованности:**
+- Eventual подходит для большинства
+- Strong нужна только для денег/складских остатков — применять аккуратные tx-паттерны
 
 ## Q8. (!) Proxy / facade layer?
 
-**Router/proxy sits в front** of both systems, dispatches.
+**Router/proxy стоит перед** обеими системами и диспетчеризует запросы.
 
-**Types:**
+**Типы:**
 
 **1. Reverse proxy (Nginx, Envoy, HAProxy):**
-- URL/path-based routing
-- Configuration-driven
-- Low compute
-- Good for simple path splits
+- Маршрутизация по URL/path
+- Управляется конфигурацией
+- Низкая нагрузка на CPU
+- Хорош для простого разделения по путям
 
 **2. API Gateway (Kong, AWS API Gateway):**
-- More features (auth, rate, transform)
-- Per-route plugins
+- Больше возможностей (auth, rate, transform)
+- Плагины на каждый маршрут
 
-**3. Application-level (Spring Gateway, custom):**
-- Code control
-- Complex logic (header-based, A/B)
+**3. Application-level (Spring Gateway, кастомный):**
+- Контроль на уровне кода
+- Сложная логика (по заголовкам, A/B)
 
 **4. Service mesh (Istio, Linkerd):**
-- Sidecar proxies
-- Great for microservice-to-microservice
+- Sidecar-прокси
+- Отлично для взаимодействия microservice-to-microservice
 
-**Configuration example (Envoy):**
+**Пример конфигурации (Envoy):**
 ```yaml
 routes:
   - match: { prefix: "/api/v2/users" }
@@ -318,42 +318,42 @@ routes:
     route: { cluster: old_monolith }
 ```
 
-**Gotchas:**
-- Session affinity (if monolith has sessions)
-- Auth token compatibility
-- Tracing propagation (same user, cross-system)
+**Подводные камни:**
+- Session affinity (если у монолита есть сессии)
+- Совместимость auth-токенов
+- Проброс трассировки (один и тот же пользователь, разные системы)
 
 ## Q9. Где жить proxy (gateway, reverse proxy)?
 
-**Options:**
+**Варианты:**
 
 **1. Edge proxy (Cloudflare, AWS CloudFront):**
-- Nearest к user
-- Early rejection / routing
-- Limited complexity
+- Ближе всего к пользователю
+- Ранний reject / маршрутизация
+- Ограниченная сложность
 
 **2. API Gateway (AWS API Gateway, Kong):**
-- Centralized policy
-- Per-route configs
-- Typical home для strangler routing
+- Централизованные политики
+- Конфиги на каждый маршрут
+- Типичное место для strangler-маршрутизации
 
 **3. Load balancer (NGINX, HAProxy):**
-- Simple path-based
-- Fast, minimal features
+- Простая маршрутизация по путям
+- Быстро, минимум возможностей
 
-**4. Application (custom Node.js / Spring):**
-- Maximum flexibility
-- Business logic routing
+**4. Application (кастомный Node.js / Spring):**
+- Максимальная гибкость
+- Маршрутизация по бизнес-логике
 
 **5. Service mesh (Istio):**
-- Internal traffic (within cluster)
-- Gradual traffic shifting (via VirtualService)
+- Внутренний трафик (внутри кластера)
+- Постепенное смещение трафика (через VirtualService)
 
-**Typical:** API Gateway для public; service mesh для internal.
+**Типично:** API Gateway для публичного трафика; service mesh для внутреннего.
 
 ## Q10. Feature flags для routing?
 
-**Use feature flags** для per-request routing decisions:
+**Используй feature flags** для решений о маршрутизации на каждый запрос:
 
 ```javascript
 if (featureFlag('new-user-service', user)) {
@@ -363,273 +363,273 @@ if (featureFlag('new-user-service', user)) {
 }
 ```
 
-**Benefits:**
-- Instant rollback (flip flag)
-- Per-user / per-region ramp
-- A/B testing
+**Преимущества:**
+- Мгновенный rollback (переключить флаг)
+- Раскатка per-user / per-region
+- A/B-тестирование
 - Kill switch
 
-**Tools:**
+**Инструменты:**
 - LaunchDarkly, Split, Unleash, Statsig
 - Flagsmith (OSS)
 
-**Rollout strategy:**
-1. Flag OFF: 0% new service
-2. Canary: 1% select users
-3. Ramp: 10% → 50% → 100%
-4. Monitor: errors, latency, business metrics
-5. Any regression → flip OFF instantly
+**Стратегия раскатки:**
+1. Флаг OFF: 0% на новый сервис
+2. Canary: 1% избранных пользователей
+3. Раскатка: 10% → 50% → 100%
+4. Мониторинг: ошибки, latency, бизнес-метрики
+5. Любая регрессия → мгновенно переключить OFF
 
-**Flag management:**
-- Config UI (non-engineers can toggle)
-- Audit log (who changed what)
-- Scheduled removal (flag cleanup policy — don't accumulate)
+**Управление флагами:**
+- Config UI (неинженеры могут переключать)
+- Audit log (кто что менял)
+- Плановое удаление (политика очистки флагов — не накапливать)
 
 ## Q11. (!) Преимущества?
 
-**1. Incremental progress:**
-- Value delivered continuously
-- Business supportive (visible wins)
+**1. Инкрементальный прогресс:**
+- Ценность поставляется непрерывно
+- Бизнес поддерживает (видимые победы)
 
-**2. Low risk per step:**
-- Small chunks easy to validate
-- Issues localized
+**2. Низкий риск на каждом шаге:**
+- Небольшие куски легко валидировать
+- Проблемы локализованы
 
-**3. Rollback easy:**
-- Route traffic back
-- No "point of no return"
+**3. Лёгкий rollback:**
+- Перенаправить трафик обратно
+- Нет "точки невозврата"
 
-**4. Team learning:**
-- Build expertise with microservices gradually
-- Mistakes cheap
+**4. Обучение команды:**
+- Постепенное наращивание экспертизы в микросервисах
+- Ошибки обходятся дёшево
 
-**5. Parallel development:**
-- New team works on services while old team maintains monolith
-- Fewer merge conflicts
+**5. Параллельная разработка:**
+- Новая команда работает над сервисами, пока старая поддерживает монолит
+- Меньше merge-конфликтов
 
-**6. Business continuity:**
-- Monolith keeps serving; no downtime
-- Revenue не interrupted
+**6. Непрерывность бизнеса:**
+- Монолит продолжает обслуживать; без downtime
+- Выручка не прерывается
 
-**7. Tech debt retirement:**
-- Old code removed as replaced
-- Cleaner codebase over time
+**7. Погашение технического долга:**
+- Старый код удаляется по мере замены
+- Со временем кодовая база становится чище
 
 ## Q12. (!) Недостатки и риски?
 
-**1. Long timeline:**
-- Years typically (not months)
-- Sustained commitment needed
+**1. Долгие сроки:**
+- Обычно годы (а не месяцы)
+- Нужна устойчивая приверженность
 
-**2. Double maintenance:**
-- Old + new both running
-- Bug fixes в two places often
+**2. Двойная поддержка:**
+- Старое + новое работают одновременно
+- Багфиксы часто в двух местах
 
-**3. Integration complexity:**
-- Services call monolith; monolith calls services
-- Careful interface design
+**3. Сложность интеграции:**
+- Сервисы зовут монолит; монолит зовёт сервисы
+- Аккуратный дизайн интерфейсов
 
-**4. Data consistency:**
-- Dual-write or CDC — complex
-- Bugs → data corruption
+**4. Согласованность данных:**
+- Dual-write или CDC — сложно
+- Баги → порча данных
 
-**5. Proxy бoтleneck:**
-- All traffic through proxy
-- SPOF если not HA
+**5. Узкое место в proxy:**
+- Весь трафик идёт через proxy
+- SPOF, если он не HA
 
-**6. Dependency tangles:**
-- Slice B needs A migrated first
-- Ordering matters
+**6. Клубки зависимостей:**
+- Срез B требует, чтобы сначала был мигрирован A
+- Порядок важен
 
-**7. Change freeze resistance:**
-- Adding features к monolith discouraged → team tension
-- Business may push back on "feature freeze"
+**7. Сопротивление заморозке изменений:**
+- Добавление фич в монолит не поощряется → напряжение в команде
+- Бизнес может сопротивляться "feature freeze"
 
-**8. Never finish:**
-- "Last 20%" stalls
-- Remaining monolith = core domain; hardest
+**8. Никогда не закончить:**
+- "Последние 20%" застревают
+- Остаток монолита = ядро домена; самое сложное
 
-**9. Culture change:**
-- Team needs to adopt microservices mindset
-- Operations complexity grows
+**9. Смена культуры:**
+- Команде нужно перенять микросервисный mindset
+- Операционная сложность растёт
 
 ## Q13. (!) Как rollback если не работает?
 
-**Rollback per slice:**
+**Rollback по срезам:**
 
-**1. Proxy config change:**
-- Flip routing back к monolith
-- Seconds-minutes deploy
+**1. Изменение конфига proxy:**
+- Переключить маршрутизацию обратно на монолит
+- Деплой за секунды-минуты
 
 **2. Feature flag:**
-- Toggle OFF
-- Instant (no deploy)
+- Переключить OFF
+- Мгновенно (без деплоя)
 
-**3. Data sync direction:**
-- If new service wrote data, replicate back к monolith
-- Or dual-read (monolith reads its own + new)
+**3. Направление синхронизации данных:**
+- Если новый сервис писал данные — реплицировать обратно в монолит
+- Или dual-read (монолит читает свои + новые)
 
-**Challenges:**
-- If monolith stopped writing, its data stale — plan for this
-- Avoid burning bridges too early
+**Сложности:**
+- Если монолит перестал писать, его данные устаревают — планируй это заранее
+- Не сжигай мосты слишком рано
 
 **Best practice:**
-- Keep monolith code functional for X weeks after cutover
-- Only delete after confidence
+- Держи код монолита рабочим ещё X недель после переключения (cutover)
+- Удаляй только после того, как появится уверенность
 
-**Data rollback:**
-- Dual-write reversible if both DBs kept in sync
-- If switched fully, rollback = migrate data back
+**Rollback данных:**
+- Dual-write обратим, если обе БД держатся в синхроне
+- Если переключился полностью, rollback = миграция данных обратно
 
-**Emergency plan:**
-- Documented step-by-step
-- Dry-run tested (chaos game days)
-- On-call practiced
+**Аварийный план:**
+- Расписан по шагам
+- Протестирован вхолостую (chaos game days)
+- Отработан дежурными (on-call)
 
 ## Q14. Testing parallel run (shadow)?
 
-**Shadow mode:** send requests к both old и new; compare responses.
+**Shadow mode:** отправлять запросы и в старую, и в новую систему; сравнивать ответы.
 
-**Flow:**
-1. Request arrives at proxy
-2. Forward к monolith (primary, returns response)
-3. Also forward к new service (shadow, response logged)
-4. Compare responses; log differences
-5. Real user sees monolith's response (safe)
+**Поток:**
+1. Запрос приходит на proxy
+2. Переслать в монолит (основной, возвращает ответ)
+3. Также переслать в новый сервис (shadow, ответ логируется)
+4. Сравнить ответы; залогировать различия
+5. Реальный пользователь видит ответ монолита (безопасно)
 
-**Benefits:**
-- Test new service с real traffic
-- Find discrepancies без user impact
-- Build confidence before cutover
+**Преимущества:**
+- Тестировать новый сервис на реальном трафике
+- Находить расхождения без влияния на пользователей
+- Набрать уверенность перед cutover
 
-**Tools:**
-- **Scientist (GitHub)** — library для Ruby/Python/Java
-- **Diffy** (Twitter — archived)
-- Envoy shadow routing
-- Custom middleware
+**Инструменты:**
+- **Scientist (GitHub)** — библиотека для Ruby/Python/Java
+- **Diffy** (Twitter — заархивирован)
+- Shadow-routing в Envoy
+- Кастомный middleware
 
-**Gotchas:**
-- Side effects duplicated (write operations execute twice!)
-- Only shadow reads / idempotent writes
-- Non-idempotent: use test tenant or sanitize
+**Подводные камни:**
+- Побочные эффекты дублируются (операции записи выполняются дважды!)
+- В shadow гонять только чтения / идемпотентные записи
+- Неидемпотентные: использовать тестовый tenant или санитизировать
 
-**Diff analysis:**
-- Response body diff
-- Latency comparison
+**Анализ различий:**
+- Diff тела ответа
+- Сравнение latency
 - Error rate
 
 ## Q15. Как долго занимает migration?
 
-**Varies wildly:**
+**Разброс огромный:**
 
-**Small (10-person team, simple app):** 6-12 months
+**Малый (команда 10 человек, простое приложение):** 6-12 месяцев
 
-**Medium (50+ eng, medium monolith):** 1-2 years
+**Средний (50+ инженеров, средний монолит):** 1-2 года
 
-**Large (Netflix, Amazon):** 5+ years
-- Amazon famously took 5+ years monolith → microservices in early 2000s
-- Netflix: ~7 years (completed ~2015)
+**Крупный (Netflix, Amazon):** 5+ лет
+- Amazon, как известно, потратил 5+ лет на переход монолит → microservices в начале 2000-х
+- Netflix: ~7 лет (завершено около 2015)
 
-**Factors:**
-- Domain complexity
-- Team size dedicated
-- Data complexity
-- Regulatory constraints
-- Business urgency
+**Факторы:**
+- Сложность домена
+- Размер выделенной команды
+- Сложность данных
+- Регуляторные ограничения
+- Срочность для бизнеса
 
-**Realistic expectations:**
-- 80% migrated в year 1-2
-- Last 20% can take as long as first 80%
-- "90% done" common trap
+**Реалистичные ожидания:**
+- 80% мигрировано за 1-2 года
+- Последние 20% могут занять столько же, сколько первые 80%
+- "Готово на 90%" — частая ловушка
 
-**Recommendation:**
-- Start with cleanest piece
-- Learn, document, refine process
-- Apply accelerated к rest
+**Рекомендация:**
+- Начинай с самого чистого куска
+- Учись, документируй, шлифуй процесс
+- Применяй ускоренно к остальному
 
 ## Q16. Когда считать migration complete?
 
-**Signals:**
+**Сигналы:**
 
-- Monolith handles < 5% of traffic
-- Remaining functionality rarely changes
-- Team no longer deploys monolith frequently
-- Infrastructure cost for monolith small
+- Монолит обслуживает < 5% трафика
+- Оставшаяся функциональность меняется редко
+- Команда больше не деплоит монолит часто
+- Стоимость инфраструктуры монолита мала
 
-**Choices at "mostly done":**
+**Выбор на стадии "почти готово":**
 
-**1. Strangle the rest:**
-- Continue migrating
-- Fully retire monolith
+**1. Задушить остаток:**
+- Продолжать миграцию
+- Полностью вывести монолит из эксплуатации
 
-**2. Freeze monolith:**
-- Leave running for rare edge cases
-- Stop actively developing
-- Eventually sunset (business decision)
+**2. Заморозить монолит:**
+- Оставить работать для редких краевых случаев
+- Прекратить активную разработку
+- Со временем погасить (решение бизнеса)
 
-**3. Extract remaining в "legacy service":**
-- Rewrite wrapper, but don't decompose further
-- Pragmatic для low-traffic admin tools
+**3. Вынести остаток в "legacy service":**
+- Переписать обёртку, но дальше не декомпозировать
+- Прагматично для low-traffic admin-инструментов
 
-**Decommissioning:**
-- Final plans для data archiving
-- Customer comms (if any interfaces change)
-- Disable / delete infrastructure
+**Вывод из эксплуатации:**
+- Финальные планы по архивации данных
+- Коммуникация с клиентами (если меняются какие-то интерфейсы)
+- Отключить / удалить инфраструктуру
 
-**Post-migration:**
-- Document what was learned
-- Reflect on decomposition (microservices right?)
-- Avoid over-decomposing (distributed monolith)
+**После миграции:**
+- Зафиксировать извлечённые уроки
+- Отрефлексировать декомпозицию (микросервисы — правильное решение?)
+- Избегать чрезмерной декомпозиции (распределённый монолит)
 
 ## Q17. Anti-corruption layer?
 
-**Anti-corruption layer (ACL) — DDD term** — shield новой системы от legacy's bad model.
+**Anti-corruption layer (ACL) — термин из DDD** — щит, защищающий новую систему от плохой модели legacy.
 
-**Zachyy:** legacy might have weird data shapes, inconsistencies. Don't let new service absorb that.
+**Зачем:** в legacy могут быть странные формы данных и несогласованности. Не давай новому сервису впитать это.
 
-**Pattern:**
+**Паттерн:**
 ```
 New Service ←→ ACL (translator) ←→ Legacy API / DB
 ```
 
 ACL:
-- Maps legacy types к new domain types
-- Hides legacy naming, schemas
-- Single point to update when legacy changes
+- Маппит типы legacy в типы нового домена
+- Скрывает именование и схемы legacy
+- Единая точка обновления, когда legacy меняется
 
-**Example:**
-- Legacy: `CUST_RECORD` с fields `CUST_NM`, `CUST_BRTH_DT_YR`
+**Пример:**
+- Legacy: `CUST_RECORD` с полями `CUST_NM`, `CUST_BRTH_DT_YR`
 - New: `Customer` с `name`, `birthYear`
-- ACL translates
+- ACL транслирует между ними
 
-**Benefits:**
-- New service clean
-- Migration later doesn't break internals
-- Decouples dependency
+**Преимущества:**
+- Новый сервис остаётся чистым
+- Последующая миграция не ломает его внутренности
+- Развязывает зависимость
 
-**Overuse:**
-- Adds layer; not always necessary
-- Use только when legacy genuinely ugly
+**Чрезмерное применение:**
+- Добавляет слой; не всегда нужен
+- Использовать только когда legacy действительно уродлив
 
 ## Q18. Branch by abstraction?
 
-**Alternative/complementary pattern:**
+**Альтернативный/дополняющий паттерн:**
 
 **Branch by abstraction:**
-- Inside code, introduce abstraction (interface)
-- Old impl + new impl both exist
-- Feature flag switches
-- After switch → remove old impl
+- Внутри кода ввести абстракцию (интерфейс)
+- Существуют обе реализации — старая и новая
+- Feature flag переключает между ними
+- После переключения → удалить старую реализацию
 
-**Vs Strangler:**
-- Strangler: external split (HTTP proxy routes)
-- Branch by abstraction: internal split (code branch)
+**В сравнении со Strangler:**
+- Strangler: внешнее разделение (маршруты HTTP proxy)
+- Branch by abstraction: внутреннее разделение (ветвление в коде)
 
-**When use:**
-- Can't decompose externally (tight coupling)
-- Want to refactor within monolith before split
+**Когда применять:**
+- Нельзя декомпозировать снаружи (тесная связанность)
+- Хочется отрефакторить внутри монолита перед выносом
 
-**Example:**
+**Пример:**
 ```java
 interface PaymentProvider {
     void charge(...);
@@ -641,13 +641,13 @@ class StripePaymentProvider implements ... { ... }  // new
 @Autowired PaymentProvider provider;  // flag-selected
 ```
 
-**Transition:**
-1. Introduce interface (no behavior change)
-2. Implement new
-3. Flag switch
-4. Remove old impl
+**Переход:**
+1. Ввести интерфейс (без изменения поведения)
+2. Реализовать новое
+3. Переключить флаг
+4. Удалить старую реализацию
 
-**Prerequisite для strangler often** — refactor internals first, then extract.
+**Часто это предусловие для strangler** — сначала отрефакторить внутренности, затем выносить.
 
 ---
 
