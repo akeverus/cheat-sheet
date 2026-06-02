@@ -508,10 +508,6 @@
       const favorite = button.getAttribute('aria-pressed') === 'true' || button.classList.contains('active');
       applyFavoriteButtonState(button, favorite);
     });
-    const toggleCodeBtn = document.getElementById('toggle-code-btn');
-    if (toggleCodeBtn) {
-      toggleCodeBtn.addEventListener('click', () => window.toggleCode());
-    }
     initBrowseFlashcardReveal();
     initStreakBar();
     initHintButton();
@@ -1001,6 +997,14 @@
     if (document.querySelector('.kbd-help-overlay:not(.hidden)')) return;
     if (answered) return;
     if (event.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName) && event.target.type !== 'radio') {
+      return;
+    }
+    // Элементы со своей семантикой Enter/Space (нативный <summary> у «Пример
+    // кода», кнопки, ссылки) не перехватываем — иначе Enter на summary сабмитил
+    // бы ответ вместо раскрытия примера. Сабмит-кнопка form'ы тоже BUTTON, но
+    // её нативный Enter/Space всё равно отправляет форму через submit-листенер.
+    if (event.target && (event.key === 'Enter' || event.key === ' ') &&
+        ['SUMMARY', 'BUTTON', 'A'].includes(event.target.tagName)) {
       return;
     }
     if (event.target && event.target.type === 'radio' && event.key === 'Enter') {
@@ -1625,20 +1629,6 @@
       }
     };
   }
-  window.toggleCode = function toggleCode() {
-    const block = document.getElementById('codeBlock');
-    if (!block) return;
-    const hidden = block.classList.toggle('hidden');
-    // Кнопка-тоггл должна отражать состояние: текст + aria-expanded.
-    // Иначе после раскрытия она оставалась «Показать пример» — путало и
-    // не озвучивалось скринридерам.
-    const btn = document.getElementById('toggle-code-btn');
-    if (btn) {
-      btn.textContent = hidden ? 'Показать пример' : 'Скрыть пример';
-      btn.setAttribute('aria-expanded', String(!hidden));
-    }
-  };
-
   // Client-side reveal флешкарты в browse-режиме (вне FLASHCARD-сессии).
   // Серверный POST /flashcard-reveal здесь не работает (нет сессии) и терял бы
   // тему через redirect:/. Ответ уже отрендерен сервером и лежит скрытым —

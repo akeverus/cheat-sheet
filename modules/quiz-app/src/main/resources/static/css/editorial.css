@@ -684,9 +684,16 @@ html[data-design="editorial"] .focus-question {
   text-wrap: balance;
 }
 
-/* Код-блок */
+/* Код-блок — нативный <details> (PE: раскрытие без JS) */
 html[data-design="editorial"] .question-code-wrap { margin-bottom: var(--space-5); }
-html[data-design="editorial"] #codeBlock pre { margin-top: var(--space-3); }
+html[data-design="editorial"] .question-code-details > pre { margin-top: var(--space-3); }
+/* summary выглядит кнопкой (.btn .secondary-btn): гасим нативный треугольник,
+   состояние показываем ▸/▾ как в .sm2-details. .btn даёт inline-flex+gap —
+   ::before встаёт отдельным flex-элементом со штатным отступом. */
+html[data-design="editorial"] .question-code-summary { list-style: none; }
+html[data-design="editorial"] .question-code-summary::-webkit-details-marker { display: none; }
+html[data-design="editorial"] .question-code-summary::before { content: "▸"; color: var(--color-text-tertiary); font-size: var(--font-size-sm); }
+html[data-design="editorial"] .question-code-details[open] .question-code-summary::before { content: "▾"; }
 
 /* Варианты MCQ — editorial-строки с буквенным маркером */
 html[data-design="editorial"] #interview-options { counter-reset: opt; display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-6); }
@@ -812,7 +819,6 @@ html[data-design="editorial"] .focus-page #interview-submit.is-disabled {
 html[data-design="editorial"] .btn,
 html[data-design="editorial"] .secondary-btn,
 html[data-design="editorial"] .next-btn,
-html[data-design="editorial"] #toggle-code-btn,
 html[data-design="editorial"] #extra-analysis-toggle {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
   /* width:auto гасит протёкший .secondary-btn{width:100%} из styles.css —
@@ -828,7 +834,6 @@ html[data-design="editorial"] #extra-analysis-toggle {
 }
 html[data-design="editorial"] .btn:hover:not(:disabled),
 html[data-design="editorial"] .secondary-btn:hover:not(:disabled),
-html[data-design="editorial"] #toggle-code-btn:hover:not(:disabled),
 html[data-design="editorial"] #extra-analysis-toggle:hover:not(:disabled) { background: var(--color-bg-tertiary); border-color: var(--color-text-secondary); }
 html[data-design="editorial"] .next-btn { background: var(--color-accent-primary); color: var(--color-accent-on); border-color: var(--color-accent-primary); }
 /* .next-btn — primary (accent-fill): hover красит И фон, И бордер в accent-hover,
@@ -846,7 +851,6 @@ html[data-design="editorial"] .next-btn:hover:not(:disabled) { background: var(-
 html[data-design="editorial"] .btn:active,
 html[data-design="editorial"] .secondary-btn:active,
 html[data-design="editorial"] .next-btn:active,
-html[data-design="editorial"] #toggle-code-btn:active,
 html[data-design="editorial"] #extra-analysis-toggle:active,
 html[data-design="editorial"] #extra-analysis-toggle-result:active,
 html[data-design="editorial"] .focus-page #interview-submit:active,
@@ -913,7 +917,6 @@ html[data-design="editorial"] .flashcard-grade-btn.grade-4:hover:not(:disabled) 
    гасит клик мышью, повтор с клавиатуры отсекает JS-гард. */
 html[data-design="editorial"] .flashcard-reveal-btn:disabled,
 html[data-design="editorial"] .flashcard-grade-btn:disabled,
-html[data-design="editorial"] #toggle-code-btn:disabled,
 html[data-design="editorial"] #extra-analysis-toggle:disabled,
 html[data-design="editorial"] #extra-analysis-toggle[aria-disabled="true"],
 html[data-design="editorial"] #extra-analysis-toggle-result:disabled,

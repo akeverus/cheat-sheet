@@ -27,13 +27,15 @@
         </div>
         <h2 class="focus-question" th:utext="${@markdownRenderService.toInlineHtml(current.question.questionText)}">Вопрос</h2>
 
+        <!-- Нативный <details>: раскрытие примера кода работает без JS (раньше
+             #toggle-code-btn был мёртвой кнопкой, без скриптов пример недоступен).
+             summary стилизован под .btn, треугольник заменён на ▸/▾ как в sm2-details. -->
         <div class="question-code-wrap"
              th:if="${current.question.codeSnippet() != null and !current.question.codeSnippet().isBlank()}">
-            <button type="button" class="btn secondary-btn" id="toggle-code-btn"
-                    aria-expanded="false" aria-controls="codeBlock">Показать пример</button>
-            <div id="codeBlock" class="hidden">
+            <details class="question-code-details">
+                <summary class="btn secondary-btn question-code-summary">Пример кода</summary>
                 <pre th:text="${current.question.codeSnippet()}"></pre>
-            </div>
+            </details>
         </div>
 
         <div th:if="${flashcardMode}" class="flashcard-phase"
@@ -138,6 +140,6 @@
     </section>
 </main>
 
-<script th:src="@{/js/app.js(v=15)}"></script>
+<script th:src="@{/js/app.js(v=17)}"></script>
 </body>
 </html>
