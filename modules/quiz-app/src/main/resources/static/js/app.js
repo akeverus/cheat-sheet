@@ -466,11 +466,22 @@
       try {
         const results = await Promise.allSettled(requests);
         const failedCount = results.filter(r => r.status === 'rejected').length;
-        btn.dataset.loaded = 'true';
-        btn.textContent = EXTRA_ANALYSIS_BUTTON_DONE_TEXT;
-        if (related) related.classList.remove('hidden');
-        if (failedCount > 0) {
-          setInlineAlert('Часть блоков доп. анализа не загрузилась. Можно продолжить тренировку.', 'error');
+        if (requests.length > 0 && failedCount === requests.length) {
+          // Полный провал (все блоки упали): НЕ помечаем loaded='true' и НЕ пишем
+          // «загружен» — иначе кнопка осталась бы заблокированной с ложной меткой
+          // успеха. Возвращаем кнопку в исходное retryable-состояние.
+          setInlineAlert('Не удалось загрузить доп. анализ. Попробуйте ещё раз.');
+          btn.disabled = false;
+          btn.textContent = EXTRA_ANALYSIS_BUTTON_INITIAL_TEXT;
+          btn.setAttribute('aria-expanded', 'false');
+          container.classList.add('hidden');
+        } else {
+          btn.dataset.loaded = 'true';
+          btn.textContent = EXTRA_ANALYSIS_BUTTON_DONE_TEXT;
+          if (related) related.classList.remove('hidden');
+          if (failedCount > 0) {
+            setInlineAlert('Часть блоков доп. анализа не загрузилась. Можно продолжить тренировку.', 'error');
+          }
         }
       } catch (err) {
         console.error('Result extra analysis failed:', err);
@@ -1126,6 +1137,9 @@
     answered = true;
     setAnswerFlowStep('selected');
     stopQuestionTimer();
+    // Запоминаем реальную подпись кнопки (шаблон рендерит «Проверить ответ»),
+    // чтобы при ошибке вернуть её, а не хардкод «Ответить» (рассинхрон меток).
+    const originalSubmitText = (submitBtn.textContent || '').trim() || 'Проверить ответ';
     submitBtn.disabled = true;
     submitBtn.textContent = 'Проверяю...';
     submitBtn.setAttribute('aria-busy', 'true');
@@ -1150,7 +1164,7 @@
         const err = await parseApiError(response);
         answered = false;
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Ответить';
+        submitBtn.textContent = originalSubmitText;
         submitBtn.removeAttribute('aria-busy');
         setInteractionBusy(false);
         updateSubmitAvailability();
@@ -1170,7 +1184,7 @@
       console.error('AJAX answer failed:', err);
       answered = false;
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Ответить';
+      submitBtn.textContent = originalSubmitText;
       submitBtn.removeAttribute('aria-busy');
       setInteractionBusy(false);
       updateSubmitAvailability();
@@ -1267,6 +1281,11 @@
     // (между вопросами идёт навигация window.location).
     confidenceDiv.setAttribute('role', 'group');
     confidenceDiv.setAttribute('aria-labelledby', 'confidence-label');
+    // aria-live=polite: группа вставляется ПОСЛЕ того как фокус уже ушёл в
+    // #result-feedback (showResult → feedbackDiv.focus()), поэтому сама себя
+    // озвучивает при появлении — иначе SR-пользователь не узнал бы о появлении
+    // запроса «оцени уверенность» без ручного таб-обхода.
+    confidenceDiv.setAttribute('aria-live', 'polite');
     confidenceDiv.innerHTML = `
       <span class="confidence-label" id="confidence-label">Насколько ты уверен по этому вопросу?</span>
       <button type="button" class="confidence-btn confidence-guess" data-grade="3" aria-pressed="false" aria-label="Уровень уверенности: угадал">🎲 Угадал</button>
@@ -1479,7 +1498,7 @@
 
     const relatedDiv = document.createElement('div');
     relatedDiv.className = 'related-questions';
-    let relatedHtml = '<div class="related-questions-title">🔗 Похожие вопросы для закрепления:</div>';
+    let relatedHtml = '<h3 class="related-questions-title">🔗 Похожие вопросы для закрепления:</h3>';
     data.relatedQuestions.forEach(rq => {
       relatedHtml += '<a class="related-question-item" href="/?topic=' + encodeURIComponent(rq.topic)
         + '&group=' + encodeURIComponent(currentGroup)
