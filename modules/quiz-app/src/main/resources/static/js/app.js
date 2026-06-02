@@ -1331,6 +1331,20 @@
     return query ? '/?' + query : '/';
   }
 
+  // Раскрытые блоки «доп. анализа» (takeaway / трейс кода / похожие вопросы)
+  // кладём в контейнер #extra-analysis-content, который стоит СРАЗУ ПОСЛЕ
+  // кнопки-триггера. Раньше они вставлялись через feedbackDiv.after(), то есть
+  // МЕЖДУ фидбэком и кнопкой — и кнопка «Доп. анализ загружен» оставалась
+  // сиротой ВНИЗУ, под раскрытым контентом (триггер ниже того, что он раскрыл).
+  // appendChild в общий контейнер сохраняет порядок добавления и держит весь
+  // раскрытый контент ПОД кнопкой. Fallback на старое поведение, если контейнера
+  // нет (напр. чужая разметка) — чтобы блоки не потерялись.
+  function appendAnalysisBlock(el) {
+    const sink = document.getElementById('extra-analysis-content');
+    if (sink) sink.appendChild(el);
+    else feedbackDiv.after(el);
+  }
+
   function fetchWrongFeedback(questionId, selectedOptionId, rethrowOnError = false) {
     const wrongBlock = feedbackDiv.querySelector('.result-wrong');
     if (!wrongBlock) return;
@@ -1370,7 +1384,7 @@
           tkDiv.innerHTML =
             '<div class="takeaway-title">🎯 Главное, что нужно запомнить:</div>' +
             '<div class="takeaway-text">' + escapeHtml(tkData.takeaway) + '</div>';
-          feedbackDiv.after(tkDiv);
+          appendAnalysisBlock(tkDiv);
         }
       },
       'GET',
@@ -1437,7 +1451,7 @@
               });
               html += '</ol></details>';
               traceDiv.innerHTML = html;
-              feedbackDiv.after(traceDiv);
+              appendAnalysisBlock(traceDiv);
             }
           } catch (e) { /* ignore parse error */ }
         }
@@ -1470,7 +1484,7 @@
         + '">' + escapeHtml(rq.text) + '</a>';
     });
     relatedDiv.innerHTML = relatedHtml;
-    feedbackDiv.after(relatedDiv);
+    appendAnalysisBlock(relatedDiv);
   }
 
   function showResult(data) {
