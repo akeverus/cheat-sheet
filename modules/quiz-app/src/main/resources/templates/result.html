@@ -51,7 +51,10 @@
             <p class="status" th:text="${result.correctAnswer} ? '✅ Верно!' : '❌ Неверно'">Статус</p>
 
             <div class="options" role="list" aria-label="Варианты ответа (результат)">
-                <label th:each="opt : ${result.options}"
+                <!-- div, не label: это display-only результат (нет <input>), а label
+                     без управляемого контрола + вложенный блочный <div> внутри —
+                     невалидный HTML. role=listitem несёт семантику списка. -->
+                <div th:each="opt : ${result.options}"
                        role="listitem"
                        th:classappend="${opt.id == result.correct.id} ? 'option-correct' : (opt.id == result.selected.id ? 'option-wrong' : 'option-other')"
                        th:aria-label="${(opt.id == result.correct.id ? 'Правильный: ' : (opt.id == result.selected.id ? 'Ваш ответ: ' : '')) + @markdownRenderService.toPlainText(opt.optionText)}">
@@ -61,7 +64,7 @@
                     <div th:if="${opt.explanation != null}"
                          th:class="${opt.correct} ? 'option-explanation markdown-content explanation-correct' : 'option-explanation markdown-content explanation-wrong'"
                          th:utext="${@markdownRenderService.toHtml(opt.explanation)}">Объяснение</div>
-                </label>
+                </div>
             </div>
 
             <div>

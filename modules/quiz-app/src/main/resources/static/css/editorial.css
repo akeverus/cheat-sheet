@@ -9,6 +9,10 @@
 
 /* ============================== ТОКЕНЫ ==================================== */
 :root {
+  /* Сообщаем UA активную схему, чтобы нативный хром (scrollbar, popup <select>,
+     спиннеры number, текстовая каретка) совпадал с темой. База — light; для
+     тёмной темы переопределяем в [data-theme="dark"] и в prefers-color-scheme. */
+  color-scheme: light;
   /* Цвет — Light (бумага + чернила) */
   --color-bg-primary:   #F7F3EA;
   --color-bg-secondary: #FCF9F2;
@@ -68,7 +72,6 @@
   --line-height-relaxed: 1.7;
 
   --letter-spacing-tight:  -0.02em;
-  --letter-spacing-normal: 0;
   --letter-spacing-wide:    0.12em;
 
   --rule-weight: 1px;
@@ -137,6 +140,7 @@
 }
 
 [data-theme="dark"] {
+  color-scheme: dark;
   --color-bg-primary:   #16130D;
   --color-bg-secondary: #1F1B13;
   --color-bg-tertiary:  #272117;
@@ -178,6 +182,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --color-bg-primary:   #16130D;
     --color-bg-secondary: #1F1B13;
     --color-bg-tertiary:  #272117;
@@ -334,7 +339,6 @@ html[data-design="editorial"] .flex-shrink-0 { flex-shrink: 0; }
 html[data-design="editorial"] .mt-0 { margin-top: 0; }
 html[data-design="editorial"] .mt-3 { margin-top: var(--space-3); }
 html[data-design="editorial"] .overflow-x-auto { overflow-x: auto; }
-html[data-design="editorial"] .w-50 { width: 50px; }
 html[data-design="editorial"] .w-60 { width: 60px; }
 html[data-design="editorial"] .w-80 { width: 80px; }
 html[data-design="editorial"] .min-w-140 { min-width: 140px; }
@@ -454,9 +458,6 @@ html[data-design="editorial"] .sr-only {
   text-transform: uppercase;
   color: var(--color-text-secondary);
 }
-
-/* Линейка-разделитель */
-.ed-rule { border: 0; border-top: var(--rule-weight) solid var(--color-border-primary); margin: var(--space-6) 0; }
 
 /* Примечание: библиотека ed-* примитивов (.ed-btn/.ed-field/.ed-chip/.ed-stack/…)
    удалена как мёртвая — шаблоны её не используют. Реальные кнопки/поля стилизуются
@@ -620,10 +621,6 @@ html[data-design="editorial"] .ed-masthead-title {
    встречаются и там). Разметку общих фрагментов не меняем — только стилизуем.
    ========================================================================== */
 html[data-design="editorial"] .focus-page main { /* контейнер задаём через .ed-page в шаблоне */ }
-
-/* Тулбар старых surface-tabs удалён из шаблона; на всякий случай прячем, если где-то остался */
-html[data-design="editorial"] .surface-toolbar,
-html[data-design="editorial"] .surface-tabs { display: none; }
 
 html[data-design="editorial"] .focus-training {
   max-width: var(--max-width-focus);
@@ -1041,7 +1038,7 @@ html[data-design="editorial"] .settings-page .field-label {
 html[data-design="editorial"] .settings-page select,
 html[data-design="editorial"] .settings-page input[type="number"] {
   width: 100%; max-width: 100%; min-height: 44px; padding: var(--space-2) var(--space-3);
-  font-family: var(--font-family-body); font-size: 16px;
+  font-family: var(--font-family-body); font-size: var(--font-size-base);
   color: var(--color-text-primary); background: var(--color-bg-secondary);
   border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-sm);
   transition: border-color var(--duration-fast) var(--easing-default), box-shadow var(--duration-fast) var(--easing-default);
@@ -1137,8 +1134,7 @@ html[data-design="editorial"] .settings-page .streak-progress { flex: 1; min-wid
 html[data-design="editorial"] .settings-page .streak-progress-fill { height: 100%; background: var(--color-accent-primary); }
 
 html[data-design="editorial"] .settings-page .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--space-3); }
-html[data-design="editorial"] .settings-page .stat-item,
-html[data-design="editorial"] .settings-page .stat-card {
+html[data-design="editorial"] .settings-page .stat-item {
   padding: var(--space-3) var(--space-4); border: var(--rule-weight) solid var(--color-border-primary);
   border-radius: var(--border-radius-md); background: var(--color-bg-secondary); text-align: left;
 }
@@ -1217,7 +1213,7 @@ html[data-design="editorial"] .stats-page select,
 html[data-design="editorial"] .stats-page input[type="text"],
 html[data-design="editorial"] .stats-page input[type="search"] {
   min-height: 44px; padding: var(--space-2) var(--space-3);
-  font-family: var(--font-family-body); font-size: 16px;
+  font-family: var(--font-family-body); font-size: var(--font-size-base);
   color: var(--color-text-primary); background: var(--color-bg-primary);
   border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-sm);
   transition: border-color var(--duration-fast) var(--easing-default), box-shadow var(--duration-fast) var(--easing-default);
@@ -1443,6 +1439,12 @@ html[data-design="editorial"] .summary-page .summary-score .stats-grid {
 html[data-design="editorial"] .summary-page .stat-item {
   padding: var(--space-3) var(--space-4); border: var(--rule-weight) solid var(--color-border-primary);
   border-radius: var(--border-radius-md); background: var(--color-bg-primary); text-align: center;
+  /* min-width:0 даёт 1fr-треку ужиматься ниже min-content — иначе на ~320-375px
+     трёхзначные «200»/«100%» (Fraunces xl) распирали карту/страницу вправо.
+     Этого достаточно: repeat(3,1fr) держит 3 ровные колонки до ~300px без
+     переполнения и без переноса лейблов (замерено). Тот же приём, что у
+     .result-page .stat-item. Отдельный узкий @media-override не нужен. */
+  min-width: 0;
 }
 html[data-design="editorial"] .summary-page .stat-value { font-family: var(--font-family-display); font-size: var(--font-size-xl); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); display: block; }
 html[data-design="editorial"] .summary-page .stat-label { font-family: var(--font-family-mono); font-size: var(--font-size-xs); letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-secondary); }
@@ -1597,10 +1599,11 @@ html[data-design="editorial"] .error-page .error-meta dd {
   margin: 0; font-size: var(--font-size-sm); color: var(--color-text-primary);
   word-break: break-word;
 }
+/* Фон/паддинг (0.38em)/радиус/цвет даёт глобальное :not(pre) > code — оставляем
+   только явный размер sm (dd-контекст), чтобы чип был пиксель-в-пиксель идентичен
+   остальным инлайн-code (раньше тут был рассинхрон padding 0.4em ↔ 0.38em). */
 html[data-design="editorial"] .error-page .error-meta code {
-  font-family: var(--font-family-mono); font-size: var(--font-size-sm);
-  background: var(--color-bg-tertiary); padding: 0.1em 0.4em; border-radius: var(--border-radius-sm);
-  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
 }
 
 html[data-design="editorial"] .error-page .error-actions {
@@ -1720,13 +1723,17 @@ html[data-design="editorial"] .result-page .regen-badge { font-family: var(--fon
 html[data-design="editorial"] .result-page .status {
   font-family: var(--font-family-display); font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-xl); color: var(--color-text-primary);
-  margin: var(--space-4) 0 0; padding-top: var(--space-4);
+  /* Тот же вертикальный ритм (space-5 над/под линией), что у .question-main h3 ниже,
+     чтобы два секционных разделителя в одной карте стояли на общей сетке. Иерархию
+     «вердикт громче пояснения» несёт цвет линии (primary ↔ secondary) и размер xl. */
+  margin: var(--space-5) 0 0; padding-top: var(--space-5);
   border-top: var(--rule-weight) solid var(--color-border-primary);
 }
 
-/* Варианты-результат (.options[role=list], без #interview-options-маркера). */
+/* Варианты-результат (.options[role=list], элементы — div[role=listitem],
+   без #interview-options-маркера). */
 html[data-design="editorial"] .result-page .options { display: flex; flex-direction: column; gap: var(--space-3); }
-html[data-design="editorial"] .result-page .options label {
+html[data-design="editorial"] .result-page .options > div {
   display: block; padding: var(--space-4);
   border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-md);
   background: var(--color-bg-primary); color: var(--color-text-primary);
