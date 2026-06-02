@@ -543,23 +543,8 @@ html[data-design="editorial"] .ed-masthead-title {
 .ed-nav-link:hover { color: var(--color-text-primary); }
 .ed-nav-link.is-active { color: var(--color-accent-primary); border-bottom-color: var(--color-accent-primary); }
 
-.ed-export { display: flex; gap: var(--space-2); }
-.ed-nav-export {
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide);
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
-  text-decoration: none;
-  padding: var(--space-1) var(--space-2);
-  border: var(--rule-weight) solid var(--color-border-primary);
-  border-radius: var(--border-radius-sm);
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  touch-action: manipulation;
-}
-.ed-nav-export:hover { color: var(--color-accent-primary); border-color: var(--color-accent-primary); }
+/* .ed-export / .ed-nav-export удалены: дублирующий экспорт из шапки /stats убран,
+   экспорт живёт только на /settings (data-export-actions). */
 
 .ed-theme-toggle {
   width: 44px;
@@ -1140,8 +1125,9 @@ html[data-design="editorial"] .settings-page .data-export-actions .btn {
   box-shadow: none; text-transform: none; letter-spacing: 0;
   transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
 }
-html[data-design="editorial"] .settings-page .data-export-actions .btn:hover:not(:disabled) { background: var(--color-bg-tertiary); border-color: var(--color-text-secondary); }
-html[data-design="editorial"] .settings-page .data-export-actions .btn:disabled { opacity: 0.5; cursor: progress; }
+html[data-design="editorial"] .settings-page .data-export-actions .btn:hover:not([aria-busy="true"]) { background: var(--color-bg-tertiary); border-color: var(--color-text-secondary); }
+/* «занято» во время fetch — aria-busy (не native disabled: тот выбрасывает фокус). */
+html[data-design="editorial"] .settings-page .data-export-actions .btn[aria-busy="true"] { opacity: 0.7; cursor: progress; pointer-events: none; }
 /* Статус экспорта — inline-фидбэк (готовлю / готово / ошибка) вместо raw-JSON 403. */
 html[data-design="editorial"] .settings-page .export-status { margin-top: var(--space-3); font-size: var(--font-size-sm); color: var(--color-text-secondary); }
 html[data-design="editorial"] .settings-page .export-status-error { color: var(--color-status-error); }

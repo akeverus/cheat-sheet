@@ -513,10 +513,18 @@
   // --- Экспорт прогресса (/export) ---------------------------------------
   // /export защищён admin-токеном через заголовок X-Admin-Token (SecurityConfig).
   // <a>-навигация заголовок не отправляет → клик всегда отдавал raw-JSON 403.
-  // Здесь: fetch с заголовком, токен спрашиваем один раз и кэшируем в localStorage,
-  // ответ скачиваем как файл (blob). localStorage обёрнут в try/catch — приватные
-  // режимы браузера бросают на доступе к нему.
+  // Здесь: apiFetch с заголовком, токен спрашиваем один раз и кэшируем в
+  // localStorage, ответ скачиваем как файл (blob). localStorage обёрнут в
+  // try/catch — приватные режимы браузера бросают на доступе к нему.
+  // Единственная точка — data-export-block на /settings (inline-статус). Дубль
+  // из шапки /stats убран: там нет app.js и нет места под статус (был битый).
   const ADMIN_TOKEN_KEY = 'cheatsheet-admin-token';
+  // ДОГОВОР: дублирует серверный текст SensitiveEndpointAccessService
+  // .buildForbiddenResponse («…app.admin-token не настроен»). Машиночитаемого
+  // type у обоих 403 нет (оба FORBIDDEN), поэтому различаем по этой подстроке.
+  // При смене формулировки на сервере — поправить здесь.
+  const SERVER_TOKEN_UNSET_MARKER = 'не настроен';
+  let exportInFlight = false;
   function readStoredToken() { try { return localStorage.getItem(ADMIN_TOKEN_KEY) || ''; } catch (_) { return ''; } }
   function storeToken(t) { try { localStorage.setItem(ADMIN_TOKEN_KEY, t); } catch (_) { /* ignore */ } }
   function clearStoredToken() { try { localStorage.removeItem(ADMIN_TOKEN_KEY); } catch (_) { /* ignore */ } }
@@ -531,78 +539,97 @@
   }
 
   // Имя файла из Content-Disposition: сначала RFC 5987 filename*=UTF-8''…,
-  // затем обычный filename="…". Иначе — осмысленный дефолт.
+  // затем обычный filename="…" / filename=… . Иначе — дефолт под серверный
+  // нейминг (ExportApiService отдаёт quiz-progress.json|csv).
   function parseContentDispositionFilename(header, fallback) {
     if (!header) return fallback;
     const star = /filename\*=UTF-8''([^;]+)/i.exec(header);
     if (star) { try { return decodeURIComponent(star[1]); } catch (_) { /* fallthrough */ } }
-    const plain = /filename="?([^";]+)"?/i.exec(header);
-    return plain ? plain[1] : fallback;
+    const plain = /filename=(?:"([^"]+)"|([^;]+))/i.exec(header);
+    if (plain) return (plain[1] || plain[2] || '').trim() || fallback;
+    return fallback;
   }
 
+  // Статус через .hidden-класс (как result-feedback / chart-fallback), НЕ через
+  // атрибут hidden: единый паттерн live-region в проекте. Текст пишем до показа.
   function setExportStatus(el, message, isError) {
     if (!el) return;
-    if (!message) { el.hidden = true; el.textContent = ''; el.classList.remove('export-status-error'); return; }
-    el.hidden = false;
-    el.textContent = message;
-    el.classList.toggle('export-status-error', !!isError);
+    el.textContent = message || '';
+    el.classList.toggle('hidden', !message);
+    el.classList.toggle('export-status-error', !!(message && isError));
+  }
+
+  // Общая логика: один запрос за раз (exportInFlight), кнопки на время полёта —
+  // aria-disabled + aria-busy (НЕ native disabled: тот выбрасывает фокус
+  // клавиатуры на <body>; см. extra-analysis-toggle). notify(message, isError) —
+  // канал фидбэка (inline-статус на /settings, alert в шапке /stats).
+  async function runExport(format, buttons, notify) {
+    if (exportInFlight) return;
+    const token = obtainAdminToken();
+    if (!token) return; // пользователь отменил ввод — молча выходим
+    exportInFlight = true;
+    notify('Готовлю экспорт…', false);
+    buttons.forEach((b) => { b.setAttribute('aria-disabled', 'true'); b.setAttribute('aria-busy', 'true'); });
+    try {
+      const resp = await apiFetch('/export?format=' + encodeURIComponent(format), {
+        headers: { 'X-Admin-Token': token }
+      });
+      if (resp.status === 401 || resp.status === 403) {
+        let serverMsg = '';
+        try { serverMsg = (await resp.json())?.message || ''; } catch (_) { /* ignore */ }
+        // «не настроен» — проблема сервера, токен пользователя ни при чём:
+        // НЕ сбрасываем кэш. Иначе токен неверен → сбрасываем, чтобы переспросить.
+        const notConfigured = serverMsg.toLowerCase().includes(SERVER_TOKEN_UNSET_MARKER);
+        if (!notConfigured) clearStoredToken();
+        notify(notConfigured
+          ? 'Экспорт недоступен: на сервере не задан admin-токен (APP_ADMIN_TOKEN).'
+          : 'Неверный admin-токен. Нажми «Экспорт» ещё раз и введи правильный.', true);
+        return;
+      }
+      if (!resp.ok) {
+        notify('Не удалось выполнить экспорт (HTTP ' + resp.status + ').', true);
+        return;
+      }
+      const blob = await resp.blob();
+      const filename = parseContentDispositionFilename(
+        resp.headers.get('Content-Disposition'), 'quiz-progress.' + format);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      notify('Готово: ' + filename, false);
+    } catch (e) {
+      console.error('Export failed:', e);
+      notify('Сеть недоступна — экспорт не выполнен.', true);
+    } finally {
+      exportInFlight = false;
+      buttons.forEach((b) => { b.removeAttribute('aria-disabled'); b.removeAttribute('aria-busy'); });
+    }
+  }
+
+  function wireExportGroup(buttons, notify) {
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (btn.getAttribute('aria-busy') === 'true') return; // повтор во время полёта
+        runExport(btn.getAttribute('data-export-format'), buttons, notify);
+      });
+    });
   }
 
   function initExportButtons() {
+    // /settings — блок «Управление данными» с inline-статусом (единственная точка
+    // экспорта; дубль из шапки /stats убран — там нет app.js и нет места под статус).
     const block = document.getElementById('data-export-block');
-    const buttons = document.querySelectorAll('[data-export-format]');
-    if (!block || buttons.length === 0) return;
+    if (!block) return;
+    const buttons = Array.from(block.querySelectorAll('[data-export-format]'));
+    if (!buttons.length) return;
     block.classList.remove('hidden'); // PE-reveal: с JS экспорт реально работает
     const statusEl = document.getElementById('export-status');
-
-    buttons.forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        const format = btn.getAttribute('data-export-format');
-        const token = obtainAdminToken();
-        if (!token) return; // пользователь отменил ввод — молча выходим
-        setExportStatus(statusEl, 'Готовлю экспорт…', false);
-        buttons.forEach((b) => { b.disabled = true; });
-        try {
-          const resp = await fetch('/export?format=' + encodeURIComponent(format), {
-            credentials: 'same-origin',
-            headers: { 'X-Admin-Token': token }
-          });
-          if (resp.status === 401 || resp.status === 403) {
-            let serverMsg = '';
-            try { serverMsg = (await resp.json())?.message || ''; } catch (_) { /* ignore */ }
-            // «не настроен» — проблема сервера, токен пользователя ни при чём:
-            // НЕ сбрасываем кэш. Иначе токен неверен → сбрасываем, чтобы переспросить.
-            const notConfigured = /не настроен/i.test(serverMsg);
-            if (!notConfigured) clearStoredToken();
-            setExportStatus(statusEl, notConfigured
-              ? 'Экспорт недоступен: на сервере не задан admin-токен (APP_ADMIN_TOKEN).'
-              : 'Неверный admin-токен. Нажми «Экспорт» ещё раз и введи правильный.', true);
-            return;
-          }
-          if (!resp.ok) {
-            setExportStatus(statusEl, 'Не удалось выполнить экспорт (HTTP ' + resp.status + ').', true);
-            return;
-          }
-          const blob = await resp.blob();
-          const filename = parseContentDispositionFilename(
-            resp.headers.get('Content-Disposition'), 'interview-progress.' + format);
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = filename;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          URL.revokeObjectURL(url);
-          setExportStatus(statusEl, 'Готово: ' + filename, false);
-        } catch (e) {
-          console.error('Export failed:', e);
-          setExportStatus(statusEl, 'Сеть недоступна — экспорт не выполнен.', true);
-        } finally {
-          buttons.forEach((b) => { b.disabled = false; });
-        }
-      });
-    });
+    wireExportGroup(buttons, (m, e) => setExportStatus(statusEl, m, e));
   }
 
   document.addEventListener('DOMContentLoaded', () => {

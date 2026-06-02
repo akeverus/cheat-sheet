@@ -32,10 +32,11 @@
                    th:classappend="${activePage == 'settings'} ? 'is-active'"
                    th:attr="aria-current=${activePage == 'settings'} ? 'page' : null">Настройки</a>
             </nav>
-            <div class="ed-export" th:if="${statsPage}">
-                <a href="/export?format=json" th:href="@{/export(format='json')}" class="ed-nav-export" title="Экспорт JSON" aria-label="Экспорт в JSON">JSON ↓</a>
-                <a href="/export?format=csv" th:href="@{/export(format='csv')}" class="ed-nav-export" title="Экспорт CSV" aria-label="Экспорт в CSV">CSV ↓</a>
-            </div>
+            <!-- Экспорт прогресса живёт на /settings → «Управление данными»: единая
+                 точка для дата-операций. Раньше здесь дублировались <a href=/export>,
+                 которые всегда отдавали raw-JSON 403 (заголовок X-Admin-Token из
+                 навигации не отправить) И требовали app.js, не подключённого на /stats.
+                 Убрали дубль — шапка чище, экспорт один и рабочий. -->
             <button type="button" class="theme-toggle ed-theme-toggle" id="theme-toggle"
                     aria-label="Переключить тему" aria-pressed="false" title="Светлая / тёмная тема">
                 <span class="theme-toggle-icon" aria-hidden="true"></span>
