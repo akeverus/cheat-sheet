@@ -103,7 +103,7 @@
 <!-- Таблица тем -->
 <section class="card overflow-x-auto" th:if="${topicStats != null and !topicStats.isEmpty()}">
     <h2 class="mt-0">Детализация по темам</h2>
-    <div class="topic-table-wrap is-collapsed" id="topic-table-wrap" data-collapse-rows="12">
+    <div class="topic-table-wrap" id="topic-table-wrap" data-collapse-rows="12">
     <table class="topic-table" id="topic-table">
         <caption class="visually-hidden">Статистика по темам</caption>
         <thead>
@@ -162,7 +162,11 @@
     <p id="table-sort-status" class="visually-hidden" aria-live="polite" aria-atomic="true"></p>
 </section>
 <!-- B6: длинная таблица тем сворачивается по высоте. Скоупится на /stats.
-     Sort-agnostic: ограничивает высоту обёртки, строки не трогает. -->
+     Sort-agnostic: ограничивает высоту обёртки, строки не трогает.
+     PE: таблица рендерится РАЗВЁРНУТОЙ (no-JS видит все строки). is-collapsed
+     навешивает этот скрипт — иначе без JS строки обрезались бы CSS-ом, а
+     кнопка-разворот остаётся hidden → данные были бы недоступны. Скрипт
+     инлайновый сразу после таблицы → сворачивает до первой отрисовки (без FOUC). -->
 <script>
   (function () {
     var wrap = document.getElementById('topic-table-wrap');
@@ -171,8 +175,9 @@
     if (!wrap || !btn || !table || !table.tBodies[0]) return;
     var rowCount = table.tBodies[0].rows.length;
     var limit = parseInt(wrap.getAttribute('data-collapse-rows'), 10) || 12;
-    if (rowCount <= limit) { wrap.classList.remove('is-collapsed'); return; }
+    if (rowCount <= limit) return; // короткие таблицы не сворачиваем
     var hidden = rowCount - limit;
+    wrap.classList.add('is-collapsed');
     function sync() {
       var collapsed = wrap.classList.contains('is-collapsed');
       btn.textContent = collapsed ? ('Показать все темы (' + hidden + ' ниже)') : 'Свернуть таблицу';
