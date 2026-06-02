@@ -151,30 +151,32 @@
   /**
    * Streak bar: fetch /api/streak and update DOM. No-op if #streak-bar is missing.
    */
+  // Multi-instance: один fetch /api/streak питает ВСЕ [data-streak-bar] на странице
+  // (детальный бар в настройках + компактные чипы today-widget на /settings и /focus).
+  // Дети ищутся scoped по data-атрибутам, поэтому id-коллизий между инстансами нет.
+  // Сбой стрика молчим: дневной прогресс не критичен, нагло алертить не нужно.
   function initStreakBar() {
-    const bar = document.getElementById('streak-bar');
-    if (!bar) return;
+    const bars = document.querySelectorAll('[data-streak-bar]');
+    if (!bars.length) return;
+    const daysText = (n) => n + (n === 1 ? ' день' : (n >= 2 && n <= 4 ? ' дня' : ' дней'));
     apiFetch(API.STREAK)
       .then(r => r.json())
       .then(d => {
         if (!d || typeof d !== 'object' || typeof d.streak !== 'number'
             || typeof d.goal !== 'number' || typeof d.today !== 'number') return;
-        bar.classList.remove('hidden');
-        const daysEl = document.getElementById('streak-days');
-        if (daysEl) {
-          const n = d.streak;
-          daysEl.textContent = n + (n === 1 ? ' день' : (n >= 2 && n <= 4 ? ' дня' : ' дней'));
-        }
         const pct = d.goal > 0 ? Math.min(100, (d.today / d.goal) * 100) : 0;
-        const fillEl = document.getElementById('streak-progress-fill');
-        if (fillEl) setProgressValue(fillEl, pct);
-        const countEl = document.getElementById('streak-count');
-        if (countEl) countEl.textContent = d.today + '/' + d.goal;
-        if (d.goalReached) bar.classList.add('streak-goal-reached');
+        bars.forEach((bar) => {
+          bar.classList.remove('hidden');
+          const daysEl = bar.querySelector('[data-streak-days]');
+          if (daysEl) daysEl.textContent = daysText(d.streak);
+          const fillEl = bar.querySelector('[data-streak-fill]');
+          if (fillEl) setProgressValue(fillEl, pct);
+          const countEl = bar.querySelector('[data-streak-count]');
+          if (countEl) countEl.textContent = d.today + '/' + d.goal;
+          if (d.goalReached) bar.classList.add('streak-goal-reached');
+        });
       })
-      .catch(() => {
-        setInlineAlert('Не удалось загрузить прогресс за день. Можно продолжать без него.');
-      });
+      .catch(() => { /* прогресс за день не критичен — тихо пропускаем */ });
   }
 
   /**

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+  Fragment: today-widget — виджет «Сегодня к повтору».
+  due (stats.due) серверный (есть в модели focus и settings). Стрик догружает
+  app.js initStreakBar (multi-instance, по data-streak-bar). CTA ведёт в /, где
+  трейнер по умолчанию отдаёт due-вопросы первыми (DefaultSelectionStrategy).
+
+  today-hero(stats)  — крупная карточка для /settings (лэндинг сессии).
+  today-chip(stats)  — компактная строка для /focus (информативная, без CTA —
+                       на самой тренировке кнопка «повторить» избыточна).
+-->
+
+<section th:fragment="today-hero(stats)" class="card today-hero" th:if="${stats != null}" aria-labelledby="today-hero-title">
+    <div class="today-hero-head">
+        <span class="ed-eyebrow">Сегодня</span>
+        <!-- Стрик: скрыт без JS (data приходит из /api/streak). -->
+        <span class="streak-inline hidden" data-streak-bar aria-live="polite">
+            <svg class="ed-icon" aria-hidden="true"><use href="#i-flame"></use></svg>
+            <span class="streak-inline-days" data-streak-days>0 дней</span>
+        </span>
+    </div>
+    <div class="today-hero-body">
+        <div class="today-hero-figure">
+            <span class="today-hero-due" data-stat-field="due" th:text="${stats.due}">0</span>
+            <span class="today-hero-due-label" th:text="${stats.due == 1 ? 'вопрос к повтору' : (stats.due >= 2 and stats.due <= 4 ? 'вопроса к повтору' : 'вопросов к повтору')}">вопросов к повтору</span>
+        </div>
+        <h2 id="today-hero-title" class="visually-hidden">Сегодня к повтору</h2>
+        <div class="today-hero-cta">
+            <a th:if="${stats.due > 0}" class="btn next-btn" th:href="@{/}">Начать повторение →</a>
+            <a th:if="${stats.due == 0}" class="btn next-btn" th:href="@{/}">Учить новое →</a>
+            <p class="today-hero-hint" th:if="${stats.due > 0}">Трейнер начнёт с просроченных карточек.</p>
+            <p class="today-hero-hint" th:if="${stats.due == 0}">Всё повторено — самое время для новых тем.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Компактный чип для /focus: стрик + due, без CTA. -->
+<div th:fragment="today-chip(stats)" class="today-chip" th:if="${stats != null}">
+    <span class="streak-inline hidden" data-streak-bar aria-live="polite">
+        <svg class="ed-icon" aria-hidden="true"><use href="#i-flame"></use></svg>
+        <span class="streak-inline-days" data-streak-days>0 дней</span>
+    </span>
+    <span class="today-chip-due" th:if="${stats.due > 0}">
+        <svg class="ed-icon" aria-hidden="true"><use href="#i-target"></use></svg>
+        <span th:text="${stats.due} + ' к повтору'">0 к повтору</span>
+    </span>
+</div>
+</body>
+</html>
