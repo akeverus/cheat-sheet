@@ -13,8 +13,8 @@
         <div class="session-bar">
             <span>Сессия: <strong th:text="${interviewSession.mode}">MODE</strong></span>
             <span>Прогресс: <span th:text="${(interviewSession != null ? interviewSession.getIndex() : 0) + 1}">1</span>/<span th:text="${interviewSession != null ? interviewSession.getTotal() : 0}">0</span></span>
-            <span>✅ <span th:text="${interviewSession != null ? interviewSession.getCorrect() : 0}">0</span></span>
-            <span>❌ <span th:text="${interviewSession != null ? interviewSession.getWrong() : 0}">0</span></span>
+            <span><svg class="ed-icon ed-icon-success" aria-hidden="true"><use href="#i-circle-check"></use></svg> <span class="visually-hidden">Верно:</span> <span th:text="${interviewSession != null ? interviewSession.getCorrect() : 0}">0</span></span>
+            <span><svg class="ed-icon ed-icon-error" aria-hidden="true"><use href="#i-circle-x"></use></svg> <span class="visually-hidden">Неверно:</span> <span th:text="${interviewSession != null ? interviewSession.getWrong() : 0}">0</span></span>
             <form method="post" th:action="@{/finish}" class="d-inline">
                 <button type="submit" class="btn-finish">Завершить</button>
             </form>
@@ -36,19 +36,23 @@
                             th:data-question-id="${result.question.id}"
                             th:attr="aria-pressed=${result.question.important}"
                             th:title="${result.question.important} ? 'Убрать из избранного' : 'Добавить в избранное'"
-                            th:aria-label="${result.question.important} ? 'Убрать из избранного' : 'Добавить в избранное'">★</button>
+                            th:aria-label="${result.question.important} ? 'Убрать из избранного' : 'Добавить в избранное'"><svg class="ed-icon" aria-hidden="true"><use href="#i-star"></use></svg></button>
                     <span class="topic-badge" th:if="${result.question.topic != null}"
                           th:text="${@topicUtils.displayName(result.question.topic)}">topic</span>
                     <button type="button" class="btn-regenerate" title="Удалить варианты и перегенерировать через LLM"
                             th:if="${aiEnabled}"
-                            th:data-question-id="${result.question.id}" id="btn-regenerate" aria-label="Перегенерировать варианты ответа">🔄</button>
+                            th:data-question-id="${result.question.id}" id="btn-regenerate" aria-label="Перегенерировать варианты ответа"><svg class="ed-icon" aria-hidden="true"><use href="#i-refresh"></use></svg></button>
                     <span th:if="${result.question.regenCount() > 0}" class="regen-badge"
                           th:text="${result.question.regenCount()}"
                           th:title="'Перегенерировано ' + ${result.question.regenCount()} + ' раз'">0</span>
                 </div>
             </div>
 
-            <p class="status" th:text="${result.correctAnswer} ? '✅ Верно!' : '❌ Неверно'">Статус</p>
+            <p class="status" th:with="ok=${result.correctAnswer}" th:classappend="${ok} ? ' status-correct' : ' status-wrong'">
+                <svg class="ed-icon ed-icon-lead" th:classappend="${ok} ? 'ed-icon-success' : 'ed-icon-error'" aria-hidden="true">
+                    <use th:attr="href=${ok} ? '#i-circle-check' : '#i-circle-x'"></use>
+                </svg><span th:text="${ok} ? 'Верно!' : 'Неверно'">Статус</span>
+            </p>
 
             <div class="options" role="list" aria-label="Варианты ответа (результат)">
                 <!-- div, не label: это display-only результат (нет <input>), а label
@@ -68,7 +72,7 @@
             </div>
 
             <div>
-                <h3>📖 Пояснение</h3>
+                <h3><svg class="ed-icon ed-icon-lead" aria-hidden="true"><use href="#i-book-open"></use></svg>Пояснение</h3>
                 <div class="answer markdown-content" th:utext="${answerHtml}"></div>
             </div>
 
@@ -111,7 +115,7 @@
             <div id="result-extra-analysis" class="result-feedback hidden" aria-live="polite"></div>
 
             <div th:if="${interviewSession != null and interviewSession.finished}" class="mt-3 text-center">
-                <strong>🏁 Сессия завершена!</strong>
+                <strong><svg class="ed-icon ed-icon-lead" aria-hidden="true"><use href="#i-flag"></use></svg>Сессия завершена!</strong>
             </div>
         </div>
 
@@ -128,7 +132,7 @@
 
 <!-- Связанные вопросы -->
 <div th:if="${relatedQuestions != null and !relatedQuestions.isEmpty()}" id="result-related-questions" class="related-questions related-questions-block">
-    <h3 class="related-questions-title">🔗 Похожие вопросы для закрепления:</h3>
+    <h3 class="related-questions-title"><svg class="ed-icon ed-icon-lead" aria-hidden="true"><use href="#i-link"></use></svg>Похожие вопросы для закрепления:</h3>
     <a th:each="rq : ${relatedQuestions}" class="related-question-item"
        th:href="@{/(topic=${rq.topic()},group=${filter?.group},ordered=${filter == null or filter.ordered != false},important=${filter?.importantOnly},onlyWrong=${filter?.onlyWrong},shuffle=${filter?.shuffle},weakTopics=${weakTopics})}"
        th:utext="${@markdownRenderService.toInlineHtml(rq.questionText())}">
