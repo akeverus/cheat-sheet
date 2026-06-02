@@ -18,7 +18,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Stream Processing`
 
-Stream processing — обработка данных **в реальном времени** (или near-real-time), как **continuous flow** событий, не как batch jobs. Концепции одинаковы для Flink, Kafka Streams, Spark Structured Streaming. На интервью спрашивают: event time vs processing time, watermarks, exactly-once, stateful processing, lambda vs kappa архитектура.
+Stream processing — обработка данных **в реальном времени** (или near-real-time), в виде **непрерывного потока** событий, а не отдельными пакетными задачами (batch jobs). Концепции одинаковы для Flink, Kafka Streams, Spark Structured Streaming. На собеседовании спрашивают: event time vs processing time, watermarks, exactly-once, stateful-обработку, архитектуры lambda vs kappa.
 
 ## Полезные ссылки
 
@@ -85,63 +85,63 @@ Stream processing — обработка данных **в реальном вр
 
 (!) Что такое stream processing?
 
-**Stream processing** — модель обработки **непрерывных потоков** данных (events) в реальном времени, в отличие от **batch processing** (накопить → обработать).
+**Stream processing** — модель обработки **непрерывных потоков** данных (событий) в реальном времени, в отличие от **batch processing** (накопить → обработать).
 
 **Основные принципы:**
 - Каждое событие обрабатывается **по мере поступления** (или маленькими батчами)
-- **Stateful** processing — операции помнят prior events
-- **Out-of-order** events — реальные данные приходят не в том порядке, что произошли
+- **Stateful**-обработка — операции помнят предыдущие события
+- **Out-of-order**-события — реальные данные приходят не в том порядке, в котором произошли
 
 **Применения:**
-- Real-time analytics (clickstream, IoT)
-- Fraud detection
-- Recommendations
-- Alerting / monitoring
-- ETL pipelines (real-time)
+- Аналитика в реальном времени (clickstream, IoT)
+- Обнаружение мошенничества (fraud detection)
+- Рекомендации
+- Оповещения и мониторинг
+- ETL-пайплайны (в реальном времени)
 
 ## Q2. (!) Stream vs Batch processing?
 
 | Критерий | Stream | Batch |
 |----------|--------|-------|
-| Данные | Continuous flow | Bounded dataset |
-| Latency | ms - seconds | minutes - hours |
-| Throughput | Высокий, но steady | Очень высокий, но bursty |
-| Complexity | Сложнее (state, time) | Проще |
-| Reproducibility | Сложно | Легко (rerun на dataset) |
-| Examples | Flink, Kafka Streams, Spark Streaming | Spark, Hive, dbt |
+| Данные | Непрерывный поток | Ограниченный набор данных |
+| Задержка | мс — секунды | минуты — часы |
+| Пропускная способность | Высокая, но равномерная | Очень высокая, но всплесками |
+| Сложность | Выше (state, время) | Ниже |
+| Воспроизводимость | Сложно | Легко (повторный прогон на наборе данных) |
+| Примеры | Flink, Kafka Streams, Spark Streaming | Spark, Hive, dbt |
 
-**Тренд:** "**streaming as the unified model**" — batch как special case streaming (bounded vs unbounded).
+**Тренд:** «**streaming как единая модель**» — batch рассматривается как частный случай streaming (ограниченный поток против бесконечного, bounded vs unbounded).
 
 ## Q3. (!) Bounded vs unbounded streams?
 
-**Bounded stream** — конечный, известный заранее (файл, table snapshot). По сути — batch.
+**Bounded stream** — конечный, известный заранее (файл, snapshot таблицы). По сути — batch.
 
-**Unbounded stream** — бесконечный (Kafka topic, sensor data, clicks). Никогда не "заканчивается".
+**Unbounded stream** — бесконечный (Kafka topic, данные сенсоров, клики). Никогда не «заканчивается».
 
 ```
 Bounded:    [e1, e2, e3, e4, e5]      ← finite
 Unbounded:  [e1, e2, e3, e4, e5, ...] ← never ends
 ```
 
-Это ключевое разделение. Stream processing engines обрабатывают оба, но **unbounded** требует watermarks, windows, state management.
+Это ключевое разделение. Движки stream processing обрабатывают оба типа, но **unbounded** требует watermarks, windows и управления state.
 
 ## Q4. Real-time vs Near-real-time?
 
-| Тип | Latency | Examples |
+| Тип | Задержка | Примеры |
 |-----|---------|----------|
-| **Hard real-time** | < 1ms | Trading, robotics |
-| **Real-time** | 1-100ms | Fraud detection, ad bidding |
-| **Near-real-time** | seconds | Most "streaming" use cases |
-| **Micro-batch** | seconds-minutes | Spark Structured Streaming |
-| **Batch** | minutes-hours | Daily ETL |
+| **Hard real-time** | < 1 мс | Трейдинг, робототехника |
+| **Real-time** | 1–100 мс | Обнаружение мошенничества, ad bidding |
+| **Near-real-time** | секунды | Большинство «streaming»-сценариев |
+| **Micro-batch** | секунды-минуты | Spark Structured Streaming |
+| **Batch** | минуты-часы | Ежедневный ETL |
 
-В **2024** большинство "streaming" приложений = **near-real-time** (1-10 sec OK). True real-time нужен реже.
+В **2024** большинство «streaming»-приложений = **near-real-time** (1–10 сек — нормально). Настоящий real-time нужен реже.
 
 ## Q5. (!) Event time vs Processing time?
 
-| Time | Что значит |
+| Время | Что значит |
 |------|------------|
-| **Event time** | Когда событие **произошло** в реальности (timestamp в data) |
+| **Event time** | Когда событие **произошло** в реальности (timestamp в данных) |
 | **Processing time** | Когда событие **обрабатывается** в системе |
 
 **Пример (clickstream):**
@@ -153,11 +153,11 @@ Unbounded:  [e1, e2, e3, e4, e5, ...] ← never ends
 
 **Event time** — корректно, детерминированно, повторяемо. **Processing time** — проще, но не отражает реальность.
 
-**В production** — почти всегда нужен **event time** для аналитики.
+**В production** для аналитики почти всегда нужен **event time**.
 
 ## Q6. (!) Watermarks — концепция?
 
-**Watermark** — мета-сообщение, заявляющее: "до этого event_time все события **уже обработаны**".
+**Watermark** — мета-сообщение, заявляющее: «до этого event_time все события **уже обработаны**».
 
 ```
 events:    e(t=10) e(t=12) e(t=15) e(t=11)
@@ -166,20 +166,20 @@ events:    e(t=10) e(t=12) e(t=15) e(t=11)
 ```
 
 **Применения:**
-- Trigger window closure
-- Determine "late" events
+- Триггер закрытия window
+- Определение «опоздавших» (late) событий
 - Освобождать state по истёкшему времени
 
 **Стратегии создания:**
-- **Periodic** — добавляем watermark каждые N сек (на основе seen events)
-- **Punctuated** — на каждом событии (для очень out-of-order)
+- **Periodic** — добавляем watermark каждые N сек (на основе уже увиденных событий)
+- **Punctuated** — на каждом событии (для сильно out-of-order потоков)
 
 ```scala
 // Flink
 WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofSeconds(20))
 ```
 
-Допустима задержка 20 сек, после — события считаются late.
+Допустима задержка до 20 сек, после неё события считаются опоздавшими (late).
 
 ## Q7. Late events — стратегии?
 
@@ -187,10 +187,10 @@ WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofSeconds(20))
 
 **Стратегии:**
 
-1. **Drop** (default) — игнорировать
-2. **Send to dead letter queue** — обработать отдельно
-3. **Update existing aggregation** — пересчитать window результат (если watermark с **allowed lateness**)
-4. **Side output** — в отдельный stream для отдельной обработки
+1. **Drop** (по умолчанию) — игнорировать
+2. **Отправить в dead letter queue** — обработать отдельно
+3. **Обновить существующую агрегацию** — пересчитать результат window (если watermark с **allowed lateness**)
+4. **Side output** — в отдельный поток для отдельной обработки
 
 ```scala
 val late = new OutputTag[Event]("late")
@@ -205,7 +205,7 @@ stream
 
 ## Q8. (!) Что такое window?
 
-**Window** — finite chunk событий из infinite stream, для применения aggregation.
+**Window** — конечный фрагмент событий из бесконечного потока, к которому применяют агрегацию.
 
 ```
 infinite stream: e1 e2 e3 e4 e5 e6 e7 ...
@@ -214,33 +214,33 @@ windows:        [e1 e2 e3] [e4 e5 e6] [e7 ...]
 ```
 
 Применения:
-- Подсчёт по интервалу (events/min, errors/hour)
-- Aggregations (avg/sum)
-- Detection patterns
+- Подсчёт по интервалу (событий/мин, ошибок/час)
+- Агрегации (avg/sum)
+- Выявление паттернов
 
 ## Q9. Tumbling, Sliding, Session, Global windows?
 
-**Tumbling** — фиксированные, не перекрываются:
+**Tumbling** — фиксированные, не перекрывающиеся:
 ```
 | 0-5 | 5-10 | 10-15 |
 ```
 
-**Sliding** — фиксированные, перекрываются с шагом:
+**Sliding** — фиксированные, перекрывающиеся с заданным шагом:
 ```
 | 0-5 |
    | 1-6 |
       | 2-7 |
 ```
 
-**Session** — gap-based, динамическая длина:
+**Session** — на основе пауз (gap), динамической длины:
 ```
 e1 e2 e3 [gap] e4 e5 [gap] e6
 [----session 1----] [-session 2-] [s3]
 ```
 
-**Global** — все события в одном window (custom trigger).
+**Global** — все события в одном window (с кастомным триггером).
 
-Подробнее в каждом фреймворке:
+Подробнее по каждому фреймворку:
 - [Flink](apache-flink-interview.md)
 - [Kafka Streams](kafka-streams-interview.md)
 - [Spark](apache-spark-interview.md)
@@ -252,27 +252,27 @@ e1 e2 e3 [gap] e4 e5 [gap] e6
 .allowedLateness(Time.minutes(2))
 ```
 
-Window остаётся "open" ещё **2 минуты после закрытия** — может **обновлять** свой результат при поступлении late events.
+Window остаётся «открытым» ещё **2 минуты после закрытия** — он может **обновлять** свой результат при поступлении опоздавших (late) событий.
 
 **Trade-off:**
-- Больше lateness = больше state (memory)
-- Меньше lateness = больше потерянных events
+- Больше lateness = больше state (памяти)
+- Меньше lateness = больше потерянных событий
 
-**Подвох:** downstream должен уметь обрабатывать **обновления** результата (re-emit).
+**Подвох:** downstream должен уметь обрабатывать **обновления** результата (повторную отправку, re-emit).
 
 ## Q11. (!) Stateful processing — что и зачем?
 
-**Stateful** — operator помнит данные **между событиями**.
+**Stateful** — оператор помнит данные **между событиями**.
 
 Примеры state:
-- Counter per user
-- Last seen value
-- Window aggregations
-- ML model
-- Session info
+- Счётчик на пользователя
+- Последнее увиденное значение
+- Агрегации по window
+- ML-модель
+- Информация о сессии
 
-**Без state:** только map/filter (stateless).
-**Со state:** aggregations, joins, sessionization, CEP.
+**Без state:** только преобразования map/filter (stateless).
+**Со state:** агрегации, join-ы, разбиение на сессии (sessionization), CEP.
 
 ```scala
 // Кол-во events per user
@@ -290,64 +290,64 @@ keyedStream.process(new KeyedProcessFunction[String, Event, Long] {
 
 | Backend | Производительность | Размер |
 |---------|-------------------|--------|
-| **JVM heap** | Самый быстрый | < 1 GB на operator |
-| **RocksDB on disk** | Медленнее (ser/deser) | TBs |
-| **External** (Redis, Cassandra) | Самый медленный | Любой |
+| **JVM heap** | Самый быстрый | < 1 ГБ на оператор |
+| **RocksDB на диске** | Медленнее (сериализация/десериализация) | терабайты |
+| **Внешний** (Redis, Cassandra) | Самый медленный | Любой |
 
 **В Flink:** HashMapStateBackend (heap) или EmbeddedRocksDBStateBackend.
 **В Kafka Streams:** RocksDB + changelog topic.
-**В Spark:** Stateful operations через checkpoints.
+**В Spark:** stateful-операции через checkpoints.
 
 **Выбор:**
 - Маленький state → heap
 - Большой state → RocksDB
-- Очень большой / shared → external store
+- Очень большой / общий → внешнее хранилище
 
 ## Q13. (!) Checkpointing?
 
-**Checkpoint** — periodic snapshot всего state системы.
+**Checkpoint** — периодический snapshot всего state системы.
 
 ```scala
 env.enableCheckpointing(60000) // every 60 seconds
 ```
 
 **Зачем:**
-- **Fault tolerance** — после сбоя восстановиться с last checkpoint
-- **Exactly-once semantics** (с правильным sink)
+- **Отказоустойчивость** — после сбоя восстановиться с последнего checkpoint
+- **Exactly-once-семантика** (с правильным sink)
 
 **Где хранить:**
-- **HDFS, S3** — distributed, durable
-- Local disk — только для dev
+- **HDFS, S3** — распределённое, надёжное хранилище
+- Локальный диск — только для dev
 
 **Алгоритм (Chandy-Lamport):**
-1. Inject **barrier** в input
-2. Barriers идут через operators
-3. Operator получил barriers → snapshot state
-4. Когда все operators сделали snapshot → checkpoint complete
+1. Внедрить **barrier** во входной поток
+2. Barrier-ы проходят через операторы
+3. Оператор получил barrier-ы → делает snapshot state
+4. Когда все операторы сделали snapshot → checkpoint завершён
 
-При **сбое** — restart с last checkpoint.
+При **сбое** — рестарт с последнего checkpoint.
 
 ## Q14. (!) At-most-once vs At-least-once vs Exactly-once?
 
 | Семантика | Описание | Когда |
 |-----------|----------|-------|
-| **At-most-once** | Каждое event = 0 или 1 раз обработано | Метрики где важна low latency, потеря OK |
-| **At-least-once** | Каждое event = ≥1 раз | Большинство систем (с idempotent processing) |
-| **Exactly-once** | Каждое event = ровно 1 раз | Финансы, биллинг |
+| **At-most-once** | Каждое событие обработано 0 или 1 раз | Метрики, где важна низкая задержка, а потеря допустима |
+| **At-least-once** | Каждое событие ≥1 раза | Большинство систем (с идемпотентной обработкой) |
+| **Exactly-once** | Каждое событие ровно 1 раз | Финансы, биллинг |
 
 **Без гарантий** — события могут теряться или дублироваться при сбоях.
 
 **Trade-off:**
-- At-least-once проще, быстрее, но requires idempotency
-- Exactly-once сложнее, медленнее (transactions), но строже
+- At-least-once проще и быстрее, но требует идемпотентности
+- Exactly-once сложнее и медленнее (транзакции), но строже
 
 ## Q15. (!) Как достичь exactly-once?
 
 **End-to-end exactly-once** требует **трёх** компонентов:
 
-1. **Replayable source** — Kafka, Kinesis (с offsets)
-2. **Stream processor с checkpointing** — Flink, Kafka Streams, Spark
-3. **Transactional sink** — Kafka transactions, JDBC 2PC, idempotent writes
+1. **Перевоспроизводимый источник** (replayable source) — Kafka, Kinesis (с offsets)
+2. **Stream-процессор с checkpointing** — Flink, Kafka Streams, Spark
+3. **Транзакционный sink** — Kafka transactions, JDBC 2PC, идемпотентные записи
 
 **Пример:** Kafka → Flink → Kafka (с Kafka transactions):
 
@@ -360,13 +360,13 @@ KafkaSink.<String>builder()
     .build();
 ```
 
-**Цена:** ~5-15% throughput overhead.
+**Цена:** ~5–15% накладных расходов на пропускную способность.
 
-Если sink не транзакционный (Elasticsearch) — нужно делать **idempotent writes** (с unique IDs).
+Если sink не транзакционный (Elasticsearch) — нужно делать **идемпотентные записи** (с уникальными ID).
 
 ## Q16. Idempotent operations?
 
-**Idempotent** — повторное выполнение даёт тот же результат.
+**Идемпотентность** — повторное выполнение даёт тот же результат.
 
 ```sql
 -- Idempotent (PUT/UPSERT)
@@ -377,16 +377,16 @@ ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
 INSERT INTO orders (user_id, amount) VALUES (1, 100); -- каждый раз новая запись!
 ```
 
-**При at-least-once + idempotent operations** = effectively exactly-once.
+**At-least-once + идемпотентные операции** = фактически exactly-once.
 
-**Стратегии idempotency:**
-- **Unique IDs** в записях (UUID)
+**Стратегии идемпотентности:**
+- **Уникальные ID** в записях (UUID)
 - **UPSERT/MERGE** в БД
-- **Checkpoint** в receiver
+- **Checkpoint** на стороне получателя (receiver)
 
 ## Q17. (!) Backpressure — что это?
 
-**Backpressure** — медленный downstream operator замедляет upstream через накопление в buffers.
+**Backpressure** — медленный downstream-оператор замедляет upstream через накопление данных в буферах.
 
 ```
 Source → Op1 → Op2 (SLOW)
@@ -396,26 +396,26 @@ Source → Op1 → Op2 (SLOW)
 
 **Признаки:**
 - Растущий **lag** (Kafka consumer lag, Flink backpressure UI)
-- Высокая RAM usage
-- Latency растёт
+- Высокое потребление RAM
+- Растёт задержка
 
-**Не теряем данные**, но throughput снижается до самого медленного operator.
+**Данные не теряются**, но пропускная способность падает до уровня самого медленного оператора.
 
 ## Q18. Как обрабатывать?
 
-1. **Profile** — найти slow operator (Flink Web UI, Spark UI)
-2. **Scale up** — больше parallelism
-3. **Optimize код** — оптимизировать UDF, аккуратнее joins
-4. **Resource increase** — больше CPU/RAM
-5. **Drop messages** — если это OK (back to source LATEST offset)
-6. **Buffer** — увеличить network buffers (временное решение)
+1. **Профилирование** — найти медленный оператор (Flink Web UI, Spark UI)
+2. **Масштабирование** — больше parallelism
+3. **Оптимизация кода** — оптимизировать UDF, аккуратнее с join-ами
+4. **Увеличение ресурсов** — больше CPU/RAM
+5. **Сброс сообщений** — если это допустимо (перейти к source с offset LATEST)
+6. **Буферизация** — увеличить network buffers (временное решение)
 
-В **Kafka Streams** — добавить больше instances (consumer group rebalance).
-В **Flink** — увеличить parallelism slow operator.
+В **Kafka Streams** — добавить больше инстансов (ребаланс consumer group).
+В **Flink** — увеличить parallelism медленного оператора.
 
 ## Q19. Parallelism в streaming?
 
-**Parallelism** — сколько параллельных subtasks обрабатывают stream.
+**Parallelism** — сколько параллельных subtasks обрабатывают поток.
 
 **В Flink:**
 ```scala
@@ -425,19 +425,19 @@ stream.map(...).setParallelism(4) // override per operator
 
 **Партиционирование:**
 - **Round-robin** — равномерно (для stateless)
-- **By key** (`keyBy`) — по hash от key (для stateful)
-- **Broadcast** — каждое event во все subtasks
+- **По ключу** (`keyBy`) — по hash от ключа (для stateful)
+- **Broadcast** — каждое событие во все subtasks
 
-**В Kafka Streams** — parallelism = #partitions Kafka topic.
+**В Kafka Streams** — parallelism = число партиций Kafka topic.
 
 **Best practice:**
-- Source parallelism = #partitions
-- Sink parallelism может быть меньше (output groupping)
-- Stateful operators — параллелим по key
+- Parallelism source-а = числу партиций
+- Parallelism sink-а может быть меньше (группировка вывода)
+- Stateful-операторы параллелим по ключу
 
 ## Q20. (!) Lambda Architecture?
 
-**Lambda Architecture** (Nathan Marz, 2011) — параллельные **batch** и **speed** layers.
+**Lambda Architecture** (Nathan Marz, 2011) — параллельные слои **batch** и **speed**.
 
 ```mermaid
 graph LR
@@ -449,23 +449,23 @@ graph LR
 ```
 
 **Идея:**
-- **Batch layer** — accurate но slow (часовая ETL)
-- **Speed layer** — quick approximation для recent events
-- **Serving layer** — merge оба для queries
+- **Batch layer** — точный, но медленный (часовой ETL)
+- **Speed layer** — быстрое приближение для недавних событий
+- **Serving layer** — объединяет оба для запросов
 
 **Преимущества:**
-- Batch гарантирует accuracy
-- Speed даёт low latency
+- Batch гарантирует точность
+- Speed даёт низкую задержку
 
 **Недостатки:**
-- **Сложно поддерживать** — два кодовых базы (одна логика дважды!)
-- Сложно reason about consistency
+- **Сложно поддерживать** — две кодовые базы (одна и та же логика дважды!)
+- Сложно рассуждать о консистентности
 
-В **2024** — устаревший подход, заменяется Kappa.
+В **2024** — устаревший подход, вытесняется Kappa.
 
 ## Q21. (!) Kappa Architecture?
 
-**Kappa Architecture** (Jay Kreps, 2014) — **только** speed layer, без batch.
+**Kappa Architecture** (Jay Kreps, 2014) — **только** speed layer, без batch-слоя.
 
 ```mermaid
 graph LR
@@ -474,95 +474,95 @@ graph LR
     Serving --> Query[Queries]
 ```
 
-**Идея:** обрабатывать всё как stream. Если нужен **reprocessing** — perevoditim Kafka offset назад и replay.
+**Идея:** обрабатывать всё как поток. Если нужен **повторный прогон** (reprocessing) — перематываем Kafka offset назад и делаем replay.
 
 **Преимущества:**
-- **Один codebase** (только streaming)
-- Простота operations
-- Streaming engines умеют работать как batch (bounded streams)
+- **Одна кодовая база** (только streaming)
+- Простота эксплуатации
+- Streaming-движки умеют работать в режиме batch (на ограниченных потоках, bounded streams)
 
 **Условия:**
 - Источник должен быть **replayable** (Kafka)
-- Stream engine должен handle bounded и unbounded одинаково
+- Stream-движок должен одинаково обрабатывать bounded и unbounded потоки
 
-В **2024** Kappa дружит с **Flink** (unified batch + streaming) и **Lakehouse** (Delta/Iceberg). Заменяет Lambda.
+В **2024** Kappa хорошо сочетается с **Flink** (единый batch + streaming) и **Lakehouse** (Delta/Iceberg). Вытесняет Lambda.
 
 ## Q22. (!) Lambda vs Kappa — что выбрать?
 
 **Kappa**, если:
 - Источник = Kafka (replayable)
-- Stream engine может handle bounded streams (Flink, Spark Structured Streaming)
-- Хочется **простоты** (один codebase)
+- Stream-движок умеет обрабатывать bounded streams (Flink, Spark Structured Streaming)
+- Хочется **простоты** (одна кодовая база)
 
 **Lambda**, если:
-- Source — не replayable
-- Уже есть Hadoop infrastructure
-- Heavy batch jobs не выразимы как stream
+- Источник — не replayable
+- Уже есть инфраструктура Hadoop
+- Тяжёлые batch-задачи невыразимы как поток
 
-В **2024** — **Kappa** доминирует в новых проектах. **Lambda** остаётся в legacy.
+В **2024** в новых проектах доминирует **Kappa**. **Lambda** остаётся в legacy.
 
 ## Q23. (!) Flink vs Spark Streaming vs Kafka Streams?
 
 | Критерий | Flink | Spark Structured Streaming | Kafka Streams |
 |----------|-------|---------------------------|---------------|
-| Model | True streaming | Micro-batch | True streaming (CKafka pulls) |
-| Latency | < 100ms (часто <10ms) | sec | 10-100ms |
-| State | Богатый | Stateful есть | RocksDB + changelog |
-| Sources | Любые | Любые | Только Kafka |
-| Deploy | Cluster | Cluster | Library (как microservice) |
-| Operational | Сложный | Сложный | Простой |
+| Модель | True streaming | Micro-batch | True streaming (читает из Kafka) |
+| Задержка | < 100 мс (часто < 10 мс) | сек | 10–100 мс |
+| State | Богатый | Есть поддержка stateful | RocksDB + changelog |
+| Источники | Любые | Любые | Только Kafka |
+| Деплой | Кластер | Кластер | Библиотека (как микросервис) |
+| Эксплуатация | Сложная | Сложная | Простая |
 
 **Выбор:**
-- **Kafka Streams** — если источник Kafka, хочется простоты
-- **Flink** — если нужна true streaming с low latency, complex state
-- **Spark Streaming** — если уже Spark в команде, latency 1+ сек OK
+- **Kafka Streams** — если источник Kafka и хочется простоты
+- **Flink** — если нужен true streaming с низкой задержкой и сложным state
+- **Spark Streaming** — если в команде уже есть Spark и задержка от 1 сек допустима
 
 ## Q24. Apache Storm — почему deprecated?
 
-**Apache Storm** (2011) — первый popular stream processor.
+**Apache Storm** (2011) — первый популярный stream processor.
 
 **Особенности:**
-- True streaming (record-by-record)
-- Низкий уровень API (spouts, bolts)
-- At-least-once (exactly-once через Trident)
+- True streaming (запись за записью)
+- Низкоуровневый API (spouts, bolts)
+- Гарантия at-least-once (exactly-once — через Trident)
 
 **Почему deprecated:**
 - Низкоуровневый API
-- Нет богатого state API (Flink выиграл)
-- Нет integrated SQL
-- Сообщество уменьшилось
+- Нет богатого state API (тут выиграл Flink)
+- Нет встроенного SQL
+- Сообщество сократилось
 
-В **2024** Storm — legacy. Heron (от Twitter) — преемник, тоже не получил широкого adoption.
+В **2024** Storm — legacy. Heron (от Twitter) — преемник, тоже не получил широкого распространения.
 
 ## Q25. (!) Streaming vs Message Queue (Kafka)?
 
 | Критерий | Stream Processor | Message Queue (Kafka) |
 |----------|-----------------|----------------------|
 | Назначение | Обработка | Транспорт сообщений |
-| State | Богатое (windows, aggregations) | Минимальное |
-| Latency | Включает processing time | Сетевая latency |
-| API | DSL для transformations | Producer/Consumer |
+| State | Богатый (windows, агрегации) | Минимальный |
+| Задержка | Включает processing time | Сетевая задержка |
+| API | DSL для преобразований | Producer/Consumer |
 
-**Kafka** — это **transport**. **Stream processor** (Flink, Kafka Streams) — обрабатывают данные **поверх** Kafka.
+**Kafka** — это **транспорт**. **Stream processor** (Flink, Kafka Streams) обрабатывает данные **поверх** Kafka.
 
 ```
 Producers → Kafka (transport) → Stream Processor (logic) → Sinks
 ```
 
-Kafka сам **не делает aggregations** — только хранит и доставляет messages. Подробнее — [Apache Kafka](../messaging/kafka-interview.md).
+Сама Kafka **не делает агрегаций** — только хранит и доставляет сообщения. Подробнее — [Apache Kafka](../messaging/kafka-interview.md).
 
 ## Q26. (!) Где stream processing в production?
 
-1. **Fraud detection** — банки, payments (Stripe, banks)
-2. **Real-time recommendations** — Netflix, Amazon
-3. **Ad bidding** — < 100ms decisions
-4. **Monitoring / alerting** — Datadog, Prometheus pipelines
-5. **IoT sensor data** — manufacturing, automotive
-6. **Click stream analytics** — A/B testing, funnel analysis
-7. **ETL streaming** — replace batch (CDC → streaming → DWH)
-8. **Trading** — high-frequency systems
-9. **Geo-tracking** — Uber, Lyft
-10. **Real-time ML inference** — online predictions
+1. **Обнаружение мошенничества** — банки, платежи (Stripe, банки)
+2. **Рекомендации в реальном времени** — Netflix, Amazon
+3. **Ad bidding** — решения за < 100 мс
+4. **Мониторинг / оповещения** — пайплайны Datadog, Prometheus
+5. **Данные IoT-сенсоров** — производство, автопром
+6. **Аналитика clickstream** — A/B-тестирование, анализ воронок
+7. **ETL-стриминг** — замена batch (CDC → streaming → DWH)
+8. **Трейдинг** — высокочастотные системы
+9. **Гео-трекинг** — Uber, Lyft
+10. **ML-инференс в реальном времени** — онлайн-предсказания
 
 ## Q27. Real-time ML inference?
 
@@ -570,30 +570,30 @@ Kafka сам **не делает aggregations** — только хранит и
 events → feature extraction (streaming) → ML model serving → predictions
 ```
 
-**Patterns:**
+**Паттерны:**
 - **Embedded model** — инференс прямо в stream processor
-- **Model service** — отдельный microservice (gRPC), stream calls it
-- **Feature store** — Tecton, Feast — pre-computed features для inference
+- **Model service** — отдельный микросервис (gRPC), поток обращается к нему
+- **Feature store** — Tecton, Feast — заранее вычисленные признаки для инференса
 
-**Tools:**
-- **TensorFlow Serving / Triton** — model serving
+**Инструменты:**
+- **TensorFlow Serving / Triton** — обслуживание моделей (model serving)
 - **Feast** — feature store
-- **Flink ML** — embedded ML в Flink
+- **Flink ML** — встроенный ML в Flink
 
 ## Q28. (!) Какие частые pitfalls в streaming?
 
-1. **Wrong time semantics** — processing time где нужно event time → неправильные aggregations при out-of-order
-2. **Watermark too aggressive** — теряем late data
-3. **Watermark too conservative** — windows закрываются слишком поздно
-4. **State без cleanup** — memory leak, state растёт навсегда
-5. **Ignoring backpressure** — растёт lag, latency
-6. **Not testing с late events** — production interactions удивляют
-7. **Wrong delivery semantics** — at-most-once там, где нужно exactly-once
-8. **Sink не идempotent + at-least-once** — дублирование
-9. **Sequential bottleneck** — низкий parallelism в одном месте
-10. **Не мониторить state size** — RocksDB вырос → IO bound
+1. **Неправильная семантика времени** — processing time там, где нужен event time → неверные агрегации при out-of-order
+2. **Слишком агрессивный watermark** — теряем опоздавшие (late) данные
+3. **Слишком консервативный watermark** — windows закрываются слишком поздно
+4. **State без очистки** — утечка памяти, state растёт бесконечно
+5. **Игнорирование backpressure** — растут lag и задержка
+6. **Нет тестов с late-событиями** — поведение в production преподносит сюрпризы
+7. **Неправильная семантика доставки** — at-most-once там, где нужен exactly-once
+8. **Неидемпотентный sink + at-least-once** — дублирование
+9. **Последовательное узкое место** — низкий parallelism в одной точке
+10. **Не мониторят размер state** — RocksDB разросся → упор в IO
 
-**Streaming в production** требует **намного больше** заботы, чем batch.
+**Streaming в production** требует **намного больше** внимания, чем batch.
 
 ## See also
 

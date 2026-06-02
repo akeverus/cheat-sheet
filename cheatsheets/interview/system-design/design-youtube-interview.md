@@ -16,9 +16,9 @@ updated: "2026-05-22"
 ---
 # Вопросы на собеседовании: `Design YouTube`
 
-`YouTube` — крупнейший видеосервис: 2.5B MAU, 500 часов видео в минуту загружается, 1B часов смотрится в день. System design YouTube — про экстремальный масштаб storage (экзабайты), egress (сотни Tbps), pipeline transcoding и ML-рекомендации.
+`YouTube` — крупнейший видеосервис: 2.5B MAU, загружается 500 часов видео в минуту, просматривается 1B часов в день. System design YouTube — это про экстремальный масштаб хранилища (экзабайты), egress (сотни Tbps), pipeline транскодирования и ML-рекомендации.
 
-Эта шпаргалка — про архитектуру, capacity, trade-offs и production-практики Google/YouTube.
+Эта шпаргалка — про архитектуру, ёмкость (capacity), компромиссы (trade-offs) и production-практики Google/YouTube.
 
 ## Полезные ссылки
 
@@ -88,61 +88,61 @@ updated: "2026-05-22"
 
 ## Q1. (!) Functional и non-functional requirements?
 
-**Functional requirements:**
+**Функциональные требования (functional):**
 
-- Upload video (загрузка с прогрессом, resumable).
-- Watch video (streaming, ABR, multiple qualities).
-- Like / dislike / comment / share.
-- Subscribe to channel, notifications.
-- Recommendations (homepage feed, Up Next).
-- Search (по title, description, transcript).
-- Channel page (список видео автора).
+- Загрузка видео (с прогрессом, resumable).
+- Просмотр видео (streaming, ABR, несколько качеств).
+- Like / dislike / комментарии / шеринг.
+- Подписка на канал, уведомления.
+- Рекомендации (лента на главной, Up Next).
+- Поиск (по title, description, transcript).
+- Страница канала (список видео автора).
 - Live streaming.
-- Monetization (ads, channel memberships).
+- Монетизация (реклама, channel memberships).
 
-**Non-functional requirements:**
+**Нефункциональные требования (non-functional):**
 
 | Метрика | Цель |
 |---------|------|
 | MAU | 2.5B пользователей |
-| Upload rate | 500 часов видео в минуту |
-| Watch volume | 1B часов в день |
-| Start-up latency | < 2s от click до first frame |
-| Rebuffering ratio | < 0.5% времени просмотра |
-| Availability | 99.95% (watch path) |
-| Durability | 11x9s (как S3) для original uploads |
-| Geo | Глобальное покрытие, < 50ms от user до CDN edge |
+| Темп загрузки | 500 часов видео в минуту |
+| Объём просмотра | 1B часов в день |
+| Latency старта | < 2s от клика до первого кадра |
+| Доля ребуферинга | < 0.5% времени просмотра |
+| Доступность | 99.95% (watch path) |
+| Durability | 11x9s (как S3) для исходных загрузок |
+| Гео | Глобальное покрытие, < 50ms от пользователя до CDN edge |
 
-**Out of scope (на интервью):** Premium subscription billing, Studio analytics dashboard, monetization payouts, kids/family separate app.
+**Вне рамок (на интервью):** биллинг Premium-подписки, аналитический дашборд Studio, выплаты по монетизации, отдельное kids/family-приложение.
 
-**Trade-off для интервью:** скажи явно «фокус на watch path и upload pipeline; recommendations упомяну на верхнем уровне». Иначе утонешь в ML.
+**Trade-off для интервью:** явно проговори «фокус на watch path и upload pipeline; рекомендации упомяну на верхнем уровне». Иначе утонешь в ML.
 
 ---
 
 ## Q2. (!) Capacity estimation: storage, bandwidth, QPS?
 
-**Upload storage:**
+**Хранилище загрузок:**
 
-- 500 часов / мин × 60 мин × 24 ч × 365 дн = **263M часов / год** uploaded.
-- Raw upload средний bitrate ~5 Mbps → 1 час ≈ 2.25 GB. Многие в 1080p+/4K → среднее ~4 GB/час original.
-- 263M × 4 GB ≈ **1 EB original / год**.
-- Transcoded variants (10 resolutions × 2 codecs): множитель ×3-5 (старшие resolutions больше всего). Итого storage ~**3-5 EB / год** после transcoding.
+- 500 часов / мин × 60 мин × 24 ч × 365 дн = **263M часов / год** загружается.
+- Средний bitrate сырой загрузки ~5 Mbps → 1 час ≈ 2.25 GB. Многие в 1080p+/4K → в среднем ~4 GB/час оригинала.
+- 263M × 4 GB ≈ **1 EB оригиналов / год**.
+- Транскодированные варианты (10 разрешений × 2 кодека): множитель ×3-5 (старшие разрешения занимают больше всего). Итого хранилище ~**3-5 EB / год** после транскодирования.
 
 **Egress bandwidth:**
 
 - 1B часов смотрится в день → ~42M часов / час.
-- Средний bitrate смотрового потока ~3 Mbps (720p смесь mobile/desktop).
-- 42M × 3600 сек × 3 Mbps / 3600 = 42M × 3 Mbps = **126 Tbps average**.
-- Peak (prime time, viral video): ×2-3 → **250-400 Tbps peak**.
-- Для сравнения: peak Netflix ≈ 100 Tbps, peak Cloudflare network ≈ 150 Tbps. YouTube сопоставим с глобальным интернет-трафиком крупного континента.
+- Средний bitrate смотрового потока ~3 Mbps (720p — смесь mobile/desktop).
+- 42M × 3600 сек × 3 Mbps / 3600 = 42M × 3 Mbps = **126 Tbps в среднем**.
+- Пик (prime time, виральное видео): ×2-3 → **250-400 Tbps на пике**.
+- Для сравнения: пик Netflix ≈ 100 Tbps, пик сети Cloudflare ≈ 150 Tbps. YouTube сопоставим с глобальным интернет-трафиком крупного континента.
 
 **QPS:**
 
-- Watch starts: 1B часов / день, средняя сессия ~10 мин → ~6B starts/день → **70K QPS avg**, ~200K QPS peak.
-- Upload starts: 500 h / min × ~10 min average = ~50 uploads/min активных. Низкий QPS, но heavy bytes.
-- Metadata reads (video page, channel page, recommendations): ~10× watch starts → **2M QPS metadata**.
+- Старты просмотров: 1B часов / день, средняя сессия ~10 мин → ~6B стартов/день → **70K QPS в среднем**, ~200K QPS на пике.
+- Старты загрузок: 500 h / min × ~10 min в среднем = ~50 активных загрузок/мин. Низкий QPS, но много байт.
+- Чтения метаданных (страница видео, страница канала, рекомендации): ~10× от стартов просмотра → **2M QPS на метаданных**.
 
-**CDN egress dominates** infrastructure cost. Поэтому YouTube строит собственную CDN (Google Global Cache, GGC) — серверы внутри ISP.
+**Egress CDN доминирует** в стоимости инфраструктуры. Поэтому YouTube строит собственную CDN (Google Global Cache, GGC) — серверы внутри ISP.
 
 ---
 
@@ -175,12 +175,12 @@ flowchart TD
 
 Ключевые компоненты:
 
-- **Upload path:** API Gateway → presigned URL → object store (raw) → Kafka → transcoding workers → object store (segments) → CDN.
-- **Watch path:** API Gateway → metadata service → manifest URL → CDN (segments).
-- **Recommendation path:** offline batch (Spark/Beam) генерит candidates, online ranking при запросе.
-- **Engagement path:** Kafka → Flink → counters в Redis.
+- **Upload path:** API Gateway → presigned URL → object store (raw) → Kafka → воркеры транскодирования → object store (segments) → CDN.
+- **Watch path:** API Gateway → сервис метаданных → URL манифеста → CDN (segments).
+- **Recommendation path:** offline-batch (Spark/Beam) генерит кандидатов, online-ranking при запросе.
+- **Engagement path:** Kafka → Flink → счётчики в Redis.
 
-Услуга — **read-heavy (~100:1)** на уровне segments. Поэтому всё CDN-кеширование агрессивно.
+Сервис — **read-heavy (~100:1)** на уровне сегментов. Поэтому всё CDN-кеширование агрессивно.
 
 ---
 
@@ -188,11 +188,11 @@ flowchart TD
 
 **Шаги:**
 
-1. Client → `POST /api/v1/uploads/init` с `{filename, size, mimeType}`.
-2. Server создаёт `video_id`, генерит **resumable upload URL** (signed, expires 24h). Сохраняет в `uploads` table.
-3. Client загружает чанками (5-100 MB) на signed URL: `PUT /upload?uploadId=xxx&partNumber=N`.
+1. Клиент → `POST /api/v1/uploads/init` с `{filename, size, mimeType}`.
+2. Сервер создаёт `video_id`, генерит **resumable upload URL** (signed, истекает через 24h). Сохраняет в таблице `uploads`.
+3. Клиент загружает чанками (5-100 MB) на signed URL: `PUT /upload?uploadId=xxx&partNumber=N`.
 4. После всех чанков → `POST /api/v1/uploads/{video_id}/complete`. S3 Multipart Complete объединяет parts.
-5. S3 event → SNS/SQS/Kafka → запускает transcoding pipeline.
+5. S3-событие → SNS/SQS/Kafka → запускает pipeline транскодирования.
 
 **Resumable (RFC 7233 Range):**
 
@@ -204,9 +204,9 @@ Content-Length: 5242880
 [5MB chunk]
 ```
 
-Если сеть упала на 30% — client делает `HEAD /upload?uploadId=abc`, сервер отвечает `Range: bytes=0-15728639/52428800`, client возобновляет с offset 15728640.
+Если сеть упала на 30% — клиент делает `HEAD /upload?uploadId=abc`, сервер отвечает `Range: bytes=0-15728639/52428800`, клиент возобновляет с offset 15728640.
 
-**Java snippet (S3 multipart):**
+**Java-сниппет (S3 multipart):**
 
 ```java
 // 1. Initiate
@@ -244,7 +244,7 @@ s3.completeMultipartUpload(
 );
 ```
 
-**Зачем presigned URL:** клиент льёт байты **напрямую** в object store, минуя backend. Backend не масштабирует TB/sec пропускную способность.
+**Зачем presigned URL:** клиент льёт байты **напрямую** в object store, минуя backend. Backend не вытянул бы масштабирование пропускной способности до TB/sec.
 
 ---
 
@@ -285,7 +285,7 @@ sequenceDiagram
     Orch->>Upload: video.ready
 ```
 
-**ffmpeg команда для одного варианта HLS 720p H.264:**
+**Команда ffmpeg для одного варианта HLS 720p H.264:**
 
 ```bash
 ffmpeg -i input.mp4 \
@@ -300,19 +300,19 @@ ffmpeg -i input.mp4 \
 
 Ключевое:
 
-- `-g 48` — GOP size 48 кадров (2 секунды при 24fps). Keyframe в начале каждого segment — обязательно для seek/ABR-switch.
+- `-g 48` — размер GOP 48 кадров (2 секунды при 24fps). Keyframe в начале каждого сегмента обязателен для seek и переключения ABR.
 - `-keyint_min 48 -sc_threshold 0` — выключает scene-cut keyframes, GOP строго фиксированный.
-- `-hls_time 6` — segment ~6 секунд.
+- `-hls_time 6` — сегмент ~6 секунд.
 
-**Параллелизм:** YouTube распиливает video на **chunks по времени** (например, 30-секундные блоки) и запускает 100+ workers в параллель → 1-часовое видео transcodes за минуты. Затем merge.
+**Параллелизм:** YouTube распиливает видео на **чанки по времени** (например, 30-секундные блоки) и запускает 100+ воркеров параллельно → часовое видео транскодируется за минуты. Затем merge.
 
-**Codecs (multiple для разных клиентов):**
+**Кодеки (несколько — под разных клиентов):**
 
-| Codec | Год | Compression | Decoder support |
+| Кодек | Год | Сжатие | Поддержка декодером |
 |-------|-----|-------------|-----------------|
-| H.264 (AVC) | 2003 | baseline | универсально, hardware everywhere |
-| H.265 (HEVC) | 2013 | -50% bitrate vs H.264 | Apple, modern Android, royalty issues |
-| VP9 | 2013 | сопоставимо с HEVC | YouTube/Chrome native, royalty-free |
+| H.264 (AVC) | 2003 | baseline | универсально, hardware повсюду |
+| H.265 (HEVC) | 2013 | -50% bitrate vs H.264 | Apple, современный Android, проблемы с роялти |
+| VP9 | 2013 | сопоставимо с HEVC | native в YouTube/Chrome, royalty-free |
 | AV1 | 2018 | -30% vs VP9 | новейшие клиенты, медленный encode |
 
 YouTube кодирует **VP9 (приоритет) + H.264 (fallback)**, для топовых видео ещё AV1 на 4K.
@@ -321,24 +321,24 @@ YouTube кодирует **VP9 (приоритет) + H.264 (fallback)**, для
 
 ## Q6. Какие resolutions/bitrates и почему ladder?
 
-**Bitrate ladder** — набор `{resolution, bitrate}` для ABR. Каждая «ступенька» нацелена на конкретную bandwidth-категорию клиентов.
+**Bitrate ladder** — набор `{разрешение, bitrate}` для ABR. Каждая «ступенька» нацелена на конкретную bandwidth-категорию клиентов.
 
-| Resolution | Bitrate (H.264) | Use case |
+| Разрешение | Bitrate (H.264) | Сценарий |
 |------------|-----------------|----------|
-| 144p | 80-100 kbps | extreme mobile (2G), audio-first |
-| 240p | 300 kbps | slow 3G |
+| 144p | 80-100 kbps | предельный mobile (2G), audio-first |
+| 240p | 300 kbps | медленный 3G |
 | 360p | 700 kbps | 3G |
-| 480p (SD) | 1.2 Mbps | 4G, low-end Wi-Fi |
-| 720p (HD) | 2.8 Mbps | 4G/Wi-Fi default |
+| 480p (SD) | 1.2 Mbps | 4G, слабый Wi-Fi |
+| 720p (HD) | 2.8 Mbps | default для 4G/Wi-Fi |
 | 1080p (FHD) | 5 Mbps | broadband |
 | 1440p (QHD) | 8 Mbps | broadband, desktop |
-| 2160p (4K) | 16 Mbps | fast broadband, 4K display |
+| 2160p (4K) | 16 Mbps | быстрый broadband, 4K-дисплей |
 
-**Зачем 144p в 2026?** Развивающиеся рынки (Индия, Африка), плохое 3G, экономия mobile data. У YouTube огромный non-Western user base.
+**Зачем 144p в 2026?** Развивающиеся рынки (Индия, Африка), плохой 3G, экономия мобильного трафика. У YouTube огромная не-западная аудитория.
 
-**Per-title encoding** (Netflix approach, теперь и YouTube): анализируют сложность контента, выдают **разный ladder для разных видео**. Talking-head ролик может на 720p уложиться в 1 Mbps, а action-сцена требует 4 Mbps.
+**Per-title encoding** (подход Netflix, теперь и YouTube): анализируют сложность контента и выдают **разный ladder для разных видео**. Ролик с говорящей головой может уложиться в 1 Mbps на 720p, а экшн-сцена требует 4 Mbps.
 
-**Content-aware encoding (CAE):** двухпроходный анализ → variable bitrate (VBR) с peak constraints.
+**Content-aware encoding (CAE):** двухпроходный анализ → переменный bitrate (VBR) с ограничениями по пику.
 
 ---
 
@@ -347,24 +347,24 @@ YouTube кодирует **VP9 (приоритет) + H.264 (fallback)**, для
 | | HLS | DASH | CMAF |
 |---|---|---|---|
 | Создатель | Apple (2009) | MPEG (2012) | MPEG (2018) |
-| Manifest | `.m3u8` (text) | `.mpd` (XML) | использует HLS или DASH |
-| Container | `.ts` (исторически), теперь `.fmp4` | `.m4s` (fragmented MP4) | `.cmfv` (fragmented MP4) |
-| iOS/Safari | native | через MSE polyfill | native (CMAF-HLS) |
+| Manifest | `.m3u8` (текст) | `.mpd` (XML) | использует HLS или DASH |
+| Контейнер | `.ts` (исторически), теперь `.fmp4` | `.m4s` (fragmented MP4) | `.cmfv` (fragmented MP4) |
+| iOS/Safari | native | через MSE-polyfill | native (CMAF-HLS) |
 | Android/Chrome | native (с Android 3+) | native | native |
-| Smart TVs | hit-or-miss | широко | широко |
-| DRM | FairPlay (sample-AES) | Widevine + PlayReady (CENC) | CENC universal |
+| Smart TV | как повезёт | широко | широко |
+| DRM | FairPlay (sample-AES) | Widevine + PlayReady (CENC) | универсальный CENC |
 
-**Проблема двух стандартов:** до CMAF приходилось хранить **двойной набор segments** (TS для HLS + m4s для DASH) → 2× storage cost на CDN.
+**Проблема двух стандартов:** до CMAF приходилось хранить **двойной набор сегментов** (TS для HLS + m4s для DASH) → 2× стоимость хранения на CDN.
 
-**CMAF (Common Media Application Format):** **одни и те же** `.cmfv` segments шарятся между HLS и DASH manifests. Encode 1 раз → serve обоим. **Срезает CDN storage в 2 раза.**
+**CMAF (Common Media Application Format):** **одни и те же** сегменты `.cmfv` шарятся между манифестами HLS и DASH. Кодируешь 1 раз → отдаёшь обоим. **Срезает CDN storage в 2 раза.**
 
-YouTube **давно перешёл на CMAF**. HLS-плееры запрашивают `master.m3u8` → внутри ссылки на `.cmfv` segments. DASH-плееры запрашивают `manifest.mpd` → ссылки на те же `.cmfv`.
+YouTube **давно перешёл на CMAF**. HLS-плееры запрашивают `master.m3u8` → внутри ссылки на сегменты `.cmfv`. DASH-плееры запрашивают `manifest.mpd` → ссылки на те же `.cmfv`.
 
 ---
 
 ## Q8. (!) Adaptive bitrate streaming — как работает?
 
-**ABR (Adaptive Bitrate)** — клиент **сам** переключает quality на лету в зависимости от bandwidth.
+**ABR (Adaptive Bitrate)** — клиент **сам** переключает качество на лету в зависимости от пропускной способности.
 
 ```mermaid
 flowchart LR
@@ -382,15 +382,15 @@ flowchart LR
 
 **Алгоритмы:**
 
-1. **Throughput-based (наивный):** скользящее среднее последних N сегментов. Бьётся об bursty network.
-2. **Buffer-based (BBA, Netflix-style):** смотрит на **buffer occupancy** (сколько секунд в буфере). Buffer низкий → drop quality, buffer высокий → bump up. Стабильнее.
-3. **MPC / Pensieve (RL):** combine оба signal-а через model-predictive control / deep RL. Google использует ML-based ABR.
+1. **На основе throughput (наивный):** скользящее среднее по последним N сегментам. Спотыкается на bursty-сети.
+2. **На основе буфера (BBA, Netflix-style):** смотрит на **заполненность буфера** (сколько секунд в буфере). Буфер низкий → снижаем качество, буфер высокий → повышаем. Стабильнее.
+3. **MPC / Pensieve (RL):** комбинирует оба сигнала через model-predictive control / deep RL. Google использует ABR на базе ML.
 
-**Switch granularity:** на границе **segment** (т.е. каждые 2-6s). Поэтому сегменты короче → быстрее адаптация, но больше overhead manifest-запросов.
+**Гранулярность переключения:** на границе **сегмента** (то есть каждые 2-6s). Поэтому короче сегменты → быстрее адаптация, но больше накладных расходов на запросы манифеста.
 
-**Bandwidth estimator** для cellular: использует **TCP throughput** последнего сегмента. Для QUIC/HTTP3 — congestion window от транспорта.
+**Оценщик bandwidth** для cellular: использует **TCP throughput** последнего сегмента. Для QUIC/HTTP3 — congestion window от транспорта.
 
-**Java-style псевдокод выбора варианта:**
+**Псевдокод выбора варианта в стиле Java:**
 
 ```java
 public Variant pickNextVariant(double measuredThroughputBps, double bufferSeconds) {
@@ -407,7 +407,7 @@ public Variant pickNextVariant(double measuredThroughputBps, double bufferSecond
 
 ## Q9. Manifest (m3u8/mpd) — формат и доставка?
 
-**Master HLS manifest:**
+**Мастер-манифест HLS:**
 
 ```m3u8
 #EXTM3U
@@ -426,7 +426,7 @@ public Variant pickNextVariant(double measuredThroughputBps, double bufferSecond
 1080p/playlist.m3u8
 ```
 
-**Media playlist (720p):**
+**Медиа-плейлист (720p):**
 
 ```m3u8
 #EXTM3U
@@ -447,27 +447,27 @@ public Variant pickNextVariant(double measuredThroughputBps, double bufferSecond
 
 **Доставка:**
 
-- Master manifest **per video_id** — почти immutable, кешируется в CDN на длинный TTL (24h).
-- Segments **immutable** — длинный TTL (year), versioned URL (`/segments/{video_id}/720p_0001_v3.cmfv`).
-- Manifest URL signed: `?token=xxx&exp=...` — для DRM/access control.
+- Мастер-манифест **на каждый video_id** — почти неизменяем, кешируется в CDN на длинный TTL (24h).
+- Сегменты **неизменяемы** — длинный TTL (год), versioned URL (`/segments/{video_id}/720p_0001_v3.cmfv`).
+- URL манифеста подписан: `?token=xxx&exp=...` — для DRM и контроля доступа.
 
-**Edge case live:** для live manifest **меняется** (новые сегменты добавляются). TTL короткий (1-2s), используются `#EXT-X-PART` для LL-HLS.
+**Edge case с live:** для live-трансляции манифест **меняется** (добавляются новые сегменты). TTL короткий (1-2s), для LL-HLS используются `#EXT-X-PART`.
 
 ---
 
 ## Q10. Segment size trade-offs (2s vs 6s vs 10s)?
 
-| Segment | Pro | Con |
+| Сегмент | За | Против |
 |---------|-----|-----|
-| 2s | Быстрая ABR-адаптация, низкая live latency | Много запросов (overhead), TCP slow start на каждом, hurt CDN |
-| 6s | Баланс (default HLS) | Стандарт VOD |
-| 10s | Меньше запросов, лучше CDN cache hit rate | Медленная адаптация, высокая live latency |
+| 2s | Быстрая адаптация ABR, низкая live-latency | Много запросов (overhead), TCP slow start на каждом, бьёт по CDN |
+| 6s | Баланс (default в HLS) | Стандарт для VOD |
+| 10s | Меньше запросов, выше cache hit rate на CDN | Медленная адаптация, высокая live-latency |
 
-**Для VOD:** YouTube использует **5-6s** segments. Достаточно частая адаптация, низкий overhead.
+**Для VOD:** YouTube использует сегменты по **5-6s**. Достаточно частая адаптация, низкий overhead.
 
-**Для live:** **2s** + LL-HLS parts по **200-500ms** (HTTP/2 push или CTE — chunked transfer encoding). Это даёт **end-to-end latency ~3s** vs стандартные HLS ~30s.
+**Для live:** **2s** + LL-HLS-парты по **200-500ms** (HTTP/2 push или CTE — chunked transfer encoding). Это даёт **end-to-end latency ~3s** против стандартного HLS ~30s.
 
-**Math:** при 1-часовом видео и 6s сегментах → 600 файлов. Manifest ~50 KB. Каждый segment ~2 MB на 720p. Total /1080p ladder ≈ 1.5 GB per hour per variant.
+**Расчёт:** для часового видео с сегментами по 6s → 600 файлов. Манифест ~50 KB. Каждый сегмент ~2 MB на 720p. Итого для ladder /1080p ≈ 1.5 GB на час на вариант.
 
 ---
 
@@ -477,11 +477,11 @@ public Variant pickNextVariant(double measuredThroughputBps, double bufferSecond
 
 YouTube использует **собственную CDN** — Google Global Cache (GGC):
 
-- **GGC nodes** размещены **внутри ISP** по всему миру (1500+ ISP). Когда ты в Москве смотришь YouTube — segments идут с GGC-сервера твоего провайдера, **не выходя из его сети**.
+- **GGC-ноды** размещены **внутри ISP** по всему миру (1500+ провайдеров). Когда ты в Москве смотришь YouTube — сегменты идут с GGC-сервера твоего провайдера, **не выходя из его сети**.
 - Это **edge peering**: ISP экономит transit-трафик, Google экономит egress. Win-win.
-- На границе — Google's own edge PoPs (Google Edge Network), затем Google's backbone.
+- На границе — собственные edge-PoP Google (Google Edge Network), затем backbone Google.
 
-Для **не-Google services** (CDN-as-a-product) commercial multi-CDN: CloudFront + Akamai + Cloudflare + Fastly с DNS-based load balancing (например, Cedexis/Citrix ITM) или client-side selection.
+Для **не-Google-сервисов** (CDN как продукт) — коммерческий multi-CDN: CloudFront + Akamai + Cloudflare + Fastly с балансировкой на базе DNS (например, Cedexis/Citrix ITM) или выбором на стороне клиента.
 
 **Origin shield:**
 
@@ -493,14 +493,14 @@ flowchart LR
     Shield --> Origin[(Origin S3/Colossus)]
 ```
 
-Edge node при miss идёт не сразу в origin, а в **regional shield**. Виральное видео → много edges miss-ятся параллельно → shield делает **одну** запросу к origin, остальные ждут (request coalescing). Защищает origin от thundering herd.
+Edge-нода при miss идёт не сразу в origin, а в **regional shield**. Виральное видео → много edges промахиваются параллельно → shield делает **один** запрос к origin, остальные ждут (request coalescing). Защищает origin от thundering herd.
 
-**Edge caching:**
+**Edge-кеширование:**
 
-- Segments — **immutable, content-hashed URLs** → cache TTL = 1 year.
-- Master manifest — TTL 24h (можно поменять при reencode).
-- Live manifest — TTL 1s + `Cache-Control: no-store` для playlist top.
-- Eviction policy на edge: **LRU** + popularity-aware (LFU). Long-tail видео вылетают первыми.
+- Сегменты — **неизменяемые, content-hashed URL** → cache TTL = 1 год.
+- Мастер-манифест — TTL 24h (можно поменять при перекодировании).
+- Live-манифест — TTL 1s + `Cache-Control: no-store` для верхушки плейлиста.
+- Политика вытеснения на edge: **LRU** + с учётом популярности (LFU). Long-tail-видео вылетают первыми.
 
 ---
 
@@ -520,34 +520,34 @@ flowchart TD
 
 **Tiers и стоимость (порядок величин):**
 
-| Tier | Cost / GB / month | Read latency | Use case |
+| Tier | Цена / GB / мес | Latency чтения | Сценарий |
 |------|--------------------|--------------|----------|
-| CDN edge | $0 (sunk) | ~5ms | top 0.1% видео |
-| S3 Standard / Colossus | $0.023 | ~50ms | active long-tail |
+| CDN edge | $0 (sunk) | ~5ms | топ-0.1% видео |
+| S3 Standard / Colossus | $0.023 | ~50ms | активный long-tail |
 | S3 IA | $0.0125 | ~100ms | редко смотримое |
-| Glacier Instant | $0.004 | ~100ms | архив, иногда читаемый |
-| Glacier Deep Archive | $0.00099 | ~12h restore | очень редко |
+| Glacier Instant | $0.004 | ~100ms | архив, изредка читаемый |
+| Glacier Deep Archive | $0.00099 | ~12h на restore | совсем редко |
 
-**Power-law distribution:** ~80% watch time приходится на **~0.1% видео** (популярные). Остальные 99.9% — long tail, может месяцами не запрашиваться.
+**Степенное распределение (power-law):** ~80% времени просмотра приходится на **~0.1% видео** (популярные). Остальные 99.9% — long tail, могут месяцами не запрашиваться.
 
-YouTube **не** держит весь long-tail в hot CDN — только manifest + первый segment (для fast start). Остальные сегменты pre-fetch при old video request.
+YouTube **не** держит весь long-tail в горячем CDN — только манифест + первый сегмент (для быстрого старта). Остальные сегменты подгружаются (pre-fetch) при запросе старого видео.
 
-**Trade-off:** хранить транскодированные variants long-tail видео или **транскодировать on-demand** при первом запросе? YouTube исторически **транскодирует всё upfront** (CPU дешевле storage retrieval latency для UX). Но Netflix на части контента делает on-demand.
+**Trade-off:** хранить транскодированные варианты long-tail-видео или **транскодировать on-demand** при первом запросе? YouTube исторически **транскодирует всё заранее** (CPU дешевле, чем latency извлечения из storage для UX). Но Netflix на части контента делает on-demand.
 
 ---
 
 ## Q13. Hot videos (viral) — как обрабатывать?
 
-Когда видео становится viral (миллион views/час):
+Когда видео становится виральным (миллион просмотров/час):
 
-1. **Pre-warm cache** в большем числе PoP — push к множеству edges заранее.
-2. **Priority transcoding lane:** если только что загружено и резко взлетело — пропускают через transcoding ladder быстрее (приоритетный K8s queue).
-3. **Adaptive replication** в metadata DB: hot rows реплицируются в больше регионов (read replicas).
+1. **Pre-warm кеша** в большем числе PoP — заранее push на множество edges.
+2. **Приоритетная очередь транскодирования:** если видео только что загрузили и оно резко взлетело — пропускают через transcoding ladder быстрее (приоритетная K8s-очередь).
+3. **Адаптивная репликация** в metadata DB: горячие строки реплицируются в большее число регионов (read-реплики).
 4. **Request coalescing на origin shield** (см. Q11) — защита от thundering herd.
-5. **Premium codec:** для топ-0.001% видео генерят AV1 (-30% bitrate) → экономия egress в долгосрочной перспективе.
-6. **Predictive caching:** ML-модель предсказывает upcoming spike (по early signals: subscriber count, geographic spread of first views) → push в CDN до пика.
+5. **Premium-кодек:** для топ-0.001% видео генерят AV1 (-30% bitrate) → экономия egress на длинной дистанции.
+6. **Предиктивное кеширование:** ML-модель предсказывает грядущий всплеск (по ранним сигналам: число подписчиков, географический разброс первых просмотров) → push в CDN до пика.
 
-**Cache stampede protection** при miss:
+**Защита от cache stampede** при miss:
 
 ```
 GET segment_X.cmfv → cache miss → 1000 параллельных requests на shield
@@ -562,48 +562,48 @@ GET segment_X.cmfv → cache miss → 1000 параллельных requests н�
 
 ## Q14. (!) Metadata DB: схема, sharding?
 
-**`video_metadata` table:**
+**Таблица `video_metadata`:**
 
-| column | type | примечание |
+| колонка | тип | примечание |
 |--------|------|-----------|
-| video_id | string (11 chars) | partition key, sharded by hash |
-| uploader_user_id | bigint | secondary index |
-| title | string | до 100 chars |
-| description | text | до 5K chars |
+| video_id | string (11 символов) | partition key, шардинг по хешу |
+| uploader_user_id | bigint | вторичный индекс |
+| title | string | до 100 символов |
+| description | text | до 5K символов |
 | upload_ts | timestamp | |
-| publish_ts | timestamp | nullable (scheduled publish) |
+| publish_ts | timestamp | nullable (отложенная публикация) |
 | duration_sec | int | |
 | visibility | enum | public/unlisted/private |
 | category | string | |
 | tags | array<string> | |
 | transcoding_status | enum | pending/processing/ready/failed |
 | manifest_url | string | путь к master.m3u8/cmaf |
-| thumbnail_urls | array<string> | preview frames |
+| thumbnail_urls | array<string> | превью-кадры |
 | age_restricted | bool | |
 | geo_blocked_countries | array<string> | |
 
-**Storage choice — Spanner (или Cassandra):**
+**Выбор хранилища — Spanner (или Cassandra):**
 
-- Spanner — globally consistent, transactional, sharded by primary key. Для core metadata.
-- Cassandra — eventually consistent, write-heavy. Можно для analytics или comments.
-- BigTable — для view counts (KV).
+- Spanner — глобально консистентный, транзакционный, шардится по primary key. Для основных метаданных.
+- Cassandra — eventually consistent, write-heavy. Подходит для аналитики или комментариев.
+- BigTable — для счётчиков просмотров (KV).
 
-**Sharding strategy:**
+**Стратегия шардинга:**
 
-- `video_metadata` — hash partition by `video_id`. Равномерное распределение, hot video не убивает один shard.
-- `channel_videos` (videos by uploader) — partition by `user_id`, sort by `upload_ts DESC`. Channel page query — точечный.
-- `subscriptions` — partition by `subscriber_user_id`, list of `channel_id`. Для feed.
-- `comments` — partition by `video_id`, but **secondary partition by time-bucket** для популярных видео с миллионами комментов.
+- `video_metadata` — hash-партиционирование по `video_id`. Равномерное распределение, горячее видео не убивает один shard.
+- `channel_videos` (видео по аплоадеру) — партиция по `user_id`, сортировка по `upload_ts DESC`. Запрос страницы канала — точечный.
+- `subscriptions` — партиция по `subscriber_user_id`, список `channel_id`. Для ленты.
+- `comments` — партиция по `video_id`, но с **вторичной партицией по time-bucket** для популярных видео с миллионами комментариев.
 
-**Video ID:** короткие 11-символьные base64 → URL-safe. Генерация через UUID → base64 → truncate, проверка уникальности через DB.
+**Video ID:** короткие 11-символьные base64 → URL-safe. Генерация через UUID → base64 → обрезка, проверка уникальности через БД.
 
 ---
 
 ## Q15. View counts — как считать на масштабе?
 
-Точный count нерентабелен: 1B views/день × write-amplification → миллионы writes/sec в БД.
+Точный подсчёт нерентабелен: 1B просмотров/день × write-amplification → миллионы записей/сек в БД.
 
-**Решение — Lambda-like pipeline:**
+**Решение — pipeline в духе Lambda-архитектуры:**
 
 ```mermaid
 flowchart LR
@@ -615,51 +615,51 @@ flowchart LR
     UI[Watch page] -->|GET view count| Redis
 ```
 
-**Логика count:**
+**Логика подсчёта:**
 
-- View засчитывается, если watched ≥ **30 секунд** (правило YouTube исторически).
-- Player отправляет heartbeat каждые 5s с `{video_id, user_id, position, session_id}`.
-- Flink дедуплицирует по `(video_id, user_id, session_id)` за окно (борьба с refresh-spam).
-- Counts в Redis (INCR по ключу `video:views:{video_id}`).
-- Каждые 5 мин flush Redis → Spanner (durable count).
-- UI читает из Redis (eventual consistency, +/- секунды задержки).
+- Просмотр засчитывается, если посмотрели ≥ **30 секунд** (исторически правило YouTube).
+- Плеер шлёт heartbeat каждые 5s с `{video_id, user_id, position, session_id}`.
+- Flink дедуплицирует по `(video_id, user_id, session_id)` за окно (борьба с refresh-спамом).
+- Счётчики в Redis (INCR по ключу `video:views:{video_id}`).
+- Каждые 5 мин flush из Redis → Spanner (durable-счётчик).
+- UI читает из Redis (eventual consistency, задержка ±секунды).
 
-**Anti-fraud:**
+**Анти-фрод:**
 
-- Bot detection (Frequency analysis, browser fingerprint).
-- View threshold (30s) защищает от skip-spam.
-- Throttling: 1 view per user per video per 24h.
+- Детектирование ботов (частотный анализ, browser fingerprint).
+- Порог просмотра (30s) защищает от skip-спама.
+- Throttling: 1 просмотр на пользователя на видео за 24h.
 
-**Spike protection:** при viral spike Redis INCR может стать bottleneck → шардить counter по hash partitions, sum at read time.
+**Защита от всплесков:** при виральном всплеске Redis INCR может стать узким местом → шардить счётчик по hash-партициям, суммировать при чтении.
 
 ---
 
 ## Q16. Likes, comments, subscriptions feed?
 
-**Likes:**
+**Лайки:**
 
-- Same pattern: Kafka → Flink → Redis counter. Eventual consistency.
-- Uniqueness: `like(user_id, video_id)` в DB; если уже liked, не инкрементить.
+- Тот же паттерн: Kafka → Flink → счётчик в Redis. Eventual consistency.
+- Уникальность: `like(user_id, video_id)` в БД; если уже лайкнуто — не инкрементить.
 
-**Comments:**
+**Комментарии:**
 
-- Сторадж: Cassandra или Spanner, partition by `video_id`.
-- Hot videos: миллионы комментов → пагинация cursor-based (`?after=comment_id`).
-- Sort: by `top` (replies/upvotes), `new`, `controversial`.
-- Threading: parent_comment_id, depth limit 2 (top-level + replies).
+- Хранилище: Cassandra или Spanner, партиция по `video_id`.
+- Горячие видео: миллионы комментариев → пагинация на курсорах (`?after=comment_id`).
+- Сортировка: по `top` (ответы/апвоуты), `new`, `controversial`.
+- Threading: parent_comment_id, ограничение глубины 2 (верхний уровень + ответы).
 
-**Subscriptions feed:**
+**Лента подписок (subscriptions feed):**
 
-- На pull-time: для каждого user'а взять `subscriptions[user_id]` → для каждого channel взять последние 10 видео → merge by time → top N.
-- При scale неэффективно для **heavy fan-out** каналов (MrBeast с 200M subscribers).
-- Гибрид: pull для регулярных пользователей, push (fan-out на write) для top creators с лимитом — но в feed-таблицу всех subs.
+- На pull-time: для каждого пользователя взять `subscriptions[user_id]` → для каждого канала взять последние 10 видео → merge по времени → top N.
+- На масштабе неэффективно для каналов с **heavy fan-out** (MrBeast с 200M подписчиков).
+- Гибрид: pull для обычных пользователей, push (fan-out на write) для топовых креаторов с лимитом — но в feed-таблицу всех подписчиков.
 - См. подробнее: [design-feed-system-interview.md](design-feed-system-interview.md), [design-twitter-interview.md](design-twitter-interview.md).
 
 ---
 
 ## Q17. (!) Two-stage recommendation model: candidate + ranking?
 
-YouTube recommendations (Up Next + homepage) — **two-stage**:
+Рекомендации YouTube (Up Next + главная) — **двухстадийные (two-stage)**:
 
 ```mermaid
 flowchart TD
@@ -680,54 +680,54 @@ flowchart TD
     end
 ```
 
-**Stage 1: Candidate Generation:**
+**Стадия 1: генерация кандидатов (Candidate Generation):**
 
-- Цель — из ~10⁹ видео отобрать ~10² релевантных. Recall > precision.
+- Цель — из ~10⁹ видео отобрать ~10² релевантных. Recall важнее precision.
 - Модель: two-tower neural network. Учит **user embedding** и **video embedding** в общем латентном пространстве.
-- При serve: query = user embedding → **ANN (approximate nearest neighbor)** search через миллионы video embeddings (FAISS, ScaNN).
-- Latency target: < 50ms.
+- При обслуживании запроса: query = user embedding → поиск **ANN (approximate nearest neighbor)** по миллионам video embeddings (FAISS, ScaNN).
+- Целевая latency: < 50ms.
 
-**Stage 2: Ranking:**
+**Стадия 2: ранжирование (Ranking):**
 
-- Цель — точно ранжировать ~500 candidates → top 10-20. Precision matters.
-- Deep neural network с **сотнями features**: video features (age, language, channel quality), user features (watch history, demographics), context (device, time of day).
-- Multi-objective: predict CTR, predicted watch time, predicted satisfaction (likes/dislikes).
-- Latency target: < 100ms на весь батч из 500.
+- Цель — точно ранжировать ~500 кандидатов → top 10-20. Здесь важна precision.
+- Deep neural network с **сотнями фич**: фичи видео (возраст, язык, качество канала), фичи пользователя (история просмотров, демография), контекст (устройство, время суток).
+- Multi-objective: предсказать CTR, ожидаемое время просмотра, ожидаемую удовлетворённость (лайки/дизлайки).
+- Целевая latency: < 100ms на весь батч из 500.
 
 **Offline vs online:**
 
-- Embeddings (offline): Spark/Beam обучает раз в N часов, batch encode видео.
-- Ranking model (online): TF Serving / KFServing.
-- A/B testing постоянный — десятки экспериментов параллельно.
+- Эмбеддинги (offline): Spark/Beam обучает раз в N часов, batch-кодирование видео.
+- Модель ранжирования (online): TF Serving / KFServing.
+- A/B-тестирование постоянное — десятки экспериментов параллельно.
 
 ---
 
 ## Q18. Features для ranking model?
 
-**Video features:**
+**Фичи видео:**
 
 - `video_age_hours`, `total_views`, `like_ratio`, `comment_count`.
-- `channel_quality_score` (uploader signals).
-- `topic_embedding` (category, tags, transcript).
+- `channel_quality_score` (сигналы аплоадера).
+- `topic_embedding` (категория, теги, transcript).
 - `language`, `geographic_target`.
-- `monetization_eligible` (для ads).
+- `monetization_eligible` (для рекламы).
 
-**User features:**
+**Фичи пользователя:**
 
 - `watch_history_embedding` (последние 50 видео).
 - `search_history_embedding`.
-- `demographics` (age band, country, device).
-- `subscription_signal` (subscribed to channel?).
+- `demographics` (возрастная группа, страна, устройство).
+- `subscription_signal` (подписан ли на канал?).
 - `time_since_last_visit`.
 
-**Context:**
+**Контекст:**
 
 - `device_type` (mobile/TV/desktop).
 - `time_of_day`, `day_of_week`.
-- `referrer` (homepage / search / channel page).
+- `referrer` (главная / поиск / страница канала).
 - `previous_video_in_session`.
 
-**Cross features:** user × video взаимодействия — например, «smartphone user × video в landscape orientation» — модель учит non-linear combinations через feature crosses или deep embedding.
+**Cross-фичи:** взаимодействия пользователь × видео — например, «пользователь со смартфона × видео в landscape-ориентации» — модель учит нелинейные комбинации через feature crosses или deep embedding.
 
 **Multi-objective head:** одна модель предсказывает **сразу несколько** скаляров:
 
@@ -735,9 +735,9 @@ flowchart TD
 - E[watch_time | click]
 - p(like | watch)
 - p(share)
-- p(skip-within-5s) — negative signal
+- p(skip-within-5s) — негативный сигнал
 
-Финальный score: weighted combination, веса настраиваются под бизнес-метрику (engagement vs revenue).
+Итоговый score: взвешенная комбинация, веса настраиваются под бизнес-метрику (вовлечённость vs выручка).
 
 См. также: [embeddings-interview.md](../ai-ml/embeddings-interview.md), [llm-integration-patterns-interview.md](../ai-ml/llm-integration-patterns-interview.md).
 
@@ -747,14 +747,14 @@ flowchart TD
 
 **Pipeline:**
 
-1. На upload + transcoding параллельно гонят **ASR (Automatic Speech Recognition)** → transcript.
-2. Index в Elasticsearch:
-   - `title`, `description` — text fields с custom analyzer (russian + english).
+1. При загрузке + транскодировании параллельно гонят **ASR (Automatic Speech Recognition)** → transcript.
+2. Индексация в Elasticsearch:
+   - `title`, `description` — text-поля с кастомным анализатором (russian + english).
    - `tags` — keyword.
-   - `transcript_chunks` — отдельный field, chunked по 30s windows. Позволяет deep-link «search jump to position».
+   - `transcript_chunks` — отдельное поле, разбитое на окна по 30s. Позволяет deep-link «перейти к позиции из поиска».
    - `channel_name`, `category` — keyword.
-3. Query: multi-match across поля + boost по engagement (views, recency).
-4. Ranking model — отдельная Learn-to-Rank модель (LambdaMART / DNN), переранжирует top-100 ES результатов.
+3. Запрос: multi-match по полям + boost по вовлечённости (просмотры, свежесть).
+4. Модель ранжирования — отдельная Learn-to-Rank-модель (LambdaMART / DNN), переранжирует top-100 результатов ES.
 
 ```json
 {
@@ -777,9 +777,9 @@ flowchart TD
 }
 ```
 
-**Autocomplete:** отдельный сервис на edge-ngram + popularity counter (top queries last 24h из Redis). Latency target < 50ms.
+**Автодополнение:** отдельный сервис на edge-ngram + счётчик популярности (топ-запросы за последние 24h из Redis). Целевая latency < 50ms.
 
-**Typo tolerance:** ES fuzzy + phonetic + spell correction (custom dictionary с misspellings).
+**Устойчивость к опечаткам:** ES fuzzy + phonetic + spell correction (кастомный словарь с типичными опечатками).
 
 См. подробнее: [design-search-interview.md](design-search-interview.md).
 
@@ -800,14 +800,14 @@ flowchart LR
     DVR --> S3[(S3 archive<br/>VOD after stream)]
 ```
 
-**Ingest:** creator пушит **RTMP** (TCP) или **SRT/WebRTC** (UDP) на ingest server. RTMP — стандарт, но latency 5-30s.
+**Ingest:** креатор пушит **RTMP** (TCP) или **SRT/WebRTC** (UDP) на ingest-сервер. RTMP — стандарт, но latency 5-30s.
 
-**Live transcoding ladder:** real-time encode в multiple resolutions. На GPU/ASIC (для cost) — H.264 NVENC, или Google's VCU (Video Coding Unit) custom silicon.
+**Live transcoding ladder:** энкодинг в реальном времени в несколько разрешений. На GPU/ASIC (ради стоимости) — H.264 NVENC, или собственный кремний Google VCU (Video Coding Unit).
 
 **LL-HLS (Low-Latency HLS):**
 
-- Segments по 2s, но внутри segments — **HTTP/2 push of parts** по 200-500ms.
-- Manifest содержит `#EXT-X-PART` tags:
+- Сегменты по 2s, но внутри сегментов — **HTTP/2 push of parts** по 200-500ms.
+- Манифест содержит теги `#EXT-X-PART`:
 
 ```m3u8
 #EXT-X-PART:DURATION=0.33,URI="seg42_part0.cmfv"
@@ -816,39 +816,39 @@ flowchart LR
 #EXT-X-PRELOAD-HINT:TYPE=PART,URI="seg42_part3.cmfv"
 ```
 
-- `INDEPENDENT=YES` — этот part начинается с keyframe → можно сразу switch ABR.
-- End-to-end latency 2-5s vs обычный HLS 30s+.
+- `INDEPENDENT=YES` — этот part начинается с keyframe → можно сразу переключить ABR.
+- End-to-end latency 2-5s против обычного HLS 30s+.
 
-**Альтернативы:** WebRTC — sub-second latency, но плохо масштабируется (peer-based). Используется для interactive (call, live chat), не для broadcast.
+**Альтернативы:** WebRTC — sub-second latency, но плохо масштабируется (peer-based). Используется для интерактива (звонки, live-чат), не для broadcast.
 
-**DVR:** последние N часов live-стрима хранятся в circular buffer → user может «отмотать назад» во время трансляции.
+**DVR:** последние N часов live-стрима хранятся в кольцевом буфере → пользователь может «отмотать назад» во время трансляции.
 
-**После окончания стрима:** finalize в **VOD** asset — сегменты копируются в long-term storage, добавляется в transcoding pipeline для дополнительных codecs (AV1 и т.п.).
+**После окончания стрима:** финализация в **VOD**-ассет — сегменты копируются в долговременное хранилище, видео добавляется в pipeline транскодирования для дополнительных кодеков (AV1 и т.п.).
 
 ---
 
 ## Q21. Ad insertion: SSAI vs CSAI, VAST/VPAID?
 
-**Forms:**
+**Форматы:**
 
 - **Pre-roll** — реклама до видео.
 - **Mid-roll** — встроена в середину.
 - **Post-roll** — после.
-- **Bumper** — короткая 6s non-skippable.
+- **Bumper** — короткая 6s без пропуска.
 - **Overlay/banner** — поверх плеера.
 
-**Two strategies of stitching:**
+**Две стратегии сшивки (stitching):**
 
 | | CSAI (Client-Side) | SSAI (Server-Side) |
 |---|---|---|
-| Как работает | Player знает про ads, делает паузу основного видео, играет ad asset | Сервер вставляет ad segments **прямо в manifest** между content segments |
-| AdBlock | легко блокировать (отдельный domain) | сложно (тот же manifest) |
-| Pixel tracking | rich (player-aware) | ограниченный (server log) |
-| Latency switching content↔ad | заметный (загрузка ad player) | seamless (тот же бuffer) |
-| Personalization | per-user | per-user (server inserts разный ad per session) |
-| Используется | Mobile apps, Web | LL-стримы, Connected TV |
+| Как работает | Плеер знает про рекламу, ставит основное видео на паузу, проигрывает ad-ассет | Сервер вставляет ad-сегменты **прямо в манифест** между сегментами контента |
+| AdBlock | легко блокировать (отдельный домен) | сложно (тот же манифест) |
+| Pixel tracking | богатый (player-aware) | ограниченный (server log) |
+| Latency переключения контент↔реклама | заметная (загрузка ad-плеера) | бесшовная (тот же буфер) |
+| Персонализация | per-user | per-user (сервер вставляет разную рекламу на каждую сессию) |
+| Где используется | мобильные приложения, веб | LL-стримы, Connected TV |
 
-**VAST (Video Ad Serving Template)** — XML стандарт от IAB:
+**VAST (Video Ad Serving Template)** — XML-стандарт от IAB:
 
 ```xml
 <VAST version="4.2">
@@ -876,52 +876,52 @@ flowchart LR
 </VAST>
 ```
 
-**VPAID** — interactive ads (clickable overlays, surveys). Был популярен, теперь deprecated в пользу **SIMID**.
+**VPAID** — интерактивная реклама (кликабельные оверлеи, опросы). Был популярен, теперь deprecated в пользу **SIMID**.
 
-**Frequency capping:** не показывать одну и ту же рекламу одному user'у >N раз/день → counter в Redis per (user_id, ad_id).
+**Frequency capping:** не показывать одну и ту же рекламу одному пользователю >N раз/день → счётчик в Redis по (user_id, ad_id).
 
 ---
 
 ## Q22. (!) Content moderation: CSAM, Content ID fingerprinting?
 
-**Layers of moderation:**
+**Слои модерации:**
 
-1. **Pre-upload (on raw):**
-   - **CSAM detection** (PhotoDNA / Google CSAI Match): hash-based matching against known database of child-abuse material. Mandatory by law.
-   - Virus scan.
-2. **Post-transcoding (on output):**
-   - **Content ID (copyright):** Google's fingerprinting system. Rights holders upload reference content → каждое новое video fingerprinted (audio + video) → matched против reference DB. Match → claim, blocking, monetization re-routing.
-   - **ML classifier:** nudity / violence / extremism / hate speech → enqueue для human review.
-3. **At watch-time:**
-   - Age-restriction enforcement (требуется sign-in).
-   - Regional restrictions (geo-block).
-4. **Post-publication (community signals):**
-   - User reports → review queue.
-   - Spam/comment moderation (ML + community).
+1. **До загрузки (на сыром файле):**
+   - **Детектирование CSAM** (PhotoDNA / Google CSAI Match): hash-сопоставление с известной базой материалов с насилием над детьми. Обязательно по закону.
+   - Антивирусное сканирование.
+2. **После транскодирования (на выходном файле):**
+   - **Content ID (копирайт):** система фингерпринтинга от Google. Правообладатели загружают эталонный контент → каждое новое видео фингерпринтится (audio + video) → сопоставляется с эталонной БД. Совпадение → claim, блокировка, перенаправление монетизации.
+   - **ML-классификатор:** нагота / насилие / экстремизм / hate speech → в очередь на ручную проверку.
+3. **Во время просмотра:**
+   - Применение возрастных ограничений (требуется вход в аккаунт).
+   - Региональные ограничения (geo-block).
+4. **После публикации (сигналы сообщества):**
+   - Жалобы пользователей → очередь на ревью.
+   - Модерация спама/комментариев (ML + сообщество).
 
-**Content ID detail:**
+**Детали Content ID:**
 
-- **Audio fingerprint:** acoustic fingerprint (spectrogram hashing à la Shazam) → robust к re-encoding, pitch shift.
-- **Video fingerprint:** perceptual hash (pHash) per keyframe → robust к crop, watermark, mild quality loss.
-- Match results: claim → owner decides: **block** / **monetize** (ads revenue идёт owner) / **track**.
+- **Аудио-фингерпринт:** акустический отпечаток (spectrogram hashing в духе Shazam) → устойчив к перекодированию, сдвигу высоты тона.
+- **Видео-фингерпринт:** перцептивный хеш (pHash) на каждый keyframe → устойчив к кропу, вотермаркам, лёгкой потере качества.
+- Результаты совпадения: claim → владелец решает: **заблокировать** / **монетизировать** (доход с рекламы идёт владельцу) / **отслеживать**.
 
-**Scale:** ~500 часов uploaded/min × fingerprint extraction → массивный GPU/TPU pipeline. Async, не блокирует publish — claim может появиться через минуты-часы.
+**Масштаб:** ~500 часов загрузок/мин × извлечение фингерпринта → массивный GPU/TPU pipeline. Асинхронно, не блокирует публикацию — claim может появиться через минуты-часы.
 
 ---
 
 ## Q23. DRM: Widevine, FairPlay, PlayReady?
 
-**Зачем DRM:** premium content (YouTube Movies, Premium streams, кино) — rights holders требуют **encryption + key management** + secure decode.
+**Зачем DRM:** премиум-контент (YouTube Movies, Premium-стримы, кино) — правообладатели требуют **шифрования + управления ключами** + защищённого декодирования.
 
-**Three major DRMs:**
+**Три основных DRM:**
 
-| DRM | Vendor | Platforms |
+| DRM | Вендор | Платформы |
 |-----|--------|-----------|
-| Widevine | Google | Chrome, Android, ChromeOS, Smart TVs |
+| Widevine | Google | Chrome, Android, ChromeOS, Smart TV |
 | FairPlay | Apple | Safari, iOS, tvOS, macOS |
 | PlayReady | Microsoft | Edge, Windows, Xbox, некоторые TV |
 
-**Flow:**
+**Поток:**
 
 ```mermaid
 sequenceDiagram
@@ -940,136 +940,136 @@ sequenceDiagram
     CDM-->>Player: decoded frames
 ```
 
-**Key concepts:**
+**Ключевые концепции:**
 
-- **CENC (Common Encryption):** standard AES-128 CTR/CBC. **Один и тот же** encrypted asset работает с **всеми** DRM-системами — отличается только license server и key delivery.
-- **Secure media path:** decode и render в **TEE/SGX/Secure Element** (на hardware level). Screen capture блокируется или downgrades quality.
-- **License policy:** TTL (например, 24h), playback restrictions (HDCP required, offline playback yes/no, max resolution).
-- **Multi-DRM packaging:** один CMAF file + multiple license servers (Widevine + FairPlay + PlayReady) → разные platforms.
+- **CENC (Common Encryption):** стандартный AES-128 CTR/CBC. **Один и тот же** зашифрованный ассет работает со **всеми** DRM-системами — отличаются только license server и доставка ключей.
+- **Secure media path:** декодирование и рендеринг в **TEE/SGX/Secure Element** (на уровне железа). Захват экрана блокируется или ведёт к снижению качества.
+- **Политика лицензии:** TTL (например, 24h), ограничения воспроизведения (требуется HDCP, можно ли offline-воспроизведение, максимальное разрешение).
+- **Multi-DRM packaging:** один CMAF-файл + несколько license-серверов (Widevine + FairPlay + PlayReady) → под разные платформы.
 
-**Для regular YouTube видео:** DRM не используется (free content). Только sample-AES для premium streams, Movies, music.
+**Для обычных видео YouTube:** DRM не используется (бесплатный контент). Только sample-AES для премиум-стримов, Movies, музыки.
 
 ---
 
 ## Q24. Geo-distribution и regional restrictions?
 
-**Geo-distribution:**
+**Гео-распределение:**
 
-- DNS-based: user queries `youtube.com` → resolution возвращает **closest CDN PoP** (через GeoDNS / Anycast).
+- На базе DNS: пользователь запрашивает `youtube.com` → резолвинг возвращает **ближайший CDN PoP** (через GeoDNS / Anycast).
 - Google использует **Anycast IP** — один IP, маршрутизация BGP к ближайшему дата-центру.
-- CDN edges в каждом крупном регионе (NA, EU, APAC, LATAM, Africa, AU).
-- Storage replication: 3+ regions для durability.
+- CDN-edges в каждом крупном регионе (NA, EU, APAC, LATAM, Африка, AU).
+- Репликация хранилища: 3+ региона ради durability.
 
-**Regional restrictions (geo-block):**
+**Региональные ограничения (geo-block):**
 
-- Per-video field `geo_blocked_countries: ["US", "UK"]`.
-- При watch request: backend resolves user country (IP geo-lookup) → если в blocklist → return 451 (Unavailable For Legal Reasons) + alternative recommendations.
-- VPN bypass: возможно, YouTube старается обнаруживать через IP reputation / device fingerprint, но не блокирует радикально.
+- Поле на каждое видео `geo_blocked_countries: ["US", "UK"]`.
+- При watch-запросе: backend определяет страну пользователя (IP geo-lookup) → если в blocklist → возвращает 451 (Unavailable For Legal Reasons) + альтернативные рекомендации.
+- Обход через VPN: возможен; YouTube пытается выявлять по IP-репутации / device fingerprint, но не блокирует радикально.
 
-**Compliance:**
+**Комплаенс:**
 
-- DMCA (US), copyright takedowns.
-- GDPR (EU): right-to-be-forgotten — удалить user data, comments anonymize.
-- Local content laws (Russia, China, Saudi — где сервис вообще доступен).
+- DMCA (US), запросы на удаление по копирайту.
+- GDPR (EU): право на забвение — удалить данные пользователя, анонимизировать комментарии.
+- Локальное законодательство о контенте (Россия, Китай, Саудовская Аравия — там, где сервис вообще доступен).
 
-**Language localization:**
+**Локализация языка:**
 
-- Auto-translated captions (ASR + MT).
-- Auto-dubbed audio (TTS) — beta.
-- Localized search/recommendations per locale.
+- Автопереведённые субтитры (ASR + MT).
+- Автодублированное аудио (TTS) — beta.
+- Локализованные поиск/рекомендации под локаль.
 
 ---
 
 ## Q25. Failed upload / failed transcoding — recovery?
 
-**Failed upload:**
+**Неуспешная загрузка:**
 
-- Resumable upload (RFC 7233) — client возобновляет с last byte (см. Q4).
-- Если client не возобновляется в течение 24h → cleanup job удаляет orphan parts из S3 (S3 multipart aborted).
-- Если upload **complete** но client не закрыл сессию → backend всё равно триггерит transcoding по S3 event.
+- Resumable upload (RFC 7233) — клиент возобновляет с последнего байта (см. Q4).
+- Если клиент не возобновился в течение 24h → cleanup-job удаляет осиротевшие parts из S3 (S3 multipart aborted).
+- Если загрузка **завершена**, но клиент не закрыл сессию → backend всё равно триггерит транскодирование по S3-событию.
 
-**Failed transcoding:**
+**Неуспешное транскодирование:**
 
-- K8s Job retries: 3 attempts. Если все failed → enqueue в **dead-letter topic**.
-- DLT consumer: alerting + manual investigation. Часто причина — corrupted source (broken codec, incomplete file).
-- На UI: status `failed` → uploader видит «video processing failed», может re-upload.
-- **Partial success:** если 720p закодировано но 4K упал → publish с 720p, retry 4K в background. Видео доступно, просто без top quality.
+- Повторы K8s Job: 3 попытки. Если все провалились → в **dead-letter topic**.
+- Consumer DLT: алертинг + ручной разбор. Частая причина — повреждённый исходник (битый кодек, неполный файл).
+- На UI: статус `failed` → аплоадер видит «обработка видео не удалась», может загрузить заново.
+- **Частичный успех:** если 720p закодировано, а 4K упало → публикуем с 720p, повторяем 4K в фоне. Видео доступно, просто без топового качества.
 
-**Removed video:**
+**Удалённое видео:**
 
-- Delete API → soft delete (status=deleted) в metadata.
-- Cron job: cleanup S3 objects, DRM keys revoke.
-- **CDN purge:** active purge через CDN API (`PURGE /video/{id}/*`) → инвалидирует edge cache во всех PoPs. Latency: 1-30 секунд.
-- Manifest URL переадресуется на error page после purge.
+- Delete API → soft delete (status=deleted) в метаданных.
+- Cron-job: очистка S3-объектов, отзыв DRM-ключей.
+- **CDN purge:** активный purge через CDN API (`PURGE /video/{id}/*`) → инвалидирует edge-кеш во всех PoP. Latency: 1-30 секунд.
+- URL манифеста после purge переадресуется на страницу ошибки.
 
-**Corrupted CDN edge:**
+**Повреждённый CDN edge:**
 
-- Health check каждые 30s. Failed edge → DNS removes из rotation.
-- User retry на следующем segment hits другой edge.
+- Health-check каждые 30s. Упавший edge → DNS убирает его из ротации.
+- Повтор пользователя на следующем сегменте попадает на другой edge.
 
 ---
 
 ## Q26. (!) Trade-offs: transcode upfront vs on-demand, CDN cost vs latency?
 
-**Transcode upfront (eager) vs on-demand (lazy):**
+**Транскодирование заранее (eager) vs по запросу (lazy):**
 
-| | Upfront | On-demand |
+| | Заранее | По запросу |
 |---|---|---|
-| Storage | высокий (×N variants stored) | низкий (только original) |
-| First-watch latency | мгновенно | medium (transcode время) |
-| Compute cost | upfront (1 раз для всех) | per-request (теоретически каждый раз, на практике cached) |
-| Long-tail efficiency | плохо (тратим storage на нечитаемые видео) | хорошо |
+| Хранилище | высокое (хранится ×N вариантов) | низкое (только оригинал) |
+| Latency первого просмотра | мгновенно | средняя (время транскодирования) |
+| Стоимость вычислений | заранее (1 раз на всех) | на каждый запрос (теоретически каждый раз, на практике кешируется) |
+| Эффективность на long-tail | плохо (тратим storage на невостребованные видео) | хорошо |
 
-YouTube **транскодирует всё upfront**: storage дешевле UX-задержки на старте. Netflix на части старого long-tail каталога переходит на on-demand: original + JIT-transcoding на CDN edge для нечастых форматов.
+YouTube **транскодирует всё заранее**: storage дешевле, чем задержка UX на старте. Netflix на части старого long-tail-каталога переходит на on-demand: оригинал + JIT-транскодирование на CDN edge для редких форматов.
 
-**CDN cost vs latency:**
+**Стоимость CDN vs latency:**
 
-| | Aggressive CDN (всё кешируется) | Lean CDN (только top видео) |
+| | Агрессивный CDN (кешируется всё) | Экономный CDN (только топовые видео) |
 |---|---|---|
-| Storage cost на edge | высокий | низкий |
-| Origin egress | низкий | высокий |
-| User latency | низкий | medium |
+| Стоимость storage на edge | высокая | низкая |
+| Egress с origin | низкий | высокий |
+| Latency пользователя | низкая | средняя |
 | Cache hit ratio | 99%+ | 80% |
 
-YouTube: **GGC внутри ISP** (zero transit cost), поэтому **aggressive caching** очень дешёв (только storage edge node, нет egress fee). Это структурное преимущество над commercial CDN-customers.
+YouTube: **GGC внутри ISP** (нулевая стоимость транзита), поэтому **агрессивное кеширование** очень дёшево (только storage edge-ноды, нет платы за egress). Это структурное преимущество перед клиентами коммерческих CDN.
 
-**CMAF universal vs HLS+DASH split:**
+**Универсальный CMAF vs раздельный HLS+DASH:**
 
-- Universal: storage halved, но плееры должны поддерживать.
-- Split: больший storage, но совместимость со старыми devices (legacy HLS).
-- YouTube: universal CMAF с 2018-2020, тестировал backwards compatibility.
+- Универсальный: storage вдвое меньше, но плееры должны поддерживать.
+- Раздельный: больше storage, зато совместимость со старыми устройствами (legacy HLS).
+- YouTube: универсальный CMAF с 2018-2020, тестировал обратную совместимость.
 
-**Многоcodec ladder (AV1 + VP9 + H.264) vs один:**
+**Многокодековый ladder (AV1 + VP9 + H.264) vs один:**
 
-- Multi: -30-50% egress (AV1), но 3× transcoding cost upfront.
-- Single H.264: simplest, дешёвый encode, дороже delivery.
-- YouTube: H.264 + VP9 для most, AV1 для top 1% видео (где экономия egress >> cost encode).
+- Многокодековый: -30-50% egress (AV1), но 3× стоимость транскодирования заранее.
+- Только H.264: проще всего, дешёвый encode, дороже доставка.
+- YouTube: H.264 + VP9 для большинства, AV1 для топ-1% видео (где экономия egress >> стоимости encode).
 
 ---
 
 ## Q27. CDN cache invalidation для удалённых видео?
 
-Проблема: video removed (DMCA, terms violation, owner delete). Сегменты могут быть закешированы на 1000+ edges с TTL=1 year.
+Проблема: видео удалено (DMCA, нарушение правил, удаление владельцем). Сегменты могут быть закешированы на 1000+ edges с TTL=1 год.
 
-**Стратегии invalidation:**
+**Стратегии инвалидации:**
 
-1. **Active purge:**
+1. **Активный purge:**
    - CDN API: `POST /purge?path=/videos/abc/*`.
-   - Propagates через edges: 1-30 sec на крупный CDN (Akamai, Cloudflare).
-   - Cost: API rate limits, может быть expensive at scale.
-2. **Versioned URLs (immutability):**
-   - Каждый segment версия в URL: `/videos/abc/v3/720p_0001.cmfv`.
-   - Удалить = обновить manifest, чтобы ссылок на старую версию не было. Сами segments живут в кеше до TTL.
-   - **Не подходит** для DMCA: контент всё ещё доступен по прямой ссылке если кто-то её сохранил.
-3. **Manifest invalidation only:**
-   - Очистить только manifest (~1 KB). Без manifest player не знает segment URLs.
-   - Но bypass возможен если segment URLs скопированы.
-4. **Hybrid:**
-   - Manifest purge → быстро (latest playback impossible).
-   - Segment purge → асинхронно, в течение часа на все edges.
-   - При request на removed video → CDN edge возвращает 410 Gone из «tombstone» list.
+   - Распространяется по edges: 1-30 sec на крупном CDN (Akamai, Cloudflare).
+   - Цена: rate-лимиты API, на масштабе может быть дорого.
+2. **Versioned URL (неизменяемость):**
+   - Каждый сегмент с версией в URL: `/videos/abc/v3/720p_0001.cmfv`.
+   - Удалить = обновить манифест так, чтобы ссылок на старую версию не было. Сами сегменты живут в кеше до TTL.
+   - **Не подходит** для DMCA: контент всё ещё доступен по прямой ссылке, если кто-то её сохранил.
+3. **Инвалидация только манифеста:**
+   - Очистить только манифест (~1 KB). Без манифеста плеер не знает URL сегментов.
+   - Но обход возможен, если URL сегментов скопированы.
+4. **Гибрид:**
+   - Purge манифеста → быстро (свежее воспроизведение невозможно).
+   - Purge сегментов → асинхронно, в течение часа на все edges.
+   - При запросе удалённого видео → CDN edge возвращает 410 Gone из «tombstone»-списка.
 
-**YouTube подход:** combination — manifest purge мгновенно, segments async cleanup, edges имеют **blacklist** видео-IDs для немедленного 410.
+**Подход YouTube:** комбинация — purge манифеста мгновенно, очистка сегментов асинхронно, у edges есть **blacklist** video-ID для немедленного 410.
 
 ---
 
@@ -1090,21 +1090,21 @@ flowchart LR
     Push --> User[(User devices)]
 ```
 
-**Challenges:**
+**Сложности:**
 
-- **Fan-out scale:** MrBeast (200M subscribers) → нужно отправить 200M push'ей за разумное время.
-- **Throttling:** APNs/FCM имеют rate limits → распределить пуши в течение 5-30 минут (smear).
-- **Personalization:** не всем нужны notifications на новое video — только subscribers who opted in to «all notifications» (vs «personalized» = ML-based).
-- **Cost:** push + email на огромных каналах — expensive.
+- **Масштаб fan-out:** MrBeast (200M подписчиков) → нужно разослать 200M пушей за разумное время.
+- **Throttling:** у APNs/FCM есть rate-лимиты → размазать пуши на 5-30 минут (smear).
+- **Персонализация:** не всем нужны уведомления о новом видео — только подписчикам, выбравшим «все уведомления» (vs «персонализированные» = на базе ML).
+- **Стоимость:** push + email на огромных каналах — дорого.
 
-**Two-tier:**
+**Два уровня:**
 
-- **Bell-on subscribers** («all notifications»): push notification сразу.
-- **Default subscribers:** не нотифицируются на каждое video — попадают в homepage feed и personalized notifications через ML.
+- **Подписчики с включённым колокольчиком** («все уведомления»): push-уведомление сразу.
+- **Обычные подписчики:** не получают уведомление о каждом видео — попадают в ленту на главной и в персонализированные уведомления через ML.
 
-**Batching:** worker берёт 10K user_id'ов из subscriptions table, шлёт батч в FCM/APNs (FCM поддерживает до 500 tokens per request).
+**Батчинг:** воркер берёт 10K user_id из таблицы подписок, шлёт батч в FCM/APNs (FCM поддерживает до 500 токенов на запрос).
 
-**Idempotency:** notification message содержит `(video_id, user_id)` — если retry, FCM/APNs дедуплицируют (server-side `collapse_key`).
+**Идемпотентность:** сообщение-уведомление содержит `(video_id, user_id)` — при повторе FCM/APNs дедуплицируют (на стороне сервера через `collapse_key`).
 
 См. также: [kafka-interview.md](../messaging/kafka-interview.md), [design-feed-system-interview.md](design-feed-system-interview.md).
 

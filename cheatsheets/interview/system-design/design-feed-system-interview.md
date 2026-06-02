@@ -76,83 +76,83 @@ updated: "2026-05-26"
 
 ## Q1. (!) Functional и non-functional requirements?
 
-**Functional (core scope):**
-- User posts текст/медиа.
-- User видит home feed — посты из followed people.
-- Like, comment, share (engagement).
-- Ranking: chronological или algorithmic.
-- Infinite scroll + pull-to-refresh.
-- Push-уведомления на mention/like.
+**Функциональные (ядро скоупа):**
+- Пользователь публикует текст/медиа.
+- Пользователь видит home feed — посты от тех, на кого подписан.
+- Лайки, комментарии, репосты (engagement).
+- Ранжирование: хронологическое или алгоритмическое.
+- Бесконечный скролл + pull-to-refresh.
+- Push-уведомления на упоминание/лайк.
 
-**Non-functional:**
-- Read-heavy (~100:1 reads:writes).
-- p99 latency feed load < 200 ms.
-- Availability 99.99% (≈ 53 min/year downtime).
-- Consistency: `eventual` достаточна (5-10 sec lag на feed OK).
-- Scalability: миллиарды пользователей, сотни миллионов DAU.
-- Durability: посты — `nines of 9`, timeline cache — допустима потеря.
+**Нефункциональные:**
+- Read-heavy (~100:1, чтения к записям).
+- p99 latency загрузки feed < 200 ms.
+- Доступность 99.99% (≈ 53 минуты простоя в год).
+- Согласованность: достаточно `eventual` (лаг 5-10 секунд на feed допустим).
+- Масштабируемость: миллиарды пользователей, сотни миллионов DAU.
+- Долговечность: посты — `nines of 9`, потерю timeline cache допускаем.
 
-**Scope excluded (явно проговорить):**
-- Direct messages (отдельный кейс).
-- Live video streaming.
-- Ads/monetization platform.
+**Что вне скоупа (проговорить явно):**
+- Личные сообщения (отдельный кейс).
+- Live-видеостриминг.
+- Платформа рекламы/монетизации.
 - Полная модерация контента.
 
-**Tip:** scope-список — первое, что слушает интервьюер. Без него capacity estimation повисает в воздухе.
+**Совет:** список скоупа — первое, что слушает интервьюер. Без него capacity estimation повисает в воздухе.
 
 ## Q2. (!) Capacity estimation?
 
-Twitter/X-scale допущения (2026):
+Допущения масштаба Twitter/X (2026):
 
 | Параметр | Значение |
 |---|---|
 | DAU | 500M |
-| Posts per day | 200M (writes) |
-| Average follows per user | 200 |
-| Average reads | 10 feed-fetches/user/day → 5B reads/day |
+| Постов в день | 200M (записи) |
+| Среднее число подписок на пользователя | 200 |
+| Среднее число чтений | 10 загрузок feed на пользователя в день → 5B чтений/день |
 
-**Throughput:**
-- Writes: 200M / 86 400 ≈ **2 300 posts/sec**.
-- Reads: 5B / 86 400 ≈ **58 000 fetches/sec** (peak ×3 — 175 K/sec).
+**Пропускная способность:**
+- Записи: 200M / 86 400 ≈ **2 300 постов/сек**.
+- Чтения: 5B / 86 400 ≈ **58 000 загрузок/сек** (пик ×3 — 175 K/сек).
 
-**Fan-out impact (push-модель):**
-- 2 300 × 200 followers = **460 000 timeline writes/sec**.
-- При среднем follower-count 200 — но celebrities искажают распределение (см. Q5).
+**Влияние fan-out (push-модель):**
+- 2 300 × 200 подписчиков = **460 000 записей в timeline/сек**.
+- При среднем числе подписчиков 200 — но celebrities искажают распределение (см. Q5).
 
-**Storage:**
-- Посты: 200M × 300 B = 60 GB/день raw.
-- 5 лет: ~110 TB raw; + индексы + 3× репликация = 300-400 TB.
-- Timeline cache (top 1M активных × 1000 IDs × 80 B sorted-set entry) ≈ **80 GB Redis**.
+**Хранилище:**
+- Посты: 200M × 300 B = 60 GB/день сырых данных.
+- За 5 лет: ~110 TB сырых; + индексы + 3× репликация = 300-400 TB.
+- Timeline cache (top 1M активных × 1000 ID × 80 B на запись sorted-set) ≈ **80 GB Redis**.
 
-**Bandwidth:**
-- Feed load: 58 K/s × 100 posts × 200 B = ~1.2 GB/s egress (без медиа).
-- Медиа отдаются через CDN — это отдельный poll.
+**Пропускная способность сети:**
+- Загрузка feed: 58 K/s × 100 постов × 200 B = ~1.2 GB/s исходящего трафика (без медиа).
+- Медиа отдаются через CDN — это отдельный вопрос.
 
-**Cost (порядок):**
-- Redis cluster ~$50K/month, Cassandra ~$100K/month, CDN — $0.5-1M/month (трафик доминирует).
+**Стоимость (порядок):**
+- Redis cluster ~$50K/месяц, Cassandra ~$100K/месяц, CDN — $0.5-1M/месяц (трафик доминирует).
 
 ## Q3. Какие операции считаем «read-heavy» vs «write-heavy» и почему это важно?
 
 | Операция | Тип | QPS (порядок) |
 |---|---|---|
-| Post creation | write | 2 K/sec |
-| Like/comment | write | 50-100 K/sec (peak) |
-| Feed fetch | read | 60-200 K/sec |
-| Profile view | read | 30 K/sec |
-| Search | read | 10 K/sec |
+| Создание поста | запись | 2 K/сек |
+| Лайк/комментарий | запись | 50-100 K/сек (пик) |
+| Загрузка feed | чтение | 60-200 K/сек |
+| Просмотр профиля | чтение | 30 K/сек |
+| Поиск | чтение | 10 K/сек |
 
-**Вывод:** read-heavy в ~100 раз. Из этого вытекают решения:
-- Heavy caching (Redis + CDN) — стандарт.
-- Read replicas Cassandra (`LOCAL_QUORUM` на write, `ONE` на read).
-- Fan-out on write — оптимизирует read за счёт write (если write дешевле — выгодно).
+**Вывод:** read-heavy примерно в 100 раз. Из этого вытекают решения:
+- Интенсивное кэширование (Redis + CDN) — стандарт.
+- Read-реплики Cassandra (`LOCAL_QUORUM` на запись, `ONE` на чтение).
+- Fan-out on write — оптимизирует чтение за счёт записи (если запись дешевле — выгодно).
 
-**Контрпример:** Slack чат — write-heavy, фан-аут не нужен, fetch отдаёт хронологию из одного channel-stream.
+**Контрпример:** чат Slack — write-heavy, fan-out не нужен, fetch отдаёт хронологию из одного потока канала.
 
 ## Q4. (!) Fan-out on write vs fan-out on read?
 
 **Push (fan-out on write):**
-- User A постит → fanout worker записывает `post_id` в timeline каждого follower-а.
-- Read: `LRANGE user:42:timeline 0 49` — O(1).
+- Пользователь A публикует пост → fanout worker записывает `post_id` в timeline каждого подписчика.
+- Чтение: `LRANGE user:42:timeline 0 49` — O(1).
 
 ```
 A posts → kafka(posts_created)
@@ -164,55 +164,55 @@ A posts → kafka(posts_created)
    ... (×N followers)
 ```
 
-| Pros | Cons |
+| Плюсы | Минусы |
 |---|---|
-| Read O(1), стабильные p99 | Write amplification (10M followers = 10M writes) |
-| Простая модель кэширования | Wasted work для inactive followers |
+| Чтение O(1), стабильные p99 | Write amplification (10M подписчиков = 10M записей) |
+| Простая модель кэширования | Бесполезная работа для неактивных подписчиков |
 | Легко добавить ranking offline | Storage amplification (×fan-out) |
 
 **Pull (fan-out on read):**
-- User A постит → пишет в свою таблицу `user_posts`.
-- Read: для user B — fetch `user_posts` каждого из 200 follow-ов, merge-sort по времени.
+- Пользователь A публикует пост → пишет в свою таблицу `user_posts`.
+- Чтение: для пользователя B — fetch `user_posts` каждого из 200 подписок, merge-sort по времени.
 
-| Pros | Cons |
+| Плюсы | Минусы |
 |---|---|
-| Cheap writes (O(1)) | Read дорогой (200 запросов + merge) |
+| Дешёвые записи (O(1)) | Дорогое чтение (200 запросов + merge) |
 | Нет amplification | Высокая latency для активных пользователей |
-| Celebrity-проблема исчезает | Сложно применять ranking online |
+| Проблема celebrity исчезает | Сложно применять ranking online |
 
-**Вывод:** ни один подход не масштабируется в чистом виде — production это hybrid (Q6).
+**Вывод:** ни один подход не масштабируется в чистом виде — на проде это гибрид (Q6).
 
 ## Q5. (!) Celebrity problem и как его решают?
 
-**Проблема:** пользователь с 10M+ follower-ов (`@elonmusk`, бренд).
-- Fan-out on write: каждый пост = 10M timeline-вставок.
-- Spike: пост за минуту → 10M writes/min = 167 K writes/sec — на 1 пост.
-- Hot key в Redis cluster, fanout queue распухает.
+**Проблема:** пользователь с 10M+ подписчиков (`@elonmusk`, бренд).
+- Fan-out on write: каждый пост = 10M вставок в timeline.
+- Всплеск: пост за минуту → 10M записей/мин = 167 K записей/сек — ради одного поста.
+- Hot key в Redis cluster, очередь fanout распухает.
 
 **Решения:**
 
-**1. Threshold detection.** `followers_count > 100 000` → пользователь-celebrity, пропускаем write-fanout полностью.
+**1. Определение по порогу.** `followers_count > 100 000` → пользователь-celebrity, полностью пропускаем write-fanout.
 
-**2. Pull на read.** Подписчик при загрузке feed дополнительно пуллит из `celebrity_posts` (отдельный store, выс. cache hit), сливает с push-timeline.
+**2. Pull на чтении.** Подписчик при загрузке feed дополнительно пуллит из `celebrity_posts` (отдельное хранилище, высокий cache hit), сливает с push-timeline.
 
-**3. Async с приоритетами.** Сначала fanout к active follower-ам (заходили < 24 ч), inactive обрабатываются позже или вообще не fanout-ятся.
+**3. Async с приоритетами.** Сначала fanout к активным подписчикам (заходили < 24 ч), неактивные обрабатываются позже или вообще не получают fanout.
 
 **4. CDN/edge cache.** Тело поста кладётся в CDN — миллион подписчиков читают его не из БД.
 
-**5. Pre-warming.** На пост celebrity сразу прогревается edge-кэш в каждом регионе.
+**5. Прогрев заранее.** На пост celebrity сразу прогревается edge-кэш в каждом регионе.
 
 **Twitter (исторически):**
-- Сервис `Timelines` (Scala) делал fanout, для top accounts применялось правило "skip and pull".
-- На read merge-sort объединял push-timeline + pulled celebrity posts.
+- Сервис `Timelines` (Scala) делал fanout, для топовых аккаунтов применялось правило «skip and pull».
+- На чтении merge-sort объединял push-timeline + спулленные celebrity posts.
 
 ## Q6. (!) Hybrid (push+pull) подход на проде?
 
-**Write side:**
-- Regular users (< 10 K follower) → push: fanout в follower-timelines.
-- Celebrities (> 100 K follower) → no push: только в собственный `user_posts`.
-- Boundary (10-100 K) — A/B-тюнинг.
+**Сторона записи:**
+- Обычные пользователи (< 10 K подписчиков) → push: fanout в timeline подписчиков.
+- Celebrities (> 100 K подписчиков) → без push: только в собственный `user_posts`.
+- Граница (10-100 K) — настраивается через A/B.
 
-**Read side:**
+**Сторона чтения:**
 ```
 GET /feed?cursor=<ts> ─► Feed Service
    ├─► fetch push-timeline (Redis ZREVRANGEBYSCORE)
@@ -222,16 +222,16 @@ GET /feed?cursor=<ts> ─► Feed Service
    └─► enrich (author, media URL) → return
 ```
 
-**Tuning:**
-- Дробный fanout: на 1% follower сразу, остальное async с retry.
-- `inactive_threshold` (90 дней без логина) → не fanout-им; на login делаем backfill timeline.
+**Настройка:**
+- Дробный fanout: на 1% подписчиков сразу, остальное async с retry.
+- `inactive_threshold` (90 дней без входа) → не делаем fanout; на входе делаем backfill timeline.
 
-**Decision matrix:**
+**Матрица решений:**
 | Сценарий | Подход |
 |---|---|
-| Стартап < 1M MAU | Pure push, без celebrity-detection |
-| Соцсеть 100M+ MAU | Hybrid (push для regular + pull для celebs) |
-| Twitter/X-scale | Hybrid + multi-region + edge caching |
+| Стартап < 1M MAU | Чистый push, без определения celebrity |
+| Соцсеть 100M+ MAU | Гибрид (push для обычных + pull для celebs) |
+| Масштаб Twitter/X | Гибрид + multi-region + edge caching |
 
 ## Q7. Active vs inactive followers — оптимизация fanout?
 
@@ -239,30 +239,30 @@ GET /feed?cursor=<ts> ─► Feed Service
 
 **Стратегии:**
 - **Hot tier** (< 7 дней без визита) → fanout всегда, высокий приоритет в Kafka.
-- **Warm tier** (7-30 дней) → fanout с задержкой 30-60 сек, batch-режим.
-- **Cold tier** (> 30 дней) → не fanout; на следующем визите делаем `lazy backfill` — pull последних N постов от каждого follow.
+- **Warm tier** (7-30 дней) → fanout с задержкой 30-60 сек, в batch-режиме.
+- **Cold tier** (> 30 дней) → без fanout; на следующем визите делаем `lazy backfill` — пуллим последние N постов от каждой подписки.
 
-**Эффект:** Twitter раскрывал в докладах — 50-70% follower-ов целевой аудитории неактивны в данный момент, fanout к ним = wasted writes.
+**Эффект:** Twitter в докладах раскрывал — 50-70% подписчиков целевой аудитории в данный момент неактивны, fanout к ним = бесполезные записи.
 
-**Lazy backfill flow:**
-1. User логинится после долгого отсутствия → флаг `timeline_stale=true`.
-2. Async job собирает посты от всех follow за последний месяц.
+**Поток lazy backfill:**
+1. Пользователь входит после долгого отсутствия → флаг `timeline_stale=true`.
+2. Async-задача собирает посты от всех подписок за последний месяц.
 3. Заполняет ZSET timeline, снимает флаг.
 4. UI показывает skeleton/loading 1-2 сек.
 
 ## Q8. (!) Storage для user timeline?
 
-**Per-user timeline cache (Redis):**
+**Timeline cache на пользователя (Redis):**
 ```
 ZADD user:42:timeline <timestamp> <post_id>
 ZREVRANGE user:42:timeline 0 49
 ZREMRANGEBYRANK user:42:timeline 0 -1001  # keep top 1000
 ```
 - Sorted set, score = timestamp.
-- O(log N) insert, O(log N + M) range fetch.
-- 80 B/entry × 1000 × 1M users = 80 GB.
+- Вставка O(log N), range-fetch O(log N + M).
+- 80 B на запись × 1000 × 1M пользователей = 80 GB.
 
-**Persistent backing (Cassandra):**
+**Постоянное хранилище-бэкенд (Cassandra):**
 ```
 CREATE TABLE timelines (
   user_id bigint,
@@ -272,16 +272,16 @@ CREATE TABLE timelines (
 ) WITH CLUSTERING ORDER BY (ts DESC);
 ```
 - Partition по `user_id`, clustering по `ts`.
-- Range scan by user: один partition.
-- Compaction tuning (TWCS — Time Window Compaction Strategy) для time-series.
+- Range-scan по пользователю: один partition.
+- Настройка compaction (TWCS — Time Window Compaction Strategy) для time-series.
 
-**Post bodies — отдельный store:**
-- `posts` table: partition по `post_id`, контент + media URL.
-- Timeline хранит только `post_id`; на read batch MGET.
+**Тела постов — отдельное хранилище:**
+- Таблица `posts`: partition по `post_id`, контент + media URL.
+- Timeline хранит только `post_id`; на чтении — batch MGET.
 
-**Почему разделение:**
-- Изменение поста (edit/delete) — один write в `posts`, timeline не трогаем.
-- Дедупликация: один пост × N follower = N timeline entries, но 1 тело.
+**Зачем разделение:**
+- Изменение поста (edit/delete) — одна запись в `posts`, timeline не трогаем.
+- Дедупликация: один пост × N подписчиков = N записей в timeline, но 1 тело.
 
 ## Q9. Redis sorted set для timeline?
 
@@ -294,38 +294,38 @@ ZREMRANGEBYRANK user:42:timeline 0 -1001        # trim до 1000
 ```
 
 **Память:**
-- Один skiplist + ziplist entry ≈ 64-80 B.
-- 1000 × 80 B = 80 KB на user.
+- Одна запись skiplist + ziplist ≈ 64-80 B.
+- 1000 × 80 B = 80 KB на пользователя.
 - 1M активных × 80 KB = 80 GB → один шард `r6gd.4xlarge` (128 GB).
-- 100M активных → нужен Redis cluster (16-32 master shards).
+- 100M активных → нужен Redis cluster (16-32 master-шарда).
 
-**Eviction:**
+**Вытеснение (eviction):**
 - `maxmemory-policy allkeys-lru` глобально.
-- Или TTL на конкретный ZSET (24-72 ч); inactive timeline регенерируется при логине.
+- Или TTL на конкретный ZSET (24-72 ч); неактивный timeline регенерируется при входе.
 
 **Persistence:**
-- AOF every 1 sec — допустимая потеря (timeline восстанавливается из `posts` за минуты).
+- AOF раз в 1 сек — допустимая потеря (timeline восстанавливается из `posts` за минуты).
 - RDB snapshot 1×/час — для disaster recovery.
 
-**Edge:** Redis `ZADD` поверх миллионов sortset-ов — pipelining обязателен, иначе RTT убивает throughput.
+**Тонкость:** при `ZADD` поверх миллионов sorted-set-ов pipelining обязателен, иначе RTT убивает throughput.
 
 ## Q10. Posts master table — Cassandra vs DynamoDB vs Postgres?
 
 | Свойство | Cassandra | DynamoDB | Postgres (sharded) |
 |---|---|---|---|
 | Write throughput | очень высокий | очень высокий (RCU/WCU) | средний |
-| Latency p99 write | 5-10 ms | 5-15 ms | 10-30 ms |
-| Operational cost | сами админят | managed | managed (RDS) |
-| Schema-flexibility | средняя | средняя | низкая (нужны migration) |
-| Query model | по PK + clustering | по PK + sort key + GSI | SQL |
+| Latency p99 на запись | 5-10 ms | 5-15 ms | 10-30 ms |
+| Операционная стоимость | админят сами | managed | managed (RDS) |
+| Гибкость схемы | средняя | средняя | низкая (нужны миграции) |
+| Модель запросов | по PK + clustering | по PK + sort key + GSI | SQL |
 | Multi-region | active-active (`LOCAL_QUORUM`) | global tables | logical replication, сложно |
 
 **Выбор:**
-- **Twitter, Discord** → Cassandra (write-throughput + проверено).
-- **Lyft, Stripe non-core** → DynamoDB (когда нет команды на Cassandra).
-- **Startup до 10M MAU** → Postgres (CitusData/Aurora), позже миграция.
+- **Twitter, Discord** → Cassandra (write-throughput + проверено временем).
+- **Lyft, неядровые системы Stripe** → DynamoDB (когда нет команды под Cassandra).
+- **Стартап до 10M MAU** → Postgres (CitusData/Aurora), позже миграция.
 
-**Schema (Cassandra):**
+**Схема (Cassandra):**
 ```sql
 CREATE TABLE posts (
   post_id bigint PRIMARY KEY,
@@ -336,63 +336,63 @@ CREATE TABLE posts (
   ...
 );
 ```
-Один partition = один пост, идеально для random access.
+Один partition = один пост, идеально для произвольного доступа.
 
 ## Q11. (!) Chronological vs algorithmic feed?
 
-**Chronological (reverse-chrono):**
+**Хронологический (reverse-chrono):**
 - Самые свежие сверху.
-- Простая модель, предсказуемо, юзер контролирует.
-- Минус: при 500 follow-ах пост из 09:00 утра «утонет» к вечеру.
+- Простая модель, предсказуемо, пользователь сам контролирует.
+- Минус: при 500 подписках пост от 09:00 утра «утонет» к вечеру.
 
-**Algorithmic:**
-- ML-ranking по relevance signals (engagement, affinity, recency decay).
+**Алгоритмический:**
+- ML-ранжирование по сигналам релевантности (engagement, affinity, recency decay).
 - Выше engagement (Instagram добавил +20% time-on-app, 2016).
-- Минусы: filter bubble, «почему я это вижу?» frustration.
+- Минусы: filter bubble, фрустрация «почему я это вижу?».
 
 **Реальные продукты:**
-- Instagram (с 2016), Facebook (EdgeRank → ML), TikTok (For You) — algorithmic.
-- Twitter/X — гибрид: `For You` (algo) + `Following` (chrono).
-- Threads, Bluesky — chrono по умолчанию.
+- Instagram (с 2016), Facebook (EdgeRank → ML), TikTok (For You) — алгоритмические.
+- Twitter/X — гибрид: `For You` (алго) + `Following` (хроно).
+- Threads, Bluesky — хроно по умолчанию.
 
-**Implementation:**
-- Algorithmic = candidate generation + ranking model (Q13).
-- Chrono = просто `ZREVRANGE` без ranking-stage.
+**Реализация:**
+- Алгоритмический = генерация кандидатов + ranking-модель (Q13).
+- Хроно = просто `ZREVRANGE` без стадии ранжирования.
 
 ## Q12. Ranking features и signals?
 
-**Категории features:**
+**Категории признаков:**
 
-**Recency:**
+**Свежесть (recency):**
 - `age_minutes`, `exp(-age/decay)`.
 
-**Engagement (per post):**
-- Likes, comments, reshares, click-through.
-- Normalized по post age и author follower count.
+**Engagement (на пост):**
+- Лайки, комментарии, репосты, click-through.
+- Нормализовано по возрасту поста и числу подписчиков автора.
 
-**Affinity (user × author):**
-- Past interactions: лайки, replies, profile visits, DM-чаты.
+**Affinity (пользователь × автор):**
+- Прошлые взаимодействия: лайки, ответы, визиты в профиль, личные чаты.
 - `pmi(user, author)` — pointwise mutual information.
 
-**User history:**
-- Embeddings по последним 100 viewed постам.
-- Topic preferences (sport, tech, politics).
+**История пользователя:**
+- Эмбеддинги по последним 100 просмотренным постам.
+- Тематические предпочтения (спорт, технологии, политика).
 
-**Media-type weight:**
-- Video > image > text (engagement-wise).
+**Вес по типу медиа:**
+- Видео > изображение > текст (по engagement).
 - Dwell time (длительность просмотра).
 
-**Negative signals:**
-- Hide, not-interested, unfollow, mute.
+**Негативные сигналы:**
+- Скрытие, «не интересно», отписка, mute.
 - Сильный отрицательный вес.
 
-**Feature store:** Feast / Tecton / Michelangelo (Uber) — централизованный store для offline + online consistency.
+**Feature store:** Feast / Tecton / Michelangelo (Uber) — централизованное хранилище для согласованности offline + online.
 
 **Пример EdgeRank (упрощённо):**
 ```
 score = Σ_e (affinity_e × weight_e × time_decay_e)
 ```
-где `e` — edge (like, comment, share, ...).
+где `e` — ребро (лайк, комментарий, репост, ...).
 
 ## Q13. (!) ML pipeline для ranking?
 
@@ -419,47 +419,47 @@ score = Σ_e (affinity_e × weight_e × time_decay_e)
 └──────────────────────────────────┘
 ```
 
-**Candidate generation:** ~1 K кандидатов из push-timeline + celebrity-pull + trending + injected ads. Без этого шага ranker обрабатывал бы 100K+ постов — не уложится в latency.
+**Генерация кандидатов:** ~1 K кандидатов из push-timeline + celebrity-pull + trending + внедрённой рекламы. Без этого шага ranker обрабатывал бы 100K+ постов — не уложится в latency.
 
-**Ranking model:**
-- Deep model (DLRM, Wide&Deep, transformer).
-- Inference: 1-5 ms per request, batched.
+**Ranking-модель:**
+- Глубокая модель (DLRM, Wide&Deep, transformer).
+- Инференс: 1-5 ms на запрос, батчами.
 - Serving: TensorFlow Serving / TorchServe / Triton, GPU для тяжёлых моделей.
 
 **A/B:**
 - Новая модель → 0.5-1% трафика → метрики (DAU, session_time, complaint_rate).
-- Холдаут-группа `control` всегда.
+- Холдаут-группа `control` всегда есть.
 
-**Continuous learning:**
-- Online updates через streaming (Flink) для свежих signals (горячие тренды).
+**Непрерывное обучение:**
+- Онлайн-обновления через streaming (Flink) для свежих сигналов (горячие тренды).
 - Полный rebuild — ежедневно.
 
 ## Q14. Cold start для нового пользователя?
 
-**Проблема:** новый юзер, follow-ов мало, signals для personalization нет.
+**Проблема:** новый пользователь, подписок мало, сигналов для персонализации нет.
 
 **Стратегии:**
-- **Editorial defaults.** Куратор-командой выбирает 50 «качественных» аккаунтов (новости, авторитетные блоги) → onboarding wizard.
-- **Topic onboarding.** На регистрации просим выбрать темы (sport, tech, music) → feed = trending posts из этих тем.
-- **Location-based.** Geo-IP → trending в стране/городе.
-- **Demographic-based.** Возраст/пол → коллаборативные похожие профили.
-- **Trending feed.** Просто top-N global trending — пока не накопятся signals.
-- **Sponsored / discoverable rows.** «Кого вам подписаться» в feed.
+- **Редакционные дефолты.** Команда кураторов выбирает 50 «качественных» аккаунтов (новости, авторитетные блоги) → onboarding-визард.
+- **Онбординг по темам.** При регистрации просим выбрать темы (спорт, технологии, музыка) → feed = trending-посты из этих тем.
+- **По геолокации.** Geo-IP → trending в стране/городе.
+- **По демографии.** Возраст/пол → коллаборативно похожие профили.
+- **Trending feed.** Просто top-N глобального trending — пока не накопятся сигналы.
+- **Рекламные / discoverable-строки.** «Кого вам подписаться» в feed.
 
-**Метрика успеха:** D1 retention (вернулся ли user через сутки). Cold-start cтратегия = главный рычаг.
+**Метрика успеха:** D1 retention (вернулся ли пользователь через сутки). Cold-start-стратегия = главный рычаг.
 
 ## Q15. Cold start для нового поста (нет engagement signals)?
 
-**Проблема:** пост только опубликован, лайков 0, ranker не знает что с ним делать.
+**Проблема:** пост только опубликован, лайков 0, ranker не знает, что с ним делать.
 
 **Стратегии:**
-- **Author quality score.** Engagement автора в среднем → стартовый score нового поста.
-- **Content features only.** Embedding текста + media → similarity к past engaging posts.
-- **Exploration bonus.** Multi-armed bandit: бустим новые посты на ~5% impressions, чтобы собрать signals.
-- **Implicit signals.** Time-to-first-like, dwell time, scroll-past rate — собираем за первые 10 минут.
-- **Cohort-baseline.** Похожие посты у того же автора в прошлом → expected engagement.
+- **Оценка качества автора.** Средний engagement автора → стартовый score нового поста.
+- **Только контентные признаки.** Эмбеддинг текста + медиа → схожесть с прошлыми «заходящими» постами.
+- **Бонус за исследование.** Multi-armed bandit: бустим новые посты на ~5% показов, чтобы собрать сигналы.
+- **Неявные сигналы.** Time-to-first-like, dwell time, scroll-past rate — собираем за первые 10 минут.
+- **Бейзлайн по когорте.** Похожие посты того же автора в прошлом → ожидаемый engagement.
 
-**Trap:** если ranker полностью отвергает новые посты, появится «rich get richer» — старые посты доминируют, новые не получают шанса. Нужен `epsilon-greedy` или Thompson sampling.
+**Ловушка:** если ranker полностью отвергает новые посты, появляется «rich get richer» — старые посты доминируют, новые не получают шанса. Нужен `epsilon-greedy` или Thompson sampling.
 
 ## Q16. (!) High-level architecture?
 
@@ -501,11 +501,11 @@ graph LR
 ```
 
 **Ключевые сервисы:**
-- `Feed Service` — read-path, объединяет push-timeline + celebrity-pull + ranking.
-- `Post Service` — write-path, валидация, persistance, kafka emit.
-- `Fanout Workers` — async-консьюмеры, заполняют Redis-timelines.
+- `Feed Service` — путь чтения, объединяет push-timeline + celebrity-pull + ранжирование.
+- `Post Service` — путь записи, валидация, сохранение, эмит в Kafka.
+- `Fanout Workers` — async-консьюмеры, заполняют Redis-timeline-ы.
 - `Ranking Service` — gRPC, выдаёт scores; модель из registry.
-- `Graph DB` — follow-граф (Neo4j или sharded MySQL `edges` table).
+- `Graph DB` — граф подписок (Neo4j или шардированная MySQL-таблица `edges`).
 
 ## Q17. Post creation flow?
 
@@ -525,16 +525,16 @@ graph LR
 5. Через 1-5 сек пост виден в feed подписчиков.
 ```
 
-**Latency budget:**
-- User видит свой пост сразу (UI optimistic).
-- Followers видят: SLO p95 < 5 сек, p99 < 30 сек.
+**Бюджет latency:**
+- Пользователь видит свой пост сразу (оптимистичный UI).
+- Подписчики видят: SLO p95 < 5 сек, p99 < 30 сек.
 
-**Idempotency:**
-- Client отправляет `Idempotency-Key` (UUID v4) — защита от double-submit.
+**Идемпотентность:**
+- Клиент отправляет `Idempotency-Key` (UUID v4) — защита от двойной отправки.
 - На Post Service — `INSERT ... ON CONFLICT DO NOTHING`.
 
 **Backpressure:**
-- Если Kafka lag > N сек, переключаем fanout в degraded mode (только active hot tier).
+- Если lag Kafka > N сек, переключаем fanout в degraded-режим (только активный hot tier).
 
 ## Q18. Read (timeline fetch) flow и latency budget?
 
@@ -553,382 +553,382 @@ API Gateway → Feed Service:
    9. return JSON
 ```
 
-**Latency budget 200 ms p99:**
+**Бюджет latency 200 ms p99:**
 | Этап | ms |
 |---|---|
 | TLS + auth | 5 |
-| Timeline fetch | 5 |
+| Чтение timeline | 5 |
 | Celebrity pull | 30 |
-| Ranking | 50 |
-| Post bodies | 15 |
-| Enrichment | 20 |
-| Filter | 5 |
-| Serialize + egress | 20 |
-| Buffer | 50 |
-| **Total** | **200** |
+| Ранжирование | 50 |
+| Тела постов | 15 |
+| Обогащение (enrichment) | 20 |
+| Фильтр | 5 |
+| Сериализация + egress | 20 |
+| Буфер | 50 |
+| **Итого** | **200** |
 
-**Что съедает budget:**
-- Ranking — самое тяжёлое. Без него можно отдавать chrono за 30 ms.
-- Cold cache: пагинация далеко в прошлое → Cassandra read 50-100 ms.
+**Что съедает бюджет:**
+- Ранжирование — самое тяжёлое. Без него можно отдавать хроно за 30 ms.
+- Холодный кэш: пагинация далеко в прошлое → чтение Cassandra 50-100 ms.
 
 ## Q19. Real-time updates: long-polling, SSE, WebSocket?
 
 **Long polling:**
-- Client → GET `/feed/updates?since=<ts>` → server держит до new data / timeout.
-- Pros: простая инфра, любой proxy.
-- Cons: HTTP overhead, не масштабируется на 100M-1B connections.
+- Клиент → GET `/feed/updates?since=<ts>` → сервер держит соединение до новых данных / таймаута.
+- Плюсы: простая инфраструктура, работает через любой прокси.
+- Минусы: HTTP-оверхед, не масштабируется на 100M-1B соединений.
 
 **Server-Sent Events (SSE):**
-- One-way push (server → client) по обычному HTTP.
-- Pros: проще WebSocket-а, native browser API, работает через прокси.
-- Cons: только text, без bidirectional.
+- Односторонний push (сервер → клиент) поверх обычного HTTP.
+- Плюсы: проще WebSocket, нативный browser API, работает через прокси.
+- Минусы: только текст, без двусторонней связи.
 
 **WebSocket:**
-- Two-way, persistent connection.
-- Pros: low overhead, real-time лайки/комменты.
-- Cons: дорого держать миллионы коннектов; нужен sticky LB; нюансы реконнекта.
+- Двустороннее, постоянное соединение.
+- Плюсы: низкий оверхед, real-time лайки/комментарии.
+- Минусы: дорого держать миллионы коннектов; нужен sticky LB; нюансы переподключения.
 
-**Production-stack:**
+**Продакшен-стек:**
 - Push-уведомления (mobile) — FCM / APNs.
-- В-приложении real-time — WebSocket (Phoenix, Centrifugo, Soketi, или custom Go-server).
-- Один сервер держит 100K-1M idle WebSocket-ов с правильным tuning (`ulimit`, `SO_REUSEPORT`).
+- Real-time внутри приложения — WebSocket (Phoenix, Centrifugo, Soketi или собственный Go-сервер).
+- Один сервер держит 100K-1M простаивающих WebSocket-ов при правильном тюнинге (`ulimit`, `SO_REUSEPORT`).
 
-**Pattern:**
+**Паттерн:**
 - WebSocket-уведомления приходят как «у тебя 5 новых постов» (badge).
-- User тапает → GET `/feed` обычным flow (Q18).
+- Пользователь тапает → GET `/feed` обычным потоком (Q18).
 
 ## Q20. (!) Как handle millions of followers?
 
-См. также Q5 (celebrity), Q7 (active/inactive). Дополнительно:
+См. также Q5 (celebrity), Q7 (активные/неактивные). Дополнительно:
 
-**1. Sharded fanout.**
-- Kafka topic с N=1000 partitions, key=`follower_id`.
-- N workers consume в parallel, каждый отвечает за свою «полосу» followers.
-- Linear scaling.
+**1. Шардированный fanout.**
+- Kafka-топик с N=1000 партициями, key=`follower_id`.
+- N воркеров консьюмят параллельно, каждый отвечает за свою «полосу» подписчиков.
+- Линейное масштабирование.
 
-**2. Batched writes в Redis.**
-- Один worker аккумулирует 1000 `ZADD` в pipeline → одна RTT.
-- 1000× throughput.
+**2. Batch-записи в Redis.**
+- Один воркер аккумулирует 1000 `ZADD` в pipeline → одна RTT.
+- Throughput ×1000.
 
-**3. Async + retry с idempotency.**
-- На сбой Redis worker retry — `ZADD` идемпотентен (тот же score+member).
+**3. Async + retry с идемпотентностью.**
+- При сбое Redis воркер делает retry — `ZADD` идемпотентен (тот же score+member).
 
-**4. Timeline trimming.**
+**4. Подрезка timeline.**
 - ZSET ограничен top-1000; при вставке → `ZREMRANGEBYRANK 0 -1001`.
-- Inactive часть сама вылетает.
+- Неактивная часть сама вылетает.
 
-**5. Region-aware fanout.**
-- Followers распределены по регионам — fanout локально внутри региона.
+**5. Fanout с учётом региона.**
+- Подписчики распределены по регионам — fanout локально внутри региона.
 - Cross-region async через Kafka MirrorMaker.
 
-**6. Pre-compute at off-peak.**
-- Часть fanout откладываем на 30-60 сек (low priority); если пост viral — мгновенно бустим всех active.
+**6. Предвычисление в непиковое время.**
+- Часть fanout откладываем на 30-60 сек (низкий приоритет); если пост стал viral — мгновенно бустим всех активных.
 
 ## Q21. Cache strategy (L1/L2/L3)?
 
-**L1 — Client (mobile/web).**
-- Recently viewed posts, profiles.
-- Cache size: ~5-10 MB.
+**L1 — Клиент (mobile/web).**
+- Недавно просмотренные посты, профили.
+- Размер кэша: ~5-10 MB.
 - TTL: 5-15 минут.
 
-**L2 — CDN / edge (static + public content).**
-- Public profiles, media thumbnails.
+**L2 — CDN / edge (статика + публичный контент).**
+- Публичные профили, превью медиа.
 - TTL: 1-6 часов.
-- Invalidation: cache-buster в URL (`?v=<hash>`).
+- Инвалидация: cache-buster в URL (`?v=<hash>`).
 
-**L3 — Redis (hot data).**
-- User timeline (ZSET).
-- Post bodies (hash, TTL 1 ч).
-- User profiles (hash, TTL 1 ч).
-- Counters (likes/comments) — write-through + periodic flush.
+**L3 — Redis (горячие данные).**
+- Timeline пользователя (ZSET).
+- Тела постов (hash, TTL 1 ч).
+- Профили пользователей (hash, TTL 1 ч).
+- Счётчики (лайки/комментарии) — write-through + периодический flush.
 
-**L4 — Application local (in-process).**
-- Ranking model in-memory cache (decoded features).
+**L4 — Локальный кэш приложения (in-process).**
+- In-memory кэш ranking-модели (декодированные признаки).
 - Caffeine / Guava cache на JVM.
 
-**L5 — DB (источник правды).**
-- Cassandra (posts), Postgres (users).
+**L5 — БД (источник правды).**
+- Cassandra (посты), Postgres (пользователи).
 
-**Invalidation:**
-- Post edit → publish `post.updated` → fanout invalidate post cache + re-push в affected timelines.
-- Follow change → invalidate user's timeline cache (regenerate on next visit).
+**Инвалидация:**
+- Редактирование поста → публикуем `post.updated` → fanout-инвалидация кэша поста + re-push в затронутые timeline-ы.
+- Изменение подписки → инвалидация timeline-кэша пользователя (регенерация при следующем визите).
 
 **Cache stampede:**
 - `singleflight` (Go) / Caffeine `Loader` — один поток грузит, остальные ждут.
-- `XX` флаг на Redis SET (только update если уже есть).
+- Флаг `XX` на Redis SET (обновляем только если ключ уже есть).
 
 ## Q22. DB sharding для posts/users/timelines/graph?
 
-| Сущность | Sharding key | Почему |
+| Сущность | Ключ шардирования | Почему |
 |---|---|---|
-| `posts` | `post_id` (hash) | Random access; ровное распределение |
-| `posts_by_user` (denorm) | `user_id` | "Все посты юзера X" — один shard |
+| `posts` | `post_id` (hash) | Произвольный доступ; ровное распределение |
+| `posts_by_user` (денорм.) | `user_id` | «Все посты пользователя X» — один shard |
 | `users` | `user_id` (hash) | Идентификатор-PK |
-| `timelines` (Redis) | `user_id` | Все timeline-операции одного user — один shard |
-| `follows` (edges) | `follower_id` ИЛИ `followed_id` | Часто нужны обе стороны — два denorm-индекса |
-| `notifications` | `recipient_id` | Все уведомления юзера — один shard |
+| `timelines` (Redis) | `user_id` | Все операции с timeline одного пользователя — один shard |
+| `follows` (edges) | `follower_id` ИЛИ `followed_id` | Часто нужны обе стороны — два денорм-индекса |
+| `notifications` | `recipient_id` | Все уведомления пользователя — один shard |
 
-**Edge cases:**
-- Cross-shard query (например, «топ постов по миру») → MapReduce / стримит из Kafka в OLAP (BigQuery).
-- Re-sharding (когда shard переполнен) → consistent hashing или Vitess `Reshard`.
+**Граничные случаи:**
+- Cross-shard-запрос (например, «топ постов по миру») → MapReduce / стрим из Kafka в OLAP (BigQuery).
+- Решардинг (когда shard переполнен) → consistent hashing или Vitess `Reshard`.
 
-**Tools:**
+**Инструменты:**
 - Vitess (YouTube), Citus (Postgres), ProxySQL.
-- Cassandra/Dynamo — sharding встроенный (token ring / partition key).
+- Cassandra/Dynamo — шардирование встроено (token ring / partition key).
 
 ## Q23. (!) Viral posts — hot key problem?
 
 **Симптомы:**
-- Один `post_id` читают 1M+ раз/мин → Redis shard на пределе.
-- Likes-counter `INCR post:42:likes` — 100 K writes/sec в один key → contention.
+- Один `post_id` читают 1M+ раз/мин → Redis-shard на пределе.
+- Счётчик лайков `INCR post:42:likes` — 100 K записей/сек в один ключ → contention.
 
 **Митигации:**
 
-**1. Replicate hot key.**
-- Распознавание viral (counter > threshold) → копируем в N=10 shards.
-- Client случайно выбирает shard для read.
+**1. Реплицировать hot key.**
+- Распознали viral (counter > threshold) → копируем в N=10 шардов.
+- Клиент случайно выбирает shard для чтения.
 
-**2. Counter sharding.**
-- `INCR post:42:likes:shard_<rand 0..15>` (write на любой из 16).
-- Read = `SUM(post:42:likes:shard_*)`.
+**2. Шардирование счётчика.**
+- `INCR post:42:likes:shard_<rand 0..15>` (запись на любой из 16).
+- Чтение = `SUM(post:42:likes:shard_*)`.
 
-**3. Async aggregation.**
-- Likes → Kafka → Flink window aggregate → final count в Redis 1×/сек.
-- User видит slightly stale, но system не падает.
+**3. Async-агрегация.**
+- Лайки → Kafka → оконная агрегация Flink → финальный счёт в Redis 1×/сек.
+- Пользователь видит слегка устаревшее значение, но система не падает.
 
 **4. CDN/edge cache для содержимого поста.**
-- Body статичен → TTL 60 сек, миллионы реверсов читают edge, не origin.
+- Тело статично → TTL 60 сек, миллионы чтений идут на edge, а не на origin.
 
-**5. Probabilistic counting.**
-- HyperLogLog для unique viewers («1.2M people viewed»).
-- 12 KB вместо 1M entries.
+**5. Вероятностный подсчёт.**
+- HyperLogLog для уникальных просмотров («1.2M people viewed»).
+- 12 KB вместо 1M записей.
 
-**6. Rate-limit write side.**
-- Лайк-spam от ботов — capped per-user-per-post.
+**6. Rate-limit на стороне записи.**
+- Спам лайками от ботов — ограничен per-user-per-post.
 
-**Анти-pattern:**
-- Класть лайк-список в один Redis HASH `post:42:likers` — при viral виден latency degradation. Лучше — отдельная Cassandra row partition.
+**Антипаттерн:**
+- Класть список лайкнувших в один Redis HASH `post:42:likers` — при viral виден рост latency. Лучше — отдельный partition строки в Cassandra.
 
 ## Q24. Feed freshness vs latency trade-off и SLO?
 
-**Freshness** = время от создания поста до появления в feed произвольного активного follower-а.
+**Freshness** = время от создания поста до его появления в feed произвольного активного подписчика.
 
 **Latency** = время загрузки feed клиентом.
 
 **Trade-off:**
-- Push fanout → freshness 1-5 сек, latency feed ~50 ms.
-- Pure pull → freshness instant (на момент чтения), latency feed 200-500 ms.
-- Stale cache → latency 10 ms, freshness 30 сек.
+- Push-fanout → freshness 1-5 сек, latency feed ~50 ms.
+- Чистый pull → freshness мгновенный (на момент чтения), latency feed 200-500 ms.
+- Устаревший кэш → latency 10 ms, freshness 30 сек.
 
-**SLO примеры (Twitter-like):**
-| Метрика | Target |
+**Примеры SLO (в стиле Twitter):**
+| Метрика | Цель |
 |---|---|
-| `p50 freshness` (post→feed) | < 2 сек |
+| `p50 freshness` (пост→feed) | < 2 сек |
 | `p95 freshness` | < 10 сек |
 | `p99 freshness` | < 60 сек |
 | `p50 feed load` | < 100 ms |
 | `p99 feed load` | < 500 ms |
 | `feed_error_rate` | < 0.01% |
 
-**Knobs:**
-- Fanout worker count → freshness.
-- Cache TTL → latency vs staleness.
-- Ranking complexity → latency.
+**Ручки настройки:**
+- Число fanout-воркеров → freshness.
+- Cache TTL → latency vs устаревание.
+- Сложность ранжирования → latency.
 
-**Monitor:**
-- `feed_freshness_seconds_bucket` — histogram, мониторим p95/p99.
-- Alert: p95 > 30 сек 5 минут подряд.
+**Мониторинг:**
+- `feed_freshness_seconds_bucket` — гистограмма, мониторим p95/p99.
+- Алерт: p95 > 30 сек 5 минут подряд.
 
 ## Q25. Block/mute/hide — как влияют на feed?
 
 **Block** (двусторонний):
 - A блокирует B → B не видит постов A, A не видит постов B.
-- Применяется на read time (filter после ranking).
-- Хранится в `user_blocks` table, partition by `blocker_id`.
-- Cache в memory (per-request lookup ms-bound).
+- Применяется на чтении (фильтр после ранжирования).
+- Хранится в таблице `user_blocks`, partition по `blocker_id`.
+- Кэш в памяти (per-request lookup за миллисекунды).
 
 **Mute** (односторонний):
-- A muted B → A не видит постов B, но B знает A не блокировал.
-- Filter аналогично.
+- A замьютил B → A не видит постов B, но B не знает, что A его заблокировал бы.
+- Фильтрация аналогична.
 
-**Hide post** (per-post):
-- User скрывает конкретный пост → не показывать.
-- Сильный negative signal для ranking model.
+**Hide post** (на отдельный пост):
+- Пользователь скрывает конкретный пост → не показывать.
+- Сильный негативный сигнал для ranking-модели.
 
 **Где фильтровать:**
-- Перед ranking: исключаем blocked authors из candidate pool.
-- Дополнительно после ranking: дешёвая защита от race condition (block добавлен между шагами).
+- Перед ранжированием: исключаем заблокированных авторов из пула кандидатов.
+- Дополнительно после ранжирования: дешёвая защита от гонки (block добавлен между шагами).
 
 **Trade-off:**
-- Filter в Cassandra на write fanout — экономит read filter, но при block-event надо удалять из timeline (`ZREM`) → дорого.
-- Filter on read — дешевле; неконсистентность не критична (пост из заблокированного может промелькнуть на 5 сек).
+- Фильтр в Cassandra при write-fanout — экономит фильтр на чтении, но при событии блокировки надо удалять из timeline (`ZREM`) → дорого.
+- Фильтр на чтении — дешевле; неконсистентность некритична (пост от заблокированного может мелькнуть на 5 сек).
 
-**Privacy:**
-- Block list — приватная; не светим в API.
+**Приватность:**
+- Список блокировок приватный; в API не светим.
 
 ## Q26. (!) Multi-region deployment?
 
 **Цели:**
 - Latency < 100 ms из любой точки мира.
-- Disaster recovery: падение one region → переключение в 5 минут.
+- Disaster recovery: падение одного региона → переключение за 5 минут.
 
 **Архитектура:**
 - 3-5 регионов: US-East, US-West, EU-West, APAC-Singapore, APAC-Tokyo.
-- Каждый — full stack (Feed Service, Post Service, Redis, Cassandra ring).
-- Cassandra: multi-DC replication, `LOCAL_QUORUM` на write, `LOCAL_QUORUM` на read.
-- Kafka MirrorMaker → cross-region post stream.
+- Каждый — полный стек (Feed Service, Post Service, Redis, Cassandra ring).
+- Cassandra: multi-DC репликация, `LOCAL_QUORUM` на запись, `LOCAL_QUORUM` на чтение.
+- Kafka MirrorMaker → cross-region поток постов.
 
-**Routing:**
-- DNS GeoDNS / AWS Route53 latency-based routing.
-- User pinned к home region (hash by user_id или географически).
+**Маршрутизация:**
+- GeoDNS / latency-based routing на AWS Route53.
+- Пользователь закреплён за home-регионом (hash по user_id или географически).
 
-**Consistency:**
-- Posts → eventually consistent across regions (5-30 сек).
-- User profile, follows → also eventually; ok.
-- Money/billing → отдельная CP-система с strong consistency.
+**Согласованность:**
+- Посты → eventually consistent между регионами (5-30 сек).
+- Профиль пользователя, подписки → тоже eventually; нормально.
+- Деньги/биллинг → отдельная CP-система со строгой согласованностью.
 
 **Failover:**
-- Health checks на каждом регионе.
-- Auto-failover Route53: TTL 60 сек.
-- DR drill: ежемесячный chaos test.
+- Health-чеки в каждом регионе.
+- Авто-failover в Route53: TTL 60 сек.
+- DR-учения: ежемесячный chaos-тест.
 
-**Pitfalls:**
-- Cross-region write для celebrity fanout → дорого; делаем fanout локально per-region, async-replicate index.
-- Timezone-aware ranking: для APAC weight other than для US.
+**Подводные камни:**
+- Cross-region запись для celebrity-fanout → дорого; делаем fanout локально по регионам, индекс реплицируем async.
+- Ранжирование с учётом часового пояса: для APAC веса иные, чем для US.
 
 ## Q27. A/B testing платформа для feed changes?
 
-**Эксперимент = бакет юзеров + контроль + treatment + метрики.**
+**Эксперимент = бакет пользователей + контроль + treatment + метрики.**
 
 **Платформа:**
-- Bucketing service (hash by user_id + experiment_id) → стабильное распределение.
-- Конфиг эксперимента в feature flag system (Unleash, LaunchDarkly, custom).
-- Сервис `Feed` читает flag → выбирает model_version / cache_strategy / ranking_weight.
+- Сервис бакетинга (hash по user_id + experiment_id) → стабильное распределение.
+- Конфиг эксперимента в системе feature-флагов (Unleash, LaunchDarkly, собственная).
+- Сервис `Feed` читает флаг → выбирает model_version / cache_strategy / ranking_weight.
 
 **Метрики:**
-- Engagement: likes/share/comment per session.
-- Time-on-app, session count.
+- Engagement: лайки/репосты/комментарии за сессию.
+- Time-on-app, число сессий.
 - Retention D1/D7/D30.
-- Negative: report rate, hide rate, unfollow rate.
+- Негативные: report rate, hide rate, unfollow rate.
 
-**Stat:**
+**Статистика:**
 - Sequential testing (mSPRT) для ранней остановки.
-- Holdout-группа 1% всегда (long-term effects).
+- Холдаут-группа 1% всегда (долгосрочные эффекты).
 
-**Rollout:**
+**Раскатка:**
 - 1% → 5% → 10% → 50% → 100% при положительных метриках.
-- Auto-rollback если KPI деградирует > 1%.
+- Авто-откат, если KPI деградирует > 1%.
 
-**Pitfalls:**
-- Network effects: A/B на social graph — действия treatment-юзеров влияют на control-юзеров (нужны cluster-randomized experiments).
+**Подводные камни:**
+- Сетевые эффекты: A/B на социальном графе — действия treatment-пользователей влияют на control-пользователей (нужны cluster-randomized эксперименты).
 - Novelty bias: новая фича сначала растёт, потом возвращается к baseline.
 
 ## Q28. Throttling и backpressure при spike?
 
-**Source spikes:**
-- Crisis / news event → 10× normal posts/sec.
-- Celebrity event → 100× fanout.
+**Источники всплесков:**
+- Кризис / новостное событие → 10× от обычного числа постов/сек.
+- Событие с участием celebrity → 100× fanout.
 - DDoS / bot storm.
 
-**Layered defenses:**
+**Эшелонированная защита:**
 
 **1. Edge / WAF.**
-- CDN rate limiting per IP.
-- Bot detection (CAPTCHA, JS challenges).
+- Rate limiting на CDN по IP.
+- Детекция ботов (CAPTCHA, JS-челленджи).
 
 **2. API Gateway.**
-- Per-user rate limit (token bucket): 100 req/min на feed-fetch.
-- Per-endpoint rate limit globally.
+- Per-user rate limit (token bucket): 100 запросов/мин на загрузку feed.
+- Per-endpoint rate limit глобально.
 
-**3. Application:**
-- Bulkhead: ranking-service отдельный thread pool от feed-service.
-- Circuit breaker (Resilience4j): на падение ranking → degrade в chrono mode.
+**3. Приложение:**
+- Bulkhead: у ranking-service отдельный пул потоков от feed-service.
+- Circuit breaker (Resilience4j): при падении ranking → деградация в хроно-режим.
 
 **4. Backpressure от Kafka.**
-- Posts → consumer lag растёт → reactive throttle на Post Service (медленнее принимаем writes).
+- Посты → растёт consumer lag → реактивный throttle на Post Service (медленнее принимаем записи).
 
 **5. Graceful degradation.**
-- Ранг сломан → отдаём chrono.
-- Redis недоступен → fallback на pull-from-Cassandra (медленнее, но работает).
-- Media недоступны → text-only.
+- Ранжирование сломано → отдаём хроно.
+- Redis недоступен → fallback на pull из Cassandra (медленнее, но работает).
+- Медиа недоступны → только текст.
 
-**Monitoring:**
+**Мониторинг:**
 - `consumer_lag` Kafka, `redis_evicted_keys`, `circuit_breaker_state`.
-- Alert thresholds + auto-scaling (HPA Kubernetes).
+- Пороги алертов + автомасштабирование (HPA Kubernetes).
 
 ## Q29. Стоимость инфры: на чём экономим?
 
-**Top cost buckets (Twitter/X-scale):**
-1. **CDN egress** — $0.5-2M/month (видео/медиа).
-2. **Compute (k8s nodes)** — $200-500K/month.
-3. **Cassandra cluster + storage** — $100-300K/month.
-4. **Redis cluster** — $50-150K/month.
-5. **Kafka cluster + storage** — $30-100K/month.
+**Главные статьи расходов (масштаб Twitter/X):**
+1. **CDN egress** — $0.5-2M/месяц (видео/медиа).
+2. **Compute (k8s-ноды)** — $200-500K/месяц.
+3. **Cassandra cluster + хранилище** — $100-300K/месяц.
+4. **Redis cluster** — $50-150K/месяц.
+5. **Kafka cluster + хранилище** — $30-100K/месяц.
 
 **Оптимизации:**
-- **Per-title video encoding** (Netflix-style) — снижение bandwidth до 50%.
-- **Image WebP/AVIF** вместо JPEG/PNG (30-50% smaller).
-- **Edge cache TTL** — длиннее = меньше origin traffic.
-- **Reserved Instances / Savings Plans** на AWS — 30-60% скидка.
-- **Spot instances** для batch-jobs (ranking training, indexing).
-- **Cold storage** для постов > 1 года → S3 IA / Glacier.
-- **Tiered cache** — hot в Redis, warm в Memcached, cold в Cassandra.
-- **Compression** на Kafka (`compression.type=zstd`) — 4× меньше storage и bandwidth.
+- **Per-title video encoding** (как у Netflix) — снижение bandwidth до 50%.
+- **Изображения в WebP/AVIF** вместо JPEG/PNG (на 30-50% меньше).
+- **Edge cache TTL** — длиннее = меньше трафика на origin.
+- **Reserved Instances / Savings Plans** на AWS — скидка 30-60%.
+- **Spot-инстансы** для batch-задач (обучение ranking, индексация).
+- **Холодное хранилище** для постов старше 1 года → S3 IA / Glacier.
+- **Многоуровневый кэш** — горячее в Redis, тёплое в Memcached, холодное в Cassandra.
+- **Сжатие** на Kafka (`compression.type=zstd`) — в 4× меньше хранилища и bandwidth.
 
-**Trade-offs:**
-- Меньше реплик → дешевле, но риски DR.
-- Длинный cache TTL → дешевле, но stale feed.
-- Слабее ranking model → дешевле GPU, но ниже engagement.
+**Trade-off-ы:**
+- Меньше реплик → дешевле, но риски для DR.
+- Длинный cache TTL → дешевле, но устаревший feed.
+- Слабее ranking-модель → дешевле GPU, но ниже engagement.
 
 ## Q30. (!) Антипаттерны и подводные камни?
 
-**1. Sync fanout в request thread.**
-- Симптом: POST `/posts` ждёт 5 сек, пока пишет в timeline 10K followers.
-- Fix: async через Kafka (Q17).
+**1. Синхронный fanout в потоке запроса.**
+- Симптом: POST `/posts` ждёт 5 сек, пока пишет в timeline 10K подписчиков.
+- Исправление: async через Kafka (Q17).
 
-**2. Один большой ZSET для global feed.**
-- Симптом: hot key, всё пишут и читают один Redis-shard.
-- Fix: per-user ZSET (Q9).
+**2. Один большой ZSET на глобальный feed.**
+- Симптом: hot key, все пишут и читают один Redis-shard.
+- Исправление: ZSET на пользователя (Q9).
 
-**3. Read all follow-ов synchronously.**
-- Симптом: 200 sequential queries per feed fetch → 10× latency.
-- Fix: batch-fetch (MGET), параллельные RPC.
+**3. Синхронное чтение всех подписок.**
+- Симптом: 200 последовательных запросов на одну загрузку feed → 10× latency.
+- Исправление: batch-fetch (MGET), параллельные RPC.
 
-**4. Counter в одной row для likes viral поста.**
-- Симптом: lock contention, 100K writes/sec в один partition.
-- Fix: counter sharding или async aggregation (Q23).
+**4. Счётчик в одной строке для лайков viral-поста.**
+- Симптом: lock contention, 100K записей/сек в один partition.
+- Исправление: шардирование счётчика или async-агрегация (Q23).
 
-**5. Strong consistency на timeline.**
-- Симптом: попытка `QUORUM` write на 100 follower-timelines → 10× latency.
-- Fix: eventual consistency, fanout async.
+**5. Строгая согласованность на timeline.**
+- Симптом: попытка записи `QUORUM` в 100 timeline-ов подписчиков → 10× latency.
+- Исправление: eventual consistency, async-fanout.
 
-**6. Без кэша user data в feed pipeline.**
-- Симптом: 50 user-lookups per feed = 50 RTT.
-- Fix: Redis cache + bulk fetch.
+**6. Без кэша пользовательских данных в feed-пайплайне.**
+- Симптом: 50 lookup-ов пользователей на один feed = 50 RTT.
+- Исправление: кэш Redis + bulk-fetch.
 
-**7. Без celebrity-handling.**
-- Симптом: один @elonmusk-post подвешивает fanout systerm.
-- Fix: hybrid push+pull (Q6).
+**7. Без обработки celebrity.**
+- Симптом: один пост @elonmusk подвешивает систему fanout.
+- Исправление: гибрид push+pull (Q6).
 
-**8. Без backpressure на Kafka producer.**
-- Симптом: producer заваливает Kafka → broker OOM.
-- Fix: `linger.ms`, `batch.size`, `acks=1`, max in-flight requests.
+**8. Без backpressure на Kafka-producer.**
+- Симптом: producer заваливает Kafka → OOM брокера.
+- Исправление: `linger.ms`, `batch.size`, `acks=1`, лимит in-flight-запросов.
 
 **9. Без A/B-инфраструктуры.**
-- Симптом: rolled out new ranking → engagement упал 20% — никто не заметил неделю.
-- Fix: ML pipeline + A/B + auto-rollback (Q27).
+- Симптом: выкатили новый ranking → engagement упал на 20%, неделю никто не замечал.
+- Исправление: ML-пайплайн + A/B + авто-откат (Q27).
 
-**10. Без observability на freshness.**
-- Симптом: «у нас всё ок» — а юзеры видят посты с задержкой 30 минут.
-- Fix: `freshness_seconds` метрика end-to-end (Q24).
+**10. Без observability по freshness.**
+- Симптом: «у нас всё ок» — а пользователи видят посты с задержкой 30 минут.
+- Исправление: сквозная метрика `freshness_seconds` (Q24).
 
-**11. Single-region deploy.**
-- Симптом: regional outage → весь продукт лежит 4 часа.
-- Fix: multi-region active-active (Q26).
+**11. Single-region-деплой.**
+- Симптом: региональный сбой → весь продукт лежит 4 часа.
+- Исправление: multi-region active-active (Q26).
 
-**12. Storing media as DB blobs.**
-- Симптом: DB IO/storage растут с фото → дорого + медленно.
-- Fix: S3 + CDN, в DB только URL.
+**12. Хранение медиа как BLOB-ов в БД.**
+- Симптом: IO/хранилище БД растут с фотографиями → дорого и медленно.
+- Исправление: S3 + CDN, в БД только URL.
 
 ---
 
