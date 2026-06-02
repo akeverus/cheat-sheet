@@ -19,7 +19,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Azure`
 
-`Microsoft Azure` — №2 cloud provider (~24% market share, 2025). Сильные стороны: **enterprise integration** (Active Directory, Office 365, Windows), **AI** (тесная интеграция с OpenAI), **hybrid cloud** (Azure Arc). На интервью знают: VMs, AKS, App Service, Functions, Cosmos DB, AAD/Entra ID.
+`Microsoft Azure` — облачный провайдер №2 (~24% рынка, 2025). Сильные стороны: **интеграция с enterprise** (Active Directory, Office 365, Windows), **AI** (тесная интеграция с OpenAI), **гибридное облако** (Azure Arc). На интервью спрашивают: VMs, AKS, App Service, Functions, Cosmos DB, AAD/Entra ID.
 
 ## Полезные ссылки
 
@@ -80,20 +80,20 @@ updated: "2026-04-25"
 
 ## Q1. (!) Что такое Azure?
 
-`Microsoft Azure` — облако Microsoft (с 2010). №2 по market share (~24%, 2025).
+`Microsoft Azure` — облако Microsoft (с 2010). №2 по доле рынка (~24%, 2025).
 
-**Strong areas:**
-- **Enterprise integration** — Active Directory (Entra ID), Office 365
-- **Hybrid cloud** — Azure Arc, Stack
-- **AI** — exclusive partnership с OpenAI (Azure OpenAI Service)
-- **.NET ecosystem** — best для C#/Windows
+**Сильные стороны:**
+- **Интеграция с enterprise** — Active Directory (Entra ID), Office 365
+- **Гибридное облако** — Azure Arc, Stack
+- **AI** — эксклюзивное партнёрство с OpenAI (Azure OpenAI Service)
+- **Экосистема .NET** — лучший выбор для C#/Windows
 - **Compliance** — широкий каталог сертификаций
 
-**Weaknesses vs AWS:**
-- Менее consistent UI/UX (legacy services)
-- Documentation сложнее
-- Меньше features в open-source
-- Reliability — иногда issues (известные outages)
+**Слабые стороны на фоне AWS:**
+- Менее согласованный UI/UX (legacy-сервисы)
+- Документация сложнее
+- Меньше возможностей в open-source
+- Надёжность — иногда сбои (известные outages)
 
 ## Q2. (!) Subscriptions, Resource Groups?
 
@@ -109,73 +109,73 @@ Tenant (Entra ID directory)
       └── Subscription: app-dev
 ```
 
-**Subscription** = billing boundary (как AWS account).
-**Resource Group** = logical container внутри subscription. Все resources должны быть в RG.
-**Management Group** = organize subscriptions (для policies).
+**Subscription** = граница биллинга (как AWS account).
+**Resource Group** = логический контейнер внутри subscription. Все ресурсы должны лежать в RG.
+**Management Group** = организует subscriptions (для политик).
 
-**Преимущество:** Resource Groups позволяют **delete всё одновременно**.
+**Преимущество:** Resource Groups позволяют **удалить всё одновременно**.
 
 ## Q3. Regions и Availability Zones?
 
-**Region** — geographical area (East US, West Europe). 60+ regions.
+**Region** — географическая зона (East US, West Europe). Более 60 регионов.
 
-**Availability Zones** — physical data centers в region (3+ per region для AZ-enabled regions).
+**Availability Zones** — физические дата-центры внутри региона (3+ на регион для регионов с поддержкой AZ).
 
-**Region pairs** — Azure pairs regions (East US ↔ West US) для disaster recovery.
+**Region pairs** — Azure связывает регионы в пары (East US ↔ West US) для disaster recovery.
 
-**Не все regions** имеют AZ support (older regions).
+**Не все регионы** поддерживают AZ (старые регионы).
 
 ## Q4. (!) Azure VMs?
 
 **Azure Virtual Machines** — IaaS, аналог AWS EC2.
 
-**VM series:**
-- **B** (Burstable) — variable workloads
-- **D** (General purpose) — workhorse
-- **F** (Compute optimized) — CPU-intensive
-- **E** (Memory optimized) — large databases
-- **L** (Storage optimized) — local SSD
-- **N** (GPU)
-- **H** (HPC)
+**Серии VM:**
+- **B** (Burstable) — переменные нагрузки
+- **D** (General purpose) — рабочая лошадка, общего назначения
+- **F** (Compute optimized) — нагрузки, интенсивные по CPU
+- **E** (Memory optimized) — большие базы данных, оптимизация по памяти
+- **L** (Storage optimized) — локальный SSD, оптимизация по хранилищу
+- **N** (GPU) — задачи с GPU
+- **H** (HPC) — высокопроизводительные вычисления
 
-**Pricing:**
+**Тарификация:**
 - Pay-as-you-go
-- **Reserved Instances** — 1-3 years, 72% off
-- **Spot VMs** — up to 90% off
-- **Hybrid Benefit** — bring Windows/SQL Server licenses
+- **Reserved Instances** — 1–3 года, скидка до 72%
+- **Spot VMs** — скидка до 90%
+- **Hybrid Benefit** — принести свои лицензии Windows/SQL Server
 
 ## Q5. (!) AKS (Azure Kubernetes Service)?
 
-**AKS** — managed Kubernetes на Azure.
+**AKS** — управляемый Kubernetes на Azure.
 
 **Особенности:**
-- Free control plane (только nodes стоят)
-- Integration с Entra ID
-- Auto-scaling
-- Azure CNI или kubenet networking
-- Multi-zone clusters
-- Windows containers support
+- Бесплатный control plane (платишь только за nodes)
+- Интеграция с Entra ID
+- Автомасштабирование
+- Сеть на Azure CNI или kubenet
+- Кластеры с несколькими зонами (multi-zone)
+- Поддержка Windows-контейнеров
 
-**vs GKE:** GKE считается слегка лучше matured, но AKS догнал. Для Microsoft shops AKS — natural choice.
+**На фоне GKE:** GKE считается чуть более зрелым, но AKS догнал. Для компаний на стеке Microsoft AKS — естественный выбор.
 
 ## Q6. (!) Azure Functions?
 
 **Azure Functions** — FaaS, аналог AWS Lambda.
 
-**Hosting plans:**
-- **Consumption** — pay per execution (true serverless)
-- **Premium** — pre-warmed instances (no cold start)
-- **Dedicated** (App Service Plan) — running на VM
+**Планы хостинга:**
+- **Consumption** — оплата за выполнение (настоящий serverless)
+- **Premium** — заранее прогретые инстансы (без cold start)
+- **Dedicated** (App Service Plan) — работа на VM
 
-**Triggers:**
-- HTTP
-- Timer
+**Триггеры:**
+- HTTP-запрос
+- по таймеру (Timer)
 - Blob Storage
 - Queue Storage / Service Bus
 - Event Hubs
-- Cosmos DB changes
+- изменения в Cosmos DB
 
-**Languages:** C#, JavaScript, Python, Java, PowerShell, Rust, Go (custom).
+**Языки:** C#, JavaScript, Python, Java, PowerShell, Rust, Go (custom).
 
 ```csharp
 [FunctionName("HelloHttp")]
@@ -186,135 +186,135 @@ public static IActionResult Run(
 }
 ```
 
-**Durable Functions** — для stateful workflows (analog Step Functions).
+**Durable Functions** — для stateful-воркфлоу (аналог Step Functions).
 
 ## Q7. (!) App Service?
 
-**App Service** — managed PaaS для веб-приложений.
+**App Service** — управляемый PaaS для веб-приложений.
 
 **Особенности:**
-- Auto-scaling, load balancing
-- CI/CD integration (GitHub Actions, Azure DevOps)
-- Custom domains, SSL, auth (через Entra ID)
-- Multiple language support (.NET, Node, Java, Python, PHP)
-- Slots (для blue-green deployment)
+- Автомасштабирование, балансировка нагрузки
+- Интеграция CI/CD (GitHub Actions, Azure DevOps)
+- Свои домены, SSL, аутентификация (через Entra ID)
+- Поддержка множества языков (.NET, Node, Java, Python, PHP)
+- Slots (для blue-green деплоя)
 
-**Pricing tiers:**
-- Free / Shared (для testing)
-- Basic / Standard / Premium / Isolated
+**Тарифные уровни:**
+- Free / Shared (для тестирования)
+- Basic / Standard / Premium / Isolated (от базового до изолированного)
 
-**App Service Plan** = compute resources, можно host multiple apps.
+**App Service Plan** = вычислительные ресурсы, можно разместить несколько приложений.
 
-В **2025** — App Service самый популярный для **classic web apps** на Azure.
+В **2025** App Service остаётся самым популярным выбором для **классических веб-приложений** на Azure.
 
 ## Q8. Container Instances, Container Apps?
 
-**Container Instances (ACI)** — single container, no orchestration. Quick container, no overhead.
+**Container Instances (ACI)** — один контейнер, без оркестрации. Быстрый запуск контейнера, без накладных расходов.
 
-**Container Apps** (с 2022) — managed serverless containers (AKS-light). Built на Kubernetes, KEDA, Dapr.
+**Container Apps** (с 2022) — управляемые serverless-контейнеры (облегчённый AKS). Построены на Kubernetes, KEDA, Dapr.
 
-| Service | Use case |
+| Сервис | Сценарий применения |
 |---------|----------|
-| ACI | Single container, batch tasks |
-| Container Apps | Microservices, auto-scaling, managed |
-| AKS | Full control, complex setups |
+| ACI | Один контейнер, batch-задачи |
+| Container Apps | Микросервисы, автомасштабирование, управляемый сервис |
+| AKS | Полный контроль, сложные конфигурации |
 
-**Container Apps** — equivalent GCP Cloud Run.
+**Container Apps** — эквивалент GCP Cloud Run.
 
 ## Q9. (!) Azure Storage account types?
 
-Azure Storage account — единый namespace для:
-- **Blob Storage** — objects (как S3)
-- **File Storage** — SMB/NFS shares
-- **Queue Storage** — simple messaging
-- **Table Storage** — NoSQL (legacy, used в Cosmos DB Tables)
-- **Disk Storage** — managed disks для VMs
+Azure Storage account — единое пространство имён для:
+- **Blob Storage** — объекты (как S3)
+- **File Storage** — SMB/NFS-шары
+- **Queue Storage** — простой обмен сообщениями
+- **Table Storage** — NoSQL (legacy, используется в Cosmos DB Tables)
+- **Disk Storage** — управляемые диски для VMs
 
-**Account types:**
-- **Standard general-purpose v2** — most common
-- **Premium Block Blob** — low latency
-- **Premium File Shares**
+**Типы аккаунтов:**
+- **Standard general-purpose v2** — самый распространённый, общего назначения
+- **Premium Block Blob** — низкая задержка
+- **Premium File Shares** — премиальные файловые шары
 - **Premium Page Blobs** — для VMs
 
 ## Q10. Blob Storage tiers?
 
-| Tier | Use case | Cost |
+| Tier | Сценарий применения | Стоимость |
 |------|----------|------|
-| **Hot** | Frequent access | Highest storage, lowest access |
-| **Cool** | Infrequent (≥30 days) | Lower storage, higher access |
-| **Cold** (с 2023) | Rare (≥90 days) | Even cheaper |
-| **Archive** | Almost never | Cheapest, hours to retrieve |
+| **Hot** | Частый доступ | Дорогое хранение, дешёвый доступ |
+| **Cool** | Редкий (≥30 дней) | Дешевле хранение, дороже доступ |
+| **Cold** (с 2023) | Очень редкий (≥90 дней) | Ещё дешевле |
+| **Archive** | Почти никогда | Самое дешёвое, извлечение часами |
 
-**Lifecycle management** — auto-transition между tiers.
+**Lifecycle management** — автоматический переход между tier'ами.
 
 ## Q11. (!) Azure SQL Database?
 
-**Azure SQL Database** — managed Microsoft SQL Server.
+**Azure SQL Database** — управляемый Microsoft SQL Server.
 
-**Deployment options:**
-- **Single Database** — standalone DB
-- **Elastic Pool** — share resources между DBs
-- **Managed Instance** — full SQL Server compatibility
+**Варианты развёртывания:**
+- **Single Database** — отдельная БД
+- **Elastic Pool** — общие ресурсы между БД
+- **Managed Instance** — полная совместимость с SQL Server
 
-**Service tiers:**
-- **DTU-based** (legacy) — bundled compute + IO
-- **vCore-based** (recommended) — separate compute + storage
+**Уровни сервиса:**
+- **DTU-based** (legacy) — связка compute + IO
+- **vCore-based** (рекомендуется) — раздельные compute + storage
   - **General Purpose**, **Business Critical** (in-memory), **Hyperscale** (scale-out)
 
-**Azure SQL** — hands down лучшее place для running SQL Server.
+**Azure SQL** — без вопросов лучшее место, чтобы запускать SQL Server.
 
 ## Q12. (!) Cosmos DB?
 
-**Cosmos DB** — multi-model, globally distributed NoSQL. Crown jewel Azure.
+**Cosmos DB** — мультимодельная, глобально распределённая NoSQL. Жемчужина Azure.
 
 **Особенности:**
-- **Multi-model** — Document (Mongo, JSON), Key-Value, Column (Cassandra), Graph (Gremlin)
-- **Globally distributed** — multi-region replication
-- **5 consistency levels** — Strong, Bounded staleness, Session, Consistent prefix, Eventual
-- **Single-digit ms latency** at any scale
-- **99.999% SLA** для multi-region writes
+- **Мультимодельность** — Document (Mongo, JSON), Key-Value, Column (Cassandra), Graph (Gremlin)
+- **Глобальная распределённость** — репликация по нескольким регионам
+- **5 уровней согласованности** — Strong, Bounded staleness, Session, Consistent prefix, Eventual
+- **Задержка в единицы миллисекунд** при любом масштабе
+- **SLA 99,999%** для multi-region записей
 - **Serverless** или provisioned RU
 
-**Pricing:** **Request Units (RU/s)** — abstract performance unit.
+**Тарификация:** **Request Units (RU/s)** — абстрактная единица производительности.
 
-**Use cases:**
+**Сценарии применения:**
 - IoT
-- Personalization
-- Real-time recommendations
-- Global apps
-- Mobile backends
+- персонализация
+- рекомендации в реальном времени
+- глобальные приложения
+- мобильные бэкенды
 
-**Cost trap:** RU/s можно accidentally overprovision → expensive.
+**Ловушка по стоимости:** можно случайно перевыделить RU/s → дорого.
 
 ## Q13. Database for PostgreSQL/MySQL?
 
-**Azure Database for PostgreSQL/MySQL** — managed open-source DBs.
+**Azure Database for PostgreSQL/MySQL** — управляемые open-source-БД.
 
-**Tiers:**
-- Burstable (small)
-- General Purpose
-- Memory Optimized
-- **Hyperscale (Citus)** — для PostgreSQL, distributed (sharded)
+**Уровни:**
+- Burstable (небольшие)
+- General Purpose — общего назначения
+- Memory Optimized — оптимизация по памяти
+- **Hyperscale (Citus)** — для PostgreSQL, распределённый (шардированный)
 
-С **2024** — **Azure Database for PostgreSQL Flexible Server** — main offering.
+С **2024** основное предложение — **Azure Database for PostgreSQL Flexible Server**.
 
 ## Q14. Azure Cache для Redis?
 
-**Azure Cache for Redis** — managed Redis. Аналог AWS ElastiCache, GCP Memorystore.
+**Azure Cache for Redis** — управляемый Redis. Аналог AWS ElastiCache, GCP Memorystore.
 
-**Tiers:**
-- Basic — single node
-- Standard — replication
-- Premium — clustering, persistence
-- Enterprise — Redis Enterprise features
+**Уровни:**
+- Basic — один узел
+- Standard — репликация
+- Premium — кластеризация, персистентность
+- Enterprise — возможности Redis Enterprise
 
-С **2024** Microsoft anunciated **Azure Managed Redis** — preview новой версии.
+С **2024** Microsoft анонсировала **Azure Managed Redis** — preview новой версии.
 
 ## Q15. (!) VNet, NSG?
 
 **VNet (Virtual Network)** — аналог AWS VPC.
 
-**NSG (Network Security Group)** — firewall rules (аналог Security Groups + NACLs).
+**NSG (Network Security Group)** — правила firewall (аналог Security Groups + NACLs).
 
 ```
 VNet (10.0.0.0/16)
@@ -323,39 +323,39 @@ VNet (10.0.0.0/16)
   └── Subnet: data (10.0.3.0/24) + NSG-data (no internet)
 ```
 
-**Application Security Groups (ASG)** — group VMs logically для firewall rules.
+**Application Security Groups (ASG)** — логически группируют VMs для правил firewall.
 
 ## Q16. Application Gateway, Front Door?
 
-**Application Gateway** — Layer 7 (HTTP) load balancer внутри region.
-- Path-based routing
-- WAF integration
-- SSL termination
+**Application Gateway** — балансировщик нагрузки уровня L7 (HTTP) внутри региона.
+- Маршрутизация по пути (path-based)
+- Интеграция с WAF
+- Терминация SSL
 
-**Azure Front Door** — global L7 load balancer + CDN.
-- Global anycast
-- Multi-region failover
+**Azure Front Door** — глобальный балансировщик L7 + CDN.
+- Глобальный anycast
+- Отказоустойчивость между регионами (multi-region failover)
 - WAF
-- SSL termination
+- Терминация SSL
 
-**Load Balancer** — Layer 4 (TCP/UDP).
-**Traffic Manager** — DNS-based load balancing.
+**Load Balancer** — уровень L4 (TCP/UDP).
+**Traffic Manager** — балансировка на уровне DNS.
 
 ## Q17. (!) Entra ID (бывший Azure AD)?
 
-**Microsoft Entra ID** (rebranded из Azure Active Directory в 2023) — identity provider.
+**Microsoft Entra ID** (переименован из Azure Active Directory в 2023) — провайдер идентификации.
 
 **Особенности:**
-- **SSO** для thousands SaaS apps
-- **Conditional Access** — granular policies
-- **MFA** built-in
+- **SSO** для тысяч SaaS-приложений
+- **Conditional Access** — гранулярные политики
+- **MFA** встроена
 - **Passwordless** (FIDO2)
-- **B2B / B2C** scenarios
-- **Identity Governance** (lifecycle, access reviews)
+- сценарии **B2B / B2C**
+- **Identity Governance** (жизненный цикл, access reviews)
 
-**Crown jewel Microsoft Cloud.** Huge enterprise install base.
+**Жемчужина Microsoft Cloud.** Огромная база установок в enterprise.
 
-**Integration** в Azure resources — RBAC через Entra ID.
+**Интеграция** с ресурсами Azure — RBAC через Entra ID.
 
 ```bash
 az role assignment create --assignee user@contoso.com \
@@ -364,7 +364,7 @@ az role assignment create --assignee user@contoso.com \
 
 ## Q18. Managed Identities?
 
-**Managed Identity** — auto-created Entra ID identity для Azure resource (VM, App Service, Function).
+**Managed Identity** — автоматически создаваемая Entra ID identity для ресурса Azure (VM, App Service, Function).
 
 ```csharp
 // No credentials в коде!
@@ -372,123 +372,123 @@ var credential = new DefaultAzureCredential();
 var blobClient = new BlobServiceClient(uri, credential);
 ```
 
-**Types:**
-- **System-assigned** — tied to resource lifecycle
-- **User-assigned** — independent, can be shared
+**Типы:**
+- **System-assigned** — привязана к жизненному циклу ресурса
+- **User-assigned** — независимая, можно переиспользовать совместно
 
-Equivalent **AWS IAM Roles for EC2/Lambda** или **GCP Service Accounts**.
+Эквивалент **AWS IAM Roles for EC2/Lambda** или **GCP Service Accounts**.
 
 ## Q19. (!) Synapse Analytics?
 
-**Azure Synapse Analytics** — unified analytics platform.
+**Azure Synapse Analytics** — единая платформа аналитики.
 
-**Includes:**
-- **Synapse SQL** — DWH (analog Snowflake)
-- **Apache Spark pools**
+**Включает:**
+- **Synapse SQL** — хранилище данных (DWH, аналог Snowflake)
+- **Apache Spark pools** — пулы Apache Spark
 - **Data Explorer** (Kusto)
-- **Pipelines** (data integration)
+- **Pipelines** (интеграция данных)
 
 **Synapse SQL:**
-- **Dedicated SQL pool** — provisioned DWH
-- **Serverless SQL pool** — query data в Azure Storage без loading
+- **Dedicated SQL pool** — provisioned-DWH
+- **Serverless SQL pool** — запросы к данным в Azure Storage без их загрузки
 
-В **2025** Synapse — Microsoft answer на BigQuery / Snowflake. Но reliability и UX issues есть. Многие выбирают **Microsoft Fabric** (новая объединённая платформа).
+В **2025** Synapse — ответ Microsoft на BigQuery / Snowflake. Но есть проблемы с надёжностью и UX. Многие выбирают **Microsoft Fabric** (новую объединённую платформу).
 
 ## Q20. Azure Data Factory?
 
-**ADF** — managed ETL/ELT. Аналог AWS Glue, GCP Cloud Data Fusion.
+**ADF** — управляемый ETL/ELT. Аналог AWS Glue, GCP Cloud Data Fusion.
 
 **Особенности:**
-- Visual UI для pipelines
-- 90+ data connectors
-- Code-free transformations (Mapping Data Flows)
-- Custom Python/Spark activities
-- CI/CD integration
+- Визуальный UI для pipeline'ов
+- 90+ коннекторов к данным
+- Трансформации без кода (Mapping Data Flows)
+- Кастомные activities на Python/Spark
+- Интеграция CI/CD
 
-В **2025** — Microsoft pushes **Microsoft Fabric** (new unified platform), но ADF still in use.
+В **2025** Microsoft продвигает **Microsoft Fabric** (новую объединённую платформу), но ADF всё ещё используется.
 
 ## Q21. Event Hubs vs Service Bus?
 
-**Event Hubs** — high-throughput event streaming. Аналог Kafka.
-- Millions events/sec
-- Partitions, consumer groups
-- Apache Kafka protocol compatible (с Premium tier)
+**Event Hubs** — высокопроизводительный стриминг событий. Аналог Kafka.
+- Миллионы событий/сек
+- партиции, группы потребителей (consumer groups)
+- Совместимость с протоколом Apache Kafka (на уровне Premium)
 
-**Service Bus** — enterprise messaging. Аналог RabbitMQ.
-- Queues и Topics (pub/sub)
-- Transactions, sessions, dead-letter
+**Service Bus** — enterprise-обмен сообщениями. Аналог RabbitMQ.
+- очереди (Queues) и темы (Topics, pub/sub)
+- транзакции, сессии, dead-letter
 - AMQP 1.0
-- Lower throughput чем Event Hubs
+- Ниже пропускная способность, чем у Event Hubs
 
-| Service | Use case |
+| Сервис | Сценарий применения |
 |---------|----------|
-| Event Hubs | Streaming, telemetry, IoT |
-| Service Bus | Business messaging, transactions |
+| Event Hubs | Стриминг, телеметрия, IoT |
+| Service Bus | Бизнес-сообщения, транзакции |
 
 ## Q22. (!) Azure OpenAI Service?
 
-**Azure OpenAI Service** — exclusive Microsoft offering. Hosting OpenAI models (GPT-4, etc.) на Azure infrastructure.
+**Azure OpenAI Service** — эксклюзивное предложение Microsoft. Хостинг моделей OpenAI (GPT-4 и т. д.) на инфраструктуре Azure.
 
-**Преимущества vs OpenAI directly:**
-- **Enterprise compliance** (GDPR, HIPAA, SOC)
-- **Private network** access
+**Преимущества против прямого OpenAI:**
+- **Enterprise-compliance** (GDPR, HIPAA, SOC)
+- Доступ через **частную сеть**
 - **Customer-managed keys** (BYOK)
-- **No data used для OpenAI training**
-- **SLA, support** через Microsoft
+- **Данные не используются для обучения OpenAI**
+- **SLA и поддержка** через Microsoft
 
-**Use case:** enterprise хочет GPT-4, но не может использовать public OpenAI API.
+**Сценарий:** enterprise хочет GPT-4, но не может использовать публичный OpenAI API.
 
-В **2025** — самый популярный enterprise way использовать OpenAI models.
+В **2025** — самый популярный способ для enterprise использовать модели OpenAI.
 
 ## Q23. Azure Machine Learning?
 
-**Azure ML** — managed ML platform. Equivalent SageMaker, Vertex AI.
+**Azure ML** — управляемая ML-платформа. Эквивалент SageMaker, Vertex AI.
 
-**Features:**
+**Возможности:**
 - Workspace для проекта
-- Compute clusters (CPU/GPU)
+- вычислительные кластеры (CPU/GPU)
 - AutoML
-- Model registry
-- Endpoints (real-time, batch)
-- MLflow integration
-- Designer (no-code)
+- Реестр моделей
+- Endpoints (в реальном времени и пакетные)
+- Интеграция с MLflow
+- Designer (без кода)
 
-В **2025** — конкурирует с Vertex AI, SageMaker. Tightly integrated с Azure DevOps, GitHub.
+В **2025** конкурирует с Vertex AI, SageMaker. Тесно интегрирована с Azure DevOps, GitHub.
 
 ## Q24. (!) Azure vs AWS — strengths?
 
-**Azure strengths:**
-- **Enterprise integration** — AD, Office 365
-- **Hybrid cloud** — Azure Arc, Azure Stack
-- **AI** — Azure OpenAI Service exclusive
-- **.NET, Windows, SQL Server** — best home
-- **Compliance** — самый широкий portfolio
-- **Microsoft contracts** — bundled discounts
+**Сильные стороны Azure:**
+- **Интеграция с enterprise** — AD, Office 365
+- **Гибридное облако** — Azure Arc, Azure Stack
+- **AI** — эксклюзивный Azure OpenAI Service
+- **.NET, Windows, SQL Server** — лучший дом
+- **Compliance** — самый широкий портфель
+- **Контракты Microsoft** — скидки в составе бандлов
 
-**Azure weaknesses:**
-- **Reliability** — заметные outages (DNS, AAD, etc.)
-- **Documentation** — fragmented across services
-- **UI/UX** — inconsistent (legacy)
-- **Open-source ecosystem** — менее integrated
-- **Pricing** — confusing models (DTU, RU, ...)
+**Слабые стороны Azure:**
+- **Надёжность** — заметные сбои (DNS, AAD и т. д.)
+- **Документация** — разрозненная по сервисам
+- **UI/UX** — несогласованный (legacy)
+- **Экосистема open-source** — слабее интегрирована
+- **Тарификация** — запутанные модели (DTU, RU, ...)
 
 ## Q25. (!) Когда выбирать Azure?
 
 **Выбирай Azure когда:**
-- **Уже Microsoft shop** (AD, Office 365, Windows servers)
-- **.NET / SQL Server** workloads
-- **Enterprise sales** — предложение Microsoft с бандлами
-- **Hybrid cloud** — Azure Arc для on-prem
-- **Compliance-heavy** industries (healthcare, government)
-- Нужен **Azure OpenAI** specifically
+- **Уже на стеке Microsoft** (AD, Office 365, Windows-серверы)
+- нагрузки на **.NET / SQL Server**
+- **Enterprise-продажи** — предложение Microsoft с бандлами
+- **Гибридное облако** — Azure Arc для on-prem
+- отрасли с **жёстким compliance** (здравоохранение, госсектор)
+- конкретно нужен **Azure OpenAI**
 
 **Не выбирай:**
-- Cloud-native новый проект — AWS/GCP часто лучше
-- Heavy Linux / open-source — AWS/GCP
-- ML/Data — GCP / AWS чаще выбирают
-- Startups — AWS/GCP enabled, Azure expensive
+- Новый cloud-native проект — AWS/GCP часто лучше
+- Много Linux / open-source — AWS/GCP
+- ML/Data — чаще выбирают GCP / AWS
+- Стартапы — AWS/GCP удобнее, Azure дорогой
 
-В **2025** Azure — **№1 для enterprise**, но новые startups редко выбирают.
+В **2025** Azure — **№1 для enterprise**, но новые стартапы выбирают его редко.
 
 ---
 
