@@ -866,12 +866,21 @@
    */
   async function regenerateQuestion(questionId, button) {
     if (!questionId || !button) return;
+    // /api/regenerate admin-gated (SecurityConfig), как и /export — без заголовка
+    // X-Admin-Token всегда 403. Тот же токен, что и для экспорта (один кэш).
+    // В seed-first dev кнопка скрыта (th:if=aiEnabled=false), но при включённом
+    // AI это рабочий путь только для админа — фикс того же класса, что экспорт.
+    const token = obtainAdminToken();
+    if (!token) return; // пользователь отменил ввод
     button.classList.add('regenerating');
     button.title = 'Удаляю варианты...';
     try {
       const resp = await apiFetch(API.REGENERATE, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-Admin-Token': token
+        },
         body: 'questionId=' + encodeURIComponent(questionId)
       });
       if (resp.ok) {
@@ -911,6 +920,12 @@
         button.classList.remove('regenerating');
         button.innerHTML = icon('circle-x', 'ed-icon-error');
         button.title = 'Ошибка при удалении';
+        // Неверный admin-токен — сбрасываем кэш, чтобы следующий клик переспросил.
+        // «не настроен» (server-misconfig) НЕ сбрасываем: токен пользователя ни при чём.
+        if (resp.status === 401 || resp.status === 403) {
+          const notConfigured = (err.message || '').toLowerCase().includes(SERVER_TOKEN_UNSET_MARKER);
+          if (!notConfigured) clearStoredToken();
+        }
         setInlineAlert(err.message || 'Не удалось перегенерировать варианты.');
       }
     } catch (err) {
