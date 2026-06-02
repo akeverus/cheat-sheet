@@ -90,7 +90,15 @@
                            name="optionId"
                            th:value="${opt.id}"
                            required>
-                    <span th:text="${opt.optionText}">Вариант</span>
+                    <!-- optionText в БД хранится как "A. текст" (McqJsonLoader склеивает
+                         label+text — это удобно для контекстов без буквенного бейджа:
+                         фидбэк, CSV-экспорт, aria-label для скринридеров). Но в этом
+                         списке букву уже рисует CSS-счётчик (label::before, content:
+                         counter(opt, upper-latin)) → буква дублировалась (бейдж "A" +
+                         "A. текст"). Срезаем ведущий "X. " ТОЛЬКО в видимом span;
+                         aria-label выше оставляем с буквой (CSS-бейдж декоративный и
+                         скринридером не озвучивается). -->
+                    <span th:text="${opt.optionText != null ? opt.optionText.replaceFirst('^[A-Z][.] ', '') : ''}">Вариант</span>
                 </label>
             </div>
             <div th:replace="~{fragments/training-actions :: training-actions(
