@@ -18,7 +18,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `API Design Best Practices`
 
-API design — критическое skill. Хороший API: **intuitive, consistent, evolvable, secure**. Плохой API — eternal pain. На интервью спрашивают: naming conventions, pagination, filtering, error format, idempotency, rate limiting, authentication. Коллекция best practices от Google, Microsoft, Stripe, GitHub.
+Проектирование API — критический навык. Хороший API: **интуитивный, консистентный, расширяемый, безопасный**. Плохой API — вечная боль. На интервью спрашивают: соглашения об именовании, пагинацию, фильтрацию, формат ошибок, идемпотентность, rate limiting, аутентификацию. Коллекция лучших практик от Google, Microsoft, Stripe, GitHub.
 
 ## Полезные ссылки
 
@@ -91,7 +91,7 @@ API design — критическое skill. Хороший API: **intuitive, co
 
 ## Q1. (!) Naming resources (nouns, plural)?
 
-**Use nouns, plural**:
+**Используйте существительные во множественном числе:**
 
 ```
 ✓ /users
@@ -101,18 +101,18 @@ API design — критическое skill. Хороший API: **intuitive, co
 ✗ /user           # singular
 ```
 
-**Hierarchy:**
+**Иерархия:**
 ```
 ✓ /users/123/orders/456
 ```
 
-**Avoid verbs в URLs** (use HTTP verbs instead):
+**Избегайте глаголов в URL** (вместо них — HTTP-методы):
 ```
 ✓ DELETE /users/123     # not POST /users/123/delete
 ✓ PUT /users/123        # not POST /users/123/update
 ```
 
-**Exception:** **actions** не fitting CRUD (см. Q8).
+**Исключение:** **действия**, не укладывающиеся в CRUD (см. Q8).
 
 ## Q2. (!) URL structure?
 
@@ -122,20 +122,20 @@ https://api.example.com/v1/users/123/orders?status=pending&limit=10
        host       version  resource path     query string
 ```
 
-**Best practices:**
-- **API subdomain** (`api.example.com`)
-- **Version в path** (`/v1/`)
-- **Lowercase** URLs (`/users` not `/Users`)
-- **Hyphens, not underscores** (`/order-items` not `/order_items`)
-- **Plural nouns** для collections
-- **Identifiers в path** (`/users/123`)
-- **Filters в query string** (`?status=active`)
+**Лучшие практики:**
+- **Поддомен для API** (`api.example.com`)
+- **Версия в пути** (`/v1/`)
+- **URL в нижнем регистре** (`/users`, а не `/Users`)
+- **Дефисы, а не подчёркивания** (`/order-items`, а не `/order_items`)
+- **Существительные во множественном числе** для коллекций
+- **Идентификаторы в пути** (`/users/123`)
+- **Фильтры в query string** (`?status=active`)
 
 ## Q3. snake_case vs camelCase в JSON?
 
-**Choose ONE convention, stick to it.**
+**Выберите ОДНО соглашение и придерживайтесь его.**
 
-**snake_case** (более common):
+**snake_case** (более распространён):
 ```json
 {"first_name": "Alice", "created_at": "2025-04-19T10:00:00Z"}
 ```
@@ -145,74 +145,74 @@ https://api.example.com/v1/users/123/orders?status=pending&limit=10
 {"firstName": "Alice", "createdAt": "2025-04-19T10:00:00Z"}
 ```
 
-**Used by:**
-- snake_case: Stripe, Slack, Twitter, Python ecosystem
-- camelCase: Google, Microsoft, JavaScript ecosystem
+**Кто использует:**
+- snake_case: Stripe, Slack, Twitter, экосистема Python
+- camelCase: Google, Microsoft, экосистема JavaScript
 
-**В Java backend** — внутри `firstName` (camelCase), serialize с Jackson `@JsonProperty("first_name")` если API uses snake.
+**В Java-бэкенде** — внутри `firstName` (camelCase), сериализация через Jackson `@JsonProperty("first_name")`, если API использует snake_case.
 
 ## Q4. Date/time format?
 
-**ISO 8601** — international standard:
+**ISO 8601** — международный стандарт:
 
 ```json
 "created_at": "2025-04-19T14:30:00Z"           // UTC
 "created_at": "2025-04-19T14:30:00+02:00"       // with timezone
 ```
 
-**Avoid:**
-- Unix timestamps (use ISO для humans)
-- Custom formats ("April 19, 2025")
-- Local times без timezone
+**Избегайте:**
+- Unix-таймстампов (для людей используйте ISO)
+- Кастомных форматов («April 19, 2025»)
+- Локального времени без указания таймзоны
 
-**В Java:** `Instant`, `OffsetDateTime`, `ZonedDateTime` (NOT `Date`).
+**В Java:** `Instant`, `OffsetDateTime`, `ZonedDateTime` (НЕ `Date`).
 
 ## Q5. (!) Resource hierarchy (parent/child)?
 
-**Hierarchy via URL:**
+**Иерархия через URL:**
 ```
 /users/123/orders          # all orders для user 123
 /users/123/orders/456      # specific order
 /orders/456                # also valid (independent access)
 ```
 
-**Pros nested:**
-- Clear ownership
-- Scoping built-in
+**Плюсы вложенности:**
+- Понятная принадлежность (ownership)
+- Скоупинг встроен «из коробки»
 
-**Cons nested:**
-- Deep nesting confusing (`/users/123/orders/456/items/789/refunds/...`)
-- Limited to two levels usually
+**Минусы вложенности:**
+- Глубокая вложенность сбивает с толку (`/users/123/orders/456/items/789/refunds/...`)
+- Обычно ограничена двумя уровнями
 
-**Best practice:** **2 levels max** в nested URLs. Beyond — flat structure с filters.
+**Лучшая практика:** **максимум 2 уровня** во вложенных URL. Дальше — плоская структура с фильтрами.
 
 ## Q6. Sub-resources vs flat structure?
 
-**Sub-resources** (nested):
+**Под-ресурсы** (вложенные):
 ```
 GET /users/123/orders     # orders for this user
 POST /users/123/orders    # create order для user
 ```
 
-**Flat:**
+**Плоская структура:**
 ```
 GET /orders?user_id=123
 POST /orders {"user_id": 123, ...}
 ```
 
-**Choice:**
-- **Strong containment** (item belongs к user) → nested
-- **Independent** entities → flat
+**Выбор:**
+- **Сильная вложенность** (элемент принадлежит пользователю) → вложенные ресурсы
+- **Независимые** сущности → плоская структура
 
-**Both can co-exist.** Stripe uses both: `/customers/cus_123/charges` и `/charges?customer=cus_123`.
+**Оба варианта могут сосуществовать.** Stripe использует и то, и другое: `/customers/cus_123/charges` и `/charges?customer=cus_123`.
 
 ## Q7. (!) Bulk operations?
 
-**Need:** create / update / delete multiple resources в one call.
+**Зачем:** создать / обновить / удалить несколько ресурсов за один вызов.
 
-**Approaches:**
+**Подходы:**
 
-**1. Send array:**
+**1. Передать массив:**
 ```http
 POST /users/batch
 [
@@ -221,56 +221,56 @@ POST /users/batch
 ]
 ```
 
-**2. Wrap в object:**
+**2. Обернуть в объект:**
 ```http
 POST /users
 {"users": [{"name": "Alice"}, ...]}
 ```
 
-**3. Sub-resource:**
+**3. Под-ресурс:**
 ```http
 POST /users/bulk-create
 {"users": [...]}
 ```
 
-**Considerations:**
-- **Atomicity** — all-or-nothing? или partial success?
-- **Response format** — array of results, errors per item?
-- **Limits** — max items per request
+**На что обратить внимание:**
+- **Атомарность** — всё-или-ничего? или частичный успех (partial success)?
+- **Формат ответа** — массив результатов, ошибки по каждому элементу?
+- **Лимиты** — максимум элементов на один запрос
 
-**JSON:API spec** имеет conventions для bulk.
+**Спецификация JSON:API** содержит соглашения для bulk-операций.
 
 ## Q8. Custom actions (verbs)?
 
-Иногда action не CRUD (e.g., "publish article", "archive order").
+Иногда действие не вписывается в CRUD (например, «опубликовать статью», «заархивировать заказ»).
 
-**Options:**
+**Варианты:**
 
-**1. Sub-resource:**
+**1. Под-ресурс:**
 ```
 POST /articles/123/publish
 POST /orders/456/cancel
 ```
 
-**2. State change через PATCH:**
+**2. Смена состояния через PATCH:**
 ```
 PATCH /orders/456
 {"status": "cancelled"}
 ```
 
-**3. Action endpoint:**
+**3. Эндпоинт-действие:**
 ```
 POST /actions/cancel-order
 {"order_id": 456}
 ```
 
-**Best practice:** **sub-resource** часто naturally fit. Limit к few cases (don't go RPC-style).
+**Лучшая практика:** **под-ресурс** часто ложится естественно. Ограничивайтесь редкими случаями (не скатывайтесь в RPC-стиль).
 
 ## Q9. (!) Pagination strategies?
 
-**Always paginate** collection endpoints (don't return 1 million items).
+**Всегда пагинируйте** эндпоинты-коллекции (не возвращайте миллион элементов).
 
-**Approaches:**
+**Подходы:**
 
 **Offset/limit:**
 ```
@@ -282,76 +282,76 @@ GET /users?offset=20&limit=10
 GET /users?page=3&per_page=10
 ```
 
-**Cursor-based:**
+**Курсорная (cursor-based):**
 ```
 GET /users?cursor=abc123&limit=10
 ```
 
-**Time-based:**
+**По времени (time-based):**
 ```
 GET /events?since=2025-04-19T10:00:00Z&limit=100
 ```
 
-**Default limit** — 20-100 typical. Max — 100-1000.
+**Лимит по умолчанию** — типично 20-100. Максимум — 100-1000.
 
 ## Q10. (!) Cursor-based vs offset-based?
 
 **Offset-based** (`?offset=20&limit=10`):
-- ✅ **Easy to understand**
-- ✅ Skip к page 5 directly
-- ❌ **Slow на больших datasets** (`OFFSET 1000000` = scan all rows)
-- ❌ **Inconsistent** if data changes (skipped/duplicate items)
+- ✅ **Проста для понимания**
+- ✅ Можно сразу перейти на 5-ю страницу
+- ❌ **Медленна на больших датасетах** (`OFFSET 1000000` = скан всех строк)
+- ❌ **Неконсистентна** при изменении данных (пропуски/дубликаты элементов)
 
 **Cursor-based** (`?cursor=abc&limit=10`):
-- ✅ **Fast** (uses indexed cursor)
-- ✅ **Consistent** (no skip/dup)
-- ❌ Cannot jump к arbitrary page
-- ❌ More complex implementation
+- ✅ **Быстра** (использует индексированный курсор)
+- ✅ **Консистентна** (нет пропусков/дублей)
+- ❌ Нельзя перейти на произвольную страницу
+- ❌ Сложнее в реализации
 
-**Use cursor для:**
-- Large datasets
-- Real-time feeds
-- High-traffic APIs
+**Курсор подходит для:**
+- Больших датасетов
+- Real-time-лент
+- Высоконагруженных API
 
-**Use offset для:**
-- Small datasets
-- Admin UIs requiring page jumping
+**Offset подходит для:**
+- Небольших датасетов
+- Админок, где нужны переходы по страницам
 
-**Modern APIs** (Stripe, Shopify, GraphQL Relay) — cursor-based.
+**Современные API** (Stripe, Shopify, GraphQL Relay) — курсорные.
 
 ## Q11. (!) Filtering и sorting?
 
-**Filtering:**
+**Фильтрация:**
 ```
 GET /users?status=active
 GET /users?created_after=2025-01-01
 GET /users?role=admin&country=US
 ```
 
-**Sorting:**
+**Сортировка:**
 ```
 GET /users?sort=created_at         # ascending
 GET /users?sort=-created_at         # descending (- prefix)
 GET /users?sort=name,-created_at   # multiple fields
 ```
 
-**Advanced filtering** (RSQL, OData):
+**Продвинутая фильтрация** (RSQL, OData):
 ```
 GET /users?filter=age=gt=18;status==active
 ```
 
-**Best practice:**
-- Simple filters via query params
-- Complex filters → POST /search endpoint с JSON body
+**Лучшая практика:**
+- Простые фильтры — через query-параметры
+- Сложные фильтры → эндпоинт `POST /search` с JSON-телом
 
 ## Q12. Field selection (sparse fieldsets)?
 
-**Return only requested fields:**
+**Возвращайте только запрошенные поля:**
 ```
 GET /users/123?fields=id,name,email
 ```
 
-**Response:**
+**Ответ:**
 ```json
 {
   "id": 123,
@@ -360,20 +360,20 @@ GET /users/123?fields=id,name,email
 }
 ```
 
-**Effect:** меньше bandwidth, faster для bandwidth-sensitive clients.
+**Эффект:** меньше трафика, быстрее для клиентов, чувствительных к ширине канала.
 
-**JSON:API has standard:**
+**В JSON:API для этого есть стандарт:**
 ```
 GET /users?fields[user]=name,email
 ```
 
-**GraphQL** does this naturally.
+**GraphQL** делает это естественным образом.
 
 ## Q13. (!) Error response format?
 
-**Consistent error format** critical.
+**Консистентный формат ошибок** критически важен.
 
-**Common pattern:**
+**Распространённый паттерн:**
 ```json
 {
   "error": {
@@ -388,19 +388,19 @@ GET /users?fields[user]=name,email
 }
 ```
 
-**Best practices:**
-- **HTTP status code** (4xx, 5xx)
-- **Machine-readable code** (`INVALID_PARAMETER`)
-- **Human-readable message**
-- **Details** для programmatic handling
-- **Documentation link**
-- **Request ID** (для support)
+**Лучшие практики:**
+- **HTTP-статус** (4xx, 5xx)
+- **Машиночитаемый код** (`INVALID_PARAMETER`)
+- **Человекочитаемое сообщение** (message)
+- **Details** для программной обработки
+- **Ссылка на документацию**
+- **Request ID** (для поддержки)
 
-**No stack traces** в production responses (security).
+**Никаких stack trace** в ответах продакшена (безопасность).
 
 ## Q14. (!) Problem Details (RFC 7807)?
 
-**RFC 7807** — standard error format.
+**RFC 7807** — стандартный формат ошибок.
 
 ```json
 {
@@ -414,11 +414,11 @@ GET /users?fields[user]=name,email
 
 **Content-Type:** `application/problem+json`.
 
-**Stripe, Spring Boot 3+** support this. Standardization simplifies tooling.
+**Stripe, Spring Boot 3+** это поддерживают. Стандартизация упрощает инструментарий.
 
 ## Q15. Validation errors?
 
-**Multiple errors** в one response (don't fail-fast):
+**Несколько ошибок** в одном ответе (не fail-fast):
 
 ```json
 {
@@ -434,13 +434,13 @@ GET /users?fields[user]=name,email
 }
 ```
 
-**Status:** 400 Bad Request или 422 Unprocessable Entity.
+**Статус:** 400 Bad Request или 422 Unprocessable Entity.
 
-**Returns ALL errors** at once (better UX for forms).
+**Возвращайте ВСЕ ошибки** сразу (лучше UX для форм).
 
 ## Q16. (!) Idempotency keys?
 
-**Make POST idempotent** через client-supplied key.
+**Сделайте POST идемпотентным** через ключ, передаваемый клиентом.
 
 ```http
 POST /payments HTTP/1.1
@@ -448,20 +448,20 @@ Idempotency-Key: 7f9c1d-...
 {"amount": 100}
 ```
 
-**Server logic:**
-1. Check if key already processed
-2. If yes — return same response (cached)
-3. If no — process, store result
+**Логика сервера:**
+1. Проверить, не обработан ли ключ ранее
+2. Если да — вернуть тот же ответ (из кэша)
+3. Если нет — обработать, сохранить результат
 
-**Use case:** retry network failures без duplicate charges.
+**Сценарий:** повтор при сетевых сбоях без двойного списания.
 
-**Stripe** is canonical example.
+**Stripe** — канонический пример.
 
-**Storage:** Redis с TTL (24h typical).
+**Хранилище:** Redis с TTL (типично 24 часа).
 
 ## Q17. Optimistic concurrency (ETag)?
 
-**ETag** — version identifier на resource.
+**ETag** — идентификатор версии ресурса.
 
 ```http
 # Read
@@ -476,61 +476,61 @@ If-Match: "abc123"
 # If resource changed → 412 Precondition Failed
 ```
 
-**Прevent** lost updates (concurrent modifications).
+**Предотвращает** потерянные обновления (конкурентные изменения).
 
-**Effect:**
-- Client A reads (ETag "abc123")
-- Client B reads (ETag "abc123")
-- Client A updates (succeeds, new ETag "def456")
-- Client B updates (412 Precondition Failed — must reload)
+**Эффект:**
+- Клиент A читает (ETag "abc123")
+- Клиент B читает (ETag "abc123")
+- Клиент A обновляет (успех, новый ETag "def456")
+- Клиент B обновляет (412 Precondition Failed — надо перечитать)
 
-**Alternative:** version fields (`{"version": 1, ...}`).
+**Альтернатива:** поля версии (`{"version": 1, ...}`).
 
 ## Q18. (!) Auth strategies (API key, JWT, OAuth)?
 
-**API Key:**
-- Simple, common для server-to-server
+**API-ключ:**
+- Прост, распространён для server-to-server
 - `Authorization: Bearer ak_test_...`
-- No expiration usually
-- Limited scope (or full access)
+- Обычно без срока истечения
+- Ограниченный скоуп (или полный доступ)
 
 **JWT (JSON Web Token):**
-- Self-contained (claims внутри)
-- Stateless (no server lookup)
-- Expiration built-in
-- Suitable для user auth
+- Самодостаточен (claims внутри)
+- Stateless (без обращения к серверу)
+- Срок истечения встроен
+- Подходит для аутентификации пользователей
 
 **OAuth 2.0:**
-- Standard для third-party access
-- Authorization Code flow для users
-- Client Credentials для service accounts
-- Refresh tokens для long-lived sessions
+- Стандарт для доступа сторонних приложений
+- Authorization Code flow — для пользователей
+- Client Credentials — для сервисных аккаунтов
+- Refresh-токены — для долгоживущих сессий
 
-**Choice:**
-- **Internal services** — API keys или mTLS
-- **User-facing** — OAuth + JWT
-- **Public APIs** — API keys (simple) или OAuth (advanced)
+**Выбор:**
+- **Внутренние сервисы** — API-ключи или mTLS
+- **Обращённые к пользователю** — OAuth + JWT
+- **Публичные API** — API-ключи (просто) или OAuth (продвинуто)
 
 Подробнее — в [OAuth2](../security/oauth2-interview.md), [JWT](../security/jwt-interview.md).
 
 ## Q19. API key best practices?
 
-1. **Prefix keys** (`sk_live_`, `pk_test_`) — identify type at glance
-2. **Long random** (32+ bytes)
-3. **Scoped permissions** (read-only, specific resources)
-4. **Revocable** (must be able to invalidate immediately)
-5. **Rotatable** (allow renew без downtime)
-6. **Per-environment** (test, live)
-7. **Audit logging** (who used when)
-8. **Hash в DB** (don't store plaintext)
-9. **Show once** (на creation only)
-10. **Rate limiting** per key
+1. **Префиксы в ключах** (`sk_live_`, `pk_test_`) — тип виден с первого взгляда
+2. **Длинные случайные** (32+ байт)
+3. **Скоупированные права** (read-only, конкретные ресурсы)
+4. **Отзываемые** (должна быть возможность мгновенно инвалидировать)
+5. **Ротируемые** (обновление без простоя)
+6. **На каждое окружение** (test, live)
+7. **Аудит-логирование** (кто и когда использовал)
+8. **Хеш в БД** (не хранить в открытом виде)
+9. **Показывать один раз** (только при создании)
+10. **Rate limiting** на каждый ключ
 
-**Stripe pattern:** `sk_live_abc123...` — prefix immediately tells whether secret/publishable/test/live.
+**Паттерн Stripe:** `sk_live_abc123...` — по префиксу сразу понятно secret/publishable и test/live.
 
 ## Q20. (!) Rate limiting headers?
 
-**Tell client about limits:**
+**Сообщайте клиенту о лимитах:**
 
 ```http
 HTTP/1.1 200 OK
@@ -539,47 +539,47 @@ X-RateLimit-Remaining: 47
 X-RateLimit-Reset: 1714579200    # Unix timestamp
 ```
 
-**RFC 9239 (newer):**
+**RFC 9239 (новее):**
 ```http
 RateLimit-Limit: 100
 RateLimit-Remaining: 47
 RateLimit-Reset: 60
 ```
 
-**На rate limit hit:**
+**При срабатывании лимита:**
 ```http
 HTTP/1.1 429 Too Many Requests
 Retry-After: 60
 ```
 
-**Client should:**
-- Monitor headers
-- Backoff before hitting limit
-- Honor `Retry-After` после 429
+**Клиент должен:**
+- Следить за заголовками
+- Делать backoff до достижения лимита
+- Уважать `Retry-After` после 429
 
 ## Q21. Throttling vs hard limits?
 
-**Throttling** (soft) — slow down requests.
-**Hard limit** — reject (429).
+**Троттлинг** (мягкий) — замедление запросов.
+**Жёсткий лимит** — отказ (429).
 
-**Implementation:**
-- **Token bucket** (popular)
+**Реализация:**
+- **Token bucket** (популярно)
 - **Sliding window**
 - **Fixed window**
 
-**Per:**
-- API key
-- IP address
-- User
-- Endpoint
+**В разрезе:**
+- API-ключа
+- IP-адреса
+- Пользователя
+- Эндпоинта
 
-**Stripe model:** different limits per endpoint (creating users vs reading).
+**Модель Stripe:** разные лимиты на разные эндпоинты (создание пользователей против чтения).
 
-**Tools:** API Gateway (Kong, Apigee), Nginx, Envoy, application code.
+**Инструменты:** API Gateway (Kong, Apigee), Nginx, Envoy, код приложения.
 
 ## Q22. (!) OpenAPI / Swagger?
 
-**OpenAPI** (formerly Swagger) — standard для API documentation.
+**OpenAPI** (бывший Swagger) — стандарт для документирования API.
 
 ```yaml
 openapi: 3.0.0
@@ -605,64 +605,64 @@ paths:
                 $ref: '#/components/schemas/User'
 ```
 
-**Tools:**
-- **Swagger UI** — interactive docs
-- **Redoc** — alternative UI
-- **Code generators** — clients SDKs из spec
-- **Validators** — request/response validation
+**Инструменты:**
+- **Swagger UI** — интерактивная документация
+- **Redoc** — альтернативный UI
+- **Кодогенераторы** — клиентские SDK из спецификации
+- **Валидаторы** — проверка запросов/ответов
 
-**Best practice:** **API spec first, then implement**. OpenAPI = source of truth.
+**Лучшая практика:** **сначала спецификация API, потом реализация**. OpenAPI = источник истины.
 
 Подробнее — в [OpenAPI / Swagger](openapi-swagger-interview.md).
 
 ## Q23. Examples и SDKs?
 
-**Always provide:**
-- **Code examples** (curl, Python, JavaScript, Java, ...)
-- **Postman collection** или Insomnia exports
-- **SDKs** для major languages (auto-generated from OpenAPI)
+**Всегда предоставляйте:**
+- **Примеры кода** (curl, Python, JavaScript, Java, ...)
+- **Коллекцию Postman** или экспорты Insomnia
+- **SDK** для основных языков (автогенерация из OpenAPI)
 
-**SDKs reduce friction:** developers don't write HTTP code from scratch.
+**SDK снижают порог входа:** разработчикам не нужно писать HTTP-код с нуля.
 
-**Auto-gen tools:** OpenAPI Generator, Speakeasy, Stainless.
+**Инструменты автогенерации:** OpenAPI Generator, Speakeasy, Stainless.
 
 ## Q24. (!) HTTPS only?
 
-**Always.** No HTTP в production.
+**Всегда.** Никакого HTTP в продакшене.
 
 ```
 HTTP/1.1 308 Permanent Redirect
 Location: https://api.example.com/...
 ```
 
-**Or fail с 400/426** (don't redirect — clients may leak secrets).
+**Или отдавайте 400/426** (не редиректьте — клиенты могут утечь секреты).
 
-**HSTS header:**
+**Заголовок HSTS:**
 ```http
 Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
 ```
 
-**TLS 1.2 minimum** (1.3 recommended).
+**TLS 1.2 минимум** (рекомендуется 1.3).
 
 ## Q25. Input validation, output encoding?
 
-**Input validation:**
-- Schema (OpenAPI или JSON Schema)
-- Type checking
-- Range checking
-- Format (email, URL, UUID)
-- Length limits
-- SQL injection prevention (parameterized queries)
+**Валидация входных данных:**
+- Схема (OpenAPI или JSON Schema)
+- Проверка типов
+- Проверка диапазонов
+- Формат (email, URL, UUID)
+- Ограничения длины
+- Защита от SQL-инъекций (параметризованные запросы)
 
-**Output encoding:**
-- Escape HTML/JS если HTML rendering possible
-- Sanitize file names в URLs
+**Кодирование вывода:**
+- Экранируйте HTML/JS, если возможен HTML-рендеринг
+- Санируйте имена файлов в URL
 
 Подробнее — в [Application Security](../security/application-security-interview.md).
 
 ## Q26. CORS?
 
-**Cross-Origin Resource Sharing** — browser security.
+**Cross-Origin Resource Sharing** — браузерная безопасность.
 
 ```http
 Access-Control-Allow-Origin: https://myapp.com
@@ -671,9 +671,9 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 Access-Control-Max-Age: 3600
 ```
 
-**Preflight OPTIONS** request before actual request.
+**Preflight-запрос OPTIONS** перед фактическим запросом.
 
-**Best practice:** specify exact origins, не `*` для authenticated APIs.
+**Лучшая практика:** указывайте точные origin, а не `*` для API с аутентификацией.
 
 ## Q27. (!) Caching headers?
 
@@ -693,61 +693,61 @@ If-None-Match: "abc123"
 # → 304 Not Modified (если unchanged)
 ```
 
-**Cache levels:**
-- Browser cache
+**Уровни кэширования:**
+- Кэш браузера
 - CDN
 - API gateway
-- Application cache (Redis)
+- Кэш приложения (Redis)
 
-**Use case:** static-ish data (user profile, product catalog).
+**Сценарий:** условно статичные данные (профиль пользователя, каталог товаров).
 
 ## Q28. Compression (gzip, brotli)?
 
-**Client requests:**
+**Клиент запрашивает:**
 ```http
 Accept-Encoding: gzip, br
 ```
 
-**Server responds:**
+**Сервер отвечает:**
 ```http
 Content-Encoding: gzip
 ```
 
-**Effect:** 60-90% reduction для JSON/text.
+**Эффект:** сокращение на 60-90% для JSON/текста.
 
-**Brotli** > **gzip** (better compression, slightly more CPU).
+**Brotli** > **gzip** (лучше сжатие, чуть больше CPU).
 
-**Most frameworks** auto-handle compression.
+**Большинство фреймворков** обрабатывают сжатие автоматически.
 
 ## Q29. (!) HATEOAS — нужно?
 
 **В большинстве** API — **нет**.
 
-**HATEOAS pure approach** rarely justifies complexity. **OpenAPI documentation** + URL conventions = почти все benefits.
+**Чистый подход HATEOAS** редко оправдывает свою сложность. **Документация OpenAPI** + соглашения об URL дают почти все преимущества.
 
-**Когда useful:**
-- State machines (workflow APIs)
-- Self-discovering hypermedia clients
-- Strict REST compliance (rare)
+**Когда полезно:**
+- Конечные автоматы (workflow-API)
+- Самообнаруживающиеся гипермедиа-клиенты
+- Строгое соответствие REST (редко)
 
 См. [REST Maturity](rest-maturity-interview.md).
 
 ## Q30. Webhooks design?
 
-**Webhook** — server sends events к customer-provided URL.
+**Webhook** — сервер отправляет события на URL, заданный клиентом.
 
-**Best practices:**
-- **Sign payloads** (HMAC) — verify authenticity
-- **Retry** на failures (with exponential backoff)
-- **Dead letter** после max retries
-- **Idempotency** — same event may be delivered multiple times
-- **Event types** (`order.created`, `order.cancelled`)
-- **Versioned payloads** (per-customer pinned)
-- **Webhook management API** (subscribe, unsubscribe, list)
-- **Documentation** с payload examples
-- **Testing tools** (webhook tester, ngrok)
+**Лучшие практики:**
+- **Подписывайте payload** (HMAC) — проверка подлинности
+- **Повторяйте** при сбоях (с экспоненциальным backoff)
+- **Dead letter** после максимума попыток
+- **Идемпотентность** — одно событие может прийти несколько раз
+- **Типы событий** (`order.created`, `order.cancelled`)
+- **Версионированные payload** (закреплены за каждым клиентом)
+- **API управления вебхуками** (subscribe, unsubscribe, list)
+- **Документация** с примерами payload
+- **Инструменты тестирования** (webhook tester, ngrok)
 
-**Stripe webhooks** are gold standard — copy that design.
+**Вебхуки Stripe** — золотой стандарт, копируйте этот дизайн.
 
 ---
 

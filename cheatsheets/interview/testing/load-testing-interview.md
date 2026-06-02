@@ -18,7 +18,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Load Testing`
 
-`Load testing` — testing system под expected/peak load. Отличается от **stress testing** (find breaking point), **spike testing** (sudden jumps), **soak testing** (sustained over hours/days). Главные tools: **JMeter** (legacy, GUI), **k6** (modern, JS-based), **Gatling** (Scala/Java), **Locust** (Python). Critical для capacity planning.
+`Load testing` — проверка системы под ожидаемой/пиковой нагрузкой. Отличается от **stress testing** (поиск точки отказа), **spike testing** (резкие скачки), **soak testing** (длительная нагрузка часами/днями). Главные инструменты: **JMeter** (legacy, GUI), **k6** (современный, на JS), **Gatling** (Scala/Java), **Locust** (Python). Критично для capacity planning.
 
 ## Полезные ссылки
 
@@ -74,76 +74,76 @@ updated: "2026-04-25"
 
 ## Q1. (!) Что такое load testing?
 
-**Load testing** — testing system под **expected load** для verify performance.
+**Load testing** — проверка системы под **ожидаемой нагрузкой** для верификации производительности.
 
-**Cели:**
-- **Verify SLAs** (99% requests < 200ms)
-- **Find bottlenecks** (DB, network, code)
-- **Capacity planning** (how many servers for X RPS)
-- **Regression detection** (perf got worse?)
-- **Tuning** (config changes effect)
+**Цели:**
+- **Проверить SLA** (99% запросов < 200ms)
+- **Найти узкие места** (БД, сеть, код)
+- **Capacity planning** (сколько серверов нужно для X RPS)
+- **Обнаружить регрессии** (производительность просела?)
+- **Тюнинг** (эффект от изменения конфигурации)
 
-**Use cases:**
-- Перед launch (Black Friday prep)
-- After major refactor
-- New deployment validation
-- Periodic regression testing
+**Сценарии применения:**
+- Перед запуском (подготовка к Black Friday)
+- После крупного рефакторинга
+- Валидация нового деплоя
+- Периодическое regression-тестирование
 
 ## Q2. (!) Load vs stress vs spike vs soak vs scalability testing?
 
-| Type | Goal | Pattern |
+| Тип | Цель | Паттерн |
 |------|------|---------|
-| **Load** | Verify performance under expected load | Sustained normal traffic |
-| **Stress** | Find breaking point | Increasing load until failure |
-| **Spike** | Verify resilience к sudden bursts | Sharp increase then drop |
-| **Soak (endurance)** | Find issues over long time | Sustained для hours/days |
-| **Scalability** | Verify scaling | Gradually increase load + scale |
-| **Capacity** | Determine max load | Find max RPS where SLA holds |
+| **Load** | Проверить производительность под ожидаемой нагрузкой | Устойчивый нормальный трафик |
+| **Stress** | Найти точку отказа | Растущая нагрузка до сбоя |
+| **Spike** | Проверить устойчивость к резким всплескам | Резкий рост и спад |
+| **Soak (endurance)** | Найти проблемы на длинной дистанции | Устойчивая нагрузка часами/днями |
+| **Scalability** | Проверить масштабирование | Постепенный рост нагрузки + scale |
+| **Capacity** | Определить максимальную нагрузку | Найти максимальный RPS, при котором SLA держится |
 
-**Common pattern в production:** **all of these**, periodically.
+**Типичная практика в production:** **все из перечисленного**, периодически.
 
 ## Q3. Зачем load testing?
 
-1. **Production-like behavior** detection (memory leaks, connection exhaustion)
-2. **Validate SLAs** before launch
-3. **Catch regressions** в performance
-4. **Right-sizing** infrastructure
-5. **Confidence** для deploy
-6. **Debugging** под load (different bugs than dev env)
-7. **Tuning** opportunities (DB indexes, caching)
+1. **Обнаружение production-подобного поведения** (утечки памяти, исчерпание соединений)
+2. **Валидация SLA** до запуска
+3. **Отлов регрессий** в производительности
+4. **Right-sizing** инфраструктуры
+5. **Уверенность** при деплое
+6. **Отладка** под нагрузкой (другие баги, чем в dev-окружении)
+7. **Возможности тюнинга** (индексы БД, кэширование)
 
-**Without load testing** → production failures, customer impact.
+**Без load testing** → отказы в production, ущерб для пользователей.
 
 ## Q4. (!) Главные метрики (RPS, latency, errors)?
 
-**RPS (Requests per Second):** throughput.
-**Latency:** response time (per request).
-**Error rate:** % failed requests.
-**Concurrent users (VUs):** simulated users.
-**Bandwidth:** network usage.
-**CPU/Memory:** server resource usage (correlate с request rate).
+**RPS (Requests per Second):** пропускная способность (throughput).
+**Latency:** время отклика (на каждый запрос).
+**Error rate:** % неудачных запросов.
+**Concurrent users (VUs):** имитируемые пользователи.
+**Bandwidth:** использование сети.
+**CPU/Memory:** потребление ресурсов сервера (коррелирует с request rate).
 
-**Industry-standard "RED metrics":**
+**Отраслевой стандарт «RED metrics»:**
 - **R**ate — RPS
 - **E**rrors — error rate
 - **D**uration — latency
 
-**USE metrics** (для resources):
-- **U**tilization — % busy
-- **S**aturation — queue depth
+**USE metrics** (для ресурсов):
+- **U**tilization — % занятости
+- **S**aturation — глубина очереди
 - **E**rrors
 
 ## Q5. (!) Percentiles (p50, p95, p99) — почему важны?
 
-**Average latency misleading.** Few slow requests can be hidden.
+**Средняя latency вводит в заблуждение.** Несколько медленных запросов могут «спрятаться».
 
-**Percentiles** show distribution:
-- **p50 (median)** — typical user experience
-- **p95** — 5% worst case
-- **p99** — 1% worst case
-- **p99.9** — extreme tail
+**Перцентили** показывают распределение:
+- **p50 (медиана)** — типичный пользовательский опыт
+- **p95** — 5% худших случаев
+- **p99** — 1% худших случаев
+- **p99.9** — экстремальный хвост распределения
 
-**Example:**
+**Пример:**
 ```
 1000 requests
 99% complete в 100ms
@@ -153,43 +153,43 @@ Avg = ~150ms
 p99 = 5000ms ← real user pain
 ```
 
-**Tail latency** matters для UX.
+**Tail latency** (хвостовая задержка) важна для UX.
 
-**SLA usually defined в percentiles:** "p95 < 200ms".
+**SLA обычно задаётся в перцентилях:** «p95 < 200ms».
 
 ## Q6. Throughput vs latency trade-off?
 
-**Higher throughput** often = **higher latency** (queuing).
+**Выше throughput** часто = **выше latency** (из-за очередей).
 
-**Little's Law:**
+**Закон Литтла (Little's Law):**
 ```
 Concurrency = Throughput × Latency
 ```
 
-Example:
+Пример:
 - Latency 10ms, Throughput 1000 RPS → Concurrency 10
 - Latency 100ms, Throughput 100 RPS → Concurrency 10
 
-**Capacity = max throughput где latency acceptable.**
+**Capacity = максимальный throughput, при котором latency приемлема.**
 
 ## Q7. (!) JMeter (legacy gold standard)?
 
-**Apache JMeter** — most popular OSS load testing (с 1998!).
+**Apache JMeter** — самый популярный OSS-инструмент load testing (с 1998 года!).
 
-**Pros:**
-- **GUI** для test design (drag-drop)
-- **HUGE plugin ecosystem**
-- Multiple protocols (HTTP, JDBC, JMS, gRPC)
+**Плюсы:**
+- **GUI** для проектирования тестов (drag-drop)
+- **ОГРОМНАЯ экосистема плагинов**
+- Множество протоколов (HTTP, JDBC, JMS, gRPC)
 - **Distributed mode** (master + slaves)
-- **Industry standard** в enterprise
+- **Отраслевой стандарт** в enterprise
 
-**Cons:**
-- **Heavy** (Java GUI sluggish)
-- **XML-based** test plans (verbose, hard к diff)
-- **Lower performance** than k6/Gatling
-- **Threads** — high resource usage per virtual user
+**Минусы:**
+- **Тяжёлый** (Java GUI тормозит)
+- **Тест-планы на XML** (многословные, тяжело диффить)
+- **Ниже производительность**, чем у k6/Gatling
+- **Потоки** — высокое потребление ресурсов на одного виртуального пользователя
 
-**Still widely used** — legacy investments, enterprise familiarity.
+**По-прежнему широко используется** — наследие инвестиций, привычка в enterprise.
 
 ```bash
 jmeter -n -t test-plan.jmx -l results.jtl  # CLI mode
@@ -197,20 +197,20 @@ jmeter -n -t test-plan.jmx -l results.jtl  # CLI mode
 
 ## Q8. (!) k6 (modern)?
 
-**k6** (by Grafana, formerly Load Impact) — modern load testing tool.
+**k6** (от Grafana, ранее Load Impact) — современный инструмент load testing.
 
-**Pros:**
-- **JavaScript/TypeScript** test scripts
-- **Very high performance** (Go runtime)
-- **CI/CD-friendly**
-- **Cloud + Open Source** versions
-- **Modern reporting** (Grafana integration)
+**Плюсы:**
+- Тест-скрипты на **JavaScript/TypeScript**
+- **Очень высокая производительность** (Go runtime)
+- **Дружелюбен к CI/CD**
+- Версии **Cloud + Open Source**
+- **Современная отчётность** (интеграция с Grafana)
 
-**Cons:**
-- **Less mature** than JMeter
-- **JS limitations** для complex scenarios
+**Минусы:**
+- **Менее зрелый**, чем JMeter
+- **Ограничения JS** для сложных сценариев
 
-**Example:**
+**Пример:**
 ```javascript
 import http from 'k6/http';
 import { check, sleep } from 'k6';
@@ -235,23 +235,23 @@ export default function () {
 k6 run script.js
 ```
 
-В **2025** — k6 fastest-growing load testing tool.
+В **2025** — k6 наиболее быстрорастущий инструмент load testing.
 
 ## Q9. (!) Gatling (Scala/Java)?
 
-**Gatling** — Scala-based (DSL также Java/Kotlin since 3.7).
+**Gatling** — на базе Scala (DSL также Java/Kotlin начиная с 3.7).
 
-**Pros:**
-- **Very high performance** (async I/O)
-- **Beautiful HTML reports**
-- **Code-based** tests (Scala/Java/Kotlin DSL)
-- Async, non-blocking
+**Плюсы:**
+- **Очень высокая производительность** (async I/O)
+- **Красивые HTML-отчёты**
+- Тесты **в виде кода** (DSL на Scala/Java/Kotlin)
+- Асинхронный, неблокирующий
 
-**Cons:**
-- Scala learning curve
-- Less plugin ecosystem than JMeter
+**Минусы:**
+- Кривая обучения Scala
+- Экосистема плагинов меньше, чем у JMeter
 
-**Example (Scala):**
+**Пример (Scala):**
 ```scala
 class BasicSimulation extends Simulation {
   val httpProtocol = http.baseUrl("https://api.example.com")
@@ -265,11 +265,11 @@ class BasicSimulation extends Simulation {
 }
 ```
 
-**Gatling vs k6** — closely matched. Choice often по language preference.
+**Gatling vs k6** — близки по возможностям. Выбор часто диктуется предпочтением языка.
 
 ## Q10. Locust (Python)?
 
-**Locust** — Python-based, code-driven.
+**Locust** — на Python, управляемый кодом.
 
 ```python
 from locust import HttpUser, task, between
@@ -286,32 +286,32 @@ class WebsiteUser(HttpUser):
         self.client.get(f"/users/{random.randint(1, 100)}")
 ```
 
-**Pros:**
-- Python (easy adoption)
+**Плюсы:**
+- Python (легко освоить)
 - Web UI
 - Distributed mode
 
-**Cons:**
-- **Lower performance** than k6/Gatling (Python GIL)
-- Less mature reporting
+**Минусы:**
+- **Ниже производительность**, чем у k6/Gatling (Python GIL)
+- Менее зрелая отчётность
 
 ## Q11. Сравнение JMeter vs k6 vs Gatling vs Locust?
 
-| Critterion | JMeter | k6 | Gatling | Locust |
+| Критерий | JMeter | k6 | Gatling | Locust |
 |-----------|--------|-----|---------|--------|
-| Language | XML/GUI | JS/TS | Scala/Java | Python |
-| Performance | Medium | **Very High** | **Very High** | Medium |
-| Reports | OK | Good (Grafana) | **Excellent** | OK |
-| GUI test design | **Yes** | No | No | No |
-| Cloud version | Various | k6 Cloud | Gatling Enterprise | — |
-| Maturity | **Highest** | Growing | High | Medium |
-| Adoption | Largest legacy | Growing rapidly | Growing | Niche |
+| Язык | XML/GUI | JS/TS | Scala/Java | Python |
+| Производительность | Средняя | **Очень высокая** | **Очень высокая** | Средняя |
+| Отчёты | Нормально | Хорошо (Grafana) | **Отлично** | Нормально |
+| Проектирование тестов в GUI | **Да** | Нет | Нет | Нет |
+| Cloud-версия | Разные | k6 Cloud | Gatling Enterprise | — |
+| Зрелость | **Наивысшая** | Растёт | Высокая | Средняя |
+| Распространённость | Крупнейшее наследие | Быстро растёт | Растёт | Нишевый |
 
-**Choice (2025):**
-- **Modern projects** — k6 (JavaScript appeal, fast)
-- **Java shops** — Gatling
-- **Python shops** — Locust
-- **Enterprise legacy** — JMeter
+**Выбор (2025):**
+- **Современные проекты** — k6 (привлекательность JavaScript, скорость)
+- **Java-команды** — Gatling
+- **Python-команды** — Locust
+- **Enterprise-наследие** — JMeter
 - **No-code GUI** — JMeter
 
 ## Q12. (!) Как написать k6 test?
@@ -378,13 +378,13 @@ options = {
 };
 ```
 
-**Realistic** — gradual increase (не sudden 0 → 1000).
+**Реалистично** — постепенный рост (не резкий 0 → 1000).
 
-**Patterns:**
-- **Ramp-up:** find performance vs load
-- **Steady load:** soak test
-- **Spike:** sudden increase
-- **Ramp-down:** verify recovery
+**Паттерны:**
+- **Ramp-up:** найти зависимость производительности от нагрузки
+- **Steady load:** soak-тест
+- **Spike:** резкий рост
+- **Ramp-down:** проверить восстановление
 
 ## Q14. Thresholds (pass/fail criteria)?
 
@@ -399,39 +399,39 @@ options = {
 };
 ```
 
-**Test fails** если threshold не met. CI/CD integration breaks build.
+**Тест падает**, если threshold не выполнен. В CI/CD это ломает билд.
 
-**Use case:** **performance budget** (perf SLAs enforced automatically).
+**Сценарий применения:** **performance budget** (perf-SLA проверяются автоматически).
 
 ## Q15. Distributed load testing?
 
-**Why:** single load generator can't produce enough load.
+**Зачем:** один генератор нагрузки не способен создать достаточную нагрузку.
 
 **JMeter distributed:**
-- Master controls slaves
-- Slaves generate load
-- Aggregated results
+- Master управляет slaves
+- Slaves генерируют нагрузку
+- Результаты агрегируются
 
 **k6:**
-- **Cloud version** — managed distributed
-- **OSS distributed** через operator (K8s)
+- **Cloud-версия** — управляемое распределение
+- **OSS distributed** через оператор (K8s)
 
 **Gatling:**
-- Gatling Enterprise — distributed
-- OSS — manual setup
+- Gatling Enterprise — распределённый режим
+- OSS — настройка вручную
 
-**Common pattern:** generate load from multiple regions для realistic geo-distribution.
+**Типичная практика:** генерировать нагрузку из нескольких регионов для реалистичной гео-распределённости.
 
 ## Q16. (!) Capacity planning через load testing?
 
-**Process:**
-1. Define **SLA** (e.g., p95 < 200ms, error rate < 1%)
-2. Run **gradually increasing load** (10, 50, 100, 200, 500 RPS)
-3. Find **max RPS** где SLA holds
-4. Calculate **headroom** (e.g., target 70% capacity)
-5. Provision accordingly
+**Процесс:**
+1. Определить **SLA** (например, p95 < 200ms, error rate < 1%)
+2. Запустить **постепенно растущую нагрузку** (10, 50, 100, 200, 500 RPS)
+3. Найти **максимальный RPS**, при котором SLA держится
+4. Рассчитать **запас (headroom)** (например, целиться в 70% от capacity)
+5. Спровизионить инфраструктуру соответственно
 
-**Example:**
+**Пример:**
 ```
 Single instance: 100 RPS sustainable
 Expected peak: 1000 RPS
@@ -441,53 +441,53 @@ Required: 15 instances
 
 ## Q17. Bottleneck analysis?
 
-**Find** что limiting performance:
-- CPU? → scale CPU или optimize code
-- Memory? → scale RAM, GC tuning
-- Network? → bandwidth, connection pool size
-- DB? → indexes, queries, connection pool
-- Disk I/O? → SSD, async writes
-- External APIs? → caching, async
+**Найти**, что ограничивает производительность:
+- CPU? → масштабировать CPU или оптимизировать код
+- Память? → увеличить RAM, тюнинг GC
+- Сеть? → bandwidth, размер connection pool
+- БД? → индексы, запросы, connection pool
+- Disk I/O? → SSD, асинхронная запись
+- Внешние API? → кэширование, асинхронность
 
-**Tools:**
+**Инструменты:**
 - APM (Datadog, New Relic, Honeycomb)
-- Profiling (`pprof`, async-profiler)
-- DB query analysis (`EXPLAIN ANALYZE`)
-- Network monitoring
+- Профилирование (`pprof`, async-profiler)
+- Анализ запросов к БД (`EXPLAIN ANALYZE`)
+- Мониторинг сети
 
-**Iteratively:** load test → identify bottleneck → optimize → repeat.
+**Итеративно:** load-тест → выявить узкое место → оптимизировать → повторить.
 
 ## Q18. (!) Тестировать в production?
 
-**Yes** — но carefully.
+**Да** — но осторожно.
 
-**Approaches:**
-- **Shadow traffic** (mirror production traffic к staging)
-- **Canary load tests** (small % production traffic)
-- **Off-hours testing** (when impact lower)
-- **Chaos engineering** combined
+**Подходы:**
+- **Shadow traffic** (зеркалирование production-трафика на staging)
+- **Canary load tests** (небольшой % production-трафика)
+- **Тестирование вне часов пик** (когда влияние меньше)
+- В сочетании с **chaos engineering**
 
-**Risk:** affecting real users.
+**Риск:** воздействие на реальных пользователей.
 
-**Production load tests** essential для true validation (staging never matches prod).
+**Production-нагрузочные тесты** необходимы для настоящей валидации (staging никогда не совпадает с prod).
 
-**Examples:** Netflix runs constant load tests в production (chaos engineering).
+**Примеры:** Netflix постоянно гоняет load-тесты в production (chaos engineering).
 
 ## Q19. Realistic scenarios?
 
-**Bad scenario:** all VUs hitting one endpoint repeatedly.
+**Плохой сценарий:** все VU долбят один endpoint по кругу.
 
-**Good scenario:**
-- Multiple endpoints proportional к real usage
-- Realistic data (varied user IDs, payloads)
-- Realistic think times (`sleep`)
-- Login → browse → action flows
-- Session state per VU
+**Хороший сценарий:**
+- Несколько endpoint-ов пропорционально реальному использованию
+- Реалистичные данные (разнообразные user ID, payload-ы)
+- Реалистичные think time (`sleep`)
+- Потоки login → просмотр → действие
+- Состояние сессии на каждый VU
 
-**Tools:**
-- **Record real traffic** → replay (JMeter HTTP recorder)
-- **Production logs** → derive workload patterns
-- **User journey analytics** → script common flows
+**Инструменты:**
+- **Запись реального трафика** → воспроизведение (JMeter HTTP recorder)
+- **Production-логи** → вывод паттернов нагрузки
+- **Аналитика пользовательских путей** → скриптование типовых сценариев
 
 ## Q20. CI/CD integration?
 
@@ -504,45 +504,45 @@ Required: 15 instances
   run: echo "Performance regression detected"
 ```
 
-**Patterns:**
-- **PR builds** — quick smoke test (5-10 min)
-- **Nightly** — full load test
-- **Pre-release** — comprehensive performance suite
-- **Production** — periodic synthetic monitoring
+**Паттерны:**
+- **PR-билды** — быстрый smoke-тест (5–10 мин)
+- **Nightly** — полный load-тест
+- **Pre-release** — комплексный набор performance-тестов
+- **Production** — периодический synthetic-мониторинг
 
 ## Q21. (!) Common mistakes?
 
-1. **Testing only happy path** — error scenarios важны
-2. **No realistic data** (same user ID for всех)
-3. **No think time** — unrealistic burst
-4. **Test from same region** as server (no network latency)
-5. **Caching skews** results (dev cached, prod cold)
-6. **Insufficient warm-up** (JIT, connection pools)
-7. **No baselines** — comparing against what?
-8. **One-shot tests** — need consistency over time
-9. **Ignoring percentiles** (only checking averages)
+1. **Тестирование только happy path** — error-сценарии тоже важны
+2. **Нереалистичные данные** (один и тот же user ID для всех)
+3. **Нет think time** — нереалистичные всплески
+4. **Тест из того же региона**, что и сервер (нет сетевой latency)
+5. **Кэширование искажает** результаты (dev прогрет, prod холодный)
+6. **Недостаточный прогрев** (JIT, connection pool-ы)
+7. **Нет baseline** — а с чем сравнивать?
+8. **Разовые тесты** — нужна стабильность во времени
+9. **Игнорирование перцентилей** (смотрят только средние)
 10. **Coordinated omission** (Q22)
 
 ## Q22. Coordinated omission?
 
-**Coordinated omission** — load testing tool **slows down** when system slow → underreports latency.
+**Coordinated omission** — инструмент load testing **замедляется**, когда система тормозит → занижает latency в отчётах.
 
-**Example:**
-- Plan: 1000 RPS (1 ms apart)
-- System slow → request takes 1 second
-- Tool waits → next request 1.001 seconds later
-- **Misses spike** в latency
+**Пример:**
+- План: 1000 RPS (интервал 1 ms)
+- Система тормозит → запрос занимает 1 секунду
+- Инструмент ждёт → следующий запрос идёт на 1.001 секунды позже
+- **Пропускает всплеск** latency
 
-**Result:** percentile latencies look better than reality.
+**Итог:** перцентильные latency выглядят лучше, чем на самом деле.
 
-**Solutions:**
-- Tools with **constant arrival rate** (k6 `constant-arrival-rate` executor)
-- HdrHistogram corrections
-- **Synthetic load injection** (don't wait for previous)
+**Решения:**
+- Инструменты с **постоянной частотой поступления (constant arrival rate)** (executor `constant-arrival-rate` в k6)
+- Коррекции HdrHistogram
+- **Синтетическая инъекция нагрузки** (не ждать завершения предыдущего запроса)
 
-**JMeter, Gatling** — by default, Gatling handles coordinated omission better.
+**JMeter, Gatling** — по умолчанию Gatling лучше справляется с coordinated omission.
 
-В **2025** — k6 popular для new projects из-за simplicity + performance. JMeter — legacy enterprise.
+В **2025** — k6 популярен для новых проектов из-за простоты + производительности. JMeter — legacy-enterprise.
 
 ---
 

