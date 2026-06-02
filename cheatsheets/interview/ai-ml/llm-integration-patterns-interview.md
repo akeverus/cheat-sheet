@@ -18,7 +18,7 @@ updated: "2026-05-19"
 ---
 # Вопросы на собеседовании: `LLM Integration Patterns`
 
-Интеграция LLM в production — больше, чем просто `client.chat.completions.create()`. На интервью спрашивают: streaming, retry/fallback, model routing, caching, rate limiting, observability, cost tracking, abstractions для multi-provider, semantic caching, async patterns.
+Интеграция LLM в production — это больше, чем просто `client.chat.completions.create()`. На собеседовании спрашивают про streaming, retry/fallback, маршрутизацию моделей, кэширование, rate limiting, наблюдаемость, учёт затрат, абстракции над несколькими провайдерами, семантическое кэширование и асинхронные паттерны.
 
 ## Полезные ссылки
 
@@ -82,13 +82,13 @@ updated: "2026-05-19"
 
 ## Q1. (!) Что такое LLM gateway?
 
-**LLM gateway** — middleware между приложением и LLM providers. Централизует:
-- Routing (выбор model)
-- Caching
+**LLM gateway** — это middleware между приложением и LLM-провайдерами. Централизует:
+- Маршрутизацию (выбор модели)
+- Кэширование
 - Rate limiting
-- Observability
-- Fallbacks
-- Cost tracking
+- Наблюдаемость
+- Fallback-и
+- Учёт затрат
 
 ```mermaid
 graph LR
@@ -100,9 +100,9 @@ graph LR
     Gateway --> Logs[(Observability)]
 ```
 
-**Tools:** Portkey, Helicone, LiteLLM, OpenRouter, custom.
+**Инструменты:** Portkey, Helicone, LiteLLM, OpenRouter, собственное решение.
 
-**Применение:** в **enterprise**, где много LLM-feature → нужна centralization.
+**Применение:** в **enterprise**, где много LLM-фич → нужна централизация.
 
 
 ## Q2. (!) Streaming responses — реализация?
@@ -137,14 +137,14 @@ async def chat(req: ChatRequest):
 ```
 
 **Преимущества:**
-- Faster perceived response (TTFT vs total time)
-- Можно cancel mid-generation
-- Меньше timeout risks
+- Ответ ощущается быстрее (TTFT против общего времени)
+- Можно отменить генерацию на середине
+- Меньше рисков по таймаутам
 
 
 ## Q3. (!) SSE (Server-Sent Events) для streaming?
 
-**SSE** — HTTP standard для server → client streaming.
+**SSE** — это HTTP-стандарт для стриминга server → client.
 
 ```
 HTTP/1.1 200 OK
@@ -170,25 +170,25 @@ evtSource.onmessage = (e) => {
 ```
 
 **Преимущества SSE:**
-- Простой (просто HTTP)
-- Auto-reconnect built-in
-- Работает через CDN (Cloudflare etc.)
-- Один-направление = меньше state
+- Простой (это просто HTTP)
+- Автоматический reconnect из коробки
+- Работает через CDN (Cloudflare и т.п.)
+- Однонаправленность = меньше состояния
 
-**OpenAI/Anthropic** возвращают SSE ответы.
+**OpenAI/Anthropic** возвращают ответы в формате SSE.
 
 
 ## Q4. WebSocket vs SSE для LLM?
 
 | Критерий | SSE | WebSocket |
 |----------|-----|-----------|
-| Direction | Server → Client | Bidirectional |
-| Protocol | HTTP | Custom (upgraded HTTP) |
-| Reconnect | Automatic | Manual |
-| Proxies/CDN | Хорошо работает | Сложнее |
-| Use case | LLM streaming | Real-time chat (peer-to-peer) |
+| Направление | Server → Client | Двунаправленный |
+| Протокол | HTTP | Свой (апгрейд HTTP) |
+| Reconnect | Автоматический | Вручную |
+| Прокси/CDN | Хорошо работает | Сложнее |
+| Сценарий | LLM-стриминг | Чат в реальном времени (peer-to-peer) |
 
-**Для LLM streaming — SSE** обычно достаточно (одностороннее: server → client). WebSocket если нужны interactive interruptions от клиента.
+**Для LLM-стриминга обычно достаточно SSE** (одностороннее: server → client). WebSocket — если нужны интерактивные прерывания от клиента.
 
 
 ## Q5. (!) Retry с exponential backoff?
@@ -205,23 +205,23 @@ def call_llm(prompt):
     return client.chat.completions.create(...)
 ```
 
-**Wait pattern:** 2s → 4s → 8s → 16s → 60s (max).
+**Схема ожидания:** 2s → 4s → 8s → 16s → 60s (max).
 
-**Что retry'ать:**
+**Что ретраить:**
 - HTTP 429 (rate limit)
-- HTTP 500-599 (server errors)
-- Timeouts
-- Connection errors
+- HTTP 500-599 (ошибки сервера)
+- Таймауты
+- Ошибки соединения
 
-**Не retry'ать:**
-- HTTP 400 (bad request) — твоя ошибка, retry не поможет
-- HTTP 401, 403 (auth) — retry не поможет
-- HTTP 422 (validation)
+**Что не ретраить:**
+- HTTP 400 (bad request) — это твоя ошибка, retry не поможет
+- HTTP 401, 403 (авторизация) — retry не поможет
+- HTTP 422 (валидация)
 
 
 ## Q6. (!) Circuit breaker для LLM API?
 
-**Circuit breaker:** если provider returning errors **много раз** → временно **stop calling** (open circuit), wait, try again.
+**Circuit breaker:** если провайдер возвращает ошибки **много раз подряд** → временно **перестаём его вызывать** (открываем цепь), ждём, пробуем снова.
 
 ```python
 from pybreaker import CircuitBreaker
@@ -233,12 +233,12 @@ def call_openai(prompt):
     return openai_client.chat.completions.create(...)
 ```
 
-**States:**
-- **Closed** — calls идут normally
-- **Open** — все calls fail immediately (без обращения к API)
-- **Half-open** — пробуем 1-2 calls, если OK → closed
+**Состояния:**
+- **Closed** — вызовы идут как обычно
+- **Open** — все вызовы падают сразу (без обращения к API)
+- **Half-open** — пробуем 1-2 вызова, если ОК → переходим в closed
 
-**Зачем:** не **душить** вмёртвый сервис, экономить ресурсы, fail fast.
+**Зачем:** не **долбить** мёртвый сервис, экономить ресурсы, падать быстро (fail fast).
 
 Подробнее — в [Resilience Patterns](../architecture/resilience-patterns-interview.md).
 
@@ -261,9 +261,9 @@ def chat_with_fallback(messages):
     raise AllProvidersFailedError()
 ```
 
-**Подвох:** разные providers имеют **разные API формат**. Need adapter layer (LiteLLM helps).
+**Подвох:** у разных провайдеров **разный формат API**. Нужен слой-адаптер (тут помогает LiteLLM).
 
-**Use case:** primary provider down → не положить product, использовать backup.
+**Сценарий:** основной провайдер недоступен → не уронить продукт, переключиться на резервный.
 
 
 ## Q8. Timeouts — как настраивать?
@@ -274,17 +274,17 @@ client = OpenAI(timeout=30.0)  # default
 response = client.chat.completions.create(timeout=60.0, ...)
 ```
 
-**Recommendations:**
-- **Streaming:** longer (5-10 min) — иногда модель долго "думает"
-- **Non-streaming:** 30-60 sec обычно
-- **TTFT (Time-To-First-Token):** monitor < 3 sec — если больше → проблема
+**Рекомендации:**
+- **Стриминг:** больше (5-10 мин) — иногда модель долго «думает»
+- **Без стриминга:** обычно 30-60 сек
+- **TTFT (Time-To-First-Token):** держать < 3 сек — если больше → проблема
 
-**Подвох:** **default timeouts** OpenAI/Anthropic SDK могут быть слишком высокими для UX.
+**Подвох:** **дефолтные таймауты** SDK OpenAI/Anthropic могут быть слишком большими для UX.
 
 
 ## Q9. (!) Model routing (small → large escalation)?
 
-**Идея:** не использовать самую дорогую model для всего. Cascade:
+**Идея:** не использовать самую дорогую модель для всего. Каскад:
 
 ```python
 def smart_route(query):
@@ -299,17 +299,17 @@ def smart_route(query):
 ```
 
 **Сложнее:**
-- **Classifier** перед LLM выбирает right model based on task complexity
-- **Mixture of Experts** — multiple specialized models
+- **Classifier** перед LLM выбирает подходящую модель по сложности задачи
+- **Mixture of Experts** — несколько специализированных моделей
 
-**Эффект:** 50-80% cost saving для apps с varied complexity.
+**Эффект:** экономия 50-80% затрат для приложений с разной сложностью запросов.
 
 
 ## Q10. (!) Semantic caching?
 
-**Exact match cache:** key = full prompt, low hit rate.
+**Кэш по точному совпадению:** ключ = полный prompt, низкий hit rate.
 
-**Semantic cache:** key = embedding query, hit на **похожих** queries.
+**Семантический кэш:** ключ = embedding запроса, попадание на **похожих** запросах.
 
 ```python
 def semantic_cache_lookup(query, threshold=0.95):
@@ -328,15 +328,15 @@ def chat(query):
 ```
 
 **Подвох:**
-- High threshold → low hit rate
-- Low threshold → wrong answers (different intent но similar wording)
+- Высокий порог → низкий hit rate
+- Низкий порог → неверные ответы (другое намерение, но похожая формулировка)
 
-**Tools:** GPTCache, Redis Vector Search.
+**Инструменты:** GPTCache, Redis Vector Search.
 
 
 ## Q11. Prompt caching (provider-side)?
 
-**Anthropic, OpenAI** поддерживают auto cache prompt **prefixes**.
+**Anthropic, OpenAI** поддерживают автоматическое кэширование **префиксов** промпта.
 
 **Anthropic:**
 ```python
@@ -345,17 +345,17 @@ def chat(query):
 ]}
 ```
 
-**Cost reduction:** 90% для cached portion.
+**Снижение затрат:** 90% на закэшированной части.
 
-**Use case:** RAG с large static documents. Documents в начале prompt → cached. User question меняется → дешевле re-query.
+**Сценарий:** RAG с большими статичными документами. Документы в начале промпта → кэшируются. Вопрос пользователя меняется → повторный запрос дешевле.
 
 
 ## Q12. Batching API requests?
 
 **Batch API** (OpenAI, Anthropic):
-- Async: submit batch, wait few hours, get results
-- **50% discount** vs sync API
-- Для не-realtime use cases
+- Асинхронно: отправляешь батч, ждёшь несколько часов, забираешь результаты
+- **Скидка 50%** по сравнению с синхронным API
+- Для сценариев, не требующих realtime
 
 ```python
 batch = client.batches.create(
@@ -367,11 +367,11 @@ batch = client.batches.create(
 result = client.batches.retrieve(batch.id)
 ```
 
-**Use cases:**
-- Bulk classification
-- Background ETL
-- Embedding generation (тоже batch)
-- Non-urgent summarizations
+**Сценарии:**
+- Массовая классификация
+- Фоновый ETL
+- Генерация embedding-ов (тоже батчем)
+- Несрочная суммаризация
 
 
 ## Q13. (!) Cost tracking per user / feature?
@@ -399,12 +399,12 @@ def call_llm_with_tracking(user_id, feature, messages):
 ```
 
 **Зачем:**
-- Бизнес-метрики (cost per active user)
-- Идентификация expensive features
-- Quota enforcement (free tier vs paid)
-- Anomaly detection
+- Бизнес-метрики (затраты на активного пользователя)
+- Выявление дорогих фич
+- Контроль квот (free tier против платного)
+- Детектирование аномалий
 
-**Tools:** Helicone, Langfuse, custom Postgres + Grafana.
+**Инструменты:** Helicone, Langfuse, собственное решение на Postgres + Grafana.
 
 
 ## Q14. (!) Token bucket для LLM API?
@@ -420,9 +420,9 @@ def call_llm(prompt):
     return llm.chat.completions.create(...)
 ```
 
-**Зачем:** не превысить provider's rate limits → меньше HTTP 429.
+**Зачем:** не превышать rate limits провайдера → меньше HTTP 429.
 
-**Per-token bucket:** track output tokens, не requests (since OpenAI имеет TPM limits тоже).
+**Bucket по токенам:** учитывать output-токены, а не запросы (поскольку у OpenAI есть и лимиты TPM).
 
 
 ## Q15. Per-user rate limits?
@@ -438,9 +438,9 @@ def rate_limit_user(user_id, max_per_min=10):
 ```
 
 **Зачем:**
-- **Защита от abuse** (один user не сжигает всю quota)
-- **Tiered pricing** (free: 10 RPM, premium: 100 RPM)
-- **Cost control** (budget per user)
+- **Защита от злоупотреблений** (один пользователь не сжигает всю квоту)
+- **Тарифные уровни** (free: 10 RPM, premium: 100 RPM)
+- **Контроль затрат** (бюджет на пользователя)
 
 
 ## Q16. Distributed rate limiting (Redis)?
@@ -459,14 +459,14 @@ def is_allowed(user_id, max_per_min=10):
     return True
 ```
 
-**Distributed** — все instances приложения видят limit consistently через Redis.
+**Распределённый** — все инстансы приложения согласованно видят лимит через Redis.
 
-**Tools:** `redis-py-cluster`, `aioredis`.
+**Инструменты:** `redis-py-cluster`, `aioredis`.
 
 
 ## Q17. (!) Зачем abstraction над provider?
 
-**Без abstraction:**
+**Без абстракции:**
 ```python
 # OpenAI
 openai_client.chat.completions.create(model="gpt-4", messages=[...])
@@ -478,9 +478,9 @@ anthropic_client.messages.create(model="claude-opus-4", messages=[...], max_toke
 google_client.generate(model="gemini-1.5-pro", contents=[...])
 ```
 
-Разные APIs, разные параметры, разные форматы responses.
+Разные API, разные параметры, разные форматы ответов.
 
-**С abstraction:**
+**С абстракцией:**
 ```python
 gateway.chat(model="gpt-4", messages=[...])
 gateway.chat(model="claude-opus-4", messages=[...])
@@ -488,15 +488,15 @@ gateway.chat(model="claude-opus-4", messages=[...])
 ```
 
 **Зачем:**
-- **Switch providers** легко
-- **A/B testing** разных models
-- **Fallback** между providers
-- **Centralized logging, caching**
+- **Легко менять провайдеров**
+- **A/B-тестирование** разных моделей
+- **Fallback** между провайдерами
+- **Централизованные логирование и кэширование**
 
 
 ## Q18. (!) LiteLLM, OpenRouter, Portkey?
 
-**LiteLLM** — Python SDK, унифицирует **100+ models**.
+**LiteLLM** — Python SDK, унифицирует **100+ моделей**.
 
 ```python
 from litellm import completion
@@ -507,16 +507,16 @@ response = completion(
 )
 ```
 
-**OpenRouter** — proxy/marketplace для LLM. Один API key, выбор из десятков models, billing.
+**OpenRouter** — прокси/маркетплейс для LLM. Один API-ключ, выбор из десятков моделей, биллинг.
 
-**Portkey** — AI gateway: routing, fallbacks, observability, caching, guardrails.
+**Portkey** — AI gateway: маршрутизация, fallback-и, наблюдаемость, кэширование, guardrails.
 
-**Helicone** — фокус на observability + caching, как proxy.
+**Helicone** — фокус на наблюдаемости и кэшировании, работает как прокси.
 
-**Когда нужно:**
-- LiteLLM — если хочешь minimal abstraction в коде
-- OpenRouter — если хочешь experimentation с разными models
-- Portkey/Helicone — для enterprise (governance, observability)
+**Когда что нужно:**
+- LiteLLM — если хочешь минимальную абстракцию прямо в коде
+- OpenRouter — если хочешь экспериментировать с разными моделями
+- Portkey/Helicone — для enterprise (governance, наблюдаемость)
 
 
 ## Q19. Model parameter normalization?
@@ -528,41 +528,41 @@ anthropic_params = {"temperature": 0.7}  # no presence_penalty
 google_params = {"temperature": 0.7, "top_k": 40}
 ```
 
-**Abstraction layer должен:**
-- Map common params (temperature, max_tokens)
-- Handle provider-specific quirks
-- Validate inputs
+**Слой абстракции должен:**
+- Маппить общие параметры (temperature, max_tokens)
+- Обрабатывать особенности конкретных провайдеров
+- Валидировать входные данные
 
-LiteLLM делает это automatically.
+LiteLLM делает это автоматически.
 
 
 ## Q20. (!) Что трекать в LLM systems?
 
-**Per-request:**
-- Model used
-- Input/output tokens
-- Cost
+**По каждому запросу:**
+- Какая модель использована
+- Input/output-токены
+- Стоимость
 - Latency (TTFT, TTFC, TPOT, total)
-- HTTP status / error
-- User ID, feature, request ID
-- Cache hit/miss
+- HTTP-статус / ошибка
+- User ID, фича, request ID
+- Попадание/промах кэша
 
-**Per-system:**
-- RPS, error rates
-- Token usage (input/output)
-- Cost per hour/day
-- Cost per feature
-- Provider usage distribution
+**По системе в целом:**
+- RPS, доля ошибок
+- Расход токенов (input/output)
+- Затраты в час/сутки
+- Затраты на фичу
+- Распределение использования по провайдерам
 
-**User-level:**
-- Satisfaction (thumbs up/down)
-- Feature usage
-- Cost per user
+**На уровне пользователя:**
+- Удовлетворённость (лайк/дизлайк)
+- Использование фич
+- Затраты на пользователя
 
 
 ## Q21. (!) Tracing prompt chains?
 
-**Trace** — запись всей цепочки вызовов в одном logical operation.
+**Trace** — это запись всей цепочки вызовов в рамках одной логической операции.
 
 ```python
 with tracer.span("rag_pipeline") as root:
@@ -574,7 +574,7 @@ with tracer.span("rag_pipeline") as root:
         answer = llm(prompt)
 ```
 
-**Visualization:**
+**Визуализация:**
 ```
 rag_pipeline (2.5s)
 ├── retrieval (0.2s)
@@ -582,7 +582,7 @@ rag_pipeline (2.5s)
 └── llm_call (2.0s)
 ```
 
-**Tools:** OpenTelemetry, LangSmith, Langfuse, Phoenix.
+**Инструменты:** OpenTelemetry, LangSmith, Langfuse, Phoenix.
 
 Подробнее — [Observability](../monitoring/observability-interview.md).
 
@@ -590,43 +590,43 @@ rag_pipeline (2.5s)
 ## Q22. Helicone, Langfuse, LangSmith?
 
 **Helicone** (open-source/SaaS):
-- Просто **proxy** перед OpenAI API
-- Auto-track все calls
-- Caching, rate limiting
+- Просто **прокси** перед OpenAI API
+- Автоматически трекает все вызовы
+- Кэширование, rate limiting
 
 **Langfuse** (open-source):
-- Tracing prompt chains
-- Datasets для evaluation
-- Prompt management
+- Трассировка цепочек промптов
+- Датасеты для оценки
+- Управление промптами
 
 **LangSmith** (LangChain):
-- Tightly integrated с LangChain
-- Tracing, datasets, evals
-- Prompt versioning
+- Тесно интегрирован с LangChain
+- Трассировка, датасеты, оценки
+- Версионирование промптов
 
-**Phoenix (Arize):** open-source, фокус на embedding + tracing.
+**Phoenix (Arize):** open-source, фокус на embedding-ах и трассировке.
 
-В **2025** — выбор зависит от стека. Без LangChain → Langfuse / Helicone.
+В **2025** выбор зависит от стека. Без LangChain → Langfuse / Helicone.
 
 
 ## Q23. Latency metrics: TTFT, TPOT?
 
 | Метрика | Расшифровка | Описание |
 |---------|-------------|----------|
-| **TTFT** | Time To First Token | Latency до первого слова (важно для UX) |
-| **TPOT** | Time Per Output Token | Сколько времени на каждый token |
-| **TTFC** | Time To First Chunk | Похоже TTFT |
-| **TPS** | Tokens Per Second | Output throughput |
-| **E2E** | End-to-end latency | Total время |
+| **TTFT** | Time To First Token | Задержка до первого слова (важно для UX) |
+| **TPOT** | Time Per Output Token | Сколько времени уходит на каждый токен |
+| **TTFC** | Time To First Chunk | Похоже на TTFT |
+| **TPS** | Tokens Per Second | Пропускная способность по выводу |
+| **E2E** | End-to-end latency | Общее время |
 
 **Важно:**
-- **TTFT** — ключевая метрика для chat UX
-- **TPS** — throughput для batch processing
+- **TTFT** — ключевая метрика для UX чата
+- **TPS** — пропускная способность для пакетной обработки
 - **E2E = TTFT + tokens × TPOT**
 
-OpenAI / Anthropic typically:
-- TTFT: 0.5-3 sec
-- TPS: 50-150 tokens/sec
+У OpenAI / Anthropic обычно:
+- TTFT: 0.5-3 сек
+- TPS: 50-150 токенов/сек
 
 
 ## Q24. (!) Sync vs async LLM calls?
@@ -641,10 +641,10 @@ response = client.chat.completions.create(...)
 response = await async_client.chat.completions.create(...)
 ```
 
-**Async преимущества:**
-- Можно параллелить много calls
+**Преимущества async:**
+- Можно параллелить много вызовов
 - Не блокирует event loop (FastAPI, asyncio)
-- Лучше throughput для high-concurrency
+- Лучше пропускная способность при высокой конкурентности
 
 ```python
 # Parallel calls
@@ -655,12 +655,12 @@ responses = await asyncio.gather(
 )
 ```
 
-**Production rule:** **always use async** для LLM calls в web servers.
+**Правило для production:** в веб-серверах для LLM-вызовов **всегда использовать async**.
 
 
 ## Q25. Background jobs для long generations?
 
-Если ответ модели **долгий** (минуты):
+Если ответ модели генерируется **долго** (минутами):
 
 ```python
 @app.post("/generate")
@@ -674,24 +674,24 @@ async def status(job_id):
     return jobs.get(job_id)  # {"status": "complete", "result": "..."}
 ```
 
-**Tools:** Celery, RQ, Sidekiq, custom.
+**Инструменты:** Celery, RQ, Sidekiq, собственное решение.
 
-**Use cases:**
-- Long-form generation (essays, reports)
-- Reasoning models (o1, o3) — могут думать минутами
-- Multi-step agents
+**Сценарии:**
+- Генерация длинных текстов (эссе, отчёты)
+- Reasoning-модели (o1, o3) — могут думать минутами
+- Многошаговые агенты
 
 
 ## Q26. (!) Content moderation pipeline?
 
-**Pre-LLM moderation** (на input):
+**Модерация до LLM** (на входе):
 ```python
 moderation = openai.moderations.create(input=user_message)
 if moderation.results[0].flagged:
     return "I cannot help with that request."
 ```
 
-**Post-LLM moderation** (на output):
+**Модерация после LLM** (на выходе):
 ```python
 response = llm(prompt)
 moderation = openai.moderations.create(input=response)
@@ -699,18 +699,18 @@ if moderation.results[0].flagged:
     return generic_safe_response()
 ```
 
-**Categories:** hate, sexual, violence, self-harm, harassment.
+**Категории:** ненависть, сексуальный контент, насилие, self-harm, харассмент.
 
-**Tools:**
-- OpenAI Moderations API (free)
-- Anthropic Constitutional AI (built-in)
+**Инструменты:**
+- OpenAI Moderations API (бесплатно)
+- Anthropic Constitutional AI (встроено)
 - Perspective API (Google)
-- Self-hosted classifiers
+- Свои self-hosted классификаторы
 
 
 ## Q27. Audit logging?
 
-**Audit log** — immutable record каждого LLM interaction.
+**Audit log** — это неизменяемая запись каждого взаимодействия с LLM.
 
 ```python
 audit_log({
@@ -730,29 +730,29 @@ audit_log({
 
 **Зачем:**
 - **Compliance** (GDPR, HIPAA)
-- **Debugging** production issues
-- **Quality analysis** (LLM-as-judge)
-- **Training fine-tuning datasets** (с consent)
+- **Отладка** проблем в production
+- **Анализ качества** (LLM-as-judge)
+- **Сбор датасетов для fine-tuning** (с согласия пользователя)
 
-**Storage:** S3 + Athena, BigQuery, Postgres + analytics tools.
+**Хранение:** S3 + Athena, BigQuery, Postgres + аналитические инструменты.
 
 
 ## Q28. (!) Какие частые проблемы LLM в production?
 
-1. **Cost runaway** — без monitoring → неприятный сюрприз
-2. **Rate limits** — API limits игнорируются
-3. **Provider downtime** — нет fallback
-4. **Slow queries** — нет TTFT monitoring
-5. **Prompt injection** — нет validation
-6. **PII leak** — sensitive data в logs/prompts
-7. **Regression при model updates** — provider обновил → quality дроп
-8. **No streaming** — UX страдает
-9. **Sync calls** — блокируют threads, low throughput
-10. **No caching** — overpaying за same queries
-11. **Hallucinations без guardrails** — wrong answers in production
-12. **Vendor lock-in** — невозможно поменять provider
+1. **Неконтролируемый рост затрат** — без мониторинга → неприятный сюрприз
+2. **Rate limits** — лимиты API игнорируются
+3. **Недоступность провайдера** — нет fallback
+4. **Медленные запросы** — нет мониторинга TTFT
+5. **Prompt injection** — нет валидации
+6. **Утечка PII** — чувствительные данные в логах/промптах
+7. **Регрессия при обновлении модели** — провайдер обновил → просадка качества
+8. **Нет стриминга** — UX страдает
+9. **Синхронные вызовы** — блокируют потоки, низкая пропускная способность
+10. **Нет кэширования** — переплата за одинаковые запросы
+11. **Галлюцинации без guardrails** — неверные ответы в production
+12. **Vendor lock-in** — невозможно сменить провайдера
 
-**Production-ready LLM system** требует **много** infrastructure beyond simple API calls.
+**Production-ready LLM-система** требует **много** инфраструктуры сверх простых вызовов API.
 
 
 ---

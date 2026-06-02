@@ -18,7 +18,7 @@ updated: "2026-05-19"
 ---
 # Вопросы на собеседовании: `AI Agents`
 
-**AI Agent** — LLM, которая может **planning** + **использовать tools** + **observe results** + **iterate** для решения задач. От простой ReAct loop до сложных multi-agent систем. С 2024-2025 — горячая тема. Стандарты: **MCP** (Model Context Protocol). Frameworks: LangGraph, AutoGen, CrewAI, Anthropic SDK.
+**AI Agent** — LLM, которая умеет **планировать** + **использовать tools** + **наблюдать результаты** + **итерировать** для решения задач. От простого ReAct-цикла до сложных multi-agent-систем. В 2024–2025 — горячая тема. Стандарты: **MCP** (Model Context Protocol). Фреймворки: LangGraph, AutoGen, CrewAI, Anthropic SDK.
 
 ## Полезные ссылки
 
@@ -83,14 +83,14 @@ updated: "2026-05-19"
 
 ## Q1. (!) Что такое AI agent?
 
-**AI Agent** — LLM-powered system, которая:
-1. **Принимает goal** (от user)
+**AI Agent** — система на базе LLM, которая:
+1. **Принимает цель** (от пользователя)
 2. **Планирует** последовательность шагов
-3. **Использует tools** (HTTP, DB, code, ...)
-4. **Observes** результаты
-5. **Iterates** до достижения goal
+3. **Использует tools** (HTTP, БД, код, ...)
+4. **Наблюдает** результаты
+5. **Итерирует** до достижения цели
 
-**Простейший agent loop:**
+**Простейший agent-цикл:**
 
 ```python
 def agent(goal):
@@ -105,60 +105,60 @@ def agent(goal):
 ```
 
 **Применения:**
-- Customer support (с access к CRM, knowledge base)
-- Code assistants (Cursor, Cline)
-- Research agents (Deep Research, GPT Researcher)
-- Workflow automation
-- Computer-use agents
+- Поддержка клиентов (с доступом к CRM, базе знаний)
+- Ассистенты для кода (Cursor, Cline)
+- Research-агенты (Deep Research, GPT Researcher)
+- Автоматизация рабочих процессов
+- Computer-use-агенты
 
 
 ## Q2. (!) Workflows vs Agents — Anthropic классификация?
 
-Anthropic ("Building Effective Agents", 2024) разделяет:
+Anthropic («Building Effective Agents», 2024) разделяет:
 
-**Workflows** — pre-defined steps, LLM на конкретных шагах.
+**Workflows** — заранее заданные шаги, LLM работает на конкретных шагах.
 ```
 Step 1: Extract entities
 Step 2: Classify intent
 Step 3: Generate response
 ```
 
-**Agents** — LLM **dynamically decides** что делать дальше.
+**Agents** — LLM **динамически решает**, что делать дальше.
 ```
 Loop: LLM decides next action → execute → check result → continue
 ```
 
 **Trade-off:**
-- **Workflows** — predictable, easier to debug, cheaper
-- **Agents** — flexible, handle unknown tasks, more expensive, less predictable
+- **Workflows** — предсказуемы, проще отлаживать, дешевле
+- **Agents** — гибкие, справляются с неизвестными задачами, дороже, менее предсказуемы
 
-**Best practice:** **start with workflows**, escalate to agent если нужна гибкость.
+**Best practice:** **начинать с workflows**, переходить к agent только если нужна гибкость.
 
 
 ## Q3. (!) Когда нужен agent, а когда хватает простого LLM?
 
 **Простой LLM:**
-- Single-turn QA
-- Classification
-- Generation (text, code)
-- Translation, summarization
+- Однократные вопросы-ответы (single-turn QA)
+- Классификация
+- Генерация (текст, код)
+- Перевод, суммаризация
 
-**Workflow (deterministic):**
-- Multi-step tasks с **известной** последовательностью
+**Workflow (детерминированный):**
+- Многошаговые задачи с **известной** последовательностью
 - ETL-подобные pipelines
-- Структурированный output
+- Структурированный вывод
 
 **Agent:**
 - Открытые задачи с **неизвестным** числом шагов
-- Нужны tools (database, web, code execution)
-- Adaptive behavior (different paths for different inputs)
+- Нужны tools (база данных, web, выполнение кода)
+- Адаптивное поведение (разные пути для разных входных данных)
 
-**Правило:** не делай agent если workflow достаточен. Agents **дороже, медленнее, менее надёжны**.
+**Правило:** не делай agent, если достаточно workflow. Agents **дороже, медленнее, менее надёжны**.
 
 
 ## Q4. (!) ReAct (Reasoning + Acting)?
 
-**ReAct** (Yao et al., 2022) — основной паттерн agent execution.
+**ReAct** (Yao et al., 2022) — основной паттерн выполнения agent.
 
 ```
 Thought: I need to find the user's order status
@@ -170,7 +170,7 @@ Observation: {"estimated_delivery": "2025-04-20"}
 Final Answer: Your order has been shipped (ABC123) and will arrive by April 20.
 ```
 
-**Implementation:**
+**Реализация:**
 
 ```python
 def react_agent(query, tools):
@@ -192,7 +192,7 @@ def react_agent(query, tools):
 
 ## Q5. Plan-and-Execute?
 
-**Plan-and-Execute** — сначала **полный план**, потом execution каждого шага.
+**Plan-and-Execute** — сначала **полный план**, потом выполнение каждого шага.
 
 ```
 1. Planner: "To answer X, I need to do A, then B, then C"
@@ -202,14 +202,14 @@ def react_agent(query, tools):
 5. Final answer
 ```
 
-**Vs ReAct:** ReAct decides next step at each iteration (more flexible). Plan-and-Execute commits к плану upfront (more predictable, can fail if план bad).
+**Сравнение с ReAct:** ReAct выбирает следующий шаг на каждой итерации (гибче). Plan-and-Execute фиксирует план заранее (предсказуемее, но может провалиться, если план плох).
 
-**Когда:** complex tasks where structure matters (research, data analysis).
+**Когда:** сложные задачи, где важна структура (исследования, анализ данных).
 
 
 ## Q6. (!) Tool use — function calling?
 
-**Tool definition:**
+**Определение tool:**
 
 ```python
 tools = [{
@@ -229,7 +229,7 @@ tools = [{
 }]
 ```
 
-**LLM выбирает** tool + аргументы:
+**LLM выбирает** tool и аргументы:
 
 ```python
 response = client.chat.completions.create(
@@ -248,28 +248,28 @@ response = client.chat.completions.create(
 
 ## Q7. (!) Какие tools предоставляют agentам?
 
-**Common tools:**
-1. **Search** — internal docs, web search (Tavily, Perplexity, Brave)
-2. **Database queries** — SQL, NoSQL
-3. **HTTP requests** — APIs (REST, GraphQL)
-4. **Code execution** — Python sandbox (e.g., E2B, Modal)
-5. **File operations** — read/write
-6. **Email / notifications** — send messages
-7. **Calendar / scheduling**
-8. **Image generation** (DALL-E, Imagen)
+**Типичные tools:**
+1. **Поиск** — внутренние документы, web-поиск (Tavily, Perplexity, Brave)
+2. **Запросы к БД** — SQL, NoSQL
+3. **HTTP-запросы** — API (REST, GraphQL)
+4. **Выполнение кода** — Python-sandbox (например, E2B, Modal)
+5. **Файловые операции** — чтение/запись
+6. **Email / уведомления** — отправка сообщений
+7. **Календарь / планирование**
+8. **Генерация изображений** (DALL-E, Imagen)
 9. **Web scraping**
-10. **Computer-use** (Claude — клавиатура/мышь, screen)
+10. **Computer-use** (Claude — клавиатура/мышь, экран)
 
 **Best practices:**
-- **Описать tool clearly** — модель должна понимать, когда вызывать
-- **Validate inputs** — LLM может передать invalid args
-- **Sandbox potentially dangerous** tools (code, file ops)
-- **Return structured results** — JSON/dict, not free text
+- **Чётко описать tool** — модель должна понимать, когда его вызывать
+- **Валидировать входные данные** — LLM может передать некорректные аргументы
+- **Изолировать потенциально опасные** tools в sandbox (код, файловые операции)
+- **Возвращать структурированный результат** — JSON/dict, а не свободный текст
 
 
 ## Q8. (!) Code execution as tool?
 
-**Code execution** — LLM пишет Python (или другой) код, выполняется в **sandbox**, результат обратно.
+**Code execution** — LLM пишет код на Python (или другом языке), он выполняется в **sandbox**, результат возвращается обратно.
 
 ```python
 def execute_python(code: str) -> str:
@@ -278,30 +278,30 @@ def execute_python(code: str) -> str:
 ```
 
 **Use cases:**
-- Math, statistics (вместо неточных LLM math)
-- Data analysis на CSV
-- Plot generation
-- Custom logic
+- Математика, статистика (вместо неточной «математики» самой LLM)
+- Анализ данных в CSV
+- Генерация графиков
+- Кастомная логика
 
-**Sandboxes:**
-- **E2B** — managed sandbox API
-- **Modal** — serverless compute
-- **Self-hosted Docker** — для privacy
-- **Pyodide** — browser-side Python
+**Sandbox-окружения:**
+- **E2B** — управляемый sandbox-API
+- **Modal** — serverless-вычисления
+- **Self-hosted Docker** — ради приватности
+- **Pyodide** — Python на стороне браузера
 
-**Безопасность критична:** evil code может damage infrastructure.
+**Безопасность критична:** вредоносный код может повредить инфраструктуру.
 
 
 ## Q9. Web search как tool?
 
-**Web search** для up-to-date информации (LLM training data часто месяцы старая).
+**Web-поиск** нужен для актуальной информации (обучающие данные LLM часто устарели на месяцы).
 
-**APIs:**
-- **Tavily** — popular для AI
+**API:**
+- **Tavily** — популярен для AI
 - **Perplexity Online**
 - **Brave Search API**
 - **Bing Search API**
-- **SerpAPI** (Google results)
+- **SerpAPI** (результаты Google)
 - **You.com**
 
 ```python
@@ -314,14 +314,14 @@ def web_search(query: str, max_results: int = 5):
     } for r in results]
 ```
 
-**Pattern:** agent сначала search, потом fetches relevant pages для деталей.
+**Паттерн:** agent сначала делает поиск, потом подгружает релевантные страницы для деталей.
 
 
 ## Q10. (!) Что такое MCP (Model Context Protocol)?
 
-**Model Context Protocol (MCP)** — открытый стандарт от Anthropic (ноябрь 2024) для интеграции LLM с инструментами и data sources.
+**Model Context Protocol (MCP)** — открытый стандарт от Anthropic (ноябрь 2024) для интеграции LLM с инструментами и источниками данных.
 
-**Идея:** **универсальный** way для AI clients (Claude Desktop, Cursor, ...) подключаться к external services.
+**Идея:** **универсальный** способ для AI-клиентов (Claude Desktop, Cursor, ...) подключаться к внешним сервисам.
 
 ```
 Client (Claude Desktop, IDE)
@@ -329,28 +329,28 @@ Client (Claude Desktop, IDE)
 MCP Server (Github, PostgreSQL, Slack, ...)
 ```
 
-**MCP Servers** уже есть для:
-- File system, Git, GitHub
+**MCP-серверы** уже есть для:
+- Файловой системы, Git, GitHub
 - PostgreSQL, SQLite, MongoDB
 - Slack, Linear, Notion
-- Web browsers (Puppeteer)
+- Веб-браузеров (Puppeteer)
 - Google Drive, Confluence
 
-**Преимущество:** разработчик пишет MCP server один раз → работает с любым MCP-compatible client.
+**Преимущество:** разработчик пишет MCP-сервер один раз → он работает с любым MCP-совместимым клиентом.
 
-В **2025** — стандарт **быстро принимается** (OpenAI announced support, многие IDE).
+В **2025** стандарт **быстро принимается** (OpenAI анонсировал поддержку, многие IDE тоже).
 
 
 ## Q11. (!) Short-term vs long-term memory?
 
-**Short-term memory** — context текущей conversation.
-- В prompt history
-- Forgotten после session
+**Short-term memory** — контекст текущего разговора.
+- Хранится в истории prompt
+- Забывается после сессии
 
-**Long-term memory** — persistent across sessions.
-- User preferences
-- Past interactions
-- Learned facts
+**Long-term memory** — сохраняется между сессиями.
+- Предпочтения пользователя
+- Прошлые взаимодействия
+- Усвоенные факты
 
 **Реализация long-term:**
 
@@ -369,13 +369,13 @@ prompt = f"User context: {context}\n\nMessage: {new_message}"
 
 ## Q12. Conversation history truncation?
 
-При длинных conversations — context window заполняется.
+При длинных разговорах context window заполняется.
 
 **Стратегии:**
-1. **Sliding window** — keep last N сообщений
-2. **Summarization** — старая история → summary
-3. **Hybrid** — keep recent + summary of older
-4. **Semantic** — find relevant past messages (vector search)
+1. **Sliding window** — хранить последние N сообщений
+2. **Summarization** — старая история → краткое резюме (summary)
+3. **Hybrid** — хранить свежие сообщения + резюме старых
+4. **Semantic** — находить релевантные прошлые сообщения (vector search)
 
 ```python
 def truncate_history(history, max_tokens=8000):
@@ -390,7 +390,7 @@ def truncate_history(history, max_tokens=8000):
 
 ## Q13. Vector memory (RAG для memory)?
 
-**Memory как vector DB:**
+**Память как vector DB:**
 
 ```python
 # Store
@@ -402,16 +402,16 @@ relevant = vector_db.search(embed(current_query), filter={"user_id": user_id}, t
 ```
 
 **Применение:**
-- "What did I tell you about my preferences?"
-- Long-term personalization
-- Cross-session continuity
+- «Что я говорил тебе про свои предпочтения?»
+- Долгосрочная персонализация
+- Непрерывность между сессиями
 
-Это **RAG для conversation history** вместо RAG для documents.
+Это **RAG для истории разговора** вместо RAG для документов.
 
 
 ## Q14. (!) Что такое multi-agent system?
 
-**Multi-agent** — **несколько LLM agents** взаимодействуют для решения задачи.
+**Multi-agent** — **несколько LLM-агентов** взаимодействуют для решения задачи.
 
 ```mermaid
 graph TD
@@ -425,23 +425,23 @@ graph TD
 ```
 
 **Типы:**
-- **Specialist agents** — каждый эксперт в области
-- **Pipeline** — sequential
-- **Debate** — два agents argue, third judges
-- **Hierarchical** — manager + workers
+- **Specialist agents** — каждый эксперт в своей области
+- **Pipeline** — последовательная обработка
+- **Debate** — два агента спорят, третий судит
+- **Hierarchical** — менеджер + работники
 
 **Минусы:**
-- **Очень дорого** (много LLM calls)
-- **Slow**
-- **Hard to debug**
-- **Может escalate в endless loops**
+- **Очень дорого** (много вызовов LLM)
+- **Медленно**
+- **Сложно отлаживать**
+- **Может скатиться в бесконечные циклы**
 
-В **2025** — большинство production systems = single agent. Multi-agent — для сложных research/creative задач.
+В **2025** большинство production-систем — это single agent. Multi-agent — для сложных research/creative-задач.
 
 
 ## Q15. Supervisor pattern?
 
-**Supervisor agent** decides which **worker agent** должен handle subtask.
+**Supervisor agent** решает, какой **worker agent** должен обработать подзадачу.
 
 ```python
 def supervisor(query):
@@ -454,7 +454,7 @@ def supervisor(query):
         return writing_agent(query)
 ```
 
-**Использование:** routing complex queries в правильную команду.
+**Использование:** маршрутизация сложных запросов в нужную команду.
 
 
 ## Q16. Hierarchical agents?
@@ -469,28 +469,28 @@ Manager Agent
     └── Worker 2.2
 ```
 
-**Multi-level decomposition.** Useful для очень больших задач (например, codebase refactoring).
+**Многоуровневая декомпозиция.** Полезна для очень больших задач (например, рефакторинг codebase).
 
-В **2025** — продвинутая, но experimental тема. Cost и complexity ограничивают adoption.
+В **2025** это продвинутая, но всё ещё экспериментальная тема. Стоимость и сложность ограничивают распространение.
 
 
 ## Q17. (!) Agent communication patterns?
 
-**Patterns:**
+**Паттерны:**
 
 1. **Direct messaging** — agent A → agent B напрямую
-2. **Shared blackboard** — все agents читают/пишут shared state
-3. **Pub/sub** — events triggered, subscribed agents react
-4. **Voting / consensus** — multiple agents propose, vote
-5. **Debate** — agents argue, judge decides
+2. **Shared blackboard** — все агенты читают/пишут в общее состояние
+3. **Pub/sub** — события порождают реакцию у подписавшихся агентов
+4. **Voting / consensus** — несколько агентов предлагают варианты и голосуют
+5. **Debate** — агенты спорят, судья решает
 
-**LangGraph** использует **graph-based state** (shared state, agents как nodes).
-**AutoGen** использует **conversational** (agents talk to each other).
+**LangGraph** использует **состояние на основе графа** (общее состояние, агенты как узлы).
+**AutoGen** использует **диалоговый** подход (агенты разговаривают друг с другом).
 
 
 ## Q18. (!) LangGraph (LangChain)?
 
-**LangGraph** — graph-based agent framework. State = node, agents = edges.
+**LangGraph** — agent-фреймворк на основе графа. Состояние = узел, агенты = рёбра.
 
 ```python
 from langgraph.graph import StateGraph
@@ -515,14 +515,14 @@ graph.add_edge("tools", "agent")  # loop
 graph.set_entry_point("agent")
 ```
 
-**Преимущества:** explicit state, debuggable, supports complex flows.
+**Преимущества:** явное состояние, удобство отладки, поддержка сложных потоков.
 
-В **2025** — самый популярный agent framework.
+В **2025** — самый популярный agent-фреймворк.
 
 
 ## Q19. AutoGen (Microsoft)?
 
-**AutoGen** — multi-agent conversation framework.
+**AutoGen** — фреймворк для multi-agent-диалогов.
 
 ```python
 from autogen import AssistantAgent, UserProxyAgent
@@ -534,16 +534,16 @@ user_proxy.initiate_chat(assistant, message="Solve this: ...")
 ```
 
 **Особенности:**
-- Multi-agent conversations
-- Code execution built-in
-- Human-in-the-loop поддержка
+- Multi-agent-диалоги
+- Встроенное выполнение кода
+- Поддержка human-in-the-loop
 
-В **2025** — популярен в research и code generation.
+В **2025** популярен в research и генерации кода.
 
 
 ## Q20. CrewAI?
 
-**CrewAI** — фреймворк для **role-based** agent crews.
+**CrewAI** — фреймворк для **ролевых** команд агентов (agent crews).
 
 ```python
 researcher = Agent(role="Researcher", goal="Find info", tools=[web_search])
@@ -552,23 +552,23 @@ crew = Crew(agents=[researcher, writer], tasks=[task1, task2])
 result = crew.kickoff()
 ```
 
-**Декларативный** подход. Подходит для линейных pipelines с clear roles.
+**Декларативный** подход. Подходит для линейных pipelines с чётко заданными ролями.
 
 
 ## Q21. Custom vs framework?
 
-**Frameworks pros:**
-- Quick start
-- Patterns implemented
-- Community
+**Плюсы фреймворков:**
+- Быстрый старт
+- Готовые реализации паттернов
+- Сообщество
 
-**Frameworks cons:**
-- **Heavy abstractions** — hard to debug
-- Frequent breaking changes (LangChain notorious)
-- Sometimes ограничивает creative patterns
+**Минусы фреймворков:**
+- **Тяжёлые абстракции** — сложно отлаживать
+- Частые ломающие изменения (LangChain этим печально известен)
+- Иногда ограничивают нестандартные паттерны
 
-**Anthropic's recommendation (2024):**
-> "Don't use frameworks unless you really need to. Most agents are simple loops."
+**Рекомендация Anthropic (2024):**
+> «Не используйте фреймворки, пока они вам действительно не понадобятся. Большинство агентов — это простые циклы.»
 
 ```python
 # Simple custom agent — может быть лучше LangGraph
@@ -585,22 +585,22 @@ def agent(query, tools, max_iterations=10):
     raise TimeoutError("Agent exceeded max iterations")
 ```
 
-**В 2025** — растёт мнение, что **custom код** для agents часто лучше than frameworks.
+**В 2025** растёт мнение, что **кастомный код** для агентов часто лучше фреймворков.
 
 
 ## Q22. (!) Как тестировать agents?
 
-**Сложно**: agents nondeterministic, могут много путей к ответу.
+**Сложно**: агенты недетерминированы, к ответу ведёт множество путей.
 
 **Подходы:**
 
-1. **Trace evaluation** — каждый шаг agent logged, manual review
-2. **Outcome evaluation** — does final answer correct? (LLM-as-judge)
-3. **Tool call evaluation** — правильно ли вызвал tools?
-4. **Cost / step count** — agent не должен запускать 100 calls
-5. **Golden trajectories** — manually defined "правильный" путь, compare
+1. **Trace evaluation** — каждый шаг агента логируется, ручной разбор
+2. **Outcome evaluation** — корректен ли финальный ответ? (LLM-as-judge)
+3. **Tool call evaluation** — правильно ли вызваны tools?
+4. **Cost / step count** — агент не должен делать 100 вызовов
+5. **Golden trajectories** — заранее заданный «правильный» путь, сравнение с ним
 
-**Frameworks:** LangSmith, Langfuse, Phoenix Arize, Weights & Biases.
+**Фреймворки:** LangSmith, Langfuse, Phoenix Arize, Weights & Biases.
 
 ```python
 # Pseudo eval
@@ -613,7 +613,7 @@ for case in test_cases:
 
 ## Q23. Trace evaluation?
 
-**Trace** = sequence of agent's thoughts, actions, observations.
+**Trace** = последовательность мыслей, действий и наблюдений агента.
 
 ```
 Step 1: Thought "I need order status"
@@ -623,32 +623,32 @@ Step 4: Thought "Found order"
 Step 5: Final Answer "..."
 ```
 
-**Eval criteria:**
-- Did agent solve task?
-- Tool calls efficient (no unnecessary ones)?
-- Reasoning sound (no hallucinations)?
-- Cost reasonable?
+**Критерии оценки:**
+- Решил ли агент задачу?
+- Эффективны ли вызовы tools (нет ли лишних)?
+- Здравые ли рассуждения (без галлюцинаций)?
+- Разумна ли стоимость?
 
-**LLM-as-judge:** другая LLM анализирует trace, scores quality.
+**LLM-as-judge:** другая LLM анализирует trace и оценивает качество.
 
 
 ## Q24. (!) Какие риски / pitfalls в agents?
 
-1. **Endless loops** — agent повторяет одно и то же
-2. **Context explosion** — history растёт, costs explode
-3. **Tool misuse** — wrong arguments → broken behavior
-4. **Hallucinations в planning** — план для несуществующих tools
-5. **Security** — agent делает destructive actions (delete files, send money)
-6. **Prompt injection через tools** — tool returns malicious instructions
-7. **Cost runaway** — много iterations, expensive
-8. **Slow latency** — multi-step takes minutes
-9. **Unpredictable behavior** — different runs → different results
-10. **Hard to debug** — long traces, complex state
+1. **Бесконечные циклы** — агент повторяет одно и то же
+2. **Взрыв контекста** — история растёт, расходы взлетают
+3. **Неправильное использование tools** — неверные аргументы → сломанное поведение
+4. **Галлюцинации при планировании** — план под несуществующие tools
+5. **Безопасность** — агент совершает разрушительные действия (удаляет файлы, переводит деньги)
+6. **Prompt injection через tools** — tool возвращает вредоносные инструкции
+7. **Неконтролируемые расходы** — много итераций, дорого
+8. **Высокая latency** — многошаговое выполнение занимает минуты
+9. **Непредсказуемое поведение** — разные запуски → разные результаты
+10. **Сложность отладки** — длинные trace, сложное состояние
 
 
 ## Q25. (!) Human-in-the-loop?
 
-**HITL** — human approves critical actions перед execution.
+**HITL** — человек подтверждает критические действия перед их выполнением.
 
 ```python
 def execute_tool_with_approval(tool_call):
@@ -659,16 +659,16 @@ def execute_tool_with_approval(tool_call):
     return execute(tool_call)
 ```
 
-**Когда обязательно HITL:**
-- **Financial transactions** (move money, place orders)
-- **Destructive ops** (delete data, drop tables)
-- **External communication** (send emails, make calls)
-- **Production deployments**
+**Когда HITL обязателен:**
+- **Финансовые транзакции** (перевод денег, размещение заказов)
+- **Разрушительные операции** (удаление данных, drop таблиц)
+- **Внешние коммуникации** (отправка писем, звонки)
+- **Деплои в production**
 
-**Patterns:**
-- **Manual approval** — каждый dangerous action
-- **Sampling review** — 10% случайных action manually reviewed
-- **Confidence threshold** — high confidence auto, low → ask
+**Паттерны:**
+- **Ручное подтверждение** — каждое опасное действие
+- **Выборочный контроль** — 10% случайных действий проверяются вручную
+- **Порог уверенности** — высокая уверенность → авто, низкая → спросить
 
 
 ## Q26. Cost control для agents?
@@ -684,35 +684,35 @@ def agent_with_budget(query, max_cost_usd=0.50):
         ...
 ```
 
-**Strategies:**
-- **Iteration limit** — max 10 steps
-- **Token limit** — total tokens cap
-- **Cost limit** — $ budget per run
-- **Time limit** — max 5 min
-- **Tool call limit** — max 20 tool calls
-- **Smaller model для planning**, large model только для critical generation
+**Стратегии:**
+- **Лимит итераций** — максимум 10 шагов
+- **Лимит токенов** — потолок на суммарные токены
+- **Лимит стоимости** — бюджет в $ на один запуск
+- **Лимит времени** — максимум 5 мин
+- **Лимит вызовов tools** — максимум 20 вызовов
+- **Маленькая модель для планирования**, большая — только для критичной генерации
 
 
 ## Q27. Latency в agents?
 
-**Multi-step agents are SLOW.** Single LLM call ≈ 1-5 sec. 10 calls = 10-50 sec.
+**Многошаговые агенты МЕДЛЕННЫЕ.** Один вызов LLM ≈ 1–5 сек. 10 вызовов = 10–50 сек.
 
-**Optimizations:**
-- **Parallel tool calls** (если tools independent) — `parallel_tool_calls: true` в OpenAI
-- **Smaller fast models** для simple steps (Haiku, GPT-4o-mini)
-- **Caching** intermediate results
-- **Streaming** final answer как только known
-- **Background execution** + async notification
+**Оптимизации:**
+- **Параллельные вызовы tools** (если tools независимы) — `parallel_tool_calls: true` в OpenAI
+- **Маленькие быстрые модели** для простых шагов (Haiku, GPT-4o-mini)
+- **Кэширование** промежуточных результатов
+- **Стриминг** финального ответа сразу, как только он известен
+- **Фоновое выполнение** + асинхронное уведомление
 
 **UX:**
-- Show progress ("Agent searched documents... reviewing...")
-- Estimated completion time
-- Allow cancel mid-execution
+- Показывать прогресс («Агент искал документы... проверяет...»)
+- Оценочное время завершения
+- Возможность отменить выполнение на полпути
 
 
 ## Q28. (!) Computer use — Claude (с 2024)?
 
-**Computer use** (Claude 3.5 Sonnet+, October 2024) — Claude может **видеть screenshots**, **управлять mouse/keyboard**.
+**Computer use** (Claude 3.5 Sonnet+, октябрь 2024) — Claude может **видеть screenshots** и **управлять мышью/клавиатурой**.
 
 ```python
 response = client.messages.create(
@@ -733,14 +733,14 @@ response = client.messages.create(
 ```
 
 **Применение:**
-- Автоматизация GUI tasks
-- Browser automation
-- QA testing
-- Legacy applications без API
+- Автоматизация GUI-задач
+- Автоматизация браузера
+- QA-тестирование
+- Легаси-приложения без API
 
-**Подвох:** очень slow, expensive. Для simple tasks — hasta API лучше. **Computer use** для случаев когда **API не существует**.
+**Подвох:** очень медленно и дорого. Для простых задач лучше использовать API. **Computer use** — для случаев, когда **API не существует**.
 
-В **2025** растущая адопция в RPA (Robotic Process Automation).
+В **2025** — растущее распространение в RPA (Robotic Process Automation).
 
 
 ---

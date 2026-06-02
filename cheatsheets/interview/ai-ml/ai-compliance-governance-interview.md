@@ -75,19 +75,19 @@ updated: "2026-05-25"
 | Дата | Что вступает в силу |
 |---|---|
 | **2 февраля 2025** | Запреты `prohibited AI` (Article 5), обязательные требования к AI literacy сотрудников |
-| **2 августа 2025** | Правила для `GPAI` (General-Purpose AI), назначение национальных competent authorities, penalties (кроме GPAI) |
-| **2 августа 2026** | Основная часть `high-risk` требований (Annex III системы), обязательства providers и deployers |
-| **2 августа 2027** | High-risk AI **встроенный в продукты** (Annex I — медтехника, машины, игрушки), full enforcement |
+| **2 августа 2025** | Правила для `GPAI` (General-Purpose AI), назначение национальных компетентных органов, штрафы (кроме GPAI) |
+| **2 августа 2026** | Основная часть требований к `high-risk` (системы из Annex III), обязательства провайдеров и деплойеров |
+| **2 августа 2027** | High-risk AI, **встроенный в продукты** (Annex I — медтехника, машины, игрушки), полное правоприменение |
 
-**Зачем фазы:** регуляторам и индустрии нужно время — нотификация conformity assessment bodies, написание harmonised standards (CEN-CENELEC JTC 21), создание AI Office и AI Board.
+**Зачем фазы:** регуляторам и индустрии нужно время — нотификация органов оценки соответствия (conformity assessment bodies), написание гармонизированных стандартов (CEN-CENELEC JTC 21), создание AI Office и AI Board.
 
-**Территориальный охват** (Article 2): применяется к **provider** (создатель/размещение на рынке EU), **deployer** (использующий AI в EU), **importer/distributor**. Включая **компании вне EU**, если output используется в EU — экстерриториальность как у GDPR.
+**Территориальный охват** (Article 2): применяется к **провайдеру** (создатель / размещение на рынке EU), **деплойеру** (использующий AI в EU), **импортёру/дистрибьютору**. В том числе к **компаниям вне EU**, если результат работы системы используется в EU — экстерриториальность как у GDPR.
 
-> EU AI Act — **product safety regulation**, а не privacy law. Он не заменяет GDPR, а дополняет: GDPR покрывает данные, AI Act — систему.
+> EU AI Act — это **регулирование безопасности продукта** (product safety regulation), а не закон о приватности. Он не заменяет GDPR, а дополняет его: GDPR покрывает данные, AI Act — систему.
 
 ## Q2. Какие четыре risk tier-а определяет EU AI Act? (!)
 
-**Pyramid of risk** — фундамент регламента. Четыре уровня, от запрещённого до минимального:
+**Пирамида рисков** — фундамент регламента. Четыре уровня, от запрещённого до минимального:
 
 ```mermaid
 graph TD
@@ -100,91 +100,91 @@ graph TD
     style D fill:#1dd1a1,color:#000
 ```
 
-**Unacceptable risk** (Article 5): запрещено **полностью** — social scoring госорганами, manipulative AI с physical/psychological harm, exploitation уязвимостей (детей, инвалидов), real-time remote biometric ID в public spaces (с узкими исключениями для law enforcement), predictive policing по profile, untargeted scraping faces из интернета, emotion recognition на работе и в образовании, biometric categorization по чувствительным атрибутам (race, religion).
+**Unacceptable risk** (Article 5): запрещено **полностью** — социальный скоринг госорганами, манипулятивный AI с физическим/психологическим вредом, эксплуатация уязвимостей (детей, инвалидов), биометрическая идентификация в реальном времени в публичных местах (с узкими исключениями для правоохраны), предиктивный полисинг по профилю, нецелевой сбор лиц (scraping) из интернета, распознавание эмоций на работе и в образовании, биометрическая категоризация по чувствительным атрибутам (раса, религия).
 
-**High-risk** (Annex III): credit scoring, hiring/HR, образование (scoring экзаменов), law enforcement (risk assessment подозреваемых), critical infrastructure (электросети, transport), миграция/asylum, justice administration, demokratic processes. Плюс Annex I — AI как safety component в регулируемых продуктах (медтехника MDR, машины, игрушки).
+**High-risk** (Annex III): кредитный скоринг, найм/HR, образование (оценка экзаменов), правоохрана (оценка рисков подозреваемых), критическая инфраструктура (электросети, транспорт), миграция/убежище, отправление правосудия, демократические процессы. Плюс Annex I — AI как компонент безопасности (safety component) в регулируемых продуктах (медтехника MDR, машины, игрушки).
 
-**Limited risk**: transparency only — chatbot должен признать, что он AI; deepfake-контент должен быть помечен; emotion recognition — уведомление субъекта.
+**Limited risk**: только прозрачность — чат-бот должен признать, что он AI; deepfake-контент должен быть помечен; при распознавании эмоций — уведомление субъекта.
 
 **Minimal/No risk**: ничего не требуется. Большая часть AI-систем (≈85% по оценкам Commission) попадает сюда.
 
-> Классификация — **per use case**, не per technology. Один и тот же LLM может быть high-risk в hiring (CV screening) и minimal в спам-фильтре.
+> Классификация — **по сценарию использования** (per use case), а не по технологии. Один и тот же LLM может быть high-risk в найме (скрининг резюме) и minimal в спам-фильтре.
 
 ## Q3. Какие требования EU AI Act предъявляет к high-risk AI системам? (!)
 
-Девять core requirements (Chapter III Section 2). Они касаются **provider** (создающего систему) и частично **deployer** (использующего):
+Девять ключевых требований (Chapter III Section 2). Они касаются **провайдера** (создающего систему) и частично **деплойера** (использующего):
 
 | Требование | Что включает |
 |---|---|
-| **Risk management system** (Art. 9) | Continuous lifecycle process: идентификация рисков → оценка → mitigation → testing |
-| **Data governance** (Art. 10) | Quality criteria для training/validation/test, bias detection, representativeness, statistical properties |
-| **Technical documentation** (Art. 11, Annex IV) | Architecture, training methodology, performance metrics, foreseeable risks |
-| **Record-keeping** (Art. 12) | Automatic logging — input data, references, identification persons, retention минимум 6 месяцев |
-| **Transparency** (Art. 13) | Instructions for use, capabilities, limitations, expected accuracy, human oversight requirements |
-| **Human oversight** (Art. 14) | Real ability vmешаться, override, stop — не cosmetic «уведомление» |
-| **Accuracy, robustness, cybersecurity** (Art. 15) | Performance levels, resilience к ошибкам, защита от adversarial attacks, data poisoning |
-| **Quality management system** (Art. 17) | ISO 9001-style — policies, procedures, regulatory compliance, post-market monitoring |
+| **Risk management system** (Art. 9) | Непрерывный процесс на всём жизненном цикле: идентификация рисков → оценка → митигация → тестирование |
+| **Data governance** (Art. 10) | Критерии качества для train/validation/test, выявление bias, репрезентативность, статистические свойства |
+| **Technical documentation** (Art. 11, Annex IV) | Архитектура, методология обучения, метрики производительности, предвидимые риски |
+| **Record-keeping** (Art. 12) | Автоматическое логирование — входные данные, ссылки, идентификация лиц, хранение минимум 6 месяцев |
+| **Transparency** (Art. 13) | Инструкции по использованию, возможности, ограничения, ожидаемая точность, требования к человеческому надзору |
+| **Human oversight** (Art. 14) | Реальная возможность вмешаться, переопределить (override), остановить — а не косметическое «уведомление» |
+| **Accuracy, robustness, cybersecurity** (Art. 15) | Уровни производительности, устойчивость к ошибкам, защита от adversarial-атак, data poisoning |
+| **Quality management system** (Art. 17) | В стиле ISO 9001 — политики, процедуры, соответствие регуляторике, post-market monitoring |
 | **Conformity assessment** (Art. 43) | Внутренняя (self-assessment) или с notified body — перед `CE marking` |
 
-**Post-market monitoring** (Art. 72): provider обязан continuous monitoring + сообщать `serious incidents` (Art. 73) в течение **15 дней** (24 часа для широко распространённых нарушений или infrastructure disruption).
+**Post-market monitoring** (Art. 72): провайдер обязан вести непрерывный мониторинг и сообщать о `serious incidents` (Art. 73) в течение **15 дней** (24 часа для широко распространённых нарушений или нарушения работы инфраструктуры).
 
-**Deployer obligations** (Art. 26): использовать по инструкции, обеспечить human oversight, мониторить, логировать выходы, информировать affected persons, проводить **FRIA** (Fundamental Rights Impact Assessment) для public bodies или significant impact.
+**Обязанности деплойера** (Art. 26): использовать по инструкции, обеспечить человеческий надзор, мониторить, логировать выходы, информировать затронутых лиц, проводить **FRIA** (Fundamental Rights Impact Assessment) для публичных органов или при значимом воздействии.
 
 ## Q4. Что такое GPAI и какие у него специальные обязательства? (!)
 
-**GPAI** (General-Purpose AI model) — модель «общего назначения», способная выполнять широкий спектр задач, обычно обучена на больших данных через self-supervision (Article 3(63)). Примеры: GPT-4, Claude, Gemini, Llama 3, Mistral Large.
+**GPAI** (General-Purpose AI model) — модель «общего назначения», способная выполнять широкий спектр задач, обычно обученная на больших данных через self-supervision (Article 3(63)). Примеры: GPT-4, Claude, Gemini, Llama 3, Mistral Large.
 
 **Не путать** с `GPAI system`: модель — это веса + код, system — модель в составе продукта.
 
 **Два уровня обязательств** GPAI (Chapter V):
 
-**All GPAI providers** (Art. 53):
-- Technical documentation (Annex XI) — архитектура, training process, data sources.
-- Information и документация для downstream providers (Annex XII).
-- Policy для compliance с copyright (DSM Directive).
-- Публикация **summary of training content** (по template AI Office).
+**Все провайдеры GPAI** (Art. 53):
+- Техническая документация (Annex XI) — архитектура, процесс обучения, источники данных.
+- Информация и документация для downstream-провайдеров (Annex XII).
+- Политика соблюдения авторских прав (DSM Directive).
+- Публикация **краткого описания обучающего контента** (summary of training content) по шаблону AI Office.
 
 **GPAI с systemic risk** (Art. 51-55):
-- Критерий: training compute **> 10²⁵ FLOPS** (≈ GPT-4 размер) или дизайнация AI Office по capability.
-- Дополнительно: model evaluations (incl. adversarial testing / red teaming), assessment systemic risks, mitigation, incident reporting, cybersecurity, energy consumption disclosure.
-- Adherence к `codes of practice` (на 2026 — General-Purpose AI Code of Practice, published April 2025).
+- Критерий: вычислительные ресурсы на обучение **> 10²⁵ FLOPS** (≈ масштаб GPT-4) или назначение AI Office по уровню возможностей (capability).
+- Дополнительно: оценки модели (включая adversarial-тестирование / red teaming), оценка системных рисков, их митигация, отчётность об инцидентах, кибербезопасность, раскрытие энергопотребления.
+- Следование `codes of practice` (на 2026 — General-Purpose AI Code of Practice, опубликован в апреле 2025).
 
-**Open-source exemption**: часть обязательств снимается для свободно доступных моделей (weights, architecture, usage info публичны) — но НЕ для systemic-risk моделей и НЕ для использования copyright и публикации training summary.
+**Исключение для open-source**: часть обязательств снимается для свободно доступных моделей (веса, архитектура, информация об использовании опубликованы) — но НЕ для моделей с systemic risk и НЕ в части авторских прав и публикации training summary.
 
 ## Q5. Какие penalties предусмотрены EU AI Act?
 
-Tier-аnal penalty scheme (Article 99):
+Многоуровневая схема штрафов (Article 99):
 
 | Нарушение | Штраф |
 |---|---|
-| Prohibited AI practices (Art. 5) | до **€35M** или **7% global annual turnover** (whichever higher) |
-| Несоблюдение high-risk requirements или GPAI obligations | до **€15M** или **3%** |
-| Предоставление incorrect, incomplete, misleading info | до **€7.5M** или **1%** |
+| Запрещённые практики AI (Art. 5) | до **€35M** или **7% от глобального годового оборота** (большее из двух) |
+| Несоблюдение требований к high-risk или обязательств GPAI | до **€15M** или **3%** |
+| Предоставление некорректной, неполной, вводящей в заблуждение информации | до **€7.5M** или **1%** |
 
-**Для SME и стартапов** — caps берутся в обратную сторону (whichever lower) — защита малого бизнеса.
+**Для SME и стартапов** потолки берутся в обратную сторону (меньшее из двух) — это защита малого бизнеса.
 
-**Сравнение с GDPR**: GDPR cap — 4% или €20M. AI Act жёстче для prohibited (7%), сравним для остальных.
+**Сравнение с GDPR**: потолок GDPR — 4% или €20M. AI Act жёстче для запрещённых практик (7%) и сравним для остальных.
 
-**Enforcement**: национальные `market surveillance authorities` плюс AI Office (на уровне Commission) для GPAI. Penalties назначают MS authorities, GPAI — Commission.
+**Правоприменение**: национальные `market surveillance authorities` плюс AI Office (на уровне Commission) для GPAI. Штрафы назначают органы государств-членов, а для GPAI — Commission.
 
-> Первые крупные штрафы ожидаются **не раньше 2026-2027**, когда полностью вступит в силу high-risk часть. Но prohibited AI уже enforce-уется с февраля 2025.
+> Первые крупные штрафы ожидаются **не раньше 2026-2027**, когда полностью вступит в силу часть про high-risk. Но запрещённые практики AI уже подпадают под правоприменение с февраля 2025.
 
 ## Q6. Что такое Annex III high-risk use cases — приведи примеры
 
-**Annex III** — список «areas» high-risk AI применений (можно обновлять delegated acts):
+**Annex III** — список «областей» применения high-risk AI (можно расширять делегированными актами):
 
-1. **Biometric ID и categorization** (не запрещённое) — biometric verification (1:1), categorization не по чувствительным.
-2. **Critical infrastructure** — управление electricity, gas, water, traffic.
-3. **Education and vocational training** — оценка экзаменов, admission, мониторинг поведения студентов.
-4. **Employment и HR** — recruitment (CV screening, ranking), task allocation, monitoring, evaluation, termination.
-5. **Essential private and public services** — credit scoring, insurance underwriting, emergency call dispatch, eligibility для public benefits.
-6. **Law enforcement** — risk assessment recidivism, polygraph alternatives, evidence reliability evaluation, crime prediction.
-7. **Migration, asylum, border control** — risk assessment applicants, document authenticity, eligibility decisions.
-8. **Administration of justice and democratic processes** — assist judge в research/interpretation law, influence elections.
+1. **Биометрическая идентификация и категоризация** (не запрещённая) — биометрическая верификация (1:1), категоризация не по чувствительным признакам.
+2. **Критическая инфраструктура** — управление электро-, газо-, водоснабжением, дорожным трафиком.
+3. **Образование и профессиональная подготовка** — оценка экзаменов, приём, мониторинг поведения студентов.
+4. **Занятость и HR** — рекрутинг (скрининг и ранжирование резюме), распределение задач, мониторинг, оценка, увольнение.
+5. **Базовые частные и публичные услуги** — кредитный скоринг, андеррайтинг в страховании, диспетчеризация экстренных вызовов, право на получение публичных льгот.
+6. **Правоохрана** — оценка риска рецидива, альтернативы полиграфу, оценка надёжности доказательств, прогнозирование преступлений.
+7. **Миграция, убежище, пограничный контроль** — оценка риска заявителей, подлинность документов, решения о праве на въезд.
+8. **Отправление правосудия и демократические процессы** — помощь судье в исследовании/толковании права, влияние на выборы.
 
-**Conditional high-risk** (Art. 6(3)): если AI выполняет **narrow procedural task**, или improves результат уже принятого решения, или detects patterns без replace human assessment — может **не** быть high-risk. Но provider должен это документировать.
+**Условно high-risk** (Art. 6(3)): если AI выполняет **узкую процедурную задачу**, или улучшает результат уже принятого решения, или выявляет паттерны, не заменяя оценку человеком — он может **не** быть high-risk. Но провайдер обязан это задокументировать.
 
-**Examples** — `CV ranker` в hiring (high-risk), `credit decision engine` в банке (high-risk), `traffic light optimization` (high-risk), `email spell-checker` (minimal), `customer chatbot для бронирования` (limited — transparency only).
+**Примеры**: `CV ranker` в найме (high-risk), `credit decision engine` в банке (high-risk), `traffic light optimization` (high-risk), `email spell-checker` (minimal), `customer chatbot для бронирования` (limited — только прозрачность).
 
 ---
 
@@ -192,9 +192,9 @@ Tier-аnal penalty scheme (Article 99):
 
 ## Q7. Что такое NIST AI Risk Management Framework и какие у него четыре функции? (!)
 
-**NIST AI RMF 1.0** (Jan 2023) — добровольный фреймворк от U.S. National Institute of Standards and Technology. **De facto** US стандарт; ссылается в federal contracts, executive orders, state laws (Colorado AI Act).
+**NIST AI RMF 1.0** (Jan 2023) — добровольный фреймворк от U.S. National Institute of Standards and Technology. **Де-факто** стандарт в США; на него ссылаются в федеральных контрактах, executive orders, законах штатов (Colorado AI Act).
 
-**Четыре core functions** (с playbook actions для каждой):
+**Четыре ключевые функции** (с playbook-действиями для каждой):
 
 ```mermaid
 graph LR
@@ -214,62 +214,62 @@ graph LR
     style A fill:#27ae60,color:#fff
 ```
 
-**Govern** — cross-cutting функция: AI risk management strategy, accountability, policies, roles (RACI), культура, supply chain.
+**Govern** — сквозная функция: стратегия управления AI-рисками, ответственность (accountability), политики, роли (RACI), культура, supply chain.
 
-**Map** — контекст: цели системы, stakeholders, риски (intended и foreseeable misuse), impact assessment, классификация по trustworthiness characteristics.
+**Map** — контекст: цели системы, стейкхолдеры, риски (предполагаемое и предвидимое злоупотребление), оценка воздействия, классификация по характеристикам доверия (trustworthiness).
 
-**Measure** — quantitative + qualitative оценка: accuracy, robustness, fairness, explainability, privacy, security. Testing, TEVV (Testing, Evaluation, Validation, Verification).
+**Measure** — количественная и качественная оценка: accuracy, robustness, fairness, explainability, privacy, security. Тестирование, TEVV (Testing, Evaluation, Validation, Verification).
 
-**Manage** — приоритизация рисков, treatment (avoid/mitigate/transfer/accept), continuous monitoring, incident response, decommissioning.
+**Manage** — приоритизация рисков, обработка (avoid/mitigate/transfer/accept), непрерывный мониторинг, реагирование на инциденты, вывод из эксплуатации.
 
-**Trustworthy AI characteristics** (cross-cutting): valid & reliable, safe, secure & resilient, accountable & transparent, explainable & interpretable, privacy-enhanced, fair (bias managed).
+**Характеристики Trustworthy AI** (сквозные): valid & reliable, safe, secure & resilient, accountable & transparent, explainable & interpretable, privacy-enhanced, fair (управляемый bias).
 
 ## Q8. Что такое NIST AI RMF Generative AI Profile?
 
-**NIST AI 600-1** (July 2024) — companion profile к RMF 1.0, заточенный под `generative AI`. Содержит **200+ конкретных actions** в рамках 4 функций.
+**NIST AI 600-1** (July 2024) — сопутствующий профиль (companion profile) к RMF 1.0, заточенный под `generative AI`. Содержит **200+ конкретных действий** в рамках 4 функций.
 
-**12 risk categories** GenAI Profile:
+**12 категорий рисков** GenAI Profile:
 
 | Категория | Пример |
 |---|---|
-| `CBRN information` | Инструкции для chemical/biological/radiological/nuclear weapons |
-| `Confabulation` | Hallucinations — уверенный неверный ответ |
-| `Dangerous, violent, hateful content` | Toxic outputs |
-| `Data privacy` | Утечка PII из training, prompt injection с PII |
-| `Environmental impact` | Carbon footprint training/inference |
-| `Harmful bias and homogenization` | Discrimination, mode collapse |
-| `Human-AI configuration` | Over-reliance, anthropomorphization |
-| `Information integrity` | Disinformation, deepfakes |
-| `Information security` | Model theft, prompt injection, RCE через tool use |
-| `Intellectual property` | Copyright violations в outputs |
-| `Obscene/abusive sexual content` | CSAM, non-consensual imagery |
-| `Value chain and component integration` | Третьи стороны — модели, datasets, infra |
+| `CBRN information` | Инструкции по химическому/биологическому/радиологическому/ядерному оружию |
+| `Confabulation` | Галлюцинации — уверенный неверный ответ |
+| `Dangerous, violent, hateful content` | Токсичные выходы |
+| `Data privacy` | Утечка PII из обучающих данных, prompt injection с PII |
+| `Environmental impact` | Углеродный след обучения/инференса |
+| `Harmful bias and homogenization` | Дискриминация, mode collapse |
+| `Human-AI configuration` | Чрезмерное доверие, антропоморфизация |
+| `Information integrity` | Дезинформация, deepfakes |
+| `Information security` | Кража модели, prompt injection, RCE через tool use |
+| `Intellectual property` | Нарушения авторских прав в выходах |
+| `Obscene/abusive sexual content` | CSAM, изображения без согласия |
+| `Value chain and component integration` | Третьи стороны — модели, датасеты, инфраструктура |
 
-> GenAI Profile **не mandatory**, но активно используется как baseline в US — особенно federal agency contracts после EO 14110 (даже после его revocation в 2025 многие AI Use Case Inventory requirements продолжают действовать).
+> GenAI Profile **не обязателен**, но активно используется как baseline в США — особенно в контрактах федеральных агентств после EO 14110 (даже после его отмены в 2025 многие требования AI Use Case Inventory продолжают действовать).
 
 ## Q9. Что такое ISO/IEC 42001 и как он связан с EU AI Act? (!)
 
-**ISO/IEC 42001:2023** (опубликован декабрь 2023) — первый **сертифицируемый** международный стандарт для AI Management System (AIMS). Структура — Annex SL (как ISO 27001, 9001) — встраивается в существующую ISMS.
+**ISO/IEC 42001:2023** (опубликован в декабре 2023) — первый **сертифицируемый** международный стандарт для AI Management System (AIMS). Структура — Annex SL (как у ISO 27001, 9001) — встраивается в существующую ISMS.
 
 **Ключевые элементы**:
-- Context organization (4) — внешние/внутренние факторы, stakeholders.
-- Leadership (5) — AI policy, roles.
-- Planning (6) — risk assessment, opportunity, AI objectives.
-- Support (7) — resources, competence, awareness, documentation.
-- Operation (8) — lifecycle controls, impact assessment, third-party.
-- Performance evaluation (9) — monitoring, internal audit, management review.
-- Improvement (10) — nonconformity, corrective action.
+- Контекст организации (4) — внешние/внутренние факторы, стейкхолдеры.
+- Лидерство (5) — AI-политика, роли.
+- Планирование (6) — оценка рисков, возможностей, AI-цели.
+- Поддержка (7) — ресурсы, компетенции, осведомлённость, документация.
+- Эксплуатация (8) — контроли жизненного цикла, оценка воздействия, третьи стороны.
+- Оценка результатов (9) — мониторинг, внутренний аудит, management review.
+- Улучшение (10) — несоответствия, корректирующие действия.
 
-**Annex A controls**: ~38 controls в 9 категориях — AI policies, internal organization, AI lifecycle (design, development, V&V, deployment, operation, retirement), data, info for interested parties.
+**Контроли Annex A**: ~38 контролей в 9 категориях — AI-политики, внутренняя организация, жизненный цикл AI (проектирование, разработка, V&V, развёртывание, эксплуатация, вывод из эксплуатации), данные, информация для заинтересованных сторон.
 
 **Связь с EU AI Act**:
-- ISO 42001 — **process** standard, AI Act — **product** regulation.
-- Сертификация ISO 42001 НЕ заменяет AI Act compliance, но **демонстрирует** quality management system (Art. 17 AI Act).
-- Harmonised standards (CEN-CENELEC) для AI Act ещё в разработке (ожидаются 2026-2027) — ISO 42001 закрывает gap.
+- ISO 42001 — стандарт **процесса**, AI Act — регулирование **продукта**.
+- Сертификация ISO 42001 НЕ заменяет соответствие AI Act, но **демонстрирует** quality management system (Art. 17 AI Act).
+- Гармонизированные стандарты (CEN-CENELEC) для AI Act ещё в разработке (ожидаются в 2026-2027) — ISO 42001 закрывает этот пробел.
 
-**Companion**: **ISO/IEC 23894:2023** — AI Risk Management guidance (не сертифицируемый), детализирует подход к рискам ISO 31000 для AI.
+**Сопутствующий стандарт**: **ISO/IEC 23894:2023** — руководство по AI Risk Management (не сертифицируемое), детализирует подход к рискам из ISO 31000 применительно к AI.
 
-**Кому полезно**: GPAI providers, enterprise AI vendors, deployers high-risk — все, кому нужно демонстрировать «we have AI governance» клиентам/регуляторам.
+**Кому полезно**: провайдеры GPAI, корпоративные AI-вендоры, деплойеры high-risk — все, кому нужно демонстрировать клиентам/регуляторам «у нас есть AI governance».
 
 ---
 
@@ -281,63 +281,63 @@ graph LR
 
 | Положение | Применение к AI |
 |---|---|
-| **Article 5** — principles | Data minimization vs «больше данных = лучше модель» (конфликт), purpose limitation, accuracy |
-| **Article 6** — lawful basis | Training data — какой legal basis? Legitimate interest (с balancing test), consent, contract |
-| **Article 9** — special categories | Health, biometric, racial — strict prohibition с exceptions |
-| **Article 13-14** — info to data subject | Existence of automated decision-making, logic involved, consequences |
-| **Article 15** — right of access | Включает logic of automated decisions |
-| **Article 17** — right to erasure | «Право на забвение» в training data — **технически сложно** (нужен retraining, unlearning) |
-| **Article 22** — automated decision-making | Special protections для decisions «solely» автоматических с legal/significant effect |
-| **Article 25** — privacy by design | Применимо к AI architecture |
-| **Article 35** — DPIA | Mandatory для high-risk processing — почти всегда для AI |
-| **Chapter V** — international transfers | Training/inference cross-border — SCCs, adequacy decisions |
+| **Article 5** — принципы | Минимизация данных против «больше данных = лучше модель» (конфликт), ограничение цели, точность |
+| **Article 6** — законное основание | Обучающие данные — на каком правовом основании? Легитимный интерес (с balancing-тестом), согласие, договор |
+| **Article 9** — особые категории | Здоровье, биометрия, раса — строгий запрет с исключениями |
+| **Article 13-14** — информирование субъекта | Наличие автоматизированного принятия решений, задействованная логика, последствия |
+| **Article 15** — право доступа | Включает логику автоматизированных решений |
+| **Article 17** — право на удаление | «Право на забвение» в обучающих данных — **технически сложно** (нужен retraining, unlearning) |
+| **Article 22** — автоматизированное принятие решений | Особая защита для решений «исключительно» (solely) автоматических с правовым/значимым эффектом |
+| **Article 25** — privacy by design | Применимо к архитектуре AI |
+| **Article 35** — DPIA | Обязательна для high-risk-обработки — почти всегда для AI |
+| **Chapter V** — международные трансферы | Обучение/инференс через границы — SCCs, решения об адекватности |
 
-**Конфликты с AI Act**: GDPR требует erasure, AI Act требует retention логов 6+ месяцев. Решение: разные categories of data, или anonymization логов.
+**Конфликты с AI Act**: GDPR требует удаления, AI Act требует хранения логов 6+ месяцев. Решение: разные категории данных или анонимизация логов.
 
-**Schrems II** (2020) — invalidated Privacy Shield, осложнил US ↔ EU transfers. Решено EU-US Data Privacy Framework (July 2023), но юридические challenges продолжаются.
+**Schrems II** (2020) — признал недействительным Privacy Shield, осложнил трансферы US ↔ EU. Решено через EU-US Data Privacy Framework (July 2023), но юридические оспаривания продолжаются.
 
 ## Q11. Что такое DPIA и когда она обязательна для AI? (!)
 
-**DPIA** (Data Protection Impact Assessment, Article 35 GDPR) — формальная оценка risks для прав и свобод субъектов данных перед началом processing.
+**DPIA** (Data Protection Impact Assessment, Article 35 GDPR) — формальная оценка рисков для прав и свобод субъектов данных перед началом обработки.
 
-**Mandatory** когда:
-- Systematic and extensive evaluation, включая profiling, с legal/significant effects.
-- Large-scale processing special categories (Article 9) или criminal data.
-- Systematic monitoring publicly accessible area.
-- Дополнительные критерии EDPB Guidelines 248 (≥2 из 9): evaluation/scoring, automated decision, systematic monitoring, sensitive data, large scale, matching/combining datasets, vulnerable subjects, innovative tech, blocks data subject rights.
+**Обязательна**, когда:
+- Систематическая и масштабная оценка, включая профилирование, с правовыми/значимыми эффектами.
+- Крупномасштабная обработка особых категорий (Article 9) или данных о судимостях.
+- Систематический мониторинг публично доступной зоны.
+- Дополнительные критерии EDPB Guidelines 248 (≥2 из 9): оценка/скоринг, автоматизированное решение, систематический мониторинг, чувствительные данные, большой масштаб, сопоставление/объединение датасетов, уязвимые субъекты, инновационные технологии, блокировка прав субъекта данных.
 
-**AI почти всегда** попадает под минимум 2 критерия → DPIA mandatory.
+**AI почти всегда** попадает под минимум 2 критерия → DPIA обязательна.
 
 **Содержание** (Art. 35(7)):
-1. Systematic description processing, purposes, legitimate interest.
-2. Necessity and proportionality.
-3. Risks для прав и свобод.
-4. Measures to address risks — safeguards, security, mechanisms ensuring compliance.
+1. Систематическое описание обработки, целей, легитимного интереса.
+2. Необходимость и пропорциональность.
+3. Риски для прав и свобод.
+4. Меры по снижению рисков — гарантии (safeguards), безопасность, механизмы обеспечения соответствия.
 
-**Связь с AI Act**: high-risk AI требует `Fundamental Rights Impact Assessment` (FRIA, Art. 27) для deployers — public bodies, banking/insurance. DPIA и FRIA **дополняют** друг друга, не заменяют. EDPB рекомендует **integrated** assessment.
+**Связь с AI Act**: high-risk AI требует `Fundamental Rights Impact Assessment` (FRIA, Art. 27) для деплойеров — публичных органов, банков/страховщиков. DPIA и FRIA **дополняют** друг друга, а не заменяют. EDPB рекомендует **интегрированную** оценку.
 
-**Кто проводит**: data controller с участием DPO (если есть). Консультация с supervisory authority — если residual high risk не mitigated.
+**Кто проводит**: контролёр данных с участием DPO (если есть). Консультация с надзорным органом — если остаточный высокий риск не митигирован.
 
 ## Q12. Что говорит Article 22 GDPR про automated decision-making?
 
-**Article 22(1)**: субъект имеет право не быть subject of decision, основанного **solely** на automated processing (включая profiling), которое production **legal effects** или **similarly significantly** affects.
+**Article 22(1)**: субъект имеет право не быть объектом решения, основанного **исключительно** (solely) на автоматизированной обработке (включая профилирование), которое порождает **правовые последствия** или **аналогичным образом значимо** на него влияет.
 
-**Условие «solely»**: если человек делает meaningful review — Art. 22 не применяется. Но «штамповать» одобрения без анализа = solely automated. EDPB Guidelines 251 говорят про **active and substantial** human involvement.
+**Условие «solely»**: если человек проводит осмысленный (meaningful) пересмотр — Art. 22 не применяется. Но «штамповать» одобрения без анализа = исключительно автоматическое решение. EDPB Guidelines 251 говорят про **активное и существенное** участие человека.
 
-**Examples**:
-- `Solely automated` (Art. 22 applies): online credit scoring, automated CV rejection, online ad targeting (debatable), insurance claim auto-decline.
-- `Human in the loop` (Art. 22 NOT applies): AI flag → human review → human decides.
+**Примеры**:
+- `Solely automated` (Art. 22 применяется): онлайн кредитный скоринг, автоматический отказ по резюме, онлайн таргетинг рекламы (спорно), авто-отклонение страхового требования.
+- `Human in the loop` (Art. 22 НЕ применяется): AI помечает → человек проверяет → человек решает.
 
-**Exceptions** (Art. 22(2)):
-- Necessary для contract (a),
-- Authorized by EU/MS law с safeguards (b),
-- Explicit consent (c).
+**Исключения** (Art. 22(2)):
+- Необходимо для договора (a),
+- Разрешено правом EU/государства-члена с гарантиями (b),
+- Явное согласие (c).
 
-Даже при exception — минимальные **safeguards**: human intervention right, expression of point of view, contestation right.
+Даже при исключении — минимальные **гарантии**: право на вмешательство человека, выражение своей точки зрения, право оспорить решение.
 
-**Special categories** (Art. 22(4)): Art. 9 data — только consent или substantial public interest.
+**Особые категории** (Art. 22(4)): данные по Art. 9 — только согласие или существенный общественный интерес.
 
-**SCHUFA case** (CJEU, December 2023, C-634/21): credit scoring score сам по себе = automated decision, даже если bank использует его «как input» — если score фактически determinative.
+**Дело SCHUFA** (CJEU, December 2023, C-634/21): сам по себе кредитный скоринговый балл = автоматизированное решение, даже если банк использует его «как входной параметр» — если балл фактически определяет исход.
 
 ---
 
@@ -345,96 +345,96 @@ graph LR
 
 ## Q13. Что такое AI Bill of Rights и Executive Order 14110?
 
-**Blueprint for an AI Bill of Rights** (October 2022, White House OSTP) — **non-binding** framework с 5 принципами:
+**Blueprint for an AI Bill of Rights** (October 2022, White House OSTP) — **необязывающий** (non-binding) фреймворк из 5 принципов:
 
-1. **Safe and Effective Systems** — testing pre-deployment, monitoring.
-2. **Algorithmic Discrimination Protections** — proactive equity assessment.
-3. **Data Privacy** — built-in, agency over data.
+1. **Safe and Effective Systems** — тестирование до развёртывания, мониторинг.
+2. **Algorithmic Discrimination Protections** — проактивная оценка справедливости (equity).
+3. **Data Privacy** — встроенная защита, контроль над данными.
 4. **Notice and Explanation** — субъект знает про AI и логику.
 5. **Human Alternatives, Consideration, Fallback** — opt-out, человеческое решение.
 
-**Сила**: морально-политическая, не law. Влияет на federal procurement, agency guidance.
+**Сила**: морально-политическая, а не закон. Влияет на федеральные госзакупки, рекомендации агентств.
 
-**Executive Order 14110** (Biden, October 2023) — **самый большой US AI executive order**:
-- Safety testing для frontier models (compute > 10²⁶ FLOPS) с reporting.
-- NIST framework для red-teaming.
-- Content authentication (C2PA).
-- AI talent visa.
-- Federal agency AI Use Case Inventories.
+**Executive Order 14110** (Biden, October 2023) — **крупнейший AI executive order в США**:
+- Тестирование безопасности frontier-моделей (compute > 10²⁶ FLOPS) с отчётностью.
+- NIST-фреймворк для red-teaming.
+- Аутентификация контента (C2PA).
+- Виза для AI-талантов.
+- Инвентаризации сценариев использования AI (AI Use Case Inventories) в федеральных агентствах.
 
-**Revoked Trump (January 2025)** — EO 14179 «Removing Barriers to American Leadership in AI». Но:
-- Federal AI Use Case Inventories продолжаются (Congress requires).
-- NIST AI RMF и GenAI Profile — независимы от EO.
-- State laws не затрагиваются (preemption нет).
+**Отменён Трампом (January 2025)** — EO 14179 «Removing Barriers to American Leadership in AI». Но:
+- Федеральные AI Use Case Inventories продолжаются (требует Congress).
+- NIST AI RMF и GenAI Profile независимы от EO.
+- Законы штатов не затрагиваются (федерального вытеснения, preemption, нет).
 
 ## Q14. Что такое Colorado AI Act и какие US state-level AI laws есть? (!)
 
-**Colorado AI Act (SB 24-205)**, signed май 2024, в силе с **1 февраля 2026** — **первый comprehensive** AI law в US.
+**Colorado AI Act (SB 24-205)**, подписан в мае 2024, в силе с **1 февраля 2026** — **первый комплексный** AI-закон в США.
 
-**Scope**: developers и deployers `high-risk AI systems` — consequential decisions (education, employment, financial, healthcare, housing, insurance, legal, government services).
+**Сфера действия**: разработчики (developers) и деплойеры `high-risk AI systems` — значимые решения (образование, занятость, финансы, здравоохранение, жильё, страхование, юриспруденция, госуслуги).
 
-**Developer obligations**:
-- Disclosure deployers — purpose, known limitations, evaluation results, data governance.
-- Public statement про AI systems и risk management.
-- Notify Attorney General о known algorithmic discrimination в 90 дней.
+**Обязанности разработчика**:
+- Раскрытие деплойерам — назначение, известные ограничения, результаты оценки, data governance.
+- Публичное заявление об AI-системах и управлении рисками.
+- Уведомление Attorney General об известной алгоритмической дискриминации в течение 90 дней.
 
-**Deployer obligations**:
-- Risk management policy и program.
-- Annual impact assessment.
-- Notify consumers пре consequential decision.
-- Right to appeal automated decision.
-- Right to explanation.
+**Обязанности деплойера**:
+- Политика и программа управления рисками.
+- Ежегодная оценка воздействия (impact assessment).
+- Уведомление потребителей перед значимым решением.
+- Право обжаловать автоматизированное решение.
+- Право на объяснение.
 
-**Penalties**: civil action AG, up to $20,000 per violation.
+**Штрафы**: гражданский иск от AG, до $20,000 за нарушение.
 
-**Другие US state laws**:
+**Другие законы штатов США**:
 
 | Юрисдикция | Закон | Фокус |
 |---|---|---|
-| California | **AB 2013** (2024) | GenAI training data disclosure (с Jan 2026) |
-| California | **AB 1008** (2024) | CCPA включает personal info в AI systems |
-| California | **SB 942** (2024) | AI-generated content disclosure |
-| New York City | **Local Law 144** (2023) | Hiring AI bias audit + notice |
-| Illinois | **BIPA** (2008) | Biometric — широко применяется к AI |
-| Texas | **TRAIGA** (HB 1709, 2026) | High-risk AI obligations |
-| Utah | **SB 149** (2024) | GenAI disclosure для regulated professions |
+| California | **AB 2013** (2024) | Раскрытие обучающих данных GenAI (с Jan 2026) |
+| California | **AB 1008** (2024) | CCPA включает персональные данные в AI-системах |
+| California | **SB 942** (2024) | Раскрытие AI-сгенерированного контента |
+| New York City | **Local Law 144** (2023) | Аудит bias в hiring-AI + уведомление |
+| Illinois | **BIPA** (2008) | Биометрия — широко применяется к AI |
+| Texas | **TRAIGA** (HB 1709, 2026) | Обязательства для high-risk AI |
+| Utah | **SB 149** (2024) | Раскрытие GenAI для регулируемых профессий |
 
-> Регуляторный landscape в US — **fragmented**. Federal preemption обсуждается, но не принят. Компаниям проще соблюдать «highest common denominator» — обычно EU AI Act или Colorado.
+> Регуляторный ландшафт в США **фрагментирован**. Федеральное вытеснение (preemption) обсуждается, но не принято. Компаниям проще соблюдать «наивысший общий знаменатель» — обычно EU AI Act или Colorado.
 
 ## Q15. Какие подходы у UK и China к AI regulation?
 
-**UK** — **light-touch, principles-based** (white paper 2023, реализовано через existing regulators):
+**UK** — **мягкий, основанный на принципах** подход (light-touch, white paper 2023, реализован через существующих регуляторов):
 
 Пять принципов:
-1. Safety, security, robustness.
-2. Appropriate transparency и explainability.
-3. Fairness.
-4. Accountability и governance.
-5. Contestability и redress.
+1. Безопасность, защищённость, устойчивость.
+2. Уместная прозрачность и объяснимость.
+3. Справедливость.
+4. Подотчётность и governance.
+5. Возможность оспорить и получить возмещение.
 
-**Без AI Act** на 2026 — Sunak делал ставку на «UK as global AI safety hub». Labour (с 2024) обещали targeted legislation для frontier models, но конкретики ещё нет.
+**Без AI Act** на 2026 — Сунак делал ставку на «UK как глобальный хаб AI-безопасности». Лейбористы (с 2024) обещали точечное законодательство для frontier-моделей, но конкретики ещё нет.
 
-**AI Safety Institute (AISI)** — November 2023, government body для evaluation frontier models. Один из первых в мире. Не регулятор, а evaluator — voluntary access от labs (OpenAI, Anthropic, DeepMind).
+**AI Safety Institute (AISI)** — November 2023, государственный орган для оценки frontier-моделей. Один из первых в мире. Не регулятор, а оценщик (evaluator) — добровольный доступ от лабораторий (OpenAI, Anthropic, DeepMind).
 
-**Sectoral approach**: ICO (data), FCA (finance), Ofcom (online safety), MHRA (medical) — каждый применяет принципы в своей сфере.
+**Секторальный подход**: ICO (данные), FCA (финансы), Ofcom (онлайн-безопасность), MHRA (медицина) — каждый применяет принципы в своей сфере.
 
-**China** — **proactive, prescriptive**:
+**China** — **проактивный, предписывающий**:
 
 | Регулирование | Дата | Фокус |
 |---|---|---|
-| **Algorithmic Recommendations** | Mar 2022 | Recommendation systems — algorithm registry |
-| **Deep Synthesis** | Jan 2023 | Deepfakes — labeling, identity verification |
-| **Interim Measures для Generative AI** | Aug 2023 | LLMs — registration, content moderation, training data legality |
-| **Labeling AI-generated content** | Sep 2024 | Watermarks, metadata |
+| **Algorithmic Recommendations** | Mar 2022 | Рекомендательные системы — реестр алгоритмов |
+| **Deep Synthesis** | Jan 2023 | Deepfakes — маркировка, верификация личности |
+| **Interim Measures для Generative AI** | Aug 2023 | LLM — регистрация, модерация контента, легальность обучающих данных |
+| **Labeling AI-generated content** | Sep 2024 | Водяные знаки, метаданные |
 
 **Ключевые требования**:
-- **Registration** алгоритмов в CAC (Cyberspace Administration China) — algorithm filing.
-- **Security assessment** для LLM с public access.
-- **Content moderation** — соответствие «socialist core values».
-- **Training data** — laws compliance, real source.
-- **Watermarking** — visible + invisible для AI-generated.
+- **Регистрация** алгоритмов в CAC (Cyberspace Administration China) — algorithm filing.
+- **Оценка безопасности** для LLM с публичным доступом.
+- **Модерация контента** — соответствие «социалистическим базовым ценностям».
+- **Обучающие данные** — соблюдение законов, реальный источник.
+- **Водяные знаки** — видимые и невидимые для AI-сгенерированного.
 
-> Сравнение: **EU** — rights-based + product safety. **US** — sectoral + state-by-state. **UK** — principles + regulators. **China** — state control + content moderation.
+> Сравнение: **EU** — основан на правах + безопасность продукта. **US** — секторальный + штат-за-штатом. **UK** — принципы + регуляторы. **China** — госконтроль + модерация контента.
 
 ---
 
@@ -442,81 +442,81 @@ graph LR
 
 ## Q16. Что такое Model Cards и какова их структура? (!)
 
-**Model Cards** — стандарт документации модели (Mitchell, Wu et al., 2019, Google). Цель: transparency про intended use, performance, limitations.
+**Model Cards** — стандарт документации модели (Mitchell, Wu et al., 2019, Google). Цель: прозрачность относительно предполагаемого использования, производительности, ограничений.
 
 **Стандартная структура** (расширенная):
 
 | Секция | Содержание |
 |---|---|
-| **Model Details** | Developer, date, version, type (e.g. transformer 7B), license, paper, contact |
-| **Intended Use** | Primary use cases, primary users, out-of-scope uses |
-| **Factors** | Demographics, instrumentation, environment relevant to performance |
-| **Metrics** | Performance measures, decision thresholds, variation approaches |
-| **Evaluation Data** | Datasets, motivation, preprocessing |
-| **Training Data** | Same как evaluation; если confidential — disclosed |
-| **Quantitative Analyses** | Unitary results (overall), disaggregated (by subgroup) |
-| **Ethical Considerations** | Sensitive data, life/safety impact, mitigations, risks |
-| **Caveats and Recommendations** | Limitations, future work, idealised vs operational deployment |
+| **Model Details** | Разработчик, дата, версия, тип (напр. transformer 7B), лицензия, статья, контакт |
+| **Intended Use** | Основные сценарии, основные пользователи, использование вне области применения |
+| **Factors** | Демография, инструментирование, окружение, влияющее на производительность |
+| **Metrics** | Метрики производительности, пороги принятия решений, подходы к учёту вариативности |
+| **Evaluation Data** | Датасеты, мотивация, предобработка |
+| **Training Data** | То же, что и evaluation; если конфиденциально — раскрывается |
+| **Quantitative Analyses** | Унитарные результаты (в целом), дезагрегированные (по подгруппам) |
+| **Ethical Considerations** | Чувствительные данные, влияние на жизнь/безопасность, митигации, риски |
+| **Caveats and Recommendations** | Ограничения, дальнейшая работа, идеализированное против операционного развёртывания |
 
-**HuggingFace Model Cards** (mandatory на Hub):
-- License (важно — без license модель «не использовать»).
-- Model description.
-- Uses (direct, downstream, out-of-scope).
-- Bias, risks, limitations.
-- Training details.
-- Evaluation.
-- Environmental impact (Co2 emissions).
-- Technical specifications.
+**HuggingFace Model Cards** (обязательны на Hub):
+- Лицензия (важно — без лицензии модель «не использовать»).
+- Описание модели.
+- Использование (direct, downstream, out-of-scope).
+- Bias, риски, ограничения.
+- Детали обучения.
+- Оценка (evaluation).
+- Влияние на окружающую среду (выбросы CO2).
+- Технические характеристики.
 
-**Best practices**:
-- Disaggregated metrics — **по subgroups** (gender, age, race, language) — не только aggregate accuracy.
-- Honest limitations — НЕ маркетинг.
-- Versioning — каждый retrain = новый card или version bump.
-- Machine-readable — `MODEL_CARD.md` рядом с весами, или JSON schema.
+**Лучшие практики**:
+- Дезагрегированные метрики — **по подгруппам** (gender, age, race, language), а не только агрегированная accuracy.
+- Честные ограничения — НЕ маркетинг.
+- Версионирование — каждый retrain = новый card или bump версии.
+- Машиночитаемость — `MODEL_CARD.md` рядом с весами или JSON-схема.
 
-**Применение в EU AI Act**: Annex IV technical documentation **включает аналог model card** для high-risk. Без него — нет conformity assessment.
+**Применение в EU AI Act**: техническая документация Annex IV **включает аналог model card** для high-risk. Без неё нет conformity assessment.
 
 ## Q17. Что такое Datasheets for Datasets и зачем они нужны?
 
-**Datasheets for Datasets** (Gebru et al. 2018, Microsoft Research / Google) — стандарт документации датасетов. Inspired by electronics datasheets — каждый компонент имеет datasheet.
+**Datasheets for Datasets** (Gebru et al. 2018, Microsoft Research / Google) — стандарт документации датасетов. Вдохновлён datasheet'ами электроники — у каждого компонента есть свой datasheet.
 
 **Семь категорий вопросов**:
 
-1. **Motivation** — для какой цели создан, кто финансировал, кто создал.
-2. **Composition** — что instances представляют, total count, есть ли labels, missing data, recommended splits.
-3. **Collection Process** — как получены, sampling strategy, validation, timeframe, ethical review.
-4. **Preprocessing/Cleaning/Labeling** — что сделано, raw data available, software.
-5. **Uses** — past/current uses, recommended uses, NOT-recommended uses.
-6. **Distribution** — third parties, licensing, restrictions, IP.
-7. **Maintenance** — owner, contact, updates, versioning, deprecation.
+1. **Motivation** — с какой целью создан, кто финансировал, кто создал.
+2. **Composition** — что представляют экземпляры (instances), общее число, есть ли метки, пропущенные данные, рекомендованные сплиты.
+3. **Collection Process** — как получены, стратегия сэмплирования, валидация, временные рамки, этическое ревью.
+4. **Preprocessing/Cleaning/Labeling** — что сделано, доступны ли сырые данные, ПО.
+5. **Uses** — прошлые/текущие применения, рекомендованные применения, НЕ рекомендованные применения.
+6. **Distribution** — третьи стороны, лицензирование, ограничения, IP.
+7. **Maintenance** — владелец, контакт, обновления, версионирование, прекращение поддержки.
 
 **Зачем**:
-- **Bias detection**: знать demographics dataset → понять blind spots модели.
-- **Reproducibility**: знать preprocessing → воспроизводимый эксперимент.
-- **Legal compliance**: knowing legal basis collection — GDPR, CCPA.
-- **Responsible use**: out-of-scope uses формально документированы.
+- **Выявление bias**: знать демографию датасета → понять слепые зоны модели.
+- **Воспроизводимость**: знать предобработку → воспроизводимый эксперимент.
+- **Соответствие законам**: знать правовое основание сбора — GDPR, CCPA.
+- **Ответственное использование**: применения вне области (out-of-scope) формально задокументированы.
 
-**Industry adoption**:
-- HuggingFace `Dataset Cards` — обязательны для datasets на Hub.
+**Принятие в индустрии**:
+- HuggingFace `Dataset Cards` — обязательны для датасетов на Hub.
 - Google `Data Cards` — изобретены параллельно, частично пересекаются.
-- ML CommonsCroissant — machine-readable schema для datasets.
+- ML Commons Croissant — машиночитаемая схема для датасетов.
 
-**Anti-pattern**: «mystery dataset» — модели обучают на scraped web без datasheet → невозможно audit bias, copyright, PII.
+**Анти-паттерн**: «загадочный датасет» — модели обучают на scraped web без datasheet → невозможно аудировать bias, авторские права, PII.
 
 ## Q18. Чем Model Card отличается от Datasheet for Dataset и от System Card?
 
 | Артефакт | Объект | Когда создаётся |
 |---|---|---|
-| **Datasheet for Dataset** | Dataset (training, evaluation) | После сбора данных, обновляется при изменении |
-| **Model Card** | Trained model (weights + architecture) | После training, обновляется per version |
-| **System Card** | Whole AI system (model + prompts + tools + guardrails) | Per deployed system, OpenAI / Anthropic — самостоятельный жанр |
+| **Datasheet for Dataset** | Датасет (обучающий, оценочный) | После сбора данных, обновляется при изменении |
+| **Model Card** | Обученная модель (веса + архитектура) | После обучения, обновляется на каждую версию |
+| **System Card** | Целая AI-система (модель + промпты + инструменты + guardrails) | На каждую развёрнутую систему; у OpenAI / Anthropic — самостоятельный жанр |
 
 **System Card** — относительно новый формат (OpenAI GPT-4 System Card, Anthropic Claude 3 Model Card). Включает:
-- Model details + использование (chat, API).
-- Safety mitigations (post-training, system prompts).
-- Red-team findings.
-- Capability evaluations (incl. dangerous capabilities — CBRN, cyber).
-- Deployment context.
+- Детали модели + использование (chat, API).
+- Меры безопасности (post-training, системные промпты).
+- Находки red-team.
+- Оценки возможностей (включая опасные возможности — CBRN, cyber).
+- Контекст развёртывания.
 
 **Иерархия**:
 
@@ -524,7 +524,7 @@ graph LR
 Datasheet (data) → Model Card (model) → System Card (deployed system)
 ```
 
-EU AI Act требует все три уровня для high-risk: data governance docs (Art. 10), technical documentation модели (Art. 11, Annex IV), product-level instructions (Art. 13).
+EU AI Act требует все три уровня для high-risk: документы data governance (Art. 10), технической документации модели (Art. 11, Annex IV), инструкции уровня продукта (Art. 13).
 
 ---
 
@@ -532,100 +532,100 @@ EU AI Act требует все три уровня для high-risk: data gover
 
 ## Q19. Какие fairness metrics существуют и как выбрать подходящую? (!)
 
-**Group fairness** — модель равно «хороша» для разных групп (защищённый attribute A, типично gender/race).
+**Групповая справедливость** (group fairness) — модель одинаково «хороша» для разных групп (защищённый атрибут A, типично gender/race).
 
-Основные метрики (`Ŷ` — prediction, `Y` — true label):
+Основные метрики (`Ŷ` — предсказание, `Y` — истинная метка):
 
 | Метрика | Определение | Подходит когда |
 |---|---|---|
-| **Demographic parity** (statistical parity) | `P(Ŷ=1|A=0) = P(Ŷ=1|A=1)` | Equal selection rate (e.g., hiring quota) |
-| **Equal opportunity** | `P(Ŷ=1|Y=1, A=0) = P(Ŷ=1|Y=1, A=1)` | True positive rate equal — recall fair |
-| **Equalized odds** | TPR равны + FPR равны | Stricter version equal opportunity |
-| **Predictive parity** | `P(Y=1|Ŷ=1, A=0) = P(Y=1|Ŷ=1, A=1)` | Precision equal (calibration) |
-| **Treatment equality** | FP/FN ratio равны | Errors симметричны по группам |
+| **Demographic parity** (statistical parity) | `P(Ŷ=1|A=0) = P(Ŷ=1|A=1)` | Нужна равная доля отбора (напр. квота при найме) |
+| **Equal opportunity** | `P(Ŷ=1|Y=1, A=0) = P(Ŷ=1|Y=1, A=1)` | Равный true positive rate — справедливый recall |
+| **Equalized odds** | Равные TPR + равные FPR | Более строгая версия equal opportunity |
+| **Predictive parity** | `P(Y=1|Ŷ=1, A=0) = P(Y=1|Ŷ=1, A=1)` | Равная precision (калибровка) |
+| **Treatment equality** | Равные отношения FP/FN | Ошибки симметричны по группам |
 
-**Impossibility result** (Chouldechova 2017, Kleinberg 2016): demographic parity, equal odds, predictive parity **не могут** все три выполняться одновременно, если base rates отличаются (кроме trivial cases). Trade-off неизбежен.
+**Результат о невозможности** (Chouldechova 2017, Kleinberg 2016): demographic parity, equalized odds и predictive parity **не могут** выполняться все три одновременно, если базовые частоты (base rates) различаются (кроме тривиальных случаев). Компромисс неизбежен.
 
-**Counterfactual fairness** (Kusner 2017): решение модели не должно изменяться, если контрфактически изменить только sensitive attribute (gender, race) при сохранении causal structure. Сильнее group fairness, но требует causal model.
+**Counterfactual fairness** (Kusner 2017): решение модели не должно меняться, если контрфактически изменить только чувствительный атрибут (gender, race), сохранив причинную структуру. Сильнее групповой справедливости, но требует причинной модели.
 
-**Individual fairness**: similar individuals → similar predictions (Dwork 2012). Требует distance metric.
+**Individual fairness**: похожие индивиды → похожие предсказания (Dwork 2012). Требует метрики расстояния.
 
 **Как выбрать**:
-- **Hiring quotas** → demographic parity (поставлена цель equal selection).
-- **Medical screening** → equal opportunity (нельзя пропускать больных в любой группе).
-- **Credit scoring** → equalized odds + calibration (balance false positives и precision).
-- **Criminal justice (COMPAS)** → debate predictive vs equal odds — нет «правильного» ответа без values.
+- **Квоты при найме** → demographic parity (поставлена цель равного отбора).
+- **Медицинский скрининг** → equal opportunity (нельзя пропускать больных ни в одной группе).
+- **Кредитный скоринг** → equalized odds + калибровка (баланс false positives и precision).
+- **Уголовное правосудие (COMPAS)** → спор predictive против equalized odds — нет «правильного» ответа без выбора ценностей.
 
-**Tools**:
-- **IBM AI Fairness 360** — 70+ metrics, mitigation algorithms (preprocessing, in-processing, post-processing).
-- **Aequitas** (UChicago) — bias audit toolkit, focused on policy use cases.
-- **Microsoft Fairlearn** — Python, integration с scikit-learn.
-- **Google What-If Tool** — interactive visualization.
+**Инструменты**:
+- **IBM AI Fairness 360** — 70+ метрик, алгоритмы митигации (preprocessing, in-processing, post-processing).
+- **Aequitas** (UChicago) — тулкит аудита bias, ориентирован на policy-сценарии.
+- **Microsoft Fairlearn** — Python, интеграция с scikit-learn.
+- **Google What-If Tool** — интерактивная визуализация.
 
 ## Q20. Какие методы explainability существуют для ML и LLM? (!)
 
-**Tabular / classical ML**:
+**Табличные данные / классический ML**:
 
 | Метод | Тип | Идея |
 |---|---|---|
-| **SHAP** (Shapley values) | Model-agnostic, post-hoc | Контрибуция feature к prediction через cooperative game theory |
-| **LIME** | Model-agnostic, post-hoc | Локальная linear approximation вокруг точки |
-| **Feature importance** (built-in) | Model-specific | Trees — Gini decrease; linear — coefficients |
-| **Permutation importance** | Model-agnostic | Shuffle feature → измерить drop in performance |
-| **Partial dependence plots** | Visualization | Effect feature averaged over others |
-| **Counterfactual explanations** | Local | «Если бы X=x', prediction был бы Y'» — actionable |
+| **SHAP** (Shapley values) | Model-agnostic, post-hoc | Вклад признака в предсказание через кооперативную теорию игр |
+| **LIME** | Model-agnostic, post-hoc | Локальная линейная аппроксимация вокруг точки |
+| **Feature importance** (встроенная) | Model-specific | Деревья — снижение Gini; линейные — коэффициенты |
+| **Permutation importance** | Model-agnostic | Перемешать признак → измерить падение качества |
+| **Partial dependence plots** | Визуализация | Эффект признака, усреднённый по остальным |
+| **Counterfactual explanations** | Локальный | «Если бы X=x', предсказание было бы Y'» — actionable |
 
 **Deep learning**:
-- **Integrated gradients** (Sundararajan 2017) — axiom-satisfying attribution.
-- **Grad-CAM** — visualization для CNN.
-- **Attention visualization** — для transformers (caveat: attention ≠ explanation в strict sense).
-- **TCAV** (Testing with Concept Activation Vectors) — concepts (e.g. «stripes»).
+- **Integrated gradients** (Sundararajan 2017) — атрибуция, удовлетворяющая аксиомам.
+- **Grad-CAM** — визуализация для CNN.
+- **Attention visualization** — для трансформеров (оговорка: attention ≠ объяснение в строгом смысле).
+- **TCAV** (Testing with Concept Activation Vectors) — концепты (напр. «полоски»).
 
-**LLM-specific**:
-- **Chain-of-thought** — model says reasoning steps (но не настоящее объяснение — post-hoc rationalization).
-- **Attention maps** — input tokens, что повлияли.
-- **Feature attribution** — Captum, Inseq libraries.
-- **Mechanistic interpretability** (Anthropic, OpenAI) — circuits, features через sparse autoencoders.
-- **Activation patching** — causal trace, какие neurons вызывают behavior.
+**Специфично для LLM**:
+- **Chain-of-thought** — модель проговаривает шаги рассуждения (но это не настоящее объяснение — post-hoc рационализация).
+- **Attention maps** — какие входные токены повлияли.
+- **Feature attribution** — библиотеки Captum, Inseq.
+- **Mechanistic interpretability** (Anthropic, OpenAI) — схемы (circuits), фичи через sparse autoencoders.
+- **Activation patching** — причинная трассировка, какие нейроны вызывают поведение.
 
-**Caveats**:
-- Explainability ≠ correctness — модель может дать «explanation», которое не отражает actual reasoning.
-- **Faithfulness** — насколько explanation отражает действительное reasoning модели. Часто низкая для post-hoc методов.
-- **GDPR «right to explanation»** — scope debated, но minimum «meaningful information about logic involved» (Art. 13(2)(f)).
-- **EU AI Act Art. 13(3)(b)(iv)** — instructions for use должны описывать характеристики, что enable interpretation output.
+**Оговорки**:
+- Объяснимость ≠ корректность — модель может дать «объяснение», которое не отражает действительное рассуждение.
+- **Faithfulness** — насколько объяснение отражает реальное рассуждение модели. Для post-hoc методов часто низкая.
+- **GDPR «право на объяснение»** — объём спорен, но минимум — «осмысленная информация о задействованной логике» (Art. 13(2)(f)).
+- **EU AI Act Art. 13(3)(b)(iv)** — инструкции по использованию должны описывать характеристики, позволяющие интерпретировать вывод.
 
 ## Q21. Как организовать bias audit модели в production?
 
 **Этапы bias audit**:
 
-1. **Determine protected attributes**.
-   - Legal: race, gender, age, disability, religion (Title VII US; protected characteristics UK Equality Act 2010).
-   - Operational: customer segment, geographic region.
-   - Proxies: zip code → race; name → gender, ethnicity.
+1. **Определить защищённые атрибуты**.
+   - Юридические: раса, пол, возраст, инвалидность, религия (Title VII в США; защищённые характеристики UK Equality Act 2010).
+   - Операционные: сегмент клиента, географический регион.
+   - Прокси: почтовый индекс → раса; имя → пол, этничность.
 
-2. **Collect demographic data** — часто **не доступно** (privacy laws не разрешают сбор без consent).
-   - Альтернативы: BISG (Bayesian Improved Surname Geocoding), self-reported аnonymous survey, proxy modelling с caveats.
+2. **Собрать демографические данные** — часто **недоступны** (законы о приватности не разрешают сбор без согласия).
+   - Альтернативы: BISG (Bayesian Improved Surname Geocoding), анонимный self-reported опрос, прокси-моделирование с оговорками.
 
-3. **Slice metrics** — disaggregated performance:
-   - Не только overall accuracy.
-   - По каждой защищённой группе: TPR, FPR, precision, recall, calibration.
-   - Intersectional — black women, не только black + women.
+3. **Разрезать метрики** (slice) — дезагрегированное качество:
+   - Не только общая accuracy.
+   - По каждой защищённой группе: TPR, FPR, precision, recall, калибровка.
+   - Пересечения (intersectional) — чернокожие женщины, а не просто чернокожие + женщины.
 
-4. **Statistical significance** — bootstrap CI, не один-два процента «между группами».
+4. **Статистическая значимость** — bootstrap-доверительные интервалы, а не «один-два процента между группами».
 
-5. **Mitigation, если нашли disparity**:
-   - **Pre-processing**: reweighing, disparate impact remover, learning fair representations.
-   - **In-processing**: adversarial debiasing, fair constraints в loss.
-   - **Post-processing**: threshold optimization per group (но юридически нюансно — disparate treatment).
+5. **Митигация, если нашли неравенство (disparity)**:
+   - **Pre-processing**: reweighing, disparate impact remover, обучение справедливых представлений.
+   - **In-processing**: adversarial debiasing, справедливые ограничения в loss.
+   - **Post-processing**: оптимизация порога по группам (но юридически тонко — disparate treatment).
 
-6. **Documentation** — model card с disaggregated metrics, mitigations applied, residual risks.
+6. **Документация** — model card с дезагрегированными метриками, применёнными митигациями, остаточными рисками.
 
-7. **Continuous monitoring** — distribution shift → bias can re-emerge. Production metrics per group.
+7. **Непрерывный мониторинг** — distribution shift → bias может вернуться. Production-метрики по группам.
 
-**Mandatory audits** (regulatory):
-- **NYC Local Law 144** — hiring AI annual audit by independent auditor + public summary.
-- **EU AI Act** — implied для high-risk через risk management + post-market monitoring.
-- **Colorado AI Act** — annual impact assessment includes algorithmic discrimination.
+**Обязательные аудиты** (регуляторные):
+- **NYC Local Law 144** — ежегодный аудит hiring-AI независимым аудитором + публичное резюме.
+- **EU AI Act** — подразумевается для high-risk через risk management + post-market monitoring.
+- **Colorado AI Act** — ежегодная оценка воздействия включает алгоритмическую дискриминацию.
 
 ---
 
@@ -633,117 +633,117 @@ EU AI Act требует все три уровня для high-risk: data gover
 
 ## Q22. Что должен включать audit trail для AI-системы? (!)
 
-**Цель**: реконструировать «как и почему» модель приняла решение, чтобы answer:
-- Что сказал AI пользователю в incident X?
+**Цель**: реконструировать, «как и почему» модель приняла решение, чтобы ответить:
+- Что сказал AI пользователю в инциденте X?
 - Какая версия модели обработала запрос Y?
-- Были ли guardrails сработали?
-- Кто/когда developer пушнул эту version weights?
+- Сработали ли guardrails?
+- Кто и когда из разработчиков выложил (push) эту версию весов?
 
 **Уровни audit trail**:
 
-| Уровень | Что логируется | Retention |
+| Уровень | Что логируется | Срок хранения |
 |---|---|---|
-| **Decision logs** | Per request — input, output, model version, latency, guardrail flags, user ID | 6+ месяцев (AI Act Art. 12), дольше для regulated industries |
-| **Model lineage** | Training data version, code commit, hyperparameters, eval results, who/when | Permanent (для traceability) |
-| **Data lineage** | Source datasets, transformations, splits, anonymization | Permanent |
-| **Access logs** | Кто из людей трогал модель/данные | Per company policy, SOC 2 — 1+ year |
-| **Change logs** | Deployment history, rollbacks, config changes | Permanent |
+| **Decision logs** | На каждый запрос — вход, выход, версия модели, latency, флаги guardrail, user ID | 6+ месяцев (AI Act Art. 12), дольше для регулируемых отраслей |
+| **Model lineage** | Версия обучающих данных, коммит кода, гиперпараметры, результаты eval, кто/когда | Бессрочно (для прослеживаемости) |
+| **Data lineage** | Исходные датасеты, трансформации, сплиты, анонимизация | Бессрочно |
+| **Access logs** | Кто из людей трогал модель/данные | По политике компании, SOC 2 — 1+ год |
+| **Change logs** | История развёртываний, откаты, изменения конфигурации | Бессрочно |
 
-**Properties** quality audit log:
-- **Append-only** — нельзя редактировать post-hoc.
-- **Cryptographically signed** или **immutable storage** (S3 Object Lock, blockchain — overkill в большинстве cases).
-- **Timestamped** — synchronized clocks (NTP), ideally TSA (Time-Stamping Authority).
-- **Structured** — JSON / Parquet, не free-form text.
-- **Searchable** — индекс по request_id, user_id, model_version, timestamp.
-- **Privacy-aware** — PII redaction в logs (но retain unsalted hash для linking, если legal allows).
+**Свойства** качественного audit log:
+- **Append-only** — нельзя редактировать задним числом.
+- **Криптографически подписан** или **неизменяемое хранилище** (S3 Object Lock; blockchain в большинстве случаев избыточен).
+- **С метками времени** — синхронизированные часы (NTP), в идеале TSA (Time-Stamping Authority).
+- **Структурирован** — JSON / Parquet, а не free-form text.
+- **С возможностью поиска** — индекс по request_id, user_id, model_version, timestamp.
+- **С учётом приватности** — редакция PII в логах (но можно хранить unsalted-хеш для связывания, если это разрешено законом).
 
-**Tools**:
+**Инструменты**:
 - **MLflow Model Registry** — model lineage.
-- **DVC** + **Git** — data + code versioning.
-- **OpenTelemetry** + LLM-specific (Langfuse, Helicone, Arize Phoenix) — request-level traces.
-- **Apache Atlas / DataHub** — data lineage enterprise.
-- **W&B / Comet** — experiment tracking.
+- **DVC** + **Git** — версионирование данных и кода.
+- **OpenTelemetry** + LLM-специфичные (Langfuse, Helicone, Arize Phoenix) — трейсы на уровне запроса.
+- **Apache Atlas / DataHub** — data lineage в enterprise.
+- **W&B / Comet** — трекинг экспериментов.
 
-**EU AI Act** (Art. 12) требует automatic logging для high-risk: events traceable, ID persons involved, reference data input. Минимум **6 месяцев**, дольше per national law.
+**EU AI Act** (Art. 12) требует автоматического логирования для high-risk: события прослеживаемы, ID задействованных лиц, ссылка на входные данные. Минимум **6 месяцев**, дольше по национальному праву.
 
 ## Q23. Что такое C2PA и зачем нужна provenance AI-generated content?
 
-**C2PA** (Coalition for Content Provenance and Authenticity) — открытый стандарт (2021, Adobe, Microsoft, BBC, Intel, Arm, others) для cryptographic provenance media.
+**C2PA** (Coalition for Content Provenance and Authenticity) — открытый стандарт (2021, Adobe, Microsoft, BBC, Intel, Arm и др.) для криптографической провенанс-маркировки медиа.
 
-**Идея**: к каждому media (image, video, audio, document) прикрепляется **manifest** — подписанный набор assertions:
+**Идея**: к каждому медиа (image, video, audio, document) прикрепляется **manifest** — подписанный набор утверждений (assertions):
 - Кто создал (claim generator).
 - Когда.
-- Какие edits сделаны (AI generation, cropping, color correction).
-- Source materials (если derivative).
-- Hashes для tamper detection.
+- Какие правки сделаны (AI-генерация, обрезка, цветокоррекция).
+- Исходные материалы (если это производная работа).
+- Хеши для обнаружения подмены (tamper detection).
 
-**Manifest** хранится в file metadata (XMP, JUMBF — JPEG Universal Metadata Box Format) или sidecar.
+**Manifest** хранится в метаданных файла (XMP, JUMBF — JPEG Universal Metadata Box Format) или в sidecar-файле.
 
-**AI-specific**:
-- `c2pa.ai_generative` — assertion для AI-generated.
-- `c2pa.ai_compositional` — AI-edited / inpainting.
-- `c2pa.training_mining` — opt-out signal для crawlers.
+**Специфично для AI**:
+- `c2pa.ai_generative` — assertion для AI-сгенерированного.
+- `c2pa.ai_compositional` — отредактировано AI / inpainting.
+- `c2pa.training_mining` — opt-out-сигнал для краулеров.
 
-**Adoption (2026)**:
-- OpenAI DALL-E, ChatGPT image generation — C2PA metadata embedded.
+**Принятие (2026)**:
+- OpenAI DALL-E, генерация изображений в ChatGPT — встроенные C2PA-метаданные.
 - Adobe Firefly — content credentials.
 - Google SynthID — для Gemini image/text/audio.
-- Sony, Nikon, Leica — cameras с C2PA signing.
-- TikTok — labels для AI content (использует C2PA + own signals).
+- Sony, Nikon, Leica — камеры с подписью C2PA.
+- TikTok — метки для AI-контента (использует C2PA + собственные сигналы).
 
-**Limitations**:
-- Metadata strippable — re-encode, screenshot.
-- Trust chain — cert authority needed.
-- Verifies origin, NOT truth — fake C2PA-signed image остаётся фейком, просто авторизованным.
+**Ограничения**:
+- Метаданные можно срезать — re-encode, скриншот.
+- Цепочка доверия — нужен удостоверяющий центр (cert authority).
+- Подтверждает происхождение, а НЕ истинность — поддельное изображение с подписью C2PA остаётся фейком, просто авторизованным.
 
-**Regulatory**:
-- **EU AI Act Art. 50** — providers GenAI должны mark output как artificially generated (machine-readable). С 2 августа 2026.
-- **California AB 942** — disclosure AI-generated content.
-- **China** — mandatory watermarking AI content (с Sep 2024).
+**Регуляторика**:
+- **EU AI Act Art. 50** — провайдеры GenAI должны помечать вывод как искусственно сгенерированный (машиночитаемо). С 2 августа 2026.
+- **California AB 942** — раскрытие AI-сгенерированного контента.
+- **China** — обязательные водяные знаки для AI-контента (с сентября 2024).
 
-**Watermarking** (complementary): SynthID, Tree-Ring (image), invisible token sequences для text. Robust к compression/crop. C2PA = metadata, watermark = embedded в signal.
+**Водяные знаки** (дополняющая мера): SynthID, Tree-Ring (изображения), невидимые последовательности токенов для текста. Устойчивы к сжатию/обрезке. C2PA = метаданные, водяной знак = встроен в сам сигнал.
 
 ## Q24. Как организовать reporting AI incidents?
 
-**Что считается incident** (EU AI Act Art. 3(49) — `serious incident`):
-- Death или serious health damage.
-- Serious и irreversible disruption critical infrastructure.
-- Infringement EU fundamental rights protections.
-- Serious damage to property или environment.
+**Что считается инцидентом** (EU AI Act Art. 3(49) — `serious incident`):
+- Смерть или серьёзный вред здоровью.
+- Серьёзное и необратимое нарушение работы критической инфраструктуры.
+- Нарушение защиты фундаментальных прав EU.
+- Серьёзный ущерб имуществу или окружающей среде.
 
-**Timeline** (Art. 73):
-- **Immediately** после establishing causal link (или reasonable likelihood).
-- **15 days** для standard serious incident.
-- **2 days** для widespread infringement или critical infrastructure disruption.
-- **10 days** для death.
+**Сроки** (Art. 73):
+- **Немедленно** после установления причинной связи (или обоснованной вероятности).
+- **15 дней** для обычного серьёзного инцидента.
+- **2 дня** для широко распространённого нарушения или нарушения работы критической инфраструктуры.
+- **10 дней** в случае смерти.
 
-**Кому**: market surveillance authority MS, где произошёл incident.
+**Кому**: органу надзора за рынком (market surveillance authority) государства-члена, где произошёл инцидент.
 
 **Что в отчёте**:
-- Описание incident.
-- AI system involved (provider, model, version).
-- Causal link analysis.
-- Corrective actions taken / planned.
+- Описание инцидента.
+- Задействованная AI-система (провайдер, модель, версия).
+- Анализ причинной связи.
+- Предпринятые / планируемые корректирующие действия.
 
-**Internal incident management**:
-- Detection — anomaly monitoring, user reports, news/social signals.
-- Triage — severity, scope (sus customers affected).
-- Containment — rollback, disable feature, increase guardrails.
-- Investigation — root cause, model behavior, data, prompts.
-- Remediation — fix, communicate, learn.
-- Post-mortem — blameless, документировать, share learnings.
+**Внутреннее управление инцидентами**:
+- Обнаружение — мониторинг аномалий, обращения пользователей, сигналы из новостей/соцсетей.
+- Триаж — серьёзность, охват (сколько клиентов затронуто).
+- Локализация — откат, отключение фичи, усиление guardrails.
+- Расследование — корневая причина, поведение модели, данные, промпты.
+- Устранение — исправить, оповестить, извлечь уроки.
+- Пост-мортем — без поиска виноватых (blameless), задокументировать, поделиться уроками.
 
-**Public AI Incident Databases**:
-- **AI Incident Database** (incidentdatabase.ai) — Partnership on AI / Stanford. 700+ incidents, taxonomy.
-- **OECD AI Incidents Monitor** — global tracking.
-- **AVID** (AI Vulnerability Database) — security-focused (analog CVE for AI).
+**Публичные базы AI-инцидентов**:
+- **AI Incident Database** (incidentdatabase.ai) — Partnership on AI / Stanford. 700+ инцидентов, таксономия.
+- **OECD AI Incidents Monitor** — глобальный трекинг.
+- **AVID** (AI Vulnerability Database) — с фокусом на безопасность (аналог CVE для AI).
 
-**Famous incidents** (для контекста):
-- COMPAS recidivism — racial bias (ProPublica 2016).
-- Amazon hiring AI — gender bias scrap (2018).
-- Air Canada chatbot — wrong refund advice, ordered to honor (2024).
-- DPD chatbot — swearing at customer (2024).
-- iTutor — discrimination resume screening, $365K EEOC (2023).
+**Известные инциденты** (для контекста):
+- COMPAS recidivism — расовый bias (ProPublica 2016).
+- Hiring-AI у Amazon — гендерный bias, проект свернули (2018).
+- Чат-бот Air Canada — неверный совет про возврат, суд обязал его исполнить (2024).
+- Чат-бот DPD — выругался на клиента (2024).
+- iTutor — дискриминация при скрининге резюме, штраф $365K от EEOC (2023).
 
 ---
 
@@ -765,124 +765,124 @@ graph LR
     style F fill:#27ae60,color:#fff
 ```
 
-**1. Inventory** (часто самое сложное):
-- AI systems **provided** компанией клиентам.
-- AI systems **deployed** внутри (used от vendors — OpenAI, Anthropic, HuggingFace).
-- Shadow AI — devs использующие LLM без discovery (ChatGPT, Copilot, AI features в SaaS).
-- Methods: surveys teams, network monitoring, procurement review, SBOM-style ML BOM.
+**1. Инвентаризация** (часто самое сложное):
+- AI-системы, которые компания **предоставляет** клиентам.
+- AI-системы, **развёрнутые** внутри (используемые от вендоров — OpenAI, Anthropic, HuggingFace).
+- Shadow AI — разработчики, использующие LLM без учёта (ChatGPT, Copilot, AI-фичи в SaaS).
+- Методы: опросы команд, сетевой мониторинг, ревью закупок, ML BOM в стиле SBOM.
 
-**2. Risk classification**:
-- Per EU AI Act tier (prohibited / high / limited / minimal).
-- Per use case (один LLM в разных contexts может иметь разный tier).
-- GDPR risk (DPIA needed?).
-- Sector-specific (medical → MDR, financial → DORA).
+**2. Классификация рисков**:
+- По уровню EU AI Act (prohibited / high / limited / minimal).
+- По сценарию использования (один LLM в разных контекстах может иметь разный уровень).
+- GDPR-риск (нужна ли DPIA?).
+- Секторально (медицина → MDR, финансы → DORA).
 
-**3. Gap analysis** — для каждой high-risk system, что **есть** vs что **требуется**:
-- Documentation (model card, datasheet, technical doc Annex IV).
-- Processes (risk management, post-market monitoring).
-- Technical (logging, monitoring, accuracy/robustness testing).
+**3. Gap-анализ** — для каждой high-risk-системы: что **есть** против того, что **требуется**:
+- Документация (model card, datasheet, техническая документация Annex IV).
+- Процессы (управление рисками, post-market monitoring).
+- Техническое (логирование, мониторинг, тестирование accuracy/robustness).
 
-**4. Remediation backlog**:
-- Приоритизация: regulatory deadline × business impact × effort.
-- Owners назначены (engineering, legal, DPO, business).
-- Tracking — Jira/Linear с тegging «AI-Act-compliance».
+**4. Бэклог устранения недостатков**:
+- Приоритизация: регуляторный дедлайн × влияние на бизнес × трудозатраты.
+- Назначены владельцы (engineering, legal, DPO, бизнес).
+- Трекинг — Jira/Linear с тегом «AI-Act-compliance».
 
-**5. Implementation**:
-- Technical: logging infra, bias monitoring, model registry, red teaming program.
-- Process: AI policy, DPIA template, incident response runbook.
-- Training: AI literacy для всех сотрудников touching AI (AI Act требует с Feb 2025).
+**5. Реализация**:
+- Техническое: инфраструктура логирования, мониторинг bias, model registry, программа red teaming.
+- Процессы: AI-политика, шаблон DPIA, runbook реагирования на инциденты.
+- Обучение: AI literacy для всех сотрудников, соприкасающихся с AI (AI Act требует с февраля 2025).
 
-**6. Continuous monitoring**:
-- Drift detection, performance monitoring per group.
-- Periodic reviews — annual + post-incident.
-- Regulatory updates — AI Act delegated acts, новые state laws.
+**6. Непрерывный мониторинг**:
+- Детекция дрейфа, мониторинг качества по группам.
+- Периодические ревью — ежегодные + после инцидентов.
+- Регуляторные обновления — делегированные акты AI Act, новые законы штатов.
 
-**Governance structure**:
-- **AI Ethics / Risk Committee** — cross-functional (legal, engineering, product, ethics).
-- **DPO** — privacy.
-- **AI Lead / Chief AI Officer** — accountability.
-- **Model Risk Management** (banks — long-time role from SR 11-7).
+**Структура governance**:
+- **AI Ethics / Risk Committee** — кросс-функциональный (legal, engineering, product, ethics).
+- **DPO** — приватность.
+- **AI Lead / Chief AI Officer** — ответственность (accountability).
+- **Model Risk Management** (в банках — давняя роль, идущая от SR 11-7).
 
 ## Q26. Что такое red teaming AI и какие best practices?
 
-**Red teaming AI** — adversarial testing модели/системы для нахождения failures: harmful outputs, jailbreaks, hallucinations, bias, security vulnerabilities.
+**Red teaming AI** — adversarial-тестирование модели/системы для поиска отказов: вредные выходы, jailbreaks, галлюцинации, bias, уязвимости безопасности.
 
-**Отличие от классического security red team**: не только «code exploits», а **behavioral attacks** на модель.
+**Отличие от классического security red team**: не только «эксплойты в коде», а **поведенческие атаки** на модель.
 
-**Types of red teaming**:
+**Виды red teaming**:
 
 | Тип | Цель | Пример |
 |---|---|---|
-| **Capability evaluation** | Что модель может (dangerous capabilities) | CBRN uplift, autonomous replication, deception |
-| **Misuse red teaming** | Как взломать guardrails | Jailbreaks, role-play, encoding, multi-turn manipulation |
-| **Bias / fairness probing** | Discrimination в outputs | Generate per-group stereotypes |
-| **Robustness testing** | Adversarial inputs | Prompt injection, typos, distribution shift |
-| **Security red teaming** | Infrastructure | Model extraction, training data extraction, MaaS auth bypass |
+| **Capability evaluation** | Что модель может (опасные возможности) | CBRN-uplift, автономная репликация, обман |
+| **Misuse red teaming** | Как взломать guardrails | Jailbreaks, ролевые игры, кодирование, multi-turn манипуляция |
+| **Bias / fairness probing** | Дискриминация в выходах | Генерация стереотипов по группам |
+| **Robustness testing** | Adversarial-входы | Prompt injection, опечатки, distribution shift |
+| **Security red teaming** | Инфраструктура | Извлечение модели, извлечение обучающих данных, обход аутентификации MaaS |
 
-**Best practices**:
-- **Diverse teams** — gender, race, expertise (domain experts для CBRN, etc.) — Anthropic Constitutional AI work.
-- **Structured + unstructured** — taxonomies (HarmBench, AILuminate) + creative open-ended.
-- **Document attacks** — reproducible, не «I think I jailbroke it».
-- **Severity scoring** — likelihood × impact.
-- **Re-test after mitigation** — fixes сами создают новые attack surfaces.
-- **Continuous** — модель обновляется, attack landscape тоже. Не one-shot pre-launch.
+**Лучшие практики**:
+- **Разнообразные команды** — пол, раса, экспертиза (доменные эксперты для CBRN и т.п.) — работа Anthropic над Constitutional AI.
+- **Структурированный + неструктурированный** — таксономии (HarmBench, AILuminate) + творческий open-ended.
+- **Документировать атаки** — воспроизводимо, а не «кажется, я его взломал».
+- **Оценка серьёзности** — вероятность × воздействие.
+- **Перетест после митигации** — фиксы сами создают новые поверхности атаки.
+- **Непрерывно** — модель обновляется, ландшафт атак тоже. Это не разовая проверка перед запуском.
 
-**Frontier labs red teams** (2026):
+**Red-team-команды frontier-лабораторий** (2026):
 - **OpenAI** — Frontier Red Team, Preparedness Framework (CBRN, cyber, persuasion, autonomy).
 - **Anthropic** — Frontier Threats Red Team, Responsible Scaling Policy.
 - **DeepMind** — Frontier Safety Framework.
-- **External**: METR (Model Evaluation and Threat Research), AISI (UK), US AISI (now AI Safety Institute under NIST).
+- **Внешние**: METR (Model Evaluation and Threat Research), AISI (UK), US AISI (теперь AI Safety Institute под NIST).
 
-**Open frameworks/tools**:
-- **PyRIT** (Microsoft) — automated red teaming.
-- **Garak** — LLM vulnerability scanner.
-- **HarmBench** — standardized benchmark for harmful outputs.
-- **AILuminate** (MLCommons) — safety benchmark.
+**Открытые фреймворки/инструменты**:
+- **PyRIT** (Microsoft) — автоматизированный red teaming.
+- **Garak** — сканер уязвимостей LLM.
+- **HarmBench** — стандартизированный бенчмарк для вредных выходов.
+- **AILuminate** (MLCommons) — бенчмарк безопасности.
 
-**EU AI Act** требует adversarial testing для systemic-risk GPAI (Art. 55(1)(b)). NIST GenAI Profile — multiple actions related to red teaming.
+**EU AI Act** требует adversarial-тестирования для GPAI с systemic risk (Art. 55(1)(b)). NIST GenAI Profile — несколько действий, связанных с red teaming.
 
 ## Q27. Что такое post-market monitoring и почему compliance — continuous process?
 
-**Post-market monitoring** (EU AI Act Art. 72) — обязательная **систематическая** деятельность providers high-risk AI после deployment:
+**Post-market monitoring** (EU AI Act Art. 72) — обязательная **систематическая** деятельность провайдеров high-risk AI после развёртывания:
 
-- **Active** сбор и review performance data всю жизнь системы.
-- Detect departures от expected/documented behavior.
-- Trigger corrective actions если drift или harm.
+- **Активный** сбор и анализ данных о работе на протяжении всей жизни системы.
+- Выявление отклонений от ожидаемого/задокументированного поведения.
+- Запуск корректирующих действий при дрейфе или вреде.
 
-**План** должен быть **part of technical documentation** (Annex IV) — НЕ ad-hoc.
+**План** должен быть **частью технической документации** (Annex IV), а не разовым (ad-hoc).
 
 **Что мониторить**:
-- Performance metrics (accuracy, fairness, calibration).
-- User feedback и complaints.
-- Distribution shift (input data, demographics).
-- Concept drift (target relationship changes).
-- Incidents (включая near-misses).
-- Adversarial use patterns.
+- Метрики качества (accuracy, fairness, калибровка).
+- Обратная связь и жалобы пользователей.
+- Distribution shift (входные данные, демография).
+- Concept drift (изменение связи с целевой переменной).
+- Инциденты (включая near-misses).
+- Паттерны злонамеренного использования.
 
-**Триггеры corrective action**:
-- Significant degradation метрик.
-- New failure mode reported.
-- Demographic group disparity растёт.
-- Regulatory guidance changes.
+**Триггеры корректирующих действий**:
+- Значимая деградация метрик.
+- Сообщён новый режим отказа (failure mode).
+- Растёт неравенство (disparity) между демографическими группами.
+- Изменились регуляторные рекомендации.
 
-**Почему compliance ≠ checkbox**:
+**Почему compliance ≠ галочка в чек-листе**:
 
-| Static checkbox view | Continuous process view |
+| Взгляд «галочка / статика» | Взгляд «непрерывный процесс» |
 |---|---|
-| Pre-launch certification, done | Ongoing risk management |
-| Document and forget | Versioned docs, model card updates |
-| Annual audit only | Real-time monitoring + periodic audits |
-| Compliance team isolated | Cross-functional, embedded |
-| Fix when caught | Proactive testing, red teaming |
+| Сертификация перед запуском — и готово | Постоянное управление рисками |
+| Задокументировать и забыть | Версионированные документы, обновления model card |
+| Только ежегодный аудит | Мониторинг в реальном времени + периодические аудиты |
+| Изолированная команда compliance | Кросс-функциональная, встроенная в процессы |
+| Чинить, когда поймали | Проактивное тестирование, red teaming |
 
-**Reactive vs proactive**:
-- **Reactive** (anti-pattern): wait для incident → fix → comply «good enough». Risk: large penalties, reputation, user harm uncaught.
-- **Proactive**: continuous testing, monitoring, red teaming, incident drills, table-top exercises.
+**Реактивно против проактивно**:
+- **Реактивно** (анти-паттерн): ждать инцидента → починить → соответствовать «достаточно хорошо». Риск: крупные штрафы, репутация, незамеченный вред пользователям.
+- **Проактивно**: непрерывное тестирование, мониторинг, red teaming, учения по инцидентам, table-top-упражнения.
 
-**Standards push to continuous**:
-- ISO 42001 — Plan-Do-Check-Act cycle.
-- NIST RMF — Manage function explicitly «monitor and respond».
-- AI Act — post-market plan mandatory.
+**Стандарты подталкивают к непрерывности**:
+- ISO 42001 — цикл Plan-Do-Check-Act.
+- NIST RMF — функция Manage явно про «мониторить и реагировать».
+- AI Act — план post-market обязателен.
 
 ---
 
@@ -892,188 +892,188 @@ graph LR
 
 **Две большие категории**:
 
-**А. Training data — fair use / fair dealing?**
-- US: **fair use** defense (4-factor test) — purpose, nature, amount, market effect.
-- EU: **Text and Data Mining (TDM)** exception (DSM Directive 2019/790 Art. 3-4):
-  - Art. 3 — research orgs, non-commercial, broad.
-  - Art. 4 — commercial, **rightsholders могут opt-out** machine-readable (robots.txt, ai.txt, meta tags).
-- UK: TDM exception narrower (research only), commercial exception proposal abandoned (2023).
-- Japan: explicit AI training exception (Art. 30-4) — copyright doesn't apply except where prejudices interests.
+**А. Обучающие данные — это fair use / fair dealing?**
+- US: защита через **fair use** (тест из 4 факторов) — цель, природа, объём, влияние на рынок.
+- EU: исключение **Text and Data Mining (TDM)** (DSM Directive 2019/790 Art. 3-4):
+  - Art. 3 — исследовательские организации, некоммерческое, широкое.
+  - Art. 4 — коммерческое, **правообладатели могут заявить opt-out** машиночитаемо (robots.txt, ai.txt, meta-теги).
+- UK: исключение TDM уже (только исследования), предложение о коммерческом исключении отклонено (2023).
+- Japan: явное исключение для обучения AI (Art. 30-4) — авторское право не применяется, кроме случаев ущемления интересов.
 
-**Active litigation (2026)**:
-- **NYT v. OpenAI/Microsoft** (Dec 2023, S.D.N.Y.) — direct copying, output regurgitation.
-- **Getty Images v. Stability AI** (UK + US) — image training.
-- **Authors Guild / GRR Martin v. OpenAI** — book training.
-- **Bartz v. Anthropic** (Aug 2024) — pirate book sources.
-- **Concord Music v. Anthropic** — lyrics in outputs.
+**Активные судебные дела (2026)**:
+- **NYT против OpenAI/Microsoft** (Dec 2023, S.D.N.Y.) — прямое копирование, воспроизведение в выводе.
+- **Getty Images против Stability AI** (UK + US) — обучение на изображениях.
+- **Authors Guild / Дж. Р. Р. Мартин против OpenAI** — обучение на книгах.
+- **Bartz против Anthropic** (Aug 2024) — пиратские источники книг.
+- **Concord Music против Anthropic** — тексты песен в выводах.
 
-**EU AI Act** не решает copyright, но:
-- Art. 53(1)(c) — providers GPAI must publish summary of training content.
-- Art. 53(1)(d) — comply с DSM rights reservations (opt-out).
+**EU AI Act** не решает вопрос авторских прав, но:
+- Art. 53(1)(c) — провайдеры GPAI должны публиковать краткое описание обучающего контента.
+- Art. 53(1)(d) — соблюдать оговорки прав по DSM (opt-out).
 
-**Б. AI-generated outputs — copyrightable?**
-- **US Copyright Office** (2023): только work с **meaningful human authorship** copyrightable. Pure AI = public domain.
-- **Thaler v. USCO** (2023) — DABUS «creativity machine» output не copyrightable.
-- **Zarya of the Dawn** (2023) — partial — text + arrangement human (©), individual AI images (no ©).
-- **Allen v. USCO** (Théâtre D'opéra Spatial, 2023) — too much AI involvement → no ©.
+**Б. Подлежат ли AI-сгенерированные выходы охране авторским правом?**
+- **US Copyright Office** (2023): охраняемы только работы со **значимым человеческим авторством**. Чистый AI = public domain.
+- **Thaler против USCO** (2023) — вывод «машины творчества» DABUS не охраняется.
+- **Zarya of the Dawn** (2023) — частично — текст + компоновка человека (©), отдельные AI-изображения (без ©).
+- **Allen против USCO** (Théâtre D'opéra Spatial, 2023) — слишком большое участие AI → нет ©.
 
-**UK**: section 9(3) CDPA 1988 — computer-generated work autorship assigned to person making arrangements. Old, controversial для modern GenAI.
+**UK**: section 9(3) CDPA 1988 — авторство на computer-generated work приписывается лицу, организовавшему создание. Старая норма, спорная для современного GenAI.
 
-**Practical guidance**:
-- Document **human contribution** — selection, arrangement, editing.
-- Disclose AI use в copyright registration.
-- For training: keep records sources, opt-out signals, licensing.
+**Практические рекомендации**:
+- Документировать **человеческий вклад** — отбор, компоновку, редактирование.
+- Раскрывать использование AI при регистрации авторских прав.
+- Для обучения: вести записи об источниках, opt-out-сигналах, лицензировании.
 
 ## Q29. Что такое data residency для AI и как её обеспечить?
 
-**Data residency** — требование, что data (training, inference inputs, outputs) обрабатывается и/или хранится в специфическом регионе.
+**Data residency** — требование, чтобы данные (обучающие, входы инференса, выходы) обрабатывались и/или хранились в конкретном регионе.
 
 **Зачем**:
-- **GDPR Chapter V** — transfers вне EEA требуют SCCs / adequacy decision.
-- **Schrems II** (2020) — US transfers under scrutiny, EU-US Data Privacy Framework partial fix.
-- **National security** (China PIPL, Russia 152-FZ, India DPDPA).
-- **Sectoral** — healthcare (HIPAA, EU EHDS), banking (DORA), defence.
+- **GDPR Chapter V** — трансферы за пределы EEA требуют SCCs / решения об адекватности.
+- **Schrems II** (2020) — трансферы в US под пристальным вниманием, EU-US Data Privacy Framework — частичное решение.
+- **Национальная безопасность** (China PIPL, Russia 152-ФЗ, India DPDPA).
+- **Секторальные** — здравоохранение (HIPAA, EU EHDS), банкинг (DORA), оборона.
 
-**Решения от cloud AI providers (2026)**:
+**Решения от облачных AI-провайдеров (2026)**:
 
-| Provider | Data residency |
+| Провайдер | Data residency |
 |---|---|
-| **OpenAI** | Azure OpenAI с regional deployment (EU, US, Asia). API direct — US/global. Enterprise — data residency commitments. |
-| **Anthropic** | AWS Bedrock regional (eu-central-1, us-east-1, etc.), GCP Vertex. Direct API — US. |
-| **Google Gemini** | Vertex AI с regional. EU AI sovereignty продукты. |
-| **Mistral** | Self-hosted (open weights) + La Plateforme в EU. |
-| **Aleph Alpha** | EU-based, sovereign AI focus (Germany). |
+| **OpenAI** | Azure OpenAI с региональным развёртыванием (EU, US, Asia). Прямой API — US/глобально. Enterprise — обязательства по data residency. |
+| **Anthropic** | AWS Bedrock по регионам (eu-central-1, us-east-1 и т.д.), GCP Vertex. Прямой API — US. |
+| **Google Gemini** | Vertex AI с регионами. Продукты для AI-суверенитета EU. |
+| **Mistral** | Self-hosted (открытые веса) + La Plateforme в EU. |
+| **Aleph Alpha** | Базируется в EU, фокус на суверенный AI (Германия). |
 
-**Architecture patterns**:
-- **Regional deployment** — модель в data center региона. Anthropic Bedrock EU = data не покидает EU.
-- **Self-hosted** — own VPC / on-prem. Open weights (Llama, Mistral, Mixtral, Qwen) for sensitive workloads.
-- **Hybrid** — embedding/retrieval on-prem, генерация в cloud с anonymized prompts.
-- **EU sovereign clouds** — OVH, Scaleway, T-Systems с AI services.
+**Архитектурные паттерны**:
+- **Региональное развёртывание** — модель в дата-центре региона. Anthropic Bedrock EU = данные не покидают EU.
+- **Self-hosted** — собственный VPC / on-prem. Открытые веса (Llama, Mistral, Mixtral, Qwen) для чувствительных нагрузок.
+- **Гибрид** — embedding/retrieval on-prem, генерация в облаке с анонимизированными промптами.
+- **Суверенные облака EU** — OVH, Scaleway, T-Systems с AI-сервисами.
 
-**Cross-border training**:
-- Часто **legal grey area** — training data scraped globally, GDPR применяется когда EU residents data, anywhere processing.
-- Practical: regional training pipelines, или anonymization pre-training, или strict consent.
+**Трансграничное обучение**:
+- Часто **юридически серая зона** — обучающие данные собираются (scraped) глобально, GDPR применяется при данных резидентов EU независимо от места обработки.
+- На практике: региональные обучающие пайплайны, или анонимизация до обучения, или строгое согласие.
 
-**Operational checklist**:
-- Map data flows (inputs, outputs, telemetry, debugging).
-- Vendor contracts — DPAs, SCCs, data location commitments.
-- Encryption (in-transit, at-rest, ideally end-to-end).
-- Access controls per region (если global team accessing EU data).
-- Logs — где хранятся.
+**Операционный чек-лист**:
+- Картировать потоки данных (входы, выходы, телеметрия, отладка).
+- Контракты с вендорами — DPA, SCCs, обязательства о местоположении данных.
+- Шифрование (в транзите, в покое, в идеале end-to-end).
+- Контроль доступа по регионам (если глобальная команда обращается к данным EU).
+- Логи — где хранятся.
 
 ## Q30. Какие anti-patterns в AI compliance? (!)
 
-**1. «Black-box» AI без documentation** — нет model card, нет datasheet, training data из «scraped web». Не пройдёт ни AI Act, ни GDPR DPIA, ни sectoral regulation.
+**1. «Чёрный ящик» AI без документации** — нет model card, нет datasheet, обучающие данные «из scraped web». Не пройдёт ни AI Act, ни DPIA по GDPR, ни секторальное регулирование.
 
-**2. Privacy через obscurity** — «никто не узнает что мы scraped». Audit / class action / data subject request раскроет.
+**2. Приватность через сокрытие (obscurity)** — «никто не узнает, что мы scraped». Аудит / коллективный иск / запрос субъекта данных это вскроет.
 
-**3. Compliance как checkbox** — фокус на «pass the audit», не на actual safety. Pre-launch отчёт идеален, в production drift и harm накапливаются.
+**3. Compliance как галочка** — фокус на «пройти аудит», а не на реальной безопасности. Отчёт перед запуском идеален, а в production накапливаются дрейф и вред.
 
-**4. Reactive risk management** — incident → scramble → patch. Без proactive red teaming следующий incident дороже.
+**4. Реактивное управление рисками** — инцидент → паника → патч. Без проактивного red teaming следующий инцидент дороже.
 
-**5. Compliance в silo** — отделить от engineering. «Legal handle it» — но technical controls (logging, monitoring) делает engineering. Cross-functional обязательно.
+**5. Compliance в изоляции (silo)** — отделён от engineering. «Пусть legal разбирается» — но технические контроли (логирование, мониторинг) делает engineering. Кросс-функциональность обязательна.
 
-**6. One-time DPIA / impact assessment** — DPIA done в 2024 не покрывает изменения 2026. Должна обновляться при significant changes.
+**6. Разовая DPIA / оценка воздействия** — DPIA, сделанная в 2024, не покрывает изменения 2026. Должна обновляться при значимых изменениях.
 
-**7. Shadow AI** — devs использует ChatGPT/Copilot/AI features без discovery → data leaks, IP risk, no governance. Discover, policy, sanctioned tools.
+**7. Shadow AI** — разработчики используют ChatGPT/Copilot/AI-фичи без учёта → утечки данных, IP-риск, отсутствие governance. Выявить, ввести политику, разрешённые инструменты.
 
-**8. «We use only OpenAI, they are compliant»** — vendor compliance ≠ ваша compliance. Вы deployer (per AI Act) и controller (per GDPR) — у вас свои обязательства.
+**8. «Мы используем только OpenAI, они compliant»** — соответствие вендора ≠ ваше соответствие. Вы деплойер (по AI Act) и контролёр (по GDPR) — у вас свои обязательства.
 
-**9. Cosmetic human oversight** — UI с «approve» кнопкой без реальной возможности override (decision fatigue, lack training, no time). AI Act Art. 14 требует **meaningful**.
+**9. Косметический человеческий надзор** — UI с кнопкой «approve» без реальной возможности override (усталость от решений, нет обучения, нет времени). AI Act Art. 14 требует **осмысленного** надзора.
 
-**10. Over-reliance на model card vendor** — нужен deployment-specific assessment. Foundation model card описывает model, не ваше использование.
+**10. Чрезмерная опора на model card вендора** — нужна оценка под конкретное развёртывание. Model card foundation-модели описывает модель, а не ваше использование.
 
-**11. Training data без records** — невозможно ответить на «откуда взяли», «opt-out respected?», «PII inside?». Audit hostile.
+**11. Обучающие данные без записей** — невозможно ответить на «откуда взяли», «учли ли opt-out?», «есть ли внутри PII?». Аудит будет враждебным.
 
-**12. No incident response plan** — incident случится. Без runbook, contacts, communication template — каскад ошибок и regulatory penalties.
+**12. Отсутствие плана реагирования на инциденты** — инцидент случится. Без runbook, контактов, шаблона коммуникации — каскад ошибок и регуляторные штрафы.
 
-**Mitigation paths**:
-- AI policy в written form, approved leadership.
-- Inventory + classification (минимум quarterly).
-- Cross-functional AI governance committee.
-- Continuous monitoring infra (drift, bias, performance).
-- Periodic red teaming + external audits.
-- Incident response runbook + drills.
-- Training all staff (AI literacy mandate AI Act Art. 4).
+**Пути митигации**:
+- AI-политика в письменном виде, одобренная руководством.
+- Инвентаризация + классификация (минимум ежеквартально).
+- Кросс-функциональный комитет AI governance.
+- Инфраструктура непрерывного мониторинга (дрейф, bias, качество).
+- Периодический red teaming + внешние аудиты.
+- Runbook реагирования на инциденты + учения.
+- Обучение всего персонала (требование AI literacy, AI Act Art. 4).
 
 ## Q31. Что такое FRIA и как она отличается от DPIA?
 
-**FRIA** (Fundamental Rights Impact Assessment, EU AI Act Art. 27) — оценка влияния high-risk AI на fundamental rights.
+**FRIA** (Fundamental Rights Impact Assessment, EU AI Act Art. 27) — оценка влияния high-risk AI на фундаментальные права.
 
 **Кто обязан**:
-- **Deployers** high-risk AI (не providers).
-- Public bodies (incl. private actors providing public services).
-- Private deployers — credit scoring (Annex III(5)(b)), life/health insurance pricing (Annex III(5)(c)).
+- **Деплойеры** high-risk AI (не провайдеры).
+- Публичные органы (включая частные структуры, оказывающие публичные услуги).
+- Частные деплойеры — кредитный скоринг (Annex III(5)(b)), ценообразование страхования жизни/здоровья (Annex III(5)(c)).
 
 **Содержание** (Art. 27(1)):
-1. Description deployer processes.
-2. Period and frequency use.
-3. Categories natural persons affected.
-4. Specific risks к рravam likely affected.
-5. Human oversight measures.
-6. Measures in case risk materialises (governance, complaint mechanism).
+1. Описание процессов деплойера.
+2. Период и частота использования.
+3. Категории затрагиваемых физических лиц.
+4. Конкретные риски для прав вероятно затрагиваемых лиц.
+5. Меры человеческого надзора.
+6. Меры на случай реализации риска (governance, механизм обжалования).
 
-**Notification**: deployer уведомляет market surveillance authority о results FRIA.
+**Уведомление**: деплойер уведомляет орган надзора за рынком о результатах FRIA.
 
-**FRIA vs DPIA**:
+**FRIA против DPIA**:
 
 | Аспект | DPIA (GDPR Art. 35) | FRIA (AI Act Art. 27) |
 |---|---|---|
-| **Scope rights** | Data protection (privacy) | Все fundamental rights (Charter EU) — dignity, non-discrimination, equality, expression |
-| **Triggered by** | Processing personal data, high risk | High-risk AI deployment by certain deployers |
-| **Who** | Data controller | Deployer high-risk AI |
-| **Output** | Internal document, consult DPA if needed | Notification market surveillance authority |
-| **Sanctions tied** | GDPR fines | AI Act fines |
+| **Охват прав** | Защита данных (приватность) | Все фундаментальные права (Хартия EU) — достоинство, недискриминация, равенство, свобода выражения |
+| **Триггер** | Обработка персональных данных, высокий риск | Развёртывание high-risk AI определёнными деплойерами |
+| **Кто** | Контролёр данных | Деплойер high-risk AI |
+| **Результат** | Внутренний документ, консультация с DPA при необходимости | Уведомление органа надзора за рынком |
+| **С какими санкциями связано** | Штрафы GDPR | Штрафы AI Act |
 
-**Integration**: EDPB recommends **integrated assessment** — одна procedure, обе perspective. Saves duplication, но требует expertise обеих сторон.
+**Интеграция**: EDPB рекомендует **интегрированную оценку** — одна процедура, обе перспективы. Экономит на дублировании, но требует экспертизы обеих сторон.
 
-**Other impact assessments**:
-- **AIA** (Algorithmic Impact Assessment) — Canadian Directive on Automated Decision-Making.
-- **EIA** (Ethical Impact Assessment) — UNESCO recommendation.
-- **HRIA** (Human Rights Impact Assessment) — corporate due diligence under UNGPs.
+**Другие оценки воздействия**:
+- **AIA** (Algorithmic Impact Assessment) — канадская Directive on Automated Decision-Making.
+- **EIA** (Ethical Impact Assessment) — рекомендация UNESCO.
+- **HRIA** (Human Rights Impact Assessment) — корпоративная due diligence в рамках UNGPs.
 
 ## Q32. Как ответить на собеседовании на вопрос «как бы вы готовили компанию к EU AI Act»?
 
 **Структурированный ответ** (≈3 минуты):
 
-**Шаг 1: Discovery и inventory.** Identify, какие AI systems провайдим клиентам (provider) и используем внутри (deployer, ofen via vendor). Включая shadow AI — sales team использует ChatGPT, engineering Copilot. Без inventory нет classification.
+**Шаг 1: Обнаружение и инвентаризация.** Определить, какие AI-системы мы предоставляем клиентам (provider) и используем внутри (deployer, часто через вендора). Включая shadow AI — отдел продаж использует ChatGPT, инженеры — Copilot. Без инвентаризации нет классификации.
 
-**Шаг 2: Risk classification per use case.** Для каждой системы определить EU AI Act tier — prohibited / high-risk Annex III / limited / minimal. Особое внимание Annex III категориям нашего сектора (e.g., если HR-tech — hiring tools всегда high-risk). Документировать reasoning.
+**Шаг 2: Классификация рисков по сценарию использования.** Для каждой системы определить уровень EU AI Act — prohibited / high-risk Annex III / limited / minimal. Особое внимание категориям Annex III нашего сектора (например, если это HR-tech — hiring-инструменты всегда high-risk). Задокументировать обоснование.
 
-**Шаг 3: Gap analysis для high-risk.** Для каждой high-risk — checklist Art. 9-15: risk management, data governance, technical doc Annex IV, logging, transparency, human oversight, accuracy/robustness. Что есть, чего нет.
+**Шаг 3: Gap-анализ для high-risk.** Для каждой high-risk — чек-лист по Art. 9-15: risk management, data governance, техническая документация Annex IV, логирование, прозрачность, человеческий надзор, accuracy/robustness. Что есть, чего нет.
 
-**Шаг 4: Roadmap with deadlines.** 
-- Q1 2026 — focus on prohibited check (Feb 2025 deadline уже прошёл, но verify) и AI literacy training (Art. 4).
-- Q2-Q4 2026 — GPAI compliance (если applicable) и подготовка к Aug 2026 high-risk deadline.
-- 2027 — Annex I products (embedded AI) full enforcement.
+**Шаг 4: Дорожная карта с дедлайнами.**
+- Q1 2026 — фокус на проверке prohibited (дедлайн Feb 2025 уже прошёл, но проверить) и обучении AI literacy (Art. 4).
+- Q2-Q4 2026 — соответствие GPAI (если применимо) и подготовка к дедлайну high-risk в августе 2026.
+- 2027 — продукты Annex I (встроенный AI), полное правоприменение.
 
-**Шаг 5: Technical implementation.**
-- Logging infrastructure (Art. 12) — request logging, model versioning.
-- Monitoring — performance, bias, drift per group.
-- Model registry + model cards aligned с Annex IV.
-- Red teaming program (для GPAI с systemic risk obligatory).
+**Шаг 5: Техническая реализация.**
+- Инфраструктура логирования (Art. 12) — логирование запросов, версионирование модели.
+- Мониторинг — качество, bias, дрейф по группам.
+- Model registry + model cards в соответствии с Annex IV.
+- Программа red teaming (обязательна для GPAI с systemic risk).
 
 **Шаг 6: Governance.**
-- AI governance committee (cross-functional).
-- AI policy approved leadership.
-- Roles: provider/deployer responsibilities clear, RACI.
-- Vendor management — contracts с providers (data location, support обязательств).
+- Комитет AI governance (кросс-функциональный).
+- AI-политика, одобренная руководством.
+- Роли: чёткое разделение ответственности provider/deployer, RACI.
+- Управление вендорами — контракты с провайдерами (местоположение данных, обязательства по поддержке).
 
-**Шаг 7: Process integration.**
-- DPIA + FRIA integrated assessment (где applicable).
-- Incident response runbook (Art. 73 — 15 days, или 2/10 days для severe).
-- Conformity assessment workflow (Art. 43).
-- Post-market monitoring plan.
+**Шаг 7: Интеграция процессов.**
+- Интегрированная оценка DPIA + FRIA (где применимо).
+- Runbook реагирования на инциденты (Art. 73 — 15 дней, или 2/10 дней для тяжёлых).
+- Workflow conformity assessment (Art. 43).
+- План post-market monitoring.
 
-**Шаг 8: Training.** AI literacy для всех staff dealing с AI (Art. 4, в силе Feb 2025). Specialized training для legal, engineering, product.
+**Шаг 8: Обучение.** AI literacy для всего персонала, работающего с AI (Art. 4, в силе с Feb 2025). Специализированное обучение для legal, engineering, product.
 
-**Шаг 9: Continuous.** Не one-shot — quarterly reviews inventory, annual audits, monitoring metrics, regulatory updates tracking (delegated acts, harmonised standards releases).
+**Шаг 9: Непрерывность.** Не разово — ежеквартальные ревью инвентаризации, ежегодные аудиты, мониторинг метрик, отслеживание регуляторных обновлений (делегированные акты, релизы гармонизированных стандартов).
 
 **Что сказать «между строк»**:
-- Compliance это process, не project.
-- Cross-functional ownership.
-- Build на existing frameworks (ISO 27001, GDPR процессы) — не rebuild.
-- Document everything — auditable trail сам по себе value.
+- Compliance — это процесс, а не проект.
+- Кросс-функциональная ответственность.
+- Строить на существующих фреймворках (ISO 27001, процессы GDPR), а не создавать с нуля.
+- Документировать всё — аудируемый след сам по себе ценность.
 
 ---
 

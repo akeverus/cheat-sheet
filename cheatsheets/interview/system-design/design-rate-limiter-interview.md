@@ -77,92 +77,92 @@ updated: "2026-05-26"
 
 ## Q1. (!) Functional и non-functional requirements?
 
-**Functional:**
+**Функциональные требования:**
 - Принимать решение `allow` / `deny` для входящего запроса.
-- Decision на основе ключа: user_id, IP, API key, endpoint, или комбинация.
-- Конфигурируемые лимиты (10 req/sec per user, 1000 req/min per IP).
-- HTTP 429 с `Retry-After` при deny.
-- Headers `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`.
+- Решение на основе ключа: user_id, IP, API key, endpoint или комбинация.
+- Конфигурируемые лимиты (10 req/sec на пользователя, 1000 req/min на IP).
+- HTTP 429 с `Retry-After` при отказе.
+- Заголовки `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`.
 
-**Non-functional:**
-- **Throughput:** 100K-1M decisions/sec на global edge.
-- **Latency:** p99 decision < 10 ms (decision на critical path API).
+**Нефункциональные требования:**
+- **Throughput:** 100K–1M решений/сек на global edge.
+- **Latency:** p99 решения < 10 ms (решение лежит на critical path API).
 - **Availability:** 99.99% — rate limiter не должен быть SPOF.
-- **Accuracy:** допустимо ±10% по window (sliding counter approximation); strict accuracy не критична.
-- **Consistency:** eventual между nodes ок; не нужен strong consensus.
-- **Fairness:** один heavy user не должен задушить остальных (per-key isolation).
+- **Accuracy:** допустимо ±10% по окну (аппроксимация sliding counter); строгая точность не критична.
+- **Consistency:** eventual между нодами ок; strong consensus не нужен.
+- **Fairness:** один тяжёлый пользователь не должен задушить остальных (изоляция per-key).
 
-**Scope excluded (явно проговорить):**
-- Application-level business logic limits (quota = $1000/month).
-- Long-term billing (это metering, не rate limiting).
-- Per-row DB throttling (это application concern).
+**Что вне scope (проговорить явно):**
+- Бизнес-логические лимиты уровня приложения (квота = $1000/месяц).
+- Долгосрочный биллинг (это metering, а не rate limiting).
+- Throttling отдельных строк БД (это забота приложения).
 
-Tip: senior-уровневая ловушка — если кандидат начинает с алгоритма (`будем использовать token bucket`) без явных NFR, интервьюер уведёт в обсуждение fairness и failure modes, где кандидат поплывёт.
+Подсказка: ловушка senior-уровня — если кандидат начинает с алгоритма (`будем использовать token bucket`) без явных NFR, интервьюер уведёт разговор в сторону fairness и failure modes, где кандидат поплывёт.
 
 ## Q2. (!) Capacity estimation (1M req/sec, 1B users)?
 
-Cloudflare/Stripe-scale допущения:
+Допущения масштаба Cloudflare/Stripe:
 
 | Параметр | Значение |
 |---|---|
-| Global API requests | 1M req/sec peak |
-| Unique active users | 100M (1B registered, 10% active per day) |
-| Unique API keys | 5M (merchants/integrations) |
-| Avg rate limit | 100 req/min per user, 10K req/min per API key |
+| Global API requests | 1M req/sec в пике |
+| Уникальных активных пользователей | 100M (1B зарегистрированных, 10% активны в день) |
+| Уникальных API keys | 5M (мерчанты/интеграции) |
+| Средний лимит | 100 req/min на пользователя, 10K req/min на API key |
 
 **Throughput:**
-- Rate-limit checks: 1M/sec (на каждый request — один check).
-- Updates (atomic INCR в Redis): ~1M/sec.
-- Reads (для X-RateLimit-Remaining headers): ~1M/sec.
+- Проверки лимита: 1M/сек (на каждый запрос — одна проверка).
+- Обновления (atomic INCR в Redis): ~1M/сек.
+- Чтения (для заголовков X-RateLimit-Remaining): ~1M/сек.
 
-**Storage:**
-- Per-key state: `(key, counter, window_start)` ≈ 50-100 B в Redis.
-- Active keys (user+IP+API key combinations): 200M.
-- Memory: 200M × 100 B = **20 GB** в Redis cluster.
-- TTL для keys: window_size + headroom (1 минута → TTL 2 минуты).
+**Хранение:**
+- Состояние на ключ: `(key, counter, window_start)` ≈ 50–100 B в Redis.
+- Активных ключей (комбинации user+IP+API key): 200M.
+- Память: 200M × 100 B = **20 GB** в Redis cluster.
+- TTL для ключей: window_size + запас (1 минута → TTL 2 минуты).
 
-**Compute:**
-- Redis cluster: 1M ops/sec / 50K ops/sec на master = **20 master shards** (×3 replicas = 60 nodes).
-- Decision-service (если в-process): 1M / 5K на pod = 200 pods.
+**Вычисления:**
+- Redis cluster: 1M ops/sec / 50K ops/sec на master = **20 master-шардов** (×3 реплики = 60 нод).
+- Decision-service (если in-process): 1M / 5K на pod = 200 подов.
 
-**Network:**
-- Redis call: 1M × 1 round-trip × 100 B = 100 MB/sec ingress + egress per cluster.
-- Edge → Redis: cross-region не годится (latency 100+ ms), нужен per-region Redis.
+**Сеть:**
+- Вызов Redis: 1M × 1 round-trip × 100 B = 100 MB/сек ingress + egress на кластер.
+- Edge → Redis: cross-region не годится (latency 100+ ms), нужен Redis в каждом регионе.
 
-**Cost (порядок):**
-- Redis cluster (60 nodes r6g.xlarge): ~$20K/month.
-- Decision-service compute: $5-10K/month.
-- Cheaper чем потери от DDoS / overload.
+**Стоимость (порядок величин):**
+- Redis cluster (60 нод r6g.xlarge): ~$20K/месяц.
+- Compute decision-service: $5–10K/месяц.
+- Дешевле, чем потери от DDoS / перегрузки.
 
 ## Q3. Что в scope (per-user/IP/key) и что out-of-scope?
 
-| Уровень | Ключ | Use case |
+| Уровень | Ключ | Сценарий |
 |---|---|---|
-| Per-user | user_id | Защита от индивидуального abuse |
+| Per-user | user_id | Защита от индивидуального злоупотребления |
 | Per-IP | client IP | Защита от скрапинга, DDoS |
 | Per-API-key | api_key | B2B-партнёрский tier |
-| Per-endpoint | (key, route) | Защита expensive endpoints |
+| Per-endpoint | (key, route) | Защита дорогих endpoint-ов |
 | Per-region | region_code | Geo-aware throttling |
 | Global | `*` | Общий circuit breaker |
 
 **В scope:**
-- Один или несколько из выше.
-- Композиция: AND (request разрешён если ВСЕ tier-ы allow) или OR (любой deny → 429).
+- Один или несколько уровней из перечисленных выше.
+- Композиция: AND (запрос разрешён, если ВСЕ tier-ы allow) или OR (любой deny → 429).
 
-**Out of scope (обычно):**
-- Quota billing ($1000/month соизмерение — это metering).
-- Per-row DB lock contention (application-level concern).
-- Soft warning vs hard block (продуктовое решение).
+**Вне scope (обычно):**
+- Биллинг квот (соизмерение $1000/месяц — это metering).
+- Конкуренция за блокировки строк БД (забота уровня приложения).
+- Мягкое предупреждение vs жёсткая блокировка (продуктовое решение).
 
-Practical: в финтехе/SaaS — composite: `min(per_user_limit, per_api_key_limit, per_endpoint_limit, per_ip_limit)`. Каждый tier защищает от своего вектора атаки.
+На практике: в финтехе/SaaS — composite: `min(per_user_limit, per_api_key_limit, per_endpoint_limit, per_ip_limit)`. Каждый tier защищает от своего вектора атаки.
 
 ## Q4. (!) Token bucket — алгоритм, формулы, burst handling?
 
-**Idea:** bucket объёмом `capacity` токенов, пополняется со скоростью `refill_rate` (токенов/сек). Каждый request забирает 1 токен. Если 0 токенов → deny.
+**Идея:** bucket объёмом `capacity` токенов, пополняется со скоростью `refill_rate` (токенов/сек). Каждый запрос забирает 1 токен. Если токенов 0 → deny.
 
-**State per key:** `(tokens: float, last_refill: timestamp)`.
+**Состояние на ключ:** `(tokens: float, last_refill: timestamp)`.
 
-**Algorithm (на каждом request):**
+**Алгоритм (на каждый запрос):**
 ```
 now = current_time()
 elapsed = now - last_refill
@@ -176,22 +176,22 @@ else:
 ```
 
 **Параметры:**
-- `capacity` = burst size (например 100 — позволяет 100 req мгновенно).
-- `refill_rate` = sustained rate (например 10/sec — long-term ограничение).
+- `capacity` = размер всплеска (например 100 — позволяет 100 запросов мгновенно).
+- `refill_rate` = устойчивая скорость (например 10/sec — долгосрочное ограничение).
 
-**Burst handling:**
-- Token bucket позволяет **burst до capacity** мгновенно.
-- Затем drain rate = `refill_rate`.
-- Идеально для API с occasional spikes (Stripe: 100 req/sec burst, 25 req/sec sustained).
+**Обработка всплесков:**
+- Token bucket позволяет **всплеск до capacity** мгновенно.
+- Затем скорость осушения = `refill_rate`.
+- Идеален для API со случайными пиками (Stripe: всплеск 100 req/sec, устойчиво 25 req/sec).
 
-**Pros:**
-- Простой, intuitive, поддерживает burst.
-- O(1) memory per key.
-- Стандарт индустрии (AWS, Stripe, GitHub).
+**Плюсы:**
+- Простой, интуитивный, поддерживает всплески.
+- O(1) памяти на ключ.
+- Отраслевой стандарт (AWS, Stripe, GitHub).
 
-**Cons:**
-- Точность зависит от clock-precision (microseconds matter).
-- Distributed: нужна atomic RMW на (tokens, last_refill).
+**Минусы:**
+- Точность зависит от точности часов (важны микросекунды).
+- В распределённом случае: нужен atomic RMW над (tokens, last_refill).
 
 **Redis Lua (atomic):**
 ```lua
@@ -222,11 +222,11 @@ end
 
 ## Q5. (!) Leaky bucket — как отличается от token bucket?
 
-**Idea:** bucket объёмом `capacity`. Запросы попадают в очередь; дренируются с фиксированной скоростью `leak_rate`. Если bucket полный → deny.
+**Идея:** bucket объёмом `capacity`. Запросы попадают в очередь; вытекают с фиксированной скоростью `leak_rate`. Если bucket полон → deny.
 
-**State per key:** `(queue: list of timestamps, last_leak: timestamp)` или counter с last_leak.
+**Состояние на ключ:** `(queue: list of timestamps, last_leak: timestamp)` или counter с last_leak.
 
-**Algorithm:**
+**Алгоритм:**
 ```
 now = current_time()
 leaked = (now - last_leak) * leak_rate
@@ -241,38 +241,38 @@ else:
 ```
 
 **Ключевое отличие от token bucket:**
-- Token bucket: разрешает **burst** до capacity (мгновенный input).
-- Leaky bucket: input limited by leak_rate; **smooth output**, никогда быстрее `leak_rate`.
+- Token bucket: разрешает **всплеск** до capacity (мгновенный вход).
+- Leaky bucket: вход ограничен `leak_rate`; **сглаженный выход**, никогда не быстрее `leak_rate`.
 
 **Сравнение:**
 
 | Свойство | Token Bucket | Leaky Bucket |
 |---|---|---|
-| Burst | да, до capacity | нет (или мини-buffer) |
-| Output rate | переменный (burst then drain) | фиксированный `leak_rate` |
-| Use case | API с occasional spikes | shaping для downstream stability |
-| Реальный пример | Stripe API, AWS | network packet shaping, message queue |
+| Всплеск | да, до capacity | нет (или мини-буфер) |
+| Скорость на выходе | переменная (всплеск, затем осушение) | фиксированная `leak_rate` |
+| Сценарий | API со случайными пиками | shaping ради стабильности downstream |
+| Реальный пример | Stripe API, AWS | network packet shaping, очередь сообщений |
 
-**Pros leaky:**
-- Гарантирует stable downstream load (downstream не превысит `leak_rate`).
-- Нет burst surprise для backend.
+**Плюсы leaky bucket:**
+- Гарантирует стабильную нагрузку на downstream (downstream не превысит `leak_rate`).
+- Никаких неожиданных всплесков для backend.
 
-**Cons:**
-- Менее friendly для clients (нет burst tolerance).
-- Сложнее ставить в queue + drain (требует scheduler).
+**Минусы:**
+- Менее дружелюбен к клиентам (нет терпимости к всплескам).
+- Сложнее в реализации (очередь + осушение, нужен планировщик).
 
-**Реальный use:**
-- Traffic shaping в Cisco/Juniper routers.
-- Message queue throttling (Kafka consumer rate limit).
+**Где применяется на практике:**
+- Traffic shaping в роутерах Cisco/Juniper.
+- Throttling очередей сообщений (rate limit consumer-а Kafka).
 - Воркеры с фиксированной пропускной способностью.
 
 ## Q6. Fixed window counter — простота и проблема краёв?
 
-**Idea:** разбить время на windows (1 минута); per (key, window) — counter. На каждом request: INCR; если > limit → deny. Window expires.
+**Идея:** разбить время на окна (1 минута); на каждую пару (key, window) — counter. На каждый запрос: INCR; если > limit → deny. Окно протухает по TTL.
 
-**State:** `counter:{key}:{window_start}` → integer.
+**Состояние:** `counter:{key}:{window_start}` → integer.
 
-**Algorithm:**
+**Алгоритм:**
 ```
 window = floor(now / window_size) * window_size
 count = INCR counter:{key}:{window}
@@ -282,14 +282,14 @@ if count > limit:
 return ALLOW
 ```
 
-**Pros:**
-- Простой, O(1) memory.
+**Плюсы:**
+- Простой, O(1) памяти.
 - Atomic через Redis INCR (без Lua).
-- Легко монитор: `key=count` напрямую видно.
+- Легко мониторить: `key=count` видно напрямую.
 
-**Cons (edge problem):**
-- На границе window-а возможен **2× burst**.
-- Пример: limit 100/min. В 00:59 — 100 requests. В 01:00 (новое окно) — ещё 100 requests. Итого 200 в 2 секунды (около границы).
+**Минусы (проблема границ):**
+- На границе окна возможен **двойной всплеск (2×)**.
+- Пример: limit 100/min. В 00:59 — 100 запросов. В 01:00 (новое окно) — ещё 100 запросов. Итого 200 за 2 секунды (около границы).
 
 ```
 window 1 (00:00-01:00):  ____________________100 requests at 00:59
@@ -299,24 +299,24 @@ window 2 (01:00-02:00):  100 requests at 01:00____________________
 ```
 
 **Когда подходит:**
-- Очень неточные лимиты (analytics throttling).
-- Когда абсолютная точность не критична и edge-burst допустим.
+- Очень неточные лимиты (throttling аналитики).
+- Когда абсолютная точность не критична и всплеск на границе допустим.
 - Когда нужна максимальная простота.
 
 **Когда НЕ подходит:**
-- DDoS protection (atomic 2× burst недопустимо).
-- Strict per-second limits.
+- Защита от DDoS (2×-всплеск недопустим).
+- Строгие per-second лимиты.
 
 ## Q7. (!) Sliding window log — точность vs память?
 
-**Idea:** для каждого key хранить sorted list timestamps всех requests за последний window. На request:
-1. Удалить из log все timestamps старше `now - window_size`.
+**Идея:** для каждого ключа хранить отсортированный список timestamp-ов всех запросов за последнее окно. На запрос:
+1. Удалить из лога все timestamp-ы старше `now - window_size`.
 2. Если `len(log) >= limit` → deny.
 3. Иначе добавить `now` → allow.
 
-**State:** Redis sorted set `key` → ZADD timestamp.
+**Состояние:** Redis sorted set `key` → ZADD timestamp.
 
-**Algorithm:**
+**Алгоритм:**
 ```
 ZREMRANGEBYSCORE key 0 (now - window_size)
 count = ZCARD key
@@ -327,29 +327,29 @@ EXPIRE key window_size * 2
 return ALLOW
 ```
 
-**Pros:**
-- **Идеальная точность**: реальный sliding window.
-- Без edge-burst.
+**Плюсы:**
+- **Идеальная точность**: настоящее скользящее окно.
+- Без всплеска на границе.
 
-**Cons:**
-- **Memory O(limit) per key** — каждый timestamp в sorted set ≈ 50-80 B.
-- При limit=10K req/sec — 10K timestamps per key — 800 KB на key.
-- Не масштабируется для high-volume keys.
+**Минусы:**
+- **Память O(limit) на ключ** — каждый timestamp в sorted set ≈ 50–80 B.
+- При limit=10K req/sec — 10K timestamp-ов на ключ — 800 KB на ключ.
+- Не масштабируется для высоконагруженных ключей.
 
 **Когда подходит:**
-- Низкий limit (< 100 req/window), точность критична.
-- Финтех: 10 transactions per minute, нельзя ошибиться.
-- Security: 5 login attempts per hour.
+- Низкий лимит (< 100 req/окно), точность критична.
+- Финтех: 10 транзакций в минуту, ошибиться нельзя.
+- Безопасность: 5 попыток логина в час.
 
 **Когда НЕ подходит:**
-- High-volume APIs (1000+ req/sec per key) — memory blow-up.
-- Cloudflare-scale edge protection.
+- Высоконагруженные API (1000+ req/sec на ключ) — память взрывается.
+- Edge-защита масштаба Cloudflare.
 
 ## Q8. (!) Sliding window counter — компромисс точности и стоимости?
 
-**Idea:** объединить fixed window и sliding window log. Хранить counter для текущего и предыдущего window; на decision — взвешенная сумма с учётом сдвига внутри текущего window.
+**Идея:** объединить fixed window и sliding window log. Хранить counter для текущего и предыдущего окна; при решении — взвешенная сумма с учётом сдвига внутри текущего окна.
 
-**Algorithm:**
+**Алгоритм:**
 ```
 now = current_time()
 current_window = floor(now / window_size) * window_size
@@ -373,46 +373,46 @@ return ALLOW
 **Пример:**
 - Limit = 100/min, window_size = 60s.
 - Сейчас 01:00:42 → elapsed_in_current = 42/60 = 0.7.
-- previous_count (00:00-01:00) = 80, current_count (01:00-02:00) = 30.
-- estimated = 80 × (1 - 0.7) + 30 = 24 + 30 = **54** → allow (< 100).
+- previous_count (00:00–01:00) = 80, current_count (01:00–02:00) = 30.
+- estimated = 80 × (1 − 0.7) + 30 = 24 + 30 = **54** → allow (< 100).
 
-**Pros:**
-- O(1) memory per key.
-- Точность ±1% от sliding window log на нормальном трафике.
+**Плюсы:**
+- O(1) памяти на ключ.
+- Точность ±1% относительно sliding window log на нормальном трафике.
 - Atomic через Redis INCR.
 
-**Cons:**
-- Approximation: предполагает uniform distribution в previous window.
-- При bursty traffic на конце предыдущего окна — недооценка реального rate.
+**Минусы:**
+- Аппроксимация: предполагает равномерное распределение в предыдущем окне.
+- При всплесковом трафике в конце предыдущего окна — недооценка реальной скорости.
 
-**Использование:**
+**Где применяется:**
 - Cloudflare использует именно sliding window counter для edge rate limiting.
-- Industry-стандарт для high-throughput APIs.
-- Балансирует точность ±1% и memory O(1).
+- Отраслевой стандарт для высоконагруженных API.
+- Балансирует точность ±1% и память O(1).
 
 ## Q9. Сравнительная таблица 5 алгоритмов?
 
-| Алгоритм | Memory | Burst | Accuracy | Atomic | Use case |
+| Алгоритм | Память | Всплеск | Точность | Atomic | Сценарий |
 |---|---|---|---|---|---|
-| Token bucket | O(1) | да, до capacity | high | INCR + Lua | API с burst (Stripe, AWS) |
-| Leaky bucket | O(1) | нет | high | requires queue or counter | Traffic shaping (routers) |
-| Fixed window | O(1) | 2× edge burst | low (edge) | INCR | Простые analytics throttle |
-| Sliding window log | O(limit) | нет | **perfect** | sorted set ops | Low-volume strict (login attempts) |
-| Sliding window counter | O(1) | нет | ±1% | INCR | **Default choice** (Cloudflare) |
+| Token bucket | O(1) | да, до capacity | высокая | INCR + Lua | API со всплесками (Stripe, AWS) |
+| Leaky bucket | O(1) | нет | высокая | нужна очередь или counter | Traffic shaping (роутеры) |
+| Fixed window | O(1) | 2×-всплеск на границе | низкая (на границе) | INCR | Простой throttle аналитики |
+| Sliding window log | O(limit) | нет | **идеальная** | операции над sorted set | Строгий низкий объём (попытки логина) |
+| Sliding window counter | O(1) | нет | ±1% | INCR | **Выбор по умолчанию** (Cloudflare) |
 
 **Выбор:**
-- High-volume + need burst → **token bucket**.
-- High-volume + smooth output → **sliding window counter**.
-- Low-volume + perfect accuracy → **sliding window log**.
-- Downstream protection → **leaky bucket**.
-- Не используй fixed window в production (edge-burst).
+- Высокий объём + нужны всплески → **token bucket**.
+- Высокий объём + сглаженный выход → **sliding window counter**.
+- Низкий объём + идеальная точность → **sliding window log**.
+- Защита downstream → **leaky bucket**.
+- Не используй fixed window в проде (всплеск на границе).
 
 ## Q10. (!) Distributed rate limiting на Redis (Lua atomic)?
 
-**Проблема:** при decision-service из N pods, каждый pod не знает счётчик других. Naive `INCR + GET` race:
+**Проблема:** при decision-service из N подов каждый под не знает счётчик других. Наивный `INCR + GET` даёт гонку:
 - Pod A: GET counter = 99 → < 100, INCR → 100.
 - Pod B: GET counter = 99 → < 100, INCR → 101.
-- Оба разрешили, lim превышен.
+- Оба разрешили, лимит превышен.
 
 **Решение — atomic RMW через Redis Lua:**
 
@@ -447,39 +447,39 @@ redis.call('EXPIRE', key, 3600)
 return {allowed, tokens}
 ```
 
-**Гарантия atomicity:**
-- Redis выполняет Lua single-threaded — никаких races.
-- Все читатели видят одинаковое state.
+**Гарантия атомарности:**
+- Redis выполняет Lua однопоточно — никаких гонок.
+- Все читатели видят одно и то же состояние.
 
-**Вызов из application:**
+**Вызов из приложения:**
 ```python
 result = redis.eval(lua_script, 1, key, capacity, refill_rate, time.time(), 1)
 allowed, remaining = result
 ```
 
-**Performance:**
-- Single Lua call: ~0.1 ms на single-shard Redis.
-- 10K calls/sec на одну shard.
-- Для 1M calls/sec — Redis Cluster с 20+ shards, sharding по key.
+**Производительность:**
+- Один вызов Lua: ~0.1 ms на одношардовом Redis.
+- 10K вызовов/сек на один шард.
+- Для 1M вызовов/сек — Redis Cluster с 20+ шардами, sharding по ключу.
 
-**Pre-load script (SCRIPT LOAD):**
-- `EVALSHA` вместо `EVAL` — экономит bandwidth (только SHA1 передаётся).
-- Стандартная практика для high-throughput.
+**Предзагрузка скрипта (SCRIPT LOAD):**
+- `EVALSHA` вместо `EVAL` — экономит трафик (передаётся только SHA1).
+- Стандартная практика для высокой пропускной способности.
 
 ## Q11. Single-node vs distributed: trade-offs latency vs consistency?
 
 **Single-node (in-process counter):**
-- Pros: < 0.001 ms decision, no external dependency.
-- Cons: rate limit per-pod, не глобальный. 10 pods × 100 limit = 1000 effective limit.
+- Плюсы: решение < 0.001 ms, нет внешних зависимостей.
+- Минусы: лимит per-pod, не глобальный. 10 подов × 100 limit = 1000 эффективный лимит.
 
-**Distributed (Redis shared state):**
-- Pros: глобальный limit; масштабируется до миллионов keys.
-- Cons: 1-5 ms latency на decision (network к Redis), Redis SPOF.
+**Распределённый (Redis shared state):**
+- Плюсы: глобальный лимит; масштабируется до миллионов ключей.
+- Минусы: 1–5 ms latency на решение (сеть до Redis), Redis как SPOF.
 
-**Гибрид (recommended):**
-- **Local counter** для quick checks (per-pod, бóльший лимит).
-- **Distributed counter** для глобальной правды (per-cluster sync).
-- Local check rejects 99% abuse без Redis call; distributed catches remaining edge cases.
+**Гибрид (рекомендуется):**
+- **Локальный counter** для быстрых проверок (per-pod, лимит побольше).
+- **Распределённый counter** для глобальной истины (синхронизация на уровне кластера).
+- Локальная проверка отсекает 99% злоупотреблений без вызова Redis; распределённая ловит оставшиеся пограничные случаи.
 
 ```
 incoming request
@@ -491,111 +491,111 @@ Redis EVAL token_bucket.lua → global decision
 ALLOW / DENY
 ```
 
-**Tuning:**
-- Local threshold = global_limit × 1.2 / pod_count → конвергенция к global.
-- Trade-off: accuracy vs Redis load.
+**Тюнинг:**
+- Локальный порог = global_limit × 1.2 / pod_count → сходимость к глобальному.
+- Trade-off: точность против нагрузки на Redis.
 
 ## Q12. (!) Hot key problem на популярных API keys?
 
-**Проблема:** один merchant с 100K req/sec бьёт по одному ключу в Redis → один shard загружен на 100%, остальные shards idle.
+**Проблема:** один мерчант с 100K req/sec бьёт по одному ключу в Redis → один шард загружен на 100%, остальные шарды простаивают.
 
 **Симптомы:**
-- Latency p99 для других keys на том же shard растёт.
-- Redis CPU 100% на одном master, остальные master-ы idle.
+- Latency p99 для других ключей на том же шарде растёт.
+- CPU Redis 100% на одном master, остальные master-ы простаивают.
 
 **Митигации:**
 
-**1. Local counter (Q11):**
-- 99% checks rejected locally — Redis call только редко.
+**1. Локальный counter (Q11):**
+- 99% проверок отсекаются локально — вызов Redis только изредка.
 
-**2. Probabilistic admission:**
-- Sampled checks: каждый 10-й request делает Redis call; 9 из 10 — local approx.
-- Точность снижается, но key cooling работает.
+**2. Вероятностный допуск:**
+- Выборочные проверки: каждый 10-й запрос делает вызов Redis; 9 из 10 — локальная аппроксимация.
+- Точность снижается, но «остывание» ключа работает.
 
-**3. Sharding hot key:**
-- Per-pod counter (key + pod_id), периодически (1 раз/сек) суммируется в Redis.
-- Trade-off: бывают burst-окна где hот-key превышает limit между sync-ами.
+**3. Sharding горячего ключа:**
+- Counter per-pod (key + pod_id), периодически (1 раз/сек) суммируется в Redis.
+- Trade-off: бывают всплесковые окна, где горячий ключ превышает лимит между синхронизациями.
 
-**4. Two-tier limiter:**
-- Edge (Envoy/Cloudflare): coarse-grained, per-IP only.
-- Backend: fine-grained, per-API-key.
-- 80% abuse rejected на edge без backend Redis hit.
+**4. Двухуровневый limiter:**
+- Edge (Envoy/Cloudflare): грубый, только per-IP.
+- Backend: точный, per-API-key.
+- 80% злоупотреблений отсекается на edge без обращения к backend Redis.
 
-**5. Dedicated Redis cluster для hot keys:**
-- Top-N keys выносятся на отдельный hot-key Redis cluster.
-- Mapping в config service.
+**5. Выделенный Redis cluster под горячие ключи:**
+- Top-N ключей выносятся на отдельный hot-key Redis cluster.
+- Маппинг в config service.
 
-**Real:** Stripe документирует hot-key sharding в blog; GitHub использует Memcached LRU для top API keys.
+**На практике:** Stripe документирует hot-key sharding в блоге; GitHub использует Memcached LRU для топовых API keys.
 
 ## Q13. Clock drift между nodes — как влияет на window?
 
-**Проблема:** node A clock 01:00:00, node B clock 01:00:02. Sliding window decisions расходятся.
+**Проблема:** часы ноды A показывают 01:00:00, ноды B — 01:00:02. Решения по скользящему окну расходятся.
 
-**Cases:**
-- Token bucket: использует `now` для refill rate. 2 sec skew → 2 sec × refill_rate tokens разница.
-- Sliding window log: timestamps в sorted set из разных nodes — ranges не aligned.
-- Fixed window: window_start = floor(now / window_size). 2 sec skew → wrong window for boundary requests.
+**Случаи:**
+- Token bucket: использует `now` для скорости пополнения. Расхождение 2 сек → разница в 2 sec × refill_rate токенов.
+- Sliding window log: timestamp-ы в sorted set из разных нод — диапазоны не выровнены.
+- Fixed window: window_start = floor(now / window_size). Расхождение 2 сек → не то окно для пограничных запросов.
 
 **Решения:**
 
-**1. Authoritative time на Redis side.**
-- Lua использует `redis.call('TIME')` вместо `ARGV[3] now from client`.
-- Все nodes видят single source of truth time.
-- Trade-off: TIME command даёт текущее Redis time, но replication между master-replica adds 1-10 ms.
+**1. Авторитетное время на стороне Redis.**
+- Lua использует `redis.call('TIME')` вместо `ARGV[3] now` от клиента.
+- Все ноды видят единый источник истины по времени.
+- Trade-off: команда TIME даёт текущее время Redis, но репликация master→replica добавляет 1–10 ms.
 
 **2. NTP / chrony.**
-- Все nodes синхронизированы через NTP с дрейфом < 50 ms.
-- Standard infra practice.
+- Все ноды синхронизированы через NTP с дрейфом < 50 ms.
+- Стандартная инфраструктурная практика.
 
-**3. Logical clocks (только для sequence):**
-- Не для timestamps, но для ordering: Lamport / vector clocks.
-- Не используется в rate limiter обычно.
+**3. Логические часы (только для упорядочивания):**
+- Не для timestamp-ов, а для ordering: Lamport / vector clocks.
+- В rate limiter обычно не используется.
 
-**Реальный impact:**
-- При 100 ms skew и refill rate 10/sec — разница в 1 token.
-- Для production threshold 100 req/min не критично.
-- Для high-frequency trading (1 ms windows) — критично; нужен PTP (Precision Time Protocol).
+**Реальное влияние:**
+- При расхождении 100 ms и скорости пополнения 10/сек — разница в 1 токен.
+- Для прод-порога 100 req/min не критично.
+- Для high-frequency trading (окна 1 ms) — критично; нужен PTP (Precision Time Protocol).
 
 ## Q14. Consistent hashing для sharding rate-limit keys?
 
-**Зачем:** распределить 200M keys по 20 Redis shards равномерно + минимизировать перешардирование при добавлении/удалении shard.
+**Зачем:** равномерно распределить 200M ключей по 20 Redis-шардам + минимизировать перешардирование при добавлении/удалении шарда.
 
-**Naive hash mod N:**
+**Наивный hash mod N:**
 - `shard = hash(key) % 20`.
-- При scale 20 → 21 shards: 19/20 keys меняют shard → 95% data movement.
+- При масштабировании 20 → 21 шард: 19/20 ключей меняют шард → перемещается 95% данных.
 
 **Consistent hashing:**
-- Hash ring; каждый shard несколько virtual nodes (≈ 100-200) для balance.
-- Key → hash → first shard clockwise on ring.
-- Add/remove shard → only 1/N keys move.
+- Hash-кольцо; у каждого шарда несколько виртуальных нод (≈ 100–200) для баланса.
+- Key → hash → первый шард по часовой стрелке на кольце.
+- Добавление/удаление шарда → переезжает только 1/N ключей.
 
 **Redis Cluster:**
-- Использует `CRC16(key) mod 16384` slot, slots distributed across masters.
-- Resharding moves slots (groups of keys), не individual keys.
+- Использует слот `CRC16(key) mod 16384`, слоты распределены по master-ам.
+- Resharding перемещает слоты (группы ключей), а не отдельные ключи.
 
 **Hash tags:**
-- `{user_id}_endpoint_A` и `{user_id}_endpoint_B` — same slot (one shard).
-- Позволяет atomic Lua над несколькими keys одного user.
+- `{user_id}_endpoint_A` и `{user_id}_endpoint_B` — один слот (один шард).
+- Позволяет atomic Lua над несколькими ключами одного пользователя.
 
 **Реальная архитектура:**
-- 20 master shards, 60 nodes total (master + 2 replicas каждый).
-- Lua script всегда сужает на один shard через hash tag по rate-limit key.
+- 20 master-шардов, 60 нод всего (master + 2 реплики у каждого).
+- Lua-скрипт всегда сужается до одного шарда через hash tag по rate-limit key.
 
 ## Q15. (!) Multi-tier limits (per-user + per-IP + per-API-key + per-endpoint)?
 
-**Сценарий:** API имеет лимиты на разных уровнях; request разрешён только если все tier-ы allow.
+**Сценарий:** у API лимиты на разных уровнях; запрос разрешён, только если все tier-ы дают allow.
 
-**Tier hierarchy:**
+**Иерархия tier-ов:**
 
-| Tier | Limit | Cost | Purpose |
+| Tier | Лимит | Стоимость проверки | Назначение |
 |---|---|---|---|
-| Global | 100K req/sec | very cheap | Circuit breaker (whole system) |
-| Per-IP | 100 req/min | cheap | DDoS, scraping |
-| Per-API-key | 10K req/min | medium | B2B tier (paid plan) |
-| Per-user | 100 req/min | medium | Individual abuse |
-| Per-endpoint | varies | expensive | Heavy operations (search, export) |
+| Global | 100K req/sec | очень дёшево | Circuit breaker (вся система) |
+| Per-IP | 100 req/min | дёшево | DDoS, скрапинг |
+| Per-API-key | 10K req/min | средне | B2B-tier (платный план) |
+| Per-user | 100 req/min | средне | Индивидуальное злоупотребление |
+| Per-endpoint | по-разному | дорого | Тяжёлые операции (поиск, экспорт) |
 
-**Decision logic:**
+**Логика принятия решения:**
 ```python
 def is_allowed(request):
     for tier in [global, per_ip, per_api_key, per_user, per_endpoint]:
@@ -607,30 +607,30 @@ def is_allowed(request):
     return True, None
 ```
 
-**Pitfalls:**
+**Подводные камни:**
 
-**1. Race между check и consume.**
-- Tier A allowed, tier B check, tier B denied → tier A counter уже incremented? Если check + consume не атомарны, можно «потерять» token.
-- Fix: проверить ВСЕ tiers сначала; consume в одной Lua transaction.
+**1. Гонка между check и consume.**
+- Tier A разрешил, tier B проверяется, tier B отказал → counter tier A уже увеличен? Если check + consume не атомарны, можно «потерять» токен.
+- Решение: сначала проверить ВСЕ tier-ы; consume в одной Lua-транзакции.
 
-**2. Cheap tier first.**
-- Global / per-IP check ≈ 0.5 ms; per-user check ≈ 2 ms (требует lookup user state).
-- Order matters: дешёвые сначала, чтобы DDoS отсекался без expensive checks.
+**2. Сначала дешёвые tier-ы.**
+- Проверка global / per-IP ≈ 0.5 ms; проверка per-user ≈ 2 ms (требует lookup состояния пользователя).
+- Порядок важен: дешёвые впереди, чтобы DDoS отсекался без дорогих проверок.
 
-**3. Different windows.**
-- Per-IP: 100 req/min (long window catches gradual scraping).
-- Per-endpoint: 10 req/sec (short window catches sudden burst).
+**3. Разные окна.**
+- Per-IP: 100 req/min (длинное окно ловит постепенный скрапинг).
+- Per-endpoint: 10 req/sec (короткое окно ловит внезапный всплеск).
 
 ## Q16. Cost-based (weighted requests) rate limiting?
 
-**Idea:** разные requests «стоят» разное количество tokens. Cheap endpoint = 1 token, expensive = 10 tokens. Limit измеряется в tokens/sec.
+**Идея:** разные запросы «стоят» разное количество токенов. Дешёвый endpoint = 1 токен, дорогой = 10 токенов. Лимит измеряется в токенах/сек.
 
 **Сценарий:**
-- `GET /users/me` — простой read, 1 token.
-- `GET /search?q=...` — full-text search, 5 tokens.
-- `POST /export?type=full` — full export, 100 tokens.
+- `GET /users/me` — простое чтение, 1 токен.
+- `GET /search?q=...` — полнотекстовый поиск, 5 токенов.
+- `POST /export?type=full` — полный экспорт, 100 токенов.
 
-**Algorithm:**
+**Алгоритм:**
 ```python
 cost = endpoint_cost[request.path]  # 1, 5, 100
 result = redis.eval(token_bucket_lua, 1, key, capacity, refill_rate, now, cost)
@@ -638,37 +638,37 @@ if not result.allowed:
     return 429, Retry-After=(cost - result.remaining) / refill_rate
 ```
 
-**Pros:**
-- Fair: тяжёлые operations cost больше, не пропускают burst через простой counter.
-- Резистентность к application-level DDoS (10 expensive requests = 100 simple).
+**Плюсы:**
+- Справедливо: тяжёлые операции стоят больше и не пролезают всплеском через простой counter.
+- Устойчивость к DDoS уровня приложения (10 дорогих запросов = 100 простых).
 
-**Use cases:**
-- **Stripe API:** `/v1/charges` — 1 weight; `/v1/reports` — 10 weight.
-- **GitHub GraphQL:** computed cost based on query depth/breadth.
-- **AWS API Gateway:** per-method cost.
+**Сценарии:**
+- **Stripe API:** `/v1/charges` — вес 1; `/v1/reports` — вес 10.
+- **GitHub GraphQL:** стоимость вычисляется по глубине/ширине запроса.
+- **AWS API Gateway:** стоимость на метод.
 
-**Configuration:**
-- Cost mapping в config service, hot-reload.
-- Cost можно вычислять dynamic: parse query, estimate cost.
+**Конфигурация:**
+- Маппинг стоимостей в config service, hot-reload.
+- Стоимость можно вычислять динамически: распарсить запрос, оценить cost.
 
-**Pitfall:**
-- Если cost > capacity, request никогда не пройдёт. Validate cost ≤ capacity.
-- Cost изменяется со временем (новый endpoint) — нужен versioning.
+**Подводный камень:**
+- Если cost > capacity, запрос не пройдёт никогда. Проверяйте, что cost ≤ capacity.
+- Стоимость меняется со временем (новый endpoint) — нужно версионирование.
 
 ## Q17. Per-tenant quotas + bursting (Stripe/GitHub patterns)?
 
-**Stripe API tier system:**
+**Система tier-ов Stripe API:**
 - Test mode: 25 req/sec.
-- Live mode: 100 req/sec по умолчанию; burst до 200 req/sec.
-- Higher tier (enterprise): negotiable, contact sales.
+- Live mode: 100 req/sec по умолчанию; всплеск до 200 req/sec.
+- Более высокий tier (enterprise): по договорённости, contact sales.
 
 **GitHub REST:**
-- Authenticated: 5000 req/hour per user.
+- Аутентифицированный: 5000 req/hour на пользователя.
 - App: 12500 req/hour.
-- Search API: 30 req/min (отдельный limit).
+- Search API: 30 req/min (отдельный лимит).
 - GraphQL: 5000 points/hour (cost-based).
 
-**Per-tenant config schema:**
+**Схема конфига per-tenant:**
 ```yaml
 tenants:
   enterprise_acme:
@@ -682,25 +682,25 @@ tenants:
       api: { rate: 10/sec, burst: 100 }
 ```
 
-**Implementation:**
-- Tenant config в Redis hash или PostgreSQL с cache.
-- On request: lookup tenant from API key → load limits → check rate limiter.
-- Hot reload через config-service updates.
+**Реализация:**
+- Конфиг тенанта в Redis hash или PostgreSQL с кэшем.
+- На запрос: определить тенанта по API key → загрузить лимиты → проверить rate limiter.
+- Hot reload через обновления config-service.
 
-**Bursting mechanism:**
-- Token bucket с capacity > sustained rate.
-- Например: 1000 req/sec sustained, capacity = 5000 → 5-second burst at 2000 req/sec.
+**Механизм всплесков (bursting):**
+- Token bucket с capacity > устойчивой скорости.
+- Например: устойчиво 1000 req/sec, capacity = 5000 → 5-секундный всплеск на 2000 req/sec.
 
-**Quota vs rate limit:**
-- Rate limit: short-term (req/sec, req/min).
-- Quota: long-term (req/month, includes billing).
-- Quota tracking — отдельная metering service, не на critical path.
+**Квота vs rate limit:**
+- Rate limit: краткосрочно (req/sec, req/min).
+- Квота: долгосрочно (req/месяц, включает биллинг).
+- Учёт квоты — отдельный metering-сервис, не на critical path.
 
 ## Q18. (!) HTTP 429, Retry-After, X-RateLimit-* headers (RFC 6585)?
 
 **RFC 6585** определяет HTTP 429 Too Many Requests.
 
-**Response при deny:**
+**Ответ при отказе:**
 ```http
 HTTP/1.1 429 Too Many Requests
 Retry-After: 30
@@ -716,28 +716,28 @@ Content-Type: application/json
 }
 ```
 
-**Headers:**
-- `Retry-After`: либо seconds (`30`), либо HTTP-date.
-- `X-RateLimit-Limit`: max requests in current window.
-- `X-RateLimit-Remaining`: requests left в текущем window.
-- `X-RateLimit-Reset`: Unix timestamp когда window reset.
+**Заголовки:**
+- `Retry-After`: либо секунды (`30`), либо HTTP-date.
+- `X-RateLimit-Limit`: максимум запросов в текущем окне.
+- `X-RateLimit-Remaining`: сколько запросов осталось в текущем окне.
+- `X-RateLimit-Reset`: Unix timestamp момента сброса окна.
 
-**Response на successful (даже без 429) — рекомендуется:**
-- Те же `X-RateLimit-*` headers.
-- Позволяет clients узнавать remaining до deny.
+**В успешном ответе (даже без 429) — рекомендуется:**
+- Те же заголовки `X-RateLimit-*`.
+- Позволяет клиентам узнавать остаток до отказа.
 
-**Standardization:**
+**Стандартизация:**
 - **IETF RateLimit Fields** (draft): `RateLimit: limit=100, remaining=50, reset=30`.
-- Pre-standard `X-` prefix de-facto универсален.
+- Дореформенный префикс `X-` де-факто универсален.
 
-**Pitfalls:**
-- НЕ возвращать 503 вместо 429: 503 означает service-side issue, не client.
-- НЕ возвращать 200 с rate limit message: ломает client retry-логику.
-- Retry-After обязателен — без него client не знает, когда retry.
+**Подводные камни:**
+- НЕ возвращать 503 вместо 429: 503 означает проблему на стороне сервиса, а не клиента.
+- НЕ возвращать 200 с сообщением о лимите: это ломает retry-логику клиента.
+- `Retry-After` обязателен — без него клиент не знает, когда повторять.
 
 ## Q19. Client-side awareness: exponential backoff + jitter?
 
-**Naive client retry:**
+**Наивный retry клиента:**
 ```python
 while True:
     response = call_api()
@@ -746,7 +746,7 @@ while True:
         continue
     return response
 ```
-Проблема: thundering herd при общем restart — все clients retry одновременно через 1 sec.
+Проблема: thundering herd при общем рестарте — все клиенты повторяют одновременно через 1 сек.
 
 **Exponential backoff + jitter:**
 ```python
@@ -765,16 +765,16 @@ while attempt < max_attempts:
     return response
 ```
 
-**Jitter варианты:**
+**Варианты jitter:**
 - **Full jitter:** `sleep = random(0, backoff)` — лучшее распределение.
-- **Equal jitter:** `sleep = backoff/2 + random(0, backoff/2)` — гарантирует min wait.
-- **Decorrelated jitter:** `sleep = random(backoff_min, prev_sleep * 3)` — самосгладится.
+- **Equal jitter:** `sleep = backoff/2 + random(0, backoff/2)` — гарантирует минимальное ожидание.
+- **Decorrelated jitter:** `sleep = random(backoff_min, prev_sleep * 3)` — самосглаживается.
 
-**AWS SDK exponential backoff** — стандарт. Все official client libraries Stripe, GitHub имеют built-in.
+**Exponential backoff в AWS SDK** — стандарт. Все официальные клиентские библиотеки Stripe и GitHub имеют его «из коробки».
 
 **Идемпотентность критична:**
-- GET — safe retry.
-- POST/PUT — retry только с `Idempotency-Key`.
+- GET — безопасен для повтора.
+- POST/PUT — повтор только с `Idempotency-Key`.
 
 ## Q20. (!) High-level architecture (edge / gateway / service)?
 
@@ -800,124 +800,124 @@ graph LR
     Svc -.metrics.-> Metrics
 ```
 
-**Layers:**
+**Уровни:**
 
 **Edge (Cloudflare / AWS WAF / Fastly):**
-- Per-IP, geo-fence, basic bot detection.
-- Cheap, very fast (sub-ms).
-- Rejects 80%+ DDoS.
+- Per-IP, geo-fence, базовое обнаружение ботов.
+- Дёшево, очень быстро (sub-ms).
+- Отсекает 80%+ DDoS.
 
 **API Gateway (Envoy / Kong / AWS API Gateway):**
-- Per-API-key, global. Composite checks.
-- Lua-based or filter-based.
-- Redis shared state.
+- Per-API-key, глобальные. Composite-проверки.
+- На основе Lua или фильтров.
+- Общее состояние в Redis.
 
-**Service-level (in-process):**
+**Уровень сервиса (in-process):**
 - Per-user, per-endpoint.
-- Application-specific business logic.
-- Local + Redis hybrid.
+- Бизнес-логика конкретного приложения.
+- Гибрид «локальное + Redis».
 
 **Config service:**
-- Per-tenant limits, hot reload.
-- etcd / Consul / custom.
+- Лимиты per-tenant, hot reload.
+- etcd / Consul / собственное решение.
 
-**Каждый layer фильтрует traffic; самый дешёвый (edge) — первый. Самый дорогой (service-level) — последний.**
+**Каждый уровень фильтрует трафик; самый дешёвый (edge) — первый. Самый дорогой (уровень сервиса) — последний.**
 
 ## Q21. Edge (Cloudflare/Envoy) vs API gateway vs in-service?
 
-| Layer | Latency | Granularity | Scope | Когда |
+| Уровень | Latency | Гранулярность | Охват | Когда |
 |---|---|---|---|---|
-| Edge (CDN/WAF) | < 1 ms | Coarse (IP, geo) | Whole infrastructure | DDoS, scraping |
-| Gateway (Envoy/Kong) | 1-3 ms | Medium (API key, route) | All services | B2B tier, public API |
-| In-service | 0.1-1 ms (local) или 2-5 ms (Redis) | Fine (user, endpoint, business logic) | Single service | Per-tenant business rules |
+| Edge (CDN/WAF) | < 1 ms | Грубая (IP, geo) | Вся инфраструктура | DDoS, скрапинг |
+| Gateway (Envoy/Kong) | 1–3 ms | Средняя (API key, route) | Все сервисы | B2B-tier, публичный API |
+| In-service | 0.1–1 ms (локально) или 2–5 ms (Redis) | Тонкая (user, endpoint, бизнес-логика) | Один сервис | Бизнес-правила per-tenant |
 
 **Cloudflare:**
-- Edge rate limiting встроен; configurable rules per zone.
-- DDoS protection бесплатно даже free tier.
-- Rate limit rules: `(http.request.uri.path == "/api/login") and (http.client.country == "ZZ")` → block.
+- Edge rate limiting встроен; настраиваемые правила на зону.
+- Защита от DDoS бесплатно даже на free-tier.
+- Правила лимита: `(http.request.uri.path == "/api/login") and (http.client.country == "ZZ")` → block.
 
 **Envoy:**
-- `envoy.filters.http.ratelimit` filter → external rate limit service.
-- gRPC API to RL service.
-- Backed by Redis or custom backend.
+- Фильтр `envoy.filters.http.ratelimit` → внешний rate limit service.
+- gRPC API к RL-сервису.
+- Хранилище — Redis или собственный backend.
 
 **Kong:**
-- Plugin-based, multiple algorithms.
-- Database (Postgres/Cassandra) или Redis for state.
+- На основе плагинов, несколько алгоритмов.
+- Состояние в БД (Postgres/Cassandra) или Redis.
 
 **In-service:**
-- Полный контроль, business-specific.
-- Например: «не больше 5 transfers per hour per user» — banking logic.
+- Полный контроль, под конкретный бизнес.
+- Например: «не больше 5 переводов в час на пользователя» — банковская логика.
 
-**Reality: все три уровня применяются последовательно.**
+**На практике все три уровня применяются последовательно.**
 
 ## Q22. Bloom filter для memory-efficient set rate limiting?
 
-**Use case:** «отклонять request если этот IP делал > 1000 requests за последний час; точность ±5% ок».
+**Сценарий:** «отклонять запрос, если этот IP сделал > 1000 запросов за последний час; точность ±5% допустима».
 
-**Naive:** хранить set всех IPs с counter — 100M unique IPs × (4 B IP + 4 B counter) = 800 MB.
+**Наивно:** хранить set всех IP со счётчиком — 100M уникальных IP × (4 B IP + 4 B counter) = 800 MB.
 
 **Bloom filter + counter:**
-- Bloom filter (m bits, k hash functions) — membership probabilistic.
-- Counting Bloom filter — counter в каждой ячейке (4-bit или 8-bit).
-- Memory: 100M IPs × 10 bits/IP × 1.5 (для 1% false-positive) = ~190 MB.
+- Bloom filter (m бит, k хеш-функций) — вероятностная проверка принадлежности.
+- Counting Bloom filter — счётчик в каждой ячейке (4-bit или 8-bit).
+- Память: 100M IP × 10 bits/IP × 1.5 (для 1% false-positive) = ~190 MB.
 
 **Trade-off:**
-- False-positive rate настраиваем (через size m + k).
-- Невозможно exact count; только «вероятно > threshold».
+- Частота false-positive настраивается (через размер m + k).
+- Точный подсчёт невозможен; только «вероятно > порога».
 
 **Когда подходит:**
-- Hot set tracking (top abusers).
-- Memory-constrained edge nodes (1 GB limit).
-- Approximation acceptable.
+- Отслеживание горячего набора (топ нарушителей).
+- Edge-ноды с ограниченной памятью (лимит 1 GB).
+- Аппроксимация допустима.
 
 **Когда НЕ подходит:**
-- Per-user precise count (false-positive = неправильный 429).
-- Strict accuracy financial limits.
+- Точный подсчёт per-user (false-positive = ошибочный 429).
+- Строгая точность финансовых лимитов.
 
-**Real use:** Akamai/Cloudflare edge nodes используют counting Bloom для bot scoring.
+**На практике:** edge-ноды Akamai/Cloudflare используют counting Bloom для скоринга ботов.
 
 ## Q23. (!) Fail-open vs fail-closed при недоступности Redis?
 
-**Scenario:** Redis cluster down or slow → rate limiter не может принять decision.
+**Сценарий:** Redis cluster недоступен или медленный → rate limiter не может принять решение.
 
 **Fail-open:**
-- При Redis fail → allow request.
-- Pros: API остаётся доступным.
-- Cons: legitimate abuse не блокируется во время outage.
+- При сбое Redis → разрешить запрос.
+- Плюсы: API остаётся доступным.
+- Минусы: реальные злоупотребления не блокируются во время сбоя.
 
 **Fail-closed:**
-- При Redis fail → deny request (429 / 503).
-- Pros: защита от abuse.
-- Cons: legitimate traffic блокируется — full outage.
+- При сбое Redis → отклонить запрос (429 / 503).
+- Плюсы: защита от злоупотреблений.
+- Минусы: легитимный трафик блокируется — полный простой.
 
-**Hybrid (recommended):**
-- Local counter fallback (Q24).
-- При Redis fail → переключиться на local pod-level counter.
-- Per-pod limit conservative (например, global_limit / pod_count × 1.5).
+**Гибрид (рекомендуется):**
+- Fallback на локальный counter (Q24).
+- При сбое Redis → переключиться на локальный счётчик уровня пода.
+- Лимит per-pod консервативный (например, global_limit / pod_count × 1.5).
 
-**Decision matrix:**
+**Матрица решений:**
 
-| Service criticality | Choice |
+| Критичность сервиса | Выбор |
 |---|---|
-| Public read-only API | fail-open (uptime priority) |
-| Auth, payments | fail-closed (security priority) |
-| Mixed | per-endpoint policy |
+| Публичный read-only API | fail-open (приоритет uptime) |
+| Auth, платежи | fail-closed (приоритет безопасности) |
+| Смешанный | политика per-endpoint |
 
-**Pitfall:**
-- Fail-open без alerting → Redis outage не замечен → DDoS прошёл.
-- Fail-closed без circuit breaker → cascading outage когда Redis lags.
+**Подводный камень:**
+- Fail-open без алертинга → сбой Redis незамечен → DDoS прошёл.
+- Fail-closed без circuit breaker → каскадный сбой, когда Redis тормозит.
 
 **Best practice:**
-- Circuit breaker на Redis client.
-- Timeout 50 ms; если 3 fails подряд — переключиться на fallback.
-- Alert on `redis_rate_limiter_unavailable=1`.
+- Circuit breaker на клиенте Redis.
+- Таймаут 50 ms; если 3 сбоя подряд — переключиться на fallback.
+- Алерт на `redis_rate_limiter_unavailable=1`.
 
 ## Q24. Graceful degradation: local fallback counter?
 
-**Pattern:** при Redis недоступном → переключиться на in-process counter (per-pod).
+**Паттерн:** при недоступном Redis → переключиться на in-process counter (per-pod).
 
-**Algorithm:**
+**Алгоритм:**
 ```python
 class RateLimiter:
     def check(self, key):
@@ -934,55 +934,55 @@ class RateLimiter:
         ...
 ```
 
-**Local counter design:**
+**Устройство локального counter-а:**
 - In-memory hash map с TTL.
 - Caffeine cache (Java) / `cachetools` (Python).
-- Limit per-pod = `(global_limit / pod_count) × 1.5` (overhead for skew).
+- Лимит per-pod = `(global_limit / pod_count) × 1.5` (запас на перекос).
 
 **Trade-off:**
-- Аккуратность снижена: 10 pods могут разрешить 10× local_limit = 1.5× global.
-- Но защита от abuse сохраняется: 1.5× global всё ещё лучше unlimited.
+- Точность снижена: 10 подов могут разрешить 10× local_limit = 1.5× global.
+- Но защита от злоупотреблений сохраняется: 1.5× global всё равно лучше, чем без лимита.
 
-**Recovery:**
-- Когда Redis вернулся — circuit breaker closes.
-- Гладкое переключение обратно.
+**Восстановление:**
+- Когда Redis вернулся — circuit breaker закрывается.
+- Плавное переключение обратно.
 
-**Real:** Netflix Hystrix / Resilience4j — built-in pattern.
+**На практике:** Netflix Hystrix / Resilience4j — встроенный паттерн.
 
 ## Q25. (!) DDoS mitigation: per-IP + geo-fence + CAPTCHA escalation?
 
-**Layered defence:**
+**Эшелонированная защита:**
 
-**Level 1: Network DDoS (volumetric).**
-- BGP anycast + scrubbing centers (Cloudflare, Akamai).
-- Up to 100+ Tbps mitigation.
-- Rate limiter не involved.
+**Уровень 1: Сетевой DDoS (volumetric).**
+- BGP anycast + scrubbing-центры (Cloudflare, Akamai).
+- Митигация до 100+ Tbps.
+- Rate limiter не задействован.
 
-**Level 2: Application DDoS (L7).**
-- Per-IP rate limiting (edge): 100 req/min per IP.
-- Per-IP × per-endpoint: 10 req/min for `/api/login`.
+**Уровень 2: Прикладной DDoS (L7).**
+- Per-IP rate limiting (edge): 100 req/min на IP.
+- Per-IP × per-endpoint: 10 req/min для `/api/login`.
 
-**Level 3: Bot detection.**
-- Device fingerprinting (browser canvas, fonts, screen).
-- Behavioral signals (mouse movement, timing).
+**Уровень 3: Обнаружение ботов.**
+- Фингерпринтинг устройства (browser canvas, шрифты, экран).
+- Поведенческие сигналы (движение мыши, тайминги).
 - Cloudflare Bot Management, AWS WAF Bot Control.
 
-**Level 4: CAPTCHA escalation.**
-- При detected suspicious activity → CAPTCHA challenge.
+**Уровень 4: Эскалация до CAPTCHA.**
+- При обнаружении подозрительной активности → CAPTCHA challenge.
 - hCaptcha, reCAPTCHA, Turnstile (Cloudflare).
-- Soft escalation: challenge first time → block after N failures.
+- Мягкая эскалация: первый раз — challenge → блокировка после N провалов.
 
-**Level 5: Geo-fence.**
-- Block / restrict from specific countries (compliance, abuse).
-- Allowlist business-critical regions.
+**Уровень 5: Geo-fence.**
+- Блокировка / ограничение для конкретных стран (комплаенс, злоупотребления).
+- Allowlist для бизнес-критичных регионов.
 
-**Detection signals:**
-- Request rate per IP > threshold.
-- Failed auth attempts > 10/min per IP.
-- Suspicious User-Agent (curl, python-requests без legitimate context).
-- Missing browser headers (Accept-Language, sec-fetch-*).
+**Сигналы обнаружения:**
+- Частота запросов на IP > порога.
+- Неуспешных попыток аутентификации > 10/min на IP.
+- Подозрительный User-Agent (curl, python-requests без легитимного контекста).
+- Отсутствуют браузерные заголовки (Accept-Language, sec-fetch-*).
 
-**Escalation flow:**
+**Поток эскалации:**
 ```
 normal traffic → allow
 suspicious (rate > limit) → CAPTCHA challenge
@@ -992,14 +992,14 @@ repeat offender → permanent block + log
 
 ## Q26. Adaptive rate limiting (auto-tune по latency/error)?
 
-**Idea:** статический limit не учитывает текущую нагрузку. Adaptive limiter снижает limit когда сервис страдает.
+**Идея:** статический лимит не учитывает текущую нагрузку. Адаптивный limiter снижает лимит, когда сервису плохо.
 
-**Signals:**
-- `service.latency_p99` > target (например, > 500 ms).
-- `service.error_rate` > threshold (5%).
+**Сигналы:**
+- `service.latency_p99` > цели (например, > 500 ms).
+- `service.error_rate` > порога (5%).
 - `service.cpu_utilization` > 80%.
 
-**Algorithm (AIMD — Additive Increase Multiplicative Decrease):**
+**Алгоритм (AIMD — Additive Increase Multiplicative Decrease):**
 ```python
 if metrics.latency_p99 > target_latency:
     rate_limit *= 0.5  # multiplicative decrease
@@ -1007,179 +1007,179 @@ elif metrics.healthy:
     rate_limit = min(rate_limit + increment, max_limit)  # additive increase
 ```
 
-**TCP congestion control inspiration:**
-- AIMD стабильный, конвергирует к optimal.
-- Все clients share resource fairly.
+**Вдохновлено TCP congestion control:**
+- AIMD стабилен, сходится к оптимуму.
+- Все клиенты делят ресурс справедливо.
 
-**Tools:**
-- Netflix concurrency-limits (open source library).
-- Envoy adaptive concurrency filter.
-- Google SRE «adaptive throttling» (chapter 21 SRE book).
+**Инструменты:**
+- Netflix concurrency-limits (open source библиотека).
+- Фильтр adaptive concurrency в Envoy.
+- «Adaptive throttling» из Google SRE (глава 21 книги SRE).
 
-**Pros:**
-- Авто-восстановление после load spike.
-- Защита backend от overload.
+**Плюсы:**
+- Авто-восстановление после всплеска нагрузки.
+- Защита backend от перегрузки.
 
-**Cons:**
-- Hysteresis: limit может «дёргаться» при noisy metrics.
-- Cold-start: при первой загрузке нет history.
+**Минусы:**
+- Гистерезис: лимит может «дёргаться» при шумных метриках.
+- Cold-start: при первом запуске нет истории.
 
-**Real:**
-- Netflix Hystrix → Resilience4j adaptive bulkhead.
-- Envoy adaptive concurrency.
-- AWS DynamoDB auto-scaling read/write capacity.
+**На практике:**
+- Netflix Hystrix → adaptive bulkhead в Resilience4j.
+- Adaptive concurrency в Envoy.
+- Авто-масштабирование read/write capacity в AWS DynamoDB.
 
 ## Q27. Monitoring: какие metrics обязательны?
 
-**Core metrics:**
+**Ключевые метрики:**
 
-| Metric | Type | Purpose |
+| Метрика | Тип | Назначение |
 |---|---|---|
-| `rate_limit_decisions_total{result=allow\|deny, tier, key_type}` | counter | Sum decisions |
-| `rate_limit_decision_latency_seconds` | histogram | p99 < 10 ms target |
-| `rate_limit_redis_calls_total{status}` | counter | Redis health |
-| `rate_limit_redis_latency_seconds` | histogram | Redis latency |
-| `rate_limit_local_fallback_total` | counter | Fail-over events |
-| `rate_limit_top_keys` (top-K denied) | gauge | Hot abusers |
-| `rate_limit_429_response_total{endpoint}` | counter | Client-side perception |
+| `rate_limit_decisions_total{result=allow\|deny, tier, key_type}` | counter | Сумма решений |
+| `rate_limit_decision_latency_seconds` | histogram | Цель p99 < 10 ms |
+| `rate_limit_redis_calls_total{status}` | counter | Здоровье Redis |
+| `rate_limit_redis_latency_seconds` | histogram | Latency Redis |
+| `rate_limit_local_fallback_total` | counter | События fail-over |
+| `rate_limit_top_keys` (top-K отклонённых) | gauge | Горячие нарушители |
+| `rate_limit_429_response_total{endpoint}` | counter | Восприятие со стороны клиента |
 
-**Dashboards:**
-- Decision rate per tier (allow vs deny).
-- Top 10 denied keys (potential abuse).
-- p99 latency over time.
-- Redis health (master/replica lag).
+**Дашборды:**
+- Частота решений по tier-ам (allow vs deny).
+- Топ-10 отклонённых ключей (потенциальные злоупотребления).
+- p99 latency во времени.
+- Здоровье Redis (лаг master/replica).
 
-**Alerts:**
-- Page: rate_limit_decision_latency_p99 > 50 ms 5 min подряд.
-- Slack: top_key_denials growing >100/sec — possible DDoS or misconfigured client.
-- Email: local_fallback_total > 0 — Redis issues.
+**Алерты:**
+- Page: rate_limit_decision_latency_p99 > 50 ms 5 минут подряд.
+- Slack: top_key_denials растёт > 100/сек — возможен DDoS или неверно настроенный клиент.
+- Email: local_fallback_total > 0 — проблемы с Redis.
 
-**Tracing:**
-- Trace ID propagated through rate-limit check.
-- Visibility: «request rejected by per-IP tier на edge, не дошёл до gateway».
+**Трассировка:**
+- Trace ID прокидывается через проверку лимита.
+- Видимость: «запрос отклонён tier-ом per-IP на edge, до gateway не дошёл».
 
 ## Q28. (!) Sticky routing vs random routing — impact на shared state?
 
 **Sticky routing (session affinity):**
-- Same user → same pod always.
-- Pod хранит counter for user in memory.
-- Pros: no Redis call needed.
-- Cons: hot pod при популярном user; failover теряет state.
+- Один пользователь → всегда один и тот же под.
+- Под хранит counter пользователя в памяти.
+- Плюсы: вызов Redis не нужен.
+- Минусы: горячий под при популярном пользователе; при failover состояние теряется.
 
 **Random routing:**
-- User → any pod.
-- Каждый pod нуждается в shared state (Redis).
-- Pros: even distribution; failover preserves state.
-- Cons: Redis on critical path.
+- Пользователь → любой под.
+- Каждому поду нужно общее состояние (Redis).
+- Плюсы: равномерное распределение; failover сохраняет состояние.
+- Минусы: Redis на critical path.
 
 **Trade-off:**
 
 | Свойство | Sticky | Random |
 |---|---|---|
-| Redis load | low | high |
-| Failover | losing pod loses state | seamless |
-| Hot user impact | local hot pod | distributed |
-| Implementation | session cookie / consistent hash LB | standard LB |
+| Нагрузка на Redis | низкая | высокая |
+| Failover | упавший под теряет состояние | бесшовный |
+| Влияние горячего пользователя | локальный горячий под | распределено |
+| Реализация | session cookie / consistent hash LB | обычный LB |
 
-**Hybrid:**
-- Sticky routing на LB для cache locality.
-- Redis shared state как source of truth.
-- Pod cache for last N decisions (LRU).
+**Гибрид:**
+- Sticky routing на LB ради cache locality.
+- Общее состояние в Redis как source of truth.
+- Кэш пода на последние N решений (LRU).
 
-**Real:**
-- AWS ALB sticky sessions для каноничных pods.
-- Envoy session affinity headers.
-- Cloudflare использует sticky routing к origin для cache locality.
+**На практике:**
+- Sticky sessions в AWS ALB для канонических подов.
+- Заголовки session affinity в Envoy.
+- Cloudflare использует sticky routing к origin ради cache locality.
 
 ## Q29. Тестирование rate limiter: unit, integration, load?
 
-**Unit tests:**
-- Token bucket: 100 requests на 1 sec → 100 allowed, 101-я denied (capacity).
-- Sliding window: precise count при borders.
-- Cost-based: weighted requests sum correctly.
-- Edge cases: clock back-jump, overflow, zero refill rate.
+**Unit-тесты:**
+- Token bucket: 100 запросов за 1 сек → 100 разрешено, 101-й отклонён (capacity).
+- Sliding window: точный подсчёт на границах.
+- Cost-based: взвешенные запросы суммируются корректно.
+- Пограничные случаи: скачок часов назад, переполнение, нулевая скорость пополнения.
 
-**Integration tests:**
-- Real Redis (Testcontainers): atomic Lua, race conditions.
-- Distributed: 5 pods + shared Redis → global limit observable.
-- Failure injection: Redis down → fallback path.
+**Интеграционные тесты:**
+- Реальный Redis (Testcontainers): atomic Lua, состояния гонки.
+- Распределённый: 5 подов + общий Redis → глобальный лимит наблюдаем.
+- Инъекция сбоев: Redis недоступен → fallback-путь.
 
-**Load tests:**
+**Нагрузочные тесты:**
 - Gatling / k6 / Locust → 1M req/sec на rate limiter.
-- Measure: decision latency p99, throughput, error rate.
-- Chaos: kill Redis master mid-test, observe failover.
+- Измеряем: p99 latency решения, throughput, частоту ошибок.
+- Chaos: убить master Redis посреди теста, наблюдать failover.
 
-**Property-based testing:**
-- ScalaCheck / Hypothesis: «при ANY sequence requests, allowed count ≤ limit + 1 (1 для approximation)».
-- Catches edge cases human tests miss.
+**Property-based тесты:**
+- ScalaCheck / Hypothesis: «при ЛЮБОЙ последовательности запросов число разрешённых ≤ limit + 1 (1 на аппроксимацию)».
+- Ловит пограничные случаи, которые ручные тесты пропускают.
 
-**Compliance test:**
-- 429 response headers correct (Retry-After, X-RateLimit-*).
-- HTTP status codes per RFC 6585.
+**Тест на соответствие контракту:**
+- Заголовки ответа 429 корректны (Retry-After, X-RateLimit-*).
+- HTTP-статусы по RFC 6585.
 
-**Real:** Stripe и Cloudflare имеют extensive load test infrastructure (private). Open source: rate-limit benchmarks от Resilience4j.
+**На практике:** у Stripe и Cloudflare обширная (закрытая) инфраструктура нагрузочного тестирования. Из open source: бенчмарки rate-limit от Resilience4j.
 
 ## Q30. (!) Антипаттерны и подводные камни?
 
-**1. DB-backed counter.**
-- Симптом: `UPDATE rate_limits SET count=count+1 WHERE key=?` на каждый request → DB row lock, throughput < 1K/sec.
-- Fix: Redis / in-memory.
+**1. Счётчик в БД.**
+- Симптом: `UPDATE rate_limits SET count=count+1 WHERE key=?` на каждый запрос → блокировка строки БД, throughput < 1K/sec.
+- Решение: Redis / in-memory.
 
-**2. Sync to disk on every request.**
-- Симптом: `fsync` на каждый INCR → IOPS ceiling, latency 10+ ms.
-- Fix: Redis с AOF appendfsync everysec (1 sec data loss acceptable).
+**2. Sync на диск на каждый запрос.**
+- Симптом: `fsync` на каждый INCR → потолок по IOPS, latency 10+ ms.
+- Решение: Redis с AOF appendfsync everysec (потеря данных за 1 сек допустима).
 
-**3. No jitter в client retry.**
-- Симптом: 1000 clients одновременно retry через ровно 5 sec → thundering herd.
-- Fix: exponential backoff + full jitter (Q19).
+**3. Нет jitter в retry клиента.**
+- Симптом: 1000 клиентов одновременно повторяют ровно через 5 сек → thundering herd.
+- Решение: exponential backoff + full jitter (Q19).
 
-**4. Single global Redis instance.**
-- Симптом: SPOF; 100% outage when Redis down.
-- Fix: Redis cluster, replicas, fail-open fallback.
+**4. Единственный глобальный инстанс Redis.**
+- Симптом: SPOF; 100% простой при падении Redis.
+- Решение: Redis cluster, реплики, fallback fail-open.
 
-**5. Naive INCR + GET.**
-- Симптом: race condition между pods, limit exceeded by N pods.
-- Fix: atomic Lua script (Q10).
+**5. Наивный INCR + GET.**
+- Симптом: состояние гонки между подами, лимит превышен на N подов.
+- Решение: atomic Lua-скрипт (Q10).
 
-**6. Не lokal counter для очевидных DDoS.**
-- Симптом: 1M req/sec DDoS hits Redis с 1M ops/sec.
-- Fix: local pod counter rejects 99% перед Redis call.
+**6. Нет локального counter-а для очевидного DDoS.**
+- Симптом: DDoS 1M req/sec бьёт по Redis с 1M ops/sec.
+- Решение: локальный counter пода отсекает 99% до вызова Redis.
 
-**7. Limit per pod вместо global.**
-- Симптом: 10 pods × 100/sec limit = 1000/sec global; вместо 100/sec.
-- Fix: shared Redis state.
+**7. Лимит на под вместо глобального.**
+- Симптом: 10 подов × 100/sec limit = 1000/sec глобально вместо 100/sec.
+- Решение: общее состояние в Redis.
 
-**8. Без TTL на Redis keys.**
-- Симптом: память Redis растёт линейно с unique keys; OOM через дни.
-- Fix: EXPIRE на каждый INCR, TTL = window × 2.
+**8. Нет TTL на ключах Redis.**
+- Симптом: память Redis растёт линейно с числом уникальных ключей; OOM через дни.
+- Решение: EXPIRE на каждый INCR, TTL = window × 2.
 
-**9. Fixed window для critical APIs.**
-- Симптом: 2× burst на edge boundaries; DDoS детектор пропускает.
-- Fix: sliding window counter.
+**9. Fixed window для критичных API.**
+- Симптом: 2×-всплеск на границах окон; DDoS-детектор пропускает.
+- Решение: sliding window counter.
 
-**10. Hard 429 без graceful degradation.**
-- Симптом: third-party API down → все clients получают 429 одновременно.
-- Fix: queue request, retry с backoff серверной стороны (для не-critical).
+**10. Жёсткий 429 без graceful degradation.**
+- Симптом: сторонний API упал → все клиенты получают 429 одновременно.
+- Решение: поставить запрос в очередь, повторять с backoff на стороне сервера (для не-критичного).
 
-**11. Не logging blocked requests.**
-- Симптом: невозможно понять, почему clients failing.
-- Fix: log на debug-level: `key=X, reason=per_user_limit, retry_after=30`.
+**11. Не логировать заблокированные запросы.**
+- Симптом: невозможно понять, почему у клиентов сбои.
+- Решение: лог на debug-уровне: `key=X, reason=per_user_limit, retry_after=30`.
 
-**12. Different limits на разных pods.**
-- Симптом: config rollout не атомарный; pod A разрешает 100/sec, pod B — 50/sec; неравномерное поведение.
-- Fix: centralized config с versioning, hot reload.
+**12. Разные лимиты на разных подах.**
+- Симптом: раскатка конфига не атомарна; под A разрешает 100/sec, под B — 50/sec; неравномерное поведение.
+- Решение: централизованный конфиг с версионированием, hot reload.
 
 **13. Не учитывать X-Forwarded-For.**
-- Симптом: rate limit per `remote_addr` = LB IP (one!); per-IP limit бесполезен.
-- Fix: parse `X-Forwarded-For` или `Cf-Connecting-IP` (Cloudflare).
+- Симптом: rate limit по `remote_addr` = IP балансировщика (один на всех!); per-IP лимит бесполезен.
+- Решение: парсить `X-Forwarded-For` или `Cf-Connecting-IP` (Cloudflare).
 
-**14. Rate limit на authentication endpoint без CAPTCHA escalation.**
-- Симптом: 100 req/min позволяет brute force через прокси с разными IP.
-- Fix: per-user + CAPTCHA после N failures.
+**14. Rate limit на endpoint аутентификации без эскалации до CAPTCHA.**
+- Симптом: 100 req/min позволяют brute force через прокси с разными IP.
+- Решение: per-user + CAPTCHA после N провалов.
 
-**15. Не reset limit при account upgrade.**
-- Симптом: user upgrade plan; всё ещё old limit до конца window.
-- Fix: на plan-change event — delete counter key (атомарный reset).
+**15. Не сбрасывать лимит при апгрейде аккаунта.**
+- Симптом: пользователь повысил план, но до конца окна действует старый лимит.
+- Решение: по событию смены плана — удалить ключ counter-а (атомарный сброс).
 
 ---
 
