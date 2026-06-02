@@ -1637,20 +1637,20 @@
       }
     };
   }
-  // Client-side reveal флешкарты в browse-режиме (вне FLASHCARD-сессии).
-  // Серверный POST /flashcard-reveal здесь не работает (нет сессии) и терял бы
-  // тему через redirect:/. Ответ уже отрендерен сервером и лежит скрытым —
-  // просто показываем его и дорисовываем mermaid/код. Никакой навигации.
+  // Browse-режим флешкарты (вне FLASHCARD-сессии): раскрытие — нативный <details>
+  // (PE — работает без JS). Серверный POST /flashcard-reveal здесь невозможен (нет
+  // сессии) и терял бы тему через redirect:/. Ответ уже отрендерён сервером внутри
+  // details. JS лишь: (1) при первом открытии дорисовывает mermaid/код (display:none
+  // в закрытом details не даёт mermaid измерить размеры), (2) синхронизирует подпись
+  // summary. ::before-стрелка ▸/▾ — пустоэлемент, textContent её не затрагивает.
   function initBrowseFlashcardReveal() {
-    const btn = document.getElementById('browse-reveal-btn');
+    const details = document.getElementById('browse-details');
+    const summary = document.getElementById('browse-reveal-btn');
     const answer = document.getElementById('browse-answer');
-    if (!btn || !answer) return;
-    btn.addEventListener('click', () => {
-      answer.classList.remove('hidden');
-      btn.setAttribute('aria-expanded', 'true');
-      btn.disabled = true;
-      btn.textContent = 'Ответ показан';
-      renderDynamicContent(answer);
+    if (!details || !summary || !answer) return;
+    details.addEventListener('toggle', () => {
+      summary.textContent = details.open ? 'Скрыть ответ' : 'Показать ответ';
+      if (details.open) renderDynamicContent(answer);
     });
   }
 

@@ -43,14 +43,19 @@
             <div class="flashcard-badge">Флешкарта — вспомни ответ до раскрытия</div>
 
             <!-- Browse / вне FLASHCARD-сессии: серверный reveal невозможен (нет
-                 активной flashcard-сессии для SM-2), поэтому раскрываем ответ на
-                 клиенте — без POST и без потери темы/вопроса (см. browse-reveal в app.js). -->
+                 активной flashcard-сессии для SM-2). Нативный <details> раскрывает
+                 уже отрендеренный сервером ответ БЕЗ JS (раньше #browse-reveal-btn
+                 был JS-only: без скриптов кнопка мертва, ответ навсегда скрыт).
+                 По-прежнему закрыт по умолчанию — флешкарта прячет ответ до reveal.
+                 app.js (toggle-listener) лишь дорисовывает mermaid/код и меняет
+                 подпись summary; навигации/POST нет. -->
             <div th:if="${!sessionFlashcard}" class="flashcard-browse">
-                <button type="button" id="browse-reveal-btn" class="flashcard-reveal-btn"
-                        aria-expanded="false" aria-controls="browse-answer">Показать ответ</button>
-                <div id="browse-answer" class="flashcard-answer hidden">
-                    <div class="answer markdown-content" th:utext="${studyAnswerHtml}"></div>
-                </div>
+                <details id="browse-details" class="flashcard-browse-details">
+                    <summary id="browse-reveal-btn" class="flashcard-reveal-btn flashcard-reveal-summary">Показать ответ</summary>
+                    <div id="browse-answer" class="flashcard-answer">
+                        <div class="answer markdown-content" th:utext="${studyAnswerHtml}"></div>
+                    </div>
+                </details>
             </div>
 
             <!-- Активная FLASHCARD-сессия: серверный reveal двигает SM-2 фазу. -->
@@ -140,6 +145,6 @@
     </section>
 </main>
 
-<script th:src="@{/js/app.js(v=18)}"></script>
+<script th:src="@{/js/app.js(v=19)}"></script>
 </body>
 </html>
