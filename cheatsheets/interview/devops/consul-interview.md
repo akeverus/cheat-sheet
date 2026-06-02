@@ -19,7 +19,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `HashiCorp Consul`
 
-`HashiCorp Consul` — service mesh + service discovery + KV store + health checking. Создан HashiCorp (2014). Использует **gossip protocol** (Serf) и **Raft consensus**. Часто конкурирует с **etcd, ZooKeeper, Eureka**. С 2023 — license changed (BSL), форк **OpenBao для Vault**, но Consul под BSL.
+`HashiCorp Consul` — это service mesh + service discovery + KV-хранилище + health-checking. Создан HashiCorp (2014). Использует **gossip-протокол** (Serf) и **Raft consensus**. Часто конкурирует с **etcd, ZooKeeper, Eureka**. С 2023 года лицензия сменилась (BSL), для Vault появился форк **OpenBao**, но сам Consul остаётся под BSL.
 
 ## Полезные ссылки
 
@@ -40,17 +40,17 @@ updated: "2026-04-25"
 - [Q2. (!) Service discovery — что и зачем?](#q2--service-discovery--что-и-зачем)
 - [Q3. Architecture (servers, clients, gossip)?](#q3-architecture-servers-clients-gossip)
 
-**Service Discovery**
+**Обнаружение сервисов**
 - [Q4. (!) Регистрация services?](#q4--регистрация-services)
 - [Q5. (!) DNS interface?](#q5--dns-interface)
 - [Q6. HTTP API queries?](#q6-http-api-queries)
 - [Q7. Service tags, metadata?](#q7-service-tags-metadata)
 
-**Health checks**
+**Проверки здоровья**
 - [Q8. (!) Типы health checks?](#q8--типы-health-checks)
 - [Q9. Auto-removal unhealthy services?](#q9-auto-removal-unhealthy-services)
 
-**KV store**
+**KV-хранилище**
 - [Q10. (!) Consul KV?](#q10--consul-kv)
 - [Q11. Watches, blocking queries?](#q11-watches-blocking-queries)
 - [Q12. Consul Template?](#q12-consul-template)
@@ -60,11 +60,11 @@ updated: "2026-04-25"
 - [Q14. Sidecar proxies (Envoy)?](#q14-sidecar-proxies-envoy)
 - [Q15. mTLS, intentions?](#q15-mtls-intentions)
 
-**Multi-datacenter**
+**Несколько дата-центров**
 - [Q16. (!) Multi-DC support?](#q16--multi-dc-support)
 - [Q17. WAN federation?](#q17-wan-federation)
 
-**Integration**
+**Интеграция**
 - [Q18. (!) Consul + K8s (Helm chart)?](#q18--consul--k8s-helm-chart)
 - [Q19. Consul-Terraform-Sync?](#q19-consul-terraform-sync)
 
@@ -79,29 +79,29 @@ updated: "2026-04-25"
 
 ## Q1. (!) Что такое Consul?
 
-**HashiCorp Consul** — multi-purpose tool:
-1. **Service discovery** — registry для services
-2. **Health checking** — monitor service health
-3. **KV store** — distributed config
-4. **Service mesh** (Consul Connect) — secure service-to-service
-5. **DNS / HTTP interface** для queries
-6. **Multi-datacenter** native
+**HashiCorp Consul** — многоцелевой инструмент:
+1. **Service discovery** — реестр сервисов
+2. **Health checking** — мониторинг здоровья сервисов
+3. **KV-хранилище** — распределённая конфигурация
+4. **Service mesh** (Consul Connect) — защищённое взаимодействие service-to-service
+5. **DNS / HTTP-интерфейс** для запросов
+6. **Multi-datacenter** из коробки
 
 **Применения:**
-- Service registry (microservices)
-- Configuration management
+- Реестр сервисов (микросервисы)
+- Управление конфигурацией
 - Service mesh
-- Multi-DC coordination
-- Health monitoring
+- Координация между несколькими дата-центрами
+- Мониторинг здоровья
 
 ## Q2. (!) Service discovery — что и зачем?
 
-**Service discovery** — mechanism для services finding each other.
+**Service discovery** — механизм, с помощью которого сервисы находят друг друга.
 
 **Без service discovery:**
-- Hardcoded IPs / hostnames
-- Update everywhere when service moves
-- Pain в dynamic env (auto-scaling, K8s)
+- Захардкоженные IP-адреса / hostname'ы
+- При переезде сервиса нужно обновлять адрес везде
+- Боль в динамической среде (auto-scaling, K8s)
 
 **С service discovery:**
 ```
@@ -109,34 +109,34 @@ Service A: "Where is Service B?"
 Discovery: "Service B is at 10.0.5.3:8080, 10.0.5.4:8080, ..."
 ```
 
-Service A connects к available instance.
+Service A подключается к доступному инстансу.
 
-**Examples:**
+**Примеры:**
 - Consul
-- etcd (used by Kubernetes)
+- etcd (используется в Kubernetes)
 - ZooKeeper
 - Netflix Eureka
-- Kubernetes Services (DNS-based)
+- Kubernetes Services (на основе DNS)
 - AWS Cloud Map
 
 ## Q3. Architecture (servers, clients, gossip)?
 
-**Servers (3-5 nodes):**
-- Hold cluster state (Raft consensus)
-- Handle queries
-- One **leader**, others followers
+**Servers (3-5 нод):**
+- Хранят состояние кластера (Raft consensus)
+- Обрабатывают запросы
+- Один **leader**, остальные — followers
 
-**Clients (run на каждой application node):**
-- Lightweight agent
-- Forwards queries к servers
-- Performs health checks
-- Participates в gossip
+**Clients (запускаются на каждой ноде приложения):**
+- Лёгкий агент
+- Форвардит запросы на servers
+- Выполняет health-проверки
+- Участвует в gossip
 
-**Gossip protocol (Serf):**
-- All nodes (servers + clients) participate
-- Membership detection
-- Failure detection
-- LAN gossip (per-DC) + WAN gossip (cross-DC)
+**Gossip-протокол (Serf):**
+- Участвуют все ноды (servers + clients)
+- Обнаружение членства в кластере (membership)
+- Обнаружение отказов (failure detection)
+- LAN gossip (внутри DC) + WAN gossip (между DC)
 
 ```mermaid
 graph LR
@@ -168,16 +168,16 @@ service {
 consul services register service.hcl
 ```
 
-**Or via API:**
+**Или через API:**
 ```bash
 curl --request PUT --data @service.json http://localhost:8500/v1/agent/service/register
 ```
 
-После registration — service queryable через DNS / HTTP API.
+После регистрации сервис доступен для запросов через DNS / HTTP API.
 
 ## Q5. (!) DNS interface?
 
-Consul exposes **DNS server** (port 8600 default).
+Consul предоставляет **DNS-сервер** (порт 8600 по умолчанию).
 
 ```bash
 # Get all healthy instances
@@ -190,9 +190,9 @@ dig @consul.local -p 8600 v1.my-api.service.consul
 dig @consul.local -p 8600 my-api.service.consul SRV
 ```
 
-**Apps use standard DNS** — no custom client library.
+**Приложения используют стандартный DNS** — никакой особой клиентской библиотеки не нужно.
 
-**Integration с system DNS:** forward `*.consul` queries → Consul DNS port.
+**Интеграция с системным DNS:** перенаправлять запросы `*.consul` → на DNS-порт Consul.
 
 ## Q6. HTTP API queries?
 
@@ -204,13 +204,13 @@ curl http://consul.local:8500/v1/health/service/my-api?passing
 curl http://consul.local:8500/v1/health/service/my-api?tag=v1
 ```
 
-**Returns JSON** с service nodes, addresses, health status.
+**Возвращает JSON** с нодами сервиса, адресами и статусом здоровья.
 
-**SDKs:** Java, Go, Python, Ruby, Node, .NET.
+**SDK:** Java, Go, Python, Ruby, Node, .NET.
 
 ## Q7. Service tags, metadata?
 
-**Tags** — strings labeling service.
+**Tags** — строки-метки для сервиса.
 
 ```hcl
 service {
@@ -219,13 +219,13 @@ service {
 }
 ```
 
-**Use cases:**
-- Versioning (`v1`, `v2`)
-- Environment (`prod`, `staging`)
-- Region
-- Role (`primary`, `replica`)
+**Сценарии использования:**
+- Версионирование (`v1`, `v2`)
+- Окружение (`prod`, `staging`)
+- Регион
+- Роль (`primary`, `replica`)
 
-**Metadata** (newer) — key-value pairs:
+**Metadata** (появилось позже) — пары ключ-значение:
 ```hcl
 service {
   meta = {
@@ -235,7 +235,7 @@ service {
 }
 ```
 
-**Filter queries** by tags / meta.
+**Фильтрация запросов** по tags / meta.
 
 ## Q8. (!) Типы health checks?
 
@@ -270,13 +270,13 @@ check {
 }
 ```
 
-**Check states:** passing, warning, critical.
+**Состояния проверок:** passing, warning, critical.
 
-**Multiple checks** per service possible (logical AND).
+**Несколько проверок** на один сервис возможны (логическое AND).
 
 ## Q9. Auto-removal unhealthy services?
 
-При **critical health check** — service automatically **excluded** from healthy queries.
+При **critical health check** сервис автоматически **исключается** из запросов по здоровым инстансам.
 
 ```bash
 # Returns only passing instances
@@ -286,13 +286,13 @@ dig @consul.local my-api.service.consul
 dig @consul.local my-api.connect.consul
 ```
 
-**Service deregistered** after node leaves cluster (gracefully) или fails (after timeout).
+**Сервис снимается с регистрации** после того, как нода покидает кластер (штатно) или отказывает (по таймауту).
 
-**Critical health → traffic redirected** к healthy instances. Auto-failover **without external load balancer changes**.
+**Critical health → трафик перенаправляется** на здоровые инстансы. Авто-failover **без изменений во внешнем балансировщике**.
 
 ## Q10. (!) Consul KV?
 
-**Distributed key-value store**.
+**Распределённое key-value хранилище**.
 
 ```bash
 consul kv put my-app/config/timeout 30
@@ -304,30 +304,30 @@ consul kv list my-app/  # list keys
 consul kv delete my-app/config/timeout
 ```
 
-**Use cases:**
-- Application config
-- Feature flags
-- Service coordination
+**Сценарии использования:**
+- Конфигурация приложений
+- Feature-флаги
+- Координация сервисов
 - Leader election
 
-**Strong consistency** через Raft (linearizable reads/writes).
+**Строгая консистентность** через Raft (linearizable чтения/записи).
 
 ## Q11. Watches, blocking queries?
 
-**Blocking queries** — long-poll для changes.
+**Blocking queries** — long-poll для отслеживания изменений.
 
 ```bash
 # Block until changes
 curl http://consul.local:8500/v1/kv/my-app?wait=5m&index=42
 ```
 
-`index` — current modification index. Server holds connection until **change** или timeout.
+`index` — текущий modification index. Сервер удерживает соединение до **изменения** или таймаута.
 
-**Apps subscribe** к config changes — react в real-time без polling.
+**Приложения подписываются** на изменения конфигурации — реагируют в реальном времени без polling.
 
 ## Q12. Consul Template?
 
-**Consul Template** — render templates from Consul KV / services data к local files.
+**Consul Template** — рендерит шаблоны из данных Consul KV / сервисов в локальные файлы.
 
 ```hcl
 template {
@@ -337,38 +337,38 @@ template {
 }
 ```
 
-Template:
+Шаблон:
 ```
 {{range service "my-api"}}
 server {{.Address}}:{{.Port}};
 {{end}}
 ```
 
-**Эффект:** when services change — file regenerated, nginx reloaded.
+**Эффект:** при изменении сервисов файл перегенерируется, nginx перезагружается.
 
-**Use case:** dynamic Nginx upstream, load balancer config from service registry.
+**Сценарий использования:** динамический upstream Nginx, конфигурация балансировщика из реестра сервисов.
 
 ## Q13. (!) Что такое Consul Connect?
 
-**Consul Connect** — **service mesh** layer на Consul (с 2018).
+**Consul Connect** — слой **service mesh** поверх Consul (с 2018 года).
 
-**Capabilities:**
-- **mTLS** automatic between services
-- **Identity-based auth** (intentions)
-- **L7 routing** (через Envoy proxy)
+**Возможности:**
+- **mTLS** автоматически между сервисами
+- **Аутентификация на основе identity** (intentions)
+- **L7-маршрутизация** (через Envoy proxy)
 - **Observability**
 
-**Architecture:**
+**Архитектура:**
 ```
 App A → Envoy sidecar (Connect proxy) → Envoy sidecar → App B
                        (mTLS)
 ```
 
-**Vs Istio/Linkerd:** Consul Connect — **multi-platform** (works на VMs, K8s, hybrid). Istio/Linkerd — K8s-focused.
+**В сравнении с Istio/Linkerd:** Consul Connect — **мультиплатформенный** (работает на VM, K8s, гибридных средах). Istio/Linkerd ориентированы на K8s.
 
 ## Q14. Sidecar proxies (Envoy)?
 
-**Envoy proxy** — high-performance L7 proxy. Used by Consul Connect, Istio, AWS App Mesh.
+**Envoy proxy** — высокопроизводительный L7-прокси. Используется в Consul Connect, Istio, AWS App Mesh.
 
 ```hcl
 service {
@@ -388,18 +388,18 @@ service {
 }
 ```
 
-**App connects к localhost:5432** → Envoy proxy → secure tunnel → other service's Envoy → database.
+**Приложение подключается к localhost:5432** → Envoy proxy → защищённый туннель → Envoy другого сервиса → база данных.
 
 ## Q15. mTLS, intentions?
 
-**mTLS** — mutual TLS. Both client и server verify each other's certificates.
+**mTLS** — mutual TLS. И клиент, и сервер проверяют сертификаты друг друга.
 
 **Consul Connect:**
-- **Auto-issued** certificates (Vault PKI или built-in CA)
-- **Auto-rotated** (short TTLs)
-- **Identity = service name** (not IP)
+- **Автоматически выдаёт** сертификаты (Vault PKI или встроенный CA)
+- **Автоматически ротирует** (короткие TTL)
+- **Identity = имя сервиса** (не IP)
 
-**Intentions** — service-to-service authorization.
+**Intentions** — авторизация service-to-service.
 
 ```bash
 # Allow web → api
@@ -409,47 +409,47 @@ consul intention create web api
 consul intention create -deny web database
 ```
 
-**Default deny** option:
+Вариант с **default deny**:
 ```bash
 consul intention create -deny "*" "*"
 # Then explicitly allow needed services
 ```
 
-**Zero-trust networking** — services need explicit permission.
+**Zero-trust networking** — сервисам нужно явное разрешение на доступ.
 
 ## Q16. (!) Multi-DC support?
 
-**Native multi-datacenter** support.
+**Нативная поддержка multi-datacenter**.
 
-**Architecture:**
-- Each DC has own Consul cluster (servers + clients)
-- DCs federated через WAN gossip
+**Архитектура:**
+- В каждом DC свой кластер Consul (servers + clients)
+- DC объединяются через WAN gossip
 
 ```bash
 # Query service в other DC
 dig @consul.local -p 8600 my-api.service.us-east-1.consul
 ```
 
-**Service в другой DC** queryable via DNS / HTTP.
+**Сервис в другом DC** доступен для запросов через DNS / HTTP.
 
-**Use case:** multi-region apps, geo-distributed services.
+**Сценарий использования:** мультирегиональные приложения, гео-распределённые сервисы.
 
 ## Q17. WAN federation?
 
-**WAN gossip** — connection между Consul DCs.
+**WAN gossip** — соединение между DC Consul.
 
 ```hcl
 # Server config
 retry_join_wan = ["consul-dc2.example.com"]
 ```
 
-**Effect:**
-- Service catalog shared across DCs
-- KV store NOT replicated (separate per DC)
-- Cross-DC queries via DNS/API
-- ACL replication available
+**Эффект:**
+- Каталог сервисов общий для всех DC
+- KV-хранилище НЕ реплицируется (отдельное в каждом DC)
+- Кросс-DC запросы через DNS/API
+- Доступна репликация ACL
 
-**Limitation:** KV не auto-replicated (по design — DCs autonomous).
+**Ограничение:** KV не реплицируется автоматически (так задумано — DC автономны).
 
 ## Q18. (!) Consul + K8s (Helm chart)?
 
@@ -458,131 +458,131 @@ helm repo add hashicorp https://helm.releases.hashicorp.com
 helm install consul hashicorp/consul --set global.name=consul
 ```
 
-**Features:**
-- Consul servers running на K8s
+**Возможности:**
+- Consul servers работают на K8s
 - Consul clients как DaemonSet
-- Sync K8s services ↔ Consul registry
-- Connect injector (auto-add Envoy sidecar к pods)
+- Синхронизация сервисов K8s ↔ реестр Consul
+- Connect injector (автоматически добавляет Envoy sidecar к pod'ам)
 
-**Use case:** Consul Connect service mesh для K8s + non-K8s workloads.
+**Сценарий использования:** service mesh Consul Connect для нагрузок в K8s + вне K8s.
 
 ## Q19. Consul-Terraform-Sync?
 
-**Network Infrastructure Automation (NIA)** — automatically update **infrastructure** when services change.
+**Network Infrastructure Automation (NIA)** — автоматически обновляет **инфраструктуру** при изменении сервисов.
 
 ```
 Consul service change → Terraform run → update load balancer / firewall / DNS
 ```
 
-**Use case:** auto-update F5 load balancer, AWS ALB target groups, DNS records when services scale.
+**Сценарий использования:** автообновление балансировщика F5, target groups AWS ALB, DNS-записей при масштабировании сервисов.
 
 ## Q20. (!) Consul vs etcd vs ZooKeeper?
 
-| Critterion | Consul | etcd | ZooKeeper |
+| Критерий | Consul | etcd | ZooKeeper |
 |-----------|--------|------|-----------|
 | Создатель | HashiCorp | CoreOS / CNCF | Apache |
-| Service discovery | **Built-in** | Manual | Manual |
-| Health checks | **Built-in** | No | No |
-| Service mesh | **Built-in (Connect)** | No | No |
-| KV store | Yes | Yes (primary use) | Yes |
-| DNS interface | **Yes** | No | No |
-| Multi-DC | **Native** | Manual | Limited |
+| Service discovery | **Встроен** | Вручную | Вручную |
+| Health checks | **Встроены** | Нет | Нет |
+| Service mesh | **Встроен (Connect)** | Нет | Нет |
+| KV-хранилище | Да | Да (основное назначение) | Да |
+| DNS-интерфейс | **Да** | Нет | Нет |
+| Multi-DC | **Нативно** | Вручную | Ограниченно |
 | Consensus | Raft | Raft | ZAB |
-| Used in | Standalone, K8s | Kubernetes | Kafka, HBase, legacy |
+| Где используется | Отдельно, K8s | Kubernetes | Kafka, HBase, legacy |
 
-**Consul** — broader feature set (DNS, health, mesh).
-**etcd** — focus on KV (Kubernetes use it).
-**ZooKeeper** — older, used by big data ecosystem.
+**Consul** — более широкий набор возможностей (DNS, health, mesh).
+**etcd** — фокус на KV (его использует Kubernetes).
+**ZooKeeper** — старше, используется в экосистеме big data.
 
 ## Q21. Consul vs Kubernetes service discovery?
 
 **Kubernetes:**
-- Built-in service discovery via DNS
+- Встроенный service discovery через DNS
 - ClusterIP / Headless services
-- Limited к K8s cluster
+- Ограничен пределами кластера K8s
 
 **Consul:**
-- Multi-platform (VMs, K8s, hybrid)
-- Multi-DC native
-- Health checks more flexible
-- KV store, mesh in one tool
+- Мультиплатформенный (VM, K8s, гибрид)
+- Multi-DC из коробки
+- Более гибкие health-проверки
+- KV-хранилище и mesh в одном инструменте
 
-**Когда Consul over K8s discovery:**
+**Когда Consul вместо K8s discovery:**
 - Multi-cluster / multi-cloud
-- Mix VMs и K8s
-- Need feature-rich service mesh
-- Existing HashiCorp investment
+- Сочетание VM и K8s
+- Нужен функционально богатый service mesh
+- Уже вложились в экосистему HashiCorp
 
 **Когда K8s discovery достаточно:**
-- Pure K8s deployment
-- Single cluster
-- Simple needs
+- Чистый деплой в K8s
+- Один кластер
+- Простые потребности
 
 ## Q22. (!) Consul Connect vs Istio vs Linkerd?
 
-| Critterion | Consul Connect | Istio | Linkerd |
+| Критерий | Consul Connect | Istio | Linkerd |
 |-----------|---------------|-------|---------|
-| Platform | Multi (VM, K8s) | K8s-focused | K8s-focused |
-| Proxy | Envoy | Envoy | linkerd2-proxy (Rust) |
-| Complexity | Medium | **High** | **Low** |
-| Performance | Good | Heavy | **Excellent** |
-| Multi-DC | Native | Possible | Limited |
-| Adoption | Medium | Highest | Growing |
+| Платформа | Мульти (VM, K8s) | Ориентирован на K8s | Ориентирован на K8s |
+| Прокси | Envoy | Envoy | linkerd2-proxy (Rust) |
+| Сложность | Средняя | **Высокая** | **Низкая** |
+| Производительность | Хорошая | Тяжёлый | **Отличная** |
+| Multi-DC | Нативно | Возможно | Ограниченно |
+| Распространённость | Средняя | Наибольшая | Растёт |
 
-**Choice:**
-- **Multi-platform / VMs** → Consul Connect
-- **K8s + many features** → Istio
-- **K8s + simplicity** → Linkerd
+**Выбор:**
+- **Мультиплатформа / VM** → Consul Connect
+- **K8s + много возможностей** → Istio
+- **K8s + простота** → Linkerd
 
 Подробнее — в [Istio](istio-service-mesh-interview.md) и [Linkerd](linkerd-interview.md).
 
 ## Q23. (!) Когда выбрать Consul?
 
 **Выбирай когда:**
-- Need **service discovery** для mix VMs + K8s
-- **Multi-DC** native required
-- Want **single tool** для discovery + KV + mesh
-- Already HashiCorp ecosystem (Terraform, Vault, Nomad)
-- **Hybrid cloud** (on-prem + cloud)
-- Need **DNS interface** для service queries
+- Нужен **service discovery** для смеси VM + K8s
+- Требуется **Multi-DC** из коробки
+- Нужен **единый инструмент** для discovery + KV + mesh
+- Уже используете экосистему HashiCorp (Terraform, Vault, Nomad)
+- **Гибридное облако** (on-prem + cloud)
+- Нужен **DNS-интерфейс** для запросов к сервисам
 
 **Не выбирай когда:**
-- Pure K8s — built-in discovery достаточно
-- Don't want operational overhead
-- Need maximum performance mesh — Linkerd
-- Need maximum features mesh — Istio
+- Чистый K8s — встроенного discovery достаточно
+- Не хотите операционных накладных расходов
+- Нужен mesh с максимальной производительностью — Linkerd
+- Нужен mesh с максимумом возможностей — Istio
 
 ## Q24. Какие частые проблемы?
 
-1. **Quorum loss** — < 3 server nodes available → cluster unavailable
-2. **Network partitions** — split-brain potential
-3. **Memory growth** — large service catalogs
-4. **Slow gossip** в huge clusters (тысячи nodes)
-5. **DNS caching issues** — clients cache stale records
-6. **ACL misconfig** — too restrictive locks out everyone
-7. **Connect intentions** — default deny breaks unexpected services
-8. **WAN gossip flapping** — unstable cross-DC links
-9. **No backups** — KV data lost
-10. **License confusion** (BSL change в 2023)
+1. **Потеря кворума** — доступно < 3 server-нод → кластер недоступен
+2. **Сетевые разделения (network partitions)** — потенциальный split-brain
+3. **Рост памяти** — большие каталоги сервисов
+4. **Медленный gossip** в огромных кластерах (тысячи нод)
+5. **Проблемы DNS-кэширования** — клиенты кэшируют устаревшие записи
+6. **Неправильная конфигурация ACL** — слишком строгие правила блокируют всех
+7. **Connect intentions** — default deny неожиданно ломает доступ для сервисов
+8. **Флаппинг WAN gossip** — нестабильные кросс-DC соединения
+9. **Отсутствие бэкапов** — данные KV теряются
+10. **Путаница с лицензией** (смена на BSL в 2023)
 
-В **2025** Consul — mature tool, but **K8s-native solutions** (Kubernetes Services + Linkerd/Istio) часто preferred для new projects.
+К **2025 году** Consul — зрелый инструмент, но для новых проектов часто предпочитают **K8s-нативные решения** (Kubernetes Services + Linkerd/Istio).
 
 ---
 
 ## See also
 
-- [HashiCorp Vault](vault-interview.md) — same vendor, integration
-- [Istio](istio-service-mesh-interview.md) — service mesh alternative
-- [Linkerd](linkerd-interview.md) — service mesh alternative
-- [Ansible](ansible-interview.md) — config management
-- [Kubernetes](kubernetes-interview.md) — built-in discovery
-- [Микросервисы](../architecture/microservices-interview.md) — service discovery context
-- [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — context
+- [HashiCorp Vault](vault-interview.md) — тот же вендор, интеграция
+- [Istio](istio-service-mesh-interview.md) — альтернативный service mesh
+- [Linkerd](linkerd-interview.md) — альтернативный service mesh
+- [Ansible](ansible-interview.md) — управление конфигурацией
+- [Kubernetes](kubernetes-interview.md) — встроенный discovery
+- [Микросервисы](../architecture/microservices-interview.md) — контекст service discovery
+- [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — контекст
 - [Распределённые системы](../architecture/distributed-systems-interview.md) — Raft, gossip
-- [Networking](../architecture/networking-interview.md) — context
-- [Application Security](../security/application-security-interview.md) — mTLS, ACLs
-- [Zero Trust](../security/zero-trust-interview.md) — Connect implements
-- [Load Balancing](../architecture/load-balancing-interview.md) — Consul + LB integration
+- [Networking](../architecture/networking-interview.md) — контекст
+- [Application Security](../security/application-security-interview.md) — mTLS, ACL
+- [Zero Trust](../security/zero-trust-interview.md) — Connect реализует zero-trust
+- [Load Balancing](../architecture/load-balancing-interview.md) — интеграция Consul + балансировщик
 
 - [Ansible](ansible-interview.md)
 - [ArgoCD и GitOps](argocd-interview.md)

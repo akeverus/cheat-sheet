@@ -18,7 +18,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Linkerd`
 
-`Linkerd` — lightweight service mesh для Kubernetes. **Pioneer** service mesh space (Linkerd 1.x в 2016). Linkerd2 (2018) — переписан на **Rust** для performance. Created by **Buoyant**. **CNCF graduated** (2021). Главная альтернатива Istio — **simpler, faster, более opinionated**.
+`Linkerd` — легковесный service mesh для Kubernetes. **Пионер** в сегменте service mesh (Linkerd 1.x в 2016). Linkerd2 (2018) — переписан на **Rust** ради производительности. Создан компанией **Buoyant**. **Выпускник CNCF** (2021). Главная альтернатива Istio — **проще, быстрее и более opinionated** (с жёсткими дефолтами).
 
 ## Полезные ссылки
 
@@ -45,11 +45,11 @@ updated: "2026-04-25"
 - [Q5. (!) linkerd2-proxy (Rust)?](#q5--linkerd2-proxy-rust)
 - [Q6. (!) Ultralight sidecar?](#q6--ultralight-sidecar)
 
-**Installation**
+**Установка**
 - [Q7. (!) Linkerd installation?](#q7--linkerd-installation)
 - [Q8. Sidecar injection (annotation)?](#q8-sidecar-injection-annotation)
 
-**Features**
+**Возможности**
 - [Q9. (!) Mutual TLS (automatic)?](#q9--mutual-tls-automatic)
 - [Q10. Traffic split (canary, blue-green)?](#q10-traffic-split-canary-blue-green)
 - [Q11. Retries и timeouts?](#q11-retries-и-timeouts)
@@ -63,7 +63,7 @@ updated: "2026-04-25"
 - [Q15. Linkerd Viz (UI)?](#q15-linkerd-viz-ui)
 - [Q16. Tap (live request inspection)?](#q16-tap-live-request-inspection)
 
-**Production**
+**Прод**
 - [Q17. (!) Когда выбрать Linkerd?](#q17--когда-выбрать-linkerd)
 - [Q18. Какие минусы Linkerd?](#q18-какие-минусы-linkerd)
 - [Q19. Performance benchmarks vs Istio?](#q19-performance-benchmarks-vs-istio)
@@ -71,57 +71,57 @@ updated: "2026-04-25"
 
 ## Q1. (!) Что такое Linkerd?
 
-**Linkerd** — service mesh для Kubernetes. Designed для **simplicity, performance, security**.
+**Linkerd** — service mesh для Kubernetes. Спроектирован под **простоту, производительность и безопасность**.
 
-**Slogan:** "The lightweight service mesh."
+**Слоган:** "The lightweight service mesh."
 
 **Особенности:**
-- **Rust-based** proxy (vs Istio's Envoy в C++)
-- **Zero-config mTLS** (automatic)
-- **Minimal CRDs** (no over-engineering)
-- **Easy install** (один command)
-- **Lower overhead** than Istio
-- **Opinionated** (less flexible, more usable)
+- Proxy **на Rust** (в отличие от Envoy на C++ у Istio)
+- **mTLS без конфигурации** (автоматически)
+- **Минимум CRD** (без over-engineering)
+- **Простая установка** (одна команда)
+- **Меньше накладных расходов**, чем у Istio
+- **Opinionated** (менее гибкий, но удобнее в эксплуатации)
 
-**CNCF graduated** project (2021).
+Проект — **выпускник CNCF** (2021).
 
 ## Q2. (!) Linkerd vs Istio — main отличия?
 
-| Critterion | Linkerd | Istio |
+| Критерий | Linkerd | Istio |
 |-----------|---------|-------|
-| Complexity | **Low** | High |
-| Sidecar size | **~30 MB** | ~50-100 MB |
+| Сложность | **Низкая** | Высокая |
+| Размер sidecar | **~30 MB** | ~50-100 MB |
 | Proxy | **linkerd2-proxy (Rust)** | Envoy (C++) |
-| Latency overhead | **<1 ms** | 5-10 ms |
-| Setup time | Minutes | Hours |
-| CRDs | ~10 | ~30+ |
-| Features | Subset (но essential) | Most |
-| Configuration | Annotations + small CRDs | Many CRDs |
-| mTLS | **Automatic, zero-config** | Configurable, default off (until recent) |
-| Adoption | Growing rapidly | Largest |
-| Multi-cluster | Yes | Yes |
+| Прибавка к latency | **<1 ms** | 5-10 ms |
+| Время установки | Минуты | Часы |
+| CRD | ~10 | ~30+ |
+| Возможности | Подмножество (но самое нужное) | Почти всё |
+| Конфигурация | Аннотации + небольшие CRD | Множество CRD |
+| mTLS | **Автоматически, без конфигурации** | Настраивается, по умолчанию выключен (до недавнего времени) |
+| Распространённость | Быстро растёт | Самая большая |
+| Multi-cluster | Да | Да |
 
-**Linkerd philosophy:** "do core things well, don't try to do everything."
+**Философия Linkerd:** «делать ключевые вещи хорошо, не пытаться делать всё подряд».
 
-**Istio philosophy:** "kitchen sink — every possible feature."
+**Философия Istio:** «kitchen sink — каждая возможная фича».
 
 ## Q3. История (Linkerd 1.x → 2.x)?
 
 **Linkerd 1.x** (2016):
-- Written в Scala, на JVM
-- Powerful но **resource-heavy**
-- Pioneer service mesh
+- Написан на Scala, работает на JVM
+- Мощный, но **прожорливый по ресурсам**
+- Первопроходец среди service mesh
 
 **Linkerd 2.0** (2018):
-- **Complete rewrite** в Go (control plane) + Rust (proxy)
-- Massively reduced resource usage
-- Simpler architecture
+- **Полная переписка**: Go (control plane) + Rust (proxy)
+- Кардинально снижено потребление ресурсов
+- Более простая архитектура
 
-**Linkerd 2.x** (current):
-- Continued evolution (2.15+ в 2025)
-- Multi-cluster, policy, и т.д.
+**Linkerd 2.x** (актуальная):
+- Продолжающаяся эволюция (2.15+ в 2025)
+- Multi-cluster, политики и т.д.
 
-В **2025** — Linkerd 2.x **only supported version**. 1.x deprecated.
+В **2025** — Linkerd 2.x **единственная поддерживаемая версия**. 1.x помечена как deprecated.
 
 ## Q4. (!) Control plane vs data plane?
 
@@ -135,48 +135,48 @@ graph TD
     P1 -.mTLS.- P2
 ```
 
-**Control plane components:**
-- **destination** — service discovery
-- **identity** — issues mTLS certificates
-- **proxy-injector** — injects sidecars
+**Компоненты control plane:**
+- **destination** — service discovery (обнаружение сервисов)
+- **identity** — выдаёт mTLS-сертификаты
+- **proxy-injector** — внедряет sidecar-ы
 
-**Data plane:** linkerd2-proxy sidecars.
+**Data plane:** sidecar-ы linkerd2-proxy.
 
-**Optional:**
-- **Linkerd Viz** — observability stack
-- **Linkerd Multicluster** — cross-cluster
+**Опционально:**
+- **Linkerd Viz** — стек observability
+- **Linkerd Multicluster** — связность между кластерами
 
 ## Q5. (!) linkerd2-proxy (Rust)?
 
-**linkerd2-proxy** — purpose-built service mesh proxy на Rust.
+**linkerd2-proxy** — специализированный service mesh proxy на Rust.
 
-**vs Envoy:**
-- **Smaller** (~30 MB vs Envoy ~100 MB)
-- **Faster** (no GC, optimized для mesh use case)
-- **Less features** (only what mesh needs)
+**В сравнении с Envoy:**
+- **Меньше** (~30 MB против ~100 MB у Envoy)
+- **Быстрее** (нет GC, оптимизирован под сценарий mesh)
+- **Меньше возможностей** (только то, что нужно mesh)
 
-**Designed для:**
+**Рассчитан на:**
 - HTTP/1.1, HTTP/2, gRPC
 - mTLS termination/origination
-- Metrics collection
-- Retries, timeouts
-- Load balancing
+- сбор метрик
+- ретраи, таймауты
+- балансировку нагрузки
 
-**Won't replace** Envoy для general-purpose proxying. **Optimized для mesh sidecar** workload.
+**Не заменит** Envoy для proxying общего назначения. **Оптимизирован под нагрузку mesh sidecar**.
 
 ## Q6. (!) Ultralight sidecar?
 
-**Resource consumption per sidecar:**
-- **~30 MB RAM** (vs Istio Envoy 50-100 MB)
-- **~0.05 CPU cores** baseline (vs ~0.2 CPU)
+**Потребление ресурсов на один sidecar:**
+- **~30 MB RAM** (против 50-100 MB у Envoy в Istio)
+- **~0.05 ядра CPU** в базовом режиме (против ~0.2 CPU)
 
-**Effect:**
-- 1000-pod cluster Linkerd: ~30 GB sidecar RAM
-- 1000-pod cluster Istio: ~80 GB sidecar RAM
+**Эффект:**
+- кластер из 1000 подов на Linkerd: ~30 GB RAM на sidecar-ы
+- кластер из 1000 подов на Istio: ~80 GB RAM на sidecar-ы
 
-**~3x cheaper** at scale.
+**В ~3 раза дешевле** на масштабе.
 
-**Не nuance** — на small clusters difference negligible. На huge mesh — substantial.
+**Важный нюанс** — на небольших кластерах разница пренебрежимо мала. На огромном mesh — существенна.
 
 ## Q7. (!) Linkerd installation?
 
@@ -195,54 +195,54 @@ linkerd install | kubectl apply -f -
 linkerd check
 ```
 
-**3 commands** — running mesh.
+**3 команды** — и mesh работает.
 
-**Compare к Istio:**
+**Сравните с Istio:**
 ```bash
 istioctl install --set profile=demo  # less validation
 # + many more steps for production
 ```
 
-**Linkerd opinionated** — fewer choices, less to misconfigure.
+**Linkerd — opinionated**: меньше выбора, меньше шансов накосячить с настройкой.
 
 ## Q8. Sidecar injection (annotation)?
 
-**Auto-inject** by namespace annotation:
+**Автоматическое внедрение** через аннотацию namespace:
 ```bash
 kubectl annotate ns my-namespace linkerd.io/inject=enabled
 ```
 
-Все new pods get sidecar.
+Все новые поды получают sidecar.
 
-**Per-pod opt-out:**
+**Отключение для отдельного пода:**
 ```yaml
 metadata:
   annotations:
     linkerd.io/inject: disabled
 ```
 
-Existing pods need restart для injection.
+Уже существующие поды нужно перезапустить, чтобы в них внедрился sidecar.
 
 ## Q9. (!) Mutual TLS (automatic)?
 
-**mTLS — turned on by default** в Linkerd. **Zero-config**.
+**mTLS включён по умолчанию** в Linkerd. **Без конфигурации**.
 
-**Identity:**
-- Each pod gets cert (signed by Linkerd identity service)
-- TTL: 24 hours (auto-renewed)
+**Identity (идентичность):**
+- каждый под получает сертификат (подписанный сервисом identity в Linkerd)
+- TTL: 24 часа (автоматическое продление)
 - **Identity = ServiceAccount**
 
-**Verification:**
+**Проверка:**
 ```bash
 linkerd viz tap deploy/my-app -n my-namespace
 # Shows :tls=true для encrypted traffic
 ```
 
-**Vs Istio:** Istio mTLS configurable (PERMISSIVE, STRICT, DISABLE). Linkerd just **on**.
+**В сравнении с Istio:** в Istio mTLS настраивается (PERMISSIVE, STRICT, DISABLE). В Linkerd он просто **включён**.
 
 ## Q10. Traffic split (canary, blue-green)?
 
-**TrafficSplit** (SMI specification):
+**TrafficSplit** (спецификация SMI):
 ```yaml
 apiVersion: split.smi-spec.io/v1alpha1
 kind: TrafficSplit
@@ -257,9 +257,9 @@ spec:
       weight: 10
 ```
 
-**90% к v1, 10% к v2.**
+**90% на v1, 10% на v2.**
 
-**Combined с Flagger** (CNCF) — automated progressive delivery (canary с metrics-based promotion).
+**В связке с Flagger** (CNCF) — автоматизированный progressive delivery (canary с продвижением на основе метрик).
 
 ## Q11. Retries и timeouts?
 
@@ -279,16 +279,16 @@ spec:
       timeout: 5s
 ```
 
-**Per-route configuration:**
-- Retries (`isRetryable`)
-- Timeouts
-- Latency / success rate metrics
+**Конфигурация по каждому маршруту:**
+- ретраи (`isRetryable`)
+- таймауты
+- метрики latency / success rate
 
-**Less flexibility than Istio**, но 80% use cases covered.
+**Гибкости меньше, чем в Istio**, но 80% сценариев покрыто.
 
 ## Q12. Service profiles?
 
-**ServiceProfile** = per-service config.
+**ServiceProfile** = конфигурация для конкретного сервиса.
 
 ```yaml
 spec:
@@ -301,73 +301,73 @@ spec:
       timeout: 1s
 ```
 
-**Auto-generate** from OpenAPI spec:
+**Автогенерация** из OpenAPI-спеки:
 ```bash
 linkerd profile --open-api spec.yml my-service
 ```
 
-**Provides per-route metrics** в Linkerd Viz.
+**Даёт метрики по каждому маршруту** в Linkerd Viz.
 
 ## Q13. Multi-cluster meshes?
 
-**Linkerd Multicluster** — cross-cluster mTLS + service discovery.
+**Linkerd Multicluster** — mTLS между кластерами + service discovery.
 
 ```bash
 linkerd multicluster install | kubectl apply -f -
 linkerd multicluster link --cluster-name remote-cluster
 ```
 
-**Mirror services** between clusters:
+**Зеркалирование сервисов** между кластерами:
 ```bash
 kubectl label svc/my-service mirror.linkerd.io/exported=true
 ```
 
-**Trust anchor sharing:**
-- Common CA трасstrap для cross-cluster mTLS
-- Identity preserved across clusters
+**Общий trust anchor:**
+- общий CA как корень доверия для mTLS между кластерами
+- идентичность (identity) сохраняется при переходе между кластерами
 
-**Use case:** geo-distributed apps, disaster recovery.
+**Сценарий применения:** геораспределённые приложения, disaster recovery.
 
 ## Q14. (!) Built-in metrics + dashboards?
 
-**Linkerd auto-collects:**
-- **Success rate** (% non-5xx responses)
+**Linkerd собирает автоматически:**
+- **Success rate** (% ответов не из класса 5xx)
 - **Request rate** (RPS)
 - **Latency** (p50, p95, p99)
 
-**Per:**
-- Service
-- Route (with ServiceProfile)
-- Pod
-- Connection (mTLS yes/no)
+**В разрезе:**
+- сервиса
+- маршрута (при наличии ServiceProfile)
+- пода
+- соединения (mTLS да/нет)
 
 ```bash
 linkerd viz top deploy/my-app
 linkerd viz routes deploy/my-app
 ```
 
-**Gold standard** — RED метрики (Rate, Errors, Duration) — exactly что Linkerd provides.
+**Золотой стандарт** — RED-метрики (Rate, Errors, Duration) — это ровно то, что даёт Linkerd.
 
 ## Q15. Linkerd Viz (UI)?
 
-**Linkerd Viz** — extension с UI + Prometheus + Grafana + Jaeger integration.
+**Linkerd Viz** — расширение с UI и интеграцией Prometheus + Grafana + Jaeger.
 
 ```bash
 linkerd viz install | kubectl apply -f -
 linkerd viz dashboard
 ```
 
-**Dashboard shows:**
-- Service-level метрики
-- Topology graph
-- Live request inspection
-- Per-route stats
+**Dashboard показывает:**
+- метрики на уровне сервисов
+- граф топологии
+- инспекцию запросов в реальном времени
+- статистику по каждому маршруту
 
-**Optional component** — main Linkerd works без него.
+**Опциональный компонент** — основной Linkerd работает и без него.
 
 ## Q16. Tap (live request inspection)?
 
-**Tap** — live stream requests.
+**Tap** — потоковая трансляция запросов в реальном времени.
 
 ```bash
 linkerd viz tap deploy/my-app
@@ -376,86 +376,86 @@ linkerd viz tap deploy/my-app
 # rsp id=0 proxy=out :status=200 latency=15ms
 ```
 
-**Use case:** debug production issues, see live traffic.
+**Сценарий применения:** отладка проблем на проде, наблюдение за живым трафиком.
 
-**Filtering:** `--path /api/users`, `--from <namespace>`, etc.
+**Фильтрация:** `--path /api/users`, `--from <namespace>` и т.д.
 
 ## Q17. (!) Когда выбрать Linkerd?
 
-**Выбирай Linkerd когда:**
-- Want **simplicity** (vs Istio complexity)
-- **Performance critical** (low latency overhead)
-- **Resource-constrained** (sidecar size matters)
-- **Smaller team** (less to operate)
-- Need **just core mesh features** (mTLS, observability, traffic split)
-- **K8s-only** deployment
+**Выбирай Linkerd, когда:**
+- нужна **простота** (против сложности Istio)
+- **производительность критична** (малая прибавка к latency)
+- **ресурсы ограничены** (размер sidecar имеет значение)
+- **небольшая команда** (меньше эксплуатировать)
+- нужны **только базовые возможности mesh** (mTLS, observability, traffic split)
+- развёртывание **только в K8s**
 
-**Не выбирай когда:**
-- Need **advanced features** Istio имеет (sometimes)
-- Need **multi-platform** mesh (use Consul)
-- **Already invested** в Istio
+**Не выбирай, когда:**
+- нужны **продвинутые фичи**, которые есть у Istio (иногда)
+- нужен **мультиплатформенный** mesh (используй Consul)
+- **уже вложились** в Istio
 
 ## Q18. Какие минусы Linkerd?
 
-1. **Less features** than Istio (sometimes missing edge case)
-2. **K8s-only** (no VM support)
-3. **Smaller community** vs Istio
-4. **Less third-party integrations**
-5. **Opinionated** — less flexibility
-6. **No L7 authz через JWT** (Istio better here)
-7. **Smaller ecosystem** (fewer plugins, blogs)
+1. **Меньше возможностей**, чем у Istio (иногда не хватает на крайних случаях)
+2. **Только K8s** (нет поддержки VM)
+3. **Сообщество меньше**, чем у Istio
+4. **Меньше сторонних интеграций**
+5. **Opinionated** — меньше гибкости
+6. **Нет L7-авторизации через JWT** (здесь Istio лучше)
+7. **Меньше экосистема** (меньше плагинов, статей)
 
-**Trade-off:** simplicity ↔ features. Linkerd выбирает simplicity.
+**Компромисс:** простота ↔ возможности. Linkerd выбирает простоту.
 
 ## Q19. Performance benchmarks vs Istio?
 
-**Various independent benchmarks** (Linkerd vs Istio, sidecar mode):
-- **Linkerd p99 latency overhead:** ~1-2 ms
-- **Istio p99 latency overhead:** ~5-10 ms
+**Различные независимые бенчмарки** (Linkerd vs Istio, режим sidecar):
+- **прибавка к p99-latency у Linkerd:** ~1-2 ms
+- **прибавка к p99-latency у Istio:** ~5-10 ms
 
-**Memory:**
-- Linkerd sidecar: ~30 MB
-- Istio sidecar: ~50-100 MB
+**Память:**
+- sidecar Linkerd: ~30 MB
+- sidecar Istio: ~50-100 MB
 
-**CPU usage:** Linkerd ~30-50% lower CPU per service.
+**Потребление CPU:** у Linkerd на ~30-50% ниже на сервис.
 
-**Caveats:**
-- Vendor benchmarks (Buoyant) may be biased
-- Real-world results vary
-- Istio Ambient mode (без sidecar) closes gap
+**Оговорки:**
+- бенчмарки от вендора (Buoyant) могут быть предвзятыми
+- реальные результаты варьируются
+- режим Istio Ambient (без sidecar) сокращает разрыв
 
 ## Q20. License change в 2024?
 
-**В 2024** — **Buoyant** (creator) changed Linkerd licensing для commercial users:
-- **Linkerd Open Source** — same Apache 2.0 (free)
-- **Linkerd Enterprise** — paid (advanced features, support)
-- **No more "Stable" releases** — only через paid Enterprise
+**В 2024** — **Buoyant** (создатель) изменила лицензирование Linkerd для коммерческих пользователей:
+- **Linkerd Open Source** — та же Apache 2.0 (бесплатно)
+- **Linkerd Enterprise** — платно (продвинутые фичи, поддержка)
+- **Больше нет «Stable»-релизов** — только через платный Enterprise
 
-**Edge releases** — open source, less stable.
+**Edge-релизы** — open source, менее стабильные.
 
-**Effect:**
-- **Hobby / OSS** users — still free
-- **Production enterprise** — pay для stability
-- **Some controversy** в community
+**Эффект:**
+- **хобби / OSS**-пользователи — по-прежнему бесплатно
+- **production enterprise** — платят за стабильность
+- **некоторые споры** в сообществе
 
-В **2025** — Linkerd still popular, но competitors (Cilium Service Mesh, ambient Istio) gaining.
+В **2025** — Linkerd всё ещё популярен, но конкуренты (Cilium Service Mesh, ambient Istio) набирают обороты.
 
 ---
 
 ## See also
 
-- [Istio](istio-service-mesh-interview.md) — main конкурент
-- [Consul Connect](consul-interview.md) — multi-platform alternative
-- [Kubernetes](kubernetes-interview.md) — required platform
-- [Микросервисы](../architecture/microservices-interview.md) — main use case
-- [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — context
-- [Zero Trust](../security/zero-trust-interview.md) — Linkerd enables
-- [mTLS](../security/mtls-interview.md) — automatic
-- [Application Security](../security/application-security-interview.md) — security
+- [Istio](istio-service-mesh-interview.md) — главный конкурент
+- [Consul Connect](consul-interview.md) — мультиплатформенная альтернатива
+- [Kubernetes](kubernetes-interview.md) — обязательная платформа
+- [Микросервисы](../architecture/microservices-interview.md) — основной сценарий применения
+- [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — контекст
+- [Zero Trust](../security/zero-trust-interview.md) — Linkerd его обеспечивает
+- [mTLS](../security/mtls-interview.md) — автоматически
+- [Application Security](../security/application-security-interview.md) — безопасность
 - [OpenTelemetry](../monitoring/opentelemetry-interview.md) — observability
-- [Observability](../monitoring/observability-interview.md) — RED metrics
+- [Observability](../monitoring/observability-interview.md) — RED-метрики
 - [Deployment Strategies](../cicd/deployment-strategies-interview.md) — TrafficSplit
-- [Resilience Patterns](../architecture/resilience-patterns-interview.md) — retries
+- [Resilience Patterns](../architecture/resilience-patterns-interview.md) — ретраи
 - [Networking](../architecture/networking-interview.md) — L4/L7
 
 - [Ansible](ansible-interview.md)

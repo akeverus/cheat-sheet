@@ -18,7 +18,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Database Performance`
 
-`Database Performance` — **топ-1 причина медленных приложений**. В 90% случаев slow responses = bad query, missing index, N+1, connection pool. Знание EXPLAIN, pg_stat_statements, execution plan — must-have senior backend.
+`Database Performance` — **топ-1 причина медленных приложений**. В 90% случаев медленные ответы = плохой запрос, отсутствующий индекс, N+1, исчерпанный connection pool. Знание EXPLAIN, pg_stat_statements, execution plan — обязательный навык senior-backend.
 
 ## Полезные ссылки
 
@@ -84,16 +84,16 @@ updated: "2026-04-25"
 
 (!) Как диагностировать slow query?
 
-**Систематический approach:**
+**Систематический подход:**
 
-**1. Identify:**
-- APM tool (DataDog, New Relic) показывает slow endpoint
-- `pg_stat_statements` — top-N queries by total/mean time
-- Slow query log (threshold, например 1s)
+**1. Найти проблемный запрос:**
+- APM-инструмент (DataDog, New Relic) показывает медленный endpoint
+- `pg_stat_statements` — топ-N запросов по суммарному / среднему времени
+- Slow query log (порог, например 1 с)
 
-**2. Reproduce:**
-- Get query + parameters
-- Run в test environment с prod-like data volume
+**2. Воспроизвести:**
+- Получить запрос + параметры
+- Прогнать в тестовом окружении на объёме данных, близком к прод
 
 **3. EXPLAIN ANALYZE:**
 ```sql
@@ -101,71 +101,71 @@ EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT)
 SELECT * FROM orders WHERE user_id = 123 AND status = 'PAID';
 ```
 
-**4. Identify bottleneck:**
-- **Seq Scan** большой таблицы → missing index?
-- **Sort** с disk → work_mem too low?
-- **Nested Loop** многомиллионных tables → wrong plan; join order?
-- **High Buffers: read** → cache miss; cold data
+**4. Найти узкое место:**
+- **Seq Scan** большой таблицы → отсутствует индекс?
+- **Sort** с уходом на диск → слишком маленький work_mem?
+- **Nested Loop** на многомиллионных таблицах → неверный план; порядок join?
+- **Высокий Buffers: read** → промах кэша; холодные данные
 
-**5. Fix hypothesis:**
-- Add index
-- Rewrite query
-- Adjust work_mem / config
-- Partition table
+**5. Сформулировать гипотезу фикса:**
+- Добавить индекс
+- Переписать запрос
+- Подкрутить work_mem / конфиг
+- Партицировать таблицу
 
-**6. Verify:**
-- EXPLAIN ANALYZE после change
-- Compare: planning time, execution time, rows, buffers
+**6. Проверить:**
+- EXPLAIN ANALYZE после изменения
+- Сравнить: planning time, execution time, rows, buffers
 
-**7. Monitor:**
-- Deploy to prod
-- Watch metrics (latency, query time)
+**7. Мониторить:**
+- Выкатить в прод
+- Следить за метриками (latency, время запроса)
 
-**Checklist first-touch:**
-- Index на WHERE columns?
-- Statistics up-to-date (`ANALYZE`)?
-- Query returns reasonable row count (not SELECT *)?
-- Type mismatches (function on indexed col: `WHERE LOWER(email) =` breaks index)?
+**Чек-лист на первом касании:**
+- Есть индекс на колонках WHERE?
+- Статистика актуальна (`ANALYZE`)?
+- Запрос возвращает вменяемое число строк (не SELECT *)?
+- Нет ли несовпадения типов (функция на индексируемой колонке: `WHERE LOWER(email) =` ломает индекс)?
 
 ## Q2. (!) EXPLAIN vs EXPLAIN ANALYZE?
 
-**EXPLAIN:** shows **planned** execution plan (estimates).
-- Fast, no actual execution
-- Estimated costs / rows
-- Hypothetical
+**EXPLAIN:** показывает **планируемый** план выполнения (оценки).
+- Быстро, без реального выполнения
+- Оценочные costs / rows
+- Гипотетический
 
-**EXPLAIN ANALYZE:** **actually executes** query + measures.
-- Real timings, real row counts
-- Detects **estimate vs actual mismatch** (bad stats!)
-- Slow queries take same time to run (ANALYZE не bypass execution)
-- **Warning:** DML executes! Use `BEGIN; EXPLAIN ANALYZE UPDATE ...; ROLLBACK;`
+**EXPLAIN ANALYZE:** **реально выполняет** запрос и замеряет.
+- Реальные тайминги, реальное число строк
+- Выявляет **расхождение оценки и факта** (плохая статистика!)
+- Медленные запросы выполняются столько же (ANALYZE не пропускает выполнение)
+- **Внимание:** DML реально выполняется! Используйте `BEGIN; EXPLAIN ANALYZE UPDATE ...; ROLLBACK;`
 
-**Useful options:**
+**Полезные опции:**
 ```sql
 EXPLAIN (ANALYZE, BUFFERS, VERBOSE, FORMAT JSON)
 SELECT ...;
 ```
 
-- **BUFFERS:** shows shared buffers hit / read (cache effectiveness)
-- **VERBOSE:** output column lists
-- **FORMAT JSON/YAML/XML:** for tooling (e.g., pev2 visualizer)
-- **SETTINGS:** show non-default config values
-- **WAL:** WAL records written (PG 13+)
+- **BUFFERS:** показывает shared buffers hit / read (эффективность кэша)
+- **VERBOSE:** выводит списки колонок
+- **FORMAT JSON/YAML/XML:** для инструментов (например, визуализатор pev2)
+- **SETTINGS:** показывает не-дефолтные значения конфига
+- **WAL:** число записанных WAL-записей (PG 13+)
 
-**Read output:**
-- `actual rows=100` vs `rows=10000` → estimate 100× off → stats stale, `ANALYZE`
-- `Buffers: shared hit=X read=Y` — read = disk, hit = cache; high read = cold data
-- `Execution Time: 234 ms` — real duration
+**Как читать вывод:**
+- `actual rows=100` против `rows=10000` → оценка ошибается в 100× → статистика устарела, нужен `ANALYZE`
+- `Buffers: shared hit=X read=Y` — read = диск, hit = кэш; высокий read = холодные данные
+- `Execution Time: 234 ms` — реальная длительность
 
-**Visualizers:**
-- **pev2** / **explain.depesz.com** — color-coded bottlenecks
+**Визуализаторы:**
+- **pev2** / **explain.depesz.com** — узкие места с цветовой подсветкой
 - **Dalibo Visual Explain**
 
-**Gotcha:** cold run != warm. Run 2x — first hits disk, second from cache. Use `BUFFERS` to see.
+**Подвох:** холодный прогон не равен тёплому. Прогоните 2 раза — первый бьёт по диску, второй из кэша. Чтобы это увидеть, используйте `BUFFERS`.
 
 ## Q3. (!) Как читать execution plan?
 
-**Plan — tree of operations**, bottom-up execution:
+**План — это дерево операций**, выполнение снизу вверх:
 
 ```
 Nested Loop  (cost=0.42..8.46 rows=1 width=128) (actual time=0.05..0.12 rows=1 loops=1)
@@ -176,63 +176,63 @@ Nested Loop  (cost=0.42..8.46 rows=1 width=128) (actual time=0.05..0.12 rows=1 l
        Filter: (status = 'PAID')
 ```
 
-**Читать:**
-- **Indentation:** deeper = earlier (leaves first)
-- Each node: operation, cost, rows, width, actual time
-- `cost=startup..total` (not ms, abstract units; ratio matters)
-- `rows`: estimated; `actual time`: real measurement
-- `loops`: execute count (multiply actual time × loops for real total)
+**Как читать:**
+- **Отступ:** глубже = выполняется раньше (сначала листья)
+- Каждый узел: операция, cost, rows, width, actual time
+- `cost=startup..total` (не мс, абстрактные единицы; важно соотношение)
+- `rows`: оценка; `actual time`: реальный замер
+- `loops`: число выполнений (умножьте actual time × loops для реального итога)
 
-**Key node types:**
-- **Seq Scan:** full table scan
-- **Index Scan:** follows index pointers to rows
-- **Index Only Scan:** index contains all needed cols (fast)
-- **Bitmap Heap Scan + Bitmap Index Scan:** batch reads sorted by disk page
-- **Hash Join:** builds hash of smaller table
-- **Merge Join:** both sorted; merges
-- **Nested Loop:** for each row outer, scan inner
-- **Sort:** orders result; disk spill bad
+**Ключевые типы узлов:**
+- **Seq Scan:** полное сканирование таблицы
+- **Index Scan:** идёт по указателям индекса к строкам
+- **Index Only Scan:** индекс содержит все нужные колонки (быстро)
+- **Bitmap Heap Scan + Bitmap Index Scan:** пакетное чтение, отсортированное по страницам диска
+- **Hash Join:** строит хэш меньшей таблицы
+- **Merge Join:** обе стороны отсортированы; сливает их
+- **Nested Loop:** для каждой строки внешней таблицы сканирует внутреннюю
+- **Sort:** сортирует результат; уход на диск — плохо
 - **Aggregate / HashAggregate:** GROUP BY
-- **Gather / Gather Merge:** parallel workers combine
+- **Gather / Gather Merge:** объединение результатов параллельных воркеров
 
-**Warning signs:**
-- `rows=1 (actual rows=1000)` — huge mis-estimate
-- `Sort Method: external merge Disk: 500MB` — work_mem too small
-- `Seq Scan` big table без filter → missing index
-- `Nested Loop` с large outer → bad; expected Hash Join
-- High `Rows Removed by Filter` — filter должен быть в index condition
+**Тревожные признаки:**
+- `rows=1 (actual rows=1000)` — грубый просчёт оценки
+- `Sort Method: external merge Disk: 500MB` — слишком маленький work_mem
+- `Seq Scan` большой таблицы без фильтра → отсутствует индекс
+- `Nested Loop` с большой внешней таблицей → плохо; ожидался Hash Join
+- Высокий `Rows Removed by Filter` — фильтр должен быть в index condition
 
 ## Q4. Seq Scan vs Index Scan vs Bitmap Scan?
 
 **Seq Scan (Sequential Scan):**
-- Read table page-by-page от start to end
-- **Fast для:** small table, reading ≥ ~30% rows
-- **Slow для:** large table, needle-in-haystack
-- Optimal для `COUNT(*)` без WHERE
+- Читает таблицу страница за страницей от начала до конца
+- **Быстро для:** маленькая таблица, выборка ≥ ~30% строк
+- **Медленно для:** большая таблица, поиск иголки в стоге сена
+- Оптимален для `COUNT(*)` без WHERE
 
 **Index Scan:**
-- Walk index → fetch rows from table (random I/O)
-- **Fast для:** selective queries (few rows)
-- **Slow для:** non-selective (many random page reads)
-- Returns rows in **index order**
+- Проходит по индексу → достаёт строки из таблицы (случайный I/O)
+- **Быстро для:** селективных запросов (мало строк)
+- **Медленно для:** неселективных (много случайных чтений страниц)
+- Возвращает строки **в порядке индекса**
 
 **Index Only Scan:**
-- All needed columns в index → no table visit
-- Visibility map checked (PostgreSQL MVCC)
-- Fastest
+- Все нужные колонки есть в индексе → обращения к таблице нет
+- Проверяется visibility map (MVCC в PostgreSQL)
+- Самый быстрый
 
 **Bitmap Index Scan + Bitmap Heap Scan:**
-- Step 1: scan index → bitmap of TIDs
-- Step 2: sort bitmap by page, read heap **sequentially**
-- **Fast для:** medium selectivity (10-30% rows)
-- Not ordered output
+- Шаг 1: сканирует индекс → bitmap из TID
+- Шаг 2: сортирует bitmap по страницам, читает heap **последовательно**
+- **Быстро для:** средней селективности (10-30% строк)
+- Результат не упорядочен
 
-**When planner chooses what:**
-- Selectivity via statistics
-- Random vs sequential I/O costs (`random_page_cost`, `seq_page_cost`)
-- Default: `random_page_cost=4` — assumption HDD; для SSD set `=1.1` (major perf improvement!)
+**Как планировщик выбирает:**
+- Селективность по статистике
+- Стоимость случайного и последовательного I/O (`random_page_cost`, `seq_page_cost`)
+- По умолчанию `random_page_cost=4` — расчёт на HDD; для SSD ставьте `=1.1` (большой прирост производительности!)
 
-**Example:**
+**Пример:**
 ```sql
 -- 1M rows, returning 100 rows → Index Scan
 EXPLAIN SELECT * FROM orders WHERE user_id = 42;
@@ -243,119 +243,119 @@ EXPLAIN SELECT * FROM orders WHERE amount > 10;
 
 ## Q5. (!) Когда index помогает, когда не помогает?
 
-**Index помогает:**
-- `WHERE col = value` (equality)
-- `WHERE col > X` (range) — B-tree ordered
-- `ORDER BY col` — avoid sort
-- `GROUP BY col` — clustering
+**Индекс помогает:**
+- `WHERE col = value` (равенство)
+- `WHERE col > X` (диапазон) — B-tree упорядочен
+- `ORDER BY col` — избегаем сортировки
+- `GROUP BY col` — кластеризация
 - `JOIN ON a.col = b.col`
 
-**Index НЕ помогает:**
+**Индекс НЕ помогает:**
 
-**1. Function on column:**
+**1. Функция над колонкой:**
 ```sql
 WHERE LOWER(email) = 'x@y.com'  -- normal index не используется!
 ```
-Fix: functional index: `CREATE INDEX ON t (LOWER(email));`
+Решение: функциональный индекс: `CREATE INDEX ON t (LOWER(email));`
 
-**2. Leading wildcard:**
+**2. Wildcard в начале:**
 ```sql
 WHERE name LIKE '%john%'  -- no index (B-tree prefix only)
 ```
-Fix: trigram index (`pg_trgm`) or full-text search
+Решение: триграммный индекс (`pg_trgm`) или full-text search
 
-**3. Type mismatch:**
+**3. Несовпадение типов:**
 ```sql
 -- col is VARCHAR, passing INT
 WHERE phone = 123456  -- implicit cast breaks index
 ```
 
-**4. Non-selective query:**
-- Returning > 30% rows → Seq Scan win
-- e.g., `WHERE active = true` когда 90% rows active — index useless
+**4. Неселективный запрос:**
+- Возвращает > 30% строк → выигрывает Seq Scan
+- например, `WHERE active = true`, когда 90% строк активны — индекс бесполезен
 
-**5. OR без indexes на обе cols:**
+**5. OR без индексов на обе колонки:**
 ```sql
 WHERE a = 1 OR b = 2  -- if only a indexed, partial
 ```
-Fix: index на оба OR UNION queries
+Решение: индекс на обе колонки ИЛИ запросы через UNION
 
-**6. NOT IN / != (in some cases):**
-- Planner может choose seq scan
+**6. NOT IN / != (в некоторых случаях):**
+- Планировщик может выбрать seq scan
 
-**7. Data distribution skew:**
+**7. Перекос распределения данных:**
 - 99% `status='ACTIVE'`, 1% `status='DELETED'`
-- Query `WHERE status='DELETED'` wants index
-- Query `WHERE status='ACTIVE'` wants seq scan
-- Solution: **partial index** для `WHERE status='DELETED'`
+- Запросу `WHERE status='DELETED'` нужен индекс
+- Запросу `WHERE status='ACTIVE'` нужен seq scan
+- Решение: **partial index** для `WHERE status='DELETED'`
 
-**Check index usage:**
+**Проверить использование индексов:**
 ```sql
 SELECT * FROM pg_stat_user_indexes WHERE idx_scan = 0;  -- unused indexes
 ```
 
 ## Q6. (!) Composite index column order?
 
-**Rule:** **most selective first** is myth — **real rule: query access pattern.**
+**Правило:** «самая селективная колонка первой» — миф; **реальное правило: паттерн доступа запросов.**
 
-**Left-prefix rule:**
-Index `(a, b, c)` can be used для:
+**Правило левого префикса:**
+Индекс `(a, b, c)` может использоваться для:
 - `WHERE a = ?`
 - `WHERE a = ? AND b = ?`
 - `WHERE a = ? AND b = ? AND c = ?`
-- NOT для `WHERE b = ?` (skips leading col!)
-- NOT для `WHERE a = ? AND c = ?` (uses только `a`)
+- НЕ для `WHERE b = ?` (пропускает ведущую колонку!)
+- НЕ для `WHERE a = ? AND c = ?` (использует только `a`)
 
-**Order by query pattern:**
-1. **Equality columns first** (leftmost)
-2. **Range last** (breaks prefix for subsequent)
-3. **Sort columns** after equality
+**Порядок по паттерну запроса:**
+1. **Сначала колонки равенства** (слева)
+2. **Диапазон в конце** (ломает префикс для следующих колонок)
+3. **Колонки сортировки** после равенства
 
-**Example:**
-Queries:
+**Пример:**
+Запросы:
 - `WHERE user_id = ? AND created_at > ?`
 - `WHERE user_id = ? ORDER BY created_at DESC`
 
-Index: `(user_id, created_at)` — both queries helped.
+Индекс: `(user_id, created_at)` — помогает обоим запросам.
 
-**Bad:** `(created_at, user_id)` — first query does range scan, second can't leverage sort.
+**Плохо:** `(created_at, user_id)` — первый запрос делает range scan, второй не может опереться на сортировку.
 
-**Multi-workload:**
-Если different queries touch different columns, может понадобиться multiple indexes. Но cost:
-- Write overhead (INSERT/UPDATE updates all indexes)
-- Disk space
-- Maintenance
+**Несколько нагрузок:**
+Если разные запросы затрагивают разные колонки, может понадобиться несколько индексов. Но это стоит:
+- Накладные расходы на запись (INSERT/UPDATE обновляют все индексы)
+- Место на диске
+- Сопровождение
 
-**Rule of thumb:** < 10 indexes per table; more = review patterns.
+**Эвристика:** < 10 индексов на таблицу; больше — пересмотрите паттерны.
 
-**Index-only scan bonus:**
-Include frequently selected cols:
+**Бонус index-only scan:**
+Включите часто выбираемые колонки:
 ```sql
 CREATE INDEX idx ON orders (user_id, created_at) INCLUDE (amount, status);
 ```
 
 ## Q7. Covering index (INCLUDE)?
 
-**Covering index** — contains all columns query needs (SELECT + WHERE), позволяя **Index Only Scan**.
+**Covering index** — содержит все колонки, нужные запросу (SELECT + WHERE), что позволяет сделать **Index Only Scan**.
 
-**Old way (pre-PG 11):**
+**Старый способ (до PG 11):**
 ```sql
 CREATE INDEX ON orders (user_id, amount, status);
 ```
-- All cols в B-tree key → larger index, affects ordering
+- Все колонки в ключе B-tree → индекс больше, влияет на упорядочивание
 
-**Modern way (PG 11+):**
+**Современный способ (PG 11+):**
 ```sql
 CREATE INDEX ON orders (user_id) INCLUDE (amount, status);
 ```
-- `user_id` в key (sorted, searchable)
-- `amount, status` в **leaf pages** (not sorted, just stored)
-- Smaller than full multi-col index
-- Index Only Scan still works
+- `user_id` в ключе (отсортирован, по нему ищут)
+- `amount, status` в **листовых страницах** (не отсортированы, просто хранятся)
+- Меньше, чем полный многоколоночный индекс
+- Index Only Scan по-прежнему работает
 
-**Benefit:** avoid heap visit = faster.
+**Выгода:** избегаем обращения к heap = быстрее.
 
-**Query:**
+**Запрос:**
 ```sql
 SELECT amount, status FROM orders WHERE user_id = 42;
 ```
@@ -366,40 +366,40 @@ Index Only Scan using idx on orders
   Heap Fetches: 0
 ```
 
-**Gotcha MVCC:**
-- Visibility map must show page all-visible (after VACUUM)
-- If recently updated → "Heap Fetches: N" → not pure index-only
+**Подвох MVCC:**
+- Visibility map должна показывать страницу как all-visible (после VACUUM)
+- Если строки недавно обновлялись → "Heap Fetches: N" → это не чистый index-only
 
-**Trade-off:**
-- Size growth
-- Write overhead
-- Best для hot read paths
+**Компромисс:**
+- Рост размера
+- Накладные расходы на запись
+- Лучше всего для горячих путей чтения
 
 ## Q8. Partial index?
 
-**Partial index** — index только subset rows (`WHERE` clause в CREATE INDEX).
+**Partial index** — индекс только по подмножеству строк (clause `WHERE` в CREATE INDEX).
 
 ```sql
 CREATE INDEX idx_pending_orders ON orders (created_at)
 WHERE status = 'PENDING';
 ```
 
-**Use cases:**
-- Skewed data (99% рows one value) → index только rare values
-- Soft delete: `WHERE deleted_at IS NULL` — index only active rows
-- Hot query pattern
+**Сценарии:**
+- Перекошенные данные (99% строк имеют одно значение) → индексируем только редкие значения
+- Soft delete: `WHERE deleted_at IS NULL` — индексируем только активные строки
+- Горячий паттерн запросов
 
-**Benefits:**
-- **Smaller** (subset of rows)
-- **Faster** writes (only matching rows update)
-- **Faster** reads (less data to traverse)
+**Выгоды:**
+- **Меньше** (подмножество строк)
+- **Быстрее** запись (обновляются только совпадающие строки)
+- **Быстрее** чтение (меньше данных для обхода)
 
-**Example savings:**
-- Table 100M rows, 99M completed, 1M pending
-- Full index: 100M entries
-- Partial (`WHERE status='PENDING'`): 1M entries — 100× smaller
+**Пример экономии:**
+- Таблица 100M строк, 99M завершённых, 1M в ожидании
+- Полный индекс: 100M записей
+- Частичный (`WHERE status='PENDING'`): 1M записей — в 100× меньше
 
-**Query must match predicate exactly:**
+**Запрос должен точно совпадать с предикатом:**
 ```sql
 -- Works (matches WHERE)
 SELECT ... FROM orders WHERE status='PENDING' AND created_at > ...;
@@ -408,23 +408,23 @@ SELECT ... FROM orders WHERE status='PENDING' AND created_at > ...;
 SELECT ... FROM orders WHERE created_at > ...;
 ```
 
-**Planner проверяет:** query predicate implied by index predicate → use.
+**Планировщик проверяет:** предикат запроса вытекает из предиката индекса → индекс используется.
 
-**Common patterns:**
+**Частые паттерны:**
 - `WHERE enabled = true`
 - `WHERE deleted_at IS NULL`
-- `WHERE region = 'US'` for region-specific queries
+- `WHERE region = 'US'` для запросов по конкретному региону
 
 ## Q9. Index bloat и REINDEX?
 
-**Index bloat** — pages частично заполнены (UPDATE/DELETE оставляют dead tuples). Index grows beyond data size → slower scans, more I/O.
+**Index bloat** — страницы заполнены частично (UPDATE/DELETE оставляют dead tuples). Индекс разрастается сверх объёма данных → сканирование медленнее, больше I/O.
 
 **Причины:**
-- UPDATE = MVCC insert + mark old dead
-- DELETE mark dead; VACUUM removes eventually
-- Long transactions prevent cleanup
+- UPDATE = MVCC-вставка + пометка старой версии мёртвой
+- DELETE помечает строку мёртвой; VACUUM удаляет её со временем
+- Длинные транзакции мешают очистке
 
-**Detection:**
+**Как обнаружить:**
 ```sql
 SELECT schemaname, tablename, indexname,
        pg_size_pretty(pg_relation_size(indexrelid)) AS size
@@ -432,15 +432,15 @@ FROM pg_stat_user_indexes
 ORDER BY pg_relation_size(indexrelid) DESC;
 ```
 
-Или extension `pgstattuple`:
+Или расширение `pgstattuple`:
 ```sql
 SELECT * FROM pgstatindex('idx_name');
 -- leaf_fragmentation, avg_leaf_density
 ```
 
-Low `avg_leaf_density` (< 50%) → bloat.
+Низкий `avg_leaf_density` (< 50%) → bloat.
 
-**Fix:**
+**Исправление:**
 
 **REINDEX:**
 ```sql
@@ -448,46 +448,46 @@ REINDEX INDEX idx_name;          -- locks writes (PG <12)
 REINDEX INDEX CONCURRENTLY ...;  -- non-blocking (PG 12+)
 ```
 
-**CREATE + DROP (pre-12):**
+**CREATE + DROP (до 12):**
 ```sql
 CREATE INDEX CONCURRENTLY idx_new ON t (...);
 DROP INDEX idx_old;
 ALTER INDEX idx_new RENAME TO idx_old;
 ```
 
-**pg_repack / pg_squeeze:** online table + index rebuild без long lock.
+**pg_repack / pg_squeeze:** онлайн-перестроение таблицы и индексов без долгого lock.
 
-**Prevention:**
-- Regular autovacuum (correctly configured)
-- Avoid very long transactions (xmin horizon blocks cleanup)
-- **HOT updates** (no indexed col changed) don't grow indexes
+**Профилактика:**
+- Регулярный autovacuum (правильно настроенный)
+- Избегайте очень длинных транзакций (xmin horizon блокирует очистку)
+- **HOT-обновления** (индексируемая колонка не менялась) не раздувают индексы
 
 ## Q10. (!) N+1 problem — как обнаружить и исправить?
 
-**N+1:** 1 query для list + N queries (one per item) для related entity.
+**N+1:** 1 запрос на список + N запросов (по одному на элемент) на связанную сущность.
 
-**Example (JPA/Hibernate):**
+**Пример (JPA/Hibernate):**
 ```java
 List<Order> orders = orderRepo.findAll();  // 1 query
 for (Order o : orders) {
     System.out.println(o.getUser().getName());  // N queries lazy load!
 }
 ```
-→ 1 + 100 = 101 DB roundtrips for 100 orders.
+→ 1 + 100 = 101 обращений к БД для 100 заказов.
 
-**Detection:**
-- **APM** (DataDog tracing) — spans показывают bulk similar queries
-- **Hibernate statistics:** `hibernate.generate_statistics=true`; log `queryExecutionCount`
-- **p6spy** — log all SQL
-- **JPA Buddy / QuickPerf** — tests assert no N+1
+**Как обнаружить:**
+- **APM** (трассировка DataDog) — спаны показывают пачку однотипных запросов
+- **Статистика Hibernate:** `hibernate.generate_statistics=true`; логируем `queryExecutionCount`
+- **p6spy** — логирует весь SQL
+- **JPA Buddy / QuickPerf** — тесты утверждают отсутствие N+1
 
-**Fixes:**
+**Исправления:**
 
 **JOIN FETCH:**
 ```java
 @Query("SELECT o FROM Order o JOIN FETCH o.user WHERE ...")
 ```
-One query with JOIN → 1 query vs 101.
+Один запрос с JOIN → 1 запрос вместо 101.
 
 **EntityGraph:**
 ```java
@@ -499,24 +499,24 @@ List<Order> findAll();
 ```properties
 spring.jpa.properties.hibernate.default_batch_fetch_size=20
 ```
-Groups N queries into IN (...) batches of 20.
+Группирует N запросов в пачки IN (...) по 20.
 
-**DTO projection:**
+**DTO-проекция:**
 ```java
 @Query("SELECT new com.OrderDto(o.id, u.name) FROM Order o JOIN o.user u")
 ```
-Direct flat query, no entity graph.
+Прямой плоский запрос, без графа сущностей.
 
-**Which choice:**
-- Small collection: JOIN FETCH
-- Many-to-many pagination: batch fetch (JOIN FETCH duplicates)
-- Read-only: DTO projection (fastest)
+**Что выбрать:**
+- Маленькая коллекция: JOIN FETCH
+- Пагинация many-to-many: batch fetch (JOIN FETCH даёт дубликаты)
+- Только чтение: DTO-проекция (самое быстрое)
 
-**Not only Hibernate:** any ORM + loops has this.
+**Не только Hibernate:** так ведёт себя любой ORM в связке с циклами.
 
 ## Q11. JOIN FETCH vs subselect vs batch size?
 
-**Сценарий:** load `Order` + `OrderItems`.
+**Сценарий:** загрузить `Order` + `OrderItems`.
 
 **JOIN FETCH:**
 ```sql
@@ -524,23 +524,23 @@ SELECT o.*, i.*
 FROM orders o
 LEFT JOIN order_items i ON i.order_id = o.id
 ```
-- **1 query**
-- Cartesian explosion при multiple collections
-- **Pagination broken** (Hibernate loads all, paginates in memory — warn)
+- **1 запрос**
+- Декартов взрыв при нескольких коллекциях
+- **Пагинация ломается** (Hibernate грузит всё и пагинирует в памяти — выдаёт предупреждение)
 
 **Batch (subselect) fetching:**
 ```properties
 hibernate.batch_fetch_style=dynamic
 hibernate.default_batch_fetch_size=16
 ```
-Hibernate issues:
+Hibernate выполняет:
 ```sql
 SELECT * FROM orders WHERE id IN (1, 2, ..., 16);
 SELECT * FROM order_items WHERE order_id IN (1, 2, ..., 16);
 ```
-- 2 queries для 16 orders
-- No cartesian
-- Works with pagination
+- 2 запроса на 16 заказов
+- Без декартова произведения
+- Работает с пагинацией
 
 **Subselect fetch:**
 ```java
@@ -548,68 +548,68 @@ SELECT * FROM order_items WHERE order_id IN (1, 2, ..., 16);
 @Fetch(FetchMode.SUBSELECT)
 Collection<Item> items;
 ```
-Runs original query как subquery:
+Выполняет исходный запрос как подзапрос:
 ```sql
 SELECT * FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE ...)
 ```
 
-**Compare:**
+**Сравнение:**
 
-| Strategy | Queries | Cartesian | Pagination |
+| Стратегия | Запросов | Декартово произведение | Пагинация |
 |----------|---------|-----------|------------|
-| JOIN FETCH | 1 | Yes (bad for multi-collection) | Broken for collections |
-| Batch | ~N/batch_size | No | OK |
-| Subselect | 2 | No | OK but replays filter |
+| JOIN FETCH | 1 | Да (плохо для нескольких коллекций) | Ломается для коллекций |
+| Batch | ~N/batch_size | Нет | OK |
+| Subselect | 2 | Нет | OK, но переигрывает фильтр |
 
-**Rule of thumb:**
-- Single collection, few parents: JOIN FETCH
-- Multiple collections: batch_fetch_size=20 default
-- Very large: DTO projection
+**Эвристика:**
+- Одна коллекция, мало родителей: JOIN FETCH
+- Несколько коллекций: batch_fetch_size=20 по умолчанию
+- Очень большой объём: DTO-проекция
 
 ## Q12. (!) Connection pooling — зачем?
 
-**Connection open** = expensive:
+**Открытие соединения** — дорого:
 - TCP handshake
-- TLS handshake (~100+ ms на WAN)
-- DB authentication
-- Backend process fork (PostgreSQL — `connection_pid`)
+- TLS handshake (~100+ мс по WAN)
+- Аутентификация в БД
+- Форк backend-процесса (в PostgreSQL — `connection_pid`)
 
-**Без pool:** каждый request opens + closes — **serial bottleneck**, and DB limits total connections.
+**Без пула:** каждый запрос открывает + закрывает соединение — **последовательное узкое место**, плюс БД ограничивает общее число соединений.
 
-**Pool:**
-- Maintain N open connections
-- Request borrows; returns when done
-- Queue если все busy
+**Пул:**
+- Держит N открытых соединений
+- Запрос берёт соединение; возвращает по завершении
+- Ставит в очередь, если все заняты
 
-**Benefits:**
-- Eliminate connection overhead (ms saved)
-- Limit concurrent DB connections (backend stability)
-- Faster (connect latency 0)
-- Resource control
+**Выгоды:**
+- Убираем накладные расходы на соединение (экономия мс)
+- Ограничиваем число одновременных соединений к БД (стабильность бэкенда)
+- Быстрее (latency подключения = 0)
+- Контроль ресурсов
 
-**Типичные pools:**
-- **HikariCP** (Java) — fastest, default Spring Boot
-- **pgbouncer** (standalone) — in front of PostgreSQL
-- **RDS Proxy** (AWS) — managed
+**Типичные пулы:**
+- **HikariCP** (Java) — самый быстрый, дефолт в Spring Boot
+- **pgbouncer** (отдельный) — перед PostgreSQL
+- **RDS Proxy** (AWS) — управляемый
 - **Node pg-pool**, **Python psycopg2 pool**
 
-**Architecture decision:**
-- **App-side pool:** easy, in-process
-- **External pool (pgbouncer, RDS Proxy):** между app и DB; можно pool across multiple apps/instances
-- **Both:** app pool → external pool → DB (common for serverless)
+**Архитектурное решение:**
+- **Пул на стороне приложения:** просто, in-process
+- **Внешний пул (pgbouncer, RDS Proxy):** между приложением и БД; можно делить пул между несколькими приложениями/инстансами
+- **Оба:** пул приложения → внешний пул → БД (типично для serverless)
 
-**Size:**
-- Rule: `pool = cores × 2 + spindles` (old rule)
-- Modern: benchmark; too many = context switching hurts
-- Typical backend: 10-30 per instance
+**Размер:**
+- Правило: `pool = cores × 2 + spindles` (старое правило)
+- Современный подход: бенчмарк; слишком много = вредит переключение контекста
+- Типичный бэкенд: 10-30 на инстанс
 
-**Warning:** serverless (Lambda) without pooling = DB connection explosion; always use RDS Proxy.
+**Внимание:** serverless (Lambda) без пулинга = взрыв числа соединений к БД; всегда используйте RDS Proxy.
 
 ## Q13. (!) HikariCP settings?
 
-**HikariCP** — default в Spring Boot. Minimal config, fast.
+**HikariCP** — дефолт в Spring Boot. Минимум конфига, быстрый.
 
-**Key properties (`spring.datasource.hikari.*`):**
+**Ключевые свойства (`spring.datasource.hikari.*`):**
 
 ```yaml
 spring:
@@ -624,22 +624,22 @@ spring:
       leak-detection-threshold: 60000  # 60s — warn if not returned
 ```
 
-**Sizing guidelines:**
-- **maximum-pool-size:** start с 10, tune up based on load + DB max_connections
-- **minimum-idle:** usually = max (keep warm) for consistent latency
-- **Formula:** total connections across all instances ≤ DB `max_connections × 0.8`
+**Рекомендации по размеру:**
+- **maximum-pool-size:** начните с 10, подкручивайте по нагрузке + DB max_connections
+- **minimum-idle:** обычно = max (держать прогретым) для стабильного latency
+- **Формула:** суммарное число соединений по всем инстансам ≤ DB `max_connections × 0.8`
 
-**Common issue:**
-- App 10 instances × 20 pool = 200 connections
-- DB max = 100 → crashes
+**Частая проблема:**
+- Приложение из 10 инстансов × пул 20 = 200 соединений
+- DB max = 100 → падение
 
-**Connection timeout:** app doesn't hang waiting forever — fails fast, returns 503.
+**Connection timeout:** приложение не виснет в бесконечном ожидании — быстро падает и возвращает 503.
 
-**max-lifetime:** важно! Prevents stale connections (firewalls kill idle, DB restart).
+**max-lifetime:** важно! Предотвращает устаревшие соединения (фаерволы убивают idle, рестарт БД).
 
-**leak-detection-threshold:** logs stack trace if connection held > threshold → finds missing `try-with-resources`.
+**leak-detection-threshold:** логирует stack trace, если соединение держится дольше порога → находит пропущенный `try-with-resources`.
 
-**Metrics:** expose via Micrometer:
+**Метрики:** экспонируем через Micrometer:
 ```
 hikaricp.connections.active
 hikaricp.connections.idle
@@ -647,39 +647,39 @@ hikaricp.connections.pending
 hikaricp.connections.acquire  # time histogram
 ```
 
-**Alerts:** `pending > 0` sustained → pool undersized.
+**Алерты:** устойчивое `pending > 0` → пул недостаточного размера.
 
 ## Q14. PgBouncer transaction vs session pooling?
 
-**PgBouncer** — lightweight PostgreSQL connection pooler (proxy).
+**PgBouncer** — лёгкий пулер соединений для PostgreSQL (прокси).
 
-**Modes:**
+**Режимы:**
 
-**Session pooling (default):**
-- Client gets DB connection for **entire session** (connect → disconnect)
-- Like no pooling (except connection reuse after disconnect)
-- Safe for all features (prepared statements, temp tables, listen/notify)
-- Low efficiency gain
+**Session pooling (по умолчанию):**
+- Клиент получает соединение с БД на **всю сессию** (connect → disconnect)
+- Почти как без пулинга (кроме переиспользования соединения после disconnect)
+- Безопасен для всех возможностей (prepared statements, temp tables, listen/notify)
+- Малый прирост эффективности
 
 **Transaction pooling:**
-- Connection issued **per transaction**, returned on COMMIT/ROLLBACK
-- **Huge efficiency:** 1000 clients can share 20 DB connections
-- **Restrictions:**
-  - No prepared statements (session-scoped) — unless PG 14+ и PgBouncer 1.22+ protocol-level support
-  - No `SET` (session-scoped)
-  - No temp tables
-  - No `LISTEN/NOTIFY`
-  - Cursor limitations
+- Соединение выдаётся **на транзакцию**, возвращается на COMMIT/ROLLBACK
+- **Огромная эффективность:** 1000 клиентов могут делить 20 соединений к БД
+- **Ограничения:**
+  - Нет prepared statements (привязаны к сессии) — кроме PG 14+ и PgBouncer 1.22+ с поддержкой на уровне протокола
+  - Нет `SET` (привязан к сессии)
+  - Нет temp tables
+  - Нет `LISTEN/NOTIFY`
+  - Ограничения по курсорам
 
 **Statement pooling:**
-- Per statement (rare, extreme restrictions)
+- На каждый statement (редко, крайне жёсткие ограничения)
 
 **Выбор:**
-- **Session:** legacy apps, features used
-- **Transaction:** modern apps, high throughput, stateless handlers
-- **ORMs:** Hibernate by default uses prepared statements — disable или use PG14+
+- **Session:** легаси-приложения, где используются эти возможности
+- **Transaction:** современные приложения, высокий throughput, stateless-обработчики
+- **ORM:** Hibernate по умолчанию использует prepared statements — отключите их или используйте PG14+
 
-**Spring Boot + PgBouncer transaction mode:**
+**Spring Boot + PgBouncer в режиме transaction:**
 ```yaml
 spring:
   datasource:
@@ -697,42 +697,42 @@ spring:
 
 ## Q15. (!) Partitioning — когда применять?
 
-**Partitioning** — split large table на smaller physical chunks (partitions) by criterion (range, list, hash).
+**Partitioning** — разбиение большой таблицы на меньшие физические части (партиции) по критерию (range, list, hash).
 
 **Когда:**
 
-**1. Very large tables (> 100M rows / > 100GB):**
-- Queries scanning recent data → partition on date, query prunes old partitions
-- Index fit в memory (smaller per partition)
+**1. Очень большие таблицы (> 100M строк / > 100GB):**
+- Запросы сканируют свежие данные → партицируем по дате, запрос отсекает старые партиции
+- Индекс помещается в память (меньше на партицию)
 
-**2. Time-series data:**
-- Logs, events, metrics — range partition by month/week
-- Drop old partition = fast (vs DELETE millions rows)
+**2. Временные ряды:**
+- Логи, события, метрики — range-партицирование по месяцу/неделе
+- Дроп старой партиции = быстро (против DELETE миллионов строк)
 
-**3. Delete-heavy workload:**
-- Dropping partition = instant; DELETE + VACUUM = slow
+**3. Нагрузка с большим числом удалений:**
+- Дроп партиции = мгновенно; DELETE + VACUUM = медленно
 
-**4. Tenant isolation:**
-- Hash/list partition by tenant_id
+**4. Изоляция арендаторов:**
+- Hash/list-партицирование по tenant_id
 
 **Когда НЕ применять:**
-- Small tables (< 10M rows)
-- Queries don't benefit (no pruning)
-- Add complexity без proportional benefit
-- Foreign keys across partitions complicated
+- Маленькие таблицы (< 10M строк)
+- Запросы не выигрывают (нет отсечения)
+- Добавляет сложность без соразмерной выгоды
+- Внешние ключи между партициями сложны
 
-**Benefits:**
-- Partition pruning (scan only relevant partitions)
-- Parallel operations на partitions
-- Maintenance per-partition (VACUUM, REINDEX)
-- DROP partition for retention
+**Выгоды:**
+- Отсечение партиций (сканируем только релевантные)
+- Параллельные операции по партициям
+- Обслуживание по партициям (VACUUM, REINDEX)
+- DROP партиции для retention
 
-**Costs:**
-- Complexity (migrations, constraints)
-- Cross-partition queries slower
-- Partition key must be в all unique indexes (or workaround)
+**Издержки:**
+- Сложность (миграции, ограничения)
+- Кросс-партиционные запросы медленнее
+- Ключ партиционирования должен быть во всех уникальных индексах (или обходной путь)
 
-**PostgreSQL partitioning (10+):**
+**Партицирование в PostgreSQL (10+):**
 ```sql
 CREATE TABLE logs (ts TIMESTAMP, msg TEXT)
 PARTITION BY RANGE (ts);
@@ -741,61 +741,61 @@ CREATE TABLE logs_2024_01 PARTITION OF logs
   FOR VALUES FROM ('2024-01-01') TO ('2024-02-01');
 ```
 
-**Automation:** `pg_partman` extension для auto-creation.
+**Автоматизация:** расширение `pg_partman` для авто-создания партиций.
 
 ## Q16. Range / List / Hash partitioning?
 
 **Range:**
-- Values within range go to partition
-- Best для: timestamps, sequential IDs
+- Значения в пределах диапазона попадают в партицию
+- Лучше для: меток времени, последовательных ID
 ```sql
 PARTITION BY RANGE (created_at);
 -- partitions: 2024_01, 2024_02, ...
 ```
 
 **List:**
-- Discrete values → partition
-- Best для: region, category, status
+- Дискретные значения → партиция
+- Лучше для: региона, категории, статуса
 ```sql
 PARTITION BY LIST (country);
 -- partitions: us, eu, apac, other
 ```
 
 **Hash:**
-- `hash(key) % N` → partition
-- Best для: even load distribution (no natural key)
-- Can't do range queries efficiently
+- `hash(key) % N` → партиция
+- Лучше для: равномерного распределения нагрузки (нет естественного ключа)
+- Не умеет эффективно выполнять range-запросы
 ```sql
 PARTITION BY HASH (user_id);
 -- 16 partitions
 ```
 
 **Composite:**
-- Range → List sub-partitions: by date, then by region
+- Range → List суб-партиции: сначала по дате, затем по региону
 
-**Comparison:**
+**Сравнение:**
 
-| Type | Pruning | Use Case | Growth |
+| Тип | Отсечение | Сценарий | Рост |
 |------|---------|----------|--------|
-| Range | Range queries | Time-series | Add new partition per period |
-| List | Equality | Region/tenant | Add per new value |
-| Hash | Equality on key | Even distribution | Fixed count, plan ahead |
+| Range | Range-запросы | Временные ряды | Добавляем новую партицию на период |
+| List | Равенство | Регион/арендатор | Добавляем на каждое новое значение |
+| Hash | Равенство по ключу | Равномерное распределение | Фиксированное число, планируйте заранее |
 
-**Pruning:** planner excludes partitions при query WHERE matches partition key.
+**Отсечение:** планировщик исключает партиции, когда WHERE запроса совпадает с ключом партиционирования.
 
-**Hash: can't re-partition easily** — choose count carefully (power of 2 for easy doubling later).
+**Hash: нелегко перепартицировать** — выбирайте число партиций аккуратно (степень 2 для удобного удвоения в будущем).
 
 ## Q17. (!) ANALYZE и статистика оптимизатора?
 
-**Statistics** — summary data о table/column distribution used by planner для estimates:
-- Number of rows
-- Distinct values per column
-- Most common values + frequencies
-- Histogram of value distribution
-- Null fraction
-- Average width
+**Статистика** — сводные данные о распределении таблицы/колонок, которые планировщик использует для оценок:
+- Число строк
+- Число уникальных значений на колонку
+- Наиболее частые значения + их частоты
+- Гистограмма распределения значений
+- Доля NULL
+- Средняя ширина
 
-**Хранилище:** `pg_stats` view.
+**Хранилище:** view `pg_stats`.
 
 **ANALYZE:**
 ```sql
@@ -803,116 +803,116 @@ ANALYZE orders;        -- update stats
 ANALYZE;              -- all tables
 ```
 
-- Samples rows (default 30000 * `default_statistics_target`)
-- Updates `pg_statistic`
+- Сэмплирует строки (по умолчанию 30000 * `default_statistics_target`)
+- Обновляет `pg_statistic`
 
 **Auto-analyze (autovacuum):**
-- Triggered when > `autovacuum_analyze_scale_factor * rows` changed (default 10%)
+- Срабатывает, когда изменилось > `autovacuum_analyze_scale_factor * rows` (по умолчанию 10%)
 
-**When stats stale:**
-- Bulk INSERT/UPDATE
-- Data distribution shifts
-- New week/month (time-series)
+**Когда статистика устаревает:**
+- Массовый INSERT/UPDATE
+- Сдвиги распределения данных
+- Новая неделя/месяц (временные ряды)
 
-**Detect stale stats:**
-- `EXPLAIN ANALYZE` shows `rows=X` vs `actual rows=Y` huge mismatch
+**Как обнаружить устаревшую статистику:**
+- `EXPLAIN ANALYZE` показывает грубое расхождение `rows=X` против `actual rows=Y`
 
 **default_statistics_target:**
-- 100 default (OK most)
-- Increase to 1000 для column with complex distribution
+- 100 по умолчанию (подходит в большинстве случаев)
+- Поднимите до 1000 для колонки со сложным распределением
 - `ALTER TABLE t ALTER COLUMN c SET STATISTICS 1000;`
 
-**Extended statistics (PG 10+):**
+**Расширенная статистика (PG 10+):**
 ```sql
 CREATE STATISTICS s_name (dependencies, ndistinct)
   ON col_a, col_b FROM t;
 ANALYZE t;
 ```
-Helps planner for **correlated columns** (city + zip).
+Помогает планировщику с **коррелированными колонками** (city + zip).
 
-**Production issue:** после major data change (migration, restore) → `ANALYZE` immediately; planning time drops, queries faster.
+**Прод-кейс:** после крупного изменения данных (миграция, восстановление) → сразу выполните `ANALYZE`; planning time снижается, запросы быстрее.
 
 ## Q18. VACUUM, autovacuum, bloat?
 
-**VACUUM:** reclaim dead tuples from UPDATE/DELETE (MVCC).
+**VACUUM:** освобождает dead tuples после UPDATE/DELETE (MVCC).
 
-**Zachyy:**
-- UPDATE = mark old dead + insert new
-- Dead tuples waste space
-- Prevent transaction ID wraparound (critical!)
+**Зачем:**
+- UPDATE = пометить старую версию мёртвой + вставить новую
+- Dead tuples занимают место впустую
+- Предотвращает transaction ID wraparound (критично!)
 
-**Types:**
+**Типы:**
 
-**VACUUM (standard):**
-- Marks dead space for reuse
-- Doesn't release to OS (table size stays)
-- Non-blocking (unless VACUUM FULL)
+**VACUUM (стандартный):**
+- Помечает мёртвое место для повторного использования
+- Не отдаёт место ОС (размер таблицы остаётся)
+- Не блокирует (кроме VACUUM FULL)
 
 **VACUUM FULL:**
-- Rewrites entire table (rebuilds)
-- Releases space to OS
-- **Blocks writes** — emergency only
-- Use `pg_repack` instead (online)
+- Переписывает всю таблицу (перестраивает)
+- Отдаёт место ОС
+- **Блокирует запись** — только для экстренных случаев
+- Вместо него используйте `pg_repack` (онлайн)
 
 **Autovacuum:**
-- Background worker, auto-triggered
-- Config: `autovacuum_vacuum_scale_factor` (default 20%)
-- Aggressive settings for high-write tables:
+- Фоновый воркер, запускается автоматически
+- Конфиг: `autovacuum_vacuum_scale_factor` (по умолчанию 20%)
+- Агрессивные настройки для таблиц с большим числом записей:
 ```sql
 ALTER TABLE t SET (autovacuum_vacuum_scale_factor = 0.05);
 ```
 
 **Bloat:**
-- Dead tuples not vacuumed fast enough
-- Or long-running transaction prevents cleanup (`xmin horizon`)
-- Detect: `pgstattuple`, `pg_stat_user_tables`
+- Dead tuples вычищаются недостаточно быстро
+- Или долгая транзакция мешает очистке (`xmin horizon`)
+- Обнаружить: `pgstattuple`, `pg_stat_user_tables`
 
-**Long transactions = bloat enemy:**
-- Running tx prevents VACUUM of newer deleted rows
-- Check: `SELECT * FROM pg_stat_activity WHERE state = 'idle in transaction';`
+**Длинные транзакции = враг bloat:**
+- Работающая транзакция мешает VACUUM удалять более новые удалённые строки
+- Проверка: `SELECT * FROM pg_stat_activity WHERE state = 'idle in transaction';`
 
 **TXID wraparound:**
-- PostgreSQL tx IDs are 32-bit
-- Every row has `xmin`/`xmax`
-- Wraparound = data corruption!
-- VACUUM "freezes" old rows, prevents
-- Ignore = **DB shuts down** at 2B tx
+- ID транзакций в PostgreSQL — 32-битные
+- У каждой строки есть `xmin`/`xmax`
+- Wraparound = повреждение данных!
+- VACUUM «замораживает» старые строки и предотвращает это
+- Игнорировать = **БД останавливается** на 2 млрд транзакций
 
-**Monitoring:**
+**Мониторинг:**
 - `pg_stat_user_tables.n_dead_tup`
-- `age(relfrozenxid)` per table — warn > 1B
+- `age(relfrozenxid)` по таблице — предупреждение при > 1 млрд
 
-**Tune:** `autovacuum_max_workers=6`, `autovacuum_naptime=10s` for busy DBs.
+**Тюнинг:** `autovacuum_max_workers=6`, `autovacuum_naptime=10s` для нагруженных БД.
 
 ## Q19. (!) shared_buffers, work_mem, effective_cache_size?
 
-**shared_buffers:** PostgreSQL's block cache (shared memory).
-- Default: 128MB (way too small!)
-- Recommend: **25% of RAM** (up to 8-16GB — diminishing returns)
-- Large values benefit OLAP; OLTP capped by OS cache overlap
+**shared_buffers:** блочный кэш PostgreSQL (разделяемая память).
+- По умолчанию: 128MB (намного меньше нужного!)
+- Рекомендация: **25% RAM** (до 8-16GB — дальше отдача падает)
+- Большие значения выгодны OLAP; для OLTP упирается в пересечение с кэшем ОС
 
-**work_mem:** per-operation memory (sort, hash).
-- Default: 4MB
-- **Per operation, per connection** — careful!
-- 10 connections × 3 operations × work_mem = 30× memory
-- Recommend: 16-64MB typical; higher for analytical
-- Can set per-query: `SET LOCAL work_mem = '256MB';`
+**work_mem:** память на операцию (sort, hash).
+- По умолчанию: 4MB
+- **На операцию, на соединение** — осторожно!
+- 10 соединений × 3 операции × work_mem = 30× памяти
+- Рекомендация: типично 16-64MB; больше для аналитики
+- Можно задать на запрос: `SET LOCAL work_mem = '256MB';`
 
-**maintenance_work_mem:** CREATE INDEX, VACUUM.
-- Default: 64MB
-- Increase to 1GB for fast index builds
-- Per session, but maintenance sessions rare
+**maintenance_work_mem:** для CREATE INDEX, VACUUM.
+- По умолчанию: 64MB
+- Поднимите до 1GB для быстрого построения индексов
+- На сессию, но maintenance-сессии редки
 
-**effective_cache_size:** hint to planner about total available cache (OS + shared_buffers).
-- Default: 4GB
-- Recommend: **50-75% of RAM**
-- Doesn't allocate, just influences planner (prefer index scans when effective_cache_size high)
+**effective_cache_size:** подсказка планировщику об общем доступном кэше (ОС + shared_buffers).
+- По умолчанию: 4GB
+- Рекомендация: **50-75% RAM**
+- Ничего не выделяет, только влияет на планировщик (он предпочитает index scan при высоком effective_cache_size)
 
-**wal_buffers:** buffer for WAL writes.
-- Default: auto (min 1/32 shared_buffers, max 16MB)
-- Usually fine
+**wal_buffers:** буфер для записи WAL.
+- По умолчанию: auto (минимум 1/32 shared_buffers, максимум 16MB)
+- Обычно подходит как есть
 
-**example (32GB RAM server):**
+**пример (сервер с 32GB RAM):**
 ```
 shared_buffers = 8GB
 effective_cache_size = 24GB
@@ -920,59 +920,59 @@ work_mem = 32MB
 maintenance_work_mem = 1GB
 ```
 
-**Tool:** `pgtune` — config calculator by workload type.
+**Инструмент:** `pgtune` — калькулятор конфига по типу нагрузки.
 
 ## Q20. WAL и checkpoint tuning?
 
-**WAL (Write-Ahead Log):** all changes logged first → can recover.
+**WAL (Write-Ahead Log):** все изменения сначала логируются → можно восстановиться.
 
-**Checkpoint:** flush dirty buffers to data files; WAL older than checkpoint can be recycled.
+**Checkpoint:** сброс грязных буферов в файлы данных; WAL старше checkpoint можно переиспользовать.
 
-**Key config:**
+**Ключевой конфиг:**
 
-**wal_level:** `replica` (default) / `logical` (for logical replication).
+**wal_level:** `replica` (по умолчанию) / `logical` (для логической репликации).
 
-**max_wal_size:** target WAL between checkpoints. Default 1GB.
-- Larger = fewer checkpoints = better write throughput, but longer recovery
-- Busy DB: 8-16GB
+**max_wal_size:** целевой объём WAL между checkpoint. По умолчанию 1GB.
+- Больше = меньше checkpoint = выше throughput записи, но дольше восстановление
+- Нагруженная БД: 8-16GB
 
-**checkpoint_timeout:** max time between checkpoints. Default 5min.
-- Larger = better throughput, longer recovery
-- 15-30 min для write-heavy
+**checkpoint_timeout:** максимум времени между checkpoint. По умолчанию 5 мин.
+- Больше = лучше throughput, дольше восстановление
+- 15-30 мин для нагрузки с большим числом записей
 
-**checkpoint_completion_target:** spread checkpoint I/O over this fraction of interval. Default 0.9.
-- Higher = smoother I/O; rarely need to change
+**checkpoint_completion_target:** размазывает I/O checkpoint по этой доле интервала. По умолчанию 0.9.
+- Выше = более плавный I/O; менять нужно редко
 
-**min_wal_size:** keep at least this much recycled. Default 80MB.
+**min_wal_size:** держать переработанным как минимум столько. По умолчанию 80MB.
 
-**Sync commit:**
+**Синхронный commit:**
 
-**synchronous_commit = on (default):** wait for WAL fsync before ACK. Durable.
-**= off:** ACK before fsync — possible to lose few ms on crash, but faster.
-**= remote_apply / remote_write:** for replicas.
+**synchronous_commit = on (по умолчанию):** ждать fsync WAL перед ACK. Долговечно.
+**= off:** ACK до fsync — при падении можно потерять несколько мс, но быстрее.
+**= remote_apply / remote_write:** для реплик.
 
-**For batch loads:** set `synchronous_commit = off` in session → faster, risk acceptable для bulk import.
+**Для пакетных загрузок:** поставьте `synchronous_commit = off` в сессии → быстрее, риск приемлем для bulk-импорта.
 
-**Replication:**
-- `wal_keep_size` (PG 13+): keep WAL for replicas
-- `archive_mode + archive_command`: for PITR
-- Replication slots: guarantee WAL kept для subscriber
+**Репликация:**
+- `wal_keep_size` (PG 13+): хранить WAL для реплик
+- `archive_mode + archive_command`: для PITR
+- Слоты репликации: гарантируют, что WAL сохранится для подписчика
 
-**Monitor:**
+**Мониторинг:**
 - `pg_stat_bgwriter`: checkpoints, buffers
-- High `checkpoints_req` vs `checkpoints_timed` → max_wal_size too small
+- Высокий `checkpoints_req` против `checkpoints_timed` → max_wal_size слишком мал
 
 ## Q21. (!) LIMIT + OFFSET проблема pagination?
 
-**Problem:**
+**Проблема:**
 ```sql
 SELECT * FROM orders ORDER BY created_at DESC LIMIT 20 OFFSET 10000;
 ```
-- Must scan 10020 rows, throw 10000, return 20
-- **Each page further = slower**
-- Page 500 (offset 10000) → 100x slower than page 1
+- Приходится сканировать 10020 строк, отбросить 10000, вернуть 20
+- **Чем дальше страница, тем медленнее**
+- Страница 500 (offset 10000) → в 100 раз медленнее страницы 1
 
-**Solution: keyset pagination (seek method):**
+**Решение: keyset-пагинация (метод seek):**
 
 ```sql
 -- Page 1
@@ -988,27 +988,27 @@ ORDER BY created_at DESC, id DESC
 LIMIT 20;
 ```
 
-**Benefits:**
-- Constant time **each page** (index seek)
-- No "row moved" inconsistency (OFFSET skips data if rows added)
+**Выгоды:**
+- Константное время **на каждую страницу** (index seek)
+- Нет несогласованности «строка сдвинулась» (OFFSET пропускает данные при добавлении строк)
 
-**Index needed:** `(created_at DESC, id DESC)`.
+**Нужен индекс:** `(created_at DESC, id DESC)`.
 
-**Caveat:**
-- Can't jump to arbitrary page (only next/prev)
-- UX often OK — infinite scroll, "load more"
+**Оговорка:**
+- Нельзя прыгнуть на произвольную страницу (только next/prev)
+- Для UX часто ок — бесконечная прокрутка, «load more»
 
-**Alternative — Count rows once, then OFFSET:**
-- Total count: `SELECT COUNT(*)` (slow on big tables)
-- Use approximate count: `pg_class.reltuples`
+**Альтернатива — посчитать строки один раз, затем OFFSET:**
+- Полный подсчёт: `SELECT COUNT(*)` (медленно на больших таблицах)
+- Используйте приблизительный подсчёт: `pg_class.reltuples`
 
-**Best practice:**
-- Infinite scroll / "next" → keyset
-- "Jump to page 500" → accept slowness или rethink UX
+**Лучшая практика:**
+- Бесконечная прокрутка / «next» → keyset
+- «Перейти на страницу 500» → смиритесь с медленностью или переосмыслите UX
 
 ## Q22. JOIN vs subquery vs EXISTS?
 
-**Semantic equivalent examples:**
+**Семантически эквивалентные примеры:**
 
 **JOIN:**
 ```sql
@@ -1017,7 +1017,7 @@ JOIN users u ON u.id = o.user_id
 WHERE u.country = 'US';
 ```
 
-**IN subquery:**
+**Подзапрос IN:**
 ```sql
 SELECT * FROM orders
 WHERE user_id IN (SELECT id FROM users WHERE country = 'US');
@@ -1029,29 +1029,29 @@ SELECT * FROM orders o
 WHERE EXISTS (SELECT 1 FROM users u WHERE u.id = o.user_id AND u.country = 'US');
 ```
 
-**Modern PostgreSQL planner:**
-- Usually rewrites все three to equivalent plan
-- Minor differences в edge cases
+**Современный планировщик PostgreSQL:**
+- Обычно переписывает все три варианта в эквивалентный план
+- Незначительные различия в граничных случаях
 
-**Differences historically:**
-- **JOIN** with `SELECT *` from users → may duplicate orders if multiple users match (rare)
-- **EXISTS** — returns once per outer row regardless inner count; often optimal для semi-join
-- **IN** — deprecated for NULL semantics (NULL in list → UNKNOWN, tricky)
+**Различия исторически:**
+- **JOIN** с `SELECT *` из users → может дублировать заказы, если совпадает несколько пользователей (редко)
+- **EXISTS** — возвращает один раз на внешнюю строку независимо от числа внутренних совпадений; часто оптимален для semi-join
+- **IN** — нежелателен из-за NULL-семантики (NULL в списке → UNKNOWN, коварно)
 
-**Performance tips:**
-- `NOT IN` с subquery returning NULL breaks (always false) — use `NOT EXISTS` or `LEFT JOIN ... WHERE ... IS NULL`
-- `EXISTS` often faster когда inner table large (short-circuits)
-- `JOIN` better if need columns from both
+**Советы по производительности:**
+- `NOT IN` с подзапросом, возвращающим NULL, ломается (всегда ложь) — используйте `NOT EXISTS` или `LEFT JOIN ... WHERE ... IS NULL`
+- `EXISTS` часто быстрее, когда внутренняя таблица большая (срабатывает короткое замыкание)
+- `JOIN` лучше, если нужны колонки из обеих таблиц
 
-**EXPLAIN ANALYZE — check plan:**
-- Often planner converts `IN` → `Semi Hash Join` = ~= `EXISTS`
-- Use whichever reads clearest; measure.
+**EXPLAIN ANALYZE — проверьте план:**
+- Часто планировщик превращает `IN` → `Semi Hash Join` ≈ `EXISTS`
+- Используйте тот вариант, что читается яснее; замеряйте.
 
 ## Q23. Window functions performance?
 
-**Window functions** — compute per-row using "window" of rows (not aggregate that collapses).
+**Window functions** — вычисляют значение для каждой строки по «окну» строк (а не агрегат, схлопывающий результат).
 
-**Examples:**
+**Примеры:**
 ```sql
 SELECT user_id, amount,
   ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC) AS rn,
@@ -1059,27 +1059,27 @@ SELECT user_id, amount,
 FROM orders;
 ```
 
-**Performance:**
+**Производительность:**
 
-- **Sort needed** unless index matches `PARTITION BY ... ORDER BY`
-- Index `(user_id, created_at)` → avoids sort для above
+- **Нужна сортировка**, если индекс не совпадает с `PARTITION BY ... ORDER BY`
+- Индекс `(user_id, created_at)` → избегает сортировки в примере выше
 
-**Cost:**
-- Typically requires **sorting** of entire dataset
-- Work_mem spill = disk → slow
-- Better than correlated subquery equivalent almost always
+**Стоимость:**
+- Обычно требуется **сортировка** всего набора данных
+- Уход work_mem на диск → медленно
+- Почти всегда лучше эквивалентного коррелированного подзапроса
 
 **Frame clause:**
 ```sql
 SUM(amount) OVER (ORDER BY dt ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)
 ```
-- Default: `RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` — cumulative
-- Custom frames can be expensive
+- По умолчанию: `RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` — нарастающий итог
+- Кастомные frame могут быть дорогими
 
-**Tips:**
-- Index support для ORDER BY
-- Avoid running window function на huge aggregate (materialize intermediate)
-- `DISTINCT ON` PostgreSQL-specific — often faster alternative для "first per group":
+**Советы:**
+- Поддержка индекса для ORDER BY
+- Избегайте оконной функции поверх огромного агрегата (материализуйте промежуточный результат)
+- `DISTINCT ON` (специфично для PostgreSQL) — часто более быстрая альтернатива для «первая запись в группе»:
 ```sql
 SELECT DISTINCT ON (user_id) *
 FROM orders
@@ -1094,23 +1094,23 @@ SELECT ... FROM aggregated;
 
 ## Q24. Materialized views vs views?
 
-**View:** stored query; executed every time.
+**View:** сохранённый запрос; выполняется каждый раз.
 ```sql
 CREATE VIEW user_summary AS
 SELECT user_id, SUM(amount) AS total FROM orders GROUP BY user_id;
 ```
-- Pro: always current
-- Con: reruns query each access → slow для complex aggregates
+- Плюс: всегда актуально
+- Минус: перезапускает запрос при каждом обращении → медленно для сложных агрегатов
 
-**Materialized view:** **query result stored** like table.
+**Materialized view:** **результат запроса сохранён** как таблица.
 ```sql
 CREATE MATERIALIZED VIEW user_summary_mv AS
 SELECT user_id, SUM(amount) AS total FROM orders GROUP BY user_id;
 
 CREATE UNIQUE INDEX ON user_summary_mv (user_id);
 ```
-- Pro: fast read (just SELECT from table)
-- Con: **stale** until REFRESH
+- Плюс: быстрое чтение (просто SELECT из таблицы)
+- Минус: **устаревает** до REFRESH
 
 **REFRESH:**
 ```sql
@@ -1118,67 +1118,67 @@ REFRESH MATERIALIZED VIEW user_summary_mv;  -- locks reads
 REFRESH MATERIALIZED VIEW CONCURRENTLY user_summary_mv;  -- needs unique index
 ```
 
-**Incremental refresh:** not in PostgreSQL core; extensions (`pg_ivm`) или logic-level solutions (CDC → update).
+**Инкрементальный refresh:** нет в ядре PostgreSQL; расширения (`pg_ivm`) или решения на уровне логики (CDC → обновление).
 
-**Use cases:**
-- Dashboards (nightly refresh)
-- Reporting (complex joins)
-- Denormalization for read path
-- Search indexes
+**Сценарии:**
+- Дашборды (ночной refresh)
+- Отчётность (сложные join)
+- Денормализация для пути чтения
+- Поисковые индексы
 
-**Alternatives:**
-- **Cache** (Redis): app-level; similar trade-off
-- **Read replica**: query replica с slightly stale data
+**Альтернативы:**
+- **Кэш** (Redis): на уровне приложения; похожий компромисс
+- **Read replica**: запросы к реплике со слегка устаревшими данными
 
-**Watch:** refresh time can become bottleneck — if view takes 10 min, how often refresh? May need partition-based incremental rebuild.
+**Следите:** время refresh может стать узким местом — если view строится 10 мин, как часто его обновлять? Может понадобиться инкрементальное перестроение по партициям.
 
 ## Q25. (!) Read replicas — когда и как?
 
-**Read replica:** copy of DB following primary's WAL, servicing read queries.
+**Read replica:** копия БД, следующая за WAL primary и обслуживающая запросы на чтение.
 
-**Why:**
-- Scale read throughput (most apps 80%+ reads)
-- Isolate heavy analytics from OLTP
-- HA failover (some configs)
+**Зачем:**
+- Масштабировать throughput чтения (в большинстве приложений 80%+ — чтения)
+- Изолировать тяжёлую аналитику от OLTP
+- HA-failover (в некоторых конфигурациях)
 
 **PostgreSQL:**
-- **Streaming replication** (physical) — byte-for-byte copy; read-only
-- **Logical replication** — row-level changes; select tables; writeable (но careful)
+- **Streaming replication** (физическая) — побайтовая копия; только чтение
+- **Logical replication** — изменения на уровне строк; выборочные таблицы; доступна для записи (но осторожно)
 
-**Lag:**
-- Typical: ms-seconds
-- Bulk operations на primary spike lag
-- Monitor: `pg_replication_slots`, `replay_lsn` delta
+**Лаг:**
+- Типично: миллисекунды-секунды
+- Массовые операции на primary дают всплеск лага
+- Мониторинг: `pg_replication_slots`, дельта `replay_lsn`
 
-**Read-your-writes problem:**
-- User updates record, immediately reads
-- May hit replica → stale data
-- Solutions:
-  - Route writes+immediate reads → primary
-  - Session sticky to primary for X seconds post-write
-  - Read from primary during "session after write"
+**Проблема read-your-writes:**
+- Пользователь обновляет запись и сразу читает
+- Запрос может попасть на реплику → устаревшие данные
+- Решения:
+  - Маршрутизировать записи + немедленные чтения → на primary
+  - Sticky-сессия к primary на X секунд после записи
+  - Читать с primary в течение «сессии после записи»
 
-**Architecture patterns:**
-- App routes queries: `@Transactional(readOnly=true)` → replica; else → primary
-- Spring `AbstractRoutingDataSource` for dynamic routing
-- **Proxy-based:** ProxySQL, pgpool, RDS Proxy
+**Архитектурные паттерны:**
+- Приложение маршрутизирует запросы: `@Transactional(readOnly=true)` → реплика; иначе → primary
+- Spring `AbstractRoutingDataSource` для динамической маршрутизации
+- **На основе прокси:** ProxySQL, pgpool, RDS Proxy
 
-**Trade-offs:**
-- Eventual consistency (lag)
-- Failover complexity
-- Connection doubles (app connects к both)
+**Компромиссы:**
+- Eventual consistency (лаг)
+- Сложность failover
+- Число соединений удваивается (приложение подключается к обоим)
 
-**Consistency modes:**
-- Async replication (default, fast, may lose data on crash)
-- Sync replication (`synchronous_standby_names`) — slower writes, zero data loss
+**Режимы согласованности:**
+- Асинхронная репликация (по умолчанию, быстро, может потерять данные при падении)
+- Синхронная репликация (`synchronous_standby_names`) — медленнее запись, нулевая потеря данных
 
-**Cloud:** RDS/Aurora make replicas trivial; Aurora — shared storage, minimal lag.
+**Облако:** RDS/Aurora делают реплики тривиальными; Aurora — общее хранилище, минимальный лаг.
 
 ## Q26. (!) Как находить slow queries в prod?
 
 **PostgreSQL:**
 
-**pg_stat_statements (must-have extension):**
+**pg_stat_statements (обязательное расширение):**
 ```sql
 CREATE EXTENSION pg_stat_statements;
 
@@ -1191,30 +1191,30 @@ FROM pg_stat_statements
 ORDER BY total_exec_time DESC
 LIMIT 20;
 ```
-- Tracks by normalized query (params replaced by `$1`)
-- Total time, mean, calls
-- **Start here always** — top 10 usually explain 80% load
+- Учитывает по нормализованному запросу (параметры заменяются на `$1`)
+- Суммарное время, среднее, число вызовов
+- **Всегда начинайте отсюда** — топ-10 обычно объясняет 80% нагрузки
 
 **Slow query log:**
 ```sql
 log_min_duration_statement = 1000  -- log queries > 1s
 ```
-- Logs to PostgreSQL log file
-- Grep / ship to ELK / Loki
+- Пишет в лог-файл PostgreSQL
+- Grep / отправка в ELK / Loki
 
-**Active queries right now:**
+**Запросы, активные прямо сейчас:**
 ```sql
 SELECT pid, now() - query_start AS duration, state, query
 FROM pg_stat_activity
 WHERE state != 'idle' AND now() - query_start > interval '5 seconds'
 ORDER BY duration DESC;
 ```
-Use для "what's currently slow".
+Используйте для «что тормозит прямо сейчас».
 
 **APM (DataDog, New Relic):**
-- Auto-captures SQL from traces
-- Tags with service/endpoint
-- P95/P99 latencies per query
+- Автоматически захватывает SQL из трейсов
+- Размечает по сервису/endpoint
+- Latency P95/P99 на запрос
 
 **auto_explain:**
 ```sql
@@ -1222,31 +1222,31 @@ LOAD 'auto_explain';
 SET auto_explain.log_min_duration = 1000;
 SET auto_explain.log_analyze = true;  -- adds runtime overhead!
 ```
-Logs full EXPLAIN for slow queries → rich diagnosis.
+Логирует полный EXPLAIN для медленных запросов → подробная диагностика.
 
-**pganalyze / pgwatch2:** dashboards on top of pg_stat_statements.
+**pganalyze / pgwatch2:** дашборды поверх pg_stat_statements.
 
-**Workflow:**
-1. pg_stat_statements → top-N
-2. Pick highest-impact query (total_exec_time)
-3. Get example args from log
-4. EXPLAIN ANALYZE in test
-5. Fix (index, rewrite, config)
-6. Deploy, measure
+**Рабочий процесс:**
+1. pg_stat_statements → топ-N
+2. Выбрать самый влиятельный запрос (total_exec_time)
+3. Взять пример аргументов из лога
+4. EXPLAIN ANALYZE в тесте
+5. Исправить (индекс, переписать, конфиг)
+6. Выкатить, замерить
 
 ## Q27. Database load test (pgbench, sysbench)?
 
-**pgbench** (PostgreSQL bundled):
-- Built-in TPC-B-like benchmark
-- Custom scripts
+**pgbench** (идёт в комплекте с PostgreSQL):
+- Встроенный бенчмарк в стиле TPC-B
+- Свои сценарии
 ```bash
 pgbench -i -s 100 testdb   # init scale 100 (~1.5GB)
 pgbench -c 50 -j 4 -T 60 testdb  # 50 clients, 4 threads, 60s
 ```
 
-Output: TPS (transactions/sec), latency.
+Вывод: TPS (транзакций/сек), latency.
 
-**Custom script:**
+**Свой сценарий:**
 ```sql
 -- my_bench.sql
 \set uid random(1, 10000)
@@ -1257,33 +1257,33 @@ pgbench -c 50 -T 60 -f my_bench.sql testdb
 ```
 
 **sysbench:**
-- Multi-DB (MySQL, PostgreSQL)
-- Standard OLTP workloads
+- Несколько СУБД (MySQL, PostgreSQL)
+- Стандартные OLTP-нагрузки
 ```bash
 sysbench --db-driver=pgsql oltp_read_write prepare
 sysbench --db-driver=pgsql oltp_read_write run --threads=64 --time=60
 ```
 
-**Targeted scenarios:**
-- Write-heavy (INSERT workload)
-- Read-heavy (SELECT workload)
-- Mixed (70/30)
-- Latency-sensitive (P99)
+**Целевые сценарии:**
+- С упором на запись (нагрузка INSERT)
+- С упором на чтение (нагрузка SELECT)
+- Смешанный (70/30)
+- Чувствительный к latency (P99)
 
-**Best practices:**
-- Prod-like data volume (scale factor ~ prod size)
-- Prod-like config (shared_buffers, work_mem)
-- Prod-like network (can bottleneck тест)
-- Warmup: few minutes burn-in (fill caches)
-- Measure: TPS, mean, P50, P95, P99 latency
-- Iterate: change one parameter, rerun
+**Лучшие практики:**
+- Объём данных как в прод (scale factor ~ размер прод)
+- Конфиг как в прод (shared_buffers, work_mem)
+- Сеть как в прод (может стать узким местом теста)
+- Прогрев: несколько минут разогрева (заполнить кэши)
+- Замеряйте: TPS, среднее, latency P50, P95, P99
+- Итерируйте: меняйте один параметр, перезапускайте
 
-**Tools beyond:**
+**Прочие инструменты:**
 - **HammerDB** — OLTP/TPC-C, TPC-H
-- **jmeter** / **k6** — application-level (end-to-end, not pure DB)
-- **pg_bench_tools** (community scripts)
+- **jmeter** / **k6** — на уровне приложения (end-to-end, не чистая БД)
+- **pg_bench_tools** (community-скрипты)
 
-**Capacity planning:** extrapolate "at 5k TPS load, p99 = 50ms" — compare against SLO.
+**Планирование ёмкости:** экстраполируйте «при нагрузке 5k TPS p99 = 50 мс» — сравните с SLO.
 
 ## See also
 

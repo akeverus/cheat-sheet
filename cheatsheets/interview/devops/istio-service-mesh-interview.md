@@ -18,7 +18,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Istio Service Mesh`
 
-`Istio` — most popular service mesh для Kubernetes. Создан Google, IBM, Lyft (2017). Использует **Envoy proxy** как sidecar. Provides **traffic management, security (mTLS), observability** без изменения app кода. Альтернативы: Linkerd (simpler), Consul Connect (multi-platform), Cilium Service Mesh (eBPF).
+`Istio` — самый популярный service mesh для Kubernetes. Создан Google, IBM, Lyft (2017). Использует **Envoy proxy** как sidecar. Даёт **управление трафиком, безопасность (mTLS), наблюдаемость** без изменения кода приложения. Альтернативы: Linkerd (проще), Consul Connect (мультиплатформенный), Cilium Service Mesh (на eBPF).
 
 ## Полезные ссылки
 
@@ -77,14 +77,14 @@ updated: "2026-04-25"
 
 ## Q1. (!) Что такое service mesh?
 
-**Service mesh** — infrastructure layer для service-to-service communication.
+**Service mesh** — инфраструктурный слой для взаимодействия сервис-сервис.
 
-**Капabilities:**
-- **Traffic management** — routing, load balancing, retries, timeouts
-- **Security** — mTLS, authorization
-- **Observability** — metrics, traces, logs
+**Возможности:**
+- **Управление трафиком** — маршрутизация, балансировка нагрузки, повторы (retries), таймауты
+- **Безопасность** — mTLS, авторизация
+- **Наблюдаемость** — метрики, трейсы, логи
 
-**Implementation:** sidecar proxies (per pod) + control plane.
+**Реализация:** sidecar-прокси (по одному на pod) + control plane.
 
 ```mermaid
 graph LR
@@ -96,40 +96,40 @@ graph LR
     Control -.- ProxyB
 ```
 
-**Code unaware** — proxies handle communication transparently.
+**Прозрачно для кода** — прокси обрабатывают коммуникацию незаметно для приложения.
 
-**Trade-off:** complexity vs functionality.
+**Trade-off:** сложность против функциональности.
 
 ## Q2. (!) Что такое Istio?
 
-**Istio** — most popular service mesh. Open-source (с 2017).
+**Istio** — самый популярный service mesh. Open-source (с 2017).
 
-**Founded by:** Google, IBM, Lyft.
+**Создан:** Google, IBM, Lyft.
 
-**Components:**
+**Компоненты:**
 - **Envoy proxy** (data plane) — sidecar в каждом pod
-- **Istiod** (control plane) — manages Envoys
+- **Istiod** (control plane) — управляет Envoy-прокси
 
-**Use cases:**
-- Multi-service routing (canary, blue-green)
-- Zero-trust security (mTLS, authz)
-- Observability (metrics, traces, logs)
-- Resilience (retries, circuit breaker, timeout)
+**Сценарии применения:**
+- Маршрутизация между сервисами (canary, blue-green)
+- Безопасность по принципу zero-trust (mTLS, authz)
+- Наблюдаемость (метрики, трейсы, логи)
+- Устойчивость (retries, circuit breaker, таймауты)
 
-**Most powerful** service mesh, но и **самый сложный**.
+**Самый мощный** service mesh, но и **самый сложный**.
 
 ## Q3. Архитектура (control plane vs data plane)?
 
 **Data plane:**
-- **Envoy proxy** sidecars (one per pod)
-- Handle actual traffic (in/out service)
-- L4 + L7 features
+- Sidecar-прокси **Envoy** (по одному на pod)
+- Обрабатывают реальный трафик (входящий/исходящий сервиса)
+- Возможности L4 + L7
 
 **Control plane (Istiod):**
-- Configures Envoys (push config)
-- Service discovery (integrates K8s API)
-- Certificate authority (mTLS certs)
-- Implements config CRDs (VirtualService, etc.)
+- Конфигурирует Envoy-прокси (push-конфиг)
+- Service discovery (интеграция с K8s API)
+- Удостоверяющий центр (mTLS-сертификаты)
+- Реализует конфигурационные CRD (VirtualService и т.д.)
 
 ```mermaid
 graph TD
@@ -141,16 +141,16 @@ graph TD
     E2 --- E3
 ```
 
-**Pre-1.5 Istio** had multiple components (Pilot, Citadel, Galley) — consolidated в Istiod since.
+**До версии 1.5** у Istio было несколько компонентов (Pilot, Citadel, Galley) — с тех пор они объединены в Istiod.
 
 ## Q4. Sidecar pattern (Envoy)?
 
-**Envoy** — high-performance L7 proxy от Lyft (CNCF graduated).
+**Envoy** — высокопроизводительный L7-прокси от Lyft (CNCF graduated).
 
-**As Istio sidecar:**
-- Injected в каждый pod
-- Intercepts ALL traffic (in/out)
-- Implements Istio policies
+**В роли sidecar Istio:**
+- Внедряется в каждый pod
+- Перехватывает ВЕСЬ трафик (входящий/исходящий)
+- Применяет политики Istio
 
 ```yaml
 # Pod после injection
@@ -161,13 +161,13 @@ containers:
     image: docker.io/istio/proxyv2:1.20
 ```
 
-**Traffic flow:**
+**Поток трафика:**
 ```
 External → Pod IP → Envoy → App container
 App → Envoy → External service
 ```
 
-**Cost:** ~50-100 MB RAM per sidecar, latency ~1-5 ms overhead.
+**Цена:** ~50-100 МБ RAM на каждый sidecar, накладные расходы по задержке ~1-5 мс.
 
 ## Q5. (!) Istio installation profiles?
 
@@ -178,32 +178,32 @@ istioctl install --set profile=minimal  # only Istiod
 istioctl install --set profile=ambient  # ambient mode
 ```
 
-**Profiles:**
-- **default** — recommended production base
-- **demo** — все features, для evaluation
+**Профили:**
+- **default** — рекомендуемая база для production
+- **demo** — все возможности, для ознакомления
 - **minimal** — только Istiod
-- **empty** — only CRDs
-- **ambient** — sidecar-less mode (newer)
+- **empty** — только CRD
+- **ambient** — режим без sidecar (новее)
 
-**Customize:** `IstioOperator` CRD для fine-grained config.
+**Кастомизация:** CRD `IstioOperator` для тонкой настройки.
 
 ## Q6. Sidecar injection (auto vs manual)?
 
-**Auto-injection (recommended):**
+**Авто-инъекция (рекомендуется):**
 ```bash
 kubectl label namespace default istio-injection=enabled
 ```
 
-Все new pods в namespace get sidecar **automatically**.
+Все новые pod-ы в namespace получают sidecar **автоматически**.
 
-**Manual injection:**
+**Ручная инъекция:**
 ```bash
 istioctl kube-inject -f deploy.yaml | kubectl apply -f -
 ```
 
-**Init container** modifies iptables — redirect traffic к Envoy.
+**Init-контейнер** меняет iptables — перенаправляет трафик в Envoy.
 
-**Disable per-pod:**
+**Отключить для конкретного pod:**
 ```yaml
 metadata:
   annotations:
@@ -212,7 +212,7 @@ metadata:
 
 ## Q7. (!) VirtualService?
 
-**VirtualService** — defines routing rules.
+**VirtualService** — задаёт правила маршрутизации.
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -237,15 +237,15 @@ spec:
             subset: v1
 ```
 
-**Capabilities:**
-- Path-based routing (`/api/v1/*`)
-- Header-based routing
-- Method-based
-- Weight-based (canary)
+**Возможности:**
+- Маршрутизация по пути (`/api/v1/*`)
+- Маршрутизация по заголовкам
+- По HTTP-методу
+- По весам (canary)
 
 ## Q8. (!) DestinationRule?
 
-**DestinationRule** — defines policies для destination.
+**DestinationRule** — задаёт политики для целевого назначения (destination).
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -275,16 +275,16 @@ spec:
         version: v2
 ```
 
-**Defines:**
-- **Subsets** (v1, v2 versions) — referenced by VirtualService
-- Load balancing strategy
-- Connection pool limits
-- Outlier detection (passive health checking)
-- TLS settings (mTLS)
+**Задаёт:**
+- **Subsets** (версии v1, v2) — на них ссылается VirtualService
+- Стратегию балансировки нагрузки
+- Лимиты пула соединений (connection pool)
+- Outlier detection (пассивная проверка здоровья)
+- Настройки TLS (mTLS)
 
 ## Q9. Gateway?
 
-**Gateway** — manages **ingress** (или egress) traffic к/from mesh.
+**Gateway** — управляет **входящим** (ingress) или исходящим (egress) трафиком к/от mesh.
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -306,9 +306,9 @@ spec:
         - api.example.com
 ```
 
-**Combined с VirtualService** (must specify `gateways: [my-gateway]`).
+**Используется вместе с VirtualService** (нужно указать `gateways: [my-gateway]`).
 
-**Replaces** Kubernetes Ingress (для mesh services).
+**Заменяет** Kubernetes Ingress (для сервисов внутри mesh).
 
 ## Q10. (!) Traffic splitting (canary, blue-green)?
 
@@ -326,9 +326,9 @@ http:
         weight: 10
 ```
 
-**Gradually shift:** 90/10 → 50/50 → 0/100.
+**Постепенный сдвиг:** 90/10 → 50/50 → 0/100.
 
-**Header-based canary** (only specific users):
+**Canary по заголовку** (только для определённых пользователей):
 ```yaml
 http:
   - match:
@@ -345,9 +345,9 @@ http:
           subset: v1
 ```
 
-**Powerful** для safe rollouts.
+**Мощный механизм** для безопасных раскаток.
 
-**Tools на Istio:** Argo Rollouts, Flagger — automate canary с metrics.
+**Инструменты поверх Istio:** Argo Rollouts, Flagger — автоматизируют canary на основе метрик.
 
 ## Q11. Retries, timeouts, circuit breaking?
 
@@ -370,13 +370,13 @@ http:
     timeout: 10s
 ```
 
-**Circuit breaking** через DestinationRule outlierDetection (Q8).
+**Circuit breaking** через outlierDetection в DestinationRule (Q8).
 
-**No code changes** — все configured через CRDs.
+**Без изменений кода** — всё настраивается через CRD.
 
 ## Q12. Fault injection?
 
-**Inject failures** для chaos testing.
+**Внесение отказов** для chaos-тестирования.
 
 ```yaml
 http:
@@ -393,13 +393,13 @@ http:
       - destination: { host: reviews }
 ```
 
-**Эффект:** 10% requests delayed 5s, 5% return 500.
+**Эффект:** 10% запросов задерживаются на 5 с, 5% возвращают 500.
 
-**Use case:** test client retry logic, error handling.
+**Сценарий применения:** проверить логику повторов (retry) и обработку ошибок на клиенте.
 
 ## Q13. Mirroring (shadow traffic)?
 
-**Mirror** — copy traffic к secondary destination.
+**Mirror** — копирует трафик на вторичное назначение.
 
 ```yaml
 http:
@@ -414,19 +414,19 @@ http:
       value: 100.0
 ```
 
-**v1 gets primary traffic** (response sent к user).
-**v2 receives copy** (responses ignored).
+**v1 получает основной трафик** (ответ отправляется пользователю).
+**v2 получает копию** (ответы игнорируются).
 
-**Use case:** test new version с production traffic безопасно.
+**Сценарий применения:** безопасно протестировать новую версию на боевом трафике.
 
 ## Q14. (!) Mutual TLS (mTLS)?
 
-**mTLS** — both client и server verify each other's certificates.
+**mTLS** — и клиент, и сервер проверяют сертификаты друг друга.
 
-**Istio:** automatic mTLS:
-- **Auto-issued** certificates (Istiod = CA)
-- **Auto-rotated** (TTL hours)
-- **Identity = service account** (cryptographically verified)
+**В Istio:** автоматический mTLS:
+- Сертификаты **выпускаются автоматически** (Istiod = CA)
+- **Автоматическая ротация** (TTL в часах)
+- **Идентичность = service account** (криптографически проверяется)
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -438,16 +438,16 @@ spec:
     mode: STRICT  # require mTLS
 ```
 
-**Modes:**
-- `STRICT` — only mTLS
-- `PERMISSIVE` — accept both (для migration)
+**Режимы:**
+- `STRICT` — только mTLS
+- `PERMISSIVE` — принимать оба варианта (для миграции)
 - `DISABLE`
 
-**Zero-trust networking** — каждый service authenticated.
+**Сеть по принципу zero-trust** — каждый сервис аутентифицирован.
 
 ## Q15. (!) Authorization Policies?
 
-**Service-to-service authz** beyond just authentication.
+**Авторизация сервис-сервис** — на уровень выше простой аутентификации.
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -468,21 +468,21 @@ spec:
             paths: ["/api/*"]
 ```
 
-**Effect:** API service accepts only GET `/api/*` from `web` service account.
+**Эффект:** сервис API принимает только GET `/api/*` от service account `web`.
 
-**Default-deny** option:
+**Вариант default-deny** (всё запрещено по умолчанию):
 ```yaml
 spec:
   {}  # empty → deny all
 ```
 
-Then explicit Allow policies.
+А затем явные политики Allow.
 
 ## Q16. PeerAuthentication, RequestAuthentication?
 
-**PeerAuthentication** — workload-level mTLS config.
+**PeerAuthentication** — конфигурация mTLS на уровне workload.
 
-**RequestAuthentication** — verify JWT tokens в incoming requests.
+**RequestAuthentication** — проверка JWT-токенов во входящих запросах.
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -495,7 +495,7 @@ spec:
       jwksUri: "https://auth.example.com/.well-known/jwks.json"
 ```
 
-**Both layers** combined для zero-trust.
+**Оба слоя** используются вместе для zero-trust.
 
 ## Q17. JWT validation?
 
@@ -525,28 +525,28 @@ spec:
           values: ["admin"]
 ```
 
-**Validation in Envoy** — fast, no app code.
+**Валидация в Envoy** — быстро и без кода в приложении.
 
 ## Q18. (!) Метрики (Prometheus)?
 
-Envoy exposes metrics для Prometheus.
+Envoy отдаёт метрики для Prometheus.
 
-**Auto-generated metrics:**
+**Автоматически генерируемые метрики:**
 - `istio_requests_total` (counter)
 - `istio_request_duration_milliseconds` (histogram)
 - `istio_request_bytes`, `istio_response_bytes`
-- `istio_tcp_*` для TCP traffic
+- `istio_tcp_*` для TCP-трафика
 
-**Labels:** source/destination service, response code, protocol, etc.
+**Метки (labels):** сервис-источник/назначение, код ответа, протокол и т.д.
 
-**Used для:**
-- Service-level dashboards
-- Alerting (error rate, latency)
-- Auto-scaling triggers (KEDA)
+**Используется для:**
+- Дашбордов на уровне сервисов
+- Алертинга (частота ошибок, задержка)
+- Триггеров авто-масштабирования (KEDA)
 
 ## Q19. Distributed tracing (Jaeger, Tempo)?
 
-Envoy generates **trace spans**, propagates **B3 headers**.
+Envoy создаёт **trace spans** и пробрасывает **заголовки B3**.
 
 ```yaml
 # Configure tracing
@@ -558,7 +558,7 @@ meshConfig:
         address: jaeger-collector:9411
 ```
 
-**Caveat:** **app code должен propagate headers** (B3, W3C) для cross-service traces. Istio не делает context propagation внутри app.
+**Нюанс:** **код приложения должен пробрасывать заголовки** (B3, W3C) для сквозных трейсов между сервисами. Istio не делает context propagation внутри приложения.
 
 Подробнее — в [OpenTelemetry](../monitoring/opentelemetry-interview.md).
 
@@ -572,35 +572,35 @@ meshConfig:
     %RESPONSE_CODE% %RESPONSE_FLAGS% %BYTES_RECEIVED% %BYTES_SENT%
 ```
 
-**Envoy logs** every request → ship к ELK / Loki / Datadog.
+**Envoy логирует** каждый запрос → отправка в ELK / Loki / Datadog.
 
-**Performance impact:** logging high-volume mesh = lots data. Sample обычно.
+**Влияние на производительность:** логирование высоконагруженного mesh = много данных. Обычно применяют сэмплирование.
 
 ## Q21. Kiali (service mesh UI)?
 
 **Kiali** — UI для Istio.
 
-**Capabilities:**
-- **Service graph** (visualize topology)
-- Traffic animation (real-time flows)
-- Configuration validation
-- Trace correlation
-- Health overview
+**Возможности:**
+- **Граф сервисов** (визуализация топологии)
+- Анимация трафика (потоки в реальном времени)
+- Валидация конфигурации
+- Корреляция трейсов
+- Обзор состояния (health)
 
 ```bash
 kubectl apply -f kiali.yaml
 istioctl dashboard kiali
 ```
 
-**Essential** для operating Istio (otherwise blind).
+**Незаменим** для эксплуатации Istio (иначе работаешь вслепую).
 
 ## Q22. (!) Ambient mode — sidecar-less?
 
-**Istio Ambient mode** (с 2022, GA 2024) — service mesh **без sidecars**.
+**Istio Ambient mode** (с 2022, GA в 2024) — service mesh **без sidecar-ов**.
 
-**Architecture:**
-- **Layer 4 (ztunnel)** — DaemonSet per node, handles mTLS, basic L4 policies
-- **Layer 7 (waypoint proxy)** — optional, per-namespace, для L7 features
+**Архитектура:**
+- **Layer 4 (ztunnel)** — DaemonSet на каждой ноде, обрабатывает mTLS и базовые L4-политики
+- **Layer 7 (waypoint proxy)** — опционально, на namespace, для L7-возможностей
 
 ```mermaid
 graph TD
@@ -611,88 +611,88 @@ graph TD
     ZT1 -.optional L7.- WP[Waypoint Proxy<br/>per namespace]
 ```
 
-**Advantages over sidecar:**
-- **No pod modification** (just opt-in label)
-- **Lower resource usage** (one ztunnel per node vs per pod)
-- **Cheaper** для large mesh
-- **Smoother adoption** (less invasive)
+**Преимущества перед sidecar:**
+- **Pod не меняется** (достаточно opt-in метки)
+- **Меньше потребление ресурсов** (один ztunnel на ноду вместо одного на pod)
+- **Дешевле** для большого mesh
+- **Плавнее внедрение** (менее инвазивно)
 
 **Trade-offs:**
-- Newer (less mature)
-- Some features still в sidecar mode only
+- Новее (менее зрелый)
+- Часть возможностей пока доступна только в sidecar-режиме
 
-В **2025** ambient mode **rapidly growing** — recommended для new Istio deployments.
+В **2025** ambient mode **быстро набирает популярность** — рекомендуется для новых установок Istio.
 
 ## Q23. ztunnel, waypoint proxies?
 
 **ztunnel:**
-- DaemonSet (1 per node)
-- Written в Rust (high performance)
-- Handles **L4 mTLS** + simple authz
-- Always present в ambient
+- DaemonSet (по 1 на ноду)
+- Написан на Rust (высокая производительность)
+- Обрабатывает **L4 mTLS** + простую авторизацию
+- Всегда присутствует в ambient
 
 **Waypoint proxy:**
-- Envoy proxy
-- Deployed per **service** или **namespace**
-- Provides **L7 features** (retries, traffic routing, RequestAuthn)
-- Optional (only if L7 needed)
+- Прокси Envoy
+- Разворачивается на **сервис** или **namespace**
+- Даёт **L7-возможности** (retries, маршрутизация трафика, RequestAuthn)
+- Опционален (только если нужен L7)
 
-**Cost saving:** small mesh с only L4 needs → just ztunnels (cheaper than sidecars).
+**Экономия:** небольшой mesh с потребностями только в L4 → достаточно ztunnel-ов (дешевле sidecar-ов).
 
 ## Q24. (!) Istio vs Linkerd vs Consul Connect?
 
-| Critterion | Istio | Linkerd | Consul Connect |
+| Критерий | Istio | Linkerd | Consul Connect |
 |-----------|-------|---------|----------------|
-| Complexity | **High** | **Low** | Medium |
-| Performance | OK (Envoy heavy) | **Excellent** (Rust proxy) | Good |
-| Features | Most | Subset | Multi-platform |
-| Adoption | Highest | Growing | Medium |
-| Platform | K8s | K8s | Multi (VMs, K8s) |
-| Maturity | Most mature | Mature | Mature |
-| Sidecar size | ~50-100 MB | ~30 MB | ~50 MB |
-| Latency overhead | 5-10 ms | **<1 ms** | 5 ms |
+| Сложность | **Высокая** | **Низкая** | Средняя |
+| Производительность | Нормальная (Envoy тяжёлый) | **Отличная** (прокси на Rust) | Хорошая |
+| Возможности | Больше всего | Подмножество | Мультиплатформенный |
+| Распространённость | Самая высокая | Растёт | Средняя |
+| Платформа | K8s | K8s | Мульти (VM, K8s) |
+| Зрелость | Самый зрелый | Зрелый | Зрелый |
+| Размер sidecar | ~50-100 МБ | ~30 МБ | ~50 МБ |
+| Накладная задержка | 5-10 мс | **<1 мс** | 5 мс |
 
-**Choice:**
-- **Most features needed, K8s-only** → Istio
-- **Simplicity, performance, K8s** → Linkerd
-- **Multi-platform, HashiCorp stack** → Consul Connect
+**Выбор:**
+- **Нужно максимум возможностей, только K8s** → Istio
+- **Простота, производительность, K8s** → Linkerd
+- **Мультиплатформенность, стек HashiCorp** → Consul Connect
 
-В **2025** — **Linkerd** часто preferred для simpler use cases. **Istio** для full feature set.
+В **2025** — **Linkerd** часто предпочитают для более простых сценариев. **Istio** — ради полного набора возможностей.
 
 ## Q25. Какие минусы Istio?
 
-1. **Complexity** — steep learning curve
-2. **Resource overhead** — Envoy sidecars expensive at scale
-3. **Operational burden** — upgrades, troubleshooting
-4. **Latency overhead** (5-10 ms per hop)
-5. **Debugging difficult** — many layers
-6. **Configuration sprawl** — many CRDs
-7. **Backwards compatibility** — sometimes breaks
-8. **Rich features unused** — most teams use 10% features
+1. **Сложность** — крутая кривая обучения
+2. **Накладные расходы по ресурсам** — sidecar-ы Envoy дороги на масштабе
+3. **Операционная нагрузка** — обновления, траблшутинг
+4. **Накладная задержка** (5-10 мс на каждый hop)
+5. **Сложная отладка** — много слоёв
+6. **Разрастание конфигурации** — множество CRD
+7. **Обратная совместимость** — иногда ломается
+8. **Богатые возможности простаивают** — большинство команд используют ~10% возможностей
 
-**Ambient mode** addresses many minuses (lower overhead).
+**Ambient mode** снимает многие из этих минусов (меньше накладных расходов).
 
 ## Q26. Когда использовать service mesh?
 
-**Use service mesh когда:**
-- **Many microservices** (10+) с complex interactions
-- Need **mTLS** between services (zero trust)
-- Need **fine-grained traffic control** (canary, A/B)
-- Want **uniform observability** (metrics, traces без code)
-- **Cross-service authz** (not just authn)
+**Использовать service mesh, когда:**
+- **Много микросервисов** (10+) со сложными взаимодействиями
+- Нужен **mTLS** между сервисами (zero trust)
+- Нужен **тонкий контроль трафика** (canary, A/B)
+- Хочется **единообразной наблюдаемости** (метрики, трейсы без кода)
+- **Авторизация сервис-сервис** (не только аутентификация)
 
-**Не use mesh когда:**
-- Few services (3-5) — overhead не worth it
-- Simple needs covered by **K8s built-ins** (NetworkPolicies, Services)
-- Team не имеет capacity to operate mesh
-- Performance-critical (every ms matters)
+**Не использовать mesh, когда:**
+- Мало сервисов (3-5) — накладные расходы не оправданы
+- Простые потребности закрываются **встроенными средствами K8s** (NetworkPolicies, Services)
+- У команды нет ресурсов на эксплуатацию mesh
+- Критична производительность (важна каждая миллисекунда)
 
-**Consider lighter alternatives:**
-- **Linkerd** (simpler)
-- **Cilium Service Mesh** (eBPF-based, no sidecar)
-- **Just NetworkPolicies + cert-manager + OpenTelemetry**
+**Рассмотреть более лёгкие альтернативы:**
+- **Linkerd** (проще)
+- **Cilium Service Mesh** (на eBPF, без sidecar)
+- **Просто NetworkPolicies + cert-manager + OpenTelemetry**
 
-В **2025** многие teams realize mesh overkill для their needs — **simpler stacks** preferred.
+В **2025** многие команды осознают, что mesh избыточен для их задач — предпочитают **более простые стеки**.
 
 ---
 
