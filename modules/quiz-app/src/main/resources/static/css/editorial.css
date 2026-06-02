@@ -1844,3 +1844,46 @@ html[data-design="editorial"] .result-page .trace-step-explanation {
     padding: var(--space-3) var(--space-2);
   }
 }
+
+/* Модалка горячих клавиш (app.js initKeyboardHelp, открывается по «?», role=dialog).
+   Классов kbd-help-* в CSS не было → оверлей раскрывался как обычный блок в конце
+   страницы (position:static, без подложки, y≈1158 под сгибом) — нажатие «?» по сути
+   ничего видимого не показывало. Делаем настоящую модалку: fixed-оверлей с подложкой,
+   карточка по центру. .hidden (global, display:none !important) гасит её → отдельное
+   правило на .hidden не нужно. Подложка/тень/z — из общих токенов. */
+html[data-design="editorial"] .kbd-help-overlay {
+  position: fixed; inset: 0; z-index: var(--z-overlay);
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--space-4); background: var(--color-surface-overlay);
+}
+html[data-design="editorial"] .kbd-help-modal {
+  position: relative; width: 100%; max-width: 420px;
+  max-height: calc(100dvh - var(--space-7)); overflow-y: auto;
+  padding: var(--space-6);
+  background: var(--color-bg-primary);
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-lg); box-shadow: var(--shadow-lg);
+}
+html[data-design="editorial"] .kbd-help-modal h3 {
+  font-family: var(--font-family-display); font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold); color: var(--color-text-primary);
+  margin: 0 0 var(--space-4); padding-right: var(--space-6);
+}
+html[data-design="editorial"] .kbd-help-list {
+  display: grid; grid-template-columns: auto 1fr; gap: var(--space-2) var(--space-4); margin: 0;
+}
+html[data-design="editorial"] .kbd-help-list dt {
+  margin: 0; display: flex; gap: var(--space-1); flex-wrap: wrap; align-items: center;
+}
+html[data-design="editorial"] .kbd-help-list dd {
+  margin: 0; align-self: center; color: var(--color-text-secondary); font-size: var(--font-size-sm);
+}
+html[data-design="editorial"] .kbd-help-close {
+  position: absolute; top: var(--space-3); right: var(--space-3);
+  min-width: 44px; min-height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: 0; color: var(--color-text-secondary);
+  font-size: var(--font-size-xl); line-height: 1; cursor: pointer;
+  border-radius: var(--border-radius-md); transition: background var(--duration-fast) var(--easing-default), color var(--duration-fast) var(--easing-default);
+}
+html[data-design="editorial"] .kbd-help-close:hover { color: var(--color-text-primary); background: var(--color-bg-secondary); }
