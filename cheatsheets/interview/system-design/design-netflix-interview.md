@@ -79,129 +79,129 @@ updated: "2026-05-26"
 
 ## Q1. (!) Functional и non-functional requirements?
 
-**Functional (core):**
-- Stream video on demand на TV/Mobile/Web/Console.
-- Browse catalog (rows of titles).
-- Search (typo-tolerant, multi-language).
-- Recommendations (personalized homepage).
-- Continue watching + sync across devices.
-- Downloads для offline (DRM-protected).
-- Profiles (до 5 per account).
-- Ratings, reviews (thumbs up/down/love).
-- Multi-device sync (просмотр на телефоне → продолжение на TV).
+**Функциональные (ядро):**
+- Стриминг видео по запросу на TV/Mobile/Web/Console.
+- Просмотр каталога (ряды тайтлов).
+- Поиск (устойчивый к опечаткам, многоязычный).
+- Рекомендации (персонализированная домашняя страница).
+- Продолжение просмотра + синхронизация между устройствами.
+- Загрузки для офлайна (защищённые DRM).
+- Профили (до 5 на аккаунт).
+- Оценки, отзывы (thumbs up/down/love).
+- Синхронизация между устройствами (просмотр на телефоне → продолжение на TV).
 
-**Non-functional:**
-- **Subscribers:** 270M+ (2024), 200M+ DAU.
-- **Peak traffic:** 15%+ global internet egress.
-- **Latency:** p99 start playback < 2 сек.
-- **Availability:** 99.99% (≈ 52 минуты/year downtime).
-- **Quality:** rebuffering rate < 1%.
-- **Multi-region:** US-East, EU, APAC active-active.
-- **Compliance:** DMCA, GDPR, региональные content licensing.
+**Нефункциональные:**
+- **Подписчики:** 270M+ (2024), 200M+ DAU.
+- **Пиковый трафик:** 15%+ всего глобального internet egress.
+- **Задержка:** p99 старта воспроизведения < 2 сек.
+- **Доступность:** 99.99% (≈ 52 минуты простоя в год).
+- **Качество:** доля rebuffering < 1%.
+- **Multi-region:** US-East, EU, APAC в режиме active-active.
+- **Соответствие требованиям:** DMCA, GDPR, региональное лицензирование контента.
 
-**Scope excluded:**
-- Live streaming (отдельный продукт; Netflix недавно начал — boxing, NFL).
-- Real-time chat / social features.
-- User-generated content.
+**За рамками задачи:**
+- Live-стриминг (отдельный продукт; Netflix начал недавно — бокс, NFL).
+- Чат в реальном времени / социальные функции.
+- Пользовательский контент (UGC).
 
-Tip: senior-кандидат сразу проговаривает что Netflix `read-heavy on metadata + bandwidth-heavy on video` — это диктует архитектурное разделение (microservices в AWS для metadata + Open Connect для video).
+Совет: senior-кандидат сразу проговаривает, что Netflix `read-heavy on metadata + bandwidth-heavy on video` — это диктует архитектурное разделение (microservices в AWS для метаданных + Open Connect для видео).
 
 ## Q2. (!) Capacity estimation (270M subs, 1 Pbps peak)?
 
-**Allowances:**
+**Исходные допущения:**
 
 | Параметр | Значение |
 |---|---|
-| Subscribers | 270M |
+| Подписчики | 270M |
 | DAU | 200M |
-| Concurrent peak | 100M+ viewers |
-| Avg bitrate | 5 Mbps (mix HD/4K) |
-| Peak egress | 1 Pbps (~125 TB/sec) |
+| Пиковая конкуренция | 100M+ зрителей одновременно |
+| Средний bitrate | 5 Mbps (микс HD/4K) |
+| Пиковый egress | 1 Pbps (~125 TB/сек) |
 
-**Video storage:**
-- Catalog ~10 PB unique content.
-- Per title: ~6 encoding variants (codec × resolution × bitrate ladder) ≈ 10× expansion.
-- + multi-language audio tracks, subtitles.
-- Total: **~100 PB** master + variants.
-- × ~3 регионов с replication popular content → **~300 PB**.
+**Хранение видео:**
+- Каталог ~10 PB уникального контента.
+- На один тайтл: ~6 encoding-вариантов (codec × разрешение × bitrate ladder) ≈ 10-кратное раздувание.
+- + многоязычные аудиодорожки, субтитры.
+- Итого: **~100 PB** мастера + вариантов.
+- × ~3 региона с репликацией популярного контента → **~300 PB**.
 
-**Egress bandwidth:**
-- 100M concurrent × 5 Mbps = 500 Tbps avg.
-- Peak (evening US + EU overlap) = 1 Pbps.
+**Egress-bandwidth:**
+- 100M одновременно × 5 Mbps = 500 Tbps в среднем.
+- Пик (вечернее наложение US + EU) = 1 Pbps.
 
-**Metadata (Cassandra):**
-- 270M users × 100 KB profile + watch history = **27 TB**.
-- 10K titles × 1 MB rich metadata = **10 GB** (small, but hot).
+**Метаданные (Cassandra):**
+- 270M пользователей × 100 KB профиль + история просмотров = **27 TB**.
+- 10K тайтлов × 1 MB rich-метаданных = **10 GB** (немного, но горячие).
 
-**Bandwidth cost calculation:**
-- 1 Pbps × $0.02/GB (commercial CDN) = $250M/month на CDN.
-- Open Connect cuts это в ~10× → **$25M/month** infrastructure ($300M/year vs $3B/year).
+**Расчёт стоимости bandwidth:**
+- 1 Pbps × $0.02/GB (commercial CDN) = $250M/месяц на CDN.
+- Open Connect снижает это примерно в 10× → **$25M/месяц** на инфраструктуру ($300M/год против $3B/год).
 
-**Encoding farm:**
-- 5 000 hours new content/year × ~100 EC2-hours per hour encoding = **500K EC2-hours/year**.
-- Spot instances $0.05/hour → $25K/year encoding (negligible).
+**Encoding-ферма:**
+- 5 000 часов нового контента/год × ~100 EC2-часов на час кодирования = **500K EC2-часов/год**.
+- Spot-инстансы $0.05/час → $25K/год на кодирование (пренебрежимо мало).
 
 ## Q3. SLA и SLO для streaming pipeline?
 
 | Метрика | Цель | Alert |
 |---|---|---|
-| `start_playback_latency_p99` | < 2 сек | > 4 сек 5 минут |
-| `rebuffering_ratio` | < 1% | > 3% 1 час |
-| `play_failure_rate` | < 0.5% | > 2% 5 минут |
+| `start_playback_latency_p99` | < 2 сек | > 4 сек в течение 5 минут |
+| `rebuffering_ratio` | < 1% | > 3% в течение 1 часа |
+| `play_failure_rate` | < 0.5% | > 2% в течение 5 минут |
 | `recommendation_latency_p99` | < 300 ms | > 500 ms |
 | `homepage_load_p99` | < 1 сек | > 2 сек |
-| `availability` | 99.99% | < 99.9% (monthly) |
-| `quality_of_experience (QoE)` | composite score | -5% week-over-week |
+| `availability` | 99.99% | < 99.9% (за месяц) |
+| `quality_of_experience (QoE)` | составной скор | -5% неделя к неделе |
 
-**QoE composite:**
-- Сочетание: start latency + rebuffering + bitrate sustained + resolution achieved.
-- Главный business metric — коррелирует с retention.
+**Составной QoE:**
+- Сочетание: start latency + rebuffering + удерживаемый bitrate + достигнутое разрешение.
+- Главная business-метрика — коррелирует с retention.
 
-**Failure modes:**
-- CDN miss → fallback to commercial (CloudFront / Akamai).
-- License server down → cached license валиден до 24 ч.
-- Recommendation down → fallback на global popularity homepage.
+**Сценарии отказов:**
+- CDN miss → fallback на commercial CDN (CloudFront / Akamai).
+- License-сервер недоступен → закэшированная лицензия валидна до 24 ч.
+- Рекомендации недоступны → fallback на homepage с глобальной популярностью.
 
 ## Q4. (!) Open Connect — Netflix proprietary CDN?
 
-**Что это:** Netflix построил собственный CDN — **Open Connect Appliances (OCA)** — серверы, которые physically размещаются у ISP-партнёров (Comcast, Verizon, Deutsche Telekom, МТС, etc.) или в IXP (Internet Exchange Points).
+**Что это:** Netflix построил собственный CDN — **Open Connect Appliances (OCA)** — серверы, которые физически размещаются у ISP-партнёров (Comcast, Verizon, Deutsche Telekom, МТС и т.д.) или в IXP (Internet Exchange Points).
 
 **Почему собственный CDN:**
-- Commercial CDN (Akamai, Cloudflare, CloudFront) на 1 Pbps traffic стоил бы $1-3B/year.
-- Open Connect снижает cost в 10× за счёт peering с ISP.
-- ISP получают: меньше transit costs (трафик не идёт через upstream), better customer experience.
-- Netflix получает: control, lower cost, predictable performance.
+- Commercial CDN (Akamai, Cloudflare, CloudFront) на трафике 1 Pbps стоил бы $1-3B/год.
+- Open Connect снижает стоимость в 10× за счёт peering с ISP.
+- ISP получают: меньше transit-costs (трафик не идёт через upstream), лучший опыт для клиентов.
+- Netflix получает: контроль, меньшую стоимость, предсказуемую производительность.
 
 **Архитектура OCA:**
-- 2U сервер, 200-400 TB SSD, 100-200 Gbps NIC.
+- 2U-сервер, 200-400 TB SSD, 100-200 Gbps NIC.
 - Локально кэшируется популярный контент для региона ISP.
-- На пике ~95% Netflix трафика идёт через OCA (5% — fallback на AWS).
+- На пике ~95% трафика Netflix идёт через OCA (5% — fallback на AWS).
 
 **Размещение:**
-- Tier-1 ISP: десятки OCA в крупных POPs.
-- Regional ISP: 1-3 OCA в дата-центре.
-- IXP (Internet Exchange): OCA peering без участия ISP.
+- Tier-1 ISP: десятки OCA в крупных POP.
+- Региональные ISP: 1-3 OCA в дата-центре.
+- IXP (Internet Exchange): OCA с peering без участия ISP.
 
-**Network requirements (для ISP-партнёра):**
-- 10+ Gbps uplink свободного bandwidth.
-- BGP peering session.
-- Минимум 6 месяцев commitment.
+**Сетевые требования (для ISP-партнёра):**
+- 10+ Gbps свободного bandwidth на uplink.
+- BGP peering-сессия.
+- Минимум 6 месяцев обязательств (commitment).
 
 **Сравнение:**
 
-| Подход | Cost (1 Pbps) | Latency | Control |
+| Подход | Стоимость (1 Pbps) | Latency | Контроль |
 |---|---|---|---|
-| Commercial CDN (Cloudflare) | $1-3B/year | Good (50-100 POPs) | Medium |
-| Multi-CDN | $0.7-2B/year | Best (combine providers) | Higher |
-| Open Connect (own) | $200-500M/year | Best (in-ISP) | Full |
+| Commercial CDN (Cloudflare) | $1-3B/год | Хорошо (50-100 POP) | Средний |
+| Multi-CDN | $0.7-2B/год | Лучше всего (комбинация провайдеров) | Выше |
+| Open Connect (собственный) | $200-500M/год | Лучше всего (внутри ISP) | Полный |
 
-**Real:** YouTube тоже имеет собственный CDN (Google Global Cache). Cloudflare/Fastly работают только в pure CDN-роли.
+**На практике:** YouTube тоже имеет собственный CDN (Google Global Cache). Cloudflare/Fastly работают только в роли чистого CDN.
 
 ## Q5. (!) Pre-positioning контента overnight (predictive caching)?
 
-**Идея:** не ждать пока user запросит видео — заранее (ночью) предсказать что будет популярно завтра и push контент на OCA.
+**Идея:** не ждать, пока пользователь запросит видео — заранее (ночью) предсказать, что будет популярно завтра, и запушить контент на OCA.
 
-**Workflow:**
+**Поток работы:**
 
 ```mermaid
 graph LR
@@ -221,63 +221,63 @@ graph LR
     Origin -->|nightly push| OCA3
 ```
 
-**Predictive signals для popularity:**
-- Historical watch patterns per-region (Squid Game в Korea peak times).
-- Time-of-day patterns (children's content утром, drama вечером).
-- Day-of-week (binge weekends).
-- Trending в social media (Twitter, Reddit).
-- Marketing campaigns (новый release).
-- Subscriber demographics per ISP.
+**Сигналы для предсказания популярности:**
+- Исторические паттерны просмотров по регионам (Squid Game в часы пик в Корее).
+- Паттерны по времени суток (детский контент утром, драмы вечером).
+- День недели (запойный просмотр по выходным).
+- Тренды в соцсетях (Twitter, Reddit).
+- Маркетинговые кампании (новый релиз).
+- Демография подписчиков по ISP.
 
 **Размещение:**
-- High-priority: top 1 000 titles per region → все OCA.
-- Long tail: rare content → fewer OCAs, fallback on miss.
-- Time-based: новый release → emergency push в ночь премьеры.
+- Высокий приоритет: топ-1 000 тайтлов по региону → все OCA.
+- Длинный хвост: редкий контент → меньше OCA, fallback при промахе.
+- По времени: новый релиз → экстренный push в ночь премьеры.
 
 **Cache hit ratio:**
-- Target: 95%+ requests serve from OCA.
-- Cache miss → fallback к AWS origin (через commercial CDN или прямо).
-- Cold cache всего content невозможен — long tail слишком велик.
+- Цель: 95%+ запросов обслуживаются из OCA.
+- Cache miss → fallback к AWS-origin (через commercial CDN или напрямую).
+- Холодный кэш всего контента невозможен — длинный хвост слишком велик.
 
-**Update window:**
-- 04:00 - 06:00 local time (минимальный traffic).
-- Inter-OCA replication через peer-to-peer (BitTorrent-like internally).
+**Окно обновления:**
+- 04:00 - 06:00 по местному времени (минимальный трафик).
+- Репликация между OCA через peer-to-peer (внутренне похоже на BitTorrent).
 
-**Edge cases:**
-- Live event traffic surge → emergency manual push.
-- Regional content licensing → не push в страны без прав.
+**Граничные случаи:**
+- Всплеск трафика на live-событии → экстренный ручной push.
+- Региональное лицензирование контента → не пушить в страны без прав.
 
 ## Q6. Storage tier: hot OCA, warm regional, cold Glacier?
 
 **Hot tier — OCA (edge):**
 - SSD на OCA, 200-400 TB.
-- Только top contented (top 5% titles даёт 80% watch hours).
-- Latency < 50 ms (in-ISP).
+- Только самый популярный контент (топ-5% тайтлов даёт 80% часов просмотра).
+- Latency < 50 ms (внутри ISP).
 
-**Warm tier — regional S3:**
+**Warm tier — региональный S3:**
 - AWS S3 в US-East, EU-West, APAC-Tokyo.
-- Все active content (top 50%).
-- Fallback при OCA cache miss.
-- Latency 100-300 ms (across-region).
+- Весь активный контент (топ-50%).
+- Fallback при cache miss на OCA.
+- Latency 100-300 ms (между регионами).
 
 **Cold tier — S3 Glacier:**
-- Archival, long-tail catalog, old removed titles.
-- License preservation (даже после удаления из catalog нужно хранить N лет).
-- Retrieval: minutes-hours.
+- Архив, длинный хвост каталога, старые удалённые тайтлы.
+- Сохранение лицензий (даже после удаления из каталога нужно хранить N лет).
+- Извлечение: минуты-часы.
 
-**Master files:**
-- 4K HDR original в S3 — never deleted.
-- Source of truth для re-encoding (новый codec, новая bitrate ladder).
+**Мастер-файлы:**
+- Оригинал 4K HDR в S3 — никогда не удаляется.
+- Источник истины для повторного кодирования (новый codec, новая bitrate ladder).
 
-**Replication:**
-- Active content: replicated 3× across AWS regions.
-- Long tail: single region (cost saving).
-- Master: 3× + Glacier backup.
+**Репликация:**
+- Активный контент: реплицируется 3× по AWS-регионам.
+- Длинный хвост: один регион (экономия).
+- Мастер: 3× + бэкап в Glacier.
 
-**Cost model:**
-- S3 Standard: $0.023/GB/month → 100 PB = $2.3M/month.
-- S3 Glacier: $0.004/GB/month → 100 PB cold = $400K/month.
-- OCA hardware: amortized $10/TB/month → 200 PB = $2M/month.
+**Модель стоимости:**
+- S3 Standard: $0.023/GB/месяц → 100 PB = $2.3M/месяц.
+- S3 Glacier: $0.004/GB/месяц → 100 PB холодного = $400K/месяц.
+- Железо OCA: амортизированно $10/TB/месяц → 200 PB = $2M/месяц.
 
 ## Q7. (!) Encoding pipeline (master → variants)?
 
@@ -299,185 +299,185 @@ graph LR
 
 **Стадии:**
 
-1. **Ingest:** studio uploads 4K HDR master (typically Apple ProRes, 1-2 TB per movie). Validation: checksum, length, audio sync, subtitle timing.
+1. **Ingest:** студия загружает мастер 4K HDR (обычно Apple ProRes, 1-2 TB на фильм). Валидация: checksum, длительность, синхронизация аудио, тайминг субтитров.
 
-2. **Pre-processing:**
-   - Color space conversion (Rec.2020 → Rec.709 для SDR).
-   - Audio normalization (LUFS standard).
-   - Subtitle extraction.
+2. **Предобработка:**
+   - Конвертация цветового пространства (Rec.2020 → Rec.709 для SDR).
+   - Нормализация аудио (стандарт LUFS).
+   - Извлечение субтитров.
 
-3. **Encoding farm (parallel):**
-   - AWS EC2 Spot instances (10K+ machines parallel).
-   - Per-shot или per-chunk parallelism (Q8).
-   - Output codecs: H.264 (baseline compat), HEVC (mobile, smart TV), VP9 (Android, Chrome), AV1 (newest, 30% bitrate reduction).
+3. **Encoding-ферма (параллельно):**
+   - AWS EC2 Spot-инстансы (10K+ машин параллельно).
+   - Параллелизм per-shot или per-chunk (Q8).
+   - Выходные кодеки: H.264 (базовая совместимость), HEVC (mobile, smart TV), VP9 (Android, Chrome), AV1 (новейший, снижение bitrate на 30%).
 
 4. **Bitrate ladder:**
-   - 5-10 variants per codec, e.g.:
+   - 5-10 вариантов на codec, например:
      - 240p @ 235 kbps
      - 360p @ 375 kbps
      - 480p @ 750 kbps
      - 720p @ 1750 kbps
      - 1080p @ 3000 kbps
      - 2160p (4K) @ 16 Mbps
-   - Total: ~30-50 output files per title.
+   - Итого: ~30-50 выходных файлов на тайтл.
 
-5. **QC (Quality Check):**
-   - VMAF (Video Multi-method Assessment Fusion) — Netflix-developed perceptual quality metric.
-   - Reject re-encode if VMAF < threshold per resolution.
+5. **QC (контроль качества):**
+   - VMAF (Video Multi-method Assessment Fusion) — метрика воспринимаемого качества, разработанная Netflix.
+   - Перекодировать заново, если VMAF < порога для данного разрешения.
 
-6. **Packaging:**
-   - HLS segments (TS chunks).
-   - DASH segments (fMP4 chunks).
-   - CMAF (unified, since 2017).
+6. **Упаковка (packaging):**
+   - HLS-сегменты (TS-чанки).
+   - DASH-сегменты (fMP4-чанки).
+   - CMAF (единый формат, с 2017).
 
-7. **Distribution:**
-   - S3 master + variants.
-   - Pre-positioning к OCA (Q5).
+7. **Дистрибуция:**
+   - S3-мастер + варианты.
+   - Pre-positioning на OCA (Q5).
 
-**Throughput:** 5 000 hours/year new content; ~100 EC2-hours per content hour → 500K EC2-hours/year (~$25K на Spot).
+**Пропускная способность:** 5 000 часов/год нового контента; ~100 EC2-часов на час контента → 500K EC2-часов/год (~$25K на Spot).
 
 ## Q8. (!) Per-title vs per-chunk encoding — экономия bitrate?
 
-**Old approach (до 2015):** fixed bitrate ladder для всех титров.
-- Simple cartoon @ 1080p — те же 3 Mbps что и action movie.
-- Cartoon переencoded более чем нужно (over-compressed).
-- Action movie получал тот же bitrate но visually хуже (under-compressed for complex scenes).
+**Старый подход (до 2015):** фиксированный bitrate ladder для всех тайтлов.
+- Простой мультфильм @ 1080p — те же 3 Mbps, что и боевик.
+- Мультфильм перекодировался сильнее, чем нужно (over-compressed).
+- Боевик получал тот же bitrate, но визуально хуже (under-compressed на сложных сценах).
 
 **Per-title encoding (Netflix 2015):**
-- Анализируем содержание титра.
-- Cartoon (low complexity) — 1080p достижим на 2 Mbps.
-- Action movie (high motion) — 1080p требует 4 Mbps.
-- Custom ladder per title.
+- Анализируем содержание тайтла.
+- Мультфильм (низкая сложность) — 1080p достижим на 2 Mbps.
+- Боевик (высокая динамика) — 1080p требует 4 Mbps.
+- Кастомный ladder под каждый тайтл.
 
-**Economy:**
-- Average 20% bitrate reduction across catalog.
-- На 1 Pbps это $50-100M/year savings on bandwidth.
+**Экономия:**
+- В среднем 20% снижение bitrate по каталогу.
+- На 1 Pbps это $50-100M/год экономии на bandwidth.
 
 **Per-chunk encoding (Netflix 2018 — Dynamic Optimizer):**
-- Анализируем bitrate **per shot** в одном титре.
-- Dialogue scene → low bitrate (talking heads).
-- Action sequence → high bitrate (motion).
-- Per-shot encoded chunks merged в один stream.
+- Анализируем bitrate **посценно (per shot)** внутри одного тайтла.
+- Диалоговая сцена → низкий bitrate (говорящие головы).
+- Экшн-сцена → высокий bitrate (динамика).
+- Закодированные посценные чанки сшиваются в один поток.
 
-**Economy:**
-- Additional 15-30% bitrate reduction.
-- Сложнее QC (VMAF per chunk).
-- Encoding time дольше (анализ перед encoding).
+**Экономия:**
+- Дополнительные 15-30% снижения bitrate.
+- Сложнее QC (VMAF на каждый чанк).
+- Время кодирования дольше (анализ перед кодированием).
 
-**Algorithm:**
-1. Split content на shots (scene detection).
-2. Per-shot complexity analysis (motion vectors, frequency domain).
-3. Allocate bitrate budget per shot.
-4. Encode shots с individual quality targets.
-5. Concatenate в final stream.
+**Алгоритм:**
+1. Разбить контент на сцены (scene detection).
+2. Анализ сложности каждой сцены (векторы движения, частотная область).
+3. Распределить бюджет bitrate по сценам.
+4. Закодировать сцены с индивидуальными целями по качеству.
+5. Склеить в финальный поток.
 
-**VMAF — Netflix's perceptual quality metric:**
-- ML model (SVM) trained на mass crowd-sourced subjective ratings.
-- Output: 0-100 score (perceptual quality).
-- Open-sourced (now industry standard).
+**VMAF — метрика воспринимаемого качества от Netflix:**
+- ML-модель (SVM), обученная на массовых краудсорсинговых субъективных оценках.
+- Выход: скор 0-100 (воспринимаемое качество).
+- Открыта в open source (теперь отраслевой стандарт).
 
 ## Q9. Codec ladder (H.264, HEVC, VP9, AV1)?
 
-| Codec | Год | Bandwidth saving vs H.264 | Adoption | Лицензия |
+| Codec | Год | Экономия bandwidth vs H.264 | Распространённость | Лицензия |
 |---|---|---|---|---|
-| H.264/AVC | 2003 | baseline | Universal (95%+ devices) | MPEG LA royalty |
+| H.264/AVC | 2003 | базовый | Универсальный (95%+ устройств) | Роялти MPEG LA |
 | HEVC/H.265 | 2013 | 30-40% | Mobile, smart TV (60%) | Patent pool $$$ |
 | VP9 | 2013 | 30-40% | Android, Chrome | Royalty-free (Google) |
-| AV1 | 2018 | 50% vs H.264 | New devices, growing | Royalty-free (AOMedia) |
+| AV1 | 2018 | 50% vs H.264 | Новые устройства, растёт | Royalty-free (AOMedia) |
 
 **Стратегия Netflix:**
-- **H.264** — fallback для legacy devices, всегда encoded.
-- **HEVC** — mobile + smart TV main path; платят royalty.
-- **VP9** — Android + Chrome browsers (Google партнёрство).
-- **AV1** — постепенный rollout, начали с mobile (battery friendly при hardware decoder).
+- **H.264** — fallback для legacy-устройств, кодируется всегда.
+- **HEVC** — основной путь для mobile + smart TV; платят роялти.
+- **VP9** — браузеры Android + Chrome (партнёрство с Google).
+- **AV1** — постепенный rollout, начали с mobile (бережёт батарею при наличии аппаратного декодера).
 
-**Device selection:**
-- Client сообщает supported codecs.
-- Server выбирает best supported (highest compression + hardware decode).
-- Fallback chain: AV1 → HEVC → VP9 → H.264.
+**Выбор под устройство:**
+- Клиент сообщает поддерживаемые кодеки.
+- Сервер выбирает лучший из поддерживаемых (максимальное сжатие + аппаратное декодирование).
+- Цепочка fallback: AV1 → HEVC → VP9 → H.264.
 
-**AV1 значение:**
-- 50% bandwidth saving vs H.264.
-- При 1 Pbps это $100-200M/year savings.
-- Encoding cost выше (5-10× CPU vs HEVC).
-- Hardware decoding в новых chips (iPhone 15+, Pixel 9+).
+**Значимость AV1:**
+- 50% экономии bandwidth vs H.264.
+- При 1 Pbps это $100-200M/год экономии.
+- Стоимость кодирования выше (в 5-10× больше CPU, чем HEVC).
+- Аппаратное декодирование в новых чипах (iPhone 15+, Pixel 9+).
 
-**HDR variants:**
-- HDR10 (open standard).
-- Dolby Vision (premium, requires license).
-- Кодируются отдельно — другой dynamic range mapping.
+**HDR-варианты:**
+- HDR10 (открытый стандарт).
+- Dolby Vision (премиум, требует лицензии).
+- Кодируются отдельно — другое отображение динамического диапазона.
 
 ## Q10. Encoding farm на AWS EC2 (Spot instances)?
 
-**Workload характер:**
-- Embarrassingly parallel (per-chunk independent).
-- Fault-tolerant (chunk fail → re-encode).
-- Не-realtime (encoding может занять часы).
-- High CPU, moderate disk I/O.
+**Характер нагрузки:**
+- Тривиально параллелизуемая (каждый чанк независим).
+- Отказоустойчивая (чанк упал → перекодировать).
+- Не-realtime (кодирование может занять часы).
+- Высокое потребление CPU, умеренный disk I/O.
 
 **EC2 Spot:**
-- Spot price 70-90% off от On-Demand.
-- Trade-off: instance может быть terminated с 2-min warning.
-- Идеально для encoding: chunk на терминированной instance просто re-scheduled.
+- Spot-цена на 70-90% ниже, чем On-Demand.
+- Компромисс: инстанс может быть terminated с предупреждением за 2 минуты.
+- Идеально для кодирования: чанк на завершённом инстансе просто перепланируется.
 
-**Architecture:**
+**Архитектура:**
 ```
 Encoding job queue (SQS) → Spot fleet (10K instances) → S3 output
 ```
 
-**Auto-scaling:**
-- Spot fleet с multiple instance types (c5, c5n, m5) для diversification.
-- Diversification снижает risk одновременной terminations всех.
-- Запрос capacity adjustments в реальном времени.
+**Авто-масштабирование:**
+- Spot fleet с несколькими типами инстансов (c5, c5n, m5) для диверсификации.
+- Диверсификация снижает риск одновременного завершения всех.
+- Корректировка capacity в реальном времени.
 
-**Failure handling:**
-- Spot interruption → job re-queued в SQS.
-- Idempotent encoding (same input → same output).
-- Distributed file locks через S3 ETag.
+**Обработка отказов:**
+- Spot interruption → job снова ставится в очередь SQS.
+- Идемпотентное кодирование (один вход → один выход).
+- Распределённые файловые блокировки через S3 ETag.
 
-**Cost:**
-- 500K EC2-hours/year × $0.05/hour Spot = **$25K/year**.
-- Vs On-Demand $0.50/hour = $250K → 10× saving.
+**Стоимость:**
+- 500K EC2-часов/год × $0.05/час Spot = **$25K/год**.
+- Против On-Demand $0.50/час = $250K → экономия в 10×.
 
-**Alternative: pre-emptible на GCP / Azure low priority** — те же patterns.
+**Альтернатива: pre-emptible на GCP / low-priority на Azure** — те же паттерны.
 
-**Tools:**
-- Netflix custom encoding orchestrator (Spinnaker для deployment).
-- FFmpeg + custom optimizations.
-- VMAF for QC.
+**Инструменты:**
+- Собственный оркестратор кодирования Netflix (Spinnaker для деплоя).
+- FFmpeg + кастомные оптимизации.
+- VMAF для QC.
 
 ## Q11. (!) HLS vs DASH vs CMAF — что выбрать?
 
-| Протокол | Apple | Cross-platform | Container | Latency |
+| Протокол | Apple | Cross-platform | Контейнер | Latency |
 |---|---|---|---|---|
-| HLS (HTTP Live Streaming) | Native | Yes | TS, fMP4 | 6-30 сек (default) |
-| DASH (MPEG-DASH) | Через polyfill | Yes (Chrome, Firefox, Smart TV) | fMP4 | 6-30 сек |
-| CMAF (Common Media Application Format) | Yes | Yes | fMP4 (unified) | 1-3 сек (LL-CMAF) |
+| HLS (HTTP Live Streaming) | Нативно | Да | TS, fMP4 | 6-30 сек (по умолчанию) |
+| DASH (MPEG-DASH) | Через polyfill | Да (Chrome, Firefox, Smart TV) | fMP4 | 6-30 сек |
+| CMAF (Common Media Application Format) | Да | Да | fMP4 (единый) | 1-3 сек (LL-CMAF) |
 
 **HLS:**
-- Apple-spec, RFC 8216.
-- Manifest `.m3u8` + сегменты `.ts` (или fMP4 since HLS v6).
-- Native Safari / iOS.
-- LL-HLS (Low Latency) — sub-3-sec.
+- Спецификация Apple, RFC 8216.
+- Манифест `.m3u8` + сегменты `.ts` (или fMP4 начиная с HLS v6).
+- Нативно в Safari / iOS.
+- LL-HLS (Low Latency) — менее 3 секунд.
 
 **DASH:**
-- ISO/IEC 23009-1 spec.
-- Manifest `.mpd` + fMP4 chunks.
-- Native Chrome, Firefox, Android, Smart TVs.
-- Не работает natively на Safari/iOS — нужен Shaka Player polyfill.
+- Спецификация ISO/IEC 23009-1.
+- Манифест `.mpd` + fMP4-чанки.
+- Нативно в Chrome, Firefox, Android, Smart TV.
+- Не работает нативно на Safari/iOS — нужен polyfill Shaka Player.
 
 **CMAF (Common Media Application Format):**
-- 2017 spec to unify HLS + DASH.
-- Один и тот же fMP4 chunk используется обоими.
-- Single encoding → two manifest files (m3u8 + mpd).
-- Saves storage 2× (no separate TS + fMP4).
+- Спецификация 2017 года, объединяющая HLS + DASH.
+- Один и тот же fMP4-чанк используется обоими.
+- Одно кодирование → два файла манифеста (m3u8 + mpd).
+- Экономит хранилище в 2× (нет отдельных TS + fMP4).
 
-**Netflix выбор:**
-- Migrate to CMAF — single encoding, dual manifest.
-- Низкие latency через LL-HLS / LL-DASH (для live, sports).
-- VOD allows higher latency (15-30 сек startup acceptable).
+**Выбор Netflix:**
+- Миграция на CMAF — одно кодирование, двойной манифест.
+- Низкие latency через LL-HLS / LL-DASH (для live, спорта).
+- Для VOD допустима бо́льшая latency (приемлем старт за 15-30 сек).
 
-**Manifest pattern:**
+**Шаблон манифеста:**
 ```xml
 <MPD xmlns="urn:mpeg:dash:schema:mpd:2011">
   <Period>
@@ -492,34 +492,34 @@ Encoding job queue (SQS) → Spot fleet (10K instances) → S3 output
 
 ## Q12. (!) Adaptive Bitrate (ABR) — BOLA и ML-based?
 
-**Цель:** клиент динамически выбирает bitrate variant исходя из:
-- Current throughput (network bandwidth).
-- Buffer level (сколько секунд видео уже buffered).
-- Screen resolution (нет смысла 4K на телефоне).
-- Battery state (mobile economical mode).
+**Цель:** клиент динамически выбирает bitrate-вариант исходя из:
+- Текущий throughput (пропускная способность сети).
+- Уровень буфера (сколько секунд видео уже забуферизировано).
+- Разрешение экрана (нет смысла в 4K на телефоне).
+- Состояние батареи (экономичный режим на mobile).
 
-**Classic algorithms:**
+**Классические алгоритмы:**
 
-**Rate-based:**
-- Switch на bitrate ≈ measured throughput.
-- Simple, but buffer-blind (может drain buffer быстро).
+**На основе скорости (rate-based):**
+- Переключение на bitrate ≈ измеренный throughput.
+- Просто, но слепо к буферу (может быстро его опустошить).
 
-**Buffer-based (BOLA):**
+**На основе буфера (BOLA):**
 - BOLA = Buffer Occupancy based Lyapunov Algorithm (Bo Wei, 2016).
-- Maximize utility = log(quality) - penalty(rebuffering risk).
-- Switch на higher bitrate когда buffer высокий.
-- Switch на lower bitrate когда buffer низкий.
-- Provably near-optimal.
+- Максимизирует полезность = log(quality) - штраф(риск rebuffering).
+- Переключение на более высокий bitrate, когда буфер высокий.
+- Переключение на более низкий bitrate, когда буфер низкий.
+- Доказуемо близок к оптимальному.
 
-**Hybrid (ABR-PB, Netflix):**
-- Combine throughput + buffer signals.
-- Smoother switching (избегать частых quality drops).
+**Гибридный (ABR-PB, Netflix):**
+- Комбинирует сигналы throughput + буфера.
+- Более плавное переключение (избегает частых просадок качества).
 
-**ML-based:**
-- Netflix moves к ML approach.
-- Features: throughput history, buffer, device, screen, time-of-day, content type.
-- Model predicts optimal bitrate per chunk.
-- Trained на millions of real-world sessions с QoE labels.
+**На основе ML:**
+- Netflix движется к ML-подходу.
+- Признаки: история throughput, буфер, устройство, экран, время суток, тип контента.
+- Модель предсказывает оптимальный bitrate на каждый чанк.
+- Обучена на миллионах реальных сессий с метками QoE.
 
 ```mermaid
 graph LR
@@ -531,34 +531,34 @@ graph LR
     Download --> Player
 ```
 
-**ABR-implementation:**
-- Client downloads manifest (multi-bitrate list).
-- For each chunk (~2-10 sec), decide bitrate.
-- Pre-fetch next chunk while current plays.
+**Реализация ABR:**
+- Клиент скачивает манифест (список вариантов с разными bitrate).
+- Для каждого чанка (~2-10 сек) выбирает bitrate.
+- Префетчит следующий чанк, пока играет текущий.
 
-**Edge cases:**
-- Slow start: first chunk на low bitrate (быстро начать playback) → ramp up.
-- Network drop: switch to lowest bitrate to avoid rebuffer.
-- Resolution capping: на телефоне не качаем 4K (waste bandwidth + battery).
+**Граничные случаи:**
+- Медленный старт: первый чанк на низком bitrate (быстро начать воспроизведение) → постепенный разгон.
+- Просадка сети: переключение на минимальный bitrate, чтобы избежать rebuffer.
+- Ограничение разрешения: на телефоне не качаем 4K (трата bandwidth + батареи).
 
 ## Q13. DRM: Widevine, FairPlay, PlayReady?
 
-**Зачем DRM:** Studios требуют hardware-level content protection. Без DRM Netflix не может licens Hollywood content.
+**Зачем DRM:** студии требуют защиту контента на аппаратном уровне. Без DRM Netflix не может лицензировать голливудский контент.
 
-**Три ecosystem-specific DRM:**
+**Три DRM под конкретные экосистемы:**
 
-| DRM | Platform | Key system |
+| DRM | Платформа | Система ключей |
 |---|---|---|
-| Widevine | Android, Chrome, Smart TV (Tizen, webOS) | Google L1/L2/L3 levels |
-| FairPlay | iOS, Safari, Apple TV | Apple-only |
+| Widevine | Android, Chrome, Smart TV (Tizen, webOS) | Уровни Google L1/L2/L3 |
+| FairPlay | iOS, Safari, Apple TV | Только Apple |
 | PlayReady | Windows, Xbox, Edge | Microsoft |
 
-**Security levels (Widevine):**
-- **L1** — keys в TEE (Trusted Execution Environment, ARM TrustZone) → 4K HDR разрешён.
-- **L2** — keys в software-protected → 1080p max.
-- **L3** — pure software → 480p max (защита от ripper).
+**Уровни защиты (Widevine):**
+- **L1** — ключи в TEE (Trusted Execution Environment, ARM TrustZone) → 4K HDR разрешён.
+- **L2** — ключи защищены программно → максимум 1080p.
+- **L3** — чисто программно → максимум 480p (защита от риппера).
 
-**License flow:**
+**Поток лицензирования:**
 ```
 Client → Auth server (subscriber check)
 Auth server → DRM license server (Widevine)
@@ -566,59 +566,59 @@ License server → Client (encrypted decryption key)
 Client → Decrypt + decode in TEE → Display
 ```
 
-**Key components:**
-- **Content encryption:** AES-128 CBC или CTR, common encryption (CENC).
-- **License:** encrypted key blob, tied to device certificate.
-- **Persistent licenses:** для offline downloads (Q27).
+**Ключевые компоненты:**
+- **Шифрование контента:** AES-128 CBC или CTR, common encryption (CENC).
+- **Лицензия:** зашифрованный блоб с ключом, привязанный к сертификату устройства.
+- **Persistent-лицензии:** для офлайн-загрузок (Q27).
 
-**Anti-piracy:**
-- Forensic watermarking (per-user invisible watermark in video).
-- Allows tracing leaked content к конкретному account.
+**Антипиратство:**
+- Forensic watermarking (невидимый водяной знак на каждого пользователя в видео).
+- Позволяет отследить утёкший контент до конкретного аккаунта.
 
-**Implementation:**
-- Netflix runs own license server (handles все три DRM types).
-- License caching на client (24h validity).
-- Revocation list для compromised devices.
+**Реализация:**
+- Netflix держит собственный license-сервер (обрабатывает все три типа DRM).
+- Кэширование лицензий на клиенте (валидность 24 ч).
+- Revocation-list для скомпрометированных устройств.
 
 ## Q14. (!) Recommendation system — CF + content + deep learning?
 
-**Цель:** показать каждому user-у максимально relevant контент в homepage rows.
+**Цель:** показать каждому пользователю максимально релевантный контент в рядах домашней страницы.
 
 **Подходы (объединяются ансамблем):**
 
 **1. Collaborative Filtering (CF):**
-- Matrix factorization (SVD): user × item rating matrix.
-- Похожие users (по past behavior) → recommend their picks.
-- Cold start problem для новых users / новых titles.
+- Матричная факторизация (SVD): матрица оценок user × item.
+- Похожие пользователи (по прошлому поведению) → рекомендуем их выбор.
+- Проблема cold start для новых пользователей / новых тайтлов.
 
 **2. Content-based filtering:**
-- Metadata features (жанр, режиссёр, актёры, год, страна).
-- User's past genre preferences → recommend similar.
+- Признаки из метаданных (жанр, режиссёр, актёры, год, страна).
+- Прошлые жанровые предпочтения пользователя → рекомендуем похожее.
 - Помогает с item cold start.
 
 **3. Deep learning:**
-- **DNN ranking** — input (user embed, item embed, context) → score.
-- **Two-tower** architecture (Netflix, YouTube, LinkedIn).
-- **Transformer** для sequence modeling (BERT4Rec).
-- **Sequence-aware** — учитывает последние просмотры (binge pattern).
+- **DNN ranking** — вход (user embed, item embed, контекст) → скор.
+- Архитектура **two-tower** (Netflix, YouTube, LinkedIn).
+- **Transformer** для моделирования последовательностей (BERT4Rec).
+- **Sequence-aware** — учитывает последние просмотры (паттерн запойного просмотра).
 
 **4. Contextual bandits (Q17):**
-- Online learning: explore новые items + exploit known.
-- Multi-armed bandit с user context.
+- Online-обучение: исследуем новые items + эксплуатируем известные.
+- Multi-armed bandit с контекстом пользователя.
 
-**5. Page-level optimization:**
+**5. Оптимизация на уровне страницы:**
 - Не просто top-K items.
-- Optimize порядок rows + items в rows для overall engagement.
-- Diversity ensure (не 10 action movies подряд).
+- Оптимизируем порядок рядов + items внутри рядов под общую вовлечённость.
+- Обеспечиваем разнообразие (не 10 боевиков подряд).
 
-**Training pipeline:**
-- Watch events → Kafka → Spark feature store.
-- Daily model retraining (offline batch).
-- Online ranking уровень `bonusscored по recent activity`.
+**Пайплайн обучения:**
+- Watch-события → Kafka → Spark feature store.
+- Ежедневное переобучение модели (offline batch).
+- Уровень online-ранжирования `bonusscored по recent activity`.
 
 ## Q15. Candidate generation + online ranking?
 
-**Two-stage retrieval — стандарт Netflix:**
+**Двухстадийный retrieval — стандарт Netflix:**
 
 ```mermaid
 graph LR
@@ -630,90 +630,90 @@ graph LR
     PL --> Resp[Response 100ms]
 ```
 
-**Stage 1 — Candidate generation (broad recall):**
-- Multiple sources:
-  - Recently popular в user's region.
-  - Genre matches user's history.
-  - Similar to titles user liked (item-item CF).
-  - Trending now.
-  - "Because you watched X" related items.
-- Goal: 1 000 candidates с good recall.
-- Latency: < 50 ms (parallel queries).
+**Stage 1 — Генерация кандидатов (широкий recall):**
+- Несколько источников:
+  - Недавно популярное в регионе пользователя.
+  - Жанровые совпадения с историей пользователя.
+  - Похожее на понравившиеся тайтлы (item-item CF).
+  - Сейчас в трендах.
+  - Связанные items «Because you watched X».
+- Цель: 1 000 кандидатов с хорошим recall.
+- Latency: < 50 ms (параллельные запросы).
 
-**Stage 2 — Online ranking (precision):**
-- ML model scores each candidate.
-- Features: (user_embed, item_embed, context, time, device).
-- Top 10-20 per row selected.
-- Latency: < 200 ms (GPU inference в batch).
+**Stage 2 — Online-ранжирование (precision):**
+- ML-модель скорит каждого кандидата.
+- Признаки: (user_embed, item_embed, контекст, время, устройство).
+- Отбираются топ-10-20 на ряд.
+- Latency: < 200 ms (GPU-инференс батчем).
 
-**Stage 3 — Page layout:**
-- Determine row ordering (Top Picks first, then My List, then Trending).
-- Per-row items ordered by score.
-- Diversity constraint: no same-genre consecutive rows.
+**Stage 3 — Раскладка страницы:**
+- Определяем порядок рядов (сначала Top Picks, затем My List, затем Trending).
+- Items внутри ряда упорядочены по скору.
+- Ограничение разнообразия: нет двух подряд рядов одного жанра.
 
-**Eligibility filters:**
-- Content licensing region.
-- User's age rating preference.
-- Already watched (don't re-recommend).
-- Don't recommend across profiles.
+**Фильтры допуска (eligibility):**
+- Регион лицензирования контента.
+- Предпочтение пользователя по возрастному рейтингу.
+- Уже просмотренное (не рекомендовать повторно).
+- Не рекомендовать через границы профилей.
 
 ## Q16. (!) Personalized homepage + artwork personalization?
 
-**Personalized homepage:**
-- 270M users — 270M unique home pages.
-- Каждая row (Trending, Top Picks, Because You Watched) персонализирована.
-- Order of rows differs per user.
-- Items в rows ranked indi.
+**Персонализированная домашняя страница:**
+- 270M пользователей — 270M уникальных домашних страниц.
+- Каждый ряд (Trending, Top Picks, Because You Watched) персонализирован.
+- Порядок рядов различается у каждого пользователя.
+- Items внутри рядов ранжируются индивидуально.
 
-**Artwork personalization (Netflix-патент):**
-- Для каждого title есть 5-10 cover image variants.
-- ML выбирает best image per user исходя из past clicks.
-- Romance fan → couple-on-poster variant; action fan → explosion-variant.
-- Engagement boost: +20-30% click-through на posters.
+**Персонализация обложек (патент Netflix):**
+- На каждый тайтл есть 5-10 вариантов обложки.
+- ML выбирает лучшее изображение под пользователя исходя из прошлых кликов.
+- Любитель мелодрам → вариант «пара на постере»; любитель боевиков → вариант со взрывом.
+- Прирост вовлечённости: +20-30% click-through по постерам.
 
-**Implementation:**
-- Image variants stored в S3 + CDN.
-- ML model selects per user × per row.
-- Stored mapping `user_id → (title_id → image_id)` в EVCache.
+**Реализация:**
+- Варианты изображений хранятся в S3 + CDN.
+- ML-модель выбирает на пользователя × на ряд.
+- Хранимое отображение `user_id → (title_id → image_id)` в EVCache.
 
-**A/B testing:**
-- New artwork variants tested на 1% traffic.
-- Metric: CTR + downstream watch completion.
-- Auto-promote winners.
+**A/B-тестирование:**
+- Новые варианты обложек тестируются на 1% трафика.
+- Метрика: CTR + последующая досматриваемость.
+- Победители автоматически выкатываются.
 
 ## Q17. Contextual bandits для explore vs exploit?
 
 **Проблема:**
-- Pure exploit (всегда top-ranked items) → user видит то же → engagement drops.
-- Pure explore (random items) → frustration.
-- Trade-off: balance discovery + relevance.
+- Чистый exploit (всегда top-ranked items) → пользователь видит одно и то же → вовлечённость падает.
+- Чистый explore (случайные items) → фрустрация.
+- Компромисс: баланс между открытием нового и релевантностью.
 
 **Contextual bandits:**
-- Each "arm" = item to recommend.
-- Reward = user engagement (watched > 5 min).
-- Context = user state, time, device.
-- Algorithm balances explore-exploit per context.
+- Каждая «рука» (arm) = item для рекомендации.
+- Награда = вовлечённость пользователя (просмотрел > 5 мин).
+- Контекст = состояние пользователя, время, устройство.
+- Алгоритм балансирует explore-exploit под каждый контекст.
 
-**Algorithms:**
+**Алгоритмы:**
 
 **LinUCB (Linear Upper Confidence Bound):**
-- Estimate reward + uncertainty per item.
-- Pick item с highest `reward + λ × uncertainty`.
-- Explore items с high uncertainty.
+- Оцениваем награду + неопределённость по каждому item.
+- Выбираем item с наибольшим `reward + λ × uncertainty`.
+- Исследуем items с высокой неопределённостью.
 
 **Thompson Sampling:**
-- Sample from posterior distribution per item.
-- Naturally balances explore-exploit.
-- Used Netflix recommendation.
+- Сэмплируем из апостериорного распределения по каждому item.
+- Естественно балансирует explore-exploit.
+- Используется в рекомендациях Netflix.
 
-**Use cases:**
-- New title launch (no engagement data).
-- Cold-start users.
-- Long-tail item discovery.
+**Сценарии применения:**
+- Запуск нового тайтла (нет данных о вовлечённости).
+- Пользователи на cold-start.
+- Открытие items из длинного хвоста.
 
-**Tradeoffs:**
-- Statistical efficiency (faster learning).
-- Implementation complexity (vs pure ranking).
+**Компромиссы:**
+- Статистическая эффективность (быстрее обучение).
+- Сложность реализации (в сравнении с чистым ранжированием).
 
 ## Q18. (!) High-level architecture?
 
@@ -753,44 +753,44 @@ graph LR
     C --> License
 ```
 
-**Two planes:**
+**Две плоскости:**
 
-**Control plane (AWS, microservices):**
-- Metadata, recommendation, search, user account, billing, license server.
-- Hundreds of microservices.
-- Stateful storage: Cassandra (profile/watch history), MySQL (billing), Elasticsearch (search).
+**Control plane (AWS, микросервисы):**
+- Метаданные, рекомендации, поиск, аккаунт пользователя, биллинг, license-сервер.
+- Сотни микросервисов.
+- Stateful-хранилища: Cassandra (профиль/история просмотров), MySQL (биллинг), Elasticsearch (поиск).
 
 **Data plane (Open Connect):**
-- Video bytes flow.
-- OCA приближают bytes к user.
-- 95% requests serve from OCA, 5% from AWS.
+- Поток байтов видео.
+- OCA приближают байты к пользователю.
+- 95% запросов обслуживаются из OCA, 5% — из AWS.
 
-**Inter-service:**
-- gRPC внутри cluster.
+**Межсервисное взаимодействие:**
+- gRPC внутри кластера.
 - HTTP/2 для cross-region.
-- Kafka для async events.
+- Kafka для асинхронных событий.
 
-**Pattern: Fronting Layer (Zuul):**
-- Все requests от clients идут через Zuul gateway.
-- Auth, rate limit, routing.
-- Edge filters: request rewrites, A/B test bucketing.
+**Паттерн: фронтовый слой (Zuul):**
+- Все запросы от клиентов идут через Zuul gateway.
+- Auth, rate limit, маршрутизация.
+- Edge-фильтры: переписывание запросов, разбиение на корзины A/B-теста.
 
 ## Q19. Microservices stack (Eureka, Ribbon, Hystrix, Zuul, Atlas)?
 
-Netflix OSS — открытая часть internal stack, многое стало индустриальным стандартом.
+Netflix OSS — открытая часть внутреннего стека, многое стало отраслевым стандартом.
 
-| Tool | Role | Notes |
+| Инструмент | Роль | Примечания |
 |---|---|---|
-| Eureka | Service discovery | Регистрация instances + health checks |
-| Ribbon | Client-side load balancer | Round-robin / weighted; deprecated в favor of Spring Cloud LoadBalancer |
-| Hystrix | Circuit breaker | Deprecated 2018; теперь Resilience4j |
-| Zuul | API Gateway | Edge gateway, dynamic routing, filters |
-| Atlas | Time-series metrics | Multi-dimensional, Prometheus-like |
-| Spinnaker | Deployment | CD pipeline, multi-cloud |
-| Chaos Monkey | Chaos engineering | Random instance termination |
-| Mantis | Stream processing | Real-time anomaly detection |
+| Eureka | Service discovery | Регистрация инстансов + health-чеки |
+| Ribbon | Клиентский балансировщик нагрузки | Round-robin / weighted; deprecated в пользу Spring Cloud LoadBalancer |
+| Hystrix | Circuit breaker | Deprecated в 2018; теперь Resilience4j |
+| Zuul | API Gateway | Edge-gateway, динамическая маршрутизация, фильтры |
+| Atlas | Time-series метрики | Многомерные, в духе Prometheus |
+| Spinnaker | Деплой | CD-пайплайн, multi-cloud |
+| Chaos Monkey | Chaos engineering | Случайное завершение инстансов |
+| Mantis | Stream processing | Обнаружение аномалий в реальном времени |
 
-**Architecture pattern:**
+**Архитектурный паттерн:**
 
 ```
 Client → Zuul (routing) → Service A (uses Ribbon → Eureka → Service B)
@@ -799,53 +799,53 @@ Client → Zuul (routing) → Service A (uses Ribbon → Eureka → Service B)
 ```
 
 **Современная замена (2020+):**
-- Eureka → Consul / Kubernetes service discovery.
+- Eureka → Consul / service discovery в Kubernetes.
 - Ribbon → Spring Cloud LoadBalancer.
 - Hystrix → Resilience4j.
 - Zuul → Envoy + Spring Cloud Gateway.
 - Atlas → Prometheus + Grafana.
 
-Netflix постепенно мигрирует на open standards (gRPC + Envoy + K8s).
+Netflix постепенно мигрирует на открытые стандарты (gRPC + Envoy + K8s).
 
 ## Q20. (!) Resilience patterns (bulkheads, circuit breaker, fallback)?
 
-**Failure modes** на Netflix scale:
-- Hardware failures (datacenter, network, server).
-- Software bugs (новый release с regression).
-- Cascade failures (slow downstream service → upstream queue exhaustion).
+**Сценарии отказов** в масштабе Netflix:
+- Аппаратные сбои (дата-центр, сеть, сервер).
+- Программные баги (новый релиз с регрессией).
+- Каскадные отказы (медленный downstream-сервис → исчерпание очередей выше по цепочке).
 
-**Resilience patterns:**
+**Паттерны устойчивости:**
 
 **Bulkhead (изоляция):**
-- Отдельные thread pools per dependency.
-- Slow Recommendation Service не exhaust threads нужные Catalog.
+- Отдельные пулы потоков на каждую зависимость.
+- Медленный Recommendation Service не исчерпывает потоки, нужные Catalog.
 - Аналогия: водонепроницаемые отсеки корабля.
 
 **Circuit breaker:**
 - Resilience4j (наследник Hystrix).
-- 3 states: Closed (normal) → Open (fail-fast) → Half-Open (test recovery).
-- При threshold failures → break circuit → return fallback immediately.
+- 3 состояния: Closed (норма) → Open (fail-fast) → Half-Open (проверка восстановления).
+- При достижении порога отказов → размыкаем цепь → сразу возвращаем fallback.
 
 **Fallback:**
-- Каждый remote call имеет fallback.
-- Recommendation fail → cached homepage от 1 hour ago.
-- Search fail → static popular titles.
-- License fail → cached license валиден 24h.
+- У каждого удалённого вызова есть fallback.
+- Сбой рекомендаций → закэшированная homepage часовой давности.
+- Сбой поиска → статичные популярные тайтлы.
+- Сбой лицензий → закэшированная лицензия валидна 24 ч.
 
 **Timeout:**
-- Aggressive per-service timeouts (50-200 ms).
-- Lower than upstream timeout — prevents cascade.
+- Агрессивные таймауты на каждый сервис (50-200 ms).
+- Ниже, чем таймаут выше по цепочке — предотвращает каскад.
 
 **Retry:**
-- Exponential backoff + jitter.
-- Idempotency required.
-- Bounded retries (max 3).
+- Экспоненциальный backoff + jitter.
+- Требуется идемпотентность.
+- Ограниченное число повторов (максимум 3).
 
 **Rate limiting:**
-- Per-service quota.
-- Защита от runaway client.
+- Квота на каждый сервис.
+- Защита от вышедшего из-под контроля клиента.
 
-**Pattern в коде (Resilience4j):**
+**Паттерн в коде (Resilience4j):**
 ```java
 @CircuitBreaker(name = "recommendation", fallbackMethod = "getCachedRecommendation")
 @Bulkhead(name = "recommendation", type = THREADPOOL)
@@ -861,44 +861,44 @@ public CompletableFuture<List<Title>> getCachedRecommendation(String userId, Thr
 
 ## Q21. Catalog service (Elasticsearch, GraphQL Gateway)?
 
-**Catalog metadata:**
-- Title info (name, year, genre, cast, director, description).
-- Episode metadata (для shows).
-- Multi-language localization (translations, subtitles).
-- Region-specific licensing flags.
-- Rich descriptors (mood, theme, era).
+**Метаданные каталога:**
+- Информация о тайтле (название, год, жанр, актёры, режиссёр, описание).
+- Метаданные эпизодов (для сериалов).
+- Многоязычная локализация (переводы, субтитры).
+- Флаги лицензирования по регионам.
+- Богатые дескрипторы (настроение, тема, эпоха).
 
-**Storage:**
-- Master data в Cassandra (по title_id).
-- Search index в Elasticsearch (full-text + filters).
-- Hot cache в EVCache (most-accessed titles).
+**Хранение:**
+- Мастер-данные в Cassandra (по title_id).
+- Поисковый индекс в Elasticsearch (full-text + фильтры).
+- Горячий кэш в EVCache (наиболее запрашиваемые тайтлы).
 
-**Elasticsearch index:**
-- Per-language analyzer (russian, english, japanese).
-- Fuzzy matching для typos.
-- Faceted filters (genre, year, language, rating).
-- Geo-restrictions (filter by user's country).
+**Индекс Elasticsearch:**
+- Анализатор под каждый язык (русский, английский, японский).
+- Fuzzy-matching для опечаток.
+- Фасетные фильтры (жанр, год, язык, рейтинг).
+- Гео-ограничения (фильтр по стране пользователя).
 
 **GraphQL Gateway:**
-- Federated GraphQL — каждый сервис exposes schema fragment.
-- Client requests `{ title { name, recommendations { ... } } }` — gateway орchestrates.
-- Replaces REST для clients (mobile + Web).
-- Built-in batching reduces round trips.
+- Federated GraphQL — каждый сервис экспонирует фрагмент схемы.
+- Клиент запрашивает `{ title { name, recommendations { ... } } }` — gateway оркестрирует.
+- Заменяет REST для клиентов (mobile + Web).
+- Встроенный batching снижает число round-trip.
 
-**Tools:**
+**Инструменты:**
 - Apollo Federation.
-- Internal Netflix Studio Edge.
+- Внутренний Netflix Studio Edge.
 
-**Caching:**
-- Per-query cache в EVCache.
-- TTL 5 минут для catalog data (rarely changes).
-- Invalidation through pub/sub when title metadata updated.
+**Кэширование:**
+- Кэш на каждый запрос в EVCache.
+- TTL 5 минут для данных каталога (редко меняются).
+- Инвалидация через pub/sub при обновлении метаданных тайтла.
 
 ## Q22. Continue watching через Cassandra + Kafka sync?
 
-**Use case:** user смотрит S1E5 на телефоне до 23:45 минут → закрывает → открывает TV → должно продолжаться с 23:45.
+**Сценарий:** пользователь смотрит S1E5 на телефоне до 23:45 → закрывает → открывает TV → должно продолжиться с 23:45.
 
-**Storage (Cassandra):**
+**Хранение (Cassandra):**
 ```cql
 CREATE TABLE watch_progress (
   user_id   uuid,
@@ -909,173 +909,173 @@ CREATE TABLE watch_progress (
   PRIMARY KEY (user_id, title_id)
 );
 ```
-- Partition by `user_id` (все progress one user — one node).
-- Cluster by `title_id`.
-- Eventual consistency (LOCAL_QUORUM acceptable).
+- Партиционирование по `user_id` (весь прогресс одного пользователя — на одной ноде).
+- Кластеризация по `title_id`.
+- Eventual consistency (LOCAL_QUORUM приемлем).
 
-**Update flow:**
-1. Client сообщает position каждые 30 сек (или на pause/seek).
-2. Watch Service: write Cassandra + emit Kafka event.
-3. Kafka event consumed by:
-   - Analytics pipeline.
-   - Recommendation feature store.
-   - Multi-device sync service.
+**Поток обновления:**
+1. Клиент сообщает позицию каждые 30 сек (или на pause/seek).
+2. Watch Service: запись в Cassandra + эмит Kafka-события.
+3. Kafka-событие потребляется:
+   - Аналитическим пайплайном.
+   - Feature store рекомендаций.
+   - Сервисом синхронизации между устройствами.
 
-**Sync between devices:**
-- Phone Polly Watch Service every 30s. Phone closes.
-- TV opens app → Watch Service queries Cassandra → resumes from saved position.
-- Latency: 5-10 sec across-region replication (eventual).
+**Синхронизация между устройствами:**
+- Телефон опрашивает Watch Service каждые 30 с. Телефон закрывается.
+- TV открывает приложение → Watch Service запрашивает Cassandra → возобновляет с сохранённой позиции.
+- Latency: 5-10 сек на межрегиональную репликацию (eventual).
 
-**Edge cases:**
-- Two devices simultaneously — last-write-wins (latest position).
-- Offline progress (Q27) — buffered locally, synced on reconnect.
+**Граничные случаи:**
+- Два устройства одновременно — last-write-wins (последняя позиция).
+- Офлайн-прогресс (Q27) — буферизуется локально, синхронизируется при переподключении.
 
-**Volume:**
-- 200M DAU × 4 hours/day × 1 update/30s = ~96M updates/hour, 27K/sec sustained.
-- Cassandra cluster sized accordingly.
+**Объём:**
+- 200M DAU × 4 часа/день × 1 апдейт/30 с = ~96M апдейтов/час, 27K/сек в устоявшемся режиме.
+- Кластер Cassandra сайзится соответственно.
 
 ## Q23. (!) Chaos Engineering (Chaos Monkey, Kong, Latency)?
 
-**Netflix-pioneered approach:** prove resilience by deliberately injecting failures в production.
+**Подход, который запустил Netflix:** доказывать устойчивость, намеренно инжектируя отказы в production.
 
-**Suite (Simian Army):**
+**Набор (Simian Army):**
 
-| Tool | Что делает | Periodicity |
+| Инструмент | Что делает | Периодичность |
 |---|---|---|
-| Chaos Monkey | Random instance termination | Continuously, business hours |
-| Chaos Gorilla | Kill entire availability zone | Weekly |
-| Chaos Kong | Kill entire AWS region | Monthly |
-| Latency Monkey | Inject latency 1-10 sec | Hourly |
-| Conformity Monkey | Detect mis-configured instances | Daily |
-| Security Monkey | Find security violations | Continuously |
-| Janitor Monkey | Clean orphaned resources | Daily |
+| Chaos Monkey | Случайное завершение инстансов | Постоянно, в рабочие часы |
+| Chaos Gorilla | Убивает целую availability zone | Еженедельно |
+| Chaos Kong | Убивает целый AWS-регион | Ежемесячно |
+| Latency Monkey | Инжектирует задержку 1-10 сек | Ежечасно |
+| Conformity Monkey | Находит неправильно сконфигурированные инстансы | Ежедневно |
+| Security Monkey | Находит нарушения безопасности | Постоянно |
+| Janitor Monkey | Чистит осиротевшие ресурсы | Ежедневно |
 
-**Philosophy:**
-- "If you can't fix something, automate breaking it daily so the fix becomes mandatory."
-- Production has real failures — better simulate before they happen.
+**Философия:**
+- «Если что-то нельзя починить — автоматизируй поломку этого каждый день, чтобы починка стала обязательной».
+- В production бывают реальные отказы — лучше симулировать их до того, как они случатся.
 
-**Implementation:**
-- Chaos Monkey randomly picks instance from auto-scaling group.
-- Terminate с warning.
-- Monitoring measures impact.
-- If impact > threshold → alert.
+**Реализация:**
+- Chaos Monkey случайно выбирает инстанс из auto-scaling group.
+- Завершает с предупреждением.
+- Мониторинг измеряет влияние.
+- Если влияние > порога → алерт.
 
-**Recovery validation:**
-- Service replicas auto-spawn (ASG).
-- Load balancer reroutes traffic.
-- < 30 sec full recovery target.
+**Валидация восстановления:**
+- Реплики сервиса автоматически поднимаются (ASG).
+- Балансировщик перенаправляет трафик.
+- Цель — полное восстановление < 30 сек.
 
-**Cultural:**
-- Engineers ожидают что их сервис рано или поздно "пострадает" → пишут defensive code.
-- Game days — manual chaos exercises с full team.
+**Культура:**
+- Инженеры ожидают, что их сервис рано или поздно «пострадает» → пишут защитный код.
+- Game days — ручные chaos-учения всей командой.
 
-**Open-source:** Chaos Monkey released 2012. Inspiration for AWS Fault Injection Simulator, Gremlin, LitmusChaos.
+**Open source:** Chaos Monkey выпущен в 2012. Вдохновил AWS Fault Injection Simulator, Gremlin, LitmusChaos.
 
 ## Q24. (!) Multi-region active-active (US-East + EU + APAC)?
 
 **Цели:**
-- Latency < 100 ms из любой geo.
-- Region outage → < 5 минут switchover.
-- Local data residency (GDPR в EU).
+- Latency < 100 ms из любой географии.
+- Отказ региона → переключение < 5 минут.
+- Локальное хранение данных (GDPR в EU).
 
 **Архитектура:**
 
-**Regions:**
-- US-East-1 (N. Virginia) — primary US.
-- EU-West-1 (Ireland) — primary EU.
-- AP-Northeast-1 (Tokyo) — primary APAC.
-- + secondary regions per geo для DR.
+**Регионы:**
+- US-East-1 (N. Virginia) — основной для US.
+- EU-West-1 (Ireland) — основной для EU.
+- AP-Northeast-1 (Tokyo) — основной для APAC.
+- + вторичные регионы по каждой географии для DR.
 
-**Per-region stack:**
-- Full microservices replica.
-- Cassandra multi-DC replication.
-- Eureka local registry (services discover в-region first).
-- Local OCA cluster (Open Connect).
+**Стек на каждый регион:**
+- Полная реплика микросервисов.
+- Multi-DC репликация Cassandra.
+- Локальный реестр Eureka (сервисы сначала ищут друг друга внутри региона).
+- Локальный кластер OCA (Open Connect).
 
-**Routing:**
-- AWS Route 53 latency-based routing.
-- DNS TTL 60 sec → быстрый failover.
-- Health checks per region.
+**Маршрутизация:**
+- AWS Route 53 с маршрутизацией по latency.
+- DNS TTL 60 сек → быстрый failover.
+- Health-чеки на каждый регион.
 
-**Cassandra multi-region:**
-- `LOCAL_QUORUM` writes (latency < 10 ms in-region).
-- Async replication к other regions (5-30 sec lag).
-- `EACH_QUORUM` для critical writes (slow, redundant).
+**Multi-region Cassandra:**
+- Записи `LOCAL_QUORUM` (latency < 10 ms внутри региона).
+- Асинхронная репликация в другие регионы (лаг 5-30 сек).
+- `EACH_QUORUM` для критичных записей (медленно, избыточно).
 
 **Eventual consistency:**
-- Watch progress eventually consistent (acceptable 30 sec lag).
-- User profile changes — synchronous (Route to home region).
+- Прогресс просмотра в итоге согласован (приемлем лаг 30 сек).
+- Изменения профиля пользователя — синхронно (маршрутизация в домашний регион).
 
-**Failover scenarios:**
-- Single AZ loss: ASG spawns в another AZ (automatic).
-- Region loss: Route 53 reroutes traffic to next region; 1-2 minutes.
-- Cross-region disaster: regional traffic concentrates in survivors (planned overcapacity 2×).
+**Сценарии failover:**
+- Потеря одной AZ: ASG поднимает в другой AZ (автоматически).
+- Потеря региона: Route 53 перенаправляет трафик в следующий регион; 1-2 минуты.
+- Межрегиональная катастрофа: региональный трафик стекается в выжившие (запланированный двукратный запас по мощности).
 
-**Chaos Kong simulates** entire region loss — Netflix runs this monthly.
+**Chaos Kong симулирует** потерю целого региона — Netflix запускает это ежемесячно.
 
 ## Q25. A/B testing platform (1-5% traffic, auto-rollout)?
 
-**Scale:** Netflix runs 1000+ active experiments simultaneously.
+**Масштаб:** Netflix одновременно ведёт 1000+ активных экспериментов.
 
-**Platform:**
-- In-house experimentation infrastructure (open-sourced как ABBA-like).
-- Bucketing service (consistent hashing по user_id).
-- Config service stores variants per experiment.
-- Metric pipeline collects engagement signals.
+**Платформа:**
+- Собственная инфраструктура экспериментов (открыта в open source, похожа на ABBA).
+- Сервис разбиения на корзины (consistent hashing по user_id).
+- Config-сервис хранит варианты по каждому эксперименту.
+- Пайплайн метрик собирает сигналы вовлечённости.
 
-**Experiment design:**
-- Control + 1-5 treatment variants.
-- Initial allocation: 1% traffic.
-- Ramp: 5% → 25% → 50% → 100% при positive metrics.
-- Auto-rollback при regression > 1%.
+**Дизайн эксперимента:**
+- Контроль + 1-5 treatment-вариантов.
+- Начальное распределение: 1% трафика.
+- Разгон: 5% → 25% → 50% → 100% при положительных метриках.
+- Авто-откат при регрессии > 1%.
 
-**Metrics:**
-- **Primary:** retention (D7, D30 returning users).
-- **Secondary:** watch hours, completion rate, CTR.
-- **Guardrail:** error rate, latency.
+**Метрики:**
+- **Основные:** retention (возврат пользователей на D7, D30).
+- **Вторичные:** часы просмотра, доля досмотров, CTR.
+- **Guardrail:** доля ошибок, latency.
 
-**Statistical tools:**
-- Sequential testing (mSPRT) для early stopping.
-- Bayesian inference для quick decisions.
-- Holdout group 1% always (long-term effects).
+**Статистические инструменты:**
+- Sequential testing (mSPRT) для раннего останова.
+- Байесовский вывод для быстрых решений.
+- Holdout-группа всегда 1% (долгосрочные эффекты).
 
-**Pitfalls:**
-- Network effects: user-to-user interactions invalidate per-user A/B.
-- Cluster-randomized experiments для recommendation changes.
-- Multi-arm bandits для exploration без full A/B.
+**Подводные камни:**
+- Сетевые эффекты: взаимодействия между пользователями ломают per-user A/B.
+- Cluster-randomized эксперименты для изменений рекомендаций.
+- Multi-arm bandits для исследования без полноценного A/B.
 
-**Examples experiments:**
-- New artwork variant per title.
-- New ranking model.
-- Different homepage layout.
-- New encoding bitrate ladder.
+**Примеры экспериментов:**
+- Новый вариант обложки тайтла.
+- Новая модель ранжирования.
+- Другая раскладка домашней страницы.
+- Новый bitrate ladder кодирования.
 
 ## Q26. Data platform (Kafka, Iceberg, Spark, Flink)?
 
-**Stream layer:**
-- Apache Kafka — primary event backbone (trillions events/day).
-- Topics: watch_events, profile_changes, recommendation_clicks, errors.
-- 100+ Kafka clusters across regions.
+**Слой стриминга:**
+- Apache Kafka — основной хребет событий (триллионы событий/день).
+- Топики: watch_events, profile_changes, recommendation_clicks, errors.
+- 100+ Kafka-кластеров по регионам.
 
 **Stream processing:**
-- Apache Flink — low-latency real-time (recommendations, fraud).
-- Stateful processing с exactly-once semantics.
+- Apache Flink — low-latency в реальном времени (рекомендации, фрод).
+- Stateful-обработка с exactly-once семантикой.
 
 **Batch processing:**
 - Apache Spark на EMR.
-- ETL daily/hourly aggregations.
-- ML training pipelines.
+- ETL с ежедневными/ежечасными агрегациями.
+- Пайплайны обучения ML.
 
 **Data lake:**
 - Apache Iceberg на S3.
-- Schema evolution, time travel queries.
-- Partition pruning для efficient access.
+- Эволюция схемы, запросы с time travel.
+- Partition pruning для эффективного доступа.
 
-**Warehouse:**
-- Snowflake / Druid для BI analytics.
-- Tableau dashboards для product teams.
+**Хранилище (warehouse):**
+- Snowflake / Druid для BI-аналитики.
+- Дашборды Tableau для продуктовых команд.
 
-**Pipeline:**
+**Пайплайн:**
 ```
 Kafka events → Flink real-time → online features (EVCache)
               → Iceberg на S3 → Spark batch → ML training → models S3
@@ -1083,179 +1083,179 @@ Kafka events → Flink real-time → online features (EVCache)
 ```
 
 **Feature store:**
-- Netflix Metaflow + custom feature store.
-- Train-serve consistency (same features в training и inference).
+- Netflix Metaflow + собственный feature store.
+- Согласованность train-serve (одни и те же признаки в обучении и инференсе).
 
-**Volume:**
-- 1 trillion events/day.
+**Объём:**
+- 1 триллион событий/день.
 - 100 PB+ в Iceberg.
-- 10K+ data pipelines.
+- 10K+ data-пайплайнов.
 
 ## Q27. Downloads для offline viewing?
 
-**Use case:** user скачивает episode на phone перед полётом, смотрит без internet.
+**Сценарий:** пользователь скачивает эпизод на телефон перед полётом, смотрит без интернета.
 
-**Implementation:**
-- Download = encrypted local file на device.
-- DRM license (Widevine/FairPlay) — tied to device.
-- License expiration: typically 30 дней after download.
+**Реализация:**
+- Загрузка = зашифрованный локальный файл на устройстве.
+- DRM-лицензия (Widevine/FairPlay) — привязана к устройству.
+- Истечение лицензии: обычно 30 дней после загрузки.
 
-**Codec selection:**
-- Mobile-optimized: HEVC или AV1 (smaller files).
-- Lower bitrate than streaming (battery + storage).
+**Выбор кодека:**
+- Оптимизированный под mobile: HEVC или AV1 (файлы меньше).
+- Bitrate ниже, чем при стриминге (батарея + хранилище).
 
-**Storage:**
-- Up to 100 episodes per device.
-- Local file system encrypted at rest.
+**Хранение:**
+- До 100 эпизодов на устройство.
+- Локальная файловая система зашифрована at rest.
 
-**Restrictions:**
-- Some titles cannot be downloaded (licensing limits).
-- Max downloads per account.
-- Auto-delete after expiry или watch + 48h.
+**Ограничения:**
+- Часть тайтлов нельзя скачивать (лицензионные лимиты).
+- Максимум загрузок на аккаунт.
+- Авто-удаление после истечения срока или просмотра + 48 ч.
 
-**Sync с online:**
-- Watch progress saved locally → sync when online → updated на сервере.
+**Синхронизация с online:**
+- Прогресс просмотра сохраняется локально → синхронизируется при выходе в сеть → обновляется на сервере.
 - Continue Watching обновляется (Q22).
 
-**License revocation:**
-- Suspended account → next online check → license invalidated → cannot play.
-- Device limit (~5 downloaded devices per account).
+**Отзыв лицензии:**
+- Приостановленный аккаунт → следующая онлайн-проверка → лицензия аннулируется → воспроизведение невозможно.
+- Лимит устройств (~5 устройств с загрузками на аккаунт).
 
 ## Q28. (!) Cost optimization (Reserved + Spot + Open Connect)?
 
-**Top cost buckets (Netflix scale):**
+**Крупнейшие статьи расходов (масштаб Netflix):**
 
-| Bucket | Annual cost | Optimization |
+| Статья | Годовая стоимость | Оптимизация |
 |---|---|---|
 | CDN egress | $300-500M | Open Connect (vs commercial CDN $3B+) |
 | AWS Compute (EC2) | $100-200M | Reserved + Savings Plans |
-| AWS Storage (S3) | $50-100M | Lifecycle policies, Glacier для cold |
-| Encoding | $25-50M | Spot instances |
-| Studio licensing | $15-20B | Content deals (largest cost) |
+| AWS Storage (S3) | $50-100M | Lifecycle-политики, Glacier для холодного |
+| Кодирование | $25-50M | Spot-инстансы |
+| Лицензирование у студий | $15-20B | Контентные сделки (самая крупная статья) |
 
-**Open Connect cost savings:**
-- 95% traffic через OCA at ~$2/TB.
-- vs Commercial CDN $20/TB → 10× cheaper.
-- Total: $200-400M/year saved.
+**Экономия за счёт Open Connect:**
+- 95% трафика через OCA по ~$2/TB.
+- vs commercial CDN $20/TB → в 10× дешевле.
+- Итого: экономия $200-400M/год.
 
 **AWS Reserved Instances:**
-- 3-year RI: 60% discount от On-Demand.
-- Steady-state services (microservices, Cassandra) — RI.
-- Bursty (encoding) — Spot.
+- 3-летние RI: скидка 60% от On-Demand.
+- Сервисы с постоянной нагрузкой (микросервисы, Cassandra) — RI.
+- Всплесковые (кодирование) — Spot.
 
-**Per-title encoding savings:**
-- 20-30% bitrate reduction → equivalent CDN savings.
-- На 1 Pbps это $50-100M/year.
+**Экономия от per-title encoding:**
+- Снижение bitrate на 20-30% → эквивалентная экономия на CDN.
+- На 1 Pbps это $50-100M/год.
 
-**Image optimization:**
-- WebP/AVIF vs JPEG → 30-50% smaller artwork.
-- Saves CDN bandwidth для homepage assets.
+**Оптимизация изображений:**
+- WebP/AVIF vs JPEG → обложки на 30-50% меньше.
+- Экономит CDN-bandwidth на ассетах домашней страницы.
 
 **S3 lifecycle:**
-- Standard → IA after 30 days unused.
-- Glacier after 1 year unused.
+- Standard → IA после 30 дней без использования.
+- Glacier после 1 года без использования.
 
-**Trade-offs:**
-- Aggressive Spot use → orchestration complexity.
-- Reserved Instances commitment → less flexibility.
-- Open Connect requires ISP relationships (years to build).
+**Компромиссы:**
+- Агрессивное использование Spot → сложность оркестрации.
+- Обязательства по Reserved Instances → меньше гибкости.
+- Open Connect требует отношений с ISP (выстраивать годами).
 
 ## Q29. Anti-fraud: account/password sharing detection?
 
-**Problem:** account sharing (один account → multiple households) costs Netflix billions.
+**Проблема:** шеринг аккаунта (один аккаунт → несколько домохозяйств) обходится Netflix в миллиарды.
 
-**2023 crackdown:**
-- Stricter "Primary household" detection.
-- Extra members $7.99/month.
+**Ужесточение 2023:**
+- Более строгое определение «основного домохозяйства».
+- Дополнительные участники по $7.99/месяц.
 
-**Detection signals:**
-- **Device locations:** IP, geo, ISP.
-- **Login patterns:** time-of-day, frequency.
-- **Watch patterns:** simultaneous streams на 3+ different IP ranges.
-- **Device fingerprints:** unique device IDs across logins.
+**Сигналы для детекции:**
+- **Расположение устройств:** IP, гео, ISP.
+- **Паттерны входа:** время суток, частота.
+- **Паттерны просмотра:** одновременные потоки из 3+ разных диапазонов IP.
+- **Отпечатки устройств:** уникальные device-ID между входами.
 
-**Algorithm:**
-- "Household" = devices that watch in same home Wi-Fi periodically.
-- ML model identifies household graph (devices clusters).
-- Outside-household streams trigger verification.
+**Алгоритм:**
+- «Домохозяйство» = устройства, которые периодически смотрят из одной домашней Wi-Fi.
+- ML-модель строит граф домохозяйства (кластеры устройств).
+- Потоки вне домохозяйства запускают верификацию.
 
-**Enforcement:**
-- Friction (not block) — user prompted to verify primary location.
-- Soft warnings before hard block.
-- Adoption of "Extra Member" subscription.
+**Принуждение (enforcement):**
+- Трение, а не блокировка — пользователю предлагают подтвердить основную локацию.
+- Мягкие предупреждения перед жёсткой блокировкой.
+- Переход на подписку «Extra Member».
 
-**Edge cases:**
-- Traveling household member — temporary access allowed.
-- Students dormitory — flexibility.
-- Different time-zones — accommodate.
+**Граничные случаи:**
+- Член домохозяйства в поездке — разрешён временный доступ.
+- Студенческое общежитие — гибкость.
+- Разные часовые пояса — учитываются.
 
-**Other fraud types:**
-- Stolen credit cards — fraud signals on signup.
-- Subscription fraud (free-trial abuse) — device fingerprint blocklist.
-- Bot accounts (scraping) — rate limiting + CAPTCHA.
+**Другие типы мошенничества:**
+- Краденые кредитные карты — fraud-сигналы при регистрации.
+- Subscription fraud (злоупотребление free-trial) — blocklist по отпечатку устройства.
+- Бот-аккаунты (скрейпинг) — rate limiting + CAPTCHA.
 
 ## Q30. (!) Антипаттерны и подводные камни?
 
-**1. Synchronous calls между всеми сервисами.**
-- Microservice A calls B sync, B calls C sync → A waits for whole chain.
-- Cascade failures: C slow → B threads blocked → A threads blocked.
-- Fix: async где возможно (Kafka events для side-effects), tight timeouts, bulkheads.
+**1. Синхронные вызовы между всеми сервисами.**
+- Микросервис A вызывает B синхронно, B вызывает C синхронно → A ждёт всю цепочку.
+- Каскадные отказы: C медленный → потоки B заблокированы → потоки A заблокированы.
+- Решение: async где можно (Kafka-события для побочных эффектов), жёсткие таймауты, bulkheads.
 
-**2. Single CDN provider без fallback.**
-- CDN outage = 0 revenue.
-- Fix: multi-CDN (Open Connect + Akamai/Cloudflare fallback), Netflix именно так.
+**2. Один CDN-провайдер без fallback.**
+- Отказ CDN = 0 выручки.
+- Решение: multi-CDN (Open Connect + fallback на Akamai/Cloudflare), у Netflix именно так.
 
-**3. No chaos testing.**
-- Untested failover работает только 40% времени.
-- Fix: Chaos Monkey + monthly Chaos Kong drills.
+**3. Нет chaos-тестирования.**
+- Непротестированный failover срабатывает лишь в 40% случаев.
+- Решение: Chaos Monkey + ежемесячные учения Chaos Kong.
 
-**4. Strong consistency между регионами.**
-- Cross-region sync writes = 100+ ms latency.
-- Fix: eventual consistency + LOCAL_QUORUM (Q24).
+**4. Строгая согласованность между регионами.**
+- Синхронные межрегиональные записи = latency 100+ ms.
+- Решение: eventual consistency + LOCAL_QUORUM (Q24).
 
 **5. Каждый сервис без circuit breaker.**
-- Slow downstream cascades upstream.
-- Fix: Resilience4j всех external calls.
+- Медленный downstream каскадирует наверх.
+- Решение: Resilience4j на всех внешних вызовах.
 
-**6. Sync click counter updates.**
-- Hot title spike → row contention.
-- Fix: async через Kafka aggregation (Q22).
+**6. Синхронное обновление счётчиков кликов.**
+- Всплеск на горячем тайтле → конкуренция за строку.
+- Решение: async через Kafka-агрегацию (Q22).
 
-**7. Без A/B platform.**
-- Rollout new feature без measurement = guessing.
-- Fix: experimentation platform от day 1.
+**7. Нет A/B-платформы.**
+- Выкатка новой фичи без замеров = гадание.
+- Решение: платформа экспериментов с первого дня.
 
-**8. Bitrate ladder fixed для всего content.**
-- Cartoon over-encoded, action under-encoded.
-- Fix: per-title encoding (Q8) — 20% bandwidth saving.
+**8. Фиксированный bitrate ladder для всего контента.**
+- Мультфильм over-encoded, боевик under-encoded.
+- Решение: per-title encoding (Q8) — экономия 20% bandwidth.
 
-**9. One codec для всех devices.**
-- H.264 only = 30% extra bandwidth vs AV1.
-- Fix: device-aware codec selection (AV1 → HEVC → VP9 → H.264 fallback).
+**9. Один codec для всех устройств.**
+- Только H.264 = 30% лишнего bandwidth vs AV1.
+- Решение: выбор кодека с учётом устройства (fallback AV1 → HEVC → VP9 → H.264).
 
-**10. No DRM.**
-- Studios refuse to license premium content.
-- Fix: Widevine/FairPlay/PlayReady integration.
+**10. Нет DRM.**
+- Студии отказываются лицензировать премиальный контент.
+- Решение: интеграция Widevine/FairPlay/PlayReady.
 
-**11. Pure pull-based CDN.**
-- Cold cache → origin spike at premiere.
-- Fix: pre-positioning overnight (Q5).
+**11. Чисто pull-based CDN.**
+- Холодный кэш → всплеск на origin в момент премьеры.
+- Решение: pre-positioning ночью (Q5).
 
-**12. Без observability на QoE.**
-- "Метрики ок" но rebuffering high → users leave.
-- Fix: composite QoE metric, alert on degradation.
+**12. Нет observability по QoE.**
+- «Метрики ок», но rebuffering высокий → пользователи уходят.
+- Решение: составная метрика QoE, алерт на деградацию.
 
-**13. Encoding на On-Demand EC2.**
-- 10× over Spot cost.
-- Fix: Spot fleet с diversification.
+**13. Кодирование на On-Demand EC2.**
+- В 10× дороже Spot.
+- Решение: Spot fleet с диверсификацией.
 
-**14. Monolith service.**
-- Один deploy ломает весь Netflix.
-- Fix: microservices с independent deploy (Spinnaker).
+**14. Монолитный сервис.**
+- Один деплой ломает весь Netflix.
+- Решение: микросервисы с независимым деплоем (Spinnaker).
 
-**15. Без forensic watermarking.**
-- Leaked content untraceable.
-- Fix: per-user watermark embedded в video stream.
+**15. Нет forensic watermarking.**
+- Утёкший контент невозможно отследить.
+- Решение: водяной знак на каждого пользователя, встроенный в видеопоток.
 
 ---
 

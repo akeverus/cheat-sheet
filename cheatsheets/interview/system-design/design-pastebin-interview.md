@@ -80,129 +80,129 @@ updated: "2026-05-27"
 
 ## Q1. (!) Functional и non-functional requirements?
 
-**Functional:**
-- Создать paste: текст / код / Markdown с опциональным title.
+**Функциональные:**
+- Создать paste: текст / код / Markdown с опциональным заголовком.
 - Получить paste по короткой ссылке: `pastebin.com/abc1234`.
-- Raw view: `pastebin.com/raw/abc1234` (для curl, wget).
-- TTL / expiration (опционально).
-- Syntax highlighting по языку (или auto-detect).
-- Anonymous + authenticated режимы.
-- Privacy modes: public, unlisted, private, password-protected.
-- Опционально: edit, version history (Gist).
-- Опционально: full-text search.
-- Опционально: embed widget.
+- Raw-просмотр: `pastebin.com/raw/abc1234` (для curl, wget).
+- TTL / истечение срока (опционально).
+- Подсветка синтаксиса по языку (или авто-детект).
+- Анонимный и авторизованный режимы.
+- Режимы приватности: public, unlisted, private, password-protected.
+- Опционально: редактирование, история версий (Gist).
+- Опционально: полнотекстовый поиск.
+- Опционально: embed-виджет.
 
-**Non-functional:**
-- Users: миллионы DAU (Pastebin ~25M MAU, Gist ~10M+).
-- Pastes: 1M+ создаётся/день, retention years.
-- Read-heavy: 100:1 reads:writes (один paste viewed N раз).
-- Latency: view < 100 ms, creation < 500 ms.
-- Availability: 99.9% (не критично как для финтеха).
-- Storage: TB-scale (compressed blobs).
+**Нефункциональные:**
+- Пользователи: миллионы DAU (Pastebin ~25M MAU, Gist ~10M+).
+- Pastes: 1M+ создаётся/день, retention годами.
+- Преобладание чтения: 100:1 reads:writes (один paste просматривают N раз).
+- Латентность: просмотр < 100 ms, создание < 500 ms.
+- Доступность: 99.9% (не так критично, как для финтеха).
+- Хранилище: масштаб TB (сжатые blob-ы).
 
-**Scope excluded (типично):**
-- Real-time collaborative editing (Codepen, JSFiddle Pro).
-- Code execution / sandbox (это replit, не pastebin).
-- Rich text formatting (HTML editor) — только plain text / markdown.
+**За скобками scope (типично):**
+- Совместное редактирование в реальном времени (Codepen, JSFiddle Pro).
+- Выполнение кода / sandbox (это replit, не pastebin).
+- Форматированный текст (HTML-редактор) — только plain text / markdown.
 
-**Tip:** senior сразу указывает что paste бывает huge (10 MB+ logs), и это диктует blob storage отделить от metadata DB.
+**Совет:** senior сразу отмечает, что paste бывает огромным (логи на 10 MB+), и это диктует необходимость отделить blob storage от metadata DB.
 
 ## Q2. (!) Capacity estimation (1M pastes/day, 5-year retention)?
 
-**Allowances:**
+**Исходные допущения:**
 
 | Параметр | Значение |
 |---|---|
-| Pastes created/day | 1M |
-| Average size | 10 KB (mix tiny snippets + large logs) |
-| Retention | 5 years (with TTL filtering) |
-| Read:write ratio | 100:1 |
+| Pastes создаётся/день | 1M |
+| Средний размер | 10 KB (микс из крошечных сниппетов и крупных логов) |
+| Retention | 5 лет (с фильтрацией по TTL) |
+| Соотношение read:write | 100:1 |
 
-**Storage:**
-- 1M × 10 KB = **10 GB/day** raw.
-- 5 years × 365 × 10 GB = **~18 TB raw**.
-- + index (small ~1%), metadata (~50 bytes/paste × 2B = 100 GB).
-- Compression (zstd 3-4×) → **5-7 TB compressed blob**.
+**Хранилище:**
+- 1M × 10 KB = **10 GB/день** raw.
+- 5 лет × 365 × 10 GB = **~18 TB raw**.
+- + индекс (небольшой ~1%), метаданные (~50 байт/paste × 2B = 100 GB).
+- Сжатие (zstd 3-4×) → **5-7 TB сжатого blob**.
 
-**Bandwidth:**
-- Reads: 1M × 100 = 100M views/day = ~1200 views/sec average.
-- Peak ×5 = 6 000 views/sec.
-- Per view: 10 KB → ~60 MB/sec egress peak.
-- 95%+ через CDN → origin ~3 MB/sec.
+**Полоса пропускания:**
+- Чтения: 1M × 100 = 100M просмотров/день = ~1200 просмотров/сек в среднем.
+- Пик ×5 = 6 000 просмотров/сек.
+- На просмотр: 10 KB → ~60 MB/сек egress на пике.
+- 95%+ через CDN → origin ~3 MB/сек.
 
-**Memory (cache):**
-- Hot pastes top 1% × 100K avg active = ~10 GB hot in Redis.
+**Память (cache):**
+- Горячие pastes, топ 1% × 100K активных в среднем = ~10 GB горячих в Redis.
 
 **QPS на metadata DB:**
-- Creates: 1M/day = ~12/sec average, peak 100/sec.
-- Reads: 1200-6000/sec — большая часть из cache.
+- Создания: 1M/день = ~12/сек в среднем, пик 100/сек.
+- Чтения: 1200-6000/сек — большая часть из cache.
 
-**Cost:**
-- S3 storage (compressed): 5-7 TB × $0.023/GB-month = **$120-160/month**.
-- CDN egress: 60 MB/sec × peak hours = 1-2 TB/month CDN = **$50-100/month**.
-- Bigger merchant scale (Pastebin сам): proportional growth.
+**Стоимость:**
+- S3 storage (сжатый): 5-7 TB × $0.023/GB-месяц = **$120-160/месяц**.
+- CDN egress: 60 MB/сек × пиковые часы = 1-2 TB/месяц через CDN = **$50-100/месяц**.
+- На большем масштабе (сам Pastebin): рост пропорционально.
 
 ## Q3. SLA и SLO для creation / view paths?
 
 | Metric | Цель | Alert |
 |---|---|---|
 | `paste_creation_latency_p99` | < 500 ms | > 2 сек |
-| `paste_view_latency_p99` | < 100 ms (cached) | > 500 ms |
+| `paste_view_latency_p99` | < 100 ms (из cache) | > 500 ms |
 | `cdn_hit_ratio` | > 90% | < 70% |
 | `creation_success_rate` | > 99% | < 95% |
-| `expiration_gc_lag_minutes` | < 60 min | > 1440 min (1 day) |
-| `abuse_block_rate` | tracked | spike > 3× baseline |
-| `availability` | 99.9% | < 99% monthly |
+| `expiration_gc_lag_minutes` | < 60 мин | > 1440 мин (1 день) |
+| `abuse_block_rate` | отслеживается | всплеск > 3× baseline |
+| `availability` | 99.9% | < 99% за месяц |
 
-**Failure modes:**
-- Blob storage недоступен → fail create (можно offline buffer на client retry).
-- Metadata DB outage → 503; критическая.
-- CDN miss + origin down → degraded mode (raw bytes from S3 direct).
+**Сценарии отказа:**
+- Blob storage недоступен → отказ в создании (можно буферизовать офлайн с retry на клиенте).
+- Падение metadata DB → 503; критично.
+- Промах CDN + origin лежит → degraded-режим (raw-байты напрямую из S3).
 
 ## Q4. (!) Short URL generation (Base62, collision)?
 
-Параллели с [Design URL Shortener](design-url-shortener-interview.md) — но для Pastebin URL уникален для содержимого paste, не для long URL.
+Параллели с [Design URL Shortener](design-url-shortener-interview.md) — но в Pastebin URL уникален для содержимого paste, а не для длинного URL.
 
 **Подходы:**
 
-**1. Base62 counter:**
-- `id = INCR counter` (Snowflake / ZooKeeper key ranges).
+**1. Base62-счётчик:**
+- `id = INCR counter` (Snowflake / диапазоны ключей в ZooKeeper).
 - `short = base62_encode(id)`.
-- Pros: no collisions; predictable.
-- Cons: enumerable (security: можно сканировать `/1`, `/2`).
+- Плюсы: нет коллизий; предсказуемо.
+- Минусы: перечислимо (безопасность: можно сканировать `/1`, `/2`).
 
-**2. Random Base62 (7 chars):**
-- `short = random_base62(7)` → 62^7 = 3.5T combinations.
-- Pros: unpredictable (security).
-- Cons: collision check (~10M ожидаемых collisions на 6B → handle с retry).
+**2. Случайный Base62 (7 символов):**
+- `short = random_base62(7)` → 62^7 = 3.5T комбинаций.
+- Плюсы: непредсказуемо (безопасность).
+- Минусы: нужна проверка коллизий (~10M ожидаемых коллизий на 6B → обрабатывать через retry).
 
-**3. Hash-based:**
+**3. На основе хеша:**
 - `short = base62(sha256(content))[:7]`.
-- Pros: dedup (same content → same URL).
-- Cons: дубликаты могут стать privacy issue (anyone with same content can guess URL).
+- Плюсы: дедупликация (одинаковое содержимое → одинаковый URL).
+- Минусы: дубликаты могут стать проблемой приватности (любой с тем же содержимым угадает URL).
 
-**Pastebin / Gist выбор:**
-- Pastebin: 8-char random Base62.
-- Gist: 32-char hex hash (longer, less guessable).
-- Hastebin: random 10 chars.
+**Выбор Pastebin / Gist:**
+- Pastebin: случайный Base62 на 8 символов.
+- Gist: 32-символьный hex-хеш (длиннее, сложнее угадать).
+- Hastebin: случайные 10 символов.
 
 **Длина:**
-- 7 chars = 3.5T (safe для billion-scale, 5 лет).
-- 8 chars = 218T (extra headroom).
-- Gist 32 chars = essentially unguessable (security: unlisted ≠ private but harder to find).
+- 7 символов = 3.5T (безопасно для billion-масштаба, 5 лет).
+- 8 символов = 218T (дополнительный запас).
+- Gist на 32 символа = практически неугадываемо (безопасность: unlisted ≠ private, но найти труднее).
 
-**Collision handling:**
-- UNIQUE constraint в DB.
-- Retry on conflict (3-5 attempts).
-- After N retries → bump length to 8 chars.
+**Обработка коллизий:**
+- UNIQUE-constraint в DB.
+- Retry при конфликте (3-5 попыток).
+- После N попыток → увеличить длину до 8 символов.
 
-**Anti-enumeration:**
-- Длиннее = harder to scan.
-- Rate limit на 404 responses (security: detect scanning attempts).
+**Защита от перечисления:**
+- Длиннее = труднее сканировать.
+- Rate limit на 404-ответы (безопасность: детект попыток сканирования).
 
 ## Q5. (!) Storage architecture (DB metadata + S3 blob)?
 
-**Принцип:** разделять metadata (small, indexed, OLTP) и blob (large, immutable, sequential).
+**Принцип:** разделять metadata (небольшие, индексируемые, OLTP) и blob (крупные, неизменяемые, последовательные).
 
 **Metadata (Postgres / MySQL):**
 ```sql
@@ -228,11 +228,11 @@ CREATE INDEX idx_expires ON pastes (expires_at) WHERE expires_at IS NOT NULL;
 ```
 
 **Blob storage (S3 / GCS / Cloudflare R2):**
-- Key: `pastes/{short_code}.zst` (или `/{shard}/{short_code}`).
-- Value: zstd-compressed text bytes.
-- Immutable (overwrite на edit = new revision, separate blob).
+- Ключ: `pastes/{short_code}.zst` (или `/{shard}/{short_code}`).
+- Значение: текстовые байты, сжатые zstd.
+- Неизменяемый (перезапись при редактировании = новая ревизия, отдельный blob).
 
-**Read flow:**
+**Поток чтения:**
 ```
 GET /abc1234
   ↓
@@ -246,23 +246,23 @@ return content
 ```
 
 **Зачем разделять:**
-- Metadata SSD ($$$) — high-frequency queries.
-- Blob HDD/object storage ($/GB) — cheap massive.
-- Independent scaling.
-- Blob immutable → cache-friendly через CDN.
+- Metadata на SSD ($$$) — высокочастотные запросы.
+- Blob на HDD/object storage ($/GB) — дёшево и массово.
+- Независимое масштабирование.
+- Blob неизменяем → дружелюбен к кешированию через CDN.
 
 **Альтернатива (single Postgres):**
-- Хранить blob в TEXT/BYTEA column.
-- Pro: simpler architecture.
-- Cons: DB cost растёт быстро; row-level overhead; backup тяжелее.
+- Хранить blob в колонке TEXT/BYTEA.
+- Плюс: проще архитектура.
+- Минусы: стоимость DB быстро растёт; накладные расходы на уровне строк; backup тяжелее.
 
-**Для small-scale Pastebin (early stage):** single Postgres работает. На billion scale — обязательно separation.
+**Для небольшого Pastebin (ранняя стадия):** single Postgres работает. На billion-масштабе разделение обязательно.
 
 ## Q6. Schema design (pastes, users, views)?
 
 **pastes** — основная таблица (см. Q5).
 
-**users** (если auth):
+**users** (если есть авторизация):
 ```sql
 CREATE TABLE users (
   id BIGSERIAL PRIMARY KEY,
@@ -276,7 +276,7 @@ CREATE TABLE users (
 );
 ```
 
-**views** (для analytics, опционально):
+**views** (для аналитики, опционально):
 ```sql
 CREATE TABLE paste_views (
   id BIGSERIAL PRIMARY KEY,
@@ -289,9 +289,9 @@ CREATE TABLE paste_views (
 ) PARTITION BY RANGE (viewed_at);
 ```
 
-Партиционирование по месяцу → cleanup старых старых легко (`DROP PARTITION`).
+Партиционирование по месяцу → удаление старых данных простое (`DROP PARTITION`).
 
-**revisions** (если versioning, Gist):
+**revisions** (если есть версионирование, Gist):
 ```sql
 CREATE TABLE paste_revisions (
   id BIGSERIAL PRIMARY KEY,
@@ -315,41 +315,41 @@ CREATE TABLE paste_comments (
 );
 ```
 
-**Indexes:**
-- `pastes.short_code` — UNIQUE, primary lookup.
-- `pastes.user_id` — "my pastes" page.
-- `pastes.expires_at` — для GC sweep.
-- `paste_views.paste_id, viewed_at` — analytics.
+**Индексы:**
+- `pastes.short_code` — UNIQUE, основной lookup.
+- `pastes.user_id` — страница «мои pastes».
+- `pastes.expires_at` — для GC-прохода.
+- `paste_views.paste_id, viewed_at` — аналитика.
 
 ## Q7. Compression на write (gzip / zstd)?
 
-**Tradeoff:** CPU cost vs storage + bandwidth.
+**Компромисс:** стоимость CPU против хранилища и полосы пропускания.
 
-| Codec | Compression ratio | Encode speed | Decode speed |
+| Кодек | Степень сжатия | Скорость сжатия | Скорость распаковки |
 |---|---|---|---|
 | gzip | 2.5-3× | 50 MB/s | 200 MB/s |
 | zstd | 3-4× | 400 MB/s | 800 MB/s |
 | Brotli | 3.5× | 30 MB/s | 200 MB/s |
 
-**Pastebin выбор: zstd**
-- Лучший trade-off.
-- 3-4× compression на код (большая избыточность).
-- Encode достаточно быстрый для real-time (<5 ms на 10 KB).
-- Decode почти бесплатный.
+**Выбор Pastebin: zstd**
+- Лучший компромисс.
+- Сжатие 3-4× на коде (большая избыточность).
+- Сжатие достаточно быстрое для real-time (<5 ms на 10 KB).
+- Распаковка почти бесплатна.
 
-**Per-paste compression:**
-- Применять на write один раз → store.
-- На read decompress → serve raw text.
+**Сжатие на уровне отдельного paste:**
+- Применять на запись один раз → сохранять.
+- На чтение распаковывать → отдавать raw-текст.
 
-**Не compress:**
-- Tiny pastes (< 256 bytes) — overhead > savings.
-- Already compressed content (rare для plain text pastes).
+**Не сжимать:**
+- Крошечные pastes (< 256 байт) — накладные расходы больше экономии.
+- Уже сжатое содержимое (редко для plain text pastes).
 
-**Compression в transport:**
-- HTTP `Accept-Encoding: br, gzip` — CDN/server compress response.
-- Vector tiles / large content → Brotli on the wire.
+**Сжатие в транспорте:**
+- HTTP `Accept-Encoding: br, gzip` — CDN/сервер сжимают ответ.
+- Vector tiles / крупный контент → Brotli «на проводе».
 
-**Code example:**
+**Пример кода:**
 ```python
 import zstandard as zstd
 
@@ -368,17 +368,17 @@ def fetch(key):
 
 **Два типа клиентов:**
 
-**Browser users:**
-- Want: rendered HTML с syntax highlighting, navigation, comments.
+**Браузерные пользователи:**
+- Хотят: отрендеренный HTML с подсветкой синтаксиса, навигацией, комментариями.
 - URL: `pastebin.com/abc1234`.
-- Response: full HTML page.
+- Ответ: полная HTML-страница.
 
-**Programmatic (curl, wget, scripts):**
-- Want: raw bytes, no HTML decoration.
+**Программные клиенты (curl, wget, скрипты):**
+- Хотят: raw-байты, без HTML-обвязки.
 - URL: `pastebin.com/raw/abc1234`.
-- Response: `Content-Type: text/plain; charset=utf-8` + raw content.
+- Ответ: `Content-Type: text/plain; charset=utf-8` + сырое содержимое.
 
-**Endpoint design:**
+**Дизайн эндпоинтов:**
 
 ```
 GET /{short_code}      → HTML view (с decoration)
@@ -387,20 +387,20 @@ GET /download/{short_code} → Content-Disposition: attachment
 GET /embed/{short_code} → minimal HTML for iframe
 ```
 
-**Why это важно:**
-- curl `pastebin.com/abc1234` без `/raw/` получит HTML — не пригоден для shell pipelines.
-- Стандарт: `curl https://pastebin.com/raw/abc1234 | bash` (популярный pattern, security warning aside).
+**Почему это важно:**
+- `curl pastebin.com/abc1234` без `/raw/` получит HTML — непригодно для shell-пайплайнов.
+- Стандарт: `curl https://pastebin.com/raw/abc1234 | bash` (популярный паттерн, если оставить за скобками предупреждения о безопасности).
 
-**Caching:**
-- Raw endpoint: CDN cache aggressively (immutable content).
-- HTML view: also cacheable но invalidate при comment / view count update (или just serve stale).
+**Кеширование:**
+- Raw-эндпоинт: CDN кеширует агрессивно (неизменяемое содержимое).
+- HTML-просмотр: тоже кешируется, но инвалидируется при обновлении комментариев / счётчика просмотров (или просто отдаём stale).
 
-**Content-Type negotiation:**
-- `Accept: text/plain` от curl → return raw.
-- `Accept: text/html` от browser → return view.
-- Pastebin не использует Content negotiation; explicit URLs cleaner.
+**Согласование Content-Type:**
+- `Accept: text/plain` от curl → отдать raw.
+- `Accept: text/html` от браузера → отдать view.
+- Pastebin не использует content negotiation; явные URL чище.
 
-**Edge case:** auto-detect User-Agent (curl/wget) и redirect на raw — некоторые сервисы делают это для convenience.
+**Краевой случай:** авто-детект User-Agent (curl/wget) и редирект на raw — некоторые сервисы делают так для удобства.
 
 ## Q9. API для programmatic creation (CLI / IDE plugin)?
 
@@ -432,41 +432,41 @@ Response:
 ```
 
 **GET /api/v1/pastes/{short_code}:**
-- Returns metadata + content.
+- Возвращает метаданные + содержимое.
 
 **DELETE /api/v1/pastes/{short_code}:**
-- Owner only.
+- Только владелец.
 
-**API tokens:**
-- Generated в settings UI.
-- Hashed в DB.
-- Per-token rate limits (Q27).
+**API-токены:**
+- Генерируются в UI настроек.
+- Хешируются в DB.
+- Rate limits на каждый токен (Q27).
 
-**CLI tools (community):**
-- `pastebinit` (Linux command-line uploader).
+**CLI-инструменты (community):**
+- `pastebinit` (загрузчик из командной строки для Linux).
 - `gh gist create` (GitHub CLI).
-- `pbpaste | gist` (macOS пайплайн).
+- `pbpaste | gist` (пайплайн для macOS).
 
-**IDE plugins:**
-- VS Code Gist extension.
-- IntelliJ Gist plugin.
-- Sublime Text gist-it.
+**Плагины для IDE:**
+- Расширение Gist для VS Code.
+- Плагин Gist для IntelliJ.
+- gist-it для Sublime Text.
 
-**API rate limits:**
-- Anonymous (без API key): 5 creates/hour.
-- Authenticated free: 25 creates/hour.
-- Paid: 1000+ creates/hour.
+**Rate limits API:**
+- Анонимно (без API-ключа): 5 созданий/час.
+- Авторизованный free: 25 созданий/час.
+- Платный: 1000+ созданий/час.
 
 ## Q10. Embed widgets (gist.github.com `<script>`)?
 
-**Use case:** показать paste/gist на стороннем сайте (blog post, docs).
+**Сценарий использования:** показать paste/gist на стороннем сайте (статья в блоге, документация).
 
-**GitHub Gist embed:**
+**Embed от GitHub Gist:**
 ```html
 <script src="https://gist.github.com/user/abc1234.js"></script>
 ```
 - Загружает JS, который рендерит iframe / inline HTML.
-- Syntax highlighting + GitHub styling.
+- Подсветка синтаксиса + стилизация GitHub.
 
 **Альтернатива — iframe:**
 ```html
@@ -475,60 +475,60 @@ Response:
 </iframe>
 ```
 
-**Implementation:**
-- `/embed/{short_code}` endpoint returns minimal HTML page с:
-  - Только paste content + syntax highlighting.
-  - `<style>` для compact layout.
-  - X-Frame-Options: ALLOWALL (или per-domain whitelisting).
+**Реализация:**
+- Эндпоинт `/embed/{short_code}` возвращает минимальную HTML-страницу с:
+  - Только содержимое paste + подсветка синтаксиса.
+  - `<style>` для компактной вёрстки.
+  - X-Frame-Options: ALLOWALL (или whitelisting по доменам).
 
-**Security:**
-- CSP headers (Content-Security-Policy).
-- Sandbox iframe attribute: prevent escape.
-- No JS execution от content (escape HTML / показывать как plain text).
+**Безопасность:**
+- CSP-заголовки (Content-Security-Policy).
+- Атрибут sandbox у iframe: предотвращает «побег».
+- Никакого выполнения JS из содержимого (экранировать HTML / показывать как plain text).
 
-**CDN-able:**
-- Embed HTML кэшируется агрессивно.
-- Asset URLs (CSS, fonts) — long TTL.
+**Подходит для CDN:**
+- Embed-HTML кешируется агрессивно.
+- URL ассетов (CSS, шрифты) — длинный TTL.
 
-**Privacy:**
-- Public pastes only embeddable.
-- Private/password — block embed (set X-Frame-Options: DENY).
+**Приватность:**
+- Встраивать можно только public pastes.
+- Private/password — блокировать embed (выставить X-Frame-Options: DENY).
 
 ## Q11. (!) Syntax highlighting: server-side Pygments vs client-side Prism?
 
-**Server-side (Pygments / Rouge / Chroma):**
-- Tokenize код → render HTML с CSS classes.
-- На каждый view: parse + render.
-- Cache HTML output → fast subsequent views.
+**Серверная (Pygments / Rouge / Chroma):**
+- Токенизировать код → рендерить HTML с CSS-классами.
+- На каждый просмотр: парсинг + рендеринг.
+- Кешировать HTML-вывод → быстрые последующие просмотры.
 
-**Client-side (Prism.js / highlight.js):**
-- Serve raw HTML + JS library.
-- Browser parses + applies styling.
-- Smaller server payload.
+**Клиентская (Prism.js / highlight.js):**
+- Отдавать raw-HTML + JS-библиотеку.
+- Браузер парсит + применяет стилизацию.
+- Меньше payload на сервере.
 
 **Сравнение:**
 
-| Aspect | Server-side | Client-side |
+| Аспект | Серверная | Клиентская |
 |---|---|---|
-| Initial page weight | HTML с inline classes (~30% больше) | Plain HTML + 30-50 KB JS |
-| First render | Instant | Wait for JS load |
-| SEO | Good (highlighted в HTML) | Bad (search engines see raw) |
-| CPU on server | Higher | None |
-| CPU on client | None | Higher |
-| Language support | Wider (Pygments 500+ languages) | Limited (highlight.js ~190, Prism ~270) |
-| Caching | Full HTML cacheable | Raw cacheable + JS cached |
+| Вес начальной страницы | HTML с inline-классами (~на 30% больше) | Plain HTML + 30-50 KB JS |
+| Первый рендер | Мгновенно | Ждём загрузки JS |
+| SEO | Хорошо (подсветка уже в HTML) | Плохо (поисковики видят raw) |
+| CPU на сервере | Выше | Нет |
+| CPU на клиенте | Нет | Выше |
+| Поддержка языков | Шире (Pygments 500+ языков) | Ограниченная (highlight.js ~190, Prism ~270) |
+| Кеширование | Кешируется весь HTML | Кешируется raw + кешируется JS |
 
-**Production choices:**
-- **GitHub Gist:** server-side (Rouge на Ruby).
-- **Pastebin:** server-side (Geshi PHP historically, modern Pygments).
-- **Hastebin:** client-side (highlight.js).
-- **0bin (encrypted):** обязательно client-side (server can't see content).
+**Production-выбор:**
+- **GitHub Gist:** серверная (Rouge на Ruby).
+- **Pastebin:** серверная (исторически Geshi на PHP, в современном виде Pygments).
+- **Hastebin:** клиентская (highlight.js).
+- **0bin (зашифрованный):** обязательно клиентская (сервер не видит содержимое).
 
-**Recommended:**
-- Server-side для SEO-important content (public Gists).
-- Client-side для private / encrypted content где server не decrypts.
+**Рекомендация:**
+- Серверная для важного для SEO контента (публичные Gist-ы).
+- Клиентская для private / зашифрованного контента, где сервер ничего не расшифровывает.
 
-**Implementation server-side:**
+**Реализация серверной:**
 ```python
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name
@@ -540,129 +540,129 @@ def render(code, language):
     return highlight(code, lexer, formatter)
 ```
 
-**Latency:** Pygments render < 50 ms для 10 KB файла. Cache rendered HTML → subsequent < 10 ms.
+**Латентность:** рендер Pygments < 50 ms для файла 10 KB. Кешируем отрендеренный HTML → последующие < 10 ms.
 
 ## Q12. Markdown rendering vs raw text?
 
-**Markdown support (gist.github.com `.md` files):**
-- Detect `.md` extension.
-- Render через CommonMark / GFM parser.
-- Cache rendered HTML.
+**Поддержка Markdown (файлы `.md` на gist.github.com):**
+- Определять расширение `.md`.
+- Рендерить через парсер CommonMark / GFM.
+- Кешировать отрендеренный HTML.
 
-**Раздельные view modes:**
-- `/{code}` → rendered (default для .md).
-- `/{code}/raw` → raw markdown source.
+**Раздельные режимы просмотра:**
+- `/{code}` → отрендеренный (по умолчанию для .md).
+- `/{code}/raw` → исходный markdown.
 
-**Implementation:**
+**Реализация:**
 ```python
 import markdown
 def render_md(text):
     return markdown.markdown(text, extensions=['fenced_code', 'tables', 'codehilite'])
 ```
 
-**XSS risk:**
+**Риск XSS:**
 - Markdown может содержать inline HTML.
-- Sanitize через DOMPurify (client-side) или Bleach (server-side).
-- White-list разрешённых tags.
+- Санитизировать через DOMPurify (на клиенте) или Bleach (на сервере).
+- White-list разрешённых тегов.
 
 **CommonMark vs GFM:**
-- CommonMark — spec ANSI.
-- GFM (GitHub Flavored Markdown) — extensions: task lists, tables, autolinks, mentions.
+- CommonMark — стандартизированная спецификация.
+- GFM (GitHub Flavored Markdown) — расширения: списки задач, таблицы, автоссылки, упоминания.
 
-**Toggle:**
-- UI button "View source / Rendered".
+**Переключатель:**
+- Кнопка в UI «View source / Rendered».
 
-**Other formats:**
+**Другие форматы:**
 - `.txt` → plain text.
-- `.json` / `.xml` → syntax-highlighted code view.
-- `.csv` → table view (some services).
+- `.json` / `.xml` → просмотр кода с подсветкой синтаксиса.
+- `.csv` → табличное представление (в некоторых сервисах).
 
 ## Q13. Language detection (auto vs explicit)?
 
-**Explicit:**
-- User selects language from dropdown при создании.
-- Stored в `pastes.language`.
-- Pros: 100% accurate.
-- Cons: friction для quick paste.
+**Явный выбор:**
+- Пользователь выбирает язык из выпадающего списка при создании.
+- Сохраняется в `pastes.language`.
+- Плюсы: 100% точность.
+- Минусы: лишнее трение для быстрого paste.
 
-**Auto-detect:**
-- Library определяет язык из содержимого.
+**Авто-детект:**
+- Библиотека определяет язык по содержимому.
 - Pygments `guess_lexer()`.
 - highlight.js `highlightAuto()`.
-- ML-based: GitHub Linguist (used для file-language detection).
+- На основе ML: GitHub Linguist (используется для определения языка файла).
 
-**Heuristics:**
+**Эвристики:**
 - Shebang (`#!/usr/bin/env python`) → Python.
-- Keywords (`function`, `var`, `const`) → JavaScript.
-- Indentation (4 spaces consistent) → Python likely.
+- Ключевые слова (`function`, `var`, `const`) → JavaScript.
+- Отступы (стабильно 4 пробела) → вероятно Python.
 
-**Hybrid:**
-- Auto-detect default; user can override.
-- При amphigorous content (mixed languages, plain English) → fallback to plain text.
+**Гибрид:**
+- Авто-детект по умолчанию; пользователь может переопределить.
+- При неоднозначном содержимом (смесь языков, обычный английский) → откат к plain text.
 
-**Accuracy:**
-- Auto-detect 80-90% на common languages.
-- Worse для obscure (Brainfuck, COBOL).
-- Better если файл имеет signals (shebang, extension hint).
+**Точность:**
+- Авто-детект 80-90% на распространённых языках.
+- Хуже на редких (Brainfuck, COBOL).
+- Лучше, если у файла есть признаки (shebang, подсказка расширения).
 
 ## Q14. (!) Expiration / TTL (1h, 1d, 1w, never)?
 
-**Options:**
-- `expires_in=null` → never (default для paid users).
-- `expires_in=3600` → 1 hour.
-- `expires_in=86400` → 1 day.
-- `expires_in=604800` → 1 week.
-- `expires_in=2592000` → 30 days (free user default).
-- `burn_after_read=true` → one-time (Q15).
+**Опции:**
+- `expires_in=null` → никогда (по умолчанию для платных пользователей).
+- `expires_in=3600` → 1 час.
+- `expires_in=86400` → 1 день.
+- `expires_in=604800` → 1 неделя.
+- `expires_in=2592000` → 30 дней (по умолчанию для free-пользователей).
+- `burn_after_read=true` → одноразовый (Q15).
 
-**Implementation:**
+**Реализация:**
 
-**Logical expiration (на read):**
+**Логическое истечение (на чтение):**
 ```sql
 SELECT * FROM pastes
 WHERE short_code = $1
   AND (expires_at IS NULL OR expires_at > NOW())
   AND deleted_at IS NULL;
 ```
-- Returns 404 если expired.
+- Возвращает 404, если срок истёк.
 
-**Physical cleanup (background):**
+**Физическая очистка (в фоне):**
 
-Вариант 1: Cron daily sweep.
+Вариант 1: ежедневный cron-проход.
 ```sql
 DELETE FROM pastes
 WHERE expires_at < NOW() - INTERVAL '7 days';
 -- + delete blob from S3
 ```
-Batch deletes (LIMIT 10000) чтобы не блокировать DB.
+Удаления батчами (LIMIT 10000), чтобы не блокировать DB.
 
 Вариант 2: S3 lifecycle policy.
-- S3 supports automatic deletion based on tags or prefix.
-- Tag paste blob с `expires=2026-06-01`.
-- S3 auto-deletes after timestamp.
+- S3 поддерживает автоматическое удаление по тегам или префиксу.
+- Тегировать blob paste меткой `expires=2026-06-01`.
+- S3 удаляет автоматически после указанного времени.
 
-Вариант 3: TTL-aware DB (DynamoDB TTL attribute).
-- DynamoDB auto-deletes items с TTL attribute.
-- Eventual (до 48ч delay).
+Вариант 3: DB с поддержкой TTL (атрибут TTL в DynamoDB).
+- DynamoDB удаляет элементы с TTL-атрибутом автоматически.
+- Eventual (задержка до 48 ч).
 
-**Grace window:**
-- Logical expiration immediate.
-- Physical delete через 7-30 дней (recovery option для accidental).
+**Grace-окно:**
+- Логическое истечение — немедленное.
+- Физическое удаление через 7-30 дней (возможность восстановления при случайности).
 
-**User-controlled:**
-- Owner может extend TTL до expiration.
-- Owner может delete мгновенно.
+**Под контролем пользователя:**
+- Владелец может продлить TTL до истечения срока.
+- Владелец может удалить мгновенно.
 
 ## Q15. (!) Burn after reading (one-time view)?
 
-**Feature:** paste просматривается ровно один раз, потом удаляется.
+**Фича:** paste просматривается ровно один раз, потом удаляется.
 
-**Use cases:**
-- Sharing secrets / passwords / API keys.
-- Time-sensitive info.
-- Privacy-conscious users.
+**Сценарии использования:**
+- Передача секретов / паролей / API-ключей.
+- Чувствительная ко времени информация.
+- Пользователи, заботящиеся о приватности.
 
-**Implementation:**
+**Реализация:**
 
 ```python
 def view(short_code):
@@ -676,36 +676,36 @@ def view(short_code):
 ```
 
 **Атомарность:**
-- `FOR UPDATE` lock prevents concurrent reads (one wins).
-- After commit: blob delete async (с small grace для cdn invalidation).
+- Блокировка `FOR UPDATE` предотвращает конкурентные чтения (выигрывает одно).
+- После commit: удаление blob асинхронно (с небольшим grace для инвалидации CDN).
 
-**Edge cases:**
-- Network failure на client side после view → content lost (user complaint).
-- Solution: warn before view ("This paste burns after reading"); confirm click → reveal.
-- Or: 60-sec window между first view и actual burn.
+**Краевые случаи:**
+- Сетевой сбой на стороне клиента после просмотра → содержимое потеряно (жалоба пользователя).
+- Решение: предупреждать перед просмотром («Этот paste сгорит после прочтения»); клик-подтверждение → раскрытие.
+- Или: окно в 60 секунд между первым просмотром и фактическим сжиганием.
 
-**Encryption (0bin / Privatebin):**
-- Client encrypts content с key in URL fragment (`#key=base64...`).
-- Server stores только ciphertext.
-- Server can never decrypt → true E2E even before burn.
-- URL fragment не отправляется на сервер.
+**Шифрование (0bin / Privatebin):**
+- Клиент шифрует содержимое ключом во фрагменте URL (`#key=base64...`).
+- Сервер хранит только шифротекст.
+- Сервер никогда не расшифровывает → настоящее E2E ещё до сжигания.
+- Фрагмент URL не отправляется на сервер.
 
-**Anti-abuse:**
-- Crawlers / link previewers (Slackbot, Twitter Card) могут случайно "сжечь" paste.
-- Solution: confirm click required; bot UA detection.
+**Защита от злоупотреблений:**
+- Краулеры / превьюшники ссылок (Slackbot, Twitter Card) могут случайно «сжечь» paste.
+- Решение: требовать клик-подтверждение; детект UA ботов.
 
 ## Q16. Versioning (edit existing paste)?
 
-**GitHub Gist подход:**
-- Каждый edit = новая revision (как Git commit).
-- All revisions retained.
-- `paste_revisions` table (Q6).
+**Подход GitHub Gist:**
+- Каждое редактирование = новая ревизия (как коммит в Git).
+- Все ревизии сохраняются.
+- Таблица `paste_revisions` (Q6).
 
-**Pastebin classic:**
-- Editing means creating new paste с reference на parent.
-- Old version preserved otherwise.
+**Классический Pastebin:**
+- Редактирование означает создание нового paste со ссылкой на родителя.
+- Старая версия в остальном сохраняется.
 
-**Implementation Gist-style:**
+**Реализация в стиле Gist:**
 ```sql
 -- create
 INSERT INTO pastes (...) RETURNING id;
@@ -716,35 +716,35 @@ INSERT INTO paste_revisions (paste_id, blob_key=new_blob, revision_number=2, ...
 -- pastes.blob_key updated to new_blob (current = revision N)
 ```
 
-**Diff между revisions:**
-- Q20: server-side diff (unified format) или client-side через JS lib.
+**Diff между ревизиями:**
+- Q20: серверный diff (unified-формат) или клиентский через JS-библиотеку.
 
-**Storage:**
-- Each revision = new blob в S3 (CAS-friendly).
-- Если new revision identical → dedup (same blob_key).
+**Хранилище:**
+- Каждая ревизия = новый blob в S3 (удобно для CAS).
+- Если новая ревизия идентична → дедупликация (тот же blob_key).
 
-**Tradeoff:**
-- Storage cost linear с revision count.
-- Garbage collection после N лет.
+**Компромисс:**
+- Стоимость хранилища линейна по числу ревизий.
+- Сборка мусора через N лет.
 
 ## Q17. Privacy modes (public / unlisted / private / password)?
 
-**Modes:**
+**Режимы:**
 
-| Mode | Visible в listings | Accessible by URL | Auth required | Notes |
+| Режим | Виден в листингах | Доступен по URL | Нужна авторизация | Примечания |
 |---|---|---|---|---|
-| Public | Yes | Yes | No | Indexed by Google, in search |
-| Unlisted | No | Yes (anyone with URL) | No | Like YouTube unlisted |
-| Private | No | Yes (owner only) | Auth required | Server checks ownership |
-| Password-protected | No | URL valid, but password required | Pwd hash check | Bcrypt password |
+| Public | Да | Да | Нет | Индексируется Google, в поиске |
+| Unlisted | Нет | Да (любой со ссылкой) | Нет | Как unlisted на YouTube |
+| Private | Нет | Да (только владелец) | Нужна авторизация | Сервер проверяет владение |
+| Password-protected | Нет | URL валиден, но нужен пароль | Проверка хеша пароля | Пароль через bcrypt |
 
-**Schema:**
+**Схема:**
 ```sql
 ALTER TABLE pastes ADD COLUMN visibility VARCHAR(15) DEFAULT 'public';
 ALTER TABLE pastes ADD COLUMN password_hash TEXT NULL;
 ```
 
-**Access control:**
+**Контроль доступа:**
 ```python
 def get_paste(short_code, user_id, password):
     paste = SELECT * FROM pastes WHERE short_code = $1
@@ -757,20 +757,20 @@ def get_paste(short_code, user_id, password):
     return paste.content
 ```
 
-**Indexing:**
-- Public: search-indexable (Q18).
+**Индексация:**
+- Public: индексируется для поиска (Q18).
 - Unlisted: НЕ индексируем; добавляем `<meta name="robots" content="noindex">`.
-- Private: 404 для unauthenticated, не показывается даже в listing.
+- Private: 404 для неавторизованных, не показывается даже в листинге.
 
-**Edge:**
-- "Unlisted" не есть security: anyone с URL can access. Just не findable.
-- Real privacy → "Private" + auth required.
+**Краевой момент:**
+- «Unlisted» — это не безопасность: любой со ссылкой получит доступ. Просто его не найти.
+- Настоящая приватность → «Private» + обязательная авторизация.
 
 ## Q18. (!) Search (Elasticsearch, opt-in indexing)?
 
-**Search возможен только public pastes** (по definition).
+**Поиск возможен только по public pastes** (по определению).
 
-**Architecture:**
+**Архитектура:**
 
 ```
 paste created (visibility=public)
@@ -791,34 +791,34 @@ ES full-text search (BM25)
 return top-K with snippets
 ```
 
-**Indexed fields:**
-- `title` — boosted.
-- `content` — primary search field.
-- `language` — facet filter.
-- `created_at` — time filter.
+**Индексируемые поля:**
+- `title` — с повышенным весом.
+- `content` — основное поле поиска.
+- `language` — фасетный фильтр.
+- `created_at` — фильтр по времени.
 
-**Index size:**
-- ~30% от raw text (analyzed, inverted index).
-- 5 TB content → ~1.5 TB ES index.
+**Размер индекса:**
+- ~30% от raw-текста (проанализированный, inverted index).
+- 5 TB контента → ~1.5 TB ES-индекс.
 
-**Latency:**
-- Search query < 200 ms.
-- Indexing lag < 30 sec from creation.
+**Латентность:**
+- Поисковый запрос < 200 ms.
+- Задержка индексации < 30 сек с момента создания.
 
-**Opt-in privacy:**
-- Public pastes indexed by default.
-- User can mark "exclude from search" via flag.
-- Removed from ES async on update.
+**Приватность через opt-in:**
+- Public pastes индексируются по умолчанию.
+- Пользователь может пометить флагом «исключить из поиска».
+- Удаляется из ES асинхронно при обновлении.
 
-**Pastebin реальность:**
-- Pastebin classic: ограниченный search (по rate, нет full content).
-- GitHub Gist: full content search (gistsearch.com через GitHub API).
+**Реальность Pastebin:**
+- Классический Pastebin: ограниченный поиск (по rate, без полного содержимого).
+- GitHub Gist: поиск по полному содержимому (gistsearch.com через GitHub API).
 
 ## Q19. Folders / multi-file pastes (Gist)?
 
-**GitHub Gist:** один gist может содержать несколько files.
+**GitHub Gist:** один gist может содержать несколько файлов.
 
-**Schema:**
+**Схема:**
 ```sql
 CREATE TABLE gist_files (
   id BIGSERIAL PRIMARY KEY,
@@ -842,44 +842,44 @@ POST /api/v1/gists
 }
 ```
 
-**Use cases:**
-- Code with imports / dependencies.
-- Configuration + script.
-- README + code.
+**Сценарии использования:**
+- Код с импортами / зависимостями.
+- Конфигурация + скрипт.
+- README + код.
 
-**Render:**
-- Tabs или collapsible sections в UI.
-- One main file featured.
+**Рендеринг:**
+- Вкладки или раскрывающиеся секции в UI.
+- Один главный файл выделен.
 
 **Embed:**
-- `<script src="https://gist.github.com/user/abc.js?file=main.py">` → only one file.
+- `<script src="https://gist.github.com/user/abc.js?file=main.py">` → только один файл.
 
 ## Q20. Diff и compare между revisions?
 
-**Diff between revisions:**
+**Diff между ревизиями:**
 
-**Server-side:**
-- Pull two revisions' blobs.
-- Compute diff с `diff` library (myers, histogram algorithm).
-- Format: unified diff or side-by-side HTML.
+**Серверный:**
+- Подтянуть blob-ы двух ревизий.
+- Вычислить diff с библиотекой `diff` (алгоритм myers, histogram).
+- Формат: unified diff или side-by-side HTML.
 
-**Client-side:**
-- Send two raw contents к browser.
-- diff-match-patch library renders.
+**Клиентский:**
+- Отправить два raw-содержимого в браузер.
+- Рендерит библиотека diff-match-patch.
 
 **API:**
 ```http
 GET /api/v1/gists/{gist_id}/compare/{rev1}..{rev2}
 ```
-Response: unified diff format.
+Ответ: формат unified diff.
 
 **UI:**
-- Side-by-side view (GitHub style).
-- Inline diff (Gitlab style).
-- Word-level highlighting.
+- Side-by-side вид (в стиле GitHub).
+- Inline-diff (в стиле GitLab).
+- Подсветка на уровне слов.
 
-**Implementation библиотеки:**
-- `difflib` (Python stdlib).
+**Библиотеки для реализации:**
+- `difflib` (стандартная библиотека Python).
 - `diff-match-patch` (Google, JS).
 - `git diff --no-index` для CLI.
 
@@ -922,38 +922,38 @@ graph LR
     GC --> Blob
 ```
 
-**Services:**
-- **CDN:** caches HTML view + raw content; 90%+ hit ratio.
-- **API Gateway:** auth, rate limit, routing.
-- **Paste Create Service:** validate → generate short_code → compress → store blob → metadata insert.
-- **Paste Read Service:** check cache → DB → blob fetch → highlight → render.
-- **Highlight Service:** Pygments / Chroma; rendered HTML cached.
-- **Search Service:** Elasticsearch index of public pastes.
-- **Abuse Detection:** DMCA hash check + malware scanning + spam classifier.
-- **GC:** background cron deletes expired pastes from DB + blob storage.
+**Сервисы:**
+- **CDN:** кеширует HTML-просмотр + raw-содержимое; hit ratio 90%+.
+- **API Gateway:** авторизация, rate limit, маршрутизация.
+- **Paste Create Service:** валидация → генерация short_code → сжатие → запись blob → вставка метаданных.
+- **Paste Read Service:** проверка cache → DB → получение blob → подсветка → рендеринг.
+- **Highlight Service:** Pygments / Chroma; отрендеренный HTML кешируется.
+- **Search Service:** индекс Elasticsearch по public pastes.
+- **Abuse Detection:** проверка DMCA-хешей + сканирование malware + классификатор спама.
+- **GC:** фоновый cron удаляет истёкшие pastes из DB + blob storage.
 
-**Inter-service:**
-- Sync: HTTP/gRPC между services.
-- Async: Kafka для search indexing, analytics, abuse re-scanning.
+**Межсервисное взаимодействие:**
+- Синхронно: HTTP/gRPC между сервисами.
+- Асинхронно: Kafka для индексации поиска, аналитики, повторного сканирования на abuse.
 
 ## Q22. (!) Storage tiering (Redis / S3 / Glacier)?
 
-**Three-tier:**
+**Три уровня:**
 
-**Hot tier — Redis:**
-- Recently created (< 24 ч).
-- Frequently accessed (views > threshold).
-- TTL aligned с paste expiration.
+**Горячий уровень — Redis:**
+- Недавно созданные (< 24 ч).
+- Часто запрашиваемые (просмотры > порога).
+- TTL согласован с истечением срока paste.
 - ~10-20 GB.
 
-**Warm tier — S3 Standard:**
-- Active pastes (created within last 1 year).
-- ~5-7 TB compressed.
+**Тёплый уровень — S3 Standard:**
+- Активные pastes (созданы за последний 1 год).
+- ~5-7 TB в сжатом виде.
 
-**Cold tier — S3 Glacier:**
-- Old pastes (> 1 year, low access).
-- Restore latency: minutes to hours.
-- 5-10× cheaper.
+**Холодный уровень — S3 Glacier:**
+- Старые pastes (> 1 года, редкий доступ).
+- Латентность восстановления: от минут до часов.
+- В 5-10× дешевле.
 
 **Lifecycle policy (S3):**
 ```json
@@ -970,153 +970,153 @@ graph LR
 }
 ```
 
-**Read flow с tiering:**
-1. Check Redis → hit → return.
-2. Miss → S3 Standard → return + populate Redis.
-3. Miss → S3 Glacier → restore (minutes) → return.
+**Поток чтения с tiering:**
+1. Проверить Redis → попадание → вернуть.
+2. Промах → S3 Standard → вернуть + заполнить Redis.
+3. Промах → S3 Glacier → восстановить (минуты) → вернуть.
 
-**Edge:**
-- Glacier restore charged per-retrieval.
-- Pre-emptive restore при первом view in years.
+**Краевой момент:**
+- Восстановление из Glacier тарифицируется за каждое извлечение.
+- Упреждающее восстановление при первом за годы просмотре.
 
-**Cost savings:**
-- Mixed tiering: 70% Standard, 30% Glacier → ~50% cost reduction vs all-Standard.
+**Экономия:**
+- Смешанный tiering: 70% Standard, 30% Glacier → снижение стоимости ~на 50% против полностью Standard.
 
 ## Q23. CDN для raw content (Cloudflare / CloudFront)?
 
 **Зачем CDN:**
-- 100M views/day → 1200 views/sec average.
-- 95%+ requests served from edge → origin не нагружена.
+- 100M просмотров/день → 1200 просмотров/сек в среднем.
+- 95%+ запросов обслуживаются с edge → origin не нагружена.
 
-**Cache key:**
+**Ключ кеша:**
 - `(short_code, raw|view, language)`.
-- Versioned: `/v1/raw/abc1234`.
+- С версией: `/v1/raw/abc1234`.
 
-**Cache behavior:**
-- Raw endpoint (`/raw/{code}`): cache aggressively (immutable content).
-- View endpoint (`/{code}`): cache short TTL (in case of comment/view-count updates).
-- Embed (`/embed/{code}`): cache long TTL.
+**Поведение кеша:**
+- Raw-эндпоинт (`/raw/{code}`): кешировать агрессивно (неизменяемое содержимое).
+- View-эндпоинт (`/{code}`): кешировать с коротким TTL (на случай обновления комментариев/счётчика просмотров).
+- Embed (`/embed/{code}`): кешировать с длинным TTL.
 
 **TTL:**
-- Public pastes: 1 hour - 24 hours.
-- Unlisted: same as public.
-- Private: bypass CDN (Cache-Control: private).
-- Password-protected: bypass CDN.
+- Public pastes: от 1 часа до 24 часов.
+- Unlisted: как public.
+- Private: в обход CDN (Cache-Control: private).
+- Password-protected: в обход CDN.
 
-**Cache busting:**
-- Edit paste → invalidate cache (Cloudflare purge API).
-- Or: versioned URL `/v2/raw/abc1234`.
+**Сброс кеша:**
+- Редактирование paste → инвалидировать кеш (Cloudflare purge API).
+- Или: URL с версией `/v2/raw/abc1234`.
 
-**Bandwidth:**
-- Без CDN: 1200 views/sec × 10 KB = 12 MB/sec sustained = 30 TB/month egress = $600+/month.
-- С CDN 95% hit: $30/month origin egress + $50-100 CDN cost.
+**Полоса пропускания:**
+- Без CDN: 1200 просмотров/сек × 10 KB = 12 MB/сек постоянно = 30 TB/месяц egress = $600+/месяц.
+- С CDN при 95% попаданий: $30/месяц origin egress + $50-100 стоимость CDN.
 
-**Edge compression:**
-- CDN auto-compresses (Brotli/gzip).
-- Saves ~70% bandwidth on text content.
+**Сжатие на edge:**
+- CDN сжимает автоматически (Brotli/gzip).
+- Экономит ~70% трафика на текстовом контенте.
 
 ## Q24. Multi-region и data residency?
 
-**Single region — default для startup-Pastebin.** Multi-region добавляется при scale.
+**Один регион — по умолчанию для стартап-Pastebin.** Multi-region добавляется при росте масштаба.
 
-**Drivers для multi-region:**
-- Latency (global users).
-- GDPR (EU data residency).
-- DR.
+**Драйверы для multi-region:**
+- Латентность (глобальные пользователи).
+- GDPR (резидентность данных в EU).
+- DR (аварийное восстановление).
 
 **Архитектура:**
-- 3 regions: US, EU, APAC.
-- Каждый region — full stack.
-- Metadata replication (Cassandra multi-DC или Postgres logical replication).
-- Blob: per-region storage; cross-region replication async для popular.
+- 3 региона: US, EU, APAC.
+- Каждый регион — полный стек.
+- Репликация метаданных (Cassandra multi-DC или логическая репликация Postgres).
+- Blob: хранилище по регионам; кросс-региональная репликация асинхронно для популярных.
 
-**Routing:**
-- DNS GeoDNS (Route 53 latency-based).
-- User pinned к home region (country).
+**Маршрутизация:**
+- DNS GeoDNS (Route 53 по латентности).
+- Пользователь привязан к домашнему региону (по стране).
 
-**Data residency:**
-- EU pastes — physically только в EU region.
-- User-controlled: "Store data in: US / EU / APAC".
+**Резидентность данных:**
+- EU-pastes — физически только в EU-регионе.
+- Под контролем пользователя: «Хранить данные в: US / EU / APAC».
 
 **CDN:**
-- Already global → first line of caching.
-- Origin in nearest region for misses.
+- Уже глобальный → первая линия кеширования.
+- Origin в ближайшем регионе для промахов.
 
-**Cross-region:**
-- Paste created в US → replicated к EU async (5-30 sec lag).
-- EU user accessing US-stored paste: cross-region fetch (slower first time, cached в EU CDN edge after).
+**Кросс-регион:**
+- Paste создан в US → реплицируется в EU асинхронно (задержка 5-30 сек).
+- EU-пользователь обращается к paste, хранящемуся в US: кросс-региональное получение (медленнее в первый раз, дальше кешируется на EU CDN edge).
 
 ## Q25. (!) Anti-abuse (DMCA, malware, scraping)?
 
-**Risks:**
-- Pastebin hosts pirated software, leaked credentials, malware, hate content.
-- Pastebin classic has historical reputation как dump для leaks.
+**Риски:**
+- Pastebin размещает пиратское ПО, утёкшие учётные данные, malware, контент ненависти.
+- У классического Pastebin историческая репутация свалки для утечек.
 
-**Defenses:**
+**Защита:**
 
-**1. Real-time content scanning:**
-- ML classifier: spam, hate speech, NSFW.
-- Hash match для known malware code.
-- Block at creation if confidence > threshold.
+**1. Сканирование контента в реальном времени:**
+- ML-классификатор: спам, язык вражды, NSFW.
+- Сопоставление хешей с известным malware-кодом.
+- Блокировка при создании, если уверенность > порога.
 
-**2. DMCA process:**
-- Rights holders submit takedown via web form.
-- Automated hash-blocklist (copyright content).
-- Same content uploaded again → auto-block.
+**2. Процесс DMCA:**
+- Правообладатели подают запрос на удаление через веб-форму.
+- Автоматический хеш-blocklist (контент под копирайтом).
+- То же содержимое загружено снова → авто-блок.
 
-**3. Malware detection:**
-- ClamAV scan on creation.
-- Suspicious patterns (base64-encoded payloads, obfuscated JS).
-- Sandbox execution для high-risk files (rare).
+**3. Детект malware:**
+- Сканирование ClamAV при создании.
+- Подозрительные паттерны (payload в base64, обфусцированный JS).
+- Запуск в sandbox для файлов высокого риска (редко).
 
-**4. Credential leak detection:**
-- Scan для AWS keys, GitHub tokens, private SSH keys patterns.
-- Auto-alert to affected service (e.g., GitHub revokes leaked tokens).
-- Notify user who pasted.
+**4. Детект утечек учётных данных:**
+- Сканирование на паттерны AWS-ключей, GitHub-токенов, приватных SSH-ключей.
+- Авто-оповещение затронутого сервиса (например, GitHub отзывает утёкшие токены).
+- Уведомить пользователя, который вставил.
 
-**5. Anti-scraping:**
-- Rate limit per IP (Q27).
-- Bot detection (Cloudflare).
-- CAPTCHA на suspicious patterns.
+**5. Защита от скрейпинга:**
+- Rate limit по IP (Q27).
+- Детект ботов (Cloudflare).
+- CAPTCHA на подозрительных паттернах.
 
-**6. PSI / PII scrubbing (optional):**
-- Detect SSN, credit cards, emails в content.
-- Warn user before publishing public.
+**6. Очистка PSI / PII (опционально):**
+- Детектировать SSN, банковские карты, email в содержимом.
+- Предупредить пользователя перед публикацией в public.
 
-**7. User reporting:**
-- "Report this paste" button.
-- Moderation queue.
-- Auto-block при N reports.
+**7. Жалобы пользователей:**
+- Кнопка «Пожаловаться на этот paste».
+- Очередь модерации.
+- Авто-блок при N жалобах.
 
-**8. Banned content:**
-- CSAM hash matching (NCMEC / PhotoDNA).
-- Mandatory reporting.
+**8. Запрещённый контент:**
+- Сопоставление хешей CSAM (NCMEC / PhotoDNA).
+- Обязательная отчётность.
 
 ## Q26. Authentication (OAuth, API tokens)?
 
-**Anonymous:**
-- No auth required для basic paste.
-- Limited features (no edit, no private, lower quotas).
+**Анонимно:**
+- Авторизация не требуется для базового paste.
+- Ограниченные возможности (нет редактирования, нет private, ниже квоты).
 
-**Authentication options:**
+**Варианты аутентификации:**
 
 **1. OAuth (GitHub, Google):**
-- Most popular для dev tools.
-- Eliminates passwords on Pastebin side.
-- User info fetched via OAuth.
+- Самый популярный для dev-инструментов.
+- Избавляет от паролей на стороне Pastebin.
+- Информация о пользователе подтягивается через OAuth.
 
-**2. Custom user/password:**
-- Optional — for users без OAuth providers.
-- bcrypt password hash.
-- Email verification.
+**2. Собственный логин/пароль:**
+- Опционально — для пользователей без OAuth-провайдеров.
+- Хеш пароля через bcrypt.
+- Верификация email.
 
-**3. API tokens:**
-- Generated в user settings.
-- Hashed в DB (`api_token_hash`).
-- Format: `pastebin_pat_<random>` (similar к GitHub PAT).
+**3. API-токены:**
+- Генерируются в настройках пользователя.
+- Хешируются в DB (`api_token_hash`).
+- Формат: `pastebin_pat_<random>` (по аналогии с GitHub PAT).
 - Scopes: read, write, delete.
 
-**Implementation:**
+**Реализация:**
 ```python
 @require_auth
 def create_paste(user, content):
@@ -1133,35 +1133,35 @@ def authenticate(request):
     return AnonymousUser()
 ```
 
-**Session management:**
-- JWT with refresh token (для web).
-- Session stored в Redis (для invalidation).
+**Управление сессиями:**
+- JWT с refresh-токеном (для веба).
+- Сессия хранится в Redis (для инвалидации).
 - Cookie HttpOnly + Secure + SameSite=Strict.
 
 ## Q27. Rate limiting (anonymous IP vs auth key)?
 
-**Tiers:**
+**Тарифы:**
 
-| User type | Creates/hour | Reads/min | Burst |
+| Тип пользователя | Созданий/час | Чтений/мин | Burst |
 |---|---|---|---|
-| Anonymous (IP-based) | 5 | 100 | 10 |
-| Authenticated free | 25 | 500 | 50 |
-| Paid (Pro) | 250 | unlimited | 500 |
-| API enterprise | 10000 | unlimited | 1000 |
+| Анонимный (по IP) | 5 | 100 | 10 |
+| Авторизованный free | 25 | 500 | 50 |
+| Платный (Pro) | 250 | без ограничений | 500 |
+| API enterprise | 10000 | без ограничений | 1000 |
 
-**Implementation:**
-- Token bucket per user_id or IP (Redis Lua, см. [Design Rate Limiter](design-rate-limiter-interview.md)).
-- Distinguish reads vs writes (writes more expensive).
-- Burst allowance для legitimate spike.
+**Реализация:**
+- Token bucket по user_id или IP (Redis Lua, см. [Design Rate Limiter](design-rate-limiter-interview.md)).
+- Различать чтения и записи (записи дороже).
+- Допуск на burst для легитимного всплеска.
 
-**Anonymous IP-based:**
-- `X-Forwarded-For` header (parse trusted proxies).
-- Cloudflare provides `CF-Connecting-IP`.
+**Анонимный, по IP:**
+- Заголовок `X-Forwarded-For` (парсинг доверенных прокси).
+- Cloudflare предоставляет `CF-Connecting-IP`.
 
-**Authenticated key-based:**
-- API token → user_id → rate limit per user.
+**Авторизованный, по ключу:**
+- API-токен → user_id → rate limit на пользователя.
 
-**HTTP 429 response:**
+**HTTP-ответ 429:**
 ```http
 HTTP/1.1 429 Too Many Requests
 Retry-After: 60
@@ -1170,173 +1170,173 @@ X-RateLimit-Remaining: 0
 X-RateLimit-Reset: 1716832800
 ```
 
-**Adaptive rate limiting:**
-- Suspicious IPs (failed CAPTCHA, abuse history) → lower limit.
-- Trusted IPs (paid users, well-behaved) → higher limit.
+**Адаптивный rate limiting:**
+- Подозрительные IP (провал CAPTCHA, история злоупотреблений) → ниже лимит.
+- Доверенные IP (платные пользователи, добропорядочные) → выше лимит.
 
-**Edge cases:**
-- Shared NAT (corporate, школа) — many users one IP → false positive.
-- Solution: require auth or CAPTCHA вместо block.
+**Краевые случаи:**
+- Общий NAT (корпоративный, школа) — много пользователей за одним IP → ложное срабатывание.
+- Решение: требовать авторизацию или CAPTCHA вместо блокировки.
 
 ## Q28. (!) Monitoring metrics?
 
-**Core latency:**
+**Основная латентность:**
 - `paste_creation_latency_p99` < 500 ms.
-- `paste_view_latency_p99` < 100 ms cached.
+- `paste_view_latency_p99` < 100 ms из cache.
 - `cdn_hit_ratio` > 90%.
 - `syntax_highlight_latency_p99` < 50 ms.
 
-**Volume:**
+**Объём:**
 - `pastes_created_per_sec`.
 - `pastes_viewed_per_sec`.
 - `bytes_uploaded_per_sec`.
 
-**Quality:**
+**Качество:**
 - `creation_success_rate` > 99%.
 - `error_rate_5xx` < 0.1%.
 - `expired_pastes_cleanup_lag_minutes`.
 
-**Anti-abuse:**
+**Защита от злоупотреблений:**
 - `dmca_blocks_per_day`.
 - `malware_detections_per_day`.
 - `suspicious_ips_per_hour`.
 - `captcha_challenge_rate`.
 
-**Storage:**
+**Хранилище:**
 - `blob_storage_size_tb`.
 - `db_metadata_size_gb`.
-- `compression_ratio` (target 3-4×).
+- `compression_ratio` (цель 3-4×).
 
-**Business:**
+**Бизнес-метрики:**
 - `daily_active_users`.
 - `signups_per_day`.
 - `pro_conversion_rate`.
 
-**Alerts:**
+**Алерты:**
 - Page: `creation_success_rate < 95%` 5 минут подряд.
-- Slack: `dmca_blocks` spike > 5× baseline.
+- Slack: всплеск `dmca_blocks` > 5× baseline.
 - Email: `expiration_gc_lag > 24 hours`.
 
-**Tracing:**
+**Трассировка:**
 - OpenTelemetry; trace ID через client → API → DB → blob.
-- Visibility: `paste view 80 ms = CDN hit 60 ms + (would be: 200 ms DB lookup + 50 ms highlight)`.
+- Наглядность: `paste view 80 ms = CDN hit 60 ms + (would be: 200 ms DB lookup + 50 ms highlight)`.
 
 ## Q29. Cost optimization (compression + lifecycle + CDN)?
 
-**Cost drivers:**
-- Blob storage: 5-7 TB compressed.
-- CDN bandwidth: 60 MB/sec peak.
+**Драйверы стоимости:**
+- Blob storage: 5-7 TB в сжатом виде.
+- Полоса пропускания CDN: 60 MB/сек на пике.
 - Metadata DB: PostgreSQL RDS.
-- Compute (app servers).
+- Compute (серверы приложения).
 
-**Optimizations:**
+**Оптимизации:**
 
-**1. Compression (Q7):**
-- zstd 3-4× → save 70% storage cost.
-- Stored compressed; decompress on read.
+**1. Сжатие (Q7):**
+- zstd 3-4× → экономия 70% стоимости хранилища.
+- Хранится сжатым; распаковка на чтение.
 
 **2. Storage tiering (Q22):**
-- S3 Standard → IA → Glacier lifecycle.
-- 50% saving on aging pastes.
+- Lifecycle S3 Standard → IA → Glacier.
+- Экономия 50% на стареющих pastes.
 
-**3. CDN aggressive caching (Q23):**
-- 95% hit ratio → origin bandwidth × 20 cheaper.
-- Long TTL для immutable raw content.
+**3. Агрессивное кеширование CDN (Q23):**
+- Hit ratio 95% → полоса пропускания origin в 20× дешевле.
+- Длинный TTL для неизменяемого raw-содержимого.
 
-**4. Expiration cleanup (Q14):**
-- Auto-delete TTL-expired blobs.
-- Free pastes default 30-day TTL.
+**4. Очистка по истечению срока (Q14):**
+- Авто-удаление blob-ов с истёкшим TTL.
+- Free-pastes по умолчанию TTL 30 дней.
 
-**5. Read cache (Redis):**
-- Top 1% pastes in memory.
-- Subsequent views: nanosecond access.
-- Reduces DB load.
+**5. Read-кеш (Redis):**
+- Топ 1% pastes в памяти.
+- Последующие просмотры: доступ за наносекунды.
+- Снижает нагрузку на DB.
 
-**6. Pre-compressed CDN:**
-- Cloudflare auto-compresses (gzip/Brotli) — free.
-- Saves ~70% bandwidth.
+**6. Предсжатый CDN:**
+- Cloudflare сжимает автоматически (gzip/Brotli) — бесплатно.
+- Экономит ~70% трафика.
 
-**7. Cold start anonymous quota:**
-- Free anonymous tier limited → reduces abuse cost.
+**7. Квота на холодный старт для анонимов:**
+- Бесплатный анонимный тариф ограничен → снижает стоимость борьбы с abuse.
 
-**8. R2 / B2 instead of S3:**
-- Cloudflare R2: $0.015/GB-month (vs S3 $0.023).
-- Backblaze B2 еще cheaper.
-- No egress fees через Cloudflare CDN.
+**8. R2 / B2 вместо S3:**
+- Cloudflare R2: $0.015/GB-месяц (против S3 $0.023).
+- Backblaze B2 ещё дешевле.
+- Нет платы за egress через Cloudflare CDN.
 
-**Total cost estimate (1M pastes/day, 5 yr):**
-- Blob storage: $100-300/month.
-- CDN: $50-150/month.
-- Metadata DB: $100-500/month (small Postgres).
-- Compute: $200-500/month.
-- **Total: $500-1500/month** для mid-scale Pastebin.
+**Итоговая оценка стоимости (1M pastes/день, 5 лет):**
+- Blob storage: $100-300/месяц.
+- CDN: $50-150/месяц.
+- Metadata DB: $100-500/месяц (небольшой Postgres).
+- Compute: $200-500/месяц.
+- **Итого: $500-1500/месяц** для Pastebin среднего масштаба.
 
 ## Q30. (!) Антипаттерны и подводные камни?
 
-**1. Хранить large blobs в Postgres column.**
-- Postgres TOAST handles overflow, но DB size растёт быстро.
-- Backup/restore становится painfully slow.
-- Fix: blob storage в S3 (Q5).
+**1. Хранить крупные blob-ы в колонке Postgres.**
+- Postgres TOAST справляется с overflow, но размер DB растёт быстро.
+- Backup/restore становится мучительно медленным.
+- Фикс: blob storage в S3 (Q5).
 
-**2. Synchronous syntax highlighting на каждый view.**
-- Pygments на 10 KB файле = 50 ms CPU per view.
-- На 1200 views/sec = 60 servers тратятся только на rendering.
-- Fix: cache rendered HTML в Redis или CDN.
+**2. Синхронная подсветка синтаксиса на каждый просмотр.**
+- Pygments на файле 10 KB = 50 ms CPU на просмотр.
+- При 1200 просмотрах/сек = 60 серверов тратятся только на рендеринг.
+- Фикс: кешировать отрендеренный HTML в Redis или CDN.
 
-**3. No expiration cleanup → unlimited DB growth.**
-- 5 years × 1M/day × 10 KB = 18 TB blob storage; metadata 100 GB.
+**3. Нет очистки по истечению срока → безграничный рост DB.**
+- 5 лет × 1M/день × 10 KB = 18 TB blob storage; метаданные 100 GB.
 - Backup невозможен.
-- Fix: TTL + scheduled GC (Q14).
+- Фикс: TTL + плановый GC (Q14).
 
-**4. Enumerable IDs (incremental counter).**
-- Привлекает scrapers (curl `/1`, `/2`, ...).
-- Security: privacy compromised.
-- Fix: random Base62 7-8 chars (Q4).
+**4. Перечислимые ID (инкрементальный счётчик).**
+- Привлекает скрейперов (curl `/1`, `/2`, ...).
+- Безопасность: приватность скомпрометирована.
+- Фикс: случайный Base62 на 7-8 символов (Q4).
 
-**5. No anti-abuse / DMCA.**
-- Pastebin getting takedowns, legal liability.
-- Fix: hash blocklist + ML scanner + reporting (Q25).
+**5. Нет защиты от abuse / DMCA.**
+- Pastebin получает takedown-запросы, юридическая ответственность.
+- Фикс: хеш-blocklist + ML-сканер + жалобы (Q25).
 
-**6. Counting views synchronously.**
-- `UPDATE pastes SET views_count = views_count + 1` на каждый view.
-- Row contention на popular pastes.
-- Fix: async через Kafka + batch update.
+**6. Синхронный подсчёт просмотров.**
+- `UPDATE pastes SET views_count = views_count + 1` на каждый просмотр.
+- Конкуренция за строку на популярных pastes.
+- Фикс: асинхронно через Kafka + batch-обновление.
 
-**7. Hosting от same domain как user content.**
-- XSS risk: malicious paste может attempt session hijack.
-- Fix: serve raw content from sandbox subdomain (e.g., `pastebincontent.com`) или enforce strict CSP.
+**7. Размещение на том же домене, что и пользовательский контент.**
+- Риск XSS: вредоносный paste может попытаться угнать сессию.
+- Фикс: отдавать raw-содержимое с sandbox-поддомена (например, `pastebincontent.com`) или применять строгий CSP.
 
-**8. Full-text search ВСЕХ pastes по default.**
-- Privacy violation; legal liability (search для leaked passwords).
-- Fix: index только explicitly public; honor user privacy.
+**8. Полнотекстовый поиск по ВСЕМ pastes по умолчанию.**
+- Нарушение приватности; юридическая ответственность (поиск утёкших паролей).
+- Фикс: индексировать только явно публичные; уважать приватность пользователя.
 
-**9. No CDN.**
-- Origin overwhelmed at scale; bandwidth cost prohibitive.
-- Fix: CloudFront / Cloudflare (Q23).
+**9. Нет CDN.**
+- Origin перегружен на масштабе; стоимость трафика запретительная.
+- Фикс: CloudFront / Cloudflare (Q23).
 
-**10. Single Postgres для всего (metadata + blob).**
-- DB size grows fast; query latency degrades.
-- Fix: blob → S3, metadata → Postgres.
+**10. Один Postgres под всё (metadata + blob).**
+- Размер DB растёт быстро; латентность запросов деградирует.
+- Фикс: blob → S3, metadata → Postgres.
 
-**11. Hard delete blobs при expiration.**
-- Accidental expiration → permanent loss.
-- Fix: soft delete + 7-30 day grace window.
+**11. Жёсткое удаление blob-ов при истечении срока.**
+- Случайное истечение → безвозвратная потеря.
+- Фикс: soft delete + grace-окно 7-30 дней.
 
-**12. Не verify user-supplied language.**
-- Pygments crashes on certain malformed inputs.
-- Fix: try/catch + fallback to plain text.
+**12. Не валидировать язык, заданный пользователем.**
+- Pygments падает на некоторых некорректных входных данных.
+- Фикс: try/catch + откат к plain text.
 
-**13. Allow embedding from any domain.**
-- Iframe used для phishing (legitimate-looking Pastebin embed inside scam page).
-- Fix: per-domain allowlist OR `X-Frame-Options: DENY` by default.
+**13. Разрешать встраивание с любого домена.**
+- Iframe используется для фишинга (правдоподобный embed Pastebin внутри мошеннической страницы).
+- Фикс: allowlist по доменам ЛИБО `X-Frame-Options: DENY` по умолчанию.
 
-**14. No idempotency key on create.**
-- Network retry creates duplicate paste с different short_code.
-- Fix: `Idempotency-Key` header (Q9).
+**14. Нет idempotency-ключа при создании.**
+- Сетевой retry создаёт дубликат paste с другим short_code.
+- Фикс: заголовок `Idempotency-Key` (Q9).
 
-**15. Storing api_token plain в DB.**
-- DB leak = all tokens compromised.
-- Fix: hash tokens (sha256 + salt) → store hash; verify by re-hashing input.
+**15. Хранение api_token в открытом виде в DB.**
+- Утечка DB = компрометация всех токенов.
+- Фикс: хешировать токены (sha256 + salt) → хранить хеш; проверять повторным хешированием ввода.
 
 ---
 

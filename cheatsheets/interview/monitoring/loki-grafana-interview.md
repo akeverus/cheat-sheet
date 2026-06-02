@@ -18,7 +18,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Loki и Grafana`
 
-`Grafana Loki` — log aggregation от Grafana Labs (с 2018). **"Like Prometheus, but for logs"** — индексирует только labels, raw logs хранятся compressed. Намного дешевле ELK. **PLG stack** = Promtail + Loki + Grafana. Часто комбинируется с **Tempo** (traces) + **Mimir** (metrics) = full Grafana stack.
+`Grafana Loki` — система агрегации логов от Grafana Labs (с 2018). **«Like Prometheus, but for logs»** — индексирует только labels, сырые логи хранятся в сжатом виде. Намного дешевле ELK. **PLG stack** = Promtail + Loki + Grafana. Часто комбинируется с **Tempo** (трейсы) + **Mimir** (метрики) = полный Grafana stack.
 
 ## Полезные ссылки
 
@@ -84,26 +84,26 @@ updated: "2026-04-25"
 
 (!) Что такое Loki?
 
-**Grafana Loki** — open-source log aggregation от **Grafana Labs** (с 2018).
+**Grafana Loki** — open-source-система агрегации логов от **Grafana Labs** (с 2018).
 
-**Slogan:** "Like Prometheus, but for logs."
+**Слоган:** «Like Prometheus, but for logs».
 
-**Ключевая идея:** **не индексировать** текст логов, **только labels**. Raw logs хранятся compressed в object storage (S3, GCS).
+**Ключевая идея:** **не индексировать** текст логов, **только labels**. Сырые логи хранятся в сжатом виде в object storage (S3, GCS).
 
 **Преимущества:**
-- **10x cheaper** чем ELK
-- **Simpler ops**
-- Tightly integrated с Prometheus (same labels)
-- Scales к petabytes легко
+- **В 10 раз дешевле**, чем ELK
+- **Проще в эксплуатации**
+- Тесно интегрирован с Prometheus (те же labels)
+- Легко масштабируется до петабайтов
 
 **Недостатки:**
-- Slower full-text search (grep-based)
-- Слабее aggregations
-- Less mature ecosystem
+- Медленнее полнотекстовый поиск (на основе grep)
+- Слабее агрегации
+- Менее зрелая экосистема
 
 ## Q2. (!) Loki philosophy — "index labels, not content"?
 
-**Traditional (ELK):**
+**Традиционный подход (ELK):**
 ```
 Index every word from log line
 → Fast search, but expensive storage + indexing CPU
@@ -117,26 +117,26 @@ Search: filter by labels first → grep through compressed chunks
 → Cheap storage, slower full-text search
 ```
 
-**Trade-off:**
-- ELK: **index everything** = fast search, expensive
-- Loki: **index labels only** = cheap, slower text search
+**Компромисс:**
+- ELK: **индексировать всё** = быстрый поиск, дорого
+- Loki: **индексировать только labels** = дёшево, медленнее текстовый поиск
 
-**Для большинства log queries** — labels достаточно (filter by service/env). Full-text grep — secondary use case.
+**Для большинства запросов по логам** labels достаточно (фильтрация по service/env). Полнотекстовый grep — вторичный сценарий использования.
 
 ## Q3. (!) PLG (Promtail + Loki + Grafana) vs ELK?
 
 | Критерий | PLG (Loki) | ELK |
 |----------|-----------|-----|
-| Storage cost | $ (object storage) | $$$ (Elasticsearch) |
-| Resource usage | Low (Go) | High (JVM) |
-| Search speed | Slower (grep) | Fast (indexed) |
-| Full-text query | Slower | Fast |
-| Aggregations | Limited | Powerful |
-| Operational complexity | Lower | Higher |
-| Ecosystem | Growing | Mature |
-| Best for | Cost-conscious, simple use cases | Complex search, analytics |
+| Стоимость хранения | $ (object storage) | $$$ (Elasticsearch) |
+| Потребление ресурсов | Низкое (Go) | Высокое (JVM) |
+| Скорость поиска | Медленнее (grep) | Быстрая (по индексу) |
+| Полнотекстовый запрос | Медленнее | Быстрый |
+| Агрегации | Ограниченные | Мощные |
+| Сложность эксплуатации | Ниже | Выше |
+| Экосистема | Растущая | Зрелая |
+| Лучше всего для | Экономия бюджета, простые сценарии | Сложный поиск, аналитика |
 
-**Выбор:** simple log troubleshooting → Loki. Complex SIEM, analytics → ELK.
+**Выбор:** простой разбор логов → Loki. Сложный SIEM, аналитика → ELK.
 
 ## Q4. (!) Loki components?
 
@@ -153,110 +153,110 @@ graph LR
     Grafana --> QueryFrontend
 ```
 
-**Components:**
-- **Distributor** — receives logs, validates, forwards к Ingester
-- **Ingester** — buffers logs, builds chunks, writes к storage
-- **Querier** — handles queries, fetches chunks, filters
-- **Query Frontend** — query splitting, caching
-- **Compactor** — compacts indices в storage
-- **Index Gateway** — index queries (newer)
+**Компоненты:**
+- **Distributor** — принимает логи, валидирует, перенаправляет в Ingester
+- **Ingester** — буферизует логи, формирует chunks, записывает в storage
+- **Querier** — обрабатывает запросы, извлекает chunks, фильтрует
+- **Query Frontend** — разбиение запросов, кэширование
+- **Compactor** — уплотняет индексы в storage
+- **Index Gateway** — запросы к индексу (более новый компонент)
 
-**Single-binary mode** для small deployments.
+**Single-binary mode** — для небольших развёртываний.
 
 ## Q5. Storage backends (S3, GCS, Cassandra)?
 
 **Loki поддерживает:**
-- **S3** (AWS) — most common
+- **S3** (AWS) — самый распространённый
 - **GCS** (Google)
 - **Azure Blob**
-- **Filesystem** (dev only)
-- **Cassandra** (legacy schemas)
-- **DynamoDB / BigTable** (для index, schema v11)
+- **Filesystem** (только для dev)
+- **Cassandra** (legacy-схемы)
+- **DynamoDB / BigTable** (для индекса, schema v11)
 
-**TSDB (newer, schema v13)** — modern index format, cheaper.
+**TSDB (более новый, schema v13)** — современный формат индекса, дешевле.
 
-В **2025** для production — **S3-compatible object storage** + TSDB схема.
+В **2025** для production — **S3-совместимый object storage** + схема TSDB.
 
 ## Q6. (!) Streams и chunks в Loki?
 
-**Stream** — unique combination labels:
+**Stream** — уникальная комбинация labels:
 ```
 {app="my-app", env="prod", level="error"} → stream A
 {app="my-app", env="prod", level="info"} → stream B
 {app="other-app", env="prod"} → stream C
 ```
 
-**Chunk** — compressed log lines из одного stream, написанные за period (~ 5-15 min) или size (~ 1.5 MB).
+**Chunk** — сжатые строки логов из одного stream, накопленные за период (~ 5–15 мин) или по размеру (~ 1.5 MB).
 
-**Storage:**
+**Хранение:**
 ```
 s3://loki-bucket/chunks/<stream-hash>/<start-end-timestamp>
 ```
 
-**Index** — knows which chunks contain logs для labels matching query.
+**Index** — знает, какие chunks содержат логи для labels, подходящих под запрос.
 
 ## Q7. Monolithic vs Microservices vs Simple Scalable mode?
 
 **Monolithic (single binary):**
-- Все components в одном process
-- Easy deploy
-- До ~100 GB/day
+- Все компоненты в одном процессе
+- Простое развёртывание
+- До ~100 GB/день
 
 **Simple Scalable Deployment (SSD):**
-- 2 binaries: Read + Write
-- Recommended для **most production** workloads
-- До ~few TB/day
+- 2 бинарника: Read + Write
+- Рекомендуется для **большинства production**-нагрузок
+- До нескольких TB/день
 
 **Microservices:**
-- Каждый component separate
-- Maximum flexibility / scaling
-- For **massive** scale (10+ TB/day)
+- Каждый компонент отдельно
+- Максимальная гибкость / масштабирование
+- Для **очень больших** масштабов (10+ TB/день)
 
-В **2025** — **SSD mode** для majority workloads.
+В **2025** — **SSD mode** для большинства нагрузок.
 
 ## Q8. (!) Что такое labels в Loki?
 
-**Labels** = key-value pairs идентифицируют log stream.
+**Labels** = пары ключ-значение, идентифицирующие log stream.
 
 ```
 {job="my-app", env="prod", region="us-east", level="error"}
 ```
 
-**Source:**
-- Static (config)
-- Dynamic (extracted from log content)
-- Kubernetes labels (auto)
+**Источник:**
+- Статические (из конфига)
+- Динамические (извлекаются из содержимого лога)
+- Kubernetes labels (автоматически)
 
 **Используются для:**
-- **Stream selection** (filter logs by labels)
-- **Indexing** (только labels indexed)
-- **Aggregation** (group by labels)
+- **Выбора stream** (фильтрация логов по labels)
+- **Индексации** (индексируются только labels)
+- **Агрегации** (группировка по labels)
 
 ## Q9. (!) Cardinality — главная проблема?
 
-**Cardinality** = number of unique label combinations.
+**Cardinality** (кардинальность) = число уникальных комбинаций labels.
 
-**Bad:** `{user_id="123"}` — millions of unique IDs → millions of streams → blow up index.
+**Плохо:** `{user_id="123"}` — миллионы уникальных ID → миллионы streams → раздувание индекса.
 
-**Good:** `{service="api", env="prod"}` — bounded set.
+**Хорошо:** `{service="api", env="prod"}` — ограниченное множество.
 
-**Rules:**
-- **Don't use high-cardinality fields as labels** (user_id, request_id, IP)
-- **Aim for** < 10K total streams per tenant
-- **Few labels** (< 10), bounded values
+**Правила:**
+- **Не используйте поля с высокой кардинальностью как labels** (user_id, request_id, IP)
+- **Стремитесь** к < 10K streams на tenant суммарно
+- **Мало labels** (< 10), ограниченные значения
 
-**Если нужен поиск по user_id:** put в log line content, search через `|=` filter:
+**Если нужен поиск по user_id:** кладите его в содержимое строки лога и ищите через фильтр `|=`:
 ```logql
 {service="api"} |= "user_id=123"
 ```
 
-**Cardinality blowup** = №1 cause production issues с Loki.
+**Cardinality blowup** (раздувание кардинальности) = причина №1 production-проблем с Loki.
 
 ## Q10. Static vs dynamic labels?
 
-**Static labels** — известны в config (job, env).
+**Static labels** — известны в конфиге (job, env).
 
-**Dynamic labels** — extracted from log content в Promtail pipeline.
+**Dynamic labels** — извлекаются из содержимого лога в Promtail pipeline.
 
 ```yaml
 # Bad — extract user_id as label (high cardinality)
@@ -268,18 +268,18 @@ s3://loki-bucket/chunks/<stream-hash>/<start-end-timestamp>
 # Good — keep user_id в content, не как label
 ```
 
-**Best practice:** только bounded fields как labels.
+**Best practice:** в качестве labels — только поля с ограниченным набором значений.
 
 ## Q11. (!) LogQL — query language?
 
-**LogQL** — Loki's query language. Inspired by **PromQL**.
+**LogQL** — язык запросов Loki. Вдохновлён **PromQL**.
 
-**Basic structure:**
+**Базовая структура:**
 ```
 {label_selector} | filter_expression
 ```
 
-**Examples:**
+**Примеры:**
 ```
 # All logs from app
 {app="my-app"}
@@ -299,13 +299,13 @@ s3://loki-bucket/chunks/<stream-hash>/<start-end-timestamp>
 
 ## Q12. Log stream selectors?
 
-**Stream selector** — `{label="value"}`. Filter streams (which to read).
+**Stream selector** — `{label="value"}`. Отбирает streams (какие читать).
 
-**Operators:**
-- `=` — equal
-- `!=` — not equal
-- `=~` — regex match
-- `!~` — regex not match
+**Операторы:**
+- `=` — равно
+- `!=` — не равно
+- `=~` — совпадение по regex
+- `!~` — несовпадение по regex
 
 ```
 {app="my-app"}                           # equal
@@ -314,11 +314,11 @@ s3://loki-bucket/chunks/<stream-hash>/<start-end-timestamp>
 {env!="dev"}                             # not equal
 ```
 
-**Performance:** stream selectors **сильно** влияют на speed. Точнее — быстрее.
+**Производительность:** stream selectors **сильно** влияют на скорость. Чем точнее — тем быстрее.
 
 ## Q13. Filter expressions?
 
-После selector — **line filters**:
+После selector идут **line filters** (фильтры строк):
 
 ```
 {app="my-app"}
@@ -328,7 +328,7 @@ s3://loki-bucket/chunks/<stream-hash>/<start-end-timestamp>
   !~ "internal-debug"  # regex doesn't match
 ```
 
-**Parser stages:**
+**Parser stages (стадии парсинга):**
 ```
 {app="my-app"} | json                       # parse JSON
 {app="my-app"} | logfmt                      # parse logfmt
@@ -338,7 +338,7 @@ s3://loki-bucket/chunks/<stream-hash>/<start-end-timestamp>
 
 ## Q14. (!) Metric queries (LogQL → metrics)?
 
-**Logs → metrics** — LogQL aggregations.
+**Логи → метрики** — через агрегации LogQL.
 
 ```
 # Rate of errors
@@ -354,39 +354,39 @@ quantile_over_time(0.95, {app="api"} | json | unwrap duration_ms [5m])
 sum by (service) (count_over_time({env="prod"} |= "error" [1m]))
 ```
 
-Это даёт **Prometheus-style metrics из logs**. Можно использовать в Grafana dashboards и alerting.
+Это даёт **метрики в стиле Prometheus из логов**. Их можно использовать в Grafana-дашбордах и алертинге.
 
 ## Q15. (!) Promtail vs Alloy vs Fluent Bit?
 
-**Promtail** — official Loki agent (Go).
-- Lightweight (~50 MB RAM)
+**Promtail** — официальный агент Loki (Go).
+- Лёгкий (~50 MB RAM)
 - Service discovery (K8s)
-- Pipeline stages для parsing
+- Pipeline stages для парсинга
 
-**Grafana Alloy** (с 2024) — successor Promtail.
-- Multi-protocol (Loki, Tempo, Mimir, Prometheus, OTLP)
-- Component-based config (HCL-like)
-- Replaces Grafana Agent + Promtail
+**Grafana Alloy** (с 2024) — преемник Promtail.
+- Мультипротокольный (Loki, Tempo, Mimir, Prometheus, OTLP)
+- Конфиг на основе компонентов (HCL-подобный)
+- Заменяет Grafana Agent + Promtail
 
-**Fluent Bit** — alternative (CNCF).
-- Lightweight (5 MB RAM)
-- Multi-output (Loki, ES, Kafka)
+**Fluent Bit** — альтернатива (CNCF).
+- Лёгкий (5 MB RAM)
+- Несколько выходов (Loki, ES, Kafka)
 - Production-grade
 
-**Vector** (Datadog OSS) — modern alternative, fast Rust-based.
+**Vector** (Datadog OSS) — современная альтернатива, быстрый, на Rust.
 
-В **2025** — **Alloy** для Grafana stack. **Fluent Bit** для multi-vendor scenarios.
+В **2025** — **Alloy** для Grafana stack. **Fluent Bit** для мультивендорных сценариев.
 
 ## Q16. Pipeline stages в Promtail?
 
-**Stages:**
-- **regex** / **json** / **logfmt** — parse
-- **labels** — extract labels
-- **template** — modify
-- **timestamp** — parse timestamp
-- **output** — modify log line
-- **drop** — drop matching logs
-- **multiline** — combine multi-line entries (stack traces)
+**Стадии:**
+- **regex** / **json** / **logfmt** — парсинг
+- **labels** — извлечение labels
+- **template** — изменение
+- **timestamp** — парсинг timestamp
+- **output** — изменение строки лога
+- **drop** — отбрасывание подходящих логов
+- **multiline** — объединение многострочных записей (stack traces)
 
 ```yaml
 pipeline_stages:
@@ -403,7 +403,7 @@ pipeline_stages:
 
 ## Q17. K8s log discovery?
 
-**Promtail / Alloy в K8s** auto-discover pods через K8s API:
+**Promtail / Alloy в K8s** автоматически обнаруживают pods через K8s API:
 
 ```yaml
 scrape_configs:
@@ -419,23 +419,23 @@ scrape_configs:
         target_label: app
 ```
 
-**Logs из container logs** (`/var/log/pods/...`).
+**Логи берутся из container logs** (`/var/log/pods/...`).
 
-**Alternative:** every pod stdout → DaemonSet collector reads.
+**Альтернатива:** stdout каждого pod → читает DaemonSet-коллектор.
 
 ## Q18. (!) Что такое Grafana?
 
-**Grafana** — open-source visualization platform. Dashboards + alerting для observability data.
+**Grafana** — open-source-платформа визуализации. Дашборды + алертинг для observability-данных.
 
-**Datasources:** 100+ supported:
+**Datasources:** поддерживается 100+:
 - Prometheus, Loki, Tempo, Mimir
 - Elasticsearch, OpenSearch
 - InfluxDB, Graphite
 - PostgreSQL, MySQL
 - CloudWatch, Datadog, NewRelic
-- And many more
+- И многие другие
 
-**Standard tool** для observability dashboards.
+**Стандартный инструмент** для observability-дашбордов.
 
 ## Q19. Datasources в Grafana?
 
@@ -452,17 +452,17 @@ datasources:
     url: http://tempo:3200
 ```
 
-Один Grafana → много datasources → unified visualization.
+Одна Grafana → много datasources → единая визуализация.
 
-**Mixed datasources в одном dashboard** — например, latency metric (Prometheus) + related logs (Loki) + trace (Tempo).
+**Смешанные datasources в одном дашборде** — например, метрика latency (Prometheus) + связанные логи (Loki) + trace (Tempo).
 
 ## Q20. Dashboards, panels, variables?
 
-**Dashboard** = collection of panels.
+**Dashboard** = набор панелей.
 
-**Panel types:**
-- Time series (line, area, bar)
-- Stat (single value)
+**Типы панелей:**
+- Time series (линия, область, бары)
+- Stat (одно значение)
 - Gauge
 - Table
 - Logs panel
@@ -470,22 +470,22 @@ datasources:
 - Pie chart
 - World map
 
-**Variables** — dropdowns в dashboard для dynamic filtering:
+**Variables** — выпадающие списки в дашборде для динамической фильтрации:
 ```
 ${env}      → values from query (env labels)
 ${service}  → multi-select services
 ```
 
-Один dashboard работает для **разных environments** через variables.
+Один дашборд работает для **разных окружений** через variables.
 
-**Provisioning:** dashboards as code (JSON) committed в git.
+**Provisioning:** дашборды как код (JSON), закоммиченные в git.
 
 ## Q21. Alerting в Grafana?
 
 **Unified Alerting** (Grafana 8+):
-- Alert rules definable across multiple datasources
-- Notification channels (Slack, PagerDuty, email, webhook)
-- Routing, silencing, inhibition
+- Alert rules можно задавать сразу для нескольких datasources
+- Каналы уведомлений (Slack, PagerDuty, email, webhook)
+- Маршрутизация, заглушение (silencing), подавление (inhibition)
 
 ```yaml
 - name: HighErrorRate
@@ -497,13 +497,13 @@ ${service}  → multi-select services
     summary: "High error rate detected"
 ```
 
-**Alertmanager** (Prometheus) — alternative.
+**Alertmanager** (Prometheus) — альтернатива.
 
 ## Q22. (!) Explore mode для troubleshooting?
 
-**Explore** — ad-hoc query mode (vs dashboards).
+**Explore** — режим ad-hoc-запросов (в противовес дашбордам).
 
-**Use case:** debugging incident.
+**Сценарий:** разбор инцидента.
 
 ```
 1. Open Explore с Loki datasource
@@ -513,99 +513,99 @@ ${service}  → multi-select services
 5. See full distributed trace
 ```
 
-**Split view** — query 2 datasources side-by-side.
+**Split view** — запросы к 2 datasources бок о бок.
 
-**Drill-down** — clickable trace_ids → link к Tempo.
+**Drill-down** — кликабельные trace_id → переход в Tempo.
 
 ## Q23. (!) Loki + Grafana + Tempo + Mimir?
 
-**LGTM Stack** = Grafana's full observability stack.
+**LGTM Stack** = полный observability-стек от Grafana.
 
-| Tool | Назначение | "Like" |
+| Инструмент | Назначение | «Аналог» |
 |------|-----------|--------|
-| **Loki** | Logs | ELK |
-| **Grafana** | Visualization | — |
-| **Tempo** | Traces | Jaeger |
-| **Mimir** | Metrics | Prometheus (long-term storage) |
-| **Pyroscope** | Profiles | (continuous profiling) |
-| **Beyla** / **Faro** | Auto-instrumentation, RUM | — |
+| **Loki** | Логи | ELK |
+| **Grafana** | Визуализация | — |
+| **Tempo** | Трейсы | Jaeger |
+| **Mimir** | Метрики | Prometheus (долгосрочное хранение) |
+| **Pyroscope** | Профили | (continuous profiling) |
+| **Beyla** / **Faro** | Авто-инструментирование, RUM | — |
 
-**Все** open-source, **все** label-based, **все** на object storage (S3) для cheap.
+**Все** open-source, **все** на основе labels, **все** на object storage (S3) — ради дешевизны.
 
-**Эпохальный** альтернатива expensive vendor stacks.
+**Эпохальная** альтернатива дорогим вендорским стекам.
 
 ## Q24. Correlation logs ↔ traces ↔ metrics?
 
-**Workflow:**
+**Сценарий работы:**
 
-1. Spike в latency (metrics from Prometheus)
-2. → Click trace_id в Grafana → see slow trace в Tempo
-3. → Click trace_id → search Loki для logs с этим trace_id
-4. → See ERROR log message → understand root cause
+1. Всплеск latency (метрики из Prometheus)
+2. → Кликаем trace_id в Grafana → видим медленный trace в Tempo
+3. → Кликаем trace_id → ищем в Loki логи с этим trace_id
+4. → Видим ERROR-сообщение в логе → понимаем root cause
 
-**Setup:** include `trace_id` в logs, include `service.name` consistently across.
+**Настройка:** добавляйте `trace_id` в логи и единообразно проставляйте `service.name` во всех системах.
 
 ```python
 logger.info("Processing", extra={"trace_id": current_span.context.trace_id})
 ```
 
-В Grafana — **derived fields** позволяют clickable trace_id в logs panel.
+В Grafana **derived fields** делают trace_id кликабельным в logs panel.
 
 ## Q25. (!) Cost comparison Loki vs ELK?
 
-**Example:** 1 TB logs/day, 7 days retention.
+**Пример:** 1 TB логов/день, retention 7 дней.
 
 **ELK:**
-- Storage: 7 TB × $0.10/GB/month = $700/month
-- Compute (3 data nodes): $1500/month
-- License (Elastic paid features): $$$
-- **Total: $2200+/month**
+- Хранение: 7 TB × $0.10/GB/мес = $700/мес
+- Compute (3 data-ноды): $1500/мес
+- Лицензия (платные фичи Elastic): $$$
+- **Итого: $2200+/мес**
 
 **Loki:**
-- Storage: 7 TB × S3 ($0.023/GB) = $160/month
-- Compute (smaller, Go): $300/month
-- **Total: $460/month**
+- Хранение: 7 TB × S3 ($0.023/GB) = $160/мес
+- Compute (компактнее, Go): $300/мес
+- **Итого: $460/мес**
 
-**~5x cheaper.**
+**Примерно в 5 раз дешевле.**
 
-Real-world: enterprise reports save **70-90%** moving к Loki.
+На практике: enterprise-компании сообщают об экономии **70–90%** при переходе на Loki.
 
-**Cost trade-off:** queries slower (особенно full-text grep).
+**Цена компромисса:** запросы медленнее (особенно полнотекстовый grep).
 
 ## Q26. Какие частые проблемы в Loki production?
 
-1. **High cardinality labels** — index blow up
-2. **Slow queries** — broad time range + grep
-3. **Tenant isolation** — single tenant abuses cluster
-4. **Object storage costs** — list/read operations добавляются
-5. **Out-of-order ingestion** — older Loki не accepted (newer OK)
-6. **Chunk size tuning** — too small = high overhead
-7. **Retention misconfig** — забыли set TTL → costs grow
-8. **Promtail config errors** — silent log loss
-9. **No alerting** на ingestion failures
+1. **Labels с высокой кардинальностью** — раздувание индекса
+2. **Медленные запросы** — широкий временной диапазон + grep
+3. **Изоляция tenant** — один tenant перегружает кластер
+4. **Стоимость object storage** — добавляются операции list/read
+5. **Out-of-order ingestion** — старый Loki не принимал (в новых версиях OK)
+6. **Подбор размера chunk** — слишком маленький = высокий overhead
+7. **Неверный retention** — забыли выставить TTL → расходы растут
+8. **Ошибки в конфиге Promtail** — тихая потеря логов
+9. **Нет алертинга** на сбои ingestion
 
 ## Q27. (!) Когда выбрать Loki?
 
-**Выбирай Loki когда:**
-- **Cost** important
-- Already use **Grafana** + **Prometheus**
-- Logs largely **structured** (JSON, key-value)
-- Filter mostly by **labels**
-- K8s ecosystem
-- Operational simplicity matters
+**Выбирай Loki, когда:**
+- Важна **стоимость**
+- Уже используете **Grafana** + **Prometheus**
+- Логи в основном **структурированные** (JSON, key-value)
+- Фильтрация преимущественно по **labels**
+- Экосистема K8s
+- Важна простота эксплуатации
 
-**Best fit:** modern cloud-native shop, K8s, microservices, cost-conscious.
+**Лучше всего подходит:** современная cloud-native-команда, K8s, микросервисы, экономия бюджета.
 
 ## Q28. Когда не выбирать Loki?
 
-**Не выбирай Loki когда:**
-- Need **complex full-text search** на all logs
-- Heavy **aggregations / analytics**
-- Compliance / SIEM features required
-- Already deeply ELK
-- Need **APM** в одном tool
+**Не выбирай Loki, когда:**
+- Нужен **сложный полнотекстовый поиск** по всем логам
+- Тяжёлые **агрегации / аналитика**
+- Требуются фичи compliance / SIEM
+- Уже глубоко завязаны на ELK
+- Нужен **APM** в одном инструменте
 
-**Alternative:** ELK для search-heavy, **ClickHouse** для analytics-heavy, **SigNoz** для full APM.
+**Альтернативы:** ELK для нагрузки на поиск, **ClickHouse** для тяжёлой аналитики, **SigNoz** для полноценного APM.
 
 ## See also
 

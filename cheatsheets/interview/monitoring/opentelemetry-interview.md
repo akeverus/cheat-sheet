@@ -19,7 +19,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `OpenTelemetry`
 
-`OpenTelemetry (OTel)` — **vendor-neutral** стандарт для observability (от слияния OpenTracing + OpenCensus в 2019). 2-й по активности проект CNCF после Kubernetes. Стандарт de facto для **distributed tracing**, набирает momentum для metrics и logs. Заменяет vendor-specific SDKs (Datadog, NewRelic, etc.).
+`OpenTelemetry (OTel)` — **vendor-neutral** стандарт для observability (родился из слияния OpenTracing + OpenCensus в 2019). 2-й по активности проект CNCF после Kubernetes. Стандарт де-факто для **distributed tracing**, набирает обороты в metrics и logs. Заменяет vendor-specific SDK (Datadog, NewRelic и т.д.).
 
 ## Полезные ссылки
 
@@ -85,63 +85,63 @@ updated: "2026-04-25"
 
 ## Q1. (!) Что такое OpenTelemetry?
 
-`OpenTelemetry (OTel)` — open-source framework для **collection** и **export** телеметрии:
+`OpenTelemetry (OTel)` — open-source фреймворк для **сбора** и **экспорта** телеметрии:
 - Traces (distributed tracing)
 - Metrics
 - Logs
 
-**Vendor-neutral** — можно отправлять данные в любой backend (Datadog, Jaeger, New Relic, Honeycomb, Splunk, Tempo, etc.).
+**Vendor-neutral** — можно отправлять данные в любой backend (Datadog, Jaeger, New Relic, Honeycomb, Splunk, Tempo и т.д.).
 
-**CNCF graduated** project (2024). 2-й по активности после Kubernetes.
+Проект со статусом **CNCF graduated** (2024). 2-й по активности после Kubernetes.
 
-**Цель:** **standardize** instrumentation — пишешь один раз, отправляешь куда угодно.
+**Цель:** **стандартизировать** инструментирование — пишешь один раз, отправляешь куда угодно.
 
 ## Q2. (!) Зачем OTel вместо vendor SDK?
 
 **Vendor-specific SDK (Datadog, New Relic):**
-- Tightly coupled к vendor
-- Switch vendor → rewrite instrumentation
-- Different API в каждом language
+- Жёстко завязаны на вендора
+- Смена вендора → переписывание инструментирования
+- Разный API в каждом языке
 - Vendor lock-in
 
 **OpenTelemetry:**
-- **One instrumentation, multiple backends**
-- Switch vendor через config (без code changes)
-- Standard API across languages
-- Open source (no vendor lock-in)
-- Can send к multiple backends parallel
+- **Одно инструментирование, много backend-ов**
+- Смена вендора через конфиг (без правок кода)
+- Единый API во всех языках
+- Open source (без vendor lock-in)
+- Можно слать в несколько backend-ов параллельно
 
-**В 2025** — большинство vendors **support OTel input** (Datadog, NewRelic accept OTLP). OTel выиграл standards war.
+**В 2025** — большинство вендоров **принимают вход от OTel** (Datadog, NewRelic принимают OTLP). OTel выиграл войну стандартов.
 
 ## Q3. (!) Three pillars: traces, metrics, logs?
 
-**Traces** — request paths через services.
-- Stable in OTel
-- Wide language support
-- Backends: Jaeger, Tempo, Honeycomb, Datadog APM
+**Traces** — пути запроса через сервисы.
+- Стабильны в OTel
+- Широкая поддержка языков
+- Backend-ы: Jaeger, Tempo, Honeycomb, Datadog APM
 
-**Metrics** — numerical aggregations.
-- Stable in OTel
+**Metrics** — числовые агрегаты.
+- Стабильны в OTel
 - Counter, Gauge, Histogram
-- Backends: Prometheus, Datadog, CloudWatch
+- Backend-ы: Prometheus, Datadog, CloudWatch
 
-**Logs** — discrete events.
-- Newest pillar (stable since 2024)
-- Adoption растёт
-- Backends: Loki, ELK, Datadog Logs
+**Logs** — дискретные события.
+- Самый молодой pillar (stable с 2024)
+- Внедрение растёт
+- Backend-ы: Loki, ELK, Datadog Logs
 
-В 2025 — **traces + metrics** mature, **logs** растёт.
+В 2025 — **traces + metrics** зрелые, **logs** растёт.
 
 ## Q4. История (OpenTracing + OpenCensus = OpenTelemetry)?
 
 **OpenTracing** (2016) — спецификация tracing API. Ранний стандарт.
-**OpenCensus** (2017) — Google's tracing + metrics library.
+**OpenCensus** (2017) — библиотека tracing + metrics от Google.
 
-**Конкуренция:** community split, mass confusion.
+**Конкуренция:** раскол сообщества, всеобщая путаница.
 
-**OpenTelemetry** (2019) — merge OpenTracing + OpenCensus. Backed by **CNCF + большинство major vendors** (Google, Microsoft, AWS, Datadog, Splunk, ...).
+**OpenTelemetry** (2019) — слияние OpenTracing + OpenCensus. За проектом стоят **CNCF + большинство крупных вендоров** (Google, Microsoft, AWS, Datadog, Splunk, ...).
 
-В **2025** — OpenTracing и OpenCensus **deprecated**. OTel — единственный mainstream standard.
+В **2025** — OpenTracing и OpenCensus **deprecated**. OTel — единственный массовый стандарт.
 
 ## Q5. (!) Components: API, SDK, Collector?
 
@@ -149,17 +149,17 @@ updated: "2026-04-25"
 [App + OTel API] → [OTel SDK] → [OTel Collector] → [Backend(s)]
 ```
 
-**API** — defines instrumentation (`Tracer.startSpan(...)`).
-**SDK** — implementation (creates spans, batches, exports).
-**Collector** — separate process; receives, processes, exports телеметрию.
+**API** — определяет инструментирование (`Tracer.startSpan(...)`).
+**SDK** — реализация (создаёт спаны, батчит, экспортирует).
+**Collector** — отдельный процесс; принимает, обрабатывает и экспортирует телеметрию.
 
-**Зачем split API/SDK:**
-- App code только зависит от API (минимальная dependency)
-- SDK можно swap (different sampling, exporting)
+**Зачем разделять API/SDK:**
+- Код приложения зависит только от API (минимальная зависимость)
+- SDK можно заменить (другой sampling, другой экспорт)
 
 ## Q6. (!) OTel Collector — что и зачем?
 
-**OTel Collector** — process, который **receives** телеметрию от apps, **processes** (filter, sample, transform), и **exports** к backends.
+**OTel Collector** — процесс, который **принимает** телеметрию от приложений, **обрабатывает** её (фильтрация, sampling, трансформация) и **экспортирует** в backend-ы.
 
 ```mermaid
 graph LR
@@ -171,16 +171,16 @@ graph LR
     C --> Loki
 ```
 
-**Почему нужен:**
-- **Decoupling** — apps не знают про specific backends
-- **Centralized config** — sampling, filtering в одном месте
-- **Buffering / batching** — efficient transmission
-- **Multi-backend** — fanout одновременно
-- **Reduces app overhead** — heavy work в Collector, не в app
+**Зачем он нужен:**
+- **Развязка (decoupling)** — приложения не знают про конкретные backend-ы
+- **Централизованная конфигурация** — sampling и фильтрация в одном месте
+- **Буферизация / батчинг** — эффективная передача
+- **Multi-backend** — раздача (fanout) сразу в несколько мест
+- **Снижает overhead приложения** — тяжёлая работа в Collector, а не в приложении
 
-**Modes:**
-- **Agent** — sidecar / DaemonSet рядом с apps
-- **Gateway** — separate cluster, central
+**Режимы:**
+- **Agent** — sidecar / DaemonSet рядом с приложениями
+- **Gateway** — отдельный кластер, центральный
 - **Both** — Agent → Gateway
 
 ## Q7. Receiver, Processor, Exporter в Collector?
@@ -225,32 +225,32 @@ service:
 ```
 
 **Receiver** — принимает данные (OTLP, Jaeger, Prometheus, ...).
-**Processor** — обрабатывает (batch, filter, attributes, sampling).
-**Exporter** — отправляет к backend.
+**Processor** — обрабатывает (батчинг, фильтрация, attributes, sampling).
+**Exporter** — отправляет в backend.
 
 **Pipelines** — соединяют receivers → processors → exporters.
 
 ## Q8. Agent vs Gateway deployment?
 
-**Agent (per-host):**
+**Agent (на каждом хосте):**
 - DaemonSet в K8s (pod на каждой node)
 - Sidecar в pod
-- Low latency, local
-- Reduces network calls к remote collector
+- Низкая latency, локально
+- Сокращает сетевые вызовы к удалённому коллектору
 
-**Gateway (centralized):**
-- Separate cluster collectors
-- Centralized processing (sampling, filtering)
-- Easier ops (one place)
-- More buffering capacity
+**Gateway (централизованно):**
+- Коллекторы в отдельном кластере
+- Централизованная обработка (sampling, фильтрация)
+- Проще в эксплуатации (всё в одном месте)
+- Больше ёмкости для буферизации
 
-**Best practice:** **Agent + Gateway** combined:
-- Agent: local buffering, basic processing
-- Gateway: complex processing, fanout к backends
+**Best practice:** **Agent + Gateway** вместе:
+- Agent: локальная буферизация, базовая обработка
+- Gateway: сложная обработка, раздача (fanout) в backend-ы
 
 ## Q9. (!) Auto vs manual instrumentation?
 
-**Auto-instrumentation** — automatic для popular libraries (HTTP, DB, gRPC).
+**Auto-instrumentation** — автоматически для популярных библиотек (HTTP, DB, gRPC).
 
 ```bash
 # Java
@@ -264,7 +264,7 @@ opentelemetry-instrument python app.py
 node --require @opentelemetry/auto-instrumentations-node app.js
 ```
 
-**Manual instrumentation** — explicit code в business logic.
+**Manual instrumentation** — явный код в бизнес-логике.
 
 ```java
 Span span = tracer.spanBuilder("processOrder").startSpan();
@@ -276,11 +276,11 @@ try (Scope scope = span.makeCurrent()) {
 }
 ```
 
-**Best practice:** **auto** для infrastructure (HTTP, DB), **manual** для business logic (key operations).
+**Best practice:** **auto** для инфраструктуры (HTTP, DB), **manual** для бизнес-логики (ключевые операции).
 
 ## Q10. (!) Java auto-instrumentation (javaagent)?
 
-**Java agent** — JVM agent, instrumentates bytecode at startup.
+**Java agent** — JVM-агент, инструментирует байткод на старте.
 
 ```bash
 # Download agent
@@ -296,16 +296,16 @@ export OTEL_EXPORTER_OTLP_ENDPOINT=http://collector:4317
 java -javaagent:opentelemetry-javaagent.jar -jar app.jar
 ```
 
-**Auto-instruments:**
-- Spring Boot (controllers, beans)
-- HTTP clients (HttpClient, OkHttp, RestTemplate, WebClient)
-- JDBC (всё DBs)
+**Авто-инструментирует:**
+- Spring Boot (контроллеры, бины)
+- HTTP-клиенты (HttpClient, OkHttp, RestTemplate, WebClient)
+- JDBC (все БД)
 - Kafka, RabbitMQ
 - Redis, MongoDB
 - gRPC
-- 100+ libraries
+- 100+ библиотек
 
-**Без code changes!** Just attach agent.
+**Без правок кода!** Достаточно подключить агент.
 
 ## Q11. Manual spans?
 
@@ -334,14 +334,14 @@ try (Scope scope = span.makeCurrent()) {
 ```
 
 **Best practices:**
-- Wrap в try-finally (always end span)
-- Set attributes для context
-- Record exceptions
-- Set status (OK / ERROR)
+- Оборачивай в try-finally (всегда завершай спан)
+- Проставляй attributes для контекста
+- Записывай исключения (record exceptions)
+- Выставляй статус (OK / ERROR)
 
 ## Q12. Span attributes, events?
 
-**Attributes** — key-value pairs (как tags). Static info про span.
+**Attributes** — пары ключ-значение (как теги). Статичная информация про спан.
 
 ```java
 span.setAttribute("http.method", "GET");
@@ -349,7 +349,7 @@ span.setAttribute("http.status_code", 200);
 span.setAttribute("db.system", "postgresql");
 ```
 
-**Events** — timestamped events внутри span.
+**Events** — события с меткой времени внутри спана.
 
 ```java
 span.addEvent("Cache miss");
@@ -358,18 +358,18 @@ span.addEvent("Slow query detected", Attributes.of(
 ));
 ```
 
-**Standard attributes** — следуй [Semantic Conventions](https://opentelemetry.io/docs/specs/semconv/) для interoperability.
+**Стандартные attributes** — следуй [Semantic Conventions](https://opentelemetry.io/docs/specs/semconv/) ради совместимости (interoperability).
 
 ## Q13. (!) Trace, span, span context?
 
-**Trace** — collection of spans for one request.
+**Trace** — набор спанов для одного запроса.
 
-**Span** — single operation (HTTP call, DB query, function call).
+**Span** — одна операция (HTTP-вызов, запрос к БД, вызов функции).
 
-**Span context** — IDs для correlation:
-- `trace_id` — same для всех spans в trace (16 bytes / 32 hex chars)
-- `span_id` — unique per span (8 bytes / 16 hex chars)
-- `trace_flags` — sampling decision
+**Span context** — идентификаторы для корреляции:
+- `trace_id` — одинаковый для всех спанов в трейсе (16 байт / 32 hex-символа)
+- `span_id` — уникальный для каждого спана (8 байт / 16 hex-символов)
+- `trace_flags` — решение о sampling
 
 ```
 Trace 0123456789abcdef0123456789abcdef
@@ -382,37 +382,37 @@ Trace 0123456789abcdef0123456789abcdef
 
 ## Q14. (!) Context propagation (W3C Trace Context)?
 
-**Context propagation** — passing trace context между services через HTTP headers.
+**Context propagation** — передача trace context между сервисами через HTTP-заголовки.
 
-**W3C Trace Context** (standard 2020):
+**W3C Trace Context** (стандарт 2020):
 ```
 Headers:
   traceparent: 00-0123456789abcdef0123456789abcdef-0123456789abcdef-01
   tracestate: vendor1=value1,vendor2=value2
 ```
 
-**Format:**
+**Формат:**
 - `traceparent` = `version-traceId-spanId-flags`
-- `tracestate` = vendor-specific data
+- `tracestate` = данные конкретного вендора
 
-OTel SDKs **automatically** inject/extract при HTTP calls (with auto-instrumentation).
+OTel SDK **автоматически** инжектят/извлекают контекст при HTTP-вызовах (с auto-instrumentation).
 
-**For async** (Kafka): inject context в message headers, extract в consumer.
+**Для async** (Kafka): инжектить контекст в заголовки сообщения, извлекать в consumer-е.
 
 ## Q15. Sampling — head vs tail?
 
-**Не каждый** request нужно trace (cost). Sampling.
+**Не каждый** запрос нужно трейсить (это стоит денег). Отсюда — sampling.
 
-**Head sampling** (before processing):
-- Decision на start trace
-- Cheap (no need to keep all spans)
-- **Misses interesting traces** (errors, slow)
+**Head sampling** (до обработки):
+- Решение принимается в начале трейса
+- Дёшево (не нужно хранить все спаны)
+- **Пропускает интересные трейсы** (ошибки, медленные)
 
-**Tail sampling** (after trace complete):
-- Decision when trace finishes
-- Need to **buffer** all spans
-- **Smart:** keep all error traces, slow traces, % normal
-- Implemented в Collector, not SDK
+**Tail sampling** (после завершения трейса):
+- Решение принимается, когда трейс завершён
+- Нужно **буферизовать** все спаны
+- **Умно:** оставляем все трейсы с ошибками, медленные трейсы, % нормальных
+- Реализуется в Collector, а не в SDK
 
 ```yaml
 # Tail sampling в Collector
@@ -430,11 +430,11 @@ processors:
         probabilistic: { sampling_percentage: 10 }
 ```
 
-**Best practice 2025:** tail sampling для **production** apps с high traffic.
+**Best practice 2025:** tail sampling для **production**-приложений с высоким трафиком.
 
 ## Q16. (!) Metric instruments (Counter, Gauge, Histogram)?
 
-**Counter** — monotonically increasing.
+**Counter** — монотонно возрастающий.
 ```java
 LongCounter requests = meter.counterBuilder("http.requests")
     .setDescription("HTTP request count")
@@ -443,15 +443,15 @@ LongCounter requests = meter.counterBuilder("http.requests")
 requests.add(1, Attributes.of(AttributeKey.stringKey("method"), "GET"));
 ```
 
-**UpDownCounter** — может increase/decrease (например, active connections).
+**UpDownCounter** — может расти и убывать (например, число активных соединений).
 
-**Gauge** — current value (CPU%, memory used).
+**Gauge** — текущее значение (CPU%, занятая память).
 ```java
 meter.gaugeBuilder("queue.size")
     .buildWithCallback(measurement -> measurement.record(queue.size()));
 ```
 
-**Histogram** — distribution of values (latencies).
+**Histogram** — распределение значений (latency).
 ```java
 DoubleHistogram latency = meter.histogramBuilder("http.duration")
     .setUnit("ms")
@@ -459,45 +459,45 @@ DoubleHistogram latency = meter.histogramBuilder("http.duration")
 latency.record(245.5, Attributes.of(...));
 ```
 
-**Histogram** даёт percentiles (p50, p95, p99) на backend.
+**Histogram** даёт перцентили (p50, p95, p99) на стороне backend-а.
 
 ## Q17. Aggregation, push vs pull?
 
-**Push** — SDK sends metrics к backend periodically.
-- OTLP push к Collector
+**Push** — SDK периодически шлёт метрики в backend.
+- OTLP push в Collector
 - Collector → backend
 
-**Pull** — backend scrapes metrics из app.
-- Prometheus scrapes app's `/metrics` endpoint
+**Pull** — backend сам собирает (scrape) метрики из приложения.
+- Prometheus скрейпит эндпоинт `/metrics` приложения
 
-**OTel supports both:**
+**OTel поддерживает оба:**
 - **Push** — OTLP exporter
-- **Pull** — Prometheus exporter (exposes endpoint)
+- **Pull** — Prometheus exporter (отдаёт эндпоинт)
 
-**Aggregation periods:** how often metrics aggregated (default 60 sec).
+**Периоды агрегации:** как часто агрегируются метрики (по умолчанию 60 сек).
 
 ## Q18. Exemplars (linking metrics к traces)?
 
-**Exemplar** — sample trace ID attached к metric data point.
+**Exemplar** — пример trace ID, прикреплённый к точке данных метрики.
 
 ```
 Histogram bucket: 1000-2000ms
   Exemplar: trace_id=abc123, value=1500ms
 ```
 
-**Use case:** "p99 latency растёт" → click exemplar → see trace того slow request.
+**Сценарий:** «p99 latency растёт» → кликаешь по exemplar → видишь трейс того самого медленного запроса.
 
-Bridging metrics → traces. Powerful debugging.
+Связка metrics → traces. Мощный инструмент отладки.
 
-Supported в Prometheus, Tempo, Datadog.
+Поддерживается в Prometheus, Tempo, Datadog.
 
 ## Q19. (!) OTel Logs — статус?
 
-**Logs** — newest pillar. **Stable since 2024** в OTel.
+**Logs** — самый молодой pillar. **Стабилен с 2024** в OTel.
 
-**OTLP Logs** — accept logs от apps в standardized format.
+**OTLP Logs** — приём логов от приложений в стандартизированном формате.
 
-**Log Bridge** — bridge existing logging libraries (Log4j, Logback, ZapLogger) к OTel.
+**Log Bridge** — мост от существующих библиотек логирования (Log4j, Logback, ZapLogger) к OTel.
 
 ```java
 // Slf4j → OTel automatic
@@ -505,36 +505,36 @@ logger.info("Processing order {}", orderId);
 // Auto-correlated с current trace span
 ```
 
-В **2025** — adoption растёт, но Logs всё ещё **более immature** чем traces/metrics.
+В **2025** — внедрение растёт, но Logs всё ещё **менее зрелые**, чем traces/metrics.
 
 ## Q20. Log correlation с traces?
 
-**Correlation** — log entry contains trace_id + span_id.
+**Корреляция** — запись лога содержит trace_id + span_id.
 
 ```
 2025-04-19 14:30:00 INFO [trace_id=abc123, span_id=def456] Processing order 12345
 ```
 
-**Workflow:**
-1. See error в logs → grab trace_id
-2. Open trace в Jaeger/Tempo → see full request path
-3. See slow span → check related metrics
+**Сценарий работы:**
+1. Видишь ошибку в логах → берёшь trace_id
+2. Открываешь трейс в Jaeger/Tempo → видишь полный путь запроса
+3. Видишь медленный спан → проверяешь связанные метрики
 
-**OTel auto-correlates** при использовании Log Bridge.
+**OTel авто-коррелирует** при использовании Log Bridge.
 
-В **Datadog, Honeycomb, NewRelic** — UI links logs ↔ traces автоматически.
+В **Datadog, Honeycomb, NewRelic** — UI связывает logs ↔ traces автоматически.
 
 ## Q21. (!) Какие backends поддерживают OTel?
 
 **Open-source:**
 - **Jaeger** — traces
-- **Zipkin** — traces (older)
+- **Zipkin** — traces (более старый)
 - **Prometheus** — metrics
 - **Loki** (Grafana) — logs
 - **Tempo** (Grafana) — traces
 - **Mimir** (Grafana) — metrics
 - **OpenSearch / Elasticsearch** — logs / traces
-- **Cassandra** (для Jaeger storage)
+- **Cassandra** (как хранилище для Jaeger)
 
 **SaaS / Enterprise:**
 - **Datadog**
@@ -547,21 +547,21 @@ logger.info("Processing order {}", orderId);
 - **Google Cloud Trace**
 - **Dynatrace**
 
-В **2025** — practically **все** observability vendors accept OTLP. Standard wars завершены.
+В **2025** — практически **все** observability-вендоры принимают OTLP. Войны стандартов завершены.
 
 ## Q22. OTLP — wire protocol?
 
-**OTLP (OpenTelemetry Protocol)** — wire format для transmission телеметрии.
+**OTLP (OpenTelemetry Protocol)** — wire-формат для передачи телеметрии.
 
-**Two transport options:**
-- **gRPC** (`:4317`) — binary, efficient
-- **HTTP/protobuf** (`:4318`) — easier to debug
+**Два транспорта:**
+- **gRPC** (`:4317`) — бинарный, эффективный
+- **HTTP/protobuf** (`:4318`) — проще отлаживать
 
-**Default endpoint:** `localhost:4317`.
+**Эндпоинт по умолчанию:** `localhost:4317`.
 
-**Encoding:**
-- Protocol Buffers (binary)
-- Compact, fast
+**Кодирование:**
+- Protocol Buffers (бинарный)
+- Компактно, быстро
 
 ```yaml
 exporters:
@@ -571,11 +571,11 @@ exporters:
       insecure: true
 ```
 
-OTLP — standard. Все vendor backends accept it.
+OTLP — стандарт. Все vendor-backend-ы его принимают.
 
 ## Q23. (!) Можно ли менять backend без code change?
 
-**Да!** Это main value OTel.
+**Да!** В этом и главная ценность OTel.
 
 ```bash
 # Switch from Jaeger to Datadog
@@ -592,13 +592,13 @@ exporters:
     api: { key: ${DD_API_KEY} }
 ```
 
-**App code не меняется.** Restart Collector.
+**Код приложения не меняется.** Достаточно перезапустить Collector.
 
-Это **революционный shift** vs vendor SDK era.
+Это **революционный сдвиг** по сравнению с эпохой vendor SDK.
 
 ## Q24. (!) Semantic conventions?
 
-**Semantic Conventions** — standard names для attributes.
+**Semantic Conventions** — стандартные имена для attributes.
 
 ```
 http.method  = "GET"
@@ -610,15 +610,15 @@ service.name = "order-service"
 service.version = "1.2.3"
 ```
 
-**Зачем:** **interoperability** между tools. Datadog UI знает что `http.method` означает HTTP method, не custom attribute.
+**Зачем:** **совместимость (interoperability)** между инструментами. Datadog UI знает, что `http.method` означает HTTP-метод, а не кастомный атрибут.
 
-**Auto-instrumentation** uses semantic conventions automatically.
+**Auto-instrumentation** использует semantic conventions автоматически.
 
-**Manual:** import standard attribute keys из OTel package (`SemanticAttributes.HTTP_METHOD`).
+**Вручную:** импортируй стандартные ключи атрибутов из OTel-пакета (`SemanticAttributes.HTTP_METHOD`).
 
 ## Q25. Resource attributes?
 
-**Resource** — info про **источник** телеметрии (service, host, container).
+**Resource** — информация про **источник** телеметрии (сервис, хост, контейнер).
 
 ```yaml
 service.name: my-app
@@ -631,69 +631,69 @@ k8s.pod.name: my-app-7d8f9b-xz2k
 deployment.environment: production
 ```
 
-**Resource** attached к каждому span/metric/log automatically.
+**Resource** автоматически прикрепляется к каждому span/metric/log.
 
-**В K8s:** OTel resource detector auto-fills from K8s API.
+**В K8s:** OTel resource detector автоматически заполняет данные из K8s API.
 
 ## Q26. Что включить в traces (избежать noise)?
 
 **Включай:**
-- HTTP requests (auto)
-- DB queries (auto)
-- External API calls (auto)
-- Key business operations (manual)
-- Long-running tasks
-- Cache misses
+- HTTP-запросы (auto)
+- Запросы к БД (auto)
+- Вызовы внешних API (auto)
+- Ключевые бизнес-операции (manual)
+- Долгоиграющие задачи
+- Промахи кэша (cache misses)
 
 **Избегай:**
-- Очень частые ops (per-element в loop)
-- Health check endpoints
-- Static asset serving
-- Internal trivial functions
+- Очень частые операции (на каждый элемент в цикле)
+- Эндпоинты health check
+- Отдача статики
+- Тривиальные внутренние функции
 
-**Sampling** для high-volume operations.
+**Sampling** для высокообъёмных операций.
 
 ## Q27. (!) Какие частые проблемы OTel в production?
 
-1. **High overhead** — instrumentation eats 5-10% CPU. Sample aggressively.
-2. **Network costs** — sending все spans expensive. Use Collector batching.
-3. **Storage costs** — backends (Datadog, etc.) charge per ingested data.
-4. **Cardinality explosion** — high-cardinality attributes (user_id) blow up metrics.
-5. **Async context loss** — propagation в async (CompletableFuture, Coroutines) tricky.
-6. **Different vendors handle differently** — даже OTLP-compatible имеют quirks.
-7. **Auto-instrumentation conflicts** — несколько agents fighting.
-8. **Versioning** — SDK / Agent / API version mismatches.
+1. **Высокий overhead** — инструментирование съедает 5-10% CPU. Семплируй агрессивно.
+2. **Сетевые расходы** — слать все спаны дорого. Используй батчинг в Collector.
+3. **Расходы на хранилище** — backend-ы (Datadog и т.д.) берут плату за объём принятых данных.
+4. **Взрыв кардинальности** — атрибуты с высокой кардинальностью (user_id) раздувают метрики.
+5. **Потеря контекста в async** — пробрасывать контекст в async (CompletableFuture, Coroutines) непросто.
+6. **Разные вендоры обрабатывают по-разному** — даже OTLP-совместимые имеют свои причуды.
+7. **Конфликты auto-instrumentation** — несколько агентов конфликтуют между собой.
+8. **Версионирование** — рассогласование версий SDK / Agent / API.
 
 ## Q28. Cost optimization для OTel?
 
 1. **Sampling** — head + tail
-2. **Drop unnecessary spans** в Collector (filter processor)
-3. **Lower cardinality** metrics (don't tag with user_id)
-4. **Reduce attribute count** per span
-5. **Compress** OTLP traffic
-6. **Batch** in Collector
-7. **Self-host backends** (Jaeger, Loki, Tempo) instead of expensive SaaS
-8. **Aggregate metrics** при Collector level
-9. **Tail sampling** keeps important traces, drops noise
+2. **Отбрасывай ненужные спаны** в Collector (filter processor)
+3. **Снижай кардинальность** метрик (не тегируй по user_id)
+4. **Сокращай число атрибутов** на спан
+5. **Сжимай** OTLP-трафик
+6. **Батчируй** в Collector
+7. **Хости backend-ы у себя** (Jaeger, Loki, Tempo) вместо дорогого SaaS
+8. **Агрегируй метрики** на уровне Collector
+9. **Tail sampling** оставляет важные трейсы, отбрасывает шум
 
-В Datadog: ingested traces могут быть **$0.10-1.00 per million spans**. Sampling экономит десятки тысяч $/month.
+В Datadog: принятые трейсы могут стоить **$0.10-1.00 за миллион спанов**. Sampling экономит десятки тысяч $/месяц.
 
 ---
 
 ## See also
 
-- [Jaeger / Zipkin](jaeger-zipkin-interview.md) — backends для traces
+- [Jaeger / Zipkin](jaeger-zipkin-interview.md) — backend-ы для traces
 - [ELK Stack](elk-stack-interview.md) — backend для logs
 - [Loki + Grafana](loki-grafana-interview.md) — backend для logs
 - [Prometheus + Grafana](prometheus-grafana-interview.md) — backend для metrics
 - [Observability](observability-interview.md) — общая концепция
-- [Метрики и трейсинг](metrics-tracing-interview.md) — concepts
-- [Logging](../logging/logging-interview.md) — log management
-- [Стратегии логирования](logging-strategies-interview.md) — best practices
-- [Микросервисы](../architecture/microservices-interview.md) — где OTel needed
+- [Метрики и трейсинг](metrics-tracing-interview.md) — базовые понятия
+- [Logging](../logging/logging-interview.md) — управление логами
+- [Стратегии логирования](logging-strategies-interview.md) — лучшие практики
+- [Микросервисы](../architecture/microservices-interview.md) — где нужен OTel
 - [Kubernetes](../devops/kubernetes-interview.md) — Collector в K8s
-- [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — observability pillar
-- [Application Profiling](../performance/application-profiling-interview.md) — alternative для perf
+- [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — pillar observability
+- [Application Profiling](../performance/application-profiling-interview.md) — альтернатива для профилирования
 - [Spring Boot Actuator](../frameworks/spring/spring-boot-actuator-interview.md) — Actuator + OTel
 
 - [Jaeger и Zipkin](jaeger-zipkin-interview.md)

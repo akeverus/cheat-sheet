@@ -19,7 +19,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Jaeger и Zipkin`
 
-**Jaeger** (CNCF, от Uber) и **Zipkin** (от Twitter) — main open-source backends для distributed tracing. Принимают spans, хранят, визуализируют. С появлением **OpenTelemetry** оба эволюционировали к OTLP. Альтернативы: **Tempo** (Grafana), **SigNoz**, vendor SaaS (Datadog, Honeycomb).
+**Jaeger** (CNCF, от Uber) и **Zipkin** (от Twitter) — основные open-source бэкенды для distributed tracing. Принимают spans, хранят, визуализируют. С появлением **OpenTelemetry** оба эволюционировали к OTLP. Альтернативы: **Tempo** (Grafana), **SigNoz**, vendor SaaS (Datadog, Honeycomb).
 
 ## Полезные ссылки
 
@@ -79,27 +79,27 @@ updated: "2026-04-25"
 
 (!) Что такое distributed tracing?
 
-**Distributed tracing** — отслеживание request как он проходит через **множество services**.
+**Distributed tracing** — отслеживание запроса по мере того, как он проходит через **множество сервисов**.
 
 ```
 User → API Gateway → Service A → Service B → Database
                   → Service C → Cache
 ```
 
-Каждый шаг = **span**. Все spans одного request = **trace**.
+Каждый шаг = **span**. Все spans одного запроса = **trace**.
 
 **Зачем:**
-- Where is the bottleneck? (slow endpoint)
-- Where did request fail?
-- Service dependencies map
-- Capacity planning
-- Latency breakdown per service
+- Где находится bottleneck? (медленный endpoint)
+- Где запрос упал?
+- Карта зависимостей между сервисами
+- Планирование ёмкости (capacity planning)
+- Разбивка latency по каждому сервису
 
 ## Q2. (!) Span, trace, context — recap?
 
-**Trace** — все spans для одного request (связаны trace_id).
-**Span** — single operation (HTTP call, DB query, function).
-**Context** — IDs (trace_id, span_id, parent_span_id, sampling decision).
+**Trace** — все spans одного запроса (связаны через trace_id).
+**Span** — одна операция (HTTP-вызов, DB-запрос, функция).
+**Context** — идентификаторы (trace_id, span_id, parent_span_id, решение о sampling).
 
 ```
 Trace abc123
@@ -110,35 +110,35 @@ Trace abc123
 │       └── Span 5: SELECT FROM accounts (5ms)
 ```
 
-Spans имеют **timestamps, duration, attributes, events, status**.
+У spans есть **timestamps, duration, attributes, events, status**.
 
 Подробнее — в [OpenTelemetry](opentelemetry-interview.md).
 
 ## Q3. Зачем нужен tracing backend?
 
-**Apps generate spans** → нужно где-то store, query, visualize.
+**Приложения генерируют spans** → их нужно где-то хранить, запрашивать и визуализировать.
 
-**Tracing backend** делает:
-- **Receive** spans (через OTLP, Jaeger Thrift, Zipkin HTTP)
-- **Index** for fast search (by trace_id, service, time, ...)
-- **Store** в database (Cassandra, Elasticsearch, ClickHouse)
-- **Query** API
-- **UI** для visualization
+**Tracing backend** делает следующее:
+- **Принимает** spans (через OTLP, Jaeger Thrift, Zipkin HTTP)
+- **Индексирует** для быстрого поиска (по trace_id, сервису, времени, ...)
+- **Хранит** в базе данных (Cassandra, Elasticsearch, ClickHouse)
+- Предоставляет **Query** API
+- Даёт **UI** для визуализации
 
-**Без backend:** spans в memory app — теряются при restart.
+**Без backend:** spans лежат в памяти приложения — теряются при рестарте.
 
 ## Q4. (!) Что такое Jaeger?
 
-**Jaeger** — open-source distributed tracing platform от **Uber** (2017). **CNCF graduated** project (2019).
+**Jaeger** — open-source платформа для distributed tracing от **Uber** (2017). Проект уровня **CNCF graduated** (2019).
 
 **Особенности:**
-- Inspired Google Dapper paper
-- Production-ready, scaling до millions spans/sec
-- Multiple storage backends
-- Rich UI с service maps
-- Integrated OpenTelemetry support
+- Вдохновлён статьёй Google Dapper
+- Production-ready, масштабируется до миллионов spans/sec
+- Несколько storage-бэкендов на выбор
+- Богатый UI с картами сервисов
+- Встроенная поддержка OpenTelemetry
 
-**Use cases:** distributed tracing для микросервисов, debug latency, dependency analysis.
+**Сценарии:** distributed tracing для микросервисов, отладка latency, анализ зависимостей.
 
 ## Q5. (!) Jaeger architecture (Agent, Collector, Query, UI)?
 
@@ -151,66 +151,66 @@ graph LR
     Query --> UI[Jaeger UI]
 ```
 
-**Components:**
+**Компоненты:**
 
 **Jaeger Agent** (deprecated в Jaeger v2):
-- DaemonSet на host
-- Receives spans от apps via UDP (low overhead)
-- Forwards к Collector
+- DaemonSet на хосте
+- Принимает spans от приложений через UDP (низкий overhead)
+- Пересылает в Collector
 
 **Jaeger Collector:**
-- Receives spans (gRPC, HTTP, OTLP)
-- Validation, processing
-- Writes to storage
+- Принимает spans (gRPC, HTTP, OTLP)
+- Валидация, обработка
+- Пишет в хранилище
 
 **Jaeger Query:**
-- Reads from storage
-- Provides REST/gRPC API
+- Читает из хранилища
+- Предоставляет REST/gRPC API
 
 **Jaeger UI:**
-- Web interface
-- Search, view traces, service map
+- Веб-интерфейс
+- Поиск, просмотр trace'ов, карта сервисов
 
-**В Jaeger v2 (2024+)** — Agent **deprecated**. Apps push к Collector via OTLP directly.
+**В Jaeger v2 (2024+)** — Agent **deprecated**. Приложения отправляют данные прямо в Collector через OTLP.
 
 ## Q6. (!) Storage backends (Cassandra, Elasticsearch, Kafka)?
 
-| Backend | Pros | Cons |
+| Backend | Плюсы | Минусы |
 |---------|------|------|
-| **Cassandra** | High write throughput, scalable | Complex ops |
-| **Elasticsearch** | Rich querying | High memory, expensive |
-| **OpenSearch** | Same as ES | Same as ES |
-| **Kafka** | Buffer between Collector + Storage | Не permanent |
-| **ClickHouse** (Jaeger v2) | Fast, cost-efficient | Newer integration |
-| **Memory** | Quick start, no setup | Loses on restart, dev only |
+| **Cassandra** | Высокий write-throughput, масштабируется | Сложная эксплуатация |
+| **Elasticsearch** | Богатые возможности запросов | Прожорлив по памяти, дорогой |
+| **OpenSearch** | То же, что и ES | То же, что и ES |
+| **Kafka** | Буфер между Collector и хранилищем | Не постоянное хранилище |
+| **ClickHouse** (Jaeger v2) | Быстрый, выгодный по цене | Интеграция новее |
+| **Memory** | Быстрый старт, без настройки | Теряется при рестарте, только для dev |
 
-**Production:** Cassandra или Elasticsearch (большинство).
+**Production:** Cassandra или Elasticsearch (у большинства).
 
-**В 2025** — растёт adoption **ClickHouse** (faster, cheaper).
+**В 2025** — растёт adoption **ClickHouse** (быстрее, дешевле).
 
 ## Q7. Jaeger v2 (с OTel)?
 
-**Jaeger v2** (2024) — major rewrite на OpenTelemetry Collector.
+**Jaeger v2** (2024) — крупный переписанный релиз на базе OpenTelemetry Collector.
 
 **Ключевые изменения:**
-- Built на OTel Collector framework
-- **No Jaeger Agent** (deprecated)
-- **OTLP native protocol**
-- Easier to add receivers, processors, exporters
-- ClickHouse storage (better cost/perf)
+- Построен на фреймворке OTel Collector
+- **Нет Jaeger Agent** (deprecated)
+- **OTLP как нативный протокол**
+- Проще добавлять receivers, processors, exporters
+- Хранилище ClickHouse (лучше соотношение цена/производительность)
 
-В **2025** — Jaeger v2 — recommended. v1 в maintenance mode.
+В **2025** Jaeger v2 — рекомендуемый. v1 — в maintenance mode.
 
 ## Q8. (!) Что такое Zipkin?
 
-**Zipkin** — open-source tracing system от **Twitter** (2012). Один из first popular tracing systems.
+**Zipkin** — open-source система трассировки от **Twitter** (2012). Одна из первых популярных tracing-систем.
 
 **Особенности:**
-- Простой setup (single JAR)
-- HTTP-based instrumentation
-- B3 propagation headers (predates W3C Trace Context)
+- Простая установка (single JAR)
+- Инструментирование на базе HTTP
+- B3 propagation headers (появились раньше W3C Trace Context)
 
-**Status в 2025:** менее активная разработка чем Jaeger. Многие projects migrated на Jaeger / OTel.
+**Статус в 2025:** разработка менее активная, чем у Jaeger. Многие проекты мигрировали на Jaeger / OTel.
 
 ## Q9. Zipkin architecture?
 
@@ -220,11 +220,11 @@ App (Brave / Zipkin libs) → HTTP/Kafka → Zipkin Server → Storage
                                                             UI
 ```
 
-Простее Jaeger:
-- Один Zipkin Server (vs Collector + Query separate)
-- Storage: in-memory (default), MySQL, Cassandra, Elasticsearch
+Проще, чем Jaeger:
+- Один Zipkin Server (вместо раздельных Collector + Query)
+- Хранилище: in-memory (по умолчанию), MySQL, Cassandra, Elasticsearch
 
-**Brave** — Java library для Zipkin instrumentation.
+**Brave** — Java-библиотека для инструментирования под Zipkin.
 
 ## Q10. (!) Jaeger vs Zipkin?
 
@@ -232,46 +232,46 @@ App (Brave / Zipkin libs) → HTTP/Kafka → Zipkin Server → Storage
 |----------|--------|--------|
 | Возраст | 2017 | 2012 |
 | Создатель | Uber | Twitter |
-| CNCF | Graduated | No |
-| Activity | Active | Maintenance |
-| Storage | Cassandra, ES, ClickHouse | MySQL, Cassandra, ES |
-| Protocol | gRPC, HTTP, OTLP | HTTP (B3) |
-| UI | Modern, better | Simpler |
-| Service map | Built-in | Через DependencyLinker |
-| Adoption | Higher (2025) | Lower |
+| CNCF | Graduated | Нет |
+| Активность | Активный | Maintenance |
+| Хранилище | Cassandra, ES, ClickHouse | MySQL, Cassandra, ES |
+| Протокол | gRPC, HTTP, OTLP | HTTP (B3) |
+| UI | Современный, удобнее | Проще |
+| Карта сервисов | Встроенная | Через DependencyLinker |
+| Adoption | Выше (2025) | Ниже |
 
-**В 2025** для new projects — **Jaeger** или **OTel + Tempo / SigNoz**. Zipkin для legacy.
+**В 2025** для новых проектов — **Jaeger** или **OTel + Tempo / SigNoz**. Zipkin — для legacy.
 
 ## Q11. (!) Storage costs — почему traces дорогие?
 
-Each request → multiple spans → indexed by trace_id, service, time, attributes.
+Каждый запрос → несколько spans → индексируются по trace_id, сервису, времени, атрибутам.
 
-**1000 RPS × 10 spans/request × 1 KB/span = 10 MB/sec = 864 GB/day.**
+**1000 RPS × 10 spans/запрос × 1 KB/span = 10 MB/сек = 864 GB/день.**
 
-**Storage costs:** Cassandra/ES для terabytes — большие $$$.
+**Стоимость хранения:** Cassandra/ES под терабайты — это большие $$$.
 
-**Mitigations:**
-- **Sampling** (head + tail) — 99% reduction
-- **Short retention** (7-30 days vs forever)
-- **Compress** spans
-- **ClickHouse** instead of ES (10x cheaper для same data)
-- **Tail sampling** — keep important (errors, slow), drop normal
+**Способы снизить:**
+- **Sampling** (head + tail) — сокращение на 99%
+- **Короткий retention** (7-30 дней вместо «вечно»)
+- **Сжатие** spans
+- **ClickHouse** вместо ES (в 10 раз дешевле для тех же данных)
+- **Tail sampling** — оставлять важное (ошибки, медленные), отбрасывать обычное
 
-В **2025** — почти все systems sample к **1-10%** of traces.
+В **2025** почти все системы сэмплируют до **1-10%** trace'ов.
 
 ## Q12. Sampling strategies?
 
-**Head sampling** (in-app):
-- **Probabilistic** — `1%` random
-- **Rate limiting** — max 100 traces/sec
-- **Adaptive** — adjust sample rate based on traffic
+**Head sampling** (в приложении):
+- **Probabilistic** — случайные `1%`
+- **Rate limiting** — не более 100 trace'ов/сек
+- **Adaptive** — подстройка частоты сэмплирования под трафик
 
 **Tail sampling** (в Collector):
-- **Always sample errors** (status code 5xx)
-- **Always sample slow** (> 1 sec)
-- **Sample 5% of normal**
+- **Всегда сэмплировать ошибки** (status code 5xx)
+- **Всегда сэмплировать медленные** (> 1 сек)
+- **Сэмплировать 5% обычных**
 
-**Combined** — best for production.
+**Комбинация** — лучший вариант для production.
 
 ```yaml
 # Jaeger Collector adaptive sampling
@@ -287,44 +287,44 @@ adaptive_sampling:
 
 ## Q13. Retention policies?
 
-**Common retention:** 7-30 days.
+**Типичный retention:** 7-30 дней.
 
-**Shorter:** dev (1-3 days).
-**Longer:** compliance (90 days+).
+**Короче:** dev (1-3 дня).
+**Дольше:** требования комплаенса (90 дней+).
 
-**Cost-driven:**
-- Hot storage (recent, queryable): 7 days
-- Cold storage (archived, expensive to query): 30+ days
+**С учётом стоимости:**
+- Hot storage (свежее, доступно для запросов): 7 дней
+- Cold storage (в архиве, запросы дорогие): 30+ дней
 
-Cassandra TTL, Elasticsearch ILM (Index Lifecycle Management) — auto-purge old data.
+Cassandra TTL, Elasticsearch ILM (Index Lifecycle Management) — автоматически чистят старые данные.
 
 ## Q14. (!) Jaeger UI — какие views?
 
-**Search:**
-- By service, operation, tags
-- By time range
-- By min duration (find slow)
-- Limit: traces / time
+**Search (поиск):**
+- По сервису, операции, тегам
+- По временному диапазону
+- По минимальной длительности (поиск медленных)
+- Лимит: количество trace'ов / период
 
-**Trace view:**
-- Timeline of all spans
-- Hierarchy (parent-child)
-- Span details (attributes, logs, errors)
+**Trace view (просмотр trace'а):**
+- Timeline всех spans
+- Иерархия (parent-child)
+- Детали span (attributes, logs, errors)
 
-**Trace comparison:**
-- Side-by-side compare 2 traces
-- See differences
+**Trace comparison (сравнение):**
+- Сравнение двух trace'ов бок о бок
+- Видны различия
 
-**System architecture:**
-- Service dependency map
-- Auto-generated from traces
+**System architecture (архитектура системы):**
+- Карта зависимостей между сервисами
+- Генерируется автоматически из trace'ов
 
 **Monitor (новое):**
-- Per-service stats (request rate, error rate, p95 latency) — RED metrics
+- Статистика по сервисам (request rate, error rate, p95 latency) — RED-метрики
 
 ## Q15. Service map?
 
-**Service dependency graph** — auto-generated visualization из traces.
+**Service dependency graph** — визуализация, автоматически построенная из trace'ов.
 
 ```mermaid
 graph LR
@@ -338,73 +338,73 @@ graph LR
 ```
 
 **Использование:**
-- Visualize architecture
-- Find unexpected dependencies
-- Identify hot paths
-- Detect cycles
+- Визуализация архитектуры
+- Поиск неожиданных зависимостей
+- Выявление hot paths
+- Обнаружение циклов
 
-В Jaeger — auto-generated. В Datadog, Honeycomb тоже.
+В Jaeger строится автоматически. В Datadog, Honeycomb — тоже.
 
 ## Q16. Comparison view (compare traces)?
 
-Compare 2 traces (например, slow vs normal):
-- See span structure differences
-- Latency comparison
-- Find regression
+Сравнение двух trace'ов (например, медленного и обычного):
+- Видны различия в структуре spans
+- Сравнение latency
+- Поиск регрессии
 
-Useful для performance debugging.
+Полезно для отладки производительности.
 
 ## Q17. (!) Grafana Tempo?
 
-**Grafana Tempo** — Grafana's tracing backend. Major Jaeger competitor.
+**Grafana Tempo** — tracing-бэкенд от Grafana. Серьёзный конкурент Jaeger.
 
 **Особенности:**
-- **Object storage based** (S3, GCS, Azure Blob) — **очень дешёвое** storage
-- **Cost optimized** for billions of spans
-- Index ONLY trace_id (нет attribute-based search like Jaeger)
-- **Combined с Loki + Mimir** = full Grafana stack
+- **На базе object storage** (S3, GCS, Azure Blob) — **очень дешёвое** хранилище
+- **Оптимизирован по стоимости** под миллиарды spans
+- Индексирует ТОЛЬКО trace_id (нет поиска по атрибутам, как в Jaeger)
+- **В связке с Loki + Mimir** = полный стек Grafana
 - OTel native
 
 **Trade-off:**
-- Pros: cheap, scalable
-- Cons: limited search (need trace_id, not attribute search)
+- Плюсы: дёшево, масштабируемо
+- Минусы: ограниченный поиск (нужен trace_id, а не поиск по атрибутам)
 
-**Workflow:** Tempo + Loki — find log с trace_id → look up trace в Tempo. **TraceQL** (с 2023) добавил query language.
+**Workflow:** Tempo + Loki — находишь лог с trace_id → ищешь trace в Tempo. **TraceQL** (с 2023) добавил язык запросов.
 
-В **2025** — Tempo популярен в Grafana ecosystem (Loki + Tempo + Mimir + Grafana).
+В **2025** Tempo популярен в экосистеме Grafana (Loki + Tempo + Mimir + Grafana).
 
 ## Q18. SigNoz, Aspecto, Lightstep?
 
-**SigNoz** — open-source full APM (traces + metrics + logs). ClickHouse-based. Self-hosted alternative Datadog. Растущая популярность.
+**SigNoz** — open-source полноценный APM (traces + metrics + logs). На базе ClickHouse. Self-hosted альтернатива Datadog. Растущая популярность.
 
-**Aspecto** — managed OTel platform (developer-focused).
+**Aspecto** — managed-платформа на OTel (ориентирована на разработчиков).
 
-**Lightstep** (acquired ServiceNow 2021) — enterprise-grade tracing.
+**Lightstep** (куплен ServiceNow в 2021) — трассировка уровня enterprise.
 
-**Honeycomb** — pioneer "wide events", powerful query language. Different paradigm от traditional APM.
+**Honeycomb** — пионер «wide events», мощный язык запросов. Парадигма, отличная от традиционного APM.
 
 ## Q19. Cloud SaaS (Datadog APM, NewRelic, Honeycomb)?
 
-| Vendor | Pros | Cons |
+| Vendor | Плюсы | Минусы |
 |--------|------|------|
-| **Datadog** | Full APM, integrations, UI | **Дорого** (~$30/host) |
-| **New Relic** | Pricing per ingest, easier | Меньше features |
-| **Honeycomb** | Best UX для exploration | Less polished GUI |
-| **Splunk APM** | Enterprise, lots of features | Expensive |
-| **AWS X-Ray** | Cheap для AWS-only | Limited features |
+| **Datadog** | Полный APM, интеграции, UI | **Дорого** (~$30/host) |
+| **New Relic** | Оплата за объём ingest, проще | Меньше возможностей |
+| **Honeycomb** | Лучший UX для исследования данных | Менее отполированный GUI |
+| **Splunk APM** | Enterprise, много возможностей | Дорого |
+| **AWS X-Ray** | Дёшево, если только AWS | Ограниченный функционал |
 
-**SaaS pros:**
-- No ops
-- Polished UI
-- Auto-correlation traces ↔ logs ↔ metrics
-- Alerting
+**Плюсы SaaS:**
+- Нет эксплуатации (ops)
+- Отполированный UI
+- Авто-корреляция traces ↔ logs ↔ metrics
+- Алертинг
 
-**SaaS cons:**
-- **Очень expensive** at scale
-- Vendor lock-in (но OTel снизил)
-- Data leaves your environment
+**Минусы SaaS:**
+- **Очень дорого** на масштабе
+- Vendor lock-in (но OTel его снизил)
+- Данные уходят за пределы вашего окружения
 
-В **2025** trend: **OTel + self-hosted (Tempo, SigNoz)** для cost reduction. **Hybrid:** sample data in Datadog для UX, full data в self-hosted.
+В **2025** тренд: **OTel + self-hosted (Tempo, SigNoz)** ради снижения затрат. **Гибрид:** сэмплированные данные в Datadog ради UX, полные данные — в self-hosted.
 
 ## Q20. (!) Как migrate от Jaeger к OTel?
 
@@ -415,24 +415,24 @@ import io.jaegertracing.Tracer;
 Tracer tracer = new Configuration("my-service").getTracer();
 ```
 
-**После:** OTel SDK + OTLP exporter к Jaeger Collector (which accepts OTLP).
+**После:** OTel SDK + OTLP exporter в Jaeger Collector (который принимает OTLP).
 
 ```java
 import io.opentelemetry.api.trace.Tracer;
 Tracer tracer = GlobalOpenTelemetry.getTracer("my-service");
 ```
 
-**Steps:**
-1. Replace Jaeger client SDK с OTel SDK
-2. Configure OTel exporter к OTLP endpoint
-3. Configure Jaeger Collector to accept OTLP (native в v2)
-4. Validate traces appear correctly
+**Шаги:**
+1. Заменить Jaeger client SDK на OTel SDK
+2. Настроить OTel exporter на OTLP endpoint
+3. Настроить Jaeger Collector на приём OTLP (нативно в v2)
+4. Убедиться, что trace'ы отображаются корректно
 
-**Auto-instrumentation:** Java agent заменяет Jaeger libraries.
+**Auto-instrumentation:** Java-agent заменяет библиотеки Jaeger.
 
 ## Q21. Можно ли отправлять OTLP в Jaeger?
 
-**Да!** Jaeger Collector accepts OTLP (gRPC + HTTP) natively (с Jaeger v1.35+).
+**Да!** Jaeger Collector принимает OTLP (gRPC + HTTP) нативно (начиная с Jaeger v1.35+).
 
 ```yaml
 # Apps export OTLP
@@ -443,11 +443,11 @@ exporters:
 # Jaeger Collector listens на OTLP
 ```
 
-В **Jaeger v2** — OTLP **native protocol**. No conversion overhead.
+В **Jaeger v2** OTLP — **нативный протокол**. Никакого overhead на конвертацию.
 
 ## Q22. (!) Какой backend выбрать?
 
-**Decision tree:**
+**Дерево решений:**
 
 ```
 Бюджет ограничен, want self-host?
@@ -469,37 +469,37 @@ Legacy Zipkin already?
   → Stay or migrate к Jaeger v2
 ```
 
-**В 2025** для new projects:
-- **Self-host:** Jaeger v2 (mature) или SigNoz (growing)
-- **SaaS:** Datadog (polish) или Honeycomb (UX)
+**В 2025** для новых проектов:
+- **Self-host:** Jaeger v2 (зрелый) или SigNoz (набирает обороты)
+- **SaaS:** Datadog (отполированность) или Honeycomb (UX)
 
 ## Q23. Какие частые проблемы?
 
-1. **Storage explosion** — без sampling быстро уходишь на TBs
-2. **Slow queries** — Jaeger UI медленный на больших datasets
-3. **Missing spans** — context propagation broken (особенно async)
-4. **Inconsistent attributes** — разные services используют разные names
-5. **No alerting** — Jaeger sam не имеет alerting (нужен Prometheus + traces metrics)
-6. **Hot partitions** в Cassandra — bad partition key
-7. **High cardinality** killing performance
-8. **No tail sampling** в production — слишком много данных
-9. **Old data retention** — забыли установить TTL
-10. **Network bandwidth** — sending all traces → expensive
+1. **Взрывной рост хранилища** — без sampling быстро уходишь в терабайты
+2. **Медленные запросы** — Jaeger UI тормозит на больших датасетах
+3. **Пропавшие spans** — сломан context propagation (особенно в async)
+4. **Несогласованные атрибуты** — разные сервисы используют разные имена
+5. **Нет алертинга** — у самого Jaeger нет алертинга (нужен Prometheus + метрики по trace'ам)
+6. **Hot partitions** в Cassandra — неудачный partition key
+7. **Высокая кардинальность** убивает производительность
+8. **Нет tail sampling** в production — слишком много данных
+9. **Retention старых данных** — забыли выставить TTL
+10. **Сетевая полоса** — отправка всех trace'ов → дорого
 
 ## See also
 
 - [OpenTelemetry](opentelemetry-interview.md) — современный стандарт
-- [Loki + Grafana](loki-grafana-interview.md) — для logs
-- [ELK Stack](elk-stack-interview.md) — alternative для logs
-- [Prometheus + Grafana](prometheus-grafana-interview.md) — для metrics
+- [Loki + Grafana](loki-grafana-interview.md) — для логов
+- [ELK Stack](elk-stack-interview.md) — альтернатива для логов
+- [Prometheus + Grafana](prometheus-grafana-interview.md) — для метрик
 - [Observability](observability-interview.md) — общая концепция
-- [Метрики и трейсинг](metrics-tracing-interview.md) — concepts
-- [Микросервисы](../architecture/microservices-interview.md) — где tracing critical
+- [Метрики и трейсинг](metrics-tracing-interview.md) — базовые понятия
+- [Микросервисы](../architecture/microservices-interview.md) — где трассировка критична
 - [Kubernetes](../devops/kubernetes-interview.md) — Jaeger в K8s
-- [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — observability pillar
-- [Cassandra](../databases/cassandra-interview.md) — Jaeger storage
-- [Elasticsearch](../databases/elasticsearch-interview.md) — Jaeger storage
-- [Performance Testing](../performance/performance-testing-interview.md) — найти slow paths
+- [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — столп observability
+- [Cassandra](../databases/cassandra-interview.md) — хранилище Jaeger
+- [Elasticsearch](../databases/elasticsearch-interview.md) — хранилище Jaeger
+- [Performance Testing](../performance/performance-testing-interview.md) — найти медленные пути
 
 - [Стратегии логирования](logging-strategies-interview.md)
 - [Loki и Grafana](loki-grafana-interview.md)

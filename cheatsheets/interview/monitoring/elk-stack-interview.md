@@ -19,7 +19,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `ELK Stack`
 
-`ELK Stack` (теперь Elastic Stack) = **Elasticsearch + Logstash + Kibana** + **Beats**. Долго был standard для log aggregation в enterprise. На интервью знают: архитектуру, indexing, ILM, парсинг, scaling, и **OpenSearch** (AWS fork после Elastic license change 2021).
+`ELK Stack` (теперь Elastic Stack) = **Elasticsearch + Logstash + Kibana** + **Beats**. Долго был стандартом для агрегации логов в enterprise. На интервью спрашивают: архитектуру, индексацию, ILM, парсинг, масштабирование и **OpenSearch** (форк от AWS после смены лицензии Elastic в 2021).
 
 ## Полезные ссылки
 
@@ -85,22 +85,22 @@ updated: "2026-04-25"
 
 (!) Что такое ELK Stack?
 
-**ELK Stack** = **Elasticsearch + Logstash + Kibana**. Сейчас официально **Elastic Stack** (включая Beats и других).
+**ELK Stack** = **Elasticsearch + Logstash + Kibana**. Сейчас официально **Elastic Stack** (включая Beats и прочее).
 
-**Components:**
-- **Elasticsearch** — distributed search engine, хранилище логов
-- **Logstash** — pipeline для ingest, transform логов
-- **Kibana** — UI для search, visualization, dashboards
-- **Beats** — lightweight shippers (Filebeat, Metricbeat)
+**Компоненты:**
+- **Elasticsearch** — распределённый поисковый движок, хранилище логов
+- **Logstash** — pipeline для приёма (ingest) и трансформации логов
+- **Kibana** — UI для поиска, визуализации и дашбордов
+- **Beats** — лёгкие shippers (Filebeat, Metricbeat)
 
 **Применения:**
-- Log aggregation (most popular)
-- Search (e-commerce, knowledge bases)
-- Security (SIEM — Elastic Security)
+- Агрегация логов (самое популярное)
+- Поиск (e-commerce, базы знаний)
+- Безопасность (SIEM — Elastic Security)
 - APM (Application Performance Monitoring)
-- Vector search (embeddings)
+- Векторный поиск (embeddings)
 
-В **2010-х** — undisputed standard для log management. В **2020-х** — конкурент **Loki, ClickHouse, OpenSearch**.
+В **2010-х** — безусловный стандарт для управления логами. В **2020-х** — конкурент **Loki, ClickHouse, OpenSearch**.
 
 ## Q2. (!) Архитектура ELK для логов?
 
@@ -117,54 +117,54 @@ graph LR
     Kibana --> User
 ```
 
-**Flow:**
-1. Apps пишут logs → files / stdout
-2. **Filebeat** (sidecar / DaemonSet) reads logs
-3. **Logstash** parses, enriches (optional, можно skip)
-4. **Elasticsearch** indexes, stores
-5. **Kibana** queries, visualizes
+**Поток:**
+1. Приложения пишут логи → в файлы / stdout
+2. **Filebeat** (sidecar / DaemonSet) читает логи
+3. **Logstash** парсит и обогащает (опционально, можно пропустить)
+4. **Elasticsearch** индексирует и хранит
+5. **Kibana** выполняет запросы и визуализирует
 
-**Optional:**
-- **Kafka** между Filebeat и Logstash (buffer)
-- **Elastic Agent** (newer) — replaces Beats + Logstash
+**Опционально:**
+- **Kafka** между Filebeat и Logstash (буфер)
+- **Elastic Agent** (более новый) — заменяет Beats + Logstash
 
 ## Q3. ELK vs EFK vs other stacks?
 
 ELK vs EFK vs other stacks?
 
 **ELK** — Elasticsearch + Logstash + Kibana + Filebeat.
-**EFK** — Elasticsearch + **Fluentd** + Kibana (popular в K8s, более flexible).
-**EFLK** — adds Fluent Bit (lightweight Fluentd).
+**EFK** — Elasticsearch + **Fluentd** + Kibana (популярен в K8s, более гибкий).
+**EFLK** — добавляет Fluent Bit (лёгкий Fluentd).
 
-**Other:**
-- **PLG** — Promtail + Loki + Grafana (lightweight, cheap)
-- **OpenSearch + OpenSearch Dashboards** — fork of ES
-- **ClickHouse + Grafana** — cost-efficient
-- **SigNoz, Datadog, NewRelic** — commercial APM
+**Прочие:**
+- **PLG** — Promtail + Loki + Grafana (лёгкий, дешёвый)
+- **OpenSearch + OpenSearch Dashboards** — форк ES
+- **ClickHouse + Grafana** — экономичный по стоимости
+- **SigNoz, Datadog, NewRelic** — коммерческий APM
 
-В **K8s** — **Fluentd / Fluent Bit** более популярны чем Filebeat (better ecosystem).
+В **K8s** — **Fluentd / Fluent Bit** популярнее, чем Filebeat (лучше экосистема).
 
 ## Q4. (!) Что такое Elasticsearch?
 
 (!) Что такое Elasticsearch?
 
-**Elasticsearch** — distributed search engine на **Apache Lucene**. Open-source (но license changed в 2021).
+**Elasticsearch** — распределённый поисковый движок на базе **Apache Lucene**. Open-source (но лицензия сменилась в 2021).
 
 **Особенности:**
-- **Full-text search** — fast inverted index
-- **Distributed** — sharding, replication
-- **Schema-flexible** — JSON documents
+- **Полнотекстовый поиск** — быстрый inverted index
+- **Распределённость** — шардирование, репликация
+- **Гибкая схема** — JSON-документы
 - **REST API**
-- **Real-time** — searchable почти immediately после indexing
-- **Aggregations** — analytics queries
+- **Real-time** — данные доступны для поиска почти сразу после индексации
+- **Агрегации** — аналитические запросы
 
-**Не just for logs:** general-purpose search engine. Но **logging** — main use case.
+**Не только для логов:** это универсальный поисковый движок. Но **логирование** — основной сценарий использования.
 
 ## Q5. (!) Index, shards, replicas?
 
 (!) Index, shards, replicas?
 
-**Index** — namespace для documents (~ table в SQL).
+**Index** — пространство имён для документов (~ таблица в SQL).
 
 ```
 my-logs-2025-04-19  (index)
@@ -174,20 +174,20 @@ my-logs-2025-04-19  (index)
 └── shard-1 (replica) → node C
 ```
 
-**Shard** — physical division index. Distributed across nodes.
-- **Primary shard** — original
-- **Replica shard** — copy (для HA, read scaling)
+**Shard** — физическое деление индекса. Распределяется по узлам.
+- **Primary shard** — оригинал
+- **Replica shard** — копия (для HA и масштабирования чтения)
 
-**Choose # shards at index creation** (нельзя поменять!). Default 1 (с ES 7+).
+**Число шардов выбирается при создании индекса** (поменять нельзя!). По умолчанию 1 (с ES 7+).
 
-**Best practice:**
-- Shard size: 10-50 GB
-- Replicas: 1 (одна копия)
-- Don't over-shard (overhead)
+**Хорошая практика:**
+- Размер шарда: 10–50 ГБ
+- Реплик: 1 (одна копия)
+- Не переусердствуйте с шардами (накладные расходы)
 
 ## Q6. (!) Document, mapping, types?
 
-**Document** — JSON record.
+**Document** — JSON-запись.
 
 ```json
 {
@@ -199,7 +199,7 @@ my-logs-2025-04-19  (index)
 }
 ```
 
-**Mapping** — schema (типы полей). Можно auto-detect или define.
+**Mapping** — схема (типы полей). Можно определить вручную или дать определить автоматически.
 
 ```json
 {
@@ -212,28 +212,28 @@ my-logs-2025-04-19  (index)
 }
 ```
 
-**Types** — концепция removed в ES 7+. Один тип на index.
+**Types** — концепция удалена в ES 7+. Один тип на индекс.
 
 ## Q7. Cluster, nodes, master vs data?
 
-**Cluster** — group of nodes (1+).
+**Cluster** — группа узлов (1+).
 
-**Node roles:**
-- **Master** — manages cluster state (3 master-eligible минимум для HA)
-- **Data** — хранит data, executes queries
-- **Ingest** — preprocessing pipelines
-- **Coordinating** — routes queries (no data)
+**Роли узлов:**
+- **Master** — управляет состоянием кластера (минимум 3 master-eligible узла для HA)
+- **Data** — хранит данные, выполняет запросы
+- **Ingest** — конвейеры предобработки
+- **Coordinating** — маршрутизирует запросы (без данных)
 - **Machine learning**
 
-**Production:** 3+ dedicated master nodes, multiple data nodes.
+**В продакшене:** 3+ выделенных master-узла, несколько data-узлов.
 
 **Split-brain** — нужно `discovery.zen.minimum_master_nodes = (N/2 + 1)`.
 
 ## Q8. (!) Inverted index — как работает?
 
-**Inverted index** — структура для **fast text search**.
+**Inverted index** — структура для **быстрого текстового поиска**.
 
-**Forward index** (как в DB):
+**Forward index** (как в БД):
 ```
 doc1 → "the cat sat"
 doc2 → "the dog ran"
@@ -248,13 +248,13 @@ doc2 → "the dog ran"
 "sat" → [doc1]
 ```
 
-**Search** "cat" → instant lookup → [doc1].
+**Поиск** "cat" → мгновенный lookup → [doc1].
 
-Лежит в основе ES. Trade-off: **slow writes**, **fast reads**.
+Лежит в основе ES. Компромисс: **медленная запись**, **быстрое чтение**.
 
 ## Q9. (!) Что такое Logstash?
 
-**Logstash** — server-side data processing pipeline. Ingest → transform → output.
+**Logstash** — серверный конвейер обработки данных. Ingest → transform → output.
 
 ```mermaid
 graph LR
@@ -262,7 +262,7 @@ graph LR
     F --> O[Output plugins<br/>elasticsearch, kafka, s3, ...]
 ```
 
-**Pipeline на Ruby-like syntax:**
+**Конвейер на Ruby-подобном синтаксисе:**
 
 ```ruby
 input {
@@ -289,7 +289,7 @@ output {
 }
 ```
 
-**Heavyweight** (JVM, ~1 GB RAM). Из-за этого многие переходят на Fluent Bit (lighter).
+**Тяжеловесный** (JVM, ~1 ГБ RAM). Из-за этого многие переходят на Fluent Bit (легче).
 
 ## Q10. Input, Filter, Output stages?
 
@@ -297,28 +297,28 @@ output {
 - file, syslog, beats, kafka, http, tcp, udp, ...
 
 **Filters** (50+):
-- **grok** — regex parsing
-- **mutate** — transform fields
-- **date** — parse timestamps
-- **geoip** — IP → location
-- **useragent** — parse User-Agent
-- **json** — parse JSON
-- **ruby** — custom Ruby code
+- **grok** — парсинг по regex
+- **mutate** — трансформация полей
+- **date** — разбор временных меток
+- **geoip** — IP → местоположение
+- **useragent** — разбор User-Agent
+- **json** — разбор JSON
+- **ruby** — произвольный код на Ruby
 
 **Outputs** (40+):
 - elasticsearch, kafka, s3, file, http, ...
 
-**Multiple pipelines** в одном Logstash instance.
+**Несколько конвейеров** в одном инстансе Logstash.
 
 ## Q11. Grok patterns для парсинга?
 
-**Grok** — regex с named patterns для structured parsing.
+**Grok** — regex с именованными паттернами для структурированного парсинга.
 
 ```
 %{IP:client} %{USER:user} \[%{HTTPDATE:timestamp}\] "%{WORD:method} %{URIPATH:path}" %{NUMBER:status:int} %{NUMBER:bytes:int}
 ```
 
-**Result:**
+**Результат:**
 ```json
 {
   "client": "192.168.1.1",
@@ -331,25 +331,25 @@ output {
 }
 ```
 
-**Pre-defined patterns:** IP, USER, HTTPDATE, WORD, URIPATH, NUMBER, EMAILADDRESS, etc.
+**Готовые паттерны:** IP, USER, HTTPDATE, WORD, URIPATH, NUMBER, EMAILADDRESS и т. д.
 
-**Tools:** Kibana Grok Debugger, [grokdebugger.com](https://grokdebugger.com/).
+**Инструменты:** Kibana Grok Debugger, [grokdebugger.com](https://grokdebugger.com/).
 
-**Подвох:** grok medленный для huge log volumes. Лучше — **structured logging from app** (JSON logs), no parsing нужен.
+**Подвох:** grok медленный на больших объёмах логов. Лучше — **структурированное логирование из приложения** (JSON-логи), тогда парсинг не нужен.
 
 ## Q12. (!) Filebeat, Metricbeat, Packetbeat?
 
-**Beats** — lightweight shippers (написаны на Go, ~50 MB RAM).
+**Beats** — лёгкие shippers (написаны на Go, ~50 МБ RAM).
 
-**Filebeat** — ship log files. Самый popular.
-**Metricbeat** — system / service metrics (CPU, MySQL, nginx).
-**Packetbeat** — network protocol analyzer.
-**Auditbeat** — audit data (security).
-**Heartbeat** — uptime monitoring.
+**Filebeat** — отгрузка лог-файлов. Самый популярный.
+**Metricbeat** — системные / сервисные метрики (CPU, MySQL, nginx).
+**Packetbeat** — анализатор сетевых протоколов.
+**Auditbeat** — данные аудита (безопасность).
+**Heartbeat** — мониторинг доступности (uptime).
 **Functionbeat** — для AWS Lambda.
-**Winlogbeat** — Windows event logs.
+**Winlogbeat** — журналы событий Windows.
 
-**Filebeat config:**
+**Конфиг Filebeat:**
 
 ```yaml
 filebeat.inputs:
@@ -366,42 +366,42 @@ output.elasticsearch:
 ## Q13. Beats vs Logstash для shipping?
 
 **Beats:**
-- Lightweight (50 MB RAM)
-- Single purpose
-- Limited transformation
+- Лёгкий (50 МБ RAM)
+- Узкоспециализированный
+- Ограниченная трансформация
 
 **Logstash:**
-- Heavy (JVM, 1 GB RAM)
-- Powerful transformation
-- Many plugins
+- Тяжёлый (JVM, 1 ГБ RAM)
+- Мощная трансформация
+- Множество плагинов
 
-**Best practice:** **Beats** на хостах для shipping → **Logstash** centralized для transformation → **ES**.
+**Хорошая практика:** **Beats** на хостах для отгрузки → **Logstash** централизованно для трансформации → **ES**.
 
 ```
 Apps → Filebeat (ship) → Kafka (buffer) → Logstash (transform) → Elasticsearch
 ```
 
-В K8s — Fluent Bit / Fluentd часто заменяют **оба**.
+В K8s — Fluent Bit / Fluentd часто заменяют **оба** компонента.
 
 ## Q14. (!) Что такое Kibana?
 
-**Kibana** — web UI для Elasticsearch.
+**Kibana** — веб-интерфейс для Elasticsearch.
 
-**Features:**
-- **Discover** — search и view raw documents
-- **Dashboards** — combine visualizations
-- **Visualize** — charts, tables, maps
-- **Lens** — drag-and-drop visualization builder
-- **Canvas** — custom presentations
-- **Maps** — geo visualizations
-- **Machine Learning** — anomaly detection (paid)
-- **Security** — SIEM features (paid)
-- **APM** — application monitoring
-- **Alerting** — rule-based alerts
+**Возможности:**
+- **Discover** — поиск и просмотр исходных документов
+- **Dashboards** — сборка дашбордов из визуализаций
+- **Visualize** — графики, таблицы, карты
+- **Lens** — конструктор визуализаций drag-and-drop
+- **Canvas** — кастомные презентации
+- **Maps** — гео-визуализации
+- **Machine Learning** — обнаружение аномалий (платно)
+- **Security** — SIEM-возможности (платно)
+- **APM** — мониторинг приложений
+- **Alerting** — алерты по правилам
 
 ## Q15. KQL (Kibana Query Language)?
 
-**KQL** — modern query language Kibana (с 7.0+).
+**KQL** — современный язык запросов Kibana (с 7.0+).
 
 ```
 status:200
@@ -414,33 +414,33 @@ user_id:* (exists)
 service:order-* (wildcard)
 ```
 
-**Lucene query syntax** (older) тоже поддерживается.
+**Синтаксис запросов Lucene** (более старый) тоже поддерживается.
 
-**Search via Kibana → Elasticsearch** REST API.
+**Поиск через Kibana → REST API Elasticsearch**.
 
 ## Q16. Dashboards, visualizations?
 
-**Visualization types:**
-- Line / area chart
-- Bar chart
-- Pie chart
-- Data table
-- Gauge / metric
-- Heatmap
-- Maps (geo)
-- TSVB (time series)
+**Типы визуализаций:**
+- Линейный / area-график
+- Столбчатая диаграмма
+- Круговая диаграмма
+- Таблица данных
+- Gauge / метрика
+- Heatmap (тепловая карта)
+- Maps (гео)
+- TSVB (временные ряды)
 
-**Dashboards** — grid из visualizations.
+**Dashboards** — сетка из визуализаций.
 
-**Best practices:**
-- Filter at top (time range, environment)
-- RED metrics (Rate, Errors, Duration)
-- Drill-down (click → filter to subset)
-- Don't overcrowd (10-15 panels max)
+**Хорошие практики:**
+- Фильтры сверху (диапазон времени, окружение)
+- RED-метрики (Rate, Errors, Duration)
+- Drill-down (клик → фильтрация до подмножества)
+- Не перегружайте (10–15 панелей максимум)
 
 ## Q17. (!) ILM (Index Lifecycle Management)?
 
-**ILM** — automation для managing indices через жизненный цикл.
+**ILM** — автоматизация управления индексами на протяжении их жизненного цикла.
 
 ```
 Hot phase (recent, frequent reads/writes)
@@ -483,14 +483,14 @@ Delete
 }
 ```
 
-**Cost optimization** — старые data на cheaper storage.
+**Оптимизация стоимости** — старые данные на более дешёвом хранилище.
 
 ## Q18. Hot-Warm-Cold-Frozen architecture?
 
-**Hot nodes** — fast disks (NVMe SSD), recent indices, high I/O.
-**Warm nodes** — slower SSDs, indices > 7 days old.
-**Cold nodes** — HDDs, mounted from object storage (S3).
-**Frozen nodes** — searchable snapshots в S3 (super cheap).
+**Hot-узлы** — быстрые диски (NVMe SSD), свежие индексы, высокий I/O.
+**Warm-узлы** — медленнее SSD, индексы старше 7 дней.
+**Cold-узлы** — HDD, монтируются из объектного хранилища (S3).
+**Frozen-узлы** — searchable snapshots в S3 (очень дёшево).
 
 ```
 Hot (50 GB): expensive node, $$$
@@ -499,11 +499,11 @@ Cold (10 TB): cheap node + S3, $
 Frozen (100 TB): только S3, ¢
 ```
 
-**Massive cost savings** для logs с long retention.
+**Колоссальная экономия** для логов с долгим сроком хранения.
 
 ## Q19. Index templates?
 
-**Template** — auto-applied settings + mappings для new indices matching pattern.
+**Template** — настройки и mappings, автоматически применяемые к новым индексам, совпадающим с паттерном.
 
 ```json
 PUT _index_template/logs-template
@@ -525,119 +525,119 @@ PUT _index_template/logs-template
 }
 ```
 
-Когда new `logs-2025-04-19` index created → template auto-applied.
+Когда создаётся новый индекс `logs-2025-04-19` → шаблон применяется автоматически.
 
 ## Q20. (!) Какие частые проблемы performance?
 
-1. **Heavy queries** — wildcards, regex, аggregations на huge indices
-2. **Mapping explosion** — too many fields (deep nested objects)
-3. **Too many shards** — overhead on cluster state
-4. **Too few shards** — single shard hot, no parallelism
-5. **Heap pressure** — old GC pauses, OOM
-6. **Slow disk** — HDD для hot data
-7. **Large documents** — индексирование медленно
-8. **No bulk API** — single document inserts slow
-9. **Replication лагает** — too few writes nodes
-10. **Cluster split-brain** — wrong master configuration
+1. **Тяжёлые запросы** — wildcards, regex, агрегации на огромных индексах
+2. **Mapping explosion** — слишком много полей (глубоко вложенные объекты)
+3. **Слишком много шардов** — накладные расходы на состояние кластера
+4. **Слишком мало шардов** — единственный шард перегружен, нет параллелизма
+5. **Давление на heap** — затяжные паузы GC, OOM
+6. **Медленный диск** — HDD под hot-данные
+7. **Крупные документы** — индексация идёт медленно
+8. **Нет bulk API** — вставка документов по одному медленная
+9. **Репликация отстаёт** — слишком мало узлов под запись
+10. **Cluster split-brain** — неверная конфигурация master-узлов
 
 ## Q21. Sharding strategy — как выбрать?
 
-**Time-based indices:** один index per day (`logs-2025-04-19`).
-- Pros: easy retention (delete old indices)
-- Cons: many small shards если low volume
+**Индексы по времени:** один индекс в день (`logs-2025-04-19`).
+- Плюсы: простой retention (удалять старые индексы)
+- Минусы: много мелких шардов при низком объёме
 
-**Size-based** через ILM rollover (`logs-000001`, ...):
-- Roll over когда index reaches 50 GB / 7 days
-- Better для consistent shard size
+**По размеру** через ILM rollover (`logs-000001`, ...):
+- Переключение, когда индекс достигает 50 ГБ / 7 дней
+- Лучше для стабильного размера шарда
 
-**Best practices:**
-- Shard size: **10-50 GB**
-- 1 primary + 1 replica per shard
-- Per node: < 600 shards (heap memory)
-- For 100 GB/day, 30 days retention → ~10 indices × 5 shards × 2 (replica) = 100 shards
+**Хорошие практики:**
+- Размер шарда: **10–50 ГБ**
+- 1 primary + 1 replica на шард
+- На узел: < 600 шардов (heap-память)
+- Для 100 ГБ/день и retention 30 дней → ~10 индексов × 5 шардов × 2 (реплика) = 100 шардов
 
 ## Q22. (!) Что такое OpenSearch и почему появился?
 
-**OpenSearch** — fork Elasticsearch, создан **AWS** в **2021**.
+**OpenSearch** — форк Elasticsearch, создан **AWS** в **2021**.
 
 **Почему:**
-- Elastic changed license (Apache 2.0 → SSPL/Elastic License)
-- Restricted commercial use в managed services
-- AWS forked previous Apache 2.0 version → OpenSearch
+- Elastic сменил лицензию (Apache 2.0 → SSPL/Elastic License)
+- Ограничил коммерческое использование в managed-сервисах
+- AWS форкнул предыдущую версию под Apache 2.0 → OpenSearch
 
-**OpenSearch maintained by:**
-- AWS, IBM, SAP, Logz.io, others
-- Linux Foundation governance (since 2024)
+**OpenSearch поддерживают:**
+- AWS, IBM, SAP, Logz.io и другие
+- Управление под Linux Foundation (с 2024)
 
-**Compatible** с Elasticsearch APIs (mostly), но diverging.
+**Совместим** с API Elasticsearch (в основном), но расходится с ним.
 
 ## Q23. OpenSearch vs Elasticsearch differences?
 
 | Критерий | OpenSearch | Elasticsearch |
 |----------|------------|---------------|
-| License | Apache 2.0 | Elastic License (restricts SaaS) |
-| Vendor | AWS, Linux Foundation | Elastic |
-| API Compatibility | Mostly compatible | — |
-| Features (paid) | Free in OpenSearch | Paid в Elastic |
-| Plugins | Different ecosystem | Original |
-| ML, security, alerting | Free | Paid in Elastic |
+| Лицензия | Apache 2.0 | Elastic License (ограничивает SaaS) |
+| Вендор | AWS, Linux Foundation | Elastic |
+| Совместимость API | В основном совместим | — |
+| Платные фичи | Бесплатны в OpenSearch | Платны в Elastic |
+| Плагины | Своя экосистема | Оригинальная |
+| ML, безопасность, alerting | Бесплатно | Платно в Elastic |
 
 **В 2025:**
-- **AWS users** — OpenSearch Service
+- **Пользователям AWS** — OpenSearch Service
 - **Self-hosted, open-source** — OpenSearch
-- **Want Elastic-supported, paid features** — Elasticsearch
-- Migration legacy ES → OpenSearch — обычно smooth
+- **Нужны платные фичи с поддержкой Elastic** — Elasticsearch
+- Миграция legacy ES → OpenSearch — обычно проходит гладко
 
 ## Q24. (!) Loki vs ELK?
 
 | Критерий | ELK | Loki |
 |----------|-----|------|
-| Architecture | Index everything | Index only labels |
-| Storage cost | High ($$$) | Low ($) |
-| Query speed | Fast (indexed) | Slower (grep-based) |
-| Query language | KQL / Lucene / DSL | LogQL (PromQL-like) |
-| Resource usage | Heavy (JVM, lots RAM) | Light (Go) |
-| Use case | Search, analytics | Logs only, cheap |
+| Архитектура | Индексирует всё | Индексирует только метки (labels) |
+| Стоимость хранения | Высокая ($$$) | Низкая ($) |
+| Скорость запросов | Быстрая (по индексу) | Медленнее (на основе grep) |
+| Язык запросов | KQL / Lucene / DSL | LogQL (похож на PromQL) |
+| Потребление ресурсов | Тяжёлое (JVM, много RAM) | Лёгкое (Go) |
+| Сценарий | Поиск, аналитика | Только логи, дёшево |
 
-**Loki philosophy:** "logs дёшево чтобы хранить, expensive только для query-time grep". В **10x дешевле** ELK для same volume.
+**Философия Loki:** «хранить логи дёшево, дорого только grep во время запроса». В **10 раз дешевле** ELK при том же объёме.
 
-В **2025** — Loki gaining traction для **cost-conscious** teams.
+В **2025** — Loki набирает популярность у команд, **экономящих на затратах**.
 
 Подробнее — в [Loki + Grafana](loki-grafana-interview.md).
 
 ## Q25. Когда выбрать ELK?
 
-**Выбирай ELK когда:**
-- Need **fast complex queries** на logs
-- Full-text search important
-- Aggregations critical (analytics dashboards)
-- Already Elastic ecosystem
-- Need **APM, SIEM** в одном tool
-- Strong query language (KQL)
-- Compliance / audit (SIEM features)
+**Выбирай ELK, когда:**
+- Нужны **быстрые сложные запросы** по логам
+- Важен полнотекстовый поиск
+- Критичны агрегации (аналитические дашборды)
+- Уже есть экосистема Elastic
+- Нужны **APM, SIEM** в одном инструменте
+- Нужен мощный язык запросов (KQL)
+- Compliance / аудит (SIEM-возможности)
 
-**Не выбирай:**
-- Cost-sensitive (Loki / ClickHouse cheaper)
-- Simple log search (Loki достаточно)
-- Не нужен полный feature set
-- Operations team малая (ELK сложно ops)
+**Не выбирай, когда:**
+- Чувствительность к стоимости (Loki / ClickHouse дешевле)
+- Простой поиск по логам (хватит Loki)
+- Не нужен весь набор фич
+- Команда эксплуатации маленькая (ELK сложен в обслуживании)
 
 ## Q26. Какие частые ошибки в ELK production?
 
-1. **No ILM** — indices растут forever → cluster crash
-2. **No retention policy** — cost runaway
-3. **Single node cluster** — production fail
-4. **Default heap** (1 GB) — OOM
-5. **Too many shards per node** — heap pressure
-6. **Mapping conflicts** — different services overwrite mappings
-7. **No structured logs** — grok everywhere = slow
-8. **No backups** — lose data on disaster
-9. **Open access** — no auth (security risk)
-10. **Slow queries against hot indices** — affect indexing
-11. **Network bandwidth** — between nodes saturated
-12. **Disk full** — cluster goes red, no recovery
+1. **Нет ILM** — индексы растут бесконечно → крах кластера
+2. **Нет политики retention** — расходы выходят из-под контроля
+3. **Кластер из одного узла** — провал в продакшене
+4. **Heap по умолчанию** (1 ГБ) — OOM
+5. **Слишком много шардов на узел** — давление на heap
+6. **Конфликты mapping** — разные сервисы перезаписывают mappings
+7. **Нет структурированных логов** — grok повсюду = медленно
+8. **Нет бэкапов** — потеря данных при сбое
+9. **Открытый доступ** — нет аутентификации (риск безопасности)
+10. **Медленные запросы к hot-индексам** — влияют на индексацию
+11. **Пропускная способность сети** — насыщена трафиком между узлами
+12. **Заполнен диск** — кластер уходит в red, восстановления нет
 
-**Best practice:** ILM, dedicated master nodes, monitoring (yes, monitor your monitoring), backups.
+**Хорошая практика:** ILM, выделенные master-узлы, мониторинг (да, мониторьте свой мониторинг), бэкапы.
 
 ## See also
 
