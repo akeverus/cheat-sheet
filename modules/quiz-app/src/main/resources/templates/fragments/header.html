@@ -70,6 +70,48 @@
         });
       })();
     </script>
+    <!-- Кнопка «наверх»: инжектится здесь (header есть на КАЖДОЙ странице, в т.ч.
+         /stats, где app.js не подключён). PE: без JS кнопки нет — мёртвого контрола
+         не остаётся. Появляется только после прокрутки на ~1.5 экрана; скролл
+         throttled через rAF; smooth уважает prefers-reduced-motion (берётся из CSS
+         scroll-behavior, поэтому используем 'smooth' только когда движение разрешено). -->
+    <script>
+      (function () {
+        if (!document.body) return;
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'back-to-top';
+        btn.setAttribute('aria-label', 'Наверх');
+        btn.setAttribute('title', 'Наверх');
+        btn.innerHTML = '<svg class="ed-icon" aria-hidden="true"><use href="#i-arrow-up"></use></svg>';
+        document.body.appendChild(btn);
+        var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var shown = false, ticking = false;
+        function threshold() { return Math.max(400, window.innerHeight * 1.5); }
+        function update() {
+          ticking = false;
+          var should = window.pageYOffset > threshold();
+          if (should === shown) return;
+          shown = should;
+          btn.classList.toggle('is-visible', should);
+        }
+        window.addEventListener('scroll', function () {
+          if (ticking) return;
+          ticking = true;
+          window.requestAnimationFrame(update);
+        }, { passive: true });
+        btn.addEventListener('click', function () {
+          window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+          // Фокус на skip-link/первый заголовок — чтобы клавиатура не осталась внизу.
+          var anchor = document.getElementById('main-content') || document.querySelector('h1, h2');
+          if (anchor && typeof anchor.focus === 'function') {
+            anchor.setAttribute('tabindex', '-1');
+            anchor.focus({ preventScroll: true });
+          }
+        });
+        update();
+      })();
+    </script>
 </header>
 </body>
 </html>

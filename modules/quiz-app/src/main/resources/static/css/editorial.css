@@ -2018,3 +2018,63 @@ html[data-design="editorial"] .confidence-btn:disabled:not(.selected) { opacity:
 @media (max-width: 600px) {
   html[data-design="editorial"] .confidence-buttons { grid-template-columns: 1fr; }
 }
+
+/* ===========================================================================
+   Утилиты чтения и навигации (Bundle: back-to-top + копирование кода)
+   =========================================================================== */
+
+/* Кнопка «наверх»: инжектится из header-фрагмента (на всех страницах, в т.ч.
+   /stats без app.js). Круглая bordered-кнопка в editorial-стиле (не material-FAB
+   с заливкой). Скрыта по умолчанию, .is-visible (JS, после ~1.5 экрана прокрутки)
+   проявляет. z ниже модалок/оверлеев, выше контента. */
+html[data-design="editorial"] .back-to-top {
+  position: fixed; right: var(--space-5); bottom: var(--space-5);
+  z-index: var(--z-dropdown);
+  width: 44px; height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--color-bg-primary); color: var(--color-text-secondary);
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-full); box-shadow: var(--shadow-md);
+  cursor: pointer; touch-action: manipulation;
+  opacity: 0; visibility: hidden; transform: translateY(8px);
+  transition: opacity var(--duration-fast) var(--easing-default),
+              transform var(--duration-fast) var(--easing-default),
+              visibility var(--duration-fast) var(--easing-default),
+              color var(--duration-fast) var(--easing-default),
+              border-color var(--duration-fast) var(--easing-default);
+}
+html[data-design="editorial"] .back-to-top.is-visible { opacity: 1; visibility: visible; transform: translateY(0); }
+html[data-design="editorial"] .back-to-top:hover { color: var(--color-accent-primary); border-color: var(--color-accent-primary); }
+html[data-design="editorial"] .back-to-top .ed-icon { width: 1.25rem; height: 1.25rem; }
+
+/* Копирование код-блоков: app.js оборачивает <pre> в .code-copy-wrap и вешает
+   кнопку в верхний-правый угол. Кнопка проявляется на hover/focus-within (десктоп)
+   и всегда видна на touch (нет hover). Не перекрывает скролл — сидит в паддинге pre. */
+html[data-design="editorial"] .code-copy-wrap { position: relative; }
+html[data-design="editorial"] .code-copy-btn {
+  position: absolute; top: var(--space-2); right: var(--space-2);
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  padding: var(--space-1) var(--space-2); min-height: 32px;
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide);
+  background: var(--color-bg-primary); color: var(--color-text-secondary);
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-sm); cursor: pointer; touch-action: manipulation;
+  opacity: 0; transition: opacity var(--duration-fast) var(--easing-default),
+              color var(--duration-fast) var(--easing-default),
+              border-color var(--duration-fast) var(--easing-default);
+}
+html[data-design="editorial"] .code-copy-wrap:hover .code-copy-btn,
+html[data-design="editorial"] .code-copy-wrap:focus-within .code-copy-btn { opacity: 1; }
+html[data-design="editorial"] .code-copy-btn:hover { color: var(--color-accent-primary); border-color: var(--color-accent-primary); }
+html[data-design="editorial"] .code-copy-btn.is-copied { color: var(--color-status-success); border-color: var(--color-status-success); }
+html[data-design="editorial"] .code-copy-btn.is-error { color: var(--color-status-error); border-color: var(--color-status-error); }
+html[data-design="editorial"] .code-copy-btn .ed-icon { width: 0.875rem; height: 0.875rem; }
+/* Touch (нет hover) — кнопка всегда видна, иначе её не вызвать. */
+@media (hover: none) {
+  html[data-design="editorial"] .code-copy-btn { opacity: 1; }
+}
+/* Узкие экраны — только иконка, текст прячем (экономим место над кодом). */
+@media (max-width: 600px) {
+  html[data-design="editorial"] .code-copy-label { display: none; }
+}

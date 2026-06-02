@@ -231,9 +231,75 @@
     });
   }
 
+  // /stats не подключает app.js, поэтому свой компактный «?»-оверлей справки
+  // (переиспользует CSS .kbd-help-* из editorial.css). Шорткаты — релевантные
+  // именно аналитике: «/» фокусирует поиск, Enter/Space сортируют колонку.
+  function initKeyboardHelp() {
+    var shortcuts = [
+      { keys: ['/'], desc: 'Перейти к поиску по вопросам' },
+      { keys: ['Enter', 'Space'], desc: 'Сортировать колонку таблицы (когда в фокусе)' },
+      { keys: ['?'], desc: 'Показать / скрыть эту справку' },
+      { keys: ['Esc'], desc: 'Закрыть справку' }
+    ];
+    var overlay = document.createElement('div');
+    overlay.className = 'kbd-help-overlay hidden';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'kbd-help-title');
+    overlay.innerHTML =
+      '<div class="kbd-help-modal">' +
+      '<h3 id="kbd-help-title">Горячие клавиши</h3>' +
+      '<dl class="kbd-help-list">' +
+      shortcuts.map(function (s) {
+        return '<dt>' + s.keys.map(function (k) { return '<kbd>' + k + '</kbd>'; }).join(' ') + '</dt><dd>' + s.desc + '</dd>';
+      }).join('') +
+      '</dl><button type="button" class="kbd-help-close" aria-label="Закрыть">×</button></div>';
+    document.body.appendChild(overlay);
+    var closeBtn = overlay.querySelector('.kbd-help-close');
+    var lastFocused = null;
+    function close() {
+      if (overlay.classList.contains('hidden')) return;
+      overlay.classList.add('hidden');
+      if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+      lastFocused = null;
+    }
+    function open() {
+      lastFocused = document.activeElement;
+      overlay.classList.remove('hidden');
+      closeBtn.focus();
+    }
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+    closeBtn.addEventListener('click', close);
+    overlay.addEventListener('keydown', function (e) {
+      if (e.key !== 'Tab') return;
+      var f = overlay.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+      if (!f.length) return;
+      var first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+    document.addEventListener('keydown', function (event) {
+      var tag = event.target && event.target.tagName;
+      if (event.key === 'Escape' && !overlay.classList.contains('hidden')) {
+        event.preventDefault();
+        close();
+        return;
+      }
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (event.key === '?') {
+        event.preventDefault();
+        overlay.classList.contains('hidden') ? open() : close();
+      } else if (event.key === '/') {
+        var search = document.querySelector('.search-input');
+        if (search) { event.preventDefault(); search.focus(); }
+      }
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     hydrateProgressBarsFromData();
     initCharts();
     initTableSort();
+    initKeyboardHelp();
   });
 })();

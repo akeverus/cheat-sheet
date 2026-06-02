@@ -658,6 +658,7 @@
     initSubmitOnceGuard();
     initFlashcardShortcuts();
     initKeyboardHelp();
+    initCopyCode();
   });
 
   function apiPost(url, formData) {
@@ -1912,6 +1913,50 @@ function initKeyboardHelp() {
       event.preventDefault();
       close();
     }
+  });
+}
+
+// Кнопка «копировать» на код-блоках: ответы (.markdown-content pre), пример кода
+// фокуса (.question-code-details pre), код-сниппет результата (pre.question-code).
+// Оборачиваем <pre> в .code-copy-wrap (position:relative) и вешаем кнопку в угол.
+// Запускается ПОСЛЕ hljs (DOMContentLoaded в head.html зарегистрирован раньше) —
+// подсветка уже на <code>, перенос узла её сохраняет. navigator.clipboard нет в
+// insecure-context (http не-localhost) → просто не добавляем кнопку (не дразним).
+function initCopyCode() {
+  if (!navigator.clipboard || !navigator.clipboard.writeText) return;
+  // Локальный icon-хелпер: эта функция объявлена вне IIFE (рядом с
+  // initKeyboardHelp/initFlashcardShortcuts), поэтому приватный icon() из IIFE
+  // здесь недоступен — собираем тот же <svg><use> сами.
+  const svgIcon = (name) => '<svg class="ed-icon" aria-hidden="true"><use href="#i-' + name + '"></use></svg>';
+  const blocks = document.querySelectorAll('.markdown-content pre, .question-code-details pre, pre.question-code');
+  blocks.forEach((pre) => {
+    if (pre.parentElement && pre.parentElement.classList.contains('code-copy-wrap')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'code-copy-wrap';
+    pre.parentNode.insertBefore(wrap, pre);
+    wrap.appendChild(pre);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'code-copy-btn';
+    btn.setAttribute('aria-label', 'Копировать код');
+    btn.title = 'Копировать код';
+    const idle = svgIcon('copy') + '<span class="code-copy-label">Копировать</span>';
+    btn.innerHTML = idle;
+    wrap.appendChild(btn);
+    let resetTimer = null;
+    const flash = (cls, html) => {
+      btn.classList.remove('is-copied', 'is-error');
+      if (cls) btn.classList.add(cls);
+      btn.innerHTML = html;
+      if (resetTimer) clearTimeout(resetTimer);
+      resetTimer = setTimeout(() => { btn.classList.remove('is-copied', 'is-error'); btn.innerHTML = idle; }, 2000);
+    };
+    btn.addEventListener('click', () => {
+      const codeEl = pre.querySelector('code') || pre;
+      navigator.clipboard.writeText(codeEl.innerText)
+        .then(() => flash('is-copied', svgIcon('check') + '<span class="code-copy-label">Скопировано</span>'))
+        .catch(() => flash('is-error', svgIcon('x') + '<span class="code-copy-label">Ошибка</span>'));
+    });
   });
 }
 
