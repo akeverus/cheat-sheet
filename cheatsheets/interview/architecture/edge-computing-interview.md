@@ -35,7 +35,7 @@ updated: "2026-04-25"
 
 **Основы**
 - [Q1. (!) Что такое Edge Computing?](#q1--что-такое-edge-computing)
-- [Q2. (!) Edge vs CDN vs серверlessless?](#q2--edge-vs-cdn-vs-серверlessless)
+- [Q2. (!) Edge vs CDN vs serverless?](#q2--edge-vs-cdn-vs-serverless)
 - [Q3. (!) Benefits и когда применять?](#q3--benefits-и-когда-применять)
 
 **Platforms**
@@ -90,7 +90,7 @@ User → CDN Edge (runs edge function) → optionally → Origin
 
 **Ключевой момент:** edge-функция может ответить, не обращаясь к origin. Полный roundtrip исключается.
 
-## Q2. (!) Edge vs CDN vs серверlessless?
+## Q2. (!) Edge vs CDN vs serverless?
 
 **CDN:** кэширование статического контента на edge.
 - Хранимые объекты (изображения, CSS, JS)
