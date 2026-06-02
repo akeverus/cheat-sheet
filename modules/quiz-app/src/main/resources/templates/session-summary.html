@@ -28,6 +28,9 @@
     <div class="summary-duration" th:text="'Время: ' + ${summary.formattedDuration}"></div>
 </section>
 
+<!-- Тулбар «поделиться/печать»: инжектится скриптом ниже (PE — без JS нет
+     мёртвых кнопок). Сюда вставляется .summary-tools сразу после карточки счёта. -->
+
 <!-- Действия: чиним тупик IA — даём явные пути дальше. Если были ошибки,
      главное действие — повторить их (review), иначе — продолжить. -->
 <nav class="summary-actions" aria-label="Что дальше">
@@ -89,5 +92,73 @@
     </ul>
 </section>
 </main>
+
+<!-- Шеринг и печать итогов. /session-summary НЕ грузит app.js, поэтому скрипт
+     самодостаточный. Текст итога собираем из уже отрендеренного DOM (не дублируем
+     данные на сервере). Кнопки инжектим (PE: без JS их нет). Печать — window.print
+     + @media print в editorial.css прячет навигацию и делает чистый лист. -->
+<script>
+  (function () {
+    var scoreCard = document.querySelector('.summary-score');
+    if (!scoreCard) return;
+    function clean(s) { return (s || '').trim().replace(/\s+/g, ' '); }
+    function txt(sel, root) { var e = (root || document).querySelector(sel); return e ? clean(e.textContent) : ''; }
+    function buildShareText() {
+      var lines = ['Итоги сессии — Подготовка к собеседованию'];
+      var mode = txt('.summary-mode-line'); if (mode) lines.push('Режим: ' + mode);
+      var acc = txt('.summary-score-value'); if (acc) lines.push('Точность сессии: ' + acc);
+      document.querySelectorAll('.summary-score .stat-item').forEach(function (s) {
+        var label = txt('.stat-label', s), val = txt('.stat-value', s);
+        if (label && val) lines.push(label + ': ' + val);
+      });
+      var dur = txt('.summary-duration'); if (dur) lines.push(dur);
+      var rows = document.querySelectorAll('.summary-table tbody tr');
+      if (rows.length) {
+        lines.push('', 'По темам:');
+        rows.forEach(function (r) {
+          var c = r.querySelectorAll('td');
+          if (c.length >= 5) lines.push('- ' + clean(c[0].textContent) + ': ' + clean(c[2].textContent) + '/' + clean(c[1].textContent) + ' (' + clean(c[4].textContent) + ')');
+        });
+      }
+      var recs = document.querySelectorAll('.summary-recommendations-list li');
+      if (recs.length) {
+        lines.push('', 'Рекомендации:');
+        recs.forEach(function (li) { lines.push('- ' + clean(li.textContent)); });
+      }
+      return lines.join('\n');
+    }
+    var tools = document.createElement('div');
+    tools.className = 'summary-tools';
+    var status = document.createElement('span');
+    status.className = 'summary-tools-status';
+    status.setAttribute('role', 'status');
+    status.setAttribute('aria-live', 'polite');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      var copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.className = 'btn secondary-btn';
+      copyBtn.innerHTML = '<svg class="ed-icon" aria-hidden="true"><use href="#i-copy"></use></svg> Скопировать итог';
+      var resetTimer = null;
+      copyBtn.addEventListener('click', function () {
+        navigator.clipboard.writeText(buildShareText()).then(function () {
+          status.textContent = 'Итог скопирован в буфер обмена.';
+        }).catch(function () {
+          status.textContent = 'Не удалось скопировать — выдели текст вручную.';
+        });
+        if (resetTimer) clearTimeout(resetTimer);
+        resetTimer = setTimeout(function () { status.textContent = ''; }, 4000);
+      });
+      tools.appendChild(copyBtn);
+    }
+    var printBtn = document.createElement('button');
+    printBtn.type = 'button';
+    printBtn.className = 'btn secondary-btn';
+    printBtn.innerHTML = '<svg class="ed-icon" aria-hidden="true"><use href="#i-printer"></use></svg> Печать / PDF';
+    printBtn.addEventListener('click', function () { window.print(); });
+    tools.appendChild(printBtn);
+    tools.appendChild(status);
+    scoreCard.insertAdjacentElement('afterend', tools);
+  })();
+</script>
 </body>
 </html>
