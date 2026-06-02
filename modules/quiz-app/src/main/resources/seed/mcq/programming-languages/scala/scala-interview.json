@@ -1,0 +1,2405 @@
+{
+  "topic_slug": "scala-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Scala` и зачем она нужна?",
+          "options": [
+            {
+              "text": "`Scala` (Scalable Language) — статически типизированный гибридный объектно-функциональный язык на JVM, созданный Мартином Одерским в 2003. Нужна для Big Data (`Spark`, `Flink`, `Kafka Streams`), высоконагруженного backend (`Akka`, `http4s`, `ZIO`) и сложных доменных моделей с мощной системой типов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сильные стороны — мощная система типов (generics, variance, type classes, dependent types в `Scala 3`), pattern matching как first-class, immutability по умолчанию и 100% interop с `Java`.",
+                "example": "Spark-кластер на `Scala`: `case class User(name: String, age: Int)` мапится в типобезопасный `Dataset`, а `users.filter(_.age > 25).map(_.name)` компилируется без runtime-проверок типов.",
+                "when_to_apply": "Выбирают `Scala`, когда нужна выразительность системы типов и FP-стиль для data engineering или сложного домена, а не просто более удобная `Java`.",
+                "edge_cases": "На простом CRUD-бэкенде мощь типов не окупает сложный onboarding и медленную компиляцию — там часто берут `Kotlin` или `Java`.",
+                "related": "[[scala-interview#Q2]] отличия от `Java`; [[scala-interview#Q4]] что нового в `Scala 3`; [[scala-interview#Q38]] где применяется в production."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Scala` — это динамически типизированный скриптовый язык, который компилируется в нативный код в обход JVM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Scala` статически типизирована и компилируется в JVM-байткод (а также в JS и Native через отдельные backend), а не динамически в нативный код в обход JVM.",
+                "source_of_confusion": "Лаконичный синтаксис с type inference внешне напоминает динамические языки вроде `Python`, отсюда вывод о динамике.",
+                "if_it_were_true": "Если бы типы проверялись в runtime, исчезла бы compile-time безопасность type classes и exhaustive pattern matching — главные плюсы языка.",
+                "how_it_should_be": "`Scala` — статически типизированный язык на JVM с сильным выводом типов; динамика и обход JVM к ней не относятся."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Scala` — это чисто функциональный язык без поддержки ООП, аналог `Haskell` на JVM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Scala` гибридная: она объектно-функциональная, поддерживает классы, наследование и мутабельность, а не только чистый FP как `Haskell`.",
+                "source_of_confusion": "Богатый FP-арсенал (монады, type classes, immutability) создаёт впечатление чисто функционального языка.",
+                "if_it_were_true": "Если бы ООП не было, не существовало бы `class`, `trait` с состоянием и интеропа с объектной моделью `Java`.",
+                "how_it_should_be": "`Scala` совмещает ООП и FP; чистый функциональный язык без ООП — это `Haskell`, а не `Scala`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Scala` была создана в `Google` в 2011 как замена `Java` для Android-разработки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Scala` создал Мартин Одерский в академической среде (EPFL) в 2003; для Android от `JetBrains` в 2011 появился `Kotlin`.",
+                "source_of_confusion": "Историю `Scala` путают с `Kotlin`: похожая JVM-ниша и год 2011 относятся именно к `Kotlin`.",
+                "if_it_were_true": "Если бы `Scala` была андроид-языком от `Google`, она бы доминировала в мобильной разработке, чего никогда не было.",
+                "how_it_should_be": "Автор `Scala` — Мартин Одерский, 2003, EPFL; `Google`/Android/2011 — это про `Kotlin`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `Scala` отличается от `Java`?",
+          "options": [
+            {
+              "text": "`Scala` и `Java` идентичны по возможностям: разница только в синтаксисе ключевых слов, семантика полностью совпадает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Различия глубже синтаксиса: у `Scala` immutability по умолчанию, higher-kinded types, implicits/given, first-class pattern matching — всего этого в `Java` нет.",
+                "source_of_confusion": "Общая JVM-платформа и interop создают иллюзию, что языки отличаются лишь косметически.",
+                "if_it_were_true": "Если бы семантика совпадала, нельзя было бы выразить type classes и HKT, которые в `Java` принципиально невыразимы.",
+                "how_it_should_be": "`Scala` богаче по системе типов и парадигме (OOP+FP), а `Java` — преимущественно OOP с частичным FP с версии 8."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Scala` — OOP+FP с immutability по умолчанию, сильным type inference, first-class pattern matching, higher-kinded types и implicits/given; `Java` — преимущественно OOP (FP частично с `Java 8+`), слабее выводит типы, имеет switch (pattern matching с `Java 21+`) и больше boilerplate. У `Scala` `null` опционален через `Option`, компиляция медленнее, onboarding сложнее.",
+              "correct": true,
+              "sections": {
+                "explanation": "За счёт `case class`, type inference и богатого collection API код на `Scala` лаконичнее и менее ceremonial, но цена — более сложная система типов и медленная сборка.",
+                "example": "Фильтр-маппинг `users.filter(_.age > 25).map(_.name)` на `Scala` против `users.stream().filter(u -> u.age() > 25).map(User::name).toList()` на `Java` — одна и та же логика, заметно меньше церемоний.",
+                "when_to_apply": "Эти отличия приводят при выборе языка для проекта, где важны выразительность типов и FP, и где команда готова к более сложному onboarding.",
+                "edge_cases": "`record` в `Java 14+` и switch-patterns в `Java 21+` сокращают разрыв, но HKT, implicits и for-comprehension остаются эксклюзивом `Scala`.",
+                "related": "[[scala-interview#Q1]] что такое `Scala`; [[scala-interview#Q3]] отличия от `Kotlin`; [[scala-interview#Q18]] FP-различия со `Java`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Главное отличие `Scala` от `Java` — она компилируется быстрее за счёт более простой системы типов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `Scala` компилируется медленнее `Java`, особенно с heavy implicits и macros, а система типов у неё сложнее, а не проще.",
+                "source_of_confusion": "Лаконичность исходника ошибочно ассоциируется с быстрой компиляцией.",
+                "if_it_were_true": "Если бы `Scala` собиралась быстрее, никто бы не жаловался на долгую сборку sbt-проектов и не искал бы `Mill`/`Bleep`.",
+                "how_it_should_be": "Скорость компиляции — слабая сторона `Scala`; её преимущество в выразительности типов, а не в скорости сборки."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В `Scala`, как и в `Java`, переменные изменяемы по умолчанию, а иммутабельность нужно включать вручную ключевым словом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Scala` идиома — `val` (immutable) и immutable-коллекции по умолчанию; `var` (mutable) используют только при явной необходимости.",
+                "source_of_confusion": "Привычка из `Java`, где поля и локальные переменные мутабельны по умолчанию, переносится на `Scala`.",
+                "if_it_were_true": "Если бы по умолчанию всё было мутабельным, не было бы persistent-структур данных и безопасной модели акторов `Akka`.",
+                "how_it_should_be": "В `Scala` immutability — дефолт (`val`, immutable collections), а в `Java` она опциональна."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `Scala` отличается от `Kotlin`?",
+          "options": [
+            {
+              "text": "`Kotlin` старше `Scala`: создан в академии в 2003, тогда как `Scala` появился в `JetBrains` в 2011.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `Scala` создал Мартин Одерский (academia) в 2003, а `Kotlin` сделали в `JetBrains` в 2011.",
+                "source_of_confusion": "Двух JVM-языков с похожей нишей легко перепутать по датам и авторам.",
+                "if_it_were_true": "Если бы `Kotlin` был старше, экосистема `Spark`/`Akka` строилась бы на нём, а не на `Scala`.",
+                "how_it_should_be": "`Scala` — 2003, Одерский; `Kotlin` — 2011, `JetBrains`; авторов и годы менять местами нельзя."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Kotlin` имеет более мощную систему типов с higher-kinded types, а `Scala` ограничена прагматичными типами без HKT.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Higher-kinded types есть именно в `Scala`; в `Kotlin` их нет, и type system у `Kotlin` прагматичная, а не максимально мощная.",
+                "source_of_confusion": "Оба языка считаются «современнее `Java`», и силу типов ошибочно приписывают `Kotlin`.",
+                "if_it_were_true": "Если бы у `Kotlin` были HKT, на нём можно было бы напрямую выразить `Functor`/`Monad` из `Cats`, чего он не позволяет.",
+                "how_it_should_be": "Максимальная выразительность типов и HKT — у `Scala`; `Kotlin` намеренно проще и прагматичнее."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Scala` (Одерский, academia, 2003) даёт максимально мощную систему типов с higher-kinded types, first-class pattern matching, implicits и эффект-системами (`ZIO`, `Cats Effect`); `Kotlin` (`JetBrains`, 2011) — прагматичная замена `Java` с простым `when`, extension functions вместо implicits, штатными корутинами и низким порогом входа. Экосистема `Scala` — `Spark`/`Akka`/`Play`, у `Kotlin` — `Android`/`Spring`/`Ktor`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Scala` выбирают за максимальную выразительность типов, `Kotlin` — за удобство и низкую learning curve как улучшенной `Java`.",
+                "example": "Type class `Functor[F[_]]` с HKT естественно пишется на `Scala`, а в `Kotlin` HKT приходится эмулировать обходными типами — это ключевое различие систем типов.",
+                "when_to_apply": "Различия учитывают при выборе JVM-языка: data engineering и сложный FP — `Scala`, Android и прагматичный backend — `Kotlin`.",
+                "edge_cases": "Pattern matching у `Scala` first-class и мощный, у `Kotlin` `when` проще; implicits против extension functions — тоже сознательный компромисс простоты против гибкости.",
+                "related": "[[scala-interview#Q2]] отличия от `Java`; [[scala-interview#Q22]] implicits в `Scala 2`; [[scala-interview#Q40]] минусы `Scala`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Корутины — родная фича `Scala`, а `Kotlin` использует для конкурентности `Akka` и `ZIO`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Корутины — стандарт именно `Kotlin`; в `Scala` конкурентность строят на `Akka`, `ZIO`, `Cats Effect`, а не на корутинах.",
+                "source_of_confusion": "Оба языка предлагают удобную асинхронность, поэтому корутины ошибочно приписывают `Scala`.",
+                "if_it_were_true": "Если бы корутины были в `Scala`, не понадобились бы fibers из `ZIO`/`Cats Effect` как основной механизм.",
+                "how_it_should_be": "Корутины — это `Kotlin`; в `Scala` параллелизм даёт actor-модель `Akka` и эффект-системы."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что нового в `Scala 3`?",
+          "options": [
+            {
+              "text": "`Scala 3` полностью отказалась от JVM и компилируется только в нативный код через LLVM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Scala 3` (Dotty, 2021) — это новый компилятор для JVM с совместимостью с `Scala 2.13` на уровне TASTy, а не отказ от JVM ради LLVM.",
+                "source_of_confusion": "Слово «новый компилятор Dotty» путают с полной сменой целевой платформы.",
+                "if_it_were_true": "Если бы JVM ушла, сломался бы interop с `Java` и вся экосистема `Spark`/`Akka`.",
+                "how_it_should_be": "`Scala 3` остаётся на JVM (плюс JS/Native через backend), меняется синтаксис и компилятор, а не платформа."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Главное нововведение `Scala 3` — возврат `implicit` как единственного механизма и удаление type classes.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `Scala 3` заменяет `implicit` на более понятные `given`/`using` и `extension`, а type classes остаются и становятся удобнее.",
+                "source_of_confusion": "Реформа неявных параметров создаёт впечатление, что что-то «убрали», хотя на деле улучшили синтаксис.",
+                "if_it_were_true": "Если бы убрали type classes, перестали бы работать `Cats`/`ZIO`, построенные на них.",
+                "how_it_should_be": "`Scala 3` вводит `given`/`using` вместо `implicit`; type classes никуда не делись."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "В `Scala 3` появились только косметические изменения форматирования, новых конструкций типов нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Scala 3` добавила union types (`String | Int`), intersection types (`Animal & HasFur`), `opaque types`, `enum`, match types — это новые возможности системы типов, а не косметика.",
+                "source_of_confusion": "Опциональный indentation-syntax заметнее всего, поэтому реформу сводят к форматированию.",
+                "if_it_were_true": "Если бы менялось только форматирование, не понадобился бы Migration Guide и новый компилятор Dotty.",
+                "how_it_should_be": "`Scala 3` существенно расширила систему типов; indentation-синтаксис — лишь одна из многих новинок."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Scala 3` (2021, Dotty) — крупный пересмотр языка: опциональный indentation-based синтаксис (`if n == 0 then 1 else ...`), `given`/`using` вместо `implicit`, настоящие `enum`, `extension methods` без implicit-хаков, `opaque types`, union (`String | Int`) и intersection (`Animal & HasFur`) types, top-level definitions, новый компилятор Dotty, совместимость с `Scala 2.13` через TASTy и match types.",
+              "correct": true,
+              "sections": {
+                "explanation": "Цель `Scala 3` — убрать «магию» implicits, упростить продвинутые возможности типов и сделать язык понятнее без потери мощности.",
+                "example": "`enum Color: case Red, Green, Blue` заменяет sealed-trait-hack, а `extension (s: String) def shout = s.toUpperCase + \"!\"` даёт extension-методы без implicit class.",
+                "when_to_apply": "Эти фичи используют в новых проектах на `Scala 3` и при миграции с `Scala 2`, опираясь на Migration Guide и TASTy-совместимость.",
+                "edge_cases": "Совместимость с `2.13` есть, но с оговорками: часть macros и продвинутых implicit-конструкций требует переписывания.",
+                "related": "[[scala-interview#Q23]] `given`/`using` подробно; [[scala-interview#Q11]] sealed traits vs `enum`; [[scala-interview#Q24]] implicit conversion в `Scala 3`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`val` vs `var` vs `def` (и `lazy val`)?",
+          "options": [
+            {
+              "text": "`val` — immutable-привязка, вычисляется один раз при инициализации; `var` — mutable, тоже вычисляется один раз при инициализации, но значение можно переприсваивать; `def` — метод, тело вычисляется заново при каждом обращении; `lazy val` — immutable, вычисляется один раз при первом обращении. Идиома — всегда `val`, кроме случаев, где явно нужна mutability.",
+              "correct": true,
+              "sections": {
+                "explanation": "`def` пересчитывается на каждый вызов (удобно для side-effect методов `f()`), а `lazy val` откладывает дорогое вычисление до первого использования и кэширует результат.",
+                "example": "`val x = 5` нельзя переприсвоить, `var y = 5; y = 6` можно, `def z = 5` возвращает 5 при каждом обращении, а `lazy val w = compute()` вызовет `compute()` только когда `w` впервые понадобится.",
+                "when_to_apply": "Выбор делают при объявлении любого binding: по умолчанию `val`, `lazy val` — для дорогой/отложенной инициализации, `var` — только при реальной потребности в изменяемом состоянии.",
+                "edge_cases": "`lazy val` потокобезопасно инициализируется один раз, но первый доступ под contention может блокировать; `def` без `()` по соглашению должен быть чистым.",
+                "related": "[[scala-interview#Q27]] immutable vs mutable коллекции; [[scala-interview#Q29]] lazy-вычисления и `LazyList`; [[scala-interview#Q6]] type inference для `val`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`val` и `var` оба immutable; разница лишь в том, что `var` вычисляется лениво, а `val` — сразу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`var` как раз mutable (значение можно переприсвоить), а лень — это про `lazy val`, а не про `var`; оба обычных binding вычисляются при инициализации.",
+                "source_of_confusion": "Похожие имена `val`/`var` и наличие `lazy val` смешивают понятия мутабельности и ленивости.",
+                "if_it_were_true": "Если бы `var` был immutable, нельзя было бы написать `var y = 5; y = 6`, что в `Scala` законно.",
+                "how_it_should_be": "`val` immutable, `var` mutable, оба eager; ленивость даёт отдельный `lazy val`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`def` вычисляется один раз и кэширует результат, как `lazy val`, поэтому повторные вызовы возвращают сохранённое значение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`def` пересчитывает тело при каждом обращении и ничего не кэширует; кэширование первого обращения — это поведение `lazy val`.",
+                "source_of_confusion": "`def` и `lazy val` оба «откладывают» вычисление, отсюда ошибочное отождествление их семантики.",
+                "if_it_were_true": "Если бы `def` кэшировал, метод с side effect выполнял бы их лишь раз, что противоречит наблюдаемому поведению.",
+                "how_it_should_be": "`def` — пересчёт на каждый вызов; однократное кэширующее вычисление даёт `lazy val`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`lazy val` вычисляется заново при каждом обращении, ровно как `def`, и поэтому не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`lazy val` вычисляется один раз при первом обращении и далее возвращает закэшированное значение, в отличие от пересчитывающего `def`.",
+                "source_of_confusion": "И `lazy val`, и `def` откладывают первое вычисление, что создаёт иллюзию одинакового поведения.",
+                "if_it_were_true": "Если бы `lazy val` пересчитывался каждый раз, он не давал бы выигрыша для дорогой одноразовой инициализации.",
+                "how_it_should_be": "`lazy val` — однократное ленивое и кэшируемое вычисление; повтор при каждом обращении — это `def`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Type inference в `Scala`?",
+          "options": [
+            {
+              "text": "Type inference в `Scala` требует явно указывать тип для каждой локальной переменной, иначе ошибка компиляции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Локальные `val`/`var` и тип возврата методов выводятся автоматически: `val x = 5` даёт `Int` без аннотации.",
+                "source_of_confusion": "Строгая статическая типизация ошибочно приравнивается к обязательным аннотациям везде.",
+                "if_it_were_true": "Если бы тип всегда требовался явно, не работало бы лаконичное `val list = List(1, 2, 3)`.",
+                "how_it_should_be": "`Scala` выводит типы локальных переменных и результатов методов; явная аннотация нужна не всегда."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Scala` выводит типы локальных переменных (`val x = 5` → `Int`, `val list = List(1, 2, 3)` → `List[Int]`) и тип возврата методов, но типы параметров методов нужно указывать явно (`def add(a: Int, b: Int)`). Лямбды выводятся из контекста: в `nums.map(x => x * 2)` тип `x` берётся из `List[Int]`. В `Scala 3` inference, особенно для дженериков, улучшен.",
+              "correct": true,
+              "sections": {
+                "explanation": "Inference сокращает boilerplate, но границы у него есть: параметры функций и публичные API-сигнатуры обычно аннотируют явно для читаемости и стабильности.",
+                "example": "`nums.map(_ * 2)` работает, потому что `_` выводится как `Int` из `List[Int]`, а `def double(x: Int) = x * 2` сам выводит результат `Int`.",
+                "when_to_apply": "На вывод типов полагаются для локальных значений и лямбд, а явные аннотации ставят на параметрах и публичных сигнатурах.",
+                "edge_cases": "Иногда вывод даёт слишком широкий тип (например, общий супертип ветвей `if`), и тогда тип указывают вручную.",
+                "related": "[[scala-interview#Q5]] `val`/`var`/`def`; [[scala-interview#Q7]] иерархия `Any`/`Nothing`; [[scala-interview#Q17]] лямбды и HOF."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "В `Scala` типы параметров лямбд всегда нужно писать явно, контекст для их вывода не используется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тип параметра лямбды выводится из контекста: в `List(1,2,3).map(x => x * 2)` компилятор знает, что `x: Int`.",
+                "source_of_confusion": "Привычка аннотировать параметры методов переносится и на лямбды.",
+                "if_it_were_true": "Если бы контекст не учитывался, краткая форма `_ * 2` была бы невозможна.",
+                "how_it_should_be": "Параметры методов аннотируют явно, а типы лямбд выводятся из ожидаемого типа функции."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Scala 2` и `Scala 3` имеют идентичный вывод типов; в `Scala 3` улучшений inference не было.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Scala 3` принесла улучшенный inference, особенно для дженериков и `given`-разрешения, так что поведение отличается от `Scala 2`.",
+                "source_of_confusion": "Совместимость версий через TASTy создаёт впечатление, что и алгоритм вывода не менялся.",
+                "if_it_were_true": "Если бы inference был тем же, не упоминался бы как одно из улучшений `Scala 3`.",
+                "how_it_should_be": "Вывод типов в `Scala 3` заметно усилен по сравнению с `Scala 2`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Unit`, `Nothing`, `Any`, `AnyVal`, `AnyRef`?",
+          "options": [
+            {
+              "text": "`Any` — это bottom type (подтип всех), а `Nothing` — top type (родитель всех типов).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `Any` — top type (родитель всех), а `Nothing` — bottom type (подтип всех), используемый для `throw` и `???`.",
+                "source_of_confusion": "Термины top и bottom легко перепутать местами, особенно по интуиции «ничего».",
+                "if_it_were_true": "Если бы `Nothing` был родителем всех, нельзя было бы присвоить `List[Nothing]()` переменной `List[String]`.",
+                "how_it_should_be": "`Any` наверху иерархии, `Nothing` — в самом низу как подтип любого типа."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Unit` в `Scala` — это аналог `null` и обозначает отсутствующую ссылку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Unit` — аналог `void` в `Java` с единственным значением `()`, а отсутствие ссылки — это `Null` со значением `null`.",
+                "source_of_confusion": "И `Unit`, и `Null` обозначают «ничего полезного», поэтому их смешивают.",
+                "if_it_were_true": "Если бы `Unit` был `null`, метод, возвращающий `Unit`, мог бы давать NPE при использовании результата.",
+                "how_it_should_be": "`Unit` — это `void`-аналог со значением `()`; `null` — единственное значение типа `Null` (подтип `AnyRef`)."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Any` — top type, родитель всех типов; `AnyVal` — value types (примитивы: `Int`, `Double`, `Boolean`, `Unit`); `AnyRef` — reference types, эквивалент `java.lang.Object`; `Unit` — аналог `void` с единственным значением `()`; `Nothing` — bottom type, подтип всех типов, используемый для `throw` и `???`; `Null` — подтип `AnyRef` со значением `null`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Nothing` как подтип всего позволяет, например, `def fail(): Nothing = throw ...` и `val list: List[Nothing] = List()` подходить под `List[String]` или `List[Int]`.",
+                "example": "`def fail(): Nothing = throw new Exception(\"boom\")` имеет тип `Nothing`, поэтому его можно поставить в любую ветку любого типа; пустой `List()` имеет тип `List[Nothing]`.",
+                "when_to_apply": "Эту иерархию учитывают при работе с дженериками, общими супертипами ветвей и при типизации функций, которые не возвращают значение (`throw`, бесконечный цикл).",
+                "edge_cases": "`Null` существует ради совместимости с `Java`, но в идиоматичной `Scala` его избегают в пользу `Option`.",
+                "related": "[[scala-interview#Q8]] `Option` вместо `null`; [[scala-interview#Q6]] вывод общего типа ветвей; [[scala-interview#Q11]] sealed traits и ADT."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`AnyVal` и `AnyRef` — синонимы и оба описывают объекты-обёртки на JVM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AnyVal` — это value types (примитивы вроде `Int`, `Boolean`, `Unit`), а `AnyRef` — reference types (`java.lang.Object` и наследники); это разные ветви иерархии.",
+                "source_of_confusion": "Оба начинаются с `Any` и звучат похоже, что провоцирует отождествление.",
+                "if_it_were_true": "Если бы они были синонимами, не различались бы примитивы и объекты на уровне типов и боксинга.",
+                "how_it_should_be": "`AnyVal` — примитивные value-типы, `AnyRef` — ссылочные; это две разные ветви под `Any`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`Option`, `Some`, `None` — зачем?",
+          "options": [
+            {
+              "text": "`Option[T]` — это просто алиас для nullable-типа: `Some(null)` и `None` означают одно и то же.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Option[T]` — type-safe замена `null` с двумя различными состояниями `Some(value)` и `None`; они не эквивалентны, а `Some(null)` — антипаттерн.",
+                "source_of_confusion": "И `Option`, и `null` выражают «значение может отсутствовать», отсюда отождествление.",
+                "if_it_were_true": "Если бы `None` и `Some(null)` совпадали, компилятор не мог бы заставлять обрабатывать отсутствие отдельно.",
+                "how_it_should_be": "`Option` явно различает наличие (`Some`) и отсутствие (`None`), устраняя NPE, а не маскируя `null`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Option` нельзя комбинировать функционально — у него нет `map`/`flatMap`, только сравнение с `None`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Option` composable через `map`, `flatMap`, `getOrElse` и for-comprehension: `maybeName.map(_.length).getOrElse(0)` — штатный приём.",
+                "source_of_confusion": "Иногда `Option` используют только в `match`, и забывают про его богатый функциональный API.",
+                "if_it_were_true": "Если бы `map`/`flatMap` не было, for-comprehension по `Option` (`for { ... } yield ...`) не компилировался бы.",
+                "how_it_should_be": "`Option` — полноценная монада с `map`/`flatMap`, пригодная для for-comprehension и цепочек."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Option` — это чисто рантайм-проверка: компилятор не требует обрабатывать `None`-случай.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Компилятор как раз требует учесть оба случая: при pattern matching по `Option` он предупреждает о незакрытом `None`, и type-safe API не даёт молча разыменовать значение.",
+                "source_of_confusion": "Привычка к `null`, который не контролируется компилятором, переносится на `Option`.",
+                "if_it_were_true": "Если бы `None` можно было игнорировать на этапе компиляции, исчезло бы главное преимущество над `null`.",
+                "how_it_should_be": "`Option` даёт compile-time гарантии: тип `Option[T]` заставляет явно обработать отсутствие значения."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Option[T]` — type-safe замена `null`: значение либо `Some(value)`, либо `None`. Преимущества над `null`: компилятор требует обработать `None`-случай, тип composable через `map`/`flatMap`/for-comprehension, и нет `NullPointerException`. Аналог — `Optional<T>` в `Java` и nullable-типы `String?` в `Kotlin`, но `Scala` даёт более функциональный API.",
+              "correct": true,
+              "sections": {
+                "explanation": "Pattern matching `case Some(name) => ... case None => ...` делает обработку отсутствия явной, а функциональный API (`map`, `getOrElse`) позволяет не разворачивать значение вручную.",
+                "example": "`val length = maybeName.map(_.length).getOrElse(0)` безопасно возвращает 0 при `None`, а for-comprehension `for { name <- ...; email <- findEmail(name) } yield email` короткозамыкается на первом `None`.",
+                "when_to_apply": "`Option` применяют везде, где значение может отсутствовать: результат `find`, парсинг, поиск по ключу, оборачивание `null` из `Java`-API.",
+                "edge_cases": "Антипаттерн — `Some(null)` или избыточный `option.get`, который бросает исключение на `None` и сводит на нет всю безопасность.",
+                "related": "[[scala-interview#Q9]] `Either`/`Try` для ошибок; [[scala-interview#Q19]] for-comprehension; [[scala-interview#Q37]] оборачивание `null` из `Java`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`Either`, `Try` — для error handling?",
+          "options": [
+            {
+              "text": "`Either[L, R]` хранит одно из двух значений: `Left(L)` (обычно ошибка) или `Right(R)` (успех); `Try[T]` — это `Success(value)` или `Failure(throwable)`, удобный для перехвата исключений из `Java`-API. В FP-стиле чаще берут `Either` с типизированными ошибками, потому что они выразительнее любых exceptions.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Either` даёт явный типизированный канал ошибки, а `Try` оборачивает бросающий код в значение, которое можно обрабатывать через `getOrElse`/`recover` вместо try/catch.",
+                "example": "`parseAge(\"30\")` возвращает `Right(30)`, а `parseAge(\"abc\")` — `Left(\"Not a number: abc\")`; `Try(Integer.parseInt(\"x\"))` даёт `Failure`, и `result.getOrElse(0)` безопасно подставит 0.",
+                "when_to_apply": "`Either` применяют для доменных ошибок с понятным типом, `Try` — на границе с `Java`-кодом, который бросает исключения.",
+                "edge_cases": "`Either` по умолчанию right-biased (`map`/`flatMap` работают по `Right`), а `Try` ловит только non-fatal исключения, пропуская, например, `OutOfMemoryError`.",
+                "related": "[[scala-interview#Q8]] `Option` против `null`; [[scala-interview#Q19]] for-comprehension по `Either`; [[scala-interview#Q34]] типизированные ошибки в `ZIO`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Either[L, R]` всегда кладёт ошибку в `Right`, а успешное значение — в `Left`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По соглашению наоборот: `Left` — ошибка, `Right` — успех (мнемоника «right значит правильно»), и `Either` right-biased именно по успеху.",
+                "source_of_confusion": "Порядок параметров `[L, R]` сбивает с толку, и Left/Right путают по смыслу.",
+                "if_it_were_true": "Если бы успех был в `Left`, `for`-comprehension по `Either` короткозамыкался бы на успехе, а не на ошибке.",
+                "how_it_should_be": "`Left` — это ошибка, `Right` — успех; `map`/`flatMap` работают по `Right`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Try[T]` перехватывает абсолютно любые ошибки JVM, включая `OutOfMemoryError` и `StackOverflowError`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Try` ловит только non-fatal исключения; fatal-ошибки вроде `OutOfMemoryError` пробрасываются дальше, а не оборачиваются в `Failure`.",
+                "source_of_confusion": "Кажется, что раз `Try` оборачивает «исключения», то и все `Throwable` без исключений.",
+                "if_it_were_true": "Если бы `Try` глотал `OutOfMemoryError`, программа маскировала бы фатальные сбои и вела себя непредсказуемо.",
+                "how_it_should_be": "`Try` оборачивает только non-fatal `Throwable`; фатальные ошибки он намеренно не перехватывает."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Either` и `Try` нельзя использовать в for-comprehension — они не поддерживают `flatMap`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба поддерживают `map`/`flatMap` (right-biased), поэтому прекрасно работают в for-comprehension для последовательной обработки ошибок.",
+                "source_of_confusion": "Ассоциация for-comprehension только с коллекциями приводит к мысли, что монады ошибок туда не годятся.",
+                "if_it_were_true": "Если бы `flatMap` не было, нельзя было бы написать `for { a <- eitherA; b <- eitherB } yield a + b`.",
+                "how_it_should_be": "`Either` и `Try` — монады с `flatMap`, и for-comprehension по ним короткозамыкается на первой ошибке."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`case class` — что это?",
+          "options": [
+            {
+              "text": "`case class` — это обычный класс, для которого нужно вручную писать `equals`, `hashCode`, `toString` и фабрику.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Компилятор генерирует всё это автоматически: конструктор с public-полями, `equals`/`hashCode`/`toString`, `apply`, `unapply` и `copy`.",
+                "source_of_confusion": "Опыт `Java`, где boilerplate пишут руками, переносится на `case class`.",
+                "if_it_were_true": "Если бы ничего не генерировалось, `User(\"Alice\", 30) == User(\"Alice\", 30)` не давало бы `true` по значению.",
+                "how_it_should_be": "`case class` сам синтезирует value-equality, `toString`, `apply`/`unapply` и `copy`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`case class` — класс с автоматически сгенерированными конструктором с public-полями, `equals`/`hashCode`/`toString`, `apply` (factory), `unapply` (для pattern matching) и `copy` (для изменённой копии). Сравнение идёт по значению, а не по ссылке. Это аналог `record` в `Java 14+`, но мощнее: поддерживает `copy` и наследование traits.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сгенерированный `unapply` делает `case class` готовым к деструктуризации в pattern matching, а `copy` даёт immutable-обновление без ручного конструктора.",
+                "example": "`val alice = User(\"Alice\", 30); val older = alice.copy(age = 31)` создаёт новый объект, а `alice == User(\"Alice\", 30)` равно `true` по значению, не по ссылке.",
+                "when_to_apply": "`case class` применяют для DTO, доменных моделей, ADT-веток и любых immutable value-объектов, где нужны equality и pattern matching.",
+                "edge_cases": "Все поля по умолчанию `val`; делать их `var` можно, но это ломает идиому immutability и контракт `hashCode`.",
+                "related": "[[scala-interview#Q11]] sealed traits и ADT; [[scala-interview#Q15]] деструктуризация через `unapply`; [[scala-interview#Q13]] companion object и `apply`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`case class` сравниваются по ссылке: два разных экземпляра с одинаковыми полями всегда не равны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сгенерированный `equals` даёт value-equality: `User(\"Alice\", 30) == User(\"Alice\", 30)` равно `true`, несмотря на разные ссылки.",
+                "source_of_confusion": "Поведение `==` в `Java` (ссылочное для объектов) ошибочно переносят на `Scala`.",
+                "if_it_were_true": "Если бы сравнение было по ссылке, `case class` нельзя было бы использовать как ключи `Map` по значению.",
+                "how_it_should_be": "`case class` сравниваются по значению полей, а не по идентичности ссылок."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`case class` не может наследовать traits и не имеет метода `copy` для создания изменённых копий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`case class` поддерживает и наследование traits (например, веток sealed-trait ADT), и `copy` для immutable-обновления полей.",
+                "source_of_confusion": "Сравнение с `record` из `Java`, который ограниченнее, создаёт впечатление тех же ограничений у `case class`.",
+                "if_it_were_true": "Если бы `copy` не было, immutable-обновление `alice.copy(age = 31)` не компилировалось бы.",
+                "how_it_should_be": "`case class` мощнее `record`: есть `copy` и возможность миксовать traits."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`sealed` traits и почему они важны?",
+          "options": [
+            {
+              "text": "`sealed` запрещает наследование вообще: ни один класс не может расширить sealed trait.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`sealed` ограничивает наследование одним файлом, а не запрещает его: подтипы объявляются в том же файле, что и сам trait.",
+                "source_of_confusion": "`sealed` путают с `final`, который действительно запрещает наследование полностью.",
+                "if_it_were_true": "Если бы наследование было запрещено, нельзя было бы объявить `case class Circle extends Shape`.",
+                "how_it_should_be": "`sealed` разрешает наследников, но только в пределах одного файла; полный запрет — это `final`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`sealed trait` не даёт компилятору проверять исчерпывающность pattern matching — за полнотой кейсов следит только разработчик.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главная польза `sealed` как раз в exhaustive-проверке: компилятор знает все подтипы и предупреждает о пропущенном кейсе в `match`.",
+                "source_of_confusion": "Кажется, что компилятор не может знать всех наследников, хотя ограничение одним файлом ему это и обеспечивает.",
+                "if_it_were_true": "Если бы проверки полноты не было, sealed-trait не давал бы преимуществ перед обычным trait для ADT.",
+                "how_it_should_be": "`sealed` включает exhaustive matching: пропуск ветки даёт предупреждение компилятора."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`sealed` — модификатор, ограничивающий наследование одним файлом. С pattern matching он даёт исчерпывающие (exhaustive) проверки: компилятор знает все подтипы и предупреждает, если в `match` пропущен кейс. Это аналог ADT (Algebraic Data Types) из `Haskell`/`OCaml` и ключ к type-safe моделированию домена. В `Java 17+` — `sealed classes`, в `Kotlin` — `sealed class/interface`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поскольку все наследники объявлены в одном файле, компилятор может статически перечислить варианты и проверить полноту разбора.",
+                "example": "Для `sealed trait Shape` с `Circle`/`Rectangle`/`Triangle` функция `area` через `match` покроет все кейсы, а забытый `Triangle` вызовет предупреждение о non-exhaustive match.",
+                "when_to_apply": "`sealed` traits применяют для моделирования замкнутого набора вариантов: состояния, события, результаты, доменные ADT.",
+                "edge_cases": "Если оставить `case _ => ...` в `match`, exhaustive-предупреждение исчезнет, и новый забытый подтип уже не подсветится компилятором.",
+                "related": "[[scala-interview#Q10]] `case class` как ветки ADT; [[scala-interview#Q14]] основы pattern matching; [[scala-interview#Q4]] `enum` в `Scala 3`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`sealed` traits существуют только в `Scala` и не имеют аналогов в других JVM-языках.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аналоги есть: `sealed classes` в `Java 17+` и `sealed class/interface` в `Kotlin` решают ту же задачу замкнутых иерархий.",
+                "source_of_confusion": "Мощный ADT-стиль `Scala` создаёт впечатление уникальности фичи.",
+                "if_it_were_true": "Если бы аналогов не было, `Java`/`Kotlin` не получили бы exhaustive switch/when по запечатанным иерархиям.",
+                "how_it_should_be": "Запечатанные иерархии есть и в `Java 17+`, и в `Kotlin`, не только в `Scala`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`trait` vs `abstract class`?",
+          "options": [
+            {
+              "text": "`abstract class` поддерживает множественное наследование, а `trait` можно подмешать только один.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: множественное наследование (mixin) дают именно traits, а от `abstract class` можно наследоваться только одного.",
+                "source_of_confusion": "Привычные «множественные интерфейсы» `Java` путают с тем, кто из конструкций даёт mixin.",
+                "if_it_were_true": "Если бы mixin был у `abstract class`, конструкция `class App extends Database with Logger` теряла бы смысл.",
+                "how_it_should_be": "Множественное наследование — у traits; `abstract class` допускает только один родитель."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`trait` лучше совместим с `Java`, чем `abstract class`, поэтому корневые классы делают именно traits.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Совместимость с `Java` лучше у `abstract class`; traits с реализациями и (в `Scala 2`) без параметров конструктора маппятся на `Java` хуже.",
+                "source_of_confusion": "Раз traits мощнее как механизм абстракции, ошибочно решают, что и интероп у них лучше.",
+                "if_it_were_true": "Если бы traits были дружелюбнее к `Java`, не было бы рекомендации брать `abstract class` ради совместимости.",
+                "how_it_should_be": "Для интеропа с `Java` чаще выбирают `abstract class`; traits — основной инструмент абстракции внутри `Scala`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`trait` в `Scala 2` может иметь параметры конструктора, как обычный класс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Scala 2` traits параметров конструктора не имеют (это появилось только в `Scala 3`); параметры всегда были у классов.",
+                "source_of_confusion": "Возможность из `Scala 3` ретроспективно приписывают `Scala 2`.",
+                "if_it_were_true": "Если бы `Scala 2`-traits принимали параметры, не понадобилось бы вводить trait-параметры как новинку `Scala 3`.",
+                "how_it_should_be": "Параметры конструктора у traits появились в `Scala 3`; в `Scala 2` их нет, у класса они были всегда."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`trait` поддерживает множественное наследование (mixin), параметры конструктора имеет только начиная со `Scala 3`, хуже совместим с `Java` и используется как основной механизм абстракции (mixin, ADT). `abstract class` допускает один родитель, всегда имеет параметры конструктора, лучше совместим с `Java` и применяется реже — для корневых классов и интеропа.",
+              "correct": true,
+              "sections": {
+                "explanation": "Traits комбинируют как примеси (`extends A with B with C`), а `abstract class` выбирают, когда нужны конструктор-параметры или дружелюбный интероп с `Java`.",
+                "example": "`class App extends Database with Logger` подмешивает несколько traits с готовой реализацией `log`, что невозможно с несколькими abstract-классами.",
+                "when_to_apply": "Traits берут по умолчанию для абстракции и mixin; `abstract class` — когда важна совместимость с `Java` или единый параметризованный корень иерархии.",
+                "edge_cases": "Конфликт одинаковых методов в нескольких traits разрешается линеаризацией (порядком `with`), что важно учитывать при diamond-наследовании.",
+                "related": "[[scala-interview#Q11]] sealed traits и ADT; [[scala-interview#Q13]] object и companion object; [[scala-interview#Q36]] интероп с `Java`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`object` и companion object?",
+          "options": [
+            {
+              "text": "`object` — это singleton: единственный экземпляр, к методам которого обращаются по имени (`MathUtils.square(5)`). `companion object` — это `object` с тем же именем, что и класс, объявленный в том же файле; он имеет доступ к `private`-членам класса. Применяют для factory-методов (`apply`), констант и static-подобных методов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Companion object заменяет статические члены `Java`: фабрики, конструкторы через `apply`, разбор строк через `unapply` и общие константы класса живут именно в нём.",
+                "example": "`object User { def apply(name: String, age: Int) = new User(name, age) }` позволяет писать `User(\"Alice\", 30)` вместо `new User(...)`, при этом companion видит `private`-конструктор класса.",
+                "when_to_apply": "Singleton-`object` используют для утилит и констант, а companion object — когда нужны фабрики и доступ к приватному состоянию своего класса.",
+                "edge_cases": "`object` инициализируется лениво при первом обращении и потокобезопасно; companion должен лежать в одном файле с классом, иначе доступа к `private` не будет.",
+                "related": "[[scala-interview#Q10]] `case class` и сгенерированный companion; [[scala-interview#Q15]] `unapply` в companion; [[scala-interview#Q12]] trait vs abstract class."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`object` в `Scala` создаёт новый экземпляр при каждом обращении, как обычный класс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`object` — singleton: существует ровно один экземпляр на всю JVM, а не новый при каждом обращении.",
+                "source_of_confusion": "Слово «object» ассоциируется с созданием объектов через `new`.",
+                "if_it_were_true": "Если бы `object` создавался каждый раз, он не годился бы для глобальных констант и кэшей.",
+                "how_it_should_be": "`object` — единственный ленивый экземпляр; многократное создание — это про обычный класс."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`companion object` не имеет доступа к `private`-членам своего класса — для него они закрыты так же, как для внешнего кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Companion object как раз имеет доступ к `private`-членам класса-компаньона, что и позволяет ему быть фабрикой для `private`-конструктора.",
+                "source_of_confusion": "Привычка к жёсткой инкапсуляции `private` в `Java` переносится на companion.",
+                "if_it_were_true": "Если бы доступа не было, `object User { def apply(...) = new User(...) }` при `private`-конструкторе не компилировался бы.",
+                "how_it_should_be": "Companion видит `private` своего класса; это ключевая причина использовать его для фабрик."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`companion object` должен иметь имя, отличное от класса, чтобы не конфликтовать с ним.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Companion object обязан иметь то же имя, что и класс, и лежать в том же файле — именно по совпадению имени он становится компаньоном.",
+                "source_of_confusion": "Опасение конфликта имён класса и объекта приводит к ложному выводу.",
+                "if_it_were_true": "Если бы имя должно было отличаться, связь «класс ↔ companion» не устанавливалась бы и доступ к `private` пропал.",
+                "how_it_should_be": "Имя companion object совпадает с именем класса; разные имена дают обычный несвязанный singleton."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Pattern matching — основы?",
+          "options": [
+            {
+              "text": "Pattern matching в `Scala` работает только с целочисленными литералами, как `switch` в старой `Java`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`match` работает с литералами, типами (с guards), case-классами, списками, кортежами, регулярками и custom `unapply` — гораздо шире целых чисел.",
+                "source_of_confusion": "Поверхностное сходство с `switch` сужает представление о возможностях `match`.",
+                "if_it_were_true": "Если бы поддерживались только int, не работали бы `case s: String` и `case List(1, 2, _*)`.",
+                "how_it_should_be": "`match` сопоставляет с разнообразными паттернами, а не только с целыми литералами."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Pattern matching — аналог `switch`, но мощнее: сопоставляет с литералами, типами (с guards вроде `case n: Int if n > 0`), case-классами (деструктуризация), списками и кортежами (`case (a, b)`), регулярными выражениями и custom `unapply`. Ветка `case _` — это default.",
+              "correct": true,
+              "sections": {
+                "explanation": "`match` — это выражение, возвращающее значение, и в сочетании с sealed-trait даёт компилятору проверку исчерпывающности.",
+                "example": "`x match { case n: Int if n > 0 => s\"positive $n\"; case s: String => ...; case List(1, 2, _*) => ...; case _ => \"else\" }` показывает type-guard, строковый и list-паттерн сразу.",
+                "when_to_apply": "Pattern matching применяют для разбора ADT, парсинга, обработки сообщений акторов и любой логики ветвления по форме данных.",
+                "edge_cases": "Guard (`if`) уточняет кейс, но не участвует в exhaustive-анализе, поэтому полнота проверяется по конструкторам, а не по условиям guard.",
+                "related": "[[scala-interview#Q11]] sealed traits и exhaustive match; [[scala-interview#Q15]] деструктуризация через `unapply`; [[scala-interview#Q16]] matching на коллекциях."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "В `match` нельзя использовать условия (guards): каждая ветка — это только литерал или тип без дополнительных проверок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Guards поддерживаются: `case n: Int if n > 0 => ...` добавляет условие поверх паттерна.",
+                "source_of_confusion": "Сравнение со `switch`, где условий нет, переносится на `match`.",
+                "if_it_were_true": "Если бы guard был запрещён, нельзя было бы различить положительные и отрицательные `Int` в одной ветке-типе.",
+                "how_it_should_be": "`match` допускает guard через `if` после паттерна, уточняя сопоставление."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Pattern matching возвращает только `Unit` и используется исключительно ради side effects, как императивный `switch`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`match` — это выражение, возвращающее значение нужного типа; результат можно присвоить `val` или вернуть из метода.",
+                "source_of_confusion": "Императивная модель `switch` из `Java` создаёт впечатление, что `match` лишь выполняет действия.",
+                "if_it_were_true": "Если бы `match` всегда давал `Unit`, нельзя было бы написать `val r = x match { case ... => 1; case _ => 0 }`.",
+                "how_it_should_be": "`match` — выражение со значением; использование только ради side effects — частный случай."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Деструктуризация `case class` через `unapply`?",
+          "options": [
+            {
+              "text": "Чтобы деструктурировать `case class` в pattern matching, нужно вручную написать метод `unapply`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для `case class` `unapply` генерируется автоматически, поэтому `case User(name, age) => ...` работает без ручного кода.",
+                "source_of_confusion": "Опыт написания custom `unapply` для обычных объектов переносят и на case-классы.",
+                "if_it_were_true": "Если бы `unapply` приходилось писать руками, преимущество `case class` в pattern matching терялось бы.",
+                "how_it_should_be": "`unapply` для `case class` синтезируется компилятором; писать его вручную нужно лишь для не-case экстракторов."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`unapply` нельзя определить вручную для обычных классов или объектов — он существует только у case-классов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Custom `unapply` можно определить в любом `object` (например, экстрактор `Email`), не только в case-классах.",
+                "source_of_confusion": "Раз `case class` генерирует `unapply` сам, кажется, что только он на это способен.",
+                "if_it_were_true": "Если бы custom `unapply` был запрещён, не работал бы экстрактор `case Email(user, domain) => ...`.",
+                "how_it_should_be": "`unapply` можно писать руками в любом объекте; у `case class` он просто генерируется автоматически."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`case class` автоматически генерирует `unapply`, поэтому объект можно деструктурировать в pattern matching: `case User(\"Alice\", age) => s\"Alice is $age\"`. При этом можно определить и custom `unapply` в обычном `object`, чтобы извлекать данные из произвольного значения, например экстрактор email.",
+              "correct": true,
+              "sections": {
+                "explanation": "`unapply` — это контракт экстрактора: метод, возвращающий `Option` с извлечёнными частями, который компилятор вызывает при сопоставлении паттерна.",
+                "example": "`object Email { def unapply(s: String): Option[(String, String)] = ... }` позволяет писать `case Email(user, domain) => s\"$user at $domain\"`, разбирая строку на части.",
+                "when_to_apply": "Авто-`unapply` используют для разбора case-классов и ADT, а custom-экстракторы — для парсинга строк, валидации и доменных шаблонов.",
+                "edge_cases": "`unapply` должен возвращать `Option`/`Boolean` (или продукт с `isEmpty`/`get`); ошибочная сигнатура сделает экстрактор неприменимым в `match`.",
+                "related": "[[scala-interview#Q10]] что генерирует `case class`; [[scala-interview#Q14]] основы pattern matching; [[scala-interview#Q16]] matching на коллекциях."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`unapply` возвращает само значение, а не `Option`, поэтому сопоставление никогда не может «не совпасть».",
+              "correct": false,
+              "sections": {
+                "what_actually": "Custom `unapply` обычно возвращает `Option` (`Some(...)` при совпадении, `None` при несовпадении), что и позволяет паттерну не сматчиться.",
+                "source_of_confusion": "Кажется, что экстрактор всегда успешен, если он вызван.",
+                "if_it_were_true": "Если бы `unapply` не мог вернуть `None`, экстрактор `Email` совпадал бы даже на строке без `@`.",
+                "how_it_should_be": "Экстрактор возвращает `Option`, и `None` означает, что паттерн не подошёл — переход к следующей ветке."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Pattern matching на коллекциях?",
+          "options": [
+            {
+              "text": "Оператор `::` в паттерне `x :: tail` означает конкатенацию двух списков, как `++`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В паттерне `::` — это cons (head :: tail): он разбирает список на голову и хвост, а не конкатенирует; конкатенация — это `++`.",
+                "source_of_confusion": "Тот же символ `::` используется и для построения списка, что смешивает идеи cons и конкатенации.",
+                "if_it_were_true": "Если бы `::` означал конкатенацию, `case x :: y :: tail` не извлекал бы первые два элемента.",
+                "how_it_should_be": "`::` в паттерне раскладывает список на голову и хвост; объединение списков делает `++`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`case Nil => ...` сматчится на любой непустой список, потому что `Nil` обозначает «список любой длины».",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Nil` — это именно пустой список, поэтому `case Nil` совпадает только когда элементов нет.",
+                "source_of_confusion": "Слово «Nil» путают с «любым» или «null», а не с пустотой коллекции.",
+                "if_it_were_true": "Если бы `Nil` ловил непустые списки, `case x :: tail` для непустого случая был бы недостижим.",
+                "how_it_should_be": "`Nil` сопоставляется только с пустым списком; непустые ловит cons-паттерн `x :: tail`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Pattern matching на массивах невозможен: `case Array(1, _, _)` не компилируется, массивы можно разбирать только по индексам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Массивы матчатся через экстрактор `Array(...)`: `case Array(1, _, _) => \"starts with 1\"` — валидный паттерн.",
+                "source_of_confusion": "Различие между `List` (cons) и `Array` (нет `::`) приводит к выводу, что массивы вообще нельзя матчить.",
+                "if_it_were_true": "Если бы `Array`-паттерн не работал, нельзя было бы сопоставлять массивы фиксированной длины.",
+                "how_it_should_be": "`Array(...)` — штатный экстрактор для pattern matching по массивам."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "На списках работают паттерны `case Nil` (пустой), `case x :: Nil` (один элемент), `case x :: y :: tail` (минимум два, остаток в `tail`) и `case _` (всё прочее). Оператор `::` — это cons (head :: tail), он работает потому что `List` реализован как односвязный список. Массивы матчатся через экстрактор `Array(1, _, _)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Cons-паттерн рекурсивно раскладывает список, что естественно ложится на рекурсивные алгоритмы обхода и tail-recursion.",
+                "example": "`list match { case Nil => \"empty\"; case x :: Nil => s\"single: $x\"; case x :: y :: tail => s\"two: $x, $y\" }` разбирает структуру списка по голове и хвосту.",
+                "when_to_apply": "Coll-паттерны применяют при рекурсивной обработке списков, разборе head/tail и сопоставлении массивов фиксированной формы.",
+                "edge_cases": "Для `Vector` или `Array` cons-оператор `::` не работает (нет дешёвого head/tail) — там используют `+:`/`:+` или `Array(...)`.",
+                "related": "[[scala-interview#Q14]] основы pattern matching; [[scala-interview#Q21]] tail recursion по списку; [[scala-interview#Q28]] `map`/`fold` по коллекциям."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Лямбды и higher-order функции?",
+          "options": [
+            {
+              "text": "Лямбда — анонимная функция (`val double: Int => Int = _ * 2`), а higher-order function (HOF) — функция, принимающая или возвращающая функцию. `def applyTwice(f: Int => Int, x: Int): Int = f(f(x))` принимает функцию, а `def adder(n: Int): Int => Int = x => x + n` возвращает функцию. Функции в `Scala` — first-class значения.",
+              "correct": true,
+              "sections": {
+                "explanation": "First-class функции позволяют передавать поведение как данные: лямбды конфигурируют HOF (`map`, `filter`, `fold`), а HOF-замыкания захватывают переменные из контекста.",
+                "example": "`applyTwice(double, 5)` даёт `20` (двойное удвоение), а `val add5 = adder(5); add5(10)` возвращает `15`, потому что замыкание помнит `n = 5`.",
+                "when_to_apply": "HOF и лямбды применяют для коллекций, callbacks, DSL, стратегий и любого кода, где поведение передаётся как параметр.",
+                "edge_cases": "Замыкание захватывает переменную по ссылке: захват изменяемого `var` в лямбде может привести к неожиданным значениям при отложенном выполнении.",
+                "related": "[[scala-interview#Q20]] currying и partial application; [[scala-interview#Q28]] `map`/`flatMap`/`fold`; [[scala-interview#Q18]] FP-различия со `Java`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Higher-order function — это функция, которая не может ни принимать, ни возвращать другие функции, а лишь вызывает их внутри.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HOF по определению либо принимает функцию как параметр, либо возвращает функцию (или и то, и другое); `applyTwice(f, x)` принимает `f`.",
+                "source_of_confusion": "Термин «higher-order» звучит абстрактно, и его смысл искажают на противоположный.",
+                "if_it_were_true": "Если бы HOF не принимала функций, `list.map(_ * 2)` было бы невозможно.",
+                "how_it_should_be": "HOF — функция, принимающая и/или возвращающая функции; `map`/`filter`/`adder` — её примеры."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "В `Scala` функции не являются значениями: их нельзя присвоить `val` или передать как аргумент.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Функции в `Scala` first-class: `val double: Int => Int = _ * 2` присваивает функцию переменной и передаёт её куда угодно.",
+                "source_of_confusion": "Опыт языков без first-class функций переносится на `Scala`.",
+                "if_it_were_true": "Если бы функции не были значениями, нельзя было бы хранить лямбду в `val` и передавать в `applyTwice`.",
+                "how_it_should_be": "Функции — полноценные значения: их присваивают, передают и возвращают."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Замыкание (closure) в `Scala` не может захватывать переменные из окружающего scope.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Замыкания именно захватывают переменные внешнего scope: `adder(5)` возвращает функцию, помнящую `n = 5`.",
+                "source_of_confusion": "Слово «анонимная функция» путают с «изолированная без контекста».",
+                "if_it_were_true": "Если бы захвата не было, `val add5 = adder(5); add5(10)` не могло бы дать `15`.",
+                "how_it_should_be": "Замыкание захватывает переменные окружения — это и делает `adder` рабочим."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `Scala` отличается в функциональной парадигме от `Java`?",
+          "options": [
+            {
+              "text": "В функциональной парадигме `Scala` и `Java` равны: у обоих есть HKT, type classes, currying и for-comprehension.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Higher-kinded types, type classes (через implicits), built-in currying и for-comprehension есть только в `Scala`; в `Java` их нет.",
+                "source_of_confusion": "Появление stream-API и лямбд в `Java 8` создаёт впечатление паритета по FP.",
+                "if_it_were_true": "Если бы у `Java` были HKT и type classes, на ней можно было бы написать `Cats`-подобные абстракции напрямую.",
+                "how_it_should_be": "`Scala` функциональнее: HKT, type classes, currying и for-comprehension — её эксклюзив против `Java`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "В FP `Scala` сильнее: immutability по умолчанию (`val`, immutable collections) против опциональной в `Java`; HOF first-class против `Function`-интерфейсов; мощный pattern matching против базового (`Java 21+`); ADT через sealed traits + case classes против sealed classes (`Java 17+`); built-in currying, higher-kinded types, type classes (через implicits), for-comprehension и `@tailrec` — всего этого в `Java` нет. `Scala` функциональнее, но требует больше дисциплины.",
+              "correct": true,
+              "sections": {
+                "explanation": "FP-арсенал `Scala` позволяет писать чистый, композируемый код (монады, type classes), тогда как `Java` даёт лишь частичный FP поверх ООП-ядра.",
+                "example": "Type class `Show[A]` с instances и HKT-абстракция `Functor[F[_]]` выражаются в `Scala` напрямую, а в `Java` для этого нет языковых средств.",
+                "when_to_apply": "Эти различия учитывают, выбирая `Scala` для FP-тяжёлых задач (эффект-системы, типизированные ошибки, DSL) и оценивая порог входа команды.",
+                "edge_cases": "Большая выразительность требует дисциплины: злоупотребление implicits и монадическими стэками усложняет чтение кода для новичков.",
+                "related": "[[scala-interview#Q2]] общие отличия от `Java`; [[scala-interview#Q25]] type classes; [[scala-interview#Q34]] эффект-системы `ZIO`/`Cats`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Currying в `Scala` отсутствует и эмулируется так же, как в `Java`, через вложенные интерфейсы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Currying в `Scala` встроен (`def add(a: Int)(b: Int)`), а в `Java` его нет вовсе — эмуляция через интерфейсы не делает их равными.",
+                "source_of_confusion": "Раз обе на JVM, кажется, что и FP-возможности одинаково ограничены.",
+                "if_it_were_true": "Если бы currying отсутствовал в `Scala`, нельзя было бы частично применить `add(5) _`.",
+                "how_it_should_be": "Currying — built-in в `Scala`; в `Java` его как языковой конструкции нет."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Иммутабельность в `Scala` опциональна и включается реже, чем в `Java`, где она по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: в `Scala` immutability — дефолт (`val`, immutable collections), а в `Java` она опциональна.",
+                "source_of_confusion": "Привычка к мутабельным полям `Java` переносится на `Scala`.",
+                "if_it_were_true": "Если бы `Java` была immutable по умолчанию, не понадобились бы `final` и явные неизменяемые обёртки.",
+                "how_it_should_be": "Immutability по умолчанию — у `Scala`; в `Java` её включают вручную."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "for-comprehension — что это?",
+          "options": [
+            {
+              "text": "for-comprehension в `Scala` — это императивный цикл, выполняющий тело ради side effects, как `for` в `Java`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "for-comprehension — синтаксический сахар над `flatMap`/`map`/`filter`, который собирает результат через `yield`, а не императивный цикл (хотя без `yield` бывает и foreach-форма).",
+                "source_of_confusion": "Совпадение ключевого слова `for` со `for` из `Java` сбивает с толку.",
+                "if_it_were_true": "Если бы это был обычный цикл, он не работал бы единообразно для `Option`, `Either`, `Future` и `IO`.",
+                "how_it_should_be": "for-comprehension — сахар над монадическими `flatMap`/`map`/`filter` с `yield`, а не императивный цикл."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "for-comprehension работает только с коллекциями (`List`, `Set`) и неприменим к `Option`, `Either` или `Future`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Он работает с любым типом, у которого есть `map`/`flatMap`: `Option`, `Either`, `Future`, `IO` — главное применение для monad chaining.",
+                "source_of_confusion": "Ассоциация `for` с обходом коллекций сужает область применения.",
+                "if_it_were_true": "Если бы он не работал с `Option`, нельзя было бы написать `for { user <- findUser(id); email <- user.email } yield ...`.",
+                "how_it_should_be": "for-comprehension применим к любой монаде с `map`/`flatMap`, не только к коллекциям."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "for-comprehension — синтаксический сахар для цепочки `flatMap`/`map`/`filter`. Его главная польза — monad chaining над `Option`, `Either`, `Future`, `IO`: `for { user <- findUser(id); email <- user.email; count <- emailCount(email) } yield count`. Если любой шаг даёт `None` (или `Left`/`Failure`), весь результат короткозамыкается на нём.",
+              "correct": true,
+              "sections": {
+                "explanation": "Компилятор разворачивает `for { a <- x; b <- y } yield f(a, b)` в `x.flatMap(a => y.map(b => f(a, b)))`, поэтому семантика определяется монадой.",
+                "example": "`for { u <- users; e <- emails if e.contains(u.name.toLowerCase) } yield (u, e)` эквивалентно `users.flatMap(u => emails.filter(...).map(e => (u, e)))`.",
+                "when_to_apply": "for-comprehension применяют для последовательной композиции эффектов: цепочки `Option`/`Either`, параллельных и зависимых `Future`, IO-программ.",
+                "edge_cases": "Тип всех шагов должен совпадать по монаде: смешать `Option` и `Future` в одном `for` напрямую нельзя — нужны трансформеры или явное преобразование.",
+                "related": "[[scala-interview#Q8]] `Option` и короткое замыкание; [[scala-interview#Q9]] `Either`/`Try`; [[scala-interview#Q31]] composing `Future`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В for-comprehension нельзя использовать фильтрацию: условие `if` внутри `for` не поддерживается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фильтр-guard поддерживается: `if e.contains(...)` внутри `for` транслируется в `.filter(...)` (через `withFilter`).",
+                "source_of_confusion": "Минималистичная форма `for { a <- x } yield a` создаёт впечатление, что условий нет.",
+                "if_it_were_true": "Если бы `if` был запрещён, нельзя было бы отфильтровать пары `(u, e)` по совпадению имени.",
+                "how_it_should_be": "`if` внутри for-comprehension работает как `filter`/`withFilter`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Currying и partial application?",
+          "options": [
+            {
+              "text": "Currying означает, что функция выполняется немедленно при первом аргументе и возвращает результат, а не функцию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Currying превращает многоаргументную функцию в цепочку функций по одному аргументу: применение части аргументов возвращает функцию, а не финальный результат.",
+                "source_of_confusion": "Слово «применение» в currying путают с немедленным вычислением.",
+                "if_it_were_true": "Если бы currying сразу возвращал результат, `add(5) _` не давало бы значение типа `Int => Int`.",
+                "how_it_should_be": "Currying даёт цепочку одноаргументных функций; промежуточное применение возвращает функцию."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Partial application и currying — это одно и то же: оба обязательно требуют синтаксиса нескольких списков параметров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это связанные, но разные понятия: currying — форма определения `f(a)(b)`, а partial application — фиксирование части аргументов любой функции с получением новой.",
+                "source_of_confusion": "Близость идей приводит к их отождествлению.",
+                "if_it_were_true": "Если бы они совпадали, нельзя было бы частично применить обычную не-curried функцию.",
+                "how_it_should_be": "Currying — определение в нескольких списках; partial application — фиксация части аргументов, и это не одно и то же."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Currying в `Scala` нужно эмулировать вручную через анонимные классы, языковой поддержки нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Currying в `Scala` поддержан синтаксисом нескольких списков параметров: `def add(a: Int)(b: Int): Int = a + b` — встроенная возможность.",
+                "source_of_confusion": "Опыт `Java`, где currying приходится эмулировать, переносится на `Scala`.",
+                "if_it_were_true": "Если бы поддержки не было, `def add(a: Int)(b: Int)` не компилировалось бы.",
+                "how_it_should_be": "Currying — built-in: несколько списков параметров дают его без обходных конструкций."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Currying — определение функции с несколькими параметрами как нескольких функций по одному: `def add(a: Int)(b: Int): Int = a + b`. Partial application фиксирует часть аргументов: `val addFive = add(5) _` даёт функцию типа `Int => Int`, и `addFive(3)` возвращает `8`. Эквивалент — `def add(a: Int): Int => Int = b => a + b`. Применяют для factories, builders, customization и DSL.",
+              "correct": true,
+              "sections": {
+                "explanation": "Несколько списков параметров также помогают type inference и удобны для implicit-параметров и loan-pattern (`withResource(res)(action)`).",
+                "example": "`def withResource[A, B](res: A)(action: A => B)(implicit close: A => Unit): B` использует curried-списки, чтобы отделить ресурс, действие и неявное закрытие.",
+                "when_to_apply": "Currying и partial application применяют для конфигурации поведения, частичной специализации функций и построения DSL.",
+                "edge_cases": "Синтаксис `add(5) _` нужен для явного превращения метода в функцию (eta-expansion); в `Scala 3` подчёркивание часто можно опустить.",
+                "related": "[[scala-interview#Q17]] лямбды и HOF; [[scala-interview#Q22]] implicit-параметры; [[scala-interview#Q25]] type classes."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "tail recursion и `@tailrec`?",
+          "options": [
+            {
+              "text": "JVM не поддерживает TCO нативно, но компилятор `Scala` может оптимизировать tail-recursive функции в while-цикл. Аннотация `@tailrec` заставляет компилятор проверить, что метод действительно tail-recursive, иначе — ошибка компиляции. Tail call — это когда рекурсивный вызов является последней операцией (`factorial(n - 1, n * acc)`), а не `n * factNotTail(n - 1)`, где после вызова идёт умножение.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без хвостовой оптимизации глубокая рекурсия переполняет стек; `@tailrec` гарантирует, что компилятор превратит её в безопасный цикл.",
+                "example": "`@tailrec def factorial(n: Int, acc: Int = 1): Int = if (n == 0) acc else factorial(n - 1, n * acc)` компилируется в цикл; `n * factNotTail(n - 1)` — нет, и для больших `n` даст StackOverflow.",
+                "when_to_apply": "`@tailrec` ставят на рекурсивные функции с аккумулятором, чтобы гарантировать отсутствие переполнения стека на больших входах.",
+                "edge_cases": "Аннотация работает только для прямой self-рекурсии: взаимная рекурсия двух функций ею не оптимизируется (нужен trampolining).",
+                "related": "[[scala-interview#Q16]] рекурсивный разбор списка; [[scala-interview#Q17]] функции как значения; [[scala-interview#Q5]] `def` и вычисление при вызове."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "JVM нативно поддерживает tail call optimization, поэтому `@tailrec` не нужна и ничего не меняет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JVM как раз не поддерживает TCO нативно; оптимизацию делает компилятор `Scala`, и `@tailrec` проверяет её применимость.",
+                "source_of_confusion": "Существование оптимизации в `Scala` ошибочно приписывают самой JVM.",
+                "if_it_were_true": "Если бы JVM делала TCO, обычная не-tail рекурсия не давала бы StackOverflow.",
+                "how_it_should_be": "TCO в `Scala` — работа компилятора, а не JVM; `@tailrec` подтверждает, что метод хвостовой."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@tailrec` сама превращает любую рекурсию в хвостовую, даже если рекурсивный вызов не последний.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@tailrec` ничего не переписывает: она лишь проверяет, что метод уже tail-recursive, и выдаёт ошибку, если это не так.",
+                "source_of_confusion": "Слово «оптимизация» создаёт впечатление, что аннотация активно меняет код.",
+                "if_it_were_true": "Если бы она делала любую рекурсию хвостовой, `n * factNotTail(n - 1)` компилировался бы без ошибки.",
+                "how_it_should_be": "`@tailrec` — проверка, а не трансформация: не-tail метод с ней не скомпилируется."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Tail call — это любой рекурсивный вызов, независимо от того, есть ли операции после него.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tail call — это вызов, являющийся именно последней операцией; `n * factNotTail(n - 1)` не tail, потому что после возврата идёт умножение.",
+                "source_of_confusion": "Наличие рекурсивного вызова путают с тем, что он стоит в хвостовой позиции.",
+                "if_it_were_true": "Если бы любой вызов был хвостовым, `factNotTail` оптимизировался бы и не переполнял стек.",
+                "how_it_should_be": "Tail call — последняя операция функции; вычисления после рекурсивного вызова делают его не-tail."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `implicit` (`Scala 2`)?",
+          "options": [
+            {
+              "text": "`implicit` — это модификатор доступа вроде `private`, ограничивающий видимость члена внутри класса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`implicit` — механизм автоматической подстановки компилятором значений/преобразований из scope, а не модификатор доступа.",
+                "source_of_confusion": "Ключевое слово в объявлении путают с привычными `private`/`protected`.",
+                "if_it_were_true": "Если бы `implicit` ограничивал видимость, он не мог бы подставлять `defaultGreeting` в `greet(\"Alice\")`.",
+                "how_it_should_be": "`implicit` управляет автоматическим разрешением значений и конверсий, а не видимостью членов."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`implicit` — параметры, значения и преобразования, которые компилятор автоматически подставляет из доступного scope. Implicit parameter: `def greet(name: String)(implicit greeting: String)` + `implicit val defaultGreeting = \"Hello\"` даёт `greet(\"Alice\") == \"Hello, Alice\"`. Есть implicit conversion (`implicit def intToString`) и implicit class для extension-методов. Очень мощны, но запутывают (откуда взялось значение?); в `Scala 3` заменены на `given`/`using`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Implicits — основа type classes, extension-методов и контекстных зависимостей: компилятор сам находит подходящий instance по типу.",
+                "example": "`implicit class StringOps(s: String) { def shout = s.toUpperCase + \"!\" }` добавляет `\"hello\".shout`, а implicit-параметр прокидывает контекст без явной передачи.",
+                "when_to_apply": "Implicits применяют для type classes, контекстных параметров (ExecutionContext), extension-методов и type-safe конверсий.",
+                "edge_cases": "Опасность — implicit conversions между неродственными типами и ambiguity, когда в scope несколько подходящих implicit-значений.",
+                "related": "[[scala-interview#Q23]] `given`/`using` в `Scala 3`; [[scala-interview#Q24]] implicit conversion; [[scala-interview#Q25]] type classes через implicits."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Implicit-параметр нужно всегда передавать явно при вызове — компилятор его не подставляет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смысл implicit-параметра в том, что компилятор подставляет его сам из scope: `greet(\"Alice\")` без второго аргумента берёт `defaultGreeting`.",
+                "source_of_confusion": "Привычка к явным аргументам обычных параметров переносится на implicit.",
+                "if_it_were_true": "Если бы implicit нужно было передавать вручную, он ничем не отличался бы от обычного параметра.",
+                "how_it_should_be": "Implicit-параметр разрешается компилятором автоматически; явная передача — лишь опциональная возможность."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`implicit` остался основным механизмом и в `Scala 3` без изменений синтаксиса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Scala 3` `implicit` заменён более понятными `given`/`using` (и `extension` для extension-методов).",
+                "source_of_confusion": "Совместимость версий создаёт впечатление, что синтаксис неявных не менялся.",
+                "if_it_were_true": "Если бы ничего не поменялось, `given`/`using` не вводили бы как одно из ключевых улучшений `Scala 3`.",
+                "how_it_should_be": "В `Scala 3` `implicit` уступил место `given`/`using` ради ясности."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `given`/`using` (`Scala 3`)?",
+          "options": [
+            {
+              "text": "`given`/`using` в `Scala 3` — это новый синтаксис объявления мутабельных переменных вместо `var`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`given`/`using` — замена `implicit` для контекстных значений и параметров, а не объявление переменных вместо `var`.",
+                "source_of_confusion": "Незнакомые ключевые слова `Scala 3` принимают за объявление состояния.",
+                "if_it_were_true": "Если бы это были переменные, нельзя было бы использовать их для авторазрешения type-class instances.",
+                "how_it_should_be": "`given` задаёт контекстный instance, `using` — контекстный параметр; к `var` это не относится."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`given` и `using` — независимые фичи, не связанные с `implicit` из `Scala 2`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`given`/`using` — прямая замена `implicit`: `given` соответствует implicit value, `using` — implicit parameter.",
+                "source_of_confusion": "Новый синтаксис скрывает преемственность от `implicit`.",
+                "if_it_were_true": "Если бы связи не было, миграция со `Scala 2` не сводилась бы к переписыванию `implicit` в `given`/`using`.",
+                "how_it_should_be": "`given`/`using` — эволюция `implicit`: то же авторазрешение по типу, но с ясным синтаксисом."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Scala 3` заменяет `implicit` на более понятные конструкции: implicit value → `given` (`given defaultGreeting: String = \"Hello\"`), implicit parameter → `using` (`def greet(name: String)(using greeting: String)`), implicit class → `extension` (`extension (s: String) def shout = s.toUpperCase + \"!\"`), implicit conversion → `given Conversion[Int, String]`. Преимущества: различение `given`-значений и обычных, явный синтаксис extension-методов, меньше магии.",
+              "correct": true,
+              "sections": {
+                "explanation": "Разделение `given` (что предоставляем) и `using` (что требуем) делает контекстные зависимости читаемее, чем перегруженное слово `implicit`.",
+                "example": "`given Conversion[Int, String] = _.toString` явно показывает намерение конверсии, а `extension (s: String) def shout = ...` добавляет метод без implicit class.",
+                "when_to_apply": "`given`/`using` применяют для type classes, контекстных параметров и extension-методов в новом коде на `Scala 3`.",
+                "edge_cases": "Implicit conversions теперь требуют явного `given Conversion` (и часто import `scala.language.implicitConversions`), что снижает риск скрытых преобразований.",
+                "related": "[[scala-interview#Q22]] `implicit` в `Scala 2`; [[scala-interview#Q24]] implicit conversion; [[scala-interview#Q25]] type classes."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Extension-методы в `Scala 3` по-прежнему делают через implicit class — ключевое слово `extension` не появилось.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Scala 3` есть отдельное `extension (s: String) def ...`, заменяющее implicit class для extension-методов.",
+                "source_of_confusion": "Привычка к implicit class из `Scala 2` мешает заметить новую конструкцию.",
+                "if_it_were_true": "Если бы `extension` не было, `Scala 3` не относила бы его к своим нововведениям.",
+                "how_it_should_be": "Extension-методы в `Scala 3` пишут через `extension`, а не через implicit class."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Implicit conversion — польза и опасность?",
+          "options": [
+            {
+              "text": "Implicit conversion абсолютно безопасна и рекомендована для преобразования между любыми типами без ограничений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Implicit conversion опасна: скрытое поведение, неоднозначность при нескольких implicit'ах и накладные расходы (каждое преобразование — новый объект); её советуют только для type classes.",
+                "source_of_confusion": "Удобство автоконверсии создаёт ложное впечатление безопасности.",
+                "if_it_were_true": "Если бы она была безопасна везде, не было бы best-practice ограничивать её только type classes.",
+                "how_it_should_be": "Implicit conversion полезна узко (например, type classes), но между неродственными типами опасна."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Implicit conversion не имеет накладных расходов: преобразование не создаёт новых объектов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждое implicit-преобразование обычно создаёт новый объект, что добавляет runtime-overhead, особенно в горячем коде.",
+                "source_of_confusion": "Кажущаяся «бесплатность» неявности маскирует реальные аллокации.",
+                "if_it_were_true": "Если бы объектов не создавалось, performance не значился бы среди опасностей конверсий.",
+                "how_it_should_be": "Implicit conversion несёт overhead — новый объект на каждое преобразование."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Главная польза implicit conversion — неявно преобразовывать любые неродственные типы друг в друга для краткости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Best practice прямо запрещает неявные преобразования между неродственными типами; польза — узкое автоприведение совместимых типов (например, `BigDecimal` ← `Int`) и type classes.",
+                "source_of_confusion": "Соблазн «магически» приводить любые типы кажется удобством.",
+                "if_it_were_true": "Если бы конверсии между неродственными типами поощрялись, код становился бы нечитаемым и хрупким.",
+                "how_it_should_be": "Implicit conversion уместна для совместимых типов и type classes, а не для произвольных неродственных."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Польза implicit conversion — автоматическое преобразование между совместимыми типами (например, `BigDecimal` ← `Int`). Опасности: скрытое поведение (трудно понять, что происходит), неоднозначность (несколько implicit'ов в scope = ambiguity) и performance (каждое преобразование = новый объект). Best practice: использовать только для type classes, никогда не делать неявные преобразования между неродственными типами; в `Scala 3` — `given Conversion[A, B]` явно показывает intent.",
+              "correct": true,
+              "sections": {
+                "explanation": "Неявные конверсии экономят boilerplate, но платят за это потерей локальности рассуждения: источник преобразования не виден в месте использования.",
+                "example": "`BigDecimal` ← `Int` — приемлемый случай, а вот неявное `String → URL` между неродственными типами скрывает логику и затрудняет отладку.",
+                "when_to_apply": "Конверсии применяют точечно — для совместимых числовых типов и реализации type classes, а не как общий приём сокращения кода.",
+                "edge_cases": "При нескольких подходящих implicit'ах компилятор выдаёт ambiguity-ошибку; в `Scala 3` конверсии требуют явного `given Conversion` и часто отдельного import.",
+                "related": "[[scala-interview#Q22]] `implicit` в `Scala 2`; [[scala-interview#Q23]] `given Conversion` в `Scala 3`; [[scala-interview#Q25]] type classes как правильный кейс."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Type classes pattern?",
+          "options": [
+            {
+              "text": "Type class — паттерн для ad-hoc polymorphism через implicits: определяется trait с операцией (`trait Show[A] { def show(a: A): String }`), затем создаются instances (`implicit val intShow: Show[Int] = _.toString`), а функции требуют instance как implicit-параметр (`def print[A](a: A)(implicit s: Show[A]): String = s.show(a)`). `print(42)` работает, а `print(3.14)` без `Show[Double]` — ошибка компиляции.",
+              "correct": true,
+              "sections": {
+                "explanation": "Type classes отделяют поведение от типа: добавить поддержку нового типа можно, не меняя ни его, ни сам интерфейс — достаточно нового instance в scope.",
+                "example": "`Cats` строит на этом `Functor`/`Monad`/`Applicative`, `Circe` — encoders/decoders, `Spark` — `Encoder`; во всех случаях недостающий instance ловится компилятором.",
+                "when_to_apply": "Type classes применяют для расширяемого полиморфизма поверх типов, которые нельзя менять (включая чужие/`Java`-классы), и для библиотек сериализации/абстракций.",
+                "edge_cases": "В `Java` прямых аналогов нет, в `Kotlin` — частично через extension functions; в `Scala 3` instances объявляют через `given`.",
+                "related": "[[scala-interview#Q22]] implicits как механизм; [[scala-interview#Q23]] `given`/`using`; [[scala-interview#Q34]] `Cats`/`ZIO` на type classes."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Type class — это обычное наследование: чтобы тип поддерживал `Show`, он должен `extends Show`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Type class даёт ad-hoc polymorphism без наследования: instance объявляется отдельно (`implicit val ...`), и тип не обязан наследовать интерфейс.",
+                "source_of_confusion": "Привычный subtype-полиморфизм через `extends` переносят на type classes.",
+                "if_it_were_true": "Если бы требовался `extends`, нельзя было бы добавить `Show[Int]` для `Int`, который менять нельзя.",
+                "how_it_should_be": "Type class подключается через implicit instance, а не наследованием; это его главное отличие."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Отсутствие нужного type class instance обнаруживается только в runtime, выбрасывая исключение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отсутствие instance — ошибка компиляции: `print(3.14)` без `Show[Double]` не соберётся, а не упадёт в runtime.",
+                "source_of_confusion": "Опыт рефлексивных/динамических подходов переносится на type classes.",
+                "if_it_were_true": "Если бы проверка была рантаймовой, терялась бы compile-time гарантия, ради которой и берут type classes.",
+                "how_it_should_be": "Недостающий instance ловит компилятор; до runtime такая ошибка не доходит."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Type classes — это исключительно `Scala`-фича без применения в реальных библиотеках.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На type classes построены ключевые библиотеки: `Cats` (`Functor`/`Monad`), `Circe` (encoders/decoders), `Spark` (`Encoder`).",
+                "source_of_confusion": "Абстрактность паттерна создаёт впечатление чисто академической конструкции.",
+                "if_it_were_true": "Если бы они не применялись, сериализация `Circe` и абстракции `Cats` работали бы иначе.",
+                "how_it_should_be": "Type classes широко используются в production-библиотеках экосистемы `Scala`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `Scala`-коллекции отличаются от `Java`?",
+          "options": [
+            {
+              "text": "`Scala`-коллекции по умолчанию мутабельны, а immutable нужно подключать отдельным импортом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию коллекции `Scala` immutable (`scala.collection.immutable`); mutable-варианты импортируют явно из `scala.collection.mutable`.",
+                "source_of_confusion": "Привычка к мутабельным `java.util`-коллекциям переносится на `Scala`.",
+                "if_it_were_true": "Если бы дефолт был mutable, идиома «используй immutable» не имела бы смысла.",
+                "how_it_should_be": "Дефолт в `Scala` — immutable; mutable требует явного импорта."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Scala`-коллекции immutable по умолчанию (против опциональной immutability в `Java`), имеют богатый API (`map`, `flatMap`, `filter`, `fold`, `groupBy`, `partition`...) против упрощённого Stream API, поддерживают persistent data structures с эффективными обновлениями (в `Java` нужны копии), дают lazy-коллекции (`LazyList`, `View`) против одноразового `Stream`, и встроенный pattern matching, которого в `Java` нет.",
+              "correct": true,
+              "sections": {
+                "explanation": "Persistent-структуры позволяют дёшево получать изменённую версию без полной копии, а богатый API убирает необходимость в ручных циклах.",
+                "example": "`list.groupBy(_ % 2)` даёт `Map(0 -> List(2,4), 1 -> List(1,3,5))`, а `val (small, big) = list.partition(_ < 3)` сразу разбивает коллекцию на две — без эквивалента в базовом `Java`-API.",
+                "when_to_apply": "Эти свойства учитывают при выборе структуры данных: immutable + persistent для безопасного шаринга, `View` для ленивых пайплайнов над большими данными.",
+                "edge_cases": "Не все операции дёшевы: повторное `:+` к `List` за O(n), поэтому для частого добавления в конец берут `Vector`.",
+                "related": "[[scala-interview#Q27]] immutable vs mutable; [[scala-interview#Q28]] `map`/`flatMap`/`fold`; [[scala-interview#Q29]] `View` и `LazyList`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Scala` не поддерживает lazy-коллекции; единственный ленивый тип — `java.util.stream.Stream`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Scala` даёт `LazyList` (бывший `Stream`) и `View` для ленивых вычислений; `java.util.stream.Stream` — это `Java`, к тому же одноразовый.",
+                "source_of_confusion": "Совпадение старого имени `Stream` в `Scala` и `Stream` в `Java` сбивает с толку.",
+                "if_it_were_true": "Если бы ленивых типов не было, нельзя было бы построить `(1 to 1_000_000).view.map(...).take(10)`.",
+                "how_it_should_be": "Ленивость в `Scala` дают `View` и `LazyList`, а не `java.util.stream.Stream`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Scala`-коллекции не поддерживают pattern matching, в отличие от `Java`-коллекций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pattern matching по коллекциям есть именно в `Scala` (`case x :: tail`, `case Array(...)`), а в `Java`-коллекциях его нет.",
+                "source_of_confusion": "Перепутаны стороны сравнения: фича `Scala` приписана `Java`.",
+                "if_it_were_true": "Если бы matching не работал, `list match { case x :: tail => ... }` не компилировался бы.",
+                "how_it_should_be": "Pattern matching по коллекциям — преимущество `Scala`, у `Java` его нет."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "immutable vs mutable коллекции?",
+          "options": [
+            {
+              "text": "Добавление в immutable `List` через `:+` изменяет исходный список на месте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`:+` к immutable `List` создаёт новый список, а исходный остаётся неизменным; in-place изменяют только mutable-коллекции.",
+                "source_of_confusion": "Привычка к мутирующему `add` из `Java` переносится на immutable-операции.",
+                "if_it_were_true": "Если бы `list :+ 4` мутировал исходник, терялась бы безопасность шаринга immutable-структур.",
+                "how_it_should_be": "`:+` возвращает новый список; исходный не меняется — это и есть immutability."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "mutable.ArrayBuffer — это immutable-коллекция, и `buf += 4` создаёт новую копию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`mutable.ArrayBuffer` мутабельна: `buf += 4` добавляет элемент in-place, не создавая копию.",
+                "source_of_confusion": "Слово «Buffer» и операция `+=` маскируют мутирующий характер структуры.",
+                "if_it_were_true": "Если бы `ArrayBuffer` была immutable, импорт `scala.collection.mutable` был бы не нужен.",
+                "how_it_should_be": "`ArrayBuffer` мутабельна и меняется на месте; копию делают immutable-операции."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "По умолчанию коллекции immutable: `val list = List(1, 2, 3)` неизменяем, а `val newList = list :+ 4` создаёт новый список, не трогая исходный. Для изменяемости импортируют `scala.collection.mutable` и используют, например, `mutable.ArrayBuffer`, где `buf += 4` мутирует на месте. Идиома — брать immutable, если нет явной потребности в mutable. Persistent data structures — immutable, но с эффективными операциями (HAMT для `Map`, vector trees для `Vector`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Immutable-структуры безопасны для шаринга между потоками и в замыканиях, а persistent-реализация делает обновления дешёвыми за счёт structural sharing.",
+                "example": "`val list = List(1,2,3); val newList = list :+ 4` оставляет `list` равным `List(1,2,3)`, а `mutable.ArrayBuffer(1,2,3) += 4` меняет сам буфер.",
+                "when_to_apply": "Immutable берут по умолчанию (домен, конкурентность, FP), mutable — для локальной производительности в горячих циклах и при построении больших коллекций.",
+                "edge_cases": "Не вся immutable-операция дешёвая: `List.:+` за O(n); для эффективных конкатенаций/индексирования выбирают `Vector` с его vector-trees.",
+                "related": "[[scala-interview#Q26]] отличия от `Java`-коллекций; [[scala-interview#Q28]] `map`/`fold`; [[scala-interview#Q29]] `View` и `LazyList`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Persistent data structures в `Scala` — это коллекции, которые сохраняются на диск между запусками приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Persistent data structure здесь — immutable-структура с эффективными обновлениями через structural sharing (HAMT, vector trees), а не персистентность на диск.",
+                "source_of_confusion": "Термин «persistent» путают с долговременным хранением, а не с сохранением старых версий структуры.",
+                "if_it_were_true": "Если бы речь шла о диске, `Map`/`Vector` требовали бы файловой подсистемы, чего нет.",
+                "how_it_should_be": "Persistent в FP — про неизменяемость с дешёвыми обновлениями в памяти, а не про запись на диск."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`map`, `flatMap`, `filter`, `fold`?",
+          "options": [
+            {
+              "text": "`flatMap` и `map` — синонимы: оба применяют функцию к элементам и возвращают коллекцию той же формы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`map` сохраняет структуру 1:1, а `flatMap` применяет функцию, возвращающую коллекцию, и «разворачивает» результат: `list.flatMap(x => List(x, x))` удваивает элементы.",
+                "source_of_confusion": "Похожие имена и сигнатуры провоцируют отождествление.",
+                "if_it_were_true": "Если бы они совпадали, `flatMap(x => List(x, x))` не давал бы вдвое больше элементов, чем `map`.",
+                "how_it_should_be": "`map` — преобразование 1:1, `flatMap` — преобразование с уплощением вложенных коллекций."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`reduce` безопасен на пустой коллекции и возвращает значение по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`reduce` бросает исключение на пустой коллекции; безопасный вариант — `reduceOption`, возвращающий `None`, или `fold` с начальным значением.",
+                "source_of_confusion": "Ожидание «разумного дефолта» переносят на `reduce`.",
+                "if_it_were_true": "Если бы `reduce` был безопасен на пустом, не существовало бы отдельного `reduceOption`.",
+                "how_it_should_be": "`reduce` падает на пустой коллекции; защищённый вариант — `reduceOption` или `fold` с seed."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`foldLeft` обязательно требует, чтобы аккумулятор и элементы были одного типа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`foldLeft` допускает аккумулятор иного типа: `list.foldLeft(\"\")((acc, x) => acc + x)` сворачивает `List[Int]` в `String`.",
+                "source_of_confusion": "Сходство с `reduce` (где тип один) переносится на `fold`.",
+                "if_it_were_true": "Если бы типы должны были совпадать, нельзя было бы свернуть числа в строку через `foldLeft`.",
+                "how_it_should_be": "`foldLeft` позволяет аккумулятору отличаться по типу от элементов — в этом его сила перед `reduce`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`map` преобразует элементы 1:1 (`list.map(_ * 2)`), `filter` отбирает по предикату (`list.filter(_ > 2)`), `flatMap` применяет функцию, дающую коллекцию, и уплощает (`list.flatMap(x => List(x, x))`), `fold` сворачивает с начальным значением (`list.foldLeft(0)(_ + _)` = 15, `foldRight` симметрично). `reduce` — fold без seed, бросает на пустом; `reduceOption` возвращает `Some`/`None`. Полезны также `sum`, `min`, `max`, `head`/`tail`, `zipWithIndex`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти операции составляют ядро функциональной обработки коллекций: декларативные трансформации вместо ручных циклов.",
+                "example": "`list.foldLeft(\"\")((acc, x) => acc + x)` даёт `\"12345\"`, а `list.zipWithIndex` — `List((1,0),(2,1),...)`, удобный для индексированного обхода.",
+                "when_to_apply": "`map`/`filter`/`flatMap`/`fold` применяют для трансформации данных, агрегаций, построения новых коллекций и monad chaining в for-comprehension.",
+                "edge_cases": "Порядок свёртки важен для неассоциативных операций: `foldLeft` и `foldRight` дают разный результат, а `reduce` на пустой коллекции падает.",
+                "related": "[[scala-interview#Q19]] for-comprehension над `flatMap`/`map`; [[scala-interview#Q26]] богатство API против `Java`; [[scala-interview#Q29]] ленивые пайплайны через `View`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`View` и Lazy collections?",
+          "options": [
+            {
+              "text": "`View` — lazy-обёртка над коллекцией: цепочка `(1 to 1_000_000).view.map(_ * 2).filter(_ % 3 == 0).take(10).toList` вычисляется только в момент `toList`, не создавая промежуточных коллекций на каждом шаге. `LazyList` (бывший `Stream`) — список с lazy-вычислением хвоста, позволяющий бесконечные структуры: `LazyList.from(1).map(_ * 2).take(5).toList` даёт `List(2,4,6,8,10)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Лень избавляет от materialization промежуточных коллекций и позволяет работать с бесконечными или очень большими последовательностями, вычисляя лишь нужное.",
+                "example": "Без `view` каждое `map`/`filter` над миллионом элементов создаст полную промежуточную коллекцию; с `view` обрабатываются только первые 10 элементов, прошедшие фильтр.",
+                "when_to_apply": "`View` берут для ленивых пайплайнов над большими данными, `LazyList` — для бесконечных/рекурсивно определённых последовательностей (натуральные числа, Фибоначчи).",
+                "edge_cases": "`LazyList` мемоизирует уже вычисленные элементы (в отличие от одноразового старого `Stream`-семантики), но это удерживает их в памяти — для очень длинных последовательностей возможна утечка через head-reference.",
+                "related": "[[scala-interview#Q28]] eager `map`/`filter`; [[scala-interview#Q26]] lazy-коллекции против `Java Stream`; [[scala-interview#Q27]] immutable-структуры."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`View` вычисляет все операции немедленно, как обычная коллекция, и создаёт промежуточные результаты на каждом шаге.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`View` ленив: операции откладываются до терминального шага (`toList`), и промежуточные коллекции не материализуются.",
+                "source_of_confusion": "Привычка к eager-семантике обычных коллекций переносится на `View`.",
+                "if_it_were_true": "Если бы `View` был eager, он не давал бы выигрыша на больших данных, ради которого его и вводят.",
+                "how_it_should_be": "`View` откладывает вычисления; немедленное выполнение — это про обычные коллекции."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`LazyList` не может представлять бесконечные последовательности, потому что вычисляет все элементы сразу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`LazyList` лениво вычисляет хвост, поэтому `LazyList.from(1)` — корректная бесконечная последовательность, из которой берут `take(5)`.",
+                "source_of_confusion": "Слово «список» ассоциируется с конечной полностью вычисленной структурой.",
+                "if_it_were_true": "Если бы все элементы вычислялись сразу, `LazyList.from(1)` зациклился бы навсегда.",
+                "how_it_should_be": "`LazyList` вычисляет хвост лениво и потому поддерживает бесконечные последовательности."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Без `view` цепочка `map(...).filter(...)` обрабатывает коллекцию за один проход без промежуточных коллекций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `view` каждая операция создаёт отдельную промежуточную коллекцию; единый проход без них даёт как раз `view`.",
+                "source_of_confusion": "Ожидание fused-обработки переносят на обычные eager-коллекции.",
+                "if_it_were_true": "Если бы eager-цепочка не создавала промежуточных коллекций, `view` не был бы нужен для оптимизации.",
+                "how_it_should_be": "Eager-цепочка материализует промежуточные коллекции; одно-проходную ленивость даёт `view`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`Future` — асинхронность в `Scala`?",
+          "options": [
+            {
+              "text": "`Future[T]` выполняется синхронно в текущем потоке и блокирует его до получения результата.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Future` запускает вычисление асинхронно на потоках `ExecutionContext`; синхронно результат получают лишь явно через `Await.result`.",
+                "source_of_confusion": "Наличие `Await` создаёт впечатление, что `Future` сам по себе блокирующий.",
+                "if_it_were_true": "Если бы `Future` блокировал текущий поток, он не давал бы асинхронности, ради которой существует.",
+                "how_it_should_be": "`Future` асинхронен и требует `ExecutionContext`; блокирующее ожидание — только через `Await`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Future[T]` — асинхронное вычисление, которое может завершиться `Success(t)` или `Failure(throwable)`. Запускается на потоках `ExecutionContext` (часто `import ...global`). Результат обрабатывают через `onComplete { case Success(v) => ...; case Failure(e) => ... }` или комбинаторы (`map`/`flatMap`). Для синхронного ожидания (обычно в тестах) есть `Await.result(f, 5.seconds)`. Похож на `CompletableFuture` в `Java`, но с лучшим API.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Future` инкапсулирует и успех, и ошибку как значение, позволяя композировать асинхронный код без ручного управления потоками.",
+                "example": "`val f = Future { Thread.sleep(1000); 42 }` запускает вычисление в фоне, а `f.onComplete { case Success(v) => println(v) }` реагирует на завершение без блокировки.",
+                "when_to_apply": "`Future` применяют для I/O, параллельных вызовов и неблокирующих пайплайнов; `Await` — только на границе (тесты, main), не в продакшен-логике.",
+                "edge_cases": "`Future` eager: вычисление стартует сразу при создании, поэтому он не referentially transparent — этим он отличается от ленивого `IO` в эффект-системах.",
+                "related": "[[scala-interview#Q31]] composing `Future`; [[scala-interview#Q32]] `ExecutionContext`; [[scala-interview#Q34]] `IO`/`ZIO` против `Future`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Future` не требует `ExecutionContext` — он сам создаёт потоки по мере необходимости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Future` требует неявный `ExecutionContext` (пул потоков); без него код с `Future` даже не скомпилируется.",
+                "source_of_confusion": "Удобный `import ...global` маскирует обязательность контекста исполнения.",
+                "if_it_were_true": "Если бы `ExecutionContext` был не нужен, не пришлось бы импортировать `global` или объявлять `implicit val ec`.",
+                "how_it_should_be": "`Future` всегда исполняется на заданном `ExecutionContext`, который нужно предоставить."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Future` ленив: вычисление не начинается до явного вызова метода `.run()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Future` eager: тело запускается сразу при создании `Future { ... }`, метода `.run()` у него нет; ленивы как раз `IO`/`ZIO`.",
+                "source_of_confusion": "Ленивость эффект-систем (`Cats Effect`, `ZIO`) ошибочно переносят на `Future`.",
+                "if_it_were_true": "Если бы `Future` был ленив, side effect в `Future { sideEffect() }` не выполнялся бы до явного запуска.",
+                "how_it_should_be": "`Future` стартует немедленно при создании; отложенный запуск — свойство `IO`/`ZIO`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Composing `Future`?",
+          "options": [
+            {
+              "text": "Чтобы выполнить два `Future` параллельно, их нужно последовательно связать в for-comprehension.",
+              "correct": false,
+              "sections": {
+                "what_actually": "for-comprehension по `Future` выполняет шаги последовательно (каждый ждёт предыдущий); параллельность дают заранее запущенные `Future` плюс `Future.sequence`.",
+                "source_of_confusion": "for-синтаксис кажется «одновременным», хотя на деле он последователен по зависимостям.",
+                "if_it_were_true": "Если бы `for { a <- fa; b <- fb }` шёл параллельно, нельзя было бы выразить зависимость `b` от `a`.",
+                "how_it_should_be": "for-comprehension — последовательная композиция; для параллельности используют `Future.sequence` над уже стартовавшими `Future`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Восстановление после ошибки `Future` делают через `try/catch` вокруг самого `Future`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ошибки `Future` обрабатывают комбинаторами `recover`/`recoverWith` (`a.recover { case _ => 0 }`), а не внешним try/catch, который не поймает асинхронный сбой.",
+                "source_of_confusion": "Императивная привычка к try/catch переносится на асинхронный код.",
+                "if_it_were_true": "Если бы try/catch ловил ошибку `Future`, она перехватывалась бы синхронно, чего при async-исполнении не происходит.",
+                "how_it_should_be": "Для восстановления используют `recover`/`recoverWith`; try/catch вокруг `Future` асинхронную ошибку не поймает."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Future` композируют монадически: последовательно через for-comprehension (`for { ai <- a; bi <- b } yield ai + bi`, где `b` стартует после `a`), параллельно через `Future.sequence(List(a, b)).map(_.sum)` для уже запущенных `Future`, с восстановлением через `a.recover { case _ => 0 }`, и с таймаутом через `Future.firstCompletedOf(Seq(a, timeoutFuture))`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Комбинаторы превращают управление асинхронностью в декларативные трансформации значений вместо ручной работы с callbacks и потоками.",
+                "example": "`Future.sequence(List(a, b))` превращает `List[Future[Int]]` в `Future[List[Int]]`, после чего `.map(_.sum)` агрегирует результат уже параллельно вычисленных значений.",
+                "when_to_apply": "Эти приёмы применяют для агрегации параллельных вызовов, последовательных зависимых шагов, обработки ошибок и таймаутов в асинхронных пайплайнах.",
+                "edge_cases": "Параллельность требует, чтобы `Future` были созданы до for-comprehension: если объявить их прямо внутри `for`, исполнение станет последовательным.",
+                "related": "[[scala-interview#Q30]] что такое `Future`; [[scala-interview#Q32]] `ExecutionContext` для исполнения; [[scala-interview#Q19]] for-comprehension как сахар."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Future.firstCompletedOf` ждёт завершения всех `Future` и возвращает их список.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Future.firstCompletedOf` возвращает результат того `Future`, что завершился первым (используется для таймаутов); ждать всех и собирать список — это `Future.sequence`.",
+                "source_of_confusion": "Слово «completed» путают с «all completed».",
+                "if_it_were_true": "Если бы он ждал всех, его нельзя было бы применить для таймаута через гонку с timeout-`Future`.",
+                "how_it_should_be": "`firstCompletedOf` берёт первый завершившийся; сбор всех результатов делает `sequence`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`ExecutionContext` — что это?",
+          "options": [
+            {
+              "text": "`ExecutionContext` — это сам результат `Future`, который содержит вычисленное значение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ExecutionContext` — это пул потоков для исполнения `Future`, а не контейнер результата; результат хранит сам `Future`.",
+                "source_of_confusion": "Слово «context» ассоциируется с данными вычисления, а не с его исполнителем.",
+                "if_it_were_true": "Если бы `ExecutionContext` хранил значение, не было бы смысла создавать кастомные пулы потоков.",
+                "how_it_should_be": "`ExecutionContext` предоставляет потоки для запуска `Future`; значение лежит в самом `Future`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`ExecutionContext.global` основан на одном потоке и потому идеально подходит для блокирующего I/O.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`global` основан на `ForkJoinPool` (несколько потоков) и подходит для CPU-bound задач; для блокирующего I/O нужен отдельный dedicated pool.",
+                "source_of_confusion": "Удобство `global` как «всегда под рукой» создаёт впечатление универсальной пригодности.",
+                "if_it_were_true": "Если бы он был однопоточным, параллельные `Future` на нём не исполнялись бы одновременно.",
+                "how_it_should_be": "`global` — многопоточный `ForkJoinPool` для CPU-bound; под blocking I/O выделяют свой пул."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Кастомный `ExecutionContext` создать нельзя — доступен только встроенный `global`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кастомный контекст создаётся через `ExecutionContext.fromExecutor(Executors.newFixedThreadPool(8))`; `global` — лишь дефолтный вариант.",
+                "source_of_confusion": "Повсеместный `import ...global` создаёт иллюзию единственного доступного контекста.",
+                "if_it_were_true": "Если бы кастомные пулы были невозможны, нельзя было бы изолировать блокирующий I/O в отдельный executor.",
+                "how_it_should_be": "Свой `ExecutionContext` легко собрать из любого `Executor`; `global` не единственный вариант."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`ExecutionContext` — пул потоков, на котором исполняются `Future`. Его требует любой `Future` (обычно `import scala.concurrent.ExecutionContext.Implicits.global`). `global` основан на `ForkJoinPool` и подходит для CPU-bound задач; для блокирующего I/O нужен dedicated pool, например `ExecutionContext.fromExecutor(Executors.newFixedThreadPool(8))`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Разделение пулов критично: блокирующие операции на общем `ForkJoinPool` истощают его потоки и тормозят все остальные `Future`.",
+                "example": "`implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(8))` создаёт выделенный пул, который изолирует блокирующий I/O от CPU-bound задач.",
+                "when_to_apply": "Выбор контекста делают под нагрузку: `global` для вычислений, отдельный fixed pool для blocking I/O, кастомные пулы для приоритизации и изоляции.",
+                "edge_cases": "`ForkJoinPool` рассчитан на короткие неблокирующие задачи; длинные блокирующие вызовы без `blocking { ... }`-обёртки или отдельного пула вызывают thread starvation.",
+                "related": "[[scala-interview#Q30]] `Future` требует контекст; [[scala-interview#Q31]] параллельная композиция; [[scala-interview#Q33]] `Akka` как альтернатива пулам."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`Akka` Actors?",
+          "options": [
+            {
+              "text": "`Akka` — фреймворк actor model для `Scala`/`Java`. Actor — изолированный объект с mailbox; сообщения передаются асинхронно (`system ! \"Alice\"`); один actor обрабатывает по одному сообщению за раз, поэтому внутри нет race conditions; actor system может быть распределён через cluster. Применяют для message brokers, real-time систем, IoT и financial trading.",
+              "correct": true,
+              "sections": {
+                "explanation": "Изоляция состояния и последовательная обработка mailbox дают конкурентность без блокировок и общих мьютексов — состояние actor'а защищено его однопоточной обработкой.",
+                "example": "`val greeter = Behaviors.receiveMessage[String] { msg => println(s\"Hello, $msg!\"); Behaviors.same }` плюс `val system = ActorSystem(greeter, \"example\"); system ! \"Alice\"` — типизированный actor, реагирующий на сообщения.",
+                "when_to_apply": "Actor-модель применяют для систем с высокой конкурентностью и распределённостью: брокеры сообщений, real-time обработка, IoT, трейдинг.",
+                "edge_cases": "С `Akka 2.7+` (2022) — non-free лицензия для большой выручки, поэтому многие мигрируют на форк `Apache Pekko` или другие подходы.",
+                "related": "[[scala-interview#Q30]] `Future` как альтернатива async; [[scala-interview#Q34]] эффект-системы `ZIO`/`Cats`; [[scala-interview#Q38]] где применяется `Scala`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "В `Akka` один actor может обрабатывать несколько сообщений одновременно в параллельных потоках.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Actor обрабатывает сообщения строго по одному за раз из своего mailbox, что и устраняет race conditions внутри его состояния.",
+                "source_of_confusion": "Слово «асинхронность» путают с параллельной обработкой внутри одного actor.",
+                "if_it_were_true": "Если бы actor обрабатывал параллельно, его внутреннее состояние снова потребовало бы синхронизации.",
+                "how_it_should_be": "Один actor — последовательная обработка mailbox; параллелизм достигается множеством actor'ов, а не внутри одного."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Сообщения между actor'ами в `Akka` передаются синхронно: отправитель блокируется до ответа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Передача сообщений асинхронна: `actor ! msg` (fire-and-forget) не блокирует отправителя и кладёт сообщение в mailbox получателя.",
+                "source_of_confusion": "Привычка к синхронным вызовам методов переносится на обмен сообщениями.",
+                "if_it_were_true": "Если бы отправка блокировала, терялась бы неблокирующая природа actor-модели.",
+                "how_it_should_be": "Сообщения шлются асинхронно через mailbox; отправитель не ждёт обработки."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Akka` по-прежнему распространяется под полностью свободной лицензией без коммерческих ограничений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С `Akka 2.7+` (2022) лицензия стала non-free для компаний с большой выручкой, из-за чего появился свободный форк `Apache Pekko`.",
+                "source_of_confusion": "Историческая открытость `Akka` создаёт впечатление неизменной лицензии.",
+                "if_it_were_true": "Если бы лицензия осталась свободной, не возникло бы массовой миграции на `Pekko`.",
+                "how_it_should_be": "С 2022 года `Akka` имеет коммерческие ограничения; свободная альтернатива — `Apache Pekko`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `ZIO`/`Cats Effect`?",
+          "options": [
+            {
+              "text": "`ZIO` и `Cats Effect` запускают эффекты немедленно при создании `IO`-значения, как `Future`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В эффект-системах `IO`-значение — это лишь описание программы; эффект выполняется только при явном запуске (`unsafeRunSync`/`ZIOAppDefault.run`), в отличие от eager-`Future`.",
+                "source_of_confusion": "Привычка к eager-`Future` переносится на `IO`.",
+                "if_it_were_true": "Если бы `IO` запускался сразу, терялась бы referential transparency, ради которой эти библиотеки и нужны.",
+                "how_it_should_be": "`IO` ленив и описывает программу; запуск отделён от описания — этим он и отличается от `Future`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Effect systems — библиотеки для типизированного функционального программирования с эффектами (I/O, ошибки, конкурентность). `Cats Effect` даёт `IO` (`for { _ <- IO.println(\"Hello\"); _ <- IO.sleep(1.second) } yield ()`), `ZIO` — `ZIO[R, E, A]` с окружением, ошибкой и результатом. `IO` — это описание программы, а не её выполнение; запуск отделён (`unsafeRunSync`, `ZIOAppDefault.run`). Преимущества: referential transparency, типизированные ошибки, composable concurrency (fibers), resource management.",
+              "correct": true,
+              "sections": {
+                "explanation": "Отделение описания от запуска даёт чистоту (referential transparency), а типизированные ошибки и fibers — безопасную и композируемую модель конкурентности.",
+                "example": "`val program: IO[Unit] = for { _ <- IO.println(\"Hello\"); _ <- IO.sleep(1.second); _ <- IO.println(\"World\") } yield ()` лишь строит программу; реальный вывод произойдёт только при `unsafeRunSync(program)`.",
+                "when_to_apply": "Эффект-системы берут для FP-бэкенда, где важны чистота, типизированные ошибки, отмена и управление ресурсами (`Resource`/`Bracket`).",
+                "edge_cases": "Цена — высокий порог входа и фрагментация: `Cats Effect` vs `ZIO` — разные экосистемы со своими паттернами.",
+                "related": "[[scala-interview#Q35]] три типа `ZIO[R, E, A]`; [[scala-interview#Q30]] `Future` против `IO`; [[scala-interview#Q25]] type classes как основа `Cats`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Cats Effect` и `ZIO` не поддерживают типизированные ошибки: ошибки всегда `Throwable`, как в `Java`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ZIO[R, E, A]` имеет отдельный типизированный канал ошибки `E` (любой тип, не только `Throwable`), а `Cats Effect` комбинируется с `Either`/`MonadError` для типизированных ошибок.",
+                "source_of_confusion": "Привычка к exception-based обработке переносится на эффект-системы.",
+                "if_it_were_true": "Если бы ошибки были только `Throwable`, параметр `E` в `ZIO[R, E, A]` не имел бы смысла.",
+                "how_it_should_be": "Типизированные ошибки — ключевая фича: `ZIO` кодирует тип ошибки в сигнатуре `E`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Главное преимущество эффект-систем — они выполняют код быстрее, чем обычные `Future`, за счёт нативной компиляции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Преимущества эффект-систем — referential transparency, типизированные ошибки, fibers и resource management, а не нативная компиляция или скорость against `Future`.",
+                "source_of_confusion": "Слово «эффективность» в названии путают с runtime-производительностью.",
+                "if_it_were_true": "Если бы суть была в нативной скорости, не подчёркивались бы чистота и типизированные ошибки как главные плюсы.",
+                "how_it_should_be": "Ценность эффект-систем — в чистоте и контроле эффектов, а не в нативной компиляции или превосходстве по скорости."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`ZIO[R, E, A]` — три типа?",
+          "options": [
+            {
+              "text": "В `ZIO[R, E, A]` `R` — это результат (result), `A` — окружение, а `E` — отложенное выполнение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На самом деле `R` — environment (зависимости), `E` — error type, `A` — success type (результат); расшифровка перепутана.",
+                "source_of_confusion": "Буква `R` интуитивно ассоциируется с «result», а `A` — с «argument», что искажает смысл.",
+                "if_it_were_true": "Если бы `R` был результатом, алиас `UIO[A] = ZIO[Any, Nothing, A]` (нет зависимостей) не имел бы смысла.",
+                "how_it_should_be": "`R` — environment, `E` — error, `A` — success; путать порядок параметров нельзя."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`UIO[A]` означает `ZIO[Any, Throwable, A]` — эффект без зависимостей, но с возможными исключениями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`UIO[A] = ZIO[Any, Nothing, A]` — без зависимостей и без ошибок (`E = Nothing`); вариант с `Throwable` — это `Task[A]`.",
+                "source_of_confusion": "Похожие алиасы `UIO`/`Task` легко перепутать по типу ошибки.",
+                "if_it_were_true": "Если бы `UIO` допускал `Throwable`, он не отличался бы от `Task` и не гарантировал бы отсутствие ошибок.",
+                "how_it_should_be": "`UIO[A]` имеет `E = Nothing` (ошибок нет); `ZIO[Any, Throwable, A]` — это `Task[A]`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`ZIO[R, E, A]` — три параметра типа: `R` — environment (зависимости), `E` — error type, `A` — success type. Это даёт мощную систему: компилятор знает все возможные ошибки и зависимости. Удобные алиасы: `UIO[A] = ZIO[Any, Nothing, A]` (нет deps и ошибок), `Task[A] = ZIO[Any, Throwable, A]`, `IO[E, A] = ZIO[Any, E, A]`, `URIO[R, A] = ZIO[R, Nothing, A]`, `RIO[R, A] = ZIO[R, Throwable, A]`. Аналог `Reader + Either + IO` в одном.",
+              "correct": true,
+              "sections": {
+                "explanation": "Три параметра кодируют контракт эффекта прямо в типе: какие зависимости нужны, какие ошибки возможны и что возвращается при успехе.",
+                "example": "`val getUser: ZIO[UserRepo, DbError, User]` явно говорит: нужен `UserRepo`, может упасть с `DbError`, при успехе вернёт `User` — всё проверяется компилятором.",
+                "when_to_apply": "Эту сигнатуру используют для type-safe внедрения зависимостей, исчерпывающей обработки ошибок и понятного контракта эффектов в `ZIO`-приложениях.",
+                "edge_cases": "`E = Nothing` гарантирует отсутствие ошибок на уровне типов (`UIO`/`URIO`), а `R = Any` означает отсутствие требуемого окружения.",
+                "related": "[[scala-interview#Q34]] что такое `ZIO`/`Cats Effect`; [[scala-interview#Q9]] `Either` как типизированная ошибка; [[scala-interview#Q7]] роль `Nothing` в типах."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`ZIO[R, E, A]` имеет только два параметра: ошибку и результат, как `Either[E, A]`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ZIO` параметризован тремя типами — `R` (environment), `E` (error), `A` (success); третий параметр `R` отличает его от двухпараметрического `Either`.",
+                "source_of_confusion": "Сходство с `Either[E, A]` создаёт впечатление двух параметров.",
+                "if_it_were_true": "Если бы параметров было два, нельзя было бы выразить зависимость от окружения `ZIO[UserRepo, ...]`.",
+                "how_it_should_be": "У `ZIO` три параметра типа; `R` для зависимостей и делает его богаче `Either`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `Scala` взаимодействует с `Java`?",
+          "options": [
+            {
+              "text": "`Scala` может вызывать `Java`-код, но `Java` не может использовать классы, написанные на `Scala`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Interop двусторонний: `Java` тоже может использовать `Scala`-классы (поля, методы, коллекции), хотя некоторые `Scala`-only фичи из `Java` неудобны.",
+                "source_of_confusion": "Доминирование `Scala` в этой паре создаёт впечатление одностороннего интеропа.",
+                "if_it_were_true": "Если бы `Java` не видела `Scala`-классы, нельзя было бы хранить `scala.collection.immutable.List` в `Java`-поле.",
+                "how_it_should_be": "Interop работает в обе стороны: `Scala` ↔ `Java`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`java.util.List` и `scala.collection.List` — это один и тот же тип, конвертация не нужна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные иерархии: `java.util.List` ≠ `scala.collection.List`; для перехода нужны явные конвертеры из `scala.jdk.CollectionConverters`.",
+                "source_of_confusion": "Общая JVM создаёт иллюзию единых типов коллекций.",
+                "if_it_were_true": "Если бы это был один тип, не понадобились бы `asScala`/`asJava`.",
+                "how_it_should_be": "Коллекции `Java` и `Scala` различны; их конвертируют через `asScala`/`asJava`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Для конвертации `Java`-коллекции в `Scala` нужно вручную перекладывать элементы в цикле.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Конвертация делается одним вызовом: `javaList.asScala.toList` и обратно `scalaList.asJava` из `scala.jdk.CollectionConverters`.",
+                "source_of_confusion": "Незнание конвертеров приводит к ручному перекладыванию.",
+                "if_it_were_true": "Если бы автоматических конвертеров не было, библиотека `CollectionConverters` была бы бессмысленной.",
+                "how_it_should_be": "Коллекции конвертируют через `asScala`/`asJava`, а не вручную в цикле."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Interop 100% в обе стороны. Использование `Java` из `Scala`: `import java.util.{ArrayList, List => JList}; val javaList: JList[String] = new ArrayList()`. Конвертация коллекций через `import scala.jdk.CollectionConverters._` — `javaList.asScala.toList` и `scalaList.asJava`. `Java`-код тоже может использовать `Scala`-классы (например, хранить `scala.collection.immutable.List<String>` в поле).",
+              "correct": true,
+              "sections": {
+                "explanation": "Полная совместимость на уровне JVM-байткода позволяет смешивать `Java`- и `Scala`-код в одном проекте и переиспользовать всю `Java`-экосистему.",
+                "example": "`import scala.jdk.CollectionConverters._; val scalaList: List[String] = javaList.asScala.toList` даёт нативную `Scala`-коллекцию, а `scalaList.asJava` возвращает `JList`.",
+                "when_to_apply": "Interop используют для постепенной миграции, переиспользования `Java`-библиотек и интеграции `Scala`-сервисов с существующим `Java`-кодом.",
+                "edge_cases": "Несмотря на 100% interop, часть `Scala`-only фич (implicits, traits с параметрами) из `Java` неудобна, и коллекции требуют явной конвертации.",
+                "related": "[[scala-interview#Q37]] подводные камни интеропа; [[scala-interview#Q26]] различия коллекций; [[scala-interview#Q8]] оборачивание `null` из `Java` в `Option`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Подводные камни интеропа со `Java`?",
+          "options": [
+            {
+              "text": "Главные ловушки: `Java` часто возвращает `null` (оборачивай в `Option`); checked exceptions `Scala` игнорирует и может бросать без объявления; коллекции различны (`java.util.List` ≠ `scala.collection.List`, конвертируй явно); функциональные типы (`scala.Function1` ≠ `java.util.function.Function`, авто-конверсия с `Scala 2.13+`); type erasure стирает generics; часть `Scala`-only фич (implicits, traits с параметрами) может не работать из `Java`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Корень проблем — разные модели `null`, исключений, коллекций и функций между языками, которые на границе нужно сводить вручную.",
+                "example": "`Java`-метод, возвращающий `null`, безопасно оборачивают как `Option(javaApi.find(...))`, превращая `null` в `None` и избегая NPE дальше по коду.",
+                "when_to_apply": "Эти моменты учитывают на каждой границе `Scala`↔`Java`: оборачивание `null`, конвертация коллекций и функций, осторожность с generics и `Scala`-only конструкциями.",
+                "edge_cases": "С `Scala 2.13+` SAM-конверсия между `Scala`- и `Java`-функциями автоматическая, но type erasure и checked exceptions остаются источниками тонких багов.",
+                "related": "[[scala-interview#Q36]] как устроен интероп; [[scala-interview#Q8]] оборачивание `null` в `Option`; [[scala-interview#Q26]] различия коллекций."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Scala` обязана объявлять и обрабатывать checked exceptions из `Java`, как сам `Java`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Scala` игнорирует checked exceptions: их можно бросать и не ловить без объявления в сигнатуре, в отличие от `Java`.",
+                "source_of_confusion": "Опыт обязательных `throws` в `Java` переносится на `Scala`.",
+                "if_it_were_true": "Если бы `Scala` требовала объявления checked exceptions, исчезла бы свобода бросать их без `throws`.",
+                "how_it_should_be": "`Scala` не различает checked/unchecked; объявлять checked exceptions она не обязана."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`scala.Function1` и `java.util.function.Function` — один и тот же интерфейс, конверсия не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные типы функций; они различны, хотя с `Scala 2.13+` есть авто-конверсия (SAM) между ними на границе.",
+                "source_of_confusion": "Похожая роль «функционального интерфейса» создаёт впечатление идентичности.",
+                "if_it_were_true": "Если бы они совпадали, не нужна была бы специальная авто-конверсия в `Scala 2.13+`.",
+                "how_it_should_be": "`scala.Function1` ≠ `java.util.function.Function`; их связывает авто-конверсия, а не тождество."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Generics в `Scala` не стираются и доступны в runtime, в отличие от `Java`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На JVM generics стираются и в `Scala` (type erasure), так же как в `Java`; runtime-информация о типах теряется.",
+                "source_of_confusion": "Мощная статическая система типов `Scala` создаёт впечатление сохранения типов в runtime.",
+                "if_it_were_true": "Если бы стирания не было, можно было бы паттерн-матчить `List[String]` vs `List[Int]` в runtime, чего сделать нельзя.",
+                "how_it_should_be": "Type erasure действует и в `Scala`; generics стираются на уровне JVM, как и в `Java`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Где `Scala` применяется в production?",
+          "options": [
+            {
+              "text": "`Scala` применяется только в академических исследованиях и не используется в реальном production.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Scala` широко используется в production: `Apache Spark`, `Kafka Streams`, бэкенды `Twitter`, `LinkedIn`, `Netflix`, `Coursera`, риск-моделирование в банках.",
+                "source_of_confusion": "Академическое происхождение языка создаёт ложное впечатление неприменимости.",
+                "if_it_were_true": "Если бы `Scala` не шла в production, `Apache Spark` (написанный на ней) не доминировал бы в data engineering.",
+                "how_it_should_be": "`Scala` активно применяется в data engineering и backend крупных компаний."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Scala` применяется в production широко: `Apache Spark` (главное применение), `Apache Kafka` (streams API), `Apache Flink` (часть компонентов), бэкенды `Twitter` (исторически) и `LinkedIn` (Norbert, Kafka, обработка данных), сервисы `Netflix` (Atlas, Spinnaker), `Coursera`, `The Guardian` (CMS), `Foursquare`, а также банки (`HSBC`, `Morgan Stanley`) для risk modeling и trading. В 2024 `Scala` теряет популярность относительно `Kotlin`/`Rust`, но в data engineering остаётся доминирующей.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главная ниша — data engineering (`Spark`, `Kafka Streams`, `Flink`), где Scala-API нативны и feature-complete, плюс FP-тяжёлые бэкенды.",
+                "example": "Big-data пайплайны на `Apache Spark` с типобезопасными `Dataset` из case-классов — самый массовый production-кейс `Scala`.",
+                "when_to_apply": "Эти примеры приводят, оценивая, стоит ли выбирать `Scala`: сильна в data engineering и сложном FP, слабее в нишах, куда смещаются `Kotlin`/`Rust`/`Go`.",
+                "edge_cases": "Тренд 2024 — миграция части backend (`Twitter`, `LinkedIn`) на `Kotlin`/`Rust`/`Go`, при этом data engineering остаётся за `Scala`.",
+                "related": "[[scala-interview#Q39]] `Apache Spark` и `Scala`; [[scala-interview#Q1]] для чего нужна `Scala`; [[scala-interview#Q40]] минусы и причины миграций."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Apache Spark` написан на `Python`, а `Scala` — лишь второстепенный клиент к нему.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Apache Spark` написан на `Scala`, и `Scala`-API — самый родной и feature-complete; `Python` (PySpark) — один из клиентов, а не язык реализации.",
+                "source_of_confusion": "Популярность PySpark среди дата-сайентистов создаёт впечатление, что и сам движок на `Python`.",
+                "if_it_were_true": "Если бы `Spark` был на `Python`, не было бы выигрыша Scala-`Dataset` с type-safe сериализацией closures.",
+                "how_it_should_be": "`Spark` реализован на `Scala`; `Python` — клиентский API, не язык движка."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Банки и финансовые компании никогда не используют `Scala` из-за её непредсказуемости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Банки (`HSBC`, `Morgan Stanley`) применяют `Scala` для risk modeling и trading, ценя её систему типов и FP-надёжность.",
+                "source_of_confusion": "Стереотип о консервативности финсектора переносится на отказ от `Scala`.",
+                "if_it_were_true": "Если бы банки её не использовали, она не упоминалась бы среди production-применений в финансах.",
+                "how_it_should_be": "Финансовые организации используют `Scala` для риск-моделирования и трейдинга."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 39,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`Apache Spark` и `Scala` — связь?",
+          "options": [
+            {
+              "text": "`Apache Spark` написан на `Java`, а `Scala`-API добавлен позже как обёртка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spark` написан именно на `Scala`, и `Scala`-API — самый родной и feature-complete, а не поздняя обёртка.",
+                "source_of_confusion": "Общая JVM-платформа создаёт впечатление, что базой мог быть `Java`.",
+                "if_it_were_true": "Если бы `Spark` был на `Java`, type-safe `Dataset` из case-классов и эффективная сериализация closures не были бы естественны.",
+                "how_it_should_be": "`Spark` реализован на `Scala`; `Scala`-API первичен по полноте возможностей."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "В `Spark` `Scala`-API не типобезопасен: `Dataset` нельзя параметризовать case-классами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Scala`-API в `Spark` type-safe именно благодаря `Dataset` с case-классами (`Seq(User(...)).toDS()`), что даёт compile-time проверки.",
+                "source_of_confusion": "Существование нетипизированного `DataFrame` (`Dataset[Row]`) создаёт впечатление отсутствия типобезопасности вообще.",
+                "if_it_were_true": "Если бы `Dataset` нельзя было параметризовать case-классами, `users.filter(_.age >= 18)` с типом `User` не компилировался бы.",
+                "how_it_should_be": "Type-safe `Dataset[User]` из case-классов — ключевое преимущество `Scala`-API в `Spark`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Apache Spark` написан на `Scala`, и `Scala`-API — самый родной и feature-complete. Причины: API type-safe (`Dataset` с case-классами, `Seq(User(\"Alice\", 30)).toDS()`), closures сериализуются эффективно, а Catalyst optimizer лучше работает с `Scala`-объектами. Хотя `Spark` поддерживает `Python`, `Java`, `R`, `Scala` остаётся первым классом.",
+              "correct": true,
+              "sections": {
+                "explanation": "Родство языка и движка даёт компиляционные гарантии типов, эффективную сериализацию замыканий и лучшую интеграцию с оптимизатором.",
+                "example": "`val users = Seq(User(\"Alice\", 30), User(\"Bob\", 25)).toDS(); val adults = users.filter(_.age >= 18)` — типобезопасный `Dataset[User]` с проверкой полей на этапе компиляции.",
+                "when_to_apply": "`Scala`-API в `Spark` выбирают для type-safe ETL, сложных трансформаций и максимальной производительности оптимизатора Catalyst.",
+                "edge_cases": "Нетипизированный `DataFrame` (`Dataset[Row]`) и PySpark удобны для интерактивного анализа, но теряют compile-time проверки, доступные в типизированном `Dataset`.",
+                "related": "[[scala-interview#Q38]] где применяется `Scala`; [[scala-interview#Q10]] case class для `Dataset`; [[scala-interview#Q1]] Big Data как ниша `Scala`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Spark` поддерживает только `Scala`; `Python`, `Java` и `R` API у него отсутствуют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spark` поддерживает `Scala`, `Python` (PySpark), `Java` и `R`; просто `Scala`-API остаётся первоклассным и наиболее полным.",
+                "source_of_confusion": "Первенство `Scala`-API создаёт впечатление, что других языков нет.",
+                "if_it_were_true": "Если бы был только `Scala`, не существовало бы массового PySpark в data science.",
+                "how_it_should_be": "У `Spark` есть API для `Scala`, `Python`, `Java` и `R`; `Scala` среди них — первый класс."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 40,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие минусы `Scala`?",
+          "options": [
+            {
+              "text": "Главный минус `Scala` — крайне бедная система типов, из-за которой сложно моделировать домен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Система типов `Scala` наоборот очень мощная; реальные минусы — сложная learning curve, медленная компиляция, фрагментация экосистемы и сложный найм.",
+                "source_of_confusion": "Перечень минусов ошибочно дополняют претензией, противоположной сильной стороне языка.",
+                "if_it_were_true": "Если бы типы были бедными, не было бы HKT, type classes и dependent types, которыми `Scala` известна.",
+                "how_it_should_be": "Минусы `Scala` — порог входа, скорость сборки и фрагментация, а не слабая система типов."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Scala` лишена минусов в части лицензий: все её ключевые библиотеки полностью свободны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Akka` с 2.7+ (2022) имеет non-free лицензию для большой выручки — это реальный минус, заставивший мигрировать на `Apache Pekko`.",
+                "source_of_confusion": "Open-source ядро языка создаёт впечатление, что и вся экосистема свободна.",
+                "if_it_were_true": "Если бы лицензионных проблем не было, не возник бы форк `Pekko` и массовый переход на него.",
+                "how_it_should_be": "Лицензия `Akka` — заметный минус экосистемы; альтернатива — `Pekko`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Компиляция `Scala` всегда быстрее `Java`, поэтому скорость сборки в число минусов не входит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Медленная компиляция (особенно с heavy implicits и macros) — один из главных минусов `Scala`, а не её преимущество.",
+                "source_of_confusion": "Лаконичность исходника ошибочно ассоциируют с быстрой сборкой.",
+                "if_it_were_true": "Если бы сборка была быстрой, не искали бы альтернативы sbt вроде `Mill` и `Bleep`.",
+                "how_it_should_be": "Скорость компиляции — слабое место `Scala`; она медленнее `Java`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Минусы `Scala`: сложная learning curve (мощные типы, implicits, монады); медленная компиляция (особенно с heavy implicits и macros); фрагментация экосистемы (`Cats` vs `ZIO`, `Akka` vs `Pekko`); сложный onboarding и нехватка разработчиков; неидеальный IDE-support; оговорки backward-compatibility `Scala 3` с 2.13; non-free лицензия `Akka` (миграция на `Pekko`); сложный `sbt` (альтернативы `Mill`, `Bleep`); hidden cost implicits/pattern matching. В 2024 многие (`Twitter`, `LinkedIn`) мигрируют на `Kotlin`/`Rust`/`Go`, `Scala` остаётся в data engineering и FP-нишах.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти минусы — оборотная сторона мощности: богатство типов и FP-возможностей повышает порог входа, замедляет сборку и дробит экосистему на конкурирующие подходы.",
+                "example": "Долгая сборка sbt-проекта с тяжёлыми implicits и нехватка Scala-инженеров на рынке — типичные практические боли команд на `Scala`.",
+                "when_to_apply": "Эти аргументы взвешивают при выборе языка: для data engineering и сложного FP `Scala` оправдана, для простого backend часто выгоднее `Kotlin`/`Go`.",
+                "edge_cases": "Не все минусы фатальны: `Scala 3` упростила синтаксис и implicits, `Mill`/`Bleep` ускоряют сборку, а `Pekko` снимает лицензионный риск `Akka`.",
+                "related": "[[scala-interview#Q3]] сравнение с `Kotlin`; [[scala-interview#Q33]] лицензия `Akka` и `Pekko`; [[scala-interview#Q38]] миграции компаний со `Scala`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

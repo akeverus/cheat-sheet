@@ -1,0 +1,1685 @@
+{
+  "topic_slug": "java-mapstruct-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `MapStruct` и как он работает?",
+          "options": [
+            {
+              "text": "`MapStruct` — аннотационный процессор Java (JSR 269), работающий во время компиляции: разработчик объявляет интерфейс-маппер с методами, а `javac` через `-processorpath` генерирует реализацию (`UserMapperImpl`) в виде обычного `.java`-файла в `target/generated-sources/`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Процессор разбирает аннотированный интерфейс на этапе компиляции и порождает класс-реализацию с прямыми присваиваниями полей, поэтому в рантайме рефлексия не используется вовсе.",
+                "example": "Маппинг разворачивается в прямые вызовы `dto.setName(user.getName())` — без рефлексии, поэтому код такой же быстрый, как написанный вручную, и читаем при отладке.",
+                "when_to_apply": "Подойдёт когда нужно перекладывать данные между Entity и DTO в Spring-проекте без runtime-оверхеда и с проверкой ошибок маппинга ещё на этапе компиляции.",
+                "edge_cases": "Если поля невозможно сопоставить (нет геттера, несовместимый тип без конвертера), сборка падает с понятной ошибкой компиляции, а не падает в рантайме как у рефлексивных фреймворков.",
+                "related": "[[java-mapstruct-interview#Q3]] чем отличается от ModelMapper и Dozer; [[java-mapstruct-interview#Q2]] как подключить; [[java-mapstruct-interview#Q4]] аннотация @Mapper и её параметры."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`MapStruct` — рантайм-библиотека, которая через рефлексию во время выполнения копирует значения одноимённых полей из source в target, формируя маппинг на лету при первом вызове.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MapStruct` генерирует код на этапе компиляции через annotation processing и вообще не использует рефлексию в рантайме — реализация уже существует как готовый класс.",
+                "source_of_confusion": "Рефлексивные маппинг-фреймворки (`ModelMapper`, `Dozer`) действительно работают именно так, и их поведение переносят на `MapStruct`.",
+                "if_it_were_true": "Тогда нельзя было бы увидеть сгенерированный `*Impl`-класс в `target/generated-sources/`, но он там есть и его можно открыть и отладить.",
+                "how_it_should_be": "Это compile-time codegen: реализация генерируется при сборке, а в рантайме выполняются обычные вызовы геттеров/сеттеров без рефлексии."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`MapStruct` — это Maven/Gradle-плагин сборки, который анализирует байт-код собранных классов и дописывает методы маппинга в уже скомпилированные `.class`-файлы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MapStruct` — это annotation processor (JSR 269), а не плагин сборки и не пост-процессор байт-кода; он работает внутри фазы компиляции `javac`, порождая исходники.",
+                "source_of_confusion": "MapStruct действительно подключают через настройку компилятора в Maven/Gradle, отсюда вывод про «плагин сборки» и манипуляции с байт-кодом.",
+                "if_it_were_true": "Тогда не существовало бы `.java`-исходника реализации, но `MapStruct` генерирует именно читаемый `UserMapperImpl.java`, а не патчит `.class`.",
+                "how_it_should_be": "Это процессор аннотаций, который порождает новый исходный код реализации на этапе компиляции; байт-код существующих классов он не трогает."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`MapStruct` — это DSL поверх Spring, требующий описывать маппинг в XML-файле, который контейнер читает при старте приложения и применяет к бинам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Маппинг в `MapStruct` описывается аннотациями (`@Mapper`, `@Mapping`) прямо в Java-интерфейсе, без XML и без зависимости от запуска Spring-контейнера.",
+                "source_of_confusion": "XML-конфигурация — это про `Dozer`, а интеграция со Spring через `componentModel` создаёт ложное впечатление, что без Spring и XML не обойтись.",
+                "if_it_were_true": "Тогда `MapStruct` нельзя было бы использовать в проекте без Spring, но он отлично работает в plain-Java через `Mappers.getMapper()`.",
+                "how_it_should_be": "Это аннотационный процессор: конфигурация задаётся аннотациями в коде, Spring и XML опциональны и к работе процессора отношения не имеют."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как подключить `MapStruct` к Maven/Gradle-проекту?",
+          "options": [
+            {
+              "text": "Достаточно одной зависимости `org.mapstruct:mapstruct` на `implementation` — она содержит и аннотации, и сам процессор, поэтому реализация сгенерируется автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Процессор лежит в отдельном артефакте `mapstruct-processor`; без его подключения как annotation processor генерация `*Impl` не запустится вовсе.",
+                "source_of_confusion": "Кажется логичным, что одна библиотека самодостаточна, а разделение на две jar выглядит избыточным.",
+                "if_it_were_true": "Тогда `mapstruct-processor` не существовал бы как отдельный артефакт, но он публикуется отдельно именно для подключения как процессор.",
+                "how_it_should_be": "Нужны обе jar: `mapstruct` для runtime-интерфейсов и `mapstruct-processor` как annotation processor на время компиляции."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Нужны две зависимости: `org.mapstruct:mapstruct` (аннотации и runtime-интерфейсы, на compile/implementation) и `org.mapstruct:mapstruct-processor` (annotation processor, только на время компиляции — `annotationProcessor` в Gradle или `annotationProcessorPaths` в maven-compiler-plugin).",
+              "correct": true,
+              "sections": {
+                "explanation": "Разделение на runtime-jar и processor-jar ключевое: первый содержит аннотации и интерфейсы для рантайма, второй запускается только во время компиляции и в собранный артефакт не попадает.",
+                "example": "В Gradle Kotlin DSL: `implementation(\"org.mapstruct:mapstruct:1.6.0\")` плюс `annotationProcessor(\"org.mapstruct:mapstruct-processor:1.6.0\")` — процессор не утекает в runtime-classpath артефакта.",
+                "when_to_apply": "Подключать так на старте любого проекта с `MapStruct`: важно разнести runtime-jar и processor-jar, иначе либо не сгенерируется реализация, либо processor попадёт в дистрибутив зря.",
+                "edge_cases": "Если забыть `mapstruct-processor`, реализация `*Impl` просто не сгенерируется и в рантайме `Mappers.getMapper()` упадёт с `ClassNotFoundException` на отсутствующем `*Impl`.",
+                "related": "[[java-mapstruct-interview#Q1]] что такое MapStruct и codegen; [[java-mapstruct-interview#Q5]] componentModel; [[java-mapstruct-interview#Q24]] порядок процессоров с Lombok."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`mapstruct-processor` нужно класть в `implementation` (runtime-classpath), чтобы процессор был доступен приложению во время выполнения для генерации мапперов на лету.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Генерация происходит на этапе компиляции, поэтому процессор подключают как `annotationProcessor`/`annotationProcessorPaths`, а не в runtime-classpath — в рантайме он не нужен.",
+                "source_of_confusion": "Слово «processor» наводит на мысль, что он должен работать в рантайме, как обработчик запросов.",
+                "if_it_were_true": "Тогда processor-jar тащился бы в собранный артефакт и раздувал его, хотя после компиляции он бесполезен.",
+                "how_it_should_be": "Процессор должен быть только в compile-time scope (`annotationProcessor`), а в runtime остаётся лишь лёгкий `mapstruct`-jar с интерфейсами."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`MapStruct` подключается одним BOM-импортом `org.mapstruct:mapstruct-bom`, который сам добавляет и runtime, и процессор в нужные scope без явных зависимостей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BOM лишь фиксирует версии (dependency management), но не добавляет сами зависимости — `mapstruct` и `mapstruct-processor` всё равно объявляются явно в нужных scope.",
+                "source_of_confusion": "BOM-импорты в Spring-проектах действительно избавляют от указания версий, отсюда вывод, что они и подключают зависимости.",
+                "if_it_were_true": "Тогда после одного импорта BOM маппер сгенерировался бы сам, но без явного `mapstruct-processor` реализации не появится.",
+                "how_it_should_be": "BOM управляет только версиями; обе зависимости (runtime-jar и processor) нужно объявить отдельно в `implementation` и `annotationProcessor`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `MapStruct` отличается от `ModelMapper` и `Dozer`?",
+          "options": [
+            {
+              "text": "`MapStruct`, `ModelMapper` и `Dozer` работают одинаково — все три генерируют код на этапе компиляции; разница только в синтаксисе аннотаций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Только `MapStruct` использует compile-time codegen; `ModelMapper` и `Dozer` основаны на runtime-рефлексии и не генерируют код при сборке.",
+                "source_of_confusion": "Все три решают одну задачу (Entity↔DTO), поэтому кажется, что и механизм у них общий.",
+                "if_it_were_true": "Тогда `ModelMapper` ловил бы ошибки маппинга при компиляции, но он падает только в рантайме, потому что строит маппинг рефлексией.",
+                "how_it_should_be": "`MapStruct` принципиально иной — это annotation processor; рефлексивные `ModelMapper`/`Dozer` отличаются и по скорости, и по моменту обнаружения ошибок."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`MapStruct` медленнее `ModelMapper` и `Dozer`, потому что генерирует много промежуточных классов, а рефлексия в `ModelMapper` оптимизирована JIT-ом до прямых вызовов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: сгенерированный `MapStruct`-код состоит из прямых вызовов геттеров/сеттеров и по скорости равен ручному, а рефлексия в `ModelMapper`/`Dozer` заметно медленнее.",
+                "source_of_confusion": "«Генерация классов» звучит тяжеловесно, поэтому ошибочно считают это источником замедления.",
+                "if_it_were_true": "Тогда бенчмарки показывали бы преимущество `ModelMapper`, но на практике `MapStruct` стабильно быстрее за счёт отсутствия рефлексии.",
+                "how_it_should_be": "`MapStruct` — самый быстрый из трёх: рефлексии в рантайме нет, маппинг разворачивается в прямые присваивания полей."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Главное отличие: `MapStruct` работает через compile-time code generation (как ручной код по скорости, ошибки видны при компиляции), тогда как `ModelMapper` и `Dozer` маппят через runtime-рефлексию — медленнее и ошибки всплывают только в рантайме.",
+              "correct": true,
+              "sections": {
+                "explanation": "Принципиальная разница — момент работы: `MapStruct` действует на компиляции и порождает прямой код, а `ModelMapper`/`Dozer` строят маппинг рефлексией уже в рантайме, отсюда и разница в скорости и в моменте обнаружения ошибок.",
+                "example": "У `MapStruct` несовпадение полей ловится на этапе сборки, сгенерированный код читаем; `Dozer` исторически конфигурируется XML, а `ModelMapper` строит маппинг «магией» по соглашениям в рантайме.",
+                "when_to_apply": "Выбирать `MapStruct` для production-проектов, где важны производительность, явность и раннее обнаружение ошибок; `ModelMapper` проще для быстрого старта, но рискованнее на проде.",
+                "edge_cases": "У `MapStruct` есть нюанс с `Lombok`: процессоры должны идти в правильном порядке, иначе геттеры/сеттеры ещё не сгенерированы; у рефлексивных фреймворков такой проблемы нет, но они платят скоростью.",
+                "related": "[[java-mapstruct-interview#Q1]] как работает codegen; [[java-mapstruct-interview#Q24]] нюансы с Lombok; [[java-mapstruct-interview#Q26]] тестирование маппера."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`ModelMapper` обнаруживает ошибки несоответствия полей на этапе компиляции так же, как `MapStruct`, поэтому по безопасности они эквивалентны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ModelMapper` строит маппинг рефлексией в рантайме, поэтому несовпадения и неоднозначности проявляются только при выполнении, а не при сборке.",
+                "source_of_confusion": "Хочется верить, что любой современный маппер защищает на этапе компиляции, как `MapStruct`.",
+                "if_it_were_true": "Тогда `ModelMapper`-маппинг нельзя было бы сломать незаметно при рефакторинге поля, но именно такие баги у него и всплывают в рантайме.",
+                "how_it_should_be": "Раннее compile-time обнаружение ошибок — преимущество именно `MapStruct`; у `ModelMapper` ошибки маппинга runtime-only."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@Mapper` и какие параметры он принимает?",
+          "options": [
+            {
+              "text": "`@Mapper` принимает только один параметр — `value` со списком классов DTO, которые нужно маппить; всё остальное (component model, политики) задаётся отдельными аннотациями на методах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Mapper` принимает множество параметров уровня класса (`componentModel`, `uses`, `imports`, `unmappedTargetPolicy` и др.), а не единственный `value` со списком DTO.",
+                "source_of_confusion": "Многие аннотации имеют атрибут `value` по умолчанию, отсюда домысел, что и у `@Mapper` он главный.",
+                "if_it_were_true": "Тогда нельзя было бы задать `componentModel = \"spring\"` прямо в `@Mapper`, но это самый частый его атрибут.",
+                "how_it_should_be": "У `@Mapper` богатый набор атрибутов класса-уровня; список DTO он не принимает — методы маппинга объявляются в теле интерфейса."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@Mapper` обязан ставиться на класс-реализацию маппера, который пишет разработчик вручную; на интерфейс его вешать нельзя, иначе процессор не найдёт тело методов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Mapper` ставится именно на интерфейс (или абстрактный класс) с объявлениями методов, а реализацию `*Impl` пишет процессор, а не разработчик.",
+                "source_of_confusion": "Привычка из обычного Java-кода, где аннотации часто на конкретных классах, переносится на `MapStruct`.",
+                "if_it_were_true": "Тогда не было бы смысла в кодогенерации, но весь смысл `MapStruct` — сгенерировать реализацию по аннотированному интерфейсу.",
+                "how_it_should_be": "`@Mapper` вешается на интерфейс/abstract class с сигнатурами; реализацию генерирует `MapStruct`, разработчик её не пишет."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`unmappedTargetPolicy` по умолчанию равен `ERROR`, поэтому любое незамапленное target-поле сразу ломает сборку без дополнительной настройки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `unmappedTargetPolicy = WARN` — незамапленные поля дают предупреждение, а `ERROR` нужно включать явно как осознанную строгую практику.",
+                "source_of_confusion": "`ERROR` так часто рекомендуют, что его принимают за дефолт.",
+                "if_it_were_true": "Тогда не было бы смысла советовать «выставьте ERROR», но именно это и советуют, потому что дефолт мягче.",
+                "how_it_should_be": "Дефолт — `WARN`; чтобы получить строгую проверку с падением сборки, `unmappedTargetPolicy = ReportingPolicy.ERROR` задают вручную."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@Mapper` — маркер, указывающий `MapStruct` обработать интерфейс/класс и сгенерировать реализацию. Принимает `componentModel` (как создавать экземпляр), `uses` (вспомогательные мапперы/конвертеры), `imports` (для expression), `unmappedTargetPolicy`/`unmappedSourcePolicy` (что делать с незамапленными полями), `nullValueMappingStrategy` и др.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@Mapper` задаёт конфигурацию уровня класса: модель компонента, вспомогательные мапперы, импорты для выражений и политики по незамапленным полям, а конкретные методы маппинга объявляются в теле интерфейса.",
+                "example": "`@Mapper(componentModel = \"spring\", uses = {AddressMapper.class}, unmappedTargetPolicy = ReportingPolicy.ERROR)` — генерирует `@Component`, подключает `AddressMapper` и падает при незамапленном target-поле.",
+                "when_to_apply": "Указывать `@Mapper` на каждом интерфейсе-маппере; `unmappedTargetPolicy = ERROR` — хорошая практика, чтобы компиляция падала при «тихой» потере данных.",
+                "edge_cases": "`unmappedTargetPolicy = ERROR` ломает сборку, если в target есть поле без источника — приходится либо добавить `@Mapping`, либо явно `ignore = true`, что и защищает от незаметных пропусков.",
+                "related": "[[java-mapstruct-interview#Q5]] componentModel подробно; [[java-mapstruct-interview#Q19]] параметр uses; [[java-mapstruct-interview#Q7]] игнорирование полей."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `componentModel` в `@Mapper`?",
+          "options": [
+            {
+              "text": "`componentModel` определяет, как `MapStruct` создаёт экземпляр маппера и как его получить: `\"default\"` (через `Mappers.getMapper()` или синглтон `INSTANCE`), `\"spring\"` (генерирует `@Component`-бин для инъекции), `\"cdi\"` (`@ApplicationScoped`), `\"jakarta\"` (Jakarta CDI).",
+              "correct": true,
+              "sections": {
+                "explanation": "`componentModel` влияет только на жизненный цикл экземпляра маппера (как его создать и получить), но не на сам маппинг — он остаётся сгенерированным compile-time кодом без рефлексии.",
+                "example": "С `@Mapper(componentModel = \"spring\")` сгенерированный `UserMapperImpl` помечается `@Component`, и его можно инжектить через конструктор: `private final UserMapper userMapper;` в `@Service`.",
+                "when_to_apply": "Ставить `\"spring\"` в Spring-приложениях, чтобы маппер был обычным бином; `\"default\"` — для plain-Java без DI-контейнера.",
+                "edge_cases": "Можно не дублировать в каждом `@Mapper`, а задать глобально через флаг компилятора `-Amapstruct.defaultComponentModel=spring`, тогда модель применится ко всем мапперам сразу.",
+                "related": "[[java-mapstruct-interview#Q23]] интеграция со Spring; [[java-mapstruct-interview#Q4]] другие параметры @Mapper; [[java-mapstruct-interview#Q26]] тестирование (default vs spring)."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`componentModel` задаёт, в какой Java-пакет будет сгенерирована реализация маппера, чтобы развести `*Impl`-классы по слоям приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`componentModel` управляет способом инстанцирования и получения маппера (default/spring/cdi/jakarta), а не пакетом генерации — пакет наследуется от интерфейса.",
+                "source_of_confusion": "Слово «model» наводит на мысль о структуре пакетов, а не о механизме DI.",
+                "if_it_were_true": "Тогда у него были бы значения вроде имён пакетов, но допустимы только `default`/`spring`/`cdi`/`jakarta`.",
+                "how_it_should_be": "Это про создание экземпляра: `\"spring\"` делает маппер `@Component`-бином, `\"default\"` — синглтон через `Mappers.getMapper()`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`componentModel = \"spring\"` заставляет `MapStruct` использовать рефлексию Spring для маппинга полей в рантайме, делая маппер медленнее, но гибче.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`componentModel` влияет только на способ создания бина; сам маппинг остаётся сгенерированным compile-time кодом без рефлексии независимо от значения.",
+                "source_of_confusion": "Связь со Spring создаёт ложное ощущение, что включается «магия» и рефлексия контейнера.",
+                "if_it_were_true": "Тогда `\"spring\"`-маппер был бы медленнее `\"default\"`, но скорость маппинга у них одинаковая — отличается лишь способ получения экземпляра.",
+                "how_it_should_be": "Маппинг всегда compile-time и без рефлексии; `\"spring\"` лишь добавляет `@Component` на сгенерированный класс для инъекции."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "При `componentModel = \"default\"` экземпляр маппера получают только через `new UserMapperImpl()`, напрямую инстанцируя сгенерированный класс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При `\"default\"` штатный способ — `Mappers.getMapper(UserMapper.class)` или статический `INSTANCE`; прямое `new` на `*Impl` обычно не используют и оно завязано на имя сгенерированного класса.",
+                "source_of_confusion": "Раз класс сгенерирован, кажется естественным просто создать его через `new`.",
+                "if_it_were_true": "Тогда не нужен был бы фабричный `Mappers.getMapper()`, но именно он и есть рекомендуемая точка получения для `\"default\"`.",
+                "how_it_should_be": "Для `\"default\"` используют `Mappers.getMapper()`/`INSTANCE`, а не прямое инстанцирование `*Impl`, чтобы не зависеть от деталей генерации."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как маппить поля с разными именами?",
+          "options": [
+            {
+              "text": "Поля с разными именами маппятся через специальную аннотацию `@Rename(from = \"...\", to = \"...\")`, которую ставят на сам метод-маппер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Переименование делается через стандартную `@Mapping(source = ..., target = ...)`; аннотации `@Rename` в `MapStruct` не существует.",
+                "source_of_confusion": "Имя «Rename» интуитивно подходит под задачу, поэтому его додумывают.",
+                "if_it_were_true": "Тогда в документации `MapStruct` была бы аннотация `@Rename`, но там для этого служит универсальная `@Mapping`.",
+                "how_it_should_be": "Сопоставление полей с разными именами — это `@Mapping(source, target)`; отдельной аннотации переименования нет."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Через `@Mapping(source = \"sourceField\", target = \"targetField\")` на методе: например, `@Mapping(source = \"firstName\", target = \"name\")`. Одноимённые поля `MapStruct` маппит автоматически (case-sensitive), а очевидные конверсии типов (int→long, String→int) делает сам.",
+              "correct": true,
+              "sections": {
+                "explanation": "Авто-маппинг работает по совпадению имён с учётом регистра и для очевидных конверсий типов; при различии имён связь задают явной аннотацией `@Mapping(source, target)`.",
+                "example": "`@Mapping(source = \"firstName\", target = \"name\")` плюс `@Mapping(source = \"birthDate\", target = \"dob\")` над `PersonDto toDto(Person person)` — два поля переименовываются явно, остальные совпадающие маппятся автоматически.",
+                "when_to_apply": "Применять каждый раз, когда имена полей в source и target различаются и автоматическое сопоставление по имени невозможно.",
+                "edge_cases": "Если имена совпадают, но типы несовместимы и нет очевидного конвертера, автоматического маппинга не будет — понадобится `expression` или метод из `uses`.",
+                "related": "[[java-mapstruct-interview#Q9]] expression для сложных случаев; [[java-mapstruct-interview#Q10]] вложенные объекты через dot-notation; [[java-mapstruct-interview#Q7]] игнорирование полей."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Поля с разными именами `MapStruct` всё равно сопоставляет автоматически по порядку объявления в классе, поэтому `@Mapping` не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Автоматически сопоставляются только поля с совпадающими именами; при разных именах нужен явный `@Mapping(source, target)`, по порядку объявления `MapStruct` ничего не маппит.",
+                "source_of_confusion": "В позиционных конструкторах/records порядок важен, и это ошибочно переносят на маппинг по полям.",
+                "if_it_were_true": "Тогда перестановка полей в классе ломала бы маппинг, но `MapStruct` опирается на имена, а не на порядок.",
+                "how_it_should_be": "При различии имён обязателен явный `@Mapping`; авто-маппинг работает строго по совпадению имён, а не по позиции."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Сопоставление имён в `MapStruct` нечувствительно к регистру, поэтому `firstName` и `firstname` считаются одним полем и маппятся без `@Mapping`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сопоставление имён case-sensitive: `firstName` и `firstname` — разные имена, и без явного `@Mapping` авто-маппинг между ними не сработает.",
+                "source_of_confusion": "Многие SQL/JSON-сопоставления регистронезависимы, и это переносят на `MapStruct`.",
+                "if_it_were_true": "Тогда опечатка в регистре не ломала бы маппинг, но на практике она приведёт к unmapped-полю.",
+                "how_it_should_be": "Имена сравниваются с учётом регистра; различающиеся по регистру поля требуют явного `@Mapping(source, target)`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как игнорировать поле при маппинге?",
+          "options": [
+            {
+              "text": "Чтобы поле не маппилось, его помечают аннотацией `@Transient` на самом поле target-класса — `MapStruct` уважает её и пропускает поле.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MapStruct` ориентируется на свои `@Mapping(ignore = true)`/`@BeanMapping`, а `@Transient` (JPA/сериализация) к выбору маппинга отношения не имеет.",
+                "source_of_confusion": "`@Transient` действительно исключает поле из persistence/сериализации, и это поведение ошибочно ждут от маппинга.",
+                "if_it_were_true": "Тогда не было бы атрибута `ignore` у `@Mapping`, но он есть именно для исключения полей при маппинге.",
+                "how_it_should_be": "Игнорирование задаётся `@Mapping(target = ..., ignore = true)` или `@BeanMapping(ignoreByDefault = true)`, а не JPA-аннотацией `@Transient`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Игнорируемое поле указывают по source: `@Mapping(source = \"internalId\", ignore = true)` — так `MapStruct` не читает это поле из исходного объекта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При `ignore = true` указывают именно `target`-поле, которое не нужно заполнять; синтаксис `source = ..., ignore = true` не отражает суть исключения целевого поля.",
+                "source_of_confusion": "Кажется симметричным указывать source там же, где обычно пишут source при маппинге.",
+                "if_it_were_true": "Тогда нельзя было бы исключить target-поле, у которого вообще нет соответствия в source, но именно это и нужно для `id`/`createdAt`.",
+                "how_it_should_be": "Для исключения пишут `@Mapping(target = \"...\", ignore = true)` — игнорируется заполнение целевого поля."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Через `@Mapping(target = \"internalId\", ignore = true)` — поле target не заполняется из source. Альтернатива — `@BeanMapping(ignoreByDefault = true)` плюс явное перечисление только нужных полей через `@Mapping(source, target)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`ignore = true` помечает целевое поле как намеренно не заполняемое, что особенно важно при строгой политике `unmappedTargetPolicy = ERROR`, иначе компиляция упадёт на незамапленном поле.",
+                "example": "`@Mapping(target = \"createdAt\", ignore = true)` пропускает служебное поле `createdAt`; без `ignore` при `unmappedTargetPolicy = ERROR` сборка упала бы из-за незамапленного поля.",
+                "when_to_apply": "Применять для служебных target-полей (`id`, `version`, `createdAt`), которые не должны приходить из source, особенно при строгой политике `ERROR`.",
+                "edge_cases": "Если полей-исключений много, чище включить `@BeanMapping(ignoreByDefault = true)` и явно перечислить лишь те, что нужны, вместо длинного списка `ignore = true`.",
+                "related": "[[java-mapstruct-interview#Q4]] unmappedTargetPolicy = ERROR; [[java-mapstruct-interview#Q18]] @BeanMapping подробно; [[java-mapstruct-interview#Q6]] явное сопоставление полей."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Поле исключается из маппинга, если просто не упоминать его в `@Mapping`; при `unmappedTargetPolicy = ERROR` `MapStruct` молча пропустит незамапленное target-поле.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При `ERROR` незамапленное target-поле как раз ломает сборку — чтобы законно его пропустить, нужно явное `ignore = true`, молчаливого пропуска не будет.",
+                "source_of_confusion": "При мягкой политике `WARN` пропуск действительно «прощается», и это переносят на `ERROR`.",
+                "if_it_were_true": "Тогда строгая политика `ERROR` была бы бессмысленна, но её смысл — заставить явно решить судьбу каждого target-поля.",
+                "how_it_should_be": "Чтобы безопасно не маппить поле при `ERROR`, его помечают `ignore = true`; простое умолчание приведёт к ошибке компиляции."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как задать константу или значение по умолчанию?",
+          "options": [
+            {
+              "text": "`constant` и `defaultValue` ведут себя одинаково: оба подставляют значение только когда source-поле равно `null`, отличается лишь синтаксис записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`constant` подставляет значение всегда и игнорирует source, а `defaultValue` срабатывает только при `null` source-поля — это принципиально разное поведение.",
+                "source_of_confusion": "Оба про «значение, если ничего нет», и эту общую идею ошибочно считают полным совпадением.",
+                "if_it_were_true": "Тогда не было бы нужды в двух атрибутах, но они существуют именно из-за разной семантики (всегда vs только при null).",
+                "how_it_should_be": "`constant` всегда перезаписывает поле, `defaultValue` — лишь фолбэк на `null`; их нельзя считать взаимозаменяемыми."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Чтобы задать константу, пишут `@Mapping(target = \"type\", value = \"USER\")` — атрибут `value` в `@Mapping` отвечает за фиксированное значение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фиксированное значение задаётся атрибутом `constant`; атрибута `value` для этого у `@Mapping` нет.",
+                "source_of_confusion": "У многих аннотаций есть `value`, и его по аналогии ждут и здесь.",
+                "if_it_were_true": "Тогда в `MapStruct` не было бы отдельного `constant`, но именно он отвечает за константы.",
+                "how_it_should_be": "Константа — это `@Mapping(target = ..., constant = \"USER\")`, а не несуществующий атрибут `value`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`constant = \"true\"` нельзя использовать для `boolean`-поля — строку `MapStruct` не сконвертирует в примитив, нужен только `defaultExpression`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MapStruct` конвертирует строковую константу в нужный тип, включая `boolean`: `constant = \"true\"` корректно превращается в `true`.",
+                "source_of_confusion": "Кажется, что строка и примитив несовместимы без явного парсинга.",
+                "if_it_were_true": "Тогда `constant = \"true\"` давал бы ошибку типов, но `MapStruct` штатно делает строковую конверсию для констант.",
+                "how_it_should_be": "Строковые константы конвертируются в целевой тип (`boolean`, числа, enum), так что `constant = \"true\"` для `boolean` работает."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Через атрибуты `@Mapping`: `constant` всегда подставляет значение и игнорирует source; `defaultValue` подставляет значение только если source-поле равно `null`; `defaultExpression = \"java(...)\"` задаёт вычисляемый Java-дефолт.",
+              "correct": true,
+              "sections": {
+                "explanation": "Три атрибута решают три разные задачи: `constant` — жёсткое значение всегда, `defaultValue` — фолбэк на `null` source, `defaultExpression` — вычисляемый дефолт через Java-код.",
+                "example": "`@Mapping(target = \"type\", constant = \"USER\")` всегда ставит `USER`; `@Mapping(target = \"role\", defaultValue = \"READER\")` — `READER` только когда `source.role == null`; `@Mapping(target = \"score\", defaultExpression = \"java(0)\")`.",
+                "when_to_apply": "`constant` — для фиксированных значений независимо от входа; `defaultValue`/`defaultExpression` — для фолбэка, когда источник пуст.",
+                "edge_cases": "Важно не путать `constant` и `defaultValue`: первый перезаписывает даже непустой source, второй срабатывает строго на `null`-значении source-поля.",
+                "related": "[[java-mapstruct-interview#Q9]] expression и defaultExpression; [[java-mapstruct-interview#Q27]] стратегии обработки null; [[java-mapstruct-interview#Q6]] базовое сопоставление полей."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать Java-выражение в маппинге?",
+          "options": [
+            {
+              "text": "Через `@Mapping(target = ..., expression = \"java(...)\")` можно вставить произвольный Java-код, например `expression = \"java(UUID.randomUUID().toString())\"`. Классы, используемые в выражении, нужно импортировать через `@Mapper(imports = {...})`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`expression = \"java(...)\"` встраивает произвольный Java-код в сгенерированную реализацию, что позволяет вычислять значения, недостижимые простым копированием поля.",
+                "example": "`@Mapper(imports = {UUID.class, Instant.class})` плюс `@Mapping(target = \"id\", expression = \"java(UUID.randomUUID().toString())\")` и `@Mapping(target = \"fullName\", expression = \"java(person.getFirstName() + \\\" \\\" + person.getLastName())\")`.",
+                "when_to_apply": "Применять для значений, которые нельзя получить простым копированием поля: генерация id, текущее время, конкатенация нескольких полей source.",
+                "edge_cases": "Злоупотреблять не стоит: сложная логика в строке-выражении не проверяется компилятором так же удобно, как обычный код, поэтому её лучше выносить в `default`-методы или классы из `uses`.",
+                "related": "[[java-mapstruct-interview#Q8]] defaultExpression и константы; [[java-mapstruct-interview#Q19]] uses для custom-логики; [[java-mapstruct-interview#Q4]] параметр imports у @Mapper."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Java-выражение пишут как обычный код прямо в `expression = \"UUID.randomUUID().toString()\"`, без обёртки `java(...)` — `MapStruct` сам распознаёт, что это код.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Выражение обязательно оборачивается в `java(...)`: `expression = \"java(UUID.randomUUID().toString())\"`, иначе `MapStruct` примет строку за обычный source-путь.",
+                "source_of_confusion": "Кажется лишним писать `java(...)`, ведь это и так Java.",
+                "if_it_were_true": "Тогда `MapStruct` не отличал бы код от имени поля, но именно обёртка `java(...)` сигнализирует «это выражение».",
+                "how_it_should_be": "Синтаксис строго `expression = \"java(...)\"`; без обёртки строка интерпретируется как путь к полю, а не как код."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Классы в выражении (`UUID`, `Instant`) не нужно импортировать — `MapStruct` автоматически добавляет импорты по полному имени класса в строке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Используемые в `expression` классы нужно объявить в `@Mapper(imports = {...})`, иначе сгенерированный `*Impl` не скомпилируется из-за отсутствующего импорта.",
+                "source_of_confusion": "В обычном Java IDE сама добавляет импорты, и это ожидание переносят на codegen.",
+                "if_it_were_true": "Тогда `@Mapper` не имел бы атрибута `imports`, но он есть именно для классов из expression/defaultExpression.",
+                "how_it_should_be": "Классы для выражения подключают через `imports` в `@Mapper`; без этого генерация даст ошибку компиляции."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`expression` можно применять только к примитивным типам и `String`; для объектов и коллекций он запрещён компилятором `MapStruct`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`expression` возвращает любой нужный тип (объект, коллекцию, дату) — ограничения по типам нет, важно лишь чтобы тип результата подходил target-полю.",
+                "source_of_confusion": "Простые примеры с id/строками создают впечатление, что выражения только для скаляров.",
+                "if_it_were_true": "Тогда нельзя было бы написать `expression = \"java(Instant.now())\"`, но такой пример как раз типичен.",
+                "how_it_should_be": "`expression` поддерживает произвольный тип результата; главное — совместимость с типом target-поля."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как замаппить вложенные объекты (nested mapping)?",
+          "options": [
+            {
+              "text": "Вложенные объекты маппятся только полностью автоматически: `MapStruct` сам рекурсивно сопоставит все вложенные типы без `uses` и без dot-notation.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для вложенного типа нужен либо метод-маппинг, либо запись в `uses`, либо явный dot-notation; полностью «само собой» вложенный объект без этого не замаппится.",
+                "source_of_confusion": "Авто-маппинг плоских полей работает «сам», и это ожидание распространяют на вложенные типы.",
+                "if_it_were_true": "Тогда не было бы атрибута `uses` и dot-notation для nested, но они существуют именно для этого.",
+                "how_it_should_be": "Вложенный маппинг требует явного способа (метод/`uses`/dot-notation); рекурсивной магии без источника маппинга нет."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Тремя способами: (1) автоматически — добавить маппер вложенного типа в `uses` (`@Mapper(uses = AddressMapper.class)`), и `MapStruct` сам преобразует `address → addressDto`; (2) явно через dot-notation `@Mapping(source = \"address.city\", target = \"city\")` для «расплющивания»; (3) методом самого маппера в abstract class.",
+              "correct": true,
+              "sections": {
+                "explanation": "Вложенный маппинг нельзя получить полностью «само собой»: нужен либо метод/`uses` для целого поддерева, либо dot-notation для расплющивания конкретных полей.",
+                "example": "`@Mapping(source = \"address.city\", target = \"city\")` и `@Mapping(source = \"address.zip\", target = \"postalCode\")` разворачивают вложенный `Address` в плоский `UserFlatDto`.",
+                "when_to_apply": "dot-notation — когда нужно «расплющить» структуру в плоский DTO; `uses` — когда вложенный объект маппится в свой DTO целиком и переиспользуется в других мапперах.",
+                "edge_cases": "Если для вложенного типа нет ни метода, ни записи в `uses`, ни dot-notation, `MapStruct` не сможет построить маппинг и сборка упадёт с ошибкой о ненайденном маппинге.",
+                "related": "[[java-mapstruct-interview#Q19]] uses для вложенных мапперов; [[java-mapstruct-interview#Q6]] базовое сопоставление полей; [[java-mapstruct-interview#Q22]] маппинг в абстрактном классе."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Dot-notation в `@Mapping` (`source = \"address.city\"`) недопустима — точка в пути поля вызывает ошибку парсинга, нужно всегда писать отдельный метод.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Dot-notation полностью поддерживается: `source = \"address.city\"` корректно обращается к вложенному полю и часто используется для расплющивания структуры.",
+                "source_of_confusion": "Кажется, что точка зарезервирована и спецсимволы в строке пути запрещены.",
+                "if_it_were_true": "Тогда нельзя было бы расплющить `Address` в `UserFlatDto`, но это один из штатных приёмов.",
+                "how_it_should_be": "Путь с точкой — валидный синтаксис для доступа к вложенным полям; отдельный метод не обязателен."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Чтобы замаппить вложенный объект через другой маппер, его указывают в атрибуте `imports`, а не `uses`: `@Mapper(imports = AddressMapper.class)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вспомогательные мапперы подключают через `uses`; `imports` нужен только для классов в `expression`/`defaultExpression`, а не для делегирования маппинга.",
+                "source_of_confusion": "Оба атрибута принимают классы, поэтому их легко перепутать.",
+                "if_it_were_true": "Тогда `imports` отвечал бы за подключение мапперов, но за это отвечает `uses`.",
+                "how_it_should_be": "Делегирование вложенного маппинга — это `uses = {AddressMapper.class}`; `imports` служит лишь импортам для выражений."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как маппить коллекции (`List`, `Set`, `Map`)?",
+          "options": [
+            {
+              "text": "Маппинг коллекций нужно писать вручную в `default`-методе с циклом `for` — `MapStruct` не умеет генерировать обход `List`/`Set` автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MapStruct` как раз сам генерирует цикл по коллекции и вызов поэлементного маппера, если тот объявлен; ручной `for` не нужен.",
+                "source_of_confusion": "Привычка писать обход коллекции руками создаёт впечатление, что и здесь без цикла никак.",
+                "if_it_were_true": "Тогда не было бы смысла объявлять `List<OrderDto> toDtoList(...)`, но именно эту сигнатуру `MapStruct` реализует за тебя.",
+                "how_it_should_be": "Коллекционный маппинг генерируется автоматически при наличии маппинга элемента — достаточно объявить метод нужной сигнатуры."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Для маппинга `List` обязательно нужна аннотация `@IterableMapping` на каждом коллекционном методе, иначе `MapStruct` не сгенерирует обход.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@IterableMapping` нужен только при неоднозначности (несколько подходящих методов конверсии элемента); в обычном случае коллекция маппится без него.",
+                "source_of_confusion": "Раз аннотация называется про итерируемые типы, кажется, что она обязательна для любых коллекций.",
+                "if_it_were_true": "Тогда простейший `List<OrderDto> toDtoList(...)` не компилировался бы без `@IterableMapping`, но он работает и так.",
+                "how_it_should_be": "`@IterableMapping` — это инструмент разрешения неоднозначности, а не обязательное условие маппинга коллекций."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`MapStruct` автоматически генерирует маппинг коллекций, если есть маппинг элемента: объявляешь `List<OrderDto> toDtoList(List<Order> orders)` — он сам итерирует коллекцию и вызывает `toDto()` для каждого элемента. Аналогично для `Set` и `Map<K, V>` (если ключ и значение маппятся).",
+              "correct": true,
+              "sections": {
+                "explanation": "Имея поэлементный маппинг, `MapStruct` сам генерирует обход коллекции и вызов маппера для каждого элемента, поэтому ручной цикл и отдельная конфигурация обычно не нужны.",
+                "example": "При наличии `OrderDto toDto(Order order)` метод `List<OrderDto> toDtoList(List<Order>)` генерируется автоматически; `Map<String, OrderDto> toDtoMap(Map<String, Order>)` тоже работает, так как ключ-`String` совпадает.",
+                "when_to_apply": "Достаточно объявить сигнатуру коллекционного метода рядом с поэлементным маппером — отдельной конфигурации обычно не требуется.",
+                "edge_cases": "Если ключ `Map` — пользовательский тип, требующий конверсии (`Map<Entity, Dto>`), автоматического маппинга ключа не будет — нужен custom-метод для преобразования ключа.",
+                "related": "[[java-mapstruct-interview#Q12]] @IterableMapping при неоднозначности; [[java-mapstruct-interview#Q13]] маппинг enum-элементов; [[java-mapstruct-interview#Q1]] поэлементный маппинг как основа."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`MapStruct` поддерживает только `List`; для `Set` и `Map` нужны сторонние конвертеры, так как их порядок и ключи он обработать не может.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MapStruct` штатно маппит и `Set`, и `Map<K, V>` (при наличии маппинга ключа и значения), не только `List`.",
+                "source_of_confusion": "`List` — самый частый пример в туториалах, что создаёт впечатление об ограничении.",
+                "if_it_were_true": "Тогда нельзя было бы объявить `Set<OrderDto> toDtoSet(...)`, но такой метод генерируется автоматически.",
+                "how_it_should_be": "`List`, `Set` и `Map` поддерживаются из коробки; особый случай — лишь ключ `Map` пользовательского типа, требующий custom-метода."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@IterableMapping` и когда он нужен?",
+          "options": [
+            {
+              "text": "`@IterableMapping` нужен на каждом методе, возвращающем `List`/`Set`, иначе `MapStruct` не поймёт, что результат — коллекция, и не сгенерирует обход.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тип коллекции `MapStruct` распознаёт по сигнатуре сам; `@IterableMapping` требуется лишь для нестандартной конверсии или разрешения неоднозначности.",
+                "source_of_confusion": "Название аннотации намекает, что без неё «итерирование» не включится.",
+                "if_it_were_true": "Тогда обычный `List<OrderDto> toDtoList(...)` не работал бы без аннотации, но он работает.",
+                "how_it_should_be": "Распознавание коллекции автоматическое; `@IterableMapping` — для выбора метода элемента/настройки конверсии, а не для включения обхода."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@IterableMapping` превращает любой метод в метод над коллекцией, оборачивая одиночный source-объект в `List` из одного элемента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@IterableMapping` настраивает уже коллекционный метод (коллекция→коллекция), но не оборачивает одиночный объект в список.",
+                "source_of_confusion": "Слово «iterable» наводит на мысль о создании последовательности из скаляра.",
+                "if_it_were_true": "Тогда им можно было бы конструировать `List` из одного `Order`, но аннотация работает поверх коллекционных сигнатур.",
+                "how_it_should_be": "Аннотация применяется к маппингу коллекция→коллекция и управляет конверсией элементов, а не «листификацией» одиночного объекта."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@IterableMapping` параллелит маппинг коллекции по нескольким потокам, ускоряя обработку больших `List` за счёт `parallelStream`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@IterableMapping` управляет только тем, как и каким методом конвертируются элементы; никакого многопоточного обхода он не добавляет.",
+                "source_of_confusion": "Желание ускорить обработку больших коллекций порождает домысел о параллелизме.",
+                "if_it_were_true": "Тогда у аннотации был бы атрибут вроде `parallel = true`, но её атрибуты — `qualifiedByName`, `elementTargetType` и подобные.",
+                "how_it_should_be": "Это инструмент выбора и настройки поэлементной конверсии; обход остаётся обычным последовательным циклом."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@IterableMapping` нужен, когда коллекцию надо конвертировать нестандартно — например, когда есть несколько возможных методов конверсии элемента и `MapStruct` не знает, какой выбрать. Через `@IterableMapping(qualifiedByName = \"...\")` указываешь конкретный метод для элементов.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@IterableMapping` решает проблему выбора метода конверсии элемента, когда подходящих методов несколько; в однозначном случае он не требуется.",
+                "example": "При двух `@Named`-методах `toUpperCase`/`toLowerCase` пишут `@IterableMapping(qualifiedByName = \"toUpperCase\") List<String> toUpperCaseList(List<String>)` — так выбирается нужная конверсия элементов.",
+                "when_to_apply": "Применять, когда элементного маппинга несколько и без указания возникнет неоднозначность, или когда нужно задать `elementTargetType`/`numberFormat` для элементов коллекции.",
+                "edge_cases": "Если подходящий метод конверсии элемента ровно один, `@IterableMapping` не требуется — `MapStruct` выберет его сам; аннотация решает именно проблему выбора из нескольких.",
+                "related": "[[java-mapstruct-interview#Q11]] базовый маппинг коллекций; [[java-mapstruct-interview#Q20]] @Named и qualifiedByName; [[java-mapstruct-interview#Q13]] маппинг enum в коллекциях."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как маппить enum?",
+          "options": [
+            {
+              "text": "По умолчанию `MapStruct` маппит enum по имени константы (`CREATED → CREATED`, `PAID → PAID`). Для кастомного маппинга используют `@ValueMappings` с `@ValueMapping(source = \"CANCELLED\", target = \"REJECTED\")` и спец-константами `MappingConstants.ANY_REMAINING`, `MappingConstants.NULL`, `MappingConstants.ANY_UNMAPPED`.",
+              "correct": true,
+              "sections": {
+                "explanation": "По умолчанию enum сопоставляется по имени константы; для расхождений и fallback-значений служит `@ValueMapping` со специальными константами охвата.",
+                "example": "`@ValueMappings({ @ValueMapping(source = \"CANCELLED\", target = \"REJECTED\"), @ValueMapping(source = MappingConstants.ANY_REMAINING, target = \"UNKNOWN\") })` — переименовать одно значение и схлопнуть остальные в `UNKNOWN`.",
+                "when_to_apply": "Дефолтного маппинга по имени достаточно, когда наборы констsource и target совпадают; `@ValueMapping` — когда имена различаются или нужен fallback для неизвестных значений.",
+                "edge_cases": "`ANY_REMAINING` ловит все неперечисленные значения, а `ANY_UNMAPPED` — только те, что не указаны явно (без уже сопоставленных), и их легко перепутать при настройке fallback.",
+                "related": "[[java-mapstruct-interview#Q11]] enum внутри коллекций; [[java-mapstruct-interview#Q27]] обработка null при маппинге; [[java-mapstruct-interview#Q6]] сопоставление по имени."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "По умолчанию `MapStruct` маппит enum по порядковому номеру (`ordinal()`), сопоставляя константы по их позиции в объявлении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дефолтный маппинг enum идёт по имени константы (`name()`), а не по `ordinal()` — позиция в объявлении на сопоставление не влияет.",
+                "source_of_confusion": "`ordinal()` — привычный способ хранить enum в БД, и это переносят на маппинг.",
+                "if_it_were_true": "Тогда перестановка констант ломала бы маппинг, но `MapStruct` опирается на имена, поэтому порядок безопасен.",
+                "how_it_should_be": "Сопоставление enum по умолчанию — по имени; для значений с разными именами есть `@ValueMapping`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Кастомный маппинг enum задаётся обычным `@Mapping(source = \"CANCELLED\", target = \"REJECTED\")`, как для полей бинов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для enum используется специальная `@ValueMapping`/`@ValueMappings`, а не `@Mapping`, которая предназначена для свойств бинов.",
+                "source_of_confusion": "И поля, и enum-значения сопоставляются «source→target», отсюда путаница в выборе аннотации.",
+                "if_it_were_true": "Тогда не было бы отдельной `@ValueMapping`, но она существует именно для enum-констант.",
+                "how_it_should_be": "Кастомное сопоставление констант enum — это `@ValueMapping`; `@Mapping` работает с полями объектов."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`MappingConstants.ANY_REMAINING` и `MappingConstants.ANY_UNMAPPED` — синонимы и ведут себя одинаково, выбор между ними чисто стилистический.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные константы: `ANY_REMAINING` покрывает все неперечисленные значения, а `ANY_UNMAPPED` — только не сопоставленные явно (исключая уже указанные).",
+                "source_of_confusion": "Похожие названия с `ANY_` создают впечатление эквивалентности.",
+                "if_it_were_true": "Тогда существовала бы лишь одна из них, но обе нужны из-за разной семантики покрытия.",
+                "how_it_should_be": "`ANY_REMAINING` и `ANY_UNMAPPED` различаются по охвату значений и не взаимозаменяемы."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как маппить несколько source-объектов в один target?",
+          "options": [
+            {
+              "text": "Несколько source-объектов сначала объединяют в один промежуточный класс-обёртку, и только его передают в маппер — напрямую несколько параметров `MapStruct` не принимает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метод-маппер штатно принимает несколько source-параметров; промежуточная обёртка не нужна, источник поля указывается через `source = \"param.field\"`.",
+                "source_of_confusion": "Привычка к одному входному DTO создаёт впечатление, что несколько источников надо «склеить» заранее.",
+                "if_it_were_true": "Тогда не работал бы пример `toDto(Order, Address, Customer)`, но именно такая сигнатура и используется.",
+                "how_it_should_be": "`MapStruct` поддерживает многопараметрические методы; обёртка-агрегатор избыточна."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Один метод-маппер может принимать несколько source-параметров, а в `@Mapping` указывают, из какого параметра брать поле: `source = \"order.id\"`, `source = \"address.city\"` и т.д. для метода `DeliveryDto toDto(Order order, Address address, Customer customer)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Многопараметрический метод позволяет агрегировать данные из нескольких source-объектов в один target, адресуя поля через `параметр.поле`.",
+                "example": "`@Mapping(source = \"order.id\", target = \"orderId\")`, `@Mapping(source = \"address.city\", target = \"city\")`, `@Mapping(source = \"customer.name\", target = \"customerName\")` собирают `DeliveryDto` из трёх объектов.",
+                "when_to_apply": "Применять, когда target-DTO агрегирует данные из нескольких связанных доменных объектов (заказ + адрес + клиент → одна доставочная карточка).",
+                "edge_cases": "При конфликте одноимённых полей в разных параметрах (`order.name` и `customer.name`) `MapStruct` не угадает источник и выдаст ошибку компиляции — нужно явно указать `source` с именем параметра для каждого поля.",
+                "related": "[[java-mapstruct-interview#Q10]] dot-notation для вложенных полей; [[java-mapstruct-interview#Q6]] явное сопоставление source/target; [[java-mapstruct-interview#Q9]] expression с несколькими параметрами."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "При нескольких source-параметрах `MapStruct` сам разрешает конфликт одноимённых полей, беря значение из первого параметра по порядку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Конфликт одноимённых полей (`order.name` vs `customer.name`) даёт ошибку компиляции — `MapStruct` требует явно указать источник, а не молча берёт первый параметр.",
+                "source_of_confusion": "Логика «первый побеждает» кажется разумным дефолтом для неоднозначности.",
+                "if_it_were_true": "Тогда тихо терялись бы данные не из того объекта, но `MapStruct` намеренно заставляет разрешить конфликт явно.",
+                "how_it_should_be": "При неоднозначности нужно явно прописать `source = \"order.name\"`/`source = \"customer.name\"`; автоматического выбора по порядку нет."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В многопараметрическом методе нельзя смешивать dot-notation: каждый параметр должен маппиться только целиком в одноимённое вложенное поле target.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Dot-notation (`source = \"order.id\"`) — основной способ адресовать поля конкретного параметра в многопараметрическом методе, никаких запретов на смешивание нет.",
+                "source_of_confusion": "Кажется, что несколько параметров усложняют разбор путей и поэтому ограничивают синтаксис.",
+                "if_it_were_true": "Тогда нельзя было бы вытащить `order.id` и `address.city` в плоский DTO, но именно так это и делается.",
+                "how_it_should_be": "Адресация полей каждого параметра через `параметр.поле` — штатный и основной приём для нескольких source-объектов."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@MappingTarget` и зачем он нужен?",
+          "options": [
+            {
+              "text": "`@MappingTarget` указывает, какое поле в target является основным ключом, чтобы `MapStruct` корректно сопоставлял объекты при маппинге коллекций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@MappingTarget` помечает целиком параметр-объект для обновления in-place, а не поле-ключ; к сопоставлению элементов коллекций он отношения не имеет.",
+                "source_of_confusion": "Слово «target» ассоциируется с целевым полем/ключом, а не с целевым объектом.",
+                "if_it_were_true": "Тогда у аннотации был бы атрибут с именем поля-ключа, но она ставится на параметр без атрибутов.",
+                "how_it_should_be": "`@MappingTarget` — это «обнови этот существующий объект»; понятие первичного ключа сюда не относится."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Метод с `@MappingTarget` обязан возвращать новый объект того же типа; возвращаемый тип `void` для такого метода недопустим.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метод обновления с `@MappingTarget` обычно как раз `void` — он мутирует переданный объект; возврат нового экземпляра не требуется.",
+                "source_of_confusion": "Привычка, что маппер «что-то возвращает», создаёт ожидание ненулевого возвращаемого типа.",
+                "if_it_were_true": "Тогда нельзя было бы написать `void updateDto(..., @MappingTarget ...)`, но это канонический пример.",
+                "how_it_should_be": "`@MappingTarget`-метод чаще `void` (обновляет на месте); возврат опционален и не обязателен."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@MappingTarget` помечает параметр как существующий объект, который нужно обновить, а не создавать новый: `void updateDto(User user, @MappingTarget UserDto dto)`. Часто сочетается с `nullValuePropertyMappingStrategy = IGNORE` для PATCH-операций — обновляются только non-null поля.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@MappingTarget` превращает маппинг в обновление существующего объекта вместо создания нового — основа для PATCH-операций вместе со стратегией `IGNORE`.",
+                "example": "`@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE) void partialUpdate(UserUpdateRequest request, @MappingTarget User user)` — типичный паттерн PATCH-эндпоинта.",
+                "when_to_apply": "Применять, когда нужно обновить уже загруженную сущность из DTO (in-place merge), а не аллоцировать новый объект — частый сценарий update/patch в сервисном слое.",
+                "edge_cases": "Без `nullValuePropertyMappingStrategy = IGNORE` даже `null`-поля request перезапишут существующие значения target — для частичного обновления это почти всегда нежелательно.",
+                "related": "[[java-mapstruct-interview#Q18]] @BeanMapping и стратегии null; [[java-mapstruct-interview#Q27]] NullValuePropertyMappingStrategy; [[java-mapstruct-interview#Q16]] @InheritConfiguration для update-метода."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "По умолчанию метод с `@MappingTarget` не перезаписывает `null`-поля source — `MapStruct` сам пропускает их без дополнительной настройки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию (`SET_TO_NULL`) `null`-поля source перезатрут target; чтобы их игнорировать, нужно явно задать `nullValuePropertyMappingStrategy = IGNORE`.",
+                "source_of_confusion": "Логично ожидать, что «обновление» не должно стирать данные, отсюда домысел о дефолтном пропуске null.",
+                "if_it_were_true": "Тогда PATCH работал бы корректно без настройки, но без `IGNORE` частичное обновление затрёт поля в null.",
+                "how_it_should_be": "Дефолт перезаписывает поле в `null`; безопасный partial update требует явного `nullValuePropertyMappingStrategy = IGNORE`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@InheritConfiguration` и `@InheritInverseConfiguration`?",
+          "options": [
+            {
+              "text": "`@InheritConfiguration` наследует настройки маппера из родительского интерфейса при наследовании интерфейсов, аналогично наследованию методов в Java.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@InheritConfiguration` переиспользует `@Mapping`-настройки конкретного метода (по `name`) внутри одного маппера, а не наследует конфигурацию от родительского интерфейса.",
+                "source_of_confusion": "Слово «inherit» прямо ассоциируется с наследованием классов/интерфейсов Java.",
+                "if_it_were_true": "Тогда у аннотации не было бы атрибута `name` с именем метода-донора, но он есть и указывает на конкретный метод.",
+                "how_it_should_be": "Это переиспользование настроек указанного метода (`name = \"toDto\"`), а не Java-наследование между интерфейсами."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@InheritInverseConfiguration` просто меняет местами параметры `source` и `target` в `@Mapping`, но требует, чтобы оба метода имели одинаковую сигнатуру.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сигнатуры прямого и обратного методов как раз противоположны (`toDto(Product)` vs `toEntity(ProductDto)`); аннотация инвертирует правила между разными по направлению методами.",
+                "source_of_confusion": "Идея «поменять source и target» создаёт впечатление, что и типы должны совпасть.",
+                "if_it_were_true": "Тогда нельзя было бы написать обратный `Product toEntity(ProductDto)`, но именно для него аннотация и предназначена.",
+                "how_it_should_be": "Прямой и инверсный методы имеют зеркальные сигнатуры; `@InheritInverseConfiguration` связывает их по направлению маппинга."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@InheritConfiguration` и `@InheritInverseConfiguration` взаимозаменяемы: оба переносят `@Mapping` из метода-донора в текущий метод одинаковым образом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@InheritConfiguration` применяет правила в том же направлении (например, для update), а `@InheritInverseConfiguration` — в обратном; это разные по смыслу аннотации.",
+                "source_of_confusion": "Похожие имена и общая идея переиспользования создают впечатление эквивалентности.",
+                "if_it_were_true": "Тогда хватило бы одной аннотации, но нужны обе из-за прямого и обратного направлений.",
+                "how_it_should_be": "`@InheritConfiguration` — то же направление, `@InheritInverseConfiguration` — инверсия; путать их нельзя."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Они позволяют переиспользовать настройки `@Mapping` из другого метода без дублирования. `@InheritConfiguration(name = \"toDto\")` применяет те же маппинги (например, в update-методе), а `@InheritInverseConfiguration(name = \"toDto\")` — применяет их в обратную сторону (target↔source) для двунаправленного маппинга.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти аннотации устраняют дублирование `@Mapping`: одна переиспользует правила метода-донора, другая применяет их в обратном направлении для двунаправленного маппинга.",
+                "example": "Объявив `@Mapping(source = \"name\", target = \"title\") ProductDto toDto(Product)`, можно написать `@InheritInverseConfiguration(name = \"toDto\") Product toEntity(ProductDto)` — обратные маппинги не дублируются.",
+                "when_to_apply": "Применять, когда есть прямой и обратный маппинг или update-вариант с теми же правилами — чтобы один раз описать `@Mapping` и переиспользовать.",
+                "edge_cases": "`@InheritInverseConfiguration` корректно инвертирует только однозначно обратимые маппинги; сложные `expression`/constant-правила инвертировать нельзя, и для них он не подойдёт.",
+                "related": "[[java-mapstruct-interview#Q15]] @MappingTarget в update-методе; [[java-mapstruct-interview#Q6]] исходные @Mapping-настройки; [[java-mapstruct-interview#Q4]] конфигурация маппера в целом."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать `@BeforeMapping` и `@AfterMapping`?",
+          "options": [
+            {
+              "text": "Это хуки для логики до/после сгенерированного маппинга. `@BeforeMapping`-метод выполняется перед заполнением target (валидация source), `@AfterMapping` — после (доустановка полей). Работают только в abstract class или в отдельном классе хуков, подключённом через `uses` — в чистом интерфейсе их использовать нельзя.",
+              "correct": true,
+              "sections": {
+                "explanation": "Хуки `@BeforeMapping`/`@AfterMapping` встраивают пользовательскую логику до и после сгенерированного маппинга, но требуют abstract class или класса хуков в `uses`.",
+                "example": "`@BeforeMapping protected void validate(User user){...}` проверяет вход, а `@AfterMapping protected void setAuditFields(@MappingTarget UserDto dto){ dto.setMappedAt(Instant.now()); }` дозаполняет результат.",
+                "when_to_apply": "Применять для сквозной логики маппинга: валидация source перед маппингом, аудит-поля или обогащение target после основного маппинга.",
+                "edge_cases": "`@MappingTarget` в параметре `@AfterMapping` даёт доступ к уже заполненному target для модификации; в чистом интерфейсе хуки недоступны — нужен abstract class или класс из `uses`.",
+                "related": "[[java-mapstruct-interview#Q22]] маппинг в абстрактном классе; [[java-mapstruct-interview#Q15]] @MappingTarget; [[java-mapstruct-interview#Q21]] Decorator как альтернатива обогащению."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@BeforeMapping` и `@AfterMapping` можно объявлять в обычном интерфейсе-маппере как `default`-методы — `MapStruct` сам встроит их вызовы в нужные точки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Хуки требуют abstract class или класса хуков в `uses`; в чистом интерфейсе (даже как `default`-методы) их встроить нельзя.",
+                "source_of_confusion": "`default`-методы в интерфейсах дают тело методу, и это создаёт впечатление, что хуки тоже сработают.",
+                "if_it_were_true": "Тогда в документации не было бы оговорки про abstract class, но именно она и есть.",
+                "how_it_should_be": "Для `@Before/@AfterMapping` нужен абстрактный класс или отдельный класс хуков в `uses`, а не интерфейс."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@AfterMapping` выполняется до основного маппинга, а `@BeforeMapping` — после; имена исторически перепутаны в API `MapStruct`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Порядок прямой и интуитивный: `@BeforeMapping` — перед заполнением target, `@AfterMapping` — после; имена соответствуют поведению.",
+                "source_of_confusion": "Желание найти «подвох» в API порождает миф о перепутанных именах.",
+                "if_it_were_true": "Тогда нельзя было бы валидировать source в `@BeforeMapping` до маппинга, но именно для этого он и предназначен.",
+                "how_it_should_be": "`@BeforeMapping` срабатывает до, `@AfterMapping` — после основного маппинга; никакой инверсии нет."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@AfterMapping`-метод не может изменять target — он получает только копию результата и предназначен лишь для логирования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С параметром `@MappingTarget` метод `@AfterMapping` получает сам заполненный объект и штатно его модифицирует (доустанавливает поля), а не копию.",
+                "source_of_confusion": "Слово «after» наводит на мысль, что результат уже зафиксирован и неизменяем.",
+                "if_it_were_true": "Тогда пример `dto.setMappedAt(Instant.now())` в `@AfterMapping` не работал бы, но это типичный приём.",
+                "how_it_should_be": "`@AfterMapping` с `@MappingTarget` предназначен именно для пост-обработки и изменения готового target."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@BeanMapping` и `NullValuePropertyMappingStrategy`?",
+          "options": [
+            {
+              "text": "`@BeanMapping` — это глобальная настройка всего маппера, эквивалент `@Mapper`, применяемая ко всем его методам сразу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@BeanMapping` действует на уровне одного метода, а глобальная конфигурация маппера — это `@Mapper`; их области применения разные.",
+                "source_of_confusion": "Оба про «настройку маппинга», поэтому область действия легко перепутать.",
+                "if_it_were_true": "Тогда не было бы смысла в двух аннотациях, но `@Mapper` — про класс, а `@BeanMapping` — про конкретный метод.",
+                "how_it_should_be": "`@BeanMapping` настраивает отдельный метод; глобальные опции задаёт `@Mapper`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@BeanMapping` — настройка уровня одного метода маппинга: `nullValueMappingStrategy` (поведение при null всего source), `nullValuePropertyMappingStrategy` (поведение при null отдельного поля), `ignoreByDefault` и др. `NullValuePropertyMappingStrategy` определяет, что делать, когда конкретное source-поле равно null.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@BeanMapping` настраивает поведение одного метода, а `NullValuePropertyMappingStrategy` управляет тем, что происходит с целевым полем, когда соответствующее поле source равно `null`.",
+                "example": "Стратегии `NullValuePropertyMappingStrategy`: `SET_TO_NULL` (default — `target.setField(null)`), `IGNORE` (не трогать target-поле), `SET_TO_DEFAULT` (поставить default: 0, \"\", пустую коллекцию). `IGNORE` — ключ для PATCH.",
+                "when_to_apply": "Использовать `@BeanMapping` когда нужно точечно настроить поведение одного метода (часто `IGNORE` для partial update), не меняя глобальную конфигурацию маппера.",
+                "edge_cases": "Дефолт `SET_TO_NULL` затирает поле в null при пустом source; легко забыть переключить на `IGNORE` и случайно обнулить данные при частичном обновлении.",
+                "related": "[[java-mapstruct-interview#Q15]] @MappingTarget и PATCH; [[java-mapstruct-interview#Q27]] полный список стратегий null; [[java-mapstruct-interview#Q7]] ignoreByDefault для игнора полей."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`NullValuePropertyMappingStrategy.IGNORE` означает, что null-поле source записывается в target как пустая строка/ноль (`SET_TO_DEFAULT`).",
+              "correct": false,
+              "sections": {
+                "what_actually": "`IGNORE` оставляет target-поле нетронутым, а установка дефолта (0/\"\") — это отдельная стратегия `SET_TO_DEFAULT`; их путать нельзя.",
+                "source_of_confusion": "И `IGNORE`, и `SET_TO_DEFAULT` «не пишут null», отсюда смешение.",
+                "if_it_were_true": "Тогда `IGNORE` затирал бы данные дефолтом, но его смысл — не трогать существующее значение target.",
+                "how_it_should_be": "`IGNORE` сохраняет текущее значение target; подстановка default — это `SET_TO_DEFAULT`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "По умолчанию `NullValuePropertyMappingStrategy` равен `IGNORE`, поэтому update-методы по умолчанию не затирают поля null-значениями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дефолт — `SET_TO_NULL` (null-поле перезаписывает target в null); `IGNORE` нужно включать явно, иначе при partial update данные затрутся.",
+                "source_of_confusion": "Безопасное поведение `IGNORE` так часто включают, что принимают за дефолт.",
+                "if_it_were_true": "Тогда PATCH работал бы корректно без настройки, но без явного `IGNORE` поля обнулятся.",
+                "how_it_should_be": "По умолчанию действует `SET_TO_NULL`; для сохранения значений при null source стратегию `IGNORE` задают вручную."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как подключить внешний / custom mapper через `uses`?",
+          "options": [
+            {
+              "text": "`uses` принимает список DTO-классов, для которых нужно сгенерировать маппинг, и заменяет объявление отдельных методов в интерфейсе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`uses` принимает мапперы/конвертеры-помощники, а не целевые DTO; методы маппинга всё равно объявляются в самом интерфейсе.",
+                "source_of_confusion": "Слово «uses» можно прочитать как «какие типы использовать», а не «какие хелперы подключить».",
+                "if_it_were_true": "Тогда не нужно было бы объявлять методы в маппере, но их объявляют, а `uses` лишь добавляет помощников.",
+                "how_it_should_be": "В `uses` перечисляют вспомогательные мапперы/конвертеры; целевые DTO задаются сигнатурами методов."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Класс-конвертер в `uses` должен реализовывать специальный интерфейс `Converter<S, T>` из `MapStruct`, иначе его методы не будут найдены.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Конвертер в `uses` — это обычный класс с методами нужной сигнатуры (`BigDecimal fromString(String)`); реализация специального интерфейса не требуется.",
+                "source_of_confusion": "Аналогия со Spring `Converter<S,T>` создаёт ожидание обязательного интерфейса.",
+                "if_it_were_true": "Тогда нельзя было бы передать в `uses` простой `MoneyConverter` без интерфейса, но именно так и делают.",
+                "how_it_should_be": "Достаточно класса с методами подходящей сигнатуры; `MapStruct` находит их по типам параметров/возврата без маркерного интерфейса."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`uses` подключает другие мапперы или обычные классы-конвертеры: `@Mapper(uses = {AddressMapper.class, MoneyConverter.class})`. `MapStruct` ищет в этих классах подходящий метод по сигнатуре (тип параметра → тип возврата) и автоматически вызывает его при маппинге соответствующих типов.",
+              "correct": true,
+              "sections": {
+                "explanation": "`uses` подключает вспомогательные мапперы и конвертеры, и `MapStruct` автоматически вызывает их подходящий по сигнатуре метод при маппинге нужных типов.",
+                "example": "С `@Mapper(uses = {AddressMapper.class})` маппер `OrderMapper` сам преобразует `address → addressDto` через метод `AddressMapper.toDto(Address)`, не описывая это вручную; `MoneyConverter.fromString(String)` подхватится для `String → BigDecimal`.",
+                "when_to_apply": "Применять для переиспользования вложенных мапперов и для типовых конверсий значений (деньги, даты, id), вынесенных в отдельные конвертеры.",
+                "edge_cases": "`MapStruct` выбирает метод из `uses` по совместимости типов; если подходящих методов несколько и тип одинаков, возникнет неоднозначность — её разрешают через `@Named`/`@Qualifier`.",
+                "related": "[[java-mapstruct-interview#Q10]] uses для вложенных объектов; [[java-mapstruct-interview#Q20]] @Named при неоднозначности; [[java-mapstruct-interview#Q9]] expression как альтернатива конвертеру."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Метод из `uses` нужно явно указать на каждом `@Mapping` через атрибут `mapper = AddressMapper.class`, иначе он не будет применён.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При однозначном соответствии типов `MapStruct` подбирает метод из `uses` автоматически; атрибута `mapper` у `@Mapping` нет, явное указание метода — это `qualifiedByName`.",
+                "source_of_confusion": "Хочется явного контроля, отсюда домысел об обязательном указании класса-маппера.",
+                "if_it_were_true": "Тогда автоматический вызов `AddressMapper.toDto` был бы невозможен, но он и есть главное удобство `uses`.",
+                "how_it_should_be": "Подбор метода из `uses` автоматический по типам; уточняют выбор лишь при неоднозначности через `@Named`/`qualifiedByName`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@Qualifier` и `@Named` в `MapStruct`?",
+          "options": [
+            {
+              "text": "`@Named` в `MapStruct` — это та же аннотация Spring `@Qualifier` для инъекции бина-маппера, она указывает Spring, какой именно маппер внедрить.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Named`/`qualifiedByName` в `MapStruct` выбирают метод конверсии при codegen, а не управляют DI-инъекцией бинов как Spring `@Qualifier`.",
+                "source_of_confusion": "Spring тоже использует `@Qualifier`/`@Named` для разрешения бинов, отсюда смешение контекстов.",
+                "if_it_were_true": "Тогда они влияли бы только на инъекцию, но они влияют на выбор метода в сгенерированном маппинге.",
+                "how_it_should_be": "Это механизм выбора одного из нескольких методов конверсии; к Spring-инъекции бинов он отношения не имеет."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@Named` нужно ставить на каждый метод-маппер всегда, даже если он один — иначе `MapStruct` не сможет его вызвать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Named` требуется только при неоднозначности (несколько подходящих методов); единственный метод вызывается без него.",
+                "source_of_confusion": "Кажется, что для надёжного выбора методу всегда нужно «имя».",
+                "if_it_were_true": "Тогда простейшие мапперы не работали бы без `@Named`, но они прекрасно работают.",
+                "how_it_should_be": "`@Named` решает проблему выбора из нескольких методов; для одного подходящего метода он не нужен."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "На стороне `@Mapping` метод выбирают через атрибут `named = \"withTax\"`, который ссылается на значение `@Named`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ссылка на `@Named`-метод задаётся атрибутом `qualifiedByName = \"withTax\"`, а не несуществующим `named`.",
+                "source_of_confusion": "Логично ждать симметрии: раз метод `@Named`, то и ссылка через `named`.",
+                "if_it_were_true": "Тогда в API был бы атрибут `named`, но используется `qualifiedByName` (и `qualifiedBy` для типизированных квалификаторов).",
+                "how_it_should_be": "Метод выбирают через `qualifiedByName` (строка) или `qualifiedBy` (класс-аннотация), а не через `named`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Когда несколько методов могут конвертировать один тип в другой, `@Named`/`@Qualifier` помогают `MapStruct` выбрать нужный. Метод помечают `@Named(\"withTax\")`, а на `@Mapping` указывают `qualifiedByName = \"withTax\"`. Можно создать и собственную аннотацию-квалификатор через мета-аннотацию `@Qualifier`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@Named`/`qualifiedByName` разрешают неоднозначность, когда для одной пары типов есть несколько методов конверсии, явно указывая нужный метод.",
+                "example": "Два `@Named`-метода `convertWithTax`/`convertWithoutTax` для `BigDecimal → BigDecimal`, и `@Mapping(source = \"basePrice\", target = \"displayPrice\", qualifiedByName = \"withTax\")` выбирает нужный.",
+                "when_to_apply": "Применять, когда для одной пары типов существует несколько методов конверсии и нужно явно указать, какой из них использовать в конкретном маппинге.",
+                "edge_cases": "`qualifiedByName` ссылается на строковое имя из `@Named`; своя `@Qualifier`-аннотация (`@WithTax`) задаётся через `qualifiedBy = WithTax.class` — это типобезопаснее, чем строки, но требует объявить аннотацию.",
+                "related": "[[java-mapstruct-interview#Q19]] неоднозначность методов из uses; [[java-mapstruct-interview#Q12]] qualifiedByName в @IterableMapping; [[java-mapstruct-interview#Q13]] выбор конверсии для значений."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Decorator-паттерн в `MapStruct`?",
+          "options": [
+            {
+              "text": "`@DecoratedWith(MyDecorator.class)` позволяет добавить поведение поверх сгенерированного маппера, не теряя его реализацию. Декоратор — abstract class, реализующий интерфейс маппера, в который через `@Delegate` инжектится сгенерированный делегат; нужные методы переопределяются с вызовом `delegate` плюс доп.логикой.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@DecoratedWith` оборачивает сгенерированный маппер декоратором, который через `@Delegate` переиспользует исходную реализацию и добавляет логику поверх неё.",
+                "example": "`@Mapper(componentModel = \"spring\") @DecoratedWith(UserMapperDecorator.class)` плюс декоратор, где `toDto` вызывает `delegate.toDto(user)` и дополняет результат: `dto.setAvatarUrl(buildAvatarUrl(user.getId()))`.",
+                "when_to_apply": "Применять, когда маппинг нужно обогатить данными из сервисов (URL картинки, вычисляемые поля), не ломая чистоту декларативного сгенерированного маппинга.",
+                "edge_cases": "`@Delegate` подставляет сгенерированный маппер; непереопределённые методы идут в делегат напрямую, а переопределённые — через ручной код декоратора, что и даёт точечное обогащение.",
+                "related": "[[java-mapstruct-interview#Q17]] @AfterMapping как альтернатива обогащению; [[java-mapstruct-interview#Q22]] abstract class и зависимости; [[java-mapstruct-interview#Q23]] componentModel spring для декоратора."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Decorator в `MapStruct` полностью заменяет сгенерированный маппер: после `@DecoratedWith` исходная реализация не создаётся, и весь маппинг пишут вручную в декораторе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сгенерированный маппер сохраняется и доступен в декораторе через `@Delegate`; декоратор дополняет, а не заменяет реализацию.",
+                "source_of_confusion": "Слово «декоратор» иногда понимают как «обёртка вместо», а не «обёртка поверх».",
+                "if_it_were_true": "Тогда не было бы смысла в `@Delegate`, но именно он даёт доступ к сгенерированному делегату.",
+                "how_it_should_be": "Декоратор оборачивает и переиспользует сгенерированный маппер через `@Delegate`, добавляя логику поверх него."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@DecoratedWith` ставится на сам класс-декоратор, указывая, какой интерфейс-маппер он декорирует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@DecoratedWith(Decorator.class)` ставится на интерфейс-маппер и указывает класс-декоратор; направление обратное предложенному.",
+                "source_of_confusion": "Интуитивно кажется, что аннотация должна быть на декораторе и ссылаться на маппер.",
+                "if_it_were_true": "Тогда декоратор не подключился бы к нужному мапперу автоматически, но `@DecoratedWith` на маппере как раз это и делает.",
+                "how_it_should_be": "Аннотация `@DecoratedWith` размещается на маппере и ссылается на класс-декоратор, а не наоборот."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Декоратор в `MapStruct` должен быть финальным конкретным классом и сам реализовывать все методы маппинга без обращения к сгенерированному коду.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Декоратор — это abstract class, реализующий интерфейс маппера и делегирующий невыделенные методы через `@Delegate`; реализовывать всё вручную не нужно.",
+                "source_of_confusion": "Привычка к конкретным классам-реализациям создаёт ожидание «полной» реализации.",
+                "if_it_were_true": "Тогда терялось бы переиспользование сгенерированного кода, но смысл декоратора — переопределить лишь часть методов.",
+                "how_it_should_be": "Декоратор объявляют абстрактным; большую часть методов закрывает делегат, разработчик переопределяет только нужные."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает маппинг в абстрактном классе вместо интерфейса?",
+          "options": [
+            {
+              "text": "Абстрактный класс-маппер ничем не отличается от интерфейса по возможностям — `MapStruct` всё равно игнорирует поля и зависимости, оставляя только генерацию маппинга.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Abstract class как раз даёт то, чего нет у интерфейса: поля-состояние, `@Autowired`-зависимости и хуки `@Before/@AfterMapping`.",
+                "source_of_confusion": "Снаружи оба «объявляют методы маппинга», отсюда впечатление об эквивалентности.",
+                "if_it_were_true": "Тогда не было бы причин выбирать abstract class, но его выбирают именно ради зависимостей и хуков.",
+                "how_it_should_be": "Абстрактный класс расширяет возможности: состояние, DI и хуки, недоступные интерфейсу."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Маппер можно объявить как `abstract class` — это даёт состояние, инъекцию зависимостей и произвольную логику: `@Autowired private RoleService roleService;`, абстрактные методы маппинга и `@AfterMapping`-хуки. `MapStruct` генерирует подкласс, который Spring регистрирует как бин.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объявление маппера абстрактным классом даёт состояние, инъекцию зависимостей и хуки — `MapStruct` генерирует подкласс, управляемый Spring как бин.",
+                "example": "`@Mapper(componentModel = \"spring\") public abstract class UserMapper { @Autowired private RoleService roleService; public abstract UserDto toDto(User user); @AfterMapping protected void enrichWithRoles(...) {...} }`.",
+                "when_to_apply": "Применять, когда мапперу нужны Spring-зависимости, хуки `@Before/@AfterMapping` или собственное состояние — то, чего нельзя сделать в чистом интерфейсе.",
+                "edge_cases": "Ограничение интерфейса: в него нельзя инжектировать зависимости (Spring не управляет интерфейсом напрямую); abstract class снимает это, потому что `MapStruct` генерирует управляемый Spring-подкласс.",
+                "related": "[[java-mapstruct-interview#Q17]] @Before/@AfterMapping требуют abstract class; [[java-mapstruct-interview#Q21]] декоратор тоже abstract; [[java-mapstruct-interview#Q23]] componentModel spring."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "В абстрактном классе-маппере все методы маппинга обязаны иметь тело; абстрактные методы `MapStruct` обрабатывать не умеет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MapStruct` генерирует реализации именно абстрактных методов класса; конкретные `default`/обычные методы он оставляет как есть.",
+                "source_of_confusion": "Привычка, что абстрактный метод реализует наследник-человек, переносится на codegen.",
+                "if_it_were_true": "Тогда нельзя было бы написать `public abstract UserDto toDto(User)`, но это стандартный приём.",
+                "how_it_should_be": "Абстрактные методы класса — точки генерации; их реализует `MapStruct`, как и методы интерфейса."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Чтобы заинжектить зависимость в маппер-интерфейс, достаточно пометить его `@Autowired`-полем в `default`-методе — Spring внедрит зависимость в интерфейс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В интерфейс нельзя внедрить зависимость (нет полей-состояния); для DI нужен abstract class, чей сгенерированный подкласс Spring и регистрирует как бин.",
+                "source_of_confusion": "Желание оставить лаконичный интерфейс порождает домысел об инъекции в `default`-метод.",
+                "if_it_were_true": "Тогда не было бы повода переходить на abstract class ради `RoleService`, но именно из-за DI на него и переходят.",
+                "how_it_should_be": "DI требует абстрактного класса с полем-зависимостью; интерфейс состояния не имеет и инъекцию не поддерживает."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как интегрировать `MapStruct` со Spring?",
+          "options": [
+            {
+              "text": "Чтобы маппер стал Spring-бином, на него вручную вешают `@Component`, а в конфигурации объявляют `@Bean`-метод, создающий `Mappers.getMapper(...)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Достаточно `componentModel = \"spring\"` — `MapStruct` сам пометит сгенерированный `*Impl` как `@Component`; ручной `@Bean`/`@Component` не нужен.",
+                "source_of_confusion": "Привычный способ регистрации бинов через `@Bean` переносят и сюда.",
+                "if_it_were_true": "Тогда не существовало бы `componentModel = \"spring\"`, но это и есть штатный механизм интеграции.",
+                "how_it_should_be": "Регистрация бина достигается через `componentModel = \"spring\"`; ручные `@Bean`-фабрики избыточны."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Spring-маппер нельзя внедрять через конструктор — только через `@Autowired` на поле, потому что `MapStruct` генерирует прокси без конструктора.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сгенерированный `*Impl` — обычный `@Component` с конструктором; конструкторная инъекция (`final`-поле + `@RequiredArgsConstructor`) работает штатно.",
+                "source_of_confusion": "Мифы о «прокси без конструктора» из других технологий создают ложное ограничение.",
+                "if_it_were_true": "Тогда `private final ProductMapper` в `@Service` не инициализировался бы, но это рекомендуемый способ.",
+                "how_it_should_be": "Маппер-бин инжектится и через конструктор, и через `@Autowired`; конструкторная инъекция предпочтительна."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Три шага: (1) добавить `componentModel = \"spring\"` в `@Mapper`; (2) `MapStruct` сгенерирует реализацию с `@Component`; (3) внедрять маппер через конструкторную инъекцию или `@Autowired`. Альтернатива — глобально через `-Amapstruct.defaultComponentModel=spring`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Интеграция со Spring сводится к `componentModel = \"spring\"`: сгенерированный `*Impl` помечается `@Component` и подхватывается обычным сканированием и инъекцией.",
+                "example": "`@Mapper(componentModel = \"spring\") interface ProductMapper { ProductDto toDto(Product); }`, затем в `@Service` с `@RequiredArgsConstructor`: `private final ProductMapper productMapper;` — Spring внедряет автоматически.",
+                "when_to_apply": "Использовать всегда, когда маппер живёт внутри Spring-приложения и его удобно получать как бин (инъекция в сервисы, переиспользование, тестируемость).",
+                "edge_cases": "Глобальный флаг `-Amapstruct.defaultComponentModel=spring` применяет spring-модель ко всем мапперам без указания в каждом `@Mapper` — удобно, но менее явно при чтении отдельного маппера.",
+                "related": "[[java-mapstruct-interview#Q5]] componentModel подробно; [[java-mapstruct-interview#Q22]] abstract class для DI-зависимостей; [[java-mapstruct-interview#Q26]] тестирование Spring-маппера."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`componentModel = \"spring\"` требует обязательной `@EnableMapStruct`-аннотации на конфигурации, иначе бин не зарегистрируется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакой `@EnableMapStruct` не существует: `@Component` на сгенерированном маппере подхватывается обычным component-scan Spring Boot.",
+                "source_of_confusion": "Паттерн `@EnableXxx` распространён в Spring, поэтому его додумывают и здесь.",
+                "if_it_were_true": "Тогда без спец-аннотации интеграция не работала бы, но достаточно того, что `*Impl` помечен `@Component`.",
+                "how_it_should_be": "Маппер регистрируется штатным сканированием компонентов; отдельной `@Enable`-аннотации не требуется."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие проблемы возникают при использовании `MapStruct` вместе с `Lombok`?",
+          "options": [
+            {
+              "text": "`MapStruct` и `Lombok` несовместимы в принципе: их нельзя использовать в одном проекте, нужно выбрать один и писать геттеры/сеттеры либо вручную, либо через Lombok.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они совместимы при правильной настройке: порядок процессоров (Lombok первым) и зависимость `lombok-mapstruct-binding` решают проблему.",
+                "source_of_confusion": "Ошибка `No property named ...` при наивной настройке создаёт впечатление полной несовместимости.",
+                "if_it_were_true": "Тогда не существовало бы `lombok-mapstruct-binding`, но он выпущен именно для их совместной работы.",
+                "how_it_should_be": "Связка работает после настройки порядка процессоров и подключения binding-артефакта; отказываться от одного из инструментов не нужно."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Проблема в том, что `Lombok` выполняется раньше `MapStruct` и удаляет объявления полей, поэтому `MapStruct` не находит источники маппинга.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот, по умолчанию `MapStruct` идёт раньше Lombok, из-за чего ещё нет Lombok-аксессоров; Lombok ничего не удаляет, он добавляет геттеры/сеттеры.",
+                "source_of_confusion": "Направление «кто раньше» легко перепутать, не зная порядка процессоров по умолчанию.",
+                "if_it_were_true": "Тогда лечилось бы это запуском MapStruct первым, но фикс как раз в том, чтобы Lombok шёл первым.",
+                "how_it_should_be": "Корень проблемы — MapStruct до Lombok; решение — поставить Lombok-процессор раньше, чтобы аксессоры уже существовали."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Достаточно просто добавить `lombok-mapstruct-binding`; порядок объявления процессоров в Gradle/Maven значения не имеет, сборка сама разрулит зависимость.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Помимо `lombok-mapstruct-binding` важен и порядок: Lombok-процессор должен быть объявлен раньше `mapstruct-processor`, иначе аксессоров ещё не будет.",
+                "source_of_confusion": "Хочется верить, что один артефакт-биндинг полностью решает проблему без забот о порядке.",
+                "if_it_were_true": "Тогда советовали бы только добавить binding, но рекомендация всегда включает и правильный порядок процессоров.",
+                "how_it_should_be": "Нужны оба условия: и `lombok-mapstruct-binding`, и Lombok-процессор перед MapStruct-процессором."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Главная проблема: `MapStruct` выполняется раньше `Lombok`, поэтому генерируемые `Lombok` геттеры/сеттеры ещё не существуют, когда `MapStruct` строит маппинг. Симптом — `No property named \"fieldName\" exists in source parameter`. Решение: задать порядок процессоров (Lombok первым) и подключить `lombok-mapstruct-binding`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Корень проблемы — порядок процессоров: по умолчанию `MapStruct` идёт раньше `Lombok`, поэтому аксессоров ещё нет; фикс — Lombok первым плюс `lombok-mapstruct-binding`.",
+                "example": "В Gradle: `annotationProcessor(\"org.projectlombok:lombok:...\")` перед `annotationProcessor(\"org.mapstruct:mapstruct-processor:...\")` плюс `annotationProcessor(\"org.projectlombok:lombok-mapstruct-binding:0.2.0\")`.",
+                "when_to_apply": "Учитывать всегда, когда DTO/Entity используют `@Getter`/`@Setter`/`@Data` от Lombok вместе с `MapStruct` — без правильного порядка процессоров маппинг просто не соберётся.",
+                "edge_cases": "`lombok-mapstruct-binding` нужен, чтобы `MapStruct` корректно «увидел» сгенерированные Lombok аксессоры; без него даже верный порядок процессоров может не помочь на новых версиях.",
+                "related": "[[java-mapstruct-interview#Q2]] подключение процессоров; [[java-mapstruct-interview#Q25]] поддержка Lombok @Builder; [[java-mapstruct-interview#Q1]] порядок annotation processing."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `MapStruct` поддерживает Lombok `@Builder`?",
+          "options": [
+            {
+              "text": "`MapStruct` умеет работать с builder-паттерном Lombok начиная с версии 1.4 и по умолчанию предпочитает builder, если он есть: для `@Value @Builder` DTO сгенерированный код вызывает `UserDto.builder().name(...).email(...).build()` вместо конструктора/сеттеров.",
+              "correct": true,
+              "sections": {
+                "explanation": "С версии 1.4 `MapStruct` по умолчанию предпочитает builder, если он есть, и сам собирает immutable-DTO через цепочку `builder()...build()`.",
+                "example": "Для immutable `@Value @Builder class UserDto { String name; String email; }` `MapStruct` сам соберёт объект через `builder()`...`build()`; нестандартный build-метод задают через `@BeanMapping(builder = @Builder(buildMethod = \"create\"))`.",
+                "when_to_apply": "Полезно для immutable-DTO без сеттеров: если у target только builder, `MapStruct` корректно его использует без ручной настройки в обычном случае.",
+                "edge_cases": "Для `@SuperBuilder` (наследование) нужна дополнительная настройка через `BuilderProvider`; нестандартное имя build-метода тоже требует явного указания в `@BeanMapping`.",
+                "related": "[[java-mapstruct-interview#Q24]] совместная настройка с Lombok; [[java-mapstruct-interview#Q18]] @BeanMapping и его опции; [[java-mapstruct-interview#Q15]] @MappingTarget vs создание нового объекта."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`MapStruct` не поддерживает Lombok `@Builder`: для immutable-DTO с builder приходится писать `default`-метод, вручную вызывающий цепочку builder.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поддержка builder есть с версии 1.4 — `MapStruct` сам генерирует вызов `builder()...build()`, ручной `default`-метод не нужен.",
+                "source_of_confusion": "Старые версии действительно не умели в builder, и это устаревшее знание сохраняется.",
+                "if_it_were_true": "Тогда не было бы атрибута `builder` у `@BeanMapping`, но он есть именно для настройки builder-маппинга.",
+                "how_it_should_be": "С 1.4 builder поддерживается автоматически; для immutable-DTO `MapStruct` сам использует цепочку builder."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "При наличии и конструктора, и builder `MapStruct` по умолчанию предпочитает конструктор, а builder использует только при явном `@BeanMapping(builder = ...)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `MapStruct` как раз предпочитает builder, если он есть; явная настройка нужна лишь для нестандартного build-метода.",
+                "source_of_confusion": "Конструктор кажется «основным» способом создания, отсюда вывод о приоритете.",
+                "if_it_were_true": "Тогда immutable-DTO без публичного конструктора не маппился бы по умолчанию, но `MapStruct` использует его builder.",
+                "how_it_should_be": "Приоритет по умолчанию у builder; конструктор/сеттеры применяются, когда builder отсутствует."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Нестандартное имя build-метода `MapStruct` определяет автоматически по сигнатуре и не требует никакой конфигурации даже для `create()` вместо `build()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Если build-метод называется не `build()` (например, `create()`), его нужно указать явно через `@BeanMapping(builder = @Builder(buildMethod = \"create\"))`.",
+                "source_of_confusion": "Автоопределение стандартного `build()` создаёт впечатление, что и любое имя распознаётся само.",
+                "if_it_were_true": "Тогда атрибут `buildMethod` был бы лишним, но он существует именно для нестандартных имён.",
+                "how_it_should_be": "Нестандартный build-метод задают вручную в `@BeanMapping(builder = @Builder(buildMethod = ...))`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать `MapStruct`-маппер?",
+          "options": [
+            {
+              "text": "`MapStruct`-маппер нельзя протестировать в обычном unit-тесте без Spring: реализация `*Impl` создаётся только Spring-контейнером, поэтому всегда нужен `@SpringBootTest`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Default-маппер тестируется plain unit-тестом через `Mappers.getMapper()` без Spring; полный `@SpringBootTest` не требуется.",
+                "source_of_confusion": "Привычка тестировать всё через Spring-контекст переносится и на мапперы.",
+                "if_it_were_true": "Тогда `Mappers.getMapper(UserMapper.class)` не работал бы вне контекста, но он работает.",
+                "how_it_should_be": "Для default-мапперов достаточно `Mappers.getMapper()` в plain unit-тесте; Spring-контекст нужен лишь для spring-мапперов с зависимостями."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Двумя способами: (1) plain unit test без Spring — получить экземпляр через `Mappers.getMapper(UserMapper.class)` и проверить маппинг полей и обработку null; (2) Spring slice test — поднять контекст с `*Impl` и заинжектить маппер. Тестируют маппинг каждого поля, обработку null, кастомные конверсии и partial update.",
+              "correct": true,
+              "sections": {
+                "explanation": "Маппер тестируют либо plain unit-тестом через `Mappers.getMapper()`, либо Spring slice-тестом; покрывают маппинг полей, null-сценарии, кастомные конверсии и partial update.",
+                "example": "`private final UserMapper mapper = Mappers.getMapper(UserMapper.class);` затем `assertThat(mapper.toDto(user).getName()).isEqualTo(\"Alice\")` и `assertThat(mapper.toDto(null)).isNull()`.",
+                "when_to_apply": "Plain unit test применять для default-мапперов без зависимостей; Spring slice test — когда маппер использует componentModel spring и/или инжектит другие бины.",
+                "edge_cases": "`Mappers.getMapper()` создаёт экземпляр без Spring-контекста и подходит для default-мапперов; для spring-мапперов с зависимостями нужен контекст, иначе зависимости не внедрятся.",
+                "related": "[[java-mapstruct-interview#Q5]] default vs spring componentModel; [[java-mapstruct-interview#Q27]] что тестировать в null-сценариях; [[java-mapstruct-interview#Q15]] тестирование partial update."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Чтобы получить маппер в тесте без Spring, его инстанцируют как `new UserMapper()` — `MapStruct` делает интерфейс инстанцируемым через дефолтную реализацию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Интерфейс нельзя создать через `new`; в тесте используют фабрику `Mappers.getMapper(UserMapper.class)`, которая возвращает сгенерированный `*Impl`.",
+                "source_of_confusion": "Кажется, что раз реализация сгенерирована, интерфейс можно создать напрямую.",
+                "if_it_were_true": "Тогда не нужен был бы `Mappers.getMapper()`, но именно он — точка получения экземпляра в plain-тесте.",
+                "how_it_should_be": "Экземпляр в тесте берут через `Mappers.getMapper()`; интерфейс через `new` не создаётся."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В тестах маппера достаточно проверить лишь happy-path с полностью заполненным объектом; null-сценарии `MapStruct` гарантирует сам и тестировать их не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обработку null (на уровне метода и отдельных полей) как раз стоит тестировать — поведение зависит от стратегий, и регрессии тут реальны.",
+                "source_of_confusion": "Авто-генерация null-checks создаёт ложное чувство, что эти ветки не нуждаются в тестах.",
+                "if_it_were_true": "Тогда `assertThat(mapper.toDto(null)).isNull()` был бы лишним, но это рекомендуемый кейс.",
+                "how_it_should_be": "Тестировать нужно и null-сценарии, и partial update, и кастомные конверсии, а не только happy-path."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие стратегии обработки `null` есть в `MapStruct`?",
+          "options": [
+            {
+              "text": "В `MapStruct` есть единственная стратегия обработки null — `NullValueMappingStrategy`; она же управляет и поведением для всего source, и для отдельных полей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стратегий несколько и они на разных уровнях: `NullValueMappingStrategy` (весь source), `NullValuePropertyMappingStrategy` (поле), `NullValueCheckStrategy` (момент проверки).",
+                "source_of_confusion": "Похожие названия создают впечатление, что это одна настройка.",
+                "if_it_were_true": "Тогда нельзя было бы по-разному обрабатывать пустой source и отдельное null-поле, но это разные стратегии.",
+                "how_it_should_be": "Есть три отдельные стратегии для разных уровней обработки null, а не одна универсальная."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "По умолчанию `NullValueMappingStrategy` равен `RETURN_DEFAULT`, поэтому маппинг `null`-source всегда возвращает пустой объект, а не `null`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дефолт — `RETURN_NULL`: на `null`-source метод возвращает `null`; пустой объект (`RETURN_DEFAULT`) нужно включать явно.",
+                "source_of_confusion": "Возврат пустого объекта кажется «безопаснее», поэтому его принимают за дефолт.",
+                "if_it_were_true": "Тогда `mapper.toDto(null)` всегда давал бы `new Dto()`, но по умолчанию он вернёт `null`.",
+                "how_it_should_be": "По умолчанию действует `RETURN_NULL`; `RETURN_DEFAULT` — это явно выбираемая альтернатива."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Три группы: `NullValueMappingStrategy` (весь source == null) — `RETURN_NULL` (default) или `RETURN_DEFAULT` (пустой объект); `NullValuePropertyMappingStrategy` (отдельное поле == null) — `SET_TO_NULL` (default), `IGNORE`, `SET_TO_DEFAULT`; `NullValueCheckStrategy` (когда проверять null) — `ON_IMPLICIT_CONVERSION` (default) или `ALWAYS`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Стратегии null разнесены по уровням: весь source, отдельное поле и момент проверки — каждый со своими значениями и дефолтами.",
+                "example": "Например, `RETURN_NULL` вернёт `null` на `null`-source, а `RETURN_DEFAULT` — `new UserDto()`; для поля `IGNORE` оставит target нетронутым, а `SET_TO_DEFAULT` поставит 0/\"\"/пустую коллекцию.",
+                "when_to_apply": "Выбирать стратегию по сценарию: для PATCH — `IGNORE` по полям; для «всегда непустого объекта» — `RETURN_DEFAULT`; `ALWAYS` — когда нужна жёсткая защита от NPE при любых конверсиях.",
+                "edge_cases": "Легко перепутать уровни: `NullValueMappingStrategy` про весь source, а `NullValuePropertyMappingStrategy` про отдельное поле; применение «не той» стратегии даёт неожиданный null-результат.",
+                "related": "[[java-mapstruct-interview#Q18]] @BeanMapping и стратегии на метод; [[java-mapstruct-interview#Q15]] IGNORE для partial update; [[java-mapstruct-interview#Q28]] @Condition как тонкий контроль маппинга."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`NullValueCheckStrategy.ALWAYS` отключает все null-проверки ради скорости, тогда как `ON_IMPLICIT_CONVERSION` добавляет проверки только при явных конверсиях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ALWAYS` наоборот добавляет null-check всегда; `ON_IMPLICIT_CONVERSION` (default) проверяет null только при неявных конверсиях типов.",
+                "source_of_confusion": "Слово «always» в связке со «стратегией» можно ошибочно прочитать как «всегда без проверок».",
+                "if_it_were_true": "Тогда `ALWAYS` повышал бы риск NPE, но он, напротив, добавляет защиту во всех точках.",
+                "how_it_should_be": "`ALWAYS` усиливает проверки (везде добавляет null-check), а `ON_IMPLICIT_CONVERSION` ограничивает их неявными конверсиями."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить маппинг с условием (conditional mapping)?",
+          "options": [
+            {
+              "text": "Условный маппинг настраивается атрибутом `@Mapping(condition = true)` — булевый флаг, включающий копирование поля при ненулевом source.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Атрибута-флага `condition = true` у `@Mapping` нет; условие задаётся либо аннотацией `@Condition` на методе-предикате, либо `conditionExpression` со строкой кода.",
+                "source_of_confusion": "Простой булев флаг кажется удобнее, чем метод-предикат, отсюда домысел.",
+                "if_it_were_true": "Тогда не было бы метода `@Condition` и строкового `conditionExpression`, но именно они реализуют условие.",
+                "how_it_should_be": "Условие выражают через `@Condition`-предикат или `conditionExpression = \"java(...)\"`, а не флагом `condition = true`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@Condition` появился с первой версии `MapStruct` и полностью заменил `conditionExpression`, который давно удалён из API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Condition` добавлен только в 1.5; `conditionExpression` существовал раньше и до сих пор поддерживается как альтернатива.",
+                "source_of_confusion": "Новые фичи кажутся «всегда бывшими», а старые — удалёнными.",
+                "if_it_were_true": "Тогда код с `conditionExpression` не компилировался бы на актуальных версиях, но он работает.",
+                "how_it_should_be": "`@Condition` — относительно новая возможность (1.5); `conditionExpression` остаётся доступным."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Метод-предикат `@Condition` должен возвращать сам объект-результат маппинга, а не `boolean`: `MapStruct` использует его как кастомный конвертер с проверкой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метод `@Condition` обязан возвращать `boolean` (предикат включения поля), а не объект-результат; конверсией значения он не занимается.",
+                "source_of_confusion": "Связка «условие + маппинг» создаёт впечатление, что метод и проверяет, и конвертирует.",
+                "if_it_were_true": "Тогда `@Condition` дублировал бы обычный маппинг-метод, но его роль — только решить, маппить поле или нет.",
+                "how_it_should_be": "`@Condition`-метод возвращает `boolean`; само преобразование значения выполняет отдельный маппинг."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Начиная с `MapStruct` 1.5 используют аннотацию `@Condition`: помечают `default`-метод-предикат (`@Condition default boolean isNotBlank(String v){...}`), и поля соответствующего типа маппятся только если предикат вернул true. До 1.5 применяли `conditionExpression = \"java(...)\"` прямо в `@Mapping`.",
+              "correct": true,
+              "sections": {
+                "explanation": "С 1.5 условный маппинг задаётся `@Condition`-предикатом для типа, а до этого — строковым `conditionExpression` на конкретном `@Mapping`.",
+                "example": "`@Condition default boolean isNotBlank(String value){ return value != null && !value.isBlank(); }` — все `String`-поля будут маппиться только при непустом значении; устаревший аналог: `@Mapping(target = \"phone\", source = \"phone\", conditionExpression = \"java(source.getPhone() != null && !source.getPhone().isBlank())\")`.",
+                "when_to_apply": "Применять, когда поле нужно копировать не всегда, а только при выполнении условия (непустая строка, валидное значение) — особенно вместе с partial update.",
+                "edge_cases": "`@Condition` чище, чем `conditionExpression`: условие задаётся один раз и применяется ко всем полям нужного типа; строковый `conditionExpression` дублируется на каждом `@Mapping` и не проверяется компилятором.",
+                "related": "[[java-mapstruct-interview#Q9]] expression и java(...) синтаксис; [[java-mapstruct-interview#Q27]] стратегии null как смежный контроль; [[java-mapstruct-interview#Q15]] условный partial update."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

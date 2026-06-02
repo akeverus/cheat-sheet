@@ -1,0 +1,2585 @@
+{
+  "topic_slug": "kotlin-serialization-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `kotlinx.serialization` и зачем она нужна?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`kotlinx.serialization` — официальная мультиплатформенная библиотека Kotlin: сериализаторы генерируются на этапе компиляции плагином компилятора, без рефлексии. Даёт типобезопасность, нативную поддержку `data class`/`nullable`/`sealed class`, мультиформатность (`JSON`/`Protobuf`/`CBOR`) и работу на `JVM`/`JS`/`Native`/`Wasm`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сериализатор строится compile-time, поэтому если поле несериализуемо, ошибка ловится при сборке, а не в рантайме как у рефлексионных `Jackson`/`Gson`.",
+                "example": "Один `@Serializable data class User(...)` без изменений кодируется и в `JSON`, и в `Protobuf`, и в `CBOR` — описывать тип повторно для каждого формата не нужно.",
+                "when_to_apply": "Выбирают её для нового Kotlin-проекта, особенно для `Ktor` или Kotlin Multiplatform, где Java Reflection недоступна на `Native`/`JS`.",
+                "edge_cases": "Compile-time генерация увеличивает время сборки и требует плагина `kotlin(\"plugin.serialization\")`; без него `@Serializable` не сгенерирует код и сериализация упадёт в рантайме.",
+                "related": "[[kotlin-serialization-interview#Q2]] как подключить к проекту; [[kotlin-serialization-interview#Q3]] что генерирует `@Serializable`; [[kotlin-serialization-interview#Q30]] сравнение с `Jackson`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`kotlinx.serialization` — это обёртка над `Jackson`, которая в рантайме через рефлексию читает поля Kotlin-классов и переиспользует `ObjectMapper`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Библиотека не зависит от `Jackson` и не использует рефлексию: сериализаторы генерируются плагином компилятора на этапе сборки.",
+                "source_of_confusion": "Обе библиотеки решают задачу JSON, поэтому кажется, что новая просто адаптирует старую под Kotlin.",
+                "if_it_were_true": "Будь это обёрткой над `Jackson`, она не работала бы на `Kotlin/Native` и `Kotlin/JS`, где нет JVM-рефлексии, но она там работает.",
+                "how_it_should_be": "Это самостоятельная библиотека JetBrains с собственным compile-time движком; `Jackson` — отдельный рефлексионный инструмент только для JVM."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`kotlinx.serialization` поддерживает только формат `JSON` и работает исключительно на `JVM`, как и большинство Java-библиотек.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Она мультиформатная (`JSON`, `Protobuf`, `CBOR`, `Properties`, `HOCON`) и мультиплатформенная (`JVM`, `JS`, `Native`, `Wasm`).",
+                "source_of_confusion": "JSON — самый частый формат, поэтому ошибочно считают, что библиотека ограничена им и платформой JVM.",
+                "if_it_were_true": "Будь она JVM/JSON-only, не было бы артефактов `kotlinx-serialization-protobuf`/`-cbor` и поддержки `Kotlin/Native`, но они существуют.",
+                "how_it_should_be": "Один `@Serializable` класс сериализуется в несколько форматов и работает на всех целевых платформах Kotlin."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`kotlinx.serialization` подключается одной runtime-зависимостью, а аннотация `@Serializable` сама по себе генерирует код без какого-либо плагина компилятора.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нужны две части: плагин компилятора `kotlin(\"plugin.serialization\")` И runtime-артефакт формата; без плагина код не генерируется.",
+                "source_of_confusion": "У многих библиотек достаточно одной зависимости, поэтому забывают про обязательный compiler-plugin.",
+                "if_it_were_true": "Если бы плагин был не нужен, проект без него работал бы, но `@Serializable` без плагина даёт ошибку в рантайме при сериализации.",
+                "how_it_should_be": "Всегда подключают и плагин компилятора, и runtime-зависимость нужного формата, причём версии должны совпадать с версией Kotlin."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как подключить `kotlinx.serialization` к проекту?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно добавить runtime-зависимость `kotlinx-serialization-json` в `dependencies` — плагин компилятора не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без плагина `kotlin(\"plugin.serialization\")` аннотация `@Serializable` не сгенерирует сериализатор, и сериализация упадёт в рантайме.",
+                "source_of_confusion": "Обычно одна зависимость закрывает библиотеку, поэтому про отдельный плагин забывают.",
+                "if_it_were_true": "Будь runtime-артефакта достаточно, `@Serializable` работал бы сразу, но без плагина компилятор не создаёт `serializer()`.",
+                "how_it_should_be": "Нужны обе части: плагин компилятора в `plugins {}` и runtime-зависимость формата в `dependencies {}`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Подключение состоит из двух частей: плагин компилятора `kotlin(\"plugin.serialization\")` в блоке `plugins {}` и runtime-зависимость нужного формата, например `org.jetbrains.kotlinx:kotlinx-serialization-json`, в `dependencies {}`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Плагин включает генерацию кода для `@Serializable`, а runtime-артефакт даёт классы конкретного формата (`Json`, `ProtoBuf`, `Cbor`).",
+                "example": "Для JSON: `plugins { kotlin(\"plugin.serialization\") version \"2.1.0\" }` плюс `implementation(\"org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0\")`.",
+                "when_to_apply": "Это нужно при старте любого проекта с `kotlinx.serialization`; для бинарных форматов добавляют отдельные артефакты `-protobuf`/`-cbor`.",
+                "edge_cases": "Версия плагина должна соответствовать версии Kotlin; без плагина проект скомпилируется, но сериализация упадёт в рантайме.",
+                "related": "[[kotlin-serialization-interview#Q1]] что это за библиотека; [[kotlin-serialization-interview#Q25]] какие ещё форматы есть; [[kotlin-serialization-interview#Q37]] интеграция со `Spring Boot`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Нужно добавить только плагин `kotlin(\"plugin.serialization\")`, а runtime-зависимость формата подтягивается плагином автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Плагин лишь включает генерацию кода; классы формата (`Json`, `ProtoBuf`) приходят из отдельного runtime-артефакта, который надо добавить вручную.",
+                "source_of_confusion": "Плагин звучит как «всё в одном», поэтому кажется, что он тянет и runtime.",
+                "if_it_were_true": "Будь runtime автоматическим, импорт `kotlinx.serialization.json.Json` резолвился бы без зависимости, но он не резолвится.",
+                "how_it_should_be": "Помимо плагина обязательно объявить `kotlinx-serialization-json` (или `-protobuf`/`-cbor`) в `dependencies`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Версия плагина может быть произвольной и не обязана совпадать с версией Kotlin — плагин совместим со всеми версиями компилятора.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Плагин сериализации привязан к версии компилятора Kotlin; несовпадение версий приводит к ошибкам сборки.",
+                "source_of_confusion": "Многие Gradle-плагины версионируются независимо, поэтому переносят это допущение на сериализацию.",
+                "if_it_were_true": "Будь версия независимой, можно было бы взять `plugin.serialization` любой версии, но компилятор отвергнет несовместимую.",
+                "how_it_should_be": "Версию плагина указывают равной версии Kotlin, а версию runtime-артефакта выбирают совместимую с ним."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает аннотация `@Serializable` и что генерирует компилятор?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Serializable` помечает класс как требующий рефлексии: в рантайме библиотека через `Class.forName` читает его поля при первой сериализации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакой рефлексии нет: плагин компилятора генерирует `KSerializer<T>` на этапе компиляции с готовым `SerialDescriptor`.",
+                "source_of_confusion": "Аннотации часто обрабатываются рефлексивно в рантайме (как у `Jackson`), поэтому переносят это на `kotlinx`.",
+                "if_it_were_true": "Будь это рефлексией, библиотека не работала бы на `Kotlin/Native`, где `Class.forName`/`setAccessible` недоступны.",
+                "how_it_should_be": "Компилятор генерирует сериализатор compile-time, прямые вызовы вместо reflection API."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@Serializable` можно применить только к `data class`; обычные `class`, `object`, `enum class` и `sealed class` не поддерживаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотацию применяют к `data class`, `class`, `object`, `enum class` и `sealed class` — не только к `data class`.",
+                "source_of_confusion": "Примеры чаще всего показывают `data class`, поэтому делают вывод об ограничении.",
+                "if_it_were_true": "Будь это так, нельзя было бы сериализовать `sealed class` иерархии и `enum`, но они поддерживаются.",
+                "how_it_should_be": "`@Serializable` работает с широким набором деклараций при условии, что все поля конструктора сериализуемы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@Serializable` указывает плагину компилятора сгенерировать реализацию `KSerializer<T>`: создаётся (или дополняется) `companion`-объект с методом `serializer()`, возвращающим сериализатор с `SerialDescriptor` (имена, типы, аннотации полей) и логикой `serialize`/`deserialize`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Готовый `SerialDescriptor` и прямые методы позволяют проверять типы compile-time и работать без рефлексии, давая прирост перформанса.",
+                "example": "Для `@Serializable data class User(val id: Int, val name: String)` компилятор создаёт `User.Companion.serializer(): KSerializer<User>`.",
+                "when_to_apply": "Применяют к `data class`, `class`, `object`, `enum class`, `sealed class` — все поля конструктора должны быть сериализуемыми типами.",
+                "edge_cases": "Если поле несериализуемо (например, `java.time.Instant` без кастомного сериализатора), компилятор выдаёт ошибку прямо на этапе сборки.",
+                "related": "[[kotlin-serialization-interview#Q1]] зачем нужна compile-time генерация; [[kotlin-serialization-interview#Q4]] какие типы поддержаны из коробки; [[kotlin-serialization-interview#Q12]] когда нужен кастомный `KSerializer`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Сгенерированный сериализатор не содержит `SerialDescriptor` — он просто вызывает `toString()`/`fromString()` на полях при кодировании.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сериализатор обязательно содержит `SerialDescriptor` с описанием полей, типов и аннотаций, а не примитивный `toString`.",
+                "source_of_confusion": "Кодирование действительно даёт строку, поэтому кажется, что под капотом просто `toString`.",
+                "if_it_were_true": "Будь это `toString`, нельзя было бы кодировать в бинарный `Protobuf`/`CBOR` или валидировать типы, но всё это работает.",
+                "how_it_should_be": "Дескриптор — основа: по нему форматы знают структуру и порядок полей независимо от текстового представления."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типы поддерживаются из коробки без кастомных сериализаторов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Из коробки поддерживаются в том числе `java.time.LocalDate`, `Instant` и `java.util.UUID` — для них сериализатор уже встроен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эти JVM-специфичные типы НЕ поддержаны из коробки: для них нужен кастомный `KSerializer` или `@Contextual`.",
+                "source_of_confusion": "Они кажутся базовыми типами, поэтому ждут встроенной поддержки.",
+                "if_it_were_true": "Будь они встроены, библиотека тянула бы JVM-зависимости и не была бы мультиплатформенной, но она мультиплатформенна.",
+                "how_it_should_be": "`LocalDate`/`Instant`/`UUID` требуют собственного сериализатора, потому что специфичны для JVM."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Map<K, V>` вообще не поддерживается из коробки — для словарей всегда нужен кастомный сериализатор.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Map<K, V>` поддержан из коробки (ключ строковый или примитивный), как и `List`/`Set`; кастом нужен лишь для нестроковых структурных ключей.",
+                "source_of_confusion": "У словарей бывают тонкости с ключами, поэтому ошибочно считают их полностью неподдержанными.",
+                "if_it_were_true": "Будь `Map` неподдержан, нельзя было бы сериализовать `Map<String, JsonElement>`, но это штатный сценарий.",
+                "how_it_should_be": "Стандартные коллекции `List`/`Set`/`Map` работают без кастома; для нестроковых ключей включают `allowStructuredMapKeys`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Примитивы вроде `Int`/`Long`/`Boolean` требуют явной аннотации `@Serializable` на каждом использовании, иначе не сериализуются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Примитивы (`Int`, `Long`, `Double`, `Boolean`, `Char` и др.) и `String` поддержаны из коробки без каких-либо аннотаций.",
+                "source_of_confusion": "Так как класс-контейнер помечают `@Serializable`, думают, что и каждое примитивное поле нужно помечать.",
+                "if_it_were_true": "Будь это так, ни один `data class` с `Int`-полем не сериализовался бы без лишних аннотаций, но они не нужны.",
+                "how_it_should_be": "Примитивы и `String` сериализуются автоматически как поля `@Serializable`-класса."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Из коробки поддержаны: примитивы (`Int`, `Long`, `Double`, `Float`, `Boolean`, `Byte`, `Short`, `Char`), `String`, коллекции (`List`, `Set`, `Map` со строковым/примитивным ключом), примитивные массивы (`ByteArray`, `IntArray`), `T?`, `enum class`, `Pair`/`Triple`, а также `Unit` и `Duration`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это типы, для которых компилятор и runtime уже знают сериализаторы, поэтому отдельный `KSerializer` не требуется.",
+                "example": "`@Serializable data class Order(val id: Int, val tags: List<String>, val ratio: Double)` сериализуется без единого кастомного сериализатора.",
+                "when_to_apply": "На эти типы опираются для большинства DTO; для всего остального (`LocalDate`, `UUID`, `BigDecimal`) подключают кастом или `@Contextual`.",
+                "edge_cases": "НЕ поддержаны из коробки `java.time.*`, `UUID`, `java.util.Date`, `BigDecimal`, `BigInteger`, `Any`, `Nothing` — для них нужен `KSerializer`.",
+                "related": "[[kotlin-serialization-interview#Q3]] что генерирует `@Serializable`; [[kotlin-serialization-interview#Q12]] когда нужен кастомный сериализатор; [[kotlin-serialization-interview#Q13]] как сериализовать даты и `UUID`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие параметры конфигурации `Json` существуют и когда их использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Экземпляр `Json` настраивается builder-блоком: `prettyPrint`, `ignoreUnknownKeys` (не падать на лишних ключах), `encodeDefaults` (кодировать ли значения по умолчанию), `explicitNulls`, `coerceInputValues` (невалидное → default), `isLenient`, `classDiscriminator`, `namingStrategy`, `decodeEnumsCaseInsensitive`, `serializersModule` и др.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти флаги управляют форматированием, толерантностью к входным данным, размером payload и полиморфизмом, покрывая большинство продакшен-сценариев.",
+                "example": "`val json = Json { ignoreUnknownKeys = true; encodeDefaults = false; coerceInputValues = true }` — типичная устойчивая конфигурация для внешнего API.",
+                "when_to_apply": "Чаще всего на собеседовании спрашивают `ignoreUnknownKeys` (совместимость API), `encodeDefaults` (размер), `coerceInputValues` (устойчивость) и `classDiscriminator` (полиморфизм).",
+                "edge_cases": "Экземпляр `Json` иммутабелен после создания и потокобезопасен, поэтому его делают singleton и переиспользуют, а не создают на каждый вызов.",
+                "related": "[[kotlin-serialization-interview#Q7]] разница `explicitNulls` и `encodeDefaults`; [[kotlin-serialization-interview#Q19]] настройка `classDiscriminator`; [[kotlin-serialization-interview#Q35]] best practices, один экземпляр `Json`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Параметр `ignoreUnknownKeys = true` влияет на сериализацию: он опускает поля, которые не вошли в схему, при кодировании объекта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ignoreUnknownKeys` влияет только на ДЕсериализацию — не падать на лишних ключах во входном JSON; при кодировании он ни на что не влияет.",
+                "source_of_confusion": "Слово «unknown keys» звучит обобщённо, поэтому его привязывают и к сериализации.",
+                "if_it_were_true": "Будь это так, флаг менял бы выход `encodeToString`, но выход определяется полями класса, а не этим флагом.",
+                "how_it_should_be": "`ignoreUnknownKeys` — про чтение: игнорировать неизвестные поля входа; размер выхода регулируют `encodeDefaults`/`explicitNulls`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Каждый вызов `encodeToString` должен использовать новый экземпляр `Json`, потому что `Json` хранит изменяемое состояние между вызовами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Json` иммутабелен и потокобезопасен; его создают один раз и переиспользуют, а пересоздание лишь тратит ресурсы.",
+                "source_of_confusion": "Многие билдеры дают мутабельные объекты, поэтому переносят это на `Json`.",
+                "if_it_were_true": "Будь у `Json` изменяемое состояние, параллельная сериализация была бы небезопасна, но она безопасна.",
+                "how_it_should_be": "Правильно держать singleton `Json` с нужной конфигурацией и переиспользовать его во всём приложении."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`classDiscriminator` задаёт имя поля только для `enum`-сериализации и не имеет отношения к полиморфизму `sealed class`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`classDiscriminator` задаёт имя поля-дискриминатора именно для полиморфной сериализации (`sealed`/open), а не для `enum`.",
+                "source_of_confusion": "И enum, и полиморфизм связаны с «типом значения», поэтому путают области применения флага.",
+                "if_it_were_true": "Будь это про enum, изменение `classDiscriminator` меняло бы вывод enum, но оно влияет на ключ типа в полиморфном JSON.",
+                "how_it_should_be": "`classDiscriminator` (по умолчанию `\"type\"`) — это ключ, в который пишется имя подтипа при полиморфизме."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает `namingStrategy` и как настроить автоматический snake_case?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`namingStrategy` переименовывает только значения enum-констант, но не имена обычных полей класса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JsonNamingStrategy` преобразует имена обычных свойств класса (`firstName` → `first_name`), а не значения enum.",
+                "source_of_confusion": "Имена и enum-значения оба «текстовые ключи», поэтому область применения путают.",
+                "if_it_were_true": "Будь это про enum, поля `data class` не менялись бы, но именно они и преобразуются стратегией.",
+                "how_it_should_be": "Стратегия применяется к именам полей; для enum-значений используют `@SerialName` на константах."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`JsonNamingStrategy` (с 1.6.0, стабильна с 1.7.0) автоматически преобразует имена полей Kotlin в формат JSON без ручного `@SerialName` на каждом поле. Для snake_case: `Json { namingStrategy = JsonNamingStrategy.SnakeCase }`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Стратегия применяется ко всем полям сразу, поэтому при snake_case-API не нужно аннотировать каждое свойство вручную.",
+                "example": "`@Serializable data class UserProfile(val firstName: String, val lastName: String)` с `SnakeCase` даёт `{\"first_name\":..., \"last_name\":...}`.",
+                "when_to_apply": "Удобно для интеграции с REST API в snake_case; можно написать свою стратегию, реализовав интерфейс `JsonNamingStrategy`.",
+                "edge_cases": "Если на поле явно стоит `@SerialName`, он имеет приоритет над `namingStrategy` и стратегия для этого поля игнорируется.",
+                "related": "[[kotlin-serialization-interview#Q8]] `@SerialName` для переименования поля; [[kotlin-serialization-interview#Q5]] другие параметры `Json`; [[kotlin-serialization-interview#Q39]] `@SerialName` для миграции схемы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "При конфликте `namingStrategy` всегда побеждает явный `@SerialName` игнорируется, даже если он указан на поле.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: явный `@SerialName` имеет приоритет над `namingStrategy`, стратегия применяется лишь к полям без явного имени.",
+                "source_of_confusion": "Стратегия задаётся глобально, поэтому кажется, что она перекрывает локальные аннотации.",
+                "if_it_were_true": "Будь так, нельзя было бы точечно зафиксировать одно поле через `@SerialName` при общем snake_case, но это работает.",
+                "how_it_should_be": "Приоритет у локального `@SerialName`; `namingStrategy` — fallback для остальных полей."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Кастомную стратегию именования написать нельзя — доступен только встроенный `JsonNamingStrategy.SnakeCase`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Можно реализовать собственную стратегию через интерфейс `JsonNamingStrategy`, например для kebab-case.",
+                "source_of_confusion": "В документации чаще показывают только `SnakeCase`, поэтому считают список закрытым.",
+                "if_it_were_true": "Будь это так, не было бы публичного интерфейса `JsonNamingStrategy`, но он есть и его реализуют.",
+                "how_it_should_be": "`JsonNamingStrategy` — обычный функциональный интерфейс; своя стратегия пишется в пару строк."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают `explicitNulls` и `encodeDefaults` и в чём разница?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`encodeDefaults` и `explicitNulls` — синонимы: оба контролируют, кодировать ли поля со значением `null`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные параметры: `encodeDefaults` — про поля, равные default из конструктора; `explicitNulls` — про поля со значением `null`.",
+                "source_of_confusion": "Оба влияют на состав выходного JSON, поэтому их смешивают.",
+                "if_it_were_true": "Будь они синонимами, не было бы двух отдельных флагов с разными значениями по умолчанию.",
+                "how_it_should_be": "`encodeDefaults` (по умолчанию `false`) и `explicitNulls` (по умолчанию `true`) управляют разными вещами."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "По умолчанию `encodeDefaults = true`, поэтому поля со значениями по умолчанию всегда попадают в JSON.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `encodeDefaults = false`: поля, равные default из конструктора, опускаются при сериализации.",
+                "source_of_confusion": "Логично ожидать, что библиотека по умолчанию пишет всё, поэтому ставят `true`.",
+                "if_it_were_true": "Будь дефолт `true`, `Config(\"app\")` с `debug=false` всегда давал бы `debug` в JSON, но по умолчанию его нет.",
+                "how_it_should_be": "Дефолт `encodeDefaults = false`; чтобы всегда писать default-значения, флаг включают явно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`encodeDefaults` контролирует поля, равные default из конструктора (по умолчанию `false` — не кодировать), а `explicitNulls` — поля со значением `null` (по умолчанию `true` — писать `null` явно). Это независимые оси: одна про default-значения, другая про null.",
+              "correct": true,
+              "sections": {
+                "explanation": "Комбинируя их, регулируют размер payload и семантику отсутствия поля против явного `null`.",
+                "example": "Для `Config(\"app\", debug=false, tag=null)` при дефолтах выходит `{\"name\":\"app\"}`; при `encodeDefaults=true` — `{\"name\":\"app\",\"debug\":false,\"tag\":null}`.",
+                "when_to_apply": "`explicitNulls = false` полезен для PATCH-API, где отсутствие поля значит «не менять», а `null` — «стереть».",
+                "edge_cases": "Если поле nullable без default и `explicitNulls=false`, при сериализации `null` оно пропадает, что может сломать PATCH-семантику — это учитывают.",
+                "related": "[[kotlin-serialization-interview#Q10]] `@EncodeDefault` для конкретного поля; [[kotlin-serialization-interview#Q23]] nullable-поля и стратегия PATCH; [[kotlin-serialization-interview#Q42]] подводные камни nullable/default."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`explicitNulls = false` означает, что при десериализации отсутствующее поле станет `null` вместо default-значения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`explicitNulls` влияет на СЕриализацию (писать ли `null` в выход), а не на выбор default при чтении.",
+                "source_of_confusion": "Слово «nulls» наводит на мысль о входных данных и default-значениях.",
+                "if_it_were_true": "Будь это про чтение, флаг менял бы результат `decodeFromString`, но он управляет выводом `encodeToString`.",
+                "how_it_should_be": "При десериализации отсутствующее поле берёт default из конструктора независимо от `explicitNulls`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как переименовать поле в JSON с помощью `@SerialName`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@SerialName` меняет имя поля Kotlin в коде, а имя ключа в JSON остаётся прежним.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `@SerialName` меняет имя ключа в сериализованном виде; имя свойства в Kotlin не трогается.",
+                "source_of_confusion": "Аннотация стоит рядом со свойством, поэтому кажется, что она переименовывает само свойство.",
+                "if_it_were_true": "Будь так, рефакторинг Kotlin-имени менял бы код, но именно `@SerialName` фиксирует JSON-имя независимо от Kotlin-имени.",
+                "how_it_should_be": "Kotlin-имя свойства остаётся, а в JSON пишется значение из `@SerialName`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@SerialName` нельзя применять к константам `enum` — он работает только на полях `data class`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@SerialName` на enum-константах задаёт их представление в JSON (`ACTIVE` → `\"active\"`); это штатное применение.",
+                "source_of_confusion": "Чаще показывают `@SerialName` на полях, поэтому enum-вариант упускают.",
+                "if_it_were_true": "Будь это так, нельзя было бы переименовать enum-значение под внешний контракт, но это делается через `@SerialName`.",
+                "how_it_should_be": "`@SerialName` работает и на свойствах, и на enum-константах, и на уровне класса (дискриминатор)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "При конфликте `JsonNamingStrategy` перекрывает `@SerialName`, поэтому ручное имя игнорируется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@SerialName` имеет приоритет над `JsonNamingStrategy`: явное имя всегда побеждает стратегию.",
+                "source_of_confusion": "Стратегия глобальна, поэтому кажется сильнее локальной аннотации.",
+                "if_it_were_true": "Будь так, нельзя было бы зафиксировать одно поле вручную при общем snake_case, но это работает.",
+                "how_it_should_be": "Приоритет: явный `@SerialName` > `namingStrategy`; стратегия применяется к остальным полям."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@SerialName(\"имя\")` на свойстве задаёт имя ключа в сериализованном виде: `@SerialName(\"status_code\") val statusCode: Int` даёт JSON-ключ `status_code` при неизменном Kotlin-имени `statusCode`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это разделяет имя в коде и имя в контракте, что делает JSON-схему стабильной при рефакторинге Kotlin-кода.",
+                "example": "На enum: `@SerialName(\"pending_review\") PENDING_REVIEW` сериализуется как строка `\"pending_review\"`.",
+                "when_to_apply": "Ключевой инструмент обратной совместимости: при переименовании свойства старое JSON-имя сохраняется через `@SerialName`.",
+                "edge_cases": "`@SerialName` имеет приоритет над `JsonNamingStrategy`; если указать оба, выигрывает явная аннотация.",
+                "related": "[[kotlin-serialization-interview#Q6]] `namingStrategy` и snake_case; [[kotlin-serialization-interview#Q11]] `@SerialName` на уровне класса; [[kotlin-serialization-interview#Q39]] `@SerialName` для миграции схемы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как исключить поле из сериализации с помощью `@Transient`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Transient` из пакета `kotlinx.serialization` полностью исключает поле из сериализации И десериализации в обоих направлениях. Такое поле обязано иметь значение по умолчанию, иначе будет ошибка компиляции.",
+              "correct": true,
+              "sections": {
+                "explanation": "Аннотация говорит сериализатору вообще не включать поле в `SerialDescriptor`, поэтому оно не пишется и не читается.",
+                "example": "`@Transient val cachedUser: User? = null` и `@Transient val createdAt: Long = System.currentTimeMillis()` не попадут в JSON и не будут ожидаться при чтении.",
+                "when_to_apply": "Применяют для вычисляемых/кэшируемых/инфраструктурных полей, которые не должны быть частью контракта сериализации.",
+                "edge_cases": "Не путать с `kotlin.jvm.Transient` или `java.beans.Transient` — это разные аннотации; для одностороннего поля (только чтение или только запись) `@Transient` не подходит, нужен кастомный сериализатор.",
+                "related": "[[kotlin-serialization-interview#Q8]] `@SerialName` для переименования; [[kotlin-serialization-interview#Q10]] `@EncodeDefault` против глобального флага; [[kotlin-serialization-interview#Q3]] что попадает в `SerialDescriptor`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@Transient`-поле можно объявить без значения по умолчанию — библиотека подставит `null` автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поле с `@Transient` ОБЯЗАНО иметь default-значение, иначе компилятор выдаёт ошибку, ведь при десериализации его неоткуда взять.",
+                "source_of_confusion": "Кажется, что раз поле игнорируется, его инициализация не важна.",
+                "if_it_were_true": "Будь это так, `@Transient val x: Int` компилировался бы, но он падает с требованием default.",
+                "how_it_should_be": "Для `@Transient` всегда указывают значение по умолчанию, например `= null` или конкретную константу."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@Transient` исключает поле только из сериализации, но при десериализации значение по-прежнему читается из JSON.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Transient` исключает поле в ОБОИХ направлениях: оно не пишется и не читается; одностороннее поведение требует кастомного сериализатора.",
+                "source_of_confusion": "По аналогии с `transient` в Java Serialization (которое тоже двунаправленно) додумывают одностороннюю семантику.",
+                "if_it_were_true": "Будь это так, можно было бы читать `@Transient`-поле из входа, но его ключ полностью игнорируется при чтении.",
+                "how_it_should_be": "Чтобы поле читалось, но не писалось (или наоборот), пишут кастомный `KSerializer`, а не `@Transient`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`kotlinx.serialization.Transient` и `kotlin.jvm.Transient` — это одна и та же аннотация, их можно использовать взаимозаменяемо.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные аннотации из разных пакетов: только `kotlinx.serialization.Transient` влияет на `kotlinx.serialization`.",
+                "source_of_confusion": "Имя `Transient` совпадает, поэтому их легко спутать при автоимпорте.",
+                "if_it_were_true": "Будь они одинаковы, `kotlin.jvm.Transient` исключал бы поле из JSON, но он влияет лишь на JVM-сериализацию.",
+                "how_it_should_be": "Для `kotlinx.serialization` импортируют именно `kotlinx.serialization.Transient`; чужой `@Transient` не сработает."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает `@EncodeDefault` и чем отличается от `encodeDefaults` в конфиге?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@EncodeDefault` — это глобальная настройка экземпляра `Json`, дублирующая `encodeDefaults` из builder-блока.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@EncodeDefault` — аннотация уровня ПОЛЯ, она переопределяет глобальный `encodeDefaults` для конкретного свойства.",
+                "source_of_confusion": "Похожие имена (`encodeDefaults` и `@EncodeDefault`) заставляют считать их одним и тем же.",
+                "if_it_were_true": "Будь это глобальная настройка, её нельзя было бы ставить на отдельное поле, но она ставится именно туда.",
+                "how_it_should_be": "Глобально размер payload задаёт `encodeDefaults` в `Json {}`, а `@EncodeDefault` точечно перекрывает его для поля."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@EncodeDefault` — аннотация уровня поля, переопределяющая глобальный `encodeDefaults` для конкретного свойства. `Mode.ALWAYS` — поле всегда кодируется даже при `encodeDefaults=false`; `Mode.NEVER` — поле никогда не кодируется (если равно default) даже при `encodeDefaults=true`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это даёт точечный контроль: часть полей обязательна для контракта (версия, тип), часть — опциональна и экономит трафик.",
+                "example": "При `Json { encodeDefaults = false }` поле `@EncodeDefault val version: String = \"1.0.0\"` всё равно попадёт в JSON, а `debug=false` — нет.",
+                "when_to_apply": "Применяют, когда в одном классе одни default-поля надо всегда писать в контракт, а другие — опускать ради размера payload.",
+                "edge_cases": "`@EncodeDefault` без аргумента эквивалентен `Mode.ALWAYS`; важно не путать его с глобальным `encodeDefaults`, иначе ожидания по выводу разойдутся.",
+                "related": "[[kotlin-serialization-interview#Q7]] глобальные `encodeDefaults`/`explicitNulls`; [[kotlin-serialization-interview#Q9]] полное исключение через `@Transient`; [[kotlin-serialization-interview#Q35]] best practices для контрактных полей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@EncodeDefault(Mode.NEVER)` исключает поле из сериализации всегда, даже если его значение отличается от default.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Mode.NEVER` опускает поле только когда оно равно default; при значении, отличном от default, поле кодируется.",
+                "source_of_confusion": "Слово `NEVER` воспринимают как «никогда», игнорируя условие равенства default.",
+                "if_it_were_true": "Будь это «всегда исключать», `@EncodeDefault(Mode.NEVER)` дублировал бы `@Transient`, но это разные вещи.",
+                "how_it_should_be": "`Mode.NEVER` — это «не писать, если значение совпадает с default»; для полного исключения служит `@Transient`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@EncodeDefault` влияет и на десериализацию: с `Mode.NEVER` поле игнорируется во входном JSON.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@EncodeDefault` влияет только на сериализацию (что писать в выход); чтение входа он не меняет.",
+                "source_of_confusion": "Раз аннотация про «defaults», кажется, что она управляет и подстановкой default при чтении.",
+                "if_it_were_true": "Будь это так, `Mode.NEVER` отбрасывал бы входной ключ, но при десериализации поле читается как обычно.",
+                "how_it_should_be": "Подстановку default при чтении определяет наличие default-значения в конструкторе, а не `@EncodeDefault`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать `@SerialName` на уровне класса для полиморфизма и обратной совместимости?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@SerialName` на уровне класса меняет имена всех полей внутри этого класса на указанное значение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На уровне класса `@SerialName` задаёт значение ДИСКРИМИНАТОРА при полиморфизме, а не имена полей.",
+                "source_of_confusion": "На поле `@SerialName` действительно переименовывает ключ, поэтому переносят это и на класс.",
+                "if_it_were_true": "Будь так, все поля подтипа получили бы одно имя и конфликтовали, но переименовывается лишь значение типа.",
+                "how_it_should_be": "Класс-уровневый `@SerialName` влияет на дискриминатор подтипа; имена полей задаются отдельно на каждом свойстве."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Без `@SerialName` на классе дискриминатором становится короткое имя класса (`UserCreated`), а не полное.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `@SerialName` дискриминатором становится ПОЛНОЕ имя класса (`com.example.Event.UserCreated`), что неудобно для внешних API.",
+                "source_of_confusion": "В выводе хочется видеть короткое имя, поэтому додумывают, что оно и используется по умолчанию.",
+                "if_it_were_true": "Будь дефолтом короткое имя, не было бы необходимости в `@SerialName` ради читаемых дискриминаторов, но она есть.",
+                "how_it_should_be": "По умолчанию пишется fully-qualified имя; чтобы получить короткое стабильное значение, ставят `@SerialName`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@SerialName` на уровне класса задаёт значение дискриминатора при полиморфной сериализации: для `@SerialName(\"user.created\") data class UserCreated(...)` в JSON попадёт `{\"type\":\"user.created\",...}` (или иной ключ при заданном `classDiscriminator`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Это делает дискриминатор стабильным и читаемым, не завися от Kotlin-имени и пакета класса.",
+                "example": "С `Json { classDiscriminator = \"event_type\" }` сериализация `Event.UserCreated(\"u123\")` даёт `{\"event_type\":\"user.created\",\"userId\":\"u123\"}`.",
+                "when_to_apply": "Для обратной совместимости: при переименовании класса сохраняют старое `@SerialName(\"old_name\")` на новом классе — старые JSON продолжат десериализоваться.",
+                "edge_cases": "Без `@SerialName` дискриминатором будет полное имя класса (`com.example.Event.UserCreated`), что хрупко для внешних API и ломается при переезде пакета.",
+                "related": "[[kotlin-serialization-interview#Q8]] `@SerialName` на поле; [[kotlin-serialization-interview#Q17]] сериализация `sealed class`; [[kotlin-serialization-interview#Q19]] изменение `classDiscriminator`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@SerialName` на классе бесполезен для обратной совместимости — при переименовании класса старые JSON всё равно перестанут читаться.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: сохранив старое значение `@SerialName` на переименованном классе, обеспечивают чтение старых JSON-данных.",
+                "source_of_confusion": "Кажется, что раз класс переименован, контракт неизбежно ломается.",
+                "if_it_were_true": "Будь так, `@SerialName` не называли бы инструментом обратной совместимости, но именно для неё его и применяют.",
+                "how_it_should_be": "Старое значение дискриминатора фиксируют через `@SerialName`, и старые данные продолжают десериализоваться."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда нужен кастомный сериализатор и как реализовать `KSerializer`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Кастомный `KSerializer` нужен для любого `data class`, чтобы вообще включить его сериализацию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для `@Serializable data class` сериализатор генерируется автоматически; кастом нужен лишь для неподдержанных типов или нестандартного представления.",
+                "source_of_confusion": "Раз кастом — про сериализацию, кажется, что он требуется всегда.",
+                "if_it_were_true": "Будь так, `@Serializable` был бы бессмысленным, но он сам генерирует сериализатор для класса.",
+                "how_it_should_be": "`KSerializer` пишут точечно: для `LocalDate`/`UUID`, нестандартного формата или валидации, а не для каждого класса."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `KSerializer` поле `descriptor` опционально и его можно не переопределять.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`descriptor: SerialDescriptor` обязателен — он описывает структуру и без него интерфейс не реализуется.",
+                "source_of_confusion": "Часто фокусируются на `serialize`/`deserialize`, забывая, что дескриптор тоже abstract-член.",
+                "if_it_were_true": "Будь он опционален, форматы не знали бы структуру типа, но `descriptor` — обязательный член интерфейса.",
+                "how_it_should_be": "Реализуют все три члена: `descriptor`, `serialize` и `deserialize`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Кастомный сериализатор подключается к полю только глобально через `SerializersModule`; локально на поле его указать нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сериализатор подключают и локально через `@Serializable(with = ...)` на поле, и файлово через `@file:UseSerializers`, и глобально через модуль.",
+                "source_of_confusion": "Модуль кажется единственным «правильным» местом регистрации.",
+                "if_it_were_true": "Будь только глобальный путь, не существовало бы `@Serializable(with = ...)`, но эта аннотация есть.",
+                "how_it_should_be": "Способов несколько: `@Serializable(with = X::class)` на поле, `@file:UseSerializers`, либо `contextual` в модуле."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Кастомный `KSerializer` нужен, когда тип не `@Serializable` и не поддержан из коробки (`LocalDate`, `UUID`, `BigDecimal`), нужно нестандартное представление (дата как timestamp) или валидация при десериализации. Реализуют интерфейс `KSerializer<T>` с `descriptor`, `serialize(encoder, value)` и `deserialize(decoder)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Для простых типов берут `PrimitiveSerialDescriptor` и кодируют значение одним вызовом `encodeLong`/`encodeString`.",
+                "example": "`object InstantAsLongSerializer : KSerializer<Instant>` с `PrimitiveKind.LONG`, где `serialize` пишет `value.toEpochMilli()`, а `deserialize` читает `Instant.ofEpochMilli(decoder.decodeLong())`.",
+                "when_to_apply": "Подключают через `@Serializable(with = InstantAsLongSerializer::class)` на поле или `@file:UseSerializers(...)` на весь файл.",
+                "edge_cases": "Через `@file:UseSerializers` сериализатор применяется ко ВСЕМ полям этого типа в файле — это и удобно, и легко получить неожиданный охват.",
+                "related": "[[kotlin-serialization-interview#Q13]] сериализаторы для дат и `UUID`; [[kotlin-serialization-interview#Q14]] surrogate-сериализатор; [[kotlin-serialization-interview#Q15]] альтернатива через `@Contextual`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как сериализовать даты, `UUID` и другие типы из `java.time`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Типы `java.time` (`LocalDate`, `Instant`, `ZonedDateTime`) и `UUID` не поддержаны из коробки, потому что `kotlinx.serialization` мультиплатформенна, а эти классы JVM-специфичны. Для них пишут `KSerializer` (обычно через `PrimitiveSerialDescriptor` со строкой ISO-8601) и подключают на поле или через `@file:UseSerializers`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сериализатор сводит тип к примитиву: дату — к строке `value.toString()` и обратно через `LocalDate.parse(...)`.",
+                "example": "`object LocalDateSerializer : KSerializer<LocalDate>` с `PrimitiveKind.STRING`, где `serialize` пишет `value.toString()`, а `deserialize` — `LocalDate.parse(decoder.decodeString())`.",
+                "when_to_apply": "Используют для DTO с датами/идентификаторами; альтернатива — `@Contextual` с регистрацией в `SerializersModule`, не привязанной к файлу.",
+                "edge_cases": "Дата как строка ISO читаема, но дороже timestamp по размеру; для бинарных форматов часто кодируют `Instant` как `Long` эпохи.",
+                "related": "[[kotlin-serialization-interview#Q12]] общая реализация `KSerializer`; [[kotlin-serialization-interview#Q15]] `@Contextual` как альтернатива; [[kotlin-serialization-interview#Q4]] почему эти типы не из коробки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`LocalDate` и `UUID` поддержаны из коробки, и для них достаточно `@Serializable` на содержащем классе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эти JVM-типы НЕ поддержаны из коробки: без кастомного сериализатора или `@Contextual` будет ошибка компиляции.",
+                "source_of_confusion": "Они кажутся стандартными типами, поэтому ждут встроенной поддержки.",
+                "if_it_were_true": "Будь они встроены, библиотека тянула бы JVM-зависимости и не была бы мультиплатформенной.",
+                "how_it_should_be": "Для `LocalDate`/`UUID` нужен собственный `KSerializer` или контекстная регистрация."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Один файловый `@file:UseSerializers(LocalDateSerializer::class)` применяется ко всем файлам модуля сразу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@file:UseSerializers` действует только в пределах ОДНОГО файла, где объявлен, а не на весь модуль.",
+                "source_of_confusion": "Слово «file» путают с областью всего модуля.",
+                "if_it_were_true": "Будь это модульно, в других файлах сериализатор не пришлось бы повторять, но его область — файл.",
+                "how_it_should_be": "Для применения во всём приложении используют `@Contextual` + `SerializersModule`, а не файловую аннотацию."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Дату всегда нужно кодировать только как строку ISO-8601; кодировать `Instant` числом эпохи нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Представление выбирает разработчик: можно строкой ISO или числом эпохи (`toEpochMilli`) — обе стратегии валидны.",
+                "source_of_confusion": "ISO-строка — частый пример в гайдах, поэтому считают её единственным вариантом.",
+                "if_it_were_true": "Будь так, не существовало бы распространённого `InstantAsLongSerializer`, но он широко используется.",
+                "how_it_should_be": "В `serialize` можно вызвать как `encodeString`, так и `encodeLong` — формат даты определяет сам сериализатор."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как написать делегирующий сериализатор (surrogate)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Surrogate-подход требует вручную писать `beginStructure`/`endStructure` и описывать `descriptor` с нуля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: surrogate избавляет от ручного описания структуры — всё берётся из `@Serializable` surrogate-класса.",
+                "source_of_confusion": "Кастомные сериализаторы часто связаны с ручным кодированием полей, поэтому переносят это на surrogate.",
+                "if_it_were_true": "Будь так, surrogate не давал бы выигрыша над полным `KSerializer`, но его смысл именно в экономии ручной работы.",
+                "how_it_should_be": "При surrogate `descriptor` берут из `Surrogate.serializer().descriptor`, не описывая структуру вручную."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Surrogate-подход: вместо ручного кодирования полей создают промежуточный `@Serializable`-класс, через который идёт сериализация. `descriptor` берётся из `Surrogate.serializer().descriptor`, а `serialize`/`deserialize` делегируют в `encodeSerializableValue`/`decodeSerializableValue` с этим surrogate.",
+              "correct": true,
+              "sections": {
+                "explanation": "Структуру описывает сам `@Serializable` surrogate, поэтому не нужно вручную писать `beginStructure`/`endStructure` и собирать дескриптор.",
+                "example": "Для внешнего `class Color(r,g,b)` делают `@Serializable private data class ColorSurrogate(val r,g,b)`, и `ColorSerializer` конвертирует `Color` в `ColorSurrogate` и обратно.",
+                "when_to_apply": "Удобен для сложных типов из внешних библиотек, которые нельзя пометить `@Serializable` напрямую.",
+                "edge_cases": "Surrogate-класс часто делают `private` с `@SerialName(\"Color\")`, чтобы внешнее имя совпало с исходным типом, а внутренний класс не утекал в API.",
+                "related": "[[kotlin-serialization-interview#Q12]] базовая реализация `KSerializer`; [[kotlin-serialization-interview#Q13]] сериализаторы для `java.time`; [[kotlin-serialization-interview#Q41]] кастомный `KSerializer` со структурой."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Surrogate-класс обязан быть `public`, иначе сериализатор не сможет к нему обратиться.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Surrogate можно (и часто стоит) делать `private` — сериализатор в том же файле имеет к нему доступ.",
+                "source_of_confusion": "Кажется, что для сериализации тип должен быть видим извне.",
+                "if_it_were_true": "Будь так, нельзя было бы скрыть внутренний surrogate от API, но это распространённая практика.",
+                "how_it_should_be": "Surrogate делают `private`, чтобы не засорять публичный контракт промежуточным типом."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Surrogate применяют только к типам, которые уже помечены `@Serializable`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смысл surrogate — сериализовать типы, которые НЕЛЬЗЯ пометить `@Serializable` (например, из внешней библиотеки).",
+                "source_of_confusion": "Раз внутри используется `@Serializable` surrogate-класс, переносят это требование и на целевой тип.",
+                "if_it_were_true": "Будь целевой тип уже `@Serializable`, surrogate был бы не нужен — сериализатор сгенерировался бы сам.",
+                "how_it_should_be": "Surrogate оборачивает несериализуемый тип в сериализуемый промежуточный класс."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое контекстная сериализация (`@Contextual`) и зачем она нужна?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Contextual` жёстко фиксирует сериализатор на этапе компиляции, как `@Serializable(with = ...)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Contextual` наоборот ОТКЛАДЫВАЕТ выбор сериализатора до создания экземпляра `Json`, где он берётся из `SerializersModule`.",
+                "source_of_confusion": "Обе аннотации связаны с выбором сериализатора, поэтому их семантику путают.",
+                "if_it_were_true": "Будь выбор compile-time, не нужен был бы `SerializersModule`, но `@Contextual` именно туда и обращается.",
+                "how_it_should_be": "`@Serializable(with = ...)` фиксирует сериализатор на поле; `@Contextual` отдаёт выбор рантайму через модуль."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Поле `@Contextual val timestamp: Instant` сериализуется даже без регистрации сериализатора в `SerializersModule`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без зарегистрированного контекстного сериализатора в модуле сериализация `@Contextual`-поля упадёт с ошибкой в рантайме.",
+                "source_of_confusion": "Аннотация выглядит самодостаточной, поэтому про обязательную регистрацию забывают.",
+                "if_it_were_true": "Будь так, можно было бы опустить `contextual(Instant::class, ...)`, но без него `Json` не знает, как кодировать поле.",
+                "how_it_should_be": "`@Contextual` требует, чтобы сериализатор типа был зарегистрирован в `SerializersModule` экземпляра формата."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Контекстная сериализация позволяет отложить выбор сериализатора до момента создания `Json` (или другого формата): поле помечают `@Contextual`, а сериализатор регистрируют в `SerializersModule`. Так один тип в разных контекстах может кодироваться по-разному.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это развязывает определение модели и выбор формата: shared-модуль не знает, как приложение кодирует дату.",
+                "example": "`@Serializable data class Event(@Contextual val timestamp: Instant, @Contextual val id: UUID)` — сериализаторы определятся в рантайме из модуля.",
+                "when_to_apply": "Нужна, когда дата в одном модуле кодируется как ISO-строка, а в другом — как timestamp, или для подстановки mock-сериализатора в тестах.",
+                "edge_cases": "Без `@Contextual` или явного `@Serializable(with = ...)` поле типа `Instant` даёт ошибку компиляции, так как компилятор не найдёт сериализатор.",
+                "related": "[[kotlin-serialization-interview#Q12]] реализация самого `KSerializer`; [[kotlin-serialization-interview#Q16]] регистрация в `SerializersModule`; [[kotlin-serialization-interview#Q13]] сериализаторы для дат."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Contextual` работает только с полиморфными `sealed class`, но не с обычными типами вроде `Instant`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Contextual` применяют именно к обычным типам (`Instant`, `UUID`, `LocalDate`); полиморфизм регистрируют через `polymorphic`.",
+                "source_of_confusion": "И `@Contextual`, и `polymorphic` живут в `SerializersModule`, поэтому их области смешивают.",
+                "if_it_were_true": "Будь так, нельзя было бы контекстно сериализовать дату, но это основной сценарий `@Contextual`.",
+                "how_it_should_be": "Для обычных типов — `contextual(...)`, для иерархий — `polymorphic(...)`; это разные механизмы модуля."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как зарегистрировать контекстный сериализатор в `SerializersModule`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Контекстные сериализаторы регистрируют через `polymorphic(Instant::class) { ... }` в `SerializersModule`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Контекстные сериализаторы регистрируют через `contextual(Instant::class, InstantSerializer)`; `polymorphic` — для иерархий подтипов.",
+                "source_of_confusion": "Оба билдера живут в `SerializersModule`, поэтому их путают.",
+                "if_it_were_true": "Будь так, `contextual` был бы лишним, но именно он связывает тип с контекстным сериализатором.",
+                "how_it_should_be": "Для `@Contextual` используют `contextual(...)`; `polymorphic(...)` регистрирует подтипы полиморфного базового типа."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`SerializersModule` нельзя объединять — для каждого приложения пишут один монолитный модуль.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Модули объединяют оператором `plus`: `val combined = dateModule + uuidModule + polymorphicModule`.",
+                "source_of_confusion": "Кажется, что у формата может быть только один модуль, значит его не из чего собирать.",
+                "if_it_were_true": "Будь объединение невозможно, модульные приложения не предоставляли бы свои модули отдельно, но они это делают.",
+                "how_it_should_be": "Каждый модуль (или Gradle-модуль) даёт свой `SerializersModule`, а в точке сборки они складываются через `plus`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "После регистрации модуля его нужно передавать в каждый вызов `encodeToString` отдельным аргументом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Модуль передают один раз в конфиг `Json { serializersModule = module }`, после чего он применяется ко всем вызовам.",
+                "source_of_confusion": "Привычка передавать сериализатор в вызов наводит на мысль передавать и модуль.",
+                "if_it_were_true": "Будь так, `encodeToString(event)` без модуля не работал бы, но он работает, потому что модуль уже в `Json`.",
+                "how_it_should_be": "Регистрируют модуль в экземпляре `Json`, и он действует на все последующие операции этого экземпляра."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`SerializersModule` — реестр сериализаторов, который передают в конфиг формата. Контекстные регистрируют через `contextual(Instant::class, InstantSerializer)`, полиморфные — через `polymorphic(...) { subclass(...) }`, а модуль подключают как `Json { serializersModule = module }`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Один модуль может содержать и контекстные, и полиморфные регистрации; после подключения все `@Contextual`-поля начинают сериализоваться.",
+                "example": "`val module = SerializersModule { contextual(UUID::class, UUIDSerializer); polymorphic(Event::class) { subclass(UserEvent::class) } }`, затем `Json { serializersModule = module }`.",
+                "when_to_apply": "Применяют в модульных приложениях: каждый модуль даёт свой `SerializersModule`, объединяемый через `plus` в точке сборки.",
+                "edge_cases": "Модули объединяют оператором `plus` (`dateModule + uuidModule`); конфликт двух сериализаторов одного типа даёт ошибку при сборке модуля.",
+                "related": "[[kotlin-serialization-interview#Q12]] реализация `KSerializer`; [[kotlin-serialization-interview#Q15]] что такое `@Contextual`; [[kotlin-serialization-interview#Q18]] регистрация подтипов `polymorphic`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как сериализовать `sealed class` и в чём преимущество перед open-полиморфизмом?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для `sealed class` все подтипы известны компилятору, поэтому `kotlinx.serialization` сам генерирует нужную информацию о подтипах — ручная регистрация в `SerializersModule` НЕ требуется. В JSON добавляется поле-дискриминатор (по умолчанию `type`) со значением из `@SerialName`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Замкнутость иерархии даёт исчерпывающий `when` и безопасность: новый подтип нельзя добавить из чужого модуля.",
+                "example": "`@Serializable sealed class ApiResult` с подтипами `Success`/`Error`/`Loading` (через `@SerialName`) сериализует `Success(\"OK\")` в `{\"type\":\"success\",\"data\":\"OK\"}`.",
+                "when_to_apply": "Применяют для замкнутых доменных моделей (результаты, события, состояния UI), где набор вариантов фиксирован.",
+                "edge_cases": "Если подтипы должны приходить из разных модулей, `sealed class` не подойдёт — нужна open-иерархия с ручной регистрацией в `SerializersModule`.",
+                "related": "[[kotlin-serialization-interview#Q11]] `@SerialName` как дискриминатор; [[kotlin-serialization-interview#Q18]] open-полиморфизм через модуль; [[kotlin-serialization-interview#Q40]] обзор подходов к полиморфизму."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для сериализации `sealed class` нужно вручную регистрировать каждый подтип в `SerializersModule`, как для open-иерархий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для `sealed class` ручная регистрация НЕ нужна — подтипы известны компилятору, и информация о них генерируется автоматически.",
+                "source_of_confusion": "Полиморфизм ассоциируется с `SerializersModule`, поэтому требование переносят и на `sealed`.",
+                "if_it_were_true": "Будь регистрация обязательной, исчезло бы ключевое преимущество `sealed` над open-полиморфизмом, но оно есть.",
+                "how_it_should_be": "Ручная регистрация через `polymorphic { subclass(...) }` нужна только для open-иерархий (`abstract`/`interface`)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`sealed class` при сериализации не добавляет поле-дискриминатор, тип распознаётся по набору полей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дискриминатор добавляется: по умолчанию это поле `type`, значение берётся из `@SerialName` или полного имени подтипа.",
+                "source_of_confusion": "Распознавание по полям существует (`JsonContentPolymorphicSerializer`), но это отдельный механизм, а не дефолт для `sealed`.",
+                "if_it_were_true": "Будь так, `Success(\"OK\")` и `Error(...)` с одинаковыми полями нельзя было бы различить, но дискриминатор это решает.",
+                "how_it_should_be": "Стандартная полиморфная сериализация `sealed` пишет дискриминатор `type` с именем подтипа."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Преимущество `sealed class` — возможность добавлять подтипы из других модулей, в отличие от open-полиморфизма.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `sealed class` НЕ позволяет добавлять подтипы из других модулей (это и есть безопасность), а open-полиморфизм — позволяет.",
+                "source_of_confusion": "Расширяемость звучит как плюс, поэтому её ошибочно приписывают `sealed`.",
+                "if_it_were_true": "Будь так, исчезла бы exhaustive-проверка `when`, но именно замкнутость её и обеспечивает.",
+                "how_it_should_be": "Расширяемость подтипами из разных модулей — свойство open-полиморфизма, а не `sealed class`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить open-полиморфную сериализацию через `SerializersModule`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Open-полиморфизм для `abstract class`/`interface` работает автоматически, регистрация подтипов не нужна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для open-иерархий подтипы регистрируют ВРУЧНУЮ через `polymorphic(Base::class) { subclass(...) }` — автоматически они не известны.",
+                "source_of_confusion": "По аналогии с `sealed class` (где регистрация не нужна) ждут того же для open-иерархий.",
+                "if_it_were_true": "Будь так, `SerializersModule` для полиморфизма был бы не нужен, но без него `Message` не сериализуется.",
+                "how_it_should_be": "`abstract`/`interface`-базу с подтипами надо явно описать в `polymorphic`-блоке модуля."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Когда база — `abstract class` или `interface` (не `sealed`), подтипы регистрируют вручную: `SerializersModule { polymorphic(Message::class) { subclass(TextMessage::class); subclass(ImageMessage::class) } }`, и модуль передают в `Json { serializersModule = module }`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без регистрации подтип неизвестен сериализатору, и кодирование/декодирование полиморфного значения упадёт.",
+                "example": "`Message = ImageMessage(\"Look!\", url)` с `@SerialName(\"image_message\")` даёт `{\"type\":\"image_message\",\"text\":\"Look!\",\"imageUrl\":...}`.",
+                "when_to_apply": "Применяют, когда подтипы расширяемы и могут приходить из разных Gradle-модулей; модули объединяют через `plus`.",
+                "edge_cases": "Если подтип не зарегистрирован, при сериализации будет `SerializationException`; легко забыть добавить новый `subclass`.",
+                "related": "[[kotlin-serialization-interview#Q16]] сборка `SerializersModule`; [[kotlin-serialization-interview#Q17]] когда хватает `sealed class`; [[kotlin-serialization-interview#Q20]] fallback для неизвестных подтипов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `polymorphic`-блоке достаточно зарегистрировать базовый класс через `subclass(Message::class)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Регистрируют именно конкретные подтипы (`subclass(TextMessage::class)`), а не сам абстрактный базовый класс.",
+                "source_of_confusion": "Базовый класс упоминается в `polymorphic(Message::class)`, поэтому кажется, что его же и регистрируют как `subclass`.",
+                "if_it_were_true": "Будь так, конкретные реализации остались бы неизвестны, и сериализация подтипов падала бы.",
+                "how_it_should_be": "`polymorphic(Base::class)` объявляет иерархию, а `subclass(...)` перечисляет конкретные сериализуемые подтипы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Подтипы из разных Gradle-модулей объединить нельзя — все `subclass` должны быть в одном модуле.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый модуль предоставляет свой `SerializersModule`, и в точке сборки они объединяются через `plus`.",
+                "source_of_confusion": "Кажется, что иерархия должна быть описана целиком в одном месте.",
+                "if_it_were_true": "Будь так, расширяемость open-полиморфизма по модулям была бы невозможна, но она работает через `plus`.",
+                "how_it_should_be": "`val appModule = coreModule + featureAModule + featureBModule` объединяет регистрации из разных модулей."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как изменить имя и ключ дискриминатора (`classDiscriminator`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Дискриминатор можно поменять только глобально через `classDiscriminator`; для отдельной иерархии задать его нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для конкретной иерархии дискриминатор задают через `@JsonClassDiscriminator` (с 1.5.0), а глобально — через `classDiscriminator` в `Json`.",
+                "source_of_confusion": "Глобальный флаг заметнее, поэтому про аннотацию на иерархии забывают.",
+                "if_it_were_true": "Будь только глобальный путь, нельзя было бы дать разным иерархиям разные ключи, но `@JsonClassDiscriminator` это позволяет.",
+                "how_it_should_be": "Есть оба уровня: глобальный `classDiscriminator` и per-иерархия `@JsonClassDiscriminator`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Имя дискриминатора по умолчанию — `class`, а не `type`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию дискриминатор — поле `type`; на `class` или иное его меняют явно.",
+                "source_of_confusion": "Слово «classDiscriminator» содержит `class`, поэтому считают его значением по умолчанию.",
+                "if_it_were_true": "Будь дефолтом `class`, примеры показывали бы `{\"class\":...}`, но по умолчанию там `{\"type\":...}`.",
+                "how_it_should_be": "Дефолтный ключ — `type`; имя `classDiscriminator` лишь обозначает параметр, а не его значение."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "По умолчанию дискриминатор — поле `type`. Глобально его меняют через `Json { classDiscriminator = \"#class\" }`. Для конкретной иерархии задают аннотацией `@JsonClassDiscriminator(\"event_kind\")` на базовом `sealed class` (доступна с 1.5.0).",
+              "correct": true,
+              "sections": {
+                "explanation": "Это позволяет подогнать имя ключа под внешний контракт: глобально для всего формата или точечно для одной иерархии.",
+                "example": "`@JsonClassDiscriminator(\"event_kind\") sealed class DomainEvent` с `@SerialName(\"order\")` даёт `{\"event_kind\":\"order\",\"orderId\":\"123\"}`.",
+                "when_to_apply": "Меняют, когда внешний API ожидает определённое имя поля типа или когда `type` конфликтует с доменным полем.",
+                "edge_cases": "Имя дискриминатора не должно совпадать с именем реального поля в подтипах — иначе будет конфликт и `SerializationException`.",
+                "related": "[[kotlin-serialization-interview#Q11]] значение дискриминатора через `@SerialName`; [[kotlin-serialization-interview#Q5]] `classDiscriminator` среди параметров `Json`; [[kotlin-serialization-interview#Q40]] полиморфизм и discriminator."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Имя дискриминатора может свободно совпадать с именем реального поля подтипа — конфликта не будет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Если дискриминатор совпадёт с именем реального поля подтипа, возникнет конфликт и `SerializationException`.",
+                "source_of_confusion": "Кажется, что лишний одноимённый ключ просто перезапишется без последствий.",
+                "if_it_were_true": "Будь так, можно было бы назвать дискриминатор как существующее поле, но это запрещено во избежание коллизий.",
+                "how_it_should_be": "Имя дискриминатора выбирают уникальным, не пересекающимся с полями подтипов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обработать неизвестный подтип при десериализации (default polymorphic)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "При неизвестном значении дискриминатора по умолчанию подставляется первый зарегистрированный подтип.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию неизвестный дискриминатор вызывает `SerializationException`, а не молчаливую подстановку подтипа.",
+                "source_of_confusion": "Хочется устойчивости «по умолчанию», поэтому ждут автоматического fallback.",
+                "if_it_were_true": "Будь так, не понадобились бы `defaultDeserializer`/`JsonContentPolymorphicSerializer`, но они нужны именно для этого.",
+                "how_it_should_be": "Без явного fallback неизвестный тип — это ошибка; устойчивость настраивают отдельно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Единственный способ обработать неизвестный подтип — выставить `ignoreUnknownKeys = true`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ignoreUnknownKeys` про лишние ПОЛЯ, а не про неизвестное значение дискриминатора; для подтипов нужен `defaultDeserializer`.",
+                "source_of_confusion": "Оба про «неизвестное», поэтому механизмы смешивают.",
+                "if_it_were_true": "Будь так, `ignoreUnknownKeys` спасал бы от неизвестного типа, но он не влияет на выбор подтипа.",
+                "how_it_should_be": "Для неизвестного подтипа регистрируют `defaultDeserializer { ... }` или используют контентный сериализатор."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`JsonContentPolymorphicSerializer` выбирает подтип по значению дискриминатора, как обычный полиморфизм.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JsonContentPolymorphicSerializer` выбирает сериализатор по СОДЕРЖИМОМУ JSON (набору полей), а не по дискриминатору.",
+                "source_of_confusion": "Оба механизма полиморфны, поэтому критерий выбора путают.",
+                "if_it_were_true": "Будь так, он не отличался бы от стандартного полиморфизма, но его ценность — выбор без дискриминатора.",
+                "how_it_should_be": "Дискриминатор использует обычный полиморфизм; `JsonContentPolymorphicSerializer` смотрит на сами поля объекта."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При неизвестном значении дискриминатора по умолчанию бросается `SerializationException`. Для устойчивости в `polymorphic`-блоке регистрируют `defaultDeserializer { UnknownEvent.serializer() }` — fallback для неизвестных типов. Альтернатива — `JsonContentPolymorphicSerializer`, выбирающий сериализатор по содержимому JSON.",
+              "correct": true,
+              "sections": {
+                "explanation": "Default-десериализатор подменяет ошибку безопасным значением, а контентный сериализатор работает там, где дискриминатора нет вовсе.",
+                "example": "`object EventSerializer : JsonContentPolymorphicSerializer<Event>(...)` в `selectDeserializer` смотрит, есть ли `\"orderId\"` или `\"userId\"` в `jsonObject`, и выбирает подтип.",
+                "when_to_apply": "Применяют для устойчивости к новым типам от внешнего API и для форматов, где тип определяется набором полей, а не дискриминатором.",
+                "edge_cases": "Fallback-подтип (`UnknownEvent`) должен сам быть `@Serializable` и совместим по полям, иначе десериализация снова упадёт.",
+                "related": "[[kotlin-serialization-interview#Q18]] регистрация подтипов polymorphic; [[kotlin-serialization-interview#Q17]] почему `sealed` безопаснее; [[kotlin-serialization-interview#Q34]] обработка `SerializationException`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `JsonElement` и когда использовать `encodeToJsonElement`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`JsonElement` — дерево представления JSON (аналог DOM) с иерархией `JsonPrimitive`, `JsonObject` (`Map<String, JsonElement>`), `JsonArray` (`List<JsonElement>`) и `JsonNull`. `parseToJsonElement` строит дерево из строки, `encodeToJsonElement` — из объекта, после чего дерево можно модифицировать.",
+              "correct": true,
+              "sections": {
+                "explanation": "Дерево даёт прямой доступ к произвольной структуре JSON без заранее описанного типа.",
+                "example": "`Json.parseToJsonElement(\"\"\"{\"user\":{\"name\":\"Alice\"}}\"\"\").jsonObject[\"user\"]!!.jsonObject[\"name\"]!!.jsonPrimitive.content` вернёт `\"Alice\"`.",
+                "when_to_apply": "Используют, когда нужно добавить/удалить поля перед отправкой, объединить несколько JSON или работать с динамической структурой, не описываемой одним типом.",
+                "edge_cases": "Доступ через `jsonObject[...]!!` бросает NPE на отсутствующем ключе, а `jsonPrimitive` — ошибку на неверном типе узла; для надёжности проверяют наличие и тип.",
+                "related": "[[kotlin-serialization-interview#Q22]] построение `JsonElement` через DSL; [[kotlin-serialization-interview#Q24]] `Map<String, JsonElement>` для динамики; [[kotlin-serialization-interview#Q36]] `JsonTransformingSerializer` поверх дерева."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`JsonElement` — это просто `String` с сырым JSON, по которой нельзя обращаться к узлам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JsonElement` — типизированное дерево узлов (`JsonObject`/`JsonArray`/`JsonPrimitive`), а не строка; по нему ходят через `jsonObject`/`jsonArray`.",
+                "source_of_confusion": "И строка, и дерево представляют один JSON, поэтому их отождествляют.",
+                "if_it_were_true": "Будь это строкой, не было бы доступа `element.jsonObject[\"user\"]`, но он есть.",
+                "how_it_should_be": "Строку в дерево превращает `parseToJsonElement`, а обратно — `encodeToString(JsonElement.serializer(), ...)`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`encodeToJsonElement` сразу возвращает JSON-строку, готовую к отправке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`encodeToJsonElement` возвращает `JsonElement` (дерево); строку из него получают отдельным `encodeToString`.",
+                "source_of_confusion": "Название с `encode` наводит на мысль о готовом текстовом выходе.",
+                "if_it_were_true": "Будь так, нельзя было бы модифицировать результат перед сериализацией, но дерево для того и нужно.",
+                "how_it_should_be": "Дерево от `encodeToJsonElement` сначала правят, затем сериализуют в строку через `encodeToString`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`JsonObject` хранит поля как `List`, поэтому порядок есть, но обращение по ключу невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JsonObject` — это `Map<String, JsonElement>`: доступ по ключу есть (`obj[\"name\"]`); `List` — это `JsonArray`.",
+                "source_of_confusion": "`JsonObject` и `JsonArray` оба контейнеры, поэтому их внутреннее устройство путают.",
+                "if_it_were_true": "Будь это `List`, нельзя было бы писать `jsonObject[\"name\"]`, но это штатный доступ.",
+                "how_it_should_be": "Объект — словарь по ключам, массив — список по индексам; это разные узлы дерева."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как построить `JsonElement` программно с помощью DSL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Единственный способ создать `JsonElement` — распарсить готовую JSON-строку через `parseToJsonElement`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть DSL-билдеры `buildJsonObject`/`buildJsonArray`, которые строят дерево без промежуточных строк.",
+                "source_of_confusion": "Парсинг — самый очевидный путь, поэтому про билдеры забывают.",
+                "if_it_were_true": "Будь так, не существовало бы `buildJsonObject {}`, но эта функция есть.",
+                "how_it_should_be": "`buildJsonObject { put(...) }` собирает объект напрямую, минуя текстовое представление."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`kotlinx.serialization` даёт DSL-билдеры `buildJsonObject` и `buildJsonArray`, создающие `JsonElement` без промежуточных строк. Внутри доступны `put(key, value)`, `putJsonArray`/`putJsonObject` и `add` для массивов.",
+              "correct": true,
+              "sections": {
+                "explanation": "DSL формирует типизированное дерево декларативно, что удобнее ручной сборки `JsonObject(mapOf(...))`.",
+                "example": "`buildJsonObject { put(\"name\", \"Alice\"); put(\"age\", 30); putJsonArray(\"roles\") { add(\"admin\"); add(\"editor\") } }` строит вложенный объект с массивом.",
+                "when_to_apply": "Удобен для тел запросов в тестах и для ответов-обёрток без создания промежуточных `data class`.",
+                "edge_cases": "`put` принимает только примитивы (`String`/число/`Boolean`); для вложенных структур используют `putJsonObject`/`putJsonArray`, иначе значение не вставится корректно.",
+                "related": "[[kotlin-serialization-interview#Q21]] что такое `JsonElement`; [[kotlin-serialization-interview#Q24]] `Map<String, JsonElement>`; [[kotlin-serialization-interview#Q36]] трансформация дерева в сериализаторе."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Внутри `buildJsonObject` вложенный объект добавляют тем же `put`, передавая ему лямбду-билдер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для вложенного объекта используют `putJsonObject(\"key\") { ... }`, а `put` принимает только примитивные значения.",
+                "source_of_confusion": "Раз `put` универсален для примитивов, кажется, что он же примет и вложенный билдер.",
+                "if_it_were_true": "Будь так, не существовало бы отдельных `putJsonObject`/`putJsonArray`, но они нужны именно для вложенности.",
+                "how_it_should_be": "Примитивы кладут через `put`, вложенные структуры — через `putJsonObject`/`putJsonArray`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`buildJsonArray` строит объект с числовыми ключами, а не настоящий JSON-массив.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`buildJsonArray` строит именно `JsonArray` (список элементов), а не объект с числовыми ключами.",
+                "source_of_confusion": "И массив, и объект — контейнеры, поэтому их выход путают.",
+                "if_it_were_true": "Будь так, результат был бы `{\"0\":..,\"1\":..}`, но `buildJsonArray` даёт `[..,..]`.",
+                "how_it_should_be": "`buildJsonObject` строит объект, `buildJsonArray` — массив; это разные узлы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как сериализовать nullable-поля и optional-значения?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Nullable-поля (`String?`, `Int?`) требуют кастомного сериализатора, из коробки они не работают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Nullable-поля обрабатываются нативно: `T?` сериализуем для любого сериализуемого `T` без кастома.",
+                "source_of_confusion": "Раз `null` — особое значение, кажется, что нужна спецобработка.",
+                "if_it_were_true": "Будь так, любой `data class` с `String?`-полем не компилировался бы, но он работает.",
+                "how_it_should_be": "`String?`/`Int?` сериализуются из коробки; кастом нужен лишь для неподдержанных типов вроде `Optional<T>`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "При десериализации отсутствующий ключ без default-значения молча станет `null`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отсутствующий ключ без default бросает `MissingFieldException`; `null` подставляется только при наличии default или nullable+default.",
+                "source_of_confusion": "Кажется, что nullable-тип сам по себе разрешает отсутствие значения.",
+                "if_it_were_true": "Будь так, обязательные поля нельзя было бы валидировать, но их отсутствие — это ошибка.",
+                "how_it_should_be": "Без default отсутствие ключа — ошибка; чтобы получить `null` по умолчанию, поле делают `T? = null`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Nullable-поля (`String?`, `Int?`) обрабатываются нативно. При десериализации: отсутствующий ключ → default (если есть), ключ со значением `null` → `null` (если поле nullable), отсутствие ключа без default → `MissingFieldException`. Для отличия «не передано» от «передано null» (PATCH) используют `explicitNulls=false` или явные маркеры.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сочетание nullability и default-значений точно задаёт поведение при отсутствующих и null-полях.",
+                "example": "При `encodeDefaults=false` `Profile(\"Alice\")` с `bio: String? = null` даёт `{\"name\":\"Alice\"}`; при `encodeDefaults=true` — `{\"name\":\"Alice\",\"bio\":null,\"age\":null}`.",
+                "when_to_apply": "Применяют для опциональных полей DTO; для PATCH-стратегии «не менять/стереть» вводят отдельный маркер или `explicitNulls=false`.",
+                "edge_cases": "`Optional<T>` из Java не поддерживается — для таких сценариев берут `JsonElement` или обёрточные `sealed class`.",
+                "related": "[[kotlin-serialization-interview#Q7]] `explicitNulls` и `encodeDefaults`; [[kotlin-serialization-interview#Q42]] подводные камни nullable/default; [[kotlin-serialization-interview#Q24]] generic-классы и коллекции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`kotlinx.serialization` поддерживает `java.util.Optional<T>` из коробки наравне с `T?`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Optional<T>` НЕ поддерживается; вместо него используют `T?`, `JsonElement` или обёрточные `sealed class`.",
+                "source_of_confusion": "В Java `Optional` — стандартный способ опциональности, поэтому ждут его поддержки.",
+                "if_it_were_true": "Будь так, в гайдах показывали бы `Optional<String>`-поля, но рекомендуют `String?`.",
+                "how_it_should_be": "Опциональность в Kotlin выражают через nullable-тип `T?`, а не Java `Optional`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как сериализовать generic-классы (`List`, `Map`, собственные)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Стандартные коллекции `List`/`Set`/`Map` требуют явного сериализатора при каждом использовании.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стандартные коллекции работают из коробки; явный сериализатор нужен лишь для собственных generic-типов без reified `T`.",
+                "source_of_confusion": "Generic ассоциируется со сложностью, поэтому ждут ручной работы и для коллекций.",
+                "if_it_were_true": "Будь так, `List<User>` нельзя было бы сериализовать без кастома, но это штатный сценарий.",
+                "how_it_should_be": "`List`/`Set`/`Map` сериализуются автоматически; ручной сериализатор подают для собственных generic-классов в non-reified контексте."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для `Map` с нестроковыми ключами не нужна никакая настройка — они сериализуются как обычный JSON-объект.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для нестроковых структурных ключей `Map` требуется `allowStructuredMapKeys = true` в конфиге `Json`.",
+                "source_of_confusion": "Раз `Map<String, V>` работает без настройки, переносят это и на сложные ключи.",
+                "if_it_were_true": "Будь так, `Map<SomeObject, V>` сериализовался бы по умолчанию, но без флага будет ошибка.",
+                "how_it_should_be": "Строковые/примитивные ключи — из коробки; для объектов-ключей включают `allowStructuredMapKeys`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Собственный generic-класс всегда сериализуется автоматически, даже когда тип `T` не reified.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В non-reified контексте нужно передать сериализатор аргумента явно: `Page.serializer(User.serializer())`.",
+                "source_of_confusion": "С reified-параметром `encodeToString(page)` работает, поэтому считают, что так всегда.",
+                "if_it_were_true": "Будь так, в обычной (не inline) функции `encodeToString(value)` хватало бы без сериализатора, но компилятор не выведет `T`.",
+                "how_it_should_be": "Для reified-`T` сериализатор выводится; иначе подают `ClassName.serializer(argSerializer)` явно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Стандартные коллекции (`List`, `Set`, `Map`) и generic-`data class` с reified-`T` сериализуются из коробки: `Json.encodeToString(Page(listOf(User(1,\"Alice\")), 100, 1))` сам выводит `T = User`. В non-reified контексте сериализатор аргумента передают явно.",
+              "correct": true,
+              "sections": {
+                "explanation": "Для динамических полей удобен `Map<String, JsonElement>`; для своих generic-типов без reified нужен сериализатор параметра.",
+                "example": "В обычной функции пишут `Json.encodeToString(serializer, value)`, например `encode(page, Page.serializer(User.serializer()))`.",
+                "when_to_apply": "Применяют для пагинированных ответов (`Page<T>`), универсальных обёрток и конфигов с динамическими ключами.",
+                "edge_cases": "Для `Map` с нестроковыми ключами нужен `allowStructuredMapKeys = true`, иначе сериализация структурного ключа упадёт.",
+                "related": "[[kotlin-serialization-interview#Q4]] коллекции из коробки; [[kotlin-serialization-interview#Q21]] `JsonElement` для динамики; [[kotlin-serialization-interview#Q23]] nullable в полях коллекций."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие форматы поддерживает `kotlinx.serialization` кроме `JSON`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Один `@Serializable`-класс сериализуется в несколько форматов: `JSON` (Stable, REST/конфиги), `Protobuf` (Experimental, gRPC/высокая нагрузка), `CBOR` (Experimental, IoT/компактный бинарь), `Properties` (flat key-value) и `HOCON` (Experimental, JVM only, Typesafe Config).",
+              "correct": true,
+              "sections": {
+                "explanation": "Движок сериализации общий, а формат — сменный backend, поэтому модель описывают один раз для всех форматов.",
+                "example": "Для `Sensor(1, 23.5)`: `Json.encodeToString(sensor)`, `ProtoBuf.encodeToByteArray(sensor)`, `Cbor.encodeToByteArray(sensor)` — один класс, три формата.",
+                "when_to_apply": "JSON выбирают для публичных API и читаемости; `Protobuf`/`CBOR` — для внутренних высоконагруженных и компактных каналов.",
+                "edge_cases": "Бинарные форматы пока `Experimental` и требуют `@OptIn(ExperimentalSerializationApi::class)`; их API может меняться между версиями.",
+                "related": "[[kotlin-serialization-interview#Q26]] `Protobuf` и `@ProtoNumber`; [[kotlin-serialization-interview#Q27]] `CBOR` и когда его брать; [[kotlin-serialization-interview#Q43]] сравнение `CBOR`/`Protobuf`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Protobuf` в `kotlinx.serialization` уже стабилен и не требует `@OptIn`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Protobuf` (и `CBOR`) пока имеют статус `Experimental` и требуют `@OptIn(ExperimentalSerializationApi::class)`.",
+                "source_of_confusion": "Зрелость самого Protocol Buffers переносят на статус Kotlin-артефакта.",
+                "if_it_were_true": "Будь он Stable, компилятор не требовал бы `@OptIn`, но он его требует для protobuf-API.",
+                "how_it_should_be": "Stable сейчас только `JSON`; бинарные форматы помечены экспериментальными."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для каждого формата нужен свой набор аннотаций на классе, иначе он не сериализуется в другой формат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один и тот же `@Serializable`-класс работает со всеми форматами; формат-специфичные аннотации (`@ProtoNumber`) опциональны.",
+                "source_of_confusion": "Раз для protobuf бывает `@ProtoNumber`, кажется, что и остальным форматам нужны свои аннотации.",
+                "if_it_were_true": "Будь так, нельзя было бы сериализовать один класс и в JSON, и в CBOR без правок, но это работает.",
+                "how_it_should_be": "`@Serializable` достаточно для всех форматов; `@ProtoNumber` лишь уточняет protobuf-совместимость."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`HOCON`-формат работает на всех платформах Kotlin наравне с `JSON`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`HOCON` доступен только на JVM (`kotlinx-serialization-hocon`), в отличие от мультиплатформенного `JSON`.",
+                "source_of_confusion": "Раз библиотека мультиплатформенна, ждут того же от каждого формата.",
+                "if_it_were_true": "Будь `HOCON` мультиплатформенным, его артефакт собирался бы под `Native`/`JS`, но он JVM-only.",
+                "how_it_should_be": "`HOCON` опирается на Typesafe Config (JVM), поэтому ограничен JVM-таргетом."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать `Protobuf`-формат и задать номера полей (`@ProtoNumber`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Без `@ProtoNumber` поля не получают номеров, и сериализация в `Protobuf` невозможна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `@ProtoNumber` номера назначаются последовательно (1, 2, 3...); аннотация нужна лишь для совместимости со схемой и обратной совместимости.",
+                "source_of_confusion": "В `.proto` номера обязательны вручную, поэтому ждут того же от Kotlin.",
+                "if_it_were_true": "Будь так, `ProtoBuf.encodeToByteArray` падал бы без аннотаций, но он работает с автонумерацией.",
+                "how_it_should_be": "`@ProtoNumber` опционален; по умолчанию номера идут по порядку объявления полей."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`kotlinx-serialization-protobuf` кодирует в формат Protocol Buffers. По умолчанию номера полей назначаются последовательно (1, 2, 3...), а для совместимости с `.proto`-схемами и обратной совместимости их фиксируют через `@ProtoNumber(n)`. Kotlin-типы маппятся на wire-типы (`Int`→varint, `Double`→fixed64, `String`→length-delimited).",
+              "correct": true,
+              "sections": {
+                "explanation": "Явные номера делают бинарный контракт стабильным независимо от порядка полей в Kotlin-коде.",
+                "example": "`@Serializable data class User(@ProtoNumber(1) val id: Int, @ProtoNumber(2) val name: String, @ProtoNumber(5) val email: String = \"\")` совместим со схемой, где email имеет номер 5.",
+                "when_to_apply": "Применяют при интеграции с gRPC/существующими `.proto` и при эволюции схемы, где порядок и номера полей критичны.",
+                "edge_cases": "При удалении поля его `@ProtoNumber` нельзя переиспользовать — это ломает обратную совместимость; поле помечают `@Transient` или оставляют с default.",
+                "related": "[[kotlin-serialization-interview#Q25]] обзор форматов; [[kotlin-serialization-interview#Q43]] сравнение `Protobuf` и `CBOR`; [[kotlin-serialization-interview#Q27]] когда брать `CBOR` вместо `Protobuf`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Удалённый `@ProtoNumber` можно сразу переиспользовать для нового поля без последствий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Переиспользовать номер удалённого поля НЕЛЬЗЯ — старые данные с этим номером будут прочитаны в новое поле и контракт сломается.",
+                "source_of_confusion": "Номер кажется свободным после удаления поля, поэтому хочется его занять.",
+                "if_it_were_true": "Будь так, обратная совместимость не зависела бы от номеров, но в protobuf номер — это и есть идентичность поля.",
+                "how_it_should_be": "Номера удалённых полей «резервируют» и не переиспользуют, как и в нативном protobuf."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `Protobuf` `List<T>` кодируется как отдельный вложенный объект, а не как repeated-поле.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`List<T>` маппится на protobuf `repeated` — повторяющееся поле с одним номером.",
+                "source_of_confusion": "JSON кодирует список как массив-объект, поэтому переносят это на protobuf wire-формат.",
+                "if_it_were_true": "Будь так, нарушился бы protobuf wire-контракт, но коллекции там именно `repeated`.",
+                "how_it_should_be": "`List<T>` — это `repeated`, `Int`/`Boolean` — varint, `String` — length-delimited по wire-типам."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `CBOR`-формат и когда его выбирать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`CBOR` требует заранее заданную схему с номерами полей, как `Protobuf`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CBOR` самоописываемый (как JSON) и схемы НЕ требует — это отличает его от `Protobuf`.",
+                "source_of_confusion": "Оба бинарные, поэтому требование схемы переносят с protobuf на CBOR.",
+                "if_it_were_true": "Будь нужна схема, не было бы преимущества «как JSON, но компактнее», но оно есть.",
+                "how_it_should_be": "`CBOR` хранит имена полей в данных и не нуждается в `@ProtoNumber`; схема нужна только `Protobuf`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`CBOR` — это текстовый формат, читаемый человеком, просто с другим синтаксисом, чем JSON.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CBOR` — бинарный формат: компактный и нечитаемый человеком, в отличие от текстового JSON.",
+                "source_of_confusion": "Похожесть структуры на JSON наводит на мысль о текстовом виде.",
+                "if_it_were_true": "Будь он текстовым, не давал бы выигрыша в размере и скорости парсинга, но он бинарный.",
+                "how_it_should_be": "`CBOR` кодирует данные в `ByteArray`; для отладки его, в отличие от JSON, нужно декодировать."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`CBOR` (Concise Binary Object Representation, RFC 7049) — бинарный формат, похожий по структуре на JSON, но компактнее и быстрее. Самоописываемый: схема не нужна. Сериализуют через `Cbor.encodeToByteArray(...)` / `Cbor.decodeFromByteArray(...)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Он даёт компактность бинаря, сохраняя гибкость JSON по структуре, без обязательной схемы.",
+                "example": "`Cbor.encodeToByteArray(Measurement(\"temp-1\", 22.5, \"°C\"))` даёт компактный `ByteArray`, который читается обратно через `decodeFromByteArray`.",
+                "when_to_apply": "Выбирают для IoT-устройств с ограниченным каналом, бинарных WebSocket-сообщений и кэширования, где размер важнее читаемости.",
+                "edge_cases": "`CBOR` vs `Protobuf`: protobuf компактнее и быстрее, но требует схему; `CBOR` — компромисс между читаемостью структуры JSON и компактностью.",
+                "related": "[[kotlin-serialization-interview#Q25]] обзор форматов; [[kotlin-serialization-interview#Q26]] `Protobuf` со схемой; [[kotlin-serialization-interview#Q43]] сравнение `CBOR`/`Protobuf` по размеру."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`CBOR` всегда компактнее `Protobuf`, потому что не хранит лишних метаданных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Protobuf` обычно компактнее `CBOR`, так как использует короткие номера полей вместо имён; `CBOR` хранит имена.",
+                "source_of_confusion": "Раз оба бинарные, кажется, что более «гибкий» CBOR и компактнее.",
+                "if_it_were_true": "Будь CBOR компактнее, не было бы смысла в схемном protobuf ради размера, но он экономнее.",
+                "how_it_should_be": "`Protobuf` выигрывает в размере за счёт схемы; `CBOR` крупнее, но не требует `.proto`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `kotlinx.serialization` интегрируется с `Ktor`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `Ktor` сериализация настраивается глобально и работает без плагина `ContentNegotiation`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Интеграцию включают именно через `install(ContentNegotiation) { json(...) }`; без этого плагина авто-сериализации нет.",
+                "source_of_confusion": "Кажется, что фреймворк JetBrains подхватывает сериализацию автоматически.",
+                "if_it_were_true": "Будь так, не пришлось бы вызывать `install(ContentNegotiation)`, но это обязательный шаг.",
+                "how_it_should_be": "Сериализацию подключают плагином `ContentNegotiation` с `json(Json { ... })` на сервере и клиенте."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "После настройки `ContentNegotiation` ответ всё равно нужно вручную сериализовать через `Json.encodeToString`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С `ContentNegotiation` `call.respond(user)` сериализует объект автоматически — ручной `encodeToString` не нужен.",
+                "source_of_confusion": "Привычка явно вызывать сериализацию переносится и на Ktor.",
+                "if_it_were_true": "Будь так, плагин не давал бы выигрыша, но его смысл — прозрачная авто-сериализация.",
+                "how_it_should_be": "`call.respond(obj)` и `call.receive<T>()` сериализуют/десериализуют автоматически через зарегистрированный `Json`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Ktor` поддерживает через content negotiation только `JSON`; `CBOR` и `Protobuf` недоступны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Помимо `JSON`, `Ktor` поддерживает `CBOR` и `Protobuf` через аналогичные плагины content negotiation.",
+                "source_of_confusion": "JSON — самый частый пример, поэтому остальные форматы упускают.",
+                "if_it_were_true": "Будь только JSON, не было бы соответствующих ktor-serialization артефактов для бинарных форматов, но они есть.",
+                "how_it_should_be": "Через ContentNegotiation подключают и бинарные форматы, не только `json(...)`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Ktor` использует `kotlinx.serialization` как основной механизм content negotiation. На сервере и клиенте подключают `install(ContentNegotiation) { json(Json { ... }) }`, после чего `call.respond(user)` сериализует, а `call.receive<User>()` десериализует автоматически. Клиент возвращает типизированные тела через `.body()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Плагин связывает HTTP-слой с настроенным `Json`, убирая ручную сериализацию из обработчиков.",
+                "example": "На клиенте: `val users: List<User> = client.get(\"...\").body()` и `client.post(\"...\") { setBody(User(0,\"Alice\")) }.body()`.",
+                "when_to_apply": "Применяют в любом Ktor-сервисе и Ktor-клиенте; для бинарных каналов подключают `CBOR`/`Protobuf` аналогичными плагинами.",
+                "edge_cases": "Нужны зависимости `io.ktor:ktor-serialization-kotlinx-json` и `ktor-server/client-content-negotiation`; без них `install(ContentNegotiation)` не найдёт `json`.",
+                "related": "[[kotlin-serialization-interview#Q5]] конфигурация `Json` для эндпоинтов; [[kotlin-serialization-interview#Q29]] мультиплатформенные модели; [[kotlin-serialization-interview#Q35]] best practices в проде."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `kotlinx.serialization` работает в Kotlin Multiplatform проектах?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`kotlinx.serialization` полностью мультиплатформенна: `@Serializable`-модели и конфиг `Json` объявляют в `commonMain` и используют на всех таргетах (`JVM`, `JS`, `Native`/iOS, `Wasm`). Один `data class` гарантирует одинаковый JSON-контракт на всех платформах.",
+              "correct": true,
+              "sections": {
+                "explanation": "Compile-time генерация без рефлексии — единственный способ сериализации там, где Java Reflection недоступна (`Native`/`JS`).",
+                "example": "В `commonMain`: `@Serializable data class User(...)` и `class ApiClient(val json: Json) { fun parseUser(raw) = json.decodeFromString<User>(raw) }` — работает и на JVM-сервере, и в iOS.",
+                "when_to_apply": "Используют в KMP-проектах для shared-моделей между бэкендом и мобильными/web-клиентами с единым контрактом.",
+                "edge_cases": "Для платформо-специфичных типов в `commonMain` применяют `@Contextual` с `expect`/`actual` `SerializersModule`, иначе общий код не скомпилируется.",
+                "related": "[[kotlin-serialization-interview#Q1]] почему без рефлексии; [[kotlin-serialization-interview#Q15]] `@Contextual` для платформенных типов; [[kotlin-serialization-interview#Q28]] `Ktor` поверх общих моделей."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В KMP `@Serializable`-модели нужно дублировать в каждом таргете (`jvmMain`, `iosMain`).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Модели объявляют один раз в `commonMain`; дублирование по таргетам не требуется и противоречит смыслу KMP.",
+                "source_of_confusion": "Привычка к платформенному коду наводит на дублирование.",
+                "if_it_were_true": "Будь нужно дублировать, исчезла бы гарантия единого контракта, но она и есть главное преимущество.",
+                "how_it_should_be": "`@Serializable`-классы живут в `commonMain` и компилируются под все платформы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "На `Kotlin/Native` (iOS) `kotlinx.serialization` использует Java Reflection, как на JVM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На `Kotlin/Native` Java Reflection недоступна; библиотека работает за счёт compile-time генерации без рефлексии.",
+                "source_of_confusion": "Перенос JVM-модели работы на остальные таргеты создаёт это заблуждение.",
+                "if_it_were_true": "Будь нужна рефлексия, библиотека не работала бы на iOS/JS, но именно отсутствие рефлексии это позволяет.",
+                "how_it_should_be": "На всех таргетах сериализаторы сгенерированы плагином заранее — рефлексия не используется нигде."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Jackson` и `Gson` работают в KMP так же, как `kotlinx.serialization`, поэтому выбор библиотеки не важен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Jackson`/`Gson`/`Moshi` работают только на JVM; в KMP реальный вариант — `kotlinx.serialization`.",
+                "source_of_confusion": "На JVM-стороне эти библиотеки взаимозаменяемы, поэтому различие в KMP упускают.",
+                "if_it_were_true": "Будь они мультиплатформенными, не было бы конкурентного преимущества у `kotlinx`, но оно именно в KMP.",
+                "how_it_should_be": "Для общего кода KMP подходит только `kotlinx.serialization`; рефлексионные библиотеки ограничены JVM."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `kotlinx.serialization` и `Jackson`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Обе библиотеки генерируют сериализаторы на этапе компиляции и работают на JVM, JS и Native.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`kotlinx` генерирует код compile-time и мультиплатформенна; `Jackson` работает в рантайме через рефлексию и только на JVM.",
+                "source_of_confusion": "Похожий результат (JSON) скрывает разницу в механизме и платформах.",
+                "if_it_were_true": "Будь `Jackson` мультиплатформенным с compile-time генерацией, не было бы смысла в `kotlinx` для KMP, но различие есть.",
+                "how_it_should_be": "`kotlinx` — compile-time + multiplatform; `Jackson` — runtime-рефлексия + только JVM."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`kotlinx.serialization` генерирует код compile-time (плагин компилятора), работает на JVM/JS/Native/Wasm, нативно поддерживает Kotlin (nullable, default, sealed) и форматы JSON/Protobuf/CBOR. `Jackson` использует runtime-рефлексию, только JVM, Kotlin-поддержку даёт через `jackson-module-kotlin`, зато имеет огромную экосистему (XML/YAML), streaming и является default в Spring Boot.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор зависит от стека: compile-time типобезопасность и multiplatform против зрелой JVM-экосистемы и streaming.",
+                "example": "`kotlinx` использует `@Serializable`/`@SerialName`/`@Transient`, тогда как `Jackson` — `@JsonProperty`/`@JsonIgnore`/`@JsonCreator`.",
+                "when_to_apply": "`Jackson` берут для Spring Boot, XML/YAML, streaming больших файлов и legacy-Java; `kotlinx` — для KMP, `Ktor`, максимальной типобезопасности.",
+                "edge_cases": "`kotlinx` не умеет потоковую обработку (всё в памяти), а `Jackson` даёт `JsonParser`/`JsonGenerator` для стриминга — это важно для очень больших документов.",
+                "related": "[[kotlin-serialization-interview#Q29]] мультиплатформенность `kotlinx`; [[kotlin-serialization-interview#Q37]] `kotlinx` в Spring Boot; [[kotlin-serialization-interview#Q38]] `kotlinx` vs `Jackson` в Spring."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Jackson` нативно понимает Kotlin: default-значения и nullable работают без дополнительных модулей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Jackson` требует `jackson-module-kotlin` для корректной работы с Kotlin; без него default/nullable обрабатываются неверно.",
+                "source_of_confusion": "В Spring Boot модуль часто уже подключён, поэтому кажется, что поддержка встроена.",
+                "if_it_were_true": "Будь поддержка нативной, не существовало бы отдельного `jackson-module-kotlin`, но он необходим.",
+                "how_it_should_be": "Нативная Kotlin-поддержка — у `kotlinx`; `Jackson` добирает её через отдельный модуль."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`kotlinx.serialization` поддерживает streaming больших файлов через `JsonParser`/`JsonGenerator`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Streaming через `JsonParser`/`JsonGenerator` — это `Jackson`; `kotlinx` работает в памяти и стриминга не даёт.",
+                "source_of_confusion": "Оба парсят JSON, поэтому возможности стриминга смешивают.",
+                "if_it_were_true": "Будь так, `kotlinx` подошёл бы для гигабайтных файлов, но для них берут именно `Jackson`.",
+                "how_it_should_be": "Для streaming больших документов выбирают `Jackson`; `kotlinx` держит структуру целиком в памяти."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `kotlinx.serialization` отличается от `Gson`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Gson` уважает default-значения из конструктора Kotlin так же, как `kotlinx.serialization`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Gson` ИГНОРИРУЕТ default-значения: при отсутствии поля он оставит `null`/`0`, а не значение по умолчанию.",
+                "source_of_confusion": "Обе дают JSON, поэтому ждут одинакового поведения с default.",
+                "if_it_were_true": "Будь так, `{\"name\":\"Alice\"}` давал бы `age=25` и в Gson, но он вернёт `age=0`.",
+                "how_it_should_be": "Default уважает `kotlinx`; `Gson` обходит конструктор и игнорирует default-значения."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Gson` создаёт объекты через конструктор Kotlin, корректно применяя проверки и default-значения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Gson` обходит конструктор через `Unsafe.allocateInstance`, поэтому default-значения и проверки не применяются.",
+                "source_of_confusion": "Логично ждать, что библиотека вызывает обычный конструктор.",
+                "if_it_were_true": "Будь так, nullable-safety соблюдалась бы, но Gson может записать `null` в non-null поле.",
+                "how_it_should_be": "`Gson` инстанцирует объект в обход конструктора; `kotlinx` использует генерируемый сериализатор с проверками."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Gson` (Google) — одна из первых JSON-библиотек для Java, ныне legacy: Kotlin-поддержка минимальна (не знает о default и nullable), default-значения игнорируются, объекты создаются в обход конструктора через `Unsafe.allocateInstance`, может записать `null` в non-null поле, работает на runtime-рефлексии. `kotlinx.serialization` всё это решает на этапе компиляции.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевая разница — безопасность относительно Kotlin-семантики: `kotlinx` уважает конструктор, default и nullability.",
+                "example": "`data class User(val name: String, val age: Int = 25)` из `{\"name\":\"Alice\"}`: Gson даёт `age=0` (default проигнорирован), `kotlinx` — `age=25`.",
+                "when_to_apply": "Для новых Kotlin-проектов `Gson` не рекомендуется; берут `kotlinx.serialization` или `Moshi` ради безопасности.",
+                "edge_cases": "Даже non-null поле Gson может оставить `null`, и NPE всплывёт позже при использовании — поэтому миграцию с Gson делают аккуратно.",
+                "related": "[[kotlin-serialization-interview#Q30]] сравнение с `Jackson`; [[kotlin-serialization-interview#Q32]] сравнение с `Moshi`; [[kotlin-serialization-interview#Q3]] почему `kotlinx` безопаснее на этапе компиляции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Gson` активно развивается Google и считается рекомендованным выбором для новых Kotlin-проектов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Gson` находится в режиме минимальной поддержки и для новых Kotlin-проектов НЕ рекомендуется.",
+                "source_of_confusion": "Известность Google наводит на мысль об активном развитии.",
+                "if_it_were_true": "Будь он рекомендован, его не вытесняли бы `kotlinx`/`Moshi`, но именно они предпочтительнее.",
+                "how_it_should_be": "Для новых Kotlin-проектов выбирают `kotlinx.serialization` или `Moshi`, а не `Gson`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `kotlinx.serialization` отличается от `Moshi`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Moshi` — мультиплатформенная библиотека и работает на iOS/Native наравне с `kotlinx`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Moshi` работает только на JVM/Android; мультиплатформенность — преимущество `kotlinx.serialization`.",
+                "source_of_confusion": "Хорошая Kotlin-поддержка Moshi наводит на мысль о мультиплатформенности.",
+                "if_it_were_true": "Будь Moshi мультиплатформенным, в KMP был бы выбор, но для общего кода реален только `kotlinx`.",
+                "how_it_should_be": "`Moshi` — JVM/Android; для KMP и Native берут `kotlinx.serialization`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Moshi` поддерживает форматы JSON, Protobuf и CBOR, как `kotlinx.serialization`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Moshi` поддерживает только JSON; мультиформатность (Protobuf/CBOR) — у `kotlinx.serialization`.",
+                "source_of_confusion": "Обе современные, поэтому набор форматов ошибочно уравнивают.",
+                "if_it_were_true": "Будь так, у Moshi были бы protobuf/cbor-артефакты, но их нет.",
+                "how_it_should_be": "`Moshi` ограничен JSON; несколько форматов даёт `kotlinx`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Moshi` проверяет nullable на этапе компиляции, как `kotlinx.serialization`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Moshi` проверяет nullable в рантайме (бросает `JsonDataException`); compile-time проверки — у `kotlinx`.",
+                "source_of_confusion": "Codegen Moshi наводит на мысль о compile-time гарантиях, как у `kotlinx`.",
+                "if_it_were_true": "Будь проверки compile-time, нарушение nullability ловилось бы при сборке, но Moshi бросает ошибку в рантайме.",
+                "how_it_should_be": "`kotlinx` проверяет типы на этапе компиляции; `Moshi` — в рантайме через исключения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Moshi` (Square) — современная альтернатива Gson с хорошей Kotlin-поддержкой через `moshi-kotlin-codegen` (KSP/kapt) или рефлексию, но только JVM/Android, только JSON и nullable-проверки в рантайме (`JsonDataException`). `kotlinx.serialization` генерирует код на уровне компилятора, мультиплатформенна, мультиформатна и проверяет типы compile-time.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главные различия — платформы, набор форматов и момент проверки nullability (runtime у Moshi vs compile-time у kotlinx).",
+                "example": "`Moshi` отлично работает с `Retrofit` в Android-проекте, но в multiplatform или `Ktor` его не подключить.",
+                "when_to_apply": "`Moshi` берут для Android+Retrofit; `kotlinx.serialization` — для KMP, `Ktor` и максимальной типобезопасности.",
+                "edge_cases": "Moshi через рефлексию (без codegen) теряет часть compile-time гарантий — на Android обычно подключают `moshi-kotlin-codegen` ради скорости и безопасности.",
+                "related": "[[kotlin-serialization-interview#Q30]] сравнение с `Jackson`; [[kotlin-serialization-interview#Q31]] сравнение с `Gson`; [[kotlin-serialization-interview#Q29]] почему `kotlinx` выигрывает в KMP."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `kotlinx.serialization` и Java Serialization?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Java Serialization (`java.io.Serializable`, `ObjectOutputStream`) — проприетарный бинарный JVM-формат: нечитаемый, уязвимый к deserialization attacks (CVE-2015-4852), версионируемый хрупким `serialVersionUID`, только JVM, не знает о nullable/default. `kotlinx.serialization` даёт настраиваемые форматы (JSON/Protobuf/CBOR), типобезопасность, гибкое версионирование (`@SerialName`, default, `ignoreUnknownKeys`) и мультиплатформенность.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главное различие — безопасность и переносимость: kotlinx не десериализует произвольные классы и работает вне JVM.",
+                "example": "Java Serialization встречается в legacy (`RMI`, `HttpSession`), но для обмена данными по сети предпочитают `kotlinx.serialization`.",
+                "when_to_apply": "Выбирают kotlinx для нового кода и сетевого обмена; Java Serialization — только при поддержке legacy-механизмов.",
+                "edge_cases": "Java-десериализация произвольного потока может инстанцировать опасные классы (gadget chains) — отсюда исторические RCE-уязвимости, которых нет у kotlinx.",
+                "related": "[[kotlin-serialization-interview#Q30]] сравнение с `Jackson`; [[kotlin-serialization-interview#Q1]] compile-time подход `kotlinx`; [[kotlin-serialization-interview#Q34]] обработка ошибок десериализации."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Java Serialization безопаснее `kotlinx.serialization`, так как использует бинарный формат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Java Serialization исторически уязвима к deserialization attacks; бинарность не делает её безопаснее — `kotlinx` не инстанцирует произвольные классы.",
+                "source_of_confusion": "Бинарный непрозрачный формат интуитивно кажется «защищённым».",
+                "if_it_were_true": "Будь она безопаснее, не было бы CVE вроде CVE-2015-4852, но они есть.",
+                "how_it_should_be": "Безопасность выше у `kotlinx`: он типобезопасен и не десериализует произвольные классы из потока."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Java Serialization мультиплатформенна и работает на Kotlin/Native и Kotlin/JS.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Java Serialization — только JVM; мультиплатформенность даёт `kotlinx.serialization`.",
+                "source_of_confusion": "Слово «Java» в платформах не уточняет, поэтому ждут переносимости.",
+                "if_it_were_true": "Будь она мультиплатформенной, `ObjectOutputStream` существовал бы на Native/JS, но его там нет.",
+                "how_it_should_be": "Java Serialization привязана к JVM; кроссплатформенный обмен делают через `kotlinx`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Java Serialization нативно понимает Kotlin nullable и default-значения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Java Serialization не знает о Kotlin-семантике nullable и default — это JVM-механизм поверх полей.",
+                "source_of_confusion": "Раз Kotlin компилируется в JVM-классы, кажется, что и сериализация Kotlin-aware.",
+                "if_it_were_true": "Будь так, `serialVersionUID` учитывал бы nullability, но он чисто JVM-инструмент.",
+                "how_it_should_be": "Kotlin-семантику (nullable, default, sealed) нативно поддерживает `kotlinx.serialization`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие исключения выбрасывает `kotlinx.serialization` и как их обрабатывать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Базовое исключение библиотеки — `IllegalArgumentException`, от которого наследуются все остальные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Базовое исключение — `SerializationException`; от него наследуются `MissingFieldException`, `JsonDecodingException` и др.",
+                "source_of_confusion": "Многие валидации в Kotlin бросают `IllegalArgumentException`, поэтому переносят это сюда.",
+                "if_it_were_true": "Будь база `IllegalArgumentException`, нельзя было бы ловить все ошибки одним `catch (SerializationException)`, но так делают.",
+                "how_it_should_be": "Иерархию ошибок возглавляет `SerializationException`; именно его перехватывают как общий случай."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Иерархию возглавляет `SerializationException`, от которого наследуются `MissingFieldException` (нет обязательного поля), `UnknownFieldException` (лишний ключ при `ignoreUnknownKeys=false`), `JsonDecodingException` (невалидный JSON) и `JsonEncodingException`. Десериализацию внешних данных всегда оборачивают в `try/catch` или `runCatching`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Различение подтипов исключения позволяет по-разному реагировать: на отсутствие полей, лишние ключи и битый JSON.",
+                "example": "`runCatching { json.decodeFromString(deserializer, input) }.onFailure { when (it) { is MissingFieldException -> log.warn(it.missingFields); is SerializationException -> log.error(it.message) } }`.",
+                "when_to_apply": "`encodeToString` редко падает (ошибки модели ловят на разработке), а `decodeFromString` для внешнего входа всегда защищают.",
+                "edge_cases": "`ignoreUnknownKeys=true` и `coerceInputValues=true` повышают устойчивость; в HTTP-эндпоинтах `SerializationException` маппят в 400 Bad Request.",
+                "related": "[[kotlin-serialization-interview#Q5]] флаги устойчивости в `Json`; [[kotlin-serialization-interview#Q20]] fallback для неизвестных подтипов; [[kotlin-serialization-interview#Q35]] best practices обработки ошибок."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Невалидный JSON приводит к `MissingFieldException`, а не к отдельному типу ошибки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Невалидный JSON даёт `JsonDecodingException`; `MissingFieldException` — про отсутствие обязательного ПОЛЯ при структурно валидном JSON.",
+                "source_of_confusion": "Обе ошибки возникают при чтении, поэтому их смешивают.",
+                "if_it_were_true": "Будь так, синтаксическая ошибка и нехватка поля были бы неотличимы, но это разные подтипы.",
+                "how_it_should_be": "Битый синтаксис → `JsonDecodingException`; отсутствующее поле в валидном JSON → `MissingFieldException`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`encodeToString` так же часто падает на внешних данных, как и `decodeFromString`, поэтому обе операции защищают одинаково.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`encodeToString` падает редко (ошибки в самой модели), тогда как `decodeFromString` обрабатывает ненадёжный внешний вход и требует защиты.",
+                "source_of_confusion": "Симметрия методов наводит на симметрию рисков.",
+                "if_it_were_true": "Будь риски равны, не было бы рекомендации оборачивать именно декодирование, но она есть.",
+                "how_it_should_be": "Внешний вход непредсказуем, поэтому `try/catch` ставят прежде всего вокруг `decodeFromString`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие лучшие практики при использовании `kotlinx.serialization` в продакшене?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Экземпляр `Json` создают заново на каждый запрос, чтобы избежать утечек состояния между потоками.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Json` иммутабелен и потокобезопасен; его делают singleton и переиспользуют, а пересоздание лишь тратит ресурсы.",
+                "source_of_confusion": "Привычка к request-scoped объектам наводит на пересоздание.",
+                "if_it_were_true": "Будь у `Json` потоконебезопасное состояние, singleton был бы опасен, но он безопасен.",
+                "how_it_should_be": "Правильно — один настроенный `Json` (например, `object JsonConfig { val default = Json { ... } }`) на всё приложение."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для входящих данных из внешних API `ignoreUnknownKeys` лучше держать выключенным, чтобы ловить изменения схемы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для внешнего входа рекомендуют `ignoreUnknownKeys = true`: иначе добавление поля на стороне API сломает клиент.",
+                "source_of_confusion": "Желание контролировать схему наводит на строгость по умолчанию.",
+                "if_it_were_true": "Будь строгость безопаснее, её бы советовали, но практика — терпимость к новым полям.",
+                "how_it_should_be": "`ignoreUnknownKeys = true` для входа делает клиент устойчивым к расширению API."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Ключевые практики: один переиспользуемый `Json` (singleton); отделять API-DTO (`@Serializable`) от доменных моделей; `@EncodeDefault` для контрактных полей при глобальном `encodeDefaults=false`; `ignoreUnknownKeys=true` для внешнего входа; сериализаторы дат/UUID один раз в `SerializersModule` через `@Contextual`; тестировать сериализацию; в KMP держать модели в `commonMain`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти правила дают стабильный контракт, устойчивость к изменениям API и экономию трафика без потери надёжности.",
+                "example": "`object JsonConfig { val default = Json { ignoreUnknownKeys = true; encodeDefaults = false; coerceInputValues = true } }` — типичный продакшен-singleton.",
+                "when_to_apply": "Применяют в любом сервисе с внешними API; разделение DTO/домена особенно важно в слоистой архитектуре.",
+                "edge_cases": "Если смешать доменную модель с `@Serializable`, изменение JSON-контракта потянет за собой правку домена — поэтому слои разделяют.",
+                "related": "[[kotlin-serialization-interview#Q34]] обработка `SerializationException`; [[kotlin-serialization-interview#Q10]] `@EncodeDefault` для контракта; [[kotlin-serialization-interview#Q15]] `@Contextual` для дат/UUID."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Доменные модели рекомендуется помечать `@Serializable` напрямую, чтобы не плодить отдельные DTO.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рекомендуют ОТДЕЛЯТЬ API-DTO (`@Serializable`) от доменных моделей, чтобы JSON-контракт не диктовал доменный код.",
+                "source_of_confusion": "Меньше классов кажется проще, поэтому хочется обойтись без DTO.",
+                "if_it_were_true": "Будь так, изменение внешнего контракта меняло бы домен, но именно этого избегают разделением.",
+                "how_it_should_be": "Домен оставляют чистым, а сериализуемые DTO держат на API-слое и мапят между ними."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `JsonTransformingSerializer` и когда его использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`JsonTransformingSerializer` работает с любым форматом, включая `Protobuf` и `CBOR`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JsonTransformingSerializer` оперирует `JsonElement` и применим только к JSON-формату; для других нужен полноценный `KSerializer`.",
+                "source_of_confusion": "Слово «serializer» наводит на универсальность по форматам.",
+                "if_it_were_true": "Будь он мультиформатным, он не назывался бы `Json...` и не работал бы через `JsonElement`, но это так.",
+                "how_it_should_be": "Для бинарных форматов трансформацию делают в обычном `KSerializer`; `JsonTransformingSerializer` — только JSON."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`JsonTransformingSerializer` требует переопределить и `serialize`, и `deserialize`, как обычный `KSerializer`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Достаточно переопределить `transformDeserialize` и/или `transformSerialize` — он лишь правит `JsonElement` вокруг делегата.",
+                "source_of_confusion": "Привычка к полному `KSerializer` переносит требование на трансформирующий вариант.",
+                "if_it_were_true": "Будь так, он не упрощал бы работу, но его смысл — лёгкая трансформация без полного сериализатора.",
+                "how_it_should_be": "Переопределяют только нужные `transform*`-методы; кодирование/декодирование выполняет переданный делегат."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`JsonTransformingSerializer` даёт больше возможностей, чем `KSerializer`, и должен предпочитаться всегда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Он проще, но ограниченнее `KSerializer`: только JSON и только трансформация структуры, без полного контроля над кодированием.",
+                "source_of_confusion": "Простоту использования путают с большей мощью: раз меньше кода, кажется, что и возможностей больше.",
+                "if_it_were_true": "Будь он мощнее, `KSerializer` был бы не нужен, но для бинарных форматов и сложной логики берут именно его.",
+                "how_it_should_be": "Для лёгкой JSON-трансформации — `JsonTransformingSerializer`; для полного контроля и любых форматов — `KSerializer`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`JsonTransformingSerializer<T>(delegate)` преобразует `JsonElement` до сериализации / после десериализации, переопределяя `transformSerialize`/`transformDeserialize`. Это упрощённая альтернатива полному `KSerializer`, когда нужно лишь модифицировать структуру JSON: нормализовать форматы, разворачивать конверты, переименовывать ключи.",
+              "correct": true,
+              "sections": {
+                "explanation": "Делегат выполняет реальную сериализацию, а трансформер только правит дерево вокруг неё — без ручного `descriptor`.",
+                "example": "`object StringToIntSerializer : JsonTransformingSerializer<Int>(Int.serializer())` в `transformDeserialize` превращает `JsonPrimitive(\"42\")` в `JsonPrimitive(42)`, чтобы поле принимало и `5`, и `\"5\"`.",
+                "when_to_apply": "Применяют для нормализации входа (строка/число), оборачивания/разворачивания конвертов (`{\"data\":...}`) и упрощённого маппинга без полного `KSerializer`.",
+                "edge_cases": "Работает только с JSON и через `JsonElement`; для `Protobuf`/`CBOR` или полного контроля над кодированием нужен обычный `KSerializer`.",
+                "related": "[[kotlin-serialization-interview#Q12]] полноценный `KSerializer`; [[kotlin-serialization-interview#Q21]] `JsonElement` как дерево; [[kotlin-serialization-interview#Q39]] переименование ключей при миграции."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать `kotlinx.serialization` со `Spring Boot`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "По умолчанию Spring Boot использует `Jackson`. Для перехода на `kotlinx.serialization` подключают плагин и `kotlinx-serialization-json`, затем регистрируют `KotlinSerializationJsonHttpMessageConverter(json)` в начало списка конвертеров (`converters.add(0, ...)`), а DTO помечают `@Serializable` с `@SerialName` вместо Jackson-аннотаций. Для WebFlux настраивают `kotlinSerializationJsonDecoder/Encoder`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Конвертер на нулевой позиции получает приоритет для `@Serializable`-классов, оставляя Jackson для остального.",
+                "example": "В `WebMvcConfigurer.configureMessageConverters` создают `Json { ignoreUnknownKeys = true; encodeDefaults = false }` и оборачивают его в `KotlinSerializationJsonHttpMessageConverter`.",
+                "when_to_apply": "Применяют, когда хотят единый стек сериализации Kotlin-моделей в Spring или делят сервис между Spring и Ktor/KMP.",
+                "edge_cases": "Ограничения: `@Serializable` несовместим с `@JsonProperty`, форм-биндинг `ModelAttribute` и часть Spring Data проекций работают только через Jackson.",
+                "related": "[[kotlin-serialization-interview#Q30]] сравнение с `Jackson`; [[kotlin-serialization-interview#Q38]] `kotlinx` vs `Jackson` в Spring; [[kotlin-serialization-interview#Q8]] `@SerialName` вместо `@JsonProperty`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Spring Boot по умолчанию использует `kotlinx.serialization`, и Jackson нужно подключать отдельно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию Spring Boot использует именно `Jackson`; `kotlinx.serialization` подключают и настраивают вручную.",
+                "source_of_confusion": "Раз проект на Kotlin, кажется, что и сериализация Kotlin-нативная.",
+                "if_it_were_true": "Будь так, не пришлось бы регистрировать `KotlinSerializationJsonHttpMessageConverter`, но это обязательный шаг.",
+                "how_it_should_be": "Дефолт Spring Boot — Jackson; переход на kotlinx требует явной конфигурации конвертера."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@Serializable`-класс в Spring можно свободно сочетать с `@JsonProperty` на тех же полях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Serializable` несовместим с `@JsonProperty`; для переименования полей в kotlinx используют `@SerialName`.",
+                "source_of_confusion": "Обе аннотации про имена полей, поэтому кажется, что они сочетаются.",
+                "if_it_were_true": "Будь так, один класс обслуживали бы оба конвертера, но смешение аннотаций ломает выбор конвертера.",
+                "how_it_should_be": "В kotlinx-DTO применяют `@SerialName`/`@Transient`, а не Jackson-аннотации."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "После подключения kotlinx Jackson полностью удаляется, и форм-биндинг `ModelAttribute` тоже идёт через kotlinx.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Jackson обычно остаётся как fallback; `ModelAttribute` (форм-биндинг) и часть Spring Data проекций работают только через Jackson.",
+                "source_of_confusion": "Хочется единого механизма, поэтому считают Jackson лишним.",
+                "if_it_were_true": "Будь Jackson удалён, форм-биндинг сломался бы, но он опирается именно на Jackson.",
+                "how_it_should_be": "kotlinx обслуживает `@Serializable`-JSON, а Jackson остаётся для форм, Java-классов и ряда проекций."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`kotlinx.serialization` vs `Jackson` в `Spring Boot` — настройка и совместимость?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В Spring Boot нельзя использовать Jackson и kotlinx.serialization одновременно — нужно выбрать что-то одно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Их можно использовать одновременно: `@Serializable`-классы обрабатывает kotlinx, а обычные классы — Jackson.",
+                "source_of_confusion": "Кажется, что два JSON-механизма конфликтуют по определению.",
+                "if_it_were_true": "Будь так, не было бы свойства `preferred-json-mapper` и совместного списка конвертеров, но они есть.",
+                "how_it_should_be": "Spring выбирает конвертер по наличию `@Serializable`; оба механизма сосуществуют."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В Spring Boot оба инструмента сосуществуют: `@Serializable`-класс обрабатывает kotlinx, обычный класс — Jackson. Выбор конвертера управляется наличием аннотации, свойством `spring.mvc.converters.preferred-json-mapper` (`kotlinx-serialization`/`jackson`) и порядком в списке (`converters.add(0, KotlinSerializationJsonHttpMessageConverter(json))`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Это даёт постепенную миграцию: новые Kotlin-DTO на kotlinx, legacy Java-классы на Jackson.",
+                "example": "`@Serializable data class ProductDto(...)` идёт через kotlinx, а `data class LegacyDto(val value: String)` без аннотации — через Jackson.",
+                "when_to_apply": "Применяют при смешанном Kotlin/Java-коде или при поэтапном переходе с Jackson на kotlinx без big-bang рефакторинга.",
+                "edge_cases": "Различия в аннотациях (`@SerialName` vs `@JsonProperty`, `@Transient` vs `@JsonIgnore`) и ограничения (`ModelAttribute`, interface-проекции только через Jackson) надо учитывать.",
+                "related": "[[kotlin-serialization-interview#Q30]] общее сравнение с `Jackson`; [[kotlin-serialization-interview#Q37]] подключение kotlinx к Spring; [[kotlin-serialization-interview#Q39]] `@SerialName` для миграции схемы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Свойство `preferred-json-mapper` влияет только на десериализацию входящих запросов, но не на сериализацию ответов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`preferred-json-mapper` задаёт предпочитаемый конвертер для JSON в обе стороны, а не только для чтения.",
+                "source_of_confusion": "Чтение и запись путают как независимые настройки.",
+                "if_it_were_true": "Будь так, ответы и запросы шли бы разными мапперами без причины, но свойство задаёт единый предпочтительный.",
+                "how_it_should_be": "`preferred-json-mapper` выбирает основной JSON-конвертер для сериализации и десериализации."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В kotlinx-DTO для Spring исключают поле через `@JsonIgnore`, как в Jackson.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В kotlinx исключают поле через `@Transient`; `@JsonIgnore` — это Jackson-аннотация и на `@Serializable` не действует.",
+                "source_of_confusion": "Обе скрывают поле, поэтому аннотации путают.",
+                "if_it_were_true": "Будь так, `@JsonIgnore` убирал бы поле из kotlinx-JSON, но он его игнорирует.",
+                "how_it_should_be": "kotlinx использует `@Transient`/`@SerialName`; Jackson — `@JsonIgnore`/`@JsonProperty`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 39,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `@SerialName` используется для миграции схемы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@SerialName` меняет имя поля в Kotlin-коде, а JSON-ключ остаётся равным имени свойства.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@SerialName` разделяет имя в коде и имя в JSON: меняется именно JSON-ключ, а Kotlin-имя можно сохранить старым.",
+                "source_of_confusion": "Аннотация стоит на свойстве, поэтому кажется, что переименовывает его.",
+                "if_it_were_true": "Будь так, рефакторинг Kotlin-имени ломал бы JSON-контракт, но `@SerialName` его и стабилизирует.",
+                "how_it_should_be": "JSON-ключ задаёт `@SerialName`; Kotlin-имя свойства от этого не зависит."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Через `@SerialName` одно поле может одновременно читаться и по старому, и по новому имени из коробки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один `@SerialName` фиксирует ровно одно имя; поддержка ОБОИХ имён требует кастомного сериализатора (например, `JsonTransformingSerializer`).",
+                "source_of_confusion": "Хочется простого решения для двух имён, поэтому приписывают его `@SerialName`.",
+                "if_it_were_true": "Будь так, не понадобился бы `JsonTransformingSerializer` для слияния `total_price`/`amount`, но он нужен.",
+                "how_it_should_be": "Для одновременной поддержки двух имён пишут трансформирующий сериализатор поверх `@SerialName`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@SerialName` разделяет имя поля в коде и имя в JSON/бинарном формате, что критично при эволюции API. При переименовании в API на новое имя ставят `@SerialName(\"amount\")`, оставляя Kotlin-имя старым (`totalPrice`). Для поддержки сразу двух имён (`total_price` и `amount`) пишут `JsonTransformingSerializer`, переименовывающий ключ. На уровне класса `@SerialName` задаёт значение дискриминатора подтипа.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это даёт стабильный JSON-контракт независимо от рефакторинга Kotlin-кода — основа безопасной миграции схемы.",
+                "example": "`@SerialName(\"user_id\") val id: Long` фиксирует ключ `user_id`, даже если свойство в Kotlin позже переименуют.",
+                "when_to_apply": "Применяют при эволюции публичных API: переименование без слома клиентов и сохранение читаемых дискриминаторов для sealed-иерархий.",
+                "edge_cases": "Если просто переименовать поле без `@SerialName`, старые JSON перестанут читаться — поэтому старое имя фиксируют аннотацией.",
+                "related": "[[kotlin-serialization-interview#Q8]] базовое переименование поля; [[kotlin-serialization-interview#Q11]] `@SerialName` на уровне класса; [[kotlin-serialization-interview#Q36]] `JsonTransformingSerializer` для двух имён."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@SerialName` на уровне класса задаёт имя поля-дискриминатора (`type`), а не его значение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Класс-уровневый `@SerialName` задаёт ЗНАЧЕНИЕ дискриминатора подтипа; имя поля-дискриминатора меняют `classDiscriminator`/`@JsonClassDiscriminator`.",
+                "source_of_confusion": "И имя, и значение дискриминатора связаны с типом, поэтому их путают.",
+                "if_it_were_true": "Будь так, `@SerialName(\"order_placed\")` менял бы ключ на `order_placed`, но он задаёт значение в поле `type`.",
+                "how_it_should_be": "`@SerialName` на классе → значение типа; имя ключа дискриминатора → `classDiscriminator`/`@JsonClassDiscriminator`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 40,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Полиморфная сериализация — `@Polymorphic`, sealed-классы, discriminator?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для open-полиморфизма (`abstract class`/`interface`) подтипы известны компилятору и регистрировать их не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Open-полиморфизм требует ручной регистрации подтипов в `SerializersModule`; автоматически известны только подтипы `sealed class`.",
+                "source_of_confusion": "По аналогии с sealed ждут автоматизма и для открытых иерархий.",
+                "if_it_were_true": "Будь так, `SerializersModule` для open-полиморфизма был бы лишним, но без него типы неизвестны.",
+                "how_it_should_be": "Подтипы open-иерархии перечисляют в `polymorphic { subclass(...) }`; sealed — известны компилятору."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Дискриминатор по умолчанию называется `kind`, и менять его через `classDiscriminator` нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию дискриминатор — `type`; его меняют через `classDiscriminator` или `@JsonClassDiscriminator`.",
+                "source_of_confusion": "В примерах часто встречается кастомный `kind`, поэтому путают с дефолтом.",
+                "if_it_were_true": "Будь дефолтом `kind`, базовая сериализация давала бы `{\"kind\":...}`, но там `{\"type\":...}`.",
+                "how_it_should_be": "Дефолт — `type`, и он настраивается глобально или per-иерархия."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для sealed-полиморфизма без `@SerialName` дискриминатором будет короткое имя класса (`Circle`).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `@SerialName` дискриминатором становится ПОЛНОЕ имя класса (`com.example.Shape.Circle`); короткое значение задают `@SerialName`.",
+                "source_of_confusion": "В выводе удобнее короткое имя, поэтому его считают дефолтом.",
+                "if_it_were_true": "Будь дефолтом короткое имя, `@SerialName` не требовался бы для читаемости, но он нужен.",
+                "how_it_should_be": "По умолчанию — fully-qualified имя; краткий стабильный дискриминатор задаёт `@SerialName`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "kotlinx поддерживает два подхода: `sealed class` (замкнутая иерархия, compile-time, без ручной регистрации) и open-полиморфизм (`abstract`/`interface`, регистрация подтипов в `SerializersModule { polymorphic(...) { subclass(...) } }`). Дискриминатор по умолчанию — `type` (меняется `classDiscriminator`), а его значение для подтипа задаёт `@SerialName`. Неизвестные подтипы обрабатывают `polymorphicDefaultDeserializer`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Sealed-подход рекомендован для замкнутых моделей; open — для расширяемых иерархий из разных модулей.",
+                "example": "`@SerialName(\"push\") data class PushNotification(...)` в sealed-иерархии даёт `{\"type\":\"push\",\"title\":...}` вместо полного имени класса.",
+                "when_to_apply": "Sealed применяют для доменных состояний/событий, open — когда подтипы добавляются плагинами или сторонними модулями.",
+                "edge_cases": "Если подтип не зарегистрирован (open) или неизвестен на входе, без `polymorphicDefaultDeserializer` будет `SerializationException`.",
+                "related": "[[kotlin-serialization-interview#Q17]] преимущества `sealed class`; [[kotlin-serialization-interview#Q18]] open-полиморфизм через модуль; [[kotlin-serialization-interview#Q19]] настройка `classDiscriminator`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 41,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать кастомный `KSerializer<T>`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`KSerializer<T>` — интерфейс для полного контроля над (де)сериализацией: переопределяют `descriptor`, `serialize(encoder, value)` и `deserialize(decoder)`. Для примитивного представления берут `PrimitiveSerialDescriptor`, для структуры — `buildClassSerialDescriptor { element<...>(...) }` с `encodeStructure`/`decodeStructure`. Подключают на поле через `@Serializable(with = ...)` или глобально через `contextual` в `SerializersModule`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это даёт произвольное представление типа в любом формате, недоступное декларативным средствам.",
+                "example": "`class ColorSerializer : KSerializer<Color>` с `PrimitiveKind.STRING` в `serialize` пишет `\"#%02X%02X%02X\".format(...)`, а в `deserialize` парсит hex обратно в `Color`.",
+                "when_to_apply": "Нужен для типов из внешних библиотек, нестандартных форматов (`Money` как `{amount, currency}`) и валидации при чтении.",
+                "edge_cases": "В `decodeStructure` обязательно крутят цикл `decodeElementIndex` до `CompositeDecoder.DECODE_DONE` — иначе при перестановке полей чтение сломается.",
+                "related": "[[kotlin-serialization-interview#Q12]] когда нужен кастомный сериализатор; [[kotlin-serialization-interview#Q14]] surrogate как упрощение; [[kotlin-serialization-interview#Q36]] `JsonTransformingSerializer` для лёгких случаев."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `KSerializer` достаточно реализовать `serialize`/`deserialize`, а `descriptor` не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`descriptor` обязателен — это abstract-член интерфейса, описывающий структуру для всех форматов.",
+                "source_of_confusion": "Фокус на (де)сериализации заставляет забыть про дескриптор.",
+                "if_it_were_true": "Будь он опционален, форматы не знали бы структуру типа, но `descriptor` реализуют всегда.",
+                "how_it_should_be": "Реализуют все три члена: `descriptor`, `serialize`, `deserialize`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для структуры из нескольких полей дескриптор задают через `PrimitiveSerialDescriptor`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для структуры используют `buildClassSerialDescriptor { element<Long>(\"amount\") ... }`; `PrimitiveSerialDescriptor` — для одного примитива.",
+                "source_of_confusion": "Один тип дескриптора кажется универсальным.",
+                "if_it_were_true": "Будь так, нельзя было бы описать `Money(amount, currency)` как объект, но `buildClassSerialDescriptor` это делает.",
+                "how_it_should_be": "Примитив → `PrimitiveSerialDescriptor`; составной объект → `buildClassSerialDescriptor` с `element<...>`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Кастомный `KSerializer` подключается к полю только через `SerializersModule`; аннотацией на поле нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подключают и через `@Serializable(with = ColorSerializer::class)` на поле, и через `contextual` в модуле — оба способа валидны.",
+                "source_of_confusion": "Модуль кажется единственным «глобальным» путём регистрации.",
+                "if_it_were_true": "Будь только модуль, не существовало бы `@Serializable(with = ...)`, но эта аннотация работает.",
+                "how_it_should_be": "Локально — `@Serializable(with = ...)` на поле; глобально — `contextual(...)` в `SerializersModule`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 42,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Nullable и default значения при десериализации — поведение и подводные камни?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Явный `null` для non-nullable поля по умолчанию подставляет default-значение без ошибки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Явный `null` для non-nullable поля по умолчанию даёт `SerializationException`; чтобы он заменялся default, нужен `coerceInputValues = true`.",
+                "source_of_confusion": "Поведение Jackson (где это часто проходит) переносят на kotlinx.",
+                "if_it_were_true": "Будь так, `{\"host\": null}` для non-null `host` не падал бы, но без `coerceInputValues` это ошибка.",
+                "how_it_should_be": "Без `coerceInputValues` `null` в non-nullable поле — ошибка; флаг включает замену на default."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Поведение: отсутствующее поле → default (если есть); явный `null` для nullable → `null`; явный `null` для non-nullable → `SerializationException` (если нет `coerceInputValues=true`). Отличие от Jackson: там отсутствие и явный `null` часто эквивалентны, а в kotlinx отсутствие = default, а `null` для non-nullable = ошибка. Тонкость PATCH: при `encodeDefaults=false` нельзя отличить «не передано» от «передано null».",
+              "correct": true,
+              "sections": {
+                "explanation": "Чёткое разделение «нет ключа» и «ключ = null» даёт предсказуемую десериализацию и явный контроль контракта.",
+                "example": "`Json.decodeFromString<Config>(\"\"\"{\"host\":\"localhost\"}\"\"\")` даёт `port=8080` (default); `{\"host\": null}` для non-null `host` падает без `coerceInputValues`.",
+                "when_to_apply": "Учитывают при проектировании DTO с опциональными полями и PATCH-API; для PATCH берут `encodeDefaults=true` + `explicitNulls=true` или `@EncodeDefault`.",
+                "edge_cases": "`coerceInputValues = true` заменяет невалидное/`null` на default, но маскирует ошибки входа — включают осознанно; `@EncodeDefault(Mode.ALWAYS/NEVER)` даёт тонкий контроль вывода.",
+                "related": "[[kotlin-serialization-interview#Q7]] `encodeDefaults` и `explicitNulls`; [[kotlin-serialization-interview#Q23]] nullable и PATCH-стратегия; [[kotlin-serialization-interview#Q10]] `@EncodeDefault` для управления выводом."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "kotlinx.serialization ведёт себя с nullable и default точно так же, как Jackson.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поведение отличается: в kotlinx отсутствие ключа = default, а явный `null` для non-nullable = ошибка, тогда как Jackson их часто уравнивает.",
+                "source_of_confusion": "Оба про JSON, поэтому ждут одинаковой семантики.",
+                "if_it_were_true": "Будь поведение идентичным, не было бы «критической разницы с Jackson», о которой предупреждают.",
+                "how_it_should_be": "kotlinx строже различает отсутствие поля и явный `null`, чем Jackson."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При `encodeDefaults=false` всегда можно отличить «поле не передано» от «поле = null».",
+              "correct": false,
+              "sections": {
+                "what_actually": "При `encodeDefaults=false` оба случая дают одинаковый выход — отличить «не передано» от «null» нельзя, что ломает PATCH-семантику.",
+                "source_of_confusion": "Кажется, что null и отсутствие всегда выглядят по-разному в JSON.",
+                "if_it_were_true": "Будь так, не советовали бы для PATCH `encodeDefaults=true`, но именно из-за неразличимости его и советуют.",
+                "how_it_should_be": "Для надёжного PATCH берут `encodeDefaults=true` + `explicitNulls=true`, чтобы `null` явно попадал в JSON."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 43,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`CBOR` и `Protobuf` форматы в `kotlinx.serialization` — когда применять?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Protobuf` и `CBOR` — стабильные форматы и не требуют `@OptIn(ExperimentalSerializationApi::class)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Protobuf` имеет статус Experimental и часто требует `@OptIn(ExperimentalSerializationApi::class)`; стабилен только `JSON`.",
+                "source_of_confusion": "Зрелость самих форматов переносят на статус Kotlin-артефактов.",
+                "if_it_were_true": "Будь они стабильны, `@OptIn` был бы не нужен, но компилятор его требует.",
+                "how_it_should_be": "Бинарные форматы пока экспериментальны; их API может меняться между версиями."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `Protobuf` `@ProtoNumber` опционален: изменение номера поля безопасно для совместимости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@ProtoNumber` — обязательство: изменение или переиспользование номера ломает обратную совместимость; удалённые номера резервируют.",
+                "source_of_confusion": "В JSON порядок/имена менять относительно безопасно, поэтому расслабляются и в protobuf.",
+                "if_it_were_true": "Будь номера произвольными, старые и новые данные не сходились бы по полям, но именно номер — идентичность поля.",
+                "how_it_should_be": "Номера полей в protobuf фиксируют навсегда; их не меняют и не переиспользуют."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`CBOR` (~30-50% меньше JSON) и `Protobuf` (~60-80% меньше) — бинарные форматы; один `@Serializable`-класс работает с любым из них. `CBOR` самоописываем и не требует схемы (`Cbor.encodeToByteArray`), `Protobuf` требует номера полей `@ProtoNumber` (`ProtoBuf.encodeToByteArray`). Оба Experimental и требуют `@OptIn`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор формата — баланс размера, наличия схемы и читаемости при отладке.",
+                "example": "`Cbor.encodeToByteArray(SensorReading(...))` даёт компактный массив без схемы; `ProtoBuf.encodeToByteArray(UserProto(...))` использует `@ProtoNumber(1..n)` для строгого контракта.",
+                "when_to_apply": "JSON — для REST/дебага; `CBOR` — для IoT/мобильных и внутренних API без схемы; `Protobuf` — для высоконагруженных сервисов и gRPC-совместимости.",
+                "edge_cases": "В `Protobuf` `@ProtoNumber` — обязательство: изменение номера ломает совместимость, удалённые номера резервируют и не переиспользуют.",
+                "related": "[[kotlin-serialization-interview#Q25]] обзор форматов; [[kotlin-serialization-interview#Q26]] `Protobuf` и `@ProtoNumber`; [[kotlin-serialization-interview#Q27]] `CBOR` без схемы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`CBOR` требует схему так же, как `Protobuf`, и без неё не сериализуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CBOR` самоописываем и схемы НЕ требует; схема обязательна только `Protobuf` (через `@ProtoNumber`).",
+                "source_of_confusion": "Оба бинарные, поэтому требование схемы переносят с protobuf на cbor.",
+                "if_it_were_true": "Будь нужна схема, CBOR не давал бы гибкости «как JSON, но бинарный», но он её даёт.",
+                "how_it_should_be": "`CBOR` кодирует без схемы; для `Protobuf` номера полей обязательны."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

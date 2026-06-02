@@ -1,0 +1,2405 @@
+{
+  "topic_slug": "kotlin-dsl-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое DSL в `Kotlin` и чем внутренний DSL отличается от внешнего?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Внутренний (embedded) DSL построен средствами самого `Kotlin` — это обычный код, организованный так, что читается декларативно (`html { body { } }`). Внешний DSL — отдельный язык со своим парсером и синтаксисом (`SQL`, `CSS`, regex), не проверяемый компилятором host-языка.",
+              "correct": true,
+              "sections": {
+                "explanation": "Внешнему DSL нужен собственный лексер и парсер, а внутренний — это просто вызовы функций и lambda с receiver, которые компилятор `Kotlin` проверяет как любой другой код.",
+                "example": "Строка `html { body { p { +\"Hello\" } } }` — внутренний DSL; `SELECT * FROM users WHERE active = true` — внешний DSL, который нужно отдельно распарсить.",
+                "when_to_apply": "Применяй внутренний DSL, когда пользователи — разработчики и важны типобезопасность и автодополнение; внешний — когда синтаксис принципиально не вписывается в `Kotlin` или редактируется не-программистами.",
+                "edge_cases": "Граница размыта: `Gradle` совмещает внешний TOML-каталог зависимостей и внутренний `build.gradle.kts`, а `kotlinx.serialization` парсит внешний `JSON`, конфигурируясь внутренним DSL.",
+                "related": "[[kotlin-dsl-interview#Q2]] lambda с receiver как основа; [[kotlin-dsl-interview#Q26]] DSL vs fluent API; [[kotlin-dsl-interview#Q40]] внутренний vs внешний детально."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Внутренний DSL — это всегда отдельный язык со своим парсером, а внешний — наоборот, код на самом `Kotlin`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: внутренний (embedded) DSL — это код на host-языке, а внешний — самостоятельный язык с собственным парсером.",
+                "source_of_confusion": "Слова «внутренний» и «внешний» легко перепутать местами, если не привязать их к понятию «внутри host-языка».",
+                "if_it_were_true": "Если бы внутренний DSL требовал отдельного парсера, он терял бы компиляторную проверку и IDE-поддержку — главные плюсы embedded-подхода в `Kotlin`.",
+                "how_it_should_be": "Внутренний DSL живёт внутри `Kotlin`-кода (`html { }`), внешний — это отдельный язык (`SQL`), и определения нельзя менять местами."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Разница только в скорости выполнения: внутренний DSL медленнее из-за рефлексии, внешний быстрее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Различие — в способе построения (внутри host-языка или отдельным парсером), а не в скорости; рефлексия для внутреннего DSL вовсе не обязательна.",
+                "source_of_confusion": "Кажется, что «красивый» синтаксис обязан стоить производительности, поэтому придумывают про рефлексию.",
+                "if_it_were_true": "Если бы внутренний DSL всегда тормозил, его не выбирали бы для `Gradle` и `Ktor`, где `inline` убирает накладные расходы.",
+                "how_it_should_be": "Критерий — наличие отдельного языка/парсера; внутренний DSL с `inline` не уступает обычному коду по скорости."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Внутренний и внешний DSL — это синонимы; разделение придумали маркетологи, технической разницы нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Разница вполне техническая: внешний DSL имеет собственный синтаксис и парсер, внутренний выражается средствами host-языка.",
+                "source_of_confusion": "Оба называются «DSL», поэтому возникает ощущение, что это одно и то же под разными именами.",
+                "if_it_were_true": "Если бы разницы не было, не существовало бы отдельной документации `Type-Safe Builders` для embedded-подхода в `Kotlin`.",
+                "how_it_should_be": "Это два разных подхода: внешний — отдельный язык, внутренний — конструкция host-языка с compile-time проверкой."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое lambda с receiver и почему это основа `Kotlin` DSL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Lambda с receiver — это обычная lambda `(T) -> R`, просто записанная через двоеточие вместо стрелки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это lambda типа `T.() -> R` с неявным `this`, а не синтаксический вариант записи обычной `(T) -> R`.",
+                "source_of_confusion": "Обе принимают объект типа `T`, поэтому кажется, что отличие лишь в нотации.",
+                "if_it_were_true": "Если бы это была обычная lambda, внутри блока пришлось бы писать `it.append(...)`, и вложенные DSL-блоки не складывались бы естественно.",
+                "how_it_should_be": "У lambda с receiver объект доступен как неявный `this`, что и позволяет вызывать методы без префикса."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Lambda с receiver — lambda-выражение с неявным `this`, указывающим на объект-receiver; тип записывается как `T.() -> R`. Внутри блока методы и свойства `T` вызываются без префикса, что создаёт контекст «мы внутри объекта `T`» — это и есть фундамент вложенных DSL-блоков.",
+              "correct": true,
+              "sections": {
+                "explanation": "Получая неявный receiver, блок обращается к `append(...)`, `host = ...` напрямую; каждый вложенный блок — это новая lambda с receiver на дочерний тип, отсюда древовидная структура DSL.",
+                "example": "Тип `val build: StringBuilder.() -> Unit = { append(\"Hi\") }` вызывается как `StringBuilder().apply(build)`: внутри `append` — это `this.append`.",
+                "when_to_apply": "Применяй, когда нужен декларативный вложенный синтаксис конфигурации или разметки: `html { body { } }`, `server { ssl { } }` строятся именно на этом механизме.",
+                "edge_cases": "Отличие от extension-функции: `fun T.name()` объявляется на типе, а lambda с receiver — значение `T.() -> Unit`, которое можно передать аргументом и тем самым вкладывать блоки друг в друга.",
+                "related": "[[kotlin-dsl-interview#Q4]] type-safe builder поверх этого; [[kotlin-dsl-interview#Q11]] scope-функции как готовые lambda с receiver; [[kotlin-dsl-interview#Q23]] `inline` для устранения аллокаций."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Lambda с receiver — это аннотация `@DslMarker`, которую вешают на класс-контекст DSL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@DslMarker` ограничивает видимость receiver-ов, а lambda с receiver — это тип функции `T.() -> R`; это разные сущности.",
+                "source_of_confusion": "Оба понятия всплывают рядом в рассказе про DSL, поэтому их смешивают.",
+                "if_it_were_true": "Если бы lambda с receiver была аннотацией, её нельзя было бы передать как значение в `apply(block)`.",
+                "how_it_should_be": "Lambda с receiver — функциональный тип с неявным `this`; `@DslMarker` — мета-аннотация контроля scope."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Lambda с receiver работает только с классами стандартной библиотеки (`StringBuilder`, `List`) и не применима к своим типам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Receiver-ом может быть любой тип, включая пользовательские классы-контексты DSL — на этом и строятся собственные builder-ы.",
+                "source_of_confusion": "Примеры в документации часто используют `StringBuilder.apply`, отсюда ложное обобщение про только-stdlib.",
+                "if_it_were_true": "Если бы это было правдой, нельзя было бы написать `fun server(init: ServerConfig.() -> Unit)` со своим `ServerConfig`.",
+                "how_it_should_be": "Receiver — произвольный тип `T`; собственные DSL как раз объявляют свои классы-контексты как receiver."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие языковые средства `Kotlin` используются для построения DSL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Единственное средство построения DSL в `Kotlin` — рефлексия через `KClass` и `createInstance()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рефлексия не нужна для DSL; основа — lambda с receiver, extension-функции, operator overloading, infix и `inline`.",
+                "source_of_confusion": "`reified`/`KClass` иногда мелькают в продвинутых builder-ах, отсюда ложный вывод про рефлексию как основу.",
+                "if_it_were_true": "Если бы DSL держался на рефлексии, он терял бы compile-time типобезопасность и работал бы медленно.",
+                "how_it_should_be": "DSL строится на статических средствах языка (lambda с receiver, extension, операторы), а рефлексия — частный опциональный приём."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "DSL в `Kotlin` возможен только благодаря наследованию: каждый вложенный блок — это подкласс родительского контекста.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вложенность даёт не наследование, а вызовы методов с lambda с receiver на дочерних типах; наследование не обязательно.",
+                "source_of_confusion": "Классы-узлы иногда наследуют общий `Tag`, поэтому наследование путают с механизмом вложенности.",
+                "if_it_were_true": "Если бы вложенность требовала наследования, нельзя было бы вкладывать неродственные контексты вроде `ssl { }` внутри `server { }`.",
+                "how_it_should_be": "Вложенные блоки — это методы, принимающие `Child.() -> Unit`; наследование — лишь способ переиспользовать общий код узлов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Kotlin` даёт целый набор средств: lambda с receiver (`T.() -> Unit`) для вложенных контекстов, extension-функции и properties, `@DslMarker` для ограничения scope, operator overloading (`+\"text\"`, `config[\"k\"]`), infix-функции (`x shouldBe 42`), именованные и default-аргументы, `inline` и trailing lambda.",
+              "correct": true,
+              "sections": {
+                "explanation": "В совокупности эти механизмы превращают обычный код в декларативную запись: lambda с receiver задаёт контекст, операторы и infix дают краткий синтаксис, `@DslMarker` запрещает невалидную вложенность, `inline` убирает накладные расходы.",
+                "example": "`html { body { p { +\"Hi\" } } }` использует сразу lambda с receiver (вложенность), extension-функции (`p`), operator `unaryPlus` (`+`) и trailing lambda.",
+                "when_to_apply": "Перечисляй эти средства, когда на собеседовании просят объяснить «за счёт чего вообще возможен `Kotlin` DSL» — это базовый набор инструментов.",
+                "edge_cases": "Не все средства нужны сразу: простой config-DSL обходится lambda с receiver и свойствами, а операторы/infix добавляют, только когда они улучшают читаемость.",
+                "related": "[[kotlin-dsl-interview#Q2]] lambda с receiver подробно; [[kotlin-dsl-interview#Q8]] перегрузка операторов; [[kotlin-dsl-interview#Q10]] infix-функции в DSL."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "DSL в `Kotlin` строится исключительно на аннотациях: `@DslMarker`, `@HtmlTagMarker` и подобных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотации (особенно `@DslMarker`) лишь контролируют scope; сам синтаксис создают lambda с receiver, extension-функции и операторы.",
+                "source_of_confusion": "`@DslMarker` — заметная и «магическая» часть DSL, поэтому её ошибочно считают единственным средством.",
+                "if_it_were_true": "Если бы хватало аннотаций, без lambda с receiver нельзя было бы вообще написать вложенный блок `body { }`.",
+                "how_it_should_be": "Аннотации дополняют DSL контролем scope, но фундамент — функциональные средства языка."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Type-Safe Builder и как он устроен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Type-Safe Builder — это просто цепочка fluent-вызовов `builder.setX().setY().build()` с проверкой типов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Type-Safe Builder строит иерархию через вложенные lambda с receiver, а не линейной цепочкой сеттеров — это разные паттерны.",
+                "source_of_confusion": "И builder, и DSL создают объект, и оба типобезопасны, поэтому fluent-цепочку путают с type-safe builder.",
+                "if_it_were_true": "Если бы это была плоская цепочка, нельзя было бы естественно выразить дерево `html { body { div { } } }`.",
+                "how_it_should_be": "Type-Safe Builder использует функции с `T.() -> Unit`, давая древовидную вложенность, а fluent API остаётся линейным."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Type-Safe Builder требует генерации кода на этапе сборки (annotation processing), иначе вложенность не работает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакой кодогенерации не нужно: достаточно классов-узлов и методов, принимающих lambda с receiver дочернего типа.",
+                "source_of_confusion": "KSP/annotation processing активно используют в других областях, отсюда ложное обобщение и на builders.",
+                "if_it_were_true": "Если бы нужна была кодогенерация, нельзя было бы написать минимальный type-safe builder в одном файле без плагинов.",
+                "how_it_should_be": "Builder работает на чистых средствах языка — lambda с receiver и обычных методах, без процессоров аннотаций."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Type-Safe Builder строит структуру только в runtime через рефлексию, поэтому ошибки вложенности всплывают при выполнении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Допустимая вложенность проверяется компилятором (что особенно усиливает `@DslMarker`), а не в runtime через рефлексию.",
+                "source_of_confusion": "Слово «builder» ассоциируется с динамическим конструированием, поэтому приписывают runtime-проверки.",
+                "if_it_were_true": "Если бы проверки были только в runtime, терялась бы главная ценность — «type-safe» в самом названии.",
+                "how_it_should_be": "Структура и допустимость вложенных блоков проверяются на этапе компиляции, а не рефлексией во время работы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Type-Safe Builder — паттерн, где иерархическая структура (дерево узлов) строится вызовами функций с lambda с receiver `T.() -> Unit`. Классы представляют узлы (`HTML`, `Body`, `Div`), каждый хранит список потомков и метод, который создаёт дочерний узел, инициализирует его lambda и добавляет в дерево; допустимая вложенность проверяется компилятором.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый вложенный блок — это вызов метода на receiver-е, создающий дочерний узел: `fun body(init: Body.() -> Unit) = initTag(Body(), init)` инициализирует `Body` и кладёт его в `children` родителя.",
+                "example": "Точка входа — top-level функция `fun html(init: HTML.() -> Unit): HTML = HTML().apply(init)`, после чего `html { body { div { } } }` строит дерево узлов.",
+                "when_to_apply": "Применяй для иерархических структур: HTML-разметка, дерево конфигурации, маршруты — везде, где данные естественно образуют вложенное дерево.",
+                "edge_cases": "Без `@DslMarker` во вложенном блоке остаются видны методы внешних узлов (`body { head { } }` скомпилируется бессмысленно) — поэтому маркер обычно идёт в паре с паттерном.",
+                "related": "[[kotlin-dsl-interview#Q5]] пошаговый пример builder; [[kotlin-dsl-interview#Q6]] `@DslMarker` против утечки scope; [[kotlin-dsl-interview#Q20]] `kotlinx.html` как реальный builder."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как написать простой type-safe builder (пошаговый пример конфигурации сервера)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Шаги: (1) создать классы-контексты со свойствами и методами для вложенных блоков (`ServerConfig`, `SslConfig`); (2) пометить их пользовательской аннотацией с `@DslMarker`; (3) написать top-level функцию-точку входа `fun server(init: ServerConfig.() -> Unit): Server = ServerConfig().apply(init).build()`; (4) использовать DSL.",
+              "correct": true,
+              "sections": {
+                "explanation": "Метод `ssl(init: SslConfig.() -> Unit)` создаёт `SslConfig().apply(init)` и сохраняет результат, а `build()` собирает итоговый неизменяемый `Server` из накопленных свойств.",
+                "example": "Вызов `server { host = \"0.0.0.0\"; port = 443; ssl { enabled = true; certPath = \"/cert.pem\" } }` проходит через `apply(init)` и `build()`.",
+                "when_to_apply": "Применяй этот скелет каждый раз, когда нужен конфигурационный DSL с вложенными секциями: сервер, клиент, пайплайн, тестовая фикстура.",
+                "edge_cases": "Свойства с дефолтами (`var host = \"localhost\"`) делают часть конфигурации опциональной; обязательные поля стоит проверять в `build()` через `requireNotNull`.",
+                "related": "[[kotlin-dsl-interview#Q4]] устройство type-safe builder; [[kotlin-dsl-interview#Q11]] `apply` как сердце паттерна; [[kotlin-dsl-interview#Q24]] обязательные и опциональные блоки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Точка входа должна быть конструктором: пользователь пишет `ServerConfig { ... }` напрямую, без отдельной top-level функции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Идиоматичная точка входа — именно top-level функция `server { }`, которая внутри делает `ServerConfig().apply(init).build()`.",
+                "source_of_confusion": "Гибридные builder-ы иногда добавляют `operator fun invoke` в companion, отсюда мысль, что хватит конструктора.",
+                "if_it_were_true": "Если опираться только на конструктор, теряется удобное имя-глагол (`server`, `html`) и возможность вернуть отдельный immutable-тип из `build()`.",
+                "how_it_should_be": "Стандарт — top-level функция-глагол как вход в DSL; конструктор остаётся деталью реализации билдера."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Вложенный блок `ssl { }` нужно объявлять как extension-функцию на `ServerConfig` вне класса, иначе он не будет виден.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метод `ssl` обычно — обычный member-метод класса `ServerConfig`, который и так доступен внутри его lambda с receiver.",
+                "source_of_confusion": "Extension-функции действительно часто расширяют DSL, поэтому кажется, что и вложенные блоки обязаны быть extension.",
+                "if_it_were_true": "Если бы блок требовалось выносить наружу, простой пример из документации с member-методом `ssl` не компилировался бы.",
+                "how_it_should_be": "Вложенные блоки — это member-методы класса-контекста; extension нужны лишь для расширения чужого API."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чтобы DSL заработал, классы-контексты обязаны наследовать общий абстрактный `Builder`-класс из стандартной библиотеки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В стандартной библиотеке нет обязательного базового `Builder`; классы-контексты — обычные классы со свойствами и методами.",
+                "source_of_confusion": "Паттерн «builder» из мира Java ассоциируется с базовым классом, поэтому ждут того же в `Kotlin`.",
+                "if_it_were_true": "Если бы нужен был stdlib-`Builder`, нельзя было бы написать самостоятельный `ServerConfig` без наследования.",
+                "how_it_should_be": "Классы-контексты независимы; объединяет их лишь общий `@DslMarker`, а не наследование от библиотечного builder."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@DslMarker` и какую проблему он решает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@DslMarker` — это аннотация, ускоряющая DSL за счёт устранения аллокаций lambda, аналог `inline`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "За устранение аллокаций отвечает `inline`; `@DslMarker` решает проблему утечки scope, а не производительность.",
+                "source_of_confusion": "Обе аннотации/модификатора часто упоминают рядом в теме DSL, поэтому их роли путают.",
+                "if_it_were_true": "Если бы `@DslMarker` влиял на аллокации, его ставили бы на функции, а он применяется к классам-контекстам.",
+                "how_it_should_be": "`@DslMarker` ограничивает видимость receiver-ов; за скорость отвечает `inline`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@DslMarker` — мета-аннотация из `kotlin.annotation`, которой помечают пользовательскую аннотацию, а ей — классы-контексты DSL. Она решает проблему утечки scope: без неё во вложенной lambda с receiver доступны методы всех внешних receiver-ов, что допускает бессмысленные конструкции вроде `body { head { } }`.",
+              "correct": true,
+              "sections": {
+                "explanation": "С маркером компилятор оставляет видимым только ближайший помеченный receiver; к внешнему можно обратиться лишь явно через `this@html.head { }`.",
+                "example": "После `@DslMarker annotation class HtmlDsl` и `@HtmlDsl abstract class Tag` строка `html { body { head { } } }` перестаёт компилироваться — `head()` внешнего `HTML` больше не виден.",
+                "when_to_apply": "Применяй маркер в любом DSL с несколькими уровнями вложенности однотипных контекстов, чтобы запретить случайный вызов методов внешних блоков.",
+                "edge_cases": "Маркер объявляется один раз, а все аннотированные им классы образуют группу с общим scope-контролем; подклассы наследуют маркер автоматически.",
+                "related": "[[kotlin-dsl-interview#Q7]] как маркер меняет видимость; [[kotlin-dsl-interview#Q4]] type-safe builder, где он нужен; [[kotlin-dsl-interview#Q29]] отсутствие маркера как типичная ошибка."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@DslMarker` генерирует type-safe accessors для вложенных блоков, как это делает `Gradle` для плагинов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Type-safe accessors — это механизм `Gradle`, генерирующий extension по плагинам; `@DslMarker` лишь ограничивает видимость receiver-ов.",
+                "source_of_confusion": "И то, и другое улучшает работу DSL, поэтому функции смешивают.",
+                "if_it_were_true": "Если бы `@DslMarker` генерировал accessors, он бы добавлял новые методы, а он, наоборот, скрывает методы внешних receiver-ов.",
+                "how_it_should_be": "`@DslMarker` ничего не генерирует — он сужает scope; генерация accessors — отдельная фича `Gradle`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@DslMarker` обязателен: без него любой type-safe builder вообще не скомпилируется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Builder компилируется и без маркера — просто во вложенных блоках протекает scope и доступны методы внешних контекстов.",
+                "source_of_confusion": "Маркер так часто советуют, что его принимают за обязательное условие компиляции.",
+                "if_it_were_true": "Если бы он был обязателен, ранние DSL до появления `@DslMarker` (Kotlin до 1.1) вообще не работали бы.",
+                "how_it_should_be": "Маркер опционален и улучшает безопасность scope; без него DSL работает, но допускает невалидные вложения."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `@DslMarker` влияет на видимость receiver-ов во вложенных блоках?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "С `@DslMarker` во вложенном блоке становится доступен только самый внешний receiver, а внутренние скрываются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: маркер оставляет видимым самый внутренний помеченный receiver, а внешние требуют явного `this@label`.",
+                "source_of_confusion": "«Ограничение видимости» звучит абстрактно, поэтому направление (внешний/внутренний) легко перепутать.",
+                "if_it_were_true": "Если бы виден был только внешний receiver, нельзя было бы вызвать методы текущего блока вроде `div { }` внутри `body`.",
+                "how_it_should_be": "Маркер делает доступным ближайший (внутренний) receiver; внешние доступны лишь через явный `this@html`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@DslMarker` влияет на видимость только если применён к функции; на классе он не работает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Допустимые target-ы — `CLASS`, `TYPE`, `TYPEALIAS`; именно применение к классу/типу контролирует scope, а к функции — нет.",
+                "source_of_confusion": "Аннотации часто вешают на функции, отсюда ложное предположение про функциональный target.",
+                "if_it_were_true": "Если бы маркер работал на функции, его ставили бы на `fun html(...)`, а контроль scope всё равно идёт от типа receiver-а.",
+                "how_it_should_be": "Маркер действует на уровне класса или типа receiver-а; на функции/свойстве он на scope не влияет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Без `@DslMarker` действует стандартное разрешение имён: компилятор ищет метод в ближайшем receiver, затем поднимается по цепочке вложенных, поэтому внутри `body { }` видны методы и `Body`, и `HTML`. Маркер меняет это: если два receiver-а помечены одним маркером, доступным остаётся только самый внутренний.",
+              "correct": true,
+              "sections": {
+                "explanation": "К внешнему receiver-у после этого обращаются явно: `this@html.head { }`; аннотацию можно поставить на класс (наследуется подклассами) или на тип в сигнатуре `init: @HtmlDsl HTML.() -> Unit`.",
+                "example": "До маркера `html { body { div { head { } } } }` компилировался (вызывался `HTML.head()`); с `@HtmlDsl` на `Tag` строка `head { }` внутри `div` даёт ошибку компиляции.",
+                "when_to_apply": "Опирайся на это поведение, когда в DSL есть несколько уровней однотипных контекстов и нужно исключить случайный вызов метода внешнего уровня.",
+                "edge_cases": "Допустимые target-ы маркера — `CLASS`, `TYPE`, `TYPEALIAS`; на функциях или свойствах он на контроль scope не влияет.",
+                "related": "[[kotlin-dsl-interview#Q6]] что такое `@DslMarker`; [[kotlin-dsl-interview#Q4]] type-safe builder с вложенностью; [[kotlin-dsl-interview#Q2]] lambda с receiver и неявный `this`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@DslMarker` полностью убирает неявный `this` — внутри блока приходится писать `this.append(...)` явно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Неявный `this` сохраняется; маркер лишь запрещает обращаться к более внешним помеченным receiver-ам без явного label.",
+                "source_of_confusion": "Раз маркер «ограничивает», кажется, что он отбирает и удобный неявный `this`.",
+                "if_it_were_true": "Если бы пропал неявный `this`, исчезла бы вся декларативность DSL — пришлось бы префиксовать каждый вызов.",
+                "how_it_should_be": "Ближайший receiver остаётся неявным `this`; ограничивается только доступ к внешним receiver-ам."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как перегрузка операторов используется в DSL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Перегрузка операторов в DSL означает переопределение `==` и `equals`, чтобы сравнивать узлы дерева.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В DSL чаще перегружают `unaryPlus`, `get`/`set`, `contains`, `rangeTo` для синтаксиса, а не `==` для сравнения узлов.",
+                "source_of_confusion": "`equals`/`==` — самая известная перегрузка в `Kotlin`, поэтому её приписывают и DSL.",
+                "if_it_were_true": "Если бы суть была в `==`, нельзя было бы объяснить ключевой приём `div { +\"text\" }`, где работает `unaryPlus`.",
+                "how_it_should_be": "DSL использует операторы для краткого синтаксиса добавления и доступа (`+text`, `config[\"k\"]`), а не для сравнения."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Операторы в DSL можно перегружать произвольно — чем больше нестандартных значений, тем выразительнее язык.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Правило обратное: оператор должен быть семантически уместен, иначе чтение DSL усложняется.",
+                "source_of_confusion": "Свобода перегрузки в `Kotlin` создаёт иллюзию, что «чем больше, тем лучше».",
+                "if_it_were_true": "Если перегружать `-` для удаления маршрута, читатель не поймёт `-route(\"/api\")` без комментария.",
+                "how_it_should_be": "Перегружай оператор, только когда его смысл очевиден (`+` = «добавить контент»); произвольные перегрузки вредят."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чтобы `+\"text\"` работал в builder-е, нужно перегрузить бинарный `plus`, а не `unaryPlus`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для добавления текста перегружают именно унарный `unaryPlus` (`operator fun String.unaryPlus()`), а не бинарный `plus`.",
+                "source_of_confusion": "`plus` и `unaryPlus` похожи по имени, поэтому их путают.",
+                "if_it_were_true": "Если бы это был бинарный `plus`, понадобился бы второй операнд, а `+\"Hello\"` использует только один.",
+                "how_it_should_be": "Префиксный `+` перед строкой — это `unaryPlus`; бинарный `plus` отвечает за `a + b`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Перегрузка операторов даёт лаконичный DSL-синтаксис: `unaryPlus` для добавления текста (`operator fun String.unaryPlus()` кладёт `TextElement` в `children`), `get`/`set` для доступа к конфигурации (`config[\"host\"] = \"localhost\"`), `contains` для проверки принадлежности (`\"admin\" in roles`), `rangeTo` для диапазонов (`Version(1,0)..Version(2,0)`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый оператор отображается на функцию с ключевым словом `operator`, поэтому компилятор знает, как развернуть `+text` или `config[k] = v` в обычные вызовы методов.",
+                "example": "В `kotlinx.html` именно `div { +\"Hello, World!\" }` работает через `String.unaryPlus`, добавляющий текстовый узел в текущий тег.",
+                "when_to_apply": "Используй перегрузку, когда оператор естественно выражает действие домена (добавить контент, обратиться по ключу, проверить вхождение), и избегай её для произвольной семантики.",
+                "edge_cases": "Главное правило — семантическая уместность: `+` для контента читается отлично, а перегрузка `-` для «отключить маршрут» делает код непонятным без комментария.",
+                "related": "[[kotlin-dsl-interview#Q9]] invoke convention; [[kotlin-dsl-interview#Q36]] operator overloading на практике; [[kotlin-dsl-interview#Q3]] операторы среди средств DSL."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое invoke convention и как его применяют в DSL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`invoke` convention: если у класса есть `operator fun invoke(...)`, экземпляр можно вызвать как функцию — `obj(args)`. В DSL это позволяет, например, регистрировать маршрут вызовом `routes(\"/api/users\") { method = GET; handler = { ... } }`, где `routes` — объект `RouteBuilder` с `operator fun invoke(path, init)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Вызов `obj(x)` компилятор разворачивает в `obj.invoke(x)`; внутри `invoke` обычно создаётся дочерний объект через `RouteConfig(path).apply(init).build()` и складывается в список.",
+                "example": "Другой сценарий — синглтон как «вызываемая функция»: `object Query { operator fun invoke(table, init) = QueryBuilder(table).apply(init).build() }`, затем `Query(\"users\") { where(\"active = true\") }`.",
+                "when_to_apply": "Применяй, когда семантика «вызова» объекта очевидна и делает DSL лаконичнее — регистрация маршрутов, построение запросов, фабрики.",
+                "edge_cases": "Будь осторожен: если объект визуально похож на обычную переменную, `obj(...)` запутает читателя — используй convention только при ясной семантике вызова.",
+                "related": "[[kotlin-dsl-interview#Q8]] перегрузка операторов; [[kotlin-dsl-interview#Q36]] `invoke` для вложенных конфигураций; [[kotlin-dsl-interview#Q18]] routing DSL в Ktor."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`invoke` convention — это автоматический вызов `init`-блока при создании объекта, аналог конструктора.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`invoke` срабатывает при вызове экземпляра как функции `obj(...)`, а не автоматически при конструировании.",
+                "source_of_confusion": "И конструктор, и `invoke` «создают/настраивают» объект, поэтому их путают.",
+                "if_it_were_true": "Если бы `invoke` вызывался сам при создании, не было бы смысла в синтаксисе `Query(\"users\") { }` с явным вызовом.",
+                "how_it_should_be": "`invoke` — это поведение «вызвать экземпляр как функцию»; конструктор и `init` — отдельный механизм инициализации."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`invoke` convention требует, чтобы класс реализовывал интерфейс `Function1` из стандартной библиотеки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Достаточно объявить `operator fun invoke(...)`; реализовывать `FunctionN` вручную не нужно.",
+                "source_of_confusion": "Лямбды под капотом — это `FunctionN`, отсюда мысль, что и `invoke` обязывает к этому интерфейсу.",
+                "if_it_were_true": "Если бы требовалась реализация `Function1`, нельзя было бы добавить `invoke` к существующему `object Query` без рефакторинга.",
+                "how_it_should_be": "`invoke` — просто оператор-метод с ключевым словом `operator`; интерфейсы `FunctionN` ни при чём."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`invoke` convention доступен только для объектов-синглтонов (`object`), но не для обычных классов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`operator fun invoke` можно объявить в любом классе; пример `RouteBuilder` — обычный класс, а не `object`.",
+                "source_of_confusion": "Частый пример `object Query { operator fun invoke }` создаёт впечатление, что это только для синглтонов.",
+                "if_it_were_true": "Если бы это работало лишь для `object`, нельзя было бы вызвать `routes(\"/api\") { }` на экземпляре класса `RouteBuilder`.",
+                "how_it_should_be": "`invoke` доступен и обычным классам, и `object`; синглтон — лишь один из удобных сценариев."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Инфиксные функции в DSL — когда и зачем их применяют?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Инфиксная функция может принимать любое число параметров, включая vararg, лишь бы её вызывали без точки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Требования строгие: один параметр, без vararg и без default-значений, плюс member или extension.",
+                "source_of_confusion": "Гибкость обычных функций переносят и на infix, отсюда ложное «любое число параметров».",
+                "if_it_were_true": "Если бы vararg допускался, запись `a op b, c, d` была бы неоднозначной для компилятора.",
+                "how_it_should_be": "Infix-функция — ровно один параметр без vararg/default; иначе её нельзя вызвать инфиксно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Инфиксная функция (`infix fun`) вызывается без точки и скобок: `a shouldBe b` вместо `a.shouldBe(b)`. Требования: member или extension-функция, ровно один параметр, без vararg и default-значений. В DSL infix особенно хорош для assertion-ов в тестах и для пар ключ-значение.",
+              "correct": true,
+              "sections": {
+                "explanation": "Например, `infix fun <T> T.shouldBe(expected: T)` бросает `AssertionError`, если `this != expected`, превращая проверку в читаемое `result shouldBe 42`.",
+                "example": "Конфигурационный пример: `infix fun String.can(action: String)` внутри `PermissionBuilder` даёт `\"admin\" can \"delete\"`, складывая пару в список разрешений.",
+                "when_to_apply": "Применяй infix, когда выражение естественно читается как «подлежащее — глагол — дополнение» (`x shouldBe y`, `\"admin\" can \"delete\"`), особенно в тестовых и конфигурационных DSL.",
+                "edge_cases": "Не злоупотребляй: `a plus b` менее читаемо, чем `a + b`, а лишние infix без ясной семантики делают код загадочным.",
+                "related": "[[kotlin-dsl-interview#Q27]] тестовые DSL (`shouldBe`); [[kotlin-dsl-interview#Q25]] infix для пар ключ-значение; [[kotlin-dsl-interview#Q3]] infix среди средств DSL."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Инфиксные функции нужны только для арифметики — они заменяют перегрузку операторов вроде `+` и `*`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Арифметику покрывает operator overloading; infix ценен прежде всего для читаемых пар и assertion-ов (`shouldBe`, `can`, `to`).",
+                "source_of_confusion": "`a plus b` выглядит «математически», поэтому infix связывают именно с арифметикой.",
+                "if_it_were_true": "Если бы infix был про арифметику, не имело бы смысла `\"admin\" can \"delete\"`, где нет никаких чисел.",
+                "how_it_should_be": "Infix решает задачу читаемости (DSL-пары, проверки), а арифметику лучше выражать перегруженными операторами."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Инфиксную функцию можно объявить только как top-level функцию, но не как член класса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Infix может быть и member-функцией класса (как `String.can` внутри `PermissionBuilder`), и extension-функцией.",
+                "source_of_confusion": "Многие примеры infix — extension-функции верхнего уровня, отсюда ложное ограничение.",
+                "if_it_were_true": "Если бы member-infix был запрещён, `PermissionBuilder` не смог бы определить `infix fun String.can(...)` внутри себя.",
+                "how_it_should_be": "Infix допустим и как member, и как extension; ограничение — лишь один параметр без vararg/default."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как scope-функции (`apply`, `with`, `run`) связаны с DSL-паттернами?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все пять scope-функций (`apply`, `with`, `run`, `let`, `also`) принимают lambda с receiver и возвращают сам объект.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Только `apply`, `with`, `run` дают receiver (`this`); `let` и `also` работают с аргументом `it`, а возвращают разное: `apply`/`also` — объект, `with`/`run`/`let` — результат lambda.",
+                "source_of_confusion": "Все они «scope-функции», поэтому их свойства ошибочно унифицируют.",
+                "if_it_were_true": "Если бы все возвращали объект, не было бы смысла в `run`/`let`, которые отдают результат lambda для трансформации.",
+                "how_it_should_be": "`apply` и `also` возвращают объект, остальные — результат lambda; receiver есть лишь у `apply`/`with`/`run`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Scope-функции — это рантайм-рефлексия над объектом, поэтому их избегают в производительном DSL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это обычные inline-функции stdlib без рефлексии; `apply` спокойно используют в горячих DSL-точках входа.",
+                "source_of_confusion": "Слово «scope» звучит как нечто динамическое, отсюда миф про рефлексию.",
+                "if_it_were_true": "Если бы они тормозили, паттерн `ServerConfig().apply(init).build()` не был бы стандартом для builder-ов.",
+                "how_it_should_be": "Scope-функции — `inline`-обёртки без накладных расходов; рефлексии в них нет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Scope-функции `Kotlin` — это готовые DSL-примитивы. `apply` (receiver `this`, возвращает объект) — основа большинства builder-ов: `fun server(init: ServerConfig.() -> Unit): Server = ServerConfig().apply(init).build()`. `with` работает с существующим объектом, `run` сочетает инициализацию и вычисление результата, `let` трансформирует через `it`, `also` добавляет side-эффект.",
+              "correct": true,
+              "sections": {
+                "explanation": "`apply` принимает lambda с receiver и возвращает тот же объект, поэтому идеально подходит, чтобы настроить экземпляр и вернуть его — ровно то, что делает DSL-вход.",
+                "example": "`with(config) { host = \"0.0.0.0\"; port = 443 }` настраивает существующий объект, а `DatabaseConfig().run { url = ...; connect() }` инициализирует и сразу возвращает `Connection`.",
+                "when_to_apply": "Опирайся на `apply` как на сердце builder-паттерна; `with`/`run` бери, когда объект уже создан или нужен результат, а не сам объект.",
+                "edge_cases": "Различие в возвращаемом значении критично: `apply`/`also` отдают объект (удобно для цепочки конфигурации), а `with`/`run`/`let` — результат lambda (удобно для вычислений).",
+                "related": "[[kotlin-dsl-interview#Q12]] `apply` vs `also`; [[kotlin-dsl-interview#Q2]] lambda с receiver под капотом; [[kotlin-dsl-interview#Q5]] `apply` в точке входа DSL."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`apply` возвращает результат lambda, поэтому его используют для вычислений, а не для конфигурации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`apply` возвращает сам объект (`this`), результат lambda игнорируется — именно поэтому он годится для конфигурации, а не вычислений.",
+                "source_of_confusion": "`run` действительно отдаёт результат lambda, и это свойство ошибочно переносят на `apply`.",
+                "if_it_were_true": "Если бы `apply` возвращал результат lambda, `ServerConfig().apply { }` не давал бы обратно `ServerConfig` для `.build()`.",
+                "how_it_should_be": "`apply` всегда возвращает объект; для возврата результата lambda есть `run`, `with`, `let`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `apply` и `also` при конструировании объектов в DSL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`apply` и `also` отличаются возвращаемым значением: `apply` возвращает объект, а `also` — результат lambda.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обе возвращают исходный объект; различие — в способе доступа: `apply` даёт receiver (`this`), `also` — параметр (`it`).",
+                "source_of_confusion": "Возврат результата lambda — свойство `run`/`let`, его ошибочно приписывают `also`.",
+                "if_it_were_true": "Если бы `also` возвращал результат lambda, нельзя было бы продолжать цепочку конфигурации после него.",
+                "how_it_should_be": "Различие `apply`/`also` — в `this` против `it`, а не в возвращаемом значении (оба отдают объект)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`also` предпочтителен в DSL-конфигурации, потому что `it` короче, чем неявный `this`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В DSL почти всегда используют `apply`: неявный `this` позволяет обращаться к свойствам без префикса, что и создаёт декларативный синтаксис.",
+                "source_of_confusion": "`it` визуально короче, отсюда ложный вывод о его удобстве для конфигурации.",
+                "if_it_were_true": "Если бы `also` был лучше для конфигурации, пришлось бы писать `it.host = ...` в каждой строке, теряя чистоту DSL.",
+                "how_it_should_be": "Для конфигурации берут `apply` (доступ без префикса через `this`), а `also` оставляют под side-эффекты."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`apply` работает только с изменяемыми (`var`) свойствами, а `also` — и с `val`, поэтому для immutable-объектов нужен `also`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба одинаково работают с любыми свойствами; разница — в форме доступа (`this` vs `it`), а не в `var`/`val`.",
+                "source_of_confusion": "`apply` часто показывают на присваивании `var`-полей, отсюда ложная связь с изменяемостью.",
+                "if_it_were_true": "Если бы `apply` требовал `var`, его нельзя было бы использовать для вызова методов immutable-объекта.",
+                "how_it_should_be": "Изменяемость свойств тут ни при чём; выбор между `apply` и `also` определяется доступом через `this` или `it`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Обе функции возвращают исходный объект, но различаются способом доступа: `apply` даёт receiver (`this`) — идеально для DSL-конфигурации, `also` даёт параметр (`it`) — удобно для side-эффектов. В DSL почти всегда берут `apply`, потому что `this` позволяет обращаться к свойствам и методам без префикса.",
+              "correct": true,
+              "sections": {
+                "explanation": "`ServerConfig().apply { host = \"0.0.0.0\"; port = 8080 }` настраивает поля как `this.host`; `also { logger.info(it.host); validate(it) }` обращается к готовому объекту по имени `it`.",
+                "example": "Типовая цепочка: `.apply { host = ...; port = ... }.also { logger.info(\"Created ${it.host}:${it.port}\"); validate(it) }` — сначала конфигурация, затем логирование и валидация.",
+                "when_to_apply": "Бери `apply` для построения и настройки объекта, `also` — когда нужно залогировать, провалидировать или выполнить другой side-эффект, обращаясь к объекту по имени.",
+                "edge_cases": "Оба возвращают тот же объект, поэтому их можно свободно чередовать в цепочке; путаница возникает, только если ждать от `also` результата lambda, как у `let`.",
+                "related": "[[kotlin-dsl-interview#Q11]] scope-функции и DSL; [[kotlin-dsl-interview#Q5]] `apply` в точке входа; [[kotlin-dsl-interview#Q2]] неявный `this` у lambda с receiver."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен `Gradle Kotlin DSL` и чем он лучше Groovy DSL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Gradle Kotlin DSL` — это `build.gradle.kts` вместо `build.gradle`. `Gradle` компилирует скрипт как `Kotlin`-код с receiver-ами `Project`, `DependencyHandler`, `PluginDependenciesSpec` и др., а под капотом генерирует type-safe accessors (extension-функции и свойства) на основе применённых плагинов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Например, плагин `java` даёт accessor `tasks.test { }`, а плагин `application` — `application { mainClass.set(\"...\") }`; блоки `plugins { }`, `dependencies { }`, `tasks { }` — это lambda с receiver на соответствующих типах.",
+                "example": "`plugins { kotlin(\"jvm\") version \"2.0.0\" }` плюс `dependencies { implementation(\"...\"); testImplementation(kotlin(\"test\")) }` и `tasks.test { useJUnitPlatform() }` — типичный скрипт.",
+                "when_to_apply": "Выбирай Kotlin DSL для новых проектов, где важны статическая типизация, надёжный рефакторинг и автодополнение в IDE при настройке сборки.",
+                "edge_cases": "Минус — первая сборка медленнее из-за генерации accessors, а если плагин применён legacy-способом `apply plugin:`, type-safe accessors не появятся, и придётся использовать строковое API.",
+                "related": "[[kotlin-dsl-interview#Q14]] type-safe accessors детально; [[kotlin-dsl-interview#Q15]] buildSrc и convention plugins; [[kotlin-dsl-interview#Q33]] паттерны Kotlin DSL в Gradle на практике."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Gradle Kotlin DSL` — это просто переименованный Groovy DSL: тот же динамический движок, другое расширение файла.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Под Kotlin DSL лежит статически типизированный `Kotlin`-компилятор, а не динамический Groovy-движок; меняется не только расширение.",
+                "source_of_confusion": "Оба описывают одну и ту же сборку, поэтому кажется, что отличие косметическое.",
+                "if_it_were_true": "Если бы движок был тем же Groovy, не появилось бы compile-time проверок и надёжного рефакторинга.",
+                "how_it_should_be": "Kotlin DSL компилируется статически с type-safe accessors; Groovy DSL остаётся динамическим."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главное преимущество Kotlin DSL — скорость первой сборки: он компилируется быстрее Groovy.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Первая сборка Kotlin DSL обычно медленнее из-за генерации accessors; выигрыш — в типобезопасности и IDE, а не в скорости старта.",
+                "source_of_confusion": "Статическая типизация ассоциируется с «быстрее», отсюда ложный вывод про скорость сборки.",
+                "if_it_were_true": "Если бы Kotlin DSL стартовал быстрее, не было бы известной жалобы на медленную первую конфигурацию.",
+                "how_it_should_be": "Плюсы Kotlin DSL — compile-time ошибки, рефакторинг и автодополнение; первая сборка, наоборот, медленнее."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В Kotlin DSL зависимости и задачи задаются только строковыми именами, без type-safe accessors.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Gradle` как раз генерирует type-safe accessors (`tasks.test`, `implementation(...)`) из применённых плагинов; строки — это legacy-способ.",
+                "source_of_confusion": "Legacy-API со строками (`tasks.getByName(\"test\")`) ещё доступно, отсюда мысль, что только оно и есть.",
+                "if_it_were_true": "Если бы accessors не было, исчезло бы ключевое отличие от Groovy — статическая типобезопасность блоков.",
+                "how_it_should_be": "Accessors — основной механизм Kotlin DSL; строковые имена нужны лишь когда accessor не сгенерирован."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают type-safe accessors для плагинов и зависимостей в `Gradle`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Type-safe accessors доступны всегда, независимо от того, как применён плагин — через `plugins { }` или `apply plugin:`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Accessors генерируются только для плагинов, применённых через `plugins { }`; при `apply plugin:` их нет.",
+                "source_of_confusion": "Кажется, что раз плагин применён, accessors появятся в любом случае.",
+                "if_it_were_true": "Если бы способ применения не влиял, не было бы известной проблемы `Cannot access` после legacy-`apply`.",
+                "how_it_should_be": "Accessors привязаны к блоку `plugins { }`; legacy-`apply plugin:` оставляет только строковое API."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Type-safe accessors — это `Kotlin` extension-функции и свойства, которые `Gradle` генерирует на основе применённых плагинов. Они доступны только в скриптах, где плагин применён в блоке `plugins { }`. Например, accessor `tasks.test { }` заменяет `tasks.getByName(\"test\")`, а `implementation(\"...\")` — это accessor от java-плагина.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Gradle` парсит `plugins { }`, понимает, какие задачи и конфигурации добавит плагин, и заранее генерирует типизированные accessors, которые IDE видит и автодополняет.",
+                "example": "С плагином `java` пишешь `tasks.test { useJUnitPlatform(); jvmArgs(\"-Xmx1g\") }` и `dependencies { implementation(\"com.example:lib:1.0\") }` вместо строкового `add(\"implementation\", ...)`.",
+                "when_to_apply": "Опирайся на accessors всегда, когда плагин применён через `plugins { }` — это даёт автодополнение, навигацию и ошибки на этапе компиляции скрипта.",
+                "edge_cases": "Ограничение: если плагин применён legacy-способом `apply plugin:`, accessors не создаются — придётся использовать строковые имена конфигураций и `tasks.named(\"...\")`.",
+                "related": "[[kotlin-dsl-interview#Q13]] устройство Gradle Kotlin DSL; [[kotlin-dsl-interview#Q15]] convention plugins и buildSrc; [[kotlin-dsl-interview#Q33]] type-safe accessors на практике."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Type-safe accessors — это рантайм-обёртки: `Gradle` подменяет строковые вызовы на типизированные во время выполнения сборки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Accessors генерируются как `Kotlin`-код до компиляции скрипта, обеспечивая проверку на этапе компиляции, а не в рантайме.",
+                "source_of_confusion": "Сборка `Gradle` ассоциируется с «выполнением», отсюда мысль про рантайм-подмену.",
+                "if_it_were_true": "Если бы подмена шла в рантайме, IDE не могла бы заранее автодополнять `tasks.test`.",
+                "how_it_should_be": "Accessors — это статически сгенерированные extension; их видит компилятор и IDE до запуска сборки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чтобы получить type-safe accessor для задачи, нужно вручную написать extension-функцию в `buildSrc`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Gradle` генерирует accessors автоматически из плагинов; вручную писать extension в `buildSrc` для этого не требуется.",
+                "source_of_confusion": "`buildSrc` действительно расширяет сборку, поэтому его роль преувеличивают до «ручной генерации accessors».",
+                "if_it_were_true": "Если бы accessors писали руками, плагин `java` не давал бы `tasks.test` без дополнительного кода.",
+                "how_it_should_be": "Accessors появляются сами при применении плагина через `plugins { }`; `buildSrc` нужен для convention plugins, а не для них."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `buildSrc` и convention plugins в контексте `Gradle Kotlin DSL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`buildSrc` — это директория для исходников приложения, которые `Gradle` собирает в финальный артефакт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`buildSrc` хранит код логики сборки (компилируется и доступен во всех `build.gradle.kts`), а не исходники самого приложения.",
+                "source_of_confusion": "Слово «src» наводит на мысль об обычном исходном коде приложения.",
+                "if_it_were_true": "Если бы там лежал код приложения, он не был бы автоматически доступен внутри build-скриптов.",
+                "how_it_should_be": "`buildSrc` — для общей логики сборки; код приложения живёт в модулях `src/main`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Convention plugin обязательно публикуется в отдельный репозиторий, иначе его нельзя применить в модуле.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Convention plugin можно держать локально в `buildSrc/src/main/kotlin/*.gradle.kts` и применять без публикации.",
+                "source_of_confusion": "Сторонние плагины публикуют в реестр, отсюда мысль, что это обязательно и для convention plugins.",
+                "if_it_were_true": "Если бы публикация была обязательна, нельзя было бы применить `id(\"kotlin-conventions\")` из локального `buildSrc`.",
+                "how_it_should_be": "Convention plugin в `buildSrc` доступен модулям сразу; публикация нужна лишь для переиспользования между проектами."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`buildSrc` — специальная директория в корне `Gradle`-проекта, код из которой автоматически компилируется и доступен во всех `build.gradle.kts`; в неё выносят общую логику сборки. Convention plugins — переиспользуемые плагины, задающие «соглашения» для модулей (`kotlin-conventions.gradle.kts` с `kotlin { jvmToolchain(21) }`, `tasks.test { useJUnitPlatform() }`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Модуль подключает конвенцию через `plugins { id(\"kotlin-conventions\") }` и добавляет только специфичные зависимости, а общая настройка живёт в одном месте.",
+                "example": "В `buildSrc/src/main/kotlin/kotlin-conventions.gradle.kts` задают `kotlin(\"jvm\")`, toolchain и тестовую конфигурацию, после чего все модули наследуют их одной строкой `id(\"kotlin-conventions\")`.",
+                "when_to_apply": "Применяй convention plugins в многомодульных проектах, где десятки модулей повторяют одинаковую настройку компилятора, тестов и зависимостей.",
+                "edge_cases": "Преимущества — DRY (общая конфигурация в одном месте), типобезопасность (плагин компилируется как `Kotlin`) и composability (`kotlin-conventions`, `spring-conventions`, `test-conventions` можно комбинировать).",
+                "related": "[[kotlin-dsl-interview#Q13]] Gradle Kotlin DSL в целом; [[kotlin-dsl-interview#Q14]] type-safe accessors; [[kotlin-dsl-interview#Q33]] convention plugins на практике."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Convention plugins нужны, чтобы ускорить сборку: они кэшируют результаты компиляции модулей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Convention plugins переиспользуют конфигурацию (DRY), а не кэшируют артефакты; за кэш отвечает build cache `Gradle`.",
+                "source_of_confusion": "И то, и другое снижает дублирование усилий, поэтому функции смешивают.",
+                "if_it_were_true": "Если бы convention plugin кэшировал сборку, его роль дублировала бы встроенный `Gradle` build cache.",
+                "how_it_should_be": "Convention plugin — про переиспользование настроек между модулями; кэширование — отдельный механизм сборки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен `Exposed` DSL для работы с БД?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Exposed` DSL — это аннотации над сущностями (`@Entity`, `@Column`), которые `Exposed` сканирует рефлексией.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DSL-подход `Exposed` строит запросы через типобезопасные выражения и объекты `Table`/`Column<T>`, без аннотаций-сущностей.",
+                "source_of_confusion": "Аннотации-сущности привычны по `JPA`/`Hibernate`, поэтому их ждут и в `Exposed`.",
+                "if_it_were_true": "Если бы DSL держался на аннотациях, не было бы `object Users : Table()` с явными колонками-полями.",
+                "how_it_should_be": "`Exposed` DSL описывает таблицу как `object : Table()` с колонками и строит запросы выражениями, а не аннотациями."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Запросы в `Exposed` DSL можно вызывать где угодно — `transaction { }` нужен только для commit в конце.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все DSL-запросы исполняются внутри `transaction { }` — это lambda с receiver `Transaction`, задающая контекст соединения.",
+                "source_of_confusion": "В других ORM транзакция часто опциональна для чтения, отсюда ложное обобщение.",
+                "if_it_were_true": "Если бы `transaction { }` был не нужен, `Users.select { }` вне него не имел бы соединения и упал бы.",
+                "how_it_should_be": "`transaction { }` обязателен: внутри него доступны `insert`/`select`/`update`, и именно там идёт работа с БД."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`where` в `Exposed` принимает обычную строку с условием SQL, например `where(\"active = true\")`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`where` принимает lambda `SqlExpressionBuilder.() -> Op<Boolean>`, где условие строится типобезопасно: `where { Users.active eq true }`.",
+                "source_of_confusion": "Строковые условия привычны по чистому JDBC, поэтому их приписывают и `Exposed`.",
+                "if_it_were_true": "Если бы `where` брал строку, терялась бы compile-time проверка типов колонок — главная ценность DSL.",
+                "how_it_should_be": "`where` принимает типобезопасную lambda с infix-операторами (`eq`, `greater`, `like`), а не сырую SQL-строку."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Exposed` — библиотека JetBrains для работы с БД на `Kotlin`. DSL-подход строит SQL через типобезопасные выражения: таблица описывается как `object Users : Table(\"users\")` с колонками `Column<T>`, а методы `select`, `insert`, `update` возвращают builder-ы запросов внутри `transaction { }`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`where` принимает lambda `SqlExpressionBuilder.() -> Op<Boolean>`, а `eq`, `greater`, `like` — это infix-функции на `Column<T>`; всё исполняется в `transaction { }` (lambda с receiver `Transaction`).",
+                "example": "`transaction { Users.insert { it[name] = \"Alice\" }; Users.select(Users.name).where { Users.active eq true }.map { it[Users.name] } }` — вставка и выборка типобезопасно.",
+                "when_to_apply": "Применяй DSL-подход `Exposed`, когда нужны сложные запросы, агрегации и отчёты ближе к SQL с проверкой типов колонок компилятором.",
+                "edge_cases": "Колонки доступны как свойства таблицы (`Users.name`), join выражается через `Users innerJoin Orders`, а результат — `ResultRow`, из которого значения достают по ключу-колонке (`row[Users.name]`).",
+                "related": "[[kotlin-dsl-interview#Q17]] DSL vs DAO в Exposed; [[kotlin-dsl-interview#Q37]] Exposed среди известных DSL; [[kotlin-dsl-interview#Q10]] infix-функции (`eq`, `like`)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются DSL и DAO подходы в `Exposed`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "DSL-подход — SQL-подобный: таблица как `object Users : Table()`, запросы вроде `Users.select { }`, результат — `ResultRow` (map), он гибче и ближе к SQL. DAO-подход — ORM-стиль: сущность как `class User : Entity()`, запросы `User.find { }`, результат — типизированный объект с ленивыми связями (`referencedOn`), но менее производительный.",
+              "correct": true,
+              "sections": {
+                "explanation": "DSL даёт полную гибкость SQL и выше производительность (нет накладных расходов на объекты и lazy loading), DAO удобнее для CRUD с объектами и связями ценой производительности.",
+                "example": "DAO: `class UserEntity(id) : IntEntity(id) { var name by Users.name; val orders by OrderEntity referrersOn Orders.userId }`, затем `UserEntity.new { name = \"Bob\" }` и `UserEntity.find { Users.active eq true }`.",
+                "when_to_apply": "Бери DSL для сложных запросов, агрегаций и отчётов; DAO — для CRUD-операций с доменными объектами и навигацией по связям.",
+                "edge_cases": "Ленивые связи доступны только в DAO (`referencedOn`/`referrersOn`); в DSL связи выражают явными join-ами, а данные приходят как `ResultRow`.",
+                "related": "[[kotlin-dsl-interview#Q16]] устройство Exposed DSL; [[kotlin-dsl-interview#Q37]] Exposed в экосистеме; [[kotlin-dsl-interview#Q26]] DSL vs обычный API."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "DSL и DAO в `Exposed` — это одно и то же; разница только в имени метода (`select` против `find`).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это два разных подхода: DSL даёт `ResultRow` и SQL-гибкость, DAO — типизированные сущности с ленивыми связями.",
+                "source_of_confusion": "Оба работают с одной таблицей `Users`, поэтому кажутся взаимозаменяемыми.",
+                "if_it_were_true": "Если бы разницы не было, не имело бы смысла отдельно объявлять `class UserEntity : IntEntity` для DAO.",
+                "how_it_should_be": "DSL и DAO отличаются моделью (строки vs сущности), производительностью и поддержкой ленивых связей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "DAO-подход в `Exposed` производительнее DSL, потому что работает напрямую с SQL без объектов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: DSL ближе к SQL и производительнее, а DAO медленнее из-за объектов и lazy loading.",
+                "source_of_confusion": "DAO ассоциируется с «низким уровнем доступа к данным», отсюда ложный вывод про скорость.",
+                "if_it_were_true": "Если бы DAO был ближе к SQL, у него не было бы ленивых связей и накладных расходов на сущности.",
+                "how_it_should_be": "DSL быстрее (ближе к SQL), DAO удобнее для объектов, но платит производительностью."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Ленивые связи (`referencedOn`) доступны в обоих подходах одинаково.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ленивые связи есть только в DAO; в DSL связи выражаются явными join-ами без lazy loading.",
+                "source_of_confusion": "Связи между таблицами нужны в обоих стилях, отсюда мысль, что и механизм один.",
+                "if_it_were_true": "Если бы DSL имел `referencedOn`, не было бы смысла в строке таблицы сравнения «ленивые связи: DSL — нет, DAO — да».",
+                "how_it_should_be": "Lazy-связи — фича DAO; DSL соединяет таблицы через `innerJoin` и возвращает `ResultRow`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен routing DSL в `Ktor`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Ktor` описывает маршруты строкой шаблона с плейсхолдерами, которую парсит в рантайме, например `route(\"/users/:id -> handler\")`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Маршруты задаются вложенными lambda с receiver на `Route` (`route(\"/users\") { get { } }`), а не одной строкой-шаблоном с разбором.",
+                "source_of_confusion": "Внешние роутеры (Express, Spring) используют строковые шаблоны, отсюда ложное ожидание.",
+                "if_it_were_true": "Если бы маршрут был строкой, терялись бы вложенность и типобезопасность DSL-блоков `Ktor`.",
+                "how_it_should_be": "Routing DSL строится на вложенных блоках `Route.() -> Unit`, а не на строковом шаблоне с парсингом."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Ktor` использует вложенные lambda с receiver: каждый блок задаёт контекст `Route`, внутри которого доступны `get`, `post`, `put`, `delete`, `route`. `routing` — extension-функция на `Application`, `route` — extension на `Route`, создающая вложенный маршрут, а `get`/`post` регистрируют обработчик с lambda, где доступен `call`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Блоки складываются в дерево: `routing { route(\"/api\") { route(\"/users\") { get { } } } }` даёт путь `/api/users`, а каждый уровень — отдельный receiver типа `Route`.",
+                "example": "`get(\"/{id}\") { val id = call.parameters[\"id\"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest); call.respond(userService.findById(id) ?: HttpStatusCode.NotFound) }`.",
+                "when_to_apply": "Применяй routing DSL для декларативного описания REST-API: вложенные `route` группируют префиксы, а `get`/`post` регистрируют обработчики методов.",
+                "edge_cases": "Внутри обработчика lambda имеет тип `PipelineContext<Unit, ApplicationCall>.() -> Unit`, поэтому `call` доступен неявно — отсюда `call.respond(...)`, `call.receive<T>()`.",
+                "related": "[[kotlin-dsl-interview#Q19]] extension-функции для конфигурации Ktor; [[kotlin-dsl-interview#Q37]] Ktor в экосистеме; [[kotlin-dsl-interview#Q2]] lambda с receiver под капотом."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Внутри обработчика `get { }` объект запроса `call` нужно получать через параметр lambda: `get { call -> ... }`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`call` доступен как часть receiver-а обработчика (`PipelineContext`), без явного параметра: пишут просто `call.respond(...)`.",
+                "source_of_confusion": "Многие фреймворки передают `request` параметром, отсюда ожидание явного `call`.",
+                "if_it_were_true": "Если бы `call` был параметром, существующий код `get { call.respond(users) }` без аргумента не компилировался бы.",
+                "how_it_should_be": "Обработчик `Ktor` имеет `call` в receiver-е; явный параметр не нужен."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`routing { }` — это обычная top-level функция, не связанная с `Application`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`routing` — extension-функция именно на `Application`, поэтому вызывается в контексте приложения.",
+                "source_of_confusion": "Блок `routing { }` выглядит самостоятельным, отсюда мысль, что это top-level функция.",
+                "if_it_were_true": "Если бы `routing` не был extension на `Application`, его нельзя было бы вызвать внутри `embeddedServer { }`.",
+                "how_it_should_be": "`routing` — extension на `Application`; именно это даёт доступ к конфигурации сервера."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `Ktor` использует extension-функции и lambda с receiver для конфигурации?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Каждый `install(Feature) { }` принимает обычную lambda `(Config) -> Unit` с параметром-конфигом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`install(Feature) { }` принимает lambda с receiver типа конфигурации фичи, поэтому внутри свойства задаются без префикса.",
+                "source_of_confusion": "Параметр-конфиг — привычный паттерн, отсюда мысль про `(Config) -> Unit`.",
+                "if_it_were_true": "Если бы это была обычная lambda, пришлось бы писать `it.prettyPrint = true` вместо `prettyPrint = true`.",
+                "how_it_should_be": "`install` принимает lambda с receiver на конфиг фичи; обращение к полям идёт через неявный `this`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Конфигурацию `Ktor` нельзя разносить по файлам — всё должно быть в одном блоке `embeddedServer { }`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Конфигурацию как раз разносят через extension-функции на `Application` (`fun Application.configureSecurity()`), сохраняя DSL-стиль.",
+                "source_of_confusion": "Единый блок `embeddedServer { }` создаёт впечатление монолитной конфигурации.",
+                "if_it_were_true": "Если бы разнести было нельзя, не существовал бы паттерн модульного DSL с `configureRouting()`, `configureSecurity()`.",
+                "how_it_should_be": "Extension-функции на `Application` позволяют разбить конфигурацию по файлам без потери DSL-стиля."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `Ktor` вся конфигурация приложения строится через extension-функции на `Application`, а каждый `install(Feature) { ... }` принимает lambda с receiver типа конфигурации фичи. Это позволяет разносить настройку по файлам (`fun Application.configureSecurity()`), сохраняя единый DSL-стиль — паттерн модульного DSL.",
+              "correct": true,
+              "sections": {
+                "explanation": "Внутри `embeddedServer(Netty, port = 8080) { }` неявный `this` — это `Application`; `install(ContentNegotiation) { json(...) }` даёт receiver `ContentNegotiationConfig`, а вложенный `Json { }` — `JsonBuilder`.",
+                "example": "`fun Application.configureSecurity() { install(Authentication) { jwt(\"auth-jwt\") { realm = \"my-app\"; verifier(jwtVerifier); validate { credential -> } } } }` выносит безопасность в отдельный файл.",
+                "when_to_apply": "Применяй extension-функции на `Application`, когда конфигурация растёт: разбивай её на `configureRouting()`, `configureSecurity()`, `configureSerialization()` для читаемости.",
+                "edge_cases": "Каждый уровень `install` даёт свой receiver-конфиг, поэтому вложенные блоки настраивают разные объекты (`ContentNegotiationConfig`, затем `JsonBuilder`) без префиксов.",
+                "related": "[[kotlin-dsl-interview#Q18]] routing DSL в Ktor; [[kotlin-dsl-interview#Q37]] Ktor в экосистеме; [[kotlin-dsl-interview#Q2]] lambda с receiver как основа."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Extension-функции для конфигурации `Ktor` должны объявляться на `Routing`, а не на `Application`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Модульная конфигурация объявляется как extension на `Application` (`fun Application.configureX()`); `Routing` — лишь контекст внутри `routing { }`.",
+                "source_of_confusion": "`routing { }` заметен в коде, поэтому `Routing` принимают за основной receiver конфигурации.",
+                "if_it_were_true": "Если бы extension шли на `Routing`, нельзя было бы вызвать `install(...)`, который доступен на `Application`.",
+                "how_it_should_be": "Конфигурационные extension объявляют на `Application`; `Routing` отвечает только за маршруты."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `kotlinx.html` и чем он отличается от шаблонизаторов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`kotlinx.html` — это шаблонизатор: HTML-шаблоны лежат в отдельных файлах, а `Kotlin` лишь подставляет данные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`kotlinx.html` строит HTML кодом через builder-ы, а не отдельными файлами-шаблонами с подстановкой.",
+                "source_of_confusion": "Привычная модель шаблонизаторов (`Thymeleaf`) переносится на `kotlinx.html` по аналогии.",
+                "if_it_were_true": "Если бы шаблоны лежали в файлах, нельзя было бы писать `for`/`if` прямо в `Kotlin`-разметке.",
+                "how_it_should_be": "Это type-safe builder в коде; разметка и логика — единый `Kotlin`, без внешних файлов-шаблонов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Главное преимущество `kotlinx.html` — что дизайнеры могут редактировать HTML отдельно от кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: код и разметка слиты, поэтому дизайнеры не могут работать с HTML отдельно — это минус против шаблонизаторов.",
+                "source_of_confusion": "Шаблонизаторы славятся разделением HTML и логики, отсюда ложный перенос этого плюса.",
+                "if_it_were_true": "Если бы дизайнеры могли править разметку отдельно, не было бы смысла противопоставлять подход шаблонизаторам.",
+                "how_it_should_be": "Сильная сторона `kotlinx.html` — типобезопасность и логика в коде; разделение для дизайнеров, наоборот, теряется."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Ошибки в `kotlinx.html` обнаруживаются только при рендеринге, как и в обычных шаблонизаторах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ошибки структуры ловятся на этапе компиляции, потому что разметка — это типизированный `Kotlin`-код.",
+                "source_of_confusion": "Шаблонизаторы падают при рендеринге, и это свойство ошибочно приписывают `kotlinx.html`.",
+                "if_it_were_true": "Если бы ошибки всплывали только в рантайме, исчезла бы заявленная compile-time типобезопасность.",
+                "how_it_should_be": "`kotlinx.html` даёт ошибки при компиляции; рендер-тайм ошибки — особенность строковых шаблонизаторов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`kotlinx.html` — библиотека генерации HTML через type-safe builder-ы: каждый HTML-тег представлен классом с методами для вложенных тегов, поэтому разметка пишется как `Kotlin`-код. В отличие от шаблонизаторов (`Thymeleaf`, `FreeMarker`), здесь полная типобезопасность, автодополнение и ошибки на этапе компиляции, а внутри builder-а доступна вся мощь языка (`for`, `if`, `when`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый тег — метод, принимающий lambda с receiver дочернего контекста; `+\"text\"` через `unaryPlus` добавляет текстовый узел, как в любом type-safe builder.",
+                "example": "`createHTML().html { body { ul { for (item in items) { li { a(href = item.url) { +item.name } } } } } }` — цикл `for` прямо внутри разметки.",
+                "when_to_apply": "Применяй `kotlinx.html` для серверного рендеринга в `Ktor` и для DOM-манипуляций в Kotlin/JS, когда важны типобезопасность и логика прямо в шаблоне.",
+                "edge_cases": "Минус против шаблонизаторов — дизайнеры не могут редактировать HTML отдельно (код и разметка слиты), зато ошибки ловятся компилятором, а не при рендеринге.",
+                "related": "[[kotlin-dsl-interview#Q4]] type-safe builder под капотом; [[kotlin-dsl-interview#Q8]] `unaryPlus` для текста; [[kotlin-dsl-interview#Q37]] kotlinx.html в экосистеме."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое context receivers и как они расширяют возможности DSL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Context receivers (experimental, `Kotlin 2.x`) позволяют функции требовать несколько контекстов одновременно без наследования или передачи параметров. Обычная extension-функция имеет только один receiver; `context(Transaction, Logger) fun Table.loggedInsert(...)` делает оба контекста неявными, и функция доступна только при их наличии.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объявление `context(Transaction, Logger)` добавляет требуемые контексты как неявные receiver-ы: внутри можно вызвать и `info(...)` (`Logger`), и `insert(...)` (`Transaction`) без префиксов и без лишних параметров.",
+                "example": "`context(TransactionContext) fun UserRepository.findActive(): List<User> = ...` доступна только внутри `transaction { }`; вне его `userRepo.findActive()` даёт ошибку компиляции.",
+                "when_to_apply": "Применяй, когда функции DSL логически нужны сразу несколько контекстов (транзакция и логгер, scope и конфиг), и хочется убрать «лишний» receiver из параметров.",
+                "edge_cases": "На момент `Kotlin 2.1` context receivers остаются experimental (`-Xcontext-receivers`); в будущем они частично заменят use-case-ы `@DslMarker` и extension-функций.",
+                "related": "[[kotlin-dsl-interview#Q2]] обычная lambda с receiver; [[kotlin-dsl-interview#Q6]] `@DslMarker`, который они частично заменят; [[kotlin-dsl-interview#Q16]] Exposed transaction-контекст."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Context receivers позволяют функции иметь сколько угодно обычных receiver-ов через цепочку точек: `a.b.c.fun()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Context receivers требуют несколько контекстов одновременно как неявные (`context(Transaction, Logger)`), а не цепочку точечных receiver-ов.",
+                "source_of_confusion": "Цепочки вызовов `a.b.c` визуально похожи на «несколько receiver-ов», отсюда путаница.",
+                "if_it_were_true": "Если бы это была цепочка точек, не понадобился бы новый синтаксис `context(...)` в языке.",
+                "how_it_should_be": "Context receivers объявляют требуемые контексты как неявные через `context(...)`; это не цепочка `a.b.c`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Context receivers — это стабильная фича `Kotlin 1.5`, доступная без экспериментальных флагов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они остаются experimental в `Kotlin 2.x` и требуют флага `-Xcontext-receivers`, а не стабильны с 1.5.",
+                "source_of_confusion": "Многие DSL-механизмы давно стабильны, отсюда ложный вывод и про context receivers.",
+                "if_it_were_true": "Если бы фича была стабильной, не нужно было бы включать её отдельным компиляторным флагом.",
+                "how_it_should_be": "Context receivers — экспериментальная фича `Kotlin 2.x` за флагом, а не стабильная с версии 1.5."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Context receivers полностью заменяют наследование: вместо базовых классов всегда используют контексты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они дополняют язык, позволяя требовать несколько контекстов, но не отменяют наследование как механизм.",
+                "source_of_confusion": "Оба способа дают доступ к «внешнему» поведению, поэтому их противопоставляют как замену.",
+                "if_it_were_true": "Если бы они заменяли наследование, исчезли бы абстрактные классы вроде `Tag` в type-safe builders.",
+                "how_it_should_be": "Context receivers решают задачу множественных неявных контекстов; наследование остаётся отдельным инструментом."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Extension properties в контексте DSL — зачем они и какие примеры?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Extension property может иметь backing field, поэтому в нём удобно хранить состояние DSL-блока.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Extension property не имеет backing field — только getter (и setter для `var` с внешним хранилищем).",
+                "source_of_confusion": "Обычные свойства класса имеют backing field, и это переносят на extension.",
+                "if_it_were_true": "Если бы у extension был backing field, он хранил бы данные прямо в чужом классе, чего `Kotlin` не позволяет.",
+                "how_it_should_be": "Extension property вычисляется через getter без backing field; состояние держат в самом receiver-е."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Extension properties расширяют тип свойством без изменения класса, давая в DSL контекстно-зависимые значения. Внутри receiver-а DSL такое свойство выглядит встроенным: `this.baseUrl` или просто `baseUrl`. Ограничение — нет backing field, только getter (и setter для `var` с внешним хранилищем).",
+              "correct": true,
+              "sections": {
+                "explanation": "Поскольку backing field недоступен, значение всегда вычисляется в getter-е на основе данных самого receiver-а, например из его полей `host`, `port`, `sslEnabled`.",
+                "example": "`val ServerConfig.baseUrl: String get() = \"${if (sslEnabled) \"https\" else \"http\"}://$host:$port\"` или `val TestContext.randomEmail: String get() = \"test-${UUID.randomUUID()}@example.com\"`.",
+                "when_to_apply": "Применяй extension properties, когда внутри DSL-контекста нужно удобное вычисляемое значение (производный URL, параметр запроса, тестовые данные) без захламления самого класса.",
+                "edge_cases": "В контексте `Ktor` это даёт удобный доступ к параметрам: `val PipelineContext<...>.userId: Int get() = call.parameters[\"userId\"]?.toIntOrNull() ?: throw BadRequestException(...)`.",
+                "related": "[[kotlin-dsl-interview#Q3]] extension properties среди средств DSL; [[kotlin-dsl-interview#Q2]] неявный `this` у lambda с receiver; [[kotlin-dsl-interview#Q19]] extension в конфигурации Ktor."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Extension property и extension-функция — одно и то же, просто property пишется со скобками.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные конструкции: property объявляется без скобок через `val/var` с getter, а функция — с параметрами и телом.",
+                "source_of_confusion": "Обе «расширяют тип без наследования», отсюда смешение.",
+                "if_it_were_true": "Если бы они были одним и тем же, нельзя было бы обращаться к `config.baseUrl` без скобок как к свойству.",
+                "how_it_should_be": "Extension property даёт синтаксис свойства (`this.baseUrl`), extension-функция — вызов метода (`this.method()`)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Extension property нельзя сделать вычисляемым — она просто хранит переданное значение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Extension property как раз всегда вычисляемая: значение возвращает getter, а хранилища (backing field) у неё нет.",
+                "source_of_confusion": "Обычные `val` хранят значение, поэтому ждут того же от extension.",
+                "if_it_were_true": "Если бы она хранила значение, нельзя было бы объявить `val ServerConfig.baseUrl get() = ...` с вычислением на лету.",
+                "how_it_should_be": "Extension property всегда определяется через getter; именно поэтому она вычисляемая, а не хранимая."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `inline` влияет на производительность DSL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`inline` всегда ускоряет любую функцию, поэтому его стоит ставить на все методы DSL без исключений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`inline` оправдан для функций с lambda-параметром (убирает аллокацию lambda); на функции без лямбд он эффекта почти не даёт, а на крупных раздувает байткод.",
+                "source_of_confusion": "«inline = быстрее» звучит как универсальное правило, отсюда «ставить везде».",
+                "if_it_were_true": "Если бы `inline` всегда помогал, не было бы предупреждений компилятора об инлайнинге функций без функциональных параметров.",
+                "how_it_should_be": "`inline` ценен там, где есть lambda-параметр (DSL-входы); бездумное применение раздувает код без выгоды."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`inline` нужно ставить на lambda, которая сохраняется для отложенного вызова (event handler, callback).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Как раз для сохраняемых лямбд `inline` не подходит — он запрещает хранить лямбду; нужны `noinline`/`crossinline`.",
+                "source_of_confusion": "Кажется, что callback «вызывается часто», поэтому его стоит заинлайнить.",
+                "if_it_were_true": "Если бы `inline` разрешал хранить лямбду, нельзя было бы объяснить существование `noinline` для таких случаев.",
+                "how_it_should_be": "`inline` хорош для лямбд, исполняемых сразу (точки входа DSL); сохраняемые callback-и требуют `noinline`/`crossinline`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`inline` для функции с lambda-параметром убирает аллокацию объекта lambda: тело функции подставляется в место вызова, и lambda «разворачивается» в тот же код. Поэтому top-level точки входа DSL (`html { }`, `server { }`), вызываемые часто и с немедленным исполнением lambda, делают `inline`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без `inline` каждый вызов `html { }` создаёт объект анонимного класса для lambda; с `inline` объекта нет — код блока встраивается прямо в место вызова.",
+                "example": "`inline fun html(block: HTML.() -> Unit): HTML = HTML().apply(block)` — entry-point без аллокации; бонус — поддержка `reified`: `inline fun <reified T> Config.get(key): T`.",
+                "when_to_apply": "Ставь `inline` на часто вызываемые точки входа DSL с немедленным исполнением lambda; избегай, если lambda сохраняется для отложенного вызова.",
+                "edge_cases": "Если lambda нужно сохранить (callback, event handler), используют `noinline` или `crossinline` как обходной путь, иначе компилятор не даст её сохранить.",
+                "related": "[[kotlin-dsl-interview#Q34]] `reified` в type-safe builders; [[kotlin-dsl-interview#Q29]] отсутствие `inline` как ошибка; [[kotlin-dsl-interview#Q5]] точка входа DSL через `apply`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`inline` мешает использовать `reified`, поэтому в DSL с дженериками от него отказываются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `reified` работает только в `inline`-функциях — инлайнинг как раз включает `reified`-возможности.",
+                "source_of_confusion": "Ограничения дженериков ассоциируются со сложностями, отсюда ложная связь `inline` и запрета `reified`.",
+                "if_it_were_true": "Если бы `inline` мешал `reified`, нельзя было бы написать `inline fun <reified T> Config.get(...)`.",
+                "how_it_should_be": "`inline` — единственный способ получить `reified T`; они работают в паре, а не мешают друг другу."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как в DSL реализовать обязательные и опциональные блоки?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Обязательный блок делают через nullable-параметр с default `null`, а опциональный — без default-значения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: обязательный блок — параметр без default (компилятор требует его), опциональный — nullable lambda с default `null`.",
+                "source_of_confusion": "Понятия «обязательный/опциональный» легко перепутать с наличием/отсутствием default.",
+                "if_it_were_true": "Если бы обязательный блок имел default `null`, его можно было бы пропустить — и он перестал бы быть обязательным.",
+                "how_it_should_be": "Обязательный — параметр без default; опциональный — `(T.() -> Unit)? = null`, который можно не передавать."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Обязательные поля проверяет компилятор: если не задать `var url`, код не скомпилируется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обязательные поля-свойства компилятор не проверяет (у них есть значение или `null`), их валидируют в `build()` через `requireNotNull`.",
+                "source_of_confusion": "Compile-time проверка обязательных блоков переносится и на поля по аналогии.",
+                "if_it_were_true": "Если бы компилятор требовал заполнить `url`, не понадобился бы `requireNotNull(url)` в `build()`.",
+                "how_it_should_be": "Обязательность блоков — compile-time, а обязательность полей — runtime-валидация в `build()`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Опциональный блок реализуют через перегрузку функции: одна версия с блоком, другая без него.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Идиоматичнее одна функция с nullable lambda и default `null` (`fun ssl(init: (SslConfig.() -> Unit)? = null)`), а не две перегрузки.",
+                "source_of_confusion": "Перегрузка — привычный способ «сделать параметр опциональным» в Java, отсюда перенос.",
+                "if_it_were_true": "Если бы нужны были две перегрузки, нельзя было бы одним методом покрыть `ssl()` и `ssl { port = 443 }`.",
+                "how_it_should_be": "Опциональный блок — nullable lambda с default `null`; перегрузки тут избыточны."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Обязательный блок — параметр без default-значения: компилятор не даст вызвать функцию без него (`html()` не скомпилируется, `html { }` — да). Опциональный блок — nullable lambda с default `null`: `fun ssl(init: (SslConfig.() -> Unit)? = null) { _ssl = SslConfig().apply { init?.invoke(this) } }`. Обязательные поля проверяют уже в `build()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сочетают два уровня контроля: compile-time для обязательных блоков (нет default — нельзя пропустить) и runtime для обязательных полей (`requireNotNull(url) { \"URL is required\" }` в `build()`).",
+                "example": "Так `server { ssl() }` даёт SSL с дефолтами, `server { ssl { port = 443 } }` — с настройками, а `server { }` — без SSL вовсе.",
+                "when_to_apply": "Применяй обязательные блоки, когда без секции DSL бессмыслен, и опциональные nullable-блоки — для необязательной подконфигурации вроде SSL или логирования.",
+                "edge_cases": "Граничный случай — обязательное поле без значения: компилятор его не ловит, поэтому в `build()` нужен `requireNotNull`, иначе вернётся объект с `null` вместо ошибки.",
+                "related": "[[kotlin-dsl-interview#Q25]] передача параметров в DSL; [[kotlin-dsl-interview#Q5]] `build()` и валидация; [[kotlin-dsl-interview#Q29]] mutable state без валидации как ошибка."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как передавать параметры и опции в DSL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Комбинируют несколько подходов: именованные аргументы для простых параметров (`div(id = \"main\", classes = \"container\") { }`), свойства receiver-а для конфигурации (`var host`, `var port`), вложенные блоки для сложной подконфигурации (`ssl { }`, `logging { }`), infix-функции для пар ключ-значение (`\"Content-Type\" to \"application/json\"`) и vararg для списков (`tags(\"kotlin\", \"dsl\")`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый подход решает свой класс задач: именованные аргументы — для «плоских» параметров блока, свойства — для конфигурации объекта, вложенные блоки — для иерархии, infix — для читаемых пар.",
+                "example": "`server { host = \"0.0.0.0\"; port = 443; ssl { certPath = \"/cert.pem\" }; logging { level = Level.INFO } }` сочетает свойства и вложенные блоки сразу.",
+                "when_to_apply": "На собеседовании ценят понимание, что когда уместно: именованные аргументы для плоских параметров, блоки — для вложенной конфигурации, infix — для читаемых пар ключ-значение.",
+                "edge_cases": "Default-значения у свойств (`var workers = Runtime.getRuntime().availableProcessors()`) делают параметры опциональными, а vararg удобен для однородных списков переменной длины.",
+                "related": "[[kotlin-dsl-interview#Q24]] обязательные и опциональные блоки; [[kotlin-dsl-interview#Q10]] infix для пар; [[kotlin-dsl-interview#Q8]] операторы для доступа по ключу."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Единственный правильный способ передачи параметров в DSL — vararg, потому что он покрывает любое число аргументов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vararg хорош лишь для однородных списков (`tags(...)`); для конфигурации используют свойства receiver-а, именованные аргументы и вложенные блоки.",
+                "source_of_confusion": "Vararg выглядит «универсальным», отсюда соблазн объявить его единственным способом.",
+                "if_it_were_true": "Если бы хватало vararg, нельзя было бы выразить вложенную секцию `ssl { certPath = ... }`.",
+                "how_it_should_be": "Параметры передают комбинацией приёмов; vararg — лишь один из них, для списков."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Именованные аргументы в DSL запрещены — внутри lambda с receiver их использовать нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Именованные аргументы прекрасно работают в DSL: `div(id = \"main\", classes = \"container\") { }` — стандартный приём.",
+                "source_of_confusion": "Lambda с receiver выглядит «особой», отсюда ложный запрет на привычные возможности языка.",
+                "if_it_were_true": "Если бы именованные аргументы были запрещены, нельзя было бы вызвать `div(classes = \"card\") { }`.",
+                "how_it_should_be": "Именованные аргументы доступны и активно используются в DSL для читаемости «плоских» параметров."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Вложенные блоки для подконфигурации хуже именованных аргументов и их следует избегать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вложенные блоки — правильный инструмент именно для сложной иерархической подконфигурации (`ssl { }`, `logging { }`), а не антипаттерн.",
+                "source_of_confusion": "Совет «избегай глубокой вложенности» обобщают до «избегай вложенных блоков вообще».",
+                "if_it_were_true": "Если бы блоки были вредны, не существовало бы `ssl { certPath = ... }` как идиомы конфигурации.",
+                "how_it_should_be": "Каждый приём уместен в своей нише: блоки — для иерархии, именованные аргументы — для плоских параметров."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между DSL и обычным fluent API?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "DSL и fluent API различаются только синтаксисом — обе модели читаются одинаково декларативно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Различие глубже синтаксиса: fluent API — императивная последовательность команд по цепочке, DSL — декларативная запись с вложенными блоками и своим receiver-ом на каждом уровне.",
+                "source_of_confusion": "Оба удобны и типобезопасны, отсюда вывод «разница лишь косметическая».",
+                "if_it_were_true": "Если бы дело было только в синтаксисе, fluent API так же естественно выражал бы вложенность, как DSL.",
+                "how_it_should_be": "Отличие — в модели чтения (декларативная vs императивная) и в структуре (вложенные блоки vs плоская цепочка)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Fluent API — плоская цепочка вызовов на одном объекте (`builder.setX().setY().build()`), читается как последовательность команд. DSL (`Kotlin`) — вложенные блоки, где каждый блок имеет свой receiver (`config { x = ...; y { } }`), читается как декларативное описание; вложенность естественна, а scope контролируется `@DslMarker`.",
+              "correct": true,
+              "sections": {
+                "explanation": "В fluent API контекст один и тянется по цепочке методов; в DSL каждый вложенный блок — отдельный receiver, поэтому иерархические структуры выражаются естественно.",
+                "example": "Fluent: `ServerBuilder().host(\"0.0.0.0\").port(443).ssl(SslBuilder().certPath(\"/cert\").build()).build()`; DSL: `server { host = \"0.0.0.0\"; port = 443; ssl { certPath = \"/cert\" } }`.",
+                "when_to_apply": "Выбирай DSL для иерархических структур (разметка, маршруты, конфигурация с секциями), а fluent API — для линейных pipeline-ов и Java-интеропа.",
+                "edge_cases": "Оба подхода типобезопасны; ключевое различие — модель чтения (декларативная vs императивная), а не наличие проверки типов.",
+                "related": "[[kotlin-dsl-interview#Q38]] DSL vs Builder-паттерн; [[kotlin-dsl-interview#Q6]] `@DslMarker` для контроля scope; [[kotlin-dsl-interview#Q1]] внутренний DSL и его плюсы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "DSL обязательно типобезопасен, а fluent API — нет, потому что он строит объект по цепочке строк.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба подхода типобезопасны; fluent API тоже использует типизированные методы, а не строки — разница в модели чтения, не в проверке типов.",
+                "source_of_confusion": "Fluent API ассоциируется со «старым» Java-стилем, которому приписывают слабую типизацию.",
+                "if_it_were_true": "Если бы fluent API не был типобезопасным, его не использовали бы как стандартный Java-builder с проверкой типов.",
+                "how_it_should_be": "И DSL, и fluent API типобезопасны; различаются они структурой (вложенность vs цепочка) и стилем чтения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В fluent API можно контролировать scope через `@DslMarker`, как и в DSL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@DslMarker` — механизм Kotlin DSL для вложенных receiver-ов; в плоском fluent API контролировать нечего, там один объект в цепочке.",
+                "source_of_confusion": "Оба «строят объект с конфигурацией», поэтому функции `@DslMarker` приписывают и fluent API.",
+                "if_it_were_true": "Если бы fluent API имел scope для контроля, у него были бы вложенные receiver-ы, а их там нет.",
+                "how_it_should_be": "Контроль scope через `@DslMarker` актуален только для DSL с вложенными блоками, а не для fluent-цепочки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроены DSL для тестов (`shouldBe`, `expect`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Тестовые DSL держатся на рефлексии: `shouldBe` через рефлексию сравнивает все поля объектов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`shouldBe` — обычная infix extension-функция на `Any?`, которая сравнивает через `!=` и бросает `AssertionError`, без рефлексии полей.",
+                "source_of_confusion": "Глубокое сравнение объектов ассоциируется с рефлексией, отсюда ложный вывод.",
+                "if_it_were_true": "Если бы `shouldBe` использовал рефлексию, простой `result shouldBe 42` был бы избыточно сложным под капотом.",
+                "how_it_should_be": "`shouldBe` — infix extension с обычным `!=`; рефлексия для базовых matcher-ов не нужна."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`given`/`when`/`then` в BDD-DSL — это ключевые слова `Kotlin`, добавленные специально для тестов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это обычные функции с lambda с receiver на scope спецификации (`BehaviorSpecRootScope`), а не языковые ключевые слова.",
+                "source_of_confusion": "Они читаются как естественный язык, поэтому кажутся встроенными конструкциями.",
+                "if_it_were_true": "Если бы это были ключевые слова, не требовалось бы экранировать `when` обратными кавычками (`` `when` ``).",
+                "how_it_should_be": "`given`/`when`/`then` — функции DSL с lambda с receiver; ключевых слов под них в языке нет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Тестовые DSL комбинируют infix-функции, extension-функции и lambda с receiver для читаемого assertion-синтаксиса. `shouldBe` — infix extension-функция на `Any?`; `given`/`when`/`then` — функции с lambda с receiver на scope спецификации (`BehaviorSpecRootScope`); `shouldThrow<T>` — inline reified-функция. Всё это — стандартные приёмы Kotlin DSL под тестовый домен.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый matcher разворачивается в обычный вызов: `\"hello\" shouldBe \"hello\"` — это `\"hello\".shouldBe(\"hello\")`, бросающий `AssertionError` при несовпадении, а вложенные `given { when { then { } } }` строят дерево сценария.",
+                "example": "`shouldThrow<IllegalArgumentException> { parseAge(-1) }.message shouldBe \"Age must be positive\"` — reified-функция ловит тип исключения и возвращает его для дальнейших проверок.",
+                "when_to_apply": "Применяй такой стиль, когда нужны читаемые проверки (`x shouldBe y`, `list shouldContain 2`) и структурированные BDD-сценарии вместо плоских `assertEquals`.",
+                "edge_cases": "Граничный случай — `when` совпадает с ключевым словом языка, поэтому в BDD-спеках его экранируют обратными кавычками: `` `when`(\"...\") { } ``.",
+                "related": "[[kotlin-dsl-interview#Q10]] infix-функции (`shouldBe`); [[kotlin-dsl-interview#Q23]] inline+reified (`shouldThrow`); [[kotlin-dsl-interview#Q35]] Test Data Builders."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`shouldThrow<T>` — обычная generic-функция, поэтому тип `T` доступен ей в runtime без `inline`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`shouldThrow<T>` — inline reified-функция; без `reified` (а значит без `inline`) тип `T` стёрся бы и был бы недоступен в runtime.",
+                "source_of_confusion": "Дженерики кажутся работающими «сами по себе», отсюда мысль, что `inline` не нужен.",
+                "if_it_were_true": "Если бы тип был доступен без `reified`, не пришлось бы делать `shouldThrow` inline reified-функцией.",
+                "how_it_should_be": "Чтобы поймать конкретный тип исключения, `shouldThrow` обязан быть `inline` с `reified T`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие реальные DSL существуют в экосистеме `Kotlin`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Реальные DSL `Kotlin` — это только `Gradle Kotlin DSL` и `Ktor`; других production-DSL в экосистеме нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Помимо них есть `Exposed`, `kotlinx.html`, `Kotest`, `Koin`, `Compose`, `Arrow`, `kotlinx.serialization`, Spring Security DSL и др.",
+                "source_of_confusion": "`Gradle` и `Ktor` — самые известные, поэтому список ошибочно ими ограничивают.",
+                "if_it_were_true": "Если бы их было только два, не существовало бы DSL для DI (`Koin`), UI (`Compose`) и тестов (`Kotest`).",
+                "how_it_should_be": "Экосистема богата DSL в разных доменах: сборка, HTTP, SQL, HTML, DI, UI, тесты, сериализация."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Compose` — это не DSL, а отдельный язык разметки UI со своим компилятором, как XML-лейауты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Compose` — внутренний DSL на базе `@Composable`-функций и lambda с receiver, а не отдельный язык разметки.",
+                "source_of_confusion": "Декларативность UI ассоциируется с разметочными языками вроде XML, отсюда путаница.",
+                "if_it_were_true": "Если бы `Compose` был отдельным языком, нельзя было бы писать `if`/`for` прямо в `@Composable` на `Kotlin`.",
+                "how_it_should_be": "`Compose` — embedded DSL `Kotlin`; разметка строится composable-функциями, а не внешним языком."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Koin` использует кодогенерацию (annotation processing), а его `module { }` — лишь обёртка над сгенерированным кодом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Koin` — это рантайм-DSL на lambda с receiver (`module { single { } factory { } }`), не требующий кодогенерации, в отличие от compile-time DI вроде `Dagger`.",
+                "source_of_confusion": "DI-фреймворки часто генерируют код (`Dagger`/`Hilt`), отсюда ложный перенос на `Koin`.",
+                "if_it_were_true": "Если бы `Koin` опирался на кодоген, его не позиционировали бы как «DI без аннотаций и генерации».",
+                "how_it_should_be": "`Koin` строит граф зависимостей в рантайме через DSL-блоки; кодогенерации в нём нет."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Экосистема `Kotlin` богата DSL в разных доменах: `Gradle Kotlin DSL` (сборка), `Ktor` (HTTP-сервер), `Exposed` (SQL), `kotlinx.html` (HTML), `Kotest` (тесты), `Koin` (DI), `Compose` (UI), `Arrow` (FP), `kotlinx.serialization`, Spring Security DSL, `Detekt`. Все они построены на одних механизмах: lambda с receiver, extension-функции, operator overloading, `@DslMarker`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Под каждым DSL — знакомый набор приёмов: `Koin` — `module { single { } factory { } }`; `Compose` — `@Composable` + lambda с receiver; Spring Security — `http { authorizeRequests { } }` вместо chained builder-ов.",
+                "example": "`val appModule = module { single { DatabaseConnection(get()) }; factory { UserRepository(get()) } }` — DI-DSL `Koin` через lambda с receiver и функцию `get()`.",
+                "when_to_apply": "Перечисляй эти DSL, когда на собеседовании просят примеры реальных Kotlin DSL и хотят увидеть, что за «магией» стоят стандартные средства языка.",
+                "edge_cases": "Все они опираются на один фундамент, поэтому, разобрав механику одного (например, `Ktor` routing), легко понять устройство остальных.",
+                "related": "[[kotlin-dsl-interview#Q37]] Anko/Exposed/Ktor подробнее; [[kotlin-dsl-interview#Q16]] Exposed DSL; [[kotlin-dsl-interview#Q18]] Ktor routing DSL."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типичные ошибки допускают при проектировании DSL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Частые ошибки: отсутствие `@DslMarker` (утечка scope — `html { body { div { body { } } } }` компилируется, но бессмысленно); слишком глубокая вложенность (6 уровней нечитаемы); неочевидная семантика операторов (`-route(\"/api\")` — что это значит?); отсутствие `inline` (аллокация lambda на каждый вызов); mutable state без валидации (`server { port = -1 }`); отсутствие удобной точки входа.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждая ошибка бьёт по своему: без `@DslMarker` рушится корректность scope, без `inline` — производительность, без валидации — целостность данных, без точки входа — эргономика.",
+                "example": "Вместо `server { port = -1 }` поле защищают setter-ом: `var port = 8080; set(value) { require(value in 1..65535) { \"Port must be 1..65535\" }; field = value }`.",
+                "when_to_apply": "Проверяй этот чек-лист при ревью своего DSL: есть ли маркер, не слишком ли глубока вложенность, очевидны ли операторы, заинлайнены ли точки входа, валидируется ли state.",
+                "edge_cases": "Граничный случай — отсутствие точки входа: DSL доступен только через конструктор + `apply`, а не через удобную top-level функцию-глагол вроде `server { }`.",
+                "related": "[[kotlin-dsl-interview#Q6]] `@DslMarker` против утечки scope; [[kotlin-dsl-interview#Q23]] `inline` и аллокации; [[kotlin-dsl-interview#Q30]] когда DSL вообще не стоит создавать."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Главная ошибка DSL — использование `inline`: он раздувает байткод, поэтому точки входа лучше делать без него.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот, типичная ошибка — отсутствие `inline` на точках входа, из-за чего на каждый вызов аллоцируется объект lambda.",
+                "source_of_confusion": "Предупреждения про раздувание байткода на больших inline-функциях обобщают до «inline вреден».",
+                "if_it_were_true": "Если бы `inline` был ошибкой, его не рекомендовали бы для часто вызываемых `html { }`, `server { }`.",
+                "how_it_should_be": "Ошибка — забыть `inline` на entry-point; умеренный inline небольших точек входа, наоборот, полезен."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Типичная ошибка — добавлять `@DslMarker`: он ломает вложенность и запрещает обращаться к внешним receiver-ам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отсутствие `@DslMarker` — это и есть ошибка (утечка scope); маркер, наоборот, чинит вложенность, оставляя явный доступ через `this@label`.",
+                "source_of_confusion": "Маркер «что-то запрещает», поэтому его принимают за источник проблем.",
+                "if_it_were_true": "Если бы `@DslMarker` был ошибкой, его не рекомендовали бы как стандарт для всех многоуровневых DSL.",
+                "how_it_should_be": "Ошибка — пропустить `@DslMarker`; его наличие предотвращает невалидные вложения вроде `body { head { } }`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Глубокая вложенность — это достоинство DSL: чем больше уровней, тем выразительнее язык.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Чрезмерная вложенность (например, 6 уровней `config { server { network { ssl { } } } }`) — типичная ошибка, делающая DSL нечитаемым.",
+                "source_of_confusion": "Способность вкладывать блоки воспринимают как «чем больше, тем лучше».",
+                "if_it_were_true": "Если бы глубина была достоинством, не предупреждали бы о «слишком глубокой вложенности» среди ошибок проектирования.",
+                "how_it_should_be": "Умеренная вложенность хороша; чрезмерная — антипаттерн, который усложняет чтение DSL."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда стоит и когда не стоит создавать DSL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "DSL стоит создавать всегда, когда есть любой публичный API: DSL по определению удобнее обычных функций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DSL оправдан при иерархичной, многократно используемой конфигурации; для плоского одноразового API он не окупает стоимость разработки.",
+                "source_of_confusion": "Красота DSL создаёт впечатление, что он всегда лучше обычного API.",
+                "if_it_were_true": "Если бы DSL был всегда уместен, не существовало бы рекомендации обходиться именованными аргументами для плоских случаев.",
+                "how_it_should_be": "DSL стоит создавать выборочно — под иерархию и переиспользование, а не под любой API."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "DSL стоит создавать, когда конфигурация иерархическая и вложенная (маршруты, деревья, разметка), API используется многократно разными людьми, важна читаемость для не-разработчиков (BDD-тесты), есть повторяющийся паттерн с вариациями и нужна type-safety вместо строковых конфигов. Не стоит — когда достаточно обычного API, конфигурация плоская, код одноразовый или команда не знакома с Kotlin-приёмами.",
+              "correct": true,
+              "sections": {
+                "explanation": "Золотое правило: DSL оправдан, когда стоимость чтения кода с DSL значительно ниже, чем без него, и эта экономия проявляется многократно за время жизни проекта.",
+                "example": "Маршруты `Ktor` (`route { get { } }`) — хороший кейс для DSL; настройка трёх полей конфига — плохой, там хватит `Config(host, port, timeout)`.",
+                "when_to_apply": "Прогоняй идею через чек-лист: иерархия? многократное использование? читаемость для не-разработчиков? type-safety вместо YAML/JSON? Если «да» — DSL уместен.",
+                "edge_cases": "Граничный случай — команда работает на Java: тогда даже при иерархии часто выбирают fluent API/Builder, потому что Kotlin DSL неудобно вызывать из Java.",
+                "related": "[[kotlin-dsl-interview#Q29]] типичные ошибки DSL; [[kotlin-dsl-interview#Q26]] DSL vs fluent API; [[kotlin-dsl-interview#Q38]] DSL vs Builder-паттерн."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "DSL не стоит создавать, если конфигурация иерархическая и вложенная — для деревьев лучше плоский API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Иерархическая вложенная конфигурация — как раз главный аргумент ЗА DSL; плоский API там читается хуже.",
+                "source_of_confusion": "«Сложная структура» ассоциируется с «лучше упростить до плоского», отсюда инверсия.",
+                "if_it_were_true": "Если бы DSL не подходил для иерархии, не было бы DSL для HTML, маршрутов и деревьев конфигурации.",
+                "how_it_should_be": "DSL особенно уместен для иерархических структур; плоский API оставляют для нескольких независимых полей."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Готовность команды к Kotlin-приёмам не важна: DSL одинаково удобен и для тех, кто знает только Java.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Знакомство команды с lambda с receiver и operator overloading — существенный фактор: для Java-команды DSL часто хуже fluent API.",
+                "source_of_confusion": "Кажется, что «хороший API хорош для всех», без учёта владения языком.",
+                "if_it_were_true": "Если бы готовность команды не влияла, не было бы пункта «команда не знакома с Kotlin-приёмами» среди причин не делать DSL.",
+                "how_it_should_be": "Уровень владения Kotlin-идиомами влияет на выбор: незнакомой команде DSL даётся тяжелее обычного API."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает Spring Beans DSL на `Kotlin` и чем он лучше XML/аннотаций?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Spring Beans DSL под капотом использует ту же CGLIB-проксирование `@Configuration`, просто с другим синтаксисом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Beans DSL регистрирует бины функциональным API без рефлексии и CGLIB-проксирования, в отличие от `@Configuration`-классов.",
+                "source_of_confusion": "Оба способа регистрируют бины, поэтому кажется, что механизм один.",
+                "if_it_were_true": "Если бы DSL использовал CGLIB, он не давал бы выигрыша в скорости старта и дружелюбности к GraalVM.",
+                "how_it_should_be": "Beans DSL — функциональная регистрация без рефлексии; CGLIB-проксирование `@Configuration` он как раз обходит."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В Beans DSL зависимости нельзя получить программно — только автоинъекция по типу, как в аннотациях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Внутри `bean { }` зависимость берут явно через `ref<UserRepository>()`, что позволяет писать кастомную логику создания бина.",
+                "source_of_confusion": "Автоинъекция по типу (`bean<UserServiceImpl>()`) заметна, отсюда вывод, что другого способа нет.",
+                "if_it_were_true": "Если бы `ref<>()` не было, нельзя было бы передать в бин дополнительные параметры вроде `env[\"app.timeout\"]`.",
+                "how_it_should_be": "Beans DSL поддерживает и автоинъекцию (`bean<T>()`), и явное получение зависимостей через `ref<T>()`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring` поддерживает нативный Kotlin DSL для регистрации бинов функциональным API — без рефлексии, component scan и `@Configuration`-аннотаций. Бины объявляют в `beans { }`: `bean<JdbcUserRepository>()` регистрирует по типу с автоинъекцией, а `bean { val repo = ref<UserRepository>(); UserServiceImpl(repo, env[\"app.timeout\"].toInt()) }` — с кастомной логикой; условную регистрацию дают `profile(\"production\") { }`.",
+              "correct": true,
+              "sections": {
+                "explanation": "DSL подключают через `runApplication<MyApp> { addInitializers(beans) }`; отсутствие CGLIB-проксирования и рефлексии ускоряет старт и делает приложение дружелюбным к GraalVM Native Image.",
+                "example": "`val beans = beans { bean<JdbcUserRepository>(); bean<UserServiceImpl>(); profile(\"test\") { bean<TestDataSource>() } }` — типобезопасная регистрация с условными профилями.",
+                "when_to_apply": "Выбирай Beans DSL для новых Spring Boot + Kotlin проектов (особенно WebFlux и GraalVM), где много условной конфигурации и хочется уйти от CGLIB-проксирования `@Configuration`.",
+                "edge_cases": "По сравнению с XML/`@Configuration` DSL даёт полную типобезопасность (Kotlin types вместо строк), быстрее стартует и выражает условную регистрацию через `if`/`when`/`profile { }` вместо `@Conditional`.",
+                "related": "[[kotlin-dsl-interview#Q28]] Spring Security DSL среди примеров; [[kotlin-dsl-interview#Q2]] lambda с receiver как основа; [[kotlin-dsl-interview#Q11]] `apply` и scope-функции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Beans DSL медленнее стартует, чем `@Configuration`, из-за дополнительного слоя DSL поверх контекста.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Beans DSL, наоборот, стартует быстрее: он избегает рефлексии и CGLIB-проксирования, на которых держится `@Configuration`.",
+                "source_of_confusion": "Дополнительный «слой DSL» интуитивно кажется накладным расходом.",
+                "if_it_were_true": "Если бы DSL был медленнее, его не рекомендовали бы для быстрого старта и GraalVM Native Image.",
+                "how_it_should_be": "Функциональная регистрация без рефлексии ускоряет старт; замедляет его как раз проксирование `@Configuration`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать DSL с накоплением состояния (builder-паттерн через lambda с receiver)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Builder с накоплением состояния должен быть immutable: все поля — `val`, а каждый вызов возвращает новый builder.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Классический builder использует mutable-поля (`var method`, `mutableMapOf`) для накопления, а неизменяемым делают только итоговый результат в `build()`.",
+                "source_of_confusion": "Иммутабельность fluent-builder-ов из других языков переносят и сюда.",
+                "if_it_were_true": "Если бы builder был immutable с `val`, нельзя было бы накапливать заголовки в `mutableMapOf` через `header(...)`.",
+                "how_it_should_be": "Builder накапливает состояние в mutable-полях; immutable — лишь возвращаемый объект из `build()`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`build()` нужно делать публичным, чтобы пользователь сам вызывал его после блока конфигурации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`build()` обычно `internal`/приватный: его вызывает сама функция-точка входа `httpRequest { }.build()`, а не пользователь.",
+                "source_of_confusion": "В Java-builder-ах `build()` публичен, отсюда ожидание того же в DSL.",
+                "if_it_were_true": "Если бы пользователь вызывал `build()` сам, терялась бы лаконичность `val r = httpRequest { ... }` без хвостового `.build()`.",
+                "how_it_should_be": "`build()` скрывают, а точка входа вызывает его внутри; пользователь видит только результат DSL."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Вложенные builder-ы невозможны: один DSL-блок не может содержать другой накапливающий builder.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вложенные builder-ы — стандартный приём: `PipelineBuilder` содержит `stage(name) { }`, создающий вложенный `StageBuilder`.",
+                "source_of_confusion": "Кажется, что накопление состояния «не складывается» рекурсивно.",
+                "if_it_were_true": "Если бы вложенность была невозможна, нельзя было бы написать `pipeline { stage(\"build\") { step(\"...\") } }`.",
+                "how_it_should_be": "Builder-ы свободно вкладывают: внешний накапливает stage-и, каждый stage — свой builder со steps."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Классический паттерн: функция-точка входа принимает lambda с receiver на mutable `Builder`-класс, вызывает её, затем создаёт неизменяемый объект из накопленного состояния. `httpRequest { method = \"POST\"; url = \"...\"; authorization(\"token\"); json() }` через `HttpRequestBuilder().apply(init).build()` собирает immutable `HttpRequest`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Builder хранит изменяемое состояние (`var method`, `private val headers = mutableMapOf()`), DSL-методы (`header`, `authorization`, `json`) его накапливают, а `internal fun build()` фиксирует результат в immutable-объект.",
+                "example": "Для иерархии используют вложенные builder-ы: `pipeline { stage(\"build\") { step(\"./gradlew build\") } }`, где `PipelineBuilder` накапливает stage-и, а каждый `StageBuilder` — свои steps.",
+                "when_to_apply": "Применяй паттерн, когда нужно собрать сложный неизменяемый объект из множества опций с удобными хелперами (`authorization`, `json`) и осмысленными дефолтами (`var timeout = 30_000`).",
+                "edge_cases": "Хелперы-методы делегируют друг другу (`fun json() = contentType(\"application/json\")`), накапливая состояние в общем mutable-хранилище builder-а до вызова `build()`.",
+                "related": "[[kotlin-dsl-interview#Q5]] пошаговый builder; [[kotlin-dsl-interview#Q11]] `apply` как сердце паттерна; [[kotlin-dsl-interview#Q35]] Test Data Builders через тот же приём."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `Gradle Kotlin DSL` использует паттерны Kotlin DSL на практике?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Gradle Kotlin DSL` — реальный production-DSL на тех же механизмах, что и любой другой: `plugins { }` — extension-функция на `PluginDependenciesSpec`, `dependencies { }` — на `DependencyHandlerScope`, `tasks { }` — на `TaskContainer`, плюс type-safe accessors (генерируются из плагинов) и `@DslMarker`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый блок — lambda с receiver на свой тип контекста; `implementation(\"...\")`/`testImplementation(\"...\")` — это invoke на конфигурациях, а `compileKotlin { }` — сгенерированный type-safe accessor.",
+                "example": "`tasks { withType<Test> { useJUnitPlatform() }; compileKotlin { kotlinOptions.jvmTarget = \"17\" } }` сочетает reified `withType<Test>` и accessor `compileKotlin`.",
+                "when_to_apply": "Опирайся на это понимание, когда нужно объяснить, почему `build.gradle.kts` — не «магия», а обычный `Kotlin` DSL, и как чинить ошибки accessor-ов.",
+                "edge_cases": "Типичные проблемы: `Cannot access` (accessor не сгенерирован — нужно `tasks.named(\"compileKotlin\")`), медленная первая сборка из-за генерации accessors, конфликт Groovy-функций (`ext { }`) с Kotlin-идиомами.",
+                "related": "[[kotlin-dsl-interview#Q13]] устройство Gradle Kotlin DSL; [[kotlin-dsl-interview#Q14]] type-safe accessors; [[kotlin-dsl-interview#Q15]] convention plugins в buildSrc."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`build.gradle.kts` парсится особым движком `Gradle` и не является обычным `Kotlin`-кодом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Скрипт компилируется как настоящий `Kotlin`-код с receiver-ами `Project`, `TaskContainer` и т.д., а не парсится отдельным движком.",
+                "source_of_confusion": "«Сборочный скрипт» воспринимается как нечто особое, не как обычный код.",
+                "if_it_were_true": "Если бы это был не `Kotlin`, в `buildSrc` нельзя было бы использовать `data class` и `when`.",
+                "how_it_should_be": "`build.gradle.kts` — это `Kotlin` DSL, который компилируется обычным компилятором языка."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`implementation(\"...\")` в `dependencies { }` — это строковый вызов через рефлексию, а не типизированный метод.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`implementation`/`testImplementation` — type-safe accessors (operator invoke на конфигурациях), сгенерированные плагином, а не рефлексивные строковые вызовы.",
+                "source_of_confusion": "Строковые координаты зависимости создают впечатление «строкового API».",
+                "if_it_were_true": "Если бы это была рефлексия, IDE не автодополняла бы `testImplementation` и не ловила бы опечатки.",
+                "how_it_should_be": "Объявления зависимостей — типизированные accessors; рефлексия тут не используется."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Проблема `Cannot access` в Kotlin DSL означает баг компилятора `Kotlin` и решается обновлением версии языка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Cannot access` обычно значит, что type-safe accessor не сгенерирован; решение — строковое API `tasks.named(\"compileKotlin\")`, а не обновление компилятора.",
+                "source_of_confusion": "Любую ошибку компиляции списывают на версию инструмента.",
+                "if_it_were_true": "Если бы это был баг компилятора, ошибка не зависела бы от способа применения плагина (`plugins { }` vs `apply`).",
+                "how_it_should_be": "`Cannot access` — про отсутствующий accessor; обходится строковым `tasks.named(...)`, а не сменой версии Kotlin."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать type-safe builders с `reified` и какие у них ограничения?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`reified` доступен в любой функции, не только в `inline`, поэтому type-safe builders легко делают рекурсивными.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`reified` работает только в `inline`-функциях, а `inline`-функции не могут быть рекурсивными — это два отдельных ограничения.",
+                "source_of_confusion": "Кажется, что раз тип «известен», его можно получить и без inline.",
+                "if_it_were_true": "Если бы `reified` был доступен везде, не было бы обхода «принять `KClass<T>` параметром» для обычных функций.",
+                "how_it_should_be": "`reified T` существует только внутри `inline`; вне inline тип `T` стирается и недоступен."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`reified` позволяет получить тип `T` в runtime внутри `inline`-функций; в DSL это используют для type-safe фабрик: `inline fun <reified T : Handler> ApplicationDsl.handler(noinline init: T.() -> Unit = {}): T { val instance = context.getBean(T::class.java); instance.init(); return instance }`, затем `application { handler<OrderHandler> { timeout = 30 } }`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поскольку функция `inline`, тип `T` не стирается, и `T::class.java`/`T::class.createInstance()` доступны прямо в теле, без передачи `KClass<T>` параметром.",
+                "example": "Без `inline` нужен обход через `KClass`: `fun <T : Any> build(klass: KClass<T>, init: T.() -> Unit): T = klass.createInstance().apply(init)`; с `inline` — короче: `inline fun <reified T : Any> build(noinline init: T.() -> Unit): T = T::class.createInstance().apply(init)`.",
+                "when_to_apply": "Применяй reified-builders, когда хочется регистрировать/создавать объекты по типу без явного `::class` (`handler<OrderHandler> { }`, `registerSerializer<List<String>>()`).",
+                "edge_cases": "Ограничения: `reified` только в `inline`; нет рекурсии (`inline` не рекурсивен); сохранение лямбды требует `noinline`; стирание контейнера дженерика обходят через `typeOf<List<String>>()` из stdlib.",
+                "related": "[[kotlin-dsl-interview#Q23]] `inline` и `reified` в DSL; [[kotlin-dsl-interview#Q4]] type-safe builder; [[kotlin-dsl-interview#Q27]] `shouldThrow<T>` как reified-функция."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`typeOf<T>()` не нужен — `reified T` сам сохраняет полные generic-параметры контейнера вроде `List<String>`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`reified` сохраняет `T`, но контейнер всё равно стирается до `List<*>`; полный `KType` с дженериками даёт именно `typeOf<List<String>>()`.",
+                "source_of_confusion": "Раз `reified` «не стирается», кажется, что и вложенные параметры сохраняются.",
+                "if_it_were_true": "Если бы `reified` хранил полные параметры, не понадобился бы `typeOf<>()` для регистрации сериализатора `List<String>`.",
+                "how_it_should_be": "Для полных generic-параметров контейнера используют `typeOf<T>()`; `reified` сохраняет только сам `T`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Лямбду в reified-builder можно свободно сохранять в поле — `inline` этому не мешает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Inline-функция не может сохранить переданную lambda; чтобы её хранить, параметр помечают `noinline`, что снижает эффективность инлайнинга.",
+                "source_of_confusion": "Кажется, что лямбда — обычный объект, который всегда можно положить в поле.",
+                "if_it_were_true": "Если бы lambda свободно сохранялась, не существовало бы модификатора `noinline` для таких случаев.",
+                "how_it_should_be": "Чтобы сохранить лямбду в `inline`-функции, её делают `noinline`; иначе компилятор запретит хранение."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как строить Test Data Builders через DSL для тестовых фикстур?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Test Data Builder обязан требовать все поля явно — дефолтов быть не должно, иначе тест неполон.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главная идея Test Data Builder — разумные дефолты для всех полей, чтобы тест указывал только значимые (`order { status = PAID }`).",
+                "source_of_confusion": "«Полнота теста» ассоциируется с явным заданием всех параметров.",
+                "if_it_were_true": "Если бы дефолтов не было, исчезло бы преимущество над конструктором с десятком параметров.",
+                "how_it_should_be": "Builder задаёт дефолты всем полям; тест переопределяет лишь те, что важны для сценария."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Точка входа `order(init)` не может иметь default-аргумент, поэтому пустой объект `order()` создать нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Точку входа объявляют с default-лямбдой `fun order(init: OrderBuilder.() -> Unit = {})`, что и позволяет `val anyOrder = order()` без блока.",
+                "source_of_confusion": "Кажется, что lambda-параметр всегда обязателен.",
+                "if_it_were_true": "Если бы default-лямбды не было, нельзя было бы получить дефолтный объект одним вызовом `order()`.",
+                "how_it_should_be": "Default-лямбда `= {}` делает блок опциональным, давая `order()` для полностью дефолтной фикстуры."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Test Data Builder через DSL создаёт фикстуры декларативно с дефолтными значениями — чище, чем конструкторы с десятком параметров. Builder задаёт дефолты всем полям (`var id = 1L`, `var status = OrderStatus.PENDING`), вложенные объекты добавляет блоками (`item { }`), а точка входа `fun order(init: OrderBuilder.() -> Unit = {}): Order = OrderBuilder().apply(init).build()` с default-лямбдой позволяет и `order { }`, и `order()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждое поле имеет разумный дефолт, поэтому тест переопределяет только значимые значения, а `build()` собирает доменный `Order` из накопленного состояния, вычисляя производные поля вроде `totalAmount`.",
+                "example": "`val pendingOrder = order { id = 42L; status = OrderStatus.PENDING; item { productId = 1L; price = BigDecimal(\"99.99\") } }` — читается куда лучше, чем `Order(1L, 100L, emptyList(), PENDING, ...)`.",
+                "when_to_apply": "Применяй Test Data Builders, когда в тестах часто создают доменные объекты и хочется указывать только релевантные для сценария поля, а остальное брать из дефолтов.",
+                "edge_cases": "Дефолтную фикстуру даёт один вызов `val anyOrder = order()`, а переиспользуемые варианты — функции-обёртки: `fun paidOrder() = order { status = OrderStatus.PAID }`.",
+                "related": "[[kotlin-dsl-interview#Q32]] builder с накоплением состояния; [[kotlin-dsl-interview#Q5]] пошаговый builder; [[kotlin-dsl-interview#Q27]] DSL для тестов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Вложенные объекты (`item { }`) в Test Data Builder создать нельзя — фикстура должна быть плоской.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вложенные объекты добавляют блоками: `fun item(init: OrderItemBuilder.() -> Unit) { items += OrderItemBuilder().apply(init).build() }`.",
+                "source_of_confusion": "Кажется, что тестовые данные обязаны быть плоскими структурами.",
+                "if_it_were_true": "Если бы вложенность была запрещена, нельзя было бы декларативно создать `order { item { } item { } }`.",
+                "how_it_should_be": "Builder свободно вкладывает связанные объекты через `item { }`, как любой иерархический DSL."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как operator overloading применяется в DSL-контексте?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`invoke` в DSL перегружают, чтобы объект можно было сравнивать оператором `==`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`operator fun invoke` позволяет вызывать объект как функцию (`obj(...)`), а не сравнивать его; за `==` отвечает `equals`.",
+                "source_of_confusion": "Все операторы «что-то делают с объектом», отсюда смешение `invoke` и сравнения.",
+                "if_it_were_true": "Если бы `invoke` отвечал за `==`, нельзя было бы объяснить `\"/api/users\" { get { } }` через вызов.",
+                "how_it_should_be": "`invoke` — это «вызвать объект как функцию»; сравнение — отдельный оператор `equals`/`==`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`unaryPlus` уместен для любых действий — например, `+route(\"/api\")` для регистрации маршрута.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`unaryPlus` уместен для «добавить элемент» (HTML, списки, коллекции); для произвольных действий вроде регистрации маршрута он семантически неочевиден.",
+                "source_of_confusion": "Раз `+` «добавляет», кажется логичным применить его и к маршрутам.",
+                "if_it_were_true": "Если бы `+` годился для всего, нарушилось бы правило «только очевидная семантика» из рекомендаций по DSL.",
+                "how_it_should_be": "`unaryPlus` берут для добавления контента в коллекцию; для регистрации маршрута он читается непонятно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`get`/`set` в DSL перегружают для добавления элементов в список, как `unaryPlus`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`get`/`set` дают доступ по ключу к словарю-конфигу (`this[\"host\"] = \"localhost\"`), а добавление элементов — это `unaryPlus`/`plusAssign`.",
+                "source_of_confusion": "И то, и другое «что-то кладёт в коллекцию», отсюда путаница.",
+                "if_it_were_true": "Если бы `set` добавлял в список, не существовало бы отдельного `unaryPlus` для `+\"item\"` в `kotlinx.html`.",
+                "how_it_should_be": "`get`/`set` — про доступ по ключу к map-like структуре; добавление элемента выражает `unaryPlus`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Operator overloading в DSL создаёт интуитивный синтаксис для операций, естественно выглядящих как унарные или математические: `unaryPlus` для добавления элементов (`operator fun String.unaryPlus() { items += this }`, как в `kotlinx.html`), `invoke` для вложенных конфигураций (`\"/api/users\" { get { } }`), `get`/`set` для конфигурации словарём (`this[\"host\"] = \"localhost\"`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый оператор разворачивается в обычный вызов метода с ключевым словом `operator`, поэтому `+\"item\"` и `config[k] = v` остаются типобезопасными и понятными компилятору.",
+                "example": "`fun ul(init: HtmlListBuilder.() -> Unit) = HtmlListBuilder().apply(init).build()` + `operator fun String.unaryPlus()` дают `ul { +\"First\"; +\"Second\" }` — ровно как работает `kotlinx.html`.",
+                "when_to_apply": "Используй перегрузку только там, где смысл оператора очевиден без комментария: `unaryPlus` для добавления, `invoke` для настройки блока, `get`/`set` для доступа по ключу.",
+                "edge_cases": "Не перегружай арифметические операторы без явной математической семантики; неочевидная перегрузка (`-route(\"/api\")`) делает DSL загадочным.",
+                "related": "[[kotlin-dsl-interview#Q8]] перегрузка операторов в DSL; [[kotlin-dsl-interview#Q9]] invoke convention; [[kotlin-dsl-interview#Q20]] `unaryPlus` в kotlinx.html."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие известные `Kotlin` DSL существуют в экосистеме: Anko, Exposed, Ktor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Реальные DSL экосистемы: `Anko` (устаревший Android-UI DSL, заменён `Jetpack Compose`), `Exposed` (SQL-DSL с `Table`, типобезопасными запросами и `insert { }`), `Ktor` (сервер и клиент — `routing { }`, `HttpClient(CIO) { }`), `kotlinx.html` (HTML через builder-ы), Spring Security Kotlin DSL (`http { authorizeHttpRequests { } }`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Все они построены на одних механизмах — lambda с receiver, extension-функции, operator overloading — поэтому, разобрав один, понимаешь устройство остальных.",
+                "example": "`Exposed`: `Users.select { Users.name like \"%admin%\" }.orderBy(Users.name).limit(10)`; `Ktor` client: `HttpClient(CIO) { install(ContentNegotiation) { json() }; defaultRequest { header(\"X-Api-Key\", apiKey) } }`.",
+                "when_to_apply": "Перечисляй эти примеры, когда на собеседовании просят назвать известные Kotlin DSL и показать, какой механизм лежит в основе каждого.",
+                "edge_cases": "`Anko` исторически был первым широко используемым Kotlin DSL; сейчас он deprecated, а его нишу занял `Jetpack Compose`, сам являющийся DSL на composable-функциях.",
+                "related": "[[kotlin-dsl-interview#Q28]] реальные DSL списком; [[kotlin-dsl-interview#Q16]] Exposed DSL подробно; [[kotlin-dsl-interview#Q18]] Ktor routing DSL."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Anko` — актуальный рекомендуемый способ строить Android UI на `Kotlin`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Anko` устарел (deprecated) и заменён `Jetpack Compose`; рекомендовать его для нового Android UI не стоит.",
+                "source_of_confusion": "`Anko` исторически известен как первый популярный Kotlin DSL, отсюда мысль о его актуальности.",
+                "if_it_were_true": "Если бы `Anko` был актуален, `Google` не продвигал бы `Compose` как современный UI-инструмент.",
+                "how_it_should_be": "`Anko` — устаревший DSL; современный Android UI строят на `Jetpack Compose`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Ktor` предоставляет DSL только для сервера; HTTP-клиент конфигурируется обычными сеттерами без DSL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Ktor` даёт DSL и для клиента: `HttpClient(CIO) { install(...) { }; defaultRequest { } }` — это та же lambda-с-receiver конфигурация, что и на сервере.",
+                "source_of_confusion": "Серверный `routing { }` заметнее, поэтому клиентский DSL упускают из виду.",
+                "if_it_were_true": "Если бы клиент не имел DSL, нельзя было бы написать `client.get(url) { parameter(\"page\", 1) }`.",
+                "how_it_should_be": "DSL `Ktor` покрывает и сервер, и клиент; оба конфигурируются единым стилем lambda с receiver."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Exposed` query DSL не композируется: нельзя соединить `select`, `orderBy` и `limit` в одной цепочке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Query DSL `Exposed` как раз композируется: `Users.select { }.orderBy(Users.name).limit(10).map { }` — типобезопасная цепочка.",
+                "source_of_confusion": "SQL-запросы кажутся «монолитными», отсюда мысль о невозможности композиции.",
+                "if_it_were_true": "Если бы цепочка не складывалась, нельзя было бы добавить `orderBy` и `limit` после `select`.",
+                "how_it_should_be": "DSL `Exposed` композируем: операции выборки, сортировки и лимита соединяются в одну типобезопасную цепочку."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "DSL vs Builder-паттерн — когда что выбрать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Builder-паттерн (Java-стиль) лучше подходит для иерархической вложенной конфигурации, чем DSL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для вложенности выигрывает DSL (нативные блоки); Builder-паттерн на вложенности неудобен — выливается в nested builders.",
+                "source_of_confusion": "Builder ассоциируется с «построением сложного объекта», отсюда мысль, что и иерархия — его конёк.",
+                "if_it_were_true": "Если бы Builder был лучше для вложенности, не было бы примера `pipeline { stage { } }` именно как DSL-преимущества.",
+                "how_it_should_be": "Иерархию лучше выражает DSL; Builder силён в плоской линейной конфигурации и Java-интеропе."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "DSL (lambda с receiver) выбирают для Kotlin-only проектов с иерархической/вложенной конфигурацией (HTML, роутинг, CI/CD-pipeline) — нативные блоки выражают вложенность естественно. Builder-паттерн (Java-стиль `Config.builder().host(\"...\").build()`) выбирают, когда библиотека вызывается из Java, конфигурация плоская и линейная, нужна совместимость с Java-фреймворками.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевой trade-off — Java-интероп: DSL неудобно вызывать из Java, зато он отлично выражает иерархию; Builder работает из Java/Groovy/Scala, но на вложенности неуклюж.",
+                "example": "DSL: `pipeline { stage(\"build\") { step(\"./gradlew build\"); environment { set(\"JAVA_HOME\", \"/usr/lib/jvm/java-17\") } } }`; Builder: `ServerConfig.builder().host(\"localhost\").port(8080).build()`.",
+                "when_to_apply": "Выбирай DSL для Kotlin-команды и иерархичных структур; Builder — когда API используется из Java или конфигурация плоская без вложенности.",
+                "edge_cases": "Возможен гибрид: `companion object { fun builder() = Builder(); operator fun invoke(init: Builder.() -> Unit) = Builder().apply(init).build() }` даёт и Java-builder, и Kotlin-DSL одновременно.",
+                "related": "[[kotlin-dsl-interview#Q26]] DSL vs fluent API; [[kotlin-dsl-interview#Q30]] когда создавать DSL; [[kotlin-dsl-interview#Q32]] builder через lambda с receiver."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "DSL из коробки удобно вызывать из Java, поэтому Builder-паттерн в Kotlin-библиотеках не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DSL на lambda с receiver неудобен из Java; именно поэтому для Java-интеропа выбирают Builder-паттерн.",
+                "source_of_confusion": "«Раз это `Kotlin`, всё совместимо с JVM» создаёт иллюзию лёгкого вызова DSL из Java.",
+                "if_it_were_true": "Если бы DSL легко вызывался из Java, не было бы рекомендации выбирать Builder для Java-библиотек.",
+                "how_it_should_be": "Для вызова из Java берут Builder; Kotlin DSL остаётся удобным прежде всего внутри `Kotlin`-кода."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Гибрид Builder + DSL невозможен: класс не может одновременно поддерживать оба стиля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Гибрид как раз делают через `companion object` с `fun builder()` и `operator fun invoke(init)`, поддерживая оба стиля сразу.",
+                "source_of_confusion": "Кажется, что два разных API в одном классе конфликтуют.",
+                "if_it_were_true": "Если бы гибрид был невозможен, нельзя было бы вызвать и `ServerConfig.builder()`, и `ServerConfig { }` на одном типе.",
+                "how_it_should_be": "Гибрид реализуется через companion с `builder()` и `invoke`; класс поддерживает и Java-builder, и DSL."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 39,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как построить Validation DSL для декларативной валидации?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Validation DSL обязан быть fail-fast: при первой непройденной проверке он бросает исключение и останавливается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Преимущество Validation DSL как раз в накоплении всех ошибок сразу (`Invalid(errors)`), в отличие от fail-fast через исключения.",
+                "source_of_confusion": "Привычная валидация через `require`/исключения создаёт ожидание fail-fast.",
+                "if_it_were_true": "Если бы DSL падал на первой ошибке, он не возвращал бы список из нескольких сообщений сразу.",
+                "how_it_should_be": "Validation DSL копит ошибки в список и отдаёт их все; fail-fast — это как раз то, чего он избегает."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Правило валидации задают через обычную функцию, возвращающую `Boolean`, без lambda с receiver.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Правило задают lambda с receiver на проверяемое значение: `fun rule(message: String, predicate: T.() -> Boolean)`, чтобы внутри обращаться к полям напрямую (`name.isNotBlank()`).",
+                "source_of_confusion": "`Boolean`-предикат кажется достаточным, без контекста значения.",
+                "if_it_were_true": "Если бы receiver-а не было, пришлось бы писать `it.name.isNotBlank()` вместо лаконичного `name.isNotBlank()`.",
+                "how_it_should_be": "`rule` принимает `T.() -> Boolean` с receiver-ом, давая прямой доступ к полям проверяемого объекта."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Validation DSL позволяет объявлять правила декларативно и собирать все ошибки сразу (в отличие от fail-fast через исключения). `ValidationScope<T>` копит ошибки в список; `rule(message, predicate: T.() -> Boolean)` добавляет сообщение, если предикат на значении ложен; точка входа `fun <T> validate(value, init): ValidationResult = ValidationScope(value).apply(init).build()` возвращает `Valid` или `Invalid(errors)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждое правило — это lambda с receiver на проверяемое значение, поэтому внутри обращаются к полям напрямую (`name.isNotBlank()`), а все провалившиеся сообщения накапливаются и возвращаются вместе.",
+                "example": "`validate(user) { rule(\"Name must not be blank\") { name.isNotBlank() }; rule(\"Email must contain @\") { email.contains(\"@\") }; rule(\"Age must be 18+\") { age >= 18 } }` для невалидного объекта даёт `Invalid([...три сообщения...])`.",
+                "when_to_apply": "Применяй Validation DSL, когда нужно показать пользователю все ошибки формы сразу (регистрация, конфигурация) и сгруппировать правила по полям декларативно.",
+                "edge_cases": "Расширенный вариант добавляет поля и matcher-ы: `field(\"email\", { email }) { matches(EMAIL_REGEX) }`, а интеграция со `Spring` оформляется как `@Component class UserValidator : Validator`.",
+                "related": "[[kotlin-dsl-interview#Q24]] обязательные/опциональные блоки и валидация; [[kotlin-dsl-interview#Q10]] infix для читаемых правил; [[kotlin-dsl-interview#Q32]] накопление состояния в builder."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Расширенный Validation DSL с полями невозможен — DSL поддерживает только проверки на корневом объекте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Расширенный DSL вводит `field(name, selector) { }` со своим `FieldScope`, проверяющим конкретные поля (`notNull`, `matches`).",
+                "source_of_confusion": "Простой пример работает с корневым значением, отсюда вывод об отсутствии поддержки полей.",
+                "if_it_were_true": "Если бы поля не поддерживались, нельзя было бы написать `field(\"email\", { email }) { matches(regex) }`.",
+                "how_it_should_be": "Validation DSL расширяется до уровня полей через вложенный `FieldScope`; проверки не ограничены корнем."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 40,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Внутренний vs внешний DSL — плюсы и минусы `Kotlin` внутреннего DSL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Внутренний Kotlin DSL даёт полную свободу синтаксиса, как внешний DSL со своим парсером.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Внутренний DSL ограничен синтаксисом `Kotlin`; полную свободу синтаксиса даёт внешний DSL с собственным парсером.",
+                "source_of_confusion": "Гибкость lambda с receiver и операторов создаёт иллюзию «любого синтаксиса».",
+                "if_it_were_true": "Если бы внутренний DSL имел полную свободу, не было бы нужды во внешних DSL вроде regex или SQL.",
+                "how_it_should_be": "Внутренний DSL живёт в рамках синтаксиса `Kotlin`; свобода синтаксиса — преимущество внешнего DSL."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Внутренний Kotlin DSL проверяется только в runtime, как и внешний DSL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Внутренний DSL даёт compile-time проверки (он же обычный `Kotlin`-код), тогда как внешний обычно проверяется только в runtime.",
+                "source_of_confusion": "Оба «исполняются», отсюда вывод о runtime-проверках у обоих.",
+                "if_it_were_true": "Если бы внутренний DSL проверялся только в runtime, исчезло бы его ключевое преимущество — типобезопасность.",
+                "how_it_should_be": "Внутренний DSL ловит ошибки при компиляции; runtime-проверка — недостаток внешнего DSL."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Внутренний Kotlin DSL требует отдельного IDE-плагина для автодополнения, как внешний DSL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Внутренний DSL получает IDE-поддержку бесплатно (это обычный `Kotlin`), а отдельный плагин нужен внешнему DSL.",
+                "source_of_confusion": "Кастомные языки требуют плагинов, и это ожидание переносят на внутренний DSL.",
+                "if_it_were_true": "Если бы внутреннему DSL нужен был плагин, преимущество «бесплатная Kotlin IDE» не упоминалось бы.",
+                "how_it_should_be": "Внутренний DSL пользуется всей `Kotlin`-IDE без плагинов; плагин требуется внешнему DSL."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Внешний DSL — самостоятельный язык со своим синтаксисом и парсером (SQL, YAML, Dockerfile, regex, CSS). Внутренний (embedded) DSL построен средствами host-языка: в `Kotlin` это lambda с receiver, operator overloading, infix-функции, `@DslMarker`. Плюсы внутреннего: compile-time проверки, бесплатная IDE-поддержка, отсутствие парсера, знакомый синтаксис; минус — ограничение синтаксисом `Kotlin` и привязка к JVM.",
+              "correct": true,
+              "sections": {
+                "explanation": "Внутренний DSL — это обычный `Kotlin`-код, поэтому ошибки типов ловятся компилятором, а debugger и рефакторинг работают штатно; внешний DSL даёт свободу синтаксиса ценой отдельного runtime и инструментов.",
+                "example": "Внутренний: `query<User> { where { age greaterThan 18 }; orderBy { name ascending true } }` — ошибка типа поймается сразу; внешний: `\"SELECT * FROM users WHERE age > '18'\"` сравнивает число со строкой, и ошибка всплывёт лишь в runtime.",
+                "when_to_apply": "Выбирай внутренний Kotlin DSL, когда все пользователи — Kotlin-разработчики и важны типобезопасность и IDE; внешний — когда пользователи не программисты или синтаксис не вписывается в `Kotlin`.",
+                "edge_cases": "Компромисс — мультиуровневый подход: внешний DSL для файлов конфигурации плюс Kotlin DSL для программного API, как `Gradle` с TOML-каталогом зависимостей и `build.gradle.kts`.",
+                "related": "[[kotlin-dsl-interview#Q1]] внутренний vs внешний DSL базово; [[kotlin-dsl-interview#Q30]] когда создавать DSL; [[kotlin-dsl-interview#Q28]] реальные внутренние DSL Kotlin."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

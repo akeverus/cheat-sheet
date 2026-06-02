@@ -1,0 +1,2405 @@
+{
+  "topic_slug": "kotlin-exceptions-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Есть ли в `Kotlin` проверяемые (`checked`) исключения?",
+          "options": [
+            {
+              "text": "Нет, в `Kotlin` все исключения непроверяемые (`unchecked`): компилятор не требует объявлять их в сигнатуре через `throws` и не обязывает вызывающий код их обрабатывать или пробрасывать.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это осознанное решение дизайнеров языка: опыт `Java` показал, что `checked exceptions` ведут к пустым `catch`, бессмысленному пробросу и загрязнению сигнатур. Контракт «может вернуть ошибку» в `Kotlin` выражают через типы `Result`, `sealed class` или `Arrow Either`.",
+                "example": "Вызов `File(\"data.txt\").readText()` бросает `IOException`, но компилятор не заставляет оборачивать его в `try-catch` — в отличие от `Java`, где метод `read() throws IOException` обязывал бы к обработке.",
+                "when_to_apply": "Помнить об этом при интеропе с `Java`: исключения из Java-кода тоже становятся `unchecked`, и ответственность за их обработку ложится на разработчика, а не на компилятор.",
+                "edge_cases": "Аннотация `@Throws` добавляет `throws` в байткод только ради `Java`-вызывающих, но в самом `Kotlin` исключение всё равно остаётся `unchecked`.",
+                "related": "[[kotlin-exceptions-interview#Q11]] аннотация `@Throws` для Java-интеропа; [[kotlin-exceptions-interview#Q12]] вызов Java-кода с checked exceptions; [[kotlin-exceptions-interview#Q36]] иерархия Error vs Exception."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Да, как и в `Java`: компилятор требует объявить `checked`-исключения в сигнатуре через `throws` и обработать их у вызывающего.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Kotlin` нет `checked`-исключений вообще — компилятор не навязывает ни объявление, ни обработку, любое исключение можно бросить и не ловить.",
+                "source_of_confusion": "`Kotlin` работает на JVM и переиспользует Java-классы исключений, поэтому кажется, что и правила `checked` он наследует.",
+                "if_it_were_true": "Тогда сигнатура `fun read(): String` обязывала бы писать `throws IOException`, но в `Kotlin` ключевого слова `throws` для сигнатур просто нет.",
+                "how_it_should_be": "Все исключения `unchecked`; для типизированного контракта ошибки используют `Result`, `sealed class` или `Either`, а не `throws`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Проверяемыми являются только исключения, унаследованные от `java.io.IOException`, остальные — непроверяемые.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Kotlin` не делит исключения на `checked`/`unchecked` по базовому классу: `IOException` так же не обязателен к обработке, как `RuntimeException`.",
+                "source_of_confusion": "В `Java` `IOException` действительно `checked`, и это правило ошибочно переносят на `Kotlin`.",
+                "if_it_were_true": "Тогда `stream.close()` с `IOException` требовал бы обязательного `try-catch`, но в `Kotlin` он компилируется без обёртки.",
+                "how_it_should_be": "Базовый класс не влияет на обязательность обработки — в `Kotlin` все исключения одинаково `unchecked`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Проверяемыми считаются исключения, помеченные аннотацией `@Throws`; без неё исключение непроверяемое.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Throws` влияет только на байткод для `Java`-вызывающих; внутри `Kotlin` помеченное исключение остаётся таким же `unchecked`, как и без аннотации.",
+                "source_of_confusion": "Имя `@Throws` напоминает Java-клаузу `throws`, отсюда вывод, что оно делает исключение `checked` и для `Kotlin`.",
+                "if_it_were_true": "Тогда вызов `@Throws`-функции из `Kotlin` требовал бы `try-catch`, но компилятор `Kotlin` этого не требует.",
+                "how_it_should_be": "`@Throws` — метаданные исключительно для интеропа с `Java`; на правила обработки внутри `Kotlin` она не влияет."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать `try-catch` как выражение в `Kotlin`?",
+          "options": [
+            {
+              "text": "`try-catch` всегда возвращает `Unit`, поэтому его результат нельзя присвоить переменной — нужно писать значение в `var` внутри блоков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`try-catch` возвращает значение последней строки выполненной ветки, и его прямо присваивают: `val x = try { ... } catch (e) { ... }`.",
+                "source_of_confusion": "В `Java` `try` — это statement без значения, и эту модель ошибочно переносят на `Kotlin`.",
+                "if_it_were_true": "Тогда пришлось бы заводить `var result` и заполнять её в каждой ветке, но идиоматичный `Kotlin` возвращает значение прямо из `try`.",
+                "how_it_should_be": "`try-catch` — выражение: его значение и есть последняя строка отработавшей ветки, мутабельная переменная не нужна."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Блок `try-catch` в `Kotlin` — это выражение, которое возвращает значение: результатом становится последнее выражение выполненной ветки (`try` или `catch`), а `finally` на результат не влияет.",
+              "correct": true,
+              "sections": {
+                "explanation": "Тип всего выражения — общий супертип типов веток. Если `try` даёт `Int`, а `catch` бросает (тип `Nothing`), итоговый тип будет `Int`. Это позволяет присваивать результат `try-catch` переменной или возвращать из функции.",
+                "example": "`val number: Int = try { input.toInt() } catch (e: NumberFormatException) { 0 }` — при ошибке парсинга переменная получит дефолтное значение `0`.",
+                "when_to_apply": "Удобно для безопасного парсинга с fallback и комбинирования с `?:`, `when`, `let`: `try { parseJson(raw) } catch (e: Exception) { null } ?: default`.",
+                "edge_cases": "В каждой ветке итоговое значение даёт последняя строка, поэтому при нескольких действиях именно она определяет результат; промежуточные строки (логирование) на тип не влияют.",
+                "related": "[[kotlin-exceptions-interview#Q3]] тип `Nothing` в ветке throw; [[kotlin-exceptions-interview#Q8]] try-catch против Result; [[kotlin-exceptions-interview#Q36]] catch как выражение с несколькими блоками."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Значение `try-catch` определяет блок `finally`: именно его последняя строка становится результатом выражения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`finally` выполняется для очистки ресурсов, но на результат выражения он не влияет — значение даёт ветка `try` или `catch`.",
+                "source_of_confusion": "`finally` выполняется последним по времени, отсюда ложный вывод, что он и формирует итоговое значение.",
+                "if_it_were_true": "Тогда `try { 1 } finally { 2 }` возвращал бы `2`, но фактически выражение вернёт `1`.",
+                "how_it_should_be": "Результат — последняя строка `try` (при успехе) или `catch` (при исключении); `finally` лишь выполняет побочные действия."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Чтобы `try-catch` стал выражением, нужно пометить его ключевым словом `expression` перед `try`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакого ключевого слова не требуется: `try-catch` в `Kotlin` является выражением по умолчанию и сразу возвращает значение.",
+                "source_of_confusion": "В других языках бывают явные expression-формы, и кажется, что и здесь нужен особый маркер.",
+                "if_it_were_true": "Тогда без `expression` присвоить результат было бы нельзя, но `val x = try {...} catch {...}` компилируется как есть.",
+                "how_it_should_be": "`try` — выражение без всяких модификаторов; достаточно просто присвоить его результат переменной."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое тип `Nothing` в `Kotlin` и где он используется?",
+          "options": [
+            {
+              "text": "`Nothing` — это псевдоним `Unit`, обозначающий функцию, которая ничего полезного не возвращает (например, `println`).",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Unit` имеет ровно один экземпляр и означает «вернулись без полезного значения», а `Nothing` экземпляров не имеет и означает «не вернулись вообще».",
+                "source_of_confusion": "Оба типа связаны с «отсутствием значения», поэтому их легко перепутать.",
+                "if_it_were_true": "Тогда `fun fail(): Nothing` и `fun log(): Unit` были бы взаимозаменяемы, но после `fail()` компилятор считает код недостижимым, а после `log()` — нет.",
+                "how_it_should_be": "`Unit` — нормальное завершение без значения; `Nothing` — функция не завершается нормально (throw или бесконечный цикл)."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Nothing` — это тип-обёртка над `null`, эквивалент nullable-типа `Any?`, который можно присвоить любой переменной.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Nothing` — это bottom-тип без экземпляров, а вовсе не nullable-обёртка; с `null` связан только его подтип `Nothing?`.",
+                "source_of_confusion": "Литерал `null` имеет тип `Nothing?`, и из этого ошибочно делают вывод, что сам `Nothing` — про `null`.",
+                "if_it_were_true": "Тогда можно было бы создать значение типа `Nothing` (например, `null`), но `Nothing` принципиально не имеет ни одного экземпляра.",
+                "how_it_should_be": "`Nothing` экземпляров не имеет; единственное значение `null` относится к `Nothing?`, а не к `Nothing`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Nothing` — тип без единого экземпляра: функция с возвращаемым типом `Nothing` никогда не завершается нормально — она либо всегда бросает исключение, либо уходит в бесконечный цикл.",
+              "correct": true,
+              "sections": {
+                "explanation": "Будучи bottom-типом (подтипом всех типов), `Nothing` помогает анализу потока управления: компилятор понимает, что ветка с `Nothing` прерывает выполнение, и выводит более точные типы для остального кода.",
+                "example": "В `val name = value ?: fail(\"required\")`, где `fun fail(m: String): Nothing = throw ...`, переменная `name` получает тип `String`, а не `String?`, потому что ветка `fail()` не возвращается.",
+                "when_to_apply": "Использовать как тип функций-«бросателей» (`fail`, `notFound`, `error`, `TODO`) и в ветках `when`/`?:`, где нужно прервать выполнение, не нарушая вывод типа.",
+                "edge_cases": "`Nothing?` допускает единственное значение `null` (литерал `null` имеет тип `Nothing?`), а `emptyList<Nothing>()` совместим с любым `List<T>`.",
+                "related": "[[kotlin-exceptions-interview#Q4]] отличие Nothing от Unit и Void; [[kotlin-exceptions-interview#Q9]] require/check/error возвращают Nothing; [[kotlin-exceptions-interview#Q35]] Nothing в функциях-бросателях."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Nothing` — это супертип всех типов (top type), от которого наследуются `Any` и остальные классы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `Nothing` — bottom-тип, подтип любого типа; top-типом в `Kotlin` является `Any?`.",
+                "source_of_confusion": "Связь `Nothing` со всеми типами есть, но направление путают — подтип принимают за супертип.",
+                "if_it_were_true": "Тогда любое значение можно было бы привести к `Nothing` вверх по иерархии, но на деле `throw` (тип `Nothing`) подставляется вниз — туда, где ждут любой тип.",
+                "how_it_should_be": "`Nothing` — подтип всех типов (bottom), поэтому `throw` уместен везде, где ожидается значение; вершина иерархии — `Any?`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `Nothing` отличается от `Unit` и `Void`?",
+          "options": [
+            {
+              "text": "`Nothing` и `Unit` — одно и то же: оба означают функцию, которая ничего не возвращает, разница лишь в названии для Java и Kotlin.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Unit` имеет один экземпляр и означает нормальное завершение без значения, а `Nothing` экземпляров не имеет и означает отсутствие нормального завершения.",
+                "source_of_confusion": "Оба относятся к «функции без полезного результата», и поверхностно их считают синонимами.",
+                "if_it_were_true": "Тогда `fun f(): Nothing` и `fun f(): Unit` были бы взаимозаменяемы, но первая обязана не вернуться, а вторая возвращается штатно.",
+                "how_it_should_be": "`Unit` — штатный возврат без значения (один экземпляр); `Nothing` — функция не возвращается вовсе (ноль экземпляров)."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Unit` является подтипом всех типов (bottom type), поэтому `println()` можно подставить туда, где ожидается любой тип.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bottom-типом является `Nothing`, а не `Unit`; `Unit` — обычный тип с единственным значением и подтипом всех типов не является.",
+                "source_of_confusion": "Оба связаны с «пустотой», поэтому свойство bottom-типа ошибочно приписывают `Unit`.",
+                "if_it_were_true": "Тогда `val x: String = println()` компилировался бы, но это ошибка типов — а вот `val x: String = TODO()` (тип `Nothing`) проходит.",
+                "how_it_should_be": "Подтипом всех типов является `Nothing`; `Unit` встаёт только туда, где ожидается именно `Unit`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Void` в Java имеет единственный экземпляр-синглтон, аналогичный объекту `Unit` в Kotlin, и активно создаётся через `new Void()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Void` нельзя инстанцировать (`new Void()` запрещён): это box-тип, чьё единственное допустимое значение в generics — `null`.",
+                "source_of_confusion": "`Void` и `Unit` оба символизируют «отсутствие результата», и реальный синглтон `Unit` ошибочно приписывают `Void`.",
+                "if_it_were_true": "Тогда `Callable<Void>` возвращал бы непустой объект `Void`, но идиоматично он возвращает `null`.",
+                "how_it_should_be": "`Void` — необъектная Java-обёртка для generics со значением `null`; реальный синглтон есть у `Unit`, а не у `Void`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Nothing` не имеет ни одного экземпляра и означает, что функция не возвращается (`throw` или бесконечный цикл); `Unit` имеет единственный экземпляр и означает «вернулись без полезного значения»; `Void` (Java) — box-тип для generics, чьё единственное значение — `null`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Nothing` — bottom-тип, подтип любого типа, поэтому `throw` или `TODO()` можно подставить туда, где ждут любое значение. `Unit` подтипом всех типов не является. `Void` существует лишь как Java-обёртка для параметризации (`Callable<Void>`).",
+                "example": "`val value: String = TODO()` компилируется, потому что `TODO()` возвращает `Nothing`; а `val u: Unit = println()` показывает `Unit` как реальное возвращаемое значение функции без результата.",
+                "when_to_apply": "Использовать `Nothing` для функций, которые гарантированно не возвращаются; `Unit` — для процедур ради побочного эффекта; `Void` встречается только при интеропе с Java-generics.",
+                "edge_cases": "В `Kotlin` функция без `return` неявно возвращает `Unit`, тогда как присвоить переменной значение типа `Nothing` невозможно — его просто не существует.",
+                "related": "[[kotlin-exceptions-interview#Q3]] что такое тип Nothing; [[kotlin-exceptions-interview#Q35]] Nothing в функциях-бросателях; [[kotlin-exceptions-interview#Q36]] иерархия Error vs Exception."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `runCatching` и как работает `Result`?",
+          "options": [
+            {
+              "text": "`runCatching { ... }` выполняет блок и оборачивает исход в `Result<T>`: при успехе — `Result.success(value)`, при исключении — `Result.failure(exception)`; исключение не пробрасывается, а упаковывается в `Result`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это превращает ошибку в значение: вместо проброса по стеку результат можно обрабатывать функционально через `getOrElse`, `map`, `recover`, `fold`. Есть и extension-форма `obj.runCatching { method() }`, вызывающая метод на объекте.",
+                "example": "`\"42\".runCatching { toInt() }` даёт `Result.success(42)`, а `\"abc\".runCatching { toInt() }` — `Result.failure(NumberFormatException)`; затем `result.getOrElse { defaultUser }` извлекает значение или fallback.",
+                "when_to_apply": "Применять на границах системы (IO, сеть, парсинг ввода), где ошибку удобно вернуть как данные и собрать в цепочку операций.",
+                "edge_cases": "`runCatching` перехватывает все `Throwable`, включая `CancellationException` и `Error`, поэтому в корутинах нужно явно пробрасывать `CancellationException` через `onFailure { if (it is CancellationException) throw it }`.",
+                "related": "[[kotlin-exceptions-interview#Q6]] операторы Result; [[kotlin-exceptions-interview#Q8]] Result против try-catch; [[kotlin-exceptions-interview#Q34]] runCatching best practices и антипаттерны."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`runCatching` выполняет блок и, поймав исключение, повторно пробрасывает его наверх вызывающему, как обычный `try` без `catch`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`runCatching` именно НЕ пробрасывает исключение: оно упаковывается в `Result.failure(exception)`, и поток выполнения продолжается дальше.",
+                "source_of_confusion": "Слово «catching» намекает на ловлю, но кажется, что оно лишь перехватывает для логирования и затем бросает дальше.",
+                "if_it_were_true": "Тогда код после `runCatching { риск() }` не выполнялся бы при ошибке, но он выполняется, а ошибку держит возвращённый `Result`.",
+                "how_it_should_be": "Исключение упаковывается в `Result.failure` и возвращается как значение; чтобы пробросить, нужно явно вызвать `getOrThrow()`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`runCatching` перехватывает только `RuntimeException`, а `Error` и `IOException` проходят сквозь него без обёртки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`runCatching` ловит любой `Throwable`, включая `Error`, `IOException` и `CancellationException`, — это его особенность и потенциальная опасность.",
+                "source_of_confusion": "Привычка ловить только `Exception` в `catch (e: Exception)` переносится на `runCatching`.",
+                "if_it_were_true": "Тогда `OutOfMemoryError` всегда пролетал бы мимо, но `runCatching` его тоже завернёт в `Result.failure`.",
+                "how_it_should_be": "`runCatching` перехватывает весь `Throwable`; поэтому в корутинах `CancellationException` нужно явно пробрасывать обратно."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Result<T>` при успехе хранит значение, а при ошибке — строковое сообщение исключения, без самого объекта `Throwable`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Result.failure` хранит сам объект `Throwable` целиком (со стектрейсом и причиной), доступный через `exceptionOrNull()`, а не только текст.",
+                "source_of_confusion": "Часто из `Result` извлекают `.message`, и складывается впечатление, что внутри лишь строка.",
+                "if_it_were_true": "Тогда нельзя было бы сделать `result.getOrThrow()` с исходным исключением, но `Result` пробрасывает именно оригинальный `Throwable`.",
+                "how_it_should_be": "`Result.failure(exception)` хранит полный объект исключения; `exceptionOrNull()` и `getOrThrow()` работают с ним целиком."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие операторы доступны у `Result<T>`?",
+          "options": [
+            {
+              "text": "У `Result<T>` есть только два метода: `isSuccess` и `isFailure`; для всего остального нужно вручную распаковывать значение через `when`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Помимо флагов `isSuccess`/`isFailure`, `Result` имеет десяток операторов — `map`, `recover`, `fold`, `getOrElse`, `onFailure` и др. — для функциональной обработки без ручного `when`.",
+                "source_of_confusion": "Флаги `isSuccess`/`isFailure` бросаются в глаза первыми, отсюда вывод об их единственности.",
+                "if_it_were_true": "Тогда нельзя было бы написать `result.map { ... }.getOrElse { ... }`, но эта цепочка работает в стандартной библиотеке.",
+                "how_it_should_be": "API богато: `getOrNull`, `getOrElse`, `map`, `recover`, `fold`, `onSuccess`/`onFailure` — ручной разбор через `when` необязателен."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Result<T>` предоставляет богатый набор операторов: извлечение (`getOrNull`, `getOrDefault`, `getOrElse`, `getOrThrow`), трансформацию (`map`, `mapCatching`), восстановление (`recover`, `recoverCatching`), побочные эффекты (`onSuccess`, `onFailure`) и свёртку обоих случаев через `fold`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Операторы делятся на группы: одни извлекают значение с разным поведением при ошибке, `map`/`recover` строят цепочки трансформаций, а `*Catching`-варианты дополнительно перехватывают исключения внутри лямбды. Это позволяет обрабатывать ошибку функционально, без вложенных `try`.",
+                "example": "`runCatching { fetchUser(id) }.map { it.displayName }.recover { \"Anonymous\" }.getOrThrow()` — трансформирует успешное значение, заменяет ошибку на дефолт и извлекает результат.",
+                "when_to_apply": "Использовать для декларативной обработки результата: `mapCatching` — когда трансформация сама может упасть, `onFailure` — для логирования, `getOrElse` — для fallback с доступом к исключению.",
+                "edge_cases": "`map` не перехватывает исключение внутри своей лямбды (оно пробросится), а `mapCatching` — перехватывает и заворачивает в новый `Result.failure`; это ключевое различие пары.",
+                "related": "[[kotlin-exceptions-interview#Q5]] что такое runCatching и Result; [[kotlin-exceptions-interview#Q33]] Result как альтернатива try-catch; [[kotlin-exceptions-interview#Q8]] когда выбирать Result."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Оператор `recover { e -> ... }` применяется только к успешному `Result` и трансформирует его значение, а при ошибке ничего не делает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`recover` работает ровно наоборот: он срабатывает на `Result.failure`, заменяя ошибку на значение; успешный `Result` он пропускает без изменений.",
+                "source_of_confusion": "`recover` синтаксически похож на `map` (оба берут лямбду), поэтому их поведение путают.",
+                "if_it_were_true": "Тогда `runCatching { fail() }.recover { 0 }` оставался бы failure, но фактически он станет `success(0)`.",
+                "how_it_should_be": "`recover` обрабатывает ветку ошибки (заменяет на значение); `map` обрабатывает ветку успеха — это зеркальные операторы."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Метод `fold` у `Result` сворачивает коллекцию из нескольких `Result` в один общий, агрегируя их значения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`fold(onSuccess, onFailure)` у `Result` принимает две лямбды и обрабатывает один экземпляр (ветку успеха или ошибки), а не сворачивает коллекцию.",
+                "source_of_confusion": "Имя `fold` совпадает с `fold` на коллекциях, где идёт агрегация, и смыслы смешивают.",
+                "if_it_were_true": "Тогда `fold` принимал бы список `Result` и начальное значение, но его сигнатура — две функции-обработчика для одного `Result`.",
+                "how_it_should_be": "`Result.fold` — это свёртка двух веток одного результата в общий тип; агрегация списков — это `fold` на коллекциях."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему `Result` исторически нельзя было использовать как тип возврата публичной функции и как с этим сейчас?",
+          "options": [
+            {
+              "text": "Потому что `Result` хранит исключение, а возвращать исключение из функции в `Kotlin` запрещено правилами языка на уровне синтаксиса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запрет был техническим (стирание `value class` до `Object` и конфликты сигнатур), а не из-за «исключения внутри» — возвращать тип, содержащий `Throwable`, язык не запрещает.",
+                "source_of_confusion": "`Result` ассоциируется с исключением, и кажется, что причина запрета — именно в хранимом `Throwable`.",
+                "if_it_were_true": "Тогда и `sealed class` с полем `Throwable` нельзя было бы возвращать, но такие типы всегда были разрешены.",
+                "how_it_should_be": "Причина — представление `value class` как `Object` в байткоде и конфликты перегрузки/интеропа, а не наличие исключения внутри."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Потому что `Result` — это `abstract class`, а абстрактные классы в `Kotlin` нельзя указывать в возвращаемом типе функции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Result` — это `@JvmInline value class` (inline class), а не абстрактный класс, и абстрактные типы как тип возврата язык вполне допускает.",
+                "source_of_confusion": "У `Result` есть варианты success/failure, что напоминает абстрактную иерархию с подклассами.",
+                "if_it_were_true": "Тогда и любой `sealed class` (тоже абстрактный) нельзя было бы возвращать, но это распространённый и легальный приём.",
+                "how_it_should_be": "`Result` — `inline value class`; именно его стирание до `Object`, а не «абстрактность», вызывало ограничение."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "До `Kotlin 1.5` компилятор запрещал `Result<T>` как возвращаемый тип функции, свойства или параметра, потому что `Result` — `inline value class`, представленный в байткоде как `Object`, что создавало конфликты с перегрузкой и Java-интеропом; с `Kotlin 1.5` ограничение снято.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поскольку `value class` инлайнится, в байткоде `Result<User>` и, скажем, `User` могли иметь одинаковую стёртую сигнатуру, ломая overload-resolution и интероп. Сейчас использовать `Result` в сигнатурах можно, но для доменных ошибок часто выразительнее `sealed class`.",
+                "example": "`fun findUser(id: Long): Result<User>` теперь допустимо, но `sealed class UserResult { data class Found...; data class NotFound...; data class AccessDenied... }` даёт типизированные варианты вместо единственного `Throwable`.",
+                "when_to_apply": "Возвращать `Result` уместно для «успех/исключение» на границах; для богатой доменной ошибки с несколькими исходами предпочесть `sealed class` или `Arrow Either`.",
+                "edge_cases": "В очень ранних версиях обойти запрет можно было через `suspend`-функцию или обёртку в другой тип, но после `1.5` такие трюки не нужны.",
+                "related": "[[kotlin-exceptions-interview#Q22]] sealed class против исключений; [[kotlin-exceptions-interview#Q23]] проектирование sealed-иерархии ошибок; [[kotlin-exceptions-interview#Q33]] Result как value class и его ограничения."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Запрет действует и сейчас, в актуальных версиях `Kotlin`: вернуть `Result` из публичной функции по-прежнему невозможно без обёртки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Начиная с `Kotlin 1.5` ограничение снято — `Result` можно свободно использовать в сигнатурах функций, свойств и параметров.",
+                "source_of_confusion": "Старые статьи и ответы описывают запрет до 1.5, и их выводы принимают за актуальные.",
+                "if_it_were_true": "Тогда в современном коде `fun parseAge(s: String): Result<Int>` не компилировался бы, но он компилируется без обёрток.",
+                "how_it_should_be": "Запрет был исторически (до 1.5); сейчас `Result` допустим в публичных сигнатурах, хотя для доменных ошибок часто лучше `sealed class`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `Result`/`runCatching` отличается от `try-catch` и когда что использовать?",
+          "options": [
+            {
+              "text": "Разницы по сути нет: `runCatching` — это просто синтаксический сахар над `try-catch`, полностью идентичный по возможностям, включая `finally`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `runCatching` нет блока `finally` и он превращает ошибку в значение `Result`, тогда как `try-catch` оставляет её в control flow и поддерживает гарантированную очистку.",
+                "source_of_confusion": "`runCatching` действительно реализован через `try-catch` внутри, отсюда вывод о полной эквивалентности.",
+                "if_it_were_true": "Тогда у `runCatching` был бы `finally`-параметр для освобождения ресурсов, но его нет — нужен отдельный `try` или `use()`.",
+                "how_it_should_be": "`runCatching` даёт ошибку-значение без `finally`; для очистки ресурсов всё равно используют `try-catch` или `use()`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`try-catch` нельзя использовать для доменных ошибок вообще: бизнес-исключения обязаны идти только через `Result`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`try-catch` применим и для доменных ошибок (например, на границе контроллера), просто `Result`/`sealed` часто выразительнее для компонуемых сценариев.",
+                "source_of_confusion": "Рекомендация «доменную ошибку лучше как значение» преувеличивают до полного запрета `try-catch`.",
+                "if_it_were_true": "Тогда перехват доменного исключения в `@ExceptionHandler` был бы недопустим, но это стандартная и рабочая практика Spring.",
+                "how_it_should_be": "Оба инструмента валидны; `Result` предпочтителен для компоновки, `try-catch` — для границ, `finally` и фатальных ошибок."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Result` всегда производительнее `try-catch`, потому что вообще не создаёт объект исключения и не заполняет стектрейс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`runCatching` внутри ловит реальное исключение (со стектрейсом) и кладёт его в `Result.failure`, поэтому объект `Throwable` создаётся так же, как в `try-catch`.",
+                "source_of_confusion": "Функциональный стиль кажется «лёгким», и из этого делают вывод об отсутствии накладных расходов исключения.",
+                "if_it_were_true": "Тогда `result.exceptionOrNull()?.stackTrace` был бы пустым, но он содержит полный стектрейс пойманного исключения.",
+                "how_it_should_be": "Выбор между ними — про стиль и компонуемость, а не про производительность: исключение и его стектрейс создаются в обоих случаях."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Result`/`runCatching` — функциональный стиль, где ошибка становится значением (данными) и компонуется через `map`/`recover`/`fold`; `try-catch` — императивный стиль с ошибкой как control flow, вложенными блоками и поддержкой `finally` для очистки ресурсов.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Result` уместен, когда ошибка — часть доменной логики (файл не найден, невалидный формат), её нужно передать выше как данные или скомпоновать несколько падающих операций. `try-catch` уместен для очистки ресурсов через `finally`, перехвата на границе приложения и фатальных ошибок.",
+                "example": "Внутри функции можно совместить оба: `try-catch` с `finally` для закрытия ресурса внутри, а наружу вернуть `Result`, чтобы вызывающий обработал ошибку функционально.",
+                "when_to_apply": "Выбирать `Result` для компонуемой доменной ошибки-значения; `try-catch` — когда нужен `finally`, перехват на контроллере/`main` или обработка неожиданных сбоев.",
+                "edge_cases": "У `Result`/`runCatching` нет аналога `finally`, поэтому для гарантированного освобождения ресурсов всё равно нужен `try-catch` или функция `use()`.",
+                "related": "[[kotlin-exceptions-interview#Q5]] что такое runCatching; [[kotlin-exceptions-interview#Q13]] use() для гарантированной очистки ресурсов; [[kotlin-exceptions-interview#Q34]] когда лучше явный try-catch."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Для чего нужны функции `require`, `check` и `error` в `Kotlin`?",
+          "options": [
+            {
+              "text": "Это три stdlib-функции для fail-fast валидации: `require(condition)` проверяет аргументы и при провале бросает `IllegalArgumentException`, `check(condition)` проверяет состояние и бросает `IllegalStateException`, а `error(message)` безусловно прерывает выполнение через `IllegalStateException`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Они делают предусловия явными и падают как можно раньше с осмысленным сообщением. Семантика разделена намеренно: «плохой аргумент» (`require`) против «недопустимое состояние объекта» (`check`/`error`), что облегчает диагностику.",
+                "example": "`require(amount > BigDecimal.ZERO) { \"Amount must be positive: $amount\" }` и `check(from.isActive) { \"Account ${from.id} is inactive\" }` валидируют вход и состояние; `error(\"Insufficient funds\")` прерывает невозможную ветку.",
+                "when_to_apply": "Использовать в начале функций как контракт API: `require` — для входных параметров, `check` — для инвариантов состояния, `error` — для веток, которые не должны достигаться.",
+                "edge_cases": "Варианты `requireNotNull(value)` и `checkNotNull(value)` дополнительно возвращают non-null значение со smart cast; все эти функции в ветке ошибки имеют тип `Nothing`, поэтому компилятор корректно сужает типы после них.",
+                "related": "[[kotlin-exceptions-interview#Q3]] тип Nothing в ветке ошибки; [[kotlin-exceptions-interview#Q10]] assert против require/check; [[kotlin-exceptions-interview#Q35]] Nothing в функциях-бросателях."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`require`, `check` и `error` срабатывают только при включённом флаге JVM `-ea` и в продакшн-сборке полностью пропускаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это поведение `assert`, а не `require`/`check`/`error`: последние работают всегда, независимо от флагов, и в продакшне тоже выбрасывают исключения.",
+                "source_of_confusion": "Все они «проверяют условие», поэтому их легко спутать с отключаемым `assert`.",
+                "if_it_were_true": "Тогда `require(amount > 0)` в проде молча пропускал бы отрицательную сумму, но фактически он бросит `IllegalArgumentException`.",
+                "how_it_should_be": "`require`/`check`/`error` — всегда активны (контракт API); отключается флагом `-ea` только `assert`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`require` и `check` взаимозаменяемы и бросают одно и то же исключение `IllegalArgumentException`, разница только в названии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`require` бросает `IllegalArgumentException` (плохой аргумент), а `check` — `IllegalStateException` (недопустимое состояние); тип исключения разный и несёт семантику.",
+                "source_of_confusion": "Сигнатуры функций почти одинаковы, поэтому разницу в типе исключения упускают.",
+                "if_it_were_true": "Тогда `catch (e: IllegalStateException)` ловил бы и провал `require`, но провал `require` — это `IllegalArgumentException`.",
+                "how_it_should_be": "`require` → `IllegalArgumentException` для аргументов; `check`/`error` → `IllegalStateException` для состояния — это разные типы."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`error(message)` лишь логирует сообщение на уровне ERROR и возвращает `Unit`, не прерывая выполнение функции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`error(message)` не логирует, а безусловно бросает `IllegalStateException`; его возвращаемый тип — `Nothing`, то есть выполнение после него не продолжается.",
+                "source_of_confusion": "Имя `error` совпадает с уровнем логирования ERROR, отсюда вывод про запись в лог.",
+                "if_it_were_true": "Тогда код после `error(\"...\")` выполнялся бы дальше, но компилятор считает его недостижимым из-за типа `Nothing`.",
+                "how_it_should_be": "`error` — это `throw IllegalStateException(message)` с типом `Nothing`; логирование — отдельная ответственность."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `assert` отличается от `require`/`check`?",
+          "options": [
+            {
+              "text": "`assert` отличается от `require`/`check` только типом исключения: `assert` бросает `IllegalStateException`, а `require` — `AssertionError`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот по типам и сути: `assert` бросает `AssertionError` (и только при `-ea`), а `require` — `IllegalArgumentException`; ключевое отличие — отключаемость `assert`, а не тип.",
+                "source_of_confusion": "Все три «проверяют условие», поэтому различие сводят к мелочи вроде типа исключения.",
+                "if_it_were_true": "Тогда `assert` работал бы в продакшне как `check`, но без флага `-ea` он просто не выполняется.",
+                "how_it_should_be": "Главное отличие — `assert` отключаем флагом `-ea` и для отладки; `require`/`check` всегда активны и являются контрактом."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`assert(condition)` — отладочная проверка, которая выполняется только при включённом флаге JVM `-ea` (`-enableassertions`) и в продакшн-сборке пропускается, тогда как `require`/`check` работают всегда и предназначены для контрактов API.",
+              "correct": true,
+              "sections": {
+                "explanation": "`assert` бросает `AssertionError` лишь при активных ассерциях, поэтому полагаться на него в продакшне для валидации нельзя. `require`/`check` — это часть контракта: они выполняются всегда и бросают `IllegalArgumentException`/`IllegalStateException`.",
+                "example": "`assert(index >= 0) { \"index must be non-negative\" }` проверит инвариант при запуске тестов с `-ea`, но в проде без флага не сработает; для гарантированной проверки аргумента используют `require(index >= 0)`.",
+                "when_to_apply": "Использовать `assert` для отладочных допущений «это должно быть true, но не уверен», которые безопасно отключить; для валидации входов и инвариантов всегда брать `require`/`check`.",
+                "edge_cases": "В большинстве серверных запусков `-ea` выключен, поэтому `assert` там — фактически no-op; критичную валидацию никогда нельзя строить только на нём.",
+                "related": "[[kotlin-exceptions-interview#Q9]] назначение require/check/error; [[kotlin-exceptions-interview#Q28]] fail-fast валидация в рекомендациях; [[kotlin-exceptions-interview#Q30]] анти-паттерны обработки ошибок."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`assert` выполняется в продакшне всегда, а `require`/`check` — только в тестах, поэтому валидацию аргументов делают через `assert`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Зависимость от среды обратная: это `assert` пропускается в продакшне без `-ea`, а `require`/`check` выполняются всегда, в том числе в проде.",
+                "source_of_confusion": "Слово «assert» звучит строго и «production-grade», что создаёт ложное доверие к нему как к надёжной проверке.",
+                "if_it_were_true": "Тогда отключение ассерций ломало бы тесты, но обычно `-ea` включают именно для тестов, а в проде валидацию держит `require`.",
+                "how_it_should_be": "Контрактную валидацию делают через `require`/`check` (всегда активны); `assert` оставляют для отключаемых отладочных проверок."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Никакой разницы нет: `assert`, `require` и `check` — синонимы, и компилятор разворачивает их в один и тот же байткод.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они различаются по активности (assert отключаем) и по типу исключения (`AssertionError` против `IllegalArgumentException`/`IllegalStateException`), то есть это разные инструменты.",
+                "source_of_confusion": "Внешне похожий синтаксис «функция + условие + сообщение» создаёт впечатление полной взаимозаменяемости.",
+                "if_it_were_true": "Тогда поведение кода не менялось бы от флага `-ea`, но с ассерциями и без них `assert` ведёт себя по-разному.",
+                "how_it_should_be": "Это разные функции: `assert` — отключаемая отладка; `require`/`check` — всегда работающий контракт с разными типами исключений."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает аннотация `@Throws` для Java-интеропа?",
+          "options": [
+            {
+              "text": "`@Throws` заставляет компилятор `Kotlin` требовать обработки помеченного исключения у всех вызывающих, включая Kotlin-код.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотация влияет только на байткод для `Java`-вызывающих; в самом `Kotlin` помеченное исключение остаётся `unchecked`, и обрабатывать его необязательно.",
+                "source_of_confusion": "Имя `@Throws` похоже на Java-клаузу `throws`, отсюда вывод, что оно вводит `checked` и для `Kotlin`.",
+                "if_it_were_true": "Тогда вызов `readConfig(...)` из `Kotlin` без `try-catch` не компилировался бы, но он компилируется свободно.",
+                "how_it_should_be": "`@Throws` — метаданные исключительно для `Java`-интеропа; компилятор `Kotlin` обработки по-прежнему не требует."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@Throws` перехватывает указанное исключение внутри функции и автоматически логирует его перед пробросом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотация ничего не перехватывает и не логирует — она лишь добавляет клаузу `throws` в байткод; исключение пробрасывается как обычно.",
+                "source_of_confusion": "Слово «Throws» рядом с обработкой ошибок наводит на мысль о встроенной логике перехвата/логирования.",
+                "if_it_were_true": "Тогда `@Throws`-функция писала бы в лог при каждом исключении, но никакого логирования аннотация не генерирует.",
+                "how_it_should_be": "`@Throws` лишь декларирует `throws` в сигнатуре байткода для `Java`; перехват и логирование — это явный код в теле."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@Throws(IOException::class)` добавляет объявление `throws` в сгенерированный байткод метода, благодаря чему `Java`-код видит исключение как `checked` и компилятор `Java` потребует его обработки через `try-catch` или `throws`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без `@Throws` `Java`-код сможет вызвать Kotlin-функцию без обработки, и если исключение возникнет, оно пролетит как unchecked, приводя к неожиданному `crash`. Аннотация лишь добавляет метаданные `throws` в байткод; на сам `Kotlin` она не влияет.",
+                "example": "`@Throws(IOException::class) fun readConfig(path: String): Config` в байткоде станет `Config readConfig(String) throws IOException`, и Java-код будет обязан обернуть вызов в `try { ... } catch (IOException e) { ... }`.",
+                "when_to_apply": "Ставить `@Throws` на Kotlin-функции, которые вызываются из `Java` и могут бросить исключение, важное для обработки на стороне `Java`; можно указать несколько типов.",
+                "edge_cases": "Внутри самого `Kotlin` исключение остаётся `unchecked` даже с `@Throws` — аннотация не заставит Kotlin-вызывающего писать `try-catch`.",
+                "related": "[[kotlin-exceptions-interview#Q1]] отсутствие checked exceptions в Kotlin; [[kotlin-exceptions-interview#Q12]] вызов Java-кода с checked exceptions; [[kotlin-exceptions-interview#Q37]] @Throws с inline-функциями."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@Throws` можно указать только для одного типа исключения; для нескольких типов аннотацию применить нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Throws` принимает список классов, например `@Throws(IOException::class, ParseException::class)`, — несколько типов указываются штатно.",
+                "source_of_confusion": "Часто видят `@Throws` с единственным типом, отсюда вывод об ограничении в один класс.",
+                "if_it_were_true": "Тогда метод, бросающий два разных checked-исключения, нельзя было бы корректно объявить для `Java`, но `@Throws` это позволяет.",
+                "how_it_should_be": "`@Throws` принимает несколько классов исключений сразу, и все они попадут в клаузу `throws` байткода."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как из `Kotlin` вызывать Java-код с `checked exceptions`?",
+          "options": [
+            {
+              "text": "Нужно обязательно обернуть вызов в `try-catch` или объявить функцию через `throws`, иначе Kotlin-код не скомпилируется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Kotlin` не имеет `checked`-механизма и ключевого слова `throws` для сигнатур, поэтому Java-метод с `throws IOException` вызывается без всякой обязательной обработки.",
+                "source_of_confusion": "Привычка к Java-правилам, где `checked`-исключение обязывает к `try-catch` или `throws`, переносится на `Kotlin`.",
+                "if_it_were_true": "Тогда `stream.close()` из `Kotlin` не компилировался бы без обёртки, но он компилируется как обычный вызов.",
+                "how_it_should_be": "Обработка по желанию: компилятор `Kotlin` не требует ни `try-catch`, ни проброса для Java checked-исключений."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Перед вызовом Java-метода с `checked exception` его нужно пометить аннотацией `@Throws`, иначе исключение потеряется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Throws` ставят на Kotlin-функции для вызова их из `Java`, а не наоборот; для вызова Java-кода из `Kotlin` аннотация не нужна и исключение не теряется.",
+                "source_of_confusion": "`@Throws` связана с интеропом исключений, и её роль ошибочно распространяют на оба направления вызова.",
+                "if_it_were_true": "Тогда любой вызов Java-IO из `Kotlin` требовал бы пометки `@Throws`, но миллионы вызовов Java-библиотек обходятся без неё.",
+                "how_it_should_be": "`@Throws` нужна только для направления `Kotlin → Java`; при вызове Java-кода из `Kotlin` никаких аннотаций ставить не требуется."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Java checked-исключение автоматически конвертируется в `RuntimeException` при пересечении границы языков, теряя исходный тип.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тип исключения сохраняется: `IOException` остаётся `IOException`, его можно поймать по конкретному классу — `unchecked` означает лишь необязательность обработки, а не подмену типа.",
+                "source_of_confusion": "Понятие «unchecked» в Java связано с `RuntimeException`, отсюда вывод о конвертации в него.",
+                "if_it_were_true": "Тогда `catch (e: IOException)` в `Kotlin` никогда не срабатывал бы, но он успешно ловит оригинальный `IOException`.",
+                "how_it_should_be": "Исходный тип исключения не меняется; меняется лишь правило — компилятор `Kotlin` не обязывает его обрабатывать."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Просто как обычную функцию: `Kotlin` не различает `checked` и `unchecked` исключения, поэтому Java-метод с `throws IOException` вызывается без обязательной обработки — компилятор `Kotlin` не требует `try-catch` или проброса.",
+              "correct": true,
+              "sections": {
+                "explanation": "Все исключения из Java-кода при использовании из `Kotlin` становятся `unchecked`. Ответственность за обработку ложится на разработчика, а не на компилятор: можно поймать исключение по желанию, но язык к этому не принуждает.",
+                "example": "`stream.close()` (где Java объявляет `void close() throws IOException`) компилируется без обёртки; при желании можно добавить `try { stream.close() } catch (e: IOException) { logger.warn(...) }`.",
+                "when_to_apply": "Помнить об этом при работе с Java-библиотеками: потенциально опасные вызовы (IO, парсинг) стоит сознательно оборачивать в `try-catch`, потому что компилятор не подскажет.",
+                "edge_cases": "Поскольку нет принуждения, легко забыть обработать важное Java-исключение; для критичных мест полезно явно ловить конкретный тип, а не полагаться на отсутствие предупреждений.",
+                "related": "[[kotlin-exceptions-interview#Q1]] все исключения Kotlin unchecked; [[kotlin-exceptions-interview#Q11]] @Throws для обратного направления; [[kotlin-exceptions-interview#Q13]] use() для Java Closeable."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает функция `use()` для `Closeable`?",
+          "options": [
+            {
+              "text": "`use()` — extension-функция на `Closeable`/`AutoCloseable`, аналог Java `try-with-resources`: она выполняет переданный блок и гарантированно закрывает ресурс после него, даже если внутри было выброшено исключение, а также возвращает результат блока.",
+              "correct": true,
+              "sections": {
+                "explanation": "Под капотом `use()` оборачивает блок в `try` и в любом случае вызывает `close()`. Если и блок, и `close()` бросают исключения, исключение из `close()` добавляется к основному через `addSuppressed()` — как в Java `try-with-resources`.",
+                "example": "`File(\"data.txt\").bufferedReader().use { reader -> reader.lineSequence().forEach(::println) }` гарантированно закроет reader; `val bytes = File(\"f\").inputStream().use { it.readBytes() }` возвращает результат блока.",
+                "when_to_apply": "Использовать всегда при работе с `Closeable` (файлы, потоки, соединения), чтобы не утекали ресурсы; для нескольких ресурсов применяют вложенные вызовы `use`.",
+                "edge_cases": "Для нескольких ресурсов приходится вкладывать `use`, что менее элегантно, чем Java-перечисление через `;`; зато `use()` работает с любым `Closeable`, включая самописный.",
+                "related": "[[kotlin-exceptions-interview#Q14]] use() против try-with-resources; [[kotlin-exceptions-interview#Q8]] try-catch и finally для ресурсов; [[kotlin-exceptions-interview#Q28]] рекомендация всегда использовать use()."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`use()` выполняет блок, но закрывает ресурс только при нормальном завершении; если в блоке вылетело исключение, `close()` не вызывается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`use()` гарантирует вызов `close()` в любом случае — и при успехе, и при исключении в блоке: ресурс закрывается через `try`/`finally`-механику внутри.",
+                "source_of_confusion": "Закрытие «после блока» воспринимают как «только при успешном завершении блока».",
+                "if_it_were_true": "Тогда при ошибке чтения файл оставался бы открытым, но смысл `use()` — именно закрыть ресурс даже при исключении.",
+                "how_it_should_be": "`close()` вызывается всегда: и при штатном выходе, и при выброшенном из блока исключении (которое затем пробрасывается)."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`use()` — это statement и не возвращает значения, поэтому результат блока нужно сохранять во внешнюю `var`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`use()` возвращает результат блока как выражение: `val bytes = stream.use { it.readBytes() }` присваивает значение напрямую.",
+                "source_of_confusion": "Java `try-with-resources` — это statement без значения, и модель переносят на `use()`.",
+                "if_it_were_true": "Тогда `val lines = reader.use { it.readLines() }` не компилировался бы, но это идиоматичный Kotlin-код.",
+                "how_it_should_be": "`use()` — выражение, возвращающее результат лямбды; внешняя мутабельная переменная не требуется."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Если и блок, и `close()` бросают исключения, `use()` проглатывает исключение из блока и пробрасывает только ошибку из `close()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`use()` пробрасывает основное исключение из блока, а ошибку из `close()` добавляет к нему как `suppressed` через `addSuppressed()`, ничего не теряя.",
+                "source_of_confusion": "`close()` вызывается последним по времени, отсюда вывод, что именно его исключение «побеждает».",
+                "if_it_were_true": "Тогда исходная причина сбоя терялась бы за ошибкой закрытия, но `use()` сохраняет обе через suppressed-механизм.",
+                "how_it_should_be": "Пробрасывается основное исключение блока; исключение из `close()` присоединяется к нему как suppressed."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `use()` отличается от `try-with-resources` в Java?",
+          "options": [
+            {
+              "text": "`use()` — это ключевое слово языка `Kotlin`, такое же встроенное, как `try` в Java, а не библиотечная функция.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`use()` — это обычная extension-функция стандартной библиотеки на `Closeable`/`AutoCloseable`, а не синтаксическая конструкция языка.",
+                "source_of_confusion": "По удобству `use { }` ощущается как языковая конструкция, поэтому его принимают за ключевое слово.",
+                "if_it_were_true": "Тогда `use` был бы зарезервированным словом и его нельзя было бы переопределить, но это вызываемая функция из stdlib.",
+                "how_it_should_be": "`use()` — библиотечная extension-функция; в отличие от неё Java `try-with-resources` действительно конструкция языка."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`use()` — это extension-функция (часть библиотеки), которая возвращает значение и для нескольких ресурсов требует вложенных вызовов, тогда как Java `try-with-resources` — языковая конструкция-statement без значения, перечисляющая несколько ресурсов через `;` в одном блоке.",
+              "correct": true,
+              "sections": {
+                "explanation": "Обе конструкции гарантируют закрытие и поддерживают suppressed-исключения, но различаются формой: `use()` гибче (работает с любым `Closeable`, в том числе самописным, и даёт результат), а Java-вариант удобнее перечисляет много ресурсов в одной строке.",
+                "example": "`val lines = File(\"data.txt\").bufferedReader().use { it.readLines() }` возвращает список как выражение; Java-эквивалент `try (var reader = ...) { lines = reader.lines().toList(); }` — это statement, где `lines` объявляется снаружи.",
+                "when_to_apply": "`use()` удобен, когда нужен результат блока и один-два ресурса; при множестве ресурсов Java-перечисление через `;` читается чище, чем вложенные `use`.",
+                "edge_cases": "Недостаток `use()` — вложенность при нескольких ресурсах; зато он не привязан к синтаксису языка и расширяется на любой `Closeable`.",
+                "related": "[[kotlin-exceptions-interview#Q13]] как работает use() под капотом; [[kotlin-exceptions-interview#Q2]] use() как выражение возвращает значение; [[kotlin-exceptions-interview#Q8]] finally против use() для ресурсов."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "В отличие от Java, `use()` не поддерживает suppressed-исключения: при двойном сбое теряется одно из исключений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`use()` поддерживает suppressed-исключения так же, как Java: ошибка из `close()` присоединяется к основному через `addSuppressed()`, ничего не теряя.",
+                "source_of_confusion": "Будучи библиотечной функцией, `use()` кажется «менее мощным», чем языковая конструкция, отсюда вывод об отсутствии suppressed.",
+                "if_it_were_true": "Тогда диагностика двойного сбоя в `Kotlin` была бы хуже, чем в Java, но обе платформы сохраняют оба исключения.",
+                "how_it_should_be": "Suppressed-исключения поддерживаются обеими конструкциями; различия — в синтаксисе, возврате значения и работе с несколькими ресурсами."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Java `try-with-resources` возвращает значение последнего ресурса, а `use()` — нет, поэтому Java здесь выразительнее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `use()` возвращает результат блока как выражение, а Java `try-with-resources` — statement и значения не возвращает.",
+                "source_of_confusion": "Языковую конструкцию интуитивно считают «более полноценной», и возврат значения приписывают именно ей.",
+                "if_it_were_true": "Тогда в Java можно было бы написать `var x = try (...) { ... }`, но такой синтаксис недопустим, а в Kotlin `val x = ...use { ... }` работает.",
+                "how_it_should_be": "Значение возвращает именно `use()` (выражение); Java `try-with-resources` — statement, и результат пишут во внешнюю переменную."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как распространяются исключения в корутинах?",
+          "options": [
+            {
+              "text": "Исключение в дочерней корутине остаётся локальным: оно никак не влияет на родителя и siblings, каждая корутина падает независимо по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию (обычный `Job`) сбой ребёнка отменяет родителя и всех siblings; независимость даёт только `SupervisorJob`/`supervisorScope`, а не поведение по умолчанию.",
+                "source_of_confusion": "Изолированное поведение `SupervisorJob` ошибочно считают дефолтным для всех корутин.",
+                "if_it_were_true": "Тогда падение одного `launch` не трогало бы соседний `delay`, но в обычном scope соседний `launch` будет отменён.",
+                "how_it_should_be": "По умолчанию сбой каскадно отменяет всю группу (fail-fast); изоляция включается явно через supervisor."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Исключения распространяются вниз по иерархии: сбой родителя бросает исключение в каждого ребёнка, а сбой ребёнка наверх не идёт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Исключение (ошибка) распространяется вверх — от ребёнка к родителю; вниз по иерархии идёт отмена (cancel), а не выброс исходного исключения.",
+                "source_of_confusion": "Отмена действительно течёт вниз, и её путают с распространением самого исключения.",
+                "if_it_were_true": "Тогда родитель не узнавал бы о сбое ребёнка, но именно так он его получает и решает отменять группу.",
+                "how_it_should_be": "Ошибка поднимается вверх (child → parent), а вниз родитель рассылает отмену остальным детям."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Исключения распространяются вверх по иерархии `Job`: необработанное исключение в дочерней корутине отменяет родительский `Job`, что каскадно отменяет всех остальных детей (siblings) — это и есть structured concurrency, где сбой одного ребёнка означает сбой всей группы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поведение по умолчанию — fail-fast: упавшая корутина уведомляет родителя, тот отменяет себя и других детей. Изменить это можно тремя способами: `try-catch` внутри корутины, глобальный `CoroutineExceptionHandler` для root-корутин или `SupervisorJob` для изоляции сбоев.",
+                "example": "В `scope.launch { launch { throw RuntimeException(\"fail\") }; launch { delay(1000) } }` исключение первого дочернего `launch` отменит весь scope, и второй `launch` с `delay` будет отменён, не завершившись.",
+                "when_to_apply": "Учитывать при проектировании групп корутин: для связанных операций fail-fast уместен, для независимых задач нужен `SupervisorJob`/`supervisorScope`, чтобы сбой одной не ронял остальные.",
+                "edge_cases": "`async` ведёт себя иначе — откладывает исключение до `await()`; а `CancellationException` распространяется, но не считается ошибкой и не вызывает `CoroutineExceptionHandler`.",
+                "related": "[[kotlin-exceptions-interview#Q16]] CoroutineExceptionHandler для root-корутин; [[kotlin-exceptions-interview#Q17]] SupervisorJob против обычного Job; [[kotlin-exceptions-interview#Q38]] propagation в structured concurrency."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Все исключения корутин всегда перехватываются глобальным `Thread.uncaughtExceptionHandler` и никогда не отменяют другие корутины.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Необработанное исключение сначала отменяет родителя и siblings по structured concurrency; `uncaughtExceptionHandler` — лишь конечная точка, если нет `CoroutineExceptionHandler`, и отмену группы он не предотвращает.",
+                "source_of_confusion": "Финальная точка падения (uncaught handler) воспринимается как единственный механизм обработки.",
+                "if_it_were_true": "Тогда соседние корутины продолжали бы работать после сбоя, но в обычном scope они отменяются вместе с родителем.",
+                "how_it_should_be": "Сначала срабатывает каскадная отмена группы; глобальный handler — лишь последний приёмник необработанного исключения root-корутины."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `CoroutineExceptionHandler` и когда он срабатывает?",
+          "options": [
+            {
+              "text": "`CoroutineExceptionHandler` перехватывает исключения в любой корутине, включая дочерние и `async`, заменяя собой `try-catch`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Handler срабатывает только для root-корутин с `launch`; в дочерних исключение идёт к родителю, а в `async` откладывается до `await()` — он не универсальная замена `try-catch`.",
+                "source_of_confusion": "Название «exception handler» создаёт впечатление глобального перехватчика всех исключений.",
+                "if_it_were_true": "Тогда исключение из `async { ... }` сразу попадало бы в handler, но оно ждёт вызова `await()` и handler его не получает.",
+                "how_it_should_be": "Handler — для необработанных исключений root-`launch`; для дочерних и `async` нужны другие механизмы (структурная отмена, `await` с `try-catch`)."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`CoroutineExceptionHandler` обрабатывает `CancellationException` так же, как любые другие исключения — логирует и завершает корутину.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Handler НЕ вызывается для `CancellationException`: отмена — это нормальный сигнал кооперативной отмены, а не ошибка, и обработчик её игнорирует.",
+                "source_of_confusion": "`CancellationException` — тоже `Throwable`, поэтому кажется, что handler должен ловить и его.",
+                "if_it_were_true": "Тогда каждая штатная отмена корутины писала бы ошибку в лог через handler, но этого не происходит.",
+                "how_it_should_be": "`CancellationException` — особый случай: он не считается ошибкой и не попадает в `CoroutineExceptionHandler`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Чтобы `CoroutineExceptionHandler` сработал, его нужно устанавливать в контекст каждой дочерней корутины отдельно, а в root-scope он бесполезен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: handler действует именно для root-корутин scope; установка его на дочернюю корутину обычно игнорируется, так как исключение всё равно поднимается к родителю.",
+                "source_of_confusion": "Кажется логичным «ставить обработчик ближе к месту ошибки», то есть на дочернюю корутину.",
+                "if_it_were_true": "Тогда handler в `CoroutineScope(SupervisorJob() + handler)` не работал бы, но это и есть рабочая идиома.",
+                "how_it_should_be": "Handler ставят в контекст root-scope; на дочерних корутинах он не вступает в силу, потому что ошибка уходит к родителю."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`CoroutineExceptionHandler` — элемент контекста корутины, который вызывается для необработанных исключений, но срабатывает только для root-корутин (запущенных напрямую в scope) и только с `launch`, а не с `async`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Он играет роль «последнего рубежа»: ловит исключение, которое иначе стало бы unhandled, чтобы залогировать его или отправить метрику. Для дочерних (не root) корутин он не работает — там исключение поднимается к родителю по structured concurrency.",
+                "example": "`val handler = CoroutineExceptionHandler { ctx, e -> logger.error(\"Unhandled\", e) }`, затем `CoroutineScope(SupervisorJob() + handler)`: `launch { throw ... }` передаст исключение в handler, а соседний `launch` с `SupervisorJob` продолжит работу.",
+                "when_to_apply": "Устанавливать в контекст root-scope для централизованного логирования/метрик необработанных ошибок; часто в паре с `SupervisorJob`, чтобы соседи не падали.",
+                "edge_cases": "Handler НЕ поможет в `async` (исключение откладывается до `await()`), в дочерних не-root корутинах (исключение идёт к родителю), в `runBlocking` (пробрасывается вызывающему потоку) и для `CancellationException` (это не ошибка).",
+                "related": "[[kotlin-exceptions-interview#Q15]] распространение исключений в корутинах; [[kotlin-exceptions-interview#Q17]] SupervisorJob и изоляция сбоев; [[kotlin-exceptions-interview#Q40]] SupervisorJob и handler вместе."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `SupervisorJob` отличается от обычного `Job` при обработке ошибок?",
+          "options": [
+            {
+              "text": "При обычном `Job` падение одного ребёнка отменяет родителя и всех siblings (стратегия «всё или ничего»), а при `SupervisorJob` падение ребёнка отменяет только его самого, не затрагивая остальных детей — это изоляция независимых задач.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Job` реализует fail-fast: связанные операции либо успешны все вместе, либо группа отменяется целиком. `SupervisorJob` нужен, когда задачи независимы (загрузка профиля, уведомлений, рекомендаций) и сбой одной не должен ронять другие.",
+                "example": "С `CoroutineScope(SupervisorJob() + Dispatchers.IO)` три `launch { fetchUserProfile() }`, `launch { fetchNotifications() }`, `launch { fetchRecommendations() }` независимы: падение первого не отменит два других.",
+                "when_to_apply": "Брать `SupervisorJob` для независимых параллельных задач; обычный `Job` — для связанных операций, где частичный успех бессмысленен и нужна каскадная отмена.",
+                "edge_cases": "Типичная ошибка — задать `SupervisorJob` как parent, но запускать корутины через `coroutineScope { }`: внутри создаётся обычный `Job`, и supervisor не действует — для supervisor-поведения нужен `supervisorScope { }`.",
+                "related": "[[kotlin-exceptions-interview#Q15]] распространение исключений в корутинах; [[kotlin-exceptions-interview#Q21]] как работает supervisorScope; [[kotlin-exceptions-interview#Q40]] SupervisorJob и CoroutineExceptionHandler вместе."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Разница только в производительности: `SupervisorJob` легче по памяти, а на поведение при ошибках выбор `Job`/`SupervisorJob` не влияет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Различие именно в семантике ошибок: обычный `Job` каскадно отменяет группу при сбое ребёнка, а `SupervisorJob` изолирует сбой — на производительность выбор практически не влияет.",
+                "source_of_confusion": "Оба — реализации `Job`, поэтому разницу ищут в «технических» характеристиках вроде памяти.",
+                "if_it_were_true": "Тогда замена `Job` на `SupervisorJob` не меняла бы судьбу соседних корутин, но при `SupervisorJob` они переживают сбой соседа.",
+                "how_it_should_be": "Ключевое отличие — стратегия при ошибке ребёнка: каскадная отмена (`Job`) против изоляции (`SupervisorJob`)."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`SupervisorJob` полностью подавляет исключения дочерних корутин, так что ошибка нигде не всплывает и не логируется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SupervisorJob` лишь не отменяет siblings; само исключение упавшего ребёнка всё равно всплывает — в `CoroutineExceptionHandler` (для `launch`) или при `await()` (для `async`).",
+                "source_of_confusion": "«Изоляцию сбоя» ошибочно понимают как «подавление и сокрытие ошибки».",
+                "if_it_were_true": "Тогда сбой задачи проходил бы незаметно без логов, но handler или `await()` всё равно получат это исключение.",
+                "how_it_should_be": "`SupervisorJob` изолирует влияние сбоя на соседей, но не глушит само исключение — его нужно обработать handler-ом или на `await()`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "При обычном `Job` падение ребёнка отменяет только этого ребёнка, а `SupervisorJob` наоборот отменяет всю группу при любом сбое.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поведение перепутано местами: обычный `Job` отменяет всю группу (родителя и siblings), а `SupervisorJob` отменяет только упавшего ребёнка.",
+                "source_of_confusion": "Слово «supervisor» (надзиратель) звучит «строго», и его связывают с жёсткой отменой всей группы.",
+                "if_it_were_true": "Тогда `SupervisorJob` был бы бесполезен для независимых задач, но именно для них его и применяют.",
+                "how_it_should_be": "Обычный `Job` — каскадная отмена группы; `SupervisorJob` — отмена только упавшего ребёнка, остальные продолжают работу."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему `CancellationException` нужно обрабатывать отдельно?",
+          "options": [
+            {
+              "text": "Потому что `CancellationException` — единственное исключение, которое JVM не позволяет перехватить ни в каком `catch`-блоке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CancellationException` технически перехватывается обычным `catch` — в этом и проблема: его легко случайно проглотить, поэтому его нужно сознательно пробрасывать обратно.",
+                "source_of_confusion": "Особый статус отмены воспринимают как «непреодолимое» для catch исключение.",
+                "if_it_were_true": "Тогда `catch (e: Exception)` не мог бы поймать отмену и проблема не возникала бы, но именно перехват и ломает отмену.",
+                "how_it_should_be": "`CancellationException` перехватывается как обычное исключение; задача разработчика — не проглотить его, а пробросить дальше."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`CancellationException` — это часть механизма кооперативной отмены корутин, а не ошибка бизнес-логики: если её перехватить и проглотить в общем `catch (e: Exception)`, корутина не узнает, что должна остановиться, что ведёт к зависшим задачам, утечкам ресурсов и нарушению structured concurrency.",
+              "correct": true,
+              "sections": {
+                "explanation": "Отмена в корутинах работает через выброс `CancellationException` в точках приостановки. Проглотив его, вы фактически игнорируете запрос на остановку. Поэтому в широком `catch` его нужно явно пробрасывать (`if (e is CancellationException) throw e`) или ловить отдельным блоком.",
+                "example": "Правильный паттерн: `try { longOp() } catch (e: CancellationException) { throw e } catch (e: Exception) { logger.error(\"Error\", e) }` — отмена пробрасывается, остальные ошибки логируются.",
+                "when_to_apply": "Применять везде, где есть широкий `catch (e: Exception)` или `runCatching` внутри корутины: сначала пробросить отмену, потом обрабатывать настоящие ошибки.",
+                "edge_cases": "`CoroutineExceptionHandler` не вызывается для `CancellationException` — это не ошибка, а нормальный сигнал; альтернатива ручному пробросу — `coroutineContext.ensureActive()`, который сам проверяет отмену.",
+                "related": "[[kotlin-exceptions-interview#Q16]] handler не ловит CancellationException; [[kotlin-exceptions-interview#Q31]] проброс отмены при withContext; [[kotlin-exceptions-interview#Q34]] runCatching и CancellationException."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Потому что `CancellationException` нужно логировать на уровне ERROR в каждом месте перехвата, иначе отмена не зафиксируется в мониторинге.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отмена — штатный сигнал, а не ошибка: её обычно не логируют как ERROR; задача — пробросить её дальше, чтобы корутина действительно остановилась.",
+                "source_of_confusion": "Поскольку это `Exception`, кажется, что с ним нужно поступать как с ошибкой — логировать.",
+                "if_it_were_true": "Тогда логи были бы засорены ERROR при каждой нормальной отмене корутины, но отмена — ожидаемое событие.",
+                "how_it_should_be": "`CancellationException` пробрасывают (`throw e`), а не логируют как ошибку — это нормальный сигнал кооперативной отмены."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Потому что `CancellationException` автоматически перезапускает отменённую корутину, и без отдельной обработки она зациклится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CancellationException` не перезапускает корутину, а сигнализирует ей о необходимости завершиться; проблема обратная — проглатывание мешает ей остановиться.",
+                "source_of_confusion": "Механизм отмены путают с механизмом перезапуска/повтора (`retry`).",
+                "if_it_were_true": "Тогда отмена приводила бы к бесконечному циклу запусков, но фактически она прекращает выполнение корутины.",
+                "how_it_should_be": "Отмена завершает корутину, а не перезапускает; пробрасывать исключение нужно, чтобы остановка действительно произошла."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обрабатывать исключения в `async`/`await`?",
+          "options": [
+            {
+              "text": "Исключение в `async` всплывает сразу при запуске блока, поэтому его нужно перехватывать `try-catch` вокруг вызова `async { }`, а не вокруг `await()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`async` откладывает исключение до `await()`: вокруг самого вызова `async { }` ловить нечего — `try-catch` нужен вокруг `await()`.",
+                "source_of_confusion": "Поведение `launch` (немедленный подъём ошибки) переносят на `async`.",
+                "if_it_were_true": "Тогда `try { async { fail() } } catch (...)` ловил бы исключение, но оно возникнет позже — на `await()`.",
+                "how_it_should_be": "`async` хранит исключение в `Deferred` и бросает его на `await()`; именно `await()` оборачивают в `try-catch`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Чтобы поймать исключение `async`, достаточно навесить `CoroutineExceptionHandler` на scope — он перехватит ошибку из `Deferred`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CoroutineExceptionHandler` не срабатывает для `async`: исключение хранится в `Deferred` и доставляется через `await()`, а не в handler.",
+                "source_of_confusion": "Handler ассоциируется с «любыми необработанными исключениями корутин», включая `async`.",
+                "if_it_were_true": "Тогда `await()` уже не бросал бы исключение (его забрал handler), но `await()` именно его и пробрасывает.",
+                "how_it_should_be": "Для `async` исключение получают на `await()` через `try-catch`; handler работает для необработанных `launch`, а не для `async`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "В отличие от `launch`, где исключение сразу поднимается к родителю, `async` откладывает исключение до момента вызова `await()` — именно там его и перехватывают через `try-catch` вокруг `await()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`async` возвращает `Deferred<T>`, и исключение «хранится» в нём до распаковки. Однако с обычным `Job` `async` как дочерняя корутина всё равно уведомляет родителя о сбое; чтобы ошибка обрабатывалась ТОЛЬКО на `await()`, нужен `SupervisorJob` или `supervisorScope`.",
+                "example": "`val deferred = scope.async { throw RuntimeException(\"fail\") }; try { deferred.await() } catch (e: RuntimeException) { logger.error(...) }` — исключение возникает в момент `await()`.",
+                "when_to_apply": "Оборачивать `await()` в `try-catch` для параллельных вычислений; для изоляции (чтобы сбой одного `async` не ронял scope) выполнять их внутри `supervisorScope`.",
+                "edge_cases": "Распространённая ловушка: ждать перехвата только на `await()`, но при обычном `Job` родитель уже отменён уведомлением о сбое — без `supervisorScope` остальные корутины тоже падают.",
+                "related": "[[kotlin-exceptions-interview#Q15]] launch против async в распространении; [[kotlin-exceptions-interview#Q21]] supervisorScope для изоляции async; [[kotlin-exceptions-interview#Q38]] propagation через async/await."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "При использовании `async` с обычным `Job` исключение никогда не уведомляет родителя — оно полностью локализовано в `Deferred` до `await()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С обычным `Job` `async` как дочерняя корутина всё равно уведомляет родителя о сбое, отменяя scope; полная локализация только на `await()` достигается через `SupervisorJob`/`supervisorScope`.",
+                "source_of_confusion": "Раз ошибку получают на `await()`, кажется, что до этого момента она никуда больше не идёт.",
+                "if_it_were_true": "Тогда соседние корутины в обычном scope не отменялись бы при сбое `async`, но они отменяются вместе с родителем.",
+                "how_it_should_be": "`async` на обычном `Job` уведомляет родителя и роняет scope; чтобы ошибка жила только в `await()`, нужен `supervisorScope`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обрабатывать исключения в `Kotlin Flow`?",
+          "options": [
+            {
+              "text": "Во `Flow` исключения ловятся обычным `try-catch` вокруг блока `flow { }`, а специальный оператор для этого не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для прозрачности контекста во `Flow` используют именно оператор `catch`; `try-catch` внутри `flow { }` нарушает exception transparency и не является идиоматичным способом.",
+                "source_of_confusion": "Привычный императивный `try-catch` кажется применимым и здесь.",
+                "if_it_were_true": "Тогда оператор `catch` был бы не нужен, но он существует именно для корректной обработки upstream-ошибок потока.",
+                "how_it_should_be": "Ошибки upstream обрабатывают оператором `catch`; ручной `try-catch` внутри `flow { }` ломает прозрачность исключений."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Оператор `catch` ловит исключения как из upstream, так и из `collect` (downstream), полностью защищая всю цепочку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`catch` ловит только upstream-часть; исключения из `collect` (downstream) он не перехватывает — для них логику выносят в `onEach` и ставят второй `catch`.",
+                "source_of_confusion": "Кажется естественным, что `catch` в конце цепочки защищает и финальную обработку.",
+                "if_it_were_true": "Тогда ошибка в `collect { process(it) }` ловилась бы предыдущим `catch`, но она пролетит мимо него.",
+                "how_it_should_be": "`catch` покрывает только upstream; чтобы защитить обработку, её переносят в `onEach` под следующий `catch`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Для повторных попыток во `Flow` используют оператор `recover`, который заменяет упавший поток на дефолтный.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Во `Flow` повторы выполняют операторы `retry`/`retryWhen`; `recover` — это метод `Result`, а не оператор `Flow`.",
+                "source_of_confusion": "`recover` из мира `Result` по смыслу «восстановления» путают с retry-логикой потоков.",
+                "if_it_were_true": "Тогда `flow.recover { ... }` компилировался бы, но такого оператора у `Flow` нет — есть `retry`/`retryWhen` и `catch`.",
+                "how_it_should_be": "Повторные попытки во `Flow` — это `retry`/`retryWhen`; fallback-значение даёт `catch { emit(default) }`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Исключения во `Flow` обрабатываются оператором `catch`, который перехватывает ошибки upstream-части — эмиттеров и промежуточных операторов выше по цепочке; внутри `catch` можно эмитировать fallback-значение или залогировать ошибку.",
+              "correct": true,
+              "sections": {
+                "explanation": "`catch` прозрачен только к upstream: он НЕ ловит исключения из `collect` (downstream). Чтобы защитить и обработку, логику переносят из `collect` в `onEach` и ставят второй `catch` после него. Для повторов используют `retry`/`retryWhen`.",
+                "example": "`flow { emit(riskyOperation()) }.catch { emit(default) }.onEach { process(it) }.catch { logger.error(\"Process failed\", it) }.collect()` — первый `catch` ловит ошибку источника, второй — ошибку `process` из `onEach`.",
+                "when_to_apply": "Ставить `catch` сразу после потенциально падающих upstream-операторов; для сетевых сбоев комбинировать с `retryWhen { cause, attempt -> cause is IOException && attempt < 3 }`.",
+                "edge_cases": "Главная ловушка — ожидать, что `catch` поймает исключение из `collect`: этого не происходит, поэтому код обработки выносят в `onEach` под защиту следующего `catch`.",
+                "related": "[[kotlin-exceptions-interview#Q15]] исключения в корутинах в целом; [[kotlin-exceptions-interview#Q18]] CancellationException во Flow; [[kotlin-exceptions-interview#Q38]] propagation исключений во Flow."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `supervisorScope`?",
+          "options": [
+            {
+              "text": "`supervisorScope` — suspend-функция, которая создаёт `CoroutineScope` с `SupervisorJob`: внутри неё падение одного дочернего `launch`/`async` не отменяет остальных детей, в отличие от `coroutineScope`, где сбой любого ребёнка отменяет весь scope.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это удобно для агрегации независимых результатов: можно собрать частичный ответ, обработав провал отдельных веток через `try-catch` вокруг каждого `await()`. Как и `coroutineScope`, `supervisorScope` дожидается завершения всех детей перед возвратом.",
+                "example": "`supervisorScope { val orders = async { fetchOrders() }; Dashboard(orders = try { orders.await() } catch (e: Exception) { emptyList() }) }` — сбой `fetchOrders` не рушит весь дашборд, а даёт пустой список.",
+                "when_to_apply": "Применять, когда несколько параллельных задач независимы и частичный результат допустим (загрузка секций экрана, агрегация из нескольких источников).",
+                "edge_cases": "`supervisorScope` сама дожидается всех детей перед возвратом — она не «отпускает» корутины в фон; это отличает её от запуска в долгоживущем внешнем scope.",
+                "related": "[[kotlin-exceptions-interview#Q17]] SupervisorJob и его ловушки; [[kotlin-exceptions-interview#Q19]] async/await внутри supervisorScope; [[kotlin-exceptions-interview#Q38]] structured concurrency и изоляция."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`supervisorScope` запускает дочерние корутины в фоне и возвращает управление немедленно, не дожидаясь их завершения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`supervisorScope`, как и `coroutineScope`, дожидается завершения всех детей перед возвратом; немедленный возврат — это про запуск в долгоживущем внешнем scope, а не про эту функцию.",
+                "source_of_confusion": "Изоляцию сбоев путают с асинхронным «fire-and-forget» поведением.",
+                "if_it_were_true": "Тогда результаты `async` внутри нельзя было бы собрать после `supervisorScope`, но именно для сбора частичных результатов её и используют.",
+                "how_it_should_be": "`supervisorScope` блокируется до завершения всех детей; от `coroutineScope` её отличает только изоляция сбоев."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`supervisorScope` идентична `coroutineScope`: при падении любого ребёнка обе отменяют весь scope целиком.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Различие принципиально: `coroutineScope` отменяет весь scope при сбое ребёнка, а `supervisorScope` изолирует сбой — остальные дети продолжают работу.",
+                "source_of_confusion": "Обе — suspend-функции построения scope с похожей сигнатурой, отсюда вывод о тождественности.",
+                "if_it_were_true": "Тогда не было бы смысла иметь две функции, но `supervisorScope` существует именно ради изоляции сбоев.",
+                "how_it_should_be": "`coroutineScope` — каскадная отмена при сбое; `supervisorScope` — изоляция, где падение одного ребёнка не трогает остальных."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`supervisorScope` автоматически перехватывает и проглатывает исключения всех дочерних корутин, поэтому `try-catch` вокруг `await()` не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`supervisorScope` лишь не отменяет siblings при сбое; исключение упавшего `async` всё равно нужно обработать `try-catch` вокруг его `await()`, иначе оно пробросится.",
+                "source_of_confusion": "«Изоляцию сбоя» понимают как полное автоматическое подавление ошибок.",
+                "if_it_were_true": "Тогда `orders.await()` после провала возвращал бы дефолт без `try-catch`, но он бросит исключение, если его не поймать.",
+                "how_it_should_be": "`supervisorScope` изолирует влияние сбоя на соседей, но обработать исключение упавшего ребёнка (на `await()`) всё равно нужно явно."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда вместо исключений лучше использовать `sealed class` результаты?",
+          "options": [
+            {
+              "text": "`sealed class` результаты стоит использовать всегда вместо исключений, включая фатальные ошибки вроде `OutOfMemoryError` и багов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для неожиданных и фатальных ошибок (баги, OOM, сбои инфраструктуры) уместны именно исключения; sealed-результаты — для ожидаемых доменных исходов, а не для всего подряд.",
+                "source_of_confusion": "Преимущества exhaustive-`when` абсолютизируют до «всегда вместо исключений».",
+                "if_it_were_true": "Тогда `OutOfMemoryError` пришлось бы возвращать вариантом sealed-типа, но такие ошибки нельзя предвидеть и моделировать заранее.",
+                "how_it_should_be": "Sealed — для ожидаемых ошибок бизнес-потока; исключения — для неожиданных/фатальных ситуаций на границе приложения."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`sealed class` предпочтительнее исключений, когда ошибка ожидаема и является частью бизнес-потока: `when` по sealed-иерархии становится exhaustive — компилятор проверяет, что обработаны все варианты, и ошибка явно присутствует в типе результата.",
+              "correct": true,
+              "sections": {
+                "explanation": "Исключения хороши для неожиданных/фатальных ситуаций (баги, сбои инфраструктуры), а ожидаемые исходы (недостаточно средств, счёт заблокирован, превышен лимит) лучше моделировать вариантами sealed-типа — они видны в сигнатуре и не теряются как непойманное исключение.",
+                "example": "`sealed class TransferResult { data class Success(val txId: String)...; data class InsufficientFunds(val deficit: BigDecimal)...; data class AccountBlocked(val reason: String)... }` — `when` по нему компилятор заставит покрыть полностью.",
+                "when_to_apply": "Брать sealed-результаты для валидации, бизнес-правил и доменных исходов; исключения оставлять для багов, нарушений инвариантов и инфраструктурных сбоев, перехватываемых на границе.",
+                "edge_cases": "Если вариантов исхода очень много или они меняются часто, exhaustive-`when` придётся постоянно дополнять — это плата за статическую полноту, но обычно она оправдана.",
+                "related": "[[kotlin-exceptions-interview#Q23]] проектирование sealed-иерархии ошибок; [[kotlin-exceptions-interview#Q24]] Either как функциональная альтернатива; [[kotlin-exceptions-interview#Q28]] ожидаемые ошибки как значения."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Главное преимущество `sealed class` над исключениями — более высокая производительность за счёт отсутствия стектрейса в любом случае.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главное преимущество — exhaustive-проверка в `when` и явность ошибки в типе; производительность вторична, а исключение со стектрейсом нужно лишь там, где это уместно.",
+                "source_of_confusion": "Известно, что заполнение стектрейса дорого, и из этого делают производительность главным мотивом.",
+                "if_it_were_true": "Тогда sealed выбирали бы только в горячих путях ради скорости, но его берут прежде всего за типобезопасность исходов.",
+                "how_it_should_be": "Основной плюс sealed — статически полная обработка вариантов и видимость ошибки в типе, а не микрооптимизация."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`sealed class` нельзя использовать в `when` без ветки `else`, поэтому компилятор не может гарантировать полноту обработки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: для sealed-иерархии `when` exhaustive без `else` — компилятор сам проверяет, что покрыты все подтипы, и требует добавить недостающие.",
+                "source_of_confusion": "Привычка добавлять `else` в `when` по обычным типам переносится на sealed.",
+                "if_it_were_true": "Тогда теряло бы смысл главное преимущество sealed, но именно exhaustive-`when` без `else` и есть его сильная сторона.",
+                "how_it_should_be": "По sealed-типу `when` exhaustive без `else`; компилятор гарантирует, что все варианты обработаны."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как спроектировать `sealed`-иерархию ошибок?",
+          "options": [
+            {
+              "text": "Лучше строить максимально глубокую иерархию (5-6 уровней наследования), чтобы каждая ошибка была предельно специализирована.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рекомендация обратная: 2-3 уровня максимум; глубокая вложенность усложняет exhaustive-`when`, навигацию и сопровождение без реальной пользы.",
+                "source_of_confusion": "Кажется, что больше уровней = точнее классификация ошибок.",
+                "if_it_were_true": "Тогда `when` по такой иерархии был бы громоздким и хрупким, но цель — простая и читаемая обработка вариантов.",
+                "how_it_should_be": "Держать 1-3 уровня и расширять иерархию вширь подтипами одной категории, а не вглубь длинными цепочками."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Варианты ошибок должны хранить только человекочитаемое текстовое сообщение, без кодов и идентификаторов — иначе теряется простота.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рекомендуется добавлять machine-readable поля (коды, ID, контекст), а не только текст: по ним удобно программно ветвить логику и сопоставлять ошибки.",
+                "source_of_confusion": "Текстовое `message` — самое заметное поле, и кажется достаточным.",
+                "if_it_were_true": "Тогда обработка ошибки опиралась бы на парсинг строки, что хрупко; коды дают устойчивое сопоставление.",
+                "how_it_should_be": "Помимо текста добавлять machine-readable идентификаторы (код, поле, контекст) для надёжной программной обработки."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Рекомендуется двухуровневая структура: общий sealed-тип ошибки (например, `sealed interface DomainError`) и конкретные варианты, сгруппированные в подкатегории (`ValidationError`, `InfrastructureError`); при этом лучше использовать `sealed interface`, добавлять machine-readable поля и не делать более 2-3 уровней вложенности.",
+              "correct": true,
+              "sections": {
+                "explanation": "`sealed interface` (вместо `sealed class`) позволяет варианту реализовать несколько интерфейсов, что даёт гибкую категоризацию (ошибка может быть и `ValidationError`, и частью другого набора). Machine-readable поля (коды, идентификаторы) важнее свободного текста для программной обработки.",
+                "example": "`sealed interface DomainError { val message: String }`; `sealed interface ValidationError : DomainError`; `data class InvalidEmail(val email: String) : ValidationError { override val message = \"Invalid email: $email\" }`.",
+                "when_to_apply": "Применять при проектировании доменного слоя модуля, где нужно перечислить ожидаемые ошибки; группировать по смыслу (валидация/инфраструктура) и привязывать к generic `Result<T, DomainError>`.",
+                "edge_cases": "Глубокая вложенность (>3 уровней) усложняет exhaustive-`when` и навигацию; лучше расширять «вширь» подтипами одной категории, чем «вглубь» цепочкой наследования.",
+                "related": "[[kotlin-exceptions-interview#Q22]] когда выбирать sealed вместо исключений; [[kotlin-exceptions-interview#Q24]] Either с типизированной ошибкой; [[kotlin-exceptions-interview#Q27]] иерархия пользовательских исключений."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Для иерархии ошибок предпочтителен `sealed class`, а не `sealed interface`, потому что интерфейсы не поддерживают exhaustive `when`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`sealed interface` тоже даёт exhaustive-`when` и при этом позволяет множественную реализацию; именно его и рекомендуют для гибкой категоризации.",
+                "source_of_confusion": "Sealed-механику исторически ассоциируют с классами, отсюда предпочтение `sealed class`.",
+                "if_it_were_true": "Тогда `when` по `sealed interface` требовал бы `else`, но компилятор проверяет полноту и для sealed-интерфейсов.",
+                "how_it_should_be": "Предпочтителен `sealed interface` — он сохраняет exhaustive-`when` и добавляет множественное наследование интерфейсов."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Either` в Arrow и чем он лучше исключений?",
+          "options": [
+            {
+              "text": "`Either.Left` всегда содержит успешное значение, а `Either.Right` — ошибку; это соответствует чтению слева направо «сначала ошибка, потом успех».",
+              "correct": false,
+              "sections": {
+                "what_actually": "Конвенция обратная: `Left` — это ошибка (`E`), а `Right` — успешное значение (`A`); мнемоника — «right значит correct».",
+                "source_of_confusion": "Естественное чтение слева направо подталкивает считать `Left` «первым/нормальным» случаем.",
+                "if_it_were_true": "Тогда `fold(ifLeft = success, ifRight = error)` был бы корректным, но идиоматично `ifLeft` обрабатывает ошибку.",
+                "how_it_should_be": "`Left` несёт ошибку типа `E`, `Right` — успешное значение типа `A`; обработка ошибки идёт в `ifLeft`/`onLeft`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Either` в Arrow умеет хранить ошибку только типа `Throwable`, как и `kotlin.Result`, поэтому преимуществ по типизации у него нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ключевое преимущество `Either` — параметр ошибки `E` может быть любым типом (sealed class, enum), а не только `Throwable`, в отличие от `Result`.",
+                "source_of_confusion": "И `Either`, и `Result` представляют «успех или ошибку», отсюда вывод об одинаковом типе ошибки.",
+                "if_it_were_true": "Тогда не было бы смысла подключать Arrow ради `Either`, но именно типизированная ошибка `E` и есть его главный плюс.",
+                "how_it_should_be": "Тип ошибки в `Either<E, A>` параметризован и может быть любым; фиксированный `Throwable` — это ограничение `kotlin.Result`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Either` при ошибке прерывает выполнение и бросает исключение `LeftException`, как обычный `throw`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Either` не бросает исключений: `Left` — это обычное значение, которое возвращается и компонуется через `map`/`flatMap`/`fold` без прерывания control flow.",
+                "source_of_confusion": "Привычная модель «ошибка = throw» переносится на функциональный `Either`.",
+                "if_it_were_true": "Тогда вокруг `findUser(...)` нужен был бы `try-catch`, но `Either` обрабатывают через `fold`/`when`, а не ловлей исключений.",
+                "how_it_should_be": "`Left` — это значение-ошибка, не исключение; поток не прерывается, ветвление делают через `fold`/`when`/`bind`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Either<E, A>` из Arrow — тип с двумя вариантами: `Either.Left(error)` типа `E` и `Either.Right(value)` типа `A`; в отличие от исключений, ошибка явно присутствует в системе типов (параметризована как `E`) и не прерывает поток выполнения.",
+              "correct": true,
+              "sections": {
+                "explanation": "Преимущества перед `Result`: тип ошибки параметризован, а не фиксирован как `Throwable`; есть композиция через `flatMap`/`bind` и интеграция с `Raise` DSL для императивного стиля. Ошибка становится обычным значением, которое компонуется в цепочки.",
+                "example": "`fun findUser(id: Long): Either<UserError, User>` возвращает `UserError.NotFound(id).left()` или `user.right()`; затем `findUser(42).map { it.email }.flatMap { validateEmail(it) }.fold(ifLeft = ..., ifRight = ...)`.",
+                "when_to_apply": "Использовать, когда нужна типизированная иерархия доменных ошибок и функциональная композиция нескольких падающих шагов, особенно если проект уже использует Arrow.",
+                "edge_cases": "`Either` — внешняя зависимость (`arrow-core`); если нужна лишь простая обёртка «успех/исключение» без типизации ошибки, достаточно стандартного `Result`.",
+                "related": "[[kotlin-exceptions-interview#Q25]] Raise DSL в Arrow; [[kotlin-exceptions-interview#Q26]] интеграция Arrow с корутинами; [[kotlin-exceptions-interview#Q32]] Result против Either."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Raise` DSL в Arrow?",
+          "options": [
+            {
+              "text": "`Raise<E>` — DSL из Arrow, позволяющий писать код с `Either`-семантикой в императивном стиле, без цепочек `flatMap`: внутри `either { }`-блока используют `bind()` для разворачивания `Either` и `ensure`/`raise` для прерывания с `Left`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Raise` решает проблему «пирамиды `flatMap`»: вместо вложенных вызовов код читается линейно, как обычный императивный, но при ошибке short-circuits с `Left`. `ensure(cond) { error }` — аналог `require`, но вместо исключения возвращает `Left`, а `bind()` извлекает `Right` или прерывает выполнение.",
+                "example": "`fun Raise<UserError>.validate(dto): User { ensure(dto.email.contains(\"@\")) { UserError.InvalidEmail(dto.email) }; val e = findUser(dto.email).bind(); ... }`, вызываемая как `either { validate(dto) }: Either<UserError, User>`.",
+                "when_to_apply": "Использовать, когда несколько шагов возвращают `Either` и хочется читаемого линейного кода вместо вложенных `flatMap`; особенно удобно для валидации с ранним выходом.",
+                "edge_cases": "`bind()` прерывает выполнение функции при `Left`, поэтому код после неуспешного `bind()` не выполняется — это похоже на ранний `return`, но через механизм `Raise`.",
+                "related": "[[kotlin-exceptions-interview#Q24]] Either и его варианты; [[kotlin-exceptions-interview#Q26]] Raise и bind в корутинах; [[kotlin-exceptions-interview#Q9]] require/ensure как fail-fast валидация."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Raise` DSL вызывает обычное исключение через `throw`, а `either { }` его перехватывает и оборачивает в `Either.Left`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Raise` работает не на исключениях: `raise`/`bind` используют внутренний механизм короткого замыкания DSL, а не `throw`/`catch` пользовательских исключений.",
+                "source_of_confusion": "Имя `raise` похоже на «бросить исключение», отсюда вывод о работе через `throw`.",
+                "if_it_were_true": "Тогда `Raise` имел бы накладные расходы стектрейса на каждой ошибке, но DSL спроектирован как лёгкое короткое замыкание без полноценного исключения.",
+                "how_it_should_be": "`Raise` короткозамыкает выполнение с `Left` через DSL-механику, а не через пользовательский `throw`/`catch`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`bind()` в `Raise` DSL объединяет несколько `Either` в один через слияние их значений, как `zip`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`bind()` извлекает значение из `Either.Right` или прерывает выполнение с `Left`; это не слияние нескольких `Either`, а разворачивание одного.",
+                "source_of_confusion": "Слово `bind` ассоциируют с «связыванием/объединением» значений.",
+                "if_it_were_true": "Тогда `bind()` принимал бы несколько аргументов-Either, но он применяется к одному и возвращает его `Right`-значение.",
+                "how_it_should_be": "`bind()` разворачивает один `Either`: при `Right` отдаёт значение, при `Left` short-circuits весь блок."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`ensure` в `Raise` DSL при ложном условии бросает `IllegalArgumentException`, ровно как `require`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ensure(cond) { error }` при ложном условии возвращает `Left(error)`, а не бросает исключение — в этом и смысл функционального аналога `require`.",
+                "source_of_confusion": "`ensure` по роли похож на `require`, и поведение `require` (исключение) переносят на него.",
+                "if_it_were_true": "Тогда `either { ensure(false) { Err } }` бросал бы исключение наружу, но он вернёт `Either.Left(Err)`.",
+                "how_it_should_be": "`ensure` при провале даёт `Left` с указанной ошибкой, оставаясь в рамках `Either`, без выброса исключения."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Arrow интегрируется с корутинами?",
+          "options": [
+            {
+              "text": "Arrow несовместим с корутинами: `either { }` и `bind()` нельзя вызывать внутри `suspend`-функций, поэтому асинхронный код пишут только на `Result`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Arrow полностью работает в `suspend`-контексте: `either { }`, `Raise` DSL и `bind()` вызываются внутри корутин, есть даже `parZip`/`parMap` для параллелизма.",
+                "source_of_confusion": "Функциональный стиль Arrow кажется «синхронным» и несочетаемым с suspend-механикой.",
+                "if_it_were_true": "Тогда `scope.launch { either { fetchAndProcess() } }` не компилировался бы, но это рабочая идиома Arrow.",
+                "how_it_should_be": "Arrow совместим с корутинами: `bind()`/`either { }` работают в `suspend`, а `parZip`/`parMap` дают параллелизм с типизированными ошибками."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Arrow полностью совместим с `suspend`-функциями: `either { }`, `Raise` DSL и `bind()` работают внутри `suspend`-контекста, а для параллельного выполнения с типизированной обработкой ошибок Arrow предоставляет `parZip` и `parMap`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Можно вызывать `suspend`-функции внутри `either { }` и разворачивать их результат через `bind()`, в том числе после `withContext`. При ошибке в любой из параллельных веток `parZip`/`parMap` остальные автоматически отменяются, а ошибка возвращается как `Left`.",
+                "example": "`scope.launch { either { fetchAndProcess() }.onLeft { showError(it) }.onRight { updateUI(it) } }`, где внутри `fetchAndProcess` используется `httpClient.get(url).bind()` после `withContext(Dispatchers.IO)`.",
+                "when_to_apply": "Применять, когда асинхронный код должен возвращать типизированные ошибки вместо исключений: сетевые вызовы, параллельная агрегация (`parZip`), цепочки `suspend`-шагов через `bind()`.",
+                "edge_cases": "В `parZip` при сбое одной ветки остальные отменяются по structured concurrency — это согласуется с механикой корутин и не требует ручной отмены.",
+                "related": "[[kotlin-exceptions-interview#Q24]] Either и типизированные ошибки; [[kotlin-exceptions-interview#Q25]] Raise DSL и bind; [[kotlin-exceptions-interview#Q15]] structured concurrency в корутинах."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "При сбое одной ветки в `parZip` остальные ветки продолжают выполняться до конца, а ошибки собираются в список.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При ошибке в любой ветке `parZip` остальные автоматически отменяются по structured concurrency, и возвращается первый `Left`; накопления всех ошибок в список здесь нет.",
+                "source_of_confusion": "Накопление ошибок — это про `Validated`/accumulation, а не про `parZip`, и механизмы смешивают.",
+                "if_it_were_true": "Тогда `parZip` ждал бы завершения всех веток даже после первого сбоя, но он отменяет их немедленно.",
+                "how_it_should_be": "`parZip` при первом сбое отменяет остальные ветки и возвращает `Left`; накопление ошибок — задача `Validated`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Чтобы использовать Arrow в корутинах, нужно оборачивать каждый `bind()` в отдельный `runBlocking`, иначе он не развернёт `Either`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`bind()` работает прямо внутри `suspend`-контекста `either { }` без `runBlocking`; оборачивание в `runBlocking` блокировало бы поток и нарушало структурную конкурентность.",
+                "source_of_confusion": "`runBlocking` ассоциируют с «мостом» между обычным и suspend-кодом, и его лепят везде.",
+                "if_it_were_true": "Тогда асинхронные цепочки `bind()` блокировали бы потоки на каждом шаге, но Arrow интегрирован в suspend нативно.",
+                "how_it_should_be": "`bind()` вызывают напрямую в `suspend either { }`; `runBlocking` для этого не нужен и вреден для конкурентности."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как проектировать иерархию пользовательских исключений?",
+          "options": [
+            {
+              "text": "Пользовательские исключения нужно наследовать от `Throwable` напрямую, минуя `Exception` и `RuntimeException`, чтобы их нельзя было случайно поймать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Базой делают `RuntimeException` (для unchecked-поведения и удобного интеропа); наследование напрямую от `Throwable` нетипично и не даёт нужной семантики.",
+                "source_of_confusion": "`Throwable` — корень иерархии, и кажется логичным наследоваться от него ради «универсальности».",
+                "if_it_were_true": "Тогда такие исключения не попадали бы под `catch (e: Exception)`, что мешало бы их штатной обработке на границе.",
+                "how_it_should_be": "Базовый класс — `RuntimeException`; это даёт unchecked-поведение и корректную обработку через `catch (e: Exception)`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Достаточно одного класса `AppException` без полей-кодов: всю информацию об ошибке передают только через текст сообщения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рекомендуется добавлять machine-readable поля (`code`, `context`) и осмысленные подтипы, а не сводить всё к одному классу с текстом — это упрощает программную обработку и маршрутизацию.",
+                "source_of_confusion": "Один общий класс кажется проще, а текст сообщения — достаточным.",
+                "if_it_were_true": "Тогда ветвление по типу ошибки опиралось бы на парсинг строки, что хрупко; коды и подтипы дают устойчивость.",
+                "how_it_should_be": "Заводить базовый тип с `code`/`context` и конкретные подтипы исключений, а не единственный класс с одним текстом."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Пользовательские исключения группируют по домену с 1-2 уровнями наследования от общего базового типа: базовый `abstract class DomainException` с machine-readable полями (`code`, `context`), а от него — конкретные исключения; наследовать стоит от `RuntimeException`, а не от `Exception`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Наследование от `RuntimeException` (а не `Exception`) важно для интеропа: иначе `Java`-код был бы вынужден обрабатывать исключение как `checked`. Machine-readable поля (`code`, контекст) дают программную обработку, а неглубокая иерархия (≤2 уровней) держит структуру простой.",
+                "example": "`abstract class DomainException(message, val code: String, val context: Map<String, Any> = emptyMap(), cause: Throwable? = null) : RuntimeException(message, cause)`, а затем `class EntityNotFoundException(...) : DomainException(..., \"NOT_FOUND\", ...)`.",
+                "when_to_apply": "Применять, когда ошибки моделируются именно как исключения (фатальные/неожиданные ситуации); для ожидаемых доменных исходов без исключений предпочесть sealed-подход.",
+                "edge_cases": "Глубокая иерархия (>2 уровней) без реальной необходимости усложняет сопровождение; для типизированных ожидаемых ошибок лучше sealed-классы, а не разрастание дерева исключений.",
+                "related": "[[kotlin-exceptions-interview#Q23]] sealed-иерархия для ожидаемых ошибок; [[kotlin-exceptions-interview#Q29]] проброс с сохранением cause; [[kotlin-exceptions-interview#Q36]] RuntimeException против checked в JVM."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Иерархию пользовательских исключений нужно делать глубиной 4-5 уровней, повторяя всю доменную таксономию ошибок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рекомендуется неглубокая иерархия (1-2 уровня); глубокое дерево усложняет сопровождение, а детальную таксономию лучше выражать полями-кодами или sealed-типами.",
+                "source_of_confusion": "Богатую доменную модель ошибок отождествляют с глубоким деревом наследования.",
+                "if_it_were_true": "Тогда добавление ошибки требовало бы навигации по длинной цепочке классов, но цель — простая и плоская структура.",
+                "how_it_should_be": "Держать 1-2 уровня наследования; нюансы кодировать полями (`code`) или sealed-вариантами, а не глубиной дерева."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие практики обработки ошибок рекомендуются в `Kotlin`?",
+          "options": [
+            {
+              "text": "Рекомендуется все ошибки, включая ожидаемые, представлять исключениями и перехватывать их единым `catch (e: Throwable)` на верхнем уровне.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ожидаемые ошибки лучше представлять значениями (`Result`/`sealed`/`Either`), а ловить `Throwable` не рекомендуется — это поймает и `Error`, и `CancellationException`.",
+                "source_of_confusion": "Единый перехват «всего наверху» кажется простым и достаточным.",
+                "if_it_were_true": "Тогда обработка проглатывала бы `CancellationException` и `OutOfMemoryError`, что вредно — отмена ломается, фатальные ошибки скрываются.",
+                "how_it_should_be": "Ожидаемое — как значения с exhaustive-обработкой; ловить `Exception` (не `Throwable`) и только на границе."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Рекомендуется логировать каждое исключение на каждом уровне стека, чтобы в логах был полный путь его прохождения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рекомендуется логировать один раз — на границе, где принимается решение о реакции; логирование на каждом уровне даёт дубли и шум в логах.",
+                "source_of_confusion": "Кажется, что чем больше логов о пути ошибки, тем легче диагностика.",
+                "if_it_were_true": "Тогда одно исключение порождало бы N одинаковых записей, затрудняя анализ, но цель — единственная информативная запись.",
+                "how_it_should_be": "Логировать исключение один раз на границе с контекстом (ID, параметры), а ниже — просто пробрасывать."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "В корутинах рекомендуется перехватывать `CancellationException` и подавлять её, чтобы отмена не прерывала текущую работу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `CancellationException` нельзя глушить — её пробрасывают, иначе ломается кооперативная отмена и возникают зависшие задачи и утечки.",
+                "source_of_confusion": "Желание «не прерывать работу» подталкивает подавлять сигнал отмены.",
+                "if_it_were_true": "Тогда отменённые корутины продолжали бы выполняться, но это прямое нарушение structured concurrency.",
+                "how_it_should_be": "`CancellationException` пробрасывают (`throw e`); подавление отмены — анти-паттерн."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Ключевые практики: ожидаемые ошибки представлять как значения (`null`/`Result`/`sealed`/`Either`), а фатальные — как исключения с перехватом на границе; использовать fail-fast валидацию (`require`/`check`/`error`), не глотать исключения, в корутинах применять `CoroutineExceptionHandler`+`SupervisorJob` и не перехватывать `CancellationException`, для ресурсов всегда использовать `use()`, а логировать ошибку один раз на границе.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главный водораздел — тип ошибки: ожидаемая (валидация, not found) моделируется значением с exhaustive-обработкой, неожиданная/фатальная (баг, OOM) — исключением, перехватываемым на границе (контроллер, `main`, `@ExceptionHandler`). Это делает контракт ошибок явным и предотвращает их потерю.",
+                "example": "Ожидаемое: `fun findUser(id): User?` или `Either<UserError, User>`; фатальное: `throw` + `try-catch` на контроллере; ресурсы: `file.bufferedReader().use { ... }`; корутины: `SupervisorJob() + handler` для независимых задач.",
+                "when_to_apply": "Применять эти правила при проектировании любого слоя: сервисы возвращают типизированные ошибки-значения, граница приложения ловит исключения, корутины изолируют независимые сбои.",
+                "edge_cases": "Особый случай — `CancellationException`: его никогда не глушат широким `catch`, а пробрасывают; и логирование делают единожды на границе, а не на каждом уровне стека.",
+                "related": "[[kotlin-exceptions-interview#Q22]] sealed против исключений; [[kotlin-exceptions-interview#Q29]] логирование один раз на границе; [[kotlin-exceptions-interview#Q30]] анти-паттерны обработки ошибок."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как правильно логировать и пробрасывать исключения?",
+          "options": [
+            {
+              "text": "Логировать исключение нужно один раз — на границе, где принимается решение о реакции (HTTP-ответ, `retry`, fail-fast), а при пробросе обязательно сохранять причину через `cause`, чтобы не потерять stack trace, и добавлять контекст (ID операции, пользователь) без чувствительных данных.",
+              "correct": true,
+              "sections": {
+                "explanation": "Логирование на каждом уровне даёт дубли и шум: нижние слои просто пробрасывают исключение, а верхний (контроллер/обработчик) логирует с контекстом и формирует ответ. Сохранение `cause` важно, чтобы стектрейс исходной ошибки не терялся при оборачивании в доменное исключение.",
+                "example": "`catch (e: Exception) { logger.error(\"Failed to process request [id=$requestId]\", e); throw ResponseStatusException(500) }` на границе; при оборачивании — `throw DomainException(\"Operation failed\", cause = originalException)`.",
+                "when_to_apply": "Применять во всех многослойных приложениях: сервисы пробрасывают без логирования, граница (контроллер, `main`) логирует единожды и решает, как реагировать.",
+                "edge_cases": "В контекст логов нельзя класть пароли и токены; а опускание `cause` (`throw DomainException(msg)` без причины) теряет исходный стектрейс и сильно усложняет диагностику.",
+                "related": "[[kotlin-exceptions-interview#Q27]] базовый класс исключений с cause; [[kotlin-exceptions-interview#Q28]] одно место логирования; [[kotlin-exceptions-interview#Q30]] анти-паттерны: дубли логов и потеря cause."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Каждый слой (репозиторий, сервис, контроллер) должен логировать исключение и пробрасывать его дальше, чтобы путь ошибки был полностью виден в логах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Логирование на каждом уровне порождает дубликаты и шум; правильно — единственная запись на границе, а нижние слои просто пробрасывают исключение.",
+                "source_of_confusion": "Кажется, что больше логов о прохождении ошибки = лучше диагностика.",
+                "if_it_were_true": "Тогда один сбой давал бы три-четыре одинаковых ERROR-записи, затрудняя анализ, но нужна одна информативная.",
+                "how_it_should_be": "Логировать один раз на границе с контекстом; на промежуточных слоях исключение пробрасывают без логирования."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "При пробросе исключения причину (`cause`) передавать не нужно — достаточно нового сообщения, а старый stack trace только мешает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Причину обязательно сохранять (`throw DomainException(msg, cause = original)`): иначе теряется исходный stack trace и место настоящего сбоя становится неизвестным.",
+                "source_of_confusion": "Длинный стектрейс с цепочкой `Caused by` кажется лишним шумом.",
+                "if_it_were_true": "Тогда диагностика опиралась бы только на новое сообщение без места возникновения, но именно `cause` указывает на корень проблемы.",
+                "how_it_should_be": "При оборачивании всегда передавать `cause`, сохраняя исходный стектрейс через цепочку `Caused by`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В сообщения логов следует включать все доступные данные, включая пароли и токены, чтобы максимально упростить расследование инцидента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Чувствительные данные (пароли, токены) в логи класть нельзя; добавляют безопасный контекст — ID операции, имя пользователя, параметры без секретов.",
+                "source_of_confusion": "Стремление к «полному контексту» для диагностики игнорирует риски утечки секретов.",
+                "if_it_were_true": "Тогда логи становились бы источником компрометации учётных данных, что недопустимо по безопасности.",
+                "how_it_should_be": "Логировать полезный контекст (ID, параметры) без секретов; пароли и токены в логи не попадают."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие анти-паттерны обработки исключений встречаются чаще всего?",
+          "options": [
+            {
+              "text": "Пустой `catch`-блок — это рекомендуемая практика для «необязательных» операций, чтобы не засорять код обработкой маловажных ошибок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пустой `catch` — главный анти-паттерн: ошибка молча проглатывается, и сбой невозможно диагностировать; вместо этого её логируют или преобразуют.",
+                "source_of_confusion": "Для «неважных» операций глушение ошибки кажется удобным упрощением.",
+                "if_it_were_true": "Тогда реальные сбои оставались бы незамеченными до серьёзных последствий, но именно это и делает пустой `catch` опасным.",
+                "how_it_should_be": "Никогда не оставлять `catch` пустым: минимум залогировать, лучше — обработать или осознанно преобразовать ошибку."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Самые частые анти-паттерны: пустой `catch` (ошибка молча проглатывается), широкий `catch (e: Exception)` без разбора (ловит всё, включая `CancellationException`), перехват `CancellationException`, исключения как control flow, логирование на каждом уровне, потеря `cause` при пробросе, слишком общие сообщения и `throw Exception(\"...\")` вместо конкретного типа.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый анти-паттерн скрывает или искажает информацию об ошибке: пустой `catch` теряет её, перехват `CancellationException` ломает отмену, использование исключений как control flow дорого и неочевидно, потеря `cause` обрывает стектрейс. Решения — логировать/преобразовывать, ловить конкретные типы, пробрасывать отмену и причину.",
+                "example": "Топ-анти-паттерн: `try { riskyOperation() } catch (e: Exception) { /* TODO */ }` — ошибка исчезает бесследно; контроль через исключение: `fun findUser(id): User { throw UserNotFoundException(id) }` лучше заменить на `User?` или sealed.",
+                "when_to_apply": "Помнить эти анти-паттерны при code review и рефакторинге: пустые `catch`, общий `catch`, исключения вместо `null`/`Result` — первые кандидаты на исправление.",
+                "edge_cases": "Особенно коварен `catch (e: Exception)` в корутинах: он незаметно проглатывает `CancellationException`, поэтому в таком блоке его нужно явно пробрасывать.",
+                "related": "[[kotlin-exceptions-interview#Q18]] перехват CancellationException; [[kotlin-exceptions-interview#Q28]] рекомендуемые практики; [[kotlin-exceptions-interview#Q29]] логирование один раз и сохранение cause."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Перехват `CancellationException` в широком `catch` — безобидный анти-паттерн: он лишь немного засоряет логи, но на работу кооперативной отмены никак не влияет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Перехват `CancellationException` — серьёзный анти-паттерн: он ломает кооперативную отмену, оставляя зависшие задачи и утечки ресурсов, а не просто «засоряет логи».",
+                "source_of_confusion": "Поскольку отмена — «штатное» событие, её перехват кажется косметической мелочью.",
+                "if_it_were_true": "Тогда проглоченную отмену можно было бы игнорировать, но без проброса корутина не остановится и продолжит работу.",
+                "how_it_should_be": "`CancellationException` обязательно пробрасывают (`throw e`); его перехват реально нарушает structured concurrency, а не только логи."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Использовать исключения как control flow — нормальный приём в `Kotlin`, потому что выброс исключения работает так же быстро, как обычный `return`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Исключения как control flow — анти-паттерн: создание исключения со стектрейсом дороже обычного возврата и делает поток неочевидным; ожидаемые исходы лучше через `null`/`Result`/`sealed`.",
+                "source_of_confusion": "Удобство «выбросил и поймал где-то выше» маскирует стоимость и непрозрачность такого потока.",
+                "if_it_were_true": "Тогда `throw UserNotFoundException(id)` для штатного «не найден» был бы дёшев, но заполнение стектрейса заметно дороже `return null`.",
+                "how_it_should_be": "Ожидаемые исходы возвращать значением (`null`/`Result`/`sealed`), а исключения держать для неожиданных ситуаций."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как правильно обрабатывать исключения при переключении контекста (`withContext`)?",
+          "options": [
+            {
+              "text": "Исключение из `withContext` не пробрасывается наружу, а остаётся внутри блока, поэтому `try-catch` нужно ставить внутри лямбды `withContext { }`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`withContext` пробрасывает исключение в вызывающую корутину, поэтому `try-catch` ставят снаружи вокруг всего вызова `withContext`.",
+                "source_of_confusion": "`withContext` воспринимают как изолированный «подскоуп», который сам поглощает ошибки.",
+                "if_it_were_true": "Тогда внешний `try { withContext(IO) { ... } }` никогда не срабатывал бы, но именно так ошибку и ловят.",
+                "how_it_should_be": "Исключение всплывает из `withContext` наружу; обработку делают `try-catch`-ом вокруг вызова, а не только внутри лямбды."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "При `withContext` менять диспетчер опасно: исключение из IO-потока теряется и до вызывающей корутины не доходит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смена диспетчера через `withContext` безопасна: исключение корректно пробрасывается в вызывающую корутину независимо от того, на каком диспетчере выполнялся блок.",
+                "source_of_confusion": "Кажется, что переход на другой поток (IO) разрывает связь и «теряет» ошибку.",
+                "if_it_were_true": "Тогда сбои в IO-операциях были бы невидимы наверху, но structured concurrency доставляет их в вызывающую корутину.",
+                "how_it_should_be": "`withContext` сохраняет распространение исключений через границу диспетчера; ошибка из IO-блока доходит до вызывающего кода."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Исключение из блока `withContext` автоматически пробрасывается в вызывающую корутину, поэтому `try-catch` ставят снаружи вокруг `withContext`; при этом `CancellationException` нужно всегда пробрасывать отдельным `catch`, а обычные ошибки можно превращать в `null` или sealed-результат.",
+              "correct": true,
+              "sections": {
+                "explanation": "`withContext(Dispatchers.IO) { ... }` лишь меняет диспетчер, но сохраняет structured concurrency: исключение из блока всплывает наружу как обычно. Главное правило — `catch (e: CancellationException) { throw e }` перед широким `catch`, иначе отмена будет проглочена.",
+                "example": "`try { withContext(IO) { repo.findById(id) ?: throw NotFoundException(...) } } catch (e: CancellationException) { throw e } catch (e: Exception) { handleError(e) }` — отмена пробрасывается, прочее обрабатывается.",
+                "when_to_apply": "Применять при любом `withContext` с потенциально падающим блоком: оборачивать снаружи, разделять IO-исключения и бизнес-ошибки (например, через `sealed UserResult`).",
+                "edge_cases": "Частая ошибка — широкий `catch (e: Exception)` вокруг `withContext`, который молча глотает `CancellationException`; альтернатива явному `try-catch` — `runCatching + withContext` с последующим пробросом отмены.",
+                "related": "[[kotlin-exceptions-interview#Q18]] почему CancellationException пробрасывают; [[kotlin-exceptions-interview#Q15]] распространение исключений в корутинах; [[kotlin-exceptions-interview#Q34]] runCatching и отмена."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Чтобы корректно обработать ошибки `withContext`, нужно ловить `Throwable`, а не `Exception` — иначе часть сбоев из IO-потока ускользнёт от перехвата.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ловить нужно `Exception` (и отдельно пробрасывать `CancellationException`), а не `Throwable`: широкий `catch (e: Throwable)` поглотит `Error` и отмену, чего делать нельзя.",
+                "source_of_confusion": "Кажется, что `Throwable` «надёжнее» покрывает все возможные сбои IO-блока.",
+                "if_it_were_true": "Тогда перехват `Throwable` был бы безопасной нормой, но он проглотит `CancellationException` и `OutOfMemoryError`.",
+                "how_it_should_be": "Ловить `Exception`, заранее пробросив `CancellationException`; `Throwable` перехватывать не стоит из-за `Error` и отмены."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `kotlin.Result` отличается от `Either` Arrow и когда что выбирать?",
+          "options": [
+            {
+              "text": "`kotlin.Result` поддерживает любой тип ошибки `E`, а `Either` фиксирует ошибку как `Throwable`, поэтому `Result` типобезопаснее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: это `kotlin.Result` фиксирует ошибку как `Throwable`, а `Either<E, A>` параметризует тип ошибки `E` любым типом — типобезопаснее именно `Either`.",
+                "source_of_confusion": "Свойства двух похожих типов «успех/ошибка» путают местами.",
+                "if_it_were_true": "Тогда у `Result` был бы параметр ошибки, как `Result<E, T>`, но его сигнатура — `Result<T>` с ошибкой-`Throwable`.",
+                "how_it_should_be": "`Result` фиксирует `Throwable`; `Either<E, A>` параметризует ошибку `E` — типизированную иерархию даёт именно `Either`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Either` входит в стандартную библиотеку `Kotlin`, поэтому для него не требуется подключать никаких внешних зависимостей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Either` — часть библиотеки Arrow (`io.arrow-kt:arrow-core`), её нужно подключать как зависимость; в stdlib входит только `kotlin.Result`.",
+                "source_of_confusion": "Оба типа широко используются, и `Either` ошибочно считают встроенным.",
+                "if_it_were_true": "Тогда `import arrow.core.Either` работал бы без добавления Arrow в зависимости, но без неё этот импорт не разрешится.",
+                "how_it_should_be": "В стандартной библиотеке есть `kotlin.Result`; `Either` приходит из внешней библиотеки Arrow."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Raise` DSL с `bind()` доступен и для `kotlin.Result`, и для `Either`, поэтому по выразительности они полностью равны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Raise` DSL (`either { }`, `bind()`) — это механизм Arrow для `Either`; у `kotlin.Result` его нет, поэтому по композиции `Either` выразительнее.",
+                "source_of_confusion": "Оба типа дают функциональный стиль, и возможности Arrow приписывают и `Result`.",
+                "if_it_were_true": "Тогда вокруг `kotlin.Result` можно было бы писать `either { result.bind() }`, но `bind`/`either` относятся к Arrow-`Either`.",
+                "how_it_should_be": "`Raise` DSL принадлежит Arrow и работает с `Either`; `kotlin.Result` подобного DSL не имеет."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`kotlin.Result<T>` — из стандартной библиотеки, тип ошибки фиксирован как `Throwable`, набор операторов скромнее и нет `Raise` DSL; `Arrow Either<E, T>` — из библиотеки `arrow-core`, тип ошибки `E` любой и выражен явно, богаче операторы (`flatMap`, `mapLeft`) и есть `either { }` с `bind()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главное различие — типобезопасность ошибки: `Result` всё сводит к `Throwable`, а `Either` позволяет описать ошибку sealed-типом или enum. `Result` хорош для простого «есть ли исключение» без зависимостей; `Either` — для типизированных иерархий ошибок и функциональной композиции через `flatMap`/`bind`.",
+                "example": "`fun parseAge(s: String): Result<Int> = runCatching { s.toInt() }` против `fun parseAge(s: String): Either<ParseError, Int> = either { val n = s.toIntOrNull() ?: raise(ParseError.NotANumber); ensure(n in 0..150) { ParseError.OutOfRange(n) }; n }`.",
+                "when_to_apply": "Брать `Result`, когда ошибка всегда `Throwable`, нужна простота и без внешних зависимостей; брать `Either`, когда нужна типизированная иерархия ошибок, цепочки `flatMap` или проект уже на Arrow.",
+                "edge_cases": "`Result` перехватывает все `Throwable` (включая `CancellationException`), что требует осторожности в корутинах; `Either` оперирует значениями-ошибками и таких рисков с отменой не создаёт.",
+                "related": "[[kotlin-exceptions-interview#Q24]] Either и параметризованная ошибка; [[kotlin-exceptions-interview#Q25]] Raise DSL; [[kotlin-exceptions-interview#Q5]] runCatching и Result."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать `kotlin.Result` как функциональную альтернативу `try-catch`?",
+          "options": [
+            {
+              "text": "`kotlin.Result<T>` — встроенный value class, хранящий либо успешное значение типа `T`, либо исключение; через `runCatching { ... }` блок оборачивают в `Result`, а затем работают с ошибкой как со значением через цепочки `map`/`recover`/`getOrThrow`, не прерывая поток выполнения.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это позволяет заменить императивный `try-catch` декларативной цепочкой: `runCatching { ... }.map { ... }.recover { ... }.getOrElse { ... }`. API богат — `getOrNull`, `exceptionOrNull`, `getOrDefault`, `onSuccess`/`onFailure`, `mapCatching`/`recoverCatching` — и покрывает извлечение, трансформацию и побочные эффекты.",
+                "example": "`val doubled = runCatching { \"123\".toInt() }.map { it * 2 }.recover { 0 }.getOrThrow()`; в сервисе: `suspend fun fetchUser(id): Result<User> = runCatching { repo.findById(id) ?: throw UserNotFoundException(id) }`.",
+                "when_to_apply": "Применять на границах (IO, сеть, парсинг ввода), где ошибку удобно вернуть как значение и обработать в вызывающем коде без вложенных `try`.",
+                "edge_cases": "`Result` нельзя было использовать как тип возврата public-функции до `Kotlin 1.5`; сейчас можно, но в корутинах `runCatching` глотает `CancellationException`, поэтому её нужно явно пробрасывать.",
+                "related": "[[kotlin-exceptions-interview#Q5]] runCatching и Result; [[kotlin-exceptions-interview#Q6]] операторы Result; [[kotlin-exceptions-interview#Q34]] runCatching best practices и антипаттерны."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`kotlin.Result` хранит результат, но не умеет трансформировать его без распаковки: после `runCatching` нужно сразу вызвать `getOrThrow()` и работать с обычным значением через `try-catch`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Result` поддерживает цепочки `map`/`recover`/`fold`/`mapCatching` прямо на обёртке — распаковывать его в обычное значение и возвращаться к `try-catch` не нужно.",
+                "source_of_confusion": "`Result` кажется простым контейнером, из которого «надо достать значение», прежде чем что-то делать.",
+                "if_it_were_true": "Тогда `runCatching { ... }.map { ... }.recover { ... }` был бы невозможен, но это идиоматичная цепочка.",
+                "how_it_should_be": "С `Result` работают функционально через операторы на самой обёртке; ранняя распаковка `getOrThrow()` обычно не нужна."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`kotlin.Result` хранит только признак успеха/ошибки (`Boolean`), а само значение или исключение нужно получать из отдельной переменной.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Result` хранит и значение (`getOrNull()`), и исключение (`exceptionOrNull()`) внутри себя; отдельные переменные не нужны.",
+                "source_of_confusion": "Наличие `isSuccess`/`isFailure` создаёт впечатление, что внутри только флаг.",
+                "if_it_were_true": "Тогда `result.getOrNull()` и `result.exceptionOrNull()` не имели бы смысла, но они возвращают содержимое обёртки.",
+                "how_it_should_be": "`Result` инкапсулирует и значение, и исключение; доступ к ним — `getOrNull()`/`exceptionOrNull()`, без внешних переменных."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`runCatching` нельзя использовать в сервисном слое, потому что `Result` запрещено возвращать из любых функций даже в современном `Kotlin`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Начиная с `Kotlin 1.5` `Result` можно возвращать из функций; запрет был лишь в ранних версиях, и в сервисах `runCatching`-обёртки применяют свободно.",
+                "source_of_confusion": "Историческое ограничение до 1.5 принимают за актуальное правило.",
+                "if_it_were_true": "Тогда `suspend fun fetchUser(id): Result<User>` не компилировался бы, но это рабочая сигнатура.",
+                "how_it_should_be": "В актуальном `Kotlin` `Result` допустим как тип возврата; `runCatching` в сервисах — обычная практика для границ."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Каковы best practices и антипаттерны использования `runCatching`?",
+          "options": [
+            {
+              "text": "`runCatching` безопасен в корутинах по умолчанию: он распознаёт `CancellationException` и пробрасывает её сам, не оборачивая в `Result`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`runCatching` НЕ делает исключения для отмены: он заворачивает и `CancellationException` в `Result.failure`, поэтому в корутинах её нужно пробрасывать вручную через `onFailure`.",
+                "source_of_confusion": "Кажется логичным, что stdlib-функция «знает» про особый статус отмены и обрабатывает его сама.",
+                "if_it_were_true": "Тогда `runCatching { delay(1000) }` корректно реагировал бы на отмену, но он молча проглотит `CancellationException`.",
+                "how_it_should_be": "`runCatching` ловит и отмену; разработчик сам пробрасывает её: `onFailure { if (it is CancellationException) throw it }`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Главное помнить: `runCatching` перехватывает все `Throwable`, включая `Error` и `CancellationException`, поэтому best practice — в корутинах явно пробрасывать `CancellationException` и фильтровать типы ошибок в `recover`, а антипаттерны — глотать отмену, бездумно восстанавливаться от любых `Throwable` и вкладывать `runCatching` друг в друга, скрывая контекст.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поскольку `runCatching` ловит вообще всё, наивное `recover { 0 }` восстановится даже от `OutOfMemoryError`, а в корутине проглотит сигнал отмены. Правильно: `onFailure { if (it is CancellationException) throw it }` и `recover` с `when` по типу, пробрасывающим неожиданные ошибки.",
+                "example": "Антипаттерн: `suspend fun op() = runCatching { delay(1000); fetch() }` — проглотит `CancellationException`. Best practice: `runCatching { fetch() }.onFailure { if (it is CancellationException) throw it }` и применять его на границах (IO, сеть, парсинг).",
+                "when_to_apply": "Использовать `runCatching` на границах системы (внешний IO, парсинг данных пользователя, вызов Java с checked exceptions); для разной логики по типам исключений предпочесть явный `try-catch`.",
+                "edge_cases": "Вложенный `runCatching` скрывает контекст: внутренний `Result` не пробрасывается автоматически, и ошибка шага может потеряться; в местах с `finally` тоже нужен явный `try-catch`.",
+                "related": "[[kotlin-exceptions-interview#Q5]] что такое runCatching; [[kotlin-exceptions-interview#Q18]] проброс CancellationException; [[kotlin-exceptions-interview#Q8]] когда лучше явный try-catch."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`runCatching` перехватывает только подтипы `Exception`, поэтому `recover { 0 }` после него безопасен и никогда не «восстановится» от фатального `Error`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`runCatching` ловит весь `Throwable`, включая `Error` (`OutOfMemoryError`, `StackOverflowError`), поэтому слепой `recover` может скрыть фатальный сбой.",
+                "source_of_confusion": "Привычка `catch (e: Exception)` создаёт ощущение, что и `runCatching` ограничен `Exception`.",
+                "if_it_were_true": "Тогда `OutOfMemoryError` всегда пролетал бы мимо `recover`, но `runCatching` его перехватит и скроет.",
+                "how_it_should_be": "Фильтровать типы в `recover` через `when`, пробрасывая неожиданные ошибки (`else -> throw ex`), а не восстанавливаться от любого `Throwable`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Вложенные `runCatching` — рекомендуемый приём: внутренние `Result` автоматически разворачиваются и их ошибки пробрасываются во внешний `Result`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вложенный `runCatching` — антипаттерн: внутренний `Result` не пробрасывается автоматически, и ошибки внутренних шагов могут потеряться, скрыв контекст сбоя.",
+                "source_of_confusion": "Кажется, что вложенные обёртки «складываются» и ошибки сами всплывают наверх.",
+                "if_it_were_true": "Тогда `runCatching { runCatching { step1() }; runCatching { step2() } }` ловил бы сбой `step2` во внешнем `Result`, но тот останется во внутреннем и потеряется.",
+                "how_it_should_be": "Избегать вложенности: использовать один уровень `runCatching` или цепочку с `mapCatching`/`flatMap`, чтобы ошибки не терялись."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `Nothing` используется в функциях, всегда бросающих исключение?",
+          "options": [
+            {
+              "text": "Функцию, всегда бросающую исключение, объявляют с типом `Unit`, потому что она ничего не возвращает — это эквивалентно `Nothing`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Правильный тип — `Nothing`, а не `Unit`: только `Nothing` сообщает компилятору о недостижимости кода после вызова, тогда как `Unit` означает штатное завершение без значения.",
+                "source_of_confusion": "«Ничего не возвращает» интуитивно отождествляют с `Unit`.",
+                "if_it_were_true": "Тогда `val x: String = value ?: failUnit()` не давал бы non-null тип, но с `Nothing`-функцией `x` становится `String`.",
+                "how_it_should_be": "Тип функции-бросателя — `Nothing`; он включает анализ недостижимости и smart cast, чего `Unit` не делает."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Nothing` помогает только читаемости и на анализ компилятора (smart cast, exhaustive when) никак не влияет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Nothing` напрямую управляет анализом потока: после вызова `Nothing`-функции код считается недостижимым, что и даёт smart cast и exhaustive-`when`.",
+                "source_of_confusion": "`Nothing` кажется чисто «документирующим» типом без практического эффекта.",
+                "if_it_were_true": "Тогда `getUser(id) = repo.find(id) ?: notFound(id)` возвращал бы `User?`, но благодаря `Nothing` тип сужается до `User`.",
+                "how_it_should_be": "`Nothing` — рабочий инструмент анализа: он включает сужение типов и полноту `when`, а не только улучшает читаемость."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Функцию, которая всегда бросает исключение (или уходит в бесконечный цикл), объявляют с возвращаемым типом `Nothing`: компилятор понимает, что нормально она не возвращается, и считает код после её вызова недостижимым, что включает smart cast и делает `when` exhaustive.",
+              "correct": true,
+              "sections": {
+                "explanation": "Стандартные `error(message)` и `TODO()` возвращают `Nothing`; своя функция-бросатель (`fun notFound(id): Nothing = throw ...`) даёт ту же выгоду. Поскольку `Nothing` — подтип всех типов, её вызов подставляется в правую часть `?:` или в ветку `when`, не нарушая вывод типа.",
+                "example": "`fun getUser(id: Long): User = userRepo.findById(id) ?: notFound(id)` — тип `User`, а не `User?`, потому что `notFound()` возвращает `Nothing`; в `when` ветка `else -> error(\"Unknown\")` делает его exhaustive.",
+                "when_to_apply": "Применять для централизованных функций-бросателей (валидация, not found, недостижимые ветки), чтобы вызывающий код получал точный non-null тип и компилятор знал о недостижимости.",
+                "edge_cases": "`Nothing?` допускает единственное значение `null`, а `Result<Nothing>` (как `Failure : Result<Nothing>`) совместим с `Result<String>`, `Result<Int>` и любым другим благодаря ковариантности и bottom-типу.",
+                "related": "[[kotlin-exceptions-interview#Q3]] что такое тип Nothing; [[kotlin-exceptions-interview#Q4]] Nothing против Unit и Void; [[kotlin-exceptions-interview#Q9]] require/check/error возвращают Nothing."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Если функция всегда бросает исключение, объявление её типа `String` (как у обычной функции) сработает так же, поскольку `throw` совместим с любым возвращаемым типом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Хотя `throw` сам по себе совместим с любым типом, объявление возврата `String` обяжет компилятор считать, что функция возвращает `String`, и не даст знать вызывающему о недостижимости — теряется главный эффект `Nothing`.",
+                "source_of_confusion": "Раз тело — это `throw`, кажется неважным, какой тип написан в сигнатуре.",
+                "if_it_were_true": "Тогда `value ?: failString()` сужал бы тип так же, как `Nothing`-вариант, но компилятор не пометил бы код после вызова недостижимым.",
+                "how_it_should_be": "Объявлять именно `Nothing`: тогда компилятор знает, что функция не возвращается, и корректно выводит типы у вызывающего."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроена иерархия `Error` vs `Exception` в JVM и что из неё доступно в Kotlin?",
+          "options": [
+            {
+              "text": "В JVM `Error` и `Exception` — независимые корневые типы без общего предка, поэтому единым `catch` поймать оба нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `Error` и `Exception` есть общий предок — `Throwable`; именно он корень иерархии, и `catch (e: Throwable)` поймал бы оба (что как раз нежелательно).",
+                "source_of_confusion": "Семантическая противоположность «фатальное против обрабатываемого» наводит на мысль о раздельных корнях.",
+                "if_it_were_true": "Тогда не существовало бы `catch (e: Throwable)`, ловящего всё, но он есть именно благодаря общему предку.",
+                "how_it_should_be": "Корень иерархии — `Throwable`; `Error` и `Exception` — две его ветви, а не независимые типы."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "В `Kotlin`, в отличие от Java, нет классов `Error` и `Exception` — вместо них используется единый тип `KotlinException`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Kotlin` переиспользует те же JVM-классы: `kotlin.Exception` = `java.lang.Exception`, `kotlin.Error` = `java.lang.Error`; никакого отдельного `KotlinException` нет.",
+                "source_of_confusion": "Наличие `kotlin.*`-псевдонимов создаёт впечатление отдельной иерархии исключений.",
+                "if_it_were_true": "Тогда Java-исключения нельзя было бы ловить в `Kotlin` по их типам, но `catch (e: IOException)` работает напрямую.",
+                "how_it_should_be": "`Kotlin` использует JVM-иерархию `Throwable`/`Error`/`Exception` как есть; `kotlin.Exception` — лишь псевдоним `java.lang.Exception`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "В `Kotlin` рекомендуется ловить `Throwable`, а не `Exception`, чтобы перехват охватывал и фатальные `Error`, и сигнал `CancellationException`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: рекомендуется ловить `Exception`, а не `Throwable` — широкий перехват `Throwable` захватит `Error` (от которого не восстановиться) и `CancellationException` (который нельзя глотать).",
+                "source_of_confusion": "Кажется, что чем шире тип в `catch`, тем «надёжнее» обработка.",
+                "if_it_were_true": "Тогда `catch (e: Throwable)` был бы безопасной нормой, но он ломает отмену корутин и скрывает фатальные сбои.",
+                "how_it_should_be": "Ловить `Exception` (или конкретный подтип); `Error` и `CancellationException` через `Throwable` перехватывать не следует."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В JVM корень — `Throwable`, под ним две ветки: `Error` (фатальные сбои JVM: `OutOfMemoryError`, `StackOverflowError`) и `Exception` (обрабатываемые исключения, включая `RuntimeException` и `IOException`); в `Kotlin` иерархия JVM сохраняется, но все исключения становятся unchecked, а `CancellationException` играет особую роль в корутинах.",
+              "correct": true,
+              "sections": {
+                "explanation": "`kotlin.Exception` = `java.lang.Exception`, `kotlin.Error` = `java.lang.Error` — это те же классы. Разница с Java только в правилах: `IOException` (в Java checked) в `Kotlin` тоже unchecked. Практическое правило — ловить `Exception`, а не `Throwable`, чтобы не перехватывать `Error` и `CancellationException`.",
+                "example": "`try { dangerousOp() } catch (e: Exception) { handleError(e) }` — ловим `Exception`, не `Throwable`; `StackOverflowError` можно поймать (`catch (e: StackOverflowError)`), но восстановление почти невозможно, поэтому его лучше пробросить.",
+                "when_to_apply": "Использовать при выборе типа в `catch`: для бизнес-ошибок ловить конкретный `Exception`-подтип; `Error` в продакшне не перехватывать, кроме логирования с последующим пробросом.",
+                "edge_cases": "`CancellationException` — подтип `RuntimeException`, но его не перехватывает `CoroutineExceptionHandler` и его нельзя глотать; широкий `catch (e: Throwable)` опасен именно тем, что захватит и `Error`, и отмену.",
+                "related": "[[kotlin-exceptions-interview#Q1]] все исключения Kotlin unchecked; [[kotlin-exceptions-interview#Q18]] особая роль CancellationException; [[kotlin-exceptions-interview#Q30]] анти-паттерн catch Throwable."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `@Throws` работает с inline-функциями?",
+          "options": [
+            {
+              "text": "`@Throws` генерирует Java-клаузу `throws` в байткоде, но inline-функция встраивается в место вызова, поэтому аннотация на ней влияет на каждую точку встраивания; при этом есть ограничения, связанные с `noinline`/`crossinline`-параметрами, через которые checked-исключение может не пробрасываться напрямую.",
+              "correct": true,
+              "sections": {
+                "explanation": "Для обычной функции `@Throws(IOException::class)` даёт `throws IOException` в её сигнатуре байткода. У inline-функции тела разворачиваются в вызывающий код, и поведение `@Throws` распространяется на каждое встраивание; `crossinline` запрещает non-local return и `throw` напрямую через границу функции.",
+                "example": "`@Throws(IOException::class) inline fun <T> withFile(path: String, block: (String) -> T): T { val c = File(path).readText(); return block(c) }` — `readText()` может бросить `IOException`, и аннотация влияет на интероп в каждой точке встраивания.",
+                "when_to_apply": "Ставить `@Throws` на inline-функции, вызываемые из `Java` и способные бросить важное исключение; учитывать, что `noinline`/`crossinline`-лямбды меняют, как исключение проходит через функцию.",
+                "edge_cases": "`@Throws` влияет только на Java-интероп — в самом `Kotlin` исключение остаётся unchecked; `crossinline`-блок не может бросать напрямую через внешнюю функцию, что ограничивает применимость аннотации.",
+                "related": "[[kotlin-exceptions-interview#Q11]] базовая работа @Throws; [[kotlin-exceptions-interview#Q1]] unchecked в самом Kotlin; [[kotlin-exceptions-interview#Q12]] checked exceptions на границе языков."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@Throws` нельзя применять к inline-функциям: компилятор `Kotlin` запрещает эту аннотацию на функциях с модификатором `inline`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Throws` применима и к inline-функциям; запрета нет — просто её эффект распространяется на каждую точку встраивания, а `noinline`/`crossinline` вносят нюансы.",
+                "source_of_confusion": "Inline-функции имеют особенности (нет привычного байткода метода), отсюда вывод о несовместимости с `@Throws`.",
+                "if_it_were_true": "Тогда `@Throws(IOException::class) inline fun ...` не компилировался бы, но это допустимая конструкция.",
+                "how_it_should_be": "`@Throws` допустима на inline-функциях; её действие применяется в каждой точке встраивания, с учётом `noinline`/`crossinline`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "На inline-функции `@Throws` делает исключение checked и для самого `Kotlin`, потому что тело встраивается в обычный Kotlin-код вызывающего.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Даже на inline-функции `@Throws` влияет только на Java-интероп; в `Kotlin` исключение остаётся unchecked независимо от встраивания.",
+                "source_of_confusion": "Встраивание в Kotlin-код создаёт ощущение, что и правила checked начинают действовать в `Kotlin`.",
+                "if_it_were_true": "Тогда вызов такой inline-функции из `Kotlin` требовал бы `try-catch`, но компилятор этого не требует.",
+                "how_it_should_be": "`@Throws` — метаданные для `Java`; в `Kotlin` исключение unchecked и при inline, независимо от точки встраивания."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`crossinline`-параметр снимает все ограничения: через него inline-функция с `@Throws` может бросать checked-исключение напрямую наружу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `crossinline` запрещает non-local return и `throw` напрямую через границу функции, поэтому через такую лямбду исключение не пробрасывается напрямую.",
+                "source_of_confusion": "`crossinline` звучит как «усиленный inline», и ему приписывают расширенные возможности проброса.",
+                "if_it_were_true": "Тогда `Runnable { block() }.run()` внутри `crossinline`-функции бросал бы наружу, но `crossinline` это как раз ограничивает.",
+                "how_it_should_be": "`crossinline` ограничивает non-local `throw`/return; через него прямой проброс checked-исключения наружу невозможен."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает propagation исключений в structured concurrency?",
+          "options": [
+            {
+              "text": "В structured concurrency дочерние корутины могут пережить родителя: после завершения родительского scope его дети продолжают работать в фоне.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ключевая гарантия structured concurrency — дети НЕ переживают родителя: scope не завершается, пока не завершатся (или не отменятся) все его дочерние корутины.",
+                "source_of_confusion": "Фоновые задачи из «нестрого» запущенных scope воспринимают как норму structured concurrency.",
+                "if_it_were_true": "Тогда `coroutineScope { launch { ... } }` возвращался бы до завершения детей, но он дожидается их всех.",
+                "how_it_should_be": "Родительский scope завершается только после всех детей; «переживающие» родителя корутины — нарушение structured concurrency."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "В structured concurrency дочерние корутины не переживают родителя: при обычном `Job` исключение ребёнка отменяет родителя, тот отменяет всех остальных детей и пробрасывает исключение дальше; при `SupervisorJob` сбой ребёнка родителя не отменяет и остальные дети продолжают работу, а ошибка идёт в handler.",
+              "correct": true,
+              "sections": {
+                "explanation": "Правила различаются по типу `Job` и по способу запуска: `launch` поднимает ошибку сразу в parent-`Job`, `async` откладывает её до `await()`, а во `Flow` исключение перехватывает оператор `catch`. `coroutineScope` пробрасывает исключение вызывающему, `supervisorScope` изолирует сбой.",
+                "example": "`coroutineScope { launch { delay(100); throw RuntimeException(\"fail\") }; launch { delay(200); println(\"never\") } }` — первый `launch` уронит весь scope, второй не успеет вывести строку и будет отменён.",
+                "when_to_apply": "Учитывать при компоновке корутин: для связанных задач (fail-fast) подходит обычный `Job`/`coroutineScope`; для независимых — `SupervisorJob`/`supervisorScope`, чтобы один сбой не ронял группу.",
+                "edge_cases": "Исключение в `launch` без `CoroutineExceptionHandler` уходит в `Thread.uncaughtExceptionHandler` (stderr/LogCat), а сама корутина всё равно отменяется; `async`-ошибка возникает строго на `await()`.",
+                "related": "[[kotlin-exceptions-interview#Q15]] распространение исключений вверх по Job; [[kotlin-exceptions-interview#Q17]] Job против SupervisorJob; [[kotlin-exceptions-interview#Q19]] propagation через async/await."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Исключение в `launch` без `CoroutineExceptionHandler` бесследно теряется: оно не доходит ни до `Thread.uncaughtExceptionHandler`, ни до логов, и корутина продолжает работу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Необработанное исключение root-`launch` уходит в `Thread.uncaughtExceptionHandler` (stderr/LogCat), а сама корутина отменяется — оно не теряется молча.",
+                "source_of_confusion": "Раз `CoroutineExceptionHandler` не задан, кажется, что обрабатывать ошибку «некому» и она исчезает.",
+                "if_it_were_true": "Тогда упавшие фоновые `launch` никогда не попадали бы в логи, но необработанные ошибки видны в stderr/LogCat.",
+                "how_it_should_be": "Без handler ошибка root-`launch` идёт в `Thread.uncaughtExceptionHandler`, а корутина всё равно отменяется."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Во `Flow` исключение propagation идёт через `await()`, как у `async`, поэтому ошибку источника ловят, вызывая `flow.await()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `Flow` нет `await()`: исключения upstream-части перехватывает оператор `catch`, а не распаковка через `await()`, характерная для `Deferred`/`async`.",
+                "source_of_confusion": "Механизмы `async`/`await` и `Flow` смешивают, ожидая единый способ получения ошибки.",
+                "if_it_were_true": "Тогда `fetchFlow().await()` ловил бы ошибку потока, но у `Flow` такого метода нет — используется `catch`.",
+                "how_it_should_be": "Ошибки `Flow` перехватывает оператор `catch`; `await()` относится к `async`/`Deferred`, а не к потокам."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 39,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `Arrow Either`/`Validated` используются для функциональной обработки ошибок?",
+          "options": [
+            {
+              "text": "`Either` аккумулирует все ошибки цепочки в список, а `Validated` останавливается на первой — поэтому для форм используют `Either`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стратегии перепутаны: `Either` через `bind` короткозамыкается на первой ошибке (fail-fast), а накапливает все ошибки именно `Validated`; для форм берут `Validated`.",
+                "source_of_confusion": "Оба типа про ошибки, и их режимы (fail-fast/accumulating) легко поменять местами.",
+                "if_it_were_true": "Тогда `validateForm` на `Either` показывал бы все ошибки разом, но `bind` остановится на первой, скрыв остальные.",
+                "how_it_should_be": "`Either` — fail-fast (первая ошибка); `Validated` — accumulating (все ошибки); формы валидируют через `Validated`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "В `Either<E, A>` тип ошибки `E` обязан быть подтипом `Throwable`, как и в `kotlin.Result`, иначе цепочки `bind` не компилируются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тип `E` в `Either` произвольный (sealed class, enum, строка) и не обязан наследовать `Throwable`; фиксированный `Throwable` — это про `kotlin.Result`.",
+                "source_of_confusion": "Свойство `kotlin.Result` (ошибка-`Throwable`) ошибочно переносят на `Either`.",
+                "if_it_were_true": "Тогда `Either<UserError, User>` с sealed-`UserError` не компилировался бы, но это типичный и рабочий код.",
+                "how_it_should_be": "`E` в `Either` — любой тип; типизированная доменная ошибка (sealed/enum) и есть главное преимущество над `Result`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Either<E, A>` представляет либо ошибку (`Left<E>`), либо успех (`Right<A>`) с явно заданным типом ошибки `E` и работает fail-fast (первая ошибка останавливает цепочку через `bind`), а `Validated`/`ValidatedNel` аккумулирует ВСЕ ошибки сразу (например, при валидации формы), собирая их в `NonEmptyList`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Различие в стратегии: `Either` — fail-fast для зависимых шагов (последующий шаг нужен только при успехе предыдущего), `Validated` — accumulating для независимых проверок, где нужно показать пользователю все ошибки разом. Тип ошибки `E` в обоих случаях явный, не обязательно `Throwable`.",
+                "example": "`validateName(form.name).zip(validateEmail(form.email), validateAge(form.age)) { n, e, a -> Form(n, e, a) }` вернёт `Invalid(NonEmptyList([\"Name must not be blank\", \"Invalid email\", \"Must be 18+\"]))` — все ошибки сразу.",
+                "when_to_apply": "Брать `Either` для бизнес-логики с зависимыми шагами через `bind`/`flatMap`; `Validated` — для форм и валидации данных, где важно собрать все нарушения за один проход.",
+                "edge_cases": "`Either` через `bind` короткозамыкается на первой ошибке, поэтому для накопления он не годится; `Validated` для накопления требует комбинаторов вроде `zip`, а не последовательного `bind`.",
+                "related": "[[kotlin-exceptions-interview#Q24]] Either и его преимущества; [[kotlin-exceptions-interview#Q25]] Raise DSL и bind; [[kotlin-exceptions-interview#Q32]] Either против kotlin.Result."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Validated` при накоплении ошибок собирает их в обычный `List`, который может быть пустым, поэтому различить успех и провал можно только по флагу `isValid`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Validated` аккумулирует ошибки в `NonEmptyList` (`Nel`) — непустой список: при наличии ошибок он гарантированно содержит хотя бы один элемент, а успех представлен веткой `Valid`.",
+                "source_of_confusion": "Накопление ошибок ассоциируют с обычной коллекцией `List`, которая бывает пустой.",
+                "if_it_were_true": "Тогда `Invalid` мог бы нести пустой список ошибок, что бессмысленно, но `Nel` исключает такой случай типом.",
+                "how_it_should_be": "Ошибки `Validated` накапливаются в `NonEmptyList`; пустого набора ошибок в ветке `Invalid` быть не может."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 40,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `SupervisorJob` и `CoroutineExceptionHandler` работают вместе?",
+          "options": [
+            {
+              "text": "`CoroutineExceptionHandler` обязательно срабатывает и для `async`-корутин в supervisor-scope: ошибка из `Deferred` сразу попадает в handler.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Handler НЕ срабатывает для `async`: исключение хранится в `Deferred` и доставляется через `await()`, даже в scope с `SupervisorJob`.",
+                "source_of_confusion": "Кажется, что в supervisor-scope handler становится универсальным приёмником всех ошибок, включая `async`.",
+                "if_it_were_true": "Тогда `scope.async { throw ... }` логировался бы handler-ом без `await()`, но ошибку получают именно на `await()`.",
+                "how_it_should_be": "Handler работает для `launch`, а не для `async`; ошибку `async` забирают через `await()` независимо от `SupervisorJob`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`SupervisorJob` и `CoroutineExceptionHandler` несовместимы в одном контексте: при добавлении handler-а изоляция `SupervisorJob` перестаёт действовать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они полностью совместимы и часто используются вместе: `SupervisorJob() + handler` в одном контексте даёт и изоляцию сбоев, и централизованную обработку.",
+                "source_of_confusion": "Кажется, что два механизма обработки ошибок «конфликтуют» за одно исключение.",
+                "if_it_were_true": "Тогда `CoroutineScope(SupervisorJob() + handler)` ломал бы изоляцию, но это стандартная рабочая конфигурация.",
+                "how_it_should_be": "`SupervisorJob` и handler дополняют друг друга в одном контексте: изоляция плюс централизованная реакция на ошибки."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`CoroutineExceptionHandler` срабатывает для исключений из вложенного `coroutineScope` так же, как для прямых `launch` в supervisor-scope.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Из вложенного `coroutineScope` исключение пробрасывается в его внешний `launch`, и только если тот необработан и является root — попадает в handler; напрямую для inner-`coroutineScope` handler не вызывается.",
+                "source_of_confusion": "Любой `launch` внутри scope кажется одинаково «покрытым» handler-ом.",
+                "if_it_were_true": "Тогда ошибка из `coroutineScope { launch { throw ... } }` шла бы прямо в handler, но сначала она поднимается в outer `launch`.",
+                "how_it_should_be": "Handler ловит необработанные исключения root-`launch`; из вложенного `coroutineScope` ошибка сначала идёт в внешний `launch`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`SupervisorJob` изолирует сбои дочерних корутин (падение одной не отменяет сестёр), а `CoroutineExceptionHandler` обрабатывает исключения из дочерних `launch`-корутин, которые иначе стали бы unhandled; вместе они дают scope, где независимые задачи переживают сбой соседа, а каждая необработанная ошибка логируется handler-ом.",
+              "correct": true,
+              "sections": {
+                "explanation": "Их комбинируют в одном контексте: `CoroutineScope(SupervisorJob() + Dispatchers.IO + handler)`. `SupervisorJob` обеспечивает изоляцию, handler — централизованную реакцию (лог, метрика, алерт). Handler НЕ срабатывает для `async` (ошибка в `Deferred`) и для вложенных `coroutineScope`, но работает для прямых `launch` в supervisor-scope.",
+                "example": "`val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + handler); scope.launch(CoroutineName(\"order\")) { throw RuntimeException(...) }; scope.launch(CoroutineName(\"payment\")) { processPayments() }` — handler поймает сбой `order`, а `payment` продолжит работу.",
+                "when_to_apply": "Использовать связку для долгоживущих сервисных scope (Spring `@Service`, Android), где несколько независимых фоновых задач, и нужно централизованно реагировать на их необработанные ошибки.",
+                "edge_cases": "Handler не получит исключение `async` (оно ждёт `await()`) и из вложенного `coroutineScope` (тот сам пробросит в outer `launch`); в `supervisorScope` handler срабатывает для каждого дочернего `launch` отдельно.",
+                "related": "[[kotlin-exceptions-interview#Q16]] когда срабатывает CoroutineExceptionHandler; [[kotlin-exceptions-interview#Q17]] SupervisorJob и изоляция; [[kotlin-exceptions-interview#Q21]] supervisorScope."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

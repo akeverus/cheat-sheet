@@ -1,0 +1,1625 @@
+{
+  "topic_slug": "java-lombok-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Lombok` и как он работает на этапе компиляции?",
+          "options": [
+            {
+              "text": "`Project Lombok` — аннотационный процессор Java (`JSR 269`), который на этапе компиляции встраивается в AST (`Abstract Syntax Tree`) компилятора через internal API и модифицирует узлы дерева, дописывая код прямо в `.class` без промежуточного `.java`.",
+              "correct": true,
+              "sections": {
+                "explanation": "В отличие от обычных annotation processors (`MapStruct`, `Dagger`), которые только генерируют новые файлы, `Lombok` правит уже существующий AST — отсюда трудности с отладкой и зависимость от IDE-плагина.",
+                "example": "Например, `javac` читает `@Data` на классе, `Lombok` дополняет AST геттерами и `equals`, и затем компилятор собирает уже расширенное дерево в байткод.",
+                "when_to_apply": "Для работы нужны три вещи: зависимость в `compileOnly`/`provided` scope, регистрация processor в `annotationProcessorPaths` и IDE-плагин (в `IntelliJ IDEA` встроен с 2020.3).",
+                "edge_cases": "Использование internal compiler API делает `Lombok` хрупким: новые мажорные версии `JDK` иногда ломают его, и приходится ждать обновления библиотеки.",
+                "related": "[[java-lombok-interview#Q2]] подключение к Maven/Gradle; [[java-lombok-interview#Q24]] delombok как обратная операция; [[java-lombok-interview#Q25]] критика и риски internal API."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Lombok` — это runtime-библиотека, которая через рефлексию генерирует геттеры и сеттеры в момент работы приложения, когда к ним обращаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На самом деле `Lombok` работает на этапе компиляции и пишет реальные методы в байткод; в runtime его jar вообще может отсутствовать.",
+                "source_of_confusion": "Многие runtime-библиотеки (`Hibernate`, `Jackson`) действительно используют рефлексию, и по аналогии кажется, что `Lombok` тоже.",
+                "if_it_were_true": "Если бы так было, `Lombok` нужен был бы в runtime-зависимостях, но его кладут в `compileOnly` именно потому, что после компиляции он не нужен.",
+                "how_it_should_be": "Правильно: `Lombok` — compile-time AST-трансформер, методы уже физически присутствуют в `.class`, рефлексия в runtime не задействована."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Lombok` — это плагин `IntelliJ IDEA`, который показывает геттеры и сеттеры только в редакторе, но в собранном `.jar` их нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Геттеры реально попадают в байткод компилятором; IDE-плагин лишь помогает редактору понимать сгенерированный код для автодополнения.",
+                "source_of_confusion": "Без плагина `IntelliJ` подсвечивает вызовы `getName()` красным, и складывается впечатление, что всё держится на IDE.",
+                "if_it_were_true": "Если бы методов не было в `.jar`, сборка из командной строки через `gradle build` падала бы с `cannot find symbol`, но она проходит успешно.",
+                "how_it_should_be": "Правильно: код генерирует компилятор через annotation processing, а IDE-плагин — лишь удобство для разработки, не источник методов."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Lombok` — это обычный annotation processor вроде `MapStruct`, который генерирует отдельные `.java`-файлы рядом с исходником.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В отличие от `MapStruct`, `Lombok` не создаёт новые файлы, а модифицирует AST существующего класса прямо во время компиляции.",
+                "source_of_confusion": "Оба используют `JSR 269`, поэтому их легко отнести к одному и тому же механизму генерации файлов.",
+                "if_it_were_true": "Если бы `Lombok` генерировал файлы, в `build/generated` лежали бы `UserLombok.java`, но там их нет — методы вшиты в исходный класс.",
+                "how_it_should_be": "Правильно: `Lombok` — это AST-трансформер, а файл-генерирующие processors вроде `MapStruct` работают иначе и запускаются отдельно."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как подключить `Lombok` к проекту на Maven и Gradle?",
+          "options": [
+            {
+              "text": "Достаточно добавить `Lombok` только в `implementation`/`compile` scope, annotation processor регистрировать не нужно — он подключается автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без явной регистрации processor в `annotationProcessorPaths` (Maven) или `annotationProcessor` (Gradle) аннотации не обрабатываются и методы не генерируются.",
+                "source_of_confusion": "В старых версиях `Gradle` и до разделения compile/annotationProcessor одной зависимости иногда хватало, отсюда устаревшее представление.",
+                "if_it_were_true": "Если бы регистрация была не нужна, проект собирался бы и без `annotationProcessor(...)`, но на практике компиляция падает с `cannot find symbol`.",
+                "how_it_should_be": "Правильно: нужны обе строки — `compileOnly` для аннотаций и `annotationProcessor` для самой обработки."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "В `Gradle` указывают `compileOnly` и `annotationProcessor` на `org.projectlombok:lombok`; в `Maven` — зависимость с `<optional>true</optional>` плюс регистрация `Lombok` в `annotationProcessorPaths` у `maven-compiler-plugin`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Разделение нужно потому, что аннотации требуются только для компиляции (`compileOnly`), а сам процессор должен явно стоять в processor-path, чтобы `javac` его вызвал.",
+                "example": "Типичный блок: `compileOnly(\"org.projectlombok:lombok:1.18.32\")` и `annotationProcessor(\"org.projectlombok:lombok:1.18.32\")`, а для тестов — `testCompileOnly` и `testAnnotationProcessor`.",
+                "when_to_apply": "Подключают так, когда нужно убрать boilerplate, но не тянуть `Lombok` в transitive-зависимости потребителей библиотеки.",
+                "edge_cases": "`<optional>true</optional>` в Maven критичен: иначе `Lombok` просочится в transitive dependencies, и его получат все, кто зависит от вашего артефакта.",
+                "related": "[[java-lombok-interview#Q1]] как Lombok работает в компиляции; [[java-lombok-interview#Q23]] порядок processors с MapStruct; [[java-lombok-interview#Q25]] почему Lombok нежелателен в публичных библиотеках."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Версию `Lombok` всегда задаёт сам `Spring Boot` через BOM, поэтому в зависимости версию указывать нельзя — это вызовет конфликт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Версию можно указывать явно; `Spring Boot` BOM лишь предоставляет управляемую версию по умолчанию, но не запрещает её переопределение.",
+                "source_of_confusion": "`Spring Boot` действительно управляет многими версиями через `dependency management`, и это распространяют на `Lombok` как на обязательное правило.",
+                "if_it_were_true": "Если бы явная версия ломала сборку, нельзя было бы зафиксировать `1.18.32` под новый `JDK`, но именно так и делают при апгрейдах.",
+                "how_it_should_be": "Правильно: можно полагаться на BOM, но явная версия допустима и часто нужна для совместимости с конкретным `JDK`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В `Maven` нужно положить `Lombok` в scope `runtime`, потому что сгенерированные методы вызываются во время работы приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Lombok` нужен только на этапе компиляции; в runtime методы уже в байткоде, поэтому scope делают `provided`/`optional`, а не `runtime`.",
+                "source_of_confusion": "Раз методы используются в работающем приложении, кажется логичным, что библиотека должна быть в runtime-classpath.",
+                "if_it_were_true": "Если бы `Lombok` был нужен в runtime, его отсутствие в проде вызывало бы `NoClassDefFoundError`, но приложения прекрасно работают без него.",
+                "how_it_should_be": "Правильно: `Lombok` исключают из runtime — `compileOnly` в Gradle и `optional`/`provided` в Maven."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что генерируют `@Getter` и `@Setter` и как управлять видимостью?",
+          "options": [
+            {
+              "text": "`@Getter` всегда генерирует метод вида `getActive()` даже для `boolean`-поля `active`, как и для всех остальных типов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для примитива `boolean` `Lombok` генерирует геттер по конвенции JavaBeans с префиксом `is`, то есть `isActive()`, а не `getActive()`.",
+                "source_of_confusion": "Большинство типов действительно дают `getXxx()`, и это правило по инерции переносят и на `boolean`.",
+                "if_it_were_true": "Если бы геттер был `getActive()`, `Jackson` и JavaBeans-инструменты не распознавали бы boolean-property по стандартной конвенции `isActive()`.",
+                "how_it_should_be": "Правильно: для `boolean active` генерируется `isActive()`, а `setActive(boolean)` для сеттера."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@Setter(AccessLevel.NONE)` на поле делает сеттер `private`, чтобы к нему можно было обращаться только внутри класса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AccessLevel.NONE` означает, что сеттер вообще не генерируется, а не генерируется с `private`-видимостью.",
+                "source_of_confusion": "В перечислении `AccessLevel` есть и `PRIVATE`, и `NONE`, и их легко перепутать по смыслу.",
+                "if_it_were_true": "Если бы `NONE` давал `private`-сеттер, поле можно было бы менять внутри класса через `setId(...)`, но такого метода просто нет.",
+                "how_it_should_be": "Правильно: для приватного сеттера используют `AccessLevel.PRIVATE`, а `NONE` полностью отключает генерацию."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@Getter` генерирует `getFieldName()` для каждого поля (для `boolean` — `isFieldName()`), `@Setter` — `setFieldName(Type value)`; видимость задаётся через `AccessLevel`, а `@Setter(AccessLevel.NONE)` отключает генерацию для конкретного поля.",
+              "correct": true,
+              "sections": {
+                "explanation": "Аннотации можно навесить на класс (применятся ко всем нестатическим полям) или точечно на поле, переопределяя поведение класса.",
+                "example": "Например, `@Setter(AccessLevel.NONE) private String id;` оставит только `getId()`, а класс с `@Getter @Setter` сгенерирует `getName()`, `setName()`, `isActive()`, `setActive()`.",
+                "when_to_apply": "Управление видимостью применяют, когда нужен read-only доступ к части полей или package-private API без ручного написания методов.",
+                "edge_cases": "`AccessLevel` принимает `PUBLIC` (по умолчанию), `PROTECTED`, `PACKAGE`, `PRIVATE` и `NONE` — последний именно убирает метод, а не делает его приватным.",
+                "related": "[[java-lombok-interview#Q4]] настройка @ToString; [[java-lombok-interview#Q8]] @Data включает Getter и Setter; [[java-lombok-interview#Q10]] @Accessors меняет стиль аксессоров."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@Getter` и `@Setter` можно навесить только на отдельные поля; на уровне класса эти аннотации не работают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотации можно ставить и на класс — тогда геттеры/сеттеры генерируются для всех подходящих полей сразу.",
+                "source_of_confusion": "Точечное навешивание на поле выглядит более явным, и из этого делают вывод, что только так и можно.",
+                "if_it_were_true": "Если бы класс-уровень не поддерживался, нельзя было бы написать `@Getter @Setter public class User`, но это самый распространённый способ применения.",
+                "how_it_should_be": "Правильно: `@Getter`/`@Setter` работают и на классе (для всех полей), и на отдельном поле."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает `@ToString` и как настроить вывод полей?",
+          "options": [
+            {
+              "text": "`@ToString` по умолчанию вызывает `super.toString()` и включает поля родительского класса в строковое представление.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `callSuper = false`, поэтому поля родителя в вывод не попадают, пока явно не указать `callSuper = true`.",
+                "source_of_confusion": "Логично ожидать, что `toString` покажет всё состояние объекта, включая унаследованное, отсюда заблуждение.",
+                "if_it_were_true": "Если бы `callSuper` был `true` по умолчанию, в иерархиях не пришлось бы явно его выставлять, но на практике без него данные родителя теряются.",
+                "how_it_should_be": "Правильно: по умолчанию `super.toString()` не вызывается; для включения полей родителя нужен `@ToString(callSuper = true)`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@ToString` включает в вывод и статические поля класса, поскольку они тоже часть его состояния.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@ToString` берёт только нестатические поля; статические `static`-поля игнорируются, так как принадлежат классу, а не экземпляру.",
+                "source_of_confusion": "Кажется, что строковое представление должно отражать вообще всё, что объявлено в классе.",
+                "if_it_were_true": "Если бы static-поля включались, два разных экземпляра показывали бы одинаковое статическое значение в каждом `toString`, что бессмысленно для отладки экземпляра.",
+                "how_it_should_be": "Правильно: в `toString` попадают только нестатические поля, отражающие состояние конкретного объекта."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Исключить поле из `toString` можно только глобально через параметр `exclude` на классе; точечной аннотации на поле нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Существует `@ToString.Exclude` прямо на поле, а также `@ToString.Include` для явного включения при `onlyExplicitlyIncluded = true`.",
+                "source_of_confusion": "Параметр `exclude` на уровне класса действительно есть, и про field-level аннотации иногда забывают.",
+                "if_it_were_true": "Если бы field-level аннотаций не было, нельзя было бы пометить `@ToString.Exclude private BigDecimal internalCost;`, но именно так чаще всего и скрывают поля.",
+                "how_it_should_be": "Правильно: есть и `exclude` на классе, и точечные `@ToString.Exclude`/`@ToString.Include` на полях."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@ToString` генерирует `toString()` с именами и значениями всех нестатических полей; настроить вывод можно через `exclude`, `callSuper = true`, `onlyExplicitlyIncluded = true` и точечные `@ToString.Include`/`@ToString.Exclude`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Параметр `rank` у `@ToString.Include` задаёт порядок полей в выводе, а `onlyExplicitlyIncluded` оставляет лишь явно помеченные поля.",
+                "example": "Например, можно скрыть пароль: `@ToString(exclude = {\"password\"})` или точечно `@ToString.Exclude private BigDecimal internalCost;`.",
+                "when_to_apply": "Тонкую настройку применяют, чтобы не светить секреты в логах и не раздувать вывод объёмными или чувствительными полями.",
+                "edge_cases": "Важно помнить про `callSuper`: при `false` (по умолчанию) данные родителя не попадают в строку, что в иерархиях может скрыть часть состояния.",
+                "related": "[[java-lombok-interview#Q3]] базовые @Getter/@Setter; [[java-lombok-interview#Q22]] двунаправленный toString и StackOverflow в JPA; [[java-lombok-interview#Q27]] callSuper в наследовании."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что генерирует `@EqualsAndHashCode` и какие у него риски?",
+          "options": [
+            {
+              "text": "`@EqualsAndHashCode` генерирует `equals()` и `hashCode()` по всем нестатическим нетранзиентным полям; основные риски — mutable-объекты в `HashMap`/`HashSet`, JPA-сущности с `id == null` и игнорирование полей родителя при `callSuper = false`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Можно настроить `exclude` для исключения полей и `callSuper = true`, чтобы учесть состояние суперкласса в сравнении и хешировании.",
+                "example": "Например, если изменить поле объекта после добавления в `HashSet`, его хеш меняется, и элемент больше не находится по ключу.",
+                "when_to_apply": "Эти риски учитывают при выборе аннотаций для domain-объектов, JPA-сущностей и ключей коллекций, где контракт `equals/hashCode` критичен.",
+                "edge_cases": "Особый случай — JPA: до `persist()` `id == null`, поэтому все новые сущности равны по `hashCode`, что ломает их хранение в `HashSet` (подробнее в Q22).",
+                "related": "[[java-lombok-interview#Q22]] equals/hashCode на JPA-сущностях; [[java-lombok-interview#Q26]] Include/Exclude для точечного контроля; [[java-lombok-interview#Q27]] callSuper в иерархиях."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@EqualsAndHashCode` по умолчанию включает в сравнение и `transient`-поля, и статические поля класса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `Lombok` берёт только нестатические и нетранзиентные поля; `static` и `transient` исключаются.",
+                "source_of_confusion": "Кажется, что для корректного `equals` нужно учитывать вообще все поля объекта.",
+                "if_it_were_true": "Если бы static-поля участвовали, два разных экземпляра с одинаковым статическим полем были бы «равны» по этому критерию, что нарушает смысл сравнения экземпляров.",
+                "how_it_should_be": "Правильно: в `equals/hashCode` попадают нестатические нетранзиентные поля, а `static`/`transient` игнорируются."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@EqualsAndHashCode` автоматически учитывает поля родительского класса, чтобы соблюсти контракт в иерархиях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `callSuper = false`, поэтому поля родителя игнорируются, и нужно явно указывать `callSuper = true`.",
+                "source_of_confusion": "Логично ожидать, что сравнение объектов учтёт всё унаследованное состояние, отсюда заблуждение.",
+                "if_it_were_true": "Если бы родитель учитывался по умолчанию, не было бы предупреждения `Lombok` о возможной ошибке при `@Data` в наследниках, но оно есть именно из-за `callSuper = false`.",
+                "how_it_should_be": "Правильно: по умолчанию поля родителя не учитываются; для их включения нужен `@EqualsAndHashCode(callSuper = true)`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Риск с mutable-объектами в `HashMap` к `@EqualsAndHashCode` не относится — `Lombok` сам пересчитывает хеш при изменении поля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Lombok` генерирует обычный `hashCode()`, который вычисляется в момент вызова; никакого автоматического пересчёта или кэширования при изменении поля нет.",
+                "source_of_confusion": "Хочется верить, что библиотека сама решает проблему изменяемого ключа, раз генерирует методы.",
+                "if_it_were_true": "Если бы `Lombok` следил за изменениями, объект не «терялся» бы в `HashSet` после мутации, но именно эта проблема и возникает.",
+                "how_it_should_be": "Правильно: при изменении поля mutable-объекта его хеш меняется, и он перестаёт находиться в hash-коллекции — это реальный риск."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются `@NoArgsConstructor`, `@RequiredArgsConstructor` и `@AllArgsConstructor`?",
+          "options": [
+            {
+              "text": "`@RequiredArgsConstructor` генерирует конструктор по абсолютно всем полям класса, включая не-`final` поля со значениями по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@RequiredArgsConstructor` берёт только `final`-поля без инициализатора и поля, помеченные `@NonNull`; остальные в конструктор не входят.",
+                "source_of_confusion": "Слово «Required» сбивает с толку — кажется, что обязательны все поля для создания объекта.",
+                "if_it_were_true": "Если бы он брал все поля, не было бы отдельного `@AllArgsConstructor`, но они различаются именно набором параметров.",
+                "how_it_should_be": "Правильно: `@RequiredArgsConstructor` — только `final`/`@NonNull`, а все поля — это `@AllArgsConstructor`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@NoArgsConstructor` создаёт конструктор без аргументов (нужен JPA и Jackson), `@RequiredArgsConstructor` — конструктор по `final` и `@NonNull`-полям (рекомендован для Spring DI), `@AllArgsConstructor` — конструктор по всем полям.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@RequiredArgsConstructor` с `final`-полями — стандартный способ конструкторного внедрения зависимостей в Spring без `@Autowired`.",
+                "example": "Например, `@RequiredArgsConstructor` в `OrderService` с `private final OrderRepository repository;` положит репозиторий в конструктор, а не-final `prefix` оставит вне него.",
+                "when_to_apply": "Выбор зависит от задачи: JPA-сущности требуют `@NoArgsConstructor`, Spring-бины удобны с `@RequiredArgsConstructor`, а `@AllArgsConstructor` применяют осторожно.",
+                "edge_cases": "`@AllArgsConstructor` хрупок: он опирается на порядок объявления полей, и перестановка полей молча меняет смысл вызовов конструктора.",
+                "related": "[[java-lombok-interview#Q7]] @NonNull и null-проверки; [[java-lombok-interview#Q8]] @Data включает RequiredArgsConstructor; [[java-lombok-interview#Q22]] @NoArgsConstructor(force=true) для JPA."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@NoArgsConstructor` всегда корректно работает с `final`-полями, инициализируя их значениями по умолчанию из объявления.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С `final`-полями без `force = true` `@NoArgsConstructor` не компилируется, так как `final`-поля обязаны быть инициализированы; `force = true` присваивает им `null`/`0`.",
+                "source_of_confusion": "Кажется, что компилятор сам подставит дефолтные значения объявления, как в обычном поле.",
+                "if_it_were_true": "Если бы это работало, не существовало бы параметра `@NoArgsConstructor(force = true)`, но он добавлен именно для этого случая.",
+                "how_it_should_be": "Правильно: для `final`-полей нужен `@NoArgsConstructor(force = true)`, иначе будет ошибка компиляции."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@AllArgsConstructor` безопаснее `@RequiredArgsConstructor`, потому что явно перечисляет все поля и не зависит от их порядка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот, `@AllArgsConstructor` хрупок: он генерирует параметры строго в порядке объявления полей, и перестановка одинаковых по типу полей ломает вызовы незаметно.",
+                "source_of_confusion": "Интуитивно «конструктор по всем полям» кажется более полным и потому надёжным.",
+                "if_it_were_true": "Если бы он не зависел от порядка, рефакторинг полей не приводил бы к багам, но именно такие баги — частая претензия к `@AllArgsConstructor`.",
+                "how_it_should_be": "Правильно: `@AllArgsConstructor` чувствителен к порядку полей и считается более хрупким, чем `@RequiredArgsConstructor`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает `@NonNull` в `Lombok` и где он применяется?",
+          "options": [
+            {
+              "text": "`@NonNull` от `Lombok` — это та же аннотация, что `javax.annotation.NonNull` (JSR 305) и JetBrains `@NotNull`, просто из другого пакета.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Lombok` реагирует только на свой `lombok.NonNull`; одноимённые аннотации из JSR 305 или JetBrains имеют другую семантику и не вызывают генерацию проверки.",
+                "source_of_confusion": "Все три называются почти одинаково и выражают «не null», отсюда впечатление взаимозаменяемости.",
+                "if_it_were_true": "Если бы они были эквивалентны, `Lombok` вставлял бы null-check и для `javax`-аннотации, но он этого не делает.",
+                "how_it_should_be": "Правильно: `Lombok` обрабатывает исключительно `lombok.NonNull`, остальные одноимённые аннотации он игнорирует."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@NonNull` на параметре заставляет `Lombok` бросать `IllegalArgumentException`, если аргумент равен `null`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `Lombok` вставляет проверку, которая бросает `NullPointerException` с сообщением вида «name is marked @NonNull but is null», а не `IllegalArgumentException`.",
+                "source_of_confusion": "Многие валидации аргументов действительно кидают `IllegalArgumentException`, и это ожидание переносят на `@NonNull`.",
+                "if_it_were_true": "Если бы кидался `IllegalArgumentException`, существующий код, ловящий `NPE` на null-аргументах, вёл бы себя иначе, но `Lombok` намеренно использует `NPE`.",
+                "how_it_should_be": "Правильно: по умолчанию генерируется `NullPointerException` (тип исключения настраивается через `lombok.config`)."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@NonNull` на параметре или поле заставляет `Lombok` вставить проверку на `null`, бросающую `NullPointerException` с поясняющим сообщением; на поле в классе с `@RequiredArgsConstructor` оно ещё и добавляет поле в конструктор с null-check.",
+              "correct": true,
+              "sections": {
+                "explanation": "Важно различать: `Lombok` реагирует только на свой `lombok.NonNull`, а JSR 305 `@NonNull` или JetBrains `@NotNull` он игнорирует.",
+                "example": "Например, `public User create(@NonNull String name)` развернётся в проверку `if (name == null) throw new NullPointerException(\"name is marked @NonNull...\")` в начале метода.",
+                "when_to_apply": "Применяют для fail-fast валидации входных параметров и обязательных зависимостей, чтобы `null` падал на границе, а не глубже по стеку.",
+                "edge_cases": "На `@NonNull`-поле в классе с `@RequiredArgsConstructor` проверка попадает в конструктор, гарантируя, что обязательная зависимость не будет `null` при создании бина.",
+                "related": "[[java-lombok-interview#Q6]] @RequiredArgsConstructor и final-поля; [[java-lombok-interview#Q8]] @NonNull внутри @Data; [[java-lombok-interview#Q21]] настройка поведения через lombok.config."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@NonNull` работает только на полях класса; на параметрах метода `Lombok` его не поддерживает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@NonNull` поддерживается и на параметрах метода — там `Lombok` вставляет null-проверку в начало тела метода.",
+                "source_of_confusion": "Часто `@NonNull` показывают именно на полях с `@RequiredArgsConstructor`, и это создаёт впечатление, что параметры не охвачены.",
+                "if_it_were_true": "Если бы параметры не поддерживались, нельзя было бы написать `create(@NonNull String name)` с автоматической проверкой, но это один из основных сценариев.",
+                "how_it_should_be": "Правильно: `@NonNull` работает и на полях, и на параметрах метода/конструктора."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что именно генерирует комбинированная аннотация `@Data`?",
+          "options": [
+            {
+              "text": "`@Data` эквивалентна `@Getter` + `@Setter` + `@AllArgsConstructor` + `@ToString` + `@EqualsAndHashCode`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Data` включает `@RequiredArgsConstructor`, а не `@AllArgsConstructor`: конструктор создаётся только по `final` и `@NonNull`-полям.",
+                "source_of_confusion": "И `@Data`, и `@Value` генерируют конструктор, и их состав легко перепутать — у `@Value` как раз `@AllArgsConstructor`.",
+                "if_it_were_true": "Если бы `@Data` давала конструктор по всем полям, не нужно было бы добавлять `@AllArgsConstructor` рядом для DTO, но это частая практика именно из-за `@RequiredArgsConstructor` внутри.",
+                "how_it_should_be": "Правильно: `@Data` = `@Getter` + `@Setter` + `@RequiredArgsConstructor` + `@ToString` + `@EqualsAndHashCode`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@Data` делает все поля `final` и не генерирует сеттеры, создавая иммутабельный класс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Иммутабельность с `final`-полями и без сеттеров — это `@Value`, а `@Data` оставляет поля mutable и генерирует сеттеры для не-`final` полей.",
+                "source_of_confusion": "`@Data` и `@Value` — близнецы по названию и составу, поэтому их свойства путают.",
+                "if_it_were_true": "Если бы `@Data` убирала сеттеры, нельзя было бы менять состояние DTO через `setCity(...)`, но такие сеттеры она как раз создаёт.",
+                "how_it_should_be": "Правильно: иммутабельный вариант — это `@Value`; `@Data` генерирует сеттеры и оставляет поля изменяемыми."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@Data` напрямую поддерживает параметр `callSuper`, поэтому в иерархии достаточно написать `@Data(callSuper = true)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `@Data` нет параметра `callSuper`; чтобы учесть поля родителя, нужно добавить отдельную `@EqualsAndHashCode(callSuper = true)`.",
+                "source_of_confusion": "Логично ожидать, что комбинированная аннотация пробросит важный параметр вложенных аннотаций.",
+                "if_it_were_true": "Если бы `@Data(callSuper = true)` существовал, не приходилось бы дублировать `@EqualsAndHashCode` рядом, но именно так и поступают в наследниках.",
+                "how_it_should_be": "Правильно: `callSuper` задают отдельной `@EqualsAndHashCode(callSuper = true)`, а `@Data` его не принимает."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@Data` — комбинированная аннотация, эквивалентная `@Getter` + `@Setter` + `@RequiredArgsConstructor` + `@ToString` + `@EqualsAndHashCode` сразу.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это удобно для простых mutable DTO/POJO, но включённый `@EqualsAndHashCode` и сеттеры для всех не-`final` полей создают грабли на JPA-сущностях.",
+                "example": "Например, `@Data class Address { @NonNull private final String street; private String city; }` даст конструктор по `street`, плюс геттеры/сеттеры для `city`.",
+                "when_to_apply": "Применяют `@Data` для DTO и value-подобных структур, но не для JPA-сущностей, где `@EqualsAndHashCode` ломает коллекции (см. Q22).",
+                "edge_cases": "У `@Data` нет параметра `callSuper`, поэтому в иерархии нужно добавлять отдельную `@EqualsAndHashCode(callSuper = true)`, иначе поля родителя игнорируются.",
+                "related": "[[java-lombok-interview#Q5]] риски @EqualsAndHashCode; [[java-lombok-interview#Q9]] чем @Value отличается от @Data; [[java-lombok-interview#Q22]] почему @Data опасна на JPA-сущностях."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `@Value` отличается от `@Data`?",
+          "options": [
+            {
+              "text": "`@Value` — иммутабельный аналог `@Data`: эквивалентен `@Getter` + `@AllArgsConstructor` + `@ToString` + `@EqualsAndHashCode`, при этом все поля становятся `private final`, а сеттеры не генерируются.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевые отличия: у `@Data` поля mutable и есть сеттеры с `@RequiredArgsConstructor`, у `@Value` поля `final`, сеттеров нет и используется `@AllArgsConstructor`.",
+                "example": "Например, `@Value class Money { BigDecimal amount; String currency; }` сделает оба поля `private final`, сгенерирует только геттеры и конструктор со всеми полями.",
+                "when_to_apply": "`@Value` применяют для Value Objects в DDD, immutable DTO-ответов и record-подобных классов, которые до `record` (Java 16) приходилось писать руками.",
+                "edge_cases": "С появлением `record` в Java 16 многие сценарии `@Value` покрываются встроенными средствами языка, но `@Value` остаётся полезным на старых версиях `JDK`.",
+                "related": "[[java-lombok-interview#Q8]] что включает @Data; [[java-lombok-interview#Q11]] @Builder совместим с @Value; [[java-lombok-interview#Q15]] @With для копий immutable-объектов."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@Value` отличается от `@Data` только тем, что генерирует сеттеры с модификатором `protected` вместо `public`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Value` вообще не генерирует сеттеры, потому что делает класс иммутабельным с `final`-полями; речь не о видимости сеттеров.",
+                "source_of_confusion": "Кажется, что иммутабельность — это просто более закрытые сеттеры, а не их полное отсутствие.",
+                "if_it_were_true": "Если бы `@Value` давал `protected`-сеттеры, состояние объекта можно было бы менять из наследников, что нарушило бы immutability.",
+                "how_it_should_be": "Правильно: `@Value` не создаёт сеттеров вовсе и делает все поля `private final`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@Value` использует `@RequiredArgsConstructor`, как и `@Data`, поэтому в конструктор попадают только `final`-поля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Value` использует `@AllArgsConstructor`; поскольку у него и так все поля `final`, конструктор включает их все.",
+                "source_of_confusion": "Оба генерируют конструктор, а раз поля у `@Value` `final`, легко решить, что это тот же `@RequiredArgsConstructor`.",
+                "if_it_were_true": "Если бы конструктор брал лишь часть полей, нельзя было бы задать все значения immutable-объекта при создании, но `@Value` именно это и обеспечивает через `@AllArgsConstructor`.",
+                "how_it_should_be": "Правильно: `@Value` использует `@AllArgsConstructor` (все поля), а `@RequiredArgsConstructor` — это про `@Data`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@Value` оставляет поля mutable, как и `@Data`, но дополнительно генерирует метод `with` для копирования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Value` делает поля `private final` и потому иммутабельными; метод `withXxx` появляется только при отдельной аннотации `@With`, а не сам по себе.",
+                "source_of_confusion": "`@With` часто упоминают вместе с `@Value`, поэтому функцию копирования приписывают самому `@Value`.",
+                "if_it_were_true": "Если бы поля оставались mutable, `@Value` ничем не отличался бы от `@Data`, но его смысл именно в immutability.",
+                "how_it_should_be": "Правильно: `@Value` делает поля `final`/immutable, а копирование с изменением — это отдельный `@With`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@Accessors` и зачем он нужен?",
+          "options": [
+            {
+              "text": "`@Accessors(fluent = true)` совместим с `Jackson` и JPA, так как они понимают и fluent-методы вроде `host()` без префиксов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`fluent = true` ломает совместимость с `Jackson` и JPA, которые опираются на JavaBeans-конвенцию `getXxx()`/`setXxx()` и не распознают `host()`/`port()`.",
+                "source_of_confusion": "Fluent-стиль выглядит современно и кажется универсально поддерживаемым фреймворками.",
+                "if_it_were_true": "Если бы `Jackson` понимал fluent-аксессоры, не было бы известной проблемы сериализации `@Accessors(fluent = true)`-классов, но она хорошо известна.",
+                "how_it_should_be": "Правильно: `fluent = true` несовместим с `Jackson` и JPA, ожидающими стандартные `getXxx()`/`setXxx()`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@Accessors` меняет стиль сгенерированных аксессоров: `chain = true` заставляет сеттеры возвращать `this` (fluent-цепочки), `fluent = true` убирает префиксы `get`/`set`, а `prefix` отбрасывает заданный префикс из имён полей.",
+              "correct": true,
+              "sections": {
+                "explanation": "`fluent = true` неявно включает `chain`, давая API вида `config.host()` вместо `config.getHost()` и `setName(...)` с возвратом `this`.",
+                "example": "Например, `@Accessors(chain = true)` позволяет писать `new Builder().setName(\"foo\").setValue(42)` в одну цепочку вызовов.",
+                "when_to_apply": "Применяют для удобного fluent-API в билдер-подобных и конфигурационных классах, где цепочки сеттеров делают код читабельнее.",
+                "edge_cases": "Важно: `fluent = true` ломает совместимость с `Jackson` и JPA, потому что они ожидают стандартную конвенцию `getXxx()`/`setXxx()`.",
+                "related": "[[java-lombok-interview#Q3]] базовые @Getter/@Setter; [[java-lombok-interview#Q11]] @Builder как альтернатива chain-сеттерам; [[java-lombok-interview#Q25]] несовместимость fluent с Jackson как ограничение."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@Accessors(chain = true)` делает сеттеры void, но добавляет отдельный метод `build()` для завершения цепочки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`chain = true` как раз меняет тип возврата сеттера на `this` (тип класса), а не оставляет `void`; никакого `build()` он не генерирует.",
+                "source_of_confusion": "Цепочки ассоциируются с билдером, у которого есть `build()`, и это смешивают с поведением `@Accessors`.",
+                "if_it_were_true": "Если бы сеттеры оставались `void`, цепочка `setName(...).setValue(...)` не компилировалась бы, но при `chain = true` она работает.",
+                "how_it_should_be": "Правильно: `chain = true` делает сеттеры возвращающими `this`; `build()` — это про `@Builder`, а не `@Accessors`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@Accessors(fluent = true)` оставляет префиксы `get`/`set`, но дополнительно делает сеттеры цепочечными.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`fluent = true` именно убирает префиксы `get`/`set`, давая `host()`/`port()`; при этом он неявно включает и `chain`.",
+                "source_of_confusion": "Параметры `chain` и `fluent` часто используют вместе, и их эффекты сливаются в голове.",
+                "if_it_were_true": "Если бы префиксы сохранялись, fluent-стиль `config.host()` был бы невозможен, но это его основная цель.",
+                "how_it_should_be": "Правильно: `fluent = true` убирает `get`/`set`-префиксы и попутно включает цепочечность."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `@Builder` и что он генерирует?",
+          "options": [
+            {
+              "text": "`@Builder` генерирует сам объект-результат напрямую без отдельного inner-класса — каждый вызов `id(...)` сразу меняет создаваемый экземпляр.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Builder` создаёт отдельный статический inner-класс `XxxBuilder`, который накапливает значения, и лишь метод `build()` собирает итоговый объект.",
+                "source_of_confusion": "Концептуально билдер «строит объект», и легко представить, что он работает с целевым экземпляром напрямую.",
+                "if_it_were_true": "Если бы не было inner-класса, нельзя было бы построить immutable-объект (все поля сразу финальны), но `@Builder` совместим с `@Value` именно за счёт билдера.",
+                "how_it_should_be": "Правильно: `@Builder` генерирует inner-класс `XxxBuilder` с fluent-сеттерами и методом `build()`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Метод `toBuilder()` генерируется всегда по умолчанию, копируя текущий объект обратно в билдер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`toBuilder()` создаётся только при `@Builder(toBuilder = true)`; по умолчанию его нет.",
+                "source_of_confusion": "Удобство копирования объекта в билдер кажется настолько базовым, что его считают включённым всегда.",
+                "if_it_were_true": "Если бы `toBuilder()` был всегда, не существовало бы отдельного параметра `toBuilder = true`, но он есть именно для опционального включения.",
+                "how_it_should_be": "Правильно: `toBuilder()` появляется только при явном `@Builder(toBuilder = true)`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@Builder` генерирует статический фабричный метод `builder()`, отдельный inner-класс `XxxBuilder` с полями и fluent-сеттерами и метод `build()`, который создаёт объект через `@AllArgsConstructor`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Билдер позволяет задавать поля по именам в произвольном порядке: `Order.builder().id(\"ORD-001\").customerId(\"CUST-123\").build()`, что читабельнее позиционного конструктора.",
+                "example": "Например, `@Builder` на классе `Order` даст `Order.builder().items(List.of(item1, item2)).build()` без необходимости помнить порядок аргументов конструктора.",
+                "when_to_apply": "Применяют для классов с многими полями, особенно опциональными, и для immutable-объектов — `@Builder` совместим с `@Value`.",
+                "edge_cases": "При `@Builder(toBuilder = true)` добавляется `toBuilder()`, копирующий текущий объект в новый билдер для частичного изменения.",
+                "related": "[[java-lombok-interview#Q12]] @Builder.Default для значений по умолчанию; [[java-lombok-interview#Q13]] @Singular для коллекций; [[java-lombok-interview#Q14]] @SuperBuilder для наследования."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@Builder` инициализирует поля значениями из их объявления, поэтому `private int timeout = 30;` через билдер вернёт 30.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `@Builder.Default` билдер игнорирует инициализаторы полей, и не заданное поле получит `null`/`0`/`false`, а не значение из объявления.",
+                "source_of_confusion": "Логично ожидать, что объявленное значение по умолчанию сохранится при сборке через билдер.",
+                "if_it_were_true": "Если бы инициализаторы учитывались, не понадобилась бы аннотация `@Builder.Default`, но она добавлена именно из-за их игнорирования.",
+                "how_it_should_be": "Правильно: значения из объявления игнорируются билдером без `@Builder.Default` — поле получит дефолт типа."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@Builder.Default` и зачем он нужен?",
+          "options": [
+            {
+              "text": "`@Builder.Default` нужен только для коллекций; для примитивов вроде `int timeout = 30` билдер и так сохраняет значение из объявления.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `@Builder.Default` игнорируются инициализаторы любых полей, включая примитивы: `int timeout = 30` через билдер даст `0`, а не `30`.",
+                "source_of_confusion": "Кажется, что примитивы со значением по умолчанию обрабатываются иначе, чем объектные поля.",
+                "if_it_were_true": "Если бы примитивы сохраняли инициализатор, `@Builder.Default` на `int` был бы лишним, но без него `timeout` обнуляется.",
+                "how_it_should_be": "Правильно: `@Builder.Default` нужен и для примитивов, и для объектов/коллекций — иначе инициализатор игнорируется."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@Builder.Default` запрещает менять поле в билдере, фиксируя значение по умолчанию как неизменяемое.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Builder.Default` лишь задаёт начальное значение, если поле не установлено явно; задать его в билдере по-прежнему можно.",
+                "source_of_confusion": "Слово «Default» в смысле «по умолчанию и навсегда» наводит на мысль о неизменяемости.",
+                "if_it_were_true": "Если бы значение нельзя было переопределить, билдер потерял бы смысл для такого поля, но `.timeout(60)` его спокойно меняет.",
+                "how_it_should_be": "Правильно: `@Builder.Default` задаёт лишь дефолт при отсутствии явного значения, не запрещая его переопределение."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@Builder.Default` никак не влияет на `@AllArgsConstructor` — конструктор и билдер работают полностью независимо.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Builder.Default` меняет сигнатуру и поведение сгенерированного конструктора, поэтому при совместном использовании с `@AllArgsConstructor` возможны конфликты, которые надо учитывать.",
+                "source_of_confusion": "Билдер и конструктор кажутся изолированными механизмами без взаимного влияния.",
+                "if_it_were_true": "Если бы влияния не было, не предупреждали бы о граблях `@Builder.Default` + `@AllArgsConstructor`, но это известная проблема.",
+                "how_it_should_be": "Правильно: `@Builder.Default` влияет на конструктор и может конфликтовать с `@AllArgsConstructor`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@Builder.Default` задаёт значение по умолчанию для поля при сборке через билдер: без него инициализаторы полей игнорируются и поле получает `null`/`0`/`false`.",
+              "correct": true,
+              "sections": {
+                "explanation": "По умолчанию `@Builder` не применяет инициализаторы из объявления, поэтому `private int timeout = 30` без аннотации вернёт `0`, а `private List<String> hosts` — `null`.",
+                "example": "С `@Builder.Default private List<String> hosts = new ArrayList<>();` не заданное поле получит пустой список вместо `null`.",
+                "when_to_apply": "Применяют, когда у поля должно быть осмысленное значение по умолчанию даже если вызывающий код не задал его в билдере.",
+                "edge_cases": "Важно: `@Builder.Default` меняет сгенерированный конструктор, поэтому при совместном использовании с `@AllArgsConstructor` нужно учитывать возможные конфликты.",
+                "related": "[[java-lombok-interview#Q11]] как работает @Builder; [[java-lombok-interview#Q13]] @Singular для коллекций в билдере; [[java-lombok-interview#Q14]] ограничения @SuperBuilder с Default."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@Singular` в `@Builder`?",
+          "options": [
+            {
+              "text": "`@Singular` на коллекционном поле билдера добавляет методы для вставки элементов по одному вместо передачи всей коллекции; собранная коллекция делается immutable через `Collections.unmodifiableList(...)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Lombok` генерирует singular-метод (`error()` для поля `errors`), а имя можно переопределить, например `@Singular(\"metric\")` для поля `metrics`.",
+                "example": "Например, `Report.builder().error(\"field required\").error(\"email invalid\").metric(new Metric(\"cpu\", 0.8)).build()` накапливает элементы по одному.",
+                "when_to_apply": "Применяют, когда коллекцию удобнее наполнять поэлементно в fluent-стиле и при этом получить неизменяемый результат.",
+                "edge_cases": "Поскольку коллекция immutable, попытка добавить элемент после `build()` бросит `UnsupportedOperationException` — менять её уже нельзя.",
+                "related": "[[java-lombok-interview#Q11]] базовый @Builder; [[java-lombok-interview#Q12]] @Builder.Default для дефолтов; [[java-lombok-interview#Q14]] @SuperBuilder и коллекции в иерархии."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@Singular` создаёт `mutable`-коллекцию, чтобы в собранный объект можно было добавлять элементы и после вызова `build()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Singular` оборачивает коллекцию в immutable-обёртку, поэтому после `build()` добавление элемента бросает `UnsupportedOperationException`.",
+                "source_of_confusion": "Раз метод добавляет элементы по одному, кажется, что и итоговая коллекция остаётся открытой для изменений.",
+                "if_it_were_true": "Если бы коллекция была mutable, нарушалась бы безопасность immutable-объектов из `@Value` + `@Builder`, но `@Singular` намеренно делает её неизменяемой.",
+                "how_it_should_be": "Правильно: `@Singular` создаёт immutable-коллекцию, и менять её после `build()` нельзя."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Имя singular-метода всегда совпадает с именем поля, переопределить его нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имя можно задать явно: `@Singular(\"metric\")` сделает метод `metric()` для поля `metrics`, что удобно для правильного единственного числа.",
+                "source_of_confusion": "По умолчанию `Lombok` действительно выводит singular-имя сам, и кажется, что управлять им невозможно.",
+                "if_it_were_true": "Если бы имя было неизменяемым, нельзя было бы получить корректное `metric()` для `metrics`, но параметр аннотации это позволяет.",
+                "how_it_should_be": "Правильно: singular-имя можно переопределить через значение аннотации, например `@Singular(\"metric\")`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@Singular` работает с любым полем, а не только с коллекциями, добавляя fluent-метод для отдельного значения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Singular` предназначен именно для коллекционных и map-полей (`List`, `Set`, `Map` и т.п.); на обычное скалярное поле его повесить нельзя.",
+                "source_of_confusion": "Название «Singular» (по одному) звучит применимо к любому единичному значению.",
+                "if_it_were_true": "Если бы он работал с любым полем, не было бы смысла в обычных сеттерах билдера, но для скаляров используют именно их.",
+                "how_it_should_be": "Правильно: `@Singular` применяется только к коллекционным полям, добавляя поэлементное наполнение."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@SuperBuilder` и зачем он нужен?",
+          "options": [
+            {
+              "text": "`@SuperBuilder` достаточно поставить только на дочерний класс — родительские поля он подхватит из суперкласса автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@SuperBuilder` требует, чтобы аннотация стояла на всех классах иерархии; без `@SuperBuilder` на родителе его поля в билдер наследника не попадут.",
+                "source_of_confusion": "Хочется верить, что аннотация на наследнике сама «дотянется» до родителя.",
+                "if_it_were_true": "Если бы хватало одного класса, не было бы требования помечать всю иерархию, но именно оно — ключевое ограничение `@SuperBuilder`.",
+                "how_it_should_be": "Правильно: `@SuperBuilder` должен стоять на каждом классе иерархии, включая родителя."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@SuperBuilder` решает проблему обычного `@Builder`, который не работает с наследованием: он позволяет билдеру дочернего класса задавать и собственные поля, и поля родителя.",
+              "correct": true,
+              "sections": {
+                "explanation": "Для работы аннотация `@SuperBuilder` должна стоять на всех классах иерархии, и её нельзя смешивать с обычным `@Builder` в той же цепочке наследования.",
+                "example": "Например, `Dog.builder().name(\"Rex\").age(3).breed(\"Husky\").build()` задаёт `name`/`age` из `Animal` и `breed` из `Dog`.",
+                "when_to_apply": "Применяют, когда нужен билдер для иерархии классов — обычный `@Builder` тут не покрывает поля суперкласса.",
+                "edge_cases": "Есть ограничения: всю иерархию надо пометить `@SuperBuilder`, нельзя комбинировать с обычным `@Builder`, а сочетание с `@Builder.Default` иногда конфликтует.",
+                "related": "[[java-lombok-interview#Q11]] обычный @Builder без наследования; [[java-lombok-interview#Q12]] конфликты с @Builder.Default; [[java-lombok-interview#Q27]] наследование в equals/toString."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@SuperBuilder` можно свободно комбинировать с обычным `@Builder` в одной иерархии, выбирая аннотацию для каждого класса отдельно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@SuperBuilder` несовместим с обычным `@Builder` в той же иерархии: их билдеры устроены по-разному и не стыкуются.",
+                "source_of_confusion": "Раз обе аннотации про билдер, кажется естественным комбинировать их по вкусу.",
+                "if_it_were_true": "Если бы их можно было смешивать, не было бы ограничения «вся иерархия — только `@SuperBuilder`», но оно прямо указано в документации.",
+                "how_it_should_be": "Правильно: в иерархии нужно использовать только `@SuperBuilder`, без смешивания с обычным `@Builder`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@SuperBuilder` не имеет ограничений и полностью совместим с `@Builder.Default` во всех случаях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сочетание `@SuperBuilder` с `@Builder.Default` в ряде случаев конфликтует и не всегда корректно применяет значения по умолчанию.",
+                "source_of_confusion": "Обе аннотации относятся к билдеру, поэтому кажется, что они работают вместе без оговорок.",
+                "if_it_were_true": "Если бы конфликтов не было, в документации не упоминали бы про осторожность при их совместном использовании, но предупреждение есть.",
+                "how_it_should_be": "Правильно: `@SuperBuilder` имеет ограничения, включая возможные проблемы с `@Builder.Default`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@With` и какую задачу он решает?",
+          "options": [
+            {
+              "text": "`@With` генерирует методы `withFieldName(value)`, которые меняют поле прямо в текущем объекте и возвращают его же.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@With` не мутирует исходный объект, а создаёт его копию с одним изменённым полем — исходный экземпляр остаётся прежним.",
+                "source_of_confusion": "Название `with...` похоже на цепочечный сеттер, который обычно меняет тот же объект.",
+                "if_it_were_true": "Если бы он мутировал объект, `@With` был бы бесполезен для immutable-классов из `@Value`, но именно с ними он чаще всего и используется.",
+                "how_it_should_be": "Правильно: `withName(...)` возвращает новый объект с изменённым полем, не трогая исходный."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@With` работает только с mutable-классами; на иммутабельный `@Value`-класс его поставить нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@With` особенно полезен именно с `@Value`/immutable-классами, давая copy-on-write без сеттеров.",
+                "source_of_confusion": "Раз `@With` «изменяет» значение, кажется, что он требует изменяемого поля.",
+                "if_it_were_true": "Если бы он не работал с `@Value`, не было бы канонического примера `@Value @With` для функционального стиля, но это типичная связка.",
+                "how_it_should_be": "Правильно: `@With` создан как раз для immutable-объектов и отлично сочетается с `@Value`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@With` генерирует методы `withFieldName(value)`, которые создают копию объекта с одним изменённым полем (функциональный copy-on-write стиль), не трогая исходный экземпляр.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это удобно для immutable domain-объектов: можно «изменить» одно поле, получив новый объект, при этом старый остаётся неизменным.",
+                "example": "Например, `User bob = alice.withName(\"Bob\").withEmail(\"bob@mail.com\")` создаёт новый `User`, а `alice` не меняется.",
+                "when_to_apply": "Применяют для event sourcing, value-трансформаций и copy-on-write паттерна, особенно вместе с `@Value`.",
+                "edge_cases": "В Java 14+ ту же задачу частично решает `record` встроенными средствами, но `@With` остаётся актуальным на старых версиях и для классов вне record-модели.",
+                "related": "[[java-lombok-interview#Q9]] @Value и иммутабельность; [[java-lombok-interview#Q11]] @Builder для создания объектов; [[java-lombok-interview#Q26]] точечный контроль полей в equals."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@With` генерирует методы вида `setFieldName(value)`, дублируя обычные сеттеры из `@Setter`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@With` генерирует методы с префиксом `with` (`withFieldName`), которые возвращают копию объекта, а не void-сеттеры.",
+                "source_of_confusion": "И сеттер, и `with`-метод принимают значение поля, поэтому их функции путают.",
+                "if_it_were_true": "Если бы это были обычные сеттеры, исходный immutable-объект менялся бы, но `@With` намеренно делает копию.",
+                "how_it_should_be": "Правильно: `@With` создаёт `withXxx`-методы, возвращающие новый объект, а не `setXxx`-сеттеры."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие аннотации логирования есть в `Lombok` и что они генерируют?",
+          "options": [
+            {
+              "text": "Аннотации логирования генерируют поле `log` как `public static`, чтобы к логгеру можно было обращаться извне класса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Lombok` генерирует `private static final` поле логгера, а не `public` — логгер инкапсулирован внутри класса.",
+                "source_of_confusion": "Раз логгер один на класс, кажется логичным сделать его публично доступным.",
+                "if_it_were_true": "Если бы поле было `public`, любой внешний код писал бы в чужой логгер через `OtherClass.log`, что нарушает инкапсуляцию, но `Lombok` так не делает.",
+                "how_it_should_be": "Правильно: генерируется `private static final` поле логгера, доступное только внутри класса."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Имя сгенерированного поля логгера всегда `logger` и не настраивается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию поле называется `log`, а имя настраивается через `lombok.config` параметром `lombok.log.fieldName`.",
+                "source_of_confusion": "Многие проекты называют логгер `logger`, и это имя ошибочно считают дефолтным для `Lombok`.",
+                "if_it_were_true": "Если бы имя было фиксированным, не существовало бы настройки `lombok.log.fieldName`, но она есть именно для переопределения.",
+                "how_it_should_be": "Правильно: по умолчанию поле называется `log`, и имя можно поменять через конфигурацию."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@Slf4j` сразу включает реализацию логирования (`Logback`), поэтому отдельная зависимость не нужна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Slf4j` подключает только фасад SLF4J; конкретную реализацию (`Logback`, `Log4j2`) надо добавлять отдельной зависимостью.",
+                "source_of_confusion": "В `Spring Boot` `Logback` идёт из коробки, и кажется, что `@Slf4j` сам тянет реализацию.",
+                "if_it_were_true": "Если бы реализация шла с `@Slf4j`, при отсутствии backend не было бы предупреждения SLF4J о no-op логгере, но оно появляется.",
+                "how_it_should_be": "Правильно: `@Slf4j` даёт только фасад, а backend (`Logback`/`Log4j2`) подключается отдельно."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Lombok` предоставляет набор аннотаций логирования (`@Slf4j`, `@Log4j2`, `@Log`, `@CommonsLog`, `@JBossLog`, `@Flogger`), каждая из которых генерирует `private static final` поле логгера `log` для соответствующего фреймворка.",
+              "correct": true,
+              "sections": {
+                "explanation": "Самая популярная — `@Slf4j`: SLF4J это фасад, а конкретная реализация (`Logback`, `Log4j2`) подключается отдельной зависимостью.",
+                "example": "Например, `@Slf4j` развернётся в `private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(OrderService.class);`, и в коде доступен `log.info(...)`.",
+                "when_to_apply": "Применяют, чтобы не писать вручную объявление логгера в каждом классе и не ошибиться в передаче `getClass()`/`Class.class`.",
+                "edge_cases": "Имя поля по умолчанию `log`, но его можно изменить глобально через `lombok.log.fieldName` в `lombok.config`.",
+                "related": "[[java-lombok-interview#Q1]] как Lombok генерирует код в компиляции; [[java-lombok-interview#Q21]] настройка fieldName через lombok.config; [[java-lombok-interview#Q18]] @SneakyThrows для логирующих обёрток."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает `@Cleanup` и нужен ли он в современной Java?",
+          "options": [
+            {
+              "text": "`@Cleanup` на локальной переменной автоматически вызывает её `.close()` в сгенерированном `finally`-блоке, гарантируя освобождение ресурса при выходе из метода или исключении.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это аналог try-with-resources, но синтаксически чуть более явный: достаточно поставить аннотацию перед объявлением `InputStream`/`OutputStream`.",
+                "example": "Например, `@Cleanup InputStream in = new FileInputStream(path);` развернётся в `try-finally` с вызовом `in.close()` в конце.",
+                "when_to_apply": "Применяли до Java 7 как замену ручному `try-finally`; в современном коде используют стандартный `try-with-resources`.",
+                "edge_cases": "С появлением `try-with-resources` (Java 7) `@Cleanup` практически не нужен — он не даёт преимуществ над `try (InputStream in = ...)` и реже понятен команде.",
+                "related": "[[java-lombok-interview#Q18]] @SneakyThrows для checked-исключений; [[java-lombok-interview#Q19]] @Delegate как другой утилитарный механизм; [[java-lombok-interview#Q25]] спорные фичи и их ограничения."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@Cleanup` навешивается на поле класса и закрывает ресурс при сборке объекта garbage collector'ом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Cleanup` работает только на локальных переменных метода и закрывает ресурс в `finally` при выходе из метода, а не при GC и не на полях.",
+                "source_of_confusion": "Освобождение ресурсов ассоциируется с финализацией и сборщиком мусора, отсюда путаница.",
+                "if_it_were_true": "Если бы он завязывался на GC, момент закрытия был бы недетерминированным, но `@Cleanup` закрывает ресурс предсказуемо в конце метода.",
+                "how_it_should_be": "Правильно: `@Cleanup` применяется к локальной переменной и закрывает ресурс в сгенерированном `finally`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "По умолчанию `@Cleanup` вызывает метод `dispose()`, а не `close()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `@Cleanup` вызывает `close()`; другое имя метода можно задать как параметр, например `@Cleanup(\"dispose\")`.",
+                "source_of_confusion": "В некоторых API метод освобождения называется `dispose()`, и это имя ошибочно считают дефолтным.",
+                "if_it_were_true": "Если бы дефолтом был `dispose()`, `@Cleanup` не работал бы со стандартными `Closeable`/`AutoCloseable`, у которых метод `close()`.",
+                "how_it_should_be": "Правильно: по умолчанию вызывается `close()`, а нестандартное имя передаётся параметром аннотации."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@Cleanup` устарел потому, что заменён `@SneakyThrows`, который тоже закрывает ресурсы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@SneakyThrows` относится к пробросу checked-исключений и не управляет ресурсами; `@Cleanup` вытеснил именно стандартный `try-with-resources`.",
+                "source_of_confusion": "Обе аннотации связаны с обработкой исключений в `try`-блоках, поэтому их роли смешивают.",
+                "if_it_were_true": "Если бы `@SneakyThrows` закрывал ресурсы, не было бы отдельной аннотации `@Cleanup`, но они решают разные задачи.",
+                "how_it_should_be": "Правильно: `@Cleanup` морально устарел из-за `try-with-resources`, а не из-за `@SneakyThrows`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает `@SneakyThrows` и когда его стоит и не стоит использовать?",
+          "options": [
+            {
+              "text": "`@SneakyThrows` конвертирует checked-исключение в `RuntimeException`, оборачивая его перед пробросом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@SneakyThrows` пробрасывает оригинальное checked-исключение как есть, обходя проверку компилятора через `Lombok.sneakyThrow()` и erasure, без оборачивания в `RuntimeException`.",
+                "source_of_confusion": "Часто checked-исключения действительно оборачивают в `RuntimeException`, и это поведение приписывают `@SneakyThrows`.",
+                "if_it_were_true": "Если бы оно оборачивало, в стеке был бы `RuntimeException` как причина, но `@SneakyThrows` пробрасывает именно исходный `IOException`.",
+                "how_it_should_be": "Правильно: `@SneakyThrows` бросает оригинальное checked-исключение без обёртки, обманывая компилятор."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@SneakyThrows` позволяет бросать checked-исключения без их объявления в `throws`: `Lombok` оборачивает тело в `try-catch` и перебрасывает исключение через `Lombok.sneakyThrow()`, используя erasure для обхода компилятора.",
+              "correct": true,
+              "sections": {
+                "explanation": "Уместно использовать там, где `throws` физически нельзя объявить — при реализации интерфейсов без него (`Runnable`) и в лямбдах, не принимающих checked-исключения.",
+                "example": "Например, `@SneakyThrows(IOException.class)` над методом с `Files.readAllBytes(...)` избавляет от обязательного объявления `throws IOException`.",
+                "when_to_apply": "Применяют точечно во внутреннем коде; в public API его избегают, потому что вызывающий не видит, что метод может бросить checked-исключение.",
+                "edge_cases": "НЕ стоит использовать в публичном API и там, где исключение надо обработать — лучше явный `throws` или осознанная обёртка в `RuntimeException`.",
+                "related": "[[java-lombok-interview#Q17]] @Cleanup и try-finally; [[java-lombok-interview#Q21]] запрет фич через lombok.config flagUsage; [[java-lombok-interview#Q25]] @SneakyThrows как спорная фича."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@SneakyThrows` без аргументов нельзя использовать — нужно всегда явно указывать класс исключения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@SneakyThrows` можно ставить без аргументов: тогда он перебрасывает любые checked-исключения, а указание класса лишь сужает область до конкретного типа.",
+                "source_of_confusion": "Пример из документации часто показывают с `@SneakyThrows(IOException.class)`, и аргумент кажется обязательным.",
+                "if_it_were_true": "Если бы класс был обязателен, нельзя было бы написать просто `@SneakyThrows`, но это валидный и распространённый вариант.",
+                "how_it_should_be": "Правильно: аргумент опционален; без него пробрасываются любые checked-исключения."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@SneakyThrows` рекомендуется в public API, чтобы не засорять сигнатуру методов проверяемыми исключениями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В public API `@SneakyThrows` как раз не рекомендуют: потребитель не видит в сигнатуре, что метод бросает checked-исключение, и не может его осознанно обработать.",
+                "source_of_confusion": "Чистая сигнатура без `throws` выглядит привлекательно, особенно в библиотечном API.",
+                "if_it_were_true": "Если бы это было хорошей практикой, его не запрещали бы в code style guide через `lombok.sneakyThrows.flagUsage`, но многие команды это делают.",
+                "how_it_should_be": "Правильно: в public API `@SneakyThrows` избегают; он скрывает контракт об исключениях от вызывающего."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@Delegate` и как он работает?",
+          "options": [
+            {
+              "text": "`@Delegate` копирует данные из поля в текущий объект, дублируя его состояние для прямого доступа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Delegate` не копирует состояние, а генерирует методы-обёртки, которые проксируют вызовы к полю (паттерн делегирования).",
+                "source_of_confusion": "Слово «делегат» иногда понимают как «копия с полномочиями», отсюда идея о дублировании данных.",
+                "if_it_were_true": "Если бы он копировал данные, изменения в делегате не отражались бы в исходном поле, но `@Delegate` просто перенаправляет вызовы.",
+                "how_it_should_be": "Правильно: `@Delegate` генерирует проксирующие методы, а не копирует состояние поля."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@Delegate` работает с любым типом, включая те, что доступны только в runtime через рефлексию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Delegate` работает только с типами (интерфейсами/классами), доступными в compile scope, потому что методы генерируются на этапе компиляции.",
+                "source_of_confusion": "Делегирование вызовов ассоциируется с динамическими прокси, которые создаются в runtime.",
+                "if_it_were_true": "Если бы хватало runtime-типа, можно было бы делегировать неизвестному на момент компиляции интерфейсу, но `Lombok` должен знать сигнатуры заранее.",
+                "how_it_should_be": "Правильно: типы для `@Delegate` должны быть представлены в compile scope."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@Delegate` реализует паттерн делегирования: на основе типа поля `Lombok` генерирует методы-обёртки, проксирующие вызовы к этому полю, избавляя от ручного написания однотипных делегирующих методов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Можно исключить часть методов через `@Delegate(excludes = SomeInterface.class)`, ограничив набор сгенерированных делегатов.",
+                "example": "Например, `@Delegate private final UserRepository repository;` сгенерирует `findById(...)`, `save(...)` и др., каждый из которых вызывает соответствующий метод `repository`.",
+                "when_to_apply": "Применяют для композиции вместо наследования, когда класс должен «выставлять» API внутреннего объекта без ручного проброса каждого метода.",
+                "edge_cases": "Ограничение: `@Delegate` работает только с типами, представленными в compile scope, так как методы генерируются во время компиляции.",
+                "related": "[[java-lombok-interview#Q1]] генерация кода в компиляции; [[java-lombok-interview#Q17]] @Cleanup как другая утилита; [[java-lombok-interview#Q25]] @Delegate как спорная фича в code style."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Исключить методы из делегирования нельзя — `@Delegate` всегда проксирует абсолютно все методы типа поля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Исключение возможно через `@Delegate(excludes = ...)`, где указывают интерфейс с методами, которые не нужно делегировать.",
+                "source_of_confusion": "Кажется, что делегирование «всё или ничего», без точечного контроля.",
+                "if_it_were_true": "Если бы исключений не было, нельзя было бы скрыть, например, мутирующие методы коллекции, но `excludes` позволяет это сделать.",
+                "how_it_should_be": "Правильно: набор делегируемых методов настраивается параметром `excludes`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@FieldNameConstants` и где он полезен?",
+          "options": [
+            {
+              "text": "`@FieldNameConstants` генерирует геттеры, возвращающие значения полей по их строковому имени.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@FieldNameConstants` генерирует не геттеры, а inner-класс `Fields` со строковыми константами — именами полей (`name = \"name\"` и т.п.).",
+                "source_of_confusion": "Слово «Constants» рядом с «Field» наводит на мысль о доступе к значениям полей.",
+                "if_it_were_true": "Если бы он давал геттеры значений, дублировал бы `@Getter`, но его задача — предоставить имена полей как константы.",
+                "how_it_should_be": "Правильно: `@FieldNameConstants` создаёт строковые константы с именами полей, а не аксессоры значений."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@FieldNameConstants` полезен в основном для логирования, чтобы выводить имена полей в сообщениях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главная польза — устранение строк-магических констант при работе с JPA Criteria API, QueryDSL и Spring Data Specifications, а не логирование.",
+                "source_of_confusion": "Имена полей действительно могут пригодиться в логах, и этот сценарий выходит на первый план.",
+                "if_it_were_true": "Если бы целью было логирование, не подчёркивали бы связь с типобезопасными запросами, но именно она — основной мотив.",
+                "how_it_should_be": "Правильно: `@FieldNameConstants` нужен прежде всего для безопасных ссылок на поля в Criteria/QueryDSL."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Сгенерированные константы имеют значения-номера полей (`name = 0`, `email = 1`), удобные для индексации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Константы хранят строковые имена полей (`name = \"name\"`), а не их порядковые номера.",
+                "source_of_confusion": "Индексация по номеру кажется компактной, и её приписывают сгенерированным константам.",
+                "if_it_were_true": "Если бы значениями были числа, их нельзя было бы передать в `root.get(...)`, ожидающий имя свойства как строку.",
+                "how_it_should_be": "Правильно: константы содержат строковые имена полей, пригодные для API, работающих по имени свойства."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@FieldNameConstants` генерирует вложенный класс `Fields` (или `Constants`) со строковыми константами — именами полей (`public static final String name = \"name\";` и т.д.).",
+              "correct": true,
+              "sections": {
+                "explanation": "Это устраняет строки-магические константы при обращении к полям по имени в типобезопасном коде.",
+                "example": "Например, в JPA Criteria можно писать `criteriaBuilder.equal(root.get(User.Fields.name), \"Alice\")` вместо литерала `\"name\"`.",
+                "when_to_apply": "Применяют при работе с JPA Criteria API, QueryDSL и Spring Data Specifications, где обращение к полям идёт по строковому имени.",
+                "edge_cases": "Преимущество — при переименовании поля константа меняется вместе с ним, и компилятор поймает устаревшие ссылки, чего не даёт обычный строковый литерал.",
+                "related": "[[java-lombok-interview#Q3]] базовая генерация по полям; [[java-lombok-interview#Q22]] поля JPA-сущностей; [[java-lombok-interview#Q26]] точечное указание полей в equals."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `lombok.config` и как его использовать?",
+          "options": [
+            {
+              "text": "`lombok.config` — конфигурационный файл (в корне проекта или в любой директории), управляющий поведением `Lombok` для пакета и подпакетов: можно запрещать аннотации через `flagUsage`, менять имя поля логгера, включать `@Generated` для JaCoCo и др.",
+              "correct": true,
+              "sections": {
+                "explanation": "Файл действует иерархически: настройки применяются ко всем классам в директории и её подпакетах, а `config.stopBubbling = true` ограничивает область.",
+                "example": "Например, `lombok.data.flagUsage = error` запретит `@Data`, `lombok.log.fieldName = logger` переименует поле логгера, а `lombok.addLombokGeneratedAnnotation = true` пометит сгенерированный код `@Generated`.",
+                "when_to_apply": "Применяют для командных code style правил: запрета спорных фич (`@SneakyThrows`), единого имени логгера и корректного покрытия в JaCoCo.",
+                "edge_cases": "`lombok.addLombokGeneratedAnnotation = true` — ключевая настройка для JaCoCo: сгенерированные методы помечаются `@Generated` и исключаются из подсчёта покрытия тестами.",
+                "related": "[[java-lombok-interview#Q16]] имя поля логгера через config; [[java-lombok-interview#Q18]] flagUsage для запрета @SneakyThrows; [[java-lombok-interview#Q22]] запрет @Data на сущностях."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`lombok.config` действует только на тот конкретный класс, рядом с которым он лежит, и не распространяется на подпакеты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`lombok.config` применяется иерархически — ко всей директории и её подпакетам, пока выше не встретится `stopBubbling`.",
+                "source_of_confusion": "Файлы конфигурации часто кладут рядом с одним классом, отсюда впечатление локального действия.",
+                "if_it_were_true": "Если бы он влиял лишь на один класс, пришлось бы класть `lombok.config` в каждый пакет, но обычно достаточно одного в корне.",
+                "how_it_should_be": "Правильно: настройки `lombok.config` распространяются на пакет и все его подпакеты."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Через `lombok.config` можно только включать аннотации, но не запрещать их использование.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот, ключевая возможность — запрет аннотаций через `flagUsage` со значениями `warning`/`error`, например `lombok.data.flagUsage = error`.",
+                "source_of_confusion": "Конфигурация ассоциируется с включением фич, и про режим запрета забывают.",
+                "if_it_were_true": "Если бы запрета не было, нельзя было бы на уровне команды забанить `@Data` на сущностях, но это распространённая практика через `flagUsage`.",
+                "how_it_should_be": "Правильно: `lombok.config` умеет именно запрещать (флагировать) аннотации, а не только настраивать их."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`lombok.config` пишется в формате XML, аналогично конфигурации `maven-compiler-plugin`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`lombok.config` — это файл в формате properties (пары `ключ = значение`), а не XML.",
+                "source_of_confusion": "Конфигурация сборки в Maven действительно XML, и формат по аналогии переносят на `Lombok`.",
+                "if_it_were_true": "Если бы формат был XML, строки вроде `lombok.data.flagUsage = error` не парсились бы, но именно такой синтаксис properties и используется.",
+                "how_it_should_be": "Правильно: `lombok.config` использует properties-синтаксис `key = value`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие проблемы возникают у `Lombok` с JPA-сущностями?",
+          "options": [
+            {
+              "text": "Главная проблема с JPA — `Lombok` не умеет генерировать `@NoArgsConstructor`, который требует Hibernate для создания сущностей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Lombok` отлично генерирует `@NoArgsConstructor`; реальные проблемы — это `equals/hashCode` по `id == null`, рекурсивный `toString` в двунаправленных связях и `final`-поля без `force = true`.",
+                "source_of_confusion": "JPA действительно требует no-arg конструктор, и кажется, что именно его и не хватает.",
+                "if_it_were_true": "Если бы `@NoArgsConstructor` был недоступен, его не рекомендовали бы для JPA-сущностей, но он как раз стандартное решение для no-arg требования.",
+                "how_it_should_be": "Правильно: `Lombok` умеет `@NoArgsConstructor`; проблемы лежат в `equals/hashCode`, `toString` и `final`-полях."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Основные проблемы: `@EqualsAndHashCode` по `id`, который до `persist()` равен `null` (все новые сущности «равны» и ломают `HashSet`); рекурсивный `toString` в двунаправленных связях → `StackOverflowError`; и `final`-поля при `@NoArgsConstructor` без `force = true`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поэтому для JPA-сущностей `Lombok` используют осторожно — обычно только `@Getter`, `@Setter`, `@ToString(exclude=...)`, без `@Data` и автоматического `@EqualsAndHashCode`.",
+                "example": "Например, двунаправленная связь `Order ↔ OrderItem` под `@Data` даёт цикл `toString`: `order.items → item.order → order.items`, что приводит к `StackOverflowError`.",
+                "when_to_apply": "Эти грабли учитывают при проектировании Entity-слоя: equals/hashCode на сущностях делают по бизнес-ключу, а связи исключают из `toString`.",
+                "edge_cases": "Решения: `@NaturalId`/`@EqualsAndHashCode(onlyExplicitlyIncluded = true)` по `sku`/`uuid`, `@ToString(exclude = {\"items\"})` и `@NoArgsConstructor(force = true)` для `final`-полей.",
+                "related": "[[java-lombok-interview#Q5]] риски @EqualsAndHashCode; [[java-lombok-interview#Q8]] почему @Data опасна; [[java-lombok-interview#Q26]] onlyExplicitlyIncluded для бизнес-ключа."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Проблема `@EqualsAndHashCode` на сущностях в том, что `id` после сохранения становится `null`, и объект теряется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: до `persist()` `id == null`, а после сохранения `id` получает значение и `hashCode` меняется — из-за этого объект «теряется» в `HashSet`, куда был добавлен новым.",
+                "source_of_confusion": "Момент, когда `id` пустой, легко перепутать местами: до или после сохранения.",
+                "if_it_were_true": "Если бы `id` обнулялся после сохранения, сущности нельзя было бы находить по ключу в БД, но он, наоборот, заполняется при `persist()`.",
+                "how_it_should_be": "Правильно: `id == null` до сохранения, а после `persist()` он заполняется, и hash меняется — отсюда проблема с коллекциями."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Рекурсивный `StackOverflowError` в `toString` возникает только при `@ToString`, но `@Data` от этой проблемы защищён.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Data` включает `@ToString`, поэтому на двунаправленных связях он так же даёт рекурсию и `StackOverflowError`.",
+                "source_of_confusion": "Кажется, что комбинированная `@Data` умнее и сама исключает проблемные связи.",
+                "if_it_were_true": "Если бы `@Data` защищал от рекурсии, не советовали бы избегать его на JPA-сущностях, но именно он — частый источник `StackOverflowError`.",
+                "how_it_should_be": "Правильно: `@Data` содержит `@ToString` и потому подвержен той же рекурсии; решение — `@ToString(exclude=...)`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `Lombok` интегрируется с `MapStruct` и в чём подвох?",
+          "options": [
+            {
+              "text": "Проблема интеграции в том, что `Lombok` и `MapStruct` используют несовместимые версии `JSR 269` и не могут работать вместе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба совместимы с `JSR 269`; реальная проблема — неопределённый порядок запуска processors: `MapStruct` может стартовать до `Lombok`, когда геттеры/сеттеры ещё не сгенерированы.",
+                "source_of_confusion": "Технические конфликты часто объясняют несовместимостью версий API, и это переносят сюда.",
+                "if_it_were_true": "Если бы дело было в версиях `JSR 269`, не помогал бы артефакт `lombok-mapstruct-binding`, но он решает проблему именно порядка.",
+                "how_it_should_be": "Правильно: причина — порядок annotation processors, а не несовместимость версий `JSR 269`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Чтобы `MapStruct` увидел поля, `Lombok` нужно убрать и писать геттеры/сеттеры вручную — иначе интеграция невозможна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Их можно использовать вместе: достаточно добавить `lombok-mapstruct-binding` и выстроить правильный порядок processors, не отказываясь от `Lombok`.",
+                "source_of_confusion": "Раз `MapStruct` иногда «не видит» поля под `Lombok`, кажется, что выход один — отказаться от `Lombok`.",
+                "if_it_were_true": "Если бы совместная работа была невозможна, не существовало бы официального `lombok-mapstruct-binding`, но он создан именно для этого.",
+                "how_it_should_be": "Правильно: `Lombok` и `MapStruct` совместимы при корректном порядке и `lombok-mapstruct-binding`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Подвох в том, что компилятор вызывает annotation processors в неопределённом порядке: `MapStruct` может запуститься до `Lombok`, ещё не увидит сгенерированные геттеры/сеттеры и упадёт с `No property named \"x\" exists`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Решение — добавить артефакт `lombok-mapstruct-binding`, который гарантирует правильный порядок: `Lombok` → binding → `MapStruct`.",
+                "example": "Например, в Gradle прописывают `annotationProcessor(\"org.projectlombok:lombok-mapstruct-binding:0.2.0\")` между `lombok` и `mapstruct-processor`.",
+                "when_to_apply": "Эту настройку делают в любом проекте, где DTO-мапперы `MapStruct` работают с моделями, аксессоры которых генерирует `Lombok`.",
+                "edge_cases": "Симптом без binding характерен: `MapStruct` сообщает, что свойства не существует, хотя поле в классе есть — просто его геттер ещё не сгенерирован на момент запуска маппера.",
+                "related": "[[java-lombok-interview#Q2]] регистрация annotationProcessor; [[java-lombok-interview#Q3]] @Getter/@Setter, которые ищет MapStruct; [[java-lombok-interview#Q1]] порядок обработки в компиляции."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`lombok-mapstruct-binding` — это сам маппер, заменяющий `MapStruct`, поэтому отдельный `mapstruct-processor` не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`lombok-mapstruct-binding` — служебный артефакт, лишь гарантирующий правильный порядок запуска; `mapstruct-processor` по-прежнему нужен для генерации мапперов.",
+                "source_of_confusion": "Название с «mapstruct» наводит на мысль, что это полноценная замена процессора маппинга.",
+                "if_it_were_true": "Если бы binding заменял `MapStruct`, не пришлось бы держать оба артефакта в `annotationProcessorPaths`, но их указывают вместе.",
+                "how_it_should_be": "Правильно: `lombok-mapstruct-binding` только упорядочивает processors; `mapstruct-processor` обязателен."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `delombok` и зачем он нужен?",
+          "options": [
+            {
+              "text": "`delombok` запускается в runtime и разворачивает аннотации в обычный код при старте приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`delombok` — это инструмент сборки/компиляции, который заранее генерирует развёрнутые `.java`-файлы; в runtime он не работает.",
+                "source_of_confusion": "Раз `Lombok` связан с компиляцией, кажется, что и `delombok` может срабатывать при запуске.",
+                "if_it_were_true": "Если бы он работал в runtime, нужна была бы зависимость `Lombok` в проде, но `delombok` запускают как отдельную задачу сборки.",
+                "how_it_should_be": "Правильно: `delombok` — инструмент времени сборки, разворачивающий аннотации в исходный код."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`delombok` нужен в основном для ускорения компиляции, так как убирает обработку аннотаций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Цель `delombok` — получить читаемый развёрнутый код (для миграции, Javadoc, статанализа, review), а не ускорение компиляции.",
+                "source_of_confusion": "Удаление annotation processing ассоциируется с более быстрой сборкой, и это становится мнимой целью.",
+                "if_it_were_true": "Если бы целью была скорость, его применяли бы в обычной сборке, но `delombok` используют для миграции и анализа.",
+                "how_it_should_be": "Правильно: `delombok` нужен для прозрачности кода и совместимости с инструментами, а не для ускорения."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`delombok` превращает обычный Java-код обратно в аннотации `Lombok`, сворачивая boilerplate.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`delombok` действует в обратную сторону: он разворачивает аннотации `Lombok` в обычный Java-код, а не сворачивает код в аннотации.",
+                "source_of_confusion": "Название «delombok» можно ошибочно прочитать как «сделать lombok-стиль».",
+                "if_it_were_true": "Если бы он сворачивал код в аннотации, его использовали бы для внедрения `Lombok`, но он, наоборот, помогает уходить от него.",
+                "how_it_should_be": "Правильно: `delombok` разворачивает аннотации в развёрнутый Java-код, убирая зависимость от `Lombok`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`delombok` — инструмент `Lombok`, который разворачивает аннотации в обычный Java-код (например, `java -jar lombok.jar delombok src/ -d src-delombok/`), показывая, что именно генерируется.",
+              "correct": true,
+              "sections": {
+                "explanation": "Его используют для миграции с `Lombok` (переход на `record`/ручной `@Builder`), отладки, генерации Javadoc, статанализа инструментами, не знающими о `Lombok`, и code review там, где `Lombok` запрещён.",
+                "example": "В Gradle это оформляют как задачу `JavaExec` с `mainClass = \"lombok.launch.Main\"` и аргументами `delombok`, `src/main/java`, `-d`, `build/delombok`.",
+                "when_to_apply": "Применяют разово при миграции или периодически для аудита сгенерированного кода и совместимости с внешними инструментами.",
+                "edge_cases": "`delombok` особенно полезен для Javadoc: стандартный `javadoc` не понимает аннотаций `Lombok`, а развёрнутый код документируется корректно.",
+                "related": "[[java-lombok-interview#Q1]] что Lombok генерирует в AST; [[java-lombok-interview#Q9]] переход на @Value/record; [[java-lombok-interview#Q25]] отказ от Lombok как мотив delombok."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Каковы основная критика и ограничения `Lombok`?",
+          "options": [
+            {
+              "text": "Критика делится на три группы: технические (использование internal compiler API, хрупкость при апгрейде `JDK`, частичное перекрытие `record`/sealed-классами), процессные (неявная кодогенерация усложняет review, нужен IDE-плагин у всех) и конкретные ловушки (`@Data` на сущностях, fluent vs Jackson и т.п.).",
+              "correct": true,
+              "sections": {
+                "explanation": "Из-за опоры на internal API `Lombok` может ломаться при смене мажорной версии `JDK`, а неявность генерации затрудняет code review — видны только аннотации, а не итоговый код.",
+                "example": "Например, `@Accessors(fluent = true)` несовместим с `Jackson`/JPA, `@Data` на JPA-сущности даёт `StackOverflow` и broken equals, а `@SneakyThrows`/`@Delegate` часто запрещают в code style.",
+                "when_to_apply": "Эти ограничения учитывают при решении, использовать ли `Lombok`: в публичных библиотеках, командах против «магии» и на Java 16+ с `record` от него нередко отказываются.",
+                "edge_cases": "Java 16+ `record` покрывает большинство DTO-кейсов `@Value`, поэтому в новых проектах область применения `Lombok` сужается, хотя для mutable-сущностей и логгеров он остаётся удобен.",
+                "related": "[[java-lombok-interview#Q1]] internal API и AST; [[java-lombok-interview#Q22]] @Data на JPA-сущностях; [[java-lombok-interview#Q24]] delombok при отказе от Lombok."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Главное ограничение `Lombok` — он замедляет работу приложения в runtime из-за рефлексии при каждом вызове геттера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Lombok` работает на этапе компиляции и не использует runtime-рефлексию, поэтому на производительность работающего приложения он не влияет.",
+                "source_of_confusion": "Кодогенерацию часто связывают с рефлексией и накладными расходами в runtime.",
+                "if_it_were_true": "Если бы он тормозил runtime, это было бы первым пунктом критики, но реальные претензии — к review, IDE-зависимости и internal API.",
+                "how_it_should_be": "Правильно: критика касается compile-time и процессов; runtime-производительность `Lombok` не страдает."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Lombok` критикуют за то, что он генерирует отдельные `.java`-файлы, засоряющие репозиторий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Lombok` не создаёт отдельных исходных файлов — он модифицирует AST; претензия как раз в обратном: неявность генерации, которой не видно в исходниках.",
+                "source_of_confusion": "Файл-генерирующие processors (`MapStruct`) действительно плодят файлы, и это переносят на `Lombok`.",
+                "if_it_were_true": "Если бы он генерировал файлы, их было бы видно в `build/generated`, но именно отсутствие явного кода и критикуют.",
+                "how_it_should_be": "Правильно: критика в неявности (нет видимого кода), а не в засорении репозитория сгенерированными файлами."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "С появлением `record` в Java 16 `Lombok` полностью устарел и не имеет области применения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`record` покрывает многие DTO/immutable-кейсы, но `Lombok` остаётся полезен для mutable-классов, JPA-сущностей, логгеров и билдеров со сложной логикой.",
+                "source_of_confusion": "Громкое появление `record` создаёт впечатление полной замены `Lombok`.",
+                "if_it_were_true": "Если бы `Lombok` устарел, его не продолжали бы активно использовать в Spring-проектах, но `@Slf4j`, `@RequiredArgsConstructor` и `@Builder` остаются востребованы.",
+                "how_it_should_be": "Правильно: `record` сужает область `Lombok`, но не отменяет его — у mutable и не-record сценариев он живёт."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают `@EqualsAndHashCode.Include` / `@EqualsAndHashCode.Exclude`?",
+          "options": [
+            {
+              "text": "`@EqualsAndHashCode.Include` можно ставить только на поля; на методы он не действует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@EqualsAndHashCode.Include` можно поставить и на метод — тогда в сравнении участвует результат вызова метода, а не значение поля.",
+                "source_of_confusion": "Большинство примеров показывают аннотацию на полях, и про методы забывают.",
+                "if_it_were_true": "Если бы методы не поддерживались, нельзя было бы включить в equals нормализованное значение через метод вроде `normalizedName()`, но это рабочий приём.",
+                "how_it_should_be": "Правильно: `@EqualsAndHashCode.Include` применим и к полям, и к методам."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Эти аннотации дают точечный контроль над участием полей в `equals/hashCode`: `@EqualsAndHashCode.Include` явно включает поле/метод, `@EqualsAndHashCode.Exclude` исключает его, а `onlyExplicitlyIncluded = true` оставляет лишь явно включённые члены.",
+              "correct": true,
+              "sections": {
+                "explanation": "При `onlyExplicitlyIncluded = true` без `@Include` поле в сравнение не попадёт; без этого флага по умолчанию участвуют все поля, а `@Exclude` убирает отдельные.",
+                "example": "Например, `@EqualsAndHashCode(onlyExplicitlyIncluded = true)` с `@EqualsAndHashCode.Include private String sku;` оставит в equals только `sku`, игнорируя `name` и `price`.",
+                "when_to_apply": "Применяют, когда равенство должно определяться бизнес-ключом (например, `sku`/`uuid`), а не всеми полями — особенно полезно для сущностей.",
+                "edge_cases": "`@Include` на методе позволяет сравнивать по производному значению: `@EqualsAndHashCode.Include public String normalizedName() { return name.toLowerCase().trim(); }`.",
+                "related": "[[java-lombok-interview#Q5]] базовое поведение @EqualsAndHashCode; [[java-lombok-interview#Q22]] бизнес-ключ для JPA-сущностей; [[java-lombok-interview#Q27]] callSuper в иерархиях."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@EqualsAndHashCode.Exclude` работает только вместе с `onlyExplicitlyIncluded = true`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Exclude` используется как раз без `onlyExplicitlyIncluded`: по умолчанию участвуют все поля, и `@Exclude` точечно убирает ненужные.",
+                "source_of_confusion": "Параметры `Include`/`Exclude` и флаг `onlyExplicitlyIncluded` упоминают вместе, и их зависимости путают.",
+                "if_it_were_true": "Если бы `@Exclude` требовал этого флага, он был бы избыточен (при `onlyExplicitlyIncluded` и так включаются только `@Include`), но он осмысленно работает без него.",
+                "how_it_should_be": "Правильно: `@Exclude` применяют при дефолтном режиме (все поля), а `@Include` — при `onlyExplicitlyIncluded = true`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@EqualsAndHashCode.Include` на методе подставляет в equals имя метода как строку, а не его результат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В сравнении участвует именно возвращаемое значение метода (результат вызова), а не его имя.",
+                "source_of_confusion": "Раз аннотация про имена членов класса, кажется, что и для метода берётся его идентификатор.",
+                "if_it_were_true": "Если бы бралось имя метода, equals двух объектов всегда совпадал бы по этому критерию, что бессмысленно — нужен результат вычисления.",
+                "how_it_should_be": "Правильно: для метода в equals используется его возвращаемое значение, например результат `normalizedName()`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `Lombok` обрабатывает наследование в `@EqualsAndHashCode` и `@ToString`?",
+          "options": [
+            {
+              "text": "По умолчанию `Lombok` включает поля родителя в `equals/hashCode` и `toString`, так как `callSuper = true` стоит по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `callSuper = false`, поэтому поля родительского класса игнорируются, и их нужно включать явно через `callSuper = true`.",
+                "source_of_confusion": "Корректное сравнение объектов «должно» учитывать всё состояние, отсюда ожидание включённого `callSuper`.",
+                "if_it_were_true": "Если бы `callSuper` был `true` по умолчанию, не появлялось бы предупреждение `Lombok` при `@Data` в наследниках, но оно есть именно из-за `false`.",
+                "how_it_should_be": "Правильно: по умолчанию `callSuper = false`, и поля родителя игнорируются без явного включения."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Предупреждение `Lombok` про `callSuper` появляется только тогда, когда родитель — это `Object`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Предупреждение возникает, наоборот, когда у класса есть нетривиальный родитель (не `Object`), а `callSuper` не задан — тогда поля родителя могут потеряться.",
+                "source_of_confusion": "Случай наследования от `Object` (без полей родителя) путают с общим правилом срабатывания предупреждения.",
+                "if_it_were_true": "Если бы оно появлялось при родителе `Object`, его выдавали бы почти всегда, но `Lombok` молчит, когда наследовать нечего.",
+                "how_it_should_be": "Правильно: предупреждение появляется при родителе, отличном от `Object`, когда `callSuper` не указан."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "По умолчанию `callSuper = false`, поэтому `Lombok` игнорирует поля родительского класса в `equals/hashCode` и `toString`; чтобы их учесть, нужно явно указать `@EqualsAndHashCode(callSuper = true)` и `@ToString(callSuper = true)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "При `@Data` в классе с нетривиальным родителем `Lombok` ещё и выдаёт предупреждение, что `callSuper = false` может быть ошибкой, и его можно убрать явным указанием значения.",
+                "example": "Например, `@Data class Order extends BaseEntity { private String ref; }` сгенерирует `equals`, смотрящий только на `ref`, и проигнорирует `id` из `BaseEntity`.",
+                "when_to_apply": "Это учитывают в иерархиях сущностей и DTO: если у родителя есть значимые поля, без `callSuper = true` равенство и `toString` будут неполными.",
+                "edge_cases": "Предупреждение убирают осознанно: `@EqualsAndHashCode(callSuper = false)` подтверждает, что игнорирование родителя — намеренное, а не забытая настройка.",
+                "related": "[[java-lombok-interview#Q5]] риски equals/hashCode; [[java-lombok-interview#Q8]] @Data без прямого callSuper; [[java-lombok-interview#Q26]] точечный контроль полей в equals."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Чтобы включить поля родителя, достаточно указать `callSuper = true` только в `@EqualsAndHashCode`; на `@ToString` это распространяется автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`callSuper` задаётся независимо для каждой аннотации: нужно указать его и в `@EqualsAndHashCode(callSuper = true)`, и в `@ToString(callSuper = true)` отдельно.",
+                "source_of_confusion": "Кажется, что один общий флаг наследования применится ко всем сгенерированным методам сразу.",
+                "if_it_were_true": "Если бы настройка была общей, не пришлось бы дублировать `callSuper = true` в двух аннотациях, но именно так и делают для полного учёта родителя.",
+                "how_it_should_be": "Правильно: `callSuper` указывают отдельно в каждой из аннотаций `@EqualsAndHashCode` и `@ToString`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
