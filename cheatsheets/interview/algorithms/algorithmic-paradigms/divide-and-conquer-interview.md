@@ -682,3 +682,14 @@ class MergeSortTask extends RecursiveAction {
 
 Так работают `Arrays.parallelSort()` и `Stream.parallel()`. **Combine-шаг** обычно остаётся последовательным (синхронизация после `join`), поэтому идеального ускорения не достичь — ограничивает закон Амдала. Хорошо параллелятся `Merge Sort`, `Quick Sort`, `findMax`, `maxSubArray`; плохо — `Binary Search` (одна подзадача, нечего распараллеливать).
 
+## See also
+
+- [Алгоритмы (обзор)](../algorithms-interview.md) — карта алгоритмических тем
+- [Рекурсия](recursion-interview.md) — D&C — частный случай рекурсии
+- [DP](dynamic-programming-interview.md) — перекрывающиеся подзадачи vs независимые в D&C
+- [Backtracking](backtracking-interview.md) — другая рекурсивная парадигма
+- [Сортировки](../sorting-searching/sorting-algorithms-interview.md) — Merge/Quick Sort — классический D&C
+- [Поиск](../sorting-searching/searching-algorithms-interview.md) — бинарный поиск как D&C
+- [Деревья](../data-structures/trees-interview.md) — рекурсивные обходы — тот же приём
+- [Массивы и строки](../data-structures/arrays-strings-interview.md) — maxSubArray, Median of Two Arrays
+- [Анализ сложности](../complexity/complexity-analysis-interview.md) — Master Theorem, recurrence relations
