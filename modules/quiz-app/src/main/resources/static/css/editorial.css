@@ -350,6 +350,12 @@ html[data-design="editorial"] :not(pre) > code {
   color: var(--color-text-primary);
   padding: 0.1em 0.38em;
   border-radius: var(--border-radius-sm);
+  /* Длинные неразрывные токены (method-chain в `code`, напр.
+     enableStompBrokerRelay(...).setRelay(...) — до 137 симв.) рвут страницу на
+     узких экранах: инлайн-код по умолчанию НЕ переносится. anywhere ломает токен
+     только когда он иначе не влезает в строку — короткие чипы (`O(1)`, `HashMap`)
+     не трогает. Снимает горизонтальный скролл на 375px в вариантах/пояснениях. */
+  overflow-wrap: anywhere;
 }
 /* старый .markdown-content code красит инлайн-код холодным индиго — перебиваем */
 html[data-design="editorial"] .markdown-content code,
