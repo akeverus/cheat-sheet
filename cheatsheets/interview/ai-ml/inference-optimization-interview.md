@@ -25,15 +25,15 @@ updated: "2026-05-23"
 
 ### Официальная документация и авторитетные источники
 
-- [vLLM Documentation](https://docs.vllm.ai/) — main inference server
+- [vLLM Documentation](https://docs.vllm.ai/) — основной inference-сервер
 - [PagedAttention paper (Kwon et al., 2023)](https://arxiv.org/abs/2309.06180) — основа vLLM
 - [FlashAttention paper (Dao et al., 2022)](https://arxiv.org/abs/2205.14135) — v1
 - [FlashAttention-2 (Dao, 2023)](https://arxiv.org/abs/2307.08691)
 - [FlashAttention-3 (2024)](https://arxiv.org/abs/2407.08608) — H100 FP8
-- [AWQ paper (Lin et al., 2023)](https://arxiv.org/abs/2306.00978) — activation-aware quantization
+- [AWQ paper (Lin et al., 2023)](https://arxiv.org/abs/2306.00978) — activation-aware квантизация
 - [GPTQ paper (Frantar et al., 2022)](https://arxiv.org/abs/2210.17323)
 - [Speculative Decoding (Leviathan et al., 2023)](https://arxiv.org/abs/2211.17192)
-- [EAGLE paper (Li et al., 2024)](https://arxiv.org/abs/2401.15077) — better draft model
+- [EAGLE paper (Li et al., 2024)](https://arxiv.org/abs/2401.15077) — улучшенная draft-модель
 - [Anthropic Prompt Caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)
 - [OpenAI Prompt Caching](https://platform.openai.com/docs/guides/prompt-caching)
 - [NVIDIA TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM)
@@ -108,14 +108,14 @@ updated: "2026-05-23"
 |---------|--------------|------|
 | `TTFT` (Time To First Token) | Задержка до первого токена | <500ms для UX |
 | `TPOT` (Time Per Output Token) | Среднее время на следующий токен | <50ms (=20 tok/sec) |
-| `Throughput` | `tokens/sec` aggregate по всем requests | Максимизировать |
+| `Throughput` | `tokens/sec` суммарно по всем requests | Максимизировать |
 | `End-to-end latency` | TTFT + TPOT × N | Зависит от длины ответа |
 | `Cost` | `$/1M tokens` | Минимизировать при SLA |
 | `Goodput` | Доля requests, уложившихся в SLA | >99% |
 
-**Trade-off:** maximize throughput → растёт `TTFT` (большой batch ждёт prefill). Continuous batching смягчает, но не убирает.
+**Trade-off:** максимизируешь throughput → растёт `TTFT` (большой batch ждёт prefill). Continuous batching смягчает, но не убирает.
 
-**Production dashboards** должны показывать `p50/p95/p99` отдельно для prefill (`TTFT`) и decode (`TPOT`).
+**Production-дашборды** должны показывать `p50/p95/p99` отдельно для prefill (`TTFT`) и decode (`TPOT`).
 
 
 ## Q2. (!) Почему LLM inference медленный? Autoregressive nature.
@@ -139,17 +139,17 @@ P(token_i | token_1, ..., token_{i-1})
 
 Два радикально разных режима:
 
-**Prefill (prompt processing):**
+**Prefill (обработка промпта):**
 - Все токены prompt'а обрабатываются **параллельно**
 - `compute-bound` — GPU занят матричными умножениями
-- Один проход, генерирует первый output token + полный KV cache
+- Один проход, генерирует первый output-токен + полный KV cache
 - Время ≈ линейно от длины prompt
 
-**Decode (autoregressive generation):**
+**Decode (авторегрессионная генерация):**
 - Один токен за раз
 - `memory-bound` — нужно прочитать все веса для одного токена
-- GPU underutilized (compute idle), bandwidth saturated
-- Время ≈ линейно от числа output токенов
+- GPU недогружен (compute простаивает), bandwidth насыщён
+- Время ≈ линейно от числа output-токенов
 
 **Следствие:** оптимизации разные. Prefill — `FlashAttention`, `chunked prefill`. Decode — `continuous batching` (объединить много decode-шагов), `speculative decoding`, KV cache.
 
@@ -166,7 +166,7 @@ P(token_i | token_1, ..., token_{i-1})
 - **Большой batch** — амортизирует чтение весов по N requests. Batch=32 → 32 FLOPs/byte.
 - **Quantization** — INT4 уменьшает байты весов в 4 раза.
 - **Speculative decoding** — больше токенов за один проход весов.
-- **FlashAttention** — меньше HBM reads.
+- **FlashAttention** — меньше чтений из HBM.
 
 **Prefill batch=1, long prompt:** уже `compute-bound`, оптимизации другие.
 
@@ -211,11 +211,11 @@ kv_cache_bytes = 2 × n_layers × n_kv_heads × head_dim × seq_len × bytes_per
 
 ## Q7. (!) PagedAttention — что это и почему ×24 throughput?
 
-**PagedAttention** (Kwon et al., SOSP 2023) — основа vLLM. Inspired by **OS virtual memory paging**.
+**PagedAttention** (Kwon et al., SOSP 2023) — основа vLLM. Идея вдохновлена **страничной виртуальной памятью ОС**.
 
-**Проблема классики:** continuous KV cache требует резервировать `max_seq_len` под каждый request заранее. Реально использует, скажем, 30% → 70% памяти впустую.
+**Проблема классики:** непрерывный KV cache требует резервировать `max_seq_len` под каждый request заранее. Реально использует, скажем, 30% → 70% памяти впустую.
 
-**Идея:** KV cache хранится в **блоках** (pages) фиксированного размера (обычно 16 tokens). Logical sequence → table указателей на блоки.
+**Идея:** KV cache хранится в **блоках** (pages) фиксированного размера (обычно 16 токенов). Логическая последовательность → таблица указателей на блоки.
 
 ```
 Request A (50 tokens): blocks [42, 17, 3, ...]
@@ -223,12 +223,12 @@ Request B (50 tokens): blocks [42, 17, 81, ...]  # shared prefix!
 ```
 
 **Преимущества:**
-1. **Нет fragmentation** — все блоки одинаковые
-2. **Shared blocks** — beam search, parallel sampling, prefix caching
-3. **Memory efficiency** — упаковка >95% (vs ~30% у naive)
-4. **Larger batch** → 2-4× throughput от одной памяти
+1. **Нет фрагментации** — все блоки одинаковые
+2. **Общие блоки** — beam search, parallel sampling, prefix caching
+3. **Эффективность памяти** — упаковка >95% (против ~30% у наивного подхода)
+4. **Больший batch** → 2-4× throughput с той же памяти
 
-**Результат paper:** до **×24 throughput** vs HuggingFace transformers (без батчинга). Vs TGI — обычно 1.5-2×.
+**Результат из paper:** до **×24 throughput** против HuggingFace transformers (без батчинга). Против TGI — обычно 1.5-2×.
 
 ```mermaid
 graph TB
@@ -246,20 +246,20 @@ graph TB
 
 ## Q8. KV cache fragmentation — что это?
 
-**Internal fragmentation** — request зарезервировал место под max_seq_len, использует меньше. Остаток нельзя отдать другому request.
+**Внутренняя фрагментация (internal)** — request зарезервировал место под max_seq_len, а использует меньше. Остаток нельзя отдать другому request.
 
-**External fragmentation** — между активными requests дыры разного размера, ни одному новому не влезть, хотя суммарно памяти хватает.
+**Внешняя фрагментация (external)** — между активными requests дыры разного размера, ни одному новому не влезть, хотя суммарно памяти хватает.
 
-**Pre-PagedAttention миры:**
+**Мир до PagedAttention:**
 - HuggingFace transformers: ~20-40% полезного использования KV cache
-- Naive batching: padding до max длины батча
+- Наивный батчинг: padding до максимальной длины батча
 
 **После PagedAttention:**
-- Internal: <4% (последний неполный блок)
-- External: 0 (все блоки одинаковые)
-- Polish: **memory efficiency >95%**
+- Внутренняя: <4% (последний неполный блок)
+- Внешняя: 0 (все блоки одинаковые)
+- Итог: **эффективность памяти >95%**
 
-**Эффект:** на той же GPU можно держать в 2-3× больше concurrent requests → выше throughput.
+**Эффект:** на той же GPU можно держать в 2-3× больше одновременных requests → выше throughput.
 
 
 ## Q9. (!) Static batching vs continuous batching?
@@ -285,44 +285,44 @@ gantt
 ```
 
 **Static batching:** собираем batch из N requests, ждём пока **все** закончат, потом следующий batch.
-- ❌ Короткие requests ждут самый длинный
-- ❌ GPU underutilized после первых завершений
-- ❌ Высокая `TTFT` для новых requests
+- Короткие requests ждут самый длинный
+- GPU недогружен после первых завершений
+- Высокая `TTFT` для новых requests
 
 **Continuous batching** (iteration-level scheduling, Yu et al. 2022 — Orca):
 - На каждой итерации (= один decode step) можно добавить новый request
 - Завершённый request освобождает slot **сразу**
-- Все active requests декодируют параллельно
+- Все активные requests декодируют параллельно
 
-**Прирост:** 5-10× throughput vs static при том же GPU. Default в vLLM, TGI, TensorRT-LLM, SGLang.
+**Прирост:** 5-10× throughput против static при том же GPU. По умолчанию в vLLM, TGI, TensorRT-LLM, SGLang.
 
 
 ## Q10. Iteration-level scheduling — как работает?
 
-Каждую **iteration** (≈один decode step, ~30-50ms):
+Каждую **итерацию** (≈один decode step, ~30-50ms):
 
-1. **Scheduler** смотрит свободные KV blocks
-2. Решает: добавить новые requests из queue (если хватает KV) или нет
-3. Решает: какие active requests продолжить
-4. **Если KV cache переполняется** — **preemption**:
+1. **Scheduler** смотрит свободные KV-блоки
+2. Решает: добавить новые requests из очереди (если хватает KV) или нет
+3. Решает: какие активные requests продолжить
+4. **Если KV cache переполняется** — **preemption** (вытеснение):
    - `swap` — выгрузить часть на CPU RAM
    - `recompute` — выкинуть KV, при возобновлении пересчитать prefill
 
-**Knobs в vLLM:**
-- `--max-num-seqs` — максимум одновременных sequences (default 256)
+**Параметры (knobs) в vLLM:**
+- `--max-num-seqs` — максимум одновременных sequences (по умолчанию 256)
 - `--max-num-batched-tokens` — лимит на batch (обычно 8192-32768)
 - `--scheduling-policy` — `fcfs` (FIFO) или `priority`
 
-**Side effect:** TTFT нового request зависит от prefill длины. Длинный prompt (32K) блокирует decode остальных на сотни ms → решение `chunked prefill`.
+**Побочный эффект:** TTFT нового request зависит от длины prefill. Длинный prompt (32K) блокирует decode остальных на сотни ms → решение `chunked prefill`.
 
 
 ## Q11. Chunked prefill — зачем смешивать prefill и decode?
 
-**Проблема:** длинный prompt (32K токенов) на prefill занимает GPU на 500ms-1s. В это время все decode requests стоят → `TPOT` всплеск.
+**Проблема:** длинный prompt (32K токенов) на prefill занимает GPU на 500ms-1s. В это время все decode-requests стоят → всплеск `TPOT`.
 
 **Chunked prefill** (vLLM 0.4+, SGLang):
 - Бить prefill на куски по `N` токенов (например, 512)
-- В каждом batch — смесь prefill-chunk + decode-tokens активных requests
+- В каждом batch — смесь prefill-chunk + decode-токенов активных requests
 - GPU занят полезной работой, decode не блокируется
 
 ```
@@ -331,14 +331,14 @@ Batch N+1:  [decode_A, decode_B, prefill_C_chunk_2]
 Batch N+2:  [decode_A, decode_B, decode_C]  # prefill finished
 ```
 
-**Включить vLLM:** `--enable-chunked-prefill` (с 0.5+ default on для long context).
+**Включить в vLLM:** `--enable-chunked-prefill` (с 0.5+ включено по умолчанию для long context).
 
 **Профит:** P99 `TPOT` падает в 3-5×, throughput почти не страдает.
 
 
 ## Q12. (!) Speculative decoding — суть алгоритма?
 
-**Идея** (Leviathan et al., 2023): угадать N токенов **маленькой** моделью, **большая** модель проверит их **за один проход**.
+**Идея** (Leviathan et al., 2023): угадать N токенов **маленькой** моделью, а **большая** модель проверит их **за один проход**.
 
 ```mermaid
 sequenceDiagram
@@ -355,96 +355,96 @@ sequenceDiagram
 ```
 
 **Алгоритм:**
-1. Draft model генерирует `k` токенов (быстро)
-2. Target model делает **один forward pass** на эти `k` токенов параллельно — получает свои probability distributions
-3. **Rejection sampling**: токен `i` принят если `target_prob[i] ≥ draft_prob[i]`, иначе reject и пересэмпл target
-4. Все принятые токены идут в ответ, после rejection start с draft заново
+1. Draft-модель генерирует `k` токенов (быстро)
+2. Target-модель делает **один forward pass** на эти `k` токенов параллельно — получает свои распределения вероятностей
+3. **Rejection sampling**: токен `i` принят, если `target_prob[i] ≥ draft_prob[i]`, иначе отклоняем и пересэмплируем из target
+4. Все принятые токены идут в ответ, после отклонения снова стартуем с draft
 
-**Speedup:** 2-3× при `acceptance rate ~70%`. Гарантирует **идентичный** target distribution (mathematically equivalent).
+**Ускорение:** 2-3× при `acceptance rate ~70%`. Гарантирует **идентичное** распределение target (математически эквивалентно).
 
 **Кандидаты в draft:**
-- Llama-3-8B → Llama-3-70B (×8 разница)
+- Llama-3-8B → Llama-3-70B (разница ×8)
 - Llama-3-1B → Llama-3-405B
-- `n-gram` draft (без модели вообще, для code/structured)
+- `n-gram` draft (вообще без модели, для code/structured)
 
 
 ## Q13. EAGLE и Medusa heads — чем отличаются от классики?
 
-**Medusa** (Cai et al., 2024) — добавить **multiple decoding heads** прямо в target model:
-- N дополнительных heads предсказывают tokens t+1, t+2, ..., t+N параллельно
-- Tree-based verification — пробует много candidates
-- Speedup 2-3× без отдельной draft model
-- ❌ Требует fine-tuning target
+**Medusa** (Cai et al., 2024) — добавить **несколько decoding-голов (heads)** прямо в target-модель:
+- N дополнительных голов предсказывают токены t+1, t+2, ..., t+N параллельно
+- Tree-based верификация — пробует много кандидатов
+- Ускорение 2-3× без отдельной draft-модели
+- Требует fine-tuning самого target
 
-**EAGLE** (Li et al., 2024) — улучшенный draft на feature level:
-- Draft предсказывает не tokens, а **features** второго-к-последнему слоя target
-- Acceptance rate выше → 3-4× speedup
-- EAGLE-2/3 (2024-2025) — adaptive draft tree
+**EAGLE** (Li et al., 2024) — улучшенный draft на уровне фичей (feature level):
+- Draft предсказывает не токены, а **features** предпоследнего слоя target
+- Acceptance rate выше → ускорение 3-4×
+- EAGLE-2/3 (2024-2025) — адаптивное draft-дерево
 
-**Lookahead decoding** — n-gram cache из предыдущей генерации, без модели.
+**Lookahead decoding** — n-gram-кэш из предыдущей генерации, без модели.
 
-**В vLLM 2025:** native `--speculative-model`, `--num-speculative-tokens`. EAGLE через `eagle-config`.
+**В vLLM 2025:** нативные `--speculative-model`, `--num-speculative-tokens`. EAGLE — через `eagle-config`.
 
 
 ## Q14. Когда speculative decoding НЕ помогает?
 
 **Замедляет или не даёт выигрыша:**
 
-1. **Высокий batch** — большая модель уже compute-bound, спек добавляет overhead draft model
-2. **Низкий acceptance rate** (<30%) — draft слишком тупой или task сложный (творческие тексты, long reasoning)
-3. **Distillation mismatch** — draft не из той же семьи (Mistral-draft для Llama-target)
+1. **Высокий batch** — большая модель уже compute-bound, спекуляция добавляет overhead draft-модели
+2. **Низкий acceptance rate** (<30%) — draft слишком тупой или задача сложная (творческие тексты, длинный reasoning)
+3. **Несовпадение семейств** — draft не из той же семьи (Mistral-draft для Llama-target)
 4. **Очень короткие ответы** — overhead не амортизируется
-5. **Reasoning models** (`o1`, `Claude Sonnet thinking`) с длинными CoT — draft часто промахивается на reasoning steps
+5. **Reasoning-модели** (`o1`, `Claude Sonnet thinking`) с длинными CoT — draft часто промахивается на шагах рассуждений
 
 **Где работает отлично:**
-- Code generation (predictable patterns)
-- Translation (deterministic)
-- Structured output (JSON, схемы)
-- Batch=1 latency-critical chat
+- Генерация кода (предсказуемые паттерны)
+- Перевод (детерминированный)
+- Структурированный вывод (JSON, схемы)
+- Чат с batch=1, критичный к latency
 
-**Rule of thumb:** проверить на своём workload — speedup сильно зависит от данных.
+**Rule of thumb:** проверять на своём workload — ускорение сильно зависит от данных.
 
 
 ## Q15. (!) FP16/BF16/FP8/INT8/INT4 — таблица форматов?
 
-| Format | Bits | Range/Precision | Hardware | Use case |
+| Format | Bits | Диапазон/точность | Hardware | Применение |
 |--------|------|-----------------|----------|----------|
-| `FP32` | 32 | Full | Любой | Legacy training |
-| `FP16` | 16 | ±65K, 3 decimal | V100+ | Training/inference |
-| `BF16` | 16 | ±3e38, 2 decimal | A100+, TPU | Training (stable) |
-| `FP8 E4M3` | 8 | ±448, weights | H100+, MI300 | Weights, fwd pass |
-| `FP8 E5M2` | 8 | ±57K, gradients | H100+ | Backward pass |
-| `INT8` | 8 | -128..127 | Все GPU | Inference, less accuracy |
+| `FP32` | 32 | Полная | Любой | Legacy training |
+| `FP16` | 16 | ±65K, 3 десятичных | V100+ | Обучение/inference |
+| `BF16` | 16 | ±3e38, 2 десятичных | A100+, TPU | Обучение (стабильно) |
+| `FP8 E4M3` | 8 | ±448, веса | H100+, MI300 | Веса, forward pass |
+| `FP8 E5M2` | 8 | ±57K, градиенты | H100+ | Backward pass |
+| `INT8` | 8 | -128..127 | Все GPU | Inference, ниже точность |
 | `INT4` | 4 | -8..7 | A100+ (через CUTLASS) | GPTQ/AWQ inference |
 | `NF4` | 4 | NormalFloat | QLoRA | Fine-tuning |
-| `2-bit` | 2 | research | Custom kernels | Edge, experimental |
-| `1.58-bit` | log2(3) | -1/0/+1 | BitNet (research) | Future |
+| `2-bit` | 2 | research | Кастомные kernels | Edge, экспериментально |
+| `1.58-bit` | log2(3) | -1/0/+1 | BitNet (research) | На будущее |
 
 **Память для Llama-3-70B:**
 - FP16: 140 GB → 2× H100 80GB
 - INT8: 70 GB → 1× H100 80GB
-- INT4 (AWQ): 35 GB → 1× A100 40GB or RTX 4090×2
+- INT4 (AWQ): 35 GB → 1× A100 40GB или RTX 4090×2
 
-**Качество:** FP16→INT8 типично <1% drop на benchmarks. FP16→INT4 — 1-3% drop (зависит от метода).
+**Качество:** FP16→INT8 — обычно падение <1% на бенчмарках. FP16→INT4 — падение 1-3% (зависит от метода).
 
 
 ## Q16. (!) GPTQ — как работает post-training quantization?
 
-**GPTQ** (Frantar et al., 2022) — quantize **обученную** модель layer-by-layer, **без re-training**.
+**GPTQ** (Frantar et al., 2022) — квантизация **обученной** модели слой за слоем, **без переобучения**.
 
 **Алгоритм:**
-1. Берём calibration dataset (128-1024 samples)
-2. Для каждого linear layer:
-   - Считаем Hessian `H = 2 × X^T X` (importance матрица весов)
+1. Берём калибровочный датасет (128-1024 примеров)
+2. Для каждого linear-слоя:
+   - Считаем Hessian `H = 2 × X^T X` (матрицу важности весов)
    - Квантуем веса колонка за колонкой
-   - **Error compensation** — после quantization колонки `i`, размазываем ошибку на оставшиеся колонки (через `H^-1`)
+   - **Компенсация ошибки** — после квантизации колонки `i` размазываем ошибку на оставшиеся колонки (через `H^-1`)
 3. Минимизирует `||W × X - W_quant × X||²`
 
 **Параметры:**
-- `bits=4`, `group_size=128` — обычный setting
-- `desc_act=True` — порядок колонок по important (улучшает quality)
+- `bits=4`, `group_size=128` — обычная настройка
+- `desc_act=True` — порядок колонок по важности (улучшает качество)
 
-**Quality drop:** Llama-2-70B → INT4 GPTQ: <1% на MMLU.
+**Падение качества:** Llama-2-70B → INT4 GPTQ: <1% на MMLU.
 
 **Использование:**
 
@@ -460,24 +460,24 @@ python -m vllm.entrypoints.openai.api_server \
 
 ## Q17. (!) AWQ — чем отличается от GPTQ?
 
-**AWQ** (Activation-aware Weight Quantization, Lin et al., 2023) — заметили: **0.1-1% весов важны непропорционально**.
+**AWQ** (Activation-aware Weight Quantization, Lin et al., 2023) — авторы заметили: **0.1-1% весов важны непропорционально сильно**.
 
 **Идея:** не все веса равны. Веса, через которые проходят большие активации, **критичнее**. Их нужно сохранить с большей точностью.
 
 **Алгоритм:**
-1. На calibration данных считаем `|X|` per-channel (activation magnitude)
+1. На калибровочных данных считаем `|X|` per-channel (величину активаций)
 2. Находим `salient` каналы (топ-1%)
-3. **Scale** salient веса вверх перед quantization, scale обратно activations:
+3. **Масштабируем** salient-веса вверх перед квантизацией, а активации — обратно вниз:
    ```
    y = (W / s) × (s × x)   # math equivalent
    ```
-4. Это сохраняет salient веса в большей точности
+4. Это сохраняет salient-веса с большей точностью
 
-**Vs GPTQ:**
-- ✓ Лучше perplexity, особенно на instruction-tuned моделях
-- ✓ Calibration faster (нет Hessian)
-- ✓ Лучше generalizes на out-of-domain
-- ✓ Hardware-friendly (нет странных group permutations)
+**По сравнению с GPTQ:**
+- Лучше perplexity, особенно на instruction-tuned моделях
+- Калибровка быстрее (нет Hessian)
+- Лучше обобщается на out-of-domain
+- Дружелюбнее к железу (нет странных перестановок групп)
 
 **В vLLM:**
 
@@ -487,23 +487,23 @@ python -m vllm.entrypoints.openai.api_server \
   --quantization awq
 ```
 
-В **2025** AWQ — **default выбор** для INT4 quantization.
+В **2025** AWQ — **выбор по умолчанию** для INT4-квантизации.
 
 
 ## Q18. FP8 на H100 — почему it's a big deal?
 
-**H100** добавил native **FP8 Tensor Cores** — 2× compute throughput vs FP16, half memory.
+**H100** добавил нативные **FP8 Tensor Cores** — 2× compute throughput против FP16 и вдвое меньше памяти.
 
 **Форматы:**
-- `E4M3`: 4 exponent + 3 mantissa, range ±448. Для **weights** и forward activations.
-- `E5M2`: 5 exponent + 2 mantissa, range ±57K. Для **gradients** (training).
+- `E4M3`: 4 бита экспоненты + 3 мантиссы, диапазон ±448. Для **весов** и forward-активаций.
+- `E5M2`: 5 бит экспоненты + 2 мантиссы, диапазон ±57K. Для **градиентов** (обучение).
 
-**Per-tensor / per-row scaling:** scaling factor чтобы избежать overflow.
+**Per-tensor / per-row scaling:** масштабный коэффициент, чтобы избежать переполнения (overflow).
 
-**Inference выгоды:**
-- **Throughput** ×1.5-2× vs FP16
-- **KV cache** в FP8 → 2× больше batch
-- **Quality drop** очень маленький (<0.5%) при правильной calibration
+**Выгоды для inference:**
+- **Throughput** ×1.5-2× против FP16
+- **KV cache** в FP8 → вдвое больший batch
+- **Падение качества** очень маленькое (<0.5%) при правильной калибровке
 
 **В vLLM 2025:**
 
@@ -514,96 +514,96 @@ python -m vllm.entrypoints.openai.api_server \
   --kv-cache-dtype fp8
 ```
 
-**Где работает:** H100, H200, B100/B200, MI300X (другая поддержка). Не работает на A100 (нет FP8 cores — будет emulation).
+**Где работает:** H100, H200, B100/B200, MI300X (своя реализация). Не работает на A100 (нет FP8-ядер — будет эмуляция).
 
 
 ## Q19. Weight-only vs activation quantization?
 
 **Weight-only (W4A16):**
 - Веса в INT4/INT8, активации остаются FP16
-- Перед matmul: dequantize веса в FP16 на лету
-- Большинство methods: GPTQ, AWQ, GGUF Q4_K_M
-- ✓ Простой, минимальный quality drop
-- ✗ Не использует INT tensor cores напрямую
+- Перед matmul веса деквантуются в FP16 на лету
+- Большинство методов: GPTQ, AWQ, GGUF Q4_K_M
+- Простой, минимальное падение качества
+- Не использует INT-тензорные ядра напрямую
 
 **Weight + Activation (W8A8 / W4A8):**
-- И веса, и активации квантуем
+- Квантуем и веса, и активации
 - Используем INT8 Tensor Cores → 2× compute
-- ✗ Сложнее, larger quality drop (особенно для outliers в activations)
-- Examples: `SmoothQuant`, `OmniQuant`
+- Сложнее, больше падение качества (особенно из-за выбросов/outliers в активациях)
+- Примеры: `SmoothQuant`, `OmniQuant`
 
-**FP8 W8A8:** comprovesum через H100, без проблем с outliers (range FP8 шире INT8).
+**FP8 W8A8:** компромисс через H100, без проблем с выбросами (диапазон FP8 шире INT8).
 
-**Practical 2025:**
-- Decode `memory-bound` → **weight-only выигрывает** (грузит меньше данных)
-- Prefill `compute-bound` long context → W8A8 FP8 даёт compute speedup
-- Hybrid: `--quantization awq` (W4A16) + `--kv-cache-dtype fp8` — best of both
+**Практика 2025:**
+- Decode `memory-bound` → **выигрывает weight-only** (грузит меньше данных)
+- Prefill `compute-bound` для long context → W8A8 FP8 даёт ускорение вычислений
+- Гибрид: `--quantization awq` (W4A16) + `--kv-cache-dtype fp8` — лучшее из обоих миров
 
 
 ## Q20. GGUF и llama.cpp — для CPU/edge?
 
-**GGUF** (GPT-Generated Unified Format) — формат `llama.cpp`. Quantizations:
+**GGUF** (GPT-Generated Unified Format) — формат `llama.cpp`. Квантизации:
 
-| Type | Bits | Size Llama-3-8B | Use |
+| Type | Bits | Размер Llama-3-8B | Применение |
 |------|------|-----------------|-----|
-| `Q8_0` | 8 | 8.5 GB | Server, max quality |
-| `Q6_K` | 6.5 | 6.6 GB | Balanced |
-| `Q5_K_M` | 5.7 | 5.7 GB | Recommended laptop |
-| `Q4_K_M` | 4.8 | 4.9 GB | Default sweet spot |
-| `Q3_K_M` | 3.9 | 4.0 GB | Edge, small RAM |
-| `Q2_K` | 2.6 | 3.2 GB | Phones, very degraded |
+| `Q8_0` | 8 | 8.5 GB | Сервер, максимум качества |
+| `Q6_K` | 6.5 | 6.6 GB | Сбалансированно |
+| `Q5_K_M` | 5.7 | 5.7 GB | Рекомендуется для ноутбука |
+| `Q4_K_M` | 4.8 | 4.9 GB | Дефолтный sweet spot |
+| `Q3_K_M` | 3.9 | 4.0 GB | Edge, мало RAM |
+| `Q2_K` | 2.6 | 3.2 GB | Телефоны, сильная деградация |
 
-**Особенность:** **mixed precision** — important layers держат больше бит (e.g., `K`/`V` attention в Q6, FFN в Q4).
+**Особенность:** **смешанная точность (mixed precision)** — важные слои держат больше бит (например, `K`/`V` attention в Q6, FFN в Q4).
 
 **Где использовать:**
 - **CPU inference** (AVX2, AVX-512)
 - **Apple Silicon** через Metal (M1-M4)
-- **Mobile** (Android via JNI, iOS)
-- **Edge devices** (Jetson, RPi 5)
+- **Мобильные** (Android через JNI, iOS)
+- **Edge-устройства** (Jetson, RPi 5)
 
-**Wrapper'ы:** `Ollama`, `LM Studio`, `Jan` — user-friendly UI поверх `llama.cpp`.
+**Обёртки:** `Ollama`, `LM Studio`, `Jan` — удобный UI поверх `llama.cpp`.
 
 **Не для production GPU serving** — там vLLM/TensorRT в разы быстрее.
 
 
 ## Q21. (!) FlashAttention — почему 2-3× speedup?
 
-**Standard attention:**
+**Обычный attention:**
 ```
 S = Q @ K^T          # write N×N matrix to HBM
 P = softmax(S)       # read N×N, write N×N
 O = P @ V            # read N×N
 ```
 
-Каждый шаг — round-trip через HBM (slow memory). Для seq_len=8K → ~16 GB трафика.
+Каждый шаг — round-trip через HBM (медленная память). Для seq_len=8K → ~16 GB трафика.
 
 **FlashAttention** (Dao et al., 2022):
 - **Tiling** — разбить Q/K/V на блоки, помещающиеся в SRAM (~100 KB)
 - Вычислять softmax инкрементально (`online softmax`)
-- **Recomputation** в backward вместо storing
-- Никогда не материализуем полную `N×N` матрицу
+- **Пересчёт (recomputation)** в backward вместо хранения
+- Никогда не материализуем полную матрицу `N×N`
 
 **Результат:**
-- ×2-3 wall-clock speedup
-- ×5-20 memory savings → длиннее context (32K, 128K, 1M)
-- IO-aware алгоритм — оптимизирует HBM↔SRAM traffic
+- ускорение по wall-clock ×2-3
+- экономия памяти ×5-20 → длиннее context (32K, 128K, 1M)
+- IO-aware алгоритм — оптимизирует трафик HBM↔SRAM
 
 **Версии:**
 - **v1** (2022) — A100
 - **v2** (2023) — лучше parallelism по seq_len
-- **v3** (2024) — H100, FP8, asynchronous warp specialization, +1.5-2× vs v2
+- **v3** (2024) — H100, FP8, asynchronous warp specialization, +1.5-2× против v2
 
-**Где:** built into vLLM, TGI, TensorRT-LLM, PyTorch SDPA (`torch.nn.functional.scaled_dot_product_attention`).
+**Где:** встроено в vLLM, TGI, TensorRT-LLM, PyTorch SDPA (`torch.nn.functional.scaled_dot_product_attention`).
 
 
 ## Q22. (!) Prefix caching / Automatic Prefix Caching (APC)?
 
-**Сценарий:** RAG, агенты, multi-turn chat — все requests делят общий **system prompt + examples + retrieved docs**. Без cache prefill повторяется каждый раз.
+**Сценарий:** RAG, агенты, многораундовый чат — все requests делят общий **system prompt + примеры + retrieved docs**. Без кэша prefill повторяется каждый раз.
 
 **Prefix caching:**
-- Хэшировать prefix tokens
-- Cache KV blocks для уже виденных prefixes
-- Новый request с тем же prefix — переиспользует KV, prefill идёт **только для нового suffix**
+- Хэшируем токены префикса
+- Кэшируем KV-блоки для уже виденных префиксов
+- Новый request с тем же префиксом переиспользует KV, prefill идёт **только для нового suffix**
 
 **vLLM:**
 
@@ -613,19 +613,19 @@ python -m vllm.entrypoints.openai.api_server \
   --enable-prefix-caching
 ```
 
-**Что кэшируется на уровне PagedAttention блоков** — гранулярность 16 tokens. Hash блока — содержимое + хэш предыдущего → детерминированно.
+**Кэширование идёт на уровне блоков PagedAttention** — гранулярность 16 токенов. Хэш блока — это содержимое + хэш предыдущего → детерминированно.
 
 **SGLang RadixAttention:**
-- Trie (radix tree) из всех КЭШированных prefixes
-- Эффективный matching длиннейшего общего prefix
-- Поддерживает branching (parallel sampling)
+- Trie (radix tree) из всех закэшированных префиксов
+- Эффективный поиск самого длинного общего префикса
+- Поддерживает ветвление (parallel sampling)
 
-**Прирост:** для RAG с 4K shared context — **3-10× throughput**, TTFT падает в 5-50×.
+**Прирост:** для RAG с 4K общего контекста — **3-10× throughput**, TTFT падает в 5-50×.
 
 
 ## Q23. (!) Anthropic Prompt Caching API — как использовать?
 
-**Anthropic Prompt Caching** (GA 2024-2025) — server-side caching, **5-минутный TTL** (можно расширить до 1h за extra cost).
+**Anthropic Prompt Caching** (GA 2024-2025) — кэширование на стороне сервера, **TTL 5 минут** (можно расширить до 1h за дополнительную плату).
 
 ```python
 response = client.messages.create(
@@ -647,20 +647,20 @@ response = client.messages.create(
 )
 ```
 
-**Pricing:**
-- **Cache write**: +25% к стандартной input цене (one-time)
-- **Cache read**: −90% от input цены (огромная экономия)
-- **Min cacheable**: 1024 токенов (для Haiku — 2048)
+**Цены:**
+- **Запись в кэш (cache write)**: +25% к стандартной цене input (разово)
+- **Чтение из кэша (cache read)**: −90% от цены input (огромная экономия)
+- **Минимум для кэширования**: 1024 токена (для Haiku — 2048)
 
-**Break-even:** уже на **2-3 reuse** — экономишь.
+**Точка окупаемости:** уже при **2-3 переиспользованиях** — экономишь.
 
-**Use cases:**
-- Многоступенчатые агенты (large system prompt)
-- RAG с большим контекстом docs
-- Long conversations (cache историю)
-- Document Q&A (cache документ один раз)
+**Сценарии:**
+- Многоступенчатые агенты (большой system prompt)
+- RAG с большим контекстом документов
+- Долгие диалоги (кэшируем историю)
+- Document Q&A (кэшируем документ один раз)
 
-**Кэшируется:** до 4 cache breakpoints. Каждый — отдельная granularity (нельзя ломать порядок).
+**Кэшируется:** до 4 точек разрыва (cache breakpoints). Каждая — своя гранулярность (нельзя ломать порядок).
 
 
 ## Q24. OpenAI Prompt Caching — чем отличается?
@@ -668,49 +668,49 @@ response = client.messages.create(
 **OpenAI Prompt Caching** (Oct 2024) — **автоматический**, без изменений API.
 
 **Особенности:**
-- Cache lookup по prefix матчингу (как RadixAttention)
-- **−50%** off cached input tokens (vs Anthropic −90%)
-- TTL **5-10 минут** (≤ 1 час off-peak)
-- Min cacheable: **1024 tokens**
-- **Никаких API изменений** — просто структурируй prompt: static prefix → dynamic suffix
-- Поддерживается на `gpt-4o`, `gpt-4o-mini`, `o1`-series
+- Поиск в кэше по совпадению префикса (как RadixAttention)
+- **−50%** на закэшированные input-токены (против −90% у Anthropic)
+- TTL **5-10 минут** (≤ 1 час в непиковое время)
+- Минимум для кэширования: **1024 токена**
+- **Никаких изменений API** — просто структурируй prompt: статичный префикс → динамический suffix
+- Поддерживается на `gpt-4o`, `gpt-4o-mini`, серии `o1`
 
-**Vs Anthropic:**
+**По сравнению с Anthropic:**
 
-| Feature | OpenAI | Anthropic |
+| Параметр | OpenAI | Anthropic |
 |---------|--------|-----------|
-| API change | Нет (auto) | Да (`cache_control`) |
-| Cache write cost | 0 | +25% |
-| Cache read discount | -50% | -90% |
-| TTL | 5-10 min | 5 min (или 1h за надбавку) |
-| Granularity | Auto matching | Explicit breakpoints (до 4) |
-| Min tokens | 1024 | 1024 (2048 Haiku) |
+| Изменение API | Нет (авто) | Да (`cache_control`) |
+| Стоимость записи в кэш | 0 | +25% |
+| Скидка на чтение из кэша | -50% | -90% |
+| TTL | 5-10 мин | 5 мин (или 1h за надбавку) |
+| Гранулярность | Авто-совпадение | Явные breakpoints (до 4) |
+| Минимум токенов | 1024 | 1024 (2048 для Haiku) |
 
-**Vendor lock-in note:** при self-host через vLLM `--enable-prefix-caching` получаешь **100% бесплатно**, без лимитов TTL.
+**Замечание про vendor lock-in:** при self-host через vLLM `--enable-prefix-caching` получаешь **на 100% бесплатно**, без лимитов TTL.
 
 
 ## Q25. (!) vLLM vs TensorRT-LLM vs TGI vs SGLang — сравнение?
 
-| Server | Source | Strength | Weakness | Use case |
+| Сервер | Происхождение | Сильные стороны | Слабые стороны | Применение |
 |--------|--------|----------|----------|----------|
-| **vLLM** | UC Berkeley OSS | PagedAttention, easy setup, broad model support, prefix caching | Slightly slower than TRT-LLM | Default 2025 |
-| **TensorRT-LLM** | NVIDIA | Fastest (kernel fusion, custom ops), best FP8 | Complex build, NVIDIA-only, slower iteration | Max perf prod |
-| **TGI** | Hugging Face | Production-ready, Rust core, ecosystem | Catching up on features | HF Hub workflow |
-| **SGLang** | LMSYS | RadixAttention prefix, structured output, fastest for chat | Newer, fewer models | Agents, complex apps |
-| **llama.cpp** | OSS | CPU/edge/Apple Silicon, GGUF | Slower at scale | Local, embedded |
-| **MLX** | Apple | Unified memory, M-series | Apple-only | Mac development |
+| **vLLM** | UC Berkeley OSS | PagedAttention, простой запуск, широкая поддержка моделей, prefix caching | Чуть медленнее TRT-LLM | Дефолт 2025 |
+| **TensorRT-LLM** | NVIDIA | Самый быстрый (kernel fusion, кастомные ops), лучший FP8 | Сложная сборка, только NVIDIA, медленные итерации | Максимум perf в prod |
+| **TGI** | Hugging Face | Production-ready, ядро на Rust, экосистема | Догоняет по фичам | Workflow вокруг HF Hub |
+| **SGLang** | LMSYS | RadixAttention-префикс, структурированный вывод, быстрейший для чата | Новее, меньше моделей | Агенты, сложные приложения |
+| **llama.cpp** | OSS | CPU/edge/Apple Silicon, GGUF | Медленнее на масштабе | Локально, embedded |
+| **MLX** | Apple | Unified memory, M-серия | Только Apple | Разработка на Mac |
 
-**Benchmark 2025 (Llama-3-70B, H100, throughput):**
+**Бенчмарк 2025 (Llama-3-70B, H100, throughput):**
 - TensorRT-LLM: ~2200 tok/s
-- vLLM (latest): ~1900 tok/s
-- SGLang: ~2000 tok/s (с prefix cache hits — выше)
+- vLLM (последний): ~1900 tok/s
+- SGLang: ~2000 tok/s (с попаданиями в prefix-кэш — выше)
 - TGI: ~1500 tok/s
 
-**Decision:**
+**Как выбрать:**
 - Не уверен → **vLLM**
-- Maxим perf на H100 → **TensorRT-LLM**
-- Heavy prefix sharing (agents) → **SGLang**
-- HF ecosystem → **TGI**
+- Максимум perf на H100 → **TensorRT-LLM**
+- Активный prefix sharing (агенты) → **SGLang**
+- Экосистема HF → **TGI**
 
 
 ## Q26. vLLM config tuning — какие флаги важны?
@@ -732,53 +732,53 @@ python -m vllm.entrypoints.openai.api_server \
   --port 8000
 ```
 
-**Главные knobs:**
+**Главные параметры:**
 
-| Flag | Что делает | Tuning hint |
+| Флаг | Что делает | Подсказка по тюнингу |
 |------|------------|-------------|
-| `--tensor-parallel-size` | Split весов по N GPU | =GPU count в node |
-| `--max-model-len` | Max context window | Ограничивает KV |
+| `--tensor-parallel-size` | Разбивает веса по N GPU | = число GPU в ноде |
+| `--max-model-len` | Максимальное окно контекста | Ограничивает KV |
 | `--gpu-memory-utilization` | Доля VRAM под KV | 0.85-0.95 |
-| `--max-num-seqs` | Concurrent requests | 128-512 |
-| `--max-num-batched-tokens` | Token budget per batch | 4K-32K |
-| `--enable-prefix-caching` | APC on | Всегда on если есть shared prefix |
-| `--enable-chunked-prefill` | Mix prefill+decode | On для long context |
+| `--max-num-seqs` | Одновременные requests | 128-512 |
+| `--max-num-batched-tokens` | Бюджет токенов на batch | 4K-32K |
+| `--enable-prefix-caching` | Включить APC | Всегда включать при общем префиксе |
+| `--enable-chunked-prefill` | Смешивать prefill+decode | Включать для long context |
 | `--quantization` | `awq`/`gptq`/`fp8`/`bitsandbytes` | По модели |
 | `--kv-cache-dtype` | `auto`/`fp8` | FP8 на H100 — 2× batch |
-| `--speculative-model` | Draft model | Если acceptance >50% |
-| `--swap-space` | CPU swap GB | 4-16 для preemption |
+| `--speculative-model` | Draft-модель | Если acceptance >50% |
+| `--swap-space` | CPU swap в GB | 4-16 для preemption |
 
 
 ## Q27. llama.cpp, Ollama, MLX — для local/edge?
 
 **llama.cpp:**
-- C/C++ inference engine от Georgi Gerganov
+- inference-движок на C/C++ от Georgi Gerganov
 - CPU (AVX2/AVX-512), CUDA, Metal, Vulkan, ROCm
-- GGUF format
-- Quantizations 2-8 bit
-- Server mode: `./server -m model.gguf --port 8080` (OpenAI-compatible)
+- Формат GGUF
+- Квантизации 2-8 бит
+- Серверный режим: `./server -m model.gguf --port 8080` (совместим с OpenAI)
 
-**Ollama** (Go wrapper над llama.cpp):
+**Ollama** (Go-обёртка над llama.cpp):
 ```bash
 ollama run llama3:70b           # auto-download, run, REPL
 ollama serve                    # HTTP API at :11434
 ollama pull deepseek-r1:32b
 ```
-- Auto model management, simple `Modelfile`
-- API совместим с OpenAI клиентами
-- Default для local dev в 2025
+- Автоуправление моделями, простой `Modelfile`
+- API совместим с клиентами OpenAI
+- Дефолт для локальной разработки в 2025
 
 **MLX** (Apple):
-- Native Apple Silicon framework (unified memory)
-- MLX-LM библиотека для LLM
+- Нативный фреймворк для Apple Silicon (unified memory)
+- Библиотека MLX-LM для LLM
 - На M3 Max 128GB можно запустить Llama-3-70B FP16
 - `mlx_lm.server` — HTTP API
 
 **Когда что:**
-- Mac local → **MLX** (быстрее llama.cpp на M-series)
-- Linux/Win local → **Ollama** (проще)
+- Локально на Mac → **MLX** (быстрее llama.cpp на M-серии)
+- Локально на Linux/Win → **Ollama** (проще)
 - Edge/embedded → **llama.cpp** напрямую
-- Production GPU → **vLLM**, не эти
+- Production GPU → **vLLM**, не эти варианты
 
 
 ## Q28. (!) Tensor Parallelism vs Pipeline Parallelism?
@@ -786,73 +786,73 @@ ollama pull deepseek-r1:32b
 Когда модель не влезает в одну GPU.
 
 **Tensor Parallelism (TP):**
-- Split **внутри каждого слоя** по dim
+- Разбиваем **внутри каждого слоя** по размерности
 - Attention heads: разные heads на разных GPU
-- FFN: split по hidden dim
-- ✓ Latency не растёт (parallel compute)
-- ✗ Требует **fast interconnect** (NVLink, не PCIe)
-- ✗ Communication каждый layer (`all-reduce`)
+- FFN: разбиение по hidden dim
+- Latency не растёт (параллельные вычисления)
+- Требует **быстрый interconnect** (NVLink, не PCIe)
+- Коммуникация на каждом слое (`all-reduce`)
 
 **Pipeline Parallelism (PP):**
-- Split **по слоям**: GPU 0 — layers 0-19, GPU 1 — 20-39, ...
+- Разбиваем **по слоям**: GPU 0 — слои 0-19, GPU 1 — 20-39, ...
 - Передача активаций между GPU
-- ✓ Меньше communication
-- ✓ Работает по PCIe / RDMA
-- ✗ **Pipeline bubble** — pipeline нужно «прогреть»
-- ✗ Latency растёт линейно с #stages
+- Меньше коммуникации
+- Работает по PCIe / RDMA
+- **Pipeline bubble** — конвейер нужно «прогреть»
+- Latency растёт линейно с числом стадий
 
-**Sequence Parallelism / Context Parallelism:** для очень длинного context (1M+) — split по seq dim.
+**Sequence Parallelism / Context Parallelism:** для очень длинного контекста (1M+) — разбиение по seq-размерности.
 
-**vLLM практика:**
+**Практика vLLM:**
 ```bash
 --tensor-parallel-size 4        # 4 GPU в одном node через NVLink
 --pipeline-parallel-size 2      # 2 nodes по 4 GPU = 8 GPU total
 ```
 
 **Rule of thumb:**
-- В одной машине, NVLink — TP
-- Кроссноды — PP (или TP+PP combo)
-- Сверхдлинный context — добавить SP/CP
+- В одной машине с NVLink — TP
+- Между нодами — PP (или комбо TP+PP)
+- Сверхдлинный контекст — добавить SP/CP
 
 
 ## Q29. MoE serving — почему Mixtral/DeepSeek сложнее?
 
-**Mixture of Experts:** sparse activation. Layer имеет `M` экспертов, router выбирает `K` (обычно K=2) per token.
+**Mixture of Experts:** разреженная активация. Слой имеет `M` экспертов, router выбирает `K` (обычно K=2) на токен.
 
-**Mixtral 8x7B:** 8 experts × 7B параметров на FFN, активны 2 → effective compute как 12.9B, но веса 47B надо хранить.
+**Mixtral 8x7B:** 8 экспертов × 7B параметров на FFN, активны 2 → эффективный compute как у 12.9B, но веса 47B надо хранить.
 
-**DeepSeek-V3:** 671B total, 37B active. 256 routed experts + 1 shared, top-9 per token.
+**DeepSeek-V3:** всего 671B, активны 37B. 256 маршрутизируемых экспертов + 1 общий, top-9 на токен.
 
 **Сложности serving:**
-1. **Memory** — нужно держать **все** experts (вес большой), а активна только часть
-2. **Routing overhead** — каждый token может уйти к другим experts → нет нормального batching по experts
-3. **Load imbalance** — popular experts перегружены, others idle
-4. **Expert parallelism** — split experts по GPU, но **all-to-all** communication
-5. **Кэширование** — KV cache не зависит от router, но routing decisions дополнительные данные
+1. **Память** — нужно держать **всех** экспертов (вес большой), а активна только часть
+2. **Overhead маршрутизации** — каждый токен может уйти к разным экспертам → нет нормального батчинга по экспертам
+3. **Дисбаланс нагрузки** — популярные эксперты перегружены, остальные простаивают
+4. **Expert parallelism** — разбиение экспертов по GPU, но коммуникация **all-to-all**
+5. **Кэширование** — KV cache не зависит от router, но решения маршрутизации — это дополнительные данные
 
-**Tools:**
+**Инструменты:**
 - vLLM поддерживает Mixtral/DeepSeek с `--expert-parallel-size`
-- SGLang оптимизирован для DeepSeek (LMSYS делает совместно)
+- SGLang оптимизирован под DeepSeek (LMSYS делает совместно)
 - DeepSpeed-MoE — академический baseline
 
-**TPS reality:** active params занижают real cost — нужна большая VRAM для весов всех experts.
+**Реальность по TPS:** активные параметры занижают настоящую стоимость — нужна большая VRAM под веса всех экспертов.
 
 
 ## Q30. Multi-LoRA serving (LoRAX, Punica)?
 
-**Сценарий:** SaaS с per-tenant fine-tuning. 1000 клиентов = 1000 fine-tuned моделей. Нельзя держать 1000 копий базы.
+**Сценарий:** SaaS с fine-tuning на каждого арендатора. 1000 клиентов = 1000 дообученных моделей. Нельзя держать 1000 копий базы.
 
-**Решение:** **base model + LoRA адаптеры**. Адаптер — пара матриц `A (r × d)` и `B (d × r)` где `r=8-64` (rank). Маленький (~10-100 MB), а база 14-140 GB.
+**Решение:** **базовая модель + LoRA-адаптеры**. Адаптер — пара матриц `A (r × d)` и `B (d × r)`, где `r=8-64` (rank). Маленький (~10-100 MB), а база 14-140 GB.
 
 **Multi-LoRA inference:**
-- Одна base модель в памяти
-- Сотни LoRA адаптеров swap on-demand (hot cache)
-- В batch разные requests могут использовать разные адаптеры
-- Special kernels (`bgmv`, `sgmv`) выполняют per-request LoRA в одном batched matmul
+- Одна базовая модель в памяти
+- Сотни LoRA-адаптеров подгружаются по требованию (hot cache)
+- В одном batch разные requests могут использовать разные адаптеры
+- Специальные kernels (`bgmv`, `sgmv`) выполняют per-request LoRA в одном batched matmul
 
-**Tools:**
-- **LoRAX** (Predibase) — production serving multi-LoRA
-- **Punica** — academic, основа для batched LoRA kernels
+**Инструменты:**
+- **LoRAX** (Predibase) — production-serving multi-LoRA
+- **Punica** — академический, основа для batched LoRA-kernels
 - **vLLM** — `--enable-lora --max-loras 16 --max-lora-rank 64`, динамически грузит адаптеры
 
 ```bash
@@ -863,60 +863,60 @@ python -m vllm.entrypoints.openai.api_server \
   --lora-modules customer_a=/loras/cust_a customer_b=/loras/cust_b
 ```
 
-В request: `"model": "customer_a"` — vLLM применит правильный адаптер.
+В request: `"model": "customer_a"` — vLLM применит нужный адаптер.
 
 
 ## Q31. Disaggregated inference (prefill/decode split)?
 
 **Проблема:** prefill (compute-bound, нужен FLOPS) и decode (memory-bound, нужен bandwidth) имеют **разные оптимальные конфиги**. Совмещение на одной GPU = компромисс.
 
-**Disaggregated serving:**
-- **Prefill instances** — GPU с большим compute (H100), оптимизированы под throughput prefill
-- **Decode instances** — GPU с большим bandwidth (H200/MI300X), оптимизированы под decode batching
+**Disaggregated serving (разделённый):**
+- **Prefill-инстансы** — GPU с большим compute (H100), оптимизированы под throughput prefill
+- **Decode-инстансы** — GPU с большим bandwidth (H200/MI300X), оптимизированы под decode-батчинг
 - Между ними — передача KV cache (NVLink, RDMA)
 
 **Системы:**
-- **DistServe** (2024) — академический prototype
+- **DistServe** (2024) — академический прототип
 - **Mooncake** (Moonshot AI) — production для Kimi
-- **TensorRT-LLM** — disaggregation поддержка
-- **vLLM** — disaggregated experimental в roadmap
+- **TensorRT-LLM** — есть поддержка разделения
+- **vLLM** — disaggregated в экспериментальном статусе, в roadmap
 
 **Профит:**
 - TTFT и TPOT тюнятся независимо
-- 1.5-2× throughput при том же кол-ве GPU
+- 1.5-2× throughput при том же числе GPU
 - Лучше SLA goodput
 
-**Минусы:** complexity, KV transfer overhead, требует жирный interconnect.
+**Минусы:** сложность, overhead на передачу KV, требует жирный interconnect.
 
 
 ## Q32. (!) GPU выбор: A100 vs H100 vs H200 vs MI300X?
 
-| GPU | VRAM | HBM BW | FP16 TFLOPs | FP8 TFLOPs | Year | Use |
+| GPU | VRAM | HBM BW | FP16 TFLOPs | FP8 TFLOPs | Год | Применение |
 |-----|------|--------|-------------|------------|------|-----|
-| **A100 80GB** | 80 GB HBM2e | 2 TB/s | 312 | – | 2020 | Workhorse, no FP8 |
-| **H100 80GB** | 80 GB HBM3 | 3.35 TB/s | 1979 | 3958 | 2022 | Default 2024-25 |
-| **H100 NVL 94GB** | 94 GB | 3.9 TB/s | 1979 | 3958 | 2023 | LLM-tuned variant |
+| **A100 80GB** | 80 GB HBM2e | 2 TB/s | 312 | – | 2020 | Рабочая лошадка, без FP8 |
+| **H100 80GB** | 80 GB HBM3 | 3.35 TB/s | 1979 | 3958 | 2022 | Дефолт 2024-25 |
+| **H100 NVL 94GB** | 94 GB | 3.9 TB/s | 1979 | 3958 | 2023 | Вариант под LLM |
 | **H200** | 141 GB HBM3e | 4.8 TB/s | 1979 | 3958 | 2024 | Long context, KV |
 | **B100** | 192 GB HBM3e | 8 TB/s | ~3500 | 7000 | 2024 | Blackwell |
-| **B200** | 192 GB HBM3e | 8 TB/s | ~4500 | 9000 | 2024-25 | Top tier |
-| **AMD MI300X** | 192 GB HBM3 | 5.3 TB/s | 1300 | 2600 | 2024 | NVIDIA alt, ROCm |
-| **RTX 4090** | 24 GB GDDR6X | 1 TB/s | 165 | 330 | 2022 | Hobby, single 7-13B |
+| **B200** | 192 GB HBM3e | 8 TB/s | ~4500 | 9000 | 2024-25 | Топовый уровень |
+| **AMD MI300X** | 192 GB HBM3 | 5.3 TB/s | 1300 | 2600 | 2024 | Альтернатива NVIDIA, ROCm |
+| **RTX 4090** | 24 GB GDDR6X | 1 TB/s | 165 | 330 | 2022 | Хобби, одна 7-13B |
 
 **Выбор:**
-- **Llama-3-8B FP16:** A100 / 4090 / даже Mac M-series
-- **Llama-3-70B INT4:** 1× A100 80GB or 1× 4090×2
+- **Llama-3-8B FP16:** A100 / 4090 / даже Mac M-серии
+- **Llama-3-70B INT4:** 1× A100 80GB или 1× 4090×2
 - **Llama-3-70B FP16:** 2× H100 / 1× H200 / 1× MI300X
 - **Llama-3-405B FP8:** 8× H100 / 4× B200 / 4× MI300X
-- **Long context 1M:** H200/B200 за HBM, либо distributed
+- **Long context 1M:** H200/B200 ради HBM, либо распределённо
 
 **TPU/Inferentia:** дешевле в Google Cloud / AWS соответственно, но другой toolchain (JAX/XLA / Neuron SDK).
 
 
 ## Q33. (!) Cost per 1M tokens — API vs self-host?
 
-**API pricing (Q2 2026 ориентир):**
+**Цены API (ориентир Q2 2026):**
 
-| Model | Input / 1M | Output / 1M | Cached input |
+| Модель | Input / 1M | Output / 1M | Cached input |
 |-------|-----------|-------------|--------------|
 | `claude-sonnet-4-5` | $3 | $15 | $0.30 |
 | `claude-haiku-4-5` | $1 | $5 | $0.10 |
@@ -926,43 +926,43 @@ python -m vllm.entrypoints.openai.api_server \
 | `deepseek-v3` (API) | $0.27 | $1.10 | $0.07 |
 | `gemini-2.5-pro` | $1.25 | $10 | – |
 
-**Self-host Llama-3-70B на 1× H100 (AWS p5.48xlarge ~$98/hr per GPU):**
-- Throughput vLLM FP8: ~2000 tokens/sec aggregate (output)
-- Per hour: 2000 × 3600 = 7.2M tokens
-- **$98 / 7.2M = $13.6 / 1M output tokens**
+**Self-host Llama-3-70B на 1× H100 (AWS p5.48xlarge ~$98/час за GPU):**
+- Throughput vLLM FP8: ~2000 tokens/sec суммарно (output)
+- За час: 2000 × 3600 = 7.2M токенов
+- **$98 / 7.2M = $13.6 / 1M output-токенов**
 
-С 50% utilization → $27 / 1M. Output dominated.
+При утилизации 50% → $27 / 1M. Доминирует output.
 
-**Break-even:**
-- API дешевле до ~**100M tokens/month**
-- Self-host экономнее при **>500M tokens/month** consistent load
-- Compliance / privacy / data residency может перевешивать цену
+**Точка окупаемости:**
+- API дешевле примерно до **100M токенов/мес**
+- Self-host экономнее при **>500M токенов/мес** при постоянной нагрузке
+- Compliance / privacy / data residency могут перевесить цену
 
-**Optimization stack:**
-1. **Prompt caching** → -50% to -90% на input (huge для RAG)
-2. **Batch API** → -50% на не-realtime (Anthropic, OpenAI поддерживают)
-3. **Model routing** → дешёвая модель для 80% запросов
-4. **Quantization self-host** → INT4 fits 70B на одной 80GB GPU
+**Стек оптимизаций:**
+1. **Prompt caching** → -50% … -90% на input (огромный выигрыш для RAG)
+2. **Batch API** → -50% на не-realtime (поддерживают Anthropic, OpenAI)
+3. **Маршрутизация моделей** → дешёвая модель на 80% запросов
+4. **Квантизация при self-host** → INT4 вмещает 70B на одной 80GB GPU
 
 
 ## Q34. Batch API (OpenAI/Anthropic) — когда использовать?
 
 **Batch API:**
-- Submit job (JSONL файл с requests), get результат в течение **24 hours**
+- Отправляешь job (JSONL-файл с requests), получаешь результат в течение **24 часов**
 - **−50% от обычной цены** input/output
-- Не для realtime — для бэкграунда
+- Не для realtime — для фоновых задач
 
 **Когда подходит:**
-- Embedding большого корпуса
-- Data labeling / categorization
-- Synthetic data generation
-- Periodic report generation
-- Document processing (overnight)
+- Эмбеддинг большого корпуса
+- Разметка / категоризация данных
+- Генерация синтетических данных
+- Периодическая генерация отчётов
+- Обработка документов (за ночь)
 
 **Когда НЕ подходит:**
-- User-facing realtime chat
-- Жёсткий SLA по deadline
-- Iterative experiments (24h задержка)
+- Realtime-чат, обращённый к пользователю
+- Жёсткий SLA по дедлайну
+- Итеративные эксперименты (задержка в 24h)
 
 **OpenAI Batch:**
 ```python
@@ -978,23 +978,23 @@ batch = client.batches.create(
 batch = client.messages.batches.create(requests=[...])
 ```
 
-**Self-host эквивалент:** свой queue + vLLM offline mode (`LLM.generate(...)` на массив) — без 50% discount, но нет API лимитов.
+**Эквивалент при self-host:** своя очередь + vLLM offline mode (`LLM.generate(...)` на массив) — без скидки 50%, но и без лимитов API.
 
 
 ## Q35. (!) Model routing — cheap для simple, expensive для hard?
 
-**Идея:** не каждому запросу нужен GPT-4o. ~70% типичного трафика — простые задачи (классификация, простой Q&A, RAG-резюме), которые решит `gpt-4o-mini` или `Haiku` в 10× дешевле.
+**Идея:** не каждому запросу нужен GPT-4o. ~70% типичного трафика — простые задачи (классификация, простой Q&A, резюме для RAG), которые решит `gpt-4o-mini` или `Haiku` в 10× дешевле.
 
-**Routing strategies:**
+**Стратегии маршрутизации:**
 
-1. **Rule-based** — по domain/intent. «summarize → cheap», «code review → strong»
-2. **Classifier-based** — маленькая модель классифицирует complexity:
-   - `RouteLLM` (LMSYS) — open source router
-   - `Martian` (commercial)
-3. **Cascade** — попробовать cheap, escalate если low confidence
-4. **Multi-armed bandit** — A/B обучение online
+1. **На правилах (rule-based)** — по домену/intent. «summarize → дешёвая», «code review → сильная»
+2. **На классификаторе** — маленькая модель классифицирует сложность:
+   - `RouteLLM` (LMSYS) — open-source router
+   - `Martian` (коммерческий)
+3. **Каскад** — сначала дешёвая, эскалация при низкой уверенности
+4. **Multi-armed bandit** — онлайн A/B-обучение
 
-**Example RouteLLM:**
+**Пример RouteLLM:**
 ```python
 from routellm.controller import Controller
 
@@ -1006,15 +1006,15 @@ router = Controller(
 response = router.completion(messages=[...], model="router-mf-0.116")
 ```
 
-**Реальные результаты:** 50-80% запросов уходят в weak модель, quality drop <5% при правильной калибровке threshold. **Savings: 3-7×**.
+**Реальные результаты:** 50-80% запросов уходят в слабую модель, падение качества <5% при правильной калибровке порога. **Экономия: 3-7×**.
 
 
 ## Q36. Streaming SSE — снижает ли реальную latency?
 
-**Streaming** (Server-Sent Events): сервер шлёт каждый токен сразу как сгенерирован, клиент отображает progressively.
+**Streaming** (Server-Sent Events): сервер шлёт каждый токен сразу, как только тот сгенерирован, клиент отображает его постепенно.
 
-**Не снижает** end-to-end (полный ответ всё ещё `TTFT + N × TPOT`), но **резко снижает perceived latency**:
-- Без streaming: пользователь видит **полный ответ через 10s** для 500-token answer
+**Не снижает** end-to-end (полный ответ всё ещё `TTFT + N × TPOT`), но **резко снижает воспринимаемую latency**:
+- Без streaming: пользователь видит **полный ответ через 10s** для ответа в 500 токенов
 - Со streaming: первый токен через **500ms**, остальные текут → ощущение мгновенности
 
 **Реализация:**
@@ -1038,7 +1038,7 @@ for chunk in stream:
     print(chunk.choices[0].delta.content or "", end="")
 ```
 
-**Format SSE:**
+**Формат SSE:**
 ```
 data: {"choices": [{"delta": {"content": "Hello"}}]}
 
@@ -1047,11 +1047,11 @@ data: {"choices": [{"delta": {"content": " world"}}]}
 data: [DONE]
 ```
 
-**Gotchas:**
-- HTTP/2 буферизация — отключить `X-Accel-Buffering: no` на nginx
-- `gzip` middleware ломает SSE — exclude
+**Подводные камни:**
+- Буферизация HTTP/2 — отключить заголовком `X-Accel-Buffering: no` на nginx
+- `gzip`-middleware ломает SSE — исключить
 - Reverse proxy (CloudFront, Cloudflare) — нужен flush
-- Считай **TTFT отдельно** от total — это главная UX-метрика для chat
+- Считай **TTFT отдельно** от total — это главная UX-метрика для чата
 
 ---
 

@@ -84,9 +84,9 @@ updated: "2026-05-19"
 ## Q1. (!) Что такое RAG?
 
 **RAG (Retrieval-Augmented Generation)** — паттерн, при котором перед вызовом LLM:
-1. **Retrieve** релевантные документы из knowledge base
-2. **Augment** prompt этими документами
-3. **Generate** ответ на основе документов + question
+1. **Retrieve** — извлекаем релевантные документы из knowledge base
+2. **Augment** — дополняем prompt этими документами
+3. **Generate** — генерируем ответ на основе документов и вопроса
 
 ```
 User: "Какая политика по отпускам в нашей компании?"
@@ -123,14 +123,14 @@ Response: "Согласно документу X (стр. 5), сотрудник
 | Критерий | RAG | Fine-tuning |
 |----------|-----|-------------|
 | Что меняет | Контент в prompt | Параметры модели |
-| Свежесть данных | Real-time (обновил vector DB) | Frozen (нужно retrain) |
-| Cost | Per-query (vector search + LLM) | One-time training + cheaper inference |
+| Свежесть данных | В реальном времени (обновил vector DB) | Заморожена (нужен retrain) |
+| Стоимость | На каждый запрос (vector search + LLM) | Разовое обучение + дешевле inference |
 | Сложность setup | Средняя | Высокая |
 | Источники цитирования | Легко (есть chunks) | Нет (модель "знает") |
-| Privacy | Локальные docs не уходят в OpenAI | Аналогично |
-| Изменения модели | Легко поменять (RAG works с любой LLM) | Привязан к конкретной модели |
+| Privacy | Локальные документы не уходят в OpenAI | Аналогично |
+| Смена модели | Легко поменять (RAG работает с любой LLM) | Привязан к конкретной модели |
 
-**Best practice:** для большинства задач — **RAG**. Fine-tuning — для **style** (как писать) и **special skills** (классификация). Часто **combine** оба.
+**Best practice:** для большинства задач — **RAG**. Fine-tuning — для **стиля** (как писать) и **специальных навыков** (классификация). Часто **комбинируют** оба.
 
 
 ## Q4. Архитектура RAG системы?
@@ -154,33 +154,33 @@ graph TD
     end
 ```
 
-**Compoenents:**
+**Компоненты:**
 1. **Chunker** — разбивает документы
-2. **Embedder** — text → vector
+2. **Embedder** — текст → вектор
 3. **Vector DB** — хранит embeddings
-4. **Retriever** — finds top-k similar
-5. **Reranker** (optional) — точная ранжировка
+4. **Retriever** — находит top-k похожих
+5. **Reranker** (опционально) — точная ранжировка
 6. **Prompt builder** — формирует prompt
 7. **LLM** — генерирует ответ
 
 
 ## Q5. (!) Loading документов?
 
-**Источники:**
+**Источники данных:**
 - PDF, Word, Markdown, HTML
 - Confluence, Notion, Google Docs
-- Slack, Discord history
-- GitHub repos
-- Database tables, structured data
-- Audio (через transcription) → text
+- История в Slack, Discord
+- Репозитории GitHub
+- Таблицы БД, структурированные данные
+- Аудио (через транскрипцию) → текст
 
-**Tools:**
-- **Unstructured** — multi-format parser
-- **PyMuPDF, pdfplumber** — PDF
-- **BeautifulSoup, trafilatura** — HTML
-- **Docling** (IBM) — современный multi-format
+**Инструменты:**
+- **Unstructured** — парсер множества форматов
+- **PyMuPDF, pdfplumber** — для PDF
+- **BeautifulSoup, trafilatura** — для HTML
+- **Docling** (IBM) — современный многоформатный парсер
 
-**Подвох:** парсеры по-разному обрабатывают tables, images, footnotes. Quality of parsing critically важен для RAG.
+**Подвох:** парсеры по-разному обрабатывают таблицы, картинки, сноски. Качество парсинга критически важно для RAG.
 
 
 ## Q6. (!) Chunking — что это и как делать?
@@ -189,11 +189,11 @@ graph TD
 
 **Стратегии:**
 
-1. **Fixed-size** — N tokens / N chars
-2. **Recursive** — splits по separator hierarchy ("\n\n", "\n", ". ", " ")
+1. **Fixed-size** — N токенов / N символов
+2. **Recursive** — разбивка по иерархии разделителей ("\n\n", "\n", ". ", " ")
 3. **Semantic chunking** — по смысловым границам (через embedding similarity)
-4. **Markdown-aware** — sections, headers
-5. **Code-aware** — functions, classes
+4. **Markdown-aware** — по секциям и заголовкам
+5. **Code-aware** — по функциям и классам
 6. **Sentence-based** — по предложениям
 
 ```python
@@ -206,22 +206,22 @@ splitter = RecursiveCharacterTextSplitter(
 chunks = splitter.split_text(document)
 ```
 
-**Critical:** хороший chunking — половина успеха RAG.
+**Важно:** хороший chunking — половина успеха RAG.
 
 
 ## Q7. (!) Размер chunk — как выбрать?
 
-**Trade-off:**
-- **Маленькие** chunks (200-500 tokens) — точный retrieval, но мало context
-- **Большие** chunks (1000-2000 tokens) — больше context, но менее precise
+**Компромисс:**
+- **Маленькие** chunks (200-500 токенов) — точный retrieval, но мало контекста
+- **Большие** chunks (1000-2000 токенов) — больше контекста, но менее точно
 
 **Рекомендации:**
-- **Q&A на конкретные facts:** 200-500 tokens
-- **Длинные ответы / synthesis:** 800-1500 tokens
-- **Code:** function/class boundaries
-- **Tables / structured:** keep table whole
+- **Q&A по конкретным фактам:** 200-500 токенов
+- **Длинные ответы / synthesis:** 800-1500 токенов
+- **Код:** по границам функций/классов
+- **Таблицы / структурированные данные:** держать таблицу целиком
 
-**Эксперимент** — нет one-size-fits-all. Тестируй с **golden dataset**.
+**Экспериментируй** — единого размера на все случаи нет. Тестируй с **golden dataset**.
 
 
 ## Q8. Overlap между chunks?
@@ -234,9 +234,9 @@ Chunk 3: tokens 1600-2600
 
 **Зачем:** информация на границах chunks не теряется.
 
-**Размер overlap:** обычно **10-20%** от chunk size (100-300 tokens).
+**Размер overlap:** обычно **10-20%** от размера chunk (100-300 токенов).
 
-**Trade-off:** больше overlap = больше storage, больше cost.
+**Компромисс:** больше overlap = больше места в хранилище и дороже.
 
 
 ## Q9. (!) Metadata в chunks?
@@ -257,12 +257,12 @@ chunk = {
 ```
 
 **Зачем metadata:**
-- **Filtering** — "только HR documents" / "за 2025 год"
-- **Citations** — return source в ответе
+- **Filtering** — "только HR-документы" / "за 2025 год"
+- **Citations** — вернуть источник в ответе
 - **Multi-tenancy** — фильтр по `tenant_id`
-- **Hybrid search** — combine vector + metadata filters
+- **Hybrid search** — комбинировать vector + metadata-фильтры
 
-Vector DBs поддерживают metadata filters: Pinecone, Weaviate, Qdrant.
+Vector DB поддерживают metadata-фильтры: Pinecone, Weaviate, Qdrant.
 
 
 ## Q10. Embeddings — генерация для chunks?
@@ -281,10 +281,10 @@ vector = response.data[0].embedding  # 3072-dim вектор
 # Сохраняем в vector DB вместе с metadata
 ```
 
-**Embedding models:**
+**Модели embeddings:**
 - **OpenAI** `text-embedding-3-large` (3072d), `text-embedding-3-small` (1536d)
 - **Cohere** embed-english-v3 (1024d)
-- **Voyage AI** (specialized для RAG)
+- **Voyage AI** (специализированы под RAG)
 - **Open-source:** sentence-transformers (`all-MiniLM-L6-v2`, `bge-large`)
 
 Подробнее — в [Embeddings](embeddings-interview.md).
@@ -309,33 +309,33 @@ for result in results:
 ```
 
 **Метрики similarity:**
-- **Cosine similarity** — самая частая (нечувствительна к magnitude)
-- **Dot product** — быстрее (если вектора нормализованы — равно cosine)
-- **Euclidean distance** — менее частая
+- **Cosine similarity** — самая частая (нечувствительна к длине вектора)
+- **Dot product** — быстрее (если вектора нормализованы — равносильно cosine)
+- **Euclidean distance** — реже используется
 
-**Под капотом** — ANN (Approximate Nearest Neighbor) algorithms: HNSW, IVF, ScaNN. Подробнее — [Vector Databases](vector-databases-interview.md).
+**Под капотом** — ANN-алгоритмы (Approximate Nearest Neighbor): HNSW, IVF, ScaNN. Подробнее — [Vector Databases](vector-databases-interview.md).
 
 
 ## Q12. (!) k (число retrieved docs) — как выбрать?
 
-**Trade-off:**
-- **Маленькое k** (3-5) — быстро, мало context, рискуем потерять релевантное
-- **Большое k** (10-20) — больше шанса найти, больше cost, "lost in the middle"
+**Компромисс:**
+- **Маленькое k** (3-5) — быстро, мало контекста, рискуем потерять релевантное
+- **Большое k** (10-20) — больше шанса найти, дороже, эффект "lost in the middle"
 
 **Best practice:**
 - Базовая RAG: **k=5**
-- С reranking: **retrieve k=20-50, rerank → top 5**
-- С большим context (Claude 200K): **k=15-30**
+- С reranking: **извлекаем k=20-50, реранжируем → top 5**
+- С большим контекстом (Claude 200K): **k=15-30**
 
 
 ## Q13. (!) Hybrid search (vector + keyword)?
 
-**Vector search** хорош для семантики. **Keyword search** (BM25) хорош для exact matches.
+**Vector search** хорош для семантики. **Keyword search** (BM25) хорош для точных совпадений.
 
-**Hybrid:**
+**Гибридная схема:**
 1. Vector search → top-50
 2. BM25 keyword search → top-50
-3. **Reciprocal Rank Fusion (RRF)** или weighted merge
+3. **Reciprocal Rank Fusion (RRF)** или взвешенное слияние
 
 ```python
 def rrf(rankings, k=60):
@@ -347,8 +347,8 @@ def rrf(rankings, k=60):
 ```
 
 **Когда нужен hybrid:**
-- Технические термины, names, IDs (BM25 лучше)
-- Code search
+- Технические термины, имена, идентификаторы (BM25 лучше)
+- Поиск по коду
 - Compliance / legal (точные термины)
 
 Поддерживают: Weaviate, Qdrant, Elasticsearch, Pinecone.
@@ -364,17 +364,17 @@ def rrf(rankings, k=60):
 3. Send top-5 в LLM
 ```
 
-**Cross-encoder vs bi-encoder:**
-- **Bi-encoder** (для embeddings): query и doc embeddings отдельно, потом similarity
-- **Cross-encoder** (reranker): берёт `(query, doc)` пару, выдаёт single score — точнее, но медленнее
+**Cross-encoder против bi-encoder:**
+- **Bi-encoder** (для embeddings): embeddings запроса и документа считаются отдельно, затем — их similarity
+- **Cross-encoder** (reranker): берёт пару `(запрос, документ)`, выдаёт единый score — точнее, но медленнее
 
-**Models:**
+**Модели:**
 - **Cohere Rerank** (managed)
 - **Jina Reranker**
 - **bge-reranker** (open-source)
 - **Voyage Rerank**
 
-**Effect:** обычно +10-20% к relevance метрикам. **Always use reranker** в production RAG.
+**Эффект:** обычно +10-20% к метрикам relevance. **Всегда используй reranker** в production-RAG.
 
 
 ## Q15. Filters / metadata-based search?
@@ -393,11 +393,11 @@ results = vector_db.search(
 
 **Применения:**
 - **Multi-tenancy** — каждый tenant видит только свои данные
-- **Permissions** — только разрешённые docs
-- **Time-based** — recent docs
+- **Permissions** — только разрешённые документы
+- **Time-based** — только свежие документы
 - **Domain filters** — HR vs Engineering
 
-**Подвох:** жёсткие filters могут сильно сузить выбор → no results.
+**Подвох:** жёсткие фильтры могут сильно сузить выбор → пустой результат.
 
 
 ## Q16. (!) Prompt template для RAG?
@@ -421,10 +421,10 @@ results = vector_db.search(
 
 **Best practices:**
 - Чёткие инструкции (не отвечать без источников)
-- Явное разделение docs и question (XML tags / маркеры)
+- Явное разделение документов и вопроса (XML-теги / маркеры)
 - Запрос на citations
-- Instruction "если не знаю — скажи"
-- Format ответа
+- Инструкция "если не знаю — так и скажи"
+- Заданный формат ответа
 
 
 ## Q17. Citations / sources — как делать?
@@ -432,10 +432,10 @@ results = vector_db.search(
 **Подходы:**
 
 1. **Inline citations:** "Согласно [policy_2025.pdf:5], сотрудники..."
-2. **References секция:** "...текст ответа.\n\nSources: [1] policy_2025.pdf, [2] handbook.pdf"
+2. **Секция References:** "...текст ответа.\n\nSources: [1] policy_2025.pdf, [2] handbook.pdf"
 3. **Structured output:** JSON `{"answer": "...", "sources": [{"doc": "...", "page": 5}]}`
 
-**Verification:** после генерации проверить, что **все факты в ответе** действительно в retrieved docs (через secondary LLM или string matching).
+**Верификация:** после генерации проверить, что **все факты в ответе** действительно есть в извлечённых документах (через вторичный LLM или string matching).
 
 ```python
 # Anthropic Claude — нативная поддержка citations
@@ -452,24 +452,24 @@ response = client.messages.create(
 
 ## Q18. Что делать, если retrieval не нашёл ничего?
 
-**Scenarios:**
-1. **Empty retrieval results** (например, threshold не пройден)
-2. **Retrieved docs не содержат ответ** (LLM сам распознаёт)
+**Сценарии:**
+1. **Пустой результат retrieval** (например, не пройден threshold)
+2. **Извлечённые документы не содержат ответа** (LLM сам это распознаёт)
 
 **Стратегии:**
-- LLM говорит "Не знаю" (instruction в prompt)
-- **Fallback** — общий LLM ответ без RAG (с дисклеймером)
-- **Query rewriting** — может user спросил неудачно?
-- **Web search** fallback (если разрешено)
-- **Escalation** к human (для chatbots)
-- **Return empty** + предложить уточнить
+- LLM говорит "Не знаю" (инструкция в prompt)
+- **Fallback** — общий ответ LLM без RAG (с дисклеймером)
+- **Query rewriting** — может, пользователь спросил неудачно?
+- **Web search** как fallback (если разрешено)
+- **Эскалация** к человеку (для чат-ботов)
+- **Вернуть пустой результат** + предложить уточнить
 
-**Не давать ложных уверенных ответов** — это потеря trust.
+**Не давать ложных уверенных ответов** — это потеря доверия.
 
 
 ## Q19. (!) Query rewriting / expansion?
 
-Иногда query пользователя плохой для retrieval.
+Иногда запрос пользователя плохо подходит для retrieval.
 
 ```
 User: "Сколько отпуск?"
@@ -494,12 +494,12 @@ for q in queries:
 deduplicated = dedupe(results)
 ```
 
-**Query expansion** — добавить synonyms, related terms.
+**Query expansion** — добавить синонимы и связанные термины.
 
 
 ## Q20. (!) HyDE (Hypothetical Document Embeddings)?
 
-**Идея:** вместо embed query — попросить LLM **сгенерировать hypothetical answer**, и embed его.
+**Идея:** вместо того чтобы делать embed запроса — попросить LLM **сгенерировать гипотетический ответ** и сделать embed его.
 
 ```
 User query: "Какая политика по удалёнке?"
@@ -509,9 +509,9 @@ User query: "Какая политика по удалёнке?"
   ↓ vector search
 ```
 
-**Зачем:** hypothetical answer семантически ближе к **актуальным документам**, чем сама query (queries обычно короткие, документы длинные).
+**Зачем:** гипотетический ответ семантически ближе к **актуальным документам**, чем сам запрос (запросы обычно короткие, а документы длинные).
 
-**Trade-off:** один extra LLM call. Но улучшает recall в 10-20% случаев.
+**Компромисс:** один лишний вызов LLM. Но улучшает recall в 10-20% случаев.
 
 
 ## Q21. Self-RAG — динамическое решение нужен ли retrieval?
@@ -532,7 +532,7 @@ User query: "Какая политика по удалёнке?"
 
 ## Q22. Multi-query retrieval?
 
-LLM генерирует **несколько reformulations** query → retrieve по каждой → merge.
+LLM генерирует **несколько переформулировок** запроса → retrieve по каждой → объединяем.
 
 ```python
 queries = llm.generate_queries(original_query, n=5)
@@ -542,7 +542,7 @@ for q in queries:
 final = dedupe_and_rerank(all_results)
 ```
 
-Improves **recall** для ambiguous queries.
+Повышает **recall** для неоднозначных запросов.
 
 
 ## Q23. (!) Contextual Retrieval (Anthropic)?
@@ -562,36 +562,36 @@ Combined для embedding:
 [Context] + [Original chunk]
 ```
 
-**Эффект:** retrieval faliure rate снижается **на 49%** (по measurement Anthropic).
+**Эффект:** доля промахов retrieval (retrieval failure rate) снижается **на 49%** (по измерениям Anthropic).
 
-Cost: Claude API для генерации context на каждый chunk (можно делать batch). Но prompt caching делает это дёшево.
+Стоимость: Claude API для генерации контекста на каждый chunk (можно делать батчем). Но prompt caching делает это дёшево.
 
 
 ## Q24. (!) GraphRAG?
 
 **GraphRAG** (Microsoft, 2024) — RAG поверх **knowledge graph**, не просто vector search.
 
-**Pipeline:**
-1. **LLM extracts entities and relationships** из документов → graph
-2. **Cluster graph** в communities
-3. **LLM generates summaries** для каждой community
-4. При query — retrieve relevant communities + entities
+**Конвейер:**
+1. **LLM извлекает сущности и связи** из документов → граф
+2. **Кластеризует граф** в communities
+3. **LLM генерирует summary** для каждой community
+4. При запросе — извлекает релевантные communities + сущности
 
-**Зачем:** для вопросов **глобального уровня** ("в чём основные темы документа?"), где обычный RAG плох (видит только chunks, не overall structure).
+**Зачем:** для вопросов **глобального уровня** ("в чём основные темы документа?"), где обычный RAG плох (видит только chunks, а не структуру в целом).
 
-**Минус:** дорого построить (много LLM calls для extraction).
+**Минус:** дорого строить (много вызовов LLM на extraction).
 
 В **2025** — растущая адопция в enterprise.
 
 
 ## Q25. Agentic RAG?
 
-**Agentic RAG** — LLM как **agent**, который может:
-- Решать когда retrieve
-- Из каких источников retrieve (несколько vector DBs)
-- Reformulate queries
-- Verify результаты
-- Re-retrieve если нужно
+**Agentic RAG** — LLM как **агент**, который может:
+- Решать, когда делать retrieve
+- Из каких источников извлекать (несколько vector DB)
+- Переформулировать запросы
+- Проверять результаты
+- Переизвлекать, если нужно
 
 ```python
 # Псевдо-код
@@ -612,7 +612,7 @@ def agentic_rag(query):
 
 ## Q26. (!) Как тестировать RAG систему?
 
-**Golden dataset** — manually curated `(question, expected_answer, source_chunks)`:
+**Golden dataset** — вручную выверенный набор `(question, expected_answer, source_chunks)`:
 
 ```json
 {
@@ -624,32 +624,32 @@ def agentic_rag(query):
 ```
 
 **Тестируем:**
-1. **Retrieval** — нашли ли expected_sources среди retrieved chunks?
-2. **Generation** — содержит ли answer expected_answer?
-3. **Faithfulness** — все ли утверждения в answer основаны на retrieved chunks?
-4. **Answer relevance** — отвечает ли на question?
+1. **Retrieval** — нашлись ли expected_sources среди извлечённых chunks?
+2. **Generation** — содержит ли ответ expected_answer?
+3. **Faithfulness** — все ли утверждения в ответе основаны на извлечённых chunks?
+4. **Answer relevance** — отвечает ли ответ на вопрос?
 
-**LLM-as-judge** — другая LLM оценивает quality (с rubric).
+**LLM-as-judge** — другая LLM оценивает качество (по rubric).
 
 
 ## Q27. (!) Метрики (precision, recall, faithfulness, answer relevance)?
 
-**Retrieval metrics:**
-- **Precision@k** — какая доля retrieved chunks релевантна?
-- **Recall@k** — какая доля релевантных chunks была retrieved?
-- **MRR (Mean Reciprocal Rank)** — насколько высоко в списке релевантный?
-- **NDCG** — discounted cumulative gain
+**Метрики retrieval:**
+- **Precision@k** — какая доля извлечённых chunks релевантна?
+- **Recall@k** — какая доля релевантных chunks была извлечена?
+- **MRR (Mean Reciprocal Rank)** — насколько высоко в списке стоит релевантный?
+- **NDCG** — нормированный дисконтированный накопленный выигрыш
 
-**Generation metrics:**
+**Метрики generation:**
 - **Faithfulness** — не выдумала ли модель факты?
-- **Answer relevance** — отвечает ли на question?
-- **Context utilization** — использовала ли retrieved chunks?
-- **Answer correctness** — правильный ли факт?
+- **Answer relevance** — отвечает ли ответ на вопрос?
+- **Context utilization** — использовала ли модель извлечённые chunks?
+- **Answer correctness** — верный ли факт?
 
 
 ## Q28. RAGAS, TruLens?
 
-**RAGAS** — Python framework для evaluation RAG:
+**RAGAS** — Python-фреймворк для оценки RAG:
 
 ```python
 from ragas import evaluate
@@ -661,42 +661,42 @@ result = evaluate(
 )
 ```
 
-**TruLens** — observability + evaluation для LLM/RAG. Tracking, dashboards.
+**TruLens** — observability + evaluation для LLM/RAG. Трекинг, дашборды.
 
-**Phoenix (Arize)** — open-source LLM observability.
+**Phoenix (Arize)** — open-source инструмент для observability LLM.
 
-В **production RAG** — обязательно непрерывная evaluation. Без неё не понять, deteriorate ли система.
+В **production-RAG** — обязательна непрерывная оценка. Без неё не понять, деградирует ли система.
 
 
 ## Q29. (!) Какие подводные камни RAG в production?
 
-1. **Bad chunking** — теряется context, splits sentences
-2. **Embedding model mismatch** — query embedding vs doc embedding (разные models)
-3. **Stale data** — vector DB не synced с источниками
-4. **Multi-tenancy leak** — RAG возвращает чужие data
+1. **Bad chunking** — теряется контекст, рвутся предложения
+2. **Embedding model mismatch** — embedding query и документа сделаны разными моделями
+3. **Stale data** — vector DB не синхронизирована с источниками
+4. **Multi-tenancy leak** — RAG возвращает чужие данные
 5. **Hallucinations** — даже с RAG модель может выдумывать
-6. **Cost runaway** — каждый query = embedding + retrieval + LLM
+6. **Cost runaway** — каждый запрос = embedding + retrieval + LLM
 7. **Slow retrieval** — большая vector DB без индексов
 8. **Too many docs in context** — модель путается ("lost in the middle")
-9. **Prompt injection** — через документы (instructions внутри)
-10. **No evaluation** — не знаем quality, regressions проходят незамеченно
+9. **Prompt injection** — через документы (инструкции внутри текста)
+10. **No evaluation** — не знаем качества, регрессии проходят незамеченными
 
 
 ## Q30. Какой стек выбрать (LangChain, LlamaIndex, custom)?
 
-| Стек | Pros | Cons |
+| Стек | Плюсы | Минусы |
 |------|------|------|
-| **LangChain** | Богатые tools, agents | Сложный API, частые breaking changes |
-| **LlamaIndex** | RAG-first, удобный | Меньше agents tools |
-| **Haystack** (Deepset) | Production-ready | Меньше популярен |
-| **Custom** | Полный control, понятно что происходит | Больше кода |
+| **LangChain** | Богатый набор инструментов, агенты | Сложный API, частые breaking changes |
+| **LlamaIndex** | RAG-first, удобный | Меньше инструментов для агентов |
+| **Haystack** (Deepset) | Production-ready | Менее популярен |
+| **Custom** | Полный контроль, понятно что происходит | Больше кода |
 
 **Best practice 2025:**
 - **LlamaIndex** для RAG-heavy систем
-- **LangChain** для agents с инструментами
+- **LangChain** для агентов с инструментами
 - **Custom** для production-critical (контроль = надёжность)
 
-Многие переходят на **custom** после прохождения через LangChain pain.
+Многие переходят на **custom** после того, как наелись боли с LangChain.
 
 
 ---
