@@ -960,6 +960,1086 @@
           ]
         }
       ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие специализированные базы данных предлагает `AWS` помимо `RDS`/`DynamoDB` и под какие задачи они заточены?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`AWS` даёт purpose-built базы под конкретные модели данных: `DocumentDB` — MongoDB-compatible document store, `Neptune` — graph DB (Gremlin, SPARQL), `Timestream` — time-series, `Keyspaces` — Cassandra-compatible, `OpenSearch` — fork Elasticsearch для поиска/логов, `Redshift` — data warehouse. Выбор сильно зависит от use case, но для большинства задач хватает `Aurora` или `DynamoDB`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Философия `AWS` — purpose-built databases: вместо «одна БД на всё» под каждую модель данных есть отдельный managed-сервис. Это снижает impedance mismatch (граф в реляционке — боль), но добавляет операционный зоопарк, поэтому начинают обычно с `Aurora`/`DynamoDB`.",
+                "example": "Соцсеть: профили и заказы — `DynamoDB`, граф «кто на кого подписан» — `Neptune` (запрос «друзья друзей» одним Gremlin-traversal), метрики IoT-датчиков — `Timestream`, полнотекстовый поиск по постам — `OpenSearch`.",
+                "when_to_apply": "Берут специализированную БД, когда доменная модель явно графовая (`Neptune`), временная (`Timestream`), требует MongoDB-API (`DocumentDB`) или Cassandra-API (`Keyspaces`), либо нужен поиск/аналитика логов (`OpenSearch`). Для OLTP и key-value — `Aurora`/`DynamoDB`.",
+                "edge_cases": "`DocumentDB` MongoDB-compatible, но не идентичен (часть операторов и версий не поддержана). `Redshift` — это аналитический warehouse, не OLTP. Каждый сервис — отдельные навыки эксплуатации и биллинг, поэтому зоопарк дорог в поддержке.",
+                "related": "[[aws-interview#Q15]] DynamoDB как NoSQL по умолчанию; [[aws-interview#Q14]] Aurora для реляционных нагрузок; [[aws-interview#Q16]] ElastiCache как кэш-слой."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все эти сервисы (`DocumentDB`, `Neptune`, `Timestream`) — это просто пресеты `RDS` поверх `PostgreSQL`, отличающиеся лишь набором расширений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это отдельные движки с собственными моделями данных и API: `Neptune` — graph (Gremlin/SPARQL), `Timestream` — time-series, `DocumentDB` — MongoDB-протокол. Они не построены поверх `PostgreSQL` и не входят в семейство `RDS`-движков.",
+                "source_of_confusion": "Все они managed-БД от `AWS`, и кажется, что под капотом единый реляционный движок с разными «обвязками».",
+                "if_it_were_true": "Тогда к `Neptune` можно было бы подключиться обычным `psql` и писать SQL с JOIN-ами, но он принимает только graph-запросы Gremlin/SPARQL.",
+                "how_it_should_be": "Правильнее: это purpose-built движки с разными моделями данных, а не пресеты `RDS PostgreSQL`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`OpenSearch` и `Redshift` — это одно и то же: оба полнотекстовые поисковые движки, разница только в лимитах на размер индекса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OpenSearch` — поисковый/лог-аналитический движок (fork Elasticsearch) с инвертированным индексом. `Redshift` — колоночный аналитический data warehouse для SQL-аналитики по терабайтам. Это разные классы систем под разные задачи.",
+                "source_of_confusion": "Оба относятся к «аналитике» в каталоге `AWS`, и их роли смешивают.",
+                "if_it_were_true": "Тогда BI-дашборды строили бы поверх `OpenSearch` через JOIN-ы и оконные функции, но он не SQL-warehouse и для тяжёлой аналитики не предназначен.",
+                "how_it_should_be": "Правильнее: `OpenSearch` — поиск/логи, `Redshift` — колоночный SQL-warehouse, это разные классы систем."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Специализированные БД не нужны: `DynamoDB` нативно поддерживает graph-traversal, time-series-запросы и полнотекстовый поиск, поэтому всегда достаточно одной таблицы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`DynamoDB` — key-value/document store без нативного graph-traversal, без time-series-функций и без полнотекстового поиска. Graph-обход или поиск пришлось бы городить вручную поверх PK/GSI ценой сложности и throttling.",
+                "source_of_confusion": "`DynamoDB` действительно очень гибок через single-table design, и кажется, что он «умеет всё».",
+                "if_it_were_true": "Тогда `AWS` не выпускала бы `Neptune` и `OpenSearch`, но «друзья друзей» или fuzzy-поиск на `DynamoDB` без сторонних движков нереализуемы эффективно.",
+                "how_it_should_be": "Правильнее: graph/поиск/time-series требуют purpose-built БД, `DynamoDB` их нативно не закрывает."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроена сеть `VPC` в `AWS`: что такое subnets, route tables и чем отличаются public/private subnet?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`VPC` — это один большой публичный subnet на весь регион: все инстансы автоматически получают public IP и доступны из интернета, а route tables нужны только для статической маршрутизации между регионами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`VPC` нарезается на несколько subnets per-AZ, и большинство prod-инстансов живут в private subnets без public IP. Route tables управляют трафиком внутри `VPC` и наружу (IGW/NAT), а не «между регионами».",
+                "source_of_confusion": "Default `VPC` действительно даёт public subnets с авто-назначением public IP, и это поведение принимают за единственно возможное.",
+                "if_it_were_true": "Тогда RDS нельзя было бы спрятать в изолированный subnet, но именно так строят безопасные трёхзвенки, держа БД без выхода в интернет.",
+                "how_it_should_be": "Правильнее: `VPC` делится на public/private subnets per-AZ, и prod-ресурсы обычно private без public IP."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`VPC (Virtual Private Cloud)` — изолированная виртуальная сеть в регионе (например `10.0.0.0/16`). Внутри неё subnets делят адресное пространство по `AZ` (`10.0.1.0/24`), route tables решают, куда направлять трафик: public subnet имеет маршрут в `Internet Gateway`, private — нет (а выход в интернет идёт через `NAT Gateway`), isolated — вообще без интернета. Security Groups и NACLs работают как firewall. Best practice — multi-AZ subnets и разделение public/private.",
+              "correct": true,
+              "sections": {
+                "explanation": "`VPC` — это software-defined network: вы задаёте CIDR-блок и нарезаете его на subnets per-AZ. «Public» vs «private» — это не флаг, а наличие/отсутствие маршрута `0.0.0.0/0 → IGW` в route table подсети. Эта модель даёт изоляцию tiers (web/app/db) и контроль трафика.",
+                "example": "`VPC 10.0.0.0/16`: public `10.0.1.0/24` (ALB, маршрут в IGW), private app `10.0.2.0/24` (EC2, выход в интернет через NAT), isolated db `10.0.3.0/24` (RDS, без интернета). Каждый tier продублирован в `1a/1b/1c` для отказоустойчивости.",
+                "when_to_apply": "Проектируют `VPC` под любую нетривиальную нагрузку: трёхзвенка (web/app/db), требование изолировать БД от интернета, compliance (PCI/HIPAA с сетевой сегментацией), приватный доступ к `S3`/`DynamoDB` через VPC endpoints.",
+                "edge_cases": "CIDR-блок нельзя сузить после создания (только добавить вторичный). Default `VPC` имеет все public subnets — для prod создают кастомный. Пересечение CIDR с on-prem ломает VPN/peering. Один subnet привязан строго к одной `AZ`.",
+                "related": "[[aws-interview#Q19]] Security Groups vs NACLs; [[aws-interview#Q23]] NAT Gateway и Internet Gateway; [[aws-interview#Q32]] Multi-AZ как основа отказоустойчивости."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Public и private subnet физически разные дата-центры: public subnet находится на edge-локации, а private — в основном `Region`, поэтому межсетевой трафик между ними дорогой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Public и private subnets — это подсети одного `VPC` в одном `Region`, разделённые лишь маршрутом в `IGW`. Edge-локации (`CloudFront`) к subnets отношения не имеют. Трафик внутри `AZ` между ними бесплатен.",
+                "source_of_confusion": "Слово «public» ассоциируется с CDN/edge, отсюда ложная привязка public subnet к edge-локациям.",
+                "if_it_were_true": "Тогда ALB в public subnet и EC2 в private subnet общались бы через интернет с задержкой и платой, но реально это локальная маршрутизация внутри `VPC`.",
+                "how_it_should_be": "Правильнее: public/private subnet — подсети одного `VPC` в одном регионе, отличаются маршрутом в `IGW`, а не дата-центром."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Route table в `VPC` не нужна: `AWS` автоматически маршрутизирует любой трафик по кратчайшему пути, а разделение subnets делается исключительно через Security Groups.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Route table — обязательный объект: именно запись `0.0.0.0/0 → igw` или `→ nat` определяет, public подсеть или private. Security Groups фильтруют трафик на уровне инстанса, но не задают маршрутизацию.",
+                "source_of_confusion": "У default route table есть локальный маршрут «из коробки», и кажется, что маршрутизация настраивается сама.",
+                "if_it_were_true": "Тогда private subnet без явного NAT-маршрута всё равно выходил бы в интернет, но без записи в route table инстанс там полностью изолирован.",
+                "how_it_should_be": "Правильнее: route table обязательна и определяет public/private статус подсети, а SG лишь фильтруют трафик."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `Security Groups` отличаются от `NACLs` и что использовать в типичном случае?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Security Groups и NACLs — синонимы: это один и тот же firewall, просто `NACL` — старое название, а `Security Group` — новое после ребрендинга, поэтому достаточно настроить любой из них.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные механизмы: SG — stateful, на уровне инстанса, только allow; NACL — stateless, на уровне subnet, allow+deny. Они действуют на разных уровнях и оба существуют одновременно, а не заменяют друг друга.",
+                "source_of_confusion": "Оба — «сетевые фильтры в `VPC`», и их объединяют в одно понятие firewall.",
+                "if_it_were_true": "Тогда в консоли была бы одна сущность, но `AWS` показывает Security Groups и Network ACLs как отдельные разделы с разной семантикой stateful/stateless.",
+                "how_it_should_be": "Правильнее: SG и NACL — разные слои firewall (instance vs subnet, stateful vs stateless), действующие совместно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Security Group — stateless и требует явных правил для обратного трафика, а NACL — stateful и пропускает ответы автоматически; поэтому NACL удобнее для повседневной фильтрации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: Security Group stateful (ответ на разрешённый запрос проходит сам), а NACL stateless (нужны явные правила для ephemeral-портов обратного трафика). Именно stateful-природа делает SG основным инструментом.",
+                "source_of_confusion": "Термины stateful/stateless абстрактны, и их легко перепутать местами между SG и NACL.",
+                "if_it_were_true": "Тогда на каждое SG-правило приходилось бы вручную открывать ephemeral-порты на ответ, но SG этого не требует — обратный трафик идёт автоматически.",
+                "how_it_should_be": "Правильнее: SG stateful (автоответ), NACL stateless (явные правила), и поэтому SG удобнее для рутины."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Security Groups работают на уровне инстанса, они stateful (ответ на разрешённый запрос проходит автоматически), поддерживают только allow-правила, default — deny all inbound / allow outbound, все правила оцениваются вместе. NACLs — на уровне subnet, stateless (нужны явные правила для обратного трафика), поддерживают allow и deny, нумерованные правила с first-match, default — allow all. В большинстве случаев используют только Security Groups; NACLs — для специальных задач вроде блокировки конкретных IP/диапазонов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это два уровня сетевого firewall. Stateful SG проще: разрешил inbound на `:443` — ответный трафик уйдёт сам. Stateless NACL требует пары правил (inbound + outbound ephemeral ports) и умеет explicit deny, что нужно для чёрных списков. SG — основной инструмент, NACL — дополнительный субуровень.",
+                "example": "`web-sg`: allow `:443` from `0.0.0.0/0`. `db-sg`: allow `:5432` только from `web-sg` (SG как источник — нельзя в NACL). NACL поверх: explicit deny для IP-атакующего `203.0.113.7/32`, потому что SG не умеет deny.",
+                "when_to_apply": "Security Groups — для повседневной фильтрации трафика между tiers (web→app→db) и референса SG-в-SG. NACLs — когда нужен explicit deny (бан конкретных IP), subnet-wide baseline или compliance-требование сетевой сегментации на уровне подсети.",
+                "edge_cases": "NACL stateless — забытые ephemeral-порты (1024–65535) на outbound ломают ответы. SG не умеет deny — для блокировки нужен NACL или WAF. Лимит правил NACL меньше, и порядок (номер) важен: first-match останавливает оценку.",
+                "related": "[[aws-interview#Q18]] VPC и subnets, где живут SG/NACL; [[aws-interview#Q23]] NAT/Internet Gateway и трафик наружу; [[aws-interview#Q34]] открытые SG как частая ошибка."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только NACL умеет ссылаться на другую Security Group как источник (`allow from web-sg`), а Security Group понимает исключительно CIDR-диапазоны, поэтому межсервисные правила пишут в NACL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ровно наоборот: ссылаться на другую SG как источник умеет именно Security Group (`allow :5432 from web-sg`), а NACL оперирует только CIDR. SG-в-SG — ключевое удобство для динамичных tiers.",
+                "source_of_confusion": "Subnet-level NACL кажется более «сетевым», и логичной выглядит идея, что именно он знает о группах.",
+                "if_it_were_true": "Тогда правило `db-sg allow from web-sg` пришлось бы писать в NACL по CIDR, но он не понимает SG-референсы — это возможно только в Security Group.",
+                "how_it_should_be": "Правильнее: SG-в-SG ссылки умеет Security Group, а NACL работает только с CIDR-диапазонами."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются `ALB`, `NLB` и `CLB` и какой балансировщик выбирать для веб-приложения с микросервисами?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ALB`, `NLB` и `CLB` идентичны по возможностям: все три работают на Layer 7, умеют path-based routing и WAF; различие только в максимальной пропускной способности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они работают на разных уровнях: `ALB` — L7 (HTTP, path/host-routing, WAF), `NLB` — L4 (TCP/UDP, без HTTP-разбора и path-routing), `CLB` — legacy без host/path-routing. Это разные классы, а не просто разные лимиты.",
+                "source_of_confusion": "Все три называются «load balancer» в `ELB`, и кажется, что отличается лишь масштаб.",
+                "if_it_were_true": "Тогда правило `/api/* → service A` можно было бы задать на `NLB`, но он не парсит HTTP и path-routing не поддерживает в принципе.",
+                "how_it_should_be": "Правильнее: ALB — L7 с content-routing, NLB — L4 без него, CLB — legacy; это разные уровни OSI."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`NLB` — рекомендуемый default для веб-приложений с микросервисами, потому что он на Layer 7 разбирает HTTP-заголовки и делает path-based routing лучше, чем `ALB`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`NLB` работает на Layer 4 и HTTP-заголовки не разбирает — path/host-routing у него нет. Для микросервисов с content-based routing нужен именно `ALB` (Layer 7). `NLB` берут под TCP/UDP и экстремальный throughput.",
+                "source_of_confusion": "`NLB` ассоциируется с «высокой производительностью», и его ошибочно считают универсально лучшим.",
+                "if_it_were_true": "Тогда аутентификацию через OIDC и правило `host admin.example.com` настраивали бы на `NLB`, но эти фичи есть только у `ALB`.",
+                "how_it_should_be": "Правильнее: для HTTP-микросервисов default — `ALB` (L7), а `NLB` — для L4 TCP/UDP-нагрузок."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`CLB` (Classic Load Balancer) — самый современный балансировщик `AWS`, рекомендуемый для новых микросервисных проектов, так как объединяет возможности `ALB` и `NLB` в одном продукте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CLB` — legacy-балансировщик первого поколения, который `AWS` рекомендует не использовать в новых проектах. Он не поддерживает host/path-routing, контейнерные target groups и многие современные фичи `ALB`/`NLB`.",
+                "source_of_confusion": "Название «Classic» иногда воспринимается как «эталонный/основной», а не «устаревший».",
+                "if_it_were_true": "Тогда `AWS` не выпускала бы `ALB` и `NLB` как преемников и не помечала бы `CLB` как previous-generation в документации.",
+                "how_it_should_be": "Правильнее: `CLB` — legacy, новые проекты строят на `ALB` или `NLB`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ALB` (Application LB) работает на Layer 7 (HTTP/HTTPS) и подходит для веб-приложений и микросервисов; `NLB` (Network LB) — Layer 4 (TCP/UDP) для высокого throughput, статических IP и низкой latency; `GWLB` — Layer 3 для трафика на firewall/inspection; `CLB` (Classic LB) — legacy, его избегают. Для веб-приложения с микросервисами берут `ALB`: он умеет path-based и host-based routing, аутентификацию (Cognito/OIDC), SSL termination и интеграцию с WAF.",
+              "correct": true,
+              "sections": {
+                "explanation": "Балансировщики различаются OSI-уровнем. `ALB` парсит HTTP и потому умеет content-based routing (`/api/*` → service A), что идеально для микросервисов за одним endpoint. `NLB` не понимает HTTP, зато даёт миллионы соединений, статический IP и минимальную задержку. `CLB` устарел — новые проекты на нём не строят.",
+                "example": "Микросервисы за одним `ALB`: правило `/orders/*` → target group `order-svc`, `/payments/*` → `payment-svc`, host `admin.example.com` → `admin-svc`. SSL термируется на ALB, аутентификация через Cognito до бэкенда. Для gRPC/TCP-игрового сервера — `NLB`.",
+                "when_to_apply": "`ALB` — HTTP-приложения, REST/gRPC-микросервисы, path/host-routing, WAF, OIDC-аутентификация. `NLB` — TCP/UDP, экстремальный throughput, нужны статические/Elastic IP, ultra-low latency. `GWLB` — прозрачная вставка сетевых appliance (firewall, IDS).",
+                "edge_cases": "`ALB` не сохраняет client source IP без `X-Forwarded-For`; `NLB` сохраняет. `NLB` не делает SSL-offload так гибко и не имеет path-routing. `CLB` не поддерживает host/path-routing и контейнеры — миграция на ALB/NLB обязательна для новых фич.",
+                "related": "[[aws-interview#Q7]] Auto Scaling Groups за балансировщиком; [[aws-interview#Q21]] CloudFront перед ALB; [[aws-interview#Q19]] Security Groups для ALB/таргетов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `CloudFront`, как он ускоряет доставку контента и почему может быть дешевле раздачи напрямую из `S3`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`CloudFront` — глобальный CDN от `AWS` (600+ edge-локаций): запрос клиента попадает на ближайший edge, который отдаёт закэшированный контент или проксирует к origin (`S3`, `ALB`, `Lambda@Edge`, `EC2`). Используется для статики (HTML/CSS/JS/картинки), видео-стриминга, ускорения динамики (origin shield), кэширования API. Умеет `Lambda@Edge` (код на краю), origin failover, signed URLs/cookies, WAF-интеграцию. Часто дешевле прямой раздачи из `S3`, потому что нет отдельной платы за outbound-трансфер из `S3` к интернету.",
+              "correct": true,
+              "sections": {
+                "explanation": "CDN решает проблему латентности и нагрузки на origin: контент кэшируется ближе к пользователю (TTL), origin запрашивается только на cache miss. Экономия на `S3`: трафик `S3 → CloudFront` не тарифицируется как outbound, платится более дешёвый `CloudFront`-egress, а origin разгружается.",
+                "example": "SPA на `S3` за `CloudFront`: `index.html`, бандлы и картинки кэшируются на edge в Москве/Франкфурте, TTL 24ч. Пользователь в РФ получает статику за ~10 мс вместо ~150 мс из us-east-1. `Lambda@Edge` подставляет security-заголовки, WAF блокирует ботов.",
+                "when_to_apply": "Статика и медиа с географически распределённой аудиторией, видео-стриминг, ускорение динамического контента, кэширование GET-API, защита origin от DDoS/скрейпинга, раздача приватного контента через signed URLs.",
+                "edge_cases": "Инвалидция кэша платная и не мгновенная — версионируют имена файлов (`app.[hash].js`). Неправильный `Cache-Control` кэширует приватные данные. `Lambda@Edge` имеет урезанный runtime и лимиты по сравнению с обычной `Lambda`.",
+                "related": "[[aws-interview#Q9]] S3 как origin для статики; [[aws-interview#Q20]] ALB как динамический origin; [[aws-interview#Q33]] CloudFront как приём cost-оптимизации."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`CloudFront` — это сервис резервного копирования: он копирует объекты `S3` в другой регион для disaster recovery и не имеет отношения к кэшированию или ускорению доставки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CloudFront` — CDN: он кэширует контент на edge-локациях ближе к пользователю и ускоряет доставку. Кросс-региональное копирование для DR делает `S3` Cross-Region Replication, а не `CloudFront`.",
+                "source_of_confusion": "И CDN, и репликация «распределяют данные географически», и эти функции смешивают.",
+                "if_it_were_true": "Тогда у `CloudFront` не было бы TTL, инвалидаций кэша и edge-локаций, но это его центральные понятия.",
+                "how_it_should_be": "Правильнее: `CloudFront` — кэширующий CDN для ускорения, а DR-копирование — это `S3` CRR."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`CloudFront` всегда дороже прямой раздачи из `S3`, потому что добавляет отдельную плату за каждую edge-локацию помесячно сверх стоимости `S3`-трафика.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Помесячной платы за edge-локации нет. Трафик `S3 → CloudFront` не тарифицируется как `S3` outbound, а `CloudFront`-egress часто дешевле прямого `S3`-egress, поэтому CDN нередко удешевляет раздачу, а не удорожает.",
+                "source_of_confusion": "Добавление ещё одного сервиса интуитивно воспринимается как «ещё одна строка в счёте».",
+                "if_it_were_true": "Тогда `AWS` не рекомендовал бы `CloudFront` как cost-оптимизацию для статики, но это стандартный совет в Well-Architected.",
+                "how_it_should_be": "Правильнее: `CloudFront` часто дешевле прямого `S3`-egress за счёт бесплатного `S3→CloudFront` трафика."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`CloudFront` умеет работать только с origin типа `S3`; направить его на `ALB`, `EC2` или произвольный HTTP-сервер нельзя, поэтому динамический контент через него не раздаётся.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Origin у `CloudFront` может быть любым: `S3`, `ALB`, `EC2`, `API Gateway`, `Lambda@Edge` или произвольный custom HTTP-origin. Динамику ускоряют через origin shield и короткий TTL, поэтому ограничения «только `S3`» нет.",
+                "source_of_confusion": "Самый частый туториал — `S3` + `CloudFront` для статики, и эта связка запоминается как единственная.",
+                "if_it_were_true": "Тогда нельзя было бы поставить `CloudFront` перед `ALB` для ускорения API, но это распространённый production-паттерн.",
+                "how_it_should_be": "Правильнее: origin `CloudFront` может быть `S3`, `ALB`, `EC2` или любой HTTP-сервер, включая динамику."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Route53` и какие routing policies он предоставляет для распределения трафика?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Route53` — это сервис автомасштабирования `EC2`: он добавляет и убирает инстансы по нагрузке, а «routing policies» определяют, на какой инстанс положить новую виртуалку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Route53` — DNS-сервис. Автомасштабирование `EC2` делает `Auto Scaling Group`, а не `Route53`. Routing policies `Route53` управляют тем, какой IP/endpoint вернуть в DNS-ответе, а не размещением инстансов.",
+                "source_of_confusion": "Слово «routing» ассоциируется и с балансировкой нагрузки, и с управлением инстансами.",
+                "if_it_were_true": "Тогда `Route53` дублировал бы `ASG`, но это разные сервисы: один резолвит имена, другой масштабирует группу EC2.",
+                "how_it_should_be": "Правильнее: `Route53` — DNS с routing policies для DNS-ответов, а масштабирование EC2 — задача `ASG`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Route53` — managed DNS-сервис `AWS` с health checks и набором routing policies: Simple (один IP/значение), Weighted (% трафика на разные таргеты, A/B-тесты), Latency-based (ближайший по задержке регион), Geolocation (по стране пользователя), Failover (primary/secondary), Multivalue answer (round-robin), Geoproximity (по расстоянию). Health checks дают автоматический failover при недоступности таргета.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Route53` — это DNS плюс интеллект маршрутизации. Health checks превращают его из «просто резолвера» в инструмент HA/DR: при падении primary запись автоматически переключается на secondary. Policies решают разные задачи — от canary-релизов (weighted) до глобального ускорения (latency-based).",
+                "example": "`yourdomain.com` с latency-based routing на два `ALB`: `us-east-1` и `eu-west-1` — пользователь из Европы попадает на франкфуртский ALB. Failover policy: при недоступности primary-региона (health check fail) трафик уходит на secondary. Weighted 90/10 для canary-деплоя новой версии.",
+                "when_to_apply": "Глобальные приложения (latency/geolocation routing), blue-green и canary деплои (weighted), multi-region DR (failover + health checks), геораспределение по juridiction/контенту (geolocation), простой round-robin (multivalue).",
+                "edge_cases": "DNS-кэширование (TTL) задерживает failover — низкий TTL ускоряет, но грузит резолверы. Health check проверяет endpoint, а не всю систему — здоровый ALB при мёртвой БД не отловится. Geolocation по IP неточен с VPN/прокси.",
+                "related": "[[aws-interview#Q20]] ALB как таргет записей Route53; [[aws-interview#Q32]] Multi-Region failover через Route53; [[aws-interview#Q21]] CloudFront как alias-таргет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Route53` поддерживает только простую round-robin-балансировку и не умеет ни latency-based, ни failover-маршрутизацию; для этого нужен отдельный сторонний DNS-провайдер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Route53` штатно поддерживает Weighted, Latency-based, Geolocation, Failover, Geoproximity и Multivalue policies с health checks. Сторонний DNS не нужен — это часть сервиса.",
+                "source_of_confusion": "Multivalue answer действительно похож на round-robin, и его принимают за единственную доступную политику.",
+                "if_it_were_true": "Тогда multi-region failover на `AWS` строили бы на внешнем DNS, но штатный failover-policy `Route53` — стандартный паттерн DR.",
+                "how_it_should_be": "Правильнее: `Route53` нативно умеет latency/failover/geolocation и другие политики с health checks."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Health checks в `Route53` бесполезны для failover: `Route53` не проверяет доступность таргетов и всегда возвращает все записи, поэтому переключение на резерв делают вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Health checks `Route53` периодически опрашивают endpoint, и при failover-policy DNS автоматически перестаёт отдавать нездоровую запись, переключая на secondary. Это и есть штатный автоматический failover, без ручного вмешательства.",
+                "source_of_confusion": "DNS воспринимается как «статическая таблица имён», и идея активных проверок здоровья кажется чуждой.",
+                "if_it_were_true": "Тогда failover routing policy не имела бы смысла, но она существует именно ради автоматического переключения по health check.",
+                "how_it_should_be": "Правильнее: health checks `Route53` дают автоматический failover, убирая нездоровый endpoint из ответов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `Internet Gateway` отличается от `NAT Gateway` и как private-инстанс получает доступ к интернету?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Internet Gateway` и `NAT Gateway` — это один и тот же компонент: оба пропускают трафик в обе стороны, и для выхода private-инстанса в интернет достаточно прикрепить любой из них к subnet.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные компоненты с разной семантикой: IGW двунаправленный и крепится к `VPC`, NAT односторонний (только outbound) и ставится в public subnet. Private-инстансу для исходящего интернета нужен именно NAT, а не прямой IGW.",
+                "source_of_confusion": "Оба «дают доступ в интернет», и их роли сливают в один компонент.",
+                "if_it_were_true": "Тогда private-инстанс, маршрутизированный напрямую в IGW, был бы доступен из интернета, но без public IP двунаправленная связь не работает — нужен NAT для outbound.",
+                "how_it_should_be": "Правильнее: IGW — двунаправленный для public subnet, NAT — односторонний outbound для private; это разные компоненты."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`NAT Gateway` открывает private-инстансам и входящие соединения из интернета тоже: достаточно настроить порт-форвардинг на NAT, чтобы снаружи подключаться к private EC2.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`NAT Gateway` принципиально пропускает только outbound-трафик, инициированный изнутри; inbound-подключения он не принимает и port-forwarding не поддерживает. Для входящего доступа используют ALB/NLB или bastion в public subnet.",
+                "source_of_confusion": "Классический домашний NAT-роутер умеет port-forwarding, и это ожидание переносят на `NAT Gateway`.",
+                "if_it_were_true": "Тогда смысл прятать инстанс в private subnet терялся бы, но именно невозможность inbound через NAT и обеспечивает приватность.",
+                "how_it_should_be": "Правильнее: `NAT Gateway` пропускает только outbound, а для inbound нужны ALB/NLB или bastion."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Internet Gateway (IGW)` крепится к `VPC` и даёт двунаправленную связь VPC ↔ интернет — он нужен для public subnets. `NAT Gateway` ставится в public subnet и пропускает только outbound-трафик из private-инстансов в интернет (для скачивания обновлений/пакетов), но блокирует inbound — private остаётся приватным. Таким образом private-инстанс ходит наружу через `NAT Gateway → IGW`, а извне недоступен. `NAT Gateway` дорогой ($0.045/час + $0.045/GB), что часто становится сюрпризом в счёте.",
+              "correct": true,
+              "sections": {
+                "explanation": "IGW и NAT решают разные задачи. IGW — точка входа/выхода для public subnet (двусторонне). NAT — односторонний прокси: private-инстанс инициирует исходящее соединение, NAT транслирует адрес и возвращает ответ, но снаружи соединение начать нельзя. Это базовый паттерн «приложение в private, выход за апдейтами разрешён».",
+                "example": "App-сервер в private subnet `10.0.2.0/24` тянет `apt update` и пакеты с PyPI: трафик идёт `EC2 → NAT Gateway (public subnet) → IGW → интернет`. Из интернета подключиться к этому EC2 напрямую нельзя — нет публичного IP и нет inbound-маршрута.",
+                "when_to_apply": "IGW — для public subnets с ресурсами, доступными извне (ALB, bastion). NAT Gateway — когда private-инстансам нужен исходящий интернет (обновления, вызовы внешних API), но входящие соединения должны быть закрыты.",
+                "edge_cases": "NAT Gateway привязан к одной `AZ` — для HA нужен per-AZ. Стоимость кусается: $0.045/GB сверх почасовой платы делает его дороже самого EC2 на трафик-heavy. VPC endpoints для `S3`/`DynamoDB` позволяют обойти NAT и сэкономить.",
+                "related": "[[aws-interview#Q18]] VPC, subnets и route tables; [[aws-interview#Q33]] VPC endpoints как обход NAT-затрат; [[aws-interview#Q3]] NAT Gateway как частая «неожиданность» в счёте."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`NAT Gateway` бесплатен и не влияет на счёт: `AWS` тарифицирует только сам трафик в интернет, а почасовой платы за NAT нет, поэтому его ставят повсюду без оглядки на cost.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`NAT Gateway` платный по двум осям: ~$0.045/час за наличие плюс ~$0.045 за каждый обработанный GB. На трафик-heavy workload это одна из частых «сюрпризных» строк счёта, поэтому его использование оптимизируют (VPC endpoints).",
+                "source_of_confusion": "Многие managed-компоненты `AWS` кажутся «бесплатной обвязкой», и NAT попадает в ту же категорию.",
+                "if_it_were_true": "Тогда не было бы практики заменять NAT на VPC endpoints ради экономии, но это стандартный приём cost-оптимизации.",
+                "how_it_should_be": "Правильнее: `NAT Gateway` платный (час + per-GB) и нередко становится неожиданной статьёй расходов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроена модель доступа `IAM`: что такое User, Group, Role и Policy и чем policy-типы различаются?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`IAM Role` — это просто другое название для `IAM User`: оба хранят постоянные access keys, и разница лишь в том, что Role предназначена для людей, а User — для сервисов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Role не хранит постоянных access keys: она предоставляет временные credentials через `STS AssumeRole`. User держит долговременные ключи. Назначение тоже обратное: Role — для сервисов/federation, User — обычно для людей или legacy-интеграций.",
+                "source_of_confusion": "Обе сущности — «идентичности с правами» в `IAM`, и их легко спутать.",
+                "if_it_were_true": "Тогда у EC2 instance profile были бы вечные ключи, но он получает ротируемые временные credentials через metadata-сервис именно потому, что это роль.",
+                "how_it_should_be": "Правильнее: Role даёт временные credentials через AssumeRole, а User — постоянные ключи; это разные сущности."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Policy в `IAM` пишется на YAML и применяется глобально ко всему аккаунту сразу; привязать её к конкретному пользователю или ресурсу нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Policy — это JSON-документ (`Version`/`Statement` с `Effect`/`Action`/`Resource`), и он привязывается адресно: identity-based — к user/group/role, resource-based — к конкретному ресурсу. Глобального «применить ко всему» по умолчанию нет.",
+                "source_of_confusion": "SCP (Service Control Policies) в `AWS Organizations` действительно действуют на уровне аккаунтов, и их обобщают на все IAM-политики.",
+                "if_it_were_true": "Тогда нельзя было бы дать одному пользователю `s3:GetObject`, а другому — нет, но именно адресная привязка политик это и обеспечивает.",
+                "how_it_should_be": "Правильнее: IAM policy — JSON, привязываемый адресно к identity или ресурсу, а не глобально ко всему."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `IAM` существует только один тип политик — identity-based; resource-based политик и permission boundaries не бывает, поэтому дать доступ к bucket из другого аккаунта невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `IAM` есть несколько типов: identity-based, resource-based (например `S3` bucket policy), permission boundaries, а также SCP и session policies. Resource-based политики как раз и позволяют cross-account доступ к ресурсу.",
+                "source_of_confusion": "В простых сценариях видят только привязку политики к user/role, и о resource-based не вспоминают.",
+                "if_it_were_true": "Тогда нельзя было бы расшарить `S3`-bucket между аккаунтами, но bucket policy (resource-based) — стандартный способ это сделать.",
+                "how_it_should_be": "Правильнее: типов политик несколько (identity/resource-based, boundaries, SCP), и resource-based даёт cross-account доступ."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`IAM (Identity and Access Management)` управляет доступом через четыре сущности: User — человек или сервис с долговременными credentials, Group — набор пользователей, Role — assumable-идентичность для сервисов/federated/cross-account (без постоянных ключей), Policy — JSON-документ с permissions (`Effect`/`Action`/`Resource`). Policy бывают identity-based (привязаны к user/role), resource-based (привязаны к ресурсу, например bucket policy) и permission boundaries (ограничивают максимум прав).",
+              "correct": true,
+              "sections": {
+                "explanation": "`IAM` — это политики поверх identities. Ключевое различие: User держит постоянные access keys, а Role предоставляет временные credentials через `AssumeRole` — поэтому роли безопаснее для сервисов. Policy описывает, что разрешено/запрещено; identity-based и resource-based политики складываются, а permission boundary режет потолок.",
+                "example": "Policy на bucket: `{\"Effect\":\"Allow\",\"Action\":[\"s3:GetObject\",\"s3:PutObject\"],\"Resource\":\"arn:aws:s3:::my-bucket/*\"}`. Group `developers` с этой identity-based политикой; bucket policy (resource-based) дополнительно разрешает cross-account доступ; permission boundary не даёт разработчикам выйти за рамки `s3:*`/`logs:*`.",
+                "when_to_apply": "Users/Groups — для людей и их прав. Roles — для сервисов (EC2/Lambda), cross-account доступа и federation (SSO). Resource-based политики — для шаринга ресурса между аккаунтами. Permission boundaries — для делегирования прав без риска эскалации.",
+                "edge_cases": "Явный `Deny` всегда побеждает `Allow`. Resource-based и identity-based политики оцениваются вместе (union allow, любой deny блокирует). Слишком широкие `Action:*`/`Resource:*` — главный источник over-permission. Inline-политики плохо переиспользуются — лучше managed.",
+                "related": "[[aws-interview#Q25]] IAM роли для EC2/Lambda как best practice; [[aws-interview#Q26]] KMS/Secrets и доступ к ним через IAM; [[aws-interview#Q34]] частые IAM-ошибки (root без MFA, хардкод ключей)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему для доступа к `AWS` из кода на `EC2`/`Lambda` нужно использовать IAM-роли, а не хардкодить access keys?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Используют IAM-роли, а не access keys в коде. К `EC2` крепится instance profile (роль), credentials которой выдаются и автоматически ротируются через metadata-сервис; у каждой `Lambda` есть execution role. Тогда SDK (`boto3.client(\"s3\")`) сам подхватывает временные credentials, а в коде нет секретов. Это устраняет риск утечки ключей в git и реализует principle of least privilege — выдавать только нужные permissions, а не `s3:*`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Хардкод access keys — антипаттерн: ключи долговременные, утекают в git/логи, не ротируются. IAM-роль выдаёт короткоживущие credentials через `STS`/metadata, которые `AWS` ротирует автоматически. SDK сам находит их по цепочке провайдеров — секрет вообще не попадает в код.",
+                "example": "Плохо: `boto3.client(\"s3\", aws_access_key_id=\"AKIA...\", aws_secret_access_key=\"...\")` — ключ в репозитории. Хорошо: к EC2 прикреплён instance profile с ролью `s3-read-role`, в коде просто `boto3.client(\"s3\")` — credentials берутся из metadata и ротируются сами.",
+                "when_to_apply": "Всегда, когда код выполняется на `AWS` (EC2, ECS, Lambda, EKS через IRSA): прикрепляйте роль с минимально необходимыми правами. Для локальной разработки — SSO/named profiles, но не зашитые ключи.",
+                "edge_cases": "Метадата-сервис нужно защищать (IMDSv2 против SSRF). Роль EC2 видна любому процессу на инстансе — изолируйте multi-tenant нагрузки. Слишком широкая роль (`s3:*`) сводит на нет least privilege, даже если ключи не хардкожены.",
+                "related": "[[aws-interview#Q24]] IAM Users, Roles, Policies; [[aws-interview#Q26]] Secrets Manager для прикладных секретов; [[aws-interview#Q34]] хардкод ключей как частая ошибка."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Использовать IAM-роли небезопасно: лучше зашить access keys прямо в код, потому что роль может быть скомпрометирована через metadata-сервис, а статический ключ контролируешь только ты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: статический ключ в коде утекает в git/логи и не ротируется, что и есть главный вектор компрометации. Роль выдаёт временные ротируемые credentials, а metadata защищается IMDSv2. Best practice `AWS` — именно роли, не ключи.",
+                "source_of_confusion": "Кажется, что «свой» статический ключ контролируется лучше, чем «магия» metadata-сервиса.",
+                "if_it_were_true": "Тогда `AWS` не помечал бы хардкод ключей как top-риск в Trusted Advisor и не продвигал бы instance profiles по умолчанию.",
+                "how_it_should_be": "Правильнее: роли с временными ротируемыми credentials безопаснее хардкода долговременных ключей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "IAM-роли работают только для `Lambda`; для `EC2` единственный способ авторизации — это передавать access keys в user-data при запуске инстанса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для `EC2` штатный механизм — instance profile (роль), credentials которой доступны через metadata и ротируются автоматически. Передавать ключи через user-data — антипаттерн, роли поддерживаются и для EC2, и для Lambda, и для ECS/EKS.",
+                "source_of_confusion": "Execution role у `Lambda` обязательна и на виду, а instance profile у EC2 настраивается отдельно, отсюда впечатление, что у EC2 ролей «нет».",
+                "if_it_were_true": "Тогда `boto3.client(\"s3\")` без ключей не работал бы на EC2, но он работает именно благодаря instance profile.",
+                "how_it_should_be": "Правильнее: IAM-роли (instance profile) штатно работают и для `EC2`, а не только для `Lambda`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Principle of least privilege означает, что роли надо давать `Action: \"*\"` и `Resource: \"*\"`, чтобы код точно не упёрся в нехватку прав и не пришлось дебажить отказы доступа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Least privilege — ровно противоположное: выдавать минимально необходимые permissions (`s3:GetObject` на конкретный bucket), а не `*`. Wildcard `*` — это максимум привилегий и главный источник over-permission и эскалации.",
+                "source_of_confusion": "`Action:*` действительно «чинит» любой AccessDenied, и это соблазняет как быстрый фикс.",
+                "if_it_were_true": "Тогда compromised-инстанс с такой ролью получал бы полный контроль над аккаунтом, что прямо противоречит идее least privilege.",
+                "how_it_should_be": "Правильнее: least privilege — это узкие точечные права, а не `Action:*`/`Resource:*`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как соотносятся `KMS`, `Secrets Manager` и `Parameter Store` и что для чего использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`KMS` сам по себе хранит пароли и API-ключи в открытом виде и отдаёт их по запросу — это полноценная замена `Secrets Manager`, поэтому два сервиса не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`KMS` управляет криптоключами, а не хранит прикладные секреты. Значения паролей/ключей лежат в `Secrets Manager` или `Parameter Store`, которые шифруют их через `KMS`. KMS не является key-value хранилищем секретов.",
+                "source_of_confusion": "Все три сервиса вращаются вокруг «секретов и шифрования», и их функции смешивают.",
+                "if_it_were_true": "Тогда не существовало бы отдельных `Secrets Manager` и `Parameter Store`, но они есть именно потому, что KMS хранит ключи, а не значения.",
+                "how_it_should_be": "Правильнее: KMS управляет ключами шифрования, а сами секреты хранят Secrets Manager/Parameter Store."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`KMS (Key Management Service)` — managed encryption keys, на которых шифруются `S3`/`EBS`/`RDS` и сами секреты. `Secrets Manager` хранит пароли, API-ключи, DB-credentials с авто-ротацией (для RDS/Aurora), стоит ~$0.40 за секрет в месяц + API-вызовы. `Systems Manager Parameter Store` хранит конфигурацию иерархически (`/myapp/dev/db_url`), standard-параметры бесплатны, но без авто-ротации. Итого: Secrets Manager — для credentials с ротацией, Parameter Store — для конфигов/env-переменных, KMS — для самих ключей шифрования под обоими.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это три разных слоя. KMS управляет криптоключами (envelope encryption), не хранит сами секреты. Secrets Manager и Parameter Store хранят значения, шифруя их через KMS. Различие между ними — ротация и цена: Secrets Manager умеет автоматически менять пароль БД, Parameter Store дешевле, но ротацию надо городить вручную.",
+                "example": "DB-пароль prod — `Secrets Manager` с авто-ротацией каждые 30 дней (Lambda меняет пароль в RDS и в секрете синхронно). Feature flag и `LOG_LEVEL=INFO` — `Parameter Store` (`/app/prod/log_level`, бесплатно). Оба значения зашифрованы customer-managed ключом в `KMS`.",
+                "when_to_apply": "Secrets Manager — для всего, что должно ротироваться (DB-пароли, API-ключи партнёров). Parameter Store — для нечувствительного конфига и env-переменных, где важна цена и иерархия. KMS — везде, где нужно шифрование at-rest и контроль над ключами.",
+                "edge_cases": "Parameter Store SecureString тоже шифрует через KMS, но не ротирует — для секретов с ротацией всё равно нужен Secrets Manager. Secrets Manager дороже при тысячах секретов. KMS-вызовы тарифицируются и имеют rate limits — кэшируйте расшифрованные значения.",
+                "related": "[[aws-interview#Q24]] IAM-доступ к KMS/секретам через политики; [[aws-interview#Q25]] роли вместо хардкода для чтения секретов; [[aws-interview#Q9]] S3 encryption через KMS."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Parameter Store` умеет автоматически ротировать DB-пароли точно так же, как `Secrets Manager`, поэтому Secrets Manager избыточен и его никогда не используют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Parameter Store` не имеет встроенной авто-ротации — её надо реализовывать вручную (своя Lambda + cron). Автоматическую ротацию DB-credentials (RDS/Aurora) из коробки даёт именно `Secrets Manager`, ради чего его и берут.",
+                "source_of_confusion": "Оба хранят значения и оба умеют SecureString через KMS, поэтому кажутся взаимозаменяемыми.",
+                "if_it_were_true": "Тогда у `Secrets Manager` не было бы платной премии за ротацию, но именно ротация и интеграция с RDS оправдывают его цену.",
+                "how_it_should_be": "Правильнее: авто-ротацию даёт Secrets Manager, а Parameter Store требует ручной ротации."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Secrets Manager` и `Parameter Store` — один и тот же сервис под двумя именами, и оба полностью бесплатны без каких-либо лимитов и тарификации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные сервисы с разной ценой: Secrets Manager платный (~$0.40/секрет/мес + API), Parameter Store standard-параметры бесплатны, advanced — платные. Различаются они ротацией, лимитами размера и интеграциями.",
+                "source_of_confusion": "Похожий API (get parameter / get secret value) создаёт впечатление одного сервиса.",
+                "if_it_were_true": "Тогда не было бы смысла выбирать между ними по цене и фичам, но именно trade-off «цена vs ротация» определяет выбор.",
+                "how_it_should_be": "Правильнее: это разные сервисы — Secrets Manager платный с ротацией, Parameter Store дешевле и без неё."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются `SQS`, `SNS` и `EventBridge` и какой сервис выбирать для разных интеграционных паттернов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`SQS`, `SNS` и `EventBridge` — это три названия одного сервиса очередей: разница лишь в максимальном размере сообщения, а модель доставки у всех одинаковая point-to-point.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Модели доставки разные: SQS — point-to-point (сообщение берёт один consumer), SNS — pub/sub fanout (всем подписчикам), EventBridge — routed event bus с правилами. Это разные паттерны интеграции, а не вариации размера сообщения.",
+                "source_of_confusion": "Все три — «messaging» в каталоге `AWS`, и их обобщают до «очередей».",
+                "if_it_were_true": "Тогда нельзя было бы сделать fanout одного события трём consumer-ам, но именно для этого существует SNS, чего SQS не умеет.",
+                "how_it_should_be": "Правильнее: SQS — point-to-point, SNS — fanout pub/sub, EventBridge — routed bus; это разные модели."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`SNS` гарантирует строгий порядок и exactly-once доставку для любого числа подписчиков, поэтому именно его берут как durable-очередь вместо `SQS`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Durable-буфер с retry/DLQ и забором сообщения одним воркером — это `SQS`, а не `SNS`. SNS — fanout-уведомления; если подписчик недоступен и нет SQS-буфера, сообщение может потеряться. Exactly-once и порядок дают SQS FIFO, а не SNS.",
+                "source_of_confusion": "SNS умеет доставлять в SQS, и роль «надёжной доставки» ошибочно приписывают самому SNS.",
+                "if_it_were_true": "Тогда паттерн SNS→SQS не был бы нужен, но его применяют именно ради буферизации и надёжности на стороне каждого consumer.",
+                "how_it_should_be": "Правильнее: durable-очередь с retry/DLQ — это SQS (FIFO для порядка), а SNS — fanout-уведомления."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`SQS` — очередь point-to-point для worker-queues и decoupling (Standard — at-least-once с возможным reorder, FIFO — exactly-once и порядок при меньшем throughput). `SNS` — pub/sub-топик с fanout к подписчикам (HTTP, SQS, Lambda, email, SMS). `EventBridge` — event bus для сложной маршрутизации со схемами, 100+ SaaS-интеграциями (Stripe, Auth0), фильтрацией событий и replay. В 2025 EventBridge — default для event-driven, а SQS — для простых очередей.",
+              "correct": true,
+              "sections": {
+                "explanation": "Три модели интеграции. SQS — буфер «один producer → один consumer-pool», сообщение забирает один воркер. SNS — fanout «одно событие → много подписчиков». EventBridge — интеллектуальный роутер с правилами, схемами и внешними источниками. Классический паттерн — SNS→SQS (fanout с буферизацией на каждого consumer).",
+                "example": "Заказ оформлен → `SNS`-топик `order-created` → fanout в 3 `SQS`-очереди (email-worker, analytics-worker, inventory-worker), каждая обрабатывает в своём темпе. Интеграция со `Stripe` webhook и роутинг по `detail-type` — через `EventBridge` rule с фильтром.",
+                "when_to_apply": "SQS — буферизация и decoupling воркеров, сглаживание пиков, retry/DLQ. SNS — простой fanout одного события многим. EventBridge — content-based routing, схемы событий, SaaS-интеграции, scheduled events (cron), архив и replay.",
+                "edge_cases": "SQS Standard может доставить дубль и переупорядочить — нужна идемпотентность; FIFO ограничен ~300 msg/s (3000 с батчингом). SNS без подписки на SQS теряет недоставленные сообщения. EventBridge имеет лимиты на размер события (256 KB) и латентность выше, чем у SQS.",
+                "related": "[[aws-interview#Q28]] Kinesis/MSK для стриминга вместо очередей; [[aws-interview#Q8]] Lambda как consumer SQS/SNS/EventBridge; [[aws-interview#Q29]] CloudWatch для мониторинга глубины очередей."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`EventBridge` не умеет фильтровать события и интегрироваться с внешними SaaS — это просто внутренний планировщик cron-задач `AWS`, поэтому для event-driven берут только SQS.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`EventBridge` — полноценный event bus: content-based фильтрация по правилам, schema registry, 100+ SaaS-интеграций (Stripe, Auth0), replay и scheduled events. Cron — лишь одна из его возможностей, а не вся суть.",
+                "source_of_confusion": "У EventBridge есть scheduled rules (бывший CloudWatch Events cron), и его сводят к «планировщику».",
+                "if_it_were_true": "Тогда event-driven архитектуры со сложной маршрутизацией строили бы только на SQS, но именно EventBridge — рекомендуемый default для них в 2025.",
+                "how_it_should_be": "Правильнее: EventBridge — это routing event bus с фильтрами, схемами и SaaS-интеграциями, а не просто cron."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `Kinesis Data Streams` отличается от `MSK (Managed Streaming for Kafka)` и что выбирать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Kinesis` — это и есть Apache Kafka под другим именем: тот же протокол и API, поэтому Kafka-клиенты (`kafka-console-consumer`, Kafka Streams) подключаются к `Kinesis` без изменений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Kinesis` — проприетарный AWS-сервис с собственным API (PutRecord/GetRecords, shards), несовместимым с Kafka wire-protocol. Kafka-клиенты к нему не подключаются. Настоящий Kafka-API даёт `MSK`, а не Kinesis.",
+                "source_of_confusion": "Концептуально оба — partitioned log для стриминга, и их считают одной технологией.",
+                "if_it_were_true": "Тогда `AWS` не предлагал бы отдельный `MSK` для тех, кому нужен именно Kafka-API, но MSK существует ровно ради совместимости.",
+                "how_it_should_be": "Правильнее: Kinesis — проприетарный API, несовместимый с Kafka; Kafka-протокол даёт MSK."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`MSK` — это полностью serverless-сервис без брокеров, партиций и какого-либо управления: `AWS` сама создаёт топики и тюнит кластер, поэтому Kafka-экспертиза для него вообще не нужна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MSK` (provisioned) — это managed Apache Kafka с реальными брокерами и партициями, где топики, партиционирование и тюнинг остаются на команде. Managed снимает patching/provisioning, но Kafka-экспертиза по-прежнему нужна (есть и MSK Serverless, но это отдельный режим).",
+                "source_of_confusion": "Слово «managed» создаёт впечатление полного отсутствия операционки, как у настоящего serverless.",
+                "if_it_were_true": "Тогда не пришлось бы выбирать число брокеров, тип инстансов и настраивать партиции, но всё это — обязательные параметры MSK-кластера.",
+                "how_it_should_be": "Правильнее: MSK — managed Kafka с брокерами/партициями, требующий Kafka-экспертизы, а не zero-ops serverless."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Kinesis` и `MSK` нельзя использовать как consumer для `Lambda` или интегрировать с остальными сервисами `AWS` — это изолированные системы только для ручного чтения через CLI.",
+              "correct": false,
+              "sections": {
+                "what_actually": "И `Kinesis`, и `MSK` нативно интегрируются с `Lambda` (event source mapping), а Kinesis ещё и с `Firehose`/`Kinesis Analytics`/`S3`. Изоляции нет — стриминг как раз используется как источник событий для downstream-обработки.",
+                "source_of_confusion": "Стриминг кажется «низкоуровневой трубой», к которой надо писать кастомные consumer-ы вручную.",
+                "if_it_were_true": "Тогда serverless-пайплайны `stream → Lambda → S3` были бы невозможны, но это базовый паттерн обработки потоков на AWS.",
+                "how_it_should_be": "Правильнее: и Kinesis, и MSK интегрируются с Lambda и другими сервисами как источники событий."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Kinesis Data Streams` — AWS-native стриминг, похожий на Kafka, с per-shard лимитами throughput, retention до 365 дней, оплатой per-shard-hour + payload и экосистемой только внутри AWS. `MSK` — managed Apache Kafka: выше throughput (shards = partitions), retention настраиваемый (типично 7д), оплата per-broker-hour и весь стандартный Kafka-tooling. Выбор: если уже есть Kafka-стек или нужны Kafka-инструменты — `MSK`; если нужна tight-интеграция с AWS и не хочется управлять Kafka — `Kinesis`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Оба — distributed log для event streaming, но Kinesis — проприетарный AWS-сервис с шардовой моделью и бесшовной интеграцией (`Lambda`, `Firehose`, `Analytics`), а MSK — настоящий Kafka с его API, consumer groups и tooling. Выбор определяется существующим стеком и переносимостью, а не только производительностью.",
+                "example": "Команда с готовыми Kafka Streams-приложениями и `kafka-console-consumer` мигрирует lift-and-shift на `MSK` без переписывания. Новый serverless-пайплайн `IoT → stream → Lambda → S3` без Kafka-наследия проще собрать на `Kinesis` + `Firehose`.",
+                "when_to_apply": "MSK — когда уже есть Kafka-экспертиза, Kafka-коннекторы, Schema Registry, нужна переносимость между облаками/on-prem. Kinesis — для AWS-native пайплайнов, serverless-интеграции, когда важна минимизация операционки и не нужен Kafka-API.",
+                "edge_cases": "Kinesis шардирование требует ручного resharding под рост нагрузки (или on-demand mode). MSK всё равно требует управления топиками/партициями и тюнинга, несмотря на «managed». Vendor lock-in у Kinesis сильнее — миграция на Kafka означает переписывание producer/consumer.",
+                "related": "[[aws-interview#Q27]] SQS/SNS/EventBridge для очередей и событий; [[aws-interview#Q8]] Lambda как consumer Kinesis; [[aws-interview#Q1]] категории сервисов (Analytics)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что входит в `CloudWatch` и из каких компонентов состоит мониторинг `AWS`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`CloudWatch` — основной сервис мониторинга `AWS`. Он включает Metrics (числовые данные: CPU, latency, custom), Logs (логи приложений/систем), Alarms (алерты по порогам метрик), Dashboards (визуализации), Logs Insights (SQL-подобные запросы к логам), Synthetics (canaries — uptime-мониторинг), а также RUM и X-Ray для frontend/distributed tracing. Custom-метрики публикуются через `put_metric_data`. Стоимость logs ingestion может быть очень высокой — нужно оптимизировать уровни логирования.",
+              "correct": true,
+              "sections": {
+                "explanation": "`CloudWatch` — это observability-зонтик `AWS`: метрики (time-series), логи (текст) и алармы (реакция на пороги) плюс инструменты поверх них. Большинство сервисов шлют метрики автоматически, а кастомные значения и логи приложения публикуются явно. Алармы связывают метрику с действием (SNS/ASG).",
+                "example": "`cloudwatch.put_metric_data(Namespace='MyApp', MetricData=[{'MetricName':'OrdersProcessed','Value':42,'Unit':'Count'}])` — кастомная метрика. Alarm: `CPUUtilization > 80% 5 минут` → SNS-уведомление + scale-out ASG. Logs Insights: `fields @message | filter @message like /ERROR/ | stats count()`.",
+                "when_to_apply": "Базовый мониторинг любой AWS-нагрузки: алармы на CPU/latency/error-rate, дашборды для on-call, агрегация логов, canary-проверки доступности endpoint, корреляция метрик с трейсами через X-Ray.",
+                "edge_cases": "Logs ingestion (~$0.50/GB) дорожает при verbose-логировании — фильтруйте уровни и используйте sampling. Метрики стандартного разрешения — раз в 60 сек; high-resolution (1 сек) дороже. Алармы на percentiles требуют корректной статистики, иначе ложные срабатывания.",
+                "related": "[[aws-interview#Q30]] X-Ray для distributed tracing; [[aws-interview#Q7]] Auto Scaling по CloudWatch-метрикам; [[aws-interview#Q27]] SNS как target для алармов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`CloudWatch` собирает только метрики CPU и не умеет работать с логами, алармами или дашбордами — для логов и алертов нужен исключительно сторонний `Datadog`/`Grafana`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CloudWatch` штатно включает Logs, Alarms, Dashboards, Logs Insights, Synthetics и метрики (не только CPU). Сторонние инструменты (`Datadog`/`Grafana`) опциональны и часто читают как раз из `CloudWatch`.",
+                "source_of_confusion": "CPU-график — самый заметный пример метрики, и `CloudWatch` сводят к нему.",
+                "if_it_were_true": "Тогда без стороннего стека нельзя было бы поставить алерт на error-rate, но `CloudWatch Alarms` делает это из коробки.",
+                "how_it_should_be": "Правильнее: `CloudWatch` нативно покрывает метрики, логи, алармы и дашборды, а сторонние тулы лишь дополняют."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Logs ingestion в `CloudWatch` всегда бесплатен независимо от объёма, поэтому verbose `DEBUG`-логирование в проде ничего не стоит и его можно не ограничивать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Logs ingestion тарифицируется (~$0.50/GB) и при verbose-логировании становится одной из самых дорогих статей. Поэтому уровни логирования оптимизируют, а не льют `DEBUG` в прод без ограничений.",
+                "source_of_confusion": "Базовые метрики многих сервисов бесплатны, и это «бесплатно» переносят на логи.",
+                "if_it_were_true": "Тогда не было бы советов «снизьте log level и sampling ради экономии», но это стандартная cost-рекомендация для CloudWatch.",
+                "how_it_should_be": "Правильнее: logs ingestion платный по объёму, и verbose-логирование заметно увеличивает счёт."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Алармы `CloudWatch` нельзя связать ни с какими действиями: они только подсвечивают метрику красным в консоли, а уведомления и автоскейлинг настраиваются отдельно вне `CloudWatch`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Alarm в `CloudWatch` запускает действия: публикацию в `SNS` (уведомление), scaling-policy `ASG`, действия `EC2`/Systems Manager. Это и делает его инструментом реакции, а не просто индикатором.",
+                "source_of_confusion": "Визуально аларм действительно меняет цвет в консоли, и его роль сводят к индикации.",
+                "if_it_were_true": "Тогда target-tracking ASG не работал бы (он опирается на CloudWatch alarms), но автоскейлинг строится именно на них.",
+                "how_it_should_be": "Правильнее: алармы `CloudWatch` запускают действия (SNS, ASG-scaling), а не только красят метрику."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `AWS X-Ray` и какую задачу он решает в распределённой системе?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`X-Ray` — это сервис резервного копирования трейс-логов в `S3`: он архивирует текстовые логи, но не строит service map и не показывает latency по сервисам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`X-Ray` — distributed tracing: он строит service map, показывает latency по спанам и ошибки на пути запроса. Это не архиватор логов; агрегацию текстовых логов делает `CloudWatch Logs`.",
+                "source_of_confusion": "И трейсы, и логи — телеметрия, и роль X-Ray смешивают с лог-хранилищем.",
+                "if_it_were_true": "Тогда у X-Ray не было бы графа зависимостей и разбивки latency по сервисам, но это его ключевые экраны.",
+                "how_it_should_be": "Правильнее: X-Ray строит service map и показывает latency по спанам, а не архивирует логи в S3."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`AWS X-Ray` — сервис distributed tracing: он отслеживает путь запроса через несколько сервисов и строит service map, показывает request traces (latency по каждому сервису) и ошибки. Инструментация добавляется через SDK (например декоратор `@xray_recorder.capture('process_order')`), после чего вызовы трассируются автоматически. Часто как альтернативу рассматривают `OpenTelemetry` + `Jaeger`/`Datadog`/`Honeycomb` — они вендор-нейтральны и обычно удобнее.",
+              "correct": true,
+              "sections": {
+                "explanation": "В распределённой системе один пользовательский запрос проходит через много сервисов, и узкое место без трейсинга не локализовать. X-Ray связывает спаны в единый трейс по trace-id, рисует карту зависимостей и показывает, где именно копится latency или возникают ошибки.",
+                "example": "Запрос `POST /order` идёт `API Gateway → Lambda → DynamoDB → SNS`. X-Ray-трейс показывает: Lambda 40 мс, DynamoDB 8 мс, но SNS-publish 600 мс — bottleneck найден. Service map визуализирует эти зависимости и error-rate на каждом ребре.",
+                "when_to_apply": "Микросервисы и serverless-пайплайны, где нужно понять сквозную latency и найти узкое место; диагностика каскадных ошибок; анализ зависимостей между сервисами. Для мульти-облака/вендор-нейтральности предпочитают OpenTelemetry.",
+                "edge_cases": "Трейсинг требует инструментации и sampling (100% трейсов дорого и шумно). X-Ray заточен под AWS — гибридные/мульти-облачные системы лучше покрывает OpenTelemetry. Пропущенный спан (неинструментированный сервис) создаёт «дыру» в трейсе.",
+                "related": "[[aws-interview#Q29]] CloudWatch для метрик и логов; [[aws-interview#Q8]] Lambda как трассируемый сервис; [[aws-interview#Q27]] SNS/SQS как звенья трейса."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`X-Ray` автоматически трассирует все сервисы без какой-либо инструментации кода и не требует sampling — он бесплатно сохраняет 100% трейсов всех запросов навсегда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`X-Ray` требует инструментации (SDK/декораторы/auto-instrumentation) и использует sampling: трассировать 100% запросов дорого и шумно. Хранение трейсов тоже тарифицируется и ограничено по retention.",
+                "source_of_confusion": "Auto-instrumentation для Lambda/SDK создаёт впечатление «нулевой настройки и бесплатного полного трейсинга».",
+                "if_it_were_true": "Тогда не было бы настроек sampling rules и платы за записанные трейсы, но и то, и другое — часть X-Ray.",
+                "how_it_should_be": "Правильнее: X-Ray требует инструментации и sampling, а хранение трейсов платное и не вечное."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`X-Ray` — единственный возможный способ трассировки на `AWS`; альтернатив вроде `OpenTelemetry` или `Jaeger` для AWS-нагрузок не существует, и вендор-нейтральный трейсинг там невозможен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вендор-нейтральный трейсинг на AWS вполне возможен: `OpenTelemetry` (через ADOT — AWS Distro for OpenTelemetry) экспортирует трейсы в `Jaeger`, `Datadog`, `Honeycomb` и сам X-Ray. Альтернативы существуют и часто предпочтительнее.",
+                "source_of_confusion": "X-Ray — нативный сервис AWS, и его принимают за безальтернативный на платформе.",
+                "if_it_were_true": "Тогда AWS не поддерживал бы ADOT-коллектор, но он официально продвигает OpenTelemetry как вендор-нейтральный путь.",
+                "how_it_should_be": "Правильнее: на AWS доступен вендор-нейтральный трейсинг через OpenTelemetry/ADOT в Jaeger/Datadog/Honeycomb."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `AWS Well-Architected Framework` и какие в нём pillars?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Well-Architected Framework` — это обязательная сертификация `AWS`, без прохождения которой нельзя создавать ресурсы в аккаунте: пока не сдашь экзамен по 5 pillars, консоль заблокирована.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Framework — это методология и набор best practices с опциональным `Well-Architected Tool` для самооценки, а не обязательная сертификация. Создавать ресурсы можно без какого-либо review; framework носит рекомендательный характер.",
+                "source_of_confusion": "У `AWS` есть платные сертификации (Solutions Architect и т.д.), и Well-Architected путают с экзаменом-гейтом.",
+                "if_it_were_true": "Тогда новый аккаунт не мог бы запустить EC2 до сдачи экзамена, но ресурсы создаются сразу после регистрации.",
+                "how_it_should_be": "Правильнее: Well-Architected — рекомендательная методология с tool для review, а не блокирующая сертификация."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `Well-Architected Framework` есть единственный pillar — Cost Optimization; Security, Reliability и Performance в него не входят и рассматриваются отдельными несвязанными гайдами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pillars-ов шесть: Operational Excellence, Security, Reliability, Performance Efficiency, Cost Optimization и Sustainability. Cost — лишь один из них, а суть framework — балансировать все измерения вместе.",
+                "source_of_confusion": "Cost Optimization — самый «осязаемый» для бизнеса pillar, и о нём вспоминают первым.",
+                "if_it_were_true": "Тогда review не задавал бы вопросов про шифрование и Multi-AZ, но Security и Reliability — центральные pillars framework.",
+                "how_it_should_be": "Правильнее: pillars-ов шесть, и Cost Optimization — лишь один из них наряду с Security/Reliability/Performance/Operational/Sustainability."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Well-Architected Framework` — это методология `AWS` для проектирования хороших архитектур. Изначально 5 pillars: Operational Excellence (автоматизация, наблюдаемость, улучшение), Security (IAM, шифрование, защита сети), Reliability (отказоустойчивость, восстановление), Performance Efficiency (right sizing, мониторинг), Cost Optimization (верная pricing-модель, устранение waste). В 2021 добавлен шестой — Sustainability (экологический эффект). Есть `Well-Architected Tool` для автоматизированного ревью своей архитектуры.",
+              "correct": true,
+              "sections": {
+                "explanation": "Framework даёт структурированный чек-лист для оценки и улучшения архитектуры по нескольким измерениям сразу — чтобы оптимизация в одном (например cost) не ломала другое (reliability). Это не строгий стандарт, а набор вопросов и best practices, по которым проводят review.",
+                "example": "Review нового сервиса по Well-Architected Tool: Reliability — есть ли Multi-AZ и автоматический failover? Security — закрыты ли SG, включено ли шифрование? Cost — используются ли Savings Plans? Tool генерирует список рисков и рекомендаций по каждому pillar.",
+                "when_to_apply": "Перед запуском новой системы в прод, при периодических архитектурных ревью, при подготовке к масштабированию, для приоритизации технического долга и обоснования инвестиций в надёжность/безопасность перед бизнесом.",
+                "edge_cases": "Pillars иногда конфликтуют (cost vs reliability, performance vs sustainability) — framework помогает осознанно выбирать trade-off, а не даёт единственно верный ответ. Формальное прохождение review без реальных изменений бесполезно.",
+                "related": "[[aws-interview#Q32]] Multi-AZ vs Multi-Region (Reliability); [[aws-interview#Q33]] cost optimization (Cost pillar); [[aws-interview#Q34]] частые ошибки как анти-паттерны pillars."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Sustainability был первым и единственным изначальным pillar с 2006 года, а Security и Reliability добавили только в 2021 как необязательные расширения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Изначально (2015) было 5 pillars, включая Security и Reliability с самого начала. Sustainability добавлен последним — в 2021. Хронология обратная утверждению, и Security/Reliability — базовые, не «расширения».",
+                "source_of_confusion": "Sustainability — самый свежий и обсуждаемый pillar, и его ошибочно считают «корневым».",
+                "if_it_were_true": "Тогда ранние whitepapers Well-Architected не содержали бы Security pillar, но он там был с первой версии.",
+                "how_it_should_be": "Правильнее: Security и Reliability — изначальные pillars (с 2015), а Sustainability добавлен в 2021."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются стратегии Multi-AZ и Multi-Region и какую выбирать в типичном случае?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Multi-AZ и Multi-Region — это одно и то же: оба означают репликацию между дата-центрами в одном городе, разница только в маркетинговом названии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные масштабы: Multi-AZ — реплики в разных `AZ` одного региона (синхронно, ~1–2 мс), Multi-Region — в разных географических регионах (асинхронно, 50–300 мс). Они защищают от разных классов сбоев и сильно различаются по цене.",
+                "source_of_confusion": "Оба про «несколько дата-центров для надёжности», и масштаб (зона vs регион) сливается.",
+                "if_it_were_true": "Тогда Multi-AZ защищал бы от отказа целого региона, но при региональном сбое все `AZ` падают вместе — для этого и нужен Multi-Region.",
+                "how_it_should_be": "Правильнее: Multi-AZ — зоны одного региона (синхронно), Multi-Region — разные регионы (асинхронно); это разные уровни защиты."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Multi-Region обязателен для любого production-приложения, а Multi-AZ — устаревший подход, который `AWS` больше не рекомендует и постепенно отключает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-AZ — актуальный baseline для production и рекомендуемая практика; Multi-Region берут лишь при жёстких DR-требованиях из-за высокой цены и сложности. Большинству нагрузок Multi-AZ достаточно, и он не отключается.",
+                "source_of_confusion": "Multi-Region звучит «надёжнее во всём», и его принимают за обязательный максимум для всех.",
+                "if_it_were_true": "Тогда RDS Multi-AZ был бы deprecated, но это по-прежнему стандартная production-конфигурация в консоли.",
+                "how_it_should_be": "Правильнее: Multi-AZ — актуальный baseline, а Multi-Region — для редких случаев с жёстким DR."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Multi-Region использует синхронную репликацию с latency 1–2 мс, поэтому он быстрее и дешевле Multi-AZ и должен применяться по умолчанию вместо него.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-Region использует асинхронную репликацию (latency 50–300 мс из-за географии) и заметно дороже/сложнее Multi-AZ. Синхронная репликация с ~1–2 мс — это как раз свойство Multi-AZ внутри региона, а не Multi-Region.",
+                "source_of_confusion": "Свойства синхронной внутрирегиональной репликации ошибочно приписывают межрегиональной.",
+                "if_it_were_true": "Тогда не было бы проблемы потери последних транзакций при региональном failover, но именно асинхронность Multi-Region её создаёт.",
+                "how_it_should_be": "Правильнее: синхронная репликация ~1–2 мс — это Multi-AZ; Multi-Region асинхронен, медленнее и дороже."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Multi-AZ — реплики в разных `AZ` одного региона: защита от отказа `AZ`, стандарт для production, синхронная репликация (как RDS Multi-AZ), latency ~1–2 мс. Multi-Region — реплики в разных регионах: защита от отказа целого региона (редкость), disaster recovery, асинхронная репликация, latency 50–300 мс, намного дороже и сложнее. Крупные компании делают multi-region, но большинству достаточно multi-AZ.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это две ступени отказоустойчивости с разной ценой и сложностью. Multi-AZ дёшев и почти прозрачен (синхронная репликация внутри региона), покрывает 99% сбоев — падает обычно один `AZ`. Multi-Region защищает от крайне редкого отказа целого региона, но требует асинхронной репликации, разрешения конфликтов и кратно большего бюджета.",
+                "example": "Production RDS Multi-AZ: primary в `eu-central-1a`, standby в `1b`, синхронная репликация, автоматический failover за 60–120 сек при отказе AZ. Multi-Region DR: pilot-light копия в `eu-west-1` с асинхронной репликацией, активируется только при отказе всего `eu-central-1`.",
+                "when_to_apply": "Multi-AZ — для практически любого production (БД, stateful-сервисы) как базовый уровень HA. Multi-Region — когда требования RTO/RPO жёсткие, регуляторика требует геораспределения или бизнес не переживёт многочасовой отказ региона.",
+                "edge_cases": "Multi-AZ не спасает от региональных сбоев и от логических ошибок (плохой деплой реплицируется). Multi-Region добавляет проблему data consistency при асинхронной репликации (возможна потеря последних транзакций) и резко усложняет деплой/тестирование failover.",
+                "related": "[[aws-interview#Q31]] Reliability pillar Well-Architected; [[aws-interview#Q13]] RDS Multi-AZ; [[aws-interview#Q22]] Route53 failover для multi-region."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные приёмы оптимизации расходов в `AWS` и какими инструментами их контролируют?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Ключевые приёмы: right-sizing (не over-provision), Reserved Instances/Savings Plans для steady-нагрузок, Spot для batch, S3 lifecycle policies (IA/Glacier), остановка dev/test-инстансов на ночь (scheduling), удаление неиспользуемого (EBS-тома, snapshots, Elastic IP), `CloudFront` для статики (дешевле S3 outbound), VPC endpoints для `S3`/`DynamoDB` (обход NAT Gateway costs), сжатие данных перед transfer. Контроль — через Cost Explorer + Budgets, Trusted Advisor, Vantage (сторонний), Spot Advisor.",
+              "correct": true,
+              "sections": {
+                "explanation": "Cost-оптимизация — это сочетание выбора правильной pricing-модели (commitment vs On-Demand vs Spot), устранения waste (idle-ресурсы, забытые тома) и архитектурных приёмов (CDN, VPC endpoints вместо дорогого NAT/transfer). Без инструментов мониторинга (Cost Explorer, Budgets) экономия не управляема.",
+                "example": "Перевод 24/7 baseline ASG и RDS на 3-year Savings Plan (−58%), batch-ML на Spot (−80%), lifecycle для логов `S3 → Glacier` после 30 дней, удаление 40 осиротевших EBS-снапшотов, VPC endpoint для `S3` вместо прохода через NAT — суммарно срезает счёт на десятки процентов.",
+                "when_to_apply": "Регулярный FinOps-процесс: ежемесячный разбор Cost Explorer, алерты Budgets на превышение, ревью Trusted Advisor по idle-ресурсам, пересмотр commitment-покрытия, аудит data-transfer и NAT-затрат при росте трафика.",
+                "edge_cases": "Агрессивный right-sizing без headroom ломает пики нагрузки. Reserved/Savings Plans на 3 года рискованны при смене стека. Lifecycle в Glacier штрафует за ранний retrieval. Удаление «неиспользуемого» снапшота без проверки может стереть единственный бэкап.",
+                "related": "[[aws-interview#Q5]] Reserved/Spot/Savings Plans; [[aws-interview#Q23]] VPC endpoints против NAT-затрат; [[aws-interview#Q10]] S3 storage classes и lifecycle."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Главный способ сэкономить в `AWS` — всегда брать самые большие инстансы (`x1.32xlarge`) с запасом, потому что крупные инстансы `AWS` тарифицирует со скидкой за объём, и right-sizing только вредит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Over-provisioning — это прямой waste: вы платите за неиспользуемые ресурсы. Right-sizing (подбор размера под реальную нагрузку) — базовый приём cost-оптимизации. Объёмной скидки «чем больше инстанс, тем дешевле per-vCPU» в On-Demand нет.",
+                "source_of_confusion": "Объёмные скидки есть у `S3`/трафика, и эту логику ошибочно переносят на размер инстанса.",
+                "if_it_were_true": "Тогда Trusted Advisor не помечал бы over-provisioned инстансы как экономию, но это одна из его ключевых рекомендаций.",
+                "how_it_should_be": "Правильнее: экономят через right-sizing под нагрузку, а не покупкой максимальных инстансов с запасом."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "VPC endpoints для `S3`/`DynamoDB` увеличивают счёт, потому что добавляют плату за NAT Gateway поверх обычного трафика, поэтому их избегают ради экономии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "VPC endpoints как раз позволяют обойти `NAT Gateway`: трафик к `S3`/`DynamoDB` идёт напрямую через endpoint, минуя дорогой NAT ($0.045/GB). Это снижает счёт, а не увеличивает — это рекомендуемый cost-приём.",
+                "source_of_confusion": "Любой новый сетевой компонент интуитивно ассоциируется с дополнительной платой.",
+                "if_it_were_true": "Тогда Well-Architected не советовал бы gateway-endpoints для удешевления, но это стандартная рекомендация против NAT-затрат.",
+                "how_it_should_be": "Правильнее: VPC endpoints удешевляют доступ к S3/DynamoDB, обходя дорогой NAT Gateway."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cost Explorer и Budgets бесполезны для оптимизации: `AWS` не предоставляет инструментов анализа расходов, поэтому контролировать счёт можно только вручную выгружая CSV из биллинга.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AWS` даёт встроенные инструменты: Cost Explorer (анализ и прогноз трат), Budgets (алерты на превышение), Trusted Advisor (поиск idle-ресурсов), Cost Anomaly Detection. Ручной разбор CSV не требуется — это управляемый процесс.",
+                "source_of_confusion": "Биллинг `AWS` сложен, и кажется, что готовых аналитических инструментов нет.",
+                "if_it_were_true": "Тогда FinOps на AWS строился бы только на сторонних тулах, но Cost Explorer/Budgets — штатная основа cost-контроля.",
+                "how_it_should_be": "Правильнее: Cost Explorer, Budgets и Trusted Advisor — встроенные инструменты управления расходами."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие ошибки чаще всего допускают в `AWS` и как их предотвращать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Главная ошибка в `AWS` — это слишком строгие настройки безопасности: лучше держать `S3`-bucket публичными и SG открытыми на `0.0.0.0/0`, чтобы приложение «точно работало» и не упиралось в отказы доступа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Публичные bucket и открытые SG — это и есть классические критические ошибки, ведущие к утечкам и компрометации (Capital One). Безопасность строят по least-privilege, открывая ровно нужное, а не «всё ради работоспособности».",
+                "source_of_confusion": "Открыть всё действительно «чинит» любой AccessDenied/connection refused — соблазн быстрого фикса.",
+                "if_it_were_true": "Тогда AWS не включал бы Block Public Access по умолчанию и не предупреждал бы про `0.0.0.0/0` в консоли, но он делает и то, и другое.",
+                "how_it_should_be": "Правильнее: открытый доступ — это ошибка; безопасность строится по least-privilege с закрытым по умолчанию."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Частые ошибки: публичные `S3`-bucket (утечки данных, как в инциденте Capital One), отсутствие MFA на root-аккаунте, хардкод access keys в коде/git, открытые security groups (`0.0.0.0/0` для SSH), недооценка стоимости NAT Gateway и data transfer out, отсутствие тестирования бэкапов (бэкап не работает, пока не проверишь восстановление), single-AZ в production без резервирования, отсутствие мониторинга/алертов (инциденты остаются незамеченными), отсутствие тегирования ресурсов (невозможно атрибутировать затраты). Предотвращение — AWS Config, GuardDuty, Trusted Advisor, IAM Access Analyzer.",
+              "correct": true,
+              "sections": {
+                "explanation": "Большинство инцидентов в `AWS` — не из-за сложных атак, а из-за базовых упущений: открытый доступ, незащищённый root, утёкшие ключи, отсутствие резервирования и наблюдаемости. Эти ошибки системны и предотвращаются автоматическими guardrails (Config-правила, GuardDuty, Access Analyzer), а не только дисциплиной.",
+                "example": "Реальный сценарий: bucket с `Block Public Access=off` + забытый `0.0.0.0/0` на `:22` + IAM-ключ в публичном git → компрометация за часы. Защита: AWS Config-правило `s3-bucket-public-read-prohibited`, GuardDuty-алерт на аномальный API-вызов, обязательный MFA на root.",
+                "when_to_apply": "При настройке любого AWS-аккаунта/нагрузки: включать guardrails с самого начала (Block Public Access по умолчанию, MFA root, least-privilege роли, обязательное тегирование, алерты Budgets/CloudWatch, регулярные DR-учения с восстановлением бэкапа).",
+                "edge_cases": "Тестирование бэкапов часто пропускают — и обнаруживают неработающий restore в момент аварии. Тегирование внедряют поздно, теряя историческую атрибуцию затрат. Single-AZ «временно для экономии» нередко доживает до прода и падает вместе с зоной.",
+                "related": "[[aws-interview#Q9]] публичные S3 как утечка; [[aws-interview#Q24]] IAM root/MFA и хардкод ключей; [[aws-interview#Q32]] single-AZ против Multi-AZ."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "MFA на root-аккаунте и тестирование бэкапов — лишние формальности: root без MFA достаточно безопасен, а бэкап гарантированно работает по факту создания, проверять восстановление не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Root без MFA — критическая дыра (полный контроль над аккаунтом при утечке пароля), а непротестированный бэкап регулярно оказывается нерабочим в момент восстановления. И то, и другое — типичные дорогие ошибки, а не формальности.",
+                "source_of_confusion": "Эти меры не дают видимого эффекта в нормальной работе, и их ценность недооценивают до инцидента.",
+                "if_it_were_true": "Тогда не существовало бы практики DR-учений и принципа «backup не существует, пока не проверен restore», но это базовые правила надёжности.",
+                "how_it_should_be": "Правильнее: MFA на root обязателен, а бэкапы нужно регулярно проверять восстановлением."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Тегирование ресурсов и мониторинг в `AWS` бесполезны: без них cost-атрибуция и обнаружение инцидентов работают так же хорошо, поэтому их внедрение — пустая трата времени.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без тегов невозможно атрибутировать затраты по командам/проектам, а без мониторинга/алертов инциденты остаются незамеченными до жалоб пользователей. И то, и другое — частые упущения, прямо бьющие по FinOps и надёжности.",
+                "source_of_confusion": "Теги и алерты не влияют на работу приложения напрямую, и их откладывают как «неважное».",
+                "if_it_were_true": "Тогда Cost Explorer мог бы разбить расходы по проектам без тегов, но без них вся атрибуция теряется.",
+                "how_it_should_be": "Правильнее: тегирование даёт cost-атрибуцию, а мониторинг/алерты — своевременное обнаружение инцидентов."
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

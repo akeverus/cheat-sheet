@@ -392,6 +392,8 @@ my-file.json (v3, current)
 
 **ElastiCache for Redis OSS** vs **MemoryDB** (durable Redis-compatible) — для разных use cases.
 
+## Q17. Other DBs (DocumentDB, Neptune, Timestream)?
+
 **DocumentDB** — MongoDB-compatible (но не такой же).
 **Neptune** — graph database (Gremlin, SPARQL).
 **Timestream** — time-series.
@@ -400,6 +402,8 @@ my-file.json (v3, current)
 **Redshift** — data warehouse (см. [Data Warehousing](../data-engineering/data-warehousing-interview.md)).
 
 В **2025** — выбор сильно зависит от use case. Для большинства — **Aurora** или **DynamoDB**.
+
+## Q18. (!) VPC, subnets, route tables?
 
 **VPC (Virtual Private Cloud)** — isolated network в AWS region.
 
@@ -422,6 +426,8 @@ VPC (10.0.0.0/16)
 
 **Best practice:** multi-AZ subnets, public ↔ private separation.
 
+## Q19. (!) Security Groups vs NACLs?
+
 | Critterion | Security Groups | NACLs |
 |-----------|----------------|-------|
 | Level | Instance level | Subnet level |
@@ -438,6 +444,8 @@ VPC (10.0.0.0/16)
 
 В большинстве случаев — только **Security Groups**. NACLs для специальных cases.
 
+## Q20. ALB, NLB, CLB?
+
 | LB | Layer | Use case |
 |----|-------|----------|
 | **ALB (Application LB)** | Layer 7 (HTTP) | Web apps, microservices |
@@ -453,6 +461,8 @@ VPC (10.0.0.0/16)
 - SSL termination
 
 **ALB** — default для most web apps.
+
+## Q21. CloudFront CDN?
 
 **CloudFront** — global CDN от AWS (600+ edge locations).
 
@@ -474,6 +484,8 @@ Client → CloudFront edge (cached) → S3 / ALB / Lambda@Edge / EC2
 
 **Cost:** обычно дешевле чем serving из S3 directly (нет outbound transfer charges).
 
+## Q22. Route53?
+
 **Route53** — managed DNS service.
 
 **Routing policies:**
@@ -493,6 +505,8 @@ yourdomain.com → ALB (us-east-1)
               (latency-based routing)
 ```
 
+## Q23. (!) NAT Gateway, Internet Gateway?
+
 **Internet Gateway (IGW):**
 - Attached к VPC
 - Двунаправленная связь VPC ↔ internet
@@ -509,6 +523,8 @@ Private subnet: EC2 → NAT Gateway → IGW → Internet (outbound only)
 ```
 
 **Cost:** NAT Gateway **дорогой** ($0.045/hour + $0.045/GB processed). Surprise в bill.
+
+## Q24. (!) IAM — Users, Roles, Policies?
 
 **IAM (Identity and Access Management)** — управление доступом.
 
@@ -534,6 +550,8 @@ Private subnet: EC2 → NAT Gateway → IGW → Internet (outbound only)
 - **Resource-based** — attached к resource (S3 bucket policy)
 - **Permission boundaries** — max permissions
 
+## Q25. (!) IAM роли для EC2/Lambda — best practice?
+
 **Используй IAM roles, не access keys в коде.**
 
 ```python
@@ -549,6 +567,8 @@ client = boto3.client("s3")  # automatically uses instance role
 **Lambda execution role** — каждая Lambda имеет role.
 
 **Principle of least privilege:** только нужные permissions, не `s3:*`.
+
+## Q26. KMS, Secrets Manager, Parameter Store?
 
 **KMS (Key Management Service)** — managed encryption keys. Используется S3, EBS, RDS encryption.
 
@@ -566,6 +586,8 @@ client = boto3.client("s3")  # automatically uses instance role
 - **Secrets Manager** — credentials с rotation
 - **Parameter Store** — config (environment variables)
 - **KMS** — encryption keys (через Secrets Manager / Parameter Store)
+
+## Q27. (!) SQS vs SNS vs EventBridge?
 
 | Service | Тип | Use case |
 |---------|-----|----------|
@@ -588,6 +610,8 @@ client = boto3.client("s3")  # automatically uses instance role
 
 **В 2025** — EventBridge **default** для event-driven, SQS для simple queues.
 
+## Q28. Kinesis vs MSK (Kafka)?
+
 **Kinesis Data Streams** — AWS-native streaming. Похож на Kafka.
 
 **MSK (Managed Streaming for Kafka)** — managed Apache Kafka.
@@ -603,6 +627,8 @@ client = boto3.client("s3")  # automatically uses instance role
 **Когда:**
 - Уже Kafka стек / нужны Kafka tools → **MSK**
 - Tight AWS integration → **Kinesis**
+
+## Q29. (!) CloudWatch — metrics, logs, alarms?
 
 **CloudWatch** — мониторинг для AWS.
 
@@ -629,6 +655,8 @@ cloudwatch.put_metric_data(
 
 **Стоимость:** logs ingestion может быть **очень дорогим**. Optimize log levels.
 
+## Q30. X-Ray для tracing?
+
 **AWS X-Ray** — distributed tracing service.
 
 ```python
@@ -647,6 +675,8 @@ Visualizes:
 
 **Альтернативы:** OpenTelemetry + Jaeger/Datadog/Honeycomb обычно лучше (vendor-neutral).
 
+## Q31. (!) Well-Architected Framework — 5 pillars?
+
 AWS framework для design good architectures.
 
 1. **Operational Excellence** — automate, observe, improve
@@ -657,6 +687,8 @@ AWS framework для design good architectures.
 6. **Sustainability** (added 2021) — environmental impact
 
 **Well-Architected Tool** — automated review своей architecture.
+
+## Q32. (!) Multi-AZ vs Multi-Region?
 
 **Multi-AZ:**
 - Replicas в **разных AZ** одного region
@@ -675,6 +707,8 @@ AWS framework для design good architectures.
 
 **Big firms** делают multi-region. Большинству хватает **multi-AZ**.
 
+## Q33. Cost optimization tips?
+
 1. **Right-sizing** — не over-provision
 2. **Reserved Instances / Savings Plans** для steady workloads
 3. **Spot Instances** для batch
@@ -687,6 +721,8 @@ AWS framework для design good architectures.
 10. **Cost Explorer + Budgets** — мониторинг
 
 **Tools:** Cost Explorer, Trusted Advisor, **Vantage** (3rd party), Spot Advisor.
+
+## Q34. (!) Какие частые ошибки в AWS?
 
 1. **Public S3 buckets** — data leaks (Capital One incident)
 2. **No MFA на root account**

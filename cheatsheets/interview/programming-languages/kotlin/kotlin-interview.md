@@ -876,6 +876,8 @@ class Form {
 }
 ```
 
+## Q28. Что такое выражение `when` и чем оно лучше `switch`?
+
 `when` — мощная замена `switch` из Java с поддержкой произвольных условий.
 
 ```kotlin
@@ -916,6 +918,10 @@ fun area(shape: Shape): Double = when (shape) {
 
 **Преимущества перед `switch`**: нет fall-through, поддержка произвольных выражений, smart cast, exhaustive check для sealed/enum.
 
+## Q29. Что такое перегрузка операторов?
+
+`Kotlin` позволяет переопределять стандартные операторы (`+`, `-`, `*`, `[]`, `in` и др.) через функции с модификатором `operator` и фиксированным именем.
+
 ```kotlin
 data class Vector(val x: Double, val y: Double) {
     operator fun plus(other: Vector) = Vector(x + other.x, y + other.y)
@@ -933,6 +939,8 @@ println(-v1)            // Vector(-1.0, -2.0)
 
 Стандартные операторы: `plus` (+), `minus` (-), `times` (*), `div` (/), `rem` (%), `rangeTo` (..), `contains` (in), `get`/`set` ([]), `invoke` (()), `compareTo` (<, >, <=, >=).
 
+## Q30. В чём разница между `==` и `===`?
+
 - **`==`** — структурное равенство (вызывает `equals()`): `a == b` -> `a?.equals(b) ?: (b === null)`
 - **`===`** — ссылочное равенство (один объект в памяти)
 
@@ -948,6 +956,8 @@ val p2 = Point(1, 2)
 println(p1 == p2)  // true — data class генерирует equals по полям
 println(p1 === p2) // false — разные объекты в куче
 ```
+
+## Q31. Как работает деструктуризация (`destructuring declarations`)?
 
 Деструктуризация позволяет «распаковать» объект в набор переменных через функции `componentN()`.
 
@@ -970,6 +980,8 @@ val (_, email) = getUserData()
 ```
 
 Работает с любым классом, у которого есть `operator fun componentN()` — не только `data class`.
+
+## Q32. (!) В чём разница между `List` и `MutableList`?
 
 `Kotlin` разделяет read-only и mutable коллекции на уровне интерфейсов.
 
@@ -1003,6 +1015,10 @@ val immutable = underlying.toList()
 
 Подробнее — [Kotlin коллекции](kotlin-collections-interview.md).
 
+## Q33. В чём разница между `Sequence` и `Iterable`?
+
+`Iterable` вычисляется жадно (eager) и создаёт промежуточную коллекцию на каждом шаге, а `Sequence` обрабатывает элементы лениво (lazy) и поэлементно, без промежуточных списков.
+
 | | `Iterable` (коллекции) | `Sequence` |
 |---|---|---|
 | Вычисление | Eager (сразу) | Lazy (по требованию) |
@@ -1026,6 +1042,10 @@ val result2 = (1..1_000_000).asSequence()
 
 **Sequence** в Kotlin аналогичен `Stream` API в Java 8+, но проще в использовании и не требует `parallel()`.
 
+## Q34. В чём разница между `map` и `flatMap`?
+
+`map` преобразует каждый элемент один к одному, а `flatMap` — один ко многим с последующим «раскрытием» вложенных коллекций в один плоский список.
+
 ```kotlin
 val words = listOf("Hello World", "Kotlin is great")
 
@@ -1044,6 +1064,8 @@ val uniqueTags = allTags.toSet()         // [kotlin, jvm, spring]
 ```
 
 `flatMap` = `map` + `flatten`. Используется когда из каждого элемента получается коллекция, и нужен плоский результат.
+
+## Q35. (!) Что такое корутины и чем они отличаются от потоков?
 
 Корутины — легковесные «потоки» для асинхронного программирования. Подробные вопросы — в [Kotlin Coroutines](kotlin-coroutines-interview.md).
 
@@ -1082,6 +1104,8 @@ scope.launch {
 }
 ```
 
+## Q36. Что такое `CoroutineScope`, `Job` и `Dispatcher`?
+
 | Компонент | Назначение |
 |---|---|
 | **`CoroutineScope`** | Определяет жизненный цикл корутин. Отмена scope отменяет все дочерние корутины |
@@ -1098,6 +1122,8 @@ scope.launch {
 | `Dispatchers.Unconfined` | Текущий поток | Тесты, специальные случаи |
 
 Подробнее — [Kotlin Coroutines](kotlin-coroutines-interview.md).
+
+## Q37. В чём разница между `launch` и `async`?
 
 ```kotlin
 val scope = CoroutineScope(Dispatchers.IO)
@@ -1124,6 +1150,8 @@ coroutineScope {
 
 **`launch`** — когда не нужен результат (отправка события, логирование). **`async`** — когда нужен результат и параллельное выполнение.
 
+## Q38. (!) Какая польза от `@JvmStatic`, `@JvmOverloads` и `@JvmField`?
+
 Аннотации для улучшения совместимости Kotlin-кода с Java (подробнее — [интероп Kotlin и Java](kotlin-interop-java-interview.md)).
 
 ```kotlin
@@ -1147,6 +1175,8 @@ class Config {
 | `@JvmStatic` | `Config.Companion.default()` | `Config.default()` |
 | `@JvmField` | `Config.Companion.getVERSION()` | `Config.VERSION` |
 | `@JvmOverloads` | Только полная сигнатура | Перегрузки с default-значениями |
+
+## Q39. Что такое плагины `allOpen` и `noArg`?
 
 **`kotlin-allopen`** — делает классы с указанной аннотацией `open` (не `final`). Необходим для Spring Framework, где AOP-прокси требуют не-final классов.
 
@@ -1173,6 +1203,8 @@ noArg {
 
 `kotlin-spring` и `kotlin-jpa` — предварительно настроенные обёртки над `allOpen` и `noArg` для Spring/JPA.
 
+## Q40. Что такое `Reflection API` в Kotlin?
+
 `Kotlin Reflection` (`kotlin-reflect`) — API для инспекции структуры классов, свойств и функций в runtime.
 
 ```kotlin
@@ -1195,6 +1227,8 @@ field.isAccessible = true
 ```
 
 **Зачем**: сериализация, DI-фреймворки, тестирование. `kotlin-reflect` — отдельная зависимость (~2.5 MB), в production добавляйте осознанно.
+
+## Q41. Как работает интерполяция строк (string templates)?
 
 ```kotlin
 val name = "Kotlin"
@@ -1221,6 +1255,8 @@ println("Price: ${'$'}9.99")  // Price: $9.99
 
 Строковые шаблоны компилируются в `StringBuilder.append()` — эффективнее ручной конкатенации.
 
+## Q42. Что такое `contracts` в Kotlin?
+
 `Contracts` (экспериментальная фича) позволяют сообщить компилятору дополнительную информацию о поведении функции, что улучшает smart cast и анализ.
 
 ```kotlin
@@ -1242,6 +1278,8 @@ if (name.isNotNullOrEmpty()) {
 ```
 
 Стандартные функции `require`, `check`, `let`, `run` и т.д. уже используют contracts внутри.
+
+## Q43. (!) Какие best practices при написании идиоматичного Kotlin-кода?
 
 1. **`val` по умолчанию** — используйте `var` только когда необходима мутабельность
 2. **`data class` для DTO** — вместо boilerplate equals/hashCode/toString
@@ -1271,6 +1309,8 @@ fun process(list: List<String>): List<String> =
     list.filter { it.isNotBlank() }
         .map { it.uppercase() }
 ```
+
+## Q44. Что такое `typealias` и когда его использовать?
 
 `typealias` создаёт псевдоним для существующего типа. Не создаёт новый тип — на уровне JVM оба имени идентичны.
 
@@ -1312,6 +1352,8 @@ findUser(productId)  // Компилируется! — нет type-safety
 @JvmInline value class ProductId(val value: String)
 // findUser(ProductId("x"))  — ошибка компиляции ✅
 ```
+
+## Q45. Что такое `object expression` (анонимный объект) и чем отличается от `object declaration`?
 
 `object expression` создаёт анонимный объект в runtime — аналог анонимного класса в Java.
 

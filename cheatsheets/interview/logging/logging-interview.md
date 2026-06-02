@@ -449,6 +449,8 @@ public class AsyncConfig implements AsyncConfigurer {
 
 Подробнее о трассировке в [вопросах по метрикам и трейсингу](../monitoring/metrics-tracing-interview.md).
 
+## Q10. (!) Что такое структурированное логирование (`JSON`)?
+
 Структурированное логирование -- вывод логов в формате `JSON` с фиксированным набором полей. Позволяет машинную обработку, поиск и агрегацию в `ELK`, `Splunk`, `Loki`.
 
 **Обычный лог (текстовый):**
@@ -523,6 +525,8 @@ log.info("Order processed: {}, {}",
 // JSON: {"message":"Order processed: orderId=42, amount=99.99","orderId":42,"amount":99.99}
 ```
 
+## Q11. Как настроить ротацию лог-файлов (`RollingFileAppender`)?
+
 `RollingFileAppender` автоматически создаёт новые файлы по времени или размеру и удаляет старые.
 
 ```xml
@@ -552,6 +556,8 @@ log.info("Order processed: {}, {}",
 - `totalSizeCap` -- общий лимит на все файлы; при превышении удаляются самые старые
 - `.gz` в `fileNamePattern` -- автоматическое сжатие архивных файлов
 
+## Q12. (!) Почему параметризованные вызовы логгера предпочтительнее конкатенации?
+
 ```java
 // ПЛОХО: конкатенация выполняется ВСЕГДА, даже если уровень DEBUG отключён
 log.debug("User " + user.getName() + " performed action " + action);
@@ -572,6 +578,8 @@ if (log.isDebugEnabled()) {
 - Конкатенация вызывает `toString()` и выделяет память **каждый раз**
 - При параметризации `SLF4J` проверяет уровень **до** форматирования
 - В hot path экономия может быть существенной (тысячи вызовов/сек)
+
+## Q13. Что такое асинхронный аппендер и когда его использовать?
 
 Асинхронный аппендер помещает лог-записи во внутреннюю очередь и записывает в назначение в отдельном потоке. Поток приложения не блокируется на I/O.
 
@@ -601,6 +609,8 @@ if (log.isDebugEnabled()) {
 | Повышает throughput | При переполнении отбрасывает записи |
 
 **Когда использовать:** высокая нагрузка, допустима потеря нескольких записей при краше. Для критичных логов (аудит, финансы) -- синхронный аппендер.
+
+## Q14. (!) Как связать логи с распределённой трассировкой?
 
 В [микросервисной архитектуре](../architecture/microservices-interview.md) каждый запрос проходит через несколько сервисов. Для корреляции логов используют `traceId` и `spanId`.
 
@@ -655,6 +665,8 @@ public RestTemplate restTemplate(RestTemplateBuilder builder) {
 
 Стандарты заголовков: W3C `traceparent`, B3 (`X-B3-TraceId`, `X-B3-SpanId`). Подробнее в [вопросах по наблюдаемости](../monitoring/observability-interview.md).
 
+## Q15. Как не логировать чувствительные данные?
+
 Чувствительные данные (пароли, токены, номера карт, персональные данные) не должны попадать в логи.
 
 ```java
@@ -707,6 +719,8 @@ public class MaskingPatternLayout extends PatternLayout {
 - Переопределять `toString()` у DTO с чувствительными полями
 - Использовать аннотации маскировки (`@Masked`, `@Sensitive`) в собственных фреймворках
 
+## Q16. Чем `Logback` отличается от `Log4j2`?
+
 | Критерий | `Logback` | `Log4j2` |
 |----------|-----------|----------|
 | Связь с `SLF4J` | Нативная реализация | Адаптер `log4j-slf4j2-impl` |
@@ -727,6 +741,8 @@ configurations.all {
 }
 implementation 'org.springframework.boot:spring-boot-starter-log4j2'
 ```
+
+## Q17. Как уменьшить объём логов от сторонних библиотек?
 
 Задать уровень логирования по пакету библиотеки:
 
@@ -754,6 +770,8 @@ logging:
     com.zaxxer.hikari: WARN
     org.apache.kafka: WARN
 ```
+
+## Q18. (!) Что такое `correlation id` и как его использовать в микросервисах?
 
 `Correlation id` (или `traceId`) -- уникальный идентификатор, проходящий через все сервисы в рамках одного пользовательского запроса. Позволяет отфильтровать все логи одного запроса в [Elasticsearch](../databases/elasticsearch-interview.md) / `Kibana`.
 
@@ -796,6 +814,8 @@ public WebClient webClient() {
 }
 ```
 
+## Q19. Как логировать исключения правильно?
+
 ```java
 // ПРАВИЛЬНО: исключение как последний аргумент -- полный stack trace
 log.error("Failed to process order id={}", orderId, exception);
@@ -833,6 +853,8 @@ public class GlobalExceptionHandler {
     }
 }
 ```
+
+## Q20. (!) Как интегрировать логи с `ELK`?
 
 `ELK` стек (`Elasticsearch`, `Logstash`, `Kibana`) -- стандартное решение для централизованного сбора и поиска логов.
 
@@ -882,6 +904,8 @@ output.elasticsearch:
 
 Подробнее о `Elasticsearch` -- в [вопросах по Elasticsearch](../databases/elasticsearch-interview.md).
 
+## Q21. Что такое `Markers` в `SLF4J`/`Logback` и когда их использовать?
+
 `Markers` -- именованные метки, привязываемые к лог-записи. Позволяют фильтровать и маршрутизировать логи по категории.
 
 ```java
@@ -924,6 +948,8 @@ public class AuditService {
     </encoder>
 </appender>
 ```
+
+## Q22. Как настроить уровни логирования по окружению (`dev`/`prod`)?
 
 `Spring Boot` поддерживает профили в `logback-spring.xml` через `<springProfile>`:
 
@@ -976,6 +1002,8 @@ curl -X POST http://localhost:8080/actuator/loggers/com.example.myapp \
   -d '{"configuredLevel": "DEBUG"}'
 ```
 
+## Q23. Что такое `log sampling` и когда его применять?
+
 `Log sampling` -- выборочная запись логов (например, каждый N-й запрос или 1% записей) при высокой нагрузке.
 
 ```java
@@ -1015,6 +1043,8 @@ public class SamplingFilter extends TurboFilter {
 ```
 
 **Правило:** `ERROR` и `AUDIT` -- без выборки, всегда 100%. Sampling только для `INFO`/`DEBUG`.
+
+## Q24. Как логировать в многопоточном и асинхронном коде?
 
 `MDC` основан на `ThreadLocal` -- при переключении потока контекст теряется.
 
@@ -1069,6 +1099,8 @@ executor.submit(new MdcRunnable(() -> processOrder(orderId)));
 
 Для реактивных стеков см. Q30 и [вопросы по WebFlux](../frameworks/spring/spring-webflux-interview.md).
 
+## Q25. Что такое `Fluent API` в `Log4j2`?
+
 `Fluent API` -- цепочечный стиль вызова логгера, позволяющий условное вычисление сообщений через лямбды:
 
 ```java
@@ -1105,6 +1137,8 @@ log.atInfo()
    .log();
 ```
 
+## Q26. Как не раздувать логи при высокой нагрузке?
+
 **Чеклист для контроля объёма логов:**
 
 ```java
@@ -1135,6 +1169,8 @@ log.debug("Response: size={}, status={}", response.length(), response.getStatus(
 ```
 
 **Операционные метрики:** мониторить `ingestion lag` в системе сбора и стоимость хранения. Первыми под нож идут шумные `INFO`, а не `ERROR`.
+
+## Q27. Как интегрировать логи с метриками (`Micrometer`, `Prometheus`)?
 
 Логи и [метрики](../monitoring/metrics-tracing-interview.md) -- два разных канала наблюдаемости. Но их можно связать:
 
@@ -1174,6 +1210,8 @@ management:
         include: prometheus
 ```
 
+## Q28. Что такое `log aggregation` и зачем он нужен?
+
 В [распределённых системах](../architecture/distributed-systems-interview.md) логи размазаны по десяткам узлов. `Log aggregation` -- централизованный сбор всех логов в одно хранилище для поиска и анализа.
 
 ```mermaid
@@ -1202,6 +1240,8 @@ graph TB
 - **Корреляция:** `traceId` / `correlation id` для связи записей одного запроса
 
 Без `traceId` расследование инцидента в распределённой системе остаётся крайне медленным -- это антипаттерн.
+
+## Q29. Как обеспечить консистентность формата логов в микросервисах?
 
 **Подход: shared-конфигурация через библиотеку:**
 
@@ -1249,6 +1289,8 @@ public class LoggingAutoConfiguration {
 **Обязательные поля контракта:** `@timestamp`, `level`, `logger`, `message`, `service`, `env`, `traceId`. Документировать контракт и версию формата; при изменении -- обратная совместимость.
 
 **Проверка в CI:** валидировать JSON-схему логов и наличие обязательных полей.
+
+## Q30. Как логировать в реактивных стеках (`WebFlux`, `Project Reactor`)?
 
 В реактивных цепочках выполнение переключается между потоками; `MDC` (`ThreadLocal`) не передаётся автоматически. Подробнее о реактивном программировании -- в [вопросах по WebFlux](../frameworks/spring/spring-webflux-interview.md).
 
@@ -1319,6 +1361,8 @@ Mono.deferContextual(ctx -> {
     return processOrder(order);
 });
 ```
+
+## Q31. (!) Как настроить EFK-стек (Elasticsearch, Fluent Bit, Kibana)?
 
 **EFK** — замена ELK: вместо `Logstash` используется **`Fluent Bit`** (легче, написан на C, потребляет ~1 MB RAM против ~500 MB у Logstash). Популярен в Kubernetes-средах.
 
@@ -1406,6 +1450,8 @@ traceId: "4bf92f3577b34da6a3ce929d0e0e4736" AND level: "ERROR"
 | K8s интеграция | требует агент | нативный DaemonSet |
 | Throughput | до 10K/s | до 200K/s |
 
+## Q32. Как правильно использовать MDC в многопоточном коде с thread pools?
+
 `MDC` (`Mapped Diagnostic Context`) хранит данные в `ThreadLocal`, что создаёт проблемы при асинхронном выполнении — в новом потоке `MDC` пустой.
 
 **Проблема:**
@@ -1483,6 +1529,8 @@ Mono.just(order)
 - Всегда вызывать `MDC.clear()` после задачи (иначе ThreadLocal утечёт через пул)
 - В Kubernetes логи агрегируются по pod, поэтому `traceId` в MDC + JSON-логи = возможность сквозного поиска
 
+## Q33. Какие best practices по уровням логирования в production?
+
 Правильный выбор уровня логирования критичен: слишком много — перегрузка диска и Kibana, слишком мало — невозможно расследовать инциденты.
 
 **Эталонная таблица:**
@@ -1547,6 +1595,8 @@ curl http://localhost:8080/actuator/loggers/com.company.app
 ```
 
 Это мощный инструмент для расследования инцидентов в production без редеплоя.
+
+## Q34. (!) Чем Log4j2 async loggers отличаются от Logback AsyncAppender?
 
 `Log4j2` предоставляет нативные **async loggers** на основе `LMAX Disruptor` — lock-free ring buffer. `Logback` имеет только `AsyncAppender` (обёртку), который менее эффективен.
 
@@ -1619,6 +1669,8 @@ configurations.all {
 implementation 'org.springframework.boot:spring-boot-starter-log4j2'
 ```
 
+## Q35. Как работает Spring Boot Logging Auto-configuration?
+
 `Spring Boot` автоматически конфигурирует логирование через `LoggingSystem` абстракцию при старте.
 
 ```mermaid
@@ -1677,6 +1729,8 @@ logging:
 
 При старте `Spring Boot` выводит `[main]` логи до инициализации вашего конфига — это нормально; после загрузки `ApplicationContext` используется ваш конфиг.
 
+## Q36. Что такое ECS Layout и зачем он нужен?
+
 `ECS` (Elastic Common Schema) — стандартизированный формат полей для всей экосистемы `Elastic` (Elasticsearch, APM, Security). `ECS Layout` гарантирует совместимость логов с `Kibana Discover`, `Elastic APM` и готовыми дашбордами.
 
 ```json
@@ -1719,6 +1773,8 @@ implementation 'co.elastic.logging:logback-ecs-encoder:1.6.0'
 - Автоматически совместим с готовыми `Kibana` дашбордами
 - `Elastic APM` автоматически коррелирует логи с трейсами через `trace.id`
 - Стандарт полей — меньше сюрпризов при смене сервисов
+
+## Q37. Как тестировать логирование с MemoryAppender в unit-тестах?
 
 Тестирование логирования позволяет убедиться, что критичные события логируются на нужном уровне и чувствительные данные не попадают в логи.
 
@@ -1832,6 +1888,8 @@ class OrderServiceIntegrationLoggingTest {
 
 `MemoryAppender` — для unit-тестов отдельного класса; `OutputCaptureExtension` — для интеграционных тестов с проверкой реального формата вывода.
 
+## Q38. Как использовать StructuredArguments для обогащения JSON-логов?
+
 `StructuredArguments` из `logstash-logback-encoder` позволяет добавлять произвольные поля в `JSON`-лог помимо строки сообщения.
 
 ```java
@@ -1882,6 +1940,8 @@ public class OrderService {
 
 **Best practice:** использовать `keyValue` для полей, которые нужны и в читаемом тексте и в `JSON`; `append` через `Markers` — для полей только в машинном формате (userId, sessionId в каждой записи через MDC удобнее).
 
+## Q39. Как работает Log4j2 garbage-free logging?
+
 `Garbage-free logging` в `Log4j2` минимизирует создание объектов в `heap`, снижая давление на `GC`. Особенно важно для `latency-sensitive` приложений.
 
 Обычный цикл логирования создаёт объекты:
@@ -1931,6 +1991,8 @@ log.info("User {} placed order {}", userId, orderId)
 Ограничения: не все `Appender` и `Layout` поддерживают garbage-free (например, `JsonLayout` не поддерживает; используйте `JsonTemplateLayout`).
 
 Когда критично: финансовые приложения, игровые серверы, high-frequency trading — где паузы GC недопустимы.
+
+## Q40. Как настроить Graylog / GELF для приёма логов из Java?
 
 `Graylog` — альтернативная платформа централизованного логирования, использует протокол `GELF` (Graylog Extended Log Format).
 
@@ -1993,6 +2055,8 @@ implementation 'de.siegmar:logback-gelf:6.0.1'
 | Настройка | Проще | Гибче |
 
 Рекомендация для production: TCP `GELF` + async appender; UDP — только если потеря допустима.
+
+## Q41. Что такое Log Appender для Kafka и когда его применять?
 
 `Kafka Appender` — отправка лог-записей напрямую в топик `Kafka`, минуя промежуточные файлы и агенты.
 

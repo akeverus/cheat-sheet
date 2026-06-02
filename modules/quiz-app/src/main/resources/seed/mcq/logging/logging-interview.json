@@ -9,10 +9,10 @@
           "question_text": "Какие существуют фреймворки логирования в `Java` и как они соотносятся?",
           "options": [
             {
-              "text": "В экосистеме сосуществуют `SLF4J` (фасад-API), реализации `Logback` (нативная под `SLF4J`, дефолт в `Spring Boot`) и `Log4j2` (через адаптер `log4j-slf4j2-impl`), а также наследие `java.util.logging` (JUL) и `Log4j 1.x` (EOL с 2015). Код пишут против `SLF4J`, а реализацию выбирают на classpath.",
+              "text": "В экосистеме сосуществуют `SLF4J` (фасад-API), реализации `Logback` (нативная под `SLF4J`, дефолт в `Spring Boot`) и `Log4j2` (через адаптер `log4j-slf4j2-impl`), а также наследие `java.util.logging` (JUL) и `Log4j 1.x` (EOL с 2015). Код пишут против `SLF4J`, реализацию выбирают на classpath.",
               "correct": true,
               "sections": {
-                "explanation": "`SLF4J` — это абстракция (фасад), а `Logback`/`Log4j2`/JUL — конкретные движки; биндинг выбирается в момент сборки, поэтому одну реализацию меняют на другую без правки кода приложения.",
+                "explanation": "`SLF4J` — это абстракция (фасад), а `Logback`/`Log4j2`/JUL — конкретные движки; биндинг выбирается при сборке, поэтому одну реализацию меняют на другую без правки кода приложения.",
                 "example": "`spring-boot-starter` тянет `slf4j-api` + `logback-classic`; чтобы перейти на `Log4j2`, исключают `spring-boot-starter-logging` и добавляют `spring-boot-starter-log4j2` — код с `LoggerFactory.getLogger(...)` не меняется.",
                 "when_to_apply": "Эту карту фреймворков держат в голове при старте проекта, при выборе движка под производительность и при разборе конфликта нескольких биндингов в classpath.",
                 "edge_cases": "Два биндинга `SLF4J` в classpath дают предупреждение «multiple bindings» и непредсказуемый выбор движка — лишний биндинг исключают через `exclude`.",
@@ -232,7 +232,7 @@
                 "example": "`Spring Boot` в Kubernetes: `ConsoleAppender` с `LogstashEncoder` пишет JSON в stdout → Fluent Bit (DaemonSet) → Elasticsearch, без локальных файлов.",
                 "when_to_apply": "Выбор аппендера делают по среде запуска: контейнер — stdout, виртуалка/железо — `RollingFileAppender`; асинхронную обёртку добавляют под пиковую нагрузку.",
                 "edge_cases": "`AsyncAppender` сам не пишет никуда — он лишь буферизует и делегирует обёрнутому аппендеру (`FILE`/`CONSOLE`); при краше его очередь теряется.",
-                "related": "[[logging-interview#Q3]] что такое logger и как его создать."
+                "related": "[[logging-interview#Q13]] асинхронный аппендер; [[logging-interview#Q11]] ротация файлов; [[logging-interview#Q3]] что такое Logger."
               },
               "label": "D",
               "order": 3
@@ -253,10 +253,10 @@
               "correct": true,
               "sections": {
                 "explanation": "JSON в prod нужен для машинной обработки в ELK (поля `level`, `traceId` индексируются), а цветной текст в dev — для человеческого чтения; `%X{key}` достаёт значение из `MDC`.",
-                "example": "Netflix-style конфиг: `<springProfile>`-секции с разным паттерном, `%X{traceId}` для корреляции лога с трейсом в Zipkin/Tempo.",
+                "example": "Конфиг с `<springProfile>`-секциями: разный паттерн для dev и prod, `%X{traceId}` для корреляции лога с трейсом в Zipkin/Tempo.",
                 "when_to_apply": "Формат разделяют по окружению, когда настраивают `logback-spring.xml`: prod — JSON-энкодер, dev — `PatternLayout` с `%highlight`.",
                 "edge_cases": "В `Logback` напрямую `Layout` почти не используют — его оборачивают в `Encoder` (`PatternLayoutEncoder`), потому что `Appender` принимает именно `Encoder`.",
-                "related": "[[logging-interview#Q9]] MDC и %X{}; [[logging-interview#Q4]] что такое appender и какие типы существуют."
+                "related": "[[logging-interview#Q9]] MDC и %X{}; [[logging-interview#Q10]] структурированный JSON; [[logging-interview#Q4]] типы Appender."
               },
               "label": "A",
               "order": 0
@@ -325,10 +325,10 @@
               "correct": true,
               "sections": {
                 "explanation": "У каждого уровня чёткая семантика: `ERROR` будит дежурного, `WARN` разбирают утром, `INFO` помогает в post-mortem, `DEBUG`/`TRACE` — только локально, иначе объём логов взрывается.",
-                "example": "В платёжном сервисе: `log.info(\"Payment processed: orderId={}, status={}\", ...)` на успех и `log.error(\"Payment failed: orderId={}\", orderId, e)` с исключением последним аргументом на сбой.",
+                "example": "В платёжном сервисе: `log.info(\"Payment processed: orderId={}\", id)` на успех и `log.error(\"Payment failed: orderId={}\", id, e)` с исключением последним аргументом на сбой.",
                 "when_to_apply": "Эти правила применяют, настраивая alerting (по `level=ERROR`) и дашборды (счётчики по `WARN`), а также выбирая уровень в каждом `catch`-блоке.",
                 "edge_cases": "`FATAL` есть только в `Log4j2`; в `SLF4J` его нет, поэтому `log.fatal(...)` на чистом `SLF4J` не скомпилируется.",
-                "related": "[[logging-interview#Q5]] что такое layout / encoder и как настроить формат."
+                "related": "[[logging-interview#Q33]] best practices по уровням; [[logging-interview#Q19]] логирование исключений; [[logging-interview#Q22]] уровни по окружению."
               },
               "label": "B",
               "order": 1
@@ -400,7 +400,7 @@
                 "example": "`Spring Boot Admin` показывает UI `loggers` — SRE на инциденте поднимает `com.example` до `DEBUG` через POST на `/actuator/loggers/...` без редеплоя.",
                 "when_to_apply": "Распределение по каналам применяют при настройке проекта: XML — для prod-структуры, YAML — для повседневных правок, Actuator — для on-call-расследований.",
                 "edge_cases": "Изменение через `/actuator/loggers` действует до рестарта или до `LoggerContext.reset()`; для постоянного эффекта правят XML/YAML.",
-                "related": "[[logging-interview#Q5]] формат через Encoder."
+                "related": "[[logging-interview#Q22]] уровни по окружению; [[logging-interview#Q35]] Spring Boot auto-config; [[logging-interview#Q5]] формат через Encoder."
               },
               "label": "C",
               "order": 2
@@ -472,7 +472,7 @@
                 "example": "Переход на `Log4j2`: `exclude` для `spring-boot-starter-logging` и `implementation 'org.springframework.boot:spring-boot-starter-log4j2'` — ни одной правки в `LoggerFactory.getLogger(...)`.",
                 "when_to_apply": "Правило «API в коде, реализация в classpath» применяют всегда: импортируют только `org.slf4j.*`, а `ch.qos.logback`/`org.apache.logging.log4j` в коде приложения не трогают.",
                 "edge_cases": "`SLF4J` 2.0 добавил Fluent API (`log.atInfo()...`), но базовый контракт фасада тот же — реализация остаётся за биндингом.",
-                "related": "[[logging-interview#Q1]] фреймворки логирования; [[logging-interview#Q7]] какие существуют способы конфигурирования."
+                "related": "[[logging-interview#Q1]] фреймворки логирования; [[logging-interview#Q12]] параметризованные вызовы; [[logging-interview#Q7]] способы конфигурирования."
               },
               "label": "D",
               "order": 3
@@ -496,7 +496,7 @@
                 "example": "`TraceIdFilter` кладёт `MDC.put(\"traceId\", uuid)` в начале и в `finally` вызывает `MDC.clear()`; pattern `[traceId=%X{traceId}]` печатает значение в каждой строке запроса.",
                 "when_to_apply": "`MDC` применяют для корреляции логов одного HTTP-запроса и для проброса бизнес-контекста; в пулах потоков значение переносят вручную через `getCopyOfContextMap()`.",
                 "edge_cases": "`MDC` основан на `ThreadLocal`, поэтому в `@Async`/`CompletableFuture`/реактивных цепочках он теряется при переключении потока — нужен `TaskDecorator` или копирование контекста.",
-                "related": "[[logging-interview#Q8]] зачем использовать slf4j вместо прямого вызова."
+                "related": "[[logging-interview#Q18]] correlation id; [[logging-interview#Q32]] MDC в thread pools; [[logging-interview#Q8]] зачем SLF4J."
               },
               "label": "A",
               "order": 0
@@ -533,6 +533,1926 @@
                 "source_of_confusion": "Логично ожидать, что положенное в `MDC` появится в логе автоматически, без правки формата.",
                 "if_it_were_true": "Будь это так, лог содержал бы traceId даже при pattern без `%X{}` — но без спецификатора поле остаётся невидимым.",
                 "how_it_should_be": "MDC-поля выводят явно: `%X{traceId}` в `PatternLayout` или `<includeMdcKeyName>` в `LogstashEncoder`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое структурированное логирование (`JSON`) и зачем оно нужно?",
+          "options": [
+            {
+              "text": "Текстовый лог `2026-04-11 INFO ... Order processed: orderId=42` так же удобен для поиска в `Elasticsearch`, как и JSON.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Из текста ELK не извлекает поля без grok-парсинга; поиск `orderId:42` по неструктурированной строке не работает — нужен JSON с явными полями.",
+                "source_of_confusion": "Человек легко читает текстовую строку, отсюда вывод, что и машина ищет по ней так же легко.",
+                "if_it_were_true": "Будь это так, не понадобились бы grok-фильтры в Logstash для парсинга текста — но именно их и пишут, чтобы вытащить поля.",
+                "how_it_should_be": "Для машинного поиска логи пишут в JSON с явными полями; текстовый формат оставляют для локального чтения."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Структурированное логирование — вывод логов в формате `JSON` с фиксированным набором полей (`level`, `message`, `traceId`, `orderId`...). Это даёт машинную обработку, индексацию и поиск в `ELK`/`Splunk`/`Loki` по конкретным полям, а не grep по сырому тексту.",
+              "correct": true,
+              "sections": {
+                "explanation": "В JSON каждое поле индексируется отдельно, поэтому запрос `level:ERROR AND traceId:abc-123` отрабатывает мгновенно; настраивают через `LogstashEncoder` в `Logback`.",
+                "example": "`<encoder class=\"net.logstash.logback.encoder.LogstashEncoder\">` с `<includeMdcKeyName>traceId</includeMdcKeyName>` и `<customFields>{\"service\":\"order-service\"}</customFields>` даёт JSON с полями из MDC и статическими полями сервиса.",
+                "when_to_apply": "JSON-логи включают в prod-профиле, когда логи уходят в централизованную систему; в dev оставляют читаемый текст для человека.",
+                "edge_cases": "`StructuredArguments.keyValue(\"orderId\", 42)` добавляет поле и в JSON, и в текст сообщения; `value(...)` — только в текст, без отдельного JSON-поля.",
+                "related": "[[logging-interview#Q5]] Layout и Encoder; [[logging-interview#Q38]] StructuredArguments; [[logging-interview#Q20]] интеграция с ELK."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Структурированный лог означает просто запись сообщения целиком в одно строковое поле `message` без отдельных полей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смысл структурирования — именно в отдельных типизированных полях (`orderId`, `traceId`, `level`); один общий `message` не даёт фильтрации по атрибутам.",
+                "source_of_confusion": "Слово «structured» путают с «JSON-обёрнутый текст», теряя суть — отдельные поля.",
+                "if_it_were_true": "Будь так, дашборд «топ-10 orderId с ошибками» построить было бы нельзя — но при отдельном поле `orderId` это тривиальная агрегация.",
+                "how_it_should_be": "Ключевые атрибуты выносят в отдельные JSON-поля (`keyValue`, MDC), а не прячут внутрь строки `message`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "JSON-логи нужно включать и в dev, и в prod одинаково — читаемый текст в консоли больше не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В dev сырой JSON в консоли нечитаем человеком; там оставляют цветной `PatternLayout`, а JSON включают только в prod-профиле под ELK.",
+                "source_of_confusion": "Консистентность форматов кажется плюсом, отсюда желание лить JSON везде.",
+                "if_it_were_true": "Будь JSON в dev удобен, разработчик не жаловался бы на нечитаемую простыню в консоли — но именно поэтому dev оставляют текстовым.",
+                "how_it_should_be": "Формат делят по профилю: prod — JSON для машин, dev — цветной текст для человека."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить ротацию лог-файлов через `RollingFileAppender`?",
+          "options": [
+            {
+              "text": "Достаточно `FileAppender` с одним файлом — `Logback` сам начнёт новый файл, когда текущий станет большим.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Чистый `FileAppender` не ротирует ничего: файл растёт безгранично; авто-ротацию даёт только `RollingFileAppender` с rolling policy.",
+                "source_of_confusion": "Логично ожидать «умного» поведения по умолчанию, но `FileAppender` его не реализует.",
+                "if_it_were_true": "Будь авто-ротация встроена в `FileAppender`, `app.log` не разрастался бы до десятков гигабайт — но без `RollingFileAppender` именно так и происходит.",
+                "how_it_should_be": "Для ротации берут `RollingFileAppender` с `SizeAndTimeBasedRollingPolicy`; `FileAppender` — только для коротких dev-кейсов."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`maxHistory` задаёт максимальный размер одного файла в мегабайтах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`maxHistory` — это число хранимых ротированных файлов/дней; размер одного файла задаёт `maxFileSize`.",
+                "source_of_confusion": "Оба параметра про «сколько хранить», поэтому их назначение путают.",
+                "if_it_were_true": "Будь `maxHistory` размером файла, `maxHistory=30` давал бы файлы по 30 МБ — но он оставляет именно 30 архивов/дней произвольного размера.",
+                "how_it_should_be": "`maxFileSize` — размер одного файла, `maxHistory` — глубина хранения архивов, `totalSizeCap` — суммарный лимит."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`RollingFileAppender` с `SizeAndTimeBasedRollingPolicy` автоматически создаёт новые файлы по дате/размеру и удаляет старые: `maxFileSize` (порог нового файла), `maxHistory` (сколько дней/файлов хранить), `totalSizeCap` (общий лимит), а `.gz` в `fileNamePattern` включает сжатие архивов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ротация защищает от переполнения диска: при достижении `maxFileSize` открывается файл с индексом `%i`, а превышение `totalSizeCap` удаляет самые старые архивы.",
+                "example": "`<fileNamePattern>logs/app.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>` + `<maxFileSize>100MB</maxFileSize>` + `<maxHistory>30</maxHistory>` + `<totalSizeCap>5GB</totalSizeCap>` — новый файл каждый день или каждые 100 МБ, хранение 30 дней, потолок 5 ГБ.",
+                "when_to_apply": "Ротацию настраивают на сервисах, которые пишут логи в файл на VM/железе; в контейнерах чаще пишут в stdout и ротацию делает log-driver.",
+                "edge_cases": "Без `totalSizeCap` `maxHistory` ограничивает только число файлов по времени — при всплеске объёма диск всё равно может переполниться, поэтому задают оба лимита.",
+                "related": "[[logging-interview#Q4]] типы Appender; [[logging-interview#Q26]] объём логов под нагрузкой; [[logging-interview#Q13]] асинхронный аппендер."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`totalSizeCap` не нужен, если задан `maxHistory` — лимит по дням гарантирует, что диск не переполнится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`maxHistory` ограничивает количество дней, но не суммарный объём: при всплеске трафика дневные файлы раздуваются и забивают диск; `totalSizeCap` ставит жёсткий потолок по байтам.",
+                "source_of_confusion": "Кажется, что лимит по времени автоматически ограничивает и объём, но размер дня переменный.",
+                "if_it_were_true": "Будь `maxHistory` достаточным, инцидент с DEBUG-флудом не заполнял бы диск за день — но без `totalSizeCap` он его заполняет.",
+                "how_it_should_be": "Задают оба лимита: `maxHistory` (глубина) и `totalSizeCap` (потолок по объёму) — они дополняют друг друга."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему параметризованные вызовы логгера предпочтительнее конкатенации строк?",
+          "options": [
+            {
+              "text": "Конкатенация и плейсхолдеры стоят одинаково — `SLF4J` всё равно собирает строку до проверки уровня.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: при плейсхолдерах форматирование откладывается до проверки уровня; конкатенация же собирает строку в момент вызова, до проверки.",
+                "source_of_confusion": "Итоговый текст в логе одинаков, поэтому стоимость кажется равной.",
+                "if_it_were_true": "Будь это так, профайлер не показывал бы время в `String.concat`/`toString` при выключенном `DEBUG` — но при конкатенации именно там оно и тратится.",
+                "how_it_should_be": "Плейсхолдеры `{}` дешевле: уровень проверяется до форматирования, конкатенация — нет."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Для дорогих аргументов достаточно конкатенации — оборачивать в лямбду или `isDebugEnabled()` бессмысленно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дорогая сериализация большого объекта выполнится даже при выключенном уровне, если она в конкатенации/аргументе; лямбда (`() -> expensive()`) откладывает её до фактической записи.",
+                "source_of_confusion": "Кажется, что параметризация уже всё решает, поэтому лямбда выглядит лишней.",
+                "if_it_were_true": "Будь лямбда бессмысленной, `expensiveToString(data)` не вызывался бы при выключенном `DEBUG` — но как обычный аргумент он вызывается всегда.",
+                "how_it_should_be": "Для тяжёлых аргументов используют лямбду (`log.atDebug().log(\"{}\", () -> ...)`) или проверку `isDebugEnabled()`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Чтобы вывести literal-фигурные скобки `{}` в сообщении, их нельзя экранировать — придётся отказаться от плейсхолдеров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SLF4J` поддерживает экранирование `\\\\{}`, поэтому literal-скобки выводятся без отказа от параметризации.",
+                "source_of_confusion": "Раз `{}` — плейсхолдер, кажется, что вывести их как текст нельзя.",
+                "if_it_were_true": "Будь экранирования нет, нельзя было бы залогировать пример JSON `{}` через параметризованный вызов — но `\\\\{}` это решает.",
+                "how_it_should_be": "Literal `{}` экранируют обратным слешем (`\\\\{}`), сохраняя параметризованный стиль."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "При `log.debug(\"User {} did {}\", user, action)` `SLF4J` проверяет уровень ДО форматирования: если `DEBUG` выключен, ни `toString()`, ни конкатенация не выполняются. При `log.debug(\"User \" + user + ...)` строка собирается ВСЕГДА, даже когда уровень отключён, тратя CPU и память.",
+              "correct": true,
+              "sections": {
+                "explanation": "Плейсхолдер `{}` откладывает форматирование до момента, когда запись точно будет записана; для очень дорогих аргументов добавляют лямбду (`log.atDebug().log(\"{}\", () -> expensive())`).",
+                "example": "В hot path с тысячами вызовов/сек выключенный `DEBUG` при конкатенации всё равно зовёт `user.toString()` каждый раз — параметризация это убирает.",
+                "when_to_apply": "Параметризацию применяют во всех вызовах логгера; лямбду или `isDebugEnabled()` — когда сам аргумент дорого вычислять (сериализация большого объекта).",
+                "edge_cases": "Если в сообщении нужен literal `{}`, его экранируют `\\\\{}`; лишние/недостающие аргументы `SLF4J` не роняет, но формат будет неполным.",
+                "related": "[[logging-interview#Q8]] почему SLF4J; [[logging-interview#Q26]] объём логов под нагрузкой; [[logging-interview#Q25]] Fluent API."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое асинхронный аппендер и когда его использовать?",
+          "options": [
+            {
+              "text": "`AsyncAppender` помещает лог-записи во внутреннюю очередь (`queueSize`, дефолт 256) и пишет в назначение в отдельном потоке, не блокируя бизнес-поток на I/O. Плюс — сглаживание пиков I/O и рост throughput; минус — потеря записей из очереди при краше и доп. память.",
+              "correct": true,
+              "sections": {
+                "explanation": "`AsyncAppender` — обёртка над реальным аппендером (`FILE`/`CONSOLE`): при заполнении очереди выше `discardingThreshold` он отбрасывает `TRACE`/`DEBUG`, сохраняя `WARN`/`ERROR`.",
+                "example": "`<appender name=\"ASYNC\" class=\"ch.qos.logback.classic.AsyncAppender\"><queueSize>1024</queueSize><appender-ref ref=\"FILE\"/></appender>` — буфер на 1024 события перед файловым аппендером.",
+                "when_to_apply": "Async включают при высокой нагрузке, когда допустима потеря нескольких записей при краше; для критичных логов (аудит, финансы) оставляют синхронный аппендер.",
+                "edge_cases": "При `includeCallerData=true` async теряет преимущество — вычисление caller info дорогое; по умолчанию его держат `false`.",
+                "related": "[[logging-interview#Q4]] типы Appender; [[logging-interview#Q34]] Log4j2 async vs Logback; [[logging-interview#Q26]] объём логов под нагрузкой."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`AsyncAppender` гарантирует, что ни одна запись не потеряется даже при аварийном завершении приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При краше JVM записи, оставшиеся в очереди и не записанные, теряются; async — это trade-off скорости против гарантий доставки.",
+                "source_of_confusion": "«Асинхронно» звучит как «надёжно и без блокировок», отсюда вывод о нулевой потере.",
+                "if_it_were_true": "Будь потеря невозможна, для аудит-логов не рекомендовали бы синхронный аппендер — но именно его и берут ради гарантий.",
+                "how_it_should_be": "Async допускает потерю записей из очереди при краше; критичные логи пишут синхронно."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`AsyncAppender` сам пишет в файл — обёрнутый `FileAppender` ему не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AsyncAppender` только буферизует и делегирует обёрнутому аппендеру через `<appender-ref>`; без него писать некуда.",
+                "source_of_confusion": "Название «appender» наводит на мысль, что он самодостаточен и сам пишет в назначение.",
+                "if_it_were_true": "Будь он самодостаточен, конфиг без `<appender-ref>` работал бы — но без ссылки на реальный аппендер логи никуда не уходят.",
+                "how_it_should_be": "`AsyncAppender` оборачивает реальный аппендер (`FILE`/`CONSOLE`) через `<appender-ref>` и делегирует ему запись."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Async-аппендер стоит использовать для всех логов без исключения, включая аудит и финансовые записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для аудита/финансов потеря записи недопустима, поэтому их пишут синхронно; async оставляют для обычных `INFO`/`DEBUG` под нагрузкой.",
+                "source_of_confusion": "Async ускоряет всё, поэтому кажется универсально полезным.",
+                "if_it_were_true": "Будь async безопасен для аудита, регулятор принял бы потерю части аудит-записей при краше — но он этого не принимает.",
+                "how_it_should_be": "Async — для обычных логов под нагрузкой; критичные (аудит, финансы) пишут синхронно."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как связать логи с распределённой трассировкой в микросервисах?",
+          "options": [
+            {
+              "text": "Достаточно, чтобы каждый сервис писал в один общий файл — `traceId` для связи логов не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `traceId` в общем потоке логи разных запросов перемешаны и не отделимы друг от друга; именно `traceId` связывает записи одного запроса.",
+                "source_of_confusion": "Кажется, что централизованное хранилище само по себе решает корреляцию.",
+                "if_it_were_true": "Будь общего файла достаточно, поиск всех логов одного запроса не требовал бы `traceId` — но без него отфильтровать запрос невозможно.",
+                "how_it_should_be": "Логи связывают по сквозному `traceId` в MDC и заголовках, а не просто складывают в одно место."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Через сквозной `traceId`/`spanId`: на входе их кладут в `MDC` (в `Spring Boot` это делает `Micrometer Tracing`), а при исходящих вызовах пробрасывают заголовком (`W3C traceparent`, `B3`). Тогда лог любого сервиса содержит `traceId`, и в `Kibana`/`Loki` логи всего запроса находятся по одному значению.",
+              "correct": true,
+              "sections": {
+                "explanation": "`traceId` идентифицирует весь запрос через все сервисы, `spanId` — конкретный шаг; их попадание в `MDC` и в заголовки даёт корреляцию логов и трейсов из APM.",
+                "example": "`Micrometer Tracing` (бывший Sleuth) автоматически наполняет MDC, и `log.info(\"Payment processed\")` выводит `[traceId=abc-123, spanId=def-456]` без ручного кода.",
+                "when_to_apply": "Это настраивают во всех микросервисах, чтобы расследовать инцидент по одному `traceId`, а не собирать логи руками по каждому сервису.",
+                "edge_cases": "При ручном вызове через `RestTemplate`/`WebClient` без авто-инструментации `traceId` нужно явно прокидывать интерсептором, иначе цепочка трассировки рвётся.",
+                "related": "[[logging-interview#Q18]] correlation id; [[logging-interview#Q9]] MDC; [[logging-interview#Q27]] логи и метрики."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`traceId` генерируется заново в каждом сервисе, поэтому у одного запроса разные traceId на каждом шаге.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`traceId` создаётся один раз (на gateway/первом сервисе) и пробрасывается без изменения; на каждом шаге меняется только `spanId`.",
+                "source_of_confusion": "Раз каждый сервис кладёт что-то в MDC, кажется, что он и генерирует traceId.",
+                "if_it_were_true": "Будь traceId разным на каждом шаге, поиск по одному значению не собрал бы цепочку — но смысл именно в едином traceId на весь запрос.",
+                "how_it_should_be": "`traceId` единый на весь запрос (генерируется в начале и пробрасывается), меняется только `spanId` на каждом span."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "При исходящих HTTP-вызовах `traceId` передаётся сам собой, прокидывать заголовок вручную или авто-инструментацией не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MDD/ThreadLocal не пересекает сетевую границу: без авто-инструментации или ручного интерсептора заголовок `traceparent`/`X-Trace-Id` не уходит, и цепочка рвётся.",
+                "source_of_confusion": "Раз traceId в MDC, кажется, что он автоматически летит и по сети.",
+                "if_it_were_true": "Будь это так, вызов через голый `RestTemplate` без интерсептора сохранял бы traceId на той стороне — но он его теряет.",
+                "how_it_should_be": "`traceId` пробрасывают заголовком: авто-инструментацией (`Micrometer Tracing`) или ручным интерсептором на `RestTemplate`/`WebClient`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как не логировать чувствительные данные?",
+          "options": [
+            {
+              "text": "Можно логировать весь объект запроса целиком через `log.info(\"request={}\", request)` — это удобно для отладки и безопасно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дамп всего объекта через `toString()` легко вытащит пароль/токен/карту в лог; логируют только явно безопасные поля.",
+                "source_of_confusion": "Полный дамп удобен при отладке, и про скрытые секретные поля забывают.",
+                "if_it_were_true": "Будь это безопасно, security-сканер логов не находил бы PAN/токены в проде — но при дампе объектов он их находит.",
+                "how_it_should_be": "Логируют только allowlist безопасных полей; полный дамп объектов с секретами не делают."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Достаточно blacklist «запрещённых» полей — перечислить, что не логировать, проще и надёжнее, чем allowlist.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Blacklist дыряв: новое чувствительное поле в DTO по умолчанию попадёт в лог, пока его не добавят в список; allowlist безопаснее по умолчанию.",
+                "source_of_confusion": "Запретить «плохие» поля интуитивно проще, чем явно разрешать «хорошие».",
+                "if_it_were_true": "Будь blacklist надёжен, добавление поля `ssn` в DTO не утекало бы в лог до правки списка — но при blacklist оно утекает сразу.",
+                "how_it_should_be": "Используют allowlist (явно разрешённые поля), а не blacklist — он защищает по умолчанию."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Чувствительные данные (пароли, токены, номера карт, ПДн) не кладут в логи: логируют только безопасные идентификаторы (`username`, `last4`), маскируют через кастомный `MaskingPatternLayout` или allowlist полей для JSON, переопределяют `toString()` у DTO с секретами и проверяют в тестах, что секрет не попал в лог.",
+              "correct": true,
+              "sections": {
+                "explanation": "Утечка секрета в лог = инцидент безопасности: лог уходит в централизованное хранилище с широким доступом, поэтому фильтрацию делают на уровне формата и кода.",
+                "example": "Вместо `log.info(\"login: password={}\", password)` пишут `log.info(\"login: username={}\", username)`, а номер карты логируют как `last4=...` после маскировки.",
+                "when_to_apply": "Allowlist и маскировку применяют ко всем логам, где могут оказаться ПДн или секреты: auth, платежи, обработка форм пользователя.",
+                "edge_cases": "Опасны не только явные поля: секрет может протечь через `toString()` DTO, через тело исключения или через дамп всего объекта — поэтому `toString()` переопределяют и тестируют.",
+                "related": "[[logging-interview#Q37]] тестирование логов; [[logging-interview#Q19]] логирование исключений; [[logging-interview#Q5]] Layout и Encoder."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Маскировку можно не делать — `Logback` сам скрывает пароли и номера карт в логах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Logback` не знает, что является секретом, и ничего не маскирует автоматически; маскировку пишут сами (кастомный layout, фильтры, `toString()`).",
+                "source_of_confusion": "Кажется, что зрелый фреймворк обязан защищать от утечек из коробки.",
+                "if_it_were_true": "Будь авто-маскировка встроена, не существовало бы кастомных `MaskingPatternLayout` — но их пишут именно потому, что её нет.",
+                "how_it_should_be": "Маскировку реализуют явно: кастомный layout/encoder, переопределённый `toString()`, allowlist полей."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `Logback` отличается от `Log4j2`?",
+          "options": [
+            {
+              "text": "`Log4j2` — это дефолт в `Spring Boot`, а `Logback` надо подключать отдельно с исключением стартера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: дефолт в `Spring Boot` — `Logback` (через `spring-boot-starter-logging`), а `Log4j2` подключают вручную, исключив стартер.",
+                "source_of_confusion": "`Log4j` исторически известнее, отсюда ложное ощущение, что именно он дефолтный.",
+                "if_it_were_true": "Будь `Log4j2` дефолтом, новый Spring-проект писал бы `log4j2.xml`, а не `logback-spring.xml` — но генерируется именно logback-конфиг.",
+                "how_it_should_be": "Дефолт — `Logback`; `Log4j2` включают вручную через `spring-boot-starter-log4j2` с `exclude` логин-стартера."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "У `Logback` и `Log4j2` одинаковая модель асинхронности: оба используют LMAX Disruptor под капотом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LMAX Disruptor (lock-free ring buffer) — только у `Log4j2` async loggers; `Logback` использует `AsyncAppender` поверх `BlockingQueue`, который медленнее.",
+                "source_of_confusion": "Оба «умеют async», отсюда вывод об одинаковой реализации.",
+                "if_it_were_true": "Будь модели идентичны, бенчмарки не показывали бы кратный отрыв `Log4j2 AsyncLogger` — но он есть из-за Disruptor.",
+                "how_it_should_be": "`Log4j2` — нативные async loggers на Disruptor; `Logback` — `AsyncAppender` на блокирующей очереди."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Log4j2` поддерживает только XML, тогда как `Logback` умеет XML, JSON, YAML и Properties.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: широкий набор форматов (XML/JSON/YAML/Properties) — у `Log4j2`; `Logback` поддерживает XML и Groovy.",
+                "source_of_confusion": "Форматы конфигурации легко перепутать местами между двумя похожими движками.",
+                "if_it_were_true": "Будь это так, `log4j2.yaml` не существовал бы — но `Log4j2` его поддерживает, а вот `logback.yaml` нет.",
+                "how_it_should_be": "Множество форматов конфига (включая YAML/JSON) — у `Log4j2`; `Logback` ограничен XML и Groovy."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Logback` — нативная реализация `SLF4J` и дефолт в `Spring Boot`, конфиг XML/Groovy, async через `AsyncAppender`-обёртку. `Log4j2` подключается адаптером `log4j-slf4j2-impl`, конфиг XML/JSON/YAML/Properties, имеет нативные async loggers (LMAX Disruptor) и garbage-free режим — поэтому при пиковой нагрузке он быстрее.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главные оси сравнения: интеграция с SLF4J, форматы конфигурации, модель асинхронности и производительность; `Log4j2` выигрывает в throughput async, `Logback` — в простоте дефолта.",
+                "example": "Переход на `Log4j2`: исключают `spring-boot-starter-logging` и добавляют `spring-boot-starter-log4j2`; `LoggerFactory.getLogger(...)` в коде остаётся прежним.",
+                "when_to_apply": "`Log4j2` выбирают для latency-чувствительных high-throughput сервисов; `Logback` оставляют как разумный дефолт для большинства приложений.",
+                "edge_cases": "Историческая уязвимость `Log4Shell` (CVE-2021-44228) была в `Log4j2` и исправлена в 2.17+; `Logback` ей не подвержен — этот факт часто спрашивают на собеседовании.",
+                "related": "[[logging-interview#Q34]] Log4j2 async vs Logback; [[logging-interview#Q1]] фреймворки; [[logging-interview#Q39]] garbage-free logging."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как уменьшить объём логов от сторонних библиотек?",
+          "options": [
+            {
+              "text": "Поднимают уровень шумных пакетов до `WARN`/`ERROR` через per-logger настройку: `<logger name=\"org.hibernate\" level=\"WARN\"/>` в `logback-spring.xml` или `logging.level.org.hibernate=WARN` в `application.yml`. Благодаря иерархии логгеров уровень применяется ко всем вложенным классам пакета.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сторонние библиотеки (Hibernate, Spring, Kafka, Hikari) на `INFO`/`DEBUG` дают основную долю шума; подавляют их точечно, не трогая собственные пакеты приложения.",
+                "example": "`logging.level: { org.springframework: WARN, org.hibernate: WARN, com.zaxxer.hikari: WARN, org.apache.kafka: WARN }` — типовой набор для тихого prod.",
+                "when_to_apply": "Это делают при подготовке prod-конфигурации и когда конкретная библиотека внезапно начинает флудить логами после обновления.",
+                "edge_cases": "SQL-логи Hibernate (`org.hibernate.SQL`) держат на `DEBUG` только в dev-профиле; в prod их опускают до `WARN`, иначе объём взрывается.",
+                "related": "[[logging-interview#Q22]] уровни по окружению; [[logging-interview#Q26]] объём логов под нагрузкой; [[logging-interview#Q2]] иерархия логгеров."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Чтобы убрать шум библиотеки, надо опустить уровень `root` до `WARN` — это самый чистый способ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`root=WARN` глушит и собственные `INFO`-логи приложения (бизнес-события), теряя нужную диагностику; шум подавляют точечно по пакету библиотеки.",
+                "source_of_confusion": "`root` кажется удобной «одной ручкой» для уровня всего приложения.",
+                "if_it_were_true": "Будь `root=WARN` правильным, бизнес-события `log.info(\"Order created\")` сохранялись бы — но они тоже пропадают.",
+                "how_it_should_be": "Уровень поднимают на конкретном пакете библиотеки (`org.hibernate=WARN`), оставляя `INFO` для своих пакетов."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Уровень для пакета библиотеки можно задать только программно — в `application.yml` это невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`logging.level.<package>=WARN` в `application.yml` — штатный декларативный способ; программный API не требуется.",
+                "source_of_confusion": "Кажется, что тонкая настройка чужих пакетов доступна лишь через код.",
+                "if_it_were_true": "Будь это так, в `application.yml` не было бы секции `logging.level.*` — но она есть и работает по пакетам.",
+                "how_it_should_be": "Уровень пакета задают декларативно через `logging.level.<package>` в YAML или `<logger name=...>` в XML."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Иерархия логгеров тут не помогает: `org.hibernate=WARN` не повлияет на `org.hibernate.SQL`, для каждого класса уровень задают отдельно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Благодаря иерархии `org.hibernate=WARN` действует на все вложенные логгеры, включая `org.hibernate.SQL`, пока для них не задан свой уровень.",
+                "source_of_confusion": "Не зная про наследование уровней, ожидают, что настройка пакета не достаёт до подпакетов.",
+                "if_it_were_true": "Будь так, пришлось бы перечислять сотни классов Hibernate вручную — но достаточно одной строки на пакет.",
+                "how_it_should_be": "Уровень пакета наследуется вложенными логгерами; переопределяют лишь там, где нужно иное (например `org.hibernate.SQL` в dev)."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `correlation id` и как его использовать в микросервисах?",
+          "options": [
+            {
+              "text": "`Correlation id` — это id записи в БД, который автоматически совпадает у логов одного запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это не ключ БД, а сквозной идентификатор запроса, который кладут в `MDC` и заголовки; с записями в базе он не связан.",
+                "source_of_confusion": "Слово «id» наводит на мысль о первичном ключе сущности.",
+                "if_it_were_true": "Будь это id из БД, запросы без обращения к базе не имели бы correlation id — но он есть и у read-only/health-запросов.",
+                "how_it_should_be": "`Correlation id` — сквозной id запроса в MDC и заголовках, не зависящий от БД."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Correlation id` (он же `traceId`) — уникальный идентификатор, проходящий через все сервисы в рамках одного пользовательского запроса. Его генерируют на входе (gateway), кладут в `MDC`, пробрасывают заголовком при межсервисных вызовах; в `Kibana` по `traceId:abc-123` находят логи запроса из ВСЕХ сервисов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без `correlation id` логи одного запроса размазаны по узлам и неотделимы друг от друга; единый id связывает их в одну цепочку для расследования.",
+                "example": "Gateway генерирует `traceId=abc-123` → `X-Trace-Id: abc-123` в Order Service → тот же заголовок в Payment Service; в `Kibana` поиск по этому id показывает все записи запроса.",
+                "when_to_apply": "Его применяют во всех микросервисных системах, особенно при расследовании инцидентов и при анализе сквозного пути запроса.",
+                "edge_cases": "При исходящих вызовах через `WebClient`/`RestTemplate` id надо явно прокидывать filter/интерсептором; стандарты заголовков — W3C `traceparent` и B3 (`X-B3-TraceId`).",
+                "related": "[[logging-interview#Q14]] распределённая трассировка; [[logging-interview#Q9]] MDC; [[logging-interview#Q29]] консистентность формата."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Достаточно положить correlation id в `MDC` одного сервиса — в соседние сервисы он попадёт автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MDC` живёт в `ThreadLocal` и не пересекает сеть; в соседний сервис id передают явно — заголовком при HTTP-вызове.",
+                "source_of_confusion": "Раз id «глобально» в MDC, кажется, что он виден и другим сервисам.",
+                "if_it_were_true": "Будь так, вызов через голый `RestTemplate` сохранял бы id на той стороне — но без проброса заголовка он теряется.",
+                "how_it_should_be": "Id пробрасывают между сервисами заголовком (`X-Trace-Id`/`traceparent`), а не полагаются на MDC соседа."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Каждый сервис должен генерировать свой correlation id, чтобы записи не конфликтовали.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Id генерируют один раз в начале цепочки и пробрасывают неизменным; если каждый сервис создаёт свой, поиск по одному id не соберёт запрос.",
+                "source_of_confusion": "«Уникальность» путают с «генерировать заново на каждом шаге».",
+                "if_it_were_true": "Будь это верно, поиск `traceId:abc-123` показывал бы логи только одного сервиса — но смысл в едином id на всю цепочку.",
+                "how_it_should_be": "Correlation id создают однократно (gateway/первый сервис) и пробрасывают без изменения через все сервисы."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как логировать исключения правильно?",
+          "options": [
+            {
+              "text": "Правильно логировать так: `log.error(\"Error: \" + exception.getMessage())` — этого достаточно для диагностики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При передаче только `getMessage()` теряется stack trace — неизвестно, где именно упало; исключение передают отдельным последним аргументом.",
+                "source_of_confusion": "Сообщение исключения кажется самодостаточным для понимания ошибки.",
+                "if_it_were_true": "Будь `getMessage()` достаточно, по логу `Error: null` (типично для NPE) можно было бы найти строку падения — но без trace нельзя.",
+                "how_it_should_be": "Исключение передают последним аргументом (`log.error(\"...\", arg, exception)`), чтобы попал полный stack trace."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Каждое исключение надо логировать на каждом уровне стека (`catch` → log → rethrow), чтобы ничего не потерять.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Логирование на каждом уровне даёт дубли одной ошибки в логе и затрудняет анализ; логируют один раз — на верхней границе.",
+                "source_of_confusion": "Желание «точно не потерять ошибку» приводит к логированию на каждом catch.",
+                "if_it_were_true": "Будь это правильным, одно падение не порождало бы 5 одинаковых ERROR в логе — но при log+rethrow на каждом уровне порождает.",
+                "how_it_should_be": "Логируют исключение однократно (на верхнем уровне/в `@ControllerAdvice`), ниже — оборачивают и пробрасывают."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Исключение передают последним аргументом: `log.error(\"Failed to process order id={}\", orderId, exception)` — тогда `SLF4J` печатает полный stack trace. Не делают `log.error(e.getMessage())` (теряется trace) и не логируют одно и то же исключение на каждом уровне (дубли) — логируют один раз, обычно в `@ControllerAdvice`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Stack trace критичен для RCA, а двойное логирование при `catch`+`rethrow` засоряет логи одинаковыми ошибками; поэтому ловят и логируют в одной точке — на верхнем уровне.",
+                "example": "`@RestControllerAdvice` с `@ExceptionHandler(Exception.class)`: `log.error(\"Unhandled exception: uri={}\", req.getRequestURI(), e)` — единая точка логирования всех необработанных ошибок.",
+                "when_to_apply": "Так логируют в обработчиках исключений и на границах слоёв; внутри низкоуровневого кода исключение оборачивают и пробрасывают, не логируя повторно.",
+                "edge_cases": "Если исключение и обработано (есть fallback), и не критично — это `WARN` без полного trace; полный `ERROR`+trace оставляют для необработанных сбоев.",
+                "related": "[[logging-interview#Q6]] уровни логирования; [[logging-interview#Q33]] best practices по уровням; [[logging-interview#Q15]] чувствительные данные в логах."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Stack trace в проде не нужен — достаточно класса исключения, поэтому его специально подавляют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без stack trace в проде невозможно понять, какая ветка кода привела к ошибке; именно в проде trace ценнее всего для RCA.",
+                "source_of_confusion": "Trace объёмный, поэтому кажется, что в проде его можно урезать ради экономии.",
+                "if_it_were_true": "Будь trace лишним, post-mortem по инциденту обходился бы именем класса — но без trace найти причину почти нельзя.",
+                "how_it_should_be": "В проде логируют полный stack trace для необработанных ошибок; экономят на объёме иначе (sampling INFO, не ERROR)."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как интегрировать логи с `ELK`-стеком?",
+          "options": [
+            {
+              "text": "Лучше всего отправлять логи напрямую из приложения в `Logstash` через синхронный `SocketAppender` — без файлов и агентов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Синхронный сокет блокирует поток приложения при недоступности Logstash и теряет записи без буфера; надёжнее stdout/файл + агент с буфером.",
+                "source_of_confusion": "Прямая отправка кажется проще — «меньше звеньев».",
+                "if_it_were_true": "Будь это надёжно, простой ELK на 5 минут не вешал бы Tomcat-потоки — но без буфера именно так и происходит.",
+                "how_it_should_be": "Приложение пишет JSON в stdout/файл, а доставку в ELK делает `Filebeat`/`Fluent Bit` с буфером."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "В ELK можно отправлять обычные текстовые логи — `Elasticsearch` сам разберёт их на поля без JSON.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без JSON или grok-парсинга ES хранит строку целиком и не индексирует поля; поиск `traceId:...` по тексту не работает.",
+                "source_of_confusion": "Кажется, что мощный поисковик «понимает» произвольный текст сам по себе.",
+                "if_it_were_true": "Будь так, grok-фильтры в Logstash были бы не нужны — но их пишут именно чтобы распарсить текст в поля.",
+                "how_it_should_be": "В ELK шлют JSON-логи (`LogstashEncoder`) с явными полями; текст при необходимости парсят grok'ом в Logstash."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Kibana` сама хранит и индексирует логи, `Elasticsearch` в стеке не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Хранение и индексацию делает `Elasticsearch`; `Kibana` — лишь UI поверх него и без ES не работает.",
+                "source_of_confusion": "Пользователь видит только Kibana, отсюда вывод, что она и есть хранилище.",
+                "if_it_were_true": "Будь Kibana хранилищем, она работала бы без поднятого ES — но при недоступном ES она показывает ошибку подключения.",
+                "how_it_should_be": "`Elasticsearch` хранит и индексирует, `Kibana` — UI для поиска и дашбордов поверх ES."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Pipeline: приложение пишет JSON-логи (`LogstashEncoder`) в stdout/файл → агент `Filebeat` собирает их → опционально `Logstash` обогащает/фильтрует → `Elasticsearch` индексирует и хранит → `Kibana` ищет по `traceId:abc-123`, `level:ERROR` и строит дашборды.",
+              "correct": true,
+              "sections": {
+                "explanation": "ELK решает централизованный сбор и поиск: JSON нужен для индексации полей, `Filebeat` — лёгкий агент доставки, `Elasticsearch` — поисковое хранилище, `Kibana` — UI.",
+                "example": "`filebeat.yml` с `json.keys_under_root: true` и `output.elasticsearch.index: \"app-logs-%{+yyyy.MM.dd}\"` — собирает JSON-логи контейнеров и пишет в дневной индекс ES.",
+                "when_to_apply": "ELK ставят, когда логов много и они на десятках узлов; для k8s-сред чаще берут более лёгкий `Fluent Bit` (EFK) или `Loki`.",
+                "edge_cases": "Прямая синхронная отправка из приложения в Logstash через `SocketAppender` опасна — при недоступности ELK блокирует поток; надёжнее писать в stdout и доставлять агентом с буфером.",
+                "related": "[[logging-interview#Q31]] EFK-стек; [[logging-interview#Q28]] log aggregation; [[logging-interview#Q10]] структурированный JSON."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Markers` в `SLF4J`/`Logback` и когда их использовать?",
+          "options": [
+            {
+              "text": "`Markers` — именованные метки, привязываемые к лог-записи (`log.info(AUDIT, \"...\")`), которые позволяют фильтровать и маршрутизировать логи по категории независимо от уровня. Через `EvaluatorFilter`/`OnMarkerEvaluator` записи с маркером направляют в отдельный файл/аппендер.",
+              "correct": true,
+              "sections": {
+                "explanation": "Маркер — ортогональная уровню классификация: например `AUDIT`/`SECURITY` можно собирать отдельно, даже если все они `INFO`; это удобно для требований аудита.",
+                "example": "`Marker AUDIT = MarkerFactory.getMarker(\"AUDIT\")`; затем `EvaluatorFilter` с `OnMarkerEvaluator` (`<marker>AUDIT</marker>`, `onMatch=ACCEPT`, `onMismatch=DENY`) пишет такие записи в `audit.log` с долгим `maxHistory`.",
+                "when_to_apply": "Маркеры применяют для аудита, security-событий и любой сквозной категории, которую надо отделить от общего потока логов.",
+                "edge_cases": "Маркер влияет на маршрутизацию только если в конфиге есть фильтр по нему; сам по себе `MarkerFactory.getMarker(...)` лог никуда не перенаправляет.",
+                "related": "[[logging-interview#Q38]] StructuredArguments и Markers; [[logging-interview#Q4]] типы Appender; [[logging-interview#Q23]] log sampling."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Markers` — это просто ещё один уровень логирования, выше `ERROR`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Маркер ортогонален уровню: запись с маркером `AUDIT` может быть любого уровня (`INFO`/`ERROR`); это категория, а не ступень важности.",
+                "source_of_confusion": "И уровни, и маркеры влияют на фильтрацию, поэтому их смешивают.",
+                "if_it_were_true": "Будь маркер уровнем, его задавали бы в `logging.level.*` — но маркеры там не настраиваются, у них своя ось.",
+                "how_it_should_be": "Маркер — независимая от уровня метка-категория; уровень и маркер комбинируют при фильтрации."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Чтобы запись с маркером попала в отдельный файл, достаточно её просто пометить маркером — фильтр в конфиге не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `EvaluatorFilter`/`OnMarkerEvaluator` в аппендере маркер ни на что не влияет; маршрутизацию задаёт именно фильтр в конфигурации.",
+                "source_of_confusion": "Кажется, что пометка маркером сама по себе перенаправляет запись.",
+                "if_it_were_true": "Будь так, `audit.log` наполнялся бы без настройки фильтра — но без него все записи идут в общий аппендер.",
+                "how_it_should_be": "Маршрутизацию по маркеру настраивают фильтром (`OnMarkerEvaluator`) на нужном аппендере."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Маркер можно передать только как первый аргумент через конкатенацию в тексте сообщения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Маркер передают отдельным первым параметром перегруженного метода (`log.info(marker, \"...\", args)`), а не вкладывают в текст строки.",
+                "source_of_confusion": "Маркер хочется записать прямо в сообщение как «тег» в тексте.",
+                "if_it_were_true": "Будь маркер частью текста, фильтр по нему не работал бы — но `OnMarkerEvaluator` читает именно объект `Marker`, а не подстроку.",
+                "how_it_should_be": "Маркер передают отдельным аргументом `Marker` в перегрузке `log.info(marker, format, args)`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить уровни логирования по окружению (`dev`/`prod`)?",
+          "options": [
+            {
+              "text": "Профили `<springProfile>` работают в любом файле, включая `logback.xml`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`<springProfile>` понимает только `logback-spring.xml`; `logback.xml` грузится до инициализации Spring `Environment` и Spring-теги в нём игнорируются.",
+                "source_of_confusion": "Оба файла настраивают Logback, поэтому кажутся равнозначными по возможностям.",
+                "if_it_were_true": "Будь так, dev/prod-секции в `logback.xml` переключались бы по профилю — но они не срабатывают, и применяется общий блок.",
+                "how_it_should_be": "Spring-профили в логировании задают в `logback-spring.xml`, который инициализируется после `Environment`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Через профили: в `logback-spring.xml` секции `<springProfile name=\"dev\">`/`<springProfile name=\"prod\">` задают разные уровни и аппендеры, либо через `application-{profile}.yml` с `logging.level.*`. В рантайме уровень меняют без рестарта через `/actuator/loggers` (POST с `configuredLevel`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Разделение по окружениям нужно, чтобы dev видел `DEBUG`/SQL, а prod держал `INFO`/`WARN` и не флудил; `<springProfile>` и профильные YAML — два эквивалентных способа.",
+                "example": "dev: `root: DEBUG`, `org.hibernate.SQL: DEBUG`; prod: `root: INFO`, `org.springframework: WARN`. На инциденте SRE поднимает пакет до `DEBUG` через POST на `/actuator/loggers/com.example`.",
+                "when_to_apply": "Профильные уровни задают при настройке проекта; Actuator-смену уровня используют для точечной диагностики в проде без редеплоя.",
+                "edge_cases": "`<springProfile>` работает только в `logback-spring.xml` (не в `logback.xml`), потому что обычный файл грузится до инициализации Spring `Environment`.",
+                "related": "[[logging-interview#Q7]] способы конфигурирования; [[logging-interview#Q33]] best practices по уровням; [[logging-interview#Q17]] объём логов от библиотек."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Изменить уровень в проде без рестарта нельзя — только пересобрать и задеплоить с новым `application.yml`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Boot Actuator` позволяет менять уровень в рантайме: POST на `/actuator/loggers/<package>` с `configuredLevel` — без рестарта.",
+                "source_of_confusion": "Кажется, что конфигурация фиксируется на старте и неизменна.",
+                "if_it_were_true": "Будь так, эндпоинт `/actuator/loggers` не имел бы POST-метода — но он есть и меняет уровень на лету.",
+                "how_it_should_be": "Уровень в рантайме меняют через `/actuator/loggers` POST'ом, для постоянного эффекта правят YAML/XML."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В prod нужно держать `root: DEBUG`, чтобы при инциденте сразу была вся информация.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`root: DEBUG` в prod даёт поток от Hibernate/Spring/Tomcat в десятки тысяч строк/сек — диск и ELK перегружаются; в prod держат `INFO`/`WARN`.",
+                "source_of_confusion": "«Больше логов = легче расследовать» звучит разумно, но не масштабируется.",
+                "if_it_were_true": "Будь `root: DEBUG` безопасным, диск не заполнялся бы за минуты под нагрузкой — но он заполняется.",
+                "how_it_should_be": "В prod `root` держат на `INFO`/`WARN`, а нужный пакет точечно поднимают до `DEBUG` через Actuator на время инцидента."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `log sampling` и когда его применять?",
+          "options": [
+            {
+              "text": "`Log sampling` означает писать вообще все логи, но сжимать их перед отправкой — это и есть выборка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sampling — это запись только части событий (каждый N-й), а не сжатие всех; сжатие (`.gz`) — отдельный механизм экономии места.",
+                "source_of_confusion": "И sampling, и компрессия экономят место, отсюда их путают.",
+                "if_it_were_true": "Будь sampling = сжатием, число записей в ELK не уменьшалось бы — но при выборке оно падает кратно.",
+                "how_it_should_be": "Sampling пишет лишь часть событий (например 1/100); сжатие — независимый способ уменьшить размер файлов."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Под sampling должны попадать все уровни, включая `ERROR` — иначе экономия неполная.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ERROR`/`AUDIT` исключают из выборки: потеря одной ошибки скрывает инцидент; сэмплируют только шумные `INFO`/`DEBUG`.",
+                "source_of_confusion": "Ради максимальной экономии хочется сэмплировать всё подряд.",
+                "if_it_were_true": "Будь это верно, выборочно потерянный `ERROR` всё равно поднимал бы алерт — но потерянной записи просто нет, инцидент не виден.",
+                "how_it_should_be": "Sampling применяют к `INFO`/`DEBUG`; `ERROR` и `AUDIT` пишут всегда 100%."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Log sampling` — выборочная запись логов (например, каждый N-й запрос или 1% записей) при высокой нагрузке, чтобы снизить объём без полной потери видимости. Реализуют счётчиком (`counter % rate == 0`) или кастомным `TurboFilter` в `Logback`. `ERROR`/`AUDIT` из выборки исключают — пишут всегда 100%.",
+              "correct": true,
+              "sections": {
+                "explanation": "Sampling режет объём шумных `INFO`/`DEBUG` под нагрузкой, сохраняя статистическую картину; важные события (ошибки, аудит) не сэмплируют, чтобы не потерять критичное.",
+                "example": "`TurboFilter`, который для `level >= WARN` возвращает `NEUTRAL` (пропустить всё), а для `INFO`/`DEBUG` — `NEUTRAL` только на каждый `rate`-й вызов, иначе `DENY`.",
+                "when_to_apply": "Sampling включают для высокочастотных некритичных событий (трекинг, debug hot path), когда полный объём логов дорого хранить.",
+                "edge_cases": "Сэмплировать `ERROR`/`AUDIT` нельзя: потеря одной ошибки или аудит-записи недопустима, поэтому фильтр всегда пропускает их целиком.",
+                "related": "[[logging-interview#Q26]] объём логов под нагрузкой; [[logging-interview#Q21]] Markers; [[logging-interview#Q6]] уровни логирования."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Sampling в `Logback` нельзя реализовать — нет точки расширения для выборочной фильтрации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Точка расширения есть: кастомный `TurboFilter` решает per-record, пропускать запись или нет, что и используют для sampling.",
+                "source_of_confusion": "Из коробки готового sampling-фильтра нет, отсюда вывод о невозможности.",
+                "if_it_were_true": "Будь так, нельзя было бы написать `SamplingFilter extends TurboFilter` — но он расширяется и работает.",
+                "how_it_should_be": "Sampling реализуют кастомным `TurboFilter` (или счётчиком в коде), пропускающим каждый N-й `INFO`/`DEBUG`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как логировать в многопоточном и асинхронном коде?",
+          "options": [
+            {
+              "text": "`MDC` автоматически передаётся в дочерние потоки через `CompletableFuture` и пулы — переносить контекст вручную не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ThreadLocal` не наследуется рабочими потоками пула; в `CompletableFuture.supplyAsync(...)` `MDC.get(\"traceId\")` уже `null`, если контекст не скопировать.",
+                "source_of_confusion": "Кажется, что контекст «следует» за логической задачей в новый поток.",
+                "if_it_were_true": "Будь перенос автоматическим, async-логи всегда содержали бы traceId — но без копирования он пропадает.",
+                "how_it_should_be": "Контекст переносят вручную: `getCopyOfContextMap()` → `setContextMap(...)` в рабочем потоке, с `clear()` в `finally`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "В рабочем потоке после установки скопированного MDC вызывать `MDC.clear()` не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поток в пуле переиспользуется: без `clear()` скопированный контекст останется и протечёт в следующую задачу того же потока.",
+                "source_of_confusion": "Кажется, что после завершения задачи поток «забывает» свой контекст.",
+                "if_it_were_true": "Будь clear лишним, следующая задача на том же потоке не получала бы чужой traceId — но без него получает.",
+                "how_it_should_be": "После задачи в рабочем потоке вызывают `MDC.clear()` в `finally`, иначе контекст утекает в пуле."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Для async достаточно записать `traceId` в статическую переменную — она видна всем потокам, и MDC не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Статическая переменная одна на все потоки: параллельные запросы перезапишут чужой traceId; корректную изоляцию даёт именно `ThreadLocal`/MDC с явным переносом.",
+                "source_of_confusion": "Статика кажется «доступной отовсюду», что путают с потокобезопасной передачей контекста.",
+                "if_it_were_true": "Будь статика решением, два параллельных запроса не путали бы traceId — но общая переменная их перемешивает.",
+                "how_it_should_be": "Используют `MDC` (`ThreadLocal`) с явным копированием контекста в рабочий поток, а не общую статику."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`MDC` основан на `ThreadLocal`, поэтому в `CompletableFuture`/исполнителе/реактивной цепочке контекст теряется при переключении потока. Контекст переносят вручную: `Map ctx = MDC.getCopyOfContextMap()` в исходном потоке → `MDC.setContextMap(ctx)` в рабочем, с обязательным `MDC.clear()` в `finally`. Удобно обернуть это в `MdcRunnable`/`TaskDecorator`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без переноса контекста async-логи теряют `traceId`, и корреляция рвётся; копирование map и установка в новом потоке восстанавливают сквозной контекст.",
+                "example": "`MdcRunnable` сохраняет `getCopyOfContextMap()` в конструкторе и в `run()` делает `setContextMap` + `clear()` в `finally`; его передают в `executor.submit(...)`.",
+                "when_to_apply": "Перенос MDC делают везде, где задача уходит в другой поток: `@Async`, пулы исполнителей, `CompletableFuture`, реактивные операторы.",
+                "edge_cases": "`MDC.clear()` в рабочем потоке обязателен — иначе скопированный контекст утечёт в следующую задачу того же потока пула.",
+                "related": "[[logging-interview#Q32]] MDC в thread pools; [[logging-interview#Q30]] реактивные стеки; [[logging-interview#Q9]] что такое MDC."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Fluent API` в `Log4j2` (и `SLF4J` 2.0)?",
+          "options": [
+            {
+              "text": "`Fluent API` — цепочечный стиль вызова логгера (`log.atDebug().withLocation().log(\"{}\", () -> expensive())`), где сообщение, аргументы, маркер и исключение задают отдельными методами. Лямбда-аргументы вычисляются только при включённом уровне, что удобно для дорогих вычислений.",
+              "correct": true,
+              "sections": {
+                "explanation": "Fluent-стиль делает сложный вызов читаемым (маркер, throwable, ленивые аргументы) и сохраняет ленивость: `addArgument(() -> ...)` не вызовет supplier при выключенном уровне.",
+                "example": "`Log4j2`: `log.atError().withThrowable(ex).log(\"Failed order={}\", orderId)`; `SLF4J 2.0`: `log.atInfo().addMarker(AUDIT).setMessage(\"User {} did {}\").addArgument(userId).addArgument(action).log()`.",
+                "when_to_apply": "Fluent API применяют, когда вызов нагружен метаданными (маркер + throwable + ленивые аргументы) или когда нужна ленивость для тяжёлой сериализации.",
+                "edge_cases": "Fluent API появился в `SLF4J` только с 2.0; на `SLF4J` 1.x используют классический `if (log.isDebugEnabled())` для той же ленивости.",
+                "related": "[[logging-interview#Q12]] параметризованные вызовы; [[logging-interview#Q21]] Markers; [[logging-interview#Q8]] фасад SLF4J."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Fluent API` — это просто конкатенация строк в цепочке `.append(...)`, без ленивости вычислений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fluent API сохраняет ленивость: лямбда-аргументы (`addArgument(() -> ...)`) вычисляются только при активном уровне — это его ключевое отличие от конкатенации.",
+                "source_of_confusion": "Цепочечный синтаксис внешне напоминает построение строки через `StringBuilder`.",
+                "if_it_were_true": "Будь это конкатенацией, `expensiveToString` вызывался бы при выключенном `DEBUG` — но в fluent с лямбдой он не вызывается.",
+                "how_it_should_be": "`Fluent API` — ленивый билдер записи; тяжёлые аргументы передают supplier'ом и они не вычисляются при выключенном уровне."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Fluent API доступен в `SLF4J` всех версий, включая 1.x.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `SLF4J` Fluent API (`log.atInfo()...`) появился только в 2.0; на 1.x ленивость обеспечивают через `isDebugEnabled()`.",
+                "source_of_confusion": "API кажется давней частью SLF4J, раз он широко описан.",
+                "if_it_were_true": "Будь так, проект на `slf4j-api:1.7` компилировал бы `log.atInfo()` — но этого метода там нет.",
+                "how_it_should_be": "Fluent API в `SLF4J` — с версии 2.0; на 1.x используют `if (log.isDebugEnabled())`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Через Fluent API нельзя прикрепить ни исключение, ни маркер — только текст сообщения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fluent API специально умеет и `withThrowable(ex)`/`addMarker(...)`, и `addArgument(...)` — это его основное преимущество перед обычным вызовом.",
+                "source_of_confusion": "Кажется, что цепочка — лишь альтернативная запись простого `log.info(text)`.",
+                "if_it_were_true": "Будь так, `log.atError().withThrowable(ex)` не компилировался бы — но метод есть и прикрепляет исключение.",
+                "how_it_should_be": "Fluent API позволяет задать маркер, исключение и ленивые аргументы отдельными методами цепочки."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как не раздувать логи при высокой нагрузке?",
+          "options": [
+            {
+              "text": "Лучший способ снизить объём — просто отключить логирование совсем (`root: OFF`) в проде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`root: OFF` лишает прод диагностики: ни ошибок, ни бизнес-событий, RCA невозможен; объём режут точечно, сохраняя `WARN`/`ERROR` и ключевые `INFO`.",
+                "source_of_confusion": "«Нет логов — нет объёма» выглядит радикально-эффективным.",
+                "if_it_were_true": "Будь `OFF` приемлемым, при инциденте было бы по чему расследовать — но логов нет вообще.",
+                "how_it_should_be": "Режут шум выборочно (уровни, sampling, rate limit), сохраняя ошибки и важные события."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Комбинируют приёмы: поднимают уровень шумных пакетов (`org.hibernate=WARN`), не логируют в горячих циклах (вместо записи на каждую итерацию — одна с итогом), используют параметризованные вызовы, применяют rate limiting для повторяющихся ошибок и не логируют большие объекты целиком (только размер/статус).",
+              "correct": true,
+              "sections": {
+                "explanation": "Объём логов — это деньги и нагрузка на ELK; экономят за счёт устранения шума, а не критики: первыми режут шумные `INFO`, не `ERROR`.",
+                "example": "Вместо `for (item: items) log.debug(\"item={}\", id)` пишут `log.info(\"Processed {} items\", items.size())`; для частой ошибки — `RateLimiter.create(1.0)` + `tryAcquire()` перед `log.error`.",
+                "when_to_apply": "Эти приёмы применяют на высоконагруженных сервисах и когда мониторинг показывает рост `ingestion lag` или стоимости хранения логов.",
+                "edge_cases": "Rate limiting нельзя применять к уникальным `ERROR` без агрегации — иначе подавятся разные ошибки; ограничивают именно повторяющиеся одинаковые сообщения.",
+                "related": "[[logging-interview#Q23]] log sampling; [[logging-interview#Q12]] параметризованные вызовы; [[logging-interview#Q17]] объём логов от библиотек."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Логирование внутри горячего цикла на каждую итерацию — нормально, объём от этого не растёт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запись на каждую итерацию даёт тысячи строк на один вызов и взрывает объём; логируют итог (`Processed N items`), а не каждый шаг.",
+                "source_of_confusion": "Одна строка кажется дешёвой, и про умножение на размер коллекции забывают.",
+                "if_it_were_true": "Будь так, обработка списка из 10000 элементов не порождала бы 10000 строк — но при логе в цикле порождает.",
+                "how_it_should_be": "В горячих циклах логируют агрегированный итог, а не каждую итерацию."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Логировать большие объекты целиком (`log.debug(\"resp={}\", response)`) полезно и на объём почти не влияет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Полный дамп больших объектов раздувает и объём, и CPU на сериализацию; логируют только размер/статус (`size=..., status=...`).",
+                "source_of_confusion": "Полный объект удобен при отладке, и про его вес в логе не думают.",
+                "if_it_were_true": "Будь это дёшево, дамп тел ответов не забивал бы диск — но при больших payload именно забивает.",
+                "how_it_should_be": "Вместо полного объекта логируют его метаданные (размер, статус, ключевые поля)."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как интегрировать логи с метриками (`Micrometer`, `Prometheus`)?",
+          "options": [
+            {
+              "text": "Метрики полностью заменяют логи — если есть `logback_events_total`, детальные логи не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метрика — это агрегированный счётчик без контекста (нет stack trace, traceId, сообщения); для разбора конкретной ошибки нужны логи. Они дополняют друг друга.",
+                "source_of_confusion": "Раз метрика «считает ошибки», кажется, что логи избыточны.",
+                "if_it_were_true": "Будь так, по росту счётчика можно было бы понять причину сбоя — но без логов известно только «ошибок стало больше».",
+                "how_it_should_be": "Метрики дают сигнал и динамику, логи — детальный контекст; их используют вместе."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Чтобы получить метрику ошибок по логам, обязательно писать собственный парсер логов в Prometheus.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Micrometer LogbackMetrics` экспортирует `logback_events_total` из коробки без парсинга текста; парсер логов не требуется.",
+                "source_of_confusion": "Кажется, что метрику по логам можно получить только разбором их текста.",
+                "if_it_were_true": "Будь так, не существовало бы готового `LogbackMetrics` — но он есть и считает события на уровне аппендера.",
+                "how_it_should_be": "Счётчик событий берут из `Micrometer LogbackMetrics`/Actuator, а не парсят текст логов."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Логи и метрики — разные каналы, но их связывают: `Micrometer` через `LogbackMetrics` автоматически экспортирует счётчик `logback_events_total{level=\"error\"}` по уровням, который собирает `Prometheus`. Можно и вручную инкрементировать `Counter` из кастомного аппендера.",
+              "correct": true,
+              "sections": {
+                "explanation": "Счётчик ошибок по логам даёт дешёвый сигнал для алертов и дашбордов, не требуя парсинга логов; метрики агрегированы, логи детальны — они дополняют друг друга.",
+                "example": "Spring Boot Actuator + Micrometer из коробки дают `logback_events_total{level=\"error\"}`; в `application.yml` экспонируют `management.endpoints.web.exposure.include: prometheus`.",
+                "when_to_apply": "Связку применяют, когда нужен алерт «рост ошибок» без анализа текста логов, и для дашбордов по динамике уровней.",
+                "edge_cases": "Метрика считает события по уровню, но не их содержимое — для разбора конкретной ошибки всё равно идут в логи по `traceId`.",
+                "related": "[[logging-interview#Q14]] распределённая трассировка; [[logging-interview#Q28]] log aggregation; [[logging-interview#Q6]] уровни логирования."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Логи и метрики — это одно и то же: достаточно настроить только логи, и метрики появятся сами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные каналы наблюдаемости: логи — события с контекстом, метрики — числовые ряды; сами по себе из логов метрики не возникают без `LogbackMetrics`/инструментирования.",
+                "source_of_confusion": "Оба про «наблюдаемость», поэтому их отождествляют.",
+                "if_it_were_true": "Будь они одним и тем же, не нужен был бы отдельный `MeterRegistry` — но метрики настраивают отдельно.",
+                "how_it_should_be": "Логи и метрики — отдельные столпы наблюдаемости; связь между ними настраивают явно (`LogbackMetrics`)."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `log aggregation` и зачем он нужен?",
+          "options": [
+            {
+              "text": "`Log aggregation` — это просто запись всех логов в один большой файл на каждом сервере.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Агрегация — централизация логов СО ВСЕХ узлов в общее хранилище с поиском, а не локальный общий файл на одном сервере.",
+                "source_of_confusion": "Слово «aggregation» путают со «сложить всё в один файл локально».",
+                "if_it_were_true": "Будь так, поиск по логам всех подов сразу был бы невозможен — но смысл агрегации именно в едином поиске по всему кластеру.",
+                "how_it_should_be": "Агрегация собирает логи со всех узлов агентами в централизованное хранилище (ES/Loki) с поиском."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Для агрегации не нужны агенты сбора — приложение само должно писать напрямую в `Elasticsearch`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Прямая запись из приложения в ES хрупка (блокировки, потеря при недоступности); стандарт — лёгкий агент (`Filebeat`/`Fluent Bit`) с буфером между приложением и хранилищем.",
+                "source_of_confusion": "Прямая запись кажется проще — «без лишних звеньев».",
+                "if_it_were_true": "Будь прямая запись нормой, не существовало бы `DaemonSet`-агентов в каждом k8s-кластере — но их разворачивают именно для этого.",
+                "how_it_should_be": "Между приложением и хранилищем ставят агент сбора с буфером; приложение пишет в stdout/файл."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "При агрегации `correlation id` не нужен — раз все логи в одном месте, запрос и так легко собрать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `traceId` логи разных запросов в общем хранилище перемешаны и неотделимы; именно id связывает записи одного запроса.",
+                "source_of_confusion": "Кажется, что централизация сама по себе решает корреляцию.",
+                "if_it_were_true": "Будь так, фильтр одного запроса не требовал бы `traceId` — но без него выделить запрос из потока нельзя.",
+                "how_it_should_be": "Агрегация + `correlation id`: централизация хранит, а `traceId` связывает записи одного запроса."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Log aggregation` — централизованный сбор логов со всех узлов в одно хранилище для сквозного поиска и анализа. Компоненты: агенты сбора (`Filebeat`/`Fluentd`/`Promtail`/`Vector`), транспорт/обогащение (`Logstash`/`Fluentd`), хранилище (`Elasticsearch`/`Loki`/`Splunk`), UI (`Kibana`/`Grafana`), и `correlation id` для связи записей одного запроса.",
+              "correct": true,
+              "sections": {
+                "explanation": "В распределённой системе логи размазаны по десяткам подов; без агрегации расследование инцидента требует руками собирать логи с каждого узла, что недопустимо медленно.",
+                "example": "В Kubernetes `DaemonSet` (`Filebeat`/`Promtail`) на каждой ноде собирает stdout всех подов и пушит в общее хранилище, где по `traceId` находят логи запроса из всех сервисов.",
+                "when_to_apply": "Агрегацию ставят в любой многоузловой/микросервисной системе, где логи нужно искать централизованно и коррелировать между сервисами.",
+                "edge_cases": "Без `traceId`/`correlation id` агрегация хранит логи вместе, но связать записи одного запроса всё равно нельзя — это антипаттерн.",
+                "related": "[[logging-interview#Q20]] интеграция с ELK; [[logging-interview#Q31]] EFK-стек; [[logging-interview#Q18]] correlation id."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обеспечить консистентность формата логов в микросервисах?",
+          "options": [
+            {
+              "text": "Через общую shared-конфигурацию: единый `logback-base.xml` (включаемый в каждый сервис) и общая библиотека (`logging-starter`) с единым `TraceIdFilter` и JSON-энкодером. Фиксируют контракт обязательных полей (`@timestamp`, `level`, `logger`, `message`, `service`, `env`, `traceId`), версионируют формат и валидируют схему логов в CI.",
+              "correct": true,
+              "sections": {
+                "explanation": "Если каждый сервис форматирует логи по-своему, кросс-сервисный поиск и дашборды ломаются; общий стартер и base-конфиг гарантируют одинаковые поля во всех сервисах.",
+                "example": "`<include resource=\"logback-base.xml\"/>` подключает общий `LogstashEncoder` с фиксированными `includeMdcKeyName` и `fieldNames`; обязательные поля одинаковы во всех сервисах.",
+                "when_to_apply": "Это вводят на этапе платформенной стандартизации, когда сервисов много и их логи должны единообразно искаться в общем ELK.",
+                "edge_cases": "При изменении контракта формата держат обратную совместимость и версионируют схему, иначе сломаются существующие дашборды и запросы Kibana.",
+                "related": "[[logging-interview#Q10]] структурированный JSON; [[logging-interview#Q36]] ECS Layout; [[logging-interview#Q18]] correlation id."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Консистентность не нужна — `Kibana` сама приведёт разные форматы логов к единому виду.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Kibana`/ES не нормализуют чужеродные форматы: если у одного сервиса поле `traceId`, а у другого `trace_id`, запросы и дашборды по ним не совпадут.",
+                "source_of_confusion": "Кажется, что мощный стек сам «поймёт» любые поля.",
+                "if_it_were_true": "Будь так, дашборд по `traceId` работал бы для всех сервисов независимо от имён полей — но при разнобое он пропускает часть.",
+                "how_it_should_be": "Единый контракт полей задают на стороне приложений (shared-конфиг), а не надеются на нормализацию в Kibana."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Лучший способ единообразия — копировать `logback-spring.xml` вручную в каждый сервис при создании.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ручные копии расходятся со временем (drift): правку в одном файле забывают перенести в остальные; используют общий `logback-base.xml`/стартер как единый источник.",
+                "source_of_confusion": "Копипаст кажется простым способом «сделать одинаково».",
+                "if_it_were_true": "Будь копии надёжны, формат не разъезжался бы между сервисами — но при ручном дублировании он разъезжается.",
+                "how_it_should_be": "Конфиг выносят в общий include/стартер с версионированием, а не копируют вручную в каждый сервис."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Достаточно договориться о формате на словах — фиксировать контракт полей и валидировать в CI избыточно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без машинной проверки контракт нарушается незаметно (опечатка в имени поля, забытое `service`); схему логов валидируют в CI и версионируют.",
+                "source_of_confusion": "Кажется, что командной договорённости достаточно для дисциплины.",
+                "if_it_were_true": "Будь устной договорённости достаточно, поля не разъезжались бы — но без CI-проверки они разъезжаются.",
+                "how_it_should_be": "Контракт обязательных полей фиксируют и валидируют в CI (JSON-схема), а формат версионируют."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как логировать в реактивных стеках (`WebFlux`, `Project Reactor`)?",
+          "options": [
+            {
+              "text": "В `WebFlux` обычный `MDC.put` в фильтре работает так же, как в сервлетном стеке — контекст сохраняется на всю цепочку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В реактивной цепочке оператор может выполниться в другом потоке, где `ThreadLocal`-MDC пуст; контекст хранят в `Reactor Context`, а не в MDC напрямую.",
+                "source_of_confusion": "В сервлетном (один-поток-на-запрос) мире MDC работает прозрачно, и это переносят на WebFlux.",
+                "if_it_were_true": "Будь так, `doOnNext(r -> log.info(...))` всегда видел бы traceId — но после `flatMap` на другом потоке MDC пуст.",
+                "how_it_should_be": "В WebFlux контекст кладут в `Reactor Context` (`contextWrite`) и копируют в MDC хуком, а не полагаются на ThreadLocal-MDC."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "В реактивных цепочках выполнение переключается между потоками, и `MDC` (`ThreadLocal`) не передаётся автоматически. Решение — хранить контекст в `Reactor Context` (`contextWrite`), а в `MDC` копировать его через `Hooks.onEachOperator`; либо явно доставать значение через `Mono.deferContextual(ctx -> ...)` и передавать в сообщение.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Reactor Context` — это потоконезависимое хранилище, привязанное к подписке, а не к потоку; именно его используют вместо `ThreadLocal` в реактивном коде.",
+                "example": "`WebFilter` кладёт `traceId` через `.contextWrite(ctx -> ctx.put(\"traceId\", id))`, а `Hooks.onEachOperator` копирует его в `MDC` на каждом операторе, чтобы `%X{traceId}` работал.",
+                "when_to_apply": "Этот подход применяют в `Spring WebFlux`/`Project Reactor`, где обычный MDC-фильтр на `ThreadLocal` не работает из-за смены потоков.",
+                "edge_cases": "`Hooks.onEachOperator` — глобальный хук с накладными на каждый оператор; в `Spring Boot 3` его частично заменяет автоматический context propagation из `Micrometer`.",
+                "related": "[[logging-interview#Q24]] MDC в async-коде; [[logging-interview#Q9]] что такое MDC; [[logging-interview#Q32]] MDC в thread pools."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Reactor Context` привязан к потоку точно так же, как `ThreadLocal`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Reactor Context` привязан к подписке (потоку данных), а не к потоку выполнения — поэтому он переживает смену потока, в отличие от `ThreadLocal`.",
+                "source_of_confusion": "Оба называют «контекстом», отсюда ложное отождествление модели хранения.",
+                "if_it_were_true": "Будь `Reactor Context` потоковым, он терялся бы при `flatMap` на другом потоке — но именно он-то и сохраняется.",
+                "how_it_should_be": "`Reactor Context` живёт по подписке и переживает смену потоков; `ThreadLocal`-MDC — нет, поэтому в реактиве берут Context."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Логировать в WebFlux вообще нельзя — реактивный стек несовместим с логированием.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Логировать можно: либо через `Reactor Context` + хук в MDC, либо доставая значение `Mono.deferContextual`; несовместимости нет, есть лишь иной способ переноса контекста.",
+                "source_of_confusion": "Трудности с MDC в реактиве преувеличивают до «логировать нельзя».",
+                "if_it_were_true": "Будь так, в WebFlux-приложениях не было бы ни одной строки лога — но они логируют штатно.",
+                "how_it_should_be": "В WebFlux логируют, перенося контекст через `Reactor Context` (`contextWrite`/`deferContextual`) и хук в MDC."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить EFK-стек (Elasticsearch, Fluent Bit, Kibana)?",
+          "options": [
+            {
+              "text": "В EFK буква F означает `Filebeat`, и это тот же агент, что в ELK.",
+              "correct": false,
+              "sections": {
+                "what_actually": "F в EFK — это `Fluent Bit` (или `Fluentd`), а не `Filebeat`; именно он заменяет `Logstash` как лёгкий сборщик/процессор.",
+                "source_of_confusion": "И `Filebeat`, и `Fluent Bit` — лёгкие агенты на F, отсюда путаница в расшифровке.",
+                "if_it_were_true": "Будь F = Filebeat, аббревиатура была бы про сбор, а не про замену Logstash — но EFK именно про `Fluent Bit` вместо Logstash.",
+                "how_it_should_be": "EFK = Elasticsearch + `Fluent Bit` + Kibana; `Fluent Bit` заменяет тяжёлый `Logstash`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Fluent Bit` тяжелее `Logstash` и потребляет больше памяти, потому и мощнее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Fluent Bit` написан на C и потребляет на порядки меньше RAM (~1–10 МБ против ~500 МБ у JVM-Logstash); его выбирают именно за лёгкость.",
+                "source_of_confusion": "«Мощнее = тяжелее» — ложная интуиция; здесь наоборот, лёгкость и есть преимущество для k8s.",
+                "if_it_were_true": "Будь `Fluent Bit` прожорливее, его не ставили бы `DaemonSet`-ом на каждую ноду — но именно лёгкость это позволяет.",
+                "how_it_should_be": "`Fluent Bit` легче `Logstash`; ради этого его и берут в Kubernetes как DaemonSet."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "EFK — замена ELK, где вместо `Logstash` стоит `Fluent Bit` (написан на C, ~1–10 МБ RAM против ~500 МБ у Logstash). Приложение пишет JSON в stdout → `Fluent Bit` (`DaemonSet`) читает `/var/log/containers/*.log`, обогащает k8s-метаданными и шлёт в `Elasticsearch` → `Kibana` ищет по полям.",
+              "correct": true,
+              "sections": {
+                "explanation": "EFK популярен в Kubernetes из-за лёгкости `Fluent Bit`: он нативно разворачивается `DaemonSet`-ом на каждой ноде, потребляет мало ресурсов и даёт высокий throughput.",
+                "example": "`logback-spring.xml` пишет `LogstashEncoder` JSON в stdout; `Fluent Bit ConfigMap` с `[INPUT] tail`, `[FILTER] kubernetes` и `[OUTPUT] es` доставляет логи в индекс `app-logs-*`.",
+                "when_to_apply": "EFK выбирают для Kubernetes-сред, где важны низкое потребление ресурсов агентом и нативная интеграция `DaemonSet`.",
+                "edge_cases": "`Fluent Bit` беднее `Logstash` по сложной трансформации (grok); если нужна тяжёлая обработка, ставят `Fluentd`/`Logstash` как второй этаж или пишут Lua-фильтры.",
+                "related": "[[logging-interview#Q20]] интеграция с ELK; [[logging-interview#Q28]] log aggregation; [[logging-interview#Q40]] Graylog / GELF."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В EFK приложение должно писать логи прямо в `Fluent Bit` по сети, минуя stdout.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стандартная модель: приложение пишет JSON в stdout, а `Fluent Bit` (`DaemonSet`) читает файлы контейнеров (`/var/log/containers/*.log`); прямая сетевая отправка не нужна.",
+                "source_of_confusion": "Кажется, что агенту надо отправлять логи явно, как в сокет.",
+                "if_it_were_true": "Будь так, конфиг `Fluent Bit` не имел бы `[INPUT] tail` по логам контейнеров — но именно его и настраивают.",
+                "how_it_should_be": "Приложение пишет в stdout, `Fluent Bit` читает логи контейнеров с ноды — связь через файловую систему, не по сети из приложения."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как правильно использовать `MDC` в многопоточном коде с thread pools?",
+          "options": [
+            {
+              "text": "`MDC` передаётся в потоки `ThreadPoolTaskExecutor` автоматически — `TaskDecorator` не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ThreadLocal`-MDC не наследуется рабочими потоками пула; без `TaskDecorator`/ручного копирования задача видит пустой MDC.",
+                "source_of_confusion": "Кажется, что Spring-исполнитель сам «протягивает» контекст в задачу.",
+                "if_it_were_true": "Будь перенос автоматическим, `@Async`-метод всегда логировал бы с traceId — но без декоратора он его теряет.",
+                "how_it_should_be": "Контекст переносят `TaskDecorator`'ом (или вручную через `getCopyOfContextMap`/`setContextMap`)."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`MDC.clear()` в задаче пула не нужен, потому что после её выполнения поток уничтожается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Потоки пула переиспользуются, не уничтожаются; без `clear()` скопированный контекст останется и протечёт в следующую задачу того же потока.",
+                "source_of_confusion": "Кажется, что после задачи поток завершается и контекст исчезает.",
+                "if_it_were_true": "Будь поток одноразовым, утечки traceId между задачами не было бы — но пул держит потоки живыми и переиспользует.",
+                "how_it_should_be": "В задаче пула обязателен `MDC.clear()` в `finally`, иначе контекст утекает между задачами."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Достаточно установить MDC в самом пуле один раз при его создании — он будет валиден для всех задач.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MDC относится к конкретному запросу, а не к пулу: установка «один раз» дала бы всем задачам один и тот же traceId; контекст копируют per-task на момент submit.",
+                "source_of_confusion": "Хочется настроить контекст «централизованно» на уровне пула.",
+                "if_it_were_true": "Будь так, задачи разных запросов писали бы один traceId — но он должен быть свой у каждого запроса.",
+                "how_it_should_be": "Контекст снимают на момент submit (`getCopyOfContextMap`) и ставят в рабочем потоке per-task, а не один раз на пул."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В пуле потоков `MDC` (`ThreadLocal`) не передаётся в рабочий поток автоматически, поэтому контекст копируют явно: `MDC.getCopyOfContextMap()` в вызывающем потоке → `MDC.setContextMap(...)` в задаче, с обязательным `MDC.clear()` в `finally`. Удобнее всего через `TaskDecorator` (Spring `ThreadPoolTaskExecutor`), который оборачивает каждую задачу.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без переноса контекста async-задача пишет логи без `traceId`, а без `clear()` контекст утекает в следующую задачу того же переиспользуемого потока — обе проблемы решает `MdcTaskDecorator`.",
+                "example": "`executor.setTaskDecorator(new MdcTaskDecorator())`, где `decorate` сохраняет `getCopyOfContextMap()` и в обёртке делает `setContextMap` + `MDC.clear()` в `finally`.",
+                "when_to_apply": "Это применяют для всех `@Async`-методов и явных `ExecutorService`, где задачи логируют и должны сохранять сквозной `traceId`.",
+                "edge_cases": "В Kubernetes логи агрегируются по поду, поэтому `traceId` в MDC + JSON-логи дают сквозной поиск; забытый `clear()` в пуле приводит к чужому traceId в следующей задаче.",
+                "related": "[[logging-interview#Q24]] логирование в async-коде; [[logging-interview#Q9]] что такое MDC; [[logging-interview#Q30]] реактивные стеки."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие best practices по уровням логирования в production?",
+          "options": [
+            {
+              "text": "В prod держат `root: WARN`/`INFO`, свои пакеты на `INFO`, шумные библиотеки на `WARN`, SQL — `OFF`/`ERROR`. Уровни соблюдают по семантике: `ERROR` — необработанная ошибка с вмешательством, `WARN` — деградация/retry, `INFO` — бизнес-события, `DEBUG`/`TRACE` — выключены. Уровень меняют в рантайме через Actuator без рестарта.",
+              "correct": true,
+              "sections": {
+                "explanation": "Слишком много логов перегружают диск и Kibana, слишком мало — нечего расследовать; баланс достигается строгой семантикой уровней и тихими библиотеками в prod.",
+                "example": "`application-prod.yml`: `root: WARN`, `com.company.app: INFO`, `org.hibernate.SQL: ERROR`, `org.hibernate.type: OFF`; на инциденте — POST `/actuator/loggers/com.company.app` с `DEBUG`.",
+                "when_to_apply": "Эти правила применяют при настройке prod-профиля и в каждом `catch`-блоке при выборе уровня для конкретной ситуации.",
+                "edge_cases": "Типичная ошибка — `log.error` на ожидаемую `EntityNotFoundException`; это бизнес-случай уровня `WARN`/`INFO`, иначе зря триггерится алерт.",
+                "related": "[[logging-interview#Q6]] перечень уровней; [[logging-interview#Q22]] уровни по окружению; [[logging-interview#Q19]] логирование исключений."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "В prod надо держать `root: DEBUG` — чтобы при инциденте сразу была максимальная детализация.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`root: DEBUG` в prod даёт десятки тысяч строк/сек от фреймворков, перегружая диск и Kibana; держат `INFO`/`WARN`, а пакет точечно поднимают на время.",
+                "source_of_confusion": "«Больше деталей = легче расследовать» кажется верным, но не масштабируется на prod-нагрузку.",
+                "if_it_were_true": "Будь `root: DEBUG` нормой, ingestion ELK не отставал бы на часы — но под потоком DEBUG он отстаёт.",
+                "how_it_should_be": "В prod `root` держат на `INFO`/`WARN`; нужный пакет поднимают до `DEBUG` через Actuator на время инцидента."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Ожидаемую `EntityNotFoundException` правильно логировать как `ERROR` со стеком.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это обрабатываемая бизнес-ситуация уровня `WARN`/`INFO`; `ERROR` зря триггерит алерт и засоряет канал реальных сбоев.",
+                "source_of_confusion": "Любое исключение интуитивно хочется отметить как `ERROR`.",
+                "if_it_were_true": "Будь это верно, дежурный получал бы PagerDuty на каждый «не найден заказ» — но это штатный случай, а не инцидент.",
+                "how_it_should_be": "Ожидаемые бизнес-ошибки логируют `WARN`/`INFO`; `ERROR` оставляют для необработанных сбоев."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "SQL-запросы Hibernate стоит логировать на `INFO` в prod — это удобно для аудита данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SQL на `INFO` в prod даёт огромный объём и не является аудитом; его держат на `WARN`/`OFF`, а в dev включают `DEBUG`.",
+                "source_of_confusion": "SQL-трейс кажется полезным «аудитом» обращений к БД.",
+                "if_it_were_true": "Будь SQL на `INFO` полезным аудитом, регулятор принимал бы лог Hibernate как аудит-журнал — но это просто технический шум.",
+                "how_it_should_be": "SQL логируют на `DEBUG` только в dev; в prod уровень Hibernate держат `WARN`/`OFF`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `Log4j2` async loggers отличаются от `Logback` AsyncAppender?",
+          "options": [
+            {
+              "text": "Оба используют `LMAX Disruptor`, поэтому по производительности `Log4j2` async и `Logback AsyncAppender` идентичны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Disruptor только у `Log4j2`; `Logback AsyncAppender` использует `BlockingQueue` с блокировками — отсюда кратная разница в throughput.",
+                "source_of_confusion": "Оба «асинхронны», поэтому реализацию считают одинаковой.",
+                "if_it_were_true": "Будь модели идентичны, бенчмарк не показывал бы ~1M против ~18M ops/s — но разрыв есть.",
+                "how_it_should_be": "`Log4j2` — Disruptor (lock-free), `Logback` — `BlockingQueue` (с локом); производительность разная."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Log4j2` async loggers основаны на `LMAX Disruptor` — lock-free ring buffer (CAS вместо блокировок), что даёт на порядки больший throughput и микросекундную latency. `Logback AsyncAppender` — обёртка над `BlockingQueue` (дефолт 256) с одним потоком-консьюмером, поэтому медленнее под пиком.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевая разница в модели: Disruptor избегает блокировок и context switch, тогда как `BlockingQueue` сериализует доступ через lock; для latency-sensitive систем выбирают `Log4j2`.",
+                "example": "Режим All Async через `-Dlog4j2.contextSelector=...AsyncLoggerContextSelector`; в `log4j2.xml` — `<AsyncRoot>`/`<AsyncLogger>`. Бенчмарк: Logback sync ~260K ops/s, Logback Async ~1M, Log4j2 AsyncLogger ~18M.",
+                "when_to_apply": "`Log4j2 async loggers` выбирают для high-throughput latency-чувствительных сервисов (трейдинг, игровые серверы); для большинства приложений `Logback Async` достаточно.",
+                "edge_cases": "`includeLocation=true`/caller data убивает выигрыш async в обоих движках — построение stack trace дорогое; его держат выключенным.",
+                "related": "[[logging-interview#Q16]] Logback vs Log4j2; [[logging-interview#Q13]] асинхронный аппендер; [[logging-interview#Q39]] garbage-free logging."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Logback AsyncAppender` быстрее `Log4j2` async loggers, потому что у Logback меньше слоёв абстракции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По бенчмаркам `Log4j2 AsyncLogger` (Disruptor) кратно быстрее `Logback AsyncAppender` (~18M против ~1M ops/s); «меньше слоёв» не отменяет блокировок очереди.",
+                "source_of_confusion": "Logback как дефолт кажется «легче», отсюда вывод о его превосходстве в скорости.",
+                "if_it_were_true": "Будь Logback быстрее, его выбирали бы для трейдинга — но там берут `Log4j2 All Async`.",
+                "how_it_should_be": "В async-режиме `Log4j2` (Disruptor) обгоняет `Logback AsyncAppender`; для latency-критичных систем берут Log4j2."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`includeLocation`/caller data можно включать в async без потери производительности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Построение stack trace для caller info дорогое и нивелирует выигрыш async в обоих движках; его держат выключенным.",
+                "source_of_confusion": "Имя класса/строки удобно, и кажется, что в async оно «бесплатно».",
+                "if_it_were_true": "Будь это дёшево, throughput async не падал бы при `includeLocation=true` — но он резко падает.",
+                "how_it_should_be": "В async caller data (`includeLocation`) держат выключенным; включают только для точечной отладки."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает Spring Boot Logging Auto-configuration?",
+          "options": [
+            {
+              "text": "`Spring Boot` всегда использует `Logback` и не умеет переключаться на `Log4j2` через classpath.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`LoggingSystem.detect()` выбирает движок по classpath: если есть `log4j-core` (через `spring-boot-starter-log4j2`), активируется `Log4j2LoggingSystem`.",
+                "source_of_confusion": "Logback — дефолт, отсюда вывод, что он единственно возможный.",
+                "if_it_were_true": "Будь так, `spring-boot-starter-log4j2` не имел бы смысла — но он переключает движок штатно.",
+                "how_it_should_be": "Spring детектит движок по classpath и поддерживает и `Logback`, и `Log4j2`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Свойства `logging.level.*` из `application.yml` авто-конфигурация игнорирует — уровни задаются только в XML.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring специально применяет `logging.level.*`/`logging.file.*`/`logging.pattern.*` поверх XML-конфига; YAML — штатный канал настройки уровней.",
+                "source_of_confusion": "Кажется, что раз есть XML, YAML-свойства не учитываются.",
+                "if_it_were_true": "Будь так, `logging.level.root=DEBUG` в YAML не действовал бы — но он меняет уровень.",
+                "how_it_should_be": "Авто-конфигурация транслирует `logging.*` из `application.yml` в активный движок логирования."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Spring Boot` при старте через абстракцию `LoggingSystem.detect()` определяет реализацию по classpath (`logback-classic` → `LogbackLoggingSystem`, `log4j-core` → `Log4j2LoggingSystem`), инициализирует конфиг (сначала `logback-spring.xml`, затем `logback.xml`), применяет `logging.level.*`/`logging.file.*`/`logging.pattern.*` из `application.yml` и активирует `<springProfile>`-секции.",
+              "correct": true,
+              "sections": {
+                "explanation": "Авто-конфигурация связывает декларативные свойства Spring с движком логирования: разработчик задаёт уровни в YAML, а Spring транслирует их в конкретный движок без ручной настройки.",
+                "example": "`logging.level.com.myapp: DEBUG`, `logging.file.name: /var/log/app.log`, `logging.structured.format.console: ecs` (Spring Boot 3.4+) — встроенный JSON без доп. зависимостей.",
+                "when_to_apply": "На авто-конфигурацию полагаются для стандартных кейсов; кастомный `logback-spring.xml` пишут, когда нужны нестандартные аппендеры, фильтры или JSON-энкодеры.",
+                "edge_cases": "До инициализации `ApplicationContext` ранние `[main]`-логи идут в дефолтном формате — это нормально, ваш конфиг применяется после загрузки контекста.",
+                "related": "[[logging-interview#Q7]] способы конфигурирования; [[logging-interview#Q22]] уровни по окружению; [[logging-interview#Q36]] ECS Layout."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`logback.xml` имеет приоритет над `logback-spring.xml` при старте Spring Boot.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring Boot сначала ищет `logback-spring.xml` (с поддержкой Spring-расширений) и только при его отсутствии берёт `logback.xml`.",
+                "source_of_confusion": "`logback.xml` — «стандартное» имя Logback, отсюда вывод о его приоритете.",
+                "if_it_were_true": "Будь приоритет у `logback.xml`, `<springProfile>` в `logback-spring.xml` не срабатывал бы — но он работает, потому что этот файл предпочтительнее.",
+                "how_it_should_be": "Приоритет у `logback-spring.xml` (Spring-расширения), `logback.xml` — fallback без них."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое ECS Layout и зачем он нужен?",
+          "options": [
+            {
+              "text": "`ECS` — это формат сжатия логов перед отправкой в Elasticsearch.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ECS` — это стандарт ИМЁН ПОЛЕЙ (схема), а не алгоритм сжатия; он определяет, как называть `log.level`, `trace.id` и т.д.",
+                "source_of_confusion": "Аббревиатура ECS похожа на что-то техническое-низкоуровневое, отсюда мысль о сжатии.",
+                "if_it_were_true": "Будь ECS сжатием, он не давал бы готовых дашбордов Kibana — но именно унификация имён полей их и обеспечивает.",
+                "how_it_should_be": "`ECS` — общая схема имён полей Elastic; совместимость с APM/Kibana идёт от единых имён, а не от сжатия."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "ECS Layout и кастомный `LogstashEncoder` можно свободно смешивать в одном индексе ES.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ECS использует имена вроде `log.level`, а `LogstashEncoder` — `level`; в одном индексе их маппинги конфликтуют, дашборды ломаются.",
+                "source_of_confusion": "Оба пишут JSON, поэтому кажутся взаимозаменяемыми внутри одного индекса.",
+                "if_it_were_true": "Будь смешивание безопасным, ES не выдавал бы mapping conflict на разнотипных полях — но он выдаёт.",
+                "how_it_should_be": "В одном индексе придерживаются одной схемы (ECS либо кастомной), не смешивая имена полей."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Главное преимущество ECS — он работает быстрее любого другого энкодера за счёт бинарного формата.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ECS — это про стандартизацию имён полей и совместимость с Elastic, а не про скорость; формат остаётся текстовым JSON.",
+                "source_of_confusion": "«Стандарт от Elastic» ассоциируют с оптимизацией производительности.",
+                "if_it_were_true": "Будь дело в скорости, ECS рекламировали бы бенчмарками — но его ценность в авто-корреляции с APM и готовых дашбордах.",
+                "how_it_should_be": "Преимущество ECS — единая схема полей и совместимость с Elastic APM/Kibana, а не выигрыш в скорости."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`ECS` (Elastic Common Schema) — стандартизированный набор имён полей для всей экосистемы `Elastic` (`@timestamp`, `log.level`, `service.name`, `trace.id`, `error.stack_trace`...). `ECS Layout` (через `co.elastic.logging:logback-ecs-encoder`) пишет логи в этих именах, гарантируя совместимость с `Kibana Discover`, `Elastic APM` и готовыми дашбордами.",
+              "correct": true,
+              "sections": {
+                "explanation": "Единая схема полей убирает разнобой имён между сервисами и даёт автоматическую корреляцию логов с трейсами в Elastic APM по `trace.id` — без ручной настройки маппинга.",
+                "example": "`<encoder class=\"co.elastic.logging.logback.EcsEncoder\"><serviceName>${APP_NAME}</serviceName>...</encoder>` даёт JSON с `service.name`, `trace.id`, `error.type`, совместимый с APM из коробки.",
+                "when_to_apply": "ECS выбирают, когда стек уже на Elastic (ES + APM + Kibana) и нужны готовые дашборды и авто-корреляция логов с трейсами.",
+                "edge_cases": "ECS жёстко фиксирует имена полей (`log.level`, а не `level`); смешивать его с кастомным `LogstashEncoder` в одном индексе нельзя — маппинги конфликтуют.",
+                "related": "[[logging-interview#Q10]] структурированный JSON; [[logging-interview#Q29]] консистентность формата; [[logging-interview#Q14]] распределённая трассировка."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать логирование с `MemoryAppender` в unit-тестах?",
+          "options": [
+            {
+              "text": "`MemoryAppender extends ListAppender<ILoggingEvent>` копит события в памяти; в `@BeforeEach` его `start()` и `logger.addAppender(...)`, в тесте проверяют `contains(\"Payment processed\", Level.INFO)` или отсутствие секрета в логах, в `@AfterEach` — `detachAppender(...)`. Для интеграционных тестов есть `OutputCaptureExtension` с `CapturedOutput`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Логирование — часть контракта (критичные события на нужном уровне, секреты не в логах), поэтому его покрывают тестами; `MemoryAppender` даёт доступ к событиям без чтения файла.",
+                "example": "`assertThat(memoryAppender.contains(\"Payment failed\", Level.ERROR)).isTrue()` после смоделированного сбоя; и проверка, что номер карты `4111...` НЕ встречается ни в одном событии.",
+                "when_to_apply": "`MemoryAppender` берут для unit-тестов конкретного класса; `OutputCaptureExtension` (`@SpringBootTest`) — для проверки реального JSON-формата в интеграционных тестах.",
+                "edge_cases": "Аппендер привязывают к конкретному `Logger` и обязательно `detachAppender` в `@AfterEach`, иначе он останется висеть и накопит события из других тестов.",
+                "related": "[[logging-interview#Q15]] чувствительные данные в логах; [[logging-interview#Q6]] уровни логирования; [[logging-interview#Q19]] логирование исключений."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Чтобы проверить логи в тесте, обязательно читать и парсить лог-файл с диска.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MemoryAppender` (на базе `ListAppender`) даёт события прямо в памяти — файл не нужен; чтение файла хрупко и медленно.",
+                "source_of_confusion": "Логи ассоциируются с файлом, отсюда мысль, что и проверять надо файл.",
+                "if_it_were_true": "Будь так, `ListAppender` не существовал бы как тестовый инструмент — но он есть именно для проверки без файла.",
+                "how_it_should_be": "Логи тестируют через in-memory аппендер (`ListAppender`/`MemoryAppender`) или `OutputCaptureExtension`, а не парсингом файла."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Отвязывать `MemoryAppender` в `@AfterEach` не нужно — он сам отцепится после теста.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аппендер остаётся привязанным к `Logger` (это глобальное состояние логгера) и без `detachAppender` будет копить события следующих тестов, давая ложные срабатывания.",
+                "source_of_confusion": "Кажется, что объекты теста изолированы и аппендер исчезает с тестом.",
+                "if_it_were_true": "Будь отвязка лишней, тесты не флакали бы от чужих событий — но без detach они накапливаются.",
+                "how_it_should_be": "В `@AfterEach` обязательно `logger.detachAppender(memoryAppender)`, чтобы не было утечки состояния между тестами."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`MemoryAppender` и `OutputCaptureExtension` — это одно и то же, разницы в применении нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MemoryAppender` даёт типизированные `ILoggingEvent` для unit-теста класса; `OutputCaptureExtension` ловит сырой stdout для проверки реального формата в интеграционном тесте — разные уровни.",
+                "source_of_confusion": "Оба «проверяют логи», поэтому их считают взаимозаменяемыми.",
+                "if_it_were_true": "Будь они идентичны, не было бы смысла в двух инструментах — но один про события, другой про итоговый текст вывода.",
+                "how_it_should_be": "`MemoryAppender` — для unit-проверки событий/уровней; `OutputCaptureExtension` — для интеграционной проверки реального вывода."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать `StructuredArguments` для обогащения JSON-логов?",
+          "options": [
+            {
+              "text": "`value(\"orderId\", id)` создаёт отдельное поле `orderId` в JSON — так же, как `keyValue`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`value(...)` подставляет значение ТОЛЬКО в строку сообщения и не создаёт отдельного JSON-поля; для поля в JSON нужен `keyValue` или `append`.",
+                "source_of_confusion": "Имена `value` и `keyValue` похожи, отсюда вывод об одинаковом поведении.",
+                "if_it_were_true": "Будь так, поиск `orderId:12345` в Kibana находил бы записи с `value(...)` — но без отдельного поля он их не находит.",
+                "how_it_should_be": "Для JSON-поля используют `keyValue`/`append`; `value(...)` влияет лишь на текст сообщения."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`StructuredArguments` из `logstash-logback-encoder` добавляют поля в JSON помимо строки сообщения: `keyValue(\"orderId\", id)` — поле и в JSON, и в текст; `value(...)` — только в текст; `entries(map)` — карту как набор полей; а `Markers.append(\"userId\", v)` — поле только в JSON, не влияя на сообщение.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти хелперы позволяют класть типизированные атрибуты в JSON для индексации и агрегации, сохраняя при этом читаемое текстовое сообщение там, где нужно.",
+                "example": "`log.info(\"Order created {}\", keyValue(\"orderId\", id))` → `{\"message\":\"Order created orderId=12345\",\"orderId\":\"12345\"}`; `log.info(append(\"userId\", u), \"Audit event\")` кладёт `userId` только в JSON.",
+                "when_to_apply": "`keyValue` берут для полей, нужных и в тексте, и в JSON; `append`/`Markers` — для полей только в машинном формате (userId, sessionId), которые не должны засорять сообщение.",
+                "edge_cases": "`value(...)` НЕ создаёт отдельного JSON-поля (только подставляет в строку) — частая ловушка, когда ждут поле в JSON, а его нет; для поля используют `keyValue`/`append`.",
+                "related": "[[logging-interview#Q10]] структурированный JSON; [[logging-interview#Q21]] Markers; [[logging-interview#Q9]] MDC для сквозных полей."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`StructuredArguments` работают с любым энкодером, включая обычный `PatternLayout`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отдельные JSON-поля даёт только JSON-энкодер (`LogstashEncoder`); с `PatternLayout` `keyValue` попадёт лишь в текст, без структурированного поля.",
+                "source_of_confusion": "Раз это «аргументы логгера», кажется, что они дают поля при любом формате вывода.",
+                "if_it_were_true": "Будь так, текстовый `PatternLayout` тоже порождал бы JSON-поля — но он пишет плоскую строку.",
+                "how_it_should_be": "Структурированные поля требуют JSON-энкодера (`LogstashEncoder`); с `PatternLayout` будет только текст."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Markers.append(\"userId\", v)` добавляет `userId` и в текст сообщения, и в JSON одновременно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`append` через `Markers` кладёт поле ТОЛЬКО в JSON и не меняет текст сообщения; добавление в текст даёт `keyValue`.",
+                "source_of_confusion": "Кажется, что любой структурный аргумент отражается и в читаемом сообщении.",
+                "if_it_were_true": "Будь так, текст лога раздувался бы всеми машинными полями (sessionId и пр.) — но `append` их в текст не выводит.",
+                "how_it_should_be": "`append`/`Markers` — поле только в JSON; для попадания и в текст используют `keyValue`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 39,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает Log4j2 garbage-free logging?",
+          "options": [
+            {
+              "text": "Garbage-free logging означает, что `Log4j2` сам запускает сборку мусора чаще, чтобы освободить память.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот — он МИНИМИЗИРУЕТ создание объектов (пулы, direct encoding), чтобы GC запускался РЕЖЕ; форсирование GC тут ни при чём.",
+                "source_of_confusion": "Слова «garbage» и «free» наводят на мысль об активной очистке мусора.",
+                "if_it_were_true": "Будь это форсированием GC, latency только росла бы от пауз — но цель режима в их устранении.",
+                "how_it_should_be": "Garbage-free сокращает аллокации (переиспользует `LogEvent`/буферы), чтобы GC срабатывал реже и не давал пауз."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`JsonLayout` полностью поддерживает garbage-free режим, никаких ограничений нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JsonLayout` НЕ garbage-free; для JSON в этом режиме используют `JsonTemplateLayout`, иначе аллокации сводят выигрыш на нет.",
+                "source_of_confusion": "Кажется, что раз режим включён глобально, он работает с любым layout.",
+                "if_it_were_true": "Будь `JsonLayout` совместим, документация не рекомендовала бы `JsonTemplateLayout` для GF — но она рекомендует.",
+                "how_it_should_be": "Для garbage-free JSON берут `JsonTemplateLayout`; `JsonLayout` создаёт мусор и режим не держит."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Garbage-free logging` в `Log4j2` минимизирует создание объектов в heap, снижая давление на GC для latency-чувствительных приложений. Используются thread-local пул `LogEvent`/`StringBuilder`, direct encoding (запись прямо в буфер без промежуточных строк) и переиспользуемый `ByteBuffer`. Включается свойствами `log4j2.enableDirectEncoders=true`, `log4j2.garbagefreeThreadContextMap=true`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Обычный лог создаёт varargs-массив, `StringBuilder`, `String` и `LogEvent` на каждый вызов; garbage-free переиспользует эти объекты, убирая мусор и паузы GC.",
+                "example": "`-Dlog4j2.garbagefreeThreadContextMap=true -Dlog4j2.enableDirectEncoders=true`; в `log4j2.xml` — `immediateFlush=\"false\"` для max throughput и `PatternLayout` (не `JsonLayout`).",
+                "when_to_apply": "Режим включают там, где паузы GC недопустимы: high-frequency trading, игровые серверы, финансовые системы с жёсткой latency.",
+                "edge_cases": "Не все layout/appender поддерживают garbage-free: `JsonLayout` не поддерживает — для JSON в этом режиме берут `JsonTemplateLayout`.",
+                "related": "[[logging-interview#Q34]] Log4j2 async vs Logback; [[logging-interview#Q16]] Logback vs Log4j2; [[logging-interview#Q13]] асинхронный аппендер."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Garbage-free режим нужен любому веб-приложению — он всегда даёт заметный выигрыш.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для обычных CRUD-сервисов выигрыш незаметен, а ограничения (layout, флаги) усложняют конфиг; режим оправдан лишь для latency-критичных систем.",
+                "source_of_confusion": "«Меньше мусора» звучит универсально полезным.",
+                "if_it_were_true": "Будь он всегда нужен, его включали бы по умолчанию — но это узкая оптимизация под HFT/игровые серверы.",
+                "how_it_should_be": "Garbage-free применяют точечно в latency-чувствительных системах; для обычных приложений он избыточен."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 40,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить Graylog / GELF для приёма логов из Java?",
+          "options": [
+            {
+              "text": "`GELF` — это бинарный протокол, несовместимый с JSON, поэтому логи в нём нечитаемы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GELF` — это компактный JSON-формат (с опциональным chunking/сжатием), а не бинарный протокол; его поля (`short_message`, `host`) читаемы.",
+                "source_of_confusion": "Аббревиатура и UDP-транспорт создают впечатление низкоуровневого бинарного формата.",
+                "if_it_were_true": "Будь GELF бинарным, в нём не было бы JSON-полей `version`/`host`/`short_message` — но они есть.",
+                "how_it_should_be": "`GELF` — JSON-формат с обязательными полями; транспорт (UDP/TCP) отдельно, формат остаётся JSON."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Для production однозначно выбирают UDP `GELF` — он быстрее и надёжнее TCP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "UDP не гарантирует доставку и теряет сообщения при перегрузке; для prod рекомендуют TCP `GELF` + async, UDP — лишь когда потеря допустима.",
+                "source_of_confusion": "UDP быстрее по природе, отсюда ложный вывод о его надёжности.",
+                "if_it_were_true": "Будь UDP надёжнее, его не сопровождали бы оговоркой «потеря возможна» — но именно она и фигурирует.",
+                "how_it_should_be": "В prod берут TCP `GELF` + async appender; UDP — только при допустимости потерь."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Graylog` хранит логи в собственной встроенной БД и `Elasticsearch` ему не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Graylog` использует `Elasticsearch`/OpenSearch как хранилище и поисковый движок; собственной полнотекстовой БД у него нет.",
+                "source_of_confusion": "`Graylog` выглядит самодостаточным продуктом с UI, отсюда мысль о встроенном хранилище.",
+                "if_it_were_true": "Будь так, установка Graylog не требовала бы поднятого ES — но она его требует.",
+                "how_it_should_be": "`Graylog` пишет и ищет в `Elasticsearch`/OpenSearch, предоставляя свой Web UI поверх него."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Graylog` — платформа централизованного логирования на протоколе `GELF` (Graylog Extended Log Format) — компактном JSON с полями `version`, `host`, `short_message`, `timestamp`. В Java настраивают через `logback-gelf` (`GelfUdpAppender`/TCP) с `GelfLayout`, обычно обёрнутый в `AsyncAppender`; для prod рекомендуют TCP, UDP — только если потеря допустима.",
+              "correct": true,
+              "sections": {
+                "explanation": "`GELF` решает проблему многострочных логов и лимита размера UDP-датаграмм через chunking; `Graylog` пишет в `Elasticsearch` и даёт свой Web UI поверх.",
+                "example": "`<appender class=\"de.siegmar.logbackgelf.GelfUdpAppender\"><graylogHost>graylog.internal</graylogHost><graylogPort>12201</graylogPort><layout class=\"...GelfLayout\"><includeMdcData>true</includeMdcData></layout></appender>`, обёрнутый в `AsyncAppender`.",
+                "when_to_apply": "`Graylog`/GELF выбирают как альтернативу ELK, когда нужен готовый продукт с UI и потоковыми правилами, без сборки полного ELK-пайплайна.",
+                "edge_cases": "UDP `GELF` теряет сообщения при перегрузке/сети; для надёжности берут TCP-аппендер + async, а `neverBlock=true` не даёт логированию заблокировать приложение.",
+                "related": "[[logging-interview#Q20]] интеграция с ELK; [[logging-interview#Q31]] EFK-стек; [[logging-interview#Q41]] Kafka Appender."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 41,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Log Appender для Kafka и когда его применять?",
+          "options": [
+            {
+              "text": "`Kafka Appender` отправляет лог-записи напрямую в топик `Kafka`, минуя файлы и агенты, откуда их читают Logstash/Kafka Connect (→ ES), alerting и stream-обработка (Kafka Streams). Настраивают через `logback-kafka-appender` + `LogstashEncoder`; для логов берут `acks=0` (fire-and-forget) и обязательный fallback-аппендер на случай недоступности брокера.",
+              "correct": true,
+              "sections": {
+                "explanation": "Kafka как шина логов даёт высокий throughput, real-time обработку, сложную маршрутизацию и retention (буфер при сбое потребителя) — то, чего нет у простой связки Filebeat → ELK.",
+                "example": "`<appender class=\"...KafkaAppender\"><topic>app-logs</topic><producerConfig>acks=0</producerConfig>...<encoder class=\"...LogstashEncoder\"/></appender>` + `FAILOVER` FileAppender в том же root.",
+                "when_to_apply": "Kafka Appender выбирают при очень высокой нагрузке (>100K logs/s), необходимости real-time stream-обработки логов и сложной маршрутизации к нескольким потребителям.",
+                "edge_cases": "`acks=0` — fire-and-forget: при перегрузке брокера логи теряются; для критичных аудит-логов берут `acks=1` или стандартный путь через агент, плюс держат fallback-файл.",
+                "related": "[[logging-interview#Q20]] интеграция с ELK; [[logging-interview#Q28]] log aggregation; [[logging-interview#Q40]] Graylog / GELF."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Kafka Appender` с `acks=0` гарантирует доставку каждой лог-записи в топик.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`acks=0` — fire-and-forget: producer не ждёт подтверждения брокера, и при перегрузке/сбое записи теряются; гарантий доставки нет.",
+                "source_of_confusion": "Kafka известна надёжностью, отсюда вывод, что и при `acks=0` доставка гарантирована.",
+                "if_it_were_true": "Будь доставка гарантирована, не понадобился бы fallback-аппендер на случай недоступности брокера — но его держат именно поэтому.",
+                "how_it_should_be": "`acks=0` допускает потерю логов; для гарантий берут `acks=1`/`all` и/или fallback-аппендер."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Kafka Appender проще в настройке, чем связка `Filebeat → ELK`, и заменяет её во всех случаях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kafka Appender сложнее (producer-конфиг, топики, потребители, fallback) и оправдан под высокую нагрузку/stream-обработку; для простых случаев `Filebeat → ELK` проще.",
+                "source_of_confusion": "«Прямо в Kafka» звучит как короткий путь без лишних звеньев.",
+                "if_it_were_true": "Будь он всегда проще, никто не использовал бы `Filebeat → ELK` — но для типовых сервисов берут именно её.",
+                "how_it_should_be": "Kafka Appender — для high-load/real-time/сложной маршрутизации; для простых случаев проще `Filebeat → ELK`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Fallback-аппендер при использовании Kafka Appender не нужен — Kafka всегда доступна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Брокер может быть недоступен (сеть, ребаланс, перегрузка); без fallback-аппендера (например `FileAppender`) логи в этот момент теряются безвозвратно.",
+                "source_of_confusion": "Kafka воспринимают как «всегда живую» инфраструктуру.",
+                "if_it_were_true": "Будь Kafka всегда доступна, дублирующий `FAILOVER`-аппендер был бы лишним — но его добавляют как страховку.",
+                "how_it_should_be": "К Kafka Appender добавляют fallback-аппендер (файл), чтобы не терять логи при недоступности брокера."
               },
               "label": "D",
               "order": 3

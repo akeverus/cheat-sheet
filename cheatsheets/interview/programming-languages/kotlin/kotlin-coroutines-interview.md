@@ -672,6 +672,8 @@ scope.launch {
 
 Подробнее об обработке исключений — в [вопросах по исключениям Kotlin](kotlin-exceptions-interview.md).
 
+## Q20. (!) Что такое `SupervisorJob` и `supervisorScope`?
+
 `SupervisorJob` — разновидность `Job`, при которой **сбой одного ребёнка не отменяет остальных**. Ошибка распространяется вверх, но не «в стороны».
 
 ```mermaid
@@ -712,6 +714,8 @@ suspend fun loadDashboard() = supervisorScope {
 
 Частая ошибка: передача `SupervisorJob()` в `launch`. Это **не работает**, потому что создаётся новый `Job` — потомок `SupervisorJob`, а корутина получает обычный `Job`. Правильно — использовать `supervisorScope` или создавать `CoroutineScope(SupervisorJob())`.
 
+## Q21. (!) Что такое `CoroutineExceptionHandler` и где его устанавливать?
+
 `CoroutineExceptionHandler` — элемент `CoroutineContext`, обрабатывающий **необработанные** исключения.
 
 ```kotlin
@@ -731,6 +735,8 @@ scope.launch {
 - Устанавливается на **корневой** корутине или на scope. На дочерней корутине — бесполезен
 - **Не перехватывает** `CancellationException` — отмена не считается ошибкой
 - С обычным `Job` — handler вызывается после того, как всё уже отменено. С `SupervisorJob` — до отмены других детей (потому что отмены и не будет)
+
+## Q22. Чем `CancellationException` отличается от обычных исключений?
 
 `CancellationException` — специальное исключение, означающее **нормальную отмену**, а не ошибку:
 
@@ -774,6 +780,8 @@ try {
 }
 ```
 
+## Q23. (!) Что такое `Flow` и чем он отличается от `Sequence`?
+
 `Flow` — асинхронный холодный поток данных, аналог `Sequence`, но с поддержкой suspend-операций.
 
 | | `Sequence` | `Flow` |
@@ -812,6 +820,8 @@ scope.launch {
 
 `Flow` начинает выполнение только при вызове терминального оператора (`collect`, `toList`, `first` и др.) — это **холодный** поток.
 
+## Q24. (!) Что такое cold и hot потоки?
+
 **Cold поток** (`Flow`) — выполнение начинается только при подписке. Каждый коллектор получает свой экземпляр данных.
 
 **Hot поток** (`StateFlow`, `SharedFlow`, `Channel`) — данные эмитируются независимо от подписчиков.
@@ -848,6 +858,8 @@ graph LR
         HP --> SC3[Subscriber 3]
     end
 ```
+
+## Q25. (!) В чём разница между `StateFlow` и `SharedFlow`?
 
 | | `StateFlow` | `SharedFlow` |
 |---|---|---|
@@ -888,6 +900,8 @@ class EventBus {
 ```
 
 Правило: `StateFlow` для **состояния** (всегда есть текущее значение, новый подписчик получает его сразу). `SharedFlow` для **событий** (навигация, уведомления, ошибки — не нужно повторять при переподписке).
+
+## Q26. Какие операторы `Flow` существуют и как они работают?
 
 Операторы `Flow` делятся на три категории:
 
@@ -933,6 +947,8 @@ searchQuery
 // flatMapMerge — параллельно (concurrency параметр)
 ```
 
+## Q27. Как обрабатывать ошибки в `Flow`?
+
 ```kotlin
 // catch — перехватывает исключения из upstream
 flow {
@@ -966,6 +982,8 @@ flow { emit(fetchFromNetwork()) }
 ```
 
 Важно: `catch` перехватывает только **upstream** исключения (из операторов выше по цепочке). Исключения в `collect` нужно оборачивать в `try-catch`.
+
+## Q28. Как управлять backpressure в `Flow`?
 
 Backpressure возникает, когда producer эмитирует быстрее, чем consumer обрабатывает. `Flow` решает это через suspend — `emit()` приостанавливается, пока collector не готов. Для тонкой настройки:
 
@@ -1002,6 +1020,8 @@ graph LR
     end
 ```
 
+## Q29. Как преобразовать cold `Flow` в hot (`shareIn`, `stateIn`)?
+
 `shareIn` и `stateIn` превращают cold `Flow` в горячий, разделяя одну подписку между несколькими collectors:
 
 ```kotlin
@@ -1033,6 +1053,8 @@ class UserRepository(
 - `Eagerly` — запускается сразу
 - `Lazily` — при первом подписчике, никогда не останавливается
 - `WhileSubscribed(stopTimeout, replayExpiration)` — останавливается, когда нет подписчиков
+
+## Q30. (!) Что такое `Channel` и чем он отличается от `Flow`?
 
 `Channel` — горячий примитив для передачи данных **между корутинами** по принципу «производитель-потребитель». Каждый элемент доставляется **одному** получателю.
 
@@ -1077,6 +1099,8 @@ repeat(3) { consumerId ->
 
 Правило: `Channel` — для коммуникации между корутинами (очередь задач, fan-out). `Flow` — для потока данных от источника к потребителю с операторами трансформации. Подробнее об аналогах в реактивном программировании — в [вопросах по RxJava](../../reactive/rxjava-interview.md).
 
+## Q31. Какие типы `Channel` существуют?
+
 | Тип | Capacity | Поведение `send` при полном буфере |
 |---|---|---|
 | `RENDEZVOUS` (0) | 0 | Приостанавливается, пока receiver не вызовет `receive` |
@@ -1101,6 +1125,8 @@ val channel = Channel<Int>(
     onBufferOverflow = BufferOverflow.DROP_OLDEST
 )
 ```
+
+## Q32. Что такое `produce` и `actor`?
 
 `produce` — билдер корутины, создающий `ReceiveChannel` (producer-паттерн):
 
@@ -1142,6 +1168,8 @@ fun CoroutineScope.counterActor() = launch {
 }
 ```
 
+## Q33. Как вызывать suspend-функции из обычного кода?
+
 Из не-suspend кода suspend-функцию можно вызвать только через создание корутины:
 
 ```kotlin
@@ -1179,6 +1207,8 @@ fun fetchDataFuture(): CompletableFuture<Data> =
 ```
 
 Подробнее о взаимодействии с Java-кодом — в [вопросах по Kotlin-Java Interop](kotlin-interop-java-interview.md).
+
+## Q34. (!) Распространённые ошибки при работе с корутинами
 
 **1. Использование `GlobalScope` вместо structured concurrency:**
 ```kotlin
@@ -1236,6 +1266,8 @@ lifecycleScope.launch {
     }
 }
 ```
+
+## Q35. Как тестировать корутины (`runTest`, `TestScope`)?
 
 Библиотека `kotlinx-coroutines-test` предоставляет инструменты для тестирования с виртуальным временем:
 
@@ -1298,6 +1330,8 @@ fun `test periodic task`() = runTest {
 
 Рекомендация: всегда инжектируйте `CoroutineDispatcher` через конструктор, а в тестах подменяйте на `UnconfinedTestDispatcher` или `StandardTestDispatcher`.
 
+## Q36. Как интегрировать корутины со `Spring`?
+
 `Spring WebFlux` (начиная с Spring 5.2) нативно поддерживает `suspend`-функции и `Flow`:
 
 ```kotlin
@@ -1341,6 +1375,8 @@ implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
 
 Для блокирующего стека (`spring-boot-starter-web`) корутины можно запускать вручную через `CoroutineScope` в сервисе, но без нативной поддержки suspend-контроллеров.
 
+## Q37. Чем `Flow` отличается от `RxJava`?
+
 | | `Flow` | `RxJava` |
 |---|---|---|
 | Зависимость | Часть `kotlinx.coroutines` | Отдельная библиотека |
@@ -1370,6 +1406,8 @@ flow { emit(fetchData()) }
 ```
 
 `Flow` рекомендуется для новых Kotlin-проектов. `RxJava` по-прежнему актуален в крупных проектах с Java-кодом или богатой операторной базой. Подробнее — в [вопросах по RxJava](../../reactive/rxjava-interview.md).
+
+## Q38. Как работает `Mutex` в корутинах и когда использовать вместо `synchronized`?
 
 `Mutex` — инструмент взаимного исключения для корутин. В отличие от `synchronized` и `ReentrantLock`, `Mutex` **не блокирует поток** — корутина приостанавливается при ожидании блокировки.
 
@@ -1422,6 +1460,8 @@ suspend fun safeFun() {
 | Применение | Java-legacy, non-coroutine код | Корутины |
 
 Для счётчиков без сложной логики предпочтительнее `AtomicInteger` или `AtomicLong` — они не требуют блокировки вовсе.
+
+## Q39. Как комбинировать несколько `Flow` — `combine`, `zip`, `merge`?
 
 Три основных оператора для объединения потоков с разной семантикой:
 

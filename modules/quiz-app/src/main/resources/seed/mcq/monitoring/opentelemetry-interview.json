@@ -540,6 +540,1146 @@
           ]
         }
       ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Java auto-instrumentation через `javaagent` в `OTel`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`javaagent` требует добавить аннотацию `@Traced` на каждый метод, который нужно трассировать, иначе span'ы не создаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Агент инструментирует bytecode известных библиотек автоматически, без аннотаций и правок кода приложения.",
+                "source_of_confusion": "Аннотационные подходы из других APM-инструментов переносят на `OTel`-агент по аналогии.",
+                "if_it_were_true": "Тогда auto-instrumentation не отличался бы от manual по объёму работы, но его суть — нулевые правки кода.",
+                "how_it_should_be": "Достаточно подключить агент и задать env-переменные; аннотации нужны лишь для точечной ручной инструментации."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`opentelemetry-javaagent.jar` подключается через `-javaagent:` и инструментирует bytecode на старте JVM, без правок кода. Из коробки покрывает Spring Boot, HTTP-клиенты (`HttpClient`, `OkHttp`, `RestTemplate`, `WebClient`), JDBC, Kafka, RabbitMQ, Redis, MongoDB, gRPC и 100+ библиотек. Настройка — через env: `OTEL_SERVICE_NAME`, `OTEL_TRACES_EXPORTER`, `OTEL_EXPORTER_OTLP_ENDPOINT`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Агент модифицирует байткод популярных библиотек при загрузке классов, поэтому span'ы для HTTP и DB появляются сами, без единой строки инструментации в коде приложения.",
+                "example": "`java -javaagent:opentelemetry-javaagent.jar -jar app.jar` плюс `export OTEL_EXPORTER_OTLP_ENDPOINT=http://collector:4317` — и Spring-контроллеры с JDBC-запросами уже трассируются в Collector.",
+                "when_to_apply": "Когда нужно быстро покрыть стандартный стек (Spring, JDBC, Kafka) телеметрией без изменения и пересборки кода приложения.",
+                "edge_cases": "Агент знает только известные ему библиотеки; кастомные доменные операции он не видит, и для них нужна manual-инструментация поверх auto-trace.",
+                "related": "[[opentelemetry-interview#Q9]] auto vs manual instrumentation; [[opentelemetry-interview#Q11]] manual spans; [[opentelemetry-interview#Q24]] semantic conventions."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`javaagent` инструментирует только сам Spring Boot, а JDBC, Kafka и Redis приходится инструментировать вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Агент покрывает 100+ библиотек: JDBC всех БД, Kafka, RabbitMQ, Redis, MongoDB, gRPC, а не только Spring.",
+                "source_of_confusion": "Spring чаще всего приводят в примерах, отсюда впечатление, что покрытие им и ограничено.",
+                "if_it_were_true": "Тогда ради DB-трейсов пришлось бы писать ручной код, но JDBC агент инструментирует из коробки.",
+                "how_it_should_be": "Auto-инструментация охватывает большинство популярных клиентов и драйверов без ручной работы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`javaagent` работает только при пересборке приложения с особой Maven-зависимостью, без неё агент не подключается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Агент подключается флагом `-javaagent:` к готовому jar без пересборки и без добавления зависимостей в код.",
+                "source_of_confusion": "Manual-инструментация требует SDK-зависимостей, и это требование ошибочно переносят на агент.",
+                "if_it_were_true": "Тогда нельзя было бы инструментировать чужие сторонние jar, но агент работает с любым готовым артефактом.",
+                "how_it_should_be": "Агент прикрепляется к уже собранному приложению флагом запуска, пересборка не нужна."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как создавать manual spans в `OTel` (на примере Java)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Manual span закрывается автоматически сборщиком мусора, поэтому вызывать `span.end()` вручную не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Span завершается только явным `span.end()`; без него span остаётся открытым и искажает длительность и иерархию trace.",
+                "source_of_confusion": "Привычка полагаться на GC для ресурсов переносится на span'ы, у которых жизненный цикл явный.",
+                "if_it_were_true": "Тогда не нужен был бы паттерн try-finally вокруг span, но именно он гарантирует корректное закрытие.",
+                "how_it_should_be": "`span.end()` вызывается явно, обычно в `finally`, чтобы span закрылся при любом исходе."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для manual span обязательно создавать новый `Tracer` на каждый вызов метода, переиспользовать его нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Tracer` получают один раз (например, `GlobalOpenTelemetry.getTracer(\"my-app\")`) и переиспользуют для всех span'ов.",
+                "source_of_confusion": "Span создаётся на каждую операцию, и эту краткоживучесть ошибочно переносят на `Tracer`.",
+                "if_it_were_true": "Тогда инструментация была бы дорогой по аллокациям, но `Tracer` спроектирован как переиспользуемый.",
+                "how_it_should_be": "Один экземпляр `Tracer` на компонент достаточно; новый span — да, новый tracer — нет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Через `Tracer` из `GlobalOpenTelemetry.getTracer(...)`: `tracer.spanBuilder(\"process_order\").startSpan()`, затем `span.makeCurrent()` в try-with-resources, установка атрибутов, `span.recordException(e)` и `setStatus` при ошибке, и обязательный `span.end()` в `finally`. Best practices: оборачивать в try-finally, ставить атрибуты для контекста, записывать exceptions, выставлять status OK/ERROR.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ручной span описывает доменную операцию, которую агент не знает: вокруг бизнес-логики вручную открывается span, наполняется атрибутами и гарантированно закрывается.",
+                "example": "В блоке `try (Scope scope = span.makeCurrent())` ставим `span.setAttribute(\"order.id\", orderId)`, при исключении вызываем `span.recordException(e)` и `setStatus(ERROR)`, а `span.end()` всегда в `finally`.",
+                "when_to_apply": "Для ключевых бизнес-операций (оформление заказа, расчёт), которые auto-instrumentation не покрывает, но которые важно видеть в trace.",
+                "edge_cases": "Если забыть `span.end()` в `finally`, span не закроется и исказит trace; без `makeCurrent()` дочерние span'ы не привяжутся к родителю.",
+                "related": "[[opentelemetry-interview#Q9]] auto vs manual instrumentation; [[opentelemetry-interview#Q12]] span attributes и events; [[opentelemetry-interview#Q13]] trace, span, span context."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Атрибуты на manual span можно задать только до вызова `startSpan()`, после старта span неизменяем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Атрибуты можно ставить и после `startSpan()` через `span.setAttribute(...)` вплоть до `span.end()`.",
+                "source_of_confusion": "Иммутабельность span context (trace_id/span_id) переносят на весь span, включая атрибуты.",
+                "if_it_were_true": "Тогда нельзя было бы записать `http.status_code` по факту ответа, но это типовой сценарий.",
+                "how_it_should_be": "Атрибуты дополняются по ходу выполнения операции, пока span не закрыт."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое span attributes и span events в `OTel`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Attributes` и `events` — одно и то же, разница только в названии метода, поведение идентично.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Attributes — статические key-value пары на span целиком; events — timestamped точки во времени внутри span.",
+                "source_of_confusion": "Оба добавляются на span методами setAttribute/addEvent, отсюда впечатление о тождестве.",
+                "if_it_were_true": "Тогда не было бы смысла в двух разных API, но они решают разные задачи.",
+                "how_it_should_be": "Attributes описывают span, events отмечают моменты во времени — это разные сущности."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Имена атрибутов можно придумывать произвольно — Semantic Conventions это лишь рекомендация без практического эффекта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стандартные имена (`http.method`, `db.system`) позволяют backend-UI распознавать поля; произвольные имена остаются непонятными инструменту.",
+                "source_of_confusion": "Технически любое имя примется, и кажется, что стандарт не влияет на результат.",
+                "if_it_were_true": "Тогда `Datadog`/`Jaeger` не показывали бы готовые виджеты по HTTP, но они опираются на стандартные имена.",
+                "how_it_should_be": "Имена берут из Semantic Conventions, иначе теряется interoperability между инструментами."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Events` нельзя снабжать собственными атрибутами — это просто строковые метки без дополнительных данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`addEvent` принимает `Attributes`, поэтому событие может нести структурированные данные (например, текст запроса).",
+                "source_of_confusion": "Простейший вызов `addEvent(\"Cache miss\")` без атрибутов создаёт впечатление, что их и нельзя добавить.",
+                "if_it_were_true": "Тогда нельзя было бы приложить детали к событию, но перегрузка с `Attributes` именно для этого.",
+                "how_it_should_be": "Event может содержать собственные атрибуты, дополняя метку контекстом."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Attributes` — key-value пары (как tags), статическая информация про span: `span.setAttribute(\"http.method\", \"GET\")`, `http.status_code`, `db.system`. `Events` — timestamped события внутри span: `span.addEvent(\"Cache miss\")` или `addEvent` с собственными атрибутами. Стандартные имена атрибутов берут из Semantic Conventions для interoperability.",
+              "correct": true,
+              "sections": {
+                "explanation": "Attributes описывают характеристики операции целиком, а events отмечают значимые моменты во времени внутри неё — например, промах кэша или старт медленного запроса.",
+                "example": "`span.setAttribute(\"db.system\", \"postgresql\")` задаёт контекст span'а, а `span.addEvent(\"Slow query detected\", Attributes.of(...))` фиксирует конкретное событие с временной меткой.",
+                "when_to_apply": "Attributes — для фильтрации и группировки span'ов в backend; events — чтобы отметить промежуточные точки внутри одной операции.",
+                "edge_cases": "Высококардинальные атрибуты (например, `user_id`) раздувают хранилище; имена вне Semantic Conventions backend не распознает как стандартные.",
+                "related": "[[opentelemetry-interview#Q11]] manual spans; [[opentelemetry-interview#Q24]] semantic conventions; [[opentelemetry-interview#Q13]] trace, span, span context."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое trace, span и span context в `OTel`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Trace` — коллекция span'ов одного запроса. `Span` — одна операция (HTTP-вызов, DB-запрос, функция). `Span context` — IDs для корреляции: `trace_id` (16 байт / 32 hex, общий для всех span'ов trace), `span_id` (8 байт / 16 hex, уникален на span) и `trace_flags` (sampling decision). Span'ы образуют дерево: root-span запроса и вложенные дочерние span'ы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Trace связывает все операции одного запроса через общий `trace_id`, а иерархия parent-child span'ов показывает, какая операция вложена в какую и где запрос провёл время.",
+                "example": "Trace `0123...` содержит root-span `HTTP GET /orders/123`, внутри — span'ы `SELECT FROM orders`, `SELECT FROM users` и `HTTP POST /payments` со своим вложенным `SELECT FROM accounts`.",
+                "when_to_apply": "Когда нужно проследить путь одного запроса через несколько операций и сервисов и понять структуру вызовов.",
+                "edge_cases": "Если `span context` не пробросить между сервисами, появятся разорванные trace'ы; `trace_flags` определяют, будет ли span засемплирован.",
+                "related": "[[opentelemetry-interview#Q14]] context propagation; [[opentelemetry-interview#Q11]] manual spans; [[opentelemetry-interview#Q12]] span attributes и events."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`trace_id` уникален для каждого span отдельно, поэтому span'ы одного запроса имеют разные `trace_id`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`trace_id` общий для всех span'ов одного trace; уникален на span именно `span_id`.",
+                "source_of_confusion": "Оба называются ID и состоят из hex, отсюда путаница в их области уникальности.",
+                "if_it_were_true": "Тогда нельзя было бы собрать span'ы в один trace, но именно общий `trace_id` их связывает.",
+                "how_it_should_be": "`trace_id` един на весь запрос, `span_id` различает отдельные операции внутри него."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Span` всегда соответствует целому запросу целиком, а не отдельной операции внутри него.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Span — это одна операция (DB-запрос, HTTP-вызов); весь запрос — это trace из множества span'ов.",
+                "source_of_confusion": "Root-span действительно покрывает весь запрос, и это переносят на любой span.",
+                "if_it_were_true": "Тогда в trace был бы лишь один span, но дерево из вложенных span'ов — суть трассировки.",
+                "how_it_should_be": "Span описывает отдельную операцию; их совокупность образует trace запроса."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`span context` содержит полное тело запроса и ответа, чтобы backend мог их отобразить.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`span context` несёт только идентификаторы (`trace_id`, `span_id`, `trace_flags`) для корреляции, а не payload.",
+                "source_of_confusion": "Слово 'context' наводит на мысль о произвольных данных запроса.",
+                "if_it_were_true": "Тогда заголовки propagation были бы огромными, но они компактны именно из-за минимальных ID.",
+                "how_it_should_be": "Контекст — это набор корреляционных ID; данные запроса хранятся в атрибутах span, а не в context."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое context propagation и W3C Trace Context в `OTel`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Context propagation работает только внутри одного процесса; между сервисами trace всегда начинается заново.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Propagation через `traceparent` именно для межсервисной передачи; иначе distributed tracing был бы невозможен.",
+                "source_of_confusion": "In-process context (текущий span) реально живёт в процессе, и это распространяют на весь механизм.",
+                "if_it_were_true": "Тогда нельзя было бы собрать сквозной trace через несколько сервисов, но это ключевая возможность OTel.",
+                "how_it_should_be": "Контекст пробрасывается между сервисами заголовками, сохраняя единый trace."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Context propagation — передача trace-контекста между сервисами через HTTP-заголовки. Стандарт W3C Trace Context (2020): заголовок `traceparent` = `version-traceId-spanId-flags`, плюс `tracestate` для vendor-specific данных. OTel SDK автоматически inject/extract при HTTP-вызовах (с auto-instrumentation). Для async (Kafka) контекст кладут в message headers и извлекают в consumer.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без propagation span'ы соседних сервисов не свяжутся в один trace; `traceparent` переносит `trace_id` и `span_id` родителя, чтобы дочерний сервис продолжил тот же trace.",
+                "example": "Сервис A в исходящем запросе добавляет `traceparent: 00-<traceId>-<spanId>-01`; сервис B извлекает его и создаёт дочерний span с тем же `trace_id`.",
+                "when_to_apply": "Всегда при межсервисном взаимодействии (HTTP, gRPC, очереди), чтобы distributed trace оставался целостным.",
+                "edge_cases": "В async через Kafka заголовки надо прокинуть в message headers вручную или через инструментацию; потеря `traceparent` рвёт trace на части.",
+                "related": "[[opentelemetry-interview#Q13]] trace, span, span context; [[opentelemetry-interview#Q9]] auto vs manual instrumentation; [[opentelemetry-interview#Q27]] частые проблемы в production."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "W3C Trace Context требует, чтобы все сервисы были на одном языке программирования, иначе заголовки несовместимы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "W3C Trace Context — language-agnostic стандарт; `traceparent` одинаков для любого языка и SDK.",
+                "source_of_confusion": "Разные SDK по языкам наводят на мысль о несовместимости форматов между ними.",
+                "if_it_were_true": "Тогда polyglot-системы не могли бы трассироваться сквозь, но именно стандарт это и обеспечивает.",
+                "how_it_should_be": "Формат `traceparent` универсален, поэтому сервисы на разных языках понимают друг друга."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для async-передачи через Kafka context propagation невозможен — trace обрывается на брокере.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для Kafka контекст кладут в message headers и извлекают в consumer, продолжая тот же trace.",
+                "source_of_confusion": "Отсутствие HTTP-заголовков в очередях создаёт впечатление невозможности propagation.",
+                "if_it_were_true": "Тогда event-driven системы нельзя было бы трассировать сквозь, но message headers решают это.",
+                "how_it_should_be": "Контекст переносится через message headers Kafka, сохраняя связность trace в async-сценариях."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между head и tail sampling в `OTel`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Tail sampling принимает решение на старте trace, поэтому буферизация span'ов не нужна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tail sampling решает после завершения trace и потому обязан буферизовать все span'ы до этого момента.",
+                "source_of_confusion": "Head и tail легко перепутать местами, перенося свойство head (решение на старте) на tail.",
+                "if_it_were_true": "Тогда tail не мог бы сохранять именно ошибочные traces, но он для этого и видит trace целиком.",
+                "how_it_should_be": "Решение на старте — это head; tail оценивает завершённый trace и требует буфера."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Head sampling гарантированно сохраняет все ошибочные и медленные traces, не теряя interesting traces.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Head решает вслепую на старте, ещё не зная исхода, поэтому может выбросить именно ошибочный trace.",
+                "source_of_confusion": "Кажется, что любое sampling 'умное', и свойство tail переносят на head.",
+                "if_it_were_true": "Тогда tail sampling был бы не нужен, но его придумали как раз ради сохранения interesting traces.",
+                "how_it_should_be": "Сохранять ошибки и медленные traces умеет tail; head может их пропустить."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Не каждый запрос нужно trace (cost) — отсюда sampling. Head sampling: решение на старте trace, дёшево (не надо хранить все span'ы), но пропускает interesting traces (ошибки, медленные). Tail sampling: решение после завершения trace, нужно буферизовать все span'ы, но умное — оставляет все error/slow traces и % обычных; реализуется в Collector, не в SDK.",
+              "correct": true,
+              "sections": {
+                "explanation": "Head sampling экономит ресурсы, но решает вслепую в начале, когда ещё неизвестно, будет ли ошибка. Tail sampling видит весь trace целиком и сохраняет именно ценные (ошибочные и медленные).",
+                "example": "В Collector настраивают `tail_sampling` с политиками: `status_code: [ERROR]` (все ошибки), `latency.threshold_ms: 1000` (медленные) и `probabilistic: 10%` для остальных.",
+                "when_to_apply": "Tail sampling — для production с высоким трафиком, где важно не потерять ошибочные и медленные traces. Head — когда хватает простого процента и важна дешевизна.",
+                "edge_cases": "Tail sampling требует буферизации всех span'ов до завершения trace — это память и сложность в Collector; head может пропустить редкую ошибку.",
+                "related": "[[opentelemetry-interview#Q28]] cost optimization; [[opentelemetry-interview#Q6]] OTel Collector; [[opentelemetry-interview#Q27]] частые проблемы в production."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Tail sampling реализуется в SDK приложения, а Collector в этом не участвует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tail sampling реализуется в Collector, поскольку требует видеть все span'ы trace, которые у одного SDK неполны.",
+                "source_of_confusion": "Sampling ассоциируется с SDK (head), и это переносят на tail.",
+                "if_it_were_true": "Тогда один SDK должен был бы собрать span'ы всех сервисов, что невозможно.",
+                "how_it_should_be": "Tail sampling живёт в Collector, где сходятся все span'ы trace."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие metric instruments есть в `OTel` (Counter, Gauge, Histogram)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Counter` в `OTel` может как увеличиваться, так и уменьшаться, поэтому подходит для подсчёта active connections.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Counter` монотонно растёт; для значений, которые убывают, есть `UpDownCounter`.",
+                "source_of_confusion": "Оба называются counter, отсюда смешение монотонного и двунаправленного варианта.",
+                "if_it_were_true": "Тогда `UpDownCounter` был бы лишним, но он существует именно для убывающих величин.",
+                "how_it_should_be": "Для active connections берут `UpDownCounter`, а `Counter` оставляют для монотонных счётчиков."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Histogram` хранит только среднее значение, поэтому percentiles (p95/p99) по нему получить нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Histogram` собирает распределение по bucket'ам, и backend считает по нему percentiles p50/p95/p99.",
+                "source_of_confusion": "Среднее — самая привычная агрегация, и её ошибочно считают единственной у histogram.",
+                "if_it_were_true": "Тогда latency-перцентили были бы недоступны, но именно их histogram и обеспечивает.",
+                "how_it_should_be": "Histogram даёт распределение, из которого backend вычисляет нужные percentiles."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Gauge` в `OTel` задаётся как обычный счётчик с методом `add()`, callback для него не используется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Gauge` обычно задаётся через `buildWithCallback`, который при сборе считывает текущее значение (например, размер очереди).",
+                "source_of_confusion": "API counter с `add()` нагляднее, и его шаблон переносят на gauge.",
+                "if_it_were_true": "Тогда нельзя было бы наблюдать мгновенное состояние ресурса, но callback именно для этого.",
+                "how_it_should_be": "Gauge читает текущее значение через callback при каждом сборе метрик."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Counter` — монотонно растущий (число запросов). `UpDownCounter` — может расти и убывать (active connections). `Gauge` — текущее значение через callback (CPU%, размер очереди). `Histogram` — распределение значений (latencies), даёт percentiles (p50/p95/p99) на backend. У каждого инструмента свой builder в `Meter` и метод записи (`add`/`record`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор инструмента определяется природой величины: монотонный счётчик, двунаправленный счётчик, мгновенное значение или распределение для percentiles.",
+                "example": "`meter.counterBuilder(\"http.requests\").build().add(1, ...)` считает запросы, а `meter.histogramBuilder(\"http.duration\").setUnit(\"ms\").build().record(245.5, ...)` собирает распределение latency.",
+                "when_to_apply": "Counter — для подсчёта событий; Gauge — для текущих значений ресурсов; Histogram — когда нужны percentiles latency или размеров.",
+                "edge_cases": "Percentiles считаются на backend по bucket'ам histogram; высокая кардинальность атрибутов на метрике (`user_id`) приводит к cardinality explosion.",
+                "related": "[[opentelemetry-interview#Q17]] aggregation, push vs pull; [[opentelemetry-interview#Q18]] exemplars; [[opentelemetry-interview#Q3]] три столпа."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое aggregation и push vs pull в метриках `OTel`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Push — SDK периодически отправляет метрики в backend (OTLP push в Collector, дальше в backend). Pull — backend сам scrape'ит метрики из приложения (`Prometheus` дёргает `/metrics` endpoint). `OTel` поддерживает оба: push через OTLP exporter, pull через Prometheus exporter (поднимает endpoint). Aggregation period — как часто метрики агрегируются (по умолчанию ~60 сек).",
+              "correct": true,
+              "sections": {
+                "explanation": "Push и pull — это направление инициативы передачи: при push инициатор — приложение/SDK, при pull — backend. `OTel` не навязывает модель и умеет работать в обеих.",
+                "example": "С OTLP exporter сервис сам шлёт метрики в Collector каждые 60 секунд (push); с Prometheus exporter он поднимает `/metrics`, а `Prometheus` его scrape'ит (pull).",
+                "when_to_apply": "Push удобен за NAT и для эфемерных подов; pull — в `Prometheus`-экосистеме со scrape-моделью и service discovery.",
+                "edge_cases": "При push эфемерные поды успевают отправить данные до завершения; при pull короткоживущие поды могут исчезнуть между scrape'ами и потерять метрики.",
+                "related": "[[opentelemetry-interview#Q16]] metric instruments; [[opentelemetry-interview#Q22]] OTLP wire protocol; [[opentelemetry-interview#Q21]] какие backends поддерживают OTel."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`OTel` поддерживает только push-модель; pull через `Prometheus` scrape невозможен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OTel` умеет обе модели: push через OTLP exporter и pull через Prometheus exporter с `/metrics` endpoint.",
+                "source_of_confusion": "OTLP push — самый рекламируемый сценарий, отсюда вывод о единственной модели.",
+                "if_it_were_true": "Тогда `OTel` не интегрировался бы с `Prometheus`, но Prometheus exporter штатно поддерживается.",
+                "how_it_should_be": "Доступны и push, и pull; выбор зависит от backend и инфраструктуры."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "При pull-модели приложение само инициирует отправку метрик в backend по расписанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При pull инициатор — backend (`Prometheus`), который scrape'ит endpoint; приложение лишь экспонирует `/metrics`.",
+                "source_of_confusion": "Push и pull легко перепутать по тому, кто инициатор передачи.",
+                "if_it_were_true": "Тогда pull не отличался бы от push, но различие именно в инициаторе.",
+                "how_it_should_be": "При pull backend опрашивает приложение; отправляет данные сам сервис только в push."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Aggregation period нельзя настроить — метрики всегда отправляются в backend мгновенно по каждому событию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метрики агрегируются за период (по умолчанию ~60 сек) и отправляются батчами, а не по каждому событию.",
+                "source_of_confusion": "Trace-span'ы отправляются по факту операции, и это ожидание переносят на метрики.",
+                "if_it_were_true": "Тогда сеть и backend захлёбывались бы потоком точек, но агрегация именно это и предотвращает.",
+                "how_it_should_be": "Период агрегации настраивается; метрики накапливаются и отправляются периодически."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое exemplars и зачем они связывают метрики с traces?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Exemplar` хранит полную копию trace внутри метрики, поэтому отдельный tracing backend не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Exemplar хранит лишь `trace_id`-ссылку; сам trace лежит в tracing backend (`Tempo`/`Jaeger`/`Datadog`).",
+                "source_of_confusion": "Возможность перейти от метрики к trace создаёт впечатление, что trace встроен в метрику.",
+                "if_it_were_true": "Тогда метрики раздувались бы до размеров traces, но exemplar — это компактная ссылка.",
+                "how_it_should_be": "Exemplar ссылается по `trace_id`, а сам trace остаётся в tracing backend."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Exemplar` — образцовый `trace_id`, прикреплённый к точке метрики (например, к bucket'у histogram со значением 1500ms). Use case: \"p99 latency растёт\" → кликаешь по exemplar → видишь конкретный медленный trace. Это мост metrics → traces, мощный инструмент отладки. Поддерживается в `Prometheus`, `Tempo`, `Datadog`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Метрика говорит, что что-то медленно в агрегате, но не показывает конкретный запрос. Exemplar прикрепляет к точке метрики ссылку на реальный trace, позволяя перейти от агрегата к примеру.",
+                "example": "В histogram-bucket 1000-2000ms лежит exemplar `trace_id=abc123, value=1500ms`; по нему из графика p99 в Grafana переходишь сразу в тот медленный trace в `Tempo`.",
+                "when_to_apply": "Когда видишь рост percentiles на дашборде и хочешь сразу попасть в репрезентативный медленный или ошибочный trace без ручного поиска.",
+                "edge_cases": "Exemplars поддерживают не все backend — нужна связка вроде `Prometheus`+`Tempo` или `Datadog`; sampling может вырезать trace, на который ссылается exemplar.",
+                "related": "[[opentelemetry-interview#Q16]] metric instruments; [[opentelemetry-interview#Q20]] log correlation; [[opentelemetry-interview#Q13]] trace, span, span context."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Exemplar` связывает логи с метриками, добавляя текст лога к каждой точке метрики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Exemplar связывает метрику с trace через `trace_id`, а не с логами; связь логов и traces — это log correlation.",
+                "source_of_confusion": "Все три столпа коррелируют между собой, и механизмы корреляции смешивают.",
+                "if_it_were_true": "Тогда exemplar дублировал бы log correlation, но это разные механизмы для разных пар сигналов.",
+                "how_it_should_be": "Exemplar — мост metrics → traces; связь с логами обеспечивает отдельный log correlation."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Exemplars поддерживаются любым backend без исключений, включая самые старые системы метрик.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Exemplars поддерживают только определённые backend (`Prometheus`, `Tempo`, `Datadog`); многие старые системы их не умеют.",
+                "source_of_confusion": "Раз это часть стандарта, кажется, что поддержка автоматически повсеместна.",
+                "if_it_were_true": "Тогда не нужно было бы проверять совместимость стека, но на практике она обязательна.",
+                "how_it_should_be": "Перед использованием exemplars проверяют, что и metrics-, и traces-backend их поддерживают."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Каков статус OTel Logs (logs как столп телеметрии)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "OTel Logs всё ещё experimental и непригодны для production — нужно использовать только traces и metrics.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Logs стали stable в 2024 и применимы в production, хотя экосистема пока моложе traces/metrics.",
+                "source_of_confusion": "Logs действительно были последним столпом, и устаревшая оценка их статуса сохраняется.",
+                "if_it_were_true": "Тогда нельзя было бы унифицировать observability на одном SDK, но stable-статус это снял.",
+                "how_it_should_be": "Logs можно включать в production, понимая, что зрелость чуть ниже traces/metrics."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Log Bridge требует полностью переписать логирование с `Logback` на собственный API `OTel`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Log Bridge мостит существующие логгеры (`Log4j`, `Logback`, `Zap`) к `OTel` без переписывания кода логирования.",
+                "source_of_confusion": "Слово 'bridge' иногда трактуют как замену, хотя его смысл — соединение существующего с `OTel`.",
+                "if_it_were_true": "Тогда adoption logs был бы дорогим, но мост сохраняет привычный API логирования.",
+                "how_it_should_be": "Существующий логгер остаётся, а мост добавляет корреляцию с traces поверх него."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Logs — самый молодой столп, stable с 2024 в `OTel`. OTLP Logs принимает логи от приложений в стандартизированном формате. Log Bridge мостит существующие логирующие библиотеки (`Log4j`, `Logback`, `Zap`) к `OTel`, авто-коррелируя записи с текущим span. В 2025 adoption растёт, но logs всё ещё менее зрелые, чем traces/metrics.",
+              "correct": true,
+              "sections": {
+                "explanation": "Вместо отдельного pipeline логов `OTel` встраивает их в общую модель телеметрии через Log Bridge — существующий логгер продолжает работать, но записи получают `trace_id`/`span_id` текущего контекста.",
+                "example": "`logger.info(\"Processing order {}\", orderId)` через slf4j-мост `OTel` автоматически коррелируется с текущим trace span, без переписывания кода логирования.",
+                "when_to_apply": "Когда нужен единый стек observability на одном SDK и важна авто-корреляция логов с traces по trace_id.",
+                "edge_cases": "Экосистема logs моложе traces/metrics: меньше готовых интеграций и backend-фич; в legacy-проектах мост может покрывать не все логгеры одинаково.",
+                "related": "[[opentelemetry-interview#Q20]] log correlation; [[opentelemetry-interview#Q3]] три столпа; [[opentelemetry-interview#Q21]] какие backends поддерживают OTel."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "OTel Logs не умеют коррелироваться с traces — связать запись лога с trace_id невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Через Log Bridge записи авто-коррелируются с текущим span, получая `trace_id`/`span_id`.",
+                "source_of_confusion": "Раздельные подсистемы логов и traces создают впечатление их изоляции.",
+                "if_it_were_true": "Тогда отладка по логам не вела бы к trace, но именно корреляция — главная ценность OTel Logs.",
+                "how_it_should_be": "Логи автоматически несут trace_id текущего контекста, обеспечивая корреляцию."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает log correlation с traces в `OTel`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Log correlation требует вручную копировать каждый лог в trace — автоматической связи между ними нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OTel` авто-коррелирует через Log Bridge, а вендорские UI (`Datadog`, `Honeycomb`) линкуют логи и traces автоматически.",
+                "source_of_confusion": "Ручной перенос `trace_id` при отладке создаёт впечатление полностью ручного процесса.",
+                "if_it_were_true": "Тогда корреляция не давала бы выигрыша по скорости, но автоматизация — её главная ценность.",
+                "how_it_should_be": "Связь логов и traces настраивается один раз и работает автоматически по trace_id."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для корреляции лог должен содержать полный текст trace, а не только идентификаторы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Логу достаточно `trace_id`/`span_id`; сам trace хранится в tracing backend и подтягивается по ID.",
+                "source_of_confusion": "Желание видеть весь контекст в логе наводит на мысль о встраивании trace целиком.",
+                "if_it_were_true": "Тогда логи раздувались бы до неуправляемого размера, но хватает компактных ID.",
+                "how_it_should_be": "Лог несёт только идентификаторы; полный trace смотрят в tracing backend по ним."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Log correlation возможна только в open-source стеке; коммерческие вендоры её не поддерживают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Datadog`, `Honeycomb`, `New Relic` как раз автоматически линкуют логи и traces в своём UI.",
+                "source_of_confusion": "Акцент на open-source инструментах создаёт впечатление, что вендоры отстают.",
+                "if_it_were_true": "Тогда enterprise-стек был бы хуже по корреляции, но у вендоров она из коробки.",
+                "how_it_should_be": "Корреляция логов и traces поддерживается и в open-source, и у коммерческих вендоров."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Correlation — запись лога содержит `trace_id` + `span_id`, например `[trace_id=abc123, span_id=def456] Processing order 12345`. Workflow: видишь ошибку в логах → берёшь `trace_id` → открываешь trace в `Jaeger`/`Tempo` → видишь весь путь запроса → находишь медленный span → проверяешь связанные метрики. `OTel` авто-коррелирует через Log Bridge; в `Datadog`/`Honeycomb`/`New Relic` UI линкует логи ↔ traces автоматически.",
+              "correct": true,
+              "sections": {
+                "explanation": "Корреляция превращает разрозненные сигналы в связную картину: общий `trace_id` в логе и в trace позволяет за пару кликов перейти от строки лога к полному пути запроса и обратно.",
+                "example": "В логе ошибка с `trace_id=abc123` → копируешь ID → открываешь этот trace в `Tempo` → видишь медленный `SELECT` → смотришь метрики БД за тот момент.",
+                "when_to_apply": "При расследовании инцидентов, когда от конкретной строки лога нужно быстро дойти до полного контекста запроса по trace.",
+                "edge_cases": "Если log correlation не настроен (нет trace_id в формате лога), переход лог→trace ломается; sampling может удалить trace, на который ссылается лог.",
+                "related": "[[opentelemetry-interview#Q19]] OTel Logs статус; [[opentelemetry-interview#Q18]] exemplars; [[opentelemetry-interview#Q14]] context propagation."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие backends поддерживают `OTel`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Open-source: `Jaeger` (traces), `Zipkin` (traces, старее), `Prometheus` (metrics), `Loki` (logs), `Tempo` (traces), `Mimir` (metrics), `OpenSearch`/`Elasticsearch` (logs/traces). SaaS/Enterprise: `Datadog`, `New Relic`, `Splunk`, `Honeycomb`, `Lightstep`, `AWS X-Ray` (через ADOT), `Azure Monitor`, `Google Cloud Trace`, `Dynatrace`. В 2025 практически все observability-вендоры принимают OTLP — standards war завершены.",
+              "correct": true,
+              "sections": {
+                "explanation": "`OTel` развязывает инструментацию и хранилище, поэтому выбор backend огромен — от self-hosted open-source стеков до коммерческих SaaS, и все они принимают OTLP.",
+                "example": "Один Collector раздаёт traces в `Jaeger`, metrics в `Prometheus`, logs в `Loki`; при желании тот же поток дублируется в `Datadog` добавлением exporter в config.",
+                "when_to_apply": "Когда выбираешь стек observability и хочешь сохранить свободу смены или комбинации backend без переписывания инструментации.",
+                "edge_cases": "Хотя OTLP принимают почти все, отдельные вендоры имеют quirks в маппинге атрибутов; не каждый backend одинаково хорошо покрывает все три сигнала.",
+                "related": "[[opentelemetry-interview#Q22]] OTLP wire protocol; [[opentelemetry-interview#Q23]] смена backend без code change; [[opentelemetry-interview#Q2]] зачем OTel вместо vendor SDK."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`OTel` работает только с `Jaeger`; для `Prometheus`, `Loki` и коммерческих вендоров нужны отдельные SDK.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OTel` поддерживает множество backend (`Jaeger`, `Prometheus`, `Loki`, `Tempo`, `Datadog` и др.) через exporters одного SDK.",
+                "source_of_confusion": "`Jaeger` — самый частый пример для traces, отсюда сужение списка до него.",
+                "if_it_were_true": "Тогда терялась бы vendor-neutral ценность `OTel`, но именно широкий выбор backend — его суть.",
+                "how_it_should_be": "Один SDK через разные exporters шлёт данные в десятки backend, не только в `Jaeger`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Коммерческие вендоры (`Datadog`, `New Relic`) не принимают OTLP, поэтому требуют свои проприетарные агенты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В 2025 `Datadog`, `New Relic`, `Splunk`, `Honeycomb` штатно принимают OTLP input.",
+                "source_of_confusion": "Историческое продвижение собственных агентов формирует устаревшее представление.",
+                "if_it_were_true": "Тогда нельзя было бы слать `OTel`-данные в их UI, но OTLP-ingest у них работает.",
+                "how_it_should_be": "Практически все вендоры принимают OTLP, и проприетарный агент не обязателен."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`AWS X-Ray` и `Azure Monitor` несовместимы с `OTel` в принципе — это закрытые экосистемы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AWS X-Ray` поддерживает `OTel` через ADOT, а `Azure Monitor` и `Google Cloud Trace` принимают OTLP-данные.",
+                "source_of_confusion": "Cloud-вендоры воспринимаются как закрытые, хотя у них есть `OTel`-интеграции.",
+                "if_it_were_true": "Тогда в облаках нельзя было бы использовать `OTel`, но интеграции (ADOT) это опровергают.",
+                "how_it_should_be": "Облачные backend интегрируются с `OTel` через дистрибутивы и OTLP-приём."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое OTLP — wire protocol `OTel`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "OTLP передаёт данные в JSON-текстовом виде, поэтому он медленнее любого бинарного протокола.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OTLP кодирует данные в Protocol Buffers (binary) — компактно и быстро; JSON-текст не является основным форматом.",
+                "source_of_confusion": "REST-API обычно ассоциируются с JSON, и это ожидание переносят на OTLP.",
+                "if_it_were_true": "Тогда OTLP проигрывал бы по эффективности, но protobuf-кодирование делает его компактным.",
+                "how_it_should_be": "Основной encoding OTLP — бинарный protobuf, что обеспечивает скорость и компактность."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`OTLP (OpenTelemetry Protocol)` — wire-формат для передачи телеметрии. Два транспорта: gRPC (`:4317`, бинарный, эффективный) и HTTP/protobuf (`:4318`, проще дебажить). Default endpoint — `localhost:4317`. Encoding — Protocol Buffers (binary), компактный и быстрый. OTLP — стандарт, все vendor backends его принимают.",
+              "correct": true,
+              "sections": {
+                "explanation": "OTLP — это единый протокол, на котором SDK, Collector и backend общаются между собой; именно он делает данные переносимыми между любыми частями стека.",
+                "example": "В Collector exporter настраивают `otlp: { endpoint: \"collector:4317\" }` поверх gRPC; для отладки можно переключиться на HTTP-порт `:4318` и читать payload.",
+                "when_to_apply": "Как протокол по умолчанию между app→Collector→backend; gRPC — для эффективности, HTTP — где gRPC недоступен или нужна простота отладки.",
+                "edge_cases": "gRPC на `:4317` бинарен и сложнее инспектировать; HTTP/protobuf на `:4318` удобнее дебажить, но чуть менее эффективен по объёму.",
+                "related": "[[opentelemetry-interview#Q21]] какие backends поддерживают OTel; [[opentelemetry-interview#Q23]] смена backend без code change; [[opentelemetry-interview#Q7]] receiver/processor/exporter."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "OTLP поддерживает только gRPC; передавать телеметрию по HTTP невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OTLP поддерживает два транспорта: gRPC на `:4317` и HTTP/protobuf на `:4318`.",
+                "source_of_confusion": "gRPC — порт по умолчанию, и его принимают за единственный вариант.",
+                "if_it_were_true": "Тогда в окружениях без gRPC OTLP был бы недоступен, но HTTP-транспорт это закрывает.",
+                "how_it_should_be": "Доступны и gRPC, и HTTP/protobuf; выбор зависит от окружения и нужд отладки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Каждый вендор использует собственный несовместимый wire-формат, поэтому OTLP не является общим стандартом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OTLP — единый стандартный протокол, который принимают практически все vendor backends.",
+                "source_of_confusion": "Эпоха проприетарных агентов оставила представление о множестве несовместимых форматов.",
+                "if_it_were_true": "Тогда смена backend требовала бы смены протокола, но OTLP как раз унифицирует передачу.",
+                "how_it_should_be": "OTLP — общий стандарт передачи, благодаря которому backends взаимозаменяемы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Можно ли менять backend без изменения кода приложения в `OTel`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Нет — смена backend в `OTel` всегда требует переписать инструментацию приложения, как и у vendor SDK.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смена backend делается через config Collector без правок кода; именно это отличает `OTel` от vendor SDK.",
+                "source_of_confusion": "Опыт vendor SDK, где смена = переписывание, переносят на `OTel` по инерции.",
+                "if_it_were_true": "Тогда `OTel` не давал бы преимущества над vendor SDK, но развязка backend — его суть.",
+                "how_it_should_be": "Код остаётся неизменным, меняется только конфигурация exporter в Collector."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Поменять backend можно, только пересобрав приложение с новой Maven-зависимостью под этот вендор.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При работе через Collector backend меняется в его config; зависимости приложения не трогают.",
+                "source_of_confusion": "В мире vendor SDK действительно подключали vendor-библиотеку, и это ожидание сохраняется.",
+                "if_it_were_true": "Тогда каждая смена вендора требовала бы релиза, но config Collector обходится без него.",
+                "how_it_should_be": "Backend переключают в Collector; пересборка и новые зависимости приложения не нужны."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Да — это главная ценность `OTel`. Чтобы переключиться, например, с `Jaeger` на `Datadog`, меняют только config Collector: вместо `exporters: otlp/jaeger` прописывают `exporters: datadog` с API-ключом, и перезапускают Collector. Код приложения не меняется. Это революционный сдвиг по сравнению с эрой vendor SDK, где смена вендора означала переписывание инструментации.",
+              "correct": true,
+              "sections": {
+                "explanation": "Инструментация приложения завязана на `OTel API`/OTLP, а не на конкретный backend; выбор и адрес backend живут в config Collector, поэтому смена вендора не затрагивает код.",
+                "example": "Было `exporters: { otlp/jaeger: { endpoint: jaeger:4317 } }`, стало `exporters: { datadog: { api: { key: ${DD_API_KEY} } } }` — restart Collector, app не пересобирается.",
+                "when_to_apply": "При миграции APM, A/B-сравнении вендоров или добавлении второго backend параллельно — без релиза и пересборки сервисов.",
+                "edge_cases": "Если приложение использует Direct Export (без Collector), смена backend потребует правки конфигурации SDK самого приложения, а не только Collector.",
+                "related": "[[opentelemetry-interview#Q2]] зачем OTel вместо vendor SDK; [[opentelemetry-interview#Q6]] OTel Collector; [[opentelemetry-interview#Q21]] какие backends поддерживают OTel."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Менять backend без code change нельзя, потому что каждый backend требует своего формата span'ов в коде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Приложение пишет span'ы в едином OTLP-формате; преобразование под backend делает exporter в Collector.",
+                "source_of_confusion": "Различия backend в UI наводят на мысль о разном формате span на уровне кода.",
+                "if_it_were_true": "Тогда OTLP не был бы единым стандартом, но именно он унифицирует формат на стороне приложения.",
+                "how_it_should_be": "Код шлёт OTLP, а адаптацию под конкретный backend берёт на себя exporter."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое semantic conventions в `OTel`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Semantic conventions — это жёсткое требование рантайма: span с нестандартным именем атрибута будет отклонён SDK.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Конвенции — это соглашения об именах, а не валидация рантайма; нестандартный атрибут примется, но потеряет interoperability.",
+                "source_of_confusion": "Слово 'conventions' иногда воспринимают как enforced-схему с проверкой.",
+                "if_it_were_true": "Тогда нельзя было бы добавить ни одного кастомного атрибута, но они допустимы.",
+                "how_it_should_be": "Конвенции рекомендуют имена для совместимости; SDK не отклоняет нестандартные атрибуты."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Semantic conventions нужны только для manual-инструментации; auto-instrumentation их не использует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Auto-instrumentation как раз проставляет стандартные атрибуты по конвенциям автоматически.",
+                "source_of_confusion": "Импорт `SemanticAttributes` виден только в ручном коде, отсюда вывод про manual-only.",
+                "if_it_were_true": "Тогда auto-данные были бы непонятны backend-UI, но именно конвенции делают их распознаваемыми.",
+                "how_it_should_be": "Конвенции применяются и в auto (автоматически), и в manual (через стандартные ключи)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Каждый backend имеет собственные имена атрибутов, поэтому единых semantic conventions в `OTel` не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OTel` определяет единый набор Semantic Conventions, который понимают совместимые backend.",
+                "source_of_confusion": "Различия в UI вендоров создают впечатление, что и имена атрибутов у всех разные.",
+                "if_it_were_true": "Тогда переносимость телеметрии была бы невозможна, но конвенции её и обеспечивают.",
+                "how_it_should_be": "Существует общий стандарт имён, благодаря которому атрибуты понятны разным инструментам."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Semantic Conventions` — стандартные имена для атрибутов: `http.method`, `http.status_code`, `http.url`, `db.system`, `db.statement`, `service.name`, `service.version`. Зачем — interoperability между инструментами: UI `Datadog` знает, что `http.method` — это HTTP-метод, а не кастомный атрибут. Auto-instrumentation использует их автоматически; в manual импортируют стандартные ключи из `OTel` (`SemanticAttributes.HTTP_METHOD`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Стандартизация имён делает телеметрию переносимой: любой backend понимает общеизвестные атрибуты одинаково, без ручной настройки маппинга под каждый инструмент.",
+                "example": "Auto-instrumentation сама ставит `http.method=GET` и `db.system=postgresql`; в ручном коде берут `SemanticAttributes.HTTP_METHOD` вместо строки-самоделки.",
+                "when_to_apply": "Всегда при именовании атрибутов span'ов и ресурсов — чтобы backend-инструменты распознавали поля и строили готовые виджеты.",
+                "edge_cases": "Самодельные имена атрибутов backend не распознает как стандартные; конвенции эволюционируют, поэтому версии атрибутов между релизами могут отличаться.",
+                "related": "[[opentelemetry-interview#Q12]] span attributes и events; [[opentelemetry-interview#Q25]] resource attributes; [[opentelemetry-interview#Q9]] auto vs manual instrumentation."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое resource attributes в `OTel`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Resource` — информация про источник телеметрии (service, host, container): `service.name`, `service.version`, `service.namespace`, `host.name`, `container.id`, `k8s.cluster.name`, `k8s.pod.name`, `deployment.environment`. Resource прикрепляется к каждому span/metric/log автоматически. В K8s OTel resource detector авто-заполняет значения из K8s API.",
+              "correct": true,
+              "sections": {
+                "explanation": "Resource отвечает на вопрос 'кто это сгенерировал': один набор атрибутов идентифицирует сервис и его окружение и навешивается на всю телеметрию этого процесса.",
+                "example": "`service.name: my-app`, `deployment.environment: production`, `k8s.pod.name: my-app-7d8f9b-xz2k` — эти атрибуты автоматически попадают в каждый span приложения.",
+                "when_to_apply": "Всегда — как минимум `service.name`; для фильтрации по окружению, кластеру и поду в multi-tenant и K8s-средах.",
+                "edge_cases": "Без `service.name` телеметрия попадает в `unknown_service`; в K8s resource detector зависит от доступа к API и корректных downward-API переменных.",
+                "related": "[[opentelemetry-interview#Q24]] semantic conventions; [[opentelemetry-interview#Q12]] span attributes и events; [[opentelemetry-interview#Q26]] что включить в traces."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Resource attributes нужно вручную ставить на каждый span отдельно — общего механизма прикрепления нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Resource задаётся один раз на процесс и автоматически прикрепляется к каждому span/metric/log.",
+                "source_of_confusion": "Обычные span-атрибуты ставят вручную, и это переносят на resource.",
+                "if_it_were_true": "Тогда дублировать `service.name` пришлось бы в каждом span, но resource избавляет от этого.",
+                "how_it_should_be": "Resource описывает источник один раз и автоматически навешивается на всю телеметрию."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`service.name` необязателен — без него телеметрия всё равно корректно атрибутируется к конкретному сервису.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `service.name` данные попадают в `unknown_service`, и различать источники становится невозможно.",
+                "source_of_confusion": "SDK не падает без `service.name`, отсюда впечатление, что он несущественен.",
+                "if_it_were_true": "Тогда фильтрация по сервису работала бы и без имени, но без него источник неизвестен.",
+                "how_it_should_be": "`service.name` задают обязательно — это базовый идентификатор источника телеметрии."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В Kubernetes resource attributes (`k8s.pod.name`, `k8s.cluster.name`) приходится прописывать руками, авто-детекта нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В K8s resource detector авто-заполняет атрибуты из K8s API, без ручного перечисления каждого пода.",
+                "source_of_confusion": "Множество K8s-полей создаёт впечатление, что их надо задавать вручную.",
+                "if_it_were_true": "Тогда при каждом редеплое пришлось бы менять имя пода в конфиге, но detector делает это сам.",
+                "how_it_should_be": "Resource detector подтягивает K8s-атрибуты автоматически из окружения и API."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что включать в traces, чтобы избежать noise?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Нужно трассировать абсолютно всё, включая каждую итерацию цикла и health-check, чтобы картина была полной.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Частые операции (per-element, health-check, статика) создают noise и cost; их как раз исключают из трассировки.",
+                "source_of_confusion": "Кажется, что 'больше данных = лучше', но избыток span'ов скрывает значимый сигнал.",
+                "if_it_were_true": "Тогда trace был бы читаемее с тысячами span'ов, но на деле они тонут в шуме и дорого стоят.",
+                "how_it_should_be": "Трассируют значимые операции и границы сервиса, а высокочастотную мелочёвку опускают."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Включай: HTTP requests (auto), DB queries (auto), внешние API-вызовы (auto), ключевые бизнес-операции (manual), долгие задачи, cache misses. Избегай: очень частые операции (per-element в loop), health-check endpoints, отдачу статики, тривиальные внутренние функции. Для high-volume операций применяй sampling.",
+              "correct": true,
+              "sections": {
+                "explanation": "Цель — сигнал, а не шум: трассировать стоит границы сервиса и значимые операции, а высокочастотную мелочёвку исключать, иначе trace тонет в незначимых span'ах.",
+                "example": "Span на `HTTP GET /orders` и `SELECT FROM orders` полезен, а span на каждую итерацию цикла по 10000 элементов или на `/healthz` только раздувает trace.",
+                "when_to_apply": "При проектировании инструментации, когда решаешь, какие операции оборачивать span'ами, а какие оставить вне трассировки.",
+                "edge_cases": "Health-check и статика создают тысячи бесполезных span'ов; внутри циклов лучше один span на всю операцию, а не на каждый элемент.",
+                "related": "[[opentelemetry-interview#Q15]] sampling head vs tail; [[opentelemetry-interview#Q28]] cost optimization; [[opentelemetry-interview#Q11]] manual spans."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Health-check endpoints обязательно трассировать, иначе trace будет неполным и недостоверным.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Health-check'и — типичный кандидат на исключение: они частые и не несут бизнес-ценности для trace.",
+                "source_of_confusion": "Стремление к 'полноте' наводит на мысль, что пропуск любого endpoint искажает данные.",
+                "if_it_were_true": "Тогда дашборды захлёбывались бы от служебных проб, но их сознательно отфильтровывают.",
+                "how_it_should_be": "Health-check'и исключают из traces, чтобы не плодить бесполезные span'ы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Sampling для high-volume операций не нужен — если их трассировать, накладные расходы всё равно нулевые.",
+              "correct": false,
+              "sections": {
+                "what_actually": "High-volume операции дают огромный объём span'ов и cost; для них как раз применяют sampling.",
+                "source_of_confusion": "Оверхед одного span невелик, и его ошибочно экстраполируют на миллионы вызовов.",
+                "if_it_were_true": "Тогда storage- и network-затраты не росли бы с трафиком, но они растут линейно.",
+                "how_it_should_be": "Для частых операций включают sampling, чтобы контролировать объём и стоимость."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие частые проблемы `OTel` встречаются в production?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`OTel` не даёт никакого overhead в production — инструментация бесплатна по CPU и памяти.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Инструментация ест 5-10% CPU и память на буферизацию; именно поэтому рекомендуют агрессивный sampling.",
+                "source_of_confusion": "На малом трафике оверхед незаметен, и его экстраполируют как нулевой на любой объём.",
+                "if_it_were_true": "Тогда sampling был бы не нужен, но его придумали как раз для контроля оверхеда и cost.",
+                "how_it_should_be": "Оверхед реален и заметен под нагрузкой; его снижают sampling и батчингом."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Cardinality explosion невозможна в `OTel`, поэтому можно смело тегировать метрики атрибутом `user_id`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Высококардинальные атрибуты (`user_id`) порождают взрыв числа time series — классический cardinality explosion.",
+                "source_of_confusion": "Для traces высокая кардинальность приемлема, и это переносят на metrics.",
+                "if_it_were_true": "Тогда `Prometheus` не падал бы по памяти от уникальных лейблов, но это известная проблема.",
+                "how_it_should_be": "Высококардинальные значения не кладут в лейблы метрик; их место — в trace-атрибутах."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Типичные проблемы: high overhead (инструментация ест 5-10% CPU — сэмплируй агрессивно); network costs (отправка всех span'ов дорога — батчинг в Collector); storage costs (backend'ы тарифицируют ingest); cardinality explosion (высококардинальные атрибуты вроде `user_id` раздувают metrics); async context loss (propagation в `CompletableFuture`/корутинах хрупка); quirks разных вендоров даже при OTLP; конфликты нескольких auto-агентов; version mismatch SDK/Agent/API.",
+              "correct": true,
+              "sections": {
+                "explanation": "Большинство проблем — про стоимость и корректность под нагрузкой: оверхед, объём данных, кардинальность метрик и потеря контекста в async — то, что не видно на малом трафике.",
+                "example": "Атрибут `user_id` на метрике с миллионом пользователей порождает миллион time series — cardinality explosion, который кладёт `Prometheus` по памяти.",
+                "when_to_apply": "При выводе `OTel` в production под реальный трафик — заранее заложить sampling, батчинг и контроль кардинальности.",
+                "edge_cases": "Async context loss в `CompletableFuture`/корутинах рвёт trace незаметно; конфликт двух auto-агентов даёт дублирующие или сломанные span'ы.",
+                "related": "[[opentelemetry-interview#Q28]] cost optimization; [[opentelemetry-interview#Q15]] sampling; [[opentelemetry-interview#Q14]] context propagation."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Несколько auto-агентов всегда мирно сосуществуют, а версии SDK/Agent/API совместимы между собой автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Несколько агентов конфликтуют (дублируют span'ы), а version mismatch SDK/Agent/API — частая причина поломок.",
+                "source_of_confusion": "Идея 'просто подключить агент' создаёт впечатление беспроблемной совместимости.",
+                "if_it_were_true": "Тогда версии можно было бы не согласовывать, но на практике mismatch ломает инструментацию.",
+                "how_it_should_be": "Используют один агент и согласованные версии SDK/Agent/API, чтобы избежать конфликтов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как оптимизировать стоимость `OTel`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Стоимость `OTel` не зависит от объёма данных, поэтому sampling и фильтрация не дают экономии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Backend'ы тарифицируют ingest, и объём traces/metrics напрямую определяет счёт; sampling сокращает его.",
+                "source_of_confusion": "Open-source SDK бесплатен, и это переносят на стоимость хранения и ingest в backend.",
+                "if_it_were_true": "Тогда sampling не экономил бы бюджет, но именно он режет десятки тысяч $/month.",
+                "how_it_should_be": "Счёт растёт с объёмом ingested-данных, и его снижают sampling, фильтрацией и агрегацией."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Чтобы сэкономить, нужно навешивать как можно больше атрибутов на span — это уплотняет данные и снижает цену.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Больше атрибутов = больше объём и cardinality = выше cost; для экономии число атрибутов как раз сокращают.",
+                "source_of_confusion": "Слово 'уплотнить' путают с экономией, хотя лишние атрибуты только раздувают данные.",
+                "if_it_were_true": "Тогда богатые span'ы были бы дешевле, но они увеличивают ingest и хранение.",
+                "how_it_should_be": "Число атрибутов и кардинальность снижают, чтобы уменьшить объём и стоимость."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Self-host backend'ов (`Jaeger`, `Loki`, `Tempo`) всегда дороже SaaS, поэтому для экономии берут только `Datadog`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Self-host open-source backend'ов часто дешевле дорогого SaaS по ingest, хотя добавляет операционные расходы.",
+                "source_of_confusion": "Управляемый SaaS кажется дешевле из-за отсутствия ops, но per-ingest цена бывает высокой.",
+                "if_it_were_true": "Тогда self-host не упоминали бы как способ экономии, но он именно в этом списке.",
+                "how_it_should_be": "Self-host рассматривают как способ снизить SaaS-счёт, взвешивая операционные затраты."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Способы: sampling (head + tail); drop ненужных span'ов в Collector (filter processor); снижать cardinality метрик (не тегировать `user_id`); уменьшать число атрибутов на span; сжимать OTLP-трафик; батчить в Collector; self-host backend'ы (`Jaeger`, `Loki`, `Tempo`) вместо дорогого SaaS; агрегировать метрики на уровне Collector; tail sampling оставляет важные traces и отбрасывает noise. В `Datadog` ingested traces стоят ~$0.10-1.00 за миллион span'ов — sampling экономит десятки тысяч $/month.",
+              "correct": true,
+              "sections": {
+                "explanation": "Стоимость растёт с объёмом ingested-данных, поэтому экономия — это снижение объёма (sampling, filter, агрегация) и/или цены за единицу (self-host вместо SaaS).",
+                "example": "Tail sampling в Collector оставляет все error/slow traces и 10% обычных, отбрасывая noise; при цене `Datadog` ~$0.10-1.00 за миллион span'ов это экономит десятки тысяч $/month.",
+                "when_to_apply": "При высоком трафике и заметных счетах за observability — когда объём traces/metrics напрямую бьёт по бюджету.",
+                "edge_cases": "Слишком агрессивный sampling может выкинуть редкую важную ошибку; self-host снижает SaaS-счёт, но добавляет операционные расходы на поддержку backend.",
+                "related": "[[opentelemetry-interview#Q15]] sampling head vs tail; [[opentelemetry-interview#Q27]] частые проблемы в production; [[opentelemetry-interview#Q21]] какие backends поддерживают OTel."
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

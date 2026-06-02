@@ -278,6 +278,8 @@ try (Scope scope = span.makeCurrent()) {
 
 **Best practice:** **auto** для infrastructure (HTTP, DB), **manual** для business logic (key operations).
 
+## Q10. (!) Java auto-instrumentation (javaagent)?
+
 **Java agent** — JVM agent, instrumentates bytecode at startup.
 
 ```bash
@@ -304,6 +306,8 @@ java -javaagent:opentelemetry-javaagent.jar -jar app.jar
 - 100+ libraries
 
 **Без code changes!** Just attach agent.
+
+## Q11. Manual spans?
 
 ```java
 import io.opentelemetry.api.trace.Tracer;
@@ -335,6 +339,8 @@ try (Scope scope = span.makeCurrent()) {
 - Record exceptions
 - Set status (OK / ERROR)
 
+## Q12. Span attributes, events?
+
 **Attributes** — key-value pairs (как tags). Static info про span.
 
 ```java
@@ -354,6 +360,8 @@ span.addEvent("Slow query detected", Attributes.of(
 
 **Standard attributes** — следуй [Semantic Conventions](https://opentelemetry.io/docs/specs/semconv/) для interoperability.
 
+## Q13. (!) Trace, span, span context?
+
 **Trace** — collection of spans for one request.
 
 **Span** — single operation (HTTP call, DB query, function call).
@@ -372,6 +380,8 @@ Trace 0123456789abcdef0123456789abcdef
 │       └── Span: SELECT FROM accounts
 ```
 
+## Q14. (!) Context propagation (W3C Trace Context)?
+
 **Context propagation** — passing trace context между services через HTTP headers.
 
 **W3C Trace Context** (standard 2020):
@@ -388,6 +398,8 @@ Headers:
 OTel SDKs **automatically** inject/extract при HTTP calls (with auto-instrumentation).
 
 **For async** (Kafka): inject context в message headers, extract в consumer.
+
+## Q15. Sampling — head vs tail?
 
 **Не каждый** request нужно trace (cost). Sampling.
 
@@ -420,6 +432,8 @@ processors:
 
 **Best practice 2025:** tail sampling для **production** apps с high traffic.
 
+## Q16. (!) Metric instruments (Counter, Gauge, Histogram)?
+
 **Counter** — monotonically increasing.
 ```java
 LongCounter requests = meter.counterBuilder("http.requests")
@@ -447,6 +461,8 @@ latency.record(245.5, Attributes.of(...));
 
 **Histogram** даёт percentiles (p50, p95, p99) на backend.
 
+## Q17. Aggregation, push vs pull?
+
 **Push** — SDK sends metrics к backend periodically.
 - OTLP push к Collector
 - Collector → backend
@@ -460,6 +476,8 @@ latency.record(245.5, Attributes.of(...));
 
 **Aggregation periods:** how often metrics aggregated (default 60 sec).
 
+## Q18. Exemplars (linking metrics к traces)?
+
 **Exemplar** — sample trace ID attached к metric data point.
 
 ```
@@ -472,6 +490,8 @@ Histogram bucket: 1000-2000ms
 Bridging metrics → traces. Powerful debugging.
 
 Supported в Prometheus, Tempo, Datadog.
+
+## Q19. (!) OTel Logs — статус?
 
 **Logs** — newest pillar. **Stable since 2024** в OTel.
 
@@ -487,6 +507,8 @@ logger.info("Processing order {}", orderId);
 
 В **2025** — adoption растёт, но Logs всё ещё **более immature** чем traces/metrics.
 
+## Q20. Log correlation с traces?
+
 **Correlation** — log entry contains trace_id + span_id.
 
 ```
@@ -501,6 +523,8 @@ logger.info("Processing order {}", orderId);
 **OTel auto-correlates** при использовании Log Bridge.
 
 В **Datadog, Honeycomb, NewRelic** — UI links logs ↔ traces автоматически.
+
+## Q21. (!) Какие backends поддерживают OTel?
 
 **Open-source:**
 - **Jaeger** — traces
@@ -525,6 +549,8 @@ logger.info("Processing order {}", orderId);
 
 В **2025** — practically **все** observability vendors accept OTLP. Standard wars завершены.
 
+## Q22. OTLP — wire protocol?
+
 **OTLP (OpenTelemetry Protocol)** — wire format для transmission телеметрии.
 
 **Two transport options:**
@@ -547,6 +573,8 @@ exporters:
 
 OTLP — standard. Все vendor backends accept it.
 
+## Q23. (!) Можно ли менять backend без code change?
+
 **Да!** Это main value OTel.
 
 ```bash
@@ -568,6 +596,8 @@ exporters:
 
 Это **революционный shift** vs vendor SDK era.
 
+## Q24. (!) Semantic conventions?
+
 **Semantic Conventions** — standard names для attributes.
 
 ```
@@ -586,6 +616,8 @@ service.version = "1.2.3"
 
 **Manual:** import standard attribute keys из OTel package (`SemanticAttributes.HTTP_METHOD`).
 
+## Q25. Resource attributes?
+
 **Resource** — info про **источник** телеметрии (service, host, container).
 
 ```yaml
@@ -603,6 +635,8 @@ deployment.environment: production
 
 **В K8s:** OTel resource detector auto-fills from K8s API.
 
+## Q26. Что включить в traces (избежать noise)?
+
 **Включай:**
 - HTTP requests (auto)
 - DB queries (auto)
@@ -619,6 +653,8 @@ deployment.environment: production
 
 **Sampling** для high-volume operations.
 
+## Q27. (!) Какие частые проблемы OTel в production?
+
 1. **High overhead** — instrumentation eats 5-10% CPU. Sample aggressively.
 2. **Network costs** — sending все spans expensive. Use Collector batching.
 3. **Storage costs** — backends (Datadog, etc.) charge per ingested data.
@@ -627,6 +663,8 @@ deployment.environment: production
 6. **Different vendors handle differently** — даже OTLP-compatible имеют quirks.
 7. **Auto-instrumentation conflicts** — несколько agents fighting.
 8. **Versioning** — SDK / Agent / API version mismatches.
+
+## Q28. Cost optimization для OTel?
 
 1. **Sampling** — head + tail
 2. **Drop unnecessary spans** в Collector (filter processor)
