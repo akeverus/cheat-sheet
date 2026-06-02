@@ -19,7 +19,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `NATS`
 
-`NATS` — lightweight, high-performance messaging system. CNCF incubating project (2018). Создан Derek Collison (ex-TIBCO, RabbitMQ creator). Известен **скоростью** (миллионы msg/sec на single node), простотой, и low resource usage. **Core NATS** = pub/sub, **JetStream** = persistence (с 2020).
+`NATS` — лёгкая высокопроизводительная система обмена сообщениями. Incubating-проект CNCF (с 2018). Создан Дереком Коллисоном (ранее TIBCO, автор RabbitMQ). Известен **скоростью** (миллионы msg/sec на одной ноде), простотой и низким потреблением ресурсов. **Core NATS** = pub/sub, **JetStream** = персистентность (с 2020).
 
 ## Полезные ссылки
 
@@ -76,63 +76,63 @@ updated: "2026-04-25"
 
 ## Q1. (!) Что такое NATS?
 
-**NATS** — open-source messaging system (CNCF Incubating). Designed для:
-- **Очень низкой latency** (microseconds)
-- **Высокой throughput** (millions msg/sec)
-- **Простоты** (~30 MB binary)
-- **Cloud-native, edge** deployments
+**NATS** — open-source система обмена сообщениями (CNCF Incubating). Спроектирована ради:
+- **Очень низкой latency** (микросекунды)
+- **Высокого throughput** (миллионы msg/sec)
+- **Простоты** (бинарник ~30 MB)
+- **Cloud-native и edge**-развёртываний
 
-**Two layers:**
-- **Core NATS** — pub/sub, lightweight, **at-most-once** delivery
-- **JetStream** — persistence layer для **at-least-once / exactly-once**
+**Два слоя:**
+- **Core NATS** — pub/sub, легковесный, доставка **at-most-once**
+- **JetStream** — слой персистентности для **at-least-once / exactly-once**
 
 **Применения:**
-- Microservices communication
-- IoT (millions devices)
-- Edge computing
-- Real-time apps (chat, gaming)
-- Event-driven architectures
+- Коммуникация микросервисов
+- IoT (миллионы устройств)
+- Edge-вычисления
+- Real-time приложения (чат, игры)
+- Event-driven архитектуры
 
 ## Q2. (!) NATS vs Kafka vs RabbitMQ?
 
 | Критерий | NATS | Kafka | RabbitMQ |
 |----------|------|-------|----------|
-| Latency | **Microseconds** | ms | ms |
-| Throughput per node | Millions msg/sec | Hundreds of K/sec | Tens of K/sec |
-| Persistence | JetStream optional | Always | Optional |
-| Resource usage | **Very low** (30 MB) | High (JVM, GBs) | Medium |
-| Setup complexity | Simple | Complex | Medium |
-| Stream replay | JetStream (limited) | **First-class** | Limited |
-| Routing patterns | Subjects + queue groups | Topics + partitions | Exchanges, bindings |
-| Best for | Microservices, IoT, edge | Event streaming, big data | Enterprise messaging |
+| Latency | **Микросекунды** | мс | мс |
+| Throughput на ноду | Миллионы msg/sec | Сотни тысяч/сек | Десятки тысяч/сек |
+| Персистентность | JetStream опционально | Всегда | Опционально |
+| Потребление ресурсов | **Очень низкое** (30 MB) | Высокое (JVM, гигабайты) | Среднее |
+| Сложность настройки | Простая | Сложная | Средняя |
+| Replay потока | JetStream (ограниченно) | **Первоклассный** | Ограниченно |
+| Паттерны маршрутизации | Subjects + queue groups | Topics + partitions | Exchanges, bindings |
+| Лучше всего для | Микросервисы, IoT, edge | Event streaming, big data | Enterprise-сообщения |
 
-**Когда NATS** vs other:
-- **Low latency** — NATS wins
-- **Stream processing на huge scale** — Kafka
-- **Complex routing** — RabbitMQ
-- **Lightweight, edge** — NATS
+**Когда NATS** против остальных:
+- **Низкая latency** — побеждает NATS
+- **Stream processing на огромном масштабе** — Kafka
+- **Сложная маршрутизация** — RabbitMQ
+- **Легковесность, edge** — NATS
 
 ## Q3. Архитектура NATS Server?
 
-**NATS Server** — single Go binary (~30 MB).
+**NATS Server** — единый бинарник на Go (~30 MB).
 
-**Modes:**
-- **Standalone** — single node
-- **Cluster** — peers full mesh
-- **Super-cluster** — multiple clusters (regions)
-- **Leaf nodes** — edge deployments
+**Режимы:**
+- **Standalone** — одиночная нода
+- **Cluster** — пиры в режиме full mesh
+- **Super-cluster** — несколько кластеров (регионы)
+- **Leaf nodes** — edge-развёртывания
 
-**Built-in:**
-- Authentication (multiple methods)
-- Authorization (subject-based)
-- Monitoring HTTP endpoint
+**Встроено:**
+- Аутентификация (несколько методов)
+- Авторизация (на основе subjects)
+- HTTP-эндпоинт мониторинга
 - TLS
 
-Никаких external dependencies (Apache Kafka требует ZooKeeper, etc.).
+Никаких внешних зависимостей (Apache Kafka требует ZooKeeper и т.д.).
 
 ## Q4. (!) Subjects (вместо topics)?
 
-**Subject** — name для message routing. **Hierarchical**, dot-separated.
+**Subject** — имя для маршрутизации сообщений. **Иерархическое**, разделённое точками.
 
 ```
 orders.created
@@ -144,15 +144,15 @@ user.123.orders
 user.456.profile
 ```
 
-**Vs Kafka topics:**
-- NATS subjects more granular (millions cheap)
-- Wildcards для multi-subject matching
-- No partitions concept (для Core NATS)
+**В сравнении с Kafka topics:**
+- Subjects в NATS более гранулярны (миллионы — это дёшево)
+- Wildcards для сопоставления сразу с несколькими subjects
+- Нет концепции partitions (для Core NATS)
 
 ## Q5. Wildcards в subjects (`*`, `>`)?
 
-**`*`** — single-token wildcard.
-**`>`** — multi-token wildcard (must be last).
+**`*`** — wildcard на один токен.
+**`>`** — wildcard на несколько токенов (должен быть последним).
 
 ```
 orders.*           — matches orders.created, orders.updated (но не orders.shipping.scheduled)
@@ -161,7 +161,7 @@ user.*.profile     — matches user.123.profile, user.456.profile
 *.events.>         — matches user.events.X, system.events.X.Y
 ```
 
-**Use case:** subscribers можно подписаться на широкий range subjects.
+**Сценарий применения:** подписчики могут подписаться на широкий диапазон subjects.
 
 ## Q6. (!) Pub/Sub patterns?
 
@@ -177,13 +177,13 @@ nc.subscribe("orders.*", msg => {
 });
 ```
 
-**Все subscribers** matching subject get message (broadcast).
+**Все подписчики**, чей subject совпадает, получают сообщение (broadcast).
 
-**Core NATS:** if no subscribers — message **dropped** (at-most-once).
+**Core NATS:** если подписчиков нет — сообщение **отбрасывается** (at-most-once).
 
 ## Q7. (!) Queue groups (load balancing)?
 
-**Queue group** — multiple consumers share same subject, only **ONE** receives each message (round-robin).
+**Queue group** — несколько consumer'ов делят один subject, и каждое сообщение получает только **ОДИН** из них (round-robin).
 
 ```javascript
 // Worker 1
@@ -199,13 +199,13 @@ nc.subscribe("orders.process", {queue: "workers"}, processOrder);
 nc.publish("orders.process", data);
 ```
 
-**Эффективное load balancing** для work queues.
+**Эффективная балансировка нагрузки** для work queues.
 
-**Combined с broadcast:** subscribers без queue + queue groups одновременно — каждая queue group получает 1 копию + non-queue subscribers получают каждое message.
+**В сочетании с broadcast:** подписчики без queue и queue groups одновременно — каждая queue group получает 1 копию, а подписчики без queue получают каждое сообщение.
 
 ## Q8. Request-Reply?
 
-**RPC-like pattern** через NATS:
+**RPC-подобный паттерн** через NATS:
 
 ```javascript
 // Server
@@ -222,28 +222,28 @@ const response = await nc.request("calculator.add",
 console.log(JSON.parse(response.data));  // {result: 5}
 ```
 
-NATS uses **temporary subjects** для replies — auto-managed.
+NATS использует **временные subjects** для ответов — управляются автоматически.
 
-**Sub-millisecond** latency (vs HTTP).
+Latency **меньше миллисекунды** (по сравнению с HTTP).
 
 ## Q9. (!) Что такое JetStream?
 
-**JetStream** (с 2020) — persistence layer на NATS.
+**JetStream** (с 2020) — слой персистентности поверх NATS.
 
-**Adds:**
-- **Persistent storage** (memory или disk)
-- **Replay** messages
-- **At-least-once** / **exactly-once** delivery
-- **Replication** (RAFT)
-- **Consumer state tracking**
+**Добавляет:**
+- **Постоянное хранилище** (в памяти или на диске)
+- **Replay** сообщений
+- Доставку **at-least-once** / **exactly-once**
+- **Репликацию** (RAFT)
+- **Отслеживание состояния consumer'а**
 
-**Backwards-compatible** с Core NATS — same protocol, добавлены commands.
+**Обратно совместим** с Core NATS — тот же протокол, добавлены команды.
 
-JetStream нужен для **persistent messaging** workloads. Без JetStream — NATS лучше для realtime / fire-and-forget.
+JetStream нужен для нагрузок с **персистентным обменом сообщениями**. Без JetStream NATS лучше подходит для realtime / fire-and-forget.
 
 ## Q10. Streams в JetStream?
 
-**Stream** — persistent storage для messages matching subjects.
+**Stream** — постоянное хранилище для сообщений, чьи subjects совпадают с заданными.
 
 ```bash
 nats stream add ORDERS \
@@ -254,17 +254,17 @@ nats stream add ORDERS \
   --max-msgs 10000000
 ```
 
-Все messages publishing к `orders.>` — saved в `ORDERS` stream.
+Все сообщения, публикуемые в `orders.>`, сохраняются в stream `ORDERS`.
 
-**Storage:**
-- **File** — disk-based, durable
-- **Memory** — fast, ephemeral
+**Хранилище:**
+- **File** — на диске, durable
+- **Memory** — быстрое, эфемерное
 
 ## Q11. (!) Consumers (durable, ephemeral)?
 
-**Consumer** = view на stream messages.
+**Consumer** = представление (view) над сообщениями stream'а.
 
-**Durable consumer** — survives restarts, NATS tracks position (last consumed sequence).
+**Durable consumer** — переживает рестарты, NATS отслеживает позицию (последний прочитанный sequence).
 
 ```bash
 nats consumer add ORDERS order-processor \
@@ -273,24 +273,24 @@ nats consumer add ORDERS order-processor \
   --replay instant
 ```
 
-**Ephemeral** — auto-removed when no subscribers.
+**Ephemeral** — удаляется автоматически, когда подписчиков не остаётся.
 
-**Pull vs Push:**
-- **Push** consumer — NATS sends messages к subscriber
-- **Pull** consumer — subscriber requests messages (better для batch processing)
+**Pull против Push:**
+- **Push** consumer — NATS сам отправляет сообщения подписчику
+- **Pull** consumer — подписчик запрашивает сообщения (лучше для batch-обработки)
 
 ## Q12. Retention policies?
 
-**Limits-based** (default):
+**На основе лимитов** (по умолчанию):
 ```
 max_age: 7 days
 max_msgs: 10M
 max_bytes: 100GB
 ```
 
-**Interest-based:** delete after all consumers received.
+**На основе интереса (interest):** удаление после того, как все consumer'ы получили сообщение.
 
-**Work queue:** delete after one consumer received (queue semantics).
+**Work queue:** удаление после того, как сообщение получил один consumer (семантика очереди).
 
 ```yaml
 retention: limits | interest | workqueue
@@ -298,24 +298,24 @@ retention: limits | interest | workqueue
 
 ## Q13. Replication через RAFT?
 
-**JetStream** uses **RAFT consensus** для replication.
+**JetStream** использует **консенсус RAFT** для репликации.
 
 ```bash
 nats stream add ORDERS --replicas 3
 ```
 
-**3 replicas:** quorum = 2. Survive 1 failure.
+**3 реплики:** кворум = 2. Переживает 1 отказ.
 
-**Tolerance:**
-- 1 replica: no HA
-- 3 replicas: tolerate 1 failure
-- 5 replicas: tolerate 2 failures
+**Устойчивость:**
+- 1 реплика: нет HA
+- 3 реплики: переживает 1 отказ
+- 5 реплик: переживают 2 отказа
 
-**Storage:** quorum write (majority must persist) before ACK.
+**Запись:** кворумная запись (большинство должно сохранить данные) до отправки ACK.
 
 ## Q14. Key-Value store (built-in)?
 
-**JetStream KV** — simple key-value store на JetStream streams.
+**JetStream KV** — простое key-value хранилище поверх JetStream streams.
 
 ```bash
 nats kv add my_kv
@@ -324,17 +324,17 @@ nats kv get my_kv config
 nats kv watch my_kv  # subscribe to changes
 ```
 
-**Use cases:**
-- Distributed configuration
+**Сценарии применения:**
+- Распределённая конфигурация
 - Service discovery
 - Feature flags
-- Sessions
+- Сессии
 
-**Watch API** — real-time updates (analog etcd watch).
+**Watch API** — обновления в реальном времени (аналог watch в etcd).
 
 ## Q15. Object Store?
 
-**JetStream Object Store** — для **larger blobs** (files, images).
+**JetStream Object Store** — для **более крупных blob'ов** (файлы, изображения).
 
 ```bash
 nats object add my_objects
@@ -342,37 +342,37 @@ nats object put my_objects ./photo.jpg
 nats object get my_objects photo.jpg
 ```
 
-Splits objects в **chunks** (default 128 KB), stores в JetStream.
+Разбивает объекты на **chunks** (по умолчанию 128 KB) и хранит их в JetStream.
 
-**Use cases:**
-- File transfer between services
-- Distributed storage layer
-- Edge caching
+**Сценарии применения:**
+- Передача файлов между сервисами
+- Распределённый слой хранения
+- Edge-кеширование
 
-**Не replacement** для S3 — для smaller objects, integrated с messaging.
+**Не замена** S3 — для объектов поменьше, интегрированных с обменом сообщениями.
 
 ## Q16. NATS Mirroring и Sourcing?
 
-**Mirror** — exact replica другого stream.
+**Mirror** — точная реплика другого stream'а.
 
 ```bash
 nats stream add ORDERS_MIRROR --mirror ORDERS
 ```
 
-**Source** — combine messages from multiple streams.
+**Source** — объединяет сообщения из нескольких stream'ов.
 
 ```bash
 nats stream add COMBINED --sources STREAM1 --sources STREAM2
 ```
 
-**Use cases:**
-- Multi-region replication
+**Сценарии применения:**
+- Репликация между регионами
 - Disaster recovery
-- Stream aggregation
+- Агрегация stream'ов
 
 ## Q17. (!) NATS clustering?
 
-**Cluster** — multiple NATS Server instances connected как **full mesh**.
+**Cluster** — несколько экземпляров NATS Server, соединённых в **full mesh**.
 
 ```yaml
 cluster {
@@ -382,15 +382,15 @@ cluster {
 }
 ```
 
-**Auto-discovery:** clients connect к ANY node, automatically routed.
+**Auto-discovery:** клиенты подключаются к ЛЮБОЙ ноде, маршрутизация происходит автоматически.
 
-**Single virtual broker** semantics — pub в одном node → subscribers на other nodes получают messages.
+Семантика **единого виртуального брокера** — публикация на одной ноде → подписчики на других нодах получают сообщения.
 
-**Scale:** до tens of nodes per cluster.
+**Масштаб:** до десятков нод на кластер.
 
 ## Q18. Leaf nodes (edge)?
 
-**Leaf node** — NATS Server connected к main cluster as one-way leaf.
+**Leaf node** — NATS Server, подключённый к основному кластеру как односторонний leaf.
 
 ```yaml
 leafnodes {
@@ -400,16 +400,16 @@ leafnodes {
 }
 ```
 
-**Use case:**
-- **Edge deployments** — IoT devices, branch offices
-- Local NATS для low latency, leaf к central
-- Disconnected operation possible
+**Сценарий применения:**
+- **Edge-развёртывания** — IoT-устройства, филиалы
+- Локальный NATS ради низкой latency, leaf — к центральному
+- Возможна работа в отключённом (disconnected) режиме
 
-**Subjects scoped** — leaf нодa может только subjects из allowed accounts.
+**Subjects ограничены областью видимости** — leaf-нода может работать только с subjects из разрешённых accounts.
 
 ## Q19. Super-cluster (multi-region)?
 
-**Super-cluster** = multiple clusters connected в **mesh**.
+**Super-cluster** = несколько кластеров, соединённых в **mesh**.
 
 ```
 Cluster A (us-east)  ←→  Cluster B (eu-west)
@@ -418,32 +418,32 @@ Cluster A (us-east)  ←→  Cluster B (eu-west)
    (edge in US)           (edge in EU)
 ```
 
-**Gateway connections** между clusters. Clients connect locally → messages routed globally.
+**Gateway-соединения** между кластерами. Клиенты подключаются локально → сообщения маршрутизируются глобально.
 
-**Multi-region** messaging без central broker.
+Обмен сообщениями **между регионами** без центрального брокера.
 
 ## Q20. Authentication (NATS auth, JWT)?
 
-**Auth methods:**
-- **Token** — simple shared token
+**Методы аутентификации:**
+- **Token** — простой общий токен
 - **User/password**
-- **NKEY** (public key based, similar SSH keys)
-- **JWT** — decentralized auth (recommended)
+- **NKEY** (на основе публичного ключа, похоже на SSH-ключи)
+- **JWT** — децентрализованная аутентификация (рекомендуется)
 - **mTLS**
 
-**JWT-based:**
+**На основе JWT:**
 ```yaml
 operator: <operator-jwt>
 resolver: URL  # or memory
 ```
 
-**Decentralized:** operator → accounts → users. Servers don't need user list — they verify JWT signatures.
+**Децентрализованность:** operator → accounts → users. Серверам не нужен список пользователей — они проверяют подписи JWT.
 
-**Production best practice** — JWT-based с NSC tool для management.
+**Лучшая практика для production** — на основе JWT с инструментом NSC для управления.
 
 ## Q21. Accounts (multi-tenancy)?
 
-**Account** = isolated namespace (subjects, streams, KVs).
+**Account** = изолированное пространство имён (subjects, streams, KV).
 
 ```yaml
 accounts: {
@@ -455,45 +455,45 @@ accounts: {
 }
 ```
 
-**Cross-account communication** через **exports/imports**.
+**Коммуникация между accounts** через **exports/imports**.
 
-**Use case:** SaaS multi-tenant — каждый customer = separate account, isolated.
+**Сценарий применения:** multi-tenant SaaS — каждый клиент = отдельный изолированный account.
 
 ## Q22. (!) Когда выбрать NATS?
 
 **Выбирай когда:**
-- **Microservices** internal communication (replace HTTP/gRPC)
-- **IoT** — millions devices, low resource usage
-- **Edge computing** — leaf nodes
-- **Low latency** critical (gaming, real-time)
-- **Simple ops** preferred over Kafka complexity
-- **Multi-region** without expensive Kafka MirrorMaker
-- Need **request-reply + pub/sub + persistent streams** в одном stack
+- **Внутренняя коммуникация микросервисов** (замена HTTP/gRPC)
+- **IoT** — миллионы устройств, низкое потребление ресурсов
+- **Edge-вычисления** — leaf nodes
+- Критична **низкая latency** (игры, real-time)
+- **Простота эксплуатации** предпочтительнее сложности Kafka
+- **Несколько регионов** без дорогого Kafka MirrorMaker
+- Нужны **request-reply + pub/sub + персистентные streams** в одном стеке
 
 ## Q23. Когда не выбирать NATS?
 
 **Не выбирай когда:**
-- Need **complex stream processing** (Kafka Streams better)
-- Need **rich ecosystem** integrations (Kafka has it)
-- **Long-term retention** (years) — Kafka cheaper
-- **Big Data processing** — Kafka + Spark/Flink standard
-- Team **already invested** в Kafka / RabbitMQ
-- Need **enterprise features** что NATS не имеет (some Kafka Enterprise features)
+- Нужна **сложная потоковая обработка** (Kafka Streams лучше)
+- Нужны интеграции с **богатой экосистемой** (она есть у Kafka)
+- **Долгосрочное хранение** (годы) — Kafka дешевле
+- **Обработка Big Data** — стандарт Kafka + Spark/Flink
+- Команда **уже вложилась** в Kafka / RabbitMQ
+- Нужны **enterprise-фичи**, которых у NATS нет (часть фич Kafka Enterprise)
 
 ## Q24. Какие частые проблемы?
 
-1. **JetStream config** — wrong storage type (memory) → data loss
-2. **Insufficient replicas** — single point failure
-3. **Retention policy mistakes** — data deleted before consumed
-4. **No backpressure** — consumers can't keep up, queues grow
-5. **Cluster split** — network partition handling
-6. **Authentication misconfig** — security risks
-7. **No monitoring** — don't know status
-8. **Wrong deployment** (Core NATS когда нужен JetStream)
-9. **Subject design** — flat намespace без hierarchy
-10. **Underestimating learning curve** — new patterns vs Kafka/RabbitMQ
+1. **Конфигурация JetStream** — неверный тип хранилища (memory) → потеря данных
+2. **Недостаточно реплик** — единая точка отказа
+3. **Ошибки в retention-политике** — данные удаляются до того, как их прочитали
+4. **Нет backpressure** — consumer'ы не успевают, очереди растут
+5. **Split кластера** — обработка сетевых разделений (network partition)
+6. **Ошибки в конфигурации аутентификации** — риски безопасности
+7. **Нет мониторинга** — непонятно, в каком состоянии система
+8. **Неправильное развёртывание** (Core NATS, когда нужен JetStream)
+9. **Дизайн subjects** — плоское пространство имён без иерархии
+10. **Недооценка кривой обучения** — новые паттерны по сравнению с Kafka/RabbitMQ
 
-В **2025** NATS — fast-growing для cloud-native, edge, IoT use cases.
+В **2025** NATS быстро растёт для cloud-native, edge и IoT-сценариев.
 
 ---
 

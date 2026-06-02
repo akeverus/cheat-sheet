@@ -19,7 +19,7 @@ updated: "2026-05-08"
 ---
 # Вопросы на собеседовании: `ClickHouse`
 
-`ClickHouse` — open-source columnar OLAP database от **Yandex** (open-source с 2016). Известен **очень высокой скоростью** на analytical queries (миллиарды rows за секунды). Используется в observability (logs, metrics, traces), real-time analytics, ad-tech. Компания **ClickHouse Inc.** (с 2021) — managed cloud.
+`ClickHouse` — open-source колоночная OLAP-СУБД от **Yandex** (открыта в 2016). Известна **очень высокой скоростью** на аналитических запросах (миллиарды строк за секунды). Применяется в observability (логи, метрики, трейсы), real-time-аналитике, ad-tech. Компания **ClickHouse Inc.** (с 2021) предоставляет managed-облако.
 
 ## Полезные ссылки
 
@@ -30,7 +30,7 @@ updated: "2026-05-08"
 - [ClickHouse Cloud](https://clickhouse.cloud/)
 - [Awesome ClickHouse](https://github.com/ClickHouse/awesome-clickhouse)
 - [ClickHouse Best Practices](https://clickhouse.com/docs/en/operations/tips/)
-- [Altinity Knowledge Base](https://altinity.com/blog/) — open-source ClickHouse experts
+- [Altinity Knowledge Base](https://altinity.com/blog/) — эксперты по open-source ClickHouse
 
 ## Содержание
 
@@ -85,85 +85,85 @@ updated: "2026-05-08"
 
 ## Q1. (!) Что такое ClickHouse?
 
-**ClickHouse** — open-source columnar OLAP database, созданный **Yandex** для **Yandex.Metrica** (аналог Google Analytics). Open-sourced в **2016**.
+**ClickHouse** — open-source колоночная OLAP-СУБД, созданная в **Yandex** для **Yandex.Metrica** (аналог Google Analytics). Открыта в **2016**.
 
 **Особенности:**
-- **Columnar storage** + vectorized execution
-- **Очень быстрый** для analytical queries (миллиарды rows/sec scan)
-- **High compression** (5-10x typical)
-- **SQL** (mostly standard + extensions)
-- **Distributed** (sharding, replication)
-- **Real-time ingestion** (миллионы insertions/sec)
+- **Колоночное хранение** + векторизованное выполнение
+- **Очень быстрая** на аналитических запросах (скан миллиардов строк/сек)
+- **Высокое сжатие** (типично 5-10x)
+- **SQL** (в основном стандартный + расширения)
+- **Распределённость** (шардирование, репликация)
+- **Real-time-приём данных** (миллионы вставок/сек)
 
 **Применения:**
-- Logs aggregation (vs ELK)
-- Time-series (vs Prometheus, InfluxDB)
-- Web analytics
-- Ad-tech analytics
-- Observability backend (Tempo, SigNoz)
+- Агрегация логов (вместо ELK)
+- Временные ряды (вместо Prometheus, InfluxDB)
+- Веб-аналитика
+- Ad-tech-аналитика
+- Бэкенд observability (Tempo, SigNoz)
 
 ## Q2. (!) Почему ClickHouse такой быстрый?
 
 **Ключевые оптимизации:**
 
-1. **Columnar storage** — only read columns в query
-2. **Vectorized execution** — обработка batches (не row-by-row), SIMD instructions
-3. **Compression** — лучше cache utilization
-4. **Sparse primary index** — efficient range scans
-5. **Data skipping** — min/max indexes, bloom filters
-6. **Async parallel inserts** — multiple inserts concurrent
-7. **Distributed query** — parallel scan на shards
-8. **Optimized I/O** — direct disk reads, async I/O
-9. **Native protocol** — binary, compressed
-10. **JIT compilation** для queries (newer versions)
+1. **Колоночное хранение** — читаются только колонки, нужные в запросе
+2. **Векторизованное выполнение** — обработка батчами (не построчно), SIMD-инструкции
+3. **Сжатие** — лучше используется кэш
+4. **Разреженный первичный индекс** — эффективные range-сканы
+5. **Data skipping** — min/max-индексы, bloom-фильтры
+6. **Асинхронные параллельные вставки** — несколько вставок одновременно
+7. **Распределённый запрос** — параллельный скан по шардам
+8. **Оптимизированный I/O** — прямое чтение с диска, асинхронный I/O
+9. **Нативный протокол** — бинарный, сжатый
+10. **JIT-компиляция** запросов (в более новых версиях)
 
-**Benchmarks:** часто **10-100x** быстрее PostgreSQL для analytical queries.
+**Бенчмарки:** часто в **10-100x** быстрее PostgreSQL на аналитических запросах.
 
 ## Q3. (!) ClickHouse vs Snowflake/BigQuery?
 
-| Critterion | ClickHouse | Snowflake | BigQuery |
+| Критерий | ClickHouse | Snowflake | BigQuery |
 |-----------|-----------|-----------|----------|
-| Тип | Self-hosted / Cloud | Managed only | Serverless |
-| Architecture | Shared-nothing (sharded) | Shared storage + virtual warehouses | Serverless |
-| Cost | Самый дешёвый | $$$ | $$ (per query) |
-| Speed | Very fast | Fast | Fast |
-| Concurrency | Hundreds | Thousands | Thousands |
-| Setup | Manual config | Click-ops | Zero-config |
-| SQL | ClickHouse dialect | ANSI SQL | ANSI SQL |
-| Ecosystem | Smaller | Mature | Tied to GCP |
+| Тип | Self-hosted / облако | Только managed | Serverless |
+| Архитектура | Shared-nothing (шардирование) | Общее хранилище + виртуальные warehouse | Serverless |
+| Стоимость | Самый дешёвый | $$$ | $$ (за запрос) |
+| Скорость | Очень высокая | Высокая | Высокая |
+| Параллельность | Сотни | Тысячи | Тысячи |
+| Настройка | Ручная конфигурация | Click-ops | Zero-config |
+| SQL | Диалект ClickHouse | ANSI SQL | ANSI SQL |
+| Экосистема | Меньше | Зрелая | Привязана к GCP |
 
 **Когда ClickHouse:**
-- Cost-sensitive
-- Already self-hosting
-- Real-time ingestion (millions/sec)
-- Sub-second query latency на huge data
+- Чувствительность к стоимости
+- Уже есть собственный хостинг
+- Real-time-приём данных (миллионы/сек)
+- Sub-second-задержка запросов на огромных данных
 
 **Когда Snowflake/BigQuery:**
-- Want fully managed
-- Multi-tenant DWH
-- Complex schemas
-- Don't want ops
+- Нужен полностью managed-сервис
+- Multi-tenant-хранилище данных
+- Сложные схемы
+- Не хочется заниматься эксплуатацией
 
 ## Q4. ClickHouse vs PostgreSQL для аналитики?
 
 | Критерий | ClickHouse | PostgreSQL |
 |----------|-----------|------------|
-| Storage | Columnar | Row-based |
-| Analytics speed | **Very fast** | Slow на больших scans |
-| OLTP (point lookups) | Slow | Fast |
-| Updates / deletes | Limited | Full ACID |
-| Joins | Limited (broadcast только small tables) | Full |
-| Schema flexibility | Limited | Full |
+| Хранение | Колоночное | Построчное |
+| Скорость аналитики | **Очень высокая** | Медленно на больших сканах |
+| OLTP (точечные выборки) | Медленно | Быстро |
+| Обновления / удаления | Ограниченно | Полный ACID |
+| JOIN-ы | Ограниченно (broadcast только небольших таблиц) | Полноценные |
+| Гибкость схемы | Ограниченная | Полная |
 
 ## Q5. (!) Что такое MergeTree?
 
-**MergeTree** — main storage engine ClickHouse. Лежит в основе всех ClickHouse tables.
+**MergeTree** — основной storage-движок ClickHouse. Лежит в основе всех таблиц ClickHouse.
 
 **Принцип:**
-- Data разбита на **parts** (immutable chunks)
-- Background **merge** parts в larger ones (LSM-tree-like)
-- Within part: data sorted by **ORDER BY key**
-- Sparse primary index в memory
+- Данные разбиты на **части (parts)** — неизменяемые чанки
+- Фоновый **merge** объединяет части в более крупные (как в LSM-дереве)
+- Внутри части данные отсортированы по **ключу ORDER BY**
+- Разреженный первичный индекс хранится в памяти
 
 ```sql
 CREATE TABLE events (
@@ -178,7 +178,7 @@ ORDER BY (event_time, user_id);
 
 ## Q6. (!) Семейство MergeTree (ReplacingMergeTree, SummingMergeTree, AggregatingMergeTree)?
 
-**ReplacingMergeTree** — deduplicates rows с одинаковым ORDER BY key (последняя insert wins, eventually).
+**ReplacingMergeTree** — дедуплицирует строки с одинаковым ключом ORDER BY (в итоге побеждает последняя вставка, eventually).
 
 ```sql
 CREATE TABLE users (
@@ -189,7 +189,7 @@ CREATE TABLE users (
 ORDER BY id;
 ```
 
-**SummingMergeTree** — sums numeric columns при merge для одинаковых ORDER BY.
+**SummingMergeTree** — суммирует числовые колонки при merge для одинаковых значений ORDER BY.
 
 ```sql
 CREATE TABLE daily_stats (
@@ -202,13 +202,13 @@ ORDER BY (date, user_id);
 -- При merge: visits и clicks суммируются
 ```
 
-**AggregatingMergeTree** — для arbitrary aggregations через `AggregateFunction`.
+**AggregatingMergeTree** — для произвольных агрегаций через `AggregateFunction`.
 
-**MaterializedView** часто использует AggregatingMergeTree для real-time aggregations.
+**MaterializedView** часто использует AggregatingMergeTree для real-time-агрегаций.
 
 ## Q7. CollapsingMergeTree?
 
-**CollapsingMergeTree** — для cancelling out rows (sign +1 / -1).
+**CollapsingMergeTree** — для взаимного «погашения» строк (знак sign +1 / -1).
 
 ```sql
 CREATE TABLE events (
@@ -226,13 +226,13 @@ INSERT INTO events VALUES (1, -1, 100);  -- cancel
 INSERT INTO events VALUES (1, 1, 150);   -- new value
 ```
 
-При merge — opposite signs cancel out → final state remains.
+При merge — противоположные знаки взаимно гасятся → остаётся итоговое состояние.
 
-**Use case:** updates в otherwise immutable model.
+**Сценарий:** обновления в модели, которая в остальном неизменяема.
 
 ## Q8. ReplicatedMergeTree?
 
-**ReplicatedMergeTree** — adds replication к MergeTree.
+**ReplicatedMergeTree** — добавляет репликацию к MergeTree.
 
 ```sql
 CREATE TABLE events (...) ENGINE = ReplicatedMergeTree(
@@ -242,13 +242,13 @@ CREATE TABLE events (...) ENGINE = ReplicatedMergeTree(
 ORDER BY (event_time);
 ```
 
-**Replication:**
-- **Multi-master** (any replica can accept writes)
-- **Eventually consistent** (async)
-- **Coordinated через ZooKeeper / ClickHouse Keeper**
-- Auto-recovery после failures
+**Репликация:**
+- **Multi-master** (любая реплика может принимать записи)
+- **Eventually consistent** (асинхронно)
+- **Координация через ZooKeeper / ClickHouse Keeper**
+- Автовосстановление после сбоев
 
-**Best practice:** в production — always **ReplicatedMergeTree** (HA).
+**Рекомендация:** в production — всегда **ReplicatedMergeTree** (для HA).
 
 ## Q9. (!) Partitioning в ClickHouse?
 
@@ -261,21 +261,21 @@ PARTITION BY toYYYYMM(event_time)  -- partition by month
 ORDER BY event_time;
 ```
 
-**Partition** = subset data, stored separately.
+**Партиция** = подмножество данных, хранящееся отдельно.
 
 **Эффект:**
-- **Partition pruning** — query "WHERE event_time = '2025-04-19'" reads только 1 partition
-- **Independent operations** — drop / detach / optimize per partition
-- **Better query parallelism**
+- **Partition pruning** — запрос «WHERE event_time = '2025-04-19'» читает только 1 партицию
+- **Независимые операции** — drop / detach / optimize по отдельной партиции
+- **Лучшая параллельность запросов**
 
-**Best practice:**
-- Don't over-partition (≤ ~1000 partitions per table)
-- Common: by month / week (для time-series)
-- Don't partition by high-cardinality column
+**Рекомендация:**
+- Не дробите слишком сильно (≤ ~1000 партиций на таблицу)
+- Типично: по месяцу / неделе (для временных рядов)
+- Не партиционируйте по колонке с высокой кардинальностью
 
 ## Q10. (!) Sparse index — что это?
 
-**ClickHouse** не индексирует каждую row. Вместо — **sparse index**: одна entry per **8192 rows** (default).
+**ClickHouse** не индексирует каждую строку. Вместо этого — **разреженный индекс (sparse index)**: одна запись на **8192 строки** (по умолчанию).
 
 ```
 Primary index (sparse):
@@ -285,16 +285,16 @@ Primary index (sparse):
 ...
 ```
 
-**Granule** = block 8192 rows.
+**Гранула (granule)** = блок из 8192 строк.
 
-**Query:** WHERE key = 150 → binary search → granule 1 → scan 8192 rows → filter.
+**Запрос:** WHERE key = 150 → бинарный поиск → гранула 1 → скан 8192 строк → фильтрация.
 
-**Trade-offs:**
-- **Tiny index** (fits в memory)
-- **Range scans efficient**
-- **Point lookup** medленнее (читаем granule)
+**Компромиссы:**
+- **Крошечный индекс** (помещается в память)
+- **Range-сканы эффективны**
+- **Точечная выборка** медленнее (читаем целую гранулу)
 
-ClickHouse **не для point lookups**, для **scans**.
+ClickHouse предназначен **не для точечных выборок**, а для **сканов**.
 
 ## Q11. ORDER BY vs PRIMARY KEY?
 
@@ -303,27 +303,27 @@ ORDER BY (user_id, event_time)  -- physical sorting в parts
 PRIMARY KEY user_id              -- prefix of ORDER BY (для index)
 ```
 
-Если PRIMARY KEY не указан — **=ORDER BY**.
+Если PRIMARY KEY не указан — он **равен ORDER BY**.
 
-**ORDER BY:** определяет physical layout.
-**PRIMARY KEY:** prefix ORDER BY для primary index.
+**ORDER BY:** определяет физическую раскладку данных.
+**PRIMARY KEY:** префикс ORDER BY для первичного индекса.
 
-**Best practice:** обычно `PRIMARY KEY = ORDER BY` (default).
+**Рекомендация:** обычно `PRIMARY KEY = ORDER BY` (по умолчанию).
 
-**ORDER BY tuning** = main performance lever:
-- Order columns by cardinality: low → high
-- Most common filter columns first
+**Настройка ORDER BY** = главный рычаг производительности:
+- Упорядочивайте колонки по кардинальности: от низкой → к высокой
+- Самые частые колонки-фильтры — первыми
 
 ## Q12. Skip indexes (data skipping)?
 
-**Skip indexes** — secondary indexes для **skipping granules** (без чтения).
+**Skip-индексы** — вторичные индексы для **пропуска гранул** (без их чтения).
 
-**Types:**
-- `minmax` — min/max value per granule
-- `set` — set unique values
-- `bloom_filter` — bloom filter для existence checks
-- `tokenbf_v1` — tokens для full-text-like search
-- `ngrambf_v1` — n-grams для substrings
+**Типы:**
+- `minmax` — min/max-значение по грануле
+- `set` — набор уникальных значений
+- `bloom_filter` — bloom-фильтр для проверки существования
+- `tokenbf_v1` — токены для поиска в духе full-text
+- `ngrambf_v1` — n-граммы для подстрок
 
 ```sql
 CREATE TABLE logs (
@@ -334,11 +334,11 @@ CREATE TABLE logs (
 ORDER BY timestamp;
 ```
 
-**Эффект:** queries `WHERE message LIKE '%error%'` skip irrelevant granules.
+**Эффект:** запросы `WHERE message LIKE '%error%'` пропускают нерелевантные гранулы.
 
 ## Q13. (!) ClickHouse SQL — особенности?
 
-ClickHouse SQL **mostly standard**, но с extensions:
+SQL в ClickHouse **в основном стандартный**, но с расширениями:
 
 ```sql
 -- Standard SQL
@@ -356,7 +356,7 @@ SELECT uniqHLL12(user_id) FROM events;  -- ~uniqExact
 SELECT toStartOfHour(event_time), count() FROM events GROUP BY 1;
 ```
 
-**Approximate aggregates** — `uniqHLL12`, `quantileTDigest` — **намного быстрее** чем exact, slight inaccuracy.
+**Приближённые агрегаты** — `uniqHLL12`, `quantileTDigest` — **намного быстрее** точных, ценой небольшой неточности.
 
 ## Q14. Array functions, higher-order functions?
 
@@ -384,21 +384,21 @@ SELECT id FROM products WHERE has(tags, 'discount');
 SELECT id, tag FROM products ARRAY JOIN tags AS tag;
 ```
 
-**Powerful** для denormalized data — keep arrays вместо normalize.
+**Мощный инструмент** для денормализованных данных — держите массивы вместо нормализации.
 
 ## Q15. (!) JOINs в ClickHouse — особенности?
 
-**ClickHouse JOINs different от PostgreSQL:**
+**JOIN-ы в ClickHouse устроены иначе, чем в PostgreSQL:**
 
-- **Default:** broadcast right table → all nodes (small right table)
-- **Limited memory** — can OOM на large joins
-- **No hash spill to disk** (older versions)
-- Slower than column scans
+- **По умолчанию:** правая таблица рассылается (broadcast) на все узлы (правая таблица должна быть небольшой)
+- **Ограничение по памяти** — может упасть с OOM на больших JOIN-ах
+- **Нет сброса хэша на диск** (в старых версиях)
+- Медленнее, чем сканы по колонкам
 
-**Best practices:**
-- **Avoid joins** if possible (use denormalized)
-- **Small right table** for joins (broadcast)
-- **Use `IN` instead of JOIN** для filter:
+**Рекомендации:**
+- **Избегайте JOIN-ов**, если возможно (используйте денормализацию)
+- **Небольшая правая таблица** для JOIN-ов (broadcast)
+- **Используйте `IN` вместо JOIN** для фильтрации:
 ```sql
 -- Slower
 SELECT * FROM events JOIN users ON events.user_id = users.id WHERE users.country = 'US';
@@ -407,9 +407,9 @@ SELECT * FROM events JOIN users ON events.user_id = users.id WHERE users.country
 SELECT * FROM events WHERE user_id IN (SELECT id FROM users WHERE country = 'US');
 ```
 
-- **Distributed JOIN strategies:** GLOBAL, ALLOW_EXPERIMENTAL_PARALLEL_REPLICAS
+- **Стратегии распределённых JOIN:** GLOBAL, ALLOW_EXPERIMENTAL_PARALLEL_REPLICAS
 
-В **2025** joins improved (parallel hash join, grace hash), но ClickHouse всё equal **denormalized** wins.
+К **2025** JOIN-ы улучшились (parallel hash join, grace hash), но в ClickHouse всё равно выигрывает **денормализация**.
 
 ## Q16. Window functions?
 
@@ -422,16 +422,16 @@ SELECT
 FROM transactions;
 ```
 
-ClickHouse поддерживает window functions с **2021** (некоторые limitations vs PostgreSQL).
+ClickHouse поддерживает оконные функции с **2021** (есть некоторые ограничения по сравнению с PostgreSQL).
 
 ## Q17. (!) Materialized views в ClickHouse?
 
-**ClickHouse MV — different от PostgreSQL:**
+**MV в ClickHouse устроены иначе, чем в PostgreSQL:**
 
-- **Updated incrementally** при INSERT в source
-- **Pre-aggregations** в realtime
-- **No refresh** — always up-to-date
-- **Triggered on INSERT** только
+- **Обновляются инкрементально** при INSERT в исходную таблицу
+- **Предагрегации** в реальном времени
+- **Без refresh** — всегда актуальны
+- **Срабатывают только на INSERT**
 
 ```sql
 -- Source table
@@ -454,13 +454,13 @@ FROM events
 GROUP BY hour, user_id;
 ```
 
-При **каждом INSERT** в `events` → автоматически update `hourly_stats`.
+При **каждом INSERT** в `events` → автоматически обновляется `hourly_stats`.
 
-**Use case:** real-time dashboards без heavy queries на raw data.
+**Сценарий:** real-time-дашборды без тяжёлых запросов к сырым данным.
 
 ## Q18. Projections?
 
-**Projections** (с 2020) — alternative MVs, automatic.
+**Projections** (с 2020) — альтернатива MV, работают автоматически.
 
 ```sql
 ALTER TABLE events ADD PROJECTION events_by_user (
@@ -469,15 +469,15 @@ ALTER TABLE events ADD PROJECTION events_by_user (
 );
 ```
 
-ClickHouse **automatically** chooses projection если query benefits.
+ClickHouse **автоматически** выбирает проекцию, если запрос от неё выигрывает.
 
-**Vs MVs:**
-- Projections — multiple sort orders для same table
-- MVs — pre-computed aggregates / different table
+**В сравнении с MV:**
+- Projections — несколько порядков сортировки для одной и той же таблицы
+- MV — предвычисленные агрегаты / отдельная таблица
 
 ## Q19. (!) Distributed table?
 
-**Distributed table** — proxy table querying across **shards**.
+**Distributed-таблица** — таблица-прокси, выполняющая запросы по всем **шардам**.
 
 ```sql
 -- Local table on each node
@@ -488,10 +488,10 @@ CREATE TABLE events_distributed AS events_local
 ENGINE = Distributed(my_cluster, default, events_local, rand());
 ```
 
-**Insert into distributed** → routed к shards based on sharding key.
-**Query distributed** → parallelized across shards, merged.
+**Вставка в distributed** → маршрутизируется по шардам по ключу шардирования.
+**Запрос к distributed** → распараллеливается по шардам, результаты объединяются.
 
-**Cluster definition** в config:
+**Определение кластера** в конфиге:
 ```xml
 <remote_servers>
   <my_cluster>
@@ -503,36 +503,36 @@ ENGINE = Distributed(my_cluster, default, events_local, rand());
 
 ## Q20. Replication через ZooKeeper / Keeper?
 
-**ReplicatedMergeTree** требует **coordination service**:
-- **Apache ZooKeeper** (старый default)
-- **ClickHouse Keeper** (newer, native)
+**ReplicatedMergeTree** требует **сервис координации**:
+- **Apache ZooKeeper** (старый вариант по умолчанию)
+- **ClickHouse Keeper** (более новый, нативный)
 
-Coordination для:
-- Replica registration
-- Insertion ordering (queue)
-- Merge synchronization
-- Leader election
-- DDL queries propagation
+Координация нужна для:
+- Регистрации реплик
+- Упорядочивания вставок (очередь)
+- Синхронизации merge
+- Выбора лидера (leader election)
+- Распространения DDL-запросов
 
 ## Q21. ClickHouse Keeper vs ZooKeeper?
 
-**ClickHouse Keeper** (с 2021) — drop-in replacement ZooKeeper, написан на C++.
+**ClickHouse Keeper** (с 2021) — drop-in-замена ZooKeeper, написан на C++.
 
 **Преимущества:**
-- **Faster** (10x для some operations)
-- **Less memory**
-- Embeddable в ClickHouse process
-- Same Raft-based consensus
-- Compatible с ZooKeeper protocol
+- **Быстрее** (в 10x на некоторых операциях)
+- **Меньше памяти**
+- Может встраиваться в процесс ClickHouse
+- Тот же консенсус на основе Raft
+- Совместим с протоколом ZooKeeper
 
-В **2025** — Keeper recommended для new deployments.
+К **2025** — Keeper рекомендуется для новых развёртываний.
 
 ## Q22. (!) Storage engine оптимизации (compression, sparse data)?
 
-**Compression codecs:**
-- LZ4 (default, fast)
-- ZSTD (better ratio)
-- Specialized: Delta, DoubleDelta (for time-series), Gorilla (floats)
+**Кодеки сжатия:**
+- LZ4 (по умолчанию, быстрый)
+- ZSTD (лучшее соотношение сжатия)
+- Специализированные: Delta, DoubleDelta (для временных рядов), Gorilla (для float)
 
 ```sql
 CREATE TABLE metrics (
@@ -541,9 +541,9 @@ CREATE TABLE metrics (
 ) ENGINE = MergeTree() ORDER BY timestamp;
 ```
 
-**Effect:** **5-10x compression** typical, sometimes 50x.
+**Эффект:** типично **сжатие 5-10x**, иногда до 50x.
 
-**LowCardinality(String)** — for low-cardinality columns (status, country):
+**LowCardinality(String)** — для колонок с низкой кардинальностью (status, country):
 ```sql
 status LowCardinality(String)  -- dictionary encoding
 ```
@@ -574,11 +574,11 @@ SETTINGS storage_policy = 'hot_cold';
 ALTER TABLE events MODIFY TTL event_time + INTERVAL 30 DAY TO VOLUME 'cold';
 ```
 
-**Cost saving** — old data на cheap S3.
+**Экономия** — старые данные хранятся на дешёвом S3.
 
 ## Q24. (!) Kafka engine для ingestion?
 
-**Kafka Engine** — table reads from Kafka topic.
+**Kafka Engine** — таблица читает данные из топика Kafka.
 
 ```sql
 CREATE TABLE events_kafka (
@@ -598,70 +598,70 @@ TO events  -- target table (MergeTree)
 AS SELECT * FROM events_kafka;
 ```
 
-**Continuous ingestion** Kafka → ClickHouse, без external pipeline.
+**Непрерывный приём данных** Kafka → ClickHouse, без внешнего pipeline.
 
-**Aналогично:** RabbitMQ Engine, NATS Engine, S3 Queue Engine.
+**Аналогично:** RabbitMQ Engine, NATS Engine, S3 Queue Engine.
 
 ## Q25. Other table engines (S3, MySQL, PostgreSQL)?
 
-**Table functions / external engines:**
-- **S3** — read/write Parquet/CSV/JSON в S3
+**Табличные функции / внешние движки:**
+- **S3** — чтение/запись Parquet/CSV/JSON в S3
 ```sql
 SELECT * FROM s3('s3://bucket/data.parquet', 'Parquet')
 ```
-- **PostgreSQL** — federated queries
+- **PostgreSQL** — федеративные запросы
 ```sql
 CREATE TABLE pg_users ENGINE = PostgreSQL('host:5432', 'db', 'users', 'user', 'pass');
 ```
-- **MySQL** — same
-- **HDFS, URL, File** engines
+- **MySQL** — аналогично
+- Движки **HDFS, URL, File**
 
-**Use case:** ETL без external pipeline — `INSERT INTO local SELECT FROM s3(...)`.
+**Сценарий:** ETL без внешнего pipeline — `INSERT INTO local SELECT FROM s3(...)`.
 
 ## Q26. (!) Какие use cases ClickHouse в production?
 
-**Adopters:**
-- **Yandex** (founders) — Metrica
-- **Cloudflare** — analytics
-- **Uber** — observability (logs, metrics, traces)
-- **Spotify** — analytics
+**Кто использует:**
+- **Yandex** (создатели) — Metrica
+- **Cloudflare** — аналитика
+- **Uber** — observability (логи, метрики, трейсы)
+- **Spotify** — аналитика
 - **Mercedes-Benz, eBay, GitLab, Lyft**
 
-**Common use cases:**
-- **Observability** — logs (cheaper ELK), metrics (Prometheus replacement), traces (Jaeger backend)
-- **Real-time analytics** — dashboards
-- **Ad-tech** — bid analysis, attribution
-- **Web analytics** — clickstream
-- **Time-series** — IoT, monitoring
-- **Data warehouse** для real-time analytics
+**Типичные сценарии:**
+- **Observability** — логи (дешевле ELK), метрики (замена Prometheus), трейсы (бэкенд Jaeger)
+- **Real-time-аналитика** — дашборды
+- **Ad-tech** — анализ ставок, атрибуция
+- **Веб-аналитика** — clickstream
+- **Временные ряды** — IoT, мониторинг
+- **Хранилище данных** для real-time-аналитики
 
 ## Q27. (!) Какие ограничения / минусы ClickHouse?
 
-1. **No transactions** (point inserts only)
-2. **Limited UPDATE/DELETE** (mutations slow, async)
-3. **Joins** weaker чем PostgreSQL
-4. **Schema-on-write** (rigid schemas)
-5. **No foreign keys, no constraints**
-6. **Sparse indexing** — bad для point queries
-7. **Steep learning curve** для tuning
-8. **Cluster ops complex** (sharding, replication setup)
-9. **Memory hungry** (queries can OOM)
-10. **Bytes per row** — wide tables can be inefficient
+1. **Нет транзакций** (только точечные вставки)
+2. **Ограниченные UPDATE/DELETE** (мутации медленные, асинхронные)
+3. **JOIN-ы** слабее, чем в PostgreSQL
+4. **Schema-on-write** (жёсткие схемы)
+5. **Нет внешних ключей и ограничений (constraints)**
+6. **Разреженная индексация** — плохо для точечных запросов
+7. **Крутая кривая обучения** при тюнинге
+8. **Сложная эксплуатация кластера** (настройка шардирования, репликации)
+9. **Прожорлив к памяти** (запросы могут падать с OOM)
+10. **Байты на строку** — широкие таблицы могут быть неэффективны
 
 ## Q28. Common pitfalls в ClickHouse production?
 
-1. **Wrong ORDER BY** — slow queries, big indices
-2. **High-cardinality partition key** — too many parts, merges fail
-3. **OOM on joins** — broadcast large tables
-4. **Async inserts** — small data loss possible (configurable)
-5. **Mutations** — slow, lock parts
-6. **No retention TTL** — disk full
-7. **Too many small inserts** — overload ZK/Keeper
-8. **No replication** — data loss on disk failure
-9. **No backups** (ALTER TABLE FREEZE → backup parts)
-10. **Wrong engine choice** (MergeTree vs ReplacingMergeTree etc)
+1. **Неудачный ORDER BY** — медленные запросы, большие индексы
+2. **Ключ партиционирования с высокой кардинальностью** — слишком много частей, merge не справляется
+3. **OOM на JOIN-ах** — broadcast больших таблиц
+4. **Асинхронные вставки** — возможна небольшая потеря данных (настраивается)
+5. **Мутации** — медленные, блокируют части
+6. **Нет TTL для очистки** — диск переполняется
+7. **Слишком много мелких вставок** — перегрузка ZK/Keeper
+8. **Нет репликации** — потеря данных при отказе диска
+9. **Нет бэкапов** (`ALTER TABLE FREEZE` → резервное копирование частей)
+10. **Неправильный выбор движка** (`MergeTree` vs `ReplacingMergeTree` и т. д.)
 
-**Best practice:** read [ClickHouse docs Tips and Tricks](https://clickhouse.com/docs/en/operations/tips/) carefully.
+**Рекомендация:** внимательно прочитайте [ClickHouse docs Tips and Tricks](https://clickhouse.com/docs/en/operations/tips/).
 
 ---
 

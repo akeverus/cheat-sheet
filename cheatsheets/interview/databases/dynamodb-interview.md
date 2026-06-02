@@ -18,7 +18,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `DynamoDB`
 
-`AWS DynamoDB` — serverless NoSQL key-value/document store. Single-digit ms latency at any scale. Used by Amazon (Cart, Prime), Netflix, Lyft. На интервью спрашивают: partition keys, indexes (GSI/LSI), single-table design, capacity modes, hot partitions, DynamoDB Streams, transactions, Global Tables.
+`AWS DynamoDB` — serverless NoSQL key-value/document-хранилище. Однозначные миллисекунды задержки при любом масштабе. Используют Amazon (Cart, Prime), Netflix, Lyft. На интервью спрашивают: partition keys, индексы (GSI/LSI), single-table design, режимы capacity, hot partitions, DynamoDB Streams, транзакции, Global Tables.
 
 ## Полезные ссылки
 
@@ -26,7 +26,7 @@ updated: "2026-04-25"
 
 - [DynamoDB Documentation](https://docs.aws.amazon.com/dynamodb/)
 - [DynamoDB Best Practices](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/best-practices.html)
-- [The DynamoDB Book — Alex DeBrie](https://www.dynamodbbook.com/) — best resource
+- [The DynamoDB Book — Alex DeBrie](https://www.dynamodbbook.com/) — лучший ресурс
 - [DynamoDB Guide (Alex DeBrie)](https://www.dynamodbguide.com/)
 - [Single-Table Design Tutorial](https://www.alexdebrie.com/posts/dynamodb-single-table/)
 
@@ -87,82 +87,82 @@ updated: "2026-04-25"
 
 ## Q1. (!) Что такое DynamoDB?
 
-**DynamoDB** — fully managed serverless NoSQL key-value/document store от AWS (с 2012).
+**DynamoDB** — полностью управляемое serverless NoSQL key-value/document-хранилище от AWS (с 2012).
 
 **Ключевые особенности:**
-- **Single-digit ms** latency at any scale
-- **Auto-scaling** (или provisioned)
+- **Однозначные миллисекунды** задержки при любом масштабе
+- **Авто-масштабирование** (или provisioned)
 - **Multi-region** через Global Tables
-- **Serverless** — no infrastructure management
-- **Built-in HA** (3 AZ replication)
+- **Serverless** — нет управления инфраструктурой
+- **Встроенная HA** (репликация по 3 AZ)
 - **Pay-per-request** или provisioned
 
-**Built по принципам Amazon Dynamo paper** (2007). Используется внутри Amazon (Cart, Prime, ad tech).
+**Построена на принципах статьи Amazon Dynamo** (2007). Используется внутри Amazon (Cart, Prime, ad tech).
 
 ## Q2. (!) DynamoDB vs MongoDB / Cassandra?
 
 | Критерий | DynamoDB | MongoDB | Cassandra |
 |----------|----------|---------|-----------|
-| Хостинг | AWS only (managed) | Self-host / Atlas | Self-host / Astra |
-| Tип | Key-value / Document | Document | Wide-column |
-| Schema | Schemaless | Schemaless | Schema (CQL) |
-| Joins | No | Limited (`$lookup`) | No |
-| Transactions | Yes (limited) | Yes (4.0+) | Limited |
-| Latency | Single-digit ms | Variable | Single-digit ms |
-| Scaling | Auto | Manual sharding | Manual |
-| Vendor lock-in | High | Low | Low |
-| Cost | Variable | Variable | Self-host: low |
+| Хостинг | Только AWS (managed) | Self-host / Atlas | Self-host / Astra |
+| Тип | Key-value / Document | Document | Wide-column |
+| Схема | Schemaless | Schemaless | Со схемой (CQL) |
+| Joins | Нет | Ограниченно (`$lookup`) | Нет |
+| Транзакции | Да (ограниченно) | Да (4.0+) | Ограниченно |
+| Задержка | Однозначные мс | Переменная | Однозначные мс |
+| Масштабирование | Авто | Ручной шардинг | Ручное |
+| Vendor lock-in | Высокий | Низкий | Низкий |
+| Стоимость | Переменная | Переменная | Self-host: низкая |
 
-**Когда DynamoDB:** AWS-native apps, predictable access patterns, want serverless.
-**Когда MongoDB:** flexible schema, complex queries, document model.
-**Когда Cassandra:** очень большой scale, multi-region, write-heavy.
+**Когда DynamoDB:** AWS-native приложения, предсказуемые access patterns, нужен serverless.
+**Когда MongoDB:** гибкая схема, сложные запросы, документная модель.
+**Когда Cassandra:** очень большой масштаб, multi-region, write-heavy нагрузка.
 
 ## Q3. (!) Когда DynamoDB не подходит?
 
 **Не подходит если:**
-- **Complex queries** (joins, aggregations) — DynamoDB не для analytics
-- **Ad-hoc queries** (unknown access patterns) — DynamoDB требует pre-design
-- **Reporting / BI** — use Athena или Redshift
-- **Full-text search** — use OpenSearch
-- **Multi-region writes** в существующих regions — Global Tables новые tables only
-- **Free-form queries** — relational DB лучше
+- **Сложные запросы** (joins, агрегации) — DynamoDB не для аналитики
+- **Ad-hoc запросы** (заранее неизвестные access patterns) — DynamoDB требует проектирования заранее
+- **Отчётность / BI** — используйте Athena или Redshift
+- **Полнотекстовый поиск** — используйте OpenSearch
+- **Multi-region записи** в существующих регионах — Global Tables только для новых таблиц
+- **Произвольные запросы** — реляционная БД лучше
 
 **Подходит когда:**
-- Known access patterns
-- Need predictable performance at scale
-- Serverless-friendly stack
-- AWS ecosystem
+- Access patterns известны
+- Нужна предсказуемая производительность на масштабе
+- Стек, дружелюбный к serverless
+- Экосистема AWS
 
 ## Q4. (!) Partition key, sort key — primary key?
 
-**Primary key** — uniquely identifies item.
+**Primary key** — однозначно идентифицирует item.
 
-**Two options:**
+**Два варианта:**
 
-**1. Partition key only:**
+**1. Только partition key (ключ партиции):**
 ```
 PK: user_id (e.g., "user#123")
 ```
 
-**2. Composite (partition key + sort key):**
+**2. Составной (partition key + sort key):**
 ```
 PK: user_id        (partition by user)
 SK: order_date     (sort within user)
 ```
 
-**Effect:**
-- **Partition key** → hash → which physical partition хранит item
-- **Sort key** → ordering within partition
-- **Same PK** → same partition → can `Query` efficiently
+**Эффект:**
+- **Partition key** → хеш → определяет, в какой физической партиции хранится item
+- **Sort key** → упорядочивание внутри партиции
+- **Один и тот же PK** → та же партиция → можно эффективно делать `Query`
 
 **Best practices:**
-- Choose PK с **high cardinality** (avoid hot partitions)
-- Use SK для one-to-many relationships within partition
+- Выбирайте PK с **высокой кардинальностью** (избегайте hot partitions)
+- Используйте SK для связей one-to-many внутри партиции
 
 ## Q5. Item, attribute — что это?
 
-**Item** — single record (~ row в SQL).
-**Attribute** — field в item (~ column).
+**Item** — отдельная запись (~ строка в SQL).
+**Attribute** — поле в item (~ колонка).
 
 ```json
 {
@@ -174,22 +174,22 @@ SK: order_date     (sort within user)
 }
 ```
 
-Каждый item — JSON document. **Schema flexibility** — items в одной table могут иметь разные attributes.
+Каждый item — это JSON-документ. **Гибкость схемы** — items в одной таблице могут иметь разные attributes.
 
 ## Q6. (!) Какие data types?
 
-**Scalar:**
+**Скалярные:**
 - `S` — String
 - `N` — Number
 - `B` — Binary
 - `BOOL` — Boolean
 - `NULL`
 
-**Document:**
-- `M` — Map (nested object)
-- `L` — List (array)
+**Документные:**
+- `M` — Map (вложенный объект)
+- `L` — List (массив)
 
-**Set:**
+**Множества:**
 - `SS` — String Set
 - `NS` — Number Set
 - `BS` — Binary Set
@@ -205,12 +205,12 @@ SK: order_date     (sort within user)
 
 ## Q7. Item size limit (400 KB)?
 
-**Каждый item** — max **400 KB** (включая attributes names + values).
+**Каждый item** — максимум **400 KB** (включая имена attributes + значения).
 
-**Workarounds для больших items:**
-- **Compress** before write (gzip)
-- **Split** в multiple items (с composite key)
-- **Store payload в S3**, save reference в DynamoDB
+**Обходные пути для больших items:**
+- **Сжать** перед записью (gzip)
+- **Разбить** на несколько items (через composite key)
+- **Хранить payload в S3**, а в DynamoDB сохранять ссылку
 
 ```python
 # Pattern: large body → S3, reference в DynamoDB
@@ -223,7 +223,7 @@ SK: order_date     (sort within user)
 
 ## Q8. (!) GSI (Global Secondary Index) — что и зачем?
 
-**GSI** — alternative key для table. Позволяет query по non-PK attributes.
+**GSI** — альтернативный ключ для таблицы. Позволяет делать query по attributes, отличным от PK.
 
 ```
 Main table:
@@ -239,15 +239,15 @@ GSI 2:
 ```
 
 **Особенности:**
-- **Eventually consistent** (default)
-- **Separate provisioned capacity** (или on-demand inherits)
-- **Costs additional storage**
-- Up to **20 GSIs per table** (default)
-- **Sparse** by default — only items с indexed attributes appear
+- **Eventually consistent** (по умолчанию)
+- **Отдельная provisioned capacity** (или наследует on-demand)
+- **Требует дополнительного хранилища**
+- До **20 GSI на таблицу** (по умолчанию)
+- **Sparse** по умолчанию — попадают только items с индексируемыми attributes
 
 ## Q9. (!) LSI (Local Secondary Index) — отличия от GSI?
 
-**LSI** — same partition key как main table, **alternative sort key**.
+**LSI** — тот же partition key, что у основной таблицы, но **альтернативный sort key**.
 
 ```
 Main table:
@@ -260,19 +260,19 @@ LSI:
 
 **Отличия от GSI:**
 
-| Critterion | GSI | LSI |
+| Критерий | GSI | LSI |
 |-----------|-----|-----|
-| Partition key | Different | **Same as main** |
-| Created when | Anytime | **Only at table creation** |
-| Consistency | Eventually | Strongly consistent option |
-| Capacity | Separate | Shared с main table |
-| Limit | 20 per table | 5 per table |
+| Partition key | Другой | **Такой же, как у основной** |
+| Когда создаётся | В любой момент | **Только при создании таблицы** |
+| Консистентность | Eventually | Есть опция strongly consistent |
+| Capacity | Отдельная | Общая с основной таблицей |
+| Лимит | 20 на таблицу | 5 на таблицу |
 
-**LSI rarely used.** GSI more flexible. Use LSI только если **strong consistency** critical.
+**LSI используют редко.** GSI гибче. Применяйте LSI только если критична **строгая консистентность**.
 
 ## Q10. Sparse indexes?
 
-**Sparse index** — items appear в index только если индексируемый attribute exists.
+**Sparse index** — item попадает в индекс только если у него существует индексируемый attribute.
 
 ```python
 # Item 1
@@ -282,11 +282,11 @@ LSI:
 {"PK": "user#2", "SK": "order#2"}  # no status attribute
 ```
 
-GSI на `status`:
-- Item 1 → in index
-- Item 2 → **not in index**
+GSI по `status`:
+- Item 1 → попадает в индекс
+- Item 2 → **не попадает в индекс**
 
-**Use case:** "active items" pattern.
+**Сценарий:** паттерн "активные items".
 
 ```python
 # Add "active" attribute только для active orders
@@ -294,11 +294,11 @@ GSI на `status`:
 {"PK": "order#2", ...}                  # closed, not in active GSI
 ```
 
-Query active orders → small GSI.
+Query активных заказов → небольшой GSI.
 
 ## Q11. (!) Что такое single-table design?
 
-**Single-table design** — паттерн в DynamoDB: **all entities** в **одной table**, разделённые через PK/SK patterns.
+**Single-table design** — паттерн в DynamoDB: **все сущности** в **одной таблице**, разделённые через паттерны PK/SK.
 
 ```
 PK              | SK              | type    | data...
@@ -311,90 +311,90 @@ product#sku-1   | metadata         | PRODUCT | {name, price}
 ```
 
 **Зачем:**
-- **One Query** fetches related items (vs multiple queries / joins)
-- **Atomic transactions** within table
-- **Cheaper** (one table provisioning)
+- **Один Query** достаёт связанные items (вместо нескольких запросов / joins)
+- **Атомарные транзакции** внутри таблицы
+- **Дешевле** (provisioning одной таблицы)
 
 **Trade-off:**
 - **Сложнее проектировать** — нужно знать access patterns заранее
-- **Не intuitive** для SQL backgrounds
-- Updates / migrations harder
+- **Не интуитивно** для тех, кто пришёл из SQL
+- Обновления / миграции сложнее
 
-В **2025** — single-table — recommended pattern для DynamoDB experts (Alex DeBrie).
+В **2025** single-table — рекомендуемый паттерн у экспертов по DynamoDB (Alex DeBrie).
 
 ## Q12. (!) Access patterns — почему важны?
 
-**В отличие от SQL** (где модель first, queries after), в DynamoDB:
+**В отличие от SQL** (где сначала модель, потом запросы), в DynamoDB:
 
-1. **List access patterns first**:
-   - Get user by ID
-   - Get user's orders
-   - Get order with items
-   - Get top 10 popular products
+1. **Сначала перечислите access patterns**:
+   - Получить пользователя по ID
+   - Получить заказы пользователя
+   - Получить заказ вместе с items
+   - Получить топ-10 популярных продуктов
    ...
 
-2. **Design table** для каждого pattern:
-   - Choose PK/SK для each query
-   - Plan GSIs
+2. **Спроектируйте таблицу** под каждый паттерн:
+   - Выберите PK/SK под каждый запрос
+   - Спланируйте GSI
 
-3. **Avoid `Scan`** (full table scan, slow + expensive)
+3. **Избегайте `Scan`** (полный скан таблицы, медленно + дорого)
 
-**Без upfront design** — DynamoDB performance terrible.
+**Без проектирования заранее** производительность DynamoDB ужасна.
 
 ## Q13. Composite key strategies (PK/SK)?
 
-**Common patterns:**
+**Частые паттерны:**
 
-**Hierarchical (one-to-many):**
+**Иерархический (one-to-many):**
 ```
 PK: user#123 + SK: profile         → user profile
 PK: user#123 + SK: order#456       → user's order
 PK: user#123 + SK: order#789       → another order
 ```
-Query `PK="user#123" AND begins_with(SK, "order#")` → all orders.
+Query `PK="user#123" AND begins_with(SK, "order#")` → все заказы.
 
-**Date-based:**
+**По дате:**
 ```
 PK: user#123 + SK: 2025-04-19#order#456
 ```
-Query orders by date range.
+Query заказов по диапазону дат.
 
-**Inverted index:**
+**Инвертированный индекс:**
 ```
 GSI: PK = SK, SK = PK
 ```
-Reverse lookup.
+Обратный поиск.
 
 ## Q14. (!) On-demand vs Provisioned capacity?
 
 **On-demand:**
-- Pay per request ($1.25 per million reads, $6.25 per million writes для US East)
-- **Auto-scaling** instant
-- **No capacity planning**
-- Best для: unpredictable traffic, dev/test
+- Оплата по запросам ($1.25 за миллион чтений, $6.25 за миллион записей для US East)
+- **Авто-масштабирование** мгновенное
+- **Не нужно планировать capacity**
+- Лучше для: непредсказуемый трафик, dev/test
 
 **Provisioned:**
-- Pre-allocate **RCU/WCU**
-- Cheaper для **predictable steady traffic**
-- Reserved capacity discount available (до 76%)
-- **Auto-scaling** доступен (но reactive, lag)
+- Заранее выделяете **RCU/WCU**
+- Дешевле при **предсказуемом стабильном трафике**
+- Доступна скидка на reserved capacity (до 76%)
+- **Авто-масштабирование** доступно (но реактивное, с задержкой)
 
-**Best practice:** **on-demand** для dev / unknown patterns. **Provisioned** для production с predictable load.
+**Best practice:** **on-demand** для dev / неизвестных паттернов. **Provisioned** для production с предсказуемой нагрузкой.
 
 ## Q15. RCU и WCU — что это?
 
 **RCU (Read Capacity Unit):**
-- 1 strongly consistent read of item < 4 KB
-- 2 eventually consistent reads of item < 4 KB
-- 0.5 transactional reads
+- 1 strongly consistent чтение item < 4 KB
+- 2 eventually consistent чтения item < 4 KB
+- 0.5 транзакционных чтений
 
 **WCU (Write Capacity Unit):**
-- 1 write of item < 1 KB
-- 2 transactional writes
+- 1 запись item < 1 KB
+- 2 транзакционных записи
 
-**Examples:**
-- Read 8 KB strongly consistent = 2 RCUs
-- Write 2 KB item = 2 WCUs
+**Примеры:**
+- Чтение 8 KB strongly consistent = 2 RCU
+- Запись item 2 KB = 2 WCU
 
 **Provisioning:**
 ```
@@ -406,51 +406,51 @@ WCU: 500 = 500 writes/sec для < 1 KB items
 
 ## Q16. (!) Hot partition problem?
 
-**Hot partition** — single partition key getting **disproportionate** traffic.
+**Hot partition** — один partition key получает **непропорционально много** трафика.
 
 ```
 Bad PK choice: status = "ACTIVE" → 99% of items
 → All reads hit one partition → throttle
 ```
 
-DynamoDB partitions data by **PK hash**. If one PK has много traffic → physical partition overloaded.
+DynamoDB распределяет данные по **хешу PK**. Если на один PK приходится много трафика → физическая партиция перегружена.
 
-**Symptoms:**
-- Throttling, even though provisioned capacity high
-- Уneven request distribution
+**Симптомы:**
+- Throttling, даже при высокой provisioned capacity
+- Неравномерное распределение запросов
 
-**Solutions:**
-- **Choose high-cardinality PK** (user_id, order_id — not status)
-- **Write sharding:** add suffix `(user_id)#1, (user_id)#2, ...` → distribute hot items
-- **Read sharding** (cache reads через DAX)
-- **Adaptive capacity** (auto, см. ниже)
+**Решения:**
+- **Выбирайте PK с высокой кардинальностью** (user_id, order_id — не status)
+- **Write sharding:** добавить суффикс `(user_id)#1, (user_id)#2, ...` → распределить hot items
+- **Read sharding** (кешировать чтения через DAX)
+- **Adaptive capacity** (автоматически, см. ниже)
 
 ## Q17. Adaptive capacity?
 
-С 2018 — **adaptive capacity** в DynamoDB. Auto-redistributes capacity к hot partitions.
+С 2018 в DynamoDB есть **adaptive capacity**. Автоматически перераспределяет capacity к hot partitions.
 
-Если table provisioned 1000 WCU evenly, но 90% traffic on one partition → DynamoDB **temporarily boosts** that partition's capacity.
+Если таблице выделено 1000 WCU равномерно, но 90% трафика идёт на одну партицию → DynamoDB **временно повышает** capacity этой партиции.
 
-**Эффект:** smooths out short-term hot partition issues.
+**Эффект:** сглаживает краткосрочные проблемы с hot partitions.
 
-**Не fix:** долгосрочные hot partitions всё равно need design fix.
+**Не панацея:** долгосрочные hot partitions всё равно требуют исправления на уровне проектирования.
 
 ## Q18. (!) GetItem, Query, Scan — отличия?
 
-**GetItem** — fetch single item by full PK (and SK if composite).
-- Fastest: O(1)
-- Single-digit ms latency
+**GetItem** — достаёт один item по полному PK (и SK, если ключ составной).
+- Самый быстрый: O(1)
+- Задержка в однозначные миллисекунды
 
-**Query** — fetch multiple items с **same partition key**.
-- Specify PK + optional SK condition (=, BETWEEN, BEGINS_WITH, ...)
-- Sort by SK (ASC/DESC)
-- Pagination support
-- Fast: only that partition read
+**Query** — достаёт несколько items с **одним partition key**.
+- Указываете PK + опциональное условие по SK (=, BETWEEN, BEGINS_WITH, ...)
+- Сортировка по SK (ASC/DESC)
+- Поддержка пагинации
+- Быстро: читается только эта партиция
 
-**Scan** — read entire table.
-- **Slow + expensive**
-- Use only for small tables / migrations
-- **Avoid в production** code
+**Scan** — читает всю таблицу.
+- **Медленно + дорого**
+- Используйте только для маленьких таблиц / миграций
+- **Избегайте в production**-коде
 
 ```python
 # GetItem — fast
@@ -467,7 +467,7 @@ table.scan(FilterExpression=Attr("status").eq("ACTIVE"))
 
 ## Q19. PartiQL для DynamoDB?
 
-**PartiQL** — SQL-like query language для DynamoDB (с 2020).
+**PartiQL** — SQL-подобный язык запросов для DynamoDB (с 2020).
 
 ```sql
 SELECT * FROM "MyTable" WHERE PK = 'user#123' AND begins_with(SK, 'order#');
@@ -475,13 +475,13 @@ INSERT INTO "MyTable" VALUE {'PK': 'user#456', 'name': 'Alice'};
 UPDATE "MyTable" SET status = 'ACTIVE' WHERE PK = 'user#123';
 ```
 
-Convenience layer над DynamoDB API. Internally compiles в Query/Scan/PutItem/...
+Удобная обёртка над DynamoDB API. Внутри компилируется в Query/Scan/PutItem/...
 
-**Не настоящий SQL:** все same constraints (no joins, scans expensive, etc.).
+**Это не настоящий SQL:** действуют те же ограничения (нет joins, scans дороги и т.д.).
 
 ## Q20. Filter expressions?
 
-**Filter** — applied **after** Query/Scan reads items, **before** returning.
+**Filter** — применяется **после** того, как Query/Scan прочитали items, но **до** их возврата.
 
 ```python
 table.query(
@@ -490,9 +490,9 @@ table.query(
 )
 ```
 
-**Подвох:** **filter не reduces read capacity**. Items still read, then filtered.
+**Подвох:** **filter не уменьшает потребление read capacity**. Items всё равно читаются, а затем фильтруются.
 
-**Best practice:** use **Key conditions** (efficient) over filters when possible. Add new GSI если нужен фильтр часто.
+**Best practice:** по возможности используйте **Key conditions** (эффективно) вместо фильтров. Добавьте новый GSI, если фильтр нужен часто.
 
 ## Q21. Pagination в DynamoDB?
 
@@ -513,11 +513,11 @@ response = table.query(
 )
 ```
 
-**1 MB max** per response. Если результат больше — pagination needed.
+**Максимум 1 MB** на ответ. Если результат больше — нужна пагинация.
 
 ## Q22. (!) DynamoDB Transactions?
 
-**TransactWriteItems** — atomic группа до **100 actions** в одной transaction.
+**TransactWriteItems** — атомарная группа до **100 действий** в одной транзакции.
 
 ```python
 client.transact_write_items(
@@ -529,17 +529,17 @@ client.transact_write_items(
 )
 ```
 
-**TransactGetItems** — atomic read до 100 items.
+**TransactGetItems** — атомарное чтение до 100 items.
 
 **Особенности:**
-- ACID (within DynamoDB)
-- Up to 4 MB / 100 items
-- 2x WCU/RCU cost (vs non-transactional)
-- Can fail (ConditionalCheckFailed) — retry
+- ACID (в пределах DynamoDB)
+- До 4 MB / 100 items
+- Стоимость 2x WCU/RCU (по сравнению с нетранзакционными)
+- Может упасть (ConditionalCheckFailed) — нужен retry
 
 ## Q23. Conditional writes?
 
-**Atomic conditional updates** без transactions.
+**Атомарные условные обновления** без транзакций.
 
 ```python
 table.put_item(
@@ -556,14 +556,14 @@ table.update_item(
 )
 ```
 
-**Use cases:**
-- Idempotency (insert if not exists)
-- Optimistic locking
-- Atomic counters
+**Сценарии:**
+- Идемпотентность (вставить, если не существует)
+- Оптимистичная блокировка
+- Атомарные счётчики
 
 ## Q24. Optimistic locking?
 
-**Pattern:** version attribute + CAS (compare-and-swap).
+**Паттерн:** атрибут version + CAS (compare-and-swap).
 
 ```python
 # Read
@@ -583,15 +583,15 @@ table.update_item(
 # Если version изменилась → ConditionalCheckFailed → retry
 ```
 
-DynamoDB Mapper для DynamoDB Java SDK имеет built-in `@DynamoDbVersionAttribute`.
+DynamoDB Mapper в DynamoDB Java SDK имеет встроенный `@DynamoDbVersionAttribute`.
 
 ## Q25. (!) DynamoDB Streams?
 
 **DynamoDB Streams** — change data capture (CDC) для DynamoDB.
 
-Каждое INSERT / UPDATE / DELETE → event в stream.
+Каждый INSERT / UPDATE / DELETE → событие в stream.
 
-**Stream record:**
+**Запись stream:**
 ```json
 {
   "eventName": "INSERT",
@@ -603,18 +603,18 @@ DynamoDB Mapper для DynamoDB Java SDK имеет built-in `@DynamoDbVersionAt
 }
 ```
 
-**Retention:** 24 hours.
+**Retention:** 24 часа.
 
-**Use cases:**
-- Trigger Lambdas on data changes
-- Replicate to ElasticSearch / OpenSearch
-- Update aggregates / cache
-- Send notifications
-- Audit log
+**Сценарии:**
+- Запускать Lambda при изменениях данных
+- Реплицировать в ElasticSearch / OpenSearch
+- Обновлять агрегаты / кеш
+- Отправлять уведомления
+- Журнал аудита (audit log)
 
 ## Q26. Lambda triggers?
 
-**Lambda trigger** на DynamoDB Streams:
+**Lambda-триггер** на DynamoDB Streams:
 
 ```python
 def handler(event, context):
@@ -624,19 +624,19 @@ def handler(event, context):
             # Process new order, send email, etc.
 ```
 
-**Configuration:**
+**Конфигурация:**
 - Batch size (1-10000)
-- Batch window (0-5 sec)
+- Batch window (0-5 сек)
 - Parallelization factor (1-10)
-- Filter expressions (process only matching records)
+- Filter expressions (обрабатывать только подходящие записи)
 
-**Подвох:** Lambda processes batch — partial failure handling требует `ReportBatchItemFailures`.
+**Подвох:** Lambda обрабатывает пакет (batch) — обработка частичных сбоев требует `ReportBatchItemFailures`.
 
 Подробнее — в [AWS Lambda](../cloud/aws-lambda-interview.md).
 
 ## Q27. (!) DAX (DynamoDB Accelerator)?
 
-**DAX** — managed in-memory cache в front DynamoDB. Microsecond latency.
+**DAX** — управляемый in-memory кеш перед DynamoDB. Задержка в микросекунды.
 
 ```mermaid
 graph LR
@@ -646,21 +646,21 @@ graph LR
     DAX --> App
 ```
 
-**API-compatible** — drop-in for DynamoDB SDK.
+**API-совместим** — drop-in замена для DynamoDB SDK.
 
-**Caches:**
-- **Item cache** — `GetItem` results
-- **Query cache** — `Query` results
+**Кеширует:**
+- **Item cache** — результаты `GetItem`
+- **Query cache** — результаты `Query`
 
-**Use case:** read-heavy workloads с frequent same-item access.
+**Сценарий:** read-heavy нагрузки с частым обращением к одним и тем же items.
 
 **Не для:**
-- Strong consistency (DAX is eventually consistent)
-- Write-heavy (only cache reads)
+- Строгой консистентности (DAX eventually consistent)
+- Write-heavy нагрузок (кешируются только чтения)
 
 ## Q28. (!) Global Tables (multi-region)?
 
-**Global Tables** — multi-region replication для DynamoDB.
+**Global Tables** — multi-region репликация для DynamoDB.
 
 ```
 Region us-east-1: tables replicates ↔
@@ -668,28 +668,28 @@ Region eu-west-1: tables replicates ↔
 Region ap-northeast-1: tables replicates
 ```
 
-**Multi-master:** writes accepted в любом region, replicated к other regions.
+**Multi-master:** записи принимаются в любом регионе и реплицируются в остальные.
 
-**Conflict resolution:** **last writer wins** (по timestamp).
+**Разрешение конфликтов:** **last writer wins** (по timestamp).
 
-**Use cases:**
-- Disaster recovery
-- Low latency to multiple regions
-- Compliance (data residency)
+**Сценарии:**
+- Аварийное восстановление (disaster recovery)
+- Низкая задержка для нескольких регионов
+- Соответствие требованиям (data residency)
 
-**Подвох:** **eventual consistency** between regions. Up to seconds delay.
+**Подвох:** **eventual consistency** между регионами. Задержка до нескольких секунд.
 
 ## Q29. Backup и PITR?
 
-**On-demand backups:**
+**On-demand бэкапы:**
 ```bash
 aws dynamodb create-backup --table-name MyTable --backup-name backup-1
 ```
 
 **PITR (Point-in-time recovery):**
-- Restore до любой секунды last 35 days
-- Continuous backups
-- ~$0.20/GB/month extra
+- Восстановление до любой секунды за последние 35 дней
+- Непрерывные бэкапы
+- Дополнительно ~$0.20/GB/месяц
 
 ```bash
 aws dynamodb update-continuous-backups \
@@ -697,37 +697,37 @@ aws dynamodb update-continuous-backups \
   --point-in-time-recovery-specification PointInTimeRecoveryEnabled=true
 ```
 
-**Best practice:** PITR enabled для production.
+**Best practice:** PITR включён для production.
 
 ## Q30. (!) Какие частые ошибки в DynamoDB production?
 
-1. **Wrong PK choice** — hot partitions, throttling
-2. **`Scan` в production** — slow, expensive
-3. **No access patterns design** — relational thinking
-4. **Too many GSIs** — duplicate writes overhead, cost
-5. **Items > 400 KB** — split or use S3 references
-6. **No PITR** — data loss risks
-7. **Provisioned capacity wrong** — over (cost) или under (throttle)
-8. **Filter vs Key Condition** — реads still consume capacity
-9. **Unbounded query results** (no Limit) — load entire partition
-10. **Wrong consistency model** — strongly consistent doubles cost
+1. **Неудачный выбор PK** — hot partitions, throttling
+2. **`Scan` в production** — медленно, дорого
+3. **Нет проектирования access patterns** — реляционное мышление
+4. **Слишком много GSI** — накладные расходы на дублирующие записи, стоимость
+5. **Items > 400 KB** — разбивать или использовать ссылки на S3
+6. **Нет PITR** — риски потери данных
+7. **Неверная provisioned capacity** — слишком много (стоимость) или слишком мало (throttle)
+8. **Filter вместо Key Condition** — чтения всё равно потребляют capacity
+9. **Неограниченные результаты query** (без Limit) — загружается вся партиция
+10. **Неверная модель консистентности** — strongly consistent удваивает стоимость
 
-**Best practice:** read [The DynamoDB Book by Alex DeBrie](https://www.dynamodbbook.com/).
+**Best practice:** прочитайте [The DynamoDB Book by Alex DeBrie](https://www.dynamodbbook.com/).
 
 ---
 
 ## See also
 
-- [MongoDB](mongodb-interview.md) — alternative document store
+- [MongoDB](mongodb-interview.md) — альтернативное документное хранилище
 - [Cassandra](cassandra-interview.md) — wide-column NoSQL
-- [Redis](redis-interview.md) — for caching
-- [AWS](../cloud/aws-interview.md) — context
-- [AWS Lambda](../cloud/aws-lambda-interview.md) — Streams triggers
-- [Serverless](../cloud/serverless-interview.md) — DynamoDB friendly
-- [Database Architecture](database-architecture-interview.md) — NoSQL context
-- [Scalability Patterns](../architecture/scalability-patterns-interview.md) — DynamoDB scales
+- [Redis](redis-interview.md) — для кеширования
+- [AWS](../cloud/aws-interview.md) — контекст
+- [AWS Lambda](../cloud/aws-lambda-interview.md) — триггеры на Streams
+- [Serverless](../cloud/serverless-interview.md) — хорошо дружит с DynamoDB
+- [Database Architecture](database-architecture-interview.md) — контекст NoSQL
+- [Scalability Patterns](../architecture/scalability-patterns-interview.md) — как DynamoDB масштабируется
 - [Caching Strategies](../architecture/caching-strategies-interview.md) — DAX
-- [Микросервисы](../architecture/microservices-interview.md) — DynamoDB per microservice
+- [Микросервисы](../architecture/microservices-interview.md) — DynamoDB на микросервис
 - [Event-driven](../architecture/event-driven-patterns-interview.md) — Streams
 
 - [Apache Cassandra](cassandra-interview.md)

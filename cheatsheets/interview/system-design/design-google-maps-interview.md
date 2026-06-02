@@ -80,79 +80,79 @@ updated: "2026-05-26"
 
 ## Q1. (!) Functional и non-functional requirements?
 
-**Functional:**
-- Отображение карты по координатам (lat/lon) + zoom level.
+**Функциональные:**
+- Отображение карты по координатам (lat/lon) + уровень зума.
 - Поиск мест (POI): `pizza near me`, `Зурбаган Москва`.
-- Routing (driving/walking/transit/biking).
-- ETA prediction с real-time traffic.
-- Reverse geocoding: lat/lon → address.
-- Forward geocoding: address → lat/lon.
-- Offline maps (download region).
-- Place details (рейтинги, фото, часы работы).
+- Маршрутизация (на авто/пешком/транзит/велосипед).
+- Прогноз ETA с real-time-трафиком.
+- Обратное геокодирование: lat/lon → адрес.
+- Прямое геокодирование: адрес → lat/lon.
+- Офлайн-карты (загрузка региона).
+- Детали места (рейтинги, фото, часы работы).
 - Street View (опционально).
-- Real-time location sharing.
+- Шеринг местоположения в реальном времени.
 
-**Non-functional:**
-- Users: 2B+ (Google Maps), 200M+ Yandex Maps.
-- Latency: tile load < 100 ms, routing < 500 ms.
-- Throughput: billions tile requests/day, миллиарды routing queries.
-- Storage: PB-scale (tiles + POI + road graph + Street View + traffic history).
-- Availability: 99.99%.
-- Offline support: mandatory для emerging markets.
-- Multi-language: 50+ languages.
-- Multi-region: data sovereignty (China требует отдельный stack).
+**Нефункциональные:**
+- Пользователи: 2B+ (Google Maps), 200M+ Yandex Maps.
+- Latency: загрузка тайла < 100 мс, маршрутизация < 500 мс.
+- Throughput: миллиарды tile-запросов в день, миллиарды routing-запросов.
+- Storage: масштаб PB (тайлы + POI + road graph + Street View + история трафика).
+- Доступность: 99.99%.
+- Офлайн-поддержка: обязательна для развивающихся рынков.
+- Мультиязычность: 50+ языков.
+- Мультирегиональность: data sovereignty (Китай требует отдельный stack).
 
-**Scope excluded (типично):**
-- Game-style 3D rendering (это Google Earth, отдельный продукт).
-- Real-time collaborative annotation.
-- Voice-guided turn-by-turn (это поверх routing, не core design).
+**Что выносим за рамки (типично):**
+- 3D-рендеринг игрового уровня (это Google Earth, отдельный продукт).
+- Совместное аннотирование в реальном времени.
+- Голосовая пошаговая навигация (это слой поверх маршрутизации, а не ядро дизайна).
 
-**Tip:** senior различает `static map tiles` (cached aggressively, CDN-friendly) и `dynamic` (traffic, search, routing) — это диктует разное архитектурное разделение.
+**Совет:** senior различает `static map tiles` (агрессивно кэшируются, удобны для CDN) и `dynamic` (трафик, поиск, маршрутизация) — это диктует разное архитектурное разделение.
 
 ## Q2. (!) Capacity estimation (2B users, PB-scale)?
 
-**Allowances:**
+**Исходные допущения:**
 
 | Параметр | Значение |
 |---|---|
-| Users | 2B (1B+ MAU) |
-| Tile requests/day | 100B+ |
-| Search queries/day | 5B+ |
-| Routing queries/day | 1B+ |
+| Пользователи | 2B (1B+ MAU) |
+| Tile-запросов/день | 100B+ |
+| Поисковых запросов/день | 5B+ |
+| Routing-запросов/день | 1B+ |
 
-**Tile pyramid storage:**
-- Zoom 0: 1 tile (whole world).
-- Zoom 1: 4 tiles.
+**Storage tile pyramid:**
+- Zoom 0: 1 тайл (весь мир).
+- Zoom 1: 4 тайла.
 - ...
-- Zoom Z: 4^Z tiles.
-- Zoom 21 (Google Maps max): 4^21 ≈ **4.4 trillion tiles** возможных.
-- НЕ все tiles генерируются: только над land + populated areas → реально ~5-10% = ~500B tiles.
+- Zoom Z: 4^Z тайлов.
+- Zoom 21 (максимум Google Maps): 4^21 ≈ **4.4 триллиона тайлов** возможных.
+- НЕ все тайлы генерируются: только над сушей и населёнными зонами → реально ~5–10% = ~500B тайлов.
 
-**Tile size:**
-- Raster PNG: 20-50 KB.
-- Vector PBF: 5-30 KB (после compression).
+**Размер тайла:**
+- Растровый PNG: 20–50 KB.
+- Векторный PBF: 5–30 KB (после сжатия).
 
-**Map data total:**
-- All zoom levels (0..21): ~500 TB raster, ~150 TB vector + satellite imagery эксабайты.
+**Объём картографических данных:**
+- Все уровни зума (0..21): ~500 TB растр, ~150 TB вектор + спутниковые снимки эксабайты.
 
 **POI:**
-- ~200M places worldwide.
-- Per-place: 5 KB metadata (name, geo, opening hours, rating, photos URLs).
-- = 1 TB POI data.
+- ~200M мест по всему миру.
+- На место: 5 KB метаданных (название, гео, часы работы, рейтинг, URL-ы фото).
+- = 1 TB данных POI.
 
 **Road graph:**
-- ~50M road segments worldwide.
-- Per-edge: 100-200 B (geometry + properties).
-- = 10 GB road graph (compact, fits in memory of routing servers).
+- ~50M дорожных сегментов по всему миру.
+- На ребро: 100–200 B (геометрия + свойства).
+- = 10 GB road graph (компактно, помещается в память routing-серверов).
 
-**Traffic data:**
-- Real-time probe events: 1M users × 1 update/30 sec = 30K events/sec.
-- Storage: 24h hot = 2.5B events ≈ 250 GB/day.
+**Данные о трафике:**
+- Real-time probe-события: 1M пользователей × 1 апдейт/30 сек = 30K событий/сек.
+- Storage: горячие 24 ч = 2.5B событий ≈ 250 GB/день.
 
 **QPS:**
-- Peak tile QPS: 100B/86400 × 5 (peak factor) ≈ **5-10M tile/sec global**.
-- 99% serve from CDN → origin ~100K/sec.
-- Routing: 1B/day × peak ×5 = 60K routing/sec.
+- Пиковый tile QPS: 100B/86400 × 5 (пиковый множитель) ≈ **5–10M тайлов/сек глобально**.
+- 99% отдаётся из CDN → origin ~100K/сек.
+- Маршрутизация: 1B/день × пик ×5 = 60K routing/сек.
 
 ## Q3. SLA и SLO для tile / search / routing?
 
@@ -165,12 +165,12 @@ updated: "2026-05-26"
 | `eta_accuracy_mape` | < 8% | > 15% (route quality drop) |
 | `geocoding_latency_p99` | < 200 ms | > 500 ms |
 | `availability` | 99.99% | < 99.9% monthly |
-| `tile_freshness_lag` | < 24 h (POI updates) | > 7 дней |
+| `tile_freshness_lag` | < 24 ч (апдейты POI) | > 7 дней |
 
-**Failure modes:**
-- Tile CDN miss → fallback к origin (slow but works).
-- Routing server overload → simpler algorithm (A* без CH) fallback.
-- Traffic data lag → use historical averages (still functional, less accurate).
+**Сценарии отказов:**
+- Промах tile CDN → fallback к origin (медленно, но работает).
+- Перегрузка routing-сервера → fallback на более простой алгоритм (A* без CH).
+- Лаг данных о трафике → используем исторические средние (всё ещё функционально, менее точно).
 
 ## Q4. (!) Quadtree — основа всех geo систем?
 
@@ -187,54 +187,54 @@ Each cell can be subdivided into 4 again --> level 2: 16 cells
 ```
 
 **Свойства:**
-- Hierarchical: zoom out = ancestor cell.
-- Sparse: создаём cells только где есть data (densely populated).
-- O(log N) запросы.
+- Иерархичность: zoom out = родительская ячейка.
+- Разреженность: создаём ячейки только там, где есть данные (плотно населённые зоны).
+- Запросы за O(log N).
 
-**Cell encoding:**
-- Binary string: `0123210` (path from root, 7 levels deep).
-- Или Morton order (Z-order curve) для linear cells IDs.
+**Кодирование ячейки:**
+- Бинарная строка: `0123210` (путь от корня, глубина 7 уровней).
+- Или Morton order (Z-order curve) для линейных ID ячеек.
 
-**Use cases:**
-- Tile pyramid (Google Maps) — каждый tile = quadtree cell.
-- Region queries: "точки в bbox" → find covering cells.
-- Adaptive density (детальные cells где много POI).
+**Сценарии применения:**
+- Tile pyramid (Google Maps) — каждый тайл = ячейка quadtree.
+- Региональные запросы: «точки в bbox» → находим покрывающие ячейки.
+- Адаптивная плотность (детальные ячейки там, где много POI).
 
-**Limitations:**
-- Asymmetric neighbors: cell на границе квадранта может иметь "далёкого" соседа в id-space.
-- Не идеальный для proximity queries (S2/H3 лучше — Q5, Q6).
+**Ограничения:**
+- Асимметричные соседи: ячейка на границе квадранта может иметь «далёкого» соседа в id-space.
+- Не идеален для proximity-запросов (S2/H3 лучше — Q5, Q6).
 
-**Production:**
-- Google tile pyramid — quadtree.
-- Mapbox vector tiles — quadtree.
-- HBase row keys для geo data — quadtree-derived.
+**В продакшене:**
+- Tile pyramid Google — quadtree.
+- Векторные тайлы Mapbox — quadtree.
+- Row keys HBase для гео-данных — производные от quadtree.
 
 ## Q5. (!) S2 (Google) — Hilbert curve cells?
 
-**S2** — Google library для geo indexing на 64-bit cell IDs.
+**S2** — библиотека Google для гео-индексации на 64-битных cell ID.
 
 **Идея:**
 - Земля проецируется на куб (6 граней).
-- Каждая грань разбивается quadtree-style на 30 уровней.
-- Cells линеаризуются через **Hilbert curve** — fractal space-filling curve.
+- Каждая грань разбивается в стиле quadtree на 30 уровней.
+- Ячейки линеаризуются через **Hilbert curve** — фрактальную space-filling-кривую.
 
 **Свойства Hilbert curve:**
-- Соседи в curve-space обычно близки в physical space.
-- Возможно эффективное range query: "give me все cells in this geographic area" → contiguous range of S2 IDs.
+- Соседи в curve-space обычно близки и в физическом пространстве.
+- Возможен эффективный range query: «дай все ячейки в этой географической зоне» → непрерывный диапазон S2 ID.
 
-**Cell sizes (уровни 0..30):**
-- Level 0: ~85M km² (whole face of cube).
-- Level 10: ~80 km² (large city).
-- Level 14: ~0.3 km² (neighborhood).
-- Level 20: 0.0001 km² (single building).
-- Level 30: ~1 cm².
+**Размеры ячеек (уровни 0..30):**
+- Level 0: ~85M км² (целая грань куба).
+- Level 10: ~80 км² (крупный город).
+- Level 14: ~0.3 км² (район).
+- Level 20: 0.0001 км² (отдельное здание).
+- Level 30: ~1 см².
 
-**ID format:**
-- 64-bit integer.
-- Hierarchical: prefix = parent cell.
-- O(1) parent/children lookup.
+**Формат ID:**
+- 64-битное целое.
+- Иерархично: префикс = родительская ячейка.
+- Поиск parent/children за O(1).
 
-**API examples:**
+**Примеры API:**
 ```python
 import s2geometry as s2
 ll = s2.S2LatLng.FromDegrees(55.7558, 37.6173)  # Москва
@@ -242,47 +242,47 @@ cell = s2.S2CellId.FromLatLng(ll).parent(15)  # level 15 cell
 neighbors = cell.GetEdgeNeighbors()  # 4 edge-neighbors
 ```
 
-**Use cases:**
-- Foursquare proximity search.
-- Snowflake geo indexing.
+**Сценарии применения:**
+- Proximity-поиск в Foursquare.
+- Гео-индексация в Snowflake.
 - Uber (до миграции на H3).
-- BigQuery geo functions.
+- Гео-функции BigQuery.
 
 **vs Quadtree:**
-- S2 — production-ready quadtree с cube projection (handles polar areas correctly).
-- Hilbert curve лучше Morton для locality.
+- S2 — production-ready quadtree с проекцией на куб (корректно обрабатывает полярные зоны).
+- Hilbert curve лучше Morton по локальности.
 
 ## Q6. (!) H3 (Uber) — hexagonal grid?
 
-**H3** — Uber's hexagonal hierarchical geo index, опубликован 2018.
+**H3** — гексагональный иерархический гео-индекс Uber, опубликован в 2018.
 
-**Зачем hexagons вместо squares:**
-- **Uniform neighbor distance:** hex имеет 6 соседей на одинаковом расстоянии (square — 4 edge + 4 corner на разном).
-- Лучше для radial queries (surge pricing, demand heat maps).
-- Лучше для path-cost calculations.
+**Зачем гексагоны вместо квадратов:**
+- **Равномерное расстояние до соседей:** у гекса 6 соседей на одинаковом расстоянии (у квадрата — 4 по рёбрам + 4 по углам, на разном).
+- Лучше для radial-запросов (surge pricing, тепловые карты спроса).
+- Лучше для расчёта стоимости пути (path-cost).
 
 **Иерархия:**
 - 16 разрешений (0..15).
-- Res 0: ~4.3M km² (continent-scale, 122 cells globally).
-- Res 9: ~0.1 km² (block-level, ~50K m²).
-- Res 15: ~0.9 m² (single parking space).
+- Res 0: ~4.3M км² (масштаб континента, 122 ячейки на весь мир).
+- Res 9: ~0.1 км² (масштаб квартала, ~50K м²).
+- Res 15: ~0.9 м² (одно парковочное место).
 
-**Trade-off hexagonal hierarchy:**
-- Hexagons не tile иерархически идеально (parent hex не покрывает ровно 7 children — есть offset).
-- Решение: разбиение через aperture 7 (parent → 7 approximate children).
-- Children могут "выходить" за parent boundaries на ~14%.
+**Trade-off гексагональной иерархии:**
+- Гексагоны не тайлятся иерархически идеально (родительский гекс не покрывает ровно 7 потомков — есть offset).
+- Решение: разбиение через aperture 7 (родитель → 7 приблизительных потомков).
+- Потомки могут «выходить» за границы родителя на ~14%.
 
-**ID format:**
-- 64-bit integer (Uber's H3 encoding).
-- Hierarchical: parent ID derivable.
+**Формат ID:**
+- 64-битное целое (кодировка H3 от Uber).
+- Иерархично: ID родителя выводится из ID потомка.
 
-**Use cases:**
+**Сценарии применения:**
 - Uber:
-  - Surge pricing per hex.
-  - Demand prediction.
-  - ETA models per area.
-- Foursquare для venue clustering.
-- Snowflake H3 SQL functions.
+  - Surge pricing по гексам.
+  - Прогноз спроса.
+  - ETA-модели по зонам.
+- Foursquare для кластеризации заведений.
+- SQL-функции H3 в Snowflake.
 
 **API:**
 ```python
@@ -296,15 +296,15 @@ h3.grid_disk(cell, 1)  # all neighbors within 1 ring
 
 | Свойство | S2 | H3 |
 |---|---|---|
-| Shape | Square (quadtree on cube) | Hexagonal |
-| Neighbors | 4 edge + 4 corner (mixed dist) | 6 uniform |
-| Hierarchical | Perfect (4 children per parent) | Approximate (aperture 7) |
-| Performance | Slightly faster | Slightly slower |
-| Best for | Range queries, mapping | Radial / spatial analytics |
+| Форма | Квадрат (quadtree на кубе) | Гексагон |
+| Соседи | 4 по рёбрам + 4 по углам (разное расстояние) | 6 равномерно |
+| Иерархичность | Идеальная (4 потомка на родителя) | Приблизительная (aperture 7) |
+| Производительность | Чуть быстрее | Чуть медленнее |
+| Лучше для | Range-запросов, картографии | Radial / пространственная аналитика |
 
 ## Q7. R-tree (PostGIS) и когда применять?
 
-**R-tree** — balanced tree of nested bounding rectangles.
+**R-tree** — сбалансированное дерево вложенных ограничивающих прямоугольников (bounding rectangles).
 
 ```
 Root
@@ -316,27 +316,27 @@ Root
 ```
 
 **Свойства:**
-- Generic spatial index (works для points, polygons, lines).
-- Updates supported (rebalance like B-tree).
-- O(log N) bbox query.
+- Универсальный пространственный индекс (работает для точек, полигонов, линий).
+- Поддерживает апдейты (ребалансировка как у B-tree).
+- Bbox-запрос за O(log N).
 
 **Когда применять:**
-- **PostGIS**: GiST или SP-GiST индексы — R-tree variants.
-- Полигоны (boundary of countries, neighborhoods).
-- Range queries на rectangles ("все объекты в bbox").
-- Когда нужны UPDATE/DELETE (S2/H3 — read-only после indexing).
+- **PostGIS**: индексы GiST или SP-GiST — варианты R-tree.
+- Полигоны (границы стран, районов).
+- Range-запросы по прямоугольникам («все объекты в bbox»).
+- Когда нужны UPDATE/DELETE (S2/H3 — read-only после индексации).
 
 **vs S2/H3:**
 
-| Use case | Index choice |
+| Сценарий | Выбор индекса |
 |---|---|
-| Static point clustering (heat maps, demand) | H3 |
-| Range query on points (bbox) | S2 / quadtree |
-| Polygon containment ("is point in this neighborhood") | R-tree (PostGIS) |
-| Dynamic data с updates | R-tree |
-| Pre-computed read-only | S2 / H3 |
+| Статическая кластеризация точек (тепловые карты, спрос) | H3 |
+| Range-запрос по точкам (bbox) | S2 / quadtree |
+| Вхождение в полигон («лежит ли точка в этом районе») | R-tree (PostGIS) |
+| Динамические данные с апдейтами | R-tree |
+| Предвычисленные read-only | S2 / H3 |
 
-**Example PostGIS:**
+**Пример PostGIS:**
 ```sql
 CREATE INDEX idx_geom ON places USING GIST (geom);
 
@@ -345,45 +345,45 @@ WHERE ST_DWithin(geom, ST_MakePoint(37.6, 55.7)::geography, 1000);
 -- Все места в радиусе 1 км от точки
 ```
 
-**Limitation:**
-- R-tree update operations может быть expensive on heavy write workload.
-- Solution: tier-based (hot in PostGIS, cold in pre-computed S2 indexes).
+**Ограничение:**
+- Операции апдейта R-tree могут быть дорогими при тяжёлой write-нагрузке.
+- Решение: tier-based (горячее в PostGIS, холодное в предвычисленных S2-индексах).
 
 ## Q8. Geohash — старая школа, чем хуже?
 
-**Geohash** — alphanumeric encoding lat/lon в string.
-- `u4pruydqqvj` — Москва на high precision.
+**Geohash** — буквенно-цифровое кодирование lat/lon в строку.
+- `u4pruydqqvj` — Москва с высокой точностью.
 - Префикс = регион.
 
 **Алгоритм:**
-- Interleave bits of lat и lon.
-- Base32-encode.
-- Длина string ↔ precision (1 char ≈ 5000 km, 12 chars ≈ 4 cm).
+- Чередуем (interleave) биты lat и lon.
+- Кодируем в Base32.
+- Длина строки ↔ точность (1 символ ≈ 5000 км, 12 символов ≈ 4 см).
 
-**Pros:**
-- Human-readable.
-- Prefix matching (`u4pr*` = same region).
-- Используется в Elasticsearch geohash queries.
+**Плюсы:**
+- Читаемо человеком.
+- Префиксное сопоставление (`u4pr*` = тот же регион).
+- Используется в geohash-запросах Elasticsearch.
 
-**Cons (почему S2/H3 лучше):**
-- **Boundary issue:** соседние cells могут иметь сильно разные prefix (на стыке квадрантов глобуса).
-- Не подходит для антимеридианных queries (longitudinal wrap).
-- Полюса плохо обрабатываются (curve вырождается).
-- Менее эффективен для radial queries.
+**Минусы (почему S2/H3 лучше):**
+- **Проблема границ:** соседние ячейки могут иметь сильно разные префиксы (на стыке квадрантов глобуса).
+- Не подходит для запросов через антимеридиан (longitudinal wrap).
+- Полюса обрабатываются плохо (кривая вырождается).
+- Менее эффективен для radial-запросов.
 
 **Когда geohash всё ещё применяется:**
-- Простые системы где precision не критична.
-- Когда нужен readable identifier.
-- Elasticsearch / OpenSearch geohash aggregations.
+- Простые системы, где точность не критична.
+- Когда нужен читаемый идентификатор.
+- Geohash-агрегации в Elasticsearch / OpenSearch.
 
-**vs Modern alternatives:**
-- S2 (Google): cube projection — нет polar issues.
-- H3 (Uber): hexagons — uniform neighbor distance.
-- Geohash — legacy для new systems в 2026.
+**vs современные альтернативы:**
+- S2 (Google): проекция на куб — нет полярных проблем.
+- H3 (Uber): гексагоны — равномерное расстояние до соседей.
+- Geohash — legacy для новых систем в 2026.
 
 ## Q9. (!) Tile pyramid (zoom 0-21, 256×256, 5T tiles)?
 
-**Tile pyramid** — иерархическая структура карт.
+**Tile pyramid** — иерархическая структура карты.
 
 ```mermaid
 graph TD
@@ -397,31 +397,31 @@ graph TD
     Z3 -.-> Z21
 ```
 
-**Расчёт tiles:**
-- На zoom Z: 2^Z × 2^Z = 4^Z tiles.
+**Расчёт количества тайлов:**
+- На zoom Z: 2^Z × 2^Z = 4^Z тайлов.
 - Zoom 0: 1, Zoom 10: 1M, Zoom 15: 1B, Zoom 18: 68B, Zoom 21: 4.4T.
 
-**Tile coordinates:**
-- `tile_url = /zoom/x/y.png` где x, y ∈ [0, 2^Z - 1].
-- Origin: top-left (0, 0); bottom-right = (2^Z - 1, 2^Z - 1).
-- Web Mercator projection (EPSG:3857).
+**Координаты тайла:**
+- `tile_url = /zoom/x/y.png`, где x, y ∈ [0, 2^Z - 1].
+- Начало координат: верхний левый угол (0, 0); нижний правый = (2^Z - 1, 2^Z - 1).
+- Проекция Web Mercator (EPSG:3857).
 
-**Tile size:**
-- Стандарт: 256×256 pixels (Google, OSM).
-- Retina/Hi-DPI: 512×512 pixels.
-- 4×4× = same coverage, larger file.
+**Размер тайла:**
+- Стандарт: 256×256 пикселей (Google, OSM).
+- Retina/Hi-DPI: 512×512 пикселей.
+- То же покрытие, но больший размер файла.
 
-**Generation:**
-- Не все 4.4T tiles генерируются. Только над:
-  - Land (~30% Земли).
-  - Populated areas (зум-чувствительный).
-- Реально ~500B tiles (highest zoom лишь по cities).
+**Генерация:**
+- Не все 4.4T тайлов генерируются. Только над:
+  - Сушей (~30% Земли).
+  - Населёнными зонами (зависит от зума).
+- Реально ~500B тайлов (максимальный зум лишь по городам).
 
 **Pre-rendering:**
-- Static layers (terrain, roads) — pre-rendered at build time.
-- Dynamic layers (traffic, POI) — overlay on top.
+- Статические слои (рельеф, дороги) — пререндерятся на этапе сборки.
+- Динамические слои (трафик, POI) — накладываются сверху.
 
-**Tile request flow:**
+**Поток tile-запроса:**
 ```
 client → /18/152437/82854.png
   ↓
@@ -434,57 +434,57 @@ Tile server (renders or fetches from storage)
 
 **Storage:**
 - Bigtable (Google) с row key = `(zoom, x, y)`.
-- Lookup O(1).
+- Поиск за O(1).
 
 ## Q10. (!) Vector tiles vs raster tiles?
 
-| Aspect | Raster tiles (PNG/JPEG) | Vector tiles (PBF) |
+| Аспект | Растровые тайлы (PNG/JPEG) | Векторные тайлы (PBF) |
 |---|---|---|
-| Format | Image (PNG, JPEG, WebP) | Protocol Buffers (binary) |
-| Size | 20-50 KB | 5-30 KB (compressed) |
-| Rendering | Server-side, baked into image | Client-side (GPU shaders) |
-| Styling | Fixed (recompile to change) | Dynamic (CSS-like rules) |
-| Zoom interpolation | Pixelated | Smooth (re-render at any zoom) |
-| Hi-DPI | Need separate tiles (2x, 3x) | Same tile renders any DPI |
-| Offline | Heavy (download all imagery) | Light (just geometry) |
-| Interactivity | Limited (clickable layers hard) | Native (clickable features) |
+| Формат | Изображение (PNG, JPEG, WebP) | Protocol Buffers (бинарный) |
+| Размер | 20–50 KB | 5–30 KB (сжатый) |
+| Рендеринг | Server-side, «запечён» в картинку | Client-side (GPU-шейдеры) |
+| Стилизация | Фиксированная (для изменения — перекомпиляция) | Динамическая (правила в духе CSS) |
+| Интерполяция зума | Пикселизация | Плавная (ререндер на любом зуме) |
+| Hi-DPI | Нужны отдельные тайлы (2x, 3x) | Один тайл рендерится под любой DPI |
+| Офлайн | Тяжело (качать всю растровую графику) | Легко (только геометрия) |
+| Интерактивность | Ограничена (кликабельные слои сложны) | Нативная (кликабельные объекты) |
 
-**Vector tile format (MVT — Mapbox Vector Tile spec):**
-- Geometry: points, lines, polygons.
-- Layers: roads, water, buildings, labels.
-- Properties: name, type, attributes.
-- Protobuf binary, gzip/brotli compressed.
+**Формат векторного тайла (MVT — Mapbox Vector Tile spec):**
+- Геометрия: точки, линии, полигоны.
+- Слои: дороги, вода, здания, подписи.
+- Свойства: название, тип, атрибуты.
+- Бинарный protobuf, сжатый gzip/brotli.
 
-**Pros vector:**
-- Smaller (3-5× меньше than raster).
-- Re-styleable (dark mode just changes client style).
-- Interactive (clickable features).
-- Better for offline (region in vector format — MB вместо GB).
+**Плюсы вектора:**
+- Меньше (в 3–5× меньше растра).
+- Перестилизуемы (тёмная тема — это просто смена клиентского стиля).
+- Интерактивны (кликабельные объекты).
+- Лучше для офлайна (регион в векторном формате — MB вместо GB).
 
-**Cons vector:**
-- Client needs WebGL / GPU.
-- Older devices (low-end smartphones) struggle.
-- Initial render slower (GPU compilation).
+**Минусы вектора:**
+- Клиенту нужен WebGL / GPU.
+- Старые устройства (бюджетные смартфоны) тормозят.
+- Первичный рендер медленнее (компиляция на GPU).
 
-**Industry trend (2026):**
-- Google Maps: hybrid (vector for base + raster для satellite imagery).
-- Apple Maps: vector since 2018 redesign.
-- Mapbox: 100% vector.
-- OpenStreetMap: both available.
+**Тренд индустрии (2026):**
+- Google Maps: гибрид (вектор для базовой карты + растр для спутниковых снимков).
+- Apple Maps: вектор с редизайна 2018.
+- Mapbox: 100% вектор.
+- OpenStreetMap: доступны оба.
 
-**Verdict:** vector tiles — современный стандарт; raster для satellite/photographic content.
+**Вывод:** векторные тайлы — современный стандарт; растр — для спутникового/фотографического контента.
 
 ## Q11. Map rendering pipeline (server-side vs client-side)?
 
-**Server-side rendering (raster tiles):**
-- TileServer (Mapnik, GeoServer) загружает map data → renders to PNG.
-- Pre-rendering: build job создаёт all tiles once → store в Bigtable.
-- On-demand rendering: tile requested but not cached → render and cache.
+**Server-side rendering (растровые тайлы):**
+- TileServer (Mapnik, GeoServer) загружает картографические данные → рендерит в PNG.
+- Pre-rendering: build-job один раз создаёт все тайлы → кладёт в Bigtable.
+- On-demand rendering: тайл запрошен, но не закэширован → рендерим и кэшируем.
 
-**Client-side rendering (vector tiles):**
-- Client requests vector tile (.pbf).
-- WebGL / Metal renders на GPU.
-- Style applied client-side (Mapbox Style Spec, MapLibre).
+**Client-side rendering (векторные тайлы):**
+- Клиент запрашивает векторный тайл (.pbf).
+- WebGL / Metal рендерит на GPU.
+- Стиль применяется на клиенте (Mapbox Style Spec, MapLibre).
 
 **Pipeline server-side:**
 ```
@@ -510,48 +510,48 @@ OSM data → preprocessing → tilemaker → MBTiles file (vector)
                                   WebGL render с style.json
 ```
 
-**Tile bundling:**
-- MBTiles: SQLite database с tiles. Used для offline.
-- PMTiles: новый format (2022+), single file serve-able from S3 без сервера.
+**Бандлинг тайлов:**
+- MBTiles: база SQLite с тайлами. Используется для офлайна.
+- PMTiles: новый формат (2022+), один файл, который можно отдавать прямо из S3 без сервера.
 
 **Hi-DPI:**
-- Raster: separate `@2x` tiles → 4x storage.
-- Vector: client adjusts rendering scale, no separate tiles.
+- Растр: отдельные тайлы `@2x` → 4× storage.
+- Вектор: клиент подстраивает масштаб рендеринга, отдельные тайлы не нужны.
 
 ## Q12. CDN для tile delivery (edge cache, prefetch)?
 
 **Зачем CDN:**
-- 100B tile requests/day → нельзя serve from origin.
-- 95%+ requests served from edge.
-- Latency: < 50 ms из любой geo.
+- 100B tile-запросов/день → нельзя отдавать из origin.
+- 95%+ запросов отдаётся с edge.
+- Latency: < 50 мс из любой географии.
 
-**Cache key:**
-- `(zoom, x, y, style_version)` для vector.
-- `(zoom, x, y, dpi)` для raster.
+**Ключ кэша:**
+- `(zoom, x, y, style_version)` для вектора.
+- `(zoom, x, y, dpi)` для растра.
 
 **TTL:**
-- Static layers (base map): days-weeks.
-- Dynamic (traffic): minutes.
-- Versioned URLs для invalidation: `/v123/18/152437/82854.pbf`.
+- Статические слои (базовая карта): дни-недели.
+- Динамика (трафик): минуты.
+- Версионированные URL для инвалидации: `/v123/18/152437/82854.pbf`.
 
-**Predictive prefetch:**
-- При zoom-in: prefetch next zoom level tiles.
-- При panning: prefetch neighboring tiles.
-- HTTP/2 push or QUIC stream multiplexing.
+**Предиктивный prefetch:**
+- При zoom-in: префетчим тайлы следующего уровня зума.
+- При панорамировании: префетчим соседние тайлы.
+- HTTP/2 push или мультиплексирование потоков QUIC.
 
-**Compression:**
-- Vector tiles: Brotli (better than gzip for protobuf).
-- Raster: WebP (30-50% smaller than PNG).
-- HTTP `Accept-Encoding: br, gzip` negotiated.
+**Сжатие:**
+- Векторные тайлы: Brotli (лучше gzip для protobuf).
+- Растр: WebP (на 30–50% меньше PNG).
+- Согласуется через HTTP `Accept-Encoding: br, gzip`.
 
-**Cost:**
-- CDN egress на 100B tiles/day × 20 KB avg = 2 PB/day.
-- $0.02/GB → ~$40K/day = $15M/year CDN cost.
-- Большой бизнес-кейс для собственного CDN (как Netflix Open Connect).
+**Стоимость:**
+- CDN-egress на 100B тайлов/день × 20 KB в среднем = 2 PB/день.
+- $0.02/GB → ~$40K/день = $15M/год на CDN.
+- Сильный бизнес-кейс для собственного CDN (как Netflix Open Connect).
 
-**Cache busting:**
-- Major map update → bump version → all tiles invalidated.
-- Partial updates: per-area version (если изменения локальные).
+**Сброс кэша (cache busting):**
+- Крупное обновление карты → бамп версии → инвалидация всех тайлов.
+- Частичные апдейты: версия на зону (если изменения локальные).
 
 ## Q13. (!) Routing algorithms: Dijkstra → A* → CH → CRP?
 
@@ -559,127 +559,127 @@ OSM data → preprocessing → tilemaker → MBTiles file (vector)
 
 **Dijkstra (1959):**
 - O(V log V + E) с binary heap.
-- На planet graph (50M edges) — 5-30 секунд per query. Слишком медленно для real-time.
+- На planet graph (50M рёбер) — 5–30 секунд на запрос. Слишком медленно для real-time.
 
 **A* (1968):**
-- Dijkstra + heuristic (straight-line distance к target).
-- 2-10× быстрее Dijkstra.
-- Всё ещё слишком медленный для continental routing (Europe ~100M edges).
+- Dijkstra + эвристика (расстояние по прямой до цели).
+- В 2–10× быстрее Dijkstra.
+- Всё ещё слишком медленный для континентальной маршрутизации (Европа ~100M рёбер).
 
 **Contraction Hierarchies (Geisberger 2008):**
-- **Preprocessing** граф: order nodes by importance + add shortcuts.
-- Query время: 1-10 мс на continental graph.
+- **Препроцессинг** графа: упорядочиваем узлы по важности + добавляем shortcuts.
+- Время запроса: 1–10 мс на континентальном графе.
 - Используется в OSRM.
 
 **Customizable Route Planning (CRP, Microsoft 2013):**
-- Preprocessing split на metric-independent + metric-dependent.
-- Можно пересчитать metric (current traffic) за секунды, не перестраивая всю структуру.
+- Препроцессинг разбит на metric-independent + metric-dependent.
+- Метрику (текущий трафик) можно пересчитать за секунды, не перестраивая всю структуру.
 - Используется в Google Maps, Bing Maps.
 
-**Compare:**
+**Сравнение:**
 
-| Algorithm | Preprocess time | Query time | Update on traffic |
+| Алгоритм | Время препроцессинга | Время запроса | Апдейт по трафику |
 |---|---|---|---|
-| Dijkstra | None | 5-30 sec | Trivial (just edge weights) |
-| A* | None | 1-5 sec | Trivial |
-| CH | Hours | 1-10 ms | Slow (re-preprocess shortcuts) |
-| CRP | Hours initial | 5-50 ms | Fast (re-customize partition only) |
+| Dijkstra | Нет | 5–30 сек | Тривиально (просто веса рёбер) |
+| A* | Нет | 1–5 сек | Тривиально |
+| CH | Часы | 1–10 мс | Медленно (пересчёт shortcuts) |
+| CRP | Часы первично | 5–50 мс | Быстро (рекастомизация только partition) |
 
-**Industry choice:**
+**Выбор индустрии:**
 - OSRM (open-source): CH.
-- Google Maps: CRP-derived custom algorithm.
-- Yandex Maps: hybrid.
-- OSM-based services: CH or contraction-derived.
+- Google Maps: кастомный алгоритм на базе CRP.
+- Yandex Maps: гибрид.
+- Сервисы на базе OSM: CH или производные от contraction.
 
 ## Q14. (!) Contraction Hierarchies — preprocessing trick?
 
-**Идея:** "contract" nodes by importance order; добавляем shortcuts чтобы preserve shortest paths.
+**Идея:** «contract» (сжимаем) узлы в порядке важности; добавляем shortcuts, чтобы сохранить кратчайшие пути.
 
-**Algorithm:**
+**Алгоритм:**
 
-**Preprocessing:**
-1. Order nodes by importance (heuristic: edge-difference + level + ...).
-2. Contract least important node:
-   - Remove node.
-   - For each pair of remaining neighbors, check: shortest path between them через contracted node? If yes — add shortcut edge.
-3. Repeat for all nodes.
-4. Result: graph + shortcuts с node ordering.
+**Препроцессинг:**
+1. Упорядочиваем узлы по важности (эвристика: edge-difference + level + ...).
+2. Сжимаем наименее важный узел:
+   - Удаляем узел.
+   - Для каждой пары оставшихся соседей проверяем: проходит ли кратчайший путь между ними через сжатый узел? Если да — добавляем shortcut-ребро.
+3. Повторяем для всех узлов.
+4. Результат: граф + shortcuts с порядком узлов.
 
-**Query (bidirectional Dijkstra):**
-- Run Dijkstra from source upward (only к nodes higher in hierarchy).
-- Run Dijkstra from target upward.
-- Meeting point = shortest path.
-- Decompose shortcuts back в original edges.
+**Запрос (двунаправленный Dijkstra):**
+- Запускаем Dijkstra от источника вверх (только к узлам выше в иерархии).
+- Запускаем Dijkstra от цели вверх.
+- Точка встречи = кратчайший путь.
+- Раскрываем shortcuts обратно в исходные рёбра.
 
-**Performance:**
-- Continental graph (Europe): query 1-10 мс.
-- 1000-10000× faster than vanilla Dijkstra.
+**Производительность:**
+- Континентальный граф (Европа): запрос 1–10 мс.
+- В 1000–10000× быстрее обычного Dijkstra.
 
-**Preprocessing cost:**
-- Hours для Europe graph.
-- Updates: full recomputation if road geometry changes.
+**Стоимость препроцессинга:**
+- Часы для графа Европы.
+- Апдейты: полный пересчёт при изменении геометрии дорог.
 
-**Limitations:**
-- Static metric (precomputed edge weights).
-- Traffic changes invalidate all shortcuts → need CRP (Q15).
-- Doesn't support arbitrary constraints (multi-modal, time-dependent).
+**Ограничения:**
+- Статическая метрика (предвычисленные веса рёбер).
+- Изменения трафика инвалидируют все shortcuts → нужен CRP (Q15).
+- Не поддерживает произвольные ограничения (multi-modal, time-dependent).
 
-**OSRM реализация:**
+**Реализация OSRM:**
 - Open-source.
-- Preprocess: hours для Europe.
-- Production-grade для drive routing.
+- Препроцессинг: часы для Европы.
+- Production-grade для автомобильной маршрутизации.
 
 ## Q15. Customizable Route Planning (CRP) — для real-time?
 
-**Идея CRP:** разделить preprocessing на metric-independent (slow) + metric-customizable (fast).
+**Идея CRP:** разделить препроцессинг на metric-independent (медленный) + metric-customizable (быстрый).
 
-**Preprocessing:**
+**Препроцессинг:**
 
-**Phase 1: Metric-independent (hours):**
-- Partition граф на иерархические cells (multi-level partitioning).
-- Build overlay graph (edges only between cell boundaries).
+**Фаза 1: Metric-independent (часы):**
+- Разбиваем граф на иерархические ячейки (multi-level partitioning).
+- Строим overlay-граф (рёбра только между границами ячеек).
 
-**Phase 2: Metric-customizable (seconds):**
-- Compute shortest paths through overlay edges с current edge weights (traffic).
-- Re-customize при traffic update.
+**Фаза 2: Metric-customizable (секунды):**
+- Считаем кратчайшие пути через overlay-рёбра с текущими весами рёбер (трафик).
+- Рекастомизируем при обновлении трафика.
 
-**Query:**
-- Local query within cell (fast).
-- Overlay query через high-level cells (fast).
-- Combined: ~10-50 мс на continental graph.
+**Запрос:**
+- Локальный запрос внутри ячейки (быстро).
+- Overlay-запрос через ячейки верхнего уровня (быстро).
+- В сумме: ~10–50 мс на континентальном графе.
 
-**Advantages:**
-- Traffic update → re-customize в секунды (не hours like CH).
-- Multi-criteria optimization (fastest vs shortest vs scenic).
-- Multi-modal support (different metric per mode).
+**Преимущества:**
+- Апдейт трафика → рекастомизация за секунды (а не часы, как у CH).
+- Многокритериальная оптимизация (быстрейший vs кратчайший vs живописный).
+- Поддержка multi-modal (разная метрика для каждого режима).
 
 **Google Maps:**
-- CRP-derived (proprietary refinements).
-- Periodic re-customization для traffic.
+- На базе CRP (с проприетарными доработками).
+- Периодическая рекастомизация под трафик.
 
 **vs CH:**
 
-| Aspect | CH | CRP |
+| Аспект | CH | CRP |
 |---|---|---|
-| Initial preprocess | Hours | Hours |
-| Re-preprocess on traffic | Hours | Seconds |
-| Query latency | 1-10 ms | 5-50 ms |
-| Multi-criteria | No | Yes |
-| Production | OSRM | Google Maps |
+| Первичный препроцессинг | Часы | Часы |
+| Пересчёт при трафике | Часы | Секунды |
+| Latency запроса | 1–10 мс | 5–50 мс |
+| Многокритериальность | Нет | Да |
+| В продакшене | OSRM | Google Maps |
 
 ## Q16. Road network graph и OSM data ingestion?
 
-**Road network graph:**
-- Nodes: intersections + named places.
-- Edges: road segments с properties (length, speed limit, oneway, road type, allowed modes).
-- Cost function: travel time (length / speed × traffic factor).
+**Граф дорожной сети:**
+- Узлы: перекрёстки + именованные места.
+- Рёбра: дорожные сегменты со свойствами (длина, ограничение скорости, односторонность, тип дороги, разрешённые режимы).
+- Cost-функция: время в пути (длина / скорость × фактор трафика).
 
 **OpenStreetMap (OSM):**
-- Open volunteer-edited map data.
-- Format: XML (.osm) или PBF (binary).
-- Planet file: ~70 GB (compressed PBF), ~1.5 TB uncompressed.
+- Открытые картографические данные, редактируемые волонтёрами.
+- Формат: XML (.osm) или PBF (бинарный).
+- Planet-файл: ~70 GB (сжатый PBF), ~1.5 TB в распакованном виде.
 
-**Ingestion pipeline:**
+**Pipeline инжеста:**
 
 ```
 OSM data dump (planet.osm.pbf)
@@ -693,32 +693,32 @@ Preprocess для routing (CH / CRP)
 Store optimized graph в memory-mapped file
 ```
 
-**Updates:**
-- OSM minute diffs (~10 MB/day).
-- Incremental load.
-- Re-preprocess routing graph периодически (nightly).
+**Апдейты:**
+- Минутные диффы OSM (~10 MB/день).
+- Инкрементальная загрузка.
+- Периодический пересчёт routing-графа (по ночам).
 
-**Data enrichment:**
-- Speed limits (если missing в OSM).
-- Traffic regulations (turn restrictions).
-- Lane counts, road grade (для bicycle/walking).
+**Обогащение данных:**
+- Ограничения скорости (если отсутствуют в OSM).
+- ПДД-ограничения (запреты поворотов).
+- Число полос, уклон дороги (для велосипеда/пешком).
 
-**Industry:**
-- Yandex / Google имеют proprietary data (sat imagery + dispatched cars).
-- OSM-based services: Mapbox, MapQuest, OSRM.
-- Lookup attribution requirements per OSM license (ODbL).
+**Индустрия:**
+- У Yandex / Google есть проприетарные данные (спутниковые снимки + собственные машины-съёмщики).
+- Сервисы на базе OSM: Mapbox, MapQuest, OSRM.
+- Учитывайте требования по атрибуции согласно лицензии OSM (ODbL).
 
 ## Q17. (!) ETA prediction (historical + real-time + ML)?
 
-**Naive ETA:** sum(edge_length / speed_limit) along route.
+**Наивный ETA:** sum(edge_length / speed_limit) по маршруту.
 
-**Reality:** real-world travel time ≠ speed limit.
-- Traffic congestion.
-- Time of day patterns.
-- Day of week patterns.
-- Weather.
-- Special events.
-- Construction zones.
+**Реальность:** реальное время в пути ≠ ограничению скорости.
+- Заторы.
+- Паттерны по времени суток.
+- Паттерны по дням недели.
+- Погода.
+- Особые события.
+- Зоны дорожных работ.
 
 **Pipeline:**
 
@@ -739,74 +739,74 @@ graph LR
     ML --> ETA[Predicted ETA]
 ```
 
-**ML features:**
-- Per-edge baseline speed (historical avg).
-- Current observed speed (last 5-15 минут probe data).
-- Day-of-week + time-of-day patterns.
-- Weather.
-- Origin / destination characteristics.
-- Route length and complexity.
+**ML-фичи:**
+- Базовая скорость на ребро (историческое среднее).
+- Текущая наблюдаемая скорость (probe-данные за последние 5–15 минут).
+- Паттерны день-недели + время-суток.
+- Погода.
+- Характеристики начала / конца маршрута.
+- Длина и сложность маршрута.
 
-**Model:**
-- LightGBM / XGBoost for tabular.
-- DeepETA (Uber) — neural model для уберов.
-- DLRM / MLP for Google.
+**Модель:**
+- LightGBM / XGBoost для табличных данных.
+- DeepETA (Uber) — нейросетевая модель для Uber.
+- DLRM / MLP у Google.
 
-**Accuracy:**
-- Google Maps: MAPE 8-10% (Mean Absolute Percentage Error).
-- Improved via DeepMind WaveNet-derived (2020+).
+**Точность:**
+- Google Maps: MAPE 8–10% (Mean Absolute Percentage Error).
+- Улучшена через производную от DeepMind WaveNet (2020+).
 
 **Latency:**
-- ETA inference: 10-50 ms.
-- Async refresh во время поездки (re-route if congestion ahead).
+- Инференс ETA: 10–50 мс.
+- Асинхронное обновление во время поездки (перестроение, если впереди затор).
 
 **Multi-modal:**
-- Separate models per mode (driving vs walking vs transit).
-- Transit ETA: schedule + delay predictions.
+- Отдельные модели на каждый режим (авто vs пешком vs транзит).
+- ETA транзита: расписание + прогноз задержек.
 
 ## Q18. Multi-modal routing (drive/walk/transit/bike)?
 
-**Modes:**
-- **Driving** — primary.
-- **Walking** — слой pedestrian-only paths (sidewalks, alleys).
-- **Transit** — bus/metro schedules + walking transfers.
-- **Cycling** — bike paths preferred.
-- **Combined** — drive + park + walk; bike + transit + walk.
+**Режимы:**
+- **Авто** — основной.
+- **Пешком** — слой только пешеходных путей (тротуары, переулки).
+- **Транзит** — расписания автобусов/метро + пешие пересадки.
+- **Велосипед** — приоритет велодорожкам.
+- **Комбинированный** — авто + парковка + пешком; велосипед + транзит + пешком.
 
-**Graph differences:**
-- Driving: motor vehicle graph (highways, roads).
-- Walking: includes pedestrian-only segments (parks, plazas).
-- Cycling: bike paths boosted, highways excluded.
-- Transit: time-dependent edges (only available at certain times).
+**Различия графов:**
+- Авто: граф автотранспорта (магистрали, дороги).
+- Пешком: включает только-пешеходные сегменты (парки, площади).
+- Велосипед: велодорожки повышены в приоритете, магистрали исключены.
+- Транзит: рёбра с привязкой ко времени (доступны только в определённые моменты).
 
-**Transit routing complexity:**
-- Time-dependent graph (Connection Scan Algorithm — CSA, RAPTOR).
-- Schedule-based: edges have departure times.
-- Wait time = next departure - arrival.
+**Сложность маршрутизации транзита:**
+- Time-dependent-граф (Connection Scan Algorithm — CSA, RAPTOR).
+- На основе расписания: у рёбер есть времена отправления.
+- Время ожидания = следующее отправление − прибытие.
 
-**Multi-modal combined:**
-- "Drive 5 min к станции → park → train 30 min → walk 5 min".
-- Hard problem: combinatorial routing.
-- Implementation: transfer modeling через "transfer nodes".
+**Комбинированный multi-modal:**
+- «Авто 5 мин до станции → парковка → поезд 30 мин → пешком 5 мин».
+- Сложная задача: комбинаторная маршрутизация.
+- Реализация: моделирование пересадок через «transfer nodes».
 
 **Google Maps:**
-- Separate routing engines per mode.
-- Combined queries → orchestration layer.
-- Real-time traffic affects driving + transit (delays).
+- Отдельные routing-движки на каждый режим.
+- Комбинированные запросы → слой оркестрации.
+- Real-time-трафик влияет на авто + транзит (задержки).
 
-**Edge cases:**
-- Accessibility (wheelchair routing) — additional edge filter.
-- Avoid tolls / highways — preferences.
-- Carbon footprint optimization (Google eco-routing 2021+).
+**Граничные случаи:**
+- Доступность (маршруты для колясок) — дополнительный фильтр рёбер.
+- Избегать платных дорог / магистралей — предпочтения.
+- Оптимизация углеродного следа (Google eco-routing 2021+).
 
 ## Q19. (!) POI search (geo + text combined)?
 
-**Query examples:**
-- "pizza near me" → geo (current location) + text (pizza).
-- "Зурбаган Москва" → text + place.
-- "best Italian restaurants downtown" → text + geo + ranking.
+**Примеры запросов:**
+- "pizza near me" → гео (текущее местоположение) + текст (pizza).
+- "Зурбаган Москва" → текст + место.
+- "best Italian restaurants downtown" → текст + гео + ранжирование.
 
-**Architecture:**
+**Архитектура:**
 
 ```mermaid
 graph LR
@@ -825,100 +825,100 @@ graph LR
     Rank --> Results
 ```
 
-**Search stages:**
-- **Retrieval:** narrow к geo + text candidates (top 1000).
-- **Ranking:** ML model scores by relevance + popularity + distance.
-- **Diversification:** не показывать 10 одинаковых pizzerias.
+**Стадии поиска:**
+- **Retrieval:** сужаем до гео + текстовых кандидатов (топ-1000).
+- **Ranking:** ML-модель оценивает по релевантности + популярности + расстоянию.
+- **Diversification:** не показывать 10 одинаковых пиццерий.
 
-**Features для ranking:**
-- Text relevance (BM25).
-- Distance to user.
-- Place popularity (visits, reviews).
-- Open now status.
-- User personalization (past visits).
-- Quality (rating, review count).
+**Фичи для ранжирования:**
+- Текстовая релевантность (BM25).
+- Расстояние до пользователя.
+- Популярность места (визиты, отзывы).
+- Статус «открыто сейчас».
+- Персонализация под пользователя (прошлые визиты).
+- Качество (рейтинг, число отзывов).
 
 **Latency:**
-- p99 < 300 ms (Q3).
-- Heavy caching for popular queries.
+- p99 < 300 мс (Q3).
+- Активное кэширование популярных запросов.
 
-**Implementation:**
-- ES geo_point + text fields.
-- Custom scoring functions.
-- Ranking model на top-1000 candidates.
+**Реализация:**
+- Поля geo_point + text в ES.
+- Кастомные scoring-функции.
+- Модель ранжирования на топ-1000 кандидатов.
 
 ## Q20. Geocoding forward / reverse?
 
-**Forward geocoding (address → lat/lon):**
-- Input: `"улица Льва Толстого 16, Москва"`.
-- Output: lat=55.7344, lon=37.5868.
+**Прямое геокодирование (адрес → lat/lon):**
+- Вход: `"улица Льва Толстого 16, Москва"`.
+- Выход: lat=55.7344, lon=37.5868.
 
-**Reverse geocoding (lat/lon → address):**
-- Input: lat=55.7344, lon=37.5868.
-- Output: `"улица Льва Толстого 16, Москва, 119021"`.
+**Обратное геокодирование (lat/lon → адрес):**
+- Вход: lat=55.7344, lon=37.5868.
+- Выход: `"улица Льва Толстого 16, Москва, 119021"`.
 
-**Forward implementation:**
-- Parse address (street, number, city, country).
-- Search в gazetteer (address database).
-- Disambiguation (multiple matches): nearest, most populous, user history.
-- Fallback: text search в Elasticsearch.
+**Реализация прямого:**
+- Разбираем адрес (улица, номер, город, страна).
+- Ищем в газеттире (база адресов).
+- Разрешение неоднозначности (несколько совпадений): ближайший, самый населённый, история пользователя.
+- Fallback: текстовый поиск в Elasticsearch.
 
-**Reverse implementation:**
-- Find nearest address point (spatial query).
-- Or: find nearest road segment + interpolate position along road.
-- Return address с distance < threshold; otherwise return city/country only.
+**Реализация обратного:**
+- Находим ближайшую адресную точку (пространственный запрос).
+- Или: находим ближайший дорожный сегмент + интерполируем позицию вдоль дороги.
+- Возвращаем адрес с расстоянием < порога; иначе возвращаем только город/страну.
 
-**Tools:**
+**Инструменты:**
 - Nominatim (open source).
 - Google Geocoding API.
 - Mapbox Geocoding.
 - Yandex Geocoder.
 
-**Edge cases:**
-- Ambiguous address ("Main Street" в нескольких городах) → return list.
-- New construction (not in database) → nearest known.
-- Multi-language: "Москва" vs "Moscow" vs "موسكو" — normalize.
+**Граничные случаи:**
+- Неоднозначный адрес ("Main Street" в нескольких городах) → возвращаем список.
+- Новая застройка (нет в базе) → ближайший известный.
+- Мультиязычность: "Москва" vs "Moscow" vs "موسكو" — нормализуем.
 
-**Caching:**
-- Popular addresses cached (90%+ hit ratio).
-- Hash query → result.
+**Кэширование:**
+- Популярные адреса кэшируются (hit ratio 90%+).
+- Хэш запроса → результат.
 
 ## Q21. Place data (Google Places, reviews, photos)?
 
-**Place schema:**
-- ID (Google Place ID, ~30-char string).
-- Name, types (restaurant, store, hospital).
-- Geo (lat/lon).
-- Address.
-- Opening hours (per day of week, including holidays).
-- Phone, website.
-- Photos (user-contributed, business-uploaded).
-- Reviews (rating, text).
-- Popularity (Popular Times feature).
+**Схема места:**
+- ID (Google Place ID, строка ~30 символов).
+- Название, типы (ресторан, магазин, больница).
+- Гео (lat/lon).
+- Адрес.
+- Часы работы (по дням недели, включая праздники).
+- Телефон, сайт.
+- Фото (от пользователей, загруженные бизнесом).
+- Отзывы (рейтинг, текст).
+- Популярность (функция Popular Times).
 
-**Data sources:**
-- Business claims (verified owners).
-- User contributions (Local Guides).
-- Web scraping (websites, social media).
-- Partner data (Yelp, OpenTable).
+**Источники данных:**
+- Заявки бизнеса (верифицированные владельцы).
+- Вклад пользователей (Local Guides).
+- Веб-скрейпинг (сайты, соцсети).
+- Партнёрские данные (Yelp, OpenTable).
 
 **Storage:**
-- Place metadata: Spanner or Bigtable.
-- Reviews: separate (high write volume).
-- Photos: blob storage (S3-like).
-- Geo index: S2 lookup.
+- Метаданные места: Spanner или Bigtable.
+- Отзывы: отдельно (высокий объём записи).
+- Фото: blob-хранилище (типа S3).
+- Гео-индекс: поиск по S2.
 
-**Update pipeline:**
-- Business owner verifies → claims business.
-- Edits go through moderation.
-- ML for spam detection (fake reviews).
+**Pipeline апдейтов:**
+- Владелец бизнеса верифицируется → заявляет права на бизнес.
+- Правки проходят модерацию.
+- ML для детекции спама (фейковые отзывы).
 
-**Privacy:**
-- Aggregated data only ("Popular Times" не identifies individuals).
-- Reviews tied к user accounts (visible publicly).
+**Приватность:**
+- Только агрегированные данные («Popular Times» не идентифицирует отдельных людей).
+- Отзывы привязаны к аккаунтам пользователей (видны публично).
 
-**APIs:**
-- Google Places API (search, details, autocomplete, nearby).
+**API:**
+- Google Places API (поиск, детали, автодополнение, рядом).
 - Yandex Places API.
 - Foursquare Places API.
 
@@ -949,209 +949,209 @@ graph LR
     Geocode --> Place
 ```
 
-**Components:**
-- **Edge POP / CDN:** tile delivery (most requests served here).
-- **Tile Service:** stores и serves map tiles (vector + raster).
-- **Search Service:** POI search с geo + text.
-- **Geocoding Service:** address ↔ lat/lon.
-- **Routing Service:** preprocess'd road graph + CH/CRP algorithm.
-- **Traffic Service:** real-time probe ingestion + historical aggregates.
-- **ETA Service:** ML inference (DLRM/LightGBM).
-- **Places Service:** business data, reviews, photos.
+**Компоненты:**
+- **Edge POP / CDN:** доставка тайлов (большинство запросов обслуживается здесь).
+- **Tile Service:** хранит и отдаёт тайлы карты (вектор + растр).
+- **Search Service:** POI-поиск по гео + тексту.
+- **Geocoding Service:** адрес ↔ lat/lon.
+- **Routing Service:** предобработанный road graph + алгоритм CH/CRP.
+- **Traffic Service:** инжест real-time probe + исторические агрегаты.
+- **ETA Service:** ML-инференс (DLRM/LightGBM).
+- **Places Service:** данные бизнеса, отзывы, фото.
 
 **Data plane:**
-- Tile pyramid в Bigtable (PB scale).
-- Road graph в memory (10 GB per routing instance).
+- Tile pyramid в Bigtable (масштаб PB).
+- Road graph в памяти (10 GB на routing-инстанс).
 - POI в Spanner или Bigtable.
-- Traffic в Bigtable + Memcached.
+- Трафик в Bigtable + Memcached.
 
-**Async pipelines:**
-- Traffic events → Kafka → Flink aggregation.
-- OSM updates → Spark batch → re-preprocess routing graph (nightly).
-- Place updates → Kafka → ES index sync.
+**Асинхронные pipeline:**
+- События трафика → Kafka → агрегация во Flink.
+- Апдейты OSM → batch в Spark → пересчёт routing-графа (по ночам).
+- Апдейты мест → Kafka → синк индекса ES.
 
 ## Q23. Storage (Bigtable tiles + Postgres POI)?
 
-**Tile storage (Bigtable / HBase):**
+**Хранение тайлов (Bigtable / HBase):**
 - Row key: `(zoom, x, y, tile_type, version)`.
-- Cell value: tile bytes (vector PBF or raster PNG).
-- Massive scale: 100B+ tiles.
-- HFile / SSTable internals.
+- Значение ячейки: байты тайла (векторный PBF или растровый PNG).
+- Огромный масштаб: 100B+ тайлов.
+- Внутреннее устройство HFile / SSTable.
 
-**Why Bigtable:**
-- Sequential row keys → range scans для region.
-- Mass parallel reads (CDN cache fill).
-- HDFS underlying для durability.
+**Почему Bigtable:**
+- Последовательные row keys → range-сканы для региона.
+- Массово-параллельные чтения (наполнение CDN-кэша).
+- HDFS под капотом для durability.
 
-**POI storage (Spanner / Postgres):**
-- Spanner для Google scale (global transactions).
-- Postgres + PostGIS для smaller scale (Yandex level).
-- Schema: places, reviews, photos, opening_hours.
-- ACID transactions для place edits.
+**Хранение POI (Spanner / Postgres):**
+- Spanner для масштаба Google (глобальные транзакции).
+- Postgres + PostGIS для меньшего масштаба (уровень Yandex).
+- Схема: places, reviews, photos, opening_hours.
+- ACID-транзакции для правок мест.
 
 **Road graph:**
-- Memory-mapped binary files (custom format).
-- Preprocessed CH/CRP structures.
-- 10-50 GB per routing instance.
-- Replicated across routing fleet.
+- Memory-mapped бинарные файлы (кастомный формат).
+- Предобработанные структуры CH/CRP.
+- 10–50 GB на routing-инстанс.
+- Реплицируется по всему routing-флоту.
 
-**Traffic:**
-- Real-time: Memcached / Redis (hot, last 15 min).
-- Historical: Bigtable (1 year retention).
+**Трафик:**
+- Real-time: Memcached / Redis (горячее, последние 15 мин).
+- Исторический: Bigtable (хранение 1 год).
 
-**Imagery (satellite):**
-- Object storage (Colossus, S3).
+**Снимки (спутниковые):**
+- Объектное хранилище (Colossus, S3).
 - Tile pyramid.
-- Petabyte scale.
+- Масштаб петабайт.
 
 ## Q24. (!) Multi-region и data sovereignty?
 
-**Regions:**
-- US-East, US-West (primary US).
-- EU-West (Ireland), EU-Central (Frankfurt) — GDPR.
+**Регионы:**
+- US-East, US-West (основной US).
+- EU-West (Ирландия), EU-Central (Франкфурт) — GDPR.
 - APAC-Tokyo, APAC-Singapore.
-- South America.
-- Africa, Middle East.
+- Южная Америка.
+- Африка, Ближний Восток.
 
-**Data sovereignty:**
-- **China:** complete separate stack (Google Maps not available; Baidu/Gaode local).
-- **Russia:** Yandex Maps dominant; Google limited functionality.
-- **EU GDPR:** user data в EU regions only.
-- **India RBI / IT Act:** некоторые data localization requirements.
+**Data sovereignty (суверенитет данных):**
+- **Китай:** полностью отдельный stack (Google Maps недоступны; локальные Baidu/Gaode).
+- **Россия:** доминируют Yandex Maps; Google с ограниченной функциональностью.
+- **EU GDPR:** данные пользователей только в EU-регионах.
+- **India RBI / IT Act:** ряд требований по локализации данных.
 
-**Per-region:**
-- Tile pyramid replicated (read-only, identical globally).
-- POI data: localized (different content per region).
-- Search relevance: language + cultural tuning.
-- Routing graph: regional partitions (continental).
+**По регионам:**
+- Tile pyramid реплицируется (read-only, идентична по всему миру).
+- Данные POI: локализованы (разный контент по регионам).
+- Релевантность поиска: языковой + культурный тюнинг.
+- Routing-граф: региональные partition (континентальные).
 
-**Multi-region routing:**
-- Continental graph per region (Europe / North America / Asia).
-- Cross-continental routes (rare) — combined query.
+**Мультирегиональная маршрутизация:**
+- Континентальный граф на регион (Европа / Северная Америка / Азия).
+- Межконтинентальные маршруты (редко) — комбинированный запрос.
 
-**Cross-region replication:**
-- Map data: replicated all regions (same world map).
-- POI updates: async replication.
-- Traffic data: per-region (local probes).
+**Кросс-региональная репликация:**
+- Картографические данные: реплицируются во все регионы (одна и та же карта мира).
+- Апдейты POI: асинхронная репликация.
+- Данные трафика: по регионам (локальные probe).
 
 **Failover:**
-- Region outage → DNS routes к neighbor.
-- Routing data available everywhere (replication).
-- POI data: temporary inconsistency acceptable.
+- Авария региона → DNS направляет к соседнему.
+- Routing-данные доступны везде (репликация).
+- Данные POI: временная несогласованность допустима.
 
 ## Q25. Offline maps (download region, vector tiles)?
 
-**Feature:** user скачивает region для offline use (low connectivity, no roaming).
+**Фича:** пользователь скачивает регион для офлайн-использования (плохая связь, без роуминга).
 
-**Implementation:**
-- User selects region на map.
-- Background download:
-  - Vector tiles для chosen region и zoom levels.
-  - POI data within region.
-  - Road graph subset (для offline routing).
+**Реализация:**
+- Пользователь выбирает регион на карте.
+- Фоновая загрузка:
+  - Векторные тайлы для выбранного региона и уровней зума.
+  - Данные POI в пределах региона.
+  - Подмножество road graph (для офлайн-маршрутизации).
 - Storage: MBTiles (SQLite) или PMTiles.
 
-**Size estimates:**
-- Vector tiles для country (Russia, zoom 0-12): ~500 MB.
-- POI data: ~100-200 MB per country.
-- Road graph subset: ~500 MB - 2 GB.
-- Total: 1-3 GB per country.
+**Оценки размера:**
+- Векторные тайлы на страну (Россия, zoom 0–12): ~500 MB.
+- Данные POI: ~100–200 MB на страну.
+- Подмножество road graph: ~500 MB – 2 GB.
+- Итого: 1–3 GB на страну.
 
-**Offline functionality:**
-- Map display: full (vector tiles render anywhere).
-- POI search: works (local index).
-- Routing: works (local graph + simpler algorithm — no real-time traffic).
-- ETA: historical averages only.
+**Офлайн-функциональность:**
+- Отображение карты: полное (векторные тайлы рендерятся где угодно).
+- POI-поиск: работает (локальный индекс).
+- Маршрутизация: работает (локальный граф + более простой алгоритм — без real-time-трафика).
+- ETA: только исторические средние.
 
-**Updates:**
-- Periodic background updates (when connected to Wi-Fi).
-- Per-region expiration (30-180 days).
-- Diff updates (only changed tiles).
+**Апдейты:**
+- Периодические фоновые апдейты (при подключении к Wi-Fi).
+- Срок действия по регионам (30–180 дней).
+- Дифф-апдейты (только изменившиеся тайлы).
 
-**Limitations:**
-- No live traffic.
-- No real-time search ranking (popularity, reviews).
-- Storage on device.
+**Ограничения:**
+- Нет живого трафика.
+- Нет real-time-ранжирования поиска (популярность, отзывы).
+- Хранилище на устройстве.
 
-**Use cases:**
-- Travel international (no roaming).
-- Hiking / camping (no cell signal).
-- Emerging markets (cellular expensive).
+**Сценарии применения:**
+- Зарубежные поездки (без роуминга).
+- Походы / кемпинг (нет сотовой связи).
+- Развивающиеся рынки (мобильный интернет дорогой).
 
 ## Q26. Street View и indoor maps?
 
 **Street View:**
-- 360° panorama photos taken from cars / backpacks.
-- Stitched панорамы (multiple cameras combined).
-- Tiled (similar к map tiles).
-- Linked sequence (move along street).
+- 360° панорамные фото, снятые с машин / рюкзаков.
+- Сшитые панорамы (несколько камер скомбинированы).
+- Разбиты на тайлы (аналогично тайлам карты).
+- Связанная последовательность (движение вдоль улицы).
 
 **Storage:**
-- Panorama tiles: ~100 KB - 1 MB per tile.
-- Multiple zoom levels.
-- Linked metadata (heading, pitch, neighbors).
-- Total: эксабайты для world coverage.
+- Тайлы панорам: ~100 KB – 1 MB на тайл.
+- Несколько уровней зума.
+- Связанные метаданные (heading, pitch, соседи).
+- Итого: эксабайты для покрытия всего мира.
 
-**Privacy:**
-- Auto-blur faces и license plates (CV models).
-- Manual takedown requests.
+**Приватность:**
+- Авто-размытие лиц и номеров (CV-модели).
+- Ручные запросы на удаление.
 
 **Indoor maps:**
-- Buildings: airports, malls, museums.
-- Multi-floor support.
-- Indoor positioning (Wi-Fi + Bluetooth beacons).
-- Data from partners + crowdsourced.
+- Здания: аэропорты, ТЦ, музеи.
+- Поддержка нескольких этажей.
+- Indoor-позиционирование (Wi-Fi + Bluetooth-маяки).
+- Данные от партнёров + краудсорсинг.
 
-**Indoor routing:**
-- Floor-aware graph.
-- Elevators, escalators, stairs as edges.
-- Multi-floor pathfinding.
+**Indoor-маршрутизация:**
+- Граф с учётом этажей.
+- Лифты, эскалаторы, лестницы как рёбра.
+- Поиск пути между этажами.
 
-**Implementation:**
-- Geo + altitude (floor level).
-- Specialized tiles per floor.
+**Реализация:**
+- Гео + высота (уровень этажа).
+- Специализированные тайлы на этаж.
 - API: getRouteToGate(airport_terminal, gate).
 
 ## Q27. Real-time location sharing и privacy?
 
-**Feature:** user shares location в реальном времени с friends / family.
+**Фича:** пользователь делится местоположением в реальном времени с друзьями / семьёй.
 
-**Implementation:**
-- Client posts location updates every 10-30 sec.
-- Server stores tail buffer (last 24 ч или session-based).
-- Friends query: `getLocation(user_id, time)`.
+**Реализация:**
+- Клиент шлёт апдейты местоположения каждые 10–30 сек.
+- Сервер хранит хвостовой буфер (последние 24 ч или в рамках сессии).
+- Запрос друзей: `getLocation(user_id, time)`.
 
-**Privacy:**
-- Explicit consent required.
-- Time-limited (1 hour, 24 hour, indefinite).
-- Revoke anytime.
-- Stored encrypted at rest.
-- Auto-delete after retention period (configurable).
+**Приватность:**
+- Требуется явное согласие.
+- Ограничено по времени (1 час, 24 часа, бессрочно).
+- Можно отозвать в любой момент.
+- Хранится зашифрованным at-rest.
+- Авто-удаление по истечении срока хранения (настраивается).
 
 **Storage:**
-- Hot tier: Redis (last hour).
-- Cold tier: Bigtable (history if user wants).
-- Or: ephemeral only (no persistence, P2P-like).
+- Горячий tier: Redis (последний час).
+- Холодный tier: Bigtable (история, если пользователь хочет).
+- Или: только эфемерно (без персистентности, в духе P2P).
 
-**Notification:**
-- "Friend arrived at destination" — geofencing trigger.
-- "Friend deviated from route" — anomaly detection.
+**Уведомления:**
+- «Друг прибыл в место назначения» — триггер геофенсинга.
+- «Друг отклонился от маршрута» — детекция аномалии.
 
 **GDPR:**
-- Right to access (data export).
-- Right to erasure.
-- Audit log of who accessed location.
+- Право на доступ (экспорт данных).
+- Право на удаление.
+- Аудит-лог, кто получал доступ к местоположению.
 
-**Anti-stalking:**
-- Apple Find My / AirTag: notification if unknown tracker follows you.
-- Google: similar feature.
+**Анти-сталкинг:**
+- Apple Find My / AirTag: уведомление, если за вами следует неизвестный трекер.
+- Google: аналогичная функция.
 
 ## Q28. (!) Traffic data ingestion (probe data, ML smoothing)?
 
-**Probe data:**
-- Anonymous location pings from phones.
-- ~1M phones contributing per region simultaneously.
-- 1 update / 30 сек = 33K events/sec per region.
+**Probe-данные:**
+- Анонимные location-пинги от телефонов.
+- ~1M телефонов одновременно вносят вклад на регион.
+- 1 апдейт / 30 сек = 33K событий/сек на регион.
 
 **Pipeline:**
 
@@ -1170,131 +1170,131 @@ Routing service + ETA model
 ```
 
 **Map-matching:**
-- GPS noisy (5-15 m typical).
-- Snap к nearest road (Hidden Markov Model).
-- Path most likely given sequence of pings.
+- GPS зашумлён (типично 5–15 м).
+- Привязываем (snap) к ближайшей дороге (Hidden Markov Model).
+- Наиболее вероятный путь по последовательности пингов.
 
-**Speed estimation:**
-- Distance / time between pings.
-- Median across many phones on same edge (robust to outliers).
+**Оценка скорости:**
+- Расстояние / время между пингами.
+- Медиана по множеству телефонов на одном ребре (устойчиво к выбросам).
 
-**Aggregation:**
-- Per-edge speed = median(probes last 1-5 минут).
-- Smoothing: exponential moving average для stability.
-- Sparse data: borrow from historical patterns (Q17).
+**Агрегация:**
+- Скорость на ребро = median(probe за последние 1–5 минут).
+- Сглаживание: экспоненциальное скользящее среднее для стабильности.
+- Разреженные данные: заимствуем из исторических паттернов (Q17).
 
-**Privacy:**
-- Probe data anonymized (no user_id).
-- Aggregated; не visible individually.
-- Opt-in based.
+**Приватность:**
+- Probe-данные анонимизированы (без user_id).
+- Агрегированы; не видны по отдельности.
+- На основе opt-in.
 
-**Volume:**
-- Per region: 33K events/sec ingest.
-- ~50 regions globally → 1.5M events/sec total.
-- Storage hot tier: ~30 GB/day per region.
+**Объём:**
+- На регион: инжест 33K событий/сек.
+- ~50 регионов глобально → 1.5M событий/сек суммарно.
+- Горячий tier хранилища: ~30 GB/день на регион.
 
 ## Q29. Monitoring metrics обязательные?
 
-**Core latency:**
-- `tile_load_p99` (target < 100 ms cached).
-- `cdn_hit_ratio` (target > 95%).
-- `search_latency_p99` (< 300 ms).
-- `routing_latency_p99` (< 500 ms).
-- `geocoding_latency_p99` (< 200 ms).
-- `eta_inference_latency_p99` (< 50 ms).
+**Базовая latency:**
+- `tile_load_p99` (цель < 100 мс из кэша).
+- `cdn_hit_ratio` (цель > 95%).
+- `search_latency_p99` (< 300 мс).
+- `routing_latency_p99` (< 500 мс).
+- `geocoding_latency_p99` (< 200 мс).
+- `eta_inference_latency_p99` (< 50 мс).
 
-**Quality:**
+**Качество:**
 - `eta_accuracy_mape` (< 8%).
-- `route_quality_score` (composite).
-- `search_ctr` (clicks per search).
+- `route_quality_score` (композитная).
+- `search_ctr` (клики на поиск).
 - `zero_result_rate` (< 5%).
 
-**Volume:**
+**Объём:**
 - `tile_requests_per_sec`.
 - `search_queries_per_sec`.
 - `routing_queries_per_sec`.
 - `probe_events_per_sec`.
 
-**Failure:**
+**Отказы:**
 - `tile_render_failure_rate`.
 - `routing_timeout_rate`.
-- `traffic_data_staleness_seconds` (alert > 5 min).
+- `traffic_data_staleness_seconds` (алерт > 5 мин).
 
-**Business:**
+**Бизнес:**
 - `daily_active_users`.
 - `places_added_per_day`.
 - `eta_accuracy_per_country`.
 
-**Tracing:**
-- OpenTelemetry; trace через client → CDN → backend.
-- Visibility: "Routing query 380 ms = 100 ms graph fetch + 200 ms CRP + 50 ms ETA + 30 ms serialize".
+**Трейсинг:**
+- OpenTelemetry; трейс через client → CDN → backend.
+- Прозрачность: «Routing-запрос 380 мс = 100 мс fetch графа + 200 мс CRP + 50 мс ETA + 30 мс сериализация».
 
-**Alerting:**
+**Алертинг:**
 - Page: `tile_load_p99 > 500 ms` 10 минут подряд.
-- Slack: `eta_accuracy` drop > 5% week-over-week.
+- Slack: `eta_accuracy` падает > 5% неделя к неделе.
 - Email: `traffic_data_staleness > 10 min`.
 
 ## Q30. (!) Антипаттерны и подводные камни?
 
-**1. Raster tiles на всех zoom levels.**
-- Mobile bandwidth expensive; vector 3-5× меньше.
-- Fix: vector tiles default; raster только для satellite imagery.
+**1. Растровые тайлы на всех уровнях зума.**
+- Мобильный трафик дорогой; вектор в 3–5× меньше.
+- Фикс: векторные тайлы по умолчанию; растр только для спутниковых снимков.
 
-**2. Naive Dijkstra на planet graph.**
-- 5-30 секунд per query → не serviceable.
-- Fix: Contraction Hierarchies (CH) или CRP preprocessing.
+**2. Наивный Dijkstra на planet graph.**
+- 5–30 секунд на запрос → не обслуживаемо.
+- Фикс: препроцессинг Contraction Hierarchies (CH) или CRP.
 
-**3. Geohash для современных systems.**
-- Boundary issues, polar problems.
-- Fix: S2 (Google) или H3 (Uber).
+**3. Geohash для современных систем.**
+- Проблемы границ, проблемы полюсов.
+- Фикс: S2 (Google) или H3 (Uber).
 
-**4. No CDN для tile delivery.**
-- Origin перегружен 100B requests/day.
-- Fix: CDN с 95%+ hit ratio.
+**4. Нет CDN для доставки тайлов.**
+- Origin перегружен 100B запросами/день.
+- Фикс: CDN с hit ratio 95%+.
 
-**5. Sync routing API на каждый keystroke в navigation.**
-- Routing 500 ms × 30 keystrokes = 15 sec UI lag.
-- Fix: client-side prediction + async refresh.
+**5. Синхронный routing API на каждое нажатие клавиши в навигации.**
+- Маршрутизация 500 мс × 30 нажатий = 15 сек лага UI.
+- Фикс: предсказание на клиенте + асинхронное обновление.
 
-**6. Single global routing graph.**
-- Cross-continental queries редки; per-region graphs faster.
-- Fix: continental partitions; cross-region orchestration on demand.
+**6. Единый глобальный routing-граф.**
+- Межконтинентальные запросы редки; региональные графы быстрее.
+- Фикс: континентальные partition; кросс-региональная оркестрация по требованию.
 
 **7. ETA = sum(edge_length / speed_limit).**
-- Naive; ignores traffic, weather, time-of-day.
-- Fix: ML model с historical + real-time signals (Q17).
+- Наивно; игнорирует трафик, погоду, время суток.
+- Фикс: ML-модель с историческими + real-time-сигналами (Q17).
 
-**8. Не invalidate tiles при map updates.**
-- Stale data (closed roads, new construction).
-- Fix: versioned tile URLs; cache bust on major update.
+**8. Не инвалидировать тайлы при апдейтах карты.**
+- Устаревшие данные (закрытые дороги, новая застройка).
+- Фикс: версионированные tile-URL; сброс кэша при крупном обновлении.
 
-**9. POI search без geo proximity.**
-- "Pizza" returns Italy when user в Москве.
-- Fix: always combine text + geo (Q19).
+**9. POI-поиск без гео-близости.**
+- "Pizza" возвращает Италию, когда пользователь в Москве.
+- Фикс: всегда комбинировать текст + гео (Q19).
 
-**10. Tile request на каждое pan/zoom без debouncing.**
-- 1 пользователь = 100 tile requests/sec при agitated panning.
-- Fix: debounce 100-300 ms; cancel previous requests.
+**10. Tile-запрос на каждое pan/zoom без дебаунса.**
+- 1 пользователь = 100 tile-запросов/сек при нервном панорамировании.
+- Фикс: дебаунс 100–300 мс; отмена предыдущих запросов.
 
-**11. Без offline support.**
-- User без internet = useless app.
-- Fix: offline regions download (Q25).
+**11. Без офлайн-поддержки.**
+- Пользователь без интернета = бесполезное приложение.
+- Фикс: загрузка офлайн-регионов (Q25).
 
-**12. Polling traffic data на client.**
-- Каждые 30 сек × 100M users = 3M QPS на traffic API.
-- Fix: push notifications via WebSocket only when significant.
+**12. Polling данных о трафике на клиенте.**
+- Каждые 30 сек × 100M пользователей = 3M QPS на traffic API.
+- Фикс: push-уведомления через WebSocket только при значимых изменениях.
 
-**13. Без map-matching в probe pipeline.**
-- GPS noise distorts traffic estimates.
-- Fix: HMM map-matching (snap к roads).
+**13. Без map-matching в probe-pipeline.**
+- Шум GPS искажает оценки трафика.
+- Фикс: HMM map-matching (привязка к дорогам).
 
-**14. Без data sovereignty handling.**
-- GDPR violation; China access blocked.
-- Fix: per-region separate stacks; data localization.
+**14. Без обработки data sovereignty.**
+- Нарушение GDPR; доступ из Китая заблокирован.
+- Фикс: отдельные stack по регионам; локализация данных.
 
-**15. Same map data для всех languages.**
-- "Москва" не отображается английским пользователям как "Moscow".
-- Fix: per-language label fields в data; client-side label selection.
+**15. Одни и те же картографические данные для всех языков.**
+- "Москва" не отображается англоязычным пользователям как "Moscow".
+- Фикс: поля подписей по языкам в данных; выбор подписи на клиенте.
 
 ---
 
