@@ -1308,9 +1308,9 @@
     confidenceDiv.setAttribute('aria-live', 'polite');
     confidenceDiv.innerHTML = `
       <span class="confidence-label" id="confidence-label">Насколько ты уверен по этому вопросу?</span>
-      <button type="button" class="confidence-btn confidence-guess" data-grade="3" aria-pressed="false" aria-label="Уровень уверенности: угадал">🎲 Угадал</button>
-      <button type="button" class="confidence-btn confidence-hard" data-grade="4" aria-pressed="false" aria-label="Уровень уверенности: с трудом">🤔 С трудом</button>
-      <button type="button" class="confidence-btn confidence-sure" data-grade="5" aria-pressed="false" aria-label="Уровень уверенности: знал точно">💪 Знал точно</button>
+      <button type="button" class="confidence-btn confidence-guess" data-grade="3" aria-pressed="false" aria-label="Уровень уверенности: угадал">Угадал</button>
+      <button type="button" class="confidence-btn confidence-hard" data-grade="4" aria-pressed="false" aria-label="Уровень уверенности: с трудом">С трудом</button>
+      <button type="button" class="confidence-btn confidence-sure" data-grade="5" aria-pressed="false" aria-label="Уровень уверенности: знал точно">Знал точно</button>
     `;
     feedbackDiv.after(confidenceDiv);
 
