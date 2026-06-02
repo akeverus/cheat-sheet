@@ -822,10 +822,15 @@ html[data-design="editorial"] #toggle-code-btn:hover:not(:disabled),
 html[data-design="editorial"] #extra-analysis-toggle:hover:not(:disabled) { background: var(--color-bg-tertiary); border-color: var(--color-text-secondary); }
 html[data-design="editorial"] .next-btn { background: var(--color-accent-primary); color: var(--color-accent-on); border-color: var(--color-accent-primary); }
 /* .next-btn — primary (accent-fill): hover красит И фон, И бордер в accent-hover,
-   как #session-form / .summary-actions .next-btn. Раньше бордер протекал из
-   нейтральной hover-группы выше (text-secondary) → серая обводка вокруг
-   accent-заливки на самой кликаемой кнопке «Следующий вопрос». */
-html[data-design="editorial"] .next-btn:hover { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); color: var(--color-accent-on); }
+   как #session-form / .summary-actions .next-btn.
+   ВАЖНО про специфичность: реальная кнопка в шаблоне — class="btn next-btn",
+   поэтому к ней применяется и .btn:hover:not(:disabled) (специфичность 0,4,1
+   за счёт :not()). Голый .next-btn:hover (0,3,1) проигрывал ему → на hover
+   главная кнопка «Следующий вопрос» уходила в нейтральный bg-tertiary + серый
+   бордер + тёмный accent-on текст = тёмное-по-тёмному, почти нечитаемо.
+   :not(:disabled) поднимает специфичность до 0,4,1 (== .btn-правилу), а так
+   как это правило ниже по исходнику — оно выигрывает. */
+html[data-design="editorial"] .next-btn:hover:not(:disabled) { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); color: var(--color-accent-on); }
 /* Press-feedback — лёгкий «нажим» на все реальные кнопки (перенесён с мёртвого
    .ed-btn). Disabled-кнопки :active не получают (браузер не шлёт событие). */
 html[data-design="editorial"] .btn:active,
