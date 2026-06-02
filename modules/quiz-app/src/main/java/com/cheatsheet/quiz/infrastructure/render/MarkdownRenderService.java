@@ -75,6 +75,18 @@ public class MarkdownRenderService {
             .removeProtocols("a", "href", "ftp", "ftps", "http", "https", "mailto")
             .preserveRelativeLinks(true);
 
+    /**
+     * Узкий Safelist для ИНЛАЙН-текста (варианты/вопросы): только инлайн-форматирование.
+     * Намеренно НЕ разрешает ни {@code <a>}, ни блоки/таблицы/картинки — у текста варианта
+     * и вопроса их быть не должно. Отсутствие {@code <a>} снимает даже теоретический
+     * {@code javascript:}-href вектор, который в {@link #HTML_SAFELIST} открыт ради
+     * относительных wiki-ссылок в {@code toHtml}. Атрибуты не разрешены вовсе → никаких
+     * on*-обработчиков. Базис {@code new Safelist()} = «только текст», добавляем строго
+     * инлайн-теги.
+     */
+    private static final Safelist INLINE_SAFELIST = new Safelist()
+            .addTags("code", "strong", "em", "b", "i", "sub", "sup", "del", "ins", "mark", "br");
+
     /** Паттерн для mermaid code-блоков: ```mermaid ... ```. */
     private static final java.util.regex.Pattern MERMAID_BLOCK =
             java.util.regex.Pattern.compile("```mermaid\\s*\n([\\s\\S]*?)```", java.util.regex.Pattern.MULTILINE);
@@ -128,7 +140,10 @@ public class MarkdownRenderService {
         // trim: flexmark добавляет хвостовой \n после блока, а после unwrap он остаётся
         // в body. Для инлайн-вставки в <span> краевой пробел не нужен (у текста варианта
         // нет значимых ведущих/хвостовых пробелов).
-        return Jsoup.clean(doc.body().html(), "", HTML_SAFELIST, NO_PRETTY_PRINT).trim();
+        // INLINE_SAFELIST (без <a>/блоков/атрибутов) — строже, чем HTML_SAFELIST: для
+        // короткого инлайн-текста ссылки/таблицы не нужны, а узкий allow-list закрывает
+        // и теоретический javascript:-href вектор.
+        return Jsoup.clean(doc.body().html(), "", INLINE_SAFELIST, NO_PRETTY_PRINT).trim();
     }
 
     /** Заменяет ```mermaid ... ``` блоки на <div class="mermaid"> для рендеринга mermaid.js. */

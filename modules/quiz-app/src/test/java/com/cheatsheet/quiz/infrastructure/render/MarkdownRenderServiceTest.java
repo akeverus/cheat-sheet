@@ -149,4 +149,35 @@ class MarkdownRenderServiceTest {
         assertThat(service.toInlineHtml("")).isEmpty();
         assertThat(service.toInlineHtml("   ")).isEmpty();
     }
+
+    @Test
+    void inlineHtmlStripsJavascriptLinks() {
+        // Узкий INLINE_SAFELIST не разрешает <a> вовсе → javascript:-href невозможен,
+        // остаётся только текст метки.
+        String html = service.toInlineHtml("жми [сюда](javascript:alert(document.cookie))");
+
+        assertThat(html).doesNotContain("javascript");
+        assertThat(html).doesNotContain("<a");
+        assertThat(html).contains("сюда");
+    }
+
+    @Test
+    void inlineHtmlStripsImageWithEventHandler() {
+        // raw inline HTML с on*-обработчиком должен быть вычищен (атрибуты не разрешены,
+        // тег <img> не в allow-list).
+        String html = service.toInlineHtml("текст <img src=x onerror=alert(1)> ещё");
+
+        assertThat(html).doesNotContain("<img");
+        assertThat(html).doesNotContain("onerror");
+        assertThat(html).doesNotContain("alert(1)");
+    }
+
+    @Test
+    void inlineHtmlStripsLanguageClassButKeepsCode() {
+        // INLINE_SAFELIST не разрешает атрибуты — class на <code> отбрасывается,
+        // но сам инлайн-код сохраняется.
+        String html = service.toInlineHtml("`x`");
+
+        assertThat(html).isEqualTo("<code>x</code>");
+    }
 }
