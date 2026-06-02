@@ -93,14 +93,14 @@ updated: "2026-05-21"
 **CDN (Content Delivery Network)** — сеть распределённых кэширующих серверов (`edge`, `PoP`), которые отдают контент с ближайшей географически точки. Между клиентом и origin появляется слой кэша.
 
 **Что даёт:**
-- **Latency** — `edge` в 5-50 мс от пользователя вместо 100-300 мс до origin в другом регионе. TCP/TLS handshake выполняется на edge.
-- **Bandwidth offload** — 80-99% запросов закрываются кэшем edge, origin платит меньше за egress.
-- **Availability** — пока кэш свежий, origin может быть в downtime, а контент отдаётся (`stale-if-error`).
-- **DDoS absorption** — Cloudflare и Akamai имеют ёмкость 100+ Tbps anycast, поглощают атаки которые убили бы origin.
+- **Задержка (latency)** — `edge` в 5-50 мс от пользователя вместо 100-300 мс до origin в другом регионе. TCP/TLS handshake выполняется на edge.
+- **Разгрузка канала (bandwidth offload)** — 80-99% запросов закрываются кэшем edge, origin платит меньше за egress.
+- **Доступность** — пока кэш свежий, origin может лежать, а контент всё равно отдаётся (`stale-if-error`).
+- **Поглощение DDoS** — у Cloudflare и Akamai ёмкость 100+ Tbps anycast, они поглощают атаки, которые убили бы origin.
 - **TLS на edge** — handshake близко к клиенту экономит 1-2 RTT.
 
 **Что НЕ даёт:**
-- Не ускоряет write-операции (origin всё равно обрабатывает).
+- Не ускоряет операции записи (origin всё равно обрабатывает).
 - Не «магически» кэширует динамику без правильных заголовков.
 
 **Архитектурно CDN это:**
@@ -158,11 +158,11 @@ graph LR
 **Плюсы anycast:**
 - Один IP — нет DNS-разрешения для выбора региона.
 - DDoS распределяется по 300 PoP естественным образом.
-- Failover автоматический — если PoP падает, BGP сходится за секунды.
+- Переключение при сбое (failover) автоматическое — если PoP падает, BGP сходится за секунды.
 
 **Минусы:**
-- Меньше control: можно попасть не в физически ближайший, а в «лучший по BGP» PoP. Иногда из РФ маршрут уходит через Германию.
-- Stateful-протоколы (TCP) могут «прыгать» между PoP при изменении маршрута — Cloudflare решает через consistent hashing.
+- Меньше контроля: можно попасть не в физически ближайший, а в «лучший по BGP» PoP. Иногда из РФ маршрут уходит через Германию.
+- Stateful-протоколы (TCP) могут «прыгать» между PoP при изменении маршрута — Cloudflare решает это через consistent hashing.
 
 **Пример:** клиент с IP `213.x.x.x` (Москва) делает запрос к `1.1.1.1`:
 - BGP-таблица Ростелекома: маршрут через MSK-IX → ближайший Cloudflare PoP в Москве.
@@ -182,8 +182,8 @@ graph LR
 | Failover | минуты (TTL DNS) | секунды (BGP) |
 | Гранулярность | по country/ASN | по AS-path |
 | Стоимость | дешёво (NS1, Route53) | дорого (нужны AS+IP блоки) |
-| Контроль | high (per-country override) | low (BGP-driven) |
-| Sticky | нет (resolver кэширует) | per-connection |
+| Контроль | высокий (override на уровне страны) | низкий (определяется BGP) |
+| Привязка (sticky) | нет (resolver кэширует) | на каждое соединение |
 
 **Гибрид:**
 Большинство крупных CDN используют **anycast + GeoDNS поверх**:
@@ -202,9 +202,9 @@ graph LR
 - **Origin shield** — один singleton-кэш, главная роль — **анти-stampede**.
 
 **Числа из CloudFront:**
-- Edge MISS ratio: 5-20% для well-cached content.
-- Regional MISS ratio: 50-80% от edge MISS.
-- Origin shield MISS ratio: 80-95% — только истинно холодные объекты доходят до origin.
+- Доля MISS на edge: 5-20% для хорошо кэшируемого контента.
+- Доля MISS на regional: 50-80% от MISS-ов edge.
+- Доля MISS на origin shield: 80-95% — только по-настоящему холодные объекты доходят до origin.
 
 **Эффект**: при 100k QPS от клиентов origin видит 50-500 QPS — снижение в 200-2000 раз.
 
@@ -218,32 +218,32 @@ graph LR
 
 **Push CDN (Push-on-publish, eager):**
 - Контент **загружается заранее** на CDN — например, по CI/CD после публикации.
-- Origin может быть offline после публикации.
+- Origin может быть выключен после публикации.
 - CDN — единственный источник правды для пользователя.
 
 **Сравнение:**
 
 | Параметр | Pull CDN | Push CDN |
 |----------|----------|----------|
-| Setup | минуты — поменять DNS | сложнее — нужен publish-pipeline |
-| Каталог | любой размер (lazy) | ограничен capacity CDN |
-| Свежесть | TTL/invalidation | контролируется publish |
-| Cost | egress origin × MISS-ratio | egress только при publish |
-| Cold start | MISS-latency для первого юзера | нет MISS — всё уже в кэше |
-| Идеален для | большой динамический каталог | маленький статический набор |
+| Настройка | минуты — поменять DNS | сложнее — нужен publish-pipeline |
+| Каталог | любой размер (lazy) | ограничен ёмкостью CDN |
+| Свежесть | TTL/инвалидация | контролируется публикацией |
+| Стоимость | egress origin × доля MISS | egress только при публикации |
+| Холодный старт | MISS-задержка для первого пользователя | нет MISS — всё уже в кэше |
+| Идеален для | большого динамического каталога | маленького статического набора |
 
 **Когда Pull:**
 - E-commerce (миллионы SKU) — большая часть товаров запрашивается редко.
-- API responses, dynamic personalization.
-- User-generated content (Instagram, YouTube — частично push для viral).
+- Ответы API, динамическая персонализация.
+- Пользовательский контент (Instagram, YouTube — частично push для вирусного).
 
 **Когда Push:**
 - Маркетинговые лендинги — известный набор файлов, важна моментальная доступность.
-- Software releases (`.exe`/`.dmg`) — пик нагрузки в первые часы, MISS-latency недопустим.
-- Game patches (Steam, PSN) — Akamai/CloudFront push на сотни PoP заранее.
-- Live event assets — заранее распределить плейер/тексты, чтобы при старте трансляции PoP-ы уже были «горячие».
+- Релизы ПО (`.exe`/`.dmg`) — пик нагрузки в первые часы, MISS-задержка недопустима.
+- Игровые патчи (Steam, PSN) — Akamai/CloudFront раскладывают (push) на сотни PoP заранее.
+- Ассеты для live-событий — заранее разложить плеер/тексты, чтобы при старте трансляции PoP-ы уже были «горячие».
 
-**Гибрид:** большинство prod-систем — Pull CDN + manual prewarm для известных hot-объектов (новый релиз, рекламная кампания).
+**Гибрид:** большинство prod-систем — Pull CDN + ручной прогрев (prewarm) для известных горячих объектов (новый релиз, рекламная кампания).
 
 ```mermaid
 sequenceDiagram
@@ -285,15 +285,15 @@ sequenceDiagram
 
 | Заголовок | Назначение | На что влияет |
 |-----------|------------|---------------|
-| `Cache-Control: s-maxage` | CDN TTL | сколько edge держит без revalidate |
-| `Cache-Control: max-age` | Browser TTL | сколько браузер не идёт даже в CDN |
-| `ETag` | Revalidation | 304 без body при совпадении |
-| `Last-Modified` | Revalidation | fallback если нет ETag |
+| `Cache-Control: s-maxage` | TTL для CDN | сколько edge держит без revalidate |
+| `Cache-Control: max-age` | TTL для браузера | сколько браузер не идёт даже в CDN |
+| `ETag` | Ревалидация | 304 без тела при совпадении |
+| `Last-Modified` | Ревалидация | запасной вариант, если нет ETag |
 
 **Тонкости:**
-- `s-maxage` overrides `max-age` для shared cache (CDN). Это позволяет давать CDN 24h, а браузеру 5 минут.
-- Если origin не шлёт `Cache-Control`, CDN использует свои default TTL (CloudFront — 24h, Cloudflare — по типу контента).
-- `ETag` weak (`W/"..."`) vs strong — weak допускает semantically equivalent отличия.
+- `s-maxage` переопределяет `max-age` для общего кэша (CDN). Это позволяет давать CDN 24h, а браузеру 5 минут.
+- Если origin не шлёт `Cache-Control`, CDN использует свои дефолтные TTL (CloudFront — 24h, Cloudflare — по типу контента).
+- `ETag` weak (`W/"..."`) vs strong — weak допускает семантически эквивалентные отличия.
 
 **Пример:**
 ```http
@@ -316,7 +316,7 @@ Vary: Accept-Encoding, Accept-Language
 Тогда для одного URL CDN держит отдельные копии: `gzip+ru`, `br+ru`, `gzip+en`...
 
 **Опасности `Vary`:**
-- **Cache fragmentation** — каждый уникальный `User-Agent` создаёт отдельную копию. `Vary: User-Agent` для миллиона UA = миллион кэш-копий → near-zero HIT.
+- **Фрагментация кэша** — каждый уникальный `User-Agent` создаёт отдельную копию. `Vary: User-Agent` для миллиона UA = миллион кэш-копий → доля HIT близка к нулю.
 - **Vary: *** — никогда не кэшировать.
 
 **Cache key customization:**
@@ -365,17 +365,17 @@ Vary: Accept-Encoding, Accept-Language
 
 **Сравнение:**
 
-| Метод | Latency | Cost | Сложность |
+| Метод | Задержка | Стоимость | Сложность |
 |-------|---------|------|-----------|
 | Purge by URL | 30 сек - 5 мин | $$ | Низкая |
 | Purge by tag | <1 сек | $ | Средняя (теги на origin) |
-| URL versioning | мгновенно (новый URL) | 0 | Низкая (build tool) |
-| TTL refresh | TTL | 0 | 0 |
+| Версионирование URL | мгновенно (новый URL) | 0 | Низкая (build-инструмент) |
+| Истечение TTL | TTL | 0 | 0 |
 
 **Что использовать:**
-- **Static assets (JS/CSS)** → versioning + `immutable`.
-- **Dynamic content (HTML, API)** → purge by tag (Fastly), `s-maxage=0 + must-revalidate` для критичных.
-- **User-specific** → `private` + не кэшировать на CDN.
+- **Статические ассеты (JS/CSS)** → версионирование + `immutable`.
+- **Динамический контент (HTML, API)** → purge by tag (Fastly), `s-maxage=0 + must-revalidate` для критичных.
+- **Контент конкретного пользователя** → `private` + не кэшировать на CDN.
 
 **Пример Fastly Surrogate-Key:**
 ```http
@@ -390,21 +390,21 @@ curl -X POST https://api.fastly.com/service/SID/purge \
 
 ## Q10. stale-while-revalidate и stale-if-error
 
-**`stale-while-revalidate=<sec>`** — после истечения `max-age`/`s-maxage` CDN отдаёт **stale** ответ клиенту немедленно, **параллельно** обновляя кэш фоном.
-- Эффект: клиент всегда получает fast response, без MISS-latency.
-- Trade-off: до `<sec>` секунд после истечения отдаётся устаревшая версия.
+**`stale-while-revalidate=<sec>`** — после истечения `max-age`/`s-maxage` CDN отдаёт **устаревший (stale)** ответ клиенту немедленно, **параллельно** обновляя кэш фоном.
+- Эффект: клиент всегда получает быстрый ответ, без MISS-задержки.
+- Компромисс: до `<sec>` секунд после истечения отдаётся устаревшая версия.
 
-**`stale-if-error=<sec>`** — если origin вернул 5xx/timeout, CDN отдаёт stale до `<sec>` секунд.
+**`stale-if-error=<sec>`** — если origin вернул 5xx/timeout, CDN отдаёт устаревшую версию до `<sec>` секунд.
 - Эффект: продукт продолжает работать даже при падении origin.
-- Trade-off: пользователь не узнаёт что origin сломан.
+- Компромисс: пользователь не узнаёт, что origin сломан.
 
 **Пример:**
 ```http
 Cache-Control: max-age=60, stale-while-revalidate=600, stale-if-error=86400
 ```
 - 60 сек — свежий ответ.
-- 600 сек после — stale + async revalidate.
-- 86400 сек после — stale при ошибке origin.
+- 600 сек после — устаревший ответ + фоновая ревалидация.
+- 86400 сек после — устаревший ответ при ошибке origin.
 
 **Поддержка:**
 - CloudFront: с 2023 года.
@@ -413,12 +413,12 @@ Cache-Control: max-age=60, stale-while-revalidate=600, stale-if-error=86400
 - Браузеры: Chrome 75+.
 
 **Когда применять:**
-- News sites, listings — статья 5 минут устаревшая лучше 5xx.
-- API с tolerant clients — пользователь не критичен к актуальности.
+- Новостные сайты, листинги — статья с устареванием в 5 минут лучше, чем 5xx.
+- API с терпимыми к устареванию клиентами — для пользователя актуальность некритична.
 
 **Когда НЕ применять:**
-- Banking, payment — финансовый risk при stale.
-- Realtime data (биржа, спортивный счёт).
+- Банкинг, платежи — финансовый риск при устаревших данных.
+- Данные в реальном времени (биржа, спортивный счёт).
 
 ## Q11. Surrogate-Control vs Cache-Control
 
@@ -464,57 +464,57 @@ Origin/CDN отвечают `206 Partial Content`.
 **Проблема для CDN:** один и тот же файл запрашивается разными ranges от разных клиентов. Хранить 1000 копий для 1000 ranges — нерационально.
 
 **Как CDN обрабатывают:**
-- **CloudFront:** кэширует **целый объект** при первом полном fetch из origin (через `Origin Response Timeout`), потом отдаёт ranges из кэша. Если первый запрос — range, CloudFront может тянуть full object в background или не тянуть (зависит от поведения).
-- **Cloudflare:** аналогично — `Range Request Cache` (Enterprise) кэширует chunks.
-- **Akamai:** `Object Caching Behavior` — настройка как обрабатывать ranges.
-- **Fastly:** `vcl_fetch` с `restart` для full fetch.
+- **CloudFront:** кэширует **целый объект** при первом полном fetch из origin (через `Origin Response Timeout`), потом отдаёт диапазоны из кэша. Если первый запрос — диапазон, CloudFront может тянуть полный объект фоном или не тянуть (зависит от поведения).
+- **Cloudflare:** аналогично — `Range Request Cache` (Enterprise) кэширует чанки.
+- **Akamai:** `Object Caching Behavior` — настройка, как обрабатывать диапазоны.
+- **Fastly:** `vcl_fetch` с `restart` для полного fetch.
 
-**Best practices для больших файлов:**
-- **Pre-segment** на стороне origin: разрезать на чанки 1-4 MB заранее (HLS, DASH сегменты — Q17).
-- **Origin shield** обязательно — иначе при cold start MISS все edge тянут полный файл одновременно.
-- Хранить файлы в S3 с `Multipart Upload` — origin поддерживает range естественно.
+**Лучшие практики для больших файлов:**
+- **Предварительная нарезка** на стороне origin: разрезать на чанки 1-4 MB заранее (сегменты HLS, DASH — Q17).
+- **Origin shield** обязателен — иначе при холодном старте все edge тянут полный файл одновременно при MISS.
+- Хранить файлы в S3 с `Multipart Upload` — origin поддерживает диапазоны естественно.
 
-**Видео-стриминг** обычно использует HLS/DASH — там файл уже разрезан на чанки (.ts/.m4s), range request не нужен, каждый чанк — обычный GET (см. Q17).
+**Видео-стриминг** обычно использует HLS/DASH — там файл уже разрезан на чанки (.ts/.m4s), range request не нужен, каждый чанк — это обычный GET (см. Q17).
 
 ## Q13. (!) TLS termination на edge: что даёт и какие риски?
 
 **TLS termination на edge** — TLS handshake (`ClientHello`, certificate exchange) завершается на ближайшем PoP, оттуда до origin идёт отдельное (часто долгоживущее) TLS-соединение.
 
 **Что даёт:**
-- **Latency**: TLS 1.2 handshake = 2 RTT, TLS 1.3 = 1 RTT, 0-RTT возможно. На edge RTT 5-50 мс vs 200 мс до origin → handshake в 10-40 раз быстрее.
-- **Connection reuse**: 100 клиентов делают handshake на edge, edge держит один pool к origin (`keep-alive` + HTTP/2 multiplexing).
-- **OCSP stapling**: edge каждые 5-10 мин запрашивает OCSP-response у CA, прикладывает к ServerHello — клиент не идёт в CA сам. Экономит 100-300 мс на первое соединение.
+- **Задержка**: TLS 1.2 handshake = 2 RTT, TLS 1.3 = 1 RTT, 0-RTT возможно. На edge RTT 5-50 мс против 200 мс до origin → handshake в 10-40 раз быстрее.
+- **Переиспользование соединений**: 100 клиентов делают handshake на edge, edge держит один пул к origin (`keep-alive` + HTTP/2 multiplexing).
+- **OCSP stapling**: edge каждые 5-10 мин запрашивает OCSP-response у CA и прикладывает к ServerHello — клиент не идёт в CA сам. Экономит 100-300 мс на первое соединение.
 - **SNI**: edge обслуживает тысячи сертификатов на одном IP по `Server Name Indication`. У Cloudflare один anycast IP = миллионы доменов.
-- **Certificate management**: автоматический Let's Encrypt у Cloudflare, ACM у CloudFront — без manual renewal.
+- **Управление сертификатами**: автоматический Let's Encrypt у Cloudflare, ACM у CloudFront — без ручного продления.
 
 **Риски:**
-- **Compliance/PCI-DSS** — TLS-терминируется не у тебя; CDN-провайдер видит plaintext (Cloudflare видит весь трафик клиента). Для PCI данных нужен либо `Keyless SSL` (приватный ключ остаётся у клиента) либо end-to-end TLS без termination.
-- **Misissued certificates**: если CDN скомпрометирован, может выпустить сертификат на твой домен.
-- **Government access**: CDN-провайдер по закону юрисдикции может быть обязан выдать decrypted traffic.
+- **Соответствие/PCI-DSS** — TLS терминируется не у тебя; CDN-провайдер видит открытый текст (Cloudflare видит весь трафик клиента). Для PCI-данных нужен либо `Keyless SSL` (приватный ключ остаётся у клиента), либо сквозной (end-to-end) TLS без termination.
+- **Ошибочно выпущенные сертификаты**: если CDN скомпрометирован, он может выпустить сертификат на твой домен.
+- **Доступ государства**: CDN-провайдера по закону юрисдикции могут обязать выдать расшифрованный трафик.
 
-**Mitigation:**
-- **Authenticated origin pulls** — origin принимает только TLS-запросы с client cert от CDN. Если кто-то bypass CDN — не достучится до origin.
-- **Cloudflare Keyless SSL / AWS Certificate Manager Private CA** — приватный ключ держится у клиента; CDN дёргает Keyless server для подписи.
-- **End-to-end TLS** — CDN passthrough TLS не терминируя (но теряешь edge оптимизации).
+**Способы снизить риск:**
+- **Authenticated origin pulls** — origin принимает только TLS-запросы с клиентским сертификатом от CDN. Если кто-то обходит CDN — он не достучится до origin.
+- **Cloudflare Keyless SSL / AWS Certificate Manager Private CA** — приватный ключ держится у клиента; CDN дёргает Keyless-сервер для подписи.
+- **Сквозной TLS** — CDN пропускает TLS насквозь, не терминируя (но теряешь edge-оптимизации).
 
 ## Q14. HTTP/2 и HTTP/3 (QUIC) на edge
 
 **HTTP/2** (RFC 7540, 2015):
-- Multiplexing: много streams в одном TCP-соединении (head-of-line blocking на L4 остаётся).
-- Server Push (depricated, мало кто использовал).
-- Header compression (HPACK).
+- Мультиплексирование: много потоков (streams) в одном TCP-соединении (head-of-line blocking на L4 остаётся).
+- Server Push (устарел, мало кто использовал).
+- Сжатие заголовков (HPACK).
 - TLS обязателен на практике.
 
 **HTTP/3** (RFC 9114, 2022):
-- Transport: **QUIC** поверх UDP (RFC 9000).
+- Транспорт: **QUIC** поверх UDP (RFC 9000).
 - 0-RTT и 1-RTT handshake (TLS 1.3 интегрирован).
-- **Нет head-of-line blocking на транспорте** — потерянный пакет в одном stream не блокирует другие.
-- Connection migration — клиент меняет IP (Wi-Fi → LTE), connection не рвётся.
+- **Нет head-of-line blocking на транспорте** — потерянный пакет в одном потоке не блокирует другие.
+- Миграция соединений — клиент меняет IP (Wi-Fi → LTE), соединение не рвётся.
 
 **Преимущества HTTP/3 на edge:**
-- Особенно заметно на mobile/lossy сетях (3G, метро, поезда) — latency на 20-40% ниже.
-- Connection migration важен для long-poll/streaming.
-- 0-RTT даёт sub-50 мс handshake (vs 200 мс TCP+TLS 1.2).
+- Особенно заметно на мобильных и теряющих пакеты сетях (3G, метро, поезда) — задержка на 20-40% ниже.
+- Миграция соединений важна для long-poll/streaming.
+- 0-RTT даёт handshake менее 50 мс (против 200 мс TCP+TLS 1.2).
 
 **Поддержка:**
 - Cloudflare — с 2019 (одни из первых).
@@ -532,8 +532,8 @@ CloudFront → Distribution → Edit → Supported HTTP versions → HTTP/2 and 
 Сервер отдаёт `Alt-Svc: h3=":443"` — клиент в следующий раз пробует HTTP/3.
 
 **Тонкости:**
-- HTTP/3 = UDP. Некоторые корпоративные firewall блокируют UDP/443 — клиент fall back на HTTP/2.
-- HTTP/3 ещё не везде оптимально настроен в Linux kernels (нужен io_uring/XDP для full performance).
+- HTTP/3 = UDP. Некоторые корпоративные firewall блокируют UDP/443 — клиент откатывается на HTTP/2.
+- HTTP/3 ещё не везде оптимально настроен в ядрах Linux (нужен io_uring/XDP для полной производительности).
 
 ## Q15. 0-RTT в TLS 1.3 — выигрыш и replay-риск
 
@@ -549,22 +549,22 @@ CloudFront → Distribution → Edit → Supported HTTP versions → HTTP/2 and 
 - TLS 1.3 = 1 RTT.
 - TLS 1.3 + 0-RTT = 0 RTT (sub-millisecond «handshake» — данные сразу с handshake пакетом).
 
-**Replay attack risk:**
-- 0-RTT данные **не имеют forward secrecy** в смысле replay protection — кто-то перехвативший 0-RTT-запрос может его реплеить.
-- Атакующий не может расшифровать (PSK секретный), но может воспроизвести `POST /api/transfer` несколько раз.
+**Риск replay-атаки:**
+- 0-RTT-данные **не имеют защиты от повтора (replay)** — кто-то перехвативший 0-RTT-запрос может его воспроизвести.
+- Атакующий не может расшифровать (PSK секретный), но может несколько раз воспроизвести `POST /api/transfer`.
 
-**Mitigations:**
-- 0-RTT использовать **только для idempotent GET** (картинки, JS) — не для POST/PUT/DELETE.
-- Сервер хранит nonce/anti-replay cache (короткое окно, 5-10 сек).
-- Cloudflare: 0-RTT включено только для GET по умолчанию.
+**Способы снизить риск:**
+- 0-RTT использовать **только для идемпотентных GET** (картинки, JS) — не для POST/PUT/DELETE.
+- Сервер хранит nonce/кэш защиты от повтора (короткое окно, 5-10 сек).
+- Cloudflare: 0-RTT по умолчанию включено только для GET.
 - CloudFront: 0-RTT с 2023, по запросу.
 
 **Когда применять:**
-- Static content, картинки, JS — выигрыш 50-200 мс на первом запросе после повторного коннекта.
-- Mobile приложения — пользователь переключается между сетями постоянно.
+- Статический контент, картинки, JS — выигрыш 50-200 мс на первом запросе после повторного коннекта.
+- Мобильные приложения — пользователь постоянно переключается между сетями.
 
 **Когда НЕ применять:**
-- Любые non-idempotent endpoints (`/api/order/create`, `/api/payment`).
+- Любые неидемпотентные эндпоинты (`/api/order/create`, `/api/payment`).
 - Финансовые операции.
 
 ## Q16. (!) Image optimization: AVIF/WebP, srcset, on-the-fly resize
@@ -583,16 +583,16 @@ CloudFront → Distribution → Edit → Supported HTTP versions → HTTP/2 and 
 
 **2. Современные форматы:**
 
-| Формат | Compression vs JPEG | Поддержка |
+| Формат | Сжатие против JPEG | Поддержка |
 |--------|---------------------|------------|
-| **WebP** | -25-35% | 96% browsers (с 2020) |
-| **AVIF** | -50% | 90% browsers (с 2022) |
+| **WebP** | -25-35% | 96% браузеров (с 2020) |
+| **AVIF** | -50% | 90% браузеров (с 2022) |
 | **JPEG XL** | -60% | ограниченная (Chrome убрал в 2023) |
 
-**3. On-the-fly resize/format на CDN:**
-- **Cloudflare Images** — `https://imagedelivery.net/<account>/<image>/w=400,format=auto` — resize + AVIF/WebP detection на основе Accept header.
-- **Akamai Image Manager** — policy-based, $$$.
-- **CloudFront + Lambda@Edge** — `sharp` на lambda, resize on demand, кэш в CloudFront.
+**3. Ресайз/конвертация формата «на лету» на CDN:**
+- **Cloudflare Images** — `https://imagedelivery.net/<account>/<image>/w=400,format=auto` — ресайз + определение AVIF/WebP на основе заголовка Accept.
+- **Akamai Image Manager** — на основе политик, $$$.
+- **CloudFront + Lambda@Edge** — `sharp` на lambda, ресайз по требованию, кэш в CloudFront.
 - **imgproxy** (open-source) — self-hosted перед CDN.
 - **Vercel Image Optimization** — встроено в Next.js.
 
@@ -602,16 +602,16 @@ Origin (master image 4K) → CDN edge (cache resized versions) → Client
                             ↑ генерирует на 1-й запрос
 ```
 
-**Best practices:**
-- Хранить оригинал в **lossless** (PNG/TIFF/AVIF).
-- Resize/compress на CDN с кэшем.
-- Включать `Accept: image/avif,image/webp` → отдавать оптимальный формат через `format=auto`.
+**Лучшие практики:**
+- Хранить оригинал **без потерь (lossless)** (PNG/TIFF/AVIF).
+- Ресайз/сжатие на CDN с кэшем.
+- Учитывать `Accept: image/avif,image/webp` → отдавать оптимальный формат через `format=auto`.
 - `Cache-Control: public, max-age=31536000, immutable` — версионированный URL.
 
 **Числа Cloudflare Images:**
-- $5/мес за хранение 100k images.
-- Безлимит resizing operations.
-- Замена для thumbor/imgix self-hosted.
+- $5/мес за хранение 100k изображений.
+- Безлимит операций ресайза.
+- Замена для self-hosted thumbor/imgix.
 
 ## Q17. Video streaming: HLS, DASH, ABR, CMAF, LL-HLS
 
@@ -626,19 +626,19 @@ Origin (master image 4K) → CDN edge (cache resized versions) → Client
 
 **CMAF** (Common Media Application Format) — общий контейнер `.cmfv`/`.cmfa`, поддерживается и HLS, и DASH. Снижает storage cost в 2 раза (один файл — два playlist).
 
-**ABR** (Adaptive Bitrate) — клиент сам переключается между качествами по bandwidth:
-- Playlist содержит variants: 360p@500kbps, 720p@2Mbps, 1080p@5Mbps.
-- При packet loss/buffering — переключается на ниже.
+**ABR** (Adaptive Bitrate) — клиент сам переключается между качествами по доступной полосе:
+- Плейлист содержит варианты: 360p@500kbps, 720p@2Mbps, 1080p@5Mbps.
+- При потере пакетов/буферизации — переключается на качество ниже.
 
-**LL-HLS** (Low-Latency HLS) — Apple, 2019. Сокращает glass-to-glass latency с 20-30 сек до 2-5 сек.
+**LL-HLS** (Low-Latency HLS) — Apple, 2019. Сокращает задержку «от камеры до экрана» (glass-to-glass) с 20-30 сек до 2-5 сек.
 - Сегменты 0.2-2 сек + `EXT-X-PART` (части сегментов).
-- HTTP/2 push для preload (depricated в Safari 16).
+- HTTP/2 push для предзагрузки (устарел в Safari 16).
 
-**CDN-специфика:**
-- Каждый сегмент — обычный GET, идеально для CDN cache.
-- `s-maxage` для VOD — максимум (immutable файлы).
-- Для live — короткий TTL (5-30 сек) или real-time invalidation.
-- Origin shield обязателен — иначе при viral live event тысячи edge тянут один сегмент.
+**Специфика CDN:**
+- Каждый сегмент — обычный GET, идеально для кэша CDN.
+- `s-maxage` для VOD — максимум (неизменяемые файлы).
+- Для live — короткий TTL (5-30 сек) или инвалидация в реальном времени.
+- Origin shield обязателен — иначе при вирусной live-трансляции тысячи edge тянут один сегмент.
 
 **Стек:**
 ```
@@ -651,45 +651,45 @@ Encoder (FFmpeg/AWS Elemental) →
 
 **Числа Netflix Open Connect:**
 - 100% видео через CDN edge (Open Connect Appliances в дата-центрах ISP).
-- Pre-position популярный контент на OCA заранее (Push CDN — Q6).
-- 200 Tbps peak.
+- Заранее раскладывают популярный контент на OCA (Push CDN — Q6).
+- 200 Tbps в пике.
 
 ## Q18. Dynamic Site Acceleration (DSA) — как кэшировать «динамику»
 
-**DSA** — техники ускорения dynamic content (API, personalized HTML) через CDN.
+**DSA** — техники ускорения динамического контента (API, персонализированный HTML) через CDN.
 
 **Что НЕ кэшируется напрямую:**
-- User-specific HTML (профиль, корзина).
-- API с per-user data.
-- Realtime data.
+- HTML для конкретного пользователя (профиль, корзина).
+- API с данными на каждого пользователя.
+- Данные в реальном времени.
 
 **Как ускорять без кэша:**
 
 **1. TLS termination на edge** (Q13) — экономия 100-300 мс на handshake.
 
-**2. Connection pooling edge→origin**: edge держит persistent HTTP/2 multiplexed pool. Origin не делает TLS handshake на каждый запрос.
+**2. Пул соединений edge→origin**: edge держит постоянный мультиплексированный HTTP/2-пул. Origin не делает TLS handshake на каждый запрос.
 
-**3. Route optimization**: CDN использует свой backbone (Cloudflare Argo Smart Routing, AWS Global Accelerator) — пакеты идут через CDN private network вместо публичного internet, AS-hops меньше.
+**3. Оптимизация маршрута**: CDN использует свой backbone (Cloudflare Argo Smart Routing, AWS Global Accelerator) — пакеты идут через приватную сеть CDN вместо публичного интернета, AS-hop-ов меньше.
 
-**4. Edge compute** (Q19): cache user-personalized content на edge через Cloudflare Workers Cache API или KV.
+**4. Edge compute** (Q19): кэширование персонализированного контента на edge через Cloudflare Workers Cache API или KV.
 
-**5. Micro-caching**: `s-maxage=1-5` секунд. Даже 1-секундный кэш на новостном сайте при 1000 RPS снижает QPS на origin в 100-1000 раз. Stale-while-revalidate=60 даёт UX без MISS-latency.
+**5. Микро-кэширование**: `s-maxage=1-5` секунд. Даже секундный кэш на новостном сайте при 1000 RPS снижает QPS на origin в 100-1000 раз. Stale-while-revalidate=60 даёт хороший UX без MISS-задержки.
 
 **6. Edge Side Includes (ESI)**: разбить HTML на фрагменты с разным TTL.
 ```html
 <esi:include src="/shared/header" /> <!-- TTL=24h -->
 <esi:include src="/cart" />          <!-- TTL=0, user-specific -->
 ```
-Edge собирает страницу из кэшированных + некэшированных фрагментов.
+Edge собирает страницу из кэшированных и некэшированных фрагментов.
 
-**7. Compression on edge**: edge сжимает response в Brotli/gzip перед отдачей клиенту. Origin может отдавать uncompressed → edge компрессит.
+**7. Сжатие на edge**: edge сжимает ответ в Brotli/gzip перед отдачей клиенту. Origin может отдавать несжатый ответ → edge его сжимает.
 
 **Пример микро-кэша Cloudflare:**
 ```
 Cache Rule: /api/feed/* → Cache Eligibility: Eligible for cache, s-maxage=2, stale-while-revalidate=60
 ```
-- 1000 RPS feed → origin видит 0.5 RPS (cache HIT 99.95%).
-- Пользователь видит данные с лагом ≤2 сек.
+- 1000 RPS на ленту → origin видит 0.5 RPS (доля HIT 99.95%).
+- Пользователь видит данные с задержкой ≤2 сек.
 
 ## Q19. (!) Edge compute: Cloudflare Workers, Lambda@Edge, Compute@Edge
 
@@ -697,7 +697,7 @@ Cache Rule: /api/feed/* → Cache Eligibility: Eligible for cache, s-maxage=2, s
 
 **Основные платформы:**
 
-| Платформа | Runtime | Cold start | Лимиты CPU/mem | Стоимость |
+| Платформа | Runtime | Холодный старт | Лимиты CPU/mem | Стоимость |
 |-----------|---------|-------------|----------------|-----------|
 | **Cloudflare Workers** | V8 isolates | 0 мс | 50 мс CPU, 128 MB | $5/мес + $0.50/M requests |
 | **Lambda@Edge** | Node/Python | 100-500 мс | 5 сек, 128 MB | $0.60/M requests + $0.00005/GB-sec |
@@ -705,14 +705,14 @@ Cache Rule: /api/feed/* → Cache Eligibility: Eligible for cache, s-maxage=2, s
 | **Fastly Compute@Edge** | WASM (Rust/JS/Go) | 35 мкс | 50 мс CPU | $$$ |
 | **Vercel Edge Functions** | V8 (на CF) | 0 мс | 50 мс CPU | по плану |
 
-**Use cases edge compute:**
-- **Auth/JWT validation** — отклонять anonymous до origin.
-- **A/B testing** — outcome-аware response (50% юзеров — variant A).
-- **Personalization** — менять HTML по geo/cookie.
-- **Image resize** — Cloudflare Workers + Cache API (Q16).
-- **Bot detection / rate limiting** — Cloudflare Bot Management.
-- **API aggregation** — собирать данные из нескольких origin в один response.
-- **Geofencing** — блокировать страны без origin.
+**Сценарии для edge compute:**
+- **Проверка Auth/JWT** — отклонять анонимных до origin.
+- **A/B-тестирование** — ответ с учётом варианта (50% пользователей — вариант A).
+- **Персонализация** — менять HTML по гео/cookie.
+- **Ресайз изображений** — Cloudflare Workers + Cache API (Q16).
+- **Детект ботов / rate limiting** — Cloudflare Bot Management.
+- **Агрегация API** — собирать данные из нескольких origin в один ответ.
+- **Геофенсинг** — блокировать страны без обращения к origin.
 
 **Пример Cloudflare Worker (auth):**
 ```js
@@ -727,59 +727,59 @@ addEventListener('fetch', event => {
 });
 ```
 
-**Trade-offs:**
-- **Workers** (V8 isolates): нулевой cold start, но ограничения: 50 мс CPU, нет полного Node API, только Web API.
-- **Lambda@Edge**: полный Node.js, но 100-500 мс cold start; не подходит для всех запросов.
-- **Compute@Edge**: WASM-based, поддерживает Rust/Go/JS, средние характеристики.
+**Компромиссы:**
+- **Workers** (V8 isolates): нулевой холодный старт, но ограничения: 50 мс CPU, нет полного Node API, только Web API.
+- **Lambda@Edge**: полный Node.js, но холодный старт 100-500 мс; не подходит для всех запросов.
+- **Compute@Edge**: на базе WASM, поддерживает Rust/Go/JS, средние характеристики.
 
 **Когда edge compute, когда нет:**
-- ✅ Lightweight transformation (auth, A/B, image resize).
-- ✅ Cache-aware routing.
-- ❌ Heavy computation, ML inference (хотя Workers AI меняет правила).
-- ❌ DB-heavy logic (нет low-latency DB на edge, кроме Workers KV).
+- Подходит: лёгкие преобразования (auth, A/B, ресайз изображений).
+- Подходит: маршрутизация с учётом кэша.
+- Не подходит: тяжёлые вычисления, ML-инференс (хотя Workers AI меняет правила).
+- Не подходит: логика с интенсивной работой с БД (нет низколатентной БД на edge, кроме Workers KV).
 
 ## Q20. (!) DDoS protection: scrubbing, rate limiting, bot management
 
-**DDoS типы:**
-- **Volumetric** (L3/L4): UDP flood, SYN flood, amplification — забивают bandwidth.
-- **Protocol** (L3/L4): TCP state exhaustion, fragmented packets.
-- **Application** (L7): HTTP flood, slowloris, expensive endpoint targeting.
+**Типы DDoS:**
+- **Объёмные (volumetric)** (L3/L4): UDP flood, SYN flood, amplification — забивают полосу.
+- **Протокольные** (L3/L4): исчерпание TCP-состояний, фрагментированные пакеты.
+- **Прикладные (application)** (L7): HTTP flood, slowloris, удары по «дорогим» эндпоинтам.
 
-**CDN protections:**
+**Защита на стороне CDN:**
 
-**1. Anycast absorption**:
-- Cloudflare сеть = 250+ Tbps capacity. Атака на 5 Tbps распределяется по 300 PoP — каждый получает 16 Gbps, легко.
+**1. Поглощение через anycast**:
+- Сеть Cloudflare = 250+ Tbps ёмкости. Атака на 5 Tbps распределяется по 300 PoP — каждый получает 16 Gbps, легко.
 - Akamai/AWS Shield Advanced — аналогично.
 
-**2. Scrubbing**:
-- Подозрительный трафик направляется в scrubbing center, где L3/L4 фильтры (Arbor, Radware) отсеивают атаки.
+**2. Очистка трафика (scrubbing)**:
+- Подозрительный трафик направляется в центр очистки, где L3/L4-фильтры (Arbor, Radware) отсеивают атаки.
 - AWS Shield Advanced, Cloudflare Magic Transit (BGP-redirect).
 
 **3. Rate limiting**:
 - Cloudflare Rate Limiting Rules: `IF requests > 100/min FROM same IP THEN block`.
 - На edge — не доходит до origin.
-- Per-endpoint (`/login` 10 req/min) vs global.
+- На уровне эндпоинта (`/login` 10 req/min) против глобального.
 
-**4. Bot management**:
-- Cloudflare Bot Management — ML-based scoring каждого запроса (1-99). Bots flagged даже без явных паттернов.
-- Akamai Bot Manager — similar.
-- Использует TLS fingerprinting (JA3/JA4), browser behavioral, IP reputation.
+**4. Управление ботами (bot management)**:
+- Cloudflare Bot Management — ML-скоринг каждого запроса (1-99). Боты помечаются даже без явных паттернов.
+- Akamai Bot Manager — аналогично.
+- Использует TLS-фингерпринтинг (JA3/JA4), поведение браузера, репутацию IP.
 
-**5. CAPTCHA challenge**:
-- Подозрительные запросы получают `cf-mitigated: challenge` → JS challenge или CAPTCHA.
-- Cloudflare Turnstile — invisible CAPTCHA.
+**5. CAPTCHA-челлендж**:
+- Подозрительные запросы получают `cf-mitigated: challenge` → JS-челлендж или CAPTCHA.
+- Cloudflare Turnstile — невидимая CAPTCHA.
 
-**6. WAF rules** (Q21): блокируют SQLi, XSS, OWASP Top 10 на edge.
+**6. Правила WAF** (Q21): блокируют SQLi, XSS, OWASP Top 10 на edge.
 
 **Числа атак:**
-- Cloudflare 2024: поглотили 3.8 Tbps атаку (max recorded).
-- AWS Shield 2020: 2.3 Tbps (max recorded then).
-- Krebs on Security 2016: 620 Gbps от Mirai botnet — пришлось мигрировать с Akamai на Project Shield (Google).
+- Cloudflare 2024: поглотили атаку 3.8 Tbps (максимум на тот момент).
+- AWS Shield 2020: 2.3 Tbps (максимум на тот момент).
+- Krebs on Security 2016: 620 Gbps от ботнета Mirai — пришлось мигрировать с Akamai на Project Shield (Google).
 
 **Стоимость:**
-- Cloudflare Pro/Business: included DDoS protection (unlimited).
-- AWS Shield Standard: free; Advanced — $3000/мес.
-- Akamai Prolexic: enterprise pricing.
+- Cloudflare Pro/Business: защита от DDoS включена (без лимита).
+- AWS Shield Standard: бесплатно; Advanced — $3000/мес.
+- Akamai Prolexic: enterprise-прайсинг.
 
 ```mermaid
 graph LR
@@ -801,10 +801,10 @@ graph LR
 - **F5 Big-IP** — on-prem/cloud.
 
 **Что защищает:**
-- **OWASP Top 10**: SQLi, XSS, CSRF, path traversal, command injection.
-- **Bots / scrapers** (см. Q20).
-- **Geo-blocking**: запретить страны.
-- **Rate-based attacks**: credential stuffing.
+- **OWASP Top 10**: SQLi, XSS, CSRF, path traversal, инъекция команд.
+- **Боты / скраперы** (см. Q20).
+- **Гео-блокировка**: запретить страны.
+- **Атаки по частоте**: перебор учётных данных (credential stuffing).
 
 **Правило AWS WAF (JSON):**
 ```json
@@ -821,18 +821,18 @@ graph LR
 }
 ```
 
-**False positives:**
-- Managed rules часто блокируют легитимные запросы (например, RegEx match на `union select` в comment).
-- **Count mode** перед `Block` — мониторить 1-2 недели, потом включать.
+**Ложные срабатывания:**
+- Managed rules часто блокируют легитимные запросы (например, regex-совпадение на `union select` в комментарии).
+- **Режим Count** перед `Block` — мониторить 1-2 недели, потом включать.
 
 **WAF + Edge Compute:**
-- WAF — declarative rules.
-- Edge compute — programmatic (Cloudflare Workers перед/после WAF).
+- WAF — декларативные правила.
+- Edge compute — программный подход (Cloudflare Workers до/после WAF).
 
-**Cloudflare WAF Modes:**
-- **Off** — no rules.
-- **Essentially Off** — only critical.
-- **Low / Medium / High** — sensitivity levels.
+**Режимы Cloudflare WAF:**
+- **Off** — нет правил.
+- **Essentially Off** — только критичные.
+- **Low / Medium / High** — уровни чувствительности.
 
 ## Q22. (!) Cache poisoning и Web Cache Deception — как защищаться?
 
@@ -840,36 +840,36 @@ graph LR
 
 **Векторы:**
 
-**1. Unkeyed header injection**:
-- Origin использует `X-Forwarded-Host` в response, но CDN не включает его в cache key.
-- Атакующий шлёт `X-Forwarded-Host: evil.com`, получает response с `<script src="evil.com/x.js">`, CDN кэширует для всех.
-- Защита: cache key должен включать все headers, влияющие на response. WAF блокирует попытки.
+**1. Инъекция неключевого заголовка (unkeyed header injection)**:
+- Origin использует `X-Forwarded-Host` в ответе, но CDN не включает его в cache key.
+- Атакующий шлёт `X-Forwarded-Host: evil.com`, получает ответ с `<script src="evil.com/x.js">`, CDN кэширует его для всех.
+- Защита: cache key должен включать все заголовки, влияющие на ответ. WAF блокирует попытки.
 
-**2. HTTP parameter pollution (HPP)**:
+**2. Загрязнение HTTP-параметров (HPP)**:
 - `/page?lang=ru&lang=en` — origin берёт первый, CDN берёт второй.
 
 **3. Web Cache Deception** (Omer Gil, 2017, повторно Akamai 2020):
 - URL `/account.json/non-existent.css` — origin отдаёт `/account.json` (игнорируя `non-existent.css`), но CDN видит `.css` и кэширует **как публичный статический ресурс**.
-- Атакующий стучится `/account.json/x.css`, кэшируется personal data, потом любой может прочитать.
+- Атакующий стучится в `/account.json/x.css`, кэшируются персональные данные, потом любой может их прочитать.
 - **Akamai 2020**: уязвимость на десятках сайтов (PayPal, Trello), позволяла читать данные других пользователей.
 - Защита:
   - Origin должен возвращать 404 на `non-existent.css`.
-  - CDN не должен кэшировать `application/json` content-type вне зависимости от URL extension.
-  - Cloudflare добавил protection в 2021.
+  - CDN не должен кэшировать content-type `application/json` вне зависимости от расширения в URL.
+  - Cloudflare добавил защиту в 2021.
 
 **4. Cache key smuggling** (см. Q23).
 
 **Принципы защиты:**
-- **Keyed cache** — все headers и query params, влияющие на response, должны быть в cache key.
-- **Vary correctly** — особенно `Vary: Cookie` для personalized.
-- **Content-Type aware caching** — не кэшировать JSON/HTML по URL extension.
-- **WAF rules** — блокировать suspicious header injection.
-- **Audit** — Cloudflare/CloudFront логи показывают cache HITs; смотри необычные.
+- **Ключевой кэш** — все заголовки и query-параметры, влияющие на ответ, должны входить в cache key.
+- **Правильный Vary** — особенно `Vary: Cookie` для персонализированного контента.
+- **Кэширование с учётом Content-Type** — не кэшировать JSON/HTML по расширению в URL.
+- **Правила WAF** — блокировать подозрительные инъекции заголовков.
+- **Аудит** — логи Cloudflare/CloudFront показывают cache HIT-ы; смотри на необычные.
 
-**Real-world incidents:**
+**Реальные инциденты:**
 - **Web Cache Deception (2017/2020)** — массовая уязвимость, Akamai/PayPal/Trello.
-- **Cloudflare 2017 Cloudbleed** — origin утечка через cache (не классическое poisoning, но memory disclosure).
-- **2018 HTTP request smuggling** — front-back parser desync, можно poison cache (James Kettle, Black Hat).
+- **Cloudflare 2017 Cloudbleed** — утечка origin через кэш (не классическое poisoning, но раскрытие памяти).
+- **2018 HTTP request smuggling** — рассинхрон парсеров фронта и бэка, позволяет отравить кэш (James Kettle, Black Hat).
 
 ## Q23. Cache-key smuggling и нормализация заголовков
 
@@ -877,49 +877,49 @@ graph LR
 
 **Векторы:**
 
-**1. Path normalization mismatch**:
-- CDN видит `/api/user/123/../admin`, нормализует в `/api/admin`.
-- Origin видит как есть и обрабатывает другой endpoint.
-- Cache key — `/api/admin`, но response — от admin endpoint.
+**1. Расхождение в нормализации пути**:
+- CDN видит `/api/user/123/../admin` и нормализует в `/api/admin`.
+- Origin видит путь как есть и обрабатывает другой эндпоинт.
+- Cache key — `/api/admin`, но ответ — от admin-эндпоинта.
 
-**2. Query string ordering**:
-- `/?a=1&b=2` vs `/?b=2&a=1` — для origin одинаково, для CDN разный cache key (если нормализация выключена).
+**2. Порядок query-параметров**:
+- `/?a=1&b=2` против `/?b=2&a=1` — для origin одинаково, для CDN разный cache key (если нормализация выключена).
 
-**3. Trailing slash**:
-- `/page` vs `/page/` — origin отдаёт одинаково, CDN кэширует отдельно. Не уязвимость, но cache fragmentation.
+**3. Завершающий слеш**:
+- `/page` против `/page/` — origin отдаёт одинаково, CDN кэширует отдельно. Не уязвимость, но фрагментация кэша.
 
-**4. Header value parsing**:
-- CDN парсит `X-Forwarded-For: 1.1.1.1, 2.2.2.2` берёт первый.
+**4. Парсинг значения заголовка**:
+- CDN парсит `X-Forwarded-For: 1.1.1.1, 2.2.2.2` и берёт первый.
 - Origin берёт последний.
-- Если cache key включает X-Forwarded-For — mismatch.
+- Если cache key включает X-Forwarded-For — рассинхрон.
 
 **5. HTTP Request Smuggling** (James Kettle, 2019):
-- Front-back parser desync (CL.TE, TE.CL): CDN видит один request, origin видит другой.
-- Можно poison cache, bypass WAF, hijack admin sessions.
+- Рассинхрон парсеров фронта и бэка (CL.TE, TE.CL): CDN видит один запрос, origin — другой.
+- Можно отравить кэш, обойти WAF, угнать admin-сессии.
 
 **Защита:**
-- **Strict path normalization** одинаково на CDN и origin.
-- **Reject ambiguous requests** — Cloudflare/CloudFront отклоняют запросы с conflicting Content-Length и Transfer-Encoding.
-- **Cache key — whitelisted explicit set** — не «всё кроме списка», а «только список».
-- **Audit logs** — cache HIT для admin endpoints — сигнал.
+- **Строгая нормализация пути** одинаково на CDN и origin.
+- **Отклонять неоднозначные запросы** — Cloudflare/CloudFront отклоняют запросы с конфликтующими Content-Length и Transfer-Encoding.
+- **Cache key — явный whitelist** — не «всё, кроме списка», а «только список».
+- **Логи аудита** — cache HIT для admin-эндпоинтов — это сигнал.
 
-**Tooling:**
+**Инструменты:**
 - Burp Suite + HTTP Request Smuggler (PortSwigger).
-- Smuggler (открытый scanner).
+- Smuggler (открытый сканер).
 
 ## Q24. (!) Cost-модель CDN: egress, requests, edge CPU-ms
 
 **Структура цены:**
 
 **1. Egress (отдача байт клиенту):**
-- CloudFront: $0.085/GB (US/EU), $0.114 (asia-pacific). Tiered: 10TB+ цена снижается.
-- Cloudflare: **unlimited included** в Pro/Business (одна из основных причин выбора).
-- Fastly: $0.12/GB (NA/EU), $0.19 asia.
+- CloudFront: $0.085/GB (US/EU), $0.114 (asia-pacific). С порогами: от 10TB+ цена снижается.
+- Cloudflare: **без лимита, включён** в Pro/Business (одна из основных причин выбора).
+- Fastly: $0.12/GB (NA/EU), $0.19 Азия.
 - Bunny.net: $0.005/GB (Volume tier) — самый дешёвый.
 
-**2. Requests:**
+**2. Запросы:**
 - CloudFront: $0.0075 / 10k HTTP, $0.01 / 10k HTTPS.
-- Cloudflare: included.
+- Cloudflare: включено.
 - Fastly: $0.0075 / 10k.
 
 **3. Edge compute (CPU-ms):**
@@ -927,106 +927,106 @@ graph LR
 - Lambda@Edge: $0.60/M requests + $0.00005/GB-sec.
 - CloudFront Functions: $0.10/M requests (no CPU-ms billing — ограничение 1 мс).
 
-**4. Invalidation:**
-- CloudFront: 1000 paths/мес free, потом $0.005/path.
-- Cloudflare: unlimited included.
+**4. Инвалидация:**
+- CloudFront: 1000 путей/мес бесплатно, потом $0.005/путь.
+- Cloudflare: без лимита, включено.
 
-**5. SSL certificates:**
-- CloudFront ACM: free.
-- Cloudflare Universal SSL: free.
-- Dedicated SSL (CloudFront): $600/мес per cert.
+**5. SSL-сертификаты:**
+- CloudFront ACM: бесплатно.
+- Cloudflare Universal SSL: бесплатно.
+- Выделенный SSL (CloudFront): $600/мес за сертификат.
 
 **Пример расчёта (e-commerce 100 TB/мес, 5B requests):**
 
 | Метрика | CloudFront | Cloudflare Business | Bunny.net |
 |---------|-----------|---------------------|------------|
-| Egress | 100 TB × $0.085 = $8500 | $200 (flat) | $500 |
-| Requests | 5B × $0.0075/10k = $3750 | included | $1500 |
-| Invalidation | ~$50 | included | $10 |
-| **Total** | **$12300** | **$200** | **$2010** |
+| Egress | 100 TB × $0.085 = $8500 | $200 (фикс) | $500 |
+| Запросы | 5B × $0.0075/10k = $3750 | включено | $1500 |
+| Инвалидация | ~$50 | включено | $10 |
+| **Итого** | **$12300** | **$200** | **$2010** |
 
-**Cloudflare экономичнее для большого egress** (но сложнее enterprise SLA), CloudFront — for AWS integration, Bunny — для бюджета.
+**Cloudflare экономичнее при большом egress** (но enterprise-SLA ограничен), CloudFront — для интеграции с AWS, Bunny — для бюджета.
 
 **Почему CDN дешевле S3 egress:**
-- S3 → internet egress: $0.09/GB (us-east-1).
-- S3 → CloudFront egress: $0 (free, internal).
-- CloudFront → internet: $0.085/GB.
-- Сохранение: $0.005/GB × 100 TB = $500/мес.
+- S3 → egress в интернет: $0.09/GB (us-east-1).
+- S3 → CloudFront egress: $0 (бесплатно, внутренний).
+- CloudFront → интернет: $0.085/GB.
+- Экономия: $0.005/GB × 100 TB = $500/мес.
 - Cloudflare R2 + Workers: **полностью бесплатный egress** → $0 при любом объёме.
 
 ## Q25. Сравнение игроков: Cloudflare/Akamai/CloudFront/Fastly/Bunny
 
 | Параметр | Cloudflare | Akamai | CloudFront | Fastly | Bunny.net |
 |----------|------------|--------|-------------|---------|-----------|
-| PoP count | 310+ | 4100+ (largest) | 600+ | 84 | 117 |
-| Egress price | unlimited (plan) | $$$ | $0.085/GB | $0.12/GB | $0.005/GB |
+| Число PoP | 310+ | 4100+ (крупнейшая) | 600+ | 84 | 117 |
+| Цена egress | без лимита (по плану) | $$$ | $0.085/GB | $0.12/GB | $0.005/GB |
 | Edge compute | Workers (V8) | EdgeWorkers (V8) | Lambda@Edge / CFF | Compute@Edge (WASM) | Edge Scripting (Lua) |
-| DDoS | unlimited included | enterprise | Shield Standard free | included | basic |
-| WAF | included Pro+ | Kona Site Defender | AWS WAF separate | included | basic |
-| Image opt | Cloudflare Images | Image Manager | через Lambda@Edge | через CE Image | Bunny Optimizer |
-| Streaming | Stream | Adaptive Media Delivery | MediaPackage | Live Streaming | Bunny Stream |
-| Pricing model | flat plans | enterprise contracts | usage-based | usage-based | usage-based, cheap |
-| Strength | unlimited egress, security | most PoP, video, banking | AWS integration | flexibility (VCL), latest tech | cost |
-| Weakness | enterprise SLA limited | expensive, complex | egress price, no flat | smaller network | smaller network |
+| DDoS | без лимита, включён | enterprise | Shield Standard бесплатно | включён | базовый |
+| WAF | включён в Pro+ | Kona Site Defender | AWS WAF отдельно | включён | базовый |
+| Оптимизация изображений | Cloudflare Images | Image Manager | через Lambda@Edge | через CE Image | Bunny Optimizer |
+| Стриминг | Stream | Adaptive Media Delivery | MediaPackage | Live Streaming | Bunny Stream |
+| Модель цены | фиксированные планы | enterprise-контракты | по потреблению | по потреблению | по потреблению, дёшево |
+| Сильная сторона | egress без лимита, безопасность | больше всего PoP, видео, банкинг | интеграция с AWS | гибкость (VCL), свежие технологии | стоимость |
+| Слабая сторона | enterprise-SLA ограничен | дорого, сложно | цена egress, нет фикс-плана | меньше сеть | меньше сеть |
 
 **Когда что:**
-- **Cloudflare** — стартапы, медиа, любые egress-heavy. Discord, Shopify, GitHub, Replit.
-- **Akamai** — enterprise (банки, видео, госы). Netflix частично, HSBC, US gov.
-- **CloudFront** — AWS-stack, integration с S3/Lambda. Amazon.com, Hulu (was), Pinterest.
-- **Fastly** — VCL-heavy customization, news. NYT, Reddit, Stripe, Spotify, GitHub Pages.
-- **Bunny.net** — бюджетные стартапы, game distribution, video. Indie game studios.
-- **Google Cloud CDN** — GCP-stack only, простой use case.
+- **Cloudflare** — стартапы, медиа, всё с большим egress. Discord, Shopify, GitHub, Replit.
+- **Akamai** — enterprise (банки, видео, госсектор). Netflix частично, HSBC, US gov.
+- **CloudFront** — AWS-стек, интеграция с S3/Lambda. Amazon.com, Hulu (был), Pinterest.
+- **Fastly** — глубокая кастомизация на VCL, новости. NYT, Reddit, Stripe, Spotify, GitHub Pages.
+- **Bunny.net** — бюджетные стартапы, раздача игр, видео. Indie-студии.
+- **Google Cloud CDN** — только GCP-стек, простые сценарии.
 
-**Multi-CDN** часто используют (Q26): Cloudflare primary + CloudFront/Fastly backup.
+**Multi-CDN** часто используют (Q26): Cloudflare как основной + CloudFront/Fastly как резерв.
 
 ## Q26. (!) Multi-CDN: active-active, traffic steering, NS1/Cedexis
 
-**Multi-CDN** — использование 2+ CDN одновременно для:
-- **Availability**: один CDN падает → traffic переключается.
-- **Performance**: разные CDN сильнее в разных регионах.
-- **Negotiation**: можно торговаться с вендорами.
-- **Compliance**: data sovereignty (РФ — local CDN + Cloudflare для остальных).
+**Multi-CDN** — использование 2+ CDN одновременно ради:
+- **Доступности**: один CDN падает → трафик переключается.
+- **Производительности**: разные CDN сильнее в разных регионах.
+- **Переговорной позиции**: можно торговаться с вендорами.
+- **Соответствия требованиям**: суверенитет данных (РФ — локальный CDN + Cloudflare для остального).
 
 **Архитектуры:**
 
-**1. Active-passive (DNS failover)**:
-- Primary CDN всегда; при padении — DNS переключает на backup.
-- Failover: 5-30 секунд (TTL DNS).
+**1. Active-passive (DNS-failover)**:
+- Основной CDN всегда; при падении — DNS переключает на резервный.
+- Переключение: 5-30 секунд (TTL DNS).
 - Простота.
 
-**2. Active-active (traffic steering)**:
-- Трафик распределяется между CDN по правилам: regional, percentage, health-aware.
-- **NS1 Pulsar / Cedexis (Citrix ITM)** — DNS-based steering на основе RUM (Real User Monitoring).
+**2. Active-active (распределение трафика)**:
+- Трафик распределяется между CDN по правилам: по региону, по проценту, с учётом здоровья.
+- **NS1 Pulsar / Cedexis (Citrix ITM)** — распределение на уровне DNS на основе RUM (Real User Monitoring).
 - **AWS Route53 Latency-Based Routing** — простой вариант.
-- **Cloudflare Load Balancer** + external origins (можно к Akamai/CloudFront как origin).
+- **Cloudflare Load Balancer** + внешние origin-ы (можно подключить Akamai/CloudFront как origin).
 
-**3. Hybrid (geographic split)**:
-- РФ → CDN77 / Ngenix (local).
+**3. Гибрид (географическое разделение)**:
+- РФ → CDN77 / Ngenix (локальные).
 - EU → Cloudflare.
 - US → CloudFront.
 
 **Trade-offs:**
 
-| Параметр | Single CDN | Multi-CDN |
+| Параметр | Один CDN | Multi-CDN |
 |----------|------------|------------|
-| Cost | $X | $X × 1.5-2 (overhead) |
-| Latency | best-CDN-only | best-of-multiple in each region |
-| Availability | one provider | survives one provider outage |
-| Complexity | low | high (cache invalidation на N CDN) |
-| Vendor lock-in | high | low |
+| Стоимость | $X | $X × 1.5-2 (накладные расходы) |
+| Задержка | только лучший CDN | лучший из нескольких в каждом регионе |
+| Доступность | один провайдер | переживает сбой одного провайдера |
+| Сложность | низкая | высокая (инвалидация кэша на N CDN) |
+| Привязка к вендору | высокая | низкая |
 
 **Кто использует multi-CDN:**
 - **Netflix** — Akamai + Level 3 + Limelight + Open Connect.
-- **Apple** — Akamai + CloudFront + Apple's own.
+- **Apple** — Akamai + CloudFront + собственный.
 - **Hulu** — Akamai + CloudFront + Fastly.
 - **Wikipedia** — Cloudflare + Fastly.
 
-**Cache invalidation в multi-CDN:**
-- **Каждый CDN надо purge отдельно** — нет единого API.
-- Используют **purge-coordinator** (custom script или Mux Mile-High или Datacake).
+**Инвалидация кэша в multi-CDN:**
+- **Каждый CDN надо очищать (purge) отдельно** — единого API нет.
+- Используют **координатор purge-ов** (свой скрипт, Mux Mile-High или Datacake).
 - Cache tags облегчают (Fastly Surrogate-Key, Cloudflare Cache Tags) — один tag → purge на всех CDN сразу.
 
-**Steering пример (NS1 Pulsar):**
+**Пример распределения (NS1 Pulsar):**
 ```
 RUM data → NS1 → DNS response
 EU users → Cloudflare PoP IP (best by RUM RTT)
@@ -1038,126 +1038,126 @@ Asia users → CloudFront PoP IP (RUM показал что Cloudflare там м
 
 **Логи и метрики CDN:**
 
-**1. Access logs**:
-- CloudFront → S3 (raw) или CloudWatch Logs.
+**1. Логи доступа**:
+- CloudFront → S3 (сырые) или CloudWatch Logs.
 - Cloudflare → Logpush (S3/GCS/Azure/Datadog).
 - Fastly → Real-time Streaming (Splunk, Datadog).
-- Поля: timestamp, client IP, URL, status, bytes, cache HIT/MISS, edge PoP, response time.
+- Поля: timestamp, IP клиента, URL, статус, байты, cache HIT/MISS, edge PoP, время ответа.
 
-**2. Real-time metrics**:
-- Cloudflare Analytics — requests/sec, bandwidth, cache HIT ratio, error rate.
-- CloudFront → CloudWatch metrics (1-min granularity).
-- Fastly — real-time dashboards.
+**2. Метрики в реальном времени**:
+- Cloudflare Analytics — запросов/сек, полоса, доля cache HIT, доля ошибок.
+- CloudFront → метрики CloudWatch (гранулярность 1 мин).
+- Fastly — дашборды в реальном времени.
 
 **3. RUM (Real User Monitoring)**:
-- Cloudflare Web Analytics (free, privacy-friendly).
-- CloudFront with CloudWatch RUM.
-- Sentry/New Relic/Datadog RUM SDK injects на странице.
+- Cloudflare Web Analytics (бесплатно, дружелюбно к приватности).
+- CloudFront с CloudWatch RUM.
+- RUM SDK от Sentry/New Relic/Datadog встраивается на странице.
 - Метрики: TTFB, LCP, FCP, CLS, INP — Web Vitals.
 
-**4. Synthetic monitoring**:
-- Pingdom, Datadog Synthetic, Catchpoint — periodic checks из глобальных locations.
-- Видит downtime даже когда никто не пользуется.
+**4. Синтетический мониторинг**:
+- Pingdom, Datadog Synthetic, Catchpoint — периодические проверки из глобальных локаций.
+- Видит простой даже когда никто не пользуется сервисом.
 
 **Что мониторить:**
-- **Cache HIT ratio** — целевая 85-95% для static, 60-80% для dynamic с micro-cache.
-- **Edge response time** — p95 < 50 мс.
-- **Origin response time** — p95 < 200 мс (только при cache MISS).
-- **5xx rate** — < 0.1%.
-- **DDoS attempts** — Cloudflare Security Events, AWS Shield Insights.
-- **Top URLs by bandwidth** — найти hotspots для оптимизации.
+- **Доля cache HIT** — целевая 85-95% для статики, 60-80% для динамики с микро-кэшем.
+- **Время ответа edge** — p95 < 50 мс.
+- **Время ответа origin** — p95 < 200 мс (только при cache MISS).
+- **Доля 5xx** — < 0.1%.
+- **Попытки DDoS** — Cloudflare Security Events, AWS Shield Insights.
+- **Топ URL по полосе** — найти горячие точки для оптимизации.
 
-**Alerts:**
-- Cache HIT ratio < 70% → расследование invalidation/config.
-- 5xx rate > 1% → потенциальный origin outage.
-- Bandwidth spike → DDoS или viral content.
+**Алерты:**
+- Доля cache HIT < 70% → разбор инвалидации/конфига.
+- Доля 5xx > 1% → потенциальный простой origin.
+- Всплеск полосы → DDoS или вирусный контент.
 
-**Cost управление:**
-- Sample logs если >100 GB/мес — Cloudflare Logpush sampling, CloudFront sampling 1-100%.
+**Управление стоимостью:**
+- Семплировать логи, если >100 GB/мес — Cloudflare Logpush sampling, CloudFront sampling 1-100%.
 
 ## Q28. Cold start cache MISS и pre-warming
 
-**Cold start** — CDN edge PoP только что начал работать (deploy, restart, scaling) и кэш пустой. Первые запросы каждого URL — MISS, идут в origin.
+**Холодный старт** — edge-PoP CDN только что начал работать (deploy, рестарт, масштабирование) и кэш пуст. Первые запросы каждого URL — MISS, идут в origin.
 
 **Симптомы:**
-- p99 latency спайки после deploy / autoscaling.
-- Origin QPS вырастает в 5-20 раз.
-- При invalidation by tag (массовая) — global cold start.
+- Всплески p99-задержки после деплоя / автоскейлинга.
+- QPS на origin вырастает в 5-20 раз.
+- При массовой инвалидации по тегу — глобальный холодный старт.
 
-**Pre-warming стратегии:**
+**Стратегии прогрева:**
 
-**1. Synthetic warm-up**:
-- Скрипт делает GET на top-N URLs из 300 PoP (через TCP-to-PoP, или через VPN).
-- Применяется перед viral event (Black Friday, новый релиз).
-- Стоит платных API на 300 локаций (но Cloudflare даёт бесплатно через Workers).
+**1. Синтетический прогрев**:
+- Скрипт делает GET на топ-N URL из 300 PoP (через TCP-к-PoP или через VPN).
+- Применяется перед вирусным событием (Black Friday, новый релиз).
+- Требует платных API на 300 локаций (но Cloudflare даёт бесплатно через Workers).
 
-**2. Push CDN** (Q6) — eager publish заранее.
+**2. Push CDN** (Q6) — заранее раскладывать контент.
 
-**3. Origin shield** (Q2/Q5) — singleton-кэш гарантирует один MISS на global cluster, не N.
+**3. Origin shield** (Q2/Q5) — singleton-кэш гарантирует один MISS на весь глобальный кластер, а не N.
 
-**4. stale-while-revalidate** (Q10) — никогда не MISS-latency для клиента после первого warm-up.
+**4. stale-while-revalidate** (Q10) — после первого прогрева у клиента не бывает MISS-задержки.
 
-**5. Tiered cache** (Cloudflare) — между edge и origin есть «tier-1» кэш в крупном PoP, поглощает MISS от мелких.
+**5. Tiered cache** (Cloudflare) — между edge и origin есть кэш «tier-1» в крупном PoP, который поглощает MISS от мелких.
 
-**Stampede на cold start:**
+**Лавина (stampede) при холодном старте:**
 - 1000 клиентов одновременно делают MISS → 1000 запросов на origin?
 - Origin shield → 1 запрос на origin, 999 ждут.
-- Без shield → 1000 одновременных origin запросов = death by thundering herd.
+- Без shield → 1000 одновременных запросов на origin = гибель от thundering herd.
 
-**Coalescing**:
-- Cloudflare: in-flight coalescing — несколько одновременных MISS на один URL коалесцируются.
+**Объединение запросов (coalescing)**:
+- Cloudflare: объединение запросов «в полёте» — несколько одновременных MISS на один URL объединяются.
 - CloudFront: `Origin Coalescing` (с 2023).
-- Fastly: `vcl_recv → return(pass)` для опционального coalescing.
+- Fastly: `vcl_recv → return(pass)` для опционального объединения.
 
 **Метрика:**
-- "Time to first hit" — сколько после deploy первый HIT появляется.
-- Origin QPS в момент после deploy → должен быть как до.
+- «Время до первого HIT» — через сколько после деплоя появляется первый HIT.
+- QPS на origin сразу после деплоя → должен быть как до него.
 
 ## Q29. Real incidents: Fastly 2021, Akamai 2021, Cloudflare 2019
 
-**Эти инциденты — must-know для system design интервью.**
+**Эти инциденты — обязательны к знанию для system design интервью.**
 
-**1. Cloudflare 2019 BGP leak (Verizon)**:
+**1. Cloudflare 2019, утечка BGP (Verizon)**:
 - 24 июня 2019, ~3 часа.
-- Small ISP в Pennsylvania (DQE Communications) с BGP optimizer (Noction) объявил тысячи специфических Cloudflare префиксов в Verizon (AS701).
-- Verizon принял и распространил → трафик многих Cloudflare клиентов уехал через Pennsylvania ISP, потом dropped.
+- Небольшой ISP в Пенсильвании (DQE Communications) с BGP-оптимизатором (Noction) объявил тысячи специфических префиксов Cloudflare в сторону Verizon (AS701).
+- Verizon принял их и распространил → трафик многих клиентов Cloudflare уехал через ISP в Пенсильвании, а потом был отброшен.
 - Cloudflare, Amazon, Linode частично недоступны.
-- Урок: BGP не имеет authentication по default; RPKI помогает (но Verizon не валидировал ROA).
+- Урок: BGP по умолчанию не имеет аутентификации; RPKI помогает (но Verizon не валидировал ROA).
 
-**2. Fastly 2021 global outage**:
-- 8 июня 2021, **49 минут** полного downtime.
-- Bug в Fastly software triggered by valid customer config change.
-- Affected: Amazon.com, Reddit, NYT, Stack Overflow, Twitch, UK government (gov.uk), eBay, Shopify, PayPal partially.
-- Single CDN dependency stung hard.
-- Урок: multi-CDN strategy для critical services.
+**2. Fastly 2021, глобальный сбой**:
+- 8 июня 2021, **49 минут** полного простоя.
+- Баг в ПО Fastly, спровоцированный валидным изменением конфига клиента.
+- Затронуты: Amazon.com, Reddit, NYT, Stack Overflow, Twitch, правительство UK (gov.uk), eBay, Shopify, частично PayPal.
+- Зависимость от одного CDN ударила больно.
+- Урок: стратегия multi-CDN для критичных сервисов.
 
-**3. Akamai 2021 DNS outage**:
+**3. Akamai 2021, сбой DNS**:
 - 22 июля 2021, **1 час**.
-- Bug в новой DNS configuration update.
-- Affected: Steam, PSN, банки (Lloyds, Capital One UK), DraftKings, FedEx, UPS.
-- Critical infrastructure (банки) лежали в часовой outage.
+- Баг в новом обновлении конфигурации DNS.
+- Затронуты: Steam, PSN, банки (Lloyds, Capital One UK), DraftKings, FedEx, UPS.
+- Критичная инфраструктура (банки) лежала час.
 
-**4. Cloudflare 2022 cf-connecting-ip header**:
+**4. Cloudflare 2022, заголовок cf-connecting-ip**:
 - 25 июля 2022.
-- Bug в Cloudflare передавал заголовок `Cf-Connecting-Ip` от untrusted CF traffic к origin, позволяя IP spoofing.
-- Affected все клиенты, использующие этот header для rate limiting/auth.
-- Урок: trust boundaries между CDN и origin, mTLS / Authenticated Origin Pulls.
+- Баг в Cloudflare передавал заголовок `Cf-Connecting-Ip` от недоверенного CF-трафика к origin, позволяя подделку IP.
+- Затронуты все клиенты, использующие этот заголовок для rate limiting/auth.
+- Урок: границы доверия между CDN и origin, mTLS / Authenticated Origin Pulls.
 
 **5. Web Cache Deception (Akamai 2020)**:
-- Omer Gil обновил исследование 2017.
-- PayPal, Trello, многие — `/account.json/x.css` кэшировался публично.
-- Утечка PII десятки сайтов до фиксов.
+- Omer Gil обновил исследование 2017 года.
+- PayPal, Trello и многие другие — `/account.json/x.css` кэшировался публично.
+- Утечка PII на десятках сайтов до фиксов.
 
 **6. Slack 2021 (январь)**:
-- Cache invalidation + autoscaling glitch → thundering herd на AWS.
-- 5-часовой outage.
-- Урок: коммит cache invalidation как deploy procedure.
+- Сбой инвалидации кэша + автоскейлинга → thundering herd на AWS.
+- 5-часовой простой.
+- Урок: фиксировать инвалидацию кэша как часть процедуры деплоя.
 
 **7. KrebsOnSecurity 2016 (Mirai)**:
-- 620 Gbps DDoS от IoT botnet Mirai (камеры/DVR).
-- Akamai дропнул pro-bono клиента после $1M+ потенциальных расходов на защиту.
-- Project Shield (Google) приютил.
-- Урок: pro-bono ≠ guaranteed forever; для критичной защиты — paid tier.
+- 620 Gbps DDoS от IoT-ботнета Mirai (камеры/DVR).
+- Akamai сбросил pro-bono клиента после потенциальных расходов на защиту $1M+.
+- Приютил Project Shield (Google).
+- Урок: pro-bono ≠ навсегда; для критичной защиты — платный тариф.
 
 **Что отвечать на интервью:**
 - «Знаю про Fastly 2021 — пример SPOF без multi-CDN».
@@ -1244,11 +1244,11 @@ sub vcl_fetch {
 }
 ```
 
-**Best practices для конфигов:**
-- **Whitelist** headers/query/cookies в cache key, никогда blacklist.
-- **Compress on edge** (gzip/brotli) — `Compress: true` всегда.
-- **Separate behaviors** для `/static/*` (long TTL), `/api/*` (no cache or micro-cache), `/admin/*` (private, no cache).
-- **Test in Count/Monitor mode** перед switch на Block для security rules.
+**Лучшие практики для конфигов:**
+- **Whitelist** заголовков/query/cookies в cache key, никогда blacklist.
+- **Сжатие на edge** (gzip/brotli) — `Compress: true` всегда.
+- **Отдельные behaviors** для `/static/*` (большой TTL), `/api/*` (без кэша или микро-кэш), `/admin/*` (private, без кэша).
+- **Тестировать в режиме Count/Monitor** перед переключением на Block для правил безопасности.
 
 ---
 

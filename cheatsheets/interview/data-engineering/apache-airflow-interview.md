@@ -18,7 +18,7 @@ updated: "2026-05-14"
 ---
 # Вопросы на собеседовании: `Apache Airflow`
 
-`Apache Airflow` — самый популярный workflow orchestration в data engineering. Создан **Airbnb** (2014), Apache top-level с 2019. Workflows описываются как **DAG в Python**. Применяется для ETL, ML pipelines, scheduled jobs. Альтернативы: Prefect, Dagster, Argo Workflows, Luigi.
+`Apache Airflow` — самый популярный оркестратор workflow в data engineering. Создан в **Airbnb** (2014), Apache top-level с 2019. Workflow описываются как **DAG на Python**. Применяется для ETL, ML-пайплайнов и регулярных задач. Альтернативы: Prefect, Dagster, Argo Workflows, Luigi.
 
 ## Полезные ссылки
 
@@ -80,18 +80,18 @@ updated: "2026-05-14"
 
 ## Q1. (!) Что такое Apache Airflow?
 
-`Apache Airflow` — **workflow orchestration platform**. Workflows описываются как **DAG (Directed Acyclic Graph)** в Python.
+`Apache Airflow` — **платформа оркестрации workflow**. Workflow описываются как **DAG (направленный ациклический граф)** на Python.
 
 **Применения:**
-- **ETL/ELT pipelines** — extract, transform, load
-- **Data pipelines** — Spark/Flink jobs orchestration
-- **ML pipelines** — training, evaluation, deployment
-- **Scheduled jobs** — backups, reports, data cleanups
+- **ETL/ELT-пайплайны** — извлечение, преобразование, загрузка
+- **Data-пайплайны** — оркестрация Spark/Flink-задач
+- **ML-пайплайны** — обучение, оценка, деплой
+- **Регулярные задачи** — бэкапы, отчёты, очистка данных
 
-**Не для:**
-- Real-time streaming (используй Kafka Streams, Flink)
-- Long-running interactive workflows
-- Job-level orchestration внутри Spark (используй Spark scheduler)
+**Не подходит для:**
+- Потоковой обработки в реальном времени (используй Kafka Streams, Flink)
+- Долгоживущих интерактивных workflow
+- Оркестрации на уровне задач внутри Spark (используй Spark scheduler)
 
 ## Q2. (!) Что такое DAG?
 
@@ -111,7 +111,7 @@ graph LR
 **Свойства:**
 - Acyclic — нет циклов (иначе невозможно определить порядок)
 - Directed — стрелки показывают порядок
-- DAG идемпотентный должен быть (можно re-run)
+- DAG должен быть идемпотентным (можно перезапускать)
 
 ## Q3. Архитектура Airflow — компоненты?
 
@@ -133,20 +133,20 @@ graph TD
 - **Scheduler** — читает DAG файлы, планирует runs, отправляет tasks executor'у
 - **Executor** — стратегия запуска (Sequential, Local, Celery, K8s)
 - **Workers** — фактически выполняют tasks
-- **Web UI** — мониторинг, ручной trigger
-- **Metadata DB** — стейт DAG runs, tasks, connections, variables
+- **Web UI** — мониторинг, ручной запуск
+- **Metadata DB** — состояние DAG-запусков, tasks, connections, variables
 
 ## Q4. Зачем metadata DB?
 
 Хранит:
-- Описание DAG runs (started, success, failed)
+- Описание DAG-запусков (запущен, успех, ошибка)
 - Логи (опционально, обычно отдельно)
-- Connections (DB credentials)
-- Variables (config values)
-- XComs (inter-task data)
-- Pool configurations
+- Connections (учётные данные к БД)
+- Variables (значения конфигурации)
+- XComs (данные между tasks)
+- Конфигурации пулов
 
-В production — **PostgreSQL** (рекомендуется) или MySQL. **SQLite** только для dev/local.
+В production — **PostgreSQL** (рекомендуется) или MySQL. **SQLite** только для dev/локальной работы.
 
 ## Q5. (!) Как написать простейший DAG?
 
@@ -209,7 +209,7 @@ EmptyOperator(task_id='dummy')
 
 При выполнении operator создаёт **task instance**.
 
-**Типы operators:**
+**Типы операторов:**
 - **Action** — что-то делают (BashOperator, PythonOperator, EmailOperator)
 - **Transfer** — переносят данные (S3ToGCSOperator, MySqlToHiveOperator)
 - **Sensor** — ждут условия (FileSensor, ExternalTaskSensor)
@@ -231,7 +231,7 @@ EmptyOperator(task_id='dummy')
 | `TriggerDagRunOperator` | Запустить другой DAG |
 | `ExternalTaskSensor` | Дождаться task в другом DAG |
 
-Также — **provider packages** (`apache-airflow-providers-*`) для Snowflake, BigQuery, Redshift, и т.д.
+Также — **provider-пакеты** (`apache-airflow-providers-*`) для Snowflake, BigQuery, Redshift и т.д.
 
 ## Q8. TaskFlow API (с Airflow 2.0+)?
 
@@ -264,11 +264,11 @@ my_pipeline()
 ```
 
 **Преимущества:**
-- Похоже на обычный Python код
-- XCom передача автоматическая (через return values)
-- Меньше boilerplate
+- Похоже на обычный Python-код
+- Передача через XCom автоматическая (через возвращаемые значения)
+- Меньше шаблонного кода
 
-В **новых проектах** — TaskFlow API предпочтительнее classical operators.
+В **новых проектах** TaskFlow API предпочтительнее классических операторов.
 
 ## Q9. (!) Зависимости между tasks?
 
@@ -289,7 +289,7 @@ result = transform(data)  # неявная зависимость
 load(result)
 ```
 
-`>>` — `task1 << task2` или `task1 >> task2`. Создаёт edges в DAG.
+`>>` — `task1 << task2` или `task1 >> task2`. Создаёт рёбра в DAG.
 
 ## Q10. Dynamic DAG generation?
 
@@ -325,9 +325,9 @@ def my_dag():
 2. Для каждого DAG — определяет **next run** на основе `schedule_interval`
 3. Когда время приходит → создаёт **DAG run** со статусом `running`
 4. Tasks отправляются executor'у в правильном порядке (по dependencies)
-5. После завершения всех tasks → DAG run = `success` или `failed`
+5. После завершения всех tasks → DAG-запуск = `success` или `failed`
 
-Scheduler **не сам выполняет** tasks — только отправляет их executor'у.
+Scheduler **сам не выполняет** tasks — только отправляет их executor'у.
 
 ## Q12. (!) schedule_interval, start_date, catchup?
 
@@ -343,9 +343,9 @@ DAG(
 
 **`schedule_interval`** — как часто запускать.
 **`start_date`** — когда начать.
-**`catchup`** — если `True`, Airflow выполнит **все пропущенные** runs от `start_date`.
+**`catchup`** — если `True`, Airflow выполнит **все пропущенные** запуски от `start_date`.
 
-С `catchup=False` — только **последний** missed run.
+С `catchup=False` — только **последний** пропущенный запуск.
 
 **Подвох:** DAG запускается **в конце интервала**, не в начале. Daily DAG со start_date `2025-01-01` запустится **2 января** для данных от 1-го.
 
@@ -376,18 +376,18 @@ def my_task(**context):
 
 ## Q15. (!) Какие executors бывают?
 
-| Executor | Описание | Use case |
+| Executor | Описание | Когда использовать |
 |----------|----------|----------|
-| **SequentialExecutor** | Один task за раз | Local debug |
-| **LocalExecutor** | Параллельно на одной машине | Маленькие installations |
-| **CeleryExecutor** | Distributed через Celery + Redis/RabbitMQ | Mid-scale |
+| **SequentialExecutor** | Один task за раз | Локальная отладка |
+| **LocalExecutor** | Параллельно на одной машине | Небольшие инсталляции |
+| **CeleryExecutor** | Распределённо через Celery + Redis/RabbitMQ | Средний масштаб |
 | **KubernetesExecutor** | Каждый task — pod в K8s | Cloud-native |
-| **CeleryKubernetesExecutor** | Hybrid | Mixed workloads |
-| **DaskExecutor** | Dask cluster (deprecated) | — |
+| **CeleryKubernetesExecutor** | Гибрид | Смешанные нагрузки |
+| **DaskExecutor** | Dask-кластер (deprecated) | — |
 
 ## Q16. SequentialExecutor vs LocalExecutor?
 
-**SequentialExecutor** — один task в один момент. Используется только с **SQLite** (для dev). Production не подходит.
+**SequentialExecutor** — один task в один момент. Используется только с **SQLite** (для dev). Для production не подходит.
 
 **LocalExecutor** — параллельные tasks через **multiprocessing** на одной машине.
 
@@ -397,11 +397,11 @@ executor = LocalExecutor
 sql_alchemy_conn = postgresql+psycopg2://...
 ```
 
-LocalExecutor хорош для **маленьких installations** (~100 DAGs). Не масштабируется горизонтально.
+LocalExecutor хорош для **небольших инсталляций** (~100 DAG'ов). Горизонтально не масштабируется.
 
 ## Q17. (!) CeleryExecutor — как работает?
 
-`CeleryExecutor` использует **Celery** + message broker (RabbitMQ или Redis) для distribution.
+`CeleryExecutor` использует **Celery** + брокер сообщений (RabbitMQ или Redis) для распределения нагрузки.
 
 ```mermaid
 graph LR
@@ -413,35 +413,35 @@ graph LR
 
 **Workers** — отдельные процессы (на разных машинах), которые забирают tasks из брокера.
 
-**Scaling:** добавляешь больше workers.
+**Масштабирование:** добавляешь больше воркеров.
 
 ```bash
 airflow celery worker
 ```
 
 **Минусы:**
-- Сложнее operations (broker нужен)
-- Worker процессы — long-running (тяжелее update библиотек)
+- Сложнее в эксплуатации (нужен брокер)
+- Worker-процессы долгоживущие (труднее обновлять библиотеки)
 
 ## Q18. (!) KubernetesExecutor — почему рекомендуется?
 
 `KubernetesExecutor` запускает **каждый task** как **отдельный pod** в K8s.
 
 **Преимущества:**
-- **Полная изоляция** между tasks (разные dependencies, resource limits)
-- **Auto-scaling** через K8s
-- Нет постоянных workers (платим только за running tasks)
-- Cloud-native deployment
+- **Полная изоляция** между tasks (разные зависимости, лимиты ресурсов)
+- **Автомасштабирование** через K8s
+- Нет постоянных воркеров (платим только за выполняемые tasks)
+- Cloud-native деплой
 
 **Недостатки:**
-- Pod startup overhead (~5-30 sec на task)
-- Не подходит для **очень коротких** tasks (overhead > useful work)
+- Накладные расходы на старт пода (~5–30 сек на task)
+- Не подходит для **очень коротких** tasks (накладные расходы превышают полезную работу)
 
-В **2024** KubernetesExecutor — рекомендуемый выбор для production cloud deployments.
+В **2024** KubernetesExecutor — рекомендуемый выбор для облачных production-деплоев.
 
 ## Q19. (!) XCom — что это?
 
-**XCom (Cross-Communication)** — механизм обмена данными между tasks.
+**XCom (Cross-Communication)** — механизм обмена данными между задачами.
 
 ```python
 @task
@@ -468,7 +468,7 @@ def pull_xcom(**context):
 
 ## Q20. Connections и Variables?
 
-**Connections** — credentials для внешних систем:
+**Connections** — учётные данные для внешних систем:
 
 ```python
 from airflow.hooks.postgres_hook import PostgresHook
@@ -476,7 +476,7 @@ hook = PostgresHook(postgres_conn_id='my_postgres')
 df = hook.get_pandas_df("SELECT * FROM users")
 ```
 
-Создаются через UI или CLI. Хранятся в metadata DB (encrypted).
+Создаются через UI или CLI. Хранятся в metadata DB (в зашифрованном виде).
 
 **Variables** — конфигурация:
 
@@ -486,13 +486,13 @@ api_key = Variable.get("my_api_key")
 config = Variable.get("config", deserialize_json=True)
 ```
 
-**Best practice:** не хранить секреты в Variables. Использовать **Secrets Backends** (Vault, AWS Secrets Manager).
+**Хорошая практика:** не хранить секреты в Variables. Использовать **Secrets Backends** (Vault, AWS Secrets Manager).
 
 ## Q21. Hooks и operators?
 
-**Hook** — низкоуровневый wrapper над external system (DB, API, S3).
+**Hook** — низкоуровневая обёртка над внешней системой (DB, API, S3).
 
-**Operator** — high-level task, обычно использует hook внутри.
+**Operator** — высокоуровневый task, обычно использует hook внутри.
 
 ```python
 # Hook
@@ -507,11 +507,11 @@ task = PostgresOperator(
 )
 ```
 
-Hooks — для custom Python tasks. Operators — для declarative workflows.
+Hooks — для кастомных Python-задач. Operators — для декларативных workflow.
 
 ## Q22. (!) Что такое sensor?
 
-**Sensor** — task, который **ждёт** условия (file exists, table updated, etc).
+**Sensor** — task, который **ждёт** выполнения условия (появился файл, обновилась таблица и т.п.).
 
 ```python
 from airflow.sensors.filesystem import FileSensor
@@ -524,11 +524,11 @@ wait_for_file = FileSensor(
 )
 ```
 
-**Common sensors:**
-- `FileSensor`, `S3KeySensor` — wait for file
-- `ExternalTaskSensor` — wait for task in another DAG
-- `SqlSensor` — wait for SQL condition
-- `HttpSensor` — wait for HTTP response
+**Частые сенсоры:**
+- `FileSensor`, `S3KeySensor` — ждут появления файла
+- `ExternalTaskSensor` — ждёт task в другом DAG
+- `SqlSensor` — ждёт выполнения SQL-условия
+- `HttpSensor` — ждёт HTTP-ответ
 
 ## Q23. Reschedule mode для long-running sensors?
 
@@ -551,10 +551,10 @@ sensor = FileSensor(
 
 **Опции:**
 
-1. **Astronomer** (managed Airflow) — самый популярный SaaS
+1. **Astronomer** (управляемый Airflow) — самый популярный SaaS
 2. **MWAA** (Amazon Managed Workflows for Apache Airflow)
-3. **Cloud Composer** (Google managed)
-4. **Self-hosted на K8s** через [official Helm chart](https://airflow.apache.org/docs/helm-chart/stable/)
+3. **Cloud Composer** (управляемый сервис Google)
+4. **Self-hosted на K8s** через [официальный Helm-chart](https://airflow.apache.org/docs/helm-chart/stable/)
 
 **Рекомендуемая архитектура:**
 - KubernetesExecutor
@@ -569,30 +569,30 @@ helm install airflow apache-airflow/airflow
 
 ## Q25. (!) Сколько DAG'ов / tasks может выдержать?
 
-Зависит от executor и hardware:
+Зависит от executor'а и железа:
 
-- **LocalExecutor:** 50-200 DAG'ов, ~100 параллельных tasks
+- **LocalExecutor:** 50–200 DAG'ов, ~100 параллельных tasks
 - **CeleryExecutor:** 1000+ DAG'ов, тысячи параллельных tasks
-- **KubernetesExecutor:** ограничено только K8s ресурсами
+- **KubernetesExecutor:** ограничено только ресурсами K8s
 
-**Bottlenecks:**
-1. **Scheduler** — медленно сканирует много DAG'ов (тысячи)
-2. **Metadata DB** — может стать узким местом (нужны indexes, vacuum)
-3. **Network** — для distributed executors
+**Узкие места:**
+1. **Scheduler** — медленно сканирует большое число DAG'ов (тысячи)
+2. **Metadata DB** — может стать узким местом (нужны индексы, vacuum)
+3. **Сеть** — для распределённых executor'ов
 
-В **больших installations** разделяют DAG'и по нескольким Airflow instances.
+В **крупных инсталляциях** DAG'и разделяют по нескольким инстансам Airflow.
 
 ## Q26. Best practices для production DAGs?
 
-1. **Idempotency** — DAG должен быть безопасен к повторному запуску
-2. **Atomicity** — task делает одну вещь, можно re-run
-3. **Не импортируй тяжёлые libraries** на топ-level DAG (медленный parsing)
-4. **Используй Variables/Connections** для конфигурации, не hardcode
-5. **Pools** — ограничивать параллелизм для shared resources (DB, API)
+1. **Идемпотентность** — DAG должен быть безопасен к повторному запуску
+2. **Атомарность** — task делает одну вещь, можно перезапускать
+3. **Не импортируй тяжёлые библиотеки** на верхнем уровне DAG (медленный парсинг)
+4. **Используй Variables/Connections** для конфигурации, не зашивай значения в код
+5. **Pools** — ограничивать параллелизм для общих ресурсов (DB, API)
 6. **Tags** — для организации (`tags=['etl', 'critical']`)
 7. **Retries** — настраивать в `default_args`
-8. **SLA** — alerts если task не завершился вовремя
-9. **Test DAGs** — `pytest` для DAG validation
+8. **SLA** — алерты, если task не завершился вовремя
+9. **Тестируй DAG'и** — `pytest` для валидации DAG
 10. **CI/CD** — деплой DAG'ов через git
 
 ## Q27. (!) Airflow vs Prefect vs Dagster?
@@ -600,30 +600,30 @@ helm install airflow apache-airflow/airflow
 | Критерий | Airflow | Prefect | Dagster |
 |----------|---------|---------|---------|
 | Возраст | 2014 | 2018 | 2018 |
-| Standard | Apache top | Open-source | Open-source |
-| Workflow def | DAG в Python | Tasks + Flows | Assets |
-| Type system | Нет | Есть | Сильный (PEP 484) |
-| Local dev | Сложный | Простой | Простой |
-| UI | Хороший | Modern | Modern |
-| Adoption | Доминирующий | Рост | Рост |
+| Статус | Apache top-level | Open-source | Open-source |
+| Описание workflow | DAG в Python | Tasks + Flows | Assets |
+| Система типов | Нет | Есть | Сильная (PEP 484) |
+| Локальная разработка | Сложная | Простая | Простая |
+| UI | Хороший | Современный | Современный |
+| Распространённость | Доминирует | Растёт | Растёт |
 
-**Prefect** и **Dagster** — современные альтернативы, проще в local development. **Airflow** — стандарт de facto, огромная community.
+**Prefect** и **Dagster** — современные альтернативы, проще в локальной разработке. **Airflow** — стандарт де-факто, огромное сообщество.
 
-В **новых проектах** часто рассматривают Prefect/Dagster, особенно для dev experience. В **enterprise** — Airflow доминирует.
+В **новых проектах** часто рассматривают Prefect/Dagster, особенно ради удобства разработки. В **enterprise** доминирует Airflow.
 
 ## Q28. Какие минусы Airflow?
 
-1. **Slow local development** — поднять Airflow для теста медленно
-2. **Тяжёлая для маленьких задач** — нужна metadata DB, scheduler, executor, web UI
-3. **Tight coupling tasks ↔ Airflow API** — нельзя easily unit-test tasks
-4. **XCom limit** — не для больших данных
-5. **DAG parsing overhead** — Scheduler медленный с сотнями DAG'ов
-6. **Sensor scaling** — `poke` mode съедает workers
-7. **Не для streaming** — Airflow только для batch
-8. **`execution_date` vs `logical_date`** — путаница исторически
-9. **Сложности upgrade** — major versions могут ломать DAG'и
+1. **Медленная локальная разработка** — поднять Airflow для теста долго
+2. **Тяжёлый для маленьких задач** — нужны metadata DB, scheduler, executor, web UI
+3. **Тесная связанность tasks ↔ Airflow API** — task'и сложно покрыть unit-тестами
+4. **Лимит XCom** — не для больших данных
+5. **Накладные расходы на парсинг DAG** — Scheduler медленный при сотнях DAG'ов
+6. **Масштабирование сенсоров** — режим `poke` съедает воркеры
+7. **Не для streaming** — Airflow только для batch-обработки
+8. **`execution_date` vs `logical_date`** — исторически вносит путаницу
+9. **Сложности обновления** — мажорные версии могут ломать DAG'и
 
-В **2024** многие выбирают **Prefect или Dagster** для новых проектов из-за лучшего dev experience. Airflow остаётся стандартом enterprise.
+В **2024** многие выбирают **Prefect или Dagster** для новых проектов из-за более удобной разработки. Airflow остаётся стандартом в enterprise.
 
 ---
 
