@@ -1887,3 +1887,33 @@ html[data-design="editorial"] .kbd-help-close {
   border-radius: var(--border-radius-md); transition: background var(--duration-fast) var(--easing-default), color var(--duration-fast) var(--easing-default);
 }
 html[data-design="editorial"] .kbd-help-close:hover { color: var(--color-text-primary); background: var(--color-bg-secondary); }
+
+/* Кнопки самооценки уверенности (app.js attachConfidenceButtons — показываются
+   ПОСЛЕ верного ответа в обычном режиме, шлют grade в /api/confidence для SM-2;
+   это не AI-вызов, поэтому доступны и без AI). Классов confidence-* в CSS не было
+   → рендерились нативные серые кнопки (#efefef на тёмной теме, без паддингов).
+   Стилизуем единообразно с .flashcard-grade-* (та же суть — самооценка после ответа).
+   Выбранную кнопку (app.js вешает .selected + disabled на все) НЕ гасим: она
+   остаётся выделенной accent-wash, остальные disabled — приглушаются. */
+html[data-design="editorial"] .confidence-buttons {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin-top: var(--space-5);
+}
+html[data-design="editorial"] .confidence-label {
+  grid-column: 1 / -1; font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-secondary);
+}
+html[data-design="editorial"] .confidence-btn {
+  min-height: 48px; padding: var(--space-2) var(--space-4);
+  font-family: var(--font-family-body); font-size: var(--font-size-base);
+  background: var(--color-bg-secondary); color: var(--color-text-primary);
+  border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-md);
+  cursor: pointer; touch-action: manipulation;
+  transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
+}
+html[data-design="editorial"] .confidence-btn:hover:not(:disabled) { border-color: var(--color-text-secondary); background: var(--color-bg-tertiary); }
+html[data-design="editorial"] .confidence-btn.selected { border-color: var(--color-accent-primary); background: var(--color-accent-wash); }
+html[data-design="editorial"] .confidence-btn:disabled { cursor: default; }
+html[data-design="editorial"] .confidence-btn:disabled:not(.selected) { opacity: 0.5; }
+@media (max-width: 600px) {
+  html[data-design="editorial"] .confidence-buttons { grid-template-columns: 1fr; }
+}
