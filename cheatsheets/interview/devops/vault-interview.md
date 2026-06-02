@@ -18,7 +18,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `HashiCorp Vault`
 
-`HashiCorp Vault` — secrets management система. Centralized storage и access control для credentials, API keys, certificates. Использует **dynamic secrets**, **encryption-as-a-service**, **identity-based access**. С 2023 — license changed (BSL), форк **OpenBao** (Linux Foundation).
+`HashiCorp Vault` — система управления секретами (secrets management). Централизованное хранилище и контроль доступа для credentials, API-ключей, сертификатов. Использует **динамические секреты**, **шифрование как сервис** (encryption-as-a-service) и **доступ на основе identity**. В 2023 году сменилась лицензия (BSL), появился форк **OpenBao** (Linux Foundation).
 
 ## Полезные ссылки
 
@@ -77,36 +77,36 @@ updated: "2026-04-25"
 
 ## Q1. (!) Что такое Vault?
 
-**HashiCorp Vault** — secrets management system (с 2015).
+**HashiCorp Vault** — система управления секретами (с 2015 года).
 
-**Core capabilities:**
-- **Centralized secrets storage** (instead .env files, hardcoded creds)
-- **Dynamic secrets** — short-lived, auto-rotated
-- **Identity-based access** — fine-grained policies
-- **Encryption-as-a-service** — encrypt/decrypt API
-- **PKI** — issue TLS certificates
-- **Audit logs** — full traceability
+**Ключевые возможности:**
+- **Централизованное хранилище секретов** (вместо `.env`-файлов и захардкоженных credentials)
+- **Динамические секреты** — короткоживущие, с автоматической ротацией
+- **Доступ на основе identity** — гранулярные политики
+- **Шифрование как сервис** — API для encrypt/decrypt
+- **PKI** — выпуск TLS-сертификатов
+- **Audit logs** — полная прослеживаемость
 
 **Применения:**
-- Replace hardcoded API keys, DB passwords
-- Issue short-lived DB credentials
-- TLS cert management
-- Application encryption
-- SSH access management
+- Замена захардкоженных API-ключей и паролей к БД
+- Выпуск короткоживущих credentials к БД
+- Управление TLS-сертификатами
+- Шифрование на стороне приложения
+- Управление SSH-доступом
 
 ## Q2. (!) Static vs dynamic secrets?
 
-**Static secrets:**
-- Stored as-is (KV engine)
-- Same value over time
-- Manually rotated
-- Examples: API keys, config values
+**Статические секреты (static secrets):**
+- Хранятся как есть (KV engine)
+- Значение не меняется со временем
+- Ротируются вручную
+- Примеры: API-ключи, значения конфигурации
 
-**Dynamic secrets:**
-- **Generated on-demand**
-- **Short TTL** (minutes/hours)
-- **Auto-revoked**
-- Examples: DB credentials (Vault creates user on demand), AWS keys
+**Динамические секреты (dynamic secrets):**
+- **Генерируются по запросу (on-demand)**
+- **Короткий TTL** (минуты/часы)
+- **Автоматически отзываются**
+- Примеры: credentials к БД (Vault создаёт пользователя по запросу), ключи AWS
 
 ```bash
 # Dynamic DB credentials
@@ -114,39 +114,39 @@ vault read database/creds/my-role
 # Returns NEW user/password, expires in 1 hour
 ```
 
-**Преимущество dynamic:** **breach impact limited** — credentials short-lived, revoked.
+**Преимущество динамических секретов:** **ограниченный ущерб при компрометации** — credentials короткоживущие и отзываются.
 
 ## Q3. Architecture (sealed/unsealed, storage backend)?
 
-**Vault states:**
-- **Sealed** — encrypted, не accept requests (default at start)
-- **Unsealed** — operational
+**Состояния Vault:**
+- **Sealed** (запечатан) — данные зашифрованы, запросы не принимаются (состояние по умолчанию при старте)
+- **Unsealed** (распечатан) — работоспособен
 
-**Unsealing:** requires **unseal keys** (Shamir's Secret Sharing — split в N pieces, threshold M of N to unseal).
+**Распечатывание (unsealing):** требует **unseal keys** (Shamir's Secret Sharing — мастер-ключ делится на N частей, для распечатывания нужно M из N).
 
-**Storage backend:**
-- Vault doesn't store data itself
-- Backed by: **Integrated Storage (Raft, recommended)**, Consul, Filesystem, S3, MySQL, PostgreSQL, etc.
-- All data **encrypted** before write к backend
+**Storage backend (бэкенд хранения):**
+- Vault сам данные не хранит
+- В качестве бэкенда: **Integrated Storage (Raft, рекомендуется)**, Consul, файловая система, S3, MySQL, PostgreSQL и т. д.
+- Все данные **шифруются** перед записью в бэкенд
 
-**Components:**
+**Компоненты:**
 - Vault Server
 - Storage backend
-- Auth methods
+- Методы аутентификации (auth methods)
 - Secrets engines
 - Audit devices
 
 ## Q4. (!) KV (Key-Value) engine — v1 vs v2?
 
-**KV v1** (legacy):
-- Simple key-value
-- No versioning
-- Overwrite secrets
+**KV v1** (устаревший):
+- Простой key-value
+- Без версионирования
+- Секреты перезаписываются
 
-**KV v2** (recommended):
-- **Versioning** — keep history
-- **Soft delete + restore**
-- **Metadata** (CAS, custom)
+**KV v2** (рекомендуется):
+- **Версионирование** — хранится история
+- **Мягкое удаление (soft delete) + восстановление**
+- **Метаданные** (CAS, кастомные)
 - **Subkeys**
 
 ```bash
@@ -163,7 +163,7 @@ vault kv get kv/myapp/db
 vault kv get -version=1 kv/myapp/db
 ```
 
-**В 2025** — always KV v2 для new deployments.
+**В 2025 году** — для новых развёртываний всегда KV v2.
 
 ## Q5. Database engine (dynamic DB credentials)?
 
@@ -188,9 +188,9 @@ vault read database/creds/readonly
 # Returns username + password, valid 1 hour
 ```
 
-**Vault creates DB user**, application uses, Vault revokes after TTL.
+**Vault создаёт пользователя в БД**, приложение его использует, Vault отзывает после истечения TTL.
 
-**Supported DBs:** PostgreSQL, MySQL, Mongo, Cassandra, Oracle, Redis, MS-SQL, и др.
+**Поддерживаемые БД:** PostgreSQL, MySQL, Mongo, Cassandra, Oracle, Redis, MS-SQL и др.
 
 ## Q6. AWS engine (dynamic IAM credentials)?
 
@@ -208,13 +208,13 @@ vault read aws/creds/my-role
 # Returns ephemeral AWS access_key + secret
 ```
 
-Vault creates **IAM user** dynamically. Application uses, Vault revokes (deletes IAM user) after TTL.
+Vault динамически создаёт **IAM-пользователя**. Приложение его использует, Vault отзывает (удаляет IAM-пользователя) после истечения TTL.
 
-**Use case:** developer needs AWS access for 1 hour debugging. Vault provides ephemeral creds.
+**Use case:** разработчику нужен доступ к AWS на 1 час для отладки. Vault выдаёт эфемерные credentials.
 
 ## Q7. (!) PKI engine (TLS certificates)?
 
-**Vault как Certificate Authority (CA)**.
+**Vault в роли удостоверяющего центра (Certificate Authority, CA)**.
 
 ```bash
 vault secrets enable pki
@@ -229,16 +229,16 @@ vault write pki/issue/my-role \
 ```
 
 **Use case:**
-- mTLS между microservices — issue short-lived certs
-- HTTPS certs (alternative Let's Encrypt для internal)
-- Code signing
-- SSH CA для signing keys
+- mTLS между микросервисами — выпуск короткоживущих сертификатов
+- HTTPS-сертификаты (альтернатива Let's Encrypt для внутренних нужд)
+- Подпись кода (code signing)
+- SSH CA для подписи ключей
 
-**Cert-manager** в K8s integrates с Vault PKI.
+**Cert-manager** в K8s интегрируется с Vault PKI.
 
 ## Q8. Transit engine (encryption-as-a-service)?
 
-**Vault encrypts/decrypts data — never stores it.**
+**Vault шифрует/расшифровывает данные — но никогда их не хранит.**
 
 ```bash
 vault secrets enable transit
@@ -253,18 +253,18 @@ vault write transit/decrypt/my-key ciphertext="vault:v1:..."
 # Returns base64 plaintext
 ```
 
-**Application uses Vault как encryption API**:
-- Vault holds encryption keys
-- Application sends data, gets encrypted/decrypted
-- Keys never leave Vault
+**Приложение использует Vault как API шифрования**:
+- Vault хранит ключи шифрования
+- Приложение отправляет данные, получает зашифрованные/расшифрованные
+- Ключи никогда не покидают Vault
 
-**Key rotation** automatic, transparent.
+**Ротация ключей** автоматическая и прозрачная.
 
-**Use case:** PCI / HIPAA compliance, app encrypts data в DB через Vault.
+**Use case:** соответствие PCI / HIPAA, приложение шифрует данные в БД через Vault.
 
 ## Q9. (!) Token authentication?
 
-**Default auth** — token-based.
+**Аутентификация по умолчанию** — на основе токенов.
 
 ```bash
 # Get token
@@ -275,17 +275,17 @@ export VAULT_TOKEN="hvs.CAESI..."
 vault read kv/myapp/db
 ```
 
-**Token properties:**
-- TTL (auto-expires)
-- Policies (what allowed)
-- Renewable / revocable
-- Periodic / batch tokens
+**Свойства токена:**
+- TTL (автоматически истекает)
+- Политики (что разрешено)
+- Продлеваемый / отзываемый
+- Periodic / batch токены
 
-**Periodic tokens** — auto-renewed indefinitely if used regularly.
+**Periodic-токены** — продлеваются автоматически и бессрочно, если используются регулярно.
 
 ## Q10. AppRole?
 
-**AppRole** — auth для **applications** (machine-to-machine).
+**AppRole** — аутентификация для **приложений** (machine-to-machine).
 
 ```bash
 vault auth enable approle
@@ -306,15 +306,15 @@ vault write auth/approle/login \
   role_id=... secret_id=...
 ```
 
-**Two factors:**
-- **Role ID** — identifies app (long-lived)
-- **Secret ID** — credentials (short-lived)
+**Два фактора:**
+- **Role ID** — идентифицирует приложение (долгоживущий)
+- **Secret ID** — credentials (короткоживущий)
 
-**Usage:** distribute Role ID via config, Secret ID separately (CI/CD secret, etc.).
+**Использование:** Role ID раздаётся через конфигурацию, Secret ID — отдельно (как CI/CD-секрет и т. п.).
 
 ## Q11. (!) Kubernetes auth?
 
-**Kubernetes auth** — authenticates pods using **service account tokens**.
+**Kubernetes auth** — аутентифицирует поды по **токенам service account**.
 
 ```bash
 vault auth enable kubernetes
@@ -331,13 +331,13 @@ vault write auth/kubernetes/login \
   role=my-app jwt=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
 ```
 
-**Pod gets token** → exchanges с Vault → gets Vault token → reads secrets.
+**Под получает токен** → обменивает его в Vault → получает токен Vault → читает секреты.
 
-**Best practice** для apps в K8s.
+**Best practice** для приложений в K8s.
 
 ## Q12. AWS, Azure, GCP IAM auth?
 
-**Cloud IAM auth** — authenticate workloads using cloud's IAM identity.
+**Cloud IAM auth** — аутентифицирует нагрузки (workloads) по IAM-identity облака.
 
 ```bash
 vault auth enable aws
@@ -351,13 +351,13 @@ vault write auth/aws/role/my-app \
 vault login -method=aws role=my-app
 ```
 
-**Identity from cloud** verified by Vault — no shared secrets.
+**Identity из облака** проверяется Vault — без общих секретов.
 
-Same idea для Azure (managed identity) и GCP (service accounts).
+Та же идея для Azure (managed identity) и GCP (service accounts).
 
 ## Q13. JWT/OIDC?
 
-**OIDC** — auth via OIDC provider (Auth0, Okta, Google, GitHub).
+**OIDC** — аутентификация через OIDC-провайдера (Auth0, Okta, Google, GitHub).
 
 ```bash
 vault auth enable oidc
@@ -370,13 +370,13 @@ vault login -method=oidc
 # Browser opens для login
 ```
 
-**SSO** — users login через corporate SSO к Vault.
+**SSO** — пользователи входят в Vault через корпоративный SSO.
 
-**JWT auth** — generic JWT tokens (not full OIDC flow).
+**JWT auth** — обычные JWT-токены (без полного OIDC-флоу).
 
 ## Q14. (!) Policies (HCL)?
 
-**Policy** = list of allowed paths + operations.
+**Политика (policy)** = список разрешённых путей и операций над ними.
 
 ```hcl
 # Read-only access к KV
@@ -392,19 +392,19 @@ path "kv/data/myapp/db" {
 # Deny anything else (default-deny implicit)
 ```
 
-**Capabilities:**
+**Capabilities (возможности):**
 - `create`, `read`, `update`, `delete`, `list`
-- `sudo` — required для some root operations
-- `deny` — explicit deny
+- `sudo` — требуется для некоторых root-операций
+- `deny` — явный запрет
 
-**Apply policy к token / role:**
+**Применить политику к токену / роли:**
 ```bash
 vault token create -policy=my-policy
 ```
 
 ## Q15. Identity (entities, groups)?
 
-**Entity** = user (across multiple auth methods).
+**Entity** = пользователь (объединяет разные методы аутентификации).
 
 ```
 Entity: alice
@@ -413,15 +413,15 @@ Entity: alice
   └── alias: alice@oidc (OIDC auth)
 ```
 
-**Group** = collection of entities.
+**Group** = набор entity.
 
-**Policies attached к entities/groups** — централизованное управление.
+**Политики привязываются к entity/группам** — централизованное управление.
 
 ## Q16. (!) Sealing / unsealing?
 
-**Vault starts SEALED** — encrypted, non-functional.
+**Vault стартует ЗАПЕЧАТАННЫМ (SEALED)** — данные зашифрованы, сервис нерабочий.
 
-**To unseal:** provide **threshold (M)** unseal keys (out of total N).
+**Чтобы распечатать:** предоставить **пороговое число (M)** unseal-ключей (из общего числа N).
 
 ```bash
 # Initialize (generates keys)
@@ -436,13 +436,13 @@ vault operator unseal <key3>
 # Now operational
 ```
 
-**Зачем:** даже если attacker compromises Vault server — данные encrypted, unseal keys distributed.
+**Зачем:** даже если атакующий скомпрометирует сервер Vault — данные зашифрованы, а unseal-ключи распределены между разными людьми.
 
-**Restart** = sealed again. Production cluster needs unseal каждый restart.
+**Перезапуск** = снова sealed. Production-кластер нужно распечатывать при каждом рестарте.
 
 ## Q17. Auto-unseal (KMS)?
 
-**Auto-unseal** — Vault uses cloud KMS (AWS KMS, GCP KMS, Azure Key Vault) для unsealing.
+**Auto-unseal** — Vault использует облачный KMS (AWS KMS, GCP KMS, Azure Key Vault) для распечатывания.
 
 ```hcl
 seal "awskms" {
@@ -451,23 +451,23 @@ seal "awskms" {
 }
 ```
 
-**Effect:** Vault auto-unseals on startup using KMS-managed key.
+**Эффект:** Vault автоматически распечатывается при старте, используя ключ под управлением KMS.
 
-**Trade-off:** Vault dependent на cloud KMS. If KMS down → Vault sealed.
+**Компромисс:** Vault зависит от облачного KMS. Если KMS недоступен → Vault остаётся sealed.
 
-**В production** — recommended (operational simplicity).
+**В production** — рекомендуется (проще в эксплуатации).
 
 ## Q18. HA (Raft, Consul backend)?
 
-**Vault HA modes:**
+**Режимы HA в Vault:**
 
-**Integrated Storage (Raft)** — recommended (с 2020):
-- Built-in
-- 3-5 nodes cluster
-- Active/standby (only active accepts writes)
-- Failover automatic
+**Integrated Storage (Raft)** — рекомендуется (с 2020 года):
+- Встроенный
+- Кластер из 3-5 узлов
+- Active/standby (только active принимает записи)
+- Автоматический failover
 
-**Consul backend** — older approach, separate Consul cluster.
+**Consul backend** — более старый подход, отдельный кластер Consul.
 
 ```hcl
 storage "raft" {
@@ -477,7 +477,7 @@ storage "raft" {
 ha_storage "raft" { ... }
 ```
 
-**В 2025** — Raft default. Consul backend obsolete для Vault.
+**В 2025 году** — Raft по умолчанию. Consul backend для Vault устарел.
 
 ## Q19. Backup / disaster recovery?
 
@@ -488,19 +488,19 @@ vault operator raft snapshot restore backup.snap
 ```
 
 **Disaster Recovery (Enterprise):**
-- DR replication к secondary cluster
+- DR-репликация на вторичный кластер
 - Read-only standby
-- Failover capability
+- Возможность failover
 
 **Performance Replication (Enterprise):**
-- Multi-region active clusters
-- Local secrets reads
+- Active-кластеры в нескольких регионах
+- Локальное чтение секретов
 
-**Backups should be encrypted** (snapshots contain unencrypted data!).
+**Бэкапы должны быть зашифрованы** (снапшоты содержат незашифрованные данные!).
 
 ## Q20. (!) Vault Agent?
 
-**Vault Agent** — sidecar / daemon for apps that don't natively support Vault.
+**Vault Agent** — sidecar / демон для приложений, которые не поддерживают Vault нативно.
 
 ```hcl
 # vault-agent.hcl
@@ -523,16 +523,16 @@ template {
 }
 ```
 
-**Capabilities:**
-- **Auto-auth** — automatically refreshes Vault token
-- **Templates** — render secrets к files (e.g., env vars)
-- **Caching** — reduces Vault load
+**Возможности:**
+- **Auto-auth** — автоматически обновляет токен Vault
+- **Templates** — рендерит секреты в файлы (например, переменные окружения)
+- **Caching** — снижает нагрузку на Vault
 
-App reads file, не нужно знать про Vault.
+Приложение читает файл, и ему не нужно знать про Vault.
 
 ## Q21. Vault Operator (Kubernetes)?
 
-**Vault Helm chart** для deploy в K8s.
+**Vault Helm chart** для развёртывания в K8s.
 
 ```bash
 helm install vault hashicorp/vault \
@@ -540,15 +540,15 @@ helm install vault hashicorp/vault \
   --set "server.ha.replicas=3"
 ```
 
-**Features:**
-- HA Raft cluster
-- Auto-unseal с cloud KMS
-- TLS configuration
+**Возможности:**
+- HA-кластер на Raft
+- Auto-unseal с облачным KMS
+- Настройка TLS
 - Persistent storage
 
 ## Q22. Sidecar injector (K8s)?
 
-**Vault Sidecar Injector** — auto-inject Vault Agent sidecar в pods (annotations-based).
+**Vault Sidecar Injector** — автоматически инъектирует sidecar Vault Agent в поды (на основе аннотаций).
 
 ```yaml
 # Pod annotations
@@ -562,13 +562,13 @@ vault.hashicorp.com/agent-inject-template-db: |
   {{- end }}
 ```
 
-**Effect:** sidecar fetches secrets, writes к shared volume, app reads from `/vault/secrets/db`.
+**Эффект:** sidecar получает секреты, пишет их в общий volume, приложение читает из `/vault/secrets/db`.
 
-**No Vault SDK** в app code — just file reads.
+**Никакого Vault SDK** в коде приложения — только чтение файлов.
 
 ## Q23. External Secrets Operator?
 
-**External Secrets Operator (ESO)** — K8s operator, syncs external secret stores (Vault, AWS, GCP, Azure) к K8s Secrets.
+**External Secrets Operator (ESO)** — оператор K8s, синхронизирует внешние хранилища секретов (Vault, AWS, GCP, Azure) с K8s Secrets.
 
 ```yaml
 apiVersion: external-secrets.io/v1beta1
@@ -587,79 +587,79 @@ spec:
         property: password
 ```
 
-**Effect:** ESO fetches from Vault, creates K8s Secret. Apps use K8s Secret normally.
+**Эффект:** ESO забирает данные из Vault, создаёт K8s Secret. Приложения работают с K8s Secret как обычно.
 
-**Vs Vault Agent injector:** ESO simpler если уже invested в K8s Secrets workflow.
+**В сравнении с Vault Agent injector:** ESO проще, если вы уже выстроили рабочий процесс вокруг K8s Secrets.
 
 ## Q24. (!) Best practices?
 
-1. **Auto-unseal** в production (cloud KMS)
-2. **HA cluster** (3+ Raft nodes)
-3. **TLS everywhere** (Vault API, between nodes)
-4. **Audit logs enabled** (file, syslog, или socket device)
-5. **Least privilege** policies
-6. **Short TTLs** для tokens, secrets
-7. **Periodic backups** (snapshots, encrypted)
-8. **Disaster recovery** plan tested
-9. **Secrets rotation** automation
-10. **Monitoring** (telemetry → Prometheus)
-11. **Immutable infrastructure** (Vault config in git, deployed via Terraform)
-12. **Network isolation** (private subnet, no public IP)
+1. **Auto-unseal** в production (облачный KMS)
+2. **HA-кластер** (3+ узлов Raft)
+3. **TLS повсюду** (Vault API, между узлами)
+4. **Включённые audit logs** (file, syslog или socket device)
+5. Политики по принципу **наименьших привилегий** (least privilege)
+6. **Короткие TTL** для токенов и секретов
+7. **Регулярные бэкапы** (снапшоты, зашифрованные)
+8. Протестированный план **disaster recovery**
+9. **Автоматизация ротации секретов**
+10. **Мониторинг** (телеметрия → Prometheus)
+11. **Immutable infrastructure** (конфигурация Vault в git, развёртывание через Terraform)
+12. **Сетевая изоляция** (приватная подсеть, без публичного IP)
 
 ## Q25. (!) Vault vs alternatives (AWS Secrets Manager, Doppler)?
 
-| Tool | Hosting | Cloud-agnostic | Dynamic secrets | Cost |
+| Инструмент | Хостинг | Cloud-agnostic | Динамические секреты | Стоимость |
 |------|---------|----------------|-----------------|------|
-| **HashiCorp Vault** | Self-host или cloud | Yes | Yes | Free OSS, Enterprise paid |
-| **AWS Secrets Manager** | AWS managed | No (AWS-only) | Limited (RDS rotation) | $0.40/secret/month |
-| **Azure Key Vault** | Azure managed | No | Limited | $0.03/10K ops |
-| **GCP Secret Manager** | GCP managed | No | Limited | $0.06/secret/month |
-| **Doppler** | SaaS | Yes | No | $0-$25/month/user |
-| **1Password Secrets** | SaaS | Yes | No | Subscription |
-| **Infisical** | Self-host или SaaS | Yes | Yes | Free OSS |
-| **OpenBao** | Self-host (Vault fork) | Yes | Yes | Free OSS |
+| **HashiCorp Vault** | Self-host или облако | Да | Да | Бесплатный OSS, Enterprise — платно |
+| **AWS Secrets Manager** | Управляется AWS | Нет (только AWS) | Ограниченно (ротация RDS) | $0.40/секрет/месяц |
+| **Azure Key Vault** | Управляется Azure | Нет | Ограниченно | $0.03/10K операций |
+| **GCP Secret Manager** | Управляется GCP | Нет | Ограниченно | $0.06/секрет/месяц |
+| **Doppler** | SaaS | Да | Нет | $0-$25/месяц/пользователь |
+| **1Password Secrets** | SaaS | Да | Нет | Подписка |
+| **Infisical** | Self-host или SaaS | Да | Да | Бесплатный OSS |
+| **OpenBao** | Self-host (форк Vault) | Да | Да | Бесплатный OSS |
 
-**Vault — most powerful, but complex ops.**
+**Vault — самый мощный, но сложный в эксплуатации.**
 
-**For multi-cloud / heavy use cases** — Vault wins. **For simple AWS apps** — Secrets Manager easier.
+**Для multi-cloud / тяжёлых сценариев** выигрывает Vault. **Для простых приложений на AWS** проще Secrets Manager.
 
 ## Q26. License change (BSL) и OpenBao fork?
 
-**В 2023** HashiCorp changed Vault license: **MPL 2.0 → BSL** (Business Source License).
+**В 2023 году** HashiCorp сменила лицензию Vault: **MPL 2.0 → BSL** (Business Source License).
 
-**BSL restrictions:**
-- Cannot offer Vault **as a service** к third parties (without commercial license)
-- Otherwise — free для self-host, modify
+**Ограничения BSL:**
+- Нельзя предлагать Vault **как сервис** третьим сторонам (без коммерческой лицензии)
+- В остальном — бесплатно для self-host и модификации
 
-**Linux Foundation forked** Vault → **OpenBao** (2024, fully MPL 2.0).
+**Linux Foundation сделала форк** Vault → **OpenBao** (2024 год, полностью MPL 2.0).
 
-**OpenBao status в 2025:**
-- Active development
-- Compatible с Vault HCL configs
-- Some divergence over time
-- Adopted by IBM, GitLab, и others
+**Статус OpenBao в 2025 году:**
+- Активная разработка
+- Совместимость с HCL-конфигами Vault
+- Со временем — некоторое расхождение
+- Внедрён в IBM, GitLab и других компаниях
 
-**Choice:**
-- **Stay HashiCorp Vault** — most features, mature
-- **Switch к OpenBao** — fully open-source guaranteed
-- **Watch ecosystem** — OpenBao gaining traction
+**Выбор:**
+- **Остаться на HashiCorp Vault** — больше всего фич, зрелый
+- **Перейти на OpenBao** — гарантированно полностью open-source
+- **Наблюдать за экосистемой** — OpenBao набирает популярность
 
 ---
 
 ## See also
 
-- [Consul](consul-interview.md) — другой HashiCorp tool
-- [Ansible](ansible-interview.md) — для secrets distribution
-- [Istio](istio-service-mesh-interview.md) — mTLS via Vault PKI
-- [Secrets Management](../security/secrets-management-interview.md) — concepts
-- [Application Security](../security/application-security-interview.md) — context
+- [Consul](consul-interview.md) — другой инструмент HashiCorp
+- [Ansible](ansible-interview.md) — для распространения секретов
+- [Istio](istio-service-mesh-interview.md) — mTLS через Vault PKI
+- [Secrets Management](../security/secrets-management-interview.md) — концепции
+- [Application Security](../security/application-security-interview.md) — контекст
 - [Kubernetes](kubernetes-interview.md) — Vault в K8s
-- [Микросервисы](../architecture/microservices-interview.md) — secrets для microservices
-- [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — secrets management
-- [AWS](../cloud/aws-interview.md) — Secrets Manager comparison
-- [OAuth2](../security/oauth2-interview.md) — auth flows
-- [JWT](../security/jwt-interview.md) — JWT auth
-- [Zero Trust](../security/zero-trust-interview.md) — Vault key component
+- [Микросервисы](../architecture/microservices-interview.md) — секреты для микросервисов
+- [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — управление секретами
+- [AWS](../cloud/aws-interview.md) — сравнение с Secrets Manager
+- [OAuth2](../security/oauth2-interview.md) — флоу аутентификации
+- [JWT](../security/jwt-interview.md) — аутентификация по JWT
+- [Zero Trust](../security/zero-trust-interview.md) — Vault как ключевой компонент
 
 - [Ansible](ansible-interview.md)
 - [ArgoCD и GitOps](argocd-interview.md)

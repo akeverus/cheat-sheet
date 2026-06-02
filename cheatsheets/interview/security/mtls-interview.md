@@ -18,7 +18,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `mTLS (Mutual TLS)`
 
-`mTLS (Mutual TLS)` — TLS handshake, где **обе стороны** verify identity (vs standard TLS — только server). Foundation для **Zero Trust** networking. Used в microservices (service mesh), B2B APIs, IoT, banking. Requires PKI infrastructure для cert management.
+`mTLS (Mutual TLS)` — TLS handshake, где **обе стороны** проверяют identity друг друга (в отличие от обычного TLS, где проверяется только сервер). Фундамент для **Zero Trust**-сетей. Применяется в микросервисах (service mesh), B2B API, IoT, банковской сфере. Требует PKI-инфраструктуры для управления сертификатами.
 
 ## Полезные ссылки
 
@@ -69,53 +69,53 @@ updated: "2026-04-25"
 
 ## Q1. (!) Что такое mTLS?
 
-**mTLS (Mutual TLS)** — modification standard TLS handshake.
+**mTLS (Mutual TLS)** — модификация стандартного TLS handshake.
 
-**Standard TLS:**
-- **Server** presents cert
-- **Client** verifies server
-- Client **does NOT** authenticate via cert
+**Обычный TLS:**
+- **Сервер** предъявляет сертификат
+- **Клиент** проверяет сервер
+- Клиент **НЕ** аутентифицируется через сертификат
 
 **mTLS:**
-- **Both** server и client present certs
-- **Both** verify each other
-- **Mutual authentication**
+- **И** сервер, **и** клиент предъявляют сертификаты
+- **Обе** стороны проверяют друг друга
+- **Взаимная аутентификация**
 
-**Result:** server **knows** which client is connecting (cryptographically verified, not just IP/credentials).
+**Итог:** сервер **знает**, какой клиент к нему подключается (криптографически подтверждено, а не просто по IP/учётным данным).
 
 ## Q2. (!) TLS vs mTLS — отличия?
 
-| Aspect | TLS | mTLS |
+| Аспект | TLS | mTLS |
 |--------|-----|------|
-| Server auth | ✓ | ✓ |
-| Client auth | ❌ (or other mechanism) | ✓ (via cert) |
-| Encryption | ✓ | ✓ |
-| Use case | Public web | Service-to-service, B2B |
-| Cert management | Server cert only | Both sides |
-| Complexity | Low | High |
-| PKI required | For CA | Full PKI |
+| Аутентификация сервера | ✓ | ✓ |
+| Аутентификация клиента | ❌ (или другой механизм) | ✓ (через сертификат) |
+| Шифрование | ✓ | ✓ |
+| Сценарий | Публичный веб | Service-to-service, B2B |
+| Управление сертификатами | Только сертификат сервера | Обе стороны |
+| Сложность | Низкая | Высокая |
+| Нужен PKI | Для CA | Полноценный PKI |
 
-**TLS:** browser к bank.com (browser doesn't have cert).
-**mTLS:** bank-A.com к bank-B.com (both have organizational certs).
+**TLS:** браузер к bank.com (у браузера нет сертификата).
+**mTLS:** bank-A.com к bank-B.com (у обоих есть организационные сертификаты).
 
 ## Q3. (!) Зачем mTLS?
 
-**Use cases:**
+**Сценарии применения:**
 
-1. **Service-to-service** in microservices (Zero Trust)
-2. **B2B APIs** (high-value integrations)
-3. **IoT devices** (device authentication)
-4. **Internal admin tools** (extra security layer)
-5. **Banking, finance** (regulatory compliance)
-6. **Healthcare** (HIPAA)
-7. **Government** (compliance requirements)
+1. **Service-to-service** в микросервисах (Zero Trust)
+2. **B2B API** (высокоценные интеграции)
+3. **IoT-устройства** (аутентификация устройств)
+4. **Внутренние admin-инструменты** (дополнительный слой защиты)
+5. **Банки, финансы** (регуляторный комплаенс)
+6. **Здравоохранение** (HIPAA)
+7. **Госсектор** (требования комплаенса)
 
-**Benefits:**
-- **Strong authentication** (cryptographic, not passwords)
-- **No shared secrets** к leak (no API keys)
-- **Service identity** assured
-- **Encrypted transit** (TLS benefit)
-- **Audit trail** (cert identity logged)
+**Преимущества:**
+- **Сильная аутентификация** (криптографическая, а не по паролям)
+- **Нет общих секретов**, которые можно утечь (нет API-ключей)
+- **Подтверждённая identity сервиса**
+- **Шифрование трафика** (за счёт TLS)
+- **Аудит-след** (identity сертификата логируется)
 
 ## Q4. (!) mTLS handshake?
 
@@ -127,28 +127,28 @@ updated: "2026-04-25"
 5. Encrypted communication
 ```
 
-**Differences from TLS:**
-- **CertificateRequest** (server asks for client cert)
-- **CertificateVerify** (client signs handshake с private key, proving cert ownership)
+**Отличия от TLS:**
+- **CertificateRequest** (сервер запрашивает сертификат клиента)
+- **CertificateVerify** (клиент подписывает handshake своим private key, доказывая владение сертификатом)
 
-**Both certs validated** through CA chain.
+**Оба сертификата проверяются** по цепочке CA.
 
-**TLS 1.3 simplifies** handshake (1-RTT vs 2-RTT TLS 1.2).
+**TLS 1.3 упрощает** handshake (1-RTT против 2-RTT в TLS 1.2).
 
 ## Q5. X.509 certificates?
 
-**X.509** — standard format для public-key certificates.
+**X.509** — стандартный формат сертификатов с открытым ключом.
 
-**Certificate содержит:**
-- **Subject** (who owns)
-- **Issuer** (who signed — CA)
-- **Public key**
-- **Serial number**
-- **Validity period** (notBefore, notAfter)
-- **Extensions** (SANs — Subject Alternative Names, key usage, etc.)
-- **Signature** (CA's signature)
+**Сертификат содержит:**
+- **Subject** (кому принадлежит)
+- **Issuer** (кто подписал — CA)
+- **Public key** (открытый ключ)
+- **Serial number** (серийный номер)
+- **Срок действия** (notBefore, notAfter)
+- **Расширения** (SAN — Subject Alternative Names, key usage и т.д.)
+- **Подпись** (подпись CA)
 
-**Format:** PEM (base64 text), DER (binary).
+**Формат:** PEM (base64-текст), DER (бинарный).
 
 ```
 -----BEGIN CERTIFICATE-----
@@ -156,7 +156,7 @@ MIIDXTCCAkWgAwIBAgIJAK...
 -----END CERTIFICATE-----
 ```
 
-**Verification:** check signature using CA's public key.
+**Проверка:** валидация подписи с помощью открытого ключа CA.
 
 ## Q6. Certificate Authority (CA) hierarchy?
 
@@ -170,103 +170,103 @@ Root CA (self-signed, trust anchor)
 ```
 
 **Root CA:**
-- **Trust anchor** (browsers, OSes pre-install)
-- **Self-signed**
-- **Stored offline** для security
+- **Точка доверия** (предустановлен в браузерах и ОС)
+- **Self-signed** (самоподписанный)
+- **Хранится офлайн** ради безопасности
 
-**Intermediate CAs:**
-- Signed by Root
-- Used to **issue end certs**
-- **Allow easier revocation** (revoke Intermediate, not Root)
+**Intermediate CA (промежуточные):**
+- Подписаны Root
+- Используются для **выпуска конечных сертификатов**
+- **Упрощают отзыв** (отзываем Intermediate, а не Root)
 
-**Chain of trust:** verify cert → check Issuer (Intermediate) → check that's signed by Root → trust.
+**Цепочка доверия:** проверяем сертификат → проверяем Issuer (Intermediate) → проверяем, что он подписан Root → доверяем.
 
 ## Q7. (!) Public Key Infrastructure (PKI)?
 
-**PKI** — infrastructure для managing certificates.
+**PKI** — инфраструктура для управления сертификатами.
 
-**Components:**
-- **CA** — issues certs
-- **Registration Authority (RA)** — verifies identity before issuing
-- **Certificate Repository** — store certs
-- **Validation Authority (VA)** — handles revocation queries (CRL, OCSP)
+**Компоненты:**
+- **CA** — выпускает сертификаты
+- **Registration Authority (RA)** — проверяет identity перед выпуском
+- **Certificate Repository** — хранилище сертификатов
+- **Validation Authority (VA)** — обрабатывает запросы об отзыве (CRL, OCSP)
 
-**PKI tasks:**
-- Issue certs
-- Revoke compromised
-- Rotate (renew)
-- Audit / log
+**Задачи PKI:**
+- Выпуск сертификатов
+- Отзыв скомпрометированных
+- Ротация (продление)
+- Аудит и логирование
 
-**Internal PKI:**
+**Внутренний PKI:**
 - HashiCorp Vault PKI engine
 - step-ca (smallstep)
 - Microsoft AD CS
 - Cloudflare PKI Toolkit
-- Custom (OpenSSL scripts)
+- Самописный (скрипты на OpenSSL)
 
-**Public PKI:**
-- Let's Encrypt (free)
-- DigiCert, Sectigo, GoDaddy (paid)
+**Публичный PKI:**
+- Let's Encrypt (бесплатно)
+- DigiCert, Sectigo, GoDaddy (платно)
 
 ## Q8. Self-signed vs CA-signed?
 
-**Self-signed:**
-- ✅ Free, fast
-- ❌ Browsers / clients don't trust by default
-- **OK для:** dev, internal tools (with manual trust setup)
+**Self-signed (самоподписанный):**
+- ✅ Бесплатно, быстро
+- ❌ Браузеры и клиенты по умолчанию не доверяют
+- **Годится для:** dev, внутренних инструментов (с ручной настройкой доверия)
 
-**CA-signed:**
-- ✅ Trusted automatically
-- ❌ Cost (или Let's Encrypt free)
-- **Required для:** public-facing apps
+**CA-signed (подписанный CA):**
+- ✅ Доверие автоматически
+- ❌ Стоимость (либо бесплатный Let's Encrypt)
+- **Обязателен для:** публично доступных приложений
 
-**For mTLS** обычно использует **internal CA** (own PKI). Devices/services trust your CA, not public CAs.
+**Для mTLS** обычно используют **внутренний CA** (собственный PKI). Устройства и сервисы доверяют вашему CA, а не публичным CA.
 
 ## Q9. Certificate rotation?
 
-**Certs expire.** Must be **renewed** before expiration.
+**Сертификаты истекают.** Их нужно **продлевать** до окончания срока.
 
-**Manual rotation pain:**
-- Forget → cert expires → outage
-- Multiple servers → rotate в order
-- Downtime risk
+**Боль ручной ротации:**
+- Забыл → сертификат истёк → простой
+- Много серверов → ротация по очереди
+- Риск даунтайма
 
-**Automated rotation:**
-- **Let's Encrypt + cert-manager** (web certs)
-- **Vault PKI + sidecar** (service certs)
-- **Service mesh** (Istio auto-rotates every 24h)
+**Автоматическая ротация:**
+- **Let's Encrypt + cert-manager** (веб-сертификаты)
+- **Vault PKI + sidecar** (сертификаты сервисов)
+- **Service mesh** (Istio авторотирует каждые 24 ч)
 
-**Best practice:**
-- **Short TTLs** (24 hours, days, не years)
-- **Auto-rotation**
-- **Alerting** на expiry approaching
+**Лучшие практики:**
+- **Короткие TTL** (24 часа, дни, а не годы)
+- **Авторотация**
+- **Алертинг** на приближение срока истечения
 
 ## Q10. SPIFFE / SPIRE?
 
-**SPIFFE (Secure Production Identity Framework For Everyone)** — open standard для **service identity**.
+**SPIFFE (Secure Production Identity Framework For Everyone)** — открытый стандарт для **identity сервисов**.
 
 **SVID (SPIFFE Verifiable Identity Document):**
-- X.509 certificate с SPIFFE ID
-- Format: `spiffe://trust-domain/path/to/service`
+- X.509-сертификат с SPIFFE ID
+- Формат: `spiffe://trust-domain/path/to/service`
 
-**Example:**
+**Пример:**
 ```
 spiffe://example.org/ns/payments/sa/payment-service
 ```
 
-**SPIRE** — reference implementation. Issues SVIDs based on workload attestation (K8s ServiceAccount, AWS IAM, etc.).
+**SPIRE** — эталонная реализация. Выпускает SVID на основе аттестации workload (K8s ServiceAccount, AWS IAM и т.д.).
 
-**Integrates с:**
+**Интегрируется с:**
 - Istio
 - Envoy
 - Vault
 - AWS, GCP, K8s
 
-**Standard для service identity** в Zero Trust.
+**Стандарт identity сервисов** в Zero Trust.
 
 ## Q11. (!) mTLS в service mesh (Istio, Linkerd)?
 
-**Service mesh — automatic mTLS.**
+**Service mesh — автоматический mTLS.**
 
 **Istio:**
 ```yaml
@@ -279,23 +279,23 @@ spec:
     mode: STRICT  # require mTLS
 ```
 
-**Linkerd:** automatic, default-on.
+**Linkerd:** автоматически, включён по умолчанию.
 
-**Workings:**
-- Each pod gets cert (signed by mesh CA)
-- TTL: 24 hours, auto-rotated
+**Как работает:**
+- Каждый pod получает сертификат (подписан CA меша)
+- TTL: 24 часа, авторотация
 - Identity = ServiceAccount
-- Sidecar proxies handle TLS
+- TLS обрабатывают sidecar-прокси
 
-**Apps see plain HTTP.** Sidecar adds mTLS transparently.
+**Приложения видят обычный HTTP.** Sidecar добавляет mTLS прозрачно.
 
-**Effect:** zero-config service-to-service auth.
+**Эффект:** аутентификация service-to-service без конфигурации.
 
 Подробнее — [Istio](../devops/istio-service-mesh-interview.md), [Linkerd](../devops/linkerd-interview.md).
 
 ## Q12. cert-manager (K8s)?
 
-**cert-manager** — K8s controller для certificate management.
+**cert-manager** — K8s-контроллер для управления сертификатами.
 
 ```yaml
 apiVersion: cert-manager.io/v1
@@ -312,20 +312,20 @@ spec:
     - www.example.com
 ```
 
-**Issuers:**
-- **Let's Encrypt** (web certs, free)
+**Issuer-ы:**
+- **Let's Encrypt** (веб-сертификаты, бесплатно)
 - **Vault** PKI
 - **Self-signed**
-- **CA-issued**
-- **External issuers**
+- **CA-issued** (выпущенные CA)
+- **Внешние issuer-ы**
 
-**Auto-renewal** before expiration. Stores в K8s Secret.
+**Автопродление** до истечения срока. Хранение в K8s Secret.
 
-**Integrates с Istio** для mTLS certs.
+**Интегрируется с Istio** для mTLS-сертификатов.
 
 ## Q13. Vault PKI?
 
-**Vault PKI engine** — issue X.509 certs.
+**Vault PKI engine** — выпуск X.509-сертификатов.
 
 ```bash
 # Setup PKI engine
@@ -345,17 +345,17 @@ vault write pki/issue/my-role \
 # Returns cert + key
 ```
 
-**Use case:**
-- Internal CA для mTLS
-- Short-lived certs (1-24 hours)
-- Programmatic issuance
-- Automation-friendly
+**Сценарий применения:**
+- Внутренний CA для mTLS
+- Короткоживущие сертификаты (1–24 часа)
+- Программный выпуск
+- Удобно для автоматизации
 
 Подробнее — [Vault](../devops/vault-interview.md).
 
 ## Q14. mTLS в Kafka, Redis, databases?
 
-**Most data systems** support mTLS.
+**Большинство систем хранения данных** поддерживают mTLS.
 
 **Kafka:**
 ```properties
@@ -383,116 +383,116 @@ ssl_key_file = '/path/server.key'
 ssl_ca_file = '/path/ca.crt'
 ```
 
-**MongoDB, Elasticsearch, MySQL** — all support mTLS.
+**MongoDB, Elasticsearch, MySQL** — все поддерживают mTLS.
 
-**Use case:** secure connections к data stores from app, prevent unauthorized access.
+**Сценарий применения:** защищённые соединения приложения с хранилищами данных, предотвращение несанкционированного доступа.
 
 ## Q15. (!) Когда использовать mTLS?
 
-**Use mTLS когда:**
-- **Service-to-service** в microservices (Zero Trust)
-- **B2B APIs** (high-value, partner integrations)
-- **IoT** (device auth)
-- **Internal sensitive APIs** (admin tools)
-- **Compliance** (PCI, HIPAA, banking)
-- **Cross-region** secure traffic
+**Используйте mTLS, когда:**
+- **Service-to-service** в микросервисах (Zero Trust)
+- **B2B API** (высокоценные, партнёрские интеграции)
+- **IoT** (аутентификация устройств)
+- **Внутренние чувствительные API** (admin-инструменты)
+- **Комплаенс** (PCI, HIPAA, банкинг)
+- **Межрегиональный** защищённый трафик
 
-**Don't use когда:**
-- Public consumer APIs (use OAuth, API keys)
-- Mobile apps (cert distribution hard)
-- Quick prototypes (operational overhead)
+**Не используйте, когда:**
+- Публичные потребительские API (используйте OAuth, API-ключи)
+- Мобильные приложения (раздача сертификатов сложна)
+- Быстрые прототипы (эксплуатационные накладные расходы)
 
-**Modern approach:** **service mesh** для internal mTLS, OAuth для external clients.
+**Современный подход:** **service mesh** для внутреннего mTLS, OAuth — для внешних клиентов.
 
 ## Q16. Performance overhead?
 
-**Per request overhead:**
-- TLS handshake: ~50-100 ms (one time per connection)
-- mTLS handshake: ~100-200 ms (extra cert validation)
-- Encrypted bytes: ~5-10% CPU overhead
+**Накладные расходы на запрос:**
+- TLS handshake: ~50–100 мс (один раз на соединение)
+- mTLS handshake: ~100–200 мс (дополнительная проверка сертификата)
+- Шифрование байтов: ~5–10% накладных расходов на CPU
 
-**Optimization:**
-- **Connection pooling** (reuse TLS sessions)
-- **Session resumption** (TLS 1.3 0-RTT)
-- **HTTP/2 multiplexing** (one connection, many requests)
-- **Hardware acceleration** (AES-NI)
+**Оптимизация:**
+- **Пулинг соединений** (переиспользование TLS-сессий)
+- **Возобновление сессий** (TLS 1.3 0-RTT)
+- **Мультиплексирование HTTP/2** (одно соединение, много запросов)
+- **Аппаратное ускорение** (AES-NI)
 
-**В service mesh** — handshake **once per connection** between sidecars (long-lived). App-to-sidecar — localhost (no TLS).
+**В service mesh** — handshake **один раз на соединение** между sidecar-ами (долгоживущими). Приложение-sidecar — localhost (без TLS).
 
-**Net overhead** в production: ~3-5% latency.
+**Итоговые накладные расходы** в проде: ~3–5% к latency.
 
 ## Q17. (!) Common pitfalls?
 
-1. **No cert rotation** — certs expire, outage
-2. **Long-lived certs** (years) — security risk
-3. **Self-signed без trust setup** — clients reject
-4. **Missing intermediate certs** в chain
-5. **Wrong cert** для hostname (CN/SAN mismatch)
-6. **Clock skew** — cert "not yet valid"
-7. **No revocation** mechanism (compromised cert valid until expiry)
-8. **Cert distribution** difficult (mobile, public clients)
-9. **Private key leaks** (committed к git, exposed in logs)
-10. **Hard к debug** (TLS errors cryptic)
+1. **Нет ротации сертификатов** — сертификаты истекают, простой
+2. **Долгоживущие сертификаты** (на годы) — риск безопасности
+3. **Self-signed без настройки доверия** — клиенты отклоняют
+4. **Отсутствуют промежуточные сертификаты** в цепочке
+5. **Неправильный сертификат** для hostname (несоответствие CN/SAN)
+6. **Рассинхрон часов (clock skew)** — сертификат «ещё не действителен»
+7. **Нет механизма отзыва** (скомпрометированный сертификат валиден до истечения срока)
+8. **Сложная раздача сертификатов** (мобильные, публичные клиенты)
+9. **Утечка private key** (закоммичен в git, засветился в логах)
+10. **Тяжело отлаживать** (TLS-ошибки непрозрачны)
 
-**Tools:** `openssl s_client`, `curl -v`, Wireshark для debugging.
+**Инструменты:** `openssl s_client`, `curl -v`, Wireshark для отладки.
 
 ## Q18. mTLS vs JWT?
 
-| Aspect | mTLS | JWT |
+| Аспект | mTLS | JWT |
 |--------|------|-----|
-| Authentication | Cryptographic certificate | Bearer token |
-| Layer | Transport (L4-L5) | Application (L7) |
-| Identity | Cert subject | Claims в token |
-| Rotation | Cert renewal | Token expiration |
-| Revocation | CRL/OCSP (hard) | Short TTL + blocklist |
-| Mobile | Hard (cert install) | Easy (HTTP header) |
-| Browser | Hard (cert install) | Easy (cookie) |
-| Service-to-service | **Excellent** | Good |
-| User-facing | Difficult | **Excellent** |
+| Аутентификация | Криптографический сертификат | Bearer-токен |
+| Уровень | Транспортный (L4–L5) | Прикладной (L7) |
+| Identity | Subject сертификата | Claims в токене |
+| Ротация | Продление сертификата | Истечение токена |
+| Отзыв | CRL/OCSP (сложно) | Короткий TTL + blocklist |
+| Мобильные | Сложно (установка сертификата) | Легко (HTTP-заголовок) |
+| Браузер | Сложно (установка сертификата) | Легко (cookie) |
+| Service-to-service | **Отлично** | Хорошо |
+| Для пользователей | Затруднительно | **Отлично** |
 
-**Often combined:**
-- **mTLS** между services (Zero Trust)
-- **JWT** для user identity propagation through services
+**Часто комбинируют:**
+- **mTLS** между сервисами (Zero Trust)
+- **JWT** для проброса user identity через сервисы
 
 ## Q19. Certificate revocation (CRL, OCSP)?
 
-**Cert compromised** before expiration → must be **revoked**.
+**Сертификат скомпрометирован** до истечения срока → его нужно **отозвать**.
 
 **CRL (Certificate Revocation List):**
-- CA publishes list of revoked certs
-- Clients download periodically
-- **Slow** (large lists, infrequent updates)
-- Privacy issue (CA knows who checks)
+- CA публикует список отозванных сертификатов
+- Клиенты периодически скачивают его
+- **Медленно** (большие списки, редкие обновления)
+- Проблема приватности (CA знает, кто проверяет)
 
 **OCSP (Online Certificate Status Protocol):**
-- Real-time check (HTTP request к OCSP responder)
-- Faster
-- **Privacy** (CA knows checks)
-- **OCSP Stapling** — server includes signed OCSP response с cert (no separate request)
+- Проверка в реальном времени (HTTP-запрос к OCSP-респондеру)
+- Быстрее
+- **Приватность** (CA знает о проверках)
+- **OCSP Stapling** — сервер прикладывает подписанный OCSP-ответ к сертификату (без отдельного запроса)
 
-**Modern alternative: short-lived certs** (no revocation needed — just expire).
+**Современная альтернатива: короткоживущие сертификаты** (отзыв не нужен — они просто быстро истекают).
 
 ## Q20. (!) Short-lived certificates?
 
-**Short-lived certs:**
-- TTL: hours / minutes (vs years traditionally)
-- **Auto-renewed** before expiry
-- **No revocation** needed (just expire fast)
+**Короткоживущие сертификаты:**
+- TTL: часы / минуты (против традиционных лет)
+- **Автопродление** до истечения срока
+- **Отзыв не нужен** (просто быстро истекают)
 
-**Examples:**
-- **Istio:** 24h TTL (default)
-- **SPIRE:** configurable, often 1-24h
-- **Vault PKI:** any TTL
+**Примеры:**
+- **Istio:** TTL 24 ч (по умолчанию)
+- **SPIRE:** настраивается, часто 1–24 ч
+- **Vault PKI:** любой TTL
 
-**Trade-off:**
-- ✅ Compromise window short (hours, не years)
-- ✅ No revocation infrastructure
-- ❌ Frequent issuance load (many cert ops/sec)
-- ❌ Requires automation (manual rotation impossible)
+**Компромисс:**
+- ✅ Короткое окно компрометации (часы, а не годы)
+- ✅ Не нужна инфраструктура отзыва
+- ❌ Высокая нагрузка на выпуск (много операций с сертификатами в секунду)
+- ❌ Требует автоматизации (ручная ротация невозможна)
 
-**Modern pattern:** PKI infrastructure с short-lived certs auto-issued.
+**Современный паттерн:** PKI-инфраструктура с автовыпуском короткоживущих сертификатов.
 
-В **2025** mTLS — **standard** для production microservices. Service mesh makes it transparent.
+В **2025** mTLS — **стандарт** для production-микросервисов. Service mesh делает его прозрачным.
 
 ---
 

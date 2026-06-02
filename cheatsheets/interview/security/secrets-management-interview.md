@@ -19,7 +19,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Secrets Management`
 
-Secrets management — handling sensitive credentials (passwords, API keys, certificates) securely. Concepts: **central store, rotation, dynamic secrets, encryption at rest, audit, least privilege**. Tools: **Vault, AWS Secrets Manager, GCP Secret Manager, Azure Key Vault, Doppler**. Critical для security и compliance.
+Secrets management — безопасная работа с чувствительными учётными данными (пароли, API-ключи, сертификаты). Ключевые понятия: **централизованное хранилище, ротация, динамические секреты, шифрование at rest, аудит, least privilege**. Инструменты: **Vault, AWS Secrets Manager, GCP Secret Manager, Azure Key Vault, Doppler**. Критично для безопасности и compliance.
 
 ## Полезные ссылки
 
@@ -76,71 +76,71 @@ Secrets management — handling sensitive credentials (passwords, API keys, cert
 
 ## Q1. (!) Что такое secret и зачем management?
 
-**Secret** = sensitive credential:
-- Database passwords
-- API keys (Stripe, AWS, ...)
-- TLS certificates / private keys
-- Encryption keys
-- OAuth tokens
-- SSH keys
+**Secret** — чувствительные учётные данные:
+- Пароли к базам данных
+- API-ключи (Stripe, AWS, ...)
+- TLS-сертификаты / приватные ключи
+- Ключи шифрования
+- OAuth-токены
+- SSH-ключи
 
-**Зачем dedicated management:**
-- **Centralized** (one place vs scattered .env files)
-- **Audit logs** (who accessed когда)
-- **Rotation** (auto-rotate periodically)
-- **Revocation** (instantly disable compromised)
-- **Encryption** (at rest, in transit)
-- **Least privilege** (fine-grained access)
+**Зачем нужно отдельное управление:**
+- **Централизация** (одно место против разбросанных .env-файлов)
+- **Журналы аудита** (кто и когда обращался)
+- **Ротация** (периодическая автоматическая смена)
+- **Отзыв** (мгновенное отключение скомпрометированных)
+- **Шифрование** (at rest, in transit)
+- **Least privilege** (детальный доступ)
 - **Compliance** (SOC2, PCI, HIPAA)
 
 ## Q2. (!) Bad practices (что НЕ делать)?
 
-❌ **Hardcoded в source code** (commits к git → public via leak)
-❌ **Plain text в config files**
-❌ **Plain `.env` files** committed
-❌ **Slack/email** для sharing secrets
-❌ **Same secret** в dev / staging / prod
-❌ **Long-lived shared secrets** (no rotation)
-❌ **Print secrets** в logs / error messages
-❌ **Secrets в Docker images** (visible в layers)
-❌ **Wide IAM permissions** (one user accesses everything)
-❌ **No audit logging**
+❌ **Захардкожены в исходном коде** (коммиты в git → публичная утечка)
+❌ **Открытым текстом в конфигурационных файлах**
+❌ **Закоммиченные plain `.env`-файлы**
+❌ **Slack/email** для передачи секретов
+❌ **Один и тот же секрет** в dev / staging / prod
+❌ **Долгоживущие общие секреты** (без ротации)
+❌ **Вывод секретов** в логи / сообщения об ошибках
+❌ **Секреты в Docker-образах** (видны в слоях)
+❌ **Слишком широкие IAM-права** (один пользователь имеет доступ ко всему)
+❌ **Отсутствие журналирования аудита**
 
-**Real incidents** — GitHub leaks, mass-bruteforce attacks against committed secrets.
+**Реальные инциденты** — утечки на GitHub, массовые брутфорс-атаки на закоммиченные секреты.
 
-**GitGuardian** scans GitHub для leaked secrets daily — finds **millions per year**.
+**GitGuardian** ежедневно сканирует GitHub на предмет утёкших секретов — находит **миллионы в год**.
 
 ## Q3. Static vs dynamic secrets?
 
-**Static:** stored as-is.
-- Manually rotated
-- Long-lived
-- Examples: API keys, config
+**Статические:** хранятся как есть.
+- Ротируются вручную
+- Долгоживущие
+- Примеры: API-ключи, конфигурация
 
-**Dynamic:** generated on-demand.
-- Short TTL (minutes-hours)
-- Auto-revoked after TTL
-- Examples: DB credentials (Vault generates user)
+**Динамические:** генерируются по запросу.
+- Короткий TTL (минуты-часы)
+- Автоматически отзываются по истечении TTL
+- Примеры: учётные данные к БД (Vault создаёт пользователя)
 
-**Dynamic preferred** для:
-- Database access
-- Cloud (AWS, GCP)
-- SSH access
-- Third-party APIs (where supported)
+**Динамические предпочтительны** для:
+- Доступа к базам данных
+- Облака (AWS, GCP)
+- SSH-доступа
+- Сторонних API (где поддерживается)
 
-**Effect:** breach impact limited (credentials short-lived).
+**Эффект:** ущерб от компрометации ограничен (учётные данные короткоживущие).
 
 ## Q4. (!) HashiCorp Vault?
 
-**Vault** — most popular OSS secrets management.
+**Vault** — самое популярное OSS-решение для управления секретами.
 
-**Capabilities:**
-- KV store
-- Dynamic secrets (DB, cloud, SSH)
-- PKI (issue certificates)
-- Transit encryption (encryption-as-a-service)
-- Multi-tenant (namespaces, policies)
-- Multiple auth methods
+**Возможности:**
+- KV-хранилище
+- Динамические секреты (БД, облако, SSH)
+- PKI (выпуск сертификатов)
+- Transit-шифрование (encryption-as-a-service)
+- Multi-tenant (namespaces, политики)
+- Множество методов аутентификации
 
 ```bash
 # Write secret
@@ -158,7 +158,7 @@ vault read database/creds/my-role
 
 ## Q5. (!) AWS Secrets Manager?
 
-**AWS managed** secrets store.
+**Управляемое AWS** хранилище секретов.
 
 ```bash
 # Create
@@ -168,33 +168,33 @@ aws secretsmanager create-secret --name myapp/db --secret-string '{"username":"a
 aws secretsmanager get-secret-value --secret-id myapp/db
 ```
 
-**Features:**
-- **Auto-rotation** (RDS, Redshift, DocumentDB built-in)
-- **Encryption** (KMS)
-- **Cross-region replication**
+**Возможности:**
+- **Авторотация** (встроенная для RDS, Redshift, DocumentDB)
+- **Шифрование** (KMS)
+- **Репликация между регионами**
 - **Resource-based policies** (IAM)
-- **Audit** через CloudTrail
+- **Аудит** через CloudTrail
 
-**Cost:** $0.40/secret/month + API calls.
+**Стоимость:** $0.40 за секрет в месяц + плата за API-вызовы.
 
-**Best для:** AWS-native apps.
+**Лучше всего для:** AWS-native приложений.
 
 ## Q6. AWS Parameter Store vs Secrets Manager?
 
-| Critterion | Parameter Store | Secrets Manager |
+| Критерий | Parameter Store | Secrets Manager |
 |-----------|----------------|-----------------|
-| Cost | **Free** (Standard) | $0.40/secret/month |
-| Auto-rotation | No | **Yes** |
-| Cross-region replication | No | Yes |
-| Max value size | 4 KB / 8 KB | 64 KB |
-| API rate limits | Lower | Higher |
-| Use case | Config, simple secrets | Sensitive credentials |
+| Стоимость | **Бесплатно** (Standard) | $0.40 за секрет в месяц |
+| Авторотация | Нет | **Да** |
+| Репликация между регионами | Нет | Да |
+| Макс. размер значения | 4 KB / 8 KB | 64 KB |
+| Лимиты API | Ниже | Выше |
+| Сценарий | Конфигурация, простые секреты | Чувствительные учётные данные |
 
-**Common pattern:**
-- **Parameter Store** для config (URLs, feature flags, non-sensitive)
-- **Secrets Manager** для credentials (DB, API keys)
+**Распространённый паттерн:**
+- **Parameter Store** для конфигурации (URL, feature-флаги, нечувствительные данные)
+- **Secrets Manager** для учётных данных (БД, API-ключи)
 
-**Both encrypted с KMS.**
+**Оба шифруются через KMS.**
 
 ## Q7. GCP Secret Manager?
 
@@ -206,13 +206,13 @@ echo -n "secret_value" | gcloud secrets create my-secret --data-file=-
 gcloud secrets versions access latest --secret="my-secret"
 ```
 
-**Features:**
-- Versioning (multiple versions of secret)
-- **IAM-based access**
-- **CMEK** (customer-managed encryption keys)
-- Audit logs (Cloud Audit Logs)
+**Возможности:**
+- Версионирование (несколько версий секрета)
+- **Доступ на основе IAM**
+- **CMEK** (ключи шифрования, управляемые клиентом)
+- Журналы аудита (Cloud Audit Logs)
 
-**Cost:** $0.06/secret/month + access fees.
+**Стоимость:** $0.06 за секрет в месяц + плата за доступ.
 
 ## Q8. Azure Key Vault?
 
@@ -221,40 +221,40 @@ az keyvault secret set --vault-name MyVault --name MySecret --value "secretValue
 az keyvault secret show --vault-name MyVault --name MySecret
 ```
 
-**Features:**
-- Secrets, **keys** (HSM-backed), **certificates**
-- Soft delete + purge protection
-- Managed identities integration
-- **HSM** option (FIPS 140-2 Level 2/3)
+**Возможности:**
+- Секреты, **ключи** (с HSM-бэкендом), **сертификаты**
+- Soft delete + защита от очистки (purge protection)
+- Интеграция с managed identities
+- Опция **HSM** (FIPS 140-2 Level 2/3)
 
-**Cost:** $0.03/10K ops + cert costs.
+**Стоимость:** $0.03 за 10K операций + стоимость сертификатов.
 
-**Best для:** Azure-native apps, compliance-heavy.
+**Лучше всего для:** Azure-native приложений, сценариев с жёстким compliance.
 
 ## Q9. Doppler, Infisical, 1Password Secrets?
 
 **Doppler** (SaaS):
-- Easy CLI
-- Multi-environment workflows
-- Sync к multiple platforms
-- $0-25/user/month
+- Простой CLI
+- Работа с несколькими окружениями
+- Синхронизация на множество платформ
+- $0-25 за пользователя в месяц
 
 **Infisical** (open-source + SaaS):
-- Self-host или cloud
-- Free OSS
-- Modern UI
-- Growing rapidly
+- Self-host или облако
+- Бесплатная OSS-версия
+- Современный UI
+- Быстро развивается
 
-**1Password Secrets** (extension 1Password):
-- Familiar 1Password UX
-- Developer-focused features
-- CLI integration
+**1Password Secrets** (расширение 1Password):
+- Привычный UX 1Password
+- Функции, ориентированные на разработчиков
+- Интеграция с CLI
 
-**Use case:** smaller teams, simpler than Vault, more features than Parameter Store.
+**Сценарий:** небольшие команды, проще чем Vault, больше возможностей, чем у Parameter Store.
 
 ## Q10. (!) K8s Secrets — насколько secure?
 
-**K8s Secrets** = **Base64 encoded** values stored в etcd.
+**K8s Secrets** — значения в **кодировке Base64**, хранящиеся в etcd.
 
 ```yaml
 apiVersion: v1
@@ -267,22 +267,22 @@ data:
 ```
 
 **Проблемы:**
-- **Base64 ≠ encryption** (anyone с access decodes)
-- Stored в etcd (часто **unencrypted**)
-- All cluster admins can read
-- Not designed для **high security**
+- **Base64 ≠ шифрование** (любой, у кого есть доступ, декодирует)
+- Хранятся в etcd (часто **без шифрования**)
+- Все администраторы кластера могут читать
+- Не предназначены для **высокого уровня безопасности**
 
-**Mitigations:**
-1. **Encrypt etcd at rest** (`--encryption-provider-config`)
-2. **RBAC** на Secret resources
-3. **Use external secret manager** (Vault, AWS Secrets Manager)
+**Меры смягчения:**
+1. **Шифровать etcd at rest** (`--encryption-provider-config`)
+2. **RBAC** на ресурсы Secret
+3. **Использовать внешний secret manager** (Vault, AWS Secrets Manager)
 4. **Sealed Secrets** для GitOps
 
-**Best practice:** **don't use bare K8s Secrets для real secrets** — use external store + sync.
+**Best practice:** **не используйте «голые» K8s Secrets для настоящих секретов** — используйте внешнее хранилище + синхронизацию.
 
 ## Q11. (!) External Secrets Operator?
 
-**External Secrets Operator (ESO)** — K8s operator, syncs external secret stores к K8s Secrets.
+**External Secrets Operator (ESO)** — K8s-оператор, синхронизирует внешние хранилища секретов в K8s Secrets.
 
 ```yaml
 apiVersion: external-secrets.io/v1beta1
@@ -302,9 +302,9 @@ spec:
         property: password
 ```
 
-**Effect:** ESO fetches from Vault → creates K8s Secret. Pods read normally.
+**Эффект:** ESO забирает данные из Vault → создаёт K8s Secret. Поды читают его обычным образом.
 
-**Supported backends:**
+**Поддерживаемые бэкенды:**
 - HashiCorp Vault
 - AWS Secrets Manager
 - AWS Parameter Store
@@ -312,15 +312,15 @@ spec:
 - Azure Key Vault
 - 1Password
 - Doppler
-- And more
+- И другие
 
-**Most popular pattern** для K8s + external secrets в 2025.
+**Самый популярный паттерн** для связки K8s + внешние секреты в 2025 году.
 
 ## Q12. Sealed Secrets (Bitnami)?
 
-**Problem:** want secrets в git (GitOps), но git ≠ secure.
+**Проблема:** хочется хранить секреты в git (GitOps), но git небезопасен.
 
-**Sealed Secrets** — encrypted secrets safely committed к git.
+**Sealed Secrets** — зашифрованные секреты, которые можно безопасно коммитить в git.
 
 ```bash
 # Encrypt
@@ -341,13 +341,13 @@ spec:
     password: AgBKj9... (encrypted)
 ```
 
-**Sealed Secrets controller** в cluster decrypts → creates K8s Secret.
+**Контроллер Sealed Secrets** в кластере расшифровывает → создаёт K8s Secret.
 
-**Pros:** GitOps-friendly. **Cons:** keys tied к specific cluster.
+**Плюсы:** дружит с GitOps. **Минусы:** ключи привязаны к конкретному кластеру.
 
 ## Q13. SOPS для encrypted secrets в git?
 
-**SOPS (Mozilla)** — encrypts files (YAML, JSON, ENV) с various backends (KMS, PGP, age).
+**SOPS (Mozilla)** — шифрует файлы (YAML, JSON, ENV) с разными бэкендами (KMS, PGP, age).
 
 ```bash
 # Encrypt с AWS KMS
@@ -357,46 +357,46 @@ sops --encrypt --kms arn:aws:kms:... secrets.yaml > secrets.enc.yaml
 sops --decrypt secrets.enc.yaml
 ```
 
-**Result:** YAML с values encrypted (keys plain), commit safely к git.
+**Результат:** YAML с зашифрованными значениями (ключи остаются открытыми) — можно безопасно коммитить в git.
 
 ```yaml
 db:
   password: ENC[AES256_GCM,data:abc123...,type:str]
 ```
 
-**Tools integration:**
+**Интеграция с инструментами:**
 - Helm Secrets
 - ArgoCD
 - Flux
 - Terraform
 
-**Use case:** GitOps, IaC secrets, multi-env configs.
+**Сценарий:** GitOps, секреты для IaC, конфигурации для нескольких окружений.
 
 ## Q14. (!) Secret rotation?
 
-**Why:** compromised secret has limited window.
+**Зачем:** у скомпрометированного секрета ограниченное окно действия.
 
-**Rotation strategies:**
+**Стратегии ротации:**
 
-**Manual:**
-- Quarterly / annually
-- Risk: forgotten, painful
+**Вручную:**
+- Раз в квартал / год
+- Риск: про неё забывают, болезненный процесс
 
-**Auto-rotation:**
-- AWS Secrets Manager: automatic для RDS, Redshift, DocumentDB
-- Vault dynamic secrets: each request = new credential
-- Custom Lambda functions: для anything
+**Авторотация:**
+- AWS Secrets Manager: автоматически для RDS, Redshift, DocumentDB
+- Динамические секреты Vault: каждый запрос = новые учётные данные
+- Кастомные Lambda-функции: для чего угодно
 
-**Pattern:**
-1. Create new credential
-2. Update apps к use new
-3. Verify
-4. Revoke old
+**Паттерн:**
+1. Создать новые учётные данные
+2. Обновить приложения, чтобы они использовали новые
+3. Проверить
+4. Отозвать старые
 
-**Caveats:**
-- **Apps must reload** secrets (without restart ideally)
-- **Database** updates simultaneously
-- **Connection pools** must refresh
+**Подводные камни:**
+- **Приложения должны перечитывать** секреты (в идеале без перезапуска)
+- **База данных** обновляется одновременно
+- **Пулы соединений** должны обновляться
 
 ## Q15. Dynamic secrets (Vault DB engine)?
 
@@ -419,38 +419,38 @@ vault read database/creds/readonly
 # Returns username + password, valid 1 hour
 ```
 
-**Each app instance** gets unique credentials. After TTL → revoked.
+**Каждый экземпляр приложения** получает уникальные учётные данные. По истечении TTL → отзыв.
 
-**Benefits:**
-- **Per-instance** credentials (audit precise)
-- **Auto-revoked**
-- **Compromise window short**
+**Преимущества:**
+- **Учётные данные на каждый экземпляр** (точный аудит)
+- **Автоматический отзыв**
+- **Короткое окно компрометации**
 
-**Supported:** PostgreSQL, MySQL, MongoDB, Cassandra, Oracle, Redis, AWS, GCP, etc.
+**Поддерживаются:** PostgreSQL, MySQL, MongoDB, Cassandra, Oracle, Redis, AWS, GCP и др.
 
 ## Q16. Secrets revocation?
 
-**Compromised secret** must be revoked immediately.
+**Скомпрометированный секрет** нужно отозвать немедленно.
 
-**Static secrets:**
-1. Generate new
-2. Update apps
-3. Delete old в secret store
-4. Rotate connections
+**Статические секреты:**
+1. Сгенерировать новый
+2. Обновить приложения
+3. Удалить старый в хранилище секретов
+4. Пересоздать соединения
 
-**Dynamic secrets:**
-- Vault: lease revocation API
-- Cloud IAM: delete IAM user / role
+**Динамические секреты:**
+- Vault: API отзыва lease
+- Cloud IAM: удалить IAM-пользователя / роль
 
-**Speed matters:** the faster revocation, the smaller breach impact.
+**Скорость важна:** чем быстрее отзыв, тем меньше ущерб от компрометации.
 
-**Audit logs** — verify no further use after revocation.
+**Журналы аудита** — убедиться, что после отзыва секрет больше не использовался.
 
 ## Q17. (!) Как app reads secrets?
 
-**Patterns:**
+**Паттерны:**
 
-**1. Direct API call:**
+**1. Прямой вызов API:**
 ```python
 import boto3
 client = boto3.client('secretsmanager')
@@ -458,34 +458,34 @@ secret = client.get_secret_value(SecretId='myapp/db')
 ```
 
 **2. Sidecar (Vault Agent):**
-- Sidecar fetches secrets, writes к shared volume
-- App reads file
+- Sidecar забирает секреты, пишет в общий volume
+- Приложение читает файл
 
-**3. Init container:**
-- Init container fetches secrets, mounts к main container
+**3. Init-контейнер:**
+- Init-контейнер забирает секреты, монтирует в основной контейнер
 
-**4. Operator** (External Secrets Operator):
-- Sync к K8s Secret
-- App reads K8s Secret normally
+**4. Оператор** (External Secrets Operator):
+- Синхронизация в K8s Secret
+- Приложение читает K8s Secret обычным образом
 
-**5. Environment variables (injected at startup):**
-- К8s Secrets mounted as env
-- Vault Agent renders templates
+**5. Переменные окружения (внедряются при старте):**
+- K8s Secrets монтируются как env
+- Vault Agent рендерит шаблоны
 
-**Best practice:** prefer files (mounted volumes) over env vars (env vars leak в child processes, logs).
+**Best practice:** предпочитайте файлы (смонтированные volume) переменным окружения (env-переменные утекают в дочерние процессы и логи).
 
 ## Q18. Vault Agent / Sidecar Injector?
 
-**Vault Agent** — daemon рядом с app:
-- Auto-authenticates с Vault
-- Fetches secrets
-- Caches
-- Renders templates → files
-- Renews leases
+**Vault Agent** — демон рядом с приложением:
+- Автоматически аутентифицируется в Vault
+- Забирает секреты
+- Кэширует
+- Рендерит шаблоны → файлы
+- Обновляет lease
 
 **Sidecar Injector (K8s):**
-- Annotation-based auto-inject Vault Agent sidecar
-- App reads secrets from `/vault/secrets/` folder
+- Автоматическое внедрение sidecar-а Vault Agent по аннотациям
+- Приложение читает секреты из каталога `/vault/secrets/`
 
 ```yaml
 metadata:
@@ -495,11 +495,11 @@ metadata:
     vault.hashicorp.com/agent-inject-secret-db: "secret/myapp/db"
 ```
 
-**Effect:** apps no Vault SDK needed — just file reads.
+**Эффект:** приложениям не нужен Vault SDK — только чтение файлов.
 
 ## Q19. AWS IRSA (IAM Roles for Service Accounts)?
 
-**IRSA** — pod в EKS gets **IAM role** через ServiceAccount.
+**IRSA** — под в EKS получает **IAM-роль** через ServiceAccount.
 
 ```yaml
 apiVersion: v1
@@ -510,31 +510,31 @@ metadata:
     eks.amazonaws.com/role-arn: arn:aws:iam::123:role/MyAppRole
 ```
 
-**Effect:** pod uses AWS SDK без credentials в env / files. AWS auto-issues temporary credentials.
+**Эффект:** под использует AWS SDK без учётных данных в env / файлах. AWS автоматически выдаёт временные учётные данные.
 
-**Credentials short-lived** (1 hour, auto-rotated).
+**Учётные данные короткоживущие** (1 час, авторотация).
 
-**No secrets distribution** — IAM-based access.
+**Никакого распространения секретов** — доступ на основе IAM.
 
-**Equivalent:**
+**Эквиваленты:**
 - **GCP Workload Identity** — для GKE
 - **Azure Workload Identity** — для AKS
 
-**Best practice:** prefer cloud-native IAM over secret distribution.
+**Best practice:** предпочитайте cloud-native IAM распространению секретов.
 
 ## Q20. (!) Как handle secrets в GitOps?
 
-**Problem:** GitOps = git as source of truth. **But secrets can't go в git plaintext.**
+**Проблема:** GitOps = git как источник истины. **Но секреты нельзя класть в git открытым текстом.**
 
-**Solutions:**
+**Решения:**
 
-1. **Sealed Secrets** — encrypted, can commit
-2. **SOPS** — encrypted files в git
-3. **External Secrets Operator** — references к external store (Vault, AWS)
+1. **Sealed Secrets** — зашифрованы, можно коммитить
+2. **SOPS** — зашифрованные файлы в git
+3. **External Secrets Operator** — ссылки на внешнее хранилище (Vault, AWS)
 4. **Bitnami Secrets Manager**
 5. **CSI Secrets Store Driver**
 
-**Pattern:**
+**Паттерн:**
 ```yaml
 # In git (committed)
 apiVersion: external-secrets.io/v1beta1
@@ -550,48 +550,48 @@ spec:
         key: secret/db
 ```
 
-**Actual secret** только в Vault. Git contains **reference**, not value.
+**Сам секрет** хранится только в Vault. В git лежит **ссылка**, а не значение.
 
 ## Q21. (!) Best practices?
 
-1. **Never commit** secrets к source control
-2. **Centralized** secret store (Vault, AWS Secrets Manager)
-3. **Auto-rotation** для long-lived secrets
-4. **Dynamic secrets** где possible (DB, cloud)
-5. **Short TTLs** для credentials
-6. **Least privilege** access
-7. **Audit logging** все access
-8. **Encryption at rest + in transit**
-9. **No secrets в env vars** ideally (use mounted files)
-10. **Cloud IAM** over secret distribution (IRSA, Workload Identity)
-11. **Secret scanning** в CI (gitleaks, GitGuardian)
-12. **Rotate immediately** после suspected compromise
-13. **Different secrets** per environment (dev/staging/prod)
-14. **Disaster recovery** plan для secret store
-15. **MFA** для access к secret management UI
+1. **Никогда не коммитьте** секреты в систему контроля версий
+2. **Централизованное** хранилище секретов (Vault, AWS Secrets Manager)
+3. **Авторотация** для долгоживущих секретов
+4. **Динамические секреты** где возможно (БД, облако)
+5. **Короткие TTL** для учётных данных
+6. Доступ по принципу **least privilege**
+7. **Журналирование аудита** всех обращений
+8. **Шифрование at rest + in transit**
+9. **По возможности никаких секретов в env-переменных** (используйте смонтированные файлы)
+10. **Cloud IAM** вместо распространения секретов (IRSA, Workload Identity)
+11. **Сканирование секретов** в CI (gitleaks, GitGuardian)
+12. **Немедленная ротация** при подозрении на компрометацию
+13. **Разные секреты** для каждого окружения (dev/staging/prod)
+14. План **disaster recovery** для хранилища секретов
+15. **MFA** для доступа к UI управления секретами
 
 ## Q22. (!) Common pitfalls?
 
-1. **Hardcoded secrets** — leak via git, logs
-2. **Same secret across envs** — dev compromise = prod compromise
-3. **No rotation** — old credentials accumulate
-4. **Wide permissions** — service has access to all secrets
-5. **Logging secrets** (request bodies, error messages)
-6. **Secrets в Docker image** layers (visible)
-7. **No audit** — don't know if compromised
-8. **Lost vault unseal keys** — Vault unrecoverable
-9. **No backup** secret store (catastrophic loss)
-10. **Slack/email sharing**
-11. **Reuse** API keys между apps
-12. **No revocation procedure** documented
-13. **Secrets в CI/CD logs** (hidden but findable)
+1. **Захардкоженные секреты** — утекают через git, логи
+2. **Один секрет на все окружения** — компрометация dev = компрометация prod
+3. **Отсутствие ротации** — старые учётные данные накапливаются
+4. **Слишком широкие права** — сервис имеет доступ ко всем секретам
+5. **Логирование секретов** (тела запросов, сообщения об ошибках)
+6. **Секреты в слоях Docker-образа** (видны)
+7. **Отсутствие аудита** — непонятно, скомпрометировано или нет
+8. **Потеря unseal-ключей Vault** — Vault невозможно восстановить
+9. **Отсутствие бэкапа** хранилища секретов (катастрофическая потеря)
+10. **Передача через Slack/email**
+11. **Переиспользование** API-ключей между приложениями
+12. **Отсутствие задокументированной процедуры отзыва**
+13. **Секреты в логах CI/CD** (скрыты, но находимы)
 
-**Tools для detection:**
-- **gitleaks, GitGuardian, TruffleHog** — scan git для leaked secrets
-- **CodeQL, Semgrep** — static analysis
-- **Trivy, Grype** — container scanning
+**Инструменты для обнаружения:**
+- **gitleaks, GitGuardian, TruffleHog** — сканирование git на утёкшие секреты
+- **CodeQL, Semgrep** — статический анализ
+- **Trivy, Grype** — сканирование контейнеров
 
-В **2025** secrets management — **fundamental security hygiene**. Multiple breaches yearly из-за поэтому practices missing.
+В **2025 году** управление секретами — это **базовая гигиена безопасности**. Из-за отсутствия этих практик каждый год случается множество утечек.
 
 ---
 

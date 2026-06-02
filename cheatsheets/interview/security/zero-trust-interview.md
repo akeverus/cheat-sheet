@@ -18,7 +18,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Zero Trust`
 
-`Zero Trust` — security model: **never trust, always verify**. Каждый request authenticated и authorized независимо от network location. **Не perimeter-based** (firewall + VPN). Pioneered Google **BeyondCorp** (2014). NIST 800-207 — official framework. Mainstream после COVID remote work.
+`Zero Trust` — модель безопасности: **никому не доверяй, всегда проверяй**. Каждый запрос аутентифицируется и авторизуется независимо от расположения в сети. **Не периметровая модель** (firewall + VPN). Первой реализовала Google в **BeyondCorp** (2014). NIST 800-207 — официальный фреймворк. Стала мейнстримом после удалёнки в пандемию COVID.
 
 ## Полезные ссылки
 
@@ -68,108 +68,108 @@ updated: "2026-04-25"
 
 ## Q1. (!) Что такое Zero Trust?
 
-**Zero Trust** — security model. Slogan: **"Never trust, always verify"**.
+**Zero Trust** — модель безопасности. Лозунг: **«Никому не доверяй, всегда проверяй»**.
 
-**Core idea:** **trust никогда** не assumed (даже от "internal" network). Каждый request:
-- Authenticated (who?)
-- Authorized (what allowed?)
-- Encrypted (in transit, at rest)
+**Ключевая идея:** **доверие никогда** не подразумевается по умолчанию (даже из «внутренней» сети). Каждый запрос:
+- Аутентифицирован (кто?)
+- Авторизован (что разрешено?)
+- Зашифрован (в транзите и в покое)
 
-**No assumed trust** based on:
-- Being inside network perimeter
-- Having VPN access
-- Being on company laptop
+**Доверие не выдаётся** на основании того, что:
+- Клиент находится внутри сетевого периметра
+- У клиента есть доступ через VPN
+- Клиент работает с корпоративного ноутбука
 
-**Каждый interaction** verified independently.
+**Каждое взаимодействие** проверяется независимо.
 
 ## Q2. (!) Perimeter security vs Zero Trust?
 
-**Perimeter security (legacy):**
+**Периметровая безопасность (legacy):**
 ```
 Internet → Firewall → Internal Network → Trusted (everything inside)
 ```
-- Strong **outer wall**
-- **Soft inside** (after VPN/firewall, mostly trusted)
-- **Lateral movement** easy после breach
+- Прочная **внешняя стена**
+- **Мягкая середина** (после VPN/firewall почти всё доверенное)
+- **Латеральное перемещение** простое после взлома
 
 **Zero Trust:**
 ```
 Каждый request → Verify → Authorize → Allow specific action
 ```
-- **No "inside"** assumed safe
-- Каждое connection authenticated/authorized
-- **Lateral movement** prevented by default
+- **Никакого «внутри»**, которое считалось бы безопасным
+- Каждое соединение аутентифицируется и авторизуется
+- **Латеральное перемещение** блокируется по умолчанию
 
-**Why shift:**
-- Cloud (no perimeter)
-- Remote work (employees outside network)
+**Почему произошёл сдвиг:**
+- Облако (периметра нет)
+- Удалённая работа (сотрудники вне сети)
 - BYOD
-- Insider threats
-- High-profile breaches (Snowden, Target, Equifax)
+- Внутренние угрозы (insider threats)
+- Громкие утечки (Snowden, Target, Equifax)
 
 ## Q3. (!) Принципы Zero Trust?
 
-**Core principles (NIST 800-207):**
+**Ключевые принципы (NIST 800-207):**
 
-1. **All resources accessed regardless of location** require authentication
-2. **All communications secured** regardless of network
-3. **Access granted на per-session basis** (not permanent)
-4. **Access dynamic** based on policy (user, device, time, behavior)
-5. **Continuous monitoring** of all assets
-6. **Authentication + authorization strict** (don't trust, verify)
-7. **Collect data** для improving security posture
-8. **No implicit trust** based on network location
+1. **Все ресурсы, доступные независимо от расположения**, требуют аутентификации
+2. **Все коммуникации защищены** независимо от сети
+3. **Доступ выдаётся на уровне сессии** (не постоянный)
+4. **Доступ динамический** на основе политики (пользователь, устройство, время, поведение)
+5. **Непрерывный мониторинг** всех активов
+6. **Строгие аутентификация и авторизация** (не доверяй, проверяй)
+7. **Сбор данных** для улучшения уровня безопасности
+8. **Никакого неявного доверия** на основании сетевого расположения
 
 ## Q4. (!) Identity-centric security?
 
-**Identity = new perimeter.**
+**Identity = новый периметр.**
 
-**Old:** trust based on **IP / network**.
-**New:** trust based on **identity** (who you are).
+**Раньше:** доверие на основе **IP / сети**.
+**Теперь:** доверие на основе **identity** (кто ты).
 
 **Identity:**
-- **User** (employee, contractor)
-- **Device** (laptop, phone)
-- **Service** (microservice)
-- **Workload** (pod, container)
+- **Пользователь** (сотрудник, подрядчик)
+- **Устройство** (ноутбук, телефон)
+- **Сервис** (микросервис)
+- **Workload** (под, контейнер)
 
-**Each identity:**
-- Strong authentication (MFA, certificates)
-- Granular authorization (least privilege)
-- Audited (all actions logged)
-- Revocable (instant access removal)
+**Каждая identity:**
+- Сильная аутентификация (MFA, сертификаты)
+- Гранулярная авторизация (least privilege)
+- Аудит (все действия логируются)
+- Отзываемость (мгновенное снятие доступа)
 
 ## Q5. (!) Micro-segmentation?
 
-**Micro-segmentation** — divide network в **small zones**, control traffic между zones.
+**Micro-segmentation** — деление сети на **мелкие зоны** с контролем трафика между ними.
 
-**Old approach:** flat network, anyone connects к anyone.
-**Micro-segmented:** each service can communicate только с explicit approved services.
+**Старый подход:** плоская сеть, кто угодно соединяется с кем угодно.
+**С микросегментацией:** каждый сервис может общаться только с явно одобренными сервисами.
 
 ```
 WebApp ↛ Database (denied — direct access)
 WebApp → API Service → Database (allowed via API)
 ```
 
-**Implementations:**
+**Реализации:**
 - **Network policies** в K8s
 - **Service mesh** (Istio AuthorizationPolicy)
-- **Cloud security groups** (granular)
+- **Cloud security groups** (гранулярные)
 - **Software-defined perimeter (SDP)**
 
-**Effect:** breach of one service → limited blast radius.
+**Эффект:** взлом одного сервиса → ограниченный радиус поражения (blast radius).
 
 ## Q6. Policy Decision Point / Enforcement Point?
 
 **PDP (Policy Decision Point):**
-- Evaluates access requests
-- "Should user X access resource Y?"
-- Returns: allow / deny
+- Оценивает запросы доступа
+- «Должен ли пользователь X получить доступ к ресурсу Y?»
+- Возвращает: allow / deny
 
 **PEP (Policy Enforcement Point):**
-- Intercepts requests
-- Asks PDP
-- Enforces decision
+- Перехватывает запросы
+- Спрашивает PDP
+- Применяет решение
 
 ```
 User → PEP (gateway) → PDP (policy engine) → "allowed"
@@ -177,53 +177,53 @@ User → PEP (gateway) → PDP (policy engine) → "allowed"
 PEP allows or denies based on PDP response.
 ```
 
-**Examples:**
-- **OPA (Open Policy Agent)** — popular PDP
-- **API Gateway** — common PEP
-- **Service mesh sidecars** — PEPs (and partial PDPs)
+**Примеры:**
+- **OPA (Open Policy Agent)** — популярный PDP
+- **API Gateway** — типовой PEP
+- **Service mesh sidecars** — PEP-ы (и частично PDP-ы)
 
 ## Q7. NIST 800-207 components?
 
-**Logical components:**
+**Логические компоненты:**
 
-1. **Policy Engine (PE)** — decides access (PDP)
-2. **Policy Administrator (PA)** — manages access
-3. **Policy Enforcement Point (PEP)** — enforces decision
+1. **Policy Engine (PE)** — принимает решение о доступе (PDP)
+2. **Policy Administrator (PA)** — управляет доступом
+3. **Policy Enforcement Point (PEP)** — применяет решение
 
-**Data sources:**
+**Источники данных:**
 - Identity Management (IdM)
 - Continuous Diagnostics and Mitigation (CDM)
-- Industry compliance
+- Отраслевой compliance
 - Threat intelligence
-- Activity logs
-- Data access policy
-- PKI (certificates)
+- Логи активности
+- Политика доступа к данным
+- PKI (сертификаты)
 - ID management
 - SIEM
 
-**All combined** для context-aware access decisions.
+**Всё вместе** даёт контекстно-зависимые решения о доступе.
 
 ## Q8. (!) Google BeyondCorp model?
 
-**BeyondCorp** (Google, 2014) — pioneer Zero Trust implementation.
+**BeyondCorp** (Google, 2014) — пионер реализации Zero Trust.
 
-**Catalyst:** Google hacked в 2010 (Operation Aurora) → realized perimeter не enough.
+**Катализатор:** Google взломали в 2010 (Operation Aurora) → осознали, что периметра недостаточно.
 
-**Approach:**
-- **No VPN** для employees
-- **All apps** accessible через Internet (with auth)
-- **Trust based on:** user identity + device identity (managed device with cert)
-- **Tiered access** based on context (location, device posture)
+**Подход:**
+- **Без VPN** для сотрудников
+- **Все приложения** доступны через интернет (с аутентификацией)
+- **Доверие на основе:** identity пользователя + identity устройства (управляемое устройство с сертификатом)
+- **Многоуровневый доступ** в зависимости от контекста (расположение, device posture)
 
-**Result:** Google employees work from anywhere, securely.
+**Результат:** сотрудники Google работают откуда угодно и при этом безопасно.
 
-**Inspired:** entire Zero Trust industry. Most ZTNA products mimic BeyondCorp.
+**Вдохновил** всю индустрию Zero Trust. Большинство ZTNA-продуктов копируют BeyondCorp.
 
 ## Q9. (!) Identity Provider (IdP) role?
 
-**IdP** — central identity authority.
+**IdP** — центральный авторитет по identity.
 
-**Examples:**
+**Примеры:**
 - Okta
 - Azure Entra ID (formerly Azure AD)
 - Google Workspace
@@ -231,37 +231,37 @@ PEP allows or denies based on PDP response.
 - Ping Identity
 - AWS IAM Identity Center
 
-**Provides:**
-- **SSO** — single login, multiple apps
-- **MFA enforcement**
-- **User lifecycle** (provisioning, deprovisioning)
-- **Conditional access** policies
-- **OIDC / SAML protocols**
+**Предоставляет:**
+- **SSO** — единый вход, множество приложений
+- **Принудительный MFA**
+- **Жизненный цикл пользователя** (provisioning, deprovisioning)
+- Политики **conditional access**
+- Протоколы **OIDC / SAML**
 
-**Foundation Zero Trust:** without strong identity, can't implement.
+**Фундамент Zero Trust:** без сильной identity реализовать невозможно.
 
 ## Q10. (!) mTLS as Zero Trust foundation?
 
-**mTLS (mutual TLS)** — both client и server verify certificates.
+**mTLS (mutual TLS)** — и клиент, и сервер проверяют сертификаты друг друга.
 
-**Zero Trust для services:**
-- **Service identity = certificate**
-- mTLS authenticates каждый connection
-- **Auto-rotated** certs (short-lived)
-- **No shared secrets** (no API keys to leak)
+**Zero Trust для сервисов:**
+- **Identity сервиса = сертификат**
+- mTLS аутентифицирует каждое соединение
+- **Авторотация** сертификатов (короткоживущие)
+- **Без shared secrets** (нет API-ключей, которые можно утечь)
 
-**Service mesh** (Istio, Linkerd) — auto-implements mTLS для все service-to-service.
+**Service mesh** (Istio, Linkerd) — автоматически включает mTLS для всего service-to-service-трафика.
 
-**Vault PKI** — issues short-lived certs.
+**Vault PKI** — выпускает короткоживущие сертификаты.
 
 Подробнее — в [mTLS](mtls-interview.md).
 
 ## Q11. Service mesh roles (Istio, Linkerd)?
 
-**Service mesh** — Zero Trust enabler:
-- **mTLS** automatic
-- **AuthorizationPolicies** (service-to-service authz)
-- **Observability** (audit logs of every connection)
+**Service mesh** — то, что делает Zero Trust возможным:
+- **mTLS** автоматически
+- **AuthorizationPolicies** (авторизация service-to-service)
+- **Observability** (аудит-логи каждого соединения)
 - **Identity = service account**
 
 ```yaml
@@ -280,7 +280,7 @@ spec:
             principals: ["cluster.local/ns/default/sa/web"]
 ```
 
-**Default-deny option:**
+**Вариант default-deny:**
 ```yaml
 spec:
   {}  # empty = deny all
@@ -292,165 +292,165 @@ spec:
 ## Q12. (!) ZTNA vs VPN?
 
 **VPN (legacy):**
-- User → VPN tunnel → Internal network → All resources accessible
-- **Implicit trust** after VPN connection
-- Bypass = full network access
-- Slow (extra hop), single point failure
+- User → VPN tunnel → внутренняя сеть → доступны все ресурсы
+- **Неявное доверие** после подключения по VPN
+- Обход = полный доступ к сети
+- Медленно (лишний hop), единая точка отказа
 
 **ZTNA (Zero Trust Network Access):**
-- User → ZTNA gateway → Specific application
-- **No network access** — only specific apps
-- Per-session authorization
-- Faster (often direct connection через broker)
+- User → ZTNA gateway → конкретное приложение
+- **Никакого доступа к сети** — только к конкретным приложениям
+- Авторизация на уровне сессии
+- Быстрее (часто прямое соединение через брокер)
 
-**ZTNA scope:** application-level access, not network-level.
+**Область ZTNA:** доступ на уровне приложений, а не сети.
 
-**Adoption:** ZTNA growing rapidly, VPN declining.
+**Тренд:** ZTNA быстро растёт, VPN сдаёт позиции.
 
 ## Q13. ZTNA vendors (Cloudflare, Zscaler, Palo Alto)?
 
-**Cloudflare Zero Trust** (formerly Cloudflare Access):
-- Easy setup
-- Browser-based access
-- Tunnels (no inbound ports)
+**Cloudflare Zero Trust** (раньше Cloudflare Access):
+- Простая настройка
+- Доступ через браузер
+- Туннели (без входящих портов)
 
 **Zscaler Private Access (ZPA):**
-- Enterprise-focused
-- Comprehensive product
-- Expensive
+- Ориентирован на enterprise
+- Комплексный продукт
+- Дорогой
 
 **Palo Alto Prisma Access:**
-- Network-centric (legacy roots)
-- Comprehensive
+- Сетецентричный (legacy-корни)
+- Комплексный
 
 **Tailscale, Twingate:**
-- Modern, developer-friendly
-- WireGuard-based
-- SMB / startups popular
+- Современные, удобные для разработчиков
+- На базе WireGuard
+- Популярны в SMB / стартапах
 
-**Choice:** depends на scale, budget, existing vendor relationships.
+**Выбор:** зависит от масштаба, бюджета и уже имеющихся отношений с вендорами.
 
 ## Q14. (!) Implementing Zero Trust — где starting point?
 
-**Roadmap:**
+**Дорожная карта:**
 
-**Phase 1 — Foundation:**
-- Strong **identity** (IdP, MFA)
-- Inventory devices, users, applications
-- Classify data sensitivity
+**Фаза 1 — Фундамент:**
+- Сильная **identity** (IdP, MFA)
+- Инвентаризация устройств, пользователей, приложений
+- Классификация чувствительности данных
 
-**Phase 2 — Identity-based access:**
-- SSO для all apps
-- Conditional access policies
+**Фаза 2 — Доступ на основе identity:**
+- SSO для всех приложений
+- Политики conditional access
 - Privileged access management
 
-**Phase 3 — Network:**
-- Replace VPN с ZTNA
-- Micro-segmentation
-- Network monitoring
+**Фаза 3 — Сеть:**
+- Замена VPN на ZTNA
+- Микросегментация
+- Мониторинг сети
 
-**Phase 4 — Workload:**
+**Фаза 4 — Workload:**
 - Service mesh (mTLS)
 - AuthorizationPolicies
 - Secrets management
 
-**Phase 5 — Continuous:**
-- Behavioral analytics
-- SIEM integration
+**Фаза 5 — Непрерывность:**
+- Поведенческая аналитика
+- Интеграция с SIEM
 - Continuous verification
 
-**Years-long journey.** Start small, expand.
+**Путь на годы.** Начинать с малого и расширять.
 
 ## Q15. Continuous verification?
 
-**Re-verify** identity и context **continuously**, not once-and-done.
+**Перепроверять** identity и контекст **непрерывно**, а не один раз и навсегда.
 
-**Triggers re-auth:**
-- Time elapsed (every N hours)
-- Location change
-- Device posture change
-- Anomalous behavior
-- Sensitive operation
+**Триггеры повторной аутентификации:**
+- Истечение времени (каждые N часов)
+- Смена расположения
+- Изменение device posture
+- Аномальное поведение
+- Чувствительная операция
 
-**Effect:**
-- Compromised session detected
-- Reduced blast radius
-- Stronger guarantees
+**Эффект:**
+- Скомпрометированная сессия обнаруживается
+- Уменьшенный радиус поражения
+- Более сильные гарантии
 
-**Tools:** UEBA (User Entity Behavior Analytics), risk-based authentication.
+**Инструменты:** UEBA (User Entity Behavior Analytics), risk-based authentication.
 
 ## Q16. Device posture?
 
-**Device posture** = security state of device.
+**Device posture** = состояние безопасности устройства.
 
-**Checks:**
-- OS patched?
-- Antivirus running?
-- Disk encrypted?
-- Compliant (managed device)?
-- Jailbroken / rooted?
+**Проверки:**
+- ОС с актуальными патчами?
+- Запущен антивирус?
+- Зашифрован ли диск?
+- Соответствует ли требованиям (управляемое устройство)?
+- Не jailbroken / не rooted?
 
-**Conditional access** based on posture:
+**Conditional access** на основе posture:
 ```
 Healthy device → full access
 Unhealthy device → limited access (read-only, no sensitive data)
 Compromised device → block
 ```
 
-**MDM (Mobile Device Management)** integrates с IdP для posture data.
+**MDM (Mobile Device Management)** интегрируется с IdP для передачи данных о posture.
 
 ## Q17. (!) Какие частые ошибки при adoption?
 
-1. **Buying "Zero Trust product"** thinking it solves all
-2. **Big-bang approach** (boil the ocean — never finishes)
-3. **Identity foundation weak** (no MFA, no SSO)
-4. **No inventory** of assets
-5. **Ignoring service-to-service** (only user-to-app focus)
-6. **Bad UX** (too many auth prompts → users find workarounds)
-7. **No continuous verification**
-8. **Network-only thinking** (mTLS without identity)
-9. **Insufficient logging** (можно analyze breach)
-10. **Vendor lock-in** (single product all-in)
+1. **Покупка «продукта Zero Trust»** в надежде, что он решит всё
+2. **Big-bang-подход** (попытка «вскипятить океан» — никогда не завершается)
+3. **Слабый фундамент identity** (нет MFA, нет SSO)
+4. **Нет инвентаризации** активов
+5. **Игнорирование service-to-service** (фокус только на user-to-app)
+6. **Плохой UX** (слишком много запросов на аутентификацию → пользователи ищут обходные пути)
+7. **Нет continuous verification**
+8. **Мышление только про сеть** (mTLS без identity)
+9. **Недостаточное логирование** (нечем анализировать взлом)
+10. **Vendor lock-in** (ставка целиком на один продукт)
 
 ## Q18. ROI и trade-offs?
 
-**Benefits:**
-- **Reduced breach impact** (limited lateral movement)
-- **Compliance** simpler
-- **Remote work** secure
-- **Better audit trails**
-- **Insider threat** mitigation
+**Преимущества:**
+- **Снижение ущерба от взлома** (ограниченное латеральное перемещение)
+- **Compliance** проще
+- **Удалённая работа** безопасна
+- **Лучшие audit trails**
+- Снижение **внутренних угроз** (insider threat)
 
-**Costs:**
-- Expensive tools
-- Engineering time
-- User friction (initial)
-- Performance overhead (auth checks per request)
-- Complex troubleshooting
+**Издержки:**
+- Дорогие инструменты
+- Инженерное время
+- Трение для пользователей (на старте)
+- Накладные расходы на производительность (проверки аутентификации на каждый запрос)
+- Сложный troubleshooting
 
-**Pays off** для large orgs или regulated industries (financial, healthcare).
+**Окупается** для крупных организаций или регулируемых отраслей (финансы, здравоохранение).
 
 ## Q19. (!) Zero Trust для service-to-service?
 
-**Microservices Zero Trust:**
+**Zero Trust для микросервисов:**
 
-1. **Identity per service** (ServiceAccount, SPIFFE)
-2. **mTLS automatic** (service mesh)
-3. **AuthorizationPolicies** (allow lists)
+1. **Identity на каждый сервис** (ServiceAccount, SPIFFE)
+2. **Автоматический mTLS** (service mesh)
+3. **AuthorizationPolicies** (allow-листы)
 4. **Default-deny** network policies
-5. **Audit logs** all calls
-6. **Short-lived credentials** (JWT, certs)
-7. **Secrets management** (Vault, не env vars)
-8. **Rotate** credentials frequently
+5. **Audit-логи** всех вызовов
+6. **Короткоживущие credentials** (JWT, сертификаты)
+7. **Secrets management** (Vault, а не env vars)
+8. **Частая ротация** credentials
 
-**Tools stack:**
-- **Service mesh** (Istio, Linkerd) — mTLS, authz
-- **SPIFFE/SPIRE** — service identity standard
-- **Vault** — secrets
+**Стек инструментов:**
+- **Service mesh** (Istio, Linkerd) — mTLS, авторизация
+- **SPIFFE/SPIRE** — стандарт service identity
+- **Vault** — секреты
 - **OPA** — policy engine
-- **K8s NetworkPolicies** — network segmentation
+- **K8s NetworkPolicies** — сегментация сети
 
-**Modern microservices** = Zero Trust by default (с right tools).
+**Современные микросервисы** = Zero Trust по умолчанию (с правильными инструментами).
 
 ---
 
