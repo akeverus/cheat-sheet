@@ -4,7 +4,7 @@ description: "Полный аудит всех 305 interview-файлов на 2
 updated: "2026-06-01"
 status: "active"
 audit_version: 5
-progress: "MCQ-json gate-кампания ЗАВЕРШЕНА: 250/250 PASS (W1-W19). Проза читаема корпусно (0 wall-of-text). Пользователь РЕ-АВТОРИЗОВАЛ Claude на правку interview .md (2026-06-01 вечер). LANE 1 ГОТОВА: 151 файл очищен от 5282 legacy callouts (commit 1f9d11bc). LANE 2 PHASE A ГОТОВА: 55 single-blob файлов получили восстановленные ## Q-заголовки из TOC (commits c0059df8/678b7596/c3af2481). LANE 2 PHASE B В РАБОТЕ: генерация выровненного human-readable MCQ-json для 55 восстановленных файлов батчами по 11 (wf-mcq-gen.js). Остаток после: 9 gap-нумерация (косметика). Полный snapshot ниже."
+progress: "ВСЕ 305 interview .md имеют выровненный human-readable MCQ-json, 305/305 gate-PASS, 0 callouts/markers корпусно. Lane 1 (callout-strip 151), Lane 2 Phase A (restore 55 single-blob headings), Lane 2 Phase B (generate 55 json, батчи 1-5 commits e1f74dd0→1cafd2df) — ВСЁ ГОТОВО. Остаток: 8 файлов с «зарытым заголовком» (graphs/cap-theorem/micronaut/spring-cache/java-8/kotlin-collections/integration-testing по 1, observability — 25); у всех json gate-PASS, gap косметический; lane restore-buried в работе. Полный snapshot ниже."
 ---
 
 # ULTRATHINK v5 — exhaustive per-file audit plan
@@ -305,38 +305,39 @@ Pass: `OK FILE.md`.
 5. **COMMIT** логический (1-3 файла на коммит).
 6. **UPDATE** статус в этой таблице `⬜ TODO` → `✅ DONE`.
 
-## Snapshot аудита — обновлено 2026-06-01 (после Lane 1 + Lane 2 Phase A)
+## Snapshot аудита — обновлено 2026-06-02 (после Lane 1 + Lane 2 Phase A + Phase B)
 
-> Прогон: `/tmp/audit_full.py` (оформление + json + gate) + `/tmp/readability_metrics.py` (читаемость прозы). Числа отражают РЕАЛЬНОЕ состояние, не план. **Финальный numeric re-audit будет после завершения Phase B (генерация json для 55 файлов).**
+> Прогон: `/tmp/final_audit.py` (json presence + gate PASS + callouts + seq + markers по всем 305). Числа отражают РЕАЛЬНОЕ состояние, не план. **Phase B ЗАВЕРШЕНА: все 305 interview .md имеют выровненный gate-PASS MCQ-json.**
 
 | Метрика | Значение |
 |---|---|
 | Total interview .md | 305 |
-| 🟢 Имеют json gate-PASS + 0 callouts | 250 |
-| 🟢→ Legacy `> [!mcq]` callouts в .md (корпусно) | **0** (было 207 файлов / 6979 callouts — Lane 1 + Phase A вычистили всё) |
-| 🟡 НЕТ json, заголовки восстановлены, ждут Phase B генерации | 55 (Phase B в работе, батчами по 11) |
-| 🔴 НЕТ json + single-blob (вопросы зарыты в callouts) | **0** (было 54 — Phase A восстановил `## Q`-заголовки) |
-| 🟠 ## Q непоследовательны (есть json, gate-PASS — gap косметический) | 9 |
-| **MCQ-json gate-PASS (структура/ротация/ratio)** | **250 / 250** |
+| 🟢 Имеют json | **305 / 305** |
+| 🟢 **MCQ-json gate-PASS (alignment/ротация/ratio/dup/contra/empty)** | **305 / 305** |
+| 🟢 Legacy `> [!mcq]` callouts в .md (корпусно) | **0** (было 207 файлов / 6979 callouts) |
+| 🟢 gate FAIL | **0** |
+| 🟢 NO-JSON | **0** (было 55 single-blob + 1 generatable) |
+| 🟠 ## Q непоследовательны (gap = зарытый заголовок, есть json gate-PASS) | 8 (последний lane — restore-buried) |
 | Frontmatter incomplete (A1) | 0 |
 | Нет H1 / нет See-also | 0 / 0 |
 | Wall-of-text (параграф >140 слов) | 0 |
 | Запрещённые Tier1 эмодзи-маркеры | 0 |
 
-### Ключевые выводы аудита (2026-06-01)
+### Ключевые выводы аудита (2026-06-02)
 
-1. **Структурное качество MCQ-json — 250/250 PASS.** Gate-кампания (волны W1–W19) завершена: alignment, строгая ротация, info-ratio ≤ 4, без bold-артефактов, валидные `related`. 3 ORPHAN-файла восстановлены (заголовки) и регенерированы.
-2. **Проза читаема по всему корпусу.** Метрики: 0 wall-of-text, макс. параграф 77 слов, короткие абзацы + bullet-списки. Earlier readability-волны (auto-improve + пользователь) отработали структуру прозы.
-3. **🟢→ Lane 1 ГОТОВА: 151 файл очищен от 5282 legacy `> [!mcq]` callouts** (commit 1f9d11bc). Раньше у этих файлов json уже был gate-PASS, а callouts дублировали интерактивный MCQ → детерминированно вырезаны (`/tmp/strip_callouts.py`), `scripts/verify-md-no-mcq.sh` exit 0, json не тронут. Прозовый контент сохранён (callout-only baseline).
-4. **🟢→ Lane 2 Phase A ГОТОВА: 55 single-blob файлов получили восстановленные `## Q`-заголовки** (commits c0059df8 + 678b7596 + c3af2481). Вопросы Q2..QN были зарыты в callouts без заголовков; `/tmp/restore_singleblob.py` распарсил TOC → восстановил `## Q{n}. {title}`, затем `/tmp/strip_callouts.py` убрал callout-блоки. Инвариант на каждом файле: `## Q` == TOC N, 0 callouts, verify exit 0, прозовая дельта ~0% (callout-only baseline). **Phase B (генерация json) В РАБОТЕ** — батчами по 11 через `wf-mcq-gen.js`, каждый сид проходит gate + fix_rotation + атомарный commit.
-5. **🟠 9 файлов с gap в нумерации ## Q** — у всех есть json + gate-PASS (сид зеркалит номера, MCQ работают). Gap чисто косметический в отображаемой нумерации. Последний остаточный пункт после Phase B. Список: graphs, cap-theorem, micronaut, spring-cache, observability, java-8, java-lombok, kotlin-collections, integration-testing.
+1. **🟢 ВСЕ 305 файлов имеют выровненный human-readable MCQ-json, 305/305 gate-PASS.** Gate: alignment 1.0 (0 orphans/missing), строгая ротация `ABCD[(N-1)%4]`, info-ratio ≤ 4, 0 dup-distractors, 0 self-contradiction, 0 empty sections. Это и есть главная цель «наличие ЧЕЛОВЕКОЧИТАЕМЫХ mcq-json».
+2. **Проза читаема по всему корпусу.** Метрики: 0 wall-of-text, короткие абзацы + bullet-списки.
+3. **🟢 Lane 1 ГОТОВА: 151 файл очищен от 5282 legacy `> [!mcq]` callouts** (commit 1f9d11bc). 0 callouts корпусно. json не тронут.
+4. **🟢 Lane 2 Phase A ГОТОВА: 55 single-blob файлов получили восстановленные `## Q`-заголовки** (commits c0059df8 + 678b7596 + c3af2481). `/tmp/restore_singleblob.py` (TOC → `## Q{n}. {title}`) + `/tmp/strip_callouts.py`.
+5. **🟢 Lane 2 Phase B ГОТОВА: для всех 55 восстановленных файлов сгенерирован выровненный gate-PASS json** (commits e1f74dd0 → 1cafd2df, батчи 1–5). Каждый сид: чанкованный Python-генератор → gate → fix_rotation → атомарный commit. info-ratio ≤ 3.9 на всех.
+6. **🟠 8 файлов с «зарытым заголовком» — последний lane (restore-buried).** TOC обещает Q\<N\>, но `## Q<N>` heading потерян, его контент свёрнут в предыдущий вопрос. 7 файлов — 1 зарытый вопрос (graphs Q25, cap-theorem Q31, micronaut Q12, spring-cache Q2, java-8 Q35, kotlin-collections Q4, integration-testing Q32); observability — 25 зарытых (Q2–Q26, частичный single-blob, не пойман детектором т.к. q_real=15>2). У всех 8 json УЖЕ gate-PASS (зеркалит фактические номера) → MCQ работают, gap косметический. Фикс: вставить пропущенный `## Q<N>. <title>` на семантической границе + добавить 1 (или 25) выровненный json-вопрос; номера 26+ НЕ сдвигаются (заполнение gap, не renumber).
 
 ### Полосы работ (после ре-авторизации 2026-06-01 — Claude правит и .md, и json)
 
 - **Lane 1 — callout-strip (ГОТОВО):** 151 .md очищен от legacy `> [!mcq]`, json не тронут.
 - **Lane 2 Phase A — restore headings (ГОТОВО):** 55 single-blob .md получили `## Q`-заголовки из TOC.
-- **Lane 2 Phase B — generate json (В РАБОТЕ):** выровненный human-readable MCQ-json для 55 восстановленных файлов; gate + ротация + атомарный commit на батч; reachability-чек после каждого батча (митигация auto-improve hard-rewrite).
-- **Остаток:** 9 gap-нумерация (renumber .md + sync json) — косметика, низкий приоритет.
+- **Lane 2 Phase B — generate json (ГОТОВО):** выровненный human-readable MCQ-json для всех 55 восстановленных файлов (батчи 1–5, commits e1f74dd0→1cafd2df); gate + ротация + атомарный commit на батч; reachability подтверждена после каждого.
+- **Lane 3 — restore-buried (В РАБОТЕ):** 8 файлов с зарытым `## Q`-заголовком. Вставить пропущенный heading на семантической границе предыдущего вопроса + добавить выровненный json-вопрос (1 на файл; observability — 25). Заполнение gap, номера 26+ не сдвигаются. После: re-audit → 0 non-seq.
 
 ## Пофайловая таблица (305 строк) — оформление + json + читаемость
 
