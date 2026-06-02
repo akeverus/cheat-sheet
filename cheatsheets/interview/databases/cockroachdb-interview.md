@@ -41,34 +41,34 @@ updated: "2026-05-08"
 - [Q3. (!) Inspired by Google Spanner — что значит?](#q3--inspired-by-google-spanner--что-значит)
 
 **Архитектура**
-- [Q4. (!) Architecture: ranges, replicas, leases?](#q4--architecture-ranges-replicas-leases)
-- [Q5. Raft consensus?](#q5-raft-consensus)
-- [Q6. (!) Range splitting?](#q6--range-splitting)
-- [Q7. Hybrid Logical Clocks (HLC)?](#q7-hybrid-logical-clocks-hlc)
+- [Q4. (!) Как устроена архитектура: ranges, replicas, leases?](#q4--как-устроена-архитектура-ranges-replicas-leases)
+- [Q5. Как работает консенсус Raft?](#q5-как-работает-консенсус-raft)
+- [Q6. (!) Как работает разбиение range-ов (range splitting)?](#q6--как-работает-разбиение-range-ов-range-splitting)
+- [Q7. Что такое Hybrid Logical Clocks (HLC)?](#q7-что-такое-hybrid-logical-clocks-hlc)
 
-**Distribution**
-- [Q8. (!) Multi-region deployments?](#q8--multi-region-deployments)
-- [Q9. (!) Region survival vs zone survival?](#q9--region-survival-vs-zone-survival)
-- [Q10. Locality settings?](#q10-locality-settings)
-- [Q11. Geo-partitioning (data locality)?](#q11-geo-partitioning-data-locality)
+**Распределённость**
+- [Q8. (!) Как работают multi-region развёртывания?](#q8--как-работают-multi-region-развёртывания)
+- [Q9. (!) Чем region survival отличается от zone survival?](#q9--чем-region-survival-отличается-от-zone-survival)
+- [Q10. Что такое locality-настройки и зачем они нужны?](#q10-что-такое-locality-настройки-и-зачем-они-нужны)
+- [Q11. Как работает гео-партиционирование (geo-partitioning, data locality)?](#q11-как-работает-гео-партиционирование-geo-partitioning-data-locality)
 
-**SQL и compatibility**
-- [Q12. (!) PostgreSQL compatibility?](#q12--postgresql-compatibility)
-- [Q13. ACID transactions?](#q13-acid-transactions)
-- [Q14. Isolation levels (Serializable default)?](#q14-isolation-levels-serializable-default)
+**SQL и совместимость**
+- [Q12. (!) Насколько CockroachDB совместима с PostgreSQL?](#q12--насколько-cockroachdb-совместима-с-postgresql)
+- [Q13. Как реализованы ACID-транзакции?](#q13-как-реализованы-acid-транзакции)
+- [Q14. Какие уровни изоляции есть (по умолчанию Serializable)?](#q14-какие-уровни-изоляции-есть-по-умолчанию-serializable)
 
-**Performance**
-- [Q15. (!) Sharding strategy?](#q15--sharding-strategy)
-- [Q16. Index types?](#q16-index-types)
-- [Q17. (!) Limitations vs PostgreSQL?](#q17--limitations-vs-postgresql)
+**Производительность**
+- [Q15. (!) Как устроена стратегия шардирования (sharding)?](#q15--как-устроена-стратегия-шардирования-sharding)
+- [Q16. Какие типы индексов поддерживаются?](#q16-какие-типы-индексов-поддерживаются)
+- [Q17. (!) Какие ограничения у CockroachDB по сравнению с PostgreSQL?](#q17--какие-ограничения-у-cockroachdb-по-сравнению-с-postgresql)
 
 **Сравнения**
-- [Q18. (!) CockroachDB vs Spanner?](#q18--cockroachdb-vs-spanner)
-- [Q19. (!) CockroachDB vs Aurora?](#q19--cockroachdb-vs-aurora)
-- [Q20. CockroachDB vs YugabyteDB?](#q20-cockroachdb-vs-yugabytedb)
-- [Q21. CockroachDB vs TiDB?](#q21-cockroachdb-vs-tidb)
+- [Q18. (!) Чем CockroachDB отличается от Spanner?](#q18--чем-cockroachdb-отличается-от-spanner)
+- [Q19. (!) Чем CockroachDB отличается от Aurora?](#q19--чем-cockroachdb-отличается-от-aurora)
+- [Q20. Чем CockroachDB отличается от YugabyteDB?](#q20-чем-cockroachdb-отличается-от-yugabytedb)
+- [Q21. Чем CockroachDB отличается от TiDB?](#q21-чем-cockroachdb-отличается-от-tidb)
 
-**Production**
+**Прод**
 - [Q22. (!) Когда выбрать CockroachDB?](#q22--когда-выбрать-cockroachdb)
 - [Q23. License (BSL) — что значит?](#q23-license-bsl--что-значит)
 - [Q24. Какие частые проблемы?](#q24-какие-частые-проблемы)
@@ -125,7 +125,7 @@ updated: "2026-05-08"
 
 В **2025** CockroachDB — основная open-source распределённая SQL.
 
-## Q4. (!) Architecture: ranges, replicas, leases?
+## Q4. (!) Как устроена архитектура: ranges, replicas, leases?
 
 ```mermaid
 graph TD
@@ -146,7 +146,7 @@ graph TD
 
 **Raft-группа** — все реплики range образуют Raft-группу, leaseholder = лидер Raft (как правило).
 
-## Q5. Raft consensus?
+## Q5. Как работает консенсус Raft?
 
 **Raft** — алгоритм распределённого консенсуса. CockroachDB использует **отдельный Raft на каждый range**.
 
@@ -161,7 +161,7 @@ graph TD
 
 **Выбор лидера:** Raft автоматически переизбирает лидера при отказах.
 
-## Q6. (!) Range splitting?
+## Q6. (!) Как работает разбиение range-ов (range splitting)?
 
 **Автоматическое разбиение (auto-splitting)** на ~512 MB.
 
@@ -182,7 +182,7 @@ ALTER TABLE orders SPLIT AT VALUES (100), (200), (300);
 
 Полезно **перед массовым импортом (bulk import)** — для распределённой производительности записи.
 
-## Q7. Hybrid Logical Clocks (HLC)?
+## Q7. Что такое Hybrid Logical Clocks (HLC)?
 
 **HLC** объединяет **физическое время** (NTP) + **логический счётчик** для глобально упорядоченных меток времени.
 
@@ -199,7 +199,7 @@ ALTER TABLE orders SPLIT AT VALUES (100), (200), (300);
 
 На практике этого достаточно для большинства нагрузок.
 
-## Q8. (!) Multi-region deployments?
+## Q8. (!) Как работают multi-region развёртывания?
 
 CockroachDB поддерживает **развёртывание сразу в нескольких регионах**.
 
@@ -216,7 +216,7 @@ eu-west (3 replicas)
 **Чтения:** могут быть локальными (ближайшая реплика).
 **Записи:** требуют кворума через регионы → выше латентность.
 
-## Q9. (!) Region survival vs zone survival?
+## Q9. (!) Чем region survival отличается от zone survival?
 
 **Zone survival:**
 - Реплики в нескольких зонах одного региона
@@ -238,7 +238,7 @@ ALTER DATABASE my_db SURVIVE REGION FAILURE;
 - **Zone survival** обычно достаточно
 - **Region survival** — для требований комплаенса / критичных приложений
 
-## Q10. Locality settings?
+## Q10. Что такое locality-настройки и зачем они нужны?
 
 **Каждый узел** объявляет свою locality (привязку к региону/зоне):
 ```bash
@@ -250,7 +250,7 @@ cockroach start --locality=region=us-east-1,zone=us-east-1a
 - **Размещать leaseholder** ближе к пользователю
 - Делать **follower reads** (чтение из локальной реплики)
 
-## Q11. Geo-partitioning (data locality)?
+## Q11. Как работает гео-партиционирование (geo-partitioning, data locality)?
 
 **Партиционирование таблицы по региону** ради локальности данных (комплаенс, латентность).
 
@@ -275,7 +275,7 @@ CONFIGURE ZONE USING constraints = '[+region=us-east]';
 
 Аналог regional placement у Spanner.
 
-## Q12. (!) PostgreSQL compatibility?
+## Q12. (!) Насколько CockroachDB совместима с PostgreSQL?
 
 CockroachDB совместима с **wire-протоколом PostgreSQL**. Большинство приложений работают без изменений.
 
@@ -293,7 +293,7 @@ CockroachDB совместима с **wire-протоколом PostgreSQL**. Б
 
 **Путь миграции** PostgreSQL → CockroachDB обычно гладкий, но **тщательно тестируй**.
 
-## Q13. ACID transactions?
+## Q13. Как реализованы ACID-транзакции?
 
 **Полный ACID** — даже в распределённом режиме.
 
@@ -311,11 +311,11 @@ COMMIT;
 
 **Медленно** для нагрузок с высоким уровнем конфликтов (из-за retries). Лучше всего подходит для **изолированных** транзакций.
 
-## Q14. Isolation levels (Serializable default)?
+## Q14. Какие уровни изоляции есть (по умолчанию Serializable)?
 
 **По умолчанию: SERIALIZABLE** (сильнейшая изоляция).
 
-У PostgreSQL по умолчанию — **READ COMMITTED**. У CockroachDB **по умолчанию иначе**.
+У PostgreSQL по умолчанию — **READ COMMITTED**, а у CockroachDB изоляция по умолчанию строже.
 
 **Serializable** — гарантирует ACID, без аномалий. **Цена:** больше retries, медленнее записи.
 
@@ -327,7 +327,7 @@ BEGIN ISOLATION LEVEL READ COMMITTED;
 
 **Рекомендация:** Serializable для критичной к корректности логики, READ COMMITTED — для миграций legacy-систем.
 
-## Q15. (!) Sharding strategy?
+## Q15. (!) Как устроена стратегия шардирования (sharding)?
 
 **Авто-шардирование** — без ручной настройки.
 
@@ -343,7 +343,7 @@ CockroachDB **разбивает данные на range-ы** автоматич
 
 **Проблема hot range** — последовательный PK (timestamp, sequence) → все записи идут в один range. Используй **UUID** или **hash-sharded индекс**.
 
-## Q16. Index types?
+## Q16. Какие типы индексов поддерживаются?
 
 **Стандартные B-tree индексы:**
 ```sql
@@ -368,7 +368,7 @@ CREATE INVERTED INDEX ON orders (data);
 
 **Пространственные индексы (spatial indexes)** — ограниченная поддержка PostGIS.
 
-## Q17. (!) Limitations vs PostgreSQL?
+## Q17. (!) Какие ограничения у CockroachDB по сравнению с PostgreSQL?
 
 **CockroachDB не поддерживает (или поддерживает ограниченно):**
 - Хранимые процедуры (ограниченно)
@@ -383,9 +383,9 @@ CREATE INVERTED INDEX ON orders (data);
 - Пользовательские типы (ограниченно)
 - `LATERAL` join-ы (частично)
 
-**Production:** тщательно тестируй миграцию legacy PostgreSQL-приложений.
+**Прод:** тщательно тестируй миграцию legacy PostgreSQL-приложений.
 
-## Q18. (!) CockroachDB vs Spanner?
+## Q18. (!) Чем CockroachDB отличается от Spanner?
 
 | Критерий | CockroachDB | Spanner |
 |-----------|-------------|---------|
@@ -401,7 +401,7 @@ CREATE INVERTED INDEX ON orders (data);
 **Spanner** — золотой стандарт распределённого SQL, но только в GCP и дорого.
 **CockroachDB** — делает концепции Spanner доступными, open-source.
 
-## Q19. (!) CockroachDB vs Aurora?
+## Q19. (!) Чем CockroachDB отличается от Aurora?
 
 | Критерий | CockroachDB | Aurora PostgreSQL |
 |-----------|-------------|-------------------|
@@ -416,7 +416,7 @@ CREATE INVERTED INDEX ON orders (data);
 
 В **2025** Aurora — **выбор по умолчанию** для команд на AWS. CockroachDB — для multi-region, multi-cloud.
 
-## Q20. CockroachDB vs YugabyteDB?
+## Q20. Чем CockroachDB отличается от YugabyteDB?
 
 **YugabyteDB** — главный конкурент CockroachDB.
 
@@ -433,7 +433,7 @@ CREATE INVERTED INDEX ON orders (data);
 
 В **2025** — плотная конкуренция. Оба варианта жизнеспособны.
 
-## Q21. CockroachDB vs TiDB?
+## Q21. Чем CockroachDB отличается от TiDB?
 
 **TiDB** (PingCAP, Китай) — ещё одна распределённая SQL.
 

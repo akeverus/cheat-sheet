@@ -40,39 +40,39 @@ updated: "2026-04-25"
 - [Q1. (!) Что такое ScyllaDB?](#q1--что-такое-scylladb)
 - [Q2. (!) ScyllaDB vs Cassandra — основные отличия?](#q2--scylladb-vs-cassandra--основные-отличия)
 - [Q3. (!) Что такое shard-per-core архитектура?](#q3--что-такое-shard-per-core-архитектура)
-- [Q4. Seastar framework?](#q4-seastar-framework)
+- [Q4. Что такое фреймворк Seastar?](#q4-что-такое-фреймворк-seastar)
 
 **Data model (= Cassandra)**
-- [Q5. (!) Wide-column data model?](#q5--wide-column-data-model)
-- [Q6. Partition key, clustering key?](#q6-partition-key-clustering-key)
-- [Q7. CQL (Cassandra Query Language)?](#q7-cql-cassandra-query-language)
+- [Q5. (!) Как устроена wide-column модель данных?](#q5--как-устроена-wide-column-модель-данных)
+- [Q6. Чем отличаются partition key и clustering key?](#q6-чем-отличаются-partition-key-и-clustering-key)
+- [Q7. Что такое CQL (Cassandra Query Language)?](#q7-что-такое-cql-cassandra-query-language)
 
 **Architecture**
-- [Q8. (!) Shared-nothing distributed?](#q8--shared-nothing-distributed)
-- [Q9. Replication, consistency levels?](#q9-replication-consistency-levels)
-- [Q10. Tunable consistency (R + W > N)?](#q10-tunable-consistency-r--w--n)
-- [Q11. Tokens, virtual nodes (vnodes)?](#q11-tokens-virtual-nodes-vnodes)
-- [Q12. (!) LSM-tree storage?](#q12--lsm-tree-storage)
+- [Q8. (!) Что такое shared-nothing распределённая архитектура?](#q8--что-такое-shared-nothing-распределённая-архитектура)
+- [Q9. Как работают репликация и уровни согласованности?](#q9-как-работают-репликация-и-уровни-согласованности)
+- [Q10. Как работает настраиваемая согласованность (R + W > N)?](#q10-как-работает-настраиваемая-согласованность-r--w--n)
+- [Q11. Что такое tokens и virtual nodes (vnodes)?](#q11-что-такое-tokens-и-virtual-nodes-vnodes)
+- [Q12. (!) Как устроено хранение на LSM-tree?](#q12--как-устроено-хранение-на-lsm-tree)
 
 **Performance**
-- [Q13. (!) Why is Scylla faster than Cassandra?](#q13--why-is-scylla-faster-than-cassandra)
-- [Q14. No JVM = no GC pauses?](#q14-no-jvm--no-gc-pauses)
-- [Q15. Workload prioritization?](#q15-workload-prioritization)
+- [Q13. (!) Почему Scylla быстрее Cassandra?](#q13--почему-scylla-быстрее-cassandra)
+- [Q14. Нет JVM — значит нет пауз GC?](#q14-нет-jvm--значит-нет-пауз-gc)
+- [Q15. Что такое приоритизация нагрузок (workload prioritization)?](#q15-что-такое-приоритизация-нагрузок-workload-prioritization)
 
 **Compatibility**
-- [Q16. (!) Cassandra drop-in replacement — насколько true?](#q16--cassandra-drop-in-replacement--насколько-true)
-- [Q17. (!) DynamoDB API (Alternator)?](#q17--dynamodb-api-alternator)
+- [Q16. (!) Насколько Scylla — настоящая drop-in замена Cassandra?](#q16--насколько-scylla--настоящая-drop-in-замена-cassandra)
+- [Q17. (!) Что такое DynamoDB API (Alternator)?](#q17--что-такое-dynamodb-api-alternator)
 
 **Use cases**
 - [Q18. (!) Когда выбрать Scylla?](#q18--когда-выбрать-scylla)
-- [Q19. Time-series workloads?](#q19-time-series-workloads)
-- [Q20. IoT?](#q20-iot)
+- [Q19. Как Scylla работает с time-series нагрузками?](#q19-как-scylla-работает-с-time-series-нагрузками)
+- [Q20. Чем Scylla хороша для IoT?](#q20-чем-scylla-хороша-для-iot)
 
 **Editions**
-- [Q21. (!) Open Source vs Enterprise vs ScyllaDB Cloud?](#q21--open-source-vs-enterprise-vs-scylladb-cloud)
+- [Q21. (!) Чем различаются Open Source, Enterprise и ScyllaDB Cloud?](#q21--чем-различаются-open-source-enterprise-и-scylladb-cloud)
 
 **Migration и operations**
-- [Q22. (!) Migration Cassandra → Scylla?](#q22--migration-cassandra--scylla)
+- [Q22. (!) Как мигрировать с Cassandra на Scylla?](#q22--как-мигрировать-с-cassandra-на-scylla)
 - [Q23. Какие частые проблемы Scylla в production?](#q23-какие-частые-проблемы-scylla-в-production)
 
 ## Q1. (!) Что такое ScyllaDB?
@@ -137,7 +137,7 @@ updated: "2026-04-25"
 - Нет пауз GC
 - Предсказуемая задержка
 
-## Q4. Seastar framework?
+## Q4. Что такое фреймворк Seastar?
 
 **Seastar** — C++ фреймворк, созданный авторами ScyllaDB. Спроектирован под **современное железо** (многоядерные CPU, быстрые сетевые карты).
 
@@ -149,7 +149,7 @@ updated: "2026-04-25"
 
 Используется не только в ScyllaDB — также в Redis-подобном проекте и сетевых приложениях.
 
-## Q5. (!) Wide-column data model?
+## Q5. (!) Как устроена wide-column модель данных?
 
 **Та же, что у Cassandra** (отличается только производительность).
 
@@ -172,14 +172,14 @@ CREATE TABLE users (
 
 Подробнее — в [Apache Cassandra](cassandra-interview.md).
 
-## Q6. Partition key, clustering key?
+## Q6. Чем отличаются partition key и clustering key?
 
 ```sql
 PRIMARY KEY ((partition_key), clustering_key1, clustering_key2)
 ```
 
-**Partition key** — хешируется → определяет, какой узел владеет строкой.
-**Clustering key** — упорядочивает строки внутри партиции.
+- **Partition key** — хешируется и определяет, какой узел владеет строкой.
+- **Clustering key** — упорядочивает строки внутри партиции.
 
 **Составной partition key:**
 ```sql
@@ -187,12 +187,12 @@ PRIMARY KEY ((user_id, date), timestamp)
 -- partition by combination, ordered by timestamp
 ```
 
-**Лучшие практики:**
+**Рекомендации:**
 - Partition key высокой кардинальности (чтобы избежать горячих партиций)
 - Размер партиции < 100 МБ
 - Упорядочивать clustering keys под паттерны запросов
 
-## Q7. CQL (Cassandra Query Language)?
+## Q7. Что такое CQL (Cassandra Query Language)?
 
 **CQL** — SQL-подобный язык для Cassandra/Scylla.
 
@@ -226,7 +226,7 @@ DELETE FROM users WHERE user_id = uuid_value;
 - **CDC (Change Data Capture)**
 - **Materialized Views**
 
-## Q8. (!) Shared-nothing distributed?
+## Q8. (!) Что такое shared-nothing распределённая архитектура?
 
 **Shared-nothing** — каждый узел независим, общего состояния нет.
 
@@ -245,7 +245,7 @@ Node 3: same
 
 **Компромисс:** по умолчанию eventual consistency (настраивается).
 
-## Q9. Replication, consistency levels?
+## Q9. Как работают репликация и уровни согласованности?
 
 **Replication factor (RF):** сколько копий данных хранится.
 ```sql
@@ -264,7 +264,7 @@ CREATE KEYSPACE mykeyspace WITH replication = {'class': 'NetworkTopologyStrategy
 SELECT * FROM users WHERE user_id = ? USING CONSISTENCY QUORUM;
 ```
 
-## Q10. Tunable consistency (R + W > N)?
+## Q10. Как работает настраиваемая согласованность (R + W > N)?
 
 **Формула строгой согласованности:**
 ```
@@ -284,7 +284,7 @@ R + W > N
 
 **Частый выбор:** `LOCAL_QUORUM` для обоих — баланс.
 
-## Q11. Tokens, virtual nodes (vnodes)?
+## Q11. Что такое tokens и virtual nodes (vnodes)?
 
 **Token ring** — пространство хешей (от `-2^63` до `2^63-1`).
 
@@ -309,7 +309,7 @@ With 256 vnodes per node:
 
 ScyllaDB поддерживает vnodes (а также обычные токены).
 
-## Q12. (!) LSM-tree storage?
+## Q12. (!) Как устроено хранение на LSM-tree?
 
 **LSM-tree (Log-Structured Merge-tree)** — структура хранения, используемая в Cassandra/Scylla, RocksDB, ClickHouse и др.
 
@@ -327,7 +327,7 @@ Write → MemTable (in-memory sorted)
 - **Быстрые чтения при попадании в кэш** — MemTable / Bloom filter
 
 **Компромисс:**
-- **Read amplification** — приходится проверять несколько SSTable
+- **Усиление чтения (read amplification)** — приходится проверять несколько SSTable
 - **Накладные расходы на compaction** — фоновая работа
 
 **Стратегии compaction:**
@@ -335,7 +335,7 @@ Write → MemTable (in-memory sorted)
 - **LCS (LeveledCompactionStrategy)** — лучше для read-heavy нагрузки
 - **TWCS (TimeWindowCompactionStrategy)** — для временных рядов
 
-## Q13. (!) Why is Scylla faster than Cassandra?
+## Q13. (!) Почему Scylla быстрее Cassandra?
 
 1. **C++ против Java** — нет накладных расходов JVM, нет пауз GC
 2. **Shard-per-core** — нет конкуренции за блокировки
@@ -348,7 +348,7 @@ Write → MemTable (in-memory sorted)
 
 **Итог:** на том же железе Scylla часто в 3-10 раз быстрее Cassandra.
 
-## Q14. No JVM = no GC pauses?
+## Q14. Нет JVM — значит нет пауз GC?
 
 **Паузы GC в Cassandra:**
 - Stop-the-world паузы (10-500 мс)
@@ -362,7 +362,7 @@ Write → MemTable (in-memory sorted)
 
 **Главная причина**, по которой Discord, Comcast и другие **мигрировали** с Cassandra на Scylla.
 
-## Q15. Workload prioritization?
+## Q15. Что такое приоритизация нагрузок (workload prioritization)?
 
 Фича ScyllaDB Enterprise: **приоритизация нагрузок** — разные нагрузки получают разные доли CPU/IO.
 
@@ -375,7 +375,7 @@ Background analytics: 20% resources
 
 В Cassandra нет встроенного аналога — обычно поднимают отдельные кластеры.
 
-## Q16. (!) Cassandra drop-in replacement — насколько true?
+## Q16. (!) Насколько Scylla — настоящая drop-in замена Cassandra?
 
 ScyllaDB **высоко совместима**:
 - Тот же CQL
@@ -392,9 +392,9 @@ ScyllaDB **высоко совместима**:
 - Отличаются параметры тюнинга
 - Версии со временем расходятся
 
-**Лучшая практика:** тщательно тестировать. Использовать **Scylla Migration Tools**.
+**Рекомендация:** тщательно тестировать. Использовать **Scylla Migration Tools**.
 
-## Q17. (!) DynamoDB API (Alternator)?
+## Q17. (!) Что такое DynamoDB API (Alternator)?
 
 **Scylla Alternator** — DynamoDB API поверх ScyllaDB.
 
@@ -429,7 +429,7 @@ table.put_item(Item={'PK': 'user#123', 'name': 'Alice'})
 - Нужны строгие ACID-гарантии
 - У команды нет опыта с NoSQL
 
-## Q19. Time-series workloads?
+## Q19. Как Scylla работает с time-series нагрузками?
 
 **Временные ряды идеальны для Scylla/Cassandra:**
 - Только добавление (append-only)
@@ -450,7 +450,7 @@ CREATE TABLE sensor_data (
 
 **TWCS** эффективно автоматически уплотняет старые данные. Старые SSTable можно удалять через TTL.
 
-## Q20. IoT?
+## Q20. Чем Scylla хороша для IoT?
 
 IoT = миллионы устройств, непрерывно отправляющих данные.
 
@@ -462,7 +462,7 @@ IoT = миллионы устройств, непрерывно отправля
 
 **Кто использует:** Comcast, Tubi, Discord, Numberly.
 
-## Q21. (!) Open Source vs Enterprise vs ScyllaDB Cloud?
+## Q21. (!) Чем различаются Open Source, Enterprise и ScyllaDB Cloud?
 
 **Open Source (бесплатно):**
 - Лицензия Apache 2.0 (очень либеральная)
@@ -483,7 +483,7 @@ IoT = миллионы устройств, непрерывно отправля
 
 В **2025 году** — Open Source отлично подходит для большинства нагрузок. Enterprise — там, где много требований к безопасности и compliance.
 
-## Q22. (!) Migration Cassandra → Scylla?
+## Q22. (!) Как мигрировать с Cassandra на Scylla?
 
 **Шаги:**
 1. **Проверка совместимости** — совпадают ли возможности версии Cassandra?
@@ -512,7 +512,7 @@ IoT = миллионы устройств, непрерывно отправля
 9. **Миграции схемы** — медленны на больших таблицах
 10. **Непонимание shard-per-core** — критичен тюнинг пула соединений
 
-**Лучшая практика:** использовать **Scylla Manager** для бэкапов, repair-ов и управления схемой.
+**Рекомендация:** использовать **Scylla Manager** для бэкапов, repair-ов и управления схемой.
 
 ---
 

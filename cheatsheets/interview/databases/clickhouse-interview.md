@@ -40,48 +40,48 @@ updated: "2026-05-08"
 **Базовые понятия**
 - [Q1. (!) Что такое ClickHouse?](#q1--что-такое-clickhouse)
 - [Q2. (!) Почему ClickHouse такой быстрый?](#q2--почему-clickhouse-такой-быстрый)
-- [Q3. (!) ClickHouse vs Snowflake/BigQuery?](#q3--clickhouse-vs-snowflakebigquery)
+- [Q3. (!) Чем ClickHouse отличается от Snowflake и BigQuery?](#q3--чем-clickhouse-отличается-от-snowflake-и-bigquery)
 - [Q4. ClickHouse vs PostgreSQL для аналитики?](#q4-clickhouse-vs-postgresql-для-аналитики)
 
 **MergeTree engines**
 - [Q5. (!) Что такое MergeTree?](#q5--что-такое-mergetree)
 - [Q6. (!) Семейство MergeTree (ReplacingMergeTree, SummingMergeTree, AggregatingMergeTree)?](#q6--семейство-mergetree-replacingmergetree-summingmergetree-aggregatingmergetree)
-- [Q7. CollapsingMergeTree?](#q7-collapsingmergetree)
-- [Q8. ReplicatedMergeTree?](#q8-replicatedmergetree)
+- [Q7. Как работает CollapsingMergeTree?](#q7-как-работает-collapsingmergetree)
+- [Q8. Что такое ReplicatedMergeTree?](#q8-что-такое-replicatedmergetree)
 
 **Partitioning и indexing**
 - [Q9. (!) Partitioning в ClickHouse?](#q9--partitioning-в-clickhouse)
 - [Q10. (!) Sparse index — что это?](#q10--sparse-index--что-это)
-- [Q11. ORDER BY vs PRIMARY KEY?](#q11-order-by-vs-primary-key)
-- [Q12. Skip indexes (data skipping)?](#q12-skip-indexes-data-skipping)
+- [Q11. Чем отличаются ORDER BY и PRIMARY KEY?](#q11-чем-отличаются-order-by-и-primary-key)
+- [Q12. Что такое skip-индексы (data skipping)?](#q12-что-такое-skip-индексы-data-skipping)
 
 **Запросы**
 - [Q13. (!) ClickHouse SQL — особенности?](#q13--clickhouse-sql--особенности)
-- [Q14. Array functions, higher-order functions?](#q14-array-functions-higher-order-functions)
+- [Q14. Какие есть функции для массивов и higher-order-функции?](#q14-какие-есть-функции-для-массивов-и-higher-order-функции)
 - [Q15. (!) JOINs в ClickHouse — особенности?](#q15--joins-в-clickhouse--особенности)
-- [Q16. Window functions?](#q16-window-functions)
+- [Q16. Поддерживаются ли window-функции?](#q16-поддерживаются-ли-window-функции)
 
 **Materialized views и projections**
 - [Q17. (!) Materialized views в ClickHouse?](#q17--materialized-views-в-clickhouse)
-- [Q18. Projections?](#q18-projections)
+- [Q18. Что такое projections?](#q18-что-такое-projections)
 
 **Distributed**
-- [Q19. (!) Distributed table?](#q19--distributed-table)
+- [Q19. (!) Что такое Distributed-таблица?](#q19--что-такое-distributed-таблица)
 - [Q20. Replication через ZooKeeper / Keeper?](#q20-replication-через-zookeeper--keeper)
-- [Q21. ClickHouse Keeper vs ZooKeeper?](#q21-clickhouse-keeper-vs-zookeeper)
+- [Q21. Чем ClickHouse Keeper отличается от ZooKeeper?](#q21-чем-clickhouse-keeper-отличается-от-zookeeper)
 
 **Storage**
 - [Q22. (!) Storage engine оптимизации (compression, sparse data)?](#q22--storage-engine-оптимизации-compression-sparse-data)
-- [Q23. Tiered storage (hot/cold)?](#q23-tiered-storage-hotcold)
+- [Q23. Что такое многоуровневое хранение (tiered storage, hot/cold)?](#q23-что-такое-многоуровневое-хранение-tiered-storage-hotcold)
 
 **Integration**
 - [Q24. (!) Kafka engine для ingestion?](#q24--kafka-engine-для-ingestion)
-- [Q25. Other table engines (S3, MySQL, PostgreSQL)?](#q25-other-table-engines-s3-mysql-postgresql)
+- [Q25. Какие ещё табличные движки есть (S3, MySQL, PostgreSQL)?](#q25-какие-ещё-табличные-движки-есть-s3-mysql-postgresql)
 
 **Production**
 - [Q26. (!) Какие use cases ClickHouse в production?](#q26--какие-use-cases-clickhouse-в-production)
 - [Q27. (!) Какие ограничения / минусы ClickHouse?](#q27--какие-ограничения--минусы-clickhouse)
-- [Q28. Common pitfalls в ClickHouse?](#q28-common-pitfalls-в-clickhouse)
+- [Q28. Common pitfalls в ClickHouse production?](#q28-common-pitfalls-в-clickhouse-production)
 
 ## Q1. (!) Что такое ClickHouse?
 
@@ -119,7 +119,7 @@ updated: "2026-05-08"
 
 **Бенчмарки:** часто в **10-100x** быстрее PostgreSQL на аналитических запросах.
 
-## Q3. (!) ClickHouse vs Snowflake/BigQuery?
+## Q3. (!) Чем ClickHouse отличается от Snowflake и BigQuery?
 
 | Критерий | ClickHouse | Snowflake | BigQuery |
 |-----------|-----------|-----------|----------|
@@ -206,7 +206,7 @@ ORDER BY (date, user_id);
 
 **MaterializedView** часто использует AggregatingMergeTree для real-time-агрегаций.
 
-## Q7. CollapsingMergeTree?
+## Q7. Как работает CollapsingMergeTree?
 
 **CollapsingMergeTree** — для взаимного «погашения» строк (знак sign +1 / -1).
 
@@ -230,7 +230,7 @@ INSERT INTO events VALUES (1, 1, 150);   -- new value
 
 **Сценарий:** обновления в модели, которая в остальном неизменяема.
 
-## Q8. ReplicatedMergeTree?
+## Q8. Что такое ReplicatedMergeTree?
 
 **ReplicatedMergeTree** — добавляет репликацию к MergeTree.
 
@@ -296,7 +296,7 @@ Primary index (sparse):
 
 ClickHouse предназначен **не для точечных выборок**, а для **сканов**.
 
-## Q11. ORDER BY vs PRIMARY KEY?
+## Q11. Чем отличаются ORDER BY и PRIMARY KEY?
 
 ```sql
 ORDER BY (user_id, event_time)  -- physical sorting в parts
@@ -314,7 +314,7 @@ PRIMARY KEY user_id              -- prefix of ORDER BY (для index)
 - Упорядочивайте колонки по кардинальности: от низкой → к высокой
 - Самые частые колонки-фильтры — первыми
 
-## Q12. Skip indexes (data skipping)?
+## Q12. Что такое skip-индексы (data skipping)?
 
 **Skip-индексы** — вторичные индексы для **пропуска гранул** (без их чтения).
 
@@ -358,7 +358,7 @@ SELECT toStartOfHour(event_time), count() FROM events GROUP BY 1;
 
 **Приближённые агрегаты** — `uniqHLL12`, `quantileTDigest` — **намного быстрее** точных, ценой небольшой неточности.
 
-## Q14. Array functions, higher-order functions?
+## Q14. Какие есть функции для массивов и higher-order-функции?
 
 ```sql
 -- Arrays — first-class type
@@ -411,7 +411,7 @@ SELECT * FROM events WHERE user_id IN (SELECT id FROM users WHERE country = 'US'
 
 К **2025** JOIN-ы улучшились (parallel hash join, grace hash), но в ClickHouse всё равно выигрывает **денормализация**.
 
-## Q16. Window functions?
+## Q16. Поддерживаются ли window-функции?
 
 ```sql
 SELECT
@@ -458,7 +458,7 @@ GROUP BY hour, user_id;
 
 **Сценарий:** real-time-дашборды без тяжёлых запросов к сырым данным.
 
-## Q18. Projections?
+## Q18. Что такое projections?
 
 **Projections** (с 2020) — альтернатива MV, работают автоматически.
 
@@ -475,7 +475,7 @@ ClickHouse **автоматически** выбирает проекцию, е�
 - Projections — несколько порядков сортировки для одной и той же таблицы
 - MV — предвычисленные агрегаты / отдельная таблица
 
-## Q19. (!) Distributed table?
+## Q19. (!) Что такое Distributed-таблица?
 
 **Distributed-таблица** — таблица-прокси, выполняющая запросы по всем **шардам**.
 
@@ -514,7 +514,7 @@ ENGINE = Distributed(my_cluster, default, events_local, rand());
 - Выбора лидера (leader election)
 - Распространения DDL-запросов
 
-## Q21. ClickHouse Keeper vs ZooKeeper?
+## Q21. Чем ClickHouse Keeper отличается от ZooKeeper?
 
 **ClickHouse Keeper** (с 2021) — drop-in-замена ZooKeeper, написан на C++.
 
@@ -548,7 +548,7 @@ CREATE TABLE metrics (
 status LowCardinality(String)  -- dictionary encoding
 ```
 
-## Q23. Tiered storage (hot/cold)?
+## Q23. Что такое многоуровневое хранение (tiered storage, hot/cold)?
 
 ```sql
 -- Storage policy в config
@@ -602,7 +602,7 @@ AS SELECT * FROM events_kafka;
 
 **Аналогично:** RabbitMQ Engine, NATS Engine, S3 Queue Engine.
 
-## Q25. Other table engines (S3, MySQL, PostgreSQL)?
+## Q25. Какие ещё табличные движки есть (S3, MySQL, PostgreSQL)?
 
 **Табличные функции / внешние движки:**
 - **S3** — чтение/запись Parquet/CSV/JSON в S3
