@@ -34,18 +34,18 @@ updated: "2026-05-22"
 ## Содержание
 
 **Requirements и capacity**
-- [Q1. (!) Functional requirements?](#q1--functional-requirements)
-- [Q2. (!) Non-functional requirements и SLA?](#q2--non-functional-requirements-и-sla)
-- [Q3. (!) Back-of-the-envelope capacity estimation?](#q3--back-of-the-envelope-capacity-estimation)
+- [Q1. (!) Функциональные требования к crawler-у?](#q1--функциональные-требования-к-crawler-у)
+- [Q2. (!) Нефункциональные требования и SLA?](#q2--нефункциональные-требования-и-sla)
+- [Q3. (!) Прикидка ёмкости на пальцах (back-of-the-envelope)?](#q3--прикидка-ёмкости-на-пальцах-back-of-the-envelope)
 
 **High-level design**
 - [Q4. (!) Высокоуровневая архитектура crawler-а?](#q4--высокоуровневая-архитектура-crawler-а)
-- [Q5. Какой цикл проходит каждый URL?](#q5-какой-цикл-проходит-каждый-url)
+- [Q5. Какой жизненный цикл проходит каждый URL?](#q5-какой-жизненный-цикл-проходит-каждый-url)
 
 **URL Frontier (Mercator)**
 - [Q6. (!) Что такое URL Frontier и почему он критичен?](#q6--что-такое-url-frontier-и-почему-он-критичен)
-- [Q7. (!) Mercator scheme — front и back queues?](#q7--mercator-scheme--front-и-back-queues)
-- [Q8. BFS vs DFS — что выбрать и почему?](#q8-bfs-vs-dfs--что-выбрать-и-почему)
+- [Q7. (!) Схема Mercator — front и back queues?](#q7--схема-mercator--front-и-back-queues)
+- [Q8. BFS или DFS — что выбрать для обхода и почему?](#q8-bfs-или-dfs--что-выбрать-для-обхода-и-почему)
 - [Q9. Как приоритизировать URLs во front queue?](#q9-как-приоритизировать-urls-во-front-queue)
 
 **Politeness и robots.txt**
@@ -55,33 +55,33 @@ updated: "2026-05-22"
 
 **Fetcher и parsing**
 - [Q13. Как устроен Fetcher worker?](#q13-как-устроен-fetcher-worker)
-- [Q14. Parser и extraction outlinks?](#q14-parser-и-extraction-outlinks)
+- [Q14. Как парсер извлекает текст и outlinks?](#q14-как-парсер-извлекает-текст-и-outlinks)
 - [Q15. URL normalization — что и как нормализуем?](#q15-url-normalization--что-и-как-нормализуем)
 
 **URL и content dedup**
 - [Q16. (!) Как избежать повторного обхода одного URL?](#q16--как-избежать-повторного-обхода-одного-url)
-- [Q17. (!) Content dedup — SimHash vs MinHash?](#q17--content-dedup--simhash-vs-minhash)
+- [Q17. (!) Content dedup — SimHash или MinHash?](#q17--content-dedup--simhash-или-minhash)
 
 **Storage и search backend**
-- [Q18. Где хранить raw HTML, метаданные, индекс?](#q18-где-хранить-raw-html-метаданные-индекс)
-- [Q19. Cassandra/HBase schema для URL state?](#q19-cassandrahbase-schema-для-url-state)
+- [Q18. Где хранить raw HTML, метаданные и индекс?](#q18-где-хранить-raw-html-метаданные-и-индекс)
+- [Q19. Схема Cassandra/HBase для URL state?](#q19-схема-cassandrahbase-для-url-state)
 
 **Re-crawl и freshness**
-- [Q20. Как решать когда переобходить страницу?](#q20-как-решать-когда-переобходить-страницу)
+- [Q20. Как решать, когда переобходить страницу?](#q20-как-решать-когда-переобходить-страницу)
 - [Q21. Sitemap.xml — как использовать?](#q21-sitemapxml--как-использовать)
 
 **Edge cases и traps**
 - [Q22. (!) Spider traps — как детектить и обходить?](#q22--spider-traps--как-детектить-и-обходить)
-- [Q23. JavaScript-rendered страницы — headless browser?](#q23-javascript-rendered-страницы--headless-browser)
-- [Q24. Failure handling — упал worker, retry, dead URLs?](#q24-failure-handling--упал-worker-retry-dead-urls)
+- [Q23. JavaScript-рендеринг страниц — нужен ли headless browser?](#q23-javascript-рендеринг-страниц--нужен-ли-headless-browser)
+- [Q24. Обработка сбоев — упал worker, retry, мёртвые URL?](#q24-обработка-сбоев--упал-worker-retry-мёртвые-url)
 
 **Trade-offs**
-- [Q25. (!) Centralized vs distributed frontier?](#q25--centralized-vs-distributed-frontier)
+- [Q25. (!) Централизованный или распределённый frontier?](#q25--централизованный-или-распределённый-frontier)
 - [Q26. (!) Главные trade-offs дизайна?](#q26--главные-trade-offs-дизайна)
 
-## Q1. (!) Functional requirements?
+## Q1. (!) Функциональные требования к crawler-у?
 
-Crawler — это сервис, который **обходит веб** начиная с seed URLs и извлекает контент для дальнейшего индексирования.
+Crawler **обходит веб** начиная с seed URLs и извлекает контент для последующего индексирования. Суть — замкнутый цикл «скачать страницу → достать ссылки → скачать страницы по ссылкам». На собеседовании сначала проговорите этот цикл, потом распишите его этапы.
 
 Базовый функционал, который надо подтвердить с интервьюером:
 
@@ -92,22 +92,22 @@ Crawler — это сервис, который **обходит веб** нач
 - **Recurse** — повторяем процесс с новыми URLs.
 - **Store** — raw HTML + parsed content в durable storage для downstream-сервисов (indexer, search).
 
-Что **не** входит (typical out-of-scope для собеседования):
+Что **не** входит (типовой out-of-scope для собеседования) — важно очертить границы, чтобы не утонуть:
 
 - Сам search backend (ranking, query parsing) — это `design-search-interview.md`.
-- Indexer pipeline (inverted index building) — отдельный сервис.
-- Personalization, SERP rendering.
+- Indexer pipeline (построение inverted index) — отдельный сервис.
+- Personalization, рендеринг страницы выдачи (SERP).
 
 Уточняющие вопросы интервьюеру:
 
 - Какие протоколы — только HTTP/HTTPS или ещё FTP, gopher? (обычно только HTTP/HTTPS).
-- Crawl whole web или vertical (news, e-commerce)? Это меняет seed strategy.
-- Нужна ли поддержка JavaScript-rendered SPA (React/Vue)? (отдельный pool с headless Chrome).
-- Multi-language? UTF-8 + правильный charset detection.
+- Обходим весь веб или вертикаль (news, e-commerce)? От этого зависит seed-стратегия.
+- Нужна ли поддержка JavaScript-rendered SPA (React/Vue)? (требует отдельного pool с headless Chrome).
+- Multi-language? Тогда UTF-8 + корректное определение charset.
 
-## Q2. (!) Non-functional requirements и SLA?
+## Q2. (!) Нефункциональные требования и SLA?
 
-Цифры, на которые опирается весь дизайн (типовые для интервью):
+Эти цифры — фундамент всего дизайна: из них напрямую следуют объёмы хранилища, число воркеров и пропускная способность сети (см. Q3). Типовой набор для интервью:
 
 | Параметр | Значение |
 |----------|----------|
@@ -124,14 +124,14 @@ Crawler — это сервис, который **обходит веб** нач
 
 Дополнительные ограничения:
 
-- **Robots.txt compliance** — обязательно (иначе IP-banned, репутация DDoS-источника).
-- **Bandwidth** — order of 100 Gbps egress per region; мониторим.
-- **Fault tolerance** — потеря 10% workers не должна остановить crawl.
-- **Idempotency** — повторный обход того же URL даёт тот же state (если контент не менялся).
+- **Соблюдение robots.txt** — обязательно, иначе IP забанят и заработаешь репутацию источника DDoS.
+- **Bandwidth** — порядка 100 Gbps egress на регион; держим под мониторингом.
+- **Отказоустойчивость** — потеря 10% воркеров не должна останавливать crawl.
+- **Идемпотентность** — повторный обход того же URL даёт тот же state (если контент не менялся).
 
-## Q3. (!) Back-of-the-envelope capacity estimation?
+## Q3. (!) Прикидка ёмкости на пальцах (back-of-the-envelope)?
 
-Опорные цифры — их полезно знать наизусть.
+Цель прикидки — за минуту показать, что система реализуема и где её узкие места. Опорные цифры полезно знать наизусть.
 
 **Storage**:
 
@@ -162,7 +162,7 @@ Crawler — это сервис, который **обходит веб** нач
 
 ## Q4. (!) Высокоуровневая архитектура crawler-а?
 
-Стандартная компонентная схема:
+Crawler — это замкнутый конвейер вокруг центральной очереди (Frontier): из неё берут URL, скачивают, парсят, извлекают новые ссылки и возвращают их обратно в очередь. Стандартная компонентная схема:
 
 ```mermaid
 flowchart LR
@@ -185,11 +185,13 @@ flowchart LR
 Главное в этой схеме:
 
 - **Frontier — центральная структура**, всё крутится вокруг неё.
-- Цикл замкнут: Parser → Filter → Dedup → Frontier (новые URLs туда же).
-- **Storage отделён** от processing: raw HTML в дешёвый object store (S3), метаданные в быстрой column-store.
-- DNS и robots.txt — **shared services**, кэшируются.
+- Цикл замкнут: Parser → Filter → Dedup → Frontier (новые URLs возвращаются туда же).
+- **Хранилище отделено от обработки**: raw HTML — в дешёвый object store (S3), метаданные — в быстрый column-store.
+- DNS и robots.txt — **общие сервисы (shared services)**, кэшируются.
 
-## Q5. Какой цикл проходит каждый URL?
+## Q5. Какой жизненный цикл проходит каждый URL?
+
+От обнаружения ссылки до её повторного обхода URL проходит фиксированную цепочку этапов. Понимать её важно: каждый этап — это отдельный компонент системы, и на собеседовании по нему могут копнуть.
 
 Lifecycle одного URL:
 
@@ -211,22 +213,22 @@ States в URL DB: `discovered → queued → in_flight → fetched | error | fil
 
 ## Q6. (!) Что такое URL Frontier и почему он критичен?
 
-**URL Frontier** — это distributed priority queue, которая решает **что и когда** скачивать. Это не просто «список URLs», а структура, которая балансирует одновременно три требования:
+**URL Frontier** — это распределённая priority queue, которая решает, **что и когда** скачивать. Это не просто «список URLs»: она одновременно балансирует три конфликтующих требования, и именно в этом сложность.
 
 1. **Politeness** — не бить один домен чаще, чем разрешено.
-2. **Priority** — важные страницы (high PageRank, news) скачивать первыми.
-3. **Throughput** — workers всегда заняты (нет idle time).
+2. **Priority** — важные страницы (высокий PageRank, news) скачивать первыми.
+3. **Throughput** — воркеры всегда заняты, без простоя (idle time).
 
-Наивная реализация (один FIFO) ломается:
+Почему наивная реализация (один FIFO) ломается — два конкретных провала:
 
-- Если 90% URLs из frontier ведут на один домен → либо забиваем его (нарушаем politeness), либо все workers ждут (idle).
-- Если queue равномерная → low-priority URLs обгоняют high-priority.
+- Если 90% URLs во frontier ведут на один домен, то либо мы забиваем его запросами (нарушаем politeness), либо все воркеры ждут своей очереди по этому домену и простаивают.
+- Если очередь обрабатывается равномерно, то низкоприоритетные URLs обгоняют высокоприоритетные — свежесть и важные страницы страдают.
 
-Решение — **two-level queue (Mercator scheme)**: front queues для приоритета, back queues для politeness.
+Решение разводит эти конфликты по двум уровням — **two-level queue (Mercator scheme)**: front queues отвечают за приоритет, back queues — за politeness (см. Q7).
 
-## Q7. (!) Mercator scheme — front и back queues?
+## Q7. (!) Схема Mercator — front и back queues?
 
-Каноническая схема из статьи Heydon & Najork (1999), используется в Heritrix, Nutch.
+Каноническая двухуровневая схема из статьи Heydon & Najork (1999); используется в Heritrix и Nutch. Идея: разделить «что скачать в первую очередь» (приоритет) и «когда можно ударить по конкретному хосту» (politeness) на два независимых уровня очередей.
 
 ```mermaid
 flowchart TB
@@ -268,21 +270,21 @@ flowchart TB
     Worker -.->|when done<br/>update next-fetch| H
 ```
 
-Как это работает:
+Как это работает, сверху вниз:
 
-- **Front queues** (например, 3-5 очередей с разными приоритетами). Высокоприоритетные обслуживаются чаще.
-- **Biased router** — выбирает URL из front queue с вероятностью пропорциональной приоритету.
-- **Back queues** — **одна очередь на host**. Гарантия: URLs одного host не разлетаются по разным очередям → politeness легко контролировать.
-- **Heap по next-fetch time** — min-heap (host, ready_time). Worker берёт top — это host, готовый к скачиванию раньше всех.
-- Когда back queue **пустеет** — пополняется из front queue (тот же host, если есть; иначе новый).
+- **Front queues** — 3-5 очередей с разными приоритетами; высокоприоритетные обслуживаются чаще.
+- **Biased router** — выбирает URL из front queue с вероятностью, пропорциональной приоритету (P1=60%, P2=30%, P3=10%).
+- **Back queues** — **одна очередь на host**. Ключевая гарантия: URLs одного host не разлетаются по разным очередям, поэтому politeness можно контролировать в одной точке.
+- **Heap по next-fetch time** — min-heap из пар (host, ready_time). Воркер берёт вершину — это хост, который готов к скачиванию раньше всех.
+- Когда back queue **пустеет**, она пополняется из front queue (тем же хостом, если для него есть URLs; иначе берётся новый хост).
 
-Свойства:
+Почему эта конструкция закрывает все три требования из Q6:
 
-- Politeness гарантирована (один host = одна очередь, ready_time соблюдается).
-- Priority учитывается через front queue.
-- Workers никогда не простаивают, если heap не пуст.
+- **Politeness** гарантирована: один host = одна очередь, ready_time соблюдается.
+- **Priority** учитывается на уровне front queue.
+- **Throughput**: воркеры не простаивают, пока heap не пуст.
 
-Pseudo-code worker:
+Псевдокод воркера:
 ```python
 while True:
     host, back_queue = heap.pop_min_ready_time()  # waits if needed
@@ -295,32 +297,32 @@ while True:
     heap.push(host, next_ready_time)
 ```
 
-## Q8. BFS vs DFS — что выбрать и почему?
+## Q8. BFS или DFS — что выбрать для обхода и почему?
 
-Web crawl — это traversal графа, и формально применимы оба подхода.
+Короткий ответ: **BFS с приоритетами**. Веб — это граф, и формально применимы оба обхода, но на практике production-crawler всегда идёт вширь.
 
 | Подход | Плюсы | Минусы |
 |--------|-------|--------|
-| **BFS** (breadth-first) | Хорошее покрытие, естественное приоритезирование (близкие к seed = более важные), легко параллелится | Память — frontier разрастается |
-| **DFS** (depth-first) | Низкое потребление памяти | Можно надолго застрять в одном поддереве, плохая diversity, риск spider trap |
+| **BFS** (в ширину) | Хорошее покрытие, естественная приоритизация (близкие к seed = более важные), легко параллелится | Память: frontier разрастается |
+| **DFS** (в глубину) | Низкое потребление памяти | Можно надолго застрять в одном поддереве, плохое разнообразие (diversity), риск spider trap |
 
-**На практике все production-crawlers используют BFS с приоритетами** (Mercator-style). Почему:
+Почему все production-crawlers выбирают BFS (в стиле Mercator):
 
-- BFS близко коррелирует с PageRank: страницы ближе к hub-узлам обычно важнее.
-- DFS опасен: попал в `?page=1&date=2024-01-01` календарь — ушёл на 10000 уровней вниз.
-- BFS легко sharded: уровни обхода независимы по сторонам графа.
+- BFS хорошо коррелирует с PageRank: страницы ближе к hub-узлам обычно важнее, и BFS добирается до них первыми.
+- DFS опасен: попал в календарь `?page=1&date=2024-01-01` — и ушёл на 10000 уровней вниз, выкачивая мусор.
+- BFS легко шардируется: уровни обхода независимы по разным частям графа.
 
-С приоритетами это уже не чистый BFS, а **best-first search**: достаём из frontier не «самое старое», а «с максимальным приоритетом».
+**Нюанс:** с приоритетами это уже не чистый BFS, а **best-first search** — из frontier достаём не «самое старое», а «с максимальным приоритетом». То есть BFS задаёт общий каркас, а priority-функция (см. Q9) решает порядок внутри него.
 
 ## Q9. Как приоритизировать URLs во front queue?
 
-Сигналы для priority score:
+Приоритет — это число (score), которым мы решаем, какой URL скачать раньше. Считаем его из нескольких сигналов, каждый отражает «насколько эта страница важна и насколько срочно её надо обойти»:
 
-- **PageRank / domain authority** — старая, но рабочая метрика. Топ-1000 доменов имеют priority 1.
-- **Update frequency** — news сайты обновляются часто, ставим priority выше для freshness.
-- **Depth from seed** — глубокие страницы (depth > 5) опускаем в priority.
-- **Last-crawled age** — если страница не обновлялась 30 дней, поднимаем приоритет (re-crawl).
-- **Domain quota** — нельзя дать одному домену забить всю очередь.
+- **PageRank / авторитет домена** — старая, но рабочая метрика. Топ-1000 доменов получают priority 1.
+- **Частота обновления** — news-сайты обновляются часто, поэтому им поднимаем приоритет ради свежести.
+- **Глубина от seed** — глубокие страницы (depth > 5) опускаем в приоритете.
+- **Давность последнего обхода** — если страница не обновлялась 30 дней, поднимаем приоритет на re-crawl.
+- **Квота домена** — нельзя дать одному домену забить всю очередь.
 
 Скоринг (упрощённо):
 
@@ -334,20 +336,20 @@ def url_priority(url, meta):
     return score
 ```
 
-Front queue — это либо priority queue (heap по score), либо набор FIFO разной приоритетности с biased router (как в Mercator).
+Технически front queue реализуют двумя способами: либо priority queue (heap по score), либо набор FIFO-очередей разной приоритетности с biased router (как в Mercator).
 
 ## Q10. (!) Politeness — что это и как реализовать?
 
-**Politeness** — не вредить целевому сайту. Без неё crawler выглядит как DDoS-атака и его быстро забанят по IP.
+**Politeness** — это правило «не вредить целевому сайту». Без неё crawler ведёт себя как DDoS-атака, и его быстро забанят по IP — поэтому politeness не опция, а условие выживания краулера.
 
 Базовые правила:
 
-- **1 request/sec/domain** по умолчанию.
-- **Respect crawl-delay** из robots.txt (может быть 5s, 10s, ...).
-- **Sequential, не parallel** — не открывать 100 connections к одному host одновременно.
-- **Identifying User-Agent** — `Mozilla/5.0 (compatible; MyCrawler/1.0; +https://example.com/bot)` — чтобы admin сайта мог связаться.
+- **1 запрос/сек на домен** по умолчанию.
+- **Соблюдать crawl-delay** из robots.txt (может быть 5s, 10s, ...).
+- **Последовательно, не параллельно** — не открывать 100 соединений к одному хосту одновременно.
+- **Опознаваемый User-Agent** — `Mozilla/5.0 (compatible; MyCrawler/1.0; +https://example.com/bot)`, чтобы админ сайта мог с нами связаться.
 
-Реализация — **per-host back queue + heap by ready_time** (см. Q7). Альтернатива — token bucket:
+Основная реализация — **back queue на хост + heap по ready_time** (см. Q7). Альтернатива — token bucket на хост:
 
 ```python
 # Token bucket per host
@@ -367,17 +369,17 @@ class HostRateLimiter:
         return False
 ```
 
-Mercator-back-queue лучше масштабируется (один глобальный heap вместо millions of bucket states в RAM).
+Почему back queue Mercator-а лучше: он масштабируется одним глобальным heap-ом вместо миллионов состояний bucket-ов в RAM.
 
-Дополнительно:
+Дополнительные аспекты politeness:
 
-- **Bandwidth politeness** — не качать на полной скорости с одного сайта, даже если allowed.
-- **Time-of-day** — некоторые crawlers замедляются в bizhours для конкретных доменов.
-- **HTTP 429 / 503** — backoff exponential, не просто retry.
+- **Bandwidth politeness** — не качать на полной скорости с одного сайта, даже если запросы разрешены.
+- **Время суток** — некоторые crawlers замедляются в рабочие часы для конкретных доменов, чтобы не мешать живому трафику.
+- **HTTP 429 / 503** — экспоненциальный backoff, а не слепой retry: сайт явно просит притормозить.
 
 ## Q11. (!) robots.txt — как парсить и кэшировать?
 
-`https://example.com/robots.txt` — текстовый файл, описывает что можно/нельзя crawler-у.
+`https://example.com/robots.txt` — текстовый файл, в котором сайт описывает, что crawler-у можно, а что нельзя.
 
 Пример:
 ```
@@ -393,23 +395,23 @@ Crawl-delay: 10
 Sitemap: https://example.com/sitemap.xml
 ```
 
-Логика:
+Логика проверки:
 
-1. Перед первым fetch домена — скачать `/robots.txt`.
-2. Распарсить группы по `User-agent` (точное совпадение с нашим UA → fallback на `*`).
-3. Для каждой группы — упорядоченные `Allow`/`Disallow` правила.
-4. Применить **longest-prefix match** (Google спец) для проверки URL.
+1. Перед первым fetch домена скачать `/robots.txt`.
+2. Распарсить группы по `User-agent`: ищем точное совпадение с нашим UA, иначе fallback на `*`.
+3. Внутри группы — упорядоченные правила `Allow`/`Disallow`.
+4. Для проверки URL применить **longest-prefix match** (спецификация Google): побеждает правило с самым длинным совпавшим префиксом.
 5. Если URL запрещён — отбросить.
 
-**Кэширование**:
+**Кэширование** (robots.txt качать на каждый запрос нельзя — это лишний трафик и нагрузка на сайт):
 
-- TTL: 24 часа (Google рекомендация).
-- Cache key: hostname.
-- Storage: Redis cluster (sharded по host), backup в Cassandra.
-- При 4xx (no robots.txt) — считаем «всё разрешено», cache TTL = 24h.
-- При 5xx — считаем «всё запрещено» временно (1 час), retry.
+- TTL: 24 часа (рекомендация Google).
+- Ключ кэша: hostname.
+- Хранилище: Redis cluster (sharded по host), backup в Cassandra.
+- При 4xx (robots.txt нет) — считаем «всё разрешено», TTL = 24h.
+- При 5xx — временно считаем «всё запрещено» (1 час) и повторяем попытку: сайт может быть просто недоступен, и лучше не нарушить чужие правила.
 
-Pseudo-code:
+Псевдокод:
 
 ```python
 def can_fetch(url, user_agent):
@@ -422,34 +424,34 @@ def can_fetch(url, user_agent):
 
 Дополнительные директивы:
 
-- `Crawl-delay: N` — минимум N секунд между запросами (переопределяет наш default 1s).
-- `Sitemap:` — URL карты сайта, использовать для discovery (см. Q21).
+- `Crawl-delay: N` — минимум N секунд между запросами (переопределяет наш дефолт 1s).
+- `Sitemap:` — URL карты сайта; используем для discovery (см. Q21).
 
 ## Q12. DNS resolution — почему это узкое место?
 
-Каждый новый домен = DNS lookup (A/AAAA record). При 400 RPS и cache hit ratio 95%:
+Перед скачиванием с нового домена нужно резолвить его имя в IP (A/AAAA record), и этот шаг неожиданно дорогой. При 400 RPS и cache hit ratio 95%:
 
-- 400 × 0.05 = **20 DNS lookups/sec**.
-- Standard glibc DNS — synchronous, blocking, ~10-50ms.
+- 400 × 0.05 = **20 DNS-запросов/сек**.
+- Стандартный glibc DNS синхронный и блокирующий, ~10-50ms на запрос — то есть воркер на эти миллисекунды простаивает.
 
-Проблемы:
+Откуда узкое место:
 
-- **Default OS resolver** — обычно один или два сервера, легко overload.
-- **Default cache TTL** — может игнорироваться приложением.
-- **Async resolution не из коробки** — нужен c-ares, aiodns, getaddrinfo_a.
+- **Дефолтный OS-резолвер** — обычно один-два сервера, легко перегрузить.
+- **Дефолтный cache TTL** — приложение может его игнорировать, и кэш не работает.
+- **Асинхронный резолвинг не из коробки** — нужны c-ares, aiodns или getaddrinfo_a.
 
-Решение в production:
+Решение в production — снять резолвинг с критического пути:
 
-- **Dedicated DNS resolver cluster** — Unbound / BIND / dnsmasq, 4-8 хостов.
-- **Application-level DNS cache** — Redis или in-memory LRU, TTL 1 час (overriding low TTLs).
-- **Async resolver** (aiodns) — не блокирует event loop.
-- **Pre-warm** — для seed доменов сделать lookup при старте.
+- **Выделенный DNS-резолвер-кластер** — Unbound / BIND / dnsmasq, 4-8 хостов.
+- **DNS-кэш на уровне приложения** — Redis или in-memory LRU с TTL 1 час (перекрывая слишком низкие TTL сайтов).
+- **Асинхронный резолвер** (aiodns) — не блокирует event loop.
+- **Прогрев (pre-warm)** — для seed-доменов сделать lookup при старте.
 
 Полезные ссылки: см. `../architecture/dns-interview.md` и `../architecture/latency-numbers-interview.md`.
 
 ## Q13. Как устроен Fetcher worker?
 
-Fetcher — это HTTP клиент, который выполняет фактический скачивание.
+Fetcher — это HTTP-клиент, который выполняет само скачивание страницы. Его задача — забрать ответ надёжно и экономно: не зависнуть на медленном сайте, не выкачать гигабайтный файл и по возможности не качать то, что не менялось.
 
 Ключевые параметры:
 
@@ -463,27 +465,28 @@ Fetcher — это HTTP клиент, который выполняет факт
 | Retry attempts | 3 (на 5xx, network errors) |
 | Backoff | exponential: 1s, 4s, 16s |
 
-HTTP-headers (важные):
+Важные HTTP-заголовки:
 
 - `User-Agent: MyCrawler/1.0 (+https://example.com/bot)` — обязательно.
 - `Accept: text/html, application/xhtml+xml, application/xml;q=0.9, */*;q=0.8`.
-- `Accept-Encoding: gzip, deflate, br` — обязательно, экономия 3-5× на трафике.
-- `If-Modified-Since: <last_crawl_time>` — для условного запроса, экономит bandwidth при re-crawl.
-- `If-None-Match: <etag>` — то же самое с ETag.
+- `Accept-Encoding: gzip, deflate, br` — обязательно, экономит 3-5× трафика.
+- `If-Modified-Since: <last_crawl_time>` — условный запрос, экономит bandwidth при re-crawl.
+- `If-None-Match: <etag>` — то же самое, но по ETag.
 
-Conditional GET с `If-Modified-Since`:
-- 304 Not Modified → не качаем тело, экономим bandwidth.
-- 200 OK → новый контент.
+Как работает Conditional GET (`If-Modified-Since` / `If-None-Match`) — ключевая экономия при повторных обходах:
 
-Дополнительно:
+- 304 Not Modified → тело не качаем, расходуем только заголовки.
+- 200 OK → пришёл новый контент, обрабатываем как обычно.
 
-- **HTTP/2 multiplexing** — если сайт поддерживает, можем держать несколько streams через одно connection.
-- **SSL session cache** — переиспользуем TLS handshake между запросами одного хоста.
-- **Connection pooling** — pool per-host (см. Q10), не создаём новое connection на каждый GET.
+Оптимизации сетевого уровня:
 
-## Q14. Parser и extraction outlinks?
+- **HTTP/2 multiplexing** — если сайт поддерживает, держим несколько streams через одно соединение.
+- **SSL session cache** — переиспользуем TLS-handshake между запросами одного хоста.
+- **Connection pooling** — пул на хост (см. Q10), не создаём новое соединение на каждый GET.
 
-Парсер делает три вещи: extract text content, extract outlinks, extract structured data.
+## Q14. Как парсер извлекает текст и outlinks?
+
+Парсер делает три вещи: извлекает текстовый контент (для индексации), вытаскивает outlinks (новые ссылки для frontier) и собирает structured data (title, meta, canonical). Outlinks при этом сразу приводятся к абсолютному виду и очищаются от фрагментов.
 
 Pipeline:
 
@@ -515,34 +518,34 @@ def parse(html_bytes, base_url, content_type):
     return ParseResult(text, outlinks, title, meta_desc, canonical)
 ```
 
-Тонкости:
+Тонкости, на которых легко споткнуться:
 
-- **lxml** (C-extension) намного быстрее pure-python BeautifulSoup на больших объёмах.
+- **lxml** (C-расширение) намного быстрее чистого Python BeautifulSoup на больших объёмах.
 - **Apache Tika** — универсальный экстрактор (PDF, DOC, HTML, XML), используется в Heritrix.
 - **Jericho** (Java) — стандарт в Nutch.
-- **Charset detection** — `<meta charset="...">`, Content-Type header, BOM, fallback chardet.
-- **`rel="nofollow"`** — некоторые crawlers пропускают (Google формально считает).
-- **`<link rel="canonical">`** — указывает на канонический URL, используем для dedup.
-- **Robots meta tags** — `<meta name="robots" content="noindex,nofollow">` — учитываем.
+- **Определение charset** — по приоритету: `<meta charset="...">`, заголовок Content-Type, BOM, fallback на chardet.
+- **`rel="nofollow"`** — некоторые crawlers пропускают такие ссылки (Google учитывает формально).
+- **`<link rel="canonical">`** — указывает на канонический URL, используем для дедупа.
+- **Robots meta-теги** — `<meta name="robots" content="noindex,nofollow">` учитываем наравне с robots.txt.
 
 ## Q15. URL normalization — что и как нормализуем?
 
-URL `http://Example.COM/path/?b=2&a=1#section` и `https://example.com/path?a=1&b=2` — это **один и тот же ресурс**, но разные строки. Без нормализации дедуп не работает.
+`http://Example.COM/path/?b=2&a=1#section` и `https://example.com/path?a=1&b=2` — это **один ресурс**, но разные строки. Без приведения к канонической форме дедуп (Q16) не сработает: один и тот же URL будет считаться разными, и мы скачаем его много раз. Цель нормализации — чтобы одинаковый ресурс всегда давал одинаковую строку.
 
 Шаги нормализации:
 
-1. **Scheme** lowercase: `HTTP` → `http`.
-2. **Host** lowercase: `Example.COM` → `example.com`.
-3. **Default port** убрать: `:80` для http, `:443` для https.
-4. **Percent-encoding** — decode где безопасно (`%7E` → `~`), encode где нужно.
-5. **Path** — resolve `.` и `..` segments, убрать `//`.
-6. **Trailing slash** на корне: оставить `/`, на пути — единая политика (обычно убирать).
-7. **Fragment** убрать: `#section` не идёт на сервер.
-8. **Query params** — сортировать по ключу, убирать tracking-params (`utm_*`, `fbclid`, `gclid`).
-9. **Session IDs** — убирать (`jsessionid=...`, `phpsessid=...`) — частая причина duplicate-storms.
-10. **WWW prefix** — единая политика (обычно `www.example.com` ≡ `example.com`, но не всегда).
+1. **Схема** в нижний регистр: `HTTP` → `http`.
+2. **Хост** в нижний регистр: `Example.COM` → `example.com`.
+3. **Дефолтный порт** убрать: `:80` для http, `:443` для https.
+4. **Percent-encoding** — декодировать где безопасно (`%7E` → `~`), кодировать где нужно.
+5. **Путь** — разрешить сегменты `.` и `..`, убрать двойные `//`.
+6. **Trailing slash** на корне оставляем `/`, на пути — единая политика (обычно убираем).
+7. **Фрагмент** убрать: `#section` на сервер не уходит и ресурс не меняет.
+8. **Query-параметры** — сортировать по ключу, убирать tracking-параметры (`utm_*`, `fbclid`, `gclid`).
+9. **Session ID** — убирать (`jsessionid=...`, `phpsessid=...`): частая причина «штормов дубликатов», когда каждый визит даёт новый URL.
+10. **Префикс WWW** — единая политика (обычно `www.example.com` ≡ `example.com`, но не всегда).
 
-Pseudo-code:
+Псевдокод:
 
 ```python
 import re
@@ -569,18 +572,18 @@ def normalize_url(url):
     return urlunparse((scheme, host + port, path, '', query, ''))
 ```
 
-Проверочный смысл — после нормализации **одинаковый ресурс даёт одинаковую строку URL**.
+Проверка корректности: после нормализации **одинаковый ресурс даёт одинаковую строку URL**.
 
 ## Q16. (!) Как избежать повторного обхода одного URL?
 
-Двухуровневая схема dedup:
+Проверять «видели ли мы уже этот URL» нужно для каждой из миллиардов ссылок, поэтому проверка должна быть и быстрой, и компактной по памяти. Отсюда двухуровневая схема: дешёвый, но приблизительный фильтр в RAM плюс точная проверка в БД только при попадании.
 
-**Уровень 1 — Bloom filter** (in-memory, fast):
+**Уровень 1 — Bloom filter** (in-memory, быстрый, приблизительный):
 
-- Размер: 50B URLs × 10 bits = ~60 GB. Sharded по hash(url) на 16-32 узла.
-- False positive rate: ~1% (нормально для нашего use case).
-- False negatives: **исключены** — если Bloom говорит «не видел», то точно не видел.
-- На «возможно видел» — идём в уровень 2.
+- Размер: 50B URLs × 10 бит ≈ 60 GB. Шардируется по hash(url) на 16-32 узла.
+- Доля ложноположительных (false positive): ~1% — приемлемо для нашего сценария.
+- Ложноотрицательных (false negative) **не бывает**: если Bloom говорит «не видел» — значит точно не видел.
+- На ответе «возможно видел» идём на уровень 2 за точной проверкой.
 
 ```python
 from pybloom_live import ScalableBloomFilter
@@ -594,11 +597,11 @@ def mark_seen(url):
     bloom.add(url)
 ```
 
-**Уровень 2 — Sharded URL DB** (RocksDB / Cassandra):
+**Уровень 2 — шардированная URL DB** (RocksDB / Cassandra) — даёт точный ответ, когда Bloom сказал «возможно»:
 
-- Key: `hash(url)` (8-16 байт) + url string (для verification).
-- Value: state (`fetched | queued | error | filtered`) + timestamps.
-- Sharding: по hash(host) — так URLs одного host попадают на один shard (упрощает per-host queries).
+- Ключ: `hash(url)` (8-16 байт) + строка url (для верификации, чтобы исключить hash-коллизию).
+- Значение: state (`fetched | queued | error | filtered`) + таймстемпы.
+- Шардирование: по hash(host) — так URLs одного host попадают на один shard, что упрощает per-host запросы.
 
 Логика:
 
@@ -614,25 +617,25 @@ def register_url(url):
     url_db.put(hash(url), url, state='queued')
 ```
 
-Альтернативные подходы:
+Почему именно Bloom + DB, а не что-то одно (сравнение по стоимости памяти):
 
-- **Hash-only set** (без bloom) — нужно 50B × 16B = 800 GB RAM, дорого.
-- **Distributed cache (Redis)** — 50B keys × ~50B = 2.5 TB Redis, тоже дорого.
-- **Bloom + DB** — сладкое пятно: дешёвый RAM, точная проверка только при попадании.
+- **Только hash-set** (без Bloom) — нужно 50B × 16B = 800 GB RAM, дорого.
+- **Распределённый кэш (Redis)** — 50B ключей × ~50B = 2.5 TB Redis, тоже дорого.
+- **Bloom + DB** — оптимальный компромисс: дешёвый RAM под Bloom, а точная проверка в БД только при попадании (1% случаев).
 
-## Q17. (!) Content dedup — SimHash vs MinHash?
+## Q17. (!) Content dedup — SimHash или MinHash?
 
-Разные URLs могут вести на **один и тот же content** (зеркала, mirrors, syndication, copy-paste статьи). Нужен **content-based** dedup.
+Разные URLs могут вести на **один и тот же контент** (зеркала, syndication, copy-paste статей), поэтому одного URL-дедупа из Q16 мало — нужен дедуп по содержимому. Сложность в том, что страницы редко идентичны побитово: меняются дата генерации, реклама, A/B-варианты. Значит, нужно искать «почти дубликаты».
 
-**Exact dedup**: `SHA256(normalized_text)`. Работает только для побитово идентичных страниц. Не ловит near-duplicates (отличия в дате генерации, рекламе, A/B-варианты).
+**Точный дедуп**: `SHA256(normalized_text)`. Работает только для побитово идентичных страниц и не ловит near-duplicates — для веба этого мало.
 
-**Near-duplicate detection** — две основные техники:
+**Поиск near-duplicates** — две основные техники:
 
-### SimHash (Charikar 2002, используется Google)
+### SimHash (Charikar 2002, используется в Google)
 
-- 64-битный fingerprint, в котором каждый бит = знак weighted sum of feature hashes.
-- Два документа «похожи», если их SimHash отличается ≤ k бит (typical k=3, Hamming distance).
-- Очень быстро: bitwise XOR + popcount.
+- 64-битный отпечаток (fingerprint): каждый бит — знак взвешенной суммы хэшей фич документа.
+- Два документа считаются похожими, если их SimHash отличается ≤ k бит (обычно k=3, Hamming distance).
+- Сравнение мгновенное: bitwise XOR + popcount.
 
 ```python
 def simhash(text, ngram=3):
@@ -650,27 +653,27 @@ def near_duplicate(a, b, k=3):
 
 ### MinHash + LSH (Broder 1997)
 
-- Set-based: документ = set of shingles (k-gram). Similarity = Jaccard.
-- MinHash signature: для N hash functions берём min(hash(shingle)) → N-мерный вектор.
-- LSH (Locality-Sensitive Hashing) — bucketing, чтобы кандидатов на сравнение было мало.
+- Основан на множествах: документ = набор шинглов (k-грамм). Похожесть = Jaccard similarity.
+- MinHash-сигнатура: для N хэш-функций берём min(hash(shingle)) → N-мерный вектор.
+- LSH (Locality-Sensitive Hashing) раскладывает по bucket-ам, чтобы сравнивать лишь немногих кандидатов, а не всех со всеми.
 
-| Метрика | SimHash | MinHash + LSH |
+| Критерий | SimHash | MinHash + LSH |
 |---------|---------|---------------|
-| Что меряет | Cosine similarity weighted features | Jaccard similarity sets |
-| Скорость сравнения | XOR + popcount — мгновенно | Vector comparison, slower |
-| Память на документ | 64-128 бит | 100-200 hash values |
-| Индекс для retrieval | Bit-bucket index | LSH buckets |
-| Где используют | Google web crawler | Hadoop, recommendation |
+| Что меряет | Cosine similarity по взвешенным фичам | Jaccard similarity множеств |
+| Скорость сравнения | XOR + popcount — мгновенно | Сравнение векторов, медленнее |
+| Память на документ | 64-128 бит | 100-200 hash-значений |
+| Индекс для поиска | Bit-bucket index | LSH buckets |
+| Где применяют | Google web crawler | Hadoop, рекомендации |
 
-**На практике** для web crawler — SimHash (быстро и компактно). MinHash лучше для документов с явной set-структурой (e.g., user baskets).
+**Вывод для web crawler:** SimHash — быстро и компактно. MinHash выигрывает там, где у документа явная set-структура (например, корзины пользователей).
 
-Хранение:
-- В Cassandra: `simhash bigint` колонка рядом с URL metadata.
-- Index: bit-permutation tables (Manku et al. 2007) для поиска ≤ k-bit-distance кандидатов за O(log n).
+Хранение и поиск кандидатов:
+- В Cassandra: колонка `simhash bigint` рядом с метаданными URL.
+- Индекс: bit-permutation tables (Manku et al. 2007) — ищут кандидатов на расстоянии ≤ k бит за O(log n), а не полным перебором.
 
-## Q18. Где хранить raw HTML, метаданные, индекс?
+## Q18. Где хранить raw HTML, метаданные и индекс?
 
-Tiered storage — разные данные в разные системы.
+Главный принцип — **многоуровневое хранилище (tiered storage)**: у разных данных разный профиль доступа, поэтому и системы под них разные. Raw HTML читают редко и большими батчами — ему подходит дешёвый object store; метаданные нужны постоянно и с низкой задержкой — им нужен быстрый column-store.
 
 | Тип данных | Storage | Reason |
 |-----------|---------|--------|
@@ -688,15 +691,15 @@ Tiered storage — разные данные в разные системы.
 - `../messaging/kafka-interview.md` — Kafka как backbone между этапами.
 - `../algorithms/data-structures/hash-tables-interview.md` — bloom filter подробно.
 
-**Lifecycle data**:
+**Жизненный цикл данных** (чем старше, тем дешевле хранилище):
 
-- Raw HTML hot → S3 Standard (30 дней) → S3 IA (90 дней) → Glacier.
-- Метаданные hot всегда (нужны для re-crawl decisions).
-- Logs — TTL 30 дней.
+- Raw HTML: горячий → S3 Standard (30 дней) → S3 IA (90 дней) → Glacier.
+- Метаданные горячие всегда — они нужны для решений о re-crawl.
+- Логи — TTL 30 дней.
 
-## Q19. Cassandra/HBase schema для URL state?
+## Q19. Схема Cassandra/HBase для URL state?
 
-Пример Cassandra schema:
+Главное в схеме — **партиционирование по host**, чтобы все URLs одного хоста лежали рядом: это ускоряет наполнение frontier и упрощает per-host politeness. Пример схемы Cassandra:
 
 ```sql
 CREATE TABLE crawl.url_state (
@@ -721,13 +724,13 @@ CREATE TABLE crawl.url_state (
 CREATE INDEX ON crawl.url_state (next_crawl_at);  -- для re-crawl scheduler
 ```
 
-Партиционирование по `(host_shard)` обеспечивает:
+Что даёт партиционирование по `(host_shard)`:
 
-- **Локальность по host**: URLs одного host в одной партиции → быстрый scan для frontier refill.
-- **Параллелизм**: разные hosts на разные node.
-- **Politeness friendly**: per-host операции на одном узле.
+- **Локальность по host**: все URLs одного host в одной партиции → быстрый scan при наполнении frontier.
+- **Параллелизм**: разные hosts ложатся на разные ноды.
+- **Удобно для politeness**: per-host операции выполняются на одном узле.
 
-Отдельная таблица для outlinks (graph):
+Отдельная таблица для outlinks (граф ссылок):
 
 ```sql
 CREATE TABLE crawl.outlinks (
@@ -738,20 +741,20 @@ CREATE TABLE crawl.outlinks (
 );
 ```
 
-Outlinks нужны для PageRank computation в downstream pipeline.
+Outlinks нужны downstream-пайплайну для расчёта PageRank.
 
-## Q20. Как решать когда переобходить страницу?
+## Q20. Как решать, когда переобходить страницу?
 
-**Freshness policy** — компромисс между свежестью данных и бюджетом crawler-а.
+Это **freshness policy** — компромисс между свежестью данных и бюджетом crawler-а: переобходить всё подряд слишком дорого, поэтому частоту настраиваем по сигналам, насколько вероятно, что страница изменилась.
 
-Сигналы для re-crawl priority:
+Сигналы для приоритета re-crawl:
 
-- **Last-Modified header** / `If-Modified-Since` 304 ratio — если страница часто 304, понижаем частоту.
-- **Domain type** — news сайт = ежечасно, e-commerce = ежедневно, статья 2010 года = раз в год.
-- **PageRank / traffic** — популярные страницы re-crawl чаще.
-- **Detected change frequency** — exponential moving average по diffs последних crawls.
+- **Заголовок Last-Modified / доля 304 на `If-Modified-Since`** — если страница часто отвечает 304, понижаем частоту обхода.
+- **Тип домена** — news = ежечасно, e-commerce = ежедневно, статья 2010 года = раз в год.
+- **PageRank / трафик** — популярные страницы переобходим чаще.
+- **Замеренная частота изменений** — exponential moving average по diff-ам последних обходов.
 
-Простой scheduler:
+Простой планировщик:
 
 ```python
 def next_crawl_time(url_meta):
@@ -768,14 +771,14 @@ def next_crawl_time(url_meta):
     return url_meta.last_crawled + base_interval
 ```
 
-Архитектурно — отдельный **Re-crawl Scheduler service**:
-- Periodic scan `WHERE next_crawl_at < now()`.
-- Кладёт URLs обратно в frontier с приоритетом.
-- Можно реализовать через Cassandra TWCS таблицу или Redis sorted set по `next_crawl_at`.
+Архитектурно это отдельный **Re-crawl Scheduler service**:
+- Периодически сканирует `WHERE next_crawl_at < now()`.
+- Кладёт подошедшие URLs обратно в frontier с приоритетом.
+- Реализуется через таблицу Cassandra TWCS или Redis sorted set с ключом `next_crawl_at`.
 
 ## Q21. Sitemap.xml — как использовать?
 
-`Sitemap.xml` — это **подсказка** от сайта: «вот мои важные URL, вот когда они обновляются».
+`Sitemap.xml` — это **подсказка от сайта**: «вот мои важные URL и вот когда они обновляются». Главная ценность — discovery без обхода: URLs можно класть прямо во frontier, минуя цепочку «скачать страницу → распарсить → достать ссылки».
 
 Формат (упрощённо):
 ```xml
@@ -790,32 +793,32 @@ def next_crawl_time(url_meta):
 </urlset>
 ```
 
-Использование:
+Как используем:
 
-- **Discovery** — берём URLs прямо в frontier (минуем crawl + parse шага для discovery).
-- **Lastmod** — если `lastmod` <= нашего last_crawled, можно скипнуть.
-- **Changefreq / Priority** — input в re-crawl policy.
-- **Sitemap index** — для огромных сайтов, sitemap может ссылаться на другие sitemaps.
+- **Discovery** — берём URLs прямо во frontier, минуя обход и парсинг ради поиска ссылок.
+- **Lastmod** — если `lastmod` ≤ нашего last_crawled, страницу можно пропустить (не менялась).
+- **Changefreq / Priority** — входные сигналы для re-crawl policy.
+- **Sitemap index** — для огромных сайтов sitemap может ссылаться на другие sitemaps.
 
 Где искать:
-- `/sitemap.xml` (стандарт).
-- `Sitemap:` директива в `robots.txt`.
+- `/sitemap.xml` (стандартный путь).
+- Директива `Sitemap:` в `robots.txt`.
 
-Sitemaps **существенно ускоряют** discovery для крупных сайтов (e-commerce с миллионами товаров).
+Для крупных сайтов (e-commerce с миллионами товаров) sitemaps **существенно ускоряют** discovery — иначе пришлось бы добираться до товаров обходом по ссылкам.
 
 ## Q22. (!) Spider traps — как детектить и обходить?
 
-**Spider trap** — паттерн, который генерирует бесконечное количество URLs (часто one-and-the-same content под разными URL).
+**Spider trap** — паттерн, генерирующий бесконечное количество URLs, причём часто это один и тот же контент под разными адресами. Без защиты crawler уходит в такую ловушку навсегда, тратя бюджет впустую. Поэтому нужны и детект, и жёсткие лимиты.
 
 Типичные примеры:
 
-- **Infinite calendar**: `/calendar?date=2050-01-01`, `?date=2050-01-02`, ... — каждая страница ссылается на следующий день.
-- **Session IDs in URL**: `/page?sid=xyz123`, каждый visit = новый sid → каждый раз «новый» URL.
-- **Deep recursion**: `/dir/dir/dir/.../page` — относительные ссылки `../foo` забывают применять normalization.
-- **Faceted navigation**: `/search?color=red&size=M&brand=...` — N×M×K комбинаций.
-- **Pagination**: `/?page=1`, `?page=2`, ... вплоть до `?page=99999` для пустых пагинаций.
+- **Бесконечный календарь**: `/calendar?date=2050-01-01`, `?date=2050-01-02`, ... — каждая страница ссылается на следующий день.
+- **Session ID в URL**: `/page?sid=xyz123` — каждый визит даёт новый sid, то есть каждый раз «новый» URL.
+- **Глубокая рекурсия**: `/dir/dir/dir/.../page` — относительные ссылки `../foo`, к которым забыли применить нормализацию.
+- **Фасетная навигация**: `/search?color=red&size=M&brand=...` — N×M×K комбинаций фильтров.
+- **Пагинация**: `/?page=1`, `?page=2`, ... вплоть до `?page=99999` на пустых страницах пагинации.
 
-Detection и mitigation:
+Детект и меры (mitigation):
 
 | Trap | Detection | Mitigation |
 |------|-----------|------------|
@@ -826,9 +829,9 @@ Detection и mitigation:
 | Same-pattern URLs | regex pattern frequency | URL pattern blacklist (auto-detect: 1000+ URLs с одинаковым path шаблоном) |
 | Calendar traps | path matches `/\d{4}/\d{2}/\d{2}` + date > today+30d | date-based heuristic |
 
-Полезный сигнал — **content sameness**: если 100 URLs дают почти идентичный SimHash, это либо trap, либо технический шум — снижаем приоритет.
+Самый универсальный сигнал — **одинаковость контента**: если 100 разных URLs дают почти идентичный SimHash, это либо ловушка, либо технический шум — в обоих случаях снижаем приоритет.
 
-Hard limits в коде:
+Жёсткие лимиты в коде (последняя линия обороны):
 
 ```python
 MAX_DEPTH = 15
@@ -837,24 +840,24 @@ MAX_PATH_LENGTH = 256
 MAX_QUERY_PARAMS = 20
 ```
 
-Превышение → URL filtered, в frontier не попадает.
+Превышение лимита → URL помечается filtered и во frontier не попадает.
 
-## Q23. JavaScript-rendered страницы — headless browser?
+## Q23. JavaScript-рендеринг страниц — нужен ли headless browser?
 
-Современные SPA (React/Vue/Angular) возвращают **пустой HTML + JS**. Plain HTTP fetch получает `<div id="root"></div>` без контента.
+Современные SPA (React/Vue/Angular) отдают **пустой HTML + JS**: обычный HTTP-fetch получает `<div id="root"></div>` без контента, индексировать нечего. Чтобы достать реальный контент, страницу нужно отрендерить как браузер.
 
 Решение — **headless browser** (Puppeteer / Playwright / Splash):
 
-- Загружает страницу, исполняет JS, ждёт `DOMContentLoaded` / specific selector / timeout (5-10s).
-- Возвращает rendered HTML.
+- Загружает страницу, исполняет JS, ждёт `DOMContentLoaded`, нужный селектор или таймаут (5-10s).
+- Возвращает уже отрендеренный HTML.
 
-Минусы:
+Минусы — почему это нельзя включать на всё подряд:
 
-- **20-50× медленнее** plain HTTP (cold-start Chrome, CPU, memory).
-- ~100 MB RAM per browser instance.
+- **В 20-50× медленнее** обычного HTTP (cold-start Chrome, CPU, память).
+- ~100 MB RAM на один инстанс браузера.
 - Сложнее масштабировать.
 
-Архитектура — **отдельный pool**:
+Поэтому архитектурно выносим рендеринг в **отдельный pool**:
 
 ```mermaid
 flowchart LR
@@ -865,32 +868,32 @@ flowchart LR
     JSFetch --> Parser
 ```
 
-Как решить «нужен ли JS»:
+Как решить, нужен ли вообще JS (чтобы не платить 20-50× зря):
 
-- **Heuristic**: fetch plain HTML → если `<noscript>` warning, или `<body>` почти пустой (< 1KB text), или есть `<script src=*.js>` без статичного контента → re-fetch через JS pool.
-- **Domain whitelist** — известные SPA доменам сразу в JS pool.
-- **Cost-based**: для top-N доменов рендерим JS; long tail — только HTML.
+- **Эвристика**: сначала забираем обычный HTML; если есть `<noscript>`-предупреждение, или `<body>` почти пустой (< 1KB текста), или одни `<script src=*.js>` без статичного контента — перезабираем через JS pool.
+- **Whitelist доменов** — известные SPA-домены сразу направляем в JS pool.
+- **По стоимости**: для top-N доменов рендерим JS, для long tail ограничиваемся HTML.
 
-Альтернативы:
+Альтернативы headless-рендерингу:
 
-- **Prerender.io / Rendertron** — внешние сервисы.
-- **Schema.org / JSON-LD** в plain HTML — часто структурированные данные доступны без JS.
+- **Prerender.io / Rendertron** — внешние сервисы рендеринга.
+- **Schema.org / JSON-LD** в обычном HTML — часто структурированные данные доступны и без JS.
 
-## Q24. Failure handling — упал worker, retry, dead URLs?
+## Q24. Обработка сбоев — упал worker, retry, мёртвые URL?
 
-Failures на любом этапе — норма. Что предусматриваем:
+На масштабе миллиардов страниц сбои на любом этапе — норма, а не исключение. Поэтому система должна сама восстанавливать «зависшие» URL и по-разному реагировать на временные и постоянные ошибки.
 
-**Worker failure**:
+**Падение воркера:**
 
-- Worker умер с in-flight URL → URL state остался `in_flight`.
-- **Liveness check** + lease timeout: state `in_flight` с timestamp; если > 5 min → возвращаем в frontier (state `queued`).
+- Воркер умер с URL «в полёте» → его state остался `in_flight`, и URL завис.
+- Решение — **liveness-проверка + lease timeout**: у state `in_flight` есть timestamp; если прошло > 5 минут, считаем воркер мёртвым и возвращаем URL во frontier (state `queued`).
 
 ```sql
 UPDATE url_state SET state = 'queued'
 WHERE state = 'in_flight' AND in_flight_since < now() - 5min;
 ```
 
-**HTTP errors** — разные стратегии:
+**HTTP-ошибки — реакция зависит от того, временная ошибка или постоянная:**
 
 | HTTP Status | Action |
 |-------------|--------|
@@ -905,46 +908,46 @@ WHERE state = 'in_flight' AND in_flight_since < now() - 5min;
 | Network timeout | retry up to 3 times |
 | DNS NXDOMAIN | permanent fail, mark `dead` |
 
-**Dead URLs cleanup**:
+**Уборка мёртвых URL:**
 
-- URLs с consecutive_errors > 5 → state `dead`, TTL 90 дней, потом удалить.
-- Не возвращаем `dead` в frontier (защита от заспама).
+- URLs с consecutive_errors > 5 → state `dead`, TTL 90 дней, затем удаление.
+- `dead`-URLs во frontier не возвращаем — это защита от самозаспама.
 
-**Persistence of frontier** — критично:
+**Персистентность frontier — критично:**
 
-- Frontier хранится в durable storage (Cassandra / Kafka log), не in-memory only.
-- При restart cluster URLs не теряются.
-- Mercator оригинальный использовал disk-backed queues.
+- Frontier хранится в durable storage (Cassandra / Kafka log), а не только в памяти.
+- При рестарте кластера URLs не теряются.
+- Оригинальный Mercator использовал disk-backed очереди.
 
-## Q25. (!) Centralized vs distributed frontier?
+## Q25. (!) Централизованный или распределённый frontier?
 
-Два паттерна:
+Короткий ответ: на старте — централизованный (проще), на масштабе Google — распределённый по `hash(host)`. Два паттерна:
 
-### Centralized frontier
+### Централизованный frontier
 
-Один cluster (Mercator оригинальный, Heritrix). Все workers конкурируют за tasks из shared frontier.
+Один кластер (оригинальный Mercator, Heritrix). Все воркеры конкурируют за задачи из общего frontier.
 
 | Плюсы | Минусы |
 |-------|--------|
-| Простая логика politeness (один heap) | Bottleneck на frontier service |
+| Простая логика politeness (один heap) | Узкое место на frontier-сервисе |
 | Легко перебалансировать | Single point of failure (нужна репликация) |
-| Глобальная видимость priority | Сложно scale за пределы одного DC |
+| Глобальная видимость приоритетов | Сложно масштабировать за пределы одного DC |
 
-### Distributed frontier (Google-scale)
+### Распределённый frontier (Google-scale)
 
-Партиционирование по `hash(host)`. Каждый shard владеет subset доменов целиком.
+Партиционирование по `hash(host)`: каждый shard целиком владеет своим подмножеством доменов.
 
 | Плюсы | Минусы |
 |-------|--------|
-| Линейный scale | Cross-shard URLs (нашли в shard-1 outlink на host из shard-2 → надо передать) |
-| Politeness локальна (одна шарда = свои хосты) | Сложнее перебалансировать |
-| Изоляция failures | Hot shards если один host доминирует |
+| Линейное масштабирование | Cross-shard URLs: нашли в shard-1 ссылку на host из shard-2 → надо её туда передать |
+| Politeness локальна (один shard = свои хосты) | Сложнее перебалансировать |
+| Изоляция сбоев | Hot shards, если один host доминирует |
 
-В реальности **большие crawlers — distributed**:
+На практике **большие crawlers — распределённые**:
 
-- Shard по `hash(host) mod N_shards` (например, 256).
-- Внутри shard — Mercator-style frontier.
-- Cross-shard outlinks отправляются через Kafka topic `outlinks-to-shard-N`.
+- Шардируем по `hash(host) mod N_shards` (например, 256).
+- Внутри каждого shard — frontier в стиле Mercator.
+- Cross-shard outlinks передаются через Kafka topic `outlinks-to-shard-N`.
 
 ```mermaid
 flowchart LR
@@ -956,7 +959,7 @@ flowchart LR
 
 ## Q26. (!) Главные trade-offs дизайна?
 
-Финальная сводка для финальных минут собеседования.
+Сводная таблица на последние минуты собеседования: по каждому решению — две опции и выбор с обоснованием. Если успеете проговорить её, покажете, что видите систему целиком, а не отдельные куски.
 
 | Trade-off | Опция A | Опция B | Что выбираем и почему |
 |-----------|---------|---------|----------------------|
@@ -974,7 +977,7 @@ flowchart LR
 | Spider traps | Pray | Depth limit + pattern detect + content sim | **Все три**, иначе бесконечный crawl |
 | Failure | Best effort | Lease + retry + state machine | **Lease+retry** — для idempotency |
 
-Главный мета-принцип: **frontier — это сердце системы**. Если frontier дизайн правильный (politeness + priority + persistent), всё остальное обвязка. Если frontier — простой FIFO, у вас не crawler, а DDoS-генератор.
+Главный мета-принцип: **frontier — это сердце системы**. Если frontier спроектирован правильно (politeness + priority + persistence), всё остальное — обвязка вокруг него. Если же frontier — простой FIFO, у вас не crawler, а генератор DDoS.
 
 ---
 
