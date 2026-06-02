@@ -132,12 +132,20 @@
                 Удалено N вариантов.
             </p>
 
-            <div class="data-export-block">
+            <!-- /export защищён admin-токеном через ЗАГОЛОВОК X-Admin-Token
+                 (SecurityConfig). Обычная <a>-навигация заголовок отправить не
+                 может — раньше клик всегда отдавал raw-JSON 403. Поэтому кнопки,
+                 а не ссылки: app.js (initExportButtons) делает fetch с заголовком,
+                 спрашивает токен один раз и кэширует, ответ скачивает как файл.
+                 Блок скрыт без JS (.hidden) — без скриптов экспорт физически
+                 невозможен (заголовок не отправить), мёртвый контрол не нужен. -->
+            <div class="data-export-block hidden" id="data-export-block">
                 <p class="control-inline-hint">Экспорт прогресса и статистики:</p>
                 <div class="data-export-actions">
-                    <a th:href="@{/export(format='json')}" class="btn secondary-btn" aria-label="Экспорт прогресса в JSON">Экспорт JSON ↓</a>
-                    <a th:href="@{/export(format='csv')}" class="btn secondary-btn" aria-label="Экспорт прогресса в CSV">Экспорт CSV ↓</a>
+                    <button type="button" class="btn secondary-btn" data-export-format="json" aria-label="Экспорт прогресса в JSON">Экспорт JSON ↓</button>
+                    <button type="button" class="btn secondary-btn" data-export-format="csv" aria-label="Экспорт прогресса в CSV">Экспорт CSV ↓</button>
                 </div>
+                <p class="export-status" id="export-status" role="status" aria-live="polite" hidden></p>
             </div>
 
             <form method="post" th:action="@{/settings/reset-options}" class="data-management-form">
@@ -148,6 +156,6 @@
         </section>
     </div>
 </main>
-<script th:src="@{/js/app.js(v=20)}"></script>
+<script th:src="@{/js/app.js(v=21)}"></script>
 </body>
 </html>
