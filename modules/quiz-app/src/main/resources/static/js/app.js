@@ -39,6 +39,14 @@
   });
   let learningPrefs = { ...defaultLearningPrefs };
 
+  // Иконка из SVG-спрайта (fragments/icons.html) как строка для innerHTML —
+  // те же Lucide-символы, что в шаблонах. Монохром через currentColor, вставляем
+  // только в наш литеральный markup (не через sanitizeHtml, который вырезал бы svg).
+  function icon(name, extraClass) {
+    return '<svg class="ed-icon' + (extraClass ? ' ' + extraClass : '') +
+      '" aria-hidden="true"><use href="#i-' + name + '"></use></svg>';
+  }
+
   function setProgressValue(element, value) {
     if (!element) return;
     const numeric = Number.parseFloat(String(value).replace(',', '.'));
@@ -408,7 +416,7 @@
               if (fb.available && fb.feedback) {
                 addBlock(
                   'wrong-feedback',
-                  '<div class="wrong-feedback-title">💡 Почему это неверно:</div>' +
+                  '<div class="wrong-feedback-title">' + icon('lightbulb', 'ed-icon-lead') + 'Почему это неверно:</div>' +
                   '<div class="wrong-feedback-text">' + escapeHtml(fb.feedback) + '</div>'
                 );
               }
@@ -422,7 +430,7 @@
               if (!cmp.comparison) return;
               const parsed = typeof cmp.comparison === 'string' ? JSON.parse(cmp.comparison) : cmp.comparison;
               if (!parsed.criteria || !parsed.criteria.length) return;
-              let table = '<div class="comparison-title">📊 Сравнение: выбранное vs правильное</div>';
+              let table = '<div class="comparison-title">' + icon('chart', 'ed-icon-lead') + 'Сравнение: выбранное vs правильное</div>';
               table += '<table class="comparison-table"><tr><th>Критерий</th><th>Выбранное</th><th>Правильное</th></tr>';
               parsed.criteria.forEach(c => {
                 table += '<tr><td>' + escapeHtml(c.criterion) + '</td><td>' + escapeHtml(c.selected) + '</td><td>' + escapeHtml(c.correct) + '</td></tr>';
@@ -441,7 +449,7 @@
             if (tk.takeaway) {
               addBlock(
                 'takeaway-block',
-                '<div class="takeaway-title">🎯 Главное, что нужно запомнить:</div>' +
+                '<div class="takeaway-title">' + icon('target', 'ed-icon-lead') + 'Главное, что нужно запомнить:</div>' +
                 '<div class="takeaway-text">' + escapeHtml(tk.takeaway) + '</div>'
               );
             }
@@ -456,7 +464,7 @@
             if (!traceData.trace) return;
             const parsed = typeof traceData.trace === 'string' ? JSON.parse(traceData.trace) : traceData.trace;
             if (!parsed.steps || !parsed.steps.length) return;
-            let html = '<details><summary class="code-trace-title">🔍 Пошаговое выполнение кода</summary>';
+            let html = '<details><summary class="code-trace-title">' + icon('search', 'ed-icon-lead') + 'Пошаговое выполнение кода</summary>';
             html += '<ol class="code-trace-steps">';
             parsed.steps.forEach(s => {
               html += '<li class="code-trace-step">';
@@ -747,7 +755,7 @@
         clearInlineAlert();
         button.classList.remove('regenerating');
         button.classList.add('done');
-        button.textContent = '✅';
+        button.innerHTML = icon('circle-check', 'ed-icon-success');
         const isIndexPage = !!document.getElementById('interview-form');
         if (isIndexPage) {
           button.title = 'Варианты удалены. Выбери следующий вопрос без перезагрузки страницы.';
@@ -778,13 +786,13 @@
       } else {
         const err = await parseApiError(resp);
         button.classList.remove('regenerating');
-        button.textContent = '❌';
+        button.innerHTML = icon('circle-x', 'ed-icon-error');
         button.title = 'Ошибка при удалении';
         setInlineAlert(err.message || 'Не удалось перегенерировать варианты.');
       }
     } catch (err) {
       button.classList.remove('regenerating');
-      button.textContent = '❌';
+      button.innerHTML = icon('circle-x', 'ed-icon-error');
       button.title = 'Ошибка сети';
       console.error('Regenerate failed:', err);
       setInlineAlert('Не удалось перегенерировать варианты. Проверьте сеть и повторите.');
@@ -1272,7 +1280,7 @@
 
     feedbackDiv.innerHTML = `
       <div class="${isCorrect ? 'result-correct' : 'result-wrong'}">
-        <strong>${isCorrect ? '✅ Верно' : '❌ Неверно'}</strong>
+        <strong>${isCorrect ? icon('circle-check', 'ed-icon-lead') + 'Верно' : icon('circle-x', 'ed-icon-lead') + 'Неверно'}</strong>
         <div class="answer markdown-content">${safeHtml}</div>
       </div>
     `;
@@ -1395,12 +1403,12 @@
     return fetchWithPlaceholder(
       API.WRONG_FEEDBACK,
       wrongBlock,
-      '<span class="wrong-feedback-loader">🤖 Анализирую ошибку...</span>',
+      '<span class="wrong-feedback-loader">' + icon('bot', 'ed-icon-lead') + 'Анализирую ошибку...</span>',
       (fbData, placeholderEl) => {
         placeholderEl.classList.remove('loading');
         if (fbData.available && fbData.feedback) {
           placeholderEl.innerHTML =
-            '<div class="wrong-feedback-title">💡 Почему это неверно:</div>' +
+            '<div class="wrong-feedback-title">' + icon('lightbulb', 'ed-icon-lead') + 'Почему это неверно:</div>' +
             '<div class="wrong-feedback-text">' + escapeHtml(fbData.feedback) + '</div>';
         } else {
           placeholderEl.remove();
@@ -1426,7 +1434,7 @@
           const tkDiv = document.createElement('div');
           tkDiv.className = 'content-block takeaway-block';
           tkDiv.innerHTML =
-            '<div class="takeaway-title">🎯 Главное, что нужно запомнить:</div>' +
+            '<div class="takeaway-title">' + icon('target', 'ed-icon-lead') + 'Главное, что нужно запомнить:</div>' +
             '<div class="takeaway-text">' + escapeHtml(tkData.takeaway) + '</div>';
           appendAnalysisBlock(tkDiv);
         }
@@ -1451,7 +1459,7 @@
             if (parsed.criteria && parsed.criteria.length > 0) {
               const cmpDiv = document.createElement('div');
               cmpDiv.className = 'content-block comparison-block';
-              let tableHtml = '<div class="comparison-title">📊 Сравнение: выбранное vs правильное</div>';
+              let tableHtml = '<div class="comparison-title">' + icon('chart', 'ed-icon-lead') + 'Сравнение: выбранное vs правильное</div>';
               tableHtml += '<table class="comparison-table"><tr><th>Критерий</th><th>Выбранное</th><th>Правильное</th></tr>';
               parsed.criteria.forEach(c => {
                 tableHtml += '<tr><td>' + escapeHtml(c.criterion) + '</td><td>' + escapeHtml(c.selected) + '</td><td>' + escapeHtml(c.correct) + '</td></tr>';
@@ -1483,7 +1491,7 @@
             if (parsed.steps && parsed.steps.length > 0) {
               const traceDiv = document.createElement('div');
               traceDiv.className = 'content-block code-trace-block';
-              let html = '<details><summary class="code-trace-title">🔍 Пошаговое выполнение кода</summary>';
+              let html = '<details><summary class="code-trace-title">' + icon('search', 'ed-icon-lead') + 'Пошаговое выполнение кода</summary>';
               html += '<ol class="code-trace-steps">';
               parsed.steps.forEach(s => {
                 html += '<li class="code-trace-step">';
@@ -1516,7 +1524,7 @@
 
     const relatedDiv = document.createElement('div');
     relatedDiv.className = 'related-questions';
-    let relatedHtml = '<h3 class="related-questions-title">🔗 Похожие вопросы для закрепления:</h3>';
+    let relatedHtml = '<h3 class="related-questions-title">' + icon('link', 'ed-icon-lead') + 'Похожие вопросы для закрепления:</h3>';
     data.relatedQuestions.forEach(rq => {
       relatedHtml += '<a class="related-question-item" href="/?topic=' + encodeURIComponent(rq.topic)
         + '&group=' + encodeURIComponent(currentGroup)
