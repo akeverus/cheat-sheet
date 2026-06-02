@@ -6,23 +6,76 @@
     <!-- Цвет браузерного chrome для мобильных (Android Chrome, iOS Safari). -->
     <meta name="theme-color" content="#16130D">
     <meta name="color-scheme" content="dark light">
-    <!-- Тема: ставим data-theme на <html> ДО первого кадра (без вспышки белым).
-         Приоритет: сохранённый выбор → системная prefers-color-scheme → dark (бренд).
-         Синхронизируем meta[theme-color] под активную тему. Инлайн — осознанно:
-         внешний скрипт грузится асинхронно и дал бы FOUC при перезагрузке в light. -->
+    <!-- Тема + размер шрифта: применяем на <html> ДО первого кадра (без вспышки
+         белым и без скачка размера). Здесь же центральный API персонализации
+         (window.__theme / window.__fontScale) — им пользуются и header-тоггл, и
+         блок «Персонализация» на /settings, чтобы не плодить конкурирующие скрипты.
+         Тема: сохранённый выбор (auto|light|dark) → 'auto' = системная
+         prefers-color-scheme, причём в режиме auto мы ЖИВО следим за сменой
+         системной темы. Инлайн — осознанно: внешний скрипт дал бы FOUC. -->
     <script>
       (function () {
-        try {
-          var t = localStorage.getItem('theme');
-          if (t !== 'light' && t !== 'dark') {
-            t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-          }
-          document.documentElement.setAttribute('data-theme', t);
-          var m = document.querySelector('meta[name="theme-color"]');
-          if (m) m.setAttribute('content', t === 'light' ? '#F7F3EA' : '#16130D');
-        } catch (e) {
-          document.documentElement.setAttribute('data-theme', 'dark');
+        var root = document.documentElement;
+        function metaEl() { return document.querySelector('meta[name="theme-color"]'); }
+        var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+        function systemTheme() { return (mq && mq.matches) ? 'light' : 'dark'; }
+        function readPref() {
+          try { var p = localStorage.getItem('theme'); return (p === 'light' || p === 'dark' || p === 'auto') ? p : 'auto'; }
+          catch (e) { return 'auto'; }
         }
+        function resolve(pref) { return pref === 'auto' ? systemTheme() : pref; }
+        function applyResolved(resolved) {
+          root.setAttribute('data-theme', resolved);
+          var m = metaEl(); if (m) m.setAttribute('content', resolved === 'light' ? '#F7F3EA' : '#16130D');
+        }
+        var pref = readPref();
+        applyResolved(resolve(pref));
+        function notifyTheme() {
+          try { document.dispatchEvent(new CustomEvent('themechange', { detail: { pref: pref, resolved: root.getAttribute('data-theme') } })); } catch (e) {}
+        }
+        function setPref(next) {
+          pref = (next === 'light' || next === 'dark' || next === 'auto') ? next : 'auto';
+          try { localStorage.setItem('theme', pref); } catch (e) {}
+          applyResolved(resolve(pref));
+          notifyTheme();
+        }
+        if (mq) {
+          var onSysChange = function () { if (pref === 'auto') { applyResolved(systemTheme()); notifyTheme(); } };
+          if (mq.addEventListener) mq.addEventListener('change', onSysChange);
+          else if (mq.addListener) mq.addListener(onSysChange);
+        }
+        window.__theme = {
+          pref: function () { return pref; },
+          resolved: function () { return root.getAttribute('data-theme'); },
+          set: setPref,
+          toggle: function () { setPref(resolve(pref) === 'light' ? 'dark' : 'light'); }
+        };
+
+        // Размер шрифта: масштаб root font-size (токены в rem → тянется весь UI).
+        var FONT_MIN = 0.85, FONT_MAX = 1.4, FONT_STEP = 0.1;
+        function clampFont(v) { v = Math.round(v * 100) / 100; return Math.min(FONT_MAX, Math.max(FONT_MIN, v)); }
+        function readFont() {
+          try { var f = parseFloat(localStorage.getItem('fontScale')); return isFinite(f) ? clampFont(f) : 1; }
+          catch (e) { return 1; }
+        }
+        var fontScale = readFont();
+        function applyFont(v) {
+          fontScale = clampFont(v);
+          root.style.fontSize = (fontScale === 1) ? '' : (fontScale * 100) + '%';
+        }
+        applyFont(fontScale);
+        function setFont(v) {
+          applyFont(v);
+          try { if (fontScale === 1) localStorage.removeItem('fontScale'); else localStorage.setItem('fontScale', String(fontScale)); } catch (e) {}
+          try { document.dispatchEvent(new CustomEvent('fontscalechange', { detail: { scale: fontScale } })); } catch (e) {}
+        }
+        window.__fontScale = {
+          get: function () { return fontScale; },
+          min: FONT_MIN, max: FONT_MAX, STEP: FONT_STEP,
+          set: setFont,
+          stepBy: function (delta) { setFont(fontScale + delta); },
+          reset: function () { setFont(1); }
+        };
       })();
     </script>
     <!-- Приложение — личная подготовка к интервью, не public web-site:
@@ -46,8 +99,8 @@
     <!-- editorial.css — единственная таблица стилей (Editorial-редизайн).
          Самодостаточна: reset, типошкала, утилиты, обе темы, reduced-motion.
          Preload — браузер скачивает её параллельно с парсингом head → меньше FOUC. -->
-    <link rel="preload" as="style" th:href="@{/css/editorial.css(v=52)}">
-    <link rel="stylesheet" th:href="@{/css/editorial.css(v=52)}">
+    <link rel="preload" as="style" th:href="@{/css/editorial.css(v=53)}">
+    <link rel="stylesheet" th:href="@{/css/editorial.css(v=53)}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>

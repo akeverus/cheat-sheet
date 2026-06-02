@@ -46,28 +46,26 @@
     <div class="ed-masthead-progress progress-container" th:if="${progressPercent != null}">
         <div class="progress-bar ed-masthead-progress-fill" th:attr="data-progress=${progressPercent}"></div>
     </div>
-    <!-- Переключатель темы: меняет data-theme на <html>, пишет выбор в
-         localStorage, синхронит aria-pressed и meta[theme-color]. -->
+    <!-- Переключатель темы: быстрый флип светлая↔тёмная через центральный
+         window.__theme (head.html). Полный выбор, включая «Авто», живёт в
+         «Персонализации» на /settings; тоггл пере-синхронится по событию
+         themechange, чтобы aria/иконка не разъехались с выбранным режимом. -->
     <script>
       (function () {
         var btn = document.getElementById('theme-toggle');
-        if (!btn) return;
-        var root = document.documentElement;
-        var meta = document.querySelector('meta[name="theme-color"]');
+        if (!btn || !window.__theme) return;
         function sync() {
-          var t = root.getAttribute('data-theme') || 'dark';
-          btn.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
-          btn.setAttribute('title', t === 'light' ? 'Тёмная тема' : 'Светлая тема');
-          btn.setAttribute('aria-label', t === 'light' ? 'Включить тёмную тему' : 'Включить светлую тему');
+          var resolved = window.__theme.resolved();
+          var pref = window.__theme.pref();
+          btn.setAttribute('aria-pressed', resolved === 'light' ? 'true' : 'false');
+          btn.setAttribute('aria-label', resolved === 'light' ? 'Включить тёмную тему' : 'Включить светлую тему');
+          btn.setAttribute('title', pref === 'auto'
+            ? 'Тема: авто (по системе). Клик — зафиксировать ' + (resolved === 'light' ? 'тёмную' : 'светлую')
+            : (resolved === 'light' ? 'Тёмная тема' : 'Светлая тема'));
         }
         sync();
-        btn.addEventListener('click', function () {
-          var next = (root.getAttribute('data-theme') === 'light') ? 'dark' : 'light';
-          root.setAttribute('data-theme', next);
-          try { localStorage.setItem('theme', next); } catch (e) {}
-          if (meta) meta.setAttribute('content', next === 'light' ? '#F7F3EA' : '#16130D');
-          sync();
-        });
+        btn.addEventListener('click', function () { window.__theme.toggle(); });
+        document.addEventListener('themechange', sync);
       })();
     </script>
     <!-- Кнопка «наверх»: инжектится здесь (header есть на КАЖДОЙ странице, в т.ч.

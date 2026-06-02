@@ -634,6 +634,63 @@
     wireExportGroup(buttons, (m, e) => setExportStatus(statusEl, m, e));
   }
 
+  // Персонализация (/settings): тема (авто/светлая/тёмная) + размер шрифта.
+  // Контролы оживают только с JS (источник истины — window.__theme/__fontScale из
+  // head.html), поэтому карточка раскрывается здесь (PE-reveal). Сегмент темы —
+  // radiogroup со стрелочной навигацией; шаг шрифта блокируется на краях через
+  // aria-disabled (не native disabled — тот сбрасывает фокус на body).
+  function initPersonalization() {
+    const card = document.getElementById('personalization-card');
+    if (!card || !window.__theme || !window.__fontScale) return;
+    card.classList.remove('hidden');
+
+    const themeCtl = document.getElementById('theme-pref-control');
+    if (themeCtl) {
+      const themeBtns = Array.from(themeCtl.querySelectorAll('[data-theme-pref]'));
+      const syncTheme = () => {
+        const pref = window.__theme.pref();
+        themeBtns.forEach((b) => {
+          const on = b.getAttribute('data-theme-pref') === pref;
+          b.setAttribute('aria-checked', on ? 'true' : 'false');
+          b.classList.toggle('is-active', on);
+          b.tabIndex = on ? 0 : -1;
+        });
+      };
+      themeBtns.forEach((b, i) => {
+        b.addEventListener('click', () => window.__theme.set(b.getAttribute('data-theme-pref')));
+        b.addEventListener('keydown', (e) => {
+          let idx = -1;
+          if (e.key === 'ArrowRight' || e.key === 'ArrowDown') idx = (i + 1) % themeBtns.length;
+          else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') idx = (i - 1 + themeBtns.length) % themeBtns.length;
+          if (idx < 0) return;
+          e.preventDefault();
+          window.__theme.set(themeBtns[idx].getAttribute('data-theme-pref'));
+          themeBtns[idx].focus();
+        });
+      });
+      document.addEventListener('themechange', syncTheme);
+      syncTheme();
+    }
+
+    const valEl = document.getElementById('font-scale-value');
+    const decBtn = document.getElementById('font-decrease');
+    const incBtn = document.getElementById('font-increase');
+    const resetBtn = document.getElementById('font-reset');
+    const fs = window.__fontScale;
+    const syncFont = () => {
+      const s = fs.get();
+      if (valEl) valEl.textContent = Math.round(s * 100) + '%';
+      if (decBtn) decBtn.setAttribute('aria-disabled', s <= fs.min ? 'true' : 'false');
+      if (incBtn) incBtn.setAttribute('aria-disabled', s >= fs.max ? 'true' : 'false');
+      if (resetBtn) resetBtn.setAttribute('aria-disabled', s === 1 ? 'true' : 'false');
+    };
+    if (decBtn) decBtn.addEventListener('click', () => { if (decBtn.getAttribute('aria-disabled') !== 'true') fs.stepBy(-fs.STEP); });
+    if (incBtn) incBtn.addEventListener('click', () => { if (incBtn.getAttribute('aria-disabled') !== 'true') fs.stepBy(fs.STEP); });
+    if (resetBtn) resetBtn.addEventListener('click', () => { if (resetBtn.getAttribute('aria-disabled') !== 'true') fs.reset(); });
+    document.addEventListener('fontscalechange', syncFont);
+    syncFont();
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     hydrateProgressBarsFromData();
     document.querySelectorAll('.btn-favorite').forEach((button) => {
@@ -656,6 +713,7 @@
     }
     initCollapsibleSidebar();
     initExportButtons();
+    initPersonalization();
     initDangerousFormGuard();
     initSubmitOnceGuard();
     initFlashcardShortcuts();
