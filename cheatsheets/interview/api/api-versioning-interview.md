@@ -18,7 +18,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `API Versioning`
 
-API versioning — стратегия evolve APIs без breaking existing clients. Главные подходы: **URI versioning** (`/v1/`), **header versioning**, **query parameter**, **content negotiation**. Также: backwards compatibility, deprecation policies, sunset, semantic versioning. Critical для public APIs и multi-team systems.
+API versioning — стратегия развития API без поломки существующих клиентов. Главные подходы: **URI versioning** (`/v1/`), **header versioning**, **query parameter**, **content negotiation**. Также сюда входят: обратная совместимость, политики устаревания (deprecation), sunset, semantic versioning. Критично для публичных API и систем с несколькими командами.
 
 ## Полезные ссылки
 
@@ -71,56 +71,56 @@ API versioning — стратегия evolve APIs без breaking existing clien
 
 ## Q1. (!) Зачем нужен API versioning?
 
-**Проблема:** API consumers (mobile apps, third parties) **не upgrade синхронно**. Server-side изменения могут break clients.
+**Проблема:** потребители API (мобильные приложения, сторонние интеграции) **не обновляются синхронно**. Изменения на стороне сервера могут сломать клиентов.
 
 **Без versioning:**
-- Server changes API contract → existing clients fail
-- Mobile apps особенно problematic (slow update cycles)
-- Breaking changes → customer support nightmare
+- Сервер меняет контракт API → существующие клиенты падают
+- Мобильные приложения особенно проблемны (медленные циклы обновления)
+- Breaking changes → кошмар для службы поддержки
 
 **С versioning:**
-- Multiple versions live параллельно
-- Old clients work с old version
-- New clients use new version
-- Smooth migration
+- Несколько версий живут параллельно
+- Старые клиенты работают со старой версией
+- Новые клиенты используют новую версию
+- Плавная миграция
 
-**Public APIs обязательно** versioned. **Internal APIs** sometimes skip (faster iteration).
+**Публичные API обязательно** версионируются. **Внутренние API** иногда обходятся без этого (ради более быстрой итерации).
 
 ## Q2. (!) Что такое breaking change?
 
-**Breaking change** — modification, требующая action от existing clients.
+**Breaking change** — изменение, требующее действий от существующих клиентов.
 
-**Examples:**
-- **Remove field** from response
-- **Rename field**
-- **Change field type** (string → number)
-- **Make optional field required** в request
-- **Add new required field** к request
-- **Change response structure** (object → array)
-- **Change error code semantics**
-- **Change authentication scheme**
-- **Change URL** (without redirect)
+**Примеры:**
+- **Удаление поля** из ответа
+- **Переименование поля**
+- **Смена типа поля** (string → number)
+- **Превращение опционального поля в обязательное** в запросе
+- **Добавление нового обязательного поля** в запрос
+- **Смена структуры ответа** (object → array)
+- **Смена семантики кодов ошибок**
+- **Смена схемы аутентификации**
+- **Смена URL** (без редиректа)
 
-**При breaking change** → **new version** обязателен.
+**При breaking change** → **новая версия** обязательна.
 
 
 ## Q3. (!) Backwards-compatible changes — examples?
 
-**Не breaking (safe в same version):**
-- **Add new optional field** к request (clients ignore)
-- **Add new field** к response (old clients ignore extra fields)
-- **Add new endpoint**
-- **Add new optional query parameter**
-- **Make required field optional**
-- **Add new error codes** (clients should handle unknown codes)
+**Не breaking (безопасно в той же версии):**
+- **Добавление нового опционального поля** в запрос (клиенты его игнорируют)
+- **Добавление нового поля** в ответ (старые клиенты игнорируют лишние поля)
+- **Добавление нового эндпоинта**
+- **Добавление нового опционального query-параметра**
+- **Превращение обязательного поля в опциональное**
+- **Добавление новых кодов ошибок** (клиенты должны уметь обрабатывать неизвестные коды)
 
-**Tolerant Reader pattern** (Postel's Law):
+**Tolerant Reader pattern** (закон Постела):
 > "Be conservative in what you send, liberal in what you accept."
 
-Clients should:
-- Ignore unknown fields
-- Handle missing optional fields
-- Handle new error codes gracefully
+Клиенты должны:
+- Игнорировать неизвестные поля
+- Корректно работать при отсутствии опциональных полей
+- Аккуратно обрабатывать новые коды ошибок
 
 
 ## Q4. (!) URI versioning?
@@ -130,18 +130,18 @@ https://api.example.com/v1/users/123
 https://api.example.com/v2/users/123
 ```
 
-**Pros:**
-- **Simple, visible** in URL
-- Easy to route (different versions → different services)
-- Easy testing (browser-friendly)
-- Clear к users
+**Плюсы:**
+- **Просто, видно** прямо в URL
+- Легко маршрутизировать (разные версии → разные сервисы)
+- Удобно тестировать (дружелюбно к браузеру)
+- Понятно пользователям
 
-**Cons:**
-- **Resource identity changes** with version (technically "users in v2" different from "users in v1")
-- Violates REST purity (URI should identify resource, not version)
-- Multiple URLs для same resource
+**Минусы:**
+- **Идентичность ресурса меняется** вместе с версией (формально «users в v2» — это не «users в v1»)
+- Нарушает чистоту REST (URI должен идентифицировать ресурс, а не версию)
+- Несколько URL для одного и того же ресурса
 
-**Most common** approach. Used by Twitter, GitHub (older), Stripe (older).
+**Самый распространённый** подход. Используется в Twitter, GitHub (раньше), Stripe (раньше).
 
 
 ## Q5. (!) Header versioning?
@@ -151,23 +151,23 @@ GET /users/123
 Accept: application/vnd.example.v2+json
 ```
 
-или custom header:
+или кастомный заголовок:
 ```http
 GET /users/123
 X-API-Version: 2
 ```
 
-**Pros:**
-- **URI doesn't change** (REST-pure)
-- Resource identity preserved
-- Easier к add new versions
+**Плюсы:**
+- **URI не меняется** (чистый REST)
+- Идентичность ресурса сохраняется
+- Проще добавлять новые версии
 
-**Cons:**
-- **Less visible** (hard to test в browser)
-- Documentation harder
-- Cache complications (Vary header)
+**Минусы:**
+- **Менее заметно** (тяжело тестировать в браузере)
+- Сложнее документировать
+- Усложняется кэширование (заголовок Vary)
 
-**Used by:** GitHub (newer API).
+**Используется в:** GitHub (более новый API).
 
 
 ## Q6. (!) Query parameter versioning?
@@ -177,15 +177,15 @@ https://api.example.com/users/123?version=2
 https://api.example.com/users/123?api-version=2024-01-15
 ```
 
-**Pros:**
-- Visible
-- Easy to test
+**Плюсы:**
+- Видно в URL
+- Удобно тестировать
 
-**Cons:**
-- Pollutes query string
-- Less convention than URI versioning
+**Минусы:**
+- Засоряет query string
+- Менее устоявшаяся практика, чем URI versioning
 
-**Used by:** Azure APIs (often), Stripe (date-based как parameter).
+**Используется в:** Azure API (часто), Stripe (date-based в виде параметра).
 
 
 ## Q7. Content negotiation (Accept header)?
@@ -195,18 +195,18 @@ GET /users/123
 Accept: application/vnd.example.user.v2+json
 ```
 
-**MIME-type based.** Server returns appropriate version representation.
+**На основе MIME-типов.** Сервер возвращает представление нужной версии.
 
-**Pros:**
-- HTTP-standard mechanism
-- Resource identity preserved
+**Плюсы:**
+- Механизм из стандарта HTTP
+- Идентичность ресурса сохраняется
 
-**Cons:**
-- Complex MIME types
-- Hard для humans
-- Not as common
+**Минусы:**
+- Сложные MIME-типы
+- Тяжело воспринимается людьми
+- Встречается реже
 
-**Niche** — mostly academic.
+**Нишевый** подход — в основном академический.
 
 
 ## Q8. Hostname-based?
@@ -216,30 +216,30 @@ https://api-v1.example.com/users/123
 https://api-v2.example.com/users/123
 ```
 
-**Pros:**
-- Different deployments per version
-- Easy infrastructure separation
+**Плюсы:**
+- Отдельные деплои под каждую версию
+- Простое разделение инфраструктуры
 
-**Cons:**
-- DNS overhead
-- CORS complications
+**Минусы:**
+- Накладные расходы на DNS
+- Усложнения с CORS
 
-**Used:** rare, when version-specific infra needed.
+**Используется:** редко, когда нужна инфраструктура под конкретную версию.
 
 
 ## Q9. (!) Какой подход выбрать?
 
-**Recommendations:**
+**Рекомендации:**
 
-| Use case | Approach |
+| Сценарий | Подход |
 |----------|----------|
-| Public API | **URI versioning** (`/v1/`) — simple, visible |
-| Internal API | URI или header (consistency matters) |
-| Stripe-style stability | Date versions через header |
-| GraphQL | **No versions** (deprecation only) |
-| gRPC | Package versioning (`MyServiceV2`) |
+| Публичный API | **URI versioning** (`/v1/`) — просто, наглядно |
+| Внутренний API | URI или header (важна консистентность) |
+| Стабильность в стиле Stripe | Date-версии через заголовок |
+| GraphQL | **Без версий** (только deprecation) |
+| gRPC | Версионирование пакетов (`MyServiceV2`) |
 
-**Default 2025:** URI versioning (`/v1/`, `/v2/`) — most pragmatic для most cases.
+**Дефолт на 2025:** URI versioning (`/v1/`, `/v2/`) — самое прагматичное для большинства случаев.
 
 
 ## Q10. Semantic versioning (SemVer)?
@@ -247,45 +247,45 @@ https://api-v2.example.com/users/123
 `MAJOR.MINOR.PATCH` (e.g., `2.5.3`).
 
 - **MAJOR** — breaking changes
-- **MINOR** — new features (backwards compatible)
-- **PATCH** — bug fixes
+- **MINOR** — новые фичи (обратно совместимые)
+- **PATCH** — исправления багов
 
 **API versioning ≠ SemVer обычно:**
-- API URL: `/v1/` (just MAJOR)
-- Documentation tracks MINOR/PATCH
+- URL API: `/v1/` (только MAJOR)
+- Документация отслеживает MINOR/PATCH
 
-**Library semver**: SemVer применим к SDK / client libraries.
+**SemVer для библиотек:** SemVer применим к SDK и клиентским библиотекам.
 
 
 ## Q11. (!) Date-based versioning (Stripe approach)?
 
-**Stripe** uses date-based versions:
+**Stripe** использует версии по датам:
 
 ```
 2024-04-19, 2024-06-30, ...
 ```
 
-**Header:**
+**Заголовок:**
 ```http
 Stripe-Version: 2024-04-19
 ```
 
-**Each date** = snapshot of API behavior. New dates introduced для breaking changes.
+**Каждая дата** = снимок поведения API. Новые даты вводятся при breaking changes.
 
-**Pros:**
-- Granular versioning (любая мелочь = new date если breaks)
-- No "v3" debates (just dates)
+**Плюсы:**
+- Гранулярное версионирование (любая мелочь = новая дата, если ломает совместимость)
+- Нет споров про «v3» (просто даты)
 
-**Cons:**
-- Many versions to maintain
-- Confusing для clients (which date latest?)
+**Минусы:**
+- Много версий, которые приходится поддерживать
+- Запутывает клиентов (какая дата самая свежая?)
 
-**Stripe maintains** **all versions** ever published — clients pin к specific date, never broken.
+**Stripe поддерживает** **все версии**, когда-либо опубликованные — клиенты прикрепляются (pin) к конкретной дате и никогда не ломаются.
 
 
 ## Q12. (!) Per-account version pinning?
 
-**Stripe model:** каждый customer pinned к specific API version.
+**Модель Stripe:** каждый клиент закреплён (pinned) за конкретной версией API.
 
 ```
 Account X: pinned к 2024-04-19
@@ -293,37 +293,37 @@ Account Y: pinned к 2024-06-30
 Account Z: latest (auto-upgrade)
 ```
 
-**Effect:**
-- Version устанавливается при first API call (или manual)
-- Account stays на same version forever (until explicit upgrade)
-- New customers — latest by default
+**Эффект:**
+- Версия фиксируется при первом вызове API (или вручную)
+- Аккаунт остаётся на той же версии навсегда (до явного апгрейда)
+- Новые клиенты — по умолчанию на последней версии
 
-**Webhooks** also versioned per-account — webhook payload format consistent для тhat account.
+**Webhooks** тоже версионируются по аккаунтам — формат payload вебхука стабилен для данного аккаунта.
 
-**Result:** Stripe can introduce breaking changes constantly **без breaking anyone**.
+**Итог:** Stripe может постоянно вносить breaking changes **никого при этом не ломая**.
 
 
 ## Q13. Webhook versioning?
 
-**Webhooks** harder to version (server pushes, can't negotiate):
+**Webhooks** сложнее версионировать (сервер сам шлёт данные, согласовать версию нельзя):
 
-**Approaches:**
-1. **Per-customer pinned version** (Stripe)
-2. **Multiple webhook endpoints** для разных versions
-3. **Header в webhook payload** indicating version
-4. **Backwards-compatible only** (always add fields, never remove)
+**Подходы:**
+1. **Версия, закреплённая за клиентом** (Stripe)
+2. **Несколько вебхук-эндпоинтов** под разные версии
+3. **Заголовок в payload вебхука**, указывающий версию
+4. **Только обратно совместимые изменения** (всегда добавлять поля, никогда не удалять)
 
-**Common pattern:** webhook payloads frozen forever, only add new event types.
+**Частый паттерн:** payload вебхуков заморожен навсегда, добавляются только новые типы событий.
 
 
 ## Q14. (!) Не versions в GraphQL?
 
-**GraphQL philosophy:** **no versioning**.
+**Философия GraphQL:** **без версионирования**.
 
-**Instead:**
-- **Add fields** (clients request only what need — additions don't break)
-- **Deprecate fields** через `@deprecated`
-- **Never remove** (or remove very long after deprecation)
+**Вместо этого:**
+- **Добавлять поля** (клиенты запрашивают только нужное — добавления ничего не ломают)
+- **Помечать поля устаревшими** через `@deprecated`
+- **Никогда не удалять** (или удалять очень нескоро после deprecation)
 
 ```graphql
 type User {
@@ -335,9 +335,9 @@ type User {
 }
 ```
 
-**Clients** continue using `username` (works), encouraged migrate к `handle`.
+**Клиенты** продолжают использовать `username` (работает), их подталкивают мигрировать на `handle`.
 
-**Eventually** (years) — `username` removed (но disruption minimized — most clients moved).
+**Со временем** (через годы) — `username` удаляется (но потрясений минимум — большинство клиентов уже перешли).
 
 
 ## Q15. Field deprecation?
@@ -355,32 +355,32 @@ type User {
 }
 ```
 
-**Tooling:**
-- IDE shows strikethrough на deprecated fields
-- Linters warn
-- API documentation shows deprecation notices
+**Инструменты:**
+- IDE показывает зачёркивание на устаревших полях
+- Линтеры выдают предупреждения
+- В документации API отображаются пометки об устаревании
 
 
 ## Q16. (!) Deprecation policy?
 
-**Public API deprecation policy** обычно:
+**Политика устаревания публичного API** обычно такая:
 
-1. **Announce deprecation** (release notes, email, blog)
-2. **Sunset header** в responses
-3. **Deprecation period** — usually 6-24 months
-4. **Reminders** к customers
-5. **Migration guides** + tooling
-6. **Final removal**
+1. **Объявить об устаревании** (release notes, email, блог)
+2. **Заголовок Sunset** в ответах
+3. **Период устаревания** — обычно 6–24 месяца
+4. **Напоминания** клиентам
+5. **Гайды по миграции** + инструменты
+6. **Окончательное удаление**
 
-**Examples:**
-- **Stripe:** never removes (versions live forever)
-- **GitHub:** ~12-18 months deprecation
-- **Twitter:** ~6 months deprecation
+**Примеры:**
+- **Stripe:** никогда не удаляет (версии живут вечно)
+- **GitHub:** deprecation ~12–18 месяцев
+- **Twitter:** deprecation ~6 месяцев
 
 
 ## Q17. Sunset HTTP header?
 
-**RFC 8594** — `Sunset` header indicates resource will be removed.
+**RFC 8594** — заголовок `Sunset` сообщает, что ресурс будет удалён.
 
 ```http
 HTTP/1.1 200 OK
@@ -389,60 +389,60 @@ Deprecation: Mon, 01 Jan 2024 00:00:00 GMT
 Link: <https://api.example.com/v3/users/123>; rel="successor-version"
 ```
 
-**Tools** can detect Sunset header → notify developers.
+**Инструменты** могут отлавливать заголовок Sunset → уведомлять разработчиков.
 
-**Best practice:** include в every response для deprecated endpoints.
+**Best practice:** включать в каждый ответ для устаревших эндпоинтов.
 
 
 ## Q18. (!) Как gracefully deprecate API?
 
-**Steps:**
+**Шаги:**
 
-1. **Decide replacement** (новый endpoint / version exists)
-2. **Document deprecation** (release notes, docs)
-3. **Add Sunset header** к responses
-4. **Email API consumers** (multiple times)
-5. **Track usage** (analytics на deprecated endpoint)
-6. **Provide migration tools** (script, code samples)
-7. **Reminders** ближе к sunset date
-8. **Disable** (return 410 Gone)
-9. **Clean up** server code (eventually)
+1. **Определить замену** (новый эндпоинт / есть новая версия)
+2. **Задокументировать устаревание** (release notes, docs)
+3. **Добавить заголовок Sunset** в ответы
+4. **Письма потребителям API** (несколько раз)
+5. **Отслеживать использование** (аналитика по устаревшему эндпоинту)
+6. **Предоставить инструменты миграции** (скрипт, примеры кода)
+7. **Напоминания** ближе к sunset-дате
+8. **Отключить** (отдавать 410 Gone)
+9. **Вычистить** серверный код (в итоге)
 
-**Don't surprise** users. Communicate, communicate, communicate.
+**Не удивляйте** пользователей. Коммуницируйте, коммуницируйте и ещё раз коммуницируйте.
 
 
 ## Q19. (!) Versioning best practices?
 
-1. **Default к backwards-compatible changes** (no new version needed)
-2. **Versioning strategy decided early** (changing later painful)
-3. **URI versioning** — simplest для most cases
-4. **Document breaking change policy**
-5. **Sunset announcements** at least 6 months
-6. **OpenAPI spec per version**
-7. **API gateway** для routing к correct version
-8. **Tests across versions** (catch regressions)
-9. **Limit number** of supported versions (3-4 max)
-10. **Track adoption** of new versions
-11. **Tolerant Reader** pattern на client side
-12. **Don't version internal APIs** if possible (faster iteration)
+1. **По умолчанию делайте обратно совместимые изменения** (новая версия не нужна)
+2. **Стратегию версионирования выбирайте рано** (менять её позже больно)
+3. **URI versioning** — самое простое для большинства случаев
+4. **Документируйте политику breaking changes**
+5. **Анонсы Sunset** минимум за 6 месяцев
+6. **Отдельная OpenAPI-спека на каждую версию**
+7. **API gateway** для маршрутизации к нужной версии
+8. **Тесты на всех версиях** (ловят регрессии)
+9. **Ограничивайте число** поддерживаемых версий (максимум 3–4)
+10. **Отслеживайте переход** на новые версии
+11. **Паттерн Tolerant Reader** на стороне клиента
+12. **Не версионируйте внутренние API**, если возможно (более быстрая итерация)
 
 
 ## Q20. Multiple versions параллельно — операционные расходы?
 
-**Cost of supporting multiple versions:**
-- **Code complexity** (branches per version)
-- **Testing matrix** (verify all versions)
-- **Bug fixes** в multiple branches
-- **Documentation maintenance**
-- **Deployment complexity**
-- **Performance overhead** (translation layer)
+**Стоимость поддержки нескольких версий:**
+- **Сложность кода** (ветвления под каждую версию)
+- **Матрица тестирования** (проверять все версии)
+- **Исправления багов** в нескольких ветках
+- **Поддержка документации**
+- **Сложность деплоя**
+- **Накладные расходы на производительность** (слой трансляции)
 
-**Strategies:**
-- **API Gateway translation** — newest version в backend, gateway translates older requests
-- **Adapter pattern** — code separation per version
-- **Limit** supported versions (sunset old aggressively)
+**Стратегии:**
+- **Трансляция в API Gateway** — в бэкенде самая свежая версия, gateway транслирует старые запросы
+- **Паттерн Adapter** — разделение кода по версиям
+- **Ограничивайте** число поддерживаемых версий (агрессивно выводите старые из эксплуатации)
 
-**Stripe-style "all versions forever"** — exception, requires significant engineering investment.
+**Подход в стиле Stripe «все версии навсегда»** — исключение, требует существенных инженерных вложений.
 
 ---
 

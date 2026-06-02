@@ -19,7 +19,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Ansible`
 
-`Ansible` — agentless configuration management и automation tool. Создан Michael DeHaan (2012), acquired Red Hat (2015). Использует **SSH** (не агенты), **YAML playbooks**, **idempotent** modules. Доминирует в config management market. Альтернативы: Puppet, Chef, SaltStack.
+`Ansible` — agentless-система управления конфигурацией и автоматизации. Создана Michael DeHaan (2012), куплена Red Hat (2015). Использует **SSH** (без агентов), **YAML-плейбуки**, **идемпотентные** модули. Доминирует на рынке config management. Альтернативы: Puppet, Chef, SaltStack.
 
 ## Полезные ссылки
 
@@ -81,47 +81,47 @@ updated: "2026-04-25"
 
 ## Q1. (!) Что такое Ansible?
 
-**Ansible** — open-source IT automation tool. Created Michael DeHaan (creator Cobbler too) в 2012, acquired by Red Hat 2015.
+**Ansible** — open-source инструмент IT-автоматизации. Создан Michael DeHaan (автор и Cobbler) в 2012, куплен Red Hat в 2015.
 
-**Use cases:**
-- **Configuration management** (install/configure software)
-- **Application deployment**
-- **Orchestration** (multi-step workflows)
-- **Provisioning** (cloud resources, paired с Terraform)
-- **Continuous delivery** (deploy via CI/CD)
-- **Network automation** (Cisco, Juniper, etc.)
-- **Security automation**
+**Сценарии применения:**
+- **Управление конфигурацией** (установка/настройка ПО)
+- **Деплой приложений**
+- **Оркестрация** (многошаговые workflow)
+- **Provisioning** (облачные ресурсы, в паре с Terraform)
+- **Continuous delivery** (деплой через CI/CD)
+- **Сетевая автоматизация** (Cisco, Juniper и т.д.)
+- **Автоматизация безопасности**
 
-**Key characteristics:**
-- **Agentless** (uses SSH, WinRM)
-- **YAML-based** playbooks
-- **Idempotent** modules
-- **Push-based** (control node → managed nodes)
+**Ключевые характеристики:**
+- **Agentless** (использует SSH, WinRM)
+- **YAML-плейбуки**
+- **Идемпотентные** модули
+- **Push-модель** (control node → managed nodes)
 
 ## Q2. (!) Agentless — преимущество?
 
-**Vs Puppet, Chef** (agent-based):
-- ❌ Install/manage agent на каждой managed node
-- ❌ Agent updates separate
-- ❌ Agent security risks
+**В сравнении с Puppet, Chef** (agent-based):
+- ❌ Нужно ставить и обслуживать агента на каждой managed node
+- ❌ Обновления агента — отдельная задача
+- ❌ Агент создаёт риски безопасности
 
 **Ansible (agentless):**
-- ✅ Just SSH (already on Linux servers)
-- ✅ No agent install / upgrade
-- ✅ Easier to start
-- ✅ Less attack surface
+- ✅ Достаточно SSH (уже есть на Linux-серверах)
+- ✅ Не нужна установка / обновление агента
+- ✅ Проще начать
+- ✅ Меньше поверхность атаки
 
-**Trade-off:**
-- ❌ SSH overhead per task (slower for huge fleets)
-- ❌ Harder для **state monitoring** (no agent reporting back)
+**Компромисс:**
+- ❌ Накладные расходы SSH на каждую задачу (медленнее на огромных парках машин)
+- ❌ Сложнее **отслеживать состояние** (агент не шлёт отчёты обратно)
 
-**В 2025** — agentless approach **doминирует** в new tools (Salt also has agentless mode).
+**В 2025** agentless-подход **доминирует** в новых инструментах (у Salt тоже есть agentless-режим).
 
 ## Q3. (!) Idempotency — что это и зачем?
 
-**Idempotent** — running task multiple times = same result.
+**Идемпотентность** — многократный запуск задачи даёт тот же результат.
 
-**Example:**
+**Пример:**
 ```yaml
 # Idempotent — install only if not present
 - name: Install nginx
@@ -135,15 +135,15 @@ updated: "2026-04-25"
 ```
 
 **Зачем:**
-- Safe to **re-run** playbook
-- **Convergent** — system reaches desired state
-- **No side effects** при partial failures
+- Безопасно **перезапускать** плейбук
+- **Сходимость** — система приходит к желаемому состоянию
+- **Нет побочных эффектов** при частичных сбоях
 
-**Most Ansible modules idempotent**. Use `command` / `shell` carefully (not idempotent by default).
+**Большинство модулей Ansible идемпотентны**. С `command` / `shell` нужна осторожность (по умолчанию не идемпотентны).
 
 ## Q4. (!) Inventory — статический и динамический?
 
-**Static inventory** (INI или YAML):
+**Статический inventory** (INI или YAML):
 ```ini
 # inventory.ini
 [webservers]
@@ -158,13 +158,13 @@ webservers
 databases
 ```
 
-**Dynamic inventory** — generated from external source:
-- AWS EC2 (auto-discover)
+**Динамический inventory** — генерируется из внешнего источника:
+- AWS EC2 (автообнаружение)
 - Azure
 - GCP
 - Kubernetes
 - Consul, Vault
-- Custom scripts
+- Самописные скрипты
 
 ```yaml
 # aws_ec2.yml
@@ -179,7 +179,7 @@ keyed_groups:
 ansible-inventory -i aws_ec2.yml --list
 ```
 
-**Cloud environments** обычно требуют dynamic inventory (instances ephemeral).
+**Облачные окружения** обычно требуют динамический inventory (инстансы эфемерны).
 
 ## Q5. (!) Playbook — структура?
 
@@ -217,14 +217,14 @@ ansible-inventory -i aws_ec2.yml --list
         state: restarted
 ```
 
-**Run:**
+**Запуск:**
 ```bash
 ansible-playbook -i inventory deploy.yml
 ```
 
 ## Q6. (!) Roles?
 
-**Role** — reusable structured collection (tasks, vars, files, templates).
+**Роль (role)** — переиспользуемый структурированный набор (tasks, vars, files, templates).
 
 ```
 roles/
@@ -245,7 +245,7 @@ roles/
       main.yml      # dependencies
 ```
 
-**Use в playbook:**
+**Использование в плейбуке:**
 ```yaml
 - hosts: webservers
   roles:
@@ -253,20 +253,20 @@ roles/
     - app-deploy
 ```
 
-**Reusable** across projects, shared via Galaxy.
+**Переиспользуются** между проектами, распространяются через Galaxy.
 
 ## Q7. Modules?
 
-**Modules** — units of work (~ functions). 3000+ built-in.
+**Модули (modules)** — единицы работы (по сути функции). 3000+ встроенных.
 
-**Categories:**
-- **System** — file, service, user, package
-- **Cloud** — ec2, gcp_compute, azure_rm
-- **Net Tools** — uri, get_url
-- **DB** — postgresql_db, mysql_user
-- **Source Control** — git, github
-- **Files** — copy, template, lineinfile
-- **Container** — docker_container, k8s
+**Категории:**
+- **Система** — file, service, user, package
+- **Облако** — ec2, gcp_compute, azure_rm
+- **Сетевые утилиты** — uri, get_url
+- **БД** — postgresql_db, mysql_user
+- **Контроль версий** — git, github
+- **Файлы** — copy, template, lineinfile
+- **Контейнеры** — docker_container, k8s
 
 ```yaml
 # Examples
@@ -284,13 +284,13 @@ roles/
     image: ami-...
 ```
 
-**Custom modules** can be written в Python.
+**Свои модули** можно писать на Python.
 
 ## Q8. Tasks, handlers?
 
-**Tasks** — execute по порядку.
+**Tasks** — выполняются по порядку.
 
-**Handlers** — special tasks, executed **only** if `notify`d, **once** at end of play.
+**Handlers** — особые задачи, выполняются **только** если был `notify`, и **один раз** в конце play.
 
 ```yaml
 tasks:
@@ -313,20 +313,20 @@ handlers:
       state: restarted
 ```
 
-**Эффект:** if either task changed → handler fires **once** at end (no double restart).
+**Эффект:** если хоть одна из задач что-то изменила → handler срабатывает **один раз** в конце (без двойного рестарта).
 
 ## Q9. (!) Variables (group_vars, host_vars, playbook)?
 
-**Precedence (low → high):**
+**Приоритет (от низкого к высокому):**
 
 1. **Role defaults** (`roles/*/defaults/main.yml`)
-2. **Inventory file vars**
-3. **`group_vars/all.yml`** (apply к all hosts)
-4. **`group_vars/<group>.yml`** (specific group)
-5. **`host_vars/<host>.yml`** (specific host)
-6. **Playbook `vars`**
-7. **Role `vars`**
-8. **`-e` extra vars** (highest)
+2. **Переменные из inventory-файла**
+3. **`group_vars/all.yml`** (применяются ко всем хостам)
+4. **`group_vars/<group>.yml`** (конкретная группа)
+5. **`host_vars/<host>.yml`** (конкретный хост)
+6. **`vars` плейбука**
+7. **`vars` роли**
+8. **extra vars `-e`** (наивысший приоритет)
 
 ```
 inventory/
@@ -337,14 +337,14 @@ inventory/
     web1.yml        # для web1
 ```
 
-**Override через CLI:**
+**Переопределение через CLI:**
 ```bash
 ansible-playbook deploy.yml -e "version=2.0"
 ```
 
 ## Q10. Facts (auto-discovered)?
 
-**Facts** — info auto-collected про managed nodes.
+**Facts** — информация, автоматически собираемая о managed nodes.
 
 ```yaml
 - debug:
@@ -353,7 +353,7 @@ ansible-playbook deploy.yml -e "version=2.0"
     msg: "Memory: {{ ansible_facts['memtotal_mb'] }} MB"
 ```
 
-**Examples:**
+**Примеры:**
 - `ansible_distribution` (Ubuntu, RHEL)
 - `ansible_distribution_version`
 - `ansible_memtotal_mb`
@@ -361,9 +361,9 @@ ansible-playbook deploy.yml -e "version=2.0"
 - `ansible_default_ipv4.address`
 - `ansible_hostname`
 
-**Disable** для speed: `gather_facts: no`.
+**Отключить** для скорости: `gather_facts: no`.
 
-**Custom facts:** files в `/etc/ansible/facts.d/` на managed node.
+**Свои facts:** файлы в `/etc/ansible/facts.d/` на managed node.
 
 ## Q11. Templates (Jinja2)?
 
@@ -389,11 +389,11 @@ server {
 }
 ```
 
-**Powerful** — variables, loops, conditionals, filters.
+**Мощный механизм** — переменные, циклы, условия, фильтры.
 
 ## Q12. (!) Ansible Vault?
 
-**Encrypts sensitive data** в playbooks.
+**Шифрует чувствительные данные** в плейбуках.
 
 ```bash
 # Encrypt file
@@ -409,7 +409,7 @@ ansible-vault decrypt secrets.yml
 ansible-vault encrypt_string 'mypassword' --name 'db_password'
 ```
 
-**Use в playbook:**
+**Использование в плейбуке:**
 ```yaml
 vars_files:
   - secrets.yml
@@ -421,9 +421,9 @@ ansible-playbook deploy.yml --ask-vault-pass
 ansible-playbook deploy.yml --vault-password-file ~/.vault_pass
 ```
 
-**Best practice:** vault file + vault-id для multiple environments.
+**Best practice:** vault-файл + vault-id для нескольких окружений.
 
-**Alternative:** integrate с **Vault** (HashiCorp) для centralized secrets.
+**Альтернатива:** интеграция с **Vault** (HashiCorp) для централизованного хранения секретов.
 
 ## Q13. SSH best practices?
 
@@ -439,32 +439,32 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s
 ```
 
 **Best practices:**
-- **SSH keys**, not passwords
-- **Bastion / jump hosts** для private networks
-- **Specific user** для Ansible (not root)
+- **SSH-ключи**, а не пароли
+- **Bastion / jump-хосты** для приватных сетей
+- **Отдельный пользователь** для Ansible (не root)
 - **Sudo** через `become: yes`
-- **`ansible-pull`** mode для pull-based scenarios
+- Режим **`ansible-pull`** для pull-based сценариев
 
 ## Q14. (!) ad-hoc commands vs playbooks?
 
-**Ad-hoc** — one-off command:
+**Ad-hoc** — разовая команда:
 ```bash
 ansible all -m ping
 ansible webservers -m service -a "name=nginx state=restarted" --become
 ansible all -a "uname -r"  # shell command
 ```
 
-**Playbook** — multi-task, reusable.
+**Плейбук** — много задач, переиспользуется.
 
-**Use ad-hoc для:**
-- Quick checks (`ping`)
-- One-off actions
-- Inventory exploration
+**Ad-hoc подходит для:**
+- Быстрых проверок (`ping`)
+- Разовых действий
+- Изучения inventory
 
-**Playbooks для:**
-- Repeatable tasks
-- Multi-step workflows
-- Automation
+**Плейбуки — для:**
+- Повторяемых задач
+- Многошаговых workflow
+- Автоматизации
 
 ## Q15. Check mode (dry-run)?
 
@@ -472,17 +472,17 @@ ansible all -a "uname -r"  # shell command
 ansible-playbook deploy.yml --check
 ```
 
-**Effect:** show what **would** change, без actual modifications.
+**Эффект:** показывает, что **изменилось бы**, без реальных изменений.
 
-**Most modules** support check mode. Some (like `command`/`shell`) skip in check mode.
+**Большинство модулей** поддерживают check mode. Некоторые (например, `command`/`shell`) в check mode пропускаются.
 
-**Combined с `--diff`:** show file diffs before changes.
+**В сочетании с `--diff`:** показывает diff файлов до внесения изменений.
 
 ```bash
 ansible-playbook deploy.yml --check --diff
 ```
 
-**Best practice:** run check + diff перед production deployment.
+**Best practice:** запускать check + diff перед деплоем в production.
 
 ## Q16. Tags?
 
@@ -497,13 +497,13 @@ tasks:
     tags: ssl, security
 ```
 
-**Run only tagged tasks:**
+**Запустить только помеченные задачи:**
 ```bash
 ansible-playbook deploy.yml --tags ssl
 ansible-playbook deploy.yml --skip-tags install
 ```
 
-**Use case:** quick re-deploy только config (skip install steps).
+**Сценарий:** быстро передеплоить только конфиг (пропустив шаги установки).
 
 ## Q17. Parallel execution (forks)?
 
@@ -513,20 +513,20 @@ ansible-playbook deploy.yml --skip-tags install
 forks = 50  # default 5
 ```
 
-Or per-run:
+Или для конкретного запуска:
 ```bash
 ansible-playbook deploy.yml --forks 100
 ```
 
-**Effect:** Ansible parallelizes tasks across **N hosts** simultaneously.
+**Эффект:** Ansible выполняет задачи параллельно сразу на **N хостах**.
 
-**Tuning:**
-- Larger fleet → higher forks (but limit by SSH connection capacity)
-- Memory constrained — lower forks
+**Тюнинг:**
+- Больше парк машин → больше forks (но с оглядкой на лимит SSH-соединений)
+- Ограничены по памяти — снижайте forks
 
 ## Q18. (!) Ansible Galaxy?
 
-**Ansible Galaxy** — community hub для **roles** и **collections**.
+**Ansible Galaxy** — community-хаб для **roles** и **collections**.
 
 ```bash
 # Install role
@@ -545,17 +545,17 @@ collections:
   - name: community.general
 ```
 
-**40K+ roles** на Galaxy. Quality varies — check stars, recent updates.
+**40K+ ролей** на Galaxy. Качество разное — смотрите звёзды и свежесть обновлений.
 
 ## Q19. Collections (с Ansible 2.10)?
 
-**Collections** — modern packaging unit. Includes modules, roles, plugins, docs.
+**Collections** — современная единица упаковки. Включает модули, роли, плагины, документацию.
 
 ```bash
 ansible-galaxy collection install community.kubernetes
 ```
 
-**Use в playbook:**
+**Использование в плейбуке:**
 ```yaml
 - hosts: all
   tasks:
@@ -564,37 +564,37 @@ ansible-galaxy collection install community.kubernetes
         ...
 ```
 
-**Built-in `ansible.builtin`** collection — core modules.
+**Встроенная коллекция `ansible.builtin`** — базовые модули.
 
-**Cloud collections:** `amazon.aws`, `google.cloud`, `azure.azcollection`.
+**Облачные коллекции:** `amazon.aws`, `google.cloud`, `azure.azcollection`.
 
 ## Q20. (!) AWX vs Ansible Tower vs Automation Platform?
 
-**AWX** — open-source Ansible UI / orchestration platform (former Tower upstream).
+**AWX** — open-source UI / платформа оркестрации для Ansible (upstream бывшего Tower).
 
-**Ansible Tower** (paid, Red Hat) — enterprise version с support.
+**Ansible Tower** (платный, Red Hat) — enterprise-версия с поддержкой.
 
-**Ansible Automation Platform (AAP)** — Red Hat's enterprise offering (Tower + more).
+**Ansible Automation Platform (AAP)** — enterprise-предложение Red Hat (Tower + расширения).
 
-**Features:**
-- Web UI
-- Job scheduling
-- Workflows (chained playbooks)
+**Возможности:**
+- Web-интерфейс
+- Планирование задач (job scheduling)
+- Workflow (цепочки плейбуков)
 - RBAC
 - API
-- Notifications
-- Dashboard, logs
+- Уведомления
+- Дашборд, логи
 
 **Self-host AWX:**
 ```bash
 helm install awx awx-operator/awx
 ```
 
-**Use case:** centralized Ansible execution для team / enterprise.
+**Сценарий:** централизованный запуск Ansible для команды / enterprise.
 
 ## Q21. Workflows, schedules?
 
-**Workflow** — chain multiple playbooks с conditional logic.
+**Workflow** — цепочка из нескольких плейбуков с условной логикой.
 
 ```
 Stage 1: Provision EC2 (Terraform call)
@@ -606,23 +606,23 @@ Stage 3: Deploy app
 Stage 4 (cleanup): Rollback
 ```
 
-**Schedules:** cron-like для periodic playbook runs (compliance checks, backups).
+**Schedules:** cron-подобные для периодического запуска плейбуков (проверки compliance, бэкапы).
 
 ## Q22. (!) Ansible vs Terraform?
 
-| Aspect | Ansible | Terraform |
+| Аспект | Ansible | Terraform |
 |--------|---------|-----------|
-| Type | Configuration management | Infrastructure provisioning |
-| State | **Stateless** (each run independent) | **Stateful** (state file) |
-| Approach | Procedural (tasks в order) | Declarative (desired state) |
-| Idempotency | Per-task | Whole infrastructure |
-| Cloud provisioning | OK | **Excellent** |
-| Config management | **Excellent** | Limited |
-| Drift detection | Limited | Built-in |
+| Тип | Управление конфигурацией | Провижининг инфраструктуры |
+| Состояние | **Stateless** (каждый запуск независим) | **Stateful** (файл состояния) |
+| Подход | Процедурный (задачи по порядку) | Декларативный (желаемое состояние) |
+| Идемпотентность | На уровне задачи | На уровне всей инфраструктуры |
+| Провижининг в облаке | Нормально | **Отлично** |
+| Управление конфигурацией | **Отлично** | Ограниченно |
+| Обнаружение дрейфа | Ограниченно | Встроено |
 
-**Often used together:**
-- **Terraform** — provision infrastructure (VMs, networks, DBs)
-- **Ansible** — configure software на VMs
+**Часто используют вместе:**
+- **Terraform** — провижинит инфраструктуру (VM, сети, БД)
+- **Ansible** — настраивает ПО на VM
 
 ```
 Terraform creates EC2 → Ansible installs nginx, copies config
@@ -630,51 +630,51 @@ Terraform creates EC2 → Ansible installs nginx, copies config
 
 ## Q23. (!) Ansible vs Puppet vs Chef?
 
-| Critterion | Ansible | Puppet | Chef |
+| Критерий | Ansible | Puppet | Chef |
 |-----------|---------|--------|------|
-| Architecture | **Agentless** (SSH) | Agent-based | Agent-based |
-| Language | YAML | Puppet DSL (Ruby-like) | Ruby |
-| Approach | Procedural | Declarative | Procedural |
+| Архитектура | **Agentless** (SSH) | Agent-based | Agent-based |
+| Язык | YAML | Puppet DSL (похож на Ruby) | Ruby |
+| Подход | Процедурный | Декларативный | Процедурный |
 | Push / Pull | Push | Pull | Pull |
-| Learning curve | Easy | Medium | Hard |
-| Adoption (2025) | **Highest** | Declining | Declining |
-| Ecosystem | Galaxy | Forge | Supermarket |
+| Порог входа | Низкий | Средний | Высокий |
+| Распространённость (2025) | **Наибольшая** | Снижается | Снижается |
+| Экосистема | Galaxy | Forge | Supermarket |
 
-**Ansible won** в 2010-2020s due to **simplicity + agentless**. Puppet и Chef — legacy в большинстве organizations.
+**Ansible победил** в 2010-2020-х за счёт **простоты + agentless**. Puppet и Chef — legacy в большинстве организаций.
 
-**SaltStack** — fourth player, agent или agentless, fast.
+**SaltStack** — четвёртый игрок, agent или agentless, быстрый.
 
 ## Q24. (!) Best practices?
 
-1. **Idempotency** — always test re-running
-2. **Roles** — break large playbooks
-3. **Variables hierarchy** — defaults → group_vars → host_vars
-4. **Vault** для secrets (или integrate Vault)
-5. **Source control** — playbooks в git
-6. **Inventory in version control** (sometimes)
-7. **Use `check --diff`** перед production
-8. **Tags** для granular re-runs
-9. **Test playbooks** (Molecule framework)
-10. **CI/CD integration** — auto-run на git push
-11. **No `command` / `shell`** when module exists
-12. **Document with `name:`** на every task
-13. **Avoid `latest`** для package versions (pin)
-14. **Handlers** для restarts (avoid double restart)
+1. **Идемпотентность** — всегда проверяйте повторный запуск
+2. **Роли** — разбивайте большие плейбуки
+3. **Иерархия переменных** — defaults → group_vars → host_vars
+4. **Vault** для секретов (или интеграция с Vault)
+5. **Контроль версий** — плейбуки в git
+6. **Inventory в системе контроля версий** (иногда)
+7. **Используйте `check --diff`** перед production
+8. **Теги** для точечных перезапусков
+9. **Тестируйте плейбуки** (фреймворк Molecule)
+10. **Интеграция с CI/CD** — автозапуск по git push
+11. **Никаких `command` / `shell`**, если есть подходящий модуль
+12. **Документируйте через `name:`** в каждой задаче
+13. **Избегайте `latest`** для версий пакетов (фиксируйте версию)
+14. **Handlers** для рестартов (избегайте двойного рестарта)
 
 ## Q25. Какие частые проблемы?
 
-1. **SSH connection issues** (firewall, keys)
-2. **`become` permissions** — sudo not configured
-3. **Variable precedence confusion**
-4. **Idempotency violations** (using `command` блять)
-5. **Slow execution** (low forks, fact gathering на huge fleet)
-6. **Vault password management** — sharing securely
-7. **Inventory drift** — outdated host lists
-8. **Playbook complexity** — monolithic playbooks unmaintainable
-9. **Environment differences** — dev playbook fails в prod
-10. **No testing** — break production
+1. **Проблемы с SSH-соединением** (firewall, ключи)
+2. **Права `become`** — sudo не настроен
+3. **Путаница с приоритетом переменных**
+4. **Нарушения идемпотентности** (использование `command`)
+5. **Медленное выполнение** (мало forks, сбор facts на огромном парке машин)
+6. **Управление паролем Vault** — безопасный обмен
+7. **Дрейф inventory** — устаревшие списки хостов
+8. **Сложность плейбуков** — монолитные плейбуки невозможно сопровождать
+9. **Различия окружений** — dev-плейбук падает в prod
+10. **Отсутствие тестов** — ломает production
 
-В **2025** Ansible — **standard** для config management. Часто complemented Terraform для infrastructure provisioning.
+В **2025** Ansible — **стандарт** для управления конфигурацией. Часто дополняется Terraform для провижининга инфраструктуры.
 
 ---
 

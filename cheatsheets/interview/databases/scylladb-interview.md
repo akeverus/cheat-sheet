@@ -18,7 +18,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `ScyllaDB`
 
-`ScyllaDB` — open-source NoSQL wide-column database. **Drop-in replacement Cassandra**, написан на **C++** (vs Cassandra Java) с **shard-per-core** architecture. Обещает **10x lower latency** и higher throughput. Использует **Seastar framework** для async I/O. Создан 2014 ex-Cloudius (KVM).
+`ScyllaDB` — open-source NoSQL wide-column база данных. **Drop-in замена Cassandra**, написана на **C++** (в отличие от Cassandra на Java) с архитектурой **shard-per-core**. Обещает **в 10 раз меньшую задержку** и более высокую пропускную способность. Использует фреймворк **Seastar** для асинхронного I/O. Создана в 2014 году выходцами из Cloudius (KVM).
 
 ## Полезные ссылки
 
@@ -77,52 +77,52 @@ updated: "2026-04-25"
 
 ## Q1. (!) Что такое ScyllaDB?
 
-**ScyllaDB** — open-source NoSQL wide-column database. **API-compatible с Apache Cassandra**, но переписан с нуля на **C++** для significantly better performance.
+**ScyllaDB** — open-source NoSQL wide-column база данных. **API-совместима с Apache Cassandra**, но переписана с нуля на **C++** ради существенно более высокой производительности.
 
-**Заявленные метрики vs Cassandra:**
-- **10x lower latency**
-- **3-5x higher throughput**
-- **Same data model** (CQL, replication, consistency)
+**Заявленные метрики против Cassandra:**
+- **В 10 раз меньшая задержка**
+- **В 3-5 раз выше пропускная способность**
+- **Та же модель данных** (CQL, репликация, согласованность)
 
-**Created в 2014** by ex-KVM (Cloudius Systems), commercial company **ScyllaDB Inc.**
+**Создана в 2014 году** выходцами из проекта KVM (Cloudius Systems), коммерческая компания — **ScyllaDB Inc.**
 
-**Применения:** Same as Cassandra:
-- Time-series data
+**Применения:** те же, что у Cassandra:
+- Временные ряды (time-series)
 - IoT
-- Ad-tech (real-time bidding)
-- Messaging platforms (Discord использует Scylla)
-- High-throughput logging
+- Ad-tech (ставки в реальном времени)
+- Платформы обмена сообщениями (Discord использует Scylla)
+- Высокопроизводительное логирование
 
 ## Q2. (!) ScyllaDB vs Cassandra — основные отличия?
 
 | Критерий | Apache Cassandra | ScyllaDB |
 |----------|------------------|----------|
-| Language | Java (JVM) | C++ |
-| Architecture | Thread-pool | **Shard-per-core (Seastar)** |
-| GC | Yes (JVM GC pauses) | No GC |
-| Latency p99 | ~5-50 ms | ~1-5 ms |
-| Throughput | High | **3-5x higher** |
-| Memory usage | High | Lower |
-| CPU efficiency | Lower | **Much higher** |
-| Compatibility | Original | API-compatible |
-| Maturity | 2008+ | 2014+ |
-| Adoption | Wider | Growing |
+| Язык | Java (JVM) | C++ |
+| Архитектура | Пул потоков | **Shard-per-core (Seastar)** |
+| GC | Да (паузы JVM GC) | Нет GC |
+| Задержка p99 | ~5-50 мс | ~1-5 мс |
+| Пропускная способность | Высокая | **В 3-5 раз выше** |
+| Потребление памяти | Высокое | Ниже |
+| Эффективность CPU | Ниже | **Существенно выше** |
+| Совместимость | Оригинал | API-совместима |
+| Зрелость | с 2008 | с 2014 |
+| Распространённость | Шире | Растёт |
 
-**Performance** — main differentiator. На **same hardware** Scylla typically 3-10x faster.
+**Производительность** — главное отличие. На **том же железе** Scylla обычно в 3-10 раз быстрее.
 
 ## Q3. (!) Что такое shard-per-core архитектура?
 
 **Cassandra:**
-- Thread pools (work-stealing)
-- Locks, contention между cores
-- JVM overhead
+- Пулы потоков (work-stealing)
+- Блокировки, конкуренция между ядрами
+- Накладные расходы JVM
 
-**ScyllaDB (shared-nothing per core):**
-- **One shard per CPU core**
-- Each shard owns subset data
-- **No locks** между cores (no contention)
-- **No shared memory** между cores
-- Network requests routed к correct core
+**ScyllaDB (shared-nothing на каждое ядро):**
+- **Один shard на ядро CPU**
+- Каждый shard владеет своим подмножеством данных
+- **Нет блокировок** между ядрами (нет конкуренции)
+- **Нет разделяемой памяти** между ядрами
+- Сетевые запросы маршрутизируются к нужному ядру
 
 ```
 8-core node:
@@ -132,26 +132,26 @@ updated: "2026-04-25"
   ...
 ```
 
-**Effect:**
-- **Linear scaling с cores** (Cassandra plateaus)
-- No GC pauses
-- Predictable latency
+**Эффект:**
+- **Линейное масштабирование с числом ядер** (у Cassandra рост выходит на плато)
+- Нет пауз GC
+- Предсказуемая задержка
 
 ## Q4. Seastar framework?
 
-**Seastar** — C++ framework created by ScyllaDB authors. Designed для **modern hardware** (multi-core CPUs, fast NICs).
+**Seastar** — C++ фреймворк, созданный авторами ScyllaDB. Спроектирован под **современное железо** (многоядерные CPU, быстрые сетевые карты).
 
-**Principles:**
-- **Shared-nothing per-core**
-- **Asynchronous I/O** (no blocking)
-- **User-space networking** (DPDK option)
-- **Future/Promise** abstraction
+**Принципы:**
+- **Shared-nothing на каждое ядро**
+- **Асинхронный I/O** (без блокировок)
+- **Сеть в user-space** (опционально DPDK)
+- Абстракция **Future/Promise**
 
-Used не только для ScyllaDB — also Redis-like project, network apps.
+Используется не только в ScyllaDB — также в Redis-подобном проекте и сетевых приложениях.
 
 ## Q5. (!) Wide-column data model?
 
-**Same as Cassandra** (just performance differs).
+**Та же, что у Cassandra** (отличается только производительность).
 
 ```sql
 CREATE TABLE users (
@@ -163,12 +163,12 @@ CREATE TABLE users (
 ) WITH CLUSTERING ORDER BY (timestamp DESC);
 ```
 
-**Concepts:**
-- **Keyspace** = database/schema
-- **Table** = collection of rows
-- **Partition key** — determines node placement
-- **Clustering key** — sorting within partition
-- **Columns** — defined в schema
+**Понятия:**
+- **Keyspace** = база данных / схема
+- **Table** = набор строк
+- **Partition key** — определяет, на каком узле размещается строка
+- **Clustering key** — сортировка внутри партиции
+- **Columns** — задаются в схеме
 
 Подробнее — в [Apache Cassandra](cassandra-interview.md).
 
@@ -178,23 +178,23 @@ CREATE TABLE users (
 PRIMARY KEY ((partition_key), clustering_key1, clustering_key2)
 ```
 
-**Partition key** — hashed → which node owns row.
-**Clustering key** — orders rows within partition.
+**Partition key** — хешируется → определяет, какой узел владеет строкой.
+**Clustering key** — упорядочивает строки внутри партиции.
 
-**Composite partition key:**
+**Составной partition key:**
 ```sql
 PRIMARY KEY ((user_id, date), timestamp)
 -- partition by combination, ordered by timestamp
 ```
 
-**Best practices:**
-- High cardinality partition key (avoid hot partitions)
-- Partition size < 100 MB
-- Order clustering keys для query patterns
+**Лучшие практики:**
+- Partition key высокой кардинальности (чтобы избежать горячих партиций)
+- Размер партиции < 100 МБ
+- Упорядочивать clustering keys под паттерны запросов
 
 ## Q7. CQL (Cassandra Query Language)?
 
-**CQL** — SQL-like language для Cassandra/Scylla.
+**CQL** — SQL-подобный язык для Cassandra/Scylla.
 
 ```sql
 -- DDL
@@ -216,19 +216,19 @@ UPDATE users SET email = 'new@example.com' WHERE user_id = uuid_value;
 DELETE FROM users WHERE user_id = uuid_value;
 ```
 
-**Limitations vs SQL:**
-- **No JOINs** (denormalize данные)
-- **No aggregations across partitions** (limited)
-- **WHERE only on partition key + clustering key** (or secondary index)
-- **No subqueries**
+**Ограничения по сравнению с SQL:**
+- **Нет JOIN-ов** (данные денормализуют)
+- **Нет агрегаций между партициями** (ограниченно)
+- **WHERE только по partition key + clustering key** (или по вторичному индексу)
+- **Нет подзапросов**
 
-ScyllaDB extensions:
+Расширения ScyllaDB:
 - **CDC (Change Data Capture)**
 - **Materialized Views**
 
 ## Q8. (!) Shared-nothing distributed?
 
-**Shared-nothing** — каждый node independent, no shared state.
+**Shared-nothing** — каждый узел независим, общего состояния нет.
 
 ```
 Node 1: own data, own CPU, own memory, own disk
@@ -236,29 +236,29 @@ Node 2: same
 Node 3: same
 ```
 
-**Coordination via gossip protocol** (peer-to-peer). No master.
+**Координация через gossip-протокол** (peer-to-peer). Мастера нет.
 
-**Benefits:**
-- Linear scaling
-- No single point of failure
-- Easy add/remove nodes
+**Преимущества:**
+- Линейное масштабирование
+- Нет единой точки отказа
+- Легко добавлять/удалять узлы
 
-**Trade-off:** eventual consistency by default (tunable).
+**Компромисс:** по умолчанию eventual consistency (настраивается).
 
 ## Q9. Replication, consistency levels?
 
-**Replication factor (RF):** how many copies of data.
+**Replication factor (RF):** сколько копий данных хранится.
 ```sql
 CREATE KEYSPACE mykeyspace WITH replication = {'class': 'NetworkTopologyStrategy', 'dc1': 3, 'dc2': 3};
 ```
 
-**Consistency levels (per-query):**
-- `ANY` — at least one replica (включая hinted handoff)
-- `ONE`, `TWO`, `THREE` — N replicas
-- `QUORUM` — majority (N/2 + 1)
-- `ALL` — все replicas
-- `LOCAL_QUORUM` — quorum в local DC
-- `EACH_QUORUM` — quorum в каждом DC
+**Уровни согласованности (на каждый запрос):**
+- `ANY` — хотя бы одна реплика (включая hinted handoff)
+- `ONE`, `TWO`, `THREE` — N реплик
+- `QUORUM` — большинство (N/2 + 1)
+- `ALL` — все реплики
+- `LOCAL_QUORUM` — кворум в локальном DC
+- `EACH_QUORUM` — кворум в каждом DC
 
 ```sql
 SELECT * FROM users WHERE user_id = ? USING CONSISTENCY QUORUM;
@@ -266,31 +266,31 @@ SELECT * FROM users WHERE user_id = ? USING CONSISTENCY QUORUM;
 
 ## Q10. Tunable consistency (R + W > N)?
 
-**Strong consistency formula:**
+**Формула строгой согласованности:**
 ```
 R + W > N
 ```
-- R = read consistency level
-- W = write consistency level
+- R = уровень согласованности чтения
+- W = уровень согласованности записи
 - N = replication factor
 
-**Example:** RF=3
-- W=QUORUM (2) + R=QUORUM (2): 2+2 > 3 ✓ strong
-- W=ONE (1) + R=ONE (1): 1+1 < 3 ✗ eventual
+**Пример:** RF=3
+- W=QUORUM (2) + R=QUORUM (2): 2+2 > 3 — строгая согласованность
+- W=ONE (1) + R=ONE (1): 1+1 < 3 — eventual
 
-**Performance trade-off:**
-- Higher consistency → higher latency, lower availability
-- Lower consistency → faster, eventually consistent
+**Компромисс по производительности:**
+- Выше согласованность → выше задержка, ниже доступность
+- Ниже согласованность → быстрее, но согласованность eventual
 
-**Common choice:** `LOCAL_QUORUM` для both — balance.
+**Частый выбор:** `LOCAL_QUORUM` для обоих — баланс.
 
 ## Q11. Tokens, virtual nodes (vnodes)?
 
-**Token ring** — hash space (`-2^63` to `2^63-1`).
+**Token ring** — пространство хешей (от `-2^63` до `2^63-1`).
 
-Each row's partition key → hashed → token → mapped к node owning that token range.
+Partition key каждой строки → хешируется → токен → отображается на узел, владеющий этим диапазоном токенов.
 
-**vnodes** — каждая physical node owns multiple **virtual node** ranges.
+**vnodes** — каждый физический узел владеет несколькими диапазонами **виртуальных узлов** (virtual node).
 
 ```
 Without vnodes:
@@ -302,18 +302,18 @@ With 256 vnodes per node:
   Node 2: 256 random ranges
 ```
 
-**Benefits vnodes:**
-- **Better load balancing**
-- **Faster recovery** (parallel data transfer from many nodes)
-- **Easier scaling** (adding new node — pulls data from many)
+**Преимущества vnodes:**
+- **Лучшая балансировка нагрузки**
+- **Быстрее восстановление** (параллельная передача данных со многих узлов)
+- **Проще масштабирование** (новый узел подтягивает данные сразу с многих)
 
-ScyllaDB supports vnodes (also tokens).
+ScyllaDB поддерживает vnodes (а также обычные токены).
 
 ## Q12. (!) LSM-tree storage?
 
-**LSM-tree (Log-Structured Merge-tree)** — storage structure used by Cassandra/Scylla, RocksDB, ClickHouse, etc.
+**LSM-tree (Log-Structured Merge-tree)** — структура хранения, используемая в Cassandra/Scylla, RocksDB, ClickHouse и др.
 
-**Architecture:**
+**Архитектура:**
 ```
 Write → MemTable (in-memory sorted)
        ↓ flush when full
@@ -322,81 +322,81 @@ Write → MemTable (in-memory sorted)
        Larger SSTables
 ```
 
-**Benefits:**
-- **Fast writes** (sequential, batched)
-- **Fast reads if cached** в MemTable / Bloom filter
+**Преимущества:**
+- **Быстрые записи** (последовательные, батчами)
+- **Быстрые чтения при попадании в кэш** — MemTable / Bloom filter
 
-**Trade-off:**
-- **Read amplification** — need check several SSTables
-- **Compaction overhead** — background work
+**Компромисс:**
+- **Read amplification** — приходится проверять несколько SSTable
+- **Накладные расходы на compaction** — фоновая работа
 
-**Compaction strategies:**
-- **STCS (SizeTieredCompactionStrategy)** — default
-- **LCS (LeveledCompactionStrategy)** — better for read-heavy
-- **TWCS (TimeWindowCompactionStrategy)** — для time-series
+**Стратегии compaction:**
+- **STCS (SizeTieredCompactionStrategy)** — по умолчанию
+- **LCS (LeveledCompactionStrategy)** — лучше для read-heavy нагрузки
+- **TWCS (TimeWindowCompactionStrategy)** — для временных рядов
 
 ## Q13. (!) Why is Scylla faster than Cassandra?
 
-1. **C++ vs Java** — no JVM overhead, no GC pauses
-2. **Shard-per-core** — no lock contention
-3. **Seastar async I/O** — efficient I/O
-4. **Direct disk I/O** — bypasses kernel buffers (in some configs)
-5. **Better CPU utilization** — designed для modern multi-core
-6. **No GC pauses** — predictable p99 latency
-7. **Tighter memory management** — no Java heap overhead
-8. **Custom networking** (DPDK option) — bypass kernel TCP stack
+1. **C++ против Java** — нет накладных расходов JVM, нет пауз GC
+2. **Shard-per-core** — нет конкуренции за блокировки
+3. **Асинхронный I/O Seastar** — эффективный ввод-вывод
+4. **Прямой дисковый I/O** — обход буферов ядра (в части конфигураций)
+5. **Лучшая утилизация CPU** — спроектировано под современные многоядерные процессоры
+6. **Нет пауз GC** — предсказуемая задержка p99
+7. **Более плотное управление памятью** — нет накладных расходов на Java heap
+8. **Своя сетевая реализация** (опционально DPDK) — обход TCP-стека ядра
 
-**Result:** на same hardware, Scylla often 3-10x faster Cassandra.
+**Итог:** на том же железе Scylla часто в 3-10 раз быстрее Cassandra.
 
 ## Q14. No JVM = no GC pauses?
 
-**Cassandra GC pauses:**
-- Stop-the-world pauses (10-500 ms)
-- Spike в p99 latency
-- Hard tuning (G1GC, ZGC tweaks)
+**Паузы GC в Cassandra:**
+- Stop-the-world паузы (10-500 мс)
+- Всплески задержки p99
+- Сложный тюнинг (правка G1GC, ZGC)
 
 **Scylla:**
-- No GC (manual memory management в C++)
-- Predictable latency
-- p99 latency 5-10x lower
+- Нет GC (ручное управление памятью в C++)
+- Предсказуемая задержка
+- Задержка p99 в 5-10 раз ниже
 
-**Major reason** Discord, Comcast, и других **migrated** Cassandra → Scylla.
+**Главная причина**, по которой Discord, Comcast и другие **мигрировали** с Cassandra на Scylla.
 
 ## Q15. Workload prioritization?
 
-ScyllaDB Enterprise feature: **workload prioritization** — different workloads get different shares CPU/IO.
+Фича ScyllaDB Enterprise: **приоритизация нагрузок** — разные нагрузки получают разные доли CPU/IO.
 
 ```
 Critical OLTP queries: 80% resources
 Background analytics: 20% resources
 ```
 
-**Use case:** mixed workloads (OLTP + reporting) на одном cluster без impact.
+**Сценарий:** смешанные нагрузки (OLTP + отчётность) на одном кластере без взаимного влияния.
 
-В Cassandra нет native equivalent — обычно separate clusters.
+В Cassandra нет встроенного аналога — обычно поднимают отдельные кластеры.
 
 ## Q16. (!) Cassandra drop-in replacement — насколько true?
 
-ScyllaDB **highly compatible**:
-- Same CQL
-- Same wire protocol (Cassandra clients works)
-- Same data model
-- Same replication
-- Same consistency levels
+ScyllaDB **высоко совместима**:
+- Тот же CQL
+- Тот же wire-протокол (клиенты Cassandra работают)
+- Та же модель данных
+- Та же репликация
+- Те же уровни согласованности
 
-**Migrate apps без code changes** в большинстве случаев.
+**Миграция приложений без изменения кода** в большинстве случаев.
 
-**Diferences (not 100% drop-in):**
-- Some advanced Cassandra features missing (или differently implemented)
-- Operations / monitoring differs
-- Tuning parameters differ
-- Versions diverge over time
+**Отличия (не 100% drop-in):**
+- Часть продвинутых фич Cassandra отсутствует (или реализована иначе)
+- Отличаются эксплуатация и мониторинг
+- Отличаются параметры тюнинга
+- Версии со временем расходятся
 
-**Best practice:** test thoroughly. Use **Scylla Migration Tools**.
+**Лучшая практика:** тщательно тестировать. Использовать **Scylla Migration Tools**.
 
 ## Q17. (!) DynamoDB API (Alternator)?
 
-**Scylla Alternator** — DynamoDB API на ScyllaDB.
+**Scylla Alternator** — DynamoDB API поверх ScyllaDB.
 
 ```python
 # Standard boto3 DynamoDB client works
@@ -407,36 +407,36 @@ table.put_item(Item={'PK': 'user#123', 'name': 'Alice'})
 ```
 
 **Зачем:**
-- Self-hosted DynamoDB-compatible (no AWS lock-in)
-- Run DynamoDB workloads on-premise / multi-cloud
-- Cheaper than DynamoDB at scale
+- Self-hosted и DynamoDB-совместимо (нет vendor lock-in на AWS)
+- Запуск DynamoDB-нагрузок on-premise / multi-cloud
+- Дешевле DynamoDB на больших масштабах
 
-В **2025** — viable alternative для apps already designed для DynamoDB.
+В **2025 году** — жизнеспособная альтернатива для приложений, уже спроектированных под DynamoDB.
 
 ## Q18. (!) Когда выбрать Scylla?
 
 **Выбирай Scylla когда:**
-- Already running Cassandra, want better performance
-- **Predictable low latency** required (p99 < 10ms)
-- High throughput (10K+ writes/sec per node)
-- Cost-conscious (fewer nodes for same throughput)
-- Mixed workloads need isolation
-- IoT, time-series, ad-tech (typical Cassandra use cases)
+- Уже работаешь на Cassandra и хочешь больше производительности
+- Нужна **предсказуемо низкая задержка** (p99 < 10 мс)
+- Высокая пропускная способность (10K+ записей/сек на узел)
+- Важна экономия (меньше узлов на ту же пропускную способность)
+- Смешанным нагрузкам нужна изоляция
+- IoT, временные ряды, ad-tech (типичные сценарии Cassandra)
 
 **Не выбирай когда:**
-- Need full SQL (joins, aggregations, transactions)
-- Smaller scale (PostgreSQL достаточен)
-- Strong ACID needs
-- Team has no NoSQL experience
+- Нужен полноценный SQL (джойны, агрегации, транзакции)
+- Небольшой масштаб (хватает PostgreSQL)
+- Нужны строгие ACID-гарантии
+- У команды нет опыта с NoSQL
 
 ## Q19. Time-series workloads?
 
-**Time-series ideal для Scylla/Cassandra:**
-- Append-only
-- High write throughput
-- Time-windowed reads
+**Временные ряды идеальны для Scylla/Cassandra:**
+- Только добавление (append-only)
+- Высокая пропускная способность записи
+- Чтения по временным окнам
 
-**Schema:**
+**Схема:**
 ```sql
 CREATE TABLE sensor_data (
     sensor_id UUID,
@@ -448,71 +448,71 @@ CREATE TABLE sensor_data (
   AND compaction = {'class': 'TimeWindowCompactionStrategy', 'compaction_window_size': '1', 'compaction_window_unit': 'DAYS'};
 ```
 
-**TWCS** auto-compacts старые data efficiently. Old SSTables можно drop через TTL.
+**TWCS** эффективно автоматически уплотняет старые данные. Старые SSTable можно удалять через TTL.
 
 ## Q20. IoT?
 
-IoT = millions of devices sending data continuously.
+IoT = миллионы устройств, непрерывно отправляющих данные.
 
-**Scylla хорош:**
-- High write throughput (millions writes/sec per cluster)
-- Time-series storage
-- Geo-distributed (multi-DC)
-- Auto-expire с TTL
+**Scylla здесь хороша:**
+- Высокая пропускная способность записи (миллионы записей/сек на кластер)
+- Хранение временных рядов
+- Геораспределённость (multi-DC)
+- Автоматическое истечение по TTL
 
-**Adopters:** Comcast, Tubi, Discord, Numberly.
+**Кто использует:** Comcast, Tubi, Discord, Numberly.
 
 ## Q21. (!) Open Source vs Enterprise vs ScyllaDB Cloud?
 
-**Open Source (free):**
-- Apache 2.0 (very permissive)
-- Core features
+**Open Source (бесплатно):**
+- Лицензия Apache 2.0 (очень либеральная)
+- Базовые возможности
 - Self-managed
 
-**ScyllaDB Enterprise (paid):**
-- Workload prioritization
-- LDAP, encryption, compliance
-- Faster compaction strategies
-- 24/7 support
+**ScyllaDB Enterprise (платно):**
+- Приоритизация нагрузок
+- LDAP, шифрование, compliance
+- Более быстрые стратегии compaction
+- Поддержка 24/7
 
 **ScyllaDB Cloud (managed):**
-- Fully managed на AWS, GCP, Azure
+- Полностью управляемый сервис на AWS, GCP, Azure
 - Multi-region
-- Auto backups
-- Pay-as-you-go
+- Автоматические бэкапы
+- Оплата по факту (pay-as-you-go)
 
-В **2025** — Open Source отлично для most workloads. Enterprise для security/compliance heavy.
+В **2025 году** — Open Source отлично подходит для большинства нагрузок. Enterprise — там, где много требований к безопасности и compliance.
 
 ## Q22. (!) Migration Cassandra → Scylla?
 
-**Steps:**
-1. **Compatibility check** — same Cassandra version features?
-2. **Provision Scylla cluster** (parallel)
-3. **Dual-write** — application writes к both (или CDC stream)
-4. **Bulk-copy historical data** — Scylla Migrator (Spark-based) или sstableloader
-5. **Validate data parity**
-6. **Switch reads** к Scylla (one node at a time)
-7. **Stop dual-write**
-8. **Decommission Cassandra**
+**Шаги:**
+1. **Проверка совместимости** — совпадают ли возможности версии Cassandra?
+2. **Поднять кластер Scylla** (параллельно)
+3. **Dual-write** — приложение пишет в оба (или через CDC-поток)
+4. **Массовое копирование исторических данных** — Scylla Migrator (на базе Spark) или sstableloader
+5. **Проверить паритет данных**
+6. **Переключить чтения** на Scylla (по одному узлу за раз)
+7. **Остановить dual-write**
+8. **Вывести Cassandra из эксплуатации**
 
-**Зачастую** **transparent для app** — same CQL.
+**Зачастую** **прозрачно для приложения** — тот же CQL.
 
-**Tools:** Scylla Migrator, sstableloader, custom CDC.
+**Инструменты:** Scylla Migrator, sstableloader, собственный CDC.
 
 ## Q23. Какие частые проблемы Scylla в production?
 
-1. **Hot partitions** (same as Cassandra) — wrong PK choice
-2. **Tombstones** — high deletes overload reads
-3. **Compaction backlog** — write rate > compaction speed
-4. **Disk I/O bottleneck** — slow disks
-5. **Wrong consistency level** — too strong = slow, too weak = inconsistencies
-6. **Too few nodes** — scaling за reach
-7. **No backups** — Scylla Manager / snapshots needed
-8. **Not enough monitoring** — Scylla Monitoring stack obligatory
-9. **Schema migrations** — slow on large tables
-10. **Not understanding shard-per-core** — connection pool tuning critical
+1. **Горячие партиции** (как и в Cassandra) — неверный выбор PK
+2. **Tombstones** — обилие удалений перегружает чтения
+3. **Отставание compaction** — скорость записи > скорости compaction
+4. **Узкое место по дисковому I/O** — медленные диски
+5. **Неверный уровень согласованности** — слишком строгий = медленно, слишком слабый = несогласованности
+6. **Слишком мало узлов** — масштабирование за пределами доступного
+7. **Нет бэкапов** — нужны Scylla Manager / снапшоты
+8. **Недостаточный мониторинг** — стек Scylla Monitoring обязателен
+9. **Миграции схемы** — медленны на больших таблицах
+10. **Непонимание shard-per-core** — критичен тюнинг пула соединений
 
-**Best practice:** use **Scylla Manager** для backups, repairs, schema management.
+**Лучшая практика:** использовать **Scylla Manager** для бэкапов, repair-ов и управления схемой.
 
 ---
 

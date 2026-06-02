@@ -18,7 +18,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Mutation Testing`
 
-`Mutation testing` — техника оценки **качества тестов** (а не quality кода). Идея: модифицировать ("**mutate**") код, run tests, check **сколько mutations пойманы** (killed). Surviving mutants = слабые тесты. Главные tools: **PIT** (Java), **Stryker** (JS/TS/.NET/Scala), **mutmut** (Python). Дополняет (не заменяет) coverage.
+`Mutation testing` — техника оценки **качества тестов** (а не качества кода). Идея: модифицировать ("**mutate**") код, прогнать тесты и проверить, **сколько мутаций поймано** (killed). Выжившие мутанты (surviving mutants) = слабые тесты. Главные инструменты: **PIT** (Java), **Stryker** (JS/TS/.NET/Scala), **mutmut** (Python). Дополняет (но не заменяет) coverage.
 
 ## Полезные ссылки
 
@@ -69,25 +69,25 @@ updated: "2026-04-25"
 
 ## Q1. (!) Что такое mutation testing?
 
-**Mutation testing** — testing **the tests**.
+**Mutation testing** — это тестирование **самих тестов**.
 
-**Process:**
-1. **Mutate** code (small change): `if (x > 5)` → `if (x >= 5)`
-2. **Run tests** на mutated code
-3. If tests **fail** → mutant **killed** (good, tests caught it)
-4. If tests **pass** → mutant **survived** (bad, tests missed it)
+**Процесс:**
+1. **Мутируем** код (небольшое изменение): `if (x > 5)` → `if (x >= 5)`
+2. **Прогоняем тесты** на мутированном коде
+3. Если тесты **падают** → мутант **killed** (хорошо, тесты его поймали)
+4. Если тесты **проходят** → мутант **survived** (плохо, тесты его пропустили)
 
-**Mutation score (kill rate)** = killed / total mutants.
+**Mutation score (kill rate)** = killed / общее число мутантов.
 
-**Higher score** = better tests.
+**Чем выше score** — тем лучше тесты.
 
-**Idea:** **if your tests can't detect small code changes, they don't really test anything.**
+**Идея:** **если ваши тесты не замечают небольших изменений в коде, значит, они на самом деле ничего не проверяют.**
 
 ## Q2. (!) Зачем mutation testing если есть coverage?
 
-**Coverage:** what code lines executed by tests. **Doesn't measure quality.**
+**Coverage:** показывает, какие строки кода выполняются тестами. **Качество не измеряет.**
 
-**Example:**
+**Пример:**
 ```java
 // Coverage: 100%
 @Test
@@ -97,9 +97,9 @@ void test() {
 }
 ```
 
-Coverage хорошее, но если `calculate` returns wrong value — test passes!
+Coverage отличный, но если `calculate` вернёт неверное значение — тест всё равно пройдёт!
 
-**Mutation testing finds this:**
+**Mutation testing это ловит:**
 ```java
 // Mutant: change return value
 int calculate(int x) {
@@ -107,25 +107,25 @@ int calculate(int x) {
 }
 ```
 
-Test still passes (`assertNotNull(999)` true) → **survived mutant** → weak test.
+Тест по-прежнему проходит (`assertNotNull(999)` → true) → **survived mutant** → слабый тест.
 
-**Mutation = quality of assertions**, не just execution coverage.
+**Mutation = качество ассертов**, а не просто покрытие выполнением.
 
 ## Q3. Mutant, killed, survived, equivalent?
 
-**Mutant** — modified version code (по mutation operator).
+**Mutant** — изменённая версия кода (согласно mutation operator).
 
-**Killed** — at least one test fails on mutant. Good.
-**Survived** — все tests pass. Bad.
-**No coverage** — mutant в untested code (не executed).
-**Timeout** — mutant causes infinite loop.
-**Equivalent** — semantically same as original (cannot be killed). Annoying, see Q10.
+**Killed** — хотя бы один тест падает на мутанте. Хорошо.
+**Survived** — все тесты проходят. Плохо.
+**No coverage** — мутант в непокрытом коде (не выполняется).
+**Timeout** — мутант вызывает бесконечный цикл.
+**Equivalent** — семантически идентичен оригиналу (убить невозможно). Доставляет хлопоты, см. Q10.
 
 ## Q4. (!) Какие mutations типичные?
 
-**Common mutation operators:**
+**Типичные mutation operators:**
 
-| Operator | Original | Mutation |
+| Оператор | Оригинал | Мутация |
 |----------|----------|----------|
 | **Conditional Boundary** | `<` | `<=` |
 | **Conditional Boundary** | `>` | `>=` |
@@ -134,10 +134,10 @@ Test still passes (`assertNotNull(999)` true) → **survived mutant** → weak t
 | **Math** | `*` | `/` |
 | **Increment** | `++` | `--` |
 | **Boolean Return** | `return true` | `return false` |
-| **Void Method Call** | `methodCall();` | (removed) |
+| **Void Method Call** | `methodCall();` | (удалён) |
 | **Constant** | `42` | `0` или `1` |
 
-**Each line с operator** → multiple mutants generated.
+**Каждая строка с оператором** → порождает несколько мутантов.
 
 ## Q5. Conditional Boundary Mutator?
 
@@ -157,7 +157,7 @@ if (age == 18) {
 if (age != 18) {
 ```
 
-**Test:**
+**Тест:**
 ```java
 @Test
 void testAdult() {
@@ -167,7 +167,7 @@ void testAdult() {
 }
 ```
 
-**Boundary tests** (18, 17, 19) **kill** boundary mutants. Без них — survive.
+**Граничные тесты** (18, 17, 19) **убивают** boundary-мутантов. Без них — они выживают.
 
 ## Q6. Math Mutator?
 
@@ -181,7 +181,7 @@ int total = price - quantity;  // * → -
 int total = price / quantity;  // * → /
 ```
 
-**Test:**
+**Тест:**
 ```java
 @Test
 void testTotal() {
@@ -189,7 +189,7 @@ void testTotal() {
 }
 ```
 
-If test only `5*4=20` → `5+4=9` mutation **killed** (assertion fails).
+Если тест проверяет хотя бы `5*4=20` → мутация `5+4=9` будет **killed** (ассерт упадёт).
 
 ## Q7. Other mutators?
 
@@ -214,12 +214,12 @@ return true   →  return false
 return 0      →  return 1
 ```
 
-**Void Method Call (delete):**
+**Void Method Call (удаление вызова):**
 ```java
 log.info("Processing");  →  // removed
 ```
 
-**Each operator** generates множество mutants per line. **Total mutants** can be hundreds-thousands per project.
+**Каждый оператор** порождает множество мутантов на строку. **Общее число мутантов** в проекте может исчисляться сотнями и тысячами.
 
 ## Q8. (!) Mutation score (kill rate)?
 
@@ -227,28 +227,28 @@ log.info("Processing");  →  // removed
 Mutation Score = killed_mutants / (total_mutants - equivalent_mutants)
 ```
 
-**Higher = better tests.**
+**Чем выше — тем лучше тесты.**
 
-**Targets:**
-- **80%+ — excellent**
-- **60-80% — good**
-- **40-60% — okay**
-- **< 40% — weak tests**
+**Ориентиры:**
+- **80%+ — отлично**
+- **60-80% — хорошо**
+- **40-60% — приемлемо**
+- **< 40% — слабые тесты**
 
-**100% не реалистично** (equivalent mutants, timeouts).
+**100% нереалистично** (эквивалентные мутанты, таймауты).
 
-**Some teams aim 70-85%** в practice.
+**На практике многие команды целятся в 70-85%.**
 
 ## Q9. Surviving mutants — как анализировать?
 
-**Each survived mutant** = potential test gap.
+**Каждый выживший мутант** = потенциальный пробел в тестах.
 
-**Investigate:**
-1. **Real bug?** Add test → mutant killed
-2. **Equivalent mutant?** Skip (mark as such)
-3. **Acceptable?** Maybe boundary не critical
+**Разбираемся:**
+1. **Реальный баг?** Добавить тест → мутант killed
+2. **Эквивалентный мутант?** Пропустить (пометить как такой)
+3. **Допустимо?** Возможно, эта граница некритична
 
-**Tools generate report:**
+**Инструменты генерируют отчёт:**
 ```
 SurvivedMutant: line 42
   ConditionalBoundary
@@ -257,13 +257,13 @@ SurvivedMutant: line 42
   No test catches this
 ```
 
-**Action:** add boundary test для `MIN` (count == MIN should pass).
+**Действие:** добавить граничный тест для `MIN` (случай `count == MIN` должен проходить).
 
 ## Q10. Equivalent mutants?
 
-**Equivalent mutant** — semantically same as original. **Cannot be killed**.
+**Эквивалентный мутант** — семантически идентичен оригиналу. **Убить невозможно.**
 
-**Example:**
+**Пример:**
 ```java
 // Original
 int i = 0;
@@ -274,17 +274,17 @@ int i = 0;
 while (i <= 9) { i++; }  // SAME behavior!
 ```
 
-**Mutant survives**, но not because tests weak — because mutation didn't actually change behavior.
+**Мутант выживает**, но не потому, что тесты слабые — а потому, что мутация фактически не изменила поведение.
 
-**Hard to detect** automatically (research problem). Usually manual review.
+**Сложно обнаружить** автоматически (открытая исследовательская задача). Обычно — ручной разбор.
 
-**Tools** report all surviving mutants — must filter equivalent ones manually.
+**Инструменты** показывают всех выживших мутантов — эквивалентных приходится отфильтровывать вручную.
 
 ## Q11. (!) PIT для Java?
 
-**PIT (Pitest)** — most popular Java mutation testing tool.
+**PIT (Pitest)** — самый популярный инструмент mutation testing для Java.
 
-**Maven setup:**
+**Настройка Maven:**
 ```xml
 <plugin>
     <groupId>org.pitest</groupId>
@@ -297,17 +297,17 @@ while (i <= 9) { i++; }  // SAME behavior!
 mvn org.pitest:pitest-maven:mutationCoverage
 ```
 
-**Output:** HTML report shows:
-- Per-file mutation score
-- Surviving / killed mutants
-- Mutation type per surviving
+**Результат:** HTML-отчёт показывает:
+- mutation score по каждому файлу
+- выживших / убитых мутантов
+- тип мутации для каждого выжившего
 
-**Optimizations:**
-- **Incremental analysis** (only changed code)
-- **Junit5 support**
-- **Coverage-based** mutant selection (skip lines not covered)
+**Оптимизации:**
+- **Инкрементальный анализ** (только изменённый код)
+- **Поддержка JUnit5**
+- **Coverage-based** отбор мутантов (пропуск непокрытых строк)
 
-**Performance:** PIT с PITest 1.6+ has **fast mode** — orders of magnitude faster.
+**Производительность:** начиная с PITest 1.6+ есть **fast mode** — на порядки быстрее.
 
 ## Q12. (!) Stryker для JavaScript/TypeScript?
 
@@ -319,7 +319,7 @@ npx stryker init
 npx stryker run
 ```
 
-**Config (`stryker.conf.json`):**
+**Конфиг (`stryker.conf.json`):**
 ```json
 {
   "testRunner": "jest",
@@ -332,7 +332,7 @@ npx stryker run
 }
 ```
 
-**Stryker Dashboard** — track score над time.
+**Stryker Dashboard** — отслеживание score во времени.
 
 ## Q13. mutmut для Python?
 
@@ -342,110 +342,110 @@ mutmut run
 mutmut html  # report
 ```
 
-**Mutates Python code**, runs pytest.
+**Мутирует Python-код**, прогоняет pytest.
 
-**Slow** — Python тоже dynamic, mutation testing dynamic languages medленно.
+**Медленно** — Python динамический, а mutation testing динамических языков идёт медленно.
 
 ## Q14. Other tools (Mutil, Cosmic Ray)?
 
-- **Mutil** (Go) — Go mutation testing
-- **Cosmic Ray** (Python) — alternative mutmut
+- **Mutil** (Go) — mutation testing для Go
+- **Cosmic Ray** (Python) — альтернатива mutmut
 - **Infection** (PHP)
-- **Pitest** (Scala via plugin)
+- **Pitest** (Scala через плагин)
 
-**Adoption** varies. **PIT (Java) и Stryker (JS)** — most mature.
+**Распространённость** разная. **PIT (Java) и Stryker (JS)** — самые зрелые.
 
 ## Q15. (!) Mutation testing медленный — почему?
 
-**Process:** для каждого mutant — recompile (sometimes) + run all tests.
+**Процесс:** для каждого мутанта — перекомпиляция (иногда) + прогон всех тестов.
 
-**N mutants × test suite time = total time.**
+**N мутантов × время прогона набора тестов = общее время.**
 
-**Example:**
-- 1000 mutants
-- Tests run в 30 seconds
-- Total: 1000 × 30 = **8.3 hours** (naive)
+**Пример:**
+- 1000 мутантов
+- тесты идут 30 секунд
+- итого: 1000 × 30 = **8.3 часа** (наивный подход)
 
-**Optimizations bring это к minutes** для most projects.
+**Оптимизации сводят это к минутам** для большинства проектов.
 
 ## Q16. Optimization (incremental, in-process)?
 
-**Optimizations:**
+**Оптимизации:**
 
-1. **Coverage-based selection** — only mutate covered code
-2. **Per-mutant test selection** — only run tests covering mutated line
-3. **Incremental** — only re-run changed code (since last run)
-4. **In-process** — no JVM restart per mutant
-5. **Parallel** execution
-6. **Bytecode mutation** (Java) vs source (faster)
+1. **Coverage-based selection** — мутировать только покрытый код
+2. **Per-mutant test selection** — прогонять только тесты, покрывающие мутированную строку
+3. **Incremental** — перепрогонять только изменённый код (с прошлого запуска)
+4. **In-process** — без перезапуска JVM на каждого мутанта
+5. **Parallel** — параллельное выполнение
+6. **Мутация байт-кода** (Java) против исходников (быстрее)
 
-**Modern PIT:** for **incremental** runs — minutes для large codebases.
+**Современный PIT:** при **инкрементальных** прогонах — минуты даже на крупных кодовых базах.
 
 ## Q17. (!) Когда mutation testing worth it?
 
-**Worth it когда:**
-- **Critical code** (financial, safety-critical)
-- **Test quality concerns** (high coverage, but bugs slip through)
-- **Library / framework** code (used by many)
-- **TDD adoption** verification
+**Оправдано, когда:**
+- **Критичный код** (финансы, safety-critical)
+- **Есть сомнения в качестве тестов** (покрытие высокое, но баги всё равно проскакивают)
+- **Код библиотеки / фреймворка** (которым пользуются многие)
+- **Проверка внедрения TDD**
 
-**Less valuable:**
-- Prototypes (changing fast)
-- Glue code
-- Generated code
-- Simple data classes
+**Менее ценно:**
+- прототипы (быстро меняются)
+- связующий (glue) код
+- сгенерированный код
+- простые data-классы
 
-**Resources:** mutation testing requires CI time, engineering analysis.
+**Ресурсы:** mutation testing требует времени CI и инженерного разбора результатов.
 
 ## Q18. Какой score целевой?
 
-**No universal "right" score.** Depends на code criticality.
+**Универсального «правильного» score нет.** Зависит от критичности кода.
 
-**Guidance:**
-- **Critical paths:** 90%+
-- **Business logic:** 75-85%
-- **Average code:** 60-75%
-- **Trivial code:** N/A (doesn't need)
+**Ориентиры:**
+- **Критичные пути:** 90%+
+- **Бизнес-логика:** 75-85%
+- **Обычный код:** 60-75%
+- **Тривиальный код:** не нужен
 
-**Important:** **trend matters more than absolute number.** Score trending up = improving tests.
+**Важно:** **тренд важнее абсолютного числа.** Растущий score = тесты улучшаются.
 
 ## Q19. (!) Limitations и criticism?
 
-1. **Slow** даже с optimizations
-2. **Equivalent mutants** noise
-3. **False sense of quality** — high score не guarantee correctness
-4. **Hard to interpret** sometimes
-5. **Doesn't test integration** (just unit code paths)
-6. **Not a silver bullet** — complement other approaches
-7. **Cost-benefit** unclear для some teams
-8. **Maintenance burden** — analysis time
+1. **Медленно** даже с оптимизациями
+2. **Эквивалентные мутанты** — шум
+3. **Ложное ощущение качества** — высокий score не гарантирует корректность
+4. **Иногда сложно интерпретировать** результаты
+5. **Не проверяет интеграцию** (только unit-уровень путей кода)
+6. **Не серебряная пуля** — дополняет другие подходы
+7. **Соотношение цены и выгоды** для некоторых команд неочевидно
+8. **Накладные расходы на поддержку** — время на разбор
 
-**Use thoughtfully** — не replace human code review, exploratory testing, integration tests.
+**Применять вдумчиво** — это не замена человеческому code review, exploratory-тестированию и интеграционным тестам.
 
 ## Q20. CI/CD integration?
 
-**Run на pull requests** (incremental):
+**Запуск на pull request'ах** (инкрементально):
 ```bash
 # PIT incremental — only changed files
 mvn org.pitest:pitest-maven:mutationCoverage -DwithHistory
 ```
 
-**Threshold gates:**
+**Пороговые гейты (threshold gates):**
 ```
 If mutation score < 60% → fail build
 ```
 
-**Reports:**
-- Comment на PR (Stryker has GitHub action)
-- Post score к dashboard
-- Alert на drops
+**Отчётность:**
+- комментарий в PR (у Stryker есть GitHub Action)
+- публикация score в dashboard
+- алёрт при падениях
 
-**Best practice:**
-- **Full mutation testing** weekly / nightly
-- **Incremental** на PRs (fast)
-- **Track trend** over time
+**Хорошие практики:**
+- **Полный mutation testing** — еженедельно / по ночам
+- **Инкрементальный** — на PR (быстро)
+- **Отслеживать тренд** во времени
 
-В **2025** mutation testing — niche, но growing. Adopted by quality-conscious teams (Google, financial sector).
+В **2025** mutation testing — нишевая практика, но набирающая обороты. Применяется командами, серьёзно относящимися к качеству (Google, финансовый сектор).
 
 ---
 
