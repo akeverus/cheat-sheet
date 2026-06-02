@@ -98,6 +98,39 @@ public class MarkdownRenderService {
         return Jsoup.clean(html, "", HTML_SAFELIST, NO_PRETTY_PRINT);
     }
 
+    /**
+     * Конвертирует короткий markdown (текст варианта ответа, подпись) в ИНЛАЙН-HTML
+     * без блочной обёртки {@code <p>}. Нужно, чтобы {@code `code`}, {@code **bold**},
+     * {@code *em*} в тексте варианта рендерились как настоящие
+     * {@code <code>/<strong>/<em>}, а не как литералы с бэктиками/звёздочками — при
+     * этом не ломая инлайн-раскладку label (буква-бейдж + текст в одну строку).
+     *
+     * <p>Flexmark всегда оборачивает одиночный абзац в {@code <p>…</p>}; для вставки
+     * внутрь {@code <span>}/{@code <label>} этот блок лишний (даёт перенос и
+     * вертикальный отступ), поэтому единственный верхнеуровневый {@code <p>}
+     * разворачиваем. Несколько блоков (редкость для одной строки) оставляем как есть —
+     * лучше лишний отступ, чем потеря структуры.</p>
+     *
+     * @param markdown исходный markdown (обычно одна строка)
+     * @return инлайн-HTML, безопасный для th:utext / innerHTML
+     */
+    public String toInlineHtml(String markdown) {
+        if (markdown == null || markdown.isBlank()) {
+            return "";
+        }
+        Node document = PARSER.parse(markdown);
+        String html = HTML_RENDERER.render(document);
+        Document doc = Jsoup.parseBodyFragment(html);
+        doc.outputSettings(NO_PRETTY_PRINT);
+        if (doc.body().childrenSize() == 1 && "p".equals(doc.body().child(0).tagName())) {
+            doc.body().child(0).unwrap();
+        }
+        // trim: flexmark добавляет хвостовой \n после блока, а после unwrap он остаётся
+        // в body. Для инлайн-вставки в <span> краевой пробел не нужен (у текста варианта
+        // нет значимых ведущих/хвостовых пробелов).
+        return Jsoup.clean(doc.body().html(), "", HTML_SAFELIST, NO_PRETTY_PRINT).trim();
+    }
+
     /** Заменяет ```mermaid ... ``` блоки на <div class="mermaid"> для рендеринга mermaid.js. */
     private String preprocessMermaid(String markdown) {
         return MERMAID_BLOCK.matcher(markdown).replaceAll(

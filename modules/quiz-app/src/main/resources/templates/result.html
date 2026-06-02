@@ -54,8 +54,8 @@
                 <label th:each="opt : ${result.options}"
                        role="listitem"
                        th:classappend="${opt.id == result.correct.id} ? 'option-correct' : (opt.id == result.selected.id ? 'option-wrong' : 'option-other')"
-                       th:aria-label="${(opt.id == result.correct.id ? 'Правильный: ' : (opt.id == result.selected.id ? 'Ваш ответ: ' : '')) + opt.optionText}">
-                    <span th:text="${opt.optionText}">Вариант</span>
+                       th:aria-label="${(opt.id == result.correct.id ? 'Правильный: ' : (opt.id == result.selected.id ? 'Ваш ответ: ' : '')) + @markdownRenderService.toPlainText(opt.optionText)}">
+                    <span th:utext="${@markdownRenderService.toInlineHtml(opt.optionText)}">Вариант</span>
                     <span th:if="${opt.id == result.correct.id}" class="option-status-label option-status-correct">Правильный ответ</span>
                     <span th:if="${opt.id == result.selected.id and opt.id != result.correct.id}" class="option-status-label option-status-selected">Ваш выбор</span>
                     <div th:if="${opt.explanation != null}"

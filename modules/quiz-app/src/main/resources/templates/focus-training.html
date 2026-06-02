@@ -85,7 +85,7 @@
             <div class="options" id="interview-options" role="radiogroup" aria-label="Варианты ответа" aria-describedby="options-flow-hint">
                 <label th:each="opt, iterStat : ${current.options}"
                        th:data-option-id="${opt.id}"
-                       th:aria-label="${'Вариант ' + (iterStat.index + 1) + ': ' + opt.optionText}">
+                       th:aria-label="${'Вариант ' + (iterStat.index + 1) + ': ' + @markdownRenderService.toPlainText(opt.optionText)}">
                     <input type="radio"
                            name="optionId"
                            th:value="${opt.id}"
@@ -98,7 +98,7 @@
                          "A. текст"). Срезаем ведущий "X. " ТОЛЬКО в видимом span;
                          aria-label выше оставляем с буквой (CSS-бейдж декоративный и
                          скринридером не озвучивается). -->
-                    <span th:text="${opt.optionText != null ? opt.optionText.replaceFirst('^[A-Z][.] ', '') : ''}">Вариант</span>
+                    <span th:utext="${opt.optionText != null ? @markdownRenderService.toInlineHtml(opt.optionText.replaceFirst('^[A-Z][.] ', '')) : ''}">Вариант</span>
                 </label>
             </div>
             <div th:replace="~{fragments/training-actions :: training-actions(

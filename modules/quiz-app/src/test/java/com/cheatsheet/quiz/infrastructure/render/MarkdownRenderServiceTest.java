@@ -104,4 +104,49 @@ class MarkdownRenderServiceTest {
 
         assertThat(text).isEqualTo("bold it code link");
     }
+
+    @Test
+    void inlineHtmlRendersInlineCodeWithoutParagraphWrapper() {
+        // Регрессия: текст варианта рендерился th:text → пользователь видел литералы
+        // `HashMap` с бэктиками. toInlineHtml даёт <code>, и БЕЗ блочного <p>, чтобы
+        // не ломать инлайн-раскладку label (бейдж + текст в одну строку).
+        String html = service.toInlineHtml("Использовать `HashMap` для O(1)");
+
+        assertThat(html).contains("<code>HashMap</code>");
+        assertThat(html).doesNotContain("`");
+        assertThat(html).doesNotStartWith("<p>");
+        assertThat(html).doesNotContain("</p>");
+    }
+
+    @Test
+    void inlineHtmlRendersBoldAndItalicInline() {
+        String html = service.toInlineHtml("**важно** и *тонко*");
+
+        assertThat(html).contains("<strong>важно</strong>");
+        assertThat(html).contains("<em>тонко</em>");
+        assertThat(html).doesNotContain("<p>");
+    }
+
+    @Test
+    void inlineHtmlLeavesPlainTextUntouched() {
+        String html = service.toInlineHtml("Просто текст без разметки");
+
+        assertThat(html).isEqualTo("Просто текст без разметки");
+    }
+
+    @Test
+    void inlineHtmlStripsDangerousTags() {
+        String html = service.toInlineHtml("ok <script>alert(1)</script> `code`");
+
+        assertThat(html).doesNotContain("<script");
+        assertThat(html).doesNotContain("alert(1)");
+        assertThat(html).contains("<code>code</code>");
+    }
+
+    @Test
+    void inlineHtmlReturnsEmptyOnNullOrBlank() {
+        assertThat(service.toInlineHtml(null)).isEmpty();
+        assertThat(service.toInlineHtml("")).isEmpty();
+        assertThat(service.toInlineHtml("   ")).isEmpty();
+    }
 }
