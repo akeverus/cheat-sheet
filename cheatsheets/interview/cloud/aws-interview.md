@@ -19,7 +19,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `AWS`
 
-`AWS (Amazon Web Services)` — лидер cloud рынка (2025: ~32% доли). Сотни сервисов от compute (EC2) до AI (Bedrock, SageMaker). На интервью бэкендеру важно знать: core services (EC2, S3, RDS, IAM, VPC), managed databases, networking, CDN, мониторинг и **Well-Architected Framework** (5 pillars).
+`AWS (Amazon Web Services)` — лидер облачного рынка (2025: около 32% доли). Сотни сервисов: от вычислений (EC2) до AI (Bedrock, SageMaker). На собеседовании бэкендеру важно знать основные сервисы (EC2, S3, RDS, IAM, VPC), управляемые базы данных, сети, CDN, мониторинг и **Well-Architected Framework** (5 опор-pillars).
 
 ## Полезные ссылки
 
@@ -91,20 +91,20 @@ updated: "2026-04-25"
 
 ## Q1. (!) Что такое AWS и какие основные категории сервисов?
 
-`AWS` — облачная платформа от Amazon (с 2006). Лидер рынка ~32% доли (2025).
+`AWS` — облачная платформа от Amazon (с 2006). Лидер рынка с долей около 32% (2025).
 
 **Категории:**
-- **Compute** — EC2, Lambda, ECS, EKS, Fargate, Batch
-- **Storage** — S3, EBS, EFS, FSx, Glacier
-- **Databases** — RDS, Aurora, DynamoDB, ElastiCache, Redshift, Neptune
-- **Networking** — VPC, Route53, CloudFront, ELB, API Gateway
-- **Security** — IAM, KMS, Secrets Manager, WAF, Shield, GuardDuty
-- **Analytics** — Athena, EMR, Glue, Kinesis, MSK, QuickSight
+- **Compute** (вычисления) — EC2, Lambda, ECS, EKS, Fargate, Batch
+- **Storage** (хранилище) — S3, EBS, EFS, FSx, Glacier
+- **Databases** (базы данных) — RDS, Aurora, DynamoDB, ElastiCache, Redshift, Neptune
+- **Networking** (сети) — VPC, Route53, CloudFront, ELB, API Gateway
+- **Security** (безопасность) — IAM, KMS, Secrets Manager, WAF, Shield, GuardDuty
+- **Analytics** (аналитика) — Athena, EMR, Glue, Kinesis, MSK, QuickSight
 - **AI/ML** — SageMaker, Bedrock, Comprehend, Rekognition
-- **Developer Tools** — CodePipeline, CodeBuild, CodeDeploy
-- **Management** — CloudWatch, CloudFormation, CloudTrail, Config
+- **Developer Tools** (инструменты разработчика) — CodePipeline, CodeBuild, CodeDeploy
+- **Management** (управление) — CloudWatch, CloudFormation, CloudTrail, Config
 
-200+ сервисов. Большинству бэкендеров знакомо ~20.
+Более 200 сервисов. Большинству бэкендеров знакомо около 20.
 
 ## Q2. (!) Regions, Availability Zones, Edge Locations?
 
@@ -115,86 +115,86 @@ Region (us-east-1, eu-central-1)
   └── AZ c (data center)
 ```
 
-**Region** — географическая зона (Ohio, Frankfurt, Tokyo). 30+ regions globally в 2025.
+**Region** (регион) — географическая зона (Ohio, Frankfurt, Tokyo). На 2025 год — более 30 регионов по миру.
 
-**Availability Zone (AZ)** — physical data center в region (3+ per region). Изолированные (power, networking) → если один AZ упал, другие работают.
+**Availability Zone (AZ)** — физический дата-центр внутри региона (3 и более на регион). Изолированы по питанию и сети → если один AZ упал, остальные работают.
 
-**Edge Location** — точки CDN (CloudFront), 600+ globally. Для low latency пользователям.
+**Edge Location** — точки присутствия CDN (CloudFront), более 600 по миру. Дают низкую задержку для пользователей.
 
-**Best practice:** **Multi-AZ** для high availability (RDS Multi-AZ, EC2 across AZs).
+**Рекомендация:** **Multi-AZ** для высокой доступности (RDS Multi-AZ, EC2 в нескольких AZ).
 
 ## Q3. AWS pricing model?
 
-**Pay-as-you-go** для большинства services:
-- **EC2:** per-hour или per-second (Linux)
-- **S3:** per-GB stored + per-request + data transfer out
-- **Lambda:** per-invocation + per-GB-second compute
-- **RDS:** per-hour instance + storage + IOPS
+**Pay-as-you-go** (плати по факту использования) для большинства сервисов:
+- **EC2:** за час или за секунду (Linux)
+- **S3:** за хранимый GB + за запросы + за исходящий трафик
+- **Lambda:** за вызов + за GB-секунды вычислений
+- **RDS:** за час работы инстанса + хранилище + IOPS
 
-**Pricing modifiers:**
-- **Data transfer:** в region — обычно бесплатно, **между regions $$$**, **outbound к internet $$$**
-- **Reserved/Savings Plans** — discounts за commitment
-- **Spot** — до 90% discount (interruptible)
+**Что меняет стоимость:**
+- **Передача данных:** внутри региона — обычно бесплатно, **между регионами — дорого**, **исходящий трафик в интернет — дорого**
+- **Reserved/Savings Plans** — скидки за обязательство по объёму
+- **Spot** — скидка до 90% (инстанс могут прервать)
 
-**Free Tier:** 12 месяцев на новый аккаунт + always-free услуги (S3 5GB, Lambda 1M req/мес, etc.)
+**Free Tier:** 12 месяцев для нового аккаунта + всегда-бесплатные услуги (S3 5 GB, Lambda 1 млн запросов в месяц и т.д.)
 
-**Critical:** **data transfer out** — самая частая cause неприятных счетов.
+**Важно:** **исходящий трафик (data transfer out)** — самая частая причина неприятных счетов.
 
 ## Q4. (!) EC2 — instance types, families?
 
-**Instance families:**
+**Семейства инстансов:**
 
-| Family | Назначение | Examples |
+| Семейство | Назначение | Примеры |
 |--------|-----------|----------|
 | **T** (Burstable) | Веб-серверы, dev | t3.micro, t4g.medium |
-| **M** (General Purpose) | Balanced | m5.large, m7g.xlarge |
-| **C** (Compute-optimized) | Compute-heavy | c5.2xlarge, c7g |
-| **R** (Memory-optimized) | In-memory caches, DBs | r5.4xlarge, r7g |
-| **X** (Memory-extreme) | Big in-memory DBs | x1.32xlarge |
+| **M** (General Purpose) | Сбалансированные | m5.large, m7g.xlarge |
+| **C** (Compute-optimized) | Нагрузка на CPU | c5.2xlarge, c7g |
+| **R** (Memory-optimized) | Кеши в памяти, БД | r5.4xlarge, r7g |
+| **X** (Memory-extreme) | Большие БД в памяти | x1.32xlarge |
 | **I** (Storage-optimized) | NVMe SSD | i3en.large |
-| **G, P** (GPU) | ML, graphics | g5.xlarge, p4d |
+| **G, P** (GPU) | ML, графика | g5.xlarge, p4d |
 | **Inf, Trn** | AI inference/training | inf2, trn1 |
 
-**Naming:** `c7g.xlarge` = C-family, gen 7, **G**raviton (ARM), xlarge size.
+**Расшифровка имени:** `c7g.xlarge` = семейство C, поколение 7, **G**raviton (ARM), размер xlarge.
 
-**Graviton (ARM)** — обычно 20% дешевле + лучше perf/$. Default 2025.
+**Graviton (ARM)** — обычно на 20% дешевле и лучше по соотношению производительность/цена. Выбор по умолчанию в 2025.
 
 ## Q5. (!) Reserved Instances, Spot Instances, Savings Plans?
 
-| Тип | Discount | Commitment | Use case |
+| Тип | Скидка | Обязательство | Когда применять |
 |-----|----------|------------|----------|
-| **On-Demand** | 0% | Нет | Dev, unpredictable |
-| **Spot** | up to 90% | Может быть прерван | Batch, fault-tolerant |
-| **Reserved Instances (RI)** | up to 72% | 1-3 года | Predictable workloads |
-| **Savings Plans** | up to 72% | 1-3 года, $/hr commitment | Гибче чем RI |
+| **On-Demand** | 0% | Нет | Dev, непредсказуемая нагрузка |
+| **Spot** | до 90% | Могут прервать | Batch, отказоустойчивые задачи |
+| **Reserved Instances (RI)** | до 72% | 1–3 года | Предсказуемая нагрузка |
+| **Savings Plans** | до 72% | 1–3 года, обязательство в $/час | Гибче чем RI |
 
-**Savings Plans** flexible — applicable к разным instance types в region.
+**Savings Plans** гибкие — применяются к разным типам инстансов в пределах региона.
 
-**Spot Instances** для:
-- ML training
-- Batch processing
-- CI/CD jobs
-- Stateless web servers (с auto-scaling)
+**Spot Instances** подходят для:
+- обучения ML-моделей
+- пакетной (batch) обработки
+- CI/CD-задач
+- stateless веб-серверов (с auto-scaling)
 
-**Не для:** databases, stateful long-running services.
+**Не подходят для:** баз данных и stateful-сервисов с длительным временем жизни.
 
 ## Q6. AMI, EBS, instance store?
 
-**AMI (Amazon Machine Image)** — template для EC2 instances. Содержит OS, software, configs.
+**AMI (Amazon Machine Image)** — шаблон для EC2-инстансов. Содержит ОС, ПО и конфигурации.
 
-**EBS (Elastic Block Store)** — persistent block storage attached к EC2. Сохраняется при stop/start.
+**EBS (Elastic Block Store)** — постоянное блочное хранилище, подключаемое к EC2. Данные сохраняются при stop/start.
 
-**Instance store** — local NVMe SSD на физическом host. **Теряется** при stop. Очень быстрый, для temp data.
+**Instance store** — локальный NVMe SSD на физическом хосте. **Теряется** при остановке. Очень быстрый, для временных данных.
 
-**EBS volume types:**
-- **gp3** (default 2025) — General Purpose SSD, balanced
-- **io2** — Provisioned IOPS, для DBs
-- **st1** — HDD throughput-optimized
-- **sc1** — HDD cold
+**Типы EBS-томов:**
+- **gp3** (по умолчанию в 2025) — General Purpose SSD, сбалансированный
+- **io2** — Provisioned IOPS, для БД
+- **st1** — HDD, оптимизирован под throughput
+- **sc1** — HDD, холодные данные
 
 ## Q7. (!) Auto Scaling Groups?
 
-**ASG** — автоматическое масштабирование EC2 instances based on metrics.
+**ASG** — автоматическое масштабирование EC2-инстансов на основе метрик.
 
 ```
 Min: 2, Max: 10, Desired: 4
@@ -203,84 +203,84 @@ Metric: CPU > 70% → scale up (+1)
 Metric: CPU < 30% → scale down (-1)
 ```
 
-**Scaling policies:**
-- **Target tracking** (recommended) — поддерживай target metric (e.g., 50% CPU)
-- **Step scaling** — discrete steps based on alarms
-- **Scheduled** — известные patterns (бизнес-часы)
-- **Predictive** — ML predicts traffic
+**Политики масштабирования:**
+- **Target tracking** (рекомендуется) — удерживай целевую метрику (например, 50% CPU)
+- **Step scaling** — дискретные шаги по срабатыванию alarm'ов
+- **Scheduled** — известные паттерны (бизнес-часы)
+- **Predictive** — ML прогнозирует трафик
 
-**ASG за load balancer (ALB)** — auto-scale + traffic distribution.
+**ASG за load balancer'ом (ALB)** — автомасштабирование + распределение трафика.
 
 ## Q8. Lambda — кратко (deep dive в отдельном файле)?
 
-**AWS Lambda** — serverless compute. Запускает код в response на events:
+**AWS Lambda** — serverless-вычисления. Запускает код в ответ на события:
 - HTTP (API Gateway)
-- S3 events
+- события S3
 - DynamoDB streams
-- SQS messages
-- Scheduled (CloudWatch Events)
+- сообщения SQS
+- по расписанию (CloudWatch Events)
 
 ```python
 def handler(event, context):
     return {"statusCode": 200, "body": "Hello"}
 ```
 
-**Pricing:** per-invocation + per-ms × memory.
+**Тарификация:** за вызов + за миллисекунды × объём памяти.
 
 Подробнее — в [AWS Lambda](aws-lambda-interview.md).
 
 ## Q9. (!) S3 — основные понятия?
 
-**S3 (Simple Storage Service)** — object storage. Стандарт de facto для cloud storage.
+**S3 (Simple Storage Service)** — объектное хранилище. De facto стандарт облачного хранилища.
 
-**Concepts:**
-- **Bucket** — namespace для objects (globally unique name)
-- **Object** — file (любого размера до 5 TB)
-- **Key** — path/name внутри bucket
-- **Region** — bucket creates в конкретном region
+**Понятия:**
+- **Bucket** — пространство имён для объектов (имя уникально глобально)
+- **Object** — файл (любого размера до 5 TB)
+- **Key** — путь/имя внутри bucket
+- **Region** — bucket создаётся в конкретном регионе
 
 ```
 s3://my-bucket/path/to/file.json
    bucket    key
 ```
 
-**Properties:**
-- **11 nines durability** (99.999999999%)
-- **99.99% availability**
-- Strong consistency (с 2020)
-- Versioning support
-- Encryption at rest и in transit
+**Свойства:**
+- **11 девяток надёжности** (durability 99.999999999%)
+- **99.99% доступности**
+- строгая консистентность (с 2020)
+- поддержка версионирования
+- шифрование данных при хранении (at rest) и при передаче (in transit)
 
 ## Q10. (!) S3 storage classes?
 
-| Class | Latency | Cost (per GB/month) | Use case |
+| Класс | Задержка | Стоимость (за GB/мес) | Когда применять |
 |-------|---------|---------------------|----------|
-| **Standard** | ms | $0.023 | Hot data |
-| **Intelligent-Tiering** | ms | Auto-tier | Unknown access patterns |
-| **Standard-IA** (Infrequent Access) | ms | $0.0125 | Backups |
-| **One Zone-IA** | ms | $0.01 | Re-creatable data |
-| **Glacier Instant Retrieval** | ms | $0.004 | Archive с быстрым retrieval |
-| **Glacier Flexible** | min-hours | $0.0036 | Archive |
-| **Glacier Deep Archive** | 12h | $0.00099 | Compliance |
+| **Standard** | мс | $0.023 | Горячие данные |
+| **Intelligent-Tiering** | мс | Авто-тиринг | Неизвестные паттерны доступа |
+| **Standard-IA** (Infrequent Access) | мс | $0.0125 | Бэкапы |
+| **One Zone-IA** | мс | $0.01 | Восстановимые данные |
+| **Glacier Instant Retrieval** | мс | $0.004 | Архив с быстрым доступом |
+| **Glacier Flexible** | минуты–часы | $0.0036 | Архив |
+| **Glacier Deep Archive** | 12 ч | $0.00099 | Compliance |
 
-**Lifecycle policies:** auto-transition между classes (e.g., после 30 дней → IA, 90 → Glacier).
+**Lifecycle policies:** автоматический переход между классами (например, через 30 дней → IA, через 90 → Glacier).
 
-**Cost difference:** 23x между Standard и Deep Archive. Optimization очень важна.
+**Разница в цене:** 23-кратная между Standard и Deep Archive. Оптимизация очень важна.
 
 ## Q11. EBS vs EFS vs S3?
 
-| Storage | Тип | Mount | Use case |
+| Хранилище | Тип | Монтирование | Когда применять |
 |---------|-----|-------|----------|
-| **EBS** | Block storage | Один EC2 (но multi-attach есть) | Databases, OS root |
-| **EFS** | NFS file system | Множество EC2 | Shared filesystem |
-| **S3** | Object storage | Через API, не mounted | Files, backups, web assets |
-| **FSx** | Specialized FS | Multiple types | Lustre (HPC), Windows, ZFS |
+| **EBS** | Блочное хранилище | Один EC2 (но есть multi-attach) | Базы данных, корень ОС |
+| **EFS** | NFS-файловая система | Множество EC2 | Общая файловая система |
+| **S3** | Объектное хранилище | Через API, не монтируется | Файлы, бэкапы, веб-ассеты |
+| **FSx** | Специализированная ФС | Несколько вариантов | Lustre (HPC), Windows, ZFS |
 
-**По размеру:** EBS limit 64 TiB per volume; EFS, S3 — petascale.
+**По размеру:** лимит EBS — 64 TiB на том; EFS и S3 — петабайтный масштаб.
 
 ## Q12. S3 versioning, lifecycle policies?
 
-**Versioning** — каждое изменение → новая версия.
+**Versioning** (версионирование) — каждое изменение создаёт новую версию.
 
 ```
 my-file.json (v1)
@@ -289,9 +289,9 @@ my-file.json (v3, current)
 ```
 
 **Применение:**
-- Защита от accidental deletes
-- Compliance (audit history)
-- Recovery from ransomware
+- защита от случайных удалений
+- compliance (история для аудита)
+- восстановление после ransomware
 
 **Lifecycle policies:**
 ```json
@@ -312,100 +312,100 @@ my-file.json (v3, current)
 
 ## Q13. (!) RDS — какие движки, особенности?
 
-**RDS (Relational Database Service)** — managed реляционные БД.
+**RDS (Relational Database Service)** — управляемые (managed) реляционные БД.
 
-**Engines:**
+**Движки:**
 - PostgreSQL
 - MySQL
 - MariaDB
 - Oracle
 - SQL Server
-- **Aurora** (PostgreSQL/MySQL compatible, AWS-native)
+- **Aurora** (совместима с PostgreSQL/MySQL, AWS-native)
 
-**Managed features:**
-- Automated backups
-- Point-in-time recovery
-- Multi-AZ replication (high availability)
-- Read replicas (scale reads)
-- Patching, upgrades
+**Что берёт на себя managed-сервис:**
+- автоматические бэкапы
+- восстановление на момент времени (point-in-time recovery)
+- Multi-AZ репликация (высокая доступность)
+- read-реплики (масштабирование чтения)
+- патчинг, обновления
 
-**Не managed:** schema design, queries, indexes — твоя ответственность.
+**Что не входит в managed:** проектирование схемы, запросы, индексы — это твоя зона ответственности.
 
 ## Q14. (!) Aurora vs RDS PostgreSQL/MySQL?
 
-**Aurora** — proprietary AWS engine, **PostgreSQL/MySQL compatible**.
+**Aurora** — проприетарный движок AWS, **совместимый с PostgreSQL/MySQL**.
 
 | Критерий | RDS PostgreSQL | Aurora PostgreSQL |
 |----------|----------------|-------------------|
-| Performance | Standard | **3-5x faster** |
-| Storage | EBS attached | Distributed (cluster volume) |
-| Replicas | Up to 5 | Up to 15 (async, low lag) |
-| Failover | Manual or 1-2 min | Automatic, < 30 sec |
-| Scaling storage | Manual | Auto (10GB → 128TB) |
-| Cost | Cheaper | ~20% more expensive |
-| Compatibility | Full PG | 99% PG (some extensions missing) |
+| Производительность | Обычная | **в 3–5 раз быстрее** |
+| Хранилище | Подключённый EBS | Распределённое (cluster volume) |
+| Реплики | До 5 | До 15 (async, малое отставание) |
+| Failover | Вручную или 1–2 мин | Автоматический, < 30 сек |
+| Масштабирование хранилища | Вручную | Авто (10 GB → 128 TB) |
+| Стоимость | Дешевле | Примерно на 20% дороже |
+| Совместимость | Полный PG | 99% PG (часть расширений недоступна) |
 
-**Aurora Serverless v2** — auto-scaling до zero (для intermittent workloads).
+**Aurora Serverless v2** — автомасштабирование вплоть до нуля (для нерегулярной, прерывистой нагрузки).
 
-В **2025** — Aurora **default** для новых RDS workloads.
+В **2025** Aurora — **выбор по умолчанию** для новых RDS-нагрузок.
 
 ## Q15. (!) DynamoDB — что особенного?
 
-**DynamoDB** — managed NoSQL, key-value + document store.
+**DynamoDB** — управляемая NoSQL: key-value + документное хранилище.
 
 **Особенности:**
-- **Single-digit ms** latency
-- **Auto-scaling** или provisioned capacity
-- **Global Tables** — multi-region replication
-- **Streams** — change data capture
-- **DAX** — in-memory cache (microseconds)
-- **Strong consistency** option
-- **TTL** — auto-delete expired items
-- Schemaless (но primary key обязателен)
+- задержка в **единицы миллисекунд** (single-digit ms)
+- **auto-scaling** или provisioned-ёмкость
+- **Global Tables** — мультирегиональная репликация
+- **Streams** — захват изменений (change data capture)
+- **DAX** — кеш в памяти (микросекунды)
+- опция **строгой консистентности**
+- **TTL** — автоудаление просроченных элементов
+- без схемы (schemaless), но primary key обязателен
 
-**Pricing:**
-- **On-demand** — per-request (для unpredictable)
-- **Provisioned** — pre-allocated RCU/WCU (cheaper для steady)
+**Тарификация:**
+- **On-demand** — за запрос (для непредсказуемой нагрузки)
+- **Provisioned** — заранее выделенные RCU/WCU (дешевле при стабильной нагрузке)
 
-**Best practices:**
-- Design **partition key** carefully (avoid hot partitions)
-- Use **GSI** (Global Secondary Indexes) для queries по non-PK
-- **Single-table design** для related data (вместо multiple tables)
+**Лучшие практики:**
+- тщательно проектируй **partition key** (избегай hot-партиций)
+- используй **GSI** (Global Secondary Indexes) для запросов по полям, не входящим в PK
+- применяй **single-table design** для связанных данных (вместо множества таблиц)
 
 ## Q16. ElastiCache (Redis, Memcached)?
 
-**ElastiCache** — managed Redis или Memcached.
+**ElastiCache** — управляемый Redis или Memcached.
 
-**Redis features:**
-- Persistence (RDB, AOF)
-- Replication, cluster mode
+**Возможности Redis:**
+- персистентность (RDB, AOF)
+- репликация, cluster mode
 - Pub/Sub, streams
-- Lua scripting
+- скриптинг на Lua
 - TTL
 
 **Memcached:**
-- Simpler key-value
-- Multi-threaded
-- Нет persistence
+- более простой key-value
+- многопоточный
+- нет персистентности
 
-**В 2025** — почти всегда **Redis** (более features). Memcached — для simple caching где нужен max throughput.
+**В 2025** — почти всегда **Redis** (больше возможностей). Memcached — для простого кеширования, где нужен максимальный throughput.
 
-**ElastiCache for Redis OSS** vs **MemoryDB** (durable Redis-compatible) — для разных use cases.
+**ElastiCache for Redis OSS** против **MemoryDB** (надёжный, durable Redis-совместимый) — под разные сценарии.
 
 ## Q17. Other DBs (DocumentDB, Neptune, Timestream)?
 
-**DocumentDB** — MongoDB-compatible (но не такой же).
-**Neptune** — graph database (Gremlin, SPARQL).
-**Timestream** — time-series.
-**Keyspaces** — Cassandra-compatible.
-**OpenSearch** — fork Elasticsearch.
-**Redshift** — data warehouse (см. [Data Warehousing](../data-engineering/data-warehousing-interview.md)).
+**DocumentDB** — совместима с MongoDB (но не идентична ему).
+**Neptune** — графовая БД (Gremlin, SPARQL).
+**Timestream** — БД для временных рядов (time-series).
+**Keyspaces** — совместима с Cassandra.
+**OpenSearch** — форк Elasticsearch.
+**Redshift** — хранилище данных (data warehouse) — см. [Data Warehousing](../data-engineering/data-warehousing-interview.md).
 
-В **2025** — выбор сильно зависит от use case. Для большинства — **Aurora** или **DynamoDB**.
+В **2025** выбор сильно зависит от сценария. Для большинства задач — **Aurora** или **DynamoDB**.
 
 ## Q18. (!) VPC, subnets, route tables?
 
-**VPC (Virtual Private Cloud)** — isolated network в AWS region.
+**VPC (Virtual Private Cloud)** — изолированная сеть в регионе AWS.
 
 ```
 VPC (10.0.0.0/16)
@@ -417,87 +417,87 @@ VPC (10.0.0.0/16)
     └── No internet access
 ```
 
-**Components:**
-- **Subnets** — IP ranges в AZ. Public (с IGW) / private (без) / isolated.
-- **Route tables** — куда направлять traffic
-- **Internet Gateway** — для public subnets
-- **NAT Gateway** — outbound internet для private subnets
-- **Security Groups, NACLs** — firewall rules
+**Компоненты:**
+- **Subnets** (подсети) — диапазоны IP в пределах AZ. Public (с IGW) / private (без) / isolated.
+- **Route tables** — куда направлять трафик
+- **Internet Gateway** — для public-подсетей
+- **NAT Gateway** — исходящий доступ в интернет для private-подсетей
+- **Security Groups, NACLs** — правила firewall
 
-**Best practice:** multi-AZ subnets, public ↔ private separation.
+**Рекомендация:** подсети в нескольких AZ, разделение public ↔ private.
 
 ## Q19. (!) Security Groups vs NACLs?
 
-| Critterion | Security Groups | NACLs |
+| Критерий | Security Groups | NACLs |
 |-----------|----------------|-------|
-| Level | Instance level | Subnet level |
-| Stateful | **Yes** | No |
-| Rules | Allow only | Allow + Deny |
-| Default | Deny all inbound, allow outbound | Allow all |
-| Order | All evaluated | Numbered, first match |
+| Уровень | Уровень инстанса | Уровень подсети |
+| Stateful | **Да** | Нет |
+| Правила | Только Allow | Allow + Deny |
+| По умолчанию | Запрет всего входящего, разрешён исходящий | Разрешено всё |
+| Порядок | Оцениваются все | Пронумерованы, по первому совпадению |
 
-**Security Groups (recommended):**
-- "Allow port 80 from anywhere"
-- "Allow port 5432 from app SG only"
+**Security Groups (рекомендуется):**
+- «разрешить порт 80 откуда угодно»
+- «разрешить порт 5432 только из SG приложения»
 
-**NACLs:** для blocking specific IPs/ranges (например, blacklist).
+**NACLs:** для блокировки конкретных IP/диапазонов (например, чёрный список).
 
-В большинстве случаев — только **Security Groups**. NACLs для специальных cases.
+В большинстве случаев — только **Security Groups**. NACLs — для особых случаев.
 
 ## Q20. ALB, NLB, CLB?
 
-| LB | Layer | Use case |
+| LB | Уровень | Когда применять |
 |----|-------|----------|
-| **ALB (Application LB)** | Layer 7 (HTTP) | Web apps, microservices |
-| **NLB (Network LB)** | Layer 4 (TCP/UDP) | High throughput, static IPs, gaming |
-| **GWLB (Gateway LB)** | Layer 3 | Traffic to firewalls/inspection |
-| **CLB (Classic LB)** | Layer 4/7 | **Legacy** (avoid) |
+| **ALB (Application LB)** | Layer 7 (HTTP) | Веб-приложения, микросервисы |
+| **NLB (Network LB)** | Layer 4 (TCP/UDP) | Высокий throughput, статические IP, игры |
+| **GWLB (Gateway LB)** | Layer 3 | Трафик к firewall'ам/системам инспекции |
+| **CLB (Classic LB)** | Layer 4/7 | **Legacy** (избегать) |
 
-**ALB features:**
-- Path-based routing (`/api/*` → service A, `/static/*` → service B)
-- Host-based routing
-- Authentication (Cognito, OIDC)
-- WAF integration
-- SSL termination
+**Возможности ALB:**
+- маршрутизация по пути (`/api/*` → сервис A, `/static/*` → сервис B)
+- маршрутизация по хосту
+- аутентификация (Cognito, OIDC)
+- интеграция с WAF
+- терминация SSL
 
-**ALB** — default для most web apps.
+**ALB** — выбор по умолчанию для большинства веб-приложений.
 
 ## Q21. CloudFront CDN?
 
-**CloudFront** — global CDN от AWS (600+ edge locations).
+**CloudFront** — глобальный CDN от AWS (более 600 edge locations).
 
-**Use cases:**
-- Static assets (HTML, CSS, JS, images)
-- Video streaming
-- Dynamic content acceleration (с origin shield)
-- API caching
+**Сценарии использования:**
+- статические ассеты (HTML, CSS, JS, картинки)
+- стриминг видео
+- ускорение динамического контента (с origin shield)
+- кеширование API
 
 ```
 Client → CloudFront edge (cached) → S3 / ALB / Lambda@Edge / EC2
 ```
 
-**Features:**
-- **Lambda@Edge** — execute code at edge (auth, redirects)
-- **Origin failover** — multi-origin redundancy
-- **Signed URLs/cookies** — restricted content
-- **WAF integration** — DDoS, OWASP protection
+**Возможности:**
+- **Lambda@Edge** — выполнение кода на edge (auth, редиректы)
+- **Origin failover** — резервирование нескольких origin'ов
+- **Signed URLs/cookies** — контент с ограниченным доступом
+- **интеграция с WAF** — защита от DDoS и угроз OWASP
 
-**Cost:** обычно дешевле чем serving из S3 directly (нет outbound transfer charges).
+**Стоимость:** обычно дешевле, чем отдавать напрямую из S3 (нет платы за исходящий трафик).
 
 ## Q22. Route53?
 
-**Route53** — managed DNS service.
+**Route53** — управляемый DNS-сервис.
 
-**Routing policies:**
-- **Simple** — one IP/value
-- **Weighted** — A/B testing (% traffic к разным targets)
-- **Latency-based** — closest region
-- **Geolocation** — based on user country
+**Политики маршрутизации:**
+- **Simple** — один IP/значение
+- **Weighted** — A/B-тестирование (% трафика на разные цели)
+- **Latency-based** — ближайший по задержке регион
+- **Geolocation** — по стране пользователя
 - **Failover** — primary/secondary
 - **Multivalue answer** — round-robin
-- **Geoproximity** — distance-based
+- **Geoproximity** — по расстоянию
 
-**Health checks** — auto-failover при недоступности.
+**Health checks** — автоматический failover при недоступности.
 
 ```
 yourdomain.com → ALB (us-east-1)
@@ -508,31 +508,31 @@ yourdomain.com → ALB (us-east-1)
 ## Q23. (!) NAT Gateway, Internet Gateway?
 
 **Internet Gateway (IGW):**
-- Attached к VPC
-- Двунаправленная связь VPC ↔ internet
-- Для **public subnets**
+- подключается к VPC
+- двунаправленная связь VPC ↔ интернет
+- для **public-подсетей**
 
 **NAT Gateway:**
-- В public subnet
-- Позволяет **outbound** internet к private instances
-- **Не позволяет** inbound (private остаётся private)
+- располагается в public-подсети
+- даёт **исходящий** (outbound) доступ в интернет для private-инстансов
+- **не пропускает** входящий трафик (private остаётся приватным)
 
 ```
 Public subnet:  EC2 ←→ IGW ←→ Internet
 Private subnet: EC2 → NAT Gateway → IGW → Internet (outbound only)
 ```
 
-**Cost:** NAT Gateway **дорогой** ($0.045/hour + $0.045/GB processed). Surprise в bill.
+**Стоимость:** NAT Gateway **дорогой** ($0.045/час + $0.045 за обработанный GB). Частый сюрприз в счёте.
 
 ## Q24. (!) IAM — Users, Roles, Policies?
 
 **IAM (Identity and Access Management)** — управление доступом.
 
-**Concepts:**
-- **User** — человек или service (с access keys)
-- **Group** — collection of users
-- **Role** — assumable identity (для services, federated, cross-account)
-- **Policy** — JSON document с permissions
+**Понятия:**
+- **User** — человек или сервис (с access keys)
+- **Group** — набор пользователей
+- **Role** — роль, которую можно принять (assume) — для сервисов, federated-доступа, cross-account
+- **Policy** — JSON-документ с правами (permissions)
 
 ```json
 {
@@ -545,14 +545,14 @@ Private subnet: EC2 → NAT Gateway → IGW → Internet (outbound only)
 }
 ```
 
-**Policy types:**
-- **Identity-based** — attached к user/role
-- **Resource-based** — attached к resource (S3 bucket policy)
-- **Permission boundaries** — max permissions
+**Типы политик:**
+- **Identity-based** — привязаны к пользователю/роли
+- **Resource-based** — привязаны к ресурсу (например, S3 bucket policy)
+- **Permission boundaries** — максимально допустимый набор прав
 
 ## Q25. (!) IAM роли для EC2/Lambda — best practice?
 
-**Используй IAM roles, не access keys в коде.**
+**Используй IAM-роли, а не access keys в коде.**
 
 ```python
 # BAD — hardcoded
@@ -562,84 +562,84 @@ client = boto3.client("s3", aws_access_key_id="...", aws_secret_access_key="..."
 client = boto3.client("s3")  # automatically uses instance role
 ```
 
-**EC2 IAM Role** — instance profile attached к EC2. Credentials auto-rotated через metadata service.
+**EC2 IAM Role** — instance profile, привязанный к EC2. Учётные данные автоматически ротируются через metadata service.
 
-**Lambda execution role** — каждая Lambda имеет role.
+**Lambda execution role** — у каждой Lambda есть своя роль.
 
-**Principle of least privilege:** только нужные permissions, не `s3:*`.
+**Принцип наименьших привилегий (least privilege):** только нужные права, а не `s3:*`.
 
 ## Q26. KMS, Secrets Manager, Parameter Store?
 
-**KMS (Key Management Service)** — managed encryption keys. Используется S3, EBS, RDS encryption.
+**KMS (Key Management Service)** — управляемые ключи шифрования. Используется при шифровании S3, EBS, RDS.
 
 **Secrets Manager:**
-- Store passwords, API keys, DB credentials
-- Auto-rotation (RDS, Aurora)
-- Cost: $0.40 per secret per month + API calls
+- хранит пароли, API-ключи, учётные данные БД
+- автоматическая ротация (RDS, Aurora)
+- стоимость: $0.40 за секрет в месяц + API-вызовы
 
 **Systems Manager Parameter Store:**
-- Free для standard parameters
-- Hierarchical (`/myapp/dev/db_url`)
-- Not auto-rotation (manual)
+- бесплатен для standard-параметров
+- иерархический (`/myapp/dev/db_url`)
+- автоматической ротации нет (только вручную)
 
-**Когда что:**
-- **Secrets Manager** — credentials с rotation
-- **Parameter Store** — config (environment variables)
-- **KMS** — encryption keys (через Secrets Manager / Parameter Store)
+**Что когда выбирать:**
+- **Secrets Manager** — учётные данные с ротацией
+- **Parameter Store** — конфигурация (переменные окружения)
+- **KMS** — ключи шифрования (используются через Secrets Manager / Parameter Store)
 
 ## Q27. (!) SQS vs SNS vs EventBridge?
 
-| Service | Тип | Use case |
+| Сервис | Тип | Когда применять |
 |---------|-----|----------|
-| **SQS** | Queue (point-to-point) | Worker queues, decoupling |
-| **SNS** | Pub/Sub topic | Notifications, fanout |
-| **EventBridge** | Event bus | Complex routing, schemas, integrations |
-| **MSK / Kinesis** | Streaming | Event streams, real-time |
+| **SQS** | Очередь (point-to-point) | Очереди воркеров, развязка (decoupling) |
+| **SNS** | Pub/Sub-топик | Уведомления, fanout |
+| **EventBridge** | Шина событий (event bus) | Сложная маршрутизация, схемы, интеграции |
+| **MSK / Kinesis** | Стриминг | Потоки событий, real-time |
 
 **SQS:**
-- **Standard** — at-least-once, may reorder
-- **FIFO** — exactly-once, ordered (limited throughput)
+- **Standard** — at-least-once, порядок может нарушаться
+- **FIFO** — exactly-once, с сохранением порядка (ограниченный throughput)
 
-**SNS** — push к subscribers (HTTP, SQS, Lambda, email, SMS).
+**SNS** — push-доставка подписчикам (HTTP, SQS, Lambda, email, SMS).
 
 **EventBridge:**
-- 100+ SaaS integrations (Stripe, Auth0)
-- Schema registry
-- Event filtering rules
-- Replay events
+- более 100 SaaS-интеграций (Stripe, Auth0)
+- реестр схем (schema registry)
+- правила фильтрации событий
+- повтор (replay) событий
 
-**В 2025** — EventBridge **default** для event-driven, SQS для simple queues.
+**В 2025** — EventBridge **по умолчанию** для event-driven, SQS — для простых очередей.
 
 ## Q28. Kinesis vs MSK (Kafka)?
 
-**Kinesis Data Streams** — AWS-native streaming. Похож на Kafka.
+**Kinesis Data Streams** — AWS-native стриминг. Похож на Kafka.
 
-**MSK (Managed Streaming for Kafka)** — managed Apache Kafka.
+**MSK (Managed Streaming for Kafka)** — управляемый Apache Kafka.
 
 | Критерий | Kinesis | MSK (Kafka) |
 |----------|---------|-------------|
 | AWS-native | Да | Управляемый Kafka |
-| Throughput | Per-shard limits | Higher (shards = partitions) |
-| Retention | До 365 days | Configurable (typically 7d) |
-| Pricing | Per-shard-hour + payload | Per broker-hour |
-| Ecosystem | AWS-only | Standard Kafka tools |
+| Throughput | Лимиты на shard | Выше (shards = partitions) |
+| Retention | До 365 дней | Настраивается (обычно 7 дней) |
+| Тарификация | За shard-час + payload | За broker-час |
+| Экосистема | Только AWS | Стандартные Kafka-инструменты |
 
-**Когда:**
-- Уже Kafka стек / нужны Kafka tools → **MSK**
-- Tight AWS integration → **Kinesis**
+**Когда что:**
+- уже есть Kafka-стек / нужны Kafka-инструменты → **MSK**
+- тесная интеграция с AWS → **Kinesis**
 
 ## Q29. (!) CloudWatch — metrics, logs, alarms?
 
 **CloudWatch** — мониторинг для AWS.
 
-**Components:**
-- **Metrics** — numerical data (CPU, latency, custom)
-- **Logs** — application/system logs
-- **Alarms** — alerts on metric thresholds
-- **Dashboards** — visualizations
-- **Logs Insights** — query logs SQL-like
-- **Synthetics** — uptime monitoring (canaries)
-- **RUM, X-Ray** — frontend/distributed tracing
+**Компоненты:**
+- **Metrics** — числовые данные (CPU, задержка, кастомные)
+- **Logs** — логи приложений и системы
+- **Alarms** — оповещения при превышении порогов метрик
+- **Dashboards** — визуализации
+- **Logs Insights** — SQL-подобные запросы к логам
+- **Synthetics** — мониторинг доступности (canaries)
+- **RUM, X-Ray** — frontend / распределённый трейсинг
 
 ```python
 # Custom metric
@@ -653,11 +653,11 @@ cloudwatch.put_metric_data(
 )
 ```
 
-**Стоимость:** logs ingestion может быть **очень дорогим**. Optimize log levels.
+**Стоимость:** приём логов (logs ingestion) может быть **очень дорогим**. Оптимизируй уровни логирования.
 
 ## Q30. X-Ray для tracing?
 
-**AWS X-Ray** — distributed tracing service.
+**AWS X-Ray** — сервис распределённого трейсинга.
 
 ```python
 from aws_xray_sdk.core import xray_recorder
@@ -668,74 +668,74 @@ def process_order(order_id):
     ...
 ```
 
-Visualizes:
-- Service map
-- Request traces (latency per service)
-- Errors
+Визуализирует:
+- карту сервисов (service map)
+- трейсы запросов (задержка по каждому сервису)
+- ошибки
 
-**Альтернативы:** OpenTelemetry + Jaeger/Datadog/Honeycomb обычно лучше (vendor-neutral).
+**Альтернативы:** OpenTelemetry + Jaeger/Datadog/Honeycomb обычно лучше (не привязаны к вендору).
 
 ## Q31. (!) Well-Architected Framework — 5 pillars?
 
-AWS framework для design good architectures.
+Фреймворк AWS для проектирования хороших архитектур.
 
-1. **Operational Excellence** — automate, observe, improve
-2. **Security** — IAM, encryption, network protection
-3. **Reliability** — fault tolerance, recovery
-4. **Performance Efficiency** — right sizing, monitoring
-5. **Cost Optimization** — right pricing model, eliminate waste
-6. **Sustainability** (added 2021) — environmental impact
+1. **Operational Excellence** (операционное совершенство) — автоматизируй, наблюдай, улучшай
+2. **Security** (безопасность) — IAM, шифрование, защита сети
+3. **Reliability** (надёжность) — отказоустойчивость, восстановление
+4. **Performance Efficiency** (эффективность производительности) — правильный подбор ресурсов, мониторинг
+5. **Cost Optimization** (оптимизация затрат) — правильная модель тарификации, устранение потерь
+6. **Sustainability** (устойчивость, добавлен в 2021) — влияние на окружающую среду
 
-**Well-Architected Tool** — automated review своей architecture.
+**Well-Architected Tool** — автоматизированный аудит собственной архитектуры.
 
 ## Q32. (!) Multi-AZ vs Multi-Region?
 
 **Multi-AZ:**
-- Replicas в **разных AZ** одного region
-- Защита от AZ failures
-- Standard для production
-- Synchronous replication (RDS Multi-AZ)
-- Latency: ~1-2 ms
+- реплики в **разных AZ** одного региона
+- защита от отказа AZ
+- стандарт для production
+- синхронная репликация (RDS Multi-AZ)
+- задержка: примерно 1–2 мс
 
 **Multi-Region:**
-- Replicas в **разных regions**
-- Защита от entire region failure (rare!)
-- Disaster recovery
-- Asynchronous replication
-- Latency: 50-300 ms
-- **Намного дороже и сложнее**
+- реплики в **разных регионах**
+- защита от отказа целого региона (редкость!)
+- аварийное восстановление (disaster recovery)
+- асинхронная репликация
+- задержка: 50–300 мс
+- **намного дороже и сложнее**
 
-**Big firms** делают multi-region. Большинству хватает **multi-AZ**.
+**Крупные компании** делают multi-region. Большинству достаточно **multi-AZ**.
 
 ## Q33. Cost optimization tips?
 
-1. **Right-sizing** — не over-provision
-2. **Reserved Instances / Savings Plans** для steady workloads
-3. **Spot Instances** для batch
+1. **Right-sizing** — не выделяй ресурсы с запасом (over-provision)
+2. **Reserved Instances / Savings Plans** для стабильной нагрузки
+3. **Spot Instances** для batch-задач
 4. **S3 lifecycle policies** — IA, Glacier
-5. **Stop dev/test instances** ночью (scheduling)
-6. **Delete unused** — EBS volumes, snapshots, IPs
-7. **CloudFront** для static assets (cheaper than S3 outbound)
-8. **VPC endpoints** для S3/DynamoDB (avoid NAT Gateway costs)
-9. **Compress data** перед transfer
+5. **останавливай dev/test-инстансы** на ночь (по расписанию)
+6. **удаляй неиспользуемое** — EBS-тома, снапшоты, IP-адреса
+7. **CloudFront** для статических ассетов (дешевле исходящего трафика S3)
+8. **VPC endpoints** для S3/DynamoDB (чтобы избежать затрат на NAT Gateway)
+9. **сжимай данные** перед передачей
 10. **Cost Explorer + Budgets** — мониторинг
 
-**Tools:** Cost Explorer, Trusted Advisor, **Vantage** (3rd party), Spot Advisor.
+**Инструменты:** Cost Explorer, Trusted Advisor, **Vantage** (сторонний), Spot Advisor.
 
 ## Q34. (!) Какие частые ошибки в AWS?
 
-1. **Public S3 buckets** — data leaks (Capital One incident)
-2. **No MFA на root account**
-3. **Hardcoded access keys** в коде/git
-4. **Open security groups** (`0.0.0.0/0` для SSH)
-5. **NAT Gateway costs** — surprise в bill
-6. **Data transfer out** charges underestimated
-7. **No backups testing** — backups не работают пока не проверишь
-8. **Single AZ** — production без redundancy
-9. **No monitoring/alerts** — incidents незамечены
-10. **Not tagging resources** — невозможно cost attribute
+1. **публичные S3-бакеты** — утечки данных (инцидент Capital One)
+2. **нет MFA на root-аккаунте**
+3. **захардкоженные access keys** в коде/git
+4. **открытые security groups** (`0.0.0.0/0` для SSH)
+5. **затраты на NAT Gateway** — сюрприз в счёте
+6. **исходящий трафик (data transfer out)** — недооценивают стоимость
+7. **бэкапы не тестируют** — бэкап не работает, пока его не проверишь
+8. **один AZ** — production без резервирования
+9. **нет мониторинга/алертов** — инциденты остаются незамеченными
+10. **ресурсы не тегируют** — невозможно отнести затраты к проектам
 
-**Prevention:** AWS Config, GuardDuty, Trusted Advisor, IAM Access Analyzer.
+**Профилактика:** AWS Config, GuardDuty, Trusted Advisor, IAM Access Analyzer.
 
 ---
 

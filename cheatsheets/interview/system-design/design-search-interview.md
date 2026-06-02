@@ -16,7 +16,7 @@ updated: "2026-05-26"
 ---
 # Вопросы на собеседовании: `Design Search System`
 
-`Search System` (Google Search, site search, product search) — глубокий system design. Tradeoff indexing latency vs query latency, ranking, typo tolerance, scale. Обычно рассматривается site/product search (не web-scale crawler Google), но principles те же.
+`Search System` (Google Search, поиск по сайту, поиск товаров) — глубокий system design. Здесь важны компромиссы: indexing latency против query latency, ранжирование, устойчивость к опечаткам, масштаб. Обычно на собеседовании разбирают поиск по сайту или по каталогу товаров (а не web-scale краулер Google), но принципы те же.
 
 ## Полезные ссылки
 
@@ -79,152 +79,152 @@ updated: "2026-05-26"
 
 ## Q1. (!) Functional и non-functional requirements?
 
-**Functional (site/e-commerce search):**
-- Full-text query over documents
-- Autocomplete / suggestions
-- Typo tolerance
-- Filters (price, category, rating)
-- Sort (relevance, price, date)
-- Pagination
-- Highlight matching terms
+**Функциональные (поиск по сайту / e-commerce):**
+- Полнотекстовый запрос по документам
+- Autocomplete / подсказки
+- Устойчивость к опечаткам
+- Фильтры (цена, категория, рейтинг)
+- Сортировка (релевантность, цена, дата)
+- Пагинация
+- Подсветка совпавших термов
 
-**Non-functional:**
-- **Low latency** (< 200ms p99)
-- **High QPS** (thousands of queries/sec)
-- **Fresh data** (newly added items searchable in seconds-minutes)
-- **High availability** (99.9%+)
-- **Relevance quality** (precision + recall)
+**Нефункциональные:**
+- **Низкая latency** (< 200ms p99)
+- **Высокий QPS** (тысячи запросов/сек)
+- **Свежесть данных** (только что добавленные товары находятся за секунды-минуты)
+- **Высокая доступность** (99.9%+)
+- **Качество релевантности** (precision + recall)
 
-**Scope:**
-- NOT web crawler (Google-scale — separate topic)
-- Assume documents provided (products, articles)
+**Границы задачи:**
+- НЕ web-краулер (Google-scale — отдельная тема)
+- Считаем, что документы уже даны (товары, статьи)
 
 ## Q2. (!) Capacity estimation?
 
-**Assumptions (e-commerce):**
-- 100M products indexed
-- 1000 queries/sec average, 10k peak
-- Product record ~ 1KB
-- 5 product updates/sec
+**Допущения (e-commerce):**
+- 100M товаров в индексе
+- 1000 запросов/сек в среднем, 10k в пике
+- Запись товара ~ 1KB
+- 5 обновлений товаров/сек
 
-**Index size:**
-- Documents: 100M × 1KB = **100 GB raw**
-- Inverted index: ~50% of raw (terms, postings)
-- Plus: fields, stored vectors, analyzers
-- Total: ~150-200 GB (single copy)
-- Replication 2x: 400 GB
-- 3 replicas: 600 GB
+**Размер индекса:**
+- Документы: 100M × 1KB = **100 GB сырых данных**
+- Inverted index: ~50% от сырого (термы, postings)
+- Плюс: поля, stored-векторы, analyzers
+- Итого: ~150-200 GB (одна копия)
+- Репликация 2x: 400 GB
+- 3 реплики: 600 GB
 
-**Query throughput:**
-- 10k QPS peak
-- Per-query CPU: ~10ms on single shard
-- 10 shards parallel: near constant; aggregate ~100 queries per shard-second
-- Need ~10 nodes для 10k QPS
+**Пропускная способность по запросам:**
+- 10k QPS в пике
+- CPU на запрос: ~10ms на одном шарде
+- 10 шардов параллельно: почти постоянная; суммарно ~100 запросов на shard-секунду
+- Нужно ~10 нод для 10k QPS
 
-**Memory для performance:**
-- Hot indices in RAM → faster
-- ~100 GB RAM across cluster for hot data
+**Память для производительности:**
+- Горячие индексы в RAM → быстрее
+- ~100 GB RAM по кластеру под горячие данные
 
 ## Q3. (!) Inverted index — что это?
 
-**Forward index:** doc → words (normal DB).
+**Forward index:** doc → words (как обычная БД).
 ```
 doc_1: "the quick brown fox"
 doc_2: "quick fox jumps"
 ```
 
-**Inverted index:** word → docs.
+**Inverted index:** word → docs (слово → документы).
 ```
 "quick" → [doc_1, doc_2]
 "brown" → [doc_1]
 "fox" → [doc_1, doc_2]
 ```
 
-**Why:** query "quick fox" → intersect postings of "quick" + "fox" → candidates.
+**Зачем:** запрос "quick fox" → пересечение postings терма "quick" и "fox" → кандидаты.
 
-**Richer structure:**
+**Более богатая структура:**
 - Term → [(doc_id, frequency, positions)]:
   ```
   "quick" → [(1, 1, [1]), (2, 1, [0])]
   ```
-- Positions enable phrase queries
+- Позиции дают возможность делать фразовые запросы
 
-**Storage:**
-- Disk: compressed (variable-byte encoding, delta encoding)
-- Memory: cached hot terms
+**Хранение:**
+- Диск: сжатие (variable-byte encoding, delta encoding)
+- Память: кэшируются горячие термы
 
-**Lucene:** implementation в Apache Lucene = basis for Elasticsearch, Solr.
+**Lucene:** реализация в Apache Lucene = основа для Elasticsearch, Solr.
 
 ## Q4. (!) Tokenization, normalization, stemming?
 
-**Pipeline при indexing:**
+**Pipeline при индексации:**
 
 **1. Tokenization:**
-- Split text into tokens: `"Hello, world!"` → `["Hello", "world"]`
-- Language-dependent (CJK different)
-- Character filters (HTML strip, mapping)
+- Разбить текст на токены: `"Hello, world!"` → `["Hello", "world"]`
+- Зависит от языка (для CJK иначе)
+- Character filters (вырезание HTML, маппинг)
 
 **2. Normalization:**
 - Lowercase: `"Hello"` → `"hello"`
-- Unicode normalization (NFC, NFD)
+- Unicode-нормализация (NFC, NFD)
 - ASCII fold: `café` → `cafe`
-- Remove punctuation
+- Убрать пунктуацию
 
 **3. Stop words:**
-- Remove common words: "the", "a", "is"
-- Saves space; marginal for relevance
+- Удалить частые слова: "the", "a", "is"
+- Экономит место; на релевантность влияет слабо
 
 **4. Stemming:**
-- Reduce to root: `"running", "runs", "ran"` → `"run"`
-- Porter, Snowball stemmers
+- Свести к корню: `"running", "runs", "ran"` → `"run"`
+- Стеммеры Porter, Snowball
 
 **5. Lemmatization:**
-- Smart stemming (dictionary-based): `"better"` → `"good"`
-- More accurate, slower
+- Умный стемминг (на основе словаря): `"better"` → `"good"`
+- Точнее, но медленнее
 
-**6. Synonyms:**
+**6. Synonyms (синонимы):**
 - `"automobile" → "car"`
-- At index time or query time
+- На этапе индексации или на этапе запроса
 
-**Example:**
-- Input: `"Running the fastest cars"`
-- After pipeline: `["run", "fast", "car"]`
-- Query "car races" matches thanks to stemming
+**Пример:**
+- Вход: `"Running the fastest cars"`
+- После pipeline: `["run", "fast", "car"]`
+- Запрос "car races" совпадёт благодаря стеммингу
 
-**Same pipeline at query time:**
-- Consistency mandatory
-- Misconfigured analyzer = terms в index don't match query tokens
+**Тот же pipeline на этапе запроса:**
+- Согласованность обязательна
+- Неверно сконфигурированный analyzer = термы в индексе не совпадают с токенами запроса
 
 ## Q5. Elasticsearch vs Lucene — разница?
 
-**Lucene:** Java library (индекс + search на одном машины).
+**Lucene:** Java-библиотека (индексация + поиск на одной машине).
 
-**Elasticsearch:** distributed wrapper вокруг Lucene.
+**Elasticsearch:** распределённая обёртка вокруг Lucene.
 - REST API
-- Cluster management
-- Sharding + replication
-- JSON docs
+- Управление кластером
+- Sharding + репликация
+- JSON-документы
 - Aggregations
 
-**Solr:** another Lucene-based product; similar capabilities.
+**Solr:** ещё один продукт на базе Lucene; возможности схожие.
 
-**Comparison:**
+**Сравнение:**
 
-| Aspect | Lucene | Elasticsearch |
+| Аспект | Lucene | Elasticsearch |
 |--------|--------|---------------|
-| Type | Library | Distributed product |
+| Тип | Библиотека | Распределённый продукт |
 | API | Java | REST/JSON |
-| Scale | Single machine | Cluster |
-| Features | Core search | + aggregations, monitoring, Kibana |
-| Learning curve | Low-level | User-friendly |
+| Масштаб | Одна машина | Кластер |
+| Возможности | Базовый поиск | + aggregations, мониторинг, Kibana |
+| Порог входа | Низкоуровневый | Дружелюбный к пользователю |
 
-**Choose Elasticsearch** for most enterprise (cluster out-of-box).
+**Выбирайте Elasticsearch** для большинства enterprise-задач (кластер из коробки).
 
-**Alternatives:**
-- **OpenSearch** (AWS fork of ES, open license)
-- **Typesense** — simpler, lower ops
-- **Meilisearch** — lightweight typo-tolerant
-- **Algolia** — SaaS (fast, but $$$)
+**Альтернативы:**
+- **OpenSearch** (форк ES от AWS, открытая лицензия)
+- **Typesense** — проще, меньше эксплуатационных затрат
+- **Meilisearch** — лёгкий, устойчивый к опечаткам
+- **Algolia** — SaaS (быстрый, но дорогой)
 
 ## Q6. (!) High-level architecture?
 
@@ -236,78 +236,78 @@ Data sources → [Indexing Pipeline] → [Index Service (Elasticsearch)] ← [Qu
                [Product DB, CMS]                                       [Clients]
 ```
 
-**Components:**
+**Компоненты:**
 
-- **Indexing Pipeline:** ingest + transform data → index service
-- **Index Service:** Elasticsearch cluster (master + data nodes)
-- **Query Service:** fronts search API; handles query parsing, result post-processing, cache
-- **Cache:** Redis для popular queries
-- **Analytics:** clicked results → training data для ranking
+- **Indexing Pipeline:** загрузка + трансформация данных → index service
+- **Index Service:** кластер Elasticsearch (master + data nodes)
+- **Query Service:** фронт перед search API; парсинг запросов, постобработка результатов, кэш
+- **Cache:** Redis для популярных запросов
+- **Analytics:** кликнутые результаты → обучающие данные для ранжирования
 
-**Separation of concerns:**
-- Index path: write-heavy, batch-friendly
-- Query path: read-heavy, latency-sensitive
+**Разделение ответственности:**
+- Путь индексации: write-heavy, удобен для батчей
+- Путь запросов: read-heavy, чувствителен к latency
 
 ## Q7. (!) Indexing pipeline?
 
-**Batch indexing:**
+**Batch-индексация:**
 ```
 Source (DB) → ETL → Transform → Bulk index (ES)
 ```
-- Pull всё periodically (nightly)
-- Simple, high latency
+- Периодически тянем всё (например, ночью)
+- Просто, но высокая latency
 
 **Real-time CDC:**
 ```
 Source DB → WAL → Debezium → Kafka → Consumer → Index (ES)
 ```
-- Changes flow в seconds
-- Scales well
+- Изменения доходят за секунды
+- Хорошо масштабируется
 
 **Event-driven:**
 ```
 Application → Kafka topic → Consumer → Index (ES)
 ```
-- Each write emits event
-- Decoupled
+- Каждая запись порождает событие
+- Развязано (decoupled)
 
-**Pipeline stages:**
-1. Read from source (CDC or event)
-2. Transform (enrich, denormalize, derive fields)
-3. Analyze (tokenize)
-4. Bulk write к ES (_bulk API)
+**Стадии pipeline:**
+1. Чтение из источника (CDC или событие)
+2. Трансформация (обогащение, денормализация, вычисляемые поля)
+3. Анализ (токенизация)
+4. Bulk-запись в ES (_bulk API)
 
-**Handle failures:**
-- Retry on failure
+**Обработка сбоев:**
+- Retry при ошибке
 - Dead-letter queue
-- Idempotency (document ID from source)
+- Идемпотентность (document ID из источника)
 
-**Bulk performance:**
-- ES bulk API: 500-5000 docs per request
-- Measure throughput vs latency
+**Производительность bulk:**
+- ES bulk API: 500-5000 документов на запрос
+- Замеряйте throughput против latency
 
 ## Q8. Near real-time индексация?
 
 **Elasticsearch:**
-- Documents indexed в in-memory buffer
-- `refresh_interval` (default 1s) flushes buffer → segment → searchable
-- Trade-off: too frequent = costly; rare = stale
+- Документы попадают в in-memory buffer
+- `refresh_interval` (по умолчанию 1s) сбрасывает буфер → segment → доступен для поиска
+- Компромисс: слишком часто = дорого; редко = устаревшие данные
 
 **Tuning:**
 - Real-time: `refresh_interval=1s` (default)
-- Bulk loading: disable refresh (`-1`), enable after load
-- Relaxed: `30s` — reduce indexing overhead
+- Bulk-загрузка: отключить refresh (`-1`), включить после загрузки
+- Расслабленно: `30s` — снизить overhead индексации
 
 **Durability:**
-- Translog (write-ahead log) persists immediately
-- Can recover on crash
+- Translog (write-ahead log) сохраняется сразу
+- Можно восстановиться после краша
 
-**Visibility:**
-- Write → in-memory → refresh → searchable (delay = refresh interval)
+**Видимость:**
+- Запись → in-memory → refresh → доступно для поиска (задержка = refresh interval)
 
-**When matters:**
-- Product catalog update: 5s delay OK
-- Chat search: near real-time critical
+**Когда важно:**
+- Обновление каталога товаров: задержка в 5s — норм
+- Поиск по чату: near real-time критичен
 
 ## Q9. (!) Query flow (scatter-gather)?
 
@@ -328,228 +328,228 @@ Coordinator fetches full docs for top K
 Return results
 ```
 
-**Steps:**
-1. Parse query
-2. Send to shards (parallel)
-3. Each shard returns (doc_id, score) for local top K
-4. Coordinator merges — top K globally
-5. Fetch docs (by ID)
-6. Format response
+**Шаги:**
+1. Распарсить запрос
+2. Отправить на шарды (параллельно)
+3. Каждый шард возвращает (doc_id, score) для локального top K
+4. Координатор сливает — top K глобально
+5. Дотягивает документы (по ID)
+6. Форматирует ответ
 
 **Latency:**
-- p99 = slowest shard + merge + fetch
-- Slow shard = entire query slow (scatter-gather amplifies tail)
+- p99 = самый медленный шард + merge + fetch
+- Медленный шард = весь запрос медленный (scatter-gather усиливает хвост распределения)
 
-**Optimizations:**
-- **adaptive_replica_selection:** send к fastest replica
-- **search_timeout:** abort slow shards
-- **Pre-filtering:** narrow по индексу before scoring
+**Оптимизации:**
+- **adaptive_replica_selection:** отправлять на самую быструю реплику
+- **search_timeout:** прерывать медленные шарды
+- **Pre-filtering:** сузить по индексу до скоринга
 
 ## Q10. (!) Relevance scoring: TF-IDF, BM25?
 
 **TF-IDF:**
-- TF (term frequency): more occurrences = more relevant
-- IDF (inverse doc frequency): rare terms more informative
+- TF (term frequency): больше вхождений = релевантнее
+- IDF (inverse doc frequency): редкие термы информативнее
 - Score = TF × IDF
 
-**BM25 (default в Lucene/ES):**
-- Improved TF-IDF
-- Term saturation (diminishing returns for TF)
-- Document length normalization
+**BM25 (по умолчанию в Lucene/ES):**
+- Улучшенный TF-IDF
+- Term saturation (убывающая отдача от TF)
+- Нормализация по длине документа
 
-**Formula BM25:**
+**Формула BM25:**
 ```
 score = IDF(term) × (TF × (k+1)) / (TF + k × (1 - b + b × |D|/avgdl))
 ```
-- `k = 1.2` — saturation parameter
-- `b = 0.75` — length normalization
-- `|D|` = doc length; `avgdl` = avg doc length
+- `k = 1.2` — параметр saturation
+- `b = 0.75` — нормализация по длине
+- `|D|` = длина документа; `avgdl` = средняя длина документа
 
-**Why BM25 better:**
-- TF-IDF: doc с 100 occurrences of "quick" scored 100x than 1 occurrence
-- BM25: saturation — 10 occurrences ≈ 100 (diminishing)
-- More realistic
+**Почему BM25 лучше:**
+- TF-IDF: документ со 100 вхождениями "quick" получает score в 100× против одного вхождения
+- BM25: saturation — 10 вхождений ≈ 100 (убывающая отдача)
+- Реалистичнее
 
-**Default:** ES uses BM25.
+**По умолчанию:** ES использует BM25.
 
-**Practical search score:**
-- BM25 base
-- Field boosts: title weight × 3, body weight × 1
-- Freshness decay
-- Popularity boost
+**Практический score поиска:**
+- База — BM25
+- Field boosts: вес title × 3, вес body × 1
+- Затухание по свежести (freshness decay)
+- Буст по популярности
 
 ## Q11. Ranking beyond text (ML)?
 
-**Text relevance только часть:**
+**Текстовая релевантность — лишь часть:**
 
-**Signals:**
-- Query-doc match (BM25, embeddings similarity)
-- Freshness (recent > older)
-- Popularity (click-through, sales)
-- User personalization (past searches, location)
-- Quality (reviews, editorial score)
+**Сигналы:**
+- Совпадение query-doc (BM25, similarity по эмбеддингам)
+- Свежесть (новое > старое)
+- Популярность (click-through, продажи)
+- Персонализация пользователя (прошлые поиски, локация)
+- Качество (отзывы, редакторская оценка)
 
-**Approaches:**
+**Подходы:**
 
-**1. Hand-tuned formula:**
+**1. Формула, настроенная вручную:**
 - `score = BM25 + 0.5×freshness + 0.3×popularity`
-- Simple, understandable
+- Просто, понятно
 
 **2. Learning-to-Rank (LTR):**
-- ML model scores (user features, query features, doc features)
-- Training data: clicks, engagement
-- Models: LambdaMART (gradient boosting), DNN
+- ML-модель скорит (фичи пользователя, фичи запроса, фичи документа)
+- Обучающие данные: клики, вовлечённость
+- Модели: LambdaMART (gradient boosting), DNN
 
-**3. Two-stage (common):**
-- Stage 1: candidate retrieval (BM25 gets top 1000)
-- Stage 2: re-rank с ML (deep model on top 100)
+**3. Двухстадийный (распространённый):**
+- Стадия 1: отбор кандидатов (BM25 берёт top 1000)
+- Стадия 2: re-rank с ML (глубокая модель на top 100)
 
-**Elasticsearch LTR plugin:**
-- Feature extractors define signals
-- External model (XGBoost) scores
+**Плагин LTR для Elasticsearch:**
+- Feature extractors задают сигналы
+- Внешняя модель (XGBoost) скорит
 
-**A/B testing:**
-- New ranker vs baseline
-- Metric: CTR, conversion, revenue
+**A/B-тестирование:**
+- Новый ранкер против baseline
+- Метрика: CTR, конверсия, выручка
 
 ## Q12. (!) Sharding стратегии?
 
-**Shard:** partition of index on one node.
+**Shard:** партиция индекса на одной ноде.
 
-**Number of shards:**
-- More = parallelism, но overhead per shard
-- Rule: shard size 20-50GB; plan capacity
-- Example: 200GB data, 50GB/shard → 4 shards
+**Число шардов:**
+- Больше = параллелизм, но overhead на каждый шард
+- Правило: размер шарда 20-50GB; планируйте capacity
+- Пример: 200GB данных, 50GB/шард → 4 шарда
 
-**Sharding modes:**
+**Режимы шардирования:**
 
-**Per-index (default):**
-- Documents hash to shards by doc_id
-- Even distribution
-- Query: scatter to all shards
+**Per-index (по умолчанию):**
+- Документы хэшируются по шардам по doc_id
+- Равномерное распределение
+- Запрос: scatter по всем шардам
 
-**Routing (custom):**
-- Specify shard key (`routing` parameter)
-- Example: by user_id → all user's data on 1 shard
-- Query: targeted (if routing known) = faster
-- Uneven если hot user
+**Routing (кастомный):**
+- Задать ключ шарда (параметр `routing`)
+- Пример: по user_id → все данные пользователя на 1 шарде
+- Запрос: таргетированный (если routing известен) = быстрее
+- Неравномерно, если есть hot user
 
 **Time-based (rollover):**
-- Daily/monthly indices: `logs-2024-01`, `logs-2024-02`
-- Query: time filter → search relevant indices only
-- Old: close or move to cold storage
+- Индексы по дням/месяцам: `logs-2024-01`, `logs-2024-02`
+- Запрос: фильтр по времени → искать только в нужных индексах
+- Старые: закрыть или переместить в cold storage
 
 **Cross-cluster search:**
-- Multiple clusters searchable as one
-- Geo-distributed
+- Несколько кластеров ищутся как один
+- Гео-распределённо
 
 ## Q13. Replication?
 
-**Replica shard:** copy for HA + read scale.
+**Replica shard:** копия для HA + масштабирования чтения.
 
-**Configuration:**
-- Primary shard + N replicas
-- Replicas distributed across nodes (no two on same node)
+**Конфигурация:**
+- Primary shard + N реплик
+- Реплики распределены по нодам (не две на одной ноде)
 
-**Purposes:**
-- **Durability:** node failure → replica promoted
-- **Read throughput:** queries served by primaries + replicas (round-robin)
-- **Zero-downtime restarts:** rolling restart
+**Назначение:**
+- **Durability:** падение ноды → реплика повышается до primary
+- **Пропускная способность чтения:** запросы обслуживаются primary + репликами (round-robin)
+- **Рестарты без даунтайма:** rolling restart
 
-**Typical:**
-- 1 replica (2 copies total): some HA
-- 2 replicas (3 copies): safer (quorum)
+**Типично:**
+- 1 реплика (2 копии всего): некоторый HA
+- 2 реплики (3 копии): безопаснее (кворум)
 
-**Write flow:**
-- Write to primary
-- Primary replicates to replicas (sync)
-- All in-sync before ACK (default)
+**Поток записи:**
+- Запись в primary
+- Primary реплицирует на реплики (синхронно)
+- Все in-sync до ACK (по умолчанию)
 
 **Tuning:**
-- `index.number_of_replicas: 1-2` typically
-- More replicas = more storage + write cost, но better read scale
+- `index.number_of_replicas: 1-2` обычно
+- Больше реплик = больше storage + стоимость записи, но лучше масштабирование чтения
 
 ## Q14. (!) Autocomplete / typeahead?
 
-**Goal:** suggest completions as user types.
+**Цель:** предлагать варианты завершения по мере ввода.
 
-**Challenges:**
-- Ultra-low latency (< 50ms)
-- Relevance (popular first)
-- Typo-tolerant
+**Сложности:**
+- Сверхнизкая latency (< 50ms)
+- Релевантность (популярные первыми)
+- Устойчивость к опечаткам
 
-**Implementations:**
+**Реализации:**
 
-**1. Prefix-based inverted index:**
+**1. Inverted index по префиксу:**
 - Elasticsearch `completion` suggester
-- FST (Finite State Transducer) data structure
-- In-memory, very fast
-- Supports fuzzy matching
+- Структура данных FST (Finite State Transducer)
+- In-memory, очень быстро
+- Поддерживает fuzzy matching
 
-**2. Dedicated cache (Redis sorted sets):**
-- Each prefix → sorted set of terms with popularity scores
+**2. Выделенный кэш (Redis sorted sets):**
+- Каждый префикс → sorted set термов со скорами популярности
 - `ZRANGE prefix:"app" 0 5 WITHSCORES`
-- Precompute on schedule
+- Предрасчёт по расписанию
 
 **3. Trie:**
-- Classic data structure
-- In-memory per-node
-- Distributed trie сложно
+- Классическая структура данных
+- In-memory на каждой ноде
+- Распределённый trie сделать сложно
 
-**Ranking:**
-- By popularity (search frequency)
-- Personalization (user's history)
-- Context (current page, location)
+**Ранжирование:**
+- По популярности (частота поиска)
+- Персонализация (история пользователя)
+- Контекст (текущая страница, локация)
 
-**Real-time update:**
-- On query logs → update scores
-- Periodic rebuild
+**Обновление в реальном времени:**
+- По query logs → обновлять скоры
+- Периодическая перестройка
 
 ## Q15. (!) Typo tolerance / fuzzy match?
 
-**Goal:** "appel" finds "apple".
+**Цель:** "appel" находит "apple".
 
-**Approaches:**
+**Подходы:**
 
 **1. Edit distance (Levenshtein):**
-- Distance = chars to change (insert/delete/replace)
-- Match terms with distance ≤ N
-- Elasticsearch `fuzzy` query: `fuzziness: 2`
+- Расстояние = число правок символов (вставка/удаление/замена)
+- Совпадают термы с расстоянием ≤ N
+- Запрос `fuzzy` в Elasticsearch: `fuzziness: 2`
 
 **2. Damerau-Levenshtein:**
-- Adds transposition (swap)
-- Better for common typo patterns
+- Добавляет транспозицию (перестановку)
+- Лучше для частых паттернов опечаток
 
 **3. N-gram indexing:**
-- Index substrings (3-grams: "app", "ppl", "ple" for "apple")
-- Query partial "appl" matches
-- Higher storage cost
+- Индексировать подстроки (3-граммы: "app", "ppl", "ple" для "apple")
+- Частичный запрос "appl" совпадает
+- Выше стоимость хранения
 
 **4. Phonetic encoding:**
 - Soundex, Metaphone
-- "Smith" and "Smyth" → same code
-- Useful для names
+- "Smith" и "Smyth" → один код
+- Полезно для имён
 
-**5. ML spell correction:**
-- Train on query logs (user retypes after typo)
-- Suggest corrections: "Did you mean ..."
+**5. ML-исправление опечаток:**
+- Обучать на query logs (пользователь перенабирает после опечатки)
+- Предлагать исправления: "Did you mean ..."
 
 **Elasticsearch:**
-- `fuzzy` query for edit-distance
-- `ngram` analyzer для partial match
-- `phonetic` analyzer
+- Запрос `fuzzy` для edit-distance
+- Analyzer `ngram` для частичного совпадения
+- Analyzer `phonetic`
 
-**Trade-off:**
-- More tolerance = more recall, less precision (irrelevant matches)
-- Tune по use case
+**Компромисс:**
+- Больше толерантности = больше recall, меньше precision (нерелевантные совпадения)
+- Настраивать под use case
 
 ## Q16. Faceted search / filters?
 
-**Facets:** categorical breakdowns (brand, price range, rating).
+**Facets:** разбивки по категориям (бренд, диапазон цены, рейтинг).
 
-**Use case:** e-commerce "Nike shoes under $100, rating 4+".
+**Use case:** e-commerce «кроссовки Nike до $100, рейтинг 4+».
 
-**Implementation (Elasticsearch aggregations):**
+**Реализация (Elasticsearch aggregations):**
 ```json
 {
   "query": { "match": { "name": "shoes" } },
@@ -567,144 +567,144 @@ score = IDF(term) × (TF × (k+1)) / (TF + k × (1 - b + b × |D|/avgdl))
 }
 ```
 
-**Response:**
-- Top matches + counts per facet
+**Ответ:**
+- Топ совпадений + counts по каждому facet
 
 **UI:**
-- Facets as sidebar filters
-- Click filter → narrow search
+- Facets как фильтры в боковой панели
+- Клик по фильтру → сужает поиск
 
-**Performance:**
-- Aggregations cached (filter cache)
-- Cardinality (# unique values) affects speed
+**Производительность:**
+- Aggregations кэшируются (filter cache)
+- Кардинальность (число уникальных значений) влияет на скорость
 
 ## Q17. Semantic search / vector embeddings?
 
-**Problem:** lexical search (BM25) misses synonyms, semantic similarity.
-- Query "running shoes" won't match "jogging footwear"
+**Проблема:** лексический поиск (BM25) упускает синонимы и семантическую близость.
+- Запрос "running shoes" не совпадёт с "jogging footwear"
 
 **Semantic search:**
-- Embed query и docs в vector space (dense vectors)
-- Similar meaning = close vectors
+- Эмбеддить запрос и документы в векторное пространство (dense-векторы)
+- Близкий смысл = близкие векторы
 - Nearest-neighbor search
 
-**Embedding models:**
+**Embedding-модели:**
 - BERT, sentence-transformers
 - OpenAI text-embedding-3 (API)
-- Domain-specific fine-tuned
+- Дообученные под домен
 
-**Vector DBs:**
+**Vector DB:**
 - Elasticsearch (dense_vector + kNN 8+)
 - Pinecone, Weaviate, Milvus
-- pgvector (Postgres extension)
+- pgvector (расширение Postgres)
 
 **Hybrid search:**
 - BM25 + vector similarity
-- Combine scores: `score = α × bm25 + (1-α) × vector_similarity`
-- Best of both (lexical precision + semantic recall)
+- Объединение скоров: `score = α × bm25 + (1-α) × vector_similarity`
+- Лучшее из двух (лексическая precision + семантический recall)
 
-**RAG (LLM context):**
-- Embed knowledge base
-- Query → retrieve similar chunks → pass to LLM
-- See [RAG](../ai-ml/rag-interview.md)
+**RAG (контекст для LLM):**
+- Эмбеддить базу знаний
+- Запрос → достать похожие чанки → передать в LLM
+- См. [RAG](../ai-ml/rag-interview.md)
 
-**Challenges:**
-- Embedding drift (model updates → re-index)
-- High-dim vector storage expensive
-- ANN index trade-off (approximate для speed)
+**Сложности:**
+- Дрейф эмбеддингов (обновление модели → re-index)
+- Хранение высокоразмерных векторов дорого
+- Компромисс ANN-индекса (приближённый поиск ради скорости)
 
 ## Q18. (!) Analytics и learning-to-rank?
 
 **Query logs:**
-- Every search + click → event log
-- Build training data for ranking
+- Каждый поиск + клик → лог событий
+- Строим обучающие данные для ранжирования
 
-**Metrics:**
-- **Click-through rate (CTR):** clicks / impressions
-- **NDCG (Normalized Discounted Cumulative Gain):** relevance with position
-- **Mean Reciprocal Rank (MRR):** position of first relevant
-- **Conversion rate:** search → purchase
+**Метрики:**
+- **Click-through rate (CTR):** клики / показы
+- **NDCG (Normalized Discounted Cumulative Gain):** релевантность с учётом позиции
+- **Mean Reciprocal Rank (MRR):** позиция первого релевантного
+- **Conversion rate:** поиск → покупка
 
-**LTR feedback loop:**
-- Collect: query, shown results, click, dwell time, conversion
-- Label training: clicked = relevant, not = less
-- Train: XGBoost / neural
-- Deploy via A/B test
-- Measure, iterate
+**Цикл обратной связи LTR:**
+- Собрать: запрос, показанные результаты, клик, dwell time, конверсия
+- Разметка для обучения: кликнули = релевантно, нет = менее релевантно
+- Обучить: XGBoost / нейросеть
+- Выкатить через A/B-тест
+- Замерить, итерировать
 
-**Counterfactual evaluation:**
-- "If we'd ranked differently, CTR would be X" — estimate without full A/B
+**Контрфактическая оценка:**
+- «Если бы ранжировали иначе, CTR был бы X» — оценка без полного A/B
 - Inverse propensity scoring
 
-**Personalization:**
-- User features (history, location) — input к ranker
-- Privacy considerations
+**Персонализация:**
+- Фичи пользователя (история, локация) — вход в ранкер
+- Соображения приватности
 
 ## Q19. Hot queries cache?
 
-**20% queries = 80% volume** typically.
+Обычно **20% запросов = 80% объёма**.
 
-**Cache layers:**
+**Слои кэша:**
 
-**CDN / HTTP cache:**
-- Public queries (no user-specific) → CDN cacheable
+**CDN / HTTP-кэш:**
+- Публичные запросы (без user-specific) → кэшируемы на CDN
 - `Cache-Control: public, max-age=60`
 
 **Redis query cache:**
-- Key: hash(query + filters + sort)
-- Value: result IDs + metadata
+- Ключ: hash(query + filters + sort)
+- Значение: ID результатов + метаданные
 - TTL 60s-5min
 
-**Elasticsearch native:**
-- **Request cache:** cached by shard for structured queries
-- **Query cache:** cached filter results (bit sets)
-- Default enabled
+**Встроенный в Elasticsearch:**
+- **Request cache:** кэшируется по шарду для структурированных запросов
+- **Query cache:** кэшируются результаты фильтров (bit sets)
+- Включён по умолчанию
 
-**Invalidation:**
-- TTL for most
-- Event-driven для specific (product out of stock → invalidate key)
+**Инвалидация:**
+- TTL для большинства
+- Event-driven для конкретных (товар закончился → инвалидировать ключ)
 
-**Measure:**
-- Hit ratio: track
-- Stale risk: acceptable lag vs freshness requirement
+**Замеры:**
+- Hit ratio: отслеживать
+- Риск устаревания: допустимое отставание против требования к свежести
 
 ## Q20. Index rebuild / rollover?
 
-**When needed:**
-- Schema change (new analyzer, new fields)
-- Bulk backfill after data migration
-- Language analyzer update
+**Когда нужно:**
+- Изменение схемы (новый analyzer, новые поля)
+- Bulk-бэкфилл после миграции данных
+- Обновление языкового analyzer
 
-**Zero-downtime rebuild:**
-1. Build new index (alongside old)
-2. Populate: `reindex` API (or from source)
-3. Switch alias: `old` → `new`
-4. Queries use new index seamlessly
-5. Delete old
+**Перестройка без даунтайма:**
+1. Построить новый индекс (рядом со старым)
+2. Заполнить: API `reindex` (или из источника)
+3. Переключить alias: `old` → `new`
+4. Запросы бесшовно используют новый индекс
+5. Удалить старый
 
-**Alias pattern:**
+**Паттерн с alias:**
 ```
 alias "products" → index "products-v1"
 # rebuild:
 alias "products" → index "products-v2"
 ```
 
-**Rollover (time-based):**
-- Indices per day/month
-- Alias points to current
-- Auto-rollover when size/age reached:
+**Rollover (по времени):**
+- Индексы по дням/месяцам
+- Alias указывает на текущий
+- Авто-rollover при достижении размера/возраста:
 ```
 POST products/_rollover
 ```
 
-**Cost:**
-- Double storage temporarily
-- Takes hours for large dataset
-- Plan maintenance window
+**Стоимость:**
+- Временно удвоенное хранилище
+- На большом датасете занимает часы
+- Планируйте maintenance window
 
 ## Q21. (!) BM25 vs TF-IDF — формулы и saturation?
 
-**TF-IDF (classical):**
+**TF-IDF (классический):**
 ```
 score(q, d) = Σ_t∈q TF(t, d) × IDF(t)
 TF(t, d) = freq(t, d)
@@ -726,11 +726,11 @@ score(q, d) = Σ_t∈q IDF(t) × (TF × (k+1)) / (TF + k × (1 - b + b × |D|/av
 
 | Сценарий | Выбор |
 |---|---|
-| Default site search | BM25 |
+| Дефолтный поиск по сайту | BM25 |
 | Legacy Lucene/Solr 4.x | TF-IDF |
-| Short documents (titles, names) | BM25 с `b=0.0` (отключить length penalty) |
-| Long documents (articles) | BM25 default |
-| Custom domain (legal, medical) | BM25 с tuned `k1`, `b` через grid search |
+| Короткие документы (заголовки, имена) | BM25 с `b=0.0` (отключить length penalty) |
+| Длинные документы (статьи) | BM25 по умолчанию |
+| Кастомный домен (legal, medical) | BM25 с подобранными `k1`, `b` через grid search |
 
 **Альтернативы:**
 - **BM25F** — multi-field BM25 (title weight ×3, body ×1). Используется в Lucene через `MultiMatchQuery` boost.
@@ -749,9 +749,9 @@ score(q, d) = Σ_t∈q IDF(t) × (TF × (k+1)) / (TF + k × (1 - b + b × |D|/av
 
 | Подход | Сильные стороны | Слабые |
 |---|---|---|
-| BM25 | Exact keyword match, product codes, names | Не понимает синонимов, парафраз |
-| Dense (embeddings) | Semantic similarity, paraphrasing, multilingual | Слабее на rare terms, OOV, exact IDs |
-| Hybrid | Лучшее из обоих | Сложнее tuning + 2× indexing cost |
+| BM25 | Точное совпадение по ключевым словам, коды товаров, имена | Не понимает синонимов, парафраз |
+| Dense (embeddings) | Семантическая близость, парафраз, многоязычность | Слабее на rare terms, OOV, точных ID |
+| Hybrid | Лучшее из обоих | Сложнее tuning + 2× стоимость индексации |
 
 **Простое объединение (weighted sum):**
 ```
@@ -783,12 +783,12 @@ graph LR
     ML --> Result
 ```
 
-**Vector storage:**
-- `Elasticsearch dense_vector` с HNSW index (since 8.0).
+**Хранение векторов:**
+- `Elasticsearch dense_vector` с HNSW-индексом (начиная с 8.0).
 - `Qdrant`, `Pinecone`, `Weaviate`, `Vespa`.
-- `pgvector` для Postgres (для < 10M vectors).
+- `pgvector` для Postgres (при < 10M векторов).
 
-**Embedding models 2026:**
+**Embedding-модели 2026:**
 - `text-embedding-3-small` (OpenAI, 1536 dim, $0.00002/1K tokens).
 - `BGE-M3`, `e5-mistral-7b` (open-source, многоязычные).
 - `Cohere embed-v3` (high-quality, поддерживает int8 quantization).
@@ -829,18 +829,18 @@ graph LR
 - `post_filter` применяется ПОСЛЕ aggregations → counts видны для всех brands даже когда выбран один.
 - Стандарт e-commerce: search относится к query, выбранный facet — к post_filter.
 
-**Cardinality issues:**
-- `terms` aggregation по `user_id` (миллионы значений) → OOM.
+**Проблемы с кардинальностью:**
+- `terms`-агрегация по `user_id` (миллионы значений) → OOM.
 - Решения: `cardinality` (HyperLogLog approximation), `composite` aggregation (pagination).
 
-**Aggregation cache:**
+**Кэш агрегаций:**
 - ES `request_cache` кэширует aggregations с `size=0`.
-- TTL invalidate при refresh.
+- Инвалидация по TTL при refresh.
 
 **Production кейсы:**
-- Amazon e-commerce search: brand/price/seller/rating facets.
-- Airbnb: location/price/amenities filters.
-- LinkedIn search: industry/seniority/location.
+- Поиск Amazon e-commerce: facets бренд/цена/продавец/рейтинг.
+- Airbnb: фильтры локация/цена/удобства.
+- Поиск LinkedIn: отрасль/уровень/локация.
 
 ## Q24. (!) Geo search — geohash, S2, R-tree, bbox vs distance?
 
@@ -851,22 +851,22 @@ graph LR
 **1. Geohash (Elasticsearch default):**
 - Координата `(lat, lon)` → base32-строка `u4pruydqqvj`.
 - Префикс = регион (`u4` ≈ Германия + Польша).
-- Точность зависит от длины: 6 chars ≈ 1.2 km, 8 chars ≈ 40 m.
-- Поиск bbox: prefix scan.
-- Плюсы: простой, inverted index работает.
-- Минусы: соседние клетки могут иметь сильно разные prefix (на границах квадрантов).
+- Точность зависит от длины: 6 символов ≈ 1.2 km, 8 символов ≈ 40 m.
+- Поиск bbox: скан по префиксу.
+- Плюсы: простой, работает inverted index.
+- Минусы: соседние клетки могут иметь сильно разный префикс (на границах квадрантов).
 
 **2. S2 (Google, Uber, Foursquare):**
 - Делит землю на иерархические клетки разного уровня (Hilbert curve).
-- Cell ID = 64-bit integer.
-- Соседи всегда close in ID space → лучше locality.
-- Hierarchical: уровни 0 (всё полушарие) … 30 (~1 cm²).
+- Cell ID = 64-битное целое.
+- Соседи всегда близки в пространстве ID → лучше locality.
+- Иерархично: уровни 0 (всё полушарие) … 30 (~1 cm²).
 - Используется в Uber H3, Snowflake GIS.
 
 **3. R-tree:**
-- Дерево bounding rectangles.
+- Дерево ограничивающих прямоугольников.
 - Используется в PostGIS, MongoDB 2dsphere.
-- Хорошо для bbox queries, но дороже balance при writes.
+- Хорошо для bbox-запросов, но дороже балансировать при записях.
 
 **4. H3 (Uber):**
 - Hexagonal hierarchy (равные соседи, все на одинаковом distance).
@@ -888,7 +888,7 @@ GET /restaurants/_search
 **Trade-off:**
 - Bbox: ~10× быстрее, но захватывает «углы» прямоугольника (на 30% больший radius).
 - Distance: точный круг, дороже (Haversine для каждого кандидата).
-- Гибрид: bbox для retrieval → distance для filtering top-N.
+- Гибрид: bbox для retrieval → distance для фильтрации top-N.
 
 **Edge cases:**
 - Антимеридиан (Pacific dateline): bbox через ±180° ломается; S2/H3 — нет.
@@ -898,7 +898,7 @@ GET /restaurants/_search
 
 **Lucene segments:**
 - Документы пишутся в **in-memory buffer**.
-- `refresh` (default каждые 1s) → buffer → новый immutable Lucene `segment` → searchable.
+- `refresh` (по умолчанию каждые 1s) → buffer → новый неизменяемый Lucene `segment` → доступен для поиска.
 - Каждый поиск проходит по всем сегментам, merge results.
 - `merge` (background) объединяет мелкие сегменты в крупные (фоновый процесс).
 
@@ -920,9 +920,9 @@ GET /restaurants/_search
 - Tiered merge: объединяет сегменты схожего размера.
 - Force merge перед запросом архива: `POST index/_forcemerge?max_num_segments=1`.
 
-**Trade-off для interview:**
-- Меньше refresh interval → fresher data, но больше overhead.
-- Bulk load best practice: disable refresh + replicas → load → re-enable.
+**Компромисс для собеседования:**
+- Меньше refresh interval → свежее данные, но больше overhead.
+- Best practice для bulk-загрузки: отключить refresh + реплики → загрузить → включить обратно.
 
 **Production кейсы:**
 - Logging (Elastic Stack): refresh_interval 30s + force_merge для old indices.
@@ -947,30 +947,30 @@ graph LR
 
 **Стадии:**
 
-1. **Tokenization** — split по whitespace, punctuation, CJK character-by-character.
+1. **Tokenization** — разбиение по whitespace, пунктуации, для CJK — посимвольно.
 2. **Normalization** — lowercase, Unicode NFKC, ASCII fold (`café → cafe`).
-3. **Spell correction** — `appel → apple` через edit distance / phonetic / ML correction (Q15).
-4. **Query expansion:**
-   - Synonyms: `car → automobile, vehicle` (через synonym dictionary).
-   - Abbreviations: `NYC → New York City`.
+3. **Spell correction** — `appel → apple` через edit distance / phonetic / ML-исправление (Q15).
+4. **Query expansion (расширение запроса):**
+   - Синонимы: `car → automobile, vehicle` (через словарь синонимов).
+   - Аббревиатуры: `NYC → New York City`.
    - Stemming: `running → run` (Q4).
 5. **Entity extraction (NER):**
-   - `Nike running shoes` → entities: `Nike (brand)`, `running shoes (category)`.
-   - Boost matches на extracted entities.
-6. **Intent classification:**
+   - `Nike running shoes` → сущности: `Nike (brand)`, `running shoes (category)`.
+   - Буст совпадений на извлечённых сущностях.
+6. **Intent classification (классификация намерения):**
    - Navigational (`facebook.com`), informational (`how to bake bread`), transactional (`buy iphone`), local (`pizza near me`).
-   - Влияет на routing: navigational → exact match, informational → semantic search.
+   - Влияет на routing: navigational → точное совпадение, informational → semantic search.
 
-**Tools:**
+**Инструменты:**
 - ES Token Filters (synonym, stop, stemmer).
-- spaCy / Hugging Face NER модели.
-- Внутренние ML классификаторы intent.
+- NER-модели spaCy / Hugging Face.
+- Внутренние ML-классификаторы intent.
 
-**Latency budget:**
+**Бюджет latency:**
 - Tokenization + normalization: < 1 ms.
 - Spell correction: 5-20 ms (если ML).
 - Entity extraction: 20-50 ms (ML inference).
-- Total before retrieval: < 100 ms (часть p99 search budget).
+- Итого до retrieval: < 100 ms (часть p99 search budget).
 
 **Edge cases:**
 - Multilingual query — отдельные analyzers per language.
@@ -986,35 +986,35 @@ graph LR
 - Con: тысячи мелких индексов → metadata overhead, JVM heap pressure (каждый index держит state).
 - ES recommended limit: < 1000 indices per cluster.
 
-**Вариант 2: Single index + tenant_id filter.**
+**Вариант 2: единый индекс + фильтр по tenant_id.**
 - Все documents в `products` с полем `tenant_id`.
 - Каждый query: `bool { must: query, filter: { term: tenant_id: 42 } }`.
 - Pro: меньше overhead, легче scale.
 - Con: scatter-gather по всем шардам даже для одного tenant.
 
-**Вариант 3 (hybrid): Routing by tenant.**
-- Single index + `routing=tenant_id` параметр.
-- Все docs одного tenant попадают на один shard → targeted search.
-- Pro: low overhead + быстрый retrieval per tenant.
-- Con: hot tenant = hot shard (uneven distribution).
+**Вариант 3 (hybrid): routing по tenant.**
+- Единый индекс + параметр `routing=tenant_id`.
+- Все документы одного tenant попадают на один shard → таргетированный поиск.
+- Плюс: низкий overhead + быстрый retrieval на tenant.
+- Минус: hot tenant = hot shard (неравномерное распределение).
 
 **Когда что:**
 
-| Tenants | Approach |
+| Tenants | Подход |
 |---|---|
-| < 100 | Index per tenant |
-| 100-10 000 | Single index + routing |
-| 10 000+ | Single index + filter (если каждый tenant маленький) |
-| Очень разные размеры | Index per large tenants + shared index для small (`tiered`) |
+| < 100 | Индекс на каждый tenant |
+| 100-10 000 | Единый индекс + routing |
+| 10 000+ | Единый индекс + filter (если каждый tenant маленький) |
+| Очень разные размеры | Индекс на крупные tenant + общий индекс для мелких (`tiered`) |
 
-**Real:**
-- Shopify Search: routing by `shop_id` (большие магазины + tiered index для крошечных).
-- Algolia: index per application (each customer gets own index).
-- Slack search: index per workspace (большие workspace → dedicated cluster).
+**На практике:**
+- Shopify Search: routing по `shop_id` (большие магазины + tiered-индекс для крошечных).
+- Algolia: индекс на каждое приложение (каждый клиент получает свой индекс).
+- Slack search: индекс на каждое workspace (большие workspace → выделенный кластер).
 
-**Security:**
-- Filter всегда обязателен (даже при routing) — защита от bug в routing logic.
-- Per-tenant API key + middleware enforce.
+**Безопасность:**
+- Filter обязателен всегда (даже при routing) — защита от бага в логике routing.
+- API-ключ на tenant + проверка в middleware.
 
 ## Q28. Personalization signals — click history и re-ranking?
 
@@ -1022,44 +1022,44 @@ graph LR
 
 **Сигналы:**
 - **Click history** — пользователь часто кликает на категорию X → boost X в результатах.
-- **Purchase history** — для e-commerce boost related products.
+- **Purchase history** — для e-commerce буст связанных товаров.
 - **Browse history** — последние просмотренные товары.
-- **Location** — bias к local restaurants/services.
-- **Language preference** — boost матчи на user's language.
-- **Time-of-day / day-of-week** — обед vs ужин для food delivery.
+- **Location** — смещение в сторону локальных ресторанов/сервисов.
+- **Language preference** — буст совпадений на языке пользователя.
+- **Time-of-day / day-of-week** — обед против ужина для food delivery.
 
 **Реализация:**
 
-**Stage 1: Retrieval (impersonal).**
-- BM25 / hybrid top-100 candidates.
-- Эта стадия не использует user signals — кеш-friendly.
+**Стадия 1: Retrieval (без персонализации).**
+- BM25 / hybrid: top-100 кандидатов.
+- Эта стадия не использует user-сигналы — дружелюбна к кэшу.
 
-**Stage 2: Re-ranking (personalized).**
-- ML модель: input = (query_features, doc_features, user_features).
-- Output: score → re-order top-100.
-- Latency: 10-30 ms на CPU, < 5 ms на GPU (batched).
+**Стадия 2: Re-ranking (персонализированный).**
+- ML-модель: вход = (query_features, doc_features, user_features).
+- Выход: score → переупорядочить top-100.
+- Latency: 10-30 ms на CPU, < 5 ms на GPU (батчами).
 
-**User features:**
-- Embedding vector от user history (последние N кликов / покупок).
-- Category preferences (one-hot).
-- Demographics (если есть).
+**Фичи пользователя:**
+- Embedding-вектор из истории пользователя (последние N кликов / покупок).
+- Предпочтения по категориям (one-hot).
+- Демография (если есть).
 
-**Model:**
+**Модель:**
 - LambdaMART (GBM) — стандарт, легко интерпретируется.
 - Two-tower neural (query-tower + user-tower) — Amazon, LinkedIn.
-- Transformer cross-encoder — best quality, дороже.
+- Transformer cross-encoder — лучшее качество, дороже.
 
 **Cold start:**
-- New user без history → fallback на global popularity.
-- Postpone personalization до collect of первых 5-10 кликов.
+- Новый пользователь без истории → fallback на глобальную популярность.
+- Откладываем персонализацию до накопления первых 5-10 кликов.
 
-**Privacy:**
-- User features hashed / aggregated.
-- GDPR right-to-erasure → удалить click history по запросу.
+**Приватность:**
+- Фичи пользователя хэшируются / агрегируются.
+- GDPR right-to-erasure → удалить историю кликов по запросу.
 
-**A/B testing:**
-- Метрика: CTR + conversion + session quality.
-- Сравнение `personalized` vs `impersonal baseline`.
+**A/B-тестирование:**
+- Метрика: CTR + конверсия + качество сессии.
+- Сравнение `personalized` против `impersonal baseline`.
 
 ## Q29. (!) Quality metrics — recall@k, MRR, NDCG, p99 latency?
 
@@ -1085,89 +1085,89 @@ graph LR
 - `NDCG = DCG / ideal_DCG` (нормализация на оптимальный порядок).
 - Стандарт для academic IR и LTR.
 
-**Click-based metrics (production):**
-- **CTR @ position 1** — доля кликов на топ результат.
+**Метрики по кликам (production):**
+- **CTR @ position 1** — доля кликов на топ-результат.
 - **Mean clicked rank** — средняя позиция первого клика.
 - **Abandonment rate** — доля сессий без клика.
 - **Reformulation rate** — пользователь переписал запрос (значит первый не помог).
 
-**Latency metrics:**
+**Метрики latency:**
 - `search_latency_ms_p50 / p95 / p99 / p999`.
-- Target: p99 < 200 ms (e-commerce), < 1 sec (web search).
-- `indexing_lag_seconds` — задержка от source до searchable (< 5s для NRT).
+- Цель: p99 < 200 ms (e-commerce), < 1 sec (web search).
+- `indexing_lag_seconds` — задержка от source до доступности в поиске (< 5s для NRT).
 
-**Failure modes:**
-- `search_timeout_total` — slow shard or query.
-- `zero_result_rate` — доля запросов без результатов (target < 5%).
-- `cache_hit_ratio` (target > 60%).
+**Режимы отказов:**
+- `search_timeout_total` — медленный шард или запрос.
+- `zero_result_rate` — доля запросов без результатов (цель < 5%).
+- `cache_hit_ratio` (цель > 60%).
 
-**Tracking pipeline:**
-- Click events → Kafka → Flink aggregation → ClickHouse / BigQuery.
-- Dashboards: Grafana / Looker.
-- Alerts: PagerDuty / Slack.
+**Pipeline трекинга:**
+- События кликов → Kafka → агрегация Flink → ClickHouse / BigQuery.
+- Дашборды: Grafana / Looker.
+- Алерты: PagerDuty / Slack.
 
 ## Q30. (!) Антипаттерны и подводные камни?
 
-**1. Single shard на 100M+ docs.**
-- 200 GB на один shard → slow merge, full GC, OOM.
-- Fix: `number_of_shards` на этапе создания (нельзя изменить позже!), 20-50 GB на shard.
+**1. Один shard на 100M+ документов.**
+- 200 GB на один shard → медленный merge, full GC, OOM.
+- Фикс: `number_of_shards` на этапе создания (нельзя изменить позже!), 20-50 GB на shard.
 
-**2. Sync indexing на write path.**
-- `POST /product → INSERT DB → INDEX ES → ACK` — latency пользователя = ES latency.
-- ES сбой = product creation failure.
-- Fix: CDC через Debezium / Kafka — async pipeline (Q7).
+**2. Синхронная индексация на write-пути.**
+- `POST /product → INSERT DB → INDEX ES → ACK` — latency пользователя = latency ES.
+- Сбой ES = провал создания товара.
+- Фикс: CDC через Debezium / Kafka — асинхронный pipeline (Q7).
 
-**3. Нет analyzer per language.**
-- Один `standard` analyzer для всех языков → плохая токенизация CJK, без stemming для русского.
-- Fix: per-language analyzer (`russian`, `english`, `japanese` (kuromoji)).
+**3. Нет analyzer на каждый язык.**
+- Один `standard` analyzer для всех языков → плохая токенизация CJK, нет стемминга для русского.
+- Фикс: analyzer на каждый язык (`russian`, `english`, `japanese` (kuromoji)).
 
-**4. Без cache для popular queries.**
-- 20% queries = 80% traffic → DB / ES перегружены без cache.
-- Fix: Redis с TTL 60s + ES request_cache (Q19).
+**4. Нет кэша для популярных запросов.**
+- 20% запросов = 80% трафика → DB / ES перегружены без кэша.
+- Фикс: Redis с TTL 60s + ES request_cache (Q19).
 
-**5. Index per user в multi-tenancy.**
-- 100 000 users × 1 index каждый = ES cluster collapses (metadata overhead).
-- Fix: routing by user_id или single index + filter (Q27).
+**5. Индекс на каждого пользователя в multi-tenancy.**
+- 100 000 пользователей × 1 индекс каждый = кластер ES разваливается (overhead метаданных).
+- Фикс: routing по user_id или единый индекс + filter (Q27).
 
-**6. Wildcard queries с leading `*`.**
-- `*shoes*` = full table scan, latency 10+ s.
-- Fix: n-gram analyzer или edge_ngram для partial match.
+**6. Wildcard-запросы с ведущим `*`.**
+- `*shoes*` = full table scan, latency 10+ с.
+- Фикс: n-gram analyzer или edge_ngram для частичного совпадения.
 
-**7. Sort by string field без `.keyword`.**
-- Sort by `name` (analyzed) → ES fielddata loaded into heap → OOM.
-- Fix: `sort: name.keyword`.
+**7. Сортировка по строковому полю без `.keyword`.**
+- Сортировка по `name` (analyzed) → ES грузит fielddata в heap → OOM.
+- Фикс: `sort: name.keyword`.
 
-**8. Nested mapping для arrays of objects без причины.**
-- Каждый nested doc = отдельный Lucene doc → 5-10× index size.
-- Fix: nested только когда нужны cross-field queries; иначе flat.
+**8. Nested-маппинг для массивов объектов без причины.**
+- Каждый nested-документ = отдельный Lucene-документ → 5-10× размер индекса.
+- Фикс: nested только когда нужны cross-field-запросы; иначе flat.
 
-**9. `update_by_query` на проде во время traffic.**
-- Бьёт I/O, может зависеть от shards с активным indexing.
-- Fix: rolling update batches + monitoring.
+**9. `update_by_query` на проде во время трафика.**
+- Бьёт по I/O, может зависнуть на шардах с активной индексацией.
+- Фикс: rolling update батчами + мониторинг.
 
-**10. Polling DB для freshness вместо CDC.**
-- `SELECT * FROM products WHERE updated > last_check` каждые 5 min → DB load + миссы.
-- Fix: Debezium / Kafka Connect CDC (Q7).
+**10. Поллинг БД ради свежести вместо CDC.**
+- `SELECT * FROM products WHERE updated > last_check` каждые 5 мин → нагрузка на БД + промахи.
+- Фикс: Debezium / Kafka Connect CDC (Q7).
 
-**11. Без LTR / personalization для e-commerce.**
-- Pure BM25 → bad conversion (popular items не в топе).
-- Fix: BM25 retrieval + LTR re-ranking (Q11, Q18, Q28).
+**11. Нет LTR / персонализации для e-commerce.**
+- Чистый BM25 → плохая конверсия (популярные товары не в топе).
+- Фикс: BM25 retrieval + LTR re-ranking (Q11, Q18, Q28).
 
-**12. Нет `_explain` API в production debug.**
-- При ranking issues нельзя понять почему документ не в топе.
-- Fix: `GET /index/_explain/{id}?q=...` для каждого incident.
+**12. Нет `_explain` API при отладке на проде.**
+- При проблемах с ранжированием нельзя понять, почему документ не в топе.
+- Фикс: `GET /index/_explain/{id}?q=...` на каждый инцидент.
 
-**13. Bulk indexing без disable refresh.**
-- 1M docs с `refresh_interval: 1s` → 1M refresh = millions of small segments → cluster melt.
-- Fix: `refresh_interval: -1` на время bulk load, потом снова `1s`.
+**13. Bulk-индексация без отключения refresh.**
+- 1M документов с `refresh_interval: 1s` → 1M refresh = миллионы мелких сегментов → кластер плавится.
+- Фикс: `refresh_interval: -1` на время bulk-загрузки, потом снова `1s`.
 
-**14. Без translog durability tuning.**
-- `index.translog.durability: async` для критичных данных → 5s data loss window.
-- Fix: `request` для financial / compliance data, `async` для logs/analytics.
+**14. Нет настройки durability у translog.**
+- `index.translog.durability: async` для критичных данных → окно потери 5s.
+- Фикс: `request` для financial / compliance данных, `async` для логов/аналитики.
 
 **15. Cross-cluster search без timeout.**
-- Один slow remote cluster блокирует весь query.
-- Fix: per-cluster timeout + `skip_unavailable`.
+- Один медленный удалённый кластер блокирует весь запрос.
+- Фикс: timeout на каждый кластер + `skip_unavailable`.
 
 ---
 

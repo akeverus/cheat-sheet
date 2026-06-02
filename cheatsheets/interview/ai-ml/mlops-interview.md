@@ -86,18 +86,18 @@ updated: "2026-05-19"
 
 ## Q1. (!) Что такое MLOps?
 
-**MLOps (Machine Learning Operations)** — practices для **lifecycle management** ML/AI систем в production:
-- Versioning (data, code, models)
-- Experiment tracking
-- Reproducibility
-- Deployment automation
-- Monitoring (drift, performance)
-- Retraining
-- Governance, compliance
+**MLOps (Machine Learning Operations)** — практики **управления жизненным циклом** ML/AI-систем в production:
+- Версионирование (данные, код, модели)
+- Трекинг экспериментов (experiment tracking)
+- Воспроизводимость
+- Автоматизация деплоя
+- Мониторинг (drift, производительность)
+- Переобучение (retraining)
+- Governance, соответствие требованиям (compliance)
 
-**Цель:** ML системы как **reliable software**, не как одноразовые artifacts.
+**Цель:** ML-системы как **надёжное ПО**, а не как одноразовые артефакты.
 
-**Discipline появилась** с осознанием, что 80% ML моделей **никогда не доходят до production** или быстро deteriorate.
+**Дисциплина появилась** с осознанием того, что 80% ML-моделей **никогда не доходят до production** или быстро деградируют.
 
 
 ## Q2. (!) ML lifecycle?
@@ -114,57 +114,57 @@ graph LR
     Monitor -->|drift detected| Train
 ```
 
-**Stages:**
-1. **Data collection** — sources, ETL
-2. **Data preparation** — cleaning, validation
-3. **Feature engineering** — transformation, encoding
-4. **Training** — model fit
-5. **Evaluation** — metrics на test set
+**Этапы:**
+1. **Data collection** — источники, ETL
+2. **Data preparation** — очистка, валидация
+3. **Feature engineering** — преобразование, кодирование
+4. **Training** — обучение модели
+5. **Evaluation** — метрики на test set
 6. **Model registry** — версионирование
-7. **Deployment** — в production
-8. **Monitoring** — drift, performance
+7. **Deployment** — выкат в production
+8. **Monitoring** — drift, производительность
 9. **Retraining** — на новых данных
 
-MLOps овсенирует автоматизацию каждого этапа.
+MLOps оркестрирует автоматизацию каждого этапа.
 
 
 ## Q3. (!) DevOps vs MLOps — отличия?
 
 | Критерий | DevOps | MLOps |
 |----------|--------|-------|
-| Артефакт | Код | Код + данные + model |
-| Versioning | Git | Git + DVC + Model Registry |
-| Testing | Unit, integration | Data validation, model perf |
-| Reproducibility | Деpендencies + код | + data snapshot + random seed |
-| Monitoring | App health, errors | + drift, accuracy decay |
-| Deploy | Single artifact | Model + features + preprocessing |
-| Retraining | — | Periodic / triggered |
-| Lifecycle | Linear | Cyclic (retrain) |
+| Артефакт | Код | Код + данные + модель |
+| Версионирование | Git | Git + DVC + Model Registry |
+| Тестирование | Unit, integration | Валидация данных, метрики модели |
+| Воспроизводимость | Зависимости + код | + снапшот данных + random seed |
+| Мониторинг | Здоровье приложения, ошибки | + drift, деградация accuracy |
+| Деплой | Один артефакт | Модель + features + препроцессинг |
+| Переобучение | — | Периодическое / по триггеру |
+| Жизненный цикл | Линейный | Циклический (retrain) |
 
-**Ключевая разница:** ML модели **deteriorate** со временем (data меняется). DevOps app **стабильно** работает пока его не сломают.
+**Ключевая разница:** ML-модели **деградируют** со временем (данные меняются). DevOps-приложение работает **стабильно**, пока его не сломают.
 
 
 ## Q4. (!) Что такое experiment tracking?
 
-Каждый ML training run = experiment с **разными hyperparameters, data, model architectures**. Tracking сохраняет:
+Каждый прогон обучения (training run) = эксперимент с **разными гиперпараметрами, данными, архитектурами модели**. Трекинг сохраняет:
 
-- **Parameters** (learning rate, batch size, ...)
-- **Metrics** (accuracy, F1, loss curves)
-- **Artifacts** (model weights, plots)
-- **Code version** (git commit)
-- **Data version** (DVC, hash)
-- **Environment** (Python deps, GPU type)
+- **Параметры** (learning rate, batch size, ...)
+- **Метрики** (accuracy, F1, кривые loss)
+- **Артефакты** (веса модели, графики)
+- **Версию кода** (git commit)
+- **Версию данных** (DVC, hash)
+- **Окружение** (Python-зависимости, тип GPU)
 
 **Зачем:**
-- **Reproducibility** — repeat experiment когда нужно
-- **Comparison** — какой run лучший?
-- **Collaboration** — share results с командой
-- **Audit** — что использовали для production model?
+- **Воспроизводимость** — повторить эксперимент при необходимости
+- **Сравнение** — какой прогон лучший?
+- **Совместная работа** — поделиться результатами с командой
+- **Аудит** — что использовали для production-модели?
 
 
 ## Q5. (!) MLflow — основной инструмент?
 
-**MLflow** (open-source, Databricks) — самый популярный для experiment tracking + model registry.
+**MLflow** (open-source, Databricks) — самый популярный инструмент для experiment tracking + model registry.
 
 ```python
 import mlflow
@@ -178,18 +178,18 @@ with mlflow.start_run():
 # UI на http://localhost:5000
 ```
 
-**Components:**
-- **Tracking** — experiments, runs, metrics
-- **Model Registry** — versioned models, stages (Staging/Production)
-- **Projects** — packaged ML code
-- **Models** — formats для deployment (Spark, Sagemaker, ...)
+**Компоненты:**
+- **Tracking** — эксперименты, прогоны, метрики
+- **Model Registry** — версионированные модели, стадии (Staging/Production)
+- **Projects** — упакованный ML-код
+- **Models** — форматы для деплоя (Spark, Sagemaker, ...)
 
 **Self-hosted** или managed (Databricks).
 
 
 ## Q6. Weights & Biases (W&B)?
 
-**Weights & Biases** — proprietary SaaS, focus на **experiment tracking**.
+**Weights & Biases** — проприетарный SaaS с фокусом на **experiment tracking**.
 
 ```python
 import wandb
@@ -202,21 +202,21 @@ for epoch in range(10):
 
 **Преимущества над MLflow:**
 - Отличный UI
-- Богатые visualizations
-- Sweeps (hyperparameter tuning)
-- Reports / collaboration
+- Богатые визуализации
+- Sweeps (подбор гиперпараметров)
+- Reports / совместная работа
 - Artifacts с lineage
 
 **Минусы:**
 - Не open-source (есть free tier)
 - Vendor lock-in
 
-В **academia / research** — W&B доминирует. В **enterprise** — MLflow часто чуть популярнее (open-source + Databricks).
+В **академии / research** — W&B доминирует. В **enterprise** — MLflow часто чуть популярнее (open-source + Databricks).
 
 
 ## Q7. (!) Что такое feature store?
 
-**Feature store** — централизованное хранилище **features** для ML.
+**Feature store** — централизованное хранилище **features** (признаков) для ML.
 
 ```mermaid
 graph TD
@@ -227,64 +227,64 @@ graph TD
 ```
 
 **Решает проблемы:**
-- **Training-serving skew** — same feature definitions для training и inference
-- **Reuse** — несколько моделей используют те же features
-- **Discoverability** — каталог features
-- **Monitoring** — feature drift detection
+- **Training-serving skew** — единые определения features для training и inference
+- **Переиспользование** — несколько моделей используют одни и те же features
+- **Обнаруживаемость** — каталог features
+- **Мониторинг** — обнаружение дрейфа features (feature drift)
 
-**Tools:** Feast (open-source), Tecton (managed), Hopsworks, Vertex AI Feature Store, SageMaker Feature Store.
+**Инструменты:** Feast (open-source), Tecton (managed), Hopsworks, Vertex AI Feature Store, SageMaker Feature Store.
 
 
 ## Q8. (!) Online vs offline features?
 
 **Offline features** — для training:
-- Большой volume, batch computation
-- Сложные aggregations (сумма за 30 дней, ...)
-- Storage: S3, BigQuery, Hive
-- Read latency: seconds
+- Большой объём, batch-вычисления
+- Сложные агрегации (сумма за 30 дней, ...)
+- Хранилище: S3, BigQuery, Hive
+- Задержка чтения: секунды
 
 **Online features** — для realtime inference:
-- Read latency < 100ms
-- Storage: Redis, DynamoDB, Cassandra
-- Pre-computed offline → loaded online
+- Задержка чтения < 100ms
+- Хранилище: Redis, DynamoDB, Cassandra
+- Предрасчёт offline → загрузка в online-хранилище
 
-**Feature store** управляет **синхронизацией** offline ↔ online (often через scheduled jobs).
+**Feature store** управляет **синхронизацией** offline ↔ online (часто через запланированные jobs).
 
 
 ## Q9. Feast vs Tecton?
 
-| Critterion | Feast | Tecton |
+| Критерий | Feast | Tecton |
 |-----------|-------|--------|
-| License | Open-source | Proprietary |
-| Hosting | Self-host | Managed SaaS |
-| Online store | Redis, DynamoDB | Built-in |
-| Streaming features | Limited | Yes (Spark, Flink) |
-| Cost | Free + infra | $$$ |
-| Maturity | Growing | Production-grade |
+| Лицензия | Open-source | Проприетарная |
+| Хостинг | Self-host | Managed SaaS |
+| Online store | Redis, DynamoDB | Встроенный |
+| Streaming features | Ограниченно | Да (Spark, Flink) |
+| Стоимость | Бесплатно + инфра | $$$ |
+| Зрелость | Растёт | Production-grade |
 
-**Feast** — для startups / smaller teams.
-**Tecton** — для enterprise (founded by ex-Uber Michelangelo team).
+**Feast** — для стартапов / небольших команд.
+**Tecton** — для enterprise (основана командой ex-Uber Michelangelo).
 
 
 ## Q10. Training-serving skew?
 
-**Training-serving skew** — features в training computed по-разному vs в production inference.
+**Training-serving skew** — features при обучении вычисляются иначе, чем при production-inference.
 
 **Пример:**
 - Training: `avg_purchase_30d` посчитано из исторических данных
-- Inference: реальный `avg_purchase_30d` другой (другая SQL query, fresh data, different time window)
+- Inference: реальный `avg_purchase_30d` другой (другой SQL-запрос, свежие данные, другое временное окно)
 
-**Эффект:** model работает **отлично на test**, **плохо на production**.
+**Эффект:** модель работает **отлично на test** и **плохо на production**.
 
 **Решение:**
-- **Feature store** — single definition
-- **Training data extraction точно как inference**
-- **Monitoring** — track distribution differences
+- **Feature store** — единое определение
+- **Извлечение тренировочных данных точно так же, как при inference**
+- **Мониторинг** — отслеживать различия в распределениях
 
 
 ## Q11. (!) Model registry — для чего?
 
-**Model registry** — БД моделей с версионированием, stages, metadata.
+**Model registry** — БД моделей с версионированием, стадиями (stages) и метаданными.
 
 ```python
 mlflow.register_model("runs:/abc123/model", "fraud_detector")
@@ -295,50 +295,50 @@ client.transition_model_version_stage(
 )
 ```
 
-**Stages:**
-- **None** — just registered
+**Стадии (stages):**
+- **None** — только что зарегистрирована
 - **Staging** — тестируется
-- **Production** — used by inference service
-- **Archived** — old version
+- **Production** — используется inference-сервисом
+- **Archived** — старая версия
 
 **Зачем:**
-- **Lineage** — откуда взялась модель (data, code)
+- **Lineage** — откуда взялась модель (данные, код)
 - **Promotion** — staging → production через approval
-- **Rollback** — quickly revert к previous version
-- **Multiple models in production** (A/B testing)
+- **Rollback** — быстрый откат к предыдущей версии
+- **Несколько моделей в production** (A/B-тестирование)
 
-**Tools:** MLflow Registry, W&B Artifacts, SageMaker Model Registry, Vertex AI Models.
+**Инструменты:** MLflow Registry, W&B Artifacts, SageMaker Model Registry, Vertex AI Models.
 
 
 ## Q12. Model versioning — стратегии?
 
-**Approaches:**
+**Подходы:**
 
-1. **Semantic versioning** (`1.2.3`) — major/minor/patch
-2. **Git commit hash** — модель привязана к code version
-3. **Date-based** (`2025-04-19`) — для часто-обновляемых
-4. **Auto-incremented** (`v1`, `v2`, ...) — MLflow default
+1. **Семантическое версионирование** (`1.2.3`) — major/minor/patch
+2. **Git commit hash** — модель привязана к версии кода
+3. **По дате** (`2025-04-19`) — для часто обновляемых
+4. **Авто-инкремент** (`v1`, `v2`, ...) — дефолт в MLflow
 
-**Best practice:** combine — `model_v3_abc123_20250419`.
+**Best practice:** комбинировать — `model_v3_abc123_20250419`.
 
 
 ## Q13. (!) Batch vs online inference?
 
 | Критерий | Batch | Online |
 |----------|-------|--------|
-| Trigger | Scheduled (daily/hourly) | Per request |
-| Latency | Минуты-часы | < 100ms |
-| Throughput | Очень высокий | Зависит от load |
-| Use case | Recommendations precompute, churn scoring | Fraud detection, search, chatbot |
-| Infrastructure | Spark, Airflow | API service (FastAPI, Triton) |
-| Cost | Низкий per prediction | Выше (always running) |
+| Триггер | По расписанию (раз в день/час) | На каждый запрос |
+| Задержка | Минуты-часы | < 100ms |
+| Пропускная способность | Очень высокая | Зависит от нагрузки |
+| Сценарий | Предрасчёт рекомендаций, churn scoring | Fraud detection, поиск, чатбот |
+| Инфраструктура | Spark, Airflow | API-сервис (FastAPI, Triton) |
+| Стоимость | Низкая на одно предсказание | Выше (постоянно работает) |
 
-**Hybrid:** некоторые predictions precomputed batch + cached → fast online lookup.
+**Гибрид:** часть предсказаний рассчитывается заранее (batch) и кэшируется → быстрый online-lookup.
 
 
 ## Q14. (!) A/B testing моделей?
 
-**A/B testing:** % traffic → model A, % → model B, compare metrics.
+**A/B-тестирование:** % трафика → модель A, % → модель B, сравниваем метрики.
 
 ```python
 def predict(user_id, features):
@@ -352,16 +352,16 @@ def predict(user_id, features):
 ```
 
 **Метрики для сравнения:**
-- **Online metrics** — CTR, conversion rate, revenue
+- **Онлайн-метрики** — CTR, conversion rate, выручка
 - **Latency, error rate**
-- **User satisfaction**
+- **Удовлетворённость пользователей**
 
-**Сложнее, чем кажется:** статистическая значимость, novelty effects, holdout groups.
+**Сложнее, чем кажется:** статистическая значимость, novelty-эффекты, holdout-группы.
 
 
 ## Q15. Shadow deployment?
 
-**Shadow:** new model **видит production traffic**, но **predictions не используются**. Сравниваем с production model offline.
+**Shadow:** новая модель **видит production-трафик**, но её **предсказания не используются**. Сравниваем с production-моделью offline.
 
 ```python
 def predict(features):
@@ -372,12 +372,12 @@ def predict(features):
     return prediction  # production prediction
 ```
 
-**Зачем:** проверить new model на real traffic без risk. Перед actual A/B test.
+**Зачем:** проверить новую модель на реальном трафике без риска. Перед настоящим A/B-тестом.
 
 
 ## Q16. Canary deployment?
 
-Postepenно увеличиваем % traffic на new model:
+Постепенно увеличиваем % трафика на новую модель:
 
 ```
 Day 1: 1% to new model
@@ -387,37 +387,37 @@ Day 4: 50%
 Day 5: 100%
 ```
 
-При detecting issues (error rate, drift) — rollback.
+При обнаружении проблем (error rate, drift) — откат (rollback).
 
-Аналог DevOps canary deployment, но с ML metrics.
+Аналог DevOps canary deployment, но с ML-метриками.
 
 
 ## Q17. (!) Что мониторить в production ML?
 
-**Operational:**
+**Операционное:**
 - Latency (p50, p99)
 - Throughput, RPS
 - Error rate
-- CPU/memory/GPU utilization
+- Утилизация CPU/memory/GPU
 
-**ML-specific:**
-- **Predictions distribution** — drift?
-- **Input features distribution** — drift?
-- **Model accuracy** (если есть ground truth)
-- **Feature importance** — изменилось ли?
-- **Prediction confidence** distribution
-- **Business metrics** — conversion, revenue impact
+**Специфичное для ML:**
+- **Распределение предсказаний** — есть ли drift?
+- **Распределение входных features** — есть ли drift?
+- **Accuracy модели** (если есть ground truth)
+- **Feature importance** — изменилась ли?
+- **Распределение уверенности предсказаний** (prediction confidence)
+- **Бизнес-метрики** — конверсия, влияние на выручку
 
-**Alerts:**
+**Алерты:**
 - Latency > 200ms
 - Error rate > 1%
-- Drift score > threshold
-- Accuracy drop > 5%
+- Drift score > порога
+- Падение accuracy > 5%
 
 
 ## Q18. (!) Data drift?
 
-**Data drift** — distribution of **input features** меняется со временем.
+**Data drift** — распределение **входных features** меняется со временем.
 
 ```
 Training time: avg user_age = 35
@@ -425,71 +425,71 @@ Production:    avg user_age = 28 (younger users)
 ```
 
 **Виды:**
-- **Covariate shift** — distribution X меняется, P(Y|X) тот же
-- **Label shift** — P(Y) меняется
-- **Concept drift** — P(Y|X) меняется (см. Q19)
+- **Covariate shift** — распределение X меняется, P(Y|X) тот же
+- **Label shift** — меняется P(Y)
+- **Concept drift** — меняется P(Y|X) (см. Q19)
 
-**Detection:**
-- **KL divergence** между training и production distributions
+**Обнаружение:**
+- **KL divergence** между распределениями training и production
 - **PSI (Population Stability Index)**
-- **KS test** для numeric features
-- **Chi-square** для categorical
+- **KS-тест** для числовых features
+- **Chi-square** для категориальных
 
-**Tools:** Evidently AI, NannyML, Arize, WhyLabs.
+**Инструменты:** Evidently AI, NannyML, Arize, WhyLabs.
 
 
 ## Q19. (!) Concept drift?
 
-**Concept drift** — relationship X → Y меняется. Та же features → разный label.
+**Concept drift** — связь X → Y меняется. Те же features → другой label.
 
-**Пример:** spam detection — спам evolves, successfu tactics changes.
+**Пример:** обнаружение спама — спам эволюционирует, успешные тактики меняются.
 
 **Виды:**
-- **Sudden** — резкое (COVID hit, prices changed)
-- **Gradual** — постепенное (consumer preferences)
-- **Recurring** — seasonal (зимой ↔ летом)
+- **Sudden** — резкий (грянул COVID, изменились цены)
+- **Gradual** — постепенный (предпочтения потребителей)
+- **Recurring** — сезонный (зимой ↔ летом)
 
-**Detection:** model accuracy decay (если есть ground truth labels).
+**Обнаружение:** деградация accuracy модели (если есть ground-truth-метки).
 
-**Mitigation:** **continuous retraining** на новых данных.
+**Смягчение:** **непрерывное переобучение** (continuous retraining) на новых данных.
 
 
 ## Q20. Tools для monitoring (Evidently, Arize, WhyLabs)?
 
 **Evidently AI** (open-source):
 - Data drift, target drift
-- Reports, dashboards
-- Easy integration
+- Отчёты, дашборды
+- Простая интеграция
 
 **Arize AI** (SaaS):
 - ML observability
-- Drift, performance, fairness
-- LLM observability tools
+- Drift, производительность, fairness
+- Инструменты LLM observability
 
 **WhyLabs** (SaaS):
-- Open-source whylogs library
-- Statistical profiling
-- Anomaly detection
+- Open-source-библиотека whylogs
+- Статистическое профилирование
+- Обнаружение аномалий
 
-**Custom:** Prometheus metrics + Grafana dashboards для simple cases.
+**Своё решение:** метрики Prometheus + дашборды Grafana для простых случаев.
 
 
 ## Q21. (!) Что такое CI/CD для ML?
 
 **CI (Continuous Integration):**
 - Тесты на каждый PR
-- Data validation tests
-- Model unit tests (no NaNs, predictions in range)
-- Integration tests
+- Тесты валидации данных
+- Unit-тесты модели (нет NaN, предсказания в допустимом диапазоне)
+- Интеграционные тесты
 
 **CD (Continuous Deployment):**
-- Auto deploy после merge
+- Авто-деплой после merge
 - Canary deployment
-- Auto rollback при regressions
+- Авто-откат при регрессиях
 
 **Также:**
-- **CT (Continuous Training)** — auto retrain на новых data
-- **CM (Continuous Monitoring)** — постоянный watch performance
+- **CT (Continuous Training)** — авто-переобучение на новых данных
+- **CM (Continuous Monitoring)** — постоянное наблюдение за производительностью
 
 ```yaml
 # Пример CI/CD для ML pipeline
@@ -506,11 +506,11 @@ stages:
 
 ## Q22. Continuous Training?
 
-**CT (Continuous Training):** автоматическая retrain pipeline на:
-- **Schedule** (each week)
-- **Drift detection trigger**
-- **Performance degradation**
-- **New data availability**
+**CT (Continuous Training):** автоматический pipeline переобучения по:
+- **Расписанию** (каждую неделю)
+- **Триггеру обнаружения drift**
+- **Деградации производительности**
+- **Появлению новых данных**
 
 ```python
 # Airflow DAG
@@ -525,42 +525,42 @@ def retrain_pipeline():
         notify_team("Model didn't improve")
 ```
 
-**Подвох:** retraining может **ухудшить** model (bad new data, label drift). Auto-deploy только если metrics improve.
+**Подвох:** переобучение может **ухудшить** модель (плохие новые данные, label drift). Авто-деплой только если метрики улучшаются.
 
 
 ## Q23. (!) Что такое LLMOps?
 
-**LLMOps** — MLOps **для LLM приложений**. Подкласс с своей спецификой.
+**LLMOps** — MLOps **для LLM-приложений**. Подкласс со своей спецификой.
 
-**Особенности vs classical MLOps:**
-- Не обучаем модели (используем third-party APIs или fine-tuned)
-- Главный artifact = **prompts** (версионируется как код)
-- Evaluation сложнее (no clear ground truth)
-- Cost monitoring critical (per-token pricing)
+**Особенности vs классический MLOps:**
+- Не обучаем модели (используем сторонние API или fine-tuned)
+- Главный артефакт = **промпты** (версионируются как код)
+- Оценка (evaluation) сложнее (нет чёткого ground truth)
+- Критичен мониторинг стоимости (оплата за токены)
 - Latency и streaming
-- Hallucination detection
+- Обнаружение галлюцинаций
 
 **Стек LLMOps:**
-- **Prompt management** (LangSmith, Langfuse, PromptLayer)
-- **Tracing** (OpenTelemetry, LangSmith)
-- **Cost tracking** (Helicone, Portkey)
-- **Evaluation** (Ragas, TruLens, custom)
-- **Safety** (Moderation API, custom guards)
+- **Управление промптами** (LangSmith, Langfuse, PromptLayer)
+- **Трассировка** (OpenTelemetry, LangSmith)
+- **Учёт затрат** (Helicone, Portkey)
+- **Оценка** (Ragas, TruLens, своё решение)
+- **Безопасность** (Moderation API, кастомные guard-ы)
 
 
 ## Q24. Отличия LLMOps от классического MLOps?
 
-| Аспект | Classical MLOps | LLMOps |
+| Аспект | Классический MLOps | LLMOps |
 |--------|----------------|--------|
-| Main artifact | Trained model | Prompts + LLM API |
-| Training | Hours-days | Часто нет (use API) |
-| Versioning | Model weights | Prompts + model version |
-| Evaluation | Accuracy, F1 | Faithfulness, helpfulness (subjective) |
-| Drift | Data drift | Prompt regressions, model updates |
-| Deployment | Model server | Update prompt template |
-| Cost | Compute (GPU) | API per-token |
-| Monitoring | Predictions, latency | + token usage, cost, hallucinations |
-| Security | Data privacy | + Prompt injection |
+| Главный артефакт | Обученная модель | Промпты + LLM API |
+| Обучение | Часы-дни | Часто отсутствует (используем API) |
+| Версионирование | Веса модели | Промпты + версия модели |
+| Оценка | Accuracy, F1 | Faithfulness, helpfulness (субъективно) |
+| Дрейф | Data drift | Регрессии промптов, обновления модели |
+| Деплой | Сервер модели | Обновление шаблона промпта |
+| Стоимость | Вычисления (GPU) | API, оплата за токены |
+| Мониторинг | Предсказания, latency | + расход токенов, стоимость, галлюцинации |
+| Безопасность | Приватность данных | + Prompt injection |
 
 
 ## Q25. (!) Prompt versioning?
@@ -581,74 +581,74 @@ response = llm(prompt.format(question=question))
 ```
 
 **Зачем:**
-- **Track changes** — какая version использовалась когда?
-- **A/B testing** — сравнить v3 vs v4
-- **Rollback** — old version если new сломалось
-- **Audit** — compliance
+- **Отслеживание изменений** — какая версия и когда использовалась?
+- **A/B-тестирование** — сравнить v3 vs v4
+- **Rollback** — старая версия, если новая сломалась
+- **Аудит** — compliance
 
-Prompts = код. Version в Git или dedicated tools.
+Промпты = код. Версионировать в Git или в специализированных инструментах.
 
 
 ## Q26. LLM evaluation в production?
 
 **Метрики:**
 
-1. **User feedback** — thumbs up/down
-2. **Task completion** — пользователь решил problem?
-3. **LLM-as-judge** — другая LLM оценивает quality (rubric)
-4. **Faithfulness (для RAG)** — все ли facts в answer от retrieved docs?
-5. **Latency, cost** per request
+1. **Обратная связь пользователей** — thumbs up/down
+2. **Завершение задачи** — пользователь решил проблему?
+3. **LLM-as-judge** — другая LLM оценивает качество по rubric
+4. **Faithfulness (для RAG)** — все ли факты в ответе взяты из retrieved-документов?
+5. **Latency, стоимость** на запрос
 6. **Refusal rate** — как часто модель отказывает?
-7. **Safety** — toxic outputs detected?
+7. **Безопасность** — обнаружены ли токсичные ответы?
 
-**Continuous eval:**
-- Sample 1% productions запросов в **golden dataset**
-- Evaluate weekly against benchmarks
-- Alert if regressions
+**Непрерывная оценка:**
+- Сэмплировать 1% production-запросов в **golden dataset**
+- Еженедельно прогонять оценку против бенчмарков
+- Алертить при регрессиях
 
-**Tools:** Phoenix Arize, Langfuse, Helicone, custom.
+**Инструменты:** Phoenix Arize, Langfuse, Helicone, своё решение.
 
 
 ## Q27. (!) Уровни MLOps maturity?
 
-**Google ML maturity model:**
+**Модель зрелости Google ML:**
 
-**Level 0 — Manual:**
-- Manual training, manual deployment
-- One-off models
-- No tracking
+**Level 0 — Ручной:**
+- Ручное обучение, ручной деплой
+- Разовые модели
+- Нет трекинга
 
-**Level 1 — ML pipeline automation:**
-- Automated training pipeline
-- Continuous training based on triggers
+**Level 1 — Автоматизация ML-пайплайна:**
+- Автоматизированный pipeline обучения
+- Непрерывное обучение по триггерам
 - Model registry
 
-**Level 2 — Full automation:**
-- Automated CI/CD
-- Continuous monitoring
-- Automated retraining + deploy
+**Level 2 — Полная автоматизация:**
+- Автоматизированный CI/CD
+- Непрерывный мониторинг
+- Автоматическое переобучение + деплой
 - Feature store
-- Drift detection
+- Обнаружение drift
 
-**Большинство компаний — Level 0-1**. Level 2 — крупные tech companies (Uber, Netflix, FAANG).
+**Большинство компаний — Level 0-1**. Level 2 — крупные tech-компании (Uber, Netflix, FAANG).
 
-В **2025** большинство стартапов — Level 1 для critical ML, Level 0 для experiments.
+В **2025** большинство стартапов — Level 1 для критичного ML, Level 0 для экспериментов.
 
 
 ## Q28. Какие частые проблемы в MLOps?
 
-1. **Reproducibility** — могу repeat experiment? (часто нет)
-2. **Training-serving skew** — different feature definitions
-3. **Data drift не обнаружен** — model deteriorates silently
-4. **Manual deployment** — slow, error-prone
-5. **No model lineage** — откуда эта модель в production?
-6. **Hard rollback** — difficult to switch back
-7. **Cost runaway** — много models running, никто не tracks costs
-8. **Stale data** — features computed месяцы назад
-9. **Tech debt** — Jupyter notebooks в production
-10. **ML team isolated** — нет integration с product engineering
+1. **Воспроизводимость** — могу ли повторить эксперимент? (часто нет)
+2. **Training-serving skew** — разные определения features
+3. **Data drift не обнаружен** — модель деградирует незаметно
+4. **Ручной деплой** — медленно, чревато ошибками
+5. **Нет model lineage** — откуда взялась эта модель в production?
+6. **Сложный rollback** — трудно откатиться назад
+7. **Расходы вне контроля** — запущено много моделей, никто не следит за затратами
+8. **Устаревшие данные** — features посчитаны месяцы назад
+9. **Технический долг** — Jupyter-ноутбуки в production
+10. **ML-команда изолирована** — нет интеграции с product engineering
 
-**MLOps maturity** — это journey, не destination. Постоянное improvement.
+**Зрелость MLOps** — это путь, а не пункт назначения. Постоянное улучшение.
 
 
 ---

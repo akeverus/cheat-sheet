@@ -19,7 +19,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `GCP (Google Cloud Platform)`
 
-`GCP` — облако Google (~12% доли рынка 2025, 3-е место после AWS, Azure). Сильные стороны: **BigQuery** (DWH), **Kubernetes** (Google создал K8s), **AI/ML** (Vertex AI, Gemini), **networking** (best in class). На интервью знают: BigQuery, GKE, Cloud Run, Cloud Functions, IAM, отличия от AWS.
+`GCP` — облако Google (~12% доли рынка в 2025, 3-е место после AWS и Azure). Сильные стороны: **BigQuery** (DWH), **Kubernetes** (Google создал K8s), **AI/ML** (Vertex AI, Gemini), **сеть** (лучшая в классе). На интервью спрашивают про: BigQuery, GKE, Cloud Run, Cloud Functions, IAM, отличия от AWS.
 
 ## Полезные ссылки
 
@@ -84,19 +84,19 @@ updated: "2026-04-25"
 
 (!) Что такое GCP и его ключевые отличия?
 
-`GCP (Google Cloud Platform)` — облако от Google (с 2008). 3-е место по market share (~12%, 2025).
+`GCP (Google Cloud Platform)` — облако от Google (с 2008 года). 3-е место по доле рынка (~12% в 2025).
 
-**Strong areas:**
-- **BigQuery** — лучший cloud DWH (по мнению многих)
-- **Kubernetes** — родина K8s (GKE — most mature)
-- **AI/ML** — Gemini, Vertex AI, TPUs
-- **Networking** — best-in-class global network
-- **Data analytics** — Dataflow, Pub/Sub, Bigtable
+**Сильные стороны:**
+- **BigQuery** — лучший облачный DWH (по мнению многих)
+- **Kubernetes** — родина K8s (GKE — самый зрелый)
+- **AI/ML** — Gemini, Vertex AI, TPU
+- **Сеть** — глобальная сеть лучшая в классе
+- **Аналитика данных** — Dataflow, Pub/Sub, Bigtable
 
-**Weak areas:**
-- Меньше services чем AWS
-- Меньше regions (40 vs 33)
-- Меньшее enterprise adoption (но растёт)
+**Слабые стороны:**
+- Меньше сервисов, чем у AWS
+- Меньше регионов (40 против 33)
+- Слабее проникновение в enterprise (но растёт)
 
 ## Q2. (!) Regions, Zones, Multi-region?
 
@@ -107,15 +107,15 @@ Region (us-central1)
   └── Zone us-central1-c
 ```
 
-**Region** — географическая location (Iowa, Frankfurt, ...).
-**Zone** — physical data center (3+ per region).
-**Multi-region** — services replicated across multiple regions automatically (Cloud Storage, Spanner).
+**Region** — географическое расположение (Iowa, Frankfurt, ...).
+**Zone** — физический дата-центр (3+ на регион).
+**Multi-region** — сервисы автоматически реплицируются между несколькими регионами (Cloud Storage, Spanner).
 
-**Multi-region storage** в Cloud Storage — single namespace, replicated. AWS S3 не имеет аналога (хотя есть Cross-Region Replication).
+**Multi-region storage** в Cloud Storage — единое пространство имён с репликацией. У AWS S3 прямого аналога нет (хотя есть Cross-Region Replication).
 
 ## Q3. Projects и organizations?
 
-GCP имеет **проектную** организацию resources (vs AWS accounts):
+GCP организует ресурсы **по проектам** (в отличие от аккаунтов AWS):
 
 ```
 Organization
@@ -126,74 +126,74 @@ Organization
       └── Project: my-app-dev
 ```
 
-**Project** = isolated container для resources (как AWS account).
+**Project** = изолированный контейнер для ресурсов (как аккаунт в AWS).
 
-**Преимущество:** легче organize. **AWS** historically не имел org structure (потом добавили AWS Organizations).
+**Преимущество:** проще организовывать. **AWS** исторически не имел организационной структуры (потом добавили AWS Organizations).
 
 ## Q4. (!) Compute Engine (GCE) — VMs?
 
 **Compute Engine** — IaaS, аналог AWS EC2.
 
-**Machine types:**
-- **General-purpose** — N1, N2, N2D, E2 (cheapest)
+**Типы машин (machine types):**
+- **General-purpose** — N1, N2, N2D, E2 (самые дешёвые)
 - **Compute-optimized** — C2, C3
 - **Memory-optimized** — M1, M2, M3
 - **GPU** — A2, G2 (NVIDIA), TPU
 
-**Custom machine types** — выбираешь exact CPU + RAM (vs AWS fixed sizes).
+**Custom machine types** — задаёшь точное число CPU + объём RAM (в отличие от фиксированных размеров у AWS).
 
-**Discounts:**
-- **Sustained Use Discounts** — automatic, до 30%
-- **Committed Use Discounts** — 1-3 years
-- **Spot VMs (Preemptible)** — до 91% off, могут быть прерваны
+**Скидки:**
+- **Sustained Use Discounts** — автоматические, до 30%
+- **Committed Use Discounts** — на 1–3 года
+- **Spot VMs (Preemptible)** — до 91% дешевле, могут быть прерваны
 
 ## Q5. (!) GKE (Google Kubernetes Engine)?
 
-**GKE** — managed Kubernetes (Google создал K8s).
+**GKE** — управляемый Kubernetes (Google создал K8s).
 
-**Modes:**
-- **Standard** — full control, manage nodes
-- **Autopilot** (с 2021) — fully managed, pay per pod, no node management
+**Режимы:**
+- **Standard** — полный контроль, ноды управляются вручную
+- **Autopilot** (с 2021) — полностью управляемый, оплата за под, без управления нодами
 
 **Особенности:**
-- Auto-upgrade К8s versions
-- Auto-scaling (cluster + pod)
-- Workload Identity для IAM integration
+- Автообновление версий K8s
+- Автомасштабирование (кластера + подов)
+- Workload Identity для интеграции с IAM
 - Multi-cluster meshes (Anthos)
 
-**Считается** **gold standard** managed K8s. **EKS, AKS** — догоняют, но GKE pioneers.
+**Считается** **золотым стандартом** управляемого K8s. **EKS, AKS** — догоняют, но первопроходец — GKE.
 
 Подробнее — в [Kubernetes](../devops/kubernetes-interview.md).
 
 ## Q6. (!) Cloud Run — managed containers?
 
-**Cloud Run** — serverless containers. Просто deploy Docker image, GCP runs.
+**Cloud Run** — serverless-контейнеры. Просто деплоишь Docker-образ, а GCP его запускает.
 
 ```bash
 gcloud run deploy my-service --image gcr.io/my-project/my-image --port 8080
 ```
 
 **Особенности:**
-- **Auto-scaling** к zero (как Lambda) — pay only when running
-- **HTTP-triggered** или event-triggered
-- До **60 minutes** request timeout (vs Lambda 15 min)
-- До 32 GB memory, 8 vCPU
-- Concurrent requests per instance (vs Lambda 1)
+- **Автомасштабирование** до нуля (как Lambda) — платишь только во время работы
+- Запуск **по HTTP** или по событию
+- Таймаут запроса до **60 минут** (против 15 минут у Lambda)
+- До 32 ГБ памяти, 8 vCPU
+- Несколько одновременных запросов на инстанс (у Lambda — 1)
 - WebSocket, HTTP/2, gRPC
 
-**В 2025** — **самый popular GCP serverless option** (лучше чем Cloud Functions для большинства cases).
+**В 2025** — **самый популярный serverless-вариант в GCP** (для большинства случаев лучше, чем Cloud Functions).
 
-**Cloud Run Jobs** — для batch-like tasks (без HTTP).
+**Cloud Run Jobs** — для batch-задач (без HTTP).
 
 ## Q7. (!) Cloud Functions — FaaS?
 
 **Cloud Functions** — аналог AWS Lambda.
 
-**Generations:**
-- **Gen 1** — original FaaS (limited)
-- **Gen 2** (2022+) — built on Cloud Run, more powerful
+**Поколения:**
+- **Gen 1** — изначальный FaaS (с ограничениями)
+- **Gen 2** (с 2022) — построен на Cloud Run, мощнее
 
-**Triggers:** HTTP, Pub/Sub, Cloud Storage, Firestore, Eventarc.
+**Триггеры:** HTTP, Pub/Sub, Cloud Storage, Firestore, Eventarc.
 
 ```python
 def hello_http(request):
@@ -205,158 +205,158 @@ gcloud functions deploy hello-http \
   --gen2 --runtime=python311 --trigger-http
 ```
 
-**В 2025** — Cloud Functions теряет долю в favor **Cloud Run** (более flexible).
+**В 2025** — Cloud Functions теряет долю в пользу **Cloud Run** (более гибкого).
 
 ## Q8. App Engine?
 
-**App Engine** (с 2008) — original GCP PaaS. Deploy code, GCP manages everything.
+**App Engine** (с 2008) — изначальный PaaS в GCP. Деплоишь код, а GCP управляет всем остальным.
 
-**Standard** — restricted runtime, fastest cold start.
-**Flexible** — Docker-based, more control.
+**Standard** — ограниченный рантайм, самый быстрый холодный старт.
+**Flexible** — на базе Docker, больше контроля.
 
-В **2025** — App Engine **legacy**. Новые проекты выбирают **Cloud Run**.
+В **2025** — App Engine **устаревший**. Новые проекты выбирают **Cloud Run**.
 
 ## Q9. (!) Cloud Storage — vs S3?
 
-**Cloud Storage** — object storage, аналог S3.
+**Cloud Storage** — объектное хранилище, аналог S3.
 
-**Storage classes:**
-- **Standard** — hot data
-- **Nearline** — accessed < 1x/month, $0.01/GB
-- **Coldline** — accessed < 1x/quarter
-- **Archive** — long-term, $0.0012/GB
+**Классы хранения:**
+- **Standard** — горячие данные
+- **Nearline** — обращения реже 1 раза в месяц, $0.01/ГБ
+- **Coldline** — обращения реже 1 раза в квартал
+- **Archive** — долгосрочное хранение, $0.0012/ГБ
 
-**Особенности vs S3:**
-- **Single namespace** (multi-region) — auto-replicated
-- **Object versioning, lifecycle**
-- **Strong consistency**
-- **Per-object permissions** (как S3)
-- HMAC keys для S3-compatible API
+**Отличия от S3:**
+- **Единое пространство имён** (multi-region) — с автоматической репликацией
+- **Версионирование объектов и lifecycle-политики**
+- **Строгая согласованность (strong consistency)**
+- **Права на уровне объекта** (как в S3)
+- HMAC-ключи для S3-совместимого API
 
-**Egress costs** — у GCP **дешевле** чем AWS для большинства случаев.
+**Стоимость egress (исходящего трафика)** — у GCP **дешевле**, чем у AWS, в большинстве случаев.
 
 ## Q10. Persistent Disks?
 
-**Persistent Disks** — block storage для GCE (аналог EBS).
+**Persistent Disks** — блочное хранилище для GCE (аналог EBS).
 
-**Types:**
-- **pd-standard** — HDD, cheapest
-- **pd-balanced** — SSD, balanced
-- **pd-ssd** — SSD, performance
-- **pd-extreme** — highest IOPS
+**Типы:**
+- **pd-standard** — HDD, самый дешёвый
+- **pd-balanced** — SSD, сбалансированный
+- **pd-ssd** — SSD, производительный
+- **pd-extreme** — максимальный IOPS
 
-**Hyperdisk** (новее) — even more options для extreme workloads.
+**Hyperdisk** (новее) — ещё больше вариантов для экстремальных нагрузок.
 
 **Преимущества над EBS:**
-- Auto-snapshot scheduling built-in
-- Можно snapshot live disk без consistency issues
-- Regional disks (replicated across 2 zones)
+- Встроенное расписание авто-снапшотов
+- Можно снять снапшот живого диска без проблем с согласованностью
+- Региональные диски (реплицируются между 2 зонами)
 
 ## Q11. Filestore?
 
-**Filestore** — managed NFS (аналог AWS EFS).
+**Filestore** — управляемый NFS (аналог AWS EFS).
 
-**Tiers:**
-- Basic — small (under 1 TB)
-- Enterprise — high availability
-- High Scale — petabyte
-- Zonal — single zone
+**Уровни (tiers):**
+- Basic — небольшой объём (до 1 ТБ)
+- Enterprise — высокая доступность
+- High Scale — петабайты
+- Zonal — одна зона
 
-Для shared filesystems между VMs.
+Для файловых систем, общих для нескольких VM.
 
 ## Q12. (!) Cloud SQL?
 
-**Cloud SQL** — managed реляционные БД.
+**Cloud SQL** — управляемые реляционные БД.
 
-**Engines:**
+**Движки:**
 - PostgreSQL
 - MySQL
 - SQL Server
 
-**Features:**
-- Automated backups, PITR (point-in-time recovery)
-- High Availability (HA) — multi-zone replication
-- Read replicas
-- IAM-based authentication
-- Private IP access (через VPC)
+**Возможности:**
+- Автоматические бэкапы, PITR (point-in-time recovery)
+- High Availability (HA) — репликация между зонами
+- Read-реплики
+- Аутентификация на основе IAM
+- Доступ по приватному IP (через VPC)
 
-В **GCP** также: **AlloyDB** (новое, 2022) — PostgreSQL-compatible с лучшим performance (~4x). Конкурент AWS Aurora.
+В **GCP** также есть **AlloyDB** (появился в 2022) — PostgreSQL-совместимый с лучшей производительностью (~в 4 раза). Конкурент AWS Aurora.
 
 ## Q13. (!) Cloud Spanner?
 
-**Cloud Spanner** — globally distributed, **strongly consistent** SQL database. Уникален для GCP.
+**Cloud Spanner** — глобально распределённая SQL-база со **строгой согласованностью**. Уникальна для GCP.
 
 **Особенности:**
-- **Horizontally scalable** SQL
-- **Strong external consistency** (через TrueTime — atomic clocks)
-- **5 nines availability** (multi-region)
-- ACID transactions across regions
-- PostgreSQL-compatible interface
-- Serverless mode
+- **Горизонтально масштабируемый** SQL
+- **Строгая внешняя согласованность** (через TrueTime — атомные часы)
+- **Доступность «пять девяток»** (multi-region)
+- ACID-транзакции между регионами
+- PostgreSQL-совместимый интерфейс
+- Serverless-режим
 
-**Use cases:**
-- Global financial systems
-- Multi-region apps требующие consistency
-- Apps outgrowing single PostgreSQL
+**Сценарии использования:**
+- Глобальные финансовые системы
+- Multi-region приложения, требующие согласованности
+- Приложения, переросшие один инстанс PostgreSQL
 
-**Стоит:** $$$$. Только для real scale.
+**Цена:** $$$$. Только для действительно большого масштаба.
 
-В **2025** — единственный production globally-distributed SQL DB. Конкуренты (CockroachDB, YugabyteDB, TiDB) — open-source альтернативы.
+В **2025** — единственная глобально распределённая SQL-БД в продакшене. Конкуренты (CockroachDB, YugabyteDB, TiDB) — open-source альтернативы.
 
 ## Q14. Firestore?
 
-**Firestore** — NoSQL document database (NoSQL, аналог DynamoDB / MongoDB).
+**Firestore** — документная NoSQL-база (аналог DynamoDB / MongoDB).
 
 **Особенности:**
-- **Realtime sync** — клиенты получают updates автоматически
-- Mobile/web SDKs (offline support)
-- Strong consistency
-- Hierarchical data (collections → documents → subcollections)
-- Auto-scale
+- **Синхронизация в реальном времени** — клиенты получают обновления автоматически
+- SDK для mobile/web (поддержка офлайн-режима)
+- Строгая согласованность
+- Иерархические данные (collections → documents → subcollections)
+- Автомасштабирование
 
-**Modes:**
-- **Native mode** — recommended, real-time, mobile
-- **Datastore mode** — backwards compatible with old Datastore
+**Режимы:**
+- **Native mode** — рекомендуемый, реальное время, mobile
+- **Datastore mode** — обратная совместимость со старым Datastore
 
-**Use cases:** mobile apps, real-time chat, collaborative apps.
+**Сценарии использования:** мобильные приложения, чат в реальном времени, приложения для совместной работы.
 
 ## Q15. Cloud Bigtable?
 
 **Cloud Bigtable** — wide-column NoSQL (аналог HBase, Cassandra).
 
 **Особенности:**
-- **Petascale** (миллионы reads/writes per sec)
-- Low latency (~10ms)
-- HBase-compatible API
-- Single-cell row level transactions
+- **Петабайтный масштаб** (миллионы чтений/записей в секунду)
+- Низкая задержка (~10 мс)
+- HBase-совместимый API
+- Транзакции на уровне строки (одна ячейка)
 
-**Use cases:**
-- Time-series data (financial, IoT, monitoring)
-- AdTech analytics
-- Personalization
-- ML feature serving
+**Сценарии использования:**
+- Временные ряды (финансы, IoT, мониторинг)
+- AdTech-аналитика
+- Персонализация
+- Раздача ML-фич (feature serving)
 
-Реально для **large scale** (минимум $700/month за base cluster).
+Реально оправдан только на **большом масштабе** (минимум $700/месяц за базовый кластер).
 
 ## Q16. Memorystore (Redis, Memcached)?
 
-**Memorystore** — managed Redis или Memcached.
+**Memorystore** — управляемый Redis или Memcached.
 
-Аналог AWS ElastiCache. Standard features.
+Аналог AWS ElastiCache. Стандартный набор возможностей.
 
 ## Q17. (!) BigQuery — что особенного?
 
-**BigQuery** — serverless DWH. Crown jewel GCP.
+**BigQuery** — serverless DWH. Жемчужина GCP.
 
 **Особенности:**
-- **Serverless** — нет infrastructure
-- **Petabyte scale** queries за seconds
-- **Pay per query** (по scanned bytes) или flat-rate
-- **SQL** (standard ANSI)
-- **Built-in ML** (BigQuery ML — `CREATE MODEL ... USING SQL`)
-- **Native multi-cloud** (BigQuery Omni — query AWS S3, Azure)
-- **Streaming inserts** (real-time)
-- **Geospatial functions**
+- **Serverless** — никакой инфраструктуры
+- Запросы **петабайтного масштаба** за секунды
+- **Оплата за запрос** (по объёму просканированных байт) или фиксированный тариф
+- **SQL** (стандарт ANSI)
+- **Встроенный ML** (BigQuery ML — `CREATE MODEL ... USING SQL`)
+- **Нативный multi-cloud** (BigQuery Omni — запросы к AWS S3, Azure)
+- **Streaming-вставки** (в реальном времени)
+- **Геопространственные функции**
 
 ```sql
 CREATE MODEL `mydataset.mymodel`
@@ -364,21 +364,21 @@ OPTIONS(model_type='linear_reg') AS
 SELECT label, feature1, feature2 FROM `mydataset.training`;
 ```
 
-**Cost trap:** pay-per-byte-scanned. Без partitioning/clustering можно случайно "сжечь" $1000.
+**Ловушка по стоимости:** оплата за каждый просканированный байт. Без партиционирования/кластеризации можно случайно «сжечь» $1000.
 
-В **2025** — **самый popular** DWH (наряду с Snowflake).
+В **2025** — **самый популярный** DWH (наряду со Snowflake).
 
 Подробнее — в [Data Warehousing](../data-engineering/data-warehousing-interview.md).
 
 ## Q18. Dataflow (Apache Beam)?
 
-**Dataflow** — managed **Apache Beam** runtime.
+**Dataflow** — управляемый рантайм **Apache Beam**.
 
 **Особенности:**
-- **Unified batch + streaming**
-- Auto-scaling workers
-- Exactly-once processing
-- Integration с BigQuery, Pub/Sub, GCS
+- **Единый движок для batch + streaming**
+- Автомасштабирование воркеров
+- Обработка exactly-once
+- Интеграция с BigQuery, Pub/Sub, GCS
 
 ```java
 pipeline.apply(PubsubIO.readStrings().fromTopic(topic))
@@ -387,56 +387,56 @@ pipeline.apply(PubsubIO.readStrings().fromTopic(topic))
     .apply(BigQueryIO.write().to(table));
 ```
 
-**Vs AWS Kinesis Data Analytics, Azure Stream Analytics:** Dataflow более mature.
+**Против AWS Kinesis Data Analytics, Azure Stream Analytics:** Dataflow более зрелый.
 
-Конкурирует с **Spark Streaming, Flink**. Но **Dataflow managed** — easier ops.
+Конкурирует со **Spark Streaming, Flink**. Но **Dataflow управляемый** — проще в эксплуатации.
 
-Подробнее — в [Flink](../data-engineering/apache-flink-interview.md) (для сравнения streaming).
+Подробнее — в [Flink](../data-engineering/apache-flink-interview.md) (для сравнения streaming-движков).
 
 ## Q19. Pub/Sub vs Kafka?
 
-**Pub/Sub** — managed messaging. Аналог AWS SNS/SQS, Kafka.
+**Pub/Sub** — управляемый messaging. Аналог AWS SNS/SQS, Kafka.
 
-**Features:**
-- **Global** — single endpoint, multi-region
-- **At-least-once delivery**
-- **Push or pull** subscriptions
+**Возможности:**
+- **Глобальный** — единая точка входа, multi-region
+- **Доставка at-least-once**
+- Подписки **push или pull**
 - **Dead letter topics**
-- **Filtering**
-- **Ordering keys** (FIFO per key)
-- **Schema validation**
+- **Фильтрация**
+- **Ordering keys** (FIFO в рамках ключа)
+- **Валидация схем**
 
-**vs Kafka:**
-- Pub/Sub fully managed (no clusters)
-- Auto-scaling
-- No partition planning needed
-- Higher latency (50-200 ms typical)
-- Less control
+**Против Kafka:**
+- Pub/Sub полностью управляемый (нет кластеров)
+- Автомасштабирование
+- Не нужно планировать партиции
+- Выше задержка (обычно 50–200 мс)
+- Меньше контроля
 
-**Use Pub/Sub когда:** хочешь simple managed messaging.
-**Use Kafka когда:** нужен low latency, throughput >> 10K msg/sec, replay из historical offsets, ecosystem (Kafka Streams, Connect).
+**Используй Pub/Sub, когда:** нужен простой управляемый messaging.
+**Используй Kafka, когда:** нужны низкая задержка, пропускная способность >> 10K сообщений/сек, реплей из исторических offset-ов, экосистема (Kafka Streams, Connect).
 
 ## Q20. Dataproc (Hadoop/Spark)?
 
-**Dataproc** — managed **Hadoop, Spark, Hive, Presto, Flink**.
+**Dataproc** — управляемые **Hadoop, Spark, Hive, Presto, Flink**.
 
 **Особенности:**
-- Spin up cluster в **90 seconds**
-- Auto-scaling
-- Per-second pricing
-- Ephemeral clusters (spin up, run job, destroy)
+- Поднятие кластера за **90 секунд**
+- Автомасштабирование
+- Посекундная тарификация
+- Эфемерные кластеры (поднял, выполнил задачу, удалил)
 
-**Когда:** legacy Hadoop/Spark workloads, не хочешь self-host.
+**Когда:** legacy-нагрузки на Hadoop/Spark, когда не хочешь хостить самостоятельно.
 
-В **2025** — для new workloads чаще выбирают **Dataflow** или **Spark в Databricks**.
+В **2025** — для новых нагрузок чаще выбирают **Dataflow** или **Spark в Databricks**.
 
 ## Q21. (!) VPC, subnets, firewalls?
 
 **GCP VPC** уникальна:
 
-- **Global** by default — VPC spans all regions (vs AWS regional)
-- **Subnets per region** — automatic in VPC
-- **Firewall rules** — global (apply across regions)
+- **Глобальна по умолчанию** — VPC охватывает все регионы (в отличие от региональной у AWS)
+- **Подсети на регион** — создаются автоматически внутри VPC
+- **Правила firewall** — глобальные (действуют во всех регионах)
 
 ```
 my-vpc (global)
@@ -445,33 +445,33 @@ my-vpc (global)
   └── subnet-asia (asia-east1, 10.2.0.0/20)
 ```
 
-**Преимущество:** один VPC для всех regions. **AWS** — VPC per region.
+**Преимущество:** один VPC на все регионы. У **AWS** — отдельный VPC на каждый регион.
 
 ## Q22. Cloud CDN, Cloud Load Balancing?
 
-**Cloud Load Balancing** — global, single anycast IP.
-- Auto-distributes traffic к closest region
+**Cloud Load Balancing** — глобальный, единый anycast-IP.
+- Автоматически распределяет трафик к ближайшему региону
 - Layer 4 (TCP/UDP) и Layer 7 (HTTP)
-- Auto-scaling
-- Built-in DDoS protection
+- Автомасштабирование
+- Встроенная защита от DDoS
 
-**Cloud CDN** — global CDN, integrated с Load Balancing.
+**Cloud CDN** — глобальный CDN, интегрированный с Load Balancing.
 
-**Преимущество:** **single global IP** для service в multi-region (AWS требует Route53 latency-based routing для аналогичного).
+**Преимущество:** **единый глобальный IP** для сервиса в multi-region (для аналогичного у AWS нужен Route53 с latency-based routing).
 
-Best-in-class networking — наследие Google Search infrastructure.
+Сеть лучшая в классе — наследие инфраструктуры Google Search.
 
 ## Q23. (!) IAM в GCP — отличия от AWS?
 
 **GCP IAM:**
-- **Roles** = collection of permissions (vs AWS Policies)
-- **Members** = users, groups, service accounts
-- **Bindings** на resource: `member + role`
+- **Roles (роли)** = набор разрешений (в отличие от Policies у AWS)
+- **Members (участники)** = пользователи, группы, service accounts
+- **Bindings (привязки)** на ресурсе: `member + role`
 
-**Role types:**
-- **Basic** — Owner, Editor, Viewer (legacy, broad permissions)
-- **Predefined** — granular per-service (`roles/storage.objectViewer`)
-- **Custom** — own combinations
+**Типы ролей:**
+- **Basic** — Owner, Editor, Viewer (legacy, широкие разрешения)
+- **Predefined** — гранулярные, для каждого сервиса (`roles/storage.objectViewer`)
+- **Custom** — собственные комбинации
 
 ```python
 # Grant role на project
@@ -479,13 +479,13 @@ gcp set-iam-policy --member=user:alice@example.com \
   --role=roles/storage.objectAdmin
 ```
 
-**Hierarchy:** Organization → Folder → Project → Resource. Permissions inherited.
+**Иерархия:** Organization → Folder → Project → Resource. Разрешения наследуются.
 
-**vs AWS:** GCP проще для most cases. AWS более granular но сложнее.
+**Против AWS:** GCP проще в большинстве случаев. AWS более гранулярен, но сложнее.
 
 ## Q24. Service accounts?
 
-**Service account** — non-human identity для services (apps, workloads).
+**Service account** — нечеловеческая identity для сервисов (приложений, нагрузок).
 
 ```bash
 gcloud iam service-accounts create my-sa \
@@ -497,41 +497,41 @@ gcloud compute instances create my-vm \
 ```
 
 **Best practices:**
-- One SA per workload (least privilege)
-- **Workload Identity** для GKE (no JSON keys в pods)
-- **Federated identities** для cross-cloud (AWS EKS → GCP via OIDC)
+- Один SA на нагрузку (принцип наименьших привилегий)
+- **Workload Identity** для GKE (без JSON-ключей в подах)
+- **Federated identities** для cross-cloud (AWS EKS → GCP через OIDC)
 
 ## Q25. (!) Vertex AI?
 
-**Vertex AI** — unified ML platform GCP. Все ML services в одном месте.
+**Vertex AI** — единая ML-платформа GCP. Все ML-сервисы в одном месте.
 
-**Components:**
+**Компоненты:**
 - **Vertex AI Studio** — playground для Gemini
-- **Model Garden** — pre-trained models (Gemini, Llama, Anthropic, ...)
-- **Pipelines** — Kubeflow Pipelines managed
-- **Model Registry** — model versioning
-- **Feature Store** — managed feature store
-- **Workbench** — managed Jupyter
-- **Endpoints** — model serving
-- **AutoML** — no-code training
+- **Model Garden** — предобученные модели (Gemini, Llama, Anthropic, ...)
+- **Pipelines** — управляемые Kubeflow Pipelines
+- **Model Registry** — версионирование моделей
+- **Feature Store** — управляемый feature store
+- **Workbench** — управляемый Jupyter
+- **Endpoints** — раздача моделей (model serving)
+- **AutoML** — обучение без кода
 
-В **2025** — VertexAI один из лидеров managed ML platforms (наряду с SageMaker, Azure ML).
+В **2025** — Vertex AI один из лидеров среди управляемых ML-платформ (наряду с SageMaker, Azure ML).
 
 ## Q26. Gemini API?
 
-**Gemini** — Google's frontier LLM (бывший Bard, PaLM 2). Конкурент GPT-4, Claude.
+**Gemini** — флагманская LLM от Google (бывшие Bard, PaLM 2). Конкурент GPT-4, Claude.
 
-**Models:**
-- **Gemini 2.0 Flash** — fast, cheap
-- **Gemini 2.0 Pro** — balanced
-- **Gemini 2.0 Ultra** — top quality
-- **Gemini 2.5 Pro** — latest (в 2025)
+**Модели:**
+- **Gemini 2.0 Flash** — быстрая, дешёвая
+- **Gemini 2.0 Pro** — сбалансированная
+- **Gemini 2.0 Ultra** — топовое качество
+- **Gemini 2.5 Pro** — самая свежая (в 2025)
 
 **Особенности:**
-- **Native multimodal** (text + image + video + audio)
-- **1M-2M context window** (рекордный)
-- **Code execution** built-in
-- **Grounded with Google Search**
+- **Нативная мультимодальность** (текст + изображения + видео + аудио)
+- **Контекстное окно 1M–2M** (рекордное)
+- **Встроенное выполнение кода (code execution)**
+- **Привязка к Google Search (grounding)**
 
 ```python
 from google import generativeai as genai
@@ -544,44 +544,44 @@ response = model.generate_content("Hello")
 
 ## Q27. (!) GCP vs AWS — strengths/weaknesses?
 
-**GCP strengths:**
-- BigQuery (best DWH)
-- Kubernetes (родина K8s, GKE most mature)
-- Networking (best-in-class global)
-- AI/ML (TPUs, Gemini)
-- Pricing (часто чуть дешевле)
-- Better defaults (multi-zone by default, etc.)
+**Сильные стороны GCP:**
+- BigQuery (лучший DWH)
+- Kubernetes (родина K8s, GKE — самый зрелый)
+- Сеть (глобальная, лучшая в классе)
+- AI/ML (TPU, Gemini)
+- Цены (часто чуть дешевле)
+- Более удачные настройки по умолчанию (multi-zone по умолчанию и т. д.)
 
-**GCP weaknesses:**
-- Меньше services
-- Меньше enterprise tooling
-- Меньше regions (40 vs 33)
-- Smaller community
-- Меньше ecosystem (third-party tools чаще для AWS)
+**Слабые стороны GCP:**
+- Меньше сервисов
+- Меньше enterprise-инструментов
+- Меньше регионов (40 против 33)
+- Меньше сообщество
+- Беднее экосистема (сторонние инструменты чаще делают под AWS)
 
-**AWS strengths:**
-- Largest service catalog
-- Most mature
-- Largest community
-- Best documentation/training
-- Most enterprise contracts
+**Сильные стороны AWS:**
+- Самый большой каталог сервисов
+- Самый зрелый
+- Самое большое сообщество
+- Лучшие документация и обучающие материалы
+- Больше всего enterprise-контрактов
 
 ## Q28. Когда выбирать GCP?
 
-**Выбирай GCP когда:**
-- **Heavy data analytics** — BigQuery лучший
-- **Kubernetes-first** — GKE excellent
-- **AI/ML** — Vertex AI, Gemini, TPUs
-- **Global apps** — networking strong
-- **Cost-conscious** для steady workloads
-- Уже Google ecosystem (Workspace)
+**Выбирай GCP, когда:**
+- **Активная аналитика данных** — BigQuery лучший
+- **Kubernetes на первом месте** — GKE превосходен
+- **AI/ML** — Vertex AI, Gemini, TPU
+- **Глобальные приложения** — сильная сеть
+- **Важна экономия** для стабильных нагрузок
+- Уже используешь экосистему Google (Workspace)
 
-**Не выбирать:**
-- Уже AWS shop с large investment
-- Нужны nichevye services AWS только имеет
-- Compliance / regional requirements не покрыты GCP
+**Не выбирать, когда:**
+- Уже сделаны крупные инвестиции в AWS
+- Нужны нишевые сервисы, которые есть только у AWS
+- Требования по compliance / регионам не покрыты GCP
 
-В **2025** GCP — отличный выбор для **data-heavy** или **K8s-native** projects.
+В **2025** GCP — отличный выбор для проектов с **большим объёмом данных** или **K8s-native** архитектурой.
 
 ## See also
 

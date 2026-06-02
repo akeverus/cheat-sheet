@@ -18,7 +18,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `AWS Lambda`
 
-`AWS Lambda` — самый популярный FaaS (Function as a Service). Run code без управления серверами, pay per invocation. На интервью спрашивают: cold start, lifecycle, integrations (API Gateway, S3, SQS, DynamoDB Streams), limits, monitoring, deployment (SAM, CDK), best practices.
+`AWS Lambda` — самый популярный FaaS (Function as a Service). Запускает код без управления серверами, оплата за каждый вызов. На интервью спрашивают: cold start, жизненный цикл, интеграции (API Gateway, S3, SQS, DynamoDB Streams), лимиты, мониторинг, деплой (SAM, CDK), best practices.
 
 ## Полезные ссылки
 
@@ -94,21 +94,21 @@ updated: "2026-04-25"
 
 `AWS Lambda` — **Function as a Service (FaaS)**. Запускает код без управления серверами:
 
-- **Event-driven** — запуск на event (HTTP, S3, SQS, etc.)
+- **Event-driven** — запуск по событию (HTTP, S3, SQS и т.п.)
 - **Pay-per-use** — платишь только за выполнение
-- **Auto-scaling** — concurrent executions auto
-- **Stateless** — нет local persistent state
-- **Short-lived** — до 15 минут execution
+- **Auto-scaling** — параллельные исполнения масштабируются автоматически
+- **Stateless** — нет локального постоянного состояния
+- **Short-lived** — исполнение до 15 минут
 
 **Появился:** 2014 (первый mainstream FaaS).
 
 **Применения:**
-- API backends (с API Gateway)
-- Event processing (S3 uploads, DynamoDB streams)
-- Cron jobs (CloudWatch Events)
-- ETL (один-shot transformations)
-- Webhooks
-- Frontend для микросервисов
+- API-бэкенды (с API Gateway)
+- Обработка событий (загрузки в S3, DynamoDB streams)
+- Cron-задачи (CloudWatch Events)
+- ETL (разовые трансформации)
+- Вебхуки
+- Фронтенд для микросервисов
 
 ## Q2. (!) Lambda lifecycle (cold/warm start)?
 
@@ -126,10 +126,10 @@ updated: "2026-04-25"
    - Skip init phase, just invoke handler
 ```
 
-**Cold start:** ~100ms - several seconds (Java, .NET).
-**Warm:** ~ms latency (handler execution only).
+**Cold start:** ~100 мс — несколько секунд (Java, .NET).
+**Warm:** задержка ~миллисекунды (только исполнение handler-а).
 
-**Idle timeout:** AWS keeps execution environment warm for **5-15 minutes** after last invocation.
+**Idle timeout:** AWS держит execution environment «тёплым» **5–15 минут** после последнего вызова.
 
 ```python
 # Init code — runs once per cold start
@@ -143,86 +143,86 @@ def handler(event, context):
 
 ## Q3. (!) Какие runtimes поддерживаются?
 
-**Native runtimes:**
+**Нативные runtimes:**
 - Python (3.9, 3.10, 3.11, 3.12, 3.13)
 - Node.js (18, 20, 22)
 - Java (8, 11, 17, 21)
 - .NET (6, 8)
 - Ruby (3.2, 3.3)
-- Go (deprecated separate runtime → use custom)
+- Go (отдельный runtime устарел → используй custom)
 - **Custom runtime** (любой язык через Lambda Runtime API)
 
-**Container images** — bring your own image (Docker), up to 10 GB.
+**Container images** — приноси свой образ (Docker), до 10 GB.
 
 В **2025**:
 - **Python, Node.js** — самые популярные (быстрый cold start)
-- **Java, .NET** — slower cold start, но **SnapStart** помогает
+- **Java, .NET** — cold start медленнее, но **SnapStart** помогает
 - **Go, Rust** — через custom runtime / Container
 
 ## Q4. Container images vs ZIP deployment?
 
 **ZIP deployment:**
-- До 250 MB unzipped
-- Faster deployment
-- Faster cold start
-- Standard runtime
+- До 250 MB в распакованном виде
+- Деплой быстрее
+- Cold start быстрее
+- Стандартный runtime
 
 **Container images:**
 - До 10 GB
-- Custom dependencies, libraries
-- Same image как локальный Docker
-- Любой language
-- Slower cold start (image pull)
+- Произвольные зависимости и библиотеки
+- Тот же образ, что и локальный Docker
+- Любой язык
+- Cold start медленнее (нужно скачать образ)
 
-**Когда container:**
-- Большие dependencies (ML models, native libs)
-- Custom languages
-- Already containerized apps
+**Когда контейнер:**
+- Большие зависимости (ML-модели, нативные библиотеки)
+- Нестандартные языки
+- Уже контейнеризированные приложения
 
-**Default — ZIP** (faster, simpler).
+**По умолчанию — ZIP** (быстрее, проще).
 
 ## Q5. (!) Что такое cold start?
 
-**Cold start** — invocation, требующая создания **нового execution environment**.
+**Cold start** — вызов, требующий создания **нового execution environment**.
 
 **Стадии:**
-1. Provision execution environment (~50-200ms)
-2. Download code (~50-200ms)
-3. Init runtime (~100ms - 5s, language-dependent)
-4. Run init code (your imports)
-5. Run handler
+1. Выделение execution environment (~50–200 мс)
+2. Скачивание кода (~50–200 мс)
+3. Инициализация runtime (~100 мс — 5 с, зависит от языка)
+4. Запуск init-кода (ваши импорты)
+5. Запуск handler-а
 
-**Cold start by runtime (примерно):**
-- Python: ~200-500ms
-- Node.js: ~150-400ms
-- Go: ~100-300ms
-- Java (без SnapStart): ~1-5 sec
-- .NET: ~500ms - 2 sec
-- Java SnapStart: ~200-500ms
+**Cold start по runtime (примерно):**
+- Python: ~200–500 мс
+- Node.js: ~150–400 мс
+- Go: ~100–300 мс
+- Java (без SnapStart): ~1–5 с
+- .NET: ~500 мс — 2 с
+- Java SnapStart: ~200–500 мс
 
-**Когда cold start happens:**
-- First invocation
-- After idle period (5-15 min)
-- Concurrency increase (need new envs)
-- Code update (new version)
-- Configuration change
+**Когда случается cold start:**
+- Первый вызов
+- После периода простоя (5–15 мин)
+- Рост concurrency (нужны новые окружения)
+- Обновление кода (новая версия)
+- Изменение конфигурации
 
 ## Q6. (!) Как уменьшить cold start?
 
-1. **Smaller deployment package** — меньше код = быстрее download/init
-2. **Lazy load** dependencies (import inside handler если редко нужно)
-3. **More memory** — Lambda gives more CPU proportionally → faster init
-4. **Use ARM (Graviton)** — обычно faster + cheaper
-5. **Provisioned concurrency** — keeps N envs warm
-6. **Avoid heavy frameworks** (Spring Boot — slow на Lambda без SnapStart)
-7. **Choose fast runtime** (Node, Python, Go)
-8. **Minimize VPC** (раньше был slow, сейчас OK)
-9. **SnapStart для Java** (5-10x faster cold start)
-10. **Pre-warming** через scheduled invocations (hack)
+1. **Меньше deployment-пакет** — меньше кода = быстрее скачивание/инициализация
+2. **Lazy load** зависимостей (импорт внутри handler-а, если нужны редко)
+3. **Больше памяти** — Lambda пропорционально даёт больше CPU → быстрее инициализация
+4. **ARM (Graviton)** — обычно быстрее и дешевле
+5. **Provisioned concurrency** — держит N окружений «тёплыми»
+6. **Избегай тяжёлых фреймворков** (Spring Boot на Lambda без SnapStart медленный)
+7. **Выбирай быстрый runtime** (Node, Python, Go)
+8. **Минимизируй VPC** (раньше было медленно, сейчас нормально)
+9. **SnapStart для Java** (cold start быстрее в 5–10 раз)
+10. **Прогрев** через scheduled-вызовы (хак)
 
 ## Q7. (!) SnapStart для Java?
 
-**SnapStart** (с 2022) — Lambda берёт **snapshot** initialized environment после init phase, переиспользует.
+**SnapStart** (с 2022) — Lambda делает **snapshot** инициализированного окружения после init-фазы и переиспользует его.
 
 ```
 Без SnapStart: Init Java + Spring Boot = 5-10 sec
@@ -230,17 +230,17 @@ def handler(event, context):
 ```
 
 **Как работает:**
-1. При publish version Lambda runs init
-2. Делает snapshot memory + disk
-3. При invocation — **restore from snapshot** (Firecracker MicroVM)
+1. При публикации версии Lambda выполняет инициализацию
+2. Делает snapshot памяти и диска
+3. При вызове — **восстановление из snapshot** (Firecracker MicroVM)
 
-**Подвох:** state shared между invocations. Нужно избегать `Random()` в init и т.п. (uniqueness ломается).
+**Подвох:** состояние шарится между вызовами. Нужно избегать `Random()` в init-коде и т.п. (ломается уникальность).
 
 В **2025** — SnapStart доступен для **Java, Python, .NET**.
 
 ## Q8. Provisioned Concurrency?
 
-**Provisioned Concurrency (PC)** — pre-initialized envs, всегда warm.
+**Provisioned Concurrency (PC)** — заранее инициализированные окружения, всегда «тёплые».
 
 ```bash
 aws lambda put-provisioned-concurrency-config \
@@ -250,26 +250,26 @@ aws lambda put-provisioned-concurrency-config \
 ```
 
 **Зачем:**
-- Предсказуемая low latency
-- Избегаем cold starts для critical APIs
+- Предсказуемо низкая задержка
+- Избегаем cold start для критичных API
 
-**Cost:** ~$0.015 per GB-hour за provisioned env (даже если idle). Дополнительная стоимость к invocation.
+**Стоимость:** ~$0.015 за GB-час на provisioned-окружение (даже если простаивает). Это доплата сверх оплаты за вызовы.
 
-**Auto-scaling** PC — на основе schedule или metrics.
+**Auto-scaling** PC — по расписанию или по метрикам.
 
 **Когда нужен:**
-- Latency-sensitive APIs
-- Burst predictable workloads (start-of-day rush)
+- Чувствительные к задержке API
+- Предсказуемые всплески нагрузки (наплыв в начале дня)
 
 ## Q9. (!) Memory, CPU, timeout?
 
-**Memory:** 128 MB - 10 GB (с инкрементом 1 MB).
+**Память:** 128 MB — 10 GB (с шагом 1 MB).
 
-**CPU:** проpротional к memory (нельзя set отдельно).
+**CPU:** пропорционально памяти (отдельно задать нельзя).
 - 1769 MB ≈ 1 vCPU
-- 10240 MB = ~6 vCPUs
+- 10240 MB = ~6 vCPU
 
-**Timeout:** до **15 минут**. Default 3 sec.
+**Timeout:** до **15 минут**. По умолчанию 3 с.
 
 ```python
 # Choose memory based on workload
@@ -277,9 +277,9 @@ aws lambda put-provisioned-concurrency-config \
 # Memory-bound → enough memory для data
 ```
 
-**Cost:** per-ms × GB. **Не всегда** меньше memory дешевле — больше memory может finish быстрее.
+**Стоимость:** за миллисекунду × GB. **Не всегда** меньше памяти = дешевле — с большей памятью функция может завершиться быстрее.
 
-**Lambda Power Tuning** tool — automated benchmark optimal memory.
+**Lambda Power Tuning** — инструмент для автоматического бенчмарка и подбора оптимальной памяти.
 
 ## Q10. Environment variables?
 
@@ -288,12 +288,12 @@ import os
 db_url = os.environ['DB_URL']
 ```
 
-**Limit:** 4 KB total.
+**Лимит:** 4 KB суммарно.
 
 **Best practices:**
-- Не secrets в plain ENV (use Secrets Manager / Parameter Store)
-- KMS encryption для sensitive ENV
-- Different ENV per environment (dev/prod)
+- Не храни секреты в открытом ENV (используй Secrets Manager / Parameter Store)
+- KMS-шифрование для чувствительных ENV
+- Разные ENV под разные окружения (dev/prod)
 
 ```python
 # Использовать Parameter Store
@@ -304,7 +304,7 @@ db_url = ssm.get_parameter(Name='/myapp/prod/db_url', WithDecryption=True)['Para
 
 ## Q11. Lambda Layers?
 
-**Layer** — переиспользуемый код/dependencies, shared между Lambdas.
+**Layer** — переиспользуемый код или зависимости, общие для нескольких Lambda.
 
 ```
 Lambda function (your code) — 1 MB
@@ -313,43 +313,43 @@ Layer 2: shared utilities — 5 MB
 ```
 
 **Преимущества:**
-- DRY — shared code в одном месте
-- Меньше deployment packages
-- Пере используется в multiple functions
+- DRY — общий код в одном месте
+- Меньше deployment-пакеты
+- Переиспользуется в нескольких функциях
 
-**Limits:** до 5 layers per function, max 250 MB unzipped suммарно.
+**Лимиты:** до 5 layer-ов на функцию, максимум 250 MB в распакованном виде суммарно.
 
-**Use cases:**
-- AWS SDK (но он built-in)
-- Common libraries (Pandas, NumPy)
-- Custom utilities
+**Сценарии:**
+- AWS SDK (хотя он уже встроен)
+- Распространённые библиотеки (Pandas, NumPy)
+- Свои утилиты
 - Lambda Powertools
 
 ## Q12. (!) ARM (Graviton2) vs x86?
 
-**Graviton2 (ARM)** — AWS's ARM-based processor.
+**Graviton2 (ARM)** — процессор AWS на архитектуре ARM.
 
 | Критерий | x86 | ARM (Graviton2) |
 |----------|-----|------|
-| Cost | Standard | **20% cheaper** |
-| Performance | Good | **15-20% better** для most workloads |
-| Compatibility | All x86 binaries | Need ARM-compatible deps |
+| Стоимость | Стандартная | **на 20% дешевле** |
+| Производительность | Хорошая | **на 15–20% выше** для большинства нагрузок |
+| Совместимость | Все x86-бинарники | Нужны ARM-совместимые зависимости |
 
 ```yaml
 Architectures:
   - arm64
 ```
 
-**Compatible:**
-- Pure Python, Node.js, Java — works (interpreted)
-- Go, Rust — recompile for ARM
-- Native libs (PIL, numpy) — нужны ARM versions
+**Совместимость:**
+- Чистый Python, Node.js, Java — работают (интерпретируемые)
+- Go, Rust — нужна перекомпиляция под ARM
+- Нативные библиотеки (PIL, numpy) — нужны ARM-версии
 
-**Default 2025:** **ARM** для new Lambdas (если deps support).
+**Дефолт в 2025:** **ARM** для новых Lambda (если зависимости поддерживают).
 
 ## Q13. (!) API Gateway → Lambda?
 
-**Самая частая** integration: HTTP request → API Gateway → Lambda → response.
+**Самая частая** интеграция: HTTP-запрос → API Gateway → Lambda → ответ.
 
 ```mermaid
 graph LR
@@ -358,19 +358,19 @@ graph LR
     Lambda --> Client
 ```
 
-**Two API Gateway types:**
+**Два типа API Gateway:**
 
 **REST API** (v1):
-- Полный feature set (caching, throttling, request validation)
-- Higher cost ($3.50 per million requests)
-- More mature
+- Полный набор возможностей (caching, throttling, валидация запросов)
+- Дороже ($3.50 за миллион запросов)
+- Более зрелый
 
 **HTTP API** (v2):
-- 70% cheaper ($1.00 per million)
-- Faster (lower latency)
-- Менее features (нет request validation, etc.)
+- На 70% дешевле ($1.00 за миллион)
+- Быстрее (ниже задержка)
+- Меньше возможностей (нет валидации запросов и т.п.)
 
-В **2025** — HTTP API default для simple cases.
+В **2025** — HTTP API по умолчанию для простых случаев.
 
 ```python
 def handler(event, context):
@@ -384,7 +384,7 @@ def handler(event, context):
 
 ## Q14. Lambda Function URLs?
 
-С 2022 — **Function URLs** = built-in HTTPS endpoint без API Gateway.
+С 2022 — **Function URLs** = встроенный HTTPS-эндпоинт без API Gateway.
 
 ```bash
 aws lambda create-function-url-config \
@@ -395,15 +395,15 @@ aws lambda create-function-url-config \
 URL: `https://abc123.lambda-url.us-east-1.on.aws/`.
 
 **Преимущества:**
-- Бесплатно (без API Gateway costs)
-- Lower latency
-- Simpler
+- Бесплатно (без расходов на API Gateway)
+- Ниже задержка
+- Проще
 
 **Недостатки:**
-- No throttling, caching, request validation
-- Только URL, нет complex routing
+- Нет throttling, caching, валидации запросов
+- Только URL, нет сложной маршрутизации
 
-**Для simple webhooks** или public endpoints — Function URLs идеальны.
+**Для простых вебхуков** или публичных эндпоинтов Function URLs идеальны.
 
 ## Q15. (!) S3, DynamoDB Streams, Kinesis?
 
@@ -422,7 +422,7 @@ INSERT/UPDATE/DELETE in DynamoDB table → Lambda processes change record
 Records published к stream → Lambda processes batch
 ```
 
-**Common pattern:** event-driven processing.
+**Типовой паттерн:** обработка, управляемая событиями.
 
 ```python
 def handler(event, context):
@@ -433,9 +433,9 @@ def handler(event, context):
         # process
 ```
 
-**Batch settings:**
-- BatchSize — max records per invocation
-- BatchWindow — wait для batch fill
+**Настройки батчей:**
+- BatchSize — максимум записей на вызов
+- BatchWindow — ожидание заполнения батча
 - MaxRetries
 
 ## Q16. (!) SQS как trigger?
@@ -444,14 +444,14 @@ def handler(event, context):
 SQS message → Lambda → process → ack (delete from SQS)
 ```
 
-**Particulars:**
-- Lambda **automatically** polls SQS
-- Если Lambda fails → message returned to queue (retry)
-- After max retries → DLQ (Dead Letter Queue)
+**Особенности:**
+- Lambda **автоматически** опрашивает SQS
+- Если Lambda падает → сообщение возвращается в очередь (повторная попытка)
+- После максимума повторов → DLQ (Dead Letter Queue)
 
-**Batch processing:**
+**Обработка батчами:**
 - BatchSize: до 10000 (для standard), 10 (FIFO)
-- ReportBatchItemFailures — partial failure reporting
+- ReportBatchItemFailures — отчёт о частичных сбоях
 
 ```python
 def handler(event, context):
@@ -464,11 +464,11 @@ def handler(event, context):
     return {"batchItemFailures": failed_records}
 ```
 
-**Подвох:** Lambda concurrency может быть **bottlenecked SQS visibility timeout**. Set visibility = 6 × Lambda timeout.
+**Подвох:** concurrency Lambda может **упереться в SQS visibility timeout**. Ставь visibility = 6 × timeout Lambda.
 
 ## Q17. EventBridge?
 
-**EventBridge** — event bus с rules.
+**EventBridge** — шина событий с правилами.
 
 ```
 EventBridge rule: 
@@ -477,18 +477,18 @@ EventBridge rule:
   → trigger Lambda
 ```
 
-**Зачем над прямой S3 → Lambda:**
-- **Multiple subscribers** (Lambda + SNS + ...)
-- **Filtering** (только PDF files)
-- **Schemas, replay, archive**
+**Зачем вместо прямой связки S3 → Lambda:**
+- **Несколько подписчиков** (Lambda + SNS + ...)
+- **Фильтрация** (только PDF-файлы)
+- **Схемы, replay, архив**
 - **Cross-account, cross-region**
-- 100+ SaaS integrations
+- 100+ интеграций с SaaS
 
-В **2025** — EventBridge **preferred** для complex event routing.
+В **2025** — EventBridge **предпочтителен** для сложной маршрутизации событий.
 
 ## Q18. Step Functions для orchestration?
 
-**Step Functions** — visual workflow для chaining Lambdas / AWS services.
+**Step Functions** — визуальный workflow для связывания Lambda и сервисов AWS в цепочки.
 
 ```json
 {
@@ -501,38 +501,38 @@ EventBridge rule:
 ```
 
 **Применения:**
-- Long-running workflows (orders, approvals)
-- Saga pattern
-- Parallel processing
-- Error handling, retries
+- Долгоиграющие workflow (заказы, согласования)
+- Saga-паттерн
+- Параллельная обработка
+- Обработка ошибок, повторы
 
 **Express vs Standard:**
-- **Express** — high volume, short (< 5 min), at-least-once
-- **Standard** — long workflows (until 1 year), exactly-once
+- **Express** — высокий объём, короткие (< 5 мин), at-least-once
+- **Standard** — длинные workflow (до 1 года), exactly-once
 
 ## Q19. (!) Что такое concurrent executions?
 
-**Concurrent executions** — Lambdas running **в один момент**.
+**Concurrent executions** — Lambda, исполняющиеся **в один момент**.
 
 ```
 1000 concurrent = 1000 invocations executing at once
 ```
 
-**Default account limit:** 1000 (можно увеличить через support).
+**Лимит аккаунта по умолчанию:** 1000 (можно увеличить через support).
 
-**Per function** — без limit (использует account limit shared).
+**На функцию** — без отдельного лимита (использует общий лимит аккаунта).
 
 ## Q20. Reserved vs Provisioned concurrency?
 
 **Reserved concurrency:**
-- **Limit** для конкретной function (макс concurrency)
-- **Subtracts** из account-wide pool
-- Use case: prevent function от eating all concurrency
+- **Лимит** для конкретной функции (максимум concurrency)
+- **Вычитается** из общего пула аккаунта
+- Сценарий: не дать функции «съесть» всю concurrency
 
 **Provisioned concurrency:**
-- **Pre-warmed** envs (ALWAYS ready)
+- **Заранее прогретые** окружения (ВСЕГДА готовы)
 - **Дополнительная стоимость**
-- Use case: latency-sensitive endpoints
+- Сценарий: эндпоинты, чувствительные к задержке
 
 ```bash
 # Reserved (just limit)
@@ -544,44 +544,44 @@ aws lambda put-provisioned-concurrency-config --function-name my-fn --qualifier 
 
 ## Q21. (!) Что происходит при превышении concurrency limit?
 
-| Тип trigger | При throttling |
+| Тип триггера | При throttling |
 |-------------|----------------|
-| Synchronous (API Gateway) | HTTP 429, client retries |
-| Async (S3, SNS) | Lambda retries (до 6 hours), потом DLQ |
-| SQS | Message returned to queue (retried) |
-| Kinesis/DynamoDB Streams | Lambda retries (blocking shard processing) |
+| Синхронный (API Gateway) | HTTP 429, клиент повторяет запрос |
+| Асинхронный (S3, SNS) | Lambda повторяет (до 6 часов), затем DLQ |
+| SQS | Сообщение возвращается в очередь (повторяется) |
+| Kinesis/DynamoDB Streams | Lambda повторяет (блокирует обработку shard-а) |
 
-**Best practice:** monitor concurrency metrics, set alarms на throttle errors.
+**Best practice:** следи за метриками concurrency, ставь алармы на ошибки throttle.
 
 ## Q22. (!) Какие лимиты у Lambda?
 
-| Limit | Value |
+| Лимит | Значение |
 |-------|-------|
-| Memory | 128 MB - 10 GB |
-| Timeout | 15 min |
-| Deployment package (ZIP) | 250 MB unzipped |
+| Память | 128 MB — 10 GB |
+| Timeout | 15 мин |
+| Deployment-пакет (ZIP) | 250 MB в распакованном виде |
 | Container image | 10 GB |
-| /tmp storage | 512 MB - 10 GB |
-| Concurrent executions | 1000 (default, increase) |
-| Environment variables | 4 KB total |
-| Layers | 5 per function |
-| Request payload (sync) | 6 MB |
-| Request payload (async) | 256 KB |
-| Response payload | 6 MB |
+| Хранилище /tmp | 512 MB — 10 GB |
+| Concurrent executions | 1000 (по умолчанию, можно увеличить) |
+| Environment variables | 4 KB суммарно |
+| Layers | 5 на функцию |
+| Payload запроса (sync) | 6 MB |
+| Payload запроса (async) | 256 KB |
+| Payload ответа | 6 MB |
 
-**При превышении** — adapt architecture (split work, use Step Functions, switch to ECS).
+**При превышении** — адаптируй архитектуру (раздели работу, используй Step Functions, перейди на ECS).
 
 ## Q23. Как обойти 15 min timeout?
 
-**Если задача > 15 min:**
+**Если задача > 15 мин:**
 
-1. **Split** — разбить на меньшие Lambdas
-2. **Step Functions** — chained Lambdas, до 1 year
-3. **AWS Batch** — для real long-running jobs
-4. **ECS/Fargate** — containers, no time limit
-5. **EC2** — full control
+1. **Split** — разбить на меньшие Lambda
+2. **Step Functions** — цепочка Lambda, до 1 года
+3. **AWS Batch** — для по-настоящему долгих задач
+4. **ECS/Fargate** — контейнеры, без лимита по времени
+5. **EC2** — полный контроль
 
-**Common pattern:** Lambda triggers Fargate task для heavy work.
+**Типовой паттерн:** Lambda запускает Fargate-задачу для тяжёлой работы.
 
 ## Q24. (!) Lambda в VPC?
 
@@ -591,23 +591,23 @@ VpcConfig:
   SecurityGroupIds: ["sg-123"]
 ```
 
-**Зачем:** access к VPC resources (RDS in private subnet, internal services).
+**Зачем:** доступ к ресурсам VPC (RDS в приватной подсети, внутренние сервисы).
 
-**По default:** Lambda не в VPC, имеет internet access через AWS-managed network.
+**По умолчанию:** Lambda не в VPC и имеет доступ в интернет через сеть, управляемую AWS.
 
-**В VPC:** Lambda gets ENI in subnet, нужен NAT Gateway для internet access.
+**В VPC:** Lambda получает ENI в подсети, для доступа в интернет нужен NAT Gateway.
 
 ## Q25. Cold start в VPC — раньше проблема?
 
-**До 2019:** ENI attached at cold start → ~10-15 sec extra delay. **Очень болезненно**.
+**До 2019:** ENI подключался при cold start → ~10–15 с лишней задержки. **Очень болезненно**.
 
-**С 2019 (Hyperplane ENI):** ENI **shared** между Lambda invocations → **~10-50 ms** overhead. Минимально.
+**С 2019 (Hyperplane ENI):** ENI **шарится** между вызовами Lambda → накладные расходы **~10–50 мс**. Минимально.
 
-В **2025** — Lambda в VPC **OK**. No more "избегайте VPC" advice.
+В **2025** — Lambda в VPC **нормально**. Совет «избегайте VPC» больше неактуален.
 
 ## Q26. (!) SAM, CDK, Serverless Framework?
 
-**Tools для deploy Lambda:**
+**Инструменты для деплоя Lambda:**
 
 **AWS SAM (Serverless Application Model):**
 ```yaml
@@ -652,23 +652,23 @@ functions:
       - http: GET /hello
 ```
 
-| Tool | Pros |
+| Инструмент | Плюсы |
 |------|------|
-| **SAM** | AWS-native, simple YAML |
-| **CDK** | Imperative (Python/TS code), powerful |
-| **Serverless Framework** | Multi-cloud (AWS, GCP, Azure) |
-| **Terraform** | Multi-cloud, state management |
+| **SAM** | Нативный для AWS, простой YAML |
+| **CDK** | Императивный (код на Python/TS), мощный |
+| **Serverless Framework** | Мультиоблачный (AWS, GCP, Azure) |
+| **Terraform** | Мультиоблачный, управление состоянием |
 
-В **2025** — **CDK** для serious AWS-only projects, **Serverless Framework** для multi-cloud.
+В **2025** — **CDK** для серьёзных AWS-only проектов, **Serverless Framework** для мультиоблака.
 
 ## Q27. Lambda versions, aliases, traffic shifting?
 
-**Versions** — immutable snapshots Lambda.
+**Versions** — неизменяемые снимки Lambda.
 ```
 my-fn:1, my-fn:2, my-fn:3 (latest)
 ```
 
-**Aliases** — pointers к versions.
+**Aliases** — указатели на версии.
 ```
 prod → my-fn:2
 staging → my-fn:3
@@ -685,25 +685,25 @@ aws lambda update-alias --function-name my-fn --name prod \
   --routing-config AdditionalVersionWeights={"2"=0.9}
 ```
 
-**Use case:** safe deploys через canary deployment.
+**Сценарий:** безопасные деплои через canary deployment.
 
 ## Q28. (!) CloudWatch Logs / X-Ray для Lambda?
 
-**CloudWatch Logs** — automatic.
+**CloudWatch Logs** — автоматически.
 - Log group: `/aws/lambda/<function-name>`
 - Каждый `print` / `console.log` → CloudWatch
-- Retention configurable (default — never expire = $$$)
+- Retention настраивается (по умолчанию логи не истекают = $$$)
 
-**X-Ray** — distributed tracing.
+**X-Ray** — распределённая трассировка.
 ```python
 from aws_xray_sdk.core import xray_recorder
 @xray_recorder.capture('my_function')
 def process(): ...
 ```
 
-**Lambda Insights** (extension) — system-level metrics (CPU, memory utilization beyond default).
+**Lambda Insights** (расширение) — системные метрики (CPU, использование памяти сверх дефолтных).
 
-**Lambda Powertools** (Python/TS/Java/.NET) — utilities для logging, metrics, tracing.
+**Lambda Powertools** (Python/TS/Java/.NET) — утилиты для логирования, метрик и трассировки.
 
 ```python
 from aws_lambda_powertools import Logger, Tracer, Metrics
@@ -720,74 +720,74 @@ def handler(event, context):
 
 ## Q29. Cost analysis Lambda?
 
-**Pricing:**
-- **Per-invocation:** $0.20 per 1M invocations
-- **Per duration:** $0.0000166667 per GB-second
+**Тарификация:**
+- **За вызов:** $0.20 за 1M вызовов
+- **За длительность:** $0.0000166667 за GB-секунду
 
 ```
 1M invocations × 100ms × 512 MB = $0.20 + $0.83 = ~$1.03
 ```
 
-**Cost optimization:**
-- Right memory (Lambda Power Tuning tool)
-- ARM (Graviton2) — 20% cheaper
-- Avoid unnecessary cold starts (provisioned concurrency wisely)
-- Lambda destinations vs SNS/SQS in code
+**Оптимизация стоимости:**
+- Правильная память (инструмент Lambda Power Tuning)
+- ARM (Graviton2) — на 20% дешевле
+- Избегай лишних cold start (provisioned concurrency с умом)
+- Lambda destinations вместо SNS/SQS в коде
 
-**Hidden costs:**
-- CloudWatch Logs ingestion
-- VPC ENI usage
-- Data transfer
-- API Gateway costs
+**Скрытые расходы:**
+- Приём логов в CloudWatch Logs
+- Использование ENI в VPC
+- Передача данных
+- Расходы на API Gateway
 
 ## Q30. (!) Когда использовать Lambda, когда нет?
 
-**Use Lambda:**
-- Event-driven processing (S3 uploads, DynamoDB streams)
-- HTTP APIs с unpredictable traffic
-- Cron jobs / scheduled tasks
-- Webhooks
-- Glue code (integrations)
-- Real-time stream processing (Kinesis, MSK)
-- Spike traffic (auto-scale)
+**Использовать Lambda:**
+- Обработка событий (загрузки в S3, DynamoDB streams)
+- HTTP API с непредсказуемым трафиком
+- Cron-задачи / задачи по расписанию
+- Вебхуки
+- Связующий код (интеграции)
+- Обработка потоков в реальном времени (Kinesis, MSK)
+- Всплески трафика (auto-scale)
 
-**Не use Lambda:**
-- Long-running tasks > 15 min
-- High-throughput steady traffic (cheaper EC2/Fargate)
-- WebSocket connections (use API Gateway WebSocket или ALB)
-- ML inference с large models (cold start, memory)
-- Apps с heavy framework startup (Spring Boot — даже с SnapStart)
-- Stateful applications
+**Не использовать Lambda:**
+- Долгие задачи > 15 мин
+- Стабильно высокий поток (EC2/Fargate дешевле)
+- WebSocket-соединения (используй API Gateway WebSocket или ALB)
+- ML-инференс на больших моделях (cold start, память)
+- Приложения с тяжёлым стартом фреймворка (Spring Boot — даже со SnapStart)
+- Stateful-приложения
 
-**Break-even:** примерно **50K req/day** или constant load. Меньше — Lambda дешевле, больше — EC2.
+**Точка безубыточности:** примерно **50K запросов/день** или постоянная нагрузка. Меньше — Lambda дешевле, больше — EC2.
 
 ## Q31. Best practices?
 
-1. **Keep functions small** — single responsibility
-2. **Init outside handler** — connection pools, SDK clients
-3. **Reuse connections** — DB pools, HTTP clients
-4. **Async invoke** для fire-and-forget (с DLQ)
-5. **Use Layers** для shared dependencies
-6. **Don't store state в /tmp** между invocations (не reliable)
+1. **Держи функции маленькими** — единая ответственность
+2. **Инициализируй вне handler-а** — пулы соединений, SDK-клиенты
+3. **Переиспользуй соединения** — пулы БД, HTTP-клиенты
+4. **Асинхронный вызов** для fire-and-forget (с DLQ)
+5. **Используй Layers** для общих зависимостей
+6. **Не храни состояние в /tmp** между вызовами (ненадёжно)
 7. **Powertools** для observability
-8. **Versioning + aliases** для safe deploys
-9. **Right memory** через Power Tuning
-10. **CloudWatch Logs retention** — set TTL чтобы не платить лишнее
+8. **Versioning + aliases** для безопасных деплоев
+9. **Правильная память** через Power Tuning
+10. **Retention в CloudWatch Logs** — задай TTL, чтобы не платить лишнее
 
 ## Q32. (!) Какие частые ошибки?
 
-1. **Cold start surprises** — 30 sec timeout первого запроса
-2. **No DLQ** — failed messages потеряны
-3. **Hardcoded credentials** в env vars
-4. **Memory mistakes** — too low (slow), too high (expensive)
-5. **No idempotency** — retry → duplicate processing
-6. **Long-running outside Lambda timeout** — `15 min ` strict limit
-7. **VPC misconfig** — no NAT Gateway, no internet
-8. **Heavy frameworks** (Spring Boot без SnapStart)
-9. **Logging too much** — CloudWatch ingestion expensive
-10. **Concurrency limits** — production hit 1000 → service down
+1. **Сюрпризы с cold start** — таймаут 30 с на первом запросе
+2. **Нет DLQ** — упавшие сообщения теряются
+3. **Захардкоженные креды** в env vars
+4. **Ошибки с памятью** — слишком мало (медленно), слишком много (дорого)
+5. **Нет идемпотентности** — повтор → дублирующая обработка
+6. **Долгая работа сверх timeout Lambda** — жёсткий лимит `15 min `
+7. **Кривой VPC** — нет NAT Gateway, нет интернета
+8. **Тяжёлые фреймворки** (Spring Boot без SnapStart)
+9. **Слишком много логов** — приём в CloudWatch дорогой
+10. **Лимиты concurrency** — прод упёрся в 1000 → сервис лёг
 
-В **2025** Lambda — workhorse serverless, но требует **правильной архитектуры**.
+В **2025** Lambda — рабочая лошадка serverless, но требует **правильной архитектуры**.
 
 ## See also
 
