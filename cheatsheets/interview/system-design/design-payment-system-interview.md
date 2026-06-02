@@ -34,53 +34,55 @@ updated: "2026-05-26"
 
 **Requirements и capacity**
 - [Q1. (!) Functional и non-functional requirements?](#q1--functional-и-non-functional-requirements)
-- [Q2. (!) Capacity estimation (10K txn/sec, 1B users)?](#q2--capacity-estimation-10k-txnsec-1b-users)
+- [Q2. (!) Оценка нагрузки: capacity estimation на 10K txn/sec и 1B пользователей?](#q2--оценка-нагрузки-capacity-estimation-на-10k-txnsec-и-1b-пользователей)
 - [Q3. Read-heavy vs write-heavy и SLA на каждой операции?](#q3-read-heavy-vs-write-heavy-и-sla-на-каждой-операции)
 
 **Идемпотентность и ledger**
 - [Q4. (!) Idempotency keys: формат, dedup window, response replay?](#q4--idempotency-keys-формат-dedup-window-response-replay)
-- [Q5. (!) Double-entry ledger: debit/credit, invariants, audit?](#q5--double-entry-ledger-debitcredit-invariants-audit)
-- [Q6. Ledger storage: Postgres vs Cassandra vs custom append-only?](#q6-ledger-storage-postgres-vs-cassandra-vs-custom-append-only)
+- [Q5. (!) Двойная запись (double-entry ledger): debit/credit, инварианты, аудит?](#q5--двойная-запись-double-entry-ledger-debitcredit-инварианты-аудит)
+- [Q6. Хранилище для ledger: Postgres vs Cassandra vs кастомный append-only?](#q6-хранилище-для-ledger-postgres-vs-cassandra-vs-кастомный-append-only)
 
 **Payment lifecycle**
-- [Q7. Payment lifecycle: authorize → capture → settle → refund?](#q7-payment-lifecycle-authorize--capture--settle--refund)
-- [Q8. (!) Distributed transactions: saga vs 2PC?](#q8--distributed-transactions-saga-vs-2pc)
-- [Q9. Saga: choreography vs orchestration?](#q9-saga-choreography-vs-orchestration)
+- [Q7. Жизненный цикл платежа: authorize → capture → settle → refund?](#q7-жизненный-цикл-платежа-authorize--capture--settle--refund)
+- [Q8. (!) Распределённые транзакции: saga vs 2PC?](#q8--распределённые-транзакции-saga-vs-2pc)
+- [Q9. Saga: хореография vs оркестрация?](#q9-saga-хореография-vs-оркестрация)
 - [Q10. (!) Outbox pattern для надёжной публикации событий?](#q10--outbox-pattern-для-надёжной-публикации-событий)
 
 **External integrations**
-- [Q11. 3D Secure 2.0: challenge vs frictionless?](#q11-3d-secure-20-challenge-vs-frictionless)
-- [Q12. (!) PSP integrations (Stripe, Adyen, Braintree)?](#q12--psp-integrations-stripe-adyen-braintree)
-- [Q13. Card networks (Visa/MC/Amex), interchange, scheme fees?](#q13-card-networks-visamcamex-interchange-scheme-fees)
+- [Q11. 3D Secure 2.0: чем различаются challenge и frictionless?](#q11-3d-secure-20-чем-различаются-challenge-и-frictionless)
+- [Q12. (!) Интеграции с PSP (Stripe, Adyen, Braintree)?](#q12--интеграции-с-psp-stripe-adyen-braintree)
+- [Q13. Платёжные сети (Visa/MC/Amex), interchange и scheme fees?](#q13-платёжные-сети-visamcamex-interchange-и-scheme-fees)
 - [Q14. (!) Tokenization и vault: формат токенов, scope, rotation?](#q14--tokenization-и-vault-формат-токенов-scope-rotation)
-- [Q15. Webhooks: delivery, retry, signing, idempotent receivers?](#q15-webhooks-delivery-retry-signing-idempotent-receivers)
+- [Q15. Webhooks: доставка, retry, подпись и идемпотентные получатели?](#q15-webhooks-доставка-retry-подпись-и-идемпотентные-получатели)
 
 **Settlement и операции**
-- [Q16. Settlement (T+1, batch files, ACH/SWIFT)?](#q16-settlement-t1-batch-files-achswift)
+- [Q16. Settlement: расчёты T+1, batch-файлы, ACH/SWIFT?](#q16-settlement-расчёты-t1-batch-файлы-achswift)
 - [Q17. (!) Reconciliation с PSP report vs internal ledger?](#q17--reconciliation-с-psp-report-vs-internal-ledger)
 - [Q18. Refunds (partial, full, idempotency, временные окна)?](#q18-refunds-partial-full-idempotency-временные-окна)
-- [Q19. Chargebacks (Visa reason codes, evidence, win rate)?](#q19-chargebacks-visa-reason-codes-evidence-win-rate)
+- [Q19. Chargebacks: коды причин Visa, доказательства, доля выигранных споров?](#q19-chargebacks-коды-причин-visa-доказательства-доля-выигранных-споров)
 
 **Risk и fraud**
-- [Q20. (!) Anti-fraud: rules + ML, velocity, device fingerprint?](#q20--anti-fraud-rules--ml-velocity-device-fingerprint)
+- [Q20. (!) Антифрод: правила + ML, velocity, device fingerprint?](#q20--антифрод-правила--ml-velocity-device-fingerprint)
 - [Q21. AML/KYC и sanction screening?](#q21-amlkyc-и-sanction-screening)
 
 **Money и продукт**
-- [Q22. Multi-currency: FX rates, wallet, hedging?](#q22-multi-currency-fx-rates-wallet-hedging)
-- [Q23. Subscriptions: recurring billing, dunning, retry strategy?](#q23-subscriptions-recurring-billing-dunning-retry-strategy)
+- [Q22. Мультивалютность: FX-курсы, кошелёк, хеджирование?](#q22-мультивалютность-fx-курсы-кошелёк-хеджирование)
+- [Q23. Подписки: recurring billing, dunning, стратегия повторов?](#q23-подписки-recurring-billing-dunning-стратегия-повторов)
 
 **Архитектура и compliance**
-- [Q24. (!) PCI-DSS compliance: SAQ A vs D, scope reduction?](#q24--pci-dss-compliance-saq-a-vs-d-scope-reduction)
-- [Q25. (!) High-level architecture (gateway, orchestrator, ledger, risk)?](#q25--high-level-architecture-gateway-orchestrator-ledger-risk)
+- [Q24. (!) Соответствие PCI-DSS: SAQ A vs D, сокращение scope?](#q24--соответствие-pci-dss-saq-a-vs-d-сокращение-scope)
+- [Q25. (!) Высокоуровневая архитектура (gateway, orchestrator, ledger, risk)?](#q25--высокоуровневая-архитектура-gateway-orchestrator-ledger-risk)
 - [Q26. Payment orchestrator и smart routing между PSP?](#q26-payment-orchestrator-и-smart-routing-между-psp)
-- [Q27. (!) Multi-region: data residency, failover, regulatory?](#q27--multi-region-data-residency-failover-regulatory)
+- [Q27. (!) Мультирегиональность: data residency, failover, регуляторика?](#q27--мультирегиональность-data-residency-failover-регуляторика)
 
 **Production**
-- [Q28. Latency budget: p99 на authorize, capture, refund?](#q28-latency-budget-p99-на-authorize-capture-refund)
+- [Q28. Бюджет задержки: p99 на authorize, capture, refund?](#q28-бюджет-задержки-p99-на-authorize-capture-refund)
 - [Q29. Monitoring, observability и операционные runbooks?](#q29-monitoring-observability-и-операционные-runbooks)
 - [Q30. (!) Антипаттерны и подводные камни?](#q30--антипаттерны-и-подводные-камни)
 
 ## Q1. (!) Functional и non-functional requirements?
+
+Сначала зафиксируй границы задачи: что система делает (функциональные требования) и под какие гарантии работает (нефункциональные). В финтехе именно нефункциональные требования — durability, consistency, compliance — определяют архитектуру, а не список эндпоинтов.
 
 **Функциональные (ядро scope):**
 - Создать платёж: `POST /payments` (amount, currency, method, customer, idempotency_key).
@@ -96,9 +98,9 @@ updated: "2026-05-26"
 - **Strong consistency** на ledger (балансы), eventual на read-моделях (analytics, дашборды).
 - **Availability:** 99.99% на authorize-path (≈ 53 минуты/год downtime).
 - **Idempotency:** все mutating-эндпоинты безопасны для retry.
-- **Latency:** p99 authorize < 2 сек (включая 3DS-redirect), p99 status-fetch < 200 мс.
-- **Throughput:** 5-50K транзакций/сек на пике (Black Friday, события IPO).
-- **Compliance:** PCI-DSS Level 1, GDPR, локальные регуляторы (PSD2 EU, PSI India).
+- **Задержка:** p99 authorize < 2 сек (включая 3DS-redirect), p99 status-fetch < 200 мс.
+- **Пропускная способность:** 5-50K транзакций/сек на пике (Black Friday, события IPO).
+- **Соответствие регуляторам:** PCI-DSS Level 1, GDPR, локальные регуляторы (PSD2 EU, PSI India).
 - **Auditability:** каждая операция immutable и воспроизводима.
 
 **Что вне scope (явно проговорить с интервьюером):**
@@ -109,9 +111,9 @@ updated: "2026-05-26"
 
 Tip: для финтеха `scope-list` — это **первая** проверка senior-уровня. Без него остальное превращается в обсуждение Redis vs Cassandra.
 
-## Q2. (!) Capacity estimation (10K txn/sec, 1B users)?
+## Q2. (!) Оценка нагрузки: capacity estimation на 10K txn/sec и 1B пользователей?
 
-Допущения Stripe-масштаба (2026):
+Цель прикидки — показать, что система выдержит пик, и подсветить узкие места (PSP-вызовы, ledger-writes, retention). Допущения Stripe-масштаба (2026):
 
 | Параметр | Значение |
 |---|---|
@@ -127,7 +129,7 @@ Tip: для финтеха `scope-list` — это **первая** провер
 - Пик ×8-10 → **50 000 txn/sec на authorize-path**.
 - Всего API (вкл. reads/webhooks): 50K × 5 ≈ **250 000 req/sec**.
 
-**Storage:**
+**Хранилище:**
 - Одна payment-строка ≈ 2 KB (включая lifecycle-события).
 - 500M/день × 2 KB = **1 TB/день** raw.
 - + ledger-entries (×4: double-entry × authorize/capture) ≈ 0.5 KB × 4 × 500M = 1 TB/день.
@@ -147,6 +149,8 @@ Tip: для финтеха `scope-list` — это **первая** провер
 
 ## Q3. Read-heavy vs write-heavy и SLA на каждой операции?
 
+Профиль смешанный: статусы читают чаще, чем создают платежи, но именно записи (authorize/capture) определяют корректность и SLA. Поэтому каждой операции назначают свой бюджет latency и свой уровень доступности — нельзя проектировать всё «под чтения».
+
 | Операция | Тип | Пиковый QPS | Целевая p99 latency | SLA |
 |---|---|---|---|---|
 | `POST /payments` (authorize) | write | 50K | 2 сек | 99.99% |
@@ -160,7 +164,9 @@ Tip: для финтеха `scope-list` — это **первая** провер
 
 ## Q4. (!) Idempotency keys: формат, dedup window, response replay?
 
-**Зачем:** retry `POST /payments` после network blip не должен создавать два списания.
+Idempotency-ключ — это переданный клиентом идентификатор операции, по которому сервер распознаёт повтор и возвращает тот же результат вместо нового списания.
+
+**Зачем:** retry `POST /payments` после обрыва сети не должен создавать два списания. Клиент не знает, дошёл ли первый запрос, поэтому повторяет — а сервер обязан выполнить операцию ровно один раз.
 
 **Контракт (в стиле Stripe):**
 - Заголовок: `Idempotency-Key: <UUIDv4 или сгенерированный клиентом, ≤ 255 символов>`.
@@ -194,9 +200,11 @@ Tip: для финтеха `scope-list` — это **первая** провер
 
 **Ключевая мысль:** ключ хешируется вместе с **телом запроса**, а не только с эндпоинтом — иначе можно случайно «зарепортить» refund по ключу платежа.
 
-## Q5. (!) Double-entry ledger: debit/credit, invariants, audit?
+## Q5. (!) Двойная запись (double-entry ledger): debit/credit, инварианты, аудит?
 
-**Принцип:** каждая транзакция = ≥ 2 записи; сумма debits = сумма credits. Бухгалтерская основа уже 700 лет (Лука Пачоли, 1494). В цифровых платежах — единственная защита от «исчезновения» денег.
+Double-entry ledger — это журнал, где каждая операция записывается минимум двумя проводками так, что сумма дебетов равна сумме кредитов. Деньги не появляются и не исчезают — они только переходят с одного счёта на другой.
+
+**Принцип:** каждая транзакция = ≥ 2 записи; сумма debits = сумма credits. Бухгалтерская основа уже 700 лет (Лука Пачоли, 1494). В цифровых платежах — единственная защита от «исчезновения» денег: если where-from и where-to всегда балансируются, баг не может «нарисовать» лишний доллар незаметно.
 
 **Схема:**
 
@@ -264,9 +272,11 @@ sum = 0
 - У каждой entry есть `created_by` (service+user), `request_id`, `idempotency_key`.
 - Hash-chain (опц.): `hash_n = SHA256(prev_hash || entry_n)` — обнаружение подделки данных.
 
-## Q6. Ledger storage: Postgres vs Cassandra vs custom append-only?
+## Q6. Хранилище для ledger: Postgres vs Cassandra vs кастомный append-only?
 
-| Свойство | Postgres (sharded) | Cassandra | Custom append-only |
+Выбор сводится к компромиссу между транзакционной строгостью и пропускной способностью. Ledger требует строгой консистентности и аудита, поэтому реляционная база (Postgres) — дефолт; специализированные движки берут, только когда упираются в throughput.
+
+| Свойство | Postgres (sharded) | Cassandra | Кастомный append-only |
 |---|---|---|---|
 | Транзакционная консистентность | полный ACID | только LWT (медленно) | зависит от реализации |
 | Write throughput | 5-50K/sec на инстанс | 100K+/sec | 100K+/sec |
@@ -286,7 +296,9 @@ sum = 0
 
 **Антипаттерн:** ledger в MongoDB / DynamoDB single-table без транзакций. Любой потерянный write = невозможная reconciliation.
 
-## Q7. Payment lifecycle: authorize → capture → settle → refund?
+## Q7. Жизненный цикл платежа: authorize → capture → settle → refund?
+
+Платёж проходит через цепочку состояний, и каждый переход — это отдельное сообщение в card network. Ключевая идея: authorize и capture разделены, потому что бронирование денег и их фактическое списание происходят в разное время, а settlement (реальное движение средств) случается ещё позже.
 
 ```mermaid
 stateDiagram-v2
@@ -319,7 +331,9 @@ stateDiagram-v2
 - Гостиничный бизнес: auth при заселении (`pre-auth`), capture при checkout с финальной суммой.
 - Защита от сценария «заказ отменён до отгрузки» — void проще, чем refund.
 
-## Q8. (!) Distributed transactions: saga vs 2PC?
+## Q8. (!) Распределённые транзакции: saga vs 2PC?
+
+Коротко: в платежах используют saga, а не 2PC. 2PC требует, чтобы все участники держали блокировки до решения координатора — это невозможно, когда участники находятся в разных компаниях (Stripe, банк, KYC-провайдер). Saga разбивает операцию на локальные транзакции с компенсациями и потому работает между организациями.
 
 **2PC (Two-Phase Commit):**
 - Coordinator → prepare → все participants голосуют → commit/abort.
@@ -353,9 +367,11 @@ stateDiagram-v2
 
 **Idempotency обязательна** на каждом шаге саги — иначе retry при сбое ломает state.
 
-## Q9. Saga: choreography vs orchestration?
+## Q9. Saga: хореография vs оркестрация?
 
-**Choreography (на событиях):**
+Это два способа координировать шаги саги. При хореографии сервисы общаются через события без единого «дирижёра»; при оркестрации центральный сервис явно вызывает шаги по очереди. Разница — в том, где живёт знание о порядке шагов: размазано по подписчикам или сосредоточено в одном месте.
+
+**Хореография (на событиях):**
 - Каждый сервис подписан на события и эмиттит свои.
 - Нет центрального координатора.
 - Паттерн: Kafka-топик на каждый тип события.
@@ -370,10 +386,10 @@ sequenceDiagram
     Kafka-->>Notify: PaymentCaptured
 ```
 
-Плюсы: слабая связанность, легко добавлять новых listeners.
-Минусы: размазанная бизнес-логика — трудно отследить, «как вообще проходит платёж».
+**Плюсы:** слабая связанность, легко добавлять новых подписчиков.
+**Минусы:** размазанная бизнес-логика — трудно отследить, «как вообще проходит платёж».
 
-**Orchestration:**
+**Оркестрация:**
 - Центральный orchestrator (state machine) вызывает сервисы по очереди.
 - Один сервис, одна история, ясный визуальный flow.
 
@@ -384,8 +400,8 @@ PaymentOrchestrator state machine:
                на failure: запустить compensation chain
 ```
 
-Плюсы: явный flow, легко отлаживать, observability сосредоточена в одном месте.
-Минусы: orchestrator — единый источник сложности, может разрастись в «god service».
+**Плюсы:** явный flow, легко отлаживать, observability сосредоточена в одном месте.
+**Минусы:** orchestrator — единый источник сложности, может разрастись в «god service».
 
 **В платёжных системах де-факто стандарт:** orchestration для критического happy-path (authorize → capture → settle), choreography для побочных эффектов (нотификации, аналитика, fraud-feedback).
 
@@ -423,9 +439,11 @@ COMMIT;
 - `try { db.commit(); kafka.send(); }` — разрыв между ними = потерянное событие.
 - `kafka.send(); db.commit();` — даже хуже: Kafka событие видит, а БД — нет → consumer работает с фантомом.
 
-## Q11. 3D Secure 2.0: challenge vs frictionless?
+## Q11. 3D Secure 2.0: чем различаются challenge и frictionless?
 
-**3DS 2.0** — протокол для проверки cardholder через issuer (банк-эмитент). Защищает merchant от fraud-chargebacks (`liability shift`): если 3DS прошло, ответственность переходит на issuer.
+**3DS 2.0** — протокол, который подтверждает, что платёж совершает настоящий держатель карты, через банк-эмитент (issuer). Главная выгода для бизнеса — `liability shift`: если 3DS пройдено, ответственность за фрод-chargeback переходит с merchant на issuer.
+
+Ключевая развилка протокола — два пути проверки: frictionless (банк сам убеждается в легитимности по риск-сигналам и не трогает пользователя) и challenge (банк просит дополнительное подтверждение — push, SMS-OTP, биометрию). Чем больше challenge, тем меньше фрода, но выше отток на чекауте.
 
 **Flow:**
 
@@ -445,7 +463,7 @@ COMMIT;
 - 3DS обязателен для транзакций > 30 EUR в EU.
 - Исключения: low-value, recurring, MIT (merchant-initiated), TRA (trusted recipients).
 
-**Trade-off:**
+**Компромисс:**
 - Больше challenges → меньше фрода, но выше cart abandonment (отток 5-10% при frictionless → 15-30% при challenge).
 - Smart 3DS: routing сам решает, когда вызывать challenge (на high-risk-транзакциях).
 
@@ -453,9 +471,9 @@ COMMIT;
 - В EU без 3DS на > 30 EUR → soft decline `1A` от issuer.
 - В US 3DS обычно opt-in (нет SCA).
 
-## Q12. (!) PSP integrations (Stripe, Adyen, Braintree)?
+## Q12. (!) Интеграции с PSP (Stripe, Adyen, Braintree)?
 
-**PSP (Payment Service Provider)** = слой абстракции над card networks + локальными методами. Подключаешь один API — получаешь карты + Apple Pay + SEPA + ...
+**PSP (Payment Service Provider)** = слой абстракции над card networks и локальными методами. Подключаешь один API — получаешь карты + Apple Pay + SEPA + ... Вместо того чтобы интегрироваться с каждой сетью и банком напрямую, ты говоришь с одним провайдером, а он берёт сложность на себя.
 
 | PSP | Сильная сторона | Слабая сторона |
 |---|---|---|
@@ -489,7 +507,9 @@ graph LR
 
 **Затраты:** интеграция нового PSP — 2-4 месяца разработки. Поэтому большинство стартапов берут один (Stripe) и потом мучительно мигрируют.
 
-## Q13. Card networks (Visa/MC/Amex), interchange, scheme fees?
+## Q13. Платёжные сети (Visa/MC/Amex), interchange и scheme fees?
+
+Card networks — это «почта» между банком merchant и банком cardholder: они маршрутизируют авторизацию и задают правила. За эту инфраструктуру берут комиссию, которая раскладывается на несколько слоёв — понимать их структуру важно, потому что комиссии PSP — крупнейшая статья расходов платёжной системы.
 
 **Card networks** (Visa, Mastercard, American Express, Discover, JCB, UnionPay):
 - Маршрутизируют authorization между acquirer-ом merchant-а и issuer-ом cardholder-а.
@@ -546,9 +566,9 @@ graph LR
 
 **Подводный камень:** хранение PAN в локальной БД — даже зашифрованным — переводит merchant в PCI Level 1 (вместо SAQ A). Стоимость compliance × 10.
 
-## Q15. Webhooks: delivery, retry, signing, idempotent receivers?
+## Q15. Webhooks: доставка, retry, подпись и идемпотентные получатели?
 
-**Webhook** = HTTP POST от платёжной системы к merchant'у с нотификацией (payment.succeeded, refund.created, dispute.opened).
+**Webhook** = HTTP POST от платёжной системы к merchant с уведомлением о событии (payment.succeeded, refund.created, dispute.opened). Это push-модель: вместо того чтобы merchant опрашивал статус, система сама сообщает об изменениях. Четыре проблемы, которые надо решить, — надёжная доставка, повторы, защита от подделки и идемпотентность на стороне получателя.
 
 **Контракт доставки:**
 - At-least-once (Stripe гарантирует).
@@ -575,14 +595,14 @@ Body: {"type": "payment_intent.succeeded", ...}
 - Dead-letter queue после 72ч.
 - Per-merchant rate limit (если merchant медленный → throttle, не блокируя чужих).
 
-**Best practices для receiver:**
+**Рекомендации для получателя:**
 - Возвращать 200 быстро (< 1 сек); если работа долгая — складывать в свою очередь и обрабатывать async.
 - НЕ требовать синхронных side-effects в webhook-handler.
 - Логировать `event_id` для трассируемости.
 
-## Q16. Settlement (T+1, batch files, ACH/SWIFT)?
+## Q16. Settlement: расчёты T+1, batch-файлы, ACH/SWIFT?
 
-**Settlement** = реальное движение денег с банка cardholder в банк merchant. Authorize/capture — это messaging; settlement — это движение денег.
+**Settlement** = реальное движение денег с банка cardholder в банк merchant. Важно отделять его от authorize/capture: те — лишь обмен сообщениями («одобри», «спиши»); settlement — момент, когда деньги физически перемещаются между банками, и происходит он позже, обычно батчем в конце дня.
 
 **Таймлайн:**
 - День T: транзакции captured.
@@ -611,7 +631,7 @@ End of day T:
 
 **Faster Payments (UK), TIPS (EU SEPA Instant), FedNow (US):** real-time, дороже. Используются для instant payouts.
 
-**Edge case:** chargeback после settlement → списание обратно (claw back) с merchant balance. Если у merchant нет средств → merchant остаётся в долгу.
+**Граничный случай:** chargeback после settlement → списание обратно (claw back) с merchant balance. Если у merchant нет средств → merchant остаётся в долгу перед платёжной системой.
 
 ## Q17. (!) Reconciliation с PSP report vs internal ledger?
 
@@ -681,9 +701,9 @@ POST /refunds {payment_id, amount?, idempotency_key, reason?}
 - Refund > остатка → 400.
 - Конкурентные refunds: row-level lock на payment в БД.
 
-## Q19. Chargebacks (Visa reason codes, evidence, win rate)?
+## Q19. Chargebacks: коды причин Visa, доказательства, доля выигранных споров?
 
-**Chargeback** = клиент оспаривает транзакцию через issuer («не узнаю это списание»). Issuer откатывает settlement → merchant теряет деньги + chargeback fee ($15-50).
+**Chargeback** = клиент оспаривает транзакцию через свой банк-эмитент («не узнаю это списание»). Issuer откатывает settlement → merchant теряет и сумму платежа, и chargeback fee ($15-50). В отличие от refund, который инициирует merchant добровольно, chargeback — принудительный возврат, навязанный банком, и его нельзя проигнорировать.
 
 **Reason codes (примеры Visa):**
 - **10.4** — фрод (card not present).
@@ -725,7 +745,9 @@ POST /refunds {payment_id, amount?, idempotency_key, reason?}
 - Удобная политика возвратов.
 - ML-детекция фрода (Q20).
 
-## Q20. (!) Anti-fraud: rules + ML, velocity, device fingerprint?
+## Q20. (!) Антифрод: правила + ML, velocity, device fingerprint?
+
+Антифрод строят слоями: дешёвые детерминированные правила отсекают очевидное, ML-модель ловит неочевидные паттерны по сотням признаков, device fingerprint связывает попытки одного злоумышленника, а 3DS служит финальным барьером с переносом ответственности. Каждый слой ловит то, что пропустил предыдущий, и решение должно укладываться в < 100 мс real-time-бюджета.
 
 **Уровни:**
 
@@ -797,7 +819,9 @@ authorize request
 - Пропущенная санкционная транзакция → штрафы в десятки миллионов (BNP Paribas $9B в 2014 за Iran/Sudan).
 - Чрезмерная блокировка → отток клиентов.
 
-## Q22. Multi-currency: FX rates, wallet, hedging?
+## Q22. Мультивалютность: FX-курсы, кошелёк, хеджирование?
+
+Мультивалютность означает, что система хранит балансы и проводит транзакции в разных валютах. Три задачи здесь связаны: где держать деньги (отдельный кошелёк на валюту), по какому курсу конвертировать (FX-курс + наценка) и как управлять риском колебаний курса (хеджирование). Конвертация всегда отражается в ledger отдельными проводками — деньги не «телепортируются» между валютами.
 
 **Multi-currency wallet** = клиент / merchant держит баланс в нескольких валютах.
 
@@ -842,7 +866,9 @@ fx_revenue_USD          | +40
 - Ошибки округления (накопительно): для финансов всегда round-half-even, никогда не round-half-up.
 - Окно cross-currency settlement: рынок закрыт на выходных → FX-курс заморожен → расхождение.
 
-## Q23. Subscriptions: recurring billing, dunning, retry strategy?
+## Q23. Подписки: recurring billing, dunning, стратегия повторов?
+
+Подписки — это автоматические периодические списания с сохранённого метода оплаты. Главная инженерная сложность не в самом списании, а в обработке отказов: карта истекла, недостаточно средств, банк отклонил. Грамотный dunning (умные повторы неуспешных платежей) напрямую влияет на выручку — плохая стратегия теряет 5-7% подписчиков в месяц только на технических отказах.
 
 **Биллинг подписок:**
 - По периодам (помесячно, ежегодно).
@@ -878,9 +904,9 @@ fx_revenue_USD          | +40
 - CIT (Customer Initiated Transaction) — нужно 3DS.
 - MIT (Merchant Initiated, recurring billing) — освобождён от SCA, если первый CIT прошёл 3DS и сохранён mandate.
 
-## Q24. (!) PCI-DSS compliance: SAQ A vs D, scope reduction?
+## Q24. (!) Соответствие PCI-DSS: SAQ A vs D, сокращение scope?
 
-**PCI-DSS (Payment Card Industry Data Security Standard)** — обязателен для всех, кто обрабатывает / хранит / передаёт PAN (номера карт).
+**PCI-DSS (Payment Card Industry Data Security Standard)** — обязателен для всех, кто обрабатывает, хранит или передаёт PAN (номера карт). Главная стратегия — не «выполнить все требования», а вывести систему из scope: если PAN никогда не касается твоих серверов, объём аудита падает с ~329 вопросов (SAQ D) до ~22 (SAQ A) и стоимость compliance — в десять раз.
 
 **Уровни (по объёму транзакций):**
 - **Level 1:** > 6M транзакций/год → ежегодный on-site аудит от QSA (Qualified Security Assessor).
@@ -912,7 +938,9 @@ fx_revenue_USD          | +40
 - Ревью сегментации сети.
 - Хранение access-логов (90 дней online, 1 год в архиве).
 
-## Q25. (!) High-level architecture (gateway, orchestrator, ledger, risk)?
+## Q25. (!) Высокоуровневая архитектура (gateway, orchestrator, ledger, risk)?
+
+Система делится на сервисы по зонам ответственности и по требованиям compliance. Запрос проходит через edge/gateway (защита и аутентификация) в orchestrator (state machine, бизнес-логика), который дёргает risk, vault, PSP и ledger. Token Vault изолирован в PCI-scope, ledger шардирован по merchant_id, события идут через Kafka с outbox. Ключевая идея — разнести «горячий» authorize-path и тяжёлый batch (reconciliation), чтобы они не мешали друг другу.
 
 ```mermaid
 graph LR
@@ -1006,7 +1034,9 @@ state AUTHORIZED
 - Встроенные retry / timeout.
 - Инспекция (отладка вопроса «что произошло на 12-м шаге саги месяц назад»).
 
-## Q27. (!) Multi-region: data residency, failover, regulatory?
+## Q27. (!) Мультирегиональность: data residency, failover, регуляторика?
+
+Мультирегиональность в платежах диктуется не только latency, но и законом: регуляторы требуют хранить данные граждан внутри страны (data residency). Поэтому архитектура — это не просто «реплики поближе к пользователю», а изолированные региональные стеки, где чувствительные данные (PAN, токены) вообще не покидают регион, а ledger нельзя писать cross-region из-за latency и риска split-brain.
 
 **Цели:**
 - Latency < 100ms из любого региона.
@@ -1044,7 +1074,9 @@ state AUTHORIZED
 - Cross-region writes для ledger-entries → latency 100+ ms, может сломать SLA.
 - Split-brain: оба региона считают себя primary → расхождение ledger.
 
-## Q28. Latency budget: p99 на authorize, capture, refund?
+## Q28. Бюджет задержки: p99 на authorize, capture, refund?
+
+Бюджет latency — это разложение целевого p99 на отдельные этапы, чтобы видеть, на что уходит время и что вообще можно оптимизировать. Главный вывод заранее: доминирует вызов PSP (800-1500 мс на authorize), и сократить его нельзя — он у тебя за пределами контроля. Поэтому оптимизируют то, что осталось: параллелят risk и резолв токена, держат PSP-edge в том же регионе.
 
 **Авторизация (p99 < 2 сек):**
 
@@ -1060,7 +1092,7 @@ state AUTHORIZED
 | Outbox + ответ | 20 |
 | **Итого (без 3DS challenge)** | **~1.2 сек** |
 
-PSP — узкое место. С этим ничего не сделать.
+Как видно из таблицы, вызов PSP занимает больше 60% бюджета — это и есть доминирующий вклад в latency.
 
 **Захват (p99 < 500 мс):**
 - Поиск платежа: 5 ms.
