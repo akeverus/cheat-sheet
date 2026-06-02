@@ -62,6 +62,66 @@
       ]
     },
     {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как подключить кэширование в Spring Boot?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно добавить зависимость `spring-boot-starter-cache`, а аннотация `@EnableCaching` уже не нужна, так как автоконфигурация включает кэш сама.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стартер только подтягивает инфраструктуру кэша, но обработка аннотаций включается именно `@EnableCaching`; без неё `@Cacheable` и `@CacheEvict` молча игнорируются.",
+                "source_of_confusion": "Многие стартеры в Spring Boot работают без явных `@Enable*`, поэтому кажется, что и кэш активируется автоматически.",
+                "if_it_were_true": "Тогда любой проект со стартером кэшировал бы вызовы без согласия разработчика, что ломало бы методы с побочными эффектами.",
+                "how_it_should_be": "Нужно явно поставить `@EnableCaching` на конфигурацию или главный класс приложения, иначе кэш-аннотации не обрабатываются."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Добавить зависимость `spring-boot-starter-cache`, поставить `@EnableCaching` на конфигурацию или главный класс, после чего работает дефолтный `ConcurrentMapCacheManager`, а для прода подключают `Caffeine` или `Redis`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Стартер подключает абстракцию кэша, а `@EnableCaching` активирует AOP-обработку аннотаций `@Cacheable`/`@CacheEvict`; без неё аннотации просто игнорируются и метод вызывается каждый раз.",
+                "example": "Ставим `@EnableCaching` рядом с `@SpringBootApplication`, и метод `@Cacheable(\"products\")` начинает кэшировать результат в `ConcurrentMapCacheManager` без дополнительной настройки.",
+                "when_to_apply": "Этот минимум используют, когда нужно быстро включить кэш для прототипа или теста; для продакшена дефолтный провайдер заменяют на `Caffeine` или `Redis`.",
+                "edge_cases": "`ConcurrentMapCacheManager` хранит данные в памяти без TTL и без ограничения размера, поэтому может расти бесконечно и не вытесняет записи.",
+                "related": "[[spring-cache-interview#Q1]] зачем нужна абстракция кэша; [[spring-cache-interview#Q11]] какие `CacheManager` поддерживает Spring Boot; [[spring-cache-interview#Q12]] как настроить `Caffeine` как провайдер."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Нужно реализовать интерфейс `CacheManager` вручную и зарегистрировать его бином, потому что у Spring Boot нет провайдера кэша по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring Boot даёт дефолтный `ConcurrentMapCacheManager` из коробки, так что для старта свою реализацию `CacheManager` писать не нужно.",
+                "source_of_confusion": "Кастомный `CacheManager` действительно нужен для разных TTL на кэши, и это принимают за обязательный шаг подключения.",
+                "if_it_were_true": "Тогда даже простейший `@Cacheable` не заработал бы без ручного бина, но в реальности он кэширует сразу после `@EnableCaching`.",
+                "how_it_should_be": "Достаточно стартера и `@EnableCaching`; свой `CacheManager` подключают лишь когда нужен конкретный провайдер или тонкая настройка."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Кэширование включается свойством `spring.cache.enabled=true` в `application.yml`, а аннотации `@EnableCaching` и `@Cacheable` при этом не требуются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Свойства `spring.cache.enabled` не существует; включение идёт через `@EnableCaching`, а аннотации `@Cacheable`/`@CacheEvict` обязательны для пометки кэшируемых методов.",
+                "source_of_confusion": "В Spring Boot многое настраивается через `application.yml`, поэтому ожидают и флаг включения кэша там же.",
+                "if_it_were_true": "Тогда Spring сам бы решал, какие методы кэшировать, но он не знает бизнес-семантику и не может включить кэш без аннотаций.",
+                "how_it_should_be": "Через `spring.cache.type` выбирают провайдер, но саму обработку включает `@EnableCaching`, а методы помечают `@Cacheable`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "q_number": 3,
       "blocks": [
         {

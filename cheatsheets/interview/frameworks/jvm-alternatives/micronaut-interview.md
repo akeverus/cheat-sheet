@@ -368,6 +368,8 @@ public interface UserClient {
 
 Возвращаемый тип определяет стиль. Micronaut автоматически адаптирует.
 
+## Q12. (!) Как организовать конфигурацию?
+
 ```yaml
 # application.yml
 micronaut:

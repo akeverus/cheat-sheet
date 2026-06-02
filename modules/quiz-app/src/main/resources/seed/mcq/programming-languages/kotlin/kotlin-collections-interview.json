@@ -182,6 +182,66 @@
       ]
     },
     {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как создать коллекцию в Kotlin: listOf, mutableListOf, emptyList?",
+          "options": [
+            {
+              "text": "`listOf(1, 2, 3)` создаёт `MutableList`, поэтому к результату сразу можно применять `add` и `remove` без приведения типа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`listOf` возвращает read-only `List`, у которого в API нет методов `add` и `remove`, так что компилятор не даст их вызвать напрямую.",
+                "source_of_confusion": "И `listOf`, и `mutableListOf` под капотом на JVM используют `ArrayList`, и кажется, что раз класс один, то и доступные операции одинаковые.",
+                "if_it_were_true": "Если бы `listOf` отдавал `MutableList`, исчезла бы разница между read-only и mutable фабриками и пропал бы compile-time контракт неизменяемости.",
+                "how_it_should_be": "Для изменяемой коллекции нужно явно вызвать `mutableListOf(1, 2, 3)`, который возвращает `MutableList` с методами `add` и `remove`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`emptyList<String>()` каждый раз создаёт новый объект пустого списка, поэтому два вызова `emptyList()` вернут разные экземпляры в памяти.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`emptyList()` возвращает разделяемый синглтон `EmptyList`, поэтому повторные вызовы отдают один и тот же объект без аллокации.",
+                "source_of_confusion": "Привычка, что любая фабрика вроде `listOf` или `ArrayList()` выделяет новый объект, переносится и на пустой случай по аналогии.",
+                "if_it_were_true": "Если бы каждый вызов аллоцировал новый список, частое использование `emptyList()` в горячем коде создавало бы лишний мусор для GC.",
+                "how_it_should_be": "`emptyList()`, `emptySet()` и `emptyMap()` отдают неизменяемые синглтоны, и их можно безопасно возвращать как дефолтное значение без накладных расходов."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Чтобы получить пустой изменяемый список, достаточно написать `listOf<Int>()`, а затем добавлять в него элементы через `add`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`listOf<Int>()` даёт read-only пустой `List`, в который нельзя ничего добавить; для пустого изменяемого списка нужен `mutableListOf<Int>()`.",
+                "source_of_confusion": "Пустой список визуально выглядит как «заготовка под наполнение», и легко предположить, что в него можно дописывать элементы.",
+                "if_it_were_true": "Если бы в пустой `listOf()` можно было добавлять элементы, то read-only тип `List` перестал бы гарантировать отсутствие мутаций.",
+                "how_it_should_be": "Используйте `mutableListOf<Int>()` для пустого изменяемого списка, а `listOf()` или `emptyList()` — когда наполнение не нужно."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`listOf` создаёт read-only `List`, `mutableListOf` — изменяемый `MutableList`, а `emptyList()` отдаёт неизменяемый синглтон пустого списка; для Set и Map есть парные фабрики `setOf`/`mutableSetOf` и `mapOf`/`mutableMapOf`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Фабрики делятся на read-only (`listOf`, `setOf`, `mapOf`) и mutable (`mutableListOf`, `mutableSetOf`, `mutableMapOf`); на JVM под капотом это `ArrayList` и `LinkedHashSet`/`LinkedHashMap`, а пустые `emptyList`/`emptySet`/`emptyMap` возвращают синглтоны без аллокации.",
+                "example": "`val list = listOf(1, 2, 3)` даёт `List<Int>`, `val m = mutableListOf<Int>()` — пустой `MutableList`, а `val e = emptyList<String>()` — разделяемый пустой список; пара ключ-значение для Map задаётся через `mapOf(\"a\" to 1)`.",
+                "when_to_apply": "Берите `listOf`/`setOf`/`mapOf`, когда коллекция формируется один раз и дальше только читается, а `mutableListOf` и его аналоги — когда нужно наполнять или менять коллекцию по ходу выполнения.",
+                "edge_cases": "`listOf` для 0–1 элемента возвращает оптимизированную реализацию (пустой синглтон или одноэлементную обёртку), а read-only список всё ещё можно изменить через unsafe cast в `MutableList`, поэтому это не настоящая иммутабельность.",
+                "related": "[[kotlin-collections-interview#Q3]] что под капотом List, Set и Map на JVM; [[kotlin-collections-interview#Q5]] buildList и buildMap для условного наполнения; [[kotlin-collections-interview#Q6]] почему read-only не равно immutable."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
       "q_number": 5,
       "blocks": [
         {

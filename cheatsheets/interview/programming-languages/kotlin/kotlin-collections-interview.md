@@ -191,6 +191,8 @@ graph TD
 
 **Важно**: `setOf()` и `mapOf()` в `Kotlin` по умолчанию сохраняют порядок вставки (`LinkedHashSet`, `LinkedHashMap`), в отличие от `Java`, где `HashSet`/`HashMap` порядок не гарантируют.
 
+## Q4. Как создать коллекцию: listOf, mutableListOf, emptyList?
+
 ```kotlin
 // Read-only
 val list = listOf(1, 2, 3)           // List<Int>

@@ -96,6 +96,8 @@ public Product getProduct(Long id) {
 
 ---
 
+## Q2. Как подключить кэширование в Spring Boot?
+
 **Зависимость:**
 ```xml
 <dependency>

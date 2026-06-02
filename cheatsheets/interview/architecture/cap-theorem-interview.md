@@ -819,6 +819,8 @@ enable.idempotence=true   # exactly-once семантика
 
 При `acks=all` и `min.insync.replicas=2` — если живых реплик < 2, producer получит ошибку `NotEnoughReplicasException` (CP: жертвуем доступностью ради целостности).
 
+## Q31. MongoDB и CAP: как настраивается поведение?
+
 `MongoDB` — система с настраиваемой согласованностью. По умолчанию использует `ReplicaSet` с одним primary и несколькими secondary:
 
 ```javascript

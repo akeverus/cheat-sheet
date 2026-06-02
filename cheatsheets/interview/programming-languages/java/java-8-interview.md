@@ -1113,6 +1113,8 @@ all.thenRun(() -> System.out.println("Все задачи завершены"));
 
 Подробнее об асинхронности — в [вопросах по Java Concurrency](java-concurrency-interview.md).
 
+## Q35. Как комбинировать несколько `CompletableFuture`?
+
 ```java
 // thenCompose — последовательная цепочка (flatMap для Future)
 CompletableFuture<Order> orderFuture = findUser(userId)

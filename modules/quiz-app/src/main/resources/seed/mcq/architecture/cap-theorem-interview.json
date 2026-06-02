@@ -1802,6 +1802,66 @@
       ]
     },
     {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "MongoDB и CAP: как настраивается поведение системы?",
+          "options": [
+            {
+              "text": "В `MongoDB` поведение CAP жёстко зафиксировано на уровне всего кластера при его развёртывании, и изменить уровень согласованности для отдельной операции уже нельзя без переразвёртывания `ReplicaSet`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Уровни `writeConcern` и `readConcern` задаются per-operation прямо в драйвере, поэтому одна и та же коллекция обслуживает и `AP`, и `CP`-запросы без переразвёртывания.",
+                "source_of_confusion": "Топология `ReplicaSet` действительно фиксируется при развёртывании, и это легко спутать с фиксацией уровня согласованности запросов.",
+                "if_it_were_true": "Тогда нельзя было бы для одного заказа писать с `w: 1`, а для платежа с `w: \"majority\"` в пределах одного приложения.",
+                "how_it_should_be": "Корректно: `writeConcern`/`readConcern` выбираются на каждый запрос, и поведение настраивается гибко без перезапуска кластера."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`MongoDB` всегда работает как чистая `AP`-система: запись считается успешной сразу после записи на primary, и усилить гарантии до согласованности большинством невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С `writeConcern: { w: \"majority\" }` запись подтверждается только после репликации на большинство узлов, что даёт `CP`-поведение, а не только `AP`.",
+                "source_of_confusion": "Дефолтный режим с быстрой записью на primary создаёт впечатление, что `MongoDB` принципиально жертвует согласованностью.",
+                "if_it_were_true": "Тогда `MongoDB` не классифицировали бы как `PC/EC` при `majority`, и при failover нельзя было бы избежать потери подтверждённых записей.",
+                "how_it_should_be": "Корректно: уровень согласованности настраивается, и `majority` переводит запись в строгий режим с гарантией durability."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`MongoDB` настраивает поведение CAP per-operation через `writeConcern` и `readConcern`: `w: 1` даёт быструю запись на primary (ближе к `AP`), а `w: \"majority\"` с `j: true` подтверждает запись большинством узлов с журналированием (`CP`); causal-сессии гарантируют причинный порядок при чтении с secondary.",
+              "correct": true,
+              "sections": {
+                "explanation": "`writeConcern` управляет тем, сколько узлов `ReplicaSet` должны подтвердить запись, а `readConcern: \"majority\"` заставляет чтение видеть только committed-данные; вместе они сдвигают систему между `AP` и `CP` без изменения топологии.",
+                "example": "Для некритичного заказа применяют `db.orders.insertOne(doc, { writeConcern: { w: 1 } })`, а для платежа — `{ writeConcern: { w: \"majority\", j: true } }`, чтобы запись пережила failover primary.",
+                "when_to_apply": "Сильные настройки (`majority`) выбирают для финансов и инвентаря, где недопустима потеря записи, а быстрые (`w: 1`) — для логов и лент, где важнее низкая latency.",
+                "edge_cases": "Чтение с secondary при `readPreference(\"secondary\")` без causal-сессии может вернуть устаревшие данные; causal consistency через `clusterTime` и `operationTime` решает это для одной сессии.",
+                "related": "[[cap-theorem-interview#Q13]] causal consistency и `clusterTime`; [[cap-theorem-interview#Q27]] почему `ZooKeeper` — `CP`-система; [[cap-theorem-interview#Q32]] переключение системы между `CP` и `AP` per-request."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В `MongoDB` параметр `readConcern: \"majority\"` отвечает за выбор primary при failover и определяет, какой узел станет новым лидером `ReplicaSet` после падения текущего primary.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`readConcern: \"majority\"` управляет видимостью данных при чтении (возвращать только committed-записи), а выбор нового primary делает отдельный протокол выборов `ReplicaSet`.",
+                "source_of_confusion": "И выборы лидера, и `majority`-чтение оперируют понятием большинства узлов, поэтому их функции легко перепутать.",
+                "if_it_were_true": "Тогда изменение `readConcern` запроса влияло бы на топологию кластера, а failover зависел бы от параметров клиентского чтения.",
+                "how_it_should_be": "Корректно: `readConcern` задаёт уровень согласованности чтения, а failover и выбор primary обрабатываются механизмом выборов независимо от запросов."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
       "q_number": 32,
       "blocks": [
         {

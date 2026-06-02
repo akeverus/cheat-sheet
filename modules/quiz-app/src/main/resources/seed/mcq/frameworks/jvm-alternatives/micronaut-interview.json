@@ -662,6 +662,66 @@
       ]
     },
     {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать конфигурацию в `Micronaut` и какие способы доступа к настройкам поддерживаются?",
+          "options": [
+            {
+              "text": "Конфигурация задаётся в `application.yml` только литеральными значениями; подстановка переменных окружения через `${...}` не поддерживается, для этого нужен отдельный плагин.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Micronaut из коробки подставляет переменные окружения и system properties прямо в `application.yml` через синтаксис `${DB_USER:admin}` с дефолтом после двоеточия.",
+                "source_of_confusion": "В части фреймворков интерполяция значений требует дополнительных зависимостей, и это ограничение ошибочно переносят на Micronaut.",
+                "if_it_were_true": "Тогда нельзя было бы вынести пароль БД в `${DB_PASSWORD}` без хардкода, но это стандартный приём в любом Micronaut-проекте.",
+                "how_it_should_be": "Подстановка `${ENV:default}` встроена в загрузчик конфигурации и работает без отдельных плагинов."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Типобезопасную конфигурацию в `Micronaut` можно получить только через `@Value` на каждом отдельном поле; группировать связанные настройки в один класс невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Связанные настройки группируют через `@ConfigurationProperties(\"my.service\")` на классе с геттерами/сеттерами, а `@Value` остаётся лишь для одиночных значений.",
+                "source_of_confusion": "`@Value` — самый заметный способ инжекта свойства, поэтому кажется, что других механизмов нет.",
+                "if_it_were_true": "Тогда сервис с десятком связанных параметров пришлось бы засыпать `@Value`-полями вместо одного `@ConfigurationProperties`-бина.",
+                "how_it_should_be": "Группы настроек оформляют через `@ConfigurationProperties`, а `@Value` применяют для единичных свойств."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`Micronaut` понимает конфигурацию исключительно в формате `application.yml`; форматы `properties`, `toml` и `groovy` не поддерживаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Micronaut читает конфигурацию из `properties`, `yml`, `groovy`, `toml` и переменных окружения — YAML лишь самый популярный, но не единственный формат.",
+                "source_of_confusion": "В большинстве примеров документации используется именно `application.yml`, отсюда вывод о его эксклюзивности.",
+                "if_it_were_true": "Тогда команда, привыкшая к `application.properties`, не смогла бы перенести конфиги без переписывания в YAML.",
+                "how_it_should_be": "Поддерживаются несколько форматов файлов плюс env vars; YAML — лишь один из доступных вариантов."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Настройки описываются в `application.yml` (`micronaut.application.name`, `server.port`, `datasources`) с подстановкой переменных окружения вида `${DB_USER:admin}`; типобезопасный доступ даёт `@ConfigurationProperties(\"prefix\")` на классе-бине, одиночные значения — `@Value(\"${some.value}\")`. Поддерживаются форматы `properties`, `yml`, `groovy`, `toml` и переменные окружения.",
+              "correct": true,
+              "sections": {
+                "explanation": "Конфигурация в Micronaut многоуровневая: файл задаёт значения с интерполяцией env vars, `@ConfigurationProperties` биндит секцию в типизированный бин, а `@Value` инжектит отдельное свойство — всё с дефолтами через `${KEY:default}`.",
+                "example": "В `application.yml` пишут `datasources.default.username: ${DB_USER:admin}`, затем класс `@ConfigurationProperties(\"my.service\")` с полями `greeting`/`timeout` инжектят в сервис, а `@Value(\"${some.value}\")` подставляет одиночное значение.",
+                "when_to_apply": "Применяют для вынесения секретов и эндпоинтов в env vars, группировки связанных настроек сервиса в один бин и предоставления безопасных дефолтов для локального запуска.",
+                "edge_cases": "Без дефолта `${DB_PASSWORD}` отсутствующая переменная даст ошибку резолва на старте; `@ConfigurationProperties` требует геттеров/сеттеров (или `@ConfigurationInject` для immutable-вариантов).",
+                "related": "[[micronaut-interview#Q13]] environment-specific конфиги и переопределение значений; [[micronaut-interview#Q19]] distributed config через Consul и Vault; [[micronaut-interview#Q1]] основы Micronaut."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "q_number": 13,
       "blocks": [
         {

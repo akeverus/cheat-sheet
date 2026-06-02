@@ -740,6 +740,8 @@ boolean isBipartite(List<List<Integer>> adj) {
 Существует, **только если граф DAG** (без циклов).
 
 
+## Q25. (!) Алгоритм Кана (BFS-подход)?
+
 ```java
 List<Integer> kahnTopologicalSort(int n, List<List<Integer>> adj) {
     int[] inDegree = new int[n];
