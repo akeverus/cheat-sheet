@@ -182,6 +182,12 @@
 
     table.querySelectorAll('th.sortable').forEach(function (th) {
       th.classList.add('sortable-cursor');
+      // Атрибуты интерактивности навешиваем здесь, а не в шаблоне: без JS
+      // заголовки оставались focusable (tabindex) и обещали Enter/Space, которые
+      // ничего не делали. Теперь no-JS видит обычные неинтерактивные <th>.
+      th.setAttribute('tabindex', '0');
+      th.setAttribute('aria-keyshortcuts', 'Enter Space');
+      th.setAttribute('aria-sort', 'none');
       if (!th.dataset.baseAriaLabel) {
         th.dataset.baseAriaLabel = th.getAttribute('aria-label') || '';
       }

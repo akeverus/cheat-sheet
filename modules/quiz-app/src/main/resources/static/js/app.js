@@ -362,6 +362,9 @@
     const btn = document.getElementById('extra-analysis-toggle-result');
     const container = document.getElementById('result-extra-analysis');
     if (!btn || !container) return;
+    // Кнопка рендерится hidden (no-JS не должен видеть JS-only контрол) —
+    // раскрываем её, раз JS доступен и обработчик навешивается.
+    btn.classList.remove('hidden');
 
     const questionId = btn.getAttribute('data-question-id');
     const selectedOptionId = btn.getAttribute('data-selected-option-id');

@@ -96,9 +96,12 @@
                    th:href="@{/(topic=${filter?.topic},group=${filter?.group},ordered=${filter == null or filter.ordered != false},important=${filter?.importantOnly},onlyWrong=${filter?.onlyWrong},shuffle=${filter?.shuffle},weakTopics=${weakTopics})}">
                     Следующий вопрос →
                 </a>
+                <!-- hidden по умолчанию: кнопка чисто JS-driven. Без JS она была
+                     бы мёртвым контролом (клик ничего не делает). app.js при
+                     инициализации снимает .hidden — так no-JS её не видит. -->
                 <button type="button"
                         id="extra-analysis-toggle-result"
-                        class="btn secondary-btn"
+                        class="btn secondary-btn hidden"
                         aria-controls="result-extra-analysis"
                         aria-expanded="false"
                         th:attr="data-question-id=${result.question.id},data-selected-option-id=${result.selected.id},data-correct=${result.correctAnswer}">
@@ -121,7 +124,7 @@
     </div>
 </section>
 
-<script th:src="@{/js/app.js(v=13)}"></script>
+<script th:src="@{/js/app.js(v=14)}"></script>
 
 <!-- Связанные вопросы -->
 <div th:if="${relatedQuestions != null and !relatedQuestions.isEmpty()}" id="result-related-questions" class="related-questions related-questions-block">
