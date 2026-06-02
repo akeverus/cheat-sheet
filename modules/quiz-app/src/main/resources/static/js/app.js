@@ -380,8 +380,13 @@
     };
 
     btn.addEventListener('click', async () => {
-      if (btn.dataset.loaded === 'true') return;
-      btn.disabled = true;
+      // aria-busy в гарде: aria-disabled (в отличие от native disabled) не
+      // блокирует повторную клавиатурную активацию во время загрузки.
+      if (btn.dataset.loaded === 'true' || btn.getAttribute('aria-busy') === 'true') return;
+      // aria-disabled, а не disabled: native disabled выбрасывает фокус
+      // клавиатуры на <body>; aria-disabled оставляет кнопку в tab-order
+      // (клик мышью гасит CSS pointer-events, повтор с клавиатуры — гард выше).
+      btn.setAttribute('aria-disabled', 'true');
       btn.setAttribute('aria-busy', 'true');
       btn.setAttribute('aria-expanded', 'true');
       btn.textContent = EXTRA_ANALYSIS_BUTTON_LOADING_TEXT;
@@ -474,7 +479,7 @@
           // «загружен» — иначе кнопка осталась бы заблокированной с ложной меткой
           // успеха. Возвращаем кнопку в исходное retryable-состояние.
           setInlineAlert('Не удалось загрузить доп. анализ. Попробуйте ещё раз.');
-          btn.disabled = false;
+          btn.removeAttribute('aria-disabled');
           btn.textContent = EXTRA_ANALYSIS_BUTTON_INITIAL_TEXT;
           btn.setAttribute('aria-expanded', 'false');
           container.classList.add('hidden');
@@ -489,7 +494,7 @@
       } catch (err) {
         console.error('Result extra analysis failed:', err);
         setInlineAlert('Не удалось загрузить доп. анализ. Попробуйте ещё раз.');
-        btn.disabled = false;
+        btn.removeAttribute('aria-disabled');
         btn.textContent = EXTRA_ANALYSIS_BUTTON_INITIAL_TEXT;
       } finally {
         btn.removeAttribute('aria-busy');
@@ -1299,10 +1304,15 @@
 
     let confidenceSubmitted = false;
     const questionId = (form.querySelector('input[name="questionId"]') || {}).value || '';
-    confidenceDiv.querySelectorAll('.confidence-btn').forEach(btn => {
+    const confidenceBtns = confidenceDiv.querySelectorAll('.confidence-btn');
+    confidenceBtns.forEach(btn => {
       btn.addEventListener('click', async () => {
         if (confidenceSubmitted) return;
         confidenceSubmitted = true;
+        // Гасим всю группу сразу: клик принят, запрос в полёте. Без этого на
+        // время await кнопки выглядели активными, а повторные клики молча
+        // отбрасывались флагом — без видимого отклика. На ошибке вернём активность.
+        confidenceBtns.forEach(b => { b.disabled = true; });
 
         const grade = btn.getAttribute('data-grade');
         try {
@@ -1318,11 +1328,12 @@
         } catch (err) {
           console.error('Confidence update failed:', err);
           confidenceSubmitted = false;
+          confidenceBtns.forEach(b => { b.disabled = false; });
           setInlineAlert('Не удалось сохранить уверенность. Попробуйте ещё раз.');
           return;
         }
 
-        confidenceDiv.querySelectorAll('.confidence-btn').forEach(b => {
+        confidenceBtns.forEach(b => {
           b.classList.remove('selected');
           b.setAttribute('aria-pressed', 'false');
           b.disabled = true;
@@ -1542,7 +1553,7 @@
     feedbackDiv.focus();
     if (extraAnalysisBtn && !learningPrefs.hardMode) {
       extraAnalysisBtn.classList.remove('hidden');
-      extraAnalysisBtn.disabled = false;
+      extraAnalysisBtn.removeAttribute('aria-disabled');
       extraAnalysisBtn.textContent = EXTRA_ANALYSIS_BUTTON_INITIAL_TEXT;
       // При ошибке показываем ключевой разбор сразу, чтобы не терять учебный момент.
       if (!isCorrect) {
@@ -1554,7 +1565,9 @@
       extraAnalysisBtn.onclick = async () => {
         if (loaded) return;
         loaded = true;
-        extraAnalysisBtn.disabled = true;
+        // aria-disabled, не disabled: сохраняем фокус клавиатуры на кнопке
+        // (native disabled сбросил бы его на <body>). Повтор гасит флаг loaded.
+        extraAnalysisBtn.setAttribute('aria-disabled', 'true');
         extraAnalysisBtn.setAttribute('aria-busy', 'true');
         extraAnalysisBtn.setAttribute('aria-expanded', 'true');
         extraAnalysisBtn.textContent = EXTRA_ANALYSIS_BUTTON_LOADING_TEXT;
@@ -1602,9 +1615,13 @@
       window.location.href = nextLink.href;
     };
     nextLink.onkeydown = (e) => {
-      if (e.key === ' ' || e.key === 'Enter') {
+      // Enter нативно активирует <a> → срабатывает onclick (с проверкой
+      // модификаторов и метрикой), поэтому Enter не перехватываем. Space на
+      // ссылке по умолчанию скроллит страницу, а не переходит — его обрабатываем
+      // сами, но через .click(), чтобы пройти ту же ветку onclick.
+      if (e.key === ' ') {
         e.preventDefault();
-        window.location.href = nextLink.href;
+        nextLink.click();
       }
     };
   }
