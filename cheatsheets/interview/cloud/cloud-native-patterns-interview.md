@@ -365,6 +365,8 @@ Option 2: Stateless via JWT
 
 В **2025** — обычно combine: JWT для access token (short-lived), refresh token + Redis для revocation.
 
+## Q15. (!) Leader election?
+
 **Leader election** — выбор одного instance для exclusive task в cluster.
 
 **Use cases:**
@@ -395,6 +397,8 @@ leader_election = leaderelection.LeaderElection(
 )
 ```
 
+## Q16. Distributed locking?
+
 **Distributed lock** — coordinated mutex across multiple instances.
 
 **Tools:**
@@ -416,6 +420,8 @@ if acquire_lock("my-task"):
     finally:
         redis.delete("my-task")
 ```
+
+## Q17. (!) Horizontal vs vertical scaling?
 
 **Vertical (scale-up):**
 - Bigger machine (more CPU, RAM)
@@ -446,6 +452,8 @@ spec:
           averageUtilization: 70
 ```
 
+## Q18. Auto-scaling triggers?
+
 **Common triggers:**
 - **CPU utilization** (> 70%)
 - **Memory utilization**
@@ -457,6 +465,8 @@ spec:
 - Kafka, Redis, RabbitMQ
 - Cloud queues (SQS, Service Bus, Pub/Sub)
 - Custom HTTP
+
+## Q19. Predictive vs reactive scaling?
 
 **Reactive:** scale **after** metric hits threshold. Lag of seconds-minutes.
 **Predictive:** scale **before** based on patterns / ML.
@@ -471,6 +481,8 @@ spec:
 - Pre-warming перед expected spike
 
 В **2025** — большинство — **reactive** + ручное scheduled scaling для known patterns (start of business day).
+
+## Q20. (!) Three pillars: metrics, logs, traces?
 
 **Metrics** — numerical, aggregated (counters, gauges, histograms).
 - Prometheus, Datadog, CloudWatch
@@ -487,6 +499,8 @@ spec:
 **Все three** complement each other. Production system needs all.
 
 Подробнее — в [Observability](../monitoring/observability-interview.md).
+
+## Q21. OpenTelemetry?
 
 **OpenTelemetry (OTel)** — CNCF standard для **vendor-neutral** observability.
 
@@ -505,6 +519,8 @@ Apps → OpenTelemetry SDK → OTel Collector → Backend (Datadog, Honeycomb, .
 - **Logs** (newer)
 
 В **2025** — OTel **the standard** для new projects. Заменяет vendor-specific instrumentation.
+
+## Q22. Service mesh (Istio, Linkerd)?
 
 **Service mesh** — infrastructure layer для service-to-service communication. Sidecar proxies (Envoy) handle:
 
@@ -529,6 +545,8 @@ graph LR
 
 В **2025** многие используют **only mTLS + telemetry** (через Linkerd or Cilium), without full Istio complexity.
 
+## Q23. (!) Blue-green deployment?
+
 **Blue (current production)** + **Green (new version)** — оба running. Switch traffic от blue к green at once.
 
 ```
@@ -545,6 +563,8 @@ Time 5: If issues, instant rollback (switch back)
 **В K8s:** через services (route к blue или green selector).
 
 Подробнее — в [Deployment Strategies](../cicd/deployment-strategies-interview.md).
+
+## Q24. (!) Canary deployment?
 
 **Canary** — gradually increase traffic к new version.
 
@@ -564,6 +584,8 @@ Day 5: 100%
 - **Service mesh** (Istio, Linkerd) — traffic splitting
 
 **Auto-rollback** на metric thresholds — best practice.
+
+## Q25. Feature flags?
 
 **Feature flags** — toggle features в runtime, без redeploy.
 
@@ -586,6 +608,8 @@ else:
 - **Flagsmith**, **GrowthBook**, **Statsig**
 
 **Decoupling release из deploy** — modern best practice.
+
+## Q26. GitOps?
 
 **GitOps** — declarative infrastructure через Git как source of truth.
 
@@ -613,6 +637,8 @@ Auto-syncs cluster к desired state в git
 - Approval через PR review
 - Self-healing (drift detection)
 
+## Q27. (!) Configuration management в cloud-native?
+
 **12-factor:** config через **env variables**.
 
 ```bash
@@ -633,6 +659,8 @@ LOG_LEVEL=info
 
 **Best practice:** **never commit secrets** в git. Use external store.
 
+## Q28. Secrets management?
+
 **Tools:**
 - **HashiCorp Vault** — enterprise standard
 - **AWS Secrets Manager**
@@ -648,6 +676,8 @@ LOG_LEVEL=info
 - **Encryption at rest** + in transit
 - **No secrets в env vars** в Docker images / git
 
+## Q29. (!) Какие частые анти-паттерны?
+
 1. **Distributed monolith** — microservices с tight coupling
 2. **Shared database** между services
 3. **Synchronous chains** — A → B → C → D (cascading failures)
@@ -662,6 +692,8 @@ LOG_LEVEL=info
 12. **No observability** — production black box
 13. **Manual deployments** — no GitOps
 14. **No backups testing**
+
+## Q30. Cloud-native maturity model?
 
 **Levels (CNCF Maturity Model):**
 

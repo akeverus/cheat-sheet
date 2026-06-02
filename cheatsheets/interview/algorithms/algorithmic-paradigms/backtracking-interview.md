@@ -760,6 +760,8 @@ boolean wordBreak(String s, int start, Set<String> dict) {
 Без мемоизации — экспоненциально. С — `O(n²)`.
 
 
+## Q25. (!) Какова сложность backtracking?
+
 В худшем случае — экспоненциальная: `O(branchFactor^depth)`.
 
 | Задача | Сложность |
@@ -773,6 +775,8 @@ boolean wordBreak(String s, int start, Set<String> dict) {
 **С pruning** — на практике гораздо быстрее. Sudoku с хорошими эвристиками решается мгновенно для большинства задач.
 
 
+## Q26. (!) Где backtracking в production?
+
 1. **SAT-solvers** (Z3, Glucose) — boolean satisfiability
 2. **Constraint Satisfaction Problems** — Sudoku, scheduling, planning
 3. **Game AI** — chess, Go (minimax + alpha-beta pruning — это backtracking)
@@ -784,6 +788,8 @@ boolean wordBreak(String s, int start, Set<String> dict) {
 9. **Web crawlers** с фильтрацией
 10. **Theorem provers** — proof search
 
+
+## Q27. Iterative backtracking — реально?
 
 Да, через явный стек состояний. Полезно для **очень глубокой** рекурсии (риск StackOverflow).
 

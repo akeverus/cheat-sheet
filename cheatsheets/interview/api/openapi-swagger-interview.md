@@ -1240,6 +1240,317 @@ springdoc:
 
 ---
 
+## Q34. Callbacks vs Webhooks в OpenAPI 3.1
+
+И `callbacks`, и `webhooks` описывают запросы, которые **сервер инициирует сам** (асинхронные out-of-band вызовы), но привязаны к разным точкам спецификации.
+
+**`callbacks`** — описываются внутри конкретной операции и связаны с ней. Это запрос, который сервер пошлёт клиенту **в ответ на ранее сделанный вызов** (например, клиент подписался через `POST /subscribe`, передав свой `callbackUrl`):
+
+```yaml
+paths:
+  /subscribe:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                callbackUrl: { type: string, format: uri }
+      callbacks:
+        onData:
+          "{$request.body#/callbackUrl}":   # runtime-выражение
+            post:
+              requestBody:
+                content:
+                  application/json:
+                    schema: { $ref: "#/components/schemas/Event" }
+              responses:
+                "200": { description: "Клиент принял событие" }
+```
+
+**`webhooks`** — секция верхнего уровня (появилась в OAS 3.1). Описывает входящие запросы, которые API шлёт, **не привязываясь ни к какой операции** — у webhook нет предшествующего вызова и нет `callbackUrl`. Это полноценные эндпоинты «наоборот»:
+
+```yaml
+webhooks:
+  newOrder:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Order" }
+      responses:
+        "200": { description: "Получатель обработал заказ" }
+```
+
+Главное отличие: `callbacks` контекстно зависят от операции и используют runtime-выражения для URL; `webhooks` глобальны и описывают паттерн «provider шлёт — consumer слушает» без привязки к запросу-предшественнику.
+
+---
+
+## Q35. (!) API-first workflow: практический пайплайн с openapi-generator
+
+**API-first** — спецификация `openapi.yaml` является единственным источником правды и хранится в репозитории; код сервера и клиентов генерируется из неё.
+
+Практический пайплайн:
+1. **Дизайн** — пишем/правим `openapi.yaml`, ревьюим как обычный код в PR.
+2. **Линтинг** — Spectral проверяет стиль и обязательные поля (`spectral lint`).
+3. **Backward-compat** — `oasdiff`/`openapi-diff` сравнивает с предыдущей версией, ломающие изменения валят сборку.
+4. **Генерация** — `openapi-generator` создаёт серверные интерфейсы и клиентские SDK на этапе `generate-sources`.
+5. **Реализация** — разработчик имплементирует сгенерированные интерфейсы; компилятор гарантирует соответствие контракту.
+
+Maven-конфигурация генерации на каждой сборке:
+```xml
+<plugin>
+    <groupId>org.openapitools</groupId>
+    <artifactId>openapi-generator-maven-plugin</artifactId>
+    <version>7.10.0</version>
+    <executions>
+        <execution>
+            <goals><goal>generate</goal></goals>
+            <configuration>
+                <inputSpec>${project.basedir}/src/main/resources/openapi.yaml</inputSpec>
+                <generatorName>spring</generatorName>
+                <configOptions>
+                    <interfaceOnly>true</interfaceOnly>
+                    <useSpringBoot3>true</useSpringBoot3>
+                </configOptions>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+```
+
+Преимущество: спецификация не «отстаёт» от кода (как в code-first при забытых аннотациях), а frontend и backend стартуют параллельно сразу после согласования контракта.
+
+---
+
+## Q36. Delegate pattern в openapi-generator: когда применять
+
+При генерации Spring-сервера `openapi-generator` по умолчанию создаёт интерфейс `XxxApi` (с аннотациями `@RequestMapping`) — реализуя его напрямую, вы при **регенерации перезаписываете** свои контроллеры или ловите конфликты.
+
+**Delegate pattern** (`delegatePattern=true`) разрывает эту связь: генератор создаёт три артефакта:
+- `XxxApi` — интерфейс с дефолтными методами и аннотациями (генерируется, не трогаем).
+- `XxxApiController` — тонкий контроллер, делегирующий в `XxxApiDelegate` (генерируется).
+- `XxxApiDelegate` — интерфейс **без** Spring-аннотаций, который вы реализуете в своём бине.
+
+```xml
+<configOptions>
+    <delegatePattern>true</delegatePattern>
+</configOptions>
+```
+
+```java
+@Service
+public class UsersApiDelegateImpl implements UsersApiDelegate {
+    @Override
+    public ResponseEntity<UserDto> getUserById(Long id) {
+        return ResponseEntity.ok(userService.findById(id));
+    }
+}
+```
+
+**Когда применять:** при API-first с регулярной регенерацией — ваша бизнес-логика живёт в `*DelegateImpl` и не зависит от сгенерированных классов. Если генерация однократная (сгенерировали и забыли), `interfaceOnly=true` проще; delegate оправдан именно при повторяющейся генерации в пайплайне.
+
+---
+
+## Q37. Кастомизация Mustache-шаблонов openapi-generator
+
+`openapi-generator` рендерит код по **Mustache-шаблонам**. Когда дефолтного вывода не хватает (свои аннотации, лицензионный заголовок, нестандартный базовый класс), шаблоны переопределяют, не форкая генератор.
+
+Шаги:
+1. Выгрузить эталонные шаблоны нужного генератора:
+   ```bash
+   openapi-generator-cli author template -g spring -o ./templates
+   ```
+2. Отредактировать нужный `.mustache` (например, `model.mustache`, `api.mustache`).
+3. Указать каталог при генерации:
+   ```bash
+   openapi-generator-cli generate -i openapi.yaml -g spring \
+     -o ./server -t ./templates
+   ```
+
+В Maven — параметр `templateDirectory`:
+```xml
+<configuration>
+    <templateDirectory>${project.basedir}/src/main/templates</templateDirectory>
+</configuration>
+```
+
+Доступны переменные модели (`{{classname}}`, `{{#vars}}…{{/vars}}`, `{{#operations}}`). Переопределять стоит **только нужные** файлы — остальные генератор берёт встроенные, поэтому при обновлении версии генератора расхождений меньше. Альтернатива точечным правкам — `--additional-properties` и vendor-extensions (`x-*`), если хватает их.
+
+---
+
+## Q38. (!) Backward compatibility: openapi-diff и oasdiff в CI
+
+Изменение спецификации может **сломать существующих клиентов** (удаление поля, сужение типа, новое обязательное поле в запросе). Чтобы ловить это автоматически, в CI сравнивают новую спецификацию со старой.
+
+**`openapi-diff`** (OpenAPITools) — классифицирует изменения на breaking/non-breaking:
+```bash
+docker run --rm -v $(pwd):/specs openapitools/openapi-diff \
+  /specs/old-openapi.yaml /specs/new-openapi.yaml \
+  --fail-on-incompatible
+```
+
+**`oasdiff`** — более современный инструмент с богатым набором правил и уровнями (`ERR`/`WARN`/`INFO`):
+```bash
+oasdiff breaking old-openapi.yaml new-openapi.yaml --fail-on ERR
+```
+
+Что считается ломающим: удаление операции или поля ответа, добавление `required`-поля в запрос, сужение `enum`, изменение типа, ужесточение `minLength`/`maximum`. Не ломающим — добавление опционального поля, новой операции, нового `2xx`-ответа.
+
+В пайплайне «эталон» берут из main-ветки или из задеплоенной версии, а проверку ставят обязательным гейтом PR — так контракт не деградирует незаметно.
+
+---
+
+## Q39. Множественные примеры: examples vs example, переиспользуемые примеры
+
+OpenAPI 3.x различает два поля для примеров значений:
+
+- **`example`** (единственное число) — один пример прямо в `schema` или `media type`. Простой случай.
+- **`examples`** (множественное) — карта **именованных** примеров; в Swagger UI появляется выпадающий список. Доступно на уровне `media type`, параметра, заголовка (но **не** внутри `schema`).
+
+```yaml
+paths:
+  /users:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateUser" }
+            examples:
+              valid:
+                summary: "Корректный запрос"
+                value: { name: "Иван", email: "ivan@example.com" }
+              missingEmail:
+                summary: "Без email"
+                value: { name: "Иван" }
+```
+
+Переиспользуемые примеры выносят в `components/examples` и ссылаются через `$ref`:
+```yaml
+components:
+  examples:
+    UserSample:
+      value: { id: 1, name: "Иван" }
+```
+
+В springdoc — аннотация `@ExampleObject` внутри `@Content(examples = {...})`. Несколько `@ExampleObject` с разными `name` дают тот же выпадающий список. `example` и `examples` взаимоисключающи в одном месте — указывать оба нельзя.
+
+---
+
+## Q40. @Hidden и скрытие операций из документации
+
+Иногда эндпоинт существует, но не должен попадать в публичную спецификацию (служебный, внутренний, технический).
+
+**`@Hidden`** (`io.swagger.v3.oas.annotations.Hidden`) скрывает контроллер, метод или поле целиком:
+```java
+@Hidden
+@GetMapping("/internal/metrics")
+public MetricsDto internalMetrics() { ... }
+```
+
+Альтернативы для частичного скрытия:
+- `@Operation(hidden = true)` — скрыть отдельную операцию.
+- `@Parameter(hidden = true)` — убрать параметр (например, `@AuthenticationPrincipal`).
+- `@Schema(hidden = true)` — скрыть поле модели из схемы.
+
+Скрыть пакеты/пути на уровне конфигурации:
+```yaml
+springdoc:
+  packages-to-exclude: com.example.internal
+  paths-to-exclude: /internal/**
+```
+
+Важно: `@Hidden` влияет **только на документацию** — сам эндпоинт остаётся доступным по HTTP. Для реального ограничения доступа нужен Spring Security, а не скрытие из Swagger UI.
+
+---
+
+## Q41. (!) Пагинация в OpenAPI: query параметры, cursor, Link header
+
+Пагинацию описывают явно через параметры и/или заголовки ответа. Два основных стиля:
+
+**1. Offset/limit (page-based):**
+```yaml
+parameters:
+  - name: page
+    in: query
+    schema: { type: integer, default: 0, minimum: 0 }
+  - name: size
+    in: query
+    schema: { type: integer, default: 20, maximum: 100 }
+```
+Ответ — обёртка с метаданными (`content`, `totalElements`, `totalPages`) — стиль Spring Data `Page`. Просто, но дорог `OFFSET` на больших таблицах и нестабилен при вставках.
+
+**2. Cursor-based (keyset):**
+```yaml
+parameters:
+  - name: cursor
+    in: query
+    description: "Непрозрачный курсор последней записи"
+    schema: { type: string }
+  - name: limit
+    in: query
+    schema: { type: integer, default: 20 }
+```
+Клиент передаёт `cursor` из предыдущего ответа; стабилен и быстр на больших данных, но нельзя прыгнуть на произвольную страницу.
+
+**3. Link header (RFC 8288):**
+```yaml
+responses:
+  "200":
+    headers:
+      Link:
+        schema: { type: string }
+        description: '<https://api/users?page=2>; rel="next"'
+```
+Навигация (`next`, `prev`, `first`, `last`) живёт в заголовке — стиль GitHub API. В OpenAPI описывается через `headers` ответа.
+
+Выбор: offset — для небольших списков и админок; cursor — для лент и больших таблиц; Link — когда хочется RESTful-навигацию без обёртки в теле.
+
+---
+
+## Q42. multipart/form-data и загрузка файлов в OpenAPI
+
+Загрузка файлов описывается через `requestBody` с `content-type` `multipart/form-data`; бинарное поле задаётся как `type: string, format: binary`.
+
+```yaml
+paths:
+  /avatar:
+    post:
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary       # сам файл
+                description:
+                  type: string         # сопутствующее поле
+            encoding:
+              file:
+                contentType: image/png, image/jpeg
+      responses:
+        "201": { description: "Файл загружен" }
+```
+
+Ключевые моменты:
+- `format: binary` — одиночный файл; массив файлов — `type: array, items: {type: string, format: binary}`.
+- Секция `encoding` уточняет `contentType` и заголовки для отдельных частей.
+- В OAS 3.1 для бинарных данных предпочтителен `contentMediaType`/`contentEncoding` (JSON Schema 2020-12), но `format: binary` остаётся совместимым.
+
+В springdoc на стороне Spring:
+```java
+@PostMapping(value = "/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+public ResponseEntity<Void> upload(
+    @RequestPart("file") MultipartFile file,
+    @RequestParam(required = false) String description) { ... }
+```
+
+`springdoc-openapi` распознаёт `MultipartFile` и автоматически рендерит его как `format: binary` с кнопкой выбора файла в Swagger UI.
+
+---
+
 ## Полезные ссылки
 
 ### Официальная документация

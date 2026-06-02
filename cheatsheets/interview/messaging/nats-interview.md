@@ -226,6 +226,8 @@ NATS uses **temporary subjects** для replies — auto-managed.
 
 **Sub-millisecond** latency (vs HTTP).
 
+## Q9. (!) Что такое JetStream?
+
 **JetStream** (с 2020) — persistence layer на NATS.
 
 **Adds:**
@@ -238,6 +240,8 @@ NATS uses **temporary subjects** для replies — auto-managed.
 **Backwards-compatible** с Core NATS — same protocol, добавлены commands.
 
 JetStream нужен для **persistent messaging** workloads. Без JetStream — NATS лучше для realtime / fire-and-forget.
+
+## Q10. Streams в JetStream?
 
 **Stream** — persistent storage для messages matching subjects.
 
@@ -256,6 +260,8 @@ nats stream add ORDERS \
 - **File** — disk-based, durable
 - **Memory** — fast, ephemeral
 
+## Q11. (!) Consumers (durable, ephemeral)?
+
 **Consumer** = view на stream messages.
 
 **Durable consumer** — survives restarts, NATS tracks position (last consumed sequence).
@@ -273,6 +279,8 @@ nats consumer add ORDERS order-processor \
 - **Push** consumer — NATS sends messages к subscriber
 - **Pull** consumer — subscriber requests messages (better для batch processing)
 
+## Q12. Retention policies?
+
 **Limits-based** (default):
 ```
 max_age: 7 days
@@ -288,6 +296,8 @@ max_bytes: 100GB
 retention: limits | interest | workqueue
 ```
 
+## Q13. Replication через RAFT?
+
 **JetStream** uses **RAFT consensus** для replication.
 
 ```bash
@@ -302,6 +312,8 @@ nats stream add ORDERS --replicas 3
 - 5 replicas: tolerate 2 failures
 
 **Storage:** quorum write (majority must persist) before ACK.
+
+## Q14. Key-Value store (built-in)?
 
 **JetStream KV** — simple key-value store на JetStream streams.
 
@@ -320,6 +332,8 @@ nats kv watch my_kv  # subscribe to changes
 
 **Watch API** — real-time updates (analog etcd watch).
 
+## Q15. Object Store?
+
 **JetStream Object Store** — для **larger blobs** (files, images).
 
 ```bash
@@ -336,6 +350,8 @@ Splits objects в **chunks** (default 128 KB), stores в JetStream.
 - Edge caching
 
 **Не replacement** для S3 — для smaller objects, integrated с messaging.
+
+## Q16. NATS Mirroring и Sourcing?
 
 **Mirror** — exact replica другого stream.
 
@@ -354,6 +370,8 @@ nats stream add COMBINED --sources STREAM1 --sources STREAM2
 - Disaster recovery
 - Stream aggregation
 
+## Q17. (!) NATS clustering?
+
 **Cluster** — multiple NATS Server instances connected как **full mesh**.
 
 ```yaml
@@ -369,6 +387,8 @@ cluster {
 **Single virtual broker** semantics — pub в одном node → subscribers на other nodes получают messages.
 
 **Scale:** до tens of nodes per cluster.
+
+## Q18. Leaf nodes (edge)?
 
 **Leaf node** — NATS Server connected к main cluster as one-way leaf.
 
@@ -387,6 +407,8 @@ leafnodes {
 
 **Subjects scoped** — leaf нодa может только subjects из allowed accounts.
 
+## Q19. Super-cluster (multi-region)?
+
 **Super-cluster** = multiple clusters connected в **mesh**.
 
 ```
@@ -399,6 +421,8 @@ Cluster A (us-east)  ←→  Cluster B (eu-west)
 **Gateway connections** между clusters. Clients connect locally → messages routed globally.
 
 **Multi-region** messaging без central broker.
+
+## Q20. Authentication (NATS auth, JWT)?
 
 **Auth methods:**
 - **Token** — simple shared token
@@ -417,6 +441,8 @@ resolver: URL  # or memory
 
 **Production best practice** — JWT-based с NSC tool для management.
 
+## Q21. Accounts (multi-tenancy)?
+
 **Account** = isolated namespace (subjects, streams, KVs).
 
 ```yaml
@@ -433,6 +459,8 @@ accounts: {
 
 **Use case:** SaaS multi-tenant — каждый customer = separate account, isolated.
 
+## Q22. (!) Когда выбрать NATS?
+
 **Выбирай когда:**
 - **Microservices** internal communication (replace HTTP/gRPC)
 - **IoT** — millions devices, low resource usage
@@ -442,6 +470,8 @@ accounts: {
 - **Multi-region** without expensive Kafka MirrorMaker
 - Need **request-reply + pub/sub + persistent streams** в одном stack
 
+## Q23. Когда не выбирать NATS?
+
 **Не выбирай когда:**
 - Need **complex stream processing** (Kafka Streams better)
 - Need **rich ecosystem** integrations (Kafka has it)
@@ -449,6 +479,8 @@ accounts: {
 - **Big Data processing** — Kafka + Spark/Flink standard
 - Team **already invested** в Kafka / RabbitMQ
 - Need **enterprise features** что NATS не имеет (some Kafka Enterprise features)
+
+## Q24. Какие частые проблемы?
 
 1. **JetStream config** — wrong storage type (memory) → data loss
 2. **Insufficient replicas** — single point failure
