@@ -1,10 +1,10 @@
 ---
 title: "ULTRATHINK v5 — exhaustive per-file audit plan (всё с нуля)"
 description: "Полный аудит всех 305 interview-файлов на 2026-06-01: оформление + человекочитаемость + наличие выровненных human-readable MCQ-json. Детальные критерии A-H + пофайловая таблица + findings."
-updated: "2026-06-01"
-status: "active"
+updated: "2026-06-02"
+status: "done"
 audit_version: 5
-progress: "Lane 1 (callout-strip 151) + Lane 2 A/B (55 single-blob restore+json, e1f74dd0→1cafd2df) + Lane 3 7/8 (одиночные зарытые заголовки, 3f4a09df) ГОТОВЫ. ПОПРАВКА: углублённый TOC-vs-headings аудит вскрыл НОВЫЙ класс дефекта — 13 файлов с зарытыми ХВОСТОВЫМИ вопросами (TOC>заголовков; gate пропустил, т.к. и md, и json обрезаны до K). 199 зарытых вопросов. observability (25) — агент режет блоб сейчас (валидация подхода). Lane 4 — 12 файлов round-2 (logging 32, kotlin-coroutines 20, …, backtracking 3 = 188 вопросов) в очереди на wf-restore-blob.js. Цель «человекочитаемый mcq-json по КАЖДОМУ файлу» = TOC-полнота, не только gate-PASS. Completeness-gate: TOC==## Q==json. Snapshot ниже."
+progress: "✅ ЗАВЕРШЕНО 2026-06-02. Финальный аудит: 305/305 имеют json, 305/305 gate-PASS, 305/305 TOC==## Q==json (полнота). 0 callouts, 0 Tier-1 маркеров, 0 дубликатов ## Q, 0 несбалансированных code-fence. Lane 1 (callout-strip 151) + Lane 2 A/B (55 single-blob restore+json, e1f74dd0→1cafd2df) + Lane 3 (8 одиночных зарытых заголовков, 3f4a09df + observability f6b21e3a) + Lane 4 (12 round-2 single-blob: batch A 5f08f642 + batch B ff1a6335) ГОТОВЫ. spring-integration TOC дополнен до 15 (221cea0e). НОВЫЙ класс дефекта «зарытые хвостовые вопросы» (TOC>заголовков, gate пропускал — и md, и json обрезаны до K) полностью устранён: completeness-gate TOC==## Q==json достигнут по всем 305. Цель «человекочитаемый mcq-json по КАЖДОМУ файлу» выполнена."
 ---
 
 # ULTRATHINK v5 — exhaustive per-file audit plan
@@ -305,38 +305,41 @@ Pass: `OK FILE.md`.
 5. **COMMIT** логический (1-3 файла на коммит).
 6. **UPDATE** статус в этой таблице `⬜ TODO` → `✅ DONE`.
 
-## Snapshot аудита — обновлено 2026-06-02 (после Lane 1/2/3 + найден новый класс дефектов)
+## Snapshot аудита — ✅ ФИНАЛ 2026-06-02 (корпус полностью чист, все полосы готовы)
 
-> Прогон: `/tmp/final_audit.py` + НОВЫЙ TOC-vs-headings аудит. **ВАЖНАЯ ПОПРАВКА: «305/305 gate-PASS» верно ТОЛЬКО для существующих заголовков. Углублённый аудит (число TOC-записей vs число `## Q`-заголовков) вскрыл 13 файлов с ЗАРЫТЫМИ хвостовыми вопросами — gate их пропустил, т.к. И md-заголовки, И json обрезаны до одного K. Это и есть дефект полноты, который требует цель.**
+> Финальный прогон (inline completeness-audit, md FIRST, no-question-TOC → complete если head==json==seq): **0 дефектов по всем измерениям.** Цель достигнута: «наличие человекочитаемого mcq-json по КАЖДОМУ файлу» = TOC-полнота, не только gate-PASS — выполнена для всех 305.
 
 | Метрика | Значение |
 |---|---|
 | Total interview .md | 305 |
-| 🟢 Имеют json gate-PASS (для существующих `## Q`) | 305 / 305 |
+| 🟢 Имеют json | **305 / 305** |
+| 🟢 gate-PASS (schema + alignment + rotation + ratio + 0 dup/contra/empty) | **305 / 305** |
+| 🟢 **TOC-полнота: TOC == `## Q` == json** | **305 / 305** (из них 34 без question-TOC → head==json==seq) |
 | 🟢 Legacy `> [!mcq]` callouts в .md (корпусно) | **0** (было 207 файлов / 6979 callouts) |
 | 🟢 NO-JSON | **0** |
-| 🔴 **TOC-полнота: файлы с зарытыми вопросами (TOC > `## Q`-заголовков)** | **13** (199 зарытых вопросов) |
-| 🟢→ Lane 3 restore-buried (1 зарытый): 7 готово + observability | 7 ✅ (commit 3f4a09df) + 1 🔄 |
-| 🔴 Lane 4 round-2 single-blob (много зарытых хвостовых): 12 файлов | 188 вопросов, в очереди |
+| 🟢 Зарытые хвостовые вопросы (TOC > `## Q`-заголовков) | **0** (было 13 файлов / 199 вопросов) |
+| 🟢 Запрещённые Tier1 эмодзи-маркеры | **0** |
+| 🟢 Дубликаты `## Q`-заголовков | **0** |
+| 🟢 Несбалансированные code-fence | **0** |
 | Frontmatter incomplete (A1) | 0 |
 | Нет H1 / нет See-also | 0 / 0 |
-| Запрещённые Tier1 эмодзи-маркеры | 0 |
 
-### Ключевые выводы аудита (2026-06-02)
+### Ключевые выводы аудита (ФИНАЛ 2026-06-02)
 
-1. **🟢 Lane 1/2/3(part) ГОТОВЫ.** Lane 1: 151 файл очищен от 5282 callouts (1f9d11bc). Lane 2 A+B: 55 single-blob восстановлены + json (c0059df8…1cafd2df). Lane 3: 7 одиночных зарытых заголовков (3f4a09df).
-2. **🔴 НОВЫЙ КЛАСС ДЕФЕКТА — «зарытые хвостовые вопросы» (single-blob round 2).** У 13 файлов TOC обещает Q1..Qmax, но заголовки идут чистым префиксом Q1..QK, а Q(K+1)..Qmax зарыты в блобе ПОСЛЕДНЕГО заголовка. Прошлые проверки пропустили: (а) seq-чек видел заголовки 1..K как «sequential»; (б) gate видел json==заголовки (оба обрезаны до K). Контент зарытых вопросов ПРИСУТСТВУЕТ в блобе (проверено: nats Q8 содержит JetStream/Consumers/RAFT; backtracking Q24 — сложность/production/iterative). **Главный вывод: «наличие человекочитаемого mcq-json по КАЖДОМУ файлу» требует TOC-полноты, а не только gate-PASS существующих заголовков.**
-3. **Lane 3 — observability (25 зарытых, частичный single-blob)** — выделенный агент сейчас режет 910-строчный блоб Q1 на Q2–Q26 + регенерирует полный json (40 вопросов). Это и валидация подхода перед фан-аутом Lane 4.
-4. **Lane 4 — 12 файлов round-2:** logging(32 зарытых), kotlin-coroutines(20), static-analysis(20), opentelemetry(19), kotlin(18), aws(18), cloud-native-patterns(16), nats(16), consistency-patterns(11), openapi-swagger(9), divide-and-conquer(6), backtracking(3). Фикс (как observability): split блоба последнего заголовка на зарытые вопросы (вставка заголовков, 0 потери прозы) → регенерация полного выровненного json (1..Qmax) → gate → commit.
-5. **Новый completeness-gate:** файл «полон» ⟺ `TOC-count == ## Q-count == json-count` И gate-PASS. Старый gate (`## Q == json`) этого НЕ ловит — нужно сверять с TOC.
+1. **🟢 ВСЕ ПОЛОСЫ ГОТОВЫ.** Lane 1: 151 файл очищен от 5282 callouts (1f9d11bc). Lane 2 A+B: 55 single-blob восстановлены + json (c0059df8…1cafd2df). Lane 3: 8 одиночных зарытых заголовков (3f4a09df + observability f6b21e3a). Lane 4: 12 round-2 single-blob (batch A 5f08f642 + batch B ff1a6335). spring-integration TOC дополнен до 15 (221cea0e).
+2. **🟢 НОВЫЙ КЛАСС ДЕФЕКТА «зарытые хвостовые вопросы» ПОЛНОСТЬЮ УСТРАНЁН.** У 13 файлов TOC обещал Q1..Qmax, заголовки шли чистым префиксом Q1..QK, а Q(K+1)..Qmax были зарыты в блобе ПОСЛЕДНЕГО заголовка. Прошлые проверки пропускали: (а) seq-чек видел заголовки 1..K как «sequential»; (б) gate видел json==заголовки (оба обрезаны до K). Фикс: split блоба последнего заголовка на зарытые вопросы (0 потери прозы) → регенерация полного выровненного json (1..Qmax). Где зарытого контента не было (openapi-swagger/divide-and-conquer — TOC-only записи) — написаны новые качественные ответы. **Главный урок: «человекочитаемый mcq-json по КАЖДОМУ файлу» требует completeness-gate TOC==## Q==json, а не только gate-PASS существующих заголовков.**
+3. **Новый completeness-gate (теперь часть финального аудита):** файл «полон» ⟺ `TOC-count == ## Q-count == json-count` И gate-PASS И sequential. Файлы без question-TOC (только meta-ссылки) → полны если `## Q == json == seq`. Старый gate (`## Q == json`) этого НЕ ловил.
+4. **Подтверждено:** реестр инструментов (`/tmp/gate_clean.py`, `fix_rotation.py`, workflow `.claude/wf-*.js`) переживает границы сессий через реконструкцию из `mcq-schema.json` + self-validate-спеки воркфлоу; верность сверяется совпадением `rmax` на закоммиченных сидерах.
 
-### Полосы работ (после ре-авторизации 2026-06-01 — Claude правит и .md, и json)
+### Полосы работ — ✅ ВСЕ ЗАКРЫТЫ (Claude правит и .md, и json)
 
 - **Lane 1 — callout-strip (ГОТОВО):** 151 .md очищен от legacy `> [!mcq]`.
-- **Lane 2 Phase A/B (ГОТОВО):** 55 single-blob восстановлены + сгенерирован json (батчи 1–5).
-- **Lane 3 — restore-buried, 1 зарытый (7/8 ГОТОВО):** 7 файлов закоммичено (3f4a09df); observability (25 зарытых) — агент в работе.
-- **Lane 4 — round-2 single-blob, много хвостовых зарытых (В ОЧЕРЕДИ):** 12 файлов, 188 вопросов; workflow `.claude/wf-restore-blob.js`; данные `/tmp/restore_blob_data.json`. Дождаться observability (валидация подхода) → фан-аут → gate completeness → commit.
-- **После Lane 4 — финальный completeness re-audit:** TOC == `## Q` == json по всем 305.
+- **Lane 2 Phase A/B (ГОТОВО):** 55 single-blob восстановлены + сгенерирован json (батчи 1–5, e1f74dd0→1cafd2df).
+- **Lane 3 — restore-buried, 1 зарытый (ГОТОВО):** 7 одиночных (3f4a09df) + observability 25 зарытых (f6b21e3a).
+- **Lane 4 — round-2 single-blob, много хвостовых зарытых (ГОТОВО):** 12 файлов; batch A 5f08f642 + batch B ff1a6335; workflow `.claude/wf-restore-blob.js`.
+- **Финальный completeness re-audit (ГОТОВО):** TOC == `## Q` == json по всем 305 → 0 дефектов.
+
+> ⚠️ **Примечание к пофайловой таблице ниже:** колонка `callouts` и вердикты `🟡 callouts-in-md` — это исторический снимок ДО Lane 1 (callout-strip). Фактически по корпусу сейчас **0 callouts**; таблица оставлена как аудит-trail, её callout-числа неактуальны.
 
 ## Пофайловая таблица (305 строк) — оформление + json + читаемость
 
