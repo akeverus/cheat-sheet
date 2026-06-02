@@ -41,39 +41,40 @@ updated: "2026-05-23"
 
 ## Q1. Что такое multi-agent система на базе LLM и чем она отличается от single-agent?
 
-Multi-agent система — несколько LLM-агентов с **разными ролями**, **разными промптами**, **разными tools**, которые **кооперируются** для решения задачи. Каждый агент работает в собственном контексте, обменивается сообщениями с другими и принимает решения о next step самостоятельно.
+**Multi-agent система** — это несколько LLM-агентов с разными ролями, промптами и tools, которые кооперируются над одной задачей. Каждый агент работает в собственном контексте, обменивается сообщениями с другими и сам решает, что делать дальше. В **single-agent** один LLM крутится в цикле ReAct/планировщика и единолично владеет всеми tools и контекстом.
 
-Single-agent — один LLM в цикле ReAct/планировщик, который сам владеет всеми tools и context.
+Главная разница — не в количестве моделей, а в декомпозиции: multi-agent дробит задачу на роли, single-agent держит всё в одной голове.
 
-Ключевые отличия:
+**Что даёт разбиение на агентов:**
 
-- **Specialisation** — каждому агенту даётся узкая роль («researcher», «writer», «critic»), что улучшает качество vs generalist.
-- **Изоляция контекста** — у каждого свой scratchpad, не забивается лишним.
-- **Параллелизм** — независимые subtasks могут идти параллельно.
-- **Сложность** — больше LLM calls, больше latency, дороже, сложнее debug.
+- **Специализация** — узкая роль («researcher», «writer», «critic») с заточенным промптом отвечает точнее, чем один generalist на все случаи жизни.
+- **Изоляция контекста** — у каждого свой scratchpad, поэтому контекст не забивается чужими промежуточными данными.
+- **Параллелизм** — независимые подзадачи идут одновременно, сокращая время «по часам».
 
-Multi-agent — это **distributed system на LLM**: появляются проблемы координации, failure handling, observability, идемпотентности — те же, что в обычных микросервисах.
+**Чем платим:** больше LLM-вызовов → выше latency, дороже, тяжелее отлаживать.
+
+Ключевая ментальная модель: multi-agent — это **распределённая система на LLM**. Отсюда и весь набор её болячек — координация, обработка отказов, observability, идемпотентность — ровно те же, что и в обычных микросервисах.
 
 ## Q2. Когда single-agent достаточно, а когда реально нужен multi-agent? (!)
 
-Эвристика по Anthropic «Building Effective Agents»: **начинай с самого простого**, добавляй сложность только когда метрика требует.
+**Правило по умолчанию:** начинай с single-agent и добавляй агентов, только когда конкретная метрика (качество, latency, изоляция) этого требует. Это прямая эвристика Anthropic из «Building Effective Agents»: сложность вводят последней, а не первой.
 
-Single-agent достаточно, если:
+**Single-agent достаточно, если:**
 
-- Задача укладывается в **один well-defined промпт** и набор tools.
-- Контекст не превышает window и не мешает рассуждению.
-- Нет естественной декомпозиции на параллельные subtasks.
-- Latency и cost критичны (single-agent дешевле в 3–10×).
+- Задача укладывается в **один чёткий промпт** и один набор tools.
+- Контекст помещается в window и не мешает рассуждению.
+- Нет естественного разбиения на параллельные подзадачи.
+- Latency и cost критичны — single-agent дешевле в 3–10×.
 
-Multi-agent оправдан, если:
+**Multi-agent оправдан, если** есть хотя бы одна из причин:
 
-- Задача состоит из **разнородных этапов** с разными expertise (research + write + critique + code).
-- Нужны **разные tools/permissions** у разных «работников» (sandbox python — у одного, file write — у другого).
-- Есть **параллельные ветки** (10 источников исследуются одновременно).
-- Нужен **adversarial/debate-паттерн** (writer vs critic, генератор vs reviewer).
-- Контекст единого агента переполняется, и хочется разнести в изолированные context windows.
+- **Разнородные этапы** с разной экспертизой (research + write + critique + code) — каждому нужен свой заточенный промпт.
+- **Разные права и tools** у «работников» (python-sandbox у одного, запись файлов — у другого), и смешивать их в одном агенте опасно.
+- **Параллельные ветки** — например, 10 источников исследуются одновременно.
+- **Adversarial/debate-паттерн** — writer против critic, генератор против reviewer, где сама идея в противопоставлении ролей.
+- Контекст одного агента **переполняется**, и подзадачи хочется развести по изолированным context windows.
 
-Если вопрос «single или multi» вызывает сомнение — почти всегда ответ single-agent с хорошими tools. Multi-agent — последнее средство, не первое.
+**Эмпирическое правило:** если сомневаешься, single или multi — почти всегда ответ «single-agent с хорошими tools». Multi-agent — последнее средство, а не первое.
 
 ## Q3. Какие основные архитектуры multi-agent систем существуют? (!)
 
@@ -95,43 +96,45 @@ flowchart LR
     end
 ```
 
-- **Hierarchical / Manager-Worker** — manager-агент декомпозирует задачу и делегирует sub-agents, аккумулирует результаты. Default-режим CrewAI (`Process.hierarchical`).
-- **Sequential / Pipeline** — output одного агента подаётся на вход следующему. Простой, предсказуемый. CrewAI `Process.sequential`.
-- **Hub-and-Spoke / Star** — центральный coordinator общается с каждым «лучом», но лучи не знают друг о друге. Удобно для роутинга.
-- **Network / Mesh / Peer-to-peer** — агенты общаются напрямую (group chat в AutoGen). Гибко, но непредсказуемо.
-- **Multi-level hierarchical** — manager → team leads → workers. Для больших задач с подкомандами.
+Архитектуры различаются тем, **кто кому может слать сообщения** — то есть топологией графа взаимодействий. Пять основных:
 
-Выбор: чем выше структурированность и предсказуемость — тем лучше hierarchical/sequential. Mesh оставляют для исследовательских/творческих задач.
+- **Hierarchical / Manager-Worker** — manager-агент дробит задачу, делегирует sub-agents и собирает их результаты воедино. Это default-режим CrewAI (`Process.hierarchical`).
+- **Sequential / Pipeline** — выход одного агента подаётся на вход следующему, как конвейер. Просто и предсказуемо. CrewAI `Process.sequential`.
+- **Hub-and-Spoke / Star** — центральный координатор общается с каждым «лучом», но лучи друг о друге не знают. Удобно для роутинга по специализациям.
+- **Network / Mesh / Peer-to-peer** — агенты общаются напрямую, все со всеми (group chat в AutoGen). Максимально гибко, но непредсказуемо.
+- **Multi-level hierarchical** — manager → team leads → workers. Для крупных задач, разбитых на подкоманды.
+
+**Как выбирать:** чем выше нужна предсказуемость, тем строже топология — hierarchical или sequential. Mesh оставляют для исследовательских и творческих задач, где как раз ценен непредсказуемый обмен идеями.
 
 ## Q4. Что такое «agentic workflow» vs «agent» по терминологии Anthropic? (!)
 
-Различие из поста «Building Effective Agents» — критично для интервью.
+Разница в **том, кто управляет потоком выполнения** — код или сама модель. Это любимый вопрос на интервью.
 
-- **Workflow** — LLM используется как **компонент в orchestrated коде**: control flow жёстко прописан разработчиком (prompt chaining, routing, parallelization, orchestrator-workers, evaluator-optimizer). LLM решает локально, маршрут — детерминированный.
-- **Agent** — LLM **сам управляет потоком выполнения**: решает, какой tool вызвать, когда остановиться, когда повторить. Control flow зависит от модели в runtime.
+- **Workflow** — поток жёстко прописан разработчиком, а LLM встроен как один из компонентов. Control flow детерминированный (prompt chaining, routing, parallelization, orchestrator-workers, evaluator-optimizer); модель принимает только локальные решения, но не выбирает маршрут.
+- **Agent** — поток выбирает сама модель: какой tool позвать, когда остановиться, когда повторить. Control flow определяется в runtime и заранее неизвестен.
 
-Trade-off:
+**Компромисс:**
 
-- Workflow — **предсказуемый**, легче тестировать, дешевле, easier to reason about. Подходит для 80% production-задач.
-- Agent — **гибкий**, обрабатывает open-ended запросы, но непредсказуемо, дороже, сложнее observability.
+- Workflow — предсказуемый, легче тестировать и отлаживать, дешевле. Покрывает ~80% production-задач.
+- Agent — гибкий, тянет open-ended запросы, но непредсказуем, дороже и тяжелее в observability.
 
-Anthropic рекомендация: «agents для задач, где flexibility и model-driven decisions реально нужны». Иначе — workflow.
+**Рекомендация Anthropic:** agents — только там, где гибкость и решения «от модели» реально нужны. Во всех остальных случаях — workflow.
 
 ## Q5. Перечислите типовые «building blocks» из Anthropic-патернов orchestration.
 
-Anthropic выделяет 5 паттернов от простого к сложному (всё это workflows, не agents):
+Anthropic выделяет 5 базовых паттернов оркестрации, от простого к сложному. Важно: всё это **workflows** (детерминированный код), а не autonomous agents.
 
-- **Prompt chaining** — последовательность LLM-вызовов, output → input.
-- **Routing** — классификатор отправляет запрос в один из специализированных промптов.
-- **Parallelization** — sectioning (разбить задачу на независимые куски) или voting (N raw calls → ensemble).
-- **Orchestrator-Workers** — central LLM динамически декомпозирует и делегирует worker-LLMs, потом синтезирует. Похоже на hierarchical multi-agent.
-- **Evaluator-Optimizer** — один LLM генерирует, другой оценивает, цикл до критерия. Аналог reflexion / actor-critic.
+- **Prompt chaining** — цепочка LLM-вызовов, где выход одного идёт на вход следующего. Для задач с чёткими последовательными шагами.
+- **Routing** — классификатор определяет тип запроса и направляет его в один из специализированных промптов.
+- **Parallelization** — два варианта: *sectioning* (разбить задачу на независимые куски и считать параллельно) или *voting* (N независимых вызовов → ансамблевое решение).
+- **Orchestrator-Workers** — центральный LLM динамически дробит задачу, делегирует worker-LLM и затем синтезирует результат. По сути — то же hierarchical multi-agent.
+- **Evaluator-Optimizer** — один LLM генерирует, другой оценивает, и так по кругу до выполнения критерия. Аналог reflexion / actor-critic.
 
-Multi-agent frameworks (CrewAI, AutoGen, LangGraph) — это **обобщения** этих паттернов, но обычно один из них покрывает 90% реальных задач без специальной библиотеки.
+**Ключевая мысль:** фреймворки (CrewAI, AutoGen, LangGraph) — это обобщения тех же паттернов. Но на практике один из этих пяти покрывает ~90% задач и без отдельной библиотеки.
 
 ## Q6. Что выбрать: hierarchical, sequential или mesh для типовых задач? (!)
 
-Грубая декомпозиция:
+Архитектуру диктует **структура задачи**: насколько чётко она раскладывается на шаги и насколько предсказуемым должен быть результат. Грубая шпаргалка по типам задач:
 
 | Тип задачи | Архитектура |
 |------------|-------------|
@@ -142,16 +145,16 @@ Multi-agent frameworks (CrewAI, AutoGen, LangGraph) — это **обобщен�
 | Software development simulation (PM → dev → QA → ops) | **Multi-level hierarchical** |
 | Voting/ensemble (N independent → majority) | **Parallel + aggregator** |
 
-Главное правило: чем понятнее граф взаимодействий, тем меньше LLM-overhead на координацию. Mesh с 5+ агентами почти всегда — overengineering.
+**Главное правило:** чем понятнее граф взаимодействий, тем меньше LLM-вызовов уходит на саму координацию. Mesh из 5+ агентов почти всегда — overengineering: модели тратят токены на «болтовню» друг с другом вместо работы.
 
 ## Q7. CrewAI — основные концепции и когда подходит. (!)
 
-CrewAI — Python-фреймворк с фокусом на **role-playing**. Базовые сущности:
+CrewAI — это Python-фреймворк, построенный вокруг **role-playing**: ты описываешь агентам роли почти как актёрам, и модель «отыгрывает» их. Базовые сущности:
 
-- **`Agent`** — `role`, `goal`, `backstory`, `tools`, `llm`. Backstory критично для качества: модель играет роль.
-- **`Task`** — описание + `expected_output` + `agent` (или назначается manager-ом).
+- **`Agent`** — `role`, `goal`, `backstory`, `tools`, `llm`. `backstory` критичен для качества: именно через него модель вживается в роль и держит нужный тон.
+- **`Task`** — описание задачи + `expected_output` + `agent` (или агент назначается manager-ом).
 - **`Crew`** — оркестратор: список agents + tasks + `process` (`sequential` или `hierarchical`).
-- **`Process.hierarchical`** — Crew автоматически назначает manager-агента, который делегирует.
+- **`Process.hierarchical`** — Crew сам добавляет manager-агента, который раздаёт задачи остальным.
 
 ```python
 from crewai import Agent, Task, Crew, Process
@@ -191,15 +194,15 @@ crew = Crew(
 result = crew.kickoff(inputs={"topic": "Multi-agent orchestration"})
 ```
 
-Подходит для: контент-производства, исследовательских конвейеров, демо/прототипов с понятными ролями. Минусы: меньше контроля над state machine, чем у LangGraph.
+**Сценарий применения:** контент-производство, исследовательские конвейеры, демо и прототипы с понятными ролями. **Минус:** меньше контроля над state machine, чем у LangGraph, — для сложной логики ветвлений и циклов CrewAI быстро упирается в потолок.
 
 ## Q8. AutoGen (Microsoft) — что это и какие сценарии? (!)
 
-AutoGen — фреймворк от Microsoft, фокус на **conversation-driven** агентах. Ключевые сущности:
+AutoGen — фреймворк от Microsoft, где координация строится **через диалог**: агенты не вызывают друг друга как функции, а переписываются в общем чате, и из этой переписки рождается решение. Ключевые сущности:
 
-- **`AssistantAgent`** — LLM, играющий роль.
-- **`UserProxyAgent`** — псевдо-юзер: умеет вызывать tools, выполнять код (в Docker-sandbox), запрашивать human input.
-- **`GroupChat`** + **`GroupChatManager`** — несколько агентов в одной conversation, manager решает, кто говорит следующим.
+- **`AssistantAgent`** — LLM, играющий роль (кодер, ревьюер и т.п.).
+- **`UserProxyAgent`** — псевдо-пользователь: умеет вызывать tools, исполнять код в Docker-sandbox и запрашивать ввод человека. Именно он замыкает диалог на реальные действия.
+- **`GroupChat`** + **`GroupChatManager`** — несколько агентов в одной беседе; manager на каждом шаге решает, кому давать слово следующим.
 
 ```python
 import autogen
@@ -231,19 +234,19 @@ manager = autogen.GroupChatManager(groupchat=groupchat, llm_config={"config_list
 user_proxy.initiate_chat(manager, message="Напиши и протестируй функцию fibonacci(n).")
 ```
 
-Сильные стороны: code execution из коробки (sandbox), естественные диалоги, AutoGen Studio для no-code-сборки. Минусы: group chat склонен к длинным «болтливым» сессиям, нужно жёстко лимитировать `max_round`.
+**Плюсы:** исполнение кода из коробки (Docker-sandbox), естественные диалоги между ролями, AutoGen Studio для no-code-сборки. **Минус и подводный камень:** group chat склонен скатываться в длинные «болтливые» сессии, где агенты гоняют сообщения по кругу, — поэтому `max_round` нужно лимитировать жёстко, иначе растут и latency, и счёт.
 
 ## Q9. LangGraph — чем отличается от CrewAI/AutoGen и зачем StateGraph? (!)
 
-LangGraph — расширение LangChain, моделирует агента как **stateful directed graph с циклами**.
+LangGraph — расширение LangChain, которое моделирует агента как **направленный граф с состоянием и циклами**. В отличие от CrewAI (роли) и AutoGen (диалог), здесь ты явно рисуешь граф переходов и сам владеешь state machine — отсюда и максимум контроля.
 
-Концепции:
+Ключевые концепции:
 
-- **State** — typed dict (часто `TypedDict`), общий контейнер, который пробрасывается между nodes.
-- **Node** — функция (LLM call, tool call, кастомная логика), принимает state и возвращает update.
-- **Edge** — направленный переход. **Conditional edges** позволяют ветвление по содержимому state.
-- **Cycles** — в отличие от DAG-фреймворков, разрешены циклы (для ReAct-loop, retry, reflection).
-- **Checkpointer** — сохраняет state в БД (sqlite/postgres), позволяет pause/resume + human-in-loop.
+- **State** — типизированный словарь (обычно `TypedDict`), общий контейнер, который пробрасывается между узлами и накапливает данные шага за шагом.
+- **Node** — функция (LLM-вызов, tool-вызов или своя логика): принимает state и возвращает его обновление.
+- **Edge** — направленный переход. **Conditional edges** дают ветвление по содержимому state — это и есть «решения» графа.
+- **Cycles** — в отличие от DAG-фреймворков, циклы разрешены, что и нужно для ReAct-loop, retry и reflection.
+- **Checkpointer** — сохраняет state в БД (SQLite/Postgres), за счёт чего возможны pause/resume и human-in-the-loop.
 
 ```python
 from langgraph.graph import StateGraph, END
@@ -282,16 +285,16 @@ graph.add_edge("writer", "supervisor")
 app = graph.compile(checkpointer=memory_saver)
 ```
 
-Когда выбрать LangGraph:
+**Когда выбирать LangGraph:**
 
-- Нужен **полный контроль над state machine** и циклами.
-- **Human-in-the-loop** с pause/resume через checkpointer.
-- **Supervisor pattern** с динамическим роутингом.
-- Интеграция с экосистемой LangChain (LangSmith tracing, retrievers).
+- Нужен **полный контроль над state machine** и циклами, а не «магия» фреймворка.
+- Требуется **human-in-the-loop** с pause/resume через checkpointer.
+- Строишь **supervisor pattern** с динамическим роутингом между worker-ами.
+- Важна интеграция с экосистемой LangChain (LangSmith tracing, retrievers).
 
 ## Q10. OpenAI Swarm — что это, для чего, насколько production-ready?
 
-Swarm — экспериментальный educational-фреймворк от OpenAI (2024). Главная идея — **handoff paradigm**: агент передаёт control другому агенту через специальный function call, который возвращает `Agent` объект.
+Swarm — экспериментальный учебный фреймворк от OpenAI (2024), который существует ради одной идеи — **handoff**: агент передаёт управление другому, просто вернув из function call объект `Agent`. Это самый наглядный способ понять, как работают передачи контроля.
 
 ```python
 from swarm import Swarm, Agent
@@ -314,20 +317,20 @@ billing_agent = Agent(
 response = client.run(agent=triage, messages=[{"role": "user", "content": "Где мой счёт?"}])
 ```
 
-Особенности:
+**Особенности:**
 
-- Минимализм — всего ~500 строк кода.
-- Без состояния между вызовами (stateless), persistence — задача разработчика.
-- **Explicitly not production-ready** — OpenAI прямо предупреждает: educational only.
-- Преемник для production — **OpenAI Agents SDK** (выпущен в 2025).
+- Минимализм — всего ~500 строк кода, легко прочитать целиком.
+- Stateless: состояние между вызовами не хранится, persistence — забота разработчика.
+- Явно **не production-ready** — OpenAI прямо предупреждает: educational only.
+- Production-преемник — **OpenAI Agents SDK** (выпущен в 2025).
 
-На интервью важно: Swarm полезен для понимания идеи handoff, но для продакшена выбирают AutoGen, LangGraph или Anthropic-style code.
+**Что сказать на интервью:** Swarm — отличный способ понять идею handoff, но в продакшен берут AutoGen, LangGraph, OpenAI Agents SDK или обычный Anthropic-style код, а не Swarm.
 
 ## Q11. Anthropic подход «agents-as-tools» и почему он часто лучше фреймворков. (!)
 
-Anthropic в «Building Effective Agents» аргументирует: специальные multi-agent frameworks часто **избыточны**. Большинство задач решается обычным кодом + tools + одним хорошим LLM.
+Главный тезис Anthropic из «Building Effective Agents»: специальные multi-agent фреймворки часто **избыточны**. Большинство задач решается обычным кодом + tools + одним хорошим LLM, а «агентом» становится просто очередной вызов с другим промптом.
 
-Паттерн «**orchestrator-workers**» в чистом виде:
+Паттерн «**orchestrator-workers**» в чистом виде, без библиотеки:
 
 ```python
 def run_orchestrator(query: str):
@@ -340,18 +343,20 @@ def run_orchestrator(query: str):
     return final
 ```
 
-Это и есть «multi-agent», только без фреймворка: каждый LLM-вызов с другим промптом — это уже «другой агент». Tools передаются обычными function-schemas.
+Это и есть «multi-agent», только без фреймворка: каждый LLM-вызов с другим промптом — уже «другой агент», а tools передаются обычными function-schemas.
 
-Преимущества подхода:
+**Плюсы подхода:**
 
-- Прозрачный control flow — обычный Python.
-- Нет vendor lock-in на framework abstractions.
-- Легко добавить retry/circuit-breaker/observability — стандартные библиотеки.
-- Easier code review, debug, тестирование.
+- Прозрачный control flow — это обычный Python, который видно глазами.
+- Нет vendor lock-in на абстракции фреймворка.
+- Retry, circuit-breaker, observability добавляются стандартными библиотеками, а не «магией» крейта.
+- Проще code review, отладка и тестирование.
 
-Когда фреймворк всё-таки нужен: long-running stateful conversations (LangGraph checkpointer), сложные group chats (AutoGen), role-heavy production (CrewAI). Иначе — обычный код.
+**Когда фреймворк всё-таки оправдан:** долгоживущие stateful-беседы (LangGraph checkpointer), сложные group chats (AutoGen), role-heavy production (CrewAI). В остальных случаях — обычный код.
 
 ## Q12. Сравните CrewAI, AutoGen, LangGraph, Swarm.
+
+Коротко: **CrewAI** — про роли, **AutoGen** — про диалог, **LangGraph** — про граф состояний, **Swarm** — про handoff и обучение. Развёрнутое сравнение:
 
 | Критерий | CrewAI | AutoGen | LangGraph | Swarm |
 |----------|--------|---------|-----------|-------|
@@ -365,83 +370,89 @@ def run_orchestrator(query: str):
 | Learning curve | Низкая | Средняя | Высокая | Очень низкая |
 | Лучший use case | Контент / research crews | Coding/debate agents | Сложные stateful workflows | Прототипы / обучение |
 
-Эмпирически в продакшене: **LangGraph** для stateful systems, **CrewAI** для role-heavy задач, **AutoGen** где нужен code-exec sandbox, **Swarm** не выбирают (берут OpenAI Agents SDK).
+**Эмпирическое правило для продакшена:** LangGraph — для stateful-систем со сложной логикой, CrewAI — для role-heavy задач, AutoGen — когда нужен code-exec sandbox, а Swarm в прод не берут (вместо него OpenAI Agents SDK).
 
 ## Q13. Что такое OpenAI Agents SDK и где он в этой картине?
 
-OpenAI Agents SDK (2025) — официальный production-преемник Swarm. Принципиальные отличия:
+OpenAI Agents SDK (2025) — официальный production-преемник Swarm: та же идея handoff, но обвешанная всем, чего не хватало Swarm для прода.
 
-- Built-in **tracing** и observability.
-- **Guardrails** — input/output валидация перед/после tools.
-- **Handoffs** остаются как ключевая идея, но более структурированы.
-- Поддержка **structured output** через Pydantic.
-- Production-grade error handling и retries.
+**Что добавили к идее Swarm:**
 
-Концептуально это «Swarm, выросший до prod», и прямой конкурент LangGraph по нише «оркестрация LLM-агентов с tools». В интервью полезно упомянуть как современный стандарт от OpenAI.
+- Встроенный **tracing** и observability из коробки.
+- **Guardrails** — валидация input/output до и после вызова tools.
+- **Handoffs** остались ключевой идеей, но стали структурированнее.
+- **Structured output** через Pydantic.
+- Production-grade обработка ошибок и retries.
+
+По сути это «Swarm, выросший до прода» и прямой конкурент LangGraph в нише «оркестрация LLM-агентов с tools». На интервью стоит назвать его как современный стандарт от OpenAI.
 
 ## Q14. Microsoft Magentic-One — что это и зачем?
 
-Magentic-One — generalist multi-agent система от Microsoft Research (2024). Архитектура:
+Magentic-One — generalist multi-agent система от Microsoft Research (2024): один оркестратор плюс набор готовых «рук» под разные действия. Архитектура:
 
-- **Orchestrator** — central agent, ведёт *Task Ledger* (план) и *Progress Ledger* (статус).
+- **Orchestrator** — центральный агент; ведёт *Task Ledger* (план) и *Progress Ledger* (статус), то есть отдельно держит «что делать» и «что уже сделано».
 - **WebSurfer** — управляет браузером.
-- **FileSurfer** — файлы и документы.
+- **FileSurfer** — работает с файлами и документами.
 - **Coder** — пишет код.
-- **ComputerTerminal** — запускает код в sandbox.
+- **ComputerTerminal** — исполняет код в sandbox.
 
-Особенность: фиксированный набор специализированных агентов + динамический оркестратор. Хороший пример «hierarchical с manager, ведущим plan/progress state» — паттерн пригоден и для своих систем.
+**Чему учит:** набор специалистов фиксирован, но оркестратор динамически решает, кого и когда звать. Это образцовый «hierarchical с manager-ом, который ведёт plan/progress state» — и этот приём легко переиспользовать в собственных системах.
 
 ## Q15. Какие коммуникационные паттерны между агентами существуют? (!)
 
-- **Direct function call (handoff)** — agent A вызывает agent B как функцию, ждёт результат. Самый простой и предсказуемый. Используется в Swarm, OpenAI Agents SDK.
-- **Message passing** — агенты обмениваются сообщениями через очередь/буфер. AutoGen GroupChat именно так работает.
-- **Shared memory / blackboard** — общий state (StateGraph LangGraph), куда все пишут и читают. Хорошо для совместного контекста, плохо для изоляции.
-- **Broadcast** — сообщение видно всем агентам сразу (group chat).
-- **Pub-sub / topic-based** — агент подписан на тип событий (редко в LLM-системах, чаще в backend-микросервисах).
-- **Request-response через ledger/queue** — orchestrator кладёт задачу, worker забирает и пишет результат (Magentic-One Task Ledger).
+Паттерны коммуникации различаются тем, **насколько жёстко связаны агенты** и кто видит чьи сообщения. Основные:
 
-Trade-off: handoff даёт control, message passing — flexibility, shared memory — простоту, но создаёт coupling.
+- **Direct function call (handoff)** — агент A вызывает агента B как функцию и ждёт результат. Самый простой и предсказуемый способ. Используется в Swarm и OpenAI Agents SDK.
+- **Message passing** — агенты обмениваются сообщениями через очередь/буфер. Именно так работает AutoGen GroupChat.
+- **Shared memory / blackboard** — общий state (StateGraph в LangGraph), куда все пишут и читают. Хорош для совместного контекста, но плох для изоляции: каждый видит всё.
+- **Broadcast** — сообщение сразу видно всем агентам (group chat).
+- **Pub-sub / topic-based** — агент подписан на тип событий. В LLM-системах редко, чаще в backend-микросервисах.
+- **Request-response через ledger/queue** — оркестратор кладёт задачу, worker забирает и пишет результат обратно (Task Ledger в Magentic-One).
+
+**Компромисс:** handoff даёт контроль, message passing — гибкость, shared memory — простоту, но создаёт coupling между агентами.
 
 ## Q16. Как организовать state в multi-agent системе?
 
-Три уровня:
+Ключевой вопрос при проектировании state — **что агенты видят вместе, а что держат при себе**. Три уровня организации:
 
-- **Shared state** — общий объект (StateGraph в LangGraph, Crew context в CrewAI). Все агенты видят и обновляют. Плюс: synchronized view. Минус: context bloat, race conditions.
-- **Per-agent state** — у каждого свой scratchpad / history. Плюс: изоляция, чище контекст. Минус: нужен явный механизм синка.
-- **Conversation history** — может быть shared (group chat) или separate (каждый видит свою ветку).
+- **Shared state** — общий объект (StateGraph в LangGraph, Crew context в CrewAI), который все видят и обновляют. Плюс — синхронная картина у всех; минус — раздувание контекста (context bloat) и race conditions на параллельных агентах.
+- **Per-agent state** — у каждого свой scratchpad/history. Плюс — изоляция и чистый контекст; минус — нужен явный механизм синхронизации между агентами.
+- **Conversation history** — может быть общей (group chat) или раздельной (каждый видит только свою ветку диалога).
 
-Практика:
+**Как это делается на практике:**
 
-- LangGraph: `Annotated[list, operator.add]` для accumulating fields (messages), обычные поля overwriting.
-- CrewAI: `context=[previous_task]` пробрасывает output.
-- Persistence: checkpointer LangGraph → SQLite/Postgres, или собственный механизм через MCP, БД, Redis.
+- LangGraph: `Annotated[list, operator.add]` для накапливаемых полей (messages), обычные поля перезаписываются.
+- CrewAI: `context=[previous_task]` пробрасывает output предыдущей задачи дальше.
+- Persistence: checkpointer LangGraph → SQLite/Postgres, либо свой механизм через MCP, БД или Redis.
 
-Главное — явно решить, **что shared, что private**, и не давать агентам видеть лишнего (приватность/контекст-гигиена).
+**Главное:** заранее явно решить, что shared, а что private, и не давать агентам видеть лишнего — это вопрос и приватности, и контекст-гигиены (меньше шума → точнее ответы).
 
 ## Q17. Типы памяти для multi-agent систем.
 
-- **Short-term (working memory)** — текущая conversation / scratchpad. Хранится в state.
-- **Long-term episodic** — прошлые задачи и решения, лежат в **vector DB** (pgvector, Pinecone, Qdrant), достаются по semantic search.
-- **Long-term semantic** — стабильные факты, knowledge graph или structured DB.
-- **Procedural** — выученные «навыки» (для self-improving agents типа Voyager). Редко в продакшене из-за стабильности.
-- **Shared org memory** — общий «корпоративный мозг» нескольких crew, доступ через MCP-сервер или общий retriever.
+Память делят по сроку жизни и характеру данных — как у человека есть «оперативная» и «долгая» память:
 
-Антипаттерн: запихнуть всю history в системный промпт — упирается в context window и стоимость. Используют **summarisation** + **vector recall**.
+- **Short-term (working memory)** — текущий диалог/scratchpad, живёт в state.
+- **Long-term episodic** — прошлые задачи и решения; лежат в **vector DB** (pgvector, Pinecone, Qdrant) и достаются по semantic search.
+- **Long-term semantic** — устойчивые факты; хранятся в knowledge graph или structured DB.
+- **Procedural** — выученные «навыки» (для self-improving агентов вроде Voyager). В проде редко — слишком нестабильно.
+- **Shared org memory** — общий «корпоративный мозг» нескольких crew; доступ через MCP-сервер или общий retriever.
+
+**Подводный камень:** запихнуть всю history в системный промпт — тупик: упираешься в context window и в стоимость. Вместо этого комбинируют **summarisation** (сжать старое) + **vector recall** (подтянуть только релевантное).
 
 ## Q18. Как организовать handoff между агентами безопасно?
 
-Handoff — момент, когда один агент передаёт control другому. Риски: потеря контекста, infinite handoff loop, неподходящий receiver.
+Handoff — это момент, когда один агент передаёт управление другому. Опасен он тремя вещами: потерей контекста при передаче, бесконечным циклом передач (A→B→A→…) и попаданием к неподходящему получателю. Безопасный handoff закрывает каждую из этих дыр.
 
-Best practices:
+**Рекомендации:**
 
-- **Explicit handoff schema** — agent возвращает `{"handoff_to": "billing", "context": {...}}`, валидируется JSON-schema.
-- **Allowed transitions** — белый список, кому конкретный агент может передать (state machine).
-- **Bounded handoff depth** — счётчик, максимум N передач, иначе fail/escalate.
-- **Context summarization on handoff** — не пересылать всю history, только нужный summary + key facts.
-- **Idempotent receivers** — на случай повторной передачи (retry).
-- **Audit log** — каждый handoff с trace_id, source, target, reason.
+- **Явная схема handoff** — агент возвращает `{"handoff_to": "billing", "context": {...}}`, и это валидируется JSON-schema (никаких free-form передач).
+- **Разрешённые переходы** — белый список, кому конкретный агент вправе передать управление (по сути state machine).
+- **Ограниченная глубина** — счётчик передач с лимитом N; превысил — fail или escalate. Это и есть защита от бесконечного цикла.
+- **Сжатие контекста при передаче** — пересылать не всю history, а summary + ключевые факты.
+- **Идемпотентные получатели** — на случай повторной передачи при retry.
+- **Audit log** — каждый handoff пишется с trace_id, source, target и reason.
 
-В OpenAI Agents SDK и Swarm handoff — first-class concept; в CrewAI/LangGraph моделируется через manager или conditional edges.
+В OpenAI Agents SDK и Swarm handoff — first-class concept; в CrewAI/LangGraph он моделируется через manager-агента или conditional edges.
 
 ## Q19. Coordination paterns: planner-executor, debate, voting — когда какой? (!)
 
@@ -464,48 +475,50 @@ flowchart TB
     end
 ```
 
-- **Planner-Executor** — один агент строит план, другие выполняют шаги. Подходит для well-decomposable задач (research, codegen). Часто комбинируется с reasoning model (o1/Claude Opus) как planner и cheaper моделью (Haiku/Mini) как executor.
-- **Debate / Critique (actor-critic, reflexion)** — generator пишет, critic ругает, цикл до сходимости. Улучшает качество на reasoning-heavy задачах, но дорого. Используется в evaluator-optimizer паттерне Anthropic.
-- **Voting / Ensemble** — N независимых агентов решают, majority побеждает. Снижает variance на subjective задачах, дорого в N раз.
-- **Specialist consultation** — generalist роутит к specialists (юрист / финансы / медицина). Hub-and-spoke.
-- **Collaborative refinement** — каждый агент дополняет общий artefact (blackboard).
+Паттерны координации различаются тем, **как агенты приходят к итоговому ответу** — через декомпозицию, спор или голосование. Когда какой:
+
+- **Planner-Executor** — один агент строит план, другие выполняют шаги. Для хорошо разложимых задач (research, codegen). Часто планировщик — reasoning model (o1/Claude Opus), а исполнители — модель подешевле (Haiku/Mini): дорогой интеллект тратится только на план.
+- **Debate / Critique (actor-critic, reflexion)** — генератор пишет, критик ругает, цикл до сходимости. Заметно поднимает качество на reasoning-heavy задачах, но дорого. Это и есть evaluator-optimizer паттерн Anthropic.
+- **Voting / Ensemble** — N независимых агентов решают, побеждает большинство. Снижает разброс (variance) на субъективных задачах ценой N-кратной стоимости.
+- **Specialist consultation** — generalist роутит запрос к специалистам (юрист / финансы / медицина). Топология hub-and-spoke.
+- **Collaborative refinement** — каждый агент дополняет общий артефакт (blackboard), результат собирается итеративно.
 
 ## Q20. Multi-agent + reasoning models — как комбинировать? (!)
 
-Reasoning models (o1, o3, DeepSeek R1, Claude Sonnet с extended thinking) — дорогие, но качественные для планирования и сложного reasoning. Cheaper models (gpt-4o-mini, Haiku, Gemini Flash) — быстрые и дешёвые на bulk-операциях.
+Идея проста: **дорогой интеллект — на думанье, дешёвый — на рутину.** Reasoning models (o1, o3, DeepSeek R1, Claude Sonnet с extended thinking) дороги, но сильны в планировании и сложном reasoning. Cheaper models (gpt-4o-mini, Haiku, Gemini Flash) — быстры и дёшевы на массовых операциях. Эффективность достигается их сочетанием, а не выбором одной.
 
-Эффективные комбинации:
+**Рабочие комбинации:**
 
-- **Reasoning as Planner** — o1/R1 декомпозирует и валидирует план, Haiku/4o-mini исполняет шаги. Снижает cost в 5–10× при сохранении качества плана.
-- **Reasoning as Critic** — большинство шагов делают cheap models, finalize/quality-check — reasoning model.
-- **Escalation** — cheap агент пробует решить, при низкой confidence escalate на reasoning model.
+- **Reasoning as Planner** — o1/R1 декомпозирует и валидирует план, а Haiku/4o-mini исполняют шаги. Снижает cost в 5–10× без потери качества плана.
+- **Reasoning as Critic** — основную массу шагов делают cheap models, а финальную проверку качества — reasoning model.
+- **Escalation** — cheap-агент пробует сам, и при низкой уверенности эскалирует на reasoning model.
 
-Антипаттерн: reasoning model на каждом шаге loop — латентность 30+ секунд per call, $$$ счёт.
+**Антипаттерн:** ставить reasoning model на каждый шаг цикла — это 30+ секунд latency на вызов и счёт в разы выше.
 
-Сheap-as-router тоже работает: маленькая модель решает «дёшево достаточно или escalate», большая активируется при сложности.
+**Cheap-as-router** тоже работает: маленькая модель решает «дёшево достаточно или эскалировать», и большая включается только на действительно сложных случаях.
 
 ## Q21. Error handling и failure isolation в multi-agent. (!)
 
-Multi-agent наследует все проблемы distributed systems:
+Multi-agent — это распределённая система, поэтому она наследует **все её проблемы отказоустойчивости**, и решаются они теми же приёмами, что в микросервисах:
 
-- **Failure isolation** — падение одного агента не должно валить всю систему. Каждый вызов в try/catch, fallback стратегия.
-- **Per-agent retry** — exponential backoff на 429/5xx LLM API, на JSON parse errors.
-- **Circuit breaker** — если агент стабильно падает, временно отключить.
-- **Timeout per agent** — общий global timeout на task + per-step.
-- **Bounded iterations** — `max_rounds`, `max_steps` обязательно. Без них — infinite loops.
-- **Dead-letter / human escalation** — задачи, которые не удалось решить, уходят в очередь для человека.
-- **Idempotency keys** — повторный вызов с тем же `task_id` не дублирует работу (особенно важно для tools с side effects: payments, emails, DB writes).
-- **Compensation / saga** — если многошаговая операция падает посередине, откатить уже сделанное.
+- **Failure isolation** — падение одного агента не должно ронять всю систему. Каждый вызов в try/catch с fallback-стратегией.
+- **Per-agent retry** — exponential backoff на 429/5xx от LLM API и на ошибках парсинга JSON.
+- **Circuit breaker** — если агент стабильно падает, временно отключить его, чтобы не тратить вызовы впустую.
+- **Timeout per agent** — глобальный таймаут на всю задачу плюс таймаут на каждый шаг.
+- **Bounded iterations** — `max_rounds`, `max_steps` обязательны: без них система уходит в бесконечный цикл.
+- **Dead-letter / human escalation** — нерешённые задачи уходят в очередь к человеку, а не теряются.
+- **Idempotency keys** — повторный вызов с тем же `task_id` не дублирует работу. Критично для tools с side effects: платежи, письма, записи в БД.
+- **Compensation / saga** — если многошаговая операция падает посередине, уже сделанное нужно откатить.
 
-CrewAI и AutoGen дают базовые retries, но production-grade reliability — на разработчике.
+CrewAI и AutoGen дают только базовые retries — за production-grade надёжность отвечает разработчик.
 
 ## Q22. Что такое orchestrator-workers паттерн и как его сделать самому?
 
-Orchestrator-workers — каноничный hierarchical-паттерн от Anthropic:
+Orchestrator-workers — каноничный hierarchical-паттерн от Anthropic, и собрать его можно за десяток строк без всякого фреймворка. Логика в три шага:
 
-1. Orchestrator LLM получает задачу, динамически декомпозирует на subtasks.
-2. Каждый subtask отправляется worker-LLM (часто параллельно).
-3. Orchestrator (или отдельный synthesizer) агрегирует результаты в финальный ответ.
+1. Orchestrator-LLM получает задачу и динамически дробит её на subtasks.
+2. Каждый subtask уходит worker-LLM — часто параллельно.
+3. Orchestrator (или отдельный synthesizer) собирает результаты в финальный ответ.
 
 ```python
 import asyncio
@@ -529,32 +542,32 @@ async def orchestrator_workers(query: str):
     return final
 ```
 
-Это уже multi-agent — три разных промпта = три «агента». Без всякого фреймворка. На таком фундаменте строят 80% «multi-agent» production-систем.
+Это уже полноценный multi-agent: три разных промпта — это три «агента», и никакого фреймворка не нужно. Именно на таком простом фундаменте построено ~80% «multi-agent» production-систем.
 
 ## Q23. Observability в multi-agent — что трассировать? (!)
 
-Без observability multi-agent — чёрный ящик. Минимум:
+Без observability multi-agent — непрозрачный чёрный ящик: когда что-то ломается, ты даже не знаешь, какой из агентов виноват. Минимальный набор того, что нужно трассировать:
 
-- **Distributed tracing** — span на каждый LLM call + tool call, с trace_id, parent_span_id. Совместимо с OpenTelemetry.
-- **Per-agent metrics** — input tokens, output tokens, latency, error rate, cost.
-- **Cross-agent message log** — кто кому что отправил, в каком state.
-- **Conversation tree** — visualisation handoffs и dependencies (LangSmith, Langfuse, AgentOps дают из коробки).
-- **Tool call audit** — какой агент позвал какой tool с какими аргументами, что вернулось.
-- **Task completion metrics** — success rate end-to-end + per-stage.
-- **Cost aggregation** — суммарный $ за конкретную user-task, разбивка по моделям.
+- **Distributed tracing** — span на каждый LLM-вызов и tool-вызов с trace_id и parent_span_id. Совместимо с OpenTelemetry, чтобы восстановить полное дерево вызовов.
+- **Per-agent metrics** — input/output tokens, latency, error rate, cost по каждому агенту.
+- **Cross-agent message log** — кто кому что отправил и в каком state это произошло.
+- **Conversation tree** — визуализация handoffs и зависимостей (LangSmith, Langfuse, AgentOps дают из коробки).
+- **Tool call audit** — какой агент позвал какой tool, с какими аргументами и что вернулось.
+- **Task completion metrics** — success rate end-to-end и по каждому этапу.
+- **Cost aggregation** — суммарный $ за конкретную user-task с разбивкой по моделям.
 
 Инструменты: **LangSmith** (LangChain/LangGraph), **Langfuse** (open-source, любой фреймворк), **AgentOps** (multi-framework), **Arize Phoenix** (open-source observability), **Helicone** (LLM gateway с трейсингом).
 
 ## Q24. Cost и latency multi-agent vs single-agent.
 
-Реалистичные оценки:
+Главное, что нужно усвоить: **параллелизм лечит latency, но не cost** — общее число вызовов от него не меняется. Реалистичные оценки:
 
-- Multi-agent делает в **3–10× больше LLM-вызовов**, чем single-agent на эквивалентной задаче. Прямой пропорциональный рост cost.
-- **Parallel agents** снижают **wall-clock latency**, но не cost (та же сумма вызовов).
-- **Sequential** агентов — растёт и latency, и cost.
-- **Reasoning models** в loop умножают cost ещё в 5–20× (long thinking traces).
+- Multi-agent делает в **3–10× больше LLM-вызовов**, чем single-agent на той же задаче, — cost растёт пропорционально.
+- **Параллельные агенты** снижают latency «по часам» (wall-clock), но не cost: сумма вызовов та же.
+- **Последовательные** агенты увеличивают и latency, и cost.
+- **Reasoning models** в цикле умножают cost ещё в 5–20× из-за длинных thinking traces.
 
-Стратегии оптимизации:
+**Стратегии оптимизации:**
 
 - Cheaper models для bulk-операций, reasoning model только для critical decisions.
 - **Prompt caching** — Anthropic prompt caching, OpenAI prompt caching экономят 50–90% на повторных system prompts.
@@ -567,21 +580,21 @@ async def orchestrator_workers(query: str):
 
 ## Q25. Как evaluate multi-agent систему?
 
-Метрики:
+Оценивать нужно на двух уровнях: **систему целиком** (доходит ли до верного ответа) и **каждого агента отдельно** (где именно ломается). Метрики:
 
-- **End-to-end task completion rate** — основная: процент задач, где финальный output корректен по golden dataset.
-- **Per-agent quality** — оценка каждого агента изолированно через unit-test-like prompts.
-- **Trace-level metrics** — длина conversation, кол-во handoffs, кол-во retries, кол-во tool calls.
-- **Cost per successful task** — суммарный $ на успешный исход (показатель эффективности).
+- **End-to-end task completion rate** — главная: доля задач, где финальный output корректен относительно golden dataset.
+- **Per-agent quality** — оценка каждого агента изолированно через unit-test-подобные промпты; помогает локализовать слабое звено.
+- **Trace-level metrics** — длина диалога, число handoffs, retries и tool calls.
+- **Cost per successful task** — суммарный $ на успешный исход; ключевой показатель эффективности.
 - **Latency P50/P95/P99** end-to-end.
-- **Failure mode taxonomy** — категоризация: timeout, JSON error, wrong tool, infinite loop, hallucination, factual error.
-- **Human review subset** — 5–10% задач уходят на ручной аудит.
+- **Failure mode taxonomy** — категоризация отказов: timeout, JSON error, wrong tool, infinite loop, галлюцинация, фактическая ошибка.
+- **Human review subset** — 5–10% задач уходят на ручной аудит как страховка от того, что метрики не ловят.
 
 Frameworks: **LangSmith evals**, **AutoGen Bench**, **Phoenix evals**, **Inspect AI** (UK AISI), кастомные harness с pytest.
 
 ## Q26. Production-ready чек-лист для multi-agent системы. (!)
 
-Прежде чем выкатывать:
+Этот список — про то, чтобы система не разорила и не навредила в проде. Прежде чем выкатывать, проверь каждый пункт:
 
 - **Bounded iterations** на все loops (`max_rounds`, `max_handoffs`, `max_tool_calls`).
 - **Cost budget guard** — hard limit на задачу, soft warning на 50%.
@@ -601,25 +614,27 @@ Frameworks: **LangSmith evals**, **AutoGen Bench**, **Phoenix evals**, **Inspect
 
 ## Q27. Топ anti-patterns в multi-agent. (!)
 
-- **«Слишком много агентов»** — 5+ ролей с overlapping responsibilities. Координационный overhead убивает выгоду. Часто single-agent с tools работает лучше.
-- **Vague role descriptions** — `goal: "помогать пользователю"` бесполезно. Goals должны быть концретные, измеримые.
-- **Infinite handoff loop** — A → B → A → B без termination condition. Лечится bounded iterations + state machine.
-- **Single LLM call could have solved it** — overengineering: вместо одного хорошего промпта собрали Crew из 4 агентов.
-- **Shared mutable state без locks** — race conditions на параллельных агентах.
-- **Полный history в context каждого агента** — токены, latency, confusion. Передавать только нужный summary.
-- **No observability** — «работает или нет — узнаем от пользователя». В multi-agent это смертельно: невозможно debug.
-- **Manager как bottleneck** — manager-LLM на каждом шаге, всё через него — последовательно и дорого.
-- **Hardcoded LLM model в каждом агенте** — нет возможности переключать или fallback.
-- **Tool sprawl** — даём каждому агенту все 50 tools «на всякий случай». Конфьюзит, дорого, неконтролируемо. Per-agent allowlist.
-- **No JSON-schema на outputs** — парсинг ad-hoc, ломается. Использовать structured output / function calling.
+Большинство антипаттернов сводятся к одному: **сложность ввели там, где её можно было избежать.** Конкретные грабли:
+
+- **«Слишком много агентов»** — 5+ ролей с пересекающимися обязанностями. Overhead на координацию съедает всю выгоду; часто single-agent с tools работает лучше.
+- **Расплывчатые роли** — `goal: "помогать пользователю"` бесполезен. Цели должны быть конкретными и измеримыми, иначе модель «плывёт».
+- **Infinite handoff loop** — A → B → A → B без условия остановки. Лечится bounded iterations + state machine с белым списком переходов.
+- **Можно было одним вызовом** — overengineering: вместо одного хорошего промпта собрали Crew из 4 агентов.
+- **Shared mutable state без локов** — race conditions на параллельных агентах.
+- **Полная history в контексте каждого агента** — лишние токены, latency и путаница. Передавать нужно только summary.
+- **No observability** — «работает или нет — узнаем от пользователя». В multi-agent это смертельно: без трейсинга невозможно отладить.
+- **Manager как bottleneck** — всё гонится через manager-LLM на каждом шаге, отчего система становится последовательной и дорогой.
+- **Захардкоженная модель в каждом агенте** — нельзя ни переключить, ни сделать fallback при недоступности.
+- **Tool sprawl** — каждому агенту выдали все 50 tools «на всякий случай». Это путает модель, дорого и неконтролируемо; нужен per-agent allowlist.
+- **Нет JSON-schema на outputs** — парсинг ad-hoc регулярно ломается. Использовать structured output / function calling.
 
 ## Q28. Что такое supervisor pattern в LangGraph?
 
-Supervisor — специальный node, который выступает router-ом:
+Supervisor — это специальный узел-диспетчер, через который проходит всё управление: workers не общаются между собой, а каждый раз возвращаются к нему за следующим решением. Цикл работы:
 
 1. Получает текущий state.
-2. Решает (через LLM или код), какому worker передать управление, либо вернуть `END`.
-3. После worker control возвращается в supervisor.
+2. Решает (через LLM или обычный код), какому worker передать управление, либо вернуть `END`.
+3. После завершения worker управление снова возвращается в supervisor.
 
 ```mermaid
 flowchart TB
@@ -632,32 +647,34 @@ flowchart TB
     S -->|FINISH| E[END]
 ```
 
-Преимущества:
+**Плюсы:**
 
-- Централизованный control flow, легко отлаживать.
-- Supervisor может быть rule-based (cheap), не обязательно LLM.
-- Workers могут вызываться повторно (Critic несколько раз).
-- Каждый worker имеет свой узкий tool-set.
+- Централизованный control flow — всё в одном месте, легко отлаживать.
+- Supervisor можно сделать rule-based (дёшево), он не обязан быть LLM.
+- Workers вызываются повторно — например, Critic несколько раз подряд.
+- У каждого worker свой узкий tool-set, что снижает путаницу.
 
-Это LangGraph-аналог CrewAI `Process.hierarchical` или Magentic-One Orchestrator.
+По сути это LangGraph-аналог CrewAI `Process.hierarchical` и Magentic-One Orchestrator.
 
 ## Q29. Real-world примеры multi-agent систем — что почитать. (!)
 
-- **GPT-Researcher** — research crew, делает deep research по запросу: planner + N parallel researchers + writer.
-- **ChatDev** — симуляция software dev команды: CEO/CTO/Programmer/Reviewer/Tester. Иллюстрирует waterfall в multi-agent.
-- **MetaGPT** — SDLC simulation, более structured чем ChatDev, с SOPs (standard operating procedures).
-- **BabyAGI / AutoGPT** — task decomposition + execution loop. Исторически важные, в проде не используются.
-- **Magentic-One (Microsoft)** — generalist агент с фиксированными specialists.
-- **Devin / OpenDevin** — autonomous software engineer (multi-agent под капотом).
-- **Anthropic Claude Computer Use** — single-agent, но с computer-use tool; контраст-пример: вместо multi-agent — один сильный агент + мощный tool.
+Эти проекты — учебники по тому, как multi-agent выглядит на практике (и как часто не выглядит):
 
-Главный вывод из обзора: «прорывных» multi-agent продакшен-систем мало. Большинство prod-кейсов — workflows + 1–2 specialised LLM calls, не «многоагентные оркестры».
+- **GPT-Researcher** — research crew для deep research по запросу: planner + N параллельных researchers + writer.
+- **ChatDev** — симуляция dev-команды: CEO/CTO/Programmer/Reviewer/Tester. Наглядно показывает waterfall, перенесённый в multi-agent.
+- **MetaGPT** — симуляция SDLC, более структурированная, чем ChatDev, с SOPs (standard operating procedures).
+- **BabyAGI / AutoGPT** — task decomposition + execution loop. Исторически важны, но в проде не используются.
+- **Magentic-One (Microsoft)** — generalist-агент с фиксированным набором специалистов.
+- **Devin / OpenDevin** — autonomous software engineer, под капотом multi-agent.
+- **Anthropic Claude Computer Use** — наоборот, single-agent с мощным computer-use tool. Контраст-пример: вместо оркестра — один сильный агент плюс один сильный инструмент.
+
+**Главный вывод обзора:** «прорывных» multi-agent продакшен-систем мало. В реальности большинство prod-кейсов — это workflows + 1–2 специализированных LLM-вызова, а не «многоагентные оркестры».
 
 ## Q30. Что такое «agents-as-tools» паттерн и когда он лучше handoff?
 
-«Agents-as-tools»: один primary agent имеет «вспомогательных» агентов как обычные tools. Когда primary решает позвать `search_specialist(query)` — под капотом это другой LLM-агент, но primary не теряет control flow.
+**Agents-as-tools** — это когда вспомогательные агенты подключены к primary-агенту как обычные tools. Primary зовёт `search_specialist(query)` так же, как любой инструмент: под капотом отрабатывает другой LLM-агент, но **primary не отдаёт управление** — получил результат и продолжает работу. Это ключевое отличие от handoff, где control физически переходит к другому агенту.
 
-Сравнение с handoff:
+**Сравнение с handoff:**
 
 | | Handoff | Agents-as-tools |
 |--|---------|-----------------|
@@ -667,7 +684,7 @@ flowchart TB
 | Контекст | Передаётся receiver-у | Только через args/return |
 | Лучше для | Длинные «переключения роли» | Узкие consultative задачи |
 
-Anthropic в большинстве примеров рекомендует **agents-as-tools** — это проще и безопаснее: primary agent остаётся «in charge», вспомогательные агенты — это инструменты с собственными внутренними промптами и моделями.
+**Рекомендация:** в большинстве примеров Anthropic советует именно agents-as-tools — это проще и безопаснее. Primary-агент остаётся «у руля», а вспомогательные агенты — это инструменты со своими внутренними промптами и моделями, у которых нельзя «потерять» контроль.
 
 ```python
 def search_specialist(query: str) -> str:
@@ -678,7 +695,7 @@ tools = [search_specialist, other_tools...]
 primary_agent_loop(query, tools)  # primary видит specialist как обычный tool
 ```
 
-Это сейчас доминирующий «multi-agent» паттерн в практике — без фреймворка, без handoffs, понятный и тестируемый.
+Сегодня это доминирующий «multi-agent» паттерн на практике — без фреймворка, без handoffs, понятный и тестируемый.
 
 ---
 
