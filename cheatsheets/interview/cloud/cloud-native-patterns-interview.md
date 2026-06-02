@@ -18,7 +18,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Cloud-native Patterns`
 
-**Cloud-native** — apps designed для cloud (не lifted-and-shifted): containerized, dynamically orchestrated, microservices-architected. Patterns: **12-factor**, **sidecar**, **circuit breaker**, **retry**, **bulkhead**, **leader election**, **autoscaling**, **service mesh**. Стандарты: **CNCF** projects (K8s, Prometheus, Envoy, ...).
+**Cloud-native** — приложения, спроектированные под облако (а не перенесённые методом lift-and-shift): контейнеризованные, динамически оркестрируемые, построенные на микросервисах. Паттерны: **12-factor**, **sidecar**, **circuit breaker**, **retry**, **bulkhead**, **leader election**, **autoscaling**, **service mesh**. Стандарты: проекты **CNCF** (K8s, Prometheus, Envoy, ...).
 
 ## Полезные ссылки
 
@@ -86,70 +86,70 @@ updated: "2026-04-25"
 
 ## Q1. (!) Что такое cloud-native?
 
-**Cloud-native** — approach к building/running apps, использующий cloud benefits:
-- **Containers** — packaging
-- **Microservices** — architecture
+**Cloud-native** — подход к построению и запуску приложений, использующий преимущества облака:
+- **Containers** — упаковка
+- **Microservices** — архитектура
 - **Dynamic orchestration** — Kubernetes
-- **DevOps practices** — CI/CD, infrastructure as code
-- **Declarative APIs** — desired state
-- **Loosely coupled** — services independent
-- **Resilient** — handle failures gracefully
+- **DevOps-практики** — CI/CD, инфраструктура как код
+- **Declarative APIs** — желаемое состояние
+- **Loosely coupled** — сервисы независимы друг от друга
+- **Resilient** — корректно переживают сбои
 - **Observable** — metrics, logs, traces
 
-**CNCF определение:**
+**Определение CNCF:**
 > "Cloud native technologies empower organizations to build and run scalable applications in modern, dynamic environments such as public, private, and hybrid clouds."
 
-**Не cloud-native:** lift-and-shift legacy apps в cloud (running monolith in EC2 — not cloud-native).
+**Не cloud-native:** lift-and-shift legacy-приложений в облако (монолит, запущенный в EC2, — не cloud-native).
 
 ## Q2. (!) 12-factor app principles?
 
-**12-Factor App** (Heroku, 2012) — methodology для cloud-native apps.
+**12-Factor App** (Heroku, 2012) — методология для cloud-native приложений.
 
-1. **Codebase** — one codebase tracked в git, multi deploys
-2. **Dependencies** — explicit, isolated (package.json, requirements.txt)
-3. **Config** — в env vars, не в code
-4. **Backing services** — DBs, queues = attached resources via URL
-5. **Build, release, run** — strict separation stages
-6. **Processes** — stateless, share-nothing
-7. **Port binding** — self-contained, exports HTTP via port
-8. **Concurrency** — scale via process model (horizontally)
-9. **Disposability** — fast startup, graceful shutdown
-10. **Dev/prod parity** — keep envs similar
-11. **Logs** — write к stdout (collection делает infrastructure)
-12. **Admin processes** — one-off tasks как separate processes
+1. **Codebase** — один кодбейз под контролем git, много развёртываний
+2. **Dependencies** — явные, изолированные (package.json, requirements.txt)
+3. **Config** — в env-переменных, не в коде
+4. **Backing services** — БД, очереди = подключаемые ресурсы по URL
+5. **Build, release, run** — строгое разделение этапов
+6. **Processes** — stateless, ничем не делятся (share-nothing)
+7. **Port binding** — самодостаточен, отдаёт HTTP через порт
+8. **Concurrency** — масштабирование через процессную модель (горизонтально)
+9. **Disposability** — быстрый старт, корректное завершение работы
+10. **Dev/prod parity** — окружения держим максимально похожими
+11. **Logs** — пишем в stdout (сбор берёт на себя инфраструктура)
+12. **Admin processes** — разовые задачи как отдельные процессы
 
-**Современные additions** ("Beyond 12-factor"):
+**Современные дополнения** ("Beyond 12-factor"):
 - API first
 - Telemetry
 - Authentication and authorization
 
 ## Q3. (!) Что такое CNCF?
 
-**Cloud Native Computing Foundation** (CNCF) — vendor-neutral organization (часть Linux Foundation), управляющая cloud-native projects.
+**Cloud Native Computing Foundation** (CNCF) — vendor-нейтральная организация (часть Linux Foundation), управляющая cloud-native-проектами.
 
-**Famous CNCF projects:**
+**Известные проекты CNCF:**
 
 **Graduated:**
-- **Kubernetes** — orchestration
-- **Prometheus** — monitoring
-- **Envoy** — proxy
+- **Kubernetes** — оркестрация
+- **Prometheus** — мониторинг
+- **Envoy** — прокси
 - **gRPC** — RPC
-- **Helm** — K8s package manager
+- **Helm** — пакетный менеджер K8s
 - **Containerd** — container runtime
-- **etcd** — distributed key-value store
+- **etcd** — распределённое key-value-хранилище
 - **Argo** — CI/CD, workflows
 - **Linkerd**, **Istio** — service mesh
-- **Vitess** — distributed MySQL
-- **Open Policy Agent (OPA)** — policy
+- **Vitess** — распределённый MySQL
+- **Open Policy Agent (OPA)** — политики
 - **Flux** — GitOps
-- **Cilium** — networking, eBPF
-- **Harbor** — container registry
+- **Cilium** — сеть, eBPF
+- **Harbor** — реестр контейнеров
 
-100+ active projects. Standards de facto для cloud-native stack.
+100+ активных проектов. De facto стандарты cloud-native-стека.
 
 ## Q4. (!) Sidecar pattern?
 
-**Sidecar** — secondary container в одном pod, providing supplementary functionality.
+**Sidecar** — вспомогательный контейнер в том же pod, добавляющий дополнительную функциональность.
 
 ```
 Pod
@@ -159,53 +159,53 @@ Pod
    - Shares volumes
 ```
 
-**Examples:**
-- **Logging sidecar** — collects logs из app
-- **Service mesh proxy** (Envoy в Istio) — handles traffic
-- **Config refresh** sidecar
+**Примеры:**
+- **Logging sidecar** — собирает логи из приложения
+- **Service mesh proxy** (Envoy в Istio) — управляет трафиком
+- Sidecar для обновления конфигурации (**config refresh**)
 - **TLS termination**
-- **Vault Agent** — secret injection
+- **Vault Agent** — инъекция секретов
 - **Metrics exporter** для Prometheus
 
 **Преимущества:**
-- Separation of concerns
-- Reuse без modify app
-- Different release cycles
-- Different teams
+- Разделение ответственности
+- Переиспользование без правки приложения
+- Разные циклы релизов
+- Разные команды
 
-**Недостаток:** extra resources per pod.
+**Недостаток:** дополнительные ресурсы на каждый pod.
 
 ## Q5. Ambassador pattern?
 
-**Ambassador** — sidecar specifically для **outbound** connections.
+**Ambassador** — sidecar специально для **исходящих** (outbound) соединений.
 
 ```
 App → Ambassador (handles retry, auth, monitoring) → External service
 ```
 
-**Use cases:**
-- Service mesh client-side (Envoy)
-- Database connection pooling sidecar
-- API gateway sidecar для outbound calls
+**Сценарии применения:**
+- Клиентская часть service mesh (Envoy)
+- Sidecar для пулинга соединений с БД
+- Sidecar-API-gateway для исходящих вызовов
 
-App думает, что говорит с simple service (`localhost:8080`), ambassador handles complexity.
+Приложение думает, что общается с простым сервисом (`localhost:8080`), а вся сложность ложится на ambassador.
 
 ## Q6. Adapter pattern?
 
-**Adapter** — sidecar, **transforms** output app в standard format.
+**Adapter** — sidecar, который **преобразует** вывод приложения в стандартный формат.
 
 ```
 App (custom format) → Adapter → Standardized output
                                    (Prometheus metrics, ELK logs)
 ```
 
-**Use cases:**
-- Legacy app outputs custom logs → adapter transforms к JSON для logging stack
-- App exports custom metrics → adapter exposes Prometheus format
+**Сценарии применения:**
+- Legacy-приложение пишет логи в своём формате → adapter преобразует их в JSON для logging-стека
+- Приложение отдаёт метрики в своём формате → adapter выставляет их в формате Prometheus
 
 ## Q7. Init containers?
 
-**Init containers** — run **before** main container, complete and exit.
+**Init containers** — запускаются **до** основного контейнера, отрабатывают и завершаются.
 
 ```yaml
 spec:
@@ -218,22 +218,22 @@ spec:
       image: my-app
 ```
 
-**Use cases:**
-- Database migrations
-- Wait for dependencies
-- Setup volumes / configs
-- Download data
+**Сценарии применения:**
+- Миграции базы данных
+- Ожидание готовности зависимостей
+- Подготовка volumes / конфигов
+- Загрузка данных
 
-Init container fails → pod restarts.
+Если init-контейнер падает → pod перезапускается.
 
 ## Q8. (!) Circuit breaker?
 
-**Circuit breaker** — prevent cascade failures. Если downstream service failing → "open" circuit, fail fast.
+**Circuit breaker** — предотвращает каскадные сбои. Если downstream-сервис сбоит → размыкаем ("open") цепь и сразу отдаём ошибку (fail fast).
 
-**States:**
-- **Closed** — calls идут normally
-- **Open** — все calls fail immediately (no actual call)
-- **Half-open** — test 1-2 calls; if OK → closed, if fail → open
+**Состояния:**
+- **Closed** — вызовы идут как обычно
+- **Open** — все вызовы сразу падают (реального вызова нет)
+- **Half-open** — пробуем 1-2 вызова; если ОК → closed, если сбой → open
 
 ```python
 @circuit_breaker(failure_threshold=5, recovery_timeout=60)
@@ -241,7 +241,7 @@ def call_payment_service(order):
     return requests.post(payment_url, json=order)
 ```
 
-**Tools:** Hystrix (legacy), Resilience4j, Polly (.NET), built-in service meshes.
+**Инструменты:** Hystrix (legacy), Resilience4j, Polly (.NET), встроенные средства service mesh.
 
 Подробнее — в [Resilience Patterns](../architecture/resilience-patterns-interview.md).
 
@@ -256,21 +256,21 @@ def call_service():
     return requests.get(...)
 ```
 
-**Wait pattern:** 2s → 4s → 8s → 16s → 60s.
+**Схема задержек:** 2s → 4s → 8s → 16s → 60s.
 
-**Best practices:**
-- **Jitter** (randomization) — избежать thundering herd
-- Только idempotent operations (или с idempotency keys)
-- Retry only **transient** errors (5xx, timeouts), не 4xx
-- Total time bound (не retry forever)
+**Лучшие практики:**
+- **Jitter** (рандомизация) — чтобы избежать thundering herd
+- Только идемпотентные операции (или с idempotency-ключами)
+- Повторять только **временные** (transient) ошибки (5xx, таймауты), не 4xx
+- Ограничивать общее время (не ретраить бесконечно)
 
-**Anti-pattern:** retry без jitter → 1000 clients hit failed service одновременно → bigger storm.
+**Анти-паттерн:** ретраи без jitter → 1000 клиентов одновременно бьются в упавший сервис → шторм только усиливается.
 
 ## Q10. (!) Bulkhead?
 
-**Bulkhead** — isolate failures, prevent одной части affecting другую.
+**Bulkhead** — изоляция сбоев, чтобы одна часть не задевала другую.
 
-**Например:** thread pools для разных downstream services.
+**Например:** отдельные пулы потоков для разных downstream-сервисов.
 
 ```
 Service A: thread pool 10 (для users API)
@@ -281,17 +281,17 @@ Service B: thread pool 5 (для analytics)
 
 **Аналогия:** корабельные перегородки — пробоина в одной не утопит весь корабль.
 
-**В K8s:** resource limits per pod (CPU, memory).
+**В K8s:** лимиты ресурсов на каждый pod (CPU, memory).
 
 ## Q11. Timeout, deadline propagation?
 
-**Timeout** на каждый external call — обязательно.
+**Timeout** на каждый внешний вызов — обязательно.
 
 ```python
 requests.get(url, timeout=5)
 ```
 
-**Deadline propagation** — passing timeout через chain calls.
+**Deadline propagation** — проброс таймаута по цепочке вызовов.
 
 ```
 Client request: 10 sec timeout
@@ -300,15 +300,15 @@ Client request: 10 sec timeout
       → Database: 2 sec timeout
 ```
 
-В **gRPC** built-in. В REST — through headers (`X-Request-Deadline`).
+В **gRPC** встроено. В REST — через заголовки (`X-Request-Deadline`).
 
 ## Q12. Health checks (liveness, readiness, startup)?
 
-**Kubernetes health checks:**
+**Health checks в Kubernetes:**
 
-- **Liveness** — is the container alive? Если fail → restart container.
-- **Readiness** — is container ready to receive traffic? Если fail → remove from load balancer (no restart).
-- **Startup** — для slow-starting apps; pause liveness/readiness checks until startup OK.
+- **Liveness** — жив ли контейнер? Если падает → перезапуск контейнера.
+- **Readiness** — готов ли контейнер принимать трафик? Если падает → убираем из load balancer (без перезапуска).
+- **Startup** — для медленно стартующих приложений; приостанавливает liveness/readiness-проверки, пока старт не завершится успешно.
 
 ```yaml
 livenessProbe:
@@ -321,34 +321,34 @@ startupProbe:
   failureThreshold: 30  # 5 minutes для startup
 ```
 
-**Best practice:**
-- Liveness — simple (just process alive)
-- Readiness — check dependencies (DB connection)
-- Startup — для apps что long warm-up
+**Лучшая практика:**
+- Liveness — простой (просто жив ли процесс)
+- Readiness — проверять зависимости (соединение с БД)
+- Startup — для приложений с долгим прогревом
 
 ## Q13. (!) Stateless apps — почему важно?
 
-**Stateless app** — no local state. Each request handled independently.
+**Stateless-приложение** — без локального состояния. Каждый запрос обрабатывается независимо.
 
 **Зачем:**
-- **Horizontal scaling** easy (clone instances)
-- **Replacement easy** — instance dies → spin up new
-- **Load balancing** — any instance handles any request
-- **Rolling updates** — replace instances без disruption
-- **Auto-scaling** works seamlessly
+- **Horizontal scaling** легко (клонируем инстансы)
+- **Простая замена** — инстанс умер → поднимаем новый
+- **Load balancing** — любой инстанс обслужит любой запрос
+- **Rolling updates** — заменяем инстансы без простоя
+- **Auto-scaling** работает без проблем
 
-**State хранится:**
-- Database (PostgreSQL, DynamoDB)
-- Cache (Redis)
-- Object storage (S3)
-- Session store (Redis, JWT в cookie)
+**Где хранится состояние:**
+- База данных (PostgreSQL, DynamoDB)
+- Кэш (Redis)
+- Объектное хранилище (S3)
+- Хранилище сессий (Redis, JWT в cookie)
 
-**Если есть state в memory:** sticky sessions → less flexible scaling.
+**Если состояние держится в памяти:** sticky sessions → менее гибкое масштабирование.
 
 ## Q14. Session state externalization?
 
-**Bad:** session в memory сервера (only that instance can serve user).
-**Good:** session в shared store.
+**Плохо:** сессия в памяти сервера (обслужить пользователя может только этот инстанс).
+**Хорошо:** сессия в общем хранилище (shared store).
 
 ```
 Option 1: Server-side sessions в Redis
@@ -360,24 +360,24 @@ Option 2: Stateless via JWT
   Backend validates signature, no lookup
 ```
 
-**JWT pros:** no DB lookup, scales infinitely.
-**JWT cons:** can't easily revoke.
+**Плюсы JWT:** нет похода в БД, масштабируется неограниченно.
+**Минусы JWT:** трудно отозвать (revoke).
 
-В **2025** — обычно combine: JWT для access token (short-lived), refresh token + Redis для revocation.
+В **2025** обычно комбинируют: JWT как access token (короткоживущий), refresh token + Redis для отзыва.
 
 ## Q15. (!) Leader election?
 
-**Leader election** — выбор одного instance для exclusive task в cluster.
+**Leader election** — выбор одного инстанса для эксклюзивной задачи в кластере.
 
-**Use cases:**
-- Cron jobs (только один instance runs)
-- Database migrations
-- Cache warming
-- Coordination tasks
+**Сценарии применения:**
+- Cron-задачи (запускает только один инстанс)
+- Миграции базы данных
+- Прогрев кэша
+- Координационные задачи
 
-**Tools:**
+**Инструменты:**
 - **Kubernetes leader election** (через ConfigMap / Lease objects)
-- **etcd** distributed lock
+- Распределённый лок в **etcd**
 - **ZooKeeper**
 - **Redis Redlock** (с осторожностью)
 - **Consul**
@@ -399,15 +399,15 @@ leader_election = leaderelection.LeaderElection(
 
 ## Q16. Distributed locking?
 
-**Distributed lock** — coordinated mutex across multiple instances.
+**Distributed lock** — согласованный мьютекс между несколькими инстансами.
 
-**Tools:**
-- **Redis** — `SET NX EX 60` (setNX with TTL) или **Redlock**
-- **etcd** — strong consistency, lease-based
-- **ZooKeeper** — ephemeral nodes
-- **Database** — `SELECT ... FOR UPDATE`
+**Инструменты:**
+- **Redis** — `SET NX EX 60` (setNX с TTL) или **Redlock**
+- **etcd** — строгая согласованность, на основе lease
+- **ZooKeeper** — эфемерные узлы
+- **База данных** — `SELECT ... FOR UPDATE`
 
-**Подвох:** distributed locks тяжелы. Avoid если возможно — design идempotently.
+**Подвох:** распределённые локи тяжелы. По возможности избегайте — проектируйте идемпотентно.
 
 ```python
 # Redis simple lock
@@ -424,18 +424,18 @@ if acquire_lock("my-task"):
 ## Q17. (!) Horizontal vs vertical scaling?
 
 **Vertical (scale-up):**
-- Bigger machine (more CPU, RAM)
-- Limit (largest VM type)
-- Restart required
-- **No traffic distribution issue**
+- Машина мощнее (больше CPU, RAM)
+- Есть предел (самый крупный тип VM)
+- Требуется перезапуск
+- **Нет проблемы распределения трафика**
 
 **Horizontal (scale-out):**
-- More machines
-- Practically unlimited
-- No downtime (rolling)
-- **Need stateless apps**
+- Больше машин
+- Практически без ограничений
+- Без простоя (rolling)
+- **Нужны stateless-приложения**
 
-**Cloud-native:** **horizontal** by default.
+**Cloud-native:** по умолчанию **горизонтальное**.
 
 ```yaml
 # K8s HPA (Horizontal Pod Autoscaler)
@@ -454,78 +454,78 @@ spec:
 
 ## Q18. Auto-scaling triggers?
 
-**Common triggers:**
-- **CPU utilization** (> 70%)
-- **Memory utilization**
-- **Custom metrics** (queue depth, request rate)
-- **External metrics** (Kafka consumer lag, SQS queue size)
-- **Scheduled** (predictable patterns)
+**Частые триггеры:**
+- **Загрузка CPU** (> 70%)
+- **Загрузка памяти**
+- **Кастомные метрики** (глубина очереди, частота запросов)
+- **Внешние метрики** (Kafka consumer lag, размер очереди SQS)
+- **По расписанию** (предсказуемые паттерны)
 
-**KEDA (Kubernetes Event-driven Autoscaling)** — auto-scale based on **30+ event sources**:
+**KEDA (Kubernetes Event-driven Autoscaling)** — авто-масштабирование на основе **30+ источников событий**:
 - Kafka, Redis, RabbitMQ
-- Cloud queues (SQS, Service Bus, Pub/Sub)
-- Custom HTTP
+- Облачные очереди (SQS, Service Bus, Pub/Sub)
+- Кастомный HTTP
 
 ## Q19. Predictive vs reactive scaling?
 
-**Reactive:** scale **after** metric hits threshold. Lag of seconds-minutes.
-**Predictive:** scale **before** based on patterns / ML.
+**Reactive:** масштабирование **после** того, как метрика достигла порога. Задержка секунды-минуты.
+**Predictive:** масштабирование **заранее** на основе паттернов / ML.
 
-**Reactive (simple):**
-- HPA с CPU thresholds
-- KEDA с queue length
+**Reactive (простое):**
+- HPA с порогами по CPU
+- KEDA по длине очереди
 
 **Predictive:**
-- AWS Predictive Scaling (ML-based)
-- Custom forecasting (для known patterns)
-- Pre-warming перед expected spike
+- AWS Predictive Scaling (на основе ML)
+- Собственное прогнозирование (для известных паттернов)
+- Прогрев заранее, перед ожидаемым всплеском
 
-В **2025** — большинство — **reactive** + ручное scheduled scaling для known patterns (start of business day).
+В **2025** большинство использует **reactive** + ручное масштабирование по расписанию для известных паттернов (начало рабочего дня).
 
 ## Q20. (!) Three pillars: metrics, logs, traces?
 
-**Metrics** — numerical, aggregated (counters, gauges, histograms).
+**Metrics** — числовые, агрегированные (counters, gauges, histograms).
 - Prometheus, Datadog, CloudWatch
-- High volume, low cardinality
+- Большой объём, низкая кардинальность
 
-**Logs** — discrete events с context.
+**Logs** — дискретные события с контекстом.
 - ELK, Loki, CloudWatch Logs, Datadog Logs
-- High volume, high cardinality
+- Большой объём, высокая кардинальность
 
-**Traces** — request paths через services.
+**Traces** — пути запроса через сервисы.
 - Jaeger, Zipkin, X-Ray, Datadog APM
-- Sampled (не all requests)
+- Сэмплируются (не все запросы)
 
-**Все three** complement each other. Production system needs all.
+**Все три** дополняют друг друга. Production-системе нужны все.
 
 Подробнее — в [Observability](../monitoring/observability-interview.md).
 
 ## Q21. OpenTelemetry?
 
-**OpenTelemetry (OTel)** — CNCF standard для **vendor-neutral** observability.
+**OpenTelemetry (OTel)** — стандарт CNCF для **vendor-нейтральной** observability.
 
 ```
 Apps → OpenTelemetry SDK → OTel Collector → Backend (Datadog, Honeycomb, ...)
 ```
 
 **Преимущества:**
-- **One instrumentation, multiple backends** — switch без code changes
-- **Multi-language** SDKs
-- **Auto-instrumentation** для popular libraries (HTTP, DB, gRPC)
+- **Одна инструментация, много бэкендов** — смена без правок кода
+- SDK для **множества языков**
+- **Авто-инструментация** для популярных библиотек (HTTP, DB, gRPC)
 
-**Components:**
-- **Tracing** (mature)
-- **Metrics** (stable)
-- **Logs** (newer)
+**Компоненты:**
+- **Tracing** (зрелый)
+- **Metrics** (стабильны)
+- **Logs** (новее остальных)
 
-В **2025** — OTel **the standard** для new projects. Заменяет vendor-specific instrumentation.
+В **2025** OTel — **стандарт** для новых проектов. Вытесняет vendor-специфичную инструментацию.
 
 ## Q22. Service mesh (Istio, Linkerd)?
 
-**Service mesh** — infrastructure layer для service-to-service communication. Sidecar proxies (Envoy) handle:
+**Service mesh** — инфраструктурный слой для взаимодействия сервис-сервис. Sidecar-прокси (Envoy) берут на себя:
 
-- **Traffic management** — routing, load balancing, circuit breaker
-- **Security** — mTLS, authorization
+- **Управление трафиком** — маршрутизация, load balancing, circuit breaker
+- **Безопасность** — mTLS, авторизация
 - **Observability** — metrics, traces, logs
 
 ```mermaid
@@ -535,19 +535,19 @@ graph LR
     BS -.- CP
 ```
 
-**Tools:**
-- **Istio** — feature-rich, complex
-- **Linkerd** — simpler, lighter
+**Инструменты:**
+- **Istio** — богатый функционал, сложный
+- **Linkerd** — проще, легче
 - **Consul Connect** — HashiCorp
-- **Cilium Service Mesh** — eBPF-based, no sidecars
+- **Cilium Service Mesh** — на eBPF, без sidecar'ов
 
-**Trade-off:** service mesh add complexity (extra latency, ops overhead) vs benefits.
+**Компромисс:** service mesh добавляет сложности (доп. латентность, операционные накладные расходы) в обмен на преимущества.
 
-В **2025** многие используют **only mTLS + telemetry** (через Linkerd or Cilium), without full Istio complexity.
+В **2025** многие берут **только mTLS + телеметрию** (через Linkerd или Cilium), без полной сложности Istio.
 
 ## Q23. (!) Blue-green deployment?
 
-**Blue (current production)** + **Green (new version)** — оба running. Switch traffic от blue к green at once.
+**Blue (текущий production)** + **Green (новая версия)** — оба запущены. Трафик переключается с blue на green разом.
 
 ```
 Time 1: Blue serves 100% traffic, Green idle
@@ -557,16 +557,16 @@ Time 4: Switch traffic Blue → Green
 Time 5: If issues, instant rollback (switch back)
 ```
 
-**Pros:** instant rollback.
-**Cons:** **двойная** infrastructure cost during deploy.
+**Плюсы:** мгновенный откат.
+**Минусы:** **двойная** стоимость инфраструктуры на время деплоя.
 
-**В K8s:** через services (route к blue или green selector).
+**В K8s:** через services (маршрутизация на blue- или green-selector).
 
 Подробнее — в [Deployment Strategies](../cicd/deployment-strategies-interview.md).
 
 ## Q24. (!) Canary deployment?
 
-**Canary** — gradually increase traffic к new version.
+**Canary** — постепенно увеличиваем трафик на новую версию.
 
 ```
 Day 1: 1% traffic → new version
@@ -576,18 +576,18 @@ Day 4: 50%
 Day 5: 100%
 ```
 
-При detecting issues (error rate, latency) → rollback.
+При обнаружении проблем (error rate, латентность) → откат.
 
-**Tools:**
-- **Argo Rollouts** — K8s-native canary
-- **Flagger** — automated canary
-- **Service mesh** (Istio, Linkerd) — traffic splitting
+**Инструменты:**
+- **Argo Rollouts** — canary, нативный для K8s
+- **Flagger** — автоматизированный canary
+- **Service mesh** (Istio, Linkerd) — разделение трафика
 
-**Auto-rollback** на metric thresholds — best practice.
+**Авто-откат** по порогам метрик — лучшая практика.
 
 ## Q25. Feature flags?
 
-**Feature flags** — toggle features в runtime, без redeploy.
+**Feature flags** — переключение фич в рантайме, без передеплоя.
 
 ```python
 if feature_flag("new_checkout_flow", user=current_user):
@@ -596,22 +596,22 @@ else:
     return old_checkout()
 ```
 
-**Use cases:**
-- Gradual rollout (10% → 50% → 100%)
-- Kill switch (instantly disable broken feature)
-- A/B testing
-- Per-user / segment targeting
+**Сценарии применения:**
+- Постепенный раскат (10% → 50% → 100%)
+- Kill switch (мгновенно отключить сломанную фичу)
+- A/B-тестирование
+- Таргетинг по пользователю / сегменту
 
-**Tools:**
-- **LaunchDarkly** (popular SaaS)
+**Инструменты:**
+- **LaunchDarkly** (популярный SaaS)
 - **Unleash** (open-source)
 - **Flagsmith**, **GrowthBook**, **Statsig**
 
-**Decoupling release из deploy** — modern best practice.
+**Развязка релиза и деплоя** — современная лучшая практика.
 
 ## Q26. GitOps?
 
-**GitOps** — declarative infrastructure через Git как source of truth.
+**GitOps** — декларативная инфраструктура с Git как единым источником истины.
 
 ```
 Developer commits manifest changes к git
@@ -622,24 +622,24 @@ Auto-syncs cluster к desired state в git
 ```
 
 **Принципы:**
-1. Declarative configurations (K8s manifests, Helm)
-2. Version control (Git)
-3. Automated synchronization
-4. Continuous monitoring (drift detection)
+1. Декларативные конфигурации (K8s-манифесты, Helm)
+2. Контроль версий (Git)
+3. Автоматическая синхронизация
+4. Непрерывный мониторинг (обнаружение дрейфа конфигурации)
 
-**Tools:**
-- **Argo CD** — most popular, web UI
-- **Flux** (CNCF) — automation-focused
+**Инструменты:**
+- **Argo CD** — самый популярный, web UI
+- **Flux** (CNCF) — упор на автоматизацию
 
 **Преимущества:**
 - **Audit trail** в git
-- Easy rollback (`git revert`)
-- Approval через PR review
-- Self-healing (drift detection)
+- Простой откат (`git revert`)
+- Согласование через PR review
+- Самовосстановление (обнаружение дрейфа конфигурации)
 
 ## Q27. (!) Configuration management в cloud-native?
 
-**12-factor:** config через **env variables**.
+**12-factor:** конфигурация через **env-переменные**.
 
 ```bash
 DATABASE_URL=postgres://...
@@ -648,77 +648,77 @@ LOG_LEVEL=info
 ```
 
 **В K8s:**
-- **ConfigMaps** — non-sensitive config
-- **Secrets** — sensitive (passwords, tokens)
-- **External Secrets Operator** — sync from Vault, AWS Secrets Manager
+- **ConfigMaps** — нечувствительная конфигурация
+- **Secrets** — чувствительные данные (пароли, токены)
+- **External Secrets Operator** — синхронизация из Vault, AWS Secrets Manager
 
-**Per-environment:**
-- Different ConfigMaps per env
-- Helm values, Kustomize overlays
-- Argo CD parameters
+**По окружениям:**
+- Свои ConfigMaps на каждое окружение
+- Helm values, Kustomize-оверлеи
+- Параметры Argo CD
 
-**Best practice:** **never commit secrets** в git. Use external store.
+**Лучшая практика:** **никогда не коммитьте секреты** в git. Используйте внешнее хранилище.
 
 ## Q28. Secrets management?
 
-**Tools:**
-- **HashiCorp Vault** — enterprise standard
+**Инструменты:**
+- **HashiCorp Vault** — стандарт уровня enterprise
 - **AWS Secrets Manager**
 - **Azure Key Vault**
 - **GCP Secret Manager**
-- **Sealed Secrets** (K8s-native, encrypted в git)
-- **External Secrets Operator** — sync external store к K8s Secrets
+- **Sealed Secrets** (нативно для K8s, зашифровано в git)
+- **External Secrets Operator** — синхронизация внешнего хранилища с K8s Secrets
 
-**Best practices:**
-- **Rotation** — auto-rotate periodically
-- **Audit logging** — кто access'нул secret когда
-- **Least privilege** — IAM access только нужным
-- **Encryption at rest** + in transit
-- **No secrets в env vars** в Docker images / git
+**Лучшие практики:**
+- **Ротация** — авто-ротация периодически
+- **Аудит-логирование** — кто и когда обращался к секрету
+- **Least privilege** — IAM-доступ только тем, кому нужно
+- **Шифрование at rest** + in transit
+- **Никаких секретов в env-переменных** в Docker-образах / git
 
 ## Q29. (!) Какие частые анти-паттерны?
 
-1. **Distributed monolith** — microservices с tight coupling
-2. **Shared database** между services
-3. **Synchronous chains** — A → B → C → D (cascading failures)
-4. **No circuit breakers** — single failure cascades
-5. **Stateful pods** без StatefulSet
-6. **Hardcoded configs** в images
-7. **Logging к files** (must be stdout)
-8. **No health checks**
-9. **No resource limits** — one pod eats node
-10. **Untagged container images** (`latest`)
-11. **Big-bang deployments** (no canary)
-12. **No observability** — production black box
-13. **Manual deployments** — no GitOps
-14. **No backups testing**
+1. **Distributed monolith** — микросервисы с сильной связанностью
+2. **Общая база данных** между сервисами
+3. **Синхронные цепочки** — A → B → C → D (каскадные сбои)
+4. **Нет circuit breaker'ов** — единичный сбой расходится каскадом
+5. **Stateful-pods** без StatefulSet
+6. **Захардкоженные конфиги** в образах
+7. **Логирование в файлы** (должно быть в stdout)
+8. **Нет health checks**
+9. **Нет лимитов ресурсов** — один pod съедает ноду
+10. **Образы без тегов** (`latest`)
+11. **Деплои «всё разом»** (без canary)
+12. **Нет observability** — production как чёрный ящик
+13. **Ручные деплои** — нет GitOps
+14. **Не тестируются бэкапы**
 
 ## Q30. Cloud-native maturity model?
 
-**Levels (CNCF Maturity Model):**
+**Уровни (CNCF Maturity Model):**
 
 **Level 1 — Build:**
-- Containerize apps
-- Source control
-- Basic CI/CD
+- Контейнеризация приложений
+- Контроль версий
+- Базовый CI/CD
 
 **Level 2 — Operate:**
-- Container orchestration (K8s)
-- Centralized logging
-- Basic monitoring
+- Оркестрация контейнеров (K8s)
+- Централизованное логирование
+- Базовый мониторинг
 
 **Level 3 — Scale:**
-- Auto-scaling
+- Авто-масштабирование
 - Service mesh
-- Advanced observability (tracing)
+- Продвинутая observability (трейсинг)
 - GitOps
 
 **Level 4 — Improve:**
 - Chaos engineering
-- ML-driven operations
-- Full automation
+- Операции на основе ML
+- Полная автоматизация
 
-В **2025** — большинство компаний — Level 1-2. Top companies (Netflix, Spotify, Airbnb) — Level 3-4.
+В **2025** большинство компаний — на Level 1-2. Топовые компании (Netflix, Spotify, Airbnb) — на Level 3-4.
 
 ---
 

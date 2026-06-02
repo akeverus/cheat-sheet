@@ -18,7 +18,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Сравнение Message Brokers`
 
-Обзор и сравнение основных messaging systems: **Apache Kafka, RabbitMQ, NATS, Apache Pulsar, Redpanda, AWS SQS/SNS/EventBridge, Apache ActiveMQ**. Часто на интервью спрашивают: "когда выбрать что и почему". Cheatsheet для quick decisions + deep сравнения.
+Обзор и сравнение основных систем обмена сообщениями: **Apache Kafka, RabbitMQ, NATS, Apache Pulsar, Redpanda, AWS SQS/SNS/EventBridge, Apache ActiveMQ**. Часто на интервью спрашивают: «когда выбрать что и почему». Шпаргалка для быстрых решений и глубокого сравнения.
 
 ## Полезные ссылки
 
@@ -57,14 +57,14 @@ updated: "2026-04-25"
 - [Q16. Operational complexity?](#q16-operational-complexity)
 - [Q17. Multi-region?](#q17-multi-region)
 
-**Decision guidelines**
+**Рекомендации по выбору**
 - [Q18. (!) Когда выбрать Kafka?](#q18--когда-выбрать-kafka)
 - [Q19. (!) Когда выбрать RabbitMQ?](#q19--когда-выбрать-rabbitmq)
 - [Q20. (!) Когда выбрать NATS?](#q20--когда-выбрать-nats)
 - [Q21. (!) Когда выбрать Pulsar?](#q21--когда-выбрать-pulsar)
 - [Q22. (!) Когда выбрать SQS/EventBridge?](#q22--когда-выбрать-sqseventbridge)
 
-**Patterns**
+**Паттерны**
 - [Q23. (!) Use case: order processing pipeline?](#q23--use-case-order-processing-pipeline)
 - [Q24. Use case: notification system?](#q24-use-case-notification-system)
 - [Q25. Use case: clickstream analytics?](#q25-use-case-clickstream-analytics)
@@ -74,86 +74,86 @@ updated: "2026-04-25"
 
 (!) Pub/Sub vs Queue vs Stream — отличия?
 
-**Queue (point-to-point):**
-- One producer → one consumer (or one из group)
-- Message **deleted** after consumption
-- FIFO usually
-- **Examples:** RabbitMQ queues, SQS, ActiveMQ
+**Queue (точка-точка):**
+- Один producer → один consumer (или один из группы)
+- Сообщение **удаляется** после обработки
+- Обычно FIFO
+- **Примеры:** очереди RabbitMQ, SQS, ActiveMQ
 
 **Pub/Sub:**
-- One producer → **multiple subscribers** (broadcast)
-- Each subscriber gets copy
-- **Examples:** RabbitMQ topic exchanges, SNS, NATS Core
+- Один producer → **несколько подписчиков** (broadcast)
+- Каждый подписчик получает копию
+- **Примеры:** topic exchanges в RabbitMQ, SNS, NATS Core
 
-**Stream (log):**
-- Append-only log
-- **Multiple consumers** read **independently** (own offset)
-- Messages **NOT deleted** (retention-based)
-- **Replayable** (any consumer can re-read)
-- **Examples:** Kafka, Pulsar, Kinesis, Redpanda
+**Stream (лог):**
+- Append-only лог
+- **Несколько consumer-ов** читают **независимо** (каждый со своим offset)
+- Сообщения **НЕ удаляются** (хранение по retention)
+- **Воспроизводимы** (любой consumer может перечитать)
+- **Примеры:** Kafka, Pulsar, Kinesis, Redpanda
 
-| Pattern | Кто получает | Persistence |
+| Паттерн | Кто получает | Хранение |
 |---------|-------------|-------------|
-| Queue | Один (load balanced) | Until consumed |
-| Pub/Sub | Все subscribers | Per subscriber или transient |
-| Stream | Все consumers (independent) | Retention-based |
+| Queue | Один (с балансировкой) | До обработки |
+| Pub/Sub | Все подписчики | На подписчика или без хранения |
+| Stream | Все consumer-ы (независимо) | По retention |
 
 ## Q2. (!) Message broker vs streaming platform?
 
 **Message broker** (RabbitMQ, ActiveMQ, NATS Core):
-- Designed для **transient messaging**
-- Optimized для routing flexibility
-- Lower throughput obычно
-- Often **at-most-once** или **at-least-once**
+- Рассчитан на **обмен сообщениями без долгого хранения**
+- Оптимизирован под гибкость маршрутизации
+- Обычно ниже throughput
+- Часто **at-most-once** или **at-least-once**
 
-**Streaming platform** (Kafka, Pulsar, Redpanda):
-- Designed для **persistent log**
-- High throughput
-- **Replay capability**
-- **At-least-once** standard, **exactly-once** possible
-- Stream processing integration (Kafka Streams, Flink)
+**Streaming-платформа** (Kafka, Pulsar, Redpanda):
+- Рассчитана на **persistent-лог**
+- Высокий throughput
+- **Возможность replay**
+- **At-least-once** по умолчанию, **exactly-once** достижима
+- Интеграция со stream processing (Kafka Streams, Flink)
 
-**Hybrid** (NATS + JetStream, RabbitMQ Streams) — both worlds.
+**Гибрид** (NATS + JetStream, RabbitMQ Streams) — оба мира сразу.
 
 ## Q3. (!) Apache Kafka — характеристики?
 
-| Critterion | Apache Kafka |
+| Критерий | Apache Kafka |
 |-----------|--------------|
-| Type | Streaming platform |
-| Language | Java (JVM) |
-| Throughput | Very high (millions msg/sec) |
-| Latency | Medium (10-100 ms) |
-| Persistence | Always (log-based) |
-| Ordering | Per-partition |
-| Replay | Excellent |
-| Multi-region | MirrorMaker (separate tool) |
-| Ecosystem | **Massive** (Connect, Streams, registry) |
-| Maturity | Most mature (2011+) |
-| Adoption | **Industry standard** |
-| Operational complexity | High (ZK/KRaft, brokers, Connect) |
+| Тип | Streaming-платформа |
+| Язык | Java (JVM) |
+| Throughput | Очень высокий (миллионы msg/sec) |
+| Latency | Средняя (10–100 мс) |
+| Хранение | Всегда (на основе лога) |
+| Упорядоченность | На партицию |
+| Replay | Отличный |
+| Multi-region | MirrorMaker (отдельный инструмент) |
+| Экосистема | **Огромная** (Connect, Streams, registry) |
+| Зрелость | Самая зрелая (с 2011) |
+| Распространённость | **Промышленный стандарт** |
+| Сложность эксплуатации | Высокая (ZK/KRaft, брокеры, Connect) |
 
-**Best for:** event streaming, big data pipelines, log aggregation, event sourcing.
+**Лучше всего для:** event streaming, big data-конвейеров, агрегации логов, event sourcing.
 
 Подробнее — в [Apache Kafka](kafka-interview.md).
 
 ## Q4. (!) RabbitMQ — характеристики?
 
-| Critterion | RabbitMQ |
+| Критерий | RabbitMQ |
 |-----------|----------|
-| Type | Message broker |
-| Language | Erlang |
-| Throughput | Medium (tens of K msg/sec) |
-| Latency | Low (ms) |
-| Persistence | Optional |
-| Ordering | Per-queue |
-| Replay | Limited (Streams plugin newer) |
-| Routing | **Excellent** (exchanges, bindings, topics) |
-| Protocols | AMQP, MQTT, STOMP |
-| Maturity | Very mature (2007+) |
-| Adoption | Wide |
-| Operational complexity | Medium |
+| Тип | Message broker |
+| Язык | Erlang |
+| Throughput | Средний (десятки тысяч msg/sec) |
+| Latency | Низкая (мс) |
+| Хранение | Опционально |
+| Упорядоченность | На очередь |
+| Replay | Ограниченный (плагин Streams, появился позднее) |
+| Маршрутизация | **Отличная** (exchanges, bindings, topics) |
+| Протоколы | AMQP, MQTT, STOMP |
+| Зрелость | Очень зрелый (с 2007) |
+| Распространённость | Широкая |
+| Сложность эксплуатации | Средняя |
 
-**Best for:** enterprise messaging, complex routing, RPC, transactional workloads.
+**Лучше всего для:** enterprise-обмена сообщениями, сложной маршрутизации, RPC, транзакционных нагрузок.
 
 Подробнее — в [RabbitMQ](rabbitmq-interview.md).
 
@@ -161,19 +161,19 @@ updated: "2026-04-25"
 
 | Критерий | NATS |
 |----------|------|
-| Type | Messaging + streaming (JetStream) |
-| Language | Go |
-| Throughput | Very high (millions msg/sec) |
-| Latency | **Microseconds** (lowest) |
-| Persistence | JetStream optional |
-| Ordering | Per-subject |
-| Multi-region | Native (super-cluster, leaf nodes) |
-| Resource usage | **Very low** |
-| Setup | **Very simple** |
-| Maturity | Mature, growing (2014+) |
-| Adoption | Niche but growing |
+| Тип | Обмен сообщениями + streaming (JetStream) |
+| Язык | Go |
+| Throughput | Очень высокий (миллионы msg/sec) |
+| Latency | **Микросекунды** (самая низкая) |
+| Хранение | Опционально через JetStream |
+| Упорядоченность | На subject |
+| Multi-region | Нативный (super-cluster, leaf nodes) |
+| Потребление ресурсов | **Очень низкое** |
+| Настройка | **Очень простая** |
+| Зрелость | Зрелый, растущий (с 2014) |
+| Распространённость | Нишевый, но растущий |
 
-**Best for:** microservices, IoT, edge computing, low-latency messaging.
+**Лучше всего для:** микросервисов, IoT, edge computing, низколатентного обмена сообщениями.
 
 Подробнее — в [NATS](nats-interview.md).
 
@@ -181,19 +181,19 @@ updated: "2026-04-25"
 
 | Критерий | Apache Pulsar |
 |----------|---------------|
-| Type | Streaming + messaging |
-| Language | Java |
-| Throughput | Very high |
-| Latency | Medium |
-| Architecture | **Compute + Storage separated** (BookKeeper) |
-| Multi-tenancy | **Built-in** |
-| Multi-region | **Native** geo-replication |
-| Subscription types | 4 (Exclusive, Shared, Failover, Key_Shared) |
-| Tiered storage | Built-in |
-| Adoption | Niche |
-| Operational complexity | High |
+| Тип | Streaming + обмен сообщениями |
+| Язык | Java |
+| Throughput | Очень высокий |
+| Latency | Средняя |
+| Архитектура | **Вычисления и хранилище разделены** (BookKeeper) |
+| Multi-tenancy | **Встроенная** |
+| Multi-region | **Нативная** geo-репликация |
+| Типы подписок | 4 (Exclusive, Shared, Failover, Key_Shared) |
+| Tiered storage | Встроенный |
+| Распространённость | Нишевый |
+| Сложность эксплуатации | Высокая |
 
-**Best for:** multi-tenant SaaS, multi-region, cloud-native architectures.
+**Лучше всего для:** multi-tenant SaaS, multi-region, cloud-native-архитектур.
 
 Подробнее — в [Apache Pulsar](pulsar-interview.md).
 
@@ -201,27 +201,27 @@ updated: "2026-04-25"
 
 | Критерий | Redpanda |
 |----------|----------|
-| Type | Streaming (Kafka-compatible) |
-| Language | C++ |
-| Throughput | Very high |
-| Latency | Lower than Kafka (no GC) |
-| Compatibility | **Kafka API** |
-| ZooKeeper | None (own Raft) |
-| Architecture | Shard-per-core (Seastar) |
-| Setup | **Single binary** |
-| Adoption | Growing |
+| Тип | Streaming (совместим с Kafka) |
+| Язык | C++ |
+| Throughput | Очень высокий |
+| Latency | Ниже, чем у Kafka (нет GC) |
+| Совместимость | **Kafka API** |
+| ZooKeeper | Нет (собственный Raft) |
+| Архитектура | Shard-per-core (Seastar) |
+| Настройка | **Один бинарник** |
+| Распространённость | Растёт |
 
-**Best for:** Kafka users wanting better performance and easier ops.
+**Лучше всего для:** пользователей Kafka, которым нужна более высокая производительность и проще эксплуатация.
 
 Подробнее — в [Redpanda](redpanda-interview.md).
 
 ## Q8. AWS SQS/SNS/EventBridge?
 
-**SQS** — managed queue (point-to-point).
-**SNS** — managed pub/sub.
-**EventBridge** — event bus с complex routing, SaaS integrations.
+**SQS** — управляемая очередь (точка-точка).
+**SNS** — управляемый pub/sub.
+**EventBridge** — шина событий со сложной маршрутизацией и интеграциями с SaaS.
 
-**Best for:** AWS-native apps, serverless, decoupling microservices.
+**Лучше всего для:** AWS-native-приложений, serverless, развязки микросервисов.
 
 Подробнее — в [AWS SQS/SNS](aws-sqs-sns-interview.md).
 
@@ -229,24 +229,24 @@ updated: "2026-04-25"
 
 | Критерий | Apache ActiveMQ |
 |----------|-----------------|
-| Type | Message broker (JMS) |
-| Language | Java |
-| Throughput | Lower |
-| Protocols | JMS, AMQP, MQTT, STOMP |
-| Maturity | Very mature (2004+) |
-| Adoption | Legacy mostly |
+| Тип | Message broker (JMS) |
+| Язык | Java |
+| Throughput | Ниже |
+| Протоколы | JMS, AMQP, MQTT, STOMP |
+| Зрелость | Очень зрелый (с 2004) |
+| Распространённость | В основном legacy |
 
-**Two flavors:**
-- **ActiveMQ Classic** — old, less popular
-- **Artemis** — newer, better performance
+**Две разновидности:**
+- **ActiveMQ Classic** — старая, менее популярная
+- **Artemis** — новее, выше производительность
 
-**Best for:** Java enterprise legacy systems, JMS compliance required.
+**Лучше всего для:** legacy Java enterprise-систем, где требуется совместимость с JMS.
 
-В **2025** — declining, replaced by Kafka, RabbitMQ.
+В **2025** — на спаде, вытесняется Kafka и RabbitMQ.
 
 ## Q10. (!) Throughput comparison?
 
-**Approximate throughput per node** (single broker):
+**Примерный throughput на узел** (один брокер):
 
 ```
 NATS Core:        10M+ msg/sec (small messages)
@@ -259,16 +259,16 @@ ActiveMQ:         20K msg/sec
 SQS:              No limit (managed scale)
 ```
 
-**Caveats:**
-- Highly **dependent на message size**
-- **Hardware matters** (NIC, disk, CPU)
-- Settings, replication factor
+**Оговорки:**
+- Сильно **зависит от размера сообщения**
+- **Важно железо** (NIC, диск, CPU)
+- Настройки, replication factor
 
-**For most apps** RabbitMQ / Kafka / NATS — overkill в throughput. **Choose by features**, not raw throughput.
+**Для большинства приложений** RabbitMQ / Kafka / NATS — избыточны по throughput. **Выбирай по фичам**, а не по сырому throughput.
 
 ## Q11. (!) Latency comparison?
 
-**Typical p99 latency** (no batching):
+**Типичная p99 latency** (без батчинга):
 
 ```
 NATS Core:        < 1 ms
@@ -280,33 +280,33 @@ Kafka:            10-100 ms
 SQS:              50-200 ms
 ```
 
-**Kafka latency** depends на batch settings — `linger.ms` trades latency for throughput.
+**Latency Kafka** зависит от настроек батчинга — `linger.ms` обменивает latency на throughput.
 
-**For low-latency** требования (gaming, trading) — NATS / Redpanda preferred.
+**Для низколатентных** требований (gaming, trading) предпочтительнее NATS / Redpanda.
 
 ## Q12. (!) Ordering guarantees?
 
-| System | Ordering |
+| Система | Упорядоченность |
 |--------|----------|
-| Kafka | Per-partition |
-| RabbitMQ | Per-queue (single consumer) |
-| NATS Core | None (parallel delivery) |
-| NATS JetStream | Per-stream |
-| Pulsar | Per-partition или Key_Shared subscription |
-| Redpanda | Per-partition |
-| SQS Standard | Best-effort (may reorder) |
-| SQS FIFO | **Strict per-message-group** |
-| EventBridge | Best-effort |
+| Kafka | На партицию |
+| RabbitMQ | На очередь (один потребитель) |
+| NATS Core | Нет (параллельная доставка) |
+| NATS JetStream | На stream |
+| Pulsar | На партицию или через подписку Key_Shared |
+| Redpanda | На партицию |
+| SQS Standard | По возможности (возможна перестановка) |
+| SQS FIFO | **Строгая в пределах message-group** |
+| EventBridge | По возможности |
 
-**Strict ordering** обычно requires **single consumer per partition/queue**.
+**Строгая упорядоченность** обычно требует **одного consumer-а на партицию/очередь**.
 
-**For partial ordering** (per-key) → use **partition keys** (Kafka, Pulsar) или **message groups** (SQS FIFO).
+**Для частичной упорядоченности** (по ключу) → используй **ключи партиционирования** (Kafka, Pulsar) или **message groups** (SQS FIFO).
 
 ## Q13. (!) Delivery semantics (at-least-once, exactly-once)?
 
-| System | Default | Possible |
+| Система | По умолчанию | Возможно |
 |--------|---------|----------|
-| Kafka | At-least-once | Exactly-once (transactional) |
+| Kafka | At-least-once | Exactly-once (транзакционно) |
 | RabbitMQ | At-most-once | At-least-once (с acks) |
 | NATS Core | **At-most-once** | — |
 | NATS JetStream | At-least-once | Exactly-once |
@@ -315,172 +315,172 @@ SQS:              50-200 ms
 | SQS Standard | At-least-once | — |
 | SQS FIFO | **Exactly-once** | — |
 
-**Exactly-once** в distributed systems — hard. Обычно achieved через:
-- Idempotent producers
-- Transactional writes
-- Idempotent consumers
+**Exactly-once** в распределённых системах — сложно. Обычно достигается через:
+- Идемпотентные producer-ы
+- Транзакционные записи
+- Идемпотентные consumer-ы
 
-В практике — **at-least-once + idempotent consumers** = effective exactly-once.
+На практике — **at-least-once + идемпотентные consumer-ы** = эффективная exactly-once.
 
 ## Q14. Persistence?
 
-| System | Persistence |
+| Система | Хранение |
 |--------|-------------|
-| Kafka | Always (log-based) |
-| RabbitMQ | Optional (durable queues + persistent messages) |
-| NATS Core | None (transient) |
-| NATS JetStream | Yes |
-| Pulsar | Always (BookKeeper) |
-| Redpanda | Always |
-| SQS | Yes (managed) |
-| ActiveMQ | Optional |
+| Kafka | Всегда (на основе лога) |
+| RabbitMQ | Опционально (durable-очереди + persistent-сообщения) |
+| NATS Core | Нет (без хранения) |
+| NATS JetStream | Да |
+| Pulsar | Всегда (BookKeeper) |
+| Redpanda | Всегда |
+| SQS | Да (управляемое) |
+| ActiveMQ | Опционально |
 
-**Persistent** — survives broker restart.
-**Non-persistent** — faster but lost on restart.
+**Хранимое (persistent)** — переживает рестарт брокера.
+**Нехранимое (non-persistent)** — быстрее, но теряется при рестарте.
 
 ## Q15. Replay (consume historical messages)?
 
-| System | Replay |
+| Система | Replay |
 |--------|--------|
-| Kafka | **Excellent** (any consumer, any offset) |
-| Pulsar | **Excellent** |
-| Redpanda | **Excellent** |
-| NATS JetStream | Yes (limited time/size) |
-| RabbitMQ | Limited (Streams plugin) |
-| SQS | **No** (deleted после consumption) |
-| EventBridge | Archive + replay supported |
+| Kafka | **Отличный** (любой consumer, любой offset) |
+| Pulsar | **Отличный** |
+| Redpanda | **Отличный** |
+| NATS JetStream | Да (ограничен по времени/размеру) |
+| RabbitMQ | Ограниченный (плагин Streams) |
+| SQS | **Нет** (удаляется после обработки) |
+| EventBridge | Поддерживаются архив и replay |
 
-**Replay** ключевая фича для:
-- Recovery after bug
-- Bootstrapping new consumers
-- A/B testing с historical data
+**Replay** — ключевая фича для:
+- Восстановления после бага
+- Подключения новых consumer-ов
+- A/B-тестирования на исторических данных
 - Event sourcing
 
-**Если replay критичен** → streaming platform (Kafka, Pulsar).
+**Если replay критичен** → streaming-платформа (Kafka, Pulsar).
 
 ## Q16. Operational complexity?
 
-**Easiest → Hardest:**
+**От самого простого к самому сложному:**
 
-1. **NATS** — single binary, no dependencies
-2. **Redpanda** — single binary, no ZK
-3. **AWS SQS/SNS/EventBridge** — fully managed
-4. **RabbitMQ** — moderate (clusters, plugins)
-5. **Kafka** — high (brokers, ZK/KRaft, Connect, Schema Registry)
-6. **Pulsar** — highest (brokers + bookies + ZK)
+1. **NATS** — один бинарник, без зависимостей
+2. **Redpanda** — один бинарник, без ZK
+3. **AWS SQS/SNS/EventBridge** — полностью управляемые
+4. **RabbitMQ** — умеренно (кластеры, плагины)
+5. **Kafka** — высокая (брокеры, ZK/KRaft, Connect, Schema Registry)
+6. **Pulsar** — самая высокая (брокеры + bookies + ZK)
 
-**Managed services** убирают complexity:
-- **Confluent Cloud** (managed Kafka)
-- **MSK** (AWS managed Kafka)
-- **CloudAMQP** (managed RabbitMQ)
-- **Synadia** (managed NATS)
-- **StreamNative** (managed Pulsar)
+**Управляемые сервисы** убирают сложность:
+- **Confluent Cloud** (управляемая Kafka)
+- **MSK** (управляемая Kafka от AWS)
+- **CloudAMQP** (управляемый RabbitMQ)
+- **Synadia** (управляемый NATS)
+- **StreamNative** (управляемый Pulsar)
 - **Redpanda Cloud**
 
 ## Q17. Multi-region?
 
-| System | Multi-region |
+| Система | Multi-region |
 |--------|--------------|
-| Kafka | MirrorMaker 2 (separate tool) |
-| Pulsar | **Native** geo-replication |
-| NATS | **Native** super-cluster |
-| RabbitMQ | Federation, Shovel plugins |
-| Redpanda | Cluster linking (newer) |
-| SQS | Single-region (cross-region replication setup) |
+| Kafka | MirrorMaker 2 (отдельный инструмент) |
+| Pulsar | **Нативная** geo-репликация |
+| NATS | **Нативный** super-cluster |
+| RabbitMQ | Плагины Federation, Shovel |
+| Redpanda | Cluster linking (появился позднее) |
+| SQS | Один регион (требуется настройка межрегиональной репликации) |
 
-**Pulsar и NATS** — best built-in multi-region.
+**Pulsar и NATS** — лучший встроенный multi-region.
 
-**Kafka** — possible но MirrorMaker complex ops.
+**Kafka** — возможен, но MirrorMaker сложен в эксплуатации.
 
 ## Q18. (!) Когда выбрать Kafka?
 
 **Выбирай Kafka когда:**
-- **Event streaming** — main use case
-- **Big data pipelines** (Spark, Flink integration)
+- **Event streaming** — основной сценарий
+- **Big data-конвейеры** (интеграция со Spark, Flink)
 - **Event sourcing** + replay
-- **Already invested** в Kafka ecosystem
-- Need **massive ecosystem** (Kafka Connect, Streams, registry)
-- **Long retention** required
-- Industry standard, hire-friendly
+- **Уже вложились** в экосистему Kafka
+- Нужна **огромная экосистема** (Kafka Connect, Streams, registry)
+- Требуется **долгое хранение**
+- Промышленный стандарт, легко нанимать специалистов
 
 **Не выбирай когда:**
-- Need very low latency (< 5 ms) — NATS / Redpanda
-- Simple queueing only — RabbitMQ
+- Нужна очень низкая latency (< 5 мс) — NATS / Redpanda
+- Только простая очередь — RabbitMQ
 - AWS-native serverless — SQS/EventBridge
 - Multi-tenancy — Pulsar
-- Don't want ops complexity — managed alternatives
+- Не хочешь сложности эксплуатации — управляемые альтернативы
 
 ## Q19. (!) Когда выбрать RabbitMQ?
 
 **Выбирай RabbitMQ когда:**
-- **Complex routing** (exchanges, topic-based, header-based)
-- **Enterprise messaging** patterns (RPC, work queues)
-- **Multiple protocols** (AMQP, MQTT, STOMP)
-- **Lower throughput** (< 100K msg/sec) acceptable
-- Java enterprise (JMS-like patterns)
-- Need **mature, battle-tested** broker
-- Dead letter exchanges, priority queues, TTL
+- **Сложная маршрутизация** (по exchange, по topic, по header)
+- **Enterprise-паттерны обмена сообщениями** (RPC, рабочие очереди)
+- **Несколько протоколов** (AMQP, MQTT, STOMP)
+- Приемлем **более низкий throughput** (< 100K msg/sec)
+- Java enterprise (JMS-подобные паттерны)
+- Нужен **зрелый, проверенный в бою** брокер
+- Dead letter exchanges, очереди приоритетов, TTL
 
 **Не выбирай когда:**
-- High throughput streaming — Kafka
-- Long retention / replay — Kafka
-- Microservices internal — NATS often better
+- Высоконагруженный streaming — Kafka
+- Долгое хранение / replay — Kafka
+- Внутренняя коммуникация микросервисов — NATS часто лучше
 
 ## Q20. (!) Когда выбрать NATS?
 
 **Выбирай NATS когда:**
-- **Microservices** internal communication
-- **Low latency** critical (< 5 ms)
-- **IoT** — millions devices
+- **Внутренняя коммуникация микросервисов**
+- Критична **низкая latency** (< 5 мс)
+- **IoT** — миллионы устройств
 - **Edge computing** — leaf nodes
-- **Multi-region** native required
-- Want **simple ops** (single binary)
-- Resource-constrained environments
+- Нужен нативный **multi-region**
+- Хочешь **простую эксплуатацию** (один бинарник)
+- Среды с ограниченными ресурсами
 
 **Не выбирай когда:**
-- Need huge ecosystem (Kafka)
-- Complex stream processing (Kafka Streams, Flink)
-- Long-term retention (Kafka cheaper)
+- Нужна огромная экосистема (Kafka)
+- Сложный stream processing (Kafka Streams, Flink)
+- Долгосрочное хранение (у Kafka дешевле)
 
 ## Q21. (!) Когда выбрать Pulsar?
 
 **Выбирай Pulsar когда:**
-- **Multi-tenant SaaS** platform
-- **Multi-region** native required
-- **Storage и compute** scale separately
-- **Long retention** с tiered storage (S3)
-- **Multiple subscription patterns** needed
-- Modern cloud-native architecture
+- **Multi-tenant SaaS**-платформа
+- Нужен нативный **multi-region**
+- **Хранилище и вычисления** масштабируются раздельно
+- **Долгое хранение** с tiered storage (S3)
+- Нужны **разные паттерны подписок**
+- Современная cloud-native-архитектура
 
 **Не выбирай когда:**
-- Need maximum simplicity (Kafka or NATS easier)
-- Already deep in Kafka ecosystem
-- Smaller team can't handle complexity
+- Нужна максимальная простота (Kafka или NATS проще)
+- Уже глубоко в экосистеме Kafka
+- Небольшая команда не справится со сложностью
 
 ## Q22. (!) Когда выбрать SQS/EventBridge?
 
 **Выбирай SQS/SNS/EventBridge когда:**
-- **AWS-native** application
-- **Serverless** stack (Lambda heavy)
-- Don't want **infrastructure ops**
-- **Pay-per-use** preferable
-- **Cross-AWS-services** integration
-- **SaaS integrations** (EventBridge для Stripe, Auth0, ...)
+- **AWS-native**-приложение
+- **Serverless**-стек (много Lambda)
+- Не хочешь **эксплуатировать инфраструктуру**
+- Предпочтительна модель **pay-per-use**
+- Интеграция **между AWS-сервисами**
+- **SaaS-интеграции** (EventBridge для Stripe, Auth0, ...)
 
 **Не выбирай когда:**
 - Multi-cloud / on-prem
-- Очень high throughput на consistent basis (cost adds up)
-- Need streaming с replay
-- Complex ordering requirements outside SQS FIFO limits
+- Очень высокий throughput на постоянной основе (стоимость накапливается)
+- Нужен streaming с replay
+- Сложные требования к упорядоченности за пределами ограничений SQS FIFO
 
 ## Q23. (!) Use case: order processing pipeline?
 
-**Requirements:**
-- Order placed → multiple downstream actions (charge, fulfill, notify)
-- Reliable processing
-- Replay for recovery
+**Требования:**
+- Заказ оформлен → несколько последующих действий (списать оплату, собрать заказ, уведомить)
+- Надёжная обработка
+- Replay для восстановления
 
-**Best fit:** **Kafka** + **Kafka Streams** (или **Pulsar**).
+**Лучший выбор:** **Kafka** + **Kafka Streams** (или **Pulsar**).
 
 ```
 Order Service → Kafka (orders topic) → 
@@ -490,18 +490,18 @@ Order Service → Kafka (orders topic) →
   └─ Analytics (Kafka Streams aggregate)
 ```
 
-**Kafka:** ordering per partition (по customer_id), replay, multiple consumers.
+**Kafka:** упорядоченность на партицию (по customer_id), replay, несколько consumer-ов.
 
-**Alternative:** Pulsar (similar), AWS EventBridge (managed AWS-native).
+**Альтернатива:** Pulsar (похоже), AWS EventBridge (управляемый, AWS-native).
 
 ## Q24. Use case: notification system?
 
-**Requirements:**
-- Send email/SMS/push к users
-- Multiple channels per notification
-- Retry on failure
+**Требования:**
+- Отправка email/SMS/push пользователям
+- Несколько каналов на уведомление
+- Повторная отправка при сбое
 
-**Best fit:** **SNS** (AWS) или **RabbitMQ** + worker queues.
+**Лучший выбор:** **SNS** (AWS) или **RabbitMQ** + worker-очереди.
 
 ```
 Trigger → SNS notification topic →
@@ -510,16 +510,16 @@ Trigger → SNS notification topic →
   └─ SQS push queue → Push service
 ```
 
-Каждый worker has own DLQ. Independent retry strategies.
+У каждого worker-а своя DLQ. Независимые стратегии повторов.
 
 ## Q25. Use case: clickstream analytics?
 
-**Requirements:**
-- Web/app events (millions/sec)
-- Real-time + batch processing
-- Long retention для analytics
+**Требования:**
+- События web/приложений (миллионы/сек)
+- Обработка в реальном времени + пакетная (batch)
+- Долгое хранение для аналитики
 
-**Best fit:** **Kafka** или **Kinesis**.
+**Лучший выбор:** **Kafka** или **Kinesis**.
 
 ```
 Web/App → Kafka clickstream topic →
@@ -528,16 +528,16 @@ Web/App → Kafka clickstream topic →
   └─ Storage: tiered к S3 (cold)
 ```
 
-**Pulsar** alternative для multi-region.
+**Pulsar** — альтернатива для multi-region.
 
 ## Q26. Use case: IoT с millions devices?
 
-**Requirements:**
-- Millions devices sending sensor data
-- Low resource usage on devices
-- Edge processing
+**Требования:**
+- Миллионы устройств шлют данные с датчиков
+- Низкое потребление ресурсов на устройствах
+- Обработка на границе сети (edge)
 
-**Best fit:** **MQTT broker** (HiveMQ, EMQX, AWS IoT Core) или **NATS** (с leaf nodes).
+**Лучший выбор:** **MQTT-брокер** (HiveMQ, EMQX, AWS IoT Core) или **NATS** (с leaf nodes).
 
 ```
 IoT devices → MQTT broker / NATS leaf → Central NATS / Kafka
@@ -545,10 +545,10 @@ IoT devices → MQTT broker / NATS leaf → Central NATS / Kafka
                                   Stream processing
 ```
 
-**MQTT** — IoT standard protocol.
-**NATS** — modern alternative, more flexible.
+**MQTT** — стандартный протокол для IoT.
+**NATS** — современная альтернатива, более гибкая.
 
-**Kafka** не ideal для IoT — heavyweight, no edge support.
+**Kafka** не идеален для IoT — тяжеловесен, нет поддержки граничных узлов (edge).
 
 ## See also
 

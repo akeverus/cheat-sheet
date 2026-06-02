@@ -18,7 +18,7 @@ updated: "2026-05-08"
 ---
 # Вопросы на собеседовании: `CockroachDB`
 
-`CockroachDB` (Cockroach Labs, с 2015) — distributed SQL database inspired Google Spanner. **PostgreSQL wire protocol compatible**, ACID transactions across multiple nodes, multi-region capable. Open-source (BSL license). Конкуренты: Spanner, Aurora, YugabyteDB, TiDB.
+`CockroachDB` (Cockroach Labs, с 2015) — распределённая SQL-база данных, вдохновлённая Google Spanner. **Совместима с wire-протоколом PostgreSQL**, ACID-транзакции через множество узлов, поддержка multi-region. Open-source (лицензия BSL). Конкуренты: Spanner, Aurora, YugabyteDB, TiDB.
 
 ## Полезные ссылки
 
@@ -75,55 +75,55 @@ updated: "2026-05-08"
 
 ## Q1. (!) Что такое CockroachDB?
 
-**CockroachDB** — distributed SQL database, designed для:
-- **Horizontal scaling** (add nodes для capacity)
-- **High availability** (no single point of failure)
-- **Strong consistency** (ACID, Serializable)
-- **PostgreSQL compatibility** (wire protocol)
-- **Multi-region** (geo-distributed)
+**CockroachDB** — распределённая SQL-база данных, спроектированная под:
+- **Горизонтальное масштабирование** (добавляешь узлы — растёт ёмкость)
+- **Высокую доступность** (нет единой точки отказа)
+- **Строгую согласованность** (ACID, Serializable)
+- **Совместимость с PostgreSQL** (wire-протокол)
+- **Multi-region** (гео-распределённость)
 
-**Создан** ex-Googlers (working on Spanner, F1) в 2015.
+**Создана** бывшими сотрудниками Google (работавшими над Spanner, F1) в 2015 году.
 
 **Применения:**
-- Global apps требующие consistency
-- Financial systems (bank ledgers, payment platforms)
+- Глобальные приложения, которым нужна согласованность
+- Финансовые системы (банковские реестры, платёжные платформы)
 - Multi-region SaaS
-- Apps outgrowing single PostgreSQL
+- Приложения, переросшие одиночный PostgreSQL
 
 ## Q2. (!) NewSQL — что это?
 
-**NewSQL** — class databases combining:
-- **SQL interface + ACID** (как traditional RDBMS)
-- **Horizontal scalability** (как NoSQL)
+**NewSQL** — класс баз данных, сочетающих:
+- **SQL-интерфейс + ACID** (как у традиционных RDBMS)
+- **Горизонтальную масштабируемость** (как у NoSQL)
 
-**Examples:**
+**Примеры:**
 - Google Spanner
 - CockroachDB
 - YugabyteDB
 - TiDB
 - VoltDB
 
-**Vs traditional SQL:** scales beyond single machine.
-**Vs NoSQL:** keeps SQL, ACID, joins.
+**В сравнении с традиционным SQL:** масштабируется за пределы одной машины.
+**В сравнении с NoSQL:** сохраняет SQL, ACID и join-ы.
 
-**Trade-off:** more complex internals, sometimes slower на single-node workloads.
+**Компромисс:** более сложное внутреннее устройство, иногда медленнее на single-node нагрузках.
 
 ## Q3. (!) Inspired by Google Spanner — что значит?
 
-**Spanner** (Google, 2012) — first globally-distributed SQL DB.
+**Spanner** (Google, 2012) — первая глобально-распределённая SQL-БД.
 
-**Key Spanner concepts:**
-- **TrueTime** — atomic clocks для globally consistent timestamps
-- **Paxos consensus**
-- **Multi-region writes**
-- **External consistency**
+**Ключевые концепции Spanner:**
+- **TrueTime** — атомные часы для глобально согласованных меток времени
+- **Консенсус Paxos**
+- **Multi-region записи**
+- **External consistency** (внешняя согласованность)
 
-**CockroachDB** реализует похожие концепции **без atomic clocks**:
+**CockroachDB** реализует похожие концепции **без атомных часов**:
 - **Hybrid Logical Clocks (HLC)** вместо TrueTime
-- **Raft consensus** вместо Paxos
-- **Open-source** (Spanner — managed only)
+- **Консенсус Raft** вместо Paxos
+- **Open-source** (Spanner — только managed)
 
-В **2025** — CockroachDB main open-source distributed SQL.
+В **2025** CockroachDB — основная open-source распределённая SQL.
 
 ## Q4. (!) Architecture: ranges, replicas, leases?
 
@@ -136,34 +136,34 @@ graph TD
     Replicas --> Storage[Pebble Storage Engine]
 ```
 
-**Range** — contiguous chunk данных (default 512 MB).
-- Identified by start/end keys
-- Each range is **independently replicated**
+**Range** — непрерывный фрагмент данных (по умолчанию 512 MB).
+- Идентифицируется начальным/конечным ключами
+- Каждый range реплицируется **независимо**
 
-**Replica** — copy range на ноде. Default **3 replicas**.
+**Replica** — копия range на узле. По умолчанию **3 реплики**.
 
-**Lease** — каждый range имеет **leaseholder** (одна replica). Coordinates reads/writes to range.
+**Lease** — у каждого range есть **leaseholder** (одна реплика). Он координирует чтения и записи в этот range.
 
-**Raft group** — все replicas range form Raft group, lease leader = Raft leader (usually).
+**Raft-группа** — все реплики range образуют Raft-группу, leaseholder = лидер Raft (как правило).
 
 ## Q5. Raft consensus?
 
-**Raft** — distributed consensus algorithm. CockroachDB uses **Raft per range**.
+**Raft** — алгоритм распределённого консенсуса. CockroachDB использует **отдельный Raft на каждый range**.
 
-**Process:**
-1. Leader (lease holder) accepts write
-2. Replicates to followers
-3. Once **majority** (quorum) ack → commit
-4. Apply к state machine
+**Процесс:**
+1. Лидер (leaseholder) принимает запись
+2. Реплицирует её на followers
+3. Как только **большинство** (кворум) подтвердило → commit
+4. Применяется к state machine
 
-**3 replicas:** quorum = 2. Tolerate 1 failure.
-**5 replicas:** quorum = 3. Tolerate 2 failures.
+**3 реплики:** кворум = 2. Переживает 1 отказ.
+**5 реплик:** кворум = 3. Переживает 2 отказа.
 
-**Leader election:** Raft auto-elects на failures.
+**Выбор лидера:** Raft автоматически переизбирает лидера при отказах.
 
 ## Q6. (!) Range splitting?
 
-**Auto-splitting** на ~512 MB.
+**Автоматическое разбиение (auto-splitting)** на ~512 MB.
 
 ```
 Range 1: keys A-K (512 MB)
@@ -173,35 +173,35 @@ Split into:
   Range 1b: keys G-K (256 MB)
 ```
 
-**Distribution:** new ranges placed на underutilized nodes.
+**Распределение:** новые range-ы размещаются на недозагруженных узлах.
 
-**Manual split** для performance:
+**Ручное разбиение (manual split)** ради производительности:
 ```sql
 ALTER TABLE orders SPLIT AT VALUES (100), (200), (300);
 ```
 
-Useful **before bulk import** для distributed write performance.
+Полезно **перед массовым импортом (bulk import)** — для распределённой производительности записи.
 
 ## Q7. Hybrid Logical Clocks (HLC)?
 
-**HLC** — combines **physical time** (NTP) + **logical counter** для globally ordered timestamps.
+**HLC** объединяет **физическое время** (NTP) + **логический счётчик** для глобально упорядоченных меток времени.
 
-**Format:** `(physical_time, logical_counter)`
+**Формат:** `(physical_time, logical_counter)`
 
-**vs Spanner TrueTime:**
-- Spanner: hardware atomic clocks → tiny uncertainty (~7ms)
-- CockroachDB: NTP + HLC → larger uncertainty (~250ms-1s)
+**В сравнении с TrueTime у Spanner:**
+- Spanner: аппаратные атомные часы → крошечная неопределённость (~7 мс)
+- CockroachDB: NTP + HLC → бо́льшая неопределённость (~250 мс — 1 с)
 
-**Effect для CockroachDB:**
-- May need to **wait out clock uncertainty** for some operations
-- Uses retries для resolve conflicts
-- Slightly higher write latency
+**Последствия для CockroachDB:**
+- Иногда нужно **переждать неопределённость часов (clock uncertainty)** для части операций
+- Использует повторные попытки (retries) для разрешения конфликтов
+- Чуть более высокая латентность записи
 
-В практике — sufficient для majority workloads.
+На практике этого достаточно для большинства нагрузок.
 
 ## Q8. (!) Multi-region deployments?
 
-CockroachDB supports **deploy across multiple regions**.
+CockroachDB поддерживает **развёртывание сразу в нескольких регионах**.
 
 ```
 us-east (3 replicas)
@@ -209,50 +209,50 @@ us-west (3 replicas)
 eu-west (3 replicas)
 ```
 
-**Replication strategies:**
-- **Region survival** — survive region failure
-- **Zone survival** — survive zone failure (cheaper)
+**Стратегии репликации:**
+- **Region survival** — переживание отказа целого региона
+- **Zone survival** — переживание отказа зоны (дешевле)
 
-**Reads:** can be local (closest replica).
-**Writes:** require quorum across regions → higher latency.
+**Чтения:** могут быть локальными (ближайшая реплика).
+**Записи:** требуют кворума через регионы → выше латентность.
 
 ## Q9. (!) Region survival vs zone survival?
 
 **Zone survival:**
-- Replicas в multiple zones одного region
-- Survives zone outage
-- **Lower latency** (zones close)
-- Cheaper (one region)
+- Реплики в нескольких зонах одного региона
+- Переживает отказ зоны
+- **Ниже латентность** (зоны рядом)
+- Дешевле (один регион)
 
 **Region survival:**
-- Replicas в multiple regions
-- Survives entire region failure
-- **Higher latency** (cross-region quorum для writes)
-- More expensive
+- Реплики в нескольких регионах
+- Переживает отказ целого региона
+- **Выше латентность** (кросс-региональный кворум для записей)
+- Дороже
 
 ```sql
 ALTER DATABASE my_db SURVIVE REGION FAILURE;
 ```
 
-**Best practice:**
+**Рекомендация:**
 - **Zone survival** обычно достаточно
-- **Region survival** для compliance / critical apps
+- **Region survival** — для требований комплаенса / критичных приложений
 
 ## Q10. Locality settings?
 
-**Each node** announces its locality:
+**Каждый узел** объявляет свою locality (привязку к региону/зоне):
 ```bash
 cockroach start --locality=region=us-east-1,zone=us-east-1a
 ```
 
-**CockroachDB uses locality** для:
-- Place replicas в разных zones/regions (failure isolation)
-- **Lease holder placement** (closer к user)
-- **Follower reads** (read local replica)
+**CockroachDB использует locality** для того, чтобы:
+- Размещать реплики в разных зонах/регионах (изоляция отказов)
+- **Размещать leaseholder** ближе к пользователю
+- Делать **follower reads** (чтение из локальной реплики)
 
 ## Q11. Geo-partitioning (data locality)?
 
-**Partition table by region** для data locality (compliance, latency).
+**Партиционирование таблицы по региону** ради локальности данных (комплаенс, латентность).
 
 ```sql
 ALTER TABLE customers
@@ -268,34 +268,34 @@ ALTER PARTITION us OF TABLE customers
 CONFIGURE ZONE USING constraints = '[+region=us-east]';
 ```
 
-**Effect:**
-- European customers → data в EU (GDPR compliance)
-- US customers → data в US
-- Local reads / writes (low latency)
+**Эффект:**
+- Европейские клиенты → данные в EU (соответствие GDPR)
+- Клиенты из США → данные в US
+- Локальные чтения/записи (низкая латентность)
 
-Аналог Spanner regional placement.
+Аналог regional placement у Spanner.
 
 ## Q12. (!) PostgreSQL compatibility?
 
-CockroachDB — **PostgreSQL wire protocol** compatible. Most apps work без changes.
+CockroachDB совместима с **wire-протоколом PostgreSQL**. Большинство приложений работают без изменений.
 
-**Compatible:**
-- Standard SQL (most)
-- pgBouncer, pgwire clients
-- ORMs (Hibernate, ActiveRecord, Sequelize)
-- Migration tools
+**Совместимо:**
+- Стандартный SQL (большая часть)
+- pgBouncer, pgwire-клиенты
+- ORM-ы (Hibernate, ActiveRecord, Sequelize)
+- Инструменты миграции
 
-**Not compatible:**
-- PostgreSQL-specific extensions (PostGIS, hstore, etc. — limited)
-- Some functions
-- Triggers (limited support)
-- Stored procedures (limited)
+**Не совместимо:**
+- Специфичные для PostgreSQL расширения (PostGIS, hstore и т.п. — ограниченно)
+- Часть функций
+- Триггеры (ограниченная поддержка)
+- Хранимые процедуры (ограниченно)
 
-**Migration path** PostgreSQL → CockroachDB обычно smooth, но **test thoroughly**.
+**Путь миграции** PostgreSQL → CockroachDB обычно гладкий, но **тщательно тестируй**.
 
 ## Q13. ACID transactions?
 
-**Full ACID** — даже distributed.
+**Полный ACID** — даже в распределённом режиме.
 
 ```sql
 BEGIN;
@@ -304,195 +304,195 @@ UPDATE inventory SET qty = qty - 1 WHERE id = 5;
 COMMIT;
 ```
 
-**Distributed transaction:**
-- Coordinator nodes (TxnCoordSender)
-- Two-phase commit (2PC) protocol
-- Automatic retries при contention
+**Распределённая транзакция:**
+- Узлы-координаторы (TxnCoordSender)
+- Протокол two-phase commit (2PC)
+- Автоматические повторные попытки при конкуренции (contention)
 
-**Slow** для high-conflict workloads (retries). Best for **isolated** transactions.
+**Медленно** для нагрузок с высоким уровнем конфликтов (из-за retries). Лучше всего подходит для **изолированных** транзакций.
 
 ## Q14. Isolation levels (Serializable default)?
 
-**Default: SERIALIZABLE** (strongest isolation).
+**По умолчанию: SERIALIZABLE** (сильнейшая изоляция).
 
-PostgreSQL default — **READ COMMITTED**. CockroachDB**different by default**.
+У PostgreSQL по умолчанию — **READ COMMITTED**. У CockroachDB **по умолчанию иначе**.
 
-**Serializable** — guarantees ACID, no anomalies. **Cost:** more retries, slower writes.
+**Serializable** — гарантирует ACID, без аномалий. **Цена:** больше retries, медленнее записи.
 
-С **CockroachDB v23+** — добавили **READ COMMITTED** option (для PostgreSQL compatibility).
+С **CockroachDB v23+** добавили опцию **READ COMMITTED** (для совместимости с PostgreSQL).
 
 ```sql
 BEGIN ISOLATION LEVEL READ COMMITTED;
 ```
 
-**Best practice:** Serializable для correctness-critical, READ COMMITTED для legacy migrations.
+**Рекомендация:** Serializable для критичной к корректности логики, READ COMMITTED — для миграций legacy-систем.
 
 ## Q15. (!) Sharding strategy?
 
-**Auto-sharding** — нет manual setup.
+**Авто-шардирование** — без ручной настройки.
 
-CockroachDB **splits data в ranges** automatically:
-- By **primary key** (default — by hash)
-- Range size ~512 MB
-- Auto-rebalance к new nodes
+CockroachDB **разбивает данные на range-ы** автоматически:
+- По **первичному ключу** (по умолчанию — по хешу)
+- Размер range ~512 MB
+- Автоматическая ребалансировка на новые узлы
 
-**Manual control:**
-- `PARTITION BY` — geo-partitioning
-- `SPLIT AT` — manual range splits
-- `INDEX (col) USING HASH` — hash-sharded index (избежать hot ranges)
+**Ручное управление:**
+- `PARTITION BY` — гео-партиционирование
+- `SPLIT AT` — ручное разбиение range-ов
+- `INDEX (col) USING HASH` — hash-sharded индекс (чтобы избежать hot ranges)
 
-**Hot range problem** — sequential PK (timestamp, sequence) → all writes к один range. Use **UUID** or **hash-sharded index**.
+**Проблема hot range** — последовательный PK (timestamp, sequence) → все записи идут в один range. Используй **UUID** или **hash-sharded индекс**.
 
 ## Q16. Index types?
 
-**Standard B-tree indexes:**
+**Стандартные B-tree индексы:**
 ```sql
 CREATE INDEX ON orders (customer_id);
 CREATE INDEX ON orders (customer_id, created_at);
 ```
 
-**Hash-sharded indexes** (распределяют hot ranges):
+**Hash-sharded индексы** (распределяют hot ranges):
 ```sql
 CREATE INDEX ON events (timestamp) USING HASH WITH BUCKET_COUNT = 8;
 ```
 
-**Partial indexes:**
+**Частичные индексы (partial indexes):**
 ```sql
 CREATE INDEX active_users ON users (last_login) WHERE active = true;
 ```
 
-**Inverted indexes** (для JSONB):
+**Инвертированные индексы (inverted indexes)** (для JSONB):
 ```sql
 CREATE INVERTED INDEX ON orders (data);
 ```
 
-**Spatial indexes** — limited PostGIS support.
+**Пространственные индексы (spatial indexes)** — ограниченная поддержка PostGIS.
 
 ## Q17. (!) Limitations vs PostgreSQL?
 
-**CockroachDB не поддерживает (или limited):**
-- Stored procedures (limited)
-- Triggers (limited)
-- Materialized views (newer support)
-- Full-text search (limited)
-- PostGIS (limited)
-- Some JSONB operators
+**CockroachDB не поддерживает (или поддерживает ограниченно):**
+- Хранимые процедуры (ограниченно)
+- Триггеры (ограниченно)
+- Материализованные представления (поддержка появилась позже)
+- Полнотекстовый поиск (ограниченно)
+- PostGIS (ограниченно)
+- Часть JSONB-операторов
 - `LISTEN/NOTIFY`
 - Foreign data wrappers (FDW)
-- `XML` type
-- Custom types (limited)
-- `LATERAL` joins (some)
+- Тип `XML`
+- Пользовательские типы (ограниченно)
+- `LATERAL` join-ы (частично)
 
-**Production:** test тщательно migration legacy PostgreSQL apps.
+**Production:** тщательно тестируй миграцию legacy PostgreSQL-приложений.
 
 ## Q18. (!) CockroachDB vs Spanner?
 
-| Critterion | CockroachDB | Spanner |
+| Критерий | CockroachDB | Spanner |
 |-----------|-------------|---------|
-| Hosting | Self-host or CockroachCloud | GCP managed only |
-| Open source | BSL (mostly free) | No (proprietary) |
-| Time | HLC (NTP-based) | TrueTime (atomic clocks) |
-| Consistency | Serializable | External Consistency (stronger) |
-| SQL | PostgreSQL wire | Custom GoogleSQL |
-| Multi-region writes | Yes | Yes |
-| Cost | Cheaper | $$$$ |
-| Ecosystem | Growing | GCP-tied |
+| Хостинг | Self-host или CockroachCloud | Только managed в GCP |
+| Open source | BSL (в основном бесплатно) | Нет (проприетарная) |
+| Время | HLC (на базе NTP) | TrueTime (атомные часы) |
+| Согласованность | Serializable | External Consistency (сильнее) |
+| SQL | wire-протокол PostgreSQL | Собственный GoogleSQL |
+| Multi-region записи | Да | Да |
+| Стоимость | Дешевле | $$$$ |
+| Экосистема | Растёт | Завязана на GCP |
 
-**Spanner** — gold standard distributed SQL, но GCP-only and expensive.
-**CockroachDB** — democratizes Spanner concepts, open-source.
+**Spanner** — золотой стандарт распределённого SQL, но только в GCP и дорого.
+**CockroachDB** — делает концепции Spanner доступными, open-source.
 
 ## Q19. (!) CockroachDB vs Aurora?
 
-| Critterion | CockroachDB | Aurora PostgreSQL |
+| Критерий | CockroachDB | Aurora PostgreSQL |
 |-----------|-------------|-------------------|
-| Type | Distributed SQL | Distributed storage, single writer |
-| Writes | Multi-master (any node) | Single master |
-| Multi-region | Yes (multi-master) | Read replicas only (or Global DB single writer) |
-| Consistency | Serializable always | PostgreSQL defaults |
-| Compatibility | PostgreSQL wire | Full PostgreSQL |
+| Тип | Распределённый SQL | Распределённое хранилище, один writer |
+| Записи | Multi-master (любой узел) | Один master |
+| Multi-region | Да (multi-master) | Только read-реплики (или Global DB с одним writer) |
+| Согласованность | Всегда Serializable | Дефолты PostgreSQL |
+| Совместимость | wire-протокол PostgreSQL | Полный PostgreSQL |
 
-**Aurora** — proven, PostgreSQL drop-in, faster для standard workloads.
-**CockroachDB** — actually distributed, multi-region writes, slower единичный node.
+**Aurora** — проверена, drop-in замена PostgreSQL, быстрее на стандартных нагрузках.
+**CockroachDB** — действительно распределённая, multi-region записи, медленнее на одиночном узле.
 
-В **2025** Aurora **default** для AWS shops. CockroachDB — для multi-region, multi-cloud.
+В **2025** Aurora — **выбор по умолчанию** для команд на AWS. CockroachDB — для multi-region, multi-cloud.
 
 ## Q20. CockroachDB vs YugabyteDB?
 
-**YugabyteDB** — main конкурент CockroachDB.
+**YugabyteDB** — главный конкурент CockroachDB.
 
-| Critterion | CockroachDB | YugabyteDB |
+| Критерий | CockroachDB | YugabyteDB |
 |-----------|-------------|------------|
-| Origin | Cockroach Labs (ex-Google) | Yugabyte (ex-Facebook) |
-| Architecture | Single SQL layer | Two-tier (YSQL + YCQL) |
-| PostgreSQL compat | Wire protocol | **Full PostgreSQL** (forked PG code) |
-| Cassandra compat | No | **Yes (YCQL)** |
-| Open source | BSL | Apache 2.0 (more free) |
-| Performance | — | Often faster |
+| Происхождение | Cockroach Labs (ex-Google) | Yugabyte (ex-Facebook) |
+| Архитектура | Единый SQL-слой | Двухуровневая (YSQL + YCQL) |
+| Совместимость с PostgreSQL | wire-протокол | **Полный PostgreSQL** (форк кода PG) |
+| Совместимость с Cassandra | Нет | **Да (YCQL)** |
+| Open source | BSL | Apache 2.0 (свободнее) |
+| Производительность | — | Часто быстрее |
 
-**YugabyteDB** имеет **closer PostgreSQL compatibility** (более features supported).
+У **YugabyteDB** **более тесная совместимость с PostgreSQL** (поддерживается больше возможностей).
 
-В **2025** — close competition. Both viable choices.
+В **2025** — плотная конкуренция. Оба варианта жизнеспособны.
 
 ## Q21. CockroachDB vs TiDB?
 
-**TiDB** (PingCAP, China) — другой distributed SQL.
+**TiDB** (PingCAP, Китай) — ещё одна распределённая SQL.
 
-| Critterion | CockroachDB | TiDB |
+| Критерий | CockroachDB | TiDB |
 |-----------|-------------|------|
-| Compatibility | PostgreSQL | **MySQL** |
-| Architecture | Monolithic | Separate compute (TiDB) + storage (TiKV) |
-| HTAP (analytics) | Limited | **Strong** (TiFlash для columnar) |
+| Совместимость | PostgreSQL | **MySQL** |
+| Архитектура | Монолитная | Раздельные compute (TiDB) + storage (TiKV) |
+| HTAP (аналитика) | Ограниченно | **Сильно** (TiFlash для колоночного хранения) |
 | Open source | BSL | Apache 2.0 |
-| Adoption | West (US, EU) | China (PingCAP) + global |
+| Распространение | Запад (US, EU) | Китай (PingCAP) + глобально |
 
-**TiDB** — для MySQL-compatible workloads + HTAP scenarios.
-**CockroachDB** — для PostgreSQL-compatible + multi-region.
+**TiDB** — для MySQL-совместимых нагрузок + HTAP-сценариев.
+**CockroachDB** — для PostgreSQL-совместимых + multi-region.
 
 ## Q22. (!) Когда выбрать CockroachDB?
 
 **Выбирай когда:**
-- **Multi-region writes** (low write latency globally)
-- **Outgrowing PostgreSQL** (scale issues)
-- **Strong consistency** required (financial, regulated)
-- **Multi-cloud** (avoid vendor lock-in)
-- **Geo-partitioning** для compliance (GDPR)
-- Open-source preferred (vs Spanner)
+- Нужны **multi-region записи** (низкая латентность записи по всему миру)
+- **Перерастаешь PostgreSQL** (упёрся в масштабирование)
+- Требуется **строгая согласованность** (финансы, регулируемые отрасли)
+- **Multi-cloud** (уйти от vendor lock-in)
+- **Гео-партиционирование** ради комплаенса (GDPR)
+- Предпочтителен open-source (в противовес Spanner)
 
 **Не выбирай когда:**
-- Single-region — Aurora / RDS быстрее, проще
-- Need full PostgreSQL features (extensions, etc.)
-- Read-heavy с few writes (read replicas достаточно)
-- Cost-sensitive (CockroachDB nodes expensive, Cloud version $$$)
-- Real-time analytics (не для OLAP)
+- Один регион — Aurora / RDS быстрее и проще
+- Нужны все возможности PostgreSQL (расширения и т.п.)
+- Преобладают чтения при малом числе записей (хватит read-реплик)
+- Чувствителен к стоимости (узлы CockroachDB дорогие, Cloud-версия $$$)
+- Аналитика в реальном времени (не для OLAP)
 
 ## Q23. License (BSL) — что значит?
 
-**Business Source License (BSL)** — license CockroachDB с 2019.
+**Business Source License (BSL)** — лицензия CockroachDB с 2019 года.
 
-**Restrictions:**
-- **Cannot offer** CockroachDB **as a service** к third parties (без commercial license)
-- Otherwise — free для self-host, modify, etc.
+**Ограничения:**
+- **Нельзя предлагать** CockroachDB **как сервис** третьим лицам (без коммерческой лицензии)
+- В остальном — бесплатно для self-host, изменения и т.д.
 
-**BSL converts к Apache 2.0 после 3 years** (so older versions become fully open).
+**BSL превращается в Apache 2.0 через 3 года** (то есть старые версии становятся полностью открытыми).
 
-**Похоже на** Elastic License (изначально был Apache → SSPL).
+**Похоже на** Elastic License (изначально была Apache → SSPL).
 
-**Effect:** AWS / Google не могут offer "CockroachDB as a Service". Cockroach Labs sells managed CockroachCloud.
+**Эффект:** AWS / Google не могут предлагать «CockroachDB as a Service». Cockroach Labs продаёт managed-сервис CockroachCloud.
 
 ## Q24. Какие частые проблемы?
 
-1. **Hot ranges** — sequential PK overload single range. Use UUID or hash-shard.
-2. **High write latency** — multi-region quorum slow.
-3. **Transaction retries** — Serializable + contention → many retries.
-4. **Mistakes from PostgreSQL** — compatibility imperfect, test thoroughly.
-5. **Large transactions** — slow, lock issues.
-6. **Insufficient nodes** — quorum impossible after node failures.
-7. **Wrong locality config** — replicas в одном zone (single zone failure → outage).
-8. **Cost surprises** — managed CockroachCloud expensive at scale.
-9. **No proper backup strategy** — built-in backups need correct config.
-10. **OLAP queries** — not designed for; use ClickHouse / Snowflake separately.
+1. **Hot ranges** — последовательный PK перегружает один range. Используй UUID или hash-shard.
+2. **Высокая латентность записи** — кросс-региональный кворум медленный.
+3. **Повторы транзакций** — Serializable + contention → много retries.
+4. **Ошибки при переходе с PostgreSQL** — совместимость неидеальна, тестируй тщательно.
+5. **Крупные транзакции** — медленные, проблемы с блокировками.
+6. **Недостаточно узлов** — после отказов узлов кворум недостижим.
+7. **Неверная конфигурация locality** — реплики в одной зоне (отказ единственной зоны → простой).
+8. **Сюрпризы по стоимости** — managed CockroachCloud дорог на масштабе.
+9. **Нет нормальной стратегии бэкапов** — встроенные бэкапы требуют правильной настройки.
+10. **OLAP-запросы** — не предназначена для них; используй ClickHouse / Snowflake отдельно.
 
-В **2025** CockroachDB — mature option для distributed SQL, но требует **expertise to operate well**.
+В **2025** CockroachDB — зрелый вариант для распределённого SQL, но требует **экспертизы для грамотной эксплуатации**.
 
 ---
 

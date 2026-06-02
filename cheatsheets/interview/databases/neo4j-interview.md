@@ -19,7 +19,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Neo4j`
 
-`Neo4j` — самый популярный graph database (Sweden, с 2007). Native graph storage. Запросы на **Cypher** (SQL-like для графов). Используется в social networks (LinkedIn, Facebook investigated), recommendations, fraud detection, knowledge graphs. Альтернативы: Amazon Neptune, ArangoDB, JanusGraph, NebulaGraph.
+`Neo4j` — самая популярная графовая база данных (Швеция, с 2007). Нативное графовое хранилище. Запросы на **Cypher** (SQL-подобный язык для графов). Применяется в социальных сетях (LinkedIn, расследования по Facebook), рекомендациях, выявлении мошенничества, графах знаний. Альтернативы: Amazon Neptune, ArangoDB, JanusGraph, NebulaGraph.
 
 ## Полезные ссылки
 
@@ -85,9 +85,9 @@ updated: "2026-04-25"
 
 ## Q1. (!) Что такое graph database?
 
-**Graph database** — database для хранения и query **графов** (nodes + relationships).
+**Графовая база данных** — БД для хранения и запросов к **графам** (nodes + relationships).
 
-**Основной paradigm:** relationships **first-class**, не joined в queries.
+**Основная парадигма:** связи relationships — это **сущность первого класса**, а не то, что приходится джойнить в запросах.
 
 ```
 Alice --FRIEND--> Bob
@@ -96,18 +96,18 @@ Alice --LIKES--> Pizza
 ```
 
 **Применения:**
-- Social networks (friends, followers)
-- Recommendation engines
-- Fraud detection (cycles, suspicious patterns)
-- Knowledge graphs (Wikipedia, Google)
-- Network topology
-- Identity / access management
+- Социальные сети (друзья, подписчики)
+- Рекомендательные движки
+- Выявление мошенничества (циклы, подозрительные паттерны)
+- Графы знаний (Wikipedia, Google)
+- Топология сети
+- Управление identity / доступом
 
-**Top vendors:** Neo4j, Amazon Neptune, ArangoDB, JanusGraph.
+**Основные вендоры:** Neo4j, Amazon Neptune, ArangoDB, JanusGraph.
 
 ## Q2. (!) Когда graph DB лучше реляционной?
 
-**Reляционная DB:**
+**Реляционная БД:**
 ```sql
 SELECT u2.name FROM users u1
 JOIN friendships f1 ON u1.id = f1.user_id
@@ -118,58 +118,58 @@ WHERE u1.name = 'Alice';
 -- Friends-of-friends-of-friends — 4 joins, slow
 ```
 
-**Graph DB:**
+**Графовая БД:**
 ```cypher
 MATCH (alice:User {name: "Alice"})-[:FRIEND*3]->(friend)
 RETURN friend.name
 -- Constant complexity per hop
 ```
 
-**Когда graph лучше:**
-- **Many joins** (3+ levels deep)
-- **Variable depth** queries
-- **Pattern matching** (find triangles, cycles)
-- **Frequent relationship traversals**
+**Когда графовая лучше:**
+- **Много джойнов** (3+ уровней в глубину)
+- Запросы с **переменной глубиной**
+- **Pattern matching** (поиск треугольников, циклов)
+- **Частые обходы по relationships**
 
 **Когда реляционная лучше:**
-- Tabular data
-- Simple aggregations
-- Strong ACID needs
-- Already SQL ecosystem
+- Табличные данные
+- Простые агрегации
+- Жёсткие требования к ACID
+- Уже сложившаяся экосистема SQL
 
 ## Q3. Property graph model?
 
-**Property graph:**
-- **Nodes** — entities (с properties)
-- **Relationships** — typed connections (с properties)
-- **Labels** — categorize nodes
-- **Direction** — relationships have direction
+**Property graph (граф со свойствами):**
+- **Nodes** — сущности (со свойствами properties)
+- **Relationships** — типизированные связи (со свойствами properties)
+- **Labels** — категоризируют узлы nodes
+- **Direction** — у связей relationships есть направление
 
 ```
 (:Person {name: "Alice", age: 30}) -[:KNOWS {since: 2020}]-> (:Person {name: "Bob"})
 ```
 
-**vs RDF graph (Resource Description Framework):**
-- Triples (subject-predicate-object)
-- W3C standard, used в semantic web (DBpedia, Wikidata)
-- Tools: SPARQL, RDF stores
+**В сравнении с RDF-графом (Resource Description Framework):**
+- Триплеты (subject-predicate-object)
+- Стандарт W3C, используется в semantic web (DBpedia, Wikidata)
+- Инструменты: SPARQL, RDF-хранилища
 
-В **2025** **property graphs** — mainstream. RDF — semantic web niche.
+В **2025** **property graphs** — мейнстрим. RDF — ниша semantic web.
 
 ## Q4. Что такое native graph storage?
 
-**Native graph storage** — специальный storage layout для graphs.
+**Нативное графовое хранилище** — специальная раскладка хранения для графов.
 
 **Index-free adjacency:**
-- Каждый node хранит **direct pointers** к connected nodes
-- O(1) traversal к neighbors
-- Performance не degrades с graph size
+- Каждый node хранит **прямые указатели** на связанные nodes
+- Обход к соседям за O(1)
+- Производительность не деградирует с ростом размера графа
 
-**Vs non-native** (graph layer over relational DB):
-- Joins для каждого hop
-- Performance degrades exponentially
+**В сравнении с не-нативным** (графовый слой поверх реляционной БД):
+- Джойны на каждый hop
+- Производительность деградирует экспоненциально
 
-**Neo4j** — native. **AWS Neptune, JanusGraph** — also native (different architectures).
+**Neo4j** — нативная. **AWS Neptune, JanusGraph** — тоже нативные (но с другими архитектурами).
 
 ## Q5. (!) Nodes, relationships, properties?
 
@@ -179,70 +179,70 @@ CREATE (bob:Person {name: "Bob", age: 25})
 CREATE (alice)-[:FRIEND_OF {since: 2020}]->(bob)
 ```
 
-**Node:**
-- Entity (Person, Movie, Order)
-- 0+ labels (Person, Customer)
-- 0+ properties (name, age)
+**Node (узел):**
+- Сущность (Person, Movie, Order)
+- Ноль или более labels (Person, Customer)
+- Ноль или более properties (name, age)
 
-**Relationship:**
-- Typed connection (FRIEND_OF, OWNS)
-- Always directed (от → к)
-- 0+ properties (since, weight)
-- Two endpoints (start node, end node)
+**Relationship (связь):**
+- Типизированная связь (FRIEND_OF, OWNS)
+- Всегда направленная (от → к)
+- Ноль или более properties (since, weight)
+- Две конечные точки (начальный и конечный node)
 
-**Property:**
-- Key-value pair
-- Types: String, Integer, Float, Boolean, Array
+**Property (свойство):**
+- Пара ключ-значение
+- Типы: String, Integer, Float, Boolean, Array
 
 ## Q6. Labels на nodes?
 
-**Labels** — категории для nodes (~tags).
+**Labels** — категории для nodes (≈ теги).
 
 ```cypher
 CREATE (alice:Person:Customer {name: "Alice"})
 -- alice has both Person and Customer labels
 ```
 
-**Filter by label:**
+**Фильтрация по label:**
 ```cypher
 MATCH (n:Person) RETURN n  -- all Persons
 MATCH (n:Customer) RETURN n  -- all Customers
 ```
 
-**Multiple labels** — node может иметь несколько (Person + Customer + VIP).
+**Несколько labels** — у node их может быть несколько (Person + Customer + VIP).
 
-**Indexing per label:**
+**Индексация по label:**
 ```cypher
 CREATE INDEX ON :Person(name)
 ```
 
 ## Q7. Direction relationships?
 
-Все relationships **directed**:
+Все relationships **направленные**:
 ```
 (a)-[:KNOWS]->(b)  -- a knows b, but not necessarily b knows a
 ```
 
-**Query bidirectional:**
+**Двунаправленный запрос:**
 ```cypher
 MATCH (a)-[:KNOWS]-(b)  -- direction-agnostic
 ```
 
-**Outgoing:**
+**Исходящие (outgoing):**
 ```cypher
 MATCH (a)-[:KNOWS]->(b)
 ```
 
-**Incoming:**
+**Входящие (incoming):**
 ```cypher
 MATCH (a)<-[:KNOWS]-(b)
 ```
 
-**Directional choice** important для query performance and semantics.
+**Выбор направления** важен для производительности запросов и семантики.
 
 ## Q8. (!) Что такое Cypher?
 
-**Cypher** — declarative query language для graphs. Создан Neo4j (2011), стал **openCypher** standard (2015).
+**Cypher** — декларативный язык запросов для графов. Создан Neo4j (2011), стал стандартом **openCypher** (2015).
 
 ```cypher
 MATCH (alice:Person {name: "Alice"})-[:FRIEND_OF]->(friend)
@@ -252,17 +252,17 @@ ORDER BY friend.age DESC
 LIMIT 10
 ```
 
-**SQL-like структура:**
+**SQL-подобная структура:**
 - `MATCH` ↔ `FROM`/`JOIN`
 - `WHERE` ↔ `WHERE`
 - `RETURN` ↔ `SELECT`
-- `ORDER BY`, `LIMIT` ↔ same
+- `ORDER BY`, `LIMIT` ↔ так же
 
-**Уникальное:** **ASCII-art patterns** для graph matching.
+**Уникальная особенность:** **ASCII-art паттерны** для сопоставления графа.
 
 ## Q9. (!) MATCH, WHERE, RETURN?
 
-**MATCH** — pattern matching (находит patterns в графе).
+**MATCH** — pattern matching (находит паттерны в графе).
 
 ```cypher
 MATCH (a:Person)-[:KNOWS]->(b:Person)
@@ -270,10 +270,10 @@ WHERE a.age > 30
 RETURN a.name, b.name
 ```
 
-**WHERE** — filter conditions.
-**RETURN** — what to return.
+**WHERE** — условия фильтрации.
+**RETURN** — что вернуть.
 
-**OPTIONAL MATCH** — like LEFT JOIN (returns NULL if no match).
+**OPTIONAL MATCH** — как LEFT JOIN (возвращает NULL, если совпадения нет).
 ```cypher
 MATCH (a:Person {name: "Alice"})
 OPTIONAL MATCH (a)-[:KNOWS]->(friend)
@@ -282,16 +282,16 @@ RETURN a.name, friend.name  -- friend.name = NULL если нет friends
 
 ## Q10. (!) Pattern matching syntax (`(a)-[r]->(b)`)?
 
-**Syntax:**
-- `(a)` — node, variable `a`
-- `(a:Person)` — node с label
-- `(a:Person {name: "Alice"})` — node с label + properties
-- `[r:KNOWS]` — relationship variable + type
-- `->` — outgoing direction
-- `<-` — incoming
-- `-` — any direction
+**Синтаксис:**
+- `(a)` — node, переменная `a`
+- `(a:Person)` — node с меткой label
+- `(a:Person {name: "Alice"})` — node с label и properties
+- `[r:KNOWS]` — переменная relationship + тип
+- `->` — исходящее направление
+- `<-` — входящее
+- `-` — любое направление
 
-**Examples:**
+**Примеры:**
 ```cypher
 -- Find friends-of-friends
 MATCH (alice:Person {name: "Alice"})-[:KNOWS]->(friend)-[:KNOWS]->(fof)
@@ -303,29 +303,29 @@ MATCH (a)-[:KNOWS]->(b)-[:KNOWS]->(c)-[:KNOWS]->(a)
 RETURN a, b, c
 ```
 
-**Powerful** для graph patterns.
+**Мощный инструмент** для графовых паттернов.
 
 ## Q11. CREATE, MERGE, SET, DELETE?
 
-**CREATE** — always creates new (даже если duplicate).
+**CREATE** — всегда создаёт новый (даже если дубликат).
 ```cypher
 CREATE (n:Person {name: "Alice"})
 ```
 
-**MERGE** — match existing OR create.
+**MERGE** — найти существующий ИЛИ создать.
 ```cypher
 MERGE (n:Person {name: "Alice"})
 -- Если node с этим name existed → match
 -- Иначе → create
 ```
 
-**SET** — update properties.
+**SET** — обновить properties.
 ```cypher
 MATCH (n:Person {name: "Alice"})
 SET n.age = 31, n.email = "alice@example.com"
 ```
 
-**DELETE** — remove nodes / relationships.
+**DELETE** — удалить nodes / relationships.
 ```cypher
 MATCH (n:Person {name: "Alice"})
 DETACH DELETE n  -- delete node + all its relationships
@@ -333,7 +333,7 @@ DETACH DELETE n  -- delete node + all its relationships
 
 ## Q12. Variable-length paths?
 
-**`*N..M`** — path from N to M hops.
+**`*N..M`** — путь длиной от N до M hops.
 
 ```cypher
 -- 1 to 3 hops
@@ -351,11 +351,11 @@ MATCH path = shortestPath((a:Person {name: "Alice"})-[:KNOWS*]-(b:Person {name: 
 RETURN path
 ```
 
-**Подвох:** unbounded `*` может explode. Always set max depth.
+**Подвох:** неограниченный `*` может «взорваться». Всегда задавайте максимальную глубину.
 
 ## Q13. WITH clause (chaining queries)?
 
-**WITH** — pipe results к next query stage.
+**WITH** — передаёт результаты на следующую стадию запроса (как pipe).
 
 ```cypher
 MATCH (alice:Person {name: "Alice"})-[:KNOWS]->(friend)
@@ -365,10 +365,10 @@ MATCH (alice)-[:KNOWS]->(close)
 RETURN close
 ```
 
-`WITH` similar к SQL **subqueries**. Used для:
-- Filtering aggregates
-- Limiting before next match
-- Chaining transformations
+`WITH` похож на SQL-**подзапросы**. Используется для:
+- Фильтрации агрегатов
+- Ограничения перед следующим match
+- Цепочек преобразований
 
 ## Q14. (!) Индексы в Neo4j?
 
@@ -389,7 +389,7 @@ DROP INDEX index_name
 SHOW INDEXES
 ```
 
-**Когда нужны:** **anchor nodes** в queries.
+**Когда нужны:** для **anchor nodes** в запросах.
 
 ```cypher
 -- Без index → SCAN всех Person
@@ -398,7 +398,7 @@ MATCH (p:Person {email: "alice@example.com"})
 -- С index → INDEX SEEK
 ```
 
-**Best practice:** index on **search criteria** (entry points в graph traversal).
+**Best practice:** индекс по **критериям поиска** (точки входа в обход графа).
 
 ## Q15. Constraints (UNIQUE, NOT NULL)?
 
@@ -416,7 +416,7 @@ CREATE CONSTRAINT FOR (p:Person) REQUIRE p.age IS :: INTEGER
 CREATE CONSTRAINT FOR (p:Person) REQUIRE (p.firstName, p.lastName) IS UNIQUE
 ```
 
-**Constraints** automatically create supporting index.
+**Constraints** автоматически создают поддерживающий индекс.
 
 ## Q16. Full-text search index?
 
@@ -431,23 +431,23 @@ RETURN node.title, score
 ORDER BY score DESC
 ```
 
-Использует **Lucene** под капотом. Для text search across nodes.
+Использует **Lucene** под капотом. Для полнотекстового поиска по nodes.
 
-**Альтернатива:** OpenSearch / Elasticsearch для serious search workloads.
+**Альтернатива:** OpenSearch / Elasticsearch для серьёзных поисковых нагрузок.
 
 ## Q17. (!) Query plan, EXPLAIN, PROFILE?
 
-**EXPLAIN** — plan без выполнения:
+**EXPLAIN** — план без выполнения:
 ```cypher
 EXPLAIN MATCH (n:Person {name: "Alice"})-[:KNOWS]->(friend) RETURN friend
 ```
 
-**PROFILE** — plan + actual execution stats (DB hits, rows):
+**PROFILE** — план + реальная статистика выполнения (DB hits, строки):
 ```cypher
 PROFILE MATCH (n:Person)-[:KNOWS]->(friend) RETURN friend
 ```
 
-**Output:**
+**Вывод:**
 ```
 Operator        | Rows | DB Hits
 NodeIndexSeek   | 1    | 2
@@ -455,27 +455,27 @@ Expand          | 50   | 100
 ProduceResults  | 50   | 0
 ```
 
-**Goal:** minimize DB hits. Look for `NodeByLabelScan` (full scan, slow) — обычно need index.
+**Цель:** минимизировать DB hits. Высматривайте `NodeByLabelScan` (полный скан, медленно) — обычно нужен индекс.
 
 ## Q18. (!) Index-free adjacency — что это?
 
-**Index-free adjacency** — Neo4j (и other native graph DBs) хранит **direct pointers** между connected nodes.
+**Index-free adjacency** (безындексная смежность) — Neo4j (и другие нативные графовые БД) хранит **прямые указатели** между связанными узлами nodes.
 
 ```
 Node Alice → list of pointers к connected nodes [Bob, Charlie, ...]
 ```
 
-**Traversal:** O(1) per hop (just follow pointer).
+**Обход:** O(1) на hop (один прыжок — это просто переход по указателю).
 
-**Vs relational DB:**
-- Relational join → hash table lookup или merge → log/linear
-- For deep traversals → exponentially slower
+**В сравнении с реляционной БД:**
+- Реляционный join → lookup по хеш-таблице или merge → логарифмически/линейно
+- Для глубоких обходов → экспоненциально медленнее
 
-**Native graph storage** — главное performance edge Neo4j.
+**Нативное графовое хранилище** — главное преимущество Neo4j по производительности.
 
 ## Q19. Anchor patterns в Cypher?
 
-**Anchor** — starting point query (usually indexed).
+**Anchor** — стартовая точка запроса (обычно проиндексированная).
 
 ```cypher
 -- Bad — no anchor (scans all Persons)
@@ -485,21 +485,21 @@ MATCH (a:Person)-[:KNOWS]->(b) WHERE a.name = "Alice" RETURN b
 MATCH (a:Person {name: "Alice"})-[:KNOWS]->(b) RETURN b
 ```
 
-После anchor — traverse relationships efficiently.
+После anchor — эффективный обход relationships.
 
-**Best practice:** start с **most selective** node (smallest matching set).
+**Best practice:** начинать с **наиболее селективного** node (наименьший набор совпадений).
 
 ## Q20. (!) Graph Data Science (GDS) library?
 
-**Neo4j GDS** — library с graph algorithms (50+).
+**Neo4j GDS** — библиотека графовых алгоритмов (50+).
 
-**Categories:**
-- **Centrality** — PageRank, Betweenness, Closeness
-- **Community detection** — Louvain, Leiden, Label Propagation
-- **Path finding** — Dijkstra, A*, Yen's k-shortest
-- **Similarity** — Jaccard, Cosine, Euclidean
-- **Link prediction**
-- **Embeddings** — Node2Vec, FastRP
+**Категории:**
+- **Центральность (centrality)** — PageRank, Betweenness, Closeness
+- **Поиск сообществ (community detection)** — Louvain, Leiden, Label Propagation
+- **Поиск путей (path finding)** — Dijkstra, A*, Yen's k-shortest
+- **Схожесть (similarity)** — Jaccard, Cosine, Euclidean
+- **Предсказание связей (link prediction)**
+- **Эмбеддинги (embeddings)** — Node2Vec, FastRP
 
 ```cypher
 -- PageRank
@@ -510,9 +510,9 @@ ORDER BY score DESC LIMIT 10
 ```
 
 **Workflow:**
-1. **Project graph** в memory (subset для analysis)
-2. **Run algorithm** (mutate / write / stream)
-3. **Get results**
+1. **Спроецировать граф** в память (подмножество для анализа)
+2. **Запустить алгоритм** (mutate / write / stream)
+3. **Получить результаты**
 
 ## Q21. Shortest path algorithms?
 
@@ -537,11 +537,11 @@ YIELD totalCost, nodeIds
 RETURN totalCost, [n in nodeIds | gds.util.asNode(n).name]
 ```
 
-Подробнее — в [Графы](../algorithms/data-structures/graphs-interview.md).
+Подробнее — в разделе [Графы](../algorithms/data-structures/graphs-interview.md).
 
 ## Q22. PageRank, centrality?
 
-**PageRank** — importance score per node (Google's original algorithm).
+**PageRank** — оценка важности каждого node (исходный алгоритм Google).
 
 ```cypher
 CALL gds.pageRank.stream('myGraph')
@@ -550,21 +550,21 @@ RETURN gds.util.asNode(nodeId).name, score
 ORDER BY score DESC LIMIT 10
 ```
 
-**Centrality measures:**
-- **Degree** — number of connections
-- **Betweenness** — how often node lies on shortest paths (bridges)
-- **Closeness** — average distance к all other nodes
-- **Eigenvector** — connections к important nodes
-- **PageRank** — variant Eigenvector
+**Меры центральности:**
+- **Degree** — количество связей у узла
+- **Betweenness** — как часто узел лежит на кратчайших путях (мосты)
+- **Closeness** — среднее расстояние до всех остальных узлов
+- **Eigenvector** — связи с важными узлами
+- **PageRank** — разновидность центральности Eigenvector
 
-**Use cases:**
-- Influencer detection
-- Critical infrastructure
-- Knowledge graph importance
+**Сценарии применения:**
+- Поиск инфлюенсеров
+- Критическая инфраструктура
+- Важность узлов в графе знаний
 
 ## Q23. Community detection (Louvain, Leiden)?
 
-**Detect groups** densely connected внутри.
+**Выявление групп** с плотными связями внутри.
 
 ```cypher
 CALL gds.louvain.stream('myGraph')
@@ -572,16 +572,16 @@ YIELD nodeId, communityId
 RETURN gds.util.asNode(nodeId).name, communityId
 ```
 
-**Algorithms:**
-- **Louvain** — modularity optimization, fast
-- **Leiden** — improved Louvain (better quality)
-- **Label Propagation** — fast, less precise
-- **Connected Components** — strongly/weakly connected
+**Алгоритмы:**
+- **Louvain** — оптимизация модулярности, быстрый
+- **Leiden** — улучшенный Louvain (выше качество результата)
+- **Label Propagation** — быстрый, но менее точный
+- **Connected Components** — сильно или слабо связные компоненты
 
-**Use cases:**
-- Social network communities
-- Customer segmentation
-- Knowledge graph topics
+**Сценарии применения:**
+- Сообщества в социальных сетях
+- Сегментация клиентов
+- Тематики в графе знаний
 
 ## Q24. (!) Social networks (friends-of-friends)?
 
@@ -593,13 +593,13 @@ ORDER BY mutualFriends DESC
 LIMIT 10
 ```
 
-**Friend recommendation** через mutual friends.
+**Рекомендация друзей** через общих друзей.
 
-В Facebook, LinkedIn — **People You May Know** features built на graph algorithms.
+В Facebook, LinkedIn фичи **People You May Know** построены на графовых алгоритмах.
 
 ## Q25. (!) Recommendations engine?
 
-**Collaborative filtering** через graph:
+**Коллаборативная фильтрация** через граф:
 
 ```cypher
 -- "Users who bought X also bought Y"
@@ -610,7 +610,7 @@ RETURN rec.name, count(*) AS frequency
 ORDER BY frequency DESC LIMIT 10
 ```
 
-**Movie recommendations:**
+**Рекомендации фильмов:**
 ```cypher
 MATCH (user:User {name: "Alice"})-[:RATED {rating: 5}]->(movie)<-[:RATED {rating: 5}]-(other:User)
 MATCH (other)-[:RATED {rating: 5}]->(rec:Movie)
@@ -621,7 +621,7 @@ ORDER BY commonInterests DESC
 
 ## Q26. Fraud detection?
 
-**Pattern: cycles** между accounts (money laundering).
+**Паттерн: циклы** между accounts (отмывание денег).
 
 ```cypher
 MATCH path = (a:Account)-[:TRANSFER*1..5]->(a)
@@ -629,16 +629,16 @@ WHERE all(r IN relationships(path) WHERE r.amount > 10000)
 RETURN path
 ```
 
-**Patterns:**
-- **Cycles** — A → B → C → A (round-tripping)
-- **Star** — many → 1 → many (intermediary)
-- **Hub** — single account с unusual connectivity
+**Паттерны:**
+- **Циклы** — A → B → C → A (круговые операции, round-tripping)
+- **Звезда** — много → 1 → много (посредник)
+- **Хаб** — один account с необычной связностью
 
-Banks (Capital One, HSBC) используют graph DBs для fraud.
+Банки (Capital One, HSBC) используют графовые БД для борьбы с мошенничеством.
 
 ## Q27. Knowledge graphs?
 
-**Knowledge graph** — entities + relationships в domain.
+**Граф знаний** — сущности + relationships в предметной области.
 
 ```
 (Einstein) -[:BORN_IN]-> (Germany)
@@ -646,43 +646,43 @@ Banks (Capital One, HSBC) используют graph DBs для fraud.
 (Einstein) -[:WON]-> (NobelPrize)
 ```
 
-**Applications:**
-- **Google Knowledge Graph** — search results
-- **Wikidata, DBpedia** — open knowledge
-- **Internal knowledge bases** (employees, projects, expertise)
-- **Healthcare** (drugs, diseases, interactions)
+**Применения:**
+- **Google Knowledge Graph** — результаты поиска
+- **Wikidata, DBpedia** — открытые знания
+- **Внутренние базы знаний** (сотрудники, проекты, экспертиза)
+- **Здравоохранение** (лекарства, болезни, взаимодействия)
 
-**Semantic Web (RDF, SPARQL)** — formal alternative property graphs.
+**Semantic Web (RDF, SPARQL)** — формальная альтернатива property graphs.
 
 ## Q28. (!) Neo4j editions (Community vs Enterprise vs Aura)?
 
-**Community Edition (Free):**
-- Open source (GPL v3)
-- Single-node only
-- Basic features
+**Community Edition (бесплатная редакция):**
+- Открытый исходный код (GPL v3)
+- Только один узел (single-node)
+- Базовые возможности
 
-**Enterprise Edition:**
-- Commercial license
-- Causal Cluster (replication)
-- Multi-database
-- Role-based access control
-- Hot backups
-- Advanced GDS
+**Enterprise Edition (корпоративная редакция):**
+- Коммерческая лицензия
+- Causal Cluster (репликация)
+- Несколько баз данных (multi-database)
+- Управление доступом на основе ролей (RBAC)
+- Горячие бэкапы
+- Расширенный GDS
 
-**Neo4j Aura (Managed Cloud):**
-- Fully managed
-- Free tier (50K nodes)
-- Pay-as-you-grow
-- Multi-region
+**Neo4j Aura (управляемое облако):**
+- Полностью управляемая
+- Бесплатный уровень (50K узлов)
+- Оплата по мере роста (pay-as-you-grow)
+- Несколько регионов (multi-region)
 
-**Choice:**
-- Hobby / open-source — Community
-- Production self-hosted — Enterprise
-- Don't want ops — Aura
+**Выбор:**
+- Хобби / open-source — Community
+- Production на своих серверах — Enterprise
+- Не хотите заниматься эксплуатацией — Aura
 
 ## Q29. Causal Cluster (replication)?
 
-**Causal Cluster** (Enterprise) — replication для HA.
+**Causal Cluster** (Enterprise) — репликация для высокой доступности (HA).
 
 ```mermaid
 graph TD
@@ -692,34 +692,34 @@ graph TD
     Core1 --> ReadReplica2[Read Replica]
 ```
 
-**Architecture:**
-- **Core servers (3+)** — Raft consensus, accept writes
-- **Read replicas** — async replicas, read scaling
+**Архитектура:**
+- **Core-серверы (3+)** — консенсус Raft, принимают записи
+- **Read replicas** — асинхронные реплики, масштабирование чтения
 
-**Causal consistency** — bookmarks track ваши writes; subsequent reads guaranteed see them.
+**Causal consistency** — bookmarks отслеживают ваши записи; последующие чтения гарантированно их видят.
 
 ## Q30. (!) Альтернативы Neo4j?
 
-| DB | Особенности |
+| БД | Особенности |
 |-----|------------|
-| **Amazon Neptune** | Managed AWS, Property Graph + RDF, Gremlin + SPARQL |
-| **ArangoDB** | Multi-model (graph + document + key-value) |
-| **JanusGraph** | Open-source, distributed, на HBase/Cassandra |
-| **OrientDB** | Multi-model, graph + document |
-| **TigerGraph** | High performance, distributed |
-| **NebulaGraph** | Open-source, distributed, large scale |
-| **Memgraph** | In-memory, real-time |
-| **Dgraph** | Open-source, GraphQL native |
-| **Azure Cosmos DB Gremlin API** | Multi-model |
+| **Amazon Neptune** | Управляемая в AWS, Property Graph + RDF, Gremlin + SPARQL |
+| **ArangoDB** | Мультимодельная (граф + документы + key-value) |
+| **JanusGraph** | С открытым кодом, распределённая, на HBase/Cassandra |
+| **OrientDB** | Мультимодельная, граф + документы |
+| **TigerGraph** | Высокая производительность, распределённая |
+| **NebulaGraph** | С открытым кодом, распределённая, большой масштаб |
+| **Memgraph** | В памяти (in-memory), работа в реальном времени |
+| **Dgraph** | С открытым кодом, нативный GraphQL |
+| **Azure Cosmos DB Gremlin API** | Мультимодельная |
 
-**Query languages:**
+**Языки запросов:**
 - **Cypher** (Neo4j, openCypher)
-- **Gremlin** (TinkerPop standard, multi-vendor)
-- **GQL** (ISO standard в development)
+- **Gremlin** (стандарт TinkerPop, multi-vendor)
+- **GQL** (ISO-стандарт в разработке)
 - **SPARQL** (RDF)
 - **GraphQL** (Dgraph)
 
-**В 2025** — Neo4j leader, но **TigerGraph и NebulaGraph** растут для very large scale.
+**В 2025** Neo4j — лидер, но **TigerGraph и NebulaGraph** растут для очень больших масштабов.
 
 ---
 

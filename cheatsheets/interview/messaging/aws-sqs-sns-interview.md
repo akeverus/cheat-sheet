@@ -18,7 +18,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `AWS SQS и SNS`
 
-**SQS (Simple Queue Service)** — managed message queue (point-to-point). **SNS (Simple Notification Service)** — managed pub/sub (one-to-many). Используются вместе для **event-driven** AWS architectures. **EventBridge** — modern alternative для complex event routing.
+**SQS (Simple Queue Service)** — управляемая очередь сообщений (point-to-point). **SNS (Simple Notification Service)** — управляемый pub/sub (один-ко-многим). Используются вместе для событийных (event-driven) AWS-архитектур. **EventBridge** — современная альтернатива для сложной маршрутизации событий.
 
 ## Полезные ссылки
 
@@ -72,35 +72,35 @@ updated: "2026-04-25"
 
 (!) Что такое SQS?
 
-**Amazon SQS (Simple Queue Service)** — fully managed message queue service. Один из oldest AWS services (с 2006).
+**Amazon SQS (Simple Queue Service)** — полностью управляемый сервис очередей сообщений. Один из старейших сервисов AWS (с 2006 года).
 
 **Особенности:**
-- **Fully managed** — no infrastructure
-- **Highly available** — distributed across AZs
-- **Pay-per-request** — $0.40 per million requests
-- **Unlimited scale**
-- **Two types** — Standard (high throughput) и FIFO (ordering)
+- **Полностью управляемый** — никакой инфраструктуры
+- **Высокодоступный** — распределён по зонам доступности (AZ)
+- **Оплата за запрос** — $0.40 за миллион запросов
+- **Неограниченное масштабирование**
+- **Два типа** — Standard (высокая пропускная способность) и FIFO (порядок)
 
 **Применения:**
-- Decoupling microservices
-- Background job processing
-- Buffering для traffic spikes
-- Integration между AWS services
+- Развязка (decoupling) микросервисов
+- Фоновая обработка задач
+- Буферизация для пиков трафика
+- Интеграция между сервисами AWS
 
 ## Q2. (!) Standard vs FIFO queues?
 
 | Критерий | Standard | FIFO |
 |----------|----------|------|
-| Delivery | At-least-once | **Exactly-once** |
-| Order | Best-effort, **may reorder** | **Strict FIFO** |
-| Throughput | **Unlimited** | 300 msg/sec (3000 с batching) |
-| Cost | $0.40/M | $0.50/M |
-| Suffix | `.fifo` обязательно в имени | — |
-| Deduplication | No (handle yourself) | Built-in (5-min window) |
-| Message Groups | No | Yes (parallel processing within FIFO) |
+| Доставка | At-least-once | **Exactly-once** |
+| Порядок | Best-effort, **возможна перестановка** | **Строгий FIFO** |
+| Пропускная способность | **Неограниченная** | 300 msg/sec (3000 с батчингом) |
+| Стоимость | $0.40/M | $0.50/M |
+| Суффикс | `.fifo` обязателен в имени | — |
+| Дедупликация | Нет (обрабатываешь сам) | Встроенная (окно 5 минут) |
+| Message Groups | Нет | Да (параллельная обработка внутри FIFO) |
 
-**Standard** — для most cases (idempotent processing).
-**FIFO** — когда **строгий order** и **exactly-once** critical (financial, ordering).
+**Standard** — для большинства случаев (идемпотентная обработка).
+**FIFO** — когда критичны **строгий порядок** и **exactly-once** (финансы, упорядоченность).
 
 ## Q3. (!) Message lifecycle (send → receive → delete)?
 
@@ -113,13 +113,13 @@ updated: "2026-04-25"
 6. Consumer → DeleteMessage → SQS removes message
 ```
 
-**Если consumer не deletes** within visibility timeout → message becomes visible again, **redelivered**.
+**Если consumer не удаляет** сообщение в пределах visibility timeout → оно снова становится видимым и **доставляется повторно**.
 
-**Important:** **delete только после successful processing**.
+**Важно:** **удалять только после успешной обработки**.
 
 ## Q4. (!) Visibility timeout?
 
-**Visibility timeout** — period (default 30 sec) during which message **invisible** к other consumers после receive.
+**Visibility timeout** — период (по умолчанию 30 сек), в течение которого сообщение **невидимо** для других consumer-ов после получения (receive).
 
 ```
 T=0:  Consumer A receives message X
@@ -129,29 +129,29 @@ T=30s: A finally deletes X → too late, B already processing
        → DUPLICATE PROCESSING
 ```
 
-**Set visibility timeout > expected processing time**.
+**Ставь visibility timeout > ожидаемого времени обработки**.
 
 ```python
 sqs.create_queue(QueueName='my-queue', Attributes={'VisibilityTimeout': '300'})
 ```
 
-**Heartbeating** — extend visibility while processing:
+**Heartbeating** — продлевай видимость во время обработки:
 ```python
 sqs.change_message_visibility(QueueUrl=..., ReceiptHandle=..., VisibilityTimeout=600)
 ```
 
 ## Q5. Long polling vs Short polling?
 
-**Short polling (default):**
-- Returns immediately (даже если queue empty)
-- Polls subset SQS servers (may miss messages)
-- More API calls = more cost
+**Short polling (по умолчанию):**
+- Возвращает результат сразу (даже если очередь пуста)
+- Опрашивает лишь часть SQS-серверов (может пропустить сообщения)
+- Больше API-вызовов = выше стоимость
 
 **Long polling:**
-- Wait up to **20 sec** для message arrival
-- Polls all SQS servers
-- Fewer API calls
-- **Recommended**
+- Ждёт до **20 сек** появления сообщения
+- Опрашивает все SQS-серверы
+- Меньше API-вызовов
+- **Рекомендуется**
 
 ```python
 sqs.receive_message(
@@ -160,11 +160,11 @@ sqs.receive_message(
 )
 ```
 
-**Almost always use long polling** — cheaper, faster (no constant polling).
+**Почти всегда используй long polling** — дешевле и быстрее (без постоянного опроса).
 
 ## Q6. (!) Dead Letter Queue (DLQ)?
 
-**DLQ** — separate queue для messages that **failed processing** multiple times.
+**DLQ** — отдельная очередь для сообщений, которые **не удалось обработать** несколько раз подряд.
 
 ```
 Main Queue
@@ -173,7 +173,7 @@ DLQ
   ↓ manual investigation
 ```
 
-**Setup:**
+**Настройка:**
 ```python
 sqs.set_queue_attributes(
     QueueUrl='main-queue',
@@ -186,18 +186,18 @@ sqs.set_queue_attributes(
 )
 ```
 
-После 5 receive attempts → SQS moves к DLQ.
+После 5 попыток получения (receive) → SQS перемещает сообщение в DLQ.
 
-**Use cases:**
-- Investigate failures
-- Replay после fixing bug
-- Alert on DLQ depth
+**Сценарии использования:**
+- Разбор сбоев
+- Повторная обработка (replay) после исправления бага
+- Алерт по глубине DLQ
 
-**DLQ обязательна** для production queues.
+**DLQ обязательна** для production-очередей.
 
 ## Q7. Message attributes?
 
-**Attributes** — metadata в message (separate from body).
+**Attributes** — метаданные в сообщении (отдельно от тела body).
 
 ```python
 sqs.send_message(
@@ -210,20 +210,20 @@ sqs.send_message(
 )
 ```
 
-**Use cases:**
-- Filtering (SNS subscription filters use them)
-- Routing
-- Metadata без parsing body
+**Сценарии использования:**
+- Фильтрация (фильтры подписок SNS используют их)
+- Маршрутизация
+- Метаданные без парсинга тела (body)
 
-**Limit:** 10 attributes per message.
+**Лимит:** 10 атрибутов на сообщение.
 
 ## Q8. (!) FIFO queues — deduplication, message groups?
 
-**Deduplication:**
-- Built-in window (5 minutes)
-- Two methods:
-  - **Content-based** (hash body) — auto
-  - **Explicit** `MessageDeduplicationId`
+**Дедупликация:**
+- Встроенное окно (5 минут)
+- Два способа:
+  - **На основе содержимого** (хеш тела body) — автоматически
+  - **Явный** `MessageDeduplicationId`
 
 ```python
 sqs.send_message(
@@ -234,8 +234,8 @@ sqs.send_message(
 ```
 
 **Message Groups:**
-- Group ID = parallel processing unit
-- **FIFO within group**, parallel between groups
+- Group ID = единица параллельной обработки
+- **FIFO внутри группы**, параллельно между группами
 
 ```python
 sqs.send_message(
@@ -245,18 +245,18 @@ sqs.send_message(
 )
 ```
 
-**Throughput** scales с number of message groups (300 msg/sec per group).
+**Пропускная способность** растёт с числом message groups (300 msg/sec на группу).
 
 ## Q9. Delay queues?
 
-**Delay** — postpone message visibility.
+**Delay** — отложить появление (видимость) сообщения.
 
-**Queue-level delay** (all messages):
+**Задержка на уровне очереди** (все сообщения):
 ```python
 sqs.create_queue(Attributes={'DelaySeconds': '900'})  # 15 min
 ```
 
-**Per-message delay** (Standard only):
+**Задержка на уровне сообщения** (только Standard):
 ```python
 sqs.send_message(
     QueueUrl=...,
@@ -265,18 +265,18 @@ sqs.send_message(
 )
 ```
 
-**Max delay:** 15 minutes.
+**Максимальная задержка:** 15 минут.
 
-**Use cases:**
-- Retry after some time
-- Schedule processing
-- Rate limiting
+**Сценарии использования:**
+- Повтор (retry) через некоторое время
+- Отложенная обработка по расписанию
+- Ограничение частоты (rate limiting)
 
 ## Q10. Message size limit?
 
-**Max message size:** **256 KB**.
+**Максимальный размер сообщения:** **256 КБ**.
 
-**For larger:** use **Extended Client Library** — body в S3, reference в SQS message.
+**Для больших:** используй **Extended Client Library** — тело (body) хранится в S3, в SQS-сообщении лежит ссылка.
 
 ```python
 # Conceptually
@@ -284,35 +284,35 @@ s3.put_object(Bucket='msg-bucket', Key='msg-123', Body=large_payload)
 sqs.send_message(MessageBody=json.dumps({'s3_ref': 's3://msg-bucket/msg-123'}))
 ```
 
-Extended Client library handles это automatically.
+Extended Client Library делает это автоматически.
 
 ## Q11. (!) Что такое SNS?
 
-**Amazon SNS (Simple Notification Service)** — managed pub/sub messaging.
+**Amazon SNS (Simple Notification Service)** — управляемый pub/sub-messaging.
 
-**Pattern:** publisher → topic → multiple subscribers.
+**Паттерн:** publisher → topic → множество subscriber-ов.
 
-**Subscriber types:**
+**Типы подписчиков:**
 - HTTP/HTTPS endpoints
 - Email
 - SMS
 - Mobile push (iOS, Android)
-- SQS queues
-- Lambda functions
+- SQS-очереди
+- Lambda-функции
 - Kinesis Data Firehose
 
-**Использование:** notifications, fanout, multi-subscriber events.
+**Использование:** уведомления, fanout, события для множества подписчиков.
 
 ## Q12. (!) Topic types (Standard vs FIFO)?
 
 | Standard SNS | FIFO SNS |
 |--------------|----------|
 | At-least-once | **Exactly-once** |
-| Best-effort ordering | **Strict ordering** |
-| High throughput | Lower throughput |
-| All subscriber types | **Only SQS FIFO** subscribers |
+| Порядок best-effort | **Строгий порядок** |
+| Высокая пропускная способность | Ниже пропускная способность |
+| Все типы подписчиков | **Только SQS FIFO**-подписчики |
 
-**FIFO SNS** обычно used с FIFO SQS — full ordered + dedup pipeline.
+**FIFO SNS** обычно используется с FIFO SQS — полностью упорядоченный pipeline с дедупликацией.
 
 ## Q13. Subscription protocols?
 
@@ -333,11 +333,11 @@ sns.subscribe(TopicArn=topic_arn, Protocol='email', Endpoint='alice@example.com'
 sns.subscribe(TopicArn=topic_arn, Protocol='sms', Endpoint='+1234567890')
 ```
 
-**Confirmation required** для HTTP/email/SMS.
+**Требуется подтверждение (confirmation)** для HTTP/email/SMS.
 
 ## Q14. (!) SNS message filtering?
 
-**Filter messages** so subscribers получают только matching messages.
+**Фильтрация сообщений** — чтобы подписчики получали только подходящие (matching) сообщения.
 
 ```python
 sns.subscribe(
@@ -353,7 +353,7 @@ sns.subscribe(
 )
 ```
 
-Publisher sends с attributes:
+Publisher отправляет с атрибутами:
 ```python
 sns.publish(
     TopicArn=topic_arn,
@@ -365,7 +365,7 @@ sns.publish(
 )
 ```
 
-**Эффект:** subscriber получает только matching messages → efficient routing без множества topics.
+**Эффект:** подписчик получает только подходящие сообщения → эффективная маршрутизация без множества отдельных topic-ов.
 
 ## Q15. (!) Fanout pattern (SNS → SQS)?
 
@@ -377,15 +377,15 @@ graph LR
     SNS --> SQS3[SQS Queue 3<br/>email service]
 ```
 
-**Один publish** → SNS distributes к multiple SQS queues.
+**Один publish** → SNS рассылает сообщение в несколько SQS-очередей.
 
 **Преимущества:**
-- **Decoupling** publishers и consumers
-- **Each subscriber** имеет own queue (independent processing)
-- **DLQ per subscriber** (different retry strategies)
-- **Add subscribers без code changes**
+- **Развязка (decoupling)** publisher-ов и consumer-ов
+- **У каждого подписчика** своя очередь (независимая обработка)
+- **DLQ на каждого подписчика** (разные стратегии retry)
+- **Добавление подписчиков без изменения кода**
 
-**Standard pattern** для AWS event-driven architecture.
+**Стандартный паттерн** для событийной (event-driven) архитектуры AWS.
 
 ## Q16. (!) SNS + Lambda?
 
@@ -397,17 +397,17 @@ def handler(event, context):
         process(message)
 ```
 
-**Async invocation** — SNS publishes, Lambda processes.
+**Асинхронный вызов** — SNS публикует, Lambda обрабатывает.
 
-**Use cases:**
-- Notification → Lambda → process
-- Multi-Lambda fanout (one event triggers many functions)
+**Сценарии использования:**
+- Уведомление → Lambda → обработка
+- Fanout на несколько Lambda (одно событие запускает много функций)
 
-**Подвох:** if Lambda fails — retried, after retries → DLQ (must configure).
+**Подвох:** если Lambda падает — выполняется retry, после исчерпания попыток → DLQ (нужно настроить).
 
 ## Q17. SQS → Lambda triggers?
 
-Lambda **automatically polls** SQS queue (с 2018):
+Lambda **автоматически опрашивает** SQS-очередь (с 2018 года):
 
 ```yaml
 Events:
@@ -418,39 +418,39 @@ Events:
       BatchSize: 10
 ```
 
-**Concurrency scaling:**
-- Lambda scales к match SQS load
-- Up to 1000 concurrent (default)
-- **Reserved concurrency** to limit
+**Масштабирование конкурентности:**
+- Lambda масштабируется под нагрузку SQS
+- До 1000 одновременных вызовов (по умолчанию)
+- **Reserved concurrency** — чтобы ограничить
 
-**Подвох:** SQS visibility timeout должен быть **>> Lambda timeout** (recommend 6x).
+**Подвох:** SQS visibility timeout должен быть **>> Lambda timeout** (рекомендуется 6x).
 
 Подробнее — в [AWS Lambda](../cloud/aws-lambda-interview.md).
 
 ## Q18. (!) EventBridge vs SQS/SNS?
 
-**EventBridge** (formerly CloudWatch Events) — modern event bus.
+**EventBridge** (бывший CloudWatch Events) — современная шина событий (event bus).
 
-| Service | Pattern | Best for |
+| Сервис | Паттерн | Лучше всего для |
 |---------|---------|----------|
-| **SQS** | Queue (point-to-point) | Worker queues |
-| **SNS** | Pub/sub | Fanout notifications |
-| **EventBridge** | Event bus + complex routing | Cross-service events, SaaS integrations |
+| **SQS** | Очередь (point-to-point) | Очереди воркеров |
+| **SNS** | Pub/sub | Fanout-уведомления |
+| **EventBridge** | Шина событий + сложная маршрутизация | События между сервисами, SaaS-интеграции |
 
-**EventBridge advantages:**
-- **Schema registry**
-- **Event replay**
-- **100+ SaaS integrations** (Stripe, Shopify, Auth0, ...)
-- **Powerful filtering** (rule patterns)
-- **Cross-account events**
+**Преимущества EventBridge:**
+- **Schema registry** (реестр схем)
+- **Повтор событий (event replay)**
+- **100+ SaaS-интеграций** (Stripe, Shopify, Auth0, ...)
+- **Мощная фильтрация** (rule patterns)
+- **События между аккаунтами (cross-account)**
 
-**EventBridge cost:** $1 per million events (vs SNS $0.50). Но **more functionality**.
+**Стоимость EventBridge:** $1 за миллион событий (против $0.50 у SNS). Но **функциональности больше**.
 
-В **2025** — EventBridge **default** для new event-driven systems.
+В **2025 году** — EventBridge стал **выбором по умолчанию** для новых событийных систем.
 
 ## Q19. EventBridge rules, schemas, replay?
 
-**Rules** — match events, route к targets.
+**Rules** (правила) — сопоставляют события и направляют их к targets (целям).
 
 ```json
 {
@@ -462,11 +462,11 @@ Events:
 }
 ```
 
-**Targets:** Lambda, SQS, SNS, Kinesis, Step Functions, ECS task, etc.
+**Targets (цели):** Lambda, SQS, SNS, Kinesis, Step Functions, ECS task и т.д.
 
-**Schema registry** — store event schemas, generate code (TypeScript, Java).
+**Schema registry** — хранит схемы событий, генерирует код (TypeScript, Java).
 
-**Archive + replay** — keep events для replay (recovery, testing).
+**Archive + replay** — хранит события для повтора (восстановление, тестирование).
 
 ## Q20. (!) When SQS vs SNS vs EventBridge vs Kafka?
 
@@ -490,47 +490,47 @@ Existing Kafka ecosystem?
   → Kafka
 ```
 
-**Modern AWS-native:** EventBridge для events + SQS для work queues.
+**Современный AWS-native-подход:** EventBridge для событий + SQS для рабочих очередей.
 
 ## Q21. Pricing (SQS, SNS)?
 
 **SQS:**
-- $0.40 per million requests (Standard)
-- $0.50 per million (FIFO)
-- Free tier: 1 million requests/month
+- $0.40 за миллион запросов (Standard)
+- $0.50 за миллион (FIFO)
+- Free tier: 1 миллион запросов/месяц
 
 **SNS:**
-- $0.50 per million publishes
-- + delivery cost (per protocol)
-- Email: $2 per 100K
-- SMS: ~$0.00645 per (US, varies)
+- $0.50 за миллион publish-ей
+- + стоимость доставки (зависит от протокола)
+- Email: $2 за 100K
+- SMS: ~$0.00645 за сообщение (US, варьируется)
 
 **EventBridge:**
-- $1 per million events
-- + scheduler costs
+- $1 за миллион событий
+- + затраты на scheduler
 
-**Hidden cost:** **AWS data transfer out**.
+**Скрытая статья расходов:** **исходящий трафик AWS (data transfer out)**.
 
-**Optimization:** batch operations (10 messages per API call).
+**Оптимизация:** батчевые операции (10 сообщений на один API-вызов).
 
 ## Q22. Какие частые проблемы?
 
-1. **No DLQ** — failed messages потеряны
-2. **Visibility timeout слишком короткий** — duplicates
-3. **Long polling не used** — high cost
-4. **Polling too aggressive** — high cost
-5. **No idempotency** в consumers — duplicates cause issues
-6. **Hardcoded credentials** instead IAM roles
-7. **Cross-region traffic** — expensive, slow
-8. **Message size > 256 KB** без Extended Client
-9. **FIFO ordering** misunderstood — group ID critical
-10. **No monitoring** на queue depth, age oldest message
+1. **Нет DLQ** — сбойные сообщения теряются
+2. **Visibility timeout слишком короткий** — дубликаты
+3. **Long polling не используется** — высокая стоимость
+4. **Слишком агрессивный polling** — высокая стоимость
+5. **Нет идемпотентности** в consumer-ах — дубликаты вызывают проблемы
+6. **Захардкоженные credentials** вместо IAM-ролей
+7. **Кросс-региональный трафик** — дорого и медленно
+8. **Размер сообщения > 256 КБ** без Extended Client
+9. **FIFO-порядок** понят неверно — критичен group ID
+10. **Нет мониторинга** глубины очереди и возраста самого старого сообщения
 
 **Best practice:**
-- CloudWatch alarms на queue depth и oldest message age
-- DLQ obligatory
-- Idempotent consumers
-- IAM roles, не keys
+- CloudWatch-алармы на глубину очереди и возраст самого старого сообщения
+- DLQ обязательна
+- Идемпотентные consumer-ы
+- IAM-роли, а не ключи
 
 ## See also
 
