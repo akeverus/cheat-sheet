@@ -18,7 +18,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Property-based Testing`
 
-`Property-based testing (PBT)` — testing approach, где tests describe **properties** code должен hold, framework **generates inputs automatically**. Originated с **QuickCheck** (Haskell, 2000). Modern tools: **Hypothesis** (Python), **jqwik** (Java), **fast-check** (JS), **PropEr** (Erlang). Дополняет example-based testing.
+`Property-based testing (PBT)` — подход к тестированию, где тесты описывают **свойства** (properties), которым код должен удовлетворять, а фреймворк **генерирует входные данные автоматически**. Зародился в **QuickCheck** (Haskell, 2000). Современные инструменты: **Hypothesis** (Python), **jqwik** (Java), **fast-check** (JS), **PropEr** (Erlang). Дополняет example-based-тестирование.
 
 ## Полезные ссылки
 
@@ -75,27 +75,27 @@ updated: "2026-04-25"
 
 (!) Что такое property-based testing?
 
-**Property-based testing (PBT)** — testing approach:
+**Property-based testing (PBT)** — подход к тестированию:
 
-1. **Define property** — invariant code должен hold (для всех inputs)
-2. Framework **generates many inputs** randomly
-3. Property checked для each input
-4. If fails — **shrink** к minimal counter-example
+1. **Определяешь свойство (property)** — инвариант, которому код должен удовлетворять (для всех входов)
+2. Фреймворк **генерирует много входов** случайным образом
+3. Свойство проверяется для каждого входа
+4. Если падает — **shrink** до минимального контрпримера
 
-**Example:**
+**Пример:**
 ```python
 @given(st.lists(st.integers()))
 def test_reverse_twice_returns_original(lst):
     assert reverse(reverse(lst)) == lst
 ```
 
-Hypothesis (Python) generates 100s of random lists, verifies property.
+Hypothesis (Python) генерирует сотни случайных списков и проверяет свойство.
 
-**Если fails** — Hypothesis shrinks к minimal failing case (e.g., `[1, 0]`).
+**Если падает** — Hypothesis сжимает (shrink) до минимального падающего случая (например, `[1, 0]`).
 
 ## Q2. (!) Property-based vs example-based?
 
-**Example-based** (traditional):
+**Example-based** (традиционный):
 ```python
 def test_reverse():
     assert reverse([1, 2, 3]) == [3, 2, 1]
@@ -103,7 +103,7 @@ def test_reverse():
     assert reverse([1]) == [1]
 ```
 
-You write **specific inputs + expected outputs**.
+Ты пишешь **конкретные входы + ожидаемые выходы**.
 
 **Property-based:**
 ```python
@@ -112,42 +112,42 @@ def test_reverse_idempotent(lst):
     assert reverse(reverse(lst)) == lst  # property
 ```
 
-You describe **what should be true**, framework finds inputs.
+Ты описываешь **что должно быть истинно**, а фреймворк сам подбирает входы.
 
-**Both complement each other.** Examples for known cases, properties для general invariants.
+**Оба подхода дополняют друг друга.** Примеры — для известных случаев, свойства — для общих инвариантов.
 
 ## Q3. (!) Зачем PBT?
 
-**Reasons:**
+**Причины:**
 
-1. **Find edge cases** you didn't think of (empty list, very large numbers, unicode, ...)
-2. **More coverage** with less code (one property test = 100s of examples)
-3. **Force you к think про properties** — improves code design
-4. **Regressions** caught (failing inputs saved для replay)
-5. **Better than fuzz testing** — has assertions
+1. **Находит граничные случаи**, о которых ты не подумал (пустой список, очень большие числа, unicode, …)
+2. **Больше покрытия** при меньшем коде (один property-тест = сотни примеров)
+3. **Заставляет думать в терминах свойств** — улучшает дизайн кода
+4. **Ловит регрессии** (падающие входы сохраняются для повторного прогона)
+5. **Лучше fuzz-тестирования** — у него есть проверки (assertions)
 
-**Famous discoveries** через PBT:
-- Bugs в standard libraries (Java Collections)
-- Cryptography flaws
-- File system inconsistencies
+**Известные находки** через PBT:
+- Баги в стандартных библиотеках (Java Collections)
+- Уязвимости в криптографии
+- Несогласованности в файловых системах
 
 ## Q4. (!) Какие properties testable?
 
-**Common categories:**
+**Типовые категории:**
 
 1. **Round-trip:** `decode(encode(x)) == x`
-2. **Idempotency:** `f(f(x)) == f(x)`
-3. **Invariants:** size, sum, sorted, etc.
-4. **Comparable to reference:** `optimized(x) == naive(x)`
-5. **Math properties:** commutativity, associativity, distributivity
-6. **Known answers:** `f(empty) == empty`
-7. **Stability:** result не меняется при resort
+2. **Идемпотентность:** `f(f(x)) == f(x)`
+3. **Инварианты:** размер, сумма, отсортированность и т.д.
+4. **Сравнение с эталоном:** `optimized(x) == naive(x)`
+5. **Математические свойства:** коммутативность, ассоциативность, дистрибутивность
+6. **Известные ответы:** `f(empty) == empty`
+7. **Стабильность:** результат не меняется при повторной сортировке
 
-**For любой function** — есть properties.
+**Для любой функции** найдутся свойства.
 
 ## Q5. Round-trip property?
 
-**`decode(encode(x)) == x`** для все x.
+**`decode(encode(x)) == x`** для всех x.
 
 ```python
 @given(st.dictionaries(st.text(), st.integers()))
@@ -155,17 +155,17 @@ def test_json_roundtrip(d):
     assert json.loads(json.dumps(d)) == d
 ```
 
-**Use cases:**
-- Serialization (JSON, Protobuf, XML)
-- Encoding (Base64, URL encoding)
-- Compression (`decompress(compress(x)) == x`)
-- Encryption (`decrypt(encrypt(x, key), key) == x`)
+**Сценарии применения:**
+- Сериализация (JSON, Protobuf, XML)
+- Кодирование (Base64, URL encoding)
+- Сжатие (`decompress(compress(x)) == x`)
+- Шифрование (`decrypt(encrypt(x, key), key) == x`)
 
-**Found bugs:** JSON libraries failing on unicode, special floats.
+**Найденные баги:** JSON-библиотеки, ломающиеся на unicode и специальных float-значениях.
 
 ## Q6. Idempotency property?
 
-**`f(f(x)) == f(x)`** — calling twice = once.
+**`f(f(x)) == f(x)`** — вызов дважды = вызову один раз.
 
 ```python
 @given(st.lists(st.integers()))
@@ -173,14 +173,14 @@ def test_sort_idempotent(lst):
     assert sorted(sorted(lst)) == sorted(lst)
 ```
 
-**Use cases:**
-- Sorting
-- Normalization (canonical forms)
-- Cleanup operations
+**Сценарии применения:**
+- Сортировка
+- Нормализация (канонические формы)
+- Операции очистки (cleanup)
 
 ## Q7. Invariant properties?
 
-**Property holds for all inputs.**
+**Свойство выполняется для всех входов.**
 
 ```python
 @given(st.lists(st.integers()))
@@ -192,11 +192,11 @@ def test_sort_preserves_sum(lst):
     assert sum(sorted(lst)) == sum(lst)
 ```
 
-**Multiple invariants** caught different aspects.
+**Несколько инвариантов** ловят разные аспекты поведения.
 
 ## Q8. (!) QuickCheck (originalpioneer)?
 
-**QuickCheck** — original PBT framework (Haskell, 2000, Koen Claessen и John Hughes).
+**QuickCheck** — первый PBT-фреймворк (Haskell, 2000, Koen Claessen и John Hughes).
 
 ```haskell
 prop_reverse :: [Int] -> Bool
@@ -206,12 +206,12 @@ main = quickCheck prop_reverse
 -- +++ OK, passed 100 tests.
 ```
 
-**Influenced** every modern PBT framework. **Foundational paper** still widely cited.
+**Повлиял** на каждый современный PBT-фреймворк. **Основополагающая статья** до сих пор широко цитируется.
 
-**Ports к other languages:**
+**Порты на другие языки:**
 - ScalaCheck (Scala)
 - ScalaCheck для Java
-- jqwik (Java, modernized)
+- jqwik (Java, осовременённый)
 - Hypothesis (Python)
 - fast-check (JS)
 - proptest (Rust)
@@ -219,7 +219,7 @@ main = quickCheck prop_reverse
 
 ## Q9. (!) Hypothesis (Python)?
 
-**Hypothesis** — Python PBT framework. Most popular, mature.
+**Hypothesis** — PBT-фреймворк для Python. Самый популярный и зрелый.
 
 ```python
 from hypothesis import given, strategies as st
@@ -241,13 +241,13 @@ def test_dict_operations(d):
     assert all(isinstance(k, str) for k in d.keys())
 ```
 
-**Strategies (`st.*`)** — built-in generators для common types.
+**Стратегии (`st.*`)** — встроенные генераторы для распространённых типов.
 
-**Examples database** — failing cases saved, replayed на next run.
+**База примеров (examples database)** — падающие случаи сохраняются и повторно прогоняются при следующем запуске.
 
 ## Q10. (!) jqwik (Java)?
 
-**jqwik** — modern Java PBT (replaces QuickCheck-Java).
+**jqwik** — современный PBT для Java (заменяет QuickCheck-Java).
 
 ```java
 @Property
@@ -267,12 +267,12 @@ void sortIsIdempotent(@ForAll @Size(max = 100) List<Integer> list) {
 }
 ```
 
-**Annotations:**
-- `@Property` — property method
-- `@ForAll` — generate value
-- `@Size`, `@IntRange` — constrain generators
+**Аннотации:**
+- `@Property` — метод-свойство
+- `@ForAll` — сгенерировать значение
+- `@Size`, `@IntRange` — ограничить генераторы
 
-**JUnit 5 compatible** — runs alongside @Test methods.
+**Совместим с JUnit 5** — работает рядом с методами `@Test`.
 
 ## Q11. fast-check (JavaScript)?
 
@@ -288,15 +288,15 @@ test('reverse is involutive', () => {
 });
 ```
 
-**Modern, popular** в JS ecosystem.
+**Современный и популярный** в экосистеме JS.
 
-**Used by:** ESLint, Babel, Apollo, large JS projects.
+**Используют:** ESLint, Babel, Apollo и крупные JS-проекты.
 
 ## Q12. (!) Что такое generator?
 
-**Generator** = function producing random values.
+**Генератор (generator)** = функция, производящая случайные значения.
 
-**Built-in generators (Hypothesis):**
+**Встроенные генераторы (Hypothesis):**
 - `st.integers()`, `st.floats()`
 - `st.text()`, `st.binary()`
 - `st.booleans()`
@@ -306,7 +306,7 @@ test('reverse is involutive', () => {
 - `st.dates()`, `st.datetimes()`
 - `st.from_regex("[a-z]{3,5}")`
 
-**Constraints:**
+**Ограничения:**
 ```python
 st.integers(min_value=0, max_value=100)
 st.lists(st.integers(), min_size=1, max_size=10)
@@ -315,7 +315,7 @@ st.text(alphabet="abc", max_size=5)
 
 ## Q13. Composing generators?
 
-**Combine generators** для complex types:
+**Комбинируй генераторы** для сложных типов:
 
 ```python
 # Generate User objects
@@ -336,7 +336,7 @@ def test_user_collection(users):
     ...
 ```
 
-**`flatmap`** — generator depending на another:
+**`flatmap`** — генератор, зависящий от другого:
 ```python
 st.integers().flatmap(lambda n: st.lists(st.integers(), min_size=n, max_size=n))
 # Lists of randomly chosen size
@@ -344,7 +344,7 @@ st.integers().flatmap(lambda n: st.lists(st.integers(), min_size=n, max_size=n))
 
 ## Q14. Custom generators?
 
-**For domain types:**
+**Для доменных типов:**
 
 ```python
 @st.composite
@@ -358,46 +358,46 @@ def test_isbn_validates(isbn):
     assert is_valid_isbn(isbn)
 ```
 
-**Custom generators** для:
-- Domain-specific strings (UUIDs, ISBNs)
-- Complex valid objects
-- State machines (для stateful PBT)
+**Свои генераторы** нужны для:
+- Доменно-специфичных строк (UUID, ISBN)
+- Сложных валидных объектов
+- Машин состояний (для stateful PBT)
 
 ## Q15. (!) Что такое shrinking?
 
-**Shrinking** — when property fails, framework **simplifies** failing input.
+**Shrinking** — когда свойство падает, фреймворк **упрощает** падающий вход.
 
-**Example:**
+**Пример:**
 ```python
 @given(st.lists(st.integers()))
 def test_sort_property(lst):
     assert sorted(lst)[-1] >= sorted(lst)[0]  # max >= min
 ```
 
-**Bug:** fails на empty list (IndexError).
+**Баг:** падает на пустом списке (IndexError).
 
-**Without shrinking:** failure shows `[42, -7, 100, 13, ...]` (random)
-**With shrinking:** Hypothesis simplifies → reports failure on `[]`.
+**Без shrinking:** в отчёте о падении видно `[42, -7, 100, 13, ...]` (случайный)
+**С shrinking:** Hypothesis упрощает → сообщает о падении на `[]`.
 
-**Process:**
-1. Found failing input
-2. Try smaller versions (shorter list, smaller numbers)
-3. Until cannot shrink further
-4. Report **minimal counter-example**
+**Процесс:**
+1. Найден падающий вход
+2. Пробуем уменьшенные версии (короче список, меньше числа)
+3. Пока сжимать дальше нельзя
+4. Сообщаем **минимальный контрпример**
 
 ## Q16. Зачем shrinking важен?
 
-**Without shrinking:** debugging hard ("why is `[42, -7, 100, ...]` failing?").
+**Без shrinking:** отлаживать тяжело («почему падает `[42, -7, 100, ...]`?»).
 
-**With shrinking:** **clear cause** ("empty list — case not handled").
+**С shrinking:** **причина очевидна** («пустой список — случай не обработан»).
 
-**Modern PBT** — sophisticated shrinking algorithms.
+**Современные PBT** используют изощрённые алгоритмы shrinking.
 
-**Hypothesis особенно good** — shrinks complex types (dicts, custom objects).
+**Hypothesis особенно хорош** — сжимает сложные типы (словари, кастомные объекты).
 
 ## Q17. (!) Examples reverse list, sorting, parsing?
 
-**Reverse:**
+**Reverse (разворот):**
 ```python
 @given(st.lists(st.integers()))
 def test_reverse(lst):
@@ -407,7 +407,7 @@ def test_reverse(lst):
         assert reverse(lst)[0] == lst[-1]
 ```
 
-**Sorting:**
+**Sorting (сортировка):**
 ```python
 @given(st.lists(st.integers()))
 def test_sort(lst):
@@ -427,7 +427,7 @@ def test_json(d):
 
 ## Q18. Test integration с standard tests?
 
-**PBT alongside example tests:**
+**PBT рядом с example-тестами:**
 
 ```python
 class TestSort:
@@ -446,12 +446,12 @@ class TestSort:
 ```
 
 **Best practice:**
-- **Examples** для known boundary cases (specific docs)
-- **Properties** для general invariants
+- **Примеры** — для известных граничных случаев (конкретная документация)
+- **Свойства** — для общих инвариантов
 
 ## Q19. Stateful PBT (model-based)?
 
-**Generate sequences of operations**, verify state remains consistent.
+**Генерируем последовательности операций** и проверяем, что состояние остаётся согласованным.
 
 ```python
 from hypothesis.stateful import RuleBasedStateMachine, rule
@@ -477,41 +477,41 @@ class StackMachine(RuleBasedStateMachine):
         assert self.stack.size() == len(self.model)
 ```
 
-**Hypothesis** generates sequences (push, push, pop, pop, push, ...) — verifies parity с model.
+**Hypothesis** генерирует последовательности (push, push, pop, pop, push, …) — проверяет соответствие модели.
 
-**Found bugs in:** databases, distributed systems, complex state machines.
+**Найдены баги в:** базах данных, распределённых системах, сложных машинах состояний.
 
 ## Q20. (!) Когда применять PBT?
 
-**Good fits:**
-- **Pure functions** (sort, parse, encode)
-- **Data structure operations**
-- **Math, algorithms**
-- **Serialization**
-- **State machines**
-- **Library code** (used by many)
+**Хорошо подходит:**
+- **Чистые функции** (сортировка, парсинг, кодирование)
+- **Операции над структурами данных**
+- **Математика, алгоритмы**
+- **Сериализация**
+- **Машины состояний**
+- **Код библиотек** (которым пользуются многие)
 
-**Less ideal:**
-- **UI code** (hard to specify properties)
-- **Tightly coupled с external** (DB, network)
-- **Side-effect heavy** (need careful design)
+**Хуже подходит:**
+- **UI-код** (тяжело сформулировать свойства)
+- **Жёстко связанный с внешним** (БД, сеть)
+- **С большим числом сайд-эффектов** (нужен аккуратный дизайн)
 
-**Mix PBT + example testing** — PBT не replacement.
+**Комбинируй PBT + example-тестирование** — PBT не замена.
 
 ## Q21. (!) Limitations и criticism?
 
-1. **Property design hard** — what to test?
-2. **False sense of coverage** — properties may miss issues
-3. **Slow** для complex generators
-4. **Generators imperfect** — may not cover real-world distribution
-5. **Failures hard к debug** sometimes
-6. **Not для all code** (UI, integration tests)
-7. **Learning curve** — different mindset
-8. **Maintenance** — properties evolve с code
+1. **Сложно проектировать свойства** — что именно тестировать?
+2. **Ложное ощущение покрытия** — свойства могут пропустить проблемы
+3. **Медленно** для сложных генераторов
+4. **Генераторы несовершенны** — могут не покрывать реальное распределение данных
+5. **Падения иногда тяжело отлаживать**
+6. **Подходит не для всего кода** (UI, интеграционные тесты)
+7. **Порог входа** — другой образ мышления
+8. **Поддержка** — свойства эволюционируют вместе с кодом
 
-**Не silver bullet.** Compliments other testing.
+**Не серебряная пуля.** Дополняет другие виды тестирования.
 
-В **2025** PBT — **growing adoption** в quality-focused teams. **Hypothesis** very popular в Python world.
+В **2025** PBT набирает популярность в командах, ориентированных на качество. **Hypothesis** очень популярен в мире Python.
 
 ## See also
 
