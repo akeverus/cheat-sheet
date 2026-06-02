@@ -525,7 +525,9 @@ html[data-design="editorial"] .ed-masthead-title {
 }
 .ed-masthead-actions { display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
 
-.ed-nav { display: flex; align-items: center; gap: var(--space-2); }
+/* flex-wrap: при крупном масштабе шрифта (Персонализация A+) на узких экранах
+   три ссылки не влезают в одну строку — без переноса давали гориз. скролл 375. */
+.ed-nav { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-1) var(--space-2); }
 .ed-nav-link {
   display: inline-flex;
   align-items: center;
@@ -1041,6 +1043,9 @@ html[data-design="editorial"] .settings-page .control-title {
   font-family: var(--font-family-display);
   font-size: var(--font-size-xl); font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary); margin: 0 0 var(--space-4);
+  /* Длинное одиночное слово («Персонализация») при крупном масштабе шрифта (A+)
+     не влезало в колонку и распирало страницу — разрешаем перенос внутри слова. */
+  overflow-wrap: break-word; word-break: break-word;
 }
 html[data-design="editorial"] .settings-page .control-inline-hint {
   color: var(--color-text-secondary); font-size: var(--font-size-sm); margin: var(--space-3) 0 0; max-width: var(--measure);
@@ -1159,8 +1164,13 @@ html[data-design="editorial"] .settings-page .streak-count-text { font-family: v
 html[data-design="editorial"] .settings-page .streak-progress { flex: 1; min-width: 80px; height: 4px; background: var(--color-bg-tertiary); border-radius: var(--border-radius-full); overflow: hidden; }
 html[data-design="editorial"] .settings-page .streak-progress-fill { height: 100%; background: var(--color-accent-primary); }
 
-html[data-design="editorial"] .settings-page .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--space-3); }
+/* minmax(min(120px,100%)) + min-width:0 — без них при крупном масштабе шрифта
+   (Персонализация A+) min-content плиток распирал треки шире контейнера → гориз.
+   скролл на 375. min(…,100%) не даёт колонке быть шире контейнера, min-width:0
+   позволяет 1fr-треку ужаться под доступную ширину. */
+html[data-design="editorial"] .settings-page .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr)); gap: var(--space-3); }
 html[data-design="editorial"] .settings-page .stat-item {
+  min-width: 0;
   padding: var(--space-3) var(--space-4); border: var(--rule-weight) solid var(--color-border-primary);
   border-radius: var(--border-radius-md); background: var(--color-bg-secondary); text-align: left;
 }
@@ -1287,8 +1297,11 @@ html[data-design="editorial"] .stats-page .stats-grid { display: grid; grid-temp
    столбец, много пустоты справа), расходясь с настройками (2+2+2). Проверено @375:
    2 колонки по 115px, без переполнения плиток и страницы. */
 @media (max-width: 539px) {
+  /* minmax(0,1fr) (не 1fr): при крупном масштабе шрифта (A+) 1fr-трек не ужимался
+     ниже min-content плиток и распирал сетку → гориз. скролл. min(0,…) + min-width:0
+     на .stat-item дают плиткам всегда влезать в две колонки. */
   html[data-design="editorial"] .settings-page .stats-grid,
-  html[data-design="editorial"] .stats-page .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  html[data-design="editorial"] .stats-page .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 /* Планшетная полоса: auto-fit упаковывает 6 stat-плиток как 5+1 / 4+2 — одинокая
    плитка-сирота справа. Форсим 3 колонки → ровные 3+3. Границы РАЗНЫЕ у страниц,
@@ -1303,6 +1316,7 @@ html[data-design="editorial"] .stats-page .stats-grid { display: grid; grid-temp
   html[data-design="editorial"] .stats-page .stats-grid { grid-template-columns: repeat(3, 1fr); }
 }
 html[data-design="editorial"] .stats-page .stat-item {
+  min-width: 0;
   padding: var(--space-3) var(--space-4); border: var(--rule-weight) solid var(--color-border-primary);
   border-radius: var(--border-radius-md); background: var(--color-bg-primary); text-align: left;
 }
