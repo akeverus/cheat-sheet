@@ -54,6 +54,13 @@ updated: 2026-05-31
 - [Q9. Как транзакции работают в Spring Integration?](#q9-как-транзакции-работают-в-spring-integration)
 - [Q10. Как тестировать Spring Integration потоки?](#q10-как-тестировать-spring-integration-потоки)
 
+**Сравнение и продвинутые паттерны**
+- [Q11. Чем Spring Integration отличается от Apache Camel?](#q11-чем-spring-integration-отличается-от-apache-camel)
+- [Q12. Когда использовать Spring Integration vs Spring Kafka?](#q12-когда-использовать-spring-integration-vs-spring-kafka)
+- [Q13. Что такое Claim Check и как его реализовать?](#q13-что-такое-claim-check-и-как-его-реализовать)
+- [Q14. Как работает Enricher (Content Enricher)?](#q14-как-работает-enricher-content-enricher)
+- [Q15. Как мониторить Spring Integration?](#q15-как-мониторить-spring-integration)
+
 ## Q1. Что такое Spring Integration и какие EIP-паттерны он реализует?
 
 **Spring Integration** — реализация Enterprise Integration Patterns (EIP) из книги Hohpe & Woolf поверх Spring. Позволяет строить интеграционные конвейеры без жёсткой связи между компонентами.
