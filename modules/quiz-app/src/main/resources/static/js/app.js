@@ -1260,8 +1260,15 @@
 
     const confidenceDiv = document.createElement('div');
     confidenceDiv.className = 'confidence-buttons';
+    // role=group + aria-labelledby — как у .flashcard-grade-buttons в шаблоне:
+    // обе группы это «оцени свою уверенность после ответа», a11y-семантика должна
+    // совпадать. Без этого скринридер читал label как оторванный текст, а не как
+    // имя группы кнопок. id стабилен: на странице одновременно одна такая группа
+    // (между вопросами идёт навигация window.location).
+    confidenceDiv.setAttribute('role', 'group');
+    confidenceDiv.setAttribute('aria-labelledby', 'confidence-label');
     confidenceDiv.innerHTML = `
-      <span class="confidence-label">Насколько ты уверен по этому вопросу?</span>
+      <span class="confidence-label" id="confidence-label">Насколько ты уверен по этому вопросу?</span>
       <button type="button" class="confidence-btn confidence-guess" data-grade="3" aria-pressed="false" aria-label="Уровень уверенности: угадал">🎲 Угадал</button>
       <button type="button" class="confidence-btn confidence-hard" data-grade="4" aria-pressed="false" aria-label="Уровень уверенности: с трудом">🤔 С трудом</button>
       <button type="button" class="confidence-btn confidence-sure" data-grade="5" aria-pressed="false" aria-label="Уровень уверенности: знал точно">💪 Знал точно</button>
