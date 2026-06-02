@@ -89,34 +89,34 @@ updated: "2026-04-25"
 
 (!) Что такое Kafka Streams?
 
-`Kafka Streams` — **client library** для построения stream processing приложений на JVM. Часть Apache Kafka (с 0.10).
+`Kafka Streams` — **клиентская библиотека** для построения приложений потоковой обработки на JVM. Часть Apache Kafka (начиная с 0.10).
 
 **Ключевые особенности:**
-- **Library, не framework** — обычное Java/Scala приложение, не нужен отдельный кластер
-- Хранит **state в Kafka topics** (changelog) — fault tolerance из коробки
-- Использует Kafka topics как input/output
-- Поддерживает **exactly-once** (с Kafka 0.11+)
+- **Библиотека, а не фреймворк** — обычное Java/Scala-приложение, отдельный кластер не нужен
+- Хранит **state в Kafka topics** (changelog) — отказоустойчивость из коробки
+- Использует Kafka topics как вход и выход
+- Поддерживает **exactly-once** (начиная с Kafka 0.11+)
 
-**Применения:** event-driven микросервисы, real-time aggregations, joins streams, fraud detection в финтехе.
+**Применения:** event-driven микросервисы, агрегации в реальном времени, соединение потоков, выявление мошенничества в финтехе.
 
 ## Q2. (!) Чем Kafka Streams отличается от Spark/Flink?
 
 | Критерий | Kafka Streams | Spark/Flink |
 |----------|---------------|-------------|
-| Архитектура | Library | Framework + cluster |
-| Развёртывание | Как обычный Java app | Spark cluster, Flink JobManager |
-| Source/Sink | Только Kafka | Kafka, files, DBs, ... |
-| State | Kafka topics + RocksDB | Custom backends |
-| Scaling | Через consumer groups | Через cluster manager |
-| Operational complexity | Низкая | Высокая |
+| Архитектура | Library | Framework + кластер |
+| Развёртывание | Как обычное Java-приложение | Spark-кластер, Flink JobManager |
+| Source/Sink | Только Kafka | Kafka, файлы, БД, ... |
+| State | Kafka topics + RocksDB | Произвольные backends |
+| Масштабирование | Через consumer groups | Через cluster manager |
+| Операционная сложность | Низкая | Высокая |
 | Отдельный кластер | Не нужен | Нужен |
 | Fault tolerance | Через Kafka | Через checkpoints |
 
-**Главная идея Kafka Streams:** "deploy в Kubernetes как обычный микросервис, не нужен Hadoop кластер".
+**Главная идея Kafka Streams:** «деплоим в Kubernetes как обычный микросервис, отдельный Hadoop-кластер не нужен».
 
 ## Q3. (!) Application как отдельный процесс — почему?
 
-В Kafka Streams **нет JobManager/Driver** — каждый instance твоего приложения = standalone JVM процесс.
+В Kafka Streams **нет JobManager/Driver** — каждый instance твоего приложения = самостоятельный JVM-процесс.
 
 ```
 [ Pod 1 (Streams app) ] ┐
@@ -125,19 +125,19 @@ updated: "2026-04-25"
 ```
 
 **Координация — через Kafka:**
-- Topics как input/output
-- Partition assignment через **consumer groups**
-- State persistence через **changelog topics**
+- Topics как вход и выход
+- Распределение partitions через **consumer groups**
+- Сохранение state через **changelog topics**
 
 **Преимущества:**
-- Простой deployment — это просто Java app
+- Простое развёртывание — это обычное Java-приложение
 - Хорошо ложится на K8s
-- Нет single point of failure (для координации)
+- Нет единой точки отказа (для координации)
 - Авто-failover через consumer rebalance
 
 ## Q4. (!) Что такое topology в Kafka Streams?
 
-`Topology` — DAG операций (sources, processors, sinks).
+`Topology` — это DAG операций (sources, processors, sinks).
 
 ```java
 StreamsBuilder builder = new StreamsBuilder();
@@ -155,11 +155,11 @@ KafkaStreams streams = new KafkaStreams(topology, config);
 streams.start();
 ```
 
-Topology может быть **визуализирована** через `topology.describe()`.
+Топологию можно **визуализировать** через `topology.describe()`.
 
 ## Q5. (!) Streams DSL vs Processor API?
 
-**Streams DSL** — высокоуровневый, с операциями `map/filter/groupBy/join`:
+**Streams DSL** — высокоуровневый API, с операциями `map/filter/groupBy/join`:
 
 ```java
 KStream<String, Order> orders = builder.stream("orders");
@@ -174,7 +174,7 @@ orders.groupByKey()
       .to("totals");
 ```
 
-**Processor API** — низкоуровневый, ручное управление state и timers:
+**Processor API** — низкоуровневый, с ручным управлением state и таймерами:
 
 ```java
 public class MyProcessor implements Processor<String, String, String, String> {
@@ -192,13 +192,13 @@ public class MyProcessor implements Processor<String, String, String, String> {
 }
 ```
 
-В большинстве задач — DSL. Processor API — для специальных случаев.
+В большинстве задач используют DSL. Processor API — для особых случаев.
 
 ## Q6. (!) Чем KStream отличается от KTable?
 
-**KStream** — поток **независимых событий** (insert-only). Каждая запись — фактическое событие.
+**KStream** — поток **независимых событий** (insert-only). Каждая запись — отдельное свершившееся событие.
 
-**KTable** — **таблица** (последнее значение per key). Записи с одинаковым key **обновляют** запись.
+**KTable** — **таблица** (последнее значение по ключу). Записи с одинаковым ключом **перезаписывают** предыдущее значение.
 
 ```
 KStream events:
@@ -210,17 +210,17 @@ KTable balances:
   → текущее состояние: {alice: +30, bob: +20}
 ```
 
-**KStream** — для immutable facts (orders, clicks).
-**KTable** — для current state (user profiles, prices).
+**KStream** — для неизменяемых фактов (orders, clicks).
+**KTable** — для текущего состояния (user profiles, prices).
 
 ## Q7. (!) GlobalKTable — когда использовать?
 
-| Тип | Partitioning | Replication |
+| Тип | Партиционирование | Репликация |
 |-----|-------------|-------------|
 | `KTable` | По partitions Kafka topic | Каждый instance держит свой shard |
-| `GlobalKTable` | Не разделена | Каждый instance имеет **полную копию** |
+| `GlobalKTable` | Не партиционирована | Каждый instance держит **полную копию** |
 
-`GlobalKTable` — для **lookup тables** (маленькие, нужны на каждом instance):
+`GlobalKTable` — для **lookup-таблиц** (маленькие, нужны на каждом instance):
 
 ```java
 GlobalKTable<String, User> users = builder.globalTable("users");
@@ -231,8 +231,8 @@ orders.join(users,
 )
 ```
 
-**Преимущество:** join без repartitioning (любой instance имеет данные).
-**Недостаток:** не масштабируется (если table большая → OOM).
+**Преимущество:** join без repartitioning (данные есть на любом instance).
+**Недостаток:** не масштабируется (если таблица большая → OOM).
 
 ## Q8. (!) Конвертации KStream ↔ KTable?
 
@@ -246,7 +246,7 @@ KTable<String, Long> counts = events
 KStream<String, Long> changeLog = counts.toStream();
 ```
 
-`KTable.toStream()` — даёт стрим **изменений** (changelog). Полезно для отправки изменений в downstream.
+`KTable.toStream()` — даёт поток **изменений** (changelog). Полезно для отправки этих изменений дальше по конвейеру (downstream).
 
 ```java
 // Из KStream получить latest по key
@@ -279,7 +279,7 @@ Map<String, KStream<String, String>> branches = stream.split()
     .defaultBranch(Branched.as("other"));
 ```
 
-**Подвох:** `map` (с изменением key) триггерит **repartitioning**. `mapValues` — нет.
+**Подвох:** `map` (с изменением ключа) запускает **repartitioning**. `mapValues` — нет.
 
 ## Q10. (!) groupByKey vs groupBy?
 
@@ -291,7 +291,7 @@ events.groupByKey()
 events.groupBy((k, v) -> v.userId)
 ```
 
-`groupBy` создаёт **internal repartition topic**. Дороже, но позволяет группировать по любому полю.
+`groupBy` создаёт **внутренний repartition-топик**. Дороже, но позволяет группировать по любому полю.
 
 ## Q11. (!) Aggregate, Reduce, Count?
 
@@ -314,7 +314,7 @@ KTable<String, Stats> stats = events
     );
 ```
 
-`aggregate` — самый мощный, может строить произвольный состояние per key.
+`aggregate` — самый мощный, может строить произвольное состояние per key.
 
 ## Q12. (!) Joins — типы и семантика?
 
@@ -340,10 +340,10 @@ events.leftJoin(table, ...)
 events.outerJoin(table, ...)
 ```
 
-| Join | Windowed | Repartition |
+| Join | Оконный | Repartition |
 |------|----------|-------------|
-| KStream-KStream | Да (обязательно) | Если разные partitions |
-| KStream-KTable | Нет | Стрим должен co-partition с таблицей |
+| KStream-KStream | Да (обязательно) | Если partitions различаются |
+| KStream-KTable | Нет | Стрим должен быть co-partition с таблицей |
 | KStream-GlobalKTable | Нет | Не нужен |
 | KTable-KTable | Нет | Co-partition |
 
@@ -364,17 +364,17 @@ events.groupByKey()
       .count();
 ```
 
-В Kafka Streams "**hopping window**" — то, что в Flink/Spark называют sliding.
+В Kafka Streams «**hopping window**» — это то, что в Flink/Spark называют скользящим (sliding) окном.
 
 ## Q14. Sliding windows?
 
-С Kafka Streams 2.7+ — **SlidingWindows** (отдельная концепция):
+С Kafka Streams 2.7+ появились **SlidingWindows** (отдельная концепция):
 
 ```java
 SlidingWindows.ofTimeDifferenceWithNoGrace(Duration.ofMinutes(5))
 ```
 
-Создаёт window для **каждой пары** записей в пределах timeDifference. Полезно для pattern matching.
+Создаёт окно для **каждой пары** записей в пределах timeDifference. Полезно для pattern matching.
 
 ## Q15. (!) Grace period для late events?
 
@@ -383,15 +383,15 @@ TimeWindows.of(Duration.ofMinutes(5))
            .grace(Duration.ofMinutes(1))
 ```
 
-После закрытия окна Kafka Streams **ждёт grace period** для late events. После — окно становится "closed", state удаляется.
+После закрытия окна Kafka Streams **ждёт grace period** для запоздавших событий. По истечении — окно становится «closed», state удаляется.
 
-С Kafka Streams 2.5+ — **обязательно** указывать grace (default = `Long.MAX_VALUE`, но это плохая практика — grow state forever).
+С Kafka Streams 2.5+ — **обязательно** указывать grace (default = `Long.MAX_VALUE`, но это плохая практика — состояние будет расти бесконечно).
 
 ## Q16. (!) Что такое state store?
 
-State store — **локальное** key-value хранилище для stateful operations (aggregations, joins).
+State store — **локальное** key-value хранилище для операций с состоянием (агрегации, joins).
 
-По умолчанию — **RocksDB on local disk** (быстрее JVM heap для большого state).
+По умолчанию — **RocksDB на локальном диске** (для большого state быстрее, чем JVM heap).
 
 ```java
 // Имплицитно создаётся через aggregate/count/etc
@@ -409,14 +409,14 @@ builder.addStateStore(storeBuilder);
 
 ## Q17. RocksDB как state backend?
 
-`RocksDB` — embedded LSM-tree key-value store от Facebook. По умолчанию в Kafka Streams.
+`RocksDB` — встраиваемое LSM-tree key-value хранилище от Facebook. Используется в Kafka Streams по умолчанию.
 
 **Преимущества:**
-- State не ограничен RAM (диск)
-- Хорошая производительность (LSM-tree оптимизирован для write-heavy)
-- Встроенная компрессия
+- State не ограничен объёмом RAM (хранится на диске)
+- Хорошая производительность (LSM-tree оптимизирован под write-heavy нагрузку)
+- Встроенное сжатие
 
-**Tuning:** через `RocksDBConfigSetter`:
+**Тюнинг:** через `RocksDBConfigSetter`:
 
 ```java
 public class CustomRocksDBConfig implements RocksDBConfigSetter {
@@ -444,13 +444,13 @@ my-app-store-changelog (compacted topic)
 - При сбое instance → восстановление state из changelog
 - При scale-up → новый instance читает свою partition из changelog
 
-**Compacted topic** — только last value per key хранится. Не растёт бесконечно.
+**Compacted topic** — хранит только последнее значение для каждого ключа. Не растёт бесконечно.
 
-Чем больше state → больше storage в Kafka. Это **trade-off** упрощённости.
+Чем больше state → тем больше места занимает в Kafka. Это **trade-off** за простоту.
 
 ## Q19. (!) Interactive Queries?
 
-`Interactive Queries` — **прямое чтение** state stores из приложения, без Kafka.
+`Interactive Queries` — **прямое чтение** state stores из приложения, минуя Kafka.
 
 ```java
 KafkaStreams streams = ...;
@@ -464,16 +464,16 @@ ReadOnlyKeyValueStore<String, Long> store = streams.store(
 Long value = store.get("alice");
 ```
 
-**Distributed:** state разделён между instances. Чтобы найти где key — `streams.metadataForKey("my-store", key)`.
+**Распределённость:** state разделён между instances. Чтобы найти, где находится ключ — `streams.metadataForKey("my-store", key)`.
 
-**Применение:** Kafka Streams app становится **читаемым store** (как in-memory DB), без отдельного DB.
+**Применение:** Kafka Streams app становится **читаемым store** (как in-memory БД), без отдельной БД.
 
 ## Q20. (!) Event time vs processing time?
 
-Kafka Streams поддерживает оба:
+Kafka Streams поддерживает оба варианта:
 
-- **Event time** — timestamp из записи (Kafka header или из payload)
-- **Processing time** — wall-clock time
+- **Event time** — timestamp из самой записи (Kafka header или payload)
+- **Processing time** — wall-clock, время обработки
 
 По умолчанию — **event time** через timestamp в Kafka record.
 
@@ -495,11 +495,11 @@ public class CustomExtractor implements TimestampExtractor {
 }
 ```
 
-Полезно когда event time — внутри payload, не в Kafka headers.
+Полезно, когда event time лежит внутри payload, а не в Kafka headers.
 
 ## Q22. (!) Exactly-once семантика в Kafka Streams?
 
-С Kafka Streams 0.11+ — **exactly-once** через **Kafka transactions**:
+С Kafka Streams 0.11+ — **exactly-once** реализуется через **Kafka transactions**:
 
 ```java
 props.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, StreamsConfig.EXACTLY_ONCE_V2);
@@ -507,11 +507,11 @@ props.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, StreamsConfig.EXACTLY_ONCE_
 
 **Гарантия end-to-end:**
 - Kafka source → Streams processing → Kafka sink — exactly-once
-- Включает state stores (changelog updates тоже транзакционные)
+- Распространяется и на state stores (обновления changelog тоже транзакционные)
 
-**Стоимость:** ~5-15% throughput (overhead на transactions).
+**Стоимость:** ~5-15% throughput (накладные расходы на транзакции).
 
-**При необходимости:** `at_least_once` (default) — быстрее, возможны дубли.
+**Если нужно иначе:** `at_least_once` (default) — быстрее, но возможны дубли.
 
 ## Q23. Standby replicas?
 
@@ -519,22 +519,22 @@ props.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, StreamsConfig.EXACTLY_ONCE_
 props.put(StreamsConfig.NUM_STANDBY_REPLICAS_CONFIG, 1);
 ```
 
-Standby instances держат **горячую копию** state stores. При failover — почти мгновенный takeover (не нужно читать changelog с нуля).
+Standby-инстансы держат **горячую копию** state stores. При failover — почти мгновенный takeover (не нужно читать changelog с нуля).
 
-Trade-off: больше resources, но выше availability.
+Trade-off: больше потребляемых ресурсов, но выше доступность.
 
 ## Q24. (!) Что происходит при сбое instance?
 
-1. Kafka **детектирует** dead consumer (по timeout)
+1. Kafka **обнаруживает** мёртвого consumer (по timeout)
 2. **Rebalance** — partitions перераспределяются на живые instances
-3. Новый owner partition **читает changelog** для восстановления state
+3. Новый владелец partition **читает changelog**, чтобы восстановить state
 4. После восстановления — продолжает обработку
 
-Время recovery зависит от **размера state**. С standby replicas — быстро.
+Время восстановления зависит от **размера state**. Со standby replicas — быстро.
 
 ## Q25. (!) Что такое ksqlDB?
 
-`ksqlDB` — SQL-like layer над Kafka Streams. Позволяет писать stream processing **на SQL** без Java-кода.
+`ksqlDB` — SQL-подобный слой поверх Kafka Streams. Позволяет писать stream processing **на SQL** без Java-кода.
 
 ```sql
 CREATE STREAM orders (id INT, amount DOUBLE, user_id VARCHAR)
@@ -549,58 +549,58 @@ CREATE TABLE total_per_user AS
 SELECT * FROM total_per_user EMIT CHANGES;
 ```
 
-**ksqlDB Server** — process, выполняющий ksql queries. Под капотом — Kafka Streams.
+**ksqlDB Server** — процесс, выполняющий ksql-запросы. Под капотом — Kafka Streams.
 
-**Применения:** простые трансформации без Java-кода, BI/аналитики, low-code stream processing.
+**Применения:** простые трансформации без Java-кода, BI/аналитика, low-code stream processing.
 
 ## Q26. (!) Kafka Streams vs Flink — когда что?
 
 | Критерий | Kafka Streams | Flink |
 |----------|---------------|-------|
 | Source | Только Kafka | Любой |
-| Deploy | Library (как K8s pod) | Cluster |
+| Развёртывание | Library (как K8s pod) | Cluster |
 | Latency | Низкая (~10-100ms) | Очень низкая (<10ms) |
 | Throughput | Высокий | Очень высокий |
 | Stateful | Через RocksDB + changelog | Богатый state API |
-| Operational | Простая (микросервис) | Сложнее (cluster ops) |
-| Languages | Java, Scala | Java, Scala, Python (PyFlink) |
-| Ecosystem | Confluent + open-source | Богатая |
+| Эксплуатация | Простая (микросервис) | Сложнее (cluster ops) |
+| Языки | Java, Scala | Java, Scala, Python (PyFlink) |
+| Экосистема | Confluent + open-source | Богатая |
 
-**Kafka Streams когда:**
+**Kafka Streams — когда:**
 - Источник и sink — Kafka
-- Хочется простоты deploy
+- Нужна простота развёртывания
 - Микросервисная архитектура
-- Не нужны самые низкие latencies
+- Не требуются предельно низкие latencies
 
-**Flink когда:**
+**Flink — когда:**
 - Сложные joins, CEP
 - Очень низкая latency (<10ms)
 - Источники/sinks — не только Kafka
-- Огромный state, нужен fine-grained control
+- Огромный state, нужен fine-grained-контроль
 
 ## Q27. (!) Где Kafka Streams в production?
 
 - **Confluent (создатели)** — внутренние сервисы
-- **LinkedIn** — multiple use cases (Kafka родом из LinkedIn)
+- **LinkedIn** — множество сценариев (Kafka родом из LinkedIn)
 - **Uber** — fraud detection, real-time pricing
-- **Pinterest, Airbnb, Slack** — event-driven services
-- **Banks (Goldman Sachs, ING)** — risk, fraud
+- **Pinterest, Airbnb, Slack** — event-driven сервисы
+- **Банки (Goldman Sachs, ING)** — риски, fraud
 - **Walmart** — supply chain
 
-В **банках и финтехе** Kafka Streams особенно популярен — простой deployment + exactly-once.
+В **банках и финтехе** Kafka Streams особенно популярен — простота развёртывания + exactly-once.
 
 ## Q28. Какие минусы Kafka Streams?
 
-1. **Только Kafka** — нельзя читать из других sources напрямую
-2. **State limited** by local disk — RocksDB растёт, нужно следить
+1. **Только Kafka** — нельзя читать из других источников напрямую
+2. **State ограничен** локальным диском — RocksDB растёт, нужно следить
 3. **Rebalance** при scale up/down — пауза в обработке
-4. **Сложно debug** — distributed processing
-5. **Не такой богатый CEP** как Flink
-6. **Ksql имеет ограничения** vs Java/Scala API
-7. **Java-only** (Scala через JVM API, нет Python)
-8. **Less mature** для очень больших scale (Flink выигрывает)
+4. **Сложно дебажить** — распределённая обработка
+5. **CEP не такой богатый**, как у Flink
+6. **У ksql есть ограничения** по сравнению с Java/Scala API
+7. **Только Java** (Scala через JVM API, Python нет)
+8. **Менее зрелый** для очень больших масштабов (тут выигрывает Flink)
 
-В **2024** Kafka Streams — отличный выбор для **event-driven микросервисов** на Kafka, не для general-purpose stream processing.
+В **2024** Kafka Streams — отличный выбор для **event-driven микросервисов** на Kafka, но не для general-purpose stream processing.
 
 ## See also
 

@@ -90,30 +90,30 @@ updated: "2026-04-25"
 
 `Apache Flink` — distributed stream processing engine. Создан в **TU Berlin** (2010), Apache top-level с 2014. Написан на **Scala/Java**, работает на JVM.
 
-**Ключевое отличие от Spark:** **true streaming** — обрабатывает каждое событие **мгновенно**, не группирует в micro-batch.
+**Ключевое отличие от Spark:** **настоящий streaming** — обрабатывает каждое событие **мгновенно**, не группирует в micro-batch.
 
 **Применения:**
-- Real-time analytics (clickstream, IoT, financial trading)
-- Fraud detection
-- Real-time recommendations
-- ETL streaming (Kafka → DB / Data Lake)
-- Complex Event Processing (CEP)
+- Аналитика в реальном времени (clickstream, IoT, финансовый трейдинг)
+- Обнаружение мошенничества (fraud detection)
+- Рекомендации в реальном времени
+- Потоковый ETL (Kafka → БД / Data Lake)
+- Обработка сложных событий (CEP)
 
 ## Q2. (!) Чем Flink отличается от Spark Streaming?
 
 | Критерий | Flink | Spark Structured Streaming |
 |----------|-------|---------------------------|
-| Modell | True streaming | Micro-batch (continuous mode experimental) |
-| Latency | < 100ms (часто < 10ms) | 100ms - сек |
-| Throughput | Высокий | Высокий |
-| Time semantics | Event time first-class | Event time через watermark |
-| State management | Богатый (keyed/operator) | Stateful operations есть, но проще |
+| Модель | Настоящий streaming | Micro-batch (continuous mode экспериментальный) |
+| Задержка | < 100 мс (часто < 10 мс) | 100 мс — секунды |
+| Пропускная способность | Высокая | Высокая |
+| Семантика времени | Event time как граждан первого класса | Event time через watermark |
+| Управление состоянием | Богатое (keyed/operator) | Stateful-операции есть, но проще |
 | Exactly-once | Строго (Chandy-Lamport) | Строго (через WAL) |
-| Batch | Да (батч = специальный streaming) | Да (batch + streaming) |
-| Window types | Tumbling, sliding, session, global | Tumbling, sliding, session |
-| Iterative algorithms | Native (для ML/graph) | Через DataFrame loop |
+| Batch | Да (батч = частный случай streaming) | Да (batch + streaming) |
+| Типы окон | Tumbling, sliding, session, global | Tumbling, sliding, session |
+| Итеративные алгоритмы | Нативно (для ML/графов) | Через DataFrame-цикл |
 
-**Spark** — лучше для batch + streaming в одном стеке. **Flink** — лучше для **pure low-latency streaming**.
+**Spark** — лучше для batch + streaming в одном стеке. **Flink** — лучше для **чистого low-latency streaming**.
 
 ## Q3. (!) Архитектура Flink — JobManager, TaskManager?
 
@@ -130,13 +130,13 @@ graph TD
 
 **JobManager:**
 - Принимает jobs от клиентов
-- Координирует execution
+- Координирует выполнение
 - Управляет checkpointing
-- Single-point-of-failure (можно настроить HA)
+- Единая точка отказа (можно настроить HA)
 
 **TaskManager:**
-- Worker process
-- Имеет **task slots** (по умолчанию = #cores)
+- Рабочий процесс (worker)
+- Имеет **task slots** (по умолчанию = числу ядер)
 - Каждый slot — одна параллельная subtask
 
 **Slot:** единица параллелизма (фиксированная память/CPU).
@@ -145,13 +145,13 @@ graph TD
 
 | Режим | Описание |
 |-------|----------|
-| **Standalone** | Built-in cluster manager |
-| **YARN** | Hadoop ecosystem |
-| **Kubernetes** | Cloud-native, рост популярности |
-| **Mesos** | Apache Mesos (deprecated) |
+| **Standalone** | Встроенный менеджер кластера |
+| **YARN** | Экосистема Hadoop |
+| **Kubernetes** | Cloud-native, растущая популярность |
+| **Mesos** | Apache Mesos (устарел) |
 | **Local** | Один процесс для тестов |
 
-С Flink 1.12+ — first-class K8s integration через **Flink Kubernetes Operator**.
+С Flink 1.12+ — полноценная интеграция с K8s через **Flink Kubernetes Operator**.
 
 ```bash
 flink run -m yarn-cluster -p 4 -ys 2 myapp.jar
@@ -175,17 +175,17 @@ counts.print()
 env.execute("Word Count")
 ```
 
-**Operations:**
-- `map`, `filter`, `flatMap` — element-wise
-- `keyBy` — partitioning по key
-- `reduce`, `sum`, `min`, `max` — aggregations
+**Операции:**
+- `map`, `filter`, `flatMap` — поэлементные
+- `keyBy` — партиционирование по ключу
+- `reduce`, `sum`, `min`, `max` — агрегации
 - `window` — окна
 - `join`, `coGroup` — соединения
-- `connect`, `union` — комбинирование streams
+- `connect`, `union` — комбинирование потоков
 
 ## Q6. (!) KeyedStream — что это?
 
-`KeyedStream` — `DataStream`, разделённый по **key**. Все события с одним key обрабатываются **последовательно** одним subtask.
+`KeyedStream` — `DataStream`, разделённый по **ключу**. Все события с одним ключом обрабатываются **последовательно** одним subtask.
 
 ```scala
 val keyed: KeyedStream[Event, String] = stream.keyBy(_.userId)
@@ -195,26 +195,26 @@ keyed.process(new MyKeyedProcessFunction())
 ```
 
 **Зачем:**
-- **Stateful operations per key** — counter per user, aggregations
-- **Гарантия порядка** в пределах key
-- **Параллелизация** — разные keys на разных subtasks
+- **Stateful-операции на каждый ключ** — счётчик на пользователя, агрегации
+- **Гарантия порядка** в пределах ключа
+- **Параллелизация** — разные ключи на разных subtasks
 
-`KeyedStream` — основа для **windows**, **state**, **timers**.
+`KeyedStream` — основа для **окон**, **состояния**, **таймеров**.
 
 ## Q7. Sources и Sinks?
 
 **Sources** — откуда данные:
 - Apache Kafka (`flink-connector-kafka`)
-- Files (FileSource)
-- Sockets (для тестов)
-- Custom
+- Файлы (FileSource)
+- Сокеты (для тестов)
+- Собственные (custom)
 
 **Sinks** — куда:
 - Kafka
-- JDBC databases
+- JDBC-базы данных
 - Elasticsearch
-- File systems (S3, HDFS, Iceberg, Delta Lake)
-- Custom
+- Файловые системы (S3, HDFS, Iceberg, Delta Lake)
+- Собственные (custom)
 
 ```scala
 val stream = env.fromSource(
@@ -252,8 +252,8 @@ ingestion_time = 14:05 (Kafka получил)
 processing_time = 14:07 (Flink обрабатывает)
 ```
 
-**Event time** — единственный **корректный** для аналитики (детерминирован, повторяемый).
-**Processing time** — для low-latency без точности.
+**Event time** — единственный **корректный** для аналитики (детерминирован, воспроизводим).
+**Processing time** — для low-latency, когда точность не важна.
 
 ```scala
 WatermarkStrategy.forBoundedOutOfOrderness[Event](Duration.ofSeconds(20))
@@ -262,7 +262,7 @@ WatermarkStrategy.forBoundedOutOfOrderness[Event](Duration.ofSeconds(20))
 
 ## Q9. (!) Watermarks — как работают?
 
-**Watermark** — заявление "до этого event_time все события **уже** обработаны".
+**Watermark** — утверждение «до этого event_time все события **уже** получены».
 
 ```
 events:    e1(t=10) e2(t=12) e3(t=11) e4(t=15) e5(t=13)
@@ -271,9 +271,9 @@ events:    e1(t=10) e2(t=12) e3(t=11) e4(t=15) e5(t=13)
 ```
 
 Используется для:
-- **Closing windows** — когда watermark проходит конец окна, окно закрывается
-- **Determining late data** — события с timestamp < watermark считаются late
-- **State TTL** — освобождать state старше watermark
+- **Закрытия окон** — когда watermark проходит конец окна, окно закрывается
+- **Определения опоздавших данных** — события с timestamp < watermark считаются late
+- **State TTL** — освобождать состояние старше watermark
 
 ```scala
 WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofSeconds(5))
@@ -296,11 +296,11 @@ stream.getSideOutput(late) // обрабатываем отдельно
 ```
 
 **Стратегии:**
-- **Drop** (default) — поздние события игнорируются
+- **Отбрасывание** (по умолчанию) — поздние события игнорируются
 - **`allowedLateness`** — окно остаётся открытым ещё N времени, обновляет результат
-- **`sideOutputLateData`** — поздние события идут в отдельный stream
+- **`sideOutputLateData`** — поздние события идут в отдельный поток
 
-Trade-off: больше lateness — больше state.
+Компромисс: больше lateness — больше состояния.
 
 ## Q11. (!) Tumbling windows?
 
@@ -319,6 +319,7 @@ keyedStream
 Каждое событие попадает **ровно в одно** окно.
 
 Применение: статистика за минуту/час/день.
+
 
 ## Q12. (!) Sliding windows?
 
@@ -340,11 +341,11 @@ keyedStream
   .sum(1)
 ```
 
-Каждое событие может попасть в **несколько** окон. Полезно для **moving averages**.
+Каждое событие может попасть в **несколько** окон. Полезно для **скользящих средних**.
 
 ## Q13. Session windows?
 
-**Session window** — окно объединяет события одной сессии (пользователь активен), разделённые **gap'ом неактивности**.
+**Session window** — окно объединяет события одной сессии (пользователь активен), разделённые **периодом неактивности (gap)**.
 
 ```
 events: e1 e2 e3      e4 e5     e6
@@ -358,11 +359,11 @@ keyedStream
   .reduce(...)
 ```
 
-Применение: пользовательские сессии в analytics, RP detection.
+Применение: пользовательские сессии в аналитике, определение последовательностей действий.
 
 ## Q14. Global windows?
 
-**Global window** — все события в **одном** окне. Нужен **custom trigger** для emit'а.
+**Global window** — все события в **одном** окне. Нужен **собственный триггер (custom trigger)** для выдачи результата.
 
 ```scala
 keyedStream
@@ -371,33 +372,33 @@ keyedStream
   .reduce(...)
 ```
 
-Используется редко — для специфичных случаев (count-based, custom triggers).
+Используется редко — для специфичных случаев (по количеству событий, собственные триггеры).
 
 ## Q15. (!) Что такое state в Flink?
 
-**State** — данные, которые operator хранит между событиями. Flink — **stateful streaming engine**.
+**State** — данные, которые оператор хранит между событиями. Flink — **stateful streaming-движок**.
 
-Примеры state:
-- Counter per user (key)
-- Window aggregations
-- Last seen value
-- Machine learning model
+Примеры состояния:
+- Счётчик на пользователя (ключ)
+- Оконные агрегации
+- Последнее увиденное значение
+- Модель машинного обучения
 
-State **persistent** через checkpoints — переживает рестарты.
+Состояние **персистентно** через checkpoints — переживает рестарты.
 
 ## Q16. (!) Keyed state vs Operator state?
 
 | Тип | Привязан к | Использование |
 |-----|------------|---------------|
-| **Keyed state** | Key (KeyedStream) | Aggregations per user, sessions |
-| **Operator state** | Параллельной subtask | Connector state (Kafka offsets) |
+| **Keyed state** | Ключу (KeyedStream) | Агрегации на пользователя, сессии |
+| **Operator state** | Параллельной subtask | Состояние коннектора (Kafka offsets) |
 
-**Keyed state types:**
+**Типы keyed state:**
 - `ValueState[T]` — одно значение
 - `ListState[T]` — список
-- `MapState[K, V]` — мап
-- `ReducingState[T]` — reduce функция
-- `AggregatingState[I, O]` — aggregate функция
+- `MapState[K, V]` — словарь
+- `ReducingState[T]` — reduce-функция
+- `AggregatingState[I, O]` — aggregate-функция
 
 ```scala
 class CounterFunction extends KeyedProcessFunction[String, Event, Long] {
@@ -419,37 +420,37 @@ class CounterFunction extends KeyedProcessFunction[String, Event, Long] {
 
 ## Q17. State backends — какие?
 
-| Backend | Хранение state | Hot path | Размер |
+| Backend | Хранение состояния | Горячий путь | Размер |
 |---------|----------------|----------|--------|
 | **HashMapStateBackend** | JVM heap | Очень быстро | Ограничен heap |
-| **EmbeddedRocksDBStateBackend** | RocksDB на диске | Медленнее (ser/deser) | Огромный (TBs) |
+| **EmbeddedRocksDBStateBackend** | RocksDB на диске | Медленнее (сериализация/десериализация) | Огромный (терабайты) |
 
 ```scala
 env.setStateBackend(new EmbeddedRocksDBStateBackend())
 env.getCheckpointConfig.setCheckpointStorage("s3://bucket/checkpoints")
 ```
 
-**HashMap:** для маленького state (< 1 GB), low latency.
-**RocksDB:** для огромного state (терабайты), incremental checkpoints.
+**HashMap:** для небольшого состояния (< 1 ГБ), низкая задержка.
+**RocksDB:** для огромного состояния (терабайты), инкрементальные checkpoints.
 
 ## Q18. (!) RocksDB state backend — особенности?
 
-**RocksDB** — embedded LSM-tree key-value store от Facebook. В Flink — для огромного state.
+**RocksDB** — встраиваемое key-value-хранилище на LSM-tree от Facebook. В Flink — для огромного состояния.
 
 **Преимущества:**
-- State не ограничен RAM (на диске, до TBs)
-- **Incremental checkpoints** — сохраняет только изменения
-- Compression, predicate pushdown
+- Состояние не ограничено RAM (хранится на диске, до терабайтов)
+- **Инкрементальные checkpoints** — сохраняют только изменения
+- Сжатие, predicate pushdown
 
 **Недостатки:**
-- Каждое чтение/запись — ser/deser (медленнее HashMap)
-- Tuning RocksDB сложен (BlockCache, compaction levels)
+- Каждое чтение/запись — сериализация/десериализация (медленнее HashMap)
+- Тюнинг RocksDB сложен (BlockCache, уровни compaction)
 
-В **production** для streaming с большим state — почти всегда RocksDB.
+В **production** для streaming с большим состоянием — почти всегда RocksDB.
 
 ## Q19. (!) Checkpointing — как работает?
 
-**Checkpoint** — snapshot state всех operators в определённый момент.
+**Checkpoint** — snapshot состояния всех операторов в определённый момент.
 
 ```scala
 env.enableCheckpointing(60000) // каждые 60 секунд
@@ -459,25 +460,25 @@ env.getCheckpointConfig.setCheckpointTimeout(600000)
 ```
 
 **Алгоритм (Chandy-Lamport):**
-1. JobManager инжектирует **barrier** в input streams
-2. Barriers идут через operators
-3. Когда operator получил barriers со всех inputs — снимает snapshot своего state
+1. JobManager вставляет **barrier** во входные потоки
+2. Barriers проходят через операторы
+3. Когда оператор получил barriers со всех входов — снимает snapshot своего состояния
 4. Snapshot пишется в **state backend** (HDFS, S3)
-5. Когда все operators закончили — checkpoint complete
+5. Когда все операторы закончили — checkpoint завершён
 
 При **сбое** — рестарт с последнего checkpoint.
 
 ## Q20. (!) Exactly-once semantics?
 
-Flink гарантирует **exactly-once** — каждое событие обрабатывается ровно один раз (с точки зрения state).
+Flink гарантирует **exactly-once** — каждое событие обрабатывается ровно один раз (с точки зрения состояния).
 
 **Условия:**
-- **Source** должен поддерживать replay (Kafka, Kinesis)
-- **Sink** должен поддерживать **transactional writes** или **idempotent writes**
+- **Source** должен поддерживать повторное чтение (replay) — Kafka, Kinesis
+- **Sink** должен поддерживать **транзакционную запись** или **идемпотентную запись**
 
-**End-to-end exactly-once:**
-- Kafka → Flink → Kafka (через Kafka transactions)
-- Flink → JDBC (через 2PC sink) — медленно, но строго
+**Сквозной (end-to-end) exactly-once:**
+- Kafka → Flink → Kafka (через транзакции Kafka)
+- Flink → JDBC (через 2PC-sink) — медленно, но строго
 
 **At-least-once** — проще, быстрее, но возможны дубли.
 
@@ -485,10 +486,10 @@ Flink гарантирует **exactly-once** — каждое событие о
 
 | Критерий | Checkpoint | Savepoint |
 |----------|------------|-----------|
-| Цель | Fault tolerance | Operations (upgrade, A/B) |
+| Цель | Отказоустойчивость | Эксплуатация (upgrade, A/B) |
 | Создание | Автоматически | Вручную (`flink savepoint`) |
 | Удаление | Автоматически (по retention) | Вручную |
-| Format | Optimized | Standard (можно восстанавливать после рефакторинга) |
+| Формат | Оптимизированный | Стандартный (можно восстанавливать после рефакторинга) |
 
 ```bash
 flink savepoint <job-id> s3://bucket/savepoints/
@@ -496,13 +497,13 @@ flink run -s s3://bucket/savepoints/savepoint-... newapp.jar
 ```
 
 **Savepoints** — для:
-- **Версионных upgrades** Flink приложения
-- **Migrations** state schema
-- A/B тестирования
+- **Версионных обновлений** Flink-приложения
+- **Миграций** схемы состояния
+- A/B-тестирования
 
 ## Q22. Barriers и алгоритм Chandy-Lamport?
 
-**Barrier** — специальный маркер, инжектируемый в stream для checkpoint coordination.
+**Barrier** — специальный маркер, вставляемый в поток для координации checkpoint.
 
 ```mermaid
 graph LR
@@ -511,17 +512,17 @@ graph LR
     Op2 --> Sink
 ```
 
-Когда operator получил barrier со ВСЕХ input streams → пишет snapshot. Это и есть **Chandy-Lamport algorithm** для distributed snapshots (1985).
+Когда оператор получил barrier со ВСЕХ входных потоков → пишет snapshot. Это и есть **алгоритм Chandy-Lamport** для распределённых снимков (1985).
 
-В Flink barriers **выравниваются** (alignment) — operator ждёт barriers со всех inputs. Это даёт **exactly-once**, но может вызвать backpressure. Альтернатива — **unaligned checkpoints** (Flink 1.11+).
+В Flink barriers **выравниваются** (alignment) — оператор ждёт barriers со всех входов. Это даёт **exactly-once**, но может вызвать backpressure. Альтернатива — **невыровненные checkpoints (unaligned)** (Flink 1.11+).
 
 ## Q23. (!) DataStream vs Table vs SQL API?
 
-| API | Стиль | Audience |
+| API | Стиль | Аудитория |
 |-----|-------|----------|
-| **DataStream** | Imperative, Scala/Java | Developers |
-| **Table** | Declarative, type-safe | Hybrid |
-| **SQL** | Standard SQL | Analysts, BI |
+| **DataStream** | Императивный, Scala/Java | Разработчики |
+| **Table** | Декларативный, типобезопасный | Гибридная |
+| **SQL** | Стандартный SQL | Аналитики, BI |
 
 ```scala
 // DataStream
@@ -534,13 +535,13 @@ table.groupBy($"userId").select($"userId", $"amount".sum())
 tableEnv.sqlQuery("SELECT userId, SUM(amount) FROM events GROUP BY userId")
 ```
 
-Все три **одинаковая performance** — компилируются в один Flink runtime.
+У всех трёх **одинаковая производительность** — компилируются в один Flink runtime.
 
-С Flink 1.13+ — **Table API + SQL** активно развиваются для analytical use cases.
+С Flink 1.13+ — **Table API + SQL** активно развиваются для аналитических сценариев.
 
 ## Q24. ProcessFunction — что это?
 
-`ProcessFunction` — **низкоуровневое** API для custom event processing с **state и timers**.
+`ProcessFunction` — **низкоуровневое** API для собственной обработки событий с **состоянием и таймерами**.
 
 ```scala
 class MyFunction extends KeyedProcessFunction[String, Event, Result] {
@@ -557,11 +558,11 @@ class MyFunction extends KeyedProcessFunction[String, Event, Result] {
 }
 ```
 
-Применение: custom logic, которую не выразить через стандартные операторы (CEP с custom правилами, fraud detection).
+Применение: своя логика, которую не выразить через стандартные операторы (CEP с собственными правилами, fraud detection).
 
 ## Q25. (!) CEP (Complex Event Processing)?
 
-`Flink CEP` — библиотека для поиска **сложных паттернов** в стриме.
+`Flink CEP` — библиотека для поиска **сложных паттернов** в потоке.
 
 ```scala
 import org.apache.flink.cep.scala.pattern.Pattern
@@ -578,16 +579,16 @@ CEP.pattern(stream, pattern).select(matches => alert(matches))
 ```
 
 Применения:
-- **Fraud detection** — последовательность подозрительных действий
-- **Trading signals** — паттерны рыночных событий
-- **System monitoring** — alerts по сложным условиям
-- **Click stream analysis** — пользовательские sequences
+- **Обнаружение мошенничества** — последовательность подозрительных действий
+- **Торговые сигналы** — паттерны рыночных событий
+- **Мониторинг систем** — алерты по сложным условиям
+- **Анализ clickstream** — пользовательские последовательности
 
-CEP сложнее, чем simple aggregations, но даёт мощные возможности.
+CEP сложнее, чем простые агрегации, но даёт мощные возможности.
 
 ## Q26. (!) Backpressure в Flink?
 
-**Backpressure** — медленный downstream operator замедляет upstream (через network buffers).
+**Backpressure** — медленный downstream-оператор замедляет upstream (через network buffers).
 
 ```mermaid
 graph LR
@@ -596,16 +597,16 @@ graph LR
     Op2 --> Sink
 ```
 
-Когда `Op2` не успевает — buffers перед ним заполняются → `Op1` не может писать → замедляется.
+Когда `Op2` не успевает — буферы перед ним заполняются → `Op1` не может писать → замедляется.
 
 Flink **не теряет данные** при backpressure — просто замедляется в целом.
 
-**Detection:** Flink Web UI → Backpressure tab. Высокий — значит, узкое место.
+**Обнаружение:** Flink Web UI → вкладка Backpressure. Высокий — значит, узкое место.
 
 **Решение:**
-- Увеличить parallelism slow operator
+- Увеличить параллелизм медленного оператора
 - Оптимизировать его логику
-- Увеличить ресурсы (CPU, memory)
+- Увеличить ресурсы (CPU, память)
 
 ## Q27. Parallelism — как настраивать?
 
@@ -619,70 +620,70 @@ stream
 env.setMaxParallelism(128) // verticale scaling
 ```
 
-**Best practices:**
-- Стартуй с `parallelism = #cores in cluster`
-- Источник — обычно меньший parallelism (= partitions Kafka topic)
-- Bottleneck operators — больше parallelism
+**Лучшие практики:**
+- Начинай с `parallelism = число ядер в кластере`
+- Источник — обычно меньший параллелизм (= числу партиций Kafka-топика)
+- Операторы — узкие места — больше параллелизма
 
-`maxParallelism` — для будущего масштабирования, нельзя поменять после первого запуска без savepoint migration.
+`maxParallelism` — для будущего масштабирования, нельзя поменять после первого запуска без миграции через savepoint.
 
 ## Q28. Network buffering и chains?
 
-**Operator chain** — Flink объединяет несколько operators в один task, если возможно (no shuffle между ними):
+**Operator chain** — Flink объединяет несколько операторов в один task, если возможно (нет shuffle между ними):
 
 ```
 source → map → filter → keyBy → sum → sink
 \__________ chain __________/  shuffle  \chain/
 ```
 
-В chain — операции в одном thread, без сериализации. **Огромный прирост perf**.
+В chain — операции в одном потоке (thread), без сериализации. **Огромный прирост производительности**.
 
 Принудительно отключить:
 ```scala
 stream.map(...).disableChaining()
 ```
 
-**Network buffers** — буферы для передачи между operators. Настраиваются через `taskmanager.network.memory.*`.
+**Network buffers** — буферы для передачи между операторами. Настраиваются через `taskmanager.network.memory.*`.
 
 ## Q29. (!) Когда выбирать Flink вместо Spark Streaming?
 
 **Выбирай Flink когда:**
-- **Latency < 100ms** критична
-- **Stateful processing** с big state
-- **Exactly-once end-to-end** (Kafka → Flink → Kafka)
-- **CEP** — сложные event patterns
-- **True streaming** (не micro-batch)
-- Уже есть team с Java/Scala expertise
+- Критична **задержка < 100 мс**
+- **Stateful-обработка** с большим состоянием
+- **Сквозной exactly-once** (Kafka → Flink → Kafka)
+- **CEP** — сложные паттерны событий
+- **Настоящий streaming** (не micro-batch)
+- Уже есть команда с экспертизой по Java/Scala
 
 **Выбирай Spark Streaming когда:**
 - Один стек для batch + streaming
-- Latency > 1 sec приемлема
-- Уже используется Spark в компании
+- Приемлема задержка > 1 секунды
+- В компании уже используется Spark
 - Команда знакома со Spark
 
 ## Q30. (!) Где Flink в production?
 
 **Известные пользователи:**
-- **Alibaba** — Singles' Day, real-time analytics (биллион events/сек)
-- **Netflix** — recommendation engine, fraud detection
-- **Uber** — pricing, ETA estimation
-- **Stripe** — fraud detection
+- **Alibaba** — Singles' Day, аналитика в реальном времени (миллиарды событий/сек)
+- **Netflix** — рекомендательный движок, обнаружение мошенничества
+- **Uber** — ценообразование, оценка ETA
+- **Stripe** — обнаружение мошенничества
 - **Lyft, Pinterest, Twitter, Yelp**
 - **ING Bank, Comcast**
 
-Особенно сильна позиция в **финтехе** и крупных internet-компаниях.
+Особенно сильна позиция в **финтехе** и крупных интернет-компаниях.
 
 ## Q31. Какие минусы Flink?
 
-1. **Steeper learning curve** — больше концепций (state, watermarks, checkpoints)
-2. **Меньше community** по сравнению со Spark
-3. **Меньше готовых connectors** (хотя основные есть)
-4. **Сложность операционная** — checkpointing, savepoints, state migration
-5. **SQL API менее зрелый** чем Spark SQL
-6. **Меньше ML/AI** возможностей
-7. **Сложнее в Python** (PyFlink) — не такой mature как PySpark
+1. **Более крутая кривая обучения** — больше концепций (состояние, watermarks, checkpoints)
+2. **Меньше сообщество** по сравнению со Spark
+3. **Меньше готовых коннекторов** (хотя основные есть)
+4. **Операционная сложность** — checkpointing, savepoints, миграция состояния
+5. **SQL API менее зрелый**, чем Spark SQL
+6. **Меньше возможностей для ML/AI**
+7. **Сложнее в Python** (PyFlink) — не такой зрелый, как PySpark
 
-В **2024** Flink — лидер для **pure streaming**, но Spark всё ещё доминирует overall в data engineering.
+В **2024** Flink — лидер для **чистого streaming**, но Spark всё ещё в целом доминирует в data engineering.
 
 ## See also
 
