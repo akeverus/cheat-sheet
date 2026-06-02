@@ -1600,7 +1600,15 @@ html[data-design="editorial"] .result-page .card {
 html[data-design="editorial"] .result-page .top-row { display: flex; flex-wrap: wrap; align-items: stretch; gap: var(--space-4); margin-bottom: var(--space-5); }
 html[data-design="editorial"] .result-page .top-row > * { flex: 1 1 320px; min-width: 0; }
 html[data-design="editorial"] .result-page .top-row .card { padding: var(--space-4) var(--space-5); }
+/* Слим-полоса прогресса: 6 ячеек в один ряд, разделённые border-right у .stat-item.
+   Без display:grid .stats-grid падал в block → 6 ячеек вставали столбиком, и
+   карточка вытягивалась до ~470px вместо тонкой editorial-полосы (latent-баг:
+   .stat-item был стилизован под горизонтальный ряд, но раскладку не задавали). */
+html[data-design="editorial"] .result-page .stats-grid {
+  display: grid; grid-template-columns: repeat(6, 1fr); align-items: center;
+}
 html[data-design="editorial"] .result-page .stat-item {
+  min-width: 0;
   background: transparent; border: 0; border-right: var(--rule-weight) solid var(--color-border-secondary);
   padding: 0 var(--space-4); text-align: center;
 }
@@ -1816,4 +1824,23 @@ html[data-design="editorial"] .result-page .trace-step-explanation {
   html[data-design="editorial"] .result-page .result-actions .btn { width: 100%; }
   html[data-design="editorial"] .result-page .question-header h2 { flex-basis: 100%; }
   html[data-design="editorial"] .result-page .question-layout:has(.question-side) { grid-template-columns: 1fr; }
+}
+
+/* Слим-полоса с вертикальными разделителями держит 6 ячеек в ряд только при
+   ширине грида ~690px+. Ниже (планшет/телефон) ячейки теснятся, «К ПОВТОРУ»
+   переносится на 2 строки и из-за align-items:center числа теряют общую базовую
+   линию, а border-right у крайних ячеек повисает на краю ряда. Поэтому ниже 880px
+   показываем сводку карточками — ровно тем же паттерном auto-fit, что stats-grid
+   на страницах статистики/настроек: единый вид сводки по всему приложению, и
+   auto-fit сам аккуратно раскладывает 6 карточек на любой ширине без сирот-рядов.
+   Скоуп .stats-grid .stat-item (0,4,0) перекрывает базовый border-right и :last-child. */
+@media (max-width: 880px) {
+  html[data-design="editorial"] .result-page .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: var(--space-2);
+  }
+  html[data-design="editorial"] .result-page .stats-grid .stat-item {
+    border: var(--rule-weight) solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    padding: var(--space-3) var(--space-2);
+  }
 }
