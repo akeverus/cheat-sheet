@@ -35,12 +35,12 @@ updated: "2026-05-22"
 
 **Requirements и capacity**
 - [Q1. (!) Functional и non-functional requirements?](#q1--functional-и-non-functional-requirements)
-- [Q2. (!) Capacity estimation: QPS, storage, bandwidth?](#q2--capacity-estimation-qps-storage-bandwidth)
+- [Q2. (!) Оценка нагрузки: QPS, объём хранилища, bandwidth?](#q2--оценка-нагрузки-qps-объём-хранилища-bandwidth)
 - [Q3. API design: основные endpoints?](#q3-api-design-основные-endpoints)
 
 **Media upload pipeline**
 - [Q4. (!) Upload flow: presigned URL и почему НЕ через app server?](#q4--upload-flow-presigned-url-и-почему-не-через-app-server)
-- [Q5. Async media processing: thumbnails, transcoding, moderation?](#q5-async-media-processing-thumbnails-transcoding-moderation)
+- [Q5. Асинхронная обработка медиа: thumbnails, transcoding, модерация?](#q5-асинхронная-обработка-медиа-thumbnails-transcoding-модерация)
 - [Q6. Resumable upload для больших видео?](#q6-resumable-upload-для-больших-видео)
 
 **Storage и sharding**
@@ -50,7 +50,7 @@ updated: "2026-05-22"
 
 **Feed и Stories**
 - [Q10. (!) High-level архитектура?](#q10--high-level-архитектура)
-- [Q11. (!) Feed generation: fan-out on write vs hybrid?](#q11--feed-generation-fan-out-on-write-vs-hybrid)
+- [Q11. (!) Генерация ленты: fan-out on write или гибрид?](#q11--генерация-ленты-fan-out-on-write-или-гибрид)
 - [Q12. Stories: 24h TTL и read-heavy паттерн?](#q12-stories-24h-ttl-и-read-heavy-паттерн)
 - [Q13. Likes counter: hot photos и write-behind?](#q13-likes-counter-hot-photos-и-write-behind)
 
@@ -59,18 +59,18 @@ updated: "2026-05-22"
 - [Q15. Push notifications: APNs/FCM и Kafka pipeline?](#q15-push-notifications-apnsfcm-и-kafka-pipeline)
 
 **Search и Explore (ML)**
-- [Q16. (!) Search: hashtag, username, auto-complete?](#q16--search-hashtag-username-auto-complete)
+- [Q16. (!) Поиск: hashtag, username, автодополнение?](#q16--поиск-hashtag-username-автодополнение)
 - [Q17. (!) Explore page: ML pipeline и offline batch?](#q17--explore-page-ml-pipeline-и-offline-batch)
-- [Q18. Content moderation: ML + human-in-loop?](#q18-content-moderation-ml--human-in-loop)
+- [Q18. Модерация контента: ML + human-in-loop?](#q18-модерация-контента-ml--human-in-loop)
 
 **CDN и optimization**
-- [Q19. (!) CDN strategy: CloudFront, edge resize, HTTP/3?](#q19--cdn-strategy-cloudfront-edge-resize-http3)
+- [Q19. (!) Стратегия CDN: CloudFront, edge resize, HTTP/3?](#q19--стратегия-cdn-cloudfront-edge-resize-http3)
 - [Q20. Viral photo: hot key и prefetch?](#q20-viral-photo-hot-key-и-prefetch)
 - [Q21. Cache invalidation при delete photo?](#q21-cache-invalidation-при-delete-photo)
 
 **Edge cases и trade-offs**
 - [Q22. (!) Multi-region deployment и consistency?](#q22--multi-region-deployment-и-consistency)
-- [Q23. Rate limiting: upload, API?](#q23-rate-limiting-upload-api)
+- [Q23. Rate limiting: загрузки и API?](#q23-rate-limiting-загрузки-и-api)
 - [Q24. Failed uploads и idempotency?](#q24-failed-uploads-и-idempotency)
 - [Q25. AP vs CP: какой trade-off выбирает Instagram?](#q25-ap-vs-cp-какой-trade-off-выбирает-instagram)
 - [Q26. Capacity planning: число серверов и рост?](#q26-capacity-planning-число-серверов-и-рост)
@@ -110,7 +110,9 @@ updated: "2026-05-22"
 
 ---
 
-## Q2. (!) Capacity estimation: QPS, storage, bandwidth?
+## Q2. (!) Оценка нагрузки: QPS, объём хранилища, bandwidth?
+
+Считаем «на салфетке», чтобы обосновать архитектуру числами. Главный вывод — нагрузка резко read-heavy (~290k чтений/сек против ~1.2k записей/сек) и медиа растёт на десятки PB в год. Отсюда и приоритеты: агрессивное кеширование на чтении, CDN, дешёвое object storage. Множитель пиковости ×3 — запас на всплески.
 
 **QPS на запись**:
 
@@ -167,6 +169,8 @@ Peak: ~300-400 Gbps
 
 ## Q3. API design: основные endpoints?
 
+API REST-style и группируется по доменам: загрузка (двухэтапная — сначала presigned URL, потом finalize), лента, stories, социальные действия, DM (с WebSocket для realtime), поиск и explore. Два сквозных решения: пагинация всегда cursor-based (стабильна при меняющемся наборе), аутентификация — OAuth 2.0 bearer-token.
+
 ```http
 # Upload (2-этапный: получить presigned URL, потом upload в S3)
 POST /api/v1/photos/upload-url
@@ -210,13 +214,15 @@ GET  /api/v1/explore                            # персонализирова
 
 ## Q4. (!) Upload flow: presigned URL и почему НЕ через app server?
 
-**Плохой дизайн** — клиент → app server → S3:
+Клиент грузит медиа **напрямую в S3** по короткоживущему presigned URL, а app server лишь подписывает запрос и сохраняет метаданные. Байты файла через бэкенд не проходят — это снимает с него весь media-трафик.
+
+**Почему не гнать файл через app server** (клиент → app server → S3):
 
 - App server становится узким местом по media-трафику (терабайты в час).
 - Удваивается исходящий трафик: client→server + server→S3.
 - App server тратит CPU просто на перекачку байт.
 
-**Хороший дизайн** — клиент напрямую в S3 через **presigned URL**:
+**Как работает presigned URL** — клиент напрямую в S3:
 
 ```mermaid
 sequenceDiagram
@@ -288,9 +294,11 @@ public class PresignedUrlService {
 
 ---
 
-## Q5. Async media processing: thumbnails, transcoding, moderation?
+## Q5. Асинхронная обработка медиа: thumbnails, transcoding, модерация?
 
-После загрузки — событие в Kafka, **media-worker** обрабатывает асинхронно:
+Обработка медиа вынесена из upload-запроса: загрузка завершается сразу, а тяжёлые этапы (ресайз, транскодинг, модерация) идут асинхронно. После загрузки app server кладёт событие в Kafka, и **media-worker** выполняет конвейер шаг за шагом — пользователь не ждёт.
+
+**Конвейер обработки фото**:
 
 | Этап | Инструмент | Назначение |
 |------|------|------------|
@@ -329,7 +337,7 @@ ffmpeg -i input.mp4 \
 
 ## Q6. Resumable upload для больших видео?
 
-Стандарт: **S3 Multipart Upload** или **протокол TUS**.
+Большой файл бьётся на части, и каждая загружается отдельным запросом — при обрыве сети докачиваются только недостающие части, а не весь файл заново. Стандартные механизмы: **S3 Multipart Upload** или **протокол TUS**.
 
 ```java
 // S3 multipart upload — клиент-сайд
@@ -358,13 +366,13 @@ s3.completeMultipartUpload(b -> b
 - Параллельная загрузка частей → быстрее полная загрузка.
 - TTL для незавершённых загрузок: 7 дней (lifecycle rule в S3), потом авто-очистка.
 
-**Trade-off**: минимум 5 MB на part → не подходит для маленьких фото; для них одиночный PUT.
+**Компромисс**: минимум 5 MB на part → не подходит для маленьких фото; для них одиночный PUT.
 
 ---
 
 ## Q7. (!) Storage architecture: метаданные vs media files?
 
-Разные данные → разное хранилище:
+Единого хранилища нет: под каждый тип данных выбирается своё, исходя из паттерна доступа. Бинарное медиа лежит в object storage (S3), структурированные метаданные — в реляционной БД, лента и счётчики — в Redis. Так каждое хранилище решает ровно одну задачу и масштабируется независимо.
 
 | Данные | Хранилище | Почему |
 |--------|---------|--------|
@@ -384,6 +392,8 @@ s3.completeMultipartUpload(b -> b
 ---
 
 ## Q8. (!) Sharding strategy для photos и feed?
+
+Ключ шардирования выбирается под главный запрос: фото шардируются по `user_id` (профиль = один shard), а лента — по `follower_id` (чтение ленты = один Redis-node). Разные сущности шардируются по разным ключам, потому что у них разные паттерны доступа.
 
 **Фото** — шардирование по `user_id`:
 
@@ -411,16 +421,18 @@ SELECT * FROM photos WHERE user_id = ? AND photo_id = ?
 
 Подробнее про сравнение стратегий см. [Database sharding](../databases/database-sharding-interview.md).
 
-**Проблема горячего шарда**:
+**Проблема горячего шарда** (hot shard): один пост знаменитости порождает миллионы записей в ленты подписчиков, разбросанные по всем shards.
 
 - Знаменитость (например, @cristiano с 600M followers) → не делаем fan-out по всем shards.
 - Решение: для top-1000 пользователей — pull-модель (на чтении ленты обращаемся к их inbox), для остальных — push (fan-out на запись).
 
-**Решардинг**: consistent hashing с 1024 виртуальными bucket-ами → при добавлении ноды перемещается всего 1/1024.
+**Решардинг**: consistent hashing с 1024 виртуальными bucket-ами → при добавлении ноды перемещается всего 1/1024 данных, а не половина, как при `hash % N`.
 
 ---
 
 ## Q9. Схема таблиц: User, Photo, Follow, Like, Comment?
+
+Ядро — пять сущностей в PostgreSQL. Главные приёмы: социальный граф асимметричен (две строки нужны для взаимной подписки, поэтому ключ `(follower_id, followee_id)` плюс обратный индекс по `followee_id`), а связи many-to-many (хештеги) выносятся в junction-таблицу. Под каждый частый запрос заводится составной индекс.
 
 PostgreSQL (упрощённо), полные определения ниже:
 
@@ -505,6 +517,8 @@ CREATE TABLE messages (
 
 ## Q10. (!) High-level архитектура?
 
+Система делится на пять слоёв: edge (DNS + CDN), API gateway (auth, rate-limit), stateless-микросервисы по доменам, асинхронная шина Kafka с воркерами (media, ML, fan-out) и гетерогенное хранилище. Главный приём — синхронный путь делает минимум (валидация + запись метаданных), а всё тяжёлое уходит в Kafka и обрабатывается воркерами в фоне.
+
 ```mermaid
 flowchart TB
     subgraph Client
@@ -578,7 +592,9 @@ flowchart TB
 
 ---
 
-## Q11. (!) Feed generation: fan-out on write vs hybrid?
+## Q11. (!) Генерация ленты: fan-out on write или гибрид?
+
+Instagram использует **гибрид**: для обычных авторов лента собирается на запись (push), а посты знаменитостей подмешиваются на чтении (pull). Чистый push разваливается на аккаунтах с миллионами подписчиков, чистый pull — на дорогом чтении; гибрид берёт сильную сторону каждого.
 
 Базовые подходы (детально в [Design Feed System](design-feed-system-interview.md)):
 
@@ -648,13 +664,15 @@ CACHE SIZE: 500M users × 500 items × 50 bytes ≈ 12 TB hot
 SHARDING: hash(viewerId) % redis_clusters
 ```
 
-**Обрезка (trim)**: фид ограничен ~1000 последними элементами; что старее — пагинация через Postgres.
+**Обрезка (trim)**: фид в Redis ограничен ~1000 последними элементами, иначе ZSET рос бы безгранично; что старее — догружается пагинацией через Postgres.
 
 ---
 
 ## Q12. Stories: 24h TTL и read-heavy паттерн?
 
-Особенности:
+Stories — эфемерный контент: живёт 24 часа и читается на порядок чаще, чем пишется. Ключевая идея — переложить истечение на хранилище: всё кладётся в Redis с TTL 86400 сек, и просроченные записи исчезают сами, без отдельного фонового сборщика.
+
+**Нагрузка и особенности**:
 
 - 500M пользователей × ~5 просмотров stories/день → ~2.5B чтений/день на stories.
 - TTL ровно 24 часа от момента публикации.
@@ -705,14 +723,16 @@ public StoriesFeed getStoriesFeed(long viewerId) {
 
 **Граничные случаи**:
 
-- Расхождение времени между нодами Redis → TTL может «съесть» story раньше 24h. Решается: хранить явный `expires_at` и фильтровать на чтении.
+- Расхождение времени между нодами Redis → TTL может «съесть» story раньше 24h. Решение: хранить явный `expires_at` и фильтровать на чтении (не полагаться только на TTL).
 - Повторный просмотр: после прочтения, при повторном открытии — story показывается с тёмным кругом (без отметки непросмотренного).
 
 ---
 
 ## Q13. Likes counter: hot photos и write-behind?
 
-Проблема: вирусное фото набирает 10_000 лайков/сек → UPDATE одной строки в Postgres = конкуренция за блокировку, лаг репликации.
+Счётчик лайков ведётся в Redis (`INCR`), а в Postgres сбрасывается батчами раз в несколько секунд (write-behind). Так тысячи лайков в секунду на одно фото не упираются в блокировку одной строки БД.
+
+**Проблема**: вирусное фото набирает 10_000 лайков/сек → UPDATE одной строки в Postgres = конкуренция за блокировку (row lock), лаг репликации.
 
 **Решение** — write-behind через Redis:
 
@@ -750,17 +770,19 @@ public void flush(List<LikeEvent> batch) {
 }
 ```
 
-**Trade-off**:
+**Компромисс**:
 
 - Eventual consistency: счётчик в Postgres отстаёт от Redis на ~5 сек.
-- Приемлемо: пользователи видят счётчик из Redis (свежий).
-- При сбоях Redis счётчик теряется, восстанавливается из Postgres + повтор событий из Kafka.
+- Приемлемо: пользователи читают счётчик из Redis (он свежий), Postgres нужен лишь как долговечный бэкап.
+- При сбоях Redis счётчик теряется, но восстанавливается из Postgres + повтор событий из Kafka.
 
-Для приблизительного подсчёта (топ-хештеги, вирусные счётчики) — HyperLogLog или Count-Min Sketch.
+Для приблизительного подсчёта (топ-хештеги, вирусные счётчики) — HyperLogLog или Count-Min Sketch: точное число там не нужно, зато память константна.
 
 ---
 
 ## Q14. (!) Direct Messages: WebSocket и Cassandra?
+
+Доставка сообщений в реальном времени держится на двух опорах: **WebSocket** даёт постоянное двунаправленное соединение для мгновенного push, а **Cassandra** хранит историю — её модель «много записей, partition по conversation_id» идеальна под чат. Между ними Kafka разносит сообщение на тот gateway, к которому подключён получатель.
 
 Архитектура чата (детально в [Design Chat System](design-chat-system-interview.md)), полный flow ниже:
 
@@ -832,7 +854,9 @@ CREATE TABLE user_conversations (
 
 ## Q15. Push notifications: APNs/FCM и Kafka pipeline?
 
-Pipeline:
+События (лайк, комментарий, follow, DM) проходят через Kafka в NotificationService, который фильтрует их по настройкам пользователя и батчит, а затем отдаёт в платформенные шлюзы — APNs для iOS и FCM для Android. Асинхронный конвейер нужен, чтобы всплеск событий не ронял отправку и позволял схлопывать спам в одно уведомление.
+
+**Конвейер**:
 
 ```
 Event (like/comment/follow/dm)
@@ -878,7 +902,9 @@ public void handle(UserEvent event) {
 
 ---
 
-## Q16. (!) Search: hashtag, username, auto-complete?
+## Q16. (!) Поиск: hashtag, username, автодополнение?
+
+Поиск строится на **Elasticsearch**: full-text по username/bio/хештегам, а автодополнение «по мере набора» — на edge n-grams, которые заранее режут `cristiano` на префиксы `cr`, `cri`, `cris`… Релевантность подкручивается популярностью аккаунта (число подписчиков). Индекс наполняется из Postgres через CDC, отставая на ~1 секунду.
 
 **Elasticsearch** (см. [Elasticsearch](../databases/elasticsearch-interview.md)):
 
@@ -936,10 +962,12 @@ GET /users/_search
 
 Здесь `function_score` × log(followers) — повышение релевантности для популярных аккаунтов.
 
+Здесь `username_analyzer` на edge n-grams позволяет находить аккаунт уже по первым 2 символам ввода.
+
 **Поиск по хештегам**:
 
 - Индекс `hashtags` со счётчиком постов.
-- Trending: поток через Kafka + Count-Min Sketch для top-K за последний час.
+- Trending: поток через Kafka + Count-Min Sketch для top-K за последний час (точный подсчёт по всем хештегам не нужен — важен лишь топ).
 
 **Конвейер индексации**:
 
@@ -952,7 +980,9 @@ Latency: ~1 sec eventually consistent
 
 ## Q17. (!) Explore page: ML pipeline и offline batch?
 
-Explore — персонализированная лента. Алгоритм ниже:
+Explore работает в две ступени: **ночной batch** заранее отбирает топ-500 кандидатов на каждого пользователя (collaborative filtering + content-based по эмбеддингам), а **онлайн-ранжирование** на каждый запрос пересортировывает их моделью и отдаёт топ-30. Тяжёлый отбор кандидатов вынесен в офлайн, чтобы на чтении оставалась лишь быстрая дешёвая пересортировка.
+
+Архитектура и алгоритм ниже:
 
 ```mermaid
 flowchart TB
@@ -998,9 +1028,11 @@ flowchart TB
 
 ---
 
-## Q18. Content moderation: ML + human-in-loop?
+## Q18. Модерация контента: ML + human-in-loop?
 
-Многоуровневая:
+Модерация — каскад из четырёх уровней, отсортированный по скорости и стоимости: сначала мгновенный hash-match по известному запрещённому контенту, затем ML-классификаторы, OCR-проверка текста на картинке и лишь в пограничных случаях (confidence 0.5–0.9) — живой ревьюер. ML фильтрует основной поток за миллисекунды, человек разбирает только спорное.
+
+**Уровни**:
 
 | Уровень | Что | Задержка |
 |---------|-----|---------|
@@ -1034,7 +1066,9 @@ PhotoUploaded → ML worker
 
 ---
 
-## Q19. (!) CDN strategy: CloudFront, edge resize, HTTP/3?
+## Q19. (!) Стратегия CDN: CloudFront, edge resize, HTTP/3?
+
+Раздача медиа полностью лежит на CDN: фото кешируются на edge-POP-ах рядом с пользователем, отдаются за десятки миллисекунд, а origin (S3) трогается только при cache miss. Ключевые приёмы — ресайз и выбор формата (AVIF/WebP) прямо на edge и HTTP/3 для медленных мобильных сетей.
 
 Поток получения фото:
 
@@ -1089,7 +1123,7 @@ function handler(event) {
 
 ## Q20. Viral photo: hot key и prefetch?
 
-Когда фото публикует знаменитость и за минуту прилетает 1M просмотров:
+Вирусное фото создаёт hot key — концентрированную нагрузку на один S3-prefix, один регион origin и метаданные в Redis. Лечится распределением (рандомный суффикс ключа, multi-region origin) и упреждающим прогревом: при публикации знаменитости фото проактивно заливается на все POP-ы, пока трафик ещё не пришёл.
 
 **Проблемы**:
 
@@ -1121,7 +1155,7 @@ public void prewarm(PhotoPublishedEvent event) {
 
 ## Q21. Cache invalidation при delete photo?
 
-Проблема: 300+ POP-ов закешировали `/p/abc123.jpg`. Пользователь нажимает Delete. Как убрать?
+Глобально инвалидировать CDN дорого и медленно, поэтому удаление решают на уровне источника, а не CDN: фото помечается `deleted=true` в метаданных, перестаёт показываться в ленте/профиле, а сам файл удаляется из S3 фоновым job-ом через 30 дней. Прямой `create-invalidation` оставляют на редкие исключения.
 
 **Стратегии**:
 
@@ -1152,6 +1186,8 @@ UPDATE users SET deleted_at = now(), pii_redacted = true WHERE user_id = ?;
 ---
 
 ## Q22. (!) Multi-region deployment и consistency?
+
+Каждый пользователь привязан к home-региону (по IP при регистрации): туда идут все его записи, чтения берутся из локальной реплики. Между регионами — асинхронная репликация с лагом ~100ms–1s, поэтому консистентность eventual. Локальная задержка важнее мгновенной глобальной согласованности.
 
 Архитектура ниже:
 
@@ -1204,7 +1240,9 @@ flowchart TB
 
 ---
 
-## Q23. Rate limiting: upload, API?
+## Q23. Rate limiting: загрузки и API?
+
+Лимиты накладываются на нескольких уровнях — по IP, по пользователю и по конкретному действию — потому что разные злоупотребления требуют разных ограничений: DDoS режется на IP/edge, спам-подписки — на пользователе. Счётчики живут в Redis с TTL, алгоритм (token bucket / sliding window) подбирается под уровень.
 
 Многоуровневое (см. [Rate limiter](design-rate-limiter-interview.md)):
 
@@ -1236,14 +1274,16 @@ public boolean allow(String key, int limit, Duration window) {
 
 **Мягкий vs жёсткий лимит**:
 
-- Мягкий: показать предупреждение, троттлинг на 1 сек.
+- Мягкий: показать предупреждение, троттлинг на 1 сек — не блокируем, лишь притормаживаем.
 - Жёсткий: 429 Too Many Requests, временный shadow ban.
 
 ---
 
 ## Q24. Failed uploads и idempotency?
 
-Сценарии:
+В распределённой загрузке ретраи и сбои неизбежны, поэтому каждый шаг сделан идемпотентным: повторный `finalize` не создаёт дубль (Idempotency-Key + `ON CONFLICT DO NOTHING`), оборванная загрузка докачивается через multipart, а недозавершённые файлы в S3 чистит lifecycle-rule. Цель — чтобы повтор любой операции давал тот же результат, что и первый вызов.
+
+**Сценарии**:
 
 1. **Обрыв сети посреди загрузки** → возобновление multipart (см. Q6).
 2. **Падение worker при обработке** → exactly-once через Kafka offset + идемпотентный INSERT (с `ON CONFLICT DO NOTHING`).
@@ -1278,7 +1318,9 @@ if (existing.isPresent()) {
 
 ## Q25. AP vs CP: какой trade-off выбирает Instagram?
 
-**Instagram — AP** (Availability + Partition tolerance):
+Instagram выбирает **AP** (Availability + Partition tolerance): соцсеть должна оставаться доступной всегда, а несколько секунд рассинхрона ленты или лайков пользователь даже не заметит. Strong consistency включают точечно — там, где цена ошибки высока (пароль, уникальность username, платежи).
+
+**Instagram — AP**:
 
 - Лента может показать устаревшие данные на несколько секунд → OK.
 - Лайки видны не мгновенно во всех регионах → OK.
@@ -1310,6 +1352,8 @@ Trade-offs:
 ---
 
 ## Q26. Capacity planning: число серверов и рост?
+
+Это перевод нагрузки из Q2 в железо: stateless app-tier масштабируется горизонтально (~10k инстансов в Kubernetes), под медиа и ML — отдельные CPU/GPU-пулы, под хранилища — sharded Postgres, Cassandra, Redis, ES. Главные рычаги стоимости — многоуровневое хранилище (hot S3 → cold Glacier) и сжатие на edge; запас по мощности держат +50% от пика под вирусные всплески.
 
 **Сейчас** (приближение):
 
