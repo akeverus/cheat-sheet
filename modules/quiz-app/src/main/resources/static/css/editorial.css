@@ -1254,6 +1254,26 @@ html[data-design="editorial"] .stats-page .stats-search-action:hover { backgroun
 
 /* Сводка stats-grid + accuracy-bar */
 html[data-design="editorial"] .stats-page .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--space-3); }
+/* Мобайл (<540px): оба stat-грида в 2 колонки (2+2+2) — единообразие. У аналитики
+   контейнер уже (offset ~129), и auto-fit падал в 1 колонку (6 плиток в высокий
+   столбец, много пустоты справа), расходясь с настройками (2+2+2). Проверено @375:
+   2 колонки по 115px, без переполнения плиток и страницы. */
+@media (max-width: 539px) {
+  html[data-design="editorial"] .settings-page .stats-grid,
+  html[data-design="editorial"] .stats-page .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+/* Планшетная полоса: auto-fit упаковывает 6 stat-плиток как 5+1 / 4+2 — одинокая
+   плитка-сирота справа. Форсим 3 колонки → ровные 3+3. Границы РАЗНЫЕ у страниц,
+   т.к. контейнеры разной ширины: settings капится на 860 и доходит до «6 в ряд»
+   при ~843px вьюпорта; .stats-grid на аналитике полноширинный (offset ~129) и
+   доходит до 6 в ряд только при ~909px. Замерено Playwright. Вне полос:
+   <540 auto-fit → 2+2+2 (мобайл), выше — 6 в ряд (десктоп). */
+@media (min-width: 540px) and (max-width: 842px) {
+  html[data-design="editorial"] .settings-page .stats-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 540px) and (max-width: 908px) {
+  html[data-design="editorial"] .stats-page .stats-grid { grid-template-columns: repeat(3, 1fr); }
+}
 html[data-design="editorial"] .stats-page .stat-item {
   padding: var(--space-3) var(--space-4); border: var(--rule-weight) solid var(--color-border-primary);
   border-radius: var(--border-radius-md); background: var(--color-bg-primary); text-align: left;
