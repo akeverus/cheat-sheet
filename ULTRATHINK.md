@@ -4,7 +4,7 @@ description: "Полный аудит всех 305 interview-файлов на 2
 updated: "2026-06-02"
 status: "done"
 audit_version: 5
-progress: "✅ ЗАВЕРШЕНО 2026-06-02. Финальный аудит: 305/305 имеют json, 305/305 gate-PASS, 305/305 TOC==## Q==json (полнота). 0 callouts, 0 Tier-1 маркеров, 0 дубликатов ## Q, 0 несбалансированных code-fence. Lane 1 (callout-strip 151) + Lane 2 A/B (55 single-blob restore+json, e1f74dd0→1cafd2df) + Lane 3 (8 одиночных зарытых заголовков, 3f4a09df + observability f6b21e3a) + Lane 4 (12 round-2 single-blob: batch A 5f08f642 + batch B ff1a6335) ГОТОВЫ. spring-integration TOC дополнен до 15 (221cea0e). НОВЫЙ класс дефекта «зарытые хвостовые вопросы» (TOC>заголовков, gate пропускал — и md, и json обрезаны до K) полностью устранён: completeness-gate TOC==## Q==json достигнут по всем 305. Цель «человекочитаемый mcq-json по КАЖДОМУ файлу» выполнена."
+progress: "✅ ЗАВЕРШЕНО 2026-06-02 (включая Lane 5 — русификация прозы). Финальный ре-аудит: 305/305 имеют json, 305/305 gate-PASS, 305/305 TOC==## Q==json (полнота); 0 callouts/Tier-1/дубликатов ## Q/несбалансир. fence; проза .md — медиана cyr 0.719, минимум 0.451, 0 файлов <0.45 (было 75). Lane 1 (callout-strip 151) + Lane 2 A/B (55 single-blob) + Lane 3 (8 зарытых + observability) + Lane 4 (12 round-2 single-blob) + Lane 5 (русификация прозы 75 .md, 12 батчей ≤6, c3226303→финал) ГОТОВЫ. spring-integration TOC→15 (221cea0e); go-memory-gc мета-паддинг снят (8ddc2edc). Цель — оформление + ЧЕЛОВЕКОЧИТАЕМОСТЬ + человекочитаемый mcq-json по КАЖДОМУ файлу — выполнена."
 ---
 
 # ULTRATHINK v5 — exhaustive per-file audit plan
@@ -353,15 +353,17 @@ Pass: `OK FILE.md`.
 
 > ⚠️ **Примечание к пофайловой таблице ниже:** колонка `callouts` и вердикты `🟡 callouts-in-md` — это исторический снимок ДО Lane 1 (callout-strip). Фактически по корпусу сейчас **0 callouts**; таблица оставлена как аудит-trail, её callout-числа неактуальны.
 
-### 🔴 НОВАЯ НАХОДКА — англоязычная проза .md (человекочитаемость, 2026-06-02)
+### 🟢 LANE 5 — русификация англоязычной прозы .md ЗАВЕРШЕНА (человекочитаемость, 2026-06-02)
 
-Аудит cyr-ratio прозы .md (без кода/frontmatter/headings/links) по 305 файлам. **Медиана 0.696** (корпус в целом русский), но выявлен когортный дефект: **75 файлов с прозой < 0.45 кириллицы** (из них **55 тяжёлых < 0.30**, **43 почти полностью EN < 0.15**). Это НЕ принятый билингвальный регистр json (русская связка + изолированные термины), а **полные английские предложения и буллеты** в ответах: напр. `supply-chain-security` — «Software trusts dependencies implicitly (thousands of transitive deps)», «Updates auto-applied»; `edge-computing` — «run application logic at edge of network, not central DC/cloud», «Centralized: 1-few regions». Прямо противоречит правилу «все cheatsheets на русском» ([[feedback_readability]]).
+Аудит cyr-ratio прозы .md (без кода/frontmatter/headings/links) по 305 файлам выявил когортный дефект: **75 файлов с прозой < 0.45 кириллицы** (55 тяжёлых < 0.30, 43 почти полностью EN < 0.15) — НЕ принятый билингвальный регистр, а **полные английские предложения и буллеты** в ответах (`edge-computing`: «run application logic at edge of network»; `supply-chain-security`: «Software trusts dependencies implicitly»). Противоречило правилу «все cheatsheets на русском» ([[feedback_readability]]).
 
-**Распределение:** <0.15 — 43; 0.15–0.30 — 12; 0.30–0.45 — 20; 0.45–0.60 — 37; ≥0.60 — 193.
+**Пользователь одобрил русификацию всех 75** (AskUserQuestion 2026-06-02). Выполнено воркфлоу `.claude/wf-russify-md.js` (один агент на файл, перевод ТОЛЬКО прозы) + детерминированный верификатор `verify_russify.py`. **12 батчей по ≤6** (батч из 12 ловил rate-limit — 8/12 не дописали; уроки → батч ≤6, [[project_workflow_rate_limit]]). Инварианты сохранены строго: `## Q`-заголовки/якоря байт-в-байт, nav-ссылки TOC, код (включая комментарии), frontmatter, MCQ-json — неприкосновенны. Атомарные per-batch коммиты (c3226303…финал).
 
-**Топ-тяжёлые (<0.06):** edge-computing(0.015), design-chat-system(0.019), network-performance(0.026), bff-pattern(0.026), strangler-fig(0.032), caching-performance(0.032), zero-trust(0.035), mtls(0.036), secrets-management(0.041), vault(0.043), load-testing(0.044), database-performance(0.045), supply-chain-security(0.045), api-design-best-practices(0.050), property-based-testing(0.052), linkerd(0.059), istio(0.059).
+**Итог (полный ре-аудит после Lane 5):**
+- **Структура НЕ затронута:** 305/305 have json, 305/305 gate-PASS, 305/305 TOC-полнота, **0 структурных дефектов** — русификация ничего не сломала.
+- **Читаемость:** **0 файлов** с прозой <0.45 (было 75); медиана cyr **0.719**, минимум **0.451** (был 0.015). Весь корпус теперь преимущественно русский.
 
-**Напряжение (почему решает пользователь):** (а) .md interview-файлы — лань user/auto-improve, [[project_mcq_migration]] фиксирует риск конфликта (auto-improve рерайтит историю, осиротляет коммиты); (б) `supply-chain-security` — gold-standard, выбранный пользователем, и он СОДЕРЖИТ англо-прозу → возможно, для тех. топиков это толерируется. Решение о русификации .md-прозы вынесено пользователю (см. AskUserQuestion 2026-06-02). MCQ-json-зона (моя) — полностью чиста независимо от этого.
+**Мелкие правки в процессе:** редкие соскоки агентов (перевод комментария в коде / frontmatter-description / near-miss cyr) ловились верификатором и точечно откатывались/добивались. Предсуществующая опечатка в заголовке `edge-computing` Q2 («серверlessless») — TODO косметика (заголовок+TOC синхронны, ссылка рабочая), вне scope русификации прозы.
 
 ## Пофайловая таблица (305 строк) — оформление + json + читаемость
 
