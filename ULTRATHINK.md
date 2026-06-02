@@ -353,6 +353,16 @@ Pass: `OK FILE.md`.
 
 > ⚠️ **Примечание к пофайловой таблице ниже:** колонка `callouts` и вердикты `🟡 callouts-in-md` — это исторический снимок ДО Lane 1 (callout-strip). Фактически по корпусу сейчас **0 callouts**; таблица оставлена как аудит-trail, её callout-числа неактуальны.
 
+### 🔴 НОВАЯ НАХОДКА — англоязычная проза .md (человекочитаемость, 2026-06-02)
+
+Аудит cyr-ratio прозы .md (без кода/frontmatter/headings/links) по 305 файлам. **Медиана 0.696** (корпус в целом русский), но выявлен когортный дефект: **75 файлов с прозой < 0.45 кириллицы** (из них **55 тяжёлых < 0.30**, **43 почти полностью EN < 0.15**). Это НЕ принятый билингвальный регистр json (русская связка + изолированные термины), а **полные английские предложения и буллеты** в ответах: напр. `supply-chain-security` — «Software trusts dependencies implicitly (thousands of transitive deps)», «Updates auto-applied»; `edge-computing` — «run application logic at edge of network, not central DC/cloud», «Centralized: 1-few regions». Прямо противоречит правилу «все cheatsheets на русском» ([[feedback_readability]]).
+
+**Распределение:** <0.15 — 43; 0.15–0.30 — 12; 0.30–0.45 — 20; 0.45–0.60 — 37; ≥0.60 — 193.
+
+**Топ-тяжёлые (<0.06):** edge-computing(0.015), design-chat-system(0.019), network-performance(0.026), bff-pattern(0.026), strangler-fig(0.032), caching-performance(0.032), zero-trust(0.035), mtls(0.036), secrets-management(0.041), vault(0.043), load-testing(0.044), database-performance(0.045), supply-chain-security(0.045), api-design-best-practices(0.050), property-based-testing(0.052), linkerd(0.059), istio(0.059).
+
+**Напряжение (почему решает пользователь):** (а) .md interview-файлы — лань user/auto-improve, [[project_mcq_migration]] фиксирует риск конфликта (auto-improve рерайтит историю, осиротляет коммиты); (б) `supply-chain-security` — gold-standard, выбранный пользователем, и он СОДЕРЖИТ англо-прозу → возможно, для тех. топиков это толерируется. Решение о русификации .md-прозы вынесено пользователю (см. AskUserQuestion 2026-06-02). MCQ-json-зона (моя) — полностью чиста независимо от этого.
+
 ## Пофайловая таблица (305 строк) — оформление + json + читаемость
 
 Колонки: **## Q** реальных заголовков, **json** наличие сида, **gate** результат gate_clean, **callouts** число legacy `> [!mcq]`, **blob** single-blob defect, **seq** последовательность нумерации, **ru** доля кириллицы в прозе, **вердикт** оформления.
