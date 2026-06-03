@@ -101,8 +101,25 @@
          Preload — браузер скачивает её параллельно с парсингом head → меньше FOUC. -->
     <link rel="preload" as="style" th:href="@{/css/editorial.css(v=60)}">
     <link rel="stylesheet" th:href="@{/css/editorial.css(v=60)}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- SRI (integrity) + crossorigin: защита от компрометации CDN — браузер
+         выполнит ресурс, только если его sha512 совпадает. Хэши сверены с
+         authoritative cdnjs API И независимо пересчитаны из самих файлов.
+         Версия пиннится (11.9.0, immutable URL) → SRI стабилен. mermaid/chart.js
+         на jsdelivr идут БЕЗ SRI: там диапазон версий (@11 / latest), хэш «поплыл»
+         бы при обновлении CDN — для них нужен exact-pin + live-проверка. -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"
+          integrity="sha512-Jk4AqjWsdSzSWCSuQTfYRIF84Rq/eV0G2+tu07byYwHcbTGfdmLrHjUSwvzp5HvbiqK4ibmNwdcG49Y5RGYPTg=="
+          crossorigin="anonymous" referrerpolicy="no-referrer">
+    <!-- defer: highlight.js нужен только в DOMContentLoaded-листенере ниже (и в
+         app.js на AJAX-контенте) — оба срабатывают ПОСЛЕ парсинга. defer-скрипты
+         исполняются по порядку до DOMContentLoaded, поэтому hljs гарантированно
+         готов к подсветке, но больше НЕ блокирует первый рендер (render-blocking).
+         Guard `typeof hljs === 'undefined'` ниже всё равно деградирует мягко.
+         ВАЖНО: mermaid НЕ deferим — mermaid-init вызывает mermaid.initialize()
+         инлайн во время парсинга; defer там убил бы все диаграммы. -->
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"
+            integrity="sha512-D9gUyxqja7hBtkWpPWGt9wfbfaMGVt9gnyCvYa+jojwwPHLCzUm5i8rpk7vD7wNee9bA35eYIjobYPaQuKS1MQ=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Guard: hljs может не подгрузиться (CSP, offline) — оставляем код без подсветки, без падения.
