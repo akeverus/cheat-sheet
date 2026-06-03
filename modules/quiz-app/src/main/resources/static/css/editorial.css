@@ -361,8 +361,13 @@ html[data-design="editorial"] :not(pre) > code {
      не трогает. Снимает горизонтальный скролл на 375px в вариантах/пояснениях. */
   overflow-wrap: anywhere;
 }
-/* старый .markdown-content code красит инлайн-код холодным индиго — перебиваем */
-html[data-design="editorial"] .markdown-content code,
+/* старый .markdown-content code красит инлайн-код холодным индиго — перебиваем.
+   ВАЖНО: только :not(pre) > code (инлайн). Широкий `.markdown-content code` (без
+   :not(pre)) перекрывал и БЛОЧНЫЙ `pre code.hljs` (специфичность выше, чем у
+   atom-one-dark `.hljs{color:#abb2bf}`), перекрашивая базовый текст подсветки в
+   --color-text-primary. В тёмной теме это светлый цвет (читаемо), но в СВЕТЛОЙ —
+   тёмный (#211C15) поверх тёмного фона hljs (#282c34) → код-блок становился
+   нечитаемым (контраст ~1.1). Оставляем подсветке её собственный базовый цвет. */
 html[data-design="editorial"] .markdown-content :not(pre) > code { color: var(--color-text-primary); }
 html[data-design="editorial"] pre {
   font-family: var(--font-family-mono);
