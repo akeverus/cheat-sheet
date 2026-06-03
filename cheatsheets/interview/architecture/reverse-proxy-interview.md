@@ -46,57 +46,57 @@ updated: "2026-05-21"
 
 ### Основы
 
-- [Q1. Что такое reverse proxy и зачем он нужен?](#q1--что-такое-reverse-proxy-и-зачем-он-нужен) (!)
-- [Q2. Reverse proxy vs forward proxy — в чём разница?](#q2--reverse-proxy-vs-forward-proxy--в-чём-разница) (!)
-- [Q3. Reverse proxy vs Load Balancer — где грань?](#q3--reverse-proxy-vs-load-balancer--где-грань) (!)
+- [Q1. (!) Что такое reverse proxy и зачем он нужен?](#q1--что-такое-reverse-proxy-и-зачем-он-нужен)
+- [Q2. (!) Reverse proxy vs forward proxy — в чём разница?](#q2--reverse-proxy-vs-forward-proxy--в-чём-разница)
+- [Q3. (!) Reverse proxy vs Load Balancer — где грань?](#q3--reverse-proxy-vs-load-balancer--где-грань)
 - [Q4. Основные функции reverse proxy](#q4-основные-функции-reverse-proxy)
-- [Q5. Header manipulation: X-Forwarded-For, X-Real-IP, X-Forwarded-Proto](#q5--header-manipulation-x-forwarded-for-x-real-ip-x-forwarded-proto)
+- [Q5. (!) Проброс клиентских заголовков: `X-Forwarded-For`, `X-Real-IP`, `X-Forwarded-Proto`](#q5--проброс-клиентских-заголовков-x-forwarded-for-x-real-ip-x-forwarded-proto)
 
 ### Nginx
 
-- [Q6. Nginx как reverse proxy: upstream и proxy_pass](#q6--nginx-как-reverse-proxy-upstream-и-proxy_pass) (!)
-- [Q7. Nginx proxy_cache — как работает кеш?](#q7-nginx-proxy_cache--как-работает-кеш)
-- [Q8. Nginx limit_req — rate limiting на leaky bucket](#q8--nginx-limit_req--rate-limiting-на-leaky-bucket)
-- [Q9. Nginx worker_processes и worker_connections — production tuning](#q9-nginx-worker_processes-и-worker_connections--production-tuning)
-- [Q10. Trailing slash и proxy_pass — известный gotcha](#q10-trailing-slash-и-proxy_pass--известный-gotcha)
+- [Q6. (!) Nginx как reverse proxy: `upstream` и `proxy_pass`](#q6--nginx-как-reverse-proxy-upstream-и-proxy_pass)
+- [Q7. Nginx `proxy_cache` — как работает кеш?](#q7-nginx-proxy_cache--как-работает-кеш)
+- [Q8. (!) Nginx `limit_req` — rate limiting на leaky bucket](#q8--nginx-limit_req--rate-limiting-на-leaky-bucket)
+- [Q9. Nginx `worker_processes` и `worker_connections` — production-тюнинг](#q9-nginx-worker_processes-и-worker_connections--production-тюнинг)
+- [Q10. Trailing slash и `proxy_pass` — известный gotcha](#q10-trailing-slash-и-proxy_pass--известный-gotcha)
 
 ### HAProxy
 
-- [Q11. HAProxy: frontend, backend, ACL](#q11--haproxy-frontend-backend-acl)
-- [Q12. HAProxy stick-table — sticky sessions и rate limiting](#q12--haproxy-stick-table--sticky-sessions-и-rate-limiting)
-- [Q13. Health checks: active vs passive](#q13-health-checks-active-vs-passive)
+- [Q11. (!) Структура конфига HAProxy: `frontend`, `backend`, `ACL`](#q11--структура-конфига-haproxy-frontend-backend-acl)
+- [Q12. (!) HAProxy `stick-table` — sticky sessions и rate limiting](#q12--haproxy-stick-table--sticky-sessions-и-rate-limiting)
+- [Q13. Health-проверки backendов: активные vs пассивные](#q13-health-проверки-backendов-активные-vs-пассивные)
 
 ### Envoy и Traefik
 
-- [Q14. Envoy: filter chain и xDS API](#q14--envoy-filter-chain-и-xds-api) (!)
+- [Q14. (!) Envoy: filter chain и xDS API](#q14--envoy-filter-chain-и-xds-api)
 - [Q15. Envoy как sidecar в service mesh](#q15-envoy-как-sidecar-в-service-mesh)
 - [Q16. Traefik: автодискавери через labels](#q16-traefik-автодискавери-через-labels)
-- [Q17. Сравнение: Nginx vs HAProxy vs Envoy vs Traefik](#q17--сравнение-nginx-vs-haproxy-vs-envoy-vs-traefik)
+- [Q17. (!) Сравнение: Nginx vs HAProxy vs Envoy vs Traefik](#q17--сравнение-nginx-vs-haproxy-vs-envoy-vs-traefik)
 
 ### SSL/TLS
 
-- [Q18. SSL termination vs SSL passthrough](#q18--ssl-termination-vs-ssl-passthrough) (!)
+- [Q18. (!) SSL termination vs SSL passthrough — где расшифровывать HTTPS?](#q18--ssl-termination-vs-ssl-passthrough--где-расшифровывать-https)
 - [Q19. mTLS на reverse proxy](#q19-mtls-на-reverse-proxy)
-- [Q20. Sticky session: cookie, IP-hash, JWT-based](#q20--sticky-session-cookie-ip-hash-jwt-based)
+- [Q20. (!) Привязка сессии (sticky session): cookie, IP-hash, JWT-based](#q20--привязка-сессии-sticky-session-cookie-ip-hash-jwt-based)
 
 ### HTTP-протоколы
 
-- [Q21. HTTP/1.1, HTTP/2, HTTP/3 — поддержка upstream/downstream](#q21--http11-http2-http3--поддержка-upstreamdownstream) (!)
-- [Q22. WebSocket proxying — Upgrade header и long-lived connections](#q22-websocket-proxying--upgrade-header-и-long-lived-connections)
-- [Q23. gRPC proxying — HTTP/2 end-to-end](#q23-grpc-proxying--http2-end-to-end)
+- [Q21. (!) HTTP/1.1, HTTP/2, HTTP/3 — поддержка upstream/downstream](#q21--http11-http2-http3--поддержка-upstreamdownstream)
+- [Q22. Проксирование WebSocket — заголовок `Upgrade` и long-lived соединения](#q22-проксирование-websocket--заголовок-upgrade-и-long-lived-соединения)
+- [Q23. Проксирование gRPC — HTTP/2 от клиента до backendа](#q23-проксирование-grpc--http2-от-клиента-до-backendа)
 - [Q24. Connection pooling и keepalive к upstream](#q24-connection-pooling-и-keepalive-к-upstream)
 
 ### Кеширование и rate limiting
 
 - [Q25. Кеширование статики и динамики, cache hit ratio](#q25-кеширование-статики-и-динамики-cache-hit-ratio)
-- [Q26. Compression: gzip vs brotli](#q26-compression-gzip-vs-brotli)
+- [Q26. Сжатие ответов: gzip vs brotli](#q26-сжатие-ответов-gzip-vs-brotli)
 - [Q27. Request/response transformation на L7](#q27-requestresponse-transformation-на-l7)
 
 ### Production tuning
 
-- [Q28. Slowloris и slow client — как защититься?](#q28--slowloris-и-slow-client--как-защититься) (!)
+- [Q28. (!) Slowloris и slow client — как защититься?](#q28--slowloris-и-slow-client--как-защититься)
 - [Q29. Chunked encoding и буферизация ответов](#q29-chunked-encoding-и-буферизация-ответов)
-- [Q30. Observability: access log, metrics, distributed tracing](#q30-observability-access-log-metrics-distributed-tracing)
+- [Q30. Наблюдаемость прокси: access log, метрики, distributed tracing](#q30-наблюдаемость-прокси-access-log-метрики-distributed-tracing)
 
 ---
 
@@ -115,13 +115,13 @@ flowchart LR
 
 **Зачем нужен:**
 
-- **Скрытие топологии backendов** — клиент знает один URL, внутренняя структура (порты, языки, K8s-pods) может меняться без редеплоя клиентов.
-- **TLS termination** — сертификаты живут в одном месте, backend-ы работают по plain HTTP внутри VPC.
-- **Кросс-функциональные требования** — `caching`, `compression`, `rate limiting`, `auth` вынесены из сервисов в прокси.
-- **Безопасность** — `WAF`, фильтрация атак, ограничение IP, защита от `Slowloris` и `DDoS` на L7.
-- **Observability** — единая точка для access-log, метрик, distributed tracing.
+- **Скрытие топологии backendов** — клиент знает один URL, а внутренняя структура (порты, языки, K8s-pods) меняется без редеплоя клиентов.
+- **TLS termination** — сертификаты живут в одном месте, а backend-ы работают по plain HTTP внутри доверенной сети VPC.
+- **Кросс-функциональные требования** — `caching`, `compression`, `rate limiting`, `auth` вынесены из сервисов в прокси, чтобы не дублировать их в каждом языке и фреймворке.
+- **Безопасность** — `WAF`, фильтрация атак, ограничение по IP, защита от `Slowloris` и `DDoS` на L7.
+- **Наблюдаемость** — единая точка для access-log, метрик и distributed tracing.
 
-Без reverse proxy эти задачи дублируются в каждом сервисе или, ещё хуже, делаются по-разному (что приводит к security-инцидентам).
+Суть в том, что все эти задачи сквозные: без прокси их пришлось бы реализовывать в каждом сервисе. А значит — по-разному, с разным качеством и разными дырами в безопасности. Прокси собирает их в одном месте и применяет единообразно ко всему трафику.
 
 ## Q2. (!) Reverse proxy vs forward proxy — в чём разница?
 
@@ -165,7 +165,7 @@ flowchart LR
 | Алгоритмы: round-robin, least-conn, hash | Routing по URL/host/header |
 | Пример: AWS NLB, IPVS, keepalived | Пример: Nginx с одним backend, кеширующий статику |
 
-**Практически:** `Nginx`, `HAProxy`, `Envoy` — это **L7 reverse proxy с функцией балансировки**. Если за прокси один backend — это «чистый» reverse proxy. Если несколько — он одновременно играет роль L7 load balancer.
+**Практически:** `Nginx`, `HAProxy`, `Envoy` — это **L7 reverse proxy с функцией балансировки**, и эти две роли в них неразделимы. Если за прокси один backend — он работает как «чистый» reverse proxy (балансировать нечего). Если backendов несколько — тот же прокси одновременно становится L7 load balancer. То есть граница проходит не по продукту, а по конфигурации.
 
 **Когда нужны оба слоя:**
 
@@ -195,9 +195,9 @@ flowchart LR
 
 В service mesh (Istio, Linkerd) большая часть этого делается **на каждый pod** через sidecar Envoy.
 
-## Q5. (!) Header manipulation: `X-Forwarded-For`, `X-Real-IP`, `X-Forwarded-Proto`
+## Q5. (!) Проброс клиентских заголовков: `X-Forwarded-For`, `X-Real-IP`, `X-Forwarded-Proto`
 
-Когда запрос проходит через reverse proxy, для backend-а исходный IP клиента теряется — он видит IP прокси. Это решается стандартными forwarded-заголовками.
+Главная проблема: когда запрос проходит через reverse proxy, backend видит IP прокси, а не клиента — исходный адрес теряется на TCP-уровне. Forwarded-заголовки восстанавливают эту информацию, перенося её в HTTP-слой, где её прочитает приложение.
 
 | Заголовок | Содержит | Кто ставит |
 |---|---|---|
@@ -222,10 +222,10 @@ location / {
 
 **Подводные камни:**
 
-- **Spoofing:** клиент может сам прислать `X-Forwarded-For: 1.2.3.4`. Прокси должен **затирать** или дополнять, а не доверять. В Nginx: `real_ip_header X-Forwarded-For; set_real_ip_from <trusted-proxy-net>;`.
-- **Цепочка из нескольких прокси:** backend получает список IP, реальный клиент — самый левый, но только если все прокси корректно аппендили.
-- **Spring Boot:** для корректного `request.getRemoteAddr()` нужно настроить `server.forward-headers-strategy: native` (Tomcat) или `framework`.
-- **HTTPS-detection:** если backend проверяет `request.isSecure()`, нужен `X-Forwarded-Proto: https`, иначе после TLS termination сервис думает что трафик plain.
+- **Подмена (spoofing):** клиент может сам прислать `X-Forwarded-For: 1.2.3.4` и притвориться доверенным IP. Поэтому прокси должен **затирать или дополнять** заголовок, а не доверять присланному. В Nginx: `real_ip_header X-Forwarded-For; set_real_ip_from <trusted-proxy-net>;` — Nginx примет XFF только от доверенной сети прокси.
+- **Цепочка из нескольких прокси:** backend получает список IP, реальный клиент — самый левый. Но это верно, только если каждый прокси в цепочке корректно дописывал свой адрес.
+- **Spring Boot:** чтобы `request.getRemoteAddr()` вернул реальный IP клиента, а не прокси, нужно включить `server.forward-headers-strategy: native` (для Tomcat) или `framework`. Без этого фреймворк игнорирует XFF из соображений безопасности.
+- **Определение HTTPS:** если backend проверяет `request.isSecure()`, ему нужен `X-Forwarded-Proto: https`. Иначе после TLS termination прокси приходит к сервису по plain HTTP, и сервис ошибочно считает соединение незащищённым — ломаются генерация ссылок и редиректы.
 
 ## Q6. (!) Nginx как reverse proxy: `upstream` и `proxy_pass`
 
@@ -279,7 +279,7 @@ http {
 
 ## Q7. Nginx `proxy_cache` — как работает кеш?
 
-Кеш в Nginx — это файлы на диске (или tmpfs/SSD) с индексом в shared memory. Прокси может кешировать ответы upstream и отдавать их без обращения к backendу.
+Кеш в Nginx устроен так: сами ответы лежат файлами на диске (или tmpfs/SSD), а индекс ключей — в shared memory, общей для всех worker-процессов. При повторном запросе Nginx находит ключ в памяти и отдаёт файл, не трогая backend. Это снимает нагрузку с backendа и режет latency для повторяющихся запросов.
 
 ```nginx
 http {
@@ -314,11 +314,11 @@ http {
 - `proxy_cache_lock` — защита от cache stampede: при miss один запрос идёт в backend, остальные ждут ответа.
 - `$upstream_cache_status` — `HIT` / `MISS` / `EXPIRED` / `STALE` / `UPDATING` / `BYPASS`.
 
-**Чего НЕ умеет Nginx из коробки:** purge по тегу/паттерну (только по точному ключу, и то только в `nginx-plus` или с модулем `ngx_cache_purge`). Для современных задач CDN-уровня используют `Varnish` или коммерческие CDN.
+**Чего НЕ умеет Nginx из коробки:** инвалидация по тегу или паттерну. Сбросить можно только по точному ключу, да и то лишь в `nginx-plus` или с модулем `ngx_cache_purge`. Это серьёзное ограничение: если нужно «сбросить всё про товар X», в обычном Nginx это сделать нельзя. Для задач CDN-уровня берут `Varnish` (с гибким VCL и tag-based purge) или коммерческие CDN.
 
 ## Q8. (!) Nginx `limit_req` — rate limiting на leaky bucket
 
-Защита backendа от перегрузки и злоупотреблений на уровне прокси.
+`limit_req` ограничивает частоту запросов прямо на прокси — это защищает backend от перегрузки и злоупотреблений ещё до того, как запрос до него дойдёт. В основе лежит алгоритм leaky bucket: запросы «капают» в ведро, утекают с фиксированной скоростью, а переполнение отбрасывается.
 
 ```nginx
 http {
@@ -349,13 +349,13 @@ http {
 
 **Подводные камни:**
 
-- `$binary_remote_addr` берёт IP клиента **относительно Nginx**. Если перед ним ещё один прокси/LB — все запросы идут с одного IP. Нужно настроить `real_ip` или брать ключ из `X-Forwarded-For`.
-- Memory: `10m` ≈ 160K уникальных IP. На крупном трафике — увеличить.
-- Это локальный счётчик на одном Nginx. Если их несколько за L4 LB — лимит **не глобальный**. Для глобального нужен `Redis`-backed модуль или внешний сервис (`Envoy` + `Ratelimit Service`).
+- **Ключ за вторым прокси.** `$binary_remote_addr` берёт IP клиента так, как его видит Nginx. Если перед Nginx стоит ещё один прокси или LB, все запросы придут с его одного IP — и лимит схлопнет весь трафик в один счётчик. Нужно настроить `real_ip` или брать ключ из `X-Forwarded-For`.
+- **Память зоны.** `10m` вмещает примерно 160K уникальных IP. На крупном трафике размер зоны нужно увеличивать, иначе старые записи начнут вытесняться.
+- **Лимит локальный, а не глобальный.** Счётчик живёт в памяти одного Nginx. Если за L4 LB стоит несколько инстансов Nginx, реальный лимит умножается на их число — глобального ограничения нет. Для него нужен `Redis`-backed модуль или внешний сервис (`Envoy` + `Ratelimit Service`).
 
-## Q9. Nginx `worker_processes` и `worker_connections` — production tuning
+## Q9. Nginx `worker_processes` и `worker_connections` — production-тюнинг
 
-Архитектура Nginx — master + N workers, каждый worker однопоточный event loop (epoll).
+Чтобы понимать эти параметры, надо знать архитектуру Nginx: master-процесс + N worker-процессов, и каждый worker — это однопоточный event loop поверх epoll. Один поток обслуживает тысячи соединений без блокировки, переключаясь между ними по событиям сокетов. Отсюда два главных параметра: сколько workerов запускать и сколько соединений каждый держит.
 
 ```nginx
 worker_processes auto;          # = number of CPU cores
@@ -390,14 +390,14 @@ http {
 }
 ```
 
-**Расчёт capacity:** `max_clients = worker_processes × worker_connections / 2`. Делим на 2, так как каждое клиентское соединение тянет одно upstream-соединение.
+**Расчёт пропускной способности:** `max_clients = worker_processes × worker_connections / 2`. Делить на 2 нужно потому, что в роли reverse proxy каждое клиентское соединение тянет за собой ещё одно — к upstream, и оба берутся из того же лимита `worker_connections`.
 
 **Типичные ошибки:**
 
-- `worker_processes 1` на 8-ядерной машине — не используется параллелизм.
-- `worker_connections 1024` — упрётесь в лимит при 1K RPS.
-- Низкий `worker_rlimit_nofile` — соединения отвергаются с `EMFILE: Too many open files`.
-- `keepalive_timeout 5s` — клиенты дропают persistent-соединения, лишний TLS handshake на каждый запрос.
+- `worker_processes 1` на 8-ядерной машине — задействовано одно ядро, остальные простаивают.
+- `worker_connections 1024` — потолок упрётся уже при ~1K RPS, дальше соединения встанут в очередь.
+- Низкий `worker_rlimit_nofile` — новые соединения отвергаются с `EMFILE: Too many open files`, потому что каждое соединение это файловый дескриптор.
+- `keepalive_timeout 5s` — клиенты слишком быстро теряют persistent-соединение, и каждый следующий запрос платит за новый TLS handshake.
 
 ## Q10. Trailing slash и `proxy_pass` — известный gotcha
 
@@ -423,16 +423,16 @@ location /api/ {
 }
 ```
 
-Это одна из самых частых ошибок при настройке Nginx — забывают `/` в `proxy_pass` и backend получает `/api/...` вместо чистого пути, либо наоборот.
+Правило простое: **slash после backend в `proxy_pass` означает «вырезать префикс `location`»**, его отсутствие — «передать URI как есть». Это одна из самых частых ошибок при настройке Nginx: забыли `/` — и backend получает `/api/users` вместо `/users`; поставили лишний — и наоборот теряется нужный префикс.
 
 **Дополнительно:**
 
-- Если в `proxy_pass` есть переменные (`proxy_pass http://$backend;`), правила переписывания **не применяются**, URI всегда передаётся as-is.
-- В таких случаях нужен явный `rewrite ^/api/(.*)$ /$1 break;` перед `proxy_pass`.
+- Если в `proxy_pass` есть переменная (`proxy_pass http://$backend;`), правила переписывания пути **не применяются вообще** — URI всегда уходит как есть, независимо от slash.
+- В таком случае путь нужно править явно через `rewrite ^/api/(.*)$ /$1 break;` перед `proxy_pass`.
 
-## Q11. (!) HAProxy: `frontend`, `backend`, `ACL`
+## Q11. (!) Структура конфига HAProxy: `frontend`, `backend`, `ACL`
 
-HAProxy — высокопроизводительный L4/L7 прокси, изначально заточенный под балансировку. Конфиг строится из трёх блоков.
+HAProxy — высокопроизводительный L4/L7 прокси, изначально заточенный под балансировку. Его конфиг строится из трёх ключевых блоков: `frontend` принимает трафик, `backend` его обслуживает, `ACL` — именованные условия, которые их связывают.
 
 ```haproxy
 global
@@ -490,9 +490,9 @@ backend grpc_servers
 
 **Преимущества HAProxy перед Nginx:**
 
-- Богаче ACL и stick-tables.
-- Лучше performance на чистом TCP/HTTP проксировании (без модулей под cache/scripting).
-- Встроенный admin socket с runtime API (`disable server backend/srv1` без reload).
+- Богаче язык ACL и stick-tables — сложную маршрутизацию и rate limiting описывать удобнее.
+- Выше производительность на чистом TCP/HTTP-проксировании: HAProxy не несёт модулей под кеш и scripting, поэтому hot path тоньше.
+- Встроенный admin socket с runtime API: `disable server backend/srv1` выводит сервер из ротации без перезагрузки конфига — критично для zero-downtime операций.
 
 ## Q12. (!) HAProxy `stick-table` — sticky sessions и rate limiting
 
@@ -529,7 +529,9 @@ backend app_servers
 - Distributed через `peers` — глобальный лимит на кластер прокси.
 - Runtime инспекция: `show table app_servers` в admin socket.
 
-## Q13. Health checks: active vs passive
+## Q13. Health-проверки backendов: активные vs пассивные
+
+Прокси должен знать, какие backend-серверы живы, чтобы не слать им трафик. Есть два подхода: активный — прокси сам периодически пробит сервер; пассивный — прокси делает выводы из ошибок на реальных клиентских запросах.
 
 | Тип | Active | Passive |
 |---|---|---|
@@ -616,7 +618,7 @@ static_resources:
                     socket_address: { address: backend, port_value: 8080 }
 ```
 
-**xDS** — это то, что превращает Envoy в platform-component. Control plane (Istio Pilot, Consul) пушит конфиг через gRPC stream, и Envoy инстансы обновляются без рестарта. Это позволяет управлять тысячами sidecar-прокси из одной точки.
+**xDS** — это то, что превращает Envoy из просто прокси в компонент платформы. Control plane (Istio Pilot, Consul) пушит конфиг через gRPC-stream, и инстансы Envoy обновляются на лету, без рестарта и без обрыва соединений. Именно это делает реальным управление тысячами sidecar-прокси из одной точки: меняешь правило в control plane — оно за секунды разъезжается по всему кластеру.
 
 ## Q15. Envoy как sidecar в service mesh
 
@@ -655,7 +657,7 @@ flowchart LR
 
 ## Q16. Traefik: автодискавери через labels
 
-`Traefik` — reverse proxy, спроектированный под динамические окружения (Docker, Kubernetes, Consul). Главная фишка — автоматическое чтение конфигурации из метаданных платформы.
+`Traefik` — reverse proxy, спроектированный под динамические окружения (Docker, Kubernetes, Consul). Его главная идея: не держать отдельный статический конфиг, а вычитывать маршруты прямо из метаданных платформы (Docker-labels, K8s CRD). Поднял контейнер с нужными labels — маршрут появился сам, без правки конфига и reload.
 
 **Docker labels:**
 
@@ -731,9 +733,9 @@ spec:
 - **Envoy** — service mesh, миллионы RPS, нужна динамическая конфигурация через control plane.
 - **Traefik** — Docker / K8s окружение, важен developer experience и автоконфиг.
 
-## Q18. (!) SSL termination vs SSL passthrough
+## Q18. (!) SSL termination vs SSL passthrough — где расшифровывать HTTPS?
 
-Два способа обработать HTTPS на reverse proxy.
+Два способа обработать HTTPS на reverse proxy. При **termination** прокси сам расшифровывает TLS и видит запрос открытым; при **passthrough** — пропускает зашифрованный TCP насквозь, не вскрывая. Выбор определяет, доступны ли L7-функции прокси.
 
 ```mermaid
 flowchart LR
@@ -773,7 +775,7 @@ location / {
 
 ## Q19. mTLS на reverse proxy
 
-`mTLS` (mutual TLS) — обе стороны TLS-handshake предъявляют сертификат. Reverse proxy может играть как клиента (к backend), так и сервера (к внешнему клиенту).
+`mTLS` (mutual TLS) — это TLS, в котором сертификат предъявляют **обе** стороны handshake, а не только сервер. То есть не только клиент проверяет сервер, но и сервер проверяет клиента. Reverse proxy при этом может выступать в любой роли: серверной — к внешнему клиенту, и клиентской — к backendу.
 
 **Nginx — клиентский сертификат от внешнего клиента:**
 
@@ -822,9 +824,9 @@ transport_socket:
 
 См. [mtls-interview.md](../security/mtls-interview.md) для подробностей.
 
-## Q20. (!) Sticky session: cookie, IP-hash, JWT-based
+## Q20. (!) Привязка сессии (sticky session): cookie, IP-hash, JWT-based
 
-Когда нужно гарантировать, что все запросы одного клиента идут на один backend (in-memory session, WebSocket upgrade на конкретный pod, локальный кеш).
+Sticky session нужна, когда все запросы одного клиента обязаны попадать на один и тот же backend. Так бывает при in-memory сессии на сервере, WebSocket-соединении, прибитом к конкретному pod, или локальном кеше пользователя. Способов привязки три, они различаются ключом и надёжностью.
 
 **1. Cookie-based (insertable cookie) — самый надёжный**
 
@@ -877,9 +879,9 @@ upstream backend_pool {
 }
 ```
 
-Распределение по user_id — кеш пользователя живёт на одном pod, корпоративный NAT не влияет.
+Распределение идёт по `user_id` из токена, а не по IP, поэтому кеш конкретного пользователя живёт на одном pod, и корпоративный NAT с тысячами клиентов за одним адресом не ломает балансировку.
 
-**Production-практика:** sticky session — антипаттерн. Лучше держать session в `Redis` / `JWT` и иметь stateless сервисы. Sticky оправдан только для WebSocket и устаревших монолитов.
+**Рекомендация:** относитесь к sticky session как к антипаттерну. Лучше хранить состояние сессии в `Redis` или прямо в `JWT` и держать сервисы stateless — тогда любой запрос можно отправить на любой backend. Sticky оправдан только там, где иначе нельзя: WebSocket-соединения и устаревшие монолиты с серверной сессией в памяти.
 
 См. [load-balancing-interview.md](load-balancing-interview.md) — там подробнее про consistent hashing.
 
@@ -928,9 +930,9 @@ server {
 - Между прокси и Java/Spring backendом часто оставляют HTTP/1.1 — Netty/Tomcat H2 настроить сложнее, выигрыш минимален внутри VPC.
 - gRPC требует HTTP/2 end-to-end — об этом ниже.
 
-## Q22. WebSocket proxying — `Upgrade` header и long-lived connections
+## Q22. Проксирование WebSocket — заголовок `Upgrade` и long-lived соединения
 
-WebSocket поверх HTTP — это HTTP/1.1 connection, который через `Upgrade: websocket` превращается в TCP-канал с фреймами WebSocket-протокола.
+Ключ к пониманию: WebSocket начинается как обычное HTTP/1.1-соединение, но запрос с `Upgrade: websocket` переключает его в постоянный двунаправленный TCP-канал с фреймами WebSocket-протокола. Прокси должен этот upgrade распознать и пробросить, иначе соединение оборвётся на этапе рукопожатия.
 
 ```nginx
 location /ws/ {
@@ -948,15 +950,15 @@ location /ws/ {
 
 **Особенности:**
 
-- Обязательно `proxy_http_version 1.1` и явный `Connection: upgrade`. Без них прокси разорвёт upgrade.
-- `proxy_read_timeout` по умолчанию 60 сек → idle WebSocket разрывается. Поднять до часа или больше; на уровне приложения слать ping/pong каждые 30 сек.
-- Sticky session: WebSocket «прибит» к одному backend pod, при ребалансировке (например, удаление pod) клиент должен переподключиться.
-- HTTP/2 поверх WebSocket → нужен RFC 8441 (`SETTINGS_ENABLE_CONNECT_PROTOCOL`), поддерживается не везде. Чаще оставляют H1.1 для WS.
-- HTTP/3 → WebSocket поверх H3 (RFC 9220) — экспериментально.
+- **Без `proxy_http_version 1.1` и `Connection: upgrade` upgrade не пройдёт** — прокси отправит backendу обычный HTTP-запрос, и переключения протокола не случится.
+- **Таймаут рвёт idle-соединение.** `proxy_read_timeout` по умолчанию 60 сек, а WebSocket может молчать дольше — и прокси его разорвёт. Поднимают до часа и выше, а на уровне приложения шлют ping/pong каждые 30 сек, чтобы соединение не считалось idle.
+- **Привязка к pod.** WebSocket «прибит» к одному backend pod на всё время жизни. При ребалансировке (например, удалении pod) клиенту придётся переподключаться — это нужно закладывать в логику фронтенда.
+- **HTTP/2 поверх WebSocket** требует RFC 8441 (`SETTINGS_ENABLE_CONNECT_PROTOCOL`) и поддерживается не везде, поэтому для WS чаще оставляют HTTP/1.1.
+- **HTTP/3** → WebSocket поверх H3 (RFC 9220) пока экспериментален.
 
-## Q23. gRPC proxying — HTTP/2 end-to-end
+## Q23. Проксирование gRPC — HTTP/2 от клиента до backendа
 
-gRPC использует HTTP/2 с trailers и бинарными фреймами. Прокси должен поддерживать H2 на обоих концах (или явно конвертировать).
+Главное про gRPC: он работает поверх HTTP/2 с trailers и бинарными фреймами, и это накладывает жёсткое требование на прокси — поддержка H2 на обоих концах (downstream и upstream) либо явная конвертация. На L4-балансировщике gRPC балансировать нельзя.
 
 **Nginx — `grpc_pass`:**
 
@@ -991,18 +993,18 @@ backend grpc_backend
     server grpc2 10.0.1.11:50051 proto h2 alpn h2
 ```
 
-**Envoy** — gRPC native, никаких отдельных директив, hot path по умолчанию.
+**Envoy** проксирует gRPC нативно: никаких отдельных директив, это hot path по умолчанию — одна из причин, почему Envoy выбирают для service mesh.
 
 **Подводные камни:**
 
-- HTTP/2 multiplexing → один TCP-connection несёт сотни RPC-вызовов. Балансировка на TCP-уровне (L4) **не работает** для gRPC — все запросы пойдут на один pod. Нужен L7 (Envoy/Nginx/Linkerd).
-- gRPC использует `trailers` (для status code) — прокси должен корректно их пропускать. Старые версии Nginx не умели.
-- `gRPC-Web` — gRPC через HTTP/1.1 для браузеров, нужен `Envoy grpc-web filter` или `Improbable grpcwebproxy`.
-- Streaming (server/client/bidi) — long-lived; `grpc_read_timeout` обязателен.
+- **L4-балансировка не работает.** HTTP/2 мультиплексирует сотни RPC-вызовов в одном TCP-соединении. Балансировщик уровня L4 видит одно соединение и отправит все вызовы на один pod, оставив остальные простаивать. Нужен L7-прокси (Envoy/Nginx/Linkerd), который балансирует на уровне отдельных RPC.
+- **Trailers.** Свой статус-код gRPC передаёт в HTTP-trailers (в конце ответа, а не в headers). Прокси обязан их корректно пропустить — старые версии Nginx этого не умели, и статус терялся.
+- **gRPC-Web.** Браузеры не дают приложению полный контроль над HTTP/2-фреймами, поэтому для них существует `gRPC-Web` поверх HTTP/1.1. Нужен мост: `Envoy grpc-web filter` или `Improbable grpcwebproxy`.
+- **Streaming.** Server/client/bidi-стримы — это long-lived соединения, поэтому `grpc_read_timeout` обязателен, иначе прокси разорвёт поток по дефолтному таймауту.
 
 ## Q24. Connection pooling и keepalive к upstream
 
-Без keepalive каждый запрос → новый TCP-handshake + TLS-handshake к backendу. Это +5-50 ms latency на запрос и multiplied нагрузка на backend.
+Суть проблемы: без keepalive каждый запрос открывает к backendу новое TCP-соединение (а при TLS — ещё и handshake). Это добавляет 5–50 мс latency на каждый запрос и кратно увеличивает нагрузку на backend по установке соединений. Пул persistent-соединений (keepalive) решает это, переиспользуя уже открытые соединения.
 
 **Nginx:**
 
@@ -1039,9 +1041,9 @@ backend app
 
 **Что важно понимать:**
 
-- Backend должен поддерживать keepalive — Java/Spring Tomcat по умолчанию ок, но `server.tomcat.keep-alive-timeout` должен быть >= `proxy_read_timeout`.
-- `keepalive_requests` — после N запросов соединение закрывается, чтобы перераспределить нагрузку (особенно полезно после деплоя нового backend).
-- Если за прокси несколько worker процессов, каждый держит свой пул — общий лимит на backend = `worker_processes × keepalive`.
+- **Обе стороны должны хотеть keepalive.** Backend тоже должен поддерживать persistent-соединения. Java/Spring на Tomcat это умеет по умолчанию, но `server.tomcat.keep-alive-timeout` обязан быть `>= proxy_read_timeout`, иначе backend закроет соединение раньше прокси, и тот получит ошибку на следующем запросе.
+- **Зачем вообще закрывать соединения.** `keepalive_requests` закрывает соединение после N запросов специально — это перераспределяет нагрузку. Особенно полезно после деплоя нового backendа: иначе старые соединения навсегда «прибиты» к старым pod-ам и трафик на новый не пойдёт.
+- **Пул на каждый worker.** Каждый worker-процесс держит собственный пул, поэтому фактический лимит idle-соединений к backendу — это `worker_processes × keepalive`, а не просто `keepalive`.
 
 ## Q25. Кеширование статики и динамики, cache hit ratio
 
@@ -1088,9 +1090,9 @@ location /api/catalog/ {
 
 См. [caching-strategies-interview.md](caching-strategies-interview.md) и [cdn-interview.md](cdn-interview.md).
 
-## Q26. Compression: gzip vs brotli
+## Q26. Сжатие ответов: gzip vs brotli
 
-Сжатие на L7 прокси — экономия трафика и времени загрузки.
+Сжатие на L7-прокси экономит трафик и ускоряет загрузку: текстовые ответы (HTML, JSON, JS, CSS) сжимаются в 3–5 раз. Выбор между `gzip` и `brotli` — это компромисс между степенью сжатия и затратами CPU.
 
 | Алгоритм | Compression ratio (text) | CPU cost (encode) | Поддержка браузерами |
 |---|---|---|---|
@@ -1228,15 +1230,15 @@ frontend api
 
 **Дополнительно:**
 
-- Reverse proxy буферизует запрос целиком перед отправкой backendу — backend не страдает от медленных клиентов (но прокси страдает).
-- За прокси полезно ставить L4 LB (AWS NLB, Cloudflare) — он поглощает большую часть медленных соединений.
-- `Cloudflare`/`AWS Shield` — managed защита от Slowloris и подобных L7 атак.
+- **Прокси защищает backend, но принимает удар на себя.** Reverse proxy буферизует запрос целиком, прежде чем отправить backendу, — поэтому медленный клиент держит соединение прокси, а не backendа. Backend получает уже собранный запрос быстро. Но сам прокси при этом остаётся уязвимой целью, и именно его пул соединений надо защищать таймаутами.
+- За прокси полезно ставить L4 LB (AWS NLB, Cloudflare) — он поглощает основную массу медленных соединений ещё на входе.
+- `Cloudflare` / `AWS Shield` — managed-защита от Slowloris и подобных L7-атак на стороне провайдера.
 
 ## Q29. Chunked encoding и буферизация ответов
 
 HTTP/1.1 `Transfer-Encoding: chunked` — отправка тела порциями, без заранее известного `Content-Length`. Используется для streaming (Server-Sent Events, large files, real-time API).
 
-**По умолчанию Nginx буферизует ответ upstream:** скачивает весь ответ во временный файл, потом отдаёт клиенту. Это плохо для streaming.
+**По умолчанию Nginx буферизует ответ upstream:** он сначала вычитывает весь ответ backendа в память или временный файл, а только потом отдаёт клиенту. Для обычных ответов это хорошо (backend быстро освобождается), но для streaming — фатально: клиент не увидит ни байта, пока поток не закончится.
 
 ```nginx
 location /stream/ {
@@ -1264,9 +1266,9 @@ location /stream/ {
 
 **HAProxy** — буферизация в `http-buffer-request` (опционально).
 
-## Q30. Observability: access log, metrics, distributed tracing
+## Q30. Наблюдаемость прокси: access log, метрики, distributed tracing
 
-Reverse proxy — естественная точка для сбора telemetry, т.к. через него проходит весь HTTP-трафик.
+Reverse proxy — естественная точка для сбора телеметрии: через него проходит весь HTTP-трафик, поэтому он видит каждый запрос целиком и измеряет реальную latency «снаружи», как её ощущает клиент. Три уровня наблюдаемости: access log (что произошло с каждым запросом), метрики (агрегаты по времени), distributed tracing (путь запроса сквозь сервисы).
 
 **Access log (Nginx — JSON):**
 
