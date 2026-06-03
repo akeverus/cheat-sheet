@@ -573,7 +573,7 @@ html[data-design="editorial"] .ed-masthead-title {
   width: 16px; height: 16px;
   border-radius: var(--border-radius-full);
   background: transparent;
-  border: 2px solid currentColor;
+  border: var(--rule-weight-strong) solid currentColor;
   position: relative;
   box-shadow: none;
 }
@@ -603,6 +603,10 @@ html[data-design="editorial"] .ed-masthead-title {
 
 @media (max-width: 600px) {
   .ed-masthead-inner { padding: var(--space-3) var(--space-4); gap: var(--space-3); }
+  /* На мобиле .ed-masthead-inner ужимает горизонталь до --space-4 (16px), а полоса
+     прогресса под шапкой осталась на базовом --space-5 (24px) → её accent-fill
+     не совпадал по краям с брендом/нав. Приводим жёлоб к тем же 16px. */
+  .ed-masthead-progress { padding-inline: var(--space-4); }
   .ed-masthead-actions { width: 100%; justify-content: space-between; }
   .ed-nav-link { padding-inline: var(--space-2); }
 }
@@ -1416,8 +1420,8 @@ html[data-design="editorial"] .stats-page .forecast-count { font-family: var(--f
 /* data-table (пробелы банка) */
 html[data-design="editorial"] .stats-page .data-table { width: 100%; border-collapse: collapse; font-size: var(--font-size-sm); }
 html[data-design="editorial"] .stats-page .data-table th,
-html[data-design="editorial"] .stats-page .data-table td { padding: var(--space-2) var(--space-3); border-bottom: var(--rule-weight) solid var(--color-border-secondary); text-align: left; }
-html[data-design="editorial"] .stats-page .data-table thead th { font-family: var(--font-family-mono); font-size: var(--font-size-xs); letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-secondary); background: transparent; border-bottom: var(--rule-weight-strong) solid var(--color-border-primary); }
+html[data-design="editorial"] .stats-page .data-table td { padding: var(--space-3); border-bottom: var(--rule-weight) solid var(--color-border-secondary); text-align: left; }
+html[data-design="editorial"] .stats-page .data-table thead th { font-family: var(--font-family-mono); font-size: var(--font-size-xs); font-weight: var(--font-weight-medium); letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-secondary); background: transparent; border-bottom: var(--rule-weight-strong) solid var(--color-border-primary); }
 html[data-design="editorial"] .stats-page .data-table .text-center { text-align: center; }
 
 /* Результаты поиска */
@@ -1796,7 +1800,7 @@ html[data-design="editorial"] .result-page .option-status-label {
   display: inline-block; margin-top: var(--space-2);
   font-family: var(--font-family-mono); font-size: var(--font-size-xs);
   letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
-  padding: 0.15em 0.6em; border-radius: var(--border-radius-sm); background: transparent;
+  padding: 0.15em var(--space-2); border-radius: var(--border-radius-sm); background: transparent;
 }
 html[data-design="editorial"] .result-page .option-status-correct { color: var(--color-status-success); border: var(--rule-weight) solid var(--color-status-success); }
 html[data-design="editorial"] .result-page .option-status-selected { color: var(--color-status-error); border: var(--rule-weight) solid var(--color-status-error); }
@@ -2148,7 +2152,9 @@ html[data-design="editorial"] .code-copy-btn.is-error { color: var(--color-statu
 html[data-design="editorial"] .code-copy-btn .ed-icon { width: 0.875rem; height: 0.875rem; }
 /* Touch (нет hover) — кнопка всегда видна, иначе её не вызвать. */
 @media (hover: none) {
-  html[data-design="editorial"] .code-copy-btn { opacity: 1; }
+  /* На тач кнопка всегда видима (нет hover) → это реальная тап-цель: тянем до
+     44px (WCAG 2.5.5). Десктопный компактный hover-аффорданс (32px) не трогаем. */
+  html[data-design="editorial"] .code-copy-btn { opacity: 1; min-height: 44px; }
 }
 /* Узкие экраны — только иконка, текст прячем (экономим место над кодом). */
 @media (max-width: 600px) {

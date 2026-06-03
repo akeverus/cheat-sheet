@@ -1,7 +1,7 @@
 (() => {
   const UI_CONSTANTS = Object.freeze({
     EXTRA_ANALYSIS_BUTTON_INITIAL_TEXT: 'Показать доп. анализ',
-    EXTRA_ANALYSIS_BUTTON_LOADING_TEXT: 'Загружаю...',
+    EXTRA_ANALYSIS_BUTTON_LOADING_TEXT: 'Загружаю…',
     EXTRA_ANALYSIS_BUTTON_DONE_TEXT: 'Доп. анализ загружен',
     FAVORITE_ADD_LABEL: 'Добавить в избранное',
     FAVORITE_REMOVE_LABEL: 'Убрать из избранного',
@@ -934,7 +934,7 @@
     const token = obtainAdminToken();
     if (!token) return; // пользователь отменил ввод
     button.classList.add('regenerating');
-    button.title = 'Удаляю варианты...';
+    button.title = 'Удаляю варианты…';
     try {
       const resp = await apiFetch(API.REGENERATE, {
         method: 'POST',
@@ -1360,7 +1360,7 @@
     // чтобы при ошибке вернуть её, а не хардкод «Ответить» (рассинхрон меток).
     const originalSubmitText = (submitBtn.textContent || '').trim() || 'Проверить ответ';
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Проверяю...';
+    submitBtn.textContent = 'Проверяю…';
     submitBtn.setAttribute('aria-busy', 'true');
     setInteractionBusy(true);
     setAnswerFlowStep('checking');
@@ -1602,7 +1602,7 @@
     return fetchWithPlaceholder(
       API.WRONG_FEEDBACK,
       wrongBlock,
-      '<span class="wrong-feedback-loader">' + icon('bot', 'ed-icon-lead') + 'Анализирую ошибку...</span>',
+      '<span class="wrong-feedback-loader">' + icon('bot', 'ed-icon-lead') + 'Анализирую ошибку…</span>',
       (fbData, placeholderEl) => {
         placeholderEl.classList.remove('loading');
         if (fbData.available && fbData.feedback) {
@@ -1626,7 +1626,7 @@
     return fetchWithPlaceholder(
       API.TAKEAWAY + '?questionId=' + encodeURIComponent(questionId),
       feedbackDiv,
-      '<span class="takeaway-loading-text">Загрузка...</span>',
+      '<span class="takeaway-loading-text">Загрузка…</span>',
       (tkData, placeholderEl) => {
         placeholderEl.remove();
         if (tkData.takeaway) {
@@ -1649,7 +1649,7 @@
     return fetchWithPlaceholder(
       API.COMPARISON + '?questionId=' + encodeURIComponent(questionId) + '&selectedOptionId=' + encodeURIComponent(selectedOptionId),
       wrongBlock,
-      '<span class="comparison-loading-text">Загрузка...</span>',
+      '<span class="comparison-loading-text">Загрузка…</span>',
       (cmpData, placeholderEl) => {
         placeholderEl.remove();
         if (cmpData.comparison) {
@@ -1681,7 +1681,7 @@
     return fetchWithPlaceholder(
       API.CODE_TRACE + '?questionId=' + encodeURIComponent(questionId),
       feedbackDiv,
-      '<span class="code-trace-loading-text">Загрузка...</span>',
+      '<span class="code-trace-loading-text">Загрузка…</span>',
       (traceData, placeholderEl) => {
         placeholderEl.remove();
         if (traceData.trace) {
@@ -1788,10 +1788,23 @@
           requests.push(fetchCodeTrace(questionId, true));
           const results = await Promise.allSettled(requests);
           renderRelatedQuestions(data);
-          extraAnalysisBtn.textContent = EXTRA_ANALYSIS_BUTTON_DONE_TEXT;
+          // realCount исключает undefined-слоты (fetchCodeTrace возвращает undefined
+          // для вопросов без кода → allSettled считает их fulfilled).
+          const realCount = requests.filter(r => r != null).length;
           const failedCount = results.filter(r => r.status === 'rejected').length;
-          if (failedCount > 0) {
-            setInlineAlert('Часть блоков доп. анализа не загрузилась. Можно продолжить тренировку.');
+          if (realCount > 0 && failedCount === realCount) {
+            // Полный провал: возвращаем кнопку в кликабельное состояние (как на
+            // result-странице), иначе она застывала на «загружен» без контента.
+            loaded = false;
+            extraAnalysisBtn.removeAttribute('aria-disabled');
+            extraAnalysisBtn.setAttribute('aria-expanded', 'false');
+            extraAnalysisBtn.textContent = EXTRA_ANALYSIS_BUTTON_INITIAL_TEXT;
+            setInlineAlert('Не удалось загрузить доп. анализ. Попробуйте ещё раз.');
+          } else {
+            extraAnalysisBtn.textContent = EXTRA_ANALYSIS_BUTTON_DONE_TEXT;
+            if (failedCount > 0) {
+              setInlineAlert('Часть блоков доп. анализа не загрузилась. Можно продолжить тренировку.');
+            }
           }
         } finally {
           extraAnalysisBtn.removeAttribute('aria-busy');
@@ -1849,7 +1862,13 @@
     if (!details || !summary || !answer) return;
     details.addEventListener('toggle', () => {
       summary.textContent = details.open ? 'Скрыть ответ' : 'Показать ответ';
-      if (details.open) renderDynamicContent(answer);
+      // Гидратируем (mermaid + hljs) ОДИН раз при первом раскрытии: hljs 11.x при
+      // повторном highlightElement по уже подсвеченному блоку варнит и дублирует
+      // span-обёртки. mermaid защищён своим data-rendered, но hljs — нет.
+      if (details.open && !details.dataset.hydrated) {
+        details.dataset.hydrated = '1';
+        renderDynamicContent(answer);
+      }
     });
   }
 
