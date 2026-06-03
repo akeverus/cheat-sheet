@@ -54,7 +54,7 @@ AI не вызывается. Чтобы перезалить вопросы —
 - **Режимы:** Тренировка (по одному вопросу), Экзамен (по умолчанию 20 вопросов), Марафон (по умолчанию 50 вопросов).
 - **Интервальное повторение:** алгоритм SM-2, расчёт даты следующего повторения и mastery-статистика.
 - **AI-генерация:** варианты ответа (4 опции — 1 правильный + 3 дистрактора), 3 уровня прогрессивных подсказок, Mermaid-диаграммы.
-- **Полнотекстовый поиск:** SQLite FTS5 или PostgreSQL `tsvector`.
+- **Полнотекстовый поиск:** PostgreSQL `tsvector`.
 - **Экспорт прогресса:** JSON и CSV (`/export?format=json|csv`).
 - **Горячие клавиши:** `1–4` — выбор варианта, `Enter` — отправить ответ.
 - **Без AI-ключей:** автоматический fallback в режим флешкарт (показ эталонного ответа + самооценка по SM-2).
@@ -141,7 +141,7 @@ SERVER_PORT=9090 ./gradlew bootRun
 PRELOAD_STARTUP_PRELOAD=true PRELOAD_FULL_WARMUP=true ./gradlew bootRun
 
 # Передать аргументы Spring Boot
-./gradlew bootRun --args="--spring.profiles.active=postgres --server.port=9090"
+./gradlew bootRun --args="--spring.profiles.active=prod --server.port=9090"
 
 # Запуск с другим JVM (например, для дебага)
 ./gradlew bootRun --debug-jvm   # подключитесь дебагером к порту 5005
@@ -188,34 +188,30 @@ JAR содержит каталог `cheatsheets/` если вы соберёт�
 
 ## Способ 3. Docker (одиночный контейнер)
 
-Используется по умолчанию SQLite внутри контейнера.
+Запускает **только приложение** — ему нужен доступный извне PostgreSQL (с
+2026-05-25 единственная поддерживаемая БД, SQLite убран). Если хочешь поднять
+БД и приложение одной командой — смотри **Способ 4** (Compose).
 
 ```bash
 # 1. Сборка образа (в корне репо должна быть папка cheatsheets/)
 docker build --build-arg VERSION=1.0.0 -t interview-prep .
 
-# 2. Запуск
+# 2. Запуск против PostgreSQL на хосте
+#    host.docker.internal — мост к хосту (Docker Desktop на macOS/Windows;
+#    на Linux добавь --add-host=host.docker.internal:host-gateway)
 docker run --rm \
   -p 8080:8080 \
   -e OPENAI_API_KEY="$OPENAI_API_KEY" \
+  -e SPRING_DATASOURCE_URL="jdbc:postgresql://host.docker.internal:5432/interview" \
+  -e SPRING_DATASOURCE_USERNAME=interview \
+  -e SPRING_DATASOURCE_PASSWORD=interview \
   -e SPRING_PROFILES_ACTIVE=default \
+  -v "$(pwd)/cheatsheets:/app/cheatsheets" \
   --name interview-prep \
   interview-prep
 ```
 
-По умолчанию в `Dockerfile` стоит `ENV SPRING_PROFILES_ACTIVE=prod` (Swagger выключен). Чтобы включить Swagger UI, явно перекройте профиль на `default`, как в примере выше.
-
-**С persistent SQLite вне контейнера:**
-
-```bash
-mkdir -p ./data
-docker run --rm \
-  -p 8080:8080 \
-  -e OPENAI_API_KEY="$OPENAI_API_KEY" \
-  -v "$(pwd)/data:/app/data" \
-  -v "$(pwd)/cheatsheets:/app/cheatsheets" \
-  interview-prep
-```
+По умолчанию в `Dockerfile` стоит `ENV SPRING_PROFILES_ACTIVE=prod` (Swagger выключен, `APP_ADMIN_TOKEN` обязателен). Чтобы включить Swagger UI, перекрой профиль на `default`, как в примере выше.
 
 Маунт `cheatsheets/` нужен, чтобы изменения в markdown-файлах подхватывались без пересборки образа.
 
@@ -262,12 +258,6 @@ docker compose up -d interview-prep
 
 **Готовый шаблон env-файла** лежит в `.env.example` — скопируйте его в `.env` и заполните ключи. Compose читает `.env` автоматически.
 
-**Лёгкая альтернатива без PostgreSQL** — `docker-compose.sqlite.yml`. Поднимает только приложение с SQLite в volume `quiz-data`, ничего больше. Полезно для smoke-теста или одиночного инстанса:
-
-```bash
-APP_ADMIN_TOKEN=local-secret docker compose -f docker-compose.sqlite.yml up -d
-```
-
 ---
 
 ## Способ 5. Запуск с PostgreSQL без Docker
@@ -281,8 +271,7 @@ CREATE USER interview WITH PASSWORD 'interview';
 CREATE DATABASE interview OWNER interview;
 SQL
 
-# 2. Запустить приложение с профилем postgres
-SPRING_PROFILES_ACTIVE=postgres \
+# 2. Запустить приложение (PostgreSQL — БД по умолчанию, отдельный профиль не нужен)
 POSTGRES_HOST=localhost \
 POSTGRES_PORT=5432 \
 POSTGRES_DB=interview \
@@ -292,7 +281,7 @@ OPENAI_API_KEY="$OPENAI_API_KEY" \
 ./gradlew bootRun
 ```
 
-Flyway автоматически применит миграции из `db/migration-postgres/` при первом запуске.
+Flyway автоматически применит миграции из `db/migration` при первом запуске.
 
 ---
 
@@ -335,7 +324,7 @@ export AI_FALLBACK_ENABLED=true        # без этого ключ не исп�
 | Переменная | Что задаёт | Пример |
 |-----------|------------|--------|
 | `SERVER_PORT` | Порт HTTP | `8080` |
-| `SPRING_PROFILES_ACTIVE` | Профиль (`default`, `prod`, `postgres`) | `prod` |
+| `SPRING_PROFILES_ACTIVE` | Профиль (`default`, `prod`) | `prod` |
 | `AI_PROVIDER` | Основной AI: `openai` или `deepseek` | `openai` |
 | `OPENAI_API_KEY` | Ключ OpenAI | `sk-...` |
 | `OPENAI_MODEL` | Модель OpenAI | `gpt-4.1-mini` |
@@ -596,15 +585,12 @@ cheat-sheet/
 │       └── src/main/resources/
 │           ├── application.yml
 │           ├── application-prod.yml
-│           ├── application-postgres.yml
-│           ├── db/migration/             # SQLite миграции
-│           ├── db/migration-postgres/    # PostgreSQL миграции
+│           ├── db/migration/             # Flyway-миграции PostgreSQL (в module quiz-persistence)
 │           ├── prompts/                  # промпты для LLM
 │           ├── templates/                # Thymeleaf
 │           └── static/                   # CSS/JS
 ├── cheatsheets/                  # markdown-шпаргалки и вопросы
 │   └── interview/                # источник вопросов для приложения
-├── data/                         # ⚠️ создаётся при первом запуске (SQLite + бэкапы)
 ├── scripts/                      # сидеры, линтеры, утилиты для cheatsheets
 ├── docs/                         # инженерная документация
 ├── docker-compose.yml
@@ -663,17 +649,13 @@ ls cheatsheets/interview/   # должен показать markdown-файлы
 
 ### `FlywayException: Validate failed`
 
-Схема БД ушла в рассинхрон с миграциями. Самый простой путь — пересоздать БД:
+Схема БД ушла в рассинхрон с миграциями. Самый простой путь — пересоздать схему:
 
 ```bash
-# SQLite
-rm -rf data/db/
-
-# PostgreSQL
 psql -U interview -d interview -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
 ```
 
-И перезапустить.
+И перезапустить. В Docker Compose то же самое делает полный сброс с volume: `docker compose down -v`.
 
 ### Healthcheck `{"status":"DOWN"}`
 
