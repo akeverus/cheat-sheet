@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 /**
  * Сервис полнотекстового поиска по вопросам.
  *
- * <p>Использует {@link FullTextSearchRepository} (SQLite FTS5 или PostgreSQL tsvector)
+ * <p>Использует {@link FullTextSearchRepository} (PostgreSQL tsvector)
  * затем пакетно загружает вопросы через {@link QuestionRepository#findByIds}
  * (решение проблемы N+1).</p>
  */

@@ -57,7 +57,7 @@ public class ReviewStateRepository {
 
     /**
      * Создаёт запись review_state, если она ещё не существует.
-     * SQLite и PostgreSQL: ON CONFLICT DO NOTHING.
+     * PostgreSQL: ON CONFLICT DO NOTHING.
      *
      * @param questionId идентификатор вопроса
      * @param nowEpoch   текущее время в epoch-секундах
@@ -87,7 +87,7 @@ public class ReviewStateRepository {
                 state.intervalDays(),
                 state.easeFactor(),
                 state.nextReviewAt(),
-                // Enum -> строка для хранения в SQLite
+                // Enum -> строка для хранения в БД
                 state.lastResult().name(),
                 state.correctCount(),
                 state.wrongCount(),
