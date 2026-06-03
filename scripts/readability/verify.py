@@ -25,7 +25,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from slug import Dedup, _heading_linktext  # noqa: E402
 from regen_toc import build_q_anchors, RE_TOC, RE_H2, RE_TOC_Q  # noqa: E402
 
-GATE = '/tmp/gate_clean.py'
+# Репо-локальный gate приоритетнее /tmp (переживает session-boundary, который чистит /tmp).
+_LOCAL_GATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'gate_clean.py')
+GATE = _LOCAL_GATE if os.path.exists(_LOCAL_GATE) else '/tmp/gate_clean.py'
 MARK = re.compile(r'❌ ПОСЛЕДСТВИЕ:|✓ ПРИМЕНЯТЬ:|📋 ПРАВИЛО:|🔗 См\. Q\d')
 
 # generic англ. метки, которые ДОЛЖНЫ быть переведены (= ключи таблицы в промте).
