@@ -2,11 +2,20 @@
 FROM gradle:8.9-jdk17 AS builder
 WORKDIR /build
 
+# Слой зависимостей кэшируется ОТДЕЛЬНО от исходников: сначала только
+# build-скрипты (root + каждый модуль) и wrapper, потом разрешение зависимостей.
+# Раньше `COPY modules modules` шёл ДО этого шага → правка любого .java/.kt
+# инвалидировала дорогой dependency-слой и Gradle тянул зависимости заново на
+# каждой сборке. Теперь Docker берёт кэш, пока не менялись сами build.gradle.kts.
 COPY build.gradle.kts settings.gradle.kts ./
-COPY modules modules
 COPY gradle gradle
+COPY modules/quiz-domain/build.gradle.kts      modules/quiz-domain/
+COPY modules/quiz-persistence/build.gradle.kts modules/quiz-persistence/
+COPY modules/quiz-app/build.gradle.kts         modules/quiz-app/
 RUN gradle :quiz-app:dependencies --no-daemon -q || true
 
+# Исходники меняются часто — копируем ПОСЛЕ кэш-слоя зависимостей.
+COPY modules modules
 RUN gradle :quiz-app:bootJar --no-daemon -q
 
 # Финальный образ от непривилегированного пользователя
