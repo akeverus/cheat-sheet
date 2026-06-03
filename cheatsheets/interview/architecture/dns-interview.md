@@ -38,52 +38,52 @@ updated: "2026-05-21"
 **Основы и иерархия**
 - [Q1. (!) Что такое DNS и зачем он нужен?](#q1--что-такое-dns-и-зачем-он-нужен)
 - [Q2. (!) Иерархия DNS: root → TLD → authoritative](#q2--иерархия-dns-root--tld--authoritative)
-- [Q3. (!) Recursive vs iterative resolver](#q3--recursive-vs-iterative-resolver)
+- [Q3. (!) Чем recursive resolver отличается от iterative](#q3--чем-recursive-resolver-отличается-от-iterative)
 - [Q4. (!) Полный flow DNS-резолюции](#q4--полный-flow-dns-резолюции)
 - [Q5. Что такое глобальные публичные resolver-ы (1.1.1.1, 8.8.8.8, 9.9.9.9)?](#q5-что-такое-глобальные-публичные-resolver-ы-1111-8888-9999)
 
 **Record types и кеширование**
 - [Q6. (!) A vs AAAA vs CNAME — основные record types](#q6--a-vs-aaaa-vs-cname--основные-record-types)
-- [Q7. MX, TXT (SPF/DKIM/DMARC), NS, SOA](#q7-mx-txt-spfdkimdmarc-ns-soa)
-- [Q8. SRV, PTR, CAA, ALIAS/ANAME](#q8-srv-ptr-caa-aliasaname)
+- [Q7. Записи MX, TXT (SPF/DKIM/DMARC), NS, SOA — за что отвечают](#q7-записи-mx-txt-spfdkimdmarc-ns-soa--за-что-отвечают)
+- [Q8. Записи SRV, PTR, CAA, ALIAS/ANAME — зачем они](#q8-записи-srv-ptr-caa-aliasaname--зачем-они)
 - [Q9. (!) TTL и кеширование](#q9--ttl-и-кеширование)
 - [Q10. Negative caching и его подводные камни](#q10-negative-caching-и-его-подводные-камни)
 - [Q11. (!) DNS propagation — что это и почему «48 часов»?](#q11--dns-propagation--что-это-и-почему-48-часов)
 - [Q12. CNAME flattening и проблема apex/zone apex](#q12-cname-flattening-и-проблема-apexzone-apex)
 
 **Load balancing / GeoDNS / Anycast**
-- [Q13. (!) DNS-based load balancing: round-robin, weighted, latency-based](#q13--dns-based-load-balancing-round-robin-weighted-latency-based)
-- [Q14. (!) GeoDNS / Geolocation routing](#q14--geodns--geolocation-routing)
-- [Q15. (!) Anycast vs Unicast — зачем root и публичные resolver-ы используют anycast](#q15--anycast-vs-unicast--зачем-root-и-публичные-resolver-ы-используют-anycast)
-- [Q16. Health-check-driven DNS failover (Route 53)](#q16-health-check-driven-dns-failover-route-53)
+- [Q13. (!) Балансировка нагрузки через DNS: round-robin, weighted, latency-based](#q13--балансировка-нагрузки-через-dns-round-robin-weighted-latency-based)
+- [Q14. (!) Как работает GeoDNS / маршрутизация по геолокации](#q14--как-работает-geodns--маршрутизация-по-геолокации)
+- [Q15. (!) Anycast против Unicast — зачем root и публичные resolver-ы используют anycast](#q15--anycast-против-unicast--зачем-root-и-публичные-resolver-ы-используют-anycast)
+- [Q16. DNS-failover по health-check (на примере Route 53)](#q16-dns-failover-по-health-check-на-примере-route-53)
 - [Q17. EDNS Client Subnet (ECS) — почему CDN зависит от resolver location](#q17-edns-client-subnet-ecs--почему-cdn-зависит-от-resolver-location)
-- [Q18. Managed DNS providers: Route 53, Cloudflare, NS1, Akamai, Dyn](#q18-managed-dns-providers-route-53-cloudflare-ns1-akamai-dyn)
-- [Q19. Private DNS (Route 53 private zones) vs service discovery](#q19-private-dns-route-53-private-zones-vs-service-discovery)
+- [Q18. Managed-провайдеры DNS: Route 53, Cloudflare, NS1, Akamai, Dyn](#q18-managed-провайдеры-dns-route-53-cloudflare-ns1-akamai-dyn)
+- [Q19. Private DNS (Route 53 private zones) против service discovery](#q19-private-dns-route-53-private-zones-против-service-discovery)
 - [Q20. SRV-records и service discovery (Consul, Kubernetes CoreDNS)](#q20-srv-records-и-service-discovery-consul-kubernetes-coredns)
 
 **Безопасность (DNSSEC, DoH/DoT)**
-- [Q21. (!) DNS spoofing / cache poisoning / Kaminsky attack](#q21--dns-spoofing--cache-poisoning--kaminsky-attack)
-- [Q22. (!) DNSSEC — RRSIG, DS, KSK/ZSK](#q22--dnssec--rrsig-ds-kskzsk)
-- [Q23. (!) DNS-over-HTTPS (DoH), DNS-over-TLS (DoT), DNS-over-QUIC](#q23--dns-over-https-doh-dns-over-tls-dot-dns-over-quic)
+- [Q21. (!) DNS spoofing, cache poisoning и атака Kaminsky](#q21--dns-spoofing-cache-poisoning-и-атака-kaminsky)
+- [Q22. (!) DNSSEC изнутри: RRSIG, DS, KSK/ZSK](#q22--dnssec-изнутри-rrsig-ds-kskzsk)
+- [Q23. (!) Шифрованный DNS: DoH, DoT и DNS-over-QUIC](#q23--шифрованный-dns-doh-dot-и-dns-over-quic)
 - [Q24. DDoS via DNS amplification и защита](#q24-ddos-via-dns-amplification-и-защита)
-- [Q25. Reverse DNS (PTR) — email reputation, logging](#q25-reverse-dns-ptr--email-reputation-logging)
+- [Q25. Обратный DNS (PTR): репутация почты и логирование](#q25-обратный-dns-ptr-репутация-почты-и-логирование)
 
 **Диагностика и практика**
-- [Q26. (!) dig / nslookup / drill / kdig — практическая диагностика](#q26--dig--nslookup--drill--kdig--практическая-диагностика)
+- [Q26. (!) Практическая диагностика DNS: dig, nslookup, drill, kdig](#q26--практическая-диагностика-dns-dig-nslookup-drill-kdig)
 - [Q27. Latency budget DNS-резолюции (cold vs warm)](#q27-latency-budget-dns-резолюции-cold-vs-warm)
-- [Q28. OS resolver: nscd, systemd-resolved, browser DNS cache](#q28-os-resolver-nscd-systemd-resolved-browser-dns-cache)
+- [Q28. DNS-кеши клиента: nscd, systemd-resolved, кеш браузера](#q28-dns-кеши-клиента-nscd-systemd-resolved-кеш-браузера)
 - [Q29. Как ускорить «48-часовой» switchover (lowering TTL заранее)](#q29-как-ускорить-48-часовой-switchover-lowering-ttl-заранее)
 - [Q30. Реальные incident-ы: Dyn 2016, Facebook 2021, Route 53, Cloudflare BGP 2020](#q30-реальные-incident-ы-dyn-2016-facebook-2021-route-53-cloudflare-bgp-2020)
 
 ## Q1. (!) Что такое DNS и зачем он нужен?
 
-`DNS` — иерархическая распределённая система, переводящая **человеко-понятные имена** (`example.com`) в **IP-адреса** (`93.184.216.34` / `2606:2800:220:1::5`).
+`DNS` — иерархическая распределённая система, которая переводит **понятные человеку имена** (`example.com`) в **IP-адреса** (`93.184.216.34` / `2606:2800:220:1::5`). Это телефонный справочник интернета: люди помнят имена, а сеть маршрутизирует по адресам.
 
-**Зачем:**
-- IP меняются (failover, ребалансировка), имена — стабильны.
-- Один домен → много IP (load balancing, GeoDNS).
-- Логические уровни: `api.example.com`, `mail.example.com` — разные сервисы.
-- Маршрутизация через CNAME / ALIAS на managed-сервисы (CDN, ALB).
+**Зачем вообще нужен слой имён, если можно ходить по IP:**
+- IP меняются (failover, ребалансировка), а имена остаются стабильными — клиентам не нужно ничего перенастраивать.
+- Один домен можно отдать на много IP сразу — это основа load balancing и GeoDNS.
+- Имена дают логическое разделение: `api.example.com`, `mail.example.com` — разные сервисы за одним доменом.
+- Через CNAME / ALIAS домен маршрутизируется на managed-сервисы (CDN, ALB), которые сами меняют свои IP под капотом.
 
 **Архитектурно:**
 ```
@@ -95,12 +95,12 @@ example.com → DNS resolver → 93.184.216.34
 
 ## Q2. (!) Иерархия DNS: root → TLD → authoritative
 
-DNS — **дерево**. Резолюция идёт сверху вниз.
+DNS устроен как **дерево**, и резолюция всегда идёт сверху вниз — от корня к конкретной зоне. Каждый уровень знает не сам ответ, а лишь то, у кого спросить ниже.
 
 **Уровни:**
-1. **Root** (`.`) — 13 logical серверов (`a.root-servers.net`...`m.root-servers.net`), на самом деле сотни физических через Anycast. Знают, где TLD.
-2. **TLD** (Top-Level Domain) — `com.`, `org.`, `ru.`, `io.`. Управляются registry-операторами (Verisign для `.com`).
-3. **Authoritative** — серверы конкретной зоны (`ns-1.example.com`). Хранят реальные записи.
+1. **Root** (`.`) — 13 логических серверов (`a.root-servers.net`...`m.root-servers.net`), но физически их сотни, размноженных через Anycast. Знают только, где искать TLD.
+2. **TLD** (Top-Level Domain) — `com.`, `org.`, `ru.`, `io.`. Управляются registry-операторами (например, Verisign для `.com`). Знают, какие authoritative-серверы отвечают за домен.
+3. **Authoritative** — серверы конкретной зоны (`ns-1.example.com`). Хранят реальные записи и дают финальный ответ.
 
 **Пример для `www.example.com`:**
 ```
@@ -110,9 +110,9 @@ www.example.com.
         └── .      (root)
 ```
 
-Точка в конце (`example.com.`) — fully qualified domain name (FQDN), маркер корня.
+Точка в конце (`example.com.`) делает имя fully qualified domain name (FQDN) — это явный маркер корня, чтобы resolver не дописывал к имени search-домены.
 
-**Делегирование** через `NS`-записи: `com.` говорит «за `example.com` отвечают `ns-1.example.com`, `ns-2.example.com`».
+**Делегирование** работает через `NS`-записи: `com.` не хранит записи `example.com`, а лишь говорит «за эту зону отвечают `ns-1.example.com` и `ns-2.example.com` — иди к ним». Так ответственность спускается вниз по дереву.
 
 ```mermaid
 graph TD
@@ -123,22 +123,22 @@ graph TD
     AUTH --> MX["MX → mail.example.com"]
 ```
 
-## Q3. (!) Recursive vs iterative resolver
+## Q3. (!) Чем recursive resolver отличается от iterative
 
-Два разных режима резолюции — путать **очень частая ошибка на собесе**.
+Это два режима резолюции, и **разницу между ними путают на собесе чаще всего**. Коротко: recursive делает всю работу за клиента, iterative лишь подсказывает следующий шаг.
 
-**Recursive resolver (полный «слуга»):**
-- Получает запрос от клиента, **сам** обходит всю иерархию (root → TLD → authoritative).
-- Возвращает клиенту **финальный ответ**.
-- Кеширует результат.
+**Recursive resolver** берёт запрос на себя целиком:
+- Получив запрос от клиента, **сам** обходит всю иерархию (root → TLD → authoritative).
+- Возвращает клиенту уже **финальный ответ** (готовый IP).
+- Кеширует результат, чтобы в следующий раз ответить мгновенно.
 - Примеры: `1.1.1.1` (Cloudflare), `8.8.8.8` (Google), DNS-серверы ISP, локальный `systemd-resolved`.
 
-**Iterative resolver (даёт «следующий шаг»):**
-- Получает запрос, отвечает **«не знаю, но спроси вот этих»** (NS-записи следующего уровня).
-- Клиент сам идёт дальше.
-- Так работают **root** и **TLD** серверы — они никогда не делают рекурсию для тебя.
+**Iterative resolver** работу на себя не берёт, а только направляет:
+- На запрос отвечает в духе **«сам не знаю, но спроси вот этих»** — отдаёт NS-записи следующего уровня.
+- Дальше клиент (точнее, recursive resolver) идёт сам.
+- Именно так ведут себя **root** и **TLD** серверы: они никогда не делают рекурсию за тебя — иначе их завалило бы нагрузкой со всего интернета.
 
-**Flow:**
+**Поток запросов:**
 ```
 Client → Recursive resolver (1.1.1.1) → root (iterative: "go ask com.")
                                       → com.  (iterative: "go ask ns-1.example.com")
@@ -146,13 +146,13 @@ Client → Recursive resolver (1.1.1.1) → root (iterative: "go ask com.")
                                       ← cached, returned to Client
 ```
 
-**Почему важно:** на собесе вопрос «кто делает работу обхода иерархии?» — почти всегда recursive resolver (вне зависимости от ISP, корпоратив, public DNS).
+**Почему важно:** на собесе вопрос «кто делает работу обхода иерархии?» имеет один правильный ответ — recursive resolver. Какой именно (ISP, корпоративный, public DNS) — не меняет сути: всю рекурсию делает он, а root/TLD только отвечают итеративно.
 
 ## Q4. (!) Полный flow DNS-резолюции
 
-Канонический вопрос: **«что происходит, когда я набираю `www.example.com` в браузере?»** (часть до HTTP).
+Это разбор канонического собеседовательного вопроса **«что происходит, когда я набираю `www.example.com` в браузере?»** — но только DNS-часть, до открытия HTTP-соединения. Ключевая идея: прежде чем идти в иерархию, клиент проверяет несколько слоёв кеша, и каждый промах добавляет latency.
 
-**Шаги (для cold cache):**
+**Шаги (для холодного кеша, когда нигде ничего не закешировано):**
 1. **Browser cache** — Chrome держит свой DNS-кеш (~60s по умолчанию). `chrome://net-internals/#dns`.
 2. **OS resolver cache** — `systemd-resolved` (Linux), `dnsmasq`/`nscd`, `mDNSResponder` (macOS).
 3. **`/etc/hosts`** — статика, override.
@@ -164,10 +164,10 @@ Client → Recursive resolver (1.1.1.1) → root (iterative: "go ask com.")
 6. Возвращает IP клиенту.
 7. Браузер открывает TCP к `93.184.216.34:443`.
 
-**Latency:**
-- Warm cache (OS): <1ms
-- Warm cache (recursive): 5-20ms
-- Cold cache (полный обход): 50-200ms
+**Сколько это занимает (зависит от того, где нашёлся ответ):**
+- Тёплый кеш ОС: <1 мс
+- Тёплый кеш recursive resolver: 5–20 мс
+- Холодный кеш, полный обход иерархии: 50–200 мс
 
 ```mermaid
 sequenceDiagram
@@ -197,7 +197,7 @@ dig +trace www.example.com
 
 ## Q5. Что такое глобальные публичные resolver-ы (1.1.1.1, 8.8.8.8, 9.9.9.9)?
 
-Бесплатные recursive resolver-ы, доступные всем.
+Это бесплатные recursive resolver-ы с публичными IP, доступные кому угодно. Их держат крупные компании на собственной anycast-сети — поэтому они быстрее и надёжнее DNS большинства ISP.
 
 | Resolver | Провайдер | Особенность |
 |----------|-----------|-------------|
@@ -206,13 +206,13 @@ dig +trace www.example.com
 | `9.9.9.9` / `149.112.112.112` | Quad9 | Блокирует known-malicious домены (security) |
 | `208.67.222.222` | OpenDNS (Cisco) | Family-filter, parental control |
 
-**Trade-offs:**
-- **Privacy:** Cloudflare и Quad9 декларируют «логи не храним»; Google логирует.
-- **Speed:** обычно `1.1.1.1` быстрее за счёт более плотной anycast-сети.
-- **EDNS Client Subnet:** Google поддерживает, Cloudflare — нет (важно для CDN, см. Q17).
-- **Cenzura/filtering:** Quad9 фильтрует malicious; в РФ — отдельный вопрос с провайдерскими DNS.
+**Чем отличаются (на что смотреть при выборе):**
+- **Приватность:** Cloudflare и Quad9 декларируют «логи не храним»; Google логирует запросы.
+- **Скорость:** обычно `1.1.1.1` быстрее за счёт более плотной anycast-сети.
+- **EDNS Client Subnet:** Google поддерживает, Cloudflare — нет ради приватности (это важно для CDN, см. Q17).
+- **Фильтрация:** Quad9 режет известные вредоносные домены; в РФ ситуация с провайдерскими DNS — отдельная история.
 
-**Когда использовать:** failover ISP DNS, обход кривого корпоративного DNS, тестирование (`dig @1.1.1.1`).
+**Сценарии применения:** запасной resolver, когда лёг DNS провайдера, обход кривого корпоративного DNS, отладка через `dig @1.1.1.1`.
 
 ## Q6. (!) A vs AAAA vs CNAME — основные record types
 
@@ -230,28 +230,28 @@ example.com.  300  IN  AAAA  2606:2800:220:1::5
 ```
 www.example.com.  300  IN  CNAME  example.com.
 ```
-- При резолюции `www.example.com` resolver получит CNAME, потом резолвит `example.com` → A/AAAA.
-- **Ограничения:** на зоне apex (например, `example.com` без `www.`) CNAME запрещён по RFC 1034 — там должна быть A/AAAA (или ALIAS/ANAME у провайдера, см. Q12).
-- На одном имени может быть **только один CNAME** и **никаких других** record types (кроме DNSSEC).
+- CNAME — это не конечный ответ: резолвя `www.example.com`, resolver получает CNAME и **дорезолвивает** `example.com` → A/AAAA. То есть один лишний шаг в цепочке.
+- **Ограничения:** на zone apex (`example.com` без `www.`) CNAME запрещён по RFC 1034 — там обязаны жить SOA/NS, а CNAME не уживается с другими записями (выход — ALIAS/ANAME у провайдера, см. Q12).
+- На одном имени может быть **только один CNAME** и **больше никаких** записей (исключение — DNSSEC). Это прямое следствие того, что CNAME означает «это имя — целиком псевдоним другого».
 
 **Когда что использовать:**
-- A/AAAA — для конечных IP.
-- CNAME — для алиасов на managed-сервисы (ALB, CloudFront, Heroku), чтобы провайдер мог менять IP без правок твоей зоны.
+- A/AAAA — когда ты сам владеешь конечным IP.
+- CNAME — для алиасов на managed-сервисы (ALB, CloudFront, Heroku): провайдер меняет IP под капотом, а твоя зона остаётся нетронутой.
 
-## Q7. MX, TXT (SPF/DKIM/DMARC), NS, SOA
+## Q7. Записи MX, TXT (SPF/DKIM/DMARC), NS, SOA — за что отвечают
 
 **`MX` (Mail Exchanger)** — куда слать почту для домена.
 ```
 example.com.  3600  IN  MX  10 mail1.example.com.
 example.com.  3600  IN  MX  20 mail2.example.com.
 ```
-- Цифра — приоритет (меньше = выше).
-- На правую часть **должно** указывать имя, не IP.
+- Цифра — приоритет (меньше = выше): отправитель сначала пробует MX с меньшим числом, при недоступности — следующий. Так задаётся резервный почтовый сервер.
+- Справа **обязано** стоять имя, а не IP (это требование RFC).
 
-**`TXT` (Text)** — произвольный текст. На практике три критичных применения:
-- **SPF** (`v=spf1 include:_spf.google.com -all`) — какие сервера могут слать почту от твоего домена.
-- **DKIM** (`v=DKIM1; k=rsa; p=MIGfMA0G...`) — публичный ключ для подписи писем.
-- **DMARC** (`v=DMARC1; p=reject; rua=mailto:...`) — политика для писем, не прошедших SPF/DKIM.
+**`TXT` (Text)** — произвольный текст. Сам по себе ничего не значит, но на нём держатся три критичных механизма антиспама:
+- **SPF** (`v=spf1 include:_spf.google.com -all`) — список серверов, которым разрешено слать почту от имени твоего домена.
+- **DKIM** (`v=DKIM1; k=rsa; p=MIGfMA0G...`) — публичный ключ, которым проверяется криптоподпись писем.
+- **DMARC** (`v=DMARC1; p=reject; rua=mailto:...`) — что делать с письмами, не прошедшими SPF/DKIM (отклонять, в карантин, пропускать) и куда слать отчёты.
 
 **`NS` (Name Server)** — какие серверы authoritative для этой зоны.
 ```
@@ -259,14 +259,14 @@ example.com.  86400  IN  NS  ns-1.example.com.
 example.com.  86400  IN  NS  ns-2.example.com.
 ```
 
-**`SOA` (Start of Authority)** — метаданные зоны: primary NS, email админа, serial, refresh/retry/expire, minimum TTL.
+**`SOA` (Start of Authority)** — служебная запись с метаданными зоны: primary NS, email админа, serial (версия зоны), таймеры refresh/retry/expire для синхронизации secondary-серверов и minimum TTL (используется в том числе для negative caching, см. Q10).
 ```
 example.com.  86400  IN  SOA  ns-1.example.com. hostmaster.example.com. 2024042701 7200 3600 1209600 300
 ```
 
-## Q8. SRV, PTR, CAA, ALIAS/ANAME
+## Q8. Записи SRV, PTR, CAA, ALIAS/ANAME — зачем они
 
-**`SRV` (Service)** — service discovery. Указывает host + port + priority + weight для **именованного сервиса**.
+**`SRV` (Service)** — запись для service discovery. Указывает host + port + priority + weight для **именованного сервиса** (в отличие от A, которая знает только IP).
 ```
 _sip._tcp.example.com. 86400 IN SRV 10 5 5060 sipserver.example.com.
                                     ↑  ↑    ↑
@@ -279,21 +279,21 @@ _sip._tcp.example.com. 86400 IN SRV 10 5 5060 sipserver.example.com.
 34.216.184.93.in-addr.arpa. 3600 IN PTR example.com.
 ```
 
-**`CAA` (Certification Authority Authorization)** — какой CA может выпускать TLS-сертификаты для домена.
+**`CAA` (Certification Authority Authorization)** — белый список центров сертификации, которым разрешено выпускать TLS-сертификаты для домена.
 ```
 example.com. 3600 IN CAA 0 issue "letsencrypt.org"
 ```
-- Без CAA — любой CA может выпустить сертификат (если пройдёт ACME-валидацию).
-- С CAA — защита от misissuance.
+- Без CAA сертификат может выпустить **любой** CA, если пройдёт валидацию владения доменом.
+- С CAA выпуск чужими CA блокируется — это защита от ошибочной или вредоносной выдачи сертификата (misissuance).
 
-**`ALIAS` / `ANAME`** — нестандартное расширение Route 53, Cloudflare, DNSimple. **«CNAME для apex»**:
-- На уровне DNS-провайдера выглядит как A-запись (резолвится в IP на сервере провайдера).
-- Для клиента возвращается реальный A.
-- Решает проблему «CNAME запрещён на apex».
+**`ALIAS` / `ANAME`** — нестандартное расширение провайдеров (Route 53, Cloudflare, DNSimple), по сути **«CNAME для apex»**:
+- На стороне провайдера запись резолвится в IP, а клиенту отдаётся обычная A-запись.
+- Для клиента это неотличимо от честной A — никакого лишнего шага.
+- Решает запрет «CNAME нельзя на apex» (см. Q12), сохраняя гибкость алиаса.
 
 ## Q9. (!) TTL и кеширование
 
-`TTL` (Time To Live) — сколько секунд resolver кеширует ответ.
+`TTL` (Time To Live) — сколько секунд resolver имеет право держать ответ в кеше, прежде чем спросить заново. По сути это рычаг между скоростью failover и нагрузкой на authoritative.
 
 **Типичные значения:**
 - A/AAAA: 300-3600 (5 мин – 1 час)
@@ -302,9 +302,9 @@ example.com. 3600 IN CAA 0 issue "letsencrypt.org"
 - NS: 86400-172800 (1-2 дня)
 - SOA: 86400
 
-**Trade-off:**
-- **Низкий TTL (60-300s):** быстрый failover, но больше нагрузки на authoritative и больше latency.
-- **Высокий TTL (3600-86400s):** меньше нагрузки, быстрее warm-cache, но медленный switchover.
+**Компромисс:**
+- **Низкий TTL (60–300с):** быстрый failover (кеши обновятся за минуты), но больше запросов к authoritative и чаще промахи кеша → выше latency.
+- **Высокий TTL (3600–86400с):** меньше нагрузки и больше попаданий в кеш, но переключение записи доходит до клиентов медленно (см. «48 часов» в Q11).
 
 **Где кеширует:**
 1. Browser DNS cache (Chrome: ~60s)
@@ -312,36 +312,38 @@ example.com. 3600 IN CAA 0 issue "letsencrypt.org"
 3. Recursive resolver (1.1.1.1)
 4. Иногда — приложение (Java `networkaddress.cache.ttl`, по умолчанию плохо — кешировал forever, см. Q28)
 
-**Важно:** TTL не гарантия — некоторые resolver-ы режут TTL вниз (для нагрузки) или вверх (для своего кеша). Реальный кеш может быть больше, чем заявлено.
+**Важно:** TTL — это пожелание, а не гарантия. Некоторые resolver-ы зажимают его вниз (чтобы снизить нагрузку на себя) или вверх (чтобы дольше держать кеш). Поэтому в реальности запись может жить в кешах дольше заявленного — закладывайся на это при миграциях.
 
-**Negative caching** (см. Q10) — кешируется и NXDOMAIN, и тоже по TTL (SOA minimum).
+**Negative caching** (см. Q10) — кешируется не только успешный ответ, но и NXDOMAIN, причём по своему TTL (берётся из SOA minimum).
 
 ## Q10. Negative caching и его подводные камни
 
-Кешируется не только успешный ответ, но и **NXDOMAIN** («такого имени нет») — это **negative caching** (RFC 2308).
+Кешируется не только успешный ответ, но и факт отсутствия имени — **NXDOMAIN** («такого имени нет»). Это и есть **negative caching** (RFC 2308). Логика та же, что у обычного кеша: незачем дёргать authoritative ради повторного «нет».
 
-**TTL для negative caching:**
-- Берётся из `SOA.minimum` поля (или `SOA TTL`, в зависимости от версии).
-- Типично 300-3600s.
+**На какой TTL кешируется отрицательный ответ:**
+- Берётся из поля `SOA.minimum` (или `SOA TTL`, в зависимости от версии).
+- Типично 300–3600с.
 
-**Проблема:**
-- Создал новую запись (`new-service.example.com`).
-- Кто-то до тебя её резолвил — получил NXDOMAIN.
-- Resolver закешировал NXDOMAIN на час.
-- Клиент будет видеть «не существует» ещё 1 час, даже если запись уже создана.
+**Чем это опасно — главный подвох:**
+- Создаёшь новую запись (`new-service.example.com`).
+- Но кто-то её уже запросил **до** создания — и получил NXDOMAIN.
+- Resolver закешировал это «нет» на час.
+- В итоге клиент видит «не существует» ещё час, хотя запись давно есть.
 
-**Защита:**
-- Перед созданием новых записей убедись, что никто их не запрашивал заранее.
-- Держи `SOA.minimum` низким (300s) для зон с частыми добавлениями.
+То есть отрицательный кеш живёт сам по себе и не сбрасывается от того, что ты создал запись.
 
-**Real-world:** marketing объявил `promo.example.com`, инженер добавил запись через час после анонса — пользователи, кликнувшие в первые секунды, видели NXDOMAIN ещё час.
+**Как защититься:**
+- Не «светить» новое имя до того, как создана запись (не анонсировать раньше времени).
+- Для зон с частыми добавлениями держи `SOA.minimum` низким (300с), чтобы такие промахи рассасывались быстро.
+
+**Из практики:** маркетинг анонсировал `promo.example.com`, а инженер добавил запись на час позже — те, кто кликнул в первые секунды, ещё час упирались в NXDOMAIN.
 
 ## Q11. (!) DNS propagation — что это и почему «48 часов»?
 
-**«DNS propagation»** — миф и одновременно реальность.
+**«DNS propagation»** — термин, который наполовину миф. Понять, что именно тормозит, — половина правильного ответа на собесе.
 
-**Миф:** «новые записи распространяются по интернету как gossip-протокол».
-**Реальность:** authoritative-серверы **сразу** отдают новые значения. Задержка — это **истечение TTL в кешах** resolver-ов и OS клиентов.
+**Миф:** «новые записи расползаются по интернету, как gossip-протокол, и нужно ждать, пока они дойдут до всех серверов».
+**Реальность:** authoritative-серверы отдают новое значение **сразу**, ничего никуда не «распространяется». Задержку создаёт только одно — **старые ответы, ещё живущие в кешах** resolver-ов и ОС клиентов, пока у них не истечёт TTL.
 
 **Почему «48 часов»:**
 - Часто NS-записи зоны имеют TTL 86400-172800 (1-2 дня).
@@ -354,37 +356,37 @@ example.com. 3600 IN CAA 0 issue "letsencrypt.org"
 3. **Переключить:** новые resolver-ы за минуты подхватят новое значение.
 4. **После стабилизации:** вернуть TTL обратно.
 
-**Real-world:** Facebook 2021 — BGP withdrew NS-серверы из интернета. Resolver-ы не могли получить новые ответы, но **держали кеш**. Большинство пользователей увидели outage сразу, потому что у них в кеше уже истекли A-записи.
+**Из практики:** Facebook 2021 — BGP убрал NS-серверы из интернета. Resolver-ы не могли получить новые ответы, но какое-то время **держали старый кеш**. Большинство пользователей увидели падение почти сразу: у них короткоживущие A-записи (TTL 60–300с) уже истекли, а пойти за свежими было некуда.
 
 ## Q12. CNAME flattening и проблема apex/zone apex
 
-**Проблема:** RFC 1034 запрещает CNAME на zone apex (`example.com` без `www.`), потому что apex обязан содержать SOA и NS-записи.
+**В чём проблема:** RFC 1034 запрещает CNAME на zone apex (`example.com` без `www.`), потому что apex обязан содержать SOA и NS, а CNAME не уживается с другими записями на том же имени.
 
-**Но реальность:**
-- CDN (CloudFront, Cloudflare, Fastly) даёт тебе **имя**, не IP (`d111abc.cloudfront.net`).
-- Ты хочешь `example.com` → CloudFront, без `www.`.
-- Чистый CNAME запрещён.
+**Почему это бьёт по практике:**
+- CDN (CloudFront, Cloudflare, Fastly) выдаёт тебе **имя**, а не IP (`d111abc.cloudfront.net`).
+- Ты хочешь, чтобы голый `example.com` (без `www.`) указывал на этот CDN.
+- А честный CNAME на apex поставить нельзя.
 
-**Решения:**
+**Как это обходят:**
 
 **1. `ALIAS` / `ANAME` (Route 53, DNSimple, Cloudflare):**
-- Провайдер на своей стороне резолвит `d111abc.cloudfront.net` → IP.
-- В DNS-ответе клиенту возвращается обычная `A`-запись.
-- Для клиента — стандартный flow, для тебя — гибкость CNAME.
+- Провайдер сам резолвит `d111abc.cloudfront.net` → IP на своей стороне.
+- Клиенту в ответе уходит обычная `A`-запись.
+- Для клиента это стандартная резолюция, а ты получаешь гибкость CNAME.
 
 **2. CNAME flattening (Cloudflare):**
-- Аналогично: при запросе apex Cloudflare резолвит CNAME на своей стороне и возвращает A.
+- То же самое под другим названием: на запрос apex Cloudflare разворачивает CNAME у себя и отдаёт A.
 
-**3. Apex Aliases в Cloudflare/AWS:**
-- AWS Route 53 Alias — нативный для AWS-сервисов (ALB, CloudFront, S3).
+**3. Apex Alias в AWS:**
+- Route 53 Alias — нативный механизм для AWS-сервисов (ALB, CloudFront, S3), бесплатный и без лишнего lookup.
 
-**Trade-off:**
-- ALIAS/ANAME — vendor-specific (нет в bind/PowerDNS).
-- Меняется CDN endpoint — провайдер обязан сам обновить кеш.
+**Компромисс:**
+- ALIAS/ANAME — vendor-specific: в обычных bind/PowerDNS их нет, привязка к провайдеру.
+- Если у CDN сменится endpoint, обновить разрешённый IP обязан сам провайдер — ты на это не влияешь.
 
-## Q13. (!) DNS-based load balancing: round-robin, weighted, latency-based
+## Q13. (!) Балансировка нагрузки через DNS: round-robin, weighted, latency-based
 
-DNS — самый простой LB, потому что **возвращает несколько A-записей** и клиент сам выбирает.
+DNS — самый простой балансировщик: authoritative просто **возвращает несколько A-записей**, а выбор делает клиент. Никакого отдельного железа, но и контроля почти нет.
 
 **Round-robin DNS:**
 ```
@@ -392,31 +394,31 @@ example.com. 60 IN A 1.1.1.1
 example.com. 60 IN A 2.2.2.2
 example.com. 60 IN A 3.3.3.3
 ```
-- Authoritative возвращает в **разном порядке** на каждый запрос.
-- Клиент обычно берёт первый IP.
-- **Проблемы:** нет health-check, нет учёта load, кеш resolver-а ломает balance, неравномерное распределение.
+- Authoritative тасует порядок A-записей **на каждый запрос**.
+- Клиент обычно берёт первый IP из списка — так нагрузка размазывается.
+- **Слабые места:** нет health-check (мёртвый инстанс остаётся в ротации), нет учёта реальной нагрузки, кеш resolver-а ломает чередование, распределение получается неравномерным.
 
-**Weighted DNS** (Route 53 weighted routing):
+**Weighted DNS** (Route 53 weighted routing) — задаёшь доли:
 - `A` 1.1.1.1, weight 70
 - `A` 2.2.2.2, weight 30
 - 70% запросов уйдёт на первый, 30% на второй.
-- Применение: blue/green deploy, canary.
+- Удобно для blue/green-деплоя и canary: гонишь сначала 5% трафика на новую версию.
 
 **Latency-based DNS** (Route 53 latency routing):
-- Resolver location → выбор ближайшего region.
-- Зависит от EDNS Client Subnet (см. Q17).
+- По расположению resolver-а выбирается ближайший по задержке регион.
+- Работает точнее при наличии EDNS Client Subnet (см. Q17).
 
 **Geolocation DNS** — см. Q14.
 
-**Когда DNS LB не подходит:**
-- Stateful sessions (резолвер кешировал — клиент залип на одном инстансе).
-- Точный health-check (TTL > 60s — выпавший инстанс будет получать трафик).
+**Когда DNS-балансировка не годится:**
+- Stateful-сессии: resolver закешировал IP, и клиент залипает на одном инстансе.
+- Когда нужен быстрый и точный health-check: при TTL > 60с выпавший инстанс ещё долго будет получать трафик из кешей.
 
-## Q14. (!) GeoDNS / Geolocation routing
+## Q14. (!) Как работает GeoDNS / маршрутизация по геолокации
 
-**GeoDNS** — выбор IP в зависимости от **геолокации** клиента (или resolver-а, см. Q17).
+**GeoDNS** — отдача разного IP в зависимости от **геолокации** клиента (а точнее resolver-а, см. Q17). Один и тот же домен возвращает разный адрес жителю Москвы и жителю Токио.
 
-**Примеры:**
+**Примеры реализаций:**
 - Route 53 Geolocation policy
 - NS1 Filter Chain
 - Cloudflare Geo Steering
@@ -427,35 +429,37 @@ example.com. 60 IN A 3.3.3.3
 2. Сопоставляет IP → страна/регион (MaxMind GeoIP).
 3. Возвращает A-запись региона.
 
-**Use cases:**
-- Compliance: пользователи EU → EU-region, GDPR-data не выходит.
-- Latency: пользователи Asia → Tokyo-region.
-- Content localization: разные сайты для разных стран.
+**Сценарии применения:**
+- Регуляторика: пользователи EU → EU-регион, чтобы персональные данные не покидали юрисдикцию (GDPR).
+- Снижение задержки: пользователи Азии → регион Tokyo.
+- Локализация контента: разный сайт для разных стран.
 
 **Подводные камни:**
-- **Точность geolocation** низкая для крупных ISP (1.1.1.1 в EU выглядит как «глобальный»).
-- **EDNS Client Subnet:** без ECS resolver «выглядит» как клиент, не как реальный пользователь.
-- **VPN-пользователи** получат не свой регион.
+- **Точность геолокации** низкая для крупных ISP и публичных DNS: `1.1.1.1` в EU «выглядит» просто как глобальный адрес.
+- **EDNS Client Subnet:** без ECS authoritative видит resolver, а не реального пользователя, и может промахнуться регионом (см. Q17).
+- **VPN** ломает всё: пользователь получит регион выходной ноды, а не свой.
 
-**Geolocation vs Latency:**
-- Geolocation — по карте.
-- Latency-based — по реальному времени отклика (актуальнее, но требует measurement infra).
+**Геолокация против latency-routing:**
+- Геолокация решает по карте (где формально находится IP).
+- Latency-based решает по реальному времени отклика — точнее, но требует инфраструктуры измерений.
 
-## Q15. (!) Anycast vs Unicast — зачем root и публичные resolver-ы используют anycast
+## Q15. (!) Anycast против Unicast — зачем root и публичные resolver-ы используют anycast
 
-**Unicast:** один IP — один сервер (или один LB). Маршрут уникален.
+Разница в том, сколько серверов стоит за одним IP.
 
-**Anycast:** один IP — **много серверов в разных локациях**. BGP анонсирует один и тот же префикс из множества POPs. Маршрутизатор клиента выбирает **ближайший по BGP-метрике**.
+**Unicast:** один IP — один сервер (или один LB), маршрут до него единственный.
+
+**Anycast:** один IP — **много серверов в разных локациях**. BGP анонсирует один и тот же префикс из десятков точек присутствия (POP), и маршрутизатор клиента сам выбирает **ближайший по BGP-метрике**. Клиент про это даже не знает — для него это всё тот же `1.1.1.1`.
 
 **Зачем anycast в DNS:**
-- **Низкая latency:** запрос идёт в ближайший POP (10-30ms вместо 100-300ms).
-- **DDoS-устойчивость:** атака распределяется на десятки POPs.
-- **Failover:** падает POP — BGP перерисовывает route на соседний.
-- **Простота для клиента:** один IP, никаких смарт-resolver-ов.
+- **Низкая задержка:** запрос уходит в ближайший POP (10–30 мс вместо 100–300 мс).
+- **Устойчивость к DDoS:** атака размазывается по десяткам POP, а не валит один сервер.
+- **Автоматический failover:** упал POP — BGP сам перерисовывает маршрут на соседний, клиент ничего не замечает.
+- **Простота для клиента:** один IP, не нужны умные resolver-ы или клиентская логика выбора.
 
-**Где anycast:**
-- **Root DNS:** 13 logical NS, но реально сотни физических через anycast.
-- **Public resolver-ы:** `1.1.1.1` (300+ POPs Cloudflare), `8.8.8.8` (Google).
+**Где это используется:**
+- **Root DNS:** 13 логических NS, но физически сотни серверов через anycast.
+- **Публичные resolver-ы:** `1.1.1.1` (300+ POP Cloudflare), `8.8.8.8` (Google).
 - **CDN:** Cloudflare, Akamai, Fastly.
 
 ```mermaid
@@ -467,33 +471,35 @@ graph LR
     P2 -.same IP.- P3
 ```
 
-**Подводный камень:** Cloudflare 2020 BGP withdraw — один POP анонсировал /24 префикс с ошибкой, и весь Cloudflare lost route to part of internet. Anycast сделал ошибку **глобальной мгновенно**.
+**Обратная сторона:** Cloudflare 2020 — один POP по ошибке анонсировал /24-префикс, и часть интернета потеряла маршрут до Cloudflare. Оборотная сторона anycast: ошибка в анонсе распространяется **глобально и мгновенно** — нет «локальной» поломки, которую можно изолировать.
 
-## Q16. Health-check-driven DNS failover (Route 53)
+## Q16. DNS-failover по health-check (на примере Route 53)
 
-**Route 53 health checks:**
-1. AWS периодически шлёт HTTP/TCP/HTTPS probe на endpoint (10-30s).
-2. При failure — `A`-запись помечается unhealthy.
-3. Route 53 **перестаёт возвращать** unhealthy IP в ответах.
+Идея проста: DNS перестаёт отдавать IP инстанса, который не проходит проверку здоровья.
 
-**Конфигурация:**
-- Active-passive: primary IP + secondary IP, failover policy.
-- Multi-region active-active: weighted + health check, выпадение — пропадает из ротации.
+**Как это делает Route 53:**
+1. AWS периодически шлёт HTTP/TCP/HTTPS-проверку на endpoint (раз в 10–30с).
+2. Если проверка падает — `A`-запись помечается нездоровой.
+3. Route 53 **перестаёт возвращать** этот IP в ответах, и трафик перетекает на здоровые.
 
-**Failover latency:**
-- Health check interval: 10-30s.
-- Threshold: обычно 3 неудачных probe.
-- TTL DNS-записи: 60s.
-- **Итого:** 60-120s до полного переключения для большинства клиентов.
+**Варианты настройки:**
+- Active-passive: основной IP + резервный, failover-политика переключает при падении основного.
+- Multi-region active-active: weighted + health check; выпавший регион просто пропадает из ротации.
 
-**Trade-off:**
-- Route 53 health check платный (~$0.5/check).
-- Только AWS-managed (если authoritative не Route 53 — нужен другой механизм).
-- Failover на DNS-уровне всегда медленнее, чем L4 LB (HAProxy keepalived: <1s).
+**Сколько занимает переключение (и почему оно не мгновенное):**
+- Интервал проверки: 10–30с.
+- Порог: обычно 3 неудачные проверки подряд (чтобы не реагировать на единичный сбой).
+- TTL DNS-записи: 60с — клиенты с закешированным IP не узнают о смене раньше.
+- **Итого:** 60–120с до полного переключения у большинства клиентов.
+
+**Компромисс:**
+- Health check в Route 53 платный (~$0.5 за проверку).
+- Привязан к AWS: если authoritative не Route 53 — нужен другой механизм.
+- Failover на уровне DNS всегда медленнее, чем на L4-балансировщике (HAProxy + keepalived переключают за <1с), потому что упирается в TTL и клиентские кеши.
 
 ## Q17. EDNS Client Subnet (ECS) — почему CDN зависит от resolver location
 
-**Проблема:** authoritative DNS видит IP **resolver-а**, не клиента.
+**Корень проблемы:** authoritative DNS видит IP **resolver-а**, а не самого клиента. Для GeoDNS и CDN это значит, что география определяется по resolver-у — и легко промахнуться.
 
 **Сценарий без ECS:**
 1. Пользователь в Москве использует `1.1.1.1` (Cloudflare).
@@ -503,21 +509,23 @@ graph LR
 5. Пользователь может получить edge в **Frankfurt** вместо Moscow.
 
 **Решение — ECS (RFC 7871):**
-- Resolver передаёт authoritative **префикс клиента** (`/24` IPv4 или `/56` IPv6).
-- Authoritative видит «клиент из Moscow ASN», возвращает Moscow-edge.
+- Resolver добавляет к запросу **префикс сети клиента** (`/24` для IPv4 или `/56` для IPv6) — не полный IP, а только подсеть.
+- Authoritative видит «клиент из московской подсети» и отдаёт edge в Москве.
 
-**Trade-off:**
-- **Плюс:** правильный CDN routing.
-- **Минус:** утечка геолокации пользователя на каждый DNS lookup.
+**Компромисс:**
+- **Плюс:** CDN направляет клиента на действительно ближайший edge.
+- **Минус:** на каждый lookup утекает приблизительная геолокация пользователя.
 
-**Поддержка:**
-- Google `8.8.8.8` — поддерживает.
-- Cloudflare `1.1.1.1` — **не поддерживает** (privacy).
-- OpenDNS — поддерживает.
+**Кто поддерживает:**
+- Google `8.8.8.8` — да.
+- Cloudflare `1.1.1.1` — **нет**, сознательно, ради приватности.
+- OpenDNS — да.
 
-**Последствие для CDN:** Cloudflare-сети сами хостят CDN edge в anycast POPs, поэтому им ECS не нужен — клиент уже у них. А для внешних CDN (Akamai, Fastly), Cloudflare-resolver может ухудшить routing.
+**Что это значит для CDN:** у Cloudflare edge живут в тех же anycast-POP, что и resolver, — клиент и так уже «у них», поэтому ECS им не нужен. А вот для внешних CDN (Akamai, Fastly) Cloudflare-resolver без ECS может направить клиента не на ближайший edge и ухудшить маршрут.
 
-## Q18. Managed DNS providers: Route 53, Cloudflare, NS1, Akamai, Dyn
+## Q18. Managed-провайдеры DNS: Route 53, Cloudflare, NS1, Akamai, Dyn
+
+Managed DNS — это когда зону хостит не твой bind, а внешний провайдер с anycast-сетью, API и SLA. Ниже — кто чем силён.
 
 | Провайдер | Сильная сторона | Особенность |
 |-----------|-----------------|-------------|
@@ -536,32 +544,32 @@ graph LR
 - **DDoS-защита** — критично для public-facing зон.
 - **Private zones** — для internal DNS.
 
-**Real-world:** Dyn DDoS October 2016 — Mirai botnet положил Dyn, Twitter, Reddit, GitHub, Spotify были недоступны на восточном побережье несколько часов. Урок: single managed-провайдер = single point of failure, multi-DNS-strategy (NS-записи на двух разных провайдерах) стала практикой.
+**Из практики:** DDoS на Dyn в октябре 2016 — ботнет Mirai положил Dyn, и Twitter, Reddit, GitHub, Spotify несколько часов были недоступны на восточном побережье США. Урок: один managed-провайдер = единая точка отказа; после этого нормой стала multi-DNS — NS-записи зоны держат сразу у двух независимых провайдеров.
 
-## Q19. Private DNS (Route 53 private zones) vs service discovery
+## Q19. Private DNS (Route 53 private zones) против service discovery
 
-**Private DNS:** зона, доступная только внутри определённой сети (VPC, on-prem).
+**Private DNS** — это зона, видимая только внутри определённой сети (VPC, on-prem), но недоступная из публичного интернета.
 
-**Зачем:**
-- `api-internal.example.com` → private IP, недоступно из public.
-- Не светить internal endpoints наружу.
-- Resolver внутри VPC видит private zone, снаружи — public zone (split-horizon).
+**Зачем нужно:**
+- `api-internal.example.com` резолвится в приватный IP и недоступен снаружи.
+- Не приходится светить внутренние endpoint-ы в публичном DNS.
+- Resolver внутри VPC видит приватную зону, а снаружи тот же домен резолвится в публичную (это и есть split-horizon DNS).
 
-**Где:**
+**Где доступно:**
 - AWS Route 53 Private Hosted Zones (привязка к VPC).
 - Cloudflare Internal DNS.
 - BIND views (split-horizon DNS).
 
-**Private DNS vs service discovery (Consul, k8s):**
+**Private DNS против service discovery (Consul, k8s):** это не одно и то же — они закрывают разные задачи.
 
-| Aspect | Private DNS | Consul / k8s CoreDNS |
+| Параметр | Private DNS | Consul / k8s CoreDNS |
 |--------|-------------|----------------------|
-| Update frequency | Раз в несколько часов/дней | Каждые секунды (live) |
-| Granularity | На уровне сервиса | На уровне instance / pod |
-| Health-aware | Только через managed health-check | Built-in (Consul agent, k8s readiness) |
-| Use case | Internal endpoints | Microservices dynamic discovery |
+| Частота обновления | Раз в часы/дни (статика) | Ежесекундно, live |
+| Гранулярность | На уровне сервиса | На уровне инстанса / pod |
+| Учёт здоровья | Только через managed health-check | Встроенный (Consul agent, k8s readiness) |
+| Сценарий | Стабильные внутренние endpoint-ы | Динамическое обнаружение микросервисов |
 
-**В реальности:** часто используют **оба** — Route 53 private для stable internal endpoints, Consul/k8s CoreDNS — для динамических микросервисов.
+**На практике** обычно живут **оба сразу:** Route 53 private — для стабильных внутренних endpoint-ов, а Consul / k8s CoreDNS — для динамических микросервисов, чьи pod-ы постоянно пересоздаются.
 
 ## Q20. SRV-records и service discovery (Consul, Kubernetes CoreDNS)
 
@@ -584,43 +592,45 @@ _http._tcp.my-service.default.svc.cluster.local. SRV 0 100 80 pod-1.my-service.d
 ```
 
 **Особенности:**
-- TTL обычно 0 (не кешировать) — Consul/k8s обновляют каждую секунду.
-- Health-aware: agent помечает unhealthy узлы, они выпадают из ответа.
-- Один запрос → список endpoints с port-ами.
+- TTL обычно 0 (не кешировать) — Consul/k8s обновляют состав каждую секунду, кеш только мешал бы.
+- Учитывает здоровье: agent помечает нездоровые узлы, и они сразу выпадают из ответа.
+- Один запрос возвращает сразу список endpoint-ов вместе с портами и приоритетами.
 
-**Trade-off vs A-record:**
-- A — только IP, без портов и приоритетов.
-- SRV — полная инфа для service-aware discovery.
-- Но не все клиенты умеют SRV (HTTP клиенты обычно нет; gRPC — да через `dns:///`).
+**Чем лучше/хуже обычной A-записи:**
+- A знает только IP — без портов и приоритетов.
+- SRV отдаёт полную картину для service-aware discovery (host + port + priority + weight).
+- Но не все клиенты умеют SRV: обычные HTTP-клиенты — нет, gRPC — да, через схему `dns:///`.
 
 ```bash
 # Получить SRV для Consul-сервиса
 dig @127.0.0.1 -p 8600 _redis._tcp.service.consul SRV
 ```
 
-## Q21. (!) DNS spoofing / cache poisoning / Kaminsky attack
+## Q21. (!) DNS spoofing, cache poisoning и атака Kaminsky
 
-**DNS spoofing** — атакующий отвечает на DNS-запрос быстрее настоящего authoritative и заставляет resolver принять подменённый ответ.
+Эти три понятия связаны: spoofing — приём, poisoning — цель, Kaminsky — конкретная атака, которая их соединила.
 
-**Cache poisoning** — закешировать spoofed ответ в recursive resolver. Один успешный spoof → все клиенты резолвера получают подменённый IP.
+**DNS spoofing** — атакующий успевает ответить на DNS-запрос **раньше** настоящего authoritative и подсовывает resolver-у подменённый ответ.
 
-**Kaminsky attack (2008):**
-- Атакующий шлёт recursive resolver запросы на несуществующие имена (`a1.example.com`, `a2.example.com`, ...).
-- На каждый запрос resolver идёт к authoritative.
-- Атакующий шлёт параллельно spoofed-ответы с **подменённым NS** для всей зоны `example.com`.
-- DNS-протокол использовал 16-bit transaction ID — угадать с 1/65536 на попытку, при тысячах запросов в секунду — реально.
-- Успех = атакующий контролирует **всю зону** в кеше resolver-а.
+**Cache poisoning** — закрепить этот подменённый ответ в кеше recursive resolver-а. Опасность в масштабе: один удачный spoof → подменённый IP получают **все** клиенты этого резолвера, пока запись в кеше.
 
-**Митигация (применили после 2008):**
-- **Source port randomization** — добавляет ещё 16 бит энтропии (теперь 32 bit угадывать).
-- **DNS Cookies** (RFC 7873) — клиент-серверная аутентификация.
-- **DNSSEC** (полное решение, см. Q22) — криптографическая подпись.
+**Атака Kaminsky (2008)** показала, как отравить кеш надёжно:
+- Атакующий заваливает recursive resolver запросами на несуществующие имена (`a1.example.com`, `a2.example.com`, …).
+- На каждое resolver идёт к authoritative — открывается окно для подмены.
+- Параллельно атакующий шлёт поток spoofed-ответов с **подменённой NS-записью на всю зону** `example.com`.
+- Защита держалась лишь на 16-битном transaction ID: шанс угадать 1/65536 на попытку, но при тысячах запросов в секунду подбор становится реальным.
+- Цена успеха высока: атакующий перехватывает в кеше **всю зону**, а не одно имя.
 
-**Real-world:** В 2008 Kaminsky привёл к coordinated patch всех major resolver-ов (BIND, MS DNS, Cisco) одновременно.
+**Чем закрылись после 2008:**
+- **Рандомизация source-порта** — добавляет ещё 16 бит энтропии, теперь угадывать надо 32 бита, и подбор становится непрактичным.
+- **DNS Cookies** (RFC 7873) — лёгкая клиент-серверная аутентификация запроса.
+- **DNSSEC** (полноценное решение, см. Q22) — криптоподпись, после которой подменить ответ нельзя в принципе.
 
-## Q22. (!) DNSSEC — RRSIG, DS, KSK/ZSK
+**Из практики:** в 2008 находка Kaminsky привела к синхронному патчу всех крупных resolver-ов (BIND, MS DNS, Cisco) в один день — настолько серьёзной была угроза.
 
-**DNSSEC** — расширение DNS, добавляющее **криптографическую подпись** для каждой записи.
+## Q22. (!) DNSSEC изнутри: RRSIG, DS, KSK/ZSK
+
+**DNSSEC** — расширение DNS, которое добавляет к записям **криптографическую подпись**. Цель — гарантировать, что ответ пришёл от настоящей зоны и не подменён по дороге (то самое решение против cache poisoning из Q21).
 
 **Ключевые типы записей:**
 - **`DNSKEY`** — публичный ключ зоны.
@@ -635,109 +645,111 @@ dig @127.0.0.1 -p 8600 _redis._tcp.service.consul SRV
 4. `example.com.` подписывает свои `A`/`MX`/etc через `RRSIG`.
 5. Resolver валидирует цепочку снизу вверх до root.
 
-**KSK vs ZSK:**
-- **KSK** (Key Signing Key) — подписывает только `DNSKEY`-записи. Долго живёт (1-2 года), `DS` в родительской зоне.
-- **ZSK** (Zone Signing Key) — подписывает все остальные RRset. Часто ротируется (1-3 месяца).
-- Зачем разделение: ZSK ротировать без участия registrar (DS не меняется), KSK ротация — редкое и сложное событие.
+**KSK против ZSK — зачем два ключа:**
+- **KSK** (Key Signing Key) подписывает только `DNSKEY`-записи. Живёт долго (1–2 года), и именно его хеш лежит как `DS` в родительской зоне.
+- **ZSK** (Zone Signing Key) подписывает все остальные RRset. Ротируется часто (1–3 месяца).
+- Смысл разделения: ZSK можно менять у себя, не трогая registrar (`DS` остаётся прежним), а редкую и хлопотную ротацию KSK не приходится делать каждый месяц.
 
-**Что НЕ даёт DNSSEC:**
-- **Не шифрует** — все данные видны в plain text (DoH/DoT — отдельно).
-- **Не защищает** от misconfiguration (поломанный DNSSEC = недоступность зоны).
+**Чего DNSSEC НЕ делает:**
+- **Не шифрует** — данные по-прежнему передаются открытым текстом (приватность — это уже DoH/DoT, см. Q23).
+- **Не прощает ошибок настройки** — сломанный DNSSEC означает не «работает без подписи», а недоступность всей зоны.
 
-**Real-world:** DNSSEC deployment <30% доменов (2024). Включение DNSSEC требует careful key rotation, иначе зона перестанет резолвиться.
+**Из практики:** DNSSEC включён менее чем у 30% доменов (2024). Причина именно в риске: неаккуратная ротация ключей — и зона перестаёт резолвиться, поэтому многие предпочитают не связываться.
 
-## Q23. (!) DNS-over-HTTPS (DoH), DNS-over-TLS (DoT), DNS-over-QUIC
+## Q23. (!) Шифрованный DNS: DoH, DoT и DNS-over-QUIC
 
-**Проблема классического DNS:**
-- UDP/TCP port 53, **plain text**.
-- ISP видит, какие домены ты резолвишь.
-- MITM можно подменить ответы.
+**Чем плох классический DNS:**
+- Ходит по UDP/TCP на порт 53 **открытым текстом**.
+- ISP (и любой на пути) видит, какие домены ты резолвишь.
+- MITM может незаметно подменить ответы.
 
-**Решения — шифрование DNS-трафика клиент ↔ resolver:**
+DNSSEC (Q22) защищает только целостность, но не приватность. Закрыть приватность — задача шифрования канала клиент ↔ resolver:
 
 **DoT (DNS-over-TLS, RFC 7858):**
-- TCP port 853, TLS 1.2/1.3.
-- Чистый DNS protocol поверх TLS.
+- TCP, порт 853, поверх TLS 1.2/1.3.
+- Это обычный DNS-протокол, просто завёрнутый в TLS.
 - Поддержка: Android Private DNS, systemd-resolved, knot-resolver.
-- Легче для firewall (отдельный port 853).
+- Удобен для firewall — у него выделенный порт 853, его легко разрешить или заблокировать.
 
 **DoH (DNS-over-HTTPS, RFC 8484):**
-- HTTPS port 443.
+- HTTPS, порт 443.
 - DNS-запросы упакованы в HTTP/2 (или HTTP/3).
 - Поддержка: Firefox, Chrome, iOS 14+, Cloudflare 1.1.1.1, Google.
-- Сложнее блокировать (трафик неотличим от обычного HTTPS).
+- Сложно заблокировать: трафик неотличим от обычного HTTPS и тонет в общем потоке на 443.
 
 **DoQ (DNS-over-QUIC, RFC 9250):**
-- UDP/443, QUIC поверх UDP.
-- Преимущество: 0-RTT, меньше handshake latency.
+- UDP, порт 443, QUIC поверх UDP.
+- Главный плюс — 0-RTT и меньше задержки на установку соединения.
 - Поддержка пока ограничена, но растёт.
 
 **Сравнение:**
 
-| Aspect | DoT | DoH | DoQ |
+| Параметр | DoT | DoH | DoQ |
 |--------|-----|-----|-----|
-| Port | 853 | 443 | 443/UDP |
-| Block-ability | Easy | Hard | Hard |
-| Latency | TCP handshake | TCP+TLS | 0-RTT |
-| Browser support | No | Yes | Limited |
+| Порт | 853 | 443 | 443/UDP |
+| Легко ли заблокировать | Легко | Трудно | Трудно |
+| Задержка на установку | TCP-рукопожатие | TCP + TLS | 0-RTT |
+| Поддержка в браузерах | Нет | Есть | Ограниченная |
 
-**Trade-off:**
-- DoH мешает enterprise inspection (роуты не видны admin-у).
-- DoT удобнее для контроля внутри корпоратив-сети.
-- Mozilla включила DoH по умолчанию — спровоцировало споры о «потере контроля» у ISP.
+**Компромисс:**
+- DoH мешает корпоративному инспектированию трафика: админ больше не видит, какие домены резолвят сотрудники.
+- DoT для внутрикорпоративного контроля удобнее — отдельный порт легко регулировать политиками.
+- Когда Mozilla включила DoH по умолчанию, это вызвало споры о «потере контроля» у ISP — именно из-за невидимости запросов.
 
 ## Q24. DDoS via DNS amplification и защита
 
-**DNS amplification:**
-- Атакующий шлёт DNS-запрос с **spoofed source IP** (адрес жертвы) на public resolver.
-- Запрос маленький (~60 байт), ответ большой (1000-4000 байт через `ANY` query или DNSSEC RRSIG).
-- Resolver отвечает жертве — **amplification factor 30-70x**.
-- Атакующий с 1 Gbps трафика может организовать 30-70 Gbps атаки на жертву.
+**Как работает DNS amplification (усиление):**
+- Атакующий шлёт DNS-запрос с **подменённым source IP** (адресом жертвы) на публичный resolver.
+- Запрос крошечный (~60 байт), а ответ большой (1000–4000 байт — через `ANY`-запрос или DNSSEC-подписи RRSIG).
+- Resolver добросовестно отвечает по адресу из source, то есть жертве. Коэффициент усиления — **30–70x**.
+- В итоге атакующему с каналом 1 Gbps достаточно, чтобы обрушить на жертву 30–70 Gbps. Усиление и подмена адреса — два кита этой атаки.
 
-**Open DNS resolvers** — главная проблема. Resolver, отвечающий всем, — useful tool для атакующего.
+**Корень проблемы — open resolvers.** Resolver, отвечающий кому угодно, превращается в готовый усилитель для атакующего.
 
-**Защита resolver-а:**
-- **Не быть open resolver** — отвечать только своим клиентам.
-- **Rate limiting** (Response Rate Limiting, RRL).
-- **BCP 38** — фильтровать spoofed source IP на edge провайдера (теоретически решает proблему в корне, на практике поддержка <50%).
+**Как защищается resolver:**
+- **Не быть open resolver** — отвечать только своим клиентам, отсекая чужие запросы.
+- **Rate limiting** ответов (Response Rate Limiting, RRL) — не дать использовать себя как усилитель.
+- **BCP 38** — провайдер на своём edge фильтрует пакеты с подменённым source IP. В теории это убивает атаку в корне, но на практике внедрено менее чем у половины сетей.
 
-**Защита authoritative от DDoS:**
-- **Anycast** (распределение нагрузки) — см. Q15.
-- **Scrub services** — Cloudflare, Akamai, Imperva фильтруют атаку.
-- **Multi-DNS provider** — атака на одного не валит всё (см. Dyn 2016).
+**Как защищается authoritative от DDoS:**
+- **Anycast** размазывает нагрузку по POP (см. Q15).
+- **Scrubbing-сервисы** (Cloudflare, Akamai, Imperva) отфильтровывают атакующий трафик.
+- **Несколько DNS-провайдеров** — атака на одного не валит всю зону (урок Dyn 2016).
 
-**Real-world:** AWS Shield, GitHub 1.35 Tbps атака (memcached, не DNS, но похожая amplification), Spamhaus 300 Gbps DNS amplification (2013).
+**Из практики:** AWS Shield как защита; атака на GitHub в 1.35 Tbps (через memcached, не DNS, но тот же принцип усиления); DNS-amplification на Spamhaus 300 Gbps (2013).
 
-## Q25. Reverse DNS (PTR) — email reputation, logging
+## Q25. Обратный DNS (PTR): репутация почты и логирование
 
-**Reverse DNS** — IP → имя. Живёт в зоне `in-addr.arpa.` (IPv4) или `ip6.arpa.` (IPv6).
+**Обратный DNS (reverse DNS)** делает противоположное обычному: IP → имя. Записи живут в специальной зоне `in-addr.arpa.` (IPv4) или `ip6.arpa.` (IPv6).
 
-**Зачем:**
+**Зачем он нужен — три применения:**
 
-**1. Email reputation:**
-- Получатель письма с `mail.example.com` (IP `93.184.216.34`):
-- Делает reverse: `34.216.184.93.in-addr.arpa. PTR mail.example.com.`?
-- Делает forward: `mail.example.com A 93.184.216.34`?
-- Совпадает → доверие выше.
-- Нет PTR → большая часть писем в spam.
+**1. Репутация почтового сервера** (главный сценарий):
+- Получатель письма с `mail.example.com` (IP `93.184.216.34`) проверяет согласованность имени и адреса:
+- обратный запрос: `34.216.184.93.in-addr.arpa. PTR mail.example.com.`?
+- прямой запрос: `mail.example.com A 93.184.216.34`?
+- Если оба совпали — доверие к отправителю выше.
+- Если PTR нет вовсе — значительная часть писем уйдёт в спам.
 
-**2. Logging / SIEM:**
-- В логах удобнее видеть имя, не IP.
-- `8.8.8.8` → `dns.google.` — сразу понятно, что это Google DNS.
+**2. Логирование / SIEM:**
+- В логах имя читается лучше, чем голый IP.
+- `8.8.8.8` → `dns.google.` — сразу ясно, что это Google DNS, без ручного поиска.
 
-**3. SSH auth (исторически):**
-- Некоторые серверы делают reverse-lookup перед auth (медленно, обычно отключено через `UseDNS no`).
+**3. SSH-аутентификация (исторически):**
+- Некоторые серверы делали reverse-lookup перед авторизацией. Это медленно, поэтому обычно отключают через `UseDNS no`.
 
-**Особенности:**
-- PTR-зона принадлежит **владельцу IP-блока** (обычно ISP / cloud provider).
-- Свой PTR можно поставить только в своих IP-блоках (AWS Elastic IP, GCP — через консоль).
-- PTR на динамическом IP бесполезен и зачастую вреден.
+**Особенности, о которых спрашивают:**
+- PTR-зона принадлежит **владельцу IP-блока** (обычно ISP или облачный провайдер), а не тебе.
+- Поставить свой PTR можно только в своих блоках (AWS Elastic IP, GCP — через консоль).
+- На динамическом IP PTR бесполезен и нередко вреден.
 
-**Forward-confirmed reverse DNS (FCrDNS)** — двусторонняя проверка (PTR указывает на имя, имя резолвится в тот же IP). Стандарт для трекинга email-серверов.
+**Forward-confirmed reverse DNS (FCrDNS)** — двусторонняя проверка: PTR указывает на имя, а имя резолвится обратно в тот же IP. Это де-факто стандарт доверия для почтовых серверов.
 
-## Q26. (!) dig / nslookup / drill / kdig — практическая диагностика
+## Q26. (!) Практическая диагностика DNS: dig, nslookup, drill, kdig
 
-**`dig`** — стандарт де-факто.
+Четыре инструмента под разные задачи. Знать `dig` наизусть — обязательный минимум для собеса.
+
+**`dig`** — стандарт де-факто для диагностики.
 
 ```bash
 # Базовое: A-запись
@@ -770,93 +782,97 @@ dig @8.8.8.8 example.com +subnet=1.2.3.0/24
 dig example.com ANY
 ```
 
-**`nslookup`** — старый, менее удобный, доступен везде (включая Windows).
+**`nslookup`** — старый и менее удобный, но есть везде, включая Windows: пригодится, когда `dig` недоступен.
 ```bash
 nslookup example.com
 nslookup example.com 1.1.1.1
 ```
 
-**`drill`** — альтернатива из LDNS, удобный DNSSEC tracing.
+**`drill`** — альтернатива из LDNS, удобна для трассировки цепочки DNSSEC.
 ```bash
 drill -DT example.com
 ```
 
-**`kdig`** — из Knot DNS, поддерживает DoT/DoH.
+**`kdig`** — из Knot DNS, умеет шифрованный DNS (DoT/DoH).
 ```bash
 kdig @1.1.1.1 +tls example.com
 kdig @1.1.1.1 +https example.com
 ```
 
-**Что искать в выводе `dig`:**
-- `ANSWER SECTION` — сам ответ.
-- `Query time` — latency запроса.
-- `SERVER` — какой resolver ответил.
-- `flags: aa` — authoritative answer.
-- `flags: ad` — authenticated data (DNSSEC OK).
+**На что смотреть в выводе `dig`:**
+- `ANSWER SECTION` — собственно ответ.
+- `Query time` — задержка запроса (полезно для диагностики «медленного DNS»).
+- `SERVER` — какой resolver ответил (проверить, что спросил именно нужный).
+- `flags: aa` — ответ пришёл от authoritative-сервера.
+- `flags: ad` — данные аутентифицированы, DNSSEC-валидация прошла.
 
 ## Q27. Latency budget DNS-резолюции (cold vs warm)
 
-**Сколько занимает DNS** — критично для TTFB.
+Время DNS-резолюции напрямую влияет на TTFB, поэтому важно понимать, сколько и где оно тратится.
 
-**Warm cache:**
-- Browser DNS cache: <1ms.
-- OS resolver cache: <1ms.
-- Recursive resolver warm: 5-20ms.
+**Тёплый кеш (ответ уже лежит рядом):**
+- Кеш браузера: <1 мс.
+- Кеш resolver-а ОС: <1 мс.
+- Тёплый recursive resolver: 5–20 мс.
 
-**Cold cache (полный обход root → TLD → authoritative):**
-- 50-200ms типично.
-- 300+ms при медленных authoritative или дальних регионах.
+**Холодный кеш (полный обход root → TLD → authoritative):**
+- Типично 50–200 мс.
+- 300+ мс при медленных authoritative или дальних регионах.
 
-**Подсчёт для одного запроса:**
-- DNS: 50ms (cold) или 1ms (warm)
-- TCP handshake: 50ms (1 RTT)
-- TLS handshake: 50-100ms (1-2 RTT)
-- HTTP request: 50ms
-- **Итого:** до 350ms cold, ~150ms warm.
+**Из чего складывается первый запрос целиком:**
+- DNS: 50 мс (холодный) или 1 мс (тёплый)
+- TCP-рукопожатие: 50 мс (1 RTT)
+- TLS-рукопожатие: 50–100 мс (1–2 RTT)
+- HTTP-запрос: 50 мс
+- **Итого:** до 350 мс на холодную, ~150 мс на тёплую.
 
-**Где можно сэкономить:**
-- **DNS prefetch** (`<link rel="dns-prefetch" href="//cdn.example.com">`) — браузер заранее резолвит.
-- **Preconnect** (`<link rel="preconnect" href="...">`) — DNS + TCP + TLS заранее.
+Видно, что DNS — заметная доля, и её можно срезать заранее.
+
+**Где сэкономить:**
+- **DNS prefetch** (`<link rel="dns-prefetch" href="//cdn.example.com">`) — браузер резолвит имя заранее, до того как оно понадобится.
+- **Preconnect** (`<link rel="preconnect" href="...">`) — заранее проходит DNS + TCP + TLS.
 - **HTTP/3 + QUIC** — 0-RTT при повторном подключении.
-- **Cloudflare Always Online / Bunny.net** — близкий edge → меньше cold lookups.
+- **Близкий edge** (Cloudflare, Bunny.net) — меньше холодных lookup-ов.
 
-**Anti-pattern:** Java `networkaddress.cache.ttl=-1` (кеш forever) — приложение залипает на старом IP при failover.
+**Антипаттерн:** Java `networkaddress.cache.ttl=-1` (кеш навсегда) — приложение залипает на старом IP и не видит failover.
 
-## Q28. OS resolver: nscd, systemd-resolved, browser DNS cache
+## Q28. DNS-кеши клиента: nscd, systemd-resolved, кеш браузера
 
-**Multi-level cache** в стеке клиента:
+Ключевая мысль: на пути запроса не один кеш, а целая лестница уровней, и устаревший IP может застрять на любом из них.
 
-**1. Browser:**
-- Chrome: ~60s TTL, `chrome://net-internals/#dns` для очистки.
+**1. Браузер:**
+- Chrome: TTL ~60с, очистка через `chrome://net-internals/#dns`.
 - Firefox: настраивается через `network.dnsCacheExpiration`.
 
-**2. OS resolver:**
-- **Linux:** `systemd-resolved` (modern, кеш + DoT), `nscd` (legacy, кеш name service в целом), `dnsmasq` (часто как local cache + forwarder).
+**2. Resolver ОС:**
+- **Linux:** `systemd-resolved` (современный, кеш + DoT), `nscd` (легаси, кеширует name service целиком), `dnsmasq` (часто как локальный кеш + форвардер).
 - **macOS:** `mDNSResponder` / `discoveryd`.
-- **Windows:** DNS Client Service.
+- **Windows:** служба DNS Client.
 
-**3. Application:**
-- **JVM:** `networkaddress.cache.ttl` (по умолчанию forever под security manager, иначе 30s).
-- **Node.js:** не кеширует на уровне runtime, полагается на OS.
-- **Go:** по умолчанию идёт через OS resolver (`cgo` netdns) или встроенный (`netgo`).
+**3. Приложение:**
+- **JVM:** `networkaddress.cache.ttl` (под security manager по умолчанию навсегда, иначе 30с) — частый источник «залипшего» IP.
+- **Node.js:** на уровне рантайма не кеширует, полагается на ОС.
+- **Go:** по умолчанию идёт через resolver ОС (`cgo`, netdns) либо встроенный (`netgo`).
 
-**Common gotchas:**
-- `getent hosts example.com` — Linux, видит OS-кеш.
-- `dscacheutil -flushcache` — macOS, очистить.
+**Частые ловушки и команды сброса:**
+- `getent hosts example.com` — Linux, показывает, что в кеше ОС.
+- `dscacheutil -flushcache` — macOS, очистить кеш.
 - `sudo systemd-resolve --flush-caches` — Linux.
 - `ipconfig /flushdns` — Windows.
 
-**Troubleshooting:** если `dig` показывает новый IP, а app — старый, значит app-cache (JVM, custom) или старый OS-resolver-кеш.
+**Как диагностировать:** если `dig` уже отдаёт новый IP, а приложение упорно ходит на старый — виноват кеш приложения (JVM, кастомный) или устаревший кеш resolver-а ОС, а не сам DNS.
 
 ## Q29. Как ускорить «48-часовой» switchover (lowering TTL заранее)
 
-**Сценарий:** надо перенести `api.example.com` с провайдера A на B.
+**Сценарий:** надо перенести `api.example.com` с провайдера A на B без долгого хвоста запросов на старый сервер.
 
-**Без подготовки:**
-- TTL 86400 → клиенты могут видеть старый IP до 24 часов.
-- Пользователи спорадически падают на старый сервер (который уже выключен).
+**Что будет без подготовки:**
+- При TTL 86400 клиенты держат старый IP в кеше до 24 часов.
+- Часть пользователей продолжает попадать на старый сервер (уже выключенный) — отсюда хаотичные ошибки.
 
-**Workflow:**
+Лечится это не «ожиданием 48 часов», а заблаговременным снижением TTL.
+
+**Порядок действий:**
 
 **День 0 (T-48h):**
 - Понизить TTL: 86400 → 60 на нужных записях.
@@ -875,41 +891,41 @@ kdig @1.1.1.1 +https example.com
 - Вернуть TTL обратно (3600+).
 
 **Подводные камни:**
-- **Negative caching:** если кто-то запросил несуществующее имя — NXDOMAIN закешировался на SOA.minimum. Тоже снижать заранее.
-- **Bad resolvers** игнорируют TTL и кешируют дольше. Полностью убрать старую инфру можно не раньше, чем через 48-72h.
-- **Browser/OS cache** — может ещё дольше, в крайнем случае пользователю надо рестартовать браузер.
+- **Negative caching:** если кто-то запросит несуществующее имя, NXDOMAIN закешируется на `SOA.minimum` — это значение тоже надо снизить заранее.
+- **«Плохие» resolver-ы** игнорируют TTL и держат запись дольше заявленного. Поэтому старую инфру нельзя гасить раньше, чем через 48–72 часа после переключения.
+- **Кеш браузера/ОС** может жить ещё дольше — в крайнем случае пользователю придётся перезапустить браузер.
 
-**Real-world:** AWS docs официально рекомендуют lowering TTL за 24-48h перед migration.
+**Из практики:** документация AWS прямо рекомендует снижать TTL за 24–48 часов до миграции.
 
 ## Q30. Реальные incident-ы: Dyn 2016, Facebook 2021, Route 53, Cloudflare BGP 2020
 
-**Dyn DDoS — 21 октября 2016:**
-- Mirai botnet (IoT-устройства, в основном camera) положил Dyn ~1.2 Tbps.
-- Затронуты: Twitter, Reddit, GitHub, Spotify, Netflix, PayPal — все на DNS Dyn.
-- Урок: single managed DNS provider = single point of failure. После — практика multi-DNS (NS на двух провайдерах одновременно).
+**DDoS на Dyn — 21 октября 2016:**
+- Ботнет Mirai (взломанные IoT-устройства, в основном камеры) обрушил на Dyn ~1.2 Tbps.
+- Легло всё, что хостило DNS на Dyn: Twitter, Reddit, GitHub, Spotify, Netflix, PayPal.
+- Урок: один managed-провайдер DNS — единая точка отказа. После инцидента нормой стала multi-DNS — NS у двух провайдеров одновременно.
 
-**Facebook outage — 4 октября 2021 (~6 часов):**
-- Backbone routing update убрал BGP-анонс NS-серверов facebook.com из интернета.
-- Authoritative NS «исчезли» — recursive resolver-ы не могли получить ответы.
-- Старые ответы в кешах expired быстро (TTL 60-300s) — лавина запросов в NS, которые не отвечают.
-- DNS load увеличился в 30x — даже back-channel admins не могли войти (внутренние tools тоже использовали DNS).
-- Урок: NS-серверы должны быть на independent infrastructure, не на той же сети, которой управляют (BGP-кольцо).
+**Падение Facebook — 4 октября 2021 (~6 часов):**
+- Обновление маршрутизации backbone убрало BGP-анонс NS-серверов facebook.com из интернета.
+- Authoritative NS «исчезли» — recursive resolver-ы попросту не могли до них достучаться.
+- Короткоживущие записи в кешах (TTL 60–300с) быстро протухли — и поднялась лавина запросов в NS, которые не отвечают.
+- Нагрузка на DNS выросла в 30 раз; пострадали даже внутренние инструменты — админы не могли зайти починить, потому что их tools тоже ходили через тот же DNS.
+- Урок: NS-серверы должны жить на независимой инфраструктуре, а не в той же сети, которой управляют (иначе получается замкнутый круг через BGP).
 
-**AWS Route 53 outage — 7 декабря 2021:**
-- US-EAST-1 internal API failure — control plane Route 53 не мог принимать изменения (data plane продолжал отвечать).
-- Compounded by internal AWS services depending on Route 53 health checks.
-- Урок: managed-сервисы тоже падают, особенно когда один регион — load center.
+**Сбой AWS Route 53 — 7 декабря 2021:**
+- Отказ внутреннего API в US-EAST-1: control plane Route 53 перестал принимать изменения, хотя data plane продолжал отвечать на запросы.
+- Усугубилось тем, что внутренние сервисы AWS сами зависели от health-check Route 53.
+- Урок: managed-сервисы тоже падают, особенно когда один регион стал центром нагрузки.
 
-**Cloudflare BGP withdraw — 17 июля 2020:**
-- Bug в Cloudflare router config привёл к withdraw анонсов anycast-префиксов.
-- 27 минут downtime для большой части интернета.
-- Урок: anycast делает ошибку **глобальной мгновенно**; rollout config через staged regions.
+**BGP-сбой Cloudflare — 17 июля 2020:**
+- Баг в конфиге роутера привёл к снятию (withdraw) анонсов anycast-префиксов.
+- 27 минут недоступности для большой части интернета.
+- Урок: anycast делает ошибку **глобальной мгновенно**, поэтому конфиг надо раскатывать поэтапно, регион за регионом.
 
-**Что унесли индустрию:**
-- Multi-DNS provider для critical zones.
-- TTL не слишком низкий (Facebook tail amplification).
-- NS-серверы — на physically/logically separated network.
-- Out-of-band management (не через DNS).
+**Что из этого вынесла индустрия:**
+- Несколько DNS-провайдеров для критичных зон.
+- TTL не задирать слишком низко (иначе при сбое — лавина запросов, как у Facebook).
+- NS-серверы — в физически и логически отдельной сети.
+- Управление по out-of-band каналу, не зависящему от DNS.
 
 ---
 
