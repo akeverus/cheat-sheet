@@ -290,6 +290,9 @@
         event.preventDefault();
         overlay.classList.contains('hidden') ? open() : close();
       } else if (event.key === '/') {
+        // Не воровать фокус в поиск, пока открыт модал справки (фокус ушёл бы
+        // за оверлей — ловушка для клавиатуры/скринридера).
+        if (!overlay.classList.contains('hidden')) return;
         var search = document.querySelector('.search-input');
         if (search) { event.preventDefault(); search.focus(); }
       }

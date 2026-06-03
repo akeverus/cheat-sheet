@@ -1213,6 +1213,7 @@ html[data-design="editorial"] .stats-page .card h2 {
   font-family: var(--font-family-display);
   font-size: var(--font-size-xl); font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary); margin: 0 0 var(--space-4);
+  overflow-wrap: break-word;
 }
 html[data-design="editorial"] .stats-page .card h2.mt-0 { margin-top: 0; }
 html[data-design="editorial"] .stats-page .muted { color: var(--color-text-secondary); }
@@ -1381,8 +1382,11 @@ html[data-design="editorial"] .stats-page .maturity-mid { color: var(--color-sta
 html[data-design="editorial"] .stats-page .maturity-low { color: var(--color-text-secondary); }
 
 /* сворачивание таблицы */
-html[data-design="editorial"] .stats-page .topic-table-wrap { position: relative; }
-html[data-design="editorial"] .stats-page .topic-table-wrap.is-collapsed { max-height: 540px; overflow: hidden; }
+html[data-design="editorial"] .stats-page .topic-table-wrap { position: relative; overflow-x: auto; }
+/* overflow-x:auto (не overflow:hidden) в свёрнутом виде: при A+/375 широкая
+   таблица иначе клипала правые колонки без скролла — недоступны до разворота.
+   Вертикаль клипаем (overflow-y:hidden) для эффекта сворачивания. */
+html[data-design="editorial"] .stats-page .topic-table-wrap.is-collapsed { max-height: 540px; overflow-x: auto; overflow-y: hidden; }
 html[data-design="editorial"] .stats-page .topic-table-wrap.is-collapsed::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 64px; background: linear-gradient(to bottom, transparent, var(--color-bg-secondary)); pointer-events: none; }
 html[data-design="editorial"] .stats-page .table-expander {
   display: inline-flex; align-items: center; justify-content: center; margin-top: var(--space-4);
@@ -1455,6 +1459,7 @@ html[data-design="editorial"] .summary-page .summary-mode-line {
   font-family: var(--font-family-mono); font-size: var(--font-size-xs);
   letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
   color: var(--color-text-secondary); margin-bottom: var(--space-3);
+  overflow-wrap: break-word;
 }
 /* Гасим градиент-текст из старого CSS, цвет даём через .text-* */
 html[data-design="editorial"] .summary-page .summary-score-value {
@@ -1553,7 +1558,7 @@ html[data-design="editorial"] .summary-page .summary-mistake-item {
   transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
 }
 html[data-design="editorial"] .summary-page .summary-mistake-item:hover { background: var(--color-bg-tertiary); border-left-color: var(--color-accent-primary); }
-html[data-design="editorial"] .summary-page .summary-mistake-question { display: block; color: var(--color-text-primary); margin-bottom: var(--space-2); }
+html[data-design="editorial"] .summary-page .summary-mistake-question { display: block; color: var(--color-text-primary); margin-bottom: var(--space-2); overflow-wrap: break-word; word-break: break-word; }
 html[data-design="editorial"] .summary-page .summary-mistake-meta { display: block; font-family: var(--font-family-mono); font-size: var(--font-size-xs); letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-secondary); }
 
 /* Рекомендации */
@@ -1779,6 +1784,7 @@ html[data-design="editorial"] .result-page .options > div {
   border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-md);
   background: var(--color-bg-primary); color: var(--color-text-primary);
   font-size: var(--font-size-md); box-shadow: none;
+  min-width: 0; overflow-wrap: break-word; word-break: break-word;
 }
 html[data-design="editorial"] .result-page .option-other { opacity: 0.85; }
 html[data-design="editorial"] .result-page .option-status-label {
@@ -1927,6 +1933,57 @@ html[data-design="editorial"] .result-page .trace-step-state {
 html[data-design="editorial"] .focus-page .trace-step-explanation,
 html[data-design="editorial"] .result-page .trace-step-explanation {
   display: block; color: var(--color-text-primary); line-height: var(--line-height-relaxed);
+}
+
+/* Разбор неверного ответа + сравнение «выбранное vs правильное» (AI-инжект через
+   app.js, классы .wrong-feedback / .comparison-block). Те же AI-gated условия, что
+   у takeaway — по умолчанию AI выкл, но без правил блоки были бы без стилей.
+   Зеркалят takeaway-карточку (accent border-left, eyebrow-заголовок). */
+html[data-design="editorial"] .focus-page .wrong-feedback,
+html[data-design="editorial"] .result-page .wrong-feedback,
+html[data-design="editorial"] .focus-page .comparison-block,
+html[data-design="editorial"] .result-page .comparison-block {
+  margin-top: var(--space-6); padding: var(--space-4) var(--space-5);
+  background: var(--color-bg-secondary);
+  border: var(--rule-weight) solid var(--color-border-secondary);
+  border-left: var(--rule-weight-accent) solid var(--color-accent-primary);
+  border-radius: var(--border-radius-md);
+}
+html[data-design="editorial"] .focus-page .wrong-feedback-title,
+html[data-design="editorial"] .result-page .wrong-feedback-title,
+html[data-design="editorial"] .focus-page .comparison-title,
+html[data-design="editorial"] .result-page .comparison-title {
+  display: flex; align-items: center; gap: var(--space-2);
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
+  color: var(--color-accent-primary); margin: 0 0 var(--space-2);
+}
+html[data-design="editorial"] .focus-page .wrong-feedback-text,
+html[data-design="editorial"] .result-page .wrong-feedback-text {
+  color: var(--color-text-primary); line-height: var(--line-height-relaxed); margin: 0;
+  overflow-wrap: break-word;
+}
+/* comparison-table: блочная обёртка со скроллом, чтобы 3-колоночная таблица не
+   рвала вёрстку на 375/A+. Линейки и паддинги — из токенов, как у markdown-таблиц. */
+html[data-design="editorial"] .focus-page .comparison-table,
+html[data-design="editorial"] .result-page .comparison-table {
+  display: block; overflow-x: auto; width: 100%; margin-top: var(--space-3);
+  border-collapse: collapse; font-size: var(--font-size-sm);
+}
+html[data-design="editorial"] .focus-page .comparison-table th,
+html[data-design="editorial"] .result-page .comparison-table th,
+html[data-design="editorial"] .focus-page .comparison-table td,
+html[data-design="editorial"] .result-page .comparison-table td {
+  padding: var(--space-2) var(--space-3); text-align: left; vertical-align: top;
+  border: var(--rule-weight) solid var(--color-border-secondary);
+  overflow-wrap: break-word;
+}
+html[data-design="editorial"] .focus-page .comparison-table th,
+html[data-design="editorial"] .result-page .comparison-table th {
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
+  color: var(--color-text-secondary); font-weight: var(--font-weight-semibold);
+  background: var(--color-bg-tertiary);
 }
 
 @media (max-width: 600px) {
@@ -2232,6 +2289,8 @@ html[data-design="editorial"] .summary-tools-status {
   html[data-design="editorial"] .summary-score-value,
   html[data-design="editorial"] .summary-table .text-success,
   html[data-design="editorial"] .summary-table .text-warning,
-  html[data-design="editorial"] .summary-table .text-danger { color: #16130D !important; }
+  html[data-design="editorial"] .summary-table .text-danger,
+  html[data-design="editorial"] .summary-td-correct,
+  html[data-design="editorial"] .summary-td-wrong { color: #16130D !important; }
   html[data-design="editorial"] a { color: #16130D !important; text-decoration: none; }
 }
