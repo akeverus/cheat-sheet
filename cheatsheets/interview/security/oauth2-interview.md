@@ -39,55 +39,55 @@ updated: "2026-05-08"
 - [See also](#see-also)
 
 **Основы OAuth2**
-- [Q1. (!) Что такое OAuth2 и зачем он нужен?](#q1--что-такое-oauth2-и-зачем-он-нужен)
-- [Q2. (!) Какие роли определены в OAuth2?](#q2--какие-роли-определены-в-oauth2)
-- [Q3. (!) Чем отличается авторизация от аутентификации в контексте OAuth2?](#q3--чем-отличается-авторизация-от-аутентификации-в-контексте-oauth2)
-- [Q4. Какие типы клиентов определены в OAuth2?](#q4-какие-типы-клиентов-определены-в-oauth2)
-- [Q5. Что такое scope в OAuth2?](#q5-что-такое-scope-в-oauth2)
+- [Q1. (!) Что такое `OAuth2` и зачем он нужен?](#q1--что-такое-oauth2-и-зачем-он-нужен)
+- [Q2. (!) Какие роли определены в `OAuth2`?](#q2--какие-роли-определены-в-oauth2)
+- [Q3. (!) Чем отличается авторизация от аутентификации в контексте `OAuth2`?](#q3--чем-отличается-авторизация-от-аутентификации-в-контексте-oauth2)
+- [Q4. Какие типы клиентов определены в `OAuth2`?](#q4-какие-типы-клиентов-определены-в-oauth2)
+- [Q5. Что такое scope в `OAuth2`?](#q5-что-такое-scope-в-oauth2)
 
 **Flows и гранты**
-- [Q6. (!) Как работает Authorization Code Flow?](#q6--как-работает-authorization-code-flow)
-- [Q7. (!) Что такое PKCE и как он защищает Authorization Code Flow?](#q7--что-такое-pkce-и-как-он-защищает-authorization-code-flow)
-- [Q8. (!) Как работает Client Credentials Flow?](#q8--как-работает-client-credentials-flow)
-- [Q9. Как работает Device Authorization Flow?](#q9-как-работает-device-authorization-flow)
-- [Q10. (!) Чем Authorization Code Flow отличается от Implicit Flow?](#q10--чем-authorization-code-flow-отличается-от-implicit-flow)
-- [Q11. Какие гранты убраны в OAuth 2.1?](#q11-какие-гранты-убраны-в-oauth-21)
+- [Q6. (!) Как работает `Authorization Code Flow`?](#q6--как-работает-authorization-code-flow)
+- [Q7. (!) Что такое `PKCE` и как он защищает `Authorization Code Flow`?](#q7--что-такое-pkce-и-как-он-защищает-authorization-code-flow)
+- [Q8. (!) Как работает `Client Credentials Flow`?](#q8--как-работает-client-credentials-flow)
+- [Q9. Как работает `Device Authorization Flow`?](#q9-как-работает-device-authorization-flow)
+- [Q10. (!) Чем `Authorization Code Flow` отличается от `Implicit Flow`?](#q10--чем-authorization-code-flow-отличается-от-implicit-flow)
+- [Q11. Какие гранты убраны в `OAuth 2.1`?](#q11-какие-гранты-убраны-в-oauth-21)
 
 **Токены (access, refresh, JWT)**
-- [Q12. (!) Что такое access token и refresh token?](#q12--что-такое-access-token-и-refresh-token)
-- [Q13. (!) Какова структура JWT токена?](#q13--какова-структура-jwt-токена)
-- [Q14. Чем JWT отличается от opaque token?](#q14-чем-jwt-отличается-от-opaque-token)
-- [Q15. Как ресурсный сервер валидирует JWT?](#q15-как-ресурсный-сервер-валидирует-jwt)
-- [Q16. Что такое refresh token rotation?](#q16-что-такое-refresh-token-rotation)
+- [Q12. (!) Что такое `access token` и `refresh token`?](#q12--что-такое-access-token-и-refresh-token)
+- [Q13. (!) Какова структура `JWT` токена?](#q13--какова-структура-jwt-токена)
+- [Q14. Чем `JWT` отличается от opaque token?](#q14-чем-jwt-отличается-от-opaque-token)
+- [Q15. Как ресурсный сервер валидирует `JWT`?](#q15-как-ресурсный-сервер-валидирует-jwt)
+- [Q16. Что такое `refresh token rotation`?](#q16-что-такое-refresh-token-rotation)
 - [Q17. Как отзывать токены (token revocation)?](#q17-как-отзывать-токены-token-revocation)
 - [Q18. Что такое token introspection?](#q18-что-такое-token-introspection)
-- [Q19. Что такое token binding и DPoP?](#q19-что-такое-token-binding-и-dpop)
+- [Q19. Что такое token binding и `DPoP`?](#q19-что-такое-token-binding-и-dpop)
 
 **OpenID Connect (OIDC)**
-- [Q20. (!) Что такое OpenID Connect и чем он отличается от OAuth2?](#q20--что-такое-openid-connect-и-чем-он-отличается-от-oauth2)
-- [Q21. Какова структура ID Token в OIDC?](#q21-какова-структура-id-token-в-oidc)
-- [Q22. Что такое OIDC Discovery и UserInfo endpoint?](#q22-что-такое-oidc-discovery-и-userinfo-endpoint)
+- [Q20. (!) Что такое `OpenID Connect` и чем он отличается от `OAuth2`?](#q20--что-такое-openid-connect-и-чем-он-отличается-от-oauth2)
+- [Q21. Какова структура `ID Token` в `OIDC`?](#q21-какова-структура-id-token-в-oidc)
+- [Q22. Что такое `OIDC Discovery` и `UserInfo endpoint`?](#q22-что-такое-oidc-discovery-и-userinfo-endpoint)
 
 **Spring Security OAuth2**
-- [Q23. (!) Как настроить OAuth2 Login в Spring Security?](#q23--как-настроить-oauth2-login-в-spring-security)
-- [Q24. (!) Как настроить Resource Server с JWT в Spring Security?](#q24--как-настроить-resource-server-с-jwt-в-spring-security)
-- [Q25. Как реализовать OAuth2 в микросервисной архитектуре?](#q25-как-реализовать-oauth2-в-микросервисной-архитектуре)
-- [Q26. Как настроить Spring Authorization Server?](#q26-как-настроить-spring-authorization-server)
+- [Q23. (!) Как настроить `OAuth2 Login` в `Spring Security`?](#q23--как-настроить-oauth2-login-в-spring-security)
+- [Q24. (!) Как настроить `Resource Server` с JWT в `Spring Security`?](#q24--как-настроить-resource-server-с-jwt-в-spring-security)
+- [Q25. Как реализовать `OAuth2` в микросервисной архитектуре?](#q25-как-реализовать-oauth2-в-микросервисной-архитектуре)
+- [Q26. Как настроить `Spring Authorization Server`?](#q26-как-настроить-spring-authorization-server)
 
 **Безопасность OAuth2**
-- [Q27. (!) Какие основные угрозы существуют для OAuth2?](#q27--какие-основные-угрозы-существуют-для-oauth2)
-- [Q28. Как работает state parameter и зачем он нужен?](#q28-как-работает-state-parameter-и-зачем-он-нужен)
-- [Q29. Чеклист безопасности OAuth2 для production](#q29-чеклист-безопасности-oauth2-для-production)
+- [Q27. (!) Какие основные угрозы существуют для `OAuth2`?](#q27--какие-основные-угрозы-существуют-для-oauth2)
+- [Q28. Как работает `state` parameter и зачем он нужен?](#q28-как-работает-state-parameter-и-зачем-он-нужен)
+- [Q29. Чеклист безопасности `OAuth2` для production](#q29-чеклист-безопасности-oauth2-для-production)
 
 **Тестирование OAuth2**
-- [Q30. Как тестировать OAuth2 в Spring Boot?](#q30-как-тестировать-oauth2-в-spring-boot)
+- [Q30. Как тестировать `OAuth2` в `Spring Boot`?](#q30-как-тестировать-oauth2-в-spring-boot)
 
 **Продвинутые темы**
-- [Q31. (!) Что изменилось в OAuth 2.1 по сравнению с OAuth 2.0?](#q31--что-изменилось-в-oauth-21-по-сравнению-с-oauth-20)
-- [Q32. Какие стандартные JWT claims обязательны и что они означают?](#q32-какие-стандартные-jwt-claims-обязательны-и-что-они-означают)
-- [Q33. (!) Как реализовать Refresh Token Rotation в Spring Boot?](#q33--как-реализовать-refresh-token-rotation-в-spring-boot)
-- [Q34. Что такое OAuth2 Backend for Frontend (BFF) и когда его применять?](#q34-что-такое-oauth2-backend-for-frontend-bff-и-когда-его-применять)
-- [Q35. Как защитить OAuth2 от CSRF и Token Leakage?](#q35-как-защитить-oauth2-от-csrf-и-token-leakage)
+- [Q31. (!) Что изменилось в `OAuth 2.1` по сравнению с `OAuth 2.0`?](#q31--что-изменилось-в-oauth-21-по-сравнению-с-oauth-20)
+- [Q32. Какие стандартные `JWT claims` обязательны и что они означают?](#q32-какие-стандартные-jwt-claims-обязательны-и-что-они-означают)
+- [Q33. (!) Как реализовать `Refresh Token Rotation` в Spring Boot?](#q33--как-реализовать-refresh-token-rotation-в-spring-boot)
+- [Q34. Что такое `OAuth2 Backend for Frontend` (`BFF`) и когда его применять?](#q34-что-такое-oauth2-backend-for-frontend-bff-и-когда-его-применять)
+- [Q35. Как защитить `OAuth2` от `CSRF` и `Token Leakage`?](#q35-как-защитить-oauth2-от-csrf-и-token-leakage)
 
 **OAuth 2.1, PKCE, Token Introspection и OpenID Connect**
 - [Q36. Что изменилось в OAuth 2.1 — детали спецификации?](#q36-что-изменилось-в-oauth-21--детали-спецификации)
@@ -100,9 +100,11 @@ updated: "2026-05-08"
 
 ## Q1. (!) Что такое `OAuth2` и зачем он нужен?
 
-`OAuth2` (`Open Authorization 2.0`, `RFC 6749`) — протокол **авторизации**, позволяющий приложению получить ограниченный доступ к ресурсам пользователя на другом сервисе **без передачи логина и пароля**.
+`OAuth2` (`Open Authorization 2.0`, `RFC 6749`) — протокол **делегированной авторизации**: приложение получает ограниченный доступ к ресурсам пользователя на другом сервисе **без передачи логина и пароля**.
 
-Ключевой принцип: пользователь не отдаёт свой пароль стороннему приложению, а выдаёт **токен** с ограниченными правами (`scope`) и сроком жизни.
+Проблема, которую он решает: раньше, чтобы приложение могло читать ваши контакты в Google, вы должны были отдать ему свой пароль от Google — а это полный доступ и невозможность отозвать его, не сменив пароль. `OAuth2` заменяет пароль на **токен** с ограниченными правами (`scope`) и коротким сроком жизни, который можно отозвать в любой момент.
+
+**Ключевой принцип:** пользователь логинится напрямую на доверенном сервисе (Authorization Server), а стороннее приложение никогда не видит его пароль — только выданный токен.
 
 ```mermaid
 sequenceDiagram
@@ -122,22 +124,24 @@ sequenceDiagram
     RS->>C: Защищённые данные
 ```
 
-Важно: `OAuth2` — протокол **авторизации**, не аутентификации. Аутентификацию добавляет [OIDC (OpenID Connect)](authentication-authorization-patterns-interview.md) поверх `OAuth2`.
+**Частая ошибка на собеседовании:** `OAuth2` отвечает на вопрос «что приложению разрешено делать», а не «кто этот пользователь». Аутентификацию (подтверждение личности) добавляет отдельный слой — [OIDC (OpenID Connect)](authentication-authorization-patterns-interview.md) поверх `OAuth2`.
 
 ## Q2. (!) Какие роли определены в `OAuth2`?
 
-В протоколе `OAuth2` (`RFC 6749`) определены 4 роли:
+`OAuth2` (`RFC 6749`) определяет 4 роли. Суть протокола в том, чтобы развести «того, кто владеет данными», «того, кто хочет к ним доступ» и «того, кто этот доступ выдаёт» — поэтому ролей именно четыре:
 
-| Роль | Описание | Пример |
-|------|----------|--------|
-| **Resource Owner** | Владелец ресурса (пользователь) | Пользователь с аккаунтом Google |
-| **Client** | Приложение, запрашивающее доступ | Веб-приложение, мобильное приложение |
-| **Authorization Server** | Выдаёт токены после аутентификации | Keycloak, Okta, Google OAuth |
-| **Resource Server** | Хранит защищённые ресурсы, проверяет токены | REST API сервис |
+| Роль | Кто это | Что делает | Пример |
+|------|---------|------------|--------|
+| **Resource Owner** | Пользователь | Владеет данными, даёт согласие на доступ | Владелец аккаунта Google |
+| **Client** | Приложение | Запрашивает доступ к данным от имени пользователя | Веб- или мобильное приложение |
+| **Authorization Server** | Сервис аутентификации | Логинит пользователя и выдаёт токены | Keycloak, Okta, Google OAuth |
+| **Resource Server** | API с данными | Хранит ресурсы, проверяет токены при каждом запросе | REST API сервис |
 
-Authorization Server и Resource Server могут быть одним сервером (например, в монолите) или разными (типично в [микросервисах](../architecture/microservices-interview.md)).
+**Важный нюанс:** Authorization Server и Resource Server — это *роли*, а не обязательно отдельные машины. В монолите они часто живут в одном приложении; в [микросервисах](../architecture/microservices-interview.md) Authorization Server обычно выделен (Keycloak), а Resource Server — это каждый сервис, защищающий своё API.
 
 ## Q3. (!) Чем отличается авторизация от аутентификации в контексте `OAuth2`?
+
+Коротко: **аутентификация** отвечает на вопрос «кто ты?», **авторизация** — «что тебе разрешено?». `OAuth2` занимается вторым и осознанно не делает первого.
 
 | Аспект | Аутентификация (AuthN) | Авторизация (AuthZ) |
 |--------|----------------------|---------------------|
@@ -147,23 +151,23 @@ Authorization Server и Resource Server могут быть одним серв�
 | **Токен** | ID Token (OIDC) | Access Token |
 | **Протокол** | OpenID Connect | OAuth2 |
 
-`OAuth2` **сам по себе не аутентифицирует**. Он предполагает, что Authorization Server уже выполнил аутентификацию. `OIDC` расширяет `OAuth2`, добавляя `ID Token` для подтверждения личности.
+`OAuth2` **сам по себе не аутентифицирует** — он предполагает, что Authorization Server уже как-то проверил личность пользователя (паролем, MFA, биометрией). Сам протокол этим не интересуется и не сообщает клиенту, *кто* вошёл. Именно поэтому появился `OIDC`: он расширяет `OAuth2`, добавляя `ID Token`, в котором уже есть подтверждённые данные о личности пользователя.
 
 Подробнее: [Паттерны аутентификации и авторизации](authentication-authorization-patterns-interview.md).
 
 ## Q4. Какие типы клиентов определены в `OAuth2`?
 
-`OAuth2` делит клиентов на два типа по способности хранить секрет:
+`OAuth2` делит клиентов на два типа по **одному критерию — может ли клиент безопасно хранить `client_secret`**. От этого зависит, какой flow он обязан использовать.
 
-**Confidential clients** (конфиденциальные) — могут безопасно хранить `client_secret`:
+**Confidential clients** (конфиденциальные) — секрет хранится на сервере, куда у пользователя нет доступа:
 - Backend-сервер (Java, Node.js)
-- Используют `Authorization Code Flow`
+- Используют `Authorization Code Flow` (с секретом подтверждают свою личность на token endpoint)
 
-**Public clients** (публичные) — **не могут** хранить секрет:
+**Public clients** (публичные) — код выполняется на устройстве пользователя, поэтому **любой секрет можно извлечь** (декомпилировать APK, открыть DevTools):
 - SPA (React, Angular)
 - Мобильные приложения
 - Desktop-приложения
-- **Обязаны** использовать `Authorization Code Flow` + `PKCE`
+- **Обязаны** использовать `Authorization Code Flow` + `PKCE` — раз секрета нет, защиту от перехвата кода даёт `PKCE`
 
 ```mermaid
 graph TD
@@ -179,7 +183,7 @@ graph TD
 
 ## Q5. Что такое scope в `OAuth2`?
 
-`Scope` — механизм ограничения доступа: клиент указывает, **какие именно разрешения** запрашивает.
+`Scope` — это «список разрешений», которые клиент запрашивает у пользователя. Именно через scope реализуется главное обещание `OAuth2` — *ограниченный* доступ: токен даёт права не на всё, а только на то, что перечислено в scope и что пользователь подтвердил на экране согласия (consent).
 
 ```
 GET /authorize?
@@ -199,7 +203,7 @@ GET /authorize?
 | `email` | Email пользователя |
 | `offline_access` | Получить refresh token |
 
-На ресурсном сервере **всегда проверяйте scope**:
+Scope нужно проверять **на ресурсном сервере** — то, что токен валиден, ещё не значит, что он даёт право на конкретную операцию:
 
 ```java
 @GetMapping("/api/repos")
@@ -209,11 +213,11 @@ public List<Repository> getRepos() {
 }
 ```
 
-Принцип **least privilege**: запрашивайте минимально необходимый набор scopes.
+**Эмпирическое правило (least privilege):** запрашивайте минимально необходимый набор scopes. Чем меньше прав у токена, тем меньше ущерб при его утечке.
 
 ## Q6. (!) Как работает `Authorization Code Flow`?
 
-`Authorization Code Flow` — основной и самый безопасный flow для веб-приложений с backend-сервером. Токен **никогда не передаётся через браузер**.
+`Authorization Code Flow` — основной и самый безопасный flow для приложений с backend-сервером. Главная идея: вместо того чтобы вернуть токен прямо в браузер, Authorization Server возвращает одноразовый **код**, а его обмен на токен происходит скрытно — server-to-server. Поэтому **токен никогда не проходит через браузер** и не оседает в истории, логах или referer.
 
 ```mermaid
 sequenceDiagram
@@ -236,15 +240,15 @@ sequenceDiagram
     RS->>C: Данные
 ```
 
-Ключевые моменты:
-- Authorization code — **одноразовый**, короткоживущий (обычно 10 минут)
-- Обмен code → token происходит на **backend** (server-to-server), токен не виден браузеру
-- `state` параметр защищает от CSRF
-- `redirect_uri` должен совпадать с зарегистрированным (exact match)
+Ключевые моменты (и зачем каждый нужен):
+- **Authorization code одноразовый и короткоживущий** (обычно ~10 минут) — даже если код утечёт, окно для атаки минимально, а повторно его не использовать
+- **Обмен code → token идёт на backend** (server-to-server) с `client_secret` — браузер токена не видит, а Authorization Server убеждается, что код предъявил именно зарегистрированный клиент
+- **`state` защищает от CSRF** — связывает запрос авторизации с конкретной сессией пользователя
+- **`redirect_uri` должен точно совпадать** с зарегистрированным (exact match) — иначе злоумышленник перенаправит код на свой адрес
 
 ## Q7. (!) Что такое `PKCE` и как он защищает `Authorization Code Flow`?
 
-`PKCE` (`Proof Key for Code Exchange`, `RFC 7636`, произносится "pixy") — расширение, защищающее от перехвата authorization code. **Обязателен** для public clients, рекомендован для всех клиентов в `OAuth 2.1`.
+`PKCE` (`Proof Key for Code Exchange`, `RFC 7636`, произносится "pixy") — расширение `Authorization Code Flow`, которое заменяет `client_secret` там, где его не может быть. У public client (SPA, мобильное приложение) секрета нет, значит, перехваченный authorization code злоумышленник мог бы спокойно обменять на токен. `PKCE` это закрывает: клиент придумывает одноразовый секрет на лету и доказывает им владение кодом. **Обязателен** для public clients, а в `OAuth 2.1` — для всех клиентов.
 
 ```mermaid
 sequenceDiagram
@@ -285,7 +289,7 @@ String codeChallenge = Base64.getUrlEncoder()
 
 ## Q8. (!) Как работает `Client Credentials Flow`?
 
-`Client Credentials Flow` — для **machine-to-machine** (M2M) сценариев, когда сервис обращается к API другого сервиса **от своего имени** (не от имени пользователя).
+`Client Credentials Flow` — для **machine-to-machine** (M2M) сценариев, когда сервис обращается к API другого сервиса **от своего имени** (не от имени пользователя). Никакого Resource Owner и согласия здесь нет — клиент сам и есть владелец «ресурса доступа». Поэтому flow максимально простой: один запрос с `client_id` + `client_secret` сразу возвращает access token.
 
 ```mermaid
 sequenceDiagram
@@ -331,11 +335,11 @@ public WebClient serviceB(OAuth2AuthorizedClientManager clientManager) {
 }
 ```
 
-Важно: нет участия пользователя, нет `refresh_token`. Используется только для **конфиденциальных клиентов**, которые могут безопасно хранить `client_secret`. Типичное применение в [микросервисах](../architecture/microservices-interview.md): сервис авторизации, межсервисные вызовы.
+**Подводные камни:** нет участия пользователя и нет `refresh_token` — токен не обновляется, при истечении сервис просто запрашивает новый тем же запросом. Flow допустим только для **конфиденциальных клиентов**: раз `client_secret` — единственная защита, утечь он не должен. Типичное применение в [микросервисах](../architecture/microservices-interview.md): межсервисные вызовы, фоновые задачи, сервисные интеграции.
 
 ## Q9. Как работает `Device Authorization Flow`?
 
-`Device Authorization Flow` (`RFC 8628`) — для устройств с ограниченным вводом: Smart TV, IoT, CLI-утилиты, игровые консоли.
+`Device Authorization Flow` (`RFC 8628`) решает проблему устройств, где неудобно или невозможно ввести логин и пароль: Smart TV, IoT, CLI-утилиты, игровые консоли. Идея простая — авторизацию переносят на устройство с нормальным вводом (телефон или ноутбук), а само устройство только опрашивает сервер и ждёт результат.
 
 ```mermaid
 sequenceDiagram
@@ -364,6 +368,8 @@ sequenceDiagram
 
 ## Q10. (!) Чем `Authorization Code Flow` отличается от `Implicit Flow`?
 
+Главное отличие в одном предложении: `Authorization Code Flow` возвращает **код**, который обменивается на токен скрытно, а `Implicit Flow` возвращал **сам токен прямо в URL браузера** — отсюда все его проблемы с безопасностью.
+
 | Аспект | Authorization Code Flow | Implicit Flow |
 |--------|------------------------|---------------|
 | **Токен в URL** | Нет (обмен на backend) | Да (fragment `#access_token=...`) |
@@ -391,10 +397,10 @@ graph LR
 
 ## Q11. Какие гранты убраны в `OAuth 2.1`?
 
-`OAuth 2.1` (`draft-ietf-oauth-v2-1`) — консолидация лучших практик. Убраны:
+`OAuth 2.1` (`draft-ietf-oauth-v2-1`) — это консолидация лучших практик, накопленных за годы эксплуатации `OAuth 2.0`. Принцип отбора: всё, что на практике приводило к утечкам, убирают. Под это попали два гранта:
 
-1. **Implicit Grant** — токен в URL небезопасен. Замена: `Authorization Code` + `PKCE`.
-2. **Resource Owner Password Credentials (ROPC)** — клиент получает пароль пользователя, что нарушает принцип OAuth2. Замена: `Authorization Code Flow`.
+1. **Implicit Grant** — возвращал токен прямо в URL, где тот оседал в истории браузера и referer-заголовках. Замена: `Authorization Code` + `PKCE`.
+2. **Resource Owner Password Credentials (ROPC)** — клиент получал пароль пользователя напрямую, что полностью ломает идею делегирования (зачем тогда `OAuth2`?). Замена: `Authorization Code Flow`.
 
 Добавлены как обязательные:
 - `PKCE` для **всех** клиентов (не только public)
@@ -402,6 +408,10 @@ graph LR
 - Refresh token rotation или sender-constrained tokens
 
 ## Q12. (!) Что такое `access token` и `refresh token`?
+
+Это два разных токена с разными ролями. **Access token** — пропуск к API: его показывают ресурсному серверу при каждом запросе. **Refresh token** — «талон на новый пропуск»: его показывают только Authorization Server, чтобы получить свежий access token, когда старый истёк.
+
+Зачем такое разделение? Чтобы можно было сделать access token **очень короткоживущим** (минимизируя ущерб от утечки), но не заставлять пользователя логиниться каждые 15 минут — за бесшовное продление отвечает refresh token.
 
 | Свойство | Access Token | Refresh Token |
 |----------|-------------|---------------|
@@ -436,7 +446,11 @@ sequenceDiagram
 
 ## Q13. (!) Какова структура `JWT` токена?
 
-`JWT` (`JSON Web Token`, `RFC 7519`) состоит из трёх частей, разделённых точками: `header.payload.signature`.
+`JWT` (`JSON Web Token`, `RFC 7519`) — это самодостаточный токен из трёх частей через точку: `header.payload.signature`. «Самодостаточный» значит, что все данные о пользователе уже лежат внутри (в payload), а подпись гарантирует, что их не подменили — поэтому проверить токен можно локально, не обращаясь к Authorization Server.
+
+- **Header** — алгоритм подписи и `kid` (идентификатор ключа)
+- **Payload** — claims: данные о пользователе и метаданные токена
+- **Signature** — подпись header+payload, которой ресурсный сервер убеждается в подлинности
 
 Пример реального JWT:
 
@@ -487,6 +501,8 @@ RSASHA256(
 
 ## Q14. Чем `JWT` отличается от opaque token?
 
+Ключевая разница — **где живёт информация о токене**. У `JWT` она внутри самого токена (проверяется локально по подписи), у opaque token — на стороне Authorization Server (проверяется запросом introspection). Отсюда вытекает главный компромисс: `JWT` быстрее и масштабируемее, но его тяжело отозвать досрочно; opaque медленнее, зато отзывается мгновенно.
+
 | Аспект | JWT | Opaque Token |
 |--------|-----|-------------|
 | **Структура** | Самодостаточный (header.payload.signature) | Случайная строка |
@@ -500,7 +516,15 @@ RSASHA256(
 
 ## Q15. Как ресурсный сервер валидирует `JWT`?
 
-Алгоритм валидации JWT access token:
+Ресурсный сервер проверяет JWT **локально, без обращения к Authorization Server** — в этом и смысл JWT. Валидация идёт по шагам, и провал любого означает отказ:
+
+1. **Подпись** — пересчитывается и сверяется публичным ключом (иначе токен подделан)
+2. **`exp`** — токен не истёк
+3. **`iss`** — выдан ожидаемым Authorization Server
+4. **`aud`** — предназначен именно этому сервису (защита от confused deputy)
+5. **`scope`** — достаточен для запрошенной операции
+
+Первые четыре провала дают `401`, недостаток scope — `403`:
 
 ```mermaid
 flowchart TD
@@ -538,7 +562,7 @@ Spring Security автоматически кэширует ключи и обн
 
 ## Q16. Что такое `refresh token rotation`?
 
-`Refresh token rotation` — при каждом обновлении access token **выдаётся новый refresh token**, а старый немедленно инвалидируется.
+`Refresh token rotation` — при каждом обновлении access token Authorization Server **выдаёт новый refresh token**, а старый немедленно инвалидирует. Зачем: refresh token долгоживущий, поэтому самый лакомый для кражи. Ротация превращает его в одноразовый, и главное — даёт **способ обнаружить кражу**: если кто-то использует уже отозванный токен, значит, его перехватили.
 
 ```mermaid
 sequenceDiagram
@@ -561,7 +585,7 @@ sequenceDiagram
 
 ## Q17. Как отзывать токены (token revocation)?
 
-Token revocation (`RFC 7009`) — механизм досрочного отзыва токенов:
+Token revocation (`RFC 7009`) — стандартный endpoint, на который клиент отправляет токен, чтобы Authorization Server пометил его недействительным (например, при выходе пользователя):
 
 ```
 POST /oauth2/revoke HTTP/1.1
@@ -573,18 +597,19 @@ client_id=my-app&
 client_secret=***
 ```
 
-Сложности с отзывом JWT:
-- JWT **самодостаточен** — ресурсный сервер не обращается к Authorization Server при каждом запросе
-- После отзыва JWT остаётся "валидным" до `exp`
+**Подвох с JWT:** отзыв на Authorization Server не помогает напрямую. JWT самодостаточен, и ресурсный сервер проверяет его локально, не спрашивая Authorization Server, — поэтому отозванный JWT остаётся «валидным» до своего `exp`. Это та самая цена за масштабируемость из Q14.
 
-Решения:
-1. **Короткий TTL** (5–15 мин) — минимизировать окно
-2. **Blacklist в Redis** — ресурсный сервер проверяет `jti` (JWT ID) в blacklist
-3. **Introspection** — ресурсный сервер проверяет статус на Authorization Server (снижает масштабируемость)
+Поэтому на практике отзыв JWT решают одним из трёх способов (или их комбинацией):
+
+1. **Короткий TTL** (5–15 мин) — окно, в котором отозванный токен ещё работает, минимально; самый простой подход
+2. **Blacklist в Redis** — ресурсный сервер на каждом запросе сверяет `jti` (JWT ID) со списком отозванных; точно, но возвращает сетевой запрос
+3. **Introspection** — ресурсный сервер спрашивает статус у Authorization Server; надёжно, но снижает масштабируемость (см. Q18)
 
 ## Q18. Что такое token introspection?
 
-Token introspection (`RFC 7662`) — ресурсный сервер запрашивает у Authorization Server актуальную информацию о токене:
+Token introspection (`RFC 7662`) — endpoint, через который ресурсный сервер спрашивает у Authorization Server «жив ли этот токен и что в нём?». Нужен прежде всего для **opaque token**: такой токен — просто случайная строка, локально из него ничего не извлечь, поэтому единственный способ проверки — спросить у того, кто его выдал.
+
+Запрос (ресурсный сервер аутентифицируется своими credentials):
 
 ```
 POST /oauth2/introspect HTTP/1.1
@@ -623,13 +648,13 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 }
 ```
 
-Trade-off: гарантирует актуальность статуса токена, но создаёт **дополнительный запрос** на каждый API-вызов.
+**Компромисс:** introspection гарантирует актуальный статус токена (отозванный сразу виден как `active: false`), но платит за это **дополнительным сетевым запросом** к Authorization Server на каждый API-вызов — это узкое место под нагрузкой.
 
 ## Q19. Что такое token binding и `DPoP`?
 
-**Проблема**: Bearer token может быть перехвачен и использован кем угодно.
+**Проблема, которую решают:** обычный Bearer token работает по принципу «предъявитель = владелец». Кто перехватил токен — тот и пользуется им, ключа или пароля больше не нужно. Token binding и `DPoP` привязывают токен к конкретному клиенту, превращая «предъявителя» в «доказавшего владение».
 
-**DPoP** (`Demonstrating Proof-of-Possession`, `RFC 9449`) — клиент доказывает владение приватным ключом при каждом запросе:
+**DPoP** (`Demonstrating Proof-of-Possession`, `RFC 9449`) — клиент один раз генерирует пару ключей, токен привязывается к публичному ключу, а при каждом запросе клиент прикладывает подпись приватным ключом:
 
 ```mermaid
 sequenceDiagram
@@ -647,11 +672,11 @@ sequenceDiagram
     RS->>C: 200 OK
 ```
 
-Даже если токен перехвачен — без приватного ключа клиента использовать его **невозможно**.
+**Итог:** даже перехваченный токен бесполезен — без приватного ключа клиента подделать DPoP-доказательство нельзя, и ресурсный сервер отвергнет запрос.
 
 ## Q20. (!) Что такое `OpenID Connect` и чем он отличается от `OAuth2`?
 
-`OIDC` (`OpenID Connect`) — слой **аутентификации** поверх `OAuth2`:
+`OIDC` (`OpenID Connect`) — это тонкий слой **аутентификации** поверх `OAuth2`. `OAuth2` даёт доступ к ресурсам, но не сообщает, *кто* вошёл; `OIDC` устраняет этот пробел, добавляя `ID Token` с подтверждёнными данными о пользователе, стандартные scopes (`openid`, `profile`, `email`) и UserInfo endpoint. Проще говоря: «Войти через Google» — это `OIDC`, а не голый `OAuth2`.
 
 | Аспект | OAuth2 | OIDC |
 |--------|--------|------|
@@ -679,7 +704,7 @@ graph TD
 
 ## Q21. Какова структура `ID Token` в `OIDC`?
 
-`ID Token` — JWT с обязательными claims для идентификации пользователя:
+`ID Token` — это всегда JWT, который Authorization Server выдаёт клиенту как «справку о личности» пользователя. В отличие от access token, он предназначен **для клиента** (чтобы тот узнал, кто вошёл), а не для вызова API. Содержит обязательный набор claims:
 
 ```json
 {
@@ -715,7 +740,9 @@ graph TD
 
 ## Q22. Что такое `OIDC Discovery` и `UserInfo endpoint`?
 
-**OIDC Discovery** — стандартизированный endpoint для автоконфигурации:
+Это два стандартных endpoint OIDC, решающих разные задачи: **Discovery** избавляет от ручного прописывания URL-ов сервера, **UserInfo** отдаёт свежие данные о пользователе по access token.
+
+**OIDC Discovery** — один JSON-документ по фиксированному адресу, из которого клиент узнаёт все остальные endpoint Authorization Server (authorize, token, jwks, userinfo) и его возможности:
 
 ```
 GET https://auth.example.com/.well-known/openid-configuration
@@ -752,7 +779,7 @@ Authorization: Bearer <access_token>
 
 ## Q23. (!) Как настроить `OAuth2 Login` в `Spring Security`?
 
-Полная конфигурация OAuth2 клиента для "Login with Google":
+В Spring Security `OAuth2 Login` сводится к двум вещам: описать провайдера (`registration` + `provider`) в `application.yml` и включить `.oauth2Login()` в фильтр-чейне. Всё остальное (редиректы, обмен кода, PKCE, чтение UserInfo) Spring берёт на себя. Полная конфигурация для "Login with Google":
 
 ```yaml
 # application.yml
@@ -815,6 +842,8 @@ public class SecurityConfig {
 Подробнее о конфигурации: [Spring Security](../frameworks/spring/spring-security-interview.md).
 
 ## Q24. (!) Как настроить `Resource Server` с JWT в `Spring Security`?
+
+Минимум — указать `issuer-uri` (или `jwk-set-uri`): по нему Spring сам найдёт JWKS и будет валидировать подпись, `iss` и `exp`. Дальше обычно добавляют две вещи: `STATELESS`-сессии (токен в каждом запросе, сервер ничего не помнит) и **converter**, который маппит claims вроде `roles` в `GrantedAuthority` для `@PreAuthorize`.
 
 ```yaml
 # application.yml
@@ -915,12 +944,12 @@ graph TD
     end
 ```
 
-Паттерны:
+Базовая идея: **один Authorization Server, общий JWKS, каждый сервис — это Resource Server**, валидирующий JWT локально. Тогда между сервисами нужно как-то передавать контекст пользователя — для этого есть несколько паттернов:
 
-1. **Token relay** — API Gateway пробрасывает JWT пользователя downstream-сервисам
-2. **Token exchange** (`RFC 8693`) — Gateway обменивает токен пользователя на токен с ограниченным scope для конкретного сервиса
-3. **Client Credentials** — сервис-к-сервису коммуникация от своего имени
-4. **Общий JWKS** — все сервисы валидируют JWT одним публичным ключом (один `issuer-uri`)
+1. **Token relay** — API Gateway пробрасывает JWT пользователя downstream-сервисам как есть (просто и быстро, но токен виден всем по цепочке)
+2. **Token exchange** (`RFC 8693`) — Gateway обменивает токен пользователя на токен с урезанным scope для конкретного сервиса (least privilege на каждом шаге)
+3. **Client Credentials** — для вызовов «от своего имени», где пользователя нет (фоновые задачи, межсервисные интеграции)
+4. **Общий JWKS** — все сервисы доверяют одному `issuer-uri` и валидируют JWT одним набором публичных ключей
 
 Пример проброса токена через `WebClient`:
 
@@ -939,7 +968,7 @@ public WebClient webClient(OAuth2AuthorizedClientManager clientManager) {
 
 ## Q26. Как настроить `Spring Authorization Server`?
 
-`Spring Authorization Server` — полноценный Authorization Server на базе Spring Security:
+`Spring Authorization Server` — официальная реализация Authorization Server от команды Spring Security. Позволяет поднять свой OAuth2/OIDC-провайдер (как Keycloak, но на Spring-стеке) вместо использования внешнего. Минимальная конфигурация — это три бина: фильтр-чейн с применённой security по умолчанию, репозиторий зарегистрированных клиентов и источник ключей для подписи JWT.
 
 ```xml
 <!-- pom.xml -->
@@ -1009,6 +1038,8 @@ public class AuthServerConfig {
 
 ## Q27. (!) Какие основные угрозы существуют для `OAuth2`?
 
+Угрозы в `OAuth2` крутятся вокруг трёх вещей: **перехвата кода/токена при передаче**, **подмены клиента или redirect_uri** и **повторного использования украденного токена**. Знание защиты для каждой — частый вопрос на собеседовании:
+
 | Угроза | Описание | Защита |
 |--------|----------|--------|
 | **Authorization Code Interception** | Перехват code при redirect | PKCE, HTTPS, exact redirect_uri match |
@@ -1024,7 +1055,7 @@ public class AuthServerConfig {
 
 ## Q28. Как работает `state` parameter и зачем он нужен?
 
-`state` — случайное криптостойкое значение для защиты от **CSRF** при OAuth2 callback:
+`state` — случайное криптостойкое значение, которое клиент генерирует перед редиректом на авторизацию и проверяет в callback. Его задача — **связать запрос авторизации с конкретной сессией пользователя** и тем самым защититься от CSRF: если `state` из callback не совпадает с сохранённым, значит, ответ пришёл не на наш запрос, и его надо отбросить.
 
 ```mermaid
 sequenceDiagram
@@ -1044,6 +1075,8 @@ sequenceDiagram
 Без `state` злоумышленник может подставить свой authorization code в callback URL жертвы, привязав аккаунт жертвы к аккаунту злоумышленника у провайдера.
 
 ## Q29. Чеклист безопасности `OAuth2` для production
+
+Сводный чеклист, который удобно проговорить на собеседовании. Все пункты сводятся к трём принципам: **не дать токену утечь**, **минимизировать ущерб, если утёк**, и **уметь это заметить**.
 
 1. **HTTPS везде** — authorization endpoint, token endpoint, redirect URI, resource server
 2. **PKCE для всех клиентов** (не только public)
@@ -1082,7 +1115,9 @@ public class TokenMaskingFilter extends OncePerRequestFilter {
 
 ## Q30. Как тестировать `OAuth2` в `Spring Boot`?
 
-**Unit-тесты** с `@WithMockUser` и `SecurityMockMvcRequestPostProcessors`:
+Главный принцип: **не ходить к настоящему Authorization Server в тестах**. Для быстрых тестов подделывают сам результат аутентификации через `spring-security-test` (`jwt()`, `@WithMockUser`), а для интеграционных — поднимают мок Authorization Server или Keycloak в Testcontainers.
+
+**Unit-тесты** с `@WithMockUser` и `SecurityMockMvcRequestPostProcessors` — токен не настоящий, но Spring Security видит «аутентифицированного» пользователя с нужными правами:
 
 ```java
 @WebMvcTest(UserController.class)
@@ -1233,7 +1268,7 @@ public RegisteredClientRepository registeredClientRepository() {
 
 ## Q32. Какие стандартные `JWT claims` обязательны и что они означают?
 
-`JWT` (`JSON Web Token`, RFC 7519) содержит набор стандартных `claims` в payload. Понимание их значения критично для правильной валидации.
+`JWT` (`JSON Web Token`, RFC 7519) определяет набор стандартных claims (registered claims), которые и составляют «скелет» любого токена. Строго *обязательного* claims по спецификации нет, но на практике для корректной валидации нужны `iss`, `sub`, `aud`, `exp`, `iat` — без них токен либо нельзя проверить, либо его примет чужой сервис. Понимать их смысл критично: половина уязвимостей JWT — это «забыли проверить такой-то claim».
 
 ### Registered Claims (стандартные)
 
@@ -1417,7 +1452,9 @@ public class RefreshTokenService {
 
 ## Q34. Что такое `OAuth2 Backend for Frontend` (`BFF`) и когда его применять?
 
-**BFF** (`Backend for Frontend`) — архитектурный паттерн, при котором промежуточный сервер (`BFF`) берёт на себя `OAuth2`-flow и хранение токенов вместо браузера.
+**BFF** (`Backend for Frontend`) — архитектурный паттерн, при котором небольшой backend-сервер берёт на себя весь `OAuth2`-flow и хранение токенов **вместо браузера**. Браузеру отдаётся только обычная серверная сессия в `HttpOnly`-куке, а токены вообще не покидают сервер. Это радикально решает проблему хранения токенов в SPA: то, чего нет в браузере, нельзя украсть через XSS.
+
+**Применять, когда:** публичное SPA работает с чувствительными данными и нужно гарантированно убрать токены из досягаемости JS-кода в браузере.
 
 ### Проблема без BFF (SPA + OAuth2)
 
@@ -1513,6 +1550,8 @@ public class BffProxyController {
 **Рекомендация**: для публичных SPA с чувствительными данными используйте BFF. Для внутренних инструментов достаточно `HttpOnly Cookie + PKCE`.
 
 ## Q35. Как защитить `OAuth2` от `CSRF` и `Token Leakage`?
+
+Коротко: **CSRF** в OAuth2 закрывается `state`-параметром (привязка callback к сессии), а **утечку токенов** — тем, что токен не кладут в URL, маскируют в логах и хранят в `HttpOnly` + `Secure` + `SameSite` куках. Разберём оба класса атак.
 
 ### CSRF в OAuth2
 
@@ -1654,11 +1693,11 @@ ROPC (Resource Owner Password Credentials) требует передачи ло�
 
 ## Q37. Как работает PKCE — генерация code_verifier и code_challenge?
 
-**PKCE** (Proof Key for Code Exchange, RFC 7636) — расширение Authorization Code Flow для защиты от перехвата `authorization_code`.
+**PKCE** (Proof Key for Code Exchange, RFC 7636) — расширение Authorization Code Flow, защищающее от перехвата `authorization_code`. Механика в трёх шагах: клиент генерирует секрет `code_verifier`, отправляет на авторизацию только его хэш (`code_challenge`), а при обмене кода предъявляет сам `code_verifier` — Authorization Server сверяет хэш и убеждается, что код предъявил тот же клиент, что его запрашивал.
 
 ### Проблема без PKCE
 
-Если злоумышленник перехватит `authorization_code` (через malicious app, redirect_uri hijacking), он сможет обменять его на `access_token`.
+Authorization code короткое время «гуляет» через браузер/ОС, и его можно перехватить (malicious app, перехват redirect_uri). Без PKCE этого достаточно: злоумышленник просто обменяет украденный код на `access_token`. PKCE делает украденный код бесполезным — без `code_verifier` обмен не пройдёт.
 
 ### Как работает PKCE
 
@@ -1725,7 +1764,7 @@ public class PkceUtils {
 
 ## Q38. Что такое Token Introspection (RFC 7662) и как он работает?
 
-**Token Introspection** (RFC 7662) — протокол, позволяющий Resource Server проверить активность и метаданные opaque token у Authorization Server.
+**Token Introspection** (RFC 7662) — протокол, которым Resource Server спрашивает у Authorization Server, активен ли токен, и заодно получает его метаданные (`sub`, `scope`, `exp`). Нужен там, где локальная проверка невозможна или недостаточна: opaque-токены, требование мгновенно видеть отзыв, централизованная проверка в gateway.
 
 ### Когда использовать
 
@@ -1802,7 +1841,7 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
 ## Q39. Refresh Token Rotation — почему важна и как реализовать?
 
-**Refresh Token Rotation** — механизм, при котором при каждом использовании refresh token выдаётся **новый** refresh token, а старый аннулируется.
+**Refresh Token Rotation** — при каждом использовании refresh token Authorization Server выдаёт **новый** токен, а старый аннулирует. Это превращает долгоживущий refresh token в одноразовый и, главное, даёт детектор кражи: повторное использование уже аннулированного токена однозначно сигнализирует о компрометации.
 
 ### Почему это важно: Refresh Token Reuse Attack
 
@@ -1880,7 +1919,7 @@ public ResponseEntity<TokenResponse> refresh(
 
 ## Q40. OAuth 2.0 Device Authorization Grant — для IoT и Smart TV
 
-**Device Authorization Grant** (RFC 8628) — grant type для устройств без браузера или с ограниченным вводом (Smart TV, CLI, IoT, консоли).
+**Device Authorization Grant** (RFC 8628) — grant type для устройств без браузера или с неудобным вводом (Smart TV, CLI, IoT, консоли). Суть: устройство получает короткий `user_code`, показывает его пользователю и просит ввести этот код на телефоне или ноутбуке, где есть нормальный браузер; пока пользователь авторизуется там, устройство в фоне опрашивает (polling) token endpoint и в какой-то момент получает токены.
 
 ### Поток
 
@@ -1967,7 +2006,7 @@ DeviceAuthorizationResponse deviceAuth = webClient.post()
 
 ## Q41. Как настроить Spring Authorization Server с нуля?
 
-**Spring Authorization Server** (SAS) — официальная реализация OAuth 2.1 / OpenID Connect Authorization Server от команды Spring Security.
+**Spring Authorization Server** (SAS) — официальная реализация OAuth 2.1 / OpenID Connect Authorization Server от команды Spring Security. Поднимается из нескольких бинов: два фильтр-чейна (один для OAuth-эндпоинтов, второй для формы логина), репозиторий клиентов, источник ключей (JWK) и настройки сервера с `issuer`. После старта SAS сам публикует все стандартные endpoint и `/.well-known/openid-configuration`.
 
 ### Зависимости
 
@@ -2083,7 +2122,7 @@ public OAuth2AuthorizationService authorizationService(JdbcTemplate jdbcTemplate
 
 ## Q42. OpenID Connect Claims — стандартные, кастомные, UserInfo endpoint
 
-**OIDC Claims** — атрибуты пользователя, передаваемые в ID Token или возвращаемые через UserInfo endpoint.
+**OIDC Claims** — атрибуты пользователя (имя, email, роли и т.д.), которые передаются в ID Token или отдаются через UserInfo endpoint. Ключевой момент: **набор claims определяется запрошенными scopes** — `profile` открывает имя и аватар, `email` — почту, и так далее. Это та же логика least privilege: клиент получает только те данные о пользователе, доступ к которым тот подтвердил.
 
 ### Стандартные claim группы (по scope)
 
