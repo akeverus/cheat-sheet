@@ -144,4 +144,4 @@ Easings: default/`in`/`out` (cubic-bezier), `bounce` — крайне редко
 
 editorial.css → бамп `v=N` в `head.html` (2 строки: preload+stylesheet).
 app.js → `v=N` в result/settings/focus-training (3). stats.js → stats.html (1).
-Текущее: editorial.css **v61**, app.js **v27**, stats.js **v6**.
+Текущее: editorial.css **v61**, app.js **v28**, stats.js **v6**.

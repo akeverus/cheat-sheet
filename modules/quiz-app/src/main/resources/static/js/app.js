@@ -1192,7 +1192,7 @@
   });
 
   if (submitBtn) {
-    submitBtn.setAttribute('title', `Клавиши 1-${Math.min(optionInputs.length, 9)} — выбор, Enter — ответить`);
+    submitBtn.setAttribute('title', `Клавиши 1–${Math.min(optionInputs.length, 9)} — выбор, Enter — ответить`);
   }
 
   // Горячие клавиши: 1-9 выбор варианта, Enter — отправка
