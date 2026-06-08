@@ -84,7 +84,7 @@ com.cheatsheet.quiz
 - Если `app.ai.fallback-enabled=false` (дефолт): `AIQuestionService.getOrCreateOptions` отдаёт пустой список когда seed-варианта нет → MVC форсит `flashcardMode=true`. То же поведение и при пустых ключах (`isAiEnabled()` → false).
 - AI-fallback включается только явно: `AI_FALLBACK_ENABLED=true` + любой из `OPENAI_API_KEY` / `DEEPSEEK_API_KEY`.
 
-Production profile (`prod`): disables Swagger UI. PostgreSQL profile: `postgres`.
+Production profile (`prod`): disables Swagger UI. PostgreSQL is the **default** (base `application.yml`) datastore — there is no separate `postgres` profile. Tests run under the `test` profile (Testcontainers).
 
 ## Testing Conventions
 
