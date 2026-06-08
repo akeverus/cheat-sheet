@@ -38,21 +38,23 @@ updated: 2026-05-31
 
 ## Q1. Какие ключевые изменения в Spring Boot 3?
 
-**Spring Boot 3.0 (ноябрь 2022)** — крупнейший релиз за последние годы:
+Spring Boot 3.0 (ноябрь 2022) — крупнейший релиз за всю историю: он поднял минимальную планку JDK и сменил всю пакетную базу, поэтому миграция на него редко бывает «обновил версию — и поехали». Главные изменения:
 
-1. **Java 17 baseline** — минимальная версия (до этого — Java 8).
-2. **Jakarta EE 9+** — миграция с `javax.*` на `jakarta.*`.
-3. **Spring Framework 6** — улучшения реактивности, AOT.
-4. **GraalVM Native Image** — первоклассная поддержка.
-5. **Observability** — Micrometer + OpenTelemetry по умолчанию.
-6. **HTTP Interface Clients** — декларативный HTTP-клиент (`@HttpExchange`).
-7. **Problem Details (RFC 7807)** — стандарт для REST error responses.
+1. **Java 17 baseline** — минимально требуемая версия JDK теперь 17 (до этого — Java 8). Это позволило использовать records, sealed-классы и текстовые блоки внутри самого фреймворка.
+2. **Jakarta EE 9+** — все enterprise-API переименованы с `javax.*` на `jakarta.*`. Самое массовое и болезненное изменение для прикладного кода (см. Q2).
+3. **Spring Framework 6** — основа Spring Boot 3; добавил поддержку AOT, улучшил реактивность и Observability.
+4. **GraalVM Native Image** — встроенная поддержка компиляции в нативный образ без сторонних плагинов.
+5. **Observability** — единый API для метрик и трассировки на Micrometer + OpenTelemetry вместо Spring Cloud Sleuth.
+6. **HTTP Interface Clients** — декларативный HTTP-клиент через `@HttpExchange` (альтернатива Feign).
+7. **Problem Details (RFC 7807)** — стандартный формат JSON-ответа для ошибок REST.
 
-Последующие версии: 3.1 (май 2023), 3.2 (ноябрь 2023, Virtual Threads), 3.3, 3.4.
+Последующие версии добавляли возможности постепенно: 3.1 (май 2023), 3.2 (ноябрь 2023, поддержка Virtual Threads и `RestClient`), 3.3, 3.4.
 
 ## Q2. Что такое миграция с javax на jakarta и почему она нужна?
 
-В 2017 Oracle передала Java EE в Eclipse Foundation. Eclipse не смогла сохранить `javax.*` пакеты из-за trademark. Результат: вся платформа переименована в **Jakarta EE** с пакетами `jakarta.*`.
+Это переименование всех enterprise-API из пространства имён `javax.*` в `jakarta.*` — не косметика, а вынужденный шаг из-за прав на торговую марку. В 2017 Oracle передала Java EE в Eclipse Foundation, но не отдала права на имя `javax`. Eclipse не имела права выпускать новые версии под старыми пакетами, поэтому всю платформу переименовала в **Jakarta EE**, а пакеты — в `jakarta.*`.
+
+Для прикладного кода это означает массовую замену импортов:
 
 ```java
 // ДО Spring Boot 3
@@ -66,9 +68,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.NotNull;
 ```
 
-Затронутые библиотеки: JPA, Servlet API, JAX-RS, Bean Validation, JMS, Mail. Tomcat 10+, Jetty 11+, Hibernate 6+.
+**Что затронуто:** JPA, Servlet API, JAX-RS, Bean Validation, JMS, Mail. Из-за этого подтягиваются и новые версии контейнеров и ORM, поддерживающих `jakarta.*`: Tomcat 10+, Jetty 11+, Hibernate 6+.
+
+**Подводный камень:** старая библиотека, скомпилированная под `javax.servlet`, не запустится на Tomcat 10 — нужны версии с поддержкой Jakarta либо замена зависимости.
 
 ## Q3. Как выполнить миграцию с Spring Boot 2.7 на 3.x?
+
+Ключевая идея — мигрировать поэтапно, а не одним прыжком: сначала подготовить почву (Java 17 и обновление до последней 2.7.x), потом автоматизировать рутину через OpenRewrite и только затем поднимать сам Spring Boot. Так каждый шаг можно прогнать тестами по отдельности и локализовать поломку.
 
 ```text
 Последовательность:
@@ -96,7 +102,11 @@ import jakarta.validation.constraints.NotNull;
 </properties>
 ```
 
+**Почему сначала до последней 2.7.x:** в поздних 2.7.x уже есть deprecation-предупреждения о том, что меняется в 3.0. Сняв их на стабильной версии, вы заходите в 3.0 с меньшим числом сюрпризов.
+
 ## Q4. Какие javax-пакеты НЕ мигрировали на jakarta?
+
+Не всё `javax.*` переехало в `jakarta.*` — мигрировали только API из Java EE (Enterprise Edition). Пакеты, которые входят в сам JDK (Java SE), остались под прежними именами, потому что их Oracle не передавала в Eclipse.
 
 ```text
 ОСТАЛИСЬ javax.*:
@@ -116,11 +126,13 @@ import jakarta.validation.constraints.NotNull;
 - jakarta.annotation.*  (@PostConstruct, @PreDestroy и др.)
 ```
 
-Простое правило: **если пакет относится к Java SE (JDK) — остался javax; Java EE → jakarta**.
+**Эмпирическое правило:** если пакет относится к Java SE (JDK) — он остался `javax`; если к Java EE — стал `jakarta`. Поэтому при автозамене импортов нельзя слепо менять все `javax.*` на `jakarta.*` — `javax.sql.DataSource` сломается. OpenRewrite-рецепт это учитывает.
 
 ## Q5. Что такое HTTP Interface Clients в Spring 6?
 
-Декларативный HTTP-клиент (аналог Feign), встроенный в Spring Framework 6:
+Это встроенный в Spring Framework 6 способ описать вызов внешнего HTTP-API через обычный Java-интерфейс с аннотациями — Spring сам генерирует реализацию. По духу это аналог Feign, но без отдельной библиотеки: достаточно интерфейса и одной фабрики `HttpServiceProxyFactory`.
+
+Метод объявляется аннотацией `@GetExchange`/`@PostExchange`, а параметры размечаются привычными `@PathVariable`, `@RequestBody`, `@RequestParam`. Поддерживаются как блокирующие (`Weather`), так и реактивные (`Flux<Forecast>`) типы возврата:
 
 ```java
 // Интерфейс описывает API
@@ -151,7 +163,7 @@ class HttpClientsConfig {
 }
 ```
 
-Для блокирующего кода — `RestClientAdapter` (Spring 6.1+):
+Адаптер определяет транспорт: `WebClientAdapter` оборачивает реактивный `WebClient`, а для чисто блокирующего кода есть `RestClientAdapter` (Spring 6.1+) поверх `RestClient` — без затягивания реактивного стека:
 
 ```java
 RestClient client = RestClient.create("https://api.weather.com");
@@ -163,7 +175,9 @@ WeatherClient weatherClient = HttpServiceProxyFactory
 
 ## Q6. Что такое Problem Details (RFC 7807) в Spring Boot 3?
 
-Стандарт для JSON error responses в REST API:
+Это стандартизированный формат тела ответа об ошибке для REST API (RFC 7807). Вместо самописной структуры JSON у каждого сервиса — единый набор полей, понятный клиентам и инструментам. Spring Boot 3 поддерживает его из коробки через тип `ProblemDetail`.
+
+**Поля стандарта:** `type` (URI-идентификатор типа ошибки), `title` (краткое человекочитаемое название), `status` (HTTP-код), `detail` (подробности конкретного случая), `instance` (URI этого экземпляра ошибки).
 
 ```json
 {
@@ -203,15 +217,20 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 }
 ```
 
-Content-Type: `application/problem+json`.
+Кастомный обработчик строит `ProblemDetail` через `forStatusAndDetail`, а в `setProperty` можно положить любые доменные поля (`accountBalance`) сверх стандартных. Ответ отдаётся с Content-Type `application/problem+json` — по нему клиент понимает, что перед ним именно Problem Details, а не обычный JSON.
 
 ## Q7. Что такое GraalVM Native Image и как Spring Boot 3 его поддерживает?
 
-**GraalVM Native Image** — AOT (ahead-of-time) компиляция JVM приложения в нативный executable:
-- Startup ~100ms (vs 2-5s для JVM)
-- Memory ~30% JVM
-- Размер ~80MB (smaller with upx)
-- Ограничения: reflection, динамическая загрузка классов, unsafe
+**GraalVM Native Image** компилирует приложение в самостоятельный нативный исполняемый файл ещё до запуска (AOT, ahead-of-time), без JVM в рантайме. На выходе — бинарник, который стартует почти мгновенно и потребляет в разы меньше памяти, что особенно ценно для serverless и быстрого масштабирования.
+
+**Что даёт:**
+- Startup ~100ms (против 2-5 с у JVM) — нет прогрева JIT.
+- Memory ~30% от потребления на JVM.
+- Размер образа ~80MB (меньше при сжатии upx).
+
+**Чем платим (ограничения AOT):** всё, что нельзя проанализировать статически на этапе сборки, ломается — reflection, динамическая загрузка классов, `Unsafe`. Поэтому такие места нужно явно описывать через hints (см. ниже).
+
+Spring Boot 3 берёт на себя бóльшую часть подсказок автоматически через AOT-обработку (см. Q8), а сборка делается одним Maven-плагином:
 
 ```xml
 <!-- Native Image plugin -->
@@ -228,6 +247,8 @@ Content-Type: `application/problem+json`.
 # Запуск
 ./target/myapp
 ```
+
+Если ваш код использует reflection, который Spring не видит сам (например, своя сериализация DTO), компилятору нужно дать **hints** — иначе класс не попадёт в нативный образ и в рантайме упадёт. Делается это аннотациями `@RegisterReflection*` либо программно через `RuntimeHintsRegistrar`:
 
 ```java
 // Подсказки компилятору для reflection
@@ -252,7 +273,9 @@ public class MyHints implements RuntimeHintsRegistrar {
 
 ## Q8. Как работает AOT processing в Spring Boot 3?
 
-**AOT (Ahead-of-Time)** — анализ приложения на этапе сборки и генерация дополнительного кода для ускорения старта (особенно для GraalVM).
+**AOT (Ahead-of-Time) processing** — это анализ контекста приложения на этапе сборки с генерацией готового кода вместо рантайм-рефлексии. Обычно Spring при старте сканирует classpath, разбирает аннотации и строит определения бинов «на лету». AOT выполняет эту работу заранее и записывает результат в сгенерированный код, поэтому при старте остаётся только его выполнить.
+
+Это фундамент для GraalVM (где рефлексия ограничена), но даёт ускорение и на обычной JVM. Что именно генерирует AOT-процессор:
 
 ```java
 // AOT процессор генерирует:
@@ -271,11 +294,15 @@ public class MyHints implements RuntimeHintsRegistrar {
 java -Dspring.aot.enabled=true -jar app.jar
 ```
 
-Преимущество: запуск на 30-50% быстрее даже без GraalVM native image.
+**Преимущество:** запуск на 30-50% быстрее даже без GraalVM native image — за счёт того, что определения бинов уже посчитаны, а рефлексия на старте почти не используется.
+
+**Подводный камень:** AOT фиксирует структуру контекста на этапе сборки, поэтому конфигурация, зависящая от рантайм-условий (например, профили, выбираемые при запуске), может вести себя иначе — тестировать сборку нужно в том же режиме, что и прод.
 
 ## Q9. Какие изменения в Observability?
 
-Spring Boot 3 предоставляет единый API для metrics + tracing через Micrometer:
+Главное изменение — единый API для метрик и трассировки на базе Micrometer, который заменил разрозненные решения Spring Boot 2 (Micrometer для метрик + Spring Cloud Sleuth для трассировки). Теперь одно наблюдение (`Observation`) одновременно создаёт и span для трейсинга, и таймер-метрику — описывать дважды не нужно.
+
+Подключение трассировки — это bridge на конкретный бэкенд (здесь OpenTelemetry) плюс экспортёр (здесь Zipkin):
 
 ```xml
 <dependency>
@@ -317,11 +344,15 @@ management:
       endpoint: http://localhost:9411/api/v2/spans
 ```
 
-Старый Sleuth удалён — мигрировать на `micrometer-tracing`.
+В коде `Observation.observe(...)` оборачивает блок: внутри него автоматически создаётся span и замеряется длительность, а `lowCardinalityKeyValue` добавляет теги с малым числом значений (они безопасны для метрик, в отличие от high-cardinality вроде userId).
+
+**Важно при миграции:** старый Spring Cloud Sleuth удалён, его нужно заменить на `micrometer-tracing`.
 
 ## Q10. Что нужно знать о поддержке Virtual Threads в Spring Boot 3.2+?
 
-Spring Boot 3.2 добавил первоклассную поддержку Java 21 Virtual Threads:
+Spring Boot 3.2 добавил встроенную поддержку Java 21 Virtual Threads — лёгких потоков, которыми JVM управляет сама, не привязывая каждый к ОС-потоку. Это позволяет держать тысячи одновременных блокирующих запросов на горстке реальных потоков, сохраняя простой императивный стиль кода (без перехода на реактивный стек).
+
+Включается одним флагом, после чего virtual threads используют Tomcat (по потоку на запрос), `@Async` и `@Scheduled`:
 
 ```yaml
 spring:
@@ -347,9 +378,13 @@ public TomcatProtocolHandlerCustomizer<?> protocolHandlerVirtualThreadExecutorCu
 }
 ```
 
-**Важно**: Virtual Threads помогают для I/O-bound workloads. CPU-bound — не даёт выигрыша.
+**Когда применять:** Virtual Threads дают выигрыш на I/O-bound нагрузке (много времени тратится на ожидание БД, сети, диска) — пока поток ждёт, JVM освобождает несущий ОС-поток под другую работу. На CPU-bound задачах выигрыша нет: реальные ядра всё равно ограничены, лёгкие потоки не добавляют вычислительной мощности.
 
 ## Q11. Какие breaking changes в Spring Security 6?
+
+Главный breaking change — удалён `WebSecurityConfigurerAdapter`: теперь конфигурация задаётся не наследованием от базового класса, а регистрацией бина `SecurityFilterChain`. Заодно переименованы методы DSL и весь стиль настройки переведён на лямбды.
+
+Сравнение старого и нового подхода:
 
 ```java
 // ДО (Spring Security 5, SB 2.x)
@@ -383,14 +418,18 @@ class SecurityConfig {
 ```
 
 Ключевые изменения:
-- `WebSecurityConfigurerAdapter` удалён → `SecurityFilterChain` Bean
-- `authorizeRequests` → `authorizeHttpRequests`
-- `antMatchers` → `requestMatchers`
-- Все настройки через лямбду Customizer
+- `WebSecurityConfigurerAdapter` удалён → конфигурация через бин `SecurityFilterChain`.
+- `authorizeRequests` → `authorizeHttpRequests` (новый, более производительный механизм авторизации).
+- `antMatchers`/`mvcMatchers` → единый `requestMatchers`.
+- Все настройки задаются лямбдой `Customizer`, цепочки через `.and()` больше не нужны.
+
+Почему так: переход с наследования на бин делает конфигурацию композируемой — можно объявить несколько `SecurityFilterChain` для разных URL и управлять их порядком, что с единственным `configure()`-методом было неудобно.
 
 ## Q12. Что такое декларативный RestClient?
 
-Spring Boot 3.2 принёс `RestClient` — новый блокирующий HTTP-клиент с fluent API (замена `RestTemplate`):
+`RestClient` — новый синхронный HTTP-клиент из Spring Boot 3.2 с цепочечным (fluent) API. Он пришёл на смену устаревающему `RestTemplate`: даёт тот же блокирующий стиль, но с современным API, как у `WebClient`, без необходимости тянуть реактивный стек.
+
+Типичные операции читаются как одна цепочка вызовов — выбор метода, URI, тела и извлечение результата:
 
 ```java
 // Создание
@@ -423,9 +462,11 @@ Mono<Order> orderMono = client.get()
     .exchange((request, response) -> Mono.just(response.bodyTo(Order.class)));
 ```
 
-**RestClient vs WebClient**: `RestClient` — блокирующий, проще; `WebClient` — реактивный, сложнее.
+**RestClient vs WebClient (Компромисс):** `RestClient` — блокирующий и проще в отладке, подходит для обычных синхронных сервисов; `WebClient` — реактивный и сложнее, оправдан там, где уже используется WebFlux или нужен неблокирующий стек. Обработка ошибок у `RestClient` — через привычные исключения (`HttpClientErrorException.NotFound`).
 
 ## Q13. Какие изменения в auto-configuration?
+
+Изменился способ регистрации авто-конфигураций: вместо ключа в `META-INF/spring.factories` они объявляются в отдельном файле `AutoConfiguration.imports`, где каждый класс пишется на своей строке. Это убрало парсинг тяжёлого общего `spring.factories` ради одной записи и ускорило старт.
 
 ```java
 // ДО Spring Boot 2.x — META-INF/spring.factories
@@ -436,7 +477,7 @@ org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 com.example.MyAutoConfiguration
 ```
 
-Теперь auto-configuration декларируется в отдельном файле с именем класса. Старый `spring.factories` всё ещё поддерживается для обратной совместимости.
+Старый `spring.factories` всё ещё поддерживается для обратной совместимости, но для новых стартеров используют новый файл. Дополнительно появилась аннотация-маркер `@AutoConfiguration` — она заменяет связку `@Configuration` + порядковых аннотаций и явно помечает класс именно как авто-конфигурацию:
 
 ```java
 // Также добавлено @AutoConfiguration — marker аннотация
@@ -447,6 +488,10 @@ public class MyDataSourceAutoConfiguration { ... }
 
 ## Q14. Что такое Configuration Properties Migrator?
 
+Это вспомогательная зависимость, которая на старте находит в вашей конфигурации устаревшие или переименованные `application.properties`/`yml` и пишет в лог, на что их заменить. Многие свойства в Spring Boot 3 переехали (особенно в Actuator), и без миграции они просто молча игнорируются — приложение запустится, но настройка не применится. Migrator делает эти случаи видимыми.
+
+Подключается с `runtime`-областью:
+
 ```xml
 <dependency>
     <groupId>org.springframework.boot</groupId>
@@ -455,7 +500,7 @@ public class MyDataSourceAutoConfiguration { ... }
 </dependency>
 ```
 
-При запуске приложения в логах появятся предупреждения о устаревших или переименованных properties:
+При запуске приложения в логах появятся предупреждения об устаревших или переименованных properties с указанием нового имени:
 
 ```text
 The following properties have been renamed:
@@ -463,17 +508,19 @@ The following properties have been renamed:
   management.prometheus.metrics.export.enabled
 ```
 
-После исправления properties удалите этот dependency.
+**Важно:** это инструмент только на время миграции — после правки всех свойств зависимость нужно удалить, чтобы не тащить её в прод.
 
 ## Q15. Какие проблемы часто возникают при миграции?
 
-1. **Jakarta EE несовместимость библиотек**:
+Большинство граблей при переходе на Spring Boot 3 — это не сам Spring, а его окружение: сторонние библиотеки под `javax`, устаревшие версии ORM и переименованные настройки. Типичный список:
+
+1. **Несовместимость библиотек с Jakarta EE.** Старая зависимость скомпилирована под `javax.servlet` и падает в рантайме на новом контейнере:
 ```text
 Error: NoClassDefFoundError: javax/servlet/http/HttpServletRequest
 → Решение: обновить до версии с Jakarta-поддержкой или заменить зависимость
 ```
 
-2. **Устаревшие library versions**:
+2. **Устаревшие версии библиотек.** Многие требуют апгрейда вместе со Spring Boot, иногда с собственными breaking changes:
 ```text
 - Hibernate 5.x → 6.x (breaking changes в HQL, SQL dialects)
 - Spring Cloud Sleuth → Micrometer Tracing
@@ -481,25 +528,25 @@ Error: NoClassDefFoundError: javax/servlet/http/HttpServletRequest
 - Lombok до 1.18.24+ (для Java 17 compatibility)
 ```
 
-3. **Security 6 breaking changes** (см. Q11).
+3. **Breaking changes в Spring Security 6** — удалён `WebSecurityConfigurerAdapter` (см. Q11).
 
-4. **Actuator endpoints переименования**:
+4. **Переименование Actuator endpoints** — настройки экспорта метрик переехали:
 ```text
 management.metrics.export.*  → management.prometheus.*
 и т.п.
 ```
 
-5. **WebMVC / WebFlux route handling**:
+5. **Обработка маршрутов WebMVC / WebFlux** — `antMatchers` стал `requestMatchers`, а `PathPatternParser` теперь применяется по умолчанию:
 ```java
 // antMatchers → requestMatchers
 // pathPatternsParser теперь default
 ```
 
-6. **Jackson 2.14+** — более строгая обработка типов.
+6. **Jackson 2.14+** — более строгая обработка типов; код, полагавшийся на мягкую десериализацию, может начать падать.
 
-7. **HikariCP defaults изменились** — timeouts короче.
+7. **Изменились дефолты HikariCP** — таймауты стали короче, из-за чего ранее «проходившие» медленные соединения могут отваливаться.
 
-**Best practice**: разбить миграцию на этапы — сначала Java 17, потом зависимости до последних 2.x, затем 3.0, затем 3.x++.
+**Рекомендация:** разбить миграцию на этапы — сначала Java 17, потом зависимости до последних 2.x, затем 3.0, затем 3.x++. Каждый этап отдельно прогоняется тестами, и поломку видно сразу.
 
 ## See also
 
