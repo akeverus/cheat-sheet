@@ -46,47 +46,47 @@ updated: "2026-05-05"
 - [See also](#see-also)
 
 **Основы и архитектура**
-- [Q1. (!) Что такое Spring Security и какие задачи он решает?](#q1--что-такое-spring-security-и-какие-задачи-он-решает)
-- [Q2. (!) Как устроена архитектура фильтров Spring Security?](#q2--как-устроена-архитектура-фильтров-spring-security)
+- [Q1. (!) Что такое `Spring Security` и какие задачи он решает?](#q1--что-такое-spring-security-и-какие-задачи-он-решает)
+- [Q2. (!) Как устроена архитектура фильтров `Spring Security`?](#q2--как-устроена-архитектура-фильтров-spring-security)
 - [Q3. (!) В чём разница между аутентификацией и авторизацией?](#q3--в-чём-разница-между-аутентификацией-и-авторизацией)
-- [Q4. (!) Как работает SecurityFilterChain и как его настроить?](#q4--как-работает-securityfilterchain-и-как-его-настроить)
-- [Q5. Что такое SecurityContext и SecurityContextHolder?](#q5-что-такое-securitycontext-и-securitycontextholder)
+- [Q4. (!) Как работает `SecurityFilterChain` и как его настроить?](#q4--как-работает-securityfilterchain-и-как-его-настроить)
+- [Q5. Что такое `SecurityContext` и `SecurityContextHolder`?](#q5-что-такое-securitycontext-и-securitycontextholder)
 
 **Аутентификация**
-- [Q6. (!) Как работает процесс аутентификации (AuthenticationManager, Provider)?](#q6--как-работает-процесс-аутентификации-authenticationmanager-provider)
-- [Q7. Как реализовать UserDetailsService для загрузки из БД?](#q7-как-реализовать-userdetailsservice-для-загрузки-из-бд)
-- [Q8. Как настроить хеширование паролей (PasswordEncoder)?](#q8-как-настроить-хеширование-паролей-passwordencoder)
-- [Q9. Как настроить form-based аутентификацию?](#q9-как-настроить-form-based-аутентификацию)
-- [Q10. Как настроить HTTP Basic аутентификацию?](#q10-как-настроить-http-basic-аутентификацию)
+- [Q6. (!) Как работает процесс аутентификации (`AuthenticationManager`, `Provider`)?](#q6--как-работает-процесс-аутентификации-authenticationmanager-provider)
+- [Q7. Как реализовать `UserDetailsService` для загрузки из БД?](#q7-как-реализовать-userdetailsservice-для-загрузки-из-бд)
+- [Q8. Как настроить хеширование паролей (`PasswordEncoder`)?](#q8-как-настроить-хеширование-паролей-passwordencoder)
+- [Q9. Как настроить `form-based` аутентификацию?](#q9-как-настроить-form-based-аутентификацию)
+- [Q10. Как настроить `HTTP Basic` аутентификацию?](#q10-как-настроить-http-basic-аутентификацию)
 
 **JWT и токены**
-- [Q11. (!) Как интегрировать Spring Security с JWT?](#q11--как-интегрировать-spring-security-с-jwt)
-- [Q12. (!) Как написать JWT-фильтр (JwtAuthenticationFilter)?](#q12--как-написать-jwt-фильтр-jwtauthenticationfilter)
-- [Q13. Как реализовать endpoint выдачи JWT-токена?](#q13-как-реализовать-endpoint-выдачи-jwt-токена)
+- [Q11. (!) Как интегрировать `Spring Security` с `JWT`?](#q11--как-интегрировать-spring-security-с-jwt)
+- [Q12. (!) Как написать `JWT`-фильтр (`JwtAuthenticationFilter`)?](#q12--как-написать-jwt-фильтр-jwtauthenticationfilter)
+- [Q13. Как реализовать endpoint выдачи `JWT`-токена?](#q13-как-реализовать-endpoint-выдачи-jwt-токена)
 - [Q14. Как реализовать refresh-токен?](#q14-как-реализовать-refresh-токен)
 
 **OAuth2 и SSO**
-- [Q15. (!) Как настроить OAuth2 Login (вход через Google/GitHub)?](#q15--как-настроить-oauth2-login-вход-через-googlegithub)
-- [Q16. Как настроить Spring Security как OAuth2 Resource Server?](#q16-как-настроить-spring-security-как-oauth2-resource-server)
+- [Q15. (!) Как настроить `OAuth2 Login` (вход через `Google`/`GitHub`)?](#q15--как-настроить-oauth2-login-вход-через-googlegithub)
+- [Q16. Как настроить `Spring Security` как `OAuth2 Resource Server`?](#q16-как-настроить-spring-security-как-oauth2-resource-server)
 
 **Авторизация и Method Security**
 - [Q17. (!) Как настроить авторизацию по URL-паттернам?](#q17--как-настроить-авторизацию-по-url-паттернам)
-- [Q18. (!) Как работают @PreAuthorize, @PostAuthorize и @Secured?](#q18--как-работают-preauthorize-postauthorize-и-secured)
-- [Q19. Как использовать @PreFilter и @PostFilter?](#q19-как-использовать-prefilter-и-postfilter)
+- [Q18. (!) Как работают `@PreAuthorize`, `@PostAuthorize` и `@Secured`?](#q18--как-работают-preauthorize-postauthorize-и-secured)
+- [Q19. Как использовать `@PreFilter` и `@PostFilter`?](#q19-как-использовать-prefilter-и-postfilter)
 - [Q20. Как реализовать доступ на основе данных (domain object security)?](#q20-как-реализовать-доступ-на-основе-данных-domain-object-security)
 
 **CORS и CSRF**
-- [Q21. (!) Как настроить CORS в Spring Security?](#q21--как-настроить-cors-в-spring-security)
-- [Q22. (!) Как работает CSRF-защита и когда её отключать?](#q22--как-работает-csrf-защита-и-когда-её-отключать)
+- [Q21. (!) Как настроить `CORS` в `Spring Security`?](#q21--как-настроить-cors-в-spring-security)
+- [Q22. (!) Как работает `CSRF`-защита и когда её отключать?](#q22--как-работает-csrf-защита-и-когда-её-отключать)
 
 **Сессии и Remember Me**
 - [Q23. Как управлять сессиями (session management)?](#q23-как-управлять-сессиями-session-management)
-- [Q24. Как настроить Remember Me?](#q24-как-настроить-remember-me)
+- [Q24. Как настроить `Remember Me`?](#q24-как-настроить-remember-me)
 - [Q25. Как обеспечить безопасность сессий в кластере?](#q25-как-обеспечить-безопасность-сессий-в-кластере)
 
 **Обработка ошибок и безопасность REST API**
 - [Q26. Как обработать ошибки аутентификации и авторизации?](#q26-как-обработать-ошибки-аутентификации-и-авторизации)
-- [Q27. (!) Как защитить REST API с помощью Spring Security?](#q27--как-защитить-rest-api-с-помощью-spring-security)
+- [Q27. (!) Как защитить `REST API` с помощью `Spring Security`?](#q27--как-защитить-rest-api-с-помощью-spring-security)
 - [Q28. Как настроить rate limiting?](#q28-как-настроить-rate-limiting)
 
 **Тестирование и продвинутые темы**
@@ -94,12 +94,12 @@ updated: "2026-05-05"
 - [Q30. Как настроить двухфакторную аутентификацию (2FA)?](#q30-как-настроить-двухфакторную-аутентификацию-2fa)
 
 **SecurityContext в асинхронном коде и продвинутые темы**
-- [Q31. (!) Как работает SecurityContext в async-методах и @Async?](#q31--как-работает-securitycontext-в-async-методах-и-async)
-- [Q32. (!) Как настроить OAuth2 Resource Server с JWT и кастомными клеймами?](#q32--как-настроить-oauth2-resource-server-с-jwt-и-кастомными-клеймами)
-- [Q33. (!) Как работает @PreAuthorize с выражениями SpEL и кастомным Permission Evaluator?](#q33--как-работает-preauthorize-с-выражениями-spel-и-кастомным-permission-evaluator)
-- [Q34. Как включить Method Security и в чём разница между @PreAuthorize и @PostFilter?](#q34-как-включить-method-security-и-в-чём-разница-между-preauthorize-и-postfilter)
-- [Q35. Как одновременно настроить CORS и CSRF в SecurityFilterChain?](#q35-как-одновременно-настроить-cors-и-csrf-в-securityfilterchain)
-- [Q36. Как ограничить доступ к Actuator-эндпоинтам через SecurityFilterChain?](#q36-как-ограничить-доступ-к-actuator-эндпоинтам-через-securityfilterchain)
+- [Q31. (!) Как работает `SecurityContext` в async-методах и `@Async`?](#q31--как-работает-securitycontext-в-async-методах-и-async)
+- [Q32. (!) Как настроить `OAuth2 Resource Server` с `JWT` и кастомными клеймами?](#q32--как-настроить-oauth2-resource-server-с-jwt-и-кастомными-клеймами)
+- [Q33. (!) Как работает `@PreAuthorize` с выражениями `SpEL` и кастомным `Permission Evaluator`?](#q33--как-работает-preauthorize-с-выражениями-spel-и-кастомным-permission-evaluator)
+- [Q34. Как включить `Method Security` и в чём разница между `@PreAuthorize` и `@PostFilter`?](#q34-как-включить-method-security-и-в-чём-разница-между-preauthorize-и-postfilter)
+- [Q35. Как одновременно настроить `CORS` и `CSRF` в `SecurityFilterChain`?](#q35-как-одновременно-настроить-cors-и-csrf-в-securityfilterchain)
+- [Q36. Как ограничить доступ к `Actuator`-эндпоинтам через `SecurityFilterChain`?](#q36-как-ограничить-доступ-к-actuator-эндпоинтам-через-securityfilterchain)
 
 **Spring Security 6, JWT/OAuth2 Resource Server и тестирование**
 - [Q37. Чем SecurityFilterChain в Spring Security 6 отличается от WebSecurityConfigurerAdapter?](#q37-чем-securityfilterchain-в-spring-security-6-отличается-от-websecurityconfigureradapter)
@@ -114,19 +114,21 @@ updated: "2026-05-05"
 
 ## Q1. (!) Что такое `Spring Security` и какие задачи он решает?
 
-`Spring Security` — фреймворк аутентификации и авторизации для `Spring`-приложений. Основные задачи:
+`Spring Security` — фреймворк аутентификации и авторизации для `Spring`-приложений, де-факто стандарт безопасности в экосистеме. Его сила в том, что вся защита вешается декларативно — отдельным слоем фильтров поверх приложения, не размазывая проверки прав по бизнес-коду.
 
-- **Аутентификация** — проверка «кто ты» (форма входа, `Basic`, `JWT`, `OAuth2`, `LDAP`)
-- **Авторизация** — проверка «что тебе можно» (по URL, по методам через `@PreAuthorize`)
+Что он закрывает:
+
+- **Аутентификация** («кто ты») — форма входа, `Basic`, `JWT`, `OAuth2`, `LDAP`
+- **Авторизация** («что тебе можно») — по URL-паттернам и по методам через `@PreAuthorize`
 - **Защита от атак** — `CSRF`, `XSS`, clickjacking, session fixation (подробнее в [OWASP Top 10](../../security/owasp-top10-interview.md))
 - **Управление сессиями** — таймауты, ограничение одновременных сессий
 - **Хеширование паролей** — `BCrypt`, `Argon2`, `SCrypt`
 
-Начиная с `Spring Security 6` конфигурация основана на бине `SecurityFilterChain` (устаревший `WebSecurityConfigurerAdapter` удалён).
+Начиная с `Spring Security 6` конфигурация строится вокруг бина `SecurityFilterChain`; устаревший `WebSecurityConfigurerAdapter` удалён.
 
 ## Q2. (!) Как устроена архитектура фильтров `Spring Security`?
 
-`Spring Security` реализован как цепочка `Servlet`-фильтров. Каждый фильтр отвечает за свою задачу:
+`Spring Security` встраивается в запрос как **цепочка `Servlet`-фильтров**, а не как магия внутри контроллеров. Один-единственный `Servlet`-фильтр (`DelegatingFilterProxy`) делегирует управление в `FilterChainProxy`, а тот прогоняет запрос через нужный `SecurityFilterChain`. Каждый фильтр в цепочке отвечает строго за свою задачу и передаёт запрос дальше:
 
 ```mermaid
 graph TD
@@ -155,9 +157,15 @@ graph TD
 | `ExceptionTranslationFilter` | Перехват `AuthenticationException` и `AccessDeniedException` |
 | `AuthorizationFilter` | Проверка прав доступа |
 
-`FilterChainProxy` может содержать несколько `SecurityFilterChain` для разных URL-паттернов (например, отдельно для `/api/**` и для остального приложения).
+**Порядок важен:** фильтры выполняются строго по списку, поэтому, например, `CorsFilter` стоит раньше аутентификации (иначе preflight `OPTIONS` получит `401`), а `ExceptionTranslationFilter` обёрнут вокруг `AuthorizationFilter`, чтобы перехватить отказ в доступе и превратить его в `401`/`403`.
+
+`FilterChainProxy` может содержать **несколько** `SecurityFilterChain` для разных URL-паттернов — например, stateless-цепочку для `/api/**` и сессионную для остального приложения. Подходящая цепочка выбирается по первому совпавшему `securityMatcher`.
 
 ## Q3. (!) В чём разница между аутентификацией и авторизацией?
+
+Коротко: **аутентификация отвечает на вопрос «кто ты», авторизация — «что тебе можно».** Сначала система устанавливает личность (по логину/паролю, токену, сертификату), и только потом, зная личность и её роли, решает, пускать ли к ресурсу. Порядок всегда такой: нельзя проверить права раньше, чем установлена личность.
+
+В `Spring Security` это два разных места в цепочке фильтров: аутентификацией занимается `AuthenticationManager`, а проверкой прав — `AuthorizationFilter`. Отсюда и разные HTTP-коды ошибок: `401 Unauthorized` — «не знаю, кто ты», `403 Forbidden` — «знаю, но тебе сюда нельзя».
 
 | Аспект | Аутентификация | Авторизация |
 |--------|---------------|-------------|
@@ -192,7 +200,9 @@ sequenceDiagram
 
 ## Q4. (!) Как работает `SecurityFilterChain` и как его настроить?
 
-`SecurityFilterChain` — центральный бин конфигурации `Spring Security 6+`. Заменяет устаревший `WebSecurityConfigurerAdapter`.
+`SecurityFilterChain` — центральный бин конфигурации `Spring Security 6+`, заменивший устаревший `WebSecurityConfigurerAdapter`. Вы описываете правила через `HttpSecurity` (DSL с лямбдами) и возвращаете готовую цепочку как `@Bean` — Spring сам соберёт из неё нужный набор фильтров.
+
+Минимальная конфигурация для REST API:
 
 ```java
 @Configuration
@@ -215,7 +225,9 @@ public class SecurityConfig {
 }
 ```
 
-Можно объявить несколько `SecurityFilterChain` для разных путей (через `@Order` и `securityMatcher`):
+Каждый вызов DSL включает или настраивает группу фильтров: `csrf` — `CsrfFilter`, `authorizeHttpRequests` — `AuthorizationFilter`, `httpBasic` — `BasicAuthenticationFilter` и так далее.
+
+Когда у приложения две разные модели доступа (например, stateless API и сессионный web-UI), объявляют **несколько** `SecurityFilterChain`. Их порядок задаётся через `@Order`, а зона ответственности каждой — через `securityMatcher`. Цепочка с меньшим `@Order` проверяется первой:
 
 ```java
 @Bean
@@ -240,7 +252,9 @@ public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
 
 ## Q5. Что такое `SecurityContext` и `SecurityContextHolder`?
 
-**`SecurityContext`** хранит объект `Authentication` (текущий пользователь, роли). **`SecurityContextHolder`** — статический хелпер для доступа к контексту.
+Это пара объектов, через которую любой код узнаёт, кто выполняет текущий запрос. **`SecurityContext`** — контейнер, хранящий объект `Authentication` (текущий пользователь и его роли). **`SecurityContextHolder`** — статический хелпер, который отдаёт этот контекст из любой точки кода без проброса его через параметры.
+
+После успешной аутентификации фильтр кладёт `Authentication` в контекст, и дальше до конца запроса любой сервис может его прочитать:
 
 ```java
 // Получить текущего пользователя
@@ -255,14 +269,19 @@ public UserDto currentUser(@AuthenticationPrincipal UserDetails user) {
 }
 ```
 
-Стратегии хранения:
-- **`MODE_THREADLOCAL`** (по умолчанию) — контекст в `ThreadLocal`, привязан к текущему потоку
-- **`MODE_INHERITABLETHREADLOCAL`** — наследуется дочерними потоками
-- **`MODE_GLOBAL`** — один контекст на всё приложение (редко)
+По умолчанию контекст живёт в `ThreadLocal`, то есть привязан к потоку, обрабатывающему запрос. Из этого вытекают стратегии хранения и их ограничения:
 
-Для реактивного стека (`WebFlux`) используется `ReactiveSecurityContextHolder` — контекст в `Reactor Context`, не в `ThreadLocal` (подробнее в [Spring WebFlux](spring-webflux-interview.md)).
+- **`MODE_THREADLOCAL`** (по умолчанию) — контекст в `ThreadLocal`, виден только в текущем потоке
+- **`MODE_INHERITABLETHREADLOCAL`** — наследуется дочерними потоками (но не пулами, см. Q31)
+- **`MODE_GLOBAL`** — один контекст на всё приложение (применяется редко, в основном в desktop-сценариях)
+
+Привязка к `ThreadLocal` — причина, по которой контекст «теряется» в `@Async` и пулах потоков (см. Q31). Для реактивного стека (`WebFlux`) `ThreadLocal` не подходит вовсе — там используется `ReactiveSecurityContextHolder`, который держит контекст в `Reactor Context` (подробнее в [Spring WebFlux](spring-webflux-interview.md)).
 
 ## Q6. (!) Как работает процесс аутентификации (`AuthenticationManager`, `Provider`)?
+
+Аутентификация в `Spring Security` — это конвейер с чётким разделением ответственности: фильтр собирает данные, `AuthenticationManager` оркеструет проверку, `AuthenticationProvider` проверяет конкретный тип учётных данных. Такое разделение позволяет добавить новый способ входа (например, LDAP или одноразовый код), не трогая существующие.
+
+Поток для входа по логину/паролю:
 
 ```mermaid
 sequenceDiagram
@@ -287,12 +306,16 @@ sequenceDiagram
     end
 ```
 
-- **`AuthenticationManager`** — точка входа (`authenticate()`), обычно `ProviderManager`
-- **`AuthenticationProvider`** — реализует проверку конкретного типа (`DaoAuthenticationProvider` для логин/пароль)
-- **`UserDetailsService`** — загрузка пользователя по имени
-- **`PasswordEncoder`** — сравнение паролей
+Роли участников:
 
-Кастомный `AuthenticationProvider`:
+- **`AuthenticationManager`** — точка входа (`authenticate()`); стандартная реализация `ProviderManager` перебирает провайдеры, пока один не справится
+- **`AuthenticationProvider`** — проверяет конкретный тип учётных данных; `DaoAuthenticationProvider` отвечает за пару логин/пароль
+- **`UserDetailsService`** — загружает пользователя по имени (обычно из БД)
+- **`PasswordEncoder`** — сравнивает введённый пароль с хешем
+
+`ProviderManager` выбирает провайдер по методу `supports()`: каждый провайдер сообщает, какой тип `Authentication` он умеет обрабатывать. Это и есть механизм расширения — свой провайдер встраивается в цепочку рядом со стандартными.
+
+Кастомный `AuthenticationProvider` (например, проверка через внешний сервис):
 
 ```java
 @Component
@@ -320,6 +343,8 @@ public class CustomAuthProvider implements AuthenticationProvider {
 
 ## Q7. Как реализовать `UserDetailsService` для загрузки из БД?
 
+`UserDetailsService` — это единственный метод `loadUserByUsername`, который превращает запись пользователя из вашей БД в объект `UserDetails`, понятный `Spring Security`. Реализация сводится к трём шагам: найти пользователя, смапить его роли в `GrantedAuthority`, вернуть `UserDetails` (с хешем пароля, а не с открытым паролем). Если пользователя нет — кидаем `UsernameNotFoundException`.
+
 ```java
 @Service
 @RequiredArgsConstructor
@@ -346,7 +371,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 }
 ```
 
-Конфигурация автоматическая: если `UserDetailsService` — бин, `Spring Security` подхватит его. Явная привязка:
+Подключение почти бесплатное: если `UserDetailsService` объявлен бином, `Spring Security` автоматически отдаст его в `DaoAuthenticationProvider`. Явная привязка нужна, только когда вы сами собираете `AuthenticationManager` (например, чтобы задать конкретный `PasswordEncoder`):
 
 ```java
 @Bean
@@ -361,12 +386,18 @@ public AuthenticationManager authManager(HttpSecurity http,
 
 ## Q8. Как настроить хеширование паролей (`PasswordEncoder`)?
 
+Пароли никогда не хранят в открытом виде — только их **необратимый хеш**, посчитанный медленным адаптивным алгоритмом. `PasswordEncoder` отвечает за два действия: захешировать пароль при регистрации (`encode`) и сравнить введённый пароль с хешем при входе (`matches`). Медленность здесь — фича: чем дороже один хеш, тем тяжелее перебор по украденной базе.
+
+Базовая настройка — объявить бин:
+
 ```java
 @Bean
 public PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder(12); // cost factor 12
 }
 ```
+
+`cost factor` (work factor) задаёт число итераций: каждое увеличение на единицу удваивает время хеширования. 12 — разумный баланс между защитой и скоростью входа.
 
 | Алгоритм | Класс | Рекомендация |
 |----------|-------|-------------|
@@ -375,7 +406,7 @@ public PasswordEncoder passwordEncoder() {
 | SCrypt | `SCryptPasswordEncoder` | Альтернатива Argon2 |
 | PBKDF2 | `Pbkdf2PasswordEncoder` | Совместимость с FIPS |
 
-`DelegatingPasswordEncoder` позволяет мигрировать между алгоритмами:
+`DelegatingPasswordEncoder` решает проблему миграции: он хранит в самом хеше префикс с именем алгоритма (`{bcrypt}…`, `{argon2}…`) и при проверке сам выбирает нужный энкодер. Это позволяет постепенно перевести базу на новый алгоритм, не ломая старые хеши:
 
 ```java
 @Bean
@@ -385,9 +416,11 @@ public PasswordEncoder passwordEncoder() {
 }
 ```
 
-При логине `Spring` через `PasswordEncoder.matches()` сравнивает введённый пароль с хешем из БД. Хранить пароли в открытом виде (`{noop}`) допустимо **только** в тестах.
+**Подводный камень:** хранить пароли в открытом виде (префикс `{noop}`) допустимо **только** в тестах и демках. В production это прямая утечка всех паролей при компрометации БД.
 
 ## Q9. Как настроить `form-based` аутентификацию?
+
+Form-based вход — классическая схема для серверного web-приложения с сессиями: пользователь видит HTML-форму, отправляет логин и пароль POST-запросом, `Spring Security` создаёт сессию и кладёт в неё аутентификацию. Всё, что нужно настроить, — это блок `formLogin`, где указываются URL страницы входа, URL обработки и куда редиректить при успехе/ошибке.
 
 ```java
 @Bean
@@ -408,7 +441,7 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 }
 ```
 
-`Spring Security` автоматически обрабатывает `POST /login` с параметрами `username` и `password`. Для `Thymeleaf`:
+`UsernamePasswordAuthenticationFilter` автоматически перехватывает `POST /login` и читает параметры `username` и `password` — поэтому именно так должны называться поля формы. Пример формы для `Thymeleaf`:
 
 ```html
 <form th:action="@{/login}" method="post">
@@ -419,6 +452,8 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 ```
 
 ## Q10. Как настроить `HTTP Basic` аутентификацию?
+
+`HTTP Basic` — простейшая схема аутентификации: клиент передаёт логин и пароль в заголовке каждого запроса, без формы и без сессии. Сервер на закрытый ресурс отвечает `401` с заголовком `WWW-Authenticate`, и браузер показывает системное окно ввода. Включается одной строкой `httpBasic`.
 
 ```java
 @Bean
@@ -432,11 +467,16 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 }
 ```
 
-Credentials передаются в заголовке `Authorization: Basic <base64(user:pass)>`. В production обязательно использовать **HTTPS**, иначе пароль передаётся в открытом виде. Обычно используется для внутренних API или для простых интеграций; для публичных API предпочтительнее `JWT` или `OAuth2`.
+Учётные данные передаются в заголовке `Authorization: Basic <base64(user:pass)>`. Ключевой момент: `base64` — это **не шифрование**, а просто кодирование, поэтому без HTTPS пароль фактически летит в открытом виде. Отсюда правила применения:
+
+- **Когда подходит:** внутренние API, machine-to-machine, простые интеграции — только поверх HTTPS.
+- **Когда не стоит:** публичные API и браузерные клиенты — там предпочтительнее `JWT` или `OAuth2`, поскольку Basic шлёт пароль с каждым запросом и не поддерживает отзыв доступа.
 
 ## Q11. (!) Как интегрировать `Spring Security` с `JWT`?
 
-Общая схема для stateless REST API:
+Идея JWT-аутентификации в том, чтобы сделать API **stateless**: вместо серверной сессии каждый запрос несёт самодостаточный подписанный токен, по которому сервер восстанавливает личность, ничего не храня у себя. Это упрощает горизонтальное масштабирование — любой узел кластера проверит токен сам.
+
+Схема состоит из двух частей: эндпоинт логина выдаёт токен, а фильтр на каждом последующем запросе его проверяет и наполняет `SecurityContext`.
 
 ```mermaid
 sequenceDiagram
@@ -457,7 +497,7 @@ sequenceDiagram
     API-->>Client: 200 OK {data}
 ```
 
-Конфигурация `SecurityFilterChain` для `JWT`:
+Конфигурация `SecurityFilterChain` под JWT отличается от сессионной тремя вещами: `csrf` отключён (токен не отправляется браузером автоматически, значит CSRF не грозит), сессии — `STATELESS`, и в цепочку добавлен собственный JWT-фильтр перед стандартным `UsernamePasswordAuthenticationFilter`:
 
 ```java
 @Bean
@@ -480,6 +520,8 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http,
 ```
 
 ## Q12. (!) Как написать `JWT`-фильтр (`JwtAuthenticationFilter`)?
+
+Задача фильтра — на каждом запросе достать токен из заголовка `Authorization`, проверить его и, если он валиден, положить аутентификацию в `SecurityContext`. Дальше по цепочке уже `AuthorizationFilter` решит, хватает ли прав. Алгоритм всегда один: нет токена — пропускаем запрос дальше как анонимный; токен есть и валиден — наполняем контекст; токен битый — тоже пропускаем (отказ выдаст authorization-слой ниже).
 
 ```java
 @Component
@@ -521,12 +563,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 }
 ```
 
-Ключевые моменты:
-- Наследуется от `OncePerRequestFilter` — гарантированно один вызов на запрос
-- Регистрируется **перед** `UsernamePasswordAuthenticationFilter` через `addFilterBefore`
-- При невалидном или отсутствующем токене — просто пропускает запрос дальше (авторизация сработает позже)
+Почему именно так:
+
+- Наследование от `OncePerRequestFilter` гарантирует ровно один вызов на запрос — иначе при forward/include фильтр сработал бы повторно.
+- Регистрация **перед** `UsernamePasswordAuthenticationFilter` (через `addFilterBefore`) нужна, чтобы контекст был готов до того, как до запроса доберётся проверка прав.
+- Проверка `getAuthentication() == null` не даёт перезаписать уже установленную аутентификацию.
+- При невалидном или отсутствующем токене фильтр **не бросает исключение**, а просто пропускает запрос — отказать должен authorization-слой, чтобы публичные эндпоинты остались доступны анонимам.
 
 ## Q13. Как реализовать endpoint выдачи `JWT`-токена?
+
+Эндпоинт логина делает три вещи: проверяет логин и пароль через `AuthenticationManager`, и если они верны — генерирует пару токенов и отдаёт клиенту. Короткоживущий access-токен идёт в каждый запрос, долгоживущий refresh-токен — только для обновления (см. Q14). Саму проверку учётных данных не пишут руками — её делегируют `AuthenticationManager`, который под капотом задействует `UserDetailsService` и `PasswordEncoder`.
 
 ```java
 @RestController
@@ -555,7 +601,7 @@ record AuthRequest(String username, String password) {}
 record AuthResponse(String accessToken, String refreshToken) {}
 ```
 
-Для работы `AuthenticationManager` нужно объявить его как бин:
+Чтобы инжектить `AuthenticationManager` в контроллер, в `Spring Security 6` его нужно явно достать из `AuthenticationConfiguration` и объявить бином:
 
 ```java
 @Bean
@@ -567,7 +613,9 @@ public AuthenticationManager authenticationManager(
 
 ## Q14. Как реализовать refresh-токен?
 
-Refresh-токен позволяет получить новый access-токен без повторного ввода credentials. Варианты хранения:
+Refresh-токен решает дилемму JWT: access-токен делают короткоживущим (15 минут), чтобы ограничить ущерб от кражи, но заставлять пользователя логиниться каждые 15 минут — неприемлемо. Долгоживущий refresh-токен позволяет тихо получить новый access-токен без повторного ввода логина и пароля.
+
+Главный компромисс — отзываемость. Выбор подхода — это выбор между простотой и контролем:
 
 | Подход | Плюсы | Минусы |
 |--------|-------|--------|
@@ -595,11 +643,15 @@ public ResponseEntity<AuthResponse> refresh(@RequestBody RefreshRequest request)
 }
 ```
 
-Для revocable-токенов лучше хранить refresh-токены в БД или `Redis` и проверять при обновлении. Подробнее об OAuth2-потоках — в [вопросах по OAuth2](../../security/oauth2-interview.md).
+**Ротация** (как в примере) — важная практика: при каждом обновлении старый refresh-токен инвалидируется, и выдаётся новый. Если злоумышленник украл refresh-токен и успел им воспользоваться, при следующей легитимной попытке обновления всплывёт повторное использование — это сигнал атаки.
+
+**Рекомендация:** для отзываемых токенов храните refresh-токены в БД или `Redis` и проверяйте их при каждом обновлении — чисто stateless JWT-refresh нельзя отозвать до истечения срока. Подробнее об OAuth2-потоках — в [вопросах по OAuth2](../../security/oauth2-interview.md).
 
 ## Q15. (!) Как настроить `OAuth2 Login` (вход через `Google`/`GitHub`)?
 
-Подключение зависимости и конфигурация в `application.yml`:
+`OAuth2 Login` делает приложение **OAuth2-клиентом**: пользователь логинится не паролем у вас, а через внешнего провайдера (Google, GitHub), который после согласия возвращает данные о пользователе. Вы не храните и не видите его пароль — только токен и профиль. `Spring Security` реализует весь Authorization Code flow за вас: редирект к провайдеру, обмен кода на токен, загрузку профиля. Остаётся прописать `client-id`/`client-secret` и при желании — что делать с пользователем после входа.
+
+Конфигурация регистраций провайдеров в `application.yml`:
 
 ```yaml
 spring:
@@ -635,7 +687,7 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 }
 ```
 
-Для кастомной обработки пользователя после OAuth2 входа:
+Чаще всего после входа нужно завести или обновить пользователя в своей БД — для этого расширяют `DefaultOAuth2UserService`: вызывают `super.loadUser()` (он сходит к провайдеру за профилем), а затем синхронизируют локальную запись:
 
 ```java
 @Service
@@ -661,7 +713,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
 ## Q16. Как настроить `Spring Security` как `OAuth2 Resource Server`?
 
-Когда приложение — не provider, а принимает JWT-токены от внешнего IdP (Keycloak, Auth0 и т.д.):
+Resource Server — это роль приложения, которое **само не логинит** пользователей, а только принимает уже выданные кем-то `Bearer`-токены и проверяет их. Типичный случай: микросервис за внешним IdP (Keycloak, Auth0). Приложению достаточно знать, где взять публичные ключи провайдера, — подпись токена оно проверит локально, без обращения к IdP на каждый запрос.
+
+Указываем `issuer-uri` (или напрямую `jwk-set-uri`) в `application.yml`:
 
 ```yaml
 spring:
@@ -699,9 +753,11 @@ public JwtAuthenticationConverter jwtAuthConverter() {
 }
 ```
 
-`Spring Security` автоматически валидирует подпись JWT через JWKS-endpoint провайдера.
+`JwtAuthenticationConverter` здесь решает частую проблему: провайдер кладёт роли в свой claim (например, `roles`), а `Spring Security` по умолчанию ждёт `scope`. Конвертер переопределяет, из какого claim брать права и какой префикс добавлять (`ROLE_`), чтобы заработали `hasRole(...)`. Саму подпись токена `Spring Security` валидирует автоматически по ключам с JWKS-endpoint провайдера.
 
 ## Q17. (!) Как настроить авторизацию по URL-паттернам?
+
+URL-авторизация — это правила вида «такой путь доступен таким ролям», задаваемые в `authorizeHttpRequests`. Это самый грубый, но самый быстрый уровень защиты: проверка идёт в фильтре, до контроллера. Правила можно различать по пути, по HTTP-методу и по конкретному authority.
 
 ```java
 @Bean
@@ -730,13 +786,20 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 }
 ```
 
-**Важно**: порядок `requestMatchers` имеет значение — первое совпадение выигрывает. Более специфичные правила ставьте раньше.
+**Главный подводный камень — порядок.** `requestMatchers` проверяются сверху вниз, и **первое совпадение выигрывает**. Если поставить `anyRequest()` или широкий паттерн раньше специфичного правила, специфичное никогда не сработает. Правило простое: от частного к общему, `anyRequest()` — всегда последним.
 
-В `Spring Security 6` вместо `antMatchers()` используется `requestMatchers()` с `AntPathRequestMatcher` под капотом. Поддерживается также `MvcRequestMatcher` для точного соответствия маршрутам [Spring MVC](spring-mvc-interview.md).
+Различия по типу проверки:
+
+- `hasRole("ADMIN")` ожидает authority с префиксом `ROLE_` (`ROLE_ADMIN`) и добавляет его сам.
+- `hasAuthority("REPORT_VIEW")` сверяет authority дословно, без префикса.
+
+В `Spring Security 6` вместо `antMatchers()` используется `requestMatchers()` (`AntPathRequestMatcher` под капотом). Есть также `MvcRequestMatcher` — для точного соответствия маршрутам [Spring MVC](spring-mvc-interview.md), устойчивого к нюансам вроде trailing slash.
 
 ## Q18. (!) Как работают `@PreAuthorize`, `@PostAuthorize` и `@Secured`?
 
-Включение method security (Spring Security 6+):
+Method security переносит проверку прав с уровня URL на уровень **методов сервиса** — там, где есть доступ к параметрам и результату вызова. Работает через AOP-прокси: перед (или после) вызовом метода `Spring` вычисляет условие, и если оно ложно — бросает `AccessDeniedException`. Это даёт более тонкий контроль, чем URL-правила, и защищает метод независимо от того, откуда его вызвали.
+
+Сначала method security надо включить (`@EnableMethodSecurity` в `Spring Security 6+` заменил старый `@EnableGlobalMethodSecurity`):
 
 ```java
 @Configuration
@@ -784,9 +847,13 @@ public class ArticleService {
 | `@Secured` | Нет | До вызова | Нет |
 | `@RolesAllowed` | Нет | До вызова | Нет |
 
+**Как выбрать:** `@PreAuthorize` — рабочая лошадка, его SpEL покрывает почти всё (роли, параметры, поля объектов). `@PostAuthorize` берут, только когда права зависят от результата, которого до вызова ещё нет. `@Secured`/`@RolesAllowed` — для простейшей проверки роли без SpEL.
+
+**Подводный камень AOP-прокси:** аннотация не сработает при вызове метода **изнутри того же бина** (self-invocation) — вызов идёт мимо прокси. Защищаемый метод должен вызываться извне, через бин.
+
 ## Q19. Как использовать `@PreFilter` и `@PostFilter`?
 
-`@PreFilter` фильтрует **входную** коллекцию, `@PostFilter` — **возвращаемую**:
+Если `@PreAuthorize`/`@PostAuthorize` принимают решение «всё или ничего» для всего вызова, то `@PreFilter` и `@PostFilter` работают тоньше — **отсеивают отдельные элементы коллекции** по доступу. `@PreFilter` чистит входную коллекцию перед вызовом метода, `@PostFilter` — возвращаемую после. Внутри выражения текущий элемент доступен как `filterObject`.
 
 ```java
 @Service
@@ -806,13 +873,13 @@ public class DocumentService {
 }
 ```
 
-**Осторожно**: `@PostFilter` загружает все данные из БД и потом фильтрует в памяти. Для больших коллекций лучше фильтровать в SQL-запросе.
+**Подводный камень `@PostFilter`:** метод сначала достаёт **все** записи из БД, и только потом `Spring` отсеивает лишние в памяти. На большой выборке это и лишняя нагрузка на БД, и зря потраченная память — для таких случаев фильтруйте прямо в SQL-запросе (по `WHERE owner = :user`), а не аннотацией.
 
 ## Q20. Как реализовать доступ на основе данных (domain object security)?
 
-Когда нужна авторизация на уровне конкретных объектов (например, «пользователь может редактировать только свои статьи»):
+Domain object security — это авторизация на уровне **конкретного экземпляра**, а не типа: «пользователь может редактировать только *свои* статьи». Ролей здесь недостаточно — решение зависит от данных самого объекта (кто владелец). В `Spring Security` это решают двумя способами в порядке роста сложности.
 
-**Вариант 1 — SpEL в `@PreAuthorize`:**
+**Вариант 1 — вызов своего бина в SpEL `@PreAuthorize`.** Самый прямой путь: выносим проверку в метод бина и зовём его из выражения через `@beanName`.
 
 ```java
 @PreAuthorize("@articleSecurity.isOwner(#id, authentication)")
@@ -827,7 +894,7 @@ public class ArticleSecurity {
 }
 ```
 
-**Вариант 2 — `PermissionEvaluator`:**
+**Вариант 2 — `PermissionEvaluator`.** Более стандартизированный путь: реализуем единый `PermissionEvaluator` и вызываем встроенную функцию `hasPermission(...)`. Удобно, когда проверок прав на объекты много и хочется единую точку логики.
 
 ```java
 @PreAuthorize("hasPermission(#id, 'Article', 'WRITE')")
@@ -845,9 +912,11 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
 }
 ```
 
-Для сложных ACL-сценариев существует модуль `spring-security-acl` с таблицами разрешений в БД.
+**Когда что брать:** вариант 1 — для точечных проверок «свой/чужой»; вариант 2 — когда таких проверок много и нужна единая точка. Для полноценных ACL-сценариев (наследование прав, разрешения на иерархии объектов) существует отдельный модуль `spring-security-acl` с таблицами разрешений в БД — но он тяжёлый, и без реальной потребности его обычно не берут.
 
 ## Q21. (!) Как настроить `CORS` в `Spring Security`?
+
+CORS (Cross-Origin Resource Sharing) — браузерный механизм, который по умолчанию запрещает JS-коду с одного origin (`https://frontend.example.com`) делать запросы к API на другом (`https://api.example.com`). Чтобы разрешить такие запросы, сервер должен явно перечислить доверенные origin, методы и заголовки. В `Spring Security` это делается через `CorsConfigurationSource`, который подключается вызовом `cors(...)`.
 
 ```java
 @Bean
@@ -876,13 +945,21 @@ public CorsConfigurationSource corsConfigurationSource() {
 }
 ```
 
-**Важно**: `CORS`-фильтр в `Spring Security` должен обрабатываться **до** аутентификации, иначе preflight `OPTIONS`-запросы (без credentials) получат `401`. При использовании `cors()` в `HttpSecurity` порядок фильтров настраивается автоматически.
+**Ключевой нюанс с preflight.** Перед «сложным» кросс-доменным запросом браузер шлёт предварительный `OPTIONS`-запрос **без** учётных данных. Если бы он проходил аутентификацию, то получал бы `401` и реальный запрос вообще не отправлялся. Поэтому `CorsFilter` обязан стоять **до** аутентификации — при вызове `cors(...)` внутри `HttpSecurity` `Spring` расставляет фильтры в правильном порядке сам.
 
-На уровне контроллера можно использовать `@CrossOrigin`, но `SecurityFilterChain` конфигурация имеет приоритет. Подробнее о безопасности веб-приложений — в [вопросах по безопасности приложений](../../security/application-security-interview.md).
+**Тонкости настройки:**
+
+- `allowCredentials(true)` несовместим с `allowedOrigins("*")` — браузер отклонит ответ; для wildcard используйте `allowedOriginPatterns`.
+- `exposedHeaders` нужен, чтобы JS мог прочитать нестандартные заголовки ответа (например, `X-Total-Count`).
+- `maxAge` кэширует результат preflight, снижая число `OPTIONS`-запросов.
+
+Аннотацию `@CrossOrigin` на контроллере тоже можно использовать, но конфигурация `SecurityFilterChain` имеет приоритет. Подробнее о безопасности веб-приложений — в [вопросах по безопасности приложений](../../security/application-security-interview.md).
 
 ## Q22. (!) Как работает `CSRF`-защита и когда её отключать?
 
-`CSRF` (Cross-Site Request Forgery) включён по умолчанию. Защищает state-changing запросы (`POST`, `PUT`, `DELETE`) через синхронизирующий токен.
+CSRF (Cross-Site Request Forgery) — атака, при которой чужой сайт заставляет браузер жертвы отправить запрос к вашему приложению, используя её сессионную cookie (которую браузер прикрепляет автоматически). Защита `Spring Security` (включена по умолчанию) добавляет к state-changing запросам (`POST`, `PUT`, `DELETE`) секретный токен, которого чужой сайт знать не может — сервер сверяет его и отклоняет подделку.
+
+**Ключевая мысль про отключение:** CSRF опасен только там, где аутентификация привязана к запросу **автоматически** — то есть к cookie. Если же клиент сам кладёт токен в заголовок `Authorization` (как с JWT), чужой сайт его подставить не сможет, и CSRF-защита становится лишней.
 
 ```java
 // Для stateless API (JWT) — CSRF не нужен
@@ -912,9 +989,11 @@ public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
 | OAuth2 client (cookie-based) | **Включён** |
 | Public API без аутентификации | **Отключён** |
 
-В `Thymeleaf` CSRF-токен подставляется автоматически при использовании `th:action`. Подробнее об атаках — в [OWASP Top 10](../../security/owasp-top10-interview.md).
+Отсюда правило: **отключаете CSRF — убедитесь, что нет cookie-based аутентификации.** В `Thymeleaf` CSRF-токен подставляется в форму автоматически при использовании `th:action`, поэтому для серверных приложений защита почти бесплатна. Подробнее об атаках — в [OWASP Top 10](../../security/owasp-top10-interview.md).
 
 ## Q23. Как управлять сессиями (session management)?
+
+Блок `sessionManagement` управляет тем, когда создаётся HTTP-сессия и как защищаются её жизненный цикл. Три практически важных вещи: политика создания (нужна ли сессия вообще), ограничение числа одновременных сессий на пользователя и защита от **session fixation** — атаки, когда злоумышленник навязывает жертве заранее известный ID сессии.
 
 ```java
 @Bean
@@ -932,6 +1011,8 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 }
 ```
 
+`migrateSession()` при входе выдаёт новый ID сессии и переносит в неё атрибуты — старый навязанный ID становится бесполезным. Это и есть защита от session fixation.
+
 Политики создания сессий:
 
 | Политика | Описание |
@@ -941,7 +1022,7 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 | `NEVER` | Не создавать, но использовать если есть |
 | `STATELESS` | Никогда (для JWT/REST API) |
 
-Таймаут сессии настраивается в `application.yml`:
+Для JWT-API ставят `STATELESS` — тогда `Spring Security` не создаёт и не читает сессию вовсе, что и нужно для масштабируемого stateless-сервиса. Таймаут сессии (для сессионных приложений) настраивается в `application.yml`:
 
 ```yaml
 server:
@@ -951,6 +1032,10 @@ server:
 ```
 
 ## Q24. Как настроить `Remember Me`?
+
+`Remember Me` оставляет пользователя залогиненным после закрытия браузера и истечения сессии — за счёт отдельной долгоживущей cookie. При следующем визите `Spring Security` восстанавливает аутентификацию по этой cookie, не спрашивая пароль. Включается блоком `rememberMe`.
+
+Есть два механизма хранения. По умолчанию — **hash-based**: cookie содержит подписанный хеш из имени, срока и `key`. Надёжнее — **persistent tokens**: токены хранятся в БД (`JdbcTokenRepositoryImpl`), что позволяет их отзывать и ротировать.
 
 ```java
 @Bean
@@ -973,11 +1058,13 @@ public PersistentTokenRepository persistentTokenRepository() {
 }
 ```
 
-В форме входа нужен чекбокс с `name="remember-me"`. `Spring Security` создаёт cookie, по которому восстанавливает аутентификацию без повторного ввода пароля.
+Чтобы пользователь мог включить эту опцию, в форме входа нужен чекбокс с `name="remember-me"` — `Spring Security` ищет именно этот параметр. **Подводный камень безопасности:** Remember-Me снижает защиту (украденная cookie = доступ без пароля), поэтому критичные операции стоит требовать переаутентификации, даже если пользователь «запомнен».
 
 ## Q25. Как обеспечить безопасность сессий в кластере?
 
-Для кластерного развёртывания сессии должны быть общими для всех узлов. Используется `Spring Session`:
+Проблема кластера: по умолчанию сессия живёт в памяти одного узла. Если балансировщик отправит следующий запрос на другой узел, тот о сессии ничего не знает — пользователя «разлогинит». Два решения: либо вынести сессии в общее внешнее хранилище, либо вовсе отказаться от сессий.
+
+**Решение 1 — общее хранилище сессий через `Spring Session`** (обычно `Redis`). Все узлы читают и пишут сессии в один `Redis`, поэтому любой из них обслужит запрос:
 
 ```yaml
 # application.yml
@@ -997,11 +1084,13 @@ public class SessionConfig {
 }
 ```
 
-`SecurityContext` сериализуется в `Redis` вместе с сессией. При запросе на любой узел кластера контекст восстанавливается по cookie `SESSION`.
+`SecurityContext` сериализуется в `Redis` вместе с сессией, и при запросе на любой узел восстанавливается по cookie `SESSION`. Плюс — привычная сессионная модель работает в кластере прозрачно; минус — внешняя зависимость и сериализация на каждый запрос.
 
-**Альтернатива**: stateless-архитектура с `JWT` — сессии не нужны, каждый запрос несёт токен. В этом случае кластеризация сессий не требуется, но нужен механизм отзыва токенов (blacklist в `Redis`).
+**Решение 2 — stateless-архитектура с `JWT`.** Сессий нет вообще: каждый запрос несёт самодостаточный токен, проверяемый локально на любом узле. Кластеризация сессий не нужна, но появляется своя цена — отозвать ещё не истёкший токен нельзя, поэтому для этого заводят blacklist (например, в `Redis`).
 
 ## Q26. Как обработать ошибки аутентификации и авторизации?
+
+По умолчанию `Spring Security` отвечает на отказы HTML-страницами или редиректом на форму входа — для REST API это неудобно. Нужно подменить две точки обработки: `AuthenticationEntryPoint` срабатывает, когда пользователь **не аутентифицирован** (`401`), а `AccessDeniedHandler` — когда аутентифицирован, но **прав не хватает** (`403`). Оба подключаются через блок `exceptionHandling` и для API возвращают JSON вместо HTML.
 
 ```java
 @Bean
@@ -1042,11 +1131,11 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 }
 ```
 
-Для form-based приложений вместо JSON используют редирект: `failureUrl("/login?error")` и `accessDeniedPage("/403")`.
+**Когда что использовать:** JSON-обработчики — для REST API и SPA; для классических form-based приложений вместо них берут редирект — `failureUrl("/login?error")` при неудачном входе и `accessDeniedPage("/403")` при нехватке прав. Важно различать: ошибки на этапе фильтров перехватывает именно `ExceptionTranslationFilter`, а не `@ExceptionHandler` контроллера — до контроллера запрос с отказом просто не доходит.
 
 ## Q27. (!) Как защитить `REST API` с помощью `Spring Security`?
 
-Полная конфигурация для REST API:
+Защита REST API — это сборка из уже разобранных кирпичиков в одну stateless-конфигурацию. Логика такая: REST не использует cookie-сессии, поэтому CSRF отключаем, а сессии переводим в `STATELESS`; аутентификацию берёт на себя JWT-фильтр; ошибки отдаём в JSON. Ниже — типовой каркас, который дальше дополняется деталями под проект.
 
 ```java
 @Configuration
@@ -1079,19 +1168,22 @@ public class RestSecurityConfig {
 ```
 
 Чек-лист безопасности REST API:
-1. `CSRF` отключён (stateless)
-2. `CORS` настроен (whitelist origins)
-3. Сессии — `STATELESS`
-4. `JWT`-фильтр для аутентификации
-5. `@PreAuthorize` для method-level авторизации
-6. Кастомные `401`/`403` ответы в JSON
-7. Rate limiting на уровне фильтра или gateway
+
+1. `CSRF` отключён — оправдано только потому, что аутентификация stateless (не cookie-based)
+2. `CORS` настроен по whitelist origins, а не `*`
+3. Сессии — `STATELESS`, сервер ничего не хранит между запросами
+4. `JWT`-фильтр выполняет аутентификацию на каждом запросе
+5. `@PreAuthorize` добавляет авторизацию на уровне методов поверх URL-правил
+6. Кастомные `401`/`403` отдаются в JSON, а не HTML
+7. Rate limiting — на уровне фильтра или API Gateway (см. Q28)
 
 Подробнее о конфигурации [Spring Boot](spring-boot-interview.md) и структуре контроллеров — в [Spring MVC](spring-mvc-interview.md).
 
 ## Q28. Как настроить rate limiting?
 
-Rate limiting не встроен в `Spring Security`, реализуется через фильтр или библиотеку:
+Rate limiting ограничивает число запросов от одного клиента за интервал — защита от перебора паролей, скрейпинга и DoS. В `Spring Security` его **нет из коробки**, поэтому реализуют через собственный фильтр (обычно поверх библиотеки `Bucket4j` с алгоритмом token bucket) или выносят на уровень API Gateway.
+
+Пример фильтра «20 запросов в минуту на IP»:
 
 ```java
 @Component
@@ -1129,9 +1221,11 @@ public class RateLimitFilter extends OncePerRequestFilter {
 http.addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class);
 ```
 
-Для продакшена рекомендуется хранить счётчики в `Redis` (распределённый rate limiting) и использовать API Gateway (например, `Spring Cloud Gateway` с фильтром `RequestRateLimiter`).
+**Подводный камень in-memory варианта:** `ConcurrentHashMap` локален для одного узла — в кластере каждый инстанс считает запросы по отдельности, и реальный лимит умножается на число узлов. Плюс карта по IP растёт без очистки (риск утечки памяти). Поэтому для production счётчики выносят в `Redis` (распределённый лимит на весь кластер) либо используют API Gateway — например, `Spring Cloud Gateway` с фильтром `RequestRateLimiter`.
 
 ## Q29. (!) Как тестировать защищённые эндпоинты?
+
+Тестировать безопасность нужно так же, как бизнес-логику: с моком текущего пользователя, без реального логина. Модуль `spring-security-test` даёт два подхода — аннотации (`@WithMockUser` ставит фиктивную аутентификацию в контекст до выполнения теста) и request-post-processors (`.with(jwt())`, `.with(csrf())` — добавляют аутентификацию или CSRF-токен прямо в конкретный `MockMvc`-запрос). Хороший набор тестов покрывает три исхода: успех с нужной ролью, `403` с недостаточной и `401` для анонима.
 
 ```java
 @WebMvcTest(ArticleController.class)
@@ -1184,11 +1278,13 @@ class ArticleControllerTest {
 | `SecurityMockMvcRequestPostProcessors.jwt()` | Мок JWT-токена |
 | `SecurityMockMvcRequestPostProcessors.csrf()` | Добавляет CSRF-токен в запрос |
 
-Для интеграционных тестов с `@SpringBootTest` и `TestRestTemplate`/`WebTestClient` используйте реальные токены или мок `JwtDecoder`.
+**Частый промах:** для POST/PUT/DELETE в form-based приложении тест без `.with(csrf())` получит `403`, потому что CSRF-токен включён по умолчанию. Для интеграционных тестов с `@SpringBootTest` и `TestRestTemplate`/`WebTestClient` мок-аутентификация не работает — там нужны реальные токены или мок `JwtDecoder`.
 
 ## Q30. Как настроить двухфакторную аутентификацию (2FA)?
 
-2FA в `Spring Security` реализуется через кастомный `AuthenticationProvider` или дополнительный фильтр:
+2FA добавляет второй фактор поверх пароля — обычно одноразовый код TOTP из приложения-аутентификатора. Встроенного «2FA из коробки» в `Spring Security` нет, поэтому вход разбивают на два шага: первый проверяет логин/пароль и выдаёт **частичную** аутентификацию (полного доступа ещё нет), второй проверяет TOTP-код и только тогда выдаёт полноценный токен. Реализуют это кастомным `AuthenticationProvider` плюс отдельным эндпоинтом проверки кода.
+
+Шаг 1 — проверка пароля, возврат частичной аутентификации:
 
 ```java
 @Component
@@ -1219,6 +1315,8 @@ public class TwoFactorAuthProvider implements AuthenticationProvider {
 }
 ```
 
+Шаг 2 — проверка TOTP-кода и выдача полноценного токена:
+
 ```java
 // Endpoint для проверки TOTP-кода
 @PostMapping("/api/auth/verify-2fa")
@@ -1236,13 +1334,13 @@ public ResponseEntity<AuthResponse> verify2fa(
 }
 ```
 
-Для TOTP используют библиотеки: `dev.samstevens.totp` (Java TOTP), `com.warrenstrange:googleauth`. Пользователь сканирует QR-код в Google Authenticator, Authy или аналогичном приложении.
+Сам TOTP не пишут руками — берут библиотеку (`dev.samstevens.totp` или `com.warrenstrange:googleauth`). При подключении 2FA пользователь сканирует QR-код в Google Authenticator, Authy или аналоге; дальше приложение и сервер независимо считают один и тот же код от общего секрета и текущего времени. Дополнительно стоит выдавать backup-коды — на случай потери устройства.
 
 ## Q31. (!) Как работает `SecurityContext` в async-методах и `@Async`?
 
-По умолчанию `SecurityContextHolder` использует стратегию `MODE_THREADLOCAL` — контекст хранится в `ThreadLocal` текущего потока. Когда метод помечен `@Async`, он выполняется в другом потоке пула, поэтому `SecurityContext` там **не доступен**.
+Корень проблемы: `SecurityContextHolder` по умолчанию хранит контекст в `ThreadLocal`, то есть привязывает его к потоку, обрабатывающему запрос. Метод с `@Async` выполняется в **другом** потоке из пула, у которого свой пустой `ThreadLocal` — поэтому `SecurityContextHolder.getContext()` там вернёт анонимный контекст, и `auth` будет `null`. Решений три, с разными компромиссами.
 
-**Решение 1 — изменить стратегию на `MODE_INHERITABLETHREADLOCAL`:**
+**Решение 1 — стратегия `MODE_INHERITABLETHREADLOCAL`.** Контекст автоматически копируется в дочерние потоки:
 
 ```java
 @Bean
@@ -1255,9 +1353,9 @@ public MethodInvokingFactoryBean securityContextStrategy() {
 }
 ```
 
-`MODE_INHERITABLETHREADLOCAL` автоматически передаёт контекст в дочерние потоки через `InheritableThreadLocal`. Подходит для простых случаев, но **не работает с пулами потоков** (`ThreadPoolExecutor` переиспользует потоки, не создаёт дочерние).
+Подвох: `InheritableThreadLocal` копирует контекст лишь в **момент создания** дочернего потока. А пул потоков (`ThreadPoolExecutor`) потоки переиспользует, а не создаёт заново на каждую задачу, — поэтому с пулами эта стратегия фактически не работает. Годится только для «сырого» `new Thread()`.
 
-**Решение 2 — `DelegatingSecurityContextAsyncTaskExecutor`** (рекомендуется):
+**Решение 2 — `DelegatingSecurityContextAsyncTaskExecutor` (рекомендуется).** Обёртка над executor'ом, которая захватывает контекст в вызывающем потоке и переустанавливает его в рабочем перед каждой задачей — поэтому корректно работает с пулами:
 
 ```java
 @Configuration
@@ -1277,7 +1375,7 @@ public class AsyncConfig implements AsyncConfigurer {
 }
 ```
 
-**Решение 3 — явная передача контекста:**
+**Решение 3 — явная передача контекста.** Самый ручной способ: захватить контекст в вызывающем потоке, передать параметром и установить в рабочем (обязательно очистив в `finally`, чтобы не «протёк» в переиспользуемый поток пула). Работает всегда, но добавляет boilerplate:
 
 ```java
 @Service
@@ -1313,7 +1411,7 @@ reportService.generateReport(ctx);
 
 ## Q32. (!) Как настроить `OAuth2 Resource Server` с `JWT` и кастомными клеймами?
 
-`OAuth2 Resource Server` — сервер, который принимает `Bearer`-токены и проверяет их через `Authorization Server`. Spring Security предоставляет готовую интеграцию.
+`OAuth2 Resource Server` — приложение, которое само не логинит пользователей, а принимает уже выданные `Bearer`-токены и проверяет их по ключам Authorization Server. `Spring Security` даёт готовую интеграцию: вы указываете, где брать ключи, и опционально — как маппить claim'ы токена в права. Этот вопрос углубляет тему кастомизацией: свой `JwtAuthenticationConverter` (откуда брать роли) и кастомный `JwtDecoder` (дополнительная валидация claim'ов вроде `audience`).
 
 **Зависимость:**
 
@@ -1375,7 +1473,7 @@ public class ResourceServerConfig {
 }
 ```
 
-**Кастомный `JwtDecoder` с дополнительной валидацией:**
+**Кастомный `JwtDecoder` с дополнительной валидацией.** По умолчанию `Spring` проверяет подпись, срок и issuer. Но часто нужно убедиться, что токен предназначен именно вашему API — это claim `audience`. Свой валидатор отклонит чужой токен, даже если он валидно подписан тем же IdP:
 
 ```java
 @Bean
@@ -1404,7 +1502,7 @@ public JwtDecoder jwtDecoder() {
 }
 ```
 
-**Доступ к клеймам из JWT в контроллере:**
+**Доступ к claim'ам JWT в контроллере.** После валидации сам токен доступен через `@AuthenticationPrincipal Jwt` — из него можно читать любые claim'ы (subject, email, кастомные поля):
 
 ```java
 @GetMapping("/api/profile")
@@ -1418,9 +1516,9 @@ public ProfileDto getProfile(@AuthenticationPrincipal Jwt jwt) {
 
 ## Q33. (!) Как работает `@PreAuthorize` с выражениями `SpEL` и кастомным `Permission Evaluator`?
 
-`@PreAuthorize` принимает `SpEL`-выражение, которое вычисляется до выполнения метода. Доступны встроенные объекты: `authentication`, `principal`, `hasRole()`, `hasAuthority()`, `#paramName`.
+`@PreAuthorize` принимает `SpEL`-выражение, которое вычисляется **до** вызова метода: вернёт `false` — метод не выполнится, полетит `AccessDeniedException`. Сила в том, что выражению доступны и контекст безопасности, и параметры метода. Встроенные обращения: `authentication` и `principal` (текущий пользователь), `hasRole()`/`hasAuthority()` (проверка прав), `#paramName` (значение аргумента метода), `hasPermission()` (вызов вашего `PermissionEvaluator`).
 
-**Базовые примеры:**
+**Базовые примеры** — от простой проверки роли до сверки параметра с текущим пользователем:
 
 ```java
 @PreAuthorize("hasRole('ADMIN')")
@@ -1438,7 +1536,7 @@ public UserProfile getProfile(String username) { ... }
 public void cancelOrder(Order order) { ... }
 ```
 
-**Кастомный `PermissionEvaluator` для domain object security:**
+**Кастомный `PermissionEvaluator` для domain object security.** Когда логика прав сложнее, чем «свой/чужой», её выносят в `PermissionEvaluator` — единую точку, которую вызывает `hasPermission()`. Он реализует две перегрузки: по уже загруженному объекту и по его id с типом (чтобы достать объект самому):
 
 ```java
 @Component
@@ -1473,7 +1571,7 @@ public class DocumentPermissionEvaluator implements PermissionEvaluator {
 }
 ```
 
-**Регистрация `PermissionEvaluator`:**
+**Регистрация `PermissionEvaluator`.** Чтобы `hasPermission()` в аннотациях заработал, evaluator нужно подсунуть в `MethodSecurityExpressionHandler`:
 
 ```java
 @Configuration
@@ -1514,6 +1612,8 @@ public List<Document> getAllDocuments() {
 ```
 
 ## Q34. Как включить `Method Security` и в чём разница между `@PreAuthorize` и `@PostFilter`?
+
+Method security включается одной аннотацией `@EnableMethodSecurity`, у которой есть флаги под разные семейства аннотаций. Ключевое различие между четырьмя аннотациями — **момент** (до или после вызова метода) и **что они делают** с вызовом: `@PreAuthorize`/`@PostAuthorize` решают «пускать или нет», а `@PreFilter`/`@PostFilter` отсеивают элементы коллекции.
 
 **Включение Method Security (Spring Security 6+):**
 
@@ -1557,7 +1657,9 @@ public void deleteDocuments(List<Document> documents) {
 
 ## Q35. Как одновременно настроить `CORS` и `CSRF` в `SecurityFilterChain`?
 
-**Полная конфигурация CORS + CSRF для REST API:**
+CORS и CSRF часто путают, но решают они разные задачи: CORS **разрешает** легитимные кросс-доменные запросы фронтенда, CSRF — **запрещает** поддельные запросы с чужих сайтов. В смешанном приложении (REST API + браузерные формы) их настраивают вместе, и здесь важны два правила: CORS должен быть сконфигурирован до CSRF, а preflight `OPTIONS` — всегда `permitAll`, иначе фронтенд не достучится.
+
+**Полная конфигурация CORS + CSRF:**
 
 ```java
 @Configuration
@@ -1613,7 +1715,7 @@ public class SecurityConfig {
 - Form-based логин
 - Любые мутирующие операции из браузера
 
-**Паттерн `Double Submit Cookie` (когда `allowCredentials: false`):**
+**Паттерн `Double Submit Cookie`** — стандартный способ отдать CSRF-токен в SPA. `Spring` кладёт токен в cookie `XSRF-TOKEN` (с `withHttpOnlyFalse`, чтобы JS мог его прочитать), фронтенд читает его и дублирует в заголовок `X-XSRF-TOKEN`. Сервер сверяет cookie и заголовок: чужой сайт не сможет прочитать cookie из-за same-origin policy, значит и подставить верный заголовок не сможет.
 
 ```java
 // Frontend отправляет CSRF-токен в заголовке X-XSRF-TOKEN
@@ -1625,7 +1727,7 @@ public class SecurityConfig {
 
 ## Q36. Как ограничить доступ к `Actuator`-эндпоинтам через `SecurityFilterChain`?
 
-Actuator-эндпоинты содержат чувствительную информацию — их нужно защищать в production.
+Actuator-эндпоинты (`/env`, `/heapdump`, `/loggers`, `/shutdown`) раскрывают конфигурацию, секреты и дают управление приложением — оставить их открытыми в production равносильно дыре в безопасности. Правильный подход: вынести Actuator в **отдельный** `SecurityFilterChain` с более высоким `@Order`, открыть анонимам только `health`/`info` (для k8s-проб), а остальное закрыть ролью. Матчинг — через `EndpointRequest`, а не вручную по путям, чтобы не зависеть от base-path.
 
 **Выделенный `SecurityFilterChain` для Actuator:**
 
@@ -1692,7 +1794,7 @@ public UserDetailsService actuatorUsers() {
 
 ## Q37. Чем SecurityFilterChain в Spring Security 6 отличается от WebSecurityConfigurerAdapter?
 
-`WebSecurityConfigurerAdapter` **удалён** в Spring Security 6 (deprecated с 5.7). Новый подход — конфигурация через `@Bean`-методы.
+Главное изменение: `WebSecurityConfigurerAdapter` **удалён** в Spring Security 6 (deprecated с 5.7). Раньше конфигурацию писали, **наследуясь** от адаптера и переопределяя методы `configure(...)`; теперь — **объявляя бины** (`SecurityFilterChain`, `AuthenticationManager`, `PasswordEncoder`). Это переход от наследования к композиции: вместо одного класса-наследника вы собираете конфигурацию из независимых бинов, которые проще тестировать и комбинировать.
 
 ### Было (Spring Security 5, устарело):
 
@@ -1765,7 +1867,7 @@ public class SecurityConfig {
 
 ## Q38. Как настроить OAuth2 Resource Server через spring-security-oauth2-resource-server?
 
-**OAuth2 Resource Server** — режим, когда приложение не занимается аутентификацией само, а доверяет токенам от внешнего Authorization Server (Keycloak, Auth0, Okta).
+**OAuth2 Resource Server** — режим, когда приложение не логинит пользователей само, а доверяет токенам от внешнего Authorization Server (Keycloak, Auth0, Okta). Стартер делает почти всё за вас: достаточно указать, где брать публичные ключи, и `Spring` сам подключит `BearerTokenAuthenticationFilter`, скачает ключи и будет валидировать подпись токенов. Поддерживаются два типа токенов — самодостаточный JWT (валидация локально по ключам) и opaque-токен (валидация через introspection-запрос к серверу).
 
 ### Зависимость:
 
@@ -1824,6 +1926,8 @@ public JwtAuthenticationConverter jwtAuthenticationConverter() {
 
 ### Opaque token (introspection):
 
+Opaque-токен — это непрозрачная строка без полезной нагрузки внутри. Проверить его локально нельзя, поэтому Resource Server на каждый запрос обращается к introspection-эндпоинту Authorization Server, который и сообщает, валиден ли токен и какие у него права. Плюс — токен можно отозвать мгновенно; минус — сетевой вызов на каждый запрос:
+
 ```yaml
 spring:
   security:
@@ -1839,7 +1943,7 @@ spring:
 
 ## Q39. Как использовать JwtDecoder и BearerTokenAuthenticationFilter?
 
-`BearerTokenAuthenticationFilter` — стандартный фильтр Spring Security, который извлекает `Bearer`-токен из заголовка `Authorization` и передаёт его на валидацию.
+Это два звена одной цепочки на стороне Resource Server. `BearerTokenAuthenticationFilter` — точка входа: он достаёт `Bearer`-токен из заголовка `Authorization` и запускает аутентификацию. `JwtDecoder` — рабочая лошадка проверки: он парсит токен, проверяет подпись и claim'ы, превращая строку в объект `Jwt`. Вы редко трогаете фильтр напрямую, но часто настраиваете `JwtDecoder` — выбираете источник ключей (JWKS, секрет, публичный ключ) и добавляете свои валидаторы.
 
 ### Схема работы:
 
@@ -1855,6 +1959,8 @@ HTTP Request
 ```
 
 ### Кастомный JwtDecoder:
+
+Источник ключей зависит от того, как подписан токен. **JWKS-endpoint** (асимметричный RSA, ключи раздаёт IdP) — рекомендуемый вариант: ротация ключей подхватывается автоматически. **Секрет** (симметричный HMAC) — когда вы сами и выпускаете, и проверяете токены. **Публичный ключ** (RSA напрямую) — когда JWKS недоступен, а ключ зашит в конфигурацию:
 
 ```java
 @Bean
@@ -1908,6 +2014,8 @@ public JwtDecoder jwtDecoder() {
 ---
 
 ## Q40. CSRF защита — когда отключать и SameSite cookies как альтернатива?
+
+Короткое правило: **CSRF нужен ровно там, где аутентификация привязана к запросу автоматически — то есть к cookie.** Если же токен кладётся в заголовок вручную (JWT), подделать запрос с чужого сайта нельзя, и защиту можно отключить. `SameSite`-cookie — это не замена CSRF-токену, а второй рубеж: атрибут говорит браузеру не отправлять cookie в кросс-доменных запросах, что само по себе срезает большинство CSRF-векторов.
 
 ### Когда CSRF можно отключать:
 
@@ -1965,6 +2073,11 @@ http.csrf(csrf -> csrf
 ---
 
 ## Q41. Как тестировать Spring Security — @WithMockUser и SecurityMockMvcRequestPostProcessors?
+
+Модуль `spring-security-test` даёт два способа подменить текущего пользователя без реального логина, и они дополняют друг друга:
+
+- **Аннотации** (`@WithMockUser`, `@WithUserDetails`) — ставят аутентификацию в `SecurityContext` на весь тестовый метод. `@WithMockUser` создаёт фиктивного пользователя из переданных роли/authorities, `@WithUserDetails` грузит реального через ваш `UserDetailsService`.
+- **Request-post-processors** (`.with(jwt())`, `.with(opaqueToken())`, `.with(csrf())`) — добавляют аутентификацию или CSRF-токен в конкретный `MockMvc`-запрос. Незаменимы для тестов Resource Server (JWT/opaque-токены), где контекст задаётся самим токеном.
 
 ### @WithMockUser — имитация аутентифицированного пользователя:
 
@@ -2043,6 +2156,8 @@ void opaqueTokenRequest() throws Exception {
 
 ### Кастомная аннотация для повторного использования:
 
+Чтобы не повторять один и тот же `@WithMockUser(...)` в десятках тестов, его оборачивают в собственную мета-аннотацию — получается читаемый и переиспользуемый `@WithAdminUser`:
+
 ```java
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
@@ -2062,7 +2177,7 @@ void adminCanDeleteOrder() throws Exception {
 
 ## Q42. Как передавать SecurityContext между потоками и в реактивном стеке?
 
-`SecurityContextHolder` по умолчанию использует `ThreadLocal` — контекст не передаётся в другие потоки автоматически.
+Корень всех проблем — `ThreadLocal`: `SecurityContextHolder` привязывает контекст к потоку, поэтому он **не передаётся** в другие потоки автоматически. Это проявляется в трёх ситуациях с разными решениями: `@Async`-методы (другой поток пула), ручные `CompletableFuture` (тоже чужой поток) и реактивный `WebFlux`, где `ThreadLocal` неприменим в принципе и используется `Reactor Context`.
 
 ### Проблема в @Async методах:
 
@@ -2142,6 +2257,8 @@ public class AsyncService {
 ---
 
 ## Q43. Что такое @PostAuthorize и @Secured — когда использовать вместо @PreAuthorize?
+
+`@PreAuthorize` — выбор по умолчанию, остальные две аннотации берут в конкретных случаях. `@PostAuthorize` нужен, когда права зависят от **результата**, которого до вызова ещё нет (например, проверить владельца загруженного из БД заказа). `@Secured` — для простейшей проверки роли без SpEL, ради лаконичности. Главный минус `@PostAuthorize`: метод **уже выполнился** (включая запрос к БД) к моменту отказа, поэтому для дорогих операций он хуже `@PreAuthorize`.
 
 ### @PreAuthorize vs @PostAuthorize vs @Secured:
 
