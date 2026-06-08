@@ -87,18 +87,18 @@ Tracking: tight `-0.02em` (дисплей), wide `0.12em` (капс-метки).
 8px-база: `--space-1..12` = .25 / .5 / .75 / 1 / 1.5 / 2 / 3 / 4 / 6 / 8 / 12 / 16 rem.
 **Все** padding/margin/gap идут через токены (raw-значений нет — инвариант).
 
-Per-surface контентные колонки (семантические, не magic-px), всё `margin: 0 auto`:
+**Full-width режим (по запросу пользователя).** Контентные колонки тянутся на
+всю ширину вьюпорта: токены ширины `--max-width-{page,focus,reading,result,
+settings,data}` = `none`, а проза не ограничена мерой строки (`--measure: none`).
+Жёлоб задаёт горизонтальный padding `.ed-page`/masthead (`--space-5`), поэтому
+контент выровнен с шапкой и не липнет к краю стекла. Прежние «семантические»
+значения колонок (focus 760 / reading 820 / result 880 / settings 860 / data
+1180 / page 1280 px) и читаемая мера (68ch) сохранены в комментариях editorial.css
+для быстрого отката к колоночному режиму.
 
-| Токен | px | Поверхность |
-|---|---|---|
-| max-width-focus | 760 | фокус-вопрос, error |
-| max-width-reading | 820 | итоги сессии |
-| max-width-result | 880 | разбор (вопрос + сайдбар) |
-| max-width-settings | 860 | настройки |
-| max-width-data | 1180 | аналитика (графики + таблица) |
-| max-width-page | 1280 | базовый `.ed-page`, masthead |
-
-На широких вьюпортах (1920/2560) контент не растягивается — кап + центрирование.
+На широких вьюпортах (1920/2560) контент растягивается на всю ширину; строки
+длинной прозы становятся длиннее меры (осознанный выбор пользователя ради
+максимального использования экрана).
 Радиусы: sm 3 · md 6 · lg 10 · full 999. Тени мягкие, тёплые (`rgba(33,28,21,…)`
 в light; `rgba(0,0,0,…)` в dark).
 
@@ -144,4 +144,4 @@ Easings: default/`in`/`out` (cubic-bezier), `bounce` — крайне редко
 
 editorial.css → бамп `v=N` в `head.html` (2 строки: preload+stylesheet).
 app.js → `v=N` в result/settings/focus-training (3). stats.js → stats.html (1).
-Текущее: editorial.css **v62**, app.js **v28**, stats.js **v6**.
+Текущее: editorial.css **v63**, app.js **v28**, stats.js **v6**.
