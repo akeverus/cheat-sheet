@@ -102,11 +102,11 @@
     <link rel="preload" as="style" th:href="@{/css/editorial.css(v=61)}">
     <link rel="stylesheet" th:href="@{/css/editorial.css(v=61)}">
     <!-- SRI (integrity) + crossorigin: защита от компрометации CDN — браузер
-         выполнит ресурс, только если его sha512 совпадает. Хэши сверены с
-         authoritative cdnjs API И независимо пересчитаны из самих файлов.
-         Версия пиннится (11.9.0, immutable URL) → SRI стабилен. mermaid/chart.js
-         на jsdelivr идут БЕЗ SRI: там диапазон версий (@11 / latest), хэш «поплыл»
-         бы при обновлении CDN — для них нужен exact-pin + live-проверка. -->
+         выполнит ресурс, только если его sha512 совпадает. Хэши пересчитаны из
+         самих файлов (openssl dgst -sha512). ВСЕ CDN-ресурсы пиннятся на ТОЧНУЮ
+         версию с immutable-URL (cache-control: immutable) → SRI стабилен, хэш не
+         «плывёт» при обновлении CDN. highlight.js — cdnjs; mermaid/chart.js —
+         jsdelivr (оба отдают access-control-allow-origin:* для crossorigin). -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"
           integrity="sha512-Jk4AqjWsdSzSWCSuQTfYRIF84Rq/eV0G2+tu07byYwHcbTGfdmLrHjUSwvzp5HvbiqK4ibmNwdcG49Y5RGYPTg=="
           crossorigin="anonymous" referrerpolicy="no-referrer">
@@ -128,11 +128,20 @@
         });
     </script>
     <th:block th:if="${includeMermaid}">
-        <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+        <!-- mermaid НЕ deferим (mermaid-init вызывает initialize() инлайн во время
+             парсинга). Exact-pin 11.12.0 (= то, что отдавал диапазон @11) + SRI. -->
+        <script src="https://cdn.jsdelivr.net/npm/mermaid@11.12.0/dist/mermaid.min.js"
+                integrity="sha512-5TKaYvhenABhlGIKSxAWLFJBZCSQw7HTV7aL1dJcBokM/+3PNtfgJFlv8E6Us/B1VMlQ4u8sPzjudL9TEQ06ww=="
+                crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <script th:replace="~{fragments/mermaid-init :: mermaid-init}"></script>
     </th:block>
     <th:block th:if="${includeChart}">
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <!-- Exact-pin 4.5.0 UMD-min (раньше был unversioned /npm/chart.js = latest:
+             авто-обновлялся, мог сломать графики без предупреждения) + SRI.
+             chart.umd.min.js экспортит глобал Chart, который зовёт stats.js. -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"
+                integrity="sha512-Y51n9mtKTVBh3Jbx5pZSJNDDMyY+yGe77DGtBPzRlgsf/YLCh13kSZ3JmfHGzYFCmOndraf0sQgfM654b7dJ3w=="
+                crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     </th:block>
 </head>
 </html>
