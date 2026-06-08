@@ -57,7 +57,7 @@ updated: "2026-04-25"
 - [Q12. Как работает reflection в native image?](#q12-как-работает-reflection-в-native-image)
 
 **REST и MicroProfile**
-- [Q13. (!) RESTEasy Reactive vs RESTEasy Classic?](#q13--resteasy-reactive-vs-resteasy-classic)
+- [Q13. (!) Чем отличаются RESTEasy Reactive и RESTEasy Classic?](#q13--чем-отличаются-resteasy-reactive-и-resteasy-classic)
 - [Q14. (!) Какие части MicroProfile поддерживает Quarkus?](#q14--какие-части-microprofile-поддерживает-quarkus)
 - [Q15. Config через MicroProfile Config?](#q15-config-через-microprofile-config)
 - [Q16. Health, Metrics, OpenAPI — встроенные?](#q16-health-metrics-openapi--встроенные)
@@ -69,14 +69,14 @@ updated: "2026-04-25"
 - [Q20. (!) Vert.x под капотом?](#q20--vertx-под-капотом)
 
 **Persistence**
-- [Q21. (!) Hibernate ORM with Panache?](#q21--hibernate-orm-with-panache)
-- [Q22. Active Record vs Repository pattern?](#q22-active-record-vs-repository-pattern)
+- [Q21. (!) Что такое Hibernate ORM with Panache?](#q21--что-такое-hibernate-orm-with-panache)
+- [Q22. Чем различаются Active Record и Repository в Panache?](#q22-чем-различаются-active-record-и-repository-в-panache)
 - [Q23. Hibernate Reactive — что это?](#q23-hibernate-reactive--что-это)
 
 **Dev experience**
 - [Q24. (!) Что такое dev mode и live reload?](#q24--что-такое-dev-mode-и-live-reload)
-- [Q25. Continuous testing?](#q25-continuous-testing)
-- [Q26. Dev Services?](#q26-dev-services)
+- [Q25. Что такое continuous testing?](#q25-что-такое-continuous-testing)
+- [Q26. Что такое Dev Services в Quarkus?](#q26-что-такое-dev-services-в-quarkus)
 
 **Тестирование**
 - [Q27. (!) @QuarkusTest и его особенности?](#q27--quarkustest-и-его-особенности)
@@ -89,19 +89,23 @@ updated: "2026-04-25"
 
 ## Q1. (!) Что такое Quarkus и зачем он нужен?
 
-(!) Что такое Quarkus и зачем он нужен?
+`Quarkus` — Java-фреймворк от **Red Hat** (с 2019), заточенный под **Kubernetes-native** приложения. Его главная задача — сделать Java конкурентоспособной с Go и Node.js в облаке, где традиционный минус Java (долгий старт и большое потребление памяти) превращается в реальные деньги: при auto-scaling и serverless вы платите за каждую секунду старта и каждый мегабайт RAM на реплику.
 
-`Quarkus` — Java-фреймворк от **Red Hat** (с 2019), оптимизированный для **Kubernetes-native** приложений. Главная цель — **сделать Java конкурентоспособной с Go и Node.js** в облачной среде.
+Решение Quarkus — **перенести как можно больше работы со старта приложения на этап сборки**. То, что Spring делает при запуске (сканирование classpath, рефлексия, построение контейнера), Quarkus вычисляет при компиляции и «запекает» в артефакт.
 
 **Ключевые особенности:**
-- **Supersonic startup** — запуск за десятки миллисекунд (native image)
-- **Subatomic memory** — потребление от ~30MB RAM
-- **Build-time оптимизации** — DI, конфигурация, аннотации обрабатываются при сборке
+- **Supersonic startup** — запуск за десятки миллисекунд (в native image)
+- **Subatomic memory** — потребление от ~30 MB RAM
+- **Build-time оптимизации** — DI, конфигурация, аннотации обрабатываются при сборке, а не при старте
 - **Live reload** в dev-mode без рестарта JVM
-- **MicroProfile** API + Quarkus-specific extensions
+- **MicroProfile** API + специфичные для Quarkus extensions
 - **Reactive первого класса** — через Mutiny и Vert.x
 
+**Зачем это нужно:** на типовом сервисе в VM разница незаметна, но на десятках реплик в Kubernetes или в FaaS экономия памяти и быстрый cold start напрямую снижают счёт за инфраструктуру.
+
 ## Q2. (!) Чем Quarkus отличается от Spring Boot?
+
+Коротко: **главное различие — момент сборки DI-контейнера**. Quarkus строит граф зависимостей при компиляции (build-time DI на ArC), Spring — при старте приложения (runtime DI). Из этого следствием вытекает почти всё остальное в таблице: быстрый старт, меньшее потребление памяти и first-class поддержка native image у Quarkus.
 
 | Критерий | Quarkus | Spring Boot |
 |----------|---------|-------------|
@@ -117,22 +121,27 @@ updated: "2026-04-25"
 | Dev experience | Live reload, Dev Services | DevTools |
 | Маркетинг | Cloud-native, Kubernetes | General-purpose |
 
+**Вывод:** Spring Boot — универсальный фреймворк с огромной экосистемой; Quarkus специализирован под облако и платит за это меньшим community и менее знакомым стеком (MicroProfile/Jakarta EE вместо Spring API).
+
 ## Q3. (!) Что такое supersonic subatomic Java?
 
-Маркетинговый слоган Quarkus:
+Это маркетинговый слоган Quarkus, который описывает две его цели:
 
-- **Supersonic** (сверхзвуковой) — startup за десятки миллисекунд (native), 1-2 сек (JVM)
-- **Subatomic** (субатомный) — память от 30 MB
+- **Supersonic** (сверхзвуковой) — про скорость старта: десятки миллисекунд в native, 1-2 сек на JVM
+- **Subatomic** (субатомный) — про потребление памяти: от 30 MB
 
-Достигается за счёт:
-1. **Build-time обработки** — annotations процессятся при компиляции
-2. **Tree-shaking** — убираются неиспользуемые классы
-3. **GraalVM native image** — компиляция в нативный бинарник
-4. **Минимизация runtime reflection** — известные паттерны заменяются на сгенерированный код
+Слоган не пустой — за ним стоят конкретные технические приёмы, которые убирают работу из рантайма:
+
+1. **Build-time обработка** — аннотации разбираются при компиляции, а не при старте
+2. **Tree-shaking** — из артефакта выкидываются неиспользуемые классы, остаётся только то, что реально вызывается
+3. **GraalVM native image** — компиляция в нативный бинарник без JVM
+4. **Минимизация runtime reflection** — известные паттерны заменяются на заранее сгенерированный код, поэтому при старте не надо ничего «угадывать» рефлексией
+
+**Логика связки:** меньше работы при старте → быстрее запуск; меньше рефлексии и метаданных → меньше памяти и возможен native image.
 
 ## Q4. Что такое extensions в Quarkus?
 
-`Extension` — модульный компонент, добавляющий функциональность. Аналог Spring Boot starters, но с **build-time оптимизациями**.
+`Extension` — модульный компонент, который добавляет в приложение функциональность (REST, ORM, Kafka и т.д.). Концептуально это аналог Spring Boot starters, но с принципиальным отличием: extension умеет работать на этапе сборки и заранее знает про native image.
 
 ```xml
 <dependency>
@@ -149,17 +158,17 @@ updated: "2026-04-25"
 </dependency>
 ```
 
-Каждое extension содержит:
-- **Runtime module** — код, исполняющийся в приложении
-- **Deployment module** — код, исполняющийся при сборке (генерация bean, конфигурация)
+Каждое extension состоит из двух модулей:
+- **Runtime module** — код, который работает в самом приложении
+- **Deployment module** — код, который работает при сборке (генерация bean'ов, обработка конфигурации)
 
-Поэтому extensions знают про native image и могут регистрировать reflection metadata автоматически.
+Именно наличие deployment-модуля и отличает extension от обычной зависимости: благодаря ему extension знает, какие классы понадобятся в native image, и **сам регистрирует reflection-metadata**. Поэтому Hibernate, Jackson и прочие «дружат» с native image из коробки — вам не приходится вручную перечислять классы для рефлексии.
 
 ## Q5. (!) Что такое build-time DI и почему это важно?
 
-В Spring DI происходит при **запуске** — сканируются classpath, создаются BeanFactory, обрабатываются annotations.
+**Build-time DI** — это построение графа зависимостей (DI-контейнера) на этапе сборки, а не при старте приложения. Это центральная идея Quarkus, из которой растут все его преимущества.
 
-В Quarkus всё это делается **во время сборки** через **ArC** (Quarkus CDI implementation):
+Сравним с Spring: там DI происходит при **запуске** — сканируется classpath, создаётся BeanFactory, обрабатываются аннотации через рефлексию. В Quarkus всё это делается **во время сборки** через **ArC** (реализацию CDI от Quarkus):
 
 ```
 Spring (runtime):
@@ -170,21 +179,21 @@ Quarkus (build-time):
   Start → Run (всё уже готово)
 ```
 
-**Преимущества:**
-- Faster startup (нет работы при старте)
-- Меньше runtime reflection → возможен native image
-- Меньше памяти (не нужен метаданные о классах в RAM)
-- Ошибки конфигурации видны на этапе сборки
+**Почему это важно (каждый пункт — прямое следствие переноса работы на сборку):**
+- **Быстрый старт** — при запуске уже нечего делать, граф bean'ов готов
+- **Меньше runtime reflection** → возможен native image (рефлексию GraalVM плохо переваривает)
+- **Меньше памяти** — не нужно держать метаданные о классах в RAM
+- **Ошибки конфигурации ловятся при сборке**, а не падают в проде на старте (например, неразрешённая инъекция bean'а упадёт компиляцией)
 
 ## Q6. (!) Как Quarkus генерирует код во время сборки?
 
-Через **Maven/Gradle plugin** + **deployment modules** extensions:
+Кодогенерацию запускает **Maven/Gradle-плагин Quarkus**, который дёргает **deployment-модули** подключённых extensions. Процесс делится на три фазы:
 
-1. **Augmentation phase** — анализ classpath, обработка аннотаций, генерация bean'ов
-2. **Static init** — код, исполняемый один раз при сборке (вычисление конфигурации)
-3. **Runtime init** — код, исполняемый при старте
+1. **Augmentation phase** — анализ classpath, обработка аннотаций, генерация bean'ов (основная фаза кодогенерации)
+2. **Static init** — код, исполняемый один раз при сборке (например, вычисление конфигурации)
+3. **Runtime init** — то немногое, что всё же откладывается на старт (то, что нельзя посчитать заранее, — например, чтение секретов из окружения)
 
-Сгенерированный код добавляется в JAR. При запуске — нет сканирования, нет рефлексии.
+Сгенерированный код добавляется прямо в JAR. Поэтому при запуске нет ни сканирования classpath, ни построения контейнера, ни рефлексии — приложение просто исполняет уже готовый код.
 
 ```java
 // Что мы пишем
@@ -207,7 +216,9 @@ public class UserService_Bean implements InjectableBean<UserService> {
 
 ## Q7. Что такое recorder и BuildItem?
 
-`BuildItem` — единица данных, передаваемая между **build steps** (методы, обрабатывающие какие-то аспекты сборки).
+Это два кирпичика, на которых стоит build-time-кодогенерация Quarkus.
+
+`BuildItem` — единица данных, которой обмениваются **build steps** (методы, обрабатывающие отдельные аспекты сборки). Это типобезопасный способ передать результат одного шага другому: один шаг «производит» BuildItem, другой его «потребляет» как параметр.
 
 ```java
 @BuildStep
@@ -221,30 +232,34 @@ void useConfigurations(MyConfigBuildItem config, ...) {
 }
 ```
 
-`Recorder` — механизм для **записи** runtime-действий во время сборки, которые исполняются при старте.
+`Recorder` — механизм, который во время сборки **записывает** будущие runtime-действия (как «байткод-шаблон»), а исполняются они уже при старте. Так часть логики, которую нельзя полностью вычислить на сборке, всё равно описывается на этапе augmentation, а не пишется руками в стартовом коде.
 
-Это ядро Quarkus — позволяет переносить работу со старта в build time.
+Связка `BuildStep` + `BuildItem` + `Recorder` — это и есть ядро Quarkus, позволяющее переносить работу со старта в build time.
 
 ## Q8. (!) Что такое GraalVM Native Image?
 
-**GraalVM Native Image** — компилятор от Oracle, превращающий JVM-байткод в **нативный исполняемый файл** (без JVM).
+**GraalVM Native Image** — это технология от Oracle, которая компилирует JVM-байткод в **самодостаточный нативный исполняемый файл**, не требующий установленной JVM. Внутрь бинарника зашивается минимальный рантайм (Substrate VM), поэтому файл запускается как обычная нативная программа.
 
 ```bash
 native-image -jar myapp.jar  # → myapp (linux/macOS executable)
 ```
 
-**Особенности:**
-- AOT-компиляция (Ahead-Of-Time)
-- Закрытый мир (closed-world): все классы должны быть известны при сборке
-- Нет dynamic class loading (по умолчанию)
-- Reflection и dynamic proxy нужно регистрировать
+**Ключевые особенности (и их обратная сторона):**
+- **AOT-компиляция** (Ahead-Of-Time) — весь код компилируется заранее, а не JIT'ом в рантайме
+- **Закрытый мир** (closed-world): все классы должны быть известны при сборке
+- **Нет dynamic class loading** по умолчанию
+- **Reflection и dynamic proxy** нужно регистрировать вручную (или это делает Quarkus за вас)
 
-**Преимущества:**
-- Старт за миллисекунды (нет JIT warmup)
-- Память — от ~30 MB
-- Не нужен JVM в runtime
+**Что это даёт:**
+- Старт за миллисекунды — нет JIT warmup, код уже скомпилирован
+- Память от ~30 MB — нет накладных расходов JVM
+- Не нужен JVM в runtime → меньше базовый Docker-образ
+
+Цена за это — ограничения closed-world (см. Q11) и потеря JIT-оптимизаций (см. Q10).
 
 ## Q9. (!) Как Quarkus собирает native binary?
+
+Native-сборка запускается одной командой — отдельной от обычной упаковки. Для неё нужен установленный GraalVM либо Docker (тогда GraalVM не требуется локально — сборка идёт в контейнере):
 
 ```bash
 # Maven
@@ -257,7 +272,7 @@ native-image -jar myapp.jar  # → myapp (linux/macOS executable)
 ./mvnw package -Pnative -Dquarkus.native.container-build=true
 ```
 
-Сборка занимает **2-10 минут** (медленнее обычной). Результат — `target/myapp-runner` (linux executable, ~30-100 MB).
+Под капотом Quarkus сначала собирает обычный JAR (фаза augmentation уже отработала кодогенерацию), а затем отдаёт его в GraalVM `native-image`. Сборка занимает **2-10 минут** — заметно дольше обычной, потому что AOT-компилятор анализирует весь граф достижимого кода. Результат — `target/myapp-runner` (linux executable, ~30-100 MB).
 
 ```bash
 docker build -f src/main/docker/Dockerfile.native -t myapp .
@@ -266,33 +281,37 @@ docker run -p 8080:8080 myapp
 
 ## Q10. (!) Какие преимущества и недостатки native image?
 
-**Преимущества:**
-- Startup за **миллисекунды** (vs 1-15 сек на JVM)
-- Памяти **в 5-10 раз меньше** (30-50 MB vs 150-500 MB)
-- Не нужен JVM в runtime → меньше Docker image
-- Идеально для serverless (Lambda, Cloud Run)
-- Идеально для horizontal scaling в Kubernetes
+Native image — это **компромисс**: вы выигрываете на старте и памяти, но проигрываете на пиковой пропускной способности и удобстве разработки. Где этот компромисс выгоден, а где нет — и есть суть вопроса.
 
-**Недостатки:**
-- **Долгая сборка** (2-10 минут)
-- **Сложности с reflection** — нужно регистрировать классы
-- **Нет JIT** — peak throughput ниже на ~30-50%
-- **Нет dynamic class loading** (без специальной настройки)
-- **Сложнее отладка** (gdb, не jdb)
+**Плюсы (за что берут native):**
+- Startup за **миллисекунды** (против 1-15 сек на JVM)
+- Памяти **в 5-10 раз меньше** (30-50 MB против 150-500 MB)
+- Не нужен JVM в runtime → меньше Docker-образ
+- Идеально для serverless (Lambda, Cloud Run), где платят за cold start
+- Идеально для horizontal scaling в Kubernetes, где важна память на реплику
+
+**Минусы (чем платят):**
+- **Долгая сборка** (2-10 минут) — бьёт по скорости CI
+- **Сложности с reflection** — динамические классы надо регистрировать
+- **Нет JIT** — пиковый throughput ниже на ~30-50%, т.к. код не оптимизируется под реальную нагрузку
+- **Нет dynamic class loading** без специальной настройки
+- **Сложнее отладка** — gdb вместо jdb
 - **Профилировщики** ограничены
+
+**Эмпирическое правило:** native выгоден для коротко-живущих или часто масштабируемых сервисов (FaaS, scale-to-zero); для долгоживущего сервиса под постоянной высокой нагрузкой JVM с JIT нередко даёт больший throughput.
 
 ## Q11. Что такое closed-world assumption?
 
-**Closed-world assumption (CWA)** — Native Image предполагает, что **все** классы, методы, поля, ресурсы известны на этапе компиляции.
+**Closed-world assumption (CWA, гипотеза закрытого мира)** — это фундаментальное допущение Native Image: на этапе компиляции AOT-компилятор должен видеть **весь** граф достижимого кода (все классы, методы, поля, ресурсы). То, что компилятор не «увидел», в бинарник не попадёт. Именно это допущение и позволяет делать tree-shaking и заранее всё скомпилировать — но оно же ломает любую динамику.
 
-**Что нельзя в native image (по умолчанию):**
-- Reflection с unknown classes
+**Что поэтому нельзя в native image по умолчанию** (компилятор не может вычислить это статически):
+- Reflection по неизвестным заранее классам
 - Dynamic proxy
-- Class.forName() с динамическими именами
-- Resource loading с динамическими путями
+- `Class.forName()` с именем, вычисляемым в рантайме
+- Загрузка ресурсов по динамическим путям
 - Динамическая загрузка JAR
 
-**Решение:** **reachability metadata** — JSON конфигурация, объявляющая reflection-используемые классы:
+**Решение — reachability metadata:** JSON-конфигурация, в которой вы явно объявляете классы, нужные для рефлексии. Это как бы «подсказка» компилятору: «эти классы используются динамически, не выкидывай их».
 
 ```json
 [
@@ -304,11 +323,13 @@ docker run -p 8080:8080 myapp
 ]
 ```
 
-Quarkus extensions делают это **автоматически** для known frameworks (Hibernate, Jackson, ...).
+Главный практический плюс Quarkus: для известных фреймворков (Hibernate, Jackson и т.д.) extensions генерируют эту metadata **автоматически** — вручную писать JSON приходится в основном для своих DTO и сторонних библиотек без Quarkus-extension.
 
 ## Q12. Как работает reflection в native image?
 
-Reflection работает только если класс зарегистрирован в **reachability metadata**.
+Reflection работает только для классов, заранее зарегистрированных в **reachability metadata** — иначе из-за closed-world (см. Q11) они просто не попадут в бинарник. В Quarkus есть три способа их зарегистрировать.
+
+**Способ 1 — аннотация `@RegisterForReflection`** (самый частый для своих DTO). **Способ 2 — programmatically** через build step (для extension-разработчиков):
 
 ```java
 // Quarkus автоматически регистрирует классы с @RegisterForReflection
@@ -322,30 +343,32 @@ ReflectiveClassBuildItem registerForReflection() {
 }
 ```
 
-Без регистрации — `ClassNotFoundException` или `NoSuchMethodException` в runtime.
+Без регистрации в рантайме вы получите `ClassNotFoundException` или `NoSuchMethodException` — и, что коварно, только в native-сборке, а на JVM всё работало.
 
-Извлечение metadata можно автоматизировать через **GraalVM Native Image Tracing Agent**:
+**Способ 3 (для незнакомых библиотек) — автоматический сбор metadata** через GraalVM Native Image Tracing Agent. Agent перехватывает реальные reflection-вызовы и записывает их в конфиг:
 
 ```bash
 java -agentlib:native-image-agent=config-output-dir=meta-conf -jar app.jar
 ```
 
-Запускаем приложение с тестами — agent записывает все reflection-вызовы.
+Запускаем приложение под нагрузкой или прогоняем тесты — agent фиксирует все обращения к рефлексии и сам формирует metadata. **Подводный камень:** покрытие зависит от того, какие пути кода вы реально прошли, — непокрытые ветки в native всё равно упадут.
 
-## Q13. (!) RESTEasy Reactive vs RESTEasy Classic?
+## Q13. (!) Чем отличаются RESTEasy Reactive и RESTEasy Classic?
 
-В Quarkus 2.0+ есть две реализации REST:
+В Quarkus есть две реализации JAX-RS, и выбор между ними — это выбор между двумя моделями потоков. **RESTEasy Reactive** строится на event-loop Vert.x (неблокирующая модель), **RESTEasy Classic** — на классической servlet-модели «поток на запрос». По умолчанию в Quarkus 2.0+ рекомендуется Reactive.
 
 **RESTEasy Reactive** (рекомендуется):
-- Async по умолчанию
+- Async по умолчанию, работает на event-loop'е
 - Построен на Vert.x
-- Высокий throughput
-- Поддержка Mutiny `Uni`/`Multi`
+- Высокий throughput при I/O-bound нагрузке (один поток обслуживает много запросов)
+- Нативная поддержка Mutiny `Uni`/`Multi`
 
 **RESTEasy Classic** (legacy):
-- Synchronous (blocking)
+- Синхронный, блокирующий (поток занят на всё время обработки запроса)
 - Servlet-based
-- Совместим с JAX-RS API
+- Тоже совместим с JAX-RS API
+
+Важно: Reactive не означает «обязательно писать реактивный код» — он отлично работает и с обычными блокирующими методами (Quarkus сам уведёт их в worker-пул), но раскрывается именно на async-эндпоинтах.
 
 ```java
 @Path("/users")
@@ -366,11 +389,13 @@ public class UserResource {
 }
 ```
 
-JAX-RS API — стандарт Java EE / Jakarta. Похож на Spring MVC аннотации.
+Аннотации JAX-RS (`@Path`, `@GET`, `@PathParam`) — это стандарт Java EE / Jakarta, концептуально близкий к аннотациям Spring MVC: разница в основном в именах и в том, что это вендоронезависимая спецификация.
 
 ## Q14. (!) Какие части MicroProfile поддерживает Quarkus?
 
-**MicroProfile** — набор стандартов для облачных Java-приложений (от Eclipse Foundation).
+**MicroProfile** — набор спецификаций от Eclipse Foundation для облачных Java-микросервисов: единый стандартный API для конфигурации, health-checks, метрик, отказоустойчивости и т.д. Quarkus реализует его через библиотеки SmallRye, так что вы программируете против стандарта, а не против проприетарного API.
+
+Основные части и реализующие их extensions:
 
 | MicroProfile API | Quarkus поддержка |
 |------------------|-------------------|
@@ -394,6 +419,8 @@ public interface UserApi {
 
 ## Q15. Config через MicroProfile Config?
 
+Конфигурация в Quarkus задаётся через стандарт MicroProfile Config: значения берутся из `application.properties` (а также из переменных окружения, system properties и других источников по приоритету) и инжектятся в код типизированно. Есть два стиля — отдельные поля через `@ConfigProperty` и целые группы свойств через `@ConfigMapping`.
+
 ```properties
 # application.properties
 my.greeting=Hello, %s!
@@ -416,9 +443,11 @@ public interface MyConfig {
 }
 ```
 
-Поддерживаются типы: `String`, `int`, `boolean`, `Duration`, `Optional<T>`, `List<T>`, custom через converters.
+Из коробки конвертируются типы `String`, `int`, `boolean`, `Duration`, `Optional<T>`, `List<T>`; для своих типов пишется custom-converter. `@ConfigMapping` предпочтительнее для связанных групп настроек — он даёт типобезопасный интерфейс и валидируется при сборке.
 
 ## Q16. Health, Metrics, OpenAPI — встроенные?
+
+Да, observability в Quarkus — это подключаемые extensions, а не ручная обвязка: добавили зависимость — и endpoints появляются автоматически. Это прямое следствие MicroProfile-стандартов (Health, Metrics, OpenAPI).
 
 ```xml
 <!-- Достаточно подключить extensions -->
@@ -436,14 +465,16 @@ public interface MyConfig {
 </dependency>
 ```
 
-Endpoints:
-- `/q/health` — overall
-- `/q/health/live` — liveness
-- `/q/health/ready` — readiness
-- `/q/metrics` — Prometheus метрики
-- `/q/openapi` — OpenAPI spec
+Готовые endpoints (все под общим префиксом `/q/`):
+- `/q/health` — общий статус
+- `/q/health/live` — liveness (приложение живо, нужен ли рестарт)
+- `/q/health/ready` — readiness (готово принимать трафик)
+- `/q/metrics` — метрики в формате Prometheus
+- `/q/openapi` — OpenAPI-спецификация
 - `/q/swagger-ui` — Swagger UI
 - `/q/dev` — dev console (только в dev mode)
+
+Разделение liveness/readiness — не формальность: Kubernetes по liveness решает, перезапускать ли под, а по readiness — слать ли в него трафик. Свои проверки добавляются классом-`HealthCheck` с аннотацией `@Liveness` или `@Readiness`:
 
 ```java
 @Liveness
@@ -457,11 +488,11 @@ public class DatabaseHealthCheck implements HealthCheck {
 
 ## Q17. (!) Что такое Mutiny?
 
-`Mutiny` — реактивная библиотека от SmallRye/Red Hat, рекомендуемая в Quarkus.
+`Mutiny` — реактивная библиотека от SmallRye/Red Hat, это «родной» реактивный API Quarkus (аналог роли, которую Reactor играет в Spring WebFlux). Её отличительная черта — навигационный, читаемый стиль API через явные группы операторов (`onItem()`, `onFailure()`), задуманный как более понятная альтернатива «плоским» цепочкам Reactor/RxJava.
 
-**Два основных типа:**
-- `Uni<T>` — асинхронное вычисление одного значения (как `Mono<T>` в Reactor)
-- `Multi<T>` — поток значений (как `Flux<T>` в Reactor)
+**Два основных типа** (вся библиотека крутится вокруг них):
+- `Uni<T>` — асинхронное вычисление **одного** значения (аналог `Mono<T>` в Reactor)
+- `Multi<T>` — асинхронный **поток** значений (аналог `Flux<T>` в Reactor)
 
 ```java
 Uni<User> user = userRepo.findById(1L);
@@ -475,6 +506,8 @@ users.onItem().invoke(u -> log.info(u.name)).subscribe();
 ```
 
 ## Q18. Чем Mutiny отличается от Reactor и RxJava?
+
+Все три — реактивные библиотеки с одной моделью (издатель-подписчик, backpressure по Reactive Streams), и различаются они в основном **стилем API и происхождением**, а не возможностями. Главное отличие Mutiny — явные группы операторов вместо плоских цепочек.
 
 | Критерий | Mutiny | Reactor | RxJava |
 |----------|--------|---------|--------|
@@ -501,9 +534,11 @@ mono.map(...)
     .doOnSuccess(...)
 ```
 
-Mutiny утверждает, что verbose API проще для junior-разработчиков (явно видно группу — что отслеживаем). На вкус.
+Аргумент авторов Mutiny: явные группы (`onItem`, `onFailure`) читаются легче, потому что сразу видно, какое событие мы обрабатываем, — это снижает порог входа для тех, кто не привык к Reactor. Это вопрос вкуса и привычки: опытным «реакторщикам» компактность Reactor может казаться удобнее.
 
 ## Q19. Uni и Multi в Mutiny?
+
+На практике почти весь код на Mutiny — это три шага: **создать** (`createFrom()`), **преобразовать** (через группы `onItem()`/`onFailure()`) и **подписаться** (`subscribe()`). Без подписки ничего не выполнится — Mutiny ленив, как и другие реактивные библиотеки.
 
 ```java
 // Uni — одно значение или ошибка
@@ -531,12 +566,13 @@ Uni<Dashboard> dashboard = Uni.combine().all().unis(users, products)
 
 ## Q20. (!) Vert.x под капотом?
 
-Quarkus reactive стек построен поверх **Eclipse Vert.x** — event-driven фреймворка для JVM.
+Да: весь реактивный стек Quarkus стоит на **Eclipse Vert.x** — event-driven, неблокирующем toolkit'е для JVM (модель event-loop в духе Node.js). Mutiny при этом — лишь удобная обёртка над Vert.x; именно Vert.x обеспечивает реальную неблокирующую работу с I/O.
 
-- HTTP server — Vert.x WebServer
-- DB drivers — Vert.x SQL Client (postgres, mysql, etc.)
-- Mailer, Mailbox — Vert.x integrations
-- Event Bus — Vert.x EventBus
+Что в Quarkus реализовано через Vert.x:
+- HTTP-сервер — Vert.x Web
+- Драйверы БД — Vert.x SQL Client (postgres, mysql и др.), неблокирующие
+- Mailer — интеграции Vert.x
+- Event Bus — Vert.x EventBus для внутренней коммуникации
 
 ```java
 @Inject
@@ -550,11 +586,11 @@ EventBus eventBus;
 eventBus.publish("address", "message");
 ```
 
-Quarkus делает Vert.x доступным напрямую, или оборачивает его в Mutiny API.
+Quarkus отдаёт Vert.x на двух уровнях: можно инжектить «голый» `Vertx`/`EventBus` для низкоуровневой работы, а можно использовать Mutiny-обёртки для удобного реактивного API.
 
-## Q21. (!) Hibernate ORM with Panache?
+## Q21. (!) Что такое Hibernate ORM with Panache?
 
-`Panache` — слой над Hibernate, упрощающий работу с entities.
+`Panache` — это надстройка над Hibernate ORM, которая убирает boilerplate: типовые операции (`persist`, `findById`, запросы) становятся короткими, а простые запросы пишутся в упрощённом HQL-синтаксисе. Под капотом это всё тот же Hibernate — Panache лишь добавляет удобный фасад.
 
 ```java
 // Active Record style
@@ -580,9 +616,11 @@ long count = Person.count();
 Person.deleteById(1L);
 ```
 
-Panache добавляет статические методы и убирает boilerplate Repositories.
+В примере выше использован стиль **Active Record**: сущность наследует `PanacheEntity` и сама несёт методы доступа к данным (`persist`, `findByName`). Альтернатива — паттерн Repository (см. Q22). Поля делаются `public` намеренно: Panache на этапе сборки заменяет прямой доступ к полю на вызов геттера/сеттера, поэтому boilerplate-аксессоры не нужны.
 
-## Q22. Active Record vs Repository pattern?
+## Q22. Чем различаются Active Record и Repository в Panache?
+
+Panache предлагает **два стиля** работы с данными, и это типовой вопрос «что выбрать». Active Record — методы на самой сущности (короче кода), Repository — отдельный класс-репозиторий (привычнее по Spring Data и удобнее для тестов). Функционально они эквивалентны, разница — в дизайне и тестируемости.
 
 | Подход | Active Record | Repository |
 |--------|---------------|------------|
@@ -604,11 +642,11 @@ public class PersonRepository implements PanacheRepository<Person> {
 List<Person> p = repo.listAll();
 ```
 
-В большинстве enterprise-проектов выбирают **Repository** — лучше для unit-тестов и DDD.
+**Рекомендация:** в большинстве enterprise-проектов берут **Repository** — статические методы Active Record сложнее мокать в unit-тестах, а отдельный репозиторий легко подменить и он лучше ложится на DDD. Active Record хорош для прототипов и небольших сервисов, где важна скорость написания.
 
 ## Q23. Hibernate Reactive — что это?
 
-`Hibernate Reactive` — реактивная версия Hibernate. Использует **non-blocking** drivers (Vert.x SQL Client) вместо JDBC.
+`Hibernate Reactive` — это реактивная (неблокирующая) версия Hibernate. Ключевое отличие от обычного: вместо блокирующего JDBC она работает через неблокирующие драйверы Vert.x SQL Client, а методы возвращают `Uni`/`Multi` вместо обычных значений. Так обращение к БД перестаёт блокировать поток event-loop.
 
 ```java
 @Entity
@@ -624,27 +662,29 @@ public Uni<List<Person>> list() {
 }
 ```
 
-Применение: high-throughput системы, где blocking JDBC становится bottleneck. Не для всех — обычный Hibernate проще и достаточен.
+**Сценарий применения:** high-throughput системы, где блокирующий JDBC становится узким местом (потоки висят в ожидании БД). **Когда не нужен:** в большинстве сервисов обычный Hibernate проще, привычнее и его производительности достаточно — реактивность добавляет сложности (весь стек должен стать неблокирующим), поэтому брать её стоит осознанно, а не по умолчанию.
 
 Подробнее — в [Hibernate](../../databases/hibernate-interview.md).
 
 ## Q24. (!) Что такое dev mode и live reload?
 
+**Dev mode** (`quarkus:dev`) — специальный режим запуска для разработки, главная фича которого — **live reload**: вы меняете код, и при следующем HTTP-запросе Quarkus незаметно пересобирает и перезагружает приложение без ручного рестарта JVM.
+
 ```bash
 ./mvnw quarkus:dev
 ```
 
-В dev mode:
-- **Live reload** — изменения в `.java`/`.properties` подхватываются без рестарта
-- **Continuous testing** — тесты запускаются автоматически
-- **Dev UI** — на `/q/dev` (web интерфейс с конфигурацией, БД, kafka topics)
-- **Dev Services** — автозапуск зависимостей в Docker
+Что включается в dev mode:
+- **Live reload** — изменения в `.java`/`.properties` подхватываются без рестарта (пересборка происходит лениво, по первому входящему запросу)
+- **Continuous testing** — тесты запускаются автоматически (см. Q25)
+- **Dev UI** — веб-интерфейс на `/q/dev` (конфигурация, состояние БД, Kafka-топики)
+- **Dev Services** — автозапуск зависимостей в Docker (см. Q26)
 
-Смысл — `developer experience` сравнимый с Node.js/Python: меняешь код, F5 в браузере, изменения видно.
+**Смысл:** дать Java тот же быстрый цикл «поправил → обновил вкладку → увидел результат», к которому привыкли в Node.js/Python, — традиционно слабое место Java из-за долгого рестарта.
 
-## Q25. Continuous testing?
+## Q25. Что такое continuous testing?
 
-В dev mode тесты запускаются автоматически при сохранении файла:
+Continuous testing — это режим, в котором в dev mode тесты автоматически перезапускаются при каждом сохранении файла, причём **только затронутые изменением тесты**, а не весь набор. Управление идёт горячими клавишами прямо в консоли:
 
 ```
 [r] - re-run all
@@ -654,11 +694,11 @@ public Uni<List<Person>> list() {
 [h] - help
 ```
 
-Полезно для TDD — пишешь тест, видишь сразу прохождение.
+**Сценарий применения:** идеально ложится на TDD — пишете тест, видите красный/зелёный мгновенно, без ручного запуска и переключения в IDE.
 
-## Q26. Dev Services?
+## Q26. Что такое Dev Services в Quarkus?
 
-Автоматический запуск зависимостей в Docker-контейнерах при `./mvnw quarkus:dev`:
+**Dev Services** — это автоматический подъём инфраструктурных зависимостей (БД, брокеры) в Docker-контейнерах, когда вы запускаете dev mode или тесты. Главная ценность: вам не нужно ни поднимать Postgres вручную, ни прописывать URL/логин/пароль — Quarkus сам стартует контейнер и подставляет настройки подключения.
 
 ```properties
 # application.properties — конфигурация можно НЕ указывать!
@@ -666,13 +706,15 @@ quarkus.datasource.db-kind=postgresql
 # Quarkus сам поднимет Postgres в Docker и подключится
 ```
 
-Поддержка: PostgreSQL, MySQL, MongoDB, Kafka, Redis, Keycloak, Elasticsearch, RabbitMQ, ...
+Поддерживаются: PostgreSQL, MySQL, MongoDB, Kafka, Redis, Keycloak, Elasticsearch, RabbitMQ и др.
 
-В production используется реальный сервис из конфига. Dev Services — только когда `dev mode` или `test mode`.
+**Важно:** Dev Services активны только в dev mode и test mode — в production Quarkus берёт реальный сервис из конфигурации и ничего сам не поднимает. Триггер прост: если явной конфигурации подключения нет, Quarkus считает, что нужен Dev Service, и стартует контейнер.
 
-Сильно ускоряет onboarding нового разработчика.
+**Эффект:** резко ускоряет onboarding — новый разработчик клонирует репозиторий и сразу запускает `quarkus:dev`, не настраивая локально БД и брокеры.
 
 ## Q27. (!) @QuarkusTest и его особенности?
+
+`@QuarkusTest` — основная аннотация для интеграционных тестов: она поднимает **реальное приложение Quarkus в том же процессе**, что и тесты, со всем DI-контейнером и эндпоинтами. То есть тест бьёт по живым HTTP-роутам (через RestAssured), а не дёргает методы в изоляции — это полноценный in-process интеграционный тест.
 
 ```java
 @QuarkusTest
@@ -688,9 +730,7 @@ class PersonResourceTest {
 }
 ```
 
-`@QuarkusTest` запускает приложение в-процессе. Использует **RestAssured** для HTTP-тестирования.
-
-**Mocking:**
+**Подмена зависимостей (mocking):** чтобы изолировать тестируемый сервис от настоящей БД или внешнего API, реальный bean заменяют моком через `@InjectMock` — Quarkus подменит его в контейнере, а в тесте вы программируете поведение через Mockito:
 
 ```java
 @QuarkusTest
@@ -706,7 +746,7 @@ class UserServiceTest {
 }
 ```
 
-**Native test** (медленный, но проверяет работу в native image):
+**Тест против native image** через `@QuarkusIntegrationTest`: он запускает уже собранный артефакт (в т.ч. native binary) как чёрный ящик. Это медленно и требует GraalVM на CI, зато ловит проблемы, которые видны только в native (см. Q12 — незарегистрированная рефлексия), и которых не было на JVM:
 
 ```java
 @QuarkusIntegrationTest
@@ -715,7 +755,7 @@ class NativeTest extends BaseTest { }
 
 ## Q28. RestAssured интеграция?
 
-`RestAssured` — DSL для HTTP-тестов. Quarkus идёт с готовой настройкой (порт, base URL):
+`RestAssured` — это fluent-DSL для HTTP-тестов в стиле `given().when().then()`. В Quarkus он интегрирован из коробки: порт и base URL уже настроены под тестовое приложение, поэтому в `@QuarkusTest` можно сразу слать запросы, не конфигурируя клиент:
 
 ```java
 given()
@@ -733,6 +773,8 @@ given()
 
 ## Q29. (!) Как Quarkus интегрируется с Kubernetes?
 
+Главная фишка — **генерация Kubernetes-манифестов прямо из сборки**: вы описываете деплой в `application.properties`, а Quarkus при `package` сам выпускает `kubernetes.yaml`/`kubernetes.json`. Не нужно вручную писать и синхронизировать YAML с кодом — это согласуется с общей идеей Quarkus делать работу на этапе сборки.
+
 ```xml
 <dependency>
     <groupId>io.quarkus</groupId>
@@ -740,7 +782,7 @@ given()
 </dependency>
 ```
 
-При сборке генерируются `kubernetes.yaml`, `kubernetes.json`:
+При сборке генерируются `kubernetes.yaml` и `kubernetes.json`:
 
 ```bash
 ./mvnw package
@@ -758,9 +800,11 @@ quarkus.kubernetes.resources.requests.cpu=100m
 quarkus.kubernetes.resources.limits.memory=128Mi
 ```
 
-Также есть extensions для **Helm chart**, **Knative**, **OpenShift** генерации.
+Помимо «ванильного» Kubernetes есть extensions для генерации **Helm chart**, **Knative** (serverless поверх k8s) и манифестов **OpenShift**.
 
 ## Q30. (!) Когда выбирать Quarkus вместо Spring Boot?
+
+Короткий ответ: **Quarkus — когда критичны cold start и память; Spring Boot — когда важнее зрелость экосистемы и наличие Spring-команды.** Решение почти всегда сводится к этому компромиссу.
 
 **Выбирай Quarkus когда:**
 - Serverless / FaaS (AWS Lambda, Knative) — критичен cold start
@@ -779,17 +823,24 @@ quarkus.kubernetes.resources.limits.memory=128Mi
 
 ## Q31. (!) Какие минусы Quarkus?
 
-1. **Меньше community** по сравнению со Spring (документации, статей, StackOverflow меньше)
-2. **MicroProfile/Jakarta EE** API менее знакомы Java-разработчикам, которые работали со Spring
-3. **Native image** — сложности с reflection, third-party libraries
-4. **Долгая native сборка** (2-10 минут)
-5. **Меньше готовых интеграций** (хотя основные покрыты)
-6. **Live reload** — иногда плохо работает при глубоких изменениях, нужно `./mvnw quarkus:dev` рестартовать
-7. **Тесты в native** — медленные, нужен GraalVM на CI
-8. **Обучение Mutiny** — отличается от привычных Reactor/RxJava
-9. **Vendor lock-in** — экосистема Red Hat (хотя open-source)
+Главный честный ответ: минусы Quarkus — это в основном **обратная сторона его сильных сторон** (build-time и native) и **молодости экосистемы** относительно Spring.
 
-Quarkus — отличный выбор для **новых** cloud-native проектов, но миграция со Spring редко окупается.
+**Экосистема и кадры:**
+1. **Меньше community** по сравнению со Spring — меньше документации, статей, ответов на StackOverflow
+2. **MicroProfile/Jakarta EE** API незнакомы тем, кто всю карьеру писал на Spring → порог входа для команды
+3. **Меньше готовых интеграций** (хотя основные покрыты) — под редкую задачу может не оказаться extension
+
+**Цена native image (расплата за быстрый старт):**
+4. **Сложности с reflection** и сторонними библиотеками, не знающими про native
+5. **Долгая native-сборка** (2-10 минут) — тормозит CI
+6. **Тесты в native медленные** и требуют GraalVM на CI
+
+**Прочее:**
+7. **Live reload** иногда не справляется с глубокими изменениями — приходится перезапускать `quarkus:dev`
+8. **Кривая обучения Mutiny** — другой стиль API, чем у привычных Reactor/RxJava
+9. **Привязка к экосистеме Red Hat** (хотя проект open-source)
+
+**Вывод:** Quarkus — сильный выбор для **новых** cloud-native проектов, но миграция уже работающего Spring-сервиса редко окупается — выигрыш по cold start обычно не перевешивает стоимость переписывания и переучивания.
 
 ## See also
 
