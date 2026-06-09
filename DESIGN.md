@@ -13,12 +13,16 @@
 
 ## Мульти-дизайн система (переключатель)
 
-**Что это.** Пользователь выбирает один из дизайнов в Настройки → Персонализация →
-«Дизайн» (или `window.__design.set('editorial'|'swiss'|'linear')`). Переключение
-мгновенное — флип `data-design` на `<html>`, без перезагрузки. Выбор хранится в
-`localStorage('design')`; применяется инлайн в `head.html` ДО первого кадра (как
-тема) — без вспышки чужого дизайна. SSR-дефолт `data-design="editorial"` → no-JS
-получает legacy-дизайн.
+**Что это.** Пользователь выбирает один из дизайнов двумя путями: (1) иконка-тоггл
+в шапке (близнец тоггла темы, `#design-toggle`, иконка `i-shapes`) — клик циклит
+Editorial→Swiss→Linear; (2) seg-control в Настройки → Персонализация → «Дизайн».
+Обе точки синхронятся событием `designchange` (никогда не расходятся). Программно —
+`window.__design.set('editorial'|'swiss'|'linear')`. Переключение мгновенное — флип
+`data-design` на `<html>`, без перезагрузки. Выбор хранится в `localStorage('design')`;
+применяется инлайн в `head.html` ДО первого кадра (как тема) — без вспышки чужого
+дизайна. SSR-дефолт `data-design="editorial"` → no-JS получает legacy-дизайн.
+Графики `/stats` пере-рисовываются на смену дизайна (MutationObserver на
+`data-design`/`data-theme`), читая токены палитры из живого CSS.
 
 **Архитектура CSS (DRY, без дублирования структуры).**
 - `editorial.css` = ОБЩАЯ БАЗА: вся структура (layout, spacing, responsive, a11y,
@@ -33,7 +37,8 @@
 - Грузятся в порядке: `editorial.css` (база) → оверлеи. Активен только тот, чей
   `data-design` выбран; остальные инертны (не матчатся).
 - **Добавить дизайн** = новый оверлей-файл + регистрация в `head.html` (`DESIGNS`,
-  `THEME_COLORS`, `<link>`) + кнопка в seg-control на `/settings`. Editorial и базу
+  `THEME_COLORS`, `<link>`) + кнопка в seg-control на `/settings`. Шапочный тоггл
+  подхватит его автоматически (циклит по `window.__design.list`). Editorial и базу
   трогать не нужно.
 
 **Инвариант.** Editorial остаётся точь-в-точь как был (рефактор скоупа
@@ -228,5 +233,5 @@ Easings: default/`in`/`out` (cubic-bezier), `bounce` — крайне редко
 editorial.css → бамп `v=N` в `head.html` (2 строки: preload+stylesheet). Оверлеи
 `swiss.css`/`linear.css` — там же (`v=N`), бампать при правке оверлея.
 app.js → `v=N` в result/settings/focus-training (3). stats.js → stats.html (1).
-Текущее: editorial.css **v65**, swiss.css **v2**, linear.css **v2**, app.js **v29**,
-stats.js **v6**.
+Текущее: editorial.css **v66**, swiss.css **v2**, linear.css **v2**, app.js **v29**,
+stats.js **v7**.

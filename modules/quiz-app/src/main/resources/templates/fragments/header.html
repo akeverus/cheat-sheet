@@ -37,10 +37,23 @@
                  которые всегда отдавали raw-JSON 403 (заголовок X-Admin-Token из
                  навигации не отправить) И требовали app.js, не подключённого на /stats.
                  Убрали дубль — шапка чище, экспорт один и рабочий. -->
-            <button type="button" class="theme-toggle ed-theme-toggle" id="theme-toggle"
-                    aria-label="Переключить тему" aria-pressed="false" title="Светлая / тёмная тема">
-                <span class="theme-toggle-icon" aria-hidden="true"></span>
-            </button>
+            <!-- Группа тогглов (дизайн + тема) — обёрнуты вместе, чтобы при переносе
+                 на узких экранах не разъезжались по разным строкам (flex-wrap), а
+                 всегда оставались парой. На десктопе расстояния не меняются. -->
+            <div class="ed-masthead-toggles">
+                <!-- Переключатель дизайна: иконка-близнец тоггла темы (та же 44px-оболочка
+                     .ed-theme-toggle). Клик циклит Editorial→Swiss→Linear через
+                     window.__design (head.html). Полный выбор — на /settings; обе точки
+                     синхронятся событием designchange. -->
+                <button type="button" class="ed-theme-toggle ed-design-toggle" id="design-toggle"
+                        aria-label="Сменить дизайн" title="Дизайн оформления">
+                    <svg class="ed-icon" aria-hidden="true" focusable="false"><use href="#i-shapes"></use></svg>
+                </button>
+                <button type="button" class="theme-toggle ed-theme-toggle" id="theme-toggle"
+                        aria-label="Переключить тему" aria-pressed="false" title="Светлая / тёмная тема">
+                    <span class="theme-toggle-icon" aria-hidden="true"></span>
+                </button>
+            </div>
         </div>
     </div>
     <div class="ed-masthead-progress progress-container" th:if="${progressPercent != null}">
@@ -66,6 +79,35 @@
         sync();
         btn.addEventListener('click', function () { window.__theme.toggle(); });
         document.addEventListener('themechange', sync);
+      })();
+    </script>
+    <!-- Переключатель дизайна: тот же паттерн, что и тоггл темы. Циклит по
+         window.__design.list; tooltip/aria называют текущий → следующий дизайн,
+         чтобы клик был предсказуем. Пере-синхрон по designchange держит шапку и
+         seg-control на /settings в одном состоянии. -->
+    <script>
+      (function () {
+        var btn = document.getElementById('design-toggle');
+        if (!btn || !window.__design) return;
+        var NAMES = { editorial: 'Editorial', swiss: 'Swiss', linear: 'Linear' };
+        function label(id) { return NAMES[id] || id; }
+        function order() {
+          var list = window.__design.list;
+          return (list && list.length) ? list : ['editorial', 'swiss', 'linear'];
+        }
+        function nextOf(cur) {
+          var list = order();
+          var i = list.indexOf(cur);
+          return list[(i + 1) % list.length];
+        }
+        function sync() {
+          var cur = window.__design.current();
+          btn.setAttribute('aria-label', 'Сменить дизайн (сейчас: ' + label(cur) + ')');
+          btn.setAttribute('title', 'Дизайн: ' + label(cur) + ' → ' + label(nextOf(cur)));
+        }
+        sync();
+        btn.addEventListener('click', function () { window.__design.set(nextOf(window.__design.current())); });
+        document.addEventListener('designchange', sync);
       })();
     </script>
     <!-- Кнопка «наверх»: инжектится здесь (header есть на КАЖДОЙ странице, в т.ч.
