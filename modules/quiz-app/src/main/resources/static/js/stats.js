@@ -164,14 +164,20 @@
 
     render();
 
-    // Перерисовать графики при ручном переключении темы (data-theme на <html>),
-    // иначе оси/легенда остаются в цветах прежней темы до перезагрузки.
+    // Перерисовать графики при ручном переключении темы ИЛИ дизайна (data-theme/
+    // data-design на <html>), иначе оси/бары/легенда остаются в цветах прежней
+    // палитры до перезагрузки. Графики читают --color-status-* из живого CSS, а
+    // переключатель дизайна (Editorial/Swiss/Linear) меняет эти токены на лету.
     if (typeof MutationObserver !== 'undefined') {
-      var lastTheme = document.documentElement.getAttribute('data-theme');
+      var paletteKey = function () {
+        var de = document.documentElement;
+        return de.getAttribute('data-theme') + '/' + de.getAttribute('data-design');
+      };
+      var lastKey = paletteKey();
       new MutationObserver(function () {
-        var t = document.documentElement.getAttribute('data-theme');
-        if (t !== lastTheme) { lastTheme = t; render(); }
-      }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+        var key = paletteKey();
+        if (key !== lastKey) { lastKey = key; render(); }
+      }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-design'] });
     }
   }
 
