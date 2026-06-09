@@ -96,6 +96,12 @@ settings,data}` = `none`, а проза не ограничена мерой с�
 1180 / page 1280 px) и читаемая мера (68ch) сохранены в комментариях editorial.css
 для быстрого отката к колоночному режиму.
 
+**Единственное исключение из full-width — колонка MCQ-опций** (`#interview-options`,
+`.result-page .options`): `--max-width-options: 60rem` (960px), left-aligned (левый
+край флешит с заголовком/гуттером). Причина: у коротких вариантов при ширине экрана
+справа зиял пустой хвост. Разбор-проза (`.answer`) остаётся full-width — кэп только
+на самой колонке вариантов. Error-страница тоже центрирована (status-сообщение).
+
 На широких вьюпортах (1920/2560) контент растягивается на всю ширину; строки
 длинной прозы становятся длиннее меры (осознанный выбор пользователя ради
 максимального использования экрана).
@@ -144,4 +150,4 @@ Easings: default/`in`/`out` (cubic-bezier), `bounce` — крайне редко
 
 editorial.css → бамп `v=N` в `head.html` (2 строки: preload+stylesheet).
 app.js → `v=N` в result/settings/focus-training (3). stats.js → stats.html (1).
-Текущее: editorial.css **v63**, app.js **v28**, stats.js **v6**.
+Текущее: editorial.css **v64**, app.js **v28**, stats.js **v6**.
