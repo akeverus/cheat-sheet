@@ -1,0 +1,179 @@
+/* =============================================================================
+   swiss.css — дизайн-оверлей «Swiss» (один из переключаемых дизайнов).
+   Refero-якорь: «Ui (shadcn) — Brutalist Swiss grid in graphite».
+   --------------------------------------------------------------------------
+   Философия: International Typographic Style × shadcn. Монохромный графит,
+   острые углы, тонкая хайрлайн-сетка, плоско (без тёплых теней), один «голос» —
+   чернила (ink). Хроматический цвет ТОЛЬКО в статусах (verdict: success/error).
+   Sans-serif Inter везде (вместо serif Fraunces/Newsreader), JetBrains Mono —
+   код/эйбрау/числа. Полная противоположность тёплому книжному «Editorial».
+   --------------------------------------------------------------------------
+   Контракт оверлея: переопределяем ТОЛЬКО identity-токены (цвет, шрифт, радиус,
+   тень, рамка) под html[data-design="swiss"] — структуру (layout/spacing/
+   responsive/a11y/компоненты) наследуем из editorial.css без дублирования.
+   Специфичность html[data-design="swiss"] = (0,1,1) > :root (0,1,0) → перебивает
+   дефолтные editorial-токены. Грузится ПОСЛЕ editorial.css.
+   ========================================================================== */
+
+/* ============================ SWISS — LIGHT ============================== */
+/* Графит на белом: стерильно, по-швейцарски. */
+html[data-design="swiss"] {
+  color-scheme: light;
+
+  /* Поверхности — нейтральный zinc, без тёплого тинта */
+  --color-bg-primary:   #FFFFFF;
+  --color-bg-secondary: #FAFAFA;
+  --color-bg-tertiary:  #F4F4F5;
+  --color-bg-inverse:   #18181B;
+
+  --color-text-primary:   #18181B;  /* zinc-900 графит, ~16:1 на белом */
+  --color-text-secondary: #52525B;  /* zinc-600, ~7:1 */
+  --color-text-tertiary:  #71717A;  /* zinc-500, ~4.6:1 (AA для меты) */
+  --color-text-inverse:   #FAFAFA;
+  --color-text-link:      #18181B;  /* ссылки = чернила + подчёркивание (см. base a) */
+
+  --color-border-primary:   #E4E4E7;  /* zinc-200 хайрлайн */
+  --color-border-secondary: #F1F1F3;
+  --color-border-focus:     #18181B;
+
+  /* Акцент = монохромные чернила (shadcn-true): чёрная primary-кнопка/актив/прогресс.
+     Никакого цветного акцента — хроматику несут только статусы. */
+  --color-accent-primary:        #18181B;
+  --color-accent-primary-hover:  #27272A;
+  --color-accent-primary-active: #000000;
+  --color-accent-on:             #FFFFFF;
+  --color-accent-secondary:      #52525B;
+  --color-accent-wash:           #F4F4F5;
+
+  /* Статусы — единственный источник цвета. AA на белом. */
+  --color-status-success:     #15803D;
+  --color-status-success-on:  #FFFFFF;
+  --color-status-success-wash:#F0FDF4;
+  --color-status-warning:     #B45309;
+  --color-status-error:       #DC2626;
+  --color-status-error-on:    #FFFFFF;
+  --color-status-error-wash:  #FEF2F2;
+  --color-status-info:        #1D4ED8;
+
+  --color-surface-overlay: rgba(9, 9, 11, 0.5);
+
+  /* Типографика — sans везде */
+  --font-family-display: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-family-body:    'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-family-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --letter-spacing-tight: -0.022em;   /* Inter на дисплее любит чуть плотнее */
+  --letter-spacing-wide:   0.14em;
+
+  /* Острые углы — брутализм-Swiss (editorial был 3/6/10) */
+  --border-radius-sm:   0px;
+  --border-radius-md:   2px;
+  --border-radius-lg:   4px;
+  --border-radius-full: 4px;          /* чипы/тогглы — прямоугольные, не пилюли */
+
+  /* Плоско: хайрлайн-сетка вместо тёплых теней. Минимальные cool-тени для
+     аффорданса всплывашек/sticky. Фокус — графитовое кольцо. */
+  --shadow-sm: 0 1px 2px rgba(9, 9, 11, 0.04);
+  --shadow-md: 0 2px 6px rgba(9, 9, 11, 0.06);
+  --shadow-lg: 0 8px 24px rgba(9, 9, 11, 0.08);
+  --shadow-focus: 0 0 0 3px rgba(24, 24, 27, 0.30);
+
+  --drop-cap-size: 1em;               /* буквица выключена (editorial её не рендерит) */
+}
+
+/* ============================ SWISS — DARK ============================== */
+/* Графит near-black (zinc-950), чернила инвертированы в почти-белый. */
+html[data-design="swiss"][data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-bg-primary:   #09090B;  /* zinc-950 */
+  --color-bg-secondary: #18181B;  /* zinc-900 */
+  --color-bg-tertiary:  #27272A;  /* zinc-800 */
+  --color-bg-inverse:   #FAFAFA;
+
+  --color-text-primary:   #FAFAFA;
+  --color-text-secondary: #A1A1AA;  /* zinc-400, AA на near-black */
+  --color-text-tertiary:  #71717A;  /* zinc-500 */
+  --color-text-inverse:   #18181B;
+  --color-text-link:      #FAFAFA;
+
+  --color-border-primary:   #27272A;
+  --color-border-secondary: #1C1C1F;
+  --color-border-focus:     #FAFAFA;
+
+  --color-accent-primary:        #FAFAFA;  /* инверт-чернила: белая primary-кнопка */
+  --color-accent-primary-hover:  #E4E4E7;
+  --color-accent-primary-active: #FFFFFF;
+  --color-accent-on:             #18181B;
+  --color-accent-secondary:      #A1A1AA;
+  --color-accent-wash:           #1C1C1F;
+
+  --color-status-success:     #4ADE80;
+  --color-status-success-on:  #09090B;
+  --color-status-success-wash:#14271B;
+  --color-status-warning:     #FBBF24;
+  --color-status-error:       #F87171;
+  --color-status-error-on:    #09090B;
+  --color-status-error-wash:  #2A1718;
+  --color-status-info:        #60A5FA;
+
+  --color-surface-overlay: rgba(0, 0, 0, 0.66);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.50);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.62);
+  --shadow-focus: 0 0 0 3px rgba(250, 250, 250, 0.36);
+}
+
+/* Авто-тёмная (системная), если пользователь не зафиксировал тему явно. */
+@media (prefers-color-scheme: dark) {
+  html[data-design="swiss"]:not([data-theme="light"]) {
+    color-scheme: dark;
+    --color-bg-primary:   #09090B;
+    --color-bg-secondary: #18181B;
+    --color-bg-tertiary:  #27272A;
+    --color-bg-inverse:   #FAFAFA;
+    --color-text-primary:   #FAFAFA;
+    --color-text-secondary: #A1A1AA;
+    --color-text-tertiary:  #71717A;
+    --color-text-inverse:   #18181B;
+    --color-text-link:      #FAFAFA;
+    --color-border-primary:   #27272A;
+    --color-border-secondary: #1C1C1F;
+    --color-border-focus:     #FAFAFA;
+    --color-accent-primary:        #FAFAFA;
+    --color-accent-primary-hover:  #E4E4E7;
+    --color-accent-primary-active: #FFFFFF;
+    --color-accent-on:             #18181B;
+    --color-accent-secondary:      #A1A1AA;
+    --color-accent-wash:           #1C1C1F;
+    --color-status-success:     #4ADE80;
+    --color-status-success-on:  #09090B;
+    --color-status-success-wash:#14271B;
+    --color-status-warning:     #FBBF24;
+    --color-status-error:       #F87171;
+    --color-status-error-on:    #09090B;
+    --color-status-error-wash:  #2A1718;
+    --color-status-info:        #60A5FA;
+    --color-surface-overlay: rgba(0, 0, 0, 0.66);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45);
+    --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.50);
+    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.62);
+    --shadow-focus: 0 0 0 3px rgba(250, 250, 250, 0.36);
+  }
+}
+
+/* ============================ SWISS — SIGNATURES ======================== */
+/* Точечные оверрайды поверх общей структуры — то, что не выражается токенами. */
+
+/* Ссылки: чёткое швейцарское подчёркивание (база уже underline 1px; задаём отступ). */
+html[data-design="swiss"] a {
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: 1px;
+}
+
+/* Эйбрау-метки (FOCUS, Cheat·Sheet, Q14/50) — графит, не цветной акцент: в Swiss
+   они часть монохромной сетки, а не «голос акцента». */
+html[data-design="swiss"] .ed-masthead-kicker,
+html[data-design="swiss"] .ed-eyebrow {
+  color: var(--color-text-tertiary);
+}

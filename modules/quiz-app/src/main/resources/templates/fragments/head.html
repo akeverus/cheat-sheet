@@ -19,6 +19,28 @@
         function metaEl() { return document.querySelector('meta[name="theme-color"]'); }
         var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
         function systemTheme() { return (mq && mq.matches) ? 'light' : 'dark'; }
+
+        // Дизайн-движок: editorial (default/legacy) | swiss | linear. Применяем
+        // выбранный data-design ДО первого кадра (как тему) — без вспышки чужого
+        // дизайна. SSR ставит "editorial"; здесь переопределяем сохранённым выбором.
+        var DESIGNS = ['editorial', 'swiss', 'linear'];
+        // theme-color (хром мобильного браузера) — у каждого дизайна×темы свой bg.
+        var THEME_COLORS = {
+          editorial: { light: '#F7F3EA', dark: '#16130D' },
+          swiss:     { light: '#FFFFFF', dark: '#09090B' },
+          linear:    { light: '#FFFFFF', dark: '#0B0C0E' }
+        };
+        function readDesign() {
+          try { var d = localStorage.getItem('design'); return DESIGNS.indexOf(d) >= 0 ? d : 'editorial'; }
+          catch (e) { return 'editorial'; }
+        }
+        var design = readDesign();
+        root.setAttribute('data-design', design);
+        function metaColor(resolved) {
+          var d = THEME_COLORS[design] || THEME_COLORS.editorial;
+          return d[resolved] || d.dark;
+        }
+
         function readPref() {
           try { var p = localStorage.getItem('theme'); return (p === 'light' || p === 'dark' || p === 'auto') ? p : 'auto'; }
           catch (e) { return 'auto'; }
@@ -26,7 +48,7 @@
         function resolve(pref) { return pref === 'auto' ? systemTheme() : pref; }
         function applyResolved(resolved) {
           root.setAttribute('data-theme', resolved);
-          var m = metaEl(); if (m) m.setAttribute('content', resolved === 'light' ? '#F7F3EA' : '#16130D');
+          var m = metaEl(); if (m) m.setAttribute('content', metaColor(resolved));
         }
         var pref = readPref();
         applyResolved(resolve(pref));
@@ -49,6 +71,19 @@
           resolved: function () { return root.getAttribute('data-theme'); },
           set: setPref,
           toggle: function () { setPref(resolve(pref) === 'light' ? 'dark' : 'light'); }
+        };
+
+        function setDesign(next) {
+          design = (DESIGNS.indexOf(next) >= 0) ? next : 'editorial';
+          try { if (design === 'editorial') localStorage.removeItem('design'); else localStorage.setItem('design', design); } catch (e) {}
+          root.setAttribute('data-design', design);
+          var m = metaEl(); if (m) m.setAttribute('content', metaColor(root.getAttribute('data-theme') || 'dark'));
+          try { document.dispatchEvent(new CustomEvent('designchange', { detail: { design: design } })); } catch (e) {}
+        }
+        window.__design = {
+          current: function () { return design; },
+          list: DESIGNS.slice(),
+          set: setDesign
         };
 
         // Размер шрифта: масштаб root font-size (токены в rem → тянется весь UI).
@@ -95,12 +130,19 @@
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     <!-- Editorial-редизайн: Fraunces (display) + Newsreader (reading) + JetBrains
          Mono (eyebrow/code). Единственный шрифт-линк (Syne/DM Sans убраны на R3). -->
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&display=swap" rel="stylesheet">
+    <!-- Шрифты: Fraunces/Newsreader — дизайн «Editorial»; Inter — дизайны «Swiss»
+         и «Linear» (sans); JetBrains Mono — код/эйбрау во всех. Один общий линк. -->
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&display=swap" rel="stylesheet">
     <!-- editorial.css — единственная таблица стилей (Editorial-редизайн).
          Самодостаточна: reset, типошкала, утилиты, обе темы, reduced-motion.
          Preload — браузер скачивает её параллельно с парсингом head → меньше FOUC. -->
-    <link rel="preload" as="style" th:href="@{/css/editorial.css(v=64)}">
-    <link rel="stylesheet" th:href="@{/css/editorial.css(v=64)}">
+    <link rel="preload" as="style" th:href="@{/css/editorial.css(v=65)}">
+    <link rel="stylesheet" th:href="@{/css/editorial.css(v=65)}">
+    <!-- Дизайн-оверлеи мульти-дизайн-системы (см. window.__design выше). Грузятся
+         ПОСЛЕ базы editorial.css; активен только тот, чей html[data-design] выбран.
+         Перебивают дефолтные editorial-токены по специфичности (0,1,1 > :root 0,1,0). -->
+    <link rel="stylesheet" th:href="@{/css/swiss.css(v=1)}">
+    <link rel="stylesheet" th:href="@{/css/linear.css(v=1)}">
     <!-- SRI (integrity) + crossorigin: защита от компрометации CDN — браузер
          выполнит ресурс, только если его sha512 совпадает. Хэши пересчитаны из
          самих файлов (openssl dgst -sha512). ВСЕ CDN-ресурсы пиннятся на ТОЧНУЮ

@@ -672,6 +672,37 @@
       syncTheme();
     }
 
+    // Выбор дизайна (editorial/swiss/linear) — radiogroup, как сегмент темы.
+    // Источник истины — window.__design (head.html), переключение мгновенное
+    // (флип data-design на <html>, без перезагрузки).
+    const designCtl = document.getElementById('design-pref-control');
+    if (designCtl && window.__design) {
+      const designBtns = Array.from(designCtl.querySelectorAll('[data-design-pref]'));
+      const syncDesign = () => {
+        const cur = window.__design.current();
+        designBtns.forEach((b) => {
+          const on = b.getAttribute('data-design-pref') === cur;
+          b.setAttribute('aria-checked', on ? 'true' : 'false');
+          b.classList.toggle('is-active', on);
+          b.tabIndex = on ? 0 : -1;
+        });
+      };
+      designBtns.forEach((b, i) => {
+        b.addEventListener('click', () => window.__design.set(b.getAttribute('data-design-pref')));
+        b.addEventListener('keydown', (e) => {
+          let idx = -1;
+          if (e.key === 'ArrowRight' || e.key === 'ArrowDown') idx = (i + 1) % designBtns.length;
+          else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') idx = (i - 1 + designBtns.length) % designBtns.length;
+          if (idx < 0) return;
+          e.preventDefault();
+          window.__design.set(designBtns[idx].getAttribute('data-design-pref'));
+          designBtns[idx].focus();
+        });
+      });
+      document.addEventListener('designchange', syncDesign);
+      syncDesign();
+    }
+
     const valEl = document.getElementById('font-scale-value');
     const decBtn = document.getElementById('font-decrease');
     const incBtn = document.getElementById('font-increase');

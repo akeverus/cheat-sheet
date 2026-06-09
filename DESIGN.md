@@ -1,10 +1,48 @@
 # Design
 
-> Визуальная система quiz-app (Editorial-редизайн). Единственный источник стилей —
-> `modules/quiz-app/src/main/resources/static/css/editorial.css` (все правила под
-> `html[data-design="editorial"]`). Темы через `data-theme` (dark — по умолчанию).
-> Этот файл — спецификация; правки стилей идут в editorial.css, сюда — фиксация
+> Визуальная система quiz-app. Теперь это **мульти-дизайн система с переключателем**
+> (`window.__design`): общая структура + дизайн «Editorial» (default/legacy) в
+> `editorial.css`, плюс альтернативные дизайн-оверлеи `swiss.css`, `linear.css`.
+> Активный дизайн — атрибут `data-design` на `<html>`; тема — `data-theme` (dark по
+> умолчанию). Этот файл — спецификация; правки стилей идут в CSS, сюда — фиксация
 > решений. Формат — Google Stitch DESIGN.md.
+>
+> Refero-якоря дизайнов (styles.refero.design): Editorial = книжный letterpress,
+> Swiss = «Ui (shadcn) — Brutalist Swiss grid in graphite», Linear = «Linear —
+> Midnight command deck with acid-lime accents».
+
+## Мульти-дизайн система (переключатель)
+
+**Что это.** Пользователь выбирает один из дизайнов в Настройки → Персонализация →
+«Дизайн» (или `window.__design.set('editorial'|'swiss'|'linear')`). Переключение
+мгновенное — флип `data-design` на `<html>`, без перезагрузки. Выбор хранится в
+`localStorage('design')`; применяется инлайн в `head.html` ДО первого кадра (как
+тема) — без вспышки чужого дизайна. SSR-дефолт `data-design="editorial"` → no-JS
+получает legacy-дизайн.
+
+**Архитектура CSS (DRY, без дублирования структуры).**
+- `editorial.css` = ОБЩАЯ БАЗА: вся структура (layout, spacing, responsive, a11y,
+  reduced-motion, ВСЕ компоненты) под нейтральным скоупом `html[data-design]` —
+  работает при любом значении. Плюс дефолтные токены (`:root`/`[data-theme]`) =
+  идентичность «Editorial». Цвет/шрифт/радиус/тень в компонентах идут только через
+  токены, поэтому смена токенов перекрашивает всё.
+- Каждый альтернативный дизайн = тонкий оверлей (`swiss.css`, `linear.css`): свои
+  identity-токены под `html[data-design="<name>"]` (специфичность 0,1,1 перебивает
+  `:root` 0,1,0) + точечные signature-оверрайды. Структуру НЕ дублируют (~200–250
+  строк против 2300 у базы).
+- Грузятся в порядке: `editorial.css` (база) → оверлеи. Активен только тот, чей
+  `data-design` выбран; остальные инертны (не матчатся).
+- **Добавить дизайн** = новый оверлей-файл + регистрация в `head.html` (`DESIGNS`,
+  `THEME_COLORS`, `<link>`) + кнопка в seg-control на `/settings`. Editorial и базу
+  трогать не нужно.
+
+**Инвариант.** Editorial остаётся точь-в-точь как был (рефактор скоупа
+`html[data-design="editorial"]`→`html[data-design]` специфичностно-нейтрален: обе
+формы = (0,1,1), а атрибут всегда присутствует). Каждый дизайн обязан проходить
+контраст-инварианты в ОБЕИХ темах.
+
+Ниже «Overall Vibe … Anti-slop» описывают дизайн **«Editorial»** (база/дефолт);
+спеки «Swiss» и «Linear» — в конце файла.
 
 ## Overall Vibe
 
@@ -146,8 +184,49 @@ Easings: default/`in`/`out` (cubic-bezier), `bounce` — крайне редко
   идентичность держит dark-тема + serif + терракота, а не светлый фон.
 - favicon, theme-color, иконки — в фирменной терракоте, без старой индиго-палитры.
 
+## Дизайн «Swiss» (оверлей `swiss.css`)
+
+**Refero-якорь:** «Ui (shadcn) — Brutalist Swiss grid in graphite».
+**Vibe:** International Typographic Style × shadcn. Стерильный графит, острые углы,
+тонкая хайрлайн-сетка, плоско. Полная противоположность тёплому книжному Editorial.
+
+- **Цвет — МОНОХРОМ.** Акцент = чернила (ink), а не цвет: чёрная primary-кнопка
+  (light) / белая (dark) — shadcn-приём. Хроматику несут ТОЛЬКО статусы (verdict
+  success/error/warning/info). Поверхности — нейтральный zinc без тёплого тинта.
+  - Light: bg `#FFFFFF`/`#FAFAFA`/`#F4F4F5`; ink `#18181B`/`#52525B`/`#71717A`;
+    border `#E4E4E7`; accent `#18181B` (on `#FFFFFF`).
+  - Dark: bg `#09090B`/`#18181B`/`#27272A`; ink `#FAFAFA`/`#A1A1AA`/`#71717A`;
+    border `#27272A`; accent `#FAFAFA` (on `#18181B`).
+- **Типографика:** `Inter` (display+body, sans везде — никакого serif),
+  `JetBrains Mono` (код/эйбрау/числа). Tracking display чуть плотнее (-0.022em).
+- **Форма:** острые углы (radius 0/2/4px), плоско (тени минимальны, иерархия —
+  хайрлайн-рамки + space). Фокус — графитовое кольцо.
+- **Signatures:** ссылки — чёткое подчёркивание (offset .18em); эйбрау-метки
+  графитовые (часть сетки, не «голос акцента»).
+
+## Дизайн «Linear» (оверлей `linear.css`)
+
+**Refero-якорь:** «Linear — Midnight command deck with acid-lime accents».
+**Vibe:** современный продуктовый «командный пульт». Холодный near-black midnight +
+один яркий кислотный лайм. **Тёмная тема — герой** (Linear dark-native); светлая —
+чистый дневной вариант.
+
+- **Цвет:**
+  - Dark (герой): bg `#0B0C0E`/`#141518`/`#1C1E22`; text `#F7F8F8`/`#9CA0A8`/
+    `#62666D`; accent **acid-lime `#BCF03D`** (on `#0B1402`); border `#23262B`.
+    Фокус — лаймовое свечение `rgba(188,240,61,.35)`.
+  - Light (дневной): bg `#FFFFFF`/`#F7F8F9`/`#ECEEF1`; text `#0D0E10`/`#4A4E57`/
+    `#8A8F98`; accent — глубокий лайм `#4D7C0F` (AA-safe для текста; кислотный лайм
+    в light не проходит контраст, потому затемнён). border `#E3E6EA`.
+- **Типографика:** `Inter`, плотный трекинг; `JetBrains Mono` — код/эйбрау.
+- **Форма:** мягкие современные радиусы (4/8/12px — круглее Editorial), тонкая
+  elevation. Эйбрау/актив/прогресс — лаймовые.
+- **Signatures:** ссылки цветные без подчёркивания (подчёркивание на hover).
+
 ## Cache discipline
 
-editorial.css → бамп `v=N` в `head.html` (2 строки: preload+stylesheet).
+editorial.css → бамп `v=N` в `head.html` (2 строки: preload+stylesheet). Оверлеи
+`swiss.css`/`linear.css` — там же (`v=N`), бампать при правке оверлея.
 app.js → `v=N` в result/settings/focus-training (3). stats.js → stats.html (1).
-Текущее: editorial.css **v64**, app.js **v28**, stats.js **v6**.
+Текущее: editorial.css **v65**, swiss.css **v1**, linear.css **v1**, app.js **v29**,
+stats.js **v6**.
