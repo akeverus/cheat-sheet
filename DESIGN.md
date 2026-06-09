@@ -228,5 +228,5 @@ Easings: default/`in`/`out` (cubic-bezier), `bounce` — крайне редко
 editorial.css → бамп `v=N` в `head.html` (2 строки: preload+stylesheet). Оверлеи
 `swiss.css`/`linear.css` — там же (`v=N`), бампать при правке оверлея.
 app.js → `v=N` в result/settings/focus-training (3). stats.js → stats.html (1).
-Текущее: editorial.css **v65**, swiss.css **v1**, linear.css **v1**, app.js **v29**,
+Текущее: editorial.css **v65**, swiss.css **v2**, linear.css **v2**, app.js **v29**,
 stats.js **v6**.
