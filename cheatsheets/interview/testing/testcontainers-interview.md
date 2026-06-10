@@ -263,6 +263,8 @@ class UserRepositoryTest {
 - **Методы `getJdbcUrl()`, `getUsername()`, `getPassword()`** — URL не нужно собирать руками и легко ошибиться.
 - **`withInitScript()`** — выполнить SQL (создать схему, насыпать справочные данные) сразу при старте.
 
+**Ловушка слайс-тестов: `@DataJpaTest` подменяет `DataSource`.** Слайс-тест репозиториев по умолчанию заменяет источник данных на embedded-базу — даже если контейнер поднят и свойства зарегистрированы, тест молча уйдёт в in-memory H2. Чтобы `@DataJpaTest` работал с `Testcontainers`, обязательно добавь `@AutoConfigureTestDatabase(replace = Replace.NONE)` — она запрещает Spring подменять настроенный `DataSource` (механика регистрации свойств — в Q15).
+
 ## Q6. Какие контейнеры баз данных поддерживает `Testcontainers`?
 
 `Testcontainers` предоставляет специализированные модули для большинства популярных баз данных:
@@ -787,6 +789,8 @@ graph TD
 - Старт контейнеров занимает значительное время
 - Изоляция данных обеспечивается через `@Transactional` или `TRUNCATE`
 
+**Бонус для Spring-тестов — кэш `ApplicationContext`.** Пересоздание Spring-контекста часто дороже старта самого контейнера. Общий базовый класс с единственным набором `@DynamicPropertySource` (см. Q15) даёт всем тестам одинаковую конфигурацию — Spring переиспользует один кэшированный контекст на весь прогон. Если же каждый класс регистрирует свойства по-своему, кэш ломается и контекст пересобирается заново (подробнее об ускорении — в Q26).
+
 ## Q20. Как переиспользовать контейнеры между запусками тестов (`reusable containers`)?
 
 **Reusable Containers** идут на шаг дальше singleton: контейнер переживает не только класс, но и весь прогон тестов. После завершения JVM он остаётся работать, а при следующем запуске тесты подключаются к нему мгновенно. Это убирает старт контейнера из цикла «правка → тест» при локальной разработке.
@@ -1040,6 +1044,8 @@ test:
 - **`TESTCONTAINERS_RYUK_DISABLED=true`** — в CI runner всё равно уничтожается вместе с контейнерами после job'а, поэтому Ryuk можно отключить и не тратить ресурсы на его старт.
 - **Singleton-паттерн** — один контейнер на прогон вместо перезапуска под каждый тест-класс.
 
+**Корпоративный registry и зеркалированные образы.** Если CI качает образы не с Docker Hub, а из внутреннего registry, специализированные контейнеры начнут отвергать «незнакомый» образ: `PostgreSQLContainer` проверяет, что образ совместим с `postgres`. Решение — `DockerImageName.parse("registry.company.com/mirror/postgres:16-alpine").asCompatibleSubstituteFor("postgres")`: ты явно декларируешь, что зеркалированный образ — тот же PostgreSQL. Приём работает для любого модуля и пригодится также при тестировании нескольких версий одного сервиса (см. Q31).
+
 Подробнее о CI/CD pipeline в [Test Automation](test-automation-interview.md).
 
 ## Q26. Какие есть способы ускорить тесты с `Testcontainers`?
@@ -1106,6 +1112,8 @@ new PostgreSQLContainer<>("postgres:16-alpine")
 | `Startables.deepStart()` | Параллельный старт вместо последовательного |
 | Reusable containers | ~100% времени старта (локально) |
 
+**7. Беречь кэш Spring `ApplicationContext`.** В Spring-тестах пересоздание контекста нередко дороже, чем старт контейнера, который все оптимизируют. Spring кэширует контексты между тестовыми классами, но любое отличие конфигурации — другой набор `@DynamicPropertySource`, другие `properties` в `@SpringBootTest`, добавленный `@MockBean` — даёт новый ключ кэша и полную пересборку контекста. Единый базовый класс с одним набором динамических свойств (см. Q19) сохраняет один контекст на весь прогон; зоопарк разных комбинаций свойств убивает и кэш контекста, и выигрыш от singleton-контейнера. Механика `@DynamicPropertySource` — в Q15.
+
 ## Q27. Какие ограничения и подводные камни есть у `Testcontainers`?
 
 Главный компромисс `Testcontainers` честный: за реализм платишь скоростью и зависимостью от Docker. Конкретно это проявляется так.
@@ -1135,6 +1143,12 @@ new PostgreSQLContainer<>("postgres:16-alpine")
 - Smoke-тесты в production — используйте реальную инфраструктуру
 
 ## Q28. Как использовать `ElasticsearchContainer` в тестах?
+
+`ElasticsearchContainer` (модуль `org.testcontainers:elasticsearch`) поднимает настоящий Elasticsearch-узел, и тест поиска работает против реального движка — с теми же анализаторами, маппингами и релевантностью, которые не эмулирует ни один мок. Объявляешь контейнер как `static @Container`, а адрес узла отдаёшь Spring через `@DynamicPropertySource` (`spring.elasticsearch.uris`).
+
+Для тестов контейнер настраивают двумя env-переменными. `xpack.security.enabled=false` отключает security: без этого Elasticsearch 8.x требует TLS и пароль, а в одноразовом тестовом узле они ничего не защищают и только усложняют подключение. `discovery.type=single-node` запускает узел без поиска кластера — иначе он ждал бы других участников и не вышел в статус ready.
+
+Третий обязательный нюанс — `refresh()` после записи. Elasticsearch индексирует асинхронно (near-realtime): документ становится видимым для поиска не сразу после `save()`, а после обновления индекса. Без явного `refresh()` поиск сразу после записи вернёт пустой результат, и тест станет флаки.
 
 ```java
 @SpringBootTest
@@ -1232,6 +1246,10 @@ static ElasticsearchContainer elasticsearch =
 @Testcontainers
 class OrderServiceResilienceTest {
 
+    // network объявлена ПЕРВОЙ: static-инициализаторы выполняются по порядку
+    // объявления, иначе toxiproxy/postgres получили бы null вместо сети
+    static Network network = Network.newNetwork();
+
     @Container
     static ToxiproxyContainer toxiproxy = new ToxiproxyContainer("ghcr.io/shopify/toxiproxy:2.5.0")
         .withNetwork(network);
@@ -1241,15 +1259,13 @@ class OrderServiceResilienceTest {
         .withNetwork(network)
         .withNetworkAliases("postgres");
 
-    static Network network = Network.newNetwork();
-
     static ToxiproxyContainer.ContainerProxy postgresProxy;
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
         postgresProxy = toxiproxy.getProxy(postgres, 5432);
         registry.add("spring.datasource.url",
-            () -> "jdbc:postgresql://" + postgresProxy.getContainerIpAddress()
+            () -> "jdbc:postgresql://" + postgresProxy.getHost()
                   + ":" + postgresProxy.getProxyPort() + "/test");
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
@@ -1429,7 +1445,7 @@ static Stream<String> postgresVersions() {
 
 ## Q32. Как организовать базовый класс для интеграционных тестов с `Testcontainers`?
 
-Базовый класс — практическое воплощение Singleton-паттерна через наследование. Вместо того чтобы объявлять контейнеры и регистрировать свойства в каждом тесте, всё это выносят в один абстрактный класс, а конкретные тесты просто наследуются от него. `static`-поля с `@Container` гарантируют, что контейнеры стартуют один раз и переиспользуются всеми подклассами.
+Базовый класс убирает дублирование: вместо того чтобы объявлять контейнеры и регистрировать свойства в каждом тесте, всё это выносят в один абстрактный класс, а конкретные тесты просто наследуются от него. Важно честно понимать жизненный цикл: `static`-поле с `@Container` даёт один контейнер **на тест-класс**, но `TestcontainersExtension` остановит его после каждого класса — следующий подкласс поднимет контейнеры заново. Переиспользование на весь прогон даёт только singleton-паттерн с ручным `start()` без `@Container` — см. Q19.
 
 ```java
 // Абстрактный базовый класс
@@ -1437,7 +1453,8 @@ static Stream<String> postgresVersions() {
 @Testcontainers
 public abstract class BaseIntegrationTest {
 
-    // Singleton-контейнеры — запускаются один раз для всей тест-сессии
+    // static @Container: один контейнер на тест-класс;
+    // Extension остановит его после каждого класса
     @Container
     protected static PostgreSQLContainer<?> postgres =
         new PostgreSQLContainer<>("postgres:16-alpine")
@@ -1516,9 +1533,7 @@ class ProductControllerTest extends BaseIntegrationTest {
 }
 ```
 
-Благодаря `static` полям с аннотацией `@Container`, контейнеры запускаются один раз и переиспользуются всеми подклассами — это эквивалент Singleton Container паттерна, но организованный через наследование.
-
-Подробнее — в [Q19: Singleton Containers паттерн](testcontainers-interview.md).
+Такой вариант с `@Container` — это НЕ полноценный Singleton Containers: контейнеры живут в пределах одного тест-класса и пересоздаются для каждого подкласса. Если стартов становится слишком много, переводи базовый класс на singleton-паттерн: убери `@Testcontainers`/`@Container` и стартуй контейнеры вручную в `static`-блоке — тогда они переживут все классы до конца JVM. Подробный разбор — см. Q19.
 
 **На собеседовании** стоит показать, что вы понимаете trade-off: `Testcontainers` даёт уверенность в интеграции ценой скорости и инфраструктурных требований. Хороший инженер знает, где провести границу между unit и интеграционными тестами (подробнее в [Стратегии тестирования](test-strategies-interview.md)).
 
@@ -1552,15 +1567,17 @@ Ryuk удаляет все контейнеры с label "org.testcontainers=tru
 
 ```java
 // Отключить Ryuk (например, в Kubernetes где контейнеры и так изолированы)
-// В application.properties или системная переменная:
+// Переменная окружения:
 // TESTCONTAINERS_RYUK_DISABLED=true
 
-// Или программно:
-System.setProperty("TESTCONTAINERS_RYUK_DISABLED", "true");
+// Или в ~/.testcontainers.properties:
+// ryuk.disabled=true
 
 // Изменить образ Ryuk (в testcontainers.properties):
 // ryuk.container.image=registry.company.com/testcontainers/ryuk:0.7.0
 ```
+
+Обрати внимание: Ryuk отключается **только** переменной окружения `TESTCONTAINERS_RYUK_DISABLED=true` или строкой `ryuk.disabled=true` в `~/.testcontainers.properties`. Java system property (`System.setProperty(...)`) библиотека не читает — такой «выключатель» молча не сработает.
 
 **Когда отключать Ryuk:**
 - В Kubernetes Pod'ах (инфраструктура CI изолирована)
@@ -1603,16 +1620,22 @@ class PaymentGatewayTest {
 
     @Test
     void shouldProcessPayment() throws Exception {
-        wireMock.stubFor(post(urlEqualTo("/charge"))
+        // У WireMockContainer нет методов stubFor()/verify() — настраиваем
+        // WireMock-клиент на host:port контейнера и зовём статические методы
+        WireMock.configureFor(wireMock.getHost(), wireMock.getPort());
+
+        stubFor(post(urlEqualTo("/charge"))
             .willReturn(aResponse()
                 .withStatus(200)
-                .withBody("""{"transactionId": "tx-123", "status": "SUCCESS"}""")
+                .withBody("""
+                    {"transactionId": "tx-123", "status": "SUCCESS"}
+                    """)
                 .withHeader("Content-Type", "application/json")));
 
         PaymentResult result = paymentService.charge(order);
 
         assertThat(result.getTransactionId()).isEqualTo("tx-123");
-        wireMock.verify(postRequestedFor(urlEqualTo("/charge"))
+        verify(postRequestedFor(urlEqualTo("/charge"))
             .withRequestBody(containing("orderId")));
     }
 }
@@ -1686,7 +1709,7 @@ static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16"
 
 ## Q36. Как использовать `DockerComposeContainer` — плюсы и минусы?
 
-**`DockerComposeContainer`** поднимает целый стек из `docker-compose.yml` одной строкой вместо ручного объявления каждого контейнера. Имеет смысл, когда такой compose-файл в проекте уже есть и описывает то же окружение, что нужно тестам, — переиспользовать его дешевле, чем дублировать топологию в Java.
+**`DockerComposeContainer`** поднимает целый стек из `docker-compose.yml` одной строкой вместо ручного объявления каждого контейнера. Имеет смысл, когда такой compose-файл в проекте уже есть и описывает то же окружение, что нужно тестам, — переиспользовать его дешевле, чем дублировать топологию в Java. Базовое использование модуля разобрано в Q24; здесь — фокус на trade-offs: когда compose-подход оправдан, чем за него платишь и почему по умолчанию лучше отдельные контейнеры.
 
 ```yaml
 # src/test/resources/docker-compose-test.yml
@@ -1747,7 +1770,7 @@ class IntegrationTest {
 
 ## Q37. Как запускать `Testcontainers`-тесты параллельно без конфликтов?
 
-**Параллельный запуск** с Testcontainers работает хорошо, если заранее решить, что изолировать. Конфликты бывают двух родов: за ресурсы (контейнеры конкурируют за RAM/CPU и Docker может задохнуться) и за данные (тесты на общем контейнере мешают друг другу). Стратегия выбирается под то, чего именно вы хотите.
+**Параллельный запуск** с Testcontainers работает хорошо, если заранее решить, что изолировать. Конфликты бывают двух родов: за ресурсы (контейнеры конкурируют за RAM/CPU и Docker может задохнуться) и за данные (тесты на общем контейнере мешают друг другу). Базовая настройка параллельности и сравнение подходов — в Q21; здесь — нюансы именно предотвращения конфликтов: чистые стратегии изоляции без смешения паттернов, лимиты ресурсов и `@ResourceLock`.
 
 **JUnit 5 параллельный запуск:**
 
@@ -1762,12 +1785,12 @@ junit.jupiter.execution.parallel.config.dynamic.factor=2
 
 **Стратегия 1: Singleton Container (рекомендуемая):**
 
-```java
-// Один контейнер на весь тестовый прогон — никаких конфликтов
+```kotlin
+// Один контейнер на весь тестовый прогон — никаких конфликтов.
+// Чистый singleton: ручной start() и НИКАКОГО @Container —
+// иначе Extension погасит общий контейнер после первого же класса
 abstract class BaseIntegrationTest {
     companion object {
-        @JvmField
-        @Container  // static — один на все подклассы
         val postgres: PostgreSQLContainer<*> = PostgreSQLContainer("postgres:16")
             .apply { start() }
     }
@@ -1877,7 +1900,7 @@ class CoroutineIntegrationTest {
 
 ## Q39. Что такое `@ServiceConnection` в Spring Boot 3.1+ и как он работает?
 
-**`@ServiceConnection`** (Spring Boot 3.1+) — аннотация, которая по запущенному Testcontainers-контейнеру сама настраивает соответствующие Spring-бины: `DataSource`, `RedisConnectionFactory`, `KafkaProducerFactory` и т.д. Это устраняет ручной `@DynamicPropertySource`: не нужно знать имена properties и собирать URL — достаточно повесить аннотацию на поле или бин-фабрику.
+**`@ServiceConnection`** (Spring Boot 3.1+) — аннотация, которая по запущенному Testcontainers-контейнеру сама настраивает соответствующие Spring-бины: `DataSource`, `RedisConnectionFactory`, `KafkaProducerFactory` и т.д. Это устраняет ручной `@DynamicPropertySource`: не нужно знать имена properties и собирать URL — достаточно повесить аннотацию на поле или бин-фабрику. Базовый разбор аннотации и детальное сравнение с `@DynamicPropertySource` — в Q16; здесь — нюансы применения: что именно настраивается для каждого контейнера, объявление в `@TestConfiguration` и кастомная `ConnectionDetailsFactory` для нестандартных контейнеров.
 
 **Без `@ServiceConnection` (Spring Boot < 3.1):**
 
@@ -1956,7 +1979,7 @@ public class MyCustomConnectionFactory
 
 ## Q40. Как `LocalStack` используется для тестирования AWS-сервисов локально?
 
-**LocalStack** — эмулятор AWS API в виде одного Docker-контейнера: он отвечает по тем же протоколам, что S3, SQS, DynamoDB и десятки других сервисов. Главное при работе с ним через AWS SDK — переопределить endpoint клиента на адрес контейнера (`getEndpointOverride(...)`), всё остальное в коде остаётся как для реального AWS. Testcontainers даёт `LocalStackContainer` с готовыми методами для запуска, выбора сервисов и получения этого endpoint.
+**LocalStack** — эмулятор AWS API в виде одного Docker-контейнера: он отвечает по тем же протоколам, что S3, SQS, DynamoDB и десятки других сервисов. Главное при работе с ним через AWS SDK — переопределить endpoint клиента на адрес контейнера (`getEndpointOverride(...)`), всё остальное в коде остаётся как для реального AWS. Testcontainers даёт `LocalStackContainer` с готовыми методами для запуска, выбора сервисов и получения этого endpoint. Базовый сценарий «LocalStack в Spring-тесте сервиса» — в Q30; здесь — работа с чистым AWS SDK v2 без Spring-обвязки, подключение одной аннотацией `@ServiceConnection` и ограничения бесплатной версии.
 
 **Подключение:**
 
