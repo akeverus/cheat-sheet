@@ -54,7 +54,7 @@ public class SessionConfig { }
 
 ## Q2. Как настроить Redis Session Store?
 
-Достаточно добавить стартер `spring-session-data-redis` и указать `store-type: redis` — Spring Boot автоконфигурирует фильтр и репозиторий, дальше работа с сессией идёт прозрачно.
+Достаточно добавить стартер `spring-session-data-redis` — в Spring Boot 3.x стор определяется автоматически по зависимости на classpath, а свойство `spring.session.store-type` из Boot 2.x **удалено**. Boot автоконфигурирует фильтр и репозиторий, дальше работа с сессией идёт прозрачно. Если на classpath случайно оказалось несколько сторов, выбор фиксируют явной аннотацией (`@EnableRedisHttpSession`, `@EnableJdbcHttpSession` и т.п.).
 
 **Зависимость:**
 
@@ -70,7 +70,6 @@ public class SessionConfig { }
 ```yaml
 spring:
   session:
-    store-type: redis
     timeout: 30m              # время жизни сессии
     redis:
       namespace: myapp:session
@@ -82,6 +81,8 @@ spring:
 ```
 
 Ключевые параметры: `namespace` задаёт префикс ключей (чтобы несколько приложений не пересекались в одном Redis), а `flush-mode` определяет, когда изменения пишутся в Redis — `on-save` (по умолчанию, запись в конце запроса, эффективнее) или `immediate` (сразу при изменении атрибута, нужно для редких сценариев с межзапросной видимостью).
+
+**Транспорт session ID настраивается отдельно.** По умолчанию ID ездит в cookie с именем `SESSION`; бин `DefaultCookieSerializer` (реализация `CookieSerializer`) позволяет поменять имя cookie, домен и path, а главное — атрибут `SameSite` через `setSameSite(...)` (по умолчанию `Lax`; для cross-site сценариев вроде iframe нужен `None` вместе с `Secure`). Для REST API без cookie регистрируют бин `HttpSessionIdResolver` через `HeaderHttpSessionIdResolver.xAuthToken()` — тогда session ID передаётся в заголовке `X-Auth-Token`: сервер возвращает его в ответе на логин, клиент шлёт в каждом следующем запросе.
 
 **Как сессия хранится в Redis** — в виде hash:
 
@@ -95,7 +96,7 @@ spring:
 
 ## Q3. Как настроить JDBC Session Store?
 
-JDBC-стор хранит сессии в реляционной БД — подходит, когда Redis нет, а отдельную инфраструктуру под сессии заводить не хочется. Подключается стартером `spring-session-jdbc` и `store-type: jdbc`.
+JDBC-стор хранит сессии в реляционной БД — подходит, когда Redis нет, а отдельную инфраструктуру под сессии заводить не хочется. Подключается стартером `spring-session-jdbc`: как и с Redis, Spring Boot 3.x выбирает стор по classpath — указывать `store-type: jdbc` не нужно, это свойство удалено в Boot 3.0.
 
 **Зависимость:**
 
@@ -111,7 +112,6 @@ JDBC-стор хранит сессии в реляционной БД — по�
 ```yaml
 spring:
   session:
-    store-type: jdbc
     jdbc:
       initialize-schema: always  # auto-create tables
       table-name: SPRING_SESSION
@@ -233,6 +233,8 @@ public class SessionEventListener {
 
 **Важный нюанс для Redis.** Истёкший ключ в Redis удаляется молча — само по себе приложение об этом не узнает. Чтобы получать `SessionExpiredEvent` и `SessionDeletedEvent`, нужно включить keyspace notifications: `notify-keyspace-events Eg` (события по истечению `E` и обобщённые `g`). Без этой настройки эти события просто не придут.
 
+**Второй нюанс — тип репозитория.** События публикует только indexed-репозиторий: с `@EnableRedisIndexedHttpSession` (`RedisIndexedSessionRepository`) listener получает все три события, а с обычным `@EnableRedisHttpSession` (`RedisSessionRepository`) события не публикуются вообще — listener молчит без какой-либо ошибки. Если события нужны, включайте indexed-вариант.
+
 ## Q7. Как настроить timeout сессии?
 
 Timeout — это период бездействия (max inactive interval), после которого сессия истекает. Настраивается на трёх уровнях: глобально в конфиге, программно для отдельной сессии и динамически по условию (например, по роли пользователя).
@@ -259,8 +261,9 @@ public void keepAlive(HttpSession session) {
 @EventListener
 public void onSessionCreated(SessionCreatedEvent event) {
     Session session = sessionRepository.findById(event.getSessionId());
-    Authentication auth = (Authentication) session.getAttribute(
+    SecurityContext context = (SecurityContext) session.getAttribute(
         HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
+    Authentication auth = context != null ? context.getAuthentication() : null;
 
     if (auth != null && auth.getAuthorities().stream()
             .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
@@ -361,7 +364,7 @@ Browser ─── LB ─┬─ App1 ─┐
 
 Технически миграция тривиальна — добавить зависимость и конфигурацию. Вся сложность в одном: старые in-memory сессии в Redis не попадут, поэтому при деплое активные пользователи рискуют потерять сессию. Стратегия миграции — это в первую очередь план, как этого избежать.
 
-**Варианты подхода** (в коде ниже — комментариями):
+**Варианты подхода** (в коде ниже — комментариями; «решение 2» — лишь набросок, см. оговорку после кода):
 
 ```java
 // 1. Добавить зависимость и конфигурацию (steps above)
@@ -377,6 +380,8 @@ public SessionRepository<MapSession> migrationSessionRepository() {
     return new MapSessionRepository(new ConcurrentHashMap<>());
 }
 ```
+
+**Честная оговорка про «двойное хранилище».** Объявленный выше бин `MapSessionRepository` сам по себе ничего не мигрирует: это просто второй стор без какой-либо маршрутизации между старым и новым — Spring не станет автоматически читать «сначала тут, потом там». Рабочий миграционный паттерн выглядит иначе: либо **дренаж старого стора** (новые сессии сразу пишутся в Redis, старый источник живёт read-only с коротким TTL, пока активные сессии в нём естественно не истекут), либо **dual-write на уровне кастомного `SessionRepository`** — обёртки, которая читает из Redis с фоллбэком в старый стор и пишет в оба. Второй путь заметно дороже в реализации и оправдан только при жёстком требовании «никого не разлогинивать».
 
 **На практике** выбирают один из двух сценариев: плановое обслуживание с принудительным logout всех пользователей (просто и предсказуемо) либо rolling restart с заметным сообщением о необходимости повторного входа (без простоя, но часть пользователей разлогинится в момент перезапуска их узла).
 
@@ -418,13 +423,13 @@ public SessionRegistry sessionRegistry() {
 | Контейнер | Tomcat-зависимо | Любой (Tomcat/Jetty/Undertow) |
 | Реактивный стек | Нет | Есть (WebSession) |
 | Find-by-user | Нет | Через FindByIndexNameSessionRepository |
-| Метрики | Ограничены | Spring Actuator metrics |
+| Наблюдаемость | Ограничена | Actuator `/sessions` endpoint |
 
 **Вывод:** Spring Session предпочтительнее в облачных и контейнерных средах, где инстансы эфемерны — их в любой момент пересоздают, масштабируют и перезапускают, а сессии в общем сторе это переживают без потерь.
 
 ## Q14. Как настроить мониторинг сессий через Actuator?
 
-Spring Boot Actuator даёт два инструмента: endpoint `/actuator/sessions` для просмотра и удаления сессий и метрики Micrometer для наблюдения за их количеством. Endpoint требует, чтобы под капотом был `FindByIndexNameSessionRepository` (поиск сессий по пользователю), и его нужно явно открыть в `exposure.include`.
+Главный инструмент — endpoint `/actuator/sessions` для просмотра и удаления сессий конкретного пользователя. Он требует, чтобы под капотом был `FindByIndexNameSessionRepository` (поиск сессий по пользователю), и его нужно явно открыть в `exposure.include`.
 
 ```yaml
 management:
@@ -445,7 +450,7 @@ GET /actuator/sessions?username=john.doe@example.com
 DELETE /actuator/sessions/{sessionId}
 ```
 
-**Метрики.** Через Micrometer доступна `spring.session.sessions.open` — текущее число открытых сессий; её удобно вывести на дашборд и навесить алерт (резкий рост может сигналить об утечке сессий или о DDoS, резкое падение — о проблеме со стором).
+**Метрики.** Готовых Micrometer-метрик у Spring Session out-of-the-box **нет** — а привычные `tomcat.sessions.*` при включённом Spring Session как раз перестают что-либо показывать (сессии контейнера больше не используются). Число активных сессий мониторят самостоятельно: кастомный gauge по количеству ключей в namespace Redis (подсчёт по префиксу через `SCAN`) или `COUNT(*)` по таблице `SPRING_SESSION` для JDBC. На такой gauge вешают алерт: резкий рост может сигналить об утечке сессий или о DDoS, резкое падение — о проблеме со стором.
 
 ## Q15. Когда не стоит использовать Spring Session?
 

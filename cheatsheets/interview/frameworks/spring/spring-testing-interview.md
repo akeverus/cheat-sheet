@@ -189,7 +189,9 @@ class OrderControllerTest {
 
         mockMvc.perform(post("/api/orders")
                 .contentType(APPLICATION_JSON)
-                .content("""{ "customerId": "CUST-1" }"""))
+                .content("""
+                    { "customerId": "CUST-1" }
+                    """))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.id").value(1));
     }
@@ -415,6 +417,8 @@ class OrderControllerTest {
 
 **Подводный камень.** `@MockBean` входит в ключ кеширования контекста: каждый уникальный набор `@MockBean` заставляет Spring собирать **новый** `ApplicationContext` вместо переиспользования кешированного (подробнее в Q13). Поэтому в slice-тестах его минимизируют, а одинаковые наборы моков выносят в общий базовый класс. `@Mock` на кеш не влияет вовсе — он вне Spring.
 
+**Актуальный статус.** С Spring Boot 3.4 `@MockBean` помечена **deprecated**, а в Boot 4.0 удалена. Замена — `@MockitoBean` из Spring Framework 6.2 (пакет `org.springframework.test.context.bean.override.mockito`): семантика та же — подмена бина в контексте mock-объектом, — но механизм теперь живёт в самом Framework, а не в Boot. В новом коде используйте `@MockitoBean`.
+
 ## Q10. Что такое `@SpyBean` и когда нужен?
 
 `@SpyBean` — это **частичный mock** (spy) в Spring-контексте: реальный бин со всей рабочей логикой, у которого можно перехватить отдельные методы — переопределить их поведение через `doReturn`/`doThrow` или проверить факт вызова через `verify`. Всё, что вы не переопределили, продолжает работать по-настоящему.
@@ -457,6 +461,8 @@ class OrderEventTest {
 - `@SpyBean` — реальный бин: логика работает, а замокать можно лишь те методы, которые вы явно переопределили
 
 Как и `@MockBean`, `@SpyBean` участвует в ключе кеша контекста — злоупотреблять им не стоит.
+
+**Актуальный статус.** Судьба у `@SpyBean` та же, что и у `@MockBean`: с Spring Boot 3.4 аннотация **deprecated**, в Boot 4.0 удалена. Замена — `@MockitoSpyBean` из Spring Framework 6.2; поведение прежнее (spy поверх реального бина в контексте), в новом коде используйте её.
 
 ## Q11. Что такое `@TestConfiguration` и зачем нужна?
 
@@ -649,7 +655,7 @@ public class TestcontainersConfig {
 
 // Тест
 @SpringBootTest
-@ImportTestcontainers(TestcontainersConfig.class)
+@Import(TestcontainersConfig.class)
 class UserRepositoryTest {
     @Autowired UserRepository repository;
 
@@ -660,9 +666,12 @@ class UserRepositoryTest {
 }
 ```
 
-**Старый способ (до 3.1, без `@ServiceConnection`):** контейнер объявляют как `static`-поле (чтобы он стартовал один раз на класс), а адрес и креды прокидывают вручную через `@DynamicPropertySource`:
+Конфигурацию с `@Bean`-методами подключают обычным `@Import`. Отдельная аннотация `@ImportTestcontainers` — для другого случая: она подтягивает класс со **static-полями** контейнеров (без `@Bean`-методов), смешивать эти два механизма нельзя.
+
+**Старый способ (до 3.1, без `@ServiceConnection`):** класс помечают `@Testcontainers` (JUnit-расширение, которое стартует и останавливает контейнеры с `@Container`), контейнер объявляют как `static`-поле (чтобы он стартовал один раз на класс), а адрес и креды прокидывают вручную через `@DynamicPropertySource`:
 
 ```java
+@Testcontainers
 @SpringBootTest
 class LegacyIntegrationTest {
 

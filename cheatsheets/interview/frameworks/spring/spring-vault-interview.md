@@ -90,6 +90,8 @@ spring:
 
 Конфигурация кладётся в `bootstrap.yml`, потому что Vault должен инициализироваться **до** `application.yml` — иначе секреты не успеют попасть в `Environment` к моменту создания бинов.
 
+**Важно про версии**: bootstrap-фаза deprecated и выключена по умолчанию начиная со Spring Cloud 2020.x — `bootstrap.yml` работает только при подключении легаси-стартера `spring-cloud-starter-bootstrap`. Современный стандарт — строка `spring.config.import: vault://` прямо в `application.yml`: механизм config data импортирует секреты на старте без отдельной bootstrap-фазы, а остальные `spring.cloud.vault.*` свойства задаются там же.
+
 Программный вариант нужен, когда декларативной настройки не хватает (нестандартный эндпоинт, кастомная аутентификация). Наследуемся от `AbstractVaultConfiguration` и переопределяем две точки — адрес Vault и способ входа:
 
 ```java
@@ -200,21 +202,21 @@ public class DynamicDbService {
 
 **Зачем это нужно**: радиус поражения при утечке минимален. Даже если динамические credentials попадут в чужие руки, через час (TTL) они станут бесполезны — Vault уже удалит этого пользователя из БД. Плюс полная трассируемость: каждый инстанс работает под своим именем, и по логам БД видно, кто что делал.
 
-## Q5. Что такое VaultLeaseContainer и зачем он нужен?
+## Q5. Что такое SecretLeaseContainer и зачем он нужен?
 
-`VaultLeaseContainer` — фоновый компонент Spring Vault, который следит за жизненным циклом lease (аренды секрета) и сам продлевает или ротирует его до истечения TTL. Без него динамические секреты — это бомба замедленного действия: TTL истечёт, Vault отзовёт credentials, и приложение упадёт на следующем запросе к БД.
+`SecretLeaseContainer` — фоновый компонент Spring Vault, который следит за жизненным циклом lease (аренды секрета) и сам продлевает или ротирует его до истечения TTL. Без него динамические секреты — это бомба замедленного действия: TTL истечёт, Vault отзовёт credentials, и приложение упадёт на следующем запросе к БД.
 
-Контейнер работает по порогу: когда до истечения остаётся заданный процент времени (`expiryThresholdPercentage`), он либо продлевает текущий lease, либо запрашивает новый секрет и вызывает твой коллбэк с обновлёнными данными:
+Контейнер работает по порогу: когда до истечения остаётся меньше заданного запаса времени (`expiryThreshold`), он либо продлевает текущий lease, либо — для секрета, зарегистрированного как `RequestedSecret.rotating` — запрашивает новый и публикует событие `SecretLeaseCreatedEvent` с обновлёнными данными:
 
 ```java
 @Configuration
 public class VaultLeaseConfig {
 
     @Bean
-    public VaultLeaseContainer leaseContainer(VaultOperations vaultOperations,
+    public SecretLeaseContainer leaseContainer(VaultOperations vaultOperations,
                                                TaskScheduler scheduler) {
-        VaultLeaseContainer container = new VaultLeaseContainer(vaultOperations, scheduler);
-        container.setExpiryThresholdPercentage(25);  // продлевать за 25% до истечения
+        SecretLeaseContainer container = new SecretLeaseContainer(vaultOperations, scheduler);
+        container.setExpiryThreshold(Duration.ofMinutes(1));  // ротировать за минуту до истечения
         return container;
     }
 }
@@ -222,24 +224,26 @@ public class VaultLeaseConfig {
 @Service
 @RequiredArgsConstructor
 public class DatabaseCredentialService {
-    private final VaultLeaseContainer leaseContainer;
+    private final SecretLeaseContainer leaseContainer;
 
     @PostConstruct
     public void requestCredentials() {
-        leaseContainer.requestRotatingSecret("database/creds/my-role",
-            credentials -> {
+        leaseContainer.addRequestedSecret(RequestedSecret.rotating("database/creds/my-role"));
+        leaseContainer.addLeaseListener(event -> {
+            if (event instanceof SecretLeaseCreatedEvent created) {
                 // вызывается при получении или ротации
+                Map<String, Object> secrets = created.getSecrets();
                 reconfigureDataSource(
-                    (String) credentials.getData().get("username"),
-                    (String) credentials.getData().get("password")
+                    (String) secrets.get("username"),
+                    (String) secrets.get("password")
                 );
             }
-        );
+        });
     }
 }
 ```
 
-**Суть**: коллбэк `requestRotatingSecret` вызывается и при первом получении секрета, и при каждой ротации — поэтому логику переконфигурации `DataSource` пишешь один раз, а контейнер обеспечивает, что соединения всегда работают на актуальных credentials.
+**Суть**: слушатель из `addLeaseListener` получает `SecretLeaseCreatedEvent` и при первом получении секрета, и при каждой ротации — поэтому логику переконфигурации `DataSource` пишешь один раз, а контейнер обеспечивает, что соединения всегда работают на актуальных credentials.
 
 ## Q6. Как работает Transit Secrets Engine (шифрование как сервис)?
 
@@ -334,6 +338,8 @@ public class CertificateService {
 
 Spring Cloud Vault подключает Vault как ещё один `PropertySource`: секреты загружаются на старте и становятся обычными property, доступными через `@Value` и `Environment`. Приложение работает с ними так же, как с любым свойством из `application.yml` — разницы в коде нет.
 
+Пример ниже использует `bootstrap.yml`, но помни: с Spring Cloud 2020.x bootstrap-фаза deprecated (включается только легаси-стартером `spring-cloud-starter-bootstrap`). В современных проектах тот же результат даёт `spring.config.import: vault://` в обычном `application.yml` — Vault подключается как источник config data, а порядок приоритетов путей ниже остаётся тем же.
+
 ```yaml
 # bootstrap.yml — загружается ДО application.yml
 spring:
@@ -425,9 +431,9 @@ class SecretServiceTest {
 
 ## Q11. Как реализовать автоматическую ротацию секретов?
 
-Ручная ротация (этот вопрос) — альтернатива `VaultLeaseContainer` из Q5, когда нужен полный контроль над моментом и логикой обновления. По расписанию (`@Scheduled`) сервис запрашивает у Vault новую пару credentials и обновляет ими пул соединений.
+Ручная ротация (этот вопрос) — альтернатива `SecretLeaseContainer` из Q5, когда нужен полный контроль над моментом и логикой обновления. По расписанию (`@Scheduled`) сервис запрашивает у Vault новую пару credentials и обновляет ими пул соединений.
 
-**Ключевой момент** — `softEvictConnections()`: новые credentials прописываются в `HikariDataSource`, но активные соединения не рвутся резко. Hikari помечает старые соединения на «мягкое» закрытие — они дорабатывают текущие операции и заменяются новыми с обновлёнными учётными данными. Так ротация не вызывает всплеска ошибок:
+**Ключевой момент** — `softEvictConnections()`: новые credentials прописываются в `HikariDataSource`, но активные соединения не рвутся резко. Hikari помечает старые соединения на «мягкое» закрытие — они дорабатывают текущие операции и заменяются новыми с обновлёнными учётными данными. Так ротация не вызывает всплеска ошибок. Нюанс: HikariCP сознательно не «запечатывает» `setUsername`/`setPassword` после старта пула — именно чтобы поддержать такую ротацию (новые соединения создаются уже с новыми кредами); те же операции доступны и через `HikariConfigMXBean`, в том числе по JMX:
 
 ```java
 @Component
@@ -511,32 +517,27 @@ spring:
 Vault становится критической зависимостью: если он недоступен, приложение не получит секреты и может не подняться или начать падать на запросах. Защита строится на двух уровнях — **кэш последних успешных значений** и **Circuit Breaker**, чтобы при недоступности Vault отдавать закэшированное, а не валить запросы таймаутами.
 
 ```java
-@Configuration
-public class VaultFallbackConfig {
-
-    @Bean
-    @ConditionalOnProperty(name = "vault.fallback.enabled", havingValue = "true")
-    public VaultOperations fallbackVaultOperations() {
-        // In-memory fallback с pre-loaded secrets для dev/test
-        return new InMemoryVaultOperations();
-    }
-}
-
-// Circuit Breaker для Vault
+// Circuit Breaker (Resilience4j) + кэш последних успешных секретов
 @Service
 @RequiredArgsConstructor
 public class ResilientSecretService {
     private final VaultTemplate vaultTemplate;
     private final CircuitBreaker circuitBreaker;
+    private final Map<String, String> secretCache = new ConcurrentHashMap<>();
 
     public String getSecret(String path) {
-        return circuitBreaker.executeSupplier(() ->
-            (String) vaultTemplate.read(path).getData().get("value"),
-            throwable -> {
-                log.error("Vault unavailable, using cached value", throwable);
-                return secretCache.getOrDefault(path, "");
-            }
-        );
+        Supplier<String> readFromVault = CircuitBreaker.decorateSupplier(circuitBreaker, () -> {
+            String value = (String) vaultTemplate.read(path).getData().get("value");
+            secretCache.put(path, value);  // запоминаем последнее успешное значение
+            return value;
+        });
+        try {
+            return readFromVault.get();
+        } catch (Exception e) {
+            // Vault недоступен или circuit разомкнут (CallNotPermittedException)
+            log.error("Vault unavailable, using cached value", e);
+            return secretCache.getOrDefault(path, "");
+        }
     }
 }
 ```
