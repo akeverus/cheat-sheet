@@ -91,7 +91,7 @@ updated: "2026-04-25"
 | Критерий | Apache Kafka | Redpanda |
 |----------|--------------|----------|
 | Язык | Java (JVM) | C++ |
-| ZooKeeper | Требуется (KRaft — новое) | **Не нужен** |
+| ZooKeeper | Убран полностью в 4.0 (2025); KRaft — дефолт | **Никогда не требовался** |
 | Архитектура | Пулы потоков | **Shard-per-core** |
 | Паузы GC | Да | **Нет** |
 | Компоненты | Брокеры + ZK + Connect + Schema Registry | **Единый бинарник** |
@@ -162,7 +162,7 @@ updated: "2026-04-25"
 - Выбор контроллера (controller election).
 - Хранение конфигурации.
 
-ZooKeeper — это отдельный кластер, который надо разворачивать, мониторить и сопровождать, плюс лишний сетевой roundtrip за метаданными. Kafka осознала проблему и сделала **KRaft** (с версии 2.8+, GA в 3.3) — встроенный Raft вместо ZK; сейчас идёт переходный период миграции на него.
+ZooKeeper — это отдельный кластер, который надо разворачивать, мониторить и сопровождать, плюс лишний сетевой roundtrip за метаданными. Kafka осознала проблему и сделала **KRaft** — встроенный Raft вместо ZK: production-ready с версии 3.3, в 3.5 ZooKeeper объявлен deprecated, а **Kafka 4.0 (2025) убрала его полностью**. Так что «Kafka требует ZooKeeper» — устаревший тезис; разница теперь в другом (см. ниже).
 
 **Redpanda пошла этим путём изначально.** У каждой партиции — своя Raft-группа: реплики партиции выбирают лидера и согласуют записи между собой по протоколу Raft. Координация полностью внутри брокеров.
 
@@ -170,6 +170,8 @@ ZooKeeper — это отдельный кластер, который надо 
 - Проще эксплуатация — нет отдельного кластера ZooKeeper.
 - Меньше компонентов в системе.
 - Быстрее failover — переключение лидера решается локально внутри Raft-группы партиции, без обращения к внешнему координатору.
+
+**Как Raft соотносится с ISR и `acks=all`:** важно понимать разницу глубже. В Kafka KRaft заменил ZooKeeper только для **метаданных**, а репликация данных по-прежнему работает через ISR (in-sync replicas): запись с `acks=all` подтверждается, когда её получили все реплики из ISR-списка. В Redpanda понятия ISR нет вовсе — репликация **самих данных** каждой партиции идёт через её Raft-группу, и запись подтверждается, когда её зафиксировал **кворум** (большинство реплик). Клиентский `acks=all` маппится именно на этот raft-кворум: для приложения семантика та же, а гарантии durability сопоставимы с Kafka при `acks=all` + `min.insync.replicas` — отличается лишь механика подтверждения (консенсус большинства вместо отслеживания списка ISR).
 
 ## Q7. Что такое tiered storage (многоуровневое хранилище)?
 
@@ -188,6 +190,8 @@ cloud_storage_region: us-east-1
 Чтение холодных данных из S3 происходит **прозрачно**: клиент запрашивает старые сообщения как обычно, Redpanda сама подтягивает их из объектного хранилища. Дороже по задержке, но дёшево по деньгам.
 
 **Зачем это нужно:** локальные диски дороги, а объектное хранилище — нет. Tiered storage позволяет хранить историю топиков месяцами и годами без раздувания дорогого дискового кластера. Та же идея есть у Pulsar (tiered storage) и появилась в Kafka (Tiered Storage, KIP-405).
+
+**Лицензионный нюанс (частый follow-up):** «хранить историю годами» звучит привлекательно, но у Redpanda tiered storage — **Enterprise-фича**: она требует платной лицензии и в бесплатной Community-редакции недоступна (подробнее о границе редакций — в Q16).
 
 ## Q8. (!) Что такое совместимость по wire-протоколу Kafka?
 
@@ -337,16 +341,19 @@ docker run -p 8080:8080 -e KAFKA_BROKERS=redpanda:9092 \
 
 **Redpanda существует в трёх вариантах: бесплатная самоуправляемая (Open Source), платная самоуправляемая с корпоративными фичами (Enterprise) и полностью управляемая в облаке (Cloud).** Разница — в наборе возможностей и в том, кто отвечает за эксплуатацию.
 
-**Open Source (бесплатно, разворачиваете сами):**
+**Community / Open Source (бесплатно, разворачиваете сами):**
 - Исходники открыты под лицензией BSL (нюансы — в Q17).
-- Базовые стриминговые возможности.
-- Tiered storage.
+- Базовые стриминговые возможности: топики, Raft-репликация, Schema Registry, HTTP-прокси, `rpk`.
 
-**Enterprise (платно, разворачиваете сами):**
-- Аудит-логирование.
+**Enterprise (платно, разворачиваете сами, требуется лицензия):**
+- **Tiered storage** — выгрузка холодных данных в S3/GCS/Azure Blob (см. Q7).
+- **Continuous data balancing** — непрерывная автоматическая ребалансировка партиций по узлам.
+- **Audit logging** — аудит-логирование действий в кластере.
 - Продвинутая безопасность (SASL/OAuthbearer).
 - Более гранулярный ролевой доступ на уровне кластера.
 - Поддержка 24/7.
+
+**Где проходит лицензионная граница:** частая ошибка — считать tiered storage бесплатной фичей. На самом деле Community-редакция (BSL) покрывает базовый стриминг, а tiered storage, continuous data balancing и audit logging включаются **только с Enterprise-лицензией**.
 
 **Redpanda Cloud (управляемый сервис):**
 - Полностью управляемый поставщиком в AWS, GCP, Azure.
@@ -406,7 +413,7 @@ docker run -p 8080:8080 -e KAFKA_BROKERS=redpanda:9092 \
 
 1. **MirrorMaker 2** — непрерывно реплицировать данные Kafka → Redpanda, дать им синхронизироваться, затем по очереди переключить клиентов. Без простоя, с возможностью отката.
 2. **Dual-write** — приложения какое-то время пишут в обе системы, а чтение постепенно переводится на Redpanda. Сложнее в коде, но даёт плавный переход.
-3. **Cut-over** — остановить систему, скопировать данные (`rpk import`), запустить заново. Самый простой, но с простоем и без лёгкого отката.
+3. **Cut-over** — остановить продьюсеров, перенести данные (перекачка consume → produce, разовый прогон MirrorMaker 2 или внешние инструменты миграции — готовой команды «скопировать всё» в `rpk` нет), переключить клиентов на Redpanda. Самый простой по схеме, но с простоем и без лёгкого отката.
 
 **На практике чаще всего** выбирают MirrorMaker 2 — он даёт нулевой простой и страховку на случай отката.
 
@@ -426,21 +433,18 @@ rpk topic create my-topic
 
 ## See also
 
-- [Apache Kafka](kafka-interview.md) — main конкурент (Redpanda compatible)
-- [Kafka Streams](../data-engineering/kafka-streams-interview.md) — works against Redpanda
-- [NATS](nats-interview.md) — another lightweight alternative
-- [Apache Pulsar](pulsar-interview.md) — another alternative
-- [Message Brokers Comparison](message-brokers-comparison-interview.md) — overview
-- [Event-driven Patterns](../architecture/event-driven-patterns-interview.md) — context
-- [Микросервисы](../architecture/microservices-interview.md) — primary use case
-- [Stream Processing](../data-engineering/stream-processing-interview.md) — context
-- [ScyllaDB](../databases/scylladb-interview.md) — same Seastar framework
-- [Распределённые системы](../architecture/distributed-systems-interview.md) — Raft, consensus
+- [Apache Kafka](kafka-interview.md) — главный конкурент (Redpanda совместима по протоколу)
+- [Kafka Streams](../data-engineering/kafka-streams-interview.md) — работает поверх Redpanda
+- [NATS](nats-interview.md) — ещё одна легковесная альтернатива
+- [Apache Pulsar](pulsar-interview.md) — ещё одна альтернатива
+- [Сравнение Message Brokers](message-brokers-comparison-interview.md) — обзор
+- [Event-driven Patterns](../architecture/event-driven-patterns-interview.md) — контекст
+- [Микросервисы](../architecture/microservices-interview.md) — основной сценарий применения
+- [Stream Processing](../data-engineering/stream-processing-interview.md) — контекст
+- [ScyllaDB](../databases/scylladb-interview.md) — тот же фреймворк Seastar
+- [Распределённые системы](../architecture/distributed-systems-interview.md) — Raft, консенсус
 - [Scalability Patterns](../architecture/scalability-patterns-interview.md) — shard-per-core
-- [Performance Testing](../performance/performance-testing-interview.md) — benchmarking
-- [OpenTelemetry](../monitoring/opentelemetry-interview.md) — Redpanda metrics
+- [Performance Testing](../performance/performance-testing-interview.md) — бенчмаркинг
+- [OpenTelemetry](../monitoring/opentelemetry-interview.md) — метрики Redpanda
 - [AWS SQS и SNS](aws-sqs-sns-interview.md)
-- [Сравнение Message Brokers](message-brokers-comparison-interview.md)
-- [NATS](nats-interview.md)
-- [Apache Pulsar](pulsar-interview.md)
 - [RabbitMQ](rabbitmq-interview.md)

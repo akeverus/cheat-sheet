@@ -163,6 +163,8 @@ graph LR
 
 Маршруты задают двумя способами: аннотациями (`@RestController`, `@GetMapping`) или функционально (**RouterFunction**). Под капотом вместо Servlet API — `Netty` с собственными `ServerHttpRequest`/`ServerHttpResponse`; для исходящих HTTP-вызовов используется реактивный **WebClient**.
 
+**Важно: WebFlux не привязан к Netty.** `Netty` — лишь сервер по умолчанию; тот же реактивный стек работает и на Servlet-контейнерах с поддержкой неблокирующего I/O (Servlet 3.1+) — `Tomcat`, `Jetty`, а также на `Undertow`. Мост обеспечивает адаптер (`ServletHttpHandlerAdapter`), который транслирует неблокирующий Servlet API в реактивные `ServerHttpRequest`/`ServerHttpResponse`. Это частый вопрос-ловушка: «WebFlux работает только на Netty?» — нет, Netty просто дефолт.
+
 ```mermaid
 graph TB
     subgraph "Spring WebFlux — обработка запроса"
@@ -332,11 +334,11 @@ graph LR
 
 Ошибка в реактивном потоке — это терминальный сигнал `onError`: он прекращает поток так же, как исключение прерывает обычный код. Reactor даёт операторы, чтобы перехватить ошибку и решить, что делать дальше — вернуть запасное значение, переключиться на другой поток или повторить попытку.
 
-1. `onError`: реагирует на возникновение ошибки в потоке — задаёт обработчик (лямбду), который вызывается при сбое.
+1. `doOnError`: побочное действие при ошибке — логирование, метрики, алерт. Важный нюанс: оператор **не перехватывает** ошибку и не «гасит» её — поток всё равно завершится сигналом `onError`, который пойдёт дальше по цепочке. Это «подсмотреть», а не «обработать». Отдельного оператора `onError` в Reactor нет: `onError` — это терминальный *сигнал*, а реагируют на него `doOnError` и операторы семейства `onError*` ниже.
 
 ```java
-flux.onError(err -> {
-    // обработка ошибки
+flux.doOnError(err -> {
+    // побочное действие при ошибке (лог, метрика); ошибка идёт дальше
 })
 ```
 
@@ -360,14 +362,6 @@ flux.onErrorResume(err -> {
 flux.retry(3) // повторить операцию 3 раза
 ```
 
-5. `doOnError`: побочное действие при ошибке (логирование, метрики), **не перехватывает** её — ошибка идёт дальше по цепочке. Это «подсмотреть», а не «обработать».
-
-```java
-flux.doOnError(err -> {
-    // выполнить действие при ошибке
-})
-```
-
 **Как выбрать:** запасное значение → `onErrorReturn`; запасной поток/источник → `onErrorResume`; повтор → `retry`/`retryWhen`; только залогировать, не глуша ошибку → `doOnError`.
 
 ## Q12. Как обрабатывать ошибки в `Spring WebFlux`?
@@ -384,15 +378,19 @@ public Mono<ServerResponse> handleYourException(YourException ex) {
 }
 ```
 
-2. **`WebExceptionHandler` (глобально)** — реактивный, самый низкоуровневый механизм: класс, реализующий интерфейс, перехватывает любые исключения на уровне `ServerWebExchange` для всего приложения. Гибче `@ExceptionHandler`, но требует ручной работы с ответом.
+2. **`WebExceptionHandler` (глобально)** — реактивный, самый низкоуровневый механизм: класс, реализующий интерфейс, перехватывает любые исключения на уровне `ServerWebExchange` для всего приложения. Гибче `@ExceptionHandler`, но требует ручной работы с ответом: обработчик сам выставляет статус и пишет тело в `exchange.getResponse()` через `writeWith(...)`, а возвращаемый `Mono<Void>` — сигнал завершения записи ответа.
 
 ```java
 @Component
 public class CustomExceptionHandler implements WebExceptionHandler {
     @Override
     public Mono<Void> handle(ServerWebExchange exchange, Throwable ex) {
-        // обработка исключения
-        return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).bodyValue("Custom error message").then();
+        ServerHttpResponse response = exchange.getResponse();
+        response.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
+        response.getHeaders().setContentType(MediaType.TEXT_PLAIN);
+        DataBuffer buffer = response.bufferFactory()
+            .wrap("Custom error message".getBytes(StandardCharsets.UTF_8));
+        return response.writeWith(Mono.just(buffer));
     }
 }
 ```
@@ -678,13 +676,13 @@ Flux<Product> products = Flux.concat(
 
 ## Q23. Как валидировать запросы в реактивном стеке?
 
-Валидация работает через привычный Bean Validation (`@Valid`), но с важным реактивным нюансом — момент срабатывания.
+Валидация работает через привычный Bean Validation — `@Valid` с `@RequestBody` в WebFlux **работает так же надёжно, как в MVC**. Разница не в том, «сработает ли проверка», а в том, *как приходит ошибка*.
 
-- На параметре ставят `@Valid` вместе с телом: `@Valid @RequestBody Mono<Dto> body` или `@Valid @RequestBody Dto body`.
-- **Ключевой момент:** валидация выполняется не синхронно при входе в метод, а при подписке на `Mono`/`Flux` — то есть когда тело реально читается и материализуется. Это отличает её от блокирующего MVC, где проверка идёт сразу.
-- При нарушении ограничений бросается `WebExchangeBindException`; его перехватывают глобально в `@ControllerAdvice` и формируют понятный ответ (список полей с ошибками).
+- На параметре ставят `@Valid` вместе с телом: `@Valid @RequestBody Dto body` — обычный вариант, проверка выполняется после десериализации тела. Можно валидировать и обёрнутое тело: `@Valid @RequestBody Mono<Dto> body` — тогда проверка произойдёт в момент, когда тело реально прочитано и `Mono` материализуется.
+- При нарушении ограничений возникает `WebExchangeBindException` (реактивный аналог `MethodArgumentNotValidException` из MVC). **Ключевой реактивный нюанс:** с `Mono<Dto>` ошибка не бросается синхронно до входа в метод, а приходит **error-сигналом внутри реактивной цепочки** — её можно перехватить точечно через `onErrorResume` прямо на `Mono` тела.
+- Глобально ошибку перехватывают в `@ControllerAdvice` через `@ExceptionHandler(WebExchangeBindException.class)` и формируют понятный ответ (список полей с ошибками); без обработчика клиент получит `400 Bad Request`.
 
-**Подводный камень:** если ошибочно навесить валидацию на необёрнутый объект там, где Spring не успевает прочитать тело реактивно, проверка может не сработать как ожидается. Поэтому валидируют либо непосредственно `@RequestBody Dto`, либо обёрнутый `Mono<Dto>` — Spring разворачивает и проверяет его при подписке.
+**Для functional endpoints** (`RouterFunction`, Q31) автоматической валидации нет — там `Validator` вызывают вручную внутри `HandlerFunction`.
 
 ## Q24. Когда выбирать `WebFlux` вместо `Spring MVC`?
 
@@ -759,6 +757,7 @@ Flux<Product> products = Flux.concat(
 Главное правило одно: **никогда не блокировать поток event loop** — всё остальное вытекает из него.
 
 - **Не блокировать в цепочке.** Любой блокирующий вызов (`JDBC`, синхронный SDK, `.block()`) на потоке Netty замораживает обслуживание сотен запросов. Если убрать нельзя — выносите на отдельный пул через `subscribeOn(Schedulers.boundedElastic())`.
+- **Ловить блокировки автоматически — `BlockHound`.** Java-агент от команды Reactor: инструментирует JVM и бросает ошибку при любом блокирующем вызове (`Thread.sleep`, JDBC, синхронный I/O) на неблокирующих потоках. Включают в тестах и dev-профиле — так скрытые блокировки всплывают до прода, а не под нагрузкой.
 - **Не «глотать» подписку.** Пустой `subscribe()` без обработки ошибок прячет сбои; в контроллере цепочку должен подписать сам Spring (вернуть `Mono`/`Flux`), а не вы вручную.
 - **Всегда обрабатывать ошибки** — `onErrorResume`/`onErrorReturn` для восстановления, `doOnError` для логирования. Необработанная ошибка терминально гасит поток.
 - **Учитывать backpressure** — для быстрых источников и медленных потребителей (Q14), иначе риск переполнения памяти.
@@ -1057,13 +1056,13 @@ public class SessionController {
 
     // Сохранение данных в сессии
     @PostMapping("/cart/add")
-    public Mono<ServerResponse> addToCart(WebSession session,
+    public Mono<ResponseEntity<List<CartItem>>> addToCart(WebSession session,
                                           @RequestBody CartItem item) {
         List<CartItem> cart = session.getAttributeOrDefault("cart", new ArrayList<>());
         cart.add(item);
         session.getAttributes().put("cart", cart);
 
-        return ServerResponse.ok().bodyValue(cart);
+        return Mono.just(ResponseEntity.ok(cart));
     }
 
     // Сессия через ServerWebExchange
@@ -1082,6 +1081,8 @@ public class SessionController {
     }
 }
 ```
+
+**Не путать типы ответов двух стилей:** в аннотированном `@RestController` возвращают `Mono<T>`/`Flux<T>` или `ResponseEntity`, когда нужно управлять статусом и заголовками. `ServerResponse` — тип из **функционального стиля** (`RouterFunction` + `HandlerFunction`, Q31); внутри аннотированного контроллера он не работает — фреймворк не знает, как его сериализовать в ответ.
 
 **Настройка Redis-хранилища** для сессий (`spring-session-data-redis`):
 ```yaml
@@ -1278,20 +1279,23 @@ Flux.just("a1", "b1", "a2", "b2")
 **Когда комбинировать WebFlux + Virtual Threads имеет смысл:**
 
 ```java
-// Перенос блокирующей операции на virtual thread scheduler
+// Перенос блокирующей операции с event loop на отдельный пул
 Mono<String> result = Mono.fromCallable(() -> blockingLegacyService.call())
-    .subscribeOn(Schedulers.boundedElastic()); // boundedElastic создаёт virtual-thread-friendly пул
+    .subscribeOn(Schedulers.boundedElastic()); // по умолчанию — пул платформенных потоков
+```
 
-// Spring 6.1+: явная поддержка virtual threads в WebFlux
-// application.yml
+```yaml
+# Spring Boot 3.2+ / Spring 6.1+: включение virtual threads (по умолчанию выключено)
 spring:
   threads:
     virtual:
       enabled: true
 ```
 
+**Важный нюанс, который любят на собеседованиях:** `Schedulers.boundedElastic()` по умолчанию работает на **платформенных потоках** — никакой «автоматической дружбы» с virtual threads у него нет. VT-исполнение появилось позже (Reactor 3.6+) и включается **явно**: системным свойством `reactor.schedulers.defaultBoundedElasticOnVirtualThreads=true` (тогда `boundedElastic()` отдаёт scheduler на виртуальных потоках, по одному на задачу) или созданием собственного VT-исполнителя (`Thread.ofVirtual()`, в Spring — `VirtualThreadTaskExecutor`). Флаг `spring.threads.virtual.enabled=true` переводит на виртуальные потоки инфраструктурные исполнители Spring Boot, но сам по себе не делает Reactor-шедулеры виртуальными.
+
 **Практические сценарии:**
-- **WebFlux + Virtual Threads**: если часть операций блокирующая (legacy JDBC, синхронные SDK) — перенос на `Schedulers.boundedElastic()` с виртуальными потоками
+- **WebFlux + Virtual Threads**: если часть операций блокирующая (legacy JDBC, синхронные SDK) — перенос на `Schedulers.boundedElastic()`; при явно включённом VT-режиме эти блокирующие задачи лягут на виртуальные потоки
 - **Spring MVC + Virtual Threads** (Spring Boot 3.2+): для простых REST API более читаемая альтернатива WebFlux
 - **WebFlux без Virtual Threads**: для чисто реактивного стека (R2DBC, WebClient) — виртуальные потоки не нужны
 
