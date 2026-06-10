@@ -143,6 +143,11 @@
      при ширине экрана справа зиял пустой хвост. Прижата к комфортной ширине и
      left-aligned (левый край совпадает с заголовком/гуттером). Запрос пользователя. */
   --max-width-options: 60rem;
+  /* Единый горизонтальный жёлоб страницы: им дышат .ed-page, .ed-masthead-inner,
+     .ed-masthead-progress и .ed-noscript — менять ТОЛЬКО здесь, иначе шапка и
+     контент разъедутся по краям. На широких экранах (>=1200, см. WIDE LAYOUT)
+     растёт до clamp 4vw: full-width контент не липнет к кромке стекла. */
+  --page-gutter: var(--space-5);
 
   /* Радиусы [spec]: 0 standard cards / 8 release cards / 16 panels.
      Кнопки flat 0px — сигнатурой (primary CTA асимметричный 0 0 8px 8px). */
@@ -498,7 +503,7 @@ html[data-design] .sr-only {
 .ed-page {
   max-width: var(--max-width-page);
   margin: 0 auto;
-  padding: var(--space-6) var(--space-5) var(--space-9);
+  padding: var(--space-6) var(--page-gutter) var(--space-9);
 }
 
 /* Eyebrow — mono caps подпись (FOCUS, Q14/50, лейблы) */
@@ -540,7 +545,7 @@ html[data-design] .sr-only {
 .ed-masthead-inner {
   max-width: var(--max-width-page);
   margin: 0 auto;
-  padding: var(--space-4) var(--space-5);
+  padding: var(--space-4) var(--page-gutter);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -638,13 +643,13 @@ html[data-design] .ed-masthead-title {
 
 /* Трек прозрачен в покое (при 0% не рисует вторую линию под шапкой); виден только
    тонкий accent-fill при активной сессии. box-shadow:none гасит старый .progress-bar glow. */
-.ed-masthead-progress { height: 2px; width: 100%; max-width: var(--max-width-page); margin: 0 auto; padding: 0 var(--space-5); box-sizing: border-box; background: transparent; border: 0; }
+.ed-masthead-progress { height: 2px; width: 100%; max-width: var(--max-width-page); margin: 0 auto; padding: 0 var(--page-gutter); box-sizing: border-box; background: transparent; border: 0; }
 .ed-masthead-progress-fill { height: 100%; width: 0; background: var(--color-accent-primary); box-shadow: none; border-radius: 0; transition: width var(--duration-slow) var(--easing-out); }
 
 .ed-noscript {
   max-width: var(--max-width-page);
   margin: 0 auto;
-  padding: var(--space-3) var(--space-5);
+  padding: var(--space-3) var(--page-gutter);
   font-family: var(--font-family-body);
   color: var(--color-text-primary);
   background: var(--color-status-error-wash);
@@ -2318,6 +2323,203 @@ html[data-design] .summary-tools .btn { display: inline-flex; align-items: cente
 html[data-design] .summary-tools .ed-icon { width: 1rem; height: 1rem; }
 html[data-design] .summary-tools-status {
   font-size: var(--font-size-sm); color: var(--color-text-secondary);
+}
+
+/* ===========================================================================
+   WIDE LAYOUT (>=1200px) — full-width использование широких экранов.
+   Запрос пользователя: «все окна на всю ширину экрана + пересмотреть взаимное
+   расположение блоков». Принципы:
+   - НИЖЕ 1200px ничего не меняется (все правила в @media min-width).
+   - DOM-порядок не трогаем: раскладка через grid-плейсмент по колонкам/рядам
+     (auto-flow row); скринридеры и no-JS читают страницу как раньше.
+   - Условные секции гейтятся :has() — прецедент в файле уже есть (L1300, L1732);
+     браузер без :has() остаётся на полноширинном стеке (progressive enhancement).
+   - row-gap НЕ задаём: вертикальный ритм несут существующие margin-bottom
+     карточек/блоков — обнуление маржинов слепит ряды.
+   - СТРАЖ: новая секция в шаблоне без явного grid-column-правила упадёт
+     в первую свободную ячейку сетки — при добавлении секций прописывать area.
+   =========================================================================== */
+@media (min-width: 1200px) {
+  /* Жёлоб страницы растёт с экраном: 48px на 1200 → ~69px на 1728 → 80px cap.
+     Един для шапки/прогресса/контента (см. --page-gutter в :root). */
+  html[data-design] { --page-gutter: clamp(2rem, 4vw, 5rem); }
+
+  /* --- FOCUS: основная колонка (вопрос → опции → пост-разбор) + правая
+     sticky-рейка сессии (фолио-прогресс, трек, «сегодня»-чип). Рейка — первый
+     ребёнок секции (aside), грид кладёт её во 2-ю колонку на всю высоту. */
+  html[data-design] .focus-page .focus-training {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 19rem;
+    column-gap: var(--space-8);
+    align-items: start;
+  }
+  html[data-design] .focus-page .focus-training > * { grid-column: 1; min-width: 0; }
+  html[data-design] .focus-page .focus-training > .focus-session-rail {
+    grid-column: 2;
+    /* 1 / 9: с запасом на все ряды основной колонки (zonehead, вопрос, код,
+       форма/флешкарта, пост-голова, пост-блок); лишние implicit-ряды пустые
+       и имеют нулевую высоту. align-self: start обязателен для sticky. */
+    grid-row: 1 / 9;
+    align-self: start;
+    position: sticky;
+    top: var(--space-5);
+    display: flex; flex-direction: column; gap: var(--space-3);
+  }
+  /* Хром панели — только когда в рейке есть содержимое (вне сессии и без stats
+     остаётся голый 2px-трек: рамка вокруг пустоты выглядела бы сиротливо). */
+  html[data-design] .focus-page .focus-session-rail:has(.session-progress, .today-chip-due, .streak-inline:not(.hidden)) {
+    border: var(--rule-weight) solid var(--color-border-primary);
+    border-radius: var(--border-radius-md);
+    background: var(--color-bg-secondary);
+    padding: var(--space-4) var(--space-5);
+  }
+  /* Внутри панели стек-маржины блоков гасим — ритм несёт gap рейки. */
+  html[data-design] .focus-page .focus-session-rail .focus-progress-line,
+  html[data-design] .focus-page .focus-session-rail .session-progress-track,
+  html[data-design] .focus-page .focus-session-rail .today-chip { margin-bottom: 0; }
+
+  /* Пустое состояние фокуса: «окно» тянется на всю ширину (карточка-сообщение
+     остаётся центрированной композицией внутри). */
+  html[data-design] .focus-page .empty-card-inner { max-width: none; }
+
+  /* --- RESULT (no-JS разбор /answer): сетка на main — карточка разбора в 1fr,
+     «Похожие вопросы» уезжают в правую sticky-рейку. Грид включён ВСЕГДА
+     (ширина карточки не прыгает между вопросами с related и без): без related
+     карточка просто спанит обе колонки. */
+  html[data-design] .result-page .ed-page {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+    column-gap: var(--space-7);
+    align-items: start;
+  }
+  html[data-design] .result-page .ed-page > * { grid-column: 1 / -1; min-width: 0; }
+  html[data-design] .result-page .ed-page > #interview-card { grid-column: 1; }
+  html[data-design] .result-page .ed-page:not(:has(> #result-related-questions)) > #interview-card { grid-column: 1 / -1; }
+  /* Рейка related: из «блока после карточки» (border-top + отступ) превращается
+     в editorial-панель; при длинном списке скроллится внутри вьюпорта. */
+  html[data-design] .result-page .ed-page > #result-related-questions {
+    grid-column: 2;
+    align-self: start;
+    position: sticky;
+    top: var(--space-5);
+    margin-top: 0;
+    border-top: 0;
+    border: var(--rule-weight) solid var(--color-border-primary);
+    border-radius: var(--border-radius-lg);
+    background: var(--color-bg-secondary);
+    padding: var(--space-5);
+    max-height: calc(100dvh - var(--space-7));
+    overflow-y: auto;
+  }
+  /* При одновременных related-рейке и .question-side (диаграмма/код, AI-режим)
+     на 1200-1439 текстовой колонке тесно — ужимаем сайдбар карточки. */
+  html[data-design] .result-page .ed-page:has(> #result-related-questions) .question-layout:has(.question-side) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 280px);
+  }
+
+  /* --- STATS: дашборд-сетка. Фильтры/KPI/графики — полноширинные ряды;
+     ниже таблица тем (2/3, спанит два ряда) + правая колонка: прогноз 7 дней
+     и пробелы банка (1/3). Грид включается только когда есть и таблица,
+     и хотя бы одна правая карта. */
+  html[data-design] .stats-page .main-content:has(> .overflow-x-auto):has(> .review-forecast, > .coverage-gaps) {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    column-gap: var(--space-6);
+    align-items: start;
+  }
+  html[data-design] .stats-page .main-content > * { grid-column: 1 / -1; min-width: 0; }
+  html[data-design] .stats-page .main-content > .overflow-x-auto { grid-column: 1; grid-row: span 2; }
+  /* forecast и gaps кладутся auto-flow'ом в соседние ряды 2-й колонки; если
+     прогноза нет — gaps сам займёт верхний ряд (auto-placement, не areas). */
+  html[data-design] .stats-page .main-content > .review-forecast,
+  html[data-design] .stats-page .main-content > .coverage-gaps { grid-column: 2; }
+
+  /* --- SETTINGS: панель управления в 3 колонки (Фильтры | Сессия | Прогресс),
+     совет-строка под ними; ниже «Управление данными» и «Персонализация» парой.
+     ID-шники сворачивания сайдбара (app.js) не трогаем — display:grid c
+     !important перебивает базовый display:block !important (L1090, каскад). */
+  html[data-design] .settings-page #left-sidebar-content {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: var(--space-7);
+    align-items: start;
+  }
+  html[data-design] .settings-page #left-sidebar-content > .control-section {
+    grid-column: auto;
+    border-top: 0;
+    padding-top: 0;
+  }
+  html[data-design] .settings-page #left-sidebar-content > .control-section-tips {
+    grid-column: 1 / -1;
+    border-top: var(--rule-weight) solid var(--color-border-primary);
+    padding-top: var(--space-5);
+    margin-top: var(--space-6);
+  }
+  /* Вертикальные hairline-разделители между колонками панели. */
+  html[data-design] .settings-page #left-sidebar-session,
+  html[data-design] .settings-page #left-sidebar-progress {
+    border-left: var(--rule-weight) solid var(--color-border-primary);
+    padding-left: var(--space-7);
+  }
+  /* В колонке ~1/3 ширины два селекта в ряд тесно — поля одно под другим. */
+  html[data-design] .settings-page .filters-fields { grid-template-columns: 1fr; }
+  /* Нижние карточки парой; гейт на видимую Персонализацию (без JS она hidden —
+     display:none не порождает grid-item, и «Управление данными» осталась бы
+     половинкой; без гейта no-JS-страница выглядела бы недоделанной). */
+  html[data-design] .settings-page .app-layout:has(> .personalization-card:not(.hidden)) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-7);
+    align-items: start;
+  }
+  html[data-design] .settings-page .app-layout:has(> .personalization-card:not(.hidden)) > .main-content { grid-column: 1 / -1; }
+
+  /* --- SUMMARY: геро-итог разворачивается в широкую ленту (слева режим/процент/
+     подпись, в центре плитки, справа время); ниже таблица тем и ошибки бок о бок. */
+  html[data-design] .summary-page .summary-score {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "mode  grid duration"
+      "value grid duration"
+      "label grid duration";
+    align-items: center;
+    column-gap: var(--space-8);
+    text-align: left;
+    padding: var(--space-6) var(--space-7);
+  }
+  html[data-design] .summary-page .summary-mode-line { grid-area: mode; align-self: end; margin-bottom: var(--space-2); }
+  html[data-design] .summary-page .summary-score-value { grid-area: value; }
+  html[data-design] .summary-page .summary-score-label { grid-area: label; align-self: start; }
+  html[data-design] .summary-page .summary-score .stats-grid { grid-area: grid; max-width: 640px; margin: 0 0 0 auto; width: 100%; }
+  html[data-design] .summary-page .summary-duration { grid-area: duration; margin-top: 0; }
+  /* Таблица тем + ошибки в два столбца — только когда есть блок ошибок.
+     .summary-tools (вставляет JS после геро) и actions остаются полноширинными. */
+  html[data-design] .summary-page .ed-page:has(> section .summary-mistakes) {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    column-gap: var(--space-6);
+    align-items: start;
+  }
+  html[data-design] .summary-page .ed-page:has(> section .summary-mistakes) > * { grid-column: 1 / -1; min-width: 0; }
+  html[data-design] .summary-page .ed-page > section:has(.summary-table) { grid-column: 1; }
+  html[data-design] .summary-page .ed-page > section:has(.summary-mistakes) { grid-column: 2; }
+  html[data-design] .summary-page .ed-page > section.summary-recommendations { grid-column: 1; }
+}
+
+/* Ультраширокие (>=1680px): одна колонка опций с капом 60rem оставляла мёртвую
+   зону между вариантами и рейкой — раскладываем MCQ-варианты парами (2×2, как
+   экзаменационный бланк). Каждый label — самодостаточная карточка; буквенный
+   CSS-счётчик идёт по DOM (A B / C D по строкам), клавиши 1–9 не затронуты.
+   На result-странице (/answer) НЕ применяем: там варианты с раскрытыми
+   объяснениями — их удобнее сравнивать вертикальным сканом. */
+@media (min-width: 1680px) {
+  html[data-design] .focus-page #interview-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+    max-width: none;
+  }
 }
 
 /* Печать / сохранение в PDF: прячем навигацию/кнопки/хром, лист — чистый.

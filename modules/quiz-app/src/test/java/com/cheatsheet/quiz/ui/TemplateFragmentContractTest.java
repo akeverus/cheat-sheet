@@ -29,7 +29,9 @@ class TemplateFragmentContractTest {
         assertThat(trainingActions).contains("class=\"keyboard-hint\"");
         assertThat(trainingActions).contains("aria-live=\"polite\"");
         assertThat(trainingActions).contains("id=\"next-question\"");
-        assertThat(trainingActions).contains("aria-keyshortcuts=\"Enter Space\"");
+        // Кнопки активируются Enter (Space — нативное поведение <button>, в
+        // aria-keyshortcuts не дублируется).
+        assertThat(trainingActions).contains("aria-keyshortcuts=\"Enter\"");
 
         assertThat(resultZoneHead).contains("data-ui-fragment=\"result-zone-head\"");
         assertThat(resultZoneHead).contains("result-zone-head");
@@ -37,7 +39,10 @@ class TemplateFragmentContractTest {
         assertThat(postAnswerControls).contains("data-ui-fragment=\"post-answer-controls\"");
         assertThat(postAnswerControls).contains("id=\"result-feedback\"");
         assertThat(postAnswerControls).contains("aria-atomic=\"true\"");
-        assertThat(postAnswerControls).contains("aria-controls=\"result-feedback\"");
+        // Кнопка «доп. анализ» раскрывает sink #extra-analysis-content,
+        // стоящий ПОСЛЕ неё (appendAnalysisBlock складывает блоки под кнопку).
+        assertThat(postAnswerControls).contains("aria-controls=\"extra-analysis-content\"");
+        assertThat(postAnswerControls).contains("id=\"extra-analysis-content\"");
 
         assertThat(inlineAlert).contains("data-ui-fragment=\"inline-alert\"");
         assertThat(inlineAlert).contains("role=\"alert\"");
@@ -84,7 +89,9 @@ class TemplateFragmentContractTest {
         assertThat(focusTraining).contains("th:if=\"${!generationUnavailable and !reviewMode and interviewSession != null and !interviewSession.finished}\"");
         assertThat(focusTraining).contains("th:if=\"${!generationUnavailable and !reviewMode and interviewSession != null and interviewSession.finished}\"");
         assertThat(focusTraining).contains("Сессия запущена, но вопрос пока недоступен. Попробуй обновить тренировку.");
-        assertThat(focusTraining).contains("🏁 Сессия завершена.");
+        // Эмодзи 🏁 заменён монохромной Lucide-иконкой #i-flag (система иконок).
+        assertThat(focusTraining).contains("#i-flag");
+        assertThat(focusTraining).contains("Сессия завершена.");
         assertThat(focusTraining).doesNotContain("chipText='Результат'");
         assertThat(focusTraining).doesNotContain("extraButtonText='Подробнее'");
         assertThat(focusTraining).contains("empty-action-settings");
@@ -125,10 +132,13 @@ class TemplateFragmentContractTest {
     @Test
     void statsTemplateKeepsSortableLiveRegionAccessibilityContract() throws IOException {
         String stats = readTemplate("templates/stats.html");
+        String statsJs = readTemplate("static/js/stats.js");
         assertThat(stats).contains("id=\"table-sort-status\"");
         assertThat(stats).contains("aria-live=\"polite\"");
         assertThat(stats).contains("aria-atomic=\"true\"");
-        assertThat(stats).contains("aria-keyshortcuts=\"Enter Space\"");
+        // aria-keyshortcuts сортируемым th проставляет stats.js (прогрессивное
+        // улучшение: без JS сортировки нет — атрибут в шаблоне был бы враньём).
+        assertThat(statsJs).contains("aria-keyshortcuts', 'Enter Space'");
         assertThat(stats).contains("role=\"columnheader\"");
         assertThat(stats).contains("id=\"topicProgressChartFallback\"");
         assertThat(stats).contains("id=\"topicAccuracyChartFallback\"");
@@ -145,12 +155,14 @@ class TemplateFragmentContractTest {
         // (2) файл самодостаточен (bare-reset + порт утилит после сноса styles.css).
         String css = readTemplate("static/css/editorial.css");
 
-        assertThat(css).contains("html[data-design=\"editorial\"] .focus-page");
-        assertThat(css).contains("html[data-design=\"editorial\"] .result-page");
-        assertThat(css).contains("html[data-design=\"editorial\"] .stats-page");
-        assertThat(css).contains("html[data-design=\"editorial\"] .settings-page");
-        assertThat(css).contains("html[data-design=\"editorial\"] .summary-page");
-        assertThat(css).contains("html[data-design=\"editorial\"] .error-page");
+        // Мульти-дизайн: структурные правила скоупятся НЕЙТРАЛЬНЫМ html[data-design]
+        // (работают под editorial/swiss/linear/broadsheet; оверлеи задают только токены).
+        assertThat(css).contains("html[data-design] .focus-page");
+        assertThat(css).contains("html[data-design] .result-page");
+        assertThat(css).contains("html[data-design] .stats-page");
+        assertThat(css).contains("html[data-design] .settings-page");
+        assertThat(css).contains("html[data-design] .summary-page");
+        assertThat(css).contains("html[data-design] .error-page");
 
         // Самодостаточность: глобальный reset + утилиты, на которые опираются шаблоны.
         assertThat(css).contains("box-sizing: border-box");

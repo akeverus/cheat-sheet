@@ -7,6 +7,11 @@
 
 <main id="main-content" class="ed-page">
     <section class="focus-training" th:if="${current != null}">
+        <!-- Сессионная рейка: фолио-прогресс + трек + «сегодня»-чип. На узких экранах
+             aside не стилизуется (обычный блок — стек как раньше); на >=1200px CSS
+             уводит её в правую sticky-колонку (см. editorial.css, WIDE LAYOUT).
+             DOM-порядок блоков внутри не менялся — только нестинг. -->
+        <aside class="focus-session-rail" aria-label="Сессия">
         <div class="focus-progress-line">
             <span th:if="${interviewSession != null}">
                 <span class="session-progress" th:text="${interviewSession.getIndex() + 1}">1</span>/<span th:text="${interviewSession.getTotal()}">1</span>
@@ -23,6 +28,7 @@
 
         <!-- Компактный «сегодня»-чип: стрик (🔥) + due. Информативный, без CTA. -->
         <div th:replace="~{fragments/today-widget :: today-chip(stats=${stats})}"></div>
+        </aside>
 
         <div class="question-zone-head">
             <span class="zone-chip" th:text="${focusModeChipText}">Focus mode</span>
