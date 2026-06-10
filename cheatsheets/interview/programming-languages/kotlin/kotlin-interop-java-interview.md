@@ -406,7 +406,7 @@ val nick = userService.nickname               // String! — platform type
 
 **Из `Kotlin` в `Java`:** обратное направление работает автоматически — компилятор `Kotlin` сам проставляет `@NotNull`/`@Nullable` в байткод для всех параметров и возвращаемых типов. Поэтому `Java`-IDE (IntelliJ, Eclipse) подсвечивают передачу `null` в `Kotlin`-метод с non-null параметром ещё до запуска.
 
-**Строгий режим (`-Xjsr305=strict`):** по умолчанию неаннотированный `Java`-тип остаётся platform type — компилятор молчит. В strict-режиме он трактует такие типы как nullable, заставляя явно обрабатывать `null`. Это строже и неудобнее, но защищает от скрытых NPE на границе языков.
+**Строгий режим (`-Xjsr305=strict`):** флаг управляет только тем, насколько строго компилятор реагирует на JSR-305-аннотации — включая default-квалификаторы вроде `@ParametersAreNonnullByDefault`, которые задают nullability сразу для всего пакета/класса. По умолчанию нарушение таких контрактов — warning, в strict-режиме — ошибка компиляции. Важный нюанс: типы вообще без аннотаций флаг не трогает — они как были, так и остаются platform types.
 
 ## Q8. Как в `Kotlin` объявить API, чтобы из `Java` были видны корректные nullability-контракты?
 
@@ -416,7 +416,7 @@ val nick = userService.nickname               // String! — platform type
 - Параметр `name: String?` → `@Nullable String name` в байткоде
 - Возвращаемый тип `String` → `@NotNull String` + runtime-проверка
 
-Контракт не только декларативный, но и защищён в runtime: если `Java`-код передаст `null` в non-null параметр, `Kotlin` выбросит `IllegalArgumentException` **прямо на входе в метод**, а не отложенно при первом разыменовании. Эту проверку компилятор вставляет автоматически.
+Контракт не только декларативный, но и защищён в runtime: если `Java`-код передаст `null` в non-null параметр, `Kotlin` выбросит `NullPointerException` **прямо на входе в метод**, а не отложенно при первом разыменовании (до Kotlin 1.4 бросался `IllegalArgumentException`). Эту проверку компилятор вставляет автоматически.
 
 ```kotlin
 // Kotlin
@@ -425,7 +425,7 @@ fun process(name: String): String = name.uppercase()
 
 ```java
 // Java — при вызове process(null) немедленно выбросит:
-// IllegalArgumentException: Parameter specified as non-null is null
+// NullPointerException: Parameter specified as non-null is null
 UserKt.process(null);
 ```
 
@@ -636,26 +636,23 @@ void copy(Source<? extends Object> from, Sink<? super Object> to)
 
 ## Q15. Когда нужны `@JvmSuppressWildcards` и `@JvmWildcard`?
 
-Поскольку у `Java` нет declaration-site variance, `Kotlin`-компилятору приходится переводить свои `out T`/`in T` в `Java`-сигнатурах через wildcards (`? extends T` / `? super T`). Обычно это правильно, но иногда лишний wildcard ломает код, который ожидает точный тип. Эти две аннотации дают ручное управление переводом.
+Поскольку у `Java` нет declaration-site variance, `Kotlin`-компилятору приходится переводить свои `out T`/`in T` в `Java`-сигнатурах через wildcards (`? extends T` / `? super T`). Важно: автоматически это происходит только **в позициях параметров** — в return-типах wildcards по умолчанию не генерируются (чтобы не заставлять `Java`-клиентов с ними возиться). Обычно перевод правильный, но иногда лишний wildcard ломает код, который ожидает точный тип. Эти две аннотации дают ручное управление переводом.
 
 **`@JvmSuppressWildcards`** — убирает автоматический wildcard, оставляя точный тип:
 
 ```kotlin
-// Kotlin
-interface Repository<out T> {
-    fun getAll(): List<T>
-}
+// Kotlin: обработчики приходят параметром конструктора
+class Dispatcher(private val handlers: List<Handler>) { /* ... */ }
 
-// Java видит: List<? extends T> getAll() — лишний wildcard
+// Java видит конструктор: Dispatcher(List<? extends Handler> handlers) — лишний wildcard
 // С аннотацией:
-interface Repository<out T> {
-    fun getAll(): List<@JvmSuppressWildcards T>
-}
-// Java видит: List<T> getAll() — чисто
+class Dispatcher(private val handlers: List<@JvmSuppressWildcards Handler>) { /* ... */ }
+// Java видит: Dispatcher(List<Handler> handlers) — точный тип
 ```
 
 Когда это спасает:
 - DI-фреймворки (Dagger, Guice) сопоставляют типы буквально и не видят `List<? extends Foo>` как `List<Foo>` — инъекция падает
+- `suspend`-функции: их результат уезжает в скрытый параметр `Continuation`, поэтому wildcard появляется даже у «return-типа» — отсюда привычный `@JvmSuppressWildcards` на возвратах `suspend`-методов в Retrofit
 - библиотечные API, где один wildcard тянет за собой каскад wildcards по всему `Java`-коду клиента
 
 **`@JvmWildcard`** — обратная аннотация: добавляет wildcard там, где `Kotlin` по умолчанию его не ставит:
@@ -1261,7 +1258,7 @@ val upper = name?.uppercase() ?: "UNKNOWN"
 |-----------|---------------|
 | **Явные типы** | Всегда указывать тип при получении значения из Java API |
 | **Аннотировать Java-код** | Добавить `@NotNull`/`@Nullable` в Java-источник |
-| **JSR-305 strict mode** | `-Xjsr305=strict` в kotlinc — все Java-типы без аннотаций трактуются как nullable |
+| **JSR-305 strict mode** | `-Xjsr305=strict` в kotlinc — нарушения JSR-305-аннотаций (включая default-квалификаторы вроде `@ParametersAreNonnullByDefault`) становятся ошибками компиляции, а не warnings. Типы без аннотаций остаются platform types |
 | **Defensive programming** | `requireNotNull()`, `checkNotNull()` на границе Java/Kotlin |
 | **Обёртки** | Создавать Kotlin-обёртки над Java API с явными nullability-контрактами |
 
@@ -1273,8 +1270,10 @@ tasks.withType<KotlinCompile> {
     }
 }
 
-// Теперь все неаннотированные Java-типы → nullable
-val name: String = service.getName() // Ошибка: нужен String?
+// Теперь нарушения JSR-305-контрактов — ошибки компиляции, а не warnings.
+// Если пакет помечен @ParametersAreNonnullByDefault, передача null станет ошибкой.
+// Но типы без аннотаций по-прежнему platform types:
+val name = service.getName() // String! — как и без флага
 ```
 
 **Рекомендация для фасадного слоя:**
@@ -1292,7 +1291,7 @@ class UserServiceAdapter(private val javaService: JavaUserService) {
 
 ## Q31. Почему `inline`-функции недоступны из `Java` и как это обойти?
 
-Потому что вызывать нечего: тело `inline`-функции компилятор подставляет (inlines) прямо в место вызова, и отдельного метода с такой сигнатурой в байткоде просто не остаётся. `Java` не умеет inlining, поэтому сослаться ему не на что — функция для него «не существует».
+Формулировка «недоступны» требует уточнения. Компилятор **всегда** оставляет в байткоде обычную (не-inline) версию `inline`-функции — и из `Java` она вызываема как обычный метод, просто без инлайнинга: лямбда-параметры придётся передавать объектами `Function0`/`Function1`. Реально недоступны из `Java` только функции с `reified`-параметрами: их не-inline версия не может узнать конкретный тип `T`, поэтому осмысленный вызов возможен лишь через инлайнинг, которого `Java` не умеет.
 
 ```kotlin
 // Kotlin
@@ -1326,12 +1325,12 @@ object JsonUtils {
 }
 ```
 
-**Другие ограничения `inline`-функций из `Java`:**
-- `crossinline`-лямбды — недоступны, т.к. требуют inlining
-- `noinline`-параметры — доступны, т.к. это обычные объекты
-- Функции с `inline`-параметрами без `reified` — **могут** быть вызваны из `Java`, но только если компилятор оставил не-inline версию
+**Что в итоге доступно из `Java`:**
+- Обычные `inline`-функции (в т.ч. с лямбда-параметрами, `noinline`, `crossinline`) — **вызываемы**: не-inline версия всегда лежит в байткоде, лямбды передаются как объекты `Function0`/`Function1`
+- Функции с `reified`-параметрами — **недоступны**: без инлайнинга тип `T` взять неоткуда
+- Инлайнинга при вызове из `Java` не происходит никогда — теряется только оптимизация, а не сама функция
 
-**Рекомендация:** проектируя публичное API, которое будет вызываться из `Java`, избегайте `inline`-функций в публичных сигнатурах. Предоставляйте `Java`-friendly перегрузки.
+**Рекомендация:** проектируя публичное API, которое будет вызываться из `Java`, избегайте `reified` в публичных сигнатурах и помните, что `inline`-выгоды для `Java`-клиентов не работают. Предоставляйте `Java`-friendly перегрузки с `Class<T>`.
 
 ## Q32. `Sealed classes` в `Java 17` vs `Kotlin sealed`: ключевые отличия при интеропе
 
@@ -1358,23 +1357,25 @@ sealed class NetworkResult {
 ```
 
 ```java
-// Java 21: pattern matching работает, НО без exhaustiveness-проверки
+// Java 21: pattern matching работает, но javac не видит Kotlin sealed как sealed.
+// Поэтому switch-выражение считает тип «открытым» и ТРЕБУЕТ ветку default,
+// даже когда все наследники уже перечислены:
 NetworkResult result = getResult();
 String msg = switch (result) {
     case NetworkResult.Success s -> "OK: " + s.getData();
     case NetworkResult.Failure f -> "Error: " + f.getError().getMessage();
     case NetworkResult.Loading l -> "Loading...";
-    // Java НЕ проверяет полноту — можно забыть ветку
+    default -> throw new IllegalStateException("Unexpected: " + result);
 };
 ```
 
 **Java sealed из Kotlin:**
 
 ```java
-// Java 17
-public sealed class Shape permits Circle, Rectangle {}
-public record Circle(double radius) extends Shape {}
-public record Rectangle(double w, double h) extends Shape {}
+// Java 17: record не может наследовать класс, поэтому корень иерархии — sealed interface
+public sealed interface Shape permits Circle, Rectangle {}
+public record Circle(double radius) implements Shape {}
+public record Rectangle(double w, double h) implements Shape {}
 ```
 
 ```kotlin
@@ -1412,12 +1413,13 @@ val optional: Optional<String> = javaService.findName(id)
 // Способ 1: orElse/orElseGet
 val name: String = optional.orElse("default")
 
-// Способ 2: конвертация в nullable (расширение из kotlin-stdlib)
-val name: String? = optional.orElseNull() // орNull() в некоторых версиях
-// или:
+// Способ 2: getOrNull() — расширение из kotlin-stdlib (Kotlin 1.7+),
+// import kotlin.jvm.optionals.getOrNull
+val name: String? = optional.getOrNull()
+// или вручную:
 val name: String? = if (optional.isPresent) optional.get() else null
 
-// Способ 3: через getOrNull() (не стандартное, но часто делают extension)
+// Способ 3: свой extension, если Kotlin старее 1.7
 fun <T> Optional<T>.orNull(): T? = orElse(null)
 ```
 
@@ -1442,7 +1444,7 @@ fun findUserOptional(id: Long): Optional<User> =
 
 ## Q34. Почему `Lombok` несовместим с `Kotlin` при использовании `kapt` и как это решить?
 
-Проблема — в порядке компиляции, а не в самом `Lombok`. `Lombok` генерирует код через `Java Annotation Processing API (APT)`, который запускается на стадии `javac`. Но `javac` идёт **после** `Kotlin`-компилятора, поэтому к моменту, когда `Lombok` создаст, например, метод `builder()`, `Kotlin`-код уже скомпилирован и сгенерированного метода не увидел. `kapt` (Kotlin Annotation Processing Tool) обрабатывает только `Kotlin`-файлы и `Lombok`-классы из `Java` не трогает — мостом между ними он не служит.
+Проблема — в порядке компиляции, а не в самом `Lombok`. `Lombok` генерирует код через `Java Annotation Processing API (APT)`, который запускается на стадии `javac`. Но `javac` идёт **после** `Kotlin`-компилятора, поэтому к моменту, когда `Lombok` создаст, например, метод `builder()`, `Kotlin`-код уже скомпилирован и сгенерированного метода не увидел. `kapt` (Kotlin Annotation Processing Tool) обрабатывает только `Kotlin`-файлы и `Lombok`-классы из `Java` не трогает — мостом между ними он не служит. Каноничное решение — официальный плагин компилятора `kotlin("plugin.lombok")` (с Kotlin 1.5.20): он учит `Kotlin`-компилятор понимать `Lombok`-аннотации (`@Getter`/`@Setter`, `@Data`, `@Value`, `@Builder`, конструкторные и др.) в `Java`-классах того же модуля ещё до `javac`.
 
 **Конкретные проблемы:**
 
@@ -1472,6 +1474,7 @@ val request = UserRequest.builder() // Ошибка: метод не найде�
 
 | Решение | Когда использовать |
 |---------|-------------------|
+| **Плагин `kotlin("plugin.lombok")`** | Официальный плагин компилятора (с Kotlin 1.5.20): Kotlin видит Lombok-генерируемые методы Java-классов того же модуля — первое, что стоит попробовать |
 | **Мигрировать Java → Kotlin** | Постепенная миграция, долгосрочно |
 | **Использовать `data class`** | Вместо `@Data`/`@Value` Lombok |
 | **KSP вместо kapt** | Не помогает с Lombok, но быстрее для Kotlin-only процессоров |
@@ -1608,7 +1611,7 @@ AnimalExtKt.speak(new Dog()); // "..." — тот же эффект
 
 ## Q37. `Java Optional` и Kotlin: паттерны интеграции при работе с `Spring Data`
 
-У `Spring Data` исторически `findById` возвращает `Optional<T>`, и в `Kotlin` это смотрится чужеродно. Есть два пути: либо аккуратно «приземлять» `Optional` (через `orElseThrow`/`orElse(null)`/свой `orNull()`), либо вообще от него уйти — объявлять методы репозитория с nullable-возвратом, который `Spring Data` понимает нативно (см. ниже). Второй путь идиоматичнее.
+У `Spring Data` исторически `findById` возвращает `Optional<T>`, и в `Kotlin` это смотрится чужеродно. Есть два пути: либо аккуратно «приземлять» `Optional` (через `orElseThrow`/`orElse(null)`/`getOrNull()` из kotlin-stdlib), либо вообще от него уйти — объявлять методы репозитория с nullable-возвратом, который `Spring Data` понимает нативно (см. ниже). Второй путь идиоматичнее.
 
 ```kotlin
 // Repository возвращает Optional<User>
@@ -1625,11 +1628,12 @@ class UserService(private val repo: UserRepository) {
     // Стиль 2: orElse с nullable
     fun findUser(id: Long): User? = repo.findById(id).orElse(null)
 
-    // Стиль 3: Kotlin-идиоматичный findById через расширение
-    fun findUserKotlin(id: Long): User? = repo.findById(id).orNull()
+    // Стиль 3: Kotlin-идиоматичный findById — getOrNull() из kotlin-stdlib (1.7+),
+    // import kotlin.jvm.optionals.getOrNull
+    fun findUserKotlin(id: Long): User? = repo.findById(id).getOrNull()
 }
 
-// Расширение для удобства (kotlin-stdlib не содержит orNull для Optional):
+// До Kotlin 1.7 такого хелпера в stdlib не было — писали свой extension:
 fun <T> Optional<T>.orNull(): T? = orElse(null)
 ```
 
@@ -1666,12 +1670,13 @@ fun copyBoxes(source: Box<String>): Box<Any> = source // OK — out-ковари
 ```
 
 ```java
-// Java видит:
-// Box<String> → Box<? extends String> НЕТ, точнее:
-// Kotlin out T компилируется: Box<String> присваивается Box<Object>
-// через производство правильных wildcards в сигнатурах методов
+// Как это видит Java: сам тип остаётся Box<String> — Java не знает
+// про declaration-site variance. Но там, где Box<out T> встречается
+// в позиции параметра, Kotlin-компилятор сам генерирует wildcards
+// в Java-сигнатурах: Box<T> → Box<? extends T>. В return-типах
+// wildcards по умолчанию НЕ генерируются — для этого есть @JvmWildcard
 
-void processBox(Box<? extends Object> box) {} // Java-сигнатура функции принимающей Box<out T>
+void processBox(Box<? extends Object> box) {} // Java-сигнатура функции, принимающей Box<out T>
 ```
 
 **Практическая проблема: DI-фреймворки и wildcards:**
@@ -1710,7 +1715,7 @@ fun printAll(list: List<*>) { // List<*> в Kotlin
 printAll(new ArrayList<String>());
 ```
 
-**Реварианс (invariance) на практике:**
+**Инвариантность (invariance) на практике:**
 
 ```kotlin
 // Kotlin MutableList инвариантен — как Java List

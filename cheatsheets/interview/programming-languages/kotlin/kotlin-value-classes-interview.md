@@ -71,15 +71,15 @@ val email = Email("alice@example.com")
 
 ## Q2. Чем value class отличается от data class?
 
-**Коротко:** оба автогенерируют `equals`/`hashCode`/`copy`/`toString`, но решают разные задачи. `data class` — это «контейнер для группы полей», он всегда живёт как отдельный объект в куче. `value class` — это «тип-обёртка вокруг ровно одного значения», и в большинстве сценариев он вообще не создаёт объект (значение инлайнится). Грубо: `data class` про удобство хранения данных, `value class` про дешёвую типобезопасность.
+**Коротко:** оба автогенерируют `equals`/`hashCode`/`toString`, но решают разные задачи (а вот `copy()` и `componentN()` — только `data class`). `data class` — это «контейнер для группы полей», он всегда живёт как отдельный объект в куче. `value class` — это «тип-обёртка вокруг ровно одного значения», и в большинстве сценариев он вообще не создаёт объект (значение инлайнится). Грубо: `data class` про удобство хранения данных, `value class` про дешёвую типобезопасность.
 
 | Критерий | data class | value class |
 |----------|-----------|-------------|
 | Количество полей | Любое | Ровно одно (в stable Kotlin) |
 | Представление в памяти | Отдельный объект | Inlined — underlying-значение |
 | `equals/hashCode` | Автогенерация по всем полям | Автогенерация по единственному полю |
-| `copy()` | Да | Да |
-| Destructuring | Да | Да (для одного значения) |
+| `copy()` | Да | Нет — компилятор генерирует только `equals`/`hashCode`/`toString` |
+| Destructuring | Да | Нет — `componentN()` не генерируется |
 | Наследование | Только от интерфейсов | Только от интерфейсов |
 | Overhead | Выделение объекта в куче | Обычно 0 (inline) |
 
@@ -125,7 +125,7 @@ fun isFreezing(temp: Celsius) = temp.value <= 0.0
 1. **Через интерфейс.** Когда `value class` передаётся как реализация интерфейса — нужен настоящий объект с таблицей методов.
 2. **В коллекциях.** `List<UserId>` хранит `Object`-ссылки, поэтому каждый `UserId` упаковывается в объект (boxing), а при доступе — распаковывается.
 3. **В generic-позициях.** Дженерики на JVM работают только со ссылочными типами, примитив туда не положить — снова бокс.
-4. **Nullable.** `UserId?` обязан уметь хранить `null`, а у примитива `null` нет — значит, бокс.
+4. **Nullable.** Если underlying — примитив (`Int`, `Double`), то `UserId?` боксится: у примитива `null` нет. Но для ссылочного underlying есть нюанс: `UserId?` на базе `String` может представляться как `String?` без боксинга — `null` помещается прямо в ссылку. Бокс становится обязательным, когда nullable сам underlying-тип (например, `value class W(val v: String?)`): иначе `W(null)` и `null` были бы неотличимы.
 
 Общий принцип: инлайнинг живёт, пока тип используется напрямую как «плоское» значение; как только требуется ссылка на объект (полиморфизм, дженерик, `null`), компилятор вынужден создать обёртку, и выигрыш теряется.
 
@@ -190,6 +190,8 @@ value class UserId(val value: String) {
 }
 ```
 
+6. **Запрещено сравнение по ссылке (`===`).** У `value class` нет стабильной идентичности: объекта в рантайме может вообще не быть, а при боксинге он создаётся заново. Поэтому компилятор запрещает `===` для value-типов — работает только структурное `==`. Частый follow-up на собеседовании: «а что вернёт `===`?» — ответ: «оно не скомпилируется».
+
 ## Q5. Как value class работает с интерфейсами?
 
 **Коротко:** `value class` может реализовывать интерфейсы, но как только вы используете его *через* тип интерфейса, инлайнинг отключается и значение упаковывается в реальный объект (`boxing`). Причина: переменная типа `Identifier` хранит ссылку с виртуальной таблицей методов, а «плоское» underlying-значение такой ссылкой быть не может.
@@ -210,7 +212,7 @@ val uid = UserId("user-1")
 describe(uid)  // здесь uid УПАКОВЫВАЕТСЯ в объект Identifier
 ```
 
-В вызове `describe(uid)` `uid` поднимается из плоского `String` в объект `Identifier` — это и есть `boxing`, ради которого `value class` обычно и заводят, чтобы его избежать.
+В вызове `describe(uid)` `uid` поднимается из плоского `String` в объект `Identifier` — происходит `boxing`. Это ровно та аллокация, ради избавления от которой `value class` обычно и заводят: парадокс в том, что интерфейс возвращает её обратно.
 
 **Рекомендация:** если важна производительность горячего пути — не гоняйте `value class` через интерфейсы. Интерфейс уместен, когда типобезопасность важнее, чем экономия на аллокации.
 
@@ -247,27 +249,30 @@ process(UserId(orderId.value))  // явное преобразование
 
 **Коротко:** ни JPA, ни Jackson не знают про `value class` из коробки, потому что для них это «незнакомый» тип, а не примитив. Поэтому на каждой границе с инфраструктурой нужен мост: для БД — JPA `AttributeConverter` (обёртка ↔ колонка), для JSON — корректная (де)сериализация. С `KotlinModule` Jackson часто справляется с `value class` сам, но для нетривиальных случаев пишут custom-сериализатор.
 
-JPA-конвертер: разворачивает `OrderId` в `Long` при записи и заворачивает обратно при чтении.
+JPA-конвертер: разворачивает `CustomerId` в `Long` при записи и заворачивает обратно при чтении. Важная оговорка: спецификация JPA **запрещает** применять `AttributeConverter` к `@Id`-, `@Version`- и relationship-атрибутам — поэтому конвертер висит на обычном поле (`customerId`), а идентификатор сущности остаётся «голым» `Long`.
 
 ```kotlin
 @JvmInline
 value class OrderId(val value: Long)
 
+@JvmInline
+value class CustomerId(val value: Long)
+
 @Entity
 class Order(
     @Id @GeneratedValue
-    @Convert(converter = OrderIdConverter::class)
-    val id: OrderId,
-    val customerId: String
+    val id: Long,  // @Convert на @Id запрещён спецификацией JPA
+    @Convert(converter = CustomerIdConverter::class)
+    val customerId: CustomerId
 )
 
 @Converter(autoApply = false)
-class OrderIdConverter : AttributeConverter<OrderId, Long> {
-    override fun convertToDatabaseColumn(attribute: OrderId?): Long? =
+class CustomerIdConverter : AttributeConverter<CustomerId, Long> {
+    override fun convertToDatabaseColumn(attribute: CustomerId?): Long? =
         attribute?.value
 
-    override fun convertToEntityAttribute(dbData: Long?): OrderId? =
-        dbData?.let { OrderId(it) }
+    override fun convertToEntityAttribute(dbData: Long?): CustomerId? =
+        dbData?.let { CustomerId(it) }
 }
 ```
 
@@ -352,7 +357,7 @@ fun connect(ip: IpAddress, port: Int) { }
 | Immutability | Да (только `val`) | Да (final поля) |
 | equals/hashCode | Автогенерация | Автогенерация |
 | Наследование | Только от интерфейса | Только `Record` + интерфейсы |
-| Destructuring | componentN() | нет (есть pattern matching с Java 21) |
+| Destructuring | Нет — `componentN()` не генерируется | нет (есть pattern matching с Java 21) |
 | Основная цель | Type-safe обёртки без overhead | Compact immutable data carriers |
 
 **Совместимость**: можно использовать оба в одном проекте.

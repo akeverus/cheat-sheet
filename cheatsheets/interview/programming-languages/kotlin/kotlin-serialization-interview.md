@@ -204,7 +204,7 @@ data class User(val id: Int, val name: String, val email: String? = null)
 | Пары | `Pair<A, B>`, `Triple<A, B, C>` |
 | Специальные | `Unit`, `Duration` (с Kotlin 1.7.20+) |
 
-**Чего нет из коробки** (и почему): JVM-специфичные типы `java.time.*` (`LocalDate`, `Instant`), `java.util.UUID`, `java.util.Date`, `BigDecimal`, `BigInteger`, а также `Any` и `Nothing`. Причина та же мультиплатформенность: библиотека не может опираться на классы, которых нет на Native/JS. Для них пишут `KSerializer` или подключают контекстную сериализацию (см. [Q12](#q12), [Q15](#q15)).
+**Чего нет из коробки** (и почему): JVM-специфичные типы `java.time.*` (`LocalDate`, `Instant`), `java.util.UUID`, `java.util.Date`, `BigDecimal`, `BigInteger`, а также `Any` и `Nothing`. Причина та же мультиплатформенность: библиотека не может опираться на классы, которых нет на Native/JS. Для них пишут `KSerializer` или подключают контекстную сериализацию (см. [Q12](#q12), [Q15](#q15)). Для дат есть и третий путь — мультиплатформенная библиотека `kotlinx-datetime`: её `Instant`, `LocalDate`, `LocalDateTime` поставляются с готовыми сериализаторами и работают в `@Serializable`-моделях без ручного кода.
 
 ## Q5. (!) Какие параметры конфигурации Json существуют и когда их использовать?
 
@@ -339,7 +339,7 @@ enum class Status {
 // Сериализуется как "active", "inactive", "pending_review"
 ```
 
-**Главная ценность** — обратная совместимость. `@SerialName` перебивает `JsonNamingStrategy`, поэтому при рефакторинге свойства в коде можно сохранить старый JSON-ключ и не сломать ни клиентов, ни уже сохранённые данные.
+**Главная ценность** — обратная совместимость. `@SerialName` перебивает `JsonNamingStrategy`, поэтому при рефакторинге свойства в коде можно сохранить старый JSON-ключ и не сломать ни клиентов, ни уже сохранённые данные. А если при миграции схемы нужно читать и старый, и новый ключ одновременно, поле дополняют JSON-специфичной аннотацией `@JsonNames("old_key")`: альтернативные имена принимаются при десериализации, запись же всегда идёт в основное имя (см. [Q39](#q39)).
 
 ## Q9. Как исключить поле из сериализации с помощью @Transient?
 
@@ -481,6 +481,8 @@ data class Order(
 ```
 
 **Альтернатива** — контекстная сериализация (`@Contextual`): сериализатор регистрируется один раз в `SerializersModule` и не привязан к файлу. Это удобнее, когда тип даты встречается во многих файлах или его формат должен зависеть от настроек приложения (см. [Q15](#q15)).
+
+**Альтернатива без ручных сериализаторов** — `kotlinx-datetime`. Мультиплатформенные `kotlinx.datetime.Instant`/`LocalDate`/`LocalDateTime` из этой библиотеки идут с готовыми сериализаторами (ISO-8601 по умолчанию), их можно использовать в `@Serializable`-моделях напрямую. В новых KMP-проектах часто выгоднее заменить `java.time` на `kotlinx-datetime`, чем поддерживать собственный набор `KSerializer`.
 
 ## Q14. Как написать делегирующий сериализатор (surrogate)?
 
@@ -1042,9 +1044,11 @@ graph TD
 | **Экосистема** | Kotlin-first, интеграция с Ktor | Огромная экосистема, Spring Boot default |
 | **Кастомизация** | `KSerializer`, `SerializersModule` | `@JsonDeserialize`, `ObjectMapper`, модули |
 | **Аннотации** | `@Serializable`, `@SerialName`, `@Transient` | `@JsonProperty`, `@JsonIgnore`, `@JsonCreator` |
-| **Стриминг** | Нет (в памяти) | `JsonParser`/`JsonGenerator` для стриминга |
+| **Стриминг** | Частичный: на JVM `decodeFromStream`/`encodeToStream`, `decodeToSequence` | Полный: `JsonParser`/`JsonGenerator` |
 
-**Когда выбирать Jackson:** Spring Boot проект (Jackson по умолчанию), нужен XML/YAML, нужен streaming больших файлов, legacy Java-код.
+**Уточнение про стриминг.** «kotlinx не умеет стримить» — устаревшее утверждение: на JVM у `Json` есть расширения `decodeFromStream`/`encodeToStream` для работы с `InputStream`/`OutputStream`, а `decodeToSequence` лениво читает большой JSON-массив элемент за элементом, не поднимая весь файл в память. Но это JVM-only и экспериментальный API; низкоуровневой событийной модели уровня `JsonParser`/`JsonGenerator` у kotlinx нет — для токен-стриминга Jackson по-прежнему сильнее.
+
+**Когда выбирать Jackson:** Spring Boot проект (Jackson по умолчанию), нужен XML/YAML, нужен низкоуровневый токен-стриминг больших файлов, legacy Java-код.
 
 **Когда выбирать kotlinx.serialization:** Kotlin Multiplatform, Ktor, максимальная типобезопасность, отсутствие рефлексии, новый Kotlin-проект.
 
@@ -1225,6 +1229,9 @@ val json2 = Json.decodeFromString<Product>("""{"name":"Item","quantity":"5"}""")
 
 ```kotlin
 // Пример 2: API оборачивает данные в {"data": {...}} — разворачиваем
+@Serializable
+data class User(val id: Long, val name: String)
+
 object UnwrapDataSerializer : JsonTransformingSerializer<User>(User.serializer()) {
     override fun transformDeserialize(element: JsonElement): JsonElement {
         return element.jsonObject["data"] ?: element
@@ -1235,13 +1242,12 @@ object UnwrapDataSerializer : JsonTransformingSerializer<User>(User.serializer()
     }
 }
 
-@Serializable(with = UnwrapDataSerializer::class)
-@Serializable
-data class User(val id: Long, val name: String)
-
 // {"data":{"id":1,"name":"Alice"}} → User(id=1, name="Alice")
-val user = Json.decodeFromString<User>("""{"data":{"id":1,"name":"Alice"}}""")
+// Трансформирующий сериализатор передаётся в точке вызова:
+val user = Json.decodeFromString(UnwrapDataSerializer, """{"data":{"id":1,"name":"Alice"}}""")
 ```
+
+**Почему нельзя повесить `@Serializable(with = UnwrapDataSerializer::class)` на сам класс `User`.** Во-первых, `@Serializable` — не repeatable-аннотация: «голая» версия (для генерации плагином) и версия с `with = ...` на одном классе не уживутся, код просто не скомпилируется. Во-вторых, даже одиночная `@Serializable(with = ...)` ломает делегирование: `User.serializer()` начнёт возвращать сам `UnwrapDataSerializer`, и конструктор `JsonTransformingSerializer<User>(User.serializer())` сделает делегирование в самого себя — бесконечная рекурсия (`StackOverflowError`). Поэтому трансформирующий сериализатор либо передают явно в точке вызова (`Json.decodeFromString(UnwrapDataSerializer, ...)`), либо вешают на конкретное **поле** через `@Serializable(with = ...)`, как в примере 1.
 
 **Когда использовать:**
 - Нормализация форматов входящих данных (строка/число/массив-с-одним-элементом)
@@ -1339,7 +1345,7 @@ class WebFluxConfig : WebFluxConfigurer {
 
 В одном Spring Boot-приложении `Jackson` и `kotlinx.serialization` спокойно сосуществуют: Spring выбирает конвертер по классу. Для `@Serializable`-моделей берётся kotlinx-конвертер (если он зарегистрирован выше в списке), для остальных — Jackson как fallback. Важно лишь правильно расставить приоритеты и понимать, где границы совместимости.
 
-**Автоконфигурация Spring Boot:**
+**Зависимости:**
 
 ```kotlin
 // build.gradle.kts
@@ -1350,13 +1356,7 @@ implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.x")
 implementation("org.springframework.boot:spring-boot-starter-webflux")
 ```
 
-```yaml
-# application.yml — переключение между конвертерами
-spring:
-  mvc:
-    converters:
-      preferred-json-mapper: kotlinx-serialization  # или jackson (default)
-```
+Свойство `spring.mvc.converters.preferred-json-mapper` здесь не помощник: Spring Boot документирует для него только значения `jackson`, `gson` и `jsonb`. Надёжный путь один — явно зарегистрировать `KotlinSerializationJsonHttpMessageConverter` первым в списке конвертеров, как в [Q37](#q37):
 
 **Явная конфигурация MVC:**
 
@@ -1434,20 +1434,23 @@ data class UserDto(
 data class OrderDto(
     val id: Long,
 
-    // Старое API использовало "total_price", новое — "amount"
-    // При десериализации читаем "amount" (новое имя)
+    // Старое API использовало "total_price", новое — "amount".
+    // @SerialName задаёт основное имя (для записи и чтения),
+    // @JsonNames добавляет альтернативные имена — только для чтения
     @SerialName("amount")
+    @JsonNames("total_price")
     val totalPrice: Double,  // Kotlin-имя может остаться старым
 
-    // Сложнее: поддержка ОБОИХ имён — требует кастомного сериализатора
     val status: String
 )
 ```
 
-**Поддержка нескольких имён через кастомный сериализатор:**
+**Штатное решение для двух имён — `@JsonNames`.** Аннотация из `kotlinx.serialization.json` перечисляет альтернативные имена, которые принимаются **только при десериализации**; сериализация всегда идёт в основное имя (`@SerialName` или имя свойства). Поддержка альтернативных имён включена по умолчанию (`useAlternativeNames = true` в конфиге `Json`). Кастомный сериализатор ради простого переименования не нужен.
+
+**`JsonTransformingSerializer` — только для сложных трансформаций.** Когда альтернативным именем не обойтись (старое поле имело другой формат, значение нужно склеить или разнести по нескольким ключам), подключают трансформирующий сериализатор:
 
 ```kotlin
-// Для поддержки как "total_price", так и "amount":
+// Пример сложного случая: переименование с дополнительной логикой
 object FlexibleAmountSerializer : JsonTransformingSerializer<OrderDto>(OrderDto.serializer()) {
     override fun transformDeserialize(element: JsonElement): JsonElement {
         val obj = element.jsonObject.toMutableMap()
@@ -1477,7 +1480,7 @@ sealed class Event {
 // JSON: {"type": "user_registered", "userId": 42}
 ```
 
-**Практическая ценность:** `@SerialName` — основной инструмент для стабильных JSON-контрактов. Даже если Kotlin-имя поля меняется при рефакторинге, JSON-схема остаётся неизменной.
+**Практическая ценность:** `@SerialName` — основной инструмент для стабильных JSON-контрактов: даже если Kotlin-имя поля меняется при рефакторинге, JSON-схема остаётся неизменной. А `@JsonNames` закрывает переходный период миграции, когда во входящих данных встречаются и старое, и новое имя.
 
 ## Q40. Полиморфная сериализация — @Polymorphic, sealed classes, discriminator
 
@@ -1717,7 +1720,7 @@ val json = Json {
     coerceInputValues = true
 
     // Не включать поля с дефолтными значениями при сериализации
-    encodeDefaults = false  // по умолчанию true
+    encodeDefaults = false  // по умолчанию false (здесь — для наглядности)
 
     // Явно включать null значения в JSON
     explicitNulls = true    // по умолчанию true
@@ -1732,15 +1735,15 @@ data class Patch(val name: String? = null, val age: Int? = null)
 
 val patch = Patch(name = "Alice")  // age остаётся null
 
-// encodeDefaults = true, explicitNulls = true (по умолчанию):
-Json.encodeToString(patch)  // {"name": "Alice", "age": null}
-
-// encodeDefaults = false:
-Json { encodeDefaults = false }.encodeToString(patch)  // {"name": "Alice"}
+// Дефолтный конфиг (encodeDefaults = false, explicitNulls = true):
+Json.encodeToString(patch)  // {"name": "Alice"} — age опущен: равен default (null)
 // Проблема: нельзя отличить "поле не передано" от "поле = null"
 
+// encodeDefaults = true — default-поля кодируются, null пишется явно:
+Json { encodeDefaults = true }.encodeToString(patch)  // {"name": "Alice", "age": null}
+
 // Правильное решение для PATCH — явно передавать null:
-// encodeDefaults = true + explicitNulls = true (дефолт) — OK для PATCH API
+// encodeDefaults = true + explicitNulls = true (дефолт только для explicitNulls) — OK для PATCH API
 ```
 
 **@EncodeDefault для тонкого управления:**
@@ -1825,7 +1828,7 @@ val protoBuf = ProtoBuf { encodeDefaults = false }
 | Формат | Размер | Схема | Читаемость | Поддержка |
 |--------|--------|-------|------------|-----------|
 | JSON | Базовый | Не нужна | Да | Stable |
-| CBOR | ~30-50% меньше | Не нужна | Нет | Stable |
+| CBOR | ~30-50% меньше | Не нужна | Нет | Experimental |
 | Protobuf | ~60-80% меньше | `@ProtoNumber` | Нет | Experimental |
 
 **Когда что применять:**
