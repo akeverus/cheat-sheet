@@ -21,8 +21,6 @@ updated: "2026-04-25"
 
 `REST Assured` — Java DSL для тестирования REST API с BDD-синтаксисом `given().when().then()`. Интегрируется с JUnit и Spring Boot Test, поддерживает валидацию JSON Schema, аутентификацию всех типов. Стандарт де-факто для integration-тестирования REST в Java.
 
-Дата последнего обновления: 2026-04-20
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -283,6 +281,8 @@ REST Assured даёт встроенные методы под каждую ра
 - **`auth().digest(user, pass)`** — HTTP Digest.
 - **`auth().oauth2(token)`** — добавляет `Authorization: Bearer <token>` (универсальный способ для bearer-токенов).
 - **ручной `header("Authorization", ...)`** — когда нужна нестандартная схема или полный контроль над заголовком.
+
+**Ловушка собеседования — преэмптивная аутентификация.** Обычный `auth().basic(user, pass)` работает по challenge-схеме: REST Assured сначала отправляет запрос *без* credentials, ждёт от сервера ответ `401` с заголовком `WWW-Authenticate` и только после этого повторяет запрос уже с логином и паролем. Если сервер такой challenge не присылает (а многие API просто сразу отвечают ошибкой), `auth().basic()` молча не сработает — credentials так и не уйдут. Решение — `auth().preemptive().basic(user, pass)`: заголовок `Authorization` отправляется сразу, в первом же запросе, без ожидания 401.
 
 Типичный паттерн в интеграционных тестах — сначала залогиниться (получить токен из ответа через `extract()`), затем подставить его в защищённые запросы.
 
@@ -583,6 +583,8 @@ void validateAgainstSchema() {
 }
 ```
 
+Аналогичная структурная проверка есть и для JSON — через отдельный модуль `io.rest-assured:json-schema-validator`. Он даёт статический матчер `matchesJsonSchemaInClasspath("user-schema.json")`, который подставляется в `body(...)` точно так же, как `matchesXsdInClasspath`. Файл схемы лежит в classpath (обычно `src/test/resources`), а валидируется весь ответ целиком: структура документа и типы полей, а не отдельные значения. Это удобно для контрактных smoke-проверок — один матчер ловит и пропавшее поле, и сменившийся тип.
+
 ## Q12. Как протестировать WebSocket или SSE?
 
 Коротко: полноценно — никак. REST Assured создан под модель «запрос-ответ» HTTP, а WebSocket и SSE — это потоковые, долгоживущие соединения.
@@ -698,7 +700,7 @@ void validateUserCreation(String email, int expectedStatus) {
 |----------|--------------|---------------|------------------|
 | Стиль | BDD (given-when-then) | Fluent reactive | Синхронный |
 | Платформа | Любой Java проект | Spring WebFlux | Spring Boot Test |
-| Mock без сервера | RestAssuredMockMvc | bindToServer() | нет |
+| Mock без сервера | RestAssuredMockMvc | bindToController() / bindToApplicationContext() | нет |
 | JSON/XML валидация | JsonPath/XPath | StepVerifier + assertions | ResponseEntity + assertJ |
 | Изучение | Средняя сложность | Средне-высокая | Проще всех |
 | Применение | End-to-end API tests | WebFlux controllers | Quick integration tests |
@@ -706,7 +708,7 @@ void validateUserCreation(String email, int expectedStatus) {
 **Когда что выбирать:**
 
 - **REST Assured** — нужен BDD-стиль и универсальность: проект не на Spring или хочется единый инструмент для разных сервисов.
-- **WebTestClient** — приложение на Spring WebFlux (реактивный стек); умеет работать и без сервера через `bindToServer()`.
+- **WebTestClient** — приложение на Spring WebFlux (реактивный стек); умеет работать и без сервера — через `bindToController()` или `bindToApplicationContext()` запросы идут в mock-окружение без HTTP. А вот `bindToServer()` — наоборот, режим подключения к живому серверу по реальному HTTP.
 - **TestRestTemplate** — самый низкий порог входа: быстрые синхронные интеграционные тесты Spring MVC, когда BDD-обвязка не нужна.
 
 ## See also
