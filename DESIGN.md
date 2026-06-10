@@ -1,23 +1,44 @@
 # Design
 
-> Визуальная система quiz-app. Теперь это **мульти-дизайн система с переключателем**
-> (`window.__design`): общая структура + дизайн «Editorial» (default/legacy) в
-> `editorial.css`, плюс альтернативные дизайн-оверлеи `swiss.css`, `linear.css`.
+> Визуальная система quiz-app. Это **мульти-дизайн система с переключателем**
+> (`window.__design`): общая структура + дизайн «Editorial» (default) в
+> `editorial.css`, плюс дизайн-оверлеи `swiss.css`, `linear.css`, `broadsheet.css`.
 > Активный дизайн — атрибут `data-design` на `<html>`; тема — `data-theme` (dark по
 > умолчанию). Этот файл — спецификация; правки стилей идут в CSS, сюда — фиксация
 > решений. Формат — Google Stitch DESIGN.md.
 >
-> Refero-якоря дизайнов (styles.refero.design): Editorial = книжный letterpress,
-> Swiss = «Ui (shadcn) — Brutalist Swiss grid in graphite», Linear = «Linear —
-> Midnight command deck with acid-lime accents».
+> **Refero-якоря (каждый дизайн = 100%-реплика конкретного стиля
+> styles.refero.design; spec-точные и derived-значения помечены в CSS):**
+> - **Editorial** = «Anthropic» —
+>   <https://styles.refero.design/style/d469cba4-c448-4a43-a033-883f8bfcdc42>
+>   (ivory `#faf9f5`, чернила `#141413`, Clay `#d97757`, zero box-shadows,
+>   flat-кнопки 0px, толстое подчёркивание ссылок). Тёмная тема — derived
+>   (из claude.ai `#262624`), у маркетинг-спеки её нет.
+> - **Swiss** = «Ui (shadcn/ui)» —
+>   <https://styles.refero.design/style/0fd67ec5-7e9c-4ca9-b368-5d9c7388477a>
+>   (ахроматика, Geist, Graphite `#0a0a0a` CTA, hairline `#e5e5e5`, радиусы
+>   4/10/14, тени запрещены — только oklab-ring). Тёмная тема — derived
+>   (light-only спека); статусы — функциональное исключение из ахроматики.
+> - **Linear** = «Linear» —
+>   <https://styles.refero.design/style/90ce5883-bb24-4466-93f7-801cd617b0d1>
+>   (Onyx `#08090a`, Acid Lime `#e4f222` + текст `#030404`, Indigo `#5e6ad2`,
+>   радиусы 2/6/12). «No light mode exists» — светлая тема derived
+>   (Indigo-акцент). Slate/Indigo подняты до AA в мелком тексте.
+> - **Broadsheet** = «General Intelligence Company» —
+>   <https://styles.refero.design/style/34baa524-5d5b-4165-bbab-d01f05e6d6b9>
+>   (Cream `#fefffc`, serif-заголовки Source Serif 4, Hudson Blue `#0081c0`
+>   только в ссылках, Obsidian-кнопки `#1f1f29`, sage-хайрлайны `#dee2de`,
+>   pill-навигация 50px, frosted-тени). Тёмная тема — derived (из Graphite
+>   Night `#282834`).
 
 ## Мульти-дизайн система (переключатель)
 
 **Что это.** Пользователь выбирает один из дизайнов двумя путями: (1) иконка-тоггл
 в шапке (близнец тоггла темы, `#design-toggle`, иконка `i-shapes`) — клик циклит
-Editorial→Swiss→Linear; (2) seg-control в Настройки → Персонализация → «Дизайн».
-Обе точки синхронятся событием `designchange` (никогда не расходятся). Программно —
-`window.__design.set('editorial'|'swiss'|'linear')`. Переключение мгновенное — флип
+Editorial→Swiss→Linear→Broadsheet; (2) seg-control в Настройки → Персонализация →
+«Дизайн». Обе точки синхронятся событием `designchange` (никогда не расходятся).
+Программно — `window.__design.set('editorial'|'swiss'|'linear'|'broadsheet')`.
+Переключение мгновенное — флип
 `data-design` на `<html>`, без перезагрузки. Выбор хранится в `localStorage('design')`;
 применяется инлайн в `head.html` ДО первого кадра (как тема) — без вспышки чужого
 дизайна. SSR-дефолт `data-design="editorial"` → no-JS получает legacy-дизайн.
@@ -30,10 +51,10 @@ Editorial→Swiss→Linear; (2) seg-control в Настройки → Персо
   работает при любом значении. Плюс дефолтные токены (`:root`/`[data-theme]`) =
   идентичность «Editorial». Цвет/шрифт/радиус/тень в компонентах идут только через
   токены, поэтому смена токенов перекрашивает всё.
-- Каждый альтернативный дизайн = тонкий оверлей (`swiss.css`, `linear.css`): свои
-  identity-токены под `html[data-design="<name>"]` (специфичность 0,1,1 перебивает
-  `:root` 0,1,0) + точечные signature-оверрайды. Структуру НЕ дублируют (~200–250
-  строк против 2300 у базы).
+- Каждый альтернативный дизайн = тонкий оверлей (`swiss.css`, `linear.css`,
+  `broadsheet.css`): свои identity-токены под `html[data-design="<name>"]`
+  (специфичность 0,1,1 перебивает `:root` 0,1,0) + точечные signature-оверрайды.
+  Структуру НЕ дублируют (~200–250 строк против 2300+ у базы).
 - Грузятся в порядке: `editorial.css` (база) → оверлеи. Активен только тот, чей
   `data-design` выбран; остальные инертны (не матчатся).
 - **Добавить дизайн** = новый оверлей-файл + регистрация в `head.html` (`DESIGNS`,
@@ -41,80 +62,80 @@ Editorial→Swiss→Linear; (2) seg-control в Настройки → Персо
   подхватит его автоматически (циклит по `window.__design.list`). Editorial и базу
   трогать не нужно.
 
-**Инвариант.** Editorial остаётся точь-в-точь как был (рефактор скоупа
-`html[data-design="editorial"]`→`html[data-design]` специфичностно-нейтрален: обе
-формы = (0,1,1), а атрибут всегда присутствует). Каждый дизайн обязан проходить
-контраст-инварианты в ОБЕИХ темах.
+**Инвариант.** База структурно нейтральна (скоуп `html[data-design]` действует при
+любом значении атрибута; обе формы = (0,1,1)). Каждый дизайн обязан проходить
+контраст-инварианты в ОБЕИХ темах. **Refero-инвариант:** каждый дизайн на 100%
+следует своему якорю; отступления допустимы только ради WCAG AA (помечаются
+`[derived]` в CSS с расчётом контраста) и для тем, которых у спеки нет.
 
-Ниже «Overall Vibe … Anti-slop» описывают дизайн **«Editorial»** (база/дефолт);
-спеки «Swiss» и «Linear» — в конце файла.
+Ниже «Overall Vibe … Anti-slop» описывают дизайн **«Editorial»** (база/дефолт,
+якорь Anthropic); спеки «Swiss», «Linear», «Broadsheet» — в конце файла.
 
 ## Overall Vibe
 
-**Night Study — letterpress on warm ink.**
+**Anthropic ivory — исследовательская публикация.**
 
-Сцена: разработчик готовится к собеседованию поздним вечером за деревянным столом
-под тёплой лампой; перед ним — хорошо набранная печатная книга вопросов. Отсюда
-всё: почти-чёрный тёплый фон (тёмная «чернильная» бумага), терракотовый акцент как
-оттиск штампа/свет лампы, высококонтрастный serif (Fraunces) для заголовков,
-читаемый book-serif (Newsreader) для разбора, моноширинные капс-метки как строки
-кода на полях. Светлая тема — та же книга при дневном свете на кремовой бумаге.
+Сцена: разработчик читает хорошо свёрстанный research-пост на тёплом
+ivory-пергаменте; терракота Clay «held in reserve» — единственный хроматический
+голос, рамки — hairline, теней нет вовсе, ссылки подчёркнуты толсто и этим всё
+сказано. Светлая тема — носитель идентичности (спека: ivory `#faf9f5`, «never
+pure white»); тёмная — derived из claude.ai (`#262624`), тот же характер ночью.
 
 Не журнал-лендинг и не SaaS-дашборд: это **инструмент для чтения и думания**.
-Тёмная тема — носитель идентичности; светлая — равноправный дневной режим.
 
 ## Color
 
-OKLCH-мышление, значения в HEX (как в editorial.css). Стратегия — **restrained**:
-тинтованные нейтрали + один акцент (терракота). Цвет не несёт иерархию — её несёт
-типографика; цвет несёт *статус* (verdict, success/error) и *акцент* (один голос).
+Значения в HEX (как в editorial.css). Стратегия — **restrained**: ivory-нейтрали +
+один акцент (Clay). Цвет не несёт иерархию — её несёт типографика; цвет несёт
+*статус* (verdict) и *акцент* (один голос). Spec-точные значения — `[spec]`,
+производные — `[derived]` (см. комменты в editorial.css).
 
-### Dark theme (по умолчанию — основная идентичность)
-
-| Роль | HEX | Назначение |
-|---|---|---|
-| bg-primary | `#16130D` | фон страницы — тёплый near-black «чернила» |
-| bg-secondary | `#1F1B13` | приподнятые поверхности (sidebar, чипы-блоки) |
-| bg-tertiary | `#272117` | инлайн-код, треки прогресса, hover-подложки |
-| text-primary | `#ECE4D4` | основной текст (тёплый off-white) |
-| text-secondary | `#A99E89` | вторичный текст, подписи |
-| text-tertiary | `#7C7263` | третичный (мета, hint) |
-| accent-primary | `#E0895C` | терракота — ссылки, акцент, активные состояния |
-| accent-on | `#1A1208` | текст на акцентной заливке |
-| border-primary | `#352E22` | hairline-линейки, рамки |
-| status-success | `#6FB585` | «Верно» |
-| status-error | `#E5736B` | «Неверно» |
-| status-warning | `#D9A441` / status-info `#6FA8D6` | предупреждения / инфо |
-
-### Light theme (дневная бумага — вторичная)
+### Light theme (основная идентичность, [spec])
 
 | Роль | HEX | Назначение |
 |---|---|---|
-| bg-primary | `#F7F3EA` | кремовая бумага |
-| bg-secondary | `#FCF9F2` / bg-tertiary `#EFE8D9` | поверхности / подложки |
-| text-primary | `#211C15` | чернильный charcoal |
-| text-secondary | `#5A5145` / tertiary `#8A8073` | вторичный / третичный |
-| accent-primary | `#A8431F` | терракота (темнее для контраста на бумаге) |
-| border-primary | `#DDD5C4` | hairline |
-| status-success `#2E6B45` · error `#B3261E` · warning `#7A5400` · info `#2C5E8A` | | статусы (затемнены под AA на бумаге) |
+| bg-primary | `#FAF9F5` | Ivory Light — пергамент страницы [spec] |
+| bg-secondary | `#F0EEE6` | Ivory Medium — release-карточки [spec] |
+| bg-tertiary | `#E3DACC` | Oat — код-подложки, треки [spec] |
+| text-primary | `#141413` | Slate Dark — чернила [spec], ~16:1 |
+| text-secondary | `#5E5D59` | Slate Light [spec], 6.2:1 |
+| text-tertiary | `#686760` | Cloud Dark ↓AA [derived], 4.9:1 на карточке |
+| text-link | `#141413` | чернила; декор — толстое Clay-подчёркивание |
+| accent-primary | `#D97757` | Clay [spec] — CTA-заливки, прогресс, актив |
+| accent-on | `#141413` | чернила на терракоте (5.9:1; белый = 2.97 — не AA) |
+| border-primary | `#D1CFC5` | Cloud Light hairline [spec] |
+| status success `#2E6B45` · error `#B3261E` · warning `#7A5400` · info `#2C5E8A` | | вне спеки [derived], AA на ivory |
 
-**Контраст-инварианты (проверено):** body ≥4.5:1, крупный/bold ≥3:1 в обеих
-темах. Светлая тема прошла инструментальный аудит (0 фейлов). Самоцветная ловушка:
-hljs код-блок всегда тёмный (`#282c34`) в обеих темах — инлайн-`code` обязан
-скоупиться `:not(pre) > code`, иначе перебивает базовый цвет hljs.
+### Dark theme (derived — claude.ai палитра)
 
-> ⚠️ Известный долг (audit-first, не трогать без live-проверки): light bg `#F7F3EA`
-> попадает в «cream/sand AI-default» band. Смягчено тем, что **dark — основная
-> тема**, а кремовый — осознанный «дневная бумага». Пересмотр только с живым
-> рендером и согласием — это часть идентичности, которой пользователь дорожит.
+| Роль | HEX | Назначение |
+|---|---|---|
+| bg-primary | `#262624` | тёплый графит claude.ai |
+| bg-secondary | `#30302E` / bg-tertiary `#3A3937` | панели / подложки |
+| text-primary | `#F0EEE6` | тёплый off-white |
+| text-secondary | `#C5C1B4` (8.4:1) / tertiary `#A29F94` (5.5:1) | вторичный / мета |
+| accent-primary | `#D97757` | Clay [spec] — 4.8:1 на `#262624` (AA и как текст) |
+| border-primary | `#3E3C36` | hairline |
+| status-success `#6FB585` · error `#E5736B` · warning `#D9A441` · info `#6FA8D6` | | AA на графите |
+
+**Контраст-инварианты:** body ≥4.5:1, крупный/bold ≥3:1 в обеих темах — во всех
+четырёх дизайнах. Самоцветная ловушка: hljs код-блок всегда тёмный (`#282c34`) в
+обеих темах — инлайн-`code` обязан скоупиться `:not(pre) > code`, иначе перебивает
+базовый цвет hljs.
+
+> Ivory `#faf9f5` формально попадает в «cream/sand band» impeccable-бана, но здесь
+> это **мандат якоря**: спека Anthropic прямо требует `#faf9f5` («never pure
+> white»). 100%-соответствие refero-якорю — явное требование пользователя,
+> оно сильнее эвристики.
 
 ## Typography
 
-Три семейства (потолок impeccable = 3), контраст по оси serif↔mono:
+Три семейства (потолок impeccable = 3) — fallback-цепочки самой Anthropic-спеки:
 
-- **Display** — `Fraunces` (high-contrast modern serif): h1–h3, hero-вопрос.
-- **Body/Reading** — `Newsreader` (book serif): разбор, длинная проза.
-- **Mono** — `JetBrains Mono`: эйбрау-метки (FOCUS, Q14/50), код, бейджи, числа.
+- **Display** — `Lora` (Anthropic Serif → Lora [spec-fallback]): h1–h3, hero-вопрос.
+- **Body** — `Inter` (Anthropic Sans → Inter [spec-fallback]): UI-хром и проза.
+- **Mono** — `JetBrains Mono` (Anthropic Mono → JetBrains Mono [spec-fallback]):
+  эйбрау-метки (FOCUS, Q14/50), код, бейджи, числа.
 
 Шкала (rem, ratio ≈1.25+, не плоская):
 `xs .75 · sm .875 · base 1 · md 1.125 · lg 1.375 · xl 1.75 · 2xl 2.25 · 3xl 3 · 4xl 4`.
@@ -148,8 +169,10 @@ settings,data}` = `none`, а проза не ограничена мерой с�
 На широких вьюпортах (1920/2560) контент растягивается на всю ширину; строки
 длинной прозы становятся длиннее меры (осознанный выбор пользователя ради
 максимального использования экрана).
-Радиусы: sm 3 · md 6 · lg 10 · full 999. Тени мягкие, тёплые (`rgba(33,28,21,…)`
-в light; `rgba(0,0,0,…)` в dark).
+Радиусы [spec]: sm 0 (flat) · md 8 (release cards) · lg 16 (panels) · full 999.
+Кнопки flat 0px сигнатурой; primary CTA — асимметричный `0 0 8px 8px` («Try
+Claude»). Тени: **нет** («zero box-shadows throughout» [spec]) — elevation несут
+hairline-рамки; focus-ring остаётся (a11y).
 
 ## Components / Patterns
 
@@ -185,53 +208,89 @@ Easings: default/`in`/`out` (cubic-bezier), `bounce` — крайне редко
 - Нет gradient-text, нет side-stripe бордеров как акцента, нет декоративного
   glassmorphism, нет hero-метрики-шаблона, нет эйбрау над *каждой* секцией.
 - Один акцентный цвет. Цвет = статус/акцент, иерархия = типографика.
-- Cream light-bg — осознанный «дневная бумага», не дефолтный AI-тёплый-почти-белый;
-  идентичность держит dark-тема + serif + терракота, а не светлый фон.
+- Ivory light-bg `#faf9f5` — мандат Anthropic-якоря ([spec] «never pure white»),
+  не дефолтный AI-тёплый-почти-белый; идентичность держат serif-display + Clay +
+  отсутствие теней + flat-кнопки.
 - favicon, theme-color, иконки — в фирменной терракоте, без старой индиго-палитры.
 
 ## Дизайн «Swiss» (оверлей `swiss.css`)
 
-**Refero-якорь:** «Ui (shadcn) — Brutalist Swiss grid in graphite».
-**Vibe:** International Typographic Style × shadcn. Стерильный графит, острые углы,
-тонкая хайрлайн-сетка, плоско. Полная противоположность тёплому книжному Editorial.
+**Refero-якорь (100%):** «Ui (shadcn/ui)» —
+<https://styles.refero.design/style/0fd67ec5-7e9c-4ca9-b368-5d9c7388477a>.
+**Vibe:** строго ахроматическая shadcn-система: Chalk-канва, Graphite-чернила,
+hairline `#e5e5e5` — «the load-bearing wall».
 
-- **Цвет — МОНОХРОМ.** Акцент = чернила (ink), а не цвет: чёрная primary-кнопка
-  (light) / белая (dark) — shadcn-приём. Хроматику несут ТОЛЬКО статусы (verdict
-  success/error/warning/info). Поверхности — нейтральный zinc без тёплого тинта.
-  - Light: bg `#FFFFFF`/`#FAFAFA`/`#F4F4F5`; ink `#18181B`/`#52525B`/`#71717A`;
-    border `#E4E4E7`; accent `#18181B` (on `#FFFFFF`).
-  - Dark: bg `#09090B`/`#18181B`/`#27272A`; ink `#FAFAFA`/`#A1A1AA`/`#71717A`;
-    border `#27272A`; accent `#FAFAFA` (on `#18181B`).
-- **Типографика:** `Inter` (display+body, sans везде — никакого serif),
-  `JetBrains Mono` (код/эйбрау/числа). Tracking display чуть плотнее (-0.022em).
-- **Форма:** острые углы (radius 0/2/4px), плоско (тени минимальны, иерархия —
-  хайрлайн-рамки + space). Фокус — графитовое кольцо.
-- **Signatures:** ссылки — чёткое подчёркивание (offset .18em); эйбрау-метки
-  графитовые (часть сетки, не «голос акцента»).
+- **Цвет — АХРОМАТИКА [spec].**
+  - Light (герой): bg `#FFFFFF`(канва и карточки)/`#F2F2F2`(Mist); ink `#0A0A0A`
+    (Graphite)/`#525252`[derived]/`#737373`(Concrete); border `#E5E5E5`(Hairline);
+    accent `#0A0A0A` CTA, hover `#171717`(Carbon), active `#000000` (on `#FFFFFF`).
+  - Dark [derived — спека light-only]: bg `#0A0A0A`/`#171717`(Carbon)/`#262626`;
+    ink `#FAFAFA`/`#A1A1A1`(Ash)/`#8A8A8A`; border `#262626`; accent `#FAFAFA`
+    (on `#0A0A0A`).
+  - Статусы — функциональное исключение из «no chromatic» (вердикты квиза).
+- **Типографика [spec]:** `Geist` (mandatory; fallback Inter — по спеке),
+  `Geist Mono` (→ JetBrains Mono). Tracking только отрицательный (-0.025em).
+- **Форма [spec]:** радиусы 4 (micro) / 10 (кнопки-инпуты) / 14 (карточки) /
+  9999 (пилюли). Тени запрещены — только 1px ring `oklab(0.145 0 0 / 0.1)`.
+- **Signatures:** ссылки — чернила + подчёркивание; эйбрау — Concrete.
 
 ## Дизайн «Linear» (оверлей `linear.css`)
 
-**Refero-якорь:** «Linear — Midnight command deck with acid-lime accents».
-**Vibe:** современный продуктовый «командный пульт». Холодный near-black midnight +
-один яркий кислотный лайм. **Тёмная тема — герой** (Linear dark-native); светлая —
-чистый дневной вариант.
+**Refero-якорь (100%):** «Linear» —
+<https://styles.refero.design/style/90ce5883-bb24-4466-93f7-801cd617b0d1>.
+**Vibe:** midnight command deck. **Тёмная тема — герой** (спека: «No light mode
+exists for this system»).
 
 - **Цвет:**
-  - Dark (герой): bg `#0B0C0E`/`#141518`/`#1C1E22`; text `#F7F8F8`/`#9CA0A8`/
-    `#62666D`; accent **acid-lime `#BCF03D`** (on `#0B1402`); border `#23262B`.
-    Фокус — лаймовое свечение `rgba(188,240,61,.35)`.
-  - Light (дневной): bg `#FFFFFF`/`#F7F8F9`/`#ECEEF1`; text `#0D0E10`/`#4A4E57`/
-    `#8A8F98`; accent — глубокий лайм `#4D7C0F` (AA-safe для текста; кислотный лайм
-    в light не проходит контраст, потому затемнён). border `#E3E6EA`.
-- **Типографика:** `Inter`, плотный трекинг; `JetBrains Mono` — код/эйбрау.
-- **Форма:** мягкие современные радиусы (4/8/12px — круглее Editorial), тонкая
-  elevation. Эйбрау/актив/прогресс — лаймовые.
-- **Signatures:** ссылки цветные без подчёркивания (подчёркивание на hover).
+  - Dark (герой, [spec]): bg `#08090A`(Onyx)/`#0F1011`(Charcoal)/`#161718`
+    (Obsidian); text `#F7F8F8`(Snow)/`#8A8F98`(Fog)/`#7E838C`(Slate ↑AA);
+    border `#23252A`(Graphite; Iron `#323334` — medium); accent **Acid Lime
+    `#E4F222`** (on `#030404` [spec]); ссылки Indigo `#6E79DC` (`#5e6ad2` ↑AA);
+    статусы Emerald `#27A644` / Crimson `#EB5757` / Cyan `#02B8CC` [spec].
+  - Light [derived — у спеки нет]: bg `#FFFFFF`/`#F7F8F8`(Snow)/`#ECEDF0`;
+    text `#0F1011`(Charcoal)/`#4C5057`/`#6B7079`; accent Indigo `#5E6AD2`
+    [spec-цвет, 4.7:1 AA] — лайм на белом нечитаем; border `#E2E4E8`.
+- **Типографика [spec]:** `Inter` + feature-сеты `cv01`/`ss03`
+  (identity-critical, сигнатурой); mono Berkeley → `JetBrains Mono` (spec-fallback).
+- **Форма [spec]:** радиусы 2 (badges) / 6 (кнопки) / 12 (карточки) / 9999.
+  Тени: small `0 2px 4px @40%`, large `0 4px 32px rgba(8,9,10,.6)`; inset-ring
+  спеки не дублируем — его роль играет border `#23252a` (тот же Graphite).
+- **Signatures:** ссылки цветные без подчёркивания (подчёркивание на hover);
+  cv01/ss03.
+
+## Дизайн «Broadsheet» (оверлей `broadsheet.css`)
+
+**Refero-якорь (100%):** «General Intelligence Company» —
+<https://styles.refero.design/style/34baa524-5d5b-4165-bbab-d01f05e6d6b9>.
+**Vibe:** «a publication, not a product catalog» — литературная сдержанность:
+cream-канва, серифные заголовки, один яркий синий только в ссылках.
+
+- **Цвет:**
+  - Light (герой, [spec]): bg `#FEFFFC`(Cream)/`#FFFFFF`(Paper-карточки)/
+    `#F9FAF7`(Linen); text `#171717`(Ink)/`#2C2C2C`(Carbon)/`#646464`(Steel);
+    border `#DEE2DE`(Sage hairline); ссылки Hudson Blue (`#0074AD` resting =
+    `#0081c0` ↑AA; чистый `#0081C0` — hover/focus); кнопки `#1F1F29`(Obsidian,
+    белый текст) — «no filled solid-color buttons on content canvas»;
+    outlined-кнопки — рамка Slate Cyan `#41A1CF` [spec].
+  - Dark [derived — у спеки нет]: графитовая ночь из `#282834`(Graphite Night):
+    bg `#15151D`/`#1D1D27`/`#252531`; text `#F4F5F1`/`#C3C5CE`/`#9094A3`;
+    ссылки `#4FB3E2`; CTA — cream-инверсия (`#F4F5F1` on `#1F1F29`).
+- **Типографика [spec]:** display `Source Serif 4` (ppmondwest → Source Serif 4 —
+  fallback самой спеки); body `Inter` (af → Inter); mono `JetBrains Mono`.
+  Display tracking -0.02em.
+- **Форма [spec]:** радиусы 4 (кнопки — сигнатурой) / 12 (standard cards) /
+  16 (elevated) / nav-pill 50px; hero 24px вне токен-шкалы. Frosted-тени:
+  `0 1px 1px @8%` (+`0 4px 5px @8%`), floating-nav `0 2px 6px @15%` +
+  гало `0 0 0 5px @4%`.
+- **Signatures:** pill-навигация — тёмная Graphite-Night пилюля 50px с
+  floating-тенью и белыми ссылками; outlined-кнопки со Slate Cyan-рамкой;
+  ссылки с 1px-подчёркиванием.
 
 ## Cache discipline
 
 editorial.css → бамп `v=N` в `head.html` (2 строки: preload+stylesheet). Оверлеи
-`swiss.css`/`linear.css` — там же (`v=N`), бампать при правке оверлея.
+`swiss.css`/`linear.css`/`broadsheet.css` — там же (`v=N`), бампать при правке.
 app.js → `v=N` в result/settings/focus-training (3). stats.js → stats.html (1).
-Текущее: editorial.css **v66**, swiss.css **v2**, linear.css **v2**, app.js **v29**,
+Текущее: editorial.css **v67**, swiss.css **v3**, linear.css **v3**,
+broadsheet.css **v1**, app.js **v29**,
 stats.js **v7**.

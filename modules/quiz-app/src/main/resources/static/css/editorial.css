@@ -12,8 +12,17 @@
    • Добавить дизайн = новый оверлей + регистрация в head.html. Editorial трогать
      не нужно (он одновременно база и legacy-дизайн).
    --------------------------------------------------------------------------
-   Дизайн «Editorial»: Editorial / Magazine. Тёплая дуо-тема, акцент терракота,
-   Fraunces (display) + Newsreader (reading) + JetBrains Mono (code/eyebrow).
+   Дизайн «Editorial» — refero-якорь (100%): «Anthropic»
+   https://styles.refero.design/style/d469cba4-c448-4a43-a033-883f8bfcdc42
+   Спека: ivory-пергамент #faf9f5 (никогда не чисто-белый), чернила #141413,
+   терракота Clay #d97757 «held in reserve» (hover Ember #c6613f), hairline
+   #d1cfc5, serif-display (Anthropic Serif → fallback Lora) + sans-body
+   (Anthropic Sans → fallback Inter) + mono (→ JetBrains Mono). Сигнатуры:
+   НОЛЬ box-shadow, flat-кнопки 0px (primary CTA — асимметричный 0 0 8px 8px),
+   толстое подчёркивание — единственный декор ссылок. Радиусы: 0 standard /
+   8 release-cards / 16 panels. Тёмная тема [derived] — из claude.ai-палитры
+   (#262624), у маркетинг-спеки тёмного режима нет.
+   Spec-точные значения помечены [spec], производные — [derived].
    Грузится ПЕРВЫМ в head.html (база); оверлеи — после (побеждают по специфичности).
    ========================================================================== */
 
@@ -23,43 +32,51 @@
      спиннеры number, текстовая каретка) совпадал с темой. База — light; для
      тёмной темы переопределяем в [data-theme="dark"] и в prefers-color-scheme. */
   color-scheme: light;
-  /* Цвет — Light (бумага + чернила) */
-  --color-bg-primary:   #F7F3EA;
-  --color-bg-secondary: #FCF9F2;
-  --color-bg-tertiary:  #EFE8D9;
-  --color-bg-inverse:   #211C15;
+  /* Цвет — Light (Anthropic ivory + чернила) */
+  --color-bg-primary:   #FAF9F5;   /* Ivory Light — page base [spec] */
+  --color-bg-secondary: #F0EEE6;   /* Ivory Medium — release cards [spec] */
+  --color-bg-tertiary:  #E3DACC;   /* Oat — tertiary cards [spec] */
+  --color-bg-inverse:   #141413;   /* Slate Dark [spec] */
 
-  --color-text-primary:   #211C15;
-  --color-text-secondary: #5A5145;
-  --color-text-tertiary:  #8A8073;
-  --color-text-inverse:   #F7F3EA;
-  --color-text-link:      #A8431F;
+  --color-text-primary:   #141413; /* Slate Dark — чернила [spec], ~16:1 */
+  --color-text-secondary: #5E5D59; /* Slate Light [spec], 6.2:1 */
+  /* Cloud Dark #87867f [spec] на ivory даёт 3.5:1 → затемнён до AA [derived];
+     калибр по худшей поверхности: 4.9:1 на карточке #F0EEE6, 5.4:1 на ivory. */
+  --color-text-tertiary:  #686760;
+  --color-text-inverse:   #FAF9F5;
+  /* Ссылки — чернила: «thick underline is the sole decorative device» [spec];
+     цвет подчёркивания — Clay (см. editorial-сигнатуры в конце файла). */
+  --color-text-link:      #141413;
 
-  --color-border-primary:   #DDD5C4;
-  --color-border-secondary: #E8E1D2;
-  --color-border-focus:     #A8431F;
+  --color-border-primary:   #D1CFC5; /* Cloud Light hairline [spec] */
+  --color-border-secondary: #E0DDD3; /* [derived] */
+  --color-border-focus:     #C6613F; /* Ember [spec] */
 
-  --color-accent-primary:        #A8431F;
-  --color-accent-primary-hover:  #8E3717;
-  --color-accent-primary-active: #7A2F13;
-  --color-accent-on:             #FFFFFF;
-  --color-accent-secondary:      #2C3A47;
-  --color-accent-wash:           #F0E3D6;
+  /* Clay «held in reserve» [spec]: заливки primary-CTA/прогресс/актив.
+     Текст на терракоте — чернила (5.9:1), не белый (2.97:1 — не AA). */
+  --color-accent-primary:        #D97757; /* Clay [spec] */
+  --color-accent-primary-hover:  #C6613F; /* Ember [spec] */
+  --color-accent-primary-active: #B0512E; /* [derived] */
+  --color-accent-on:             #141413;
+  --color-accent-secondary:      #788C5D; /* Olive — categorical [spec] */
+  --color-accent-wash:           #F1E6DA; /* clay-тинт ivory [derived] */
 
+  /* Статусы — вне спеки (семантика вердиктов) [derived]: тёплые, AA на ivory. */
   --color-status-success:     #2E6B45;
   --color-status-success-on:  #FFFFFF;
-  --color-status-success-wash:#E3EEE5;
+  --color-status-success-wash:#E5EEE3;
   --color-status-warning:     #7A5400;
   --color-status-error:       #B3261E;
   --color-status-error-on:    #FFFFFF;
-  --color-status-error-wash:  #F4E0DE;
+  --color-status-error-wash:  #F4E0DA;
   --color-status-info:        #2C5E8A;
 
-  --color-surface-overlay: rgba(33, 28, 21, 0.45);
+  --color-surface-overlay: rgba(20, 20, 19, 0.45);
 
-  /* Типографика */
-  --font-family-display: 'Fraunces', Georgia, 'Times New Roman', serif;
-  --font-family-body:    'Newsreader', Georgia, 'Times New Roman', serif;
+  /* Типографика [spec]: Anthropic Serif → Lora; Anthropic Sans → Inter;
+     Anthropic Mono → JetBrains Mono (fallback-цепочки самой спеки). */
+  --font-family-display: 'Lora', Georgia, 'Times New Roman', serif;
+  --font-family-body:    'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-family-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
   --font-size-xs:   0.75rem;
@@ -127,15 +144,19 @@
      left-aligned (левый край совпадает с заголовком/гуттером). Запрос пользователя. */
   --max-width-options: 60rem;
 
-  --border-radius-sm: 3px;
-  --border-radius-md: 6px;
-  --border-radius-lg: 10px;
+  /* Радиусы [spec]: 0 standard cards / 8 release cards / 16 panels.
+     Кнопки flat 0px — сигнатурой (primary CTA асимметричный 0 0 8px 8px). */
+  --border-radius-sm: 0px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 16px;
   --border-radius-full: 999px;
 
-  --shadow-sm: 0 1px 2px rgba(33, 28, 21, 0.05);
-  --shadow-md: 0 2px 8px rgba(33, 28, 21, 0.06);
-  --shadow-lg: 0 8px 28px rgba(33, 28, 21, 0.10);
-  --shadow-focus: 0 0 0 3px rgba(168, 67, 31, 0.35);
+  /* «Zero box-shadows throughout» [spec] — elevation несут hairline-рамки.
+     Focus-ring остаётся (a11y, не декоративная тень). */
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --shadow-focus: 0 0 0 3px rgba(198, 97, 63, 0.40);
 
   /* Motion */
   --duration-instant: 50ms;
@@ -156,81 +177,84 @@
   --z-toast: 1000;
 }
 
+/* Тёмная тема [derived]: у маркетинг-спеки Anthropic тёмного режима нет —
+   палитра выведена из claude.ai dark (#262624) с теми же Clay/Ember-акцентами.
+   Контрасты: secondary 8.4:1, tertiary 5.5:1, Clay-текст 4.8:1 (AA). */
 [data-theme="dark"] {
   color-scheme: dark;
-  --color-bg-primary:   #16130D;
-  --color-bg-secondary: #1F1B13;
-  --color-bg-tertiary:  #272117;
-  --color-bg-inverse:   #ECE4D4;
+  --color-bg-primary:   #262624;
+  --color-bg-secondary: #30302E;
+  --color-bg-tertiary:  #3A3937;
+  --color-bg-inverse:   #FAF9F5;
 
-  --color-text-primary:   #ECE4D4;
-  --color-text-secondary: #A99E89;
-  --color-text-tertiary:  #7C7263;
-  --color-text-inverse:   #211C15;
-  --color-text-link:      #E0895C;
+  --color-text-primary:   #F0EEE6;
+  --color-text-secondary: #C5C1B4;
+  --color-text-tertiary:  #A29F94;
+  --color-text-inverse:   #141413;
+  --color-text-link:      #F0EEE6;
 
-  --color-border-primary:   #352E22;
-  --color-border-secondary: #2A2419;
-  --color-border-focus:     #E0895C;
+  --color-border-primary:   #3E3C36;
+  --color-border-secondary: #34322D;
+  --color-border-focus:     #D97757;
 
-  --color-accent-primary:        #E0895C;
-  --color-accent-primary-hover:  #EC9A6E;
-  --color-accent-primary-active: #C9764B;
-  --color-accent-on:             #1A1208;
-  --color-accent-secondary:      #9FB4C4;
-  --color-accent-wash:           #2A2014;
+  --color-accent-primary:        #D97757; /* Clay [spec] — 4.8:1 на #262624 */
+  --color-accent-primary-hover:  #E08B6D;
+  --color-accent-primary-active: #C6613F; /* Ember [spec] */
+  --color-accent-on:             #141413;
+  --color-accent-secondary:      #9DB180; /* Olive, осветлён для dark */
+  --color-accent-wash:           #3A2C22;
 
   --color-status-success:     #6FB585;
-  --color-status-success-on:  #14130D;
-  --color-status-success-wash:#1B271E;
+  --color-status-success-on:  #1B1B19;
+  --color-status-success-wash:#28302A;
   --color-status-warning:     #D9A441;
   --color-status-error:       #E5736B;
-  --color-status-error-on:    #14130D;
-  --color-status-error-wash:  #2C1A18;
+  --color-status-error-on:    #1B1B19;
+  --color-status-error-wash:  #392523;
   --color-status-info:        #6FA8D6;
 
   --color-surface-overlay: rgba(0, 0, 0, 0.6);
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.55);
-  --shadow-focus: 0 0 0 3px rgba(224, 137, 92, 0.45);
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --shadow-focus: 0 0 0 3px rgba(217, 119, 87, 0.45);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --color-bg-primary:   #16130D;
-    --color-bg-secondary: #1F1B13;
-    --color-bg-tertiary:  #272117;
-    --color-bg-inverse:   #ECE4D4;
-    --color-text-primary:   #ECE4D4;
-    --color-text-secondary: #A99E89;
-    --color-text-tertiary:  #7C7263;
-    --color-text-inverse:   #211C15;
-    --color-text-link:      #E0895C;
-    --color-border-primary:   #352E22;
-    --color-border-secondary: #2A2419;
-    --color-border-focus:     #E0895C;
-    --color-accent-primary:        #E0895C;
-    --color-accent-primary-hover:  #EC9A6E;
-    --color-accent-primary-active: #C9764B;
-    --color-accent-on:             #1A1208;
-    --color-accent-secondary:      #9FB4C4;
-    --color-accent-wash:           #2A2014;
+    --color-bg-primary:   #262624;
+    --color-bg-secondary: #30302E;
+    --color-bg-tertiary:  #3A3937;
+    --color-bg-inverse:   #FAF9F5;
+    --color-text-primary:   #F0EEE6;
+    --color-text-secondary: #C5C1B4;
+    --color-text-tertiary:  #A29F94;
+    --color-text-inverse:   #141413;
+    --color-text-link:      #F0EEE6;
+    --color-border-primary:   #3E3C36;
+    --color-border-secondary: #34322D;
+    --color-border-focus:     #D97757;
+    --color-accent-primary:        #D97757;
+    --color-accent-primary-hover:  #E08B6D;
+    --color-accent-primary-active: #C6613F;
+    --color-accent-on:             #141413;
+    --color-accent-secondary:      #9DB180;
+    --color-accent-wash:           #3A2C22;
     --color-status-success:     #6FB585;
-    --color-status-success-on:  #14130D;
-    --color-status-success-wash:#1B271E;
+    --color-status-success-on:  #1B1B19;
+    --color-status-success-wash:#28302A;
     --color-status-warning:     #D9A441;
     --color-status-error:       #E5736B;
-    --color-status-error-on:    #14130D;
-    --color-status-error-wash:  #2C1A18;
+    --color-status-error-on:    #1B1B19;
+    --color-status-error-wash:  #392523;
     --color-status-info:        #6FA8D6;
     --color-surface-overlay: rgba(0, 0, 0, 0.6);
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.45);
-    --shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.55);
-    --shadow-focus: 0 0 0 3px rgba(224, 137, 92, 0.45);
+    --shadow-sm: none;
+    --shadow-md: none;
+    --shadow-lg: none;
+    --shadow-focus: 0 0 0 3px rgba(217, 119, 87, 0.45);
   }
 }
 
@@ -2301,7 +2325,7 @@ html[data-design] .summary-tools-status {
    тёмный текст, чтобы тёмная тема не давала серую кашу с потерей контраста. */
 @media print {
   html[data-design],
-  html[data-design] body { background: #fff !important; color: #16130D !important; }
+  html[data-design] body { background: #fff !important; color: #141413 !important; }
   html[data-design] .skip-link,
   html[data-design] .ed-masthead-actions,
   html[data-design] .ed-masthead-progress,
@@ -2320,6 +2344,45 @@ html[data-design] .summary-tools-status {
   html[data-design] .summary-table .text-warning,
   html[data-design] .summary-table .text-danger,
   html[data-design] .summary-td-correct,
-  html[data-design] .summary-td-wrong { color: #16130D !important; }
-  html[data-design] a { color: #16130D !important; text-decoration: none; }
+  html[data-design] .summary-td-wrong { color: #141413 !important; }
+  html[data-design] a { color: #141413 !important; text-decoration: none; }
 }
+
+/* ===========================================================================
+   EDITORIAL (Anthropic) — SIGNATURES. Скоуплены под html[data-design="editorial"]:
+   действуют ТОЛЬКО когда активен дефолтный дизайн (оверлеи их не видят).
+   Идут последними в файле — побеждают базовые правила той же специфичности.
+   ========================================================================== */
+
+/* Ссылки [spec]: «thick underline is the sole decorative device» — чернильный
+   текст + толстое Clay-подчёркивание; на hover цвет НЕ меняется (перебиваем
+   базовый a:hover → accent), утолщается линия. */
+html[data-design="editorial"] a {
+  color: var(--color-text-link);
+  text-decoration-color: var(--color-accent-primary);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.14em;
+}
+html[data-design="editorial"] a:hover {
+  color: var(--color-text-link);
+  text-decoration-thickness: 3px;
+}
+
+/* Кнопки [spec]: flat 0px — «no uniform rounded buttons (0px is deliberate)». */
+html[data-design="editorial"] .btn,
+html[data-design="editorial"] .secondary-btn,
+html[data-design="editorial"] .danger-btn,
+html[data-design="editorial"] .flashcard-grade-btn,
+html[data-design="editorial"] .stats-action-btn,
+html[data-design="editorial"] .table-expander,
+html[data-design="editorial"] #extra-analysis-toggle { border-radius: 0; }
+/* Primary CTA [spec]: асимметричный радиус «Try Claude» — flat-верх,
+   скруглённый низ 8px. */
+html[data-design="editorial"] .next-btn,
+html[data-design="editorial"] .focus-page #interview-submit,
+html[data-design="editorial"] .flashcard-reveal-btn { border-radius: 0 0 8px 8px; }
+
+/* Бренд-кикер и флешкарт-бейдж — чернила, не Clay: «pure typographic label»
+   [spec]; к тому же Clay 3.0:1 на ivory — не AA для 12px caps. */
+html[data-design="editorial"] .ed-masthead-kicker,
+html[data-design="editorial"] .flashcard-badge { color: var(--color-text-secondary); }
