@@ -1,0 +1,227 @@
+/* =============================================================================
+   broadsheet.css — дизайн-оверлей «Broadsheet» (один из переключаемых дизайнов).
+   Refero-якорь (100%): «General Intelligence Company»
+   https://styles.refero.design/style/34baa524-5d5b-4165-bbab-d01f05e6d6b9
+   --------------------------------------------------------------------------
+   Философия спеки: «a warm off-white canvas holds near-black serif headlines
+   and compact sans body text, with a single vivid blue used sparingly as
+   accent» — публикация, а не каталог. Cream-канва #fefffc, серифные заголовки
+   (ppmondwest → fallback Source Serif 4 по спеке), компактный sans-body
+   (af → fallback Inter по спеке), Hudson Blue #0081c0 ТОЛЬКО для ссылок,
+   тёмные Obsidian-кнопки #1f1f29, sage-хайрлайны #dee2de, pill-навигация 50px,
+   frosted-тени.
+   --------------------------------------------------------------------------
+   Spec-точные значения помечены [spec]; производные (тёмная тема — у стиля её
+   нет; AA-подгонки) помечены [derived] с пояснением. Контракт оверлея: только
+   identity-токены + сигнатуры под html[data-design="broadsheet"] (0,1,1) —
+   структура наследуется из editorial.css. Грузится ПОСЛЕ editorial.css.
+   ========================================================================== */
+
+/* ========================= BROADSHEET — LIGHT (ГЕРОЙ) ==================== */
+html[data-design="broadsheet"] {
+  color-scheme: light;
+
+  /* Поверхности [spec]: Cream-канва, Paper-карточки (elevated = чистый белый),
+     Linen-подложки. Инверс — Graphite Night (тёмная nav-поверхность спеки). */
+  --color-bg-primary:   #FEFFFC;   /* Cream [spec] */
+  --color-bg-secondary: #FFFFFF;   /* Paper — elevated surfaces [spec] */
+  --color-bg-tertiary:  #F9FAF7;   /* Linen — secondary surface [spec] */
+  --color-bg-inverse:   #282834;   /* Graphite Night [spec] */
+
+  --color-text-primary:   #171717; /* Ink [spec], ~16.4:1 на Cream */
+  --color-text-secondary: #2C2C2C; /* Carbon — secondary headings [spec], ~13.3:1 */
+  --color-text-tertiary:  #646464; /* Steel — muted text [spec], 5.9:1 (AA) */
+  --color-text-inverse:   #FEFFFC;
+  /* Hudson Blue #0081c0 [spec] на Cream даёт 4.25:1 — на волосок ниже AA 4.5
+     для body-ссылок. Resting-ссылки чуть затемнены [derived]; чистый Hudson
+     живёт в hover/focus/инверсе — спека требует его «sparingly». */
+  --color-text-link:      #0074AD; /* Hudson −7% света, 5.1:1 (AA) [derived] */
+
+  --color-border-primary:   #DEE2DE; /* Sage hairline [spec] */
+  --color-border-secondary: #ECEFEC; /* светлый sage [derived из #dee2de] */
+  --color-border-focus:     #0081C0; /* Hudson Blue [spec] */
+
+  /* Кнопки спеки: тёмный fill #1f1f29 (Obsidian) + белый текст; «no filled
+     solid-color buttons on content canvas» → акцент-заливки графитовые,
+     Hudson остаётся голосом ссылок. Hover — Graphite Night [spec-цвет]. */
+  --color-accent-primary:        #1F1F29; /* Obsidian CTA [spec] */
+  --color-accent-primary-hover:  #282834; /* Graphite Night [spec] */
+  --color-accent-primary-active: #14141C; /* [derived] */
+  --color-accent-on:             #FFFFFF; /* 16.9:1 на Obsidian */
+  --color-accent-secondary:      #444141; /* Iron — button/icon strokes [spec] */
+  --color-accent-wash:           #E9F4FA; /* Hudson-тинт 6% [derived] */
+
+  /* Статусы — вне спеки (нет семантики вердиктов): сдержанные AA-цвета в
+     духе sage/cyan-палитры [derived]. info = Hudson-семья. */
+  --color-status-success:     #15803D;
+  --color-status-success-on:  #FFFFFF;
+  --color-status-success-wash:#EFF7F1;
+  --color-status-warning:     #8A5A00;
+  --color-status-error:       #C03434;
+  --color-status-error-on:    #FFFFFF;
+  --color-status-error-wash:  #FBEFEF;
+  --color-status-info:        #0074AD;
+
+  --color-surface-overlay: rgba(40, 40, 52, 0.45);
+
+  /* Типографика [spec]: serif display (ppmondwest → Source Serif 4 fallback),
+     компактный sans body (af → Inter fallback), display tracking −0.02em. */
+  --font-family-display: 'Source Serif 4', 'Lora', Georgia, 'Times New Roman', serif;
+  --font-family-body:    'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-family-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --letter-spacing-tight: -0.02em;  /* display [spec] */
+  --letter-spacing-wide:   0.10em;
+
+  /* Радиусы [spec]: кнопки 4 / standard cards 12 / elevated cards 16 /
+     nav pill 50px (≈full). Hero 24px в 3-токенную шкалу не входит. */
+  --border-radius-sm:   4px;
+  --border-radius-md:   12px;
+  --border-radius-lg:   16px;
+  --border-radius-full: 999px;
+
+  /* Frosted-тени [spec]: diagram-card пара (0 1px 1px + 0 4px 5px @8%),
+     floating-nav 0 2px 6px @15%, frosted-гало 0 0 0 5px @4%. */
+  --shadow-sm: 0 1px 1px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 1px 1px rgba(0, 0, 0, 0.08), 0 4px 5px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.15), 0 0 0 5px rgba(0, 0, 0, 0.04);
+  --shadow-focus: 0 0 0 3px rgba(0, 129, 192, 0.30);
+
+  --drop-cap-size: 1em;             /* буквица выключена */
+}
+
+/* ========================= BROADSHEET — DARK [derived] =================== */
+/* У стиля НЕТ тёмной темы — выводим её из Graphite Night #282834 (тёмная
+   nav-поверхность спеки): графитовая ночь + cream-текст + светлый Hudson. */
+html[data-design="broadsheet"][data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-bg-primary:   #15151D;   /* Graphite Night −2 ступени [derived] */
+  --color-bg-secondary: #1D1D27;   /* [derived] */
+  --color-bg-tertiary:  #252531;   /* [derived] */
+  --color-bg-inverse:   #FEFFFC;
+
+  --color-text-primary:   #F4F5F1; /* cream-white [derived] */
+  --color-text-secondary: #C3C5CE; /* [derived], ~10:1 */
+  --color-text-tertiary:  #9094A3; /* [derived], 6.0:1 (AA) */
+  --color-text-inverse:   #171717;
+  --color-text-link:      #4FB3E2; /* Hudson +2 ступени света, 7.6:1 [derived] */
+
+  --color-border-primary:   #2E2E3B;
+  --color-border-secondary: #23232E;
+  --color-border-focus:     #4FB3E2;
+
+  /* Инверсия Obsidian-кнопки: cream-fill + ink-текст (ночной негатив
+     pill-навигации). Hudson — голос ссылок/фокуса, как в light. */
+  --color-accent-primary:        #F4F5F1;
+  --color-accent-primary-hover:  #FFFFFF;
+  --color-accent-primary-active: #E3E4DE;
+  --color-accent-on:             #1F1F29;
+  --color-accent-secondary:      #B7BAC6;
+  --color-accent-wash:           #1C2630; /* тёмный Hudson-тинт [derived] */
+
+  --color-status-success:     #5FBA7D;
+  --color-status-success-on:  #15151D;
+  --color-status-success-wash:#1A2A20;
+  --color-status-warning:     #DFAF3F;
+  --color-status-error:       #F0766E;
+  --color-status-error-on:    #15151D;
+  --color-status-error-wash:  #301B1D;
+  --color-status-info:        #56B8DC;
+
+  --color-surface-overlay: rgba(0, 0, 0, 0.6);
+
+  --shadow-sm: 0 1px 1px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 1px 1px rgba(0, 0, 0, 0.35), 0 4px 5px rgba(0, 0, 0, 0.40);
+  --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.50), 0 0 0 5px rgba(0, 0, 0, 0.25);
+  --shadow-focus: 0 0 0 3px rgba(79, 179, 226, 0.35);
+}
+
+/* Авто-тёмная (системная), если тема не зафиксирована явно. Байт-копия dark. */
+@media (prefers-color-scheme: dark) {
+  html[data-design="broadsheet"]:not([data-theme="light"]) {
+    color-scheme: dark;
+    --color-bg-primary:   #15151D;
+    --color-bg-secondary: #1D1D27;
+    --color-bg-tertiary:  #252531;
+    --color-bg-inverse:   #FEFFFC;
+    --color-text-primary:   #F4F5F1;
+    --color-text-secondary: #C3C5CE;
+    --color-text-tertiary:  #9094A3;
+    --color-text-inverse:   #171717;
+    --color-text-link:      #4FB3E2;
+    --color-border-primary:   #2E2E3B;
+    --color-border-secondary: #23232E;
+    --color-border-focus:     #4FB3E2;
+    --color-accent-primary:        #F4F5F1;
+    --color-accent-primary-hover:  #FFFFFF;
+    --color-accent-primary-active: #E3E4DE;
+    --color-accent-on:             #1F1F29;
+    --color-accent-secondary:      #B7BAC6;
+    --color-accent-wash:           #1C2630;
+    --color-status-success:     #5FBA7D;
+    --color-status-success-on:  #15151D;
+    --color-status-success-wash:#1A2A20;
+    --color-status-warning:     #DFAF3F;
+    --color-status-error:       #F0766E;
+    --color-status-error-on:    #15151D;
+    --color-status-error-wash:  #301B1D;
+    --color-status-info:        #56B8DC;
+    --color-surface-overlay: rgba(0, 0, 0, 0.6);
+    --shadow-sm: 0 1px 1px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 1px 1px rgba(0, 0, 0, 0.35), 0 4px 5px rgba(0, 0, 0, 0.40);
+    --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.50), 0 0 0 5px rgba(0, 0, 0, 0.25);
+    --shadow-focus: 0 0 0 3px rgba(79, 179, 226, 0.35);
+  }
+}
+
+/* ======================== BROADSHEET — SIGNATURES ======================== */
+/* То, что не выражается токенами. */
+
+/* «Centered pill island» [spec]: навигация в шапке — тёмная Graphite-Night
+   пилюля (50px) с floating-тенью, белые ссылки. Главная сигнатура стиля.
+   В dark пилюля остаётся графитовой (родная среда), но чуть светлее фона. */
+html[data-design="broadsheet"] .ed-nav {
+  background: #282834;                 /* Graphite Night [spec] */
+  border-radius: 50px;                 /* nav pill [spec] */
+  padding: var(--space-1) var(--space-3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); /* floating nav [spec] */
+}
+html[data-design="broadsheet"] .ed-nav-link { color: rgba(255, 255, 255, 0.78); }
+html[data-design="broadsheet"] .ed-nav-link:hover { color: #FFFFFF; }
+html[data-design="broadsheet"] .ed-nav-link.is-active { color: #FFFFFF; }
+html[data-design="broadsheet"][data-theme="dark"] .ed-nav { background: #2E2E3B; }
+@media (prefers-color-scheme: dark) {
+  html[data-design="broadsheet"]:not([data-theme="light"]) .ed-nav { background: #2E2E3B; }
+}
+
+/* Кнопки [spec] — радиус 4px (md-токен здесь 12px и достался карточкам). */
+html[data-design="broadsheet"] .btn,
+html[data-design="broadsheet"] .secondary-btn,
+html[data-design="broadsheet"] .next-btn,
+html[data-design="broadsheet"] .danger-btn,
+html[data-design="broadsheet"] .flashcard-grade-btn,
+html[data-design="broadsheet"] .focus-page #interview-submit,
+html[data-design="broadsheet"] .flashcard-reveal-btn,
+html[data-design="broadsheet"] #extra-analysis-toggle { border-radius: 4px; }
+
+/* Outlined-действия [spec]: прозрачный fill + Slate Cyan #41a1cf 1px-рамка.
+   Применяем к ghost-кнопкам (наши .btn/.secondary-btn и так transparent). */
+html[data-design="broadsheet"] .btn:not(.next-btn):not(.danger-btn),
+html[data-design="broadsheet"] .secondary-btn,
+html[data-design="broadsheet"] #extra-analysis-toggle { border-color: #41A1CF; }
+html[data-design="broadsheet"][data-theme="dark"] .btn:not(.next-btn):not(.danger-btn),
+html[data-design="broadsheet"][data-theme="dark"] .secondary-btn,
+html[data-design="broadsheet"][data-theme="dark"] #extra-analysis-toggle { border-color: #3E92BC; }
+@media (prefers-color-scheme: dark) {
+  html[data-design="broadsheet"]:not([data-theme="light"]) .btn:not(.next-btn):not(.danger-btn),
+  html[data-design="broadsheet"]:not([data-theme="light"]) .secondary-btn,
+  html[data-design="broadsheet"]:not([data-theme="light"]) #extra-analysis-toggle { border-color: #3E92BC; }
+}
+
+/* Ссылки [spec]: Hudson Blue с 1px-подчёркиванием — «words mid-sentence become
+   interactive without breaking the reading flow». База уже даёт underline 1px;
+   фиксируем тонкость и отступ явно. */
+html[data-design="broadsheet"] a {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+}
