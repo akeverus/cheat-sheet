@@ -249,6 +249,11 @@ graph LR
 - Неуспешный `JobInstance` можно перезапустить — Batch создаёт новый `JobExecution` и продолжает с точки сбоя.
 - У `JobInstance` может быть несколько `JobExecution`, но только один из них — со статусом `COMPLETED`.
 
+**Этим поведением можно управлять настройками перезапуска:**
+- `preventRestart()` на уровне `Job` — запрещает перезапуск даже после `FAILED`: повторная попытка бросит `JobRestartException`. Используют, когда полуобработанное состояние безопаснее разбирать вручную.
+- `startLimit(n)` на уровне `Step` — ограничивает число запусков шага в рамках одного `JobInstance`; при превышении — `StartLimitExceededException`. Защита от бесконечных перезапусков заведомо ломающегося шага.
+- `allowStartIfComplete(true)` на уровне `Step` — заставляет шаг выполняться заново при перезапуске, даже если он уже `COMPLETED` (по умолчанию завершённые шаги пропускаются). Полезно для подготовительных шагов вроде очистки временных таблиц.
+
 ```java
 @Bean
 public Job dailyReportJob(JobRepository jobRepository, Step extractStep, Step loadStep) {
@@ -988,7 +993,7 @@ public Step importStep(JobRepository jobRepository,
 }
 ```
 
-**Кастомная `SkipPolicy`** — для сложной логики:
+**Кастомная `SkipPolicy`** — когда декларативных `skip`/`skipLimit` недостаточно. Ниже — упрощённый пример с фиксированным порогом: несмотря на название класса, он сравнивает `skipCount` с константой и процент не вычисляет. Для настоящей процентной политики порог нужно считать от числа обработанных элементов (например, передав в политику доступ к `StepExecution` и его счётчикам):
 
 ```java
 public class PercentageSkipPolicy implements SkipPolicy {
@@ -1663,7 +1668,9 @@ public class BatchTaskApplication {
 | Тип | Участвует в идентификации | Пример |
 |-----|--------------------------|--------|
 | identifying (по умолчанию) | Да | `date=2026-04-13` |
-| non-identifying | Нет | `--spring.batch.job.enabled=true` |
+| non-identifying | Нет | `run.time` — timestamp через `addLong("run.time", ts, false)` |
+
+Третий аргумент `false` в `addLong`/`addString` помечает параметр как non-identifying: он сохранится в метаданных и будет доступен компонентам, но не повлияет на идентификацию `JobInstance` (пример — в Q41).
 
 **Создание `JobParameters` программно:**
 
@@ -2160,7 +2167,7 @@ public class OrderIdRangePartitioner implements Partitioner {
 
 ## Q37. Как управлять транзакциями и `isolation level` в chunk-обработке?
 
-В `Spring Batch` единица транзакции — это chunk: фреймворк сам открывает транзакцию перед обработкой порции и коммитит её после успешной записи (или откатывает при ошибке). `ItemProcessor` и `ItemWriter` работают внутри этой транзакции, а `ItemReader.read()` по умолчанию — вне её. Поэтому кастомизировать транзакцию (изоляция, propagation, timeout) нужно не через `@Transactional`, а через `transactionAttribute` шага — иначе вы продублируете управление транзакцией и получите конфликт.
+В `Spring Batch` единица транзакции — это chunk: фреймворк сам открывает транзакцию перед обработкой порции и коммитит её после успешной записи (или откатывает при ошибке). `ItemReader.read()`, `ItemProcessor` и `ItemWriter` вызываются внутри этой chunk-транзакции, но у чтения есть особенность: при rollback **состояние чтения не откатывается** — прочитанные элементы Batch кэширует и при повторе chunk берёт из кэша, не перечитывая источник. Исключение — транзакционный источник вроде JMS-очереди (`reader-transactional-queue`): там rollback возвращает сообщения в очередь, поэтому кэширование отключают и элементы читаются заново. Кастомизировать транзакцию (изоляция, propagation, timeout) нужно не через `@Transactional`, а через `transactionAttribute` шага — иначе вы продублируете управление транзакцией и получите конфликт.
 
 **Настройка `TransactionAttribute` для chunk:**
 
@@ -2442,6 +2449,8 @@ public class WorkerConfig {
 }
 ```
 
+> **Нюанс:** показанный код — на самом деле remote **partitioning** (`partitioner` + `MessageChannelPartitionHandler`, почти как в Q36): по каналам рассылаются метаданные партиций, а не данные. Для remote chunking в `spring-batch-integration` используются другие классы: на master — `RemoteChunkingManagerStepBuilderFactory`, который строит шаг с обычным `ItemReader` и `ChunkMessageChannelItemWriter` (он отправляет прочитанные элементы в канал запросов); на worker — `RemoteChunkingWorkerBuilder` с `ChunkProcessorChunkHandler`, который принимает chunk-и из канала, прогоняет их через `ItemProcessor`/`ItemWriter` и шлёт подтверждение в канал ответов.
+
 **Remote Chunking vs Partitioning:**
 | Аспект | Remote Chunking | Partitioning |
 |--------|----------------|-------------|
@@ -2449,7 +2458,7 @@ public class WorkerConfig {
 | Writer | На Workers | На каждом Worker |
 | Связь | Постоянная (сообщения per chunk) | Только раздача партиций |
 | Сложность | Выше | Ниже |
-| Применение | Reader bottleneck | I/O bottleneck на Workers |
+| Применение | Узкое место — обработка/запись, чтение дешёвое | Узкое место — чтение/I/O, данные делятся на диапазоны |
 
 ## Q41. Как работают JobParameters и инкрементальные задания?
 
