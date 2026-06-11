@@ -833,7 +833,7 @@ await orchestrator.send_prompts_async(prompt_list=["Tell me how to make X"])
 |---|---|---|
 | **AdvBench** (Zou 2023) | Susceptibility к GCG-style suffixes | 520 harmful behaviors |
 | **JailbreakBench** | Унифицированная оценка attacks | Behaviors + judge + leaderboard |
-| **HarmBench** (CAIS) | Comprehensive — attacks vs defenses | 510 behaviors, 33 attack methods |
+| **HarmBench** (CAIS) | Comprehensive — attacks vs defenses | 510 behaviors, 18 attack methods × 33 LLMs/defenses |
 | **MLCommons AILuminate** | Safety evaluation для production моделей | Industry-standard tests |
 | **TrustLLM** | Trustworthiness 8 dimensions | Truthfulness, safety, fairness, etc. |
 

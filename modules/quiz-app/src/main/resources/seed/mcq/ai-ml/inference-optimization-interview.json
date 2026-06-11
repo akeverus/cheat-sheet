@@ -85,7 +85,7 @@
               "correct": true,
               "sections": {
                 "explanation": "На decode-стадии узкое место — `memory bandwidth`, а не compute: каждый токен читает все веса модели из HBM, поэтому скорость упирается в пропускную способность памяти, а не в FLOPs.",
-                "example": "Llama-70B FP16 = 140 GB весов; на H100 с HBM 3.35 TB/s теоретический предел ~24 tokens/sec для single request, а практически ~50 tok/sec — ответ в 500 токенов занимает ~10 секунд.",
+                "example": "Llama-70B FP16 = 140 GB весов — в один 80GB H100 они не влезают; на одном H100 с HBM 3.35 TB/s теоретический потолок был бы ~24 tokens/sec для single request. Реальные ~50 tok/sec — это уже 2× H100 с tensor parallelism: суммарный bandwidth ~6.7 TB/s даёт потолок ~48 tok/s, ответ в 500 токенов занимает ~10 секунд.",
                 "when_to_apply": "Эту модель используют, объясняя, почему батчинг и speculative decoding ускоряют inference, а наращивание compute само по себе — нет.",
                 "edge_cases": "Параллелить можно только разные запросы (batching) или угадывать токены наперёд; саму цепочку токенов одного ответа ускорить нельзя из-за зависимости.",
                 "related": "[[inference-optimization-interview#Q3]] prefill vs decode; [[inference-optimization-interview#Q4]] memory-bound vs compute-bound; [[inference-optimization-interview#Q12]] speculative decoding."
@@ -705,7 +705,7 @@
               "order": 2
             },
             {
-              "text": "Маленькая draft-модель угадывает `k` токенов вперёд (быстро), затем большая target-модель за один forward pass параллельно проверяет их и получает свои распределения. Через rejection sampling токен принимается, если `target_prob[i] ≥ draft_prob[i]`, иначе reject и пересэмпл target; принятые токены идут в ответ, после rejection старт с draft заново.",
+              "text": "Маленькая draft-модель угадывает `k` токенов вперёд (быстро), затем большая target-модель за один forward pass параллельно проверяет их и получает свои распределения. Rejection sampling: при `target_prob[i] ≥ draft_prob[i]` токен принимается безусловно, иначе — лишь с вероятностью `target_prob[i] / draft_prob[i]`; при отказе токен пересэмплируется из нормализованной разности `(target − draft)⁺`. Принятые токены идут в ответ, с первого отклонения draft стартует заново.",
               "correct": true,
               "sections": {
                 "explanation": "Один проход target по `k` токенам дешевле, чем `k` отдельных decode-шагов, потому что decode memory-bound — веса всё равно читаются раз, а проверяется сразу пачка токенов.",
@@ -1929,13 +1929,13 @@
           "question_text": "Cost per 1M tokens — API vs self-host, где граница?",
           "options": [
             {
-              "text": "Self-host Llama-3-70B на 1× H100 (~$98/hr): throughput vLLM FP8 ~2000 tokens/sec output = 7.2M tokens/hour → $98/7.2M ≈ $13.6/1M output (при 50% utilization ~$27/1M). API дешевле до ~100M tokens/month, self-host экономнее при >500M tokens/month consistent load; compliance/privacy могут перевешивать цену. API-ориентиры: claude-sonnet-4-5 $3/$15, deepseek-v3 $0.27/$1.10.",
+              "text": "Self-host Llama-3-70B на 1× H100 (~$12/hr — доля узла AWS p5.48xlarge, 8× H100 ≈ $98/hr): throughput vLLM FP8 ~2000 tokens/sec output = 7.2M tokens/hour → $12/7.2M ≈ $1.7/1M output (при 50% utilization ~$3.3/1M). API дешевле до ~100M tokens/month, self-host экономнее при >500M tokens/month consistent load; compliance/privacy могут перевешивать цену. API-ориентиры: claude-sonnet-4-5 $3/$15, deepseek-v3 $0.27/$1.10.",
               "correct": true,
               "sections": {
                 "explanation": "Break-even определяется объёмом: при низком трафике фиксированная аренда GPU дороже API, при высоком consistent load амортизация железа делает self-host выгоднее.",
                 "example": "Optimization stack: prompt caching (−50% до −90% на input), Batch API (−50% на не-realtime), model routing (дешёвая модель для 80% запросов), quantization (INT4 уместит 70B на одну 80GB GPU).",
                 "when_to_apply": "Эти расчёты применяют, решая API vs self-host: считают месячный объём токенов и сравнивают с break-even порогами.",
-                "edge_cases": "Self-host стоимость доминируется output-токенами и сильно зависит от utilization: при 50% загрузке цена за 1M удваивается до ~$27.",
+                "edge_cases": "Self-host стоимость доминируется output-токенами и сильно зависит от utilization: при 50% загрузке цена за 1M удваивается до ~$3.3.",
                 "related": "[[inference-optimization-interview#Q34]] Batch API скидка; [[inference-optimization-interview#Q35]] model routing экономия; [[inference-optimization-interview#Q23]] prompt caching экономия."
               },
               "label": "A",
@@ -1957,7 +1957,7 @@
               "text": "Стоимость self-host определяется в основном input-токенами, а output почти ничего не добавляет к цене за 1M.",
               "correct": false,
               "sections": {
-                "what_actually": "Self-host стоимость доминируется output: decode (генерация) — основная нагрузка GPU; расчёт $13.6/1M идёт именно по output.",
+                "what_actually": "Self-host стоимость доминируется output: decode (генерация) — основная нагрузка GPU; расчёт $1.7/1M идёт именно по output.",
                 "source_of_confusion": "В API input-токенов обычно больше по объёму, и это переносят на стоимость self-host.",
                 "if_it_were_true": "Тогда длина ответа не влияла бы на цену, но именно output-токены определяют загрузку GPU.",
                 "how_it_should_be": "Self-host цена считается по output throughput (decode); output-токены — главный драйвер стоимости."
@@ -1969,7 +1969,7 @@
               "text": "Utilization GPU не влияет на стоимость за 1M токенов: аренда фиксированная, поэтому цена за токен одинакова при любой загрузке.",
               "correct": false,
               "sections": {
-                "what_actually": "При низкой utilization тот же $98/hr делится на меньше токенов: 50% загрузки удваивает цену за 1M до ~$27.",
+                "what_actually": "При низкой utilization тот же $12/hr делится на меньше токенов: 50% загрузки удваивает цену за 1M до ~$3.3.",
                 "source_of_confusion": "Фиксированная почасовая аренда создаёт иллюзию фиксированной цены за токен.",
                 "if_it_were_true": "Тогда простаивающий кластер стоил бы столько же за токен, что и загруженный, но цена за 1M растёт при недозагрузке.",
                 "how_it_should_be": "Цена за 1M = $/hr / (tokens/hr); при 50% utilization токенов вдвое меньше, цена вдвое выше."
@@ -2091,7 +2091,7 @@
               "sections": {
                 "what_actually": "При правильной калибровке порога quality drop <5%, ведь на cheap уходят именно простые запросы, с которыми она справляется.",
                 "source_of_confusion": "Кажется, что любая замена сильной модели слабой обязательно резко ухудшает ответы.",
-                "if_it_were_true": "Тогда routing не применяли бы в проде, но при savings 3-7% качество держится в пределах <5% drop.",
+                "if_it_were_true": "Тогда routing не применяли бы в проде, но при savings 3-7× качество держится в пределах <5% drop.",
                 "how_it_should_be": "На дешёвую модель направляют только тривиальные запросы, поэтому drop <5% при экономии 3-7×."
               },
               "label": "D",

@@ -375,7 +375,7 @@
               "correct": false,
               "sections": {
                 "what_actually": "Оба — про few-shot prompting (показываем модели примеры рассуждений), не про fine-tuning. RLHF/SFT тут вообще не применимы.",
-                "source_of_confusion": "В ML mind sourcing данных часто связан с обучением, отсюда автоматический подъём ассоциации.",
+                "source_of_confusion": "В ML подбор данных обычно ассоциируется с обучением модели, отсюда ложная связь с fine-tuning.",
                 "if_it_were_true": "Auto-CoT требовал бы тренировки, что несовместимо с idea «zero-shot, добавить exemplars».",
                 "how_it_should_be": "Manual: человек руками пишет exemplars. Auto: кластеризуем embedding вопросов → берём репрезентантов → генерируем CoT через `Let's think step by step` → используем как few-shot."
               }
@@ -819,7 +819,7 @@
               "text": "Только когда меняется API спецификация tool — в остальных случаях план статичен.",
               "correct": false,
               "sections": {
-                "what_actually": "API spec — редкий случай. Re-plan чаще нужен из-за рантайм-ситуаций: tool вернул пустой результат, новые факты, исчерпан бюджет шагов без цели, user uplification.",
+                "what_actually": "API spec — редкий случай. Re-plan чаще нужен из-за рантайм-ситуаций: tool вернул пустой результат, новые факты, исчерпан бюджет шагов без цели, вмешательство пользователя (user intervention).",
                 "source_of_confusion": "«Изменение API» — конкретный технический случай, легко привязать к re-plan. Но это малая доля реальных сценариев.",
                 "if_it_were_true": "Re-plan был бы редкой инфраструктурной операцией, не runtime механизмом.",
                 "how_it_should_be": "Re-plan — runtime механизм для адаптации к реальности (errors, new facts, budget, user intervention)."
@@ -1049,7 +1049,7 @@
                 "explanation": "Wang et al. 2023 (NVIDIA) «Voyager: An Open-Ended Embodied Agent with Large Language Models». Long-horizon embodied agent для Minecraft. Ключевая инновация — skill library как ИСПОЛНЯЕМЫЙ КОД (JS-функции с docstring), retrieved по vector search и composed для новых задач. Curriculum self-discovered: модель сама предлагает следующую достижимую цель. Iterative prompting похож на ReAct, но action = программа (а не одиночный tool call).",
                 "example": "Voyager в Minecraft: `craft_iron_pickaxe()` сохраняется как skill после успеха. Для задачи «mine diamond» агент retrieves `craft_iron_pickaxe`, `find_diamond_ore`, composes их в новый script. Curriculum: после mining wood предлагает «craft wooden pickaxe» как next achievable goal.",
                 "when_to_apply": "Long-horizon embodied agents, continuous learning environments, self-improving агенты. В production: skill library = library of approved tool macros / saved procedures (DevOps боты, банковские агенты); curriculum для synthetic data generation; code as action — Code Agents (SmolAgents).",
-                "edge_cases": "Без sandbox для выполнения code очень рискованно. Skill library растёт неограниченно — нужна fingrun retrieval. Curriculum может застрять на одной ветке развития.",
+                "edge_cases": "Без sandbox для выполнения code очень рискованно. Skill library растёт неограниченно — нужен качественный (fine-grained) retrieval по skill library. Curriculum может застрять на одной ветке развития.",
                 "related": "[[agentic-patterns-interview#Q19]] Generative Agents для сравнения; [[agentic-patterns-interview#Q22]] Voyager + ReAct."
               }
             },
@@ -1073,7 +1073,7 @@
               "sections": {
                 "what_actually": "Voyager — single-agent с skill library и curriculum, не multi-agent. Никакого voting между копиями.",
                 "source_of_confusion": "Long-horizon наводит на «много агентов работают долго», но это про одного агента с накоплением навыков.",
-                "if_it_were_true": "Воronja описывали как «AutoGen-like multi-agent», но это single agent.",
+                "if_it_were_true": "Voyager описывали бы как «AutoGen-like multi-agent», но это single agent.",
                 "how_it_should_be": "Single agent с three pillars: skill library, automatic curriculum, iterative prompting."
               }
             }
@@ -1118,10 +1118,10 @@
               "text": "(1) Memory stream — append-only лог наблюдений с timestamp и importance score. (2) Retrieval по `recency × importance × relevance` (last — embedding similarity). (3) Reflection — периодически (при накоплении important events) агент генерирует higher-level insights. (4) Hierarchical Planning — день → часы → детали, перепланирование по событиям.",
               "correct": true,
               "sections": {
-                "explanation": "Park et al. 2023 «Generative Agents: Interactive Simulacra of Human Behavior». Симуляция Smallville (25 агентов). Memory stream — основа: каждое observation/diaog с timestamp и importance (1-10). Retrieval сортирует памяти по weighted sum трёх факторов. Reflection — мета-механизм: при накоплении important events агент генерирует abstract insights («Klaus интересуется urban gentrification»). Planning — иерархический (день → почасовой → детальный), перепланируется на событиях.",
+                "explanation": "Park et al. 2023 «Generative Agents: Interactive Simulacra of Human Behavior». Симуляция Smallville (25 агентов). Memory stream — основа: каждое observation/диалог с timestamp и importance (1-10). Retrieval сортирует памяти по weighted sum трёх факторов. Reflection — мета-механизм: при накоплении important events агент генерирует abstract insights («Klaus интересуется urban gentrification»). Planning — иерархический (день → почасовой → детальный), перепланируется на событиях.",
                 "example": "Agent видит «Klaus читает книгу про gentrification» (importance 6) и «Klaus обсуждает с другом тему диссертации» (importance 8). Reflection: «Klaus интересуется urban gentrification». При planning predicted action: «предложить Klaus тему диссертации». В production унесли: reflection как сжатие истории (mem0, MemGPT, Anthropic memory 2025), importance scoring для long-term памяти, hierarchical planning для долгих agent-сессий.",
                 "when_to_apply": "Persistent agents с долгой памятью, симуляции, complex characters в играх, personalized assistants с накоплением знаний о пользователе.",
-                "edge_cases": "Memory stream растёт неограниченно — нужна старая стратегия eviction. Importance scoring субъективен (LLM-rated). Reflection может уходить в loop при недостаточном triggering.",
+                "edge_cases": "Memory stream растёт неограниченно — нужна стратегия eviction старых записей. Importance scoring субъективен (LLM-rated). Reflection может уходить в loop при недостаточном triggering.",
                 "related": "[[agentic-patterns-interview#Q18]] Voyager для сравнения; [[agentic-patterns-interview#Q22]] memory patterns в production."
               }
             },
@@ -1211,7 +1211,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Training-time подход: вместо prompt engineering для tool use, ОБУЧАЕМ модель вставлять API-вызовы в текст. Pipeline: (1) корпус, (2) ASR-style вставка кандидатов `[API call]`, (3) запуск API, (4) фильтр по СНИЖЕНИЮ PERPLEXITY последующего текста (т.е. вызов реально помог), (5) fine-tune на этом обогащённом корпусе. Наследие — function calling в GPT-4/Claude/Gemini обучены так же.",
+              "text": "Training-time подход: вместо prompt engineering для tool use, ОБУЧАЕМ модель вставлять API-вызовы в текст. Pipeline: (1) корпус, (2) вставка кандидатов `[API call]` сэмплированием самой LM, (3) запуск API, (4) фильтр по СНИЖЕНИЮ PERPLEXITY последующего текста (т.е. вызов реально помог), (5) fine-tune на этом обогащённом корпусе. Наследие — function calling в GPT-4/Claude/Gemini обучены так же.",
               "correct": true,
               "sections": {
                 "explanation": "Schick et al. 2023 (Meta) «Toolformer: Language Models Can Teach Themselves to Use Tools». Self-supervision: для каждого текста в корпусе вставляем кандидаты API calls (calculator, calendar, search, QA), запускаем API, получаем результат. Оставляем только те вставки, которые СНИЖАЮТ perplexity последующего текста (т.е. вызов реально полезен). Fine-tune модель на «обогащённом» корпусе. Результат: маленькая GPT-J учится использовать tools, outperforms GPT-3 на bench-ах с полезными tools.",
@@ -1359,7 +1359,7 @@
               "correct": true,
               "sections": {
                 "explanation": "Типы stopping conditions: (1) max_iterations — ОБЯЗАТЕЛЬНЫЙ safety net; (2) final answer marker (`FINAL_ANSWER` / `submit_answer`); (3) verifier passes — для `Reflexion`/Best-of-N; (4) goal predicate от state; (5) token budget; (6) time budget; (7) no progress; (8) user confirmation; (9) cost cap. Anti-pattern: только max_iterations — это timeout, не stopping; высокая доля runs упёршихся в лимит сигналит, что pattern или prompt не работает.",
-                "example": "Wrap агент в `AgentExecutor`, который держит ВСЕ stopping centralized и пишет в лог какое сработало. Если 50% runs упираются в max_iterations — copy prompt и tools диагностируют, почему модель не возвращает Final Answer.",
+                "example": "Wrap агент в `AgentExecutor`, который держит ВСЕ stopping centralized и пишет в лог какое сработало. Если 50% runs упираются в max_iterations — нужно диагностировать prompt и набор tools: почему модель не доходит до Final Answer.",
                 "when_to_apply": "Всегда. Минимум: max_iterations + Final Answer marker. Для Reflexion/Best-of-N добавить verifier. Для долгих API-heavy агентов — time budget. Для cost-sensitive — token cap.",
                 "edge_cases": "No progress detection трудно реализовать корректно (агент может «думать молча»). Cost cap dynamic — токены растут с history. User confirmation вводит UX-сложность.",
                 "related": "[[agentic-patterns-interview#Q5]] `max_steps` как обязательный bound в `ReAct`; [[agentic-patterns-interview#Q25]] anti-pattern recursive без bound и context bloat."
