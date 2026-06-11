@@ -81,7 +81,7 @@
               "order": 0
             },
             {
-              "text": "Открыты только веса под кастомной (не OSI-approved) лицензией, тогда как training-данные закрыты, training-код описан лишь высокоуровнево в paper, а лицензия ограничивает использование (clause `700M DAU` у Llama, `Gemma Terms of Use`).",
+              "text": "Открыты только веса под кастомной (не OSI-approved) лицензией, тогда как training-данные закрыты, training-код описан лишь высокоуровнево в paper, а лицензия ограничивает использование (clause `700M MAU` у Llama, `Gemma Terms of Use`).",
               "correct": true,
               "sections": {
                 "explanation": "OSI в 2024 опубликовал `OSAID`, под который `Llama` и `Gemma` не подпадают, а `OLMo` подпадает — поэтому корректный термин open-weight.",
@@ -326,7 +326,7 @@
               "sections": {
                 "explanation": "Ключевые сдвиги от Llama 3: MoE вместо dense (routing на token-level), native multimodal (text+image, early-fusion encoder), огромный context (Scout — 10M через interleaved RoPE), active=17B при total 109B-400B.",
                 "example": "Active=17B означает inference-compute как у 17B dense, но `VRAM` нужен под все веса (109B-400B), поэтому Scout метит в single-H100 long-context, а Maverick — в production multi-GPU.",
-                "when_to_apply": "Лицензия — Llama 4 Community License (тот же 700M DAU clause плюс дополнительные ограничения на EU из-за Digital Markets Act).",
+                "when_to_apply": "Лицензия — Llama 4 Community License (тот же 700M MAU clause плюс дополнительные ограничения на EU из-за Digital Markets Act).",
                 "edge_cases": "Заявленные 10M токенов Scout — это формальная декларация: на больших длинах качество деградирует, как и у других long-context моделей.",
                 "related": "[[open-source-llms-interview#Q4]] версии Llama; [[open-source-llms-interview#Q22]] total vs active params в MoE; [[open-source-llms-interview#Q7]] clause 700M MAU."
               },
@@ -633,7 +633,7 @@
               "order": 1
             },
             {
-              "text": "`Qwen 2.5` (Sept 2024) от Alibaba — наиболее полный размерный ряд open-weight: `0.5B`, `1.5B`, `7B`, `14B`, `32B` под `Apache 2.0`, `3B` под Qwen Research License, `72B` под Qwen License; все с 128K context через `YARN` scaling.",
+              "text": "`Qwen 2.5` (Sept 2024) от Alibaba — наиболее полный размерный ряд open-weight: `0.5B`, `1.5B`, `7B`, `14B`, `32B` под `Apache 2.0`, `3B` под Qwen Research License, `72B` под Qwen License; 128K context через `YaRN` scaling — у вариантов 7B и крупнее, мелкие 0.5B/1.5B/3B — 32K.",
               "correct": true,
               "sections": {
                 "explanation": "Есть специализации на той же базе: `Qwen 2.5 Math` (1.5B/7B/72B), `Qwen 2.5 Coder` (0.5B→32B, конкурент `DeepSeek-Coder`), `Qwen 2.5 VL` (vision-language), `QwQ-32B` (reasoning), `Qwen 2.5-Max` (frontier MoE через API без релиза весов).",
@@ -649,10 +649,10 @@
               "text": "`Qwen 2.5` использует фиксированный контекст 4K токенов и не поддерживает long-context.",
               "correct": false,
               "sections": {
-                "what_actually": "Все варианты Qwen 2.5 имеют 128K context через `YARN` scaling.",
+                "what_actually": "У вариантов Qwen 2.5 от 7B и крупнее — 128K context через `YaRN` scaling; у мелких 0.5B/1.5B/3B — 32K, но никак не 4K.",
                 "source_of_confusion": "Раннюю общую границу 4K ошибочно приписывают современному Qwen.",
                 "if_it_were_true": "Тогда Qwen не конкурировал бы в long-context задачах, но у него 128K из коробки.",
-                "how_it_should_be": "Контекст Qwen 2.5 — 128K через YARN, а не 4K."
+                "how_it_should_be": "Контекст Qwen 2.5 — 128K через `YaRN` у 7B+, 32K у мелких 0.5B/1.5B/3B, а не 4K."
               },
               "label": "D",
               "order": 3
@@ -1929,7 +1929,7 @@
           "question_text": "Какие code-specific open-source модели есть и какая под что?",
           "options": [
             {
-              "text": "Под код есть: `DeepSeek-Coder V2` (16B / 236B MoE / 21B active, strong + FIM), `Qwen 2.5 Coder` (0.5B→32B, Apache 2.0 до 14B, обходит Codestral), `Codestral` (22B, MNPL non-prod), `Codestral Mamba` (7B, 256K context, state-space), `StarCoder 2` (3B/7B/15B, OpenRAIL-M), `Granite Code` (Apache 2.0, IBM enterprise).",
+              "text": "Под код есть: `DeepSeek-Coder V2` (16B / 236B MoE / 21B active, strong + FIM), `Qwen 2.5 Coder` (0.5B→32B, Apache 2.0 у всех размеров включая флагман 32B — кроме 3B под Qwen Research License; обходит Codestral), `Codestral` (22B, MNPL non-prod), `Codestral Mamba` (7B, 256K context, state-space), `StarCoder 2` (3B/7B/15B, OpenRAIL-M), `Granite Code` (Apache 2.0, IBM enterprise).",
               "correct": true,
               "sections": {
                 "explanation": "Сценарии: IDE-completion (FIM) — `Qwen 2.5 Coder 7B`/`StarCoder 2 7B`/`DeepSeek-Coder 6.7B` (малые, быстрые); chat/refactor — `Qwen 2.5 Coder 32B`/`DeepSeek-Coder V2 16B`; frontier code reasoning — `DeepSeek-V3`/`DeepSeek-R1-Distill-Qwen-32B`; long-context — `Codestral Mamba` (256K).",

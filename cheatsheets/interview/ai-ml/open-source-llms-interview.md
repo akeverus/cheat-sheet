@@ -337,7 +337,7 @@ Token → Attention → Router (8 experts) → top-2 → FFN_3 + FFN_7 → outpu
 
 ## Q11. Какие размеры и варианты есть в семействе `Qwen 2.5`? `!`
 
-Главное про `Qwen 2.5` (сент 2024, Alibaba): это самая **полная по размерному ряду** open-weight семья — от 0.5B для edge до 72B флагмана, плюс специализированные ветки (Math, Coder, VL, reasoning). Все варианты — с контекстом 128K (через scaling `YARN`).
+Главное про `Qwen 2.5` (сент 2024, Alibaba): это самая **полная по размерному ряду** open-weight семья — от 0.5B для edge до 72B флагмана, плюс специализированные ветки (Math, Coder, VL, reasoning). Контекст 128K (131072 через scaling `YaRN`) — у вариантов 7B и крупнее; мелкие 0.5B/1.5B/3B — 32K.
 
 | Размер | Базовая лицензия | Назначение |
 |---|---|---|
@@ -913,7 +913,7 @@ flowchart TD
 | Модель | Размеры | Лицензия | Sweet spot |
 |---|---|---|---|
 | `DeepSeek-Coder V2` | 16B / 236B MoE / 21B active | DeepSeek License | Сильный код, FIM, многоязычный |
-| `Qwen 2.5 Coder` | 0.5B / 1.5B / 3B / 7B / 14B / 32B | Apache 2.0 (≤14B) | Полный размерный ряд, обходит Codestral |
+| `Qwen 2.5 Coder` | 0.5B / 1.5B / 3B / 7B / 14B / 32B | Apache 2.0 (кроме 3B — Qwen Research License) | Полный размерный ряд, обходит Codestral |
 | `Codestral` (Mistral) | 22B | MNPL (non-prod) | Заточен на однопроходную генерацию кода |
 | `Codestral Mamba` | 7B | Apache 2.0 | Код с длинным контекстом (256K), архитектура state-space |
 | `Code Llama` | 7B / 13B / 34B / 70B | лицензия Llama 2 | Legacy, заменён производными Llama 3 |
