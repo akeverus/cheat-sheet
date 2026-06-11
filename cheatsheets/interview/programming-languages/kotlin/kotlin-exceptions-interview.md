@@ -109,7 +109,7 @@ updated: "2026-05-08"
 
 **Structured concurrency и propagation**
 - [Q38. Как работает propagation исключений в structured concurrency?](#q38-как-работает-propagation-исключений-в-structured-concurrency)
-- [Q39. Как `Arrow Either`/`Validated` используются для функциональной обработки ошибок?](#q39-как-arrow-eithervalidated-используются-для-функциональной-обработки-ошибок)
+- [Q39. Как `Arrow Either` и `zipOrAccumulate` используются для функциональной обработки ошибок?](#q39-как-arrow-either-и-ziporaccumulate-используются-для-функциональной-обработки-ошибок)
 - [Q40. Как `SupervisorJob` и `CoroutineExceptionHandler` работают вместе?](#q40-как-supervisorjob-и-coroutineexceptionhandler-работают-вместе)
 
 ---
@@ -769,7 +769,13 @@ data class ServiceUnavailable(val service: String) : InfrastructureError {
     override val message = "Service unavailable: $service"
 }
 
-// Использование с generic Result
+// Собственный generic-результат: у kotlin.Result тип ошибки
+// фиксирован как Throwable, поэтому определяем свой
+sealed interface Result<out T, out E> {
+    data class Ok<T>(val value: T) : Result<T, Nothing>
+    data class Err<E>(val error: E) : Result<Nothing, E>
+}
+
 typealias DomainResult<T> = Result<T, DomainError>
 
 // sealed interface вместо sealed class — позволяет множественное наследование
@@ -1178,7 +1184,7 @@ val userName = fetchUser(userId)
     .getOrDefault("Unknown")
 ```
 
-**Важное ограничение:** `Result` нельзя использовать как тип возврата `public`-функции напрямую (ограничение компилятора), но можно через `suspend` функции или обернув в другой тип.
+**Историческая деталь:** до Kotlin 1.5 компилятор запрещал `Result` как тип возврата обычных функций. Начиная с Kotlin 1.5 ограничение снято — `Result` можно свободно использовать в сигнатурах public-функций, свойств и параметров (подробности и причины старого запрета — в Q7).
 
 ## Q34. `runCatching` — рекомендации и антипаттерны
 
@@ -1363,7 +1369,7 @@ val value = try {
 
 ## Q37. Как `@Throws` работает с inline-функциями?
 
-**`@Throws`** генерирует Java `throws` клаузу в bytecode. С `inline`-функциями есть нюансы: inline-функция встраивается в место вызова, поэтому `@Throws` на ней влияет на каждое место вызова.
+**`@Throws`** добавляет `throws`-клаузу в JVM-сигнатуру метода. С inline-функциями главный вопрос — где эта клауза реально действует, ведь при инлайнинге метод как таковой не вызывается.
 
 ```kotlin
 // @Throws на обычной функции
@@ -1379,20 +1385,22 @@ inline fun <T> withFile(path: String, block: (String) -> T): T {
 }
 ```
 
-**Ограничения `@Throws` с inline:**
+**Что происходит при инлайнинге:**
+- **Kotlin-вызовы.** Тело inline-функции встраивается в место вызова, и `throws`-клауза не играет никакой роли: в Kotlin все исключения unchecked, они просто распространяются из встроенного кода, как из любого другого.
+- **Java-вызовы.** Java не умеет инлайнить Kotlin-функции и вызывает обычную скомпилированную (не-inline) версию метода — именно её сигнатура и несёт `throws` из `@Throws`.
+
+**Лямбды inline-функций и исключения:**
+- `throw` из лямбда-параметра работает свободно — одинаково для inline-, `noinline`- и `crossinline`-лямбд; никаких особых ограничений `@Throws` здесь не добавляет.
+- `crossinline` запрещает только **non-local return** из лямбды (её исполняют из другого контекста, например из `Runnable`); на выброс исключений модификатор не влияет.
 
 ```kotlin
-// Нельзя выбросить checked exception внутри non-inline lambda-параметра
-// если функция @Throws, но lambda — noinline
-@Throws(IOException::class)
-inline fun process(noinline block: () -> Unit) {
-    block()  // block не inline — IOException не пробрасывается через неё
-}
-
-// Реальная проблема: crossinline запрещает non-local return и throw
 inline fun execute(crossinline block: () -> Unit) {
     Runnable { block() }.run()
-    // crossinline — block не может бросать напрямую через execute
+}
+
+execute {
+    // return  // нельзя: crossinline запрещает non-local return
+    throw IllegalStateException("а throw — можно")
 }
 ```
 
@@ -1466,7 +1474,7 @@ scope.launch {
 
 **Правило:** `async` + `await` — ошибка на `await`. `launch` — ошибка сразу в parent-Job. Для изоляции используй `supervisorScope { }` или `SupervisorJob()`.
 
-## Q39. Как `Arrow Either`/`Validated` используются для функциональной обработки ошибок?
+## Q39. Как `Arrow Either` и `zipOrAccumulate` используются для функциональной обработки ошибок?
 
 **`Either<E, A>`** — тип, представляющий либо ошибку (`Left<E>`), либо успех (`Right<A>`). Ключевое отличие от `Result` — тип ошибки `E` явно задан, это может быть любой sealed class, не только `Throwable`.
 
@@ -1490,41 +1498,48 @@ suspend fun processUser(id: Long): Either<UserError, String> = either {
 }
 ```
 
-**`Validated` (Arrow) — сбор ВСЕХ ошибок:**
+**Аккумулирование ВСЕХ ошибок: `Either.zipOrAccumulate`.** Раньше для этого использовали `Validated`/`ValidatedNel`, но этот тип объявлен deprecated в Arrow 1.2 и удалён в Arrow 2.0. Современный API копит ошибки прямо на `Either`:
 
 ```kotlin
-import arrow.core.*
+import arrow.core.Either
+import arrow.core.NonEmptyList
+import arrow.core.left
+import arrow.core.right
+import arrow.core.zipOrAccumulate
 
 data class RegistrationForm(val name: String, val email: String, val age: Int)
 
-fun validateName(name: String): ValidatedNel<String, String> =
-    if (name.isNotBlank()) name.validNel()
-    else "Name must not be blank".invalidNel()
+fun validateName(name: String): Either<String, String> =
+    if (name.isNotBlank()) name.right()
+    else "Name must not be blank".left()
 
-fun validateEmail(email: String): ValidatedNel<String, String> =
-    if (email.contains("@")) email.validNel()
-    else "Invalid email format".invalidNel()
+fun validateEmail(email: String): Either<String, String> =
+    if (email.contains("@")) email.right()
+    else "Invalid email format".left()
 
-fun validateAge(age: Int): ValidatedNel<String, Int> =
-    if (age >= 18) age.validNel()
-    else "Must be 18+".invalidNel()
+fun validateAge(age: Int): Either<String, Int> =
+    if (age >= 18) age.right()
+    else "Must be 18+".left()
 
-fun validateForm(form: RegistrationForm): ValidatedNel<String, RegistrationForm> =
-    validateName(form.name)
-        .zip(validateEmail(form.email), validateAge(form.age)) { name, email, age ->
-            RegistrationForm(name, email, age)
-        }
+fun validateForm(form: RegistrationForm): Either<NonEmptyList<String>, RegistrationForm> =
+    Either.zipOrAccumulate(
+        validateName(form.name),
+        validateEmail(form.email),
+        validateAge(form.age)
+    ) { name, email, age -> RegistrationForm(name, email, age) }
 
 // Возвращает все ошибки сразу, а не только первую
 validateForm(RegistrationForm("", "bad", 15))
-// Invalid(NonEmptyList(["Name must not be blank", "Invalid email format", "Must be 18+"]))
+// Left(NonEmptyList("Name must not be blank", "Invalid email format", "Must be 18+"))
 ```
 
-**`Either` vs `Validated`:**
-- `Either` — fail-fast (первая ошибка останавливает цепочку)
-- `Validated` — accumulating (собирает все ошибки)
+Тот же приём доступен внутри `Raise` DSL (см. Q25): функция `zipOrAccumulate` из `arrow.core.raise` принимает блоки-валидаторы и копит поднятые ошибки в `NonEmptyList`, а для коллекций есть `mapOrAccumulate`. Это и есть современный ответ на вопрос «чем аккумулировать ошибки» — связка `Either`/`Raise` вместо удалённого `Validated`.
 
-Для форм и валидации данных — `Validated`. Для бизнес-логики с зависимыми шагами — `Either`.
+**Fail-fast vs аккумулирование:**
+- `either { ... bind() ... }` — fail-fast: первая ошибка прерывает цепочку
+- `zipOrAccumulate` — accumulating: независимые проверки выполняются все, ошибки собираются в `NonEmptyList`
+
+Для форм и валидации входных данных — `zipOrAccumulate`. Для бизнес-логики с зависимыми шагами — fail-fast через `bind()`.
 
 ## Q40. Как `SupervisorJob` и `CoroutineExceptionHandler` работают вместе?
 

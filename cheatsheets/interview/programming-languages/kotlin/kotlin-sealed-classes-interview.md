@@ -104,10 +104,7 @@ fun area(shape: Shape): Double = when (shape) {  // when-выражение → 
 // data class Rectangle(...) : Shape()  // fun area: missing branch
 ```
 
-**Как добиться exhaustive-проверки.** Полноту компилятор требует от `when`-*выражения* — когда его результат куда-то идёт (присваивается, возвращается, передаётся как аргумент). `when` в роли *statement* (значение отбрасывается) по умолчанию довольствуется неявным `else`. Поэтому, если нужна проверка полноты:
-
-- используйте `when` как выражение (присвойте результат или верните его), либо
-- заставьте компилятор трактовать его как выражение — частый приём — дописать `.also { }` в конце.
+**Нужно ли что-то делать, чтобы проверка сработала.** С Kotlin 1.7 — нет: компилятор требует полноты от любого `when` по sealed-типу, и неважно, используется он как *выражение* или как *statement* (значение отбрасывается). Непокрытый вариант без `else` — ошибка компиляции. История вопроса умещается в одну фразу: до Kotlin 1.6 неполный `when`-statement давал лишь warning (отсюда старые приёмы вроде «допишите `.also { }`, чтобы превратить statement в выражение»), а с 1.7 это ошибка.
 
 ## Q4. Чем sealed interface отличается от sealed class?
 
@@ -133,7 +130,8 @@ data class ConnectionRefused(val host: String) : NetworkError
 fun handle(error: Error): String = when (error) {
     is IOError -> "IO problem"
     is NetworkError -> "Network problem"
-    // компилятор знает оба случая не exhaustive для пересечения
+    // exhaustive: у Error ровно два прямых наследника — IOError и NetworkError, оба покрыты
+    // (TimeoutError реализует оба интерфейса и попадёт в первую подходящую ветку — is IOError)
 }
 
 fun handleIO(error: IOError): String = when (error) {
@@ -267,7 +265,7 @@ data class User(val name: String) : Serializable, Comparable {
 
 2. **Sealed-тип нельзя объявить local или inner** — только top-level или nested в другом классе. У локальных и inner-типов нет стабильной видимости для всего модуля, поэтому закрытую иерархию на них не построить.
 
-3. **Sealed class не наследуется напрямую от другого sealed class.** Когда нужна многоуровневая иерархия, используют композицию или sealed interface (его можно вкладывать в другой sealed interface).
+3. **Конструкторы — только `protected` (по умолчанию) или `private`.** Сам sealed class абстрактен, экземпляр базового типа создать нельзя — только экземпляры наследников. А вот наследовать один sealed class от другого — можно: `sealed class B : A()` легален, и многоуровневые sealed-иерархии (под-семейства вариантов внутри общего типа) — нормальная практика.
 
 ```kotlin
 // В Kotlin 1.5+
@@ -357,15 +355,15 @@ val restored = Json.decodeFromString<Event>(json)
 
 Экран в каждый момент находится ровно в одном состоянии: грузится, показывает данные, пуст или в ошибке. Sealed-тип `UiState` делает эти состояния **взаимоисключающими по типу** — нельзя случайно держать одновременно `isLoading = true` и непустой список, как было бы с набором булевых флагов. Это устраняет целый класс рассинхронов в UI.
 
-Связка стандартная для Android/Compose: ViewModel хранит текущее состояние в `StateFlow<UiState<...>>`, а экран реагирует через exhaustive `when` — на каждое состояние своя ветка, и компилятор не даст забыть ни одну. Обратите внимание: `Loading`/`Empty` — это `object` (данных нет, singleton), а `Success`/`Error` — `data class`, потому что несут полезную нагрузку.
+Связка стандартная для Android/Compose: ViewModel хранит текущее состояние в `StateFlow<UiState<...>>`, а экран реагирует через exhaustive `when` — на каждое состояние своя ветка, и компилятор не даст забыть ни одну. Обратите внимание: `Loading`/`Empty` — варианты без данных, поэтому они синглтоны, а `Success`/`Error` — `data class`, потому что несут полезную нагрузку. С Kotlin 1.9 такие синглтоны идиоматично объявлять `data object`: тот же единственный экземпляр, но с человекочитаемым `toString()` («Loading» вместо имени класса с хэшем) и корректными `equals`/`hashCode` — симметрично соседним data class-вариантам.
 
 ```kotlin
 // Классический паттерн для Android/Compose
 sealed class UiState<out T> {
-    object Loading : UiState<Nothing>()
+    data object Loading : UiState<Nothing>()
     data class Success<T>(val data: T) : UiState<T>()
     data class Error(val message: String, val retryable: Boolean = true) : UiState<Nothing>()
-    object Empty : UiState<Nothing>()
+    data object Empty : UiState<Nothing>()
 }
 
 class OrdersViewModel : ViewModel() {
@@ -513,24 +511,24 @@ val intConsumer: Consumer<Int> = anyConsumer  // ОК благодаря in
 
 Большинство ошибок сводятся к одному: теряется главное преимущество sealed — проверка полноты компилятором.
 
-1. **`when` как statement вместо expression** — теряете exhaustive-проверку. Без присваивания/возврата компилятор подразумевает `else`, и при добавлении нового подкласса ветка для него тихо отсутствует:
+1. **Ветка `else` в `when` по sealed-типу** — теряете exhaustive-проверку. С Kotlin 1.7 компилятор требует полноты от любого `when` по sealed-типу — и как выражения, и как statement (до 1.6 неполный statement давал лишь warning). Но стоит написать `else`, и проверка отключается: новый подкласс молча проваливается в эту ветку:
 
 ```kotlin
-// ПЛОХО: when как statement — else подразумевается, exhaustive не сработает
+// ПЛОХО: else отключает exhaustive-проверку
 when (result) {
     is Success -> println("ok")
-    is Failure -> println("fail")
-    // добавили новый подкласс — компилятор молчит
+    else -> println("fail")
+    // добавили новый подкласс — он молча уйдёт в else
 }
 
-// ХОРОШО: expression с присваиванием
+// ХОРОШО: все варианты перечислены явно, else не нужен
 val message = when (result) {
     is Success -> "ok"
     is Failure -> "fail"
 }
 ```
 
-2. **Забыть `object` для singleton-вариантов.** Вариант без данных (`Loading`) должен быть `object` — тогда это единственный экземпляр. С `class` каждый вызов создаёт новый объект и ломает сравнение по ссылке:
+2. **Забыть `object` для singleton-вариантов.** Вариант без данных (`Loading`) должен быть `object` — тогда это единственный экземпляр; с Kotlin 1.9 идиоматичнее `data object`: тот же singleton, но с читаемым `toString()` и корректным `equals` (полезно, например, после десериализации, когда может возникнуть второй экземпляр). С обычным `class` каждый вызов создаёт новый объект и ломает сравнение по ссылке:
 
 ```kotlin
 // ПЛОХО
