@@ -12,7 +12,10 @@
              уводит её в правую sticky-колонку (см. editorial.css, WIDE LAYOUT).
              DOM-порядок блоков внутри не менялся — только нестинг. -->
         <aside class="focus-session-rail" aria-label="Сессия">
-        <div class="focus-progress-line">
+        <!-- Прогресс-строка и трек гейтятся th:if: вне сессии раньше в DOM висела
+             видимая пустая полоска 254×2px с aria-valuemax="0" (progressbar «0 из 0»
+             для скринридера). Критика round-01 C-live-1. -->
+        <div class="focus-progress-line" th:if="${interviewSession != null or reviewMode}">
             <span th:if="${interviewSession != null}">
                 <span class="session-progress" th:text="${interviewSession.getIndex() + 1}">1</span>/<span th:text="${interviewSession.getTotal()}">1</span>
             </span>
@@ -21,13 +24,22 @@
         <div class="session-progress-track"
              role="progressbar"
              aria-label="Прогресс сессии"
-             th:attr="aria-valuemin=0,aria-valuemax=${interviewSession != null ? interviewSession.getTotal() : 0},aria-valuenow=${interviewSession != null ? interviewSession.getIndex() + 1 : 0}">
+             th:if="${interviewSession != null}"
+             th:attr="aria-valuemin=0,aria-valuemax=${interviewSession.getTotal()},aria-valuenow=${interviewSession.getIndex() + 1}">
             <div class="session-progress-fill"
                  th:attr="data-progress=${#numbers.formatDecimal(progressPercent, 1, 1)}"></div>
         </div>
 
         <!-- Компактный «сегодня»-чип: стрик (🔥) + due. Информативный, без CTA. -->
         <div th:replace="~{fragments/today-widget :: today-chip(stats=${stats})}"></div>
+
+        <!-- Выход из сессии там, где сессия живёт: раньше «Завершить…» была только
+             в /settings и в no-JS result.html — с фокус-страницы уйти к итогам было
+             нельзя. POST /finish сохраняет summary и редиректит на /session-summary.
+             Критика round-01 B3. -->
+        <form method="post" th:action="@{/finish}" class="rail-finish" th:if="${interviewSession != null and !interviewSession.finished}">
+            <button type="submit" class="btn secondary-btn rail-finish-btn">Завершить сессию</button>
+        </form>
         </aside>
 
         <div class="question-zone-head">
@@ -165,6 +177,6 @@
     </section>
 </main>
 
-<script th:src="@{/js/app.js(v=29)}"></script>
+<script th:src="@{/js/app.js(v=30)}"></script>
 </body>
 </html>

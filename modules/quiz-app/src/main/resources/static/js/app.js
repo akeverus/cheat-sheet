@@ -316,6 +316,24 @@
    * Syncs current filter controls to start-session form.
    * Prevents launching session with stale hidden parameters.
    */
+  // ТРЕНИРОВКА — бесконечный режим без сессии (сервер: SessionFlowService.startSession
+  // при TRAINING очищает сессию и игнорирует count). Честный UI: счётчик вопросов
+  // прячем, CTA переименовываем — кнопка не обещает сессию, которой не будет.
+  // Критика round-01 B1.
+  function initSessionModeForm() {
+    const modeSelect = document.getElementById('session-mode-select');
+    const countField = document.getElementById('session-count-field');
+    const startBtn = document.getElementById('session-start-btn');
+    if (!modeSelect || !countField || !startBtn) return;
+    const sync = () => {
+      const isTraining = modeSelect.value === 'TRAINING';
+      countField.classList.toggle('hidden', isTraining);
+      startBtn.textContent = isTraining ? 'Начать тренировку' : 'Начать сессию';
+    };
+    modeSelect.addEventListener('change', sync);
+    sync();
+  }
+
   function initSessionFormSync() {
     const filtersForm = document.getElementById('filters-form');
     const sessionForm = document.getElementById('session-form');
@@ -733,6 +751,7 @@
     initHintButton();
     initShuffleTopic();
     initSessionFormSync();
+    initSessionModeForm();
     initResultPageExtraAnalysis();
     const supportDetails = document.querySelector('.question-support');
     if (supportDetails) {
@@ -851,6 +870,30 @@
       const width = total > 0 ? Math.min(100, (displayIndex * 100) / total) : 0;
       setProgressValue(progressFill, width);
     }
+  }
+
+  // Русская плюрализация по mod10/mod100 (1 вопрос / 2 вопроса / 5 вопросов).
+  function pluralRu(n, one, few, many) {
+    const mod10 = n % 10;
+    const mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return one;
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+    return many;
+  }
+
+  // EXAM добавляет штрафные вопросы за ошибку (app.exam-penalty-questions) —
+  // сообщаем об этом в вердикте, иначе прогресс «1/1 → 2/6» меняется молча.
+  // Один append в том же кадре, что и рендер вердикта: atomic-live-регион
+  // перечитывается вместе с появлением, без повторных прочтений. round-01 B2.
+  function appendPenaltyNotice(added, total) {
+    const feedback = document.getElementById('result-feedback');
+    if (!feedback) return;
+    const note = document.createElement('p');
+    note.className = 'result-penalty-note';
+    note.textContent = '+' + added + ' '
+      + pluralRu(added, 'штрафной вопрос', 'штрафных вопроса', 'штрафных вопросов')
+      + ' за ошибку — теперь в сессии ' + total + '.';
+    feedback.appendChild(note);
   }
 
   function writeStatField(field, value, digits = 0) {
@@ -1777,13 +1820,32 @@
     submitBtn.classList.add('hidden');
     nextLink.textContent = 'Следующий вопрос';
     nextLink.href = buildNextQuestionHref(questionId);
+    delete nextLink.dataset.finishSession;
     renderFeedbackHtml(data);
     setAnswerFlowStep('result');
     if (answerFlowHint) {
       answerFlowHint.classList.remove('hidden');
     }
 
+    // total ДО обновления прогресса: нужен для детекции штрафных вопросов EXAM.
+    const progressTrackEl = document.querySelector('.session-progress-track');
+    const prevSessionTotal = progressTrackEl
+      ? Number.parseInt(progressTrackEl.getAttribute('aria-valuemax') || '0', 10)
+      : 0;
     updateSessionProgress(data);
+    if (data.session) {
+      // EXAM наказывает ошибку штрафными вопросами (app.exam-penalty-questions) —
+      // раньше total рос молча («1/1» → «2/6» без объяснения). round-01 B2.
+      if (prevSessionTotal > 0 && data.session.total > prevSessionTotal) {
+        appendPenaltyNotice(data.session.total - prevSessionTotal, data.session.total);
+      }
+      // Последний вопрос отвечен: «Следующего вопроса» не существует — кнопка
+      // честно ведёт к итогам (POST /finish в onclick). round-01 C-live-2.
+      if (data.session.finished) {
+        nextLink.textContent = 'Итоги сессии';
+        nextLink.dataset.finishSession = 'true';
+      }
+    }
     refreshStatsFromServer();
 
     if (!learningPrefs.hardMode) {
@@ -1866,6 +1928,24 @@
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       if (!nextLink.href) return;
       e.preventDefault();
+      // Сессия завершена → не «следующий вопрос», а POST /finish прямо к итогам
+      // (минуя промежуточный экран «Сессия завершена»). round-01 C-live-2.
+      if (nextLink.dataset.finishSession === 'true') {
+        const csrfInput = form ? form.querySelector('input[name="_csrf"]') : null;
+        const finishForm = document.createElement('form');
+        finishForm.method = 'post';
+        finishForm.action = '/finish';
+        if (csrfInput) {
+          const csrf = document.createElement('input');
+          csrf.type = 'hidden';
+          csrf.name = csrfInput.name;
+          csrf.value = csrfInput.value;
+          finishForm.appendChild(csrf);
+        }
+        document.body.appendChild(finishForm);
+        finishForm.submit();
+        return;
+      }
       trackUxMetric('next_question_click');
       window.location.href = nextLink.href;
     };

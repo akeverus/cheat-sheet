@@ -53,8 +53,12 @@
   --color-border-focus:     #C6613F; /* Ember [spec] */
 
   /* Clay «held in reserve» [spec]: заливки primary-CTA/прогресс/актив.
-     Текст на терракоте — чернила (5.9:1), не белый (2.97:1 — не AA). */
+     Текст на терракоте — чернила (5.9:1), не белый (2.97:1 — не AA).
+     ВАЖНО: сам Clay #D97757 на ivory — 2.96:1, как ЦВЕТ ТЕКСТА он не проходит
+     AA ни для мелкого (4.5), ни для крупного (3.0) текста. Для текстовых
+     акцентов — только --color-accent-strong (3.7:1, AA large). */
   --color-accent-primary:        #D97757; /* Clay [spec] */
+  --color-accent-strong:         #C96442; /* тёмный Clay [derived]: 3.70:1 на ivory — AA для крупного текста */
   --color-accent-primary-hover:  #C6613F; /* Ember [spec] */
   --color-accent-primary-active: #B0512E; /* [derived] */
   --color-accent-on:             #141413;
@@ -203,6 +207,7 @@
   --color-border-focus:     #D97757;
 
   --color-accent-primary:        #D97757; /* Clay [spec] — 4.8:1 на #262624 */
+  --color-accent-strong:         #D97757; /* в dark сам Clay проходит AA large (4.8:1) */
   --color-accent-primary-hover:  #E08B6D;
   --color-accent-primary-active: #C6613F; /* Ember [spec] */
   --color-accent-on:             #141413;
@@ -213,7 +218,7 @@
   --color-status-success-on:  #1B1B19;
   --color-status-success-wash:#28302A;
   --color-status-warning:     #D9A441;
-  --color-status-error:       #E5736B;
+  --color-status-error:       #EC8580; /* 5.18:1 на строке таблицы #30302E (было #E5736B — 4.41, не AA) */
   --color-status-error-on:    #1B1B19;
   --color-status-error-wash:  #392523;
   --color-status-info:        #6FA8D6;
@@ -242,6 +247,7 @@
     --color-border-secondary: #34322D;
     --color-border-focus:     #D97757;
     --color-accent-primary:        #D97757;
+    --color-accent-strong:         #D97757;
     --color-accent-primary-hover:  #E08B6D;
     --color-accent-primary-active: #C6613F;
     --color-accent-on:             #141413;
@@ -251,7 +257,7 @@
     --color-status-success-on:  #1B1B19;
     --color-status-success-wash:#28302A;
     --color-status-warning:     #D9A441;
-    --color-status-error:       #E5736B;
+    --color-status-error:       #EC8580;
     --color-status-error-on:    #1B1B19;
     --color-status-error-wash:  #392523;
     --color-status-info:        #6FA8D6;
@@ -603,7 +609,9 @@ html[data-design] .ed-masthead-title {
   transition: color var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
 }
 .ed-nav-link:hover { color: var(--color-text-primary); }
-.ed-nav-link.is-active { color: var(--color-accent-primary); border-bottom-color: var(--color-accent-primary); }
+/* Активная вкладка: текст — чернила (Clay #D97757 на ivory — 2.96:1, не AA для 12px),
+   позицию маркирует Clay-подчёркивание. Критика round-01 A1. */
+.ed-nav-link.is-active { color: var(--color-text-primary); border-bottom-color: var(--color-accent-primary); }
 
 /* .ed-export / .ed-nav-export удалены: дублирующий экспорт из шапки /stats убран,
    экспорт живёт только на /settings (data-export-actions). */
@@ -687,7 +695,8 @@ html[data-design] .focus-progress-line {
   color: var(--color-text-secondary);
   margin-bottom: var(--space-2);
 }
-html[data-design] .focus-progress-line .session-progress { color: var(--color-accent-primary); }
+/* Чернила, не Clay: акцент на ivory — 2.96:1, для 12px нужно 4.5:1 (см. round-01 A1). */
+html[data-design] .focus-progress-line .session-progress { color: var(--color-text-primary); font-weight: var(--font-weight-semibold); }
 
 html[data-design] .session-progress-track {
   height: 2px;
@@ -695,6 +704,10 @@ html[data-design] .session-progress-track {
   margin-bottom: var(--space-6);
   overflow: hidden;
 }
+
+/* Досрочное завершение сессии из рейки (round-01 B3). На узких экранах —
+   обычный блок в потоке перед вопросом, на >=1200px — элемент sticky-рейки. */
+html[data-design] .rail-finish { margin-bottom: var(--space-6); }
 html[data-design] .session-progress-fill {
   height: 100%; width: 0;
   background: var(--color-accent-primary);
@@ -1010,6 +1023,14 @@ html[data-design] .result-zone-head { display: flex; flex-direction: column; ali
 html[data-design] .result-zone-head.hidden { display: none; }
 html[data-design] .result-feedback { margin-top: var(--space-4); }
 html[data-design] .result-feedback.hidden { display: none; }
+/* Заметка о штрафных вопросах EXAM (app.js appendPenaltyNotice, round-01 B2):
+   warning-тон, мелкий кегль — сообщение о росте сессии, не часть вердикта. */
+html[data-design] .result-penalty-note {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-status-warning);
+  font-weight: var(--font-weight-semibold);
+}
 /* Кнопка «Показать доп. анализ» сидела вплотную (margin-top:0) к блоку над ней —
    единственный элемент пост-ответной зоны без отступа сверху (фидбэк 16, кнопки
    уверенности 20, takeaway/trace 32, похожие вопросы 40). Даём space-5, как у
@@ -2240,7 +2261,9 @@ html[data-design] .today-hero-body {
 html[data-design] .today-hero-figure { display: flex; align-items: baseline; gap: var(--space-3); }
 html[data-design] .today-hero-due {
   font-family: var(--font-family-display); font-size: var(--font-size-4xl);
-  font-weight: var(--font-weight-bold); line-height: 1; color: var(--color-accent-primary);
+  /* accent-strong, не accent-primary: Clay на ivory — 2.96:1 < 3.0 (AA large).
+     Критика round-01 A2. */
+  font-weight: var(--font-weight-bold); line-height: 1; color: var(--color-accent-strong);
   font-variant-numeric: tabular-nums;
 }
 html[data-design] .today-hero-due-label {
@@ -2376,7 +2399,10 @@ html[data-design] .summary-tools-status {
   /* Внутри панели стек-маржины блоков гасим — ритм несёт gap рейки. */
   html[data-design] .focus-page .focus-session-rail .focus-progress-line,
   html[data-design] .focus-page .focus-session-rail .session-progress-track,
+  html[data-design] .focus-page .focus-session-rail .rail-finish,
   html[data-design] .focus-page .focus-session-rail .today-chip { margin-bottom: 0; }
+  /* Кнопка завершения занимает всю ширину панели рейки. */
+  html[data-design] .focus-page .focus-session-rail .rail-finish-btn { width: 100%; }
 
   /* Пустое состояние фокуса: «окно» тянется на всю ширину (карточка-сообщение
      остаётся центрированной композицией внутри). */

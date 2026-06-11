@@ -88,7 +88,7 @@
                         <input type="hidden" name="ordered" th:value="${filter == null or filter.ordered != false}">
                         <label class="field">
                             <span class="field-label">Режим:</span>
-                            <select name="mode">
+                            <select name="mode" id="session-mode-select">
                                 <option value="TRAINING" th:selected="${mode == null or mode.name() == 'TRAINING'}">Тренировка</option>
                                 <option value="STUDY" th:selected="${mode != null and mode.name() == 'STUDY'}">Изучение</option>
                                 <option value="FLASHCARD" th:selected="${mode != null and mode.name() == 'FLASHCARD'}">Флешкарты</option>
@@ -96,11 +96,16 @@
                                 <option value="MARATHON" th:selected="${mode != null and mode.name() == 'MARATHON'}">Интенсив</option>
                             </select>
                         </label>
-                        <label class="field field-inline">
-                            <span class="field-label">Кол-во:</span>
+                        <!-- ТРЕНИРОВКА — бесконечный режим без сессии (SessionFlowService.startSession:
+                             TRAINING → clearSession). Раньше поле «Кол-во» и кнопка «Начать сессию»
+                             обещали сессию из N вопросов, а сервер молча игнорировал и то и другое.
+                             app.js (initSessionModeForm) скрывает счётчик и переименовывает CTA
+                             в «Начать тренировку» при TRAINING. Критика round-01 B1. -->
+                        <label class="field field-inline" id="session-count-field">
+                            <span class="field-label">Вопросов:</span>
                             <input type="number" name="count" min="1" max="200" value="20">
                         </label>
-                        <button type="submit">Начать сессию</button>
+                        <button type="submit" id="session-start-btn">Начать сессию</button>
                     </form>
                     <form method="post" th:action="@{/finish}" class="d-inline" th:if="${interviewSession != null}">
                         <button type="submit" class="btn-finish-small">Завершить текущую сессию</button>
@@ -198,6 +203,6 @@
         </section>
     </div>
 </main>
-<script th:src="@{/js/app.js(v=29)}"></script>
+<script th:src="@{/js/app.js(v=30)}"></script>
 </body>
 </html>

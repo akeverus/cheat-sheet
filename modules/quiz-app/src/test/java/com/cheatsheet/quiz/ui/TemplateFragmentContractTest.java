@@ -76,8 +76,10 @@ class TemplateFragmentContractTest {
         assertThat(focusTraining).contains("chipText='Пост-разбор'");
         assertThat(focusTraining).contains("hintText='Сначала итог, затем объяснение и дополнительные блоки'");
         assertThat(focusTraining).contains("extraButtonText='Показать доп. анализ'");
-        assertThat(focusTraining).contains("aria-valuemax=${interviewSession != null ? interviewSession.getTotal() : 0}");
-        assertThat(focusTraining).contains("aria-valuenow=${interviewSession != null ? interviewSession.getIndex() + 1 : 0}");
+        // Трек гейтится th:if="${interviewSession != null}" (вне сессии пустой
+        // progressbar 0/0 не рендерится) → null-ветки тернарников не нужны.
+        assertThat(focusTraining).contains("aria-valuemax=${interviewSession.getTotal()}");
+        assertThat(focusTraining).contains("aria-valuenow=${interviewSession.getIndex() + 1}");
         assertThat(focusTraining).contains("data-progress=${#numbers.formatDecimal(progressPercent, 1, 1)}");
         assertThat(focusTraining).contains("th:text=\"${focusModeChipText}\"");
         assertThat(focusTraining).contains("th:text=\"${focusModeHintText}\"");
