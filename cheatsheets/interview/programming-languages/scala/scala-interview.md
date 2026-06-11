@@ -861,19 +861,29 @@ val result = Await.result(f, 5.seconds)
 
 ## Q31. Как комбинировать несколько Future?
 
-`Future` композируются через те же комбинаторы, что и коллекции: `map`/`flatMap` (или for-comprehension) дают последовательную зависимость, а `Future.sequence` — параллельный сбор результатов.
+`Future` композируются через те же комбинаторы, что и коллекции: `map`/`flatMap` (или for-comprehension) плюс `Future.sequence` для сбора списка результатов. Ключевой нюанс: `Future` eager — запускается в момент создания (см. Q30). Поэтому параллельность или последовательность определяется не самим for-comprehension, а **местом создания** Future.
 
 ```scala
-val a: Future[Int] = Future(1)
-val b: Future[Int] = Future(2)
+def slowQuery(x: Int): Future[Int] = Future { Thread.sleep(500); x * 2 }
 
-// Sequential — b зависит от a
-val sum = for {
+// (а) Параллельно: оба Future созданы val'ами ДО for-comprehension,
+// Future eager — оба уже выполняются; for лишь комбинирует результаты (~500 мс)
+val a: Future[Int] = slowQuery(1)
+val b: Future[Int] = slowQuery(2)
+
+val sumPar = for {
   ai <- a
   bi <- b
 } yield ai + bi
 
-// Parallel
+// (б) Последовательно: Future создаются ВНУТРИ for (= вложенный flatMap) —
+// второй стартует только после завершения первого (~1000 мс)
+val sumSeq = for {
+  ai <- slowQuery(1)
+  bi <- slowQuery(ai) // использует результат ai
+} yield ai + bi
+
+// Параллельный сбор списка результатов
 val parallel = Future.sequence(List(a, b)).map(_.sum)
 
 // Error recovery
@@ -888,6 +898,8 @@ val withTimeout = Future.firstCompletedOf(Seq(
   }
 ))
 ```
+
+Правило простое: нужна параллельность — создавай Future заранее val'ами и комбинируй готовые ссылки в for; нужна последовательность (второй шаг зависит от результата первого) — создавай Future внутри for/`flatMap`. Классическая интервью-ловушка — назвать вариант (а) «последовательным»: на самом деле for там лишь ждёт уже запущенные вычисления.
 
 ## Q32. Что такое ExecutionContext?
 
@@ -1069,9 +1081,11 @@ val grouped = users.groupBy("age").count()
 ```
 
 **Почему Scala здесь первый класс:**
-- API на Scala типобезопасен — Datasets с case-классами проверяются компилятором.
-- Замыкания (closures) сериализуются эффективно для распределённого выполнения.
-- Catalyst optimizer лучше работает со Scala-объектами.
+- Typed Dataset API с case-классами проверяется компилятором — в PySpark типизированных Datasets нет вовсе.
+- Нет сериализационного моста: Scala-лямбды исполняются прямо в JVM executor'а, тогда как Python UDF в PySpark гоняют данные между JVM и Python-процессом (даже с Arrow это накладные расходы).
+- Новые фичи появляются в Scala API первыми.
+
+**Нюанс про Catalyst** (интервьюер со знанием Spark это проверит): для DataFrame API оптимизатор строит одинаковые логические планы из любого языка — план языконезависим, и здесь Scala преимущества не даёт. Более того, typed-лямбды в `map`/`filter` для Catalyst непрозрачны: он не может заглянуть внутрь произвольной функции и теряет оптимизации вроде predicate pushdown. Так что преимущество Scala — типобезопасность и отсутствие моста, а не «лучшая работа Catalyst».
 
 Поэтому, хотя Spark поддерживает Python, Java и R, **Scala остаётся для него языком первого класса**.
 
