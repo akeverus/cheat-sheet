@@ -135,28 +135,13 @@ public Product getProduct(Long id) {
 }
 ```
 
-**Поток выполнения:**
+**Поток выполнения** (`Caller` → `Proxy` → `Cache` / `Method`):
 
-```mermaid
-sequenceDiagram
-    participant Caller
-    participant Proxy
-    participant Cache
-    participant Method
-
-    Caller->>Proxy: getProduct(42)
-    Proxy->>Cache: get("products::42")
-    alt Cache Hit
-        Cache-->>Proxy: Product
-        Proxy-->>Caller: Product (метод не вызван)
-    else Cache Miss
-        Cache-->>Proxy: null
-        Proxy->>Method: getProduct(42)
-        Method-->>Proxy: Product
-        Proxy->>Cache: put("products::42", Product)
-        Proxy-->>Caller: Product
-    end
-```
+1. `Caller` вызывает `getProduct(42)` — обращение идёт к `Proxy`.
+2. `Proxy` спрашивает `Cache`: `get("products::42")`.
+3. Дальше два варианта:
+   - **Cache Hit** — `Cache` возвращает `Proxy` готовый `Product`, и `Proxy` отдаёт его `Caller` (метод не вызван).
+   - **Cache Miss** — `Cache` возвращает `null`; тогда `Proxy` вызывает `Method` `getProduct(42)`, получает от него `Product`, кладёт его в `Cache` (`put("products::42", Product)`) и возвращает `Product` `Caller`-у.
 
 Ключевое для понимания: при cache hit метод **не вызывается вообще**, поэтому любые побочные эффекты внутри него (логирование, инкремент счётчика, запрос в БД) пропадают. Кэшируйте только чистые операции чтения.
 

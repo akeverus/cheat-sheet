@@ -134,14 +134,12 @@ Order order = orderRepository.findById(id).orElseThrow();
 
 Агрегат — это не просто «сущность со связями», а граница консистентности: объекты внутри неё всегда сохраняются и удаляются как единое целое, в одной транзакции.
 
-```mermaid
-graph TD
-    AR[Order — Aggregate Root] --> OI1[OrderItem 1]
-    AR --> OI2[OrderItem 2]
-    AR --> A[DeliveryAddress]
-    
-    style AR fill:#4CAF50,color:white
-```
+Структура агрегата на примере заказа: корнем выступает `Order` (Aggregate Root), а внутри его границы живут дочерние объекты:
+
+- `Order` (Aggregate Root)
+  - → `OrderItem 1`
+  - → `OrderItem 2`
+  - → `DeliveryAddress`
 
 ```java
 @Table("orders")

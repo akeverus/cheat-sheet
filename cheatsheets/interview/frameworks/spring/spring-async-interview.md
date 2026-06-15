@@ -129,22 +129,15 @@ userService.findUserAsync(1L)
 
 Именно отсюда растут все ограничения `@Async` — они следствие того, что между вызывающим и методом стоит прокси.
 
-```mermaid
-sequenceDiagram
-    participant Caller
-    participant Proxy as AOP Proxy
-    participant Executor as TaskExecutor
-    participant Target as Target Method
+**Поток вызова по шагам** (участники: `Caller` → `AOP Proxy` → `TaskExecutor` → `Target Method`):
 
-    Caller->>Proxy: asyncMethod()
-    Proxy->>Executor: submit(task)
-    Proxy-->>Caller: return (CompletableFuture or null)
-    Note over Caller: continues работу
-    Executor->>Target: execute on worker thread
-    Target->>Target: method body
-    Target-->>Executor: result
-    Executor-->>Proxy: complete CompletableFuture
-```
+1. `Caller` вызывает `asyncMethod()` — обращение попадает в `AOP Proxy`.
+2. `AOP Proxy` упаковывает тело в задачу и делает `submit(task)` в `TaskExecutor`.
+3. `AOP Proxy` сразу возвращает управление `Caller` — `CompletableFuture` (если метод его возвращает) или `null`.
+4. `Caller` продолжает работу, не дожидаясь результата.
+5. `TaskExecutor` исполняет задачу на worker-потоке (`execute on worker thread`) — запускается реальное тело метода (`method body`) в `Target Method`.
+6. `Target Method` возвращает результат в `TaskExecutor`.
+7. `TaskExecutor` завершает `CompletableFuture` (`complete CompletableFuture`), и `AOP Proxy` отдаёт результат через future.
 
 **Последствия proxy-подхода (почему так):**
 - Работает только для **public**-методов — прокси перехватывает лишь то, что видит снаружи (CGLIB-ограничение).
