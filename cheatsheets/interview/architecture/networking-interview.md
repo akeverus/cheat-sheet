@@ -122,20 +122,15 @@ updated: "2026-05-08"
 
 **Модель OSI** (Open Systems Interconnection) — эталонная модель, разбивающая сетевое взаимодействие на 7 уровней. Идея в том, что каждый уровень решает одну узкую задачу и общается только с соседними: он принимает данные сверху, добавляет свою часть работы (заголовок, адресацию, шифрование) и передаёт ниже. Уровень выше не знает, как именно работает уровень ниже, — он видит только его интерфейс.
 
-```mermaid
-graph TB
-    L7["7 — Application<br/>HTTP, FTP, DNS, SMTP"] --> L6
-    L6["6 — Presentation<br/>SSL/TLS, сжатие, кодировка"] --> L5
-    L5["5 — Session<br/>управление сессиями, RPC"] --> L4
-    L4["4 — Transport<br/>TCP, UDP, QUIC"] --> L3
-    L3["3 — Network<br/>IP, ICMP, маршрутизация"] --> L2
-    L2["2 — Data Link<br/>Ethernet, MAC-адреса"] --> L1
-    L1["1 — Physical<br/>кабели, радиоволны, электрика"]
+Семь уровней сверху вниз (каждый передаёт данные нижележащему):
 
-    style L7 fill:#4CAF50,color:#fff
-    style L4 fill:#2196F3,color:#fff
-    style L3 fill:#FF9800,color:#fff
-```
+- **7 — Application** — `HTTP`, `FTP`, `DNS`, `SMTP`
+- **6 — Presentation** — `SSL/TLS`, сжатие, кодировка
+- **5 — Session** — управление сессиями, `RPC`
+- **4 — Transport** — `TCP`, `UDP`, `QUIC`
+- **3 — Network** — `IP`, `ICMP`, маршрутизация
+- **2 — Data Link** — `Ethernet`, MAC-адреса
+- **1 — Physical** — кабели, радиоволны, электрика
 
 **Зачем нужна:**
 - **Абстракция** — разработчик HTTP-сервиса не думает об электрических сигналах в кабеле; он работает на L7, а нижние уровни прозрачны.
@@ -205,21 +200,13 @@ graph TB
 
 **Three-way handshake** — обмен тремя пакетами, которым клиент и сервер устанавливают `TCP`-соединение. Смысл трёх шагов в том, чтобы обе стороны убедились: канал работает в обе стороны и они согласовали начальные номера последовательности (`seq`), от которых дальше нумеруются байты.
 
-```mermaid
-sequenceDiagram
-    participant C as Клиент
-    participant S as Сервер
+Обмен пакетами между **Клиентом** и **Сервером**:
 
-    C->>S: 1. SYN (seq=x)
-    Note right of S: Клиент хочет соединение
-    S->>C: 2. SYN-ACK (seq=y, ack=x+1)
-    Note left of C: Сервер согласен
-    C->>S: 3. ACK (ack=y+1)
-    Note right of S: Соединение установлено
+1. Клиент → Сервер: `SYN (seq=x)` — клиент хочет соединение.
+2. Сервер → Клиент: `SYN-ACK (seq=y, ack=x+1)` — сервер согласен.
+3. Клиент → Сервер: `ACK (ack=y+1)` — соединение установлено.
 
-    C->>S: Данные
-    S->>C: Данные
-```
+После этого стороны обмениваются данными в обе стороны (Клиент → Сервер и Сервер → Клиент).
 
 **Шаги:**
 
@@ -386,22 +373,18 @@ HttpResponse<String> response = client.send(request,
 
 **`TLS` handshake** — обмен сообщениями, в ходе которого клиент и сервер решают три задачи: проверяют подлинность сервера (по сертификату), согласуют алгоритмы шифрования (cipher suite) и совместно вырабатывают общий секретный ключ, не передавая его по сети в открытом виде. После handshake весь трафик шифруется симметричным ключом.
 
-```mermaid
-sequenceDiagram
-    participant C as Клиент
-    participant S as Сервер
+Обмен сообщениями между **Клиентом** и **Сервером** (`TLS 1.2`, 2 RTT):
 
-    Note over C,S: TLS 1.2 (2 RTT)
-    C->>S: ClientHello (версии, cipher suites, random)
-    S->>C: ServerHello (выбранный cipher, random)
-    S->>C: Certificate (сертификат сервера)
-    S->>C: ServerKeyExchange + ServerHelloDone
-    C->>C: Проверка сертификата через CA
-    C->>S: ClientKeyExchange (pre-master secret)
-    C->>S: ChangeCipherSpec + Finished
-    S->>C: ChangeCipherSpec + Finished
-    Note over C,S: Зашифрованное соединение установлено
-```
+1. Клиент → Сервер: `ClientHello` (версии, cipher suites, random).
+2. Сервер → Клиент: `ServerHello` (выбранный cipher, random).
+3. Сервер → Клиент: `Certificate` (сертификат сервера).
+4. Сервер → Клиент: `ServerKeyExchange` + `ServerHelloDone`.
+5. Клиент локально проверяет сертификат через CA.
+6. Клиент → Сервер: `ClientKeyExchange` (pre-master secret).
+7. Клиент → Сервер: `ChangeCipherSpec` + `Finished`.
+8. Сервер → Клиент: `ChangeCipherSpec` + `Finished`.
+
+После этого зашифрованное соединение установлено.
 
 **Основные шаги:**
 
@@ -457,24 +440,17 @@ sequenceDiagram
 
 **`DNS`** (Domain Name System) — распределённая иерархическая «телефонная книга» интернета: превращает понятное человеку имя (`example.com`) в IP-адрес, по которому реально устанавливается соединение. Резолвинг идёт сверху вниз по дереву имён — от корня к зоне `.com`, затем к авторитативному серверу домена, — и на каждом уровне ответ кэшируется, поэтому большинство запросов разрешается мгновенно.
 
-```mermaid
-sequenceDiagram
-    participant B as Браузер
-    participant R as Recursive Resolver
-    participant Root as Root DNS
-    participant TLD as TLD DNS (.com)
-    participant Auth as Authoritative DNS
+Поток запросов между участниками — **Браузер**, **Recursive Resolver**, **Root DNS**, **TLD DNS (.com)** и **Authoritative DNS**:
 
-    B->>B: 1. Проверка локального кэша
-    B->>R: 2. Запрос: example.com → ?
-    R->>Root: 3. Кто отвечает за .com?
-    Root->>R: 4. Обратись к TLD-серверу .com
-    R->>TLD: 5. Кто отвечает за example.com?
-    TLD->>R: 6. Обратись к ns1.example.com
-    R->>Auth: 7. Какой IP у example.com?
-    Auth->>R: 8. A-запись: 93.184.216.34
-    R->>B: 9. IP: 93.184.216.34 (кэшируется на TTL)
-```
+1. Браузер проверяет локальный кэш.
+2. Браузер → Recursive Resolver: запрос `example.com → ?`.
+3. Recursive Resolver → Root DNS: кто отвечает за `.com`?
+4. Root DNS → Recursive Resolver: обратись к TLD-серверу `.com`.
+5. Recursive Resolver → TLD DNS: кто отвечает за `example.com`?
+6. TLD DNS → Recursive Resolver: обратись к `ns1.example.com`.
+7. Recursive Resolver → Authoritative DNS: какой IP у `example.com`?
+8. Authoritative DNS → Recursive Resolver: `A`-запись `93.184.216.34`.
+9. Recursive Resolver → Браузер: IP `93.184.216.34` (кэшируется на TTL).
 
 **Этапы резолвинга:**
 
@@ -985,22 +961,20 @@ curl -w "\nDNS: %{time_namelookup}s\nConnect: %{time_connect}s\nTLS: %{time_appc
 
 **mTLS** (mutual TLS) — двусторонняя: теперь и клиент предъявляет сертификат, а сервер его проверяет. То есть сама криптография канала становится способом аутентификации клиента — без паролей и токенов. Технически это всё тот же `TLS`, просто сервер дополнительно требует клиентский сертификат (`CertificateRequest`) и рвёт соединение, если тот не валиден.
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Server
+Обмен между **Client** и **Server**.
 
-    Note over Client,Server: TLS Handshake (стандартный)
-    Client->>Server: ClientHello
-    Server->>Client: ServerHello + Certificate
-    Client->>Server: (опционально) CertificateRequest
-    Client->>Server: Finished (сессионный ключ)
+Стандартный `TLS Handshake`:
 
-    Note over Client,Server: mTLS Handshake (дополнительно)
-    Server->>Client: CertificateRequest ← ОБЯЗАТЕЛЬНО
-    Client->>Server: Client Certificate
-    Server->>Client: Verified ✓ (или закрывает соединение)
-```
+1. Client → Server: `ClientHello`.
+2. Server → Client: `ServerHello` + `Certificate`.
+3. Client → Server: (опционально) `CertificateRequest`.
+4. Client → Server: `Finished` (сессионный ключ).
+
+Дополнительно для `mTLS Handshake`:
+
+1. Server → Client: `CertificateRequest` — здесь ОБЯЗАТЕЛЬНО.
+2. Client → Server: `Client Certificate`.
+3. Server → Client: `Verified ✓` (или сервер закрывает соединение).
 
 **Где применяется mTLS:**
 - **Service Mesh (Istio, Linkerd)** — автоматический mTLS между всеми pod-ами
@@ -1052,19 +1026,16 @@ HttpClient client = HttpClient.newBuilder()
 
 **Как работает:**
 
-```mermaid
-sequenceDiagram
-    participant Browser
-    participant Server
+Обмен между **Browser** и **Server** по порядку:
 
-    Browser->>Server: GET /index.html
-    Server-->>Browser: PUSH_PROMISE: /style.css
-    Server-->>Browser: PUSH_PROMISE: /app.js
-    Server-->>Browser: Response: index.html
-    Server-->>Browser: Push: style.css
-    Server-->>Browser: Push: app.js
-    Note over Browser: Браузер уже имеет CSS и JS\nдо завершения парсинга HTML
-```
+1. Browser → Server: `GET /index.html`.
+2. Server → Browser: `PUSH_PROMISE: /style.css`.
+3. Server → Browser: `PUSH_PROMISE: /app.js`.
+4. Server → Browser: `Response: index.html`.
+5. Server → Browser: `Push: style.css`.
+6. Server → Browser: `Push: app.js`.
+
+В итоге браузер уже имеет CSS и JS до завершения парсинга HTML.
 
 **Почему от Server Push отказываются:**
 
@@ -1091,19 +1062,12 @@ Content-Type: text/html
 
 **Service Mesh** — инфраструктурный слой, который берёт на себя всю сетевую логику между микросервисами (mTLS, retry, timeout, трейсинг, маршрутизацию), вынося её из кода приложений. Достигается это через **sidecar**: рядом с каждым сервисом в том же pod-е запускается прокси (Envoy), и весь трафик сервиса идёт через него. В итоге одни и те же политики безопасности и надёжности применяются единообразно ко всем сервисам, а разработчику не нужно их писать в каждом приложении.
 
-```mermaid
-graph TB
-    subgraph "Pod A"
-        AppA[Order Service] <-->|localhost| PA[Envoy Proxy]
-    end
-    subgraph "Pod B"
-        AppB[Payment Service] <-->|localhost| PB[Envoy Proxy]
-    end
+Топология трафика:
 
-    PA <-->|mTLS + metrics + tracing| PB
-    PA -->|telemetry| CP[Control Plane\nIstiod]
-    PB -->|telemetry| CP
-```
+- **Pod A**: `Order Service` ↔ `Envoy Proxy` (через localhost).
+- **Pod B**: `Payment Service` ↔ `Envoy Proxy` (через localhost).
+- `Envoy Proxy` (Pod A) ↔ `Envoy Proxy` (Pod B) — обмен идёт по mTLS, плюс metrics и tracing.
+- Оба `Envoy Proxy` шлют telemetry в `Control Plane` (`Istiod`).
 
 **Что даёт Istio Service Mesh:**
 

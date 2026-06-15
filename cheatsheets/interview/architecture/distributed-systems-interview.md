@@ -109,17 +109,13 @@ updated: "2026-05-08"
 
 Примеры: кластер БД, микросервисы, `CDN`, распределённый кэш. В отличие от монолита на одном сервере, здесь неизбежны задержки сети, частичные сбои и необходимость согласовывать состояние между узлами.
 
-```mermaid
-graph LR
-    Client[Клиент] --> LB[Load Balancer]
-    LB --> S1[Service A<br/>Node 1]
-    LB --> S2[Service A<br/>Node 2]
-    S1 --> DB_Primary[(Primary DB)]
-    S2 --> DB_Primary
-    DB_Primary -- репликация --> DB_Replica[(Replica DB)]
-    S1 --> Cache[(Redis Cache)]
-    S2 --> Cache
-```
+Типичная схема потока запроса:
+
+- `Клиент` → `Load Balancer`.
+- `Load Balancer` → распределяет запросы на два узла одного сервиса: `Service A (Node 1)` и `Service A (Node 2)`.
+- Оба узла `Service A` → пишут/читают в `Primary DB`.
+- `Primary DB` → реплицирует данные в `Replica DB`.
+- Оба узла `Service A` → также используют общий `Redis Cache`.
 
 **Ключевые свойства** (по Лесли Лампорту): компоненты общаются **только через сообщения** (нет разделяемой памяти), каждый узел имеет **собственное локальное состояние**, сбой одного узла **не означает** сбой всей системы.
 
@@ -307,15 +303,14 @@ public class VectorClock {
 
 **`Raft` — упрощённая модель:**
 
-```mermaid
-stateDiagram-v2
-    [*] --> Follower
-    Follower --> Candidate : election timeout
-    Candidate --> Leader : получил большинство голосов
-    Candidate --> Follower : другой стал лидером
-    Leader --> Follower : обнаружил лидера с большим term
-    Candidate --> Candidate : timeout, новый election
-```
+Переходы между состояниями узла:
+
+- Начальное состояние — `Follower`.
+- `Follower` → `Candidate` — по `election timeout`.
+- `Candidate` → `Leader` — получил большинство голосов.
+- `Candidate` → `Follower` — другой узел стал лидером.
+- `Leader` → `Follower` — обнаружил лидера с большим `term`.
+- `Candidate` → `Candidate` — timeout, начинается новый election.
 
 Лидер принимает запросы на запись, реплицирует log entry на фолловеров и коммитит после подтверждения от большинства (кворум `N/2 + 1`). При падении лидера фолловер с таймаутом начинает новый election.
 
@@ -378,19 +373,13 @@ public void createOrder(OrderRequest request) {
 
 Главная ловушка: вызывающий код не отличает «сервис медленный» от «сервис умер». Поэтому борьба с частичными отказами — это набор паттернов, которые превращают неопределённость в предсказуемое поведение (быстрый отказ, fallback, изоляция). Все они требуют **заранее заданных порогов**: timeout, число retry, время открытия circuit breaker и допустимую долю деградации.
 
-```mermaid
-graph TD
-    Client[Клиент] --> GW[API Gateway]
-    GW --> A[Order Service ✅]
-    GW --> B[Payment Service ❌]
-    GW --> C[Inventory Service ✅]
-    A --> DB_A[(DB ✅)]
-    B --> DB_B[(DB ⚠️ таймаут)]
-    C --> DB_C[(DB ✅)]
+Пример частичного отказа: `Клиент` → `API Gateway`, который вызывает три сервиса параллельно.
 
-    style B fill:#f44,color:#fff
-    style DB_B fill:#ff9,color:#000
-```
+- `Order Service` ✅ работает → его `DB` ✅ доступна.
+- `Payment Service` ❌ отказал → его `DB` ⚠️ отвечает с таймаутом.
+- `Inventory Service` ✅ работает → его `DB` ✅ доступна.
+
+Часть системы (`Order`, `Inventory`) продолжает обслуживать запросы, тогда как `Payment Service` недоступен — это и есть частичный отказ, который нужно обработать явно.
 
 **Стратегии борьбы:**
 
@@ -408,14 +397,13 @@ graph TD
 
 **Circuit Breaker** — паттерн отказоустойчивости: при превышении порога ошибок при вызове внешнего сервиса «размыкает цепь» и перестаёт вызывать этот сервис, возвращая fallback или ошибку. Защищает от каскадных сбоев.
 
-```mermaid
-stateDiagram-v2
-    [*] --> Closed
-    Closed --> Open : failureRate >= threshold
-    Open --> HalfOpen : после waitDuration
-    HalfOpen --> Closed : permittedCalls успешны
-    HalfOpen --> Open : ошибка в пробном вызове
-```
+Переходы между состояниями circuit breaker:
+
+- Начальное состояние — `Closed`.
+- `Closed` → `Open` — когда `failureRate >= threshold`.
+- `Open` → `HalfOpen` — после `waitDuration`.
+- `HalfOpen` → `Closed` — если `permittedCalls` успешны.
+- `HalfOpen` → `Open` — при ошибке в пробном вызове.
 
 **Три состояния:**
 - **Closed** — вызовы проходят нормально; считаются ошибки в скользящем окне
@@ -496,23 +484,13 @@ long delay = Math.min(baseDelay * (1L << attempt) + jitter, maxDelay);
 
 Аналогия — **переборки на корабле**: затопление одного отсека не топит весь корабль.
 
-```mermaid
-graph LR
-    subgraph "Приложение"
-        subgraph "Bulkhead: Payment"
-            TP1[Thread Pool<br/>max=10]
-        end
-        subgraph "Bulkhead: Inventory"
-            TP2[Thread Pool<br/>max=5]
-        end
-        subgraph "Bulkhead: Notification"
-            TP3[Thread Pool<br/>max=3]
-        end
-    end
-    TP1 --> Pay[Payment Service]
-    TP2 --> Inv[Inventory Service]
-    TP3 --> Not[Notification Service]
-```
+Внутри приложения каждому внешнему сервису выделен отдельный пул потоков (bulkhead), который вызывает только свой сервис:
+
+- Bulkhead `Payment`: `Thread Pool` с `max=10` → `Payment Service`.
+- Bulkhead `Inventory`: `Thread Pool` с `max=5` → `Inventory Service`.
+- Bulkhead `Notification`: `Thread Pool` с `max=3` → `Notification Service`.
+
+Пулы не пересекаются, поэтому исчерпание одного (например, при зависании `Payment Service`) не затрагивает остальные.
 
 ```java
 // Resilience4j Bulkhead (thread pool isolation)
@@ -667,22 +645,15 @@ public void onLeaderRevoked(OnRevokedEvent event) {
 
 **Два подхода:**
 
-```mermaid
-graph TB
-    subgraph "Client-Side Discovery"
-        C1[Service A] --> SR1[Service Registry<br/>Eureka / Consul]
-        SR1 --> C1
-        C1 --> S1[Service B<br/>instance 1]
-        C1 --> S2[Service B<br/>instance 2]
-    end
+**Client-Side Discovery:**
 
-    subgraph "Server-Side Discovery"
-        C2[Service A] --> LB[Load Balancer<br/>/ API Gateway]
-        LB --> SR2[Service Registry]
-        LB --> S3[Service B<br/>instance 1]
-        LB --> S4[Service B<br/>instance 2]
-    end
-```
+- `Service A` → запрашивает `Service Registry` (`Eureka` / `Consul`) и получает список адресов в ответ.
+- `Service A` → сам выбирает экземпляр и напрямую обращается к `Service B (instance 1)` или `Service B (instance 2)`.
+
+**Server-Side Discovery:**
+
+- `Service A` → обращается к `Load Balancer` / `API Gateway`.
+- `Load Balancer` → сам опрашивает `Service Registry` и направляет запрос на `Service B (instance 1)` или `Service B (instance 2)`.
 
 | Подход | Плюсы | Минусы | Пример |
 |---|---|---|---|
@@ -729,31 +700,21 @@ session.execute(SimpleStatement.newInstance(query)
 
 Основные топологии:
 
-```mermaid
-graph LR
-    subgraph "Single-Leader"
-        P1[Primary<br/>R/W] -- async --> R1[Replica<br/>R/O]
-        P1 -- async --> R2[Replica<br/>R/O]
-    end
-```
+**Single-Leader:**
 
-```mermaid
-graph LR
-    subgraph "Multi-Leader"
-        L1[Leader DC1<br/>R/W] <-- sync --> L2[Leader DC2<br/>R/W]
-        L1 -- async --> R3[Replica]
-        L2 -- async --> R4[Replica]
-    end
-```
+- `Primary` (`R/W`) — единственный узел, принимающий записи.
+- `Primary` → асинхронно (`async`) реплицирует на `Replica` (`R/O`) и второй `Replica` (`R/O`).
 
-```mermaid
-graph LR
-    subgraph "Leaderless"
-        N1[Node 1<br/>R/W] <--> N2[Node 2<br/>R/W]
-        N2 <--> N3[Node 3<br/>R/W]
-        N1 <--> N3
-    end
-```
+**Multi-Leader:**
+
+- `Leader DC1` (`R/W`) ↔ `Leader DC2` (`R/W`) — связаны синхронно (`sync`) в обе стороны.
+- `Leader DC1` → асинхронно (`async`) реплицирует на свой `Replica`.
+- `Leader DC2` → асинхронно (`async`) реплицирует на свой `Replica`.
+
+**Leaderless:**
+
+- Узлы `Node 1`, `Node 2`, `Node 3` — все принимают записи (`R/W`).
+- Все связаны двунаправленно «каждый с каждым»: `Node 1` ↔ `Node 2`, `Node 2` ↔ `Node 3`, `Node 1` ↔ `Node 3`.
 
 | Топология | Плюсы | Минусы | Примеры |
 |---|---|---|---|
@@ -811,18 +772,13 @@ public DataSource getShardFor(LocalDate orderDate) {
 
 **Принцип:** узлы и ключи хэшируются на кольцо `[0, 2^32)`. Ключ назначается **ближайшему узлу по часовой стрелке**.
 
-```mermaid
-graph TD
-    subgraph "Hash Ring"
-        direction LR
-        A["Node A<br/>hash=50"] --> B["Node B<br/>hash=150"]
-        B --> C["Node C<br/>hash=250"]
-        C --> A
-    end
-    K1["Key X<br/>hash=80"] -.-> B
-    K2["Key Y<br/>hash=200"] -.-> C
-    K3["Key Z<br/>hash=30"] -.-> A
-```
+Пример кольца хэшей (`Hash Ring`) из трёх узлов, расположенных по порядку по часовой стрелке: `Node A` (`hash=50`) → `Node B` (`hash=150`) → `Node C` (`hash=250`) → и снова к `Node A` (кольцо замыкается).
+
+Ключи назначаются ближайшему узлу по часовой стрелке:
+
+- `Key X` (`hash=80`) → попадает на `Node B` (ближайший узел с `hash >= 80`).
+- `Key Y` (`hash=200`) → попадает на `Node C`.
+- `Key Z` (`hash=30`) → попадает на `Node A`.
 
 **Виртуальные узлы** (vnodes): каждый физический узел создаёт несколько точек на кольце (например, 150-256). Это обеспечивает **равномерное распределение** — без vnodes один узел может получить непропорционально большой сегмент.
 
@@ -963,22 +919,13 @@ public void createOrder(OrderRequest request) {
 
 Каждый шаг — это **span** (с собственным `spanId` и ссылкой `parentSpanId`), а все span-ы одного запроса объединены общим **`traceId`** — по нему трейс собирается в дерево.
 
-```mermaid
-gantt
-    title Distributed Trace: POST /orders
-    dateFormat X
-    axisFormat %L ms
-    section API Gateway
-    gateway           :0, 350
-    section Order Service
-    createOrder        :20, 200
-    section Payment Service
-    processPayment     :50, 120
-    section Inventory Service
-    reserveStock       :180, 80
-    section Notification
-    sendEmail          :270, 60
-```
+Пример трейса запроса `POST /orders` на временной шкале (в миллисекундах span-ы вложены друг в друга по `parentSpanId`):
+
+- `API Gateway` — span `gateway`: старт на 0 мс, длительность 350 мс (охватывает весь запрос).
+- `Order Service` — span `createOrder`: старт на 20 мс, длительность 200 мс.
+- `Payment Service` — span `processPayment`: старт на 50 мс, длительность 120 мс.
+- `Inventory Service` — span `reserveStock`: старт на 180 мс, длительность 80 мс.
+- `Notification` — span `sendEmail`: старт на 270 мс, длительность 60 мс.
 
 **Ключевые концепции:**
 - **Trace** — полный путь запроса (дерево span-ов)
@@ -1025,22 +972,15 @@ public void processOrder(Order order) {
 
 **Leader Election (выбор лидера):**
 
-```mermaid
-sequenceDiagram
-    participant F1 as Follower 1
-    participant F2 as Follower 2 (→Candidate)
-    participant F3 as Follower 3
+Поток выборов лидера на примере трёх узлов (`Follower 1`, `Follower 2`, `Follower 3`), где `Follower 2` инициирует выборы:
 
-    Note over F2: Election timeout истёк
-    F2->>F2: Стать Candidate, term++
-    F2->>F1: RequestVote(term=2)
-    F2->>F3: RequestVote(term=2)
-    F1-->>F2: VoteGranted
-    F3-->>F2: VoteGranted
-    Note over F2: Получил большинство → стал Leader
-    F2->>F1: AppendEntries (heartbeat)
-    F2->>F3: AppendEntries (heartbeat)
-```
+1. У `Follower 2` истёк election timeout.
+2. `Follower 2` становится `Candidate` и увеличивает `term` (`term++`).
+3. `Follower 2` рассылает `RequestVote(term=2)` узлам `Follower 1` и `Follower 3`.
+4. `Follower 1` отвечает `VoteGranted`.
+5. `Follower 3` отвечает `VoteGranted`.
+6. `Follower 2` получил большинство голосов → стал `Leader`.
+7. Новый лидер рассылает `AppendEntries (heartbeat)` узлам `Follower 1` и `Follower 3`.
 
 **Log Replication (репликация лога):**
 1. Клиент отправляет команду лидеру
@@ -1093,25 +1033,20 @@ boolean grantVote(RequestVote request) {
 
 `2PC` (`Two-Phase Commit`) — протокол для атомарного выполнения распределённых транзакций: все участники либо коммитят, либо откатываются.
 
-```mermaid
-sequenceDiagram
-    participant C as Coordinator
-    participant P1 as Participant 1
-    participant P2 as Participant 2
+Поток протокола на примере одного координатора (`Coordinator`) и двух участников (`Participant 1`, `Participant 2`):
 
-    Note over C,P2: Фаза 1: Prepare
-    C->>P1: PREPARE
-    C->>P2: PREPARE
-    P1-->>C: VOTE_COMMIT (заблокировал ресурсы)
-    P2-->>C: VOTE_COMMIT
+**Фаза 1: Prepare**
 
-    Note over C,P2: Фаза 2: Commit
-    C->>P1: COMMIT
-    C->>P2: COMMIT
-    P1-->>C: ACK
-    P2-->>C: ACK
-    Note over C: Транзакция завершена
-```
+1. `Coordinator` → шлёт `PREPARE` обоим участникам (`Participant 1` и `Participant 2`).
+2. `Participant 1` → отвечает `VOTE_COMMIT` (заблокировал ресурсы).
+3. `Participant 2` → отвечает `VOTE_COMMIT`.
+
+**Фаза 2: Commit**
+
+4. `Coordinator` → шлёт `COMMIT` обоим участникам.
+5. `Participant 1` → отвечает `ACK`.
+6. `Participant 2` → отвечает `ACK`.
+7. Транзакция завершена.
 
 **Проблемы 2PC:**
 1. **Blocking protocol** — если координатор упал после PREPARE, участники заблокированы до восстановления
@@ -1135,20 +1070,18 @@ sequenceDiagram
 
 `Saga` — паттерн управления распределёнными транзакциями без блокировки ресурсов. Длинная транзакция разбивается на последовательность **локальных транзакций**, каждая из которых публикует событие или вызывает следующий шаг. При сбое выполняются **компенсирующие транзакции** в обратном порядке.
 
-```mermaid
-graph LR
-    subgraph "Saga: Создание заказа"
-        T1[Order Service<br/>Создать заказ] -->|OrderCreated| T2[Payment Service<br/>Списать деньги]
-        T2 -->|PaymentDone| T3[Inventory Service<br/>Зарезервировать]
-        T3 -->|Reserved| T4[Delivery Service<br/>Создать доставку]
-    end
-    subgraph "Компенсация при сбое Delivery"
-        C3[Inventory Service<br/>Отменить резерв]
-        C2[Payment Service<br/>Вернуть деньги]
-        C1[Order Service<br/>Отменить заказ]
-        T4 --"FAILED"--> C3 --> C2 --> C1
-    end
-```
+Пример саги «Создание заказа» — прямая последовательность локальных транзакций, где каждый шаг публикует событие для следующего:
+
+1. `Order Service` — создать заказ → публикует `OrderCreated`.
+2. `Payment Service` — списать деньги → публикует `PaymentDone`.
+3. `Inventory Service` — зарезервировать → публикует `Reserved`.
+4. `Delivery Service` — создать доставку.
+
+Компенсация при сбое на шаге `Delivery` (`FAILED`) — компенсирующие транзакции выполняются в обратном порядке:
+
+- `Inventory Service` — отменить резерв →
+- `Payment Service` — вернуть деньги →
+- `Order Service` — отменить заказ.
 
 **Два стиля:**
 - **Хореография** — каждый сервис слушает события и публикует новые; нет центрального координатора; подходит для простых потоков

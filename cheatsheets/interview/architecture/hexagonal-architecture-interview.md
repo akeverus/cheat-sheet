@@ -122,40 +122,18 @@ updated: "2026-05-08"
 - **Невозможность заменить инфраструктуру** без переписывания домена (сменить `PostgreSQL` на `MongoDB`, `REST` на `gRPC`).
 - **Смешение ответственностей** -- контроллер содержит бизнес-правила, а домен знает про HTTP.
 
-```mermaid
-graph LR
-    subgraph "Внешний мир"
-        HTTP[HTTP Client]
-        CLI[CLI / Batch]
-        MQ[Kafka]
-        DB[(Database)]
-        EXT[External API]
-    end
-    subgraph "Адаптеры"
-        WA[Web Adapter]
-        CA[CLI Adapter]
-        MA[Kafka Listener]
-        PA[JPA Adapter]
-        EA[HTTP Client]
-    end
-    subgraph "Application Core"
-        IP[Driving Ports]
-        APP[Use Cases]
-        DOM[Domain Model]
-        OP[Driven Ports]
-    end
-    HTTP --> WA --> IP
-    CLI --> CA --> IP
-    MQ --> MA --> IP
-    IP --> APP --> DOM
-    APP --> OP
-    OP --> PA --> DB
-    OP --> EA --> EXT
-    style DOM fill:#2d5016,color:#fff
-    style APP fill:#4a7c2e,color:#fff
-    style IP fill:#6ba34a,color:#fff
-    style OP fill:#6ba34a,color:#fff
-```
+Поток управления проходит три зоны -- внешний мир, адаптеры и `Application Core`:
+
+- **Driving-сторона (вход)** -- внешний мир дёргает ядро через primary-адаптеры:
+  - `HTTP Client` → `Web Adapter` → `Driving Ports`
+  - `CLI / Batch` → `CLI Adapter` → `Driving Ports`
+  - `Kafka` → `Kafka Listener` → `Driving Ports`
+- **Application Core** -- `Driving Ports` → `Use Cases` → `Domain Model`; `Use Cases` обращаются к `Driven Ports`.
+- **Driven-сторона (выход)** -- ядро дёргает внешний мир через secondary-адаптеры:
+  - `Driven Ports` → `JPA Adapter` → `Database`
+  - `Driven Ports` → `HTTP Client` (адаптер) → `External API`
+
+Ядро (`Domain Model`, `Use Cases`, `Driving Ports`, `Driven Ports`) -- центральная зона; все адаптеры и внешние системы располагаются снаружи.
 
 > На собеседовании важно подчеркнуть: `Hexagonal Architecture` -- это не про количество слоёв, а про **направление зависимостей**. Все стрелки внутри -- в сторону ядра. Ядро ничего не знает о фреймворках.
 
@@ -242,28 +220,10 @@ public interface OrderRepository {              // Driven Port
 | **Driving side** (слева от гексагона) | Primary Adapters | `adapter/in/web`, `adapter/in/cli` |
 | **Driven side** (справа от гексагона) | Secondary Adapters | `adapter/out/persistence`, `adapter/out/messaging` |
 
-```mermaid
-graph LR
-    subgraph "Driving side"
-        WEB[Web Adapter]
-        CLI[CLI Adapter]
-        TEST[Test Driver]
-    end
-    subgraph "Application Core"
-        CORE["Domain + Use Cases + Ports"]
-    end
-    subgraph "Driven side"
-        JPA[JPA Adapter]
-        KAFKA[Kafka Producer]
-        HTTP[HTTP Client]
-    end
-    WEB --> CORE
-    CLI --> CORE
-    TEST --> CORE
-    CORE --> JPA
-    CORE --> KAFKA
-    CORE --> HTTP
-```
+Расстановка по зонам и направление вызовов:
+
+- **Driving side** -- `Web Adapter`, `CLI Adapter`, `Test Driver`. Каждый из них вызывает `Application Core` (`Domain + Use Cases + Ports`).
+- **Driven side** -- `JPA Adapter`, `Kafka Producer`, `HTTP Client`. `Application Core` вызывает каждый из них.
 
 Такое разделение сразу отвечает на главный вопрос -- **кто кого вызывает**: driving-сторона вызывает ядро (инициирует действие), driven-сторона вызывается ядром (обслуживает его потребности). Направление управления и направление зависимости при этом совпадают только слева: справа зависимость инвертирована -- ядро зовёт интерфейс, а реализация лежит снаружи.
 
@@ -303,15 +263,12 @@ public interface AccountDao extends JpaRepository<AccountEntity, Long> {
 | **Метафора** | "Что приложение умеет делать" | "Что приложение требует от мира" |
 | **Пример** | `PlaceOrderUseCase`, `SendMoneyUseCase` | `OrderRepository`, `PaymentGateway`, `EmailSender` |
 
-```mermaid
-graph LR
-    PA[Primary Adapter<br/>REST Controller] -->|вызывает| DP[Driving Port<br/>interface]
-    UC[Use Case<br/>реализация] -.->|implements| DP
-    UC -->|вызывает| DNP[Driven Port<br/>interface]
-    SA[Secondary Adapter<br/>JPA Repo] -.->|implements| DNP
-    style DP fill:#4a7c2e,color:#fff
-    style DNP fill:#6ba34a,color:#fff
-```
+Связи между участниками (вызов vs реализация):
+
+- `Primary Adapter` (REST Controller) **вызывает** `Driving Port` (interface).
+- `Use Case` (реализация) **implements** `Driving Port` -- то есть реализует driving-порт внутри ядра.
+- `Use Case` **вызывает** `Driven Port` (interface).
+- `Secondary Adapter` (JPA Repo) **implements** `Driven Port` -- реализует driven-порт снаружи ядра.
 
 **Практическое правило**: если интерфейс реализуется в **ядре** -- это Driving Port; если в **адаптере** -- это Driven Port.
 
@@ -1089,35 +1046,18 @@ dependencies {
 | `Bounded Context` | отдельный Java-пакет или модуль |
 | `Anti-Corruption Layer` | secondary adapter между контекстами |
 
-```mermaid
-graph TB
-    subgraph "Bounded Context: Order"
-        subgraph "Domain"
-            AGG[Order Aggregate]
-            VO[OrderStatus VO]
-            DS[PricingService]
-            DE[OrderPlaced Event]
-        end
-        subgraph "Application"
-            UC[PlaceOrderUseCase]
-            IP[Driving Port]
-            OP[OrderRepository Port]
-            EP[EventPublisher Port]
-        end
-        subgraph "Adapters"
-            CTL[OrderController]
-            JPA[OrderJpaAdapter]
-            KAFKA[KafkaEventPublisher]
-        end
-    end
-    CTL --> IP
-    IP --> UC
-    UC --> AGG
-    UC --> OP
-    UC --> EP
-    JPA -.->|implements| OP
-    KAFKA -.->|implements| EP
-```
+Пример для `Bounded Context: Order` -- как сущности раскладываются по зонам и связываются:
+
+- **Domain**: `Order Aggregate`, `OrderStatus VO`, `PricingService` (доменный сервис), `OrderPlaced Event`.
+- **Application**: `PlaceOrderUseCase`, `Driving Port`, `OrderRepository Port`, `EventPublisher Port`.
+- **Adapters**: `OrderController`, `OrderJpaAdapter`, `KafkaEventPublisher`.
+
+Связи между ними:
+
+- `OrderController` → `Driving Port` → `PlaceOrderUseCase`.
+- `PlaceOrderUseCase` → `Order Aggregate`, `OrderRepository Port`, `EventPublisher Port`.
+- `OrderJpaAdapter` **implements** `OrderRepository Port`.
+- `KafkaEventPublisher` **implements** `EventPublisher Port`.
 
 Принципиально: **DDD обогащает домен**, гексагон **изолирует его** от инфраструктуры. Вместе они дают богатую, переносимую, тестируемую модель.
 
@@ -1304,26 +1244,11 @@ public class KafkaDomainEventPublisher implements DomainEventPublisher {
 
 Тестировать нужно по слоям, и здесь гексагон даёт прямую выгоду: домен и Use Case изолированы от инфраструктуры, поэтому большую часть пирамиды можно покрыть быстрыми тестами без Spring. Архитектура естественно раскладывается на классическую пирамиду тестирования:
 
-```mermaid
-graph TB
-    subgraph "E2E Tests"
-        E2E[End-to-End<br/>@SpringBootTest + Testcontainers]
-    end
-    subgraph "Integration Tests"
-        INT[Adapter Tests<br/>@WebMvcTest, @DataJpaTest]
-    end
-    subgraph "Unit Tests"
-        UC[Use Case Tests<br/>без Spring, моки портов]
-        DOM[Domain Tests<br/>чистая Java]
-    end
-    DOM --> UC
-    UC --> INT
-    INT --> E2E
-    style DOM fill:#2d5016,color:#fff
-    style UC fill:#4a7c2e,color:#fff
-    style INT fill:#6ba34a,color:#fff
-    style E2E fill:#8cc665,color:#000
-```
+Пирамида снизу вверх (от широкого и быстрого основания к узкой и медленной вершине):
+
+- **Unit Tests** (основание): `Domain Tests` (чистая Java) и `Use Case Tests` (без Spring, моки портов).
+- **Integration Tests**: `Adapter Tests` (`@WebMvcTest`, `@DataJpaTest`).
+- **E2E Tests** (вершина): `End-to-End` (`@SpringBootTest` + `Testcontainers`).
 
 | Уровень | Что тестируем | Инструменты | % |
 |---------|---------------|-------------|---|
@@ -1637,18 +1562,7 @@ class SendMoneyServiceFakeTest {
 | **DI** | Явные порты-интерфейсы | Интерфейсы на границах колец |
 | **UI/Test** | Driving-адаптеры симметричны | UI и Tests -- "outer rings", симметрия |
 
-Основная идея **Onion** -- последовательные слои, где каждый внутренний слой **не знает** о внешнем. Domain Model в центре, Infrastructure снаружи.
-
-```mermaid
-graph TB
-    subgraph "Onion"
-        O1[Infrastructure]
-        O2[Application Services]
-        O3[Domain Services]
-        O4[Domain Model]
-    end
-    O1 --> O2 --> O3 --> O4
-```
+Основная идея **Onion** -- последовательные слои, где каждый внутренний слой **не знает** о внешнем. Снаружи внутрь кольца идут так: `Infrastructure` → `Application Services` → `Domain Services` → `Domain Model`, то есть Domain Model в центре, Infrastructure снаружи.
 
 **Практическая разница** с Hexagonal:
 - Onion **различает** Domain Services и Application Services -- как в DDD
@@ -1702,17 +1616,7 @@ graph TB
 
 **Шаг 7. Внедрить ArchUnit-правила.** Чтобы регрессия не сломала структуру.
 
-```mermaid
-graph LR
-    A[Layered Monolith] --> B[1. Tests Added]
-    B --> C[2. Bounded Contexts]
-    C --> D[3. domain/ package]
-    D --> E[4. Split into Use Cases]
-    E --> F[5. Invert Repository]
-    F --> G[6. Move Adapters]
-    G --> H[7. ArchUnit rules]
-    H --> I[Hexagonal]
-```
+Весь маршрут -- это цепочка от исходного `Layered Monolith` через семь шагов (Tests Added → Bounded Contexts → `domain/` package → Split into Use Cases → Invert Repository → Move Adapters → ArchUnit rules) к итоговой `Hexagonal`-структуре.
 
 **Главное правило**: не мигрировать ради миграции. Если система работает и команда счастлива -- не трогать.
 
@@ -2124,27 +2028,17 @@ static final ArchRule layers = layeredArchitecture()
 - **Database per service**
 - **API contracts**
 
-```mermaid
-graph LR
-    subgraph "Order Service Hexagon"
-        O_IN[REST/Kafka In]
-        O_CORE[Order Core]
-        O_OUT[JPA/Kafka Out]
-    end
-    subgraph "Payment Service Hexagon"
-        P_IN[REST/Kafka In]
-        P_CORE[Payment Core]
-        P_OUT[JPA/Stripe Out]
-    end
-    subgraph "Inventory Service Hexagon"
-        I_IN[REST/Kafka In]
-        I_CORE[Inventory Core]
-        I_OUT[JPA Out]
-    end
-    O_OUT -->|Kafka event| P_IN
-    O_OUT -->|HTTP| I_IN
-    P_OUT -->|Stripe| EXT[External]
-```
+Каждый сервис -- отдельный гексагон с входом (`In`), ядром (`Core`) и выходом (`Out`):
+
+- **Order Service Hexagon**: вход `REST/Kafka In` → `Order Core` → выход `JPA/Kafka Out`.
+- **Payment Service Hexagon**: вход `REST/Kafka In` → `Payment Core` → выход `JPA/Stripe Out`.
+- **Inventory Service Hexagon**: вход `REST/Kafka In` → `Inventory Core` → выход `JPA Out`.
+
+Связи между сервисами идут через выходные адаптеры одного гексагона во входные другого, с явным транспортом:
+
+- `Order` (`JPA/Kafka Out`) → `Payment` (`REST/Kafka In`) -- через Kafka-событие.
+- `Order` (`JPA/Kafka Out`) → `Inventory` (`REST/Kafka In`) -- через HTTP.
+- `Payment` (`JPA/Stripe Out`) → `External` -- через Stripe.
 
 **Что даёт гексагон в микросервисах**:
 1. **Независимая эволюция транспорта** -- можно перейти с REST на gRPC без изменения домена
