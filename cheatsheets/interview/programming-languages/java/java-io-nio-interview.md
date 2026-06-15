@@ -19,7 +19,7 @@ updated: "2026-05-05"
 ---
 # Вопросы на собеседовании: `Java IO / NIO`
 
-Комплексное руководство по вопросам собеседования на тему `Java IO / NIO / NIO.2` для `Senior Java Developer`. Включает детальные объяснения концепций, примеры кода, диаграммы архитектуры и практические рекомендации.
+Комплексное руководство по вопросам собеседования на тему `Java IO / NIO / NIO.2` для `Senior Java Developer`. Включает детальные объяснения концепций, примеры кода, разбор архитектуры и практические рекомендации.
 
 ## Полезные ссылки
 
@@ -107,27 +107,17 @@ updated: "2026-05-05"
 
 `Java NIO` (`java.nio`, появился в Java 1.4) — API на **буферах и каналах** (buffer-oriented). Данные читаются порциями в буфер, затем обрабатываются из него. Канал двунаправленный и может работать в неблокирующем режиме, а один поток через `Selector` обслуживает множество соединений.
 
-```mermaid
-graph LR
-    subgraph "Java IO — потоковая модель"
-        A[Источник] -->|байт за байтом| B[InputStream]
-        B --> C[Программа]
-        C --> D[OutputStream]
-        D -->|байт за байтом| E[Приёмник]
-    end
-```
+**`Java IO` — потоковая модель.** Данные идут строго в одну сторону, байт за байтом:
 
-```mermaid
-graph LR
-    subgraph "Java NIO — буферная модель"
-        F[Источник] -->|блок данных| G[Channel]
-        G -->|read| H[Buffer]
-        H --> I[Программа]
-        I --> H
-        H -->|write| G
-        G -->|блок данных| J[Приёмник]
-    end
-```
+- `Источник` → (байт за байтом) → `InputStream` → `Программа`;
+- `Программа` → `OutputStream` → (байт за байтом) → `Приёмник`.
+
+**`Java NIO` — буферная модель.** Данные ходят блоками через `Channel` и `Buffer`, причём обмен двунаправленный:
+
+- `Источник` ↔ (блок данных) ↔ `Channel`;
+- `Channel` читает данные в `Buffer` (`read`) и пишет из `Buffer` (`write`);
+- `Программа` обменивается данными с `Buffer` в обе стороны;
+- `Channel` ↔ (блок данных) ↔ `Приёмник`.
 
 | Характеристика | `Java IO` | `Java NIO` |
 |---|---|---|
@@ -214,28 +204,14 @@ int bytesRead = channel.read(buffer); // возвращает сразу, даж
 
 Вся иерархия `Java IO` вырастает из четырёх абстрактных базовых классов, по два на каждый вид данных: `InputStream`/`OutputStream` — для байтов, `Reader`/`Writer` — для символов. Всё остальное (`Buffered*`, `Data*`, `File*`, `Object*`) — их конкретные подклассы и декораторы.
 
-```mermaid
-graph TD
-    subgraph "Байтовые потоки"
-        IS[InputStream] --> FIS[FileInputStream]
-        IS --> BIS[BufferedInputStream]
-        IS --> DIS[DataInputStream]
-        IS --> OIS[ObjectInputStream]
-        OS[OutputStream] --> FOS[FileOutputStream]
-        OS --> BOS[BufferedOutputStream]
-        OS --> DOS[DataOutputStream]
-        OS --> OOS[ObjectOutputStream]
-    end
-    subgraph "Символьные потоки"
-        R[Reader] --> FR[FileReader]
-        R --> BR[BufferedReader]
-        R --> ISR[InputStreamReader]
-        W[Writer] --> FW[FileWriter]
-        W --> BW[BufferedWriter]
-        W --> OSW[OutputStreamWriter]
-        W --> PW[PrintWriter]
-    end
-```
+Иерархия выглядит так (стрелка означает «подкласс»):
+
+- **Байтовые потоки:**
+  - `InputStream` → `FileInputStream`, `BufferedInputStream`, `DataInputStream`, `ObjectInputStream`;
+  - `OutputStream` → `FileOutputStream`, `BufferedOutputStream`, `DataOutputStream`, `ObjectOutputStream`.
+- **Символьные потоки:**
+  - `Reader` → `FileReader`, `BufferedReader`, `InputStreamReader`;
+  - `Writer` → `FileWriter`, `BufferedWriter`, `OutputStreamWriter`, `PrintWriter`.
 
 Основные классы:
 
@@ -299,15 +275,7 @@ int value = data.readInt();    // читает 4 байта как int
 double d = data.readDouble();  // читает 8 байт как double
 ```
 
-```mermaid
-graph LR
-    A[FileInputStream] -->|оборачивается| B[BufferedInputStream]
-    B -->|оборачивается| C[DataInputStream]
-    C --> D[Программа]
-    style A fill:#f9f,stroke:#333
-    style B fill:#bbf,stroke:#333
-    style C fill:#bfb,stroke:#333
-```
+Цепочка обёрток выстраивается так: `FileInputStream` оборачивается в `BufferedInputStream`, тот — в `DataInputStream`, и уже с ним работает `Программа`.
 
 **Что это даёт:**
 - комбинирование поведений без комбинаторного взрыва классов наследования;
@@ -395,12 +363,11 @@ try (ServerSocket serverSocket = new ServerSocket(8080)) {
 
 **`Buffer`** — контейнер фиксированного размера, посредник между каналом и программой. Канал читает данные в буфер (`channel.read(buffer)`), программа достаёт их из буфера (`buffer.get()`), и наоборот при записи.
 
-```mermaid
-graph LR
-    A[Файл / Сокет] <-->|"read() / write()"| B[Channel]
-    B <-->|"read(buffer) / write(buffer)"| C[Buffer]
-    C <-->|"get() / put()"| D[Программа]
-```
+Данные движутся по цепочке, и каждое звено связано с соседним в обе стороны:
+
+- `Файл / Сокет` ↔ (`read()` / `write()`) ↔ `Channel`;
+- `Channel` ↔ (`read(buffer)` / `write(buffer)`) ↔ `Buffer`;
+- `Buffer` ↔ (`get()` / `put()`) ↔ `Программа`.
 
 ```java
 // Чтение файла через Channel + Buffer
@@ -456,29 +423,11 @@ DatagramChannel datagramChannel = DatagramChannel.open();
 | `limit` | Граница, до которой можно читать или писать |
 | `mark` | Сохранённая позиция для возврата через `reset()` |
 
-```mermaid
-graph LR
-    subgraph "ByteBuffer после allocate(10)"
-        direction LR
-        P1["position=0"] --> L1["limit=10"] --> C1["capacity=10"]
-    end
-```
+Как меняются указатели на разных стадиях:
 
-```mermaid
-graph LR
-    subgraph "ByteBuffer после записи 5 байт"
-        direction LR
-        P2["position=5"] --> L2["limit=10"] --> C2["capacity=10"]
-    end
-```
-
-```mermaid
-graph LR
-    subgraph "ByteBuffer после flip()"
-        direction LR
-        P3["position=0"] --> L3["limit=5"] --> C3["capacity=10"]
-    end
-```
+- **после `allocate(10)`:** `position=0`, `limit=10`, `capacity=10`;
+- **после записи 5 байт:** `position=5`, `limit=10`, `capacity=10`;
+- **после `flip()`:** `position=0`, `limit=5`, `capacity=10`.
 
 ```java
 ByteBuffer buffer = ByteBuffer.allocate(10); // capacity=10, position=0, limit=10
@@ -599,14 +548,7 @@ try (FileChannel outChannel = FileChannel.open(Path.of("out.bin"),
 
 `Selector` — это мультиплексор: он позволяет **одному потоку** следить сразу за множеством каналов и просыпаться только когда какой-то из них готов к чтению, записи или приёму соединения. Вместо «поток на соединение» получается «один поток на тысячи соединений» — это и есть паттерн **Reactor** (подробнее в [Design Patterns](../../design-patterns/design-patterns-interview.md)).
 
-```mermaid
-graph TD
-    S[Selector] -->|мониторит| C1[SocketChannel 1]
-    S -->|мониторит| C2[SocketChannel 2]
-    S -->|мониторит| C3[SocketChannel 3]
-    S -->|мониторит| SC[ServerSocketChannel]
-    T[Один поток] --> S
-```
+Схема такая: `Один поток` управляет одним `Selector`, а тот мониторит сразу множество каналов — `SocketChannel 1`, `SocketChannel 2`, `SocketChannel 3` и `ServerSocketChannel`.
 
 Цикл работы (event loop):
 1. создать `Selector` через `Selector.open()`;
@@ -1054,25 +996,15 @@ try (FileChannel src = FileChannel.open(Path.of("source.dat"), StandardOpenOptio
 }
 ```
 
-```mermaid
-graph LR
-    subgraph "Обычное копирование"
-        A1[Файл] -->|read| B1[Kernel Buffer]
-        B1 -->|copy| C1[User Buffer]
-        C1 -->|copy| D1[Kernel Buffer]
-        D1 -->|write| E1[Файл]
-    end
-```
+**Обычное копирование** — данные проходят через kernel- и user-буферы:
 
-```mermaid
-graph LR
-    subgraph "Zero-copy transferTo"
-        A2[Файл] -->|DMA| B2[Kernel Buffer]
-        B2 -->|DMA| C2[Файл]
-    end
-```
+- `Файл` → (`read`) → `Kernel Buffer` → (`copy`) → `User Buffer` → (`copy`) → `Kernel Buffer` → (`write`) → `Файл`.
 
-На диаграммах видно суть: обычный путь гоняет данные через kernel- и user-буферы (множество копирований), zero-copy передаёт их между дескрипторами напрямую через DMA.
+**Zero-copy `transferTo`** — данные идут напрямую внутри ядра через DMA:
+
+- `Файл` → (`DMA`) → `Kernel Buffer` → (`DMA`) → `Файл`.
+
+Суть в том, что обычный путь гоняет данные через kernel- и user-буферы (множество копирований), а zero-copy передаёт их между дескрипторами напрямую через DMA.
 
 ## Q28. Как обрабатывать большие файлы, не загружая их целиком в память?
 
@@ -1458,16 +1390,15 @@ InputStream modern = Files.newInputStream(Path.of("/path/to/file"), StandardOpen
 
 Эмпирическое правило: **по умолчанию берите `Files` + потоки/`Reader`** — они проще и покрывают 90% задач. Переходите на `Channel`/`ByteBuffer`, только когда нужна конкретная их возможность: неблокирующий сетевой I/O (`Selector`), zero-copy, memory-mapping или произвольный доступ к большому файлу. Не усложняйте код NIO там, где хватает `Files.readString()`.
 
-```mermaid
-graph TD
-    A{Что нужно?} -->|Простой файловый I/O| B[Files + InputStream/OutputStream]
-    A -->|Работа с текстом| C[BufferedReader/Writer]
-    A -->|Неблокирующий сетевой I/O| D[SocketChannel + Selector]
-    A -->|Высокая производительность файлов| E[FileChannel + ByteBuffer]
-    A -->|Произвольный доступ к большому файлу| F[MappedByteBuffer]
-    A -->|Асинхронные операции| G[AsynchronousChannel]
-    A -->|HTTP запросы| H[HttpClient Java 11+]
-```
+Выбор API по задаче:
+
+- **Простой файловый I/O** → `Files` + `InputStream`/`OutputStream`;
+- **Работа с текстом** → `BufferedReader`/`Writer`;
+- **Неблокирующий сетевой I/O** → `SocketChannel` + `Selector`;
+- **Высокая производительность файлов** → `FileChannel` + `ByteBuffer`;
+- **Произвольный доступ к большому файлу** → `MappedByteBuffer`;
+- **Асинхронные операции** → `AsynchronousChannel`;
+- **HTTP запросы** → `HttpClient` (Java 11+).
 
 | Сценарий | Рекомендуемый API |
 |---|---|

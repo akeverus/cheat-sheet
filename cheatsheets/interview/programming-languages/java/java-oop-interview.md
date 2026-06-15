@@ -18,7 +18,7 @@ updated: "2026-05-05"
 ---
 # Вопросы на собеседовании: `OOP` & `Java`
 
-Комплексное руководство по вопросам собеседования на тему `OOP` в `Java` для `Senior Java Developer`. Включает детальные объяснения принципов ООП, примеры кода, диаграммы, `SOLID`, паттерны проектирования и практические рекомендации.
+Комплексное руководство по вопросам собеседования на тему `OOP` в `Java` для `Senior Java Developer`. Включает детальные объяснения принципов ООП, примеры кода, `SOLID`, паттерны проектирования и практические рекомендации.
 
 ## Полезные ссылки
 
@@ -109,22 +109,13 @@ updated: "2026-05-05"
 | **Полиморфизм** | Один интерфейс — разные реализации | Переопределение, перегрузка |
 | **Абстракция** | Выделение существенного, сокрытие деталей | `abstract class`, `interface` |
 
-```mermaid
-graph TD
-    OOP["ООП"]
-    OOP --> E["Инкапсуляция"]
-    OOP --> I["Наследование"]
-    OOP --> P["Полиморфизм"]
-    OOP --> A["Абстракция"]
-    E --> E1["private поля"]
-    E --> E2["getter/setter"]
-    I --> I1["extends"]
-    I --> I2["implements"]
-    P --> P1["Overloading<br>compile-time"]
-    P --> P2["Overriding<br>runtime"]
-    A --> A1["abstract class"]
-    A --> A2["interface"]
-```
+Карта принципов и их механизмов в Java:
+
+- **ООП**
+  - **Инкапсуляция** → `private` поля → `getter`/`setter`
+  - **Наследование** → `extends` → `implements`
+  - **Полиморфизм** → `Overloading` (compile-time) → `Overriding` (runtime)
+  - **Абстракция** → `abstract class` → `interface`
 
 На собеседовании важно не просто перечислить принципы, а показать, как они взаимосвязаны: инкапсуляция защищает данные, абстракция определяет контракт, наследование переиспользует реализацию, а полиморфизм позволяет работать с разными типами через единый интерфейс.
 
@@ -185,21 +176,11 @@ public class BankAccount {
 
 **Наследование** — механизм ООП, который позволяет строить новый класс на базе существующего, переиспользуя его поля и методы. Подкласс расширяет суперкласс через ключевое слово `extends` и моделирует отношение **is-a** («подкласс является частным случаем суперкласса»): `Dog` — это `Animal`. Главная цель — переиспользование общего кода и единый полиморфный интерфейс для семейства родственных типов.
 
-```mermaid
-classDiagram
-    Animal <|-- Dog
-    Animal <|-- Cat
-    Animal : -String name
-    Animal : -int age
-    Animal : +makeSound() String
-    Animal : +getName() String
-    Dog : -String breed
-    Dog : +makeSound() String
-    Dog : +fetch() void
-    Cat : -boolean indoor
-    Cat : +makeSound() String
-    Cat : +purr() void
-```
+Иерархия классов: `Dog` и `Cat` наследуют (`extends`) общий суперкласс `Animal`.
+
+- `Animal` (суперкласс): поля `-String name`, `-int age`; методы `+makeSound() String`, `+getName() String`.
+- `Dog extends Animal`: поле `-String breed`; методы `+makeSound() String` (переопределён), `+fetch() void`.
+- `Cat extends Animal`: поле `-boolean indoor`; методы `+makeSound() String` (переопределён), `+purr() void`.
 
 ```java
 public abstract class Animal {
@@ -323,14 +304,7 @@ public class ShapePrinter {
 }
 ```
 
-```mermaid
-classDiagram
-    Shape <|.. Circle
-    Shape <|.. Rectangle
-    Shape <|.. Triangle
-    Shape : +area() double
-    Shape : +describe() String
-```
+Интерфейс `Shape` определяет контракт с методами `+area() double` и `+describe() String`. Его реализуют (`implements`) классы `Circle`, `Rectangle` и `Triangle` — каждый по-своему.
 
 **Частые вопросы на собеседовании:**
 - «Можно ли переопределить `static`-метод?» — Нет. `static`-методы связываются статически, по типу ссылки, а не по реальному типу объекта. Если объявить такой же `static`-метод в подклассе, это *method hiding* (сокрытие), а не переопределение — настоящего полиморфизма здесь не будет.
@@ -444,23 +418,10 @@ public record Point(double x, double y) {
 | Создание | Целое создаёт часть | Часть передаётся извне |
 | UML | Закрашенный ромб ◆ | Незакрашенный ромб ◇ |
 
-```mermaid
-classDiagram
-    class House {
-        -List~Room~ rooms
-    }
-    class Room {
-        -int area
-    }
-    class University {
-        -List~Professor~ professors
-    }
-    class Professor {
-        -String name
-    }
-    House *-- Room : Композиция
-    University o-- Professor : Агрегация
-```
+Два примера отношений:
+
+- **Композиция** (`House *-- Room`): класс `House` (поле `-List~Room~ rooms`) владеет частями `Room` (поле `-int area`). Связь сильная — `Room` принадлежит конкретному `House`.
+- **Агрегация** (`University o-- Professor`): класс `University` (поле `-List~Professor~ professors`) ссылается на `Professor` (поле `-String name`). Связь слабая — `Professor` существует независимо от `University`.
 
 ```java
 // Композиция: Room не может существовать без House
@@ -548,17 +509,10 @@ public class InstrumentedSet<E> implements Set<E> {
 }
 ```
 
-```mermaid
-graph LR
-    subgraph "Наследование"
-        A["InstrumentedHashSet"] -->|extends| B["HashSet"]
-        B --> C["Жёсткая связь"]
-    end
-    subgraph "Композиция"
-        D["InstrumentedSet"] -->|delegate| E["Set interface"]
-        E --> F["Гибкость"]
-    end
-```
+Сравнение двух подходов:
+
+- **Наследование**: `InstrumentedHashSet` --(`extends`)--> `HashSet` → результат: жёсткая связь.
+- **Композиция**: `InstrumentedSet` --(`delegate`)--> `Set interface` → результат: гибкость.
 
 Когда наследование уместно: если отношение is-a **действительно** выполняется и суперкласс спроектирован для наследования (см. `abstract class`). Подробнее — [Design Patterns](../../design-patterns/design-patterns-interview.md) (Strategy, Decorator).
 
@@ -566,18 +520,12 @@ graph LR
 
 **Множественное наследование** — возможность класса наследоваться сразу от нескольких классов (как в C++). В `Java` множественное наследование *классов* запрещено из-за **diamond problem** (проблемы ромбовидного наследования): если класс `D` наследует один и тот же метод от двух предков `B` и `C`, у которых разные реализации, компилятор не знает, какую из них выбрать. Запрет убирает эту неоднозначность ещё на уровне языка.
 
-```mermaid
-graph TD
-    A["class A<br>void doSomething()"]
-    B["class B extends A<br>doSomething() { ... }"]
-    C["class C extends A<br>doSomething() { ... }"]
-    D["class D extends B, C<br>Какой doSomething()?"]
-    A --> B
-    A --> C
-    B --> D
-    C --> D
-    style D fill:#f96
-```
+Ромбовидная структура diamond problem по уровням:
+
+- `class A` — объявляет `void doSomething()`.
+- `class B extends A` — переопределяет `doSomething() { ... }`.
+- `class C extends A` — тоже переопределяет `doSomething() { ... }`.
+- `class D extends B, C` (гипотетически) — наследует две разные реализации `doSomething()` сразу от `B` и `C`. Какую из них выбрать — неоднозначно, поэтому Java такое наследование классов запрещает.
 
 Как Java закрывает потребность в множественном наследовании:
 - **Реализация нескольких интерфейсов** (`implements A, B, C`) — класс наследует *контракты*, но не конфликтующее состояние, поэтому diamond problem не возникает.
@@ -778,17 +726,10 @@ if (animal instanceof Dog d) {  // pattern matching (Java 16+)
 }
 ```
 
-```mermaid
-graph TD
-    A["Object"] --> B["Animal"]
-    B --> C["Dog"]
-    B --> D["Cat"]
-    
-    style C fill:#9f9
-    
-    UP["Upcasting ↑<br>Dog → Animal<br>Неявное, безопасное"]
-    DOWN["Downcasting ↓<br>Animal → Dog<br>Явное, опасное"]
-```
+Иерархия типов: `Object` → `Animal` → `Dog` и `Cat` (оба наследуют `Animal`).
+
+- **Upcasting ↑**: `Dog` → `Animal` — движение вверх по иерархии, неявное и безопасное.
+- **Downcasting ↓**: `Animal` → `Dog` — движение вниз по иерархии, явное и опасное.
 
 **Совет**: если вы часто используете `instanceof` и downcasting — это code smell. Пересмотрите дизайн в пользу полиморфизма. Исключение — pattern matching в `switch` с `sealed`-классами.
 
@@ -878,15 +819,11 @@ public class PremiumDiscount implements DiscountStrategy {
 }
 ```
 
-```mermaid
-classDiagram
-    DiscountStrategy <|.. RegularDiscount
-    DiscountStrategy <|.. VipDiscount
-    DiscountStrategy <|.. PremiumDiscount
-    DiscountStrategy : +apply(amount) double
-    
-    OrderService --> DiscountStrategy : uses
-```
+Структура связей:
+
+- Интерфейс `DiscountStrategy` объявляет метод `+apply(amount) double`.
+- Его реализуют (`implements`) `RegularDiscount`, `VipDiscount` и `PremiumDiscount`.
+- `OrderService` использует (`uses`) `DiscountStrategy` через абстракцию, не завязываясь на конкретную реализацию.
 
 OCP тесно связан с паттерном Strategy — см. [Design Patterns](../../design-patterns/design-patterns-interview.md).
 
@@ -997,17 +934,10 @@ public class OrderService {
 }
 ```
 
-```mermaid
-graph TD
-    subgraph "Без DIP"
-        A1["OrderService"] -->|зависит от| B1["MySqlOrderRepository"]
-    end
-    subgraph "С DIP"
-        A2["OrderService"] -->|зависит от| I["OrderRepository<br>(interface)"]
-        B2["MySqlOrderRepository"] -.->|implements| I
-        B3["MongoOrderRepository"] -.->|implements| I
-    end
-```
+Сравнение структуры зависимостей:
+
+- **Без DIP**: `OrderService` --(зависит от)--> `MySqlOrderRepository` напрямую (жёсткая связь с конкретной реализацией).
+- **С DIP**: `OrderService` --(зависит от)--> `OrderRepository` (interface); а конкретные `MySqlOrderRepository` и `MongoOrderRepository` --(`implements`)--> `OrderRepository`. Бизнес-логика зависит от абстракции, реализации подставляются под неё.
 
 DIP — основа `Dependency Injection` в `Spring`. `@Autowired`, `@Inject` и конструкторная инъекция — механизмы реализации DIP.
 
@@ -1115,20 +1045,11 @@ public class MemoryExample {
 }
 ```
 
-```mermaid
-graph LR
-    subgraph Stack["Stack (per thread)"]
-        A["x = 42"]
-        B["name → "]
-        C["user → "]
-    end
-    subgraph Heap["Heap (shared)"]
-        D["'Java'"]
-        E["User{name='Иван', age=30}"]
-    end
-    B --> D
-    C --> E
-```
+Раскладка памяти из примера выше:
+
+- **Stack (per thread)** хранит: `x = 42` (примитив целиком), `name` (ссылка), `user` (ссылка).
+- **Heap (shared)** хранит объекты: `'Java'` и `User{name='Иван', age=30}`.
+- Ссылки указывают из Stack в Heap: `name` → `'Java'`, `user` → `User{name='Иван', age=30}`.
 
 ## Q30. Как передаются данные в Java — по ссылке или по значению?
 

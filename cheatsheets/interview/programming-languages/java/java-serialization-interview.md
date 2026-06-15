@@ -110,16 +110,11 @@ updated: "2026-05-14"
 
 **Сериализация** — это преобразование объекта в поток байтов (или в другой формат), чтобы его можно было сохранить на диск, передать по сети или положить в кэш. Обратный процесс восстановления объекта из потока называется **десериализацией**. В `Java` стандартный механизм — классы `ObjectOutputStream` и `ObjectInputStream`, работающие с бинарным форматом, специфичным для `JVM`.
 
-```mermaid
-graph LR
-    A[Java Object] -->|ObjectOutputStream| B[Byte Stream]
-    B -->|Файл / Сеть / Кэш| C[Хранилище]
-    C -->|ObjectInputStream| D[Java Object]
-    style A fill:#e1f5fe
-    style D fill:#e1f5fe
-    style B fill:#fff3e0
-    style C fill:#f3e5f5
-```
+Полный цикл выглядит так:
+
+- `Java Object` → (через `ObjectOutputStream`) → `Byte Stream` (поток байтов);
+- `Byte Stream` → (Файл / Сеть / Кэш) → Хранилище;
+- Хранилище → (через `ObjectInputStream`) → снова `Java Object`.
 
 Смысл прост: объект живёт в heap конкретной JVM, а байты можно положить куда угодно и восстановить позже. **Зачем это нужно:**
 - **Персистентность** — сохранение состояния приложения (сессии, чекпоинты)
@@ -223,15 +218,10 @@ public class CachedResult implements Serializable {
 - Смена типа примитивного поля (например, `int` → `long`)
 - Замена `Serializable` на `Externalizable` и наоборот
 
-```mermaid
-graph TD
-    A[Класс v1<br/>serialVersionUID = 1L] -->|Добавление поля| B[Класс v2<br/>serialVersionUID = 1L<br/>✅ совместимо]
-    A -->|Смена типа поля| C[Класс v2<br/>serialVersionUID = 2L<br/>❌ несовместимо]
-    B -->|Десериализация v1 данных| D[Новое поле = default]
-    C -->|Десериализация v1 данных| E[InvalidClassException]
-    style B fill:#c8e6c9
-    style C fill:#ffcdd2
-```
+Две типичные ветки эволюции класса `v1` с `serialVersionUID = 1L`:
+
+- **Добавление поля** → `Класс v2` с тем же `serialVersionUID = 1L` — совместимо. При десериализации данных `v1` новое поле получает значение по умолчанию (`default`).
+- **Смена типа поля** → `Класс v2` с `serialVersionUID = 2L` — несовместимо. При десериализации данных `v1` бросается `InvalidClassException`.
 
 Для долгоживущих форматов рекомендуется переходить на форматы с явным версионированием схем (`Protobuf`, `Avro`), где эволюция модели управляется через схемы, а не через поведение `JVM`.
 
@@ -275,13 +265,10 @@ public class CompactDto implements Externalizable {
 
 Если родитель **не** `Serializable`, его поля в поток не попадают — сохраняются только поля потомка. А при десериализации состояние родителя восстанавливается не из потока, а через его **no-arg конструктор**, который JVM обязана вызвать. Отсюда жёсткое требование: у несериализуемого родителя должен быть доступный конструктор без аргументов, иначе будет `InvalidClassException`.
 
-```mermaid
-graph TB
-    A[Object] -->|no-arg конструктор| B[Parent<br/>❌ не Serializable<br/>поля НЕ сохраняются]
-    B -->|extends| C[Child implements Serializable<br/>✅ поля сохраняются]
-    style B fill:#ffcdd2
-    style C fill:#c8e6c9
-```
+Иерархия по порядку:
+
+- `Object` → (через no-arg конструктор) → `Parent` (не `Serializable`, его поля НЕ сохраняются);
+- `Parent` → (`extends`) → `Child implements Serializable` (поля потомка сохраняются).
 
 **Если же родитель сам `Serializable`**, его поля сериализуются вместе с потомком, и при десериализации восстанавливаются прямо из потока — обычные конструкторы при этом не вызываются вовсе. Именно поэтому правило про no-arg конструктор касается только несериализуемых родителей.
 
@@ -330,21 +317,15 @@ try (var fis = new FileInputStream("data.ser");
 - **`writeReplace()`** вызывается **перед** записью: то, что он вернёт, сериализуется вместо исходного объекта. Так подменяют объект на прокси или компактный маркер.
 - **`readResolve()`** вызывается **после** восстановления: его результат заменяет только что десериализованный объект. Классический случай — **синглтоны**: десериализация всегда создаёт новый экземпляр, а `readResolve()` отбрасывает его и возвращает единственный существующий.
 
-```mermaid
-sequenceDiagram
-    participant App
-    participant OOS as ObjectOutputStream
-    participant Stream as Byte Stream
-    participant OIS as ObjectInputStream
+Поток вызовов между участниками (`App`, `ObjectOutputStream` — OOS, `Byte Stream` — Stream, `ObjectInputStream` — OIS) по порядку:
 
-    App->>OOS: writeObject(obj)
-    OOS->>OOS: obj.writeReplace() → proxy
-    OOS->>Stream: serialize(proxy)
-    Stream->>OIS: readObject()
-    OIS->>OIS: deserialize → proxy
-    OIS->>OIS: proxy.readResolve() → obj
-    OIS->>App: return obj
-```
+1. `App` → OOS: `writeObject(obj)`.
+2. OOS у себя: `obj.writeReplace()` → `proxy`.
+3. OOS → Stream: `serialize(proxy)`.
+4. Stream → OIS: `readObject()`.
+5. OIS у себя: `deserialize` → `proxy`.
+6. OIS у себя: `proxy.readResolve()` → `obj`.
+7. OIS → `App`: `return obj`.
 
 ```java
 public class Singleton implements Serializable {
@@ -495,22 +476,15 @@ public class Period implements Serializable {
 }
 ```
 
-```mermaid
-sequenceDiagram
-    participant Obj as Period
-    participant Proxy as SerializationProxy
-    participant Stream as Byte Stream
+Поток вызовов между `Period` (Obj), `SerializationProxy` (Proxy) и `Byte Stream` (Stream) по порядку:
 
-    Note over Obj: writeReplace()
-    Obj->>Proxy: создать прокси с данными
-    Proxy->>Stream: сериализация прокси
-
-    Note over Stream: десериализация
-    Stream->>Proxy: восстановить прокси
-    Note over Proxy: readResolve()
-    Proxy->>Obj: new Period(start, end)
-    Note over Obj: Валидация в конструкторе!
-```
+1. На стороне `Period` срабатывает `writeReplace()`.
+2. `Period` → `SerializationProxy`: создать прокси с данными.
+3. `SerializationProxy` → `Byte Stream`: сериализация прокси.
+4. Далее — десериализация: `Byte Stream` → `SerializationProxy`: восстановить прокси.
+5. На стороне `SerializationProxy` срабатывает `readResolve()`.
+6. `SerializationProxy` → `Period`: `new Period(start, end)`.
+7. В `Period` выполняется валидация в конструкторе.
 
 ## Q14. Какие плюсы и минусы у `Serialization Proxy Pattern`?
 
@@ -556,16 +530,13 @@ for (int i = 0; i < 100; i++) {
 
 **Gadget chain** (цепочка гаджетов) — это последовательность вызовов уже существующих методов из библиотек на classpath, которая в итоге исполняет произвольный код. Хитрость в том, что атакующий не загружает свой класс: он лишь подбирает граф объектов из *чужих* классов так, чтобы их `readObject`, `hashCode`, `getValue` и т. п. вызывались каскадом и привели к `Runtime.exec`. Поэтому уязвимость определяется не вашим кодом, а тем, что лежит в зависимостях.
 
-```mermaid
-graph LR
-    A[Вредоносный<br/>byte stream] -->|readObject| B[HashMap]
-    B -->|hashCode| C[TiedMapEntry]
-    C -->|getValue| D[LazyMap]
-    D -->|get → transform| E[InvokerTransformer]
-    E -->|invoke| F[Runtime.exec<br/>🔴 Произвольный код]
-    style A fill:#ffcdd2
-    style F fill:#ffcdd2
-```
+Типичная цепочка вызовов (на примере Apache Commons Collections), шаг за шагом:
+
+- Вредоносный `byte stream` → (`readObject`) → `HashMap`;
+- `HashMap` → (`hashCode`) → `TiedMapEntry`;
+- `TiedMapEntry` → (`getValue`) → `LazyMap`;
+- `LazyMap` → (`get` → `transform`) → `InvokerTransformer`;
+- `InvokerTransformer` → (`invoke`) → `Runtime.exec` — выполнение произвольного кода.
 
 **Известные источники gadget chains** (классы, которые служат «звеньями» в цепочках):
 - **Apache Commons Collections** — `InvokerTransformer`, `ChainedTransformer`
@@ -634,16 +605,12 @@ ObjectInputFilter programFilter = info -> {
 5. **Мониторинг** — логировать десериализацию через JFR (Java Flight Recorder), чтобы видеть подозрительные классы
 6. **RASP/WAF** — runtime-защита на уровне инфраструктуры как последний рубеж
 
-```mermaid
-graph TD
-    A[Входящие данные] --> B{Формат?}
-    B -->|JSON/Protobuf| C[✅ Безопасный парсинг]
-    B -->|Java Serialization| D{Источник?}
-    D -->|Доверенный| E[ObjectInputFilter<br/>+ белый список]
-    D -->|Недоверенный| F[🔴 ОТКЛОНИТЬ]
-    style C fill:#c8e6c9
-    style F fill:#ffcdd2
-```
+Алгоритм решения для входящих данных по формату:
+
+- **Формат JSON/Protobuf** → безопасный парсинг.
+- **Формат Java Serialization** → смотрим на источник:
+  - **Доверенный** → `ObjectInputFilter` + белый список;
+  - **Недоверенный** → отклонить.
 
 Подробнее о защите от OWASP-уязвимостей: [OWASP Top 10](../../security/owasp-top10-interview.md) (A8:2017 — Insecure Deserialization).
 
@@ -989,32 +956,21 @@ input.close();
 
 ## Q29. (!) Как выбрать формат сериализации для проекта?
 
-Выбор сводится к нескольким развилкам: нужен ли межъязыковой обмен, важна ли человекочитаемость, критична ли скорость и есть ли Schema Registry. Дерево ниже ведёт по этим вопросам к конкретному формату; таблица показывает, какой формат уместен в каждом типичном сценарии. Универсального ответа нет — выбирают под задачу, а не «по умолчанию».
+Выбор сводится к нескольким развилкам: нужен ли межъязыковой обмен, важна ли человекочитаемость, критична ли скорость и есть ли Schema Registry. Цепочка вопросов ниже ведёт к конкретному формату; таблица показывает, какой формат уместен в каждом типичном сценарии. Универсального ответа нет — выбирают под задачу, а не «по умолчанию».
 
-```mermaid
-graph TD
-    A[Какой формат?] --> B{Межъязыковой?}
-    B -->|Да| C{Человекочитаемый?}
-    B -->|Нет, только JVM| D{Максимальная скорость?}
+Дерево выбора («Какой формат?»):
 
-    C -->|Да| E[JSON<br/>Jackson]
-    C -->|Нет| F{Есть Schema Registry?}
-
-    F -->|Да| G[Avro]
-    F -->|Нет| H[Protobuf]
-
-    D -->|Да| I[Kryo]
-    D -->|Нет| J{Стандартный JDK?}
-
-    J -->|Да| K[Java Serialization<br/>⚠️ с фильтрами]
-    J -->|Нет| I
-
-    style E fill:#c8e6c9
-    style G fill:#c8e6c9
-    style H fill:#c8e6c9
-    style I fill:#c8e6c9
-    style K fill:#fff9c4
-```
+- **Межъязыковой обмен нужен?**
+  - **Да** → **Человекочитаемый формат нужен?**
+    - **Да** → `JSON` (`Jackson`).
+    - **Нет** → **Есть Schema Registry?**
+      - **Да** → `Avro`.
+      - **Нет** → `Protobuf`.
+  - **Нет, только JVM** → **Нужна максимальная скорость?**
+    - **Да** → `Kryo`.
+    - **Нет** → **Достаточно стандартного JDK?**
+      - **Да** → `Java Serialization` (обязательно с фильтрами).
+      - **Нет** → `Kryo`.
 
 | Критерий | JSON | Protobuf | Avro | Kryo | Java Ser. |
 |----------|------|----------|------|------|-----------|
@@ -1037,13 +993,10 @@ graph TD
 5. **Производительность** — парадоксально, но из-за рефлексии и метаданных это медленнее большинства альтернатив
 6. **Эволюция контрактов** — нет версионирования схем и Schema Registry, контракт меняется «вслепую»
 
-```mermaid
-graph LR
-    A[Service A<br/>Java 17<br/>User v2] -->|Java Serialization<br/>❌ User v1 ≠ v2| B[Service B<br/>Java 11<br/>User v1]
-    A -->|Protobuf/JSON<br/>✅ Совместимые схемы| B
-    style A fill:#e1f5fe
-    style B fill:#e1f5fe
-```
+Например, два сервиса: `Service A` (Java 17, `User v2`) и `Service B` (Java 11, `User v1`):
+
+- через `Java Serialization` обмен ломается — `User v1` ≠ `User v2`;
+- через `Protobuf`/`JSON` обмен работает за счёт совместимых схем.
 
 В микросервисах используют: `JSON` (для REST API), `Protobuf` (для gRPC), `Avro` (для event streaming с [Kafka](../../messaging/kafka-interview.md)). Подробнее о сериализации в контексте обмена сообщениями: [Apache Kafka](../../messaging/kafka-interview.md).
 
@@ -1094,17 +1047,13 @@ Accept: application/vnd.api.v2+json
 - **CQRS** — у команд и запросов разные требования, поэтому форматы можно разделить: `JSON` для REST-команд, `Protobuf` для внутренних событий.
 - **Saga Pattern** — компенсирующие транзакции опираются на надёжную десериализацию сообщений между сервисами; несовместимость схем способна «подвесить» сагу на середине.
 
-```mermaid
-graph TB
-    subgraph "Выбор формата по паттерну"
-        A[REST API] -->|JSON| F[Human-readable]
-        B[gRPC] -->|Protobuf| G[Типизированный контракт]
-        C[Event Streaming] -->|Avro| H[Эволюция схем]
-        D[Internal Cache] -->|Kryo| I[Максимальная скорость]
-        E[Legacy RMI] -->|Java Ser.| J[⚠️ Миграция]
-    end
-    style J fill:#fff9c4
-```
+Выбор формата по паттерну (паттерн → формат → что он даёт):
+
+- `REST API` → `JSON` → human-readable;
+- `gRPC` → `Protobuf` → типизированный контракт;
+- `Event Streaming` → `Avro` → эволюция схем;
+- `Internal Cache` → `Kryo` → максимальная скорость;
+- `Legacy RMI` → `Java Ser.` → кандидат на миграцию.
 
 Подробнее о [паттернах обмена сообщениями в Kafka](../../messaging/kafka-interview.md) и [паттернах проектирования](../../design-patterns/design-patterns-interview.md).
 
@@ -1335,12 +1284,10 @@ public class UserEntity extends AbstractEntity {
 
 `HttpMessageConverter` — абстракция Spring MVC и WebFlux, превращающая объект в тело HTTP-ответа и парсящая тело запроса обратно в объект. Когда вы возвращаете DTO из `@RestController`, Spring сам подбирает подходящий конвертер по заголовку `Content-Type`/`Accept` и через него выполняет сериализацию. То есть в REST-приложении сериализацией занимаются именно конвертеры, а не вы напрямую.
 
-```mermaid
-graph LR
-    A[Java Object] -->|write| B[HttpMessageConverter] -->|serialize| C[HTTP Body]
-    C -->|deserialize| B -->|read| A
-    style B fill:#c8e6c9
-```
+Поток в обе стороны через `HttpMessageConverter`:
+
+- на выходе: `Java Object` → (`write`) → `HttpMessageConverter` → (`serialize`) → `HTTP Body`;
+- на входе: `HTTP Body` → (`deserialize`) → `HttpMessageConverter` → (`read`) → `Java Object`.
 
 **Основные конвертеры:**
 
