@@ -108,17 +108,12 @@ updated: "2026-05-05"
 
 В `Spring MVC` роль Front Controller играет `DispatcherServlet`. Получив HTTP-запрос, он находит подходящий контроллер через `HandlerMapping`, вызывает его через `HandlerAdapter`, а результат превращает в представление через `ViewResolver`.
 
-```mermaid
-graph LR
-    Client["Клиент"] --> FC["Front Controller<br/>(DispatcherServlet)"]
-    FC --> C1["Controller A"]
-    FC --> C2["Controller B"]
-    FC --> C3["Controller C"]
-    C1 --> V["View Resolver"]
-    C2 --> V
-    C3 --> V
-    V --> Client
-```
+Поток запроса по ролям:
+
+- `Клиент` → `Front Controller (DispatcherServlet)` — единая точка входа принимает все запросы.
+- `Front Controller` → один из контроллеров (`Controller A`, `Controller B`, `Controller C`) — маршрутизация к нужному обработчику.
+- Любой из контроллеров → `View Resolver` — результат превращается в представление.
+- `View Resolver` → `Клиент` — отрисованный ответ возвращается клиенту.
 
 **Что это даёт:** сквозная логика (аутентификация, CORS, логирование) и обработка ошибок описаны один раз, а не размазаны по обработчикам; маршрутизация единообразна. Тот же паттерн лежит в основе `Spring MVC`, `JSF`, `Struts`.
 
@@ -199,16 +194,14 @@ public class LocaleConfig implements WebMvcConfigurer {
 - `postHandle()` — после контроллера, но до рендеринга `View` (можно дополнить модель)
 - `afterCompletion()` — после полного завершения запроса, включая рендеринг (место для очистки ресурсов и замеров)
 
-```mermaid
-graph LR
-    Req["HTTP Request"] --> Pre["preHandle()"]
-    Pre -->|true| Ctrl["Controller"]
-    Pre -->|false| Resp["HTTP Response"]
-    Ctrl --> Post["postHandle()"]
-    Post --> View["View Rendering"]
-    View --> After["afterCompletion()"]
-    After --> Resp
-```
+Порядок прохождения запроса через перехватчик:
+
+1. `HTTP Request` → `preHandle()`.
+2. Из `preHandle()` две ветки: при `true` — дальше в `Controller`; при `false` — цепочка прерывается, сразу формируется `HTTP Response`.
+3. `Controller` → `postHandle()`.
+4. `postHandle()` → `View Rendering` (рендеринг представления).
+5. `View Rendering` → `afterCompletion()`.
+6. `afterCompletion()` → `HTTP Response`.
 
 Регистрация через `WebMvcConfigurer`:
 
@@ -355,15 +348,13 @@ public Order getOrder(@PathVariable Map<String, String> vars) {
 
 Валидация в `Spring MVC` строится на декларативном **Bean Validation** (`JSR 380`, реализация — `Hibernate Validator`): правила описывают аннотациями на полях DTO, а не пишут проверки руками в контроллере. Чтобы `Spring` запустил проверку, аргумент в контроллере помечают `@Valid`:
 
-```mermaid
-graph LR
-    Req["HTTP Request"] --> Bind["Data Binding<br/>(WebDataBinder)"]
-    Bind --> Val["Bean Validation<br/>(@Valid)"]
-    Val -->|Ошибки есть| BR["BindingResult<br/>(ошибки полей)"]
-    Val -->|Ошибок нет| Ctrl["Бизнес-логика"]
-    BR --> Resp["400 Bad Request"]
-    Ctrl --> Resp2["200 OK"]
-```
+Путь данных от запроса до результата валидации:
+
+1. `HTTP Request` → `Data Binding (WebDataBinder)` — привязка данных запроса к объекту.
+2. `Data Binding` → `Bean Validation (@Valid)` — запуск проверки правил.
+3. Развилка по итогам проверки:
+   - **Ошибки есть** → `BindingResult (ошибки полей)` → `400 Bad Request`.
+   - **Ошибок нет** → `Бизнес-логика` → `200 OK`.
 
 ```java
 public record UserCreateDto(
@@ -535,16 +526,14 @@ public class WebConfig implements WebMvcConfigurer {
 
 **ViewResolver** — компонент, который превращает логическое имя представления (строку из контроллера, например `"userList"`) в конкретный объект `View` для рендеринга. Благодаря этому контроллер не знает ни о пути к шаблону, ни о технологии отображения — он лишь называет View, а способ его найти и отрисовать остаётся за резолвером.
 
-```mermaid
-graph LR
-    Ctrl["Controller<br/>return &quot;userList&quot;"] --> VR["ViewResolver"]
-    VR --> TV["ThymeleafViewResolver<br/>→ /templates/userList.html"]
-    VR --> JV["InternalResourceViewResolver<br/>→ /WEB-INF/jsp/userList.jsp"]
-    VR --> CNV["ContentNegotiatingViewResolver<br/>→ выбор по Accept"]
-    TV --> Render["Рендеринг HTML"]
-    JV --> Render
-    CNV --> Render
-```
+Как логическое имя View превращается в рендеринг:
+
+- `Controller` (`return "userList"`) → `ViewResolver`.
+- `ViewResolver` делегирует одной из реализаций (в зависимости от конфигурации):
+  - `ThymeleafViewResolver` → `/templates/userList.html`;
+  - `InternalResourceViewResolver` → `/WEB-INF/jsp/userList.jsp`;
+  - `ContentNegotiatingViewResolver` → выбор по `Accept`.
+- Любая из реализаций → `Рендеринг HTML`.
 
 Основные реализации:
 
@@ -584,20 +573,15 @@ public class UserForm {
 
 **Модель 2** — собственно паттерн `MVC`: логика, данные и представление разнесены по контроллеру, модели и View.
 
-```mermaid
-graph TB
-    subgraph "Модель 1 (JSP-centric)"
-        C1["Клиент"] --> JSP1["JSP/Servlet<br/>(логика + отображение)"]
-        JSP1 --> DB1["БД"]
-    end
+Сравнение двух архитектур по связям компонентов:
 
-    subgraph "Модель 2 (MVC)"
-        C2["Клиент"] --> Ctrl2["Controller"]
-        Ctrl2 --> Svc["Service / Model"]
-        Svc --> DB2["БД"]
-        Ctrl2 --> View2["View<br/>(только отображение)"]
-    end
-```
+- **Модель 1 (JSP-centric):**
+  - `Клиент` → `JSP/Servlet (логика + отображение)` → `БД`.
+  - Логика и отображение смешаны в одном узле, который сам ходит в базу.
+- **Модель 2 (MVC):**
+  - `Клиент` → `Controller`.
+  - `Controller` → `Service / Model` → `БД`.
+  - `Controller` → `View (только отображение)`.
 
 `Spring MVC` — это модель 2. Разделение ответственности окупается на практике: слои тестируются независимо, бизнес-логика переиспользуется разными контроллерами, а View-технологию (JSP → Thymeleaf → JSON) можно заменить, не трогая контроллеры.
 
@@ -607,27 +591,16 @@ graph TB
 
 **DispatcherServlet** — центральный сервлет `Spring MVC` и воплощение паттерна Front Controller. Он дирижирует всем циклом обработки запроса, делегируя шаги специализированным компонентам:
 
-```mermaid
-graph TB
-    Client["Клиент"] --> DS["DispatcherServlet"]
-    DS --> HM["HandlerMapping<br/>(поиск контроллера)"]
-    HM --> HA["HandlerAdapter<br/>(вызов метода)"]
-    HA --> Ctrl["Controller"]
-    Ctrl --> HA
-    HA --> DS
-    DS --> VR["ViewResolver<br/>(разрешение View)"]
-    VR --> View["View<br/>(рендеринг)"]
-    View --> Client
+Цикл обработки запроса с расстановкой интерцепторов:
 
-    subgraph "Interceptors"
-        I1["preHandle()"]
-        I2["postHandle()"]
-    end
-    HM --> I1
-    I1 --> HA
-    HA --> I2
-    I2 --> DS
-```
+- `Клиент` → `DispatcherServlet`.
+- `DispatcherServlet` → `HandlerMapping (поиск контроллера)`.
+- `HandlerMapping` → `preHandle()` (интерцепторы) → `HandlerAdapter (вызов метода)`.
+- `HandlerAdapter` → `Controller` и обратно в `HandlerAdapter`.
+- `HandlerAdapter` → `postHandle()` (интерцепторы) → `DispatcherServlet`.
+- `DispatcherServlet` → `ViewResolver (разрешение View)`.
+- `ViewResolver` → `View (рендеринг)`.
+- `View` → `Клиент`.
 
 **ContextLoaderListener** — при старте создаёт **корневой** `ApplicationContext` с общими бинами (сервисы, репозитории, инфраструктура). `DispatcherServlet` поверх него заводит свой **дочерний** контекст веб-слоя (контроллеры, `ViewResolver`, `HandlerMapping`). Иерархия односторонняя: бины веб-слоя видят корневые, но не наоборот — поэтому сервисы не зависят от веб-обвязки.
 
@@ -696,17 +669,17 @@ public class UserController {
 
 `Spring MVC` ищет обработчик исключения сверху вниз по трём уровням и останавливается на первом подходящем. Если не нашёл ни одного — отдаёт `500`.
 
-```mermaid
-graph TB
-    Ex["Исключение в Controller"]
-    Ex --> L1{"@ExceptionHandler<br/>в контроллере?"}
-    L1 -->|Да| H1["Локальный обработчик"]
-    L1 -->|Нет| L2{"@ControllerAdvice<br/>с @ExceptionHandler?"}
-    L2 -->|Да| H2["Глобальный обработчик"]
-    L2 -->|Нет| L3{"@ResponseStatus<br/>на классе исключения?"}
-    L3 -->|Да| H3["HTTP-код из аннотации"]
-    L3 -->|Нет| H4["DefaultHandlerExceptionResolver<br/>→ 500 Internal Server Error"]
-```
+Поиск обработчика для `Исключение в Controller` идёт сверху вниз, до первого подходящего:
+
+1. Есть ли `@ExceptionHandler` в контроллере?
+   - **Да** → `Локальный обработчик`.
+   - **Нет** → следующий уровень.
+2. Есть ли `@ControllerAdvice` с `@ExceptionHandler`?
+   - **Да** → `Глобальный обработчик`.
+   - **Нет** → следующий уровень.
+3. Есть ли `@ResponseStatus` на классе исключения?
+   - **Да** → `HTTP-код из аннотации`.
+   - **Нет** → `DefaultHandlerExceptionResolver` → `500 Internal Server Error`.
 
 1. **`@ResponseStatus` на классе исключения** — самый простой вариант: `Spring` сам вернёт указанный HTTP-код, без отдельного обработчика. Подходит, когда тело ответа не важно:
 ```java
@@ -840,14 +813,16 @@ public void delete(@PathVariable Long id) { ... }
 
 Идея — описать правила декларативно на DTO и обрабатывать нарушения в одном месте, а не проверять поля вручную в каждом контроллере. Полная цепочка такая: ограничения на DTO → `@Valid` в контроллере → ошибки → единый обработчик, который превращает их в `400` с понятным JSON.
 
-```mermaid
-graph LR
-    DTO["DTO с аннотациями<br/>@NotBlank, @Size, @Email"] --> Valid["@Valid / @Validated<br/>в контроллере"]
-    Valid --> BR["BindingResult<br/>или исключение"]
-    BR --> Advice["@ControllerAdvice<br/>→ 400 + JSON ошибок"]
-    Custom["Кастомный<br/>ConstraintValidator"] --> DTO
-    Group["Validation Groups<br/>OnCreate, OnUpdate"] --> Valid
-```
+Цепочка валидации входных данных:
+
+- `DTO с аннотациями` (`@NotBlank`, `@Size`, `@Email`) → `@Valid / @Validated в контроллере`.
+- `@Valid / @Validated` → `BindingResult или исключение`.
+- `BindingResult или исключение` → `@ControllerAdvice` → `400 + JSON ошибок`.
+
+Расширения цепочки:
+
+- `Кастомный ConstraintValidator` подключается к `DTO` (свои правила прямо на полях).
+- `Validation Groups` (`OnCreate`, `OnUpdate`) подключаются к шагу `@Valid / @Validated` (разные правила для разных операций).
 
 ```java
 // 1. DTO с ограничениями
@@ -885,16 +860,16 @@ public class ValidationAdvice {
 
 **Content Negotiation** — механизм, которым `Spring` выбирает формат ответа (JSON, XML, HTML) под конкретного клиента: один и тот же контроллер может отдать JSON браузеру и XML интеграции, не дублируя код. Формат определяется по одной из стратегий (по убыванию предпочтительности):
 
-```mermaid
-graph TB
-    Req["HTTP Request"] --> CN["ContentNegotiationManager"]
-    CN --> S1["Заголовок Accept<br/>Accept: application/xml"]
-    CN --> S2["Параметр запроса<br/>?format=xml"]
-    CN --> S3["Расширение URL<br/>/users.xml (deprecated)"]
-    CN --> Conv["HttpMessageConverter"]
-    Conv --> JSON["Jackson<br/>→ JSON"]
-    Conv --> XML["JAXB / Jackson XML<br/>→ XML"]
-```
+Как выбирается формат ответа:
+
+- `HTTP Request` → `ContentNegotiationManager`.
+- `ContentNegotiationManager` опирается на стратегии (по убыванию предпочтительности):
+  - `Заголовок Accept` — например, `Accept: application/xml`;
+  - `Параметр запроса` — например, `?format=xml`;
+  - `Расширение URL` — например, `/users.xml` (deprecated).
+- Выбранный формат → `HttpMessageConverter`, который сериализует ответ:
+  - `Jackson` → `JSON`;
+  - `JAXB / Jackson XML` → `XML`.
 
 Настройка через `WebMvcConfigurer`:
 
@@ -966,30 +941,22 @@ class UserControllerTest {
 
 `DispatcherServlet` гоняет каждый HTTP-запрос через одну и ту же фиксированную цепочку: найти обработчик → пропустить через интерцепторы → вызвать контроллер → разрешить и отрендерить View. Каждый шаг делегируется отдельному компоненту, что и делает фреймворк расширяемым.
 
-```mermaid
-sequenceDiagram
-    participant C as Клиент
-    participant DS as DispatcherServlet
-    participant HM as HandlerMapping
-    participant HA as HandlerAdapter
-    participant Ctrl as Controller
-    participant VR as ViewResolver
+Последовательность шагов (участники: `Клиент`, `DispatcherServlet`, `HandlerMapping`, `HandlerAdapter`, `Controller`, `ViewResolver`):
 
-    C->>DS: HTTP Request
-    DS->>HM: getHandler(request)
-    HM-->>DS: HandlerExecutionChain (handler + interceptors)
-    DS->>DS: preHandle() — все Interceptor'ы
-    DS->>HA: handle(request, response, handler)
-    HA->>Ctrl: вызов метода контроллера
-    Ctrl-->>HA: ModelAndView
-    HA-->>DS: ModelAndView
-    DS->>DS: postHandle() — Interceptor'ы в обратном порядке
-    DS->>VR: resolveViewName(viewName, locale)
-    VR-->>DS: View
-    DS->>DS: render(model, view)
-    DS->>DS: afterCompletion() — Interceptor'ы (даже при исключении)
-    DS-->>C: HTTP Response
-```
+1. `Клиент` → `DispatcherServlet`: `HTTP Request`.
+2. `DispatcherServlet` → `HandlerMapping`: `getHandler(request)`.
+3. `HandlerMapping` → `DispatcherServlet`: возвращает `HandlerExecutionChain` (handler + interceptors).
+4. `DispatcherServlet` (внутри себя): `preHandle()` — все Interceptor'ы.
+5. `DispatcherServlet` → `HandlerAdapter`: `handle(request, response, handler)`.
+6. `HandlerAdapter` → `Controller`: вызов метода контроллера.
+7. `Controller` → `HandlerAdapter`: `ModelAndView`.
+8. `HandlerAdapter` → `DispatcherServlet`: `ModelAndView`.
+9. `DispatcherServlet` (внутри себя): `postHandle()` — Interceptor'ы в обратном порядке.
+10. `DispatcherServlet` → `ViewResolver`: `resolveViewName(viewName, locale)`.
+11. `ViewResolver` → `DispatcherServlet`: `View`.
+12. `DispatcherServlet` (внутри себя): `render(model, view)`.
+13. `DispatcherServlet` (внутри себя): `afterCompletion()` — Interceptor'ы (вызывается даже при исключении).
+14. `DispatcherServlet` → `Клиент`: `HTTP Response`.
 
 **Ключевые компоненты:**
 

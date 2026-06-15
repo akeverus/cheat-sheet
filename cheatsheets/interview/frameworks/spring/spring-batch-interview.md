@@ -158,21 +158,12 @@ updated: "2026-05-05"
 - **Слушатели** — перехват событий на каждом уровне (Job, Step, Item)
 - **Интеграция** — со `Spring Boot`, `Spring Data`, `Spring Cloud Task`
 
-```mermaid
-graph TB
-    subgraph "Spring Batch Framework"
-        JL[JobLauncher] --> J[Job]
-        J --> S1[Step 1]
-        J --> S2[Step 2]
-        J --> S3[Step N]
-        S1 --> R[ItemReader]
-        S1 --> P[ItemProcessor]
-        S1 --> W[ItemWriter]
-        JR[JobRepository] -.-> JL
-        JR -.-> J
-        JR -.-> S1
-    end
-```
+Как компоненты связаны внутри фреймворка:
+
+- `JobLauncher` запускает `Job`.
+- `Job` содержит последовательность шагов: `Step 1` → `Step 2` → … → `Step N`.
+- Каждый chunk-ориентированный `Step` (например, `Step 1`) состоит из трёх частей: `ItemReader` → `ItemProcessor` → `ItemWriter`.
+- `JobRepository` пронизывает всё: он персистит метаданные о `JobLauncher`, `Job` и каждом `Step` (статусы, счётчики, контекст для перезапуска).
 
 ## Q3. Какие ключевые компоненты входят в архитектуру Spring Batch?
 
@@ -184,32 +175,11 @@ graph TB
 
 **3. Batch Infrastructure** — инфраструктура: готовые `ItemReader`, `ItemWriter`, retry/skip, слушатели.
 
-```mermaid
-graph TB
-    subgraph "Application"
-        BL[Бизнес-логика]
-    end
-    subgraph "Batch Core"
-        JOB[Job]
-        STEP[Step]
-        JL[JobLauncher]
-        JR[JobRepository]
-    end
-    subgraph "Batch Infrastructure"
-        IR[ItemReader]
-        IP[ItemProcessor]
-        IW[ItemWriter]
-        RS[Retry / Skip]
-    end
-    BL --> JOB
-    JOB --> STEP
-    STEP --> IR
-    STEP --> IP
-    STEP --> IW
-    JL --> JOB
-    JR -.-> JOB
-    JR -.-> STEP
-```
+Как уровни связаны между собой:
+
+- **Application** — бизнес-логика — опирается на `Job` из ядра.
+- **Batch Core** содержит `Job`, `Step`, `JobLauncher` и `JobRepository`. `Job` разбивается на `Step`, а каждый `Step` использует инфраструктурные компоненты: `ItemReader`, `ItemProcessor` и `ItemWriter` (плюс механизмы Retry / Skip).
+- `JobLauncher` запускает `Job`, а `JobRepository` персистит метаданные и `Job`, и каждого `Step`.
 
 **Ключевые компоненты:**
 
@@ -235,14 +205,13 @@ graph TB
 
 **`JobExecution`** — конкретная физическая попытка выполнить `JobInstance`. Один `JobInstance` может иметь несколько `JobExecution`: если первая попытка упала и задание перезапустили, появляется второй `JobExecution` для того же `JobInstance`.
 
-```mermaid
-graph LR
-    J[Job: dailyReport] --> JI1[JobInstance: date=04-12]
-    J --> JI2[JobInstance: date=04-13]
-    JI1 --> JE1[JobExecution #1: FAILED]
-    JI1 --> JE2[JobExecution #2: COMPLETED]
-    JI2 --> JE3[JobExecution #1: COMPLETED]
-```
+Иерархия на конкретном примере `Job: dailyReport`:
+
+- `JobInstance: date=04-12`
+  - `JobExecution #1: FAILED` (первая попытка упала)
+  - `JobExecution #2: COMPLETED` (перезапуск завершился успешно)
+- `JobInstance: date=04-13`
+  - `JobExecution #1: COMPLETED`
 
 **Правила (вытекают из идеи «один логический прогон выполняется ровно один раз успешно»):**
 - Успешный `JobInstance` повторно запустить нельзя — он уже `COMPLETED`, и попытка вызовет `JobInstanceAlreadyCompleteException`. Это защита от случайной двойной обработки тех же данных.
@@ -440,24 +409,13 @@ public FlatFileItemWriter<Report> writer(
 
 `Spring Batch` поддерживает **две модели обработки** шага — выбор между ними определяет, как шаг устроен внутри:
 
-```mermaid
-graph LR
-    subgraph "Chunk-oriented"
-        R[ItemReader] --> P[ItemProcessor]
-        P --> W[ItemWriter]
-        R -. "читает по 1 элементу" .-> P
-        P -. "копит chunk" .-> W
-        W -. "пишет chunk целиком" .-> DB[(БД)]
-    end
-```
+**Chunk-oriented** устроен как конвейер `ItemReader` → `ItemProcessor` → `ItemWriter`:
 
-```mermaid
-graph LR
-    subgraph "Tasklet"
-        T[Tasklet] --> OP[Одна операция]
-        OP --> DONE[FINISHED]
-    end
-```
+- `ItemReader` читает по 1 элементу и передаёт его в `ItemProcessor`;
+- `ItemProcessor` обрабатывает элементы и копит их в chunk;
+- `ItemWriter` пишет chunk целиком в БД.
+
+**Tasklet** проще: `Tasklet` выполняет одну операцию и возвращает `FINISHED`.
 
 | Модель | Описание | Пример |
 |--------|----------|--------|
@@ -493,23 +451,14 @@ public Step taskletStep(JobRepository jobRepository,
 
 **Алгоритм работы:**
 
-```mermaid
-sequenceDiagram
-    participant R as ItemReader
-    participant P as ItemProcessor
-    participant W as ItemWriter
-    participant TX as Transaction
+Порядок действий внутри обработки одного chunk (участники: `ItemReader`, `ItemProcessor`, `ItemWriter` и транзакция `Transaction`):
 
-    TX->>TX: begin()
-    loop chunk size раз
-        R->>P: read() → item
-        P->>P: process(item)
-    end
-    P->>W: write(List<items>)
-    TX->>TX: commit()
+1. Транзакция: `begin()`.
+2. Цикл «chunk size раз»: `ItemReader.read()` возвращает `item`, затем `ItemProcessor.process(item)` обрабатывает его.
+3. После накопления порции `ItemProcessor` передаёт её в `ItemWriter.write(List<items>)`.
+4. Транзакция: `commit()`.
 
-    Note over TX: Если ошибка → rollback()
-```
+При ошибке вместо commit выполняется `rollback()` всей транзакции chunk.
 
 **Ключевые моменты:**
 1. `ItemReader.read()` вызывается по одному элементу, пока не вернёт `null` (конец данных) или пока не наберётся chunk
@@ -1095,27 +1044,12 @@ public Step stepWithBackoff(JobRepository jobRepository,
 
 `Spring Batch` предлагает четыре стратегии масштабирования — от простых к сложным. Принцип выбора: берите минимально достаточную. Первые две работают в одной JVM и не требуют инфраструктуры; партиционирование и remote chunking распределяют работу, но усложняют деплой и требуют брокера/общей БД.
 
-```mermaid
-graph TB
-    subgraph "1. Multi-threaded Step"
-        MT[TaskExecutor<br/>Один Step, N потоков]
-    end
-    subgraph "2. Parallel Steps"
-        PS[Split/Flow<br/>Несколько Step параллельно]
-    end
-    subgraph "3. Partitioning"
-        PA[Master → Slave Steps<br/>Данные делятся на разделы]
-    end
-    subgraph "4. Remote Chunking"
-        RC[Master читает<br/>Slaves обрабатывают/пишут<br/>через middleware]
-    end
+Четыре стратегии по нарастанию сложности:
 
-    MT --> PS --> PA --> RC
-    style MT fill:#e1f5fe
-    style PS fill:#e8f5e9
-    style PA fill:#fff3e0
-    style RC fill:#fce4ec
-```
+1. **Multi-threaded Step** — `TaskExecutor`: один `Step`, N потоков.
+2. **Parallel Steps** — `Split`/`Flow`: несколько `Step` параллельно.
+3. **Partitioning** — Master → Slave Steps: данные делятся на разделы.
+4. **Remote Chunking** — Master читает, Slaves обрабатывают и пишут, общение через middleware.
 
 | Стратегия | Сложность | Когда использовать |
 |-----------|-----------|-------------------|
@@ -1172,19 +1106,14 @@ public SynchronizedItemStreamReader<Customer> synchronizedReader() {
 
 **Partitioning** — стратегия масштабирования, при которой данные заранее делятся на непересекающиеся разделы (partitions), и каждый раздел обрабатывается отдельным экземпляром `Step` (slave/worker) параллельно. В отличие от многопоточного шага, разделы изолированы по данным (например, по диапазону ID), поэтому у каждого свой `ExecutionContext` и restart работает корректно. Master-шаг только нарезает разделы и раздаёт их — сам данные не обрабатывает.
 
-```mermaid
-graph TB
-    MASTER[Master Step<br/>Partitioner]
-    MASTER --> S1[Slave: id 1-1000]
-    MASTER --> S2[Slave: id 1001-2000]
-    MASTER --> S3[Slave: id 2001-3000]
-    MASTER --> S4[Slave: id 3001-4000]
+Например, Master Step с `Partitioner` нарезает данные на 4 раздела по диапазонам ID и раздаёт их slave-шагам:
 
-    S1 --> R1[Reader → Processor → Writer]
-    S2 --> R2[Reader → Processor → Writer]
-    S3 --> R3[Reader → Processor → Writer]
-    S4 --> R4[Reader → Processor → Writer]
-```
+- Slave: id 1-1000;
+- Slave: id 1001-2000;
+- Slave: id 2001-3000;
+- Slave: id 3001-4000.
+
+Каждый slave прогоняет свой раздел через собственную цепочку `Reader` → `Processor` → `Writer`.
 
 **Шаг 1: Реализация `Partitioner`** — определяет, как делить данные:
 
@@ -1256,17 +1185,13 @@ public Step masterStep(JobRepository jobRepository, Step slaveStep,
 
 **Split/Flow** — параллельное выполнение **разных** шагов (а не параллелизм внутри одного шага). Каждая ветка (`Flow`) идёт в своём потоке, а `split` ждёт завершения всех веток перед переходом дальше. Применяют, когда шаги логически независимы — например, импорт из нескольких несвязанных источников: их незачем выполнять последовательно.
 
-```mermaid
-graph LR
-    START((Start)) --> SPLIT{Split}
-    SPLIT --> F1[Flow 1: importCustomers]
-    SPLIT --> F2[Flow 2: importProducts]
-    SPLIT --> F3[Flow 3: importOrders]
-    F1 --> JOIN{Join}
-    F2 --> JOIN
-    F3 --> JOIN
-    JOIN --> REPORT[generateReport]
-```
+Схема выполнения по порядку: от старта поток расходится через `Split` на три независимые ветки —
+
+- Flow 1: `importCustomers`;
+- Flow 2: `importProducts`;
+- Flow 3: `importOrders`.
+
+Затем в точке Join `split` ждёт завершения всех трёх веток и только после этого переходит к финальному шагу `generateReport`.
 
 ```java
 @Bean
@@ -1303,14 +1228,13 @@ public Job parallelJob(JobRepository jobRepository,
 
 **Conditional flow** позволяет ветвить выполнение: следующий шаг выбирается по `ExitStatus` предыдущего. Это превращает линейную цепочку шагов в граф — например, при ошибке валидации уйти на уведомление, а при наличии пропусков — на шаг ручного ревью. Переходы задаются связками `.on("СТАТУС").to(step)`, а нестандартные `ExitStatus` возвращают из `StepExecutionListener.afterStep()` или вычисляют программно через `JobExecutionDecider`.
 
-```mermaid
-graph LR
-    VALIDATE[validateStep] -->|COMPLETED| IMPORT[importStep]
-    VALIDATE -->|FAILED| NOTIFY[notifyStep]
-    IMPORT -->|COMPLETED| REPORT[reportStep]
-    IMPORT -->|COMPLETED_WITH_SKIPS| REVIEW[reviewStep]
-    REVIEW --> REPORT
-```
+Пример ветвления по `ExitStatus`:
+
+- `validateStep` при `COMPLETED` → `importStep`;
+- `validateStep` при `FAILED` → `notifyStep`;
+- `importStep` при `COMPLETED` → `reportStep`;
+- `importStep` при `COMPLETED_WITH_SKIPS` → `reviewStep`;
+- `reviewStep` (любой статус) → `reportStep`.
 
 ```java
 @Bean
