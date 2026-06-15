@@ -475,14 +475,14 @@ stream.map(...).setParallelism(4) // override per operator
 
 **Lambda Architecture** (Nathan Marz, 2011) — подход, где данные обрабатываются **двумя параллельными слоями** сразу: медленным точным batch и быстрым приближённым speed. Идея в том, чтобы получить и точность, и низкую задержку, объединяя результаты обоих.
 
-```mermaid
-graph LR
-    Source --> Batch[Batch Layer<br/>Spark/Hadoop]
-    Source --> Speed[Speed Layer<br/>Storm/Flink]
-    Batch --> Serving[Serving Layer<br/>HBase/Cassandra]
-    Speed --> Serving
-    Serving --> Query[Queries]
-```
+Поток данных:
+- `Source` → **Batch Layer** (`Spark`/`Hadoop`)
+- `Source` → **Speed Layer** (`Storm`/`Flink`)
+- **Batch Layer** → **Serving Layer** (`HBase`/`Cassandra`)
+- **Speed Layer** → **Serving Layer**
+- **Serving Layer** → запросы (`Queries`)
+
+То есть источник раздваивается на два параллельных слоя (batch и speed), оба пишут в serving-слой, а уже из него идут запросы.
 
 **Роль каждого слоя:**
 - **Batch layer** — пересчитывает всё точно, но медленно (например, часовой ETL).
@@ -503,12 +503,10 @@ graph LR
 
 **Kappa Architecture** (Jay Kreps, 2014) — ответ на сложность Lambda: оставить **только** speed layer и убрать batch-слой совсем. Всё, включая исторический пересчёт, делается одним streaming-конвейером.
 
-```mermaid
-graph LR
-    Source --> Stream[Stream Processor<br/>Flink/Kafka Streams]
-    Stream --> Serving[Serving Layer]
-    Serving --> Query[Queries]
-```
+Поток данных линейный, без раздвоения:
+- `Source` → **Stream Processor** (`Flink`/`Kafka Streams`)
+- **Stream Processor** → **Serving Layer**
+- **Serving Layer** → запросы (`Queries`)
 
 **Идея:** обрабатывать всё как поток. Нужно пересчитать историю (reprocessing) — перематываем Kafka offset назад и проигрываем поток заново тем же кодом. Отдельный batch-слой становится не нужен.
 

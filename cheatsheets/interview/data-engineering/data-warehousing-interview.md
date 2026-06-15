@@ -221,19 +221,12 @@ Vectorized (fast):
 
 Такое деление неслучайно: аналитик почти всегда «считает метрику (факт) в разрезе атрибутов (измерений)» — например, выручку по регионам за квартал. Схема прямо отражает этот вопрос.
 
-```mermaid
-graph TD
-    Fact[Fact: Sales]
-    DimCustomer[Dim: Customer]
-    DimProduct[Dim: Product]
-    DimDate[Dim: Date]
-    DimStore[Dim: Store]
+В центре — таблица фактов `Fact: Sales`, вокруг неё четыре измерения, каждое из которых ссылается на факт:
 
-    DimCustomer --> Fact
-    DimProduct --> Fact
-    DimDate --> Fact
-    DimStore --> Fact
-```
+- `Dim: Customer` → `Fact: Sales`
+- `Dim: Product` → `Fact: Sales`
+- `Dim: Date` → `Fact: Sales`
+- `Dim: Store` → `Fact: Sales`
 
 Это **star schema** — fact в центре, dimensions вокруг.
 
