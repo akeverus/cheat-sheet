@@ -1523,10 +1523,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "N+2 LLM-вызовов: 1 draft + 1 plan verifications + N (по одному на verification) + 1 revise.",
+              "text": "N+3 LLM-вызовов: 1 draft + 1 plan verifications + N (по одному на verification) + 1 revise.",
               "correct": true,
               "sections": {
-                "explanation": "Структура `CoVe` — N+2 LLM calls. (1) Draft answer — 1 call. (2) Plan verifications (список вопросов) — 1 call. (3) Answer verifications — N calls (по одному на вопрос, в ИЗОЛИРОВАННОМ контексте без draft). (4) Revise draft — 1 call. Для 3-5 verification-вопросов = 5-7 calls против 1 baseline; стоит для high-stakes ответов, для chat — overkill.",
+                "explanation": "Структура `CoVe` — N+3 LLM calls. (1) Draft answer — 1 call. (2) Plan verifications (список вопросов) — 1 call. (3) Answer verifications — N calls (по одному на вопрос, в ИЗОЛИРОВАННОМ контексте без draft). (4) Revise draft — 1 call. Для 3-5 verification-вопросов = 6-8 calls против 1 baseline; стоит для high-stakes ответов, для chat — overkill.",
                 "example": "Q: «Расскажи про Эйнштейна». Draft (1 call) → Plan: 3 verification questions (1 call) → 3 isolated verifications (3 calls) → Revise (1 call) = 6 calls total для N=3.",
                 "when_to_apply": "Fact-heavy ответы где hallucination дорого стоит. Биография, исторические факты, описание продукта, медицина, legal. Не для chat (overkill).",
                 "edge_cases": "Можно сократить, batching N verifications в один call (но теряется изоляция). Для math/code лучше Reflexion с verifier, не CoVe.",
