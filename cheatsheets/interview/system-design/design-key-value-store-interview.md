@@ -185,19 +185,19 @@ KV Dynamo-стиля — это **PA/EL**: даже без partition мы гот
 - Добавление/удаление узла затрагивает ключи только **соседнего сегмента** → переезжает `1/N` данных, а не всё.
 - Каждый узел самостоятельно знает свой диапазон, поэтому глобальная координация при ребалансе минимальна.
 
-```mermaid
-graph LR
-    subgraph Ring["Hash ring 0..2^32"]
-        A["Node A<br/>token=100"]
-        B["Node B<br/>token=200"]
-        C["Node C<br/>token=300"]
-        D["Node D<br/>token=400"]
-    end
-    K1["hash(key1)=150"] --> B
-    K2["hash(key2)=250"] --> C
-    K3["hash(key3)=380"] --> D
-    A --> B --> C --> D --> A
-```
+Пример кольца `Hash ring 0..2^32` с четырьмя узлами по позициям-токенам:
+
+- `Node A` — `token=100`
+- `Node B` — `token=200`
+- `Node C` — `token=300`
+- `Node D` — `token=400`
+- узлы замкнуты в кольцо по часовой стрелке: `A → B → C → D → A`.
+
+Куда ложатся ключи (владелец = первый узел по часовой стрелке от позиции хеша):
+
+- `hash(key1)=150` → `Node B`
+- `hash(key2)=250` → `Node C`
+- `hash(key3)=380` → `Node D`
 
 ## Q6. Как работает кольцо и виртуальные узлы (!)
 
@@ -214,28 +214,13 @@ graph LR
 - **Гетерогенность кластера.** Мощному узлу можно дать больше vnodes (proportional weight) и нагрузить его пропорционально железу.
 - **Плавный rebalancing.** При добавлении узла он забирает по чуть-чуть от каждого соседа, а не один большой кусок у одного — меньше всплеск трафика на конкретную ноду.
 
-```mermaid
-graph TB
-    subgraph Physical["Physical nodes"]
-        N1[Node A]
-        N2[Node B]
-        N3[Node C]
-    end
-    subgraph Virtual["Virtual nodes on ring"]
-        A1[A#1]
-        A2[A#2]
-        A3[A#3]
-        B1[B#1]
-        B2[B#2]
-        B3[B#3]
-        C1[C#1]
-        C2[C#2]
-        C3[C#3]
-    end
-    N1 -.owns.-> A1 & A2 & A3
-    N2 -.owns.-> B1 & B2 & B3
-    N3 -.owns.-> C1 & C2 & C3
-```
+Каждый из трёх физических узлов (`Node A`, `Node B`, `Node C`) владеет несколькими виртуальными узлами на кольце (`owns`):
+
+- `Node A` → `A#1`, `A#2`, `A#3`
+- `Node B` → `B#1`, `B#2`, `B#3`
+- `Node C` → `C#1`, `C#2`, `C#3`
+
+Виртуальные узлы (`A#1`, `B#1`, …) раскиданы по кольцу вперемешку, поэтому диапазоны каждого физического узла оказываются распределены по всему кольцу, а не сосредоточены в одном куске.
 
 ## Q7. Математика равномерности и переноса данных
 
@@ -320,17 +305,12 @@ class ConsistentHashRing:
 - **Кто координатор.** Обычно — **первый** узел списка, но клиент может обратиться к любому: в Cassandra координатором становится любая нода кластера, к которой пришёл запрос.
 - **Что делает координатор.** Параллельно рассылает PUT всем N репликам и ждёт `W` подтверждений (а не всех N — в этом и смысл кворума).
 
-```mermaid
-flowchart LR
-    Client -->|PUT key=x| Coord["Coordinator (Node A)"]
-    Coord --> A[Node A replica]
-    Coord --> B[Node B replica]
-    Coord --> C[Node C replica]
-    A -->|ack| Coord
-    B -->|ack| Coord
-    C -.timeout.-> Coord
-    Coord -->|W=2 ok| Client
-```
+Поток записи `PUT key=x` (при `N=3`, `W=2`):
+
+1. `Client` шлёт `PUT key=x` координатору `Coordinator (Node A)`.
+2. Координатор параллельно рассылает запись всем трём репликам: `Node A replica`, `Node B replica`, `Node C replica`.
+3. `Node A replica` и `Node B replica` отвечают `ack`, а `Node C replica` не отвечает вовремя (`timeout`).
+4. Двух подтверждений достаточно (`W=2 ok`) → координатор возвращает успех `Client`, не дожидаясь третьей реплики.
 
 ## Q10. Quorum: формула R+W>N и трейд-оффы (!)
 
@@ -351,19 +331,11 @@ flowchart LR
 
 **Как это бьёт по латентности.** Координатор ждёт не самый быстрый ответ, а `W`-й (или `R`-й) по порядку: `latency(W)` = время прихода W-й по скорости реплики. Чем выше `W` или `R`, тем дальше в хвост распределения мы заглядываем — поэтому повышение кворума напрямую разгоняет p99.
 
-```mermaid
-graph LR
-    subgraph N3["N=3 replicas: r1, r2, r3"]
-        R1[r1]
-        R2[r2]
-        R3[r3]
-    end
-    W[Write set W=2:<br/>r1, r2] -.intersects.-> R[Read set R=2:<br/>r2, r3]
-    R1 --- W
-    R2 --- W
-    R2 --- R
-    R3 --- R
-```
+Наглядный пример пересечения при `N=3` реплики (`r1`, `r2`, `r3`), `W=2`, `R=2`:
+
+- Write set `W=2` = `{r1, r2}` — узлы, подтвердившие запись.
+- Read set `R=2` = `{r2, r3}` — узлы, опрошенные на чтении.
+- Множества пересекаются (`intersects`) на узле `r2` → чтение гарантированно зацепит реплику со свежей записью.
 
 ## Q11. Sloppy quorum и hinted handoff (!)
 
@@ -399,15 +371,17 @@ Sloppy quorum и hinted handoff — это механизм, который не
 
 **Зачем дерево:** оно превращает поиск различий в `O(log(N))` сравнений вместо `O(N)` побайтового обхода — по сети летит только то, что реально различается. Cassandra запускает Merkle-репair (`nodetool repair`) еженедельно.
 
-```mermaid
-graph TB
-    Root["Root hash"] --> L1["hash(L,M)"]
-    Root --> R1["hash(N,O)"]
-    L1 --> L["block L<br/>hash(keys 0..9)"]
-    L1 --> M["block M<br/>hash(keys 10..19)"]
-    R1 --> N["block N<br/>hash(keys 20..29)"]
-    R1 --> O["block O<br/>hash(keys 30..39)"]
-```
+Структура хеш-дерева (`Root hash` сверху, листья снизу):
+
+- `Root hash` объединяет два внутренних узла: `hash(L,M)` и `hash(N,O)`.
+- `hash(L,M)` объединяет два листа-блока:
+  - `block L` = `hash(keys 0..9)`
+  - `block M` = `hash(keys 10..19)`
+- `hash(N,O)` объединяет два листа-блока:
+  - `block N` = `hash(keys 20..29)`
+  - `block O` = `hash(keys 30..39)`
+
+Каждый внутренний узел — хеш своих детей, лист — хеш блока ключей; сравнение начинается с `Root hash` и спускается вниз только по разошедшимся ветвям.
 
 ## Q13. Last-Write-Wins и почему он опасен (!)
 
@@ -518,17 +492,14 @@ def merge_carts(cart_a: dict, cart_b: dict) -> dict:
 
 Реализация в Cassandra: `Gossiper` + `EndpointState` + `VersionedValue`. SeedNodes — небольшой bootstrap-список адресов для самого первого знакомства новой ноды с кластером.
 
-```mermaid
-sequenceDiagram
-    Note over A,D: t=0: только A знает новость
-    A->>B: gossip {A: alive, ver=42}
-    A->>C: gossip {A: alive, ver=42}
-    Note over A,D: t=1: знают A,B,C
-    B->>D: gossip {A: alive, ver=42}
-    C->>D: gossip {A: alive, ver=42}
-    Note over A,D: t=2: знают все
-    D->>A: ack
-```
+Экспоненциальное распространение новости по узлам `A`, `B`, `C`, `D` по раундам:
+
+1. `t=0`: новость знает только `A`.
+2. `t=0`: `A` шлёт `B` сообщение `gossip {A: alive, ver=42}` и параллельно `A` шлёт то же `C`.
+3. `t=1`: новость знают `A`, `B`, `C`.
+4. `t=1`: `B` шлёт `D` сообщение `gossip {A: alive, ver=42}` и `C` шлёт то же `D`.
+5. `t=2`: новость знают все узлы.
+6. `D` подтверждает получение: `ack` узлу `A`.
 
 **Плюсы:** масштабируется (нет N² соединений), переживает partition (новости находят обходной путь через другие узлы), самовосстанавливается. **Минус:** распространение eventual — между событием и тем, что о нём узнали все, проходит несколько секунд лага.
 
@@ -598,19 +569,15 @@ Bootstrap нового узла — это процесс, в котором у�
 
 ## Q20. SSTable, memtable, WAL — путь записи (!)
 
-```mermaid
-flowchart LR
-    Client -->|PUT| Coord
-    Coord -->|append| WAL[(WAL on disk<br/>fsync)]
-    Coord -->|insert| Mem[Memtable<br/>in-memory sorted map]
-    Mem -->|threshold reached| Flush
-    Flush -->|sequential write| SS1[(SSTable L0)]
-    SS1 --> Compactor
-    SS2[(SSTable L0)] --> Compactor
-    SS3[(SSTable L0)] --> Compactor
-    Compactor -->|compact| L1[(SSTable L1<br/>larger, fewer)]
-    L1 --> L2[(SSTable L2)]
-```
+Путь записи через LSM по шагам:
+
+- `Client` шлёт `PUT` координатору `Coord`.
+- `Coord` делает `append` в `WAL on disk` (с `fsync`) и параллельно `insert` в `Memtable` (`in-memory sorted map`).
+- Когда `Memtable` достигает порога (`threshold reached`) → запускается `Flush`.
+- `Flush` делает `sequential write` в новую `SSTable L0`.
+- Несколько `SSTable L0` поступают в `Compactor`.
+- `Compactor` сливает их (`compact`) в `SSTable L1` (`larger, fewer` — крупнее и меньше числом).
+- `SSTable L1` дальше компактится в `SSTable L2`.
 
 Идея LSM-записи: ничего не обновляется на месте. Запись быстро ложится в память и в последовательный лог, а превращение в отсортированные файлы на диске происходит асинхронно. Поэтому путь записи всегда дёшев и предсказуем.
 

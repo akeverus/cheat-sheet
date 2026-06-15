@@ -279,89 +279,38 @@ public interface Scheduler {
 
 ## Q8. (!) Как выглядит class diagram целиком
 
-Диаграмма связывает все классы из Q4–Q7. На собеседовании её рисуют, чтобы показать **отношения** между сущностями (композиция, агрегация, зависимость), а не просто список классов.
+Здесь связаны все классы из Q4–Q7. На собеседовании их структуру проговаривают, чтобы показать **отношения** между сущностями (композиция, агрегация, зависимость), а не просто список классов.
 
-```mermaid
-classDiagram
-    class Building {
-        +List~Floor~ floors
-        +ElevatorController controller
-    }
-    class Floor {
-        +int number
-        +boolean hasUpButton
-        +boolean hasDownButton
-        +Display display
-        +pressUp()
-        +pressDown()
-    }
-    class ElevatorController {
-        +List~Elevator~ elevators
-        +Scheduler scheduler
-        +BlockingQueue~Request~ incoming
-        +submit(Request) Future~Elevator~
-    }
-    class Scheduler {
-        <<interface>>
-        +dispatch(Request, List~Elevator~) Elevator
-    }
-    class ScanScheduler
-    class LookScheduler
-    class NearestCarScheduler
-    class GroupDispatchScheduler
+Классы и их состав:
 
-    class Elevator {
-        +int id
-        +int currentFloor
-        +Direction direction
-        +ElevatorState state
-        +int currentLoadKg
-        +Door door
-        +addStop(int, Direction)
-        +step()
-        +canAccept(Request) boolean
-    }
-    class Door {
-        +DoorState state
-        +ObstructionSensor sensor
-        +open()
-        +close()
-    }
-    class Display {
-        +render(int, Direction)
-    }
-    class Request {
-        <<value>>
-        +UUID requestId
-        +int sourceFloor
-        +Integer destinationFloor
-        +Direction direction
-        +Instant createdAt
-    }
-    class ElevatorListener {
-        <<interface>>
-        +onStateChange(Elevator)
-    }
+- `Building` — поля: `+List~Floor~ floors`, `+ElevatorController controller`.
+- `Floor` — поля: `+int number`, `+boolean hasUpButton`, `+boolean hasDownButton`, `+Display display`; методы: `+pressUp()`, `+pressDown()`.
+- `ElevatorController` — поля: `+List~Elevator~ elevators`, `+Scheduler scheduler`, `+BlockingQueue~Request~ incoming`; метод: `+submit(Request) Future~Elevator~`.
+- `Scheduler` (`<<interface>>`) — метод: `+dispatch(Request, List~Elevator~) Elevator`.
+- `ScanScheduler`, `LookScheduler`, `NearestCarScheduler`, `GroupDispatchScheduler` — конкретные реализации `Scheduler`.
+- `Elevator` — поля: `+int id`, `+int currentFloor`, `+Direction direction`, `+ElevatorState state`, `+int currentLoadKg`, `+Door door`; методы: `+addStop(int, Direction)`, `+step()`, `+canAccept(Request) boolean`.
+- `Door` — поля: `+DoorState state`, `+ObstructionSensor sensor`; методы: `+open()`, `+close()`.
+- `Display` — метод: `+render(int, Direction)`.
+- `Request` (`<<value>>`) — поля: `+UUID requestId`, `+int sourceFloor`, `+Integer destinationFloor`, `+Direction direction`, `+Instant createdAt`.
+- `ElevatorListener` (`<<interface>>`) — метод: `+onStateChange(Elevator)`.
 
-    Building "1" o-- "*" Floor
-    Building "1" o-- "1" ElevatorController
-    ElevatorController "1" o-- "*" Elevator
-    ElevatorController "1" --> "1" Scheduler
-    Scheduler <|.. ScanScheduler
-    Scheduler <|.. LookScheduler
-    Scheduler <|.. NearestCarScheduler
-    Scheduler <|.. GroupDispatchScheduler
-    Elevator "1" *-- "1" Door
-    Elevator "1" o-- "*" ElevatorListener
-    Floor "1" *-- "1" Display
-    Display ..|> ElevatorListener
-    ElevatorController ..> Request : consumes
-```
+Отношения между классами:
 
-Как читать ключевые отношения (это и спросят на ревью диаграммы):
+- `Building` `1` o-- `*` `Floor` — агрегация.
+- `Building` `1` o-- `1` `ElevatorController` — агрегация.
+- `ElevatorController` `1` o-- `*` `Elevator` — агрегация.
+- `ElevatorController` `1` --> `1` `Scheduler` — зависимость от интерфейса.
+- `Scheduler` <|.. `ScanScheduler`, `LookScheduler`, `NearestCarScheduler`, `GroupDispatchScheduler` — реализация интерфейса.
+- `Elevator` `1` *-- `1` `Door` — композиция.
+- `Elevator` `1` o-- `*` `ElevatorListener` — агрегация.
+- `Floor` `1` *-- `1` `Display` — композиция.
+- `Display` ..|> `ElevatorListener` — реализация интерфейса.
+- `ElevatorController` ..> `Request` (`consumes`) — зависимость (потребляет).
 
-- **Композиция** (`*--`, «ромб закрашен»): `Building` владеет `Floor` и `ElevatorController`, `Elevator` владеет `Door`. Часть не живёт без целого — нет лифта, нет и его двери.
-- **Агрегация** (`o--`): `ElevatorController` агрегирует `Elevator`. Лифты существуют сами по себе, controller лишь ссылается на них.
+Как читать ключевые отношения (это и спросят на ревью структуры классов):
+
+- **Композиция** (`*--`, «ромб закрашен»): `Elevator` владеет `Door`. Часть не живёт без целого — нет лифта, нет и его двери.
+- **Агрегация** (`o--`): `Building` агрегирует `Floor` и `ElevatorController`, а `ElevatorController` агрегирует `Elevator`. Части существуют сами по себе, целое лишь ссылается на них.
 - **Зависимость через интерфейс** (`-->`): `ElevatorController` зависит от **интерфейса** `Scheduler`, а не от конкретного класса — это и есть DIP, точка подмены стратегии.
 - **Реализация** (`..|>`): `Display` реализует `ElevatorListener` — связь Observer.
 
@@ -586,30 +535,27 @@ public final class ElevatorController {
 
 Состояния лифта моделируют конечным автоматом, а не россыпью флагов. Причина — безопасность и предсказуемость: каждый переход явный, запрещённые переходы (например, начать движение с открытыми дверями) физически невозможны. Это и есть паттерн State.
 
-```mermaid
-stateDiagram-v2
-    [*] --> IDLE
-    IDLE --> MOVING_UP    : addStop above
-    IDLE --> MOVING_DOWN  : addStop below
-    IDLE --> MAINTENANCE  : enterMaintenance()
-    MOVING_UP --> STOPPED : arriveAt(target)
-    MOVING_DOWN --> STOPPED : arriveAt(target)
-    STOPPED --> DOOR_OPENING : door.open()
-    DOOR_OPENING --> DOOR_OPEN
-    DOOR_OPEN --> DOOR_CLOSING : timeout / pressClose
-    DOOR_CLOSING --> STOPPED : doors closed
-    STOPPED --> MOVING_UP   : more upStops & dir==UP
-    STOPPED --> MOVING_DOWN : more downStops & dir==DOWN
-    STOPPED --> IDLE        : no stops
-    MAINTENANCE --> IDLE    : exitMaintenance()
-    state EMERGENCY {
-        [*] --> SAFE_STOP
-    }
-    MOVING_UP --> EMERGENCY : red button
-    MOVING_DOWN --> EMERGENCY : red button
-    STOPPED --> EMERGENCY : red button
-    EMERGENCY --> STOPPED : resume by operator
-```
+Состояния и переходы автомата лифта:
+
+- Старт: начальное состояние — `IDLE`.
+- `IDLE` → `MOVING_UP` по `addStop above` (добавлен этаж выше).
+- `IDLE` → `MOVING_DOWN` по `addStop below` (добавлен этаж ниже).
+- `IDLE` → `MAINTENANCE` по `enterMaintenance()`.
+- `MOVING_UP` → `STOPPED` по `arriveAt(target)`.
+- `MOVING_DOWN` → `STOPPED` по `arriveAt(target)`.
+- `STOPPED` → `DOOR_OPENING` по `door.open()`.
+- `DOOR_OPENING` → `DOOR_OPEN` (автоматически).
+- `DOOR_OPEN` → `DOOR_CLOSING` по `timeout / pressClose`.
+- `DOOR_CLOSING` → `STOPPED` когда `doors closed`.
+- `STOPPED` → `MOVING_UP` если `more upStops & dir==UP`.
+- `STOPPED` → `MOVING_DOWN` если `more downStops & dir==DOWN`.
+- `STOPPED` → `IDLE` если `no stops`.
+- `MAINTENANCE` → `IDLE` по `exitMaintenance()`.
+- Составное состояние `EMERGENCY` содержит вложенное `SAFE_STOP` (начальное внутри `EMERGENCY`).
+- `MOVING_UP` → `EMERGENCY` по `red button`.
+- `MOVING_DOWN` → `EMERGENCY` по `red button`.
+- `STOPPED` → `EMERGENCY` по `red button`.
+- `EMERGENCY` → `STOPPED` по `resume by operator`.
 
 Три правила, которые держат автомат корректным:
 
@@ -623,16 +569,15 @@ stateDiagram-v2
 
 У двери собственный автомат из четырёх состояний (`CLOSED → OPENING → OPEN → CLOSING`). Самая важная его часть — реакция на препятствие во время закрытия: именно она отвечает за то, чтобы дверь не зажала пассажира.
 
-```mermaid
-stateDiagram-v2
-    [*] --> CLOSED
-    CLOSED --> OPENING : open()
-    OPENING --> OPEN
-    OPEN --> CLOSING   : close() or timeout
-    CLOSING --> CLOSED : doors fully closed
-    CLOSING --> OPENING : sensor.obstruction == true
-    OPEN --> OPEN      : sensor.obstruction == true (hold)
-```
+Состояния и переходы автомата двери:
+
+- Старт: начальное состояние — `CLOSED`.
+- `CLOSED` → `OPENING` по `open()`.
+- `OPENING` → `OPEN` (автоматически).
+- `OPEN` → `CLOSING` по `close() or timeout`.
+- `CLOSING` → `CLOSED` когда `doors fully closed`.
+- `CLOSING` → `OPENING` если `sensor.obstruction == true`.
+- `OPEN` → `OPEN` (петля, удержание) если `sensor.obstruction == true (hold)`.
 
 **Правило препятствия:** во время `CLOSING` любая сработка сенсора немедленно возвращает дверь в `OPENING` (и далее в `OPEN`). Это инвариант безопасности — дверь физически не может дозакрыться, пока в проёме что-то есть.
 
@@ -655,24 +600,18 @@ stateDiagram-v2
 
 Проще говоря: SCAN всегда доезжает до стены, LOOK останавливается там, где кончились заявки. LOOK — почти всегда лучше.
 
-```mermaid
-stateDiagram-v2
-    direction LR
-    state SCAN {
-        [*] --> Up
-        Up --> Top : reach max floor
-        Top --> Down
-        Down --> Bottom : reach min floor
-        Bottom --> Up
-    }
-    state LOOK {
-        [*] --> UpL
-        UpL --> ReverseAtLast : no more up-stops
-        ReverseAtLast --> DownL
-        DownL --> ReverseAtLastDown : no more down-stops
-        ReverseAtLastDown --> UpL
-    }
-```
+Циклы движения двух алгоритмов:
+
+- **SCAN** (начальное состояние `Up`):
+  - `Up` → `Top` по `reach max floor` (доезжает до верхнего этажа);
+  - `Top` → `Down`;
+  - `Down` → `Bottom` по `reach min floor` (доезжает до нижнего этажа);
+  - `Bottom` → `Up` — цикл замыкается.
+- **LOOK** (начальное состояние `UpL`):
+  - `UpL` → `ReverseAtLast` по `no more up-stops` (разворот на последней верхней остановке);
+  - `ReverseAtLast` → `DownL`;
+  - `DownL` → `ReverseAtLastDown` по `no more down-stops` (разворот на последней нижней остановке);
+  - `ReverseAtLastDown` → `UpL` — цикл замыкается.
 
 В реальных лифтах работает именно **LOOK** (или его вариация): нет смысла гнать кабину на 40-й этаж, если последняя заявка была на 30-м. На собеседовании достаточно показать, что вы понимаете эту разницу и почему LOOK предпочтительнее.
 
@@ -818,68 +757,41 @@ SOLID — это тот же дизайн из предыдущих вопрос
 
 ## Q20. Как выглядят sequence-диаграммы основных потоков
 
-Диаграммы последовательности показывают, **кто кому шлёт сообщения во времени** — это дополняет class diagram (структуру) динамикой. Ниже три ключевых потока: внешний вызов, внутренний вызов и обработка препятствия в дверях.
+Последовательность сообщений показывает, **кто кому шлёт сообщения во времени** — это дополняет структуру классов динамикой. Ниже три ключевых потока: внешний вызов, внутренний вызов и обработка препятствия в дверях.
 
-**External request — вызов с этажа:**
+**External request — вызов с этажа.** Участники: `Passenger` (P), `Floor` (F), `ElevatorController` (C), `Scheduler` (S), `Elevator` (E), `Door` (D). Поток сообщений по порядку:
 
-```mermaid
-sequenceDiagram
-    actor P as Passenger
-    participant F as Floor
-    participant C as ElevatorController
-    participant S as Scheduler
-    participant E as Elevator
-    participant D as Door
+1. P → F: `pressUp()`.
+2. F → C: `submit(Request{src=F, dir=UP, type=EXTERNAL})`.
+3. C → S: `dispatch(r, elevators)`.
+4. S → C (ответ): `chosenElevator (E)`.
+5. C → E: `addStop(F, UP)`.
+6. Цикл `until currentFloor == F`: E → E: `step()` (повторяется, пока лифт не доедет до этажа `F`).
+7. E → D: `open()`.
+8. D → E (ответ): `OPEN`.
+9. Note (P и E): `passenger boards` (пассажир заходит).
+10. E → D: `close()`.
+11. D → E (ответ): `CLOSED`.
 
-    P->>F: pressUp()
-    F->>C: submit(Request{src=F, dir=UP, type=EXTERNAL})
-    C->>S: dispatch(r, elevators)
-    S-->>C: chosenElevator (E)
-    C->>E: addStop(F, UP)
-    loop until currentFloor == F
-        E->>E: step()
-    end
-    E->>D: open()
-    D-->>E: OPEN
-    Note over P,E: passenger boards
-    E->>D: close()
-    D-->>E: CLOSED
-```
+**Internal request — вызов из кабины.** Участники: `Passenger` (P), `InsidePanel` (Panel), `Elevator` (E), `Door` (D). Поток сообщений по порядку:
 
-**Internal request — вызов из кабины:**
+1. P → Panel: `pressFloor(7)`.
+2. Panel → E: `addStop(7, INTERNAL)`.
+3. Note (E): `stop добавлен в up/down-set`.
+4. Цикл `step`: E → E: `step()` (повторяется).
+5. E → D: `open()`.
+6. D → P (ответ): `OPEN, passenger leaves` (двери открыты, пассажир выходит).
 
-```mermaid
-sequenceDiagram
-    actor P as Passenger
-    participant Panel as InsidePanel
-    participant E as Elevator
-    participant D as Door
+**Door obstruction — препятствие при закрытии.** Участники: `Door` (D), `ObstructionSensor` (S). Поток сообщений по порядку:
 
-    P->>Panel: pressFloor(7)
-    Panel->>E: addStop(7, INTERNAL)
-    Note over E: stop добавлен в up/down-set
-    loop step
-        E->>E: step()
-    end
-    E->>D: open()
-    D-->>P: OPEN, passenger leaves
-```
-
-**Door obstruction — препятствие при закрытии:**
-
-```mermaid
-sequenceDiagram
-    participant D as Door
-    participant S as ObstructionSensor
-    D->>D: state = CLOSING
-    S-->>D: obstructed = true
-    D->>D: state = OPENING (re-open)
-    D->>D: state = OPEN
-    Note over D: ждём timeout, пробуем close снова
-    D->>D: state = CLOSING
-    S-->>D: obstructed = false
-    D->>D: state = CLOSED
-```
+1. D → D: `state = CLOSING`.
+2. S → D (ответ): `obstructed = true`.
+3. D → D: `state = OPENING (re-open)`.
+4. D → D: `state = OPEN`.
+5. Note (D): `ждём timeout, пробуем close снова`.
+6. D → D: `state = CLOSING`.
+7. S → D (ответ): `obstructed = false`.
+8. D → D: `state = CLOSED`.
 
 ---
 

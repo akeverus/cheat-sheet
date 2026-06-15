@@ -207,23 +207,12 @@ SLO задают численные цели, по которым измеряю
 
 **Поток работы:**
 
-```mermaid
-graph LR
-    DB[(Content catalog)]
-    ML[Popularity ML model]
-    Plan[Distribution Planner]
-    Origin[Origin servers AWS]
-    OCA1[OCA region US-East]
-    OCA2[OCA region EU]
-    OCA3[OCA region APAC]
-
-    DB --> ML
-    ML --> Plan
-    Plan --> Origin
-    Origin -->|nightly push| OCA1
-    Origin -->|nightly push| OCA2
-    Origin -->|nightly push| OCA3
-```
+- `Content catalog` → `Popularity ML model`: каталог контента подаётся в ML-модель предсказания популярности.
+- `Popularity ML model` → `Distribution Planner`: модель отдаёт прогноз планировщику дистрибуции.
+- `Distribution Planner` → `Origin servers (AWS)`: планировщик формирует план раскладки для origin-серверов в AWS.
+- `Origin servers (AWS)` → `OCA region US-East` (nightly push): ночной push на OCA региона US-East.
+- `Origin servers (AWS)` → `OCA region EU` (nightly push): ночной push на OCA региона EU.
+- `Origin servers (AWS)` → `OCA region APAC` (nightly push): ночной push на OCA региона APAC.
 
 **Сигналы для предсказания популярности:**
 - Исторические паттерны просмотров по регионам (Squid Game в часы пик в Корее).
@@ -289,21 +278,14 @@ graph LR
 
 Encoding pipeline превращает один мастер-файл студии в десятки вариантов (codec × разрешение × bitrate), которые клиент сможет подобрать под свою сеть и устройство. Это offline-конвейер: тяжёлый, параллельный, не-realtime — поэтому строится на дешёвых Spot-инстансах (Q10) и запускается один раз на тайтл.
 
-```mermaid
-graph LR
-    Source[Source 4K HDR master]
-    Ingest[Ingest + validation]
-    Farm[Encoding farm<br/>EC2 Spot instances]
-    Variants[Output variants:<br/>codec × resolution × bitrate]
-    QC[QC + perceptual quality check]
-    S3[(S3 master + variants)]
-    OCA[OCA distribution]
+Путь по конвейеру:
 
-    Source --> Ingest --> Farm
-    Farm -->|parallel jobs| Variants
-    Variants --> QC --> S3
-    S3 --> OCA
-```
+- `Source (4K HDR master)` → `Ingest + validation`: исходный мастер 4K HDR поступает на приём и валидацию.
+- `Ingest + validation` → `Encoding farm (EC2 Spot instances)`: валидированный мастер уходит на encoding-ферму из EC2 Spot-инстансов.
+- `Encoding farm` → `Output variants: codec × resolution × bitrate` (parallel jobs): ферма параллельными джобами производит выходные варианты (codec × resolution × bitrate).
+- `Output variants` → `QC + perceptual quality check`: варианты проходят QC и проверку воспринимаемого качества.
+- `QC` → `S3 (master + variants)`: прошедшие проверку файлы складываются в S3 (мастер + варианты).
+- `S3` → `OCA distribution`: из S3 идёт дистрибуция на OCA.
 
 **Стадии:**
 
@@ -539,15 +521,13 @@ Encoding job queue (SQS) → Spot fleet (10K instances) → S3 output
 - Модель предсказывает оптимальный bitrate на каждый чанк.
 - Обучена на миллионах реальных сессий с метками QoE.
 
-```mermaid
-graph LR
-    Player[Player loop<br/>каждые 2-4 сек]
-    Player --> Measure[Measure throughput<br/>buffer level<br/>screen]
-    Measure --> Decide[ABR algorithm:<br/>BOLA / ML]
-    Decide --> Select[Select next chunk<br/>bitrate variant]
-    Select --> Download[Download chunk<br/>from OCA]
-    Download --> Player
-```
+Цикл плеера (`Player loop`, повторяется каждые 2-4 сек):
+
+1. `Player loop` → `Measure`: измерить throughput, уровень буфера (buffer level) и экран (screen).
+2. `Measure` → `Decide`: прогнать ABR-алгоритм (`BOLA / ML`).
+3. `Decide` → `Select`: выбрать bitrate-вариант следующего чанка (next chunk bitrate variant).
+4. `Select` → `Download`: скачать чанк из OCA (download chunk from OCA).
+5. `Download` → `Player loop`: вернуться в начало цикла плеера.
 
 **Реализация ABR:**
 - Клиент скачивает манифест (список вариантов с разными bitrate).
@@ -638,17 +618,13 @@ Client → Decrypt + decode in TEE → Display
 
 Скорить ML-моделью весь каталог (10K+ тайтлов) на каждый запрос — слишком дорого по latency. Поэтому ранжирование делят на два этапа: дешёвый recall сужает каталог до ~1000 кандидатов, дорогая precision-модель ранжирует только их. Это стандартный паттерн рекомендаций (Netflix, YouTube, LinkedIn).
 
-**Двухстадийный retrieval — стандарт Netflix:**
+**Двухстадийный retrieval — стандарт Netflix.** Поток по шагам:
 
-```mermaid
-graph LR
-    User[User request]
-    User --> CG[Candidate generation<br/>~10K → ~1000 items]
-    CG --> Filter[Eligibility filter<br/>region, age rating]
-    Filter --> Rank[ML ranking<br/>~1000 → top 10 per row]
-    Rank --> PL[Page layout optimization]
-    PL --> Resp[Response 100ms]
-```
+1. `User request` → `Candidate generation`: запрос пользователя запускает генерацию кандидатов (`~10K → ~1000 items`).
+2. `Candidate generation` → `Eligibility filter`: кандидаты проходят фильтр допуска (`region, age rating`).
+3. `Eligibility filter` → `ML ranking`: отфильтрованные кандидаты ранжируются ML-моделью (`~1000 → top 10 per row`).
+4. `ML ranking` → `Page layout optimization`: ранжированные items идут в оптимизацию раскладки страницы.
+5. `Page layout optimization` → `Response 100ms`: итоговый ответ возвращается за ~100 ms.
 
 **Stage 1 — Генерация кандидатов (широкий recall):**
 - Несколько источников:
@@ -743,41 +719,19 @@ graph LR
 
 Главная идея архитектуры Netflix — разделить систему на две независимые плоскости: control plane (метаданные, рекомендации, аккаунты) живёт в микросервисах AWS, а data plane (поток байтов видео) — в Open Connect. Они масштабируются и отказывают независимо: сбой рекомендаций не останавливает воспроизведение, а проблема на edge не ломает биллинг.
 
-```mermaid
-graph LR
-    C[Clients<br/>TV/Mobile/Web/Console]
-    Edge[AWS API Gateway<br/>Edge Auth]
-    Zuul[Zuul Gateway<br/>routing, filters]
-    Eureka[Eureka<br/>service discovery]
-    Cat[Catalog Service]
-    Rec[Recommendation Service]
-    User[User Service]
-    Watch[Watch History Service]
-    License[License Server<br/>DRM]
-    Bill[Billing Service]
-    EV[(EVCache<br/>distributed cache)]
-    Cas[(Cassandra<br/>metadata + profiles)]
-    ES[(Elasticsearch<br/>search index)]
-    K[(Kafka<br/>events)]
-    OC[Open Connect CDN<br/>video delivery]
-    S3[(S3<br/>masters + variants)]
+Узлы и связи верхнего уровня:
 
-    C --> Edge --> Zuul
-    Zuul -.discover.-> Eureka
-    Zuul --> Cat
-    Zuul --> Rec
-    Zuul --> User
-    Zuul --> Watch
-    Cat --> ES
-    Cat --> Cas
-    Rec --> EV
-    User --> Cas
-    Watch --> Cas
-    Watch -.events.-> K
-    C -.video.-> OC
-    OC -.fallback.-> S3
-    C --> License
-```
+- `Clients (TV/Mobile/Web/Console)` → `AWS API Gateway (Edge Auth)` → `Zuul Gateway (routing, filters)`: клиенты идут через edge-auth API Gateway на Zuul-gateway, который занимается маршрутизацией и фильтрами.
+- `Zuul Gateway` ⇢ `Eureka (service discovery)` (discover): Zuul использует Eureka для service discovery (пунктирная связь — обнаружение сервисов).
+- `Zuul Gateway` → `Catalog Service`, `Recommendation Service`, `User Service`, `Watch History Service`: Zuul маршрутизирует запросы на сервисы каталога, рекомендаций, пользователя и истории просмотров.
+- `Catalog Service` → `Elasticsearch (search index)` и → `Cassandra (metadata + profiles)`: каталог читает из поискового индекса Elasticsearch и из Cassandra.
+- `Recommendation Service` → `EVCache (distributed cache)`: рекомендации обслуживаются из распределённого кэша EVCache.
+- `User Service` → `Cassandra (metadata + profiles)`: пользовательский сервис хранит данные в Cassandra.
+- `Watch History Service` → `Cassandra (metadata + profiles)` и ⇢ `Kafka (events)` (events): история просмотров пишется в Cassandra и эмитит события в Kafka (пунктирная связь — события).
+- `Clients` ⇢ `Open Connect CDN (video delivery)` (video): клиенты тянут видео напрямую из Open Connect CDN (пунктирная связь — видеопоток).
+- `Open Connect CDN` ⇢ `S3 (masters + variants)` (fallback): при промахе на edge Open Connect фолбэчится на S3 с мастерами и вариантами (пунктирная связь — fallback).
+- `Clients` → `License Server (DRM)`: клиенты обращаются к license-серверу DRM напрямую.
+- Отдельный узел `Billing Service` (биллинг) присутствует в control plane.
 
 **Две плоскости:**
 

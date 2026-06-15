@@ -152,32 +152,13 @@ updated: "2026-05-22"
 
 ## Q3. Как выглядит высокоуровневая архитектура YouTube?
 
-Удобнее всего разложить систему на четыре независимых «пути» (path), каждый со своими требованиями: загрузка и транскодирование (write-heavy, асинхронный), просмотр (read-heavy, latency-critical), рекомендации (ML, offline + online) и вовлечённость (поток событий). На диаграмме ниже эти пути сходятся в общих хранилищах, но масштабируются и оптимизируются по отдельности.
+Удобнее всего разложить систему на четыре независимых «пути» (path), каждый со своими требованиями: загрузка и транскодирование (write-heavy, асинхронный), просмотр (read-heavy, latency-critical), рекомендации (ML, offline + online) и вовлечённость (поток событий). Эти пути сходятся в общих хранилищах, но масштабируются и оптимизируются по отдельности.
 
-```mermaid
-flowchart TD
-    Creator[Creator/Uploader] -->|presigned URL,<br/>resumable upload| UploadGW[Upload API Gateway]
-    UploadGW --> S3Raw[(S3/Colossus<br/>Raw bucket)]
-    S3Raw -->|S3 event| Kafka[Kafka:<br/>video.uploaded]
-    Kafka --> TranscodeOrch[Transcoding Orchestrator]
-    TranscodeOrch --> K8sJobs[K8s Jobs:<br/>ffmpeg workers]
-    K8sJobs --> S3Out[(S3/Colossus<br/>HLS/DASH segments)]
-    S3Out --> CDN[Multi-CDN:<br/>Google GGC + edge]
+Как связаны компоненты по каждому пути (стрелка `→` = направление потока):
 
-    Viewer[Viewer] -->|GET /watch?v=xyz| API[API Gateway]
-    API --> MetaSvc[Video Metadata Service]
-    MetaSvc --> Spanner[(Spanner/Cassandra<br/>video_metadata)]
-    API --> RecSvc[Recommendation Service]
-    RecSvc --> ANN[ANN/Embeddings store]
-    RecSvc --> RankModel[Ranking Model<br/>TF Serving]
-    Viewer -->|GET manifest.m3u8| CDN
-    Viewer -->|GET segment.ts| CDN
-
-    Viewer -->|like, comment| EngageSvc[Engagement Service]
-    EngageSvc --> KafkaEng[Kafka:<br/>engagement.events]
-    KafkaEng --> Flink[Flink:<br/>view counts, trending]
-    Flink --> Redis[(Redis:<br/>counters)]
-```
+- **Upload path:** `Creator/Uploader` льёт по presigned URL и resumable upload → `Upload API Gateway` → object store `S3/Colossus (Raw bucket)`. Событие S3 → топик `Kafka: video.uploaded` → `Transcoding Orchestrator` → `K8s Jobs: ffmpeg workers` → object store `S3/Colossus (HLS/DASH segments)` → `Multi-CDN: Google GGC + edge`.
+- **Watch path:** `Viewer` шлёт `GET /watch?v=xyz` → `API Gateway`. Далее API → `Video Metadata Service` → хранилище `Spanner/Cassandra (video_metadata)`; параллельно API → `Recommendation Service`, который ходит в `ANN/Embeddings store` и в `Ranking Model (TF Serving)`. Сами байты: `Viewer` шлёт `GET manifest.m3u8` и `GET segment.ts` напрямую в `Multi-CDN`.
+- **Engagement path:** `Viewer` шлёт like/comment → `Engagement Service` → топик `Kafka: engagement.events` → `Flink: view counts, trending` → `Redis (counters)`.
 
 Четыре пути и их суть:
 
@@ -260,40 +241,22 @@ s3.completeMultipartUpload(
 
 Транскодирование превращает один загруженный файл в десятки вариантов «разрешение × bitrate × кодек» (bitrate ladder), нарезанных на сегменты для стриминга. Это самая CPU-затратная часть YouTube, поэтому её делают массово-параллельной: видео режут на короткие куски по времени, кодируют сотнями воркеров одновременно и собирают обратно. Так часовое видео обрабатывается за минуты, а не за час.
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Upload as Upload Service
-    participant S3Raw as S3 Raw
-    participant Kafka
-    participant Orch as Transcoding Orchestrator
-    participant K8s as K8s Jobs (ffmpeg)
-    participant S3Out as S3 Segments
-    participant CDN
+Поток транскодирования по шагам (участники: `Client`, `Upload Service`, `S3 Raw`, `Kafka`, `Transcoding Orchestrator`, `K8s Jobs (ffmpeg)`, `S3 Segments`, `CDN`):
 
-    Client->>Upload: complete upload
-    Upload->>S3Raw: finalize
-    S3Raw-->>Kafka: video.uploaded event
-    Kafka->>Orch: consume
-    Orch->>Orch: split work (per-resolution job)
-    par 144p
-        Orch->>K8s: ffmpeg job 144p
-        K8s->>S3Out: HLS segments 144p
-    and 480p
-        Orch->>K8s: ffmpeg job 480p
-        K8s->>S3Out: HLS segments 480p
-    and 1080p
-        Orch->>K8s: ffmpeg job 1080p
-        K8s->>S3Out: HLS segments 1080p
-    and 4K
-        Orch->>K8s: ffmpeg job 4K
-        K8s->>S3Out: HLS segments 4K
-    end
-    K8s-->>Kafka: transcoding.done per variant
-    Orch->>S3Out: write master manifest
-    Orch->>CDN: warm cache (push)
-    Orch->>Upload: video.ready
-```
+1. `Client` → `Upload Service`: complete upload.
+2. `Upload Service` → `S3 Raw`: finalize.
+3. `S3 Raw` → `Kafka`: событие `video.uploaded`.
+4. `Kafka` → `Transcoding Orchestrator`: consume.
+5. `Transcoding Orchestrator` разбивает работу на задачи по разрешениям (split work, per-resolution job).
+6. Параллельно (`par`) по каждому разрешению `Orchestrator` запускает `K8s Jobs (ffmpeg)`, а тот пишет HLS-сегменты в `S3 Segments`:
+   - `144p`: `ffmpeg job 144p` → HLS segments 144p;
+   - `480p`: `ffmpeg job 480p` → HLS segments 480p;
+   - `1080p`: `ffmpeg job 1080p` → HLS segments 1080p;
+   - `4K`: `ffmpeg job 4K` → HLS segments 4K.
+7. `K8s Jobs` → `Kafka`: `transcoding.done` на каждый вариант.
+8. `Transcoding Orchestrator` → `S3 Segments`: write master manifest.
+9. `Transcoding Orchestrator` → `CDN`: warm cache (push).
+10. `Transcoding Orchestrator` → `Upload Service`: `video.ready`.
 
 **Команда ffmpeg для одного варианта HLS 720p H.264:**
 
@@ -380,19 +343,17 @@ ffmpeg -i input.mp4 \
 
 Цикл работы: плеер скачивает сегмент, замеряет, как быстро тот пришёл, и на границе следующего сегмента решает — повысить качество, понизить или оставить.
 
-```mermaid
-flowchart LR
-    A[Player loads<br/>master manifest] --> B[Probe bandwidth<br/>~500 kbps initial]
-    B --> C[Pick 360p variant]
-    C --> D[Download segment 1<br/>measure throughput]
-    D --> E{Throughput<br/>vs bitrate?}
-    E -->|throughput >> bitrate| F[Switch up: 720p]
-    E -->|throughput < bitrate| G[Switch down: 240p]
-    E -->|stable| H[Stay current]
-    F --> D
-    G --> D
-    H --> D
-```
+По порядку этот цикл выглядит так:
+
+1. Плеер загружает мастер-манифест (`Player loads master manifest`).
+2. Probe bandwidth — начальная оценка ~500 kbps.
+3. Pick 360p variant — выбирает стартовый вариант.
+4. Download segment 1 — скачивает сегмент и замеряет throughput (`measure throughput`).
+5. Развилка `Throughput vs bitrate?`:
+   - `throughput >> bitrate` → Switch up: 720p (повысить качество);
+   - `throughput < bitrate` → Switch down: 240p (понизить);
+   - `stable` → Stay current (оставить текущее).
+6. Любая из трёх ветвей возвращает плеер к шагу 4 (скачать следующий сегмент и снова замерить) — цикл повторяется на каждом сегменте.
 
 **Три семейства алгоритмов** (от простого к умному):
 
@@ -504,13 +465,12 @@ CDN — это сердце watch path: именно она отдаёт сот�
 
 **Origin shield — защита origin от лавины промахов:**
 
-```mermaid
-flowchart LR
-    Edge1[Edge PoP 1<br/>SF] --> Shield[Origin Shield<br/>Regional cache]
-    Edge2[Edge PoP 2<br/>LA] --> Shield
-    Edge3[Edge PoP 3<br/>Seattle] --> Shield
-    Shield --> Origin[(Origin S3/Colossus)]
-```
+Топология трёхуровневая: несколько edge-PoP региона сходятся в один общий `Origin Shield (Regional cache)`, а уже он ходит в `Origin (S3/Colossus)`:
+
+- `Edge PoP 1 (SF)` → `Origin Shield`;
+- `Edge PoP 2 (LA)` → `Origin Shield`;
+- `Edge PoP 3 (Seattle)` → `Origin Shield`;
+- `Origin Shield` → `Origin (S3/Colossus)`.
 
 Идея: edge-нода при промахе идёт не напрямую в origin, а в промежуточный **regional shield**. Когда видео вирусится, десятки edge по региону промахиваются одновременно — но shield схлопывает их в **один** запрос к origin (request coalescing), остальные ждут результата. Без shield origin захлестнула бы лавина дублирующих запросов (thundering herd).
 
@@ -527,17 +487,18 @@ flowchart LR
 
 Идея tiering — платить за быстрый доступ только там, где он нужен. Просмотры подчиняются степенному закону: ~80% времени смотрят ~0.1% видео, а остальные 99.9% — long tail, который месяцами никто не открывает. Держать весь каталог в дорогом горячем хранилище разорительно, поэтому данные «остывают» по уровням: горячий CDN-кеш → стандартный object store → дешёвый архив. Чем холоднее уровень, тем дешевле гигабайт и тем выше latency чтения.
 
-```mermaid
-flowchart TD
-    Upload[New upload] --> Hot[Hot tier:<br/>CDN edge + regional cache]
-    Hot -->|после 30d<br/>низкий watch| Warm[Warm tier:<br/>S3 Standard / Colossus]
-    Warm -->|после 1y<br/>почти нет views| Cold[Cold tier:<br/>Glacier / Coldline]
-    Cold -->|вдруг тренд| Warm
+Как данные перетекают между уровнями (по мере «остывания»):
 
-    Hot -.->|cache miss| Warm
-    Warm -.->|cache miss| Cold
-    Cold -.->|restore lag 4-12h| Warm
-```
+- `New upload` → `Hot tier (CDN edge + regional cache)`.
+- `Hot tier` → `Warm tier (S3 Standard / Colossus)` — после 30d при низком watch.
+- `Warm tier` → `Cold tier (Glacier / Coldline)` — после 1y, когда почти нет views.
+- `Cold tier` → `Warm tier` — если видео вдруг попало в тренд (обратное движение).
+
+Промахи и восстановление (чтение по уровням вниз):
+
+- `Hot tier` --cache miss--> `Warm tier`;
+- `Warm tier` --cache miss--> `Cold tier`;
+- `Cold tier` --restore lag 4-12h--> `Warm tier` (подъём из архива идёт с задержкой восстановления).
 
 **Tiers и стоимость (порядок величин):**
 
@@ -626,17 +587,13 @@ GET segment_X.cmfv → cache miss → 1000 параллельных requests н�
 
 Прямой подсчёт (INCREMENT в БД на каждый просмотр) не выживает: 1B просмотров/день с учётом heartbeat-амплификации — это миллионы записей в секунду в транзакционную БД. Решение — **не считать синхронно**: события просмотра уходят в Kafka, стрим-процессор (Flink) их дедуплицирует и агрегирует по окнам, а готовые счётчики лежат в Redis для быстрого чтения и периодически сбрасываются в durable-БД. Точное значение жертвуется ради масштаба — пользователю достаточно «примерно столько просмотров с задержкой в секунды».
 
-**Pipeline в духе Lambda-архитектуры:**
+**Pipeline в духе Lambda-архитектуры** (стрелка `→` = поток данных):
 
-```mermaid
-flowchart LR
-    Player[Player heartbeat<br/>каждые 5s] --> KafkaW[Kafka:<br/>view.heartbeat]
-    KafkaW --> Flink[Flink:<br/>dedup + aggregate<br/>1-min windows]
-    Flink --> Redis[(Redis:<br/>video:views:vid)]
-    Flink --> BQ[(BigQuery:<br/>analytics archive)]
-    Redis -.->|cron flush 5min| Spanner[(Spanner:<br/>video.view_count)]
-    UI[Watch page] -->|GET view count| Redis
-```
+- `Player heartbeat` (каждые 5s) → топик `Kafka: view.heartbeat`.
+- `Kafka` → `Flink: dedup + aggregate (1-min windows)`.
+- `Flink` раздваивает вывод: → `Redis (video:views:vid)` (быстрый счётчик) и → `BigQuery (analytics archive)` (аналитический архив).
+- `Redis` --cron flush 5min--> `Spanner (video.view_count)` — периодический сброс в durable-БД.
+- `Watch page (UI)` шлёт `GET view count` → `Redis` (чтение счётчика).
 
 **Логика подсчёта — по шагам:**
 
@@ -686,24 +643,16 @@ flowchart LR
 
 Рекомендации YouTube (Up Next + главная) строятся в **две стадии**, потому что нельзя одной тяжёлой моделью ранжировать миллиард видео за десятки миллисекунд. Поэтому задачу делят: сначала дешёвая модель грубо отбирает ~сотни кандидатов из ~миллиарда (стадия candidate generation, важен recall), затем дорогая модель точно ранжирует эту короткую выборку (стадия ranking, важна precision). Это стандартный приём «воронки» в рекомендательных системах: сужай пространство поиска перед дорогим вычислением.
 
-```mermaid
-flowchart TD
-    UserCtx[User context:<br/>watch history,<br/>geo, device, time] --> CandGen[Stage 1:<br/>Candidate Generation]
-    CandGen -->|hundreds of millions →<br/>~few hundred| Rank[Stage 2:<br/>Ranking]
-    Rank -->|top N| Output[Top 10-20 videos]
+Воронка из двух стадий (стрелка `→` = поток, на стрелках — масштаб сужения):
 
-    subgraph CandGen [Candidate Generation]
-        direction TB
-        CG1[User embedding] --> CG2[ANN search<br/>over video embeddings]
-        CG2 --> CG3[~500 candidates]
-    end
+- `User context (watch history, geo, device, time)` → `Stage 1: Candidate Generation`.
+- `Stage 1` --hundreds of millions → ~few hundred--> `Stage 2: Ranking`.
+- `Stage 2` --top N--> `Top 10-20 videos`.
 
-    subgraph Rank [Ranking]
-        direction TB
-        R1[Per-candidate features:<br/>video, user, context] --> R2[Deep NN:<br/>pCTR, pWatchTime]
-        R2 --> R3[Score & sort]
-    end
-```
+Что внутри каждой стадии:
+
+- **Candidate Generation:** `User embedding` → `ANN search over video embeddings` → `~500 candidates`.
+- **Ranking:** `Per-candidate features (video, user, context)` → `Deep NN: pCTR, pWatchTime` → `Score & sort`.
 
 **Стадия 1 — генерация кандидатов (Candidate Generation):** грубый, но быстрый отбор.
 
@@ -818,18 +767,18 @@ flowchart TD
 
 Live отличается от VOD одним: нельзя транскодировать заранее — всё делается в реальном времени, и главная метрика — задержка между событием и тем, что видит зритель. Поток: креатор пушит видео по RTMP → сервер транскодирует ladder на лету → нарезает на крошечные CMAF-парты → раздаёт через CDN с минимальной задержкой (LL-HLS). Параллельно поток пишется в DVR-буфер (чтобы зритель мог отмотать) и архивируется в VOD после эфира.
 
-```mermaid
-flowchart LR
-    Creator[Creator OBS/<br/>RTMP encoder] -->|RTMP push| Ingest[RTMP Ingest Server]
-    Ingest --> Transcoder[Live Transcoder<br/>parallel ladder<br/>240p/480p/720p/1080p]
-    Transcoder --> ChunkPub[Chunked CMAF Publisher]
-    ChunkPub -->|HTTP/2 push parts<br/>200-500ms| OriginShield[Origin Shield]
-    OriginShield --> CDN[CDN Edge]
-    CDN --> Viewer[Viewer LL-HLS player]
+Поток live-стриминга (стрелка `→` = направление данных):
 
-    ChunkPub --> DVR[DVR Buffer<br/>circular 4h]
-    DVR --> S3[(S3 archive<br/>VOD after stream)]
-```
+- `Creator (OBS / RTMP encoder)` --RTMP push--> `RTMP Ingest Server`.
+- `RTMP Ingest Server` → `Live Transcoder (parallel ladder 240p/480p/720p/1080p)`.
+- `Live Transcoder` → `Chunked CMAF Publisher`.
+- `Chunked CMAF Publisher` --HTTP/2 push parts, 200-500ms--> `Origin Shield`.
+- `Origin Shield` → `CDN Edge` → `Viewer (LL-HLS player)`.
+
+Параллельная ветка записи (DVR и архив):
+
+- `Chunked CMAF Publisher` → `DVR Buffer (circular 4h)`.
+- `DVR Buffer` → `S3 archive (VOD after stream)`.
 
 **Ingest:** креатор пушит **RTMP** (поверх TCP) или **SRT/WebRTC** (поверх UDP) на ingest-сервер. RTMP — де-факто стандарт (его умеют все энкодеры вроде OBS), но даёт latency 5-30s; SRT/WebRTC быстрее, но менее распространены.
 
@@ -960,22 +909,16 @@ DRM защищает премиум-контент (YouTube Movies, кино, Pr
 
 **Поток воспроизведения** (сегменты приходят зашифрованными, ключ — отдельно от license-сервера):
 
-```mermaid
-sequenceDiagram
-    participant Player
-    participant License as License Server
-    participant CDM as CDM<br/>(Content Decryption Module)
-    participant CDN
+Поток воспроизведения по шагам (участники: `Player`, `License Server`, `CDM` — Content Decryption Module, `CDN`):
 
-    Player->>CDN: GET manifest (signed)
-    CDN-->>Player: manifest with key_id reference
-    Player->>CDN: GET encrypted segments
-    Player->>CDM: please decode (key_id)
-    CDM->>License: license request (key_id + device cert)
-    License-->>CDM: license (key, policy, expiry)
-    CDM->>CDM: decrypt segments in secure hardware
-    CDM-->>Player: decoded frames
-```
+1. `Player` → `CDN`: GET manifest (signed).
+2. `CDN` → `Player`: manifest with key_id reference (манифест со ссылкой на `key_id`).
+3. `Player` → `CDN`: GET encrypted segments.
+4. `Player` → `CDM`: please decode (`key_id`).
+5. `CDM` → `License Server`: license request (`key_id` + device cert).
+6. `License Server` → `CDM`: license (key, policy, expiry).
+7. `CDM` → `CDM`: decrypt segments in secure hardware (расшифровка в защищённом железе).
+8. `CDM` → `Player`: decoded frames.
 
 **Ключевые концепции:**
 
@@ -1120,20 +1063,14 @@ YouTube **транскодирует всё заранее**: storage дешев
 
 Это классическая задача fan-out с поправкой на масштаб: при публикации видео нужно разослать пуши подписчикам, но у крупных каналов их сотни миллионов. Поэтому уведомления делают **асинхронными и батчевыми** (через Kafka и воркеры), **размазывают по времени** под rate-лимиты пуш-сервисов и **фильтруют** — мгновенный пуш получают только те, кто явно включил «все уведомления», остальные видят видео в ленте.
 
-**Этапы обработки:**
+**Этапы обработки** (стрелка `→` = поток):
 
-```mermaid
-flowchart LR
-    Upload[Publish video] --> Kafka[Kafka:<br/>video.published]
-    Kafka --> FanOut[Notification Fan-Out Service]
-    FanOut --> SubsDB[(Subscriptions DB:<br/>channel→subscribers)]
-    FanOut --> Filter[Filter:<br/>opted-in for notifications]
-    Filter --> Batch[Batch by 10K user chunks]
-    Batch --> Push[Push Service:<br/>APNs / FCM]
-    Batch --> Email[Email Service:<br/>SES]
-    Batch --> Web[Web Push:<br/>VAPID]
-    Push --> User[(User devices)]
-```
+- `Publish video` → топик `Kafka: video.published`.
+- `Kafka` → `Notification Fan-Out Service`.
+- `Notification Fan-Out Service` → `Subscriptions DB (channel→subscribers)` (поднять подписчиков) и → `Filter: opted-in for notifications` (отфильтровать включивших уведомления).
+- `Filter` → `Batch by 10K user chunks` (нарезать на чанки по 10K пользователей).
+- `Batch` веером раздаёт в три канала доставки: → `Push Service (APNs / FCM)`, → `Email Service (SES)`, → `Web Push (VAPID)`.
+- `Push Service` → `User devices`.
 
 **В чём сложности:**
 
