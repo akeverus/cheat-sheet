@@ -233,8 +233,8 @@
                 "explanation": "Вместо статичного пароля Vault создаёт временного пользователя в БД по `creation_statements` роли и сам удаляет его по истечении `default_ttl`, поэтому утёкшие creds быстро становятся бесполезны.",
                 "example": "`lease.getData().get(\"username\")` вернёт что-то вроде `v-token-abc123` с TTL 1 час; через час Vault выполнит revoke и DROP этого пользователя в PostgreSQL.",
                 "when_to_apply": "Применяют для БД, облачных и брокерских доступов, где важно минимизировать окно компрометации: каждый инстанс получает свои короткоживущие creds.",
-                "edge_cases": "Если не продлевать lease, по истечении TTL соединения с этими creds начнут отказывать; для долгоживущих процессов нужен `VaultLeaseContainer`.",
-                "related": "[[spring-vault-interview#Q5]] VaultLeaseContainer для продления lease; [[spring-vault-interview#Q11]] автоматическая ротация секретов; [[spring-vault-interview#Q3]] способы чтения секретов."
+                "edge_cases": "Если не продлевать lease, по истечении TTL соединения с этими creds начнут отказывать; для долгоживущих процессов нужен `SecretLeaseContainer`.",
+                "related": "[[spring-vault-interview#Q5]] SecretLeaseContainer для продления lease; [[spring-vault-interview#Q11]] автоматическая ротация секретов; [[spring-vault-interview#Q3]] способы чтения секретов."
               }
             }
           ]
@@ -246,16 +246,16 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое `VaultLeaseContainer` и зачем он нужен?",
+          "question_text": "Что такое `SecretLeaseContainer` и зачем он нужен?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "`VaultLeaseContainer` — компонент Spring Vault, который управляет lease (арендой) секретов: автоматически продлевает их до истечения TTL и ротирует, вызывая ваш callback при получении новых creds через `requestRotatingSecret(path, listener)`.",
+              "text": "`SecretLeaseContainer` — компонент Spring Vault, который управляет lease (арендой) секретов: автоматически продлевает их до истечения TTL и ротирует. Секрет регистрируют через `addRequestedSecret(RequestedSecret.rotating(path))`, а на получение новых creds подписываются через `addLeaseListener(...)`.",
               "correct": true,
               "sections": {
                 "explanation": "Dynamic secrets имеют конечный TTL; без продления они истекут и приложение упадёт. Контейнер на `TaskScheduler` следит за lease и обновляет/ротирует их заранее.",
-                "example": "`container.setExpiryThresholdPercentage(25)` заставит продлевать lease за 25% до истечения, а `requestRotatingSecret(\"database/creds/my-role\", cb)` переконфигурирует DataSource при каждой ротации.",
+                "example": "`container.setExpiryThreshold(Duration.ofMinutes(1))` заставит продлевать lease за минуту до истечения, а `addRequestedSecret(RequestedSecret.rotating(\"database/creds/my-role\"))` + `addLeaseListener(cb)` переконфигурируют DataSource при каждой ротации.",
                 "when_to_apply": "Нужен для долгоживущих приложений с dynamic secrets (БД-доступы, облачные ключи), где creds надо держать валидными без рестарта и ручного продления.",
                 "edge_cases": "Если lease не продлевается или истёк `max_ttl`, renew уже невозможен — контейнер выполнит rotation и через callback придут полностью новые creds, которые нужно применить.",
                 "related": "[[spring-vault-interview#Q4]] dynamic secrets и их TTL; [[spring-vault-interview#Q11]] ротация секретов вручную через Scheduling; [[spring-vault-interview#Q1]] базовая роль Vault."
@@ -264,31 +264,31 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`VaultLeaseContainer` — это контейнер для Docker, в котором запускается dev-сервер Vault для локальной разработки и тестов.",
+              "text": "`SecretLeaseContainer` — это контейнер для Docker, в котором запускается dev-сервер Vault для локальной разработки и тестов.",
               "correct": false,
               "sections": {
-                "what_actually": "`VaultLeaseContainer` — Spring-бин для управления lease секретов, а не Docker-контейнер; dev-сервер Vault поднимают через Testcontainers `VaultContainer`.",
+                "what_actually": "`SecretLeaseContainer` — Spring-бин для управления lease секретов, а не Docker-контейнер; dev-сервер Vault поднимают через Testcontainers `VaultContainer`.",
                 "source_of_confusion": "Слово «container» в имени класса наводит на мысль о Docker, хотя здесь это контейнер-менеджер lease внутри JVM.",
-                "if_it_were_true": "Будь это Docker-образ, его конфигурировали бы в `docker-compose`, а не через `requestRotatingSecret(...)` в коде.",
-                "how_it_should_be": "Для запуска Vault в Docker берут `VaultContainer` (Testcontainers); `VaultLeaseContainer` продлевает и ротирует lease в приложении."
+                "if_it_were_true": "Будь это Docker-образ, его конфигурировали бы в `docker-compose`, а не через `addRequestedSecret(...)` в коде.",
+                "how_it_should_be": "Для запуска Vault в Docker берут `VaultContainer` (Testcontainers); `SecretLeaseContainer` продлевает и ротирует lease в приложении."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`VaultLeaseContainer` шифрует данные приложения симметричным ключом, выступая клиентом Transit Engine.",
+              "text": "`SecretLeaseContainer` шифрует данные приложения симметричным ключом, выступая клиентом Transit Engine.",
               "correct": false,
               "sections": {
-                "what_actually": "За шифрование отвечает Transit Engine через `opsForTransit()`; `VaultLeaseContainer` управляет lease секретов, а не шифрует данные.",
+                "what_actually": "За шифрование отвечает Transit Engine через `opsForTransit()`; `SecretLeaseContainer` управляет lease секретов, а не шифрует данные.",
                 "source_of_confusion": "И lease-контейнер, и Transit относятся к Vault, поэтому их функции иногда смешивают.",
-                "if_it_were_true": "Будь это Transit-клиент, у него были бы методы `encrypt`/`decrypt`, но его API — `requestRenewableSecret`/`requestRotatingSecret`.",
-                "how_it_should_be": "Для шифрования используют `vaultTemplate.opsForTransit()`, а `VaultLeaseContainer` — для продления и ротации lease."
+                "if_it_were_true": "Будь это Transit-клиент, у него были бы методы `encrypt`/`decrypt`, но его API — `addRequestedSecret(RequestedSecret.renewable(...))`/`RequestedSecret.rotating(...)` + `addLeaseListener`.",
+                "how_it_should_be": "Для шифрования используют `vaultTemplate.opsForTransit()`, а `SecretLeaseContainer` — для продления и ротации lease."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`VaultLeaseContainer` нужен только для статичных KV-секретов: у них тоже есть lease, который надо продлевать каждые несколько минут.",
+              "text": "`SecretLeaseContainer` нужен только для статичных KV-секретов: у них тоже есть lease, который надо продлевать каждые несколько минут.",
               "correct": false,
               "sections": {
                 "what_actually": "Статичные KV-секреты не имеют renewable lease; контейнер полезен именно для dynamic secrets с TTL, которые надо продлевать или ротировать.",
@@ -642,7 +642,7 @@
                 "example": "`@Scheduled(fixedDelay = 30*60*1000)` каждые 30 минут читает новые username/password и делает `((HikariDataSource) ds).getHikariPoolMXBean().softEvictConnections()`.",
                 "when_to_apply": "Применяют для dynamic-creds БД/брокеров в долгоживущих сервисах, где надо менять учётки без даунтайма и без рестарта пода.",
                 "edge_cases": "`evictConnection`/жёсткое закрытие во время активных запросов рвёт соединения; поэтому берут `softEvictConnections`, а ошибки ротации логируют и алертят, не роняя приложение.",
-                "related": "[[spring-vault-interview#Q4]] dynamic secrets и их TTL; [[spring-vault-interview#Q5]] VaultLeaseContainer как альтернатива ручному Scheduling; [[spring-vault-interview#Q15]] best practice graceful rotation."
+                "related": "[[spring-vault-interview#Q4]] dynamic secrets и их TTL; [[spring-vault-interview#Q5]] SecretLeaseContainer как альтернатива ручному Scheduling; [[spring-vault-interview#Q15]] best practice graceful rotation."
               }
             },
             {
@@ -651,7 +651,7 @@
               "text": "Ротацию секретов нельзя автоматизировать в приложении — её делает только администратор Vault вручную через CLI.",
               "correct": false,
               "sections": {
-                "what_actually": "Ротацию в приложении автоматизируют через `@Scheduled` + обновление пула или через `VaultLeaseContainer`; ручной CLI — не единственный путь.",
+                "what_actually": "Ротацию в приложении автоматизируют через `@Scheduled` + обновление пула или через `SecretLeaseContainer`; ручной CLI — не единственный путь.",
                 "source_of_confusion": "Раз политику ротации задаёт админ Vault, кажется, что и применение новых creds — тоже ручная операция.",
                 "if_it_were_true": "Будь это только ручной процесс, долгоживущие сервисы постоянно падали бы по истечении TTL creds.",
                 "how_it_should_be": "Приложение само периодически запрашивает свежие creds и применяет их к пулу, реагируя на ротацию."
