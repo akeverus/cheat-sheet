@@ -109,39 +109,35 @@ updated: "2026-05-25"
 
 ## Timeline open-source LLM releases 2023-2026
 
-```mermaid
-%%{init: {'theme':'neutral'}}%%
-timeline
-    title Open-source LLM releases 2023-2026
-    section 2023
-      Feb : Llama 1 (research-only)
-      Jul : Llama 2 (commercial OK)
-      Sep : Mistral 7B (Apache 2.0)
-      Dec : Mixtral 8x7B (MoE Apache 2.0)
-    section 2024
-      Feb : Gemma 1 7B
-      Apr : Llama 3 8B/70B
-          : Mixtral 8x22B
-          : Phi-3 family
-      May : DeepSeek-V2 (236B MoE)
-      Jun : Gemma 2 9B/27B
-      Jul : Llama 3.1 405B + 128K context
-          : Mistral Large 2 (research license)
-      Sep : Llama 3.2 vision + edge 1B/3B
-          : Qwen 2.5 family
-      Dec : Llama 3.3 70B
-          : DeepSeek-V3 671B MoE
-          : Phi-4 14B
-    section 2025
-      Jan : DeepSeek-R1 (reasoning, MIT)
-          : Qwen 2.5-Max
-      Mar : Gemma 3 (multimodal)
-      Apr : Llama 4 Scout/Maverick MoE
-      H2  : Qwen 3 family
-    section 2026
-      Q1-Q2 : Llama 4 Behemoth (training)
-            : continued frontier closing
-```
+Хронология ключевых релизов по годам:
+
+**2023**
+
+- Feb — Llama 1 (research-only)
+- Jul — Llama 2 (commercial OK)
+- Sep — Mistral 7B (Apache 2.0)
+- Dec — Mixtral 8x7B (MoE Apache 2.0)
+
+**2024**
+
+- Feb — Gemma 1 7B
+- Apr — Llama 3 8B/70B; Mixtral 8x22B; Phi-3 family
+- May — DeepSeek-V2 (236B MoE)
+- Jun — Gemma 2 9B/27B
+- Jul — Llama 3.1 405B + 128K context; Mistral Large 2 (research license)
+- Sep — Llama 3.2 vision + edge 1B/3B; Qwen 2.5 family
+- Dec — Llama 3.3 70B; DeepSeek-V3 671B MoE; Phi-4 14B
+
+**2025**
+
+- Jan — DeepSeek-R1 (reasoning, MIT); Qwen 2.5-Max
+- Mar — Gemma 3 (multimodal)
+- Apr — Llama 4 Scout/Maverick MoE
+- H2 — Qwen 3 family
+
+**2026**
+
+- Q1-Q2 — Llama 4 Behemoth (training); continued frontier closing
 
 ---
 
@@ -580,17 +576,15 @@ DeepSeek-V3-Base (pretraining)
 
 **Когда брать MoE.** Окупается, если (а) есть VRAM под все total params и (б) нужно качество выше dense при дешёвом по compute inference. Не окупается на consumer GPU: упираешься в лимит VRAM, а active params роли не играют — в памяти всё равно должны лежать все эксперты.
 
-```mermaid
-flowchart LR
-    T[Token] --> A[Self-Attention<br/>shared params]
-    A --> R{Router<br/>gate network}
-    R -->|top-K=2 of 8| E3[Expert FFN #3]
-    R -->|top-K=2 of 8| E7[Expert FFN #7]
-    R -.->|skipped| Eo[Other 6 experts<br/>params in VRAM, no compute]
-    E3 --> S[weighted sum]
-    E7 --> S
-    S --> N[next layer]
-```
+Поток токена через MoE-блок (на примере 8 экспертов, `top-K=2`):
+
+- `Token` → `Self-Attention` (shared params, общие веса).
+- → `Router` (gate network) — выбирает экспертов по токену.
+  - `top-K=2 of 8` → `Expert FFN #3`.
+  - `top-K=2 of 8` → `Expert FFN #7`.
+  - skipped → остальные 6 экспертов: их params лежат в VRAM, но compute по ним не идёт.
+- `Expert FFN #3` и `Expert FFN #7` → `weighted sum` (взвешенная сумма выходов).
+- → `next layer` (следующий слой).
 
 ## Q23. Что такое `routing overhead` в MoE и почему MoE не всегда дешевле dense?
 
@@ -735,17 +729,20 @@ Cross-cutting:
 | `Open RAIL` | С ограничением поведения | Да | Да | Да | Конкретные виды поведения | Варьируется |
 | `CC-BY-NC-4.0` | Creative Commons | Нет | Да, для NC | Да, для NC | Только некоммерческое | Неявно |
 
-```mermaid
-flowchart TD
-    A[OSI-strict open-source] --> A1[Apache 2.0<br/>OLMo, Mistral 7B, Qwen smaller, Yi]
-    A --> A2[MIT<br/>DeepSeek-R1, Phi]
-    B[Open-weight commercial-friendly<br/>с clauses] --> B1[Llama Community<br/>>700M MAU restriction]
-    B --> B2[Gemma Terms<br/>+ AUP, anti-distill]
-    B --> B3[Qwen License 72B<br/>>100M MAU]
-    C[Research/non-commercial only] --> C1[Mistral Research License<br/>Large 2]
-    C --> C2[CC-BY-NC<br/>Command R+, Aya]
-    D[Behavior-restricted] --> D1[Open RAIL<br/>BLOOM, Stable Diffusion]
-```
+Классификация лицензий по четырём группам:
+
+- **OSI-strict open-source**:
+  - `Apache 2.0` — OLMo, Mistral 7B, младшие Qwen, Yi.
+  - `MIT` — DeepSeek-R1, Phi.
+- **Open-weight commercial-friendly (с clauses)**:
+  - `Llama Community` — ограничение >700M MAU.
+  - `Gemma Terms` — + AUP, anti-distill.
+  - `Qwen License 72B` — >100M MAU.
+- **Research / non-commercial only**:
+  - `Mistral Research License` — Large 2.
+  - `CC-BY-NC` — Command R+, Aya.
+- **Behavior-restricted**:
+  - `Open RAIL` — BLOOM, Stable Diffusion.
 
 **Как это применять на практике** (лицензии делятся на три корзины по пригодности для коммерции):
 - **Зелёная зона — берите без раздумий**: Apache 2.0 / MIT (Mistral 7B, OLMo, Qwen ≤32B, DeepSeek-R1, Phi). Никаких ограничений на использование.
@@ -867,39 +864,34 @@ flowchart TD
 
 ## Q32. Decision tree: как выбрать open-source модель под задачу? `!`
 
-```mermaid
-flowchart TD
-    Q[Задача] --> L{License OK?<br/>Commercial? MAU?}
-    L -->|Strict OSI / no clauses| OSS[Apache/MIT only:<br/>Mistral 7B, Qwen ≤32B,<br/>DeepSeek-R1, Phi, OLMo]
-    L -->|OK with clauses| Any[Все open-weight]
+Дерево выбора модели под задачу (последовательность фильтров от `Задача` вниз):
 
-    OSS --> S{Размер budget?}
-    Any --> S
+**Шаг 1 — `License OK?` (Commercial? MAU?)**
 
-    S -->|≤8B edge| E[Llama 3.2 3B, Qwen 2.5 7B,<br/>Phi-3.5-mini, Gemma 3 4B]
-    S -->|14-32B sweet spot| M[Qwen 2.5 14B/32B,<br/>Phi-4 14B, Gemma 3 27B,<br/>Mistral Small 3 24B]
-    S -->|70B production| L70[Llama 3.3 70B,<br/>Qwen 2.5 72B,<br/>DeepSeek-R1-Distill 70B]
-    S -->|Frontier MoE| MoE[DeepSeek-V3/R1 671B,<br/>Mixtral 8x22B,<br/>Llama 4 Maverick]
+- `Strict OSI / no clauses` → только Apache/MIT: Mistral 7B, Qwen ≤32B, DeepSeek-R1, Phi, OLMo.
+- `OK with clauses` → все open-weight.
 
-    E --> T{Task type?}
-    M --> T
-    L70 --> T
-    MoE --> T
+**Шаг 2 — `Размер budget?`** (применяется и к ветке Apache/MIT, и к «все open-weight»)
 
-    T -->|General chat / RAG| G[Llama / Qwen / Mistral]
-    T -->|Code| Code[DeepSeek-Coder,<br/>Qwen 2.5 Coder, Codestral]
-    T -->|Math / Reasoning| R[DeepSeek-R1, QwQ-32B,<br/>Qwen 2.5 Math]
-    T -->|Multilingual non-EN| ML[Qwen for CN/JP/KR,<br/>Mistral for EU langs,<br/>Aya for low-resource]
-    T -->|Vision-language| V[Llama 3.2 Vision,<br/>Qwen 2.5-VL,<br/>Gemma 3 27B,<br/>Pixtral]
-    T -->|Safety classifier| SF[Llama Guard,<br/>ShieldGemma]
+- `≤8B edge` → Llama 3.2 3B, Qwen 2.5 7B, Phi-3.5-mini, Gemma 3 4B.
+- `14-32B sweet spot` → Qwen 2.5 14B/32B, Phi-4 14B, Gemma 3 27B, Mistral Small 3 24B.
+- `70B production` → Llama 3.3 70B, Qwen 2.5 72B, DeepSeek-R1-Distill 70B.
+- `Frontier MoE` → DeepSeek-V3/R1 671B, Mixtral 8x22B, Llama 4 Maverick.
 
-    G --> FT{Fine-tune needed?}
-    Code --> FT
-    R --> FT
-    FT -->|Yes, consumer GPU| QLR[QLoRA on 7B-14B base]
-    FT -->|Yes, server| FFT[LoRA / full FT 70B+]
-    FT -->|No| Inf[Use as-is via vLLM]
-```
+**Шаг 3 — `Task type?`** (применяется к любому выбранному размеру)
+
+- `General chat / RAG` → Llama / Qwen / Mistral.
+- `Code` → DeepSeek-Coder, Qwen 2.5 Coder, Codestral.
+- `Math / Reasoning` → DeepSeek-R1, QwQ-32B, Qwen 2.5 Math.
+- `Multilingual non-EN` → Qwen для CN/JP/KR, Mistral для языков ЕС, Aya для low-resource.
+- `Vision-language` → Llama 3.2 Vision, Qwen 2.5-VL, Gemma 3 27B, Pixtral.
+- `Safety classifier` → Llama Guard, ShieldGemma.
+
+**Шаг 4 — `Fine-tune needed?`** (для веток chat/RAG, code и math/reasoning)
+
+- `Yes, consumer GPU` → QLoRA на базе 7B-14B.
+- `Yes, server` → LoRA / full FT 70B+.
+- `No` → использовать как есть через vLLM.
 
 Порядок шагов выбран не случайно: каждый следующий фильтр применяется к уже суженному списку, и самый жёсткий (лицензия) стоит первым, чтобы не тратить время на заведомо неприменимые модели.
 

@@ -78,23 +78,11 @@ updated: "2026-05-23"
 
 ## Q3. Какие основные архитектуры multi-agent систем существуют? (!)
 
-```mermaid
-flowchart LR
-    subgraph Hierarchical
-        M[Manager]
-        M --> W1[Worker A]
-        M --> W2[Worker B]
-        M --> W3[Worker C]
-    end
-    subgraph Sequential
-        S1[Agent 1] --> S2[Agent 2] --> S3[Agent 3]
-    end
-    subgraph Mesh
-        N1[Agent A] <--> N2[Agent B]
-        N2 <--> N3[Agent C]
-        N1 <--> N3
-    end
-```
+Три базовые топологии наглядно различаются направлением связей:
+
+- **Hierarchical** — `Manager` раздаёт работу вниз трём подчинённым: `Manager` → `Worker A`, `Manager` → `Worker B`, `Manager` → `Worker C`.
+- **Sequential** — линейный конвейер: `Agent 1` → `Agent 2` → `Agent 3`.
+- **Mesh** — двусторонние связи каждого с каждым: `Agent A` ↔ `Agent B`, `Agent B` ↔ `Agent C`, `Agent A` ↔ `Agent C`.
 
 Архитектуры различаются тем, **кто кому может слать сообщения** — то есть топологией графа взаимодействий. Пять основных:
 
@@ -456,24 +444,11 @@ Handoff — это момент, когда один агент передаёт
 
 ## Q19. Coordination paterns: planner-executor, debate, voting — когда какой? (!)
 
-```mermaid
-flowchart TB
-    subgraph PlannerExecutor
-        P[Planner LLM] --> E1[Executor 1]
-        P --> E2[Executor 2]
-        P --> E3[Executor 3]
-    end
-    subgraph Debate
-        A1[Agent A] --> D{Critic}
-        A2[Agent B] --> D
-        D --> F[Finalizer]
-    end
-    subgraph Voting
-        V1[Agent 1] --> AG[Aggregator / majority]
-        V2[Agent 2] --> AG
-        V3[Agent 3] --> AG
-    end
-```
+Три паттерна координации различаются структурой потока:
+
+- **Planner-Executor** — `Planner LLM` строит план и раздаёт его исполнителям: `Planner LLM` → `Executor 1`, `Planner LLM` → `Executor 2`, `Planner LLM` → `Executor 3`.
+- **Debate** — два агента подаются на вход критику, тот отдаёт результат финализатору: `Agent A` → `Critic`, `Agent B` → `Critic`, затем `Critic` → `Finalizer`.
+- **Voting** — независимые решения сходятся в агрегаторе по большинству: `Agent 1` → `Aggregator / majority`, `Agent 2` → `Aggregator / majority`, `Agent 3` → `Aggregator / majority`.
 
 Паттерны координации различаются тем, **как агенты приходят к итоговому ответу** — через декомпозицию, спор или голосование. Когда какой:
 
@@ -636,16 +611,11 @@ Supervisor — это специальный узел-диспетчер, чер
 2. Решает (через LLM или обычный код), какому worker передать управление, либо вернуть `END`.
 3. После завершения worker управление снова возвращается в supervisor.
 
-```mermaid
-flowchart TB
-    S[Supervisor] -->|route| R[Researcher]
-    S -->|route| W[Writer]
-    S -->|route| C[Critic]
-    R --> S
-    W --> S
-    C --> S
-    S -->|FINISH| E[END]
-```
+Граф управления выглядит так:
+
+- `Supervisor` по решению `route` направляет управление одному из workers: `Supervisor` → `Researcher`, `Supervisor` → `Writer`, `Supervisor` → `Critic`.
+- После работы каждый worker возвращает управление обратно: `Researcher` → `Supervisor`, `Writer` → `Supervisor`, `Critic` → `Supervisor`.
+- Когда supervisor решает завершить, он переходит по ветке `FINISH`: `Supervisor` → `END`.
 
 **Плюсы:**
 

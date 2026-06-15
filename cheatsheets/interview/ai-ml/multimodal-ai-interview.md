@@ -108,18 +108,11 @@ updated: "2026-05-25"
 
 Современная VLM превращает картинку в **последовательность токенов** и подаёт их в обычный LLM-декодер вперемешку с текстовыми токенами. Главная идея: для самого трансформера нет разницы, откуда токен — из текста или из картинки. Вся «магия» в том, как картинку перевести в токены, которые LLM поймёт.
 
-Типичная VLM состоит из трёх частей:
+Типичная VLM состоит из трёх частей, а поток данных в ней такой:
 
-```mermaid
-flowchart LR
-    IMG[Image 224x224<br/>или 1024x1024] --> ENC[Vision Encoder<br/>ViT / SigLIP]
-    ENC --> PROJ[Projection layer<br/>MLP или Q-Former]
-    PROJ --> TOK[Image tokens<br/>~256-2048 шт]
-    TXT[Text tokens] --> CAT[Concat]
-    TOK --> CAT
-    CAT --> LLM[Decoder LLM<br/>Llama/GPT-4o/Claude]
-    LLM --> OUT[Text output]
-```
+- `Image` (224×224 или 1024×1024) → `Vision Encoder` (ViT / SigLIP) → `Projection layer` (MLP или Q-Former) → `Image tokens` (~256-2048 штук).
+- `Text tokens` и `Image tokens` сходятся в `Concat` (конкатенация в единую последовательность).
+- `Concat` → `Decoder LLM` (Llama / GPT-4o / Claude) → `Text output`.
 
 **1. Image encoder.** Чаще всего `Vision Transformer` (ViT) или `SigLIP`. Картинка нарезается на патчи 14×14 или 16×16 пикселей, каждый патч превращается в embedding. На выход — последовательность векторов (`[CLS] + patches`).
 
@@ -454,14 +447,11 @@ client.messages.create(
 - Обучение на 400M пар image-caption из интернета.
 - Цель: для пары `(image, text)` из одного примера — высокий cosine; для случайной пары из разных примеров — низкий. По сути модель учится «притягивать» правильные пары и «отталкивать» неправильные, и так оба энкодера сходятся в общем пространстве.
 
-```mermaid
-flowchart LR
-    IMG[Image] --> IE[Image Encoder<br/>ViT-L/14]
-    TXT[Caption] --> TE[Text Encoder<br/>Transformer]
-    IE --> EMB1[512-D vector]
-    TE --> EMB2[512-D vector]
-    EMB1 -.cosine.-> EMB2
-```
+Схематично поток такой:
+
+- `Image` → `Image Encoder` (ViT-L/14) → `512-D vector`.
+- `Caption` → `Text Encoder` (Transformer) → `512-D vector`.
+- Два получившихся 512-мерных вектора сравниваются между собой по `cosine` — близость и есть мера совпадения картинки с текстом.
 
 **Что это даёт:**
 
@@ -507,15 +497,12 @@ flowchart LR
 
 **Плюсы:** не нужен OCR, layout сохраняется как есть. **Минусы:** больше storage (на странице — много векторов) и нужна БД с поддержкой multi-vector retrieval (`Qdrant`, `Vespa`).
 
-```mermaid
-flowchart TB
-    Q[Текстовый запрос] --> EMB[Embedding model<br/>CLIP / SigLIP / ColPali]
-    EMB --> JOINT[Joint multimodal space]
-    DOCS[(Image / page index)] --> JOINT
-    JOINT --> RANK[Top-K matches]
-    RANK --> VLM[VLM reads<br/>retrieved images]
-    VLM --> ANSWER[Ответ + цитаты]
-```
+Обобщённый поиск устроен по шагам:
+
+1. `Текстовый запрос` → `Embedding model` (CLIP / SigLIP / ColPali) — запрос превращается в вектор.
+2. Этот вектор и заранее проиндексированный `Image / page index` сводятся в общем `Joint multimodal space`.
+3. В этом пространстве находятся `Top-K matches` — ближайшие картинки/страницы.
+4. `VLM reads retrieved images` — модель читает найденные изображения и выдаёт `Ответ + цитаты`.
 
 **Production tip:** в проде часто гибрид — текст экстрактится layout-парсером (Docling), картинки/таблицы индексируются через CLIP/ColPali, всё лежит в общем `Qdrant`-collection с filtering по типу.
 
@@ -604,22 +591,10 @@ flowchart TB
 
 Ключевое различие: **в pipeline LLM работает только с текстом (промежуточным транскриптом), а в end-to-end слышит сырое аудио целиком**. Отсюда всё остальное. Pipeline собирается из сменяемых компонентов (любой STT/LLM/TTS), но теряет интонацию, паузы и эмоции и тормозит на каждом стыке. End-to-end (Realtime API) понимает эмоции и даёт near-human latency, но привязан к одному вендору и дороже.
 
-Два архитектурных подхода к голосовым агентам:
+Два архитектурных подхода к голосовым агентам, по цепочке компонентов:
 
-```mermaid
-flowchart TB
-    subgraph Pipeline["Pipeline (классика)"]
-        MIC1[Mic] --> VAD1[VAD]
-        VAD1 --> STT1[STT<br/>Deepgram/Whisper]
-        STT1 --> LLM1[LLM<br/>GPT-4o/Claude]
-        LLM1 --> TTS1[TTS<br/>Cartesia/ElevenLabs]
-        TTS1 --> SPK1[Speaker]
-    end
-    subgraph E2E["End-to-end (Realtime API)"]
-        MIC2[Mic] --> RT[GPT-4o Realtime<br/>или Gemini Live]
-        RT --> SPK2[Speaker]
-    end
-```
+- **Pipeline (классика):** `Mic` → `VAD` → `STT` (Deepgram/Whisper) → `LLM` (GPT-4o/Claude) → `TTS` (Cartesia/ElevenLabs) → `Speaker`. Несколько сменяемых сервисов, выстроенных в линию.
+- **End-to-end (Realtime API):** `Mic` → `GPT-4o Realtime` (или `Gemini Live`) → `Speaker`. Одна модель между микрофоном и динамиком, без отдельных STT/TTS.
 
 **Pipeline (STT → LLM → TTS):**
 
@@ -909,13 +884,11 @@ resp = model.generate_content([
 - **Depth map** — задать пространственную глубину.
 - **Segmentation mask** — задать положение объектов.
 
-```mermaid
-flowchart LR
-    PROMPT[Текстовый prompt] --> SD[SD/FLUX]
-    CONTROL[Control image<br/>edges/pose/depth] --> CN[ControlNet]
-    CN --> SD
-    SD --> OUT[Сгенерированная картинка<br/>с заданной структурой]
-```
+Поток управления в этом случае такой:
+
+- `Текстовый prompt` идёт напрямую в `SD/FLUX`.
+- `Control image` (edges / pose / depth) проходит через `ControlNet`, и его выход тоже подаётся в `SD/FLUX`.
+- `SD/FLUX` на основе обоих входов выдаёт `Сгенерированную картинку с заданной структурой`.
 
 **LoRA (Low-Rank Adaptation)** — лёгкий fine-tune для конкретного стиля, персонажа, бренда. 5-50 MB вместо полной модели. Можно комбинировать несколько LoRA.
 
@@ -1018,17 +991,14 @@ flowchart LR
 4. **IP infringement** — копирайт-контент (логотипы, персонажи).
 5. **Personal data** — лица, номера машин, документы.
 
-**Многоуровневая защита:**
+**Многоуровневая защита** — по порядку прохождения запроса:
 
-```mermaid
-flowchart LR
-    UPLOAD[User upload] --> PRE[Pre-filter<br/>hash check, PhotoDNA]
-    PRE --> NSFW[NSFW classifier<br/>NudeNet, AWS Rekognition]
-    NSFW --> PII[PII detection<br/>лица, документы]
-    PII --> VLM[VLM inference]
-    VLM --> POST[Post-filter<br/>модерация ответа]
-    POST --> USER[Response to user]
-```
+1. `User upload` → `Pre-filter` (hash check, PhotoDNA).
+2. `NSFW classifier` (NudeNet, AWS Rekognition).
+3. `PII detection` (лица, документы).
+4. `VLM inference` — собственно инференс модели.
+5. `Post-filter` (модерация ответа).
+6. `Response to user` — отдаём результат пользователю.
 
 **Tooling:**
 
@@ -1112,25 +1082,24 @@ for chunk in stream:
 
 Главный принцип production-flow — **не гнать все страницы через одну модель, а маршрутизировать по типу страницы**: текст → дешёвый layout-парсер, графики → VLM-extract в JSON, сканы/рукопись → полный vision/ColPali. Дальше всё индексируется в гибридный индекс (текстовый + визуальный), retrieval проходит rerank, и только релевантные страницы попадают в финальный VLM-ответ с цитатами. Так и дешевле, и точнее, чем «одна модель на всё».
 
-```mermaid
-flowchart TB
-    PDF[PDF upload] --> SPLIT[Split pages<br/>pdf2image]
-    SPLIT --> ROUTE{Page type?}
-    ROUTE -->|text-heavy| OCR[Docling / LlamaParse<br/>text + tables markdown]
-    ROUTE -->|chart-heavy| VLM_E[VLM extract<br/>chart → JSON]
-    ROUTE -->|scan / handwriting| VLM_F[VLM full vision]
-    OCR --> EMB[Text embeddings<br/>OpenAI / Voyage / Cohere]
-    VLM_E --> EMB
-    VLM_F --> COL[ColPali multi-vector]
-    EMB --> QDRANT[(Qdrant<br/>text collection)]
-    COL --> QDRANT2[(Qdrant<br/>visual collection)]
-    QUERY[User query] --> ROUTER[Query router]
-    ROUTER --> QDRANT
-    ROUTER --> QDRANT2
-    QDRANT --> RERANK[Rerank<br/>Cohere Rerank 3]
-    QDRANT2 --> RERANK
-    RERANK --> LLM[VLM answer<br/>с цитатами]
-```
+Поток сборки выглядит так.
+
+**Индексация (offline):**
+
+1. `PDF upload` → `Split pages` (pdf2image) — разбиваем PDF на страницы.
+2. Каждая страница маршрутизируется по вопросу `Page type?` (тип страницы):
+   - `text-heavy` → `Docling / LlamaParse` (text + tables markdown).
+   - `chart-heavy` → `VLM extract` (chart → JSON).
+   - `scan / handwriting` → `VLM full vision`.
+3. Дальше результаты расходятся в два индекса:
+   - `Docling / LlamaParse` и `VLM extract` → `Text embeddings` (OpenAI / Voyage / Cohere) → `Qdrant` (text collection).
+   - `VLM full vision` → `ColPali multi-vector` → `Qdrant` (visual collection).
+
+**Запрос (online):**
+
+4. `User query` → `Query router`, который обращается к обоим индексам — и к `Qdrant` (text collection), и к `Qdrant` (visual collection).
+5. Кандидаты из обеих коллекций сходятся в `Rerank` (Cohere Rerank 3).
+6. `Rerank` → `VLM answer с цитатами` — финальный ответ с цитатами.
 
 **Ключевые принципы:**
 

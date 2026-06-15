@@ -97,18 +97,9 @@ updated: "2026-05-23"
 - 1 запрос ≈ 1 000-50 000 output tokens, причём большая часть — это thinking, а не сам ответ.
 - Обучена через RL с reward на **корректность финального ответа**, а не на стиль. Поэтому модель сама нащупала стратегии: проверять себя, откатываться назад, пробовать несколько подходов.
 
-```mermaid
-flowchart LR
-    subgraph Standard["Standard LLM"]
-        P1[Prompt] --> M1[Transformer]
-        M1 --> A1[Answer<br/>100-500 tokens]
-    end
-    subgraph Reasoning["Reasoning Model"]
-        P2[Prompt] --> M2[Transformer]
-        M2 --> T2[Thinking tokens<br/>1k-50k]
-        T2 --> A2[Final answer<br/>100-500 tokens]
-    end
-```
+**Поток обработки запроса:**
+- **Standard LLM:** `Prompt` → `Transformer` → `Answer` (100-500 tokens). Один шаг от вопроса к ответу.
+- **Reasoning Model:** `Prompt` → `Transformer` → `Thinking tokens` (1k-50k) → `Final answer` (100-500 tokens). Между моделью и ответом вклинивается длинный этап размышления, и только потом — финальный ответ той же длины, что у обычной LLM.
 
 **Аналогия:** обычная LLM — это студент, который сразу пишет ответ на экзамене; reasoning model — тот, кто исписывает черновик, проверяет себя, потом аккуратно выписывает ответ.
 
@@ -131,17 +122,9 @@ flowchart LR
 
 **Test-time compute scaling** — это эмпирическое наблюдение: если на этапе inference дать модели **больше токенов на reasoning**, качество ответа растёт. Причём растёт предсказуемо — примерно **линейно по логарифму** потраченного compute. Это вторая ось масштабирования вдобавок к классической «больше параметров / больше данных»: теперь можно улучшать результат, ничего не переобучая, просто разрешая модели думать дольше.
 
-```mermaid
-flowchart LR
-    subgraph Training["Train-time scaling (старая парадигма)"]
-        T1[More params] --> Q1[Better quality]
-        T2[More data] --> Q1
-    end
-    subgraph TestTime["Test-time scaling (новая парадигма)"]
-        T3[More thinking tokens] --> Q2[Better quality]
-        T4[Best-of-N, search] --> Q2
-    end
-```
+**Две оси масштабирования качества:**
+- **Train-time scaling (старая парадигма):** к лучшему качеству (`Better quality`) ведут `More params` и `More data` — улучшаешь модель только переобучением.
+- **Test-time scaling (новая парадигма):** к лучшему качеству (`Better quality`) ведут `More thinking tokens` и `Best-of-N, search` — результат растёт прямо на inference, без переобучения.
 
 **Закон масштабирования:** `accuracy ≈ a + b · log(compute_at_inference)`.
 
