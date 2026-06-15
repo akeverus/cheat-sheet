@@ -207,14 +207,13 @@ public interface Subscriber<T> {
 
 Порядок жёстко задан спецификацией и читается как грамматика: сначала ровно один `onSubscribe`, затем сколько-то `onNext`, и завершает поток ровно один терминальный сигнал — `onComplete` либо `onError`. Все вызовы идут последовательно, никогда не параллельно.
 
-```mermaid
-graph LR
-    A[onSubscribe] --> B[onNext*]
-    B --> C[onComplete]
-    B --> D[onError]
-    A --> C
-    A --> D
-```
+Допустимые переходы между сигналами:
+
+- `onSubscribe` → `onNext*` — после установки связи идёт серия из нуля или более `onNext`;
+- `onNext*` → `onComplete` — серия завершается успехом;
+- `onNext*` → `onError` — серия завершается ошибкой;
+- `onSubscribe` → `onComplete` — пустой поток сразу завершается успехом, без единого `onNext`;
+- `onSubscribe` → `onError` — поток падает ошибкой сразу после подписки, ещё до первого элемента.
 
 Типичная последовательность на практике:
 
@@ -556,17 +555,14 @@ Flux.range(1, 10)
 - **Pull-часть:** `Subscriber.request(n)` — потребитель сначала запрашивает «не больше `n` элементов».
 - **Push-часть:** в пределах этого `n` `Publisher` сам эмитит элементы через `onNext`, не дожидаясь отдельного запроса на каждый.
 
-```mermaid
-sequenceDiagram
-    Subscriber->>Publisher: subscribe()
-    Publisher->>Subscriber: onSubscribe(sub)
-    Subscriber->>Subscription: request(10)
-    loop до 10 раз
-        Publisher->>Subscriber: onNext(elem)
-    end
-    Subscriber->>Subscription: request(10)
-    Publisher->>Subscriber: onComplete()
-```
+Как это выглядит по шагам:
+
+1. `Subscriber` → `Publisher`: `subscribe()` — потребитель подписывается на источник.
+2. `Publisher` → `Subscriber`: `onSubscribe(sub)` — в ответ приходит `Subscription`.
+3. `Subscriber` → `Subscription`: `request(10)` — потребитель открывает спрос на 10 элементов.
+4. `Publisher` → `Subscriber`: `onNext(elem)` — до 10 раз подряд (в цикле) приходят элементы.
+5. `Subscriber` → `Subscription`: `request(10)` — обработав партию, потребитель запрашивает следующие 10.
+6. `Publisher` → `Subscriber`: `onComplete()` — источник сигнализирует об окончании потока.
 
 Почему именно гибрид, а не что-то одно:
 

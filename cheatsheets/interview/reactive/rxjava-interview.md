@@ -139,16 +139,13 @@ source.subscribe(
 );
 ```
 
-```mermaid
-sequenceDiagram
-    participant O as Observable
-    participant S as Subscriber
-    S->>O: subscribe()
-    O->>S: onNext("A")
-    O->>S: onNext("B")
-    O->>S: onNext("C")
-    O->>S: onComplete()
-```
+Порядок взаимодействия `Subscriber` (S) и `Observable` (O):
+
+1. `S → O`: `subscribe()` — подписчик регистрируется у источника.
+2. `O → S`: `onNext("A")` — источник проталкивает первый элемент.
+3. `O → S`: `onNext("B")` — второй элемент.
+4. `O → S`: `onNext("C")` — третий элемент.
+5. `O → S`: `onComplete()` — источник сигнализирует об успешном завершении.
 
 **Нюанс для собеседования.** Чистый `Observable` — это только push, у потребителя нет рычага сказать «помедленнее». Поэтому `Flowable` добавляет элемент **pull** через механизм `request(n)` из `Reactive Streams`: подписчик заявляет, сколько элементов готов принять. Получается гибридная push-pull модель, и именно она лежит в основе backpressure.
 
@@ -220,20 +217,22 @@ Completable saved = userRepository.save(user);
 Flowable<Event> events = eventBus.listen("orders");
 ```
 
-```mermaid
-graph TD
-    A[Reactive Types] --> B[Observable<br/>0..N элементов<br/>без backpressure]
-    A --> C[Flowable<br/>0..N элементов<br/>с backpressure]
-    A --> D[Single<br/>1 элемент]
-    A --> E[Maybe<br/>0 или 1 элемент]
-    A --> F[Completable<br/>0 элементов]
-    B -->|toFlowable| C
-    C -->|toObservable| B
-    D -->|toMaybe| E
-    D -->|toObservable| B
-    E -->|toSingle| D
-    F -->|toObservable| B
-```
+Семейство реактивных типов (`Reactive Types`) и переходы между ними:
+
+- `Observable` — 0..N элементов, без backpressure;
+- `Flowable` — 0..N элементов, с backpressure;
+- `Single` — 1 элемент;
+- `Maybe` — 0 или 1 элемент;
+- `Completable` — 0 элементов.
+
+Конвертация между типами:
+
+- `Observable` → `Flowable` через `toFlowable`;
+- `Flowable` → `Observable` через `toObservable`;
+- `Single` → `Maybe` через `toMaybe`;
+- `Single` → `Observable` через `toObservable`;
+- `Maybe` → `Single` через `toSingle`;
+- `Completable` → `Observable` через `toObservable`.
 
 Дополнительно есть `ConnectableObservable` — горячий `Observable`, который начинает испускать элементы только после вызова `connect()`.
 
@@ -265,14 +264,13 @@ graph TD
 
 Ценность в том, что словами поведение оператора описывать долго и неоднозначно, а одна диаграмма мгновенно показывает порядок, тайминг и судьбу каждого элемента.
 
-```mermaid
-graph LR
-    subgraph "Marble Diagram: map(x -> x * 2)"
-        direction LR
-        A["---(1)---(2)---(3)---|-->"] --> OP["map(x → x * 2)"]
-        OP --> B["---(2)---(4)---(6)---|-->"]
-    end
-```
+Пример Marble Diagram для оператора `map(x → x * 2)`:
+
+- входной поток: `---(1)---(2)---(3)---|-->`;
+- оператор: `map(x → x * 2)`;
+- выходной поток: `---(2)---(4)---(6)---|-->`.
+
+То есть каждый элемент входа умножается на 2 и попадает в выход на той же позиции по времени, а завершение (`|`) пробрасывается без изменений.
 
 Обозначения:
 - `---` — временная ось (слева направо)
@@ -348,17 +346,14 @@ source.subscribe(v -> System.out.println("Получено: " + v));
 
 Практический вывод: cold — для запросов «дай мне данные» (каждый вызывающий хочет полный результат), hot — для трансляции событий «здесь и сейчас» (новые подписчики и не должны видеть прошлое).
 
-```mermaid
-graph TD
-    subgraph "Cold Observable"
-        CO[Observable] -->|subscribe| S1[Subscriber 1: 1,2,3]
-        CO -->|subscribe| S2[Subscriber 2: 1,2,3]
-    end
-    subgraph "Hot Observable"
-        HO[Observable: 1,2,3,4,5] -->|subscribe при 3| S3[Subscriber 1: 3,4,5]
-        HO -->|subscribe при 4| S4[Subscriber 2: 4,5]
-    end
-```
+Наглядное сравнение поведения:
+
+- **Cold Observable**: при подписке каждый подписчик запускает источник заново и получает полный набор.
+  - `Subscriber 1` (subscribe) → `1, 2, 3`;
+  - `Subscriber 2` (subscribe) → `1, 2, 3`.
+- **Hot Observable** (источник `1, 2, 3, 4, 5` идёт независимо): подписчик видит только то, что испускается после его подписки.
+  - `Subscriber 1` (subscribe при `3`) → `3, 4, 5`;
+  - `Subscriber 2` (subscribe при `4`) → `4, 5`.
 
 ```java
 // Cold Observable — каждый подписчик получает все элементы
@@ -435,15 +430,6 @@ Observable.just("  hello ", " WORLD ", " RxJava ")
     .sorted()                    // сортировка
     .subscribe(System.out::println);
 // Вывод: hello, rxjava, world
-```
-
-```mermaid
-graph LR
-    S["Source<br/>' hello ', ' WORLD ', ' RxJava '"] --> M1["map<br/>trim()"]
-    M1 --> M2["map<br/>toLowerCase()"]
-    M2 --> F["filter<br/>length > 4"]
-    F --> SO["sorted()"]
-    SO --> SUB["subscribe<br/>println"]
 ```
 
 Ключевой принцип: оператор **не мутирует** исходный `Observable`, а оборачивает его в новый. Благодаря этой иммутабельности один и тот же базовый `Observable` можно безопасно переиспользовать в нескольких разных цепочках — они не повлияют друг на друга.
@@ -535,27 +521,12 @@ Observable.just(1, 2, 3)
     .subscribe(System.out::println); // 1, 10, 2, 20, 3, 30 (порядок не гарантирован)
 ```
 
-```mermaid
-graph LR
-    subgraph "map(x → x * 10)"
-        A1["1"] --> B1["10"]
-        A2["2"] --> B2["20"]
-        A3["3"] --> B3["30"]
-    end
-```
+Как работает `flatMap(x → [x, x*10])` на этом примере: каждый входной элемент превращается в собственный `Observable`, и все эти потоки сливаются (`merge`) в общий выход.
 
-```mermaid
-graph LR
-    subgraph "flatMap(x → [x, x*10])"
-        A1["1"] --> O1["Observable(1, 10)"]
-        A2["2"] --> O2["Observable(2, 20)"]
-        A3["3"] --> O3["Observable(3, 30)"]
-        O1 --> M["merge"]
-        O2 --> M
-        O3 --> M
-        M --> R["1, 10, 2, 20, 3, 30"]
-    end
-```
+- `1` → `Observable(1, 10)`;
+- `2` → `Observable(2, 20)`;
+- `3` → `Observable(3, 30)`;
+- все три потока → `merge` → `1, 10, 2, 20, 3, 30`.
 
 **Эмпирическое правило.** Возвращает простое значение → `map()`. Возвращает `Observable` (асинхронный вызов) → один из `*Map`-операторов, иначе получите «поток потоков» `Observable<Observable<R>>`, который надо разворачивать.
 
@@ -592,15 +563,12 @@ searchField.textChanges()
     .subscribe(results -> displayResults(results));
 ```
 
-```mermaid
-graph TD
-    subgraph "switchMap — поисковый autocomplete"
-        I1["Ввод: 'Jav'"] -->|запрос| R1["search('Jav')"]
-        I2["Ввод: 'Java'"] -->|отмена R1| R2["search('Java')"]
-        I3["Ввод: 'Java RxJ'"] -->|отмена R2| R3["search('Java RxJ')"]
-        R3 --> RES["Результат"]
-    end
-```
+Как `switchMap` ведёт себя в поисковом autocomplete по шагам:
+
+1. Ввод `'Jav'` → запускает запрос `search('Jav')` (R1).
+2. Ввод `'Java'` → **отменяет R1** и запускает `search('Java')` (R2).
+3. Ввод `'Java RxJ'` → **отменяет R2** и запускает `search('Java RxJ')` (R3).
+4. Результат отдаёт только последний актуальный запрос R3.
 
 ## Q17. В чём разница между `concat()` и `merge()`?
 
@@ -805,15 +773,15 @@ apiClient.getOrders()
 
 Типичная ошибка — гонять CPU-bound задачи на `io()`: безграничный пул наплодит сотни потоков, и они начнут конкурировать за ядра.
 
-```mermaid
-graph TD
-    A["Observable.create()"] -->|subscribeOn| B["Schedulers.io()<br/>Кешированный пул потоков"]
-    B --> C["map() / filter()"]
-    C -->|observeOn| D["Schedulers.computation()<br/>CPU cores потоков"]
-    D --> E["тяжёлые вычисления"]
-    E -->|observeOn| F["Main Thread"]
-    F --> G["обновление UI"]
-```
+Типичный конвейер с переключением `Scheduler` по этапам:
+
+1. `Observable.create()` — источник.
+2. `subscribeOn` → `Schedulers.io()` (кешированный пул потоков): здесь запускается источник.
+3. `map() / filter()` — выполняются на io-потоке.
+4. `observeOn` → `Schedulers.computation()` (потоков = CPU cores): переключение на вычисления.
+5. тяжёлые вычисления — выполняются на computation-потоке.
+6. `observeOn` → `Main Thread`: переключение на UI-поток.
+7. обновление UI — на главном потоке.
 
 ```java
 Observable.fromCallable(() -> loadDataFromNetwork()) // I/O
@@ -855,13 +823,6 @@ Observable.just(1, 2, 3)                    // main thread
     .subscribe(v -> {
         log("subscribe: " + Thread.currentThread()); // single thread
     });
-```
-
-```mermaid
-graph LR
-    S["Source"] -->|"subscribeOn(io)"| M1["map × 2<br/>io thread"]
-    M1 -->|"observeOn(computation)"| M2["map + 1<br/>computation thread"]
-    M2 -->|"observeOn(single)"| SUB["subscribe<br/>single thread"]
 ```
 
 ## Q25. (!) Что произойдет, если несколько `subscribeOn()` в цепочке?
@@ -983,21 +944,11 @@ subject.onNext("C");
 subject.subscribe(v -> System.out.println("Sub2: " + v)); // Sub2: C
 ```
 
-```mermaid
-graph LR
-    subgraph "PublishSubject"
-        PS["onNext: 1,2,3,4,5"]
-        PS -->|"subscribe при 3"| S1["Sub: 3,4,5"]
-    end
-    subgraph "BehaviorSubject"
-        BS["onNext: 1,2,3,4,5"]
-        BS -->|"subscribe при 3"| S2["Sub: 2,3,4,5"]
-    end
-    subgraph "ReplaySubject"
-        RS["onNext: 1,2,3,4,5"]
-        RS -->|"subscribe при 3"| S3["Sub: 1,2,3,4,5"]
-    end
-```
+Наглядно: источник испускает `1, 2, 3, 4, 5`, подписчик приходит в момент `3` (subscribe при 3) — что он получит для разных типов:
+
+- `PublishSubject` → `Sub: 3, 4, 5` (только будущие элементы);
+- `BehaviorSubject` → `Sub: 2, 3, 4, 5` (последний перед подпиской + будущие);
+- `ReplaySubject` → `Sub: 1, 2, 3, 4, 5` (вся история + будущие).
 
 ## Q30. В чем разница между `Subject` и `RxRelay`?
 
@@ -1032,14 +983,10 @@ relay.accept("B"); // всегда работает
 - `OutOfMemoryError` — неограниченный буфер рос, пока не съел память;
 - потеря данных — если элементы просто отбрасываются.
 
-```mermaid
-graph LR
-    P["Producer<br/>1000 элементов/сек"] -->|без backpressure| B["Buffer<br/>растёт бесконечно"]
-    B -->|OutOfMemoryError| C["Consumer<br/>10 элементов/сек"]
+Два сценария на примере производителя `1000 элементов/сек` и потребителя `10 элементов/сек`:
 
-    P2["Producer<br/>1000 элементов/сек"] -->|с backpressure| B2["Flowable<br/>request(10)"]
-    B2 -->|контролируемый поток| C2["Consumer<br/>10 элементов/сек"]
-```
+- **Без backpressure**: `Producer (1000/сек)` → `Buffer` растёт бесконечно → `OutOfMemoryError` → `Consumer (10/сек)` не успевает.
+- **С backpressure**: `Producer (1000/сек)` → `Flowable` с `request(10)` → контролируемый поток → `Consumer (10/сек)` получает ровно столько, сколько запросил.
 
 **Ключевой факт для собеседования.** В `RxJava 2+` backpressure умеет только `Flowable` — у него есть `request(n)`. `Observable` backpressure **не поддерживает** принципиально: это осознанное упрощение API для случаев, где давление не возникает (UI-события, небольшие коллекции). Поэтому выбор `Observable` vs `Flowable` — это в первую очередь вопрос «нужен ли мне backpressure». Подробнее — в [вопросах по Spring WebFlux](../frameworks/spring/spring-webflux-interview.md), где `Reactor` реализует тот же механизм через `Flux`/`Mono`.
 

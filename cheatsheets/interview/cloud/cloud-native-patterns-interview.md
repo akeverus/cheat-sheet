@@ -542,12 +542,9 @@ Apps → OpenTelemetry SDK → OTel Collector → Backend (Datadog, Honeycomb, .
 
 Ключевая идея — эти возможности появляются *без изменения кода сервисов*: их даёт прокси, а не приложение.
 
-```mermaid
-graph LR
-    A[App A] --- AS[Sidecar] --- BS[Sidecar] --- B[App B]
-    AS -.- CP[Control Plane]
-    BS -.- CP
-```
+**Топология** (две плоскости):
+- **Data plane** — рядом с каждым сервисом стоит свой `Sidecar`-прокси: `App A` → `Sidecar` ←→ `Sidecar` → `App B`. Весь трафик между `App A` и `App B` идёт через эту пару прокси, а не напрямую.
+- **Control plane** — оба `Sidecar`-прокси подключены к общему `Control Plane` (управляющая связь): он раздаёт им конфигурацию, политики маршрутизации и безопасности, сертификаты для mTLS.
 
 **Инструменты:**
 - **Istio** — богатый функционал, сложный
