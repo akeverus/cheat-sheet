@@ -625,7 +625,7 @@
                 "what_actually": "`Collections.swap` использует `list.set(i, list.set(j, list.get(i)))` — на LinkedList каждый `get/set` это `O(n)`, итого `O(n²)` для всех пар. Свап через ссылки занимает `O(1)` на пару, итого `O(n)`.",
                 "source_of_confusion": "Логично предположить, что JDK оптимизирует общие операции под конкретные реализации. Это не так — `Collections.swap` универсален.",
                 "if_it_were_true": "JMH-бенчмарк показал бы линейное время для `Collections.swap` на LinkedList — но он `O(n²)`.",
-                "how_it_should_be": "Перейти на пointer-манипуляцию с dummy node, обрабатывая по две ссылки за итерацию."
+                "how_it_should_be": "Перейти на манипуляцию указателями с dummy node, обрабатывая по две ссылки за итерацию."
               },
               "label": "B",
               "text": "Применить `Collections.swap(list, i, i+1)` в цикле по парам — Java оптимизирует под LinkedList.",
@@ -803,8 +803,8 @@
             {
               "sections": {
                 "explanation": "Инвариант: к моменту, когда fast прошёл `k` шагов, slow прошёл `k/2`. Когда fast упёрся в null (или `null.next`), он прошёл `n` шагов, значит slow прошёл `n/2` — это и есть середина. Один проход, `O(n)` времени, `O(1)` памяти. Для чётной длины существуют два «средних» — выбор зависит от условия выхода: `while (fast != null && fast.next != null)` возвращает второй из двух (LeetCode 876 это и просит); `while (fast.next != null && fast.next.next != null)` — первый.",
-                "example": "В реализации Merge Sort на linked list нужен middle node для разделения списка пополам (LeetCode 148 «Sort List»). Также применяется для split в isPalindrome (LeetCode 234) — разворачиваем вторую половину после нахождения середины. В Apache Spark RDD partitioning по «medianа узлов» использует похожий подход.",
-                "when_to_apply": "Любая split-задача на linked list: Merge Sort, palindrome check, split-half processing для parallel-обработки. Также для нахождения medianа в streaming без знания длины (но это не точная медиана значений, а медиана позиций).",
+                "example": "В реализации Merge Sort на linked list нужен middle node для разделения списка пополам (LeetCode 148 «Sort List»). Также применяется для split в isPalindrome (LeetCode 234) — разворачиваем вторую половину после нахождения середины. В Apache Spark RDD partitioning по «медиана узлов» использует похожий подход.",
+                "when_to_apply": "Любая split-задача на linked list: Merge Sort, palindrome check, split-half processing для parallel-обработки. Также для нахождения медианы в streaming без знания длины (но это не точная медиана значений, а медиана позиций).",
                 "edge_cases": "Чётная/нечётная длина даёт разный результат — нужно знать, какой из двух средних возвращается. Edge case: `head == null` — оба указателя null, нужна явная проверка. `head.next == null` — один узел, slow = head, fast никогда не двигается; результат корректен (сам head — середина).",
                 "related": "[[linked-lists-interview#Q12]] Floyd cycle; [[linked-lists-interview#Q19]] Merge Sort через middle; [[linked-lists-interview#Q21]] палиндром через middle+reverse."
               },
@@ -923,7 +923,7 @@
             {
               "sections": {
                 "what_actually": "«Расхождение от конца» работает только если идти С КОНЦА (нужны `prev` ссылки — singly не даёт). На singly можно сравнить tail (`pA == pB`), что обнаружит факт пересечения, но не найдёт точку — обратный обход невозможен.",
-                "source_of_confusion": "На doubly это бы работало; на singly без prev — нет. Smешение возможностей.",
+                "source_of_confusion": "На doubly это бы работало; на singly без prev — нет. Смешение возможностей.",
                 "if_it_were_true": "Тогда задача решалась бы за O(min(n,m)) с конца — но обратный обход в singly невозможен.",
                 "how_it_should_be": "Применить two-pointer с переключением, который эквивалентно «выравнивает» длины путей."
               },
@@ -1356,7 +1356,7 @@
               "sections": {
                 "explanation": "Создаём две независимые цепочки: `before` для узлов со значением `< x` и `after` для остальных. Dummy-nodes устраняют edge case первого узла в каждой цепочке. На каждом шаге `curr.val < x ? before.next = curr : after.next = curr`, продвигаем соответствующий хвост. После прохода соединяем `before` с началом `after`-цепи и обязательно ставим `after.next = null`, иначе хвост может образовать цикл. `O(n)` времени, `O(1)` памяти (две доп. ссылки + два dummy), порядок внутри групп сохраняется (stable).",
                 "example": "LeetCode 86 «Partition List»: для `1→4→3→2→5→2`, x=3 ответ `1→2→2→4→3→5`. Применяется в реальных задачах: разделение событий по приоритету в очереди (high/low queues), бакетинг логов по severity, partition `is_active` записей в DB up-stream фильтрации.",
-                "when_to_apply": "Stable partition по любому предикату: filter high/low priority, separate cached/uncached resources, split data by threshold для дальнейшей parallel-обработки. Pattern с двумя cnцелями применим и для split-into-three (negative/zero/positive), как в Dutch National Flag.",
+                "when_to_apply": "Stable partition по любому предикату: filter high/low priority, separate cached/uncached resources, split data by threshold для дальнейшей parallel-обработки. Pattern с двумя цепочками применим и для split-into-three (negative/zero/positive), как в Dutch National Flag.",
                 "edge_cases": "Не забыть `after.next = null` — иначе хвостовой узел может ссылаться на середину before-цепочки (создание цикла). Если все узлы `< x` или все `>= x`, одна из цепочек остаётся пустой — алгоритм всё ещё корректен благодаря dummy. На doubly-list нужно дополнительно обновить `prev`-ссылки при пере-связывании.",
                 "related": "[[linked-lists-interview#Q3]] dummy node; [[linked-lists-interview#Q6]] удаление с dummy; [[linked-lists-interview#Q17]] merge two lists pattern."
               },
@@ -1391,7 +1391,7 @@
             {
               "sections": {
                 "what_actually": "`Object.clone()` делает shallow copy: новый узел будет иметь те же ссылки `next` и `random` на ОРИГИНАЛЬНЫЕ узлы, не на копии. Это не глубокое копирование — две версии будут перекрёстно связаны.",
-                "source_of_confusion": "`clone()` в Java часто voодя в заблуждение: имя «clone» подразумевает deep copy, но реально это shallow.",
+                "source_of_confusion": "`clone()` в Java часто вводит в заблуждение: имя «clone» подразумевает deep copy, но реально это shallow.",
                 "if_it_were_true": "Тогда LeetCode 138 «Copy List with Random Pointer» был бы решён за 1 строку — но это medium-задача именно потому, что random-pointer требует двухпроходного резолва.",
                 "how_it_should_be": "Реализовать deep copy явно: первый проход создаёт узлы, второй — устанавливает next/random на копии."
               },
@@ -1452,7 +1452,7 @@
               "sections": {
                 "explanation": "Для `O(1)` на всех операциях нужны две структуры: `HashMap` для поиска узла по ключу за `O(1)` и doubly-linked list для порядка «most recent → least recent» (singly дал бы `O(n)` на поиск предшественника при eviction). Новые/использованные узлы держим в начале (head.next), давно неиспользованные — в конце (tail.prev). На `get(key)`: HashMap находит узел, перемещаем его в начало через `remove + addToFront` — `O(1)` благодаря prev/next. На `put`: ключ есть — update + move to front; нет и кэш полон — evict tail.prev (LRU), add node to front, обновить HashMap.",
                 "example": "LeetCode 146 «LRU Cache»: классическая реализация. Применяется в page cache OS (Linux page replacement), Redis `maxmemory-policy allkeys-lru`, в JVM `LinkedHashMap` с `accessOrder=true` (sledgehammer-решение в Java: `removeEldestEntry` override). В JCS (Java Caching System), Ehcache, Caffeine — все основаны на похожих структурах.",
-                "when_to_apply": "Любой кэш с size-limit и LRU evicition policy: HTTP response cache, DB query cache, ORM hibernate L2 cache, в-памяти cache для CDN edge nodes. Caffeine pioneering W-TinyLFU — это extension LRU с дополнительной статистикой. Если eviction policy другая (LFU, FIFO, ARC), структура немного другая.",
+                "when_to_apply": "Любой кэш с size-limit и LRU eviction policy: HTTP response cache, DB query cache, ORM hibernate L2 cache, в-памяти cache для CDN edge nodes. Библиотека Caffeine популяризировала алгоритм W-TinyLFU — это расширение LRU с дополнительной статистикой обращений. Если eviction policy другая (LFU, FIFO, ARC), структура немного другая.",
                 "edge_cases": "Dummy head и tail nodes значительно упрощают edge cases (вставка/удаление на границах). Concurrent доступ требует блокировок или специальной concurrent структуры (Caffeine использует Buffered Writes pattern). Capacity check: `if (map.size() > capacity)` — может вытеснить только что вставленный узел при race; лучше использовать `>= capacity` ДО вставки. HashMap key должен быть immutable, иначе hash может «потеряться».",
                 "related": "[[linked-lists-interview#Q1]] зачем doubly; [[hash-tables-interview#Q10]] LinkedHashMap; [[linked-lists-interview#Q26]] stack on linked list."
               },
@@ -1511,7 +1511,7 @@
             {
               "sections": {
                 "what_actually": "Linked list НЕ использует индексацию (это особенность массивов). `O(1)` для стека на linked list достигается тем, что все операции — на head (top), что не требует прохода по списку.",
-                "source_of_confusion": "Смешение arrays и linked list. Arrays — arithmetic indexing, linked list — pointer chasing.",
+                "source_of_confusion": "Смешение массивов и linked list. У массивов — арифметическая индексация, у связного списка — переход по указателям.",
                 "if_it_were_true": "Тогда `get(i)` на linked list тоже был бы `O(1)` — но он `O(n)`.",
                 "how_it_should_be": "Сказать что push/pop/peek работают только на head, что не требует обхода — отсюда `O(1)` независимо от размера."
               },
@@ -1524,7 +1524,7 @@
               "sections": {
                 "explanation": "Стек — LIFO. Если top — это head, то push/pop/peek все локальные операции у head: push создаёт новый узел и переставляет head — две операции; pop читает head.val и сдвигает head на head.next — две операции; peek просто читает head.val. Никакого обхода. `O(1)` для всех. Альтернатива — top на tail в singly без back-pointer — push был бы `O(n)` (надо дойти до tail), что хуже. Если выбрать tail на doubly — также `O(1)`, но overhead +prev ссылки не нужен для стека.",
                 "example": "JVM call stack — концептуально linked list of stack frames, push/pop при method enter/exit. JavaScript engines (V8) реализуют bytecode стек похоже. В Java `Deque.push()/pop()` через `LinkedList` или `ArrayDeque` — оба `O(1)`. Реальный use: undo stack в text editors, call-stack tracing, parsing recursive grammars.",
-                "when_to_apply": "Любой LIFO contract: parser stacks (recursive descent), call-frame management, backtracking (DFS, N-queens), expression evaluation, browser history (back-stack). Если нужны eе расширенные операции (size, contains, iteration) — стандартные Java коллекции (ArrayDeque preferred for performance).",
+                "when_to_apply": "Любой LIFO contract: parser stacks (recursive descent), call-frame management, backtracking (DFS, N-queens), expression evaluation, browser history (back-stack). Если нужны её расширенные операции (size, contains, iteration) — стандартные Java коллекции (ArrayDeque preferred for performance).",
                 "edge_cases": "EmptyStackException на pop()/peek() пустого стека — нужна явная проверка `head == null`. Иначе NPE. Thread-safety: для concurrent доступа нужен `ConcurrentLinkedDeque` или synchronization (но синхронизированный стек — bottleneck; lock-free deque сложнее). Iteration order: стек итерируется от top к bottom, что не всегда intuitive.",
                 "related": "[[linked-lists-interview#Q27]] queue на linked list (tail-based); [[linked-lists-interview#Q31]] LinkedList vs ArrayDeque; [[stacks-queues-interview#Q1]] стек основы."
               },
@@ -1535,7 +1535,7 @@
             },
             {
               "sections": {
-                "what_actually": "JVM не имеет специального кэширования head в L1. CPU кэширование происходит на уровне memory access pattern — частый доступ к одному адресу попадает в L1 autoматически. Но это про CONSTANTS, не про асимптотику. `O(1)` определяется алгоритмически, не cache-эффектами.",
+                "what_actually": "JVM не имеет специального кэширования head в L1. CPU кэширование происходит на уровне memory access pattern — частый доступ к одному адресу попадает в L1 автоматически. Но это про CONSTANTS, не про асимптотику. `O(1)` определяется алгоритмически, не cache-эффектами.",
                 "source_of_confusion": "Cache locality — известное преимущество массивов. Кандидат экстраполирует это на linked list, что неверно.",
                 "if_it_were_true": "Тогда `ArrayDeque.push` (тоже O(1)) не имел бы преимущества по скорости — но он реально быстрее именно из-за array layout и cache locality.",
                 "how_it_should_be": "Объяснить через локальность операций (только head), не через cache."
@@ -1596,7 +1596,7 @@
               "sections": {
                 "explanation": "Очередь FIFO: enqueue в конец, dequeue с начала. Без tail-указателя enqueue требует обхода списка до последнего узла — `O(n)`. С tail — две операции: `tail.next = newNode; tail = newNode`. Dequeue (с head) и так `O(1)` — `head = head.next`. Поэтому хранение tail превращает enqueue из `O(n)` в `O(1)`, и FIFO-contract с `O(1)` обеими операциями выполняется. На пустой очереди enqueue инициализирует и head, и tail; на dequeue последнего — оба становятся null. Альтернатива — doubly-list с `tail.prev` — тоже `O(1)`, но для простой FIFO `prev`-ссылка избыточна.",
                 "example": "`LinkedBlockingQueue` в java.util.concurrent — singly-list с head/tail и separate ReentrantLock на каждый конец (Doug Lea, two-lock queue design). Это позволяет одновременно enqueue и dequeue из разных потоков. В Kafka, RabbitMQ внутренние очереди использовать похожий design. Real-time scheduling в Linux kernel — task queues based on linked-list-with-tail.",
-                "when_to_apply": "Любой FIFO contract: task queue для thread pool, message broker partitions, BFS frontier, request queue в web servers, audio/video frame buffer. Если нужна priority — `PriorityBlockingQueue` (heap-based, не FIFO). Если concurrent — `ConcurrentLinkedQueue` (lock-free Michael-Scott).",
+                "when_to_apply": "Любая FIFO-очередь: task queue для thread pool, message broker partitions, BFS frontier, очередь запросов в веб-серверах, буфер аудио/видео-кадров. Если нужна priority — `PriorityBlockingQueue` (heap-based, не FIFO). Если concurrent — `ConcurrentLinkedQueue` (lock-free Michael-Scott).",
                 "edge_cases": "На dequeue последнего элемента не забыть `if (head == null) tail = null` — иначе tail указывает на освобождённый узел. На concurrent доступе одиночный lock на всю структуру — bottleneck; lock-free (CAS-based) сложнее. `size()` тоже хранится отдельно или вычисляется `O(n)` при запросе — `ConcurrentLinkedQueue.size()` именно `O(n)`.",
                 "related": "[[linked-lists-interview#Q26]] стек на linked list; [[linked-lists-interview#Q32]] ConcurrentLinkedQueue; [[stacks-queues-interview#Q3]] queue patterns."
               },
@@ -1834,8 +1834,8 @@
             },
             {
               "sections": {
-                "explanation": "Реальные сценарии для LinkedList в современной Java крайне узкие: (а) iterator-based modifications в середине списка под большим объёмом — `ListIterator.remove()` за `O(1)`, тогда как ArrayList требует `O(n)` сдвига; (б) когда тип контракта явно требует `List` И `Deque` одновременно (рiдкое). Для FIFO/LIFO в подавляющем большинстве случаев `ArrayDeque` быстрее (cache locality, нет per-node allocation). Для индексного доступа — ArrayList. В Effective Java (Joshua Bloch) явно говорится: «In most cases, you should use ArrayList instead of LinkedList».",
-                "example": "Real use case (редкий): in-memory queue с frequent modifications by iterator (например, retry-policy processor, который проходит по queue и пере-добавляет некоторые элементы). Даже там `ArrayDeque` или specialized data structure часто лучше. Caffeine cache uses specialized linked list internally, но не java.util.LinkedList.",
+                "explanation": "Реальные сценарии для LinkedList в современной Java крайне узкие: (а) iterator-based modifications в середине списка под большим объёмом — `ListIterator.remove()` за `O(1)`, тогда как ArrayList требует `O(n)` сдвига; (б) когда тип контракта явно требует `List` И `Deque` одновременно (редкое). Для FIFO/LIFO в подавляющем большинстве случаев `ArrayDeque` быстрее (cache locality, нет per-node allocation). Для индексного доступа — ArrayList. В Effective Java (Joshua Bloch) явно говорится: «In most cases, you should use ArrayList instead of LinkedList».",
+                "example": "Реальный сценарий (редкий): in-memory очередь с частыми изменениями через итератор (например, обработчик retry-политики, который проходит по очереди и пере-добавляет некоторые элементы). Даже там `ArrayDeque` или специализированная структура данных часто лучше. Caffeine cache внутри использует собственный linked list, но не java.util.LinkedList.",
                 "when_to_apply": "Очень редко: после profile'инга, который показал bottleneck именно на iterator.remove() или middle-insertions. По-умолчанию — `ArrayList` для list, `ArrayDeque` для FIFO/LIFO.",
                 "edge_cases": "Дефолтный выбор LinkedList «по инерции» — частый source of unnecessary memory consumption + cache misses. Indexed iteration по LinkedList (`for i in 0..size`) — катастрофическая `O(n²)` ловушка. Если меняешь LinkedList на ArrayList, проверь, что код не использует Deque-specific методы (`offerFirst`, `pollLast`).",
                 "related": "[[linked-lists-interview#Q2]] LinkedList vs ArrayList; [[linked-lists-interview#Q30]] память LinkedList; [[linked-lists-interview#Q32]] ConcurrentLinkedQueue."
@@ -1849,7 +1849,7 @@
               "sections": {
                 "what_actually": "JIT не оптимизирует `LinkedList.get(i)` до `O(1)` — асимптотика структурная. `O(1)` access — это ArrayList feature.",
                 "source_of_confusion": "Снова приписывание JIT'у магических способностей по optimization асимптотики.",
-                "if_it_were_true": "Тогда `LinkedList.get(500_000)` на 1М-listе был бы константный по времени — но он `O(n)`.",
+                "if_it_were_true": "Тогда `LinkedList.get(500_000)` на 1M-списке был бы константный по времени — но он `O(n)`.",
                 "how_it_should_be": "Для O(1) index access — ArrayList; LinkedList не для random access."
               },
               "label": "D",
@@ -1907,7 +1907,7 @@
             {
               "sections": {
                 "explanation": "ConcurrentLinkedQueue реализует non-blocking FIFO через CAS (compare-and-swap) на ссылки head/tail. Каждый поток продвигается независимо, без ожидания на lock; высокая throughput на multi-core. Trade-off: нет блокирующих операций (`put`/`take` отсутствуют), `size()` — `O(n)` (полный обход), высокая allocation pressure (новый Node на каждый offer). LinkedBlockingQueue использует ReentrantLock + Condition: `putLock` для writers, `takeLock` для readers — два потока могут одновременно enqueue и dequeue. `put()` ждёт пока в bounded queue появится место; `take()` ждёт элемент. Lower throughput в uncontended случае, но предсказуемое поведение и BlockingQueue contract.",
-                "example": "ConcurrentLinkedQueue: producer-consumer high-throughput с non-blocking semantics, например event bus в высоконагруженной системе, где producer не должен блокироваться. LinkedBlockingQueue: thread pool work queue (ExecutorService по умолчанию использует LinkedBlockingQueue для unbounded или ArrayBlockingQueue для bounded), backpressure pattern в reactive streams.",
+                "example": "ConcurrentLinkedQueue: высоконагруженный producer-consumer с non-blocking семантикой, например event bus в высоконагруженной системе, где producer не должен блокироваться. LinkedBlockingQueue: thread pool work queue (ExecutorService по умолчанию использует LinkedBlockingQueue для unbounded или ArrayBlockingQueue для bounded), backpressure pattern в reactive streams.",
                 "when_to_apply": "ConcurrentLinkedQueue: высокая throughput, нет необходимости в backpressure, размер не ограничен (или контролируется upstream). LinkedBlockingQueue: thread pools, producer-consumer с rate-limiting (bounded), backpressure. `ArrayBlockingQueue` — bounded array-based, лучше memory layout, но фиксированный размер с начала. `LinkedTransferQueue` — гибрид, hand-off pattern.",
                 "edge_cases": "ConcurrentLinkedQueue.size() — `O(n)` и может быть inconsistent (другой поток модифицирует во время подсчёта). Не использовать size() в hot path. LinkedBlockingQueue: при unbounded и быстром producer может OOM (типичная ошибка в Spring `@Async` без bounded queue config). Memory: ConcurrentLinkedQueue создаёт мусора больше (каждый Node) — может быть GC pressure. Both: poll/peek могут возвращать null — не путать с «нет элемента» vs «null значение» (хранение null не разрешено).",
                 "related": "[[linked-lists-interview#Q27]] queue на linked list; [[linked-lists-interview#Q28]] Skip List concurrent pattern; [[java-concurrency-interview#Q5]] BlockingQueue patterns."
