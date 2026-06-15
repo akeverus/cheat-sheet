@@ -389,13 +389,12 @@ sns.publish(
 
 Fanout — это связка, где SNS-топик публикует событие сразу в несколько SQS-очередей, по одной на каждого потребителя. Так получают и широковещательность SNS, и буферизацию с надёжной обработкой от SQS: SNS разносит копии, а каждая очередь сглаживает нагрузку своего консьюмера.
 
-```mermaid
-graph LR
-    Producer --> SNS[SNS Topic]
-    SNS --> SQS1[SQS Queue 1<br/>processing service]
-    SNS --> SQS2[SQS Queue 2<br/>analytics service]
-    SNS --> SQS3[SQS Queue 3<br/>email service]
-```
+Структура связки:
+
+- `Producer` → `SNS Topic` — продьюсер публикует событие в топик.
+- `SNS Topic` → `SQS Queue 1` (processing service) — копия события уходит в очередь сервиса обработки.
+- `SNS Topic` → `SQS Queue 2` (analytics service) — копия уходит в очередь сервиса аналитики.
+- `SNS Topic` → `SQS Queue 3` (email service) — копия уходит в очередь сервиса рассылки email.
 
 **Один publish** → SNS кладёт копию сообщения в несколько SQS-очередей.
 

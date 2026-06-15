@@ -137,17 +137,15 @@ java -Xlog:gc*:file=gc.log:time,uptime,level,tags:filecount=5,filesize=100m \
 
 Главное правило: меняем **один** параметр за итерацию и прогоняем одинаковый нагрузочный профиль. Если поменять сразу несколько флагов и результат улучшится, вы не узнаете, какой именно из них помог (а какой, возможно, навредил). Каждое изменение должно проверяться как отдельная гипотеза.
 
-```mermaid
-graph LR
-    A[Baseline<br/>Сбор метрик] --> B[Гипотеза<br/>Что менять и зачем]
-    B --> C[Изменение<br/>Один параметр]
-    C --> D[Нагрузочный тест<br/>Тот же профиль]
-    D --> E{p99 улучшился?<br/>Throughput не упал?}
-    E -->|Да| F[Фиксируем<br/>Новый baseline]
-    E -->|Нет| G[Откат<br/>Новая гипотеза]
-    F --> B
-    G --> B
-```
+Цикл проверки выглядит так:
+
+1. **Baseline** — сбор метрик (точка отсчёта).
+2. **Гипотеза** — что менять и зачем.
+3. **Изменение** — один параметр за итерацию.
+4. **Нагрузочный тест** — тот же профиль нагрузки.
+5. **Решение** — улучшился ли `p99` и не упал ли throughput?
+   - Если **да** → фиксируем результат как новый baseline и возвращаемся к шагу «Гипотеза» для следующего изменения.
+   - Если **нет** → откатываем изменение и формулируем новую гипотезу, снова возвращаясь к шагу «Гипотеза».
 
 Сравнивать нужно не только средние, но и **хвосты распределения** (`p99`, `p999`) и стабильность во времени — именно хвосты бьют по пользователю, а среднее их маскирует. Лучший формат проверки: **A/B по двум одинаковым инстансам** под одинаковой нагрузкой — так вы убираете влияние внешних факторов (соседей по кластеру, фоновых задач) и сравниваете именно эффект изменения.
 
@@ -163,16 +161,14 @@ graph LR
 | `ZGC` | concurrent | < 1 ms | большой | low-latency, большие heap |
 | `Shenandoah` | concurrent | < 10 ms | средний-большой | low-latency (OpenJDK) |
 
-```mermaid
-graph TD
-    A{Какой GC выбрать?}
-    A -->|Throughput важнее<br/>latency не критична| B[Parallel GC]
-    A -->|Универсальный backend<br/>heap < 32 GB| C[G1 GC]
-    A -->|Жёсткий SLA по паузам<br/>heap > 16 GB| D{Oracle JDK<br/>или OpenJDK?}
-    D -->|Любой| E[ZGC]
-    D -->|OpenJDK| F[Shenandoah]
-    A -->|Embedded /<br/>single-core| G[Serial GC]
-```
+Как выбрать GC, по характеру нагрузки:
+
+- **Throughput важнее, latency не критична** → `Parallel GC`.
+- **Универсальный backend, heap < 32 GB** → `G1 GC`.
+- **Жёсткий SLA по паузам, heap > 16 GB** → дальше смотрим на сборку JDK:
+  - на любом JDK (Oracle JDK или OpenJDK) → `ZGC`;
+  - на OpenJDK → также подходит `Shenandoah`.
+- **Embedded / single-core** → `Serial GC`.
 
 Ключевое отличие — насколько сборщик останавливает приложение (Stop-The-World):
 
@@ -186,23 +182,7 @@ graph TD
 
 `G1` (`Garbage-First`) делит heap на **регионы** одинакового размера (обычно 1-32 МБ) и собирает в первую очередь те регионы, где больше всего мусора (отсюда и название — «мусор сначала»). Регион в любой момент играет одну из ролей (`Eden`, `Survivor`, `Old`, `Humongous`), и эта роль может меняться — это даёт гибкость по сравнению с фиксированными непрерывными поколениями старых сборщиков. Цель G1 — уложиться в заданный target по паузе (`-XX:MaxGCPauseMillis`), собирая ровно столько регионов, сколько успевает за это время.
 
-```mermaid
-graph TD
-    subgraph "G1 Heap Layout"
-        E1[Eden] 
-        E2[Eden]
-        E3[Eden]
-        S1[Survivor]
-        O1[Old]
-        O2[Old]
-        H1[Humongous]
-        F1[Free]
-        F2[Free]
-        O3[Old]
-        S2[Survivor]
-        E4[Eden]
-    end
-```
+Heap при этом выглядит как набор перемешанных регионов разных ролей: часть занята под `Eden`, часть под `Survivor`, часть под `Old`, отдельные регионы — под `Humongous`, а ещё часть стоит свободной (`Free`) и готова принять новые объекты. Расположение ролей не фиксировано: один и тот же регион в разные моменты может быть и `Eden`, и `Old`.
 
 **Фазы работы G1:**
 
@@ -233,18 +213,16 @@ graph TD
 
 3. **Concurrent relocation** — объекты переезжают параллельно с работой приложения; старый и новый адрес связаны через forwarding tables, по которым load barrier и находит актуальное расположение.
 
-```mermaid
-graph LR
-    subgraph "ZGC Concurrent Phases"
-        A[Pause Mark Start<br/>< 1 ms STW] --> B[Concurrent Mark]
-        B --> C[Pause Mark End<br/>< 1 ms STW]
-        C --> D[Concurrent Process<br/>Non-Strong References]
-        D --> E[Concurrent Reset<br/>Relocation Set]
-        E --> F[Concurrent Relocate]
-    end
-    style A fill:#f96,stroke:#333
-    style C fill:#f96,stroke:#333
-```
+Фазы ZGC идут по порядку (короткие STW-паузы отмечены отдельно, всё остальное — concurrent):
+
+1. **Pause Mark Start** — STW-пауза < 1 мс.
+2. **Concurrent Mark** — маркировка параллельно с приложением.
+3. **Pause Mark End** — STW-пауза < 1 мс.
+4. **Concurrent Process Non-Strong References** — обработка не-strong ссылок concurrent.
+5. **Concurrent Reset Relocation Set** — формирование relocation set concurrent.
+6. **Concurrent Relocate** — перемещение объектов concurrent.
+
+Только две короткие фазы (Pause Mark Start и Pause Mark End) останавливают приложение, и обе укладываются в < 1 мс.
 
 **Характеристики ZGC (JDK 21+):**
 - Паузы: < 1 мс (не растут с размером heap)
@@ -403,14 +381,7 @@ java -Xlog:gc*,gc+age=trace,gc+heap=debug:file=gc-detailed.log:time,uptime,level
 - Высокий **promotion rate** (много объектов «доживают» до `Old`) перегружает старое поколение и провоцирует более дорогие Mixed/Full GC.
 - Итог: паузы растут, а tail latency становится нестабильной — пользователь периодически ловит длинные ответы.
 
-```mermaid
-graph LR
-    A[Высокий<br/>Allocation Rate] --> B[Частый Young GC]
-    B --> C[Высокий<br/>Promotion Rate]
-    C --> D[Old Gen растёт]
-    D --> E[Mixed / Full GC]
-    E --> F[Долгие паузы<br/>↑ p99 latency]
-```
+Цепочка причин и следствий выглядит так: высокий allocation rate → частый Young GC → высокий promotion rate → `Old Gen` растёт → Mixed / Full GC → долгие паузы и рост `p99 latency`.
 
 **Как снизить allocation rate:**
 
@@ -465,28 +436,22 @@ public String processRequest(Request req) {
 
 Память JVM **не ограничивается heap** — это самая частая ошибка при сайзинге. Кроме объектов в heap процесс держит метаданные классов, скомпилированный JIT-код, стеки потоков, off-heap буферы и внутренние структуры самой JVM. Все они входят в RSS процесса, но не учитываются `-Xmx`. Полная картина:
 
-```mermaid
-graph TD
-    subgraph "Память JVM-процесса (RSS)"
-        subgraph "Heap (-Xmx)"
-            EDEN[Eden]
-            SURV[Survivors]
-            OLD[Old Gen]
-        end
-        subgraph "Non-Heap"
-            META[Metaspace<br/>Классы, методы]
-            CCS[Compressed<br/>Class Space]
-            CODE[Code Cache<br/>JIT-код]
-        end
-        subgraph "Native"
-            THR[Thread Stacks<br/>-Xss × N]
-            DC[Direct Buffers<br/>NIO]
-            JNI[JNI / Native libs]
-            GCN[GC Native Data]
-            INT[Internal JVM<br/>Symbol tables, etc.]
-        end
-    end
-```
+Память JVM-процесса (RSS) делится на три группы областей:
+
+- **Heap (`-Xmx`):**
+  - `Eden`;
+  - `Survivors`;
+  - `Old Gen`.
+- **Non-Heap:**
+  - `Metaspace` — классы, методы;
+  - `Compressed Class Space`;
+  - `Code Cache` — JIT-код.
+- **Native:**
+  - Thread Stacks (`-Xss` × N потоков);
+  - Direct Buffers (NIO);
+  - JNI / native-библиотеки;
+  - GC Native Data;
+  - Internal JVM (symbol tables и пр.).
 
 **Формула для расчёта общего потребления:**
 
@@ -619,16 +584,7 @@ java -Xms3g -Xmx3g \
 
 `JIT` (`Just-In-Time`) компилирует байт-код в нативный машинный код прямо во время выполнения — но компилирует не всё подряд, а только «горячие» методы, которые вызываются часто. Холодный код выгоднее интерпретировать, чем тратить время на его компиляцию. Чтобы найти баланс между скоростью старта и пиковой производительностью, `HotSpot JVM` использует **Tiered Compilation** — пятиуровневую систему, где код по мере «разогрева» проходит от интерпретатора к всё более агрессивно оптимизированным версиям:
 
-```mermaid
-graph LR
-    L0[Level 0<br/>Интерпретатор] --> L1[Level 1<br/>C1 simple]
-    L0 --> L2[Level 2<br/>C1 + counters]
-    L0 --> L3[Level 3<br/>C1 + full profiling]
-    L3 --> L4[Level 4<br/>C2 optimized]
-    
-    style L0 fill:#fdd,stroke:#333
-    style L4 fill:#dfd,stroke:#333
-```
+Уровни связаны так: из **Level 0** (интерпретатор) код может уйти на любой из C1-уровней — **Level 1** (C1 simple), **Level 2** (C1 + counters) или **Level 3** (C1 + full profiling); из **Level 3** прогретый код переходит на **Level 4** (C2 optimized) — самый оптимизированный.
 
 | Уровень | Компилятор | Описание |
 |---------|-----------|----------|
@@ -651,12 +607,12 @@ graph LR
 
 Свежезапущенная JVM ещё не знает, какой код горячий, поэтому методы сначала исполняются интерпретатором и `C1`, а до агрессивной `C2`-оптимизации доходят только спустя время. Именно поэтому **cold-start** и первые минуты работы часто в 5-10 раз медленнее установившегося режима — это не баг, а нормальный цикл прогрева (warm-up):
 
-```mermaid
-graph LR
-    A[Startup<br/>Интерпретатор] -->|30-60 сек| B[Warming<br/>C1 компиляция]
-    B -->|1-5 мин| C[Warm<br/>C2 оптимизация]
-    C -->|стабильно| D[Peak<br/>Полная оптимизация]
-```
+Стадии прогрева сменяют друг друга так:
+
+1. **Startup** — интерпретатор.
+2. Через 30-60 сек → **Warming** — C1-компиляция.
+3. Через 1-5 мин → **Warm** — C2-оптимизация.
+4. Дальше стабильно → **Peak** — полная оптимизация.
 
 **Практики для production:**
 
@@ -806,16 +762,16 @@ public int calculate(int x) {
 
 Принцип: сначала по метрикам подтвердить, что узкое место именно в CPU (а не в I/O, блокировках или сети), и только потом профилировать. Иначе легко потратить время на оптимизацию кода, пока процесс на самом деле ждёт базу. Рабочий путь:
 
-```mermaid
-graph TD
-    A[Метрики CPU + latency<br/>Prometheus/Grafana] --> B{CPU > 80%?}
-    B -->|Да| C[async-profiler / JFR<br/>CPU flame graph]
-    B -->|Нет| D[Проверь I/O, locks,<br/>thread contention]
-    C --> E[Выделение hot methods<br/>и lock contention]
-    E --> F{Проблема в коде<br/>или в JVM?}
-    F -->|Код| G[Оптимизация<br/>алгоритма]
-    F -->|JVM| H[Тюнинг GC /<br/>JIT параметров]
-```
+Алгоритм поиска по шагам:
+
+1. Снимаем метрики CPU и latency (Prometheus/Grafana).
+2. Проверяем загрузку CPU:
+   - если **CPU > 80%** → профилируем через `async-profiler` / `JFR` (CPU flame graph);
+   - если **нет** → проблема не в CPU: проверяем I/O, locks, thread contention.
+3. По профилю выделяем hot methods и lock contention.
+4. Определяем, где причина:
+   - если **в коде** → оптимизируем алгоритм;
+   - если **в JVM** → тюним параметры GC / JIT.
 
 ```bash
 # async-profiler — лучший инструмент для CPU профилирования
@@ -835,12 +791,7 @@ jcmd <pid> JFR.start duration=60s filename=cpu.jfr settings=profile
 
 **Safepoint** — точка в коде, где JVM может безопасно остановить поток (для GC, deopt и т.п.). Проблема в том, что многие профилировщики снимают стек потока **только когда тот стоит в safepoint**, а safepoint'ы расставлены не равномерно. В результате профиль перекошен: время приписывается ближайшему safepoint, а не реальному месту в коде. Это и называется **safepoint bias** — профиль систематически «врёт»:
 
-```mermaid
-graph LR
-    A[Код между<br/>safepoints] -->|Невидим для<br/>safepoint-based profiler| B[Safepoint<br/>Стек снимается здесь]
-    B --> C[Код между<br/>safepoints]
-    C --> D[Safepoint<br/>Стек снимается здесь]
-```
+Наглядно: исполнение чередует код между safepoints и сами safepoint'ы. Стек снимается только в safepoint'ах, а код между ними остаётся невидимым для safepoint-based профилировщика — то есть после первого участка кода идёт safepoint (стек снимается здесь), затем снова код между safepoints, затем следующий safepoint (стек снова снимается здесь).
 
 **Последствия:**
 - Короткие hot методы между safepoints **недооцениваются**
@@ -863,12 +814,12 @@ jcmd <pid> JFR.start settings=profile
 
 `ClassLoader` в JVM организован по принципу **delegation hierarchy**:
 
-```mermaid
-graph TD
-    A[Bootstrap ClassLoader<br/>java.base, core JDK] --> B[Platform ClassLoader<br/>java.sql, java.xml, etc.]
-    B --> C[Application ClassLoader<br/>classpath приложения]
-    C --> D[Custom ClassLoaders<br/>Spring, Tomcat, OSGi]
-```
+Иерархия загрузчиков (сверху вниз, каждый следующий — потомок предыдущего):
+
+- **Bootstrap ClassLoader** — `java.base`, core JDK;
+- **Platform ClassLoader** — `java.sql`, `java.xml` и т.п.;
+- **Application ClassLoader** — classpath приложения;
+- **Custom ClassLoaders** — Spring, Tomcat, OSGi.
 
 **Принцип parent-first delegation:**
 1. ClassLoader сначала спрашивает **родителя** — может ли тот загрузить класс.
@@ -896,14 +847,14 @@ graph TD
 
 **Metaspace leak** — ситуация, когда классы загружаются, но никогда не выгружаются, и Metaspace растёт до OOM. Ключевой момент: класс выгружается только вместе со своим `ClassLoader`, а тот собирается GC, лишь когда на него не осталось ни одной ссылки. Если живая ссылка где-то удерживает ClassLoader (а с ним — все его классы), эта память не освобождается:
 
-```mermaid
-graph LR
-    A[Код создаёт<br/>ClassLoader] --> B[Загружает<br/>классы]
-    B --> C[ClassLoader<br/>в Metaspace]
-    C --> D{ClassLoader<br/>GC'd?}
-    D -->|Нет: ссылка<br/>жива| E[Metaspace LEAK<br/>растёт]
-    D -->|Да| F[Классы<br/>выгружены]
-```
+Механизм по шагам:
+
+1. Код создаёт `ClassLoader`.
+2. Тот загружает классы.
+3. `ClassLoader` и его классы оседают в Metaspace.
+4. Дальше всё зависит от того, собирается ли `ClassLoader` сборщиком мусора:
+   - если **нет** (живая ссылка удерживает его) → Metaspace LEAK, память растёт;
+   - если **да** → классы выгружаются, память освобождается.
 
 **Частые причины:**
 - Dynamic proxy / CGLIB generation без кеширования
@@ -972,15 +923,12 @@ env:
     value: "-Xms1536m -Xmx1536m -XX:MaxMetaspaceSize=256m"
 ```
 
-```mermaid
-graph TD
-    subgraph "Container Memory Limit: 2 GB"
-        A[Java Heap<br/>-Xmx 1.5 GB] 
-        B[Metaspace<br/>256 MB]
-        C[Code Cache + Threads<br/>~200 MB]
-        D[Запас<br/>~70 MB]
-    end
-```
+Пример раскладки при container memory limit 2 GB:
+
+- Java Heap (`-Xmx`) — 1.5 GB;
+- Metaspace — 256 MB;
+- Code Cache + Threads — ~200 MB;
+- запас — ~70 MB.
 
 > В production важна **повторяемая конфигурация** на уровне Helm chart/manifest, а не "ручные" флаги на конкретном pod.
 
@@ -1061,13 +1009,13 @@ spring.main.lazy-initialization=true
 java -XX:SharedArchiveFile=app-cds.jsa -jar app.jar
 ```
 
-```mermaid
-graph LR
-    A[Cold Start<br/>15-30 сек] -->|AppCDS| B[10-20 сек]
-    B -->|Lazy Init| C[7-15 сек]
-    C -->|TieredStop=1| D[5-10 сек]
-    D -->|GraalVM Native| E[0.5-2 сек]
-```
+Как техники последовательно ужимают время старта:
+
+- Cold Start — 15-30 сек;
+- + AppCDS → 10-20 сек;
+- + Lazy Init → 7-15 сек;
+- + `TieredStopAtLevel=1` → 5-10 сек;
+- + GraalVM Native → 0.5-2 сек.
 
 ## Q33. Какие JVM-флаги обязательны для production?
 
@@ -1175,17 +1123,11 @@ java -XX:+PrintCompressedOopsMode -version
 
 **NUMA** (`Non-Uniform Memory Access`) — архитектура многосокетных серверов, где у каждого CPU есть своя «локальная» память с быстрым доступом и «удалённая» (память соседнего сокета) с заметно более медленным. NUMA-aware GC старается размещать объекты в той памяти, которая локальна для потока, создающего объект, — чтобы приложение реже ходило за данными через медленный межсокетный интерконнект:
 
-```mermaid
-graph LR
-    subgraph "Node 0"
-        CPU0[CPU 0] --> MEM0[Local Memory<br/>Быстрый доступ]
-    end
-    subgraph "Node 1"
-        CPU1[CPU 1] --> MEM1[Local Memory<br/>Быстрый доступ]
-    end
-    CPU0 -.->|Медленный<br/>доступ| MEM1
-    CPU1 -.->|Медленный<br/>доступ| MEM0
-```
+Топология выглядит так:
+
+- **Node 0:** CPU 0 обращается к своей Local Memory быстро.
+- **Node 1:** CPU 1 обращается к своей Local Memory быстро.
+- При этом CPU 0 может достучаться и до памяти Node 1, а CPU 1 — до памяти Node 0, но такой межсокетный доступ медленный.
 
 ```bash
 # NUMA-aware аллокация в G1 (default: true если NUMA detected)

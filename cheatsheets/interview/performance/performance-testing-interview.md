@@ -125,17 +125,15 @@ updated: "2026-04-25"
 | Работает ли с большим объёмом данных? | `Volume` |
 | Масштабируется ли горизонтально/вертикально? | `Scalability` |
 
-```mermaid
-graph LR
-    A[Требования<br/>SLA/SLO] --> B[Дизайн теста<br/>сценарий + нагрузка]
-    B --> C[Выполнение<br/>JMeter/Gatling/k6]
-    C --> D[Сбор метрик<br/>latency, RPS, CPU, GC]
-    D --> E{SLO<br/>выполнен?}
-    E -->|Да| F[Baseline<br/>зафиксирован]
-    E -->|Нет| G[Анализ<br/>профилирование]
-    G --> H[Оптимизация]
-    H --> C
-```
+Процесс performance testing — это цикл:
+
+1. **Требования** (`SLA/SLO`) → задают цель.
+2. **Дизайн теста** (сценарий + нагрузка) → как воспроизводим трафик.
+3. **Выполнение** (`JMeter`/`Gatling`/`k6`) → прогон.
+4. **Сбор метрик** (latency, RPS, CPU, GC).
+5. Проверка: **SLO выполнен?**
+   - **Да** → baseline зафиксирован.
+   - **Нет** → анализ (профилирование) → оптимизация → возврат к шагу «Выполнение» и повторный прогон.
 
 > На интервью подчёркивайте: performance testing — это **воспроизводимый процесс с цифровым результатом** ("p99 = 180ms при 2000 RPS"), а не "мы погоняли нагрузку, вроде держит".
 
@@ -153,15 +151,12 @@ graph LR
 | `Volume` | Работа с большим объёмом данных | Нормальная, большая БД | 30-60 мин |
 | `Scalability` | Как растёт throughput при росте ресурсов | Нагрузка × разные конфиги | серия тестов |
 
-```mermaid
-graph LR
-    subgraph "Профили нагрузки"
-        L[Load: ровная полка] 
-        S[Stress: пилообразный рост]
-        SP[Spike: резкий всплеск]
-        SO[Soak: длинная полка]
-    end
-```
+Форма профиля нагрузки у каждого типа своя:
+
+- **Load** — ровная полка.
+- **Stress** — пилообразный рост.
+- **Spike** — резкий всплеск.
+- **Soak** — длинная полка.
 
 Важно: это **не разные инструменты**, а разные **профили нагрузки** на одном скрипте. Тот же Gatling/k6-сценарий можно запускать как load, так и stress — меняя injection-профиль.
 
@@ -195,19 +190,11 @@ graph LR
 
 `Performance testing` не встраивается в классическую пирамиду (unit → integration → e2e), а лежит **сбоку от неё** — это отдельная ось нефункциональных тестов: пирамида проверяет *что* система делает, performance — *насколько хорошо* она это делает под нагрузкой. Но внутри самого performance testing работает та же логика пирамиды — дёшево и часто внизу, дорого и редко наверху:
 
-```mermaid
-graph TB
-    subgraph "Performance Testing Pyramid"
-        E2E["Full-stack load test<br/>полное окружение, реальные БД/очереди"]
-        COMP["Component/service load<br/>один сервис + stub-зависимости"]
-        UNIT["Micro-benchmarks<br/>JMH: методы, алгоритмы"]
-    end
-    E2E --- COMP
-    COMP --- UNIT
-    style E2E fill:#ff6b6b,color:#000
-    style COMP fill:#ffd93d,color:#000
-    style UNIT fill:#6bcb77,color:#000
-```
+Пирамида performance testing — три уровня, от широкого верха к дешёвому низу:
+
+- **Full-stack load test** (верх) — полное окружение, реальные БД/очереди.
+- **Component/service load** (середина) — один сервис + stub-зависимости.
+- **Micro-benchmarks** (низ) — `JMH`: методы, алгоритмы.
 
 | Уровень | Инструмент | Когда |
 |---------|-----------|-------|
@@ -267,15 +254,13 @@ public class OrderLoadSimulation extends Simulation {
 - Характер отказа (graceful degradation vs cascading failure)
 - Скорость восстановления после снятия нагрузки
 
-```mermaid
-graph LR
-    A[Нормальная нагрузка<br/>OK] -->|+50%| B[Повышенная<br/>OK, latency растёт]
-    B -->|+100%| C[Перегрузка<br/>error rate 1-5%]
-    C -->|+50%| D[Breaking point<br/>error rate 50%+]
-    D -->|ещё| E[Коллапс<br/>недоступен]
-    style D fill:#f96
-    style E fill:#f66
-```
+Как нарастает деградация при stress-тесте, по шагам:
+
+1. **Нормальная нагрузка** — OK.
+2. `+50%` → **Повышенная** — OK, latency растёт.
+3. `+100%` → **Перегрузка** — error rate 1-5%.
+4. `+50%` → **Breaking point** — error rate 50%+.
+5. Ещё нагрузки → **Коллапс** — сервис недоступен.
 
 ```javascript
 // k6 stress test: от 100 до 2000 VU за 30 минут
@@ -307,12 +292,12 @@ export const options = {
 - Fragmentation (heap, disk)
 - Медленные деградации: latency растёт на 2ms/час
 
-```mermaid
-graph LR
-    A[Heap растёт<br/>стабильно] --> B[GC чаще и дольше]
-    B --> C[p99 latency растёт]
-    C --> D[OOMKilled<br/>через 18 часов]
-```
+Типичная цепочка деградации при утечке во время soak-теста:
+
+1. **Heap растёт** стабильно →
+2. **GC** срабатывает чаще и дольше →
+3. **p99 latency** растёт →
+4. **OOMKilled** — например, через 18 часов.
 
 **Практика:**
 - Длительность: минимум 4 часа, часто 24-72 часа
@@ -345,14 +330,14 @@ export const options = {
 };
 ```
 
-```mermaid
-graph LR
-    A[Normal 100 RPS] -->|10 сек| B[Spike 2000 RPS]
-    B -->|3 мин| C[Normal 100 RPS]
-    C --> D{Recovery<br/>успешный?}
-    D -->|Да| E[latency вернулась]
-    D -->|Нет| F[каскадная деградация]
-```
+Профиль spike-теста по шагам:
+
+1. **Normal** — 100 RPS.
+2. За `10 сек` → **Spike** — 2000 RPS.
+3. Через `3 мин` → откат к **Normal** — 100 RPS.
+4. Проверка: **recovery успешный?**
+   - **Да** → latency вернулась к норме.
+   - **Нет** → каскадная деградация.
 
 **Критичен для:**
 - E-commerce с распродажами и маркетинговыми акциями
@@ -382,12 +367,12 @@ graph LR
 | 4 pod × 1 CPU | 4 | 8 GB | 1450 (87% линейно) |
 | 8 pod × 1 CPU | 8 | 16 GB | 2400 (75% линейно) |
 
-```mermaid
-graph LR
-    A[1 pod] -->|×2| B[2 pods<br/>≈2× RPS]
-    B -->|×2| C[4 pods<br/>≈1.85× RPS]
-    C -->|×2| D[8 pods<br/>≈1.65× RPS<br/>узкое место: БД]
-```
+Прирост throughput при удвоении подов затухает:
+
+- **1 pod** → удвоение ресурсов →
+- **2 pods** — прирост ≈2× RPS → удвоение →
+- **4 pods** — прирост уже ≈1.85× RPS → удвоение →
+- **8 pods** — прирост ≈1.65× RPS; узкое место — БД.
 
 Падение эффективности с ростом нод (94% → 87% → 75% в таблице) — это норма: где-то остаётся разделяемый ресурс, который не масштабируется вместе с подами. Если масштабирование **резко не линейно**, ищем именно его: общая БД, distributed lock, ограниченное число партиций Kafka, единый кеш.
 
@@ -423,17 +408,14 @@ export const options = {
 | `Response time` | Полное время от отправки до получения ответа | ms |
 | `Load time` | Время загрузки ресурса (часто = response time + render) | ms |
 
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant S as Server
-    C->>S: Request
-    Note over C,S: Latency (network)
-    Note over S: Processing time
-    S->>C: Response
-    Note over C,S: Latency (network)
-    Note over C: Response time = Latency × 2 + Processing
-```
+Из чего складывается время одного запроса (`Client` → `Server` → `Client`), по порядку:
+
+1. `Client` отправляет **Request** серверу.
+2. Передача по сети — **Latency (network)**.
+3. На сервере — **Processing time** (обработка).
+4. `Server` возвращает **Response** клиенту.
+5. Обратная передача по сети — снова **Latency (network)**.
+6. Итог на клиенте: `Response time = Latency × 2 + Processing`.
 
 **В JMeter:**
 - `Latency` = время от отправки запроса до получения **первого байта** ответа (TTFB)
@@ -465,16 +447,6 @@ W — среднее время ответа (response time)
 | `p99` | 480 ms | 1% — дольше 480ms (у крупного сервиса это тысячи RPS) |
 | `p99.9` | 1200 ms | Редкие, но реальные случаи |
 | `max` | 8500 ms | Одиночные выбросы — часто шум, но полезно видеть |
-
-```mermaid
-graph LR
-    subgraph "Распределение latency"
-        A[p50 = 80ms] --> B[p95 = 220ms]
-        B --> C[p99 = 480ms<br/>ХВОСТ]
-        C --> D[p99.9 = 1200ms]
-        D --> E[max = 8500ms]
-    end
-```
 
 **Почему p99 критичен:**
 - У одного пользователя за сессию — 100+ запросов → **он с высокой вероятностью попал в 1%**
@@ -530,12 +502,11 @@ Apdex = (Satisfied + Tolerating / 2) / Total
 - **SLO** (`Service Level Objective`) — **цель**: какое значение SLI хотим держать (p99 < 300ms 99.9% времени)
 - **SLA** (`Service Level Agreement`) — **контракт**: обязательства перед клиентом, с санкциями за нарушение (доступность 99.9% или возврат денег)
 
-```mermaid
-graph TB
-    SLI[SLI: p99 latency = 180ms<br/>что измеряем СЕЙЧАС] --> SLO
-    SLO[SLO: p99 < 300ms 99.9% времени<br/>внутренняя цель команды] --> SLA
-    SLA[SLA: availability 99.9% за месяц<br/>контракт с клиентом]
-```
+Эти три уровня выстраиваются в цепочку — от факта к цели и контракту:
+
+- **SLI** — что измеряем СЕЙЧАС: например, p99 latency = 180ms.
+- **SLO** — внутренняя цель команды: p99 < 300ms 99.9% времени.
+- **SLA** — контракт с клиентом: availability 99.9% за месяц.
 
 **Связь с performance testing:**
 - Performance-тесты проектируются вокруг SLO (какая latency, при какой нагрузке)
@@ -569,16 +540,13 @@ export const options = {
 | **БД** | Connection pool saturation, slow queries, replication lag | pg_stat, Prometheus exporter |
 | **Очереди** | Consumer lag, queue depth, publish rate | Kafka exporter, RabbitMQ |
 
-```mermaid
-graph TB
-    subgraph "Обязательные дашборды теста"
-        A[Latency p50/p95/p99]
-        B[RPS + Error rate]
-        C[CPU / Memory / GC]
-        D[DB pool + slow queries]
-        E[Kafka lag / queue depth]
-    end
-```
+Обязательные дашборды на время теста:
+
+- **Latency** p50/p95/p99.
+- **RPS + Error rate**.
+- **CPU / Memory / GC**.
+- **DB pool + slow queries**.
+- **Kafka lag / queue depth**.
 
 **Как читать корреляцию.** Сам по себе рост latency ничего не объясняет — диагноз ставится по тому, *с чем* он совпадает по времени:
 - с ростом CPU → узкое место в вычислениях или алгоритмах
@@ -760,15 +728,13 @@ HEAP="-Xms4g -Xmx8g"
 
 JMeter поддерживает **master-slave** архитектуру: один master координирует N slave-нод, каждая из которых генерирует часть нагрузки.
 
-```mermaid
-graph TD
-    M[JMeter Master<br/>test plan + агрегация] -->|RMI| S1[Slave 1<br/>1000 VU]
-    M -->|RMI| S2[Slave 2<br/>1000 VU]
-    M -->|RMI| S3[Slave 3<br/>1000 VU]
-    S1 --> T[Target System]
-    S2 --> T
-    S3 --> T
-```
+Топология распределённого прогона:
+
+- **JMeter Master** (test plan + агрегация) по протоколу `RMI` раздаёт план на slave-ноды:
+  - **Slave 1** — 1000 VU;
+  - **Slave 2** — 1000 VU;
+  - **Slave 3** — 1000 VU.
+- Каждая slave-нода шлёт свою долю нагрузки в общий **Target System**.
 
 **Настройка:**
 
@@ -814,15 +780,16 @@ jmeter -n -t test.jmx -R slave1,slave2 -l results.jtl
 
 **Типичная архитектура теста:**
 
-```mermaid
-graph LR
-    A[Simulation class] --> B[HTTP Protocol config]
-    A --> C[Scenario<br/>ScenarioBuilder]
-    A --> D[Injection profile<br/>open/closed]
-    A --> E[Assertions]
-    C --> F[Feeders<br/>тестовые данные]
-    C --> G[Chain of exec/pause/check]
-```
+Из чего состоит тест в Gatling:
+
+- **Simulation class** — корень теста, который связывает:
+  - **HTTP Protocol config** — базовый URL, заголовки, таймауты;
+  - **Scenario** (`ScenarioBuilder`);
+  - **Injection profile** — open/closed;
+  - **Assertions**.
+- Внутри **Scenario** задаются:
+  - **Feeders** — тестовые данные;
+  - **Chain of exec/pause/check** — цепочка действий.
 
 Gatling чаще выбирают для:
 - Greenfield-проектов с code-first culture
@@ -923,13 +890,10 @@ setUp(scn.injectOpen(
 | **Closed** | Фиксированная парк клиентов (kiosk, desktop app), тестируем max concurrency |
 | **Open** | Web/mobile с открытым потоком, тестируем max arrival rate |
 
-```mermaid
-graph LR
-    A[Open model] -->|Arrival rate = const| B{Сервис замедлился}
-    B -->|очередь растёт| C[coordinated omission решена<br/>реальный throughput]
-    D[Closed model] -->|Concurrent = const| E{Сервис замедлился}
-    E -->|очередь не растёт| F[throughput падает<br/>скрывает проблему]
-```
+Как обе модели реагируют на замедление сервиса:
+
+- **Open model** (arrival rate = const): если сервис замедлился → очередь растёт → coordinated omission решена, виден реальный throughput.
+- **Closed model** (concurrent = const): если сервис замедлился → очередь не растёт → throughput падает и тем самым скрывает проблему.
 
 > Best practice для web-приложений: **open model**. Она вскрывает coordinated omission (см. [Q41](#q41-что-такое-coordinated-omission-и-почему-многие-инструменты-врут)).
 
@@ -1023,13 +987,11 @@ setUp(scn.injectOpen(...))
 | Extensions (xk6) | Kafka, gRPC, Redis, SQL |
 | Output plugins | InfluxDB, Prometheus, Datadog, JSON |
 
-```mermaid
-graph LR
-    A[k6 script<br/>JS/TS] --> B[k6 binary<br/>Go runtime]
-    B --> C[Target system]
-    B --> D[Metrics<br/>InfluxDB/Prometheus]
-    D --> E[Grafana dashboard]
-```
+Поток данных в k6:
+
+- **k6 script** (`JS/TS`) исполняется **k6 binary** (`Go runtime`);
+- бинарь шлёт нагрузку в **Target system** и параллельно выгружает **Metrics** в `InfluxDB`/`Prometheus`;
+- из хранилища метрики попадают на **Grafana dashboard**.
 
 **Когда k6 — правильный выбор:**
 - Команда пишет на JS/TS и не хочет учить Java/Scala
@@ -1315,17 +1277,16 @@ locust -f locustfile.py --worker --master-host=master.ip  # на каждой в
 | **GUI для QA** | Да, родной | Нет (Enterprise GUI платный) | Нет | Web UI real-time |
 | **Стоимость prod-scale** | Бесплатно | OSS free, Enterprise €89/мес+ | OSS free, Cloud платный | Бесплатно |
 
-```mermaid
-graph TD
-    A{Выбор инструмента} --> B{Какая команда?}
-    B -->|Java/JVM| C[Gatling]
-    B -->|JS/TS/DevOps| D[k6]
-    B -->|Python/DS| E[Locust]
-    B -->|QA без программирования| F[JMeter GUI]
-    A --> G{Какие протоколы?}
-    G -->|HTTP only| H[k6 / Gatling]
-    G -->|JDBC/JMS/SOAP| I[JMeter]
-```
+Как выбрать инструмент — по двум осям:
+
+- **По команде:**
+  - Java/JVM → **Gatling**;
+  - JS/TS/DevOps → **k6**;
+  - Python/DS → **Locust**;
+  - QA без программирования → **JMeter GUI**.
+- **По протоколам:**
+  - HTTP only → **k6 / Gatling**;
+  - JDBC/JMS/SOAP → **JMeter**.
 
 > Практичный совет: **Gatling** для Java-команд, **k6** для CI-heavy сред и Grafana-стека, **JMeter** для enterprise с legacy-протоколами, **Locust** для Python-команд. В корпоративных проектах часто **k6 для регрессии** в CI + **Gatling/JMeter для больших end-of-cycle прогонов**.
 
@@ -1511,18 +1472,18 @@ stage('Performance smoke') {
 
 На pre-prod окружении: 30-60 минут, реалистичная нагрузка, сравнение с baseline.
 
-```mermaid
-graph LR
-    A[PR merged] --> B[CI: unit/integration]
-    B --> C[CI: smoke perf<br/>3-5 мин]
-    C --> D{SLO OK?}
-    D -->|No| E[Block merge]
-    D -->|Yes| F[Merge to main]
-    F --> G[Nightly: full load<br/>30-60 мин]
-    G --> H{SLO OK vs baseline?}
-    H -->|No| I[Alert + Jira ticket]
-    H -->|Yes| J[Update baseline]
-```
+Полный пайплайн нагрузочных проверок, по шагам:
+
+1. **PR merged** →
+2. **CI: unit/integration** →
+3. **CI: smoke perf** (3-5 мин) →
+4. Проверка **SLO OK?**
+   - **No** → block merge;
+   - **Yes** → merge to main →
+5. **Nightly: full load** (30-60 мин) →
+6. Проверка **SLO OK vs baseline?**
+   - **No** → alert + Jira ticket;
+   - **Yes** → update baseline.
 
 **Ключевые практики:**
 - Thresholds = SLO → nonzero exit → CI fails
@@ -1542,14 +1503,11 @@ graph LR
 4. **Распределение latency** (histogram) — одногорбое или двугорбое?
 5. **Связь с метриками системы** — корреляция latency с CPU, GC, DB, Kafka lag
 
-```mermaid
-graph LR
-    A[JTL / JSON<br/>сырые результаты] --> B[HTML report<br/>Gatling/JMeter]
-    A --> C[InfluxDB/Prometheus]
-    C --> D[Grafana dashboard]
-    D --> E[Сравнение с APM<br/>Datadog/Elastic]
-    E --> F[Root cause]
-```
+Путь от сырых результатов к root cause:
+
+- **JTL / JSON** (сырые результаты) расходятся по двум веткам:
+  - → **HTML report** (`Gatling`/`JMeter`);
+  - → **InfluxDB/Prometheus** → **Grafana dashboard** → сравнение с **APM** (`Datadog`/`Elastic`) → **Root cause**.
 
 **Признаки проблем:**
 
@@ -1572,15 +1530,13 @@ graph LR
 
 Полноценный perf-test = нагрузка **+ наблюдение**. Только latency-график не покажет root cause.
 
-```mermaid
-graph TB
-    A[k6/Gatling/JMeter] -->|метрики теста| B[InfluxDB/Prometheus]
-    C[Сервис под нагрузкой] -->|actuator/metrics| B
-    D[K8s cluster] -->|node_exporter/cAdvisor| B
-    E[APM agent<br/>Datadog/Elastic APM] -->|traces/spans| F[APM backend]
-    B --> G[Grafana dashboard]
-    F --> G
-```
+Как связать нагрузку с наблюдением — кто и что куда пишет:
+
+- **k6/Gatling/JMeter** → метрики теста → **InfluxDB/Prometheus**.
+- **Сервис под нагрузкой** → actuator/metrics → **InfluxDB/Prometheus**.
+- **K8s cluster** → node_exporter/cAdvisor → **InfluxDB/Prometheus**.
+- **APM agent** (`Datadog`/`Elastic APM`) → traces/spans → **APM backend**.
+- Оба хранилища сходятся в одном **Grafana dashboard**: и **InfluxDB/Prometheus**, и **APM backend**.
 
 **k6 → Prometheus:**
 
@@ -1676,15 +1632,10 @@ Closed model: VU отправляет запрос → ждёт ответа →
 
 3. **Коррекция в анализе**: вычисляем "intended start time" и латенси от него, а не от фактической отправки
 
-```mermaid
-graph LR
-    A[Closed model<br/>VU ждёт ответа] --> B{Сервис замедлился}
-    B -->|отправляет реже| C[Coordinated omission<br/>latency занижен]
-    D[Open model<br/>arrivals независимы] --> E{Сервис замедлился}
-    E -->|очередь растёт| F[Latency честный<br/>видно деградацию]
-    style C fill:#f66
-    style F fill:#6f6
-```
+Почему coordinated omission возникает только в closed model:
+
+- **Closed model** (VU ждёт ответа): если сервис замедлился → VU отправляет запросы реже → coordinated omission, latency занижен.
+- **Open model** (arrivals независимы): если сервис замедлился → очередь растёт → latency честный, видно деградацию.
 
 > На интервью: "мы используем open model в k6 с `constant-arrival-rate` — это избегает coordinated omission и даёт честную картину latency при перегрузке".
 

@@ -132,16 +132,15 @@ updated: "2026-05-14"
 
 Профилирование не заменяет метрики, а дополняет их: его включают **после** сигнала о деградации или при адресной оптимизации критичного сценария. Метрики дёшевы и работают всегда; профиль дороже, поэтому снимается прицельно.
 
-```mermaid
-graph LR
-    A[Алерт по метрикам] --> B[Гипотеза]
-    B --> C[Профилирование]
-    C --> D[Root cause]
-    D --> E[Изменение кода]
-    E --> F[Re-profile]
-    F -->|подтверждено| G[Deploy]
-    F -->|не подтверждено| B
-```
+Рабочий цикл по шагам:
+
+1. **Алерт по метрикам** → формулируем **гипотезу**.
+2. Гипотеза → **профилирование**.
+3. Профилирование → находим **root cause**.
+4. Root cause → **изменение кода**.
+5. Изменение → **re-profile** (повторное профилирование), которое даёт развилку:
+   - **подтверждено** → **deploy**;
+   - **не подтверждено** → возврат к шагу с гипотезой (формулируем новую).
 
 Ключевой принцип: **profile → hypothesis → change → re-profile**.
 
@@ -215,18 +214,9 @@ for (int i = 0; i < array.length; i++) {
 
 **Архитектура JFR:**
 
-```mermaid
-graph TB
-    subgraph JVM
-        A[JFR Engine] --> B[Thread-local Buffers]
-        B --> C[Global Buffer Pool]
-        C --> D[Disk Repository]
-    end
-    D --> E[.jfr файл]
-    E --> F[JDK Mission Control]
-    E --> G[jfr CLI tool]
-    E --> H[Programmatic API]
-```
+- Внутри JVM данные идут по конвейеру: `JFR Engine` → `Thread-local Buffers` → `Global Buffer Pool` → `Disk Repository`.
+- С диска (`Disk Repository`) формируется `.jfr` файл.
+- Готовый `.jfr` файл читают три потребителя: `JDK Mission Control`, `jfr` CLI tool и Programmatic API.
 
 **Почему overhead такой низкий:**
 - Каждый поток пишет в **свой** thread-local буфер — нет борьбы за общий lock.
@@ -356,18 +346,13 @@ try (RecordingFile file = new RecordingFile(Path.of("recording.jfr"))) {
 
 **2. `perf_events`** (Linux) — ядерный механизм аппаратных счётчиков. Благодаря ему async-profiler сшивает native-стеки (JIT, GC, ядро) с Java-стеками в одном flame graph — видно даже то, что происходит ниже уровня байт-кода.
 
-```mermaid
-graph TB
-    subgraph async-profiler
-        A[perf_events / timer signal] -->|SIGPROF| B[Signal Handler]
-        B --> C[AsyncGetCallTrace]
-        C --> D[Java Stack Trace]
-        B --> E[Native Unwinding]
-        E --> F[Native Stack Trace]
-        D --> G[Merged Flame Graph]
-        F --> G
-    end
-```
+Как устроен сбор данных внутри `async-profiler` (от сигнала к итоговому графу):
+
+- `perf_events` / timer signal по сигналу `SIGPROF` запускает `Signal Handler`.
+- Из обработчика сигнала идут две параллельные ветки:
+  - `Signal Handler` → `AsyncGetCallTrace` → `Java Stack Trace`;
+  - `Signal Handler` → `Native Unwinding` → `Native Stack Trace`.
+- Обе ветки (`Java Stack Trace` и `Native Stack Trace`) сходятся в `Merged Flame Graph` — единый flame graph с Java- и native-стеками.
 
 **Преимущества:**
 - Нет `safepoint bias` — видит код даже внутри counted loops, который стандартные профайлеры пропускают.
@@ -441,19 +426,15 @@ profiler.execute("stop");
 
 `Flame graph` (изобретён Brendan Gregg) — это визуализация тысяч стек-трейсов, схлопнутых в одну картинку: чем шире блок, тем больше ресурса (CPU, аллокаций, ожиданий) на него приходится. Читается он не слева направо во времени, а «по ширине»: ищем самые широкие блоки. Правила чтения:
 
-```mermaid
-graph TB
-    subgraph "Flame Graph — как читать"
-        direction TB
-        A["main() — ширина = 100% CPU"]
-        A --> B["handleRequest() — 70%"]
-        A --> C["healthCheck() — 30%"]
-        B --> D["processData() — 40%"]
-        B --> E["serializeResponse() — 30%"]
-        D --> F["parseJson() — 25%"]
-        D --> G["validate() — 15%"]
-    end
-```
+Пример дерева вызовов на flame graph (в скобках — ширина блока, то есть доля CPU):
+
+- `main()` — ширина = 100% CPU
+  - `handleRequest()` — 70%
+    - `processData()` — 40%
+      - `parseJson()` — 25%
+      - `validate()` — 15%
+    - `serializeResponse()` — 30%
+  - `healthCheck()` — 30%
 
 **Ключевые принципы:**
 - **Ширина блока** = доля ресурса (времени CPU / аллокаций / lock waits)
@@ -549,15 +530,13 @@ jcmd <PID> JFR.start name=cpu settings=profile duration=60s \
 
 **`off-CPU`** — поток ничего не считает, а ждёт: lock, I/O, sleep, park, сетевой вызов. CPU при этом простаивает, но запрос всё равно тормозит.
 
-```mermaid
-graph LR
-    subgraph "Жизнь потока"
-        A[on-CPU: вычисления] --> B[off-CPU: ожидание I/O]
-        B --> C[on-CPU: обработка]
-        C --> D[off-CPU: lock wait]
-        D --> E[on-CPU: вычисления]
-    end
-```
+Жизнь потока — это чередование on-CPU и off-CPU фаз, например по порядку:
+
+1. on-CPU: вычисления →
+2. off-CPU: ожидание I/O →
+3. on-CPU: обработка →
+4. off-CPU: lock wait →
+5. on-CPU: вычисления.
 
 **Почему мало одного on-CPU:** самые частые причины медленных сервисов вообще не нагружают процессор, и CPU-профиль их «не видит»:
 - Поток ждёт ответа от БД — off-CPU.
@@ -683,15 +662,15 @@ java -XX:+HeapDumpOnOutOfMemoryError \
 
 **Стратегия поиска** — сравнить два снимка во времени и посмотреть, что растёт:
 
-```mermaid
-graph TD
-    A[Heap растёт после Full GC] --> B[Снять 2 heap dump]
-    B --> C["Сравнить histogram (delta)"]
-    C --> D[Найти растущие классы]
-    D --> E[Path to GC Roots]
-    E --> F[Найти нежелательную ссылку]
-    F --> G[Fix + verify]
-```
+Последовательность действий:
+
+1. Heap растёт после Full GC →
+2. снять 2 heap dump →
+3. сравнить histogram (delta) →
+4. найти растущие классы →
+5. построить Path to GC Roots →
+6. найти нежелательную ссылку →
+7. fix + verify.
 
 **Практические шаги:**
 
@@ -821,17 +800,12 @@ java -Xlog:gc*:file=gc.log:time,uptime,level,tags:filecount=5,filesize=50m \
      -jar myapp.jar
 ```
 
-**Ключевые метрики GC для связи с профилем:**
+**Ключевые метрики GC для связи с профилем.** Цепочка причинно-следственных связей:
 
-```mermaid
-graph LR
-    A[Allocation Rate] -->|высокий| B[Частые Young GC]
-    B -->|promotion| C[Рост Old Gen]
-    C -->|full| D[Full GC / Long Pause]
-    D -->|p99 spike| E[Пользовательская деградация]
-    
-    style D fill:#f66,color:#fff
-```
+- высокий **Allocation Rate** → частые **Young GC**;
+- через promotion → рост **Old Gen**;
+- при заполнении (full) → **Full GC / Long Pause** (ключевое звено цепочки);
+- скачок Full GC (p99 spike) → **пользовательская деградация**.
 
 **Анализ GC через JFR:**
 
@@ -914,19 +888,12 @@ public List<OrderDTO> toDto(List<Order> orders) {
 | `Elastic APM` | Есть (JFR-based) | Distributed traces | Open source core |
 | `Grafana` + `Pyroscope` | Continuous profiling | Tempo | Полностью open source |
 
-**Ключевая интеграция APM с профилированием:**
+**Ключевая интеграция APM с профилированием.** Путь от запроса до оптимизации:
 
-```mermaid
-graph TB
-    A[Пользовательский запрос] --> B[Distributed Trace]
-    B --> C[Медленный span]
-    C --> D[Profile для этого span]
-    D --> E[Горячий метод]
-    E --> F[Оптимизация]
-    
-    style C fill:#ff9,color:#333
-    style D fill:#9f9,color:#333
-```
+- пользовательский запрос → **Distributed Trace**;
+- из трейса → **медленный span** (ключевая точка перехода);
+- по медленному span → **profile для этого span** (вторая ключевая точка — связка trace → profile);
+- из профиля → **горячий метод** → **оптимизация**.
 
 **Сценарий применения:** в `Datadog` кликаешь на медленный span в trace — и сразу видишь CPU profile именно этого запроса. Раньше пришлось бы вручную воспроизводить нагрузку и угадывать окно профилирования; APM делает связь «медленный запрос → горячий метод» мгновенной.
 
@@ -942,16 +909,9 @@ graph TB
 
 **Архитектура:**
 
-```mermaid
-graph LR
-    subgraph "Production pods"
-        A1[Agent + profiler] --> B[Collector]
-        A2[Agent + profiler] --> B
-        A3[Agent + profiler] --> B
-    end
-    B --> C[Storage]
-    C --> D[UI: flame graphs, diff, trends]
-```
+- В каждом production-pod работает свой `Agent + profiler`; все агенты (несколько pod-ов) шлют данные в общий `Collector`.
+- `Collector` → `Storage` (хранилище профилей).
+- `Storage` → `UI`: flame graphs, diff, trends.
 
 **Инструменты:**
 
@@ -1096,20 +1056,16 @@ jcmd 1 VM.info | grep "container"
 
 Идея в том, чтобы профилирование запускалось не вручную «когда вспомнили», а автоматически — по алерту от метрик. Prometheus детектит деградацию, по типу проблемы триггерится нужный профиль, результат прилетает в Grafana как flame graph (см. [метрики и трассировка](../monitoring/metrics-tracing-interview.md)):
 
-```mermaid
-graph TD
-    A[Prometheus: метрики SLI] -->|алерт| B[Alert Manager]
-    B --> C{Тип проблемы}
-    C -->|CPU > 80%| D[Trigger CPU profile]
-    C -->|p99 > SLO| E[Trigger wall profile]
-    C -->|Heap > 80%| F[Trigger alloc profile]
-    D --> G[Grafana: flame graph]
-    E --> G
-    F --> G
-    G --> H[Root cause analysis]
-    H --> I[Fix + Deploy]
-    I -->|verify| A
-```
+Поток автоматизации по шагам:
+
+1. **Prometheus** (метрики SLI) по алерту → **Alert Manager**.
+2. Alert Manager → развилка по **типу проблемы**:
+   - CPU > 80% → trigger CPU profile;
+   - p99 > SLO → trigger wall profile;
+   - Heap > 80% → trigger alloc profile.
+3. Любой из этих триггеров → **Grafana: flame graph**.
+4. Grafana → **root cause analysis** → **fix + deploy**.
+5. После деплоя — verify, то есть возврат к метрикам Prometheus для проверки.
 
 **Автоматический trigger профилирования:**
 
@@ -1156,22 +1112,11 @@ public class ProfilingTrigger {
 
 Зрелость процесса профилирования проходит три уровня — от реактивного «тушим пожар» до встроенного в CI/CD. Цель — сдвинуть команду от ручного профилирования по факту инцидента к автоматическому обнаружению регрессий ещё до релиза.
 
-```mermaid
-graph TB
-    subgraph "Level 1: Reactive"
-        A[Инцидент] --> B[Ad-hoc profiling]
-    end
-    
-    subgraph "Level 2: Proactive"
-        C[Continuous profiling в prod] --> D[Regression detection]
-        D --> E[Automatic alerts]
-    end
-    
-    subgraph "Level 3: Integrated"
-        F[Profile в CI/CD pipeline] --> G[Performance budgets]
-        G --> H[Block merge если деградация]
-    end
-```
+Три уровня зрелости:
+
+- **Level 1: Reactive** — инцидент → ad-hoc profiling.
+- **Level 2: Proactive** — continuous profiling в prod → regression detection → automatic alerts.
+- **Level 3: Integrated** — profile в CI/CD pipeline → performance budgets → block merge, если есть деградация.
 
 **Практические шаги:**
 

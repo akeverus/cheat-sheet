@@ -138,15 +138,12 @@ updated: "2026-05-07"
 - **Stream Processing** — обработка данных в реальном времени (`Kafka Streams`, `Apache Flink`)
 - **Event Sourcing** — хранение потока событий как источника истины
 
-```mermaid
-graph LR
-    P1[Producer 1] --> K[Apache Kafka Cluster]
-    P2[Producer 2] --> K
-    K --> C1[Consumer 1]
-    K --> C2[Consumer 2]
-    K --> C3[Kafka Streams App]
-    K --> C4[Kafka Connect → DB]
-```
+Поток данных в этом примере: несколько producer'ов (`Producer 1`, `Producer 2`) пишут в общий `Apache Kafka Cluster`, а из него независимо читают разные потребители:
+
+- `Apache Kafka Cluster` → `Consumer 1`
+- `Apache Kafka Cluster` → `Consumer 2`
+- `Apache Kafka Cluster` → `Kafka Streams App`
+- `Apache Kafka Cluster` → `Kafka Connect → DB`
 
 **На собеседовании** ключевой акцент: Kafka — это не просто очередь сообщений, а **распределённый коммит-лог** с гарантиями хранения и воспроизведения. Эта формулировка сразу объясняет, почему здесь возможны replay, event sourcing и несколько групп потребителей одного потока.
 
@@ -167,25 +164,12 @@ Kafka — это набор слабосвязанных компонентов:
 | `Kafka Streams` | Библиотека потоковой обработки данных |
 | `Schema Registry` | Управление схемами данных (`Avro`, `Protobuf`, `JSON Schema`) |
 
-```mermaid
-graph TB
-    subgraph Kafka Cluster
-        B1[Broker 1]
-        B2[Broker 2]
-        B3[Broker 3]
-    end
-    subgraph Coordination
-        KC[KRaft Controller Quorum]
-    end
-    KC --> B1
-    KC --> B2
-    KC --> B3
-    P[Producers] --> B1
-    P --> B2
-    B1 --> CG[Consumer Group]
-    B2 --> CG
-    B3 --> CG
-```
+Как эти компоненты связаны в кластере:
+
+- **Kafka Cluster** состоит из брокеров `Broker 1`, `Broker 2`, `Broker 3` — они хранят данные.
+- **Coordination:** `KRaft Controller Quorum` координирует кластер и рассылает метаданные на каждый брокер (`KRaft Controller Quorum` → `Broker 1`, → `Broker 2`, → `Broker 3`).
+- `Producers` пишут на брокеры (`Producers` → `Broker 1`, → `Broker 2`).
+- Брокеры отдают данные `Consumer Group` (`Broker 1` → `Consumer Group`, `Broker 2` → `Consumer Group`, `Broker 3` → `Consumer Group`).
 
 ## Q3. Что такое `Topic`?
 
@@ -233,37 +217,26 @@ kafka-topics.sh --bootstrap-server localhost:9092 \
 - **Единый механизм безопасности** на весь стек
 - **Меньше операционной сложности** — на один компонент для мониторинга и обновления меньше
 
-```mermaid
-graph LR
-    subgraph "KRaft Controller Quorum"
-        C1[Controller 1<br/>Active]
-        C2[Controller 2<br/>Standby]
-        C3[Controller 3<br/>Standby]
-    end
-    C1 -->|Raft replication| C2
-    C1 -->|Raft replication| C3
-    C1 -->|metadata updates| B1[Broker 1]
-    C1 -->|metadata updates| B2[Broker 2]
-    C1 -->|metadata updates| B3[Broker 3]
-```
+Как устроен кворум контроллеров KRaft:
+
+- **KRaft Controller Quorum** состоит из `Controller 1` (Active) и `Controller 2`, `Controller 3` (Standby).
+- Активный `Controller 1` реплицирует лог метаданных на резервные контроллеры по протоколу Raft: `Controller 1` —(Raft replication)→ `Controller 2`, `Controller 1` —(Raft replication)→ `Controller 3`.
+- Он же рассылает обновления метаданных на брокеры: `Controller 1` —(metadata updates)→ `Broker 1`, → `Broker 2`, → `Broker 3`.
 
 ## Q6. (!) Что такое `Partition` и как она устроена?
 
 `Partition` — основная единица параллелизма и хранения в Kafka. Физически это упорядоченный append-only лог на диске брокера: новые записи всегда дописываются в конец, а уже записанные не меняются. Именно деление топика на партиции позволяет одновременно писать и читать с разных брокеров — но платой за это становится то, что порядок гарантируется только внутри одной партиции, а не по топику целиком.
 
-```mermaid
-graph LR
-    subgraph "Topic: orders (3 partitions)"
-        P0["Partition 0<br/>offset: 0,1,2,3,4"]
-        P1["Partition 1<br/>offset: 0,1,2,3"]
-        P2["Partition 2<br/>offset: 0,1,2"]
-    end
-    subgraph Brokers
-        B1[Broker 1<br/>Leader P0, Follower P1]
-        B2[Broker 2<br/>Leader P1, Follower P2]
-        B3[Broker 3<br/>Leader P2, Follower P0]
-    end
-```
+Например, топик `orders` с тремя партициями раскладывается по брокерам так:
+
+- **Topic: orders (3 partitions):**
+  - `Partition 0` — offset: 0,1,2,3,4
+  - `Partition 1` — offset: 0,1,2,3
+  - `Partition 2` — offset: 0,1,2
+- **Brokers** (распределение ролей Leader/Follower по партициям):
+  - `Broker 1` — Leader P0, Follower P1
+  - `Broker 2` — Leader P1, Follower P2
+  - `Broker 3` — Leader P2, Follower P0
 
 **Ключевые свойства:**
 - Порядок гарантируется **только внутри одной партиции**
@@ -336,17 +309,14 @@ public class OrderPartitioner implements Partitioner {
 
 `Producer` — клиент, который отправляет сообщения в топики Kafka. Ключевая деталь: producer не шлёт каждое сообщение по сети сразу. Он сериализует запись, выбирает партицию, копит сообщения в батчи по партициям (`RecordAccumulator`), а отдельный `Sender Thread` отправляет готовые батчи на брокеры. Эта буферизация — главный источник высокой пропускной способности Kafka.
 
-Внутренняя архитектура producer'а:
+Внутренняя архитектура producer'а по шагам:
 
-```mermaid
-graph LR
-    App[Application] -->|send| S[Serializer]
-    S --> P[Partitioner]
-    P --> RB[RecordAccumulator<br/>батчи по партициям]
-    RB -->|batch.size / linger.ms| Sender[Sender Thread]
-    Sender -->|Network I/O| B[Broker]
-    B -->|ack| Sender
-```
+1. `Application` вызывает `send` → `Serializer` (сериализация записи).
+2. `Serializer` → `Partitioner` (выбор партиции).
+3. `Partitioner` → `RecordAccumulator` (батчи по партициям).
+4. `RecordAccumulator` → `Sender Thread` — батч отправляется по срабатыванию `batch.size` / `linger.ms`.
+5. `Sender Thread` → `Broker` через Network I/O.
+6. `Broker` → `Sender Thread` — возвращает `ack` (подтверждение).
 
 **Ключевые параметры:**
 
@@ -423,30 +393,15 @@ props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 67108864); // 64 MB буфер
 - **внутри группы** партиции делятся (масштабирование, конкурентное чтение);
 - **между группами** чтение независимо — каждая группа получает полную копию потока (broadcast). Так один топик одновременно питает, например, сервис аналитики и сервис нотификаций.
 
-```mermaid
-graph TB
-    subgraph "Topic: orders (4 partitions)"
-        P0[Partition 0]
-        P1[Partition 1]
-        P2[Partition 2]
-        P3[Partition 3]
-    end
-    subgraph "Consumer Group A"
-        CA1[Consumer 1<br/>P0, P1]
-        CA2[Consumer 2<br/>P2, P3]
-    end
-    subgraph "Consumer Group B"
-        CB1[Consumer 1<br/>P0, P1, P2, P3]
-    end
-    P0 --> CA1
-    P1 --> CA1
-    P2 --> CA2
-    P3 --> CA2
-    P0 -.-> CB1
-    P1 -.-> CB1
-    P2 -.-> CB1
-    P3 -.-> CB1
-```
+Например, топик `orders` с четырьмя партициями (`Partition 0`–`Partition 3`) читают две независимые группы:
+
+- **Consumer Group A** делит партиции между двумя потребителями:
+  - `Consumer 1` — обрабатывает `Partition 0`, `Partition 1`.
+  - `Consumer 2` — обрабатывает `Partition 2`, `Partition 3`.
+- **Consumer Group B** состоит из одного потребителя, который получает все партиции топика:
+  - `Consumer 1` — обрабатывает `Partition 0`, `Partition 1`, `Partition 2`, `Partition 3`.
+
+Каждая группа получает полную копию потока, но внутри группы партиции поделены между её consumer'ами.
 
 **Правила:**
 - Если consumers > partitions → лишние consumers простаивают
@@ -518,18 +473,17 @@ spring:
 
 Репликация — основа отказоустойчивости Kafka. Каждая партиция хранится в нескольких копиях на разных брокерах (`replication.factor`). Одна реплика назначается `Leader` — через неё идёт вся запись и чтение, остальные `Followers` лишь догоняют её, постоянно вычитывая новые записи. Если брокер с Leader падает, одна из синхронных реплик становится новым Leader — данные не теряются (см. Q20).
 
-```mermaid
-graph LR
-    subgraph "Partition 0 (replication-factor=3)"
-        L["Broker 1<br/>Leader<br/>offset: 0-100"]
-        F1["Broker 2<br/>Follower (ISR)<br/>offset: 0-99"]
-        F2["Broker 3<br/>Follower (ISR)<br/>offset: 0-98"]
-    end
-    Producer -->|write| L
-    L -->|replicate| F1
-    L -->|replicate| F2
-    L -->|read| Consumer
-```
+Например, для `Partition 0` с `replication-factor=3` реплики распределены так:
+
+- `Broker 1` — Leader, offset: 0-100.
+- `Broker 2` — Follower (ISR), offset: 0-99.
+- `Broker 3` — Follower (ISR), offset: 0-98.
+
+Потоки данных:
+
+- `Producer` —(write)→ Leader (`Broker 1`).
+- Leader —(replicate)→ `Broker 2`; Leader —(replicate)→ `Broker 3`.
+- Leader —(read)→ `Consumer`.
 
 **Правила:**
 - **Только Leader** обслуживает запись и чтение (Kafka < 2.4; с 2.4 followers могут обслуживать чтение при настройке `replica.selector.class`)
@@ -936,13 +890,13 @@ public class KafkaStreamsConfig {
 | **Source Connector** | Внешняя система → Kafka | Debezium CDC, JDBC Source |
 | **Sink Connector** | Kafka → Внешняя система | Elasticsearch Sink, S3 Sink |
 
-```mermaid
-graph LR
-    DB[(PostgreSQL)] -->|Debezium Source| KC[Kafka Connect]
-    KC -->|topic: db.orders| K[Kafka]
-    K -->|Elasticsearch Sink| ES[(Elasticsearch)]
-    K -->|S3 Sink| S3[(Amazon S3)]
-```
+Например, поток данных через коннекторы выглядит так:
+
+- `PostgreSQL` —(Debezium Source)→ `Kafka Connect` — Source-коннектор тянет изменения из БД.
+- `Kafka Connect` —(topic: db.orders)→ `Kafka` — данные попадают в топик.
+- Дальше Sink-коннекторы выгружают их наружу:
+  - `Kafka` —(Elasticsearch Sink)→ `Elasticsearch`.
+  - `Kafka` —(S3 Sink)→ `Amazon S3`.
 
 ## Q35. (!) Зачем нужен `Schema Registry`?
 
@@ -1054,13 +1008,12 @@ spring:
 
 `Dead Letter Queue` (DLQ) или `Dead Letter Topic` (DLT) — отдельный топик, куда отправляются сообщения, которые не удалось обработать после всех попыток retry. Зачем это нужно: без DLT «ядовитое» сообщение (poison message) либо навсегда блокирует партицию бесконечными ретраями, либо просто молча теряется. DLT снимает дилемму — проблемная запись убирается из основного потока, обработка продолжается, а сообщение сохраняется для разбора и повторного запуска.
 
-```mermaid
-graph LR
-    T[Topic: orders] --> C[Consumer]
-    C -->|success| DB[(Database)]
-    C -->|retry 1,2,3 fail| DLT[orders.DLT]
-    DLT --> Alert[Alerting / Manual Review]
-```
+Поток обработки с DLT по шагам:
+
+- `Topic: orders` → `Consumer` — consumer читает сообщение.
+- При успехе: `Consumer` —(success)→ `Database`.
+- При неудаче после ретраев: `Consumer` —(retry 1,2,3 fail)→ `orders.DLT` — сообщение уходит в dead letter topic.
+- `orders.DLT` → `Alerting / Manual Review` — по DLT срабатывает алерт и проводится ручной разбор.
 
 **Реализация в Spring Kafka:**
 ```java
@@ -1183,22 +1136,18 @@ orders → orders-retry-0 → orders-retry-1 → orders-DLT
 
 **Фазы Rebalance (Eager Rebalance — старый алгоритм):**
 
-```mermaid
-sequenceDiagram
-    participant C1 as Consumer 1
-    participant C2 as Consumer 2
-    participant GC as Group Coordinator
+Участники: `Consumer 1`, `Consumer 2` и `Group Coordinator`. По порядку:
 
-    C1->>GC: JoinGroup Request
-    C2->>GC: JoinGroup Request
-    GC-->>C1: JoinGroup Response (leader)
-    GC-->>C2: JoinGroup Response (follower)
-    C1->>GC: SyncGroup (с assignment)
-    C2->>GC: SyncGroup
-    GC-->>C1: SyncGroup Response (partitions)
-    GC-->>C2: SyncGroup Response (partitions)
-    Note over C1,C2: Все остановили обработку на время rebalance!
-```
+1. `Consumer 1` → `Group Coordinator`: JoinGroup Request.
+2. `Consumer 2` → `Group Coordinator`: JoinGroup Request.
+3. `Group Coordinator` → `Consumer 1`: JoinGroup Response (leader) — этот consumer становится лидером группы.
+4. `Group Coordinator` → `Consumer 2`: JoinGroup Response (follower).
+5. `Consumer 1` → `Group Coordinator`: SyncGroup (с assignment) — лидер передаёт рассчитанное распределение.
+6. `Consumer 2` → `Group Coordinator`: SyncGroup.
+7. `Group Coordinator` → `Consumer 1`: SyncGroup Response (partitions).
+8. `Group Coordinator` → `Consumer 2`: SyncGroup Response (partitions).
+
+Важно: на время этого rebalance и `Consumer 1`, и `Consumer 2` останавливают обработку.
 
 **Проблема Eager Rebalance:** в фазе JoinGroup все consumer'ы отдают все свои партиции и ждут нового назначения — на это время обработка во всей группе встаёт. Это и есть «stop-the-world», который особенно болезнен при частых деплоях или нестабильной сети.
 
@@ -1302,18 +1251,15 @@ kafka-consumer-groups.sh \
 
 `Schema Registry` (Confluent) — централизованное хранилище схем сообщений, обеспечивающее контрактную совместимость между producer'ами и consumer'ами. Ключевая идея экономии: в сам топик пишется не полная схема, а лишь её короткий `schema_id`; полное определение лежит в Registry и подтягивается по id. Producer регистрирует схему и получает id, consumer по этому id запрашивает схему и десериализует данные.
 
-**Архитектура:**
+**Архитектура** (поток по шагам между `Producer (Java)`, `Schema Registry`, `Kafka Topic` и `Consumer (Java)`):
 
-```mermaid
-graph LR
-    Producer["Producer\n(Java)"] -->|"1. Регистрировать схему"| SR["Schema Registry"]
-    SR -->|"2. Вернуть schema_id"| Producer
-    Producer -->|"3. [magic_byte][schema_id][avro_bytes]"| Kafka["Kafka Topic"]
-    Kafka --> Consumer["Consumer\n(Java)"]
-    Consumer -->|"4. Запросить схему по schema_id"| SR
-    SR -->|"5. Вернуть схему"| Consumer
-    Consumer -->|"6. Десериализовать"| Consumer
-```
+1. `Producer (Java)` → `Schema Registry`: регистрировать схему.
+2. `Schema Registry` → `Producer (Java)`: вернуть `schema_id`.
+3. `Producer (Java)` → `Kafka Topic`: записать сообщение в формате `[magic_byte][schema_id][avro_bytes]`.
+4. `Kafka Topic` → `Consumer (Java)`: consumer читает сообщение.
+5. `Consumer (Java)` → `Schema Registry`: запросить схему по `schema_id`.
+6. `Schema Registry` → `Consumer (Java)`: вернуть схему.
+7. `Consumer (Java)`: десериализовать данные по полученной схеме.
 
 **Формат сообщения с Avro:**
 

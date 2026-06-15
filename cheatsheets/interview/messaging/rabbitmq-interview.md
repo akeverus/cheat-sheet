@@ -133,14 +133,12 @@ updated: "2026-05-07"
 
 ## Q2. (!) Из каких компонентов состоит модель AMQP?
 
-```mermaid
-graph LR
-    P[Producer] -->|publish| E[Exchange]
-    E -->|binding + routing key| Q1[Queue 1]
-    E -->|binding + routing key| Q2[Queue 2]
-    Q1 -->|consume| C1[Consumer 1]
-    Q2 -->|consume| C2[Consumer 2]
-```
+Поток сообщения по модели `AMQP`:
+
+- `Producer` → **publish** → `Exchange`;
+- `Exchange` → **binding + routing key** → `Queue 1` и `Queue 2` (одно сообщение раскладывается по подходящим очередям);
+- `Queue 1` → **consume** → `Consumer 1`;
+- `Queue 2` → **consume** → `Consumer 2`.
 
 Ключевая идея модели: producer **никогда не пишет в очередь напрямую**. Он публикует сообщение в `exchange`, а тот по правилам `binding` раскладывает его по очередям. Это и есть источник гибкости `AMQP` — связь «кто отправил» и «кто получит» развязана.
 
@@ -188,20 +186,12 @@ factory.setVirtualHost("/my-app");
 
 ## Q5. (!) Какие типы Exchange существуют в RabbitMQ?
 
-```mermaid
-graph TD
-    subgraph "Типы Exchange"
-        D[Direct Exchange]
-        F[Fanout Exchange]
-        T[Topic Exchange]
-        H[Headers Exchange]
-    end
-    D -->|точный routing key| Q1[Queue]
-    F -->|все binding| Q2[Queue]
-    F -->|все binding| Q3[Queue]
-    T -->|pattern match| Q4[Queue]
-    H -->|заголовки сообщения| Q5[Queue]
-```
+Как каждый тип `exchange` выбирает очереди:
+
+- `Direct Exchange` → по **точному routing key** → в одну очередь;
+- `Fanout Exchange` → по **всем binding** → во все привязанные очереди (например, сразу в две);
+- `Topic Exchange` → по **pattern match** → в подходящие по паттерну очереди;
+- `Headers Exchange` → по **заголовкам сообщения** → в очереди с совпавшими заголовками.
 
 Тип `exchange` определяет **алгоритм маршрутизации** — как именно брокер решает, в какие очереди положить сообщение. Всего их четыре, и отличаются они только этим правилом выбора очередей:
 
@@ -220,12 +210,11 @@ graph TD
 
 **`Direct Exchange`** доставляет сообщение в те очереди, у которых `binding key` **точно совпадает** (посимвольно) с `routing key` сообщения. Никаких паттернов — только строгое равенство строк.
 
-```mermaid
-graph LR
-    P[Producer] -->|routing_key=error| E[Direct Exchange]
-    E -->|binding=error| Q1[error-queue]
-    E -->|binding=info| Q2[info-queue]
-```
+Пример маршрутизации:
+
+- `Producer` публикует в `Direct Exchange` сообщение с `routing_key=error`;
+- у `error-queue` `binding=error` — совпадает, сообщение уходит туда;
+- у `info-queue` `binding=info` — не совпадает, сообщение её не получает.
 
 ```java
 // Объявление direct exchange
@@ -267,15 +256,11 @@ channel.basicPublish("notifications", "", null, body);
 - `*` — заменяет ровно **одно** слово;
 - `#` — заменяет **ноль или более** слов.
 
-Это даёт иерархическую маршрутизацию: одно событие может одновременно попасть и в узкую очередь («ошибки auth в Европе»), и в широкую («всё из Европы»), и в сквозную («все ошибки»). Ниже один и тот же ключ `eu.auth.error` совпадает с тремя разными биндингами:
+Это даёт иерархическую маршрутизацию: одно событие может одновременно попасть и в узкую очередь («ошибки auth в Европе»), и в широкую («всё из Европы»), и в сквозную («все ошибки»). Например, `Producer` публикует в `Topic Exchange` сообщение с ключом `eu.auth.error`, и этот один ключ совпадает с тремя разными биндингами:
 
-```mermaid
-graph LR
-    P[Producer] -->|"eu.auth.error"| E[Topic Exchange]
-    E -->|"*.*.error"| Q1[all-errors]
-    E -->|"eu.#"| Q2[eu-all]
-    E -->|"eu.auth.*"| Q3[eu-auth-logs]
-```
+- биндинг `*.*.error` → очередь `all-errors`;
+- биндинг `eu.#` → очередь `eu-all`;
+- биндинг `eu.auth.*` → очередь `eu-auth-logs`.
 
 ```java
 channel.exchangeDeclare("logs.topic", "topic", true);
@@ -451,12 +436,11 @@ args.put("x-overflow", "reject-publish"); // отклонить новое со�
 
 **`Routing Key`** — строка-ключ, которую указывает **producer** в момент публикации каждого сообщения. `Exchange` сравнивает её с `binding key` всех биндингов и так решает, куда направить сообщение (исключение — `fanout`, который ключ игнорирует).
 
-```mermaid
-graph LR
-    E[Exchange] -->|binding key = "order.created"| Q1[orders-queue]
-    E -->|binding key = "payment.*"| Q2[payments-queue]
-    E -->|binding key = "#"| Q3[audit-queue]
-```
+Пример набора биндингов одного `Exchange`:
+
+- `binding key = "order.created"` → очередь `orders-queue`;
+- `binding key = "payment.*"` → очередь `payments-queue`;
+- `binding key = "#"` → очередь `audit-queue`.
 
 Как трактуется `binding key`, зависит от типа exchange: в `direct` — это точная строка для посимвольного сравнения, в `topic` — паттерн с `*` и `#`, а в `fanout` он вообще игнорируется.
 
@@ -476,13 +460,12 @@ graph LR
 
 Логика такая: брокер доставляет сообщение и переводит его в состояние `unacked` — оно по-прежнему числится за consumer-ом и **не удаляется**. Удалит его брокер только после `basicAck`.
 
-```mermaid
-sequenceDiagram
-    Queue->>Consumer: deliver(deliveryTag=1)
-    Consumer->>Consumer: обработка
-    Consumer->>Queue: basicAck(deliveryTag=1)
-    Queue->>Queue: удалить сообщение
-```
+Поток подтверждения по шагам:
+
+1. `Queue` → `Consumer`: доставляет сообщение — `deliver(deliveryTag=1)`.
+2. `Consumer`: выполняет обработку.
+3. `Consumer` → `Queue`: подтверждает — `basicAck(deliveryTag=1)`.
+4. `Queue`: удаляет сообщение.
 
 Именно это даёт устойчивость к падению consumer-а: если он упал (или закрылось соединение) до отправки `ack`, брокер возвращает «зависшее» `unacked`-сообщение обратно в состояние `ready` и передаёт его другому consumer-у. Сообщение не теряется — отсюда гарантия at-least-once.
 
@@ -584,14 +567,12 @@ channel.basicPublish("exchange", "key", null, body);
 
 Технически `DLX` — это не отдельная сущность, а связка: на основной очереди ставят аргумент `x-dead-letter-exchange`, и любой `exchange` становится для неё dead-letter-приёмником.
 
-```mermaid
-graph LR
-    P[Producer] -->|publish| E[Main Exchange]
-    E --> Q[Main Queue]
-    Q -->|nack / ttl / overflow| DLX[Dead Letter Exchange]
-    DLX --> DLQ[Dead Letter Queue]
-    DLQ --> A[Alerting / Retry]
-```
+Путь сообщения через dead-letter-механизм:
+
+- `Producer` → **publish** → `Main Exchange` → `Main Queue`;
+- `Main Queue` → при **nack / ttl / overflow** → `Dead Letter Exchange` (DLX);
+- `Dead Letter Exchange` → `Dead Letter Queue` (DLQ);
+- `Dead Letter Queue` → **Alerting / Retry** (алертинг или повторная обработка).
 
 Настройка:
 ```java
@@ -627,13 +608,10 @@ channel.queueDeclare("main-queue", true, false, false, args);
 
 Получается замкнутый цикл `main → DLX → retry-queue (TTL) → main exchange → main`, где TTL retry-очереди и есть пауза между попытками:
 
-```mermaid
-graph LR
-    Q[Main Queue] -->|nack| DLX[DLX]
-    DLX --> RQ[Retry Queue\nx-message-ttl=5000]
-    RQ -->|после TTL| ME[Main Exchange]
-    ME --> Q
-```
+- `Main Queue` → при **nack** → `DLX`;
+- `DLX` → `Retry Queue` (с `x-message-ttl=5000`);
+- `Retry Queue` → **после TTL** → `Main Exchange`;
+- `Main Exchange` → `Main Queue` (сообщение возвращается на повторную обработку).
 
 ```java
 // Retry Queue — задержка 5 секунд, после истечения TTL → обратно в main exchange
@@ -665,15 +643,10 @@ channel.basicQos(10);
 
 **`prefetchCount=0`** — без ограничений: брокер отправляет всё сразу, перегружая consumer-а и память.
 
-**`prefetchCount=1`** — честное распределение (fair dispatch): consumer получает следующее сообщение только после `ack` предыдущего. Так свободный consumer всегда забирает работу первым — нагрузка раскладывается по фактической скорости, а не поровну. На диаграмме быстрый воркер успевает обработать 80 сообщений, медленный — 20:
+**`prefetchCount=1`** — честное распределение (fair dispatch): consumer получает следующее сообщение только после `ack` предыдущего. Так свободный consumer всегда забирает работу первым — нагрузка раскладывается по фактической скорости, а не поровну. Например, на очередь из 100 сообщений с `prefetch=1` подписаны два consumer-а:
 
-```mermaid
-graph LR
-    Q[Queue: 100 msg] -->|prefetch=1| C1[Consumer 1\nbыстрый]
-    Q -->|prefetch=1| C2[Consumer 2\nмедленный]
-    C1 -->|обработал 80| R1[80 messages]
-    C2 -->|обработал 20| R2[20 messages]
-```
+- `Consumer 1` (быстрый) с `prefetch=1` — успевает обработать 80 сообщений;
+- `Consumer 2` (медленный) с `prefetch=1` — обрабатывает 20 сообщений.
 
 ---
 
@@ -696,19 +669,11 @@ graph LR
 
 Кластер `RabbitMQ` — это несколько узлов (`node`), которые делят общее пространство имён и выглядят для клиента как единый брокер. Главное, что нужно понимать на собеседовании: кластеризация по умолчанию решает **масштабирование и общую топологию**, но **не отказоустойчивость очередей**.
 
-```mermaid
-graph TD
-    subgraph "RabbitMQ Cluster"
-        N1[Node 1\nram]
-        N2[Node 2\ndisc]
-        N3[Node 3\ndisc]
-        N1 <--> N2
-        N2 <--> N3
-        N1 <--> N3
-    end
-    P[Producer] --> N1
-    C[Consumer] --> N3
-```
+Типичная топология кластера `RabbitMQ`:
+
+- кластер состоит из трёх узлов — `Node 1` (тип `ram`), `Node 2` (тип `disc`), `Node 3` (тип `disc`);
+- все узлы связаны друг с другом напрямую (полная сетка): `Node 1` ↔ `Node 2`, `Node 2` ↔ `Node 3`, `Node 1` ↔ `Node 3`;
+- `Producer` может подключиться к любому узлу (например, к `Node 1`), а `Consumer` — к другому (например, к `Node 3`); для клиента кластер выглядит единым брокером.
 
 **Что реплицируется, а что нет** — это ключевой момент:
 - **Метаданные реплицируются** на все узлы: `exchange`, `binding`, `vhost`, пользователи, политики. Поэтому к любому узлу можно подключиться и увидеть одну и ту же топологию.
@@ -944,27 +909,11 @@ public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
 
 ## Q36. (!) Какие основные паттерны обмена сообщениями реализуются в RabbitMQ?
 
-```mermaid
-graph TD
-    subgraph "Work Queue (Task Queue)"
-        WP[Producer] --> WQ[Queue]
-        WQ --> WC1[Worker 1]
-        WQ --> WC2[Worker 2]
-    end
+Структура трёх базовых паттернов:
 
-    subgraph "Pub/Sub"
-        PP[Producer] --> FE[Fanout Exchange]
-        FE --> FQ1[Queue 1 → Sub 1]
-        FE --> FQ2[Queue 2 → Sub 2]
-    end
-
-    subgraph "RPC"
-        RP[Client] -->|reply_to=callback.queue| RE[RPC Queue]
-        RE --> RS[RPC Server]
-        RS --> RQ[callback.queue]
-        RQ --> RP
-    end
-```
+- **Work Queue (Task Queue):** `Producer` → `Queue`, из которой читают `Worker 1` и `Worker 2` (конкурируют за задачи одной очереди).
+- **Pub/Sub:** `Producer` → `Fanout Exchange`, который копирует сообщение в `Queue 1` (→ Sub 1) и `Queue 2` (→ Sub 2).
+- **RPC:** `Client` → `RPC Queue` (с `reply_to=callback.queue`) → `RPC Server`; сервер кладёт ответ в `callback.queue`, откуда его читает `Client`.
 
 Все паттерны `RabbitMQ` — это, по сути, комбинации уже знакомых кирпичиков: тип `exchange` + способ потребления. Различаются они тем, как именно сообщение «размножается» и кто его получает.
 
@@ -985,13 +934,12 @@ graph TD
 
 RPC поверх очередей строится на двух деталях: **`reply_to`** и **`correlationId`**. Клиент создаёт временную reply-очередь, кладёт её имя в свойство `reply_to` запроса, а в `correlationId` — уникальный идентификатор. Сервер обрабатывает запрос и отправляет ответ в очередь из `reply_to`, копируя тот же `correlationId`. Клиент по этому id сопоставляет пришедший ответ с конкретным запросом — это нужно, потому что в одну reply-очередь могут прилетать ответы на несколько параллельных запросов.
 
-```mermaid
-sequenceDiagram
-    Client->>RPC Queue: request (reply_to=callback-queue, correlationId=123)
-    RPC Server->>RPC Queue: consume
-    RPC Server->>Callback Queue: response (correlationId=123)
-    Client->>Callback Queue: consume (filter by correlationId=123)
-```
+Поток RPC по шагам:
+
+1. `Client` → `RPC Queue`: отправляет request с `reply_to=callback-queue` и `correlationId=123`.
+2. `RPC Server` → `RPC Queue`: вычитывает запрос (consume).
+3. `RPC Server` → `Callback Queue`: отправляет response с тем же `correlationId=123`.
+4. `Client` → `Callback Queue`: вычитывает ответ, фильтруя по `correlationId=123`.
 
 ```java
 // Клиент
