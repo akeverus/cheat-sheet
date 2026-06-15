@@ -291,6 +291,12 @@ cream-канва, серифные заголовки, один яркий си�
 editorial.css → бамп `v=N` в `head.html` (2 строки: preload+stylesheet). Оверлеи
 `swiss.css`/`linear.css`/`broadsheet.css` — там же (`v=N`), бампать при правке.
 app.js → `v=N` в result/settings/focus-training (3). stats.js → stats.html (1).
-Текущее: editorial.css **v67**, swiss.css **v3**, linear.css **v3**,
-broadsheet.css **v1**, app.js **v29**,
+Текущее: editorial.css **v70**, swiss.css **v4**, linear.css **v4**,
+broadsheet.css **v2**, app.js **v31**,
 stats.js **v7**.
+
+> **Mermaid удалён (2026-06-15).** Проект отказался от mermaid-диаграмм: убраны
+> CDN-загрузка mermaid.js и фрагмент `mermaid-init.html`, параметр `includeMermaid`
+> у `head(...)`, рендер-ветка в `app.js`. `MarkdownRenderService` теперь вырезает
+> ```` ```mermaid ```` блоки из вывода (CDN-зависимость и `securityLevel:'loose'`
+> исчезли). Диаграммы в контенте — ASCII/текст (см. cheatsheet-writer skill).

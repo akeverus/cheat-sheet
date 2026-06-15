@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:fragment="head(title, includeMermaid, includeChart)">
+<head th:fragment="head(title, includeChart)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Цвет браузерного chrome для мобильных (Android Chrome, iOS Safari). -->
@@ -126,8 +126,8 @@
     <title th:text="${title}">Подготовка к собеседованию</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- DNS-prefetch для CDN-источников, чтобы first-byte highlight.js / mermaid /
-         chart.js пришёл быстрее (TCP-handshake идёт параллельно с парсингом HTML). -->
+    <!-- DNS-prefetch для CDN-источников, чтобы first-byte highlight.js / chart.js
+         пришёл быстрее (TCP-handshake идёт параллельно с парсингом HTML). -->
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     <!-- Шрифты по refero-якорям (fallback-цепочки самих спек): Lora — serif-
@@ -140,8 +140,8 @@
     <!-- editorial.css — общая структурная база + дефолт-дизайн (Anthropic-якорь).
          Самодостаточна: reset, типошкала, утилиты, обе темы, reduced-motion.
          Preload — браузер скачивает её параллельно с парсингом head → меньше FOUC. -->
-    <link rel="preload" as="style" th:href="@{/css/editorial.css(v=69)}">
-    <link rel="stylesheet" th:href="@{/css/editorial.css(v=69)}">
+    <link rel="preload" as="style" th:href="@{/css/editorial.css(v=70)}">
+    <link rel="stylesheet" th:href="@{/css/editorial.css(v=70)}">
     <!-- Дизайн-оверлеи мульти-дизайн-системы (см. window.__design выше). Грузятся
          ПОСЛЕ базы editorial.css; активен только тот, чей html[data-design] выбран.
          Перебивают дефолтные editorial-токены по специфичности (0,1,1 > :root 0,1,0). -->
@@ -152,7 +152,7 @@
          выполнит ресурс, только если его sha512 совпадает. Хэши пересчитаны из
          самих файлов (openssl dgst -sha512). ВСЕ CDN-ресурсы пиннятся на ТОЧНУЮ
          версию с immutable-URL (cache-control: immutable) → SRI стабилен, хэш не
-         «плывёт» при обновлении CDN. highlight.js — cdnjs; mermaid/chart.js —
+         «плывёт» при обновлении CDN. highlight.js — cdnjs; chart.js —
          jsdelivr (оба отдают access-control-allow-origin:* для crossorigin). -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"
           integrity="sha512-Jk4AqjWsdSzSWCSuQTfYRIF84Rq/eV0G2+tu07byYwHcbTGfdmLrHjUSwvzp5HvbiqK4ibmNwdcG49Y5RGYPTg=="
@@ -161,9 +161,7 @@
          app.js на AJAX-контенте) — оба срабатывают ПОСЛЕ парсинга. defer-скрипты
          исполняются по порядку до DOMContentLoaded, поэтому hljs гарантированно
          готов к подсветке, но больше НЕ блокирует первый рендер (render-blocking).
-         Guard `typeof hljs === 'undefined'` ниже всё равно деградирует мягко.
-         ВАЖНО: mermaid НЕ deferим — mermaid-init вызывает mermaid.initialize()
-         инлайн во время парсинга; defer там убил бы все диаграммы. -->
+         Guard `typeof hljs === 'undefined'` ниже всё равно деградирует мягко. -->
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"
             integrity="sha512-D9gUyxqja7hBtkWpPWGt9wfbfaMGVt9gnyCvYa+jojwwPHLCzUm5i8rpk7vD7wNee9bA35eYIjobYPaQuKS1MQ=="
             crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -174,14 +172,6 @@
             document.querySelectorAll('.markdown-content pre code').forEach(function(b) { hljs.highlightElement(b); });
         });
     </script>
-    <th:block th:if="${includeMermaid}">
-        <!-- mermaid НЕ deferим (mermaid-init вызывает initialize() инлайн во время
-             парсинга). Exact-pin 11.12.0 (= то, что отдавал диапазон @11) + SRI. -->
-        <script src="https://cdn.jsdelivr.net/npm/mermaid@11.12.0/dist/mermaid.min.js"
-                integrity="sha512-5TKaYvhenABhlGIKSxAWLFJBZCSQw7HTV7aL1dJcBokM/+3PNtfgJFlv8E6Us/B1VMlQ4u8sPzjudL9TEQ06ww=="
-                crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-        <script th:replace="~{fragments/mermaid-init :: mermaid-init}"></script>
-    </th:block>
     <th:block th:if="${includeChart}">
         <!-- Exact-pin 4.5.0 UMD-min (раньше был unversioned /npm/chart.js = latest:
              авто-обновлялся, мог сломать графики без предупреждения) + SRI.

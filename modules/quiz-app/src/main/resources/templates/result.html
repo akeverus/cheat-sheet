@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru" data-design="editorial" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head(title='Результат — Подготовка к собеседованию', includeMermaid=true, includeChart=false)}"></head>
+<head th:replace="~{fragments/head :: head(title='Результат — Подготовка к собеседованию', includeChart=false)}"></head>
 <body class="result-page">
 <a class="skip-link" href="#main-content">Перейти к результату</a>
 <header th:replace="~{fragments/header :: header(pageTitle='Результат — Подготовка к собеседованию', statsPage=false, activePage='focus', showPrimaryNav=true)}"></header>
@@ -119,16 +119,13 @@
             </div>
         </div>
 
-        <div class="question-side" th:if="${aiEnabled and (diagram != null or (result.question.questionType != null and result.question.questionType.name() == 'CODE' and result.question.codeSnippet() != null))}">
-            <div th:if="${diagram != null}" class="question-diagram">
-                <div class="mermaid" th:text="${diagram}">diagram code</div>
-            </div>
-            <pre th:if="${result.question.questionType != null and result.question.questionType.name() == 'CODE' and result.question.codeSnippet() != null}" class="question-code"><code th:text="${result.question.codeSnippet()}">код</code></pre>
+        <div class="question-side" th:if="${aiEnabled and result.question.questionType != null and result.question.questionType.name() == 'CODE' and result.question.codeSnippet() != null}">
+            <pre class="question-code"><code th:text="${result.question.codeSnippet()}">код</code></pre>
         </div>
     </div>
 </section>
 
-<script th:src="@{/js/app.js(v=29)}"></script>
+<script th:src="@{/js/app.js(v=31)}"></script>
 
 <!-- Связанные вопросы -->
 <div th:if="${relatedQuestions != null and !relatedQuestions.isEmpty()}" id="result-related-questions" class="related-questions related-questions-block">

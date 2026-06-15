@@ -1323,10 +1323,9 @@
   // sanitizeHtml схлопывал таблицу в плоский текст ячеек — пользователь видел
   // мешанину вместо разметки в пояснениях и чек-листах.
   const ALLOWED_TAGS = new Set(['P', 'BR', 'STRONG', 'EM', 'B', 'I', 'UL', 'OL', 'LI', 'CODE', 'PRE', 'A', 'BLOCKQUOTE', 'H1', 'H2', 'H3', 'H4', 'TABLE', 'THEAD', 'TBODY', 'TR', 'TH', 'TD', 'HR', 'DIV', 'SPAN']);
-  // На этих тегах сохраняем class: <div class="mermaid"> (диаграммы) и
-  // <code class="language-java"> (подсветка highlight.js). Без class
-  // динамически вставленный ответ терял диаграммы (mermaid показывался сырым
-  // текстом graph TD...) и подсветку кода. class не исполняет JS — безопасно.
+  // На этих тегах сохраняем class: <code class="language-java"> (подсветка
+  // highlight.js). Без class динамически вставленный ответ терял подсветку кода.
+  // class не исполняет JS — безопасно.
   const CLASS_PRESERVE_TAGS = new Set(['DIV', 'SPAN', 'CODE', 'PRE']);
 
   function sanitizeNode(node) {
@@ -1377,39 +1376,14 @@
     return wrapper.innerHTML;
   }
 
-  // Дорисовывает mermaid-диаграммы и highlight.js в контенте, вставленном
-  // ПОСЛЕ DOMContentLoaded (ответ/пояснения приходят через AJAX, и начальные
-  // инициализаторы mermaid/hljs их уже не трогают). Без этого диаграмма
-  // оставалась сырым `graph TD ...`, а код — без подсветки.
+  // Дорисовывает highlight.js-подсветку в контенте, вставленном ПОСЛЕ
+  // DOMContentLoaded (ответ/пояснения приходят через AJAX, и начальный
+  // hljs-инициализатор их уже не трогает). Без этого код оставался без подсветки.
   function renderDynamicContent(container) {
     if (!container) return;
     if (typeof hljs !== 'undefined') {
       container.querySelectorAll('pre code').forEach(function (block) {
         try { hljs.highlightElement(block); } catch (_) { /* подсветка не критична */ }
-      });
-    }
-    if (typeof mermaid !== 'undefined') {
-      container.querySelectorAll('.mermaid').forEach(async function (el) {
-        if (el.getAttribute('data-rendered') === 'true') return;
-        try {
-          const id = 'mmd-dyn-' + Math.random().toString(36).slice(2);
-          const res = await mermaid.render(id, el.textContent);
-          // text/html-парсинг (как innerHTML, но без присваивания): достаём <svg>
-          // и переносим узлом — избегаем innerHTML на живом элементе.
-          const parsed = new DOMParser().parseFromString(res.svg, 'text/html');
-          const svg = parsed.body.querySelector('svg');
-          if (svg) {
-            svg.removeAttribute('height');
-            svg.style.width = '100%';
-            svg.style.height = 'auto';
-            el.replaceChildren(document.importNode(svg, true));
-            el.setAttribute('data-rendered', 'true');
-          } else {
-            el.remove();
-          }
-        } catch (_) {
-          el.remove();
-        }
       });
     }
   }
@@ -1543,7 +1517,7 @@
         label.classList.add(optExpl.correct ? 'option-correct' : (optionId === data.selectedOptionId ? 'option-wrong' : 'option-other'));
       }
     });
-    // Подсветка кода / mermaid в только что вставленных пояснениях вариантов.
+    // Подсветка кода в только что вставленных пояснениях вариантов.
     renderDynamicContent(optionsContainer);
   }
 
@@ -1963,9 +1937,9 @@
   // Browse-режим флешкарты (вне FLASHCARD-сессии): раскрытие — нативный <details>
   // (PE — работает без JS). Серверный POST /flashcard-reveal здесь невозможен (нет
   // сессии) и терял бы тему через redirect:/. Ответ уже отрендерён сервером внутри
-  // details. JS лишь: (1) при первом открытии дорисовывает mermaid/код (display:none
-  // в закрытом details не даёт mermaid измерить размеры), (2) синхронизирует подпись
-  // summary. ::before-стрелка ▸/▾ — пустоэлемент, textContent её не затрагивает.
+  // details. JS лишь: (1) при первом открытии дорисовывает подсветку кода,
+  // (2) синхронизирует подпись summary. ::before-стрелка ▸/▾ — пустоэлемент,
+  // textContent её не затрагивает.
   function initBrowseFlashcardReveal() {
     const details = document.getElementById('browse-details');
     const summary = document.getElementById('browse-reveal-btn');
@@ -1973,9 +1947,8 @@
     if (!details || !summary || !answer) return;
     details.addEventListener('toggle', () => {
       summary.textContent = details.open ? 'Скрыть ответ' : 'Показать ответ';
-      // Гидратируем (mermaid + hljs) ОДИН раз при первом раскрытии: hljs 11.x при
-      // повторном highlightElement по уже подсвеченному блоку варнит и дублирует
-      // span-обёртки. mermaid защищён своим data-rendered, но hljs — нет.
+      // Гидратируем (hljs) ОДИН раз при первом раскрытии: hljs 11.x при повторном
+      // highlightElement по уже подсвеченному блоку варнит и дублирует span-обёртки.
       if (details.open && !details.dataset.hydrated) {
         details.dataset.hydrated = '1';
         renderDynamicContent(answer);
