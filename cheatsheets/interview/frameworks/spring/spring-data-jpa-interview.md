@@ -196,18 +196,13 @@ public class UserService {
 
 ## Q2. (!) Какова иерархия репозиториев в `Spring Data`?
 
-Иерархия интерфейсов репозиториев — от общего к конкретному:
+Иерархия интерфейсов репозиториев — от общего к конкретному (стрелка означает «расширяет»):
 
-```mermaid
-graph TD
-    R["Repository&lt;T, ID&gt;<br/>маркерный интерфейс"] --> CR["CrudRepository&lt;T, ID&gt;<br/>save, findById, delete, count"]
-    CR --> LCR["ListCrudRepository&lt;T, ID&gt;<br/>findAll() → List"]
-    CR --> PSR["PagingAndSortingRepository&lt;T, ID&gt;<br/>findAll(Pageable), findAll(Sort)"]
-    PSR --> JPR["JpaRepository&lt;T, ID&gt;<br/>flush, saveAllAndFlush,<br/>deleteInBatch, getReferenceById"]
-
-    style JPR fill:#e1f5fe,stroke:#0277bd
-    style R fill:#fff3e0,stroke:#e65100
-```
+- `Repository<T, ID>` — маркерный интерфейс
+  - `CrudRepository<T, ID>` — `save`, `findById`, `delete`, `count`
+    - `ListCrudRepository<T, ID>` — `findAll() → List`
+    - `PagingAndSortingRepository<T, ID>` — `findAll(Pageable)`, `findAll(Sort)`
+      - `JpaRepository<T, ID>` — `flush`, `saveAllAndFlush`, `deleteInBatch`, `getReferenceById`
 
 ```java
 // CrudRepository — базовый CRUD
@@ -275,17 +270,11 @@ List<User> findActiveByLastNameNative(@Param("status") String status,
 
 Понимание этого механизма помогает на собеседовании объяснить, почему интерфейс без реализации «волшебным образом» работает: магии нет — есть фабрика прокси и парсер имён методов.
 
-```mermaid
-graph LR
-    A["@EnableJpaRepositories<br/>сканирование пакета"] --> B["JpaRepositoryFactoryBean<br/>фабрика для каждого интерфейса"]
-    B --> C["SimpleJpaRepository<br/>базовая реализация CRUD"]
-    B --> D["Query Method Parser<br/>разбор имён методов"]
-    D --> E["PartTree<br/>дерево предикатов"]
-    E --> F["JPA Criteria / JPQL<br/>сгенерированный запрос"]
+Поток создания репозитория (стрелка → означает «передаёт управление»):
 
-    style C fill:#c8e6c9,stroke:#2e7d32
-    style F fill:#e1f5fe,stroke:#0277bd
-```
+- `@EnableJpaRepositories` (сканирование пакета) → `JpaRepositoryFactoryBean` (фабрика для каждого интерфейса)
+- `JpaRepositoryFactoryBean` → `SimpleJpaRepository` (базовая реализация CRUD)
+- `JpaRepositoryFactoryBean` → `Query Method Parser` (разбор имён методов) → `PartTree` (дерево предикатов) → `JPA Criteria / JPQL` (сгенерированный запрос)
 
 Процесс:
 1. `@EnableJpaRepositories` (автоматически включена в `Spring Boot`) запускает сканирование
@@ -522,29 +511,17 @@ public interface ProductRepository extends BaseRepository<Product> {
 
 Механика: при вызове извне обращение идёт сначала в прокси. Тот открывает транзакцию через `TransactionManager`, вызывает реальный метод и по результату делает `commit` (успех) или `rollback` (если вылетел `RuntimeException`). Сам бизнес-код о транзакции ничего не знает — он просто работает с `EntityManager`.
 
-```mermaid
-sequenceDiagram
-    participant C as Controller
-    participant P as Proxy @Transactional
-    participant S as Service (реальный объект)
-    participant TM as TransactionManager
-    participant DB as Database
+Порядок взаимодействия участников — `Controller`, `Proxy @Transactional`, `Service` (реальный объект), `TransactionManager`, `Database`:
 
-    C->>P: вызов метода
-    P->>TM: beginTransaction()
-    TM->>DB: BEGIN
-    P->>S: вызов реального метода
-    S->>DB: SQL запросы
-    S-->>P: return / exception
-    alt Успех
-        P->>TM: commit()
-        TM->>DB: COMMIT
-    else RuntimeException
-        P->>TM: rollback()
-        TM->>DB: ROLLBACK
-    end
-    P-->>C: результат
-```
+1. `Controller` вызывает метод → попадает в `Proxy @Transactional`.
+2. `Proxy` вызывает `beginTransaction()` у `TransactionManager`, тот шлёт `BEGIN` в `Database`.
+3. `Proxy` вызывает реальный метод `Service`.
+4. `Service` выполняет SQL-запросы в `Database`.
+5. `Service` возвращает результат (`return`) или выбрасывает исключение (`exception`) обратно в `Proxy`.
+6. Дальше — две ветки:
+   - **Успех:** `Proxy` вызывает `commit()` у `TransactionManager`, тот шлёт `COMMIT` в `Database`.
+   - **`RuntimeException`:** `Proxy` вызывает `rollback()` у `TransactionManager`, тот шлёт `ROLLBACK` в `Database`.
+7. `Proxy` возвращает результат в `Controller`.
 
 ```java
 @Service
@@ -977,19 +954,11 @@ public class ProductSearchService {
 }
 ```
 
-```mermaid
-graph LR
-    F["ProductFilter<br/>category, price, keyword"] --> S1["Specification 1<br/>hasCategory"]
-    F --> S2["Specification 2<br/>priceBetween"]
-    F --> S3["Specification 3<br/>nameContains"]
-    S1 --> AND["Specification.where().and().and()"]
-    S2 --> AND
-    S3 --> AND
-    AND --> Q["Criteria Query<br/>SELECT ... WHERE ... AND ..."]
+Как из фильтра собирается запрос (стрелка → означает «питает»):
 
-    style AND fill:#c8e6c9,stroke:#2e7d32
-    style Q fill:#e1f5fe,stroke:#0277bd
-```
+- `ProductFilter` (`category`, `price`, `keyword`) → отдельные спецификации: `Specification 1` (`hasCategory`), `Specification 2` (`priceBetween`), `Specification 3` (`nameContains`).
+- Все спецификации → комбинируются через `Specification.where().and().and()`.
+- Комбинация → итоговый `Criteria Query` (`SELECT ... WHERE ... AND ...`).
 
 **Преимущество перед множеством `@Query`-методов:** не нужно создавать `findByCategoryAndPriceBetween`, `findByCategory`, `findByPriceBetween` и т.д. — один метод `findAll(spec, pageable)` покрывает все комбинации.
 
@@ -1069,27 +1038,20 @@ public class Product extends AuditableEntity {
 - **Detached** — был managed, но контекст закрылся; изменения больше не отслеживаются.
 - **Removed** — помечен на удаление, `DELETE` уйдёт при flush/commit.
 
-```mermaid
-stateDiagram-v2
-    [*] --> New: new Entity()
-    New --> Managed: persist() / save()
-    Managed --> Detached: detach() / clear() / close()
-    Managed --> Removed: remove() / delete()
-    Detached --> Managed: merge()
-    Removed --> [*]: commit → DELETE
-    Managed --> Managed: flush() → SQL
-    Managed --> [*]: commit → INSERT/UPDATE
+Переходы между состояниями (стрелка → означает переход, в скобках — операция, которая его вызывает):
 
-    note right of Managed
-        Отслеживается EntityManager.
-        Dirty checking при flush/commit.
-    end note
+- старт → **New**: `new Entity()`
+- **New** → **Managed**: `persist()` / `save()`
+- **Managed** → **Detached**: `detach()` / `clear()` / `close()`
+- **Managed** → **Removed**: `remove()` / `delete()`
+- **Detached** → **Managed**: `merge()`
+- **Removed** → завершение: `commit` → `DELETE`
+- **Managed** → **Managed**: `flush()` → SQL
+- **Managed** → завершение: `commit` → `INSERT`/`UPDATE`
 
-    note right of Detached
-        Не отслеживается.
-        Изменения не попадут в БД.
-    end note
-```
+Пометки к состояниям:
+- **Managed** — отслеживается `EntityManager`; dirty checking при flush/commit.
+- **Detached** — не отслеживается; изменения не попадут в БД.
 
 | Состояние | Описание | Отслеживается EM | В БД |
 |-----------|----------|:----------------:|:----:|
@@ -1276,21 +1238,10 @@ public class User {
 }
 ```
 
-```mermaid
-graph TD
-    subgraph EAGER
-        Q1["SELECT u FROM User u"] --> R1["User + Department<br/>JOIN в одном запросе"]
-    end
+Разница в запросах (стрелка → означает «приводит к»):
 
-    subgraph LAZY
-        Q2["SELECT u FROM User u"] --> R2["Только User"]
-        R2 -->|"user.getOrders()"| Q3["SELECT o FROM Order o<br/>WHERE o.user_id = ?"]
-        Q3 --> R3["List&lt;Order&gt;"]
-    end
-
-    style EAGER fill:#ffcdd2,stroke:#c62828
-    style LAZY fill:#c8e6c9,stroke:#2e7d32
-```
+- **EAGER:** `SELECT u FROM User u` → сразу `User + Department` (JOIN в одном запросе).
+- **LAZY:** `SELECT u FROM User u` → только `User`; затем обращение `user.getOrders()` → отдельный запрос `SELECT o FROM Order o WHERE o.user_id = ?` → `List<Order>`.
 
 **Рекомендация:** ставьте `LAZY` на **все** связи (включая `@ManyToOne`, переопределяя умолчание) и загружайте нужное явно — через `@EntityGraph` или `JOIN FETCH` под конкретный сценарий. `EAGER` — мина замедленного действия: он молча грузит лишнее и провоцирует N+1, причём проблема всплывает только под нагрузкой.
 
@@ -1569,22 +1520,15 @@ public class Order {
 - **`JOINED`** — базовая таблица + по таблице на каждый подтип, связанные по `id`. Чистая нормализация и `NOT NULL`-ограничения, но каждый запрос делает JOIN.
 - **`TABLE_PER_CLASS`** — отдельная самодостаточная таблица на каждый конкретный класс. Полиморфные запросы превращаются в `UNION ALL` и работают медленно.
 
-```mermaid
-graph TD
-    subgraph "SINGLE_TABLE"
-        ST["payments<br/>id | dtype | amount | card_number | bank_account"]
-    end
+Как при каждой стратегии раскладываются таблицы и колонки:
 
-    subgraph "JOINED"
-        J1["payments<br/>id | amount"] --> J2["card_payments<br/>id | card_number"]
-        J1 --> J3["bank_payments<br/>id | bank_account"]
-    end
-
-    subgraph "TABLE_PER_CLASS"
-        TPC1["card_payments<br/>id | amount | card_number"]
-        TPC2["bank_payments<br/>id | amount | bank_account"]
-    end
-```
+- **`SINGLE_TABLE`** — одна таблица `payments`: `id | dtype | amount | card_number | bank_account`.
+- **`JOINED`** — базовая таблица `payments` (`id | amount`), связанная по `id` с таблицами подтипов:
+  - `card_payments`: `id | card_number`;
+  - `bank_payments`: `id | bank_account`.
+- **`TABLE_PER_CLASS`** — самодостаточная таблица на каждый конкретный класс:
+  - `card_payments`: `id | amount | card_number`;
+  - `bank_payments`: `id | amount | bank_account`.
 
 ```java
 // SINGLE_TABLE — одна таблица, дискриминатор DTYPE
@@ -1699,15 +1643,9 @@ private Long id;
 
 Идея: справочные данные (категории, страны, тарифы) читаются постоянно и почти не меняются — гонять за ними в БД при каждом запросе расточительно. L2 держит их в памяти приложения, и повторные чтения по id идут без обращения к БД.
 
-```mermaid
-graph LR
-    APP["Приложение"] --> L1["L1 Cache<br/>Persistence Context<br/>(per transaction)"]
-    L1 --> L2["L2 Cache<br/>EhCache / Hazelcast<br/>(per SessionFactory)"]
-    L2 --> DB["Database"]
+Порядок поиска данных по слоям (стрелка → означает «обращается к следующему уровню при промахе»):
 
-    style L1 fill:#c8e6c9,stroke:#2e7d32
-    style L2 fill:#fff9c4,stroke:#f9a825
-```
+- `Приложение` → `L1 Cache` (Persistence Context, per transaction) → `L2 Cache` (EhCache / Hazelcast, per SessionFactory) → `Database`.
 
 ```yaml
 # application.yml
