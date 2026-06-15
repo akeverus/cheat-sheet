@@ -697,22 +697,18 @@ Masked:    "Find restaurants near {ADDRESS} for {NAME} ({EMAIL})"
 
 **Continuous eval** — это постоянное измерение качества LLM-системы прямо на живом трафике, а не только во время релиза. Зачем непрерывно: поведение модели дрейфует и после деплоя (провайдер незаметно обновил модель, в трафике появился новый класс запросов), поэтому одной проверки на релизе мало.
 
-**Конвейер:**
+**Конвейер** (по шагам):
 
-```mermaid
-flowchart LR
-    A[Production request] --> B[Trace collected]
-    B --> C{Sample N%}
-    C -->|Yes| D[Async eval queue]
-    C -->|No| Z[Store trace only]
-    D --> E[LLM-as-judge / RAGAS]
-    E --> F[Eval score attached to trace]
-    F --> G[Metrics aggregation]
-    G --> H[Dashboard / Alert]
-    H --> I{Regression?}
-    I -->|Yes| J[PagerDuty + auto-rollback]
-    I -->|No| K[Store for analysis]
-```
+1. `Production request` → собирается trace (`Trace collected`).
+2. Развилка `Sample N%`: семплируем ли этот запрос?
+   - **Yes** → trace уходит в асинхронную очередь оценки (`Async eval queue`).
+   - **No** → просто сохраняем trace без оценки (`Store trace only`).
+3. Из очереди оценка идёт в `LLM-as-judge / RAGAS`.
+4. Полученный eval-score прикрепляется к trace (`Eval score attached to trace`).
+5. Дальше score попадает в агрегацию метрик (`Metrics aggregation`) → на дашборд / в алерт (`Dashboard / Alert`).
+6. Развилка `Regression?` — есть ли просадка качества?
+   - **Yes** → `PagerDuty + auto-rollback` (алерт дежурному и авто-откат).
+   - **No** → `Store for analysis` (откладываем для разбора).
 
 **Ключевые принципы:**
 
@@ -840,20 +836,17 @@ results = run_experiment(
 
 Идея простая: **промпт — это код**, значит у него должен быть тот же конвейер, что у кода — PR, проверка качества на голден-датасете, постепенная раскатка через canary и авто-откат при просадке. Так правка промпта не уезжает в прод «на глазок».
 
-```mermaid
-flowchart TD
-    A[Dev меняет prompt v3] --> B[Push PR]
-    B --> C[CI: run eval on golden dataset]
-    C --> D{Avg score >= baseline - 5%?}
-    D -->|No| E[Block merge, post diff to PR]
-    D -->|Yes| F[Merge to staging]
-    F --> G[Canary 5% traffic]
-    G --> H[Continuous eval 24h]
-    H --> I{Quality stable?}
-    I -->|No| J[Auto-rollback]
-    I -->|Yes| K[Promote 100%]
-    K --> L[Tag v3 production in registry]
-```
+Поток выглядит так:
+
+1. `Dev меняет prompt v3` → пушит PR (`Push PR`).
+2. CI прогоняет eval на голден-датасете (`CI: run eval on golden dataset`).
+3. Развилка `Avg score >= baseline - 5%?` — средний score не упал больше чем на 5%?
+   - **No** → мерж блокируется, diff постится в PR (`Block merge, post diff to PR`).
+   - **Yes** → мерж в staging (`Merge to staging`).
+4. Дальше canary на 5% трафика (`Canary 5% traffic`) → 24 часа continuous eval (`Continuous eval 24h`).
+5. Развилка `Quality stable?` — качество стабильно?
+   - **No** → авто-откат (`Auto-rollback`).
+   - **Yes** → раскатка на 100% (`Promote 100%`) → версия `v3` помечается production в реестре (`Tag v3 production in registry`).
 
 **GitHub Actions пример:**
 
@@ -1026,23 +1019,17 @@ avg(rag_context_utilization) by (endpoint) < 0.3
 
 **Цель:** доказать, что prompt v2 действительно лучше v1, а не «мне так показалось на паре примеров». Суть подхода — детерминированно делим трафик по хешу `user_id` на две группы, тегируем трейсы вариантом, копим оценки и принимаем решение по статистической значимости, а не по тому, у кого среднее выше.
 
-**Конвейер:**
+**Конвейер** (по шагам):
 
-```mermaid
-flowchart TD
-    A[Request приходит] --> B{Bucket by user_id_hash}
-    B -->|50%| C[Prompt v1 - control]
-    B -->|50%| D[Prompt v2 - treatment]
-    C --> E[Trace tagged variant=v1]
-    D --> F[Trace tagged variant=v2]
-    E --> G[Continuous eval]
-    F --> G
-    G --> H[Aggregated metrics by variant]
-    H --> I{Stat sig diff?}
-    I -->|Yes, v2 wins| J[Promote v2 to 100%]
-    I -->|No| K[Continue collecting]
-    I -->|v1 wins| L[Discard v2, keep v1]
-```
+1. `Request приходит` → развилка `Bucket by user_id_hash` (раскладываем по хешу `user_id`):
+   - **50%** → `Prompt v1 - control` (контрольная группа).
+   - **50%** → `Prompt v2 - treatment` (тестовая группа).
+2. Каждый trace тегируется вариантом: `Trace tagged variant=v1` либо `Trace tagged variant=v2`.
+3. Оба потока сходятся в `Continuous eval`, затем в агрегацию метрик по варианту (`Aggregated metrics by variant`).
+4. Развилка `Stat sig diff?` — есть ли статистически значимая разница?
+   - **Yes, v2 wins** → раскатываем v2 на 100% (`Promote v2 to 100%`).
+   - **No** → продолжаем копить данные (`Continue collecting`).
+   - **v1 wins** → отбрасываем v2, оставляем v1 (`Discard v2, keep v1`).
 
 **Реализация:**
 
@@ -1146,60 +1133,55 @@ Observability превращает оптимизацию стоимости и�
 
 ---
 
-## Диаграмма: структура LLM trace
+## Структура LLM trace
 
-```mermaid
-flowchart TD
-    Root[chat_request<br/>trace_id=abc123<br/>user_id=u42] --> Retr[retrieve_context<br/>top_k=10]
-    Root --> LLM1[llm_call: chat<br/>model=gpt-4o<br/>in=1500 out=412 cost=0.012]
-    Root --> Guard[guardrail<br/>pii_check + safety]
-    Retr --> Embed[embed_query<br/>model=text-embedding-3]
-    Retr --> Vec[vector_search<br/>store=qdrant]
-    LLM1 --> Stream[stream_tokens]
-    LLM1 -.async eval.-> Judge[llm_judge<br/>faithfulness=0.87]
-    Judge --> Score[Score attached<br/>to trace abc123]
-```
+Пример дерева одного trace (`trace_id=abc123`, `user_id=u42`):
 
----
-
-## Диаграмма: continuous eval pipeline
-
-```mermaid
-flowchart LR
-    A[Prod LLM call] --> B[OTel span exported]
-    B --> C{Sample 5%?}
-    C -->|No| Z[Store only]
-    C -->|Yes| D[Eval queue]
-    D --> E[LLM-as-judge<br/>faithfulness + relevancy]
-    E --> F[Score → trace]
-    F --> G[Prometheus metric]
-    G --> H[Grafana dashboard]
-    G --> I{score < threshold?}
-    I -->|Yes| J[PagerDuty alert]
-    I -->|No| K[Trend monitoring]
-    F --> L[Curate low-score to dataset]
-    L --> M[Regression test in CI]
-```
+- `chat_request` (root, `trace_id=abc123`, `user_id=u42`) — корневой запрос, ветвится на три дочерних span'а:
+  - `retrieve_context` (`top_k=10`) — поход за контекстом, внутри два шага:
+    - `embed_query` (`model=text-embedding-3`) — эмбеддинг запроса.
+    - `vector_search` (`store=qdrant`) — поиск по вектор-стору.
+  - `llm_call: chat` (`model=gpt-4o`, `in=1500`, `out=412`, `cost=0.012`) — вызов модели:
+    - `stream_tokens` — стриминг токенов ответа.
+    - асинхронно (`async eval`) запускается `llm_judge` (`faithfulness=0.87`) → результат `Score attached to trace abc123` (score прикрепляется к тому же trace `abc123`).
+  - `guardrail` (`pii_check + safety`) — проверка PII и safety.
 
 ---
 
-## Диаграмма: OTel GenAI attributes
+## Continuous eval pipeline
 
-```mermaid
-flowchart TB
-    subgraph Span["LLM Span (gen_ai)"]
-        direction LR
-        SystemAttr["gen_ai.system=openai<br/>gen_ai.operation.name=chat"]
-        RequestAttr["gen_ai.request.model=gpt-4o<br/>gen_ai.request.temperature=0.7<br/>gen_ai.request.max_tokens=1000"]
-        ResponseAttr["gen_ai.response.model=gpt-4o-2024-08-06<br/>gen_ai.response.id=chatcmpl-xxx<br/>gen_ai.response.finish_reasons=stop"]
-        UsageAttr["gen_ai.usage.input_tokens=1523<br/>gen_ai.usage.output_tokens=412"]
-    end
-    Span --> Events["Span Events"]
-    Events --> E1["gen_ai.system.message"]
-    Events --> E2["gen_ai.user.message"]
-    Events --> E3["gen_ai.assistant.message"]
-    Events --> E4["gen_ai.tool.message"]
-```
+Поток оценки на проде по шагам:
+
+1. `Prod LLM call` → span экспортируется в OTel (`OTel span exported`).
+2. Развилка `Sample 5%?` — семплируем ли этот запрос?
+   - **No** → просто сохраняем (`Store only`).
+   - **Yes** → span идёт в очередь оценки (`Eval queue`).
+3. Из очереди — в `LLM-as-judge` (`faithfulness + relevancy`).
+4. Полученный score прикрепляется к trace (`Score → trace`) и далее идёт по двум веткам:
+   - в `Prometheus metric`, оттуда:
+     - на `Grafana dashboard`;
+     - на развилку `score < threshold?` — score ниже порога?
+       - **Yes** → `PagerDuty alert` (алерт дежурному).
+       - **No** → `Trend monitoring` (наблюдение за трендом).
+   - в курирование (`Curate low-score to dataset`) — низкие оценки складываются в датасет → `Regression test in CI` (регресс-тест в CI).
+
+---
+
+## OTel GenAI attributes
+
+Один `LLM Span (gen_ai)` несёт четыре группы атрибутов:
+
+- **System** — `gen_ai.system=openai`, `gen_ai.operation.name=chat`.
+- **Request** — `gen_ai.request.model=gpt-4o`, `gen_ai.request.temperature=0.7`, `gen_ai.request.max_tokens=1000`.
+- **Response** — `gen_ai.response.model=gpt-4o-2024-08-06`, `gen_ai.response.id=chatcmpl-xxx`, `gen_ai.response.finish_reasons=stop`.
+- **Usage** — `gen_ai.usage.input_tokens=1523`, `gen_ai.usage.output_tokens=412`.
+
+К этому же span'у привязаны `Span Events` — содержимое сообщений:
+
+- `gen_ai.system.message`
+- `gen_ai.user.message`
+- `gen_ai.assistant.message`
+- `gen_ai.tool.message`
 
 ---
 

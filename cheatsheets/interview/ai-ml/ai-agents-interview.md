@@ -434,16 +434,12 @@ relevant = vector_db.search(embed(current_query), filter={"user_id": user_id}, t
 
 **Multi-agent system** — задачу решают **несколько LLM-агентов**, каждый со своей ролью, координируясь между собой. Идея — декомпозиция: разбить большую задачу на части и поручить каждую специализированному агенту, как команде из исследователя, писателя и ревьюера.
 
-```mermaid
-graph TD
-    User --> Coordinator
-    Coordinator --> Researcher[Researcher Agent]
-    Coordinator --> Writer[Writer Agent]
-    Coordinator --> Reviewer[Reviewer Agent]
-    Researcher --> Tool1[Web Search]
-    Writer --> Coordinator
-    Reviewer --> Coordinator
-```
+Пример топологии вокруг координатора:
+
+- `User` → `Coordinator` (координатор принимает запрос пользователя).
+- `Coordinator` → раздаёт задачи трём специализированным агентам: `Researcher Agent`, `Writer Agent`, `Reviewer Agent`.
+- `Researcher Agent` → `Web Search` (исследователь обращается к tool веб-поиска).
+- `Writer Agent` → `Coordinator` и `Reviewer Agent` → `Coordinator` (писатель и ревьюер возвращают результаты обратно координатору).
 
 **Типы организации:**
 - **Specialist agents** — каждый эксперт в своей области.

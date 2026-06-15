@@ -98,38 +98,30 @@ updated: "2026-05-25"
 | **Fine-tuning** | Подгоняет веса модели под domain/стиль/формат | высокая (датасет + обучение) | как у базовой модели + амортизация обучения | Стабильный стиль/формат, узкий domain, нужна низкая latency на маленькой модели |
 | **Agents** | Multi-step с tool use, планированием, рефлексией | средняя (проектирование инструментов) | высокая (5-15 вызовов LLM) | Open-ended задачи: код, ресёрч, автоматизация браузера, computer use |
 
-```mermaid
-flowchart LR
-    Q[User Query] --> P[Prompt Engineering]
-    Q --> R[RAG]
-    Q --> FT[Fine-tuning]
-    Q --> A[Agents]
-    P --> R1[Direct answer]
-    R --> R2[Grounded answer + sources]
-    FT --> R3[Stylized answer]
-    A --> R4[Multi-step result]
-```
+Один и тот же `User Query` можно направить в любой из четырёх паттернов, и каждый даёт свой тип результата:
+
+- `Prompt Engineering` → прямой ответ (Direct answer).
+- `RAG` → обоснованный ответ с источниками (Grounded answer + sources).
+- `Fine-tuning` → стилизованный ответ (Stylized answer).
+- `Agents` → результат из нескольких шагов (Multi-step result).
 
 **Ключевая идея:** это не «или-или». Каждый паттерн закрывает свою ось требований — свежесть знаний (RAG), стиль/формат (Fine-tune), сложность задачи (Agents), скорость старта (Prompt). Поэтому в production почти всегда получается **гибрид** (см. Q4-Q7), где паттерны компенсируют слабости друг друга.
 
 ## Q2. (!) Когда выбрать Prompt Engineering vs RAG vs Fine-tune vs Agents?
 
-Выбор сводится к нескольким бинарным вопросам о задаче, которые отсекают неподходящие паттерны. Главные развилки: меняется ли знание часто, нужен ли особый стиль, и сколько шагов требует задача. Дерево решений ведёт по этим развилкам сверху вниз:
+Выбор сводится к нескольким бинарным вопросам о задаче, которые отсекают неподходящие паттерны. Главные развилки: меняется ли знание часто, нужен ли особый стиль, и сколько шагов требует задача. Дерево решений ведёт по этим развилкам сверху вниз, начиная с новой AI-фичи:
 
-```mermaid
-flowchart TD
-    Start[Новая AI-фича] --> Q1{Knowledge<br/>часто меняется?}
-    Q1 -->|Да| Q2{Сложная<br/>multi-step задача?}
-    Q1 -->|Нет| Q3{Нужен<br/>специфический стиль/формат?}
-    Q2 -->|Да| Agents[Agents + RAG]
-    Q2 -->|Нет| RAG[RAG]
-    Q3 -->|Да| Q4{Достаточно<br/>2-3 few-shot?}
-    Q3 -->|Нет| Q5{Задача<br/>укладывается в context?}
-    Q4 -->|Да| Prompt[Prompt Engineering]
-    Q4 -->|Нет| FT[Fine-tuning]
-    Q5 -->|Да| Prompt
-    Q5 -->|Нет| FT
-```
+- **Knowledge часто меняется?**
+  - **Да** → **Сложная multi-step задача?**
+    - **Да** → `Agents + RAG`.
+    - **Нет** → `RAG`.
+  - **Нет** → **Нужен специфический стиль/формат?**
+    - **Да** → **Достаточно 2-3 few-shot?**
+      - **Да** → `Prompt Engineering`.
+      - **Нет** → `Fine-tuning`.
+    - **Нет** → **Задача укладывается в context?**
+      - **Да** → `Prompt Engineering`.
+      - **Нет** → `Fine-tuning`.
 
 **Как распознать паттерн по сигналу в требованиях:**
 
@@ -166,13 +158,11 @@ flowchart TD
 - **Fine-tune** учит модель, **как отвечать**: стиль, формат, тон, терминология, структура вывода. Это стабильные вещи — их и стоит «зашить» в веса.
 - **RAG** даёт модели, **что отвечать**: актуальные факты, документы, политики. Это меняющиеся вещи — их держат снаружи, чтобы обновлять без переобучения.
 
-```mermaid
-flowchart LR
-    Q[Query] --> Retriever[Vector Search]
-    Retriever -->|context| FTModel[Fine-tuned LLM<br/>знает domain style]
-    FTModel --> Answer[Stylized grounded answer]
-    Docs[(Knowledge Base)] --> Retriever
-```
+Поток связки выглядит так:
+
+- `Query` → `Vector Search` (Retriever), куда знания поставляет `Knowledge Base` (Docs).
+- `Vector Search` передаёт найденный context в `Fine-tuned LLM` (модель знает domain style).
+- `Fine-tuned LLM` → `Stylized grounded answer` (стилизованный обоснованный ответ).
 
 **Пример — медицинский ассистент.** Fine-tune учит модель медицинской терминологии и формату SOAP-notes (стабильное «как»), RAG подтягивает свежие guidelines и карту конкретного пациента (меняющееся «что»). На выходе — ответ в правильном клиническом стиле и с актуальными фактами.
 
@@ -210,14 +200,12 @@ tools = [
 
 Суть каскада: **дешёвая модель** обрабатывает запрос первой, а **дорогая** подключается только тогда, когда дешёвой не хватило. Это экономит деньги, потому что большинство запросов в реальном трафике простые и не требуют флагманской модели.
 
-```mermaid
-flowchart LR
-    Q[Query] --> Cheap[Haiku/Mini]
-    Cheap --> Check{Confidence<br/>high?}
-    Check -->|Да| Out1[Return answer]
-    Check -->|Нет| Big[Sonnet/Opus]
-    Big --> Out2[Return answer]
-```
+Поток каскада по шагам:
+
+1. `Query` идёт в дешёвую модель (`Haiku`/`Mini`).
+2. Проверяем уверенность ответа (Confidence high?):
+   - **Да** → возвращаем ответ дешёвой модели (Return answer).
+   - **Нет** → передаём в дорогую модель (`Sonnet`/`Opus`) и возвращаем её ответ (Return answer).
 
 **Варианты каскадирования:**
 - **Router-модель** — маленький LLM классифицирует intent и направляет запрос в специализированный pipeline.
@@ -251,22 +239,19 @@ return result
 
 Канонический скелет, который масштабируется от MVP до enterprise без переписывания. Запрос проходит по слоям: вход и защита → выбор модели → вызов LLM и инструментов → стриминг ответа, и параллельно всё трассируется. Каждый слой решает одну задачу, поэтому его можно менять независимо от остальных.
 
-```mermaid
-flowchart TB
-    Client[Client: Web/Mobile] --> GW[API Gateway]
-    GW --> RL[Rate Limiter<br/>+ Auth]
-    RL --> Router[Model Router<br/>cheap vs expensive]
-    Router --> LLM[LLM Service]
-    LLM --> Tools[Tool Executor]
-    Tools --> Vec[(Vector DB)]
-    Tools --> SQL[(SQL DB)]
-    Tools --> Cache[(Redis Cache)]
-    LLM --> Stream[Streaming<br/>SSE/WebSocket]
-    Stream --> Client
-    LLM -.trace.-> Obs[Observability<br/>Langfuse/LangSmith]
-    Router -.config.-> PR[Prompt Registry]
-    Router -.config.-> MR[Model Registry]
-```
+Поток запроса по слоям:
+
+- `Client` (Web/Mobile) → `API Gateway`.
+- `API Gateway` → `Rate Limiter + Auth`.
+- `Rate Limiter + Auth` → `Model Router` (cheap vs expensive).
+- `Model Router` → `LLM Service`.
+- `LLM Service` → `Tool Executor`, который обращается к трём хранилищам: `Vector DB`, `SQL DB` и `Redis Cache`.
+- `LLM Service` → `Streaming` (SSE/WebSocket) → обратно в `Client`.
+
+Параллельные (служебные) связи:
+
+- `LLM Service` пишет трассы (trace) в `Observability` (Langfuse/LangSmith).
+- `Model Router` берёт конфиг (config) из `Prompt Registry` и из `Model Registry`.
 
 **Слои:**
 
@@ -334,18 +319,14 @@ Tool Executor — компонент, который выполняет function
 - **Read-only DB user** по умолчанию для SQL-инструмента — даже ошибочный запрос ничего не сломает.
 - **Human-in-the-loop** для деструктивных действий (отправить email, списать с карты) — необратимое действие требует подтверждения человека.
 
-**Архитектура:**
+**Архитектура (поток tool call):**
 
-```mermaid
-flowchart LR
-    LLM --tool_call--> TE[Tool Executor]
-    TE --> Auth{Allowed?}
-    Auth -->|No| Reject[Error to LLM]
-    Auth -->|Yes| Exec[Sandbox]
-    Exec --> Result[Result]
-    Result --> LLM
-    Exec -.audit.-> Log[(Audit Log)]
-```
+- `LLM` отправляет `tool_call` в `Tool Executor`.
+- `Tool Executor` проверяет разрешение (Allowed?):
+  - **No** → возвращает ошибку модели (Error to LLM).
+  - **Yes** → исполняет в `Sandbox`.
+- `Sandbox` → `Result`, который возвращается обратно в `LLM`.
+- Параллельно `Sandbox` пишет audit-запись в `Audit Log`.
 
 **Что нужно в реализации (Spring/Python):** реестр инструментов, валидация аргументов по схеме (Pydantic / JSON Schema), таймаут на каждый tool call (иначе зависший инструмент держит весь запрос), retry с idempotency-ключами (чтобы повтор не выполнил действие дважды).
 
@@ -353,24 +334,12 @@ flowchart LR
 
 Цель — **TTFT < 1s** (первый токен) и полный ответ < 2s. Чтобы уложиться, общий бюджет режут на этапы и каждому назначают свой лимит — тогда видно, какой этап «съедает» время и что оптимизировать в первую очередь.
 
-```mermaid
-gantt
-    title Latency budget end-to-end (~2s)
-    dateFormat  x
-    axisFormat %L ms
-    section Edge
-    Auth + rate limit       :a1, 0, 10
-    section Retrieve
-    Embedding query         :a2, after a1, 30
-    Vector search           :a3, after a2, 100
-    Rerank (optional)       :a4, after a3, 50
-    section LLM
-    Prompt assembly         :a5, after a4, 20
-    LLM prefill (TTFT)      :a6, after a5, 500
-    Token streaming         :a7, after a6, 1000
-    section Tools
-    Optional tool call      :a8, after a7, 500
-```
+Пример раскладки бюджета end-to-end (~2s), последовательно по этапам, сгруппированным по секциям:
+
+- **Edge:** Auth + rate limit — ~10 ms.
+- **Retrieve:** Embedding query — ~30 ms; Vector search — ~100 ms; Rerank (optional) — ~50 ms.
+- **LLM:** Prompt assembly — ~20 ms; LLM prefill (TTFT) — ~500 ms; Token streaming — ~1000 ms.
+- **Tools:** Optional tool call — ~500 ms (после стриминга).
 
 **Разбивка:**
 
@@ -487,19 +456,18 @@ cost_agent ≈ N_steps × (avg_in_tokens × price_in + avg_out_tokens × price_o
 | **LLM response cache** | точное совпадение запроса → ответ | короткий (или инвалидация по событию) | Redis, Memcached |
 | **Tool result cache** | аргументы tool call → результат | зависит от инструмента | Redis |
 
-```mermaid
-flowchart LR
-    Q[Query] --> SC{Semantic<br/>cache hit?}
-    SC -->|Yes| Return1[Return cached]
-    SC -->|No| EC{Embedding<br/>cache hit?}
-    EC -->|Yes| Vec[Skip embedding call]
-    EC -->|No| Embed[Embed query]
-    Vec --> Retr[Vector search]
-    Embed --> Retr
-    Retr --> PC{Prompt cache<br/>prefix hit?}
-    PC -->|Yes| LLM1[LLM with cached prefix]
-    PC -->|No| LLM2[Normal LLM call]
-```
+Порядок проверки кешей для запроса (`Query`):
+
+1. **Semantic cache hit?**
+   - **Yes** → возвращаем закешированный ответ (Return cached) — на этом всё.
+   - **No** → переходим к проверке embedding-кеша.
+2. **Embedding cache hit?**
+   - **Yes** → пропускаем embedding-вызов (Skip embedding call).
+   - **No** → считаем эмбеддинг запроса (Embed query).
+3. Обе ветки (с готовым эмбеддингом и со свежесчитанным) сходятся в `Vector search`.
+4. **Prompt cache prefix hit?**
+   - **Yes** → вызов LLM с закешированным префиксом (LLM with cached prefix).
+   - **No** → обычный вызов LLM (Normal LLM call).
 
 **Эффект:** на «горячем» трафике кеш срабатывает в 30-60% случаев, и на этой доле запросов cost и latency падают примерно вдвое.
 
@@ -536,20 +504,13 @@ flowchart LR
 | **Streaming** | `POST /ask → SSE-поток токенов` | chat UX, codegen | TTFT низкий, полный — средний |
 | **Batch** | загрузить файл → выходной файл (Anthropic/OpenAI batch API) | не realtime: ночное обогащение, evals | 0-24ч (на 50% дешевле) |
 
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant S as Service
-    participant Q as Queue
-    participant W as Worker
+Async-паттерн по шагам (участники: `Client`, `Service`, `Queue`, `Worker`):
 
-    Note over C,S: Async pattern
-    C->>S: POST /ask
-    S->>Q: enqueue
-    S-->>C: 202 { job_id }
-    Q->>W: process
-    W->>C: webhook { result }
-```
+1. `Client` → `Service`: `POST /ask`.
+2. `Service` → `Queue`: enqueue (ставит задачу в очередь).
+3. `Service` → `Client`: `202 { job_id }` (немедленный ответ с идентификатором задачи).
+4. `Queue` → `Worker`: process (воркер забирает задачу на обработку).
+5. `Worker` → `Client`: `webhook { result }` (готовый результат уходит колбэком).
 
 ## Q20. Webhook или SSE для долгих генераций?
 
@@ -582,16 +543,7 @@ sequenceDiagram
 
 **Inference Gateway** — единый API-слой над несколькими провайдерами, который централизует retry, fallback, кеширование, observability и RBAC. Вместо того чтобы хардкодить эту логику в каждом сервисе, её выносят в один шлюз — и все обращения к моделям идут через него.
 
-```mermaid
-flowchart LR
-    App --> GW[Inference Gateway<br/>LiteLLM/Portkey]
-    GW --> OAI[OpenAI]
-    GW --> Anth[Anthropic]
-    GW --> Self[Self-hosted vLLM]
-    GW --> Open[OpenRouter]
-    GW -.-> Cache[(Cache)]
-    GW -.-> Log[(Logs)]
-```
+Схема обращений: приложение (`App`) ходит не напрямую к провайдерам, а через `Inference Gateway` (LiteLLM/Portkey). Шлюз маршрутизирует запрос к одному из провайдеров — `OpenAI`, `Anthropic`, self-hosted `vLLM` или `OpenRouter` — и параллельно использует общий `Cache` и пишет `Logs`.
 
 **Что это даёт:**
 - Единый формат (OpenAI-compatible) для всех провайдеров — код приложения не знает, к кому реально идёт запрос.
@@ -657,15 +609,14 @@ router_settings:
 | **Управление API-ключами** | ротация, скоупы на тенанта, отдельные ключи под каждое окружение |
 | **Rate limiting** | защита от abuse и DoS по бюджету |
 
-```mermaid
-flowchart LR
-    In[User input] --> IR[Input Rails<br/>classifier]
-    IR -->|safe| LLM
-    IR -->|unsafe| Block1[Reject]
-    LLM --> OR[Output Rails<br/>PII redact + policy]
-    OR -->|safe| Out[Response]
-    OR -->|unsafe| Block2[Sanitize/Block]
-```
+Поток через рельсы безопасности:
+
+- `User input` → `Input Rails` (классификатор):
+  - **safe** → передаём в `LLM`.
+  - **unsafe** → отклоняем (Reject).
+- Выход `LLM` → `Output Rails` (PII redact + проверка политик):
+  - **safe** → отдаём ответ пользователю (Response).
+  - **unsafe** → санитизируем или блокируем (Sanitize/Block).
 
 **Дополнительно по compliance:** в регулируемых отраслях (фин, мед) перед отправкой клиенту все ответы проходят ревью человеком.
 
@@ -744,14 +695,12 @@ flowchart LR
 - **На устройстве:** Apple Intelligence (3B), Phi-3-mini, Gemma 2B, ONNX runtime, WebGPU + WebLLM в браузере, MLC LLM на мобильных.
 - **В облаке:** тяжёлые модели для сложных задач.
 
-```mermaid
-flowchart LR
-    User[User device] --> SmallM[Small model<br/>on-device]
-    SmallM --> Decide{Сложно?}
-    Decide -->|Нет| Out1[Локальный ответ]
-    Decide -->|Да| Cloud[Cloud LLM]
-    Cloud --> Out2[Cloud response]
-```
+Поток маршрутизации запроса:
+
+- `User device` → маленькая модель на устройстве (`Small model on-device`).
+- Маленькая модель оценивает сложность запроса (Сложно?):
+  - **Нет** → отдаёт локальный ответ (Локальный ответ).
+  - **Да** → эскалирует в облачную модель (`Cloud LLM`), которая возвращает облачный ответ (Cloud response).
 
 **Сценарии применения:**
 - **Чувствительные к latency** — автодополнение, голос: круговая поездка в облако слишком медленная.
@@ -765,15 +714,7 @@ flowchart LR
 
 Выбор между двумя подходами — это компромисс «контроль против задержки». Классический pipeline собирается из отдельных моделей (гибко, но latency складывается), Realtime API делает всё одной multimodal-моделью (быстро, но контроля меньше).
 
-**Pipeline-архитектура (классика):**
-
-```mermaid
-flowchart LR
-    Mic --> STT[Speech-to-Text<br/>Whisper/Deepgram]
-    STT --> LLM
-    LLM --> TTS[Text-to-Speech<br/>ElevenLabs/OpenAI]
-    TTS --> Speaker
-```
+**Pipeline-архитектура (классика):** звук проходит по цепочке `Mic` → `Speech-to-Text` (Whisper/Deepgram) → `LLM` → `Text-to-Speech` (ElevenLabs/OpenAI) → `Speaker`.
 
 Плюсы: гибкость — можно выбрать любую LLM/STT/TTS; есть явный текстовый trace на каждом шаге.
 Минусы: задержки складываются (STT 200ms + LLM 800ms + TTS 300ms = 1.3s+); barge-in (перебить агента голосом) сложно реализовать.

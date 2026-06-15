@@ -132,20 +132,19 @@ Fine-tuning LLM из «дорогой R&D-операции» к 2024-2026 пре
 | **Cost per token** | Высокий (prompt длинный) | Средний | Низкий |
 | **Когда лучший выбор** | Прототип, переменная задача | Factual grounding, актуальные данные | Фиксированный формат/стиль/domain |
 
-**Шпаргалка по выбору:**
+**Шпаргалка по выбору** (по порядку, начиная с вопроса «Задача»):
 
-```mermaid
-flowchart TD
-    Start[Задача] --> Q1{Знания меняются часто?}
-    Q1 -->|Да| RAG[RAG]
-    Q1 -->|Нет| Q2{Нужен особый стиль/формат?}
-    Q2 -->|Нет| Q3{Few-shot prompt справляется?}
-    Q3 -->|Да| Prompt[Prompting]
-    Q3 -->|Нет| Q4{Есть 1000+ качественных примеров?}
-    Q2 -->|Да| Q4
-    Q4 -->|Да| FT[Fine-tuning]
-    Q4 -->|Нет| Prompt2[Сначала собрать данные, потом FT]
-```
+- **Знания меняются часто?**
+  - Да → **RAG**.
+  - Нет → следующий вопрос: **нужен особый стиль/формат?**
+    - Нет → **few-shot prompt справляется?**
+      - Да → **Prompting**.
+      - Нет → **есть 1000+ качественных примеров?**
+        - Да → **Fine-tuning**.
+        - Нет → сначала собрать данные, потом FT.
+    - Да → **есть 1000+ качественных примеров?**
+      - Да → **Fine-tuning**.
+      - Нет → сначала собрать данные, потом FT.
 
 **Правило:** двигайся по лестнице **промптинг → RAG → fine-tuning**, не перепрыгивая ступени: каждый следующий шаг дороже и медленнее предыдущего. На практике fine-tune и RAG часто работают вместе — fine-tune отвечает за стиль и формат, RAG подаёт свежие факты.
 
@@ -273,32 +272,20 @@ class LoRALinear(nn.Module):
 
 **QLoRA (Dettmers et al. 2023)** добавил к LoRA один ключевой ход: **держать замороженный base в 4 битах** вместо 16. Base всё равно не обучается — значит, можно сжать его в разы и освободить VRAM под всё остальное. Вокруг этой идеи — три техники, позволившие дообучить 65B на **одной GPU с 48 GB**:
 
-```mermaid
-flowchart LR
-    subgraph FullFT["Full Fine-Tuning"]
-        W1[Weights FP16<br/>140 GB]
-        G1[Gradients FP16]
-        O1[Optimizer FP32<br/>560 GB]
-        W1 --> ALL[Все обучаем]
-        G1 --> ALL
-        O1 --> ALL
-    end
-    subgraph LoRA["LoRA"]
-        W2[Weights FP16<br/>140 GB FROZEN]
-        L2[LoRA A, B FP16<br/>~100 MB]
-        L2 --> TRAIN2[Обучаем только LoRA]
-    end
-    subgraph QLoRA["QLoRA"]
-        W3[Weights NF4 4-bit<br/>~35 GB FROZEN]
-        L3[LoRA A, B BF16<br/>~100 MB]
-        DQ[Double Quantization]
-        PO[Paged Optimizer<br/>CPU offload при OOM]
-        W3 --> TRAIN3[Обучаем LoRA]
-        L3 --> TRAIN3
-        DQ -.-> W3
-        PO -.-> TRAIN3
-    end
-```
+Три режима в сравнении (для 70B):
+
+- **Full Fine-Tuning** — обучаем всё сразу:
+  - `Weights FP16` — 140 GB;
+  - `Gradients FP16`;
+  - `Optimizer FP32` — 560 GB.
+- **LoRA** — обучаем только адаптер:
+  - `Weights FP16` — 140 GB, FROZEN;
+  - `LoRA A, B FP16` — ~100 MB → обучаем только LoRA.
+- **QLoRA** — обучаем LoRA поверх 4-битного base:
+  - `Weights NF4 4-bit` — ~35 GB, FROZEN;
+  - `LoRA A, B BF16` — ~100 MB → обучаем LoRA;
+  - `Double Quantization` применяется к весам (`Weights NF4`);
+  - `Paged Optimizer` — CPU offload при OOM в процессе обучения.
 
 **Три ключевые техники и зачем каждая:**
 
@@ -549,18 +536,14 @@ Loss = α · CE(student, ground_truth) + (1-α) · KL(student || teacher) · T²
 
 **RLHF (Reinforcement Learning from Human Feedback)** — пайплайн выравнивания (alignment) из InstructGPT (Ouyang et al. 2022), благодаря которому ChatGPT стал таким, каким мы его знаем. Суть: научить модель не «продолжать текст», а отвечать так, как нравится людям, — а для этого предпочтения людей сначала превращают в обучаемую награду.
 
-**Классический пайплайн из трёх стадий:**
+**Классический пайплайн из трёх стадий** (поток по порядку):
 
-```mermaid
-flowchart LR
-    BASE[Pretrained base<br/>Llama base / GPT base]
-    BASE --> SFT[Stage 1: SFT<br/>на demonstration data]
-    SFT --> SFT_MODEL[SFT model]
-    SFT_MODEL --> RM[Stage 2: Reward Model<br/>обучаем classifier<br/>chosen vs rejected]
-    SFT_MODEL --> PPO[Stage 3: PPO<br/>policy = SFT model<br/>reward = RM score<br/>KL penalty vs SFT]
-    RM --> PPO
-    PPO --> ALIGNED[Aligned model]
-```
+- `Pretrained base` (Llama base / GPT base) → **Stage 1: SFT** на demonstration data → `SFT model`.
+- `SFT model` ветвится в две стороны:
+  - → **Stage 2: Reward Model** — обучаем classifier `chosen vs rejected`;
+  - → **Stage 3: PPO**, где `policy = SFT model`, `reward = RM score`, KL penalty относительно SFT.
+- Выход **Stage 2 (Reward Model)** подаётся в **Stage 3 (PPO)** как источник награды.
+- **Stage 3 (PPO)** → `Aligned model`.
 
 **Стадия 1 — SFT.** Обычный supervised fine-tuning на 10K-100K демонстрационных пар `{prompt, response}`. Это «разогрев»: модель учится отвечать в нужном формате, дальше её только полируют.
 
@@ -773,19 +756,16 @@ L_OR = -log σ( log(odds(y_w|x)) - log(odds(y_l|x)) )
 | **KTO** | 2024 | Binary labels | Да | 2 | Binary thumbs up/down | Production logs с per-response rating |
 | **ORPO** | 2024 | Implicit | Нет | 1 | Preference pairs | Минимум compute, no-reference alignment |
 
-**Решающее дерево:**
+**Решающее дерево** (начиная с вопроса «Какие данные?»):
 
-```mermaid
-flowchart TD
-    A[Какие данные?] --> B{Preference pairs?}
-    B -->|Да| C{Reasoning task?}
-    C -->|Нет| D[DPO или ORPO]
-    C -->|Да| E[GRPO]
-    B -->|Нет, binary| F[KTO]
-    B -->|Нет, demonstrations| G[SFT]
-    A --> H{Frontier qaulity?}
-    H -->|Да, есть бюджет| I[Full RLHF + PPO]
-```
+- **Preference pairs есть?**
+  - Да → **Reasoning task?**
+    - Нет → **DPO или ORPO**.
+    - Да → **GRPO**.
+  - Нет, binary-метки → **KTO**.
+  - Нет, demonstrations → **SFT**.
+- Отдельная ветка — **нужно frontier-качество?**
+  - Да, есть бюджет → **Full RLHF + PPO**.
 
 ## Q20. (!) Какие открытые SFT-датасеты использовать?
 
@@ -1245,29 +1225,20 @@ outputs = llm.generate(
 
 **Multi-LoRA serving** — главный production-паттерн для дообученных моделей: **один base** в VRAM обслуживает **много адаптеров** разом. Это возможно именно потому, что адаптеры крошечные (~100 MB) на фоне base (десятки GB) — держать сотню адаптеров дешевле, чем второй экземпляр модели.
 
-```mermaid
-flowchart LR
-    BASE[Base model<br/>Llama-3-70B<br/>140 GB / 40 GB AWQ<br/>в VRAM один раз]
-    
-    A1[LoRA: code-assistant<br/>~100 MB]
-    A2[LoRA: support-bot<br/>~100 MB]
-    A3[LoRA: medical-qa<br/>~100 MB]
-    A4[LoRA: legal-docs<br/>~100 MB]
-    
-    REQ1[Request: code task] -->|adapter_id=1| ROUTER
-    REQ2[Request: support] -->|adapter_id=2| ROUTER
-    REQ3[Request: medical] -->|adapter_id=3| ROUTER
-    
-    ROUTER[Inference Server<br/>vLLM / LoRAX / Punica]
-    
-    BASE --> ROUTER
-    A1 --> ROUTER
-    A2 --> ROUTER
-    A3 --> ROUTER
-    A4 --> ROUTER
-    
-    ROUTER --> OUT[Personalized responses]
-```
+Как это устроено:
+
+- В центре — **Inference Server** (vLLM / LoRAX / Punica), он же роутер.
+- В него один раз загружается `Base model` (Llama-3-70B, 140 GB / 40 GB в AWQ) — держится в VRAM один раз.
+- К тому же серверу подключены адаптеры (каждый ~100 MB):
+  - `LoRA: code-assistant`;
+  - `LoRA: support-bot`;
+  - `LoRA: medical-qa`;
+  - `LoRA: legal-docs`.
+- Входящие запросы маршрутизируются на сервер по `adapter_id`:
+  - `Request: code task` → `adapter_id=1`;
+  - `Request: support` → `adapter_id=2`;
+  - `Request: medical` → `adapter_id=3`.
+- На выходе сервер отдаёт `Personalized responses` — ответ с применённым нужным адаптером.
 
 **Зачем это нужно:**
 
@@ -1317,18 +1288,15 @@ flowchart LR
 **Cohere:**
 - Fine-tuning через dashboard и API для Command моделей.
 
-**Решающее дерево API vs self-host:**
+**Решающее дерево API vs self-host** (начиная с «Нужен FT»):
 
-```mermaid
-flowchart TD
-    A[Нужен FT] --> B{Open-weight модель устраивает?}
-    B -->|Да| C{Нужна security/on-prem?}
-    C -->|Да| D[Self-host: Llama/Mistral/Qwen + LoRA]
-    C -->|Нет| E{Бюджет на GPU?}
-    E -->|Да| D
-    E -->|Нет| F[OpenAI/Together/Modal SFT API]
-    B -->|Нет, нужен frontier| G[OpenAI SFT API или Vertex AI Gemini]
-```
+- **Open-weight модель устраивает?**
+  - Да → **нужна security / on-prem?**
+    - Да → **Self-host**: Llama/Mistral/Qwen + LoRA.
+    - Нет → **есть бюджет на GPU?**
+      - Да → **Self-host** (тот же вариант: Llama/Mistral/Qwen + LoRA).
+      - Нет → **OpenAI / Together / Modal SFT API**.
+  - Нет, нужен frontier → **OpenAI SFT API или Vertex AI Gemini**.
 
 ## Q34. Какие open-weight базовые модели брать в 2025-2026?
 

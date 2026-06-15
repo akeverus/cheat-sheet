@@ -130,22 +130,19 @@ updated: "2026-05-23"
 
 Любой code agent сводится к трём слоям: **оркестратор** крутит цикл, **LLM** принимает решения, **sandbox** безопасно исполняет действия над файлами и шеллом. LLM сам ничего не трогает — он лишь генерирует tool-call, а реальные изменения выполняет tool-слой внутри песочницы и возвращает результат обратно в цикл.
 
-```mermaid
-graph LR
-    User[User prompt / issue] --> Orchestrator[Agent loop]
-    Orchestrator --> LLM[LLM<br/>Claude/GPT/DeepSeek]
-    LLM --> Decide{tool call?}
-    Decide -- yes --> Tools[Tool layer]
-    Tools --> FS[(File system<br/>read/write/edit)]
-    Tools --> Shell[Shell exec<br/>tests, build]
-    Tools --> Search[Code search<br/>grep/AST/symbols]
-    Tools --> VCS[git diff/log/commit]
-    Tools --> Web[Web fetch]
-    FS & Shell & Search & VCS & Web --> Sandbox[Sandbox<br/>Docker / VM / local]
-    Sandbox --> Result[Observation]
-    Result --> Orchestrator
-    Decide -- no --> Answer[Final answer / PR]
-```
+Поток управления по шагам:
+
+- `User prompt / issue` → **Agent loop** (оркестратор) → **LLM** (`Claude` / `GPT` / `DeepSeek`).
+- LLM принимает решение «tool call?»:
+  - **yes** → **Tool layer**, который раскрывается на конкретные инструменты:
+    - `File system` — read / write / edit;
+    - `Shell exec` — tests, build;
+    - `Code search` — grep / AST / symbols;
+    - `git` — diff / log / commit;
+    - `Web fetch`.
+  - **no** → `Final answer / PR` (выход из цикла).
+- Все tool-вызовы (`File system`, `Shell exec`, `Code search`, `git`, `Web fetch`) исполняются внутри **Sandbox** (`Docker` / `VM` / local).
+- Sandbox возвращает `Observation` обратно в **Agent loop** — и цикл повторяется.
 
 Разберём три уровня подробнее:
 
@@ -229,20 +226,18 @@ Verified — это **очищенное подмножество** оригин
 
 **Что победило на практике.** В современных агентах доминирует **search/replace**, и причина в том, как устроена LLM: модель надёжно воспроизводит локальный фрагмент кода целиком, но плохо считает позиции и метаданные. Стратегия проста: модель пишет «найди вот этот блок, замени на вот этот», система ищет точное совпадение и применяет. Если SEARCH-блок не уникален или не найден — агент получает понятную ошибку и пробует снова, вместо того чтобы молча испортить файл.
 
-```mermaid
-graph TB
-    Intent[Намерение модели] --> Strategy{Edit strategy}
-    Strategy -->|Full| F[Полный файл]
-    Strategy -->|Diff| D[Unified diff]
-    Strategy -->|S/R| R[Search/Replace block]
-    Strategy -->|AST| A[Структурный патч]
-    Strategy -->|Apply| AM[Intent → small model → diff]
-    F & D & R & A & AM --> Apply[Применить к файлу]
-    Apply --> OK{Успех?}
-    OK -- да --> Done[Файл обновлён]
-    OK -- нет --> Error[Tool error]
-    Error --> Intent
-```
+По шагам это выглядит так:
+
+- `Намерение модели` → выбор **edit strategy**, одна из пяти веток:
+  - **Full** → `Полный файл`;
+  - **Diff** → `Unified diff`;
+  - **S/R** → `Search/Replace block`;
+  - **AST** → `Структурный патч`;
+  - **Apply** → `Intent → small model → diff`.
+- Результат любой ветки → `Применить к файлу`.
+- Дальше проверка «успех?»:
+  - **да** → `Файл обновлён`;
+  - **нет** → `Tool error` → возврат к `Намерению модели` (новая попытка).
 
 ## Q9. (!) Почему unified diff часто ломается у LLM?
 
@@ -515,33 +510,26 @@ claude "Реши issue #1234: добавь поле lastLoginAt в Customer и �
 - Логировать все shell-команды (audit log).
 - Использовать git как **дешёвый revert**: даже плохая правка отменяется одним коммитом назад.
 
-```mermaid
-graph TB
-    Agent[Code agent] --> Confirm{Confirmation policy}
-    Confirm -- safe allowlist --> Run[Exec]
-    Confirm -- ask user --> Ask[Human-in-the-loop]
-    Confirm -- deny --> Block[Block + log]
-    Run --> Sandbox{Sandbox layer}
-    Sandbox --> Local[Local FS]
-    Sandbox --> Docker[Docker container]
-    Sandbox --> VM[Full VM / microVM]
-    Local & Docker & VM --> Audit[Audit log]
-```
+Развязка решений по порядку:
+
+- `Code agent` → **Confirmation policy**, которая разводит действие по трём веткам:
+  - **safe allowlist** → `Exec` (выполнить);
+  - **ask user** → `Human-in-the-loop` (спросить человека);
+  - **deny** → `Block + log` (заблокировать и записать).
+- Если дошло до `Exec`, команда исполняется внутри **Sandbox layer**, и это один из уровней:
+  - `Local FS`;
+  - `Docker container`;
+  - `Full VM / microVM`.
+- Любой из уровней песочницы пишет всё в `Audit log`.
 
 ## Q25. (!) Как работает цикл на тестах: правка → запуск → исправление → повтор?
 
-Ключевая идея: тесты — это **внешний источник истины**, по которому агент сам понимает, верна правка или нет, и итерирует без человека. Хороший code agent прогоняет тесты сам и крутит цикл «правка → запуск → исправление», пока не станет зелено. Базовая схема:
+Ключевая идея: тесты — это **внешний источник истины**, по которому агент сам понимает, верна правка или нет, и итерирует без человека. Хороший code agent прогоняет тесты сам и крутит цикл «правка → запуск → исправление», пока не станет зелено. Базовый порядок шагов:
 
-```mermaid
-graph LR
-    Plan[План правки] --> Edit[Edit файлов]
-    Edit --> Run[Запуск тестов]
-    Run --> Parse[Парсинг вывода]
-    Parse --> OK{Все зелёные?}
-    OK -- да --> Commit[Commit + следующая задача]
-    OK -- нет --> Diag[Диагностика по stack trace]
-    Diag --> Plan
-```
+- `План правки` → `Edit файлов` → `Запуск тестов` → `Парсинг вывода`.
+- Проверка «все зелёные?»:
+  - **да** → `Commit + следующая задача`;
+  - **нет** → `Диагностика по stack trace` → возврат к `Плану правки` (новая итерация).
 
 Ключевые практики:
 

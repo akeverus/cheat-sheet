@@ -153,15 +153,14 @@ Reasoning model встроила в себя **CoT** и частично **self-
 
 Повтор до тех пор, пока модель не выдаст `Final Answer`.
 
-```mermaid
-flowchart LR
-    Start[User query] --> Thought[Thought<br/>«Мне нужно найти X»]
-    Thought --> Action[Action<br/>tool: search«X»]
-    Action --> Obs[Observation<br/>результат tool]
-    Obs --> Decide{Goal<br/>reached?}
-    Decide -->|No| Thought
-    Decide -->|Yes| Final[Final Answer]
-```
+Поток по шагам:
+
+- `User query` → **Thought** («Мне нужно найти X»).
+- **Thought** → **Action** (`tool: search("X")`).
+- **Action** → **Observation** (результат tool).
+- **Observation** → проверка **Goal reached?**:
+  - **No** → возврат к **Thought** (новая итерация цикла);
+  - **Yes** → **Final Answer**.
 
 **Пример trace (ReAct на question answering):**
 ```
@@ -275,15 +274,14 @@ def self_consistency(question, n=20, temperature=0.7):
 
 Это форма **verbal reinforcement learning** — обучение без обновления весов модели, через текстовые «уроки» в контексте. Роль градиентов здесь играет накапливающийся текст рефлексий.
 
-```mermaid
-flowchart LR
-    Task[Task] --> Try[Attempt N<br/>ReAct/CoT]
-    Try --> Eval{Success?<br/>verifier}
-    Eval -->|Yes| Done[Done]
-    Eval -->|No| Reflect[Self-reflection<br/>«я провалился потому что…»]
-    Reflect --> Memory[Memory buffer<br/>append reflection]
-    Memory --> Try
-```
+Поток по шагам:
+
+- `Task` → **Attempt N** (`ReAct`/`CoT`).
+- **Attempt N** → проверка **Success?** через verifier:
+  - **Yes** → **Done**;
+  - **No** → **Self-reflection** («я провалился потому что…»).
+- **Self-reflection** → **Memory buffer** (append reflection).
+- **Memory buffer** → возврат к **Attempt N** (следующая попытка уже с подмешанной рефлексией).
 
 **Чем отличается от обычного retry:**
 | Свойство | Plain retry | Reflexion |
@@ -345,18 +343,16 @@ def self_refine(task, max_iters=3):
 3. **Answer verifications independently** — отвечаем на каждый проверочный вопрос **в отдельном контексте**, без черновика перед глазами — чтобы модель не подстраивалась под него.
 4. **Revise** — модель пересматривает черновик с учётом полученных проверочных ответов.
 
-```mermaid
-flowchart TB
-    Q[User question] --> Draft[1. Draft answer]
-    Draft --> Plan[2. Plan verifications<br/>«нужно проверить даты, имена»]
-    Plan --> V1[3a. Answer v_q1<br/>independent]
-    Plan --> V2[3b. Answer v_q2<br/>independent]
-    Plan --> V3[3c. Answer v_q3<br/>independent]
-    V1 --> Revise[4. Revise draft<br/>с учётом verifications]
-    V2 --> Revise
-    V3 --> Revise
-    Revise --> Final[Final answer]
-```
+Поток по шагам:
+
+- `User question` → **1. Draft answer**.
+- **1. Draft answer** → **2. Plan verifications** («нужно проверить даты, имена»).
+- **2. Plan verifications** ветвится на независимые проверочные вопросы, каждый отвечается `independent` (в отдельном контексте):
+  - **3a. Answer v_q1**;
+  - **3b. Answer v_q2**;
+  - **3c. Answer v_q3**.
+- Все три ответа (`v_q1`, `v_q2`, `v_q3`) → **4. Revise draft** (с учётом verifications).
+- **4. Revise draft** → **Final answer**.
 
 **Почему помогает:**
 - Проверки изолированы — модель отвечает на них с чистого листа и не «защищает» свой черновик.
@@ -436,15 +432,10 @@ def plan_and_execute(task, planner_llm, executor_llm, max_replans=2):
 2. **Worker** — выполняет tool calls (параллельно или последовательно). LLM на этом шаге **не вызывается** — это просто запуск инструментов.
 3. **Solver** — берёт исходный вопрос плюс все собранные evidence и синтезирует финальный ответ.
 
-```mermaid
-flowchart LR
-    subgraph ReAct["ReAct: re-prompt каждый шаг"]
-        R1[LLM] --> R2[tool] --> R3[LLM] --> R4[tool] --> R5[LLM]
-    end
-    subgraph ReWOO["ReWOO: один план, потом исполнение"]
-        W1[Planner LLM<br/>DAG with placeholders] --> W2[Worker<br/>execute tools] --> W3[Solver LLM<br/>synthesize]
-    end
-```
+Сравнение потоков:
+
+- **ReAct** (re-prompt каждый шаг): `LLM` → `tool` → `LLM` → `tool` → `LLM` — LLM перезапускается после каждого tool-вызова.
+- **ReWOO** (один план, потом исполнение): `Planner LLM` (DAG with placeholders) → `Worker` (execute tools) → `Solver LLM` (synthesize) — LLM думает один раз в начале (planner) и один раз в конце (solver), между ними только запуск инструментов.
 
 **Пример plan:**
 ```
@@ -503,17 +494,17 @@ for step in plan:
 3. **State evaluator** — LLM в роли судьи оценивает каждое состояние: `sure / likely / impossible` или числовым score.
 4. **Search** — обход дерева (BFS / DFS / beam-search) с отсечением веток с низким score.
 
-```mermaid
-flowchart TB
-    Root["Root<br/>задача"]
-    Root --> T1["Thought 1a<br/>score: 0.8"]
-    Root --> T2["Thought 1b<br/>score: 0.3 cut"]
-    Root --> T3["Thought 1c<br/>score: 0.6"]
-    T1 --> T11["Thought 2a<br/>score: 0.9"]
-    T1 --> T12["Thought 2b<br/>score: 0.4"]
-    T3 --> T31["Thought 2c<br/>score: 0.7"]
-    T11 --> Leaf1["Solution<br/>verified"]
-```
+Структура дерева (узлы со score, ветки с низким score отсекаются):
+
+- **Root** (задача) ветвится на три мысли первого уровня:
+  - **Thought 1a** (score: 0.8);
+  - **Thought 1b** (score: 0.3 — cut, отсекается);
+  - **Thought 1c** (score: 0.6).
+- **Thought 1a** ветвится дальше:
+  - **Thought 2a** (score: 0.9);
+  - **Thought 2b** (score: 0.4).
+- **Thought 1c** ветвится в **Thought 2c** (score: 0.7).
+- **Thought 2a** ведёт к листу **Solution** (verified).
 
 **Pseudo-code (BFS):**
 ```python
