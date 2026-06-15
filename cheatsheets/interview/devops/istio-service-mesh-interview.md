@@ -88,15 +88,13 @@ updated: "2026-04-25"
 
 **Как устроен:** sidecar-прокси (по одному рядом с каждым pod) перехватывает трафик сервиса, а control plane централизованно раздаёт прокси конфигурацию.
 
-```mermaid
-graph LR
-    AppA[App A] --- ProxyA[Envoy Sidecar]
-    ProxyA --- ProxyB[Envoy Sidecar]
-    ProxyB --- AppB[App B]
+Путь вызова из `App A` в `App B` проходит через цепочку прокси:
 
-    Control[Control Plane<br/>Istiod] -.- ProxyA
-    Control -.- ProxyB
-```
+- `App A` соединён со своим `Envoy Sidecar`
+- этот sidecar связан с `Envoy Sidecar` целевого pod-а
+- тот, в свою очередь, отдаёт трафик в `App B`
+
+Над этой цепочкой стоит **Control Plane (Istiod)** — он связан (управляющим каналом, не на пути запросов) с каждым из sidecar-ов и раздаёт им конфигурацию.
 
 **Прозрачно для кода** — приложение отправляет обычный HTTP/gRPC-запрос и не знает, что его перехватывает sidecar. Никаких библиотек и SDK подключать не нужно.
 
@@ -133,15 +131,11 @@ Istio разделён на два слоя: **data plane** обрабатыва
 - Выступает удостоверяющим центром (CA), выпуская mTLS-сертификаты
 - Преобразует конфигурационные CRD (VirtualService и т.д.) в настройки Envoy
 
-```mermaid
-graph TD
-    K8s[K8s API] --> Istiod[Istiod<br/>Control Plane]
-    Istiod -.config.- E1[Envoy Sidecar 1]
-    Istiod -.config.- E2[Envoy Sidecar 2]
-    Istiod -.config.- E3[Envoy Sidecar 3]
-    E1 --- E2
-    E2 --- E3
-```
+Связи между компонентами по порядку:
+
+- `K8s API` → `Istiod (Control Plane)` — Istiod берёт из K8s API список сервисов
+- `Istiod` → каждый из `Envoy Sidecar` — раздаёт им конфигурацию (config push)
+- сами sidecar-ы (`Envoy Sidecar 1` ↔ `Envoy Sidecar 2` ↔ `Envoy Sidecar 3`) связаны между собой — это data plane, по которому идёт реальный трафик
 
 **Историческая деталь:** до версии 1.5 control plane состоял из нескольких отдельных компонентов (Pilot, Citadel, Galley). Их объединили в один бинарник Istiod — это резко упростило установку и эксплуатацию, и на собеседовании про это часто спрашивают.
 
@@ -621,14 +615,13 @@ istioctl dashboard kiali
 - **Layer 4 — ztunnel** — DaemonSet, по одному на ноду; берёт на себя mTLS и базовые L4-политики для всех pod-ов этой ноды
 - **Layer 7 — waypoint proxy** — опциональный Envoy на namespace, подключается только когда реально нужны L7-возможности
 
-```mermaid
-graph TD
-    AppA[App A] --> ZT1[ztunnel<br/>per node]
-    ZT1 -.mTLS.- ZT2[ztunnel<br/>per node]
-    ZT2 --> AppB[App B]
+Путь трафика из `App A` в `App B` в ambient mode:
 
-    ZT1 -.optional L7.- WP[Waypoint Proxy<br/>per namespace]
-```
+- `App A` → `ztunnel (per node)` на своей ноде
+- `ztunnel` ноды отправителя ↔ `ztunnel (per node)` ноды получателя — соединение между ними идёт по mTLS
+- `ztunnel` ноды получателя → `App B`
+
+Кроме того, `ztunnel` может опционально направить трафик в `Waypoint Proxy (per namespace)` — это и есть опциональный слой L7, подключаемый только при необходимости.
 
 **Чем лучше sidecar:**
 - **Pod не меняется** — достаточно opt-in метки, не нужно пересоздавать pod-ы и трогать манифесты

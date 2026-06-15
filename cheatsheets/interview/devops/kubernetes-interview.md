@@ -129,34 +129,16 @@ updated: "2026-05-08"
 - **Service discovery** — встроенный `DNS` и балансировка нагрузки между репликами
 - **Rolling updates** — обновление без простоя с возможностью мгновенного отката
 
-```mermaid
-graph TB
-    subgraph "Kubernetes кластер"
-        direction TB
-        User[👤 Пользователь] -->|kubectl / API| API[API Server]
+Как устроен кластер по элементам:
 
-        subgraph CP["Control Plane"]
-            API --> ETCD[(etcd)]
-            API --> SCHED[Scheduler]
-            API --> CM[Controller Manager]
-        end
-
-        subgraph W1["Worker Node 1"]
-            KL1[Kubelet] --> P1[Pod A]
-            KL1 --> P2[Pod B]
-            KP1[Kube-proxy]
-        end
-
-        subgraph W2["Worker Node 2"]
-            KL2[Kubelet] --> P3[Pod C]
-            KL2 --> P4[Pod D]
-            KP2[Kube-proxy]
-        end
-
-        API --> KL1
-        API --> KL2
-    end
-```
+- **Пользователь** обращается к `API Server` через `kubectl` или напрямую через API.
+- **Control Plane** — `API Server` связан с:
+  - `etcd` — хранилище состояния;
+  - `Scheduler` — планировщик;
+  - `Controller Manager` — менеджер контроллеров.
+- **Worker Node 1** содержит `Kubelet` (управляет подами `Pod A` и `Pod B`) и `Kube-proxy`.
+- **Worker Node 2** содержит `Kubelet` (управляет подами `Pod C` и `Pod D`) и `Kube-proxy`.
+- `API Server` управляет `Kubelet`'ами на обеих рабочих нодах.
 
 **Что подчеркнуть на собеседовании:** `Kubernetes` — не просто инструмент запуска контейнеров, а *платформа*, реализующая паттерн **Desired State Management**. Вы описываете, что хотите, а контроллеры в цикле сверяют фактическое состояние с желаемым и сами устраняют расхождение. Отсюда и самовосстановление: если под упал, кластер снова не соответствует вашему манифесту — и K8s поднимает новый.
 
@@ -222,22 +204,10 @@ ETCDCTL_API=3 etcdctl snapshot save /backup/etcd-snapshot.db \
 | Плотность | 10-20 ВМ на хост | Сотни контейнеров на хост |
 | Безопасность | Более строгая изоляция | Разделяют ядро хоста |
 
-```mermaid
-graph LR
-    subgraph VM["Виртуальные машины"]
-        HW1[Hardware] --> HV[Hypervisor]
-        HV --> G1["Guest OS + App 1"]
-        HV --> G2["Guest OS + App 2"]
-    end
+Различие хорошо видно по слоям стека:
 
-    subgraph CT["Контейнеры"]
-        HW2[Hardware] --> OS[Host OS]
-        OS --> CR[Container Runtime]
-        CR --> C1["App 1"]
-        CR --> C2["App 2"]
-        CR --> C3["App 3"]
-    end
-```
+- **Виртуальные машины:** `Hardware` → `Hypervisor` → поверх него каждая ВМ несёт собственную гостевую ОС со своим приложением (`Guest OS + App 1`, `Guest OS + App 2`). Гипервизор виртуализирует железо, и над ним крутятся полноценные ОС.
+- **Контейнеры:** `Hardware` → `Host OS` (одна общая ОС) → `Container Runtime` → поверх рантайма приложения (`App 1`, `App 2`, `App 3`) без своих гостевых ОС. Все контейнеры делят ядро хоста, разделяя только рантайм.
 
 Подробнее о контейнеризации — в [вопросах по Docker](docker-interview.md).
 
@@ -296,17 +266,15 @@ spec:
 
 ## Q7. (!) Какие фазы жизненного цикла проходит `Pod`?
 
-```mermaid
-stateDiagram-v2
-    [*] --> Pending: kubectl apply
-    Pending --> Running: Scheduled + Containers started
-    Running --> Succeeded: All containers exited 0
-    Running --> Failed: Container exited non-zero
-    Pending --> Failed: Image pull error
-    Running --> Unknown: Node lost
-    Succeeded --> [*]
-    Failed --> [*]
-```
+Переходы между фазами по порядку:
+
+- старт → `Pending` — при `kubectl apply`;
+- `Pending` → `Running` — когда под распланирован (`Scheduled`) и контейнеры запущены (`Containers started`);
+- `Pending` → `Failed` — при ошибке скачивания образа (`Image pull error`);
+- `Running` → `Succeeded` — когда все контейнеры завершились с кодом 0 (`All containers exited 0`);
+- `Running` → `Failed` — когда контейнер завершился с ненулевым кодом (`Container exited non-zero`);
+- `Running` → `Unknown` — при потере ноды (`Node lost`);
+- `Succeeded` и `Failed` — конечные состояния.
 
 | Фаза | Описание |
 |------|----------|
@@ -419,20 +387,11 @@ spec:
 
 Это устоявшиеся способы добавить к основному контейнеру вспомогательный, не меняя само приложение. Все они опираются на то, что контейнеры пода делят сеть и тома, поэтому вспомогательный контейнер может перехватывать трафик или читать файлы основного. Четыре классических паттерна:
 
-```mermaid
-graph LR
-    subgraph "Sidecar"
-        A1[App] ---|логи| S1[Log Shipper]
-    end
+Как вспомогательный контейнер подключается к основному (`App`) в каждом паттерне:
 
-    subgraph "Ambassador"
-        A2[App] ---|localhost:6379| S2[Redis Proxy]
-    end
-
-    subgraph "Adapter"
-        A3[App] ---|метрики| S3[Prometheus Exporter]
-    end
-```
+- **Sidecar:** `App` отдаёт логи в `Log Shipper`.
+- **Ambassador:** `App` ходит на `localhost:6379` к `Redis Proxy`, который проксирует соединение наружу.
+- **Adapter:** `App` отдаёт метрики в `Prometheus Exporter`, преобразующий их в нужный формат.
 
 | Паттерн | Описание | Пример |
 |---------|----------|--------|
@@ -745,13 +704,13 @@ spec:
 
 `Service` решает фундаментальную проблему: поды эфемерны и их IP меняются при каждом пересоздании, поэтому обращаться к поду по IP нельзя. `Service` даёт набору подов **стабильный** адрес — постоянный DNS-имя и виртуальный IP (`ClusterIP`), — а сам следит, какие поды живы, и балансирует трафик между ними. Поды он находит по `selector` (labels), а актуальный список их IP держит в объекте `Endpoints`.
 
-```mermaid
-graph LR
-    Client[Клиент] -->|backend-svc:80| SVC["Service<br/>(ClusterIP)"]
-    SVC --> P1[Pod 1<br/>10.0.1.5:8080]
-    SVC --> P2[Pod 2<br/>10.0.1.6:8080]
-    SVC --> P3[Pod 3<br/>10.0.1.7:8080]
-```
+Поток трафика по шагам:
+
+- **Клиент** обращается к `Service` (типа `ClusterIP`) по стабильному адресу `backend-svc:80`.
+- `Service` балансирует запрос на один из подов за ним:
+  - `Pod 1` — `10.0.1.5:8080`;
+  - `Pod 2` — `10.0.1.6:8080`;
+  - `Pod 3` — `10.0.1.7:8080`.
 
 **Типы `Service`:**
 
@@ -765,32 +724,14 @@ graph LR
 
 ## Q21. (!) В чём разница между `ClusterIP`, `NodePort` и `LoadBalancer`?
 
-```mermaid
-graph TB
-    Internet[🌐 Internet]
+Путь внешнего запроса через все три слоя:
 
-    subgraph Cluster
-        subgraph Node1["Node 1"]
-            NP1["NodePort :30080"]
-            P1[Pod A]
-        end
-        subgraph Node2["Node 2"]
-            NP2["NodePort :30080"]
-            P2[Pod B]
-        end
-        CIP["ClusterIP<br/>10.96.0.100:80"]
-    end
+- **Internet** → облачный балансировщик **Cloud LoadBalancer** (`203.0.113.10:80`).
+- `LoadBalancer` раскидывает трафик по `NodePort` на нодах: `NodePort :30080` на `Node 1` и тот же `NodePort :30080` на `Node 2`.
+- Оба `NodePort` направляют запрос на внутренний `ClusterIP` (`10.96.0.100:80`).
+- `ClusterIP` балансирует трафик на поды за сервисом: `Pod A` (на `Node 1`) и `Pod B` (на `Node 2`).
 
-    LB["☁️ Cloud LoadBalancer<br/>203.0.113.10:80"]
-
-    Internet --> LB
-    LB --> NP1
-    LB --> NP2
-    NP1 --> CIP
-    NP2 --> CIP
-    CIP --> P1
-    CIP --> P2
-```
+То есть `ClusterIP` — внутренний виртуальный IP, `NodePort` пробрасывает порт ноды к нему, а `LoadBalancer` стоит снаружи и распределяет трафик по `NodePort`'ам нод.
 
 ```yaml
 # ClusterIP (по умолчанию)
@@ -1116,13 +1057,12 @@ spec:
 
 Смысл разделения: разработчик в манифесте пода ссылается только на `PVC` и не знает, NFS под ним, EBS или Ceph. Меняется бэкенд хранилища — манифесты приложения не трогаются.
 
-```mermaid
-graph LR
-    Pod -->|volumeMount| PVC[PersistentVolumeClaim]
-    PVC -->|bind| PV[PersistentVolume]
-    PV -->|provision| Storage["💾 NFS / EBS / GCE PD / Ceph"]
-    SC[StorageClass] -.->|dynamic provisioning| PV
-```
+Цепочка связей механизма хранилища:
+
+- `Pod` через `volumeMount` обращается к `PersistentVolumeClaim` (заявке на хранилище).
+- `PersistentVolumeClaim` связывается (`bind`) с `PersistentVolume`.
+- `PersistentVolume` предоставляет (`provision`) реальное хранилище: `NFS`, `EBS`, `GCE PD` или `Ceph`.
+- `StorageClass` динамически создаёт `PersistentVolume` под заявку (dynamic provisioning).
 
 ```yaml
 # PersistentVolumeClaim (динамическое создание PV)
@@ -1235,12 +1175,11 @@ kubectl describe hpa backend-hpa
 
 **`KEDA` (Kubernetes Event-Driven Autoscaler)** — масштабирование на основе внешних событий: длина очереди `Kafka`, `RabbitMQ`, метрики `Prometheus`, HTTP-запросы.
 
-```mermaid
-graph TB
-    HPA["HPA<br/>Масштабирует поды"] -->|Нужно больше ресурсов| CA["Cluster Autoscaler<br/>Масштабирует ноды"]
-    VPA["VPA<br/>Корректирует requests/limits"] -->|Нужно больше ресурсов| CA
-    KEDA["KEDA<br/>Event-driven scaling"] -->|Создаёт поды| CA
-```
+Как уровни масштабирования сходятся на `Cluster Autoscaler` (он масштабирует ноды):
+
+- `HPA` (масштабирует поды) → когда нужно больше ресурсов, упирается в `Cluster Autoscaler`.
+- `VPA` (корректирует `requests`/`limits`) → когда нужно больше ресурсов, тоже упирается в `Cluster Autoscaler`.
+- `KEDA` (event-driven scaling) → создаёт поды, что приводит к запросу нод у `Cluster Autoscaler`.
 
 ## Q33. (!) Что такое `RBAC` в `Kubernetes`?
 
@@ -1713,21 +1652,14 @@ spring:
     timeout-per-shutdown-phase: 30s
 ```
 
-```mermaid
-sequenceDiagram
-    participant K8s as Kubernetes
-    participant EP as Endpoints
-    participant Pod as Pod
+Порядок взаимодействия `Kubernetes`, объекта `Endpoints` и пода при остановке:
 
-    K8s->>Pod: preStop hook (sleep 5s)
-    K8s->>EP: Убрать Pod из Endpoints
-    Note over EP: Новый трафик не идёт на Pod
-    Pod->>Pod: preStop завершился
-    K8s->>Pod: SIGTERM
-    Pod->>Pod: Graceful shutdown<br/>(дообработка запросов)
-    Note over Pod: timeout-per-shutdown-phase: 30s
-    Pod->>K8s: Process exited
-```
+1. `Kubernetes` запускает на поде `preStop` hook (`sleep 5s`).
+2. Параллельно `Kubernetes` убирает `Pod` из `Endpoints`. После этого новый трафик на под уже не идёт.
+3. `preStop` на поде завершается.
+4. `Kubernetes` отправляет поду `SIGTERM`.
+5. Под выполняет graceful shutdown — дообрабатывает уже принятые запросы (в пределах `timeout-per-shutdown-phase: 30s`).
+6. Процесс пода завершается (`Process exited`), под сообщает об этом `Kubernetes`.
 
 **Итого:** `preStop` hook + `server.shutdown=graceful` + адекватный `terminationGracePeriodSeconds` = zero-downtime deployment.
 
@@ -1788,17 +1720,13 @@ spec:
                 values: ["eu-west-1a"]
 ```
 
-```mermaid
-graph TB
-    subgraph "Паттерны scheduling"
-        T[Taints/Tolerations<br/>Ноды отталкивают поды] 
-        NA[Node Affinity<br/>Поды тянутся к нодам]
-        PA[Pod Anti-Affinity<br/>Поды избегают друг друга]
-    end
-    T -.->|Совместно| SCHED[Scheduler решение]
-    NA -.-> SCHED
-    PA -.-> SCHED
-```
+Три паттерна scheduling совместно влияют на решение планировщика (`Scheduler`):
+
+- **Taints/Tolerations** — ноды отталкивают поды.
+- **Node Affinity** — поды тянутся к нодам.
+- **Pod Anti-Affinity** — поды избегают друг друга.
+
+Все три вместе учитываются при принятии решения планировщиком о размещении пода.
 
 **Типичный продакшен-паттерн** показывает, зачем нужны оба механизма вместе: на дорогие GPU-ноды вешают taint `type=gpu:NoSchedule` (чтобы обычные поды их не заняли) и одновременно node affinity на GPU-подах (чтобы они гарантированно туда попадали). Один toleration без affinity не сработает — под получит *право* на GPU-ноду, но scheduler с тем же успехом разместит его на обычной.
 

@@ -234,16 +234,15 @@ umask 027              # задать для текущего shell
 | `Z` | Zombie | завершён, но родитель ещё не забрал exit-code |
 | `X` | Dead | kernel-видимое, недолго |
 
-```mermaid
-stateDiagram-v2
-    [*] --> Running: fork + exec
-    Running --> Sleeping: wait IO
-    Sleeping --> Running: IO ready / signal
-    Running --> Stopped: SIGSTOP
-    Stopped --> Running: SIGCONT
-    Running --> Zombie: exit
-    Zombie --> [*]: parent wait()
-```
+Переходы между состояниями по жизненному циклу процесса:
+
+- Старт: процесс появляется через `fork + exec` и попадает в `Running`.
+- `Running` → `Sleeping`: процесс уходит в ожидание IO (`wait IO`).
+- `Sleeping` → `Running`: IO готово или пришёл сигнал (`IO ready / signal`).
+- `Running` → `Stopped`: получен `SIGSTOP`.
+- `Stopped` → `Running`: получен `SIGCONT`.
+- `Running` → `Zombie`: процесс завершился (`exit`).
+- `Zombie` → завершение: родитель забрал exit-code через `parent wait()`, и запись о процессе исчезает.
 
 **Подводный камень — состояние `D`.** Это непрерываемый сон: процесс заблокирован внутри системного вызова в ожидании IO, и его нельзя разбудить даже сигналом. Поэтому `kill -9` на него не действует — ядро не доставит сигнал, пока IO не завершится. Висящий в `D` процесс почти всегда указывает на проблему с диском, контроллером или зависший NFS-маунт; лечить нужно причину (storage), а не сам процесс.
 
