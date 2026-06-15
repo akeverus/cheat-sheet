@@ -1153,7 +1153,7 @@
               "text": "Для viral фото проблем с S3 нет: один объект можно читать неограниченно часто, поэтому random suffix на ключах и распределение по prefix'ам не требуются.",
               "correct": false,
               "sections": {
-                "what_actually": "S3 throttлит на уровне prefix (~5500 GET/sec на prefix), поэтому ключи распределяют random suffix'ом по разным физическим shards.",
+                "what_actually": "S3 троттлит на уровне prefix (~5500 GET/sec на prefix), поэтому ключи распределяют random suffix'ом по разным физическим shards.",
                 "source_of_confusion": "S3 кажется бесконечно масштабируемым, и про per-prefix-лимиты часто забывают.",
                 "if_it_were_true": "Тогда 1M views/минуту в один prefix не вызывали бы throttling, но на деле S3 начал бы отдавать 503 Slow Down.",
                 "how_it_should_be": "Ключи раскидывают по prefix'ам (random suffix), чтобы обойти per-prefix лимит на GET."
@@ -1186,13 +1186,13 @@
             },
             {
               "label": "D",
-              "text": "Когда celebrity публикует фото и за минуту прилетает 1M views, проблемы: один S3 prefix throttлится (limit 5500 GET/sec на prefix), Origin Shield перегружен, cold POPs далеко от региона. Решения: random suffix на S3 keys (распределение по физическим shards внутри S3); CloudFront Origin Shield + multi-region origins; predictive warming — при публикации celebrity background-worker делает GET по всем 300+ POPs; adaptive caching — фото с > 1000 RPS получает longer TTL и replication по соседним POPs. Для metadata в Redis — read replicas + local L1 cache (Caffeine, 30 сек TTL).",
+              "text": "Когда celebrity публикует фото и за минуту прилетает 1M views, проблемы: один S3 prefix троттлится (limit 5500 GET/sec на prefix), Origin Shield перегружен, cold POPs далеко от региона. Решения: random suffix на S3 keys (распределение по физическим shards внутри S3); CloudFront Origin Shield + multi-region origins; predictive warming — при публикации celebrity background-worker делает GET по всем 300+ POPs; adaptive caching — фото с > 1000 RPS получает longer TTL и replication по соседним POPs. Для metadata в Redis — read replicas + local L1 cache (Caffeine, 30 сек TTL).",
               "correct": true,
               "sections": {
                 "explanation": "Viral hot key решают распределением (random suffix, multi-region origin), упреждающим прогревом всех POP при публикации гиганта и адаптивным кэшированием горячего контента.",
                 "example": "Predictive warming: на `PhotoPublishedEvent` от автора с > 1M followers worker прогревает фото по всем 300+ POPs заранее, чтобы первые миллионы зрителей попадали в HIT, а не в MISS.",
                 "when_to_apply": "Эти приёмы включают для контента с резким всплеском трафика (celebrity-публикация, виральный пост), где наивное кэширование и один origin не выдерживают нагрузку.",
-                "edge_cases": "S3 лимит ~5500 GET/sec на один prefix — узкое место для viral: без random suffix все запросы бьют в один prefix и throttлятся, поэтому ключи распределяют по физическим shards.",
+                "edge_cases": "S3 лимит ~5500 GET/sec на один prefix — узкое место для viral: без random suffix все запросы бьют в один prefix и троттлятся, поэтому ключи распределяют по физическим shards.",
                 "related": "[[design-instagram-interview#Q19]] CDN и Origin Shield; [[design-instagram-interview#Q13]] hot key для счётчиков; [[design-instagram-interview#Q8]] celebrity hot shard problem."
               },
               "order": 3

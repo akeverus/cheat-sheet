@@ -233,7 +233,7 @@
                 "explanation": "Минимизация blast radius — главный контракт безопасности хаоса: начинаем с одного пода, потом namespace, потом кластер; эксперимент длится минуты, а не часы, и всегда есть способ его немедленно выключить.",
                 "example": "В `Chaos Mesh`: `mode: fixed-percent`, `value: \"10\"`, `duration: \"60s\"` — отказ затрагивает только 10% подов на одну минуту, что жёстко ограничивает область.",
                 "when_to_apply": "В каждом эксперименте, особенно в проде: процент трафика наращивают постепенно (1% → 5% → 25%), таргетируя сначала internal/canary-пользователей.",
-                "edge_cases": "Пренебрежение blast radius — главная причина, почему хаос-эксперименты рушат прод: `pod-kill` с `mode: all` превращается в самоDDoS.",
+                "edge_cases": "Пренебрежение blast radius — главная причина, почему хаос-эксперименты рушат прод: `pod-kill` с `mode: all` превращается в само-DDoS.",
                 "related": "[[chaos-engineering-interview#Q2]] пятый принцип — minimize blast radius; [[chaos-engineering-interview#Q22]] параметр `mode` в `PodChaos`; [[chaos-engineering-interview#Q40]] неконтролируемый радиус как антипаттерн."
               }
             }
@@ -1289,7 +1289,7 @@
                 "explanation": "Параметр `mode` напрямую контролирует blast radius: `one` — один случайный pod, `all` — все под selector (опасно в проде), `fixed-percent` — заданный процент. `selector` ограничивает namespace и набор подов по меткам.",
                 "example": "`action: pod-failure`, `mode: one`, `duration: '30s'`, `selector.namespaces: [production]`, `labelSelectors: {'app.kubernetes.io/component': 'api'}` — один api-под становится недоступен на 30 секунд.",
                 "when_to_apply": "Когда нужно проверить устойчивость к падению/перезапуску подов и корректность readiness probes и replacement в Deployment.",
-                "edge_cases": "`mode: all` в проде — это самоDDoS (убивает все подходящие поды сразу); всегда начинают с `one` или `fixed-percent`, а `kubectl delete podchaos` служит kill switch.",
+                "edge_cases": "`mode: all` в проде — это само-DDoS (убивает все подходящие поды сразу); всегда начинают с `one` или `fixed-percent`, а `kubectl delete podchaos` служит kill switch.",
                 "related": "[[chaos-engineering-interview#Q21]] PodChaos среди fault types; [[chaos-engineering-interview#Q4]] mode как контроль blast radius; [[chaos-engineering-interview#Q23]] родственный NetworkChaos."
               }
             },
@@ -1299,7 +1299,7 @@
               "text": "Параметр `mode: all` безопасен для прода, потому что Chaos Mesh всё равно убьёт только один pod.",
               "correct": false,
               "sections": {
-                "what_actually": "`mode: all` затрагивает ВСЕ поды под selector — это самоDDoS в проде; один pod даёт `mode: one`.",
+                "what_actually": "`mode: all` затрагивает ВСЕ поды под selector — это само-DDoS в проде; один pod даёт `mode: one`.",
                 "source_of_confusion": "Кажется, что платформа сама ограничит радиус, но `mode` задаёт его явно.",
                 "if_it_were_true": "Тогда не было бы смысла в значениях `one` и `fixed-percent` для контроля blast radius.",
                 "how_it_should_be": "`mode: all` бьёт по всем подходящим подам; для безопасности берут `one` или `fixed-percent`."
@@ -2391,7 +2391,7 @@
               "correct": true,
               "sections": {
                 "explanation": "Все антипаттерны сводятся к двум корням: отсутствие методологии (нет гипотезы, abort, post-mortem) и отсутствие безопасности/непрерывности (неконтролируемый радиус, chaos в инцидент, разовость). Дисциплинированный хаос противоположен каждому из них.",
-                "example": "Антипаттерн #4: `pod-kill` на `mode: all` в проде = самоDDoS; правильно — всегда начинать с `one` или `fixed-percent: 10`, наращивая постепенно.",
+                "example": "Антипаттерн #4: `pod-kill` на `mode: all` в проде = само-DDoS; правильно — всегда начинать с `one` или `fixed-percent: 10`, наращивая постепенно.",
                 "when_to_apply": "Как чек-лист при ревью плана эксперимента: если узнаёте хоть один антипаттерн, эксперимент нужно переработать до запуска.",
                 "edge_cases": "Антипаттерн #8 («chaos вместо тестов») коварен: хаос дополняет unit/integration-тесты для distributed-специфики, но не заменяет их — путаница ведёт к пробелам в базовом покрытии.",
                 "related": "[[chaos-engineering-interview#Q41]] «chaos ради chaos» подробно; [[chaos-engineering-interview#Q33]] отсутствие abort condition; [[chaos-engineering-interview#Q10]] только pod-kill как узкий портфель."

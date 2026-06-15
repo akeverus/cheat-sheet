@@ -255,7 +255,7 @@
                 "explanation": "Стабы дешёвые и потокобезопасные — их можно создавать per-call для настройки таймаутов и метаданных через `.withDeadlineAfter()`/`.withCallCredentials()`, а канал держат на весь lifecycle приложения.",
                 "example": "`ManagedChannel ch = ManagedChannelBuilder.forAddress(\"localhost\", 9090).usePlaintext().build(); var stub = UserServiceGrpc.newBlockingStub(ch); GetUserResponse r = stub.getUser(req);` — канал переиспользуется, стаб создаётся легко.",
                 "when_to_apply": "`Channel` создают один раз (бин в Spring) и держат открытым; `Stub.withDeadlineAfter(5, SECONDS)` порождает дешёвый новый стаб с per-call настройками — это нормально.",
-                "edge_cases": "Создание нового `Channel` на каждый запрос — антипаттерн (исчерпание portов, медленный handshake); забытый `channel.shutdown().awaitTermination()` течёт потоками; `usePlaintext()` — только для разработки, в проде TLS.",
+                "edge_cases": "Создание нового `Channel` на каждый запрос — антипаттерн (исчерпание портов, медленный handshake); забытый `channel.shutdown().awaitTermination()` течёт потоками; `usePlaintext()` — только для разработки, в проде TLS.",
                 "related": "[[grpc-interview#Q4]] генерация стабов; [[grpc-interview#Q6]] типы RPC; [[grpc-interview#Q31]] управление каналом в долгоживущих приложениях."
               },
               "label": "A",
