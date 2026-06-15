@@ -1,6 +1,6 @@
 ---
 title: "Вопросы на собеседовании: Java Collections"
-description: "Комплексное руководство по вопросам собеседования на тему Java Collections Framework для Senior Java Developer. Включает детальные объяснения концепций, практические примеры на Java, mermaid-диаграммы, best practices и troubleshooting."
+description: "Комплексное руководство по вопросам собеседования на тему Java Collections Framework для Senior Java Developer. Включает детальные объяснения концепций, практические примеры на Java, схемы, best practices и troubleshooting."
 tags:
   - interview
   - programming-languages
@@ -18,7 +18,7 @@ updated: "2026-05-20"
 ---
 # Вопросы на собеседовании: `Java Collections`
 
-Комплексное руководство по вопросам собеседования на тему `Java Collections Framework` для `Senior Java Developer`. Включает детальные объяснения концепций, практические примеры на `Java`, `mermaid`-диаграммы, best practices и troubleshooting.
+Комплексное руководство по вопросам собеседования на тему `Java Collections Framework` для `Senior Java Developer`. Включает детальные объяснения концепций, практические примеры на `Java`, схемы, best practices и troubleshooting.
 
 ## Полезные ссылки
 

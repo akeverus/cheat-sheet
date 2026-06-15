@@ -1,6 +1,6 @@
 ---
 title: "Вопросы на собеседовании: OAuth2"
-description: "Комплексное руководство по OAuth2: flows, токены, JWT, OIDC, Spring Security, безопасность, тестирование. С mermaid-диаграммами и примерами кода."
+description: "Комплексное руководство по OAuth2: flows, токены, JWT, OIDC, Spring Security, безопасность, тестирование. Со схемами и примерами кода."
 tags:
   - interview
   - security
