@@ -1935,7 +1935,7 @@
                 "explanation": "GraphQL резолвит поля field-by-field: для `orders { customer { name } }` `customer` вызывается 10 раз; DataLoader перехватывает вызовы, после tick делает один batch-call и резолвит все futures.",
                 "example": "В Spring: `@BatchMapping(typeName=\"Order\") public Map<Order, Customer> customer(List<Order> orders) { ... }` создаёт DataLoader сам, либо `BatchLoaderRegistry.forTypePair(...)` + `@SchemaMapping(typeName=\"Order\") public CompletableFuture<Customer> customer(Order o, DataLoader<Long, Customer> loader) { return loader.load(o.customerId()); }`.",
                 "when_to_apply": "Применимо всегда, когда field-резолвер обращается к внешнему источнику (БД, HTTP, кэш); не нужно для in-memory вычислений без I/O.",
-                "edge_cases": "DataLoader кэширует внутри запроса (повтор `load(1)` без нового batch), и в долгих запросах это даёт stale-чтение; при ошибке batch-функции все futures в батче failят'ся — нужна аккуратная обработка.",
+                "edge_cases": "DataLoader кэширует внутри запроса (повтор `load(1)` без нового batch), и в долгих запросах это даёт stale-чтение; при ошибке batch-функции все futures в батче падают с ошибкой — нужна аккуратная обработка.",
                 "related": "[[graphql-interview#Q11]] суть проблемы N+1; [[graphql-interview#Q21]] подходы к подключению DataLoader в Spring."
               },
               "label": "A",
