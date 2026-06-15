@@ -216,9 +216,9 @@
               "text": "Euclidean distance даёт лучший recall, чем cosine, для всех типов embeddings.",
               "correct": false,
               "sections": {
-                "what_actually": "Recall зависит от того, какой метрикой обучалась модель; большинство (OpenAI, Cohere, Sentence-Transformers, CLIP) учатся с cosine loss, поэтому Euclidean даёт хуже recall.",
+                "what_actually": "«Лучшей для всех» метрики нет: на нормализованных embeddings (OpenAI, Cohere) Euclidean даёт ровно тот же ranking, что cosine (`||a-b||²=2-2·cos`), а вот на ненормализованных векторах метрика, не совпадающая с той, под которую обучалась модель, меняет top-k и портит recall.",
                 "source_of_confusion": "Euclidean — самая интуитивная «дистанция», и кажется универсально надёжной для любых данных.",
-                "if_it_were_true": "Тогда переключение на Euclidean улучшало бы качество, но реально оно ломает семантику и роняет retrieval на 10–30%.",
+                "if_it_were_true": "Тогда переключение на Euclidean универсально повышало бы качество, но на нормализованных векторах оно ничего не меняет (ranking идентичен cosine), а на ненормализованных рассогласование с метрикой обучения ломает порядок результатов.",
                 "how_it_should_be": "Метрику выбирают под training objective модели; для cosine-обученных embeddings Euclidean — неправильный выбор."
               },
               "label": "C",
@@ -729,7 +729,7 @@
           "question_text": "Что отличает Weaviate от других vector DB и почему его выбирают?",
           "options": [
             {
-              "text": "Weaviate — open-source (Apache 2.0) vector DB с GraphQL API, встроенными vectorizer-модулями (text2vec-openai/cohere), hybrid search BM25+vector и multi-tenancy.",
+              "text": "Weaviate — open-source (BSD-3-Clause) vector DB с GraphQL API, встроенными vectorizer-модулями (text2vec-openai/cohere), hybrid search BM25+vector и multi-tenancy.",
               "correct": true,
               "sections": {
                 "explanation": "Vectorizer-модули генерируют embedding автоматически при insert: пишешь `{\"content\":\"Hello\"}`, модуль `text2vec-openai` вызывает OpenAI и сохраняет вектор. Есть generative search — LLM прямо из БД (RAG-in-DB).",
@@ -745,7 +745,7 @@
               "text": "Weaviate — closed-source proprietary SaaS без self-hosted опции, как Pinecone.",
               "correct": false,
               "sections": {
-                "what_actually": "Weaviate — open-source под Apache 2.0, можно self-host в Docker/Kubernetes; managed cloud — опциональный SaaS поверх того же кода.",
+                "what_actually": "Weaviate — open-source под BSD-3-Clause, можно self-host в Docker/Kubernetes; managed cloud — опциональный SaaS поверх того же кода.",
                 "source_of_confusion": "Weaviate Cloud рекламируется как managed-сервис, что ассоциируется с «закрытым».",
                 "if_it_were_true": "Тогда не было бы self-hosted production-deployments Weaviate в банках/госах, которым нельзя использовать закрытый SaaS.",
                 "how_it_should_be": "Weaviate именно open-source с опциональным managed-облаком — противоположность proprietary-only Pinecone."
@@ -937,7 +937,7 @@
               "correct": false,
               "sections": {
                 "what_actually": "pgvector — extension для обычного upstream PostgreSQL (9.6+), ставится через `CREATE EXTENSION vector;` на любом стандартном инстансе (RDS, Cloud SQL, Supabase, Neon).",
-                "source_of_confusion": "Есть отдельные vector-форки Postgres (Lantern, Timescale), и pgvector ошибочно к ним причисляют.",
+                "source_of_confusion": "Вокруг Postgres есть другие vector-расширения и надстройки (Lantern — extension, Timescale — timescaledb/pgvectorscale), и из этого многообразия делают вывод, что для векторов нужен особый «форк» Postgres.",
                 "if_it_were_true": "Тогда managed-сервисы (RDS, Supabase) не поддерживали бы pgvector «из коробки», как сейчас.",
                 "how_it_should_be": "pgvector работает на обычном upstream Postgres, а не на специальном форке."
               },
@@ -1047,7 +1047,7 @@
                 "explanation": "Под капотом Lucene HNSW (медленнее Qdrant/Pinecone ~2–3×, но достаточно). Главная фича — hybrid: `match` (BM25) + `knn` (vector), комбинируемые через RRF (Reciprocal Rank Fusion) или weighted scoring.",
                 "example": "Поиск «JWT authentication 401 error» в Elasticsearch: `match` ловит код `401` и термин `JWT`, `knn` подбирает семантически близкие статьи, RRF комбинирует top-10 для LLM.",
                 "when_to_apply": "Берут, когда ES/OpenSearch уже есть (логи, поиск, аналитика), нужен hybrid search, объём до сотен миллионов векторов и команда владеет эксплуатацией ES (cluster, shards, ILM).",
-                "edge_cases": "HNSW в heap → нужно настраивать `-Xmx`, иначе OOM; reindex для смены embedding-модели болезненный; параметры (`m`, `ef_construction`, `num_candidates`) надо тюнить — defaults не оптимальны.",
+                "edge_cases": "HNSW-структуры `dense_vector` живут off-heap (mmap/page cache) → не раздувать `-Xmx`, а оставлять достаточно RAM вне heap, иначе поиск упрётся в диск; reindex для смены embedding-модели болезненный; параметры (`m`, `ef_construction`, `num_candidates`) надо тюнить — defaults не оптимальны.",
                 "related": "[[vector-databases-interview#Q7]] HNSW-индекс; [[vector-databases-interview#Q19]] hybrid search; [[vector-databases-interview#Q14]] Qdrant как dedicated-альтернатива."
               },
               "label": "B",

@@ -343,7 +343,7 @@ results = index.query(
 **Weaviate** — open-source vector DB, самый богатый по фичам. Его фишка — встроенная векторизация и RAG прямо внутри БД: можно класть сырой текст, а embeddings и генерацию ответа БД берёт на себя.
 
 **Особенности:**
-- Open-source (Apache 2.0) + managed cloud.
+- Open-source (BSD-3-Clause) + managed cloud.
 - **GraphQL API** + REST + клиенты для Python/JS.
 - **Модули** для embeddings (text2vec-openai, text2vec-cohere) — векторизация на стороне БД.
 - **Hybrid search** (BM25 + vector) из коробки.
