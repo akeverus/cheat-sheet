@@ -108,17 +108,11 @@ updated: "2026-05-22"
 
 С системой работают три разных типа пользователей, и у каждого свой набор операций. Развести их важно: права и доступные действия у покупателя и обслуживающего персонала не пересекаются, и это сразу задаёт границу между публичным и admin-API.
 
-```mermaid
-flowchart LR
-    Customer((Customer)) --> SelectProduct[Select Product]
-    Customer --> InsertMoney[Insert Money]
-    Customer --> Cancel[Cancel]
-    Restocker((Restocker)) --> Refill[Refill Inventory]
-    Restocker --> CollectCash[Collect Cash]
-    Admin((Admin)) --> Maintain[Enter Maintenance]
-    Admin --> Audit[View Audit Log]
-    Admin --> SetPrice[Update Prices]
-```
+Действующие лица и их операции:
+
+- **Customer** → `Select Product`, `Insert Money`, `Cancel`.
+- **Restocker** → `Refill Inventory`, `Collect Cash`.
+- **Admin** → `Enter Maintenance`, `View Audit Log`, `Update Prices`.
 
 - **Customer** — основной актёр; физически у машины он один за раз, и это упрощает модель concurrency (см. Q19).
 - **Restocker** — пополняет товар, забирает наличность из кассы.
@@ -260,7 +254,7 @@ BigDecimal b = new BigDecimal("0.1").add(new BigDecimal("0.2"));  // 0.3 ✓
 
 ## Q6. UML-диаграмма классов
 
-Диаграмма собирает воедино всё, что обсуждалось выше. Главное, на что смотреть при чтении, — тип связей:
+Эта модель собирает воедино всё, что обсуждалось выше. Главное, на что смотреть, — тип связей:
 
 - **Композиция** (закрашенный ромб, `*--`): `VendingMachine` владеет `State`, `Inventory`, `ChangeDispenser`, `AuditLog` — эти части не живут без машины.
 - **Агрегация** (пустой ромб, `o--`): `PaymentStrategy` и набор `InventoryObserver` подключаются извне и заменяемы.
@@ -268,123 +262,55 @@ BigDecimal b = new BigDecimal("0.1").add(new BigDecimal("0.2"));  // 0.3 ✓
 
 Именно эти связи позволяют расширять систему через новые классы, а не правки существующих (см. OCP в Q18).
 
-```mermaid
-classDiagram
-    class VendingMachine {
-        -State currentState
-        -Inventory inventory
-        -ChangeDispenser changeDispenser
-        -BigDecimal currentBalance
-        -Product selectedProduct
-        +selectProduct(slotId)
-        +insertMoney(Money)
-        +cancel()
-        +dispense()
-        +setState(State)
-    }
+**Классы и их члены:**
 
-    class State {
-        <<interface>>
-        +onSelectProduct(slotId)
-        +onInsertMoney(Money)
-        +onCancel()
-        +onDispense()
-    }
+- `VendingMachine` (Context) — поля: `-State currentState`, `-Inventory inventory`, `-ChangeDispenser changeDispenser`, `-BigDecimal currentBalance`, `-Product selectedProduct`; методы: `+selectProduct(slotId)`, `+insertMoney(Money)`, `+cancel()`, `+dispense()`, `+setState(State)`.
+- `State` `<<interface>>` — методы: `+onSelectProduct(slotId)`, `+onInsertMoney(Money)`, `+onCancel()`, `+onDispense()`.
+- `IdleState`, `ProductSelectedState`, `AcceptingPaymentState`, `DispensingState`, `OutOfServiceState` — конкретные состояния (без собственных дополнительных полей и методов в модели).
+- `Product` — поля: `-id`, `-name`, `-BigDecimal price`.
+- `Inventory` — поле: `-Map slots`; методы: `+getSlot(id)`, `+decrement(id)`, `+refill(id, qty)`.
+- `PaymentStrategy` `<<interface>>` — методы: `+charge(amount) PaymentResult`, `+refund(amount)`.
+- `CashPaymentStrategy`, `CardPaymentStrategy`, `NfcPaymentStrategy` — конкретные стратегии оплаты.
+- `ChangeDispenser` — поле: `-Map coinStock`; методы: `+computeChange(amount) List~Coin~`, `+dispense(coins)`.
+- `InventoryObserver` `<<interface>>` — метод: `+onLowStock(slotId)`.
+- `AuditLog` — метод: `+record(TransactionRecord)`.
 
-    class IdleState
-    class ProductSelectedState
-    class AcceptingPaymentState
-    class DispensingState
-    class OutOfServiceState
+**Связи между классами:**
 
-    class Product {
-        -id
-        -name
-        -BigDecimal price
-    }
-
-    class Inventory {
-        -Map slots
-        +getSlot(id)
-        +decrement(id)
-        +refill(id, qty)
-    }
-
-    class PaymentStrategy {
-        <<interface>>
-        +charge(amount) PaymentResult
-        +refund(amount)
-    }
-
-    class CashPaymentStrategy
-    class CardPaymentStrategy
-    class NfcPaymentStrategy
-
-    class ChangeDispenser {
-        -Map coinStock
-        +computeChange(amount) List~Coin~
-        +dispense(coins)
-    }
-
-    class InventoryObserver {
-        <<interface>>
-        +onLowStock(slotId)
-    }
-
-    class AuditLog {
-        +record(TransactionRecord)
-    }
-
-    VendingMachine *-- State : currentState
-    State <|.. IdleState
-    State <|.. ProductSelectedState
-    State <|.. AcceptingPaymentState
-    State <|.. DispensingState
-    State <|.. OutOfServiceState
-    VendingMachine *-- Inventory
-    VendingMachine *-- ChangeDispenser
-    VendingMachine *-- AuditLog
-    VendingMachine o-- PaymentStrategy
-    Inventory o-- Product
-    PaymentStrategy <|.. CashPaymentStrategy
-    PaymentStrategy <|.. CardPaymentStrategy
-    PaymentStrategy <|.. NfcPaymentStrategy
-    VendingMachine o-- "*" InventoryObserver
-```
+- `VendingMachine *-- State` (композиция, поле `currentState`).
+- `State <|.. IdleState`, `State <|.. ProductSelectedState`, `State <|.. AcceptingPaymentState`, `State <|.. DispensingState`, `State <|.. OutOfServiceState` (реализация — пять состояний реализуют `State`).
+- `VendingMachine *-- Inventory`, `VendingMachine *-- ChangeDispenser`, `VendingMachine *-- AuditLog` (композиция).
+- `VendingMachine o-- PaymentStrategy` (агрегация).
+- `Inventory o-- Product` (агрегация).
+- `PaymentStrategy <|.. CashPaymentStrategy`, `PaymentStrategy <|.. CardPaymentStrategy`, `PaymentStrategy <|.. NfcPaymentStrategy` (реализация — три стратегии реализуют `PaymentStrategy`).
+- `VendingMachine o-- "*" InventoryObserver` (агрегация, множественная — много наблюдателей).
 
 ---
 
 ## Q7. Состояния и переходы (Idle → ProductSelected → ...) (!)
 
-Это ядро задачи. Автомат — конечный автомат (FSM): в каждый момент он ровно в одном состоянии, и набор допустимых действий полностью определяется этим состоянием. Сначала рисуют диаграмму переходов — она становится спецификацией, по которой потом пишется код состояний (Q8) и тесты переходов (Q23).
+Это ядро задачи. Автомат — конечный автомат (FSM): в каждый момент он ровно в одном состоянии, и набор допустимых действий полностью определяется этим состоянием. Сначала фиксируют набор переходов — он становится спецификацией, по которой потом пишется код состояний (Q8) и тесты переходов (Q23).
 
-Читайте диаграмму как контракт: стрелка — это разрешённый переход с указанием триггера. Всё, чего на диаграмме нет, — запрещено и должно падать с `IllegalStateException` (Q9). Обратите внимание на «петли»: `AcceptingPayment → AcceptingPayment` при `balance < price` означает, что машина копит баланс, пока его не хватит на товар.
+Читайте этот набор как контракт: каждый переход — это разрешённое изменение состояния с указанием триггера. Всё, чего в нём нет, — запрещено и должно падать с `IllegalStateException` (Q9). Обратите внимание на «петли»: `AcceptingPayment → AcceptingPayment` при `balance < price` означает, что машина копит баланс, пока его не хватит на товар.
 
-```mermaid
-stateDiagram-v2
-    [*] --> Idle
-    Idle --> ProductSelected : selectProduct (in stock)
-    Idle --> Idle : selectProduct (out of stock / invalid)
-    Idle --> OutOfService : admin maintenance
+**Состояния и переходы** (стартовое состояние — `Idle`; формат: `состояние → состояние : триггер`):
 
-    ProductSelected --> AcceptingPayment : insertMoney (1st coin)
-    ProductSelected --> Idle : cancel
-    ProductSelected --> Idle : timeout (30s)
-
-    AcceptingPayment --> AcceptingPayment : insertMoney (balance < price)
-    AcceptingPayment --> Dispensing : balance >= price
-    AcceptingPayment --> Idle : cancel (refund balance)
-    AcceptingPayment --> Idle : timeout (refund)
-
-    Dispensing --> ReturningChange : product released, change > 0
-    Dispensing --> Idle : product released, exact amount
-    Dispensing --> OutOfService : mechanical failure
-
-    ReturningChange --> Idle : change dispensed
-    ReturningChange --> OutOfService : insufficient coins for change
-
-    OutOfService --> Idle : admin resolves
-```
+- `Idle → ProductSelected` : `selectProduct` (товар в наличии).
+- `Idle → Idle` : `selectProduct` (нет в наличии / невалидный слот) — петля, состояние не меняется.
+- `Idle → OutOfService` : `admin maintenance`.
+- `ProductSelected → AcceptingPayment` : `insertMoney` (первая монета).
+- `ProductSelected → Idle` : `cancel`.
+- `ProductSelected → Idle` : `timeout (30s)`.
+- `AcceptingPayment → AcceptingPayment` : `insertMoney` при `balance < price` — петля, машина копит баланс, пока его не хватит на товар.
+- `AcceptingPayment → Dispensing` : `balance >= price`.
+- `AcceptingPayment → Idle` : `cancel` (возврат баланса).
+- `AcceptingPayment → Idle` : `timeout` (возврат).
+- `Dispensing → ReturningChange` : товар выдан, `change > 0`.
+- `Dispensing → Idle` : товар выдан, ровная сумма (exact amount).
+- `Dispensing → OutOfService` : механический сбой (mechanical failure).
+- `ReturningChange → Idle` : сдача выдана.
+- `ReturningChange → OutOfService` : не хватает монет для сдачи (insufficient coins for change).
+- `OutOfService → Idle` : admin устраняет проблему.
 
 **Ключевые переходы** (триггер → побочный эффект):
 
@@ -401,7 +327,7 @@ stateDiagram-v2
 
 ## Q8. State pattern: интерфейс + 5 конкретных классов (!)
 
-Теперь переводим диаграмму из Q7 в код. Каждое состояние — отдельный класс, реализующий общий интерфейс `State`. Ключевой приём — **default-методы в интерфейсе бросают `IllegalStateException`**: состоянию достаточно переопределить только те операции, которые в нём разрешены, а все остальные автоматически становятся запрещёнными. Это убирает горы шаблонного кода и делает «запрещено по умолчанию» поведением, а не тем, о чём надо помнить.
+Теперь переводим набор переходов из Q7 в код. Каждое состояние — отдельный класс, реализующий общий интерфейс `State`. Ключевой приём — **default-методы в интерфейсе бросают `IllegalStateException`**: состоянию достаточно переопределить только те операции, которые в нём разрешены, а все остальные автоматически становятся запрещёнными. Это убирает горы шаблонного кода и делает «запрещено по умолчанию» поведением, а не тем, о чём надо помнить.
 
 **Интерфейс State (default-методы бросают `IllegalStateException`):**
 
@@ -577,7 +503,7 @@ public class OutOfServiceState implements State {
 
 ## Q9. Защита от недопустимых действий: что блокировать в каждом состоянии
 
-Эта таблица — обратная сторона диаграммы переходов: на каждом пересечении «состояние × действие» видно, разрешена операция или нет. Если ячейка помечена ❌, машина обязана отвергнуть действие, а не сделать вид, что ничего не произошло.
+Эта таблица — обратная сторона набора переходов из Q7: на каждом пересечении «состояние × действие» видно, разрешена операция или нет. Если ячейка помечена ❌, машина обязана отвергнуть действие, а не сделать вид, что ничего не произошло.
 
 | Состояние | onSelect | onInsertMoney | onCancel | onDispense |
 |---|---|---|---|---|
@@ -595,43 +521,32 @@ public class OutOfServiceState implements State {
 
 ## Q10. Основной сценарий: выбор → оплата → выдача → сдача
 
-Диаграмма последовательности показывает, как объекты обмениваются сообщениями в успешном сценарии. Главное наблюдение — `VendingMachine` (Context) сам ничего не решает: он принимает команду от покупателя и тут же делегирует её текущему состоянию (`S`). Логика перехода живёт в состоянии, а уже оно дёргает `Inventory`, `ChangeDispenser` и `AuditLog`.
+В успешном сценарии объекты обмениваются сообщениями по порядку. Главное наблюдение — `VendingMachine` (Context) сам ничего не решает: он принимает команду от покупателя и тут же делегирует её текущему состоянию (`State`). Логика перехода живёт в состоянии, а уже оно дёргает `Inventory`, `ChangeDispenser` и `AuditLog`.
 
-```mermaid
-sequenceDiagram
-    actor C as Customer
-    participant VM as VendingMachine
-    participant S as State
-    participant Inv as Inventory
-    participant CD as ChangeDispenser
-    participant Log as AuditLog
+Участники: `Customer` (C), `VendingMachine` (VM), `State` (S), `Inventory` (Inv), `ChangeDispenser` (CD), `AuditLog` (Log). Поток сообщений по шагам:
 
-    C->>VM: selectProduct("A3")
-    VM->>S: onSelectProduct("A3")
-    S->>Inv: getSlot("A3")
-    Inv-->>S: Slot(Coke, $1.25, qty=5)
-    S->>VM: setState(ProductSelectedState)
-    S-->>C: "Selected Coke, $1.25"
-
-    C->>VM: insertMoney(Quarter)
-    VM->>S: onInsertMoney(0.25)
-    S->>VM: balance = 0.25
-    S->>VM: setState(AcceptingPaymentState)
-
-    C->>VM: insertMoney(Dollar)
-    VM->>S: onInsertMoney(1.00)
-    S->>VM: balance = 1.25
-    Note over S: balance >= price → Dispensing
-    S->>VM: setState(DispensingState)
-    S->>VM: onDispense()
-
-    VM->>Inv: decrement("A3")
-    VM->>VM: releaseProduct(Coke)
-    VM->>Log: record(TransactionRecord)
-    Note over VM: change = 1.25 - 1.25 = 0
-    VM->>VM: setState(IdleState)
-    VM-->>C: Product dispensed
-```
+1. C → VM: `selectProduct("A3")`.
+2. VM → S: `onSelectProduct("A3")`.
+3. S → Inv: `getSlot("A3")`.
+4. Inv ⇒ S (ответ): `Slot(Coke, $1.25, qty=5)`.
+5. S → VM: `setState(ProductSelectedState)`.
+6. S ⇒ C (ответ): `"Selected Coke, $1.25"`.
+7. C → VM: `insertMoney(Quarter)`.
+8. VM → S: `onInsertMoney(0.25)`.
+9. S → VM: `balance = 0.25`.
+10. S → VM: `setState(AcceptingPaymentState)`.
+11. C → VM: `insertMoney(Dollar)`.
+12. VM → S: `onInsertMoney(1.00)`.
+13. S → VM: `balance = 1.25`.
+    - *Note (над S):* `balance >= price → Dispensing`.
+14. S → VM: `setState(DispensingState)`.
+15. S → VM: `onDispense()`.
+16. VM → Inv: `decrement("A3")`.
+17. VM → VM: `releaseProduct(Coke)`.
+18. VM → Log: `record(TransactionRecord)`.
+    - *Note (над VM):* `change = 1.25 - 1.25 = 0`.
+19. VM → VM: `setState(IdleState)`.
+20. VM ⇒ C (ответ): `Product dispensed`.
 
 **Вариант со сдачей:** если бы покупатель вставил $2, то на шаге `setState(DispensingState)` сдача составила бы $0.75. Тогда вместо возврата в `Idle` машина перешла бы в `ReturningChangeState`, который посчитал бы монеты (3×Quarter) и выдал их.
 
@@ -1126,9 +1041,9 @@ public class VendingMachine {
 
 ## Q23. Подход к тестированию: переходы состояний + property-based
 
-Конечный автомат удобно тестировать именно потому, что он формально описан. Диаграмма переходов из Q7 напрямую превращается в матрицу тест-кейсов «из состояния X по событию Y → ожидаем состояние Z». А самое ценное свойство (деньги не теряются) проверяется property-based тестом, который сам генерирует случайные последовательности действий.
+Конечный автомат удобно тестировать именно потому, что он формально описан. Набор переходов из Q7 напрямую превращается в матрицу тест-кейсов «из состояния X по событию Y → ожидаем состояние Z». А самое ценное свойство (деньги не теряются) проверяется property-based тестом, который сам генерирует случайные последовательности действий.
 
-**1. Тесты по таблице переходов:** каждая допустимая стрелка диаграммы — отдельный кейс.
+**1. Тесты по таблице переходов:** каждый допустимый переход из Q7 — отдельный кейс.
 
 ```java
 @ParameterizedTest

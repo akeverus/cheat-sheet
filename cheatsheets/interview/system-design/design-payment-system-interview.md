@@ -300,23 +300,22 @@ sum = 0
 
 Платёж проходит через цепочку состояний, и каждый переход — это отдельное сообщение в card network. Ключевая идея: authorize и capture разделены, потому что бронирование денег и их фактическое списание происходят в разное время, а settlement (реальное движение средств) случается ещё позже.
 
-```mermaid
-stateDiagram-v2
-    [*] --> pending_authorization
-    pending_authorization --> authorized: bank approves
-    pending_authorization --> failed: declined / fraud / 3DS fail
-    authorized --> captured: merchant captures
-    authorized --> voided: merchant cancels before capture
-    authorized --> expired: 7 days no capture
-    captured --> settling: T+1 batch sent to acquirer
-    settling --> settled: acquirer confirms
-    captured --> refund_pending: refund initiated
-    settled --> refund_pending: refund initiated
-    refund_pending --> refunded: refund settled
-    settled --> disputed: customer chargeback
-    disputed --> chargeback_won
-    disputed --> chargeback_lost
-```
+**Состояния и переходы:**
+
+- Старт → `pending_authorization`.
+- `pending_authorization` → `authorized` (bank approves).
+- `pending_authorization` → `failed` (declined / fraud / 3DS fail).
+- `authorized` → `captured` (merchant captures).
+- `authorized` → `voided` (merchant cancels before capture).
+- `authorized` → `expired` (7 days no capture).
+- `captured` → `settling` (T+1 batch sent to acquirer).
+- `settling` → `settled` (acquirer confirms).
+- `captured` → `refund_pending` (refund initiated).
+- `settled` → `refund_pending` (refund initiated).
+- `refund_pending` → `refunded` (refund settled).
+- `settled` → `disputed` (customer chargeback).
+- `disputed` → `chargeback_won`.
+- `disputed` → `chargeback_lost`.
 
 **Authorize:** карточная сеть «резервирует» сумму на счёте плательщика. Деньги ещё не списаны — только hold. Hold снимается через 7 дней, если нет capture.
 
@@ -376,15 +375,14 @@ stateDiagram-v2
 - Нет центрального координатора.
 - Паттерн: Kafka-топик на каждый тип события.
 
-```mermaid
-sequenceDiagram
-    Payment->>Kafka: PaymentAuthorized
-    Kafka-->>Risk: PaymentAuthorized
-    Risk->>Kafka: RiskAssessed
-    Kafka-->>Capture: RiskAssessed
-    Capture->>Kafka: PaymentCaptured
-    Kafka-->>Notify: PaymentCaptured
-```
+Пример потока событий:
+
+1. `Payment` публикует `PaymentAuthorized` в Kafka.
+2. Kafka доставляет `PaymentAuthorized` сервису `Risk`.
+3. `Risk` публикует `RiskAssessed` в Kafka.
+4. Kafka доставляет `RiskAssessed` сервису `Capture`.
+5. `Capture` публикует `PaymentCaptured` в Kafka.
+6. Kafka доставляет `PaymentCaptured` сервису `Notify`.
 
 **Плюсы:** слабая связанность, легко добавлять новых подписчиков.
 **Минусы:** размазанная бизнес-логика — трудно отследить, «как вообще проходит платёж».
@@ -485,19 +483,13 @@ COMMIT;
 
 **Многопровайдерная архитектура:**
 
-```mermaid
-graph LR
-  M[Merchant]
-  PO[Payment Orchestrator]
-  R[Routing Engine]
-  S[Stripe Adapter]
-  A[Adyen Adapter]
-  W[Worldpay Adapter]
-  M --> PO --> R
-  R --> A
-  R --> S
-  R --> W
-```
+Поток запроса по слоям:
+
+- `Merchant` → `Payment Orchestrator` → `Routing Engine`.
+- `Routing Engine` направляет запрос в один из адаптеров PSP:
+  - → `Adyen Adapter`;
+  - → `Stripe Adapter`;
+  - → `Worldpay Adapter`.
 
 **Зачем несколько PSP:**
 - Resilience: один PSP лёг — переключаемся на backup.
@@ -942,36 +934,33 @@ fx_revenue_USD          | +40
 
 Система делится на сервисы по зонам ответственности и по требованиям compliance. Запрос проходит через edge/gateway (защита и аутентификация) в orchestrator (state machine, бизнес-логика), который дёргает risk, vault, PSP и ledger. Token Vault изолирован в PCI-scope, ledger шардирован по merchant_id, события идут через Kafka с outbox. Ключевая идея — разнести «горячий» authorize-path и тяжёлый batch (reconciliation), чтобы они не мешали друг другу.
 
-```mermaid
-graph LR
-  C[Merchant / SDK / Web]
-  Edge[Edge / WAF / Rate Limit]
-  GW[API Gateway]
-  PO[Payment Orchestrator]
-  Ldg[Ledger Service]
-  Risk[Risk / Fraud Service]
-  Vault[Token Vault]
-  PSP[PSP Adapters]
-  Webhook[Webhook Dispatcher]
-  Recon[Reconciliation Job]
-  DB[(Postgres payments)]
-  LedgerDB[(Postgres ledger)]
-  Redis[(Redis idempotency)]
-  Kafka[(Kafka events)]
-  S3[(S3 PSP reports)]
-  C --> Edge --> GW --> PO
-  PO --> Risk
-  PO --> Vault
-  PO --> PSP
-  PO --> Ldg
-  Ldg --> LedgerDB
-  PO --> DB
-  PO --> Redis
-  PO --> Kafka
-  Kafka --> Webhook
-  S3 --> Recon
-  LedgerDB --> Recon
-```
+**Узлы системы:**
+
+- `Merchant / SDK / Web` — клиенты.
+- `Edge / WAF / Rate Limit` — защита на периметре.
+- `API Gateway`.
+- `Payment Orchestrator`.
+- `Ledger Service` и его хранилище `Postgres ledger`.
+- `Risk / Fraud Service`.
+- `Token Vault`.
+- `PSP Adapters`.
+- `Webhook Dispatcher`.
+- `Reconciliation Job`.
+- Хранилища: `Postgres payments`, `Redis idempotency`, `Kafka events`, `S3 PSP reports`.
+
+**Поток запроса и связи:**
+
+- `Merchant / SDK / Web` → `Edge / WAF / Rate Limit` → `API Gateway` → `Payment Orchestrator`.
+- `Payment Orchestrator` обращается к:
+  - `Risk / Fraud Service`;
+  - `Token Vault`;
+  - `PSP Adapters`;
+  - `Ledger Service` (который пишет в `Postgres ledger`);
+  - `Postgres payments`;
+  - `Redis idempotency`;
+  - `Kafka events`.
+- `Kafka events` → `Webhook Dispatcher`.
+- `S3 PSP reports` → `Reconciliation Job`; `Postgres ledger` → `Reconciliation Job`.
 
 **Границы сервисов:**
 - **API Gateway:** аутентификация (API keys / OAuth), rate limiting, routing.

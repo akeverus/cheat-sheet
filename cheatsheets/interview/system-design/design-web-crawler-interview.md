@@ -162,25 +162,19 @@ Crawler **обходит веб** начиная с seed URLs и извлека�
 
 ## Q4. (!) Высокоуровневая архитектура crawler-а?
 
-Crawler — это замкнутый конвейер вокруг центральной очереди (Frontier): из неё берут URL, скачивают, парсят, извлекают новые ссылки и возвращают их обратно в очередь. Стандартная компонентная схема:
+Crawler — это замкнутый конвейер вокруг центральной очереди (Frontier): из неё берут URL, скачивают, парсят, извлекают новые ссылки и возвращают их обратно в очередь. Стандартный поток компонентов (по стрелкам):
 
-```mermaid
-flowchart LR
-    Seed[Seed URLs] --> Frontier[URL Frontier<br/>Mercator]
-    Frontier --> Fetcher[Fetcher Pool<br/>HTTP workers]
-    Fetcher --> Storage[(Raw HTML<br/>S3/HDFS)]
-    Fetcher --> Parser[HTML Parser<br/>extract text + links]
-    Parser --> Norm[URL Normalizer]
-    Norm --> Filter[URL Filter<br/>robots.txt, domain quota]
-    Filter --> Dedup[URL Dedup<br/>Bloom + DB]
-    Dedup -->|new URLs| Frontier
-    Parser --> ContentDedup[Content Dedup<br/>SimHash]
-    ContentDedup --> MetaDB[(Metadata<br/>Cassandra/HBase)]
-    MetaDB --> Indexer[Search Indexer<br/>Elasticsearch]
+- `Seed URLs` → `URL Frontier` (Mercator).
+- `URL Frontier` → `Fetcher Pool` (HTTP workers).
+- `Fetcher Pool` → `Raw HTML` storage (`S3/HDFS`).
+- `Fetcher Pool` → `HTML Parser` (extract text + links).
+- `HTML Parser` → `URL Normalizer` → `URL Filter` (`robots.txt`, domain quota) → `URL Dedup` (Bloom + DB) → обратно в `URL Frontier` (ветка `new URLs` замыкает цикл).
+- `HTML Parser` → `Content Dedup` (SimHash) → `Metadata` store (`Cassandra/HBase`) → `Search Indexer` (`Elasticsearch`).
 
-    DNS[DNS Resolver<br/>+ cache] -.-> Fetcher
-    Robots[robots.txt cache] -.-> Filter
-```
+Shared services (подключаются сбоку, пунктиром):
+
+- `DNS Resolver + cache` → питает `Fetcher Pool`.
+- `robots.txt cache` → питает `URL Filter`.
 
 Главное в этой схеме:
 
@@ -230,45 +224,23 @@ States в URL DB: `discovered → queued → in_flight → fetched | error | fil
 
 Каноническая двухуровневая схема из статьи Heydon & Najork (1999); используется в Heritrix и Nutch. Идея: разделить «что скачать в первую очередь» (приоритет) и «когда можно ударить по конкретному хосту» (politeness) на два независимых уровня очередей.
 
-```mermaid
-flowchart TB
-    subgraph FrontQueues["Front Queues (by priority)"]
-        F1[Priority 1<br/>news, top sites]
-        F2[Priority 2<br/>medium]
-        F3[Priority 3<br/>long tail]
-    end
+Структура сверху вниз (четыре уровня):
 
-    subgraph BiasedRouter["Biased Router"]
-        BR[Probabilistic pick<br/>P1=60%, P2=30%, P3=10%]
-    end
+- **Front Queues (by priority)** — три очереди:
+  - `Priority 1` — news, top sites;
+  - `Priority 2` — medium;
+  - `Priority 3` — long tail.
+- **Biased Router** — `Probabilistic pick` с весами `P1=60%, P2=30%, P3=10%`.
+- **Back Queues (one per host)** — по одной очереди на хост: `example.com`, `wikipedia.org`, `github.com`, ... .
+- **Heap by next-fetch time** — `Min-heap: when can we hit this host next?`.
 
-    subgraph BackQueues["Back Queues (one per host)"]
-        B1[Host: example.com]
-        B2[Host: wikipedia.org]
-        B3[Host: github.com]
-        BN[Host: ...]
-    end
+Связи между уровнями:
 
-    subgraph HeapTime["Heap by next-fetch time"]
-        H[Min-heap: when can we hit this host next?]
-    end
-
-    F1 --> BR
-    F2 --> BR
-    F3 --> BR
-    BR -->|route by host| B1
-    BR -->|route by host| B2
-    BR -->|route by host| B3
-    BR --> BN
-
-    B1 --> H
-    B2 --> H
-    B3 --> H
-    BN --> H
-
-    H -->|pop ready host| Worker[Fetcher Worker]
-    Worker -.->|when done<br/>update next-fetch| H
-```
+- Все три front queues (`Priority 1/2/3`) → `Biased Router`.
+- `Biased Router` → каждая back queue (ребро `route by host`): URL направляется в очередь своего хоста.
+- Каждая back queue (`example.com`, `wikipedia.org`, `github.com`, ...) → `Min-heap`.
+- `Min-heap` → `Fetcher Worker` (ребро `pop ready host`: достаём хост, готовый раньше всех).
+- `Fetcher Worker` → обратно в `Min-heap` (пунктирное ребро `when done, update next-fetch`: по завершении воркер обновляет next-fetch time хоста).
 
 Как это работает, сверху вниз:
 
@@ -857,16 +829,12 @@ MAX_QUERY_PARAMS = 20
 - ~100 MB RAM на один инстанс браузера.
 - Сложнее масштабировать.
 
-Поэтому архитектурно выносим рендеринг в **отдельный pool**:
+Поэтому архитектурно выносим рендеринг в **отдельный pool** с маршрутизацией по ветке `Need JS?`:
 
-```mermaid
-flowchart LR
-    Frontier --> Router{Need JS?}
-    Router -->|No| FastFetch[HTTP Fetcher Pool<br/>~1000 workers]
-    Router -->|Yes| JSFetch[Headless Pool<br/>~50 workers, Chromium]
-    FastFetch --> Parser
-    JSFetch --> Parser
-```
+- `Frontier` → решающий узел `Need JS?`.
+- ветка `No` → `HTTP Fetcher Pool` (~1000 workers).
+- ветка `Yes` → `Headless Pool` (~50 workers, Chromium).
+- оба пула (`HTTP Fetcher Pool` и `Headless Pool`) → `Parser`.
 
 Как решить, нужен ли вообще JS (чтобы не платить 20-50× зря):
 
@@ -949,11 +917,10 @@ WHERE state = 'in_flight' AND in_flight_since < now() - 5min;
 - Внутри каждого shard — frontier в стиле Mercator.
 - Cross-shard outlinks передаются через Kafka topic `outlinks-to-shard-N`.
 
-```mermaid
-flowchart LR
-    Worker[Worker in Shard 1] -->|extracted outlink<br/>for host in shard 5| Kafka[Kafka<br/>topic outlinks]
-    Kafka -->|partitioned by<br/>hash(host)| Shard5[Frontier Shard 5]
-```
+Передача cross-shard outlink по шагам:
+
+- `Worker in Shard 1` → `Kafka` (topic `outlinks`) — ребро `extracted outlink for host in shard 5`: воркер нашёл ссылку на хост из другого шарда.
+- `Kafka` → `Frontier Shard 5` — ребро `partitioned by hash(host)`: топик партиционирован по `hash(host)`, поэтому outlink попадает во frontier нужного шарда.
 
 Подробнее про распределённые системы — `../architecture/distributed-systems-interview.md`, `../architecture/scalability-patterns-interview.md`.
 

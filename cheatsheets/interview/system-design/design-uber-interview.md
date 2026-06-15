@@ -193,43 +193,22 @@ POST   /api/v1/payments/tip            body: {ride_id, amount}
 
 Система раскладывается на узкоспециализированные сервисы, потому что у подсистем радикально разные профили нагрузки и консистентности (см. Q2). Связующее звено между ними — Kafka как шина событий: она даёт асинхронный fan-out, при котором аналитика и история не нагружают горячий путь матчинга.
 
-```mermaid
-flowchart LR
-    RiderApp[Rider mobile] --> LB[Load balancer]
-    DriverApp[Driver mobile] -.WebSocket.-> LB
-    LB --> GW[API Gateway<br/>auth, rate limit]
+Потоки запросов и хранилищ выстраиваются так:
 
-    GW --> US[user-service]
-    GW --> DS[driver-service]
-    GW --> TS[trip-service]
-    GW --> LS[location-service]
-    GW --> MS[matching-service]
-    GW --> PS[pricing-service]
-    GW --> PAY[payment-service]
-    GW --> NS[notification-service]
-
-    US --> UDB[(PostgreSQL<br/>users sharded)]
-    DS --> DDB[(PostgreSQL<br/>drivers sharded)]
-    TS --> TDB[(Cassandra<br/>trips by user_id+month)]
-    LS --> Redis[(Redis GEO<br/>hot driver locations)]
-    LS --> Kafka[(Kafka<br/>location stream)]
-
-    Kafka --> MS
-    Kafka --> Hist[Location archiver]
-    Hist --> CDB[(Cassandra<br/>location history)]
-    Kafka --> An[Analytics<br/>Flink/Spark]
-    An --> CH[(ClickHouse)]
-    An --> PS
-
-    MS --> Redis
-    MS --> ETA[ETA service<br/>ML + Maps API]
-
-    PAY --> PDB[(PostgreSQL<br/>payment ledger ACID)]
-    PAY --> Stripe[Stripe / payment provider]
-
-    NS --> Push[APNs / FCM]
-    NS --> SMS[Twilio]
-```
+- **Клиенты → балансировщик.** `Rider mobile` идёт на `Load balancer`; `Driver mobile` подключается к нему по WebSocket. От балансировщика трафик идёт в `API Gateway` (auth, rate limit).
+- **API Gateway → сервисы.** Шлюз маршрутизирует запросы в `user-service`, `driver-service`, `trip-service`, `location-service`, `matching-service`, `pricing-service`, `payment-service`, `notification-service`.
+- **Сервисы → их хранилища:**
+  - `user-service` → PostgreSQL (users, sharded).
+  - `driver-service` → PostgreSQL (drivers, sharded).
+  - `trip-service` → Cassandra (trips by `user_id+month`).
+  - `location-service` → Redis GEO (hot driver locations) **и** Kafka (location stream).
+- **Kafka как фан-аут (location stream):**
+  - Kafka → `matching-service` (читает поток локаций).
+  - Kafka → `Location archiver` → Cassandra (location history).
+  - Kafka → `Analytics` (Flink/Spark) → ClickHouse; та же аналитика питает `pricing-service`.
+- **matching-service** читает Redis GEO и обращается к `ETA service` (ML + Maps API).
+- **payment-service** → PostgreSQL (payment ledger, ACID) и к внешнему `Stripe / payment provider`.
+- **notification-service** → push через `APNs / FCM` и SMS через `Twilio`.
 
 Главные сервисы и зона ответственности каждого:
 
@@ -592,36 +571,19 @@ value    = set/hash of driver_ids → {lat, lng, ts, car_type, rating}
 
 ## Q15. (!) Алгоритм матчинга — pipeline от запроса до accept?
 
-```mermaid
-sequenceDiagram
-    participant R as Rider App
-    participant GW as API Gateway
-    participant TS as trip-service
-    participant MS as matching-service
-    participant PS as pricing-service
-    participant Redis as Redis (geo)
-    participant D1 as Driver candidate 1
-    participant D2 as Driver candidate 2
+Участники взаимодействия: `Rider App`, `API Gateway`, `trip-service`, `matching-service`, `pricing-service`, `Redis (geo)` и два кандидата-водителя `Driver candidate 1` и `Driver candidate 2`. По шагам:
 
-    R->>GW: POST /rides/request {pickup, dest, car_type}
-    GW->>TS: create trip (status=REQUESTED)
-    TS->>PS: get surge multiplier
-    PS-->>TS: surge=1.5
-    TS->>MS: find driver (pickup, car_type, surge)
-
-    MS->>Redis: GEOSEARCH cell + neighbors (k=2)
-    Redis-->>MS: 50 candidate driver_ids
-
-    Note over MS: filter by car_type,<br/>rating, availability,<br/>ETA via Maps API
-
-    MS-->>MS: rank by composite score
-    MS->>D1: offer (ride_id, fare, ETA)
-    D1-->>MS: REJECT (4 sec)
-    MS->>D2: offer
-    D2-->>MS: ACCEPT
-    MS-->>TS: matched (driver=D2)
-    TS-->>R: status=MATCHED, driver, ETA
-```
+1. `Rider App` → `API Gateway`: `POST /rides/request {pickup, dest, car_type}`.
+2. `API Gateway` → `trip-service`: create trip (status=REQUESTED).
+3. `trip-service` → `pricing-service`: get surge multiplier; в ответ `pricing-service` отдаёт `surge=1.5`.
+4. `trip-service` → `matching-service`: find driver (pickup, car_type, surge).
+5. `matching-service` → `Redis (geo)`: `GEOSEARCH cell + neighbors (k=2)`; Redis возвращает ~50 candidate driver_ids.
+6. *(внутри `matching-service`)* фильтрация кандидатов по car_type, rating, availability и ETA via Maps API.
+7. `matching-service` ранжирует кандидатов по композитному score.
+8. `matching-service` → `Driver candidate 1`: offer (ride_id, fare, ETA). `Driver candidate 1` отвечает REJECT (через 4 сек).
+9. `matching-service` → `Driver candidate 2`: offer. `Driver candidate 2` отвечает ACCEPT.
+10. `matching-service` → `trip-service`: matched (driver=D2).
+11. `trip-service` → `Rider App`: status=MATCHED, driver, ETA.
 
 **Шаги конвейера (pipeline):**
 
@@ -727,22 +689,21 @@ Kafka: driver.location.updated ─┘                       │
 
 Поездка — это конечный автомат: строго определённый набор состояний и допустимых переходов между ними. Каждый переход не просто меняет статус, а порождает событие в Kafka, на которое реагируют другие сервисы.
 
-```mermaid
-stateDiagram-v2
-    [*] --> REQUESTED: rider POST /rides/request
-    REQUESTED --> MATCHING: trip-service creates
-    MATCHING --> MATCHED: driver accept
-    MATCHING --> CANCELLED: no drivers / rider cancel
-    MATCHED --> DRIVER_ARRIVING: matched event
-    DRIVER_ARRIVING --> DRIVER_ARRIVED: driver at pickup
-    DRIVER_ARRIVING --> CANCELLED: rider cancel (with fee)
-    DRIVER_ARRIVED --> IN_PROGRESS: rider in car, driver starts trip
-    IN_PROGRESS --> COMPLETED: driver ends trip
-    COMPLETED --> PAID: payment captured
-    PAID --> RATED: both rated
-    RATED --> [*]
-    CANCELLED --> [*]
-```
+Состояния и допустимые переходы:
+
+- **Старт** → `REQUESTED`: rider `POST /rides/request`.
+- `REQUESTED` → `MATCHING`: trip-service creates.
+- `MATCHING` → `MATCHED`: driver accept.
+- `MATCHING` → `CANCELLED`: no drivers / rider cancel.
+- `MATCHED` → `DRIVER_ARRIVING`: matched event.
+- `DRIVER_ARRIVING` → `DRIVER_ARRIVED`: driver at pickup.
+- `DRIVER_ARRIVING` → `CANCELLED`: rider cancel (with fee).
+- `DRIVER_ARRIVED` → `IN_PROGRESS`: rider in car, driver starts trip.
+- `IN_PROGRESS` → `COMPLETED`: driver ends trip.
+- `COMPLETED` → `PAID`: payment captured.
+- `PAID` → `RATED`: both rated.
+- `RATED` → **конец**.
+- `CANCELLED` → **конец**.
 
 **Каждый переход — событие в Kafka:**
 
@@ -832,30 +793,20 @@ stateDiagram-v2
 
 Платёж разбит на две фазы: при заказе делаем холд (резервируем деньги), а при завершении — реальное списание (capture). Это защищает от ситуации «райдер неплатёжеспособен» ещё до начала поездки и позволяет списать точную сумму по факту.
 
-```mermaid
-sequenceDiagram
-    participant R as Rider
-    participant TS as trip-service
-    participant PAY as payment-service
-    participant ST as Stripe / PSP
+Участники: `Rider`, `trip-service`, `payment-service`, `Stripe / PSP`. Поток по шагам:
 
-    R->>TS: request ride
-    TS->>PAY: pre-auth (estimate × 1.2 buffer)
-    PAY->>ST: PaymentIntent CREATE + CONFIRM (manual_capture)
-    ST-->>PAY: hold on card OK
-    PAY-->>TS: pre-auth OK
-
-    Note over TS: trip MATCHED → IN_PROGRESS → COMPLETED
-
-    TS->>PAY: capture (actual fare)
-    PAY->>ST: PaymentIntent CAPTURE
-    ST-->>PAY: charged
-    PAY->>PAY: write ledger CAPTURE row
-    PAY-->>TS: paid, status=PAID
-
-    Note over PAY: async driver payout
-    PAY->>ST: Transfer to driver Connect account
-```
+1. `Rider` → `trip-service`: request ride.
+2. `trip-service` → `payment-service`: pre-auth (estimate × 1.2 buffer).
+3. `payment-service` → `Stripe / PSP`: PaymentIntent CREATE + CONFIRM (manual_capture).
+4. `Stripe / PSP` → `payment-service`: hold on card OK.
+5. `payment-service` → `trip-service`: pre-auth OK.
+6. *(на стороне `trip-service`)* поездка проходит через `MATCHED → IN_PROGRESS → COMPLETED`.
+7. `trip-service` → `payment-service`: capture (actual fare).
+8. `payment-service` → `Stripe / PSP`: PaymentIntent CAPTURE.
+9. `Stripe / PSP` → `payment-service`: charged.
+10. `payment-service` пишет строку CAPTURE в ledger.
+11. `payment-service` → `trip-service`: paid, status=PAID.
+12. *(на стороне `payment-service`)* асинхронная выплата водителю: `payment-service` → `Stripe / PSP`: Transfer to driver Connect account.
 
 **Ключевые моменты:**
 
