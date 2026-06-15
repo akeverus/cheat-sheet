@@ -241,14 +241,12 @@ val parsed = "42".runCatching { toInt() }  // Result.success(42)
 val failed = "abc".runCatching { toInt() } // Result.failure(NumberFormatException)
 ```
 
-```mermaid
-graph LR
-    A["runCatching { block }"] --> B{Исключение?}
-    B -- Нет --> C["Result.success(value)"]
-    B -- Да --> D["Result.failure(exception)"]
-    C --> E[".getOrElse / .map / .onSuccess"]
-    D --> E
-```
+Поток `runCatching` по шагам:
+
+- `runCatching { block }` выполняет блок и проверяет, было ли исключение.
+- Исключения нет → `Result.success(value)`.
+- Исключение есть → `Result.failure(exception)`.
+- Оба исхода дальше обрабатываются одинаково — через `.getOrElse` / `.map` / `.onSuccess`.
 
 ## Q6. Какие операторы доступны у `Result`?
 
@@ -440,18 +438,11 @@ File("input.txt").bufferedReader().use { reader ->
 
 **Как работает под капотом:**
 
-```mermaid
-graph TD
-    A["resource.use { block }"] --> B["try { block(resource) }"]
-    B --> C{Исключение?}
-    C -- Нет --> D["resource.close()"]
-    C -- Да --> E["try { resource.close() }"]
-    E --> F{close() бросил<br>исключение?}
-    F -- Да --> G["addSuppressed()"]
-    F -- Нет --> H["rethrow original"]
-    G --> H
-    D --> I["return result"]
-```
+- `resource.use { block }` выполняет `try { block(resource) }`.
+- Если блок завершился **без исключения** → вызывается `resource.close()` → возвращается результат блока (`return result`).
+- Если блок **бросил исключение** → ресурс всё равно закрывается в `try { resource.close() }`, и далее два случая:
+  - `close()` тоже бросил исключение → оно добавляется к исходному через `addSuppressed()`, после чего исходное исключение пробрасывается дальше (`rethrow original`);
+  - `close()` отработал чисто → сразу пробрасывается исходное исключение (`rethrow original`).
 
 Если и блок, и `close()` бросают исключения, исключение из `close()` добавляется как `suppressed` к основному — аналогично Java `try-with-resources`.
 
@@ -484,18 +475,12 @@ val lines = File("data.txt").bufferedReader().use { it.readLines() }
 
 Исключения в корутинах распространяются **вверх по иерархии `Job`**: необработанное исключение в дочерней корутине **отменяет родительскую `Job`**, что каскадно отменяет всех остальных детей (siblings). Это поведение называется **structured concurrency** — сбой одного ребёнка = сбой всей группы.
 
-```mermaid
-graph TD
-    P["Parent Job"] --> C1["Child 1<br>throw Exception"]
-    P --> C2["Child 2<br>cancelled"]
-    P --> C3["Child 3<br>cancelled"]
-    C1 -- "exception ↑" --> P
-    P -- "cancel ↓" --> C2
-    P -- "cancel ↓" --> C3
-    style C1 fill:#f96,stroke:#333
-    style C2 fill:#ff9,stroke:#333
-    style C3 fill:#ff9,stroke:#333
-```
+Распространение сбоя по порядку:
+
+- У `Parent Job` есть три дочерние корутины: `Child 1`, `Child 2`, `Child 3`.
+- `Child 1` бросает исключение (`throw Exception`).
+- Исключение поднимается вверх (`exception ↑`) и отменяет `Parent Job`.
+- `Parent Job` каскадно отменяет вниз (`cancel ↓`) оставшихся детей — `Child 2` и `Child 3` оказываются `cancelled`.
 
 **Три стратегии обработки:**
 
@@ -554,21 +539,6 @@ scope.launch { // эта корутина продолжит работу (Super
 | Падение ребёнка | Отменяет родителя и всех siblings | Отменяет только упавшего ребёнка |
 | Стратегия | Fail-fast: всё или ничего | Изоляция: независимые задачи |
 | Применение | Связанные операции | Независимые операции |
-
-```mermaid
-graph TD
-    subgraph "Job (обычный)"
-    P1["Parent Job"] --> A1["Child 1 💥"]
-    P1 --> A2["Child 2 ❌"]
-    P1 --> A3["Child 3 ❌"]
-    end
-
-    subgraph "SupervisorJob"
-    P2["Supervisor"] --> B1["Child 1 💥"]
-    P2 --> B2["Child 2 ✅"]
-    P2 --> B3["Child 3 ✅"]
-    end
-```
 
 ```kotlin
 // Независимые задачи — SupervisorJob
@@ -733,14 +703,10 @@ when (val result = transfer(from, to, amount)) {
 }
 ```
 
-```mermaid
-graph TD
-    A[Ошибка] --> B{Ожидаема?}
-    B -- Да --> C["sealed class<br>Валидация, бизнес-правила,<br>Result/Either"]
-    B -- Нет --> D["Exception<br>Баги, сбои инфраструктуры,<br>нарушение инвариантов"]
-    C --> E["when — exhaustive check"]
-    D --> F["try-catch на границе"]
-```
+Как выбрать подход для ошибки — по признаку «ожидаема ли она»:
+
+- Ошибка **ожидаема** (валидация, бизнес-правила) → `sealed class` (или `Result`/`Either`) → обработка через `when` с exhaustive-проверкой.
+- Ошибка **не ожидаема** (баги, сбои инфраструктуры, нарушение инвариантов) → `Exception` → перехват через `try-catch` на границе.
 
 ## Q23. Как спроектировать `sealed`-иерархию ошибок?
 
@@ -940,16 +906,12 @@ class RateLimitExceededException(
 
 ## Q28. (!) Какие практики обработки ошибок рекомендуются в `Kotlin`?
 
-Главный принцип — **разделять ожидаемые ошибки и фатальные**: первые передавать как значения (`Result`/`sealed`/`Either`), вторые бросать исключениями и ловить на границе. Ниже схема выбора и восемь практик.
+Главный принцип — **разделять ожидаемые ошибки и фатальные**: первые передавать как значения (`Result`/`sealed`/`Either`), вторые бросать исключениями и ловить на границе. Правило выбора и восемь практик ниже.
 
-```mermaid
-graph TD
-    A["Ошибка"] --> B{Тип ошибки}
-    B -- "Ожидаемая<br>(валидация, not found)" --> C["Значение:<br>Result / sealed / Either"]
-    B -- "Фатальная<br>(баг, OOM)" --> D["Exception:<br>throw + try-catch на границе"]
-    C --> E["when — exhaustive"]
-    D --> F["CoroutineExceptionHandler /<br>@ExceptionHandler"]
-```
+Выбор подхода по типу ошибки:
+
+- Ошибка **ожидаемая** (валидация, not found) → передаём как значение: `Result` / `sealed` / `Either` → обработка через `when` с exhaustive-проверкой.
+- Ошибка **фатальная** (баг, OOM) → `Exception`: `throw` + `try-catch` на границе → перехват в `CoroutineExceptionHandler` / `@ExceptionHandler`.
 
 **Основные рекомендации:**
 

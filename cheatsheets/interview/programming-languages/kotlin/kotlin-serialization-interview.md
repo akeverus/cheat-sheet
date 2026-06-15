@@ -129,17 +129,13 @@ updated: "2026-04-25"
 
 Коротко: это инструмент, спроектированный «изнутри Kotlin», тогда как `Jackson`/`Gson` — Java-библиотеки, доученные понимать Kotlin.
 
-```mermaid
-graph LR
-    A["@Serializable<br/>data class"] --> B["Kotlin Compiler<br/>Plugin"]
-    B --> C["Сгенерированный<br/>Serializer"]
-    C --> D["Json"]
-    C --> E["ProtoBuf"]
-    C --> F["CBOR"]
-    D --> G["JSON строка"]
-    E --> H["Binary protobuf"]
-    F --> I["Binary CBOR"]
-```
+Конвейер от класса к выходным данным выглядит так:
+
+- `@Serializable data class` → `Kotlin Compiler Plugin` → сгенерированный `Serializer`.
+- Один и тот же сгенерированный `Serializer` далее подключается к любому формату:
+  - → `Json` → `JSON строка`;
+  - → `ProtoBuf` → бинарный protobuf (`Binary protobuf`);
+  - → `CBOR` → бинарный CBOR (`Binary CBOR`).
 
 ## Q2. Как подключить kotlinx.serialization к проекту?
 
@@ -599,17 +595,13 @@ println(json.encodeToString(result))
 // {"type":"success","data":"OK"}
 ```
 
-```mermaid
-graph TD
-    A["sealed class ApiResult"] --> B["Success"]
-    A --> C["Error"]
-    A --> D["Loading"]
-    
-    E["JSON"] --> F{"type?"}
-    F -->|"success"| B
-    F -->|"error"| C
-    F -->|"loading"| D
-```
+Структура и маршрутизация по дискриминатору:
+
+- `sealed class ApiResult` имеет три подтипа: `Success`, `Error`, `Loading`.
+- При десериализации значение поля-дискриминатора `type` в JSON выбирает подтип:
+  - `"success"` → `Success`;
+  - `"error"` → `Error`;
+  - `"loading"` → `Loading`.
 
 **Преимущества sealed class перед open-полиморфизмом:**
 
@@ -721,16 +713,11 @@ object EventSerializer : JsonContentPolymorphicSerializer<Event>(Event::class) {
 
 `JsonElement` — это JSON, разобранный в дерево объектов (аналог DOM для HTML), которым можно манипулировать в коде, не зная заранее его структуру и без `data class`. `encodeToJsonElement` даёт объект → дерево, а `parseToJsonElement` — строку → дерево. Иерархия узлов:
 
-```mermaid
-graph TD
-    A["JsonElement"] --> B["JsonPrimitive"]
-    A --> C["JsonObject"]
-    A --> D["JsonArray"]
-    A --> E["JsonNull"]
-    B --> F["содержит: String, Int, Boolean..."]
-    C --> G["Map&lt;String, JsonElement&gt;"]
-    D --> H["List&lt;JsonElement&gt;"]
-```
+- `JsonElement` — базовый тип, у которого четыре наследника:
+  - `JsonPrimitive` — содержит `String`, `Int`, `Boolean` и т.д.;
+  - `JsonObject` — `Map<String, JsonElement>`;
+  - `JsonArray` — `List<JsonElement>`;
+  - `JsonNull`.
 
 ```kotlin
 // Парсинг строки в дерево
@@ -1014,13 +1001,12 @@ class ApiClient(private val json: Json) {
 }
 ```
 
-```mermaid
-graph TD
-    A["commonMain<br/>@Serializable models<br/>Json config"] --> B["jvmMain<br/>Ktor Server"]
-    A --> C["jsMain<br/>React frontend"]
-    A --> D["iosMain<br/>Swift interop"]
-    A --> E["wasmJsMain<br/>Browser WASM"]
-```
+Один общий `commonMain` (`@Serializable`-модели и конфиг `Json`) переиспользуется во всех платформенных source set'ах:
+
+- `commonMain` → `jvmMain` (`Ktor Server`);
+- `commonMain` → `jsMain` (`React frontend`);
+- `commonMain` → `iosMain` (`Swift interop`);
+- `commonMain` → `wasmJsMain` (`Browser WASM`).
 
 **Ключевые преимущества для KMP:**
 
@@ -1109,13 +1095,11 @@ data class User(val name: String, val age: Int = 25)
 
 Все ошибки наследуются от одного базового `SerializationException` — поэтому в коде достаточно перехватить его, чтобы поймать любой сбой сериализации/десериализации. Подклассы лишь уточняют причину:
 
-```mermaid
-graph TD
-    A["SerializationException<br/>(базовый)"] --> B["MissingFieldException<br/>обязательное поле отсутствует"]
-    A --> C["UnknownFieldException<br/>неизвестный ключ<br/>(ignoreUnknownKeys=false)"]
-    A --> D["JsonDecodingException<br/>невалидный JSON"]
-    A --> E["JsonEncodingException<br/>ошибка кодирования"]
-```
+- `SerializationException` (базовый) → его наследники:
+  - `MissingFieldException` — обязательное поле отсутствует;
+  - `UnknownFieldException` — неизвестный ключ (при `ignoreUnknownKeys=false`);
+  - `JsonDecodingException` — невалидный JSON;
+  - `JsonEncodingException` — ошибка кодирования.
 
 ```kotlin
 fun <T> safeDeserialize(

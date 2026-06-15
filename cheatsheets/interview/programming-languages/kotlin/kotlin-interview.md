@@ -159,24 +159,16 @@ data class User(val name: String, val age: Int)
 
 Система типов Kotlin — единая иерархия с корнем `Any`, без деления на «примитивы» и «объекты» на уровне языка. Программист всегда работает с типами-объектами (`Int`, `Boolean`, `Char`), а компилятор уже сам, где это безопасно, разворачивает их в JVM-примитивы — поэтому за единообразие синтаксиса не приходится платить производительностью.
 
-```mermaid
-graph TD
-    Any["Any — корень иерархии"]
-    Any --> Number
-    Any --> String
-    Any --> Boolean
-    Any --> Char
-    Any --> Unit["Unit (аналог void)"]
-    Number --> Int
-    Number --> Long
-    Number --> Double
-    Number --> Float
-    Any --> Collection
-    Collection --> List
-    Collection --> Set
-    Collection --> Map
-    Nothing["Nothing — подтип всех типов"]
-```
+Иерархия типов выглядит так:
+
+- `Any` — корень иерархии, от него наследуются:
+  - `Number` → `Int`, `Long`, `Double`, `Float`
+  - `String`
+  - `Boolean`
+  - `Char`
+  - `Unit` (аналог `void`)
+  - `Collection` → `List`, `Set`, `Map`
+- `Nothing` — подтип всех типов (стоит особняком: он находится «ниже» любого типа в иерархии).
 
 Особую роль играют три «специальных» типа — их часто спрашивают именно для проверки понимания системы типов:
 
@@ -522,15 +514,6 @@ fun handleResult(result: NetworkResult<String>): String = when (result) {
     is NetworkResult.Loading -> "Loading..."
     // else не нужен — все варианты покрыты!
 }
-```
-
-```mermaid
-graph TD
-    Sealed["sealed class NetworkResult"]
-    Sealed --> Success["data class Success"]
-    Sealed --> Error["data class Error"]
-    Sealed --> Loading["data object Loading"]
-    style Sealed fill:#f9f,stroke:#333
 ```
 
 **Sealed vs Enum:**
@@ -1013,16 +996,12 @@ val (_, email) = getUserData()
 
 Kotlin разделяет коллекции на два интерфейса: `List` — только для чтения (нет методов `add`/`remove`), `MutableList` — для чтения и изменения. Это разделение существует на уровне типов и помогает выражать намерение: принимая `List`, функция декларирует, что не будет модифицировать коллекцию. **Важная оговорка**: `List` гарантирует лишь отсутствие методов изменения у *этого* интерфейса, но не неизменность самих данных — за тем же объектом может стоять `MutableList` (см. пример ниже).
 
-```mermaid
-graph TD
-    Iterable --> Collection
-    Collection --> List["List (read-only)"]
-    Collection --> Set["Set (read-only)"]
-    Collection --> MutableCollection
-    MutableCollection --> MutableList
-    MutableCollection --> MutableSet
-    List -.->|"реализует"| MutableList
-```
+Иерархия интерфейсов коллекций:
+
+- `Iterable` → `Collection`, от которого расходятся две ветви:
+  - read-only ветвь: `Collection` → `List` (read-only) и `Set` (read-only);
+  - изменяемая ветвь: `Collection` → `MutableCollection` → `MutableList` и `MutableSet`.
+- `MutableList` реализует `List` (то есть изменяемый список — это частный случай read-only списка с дополнительными методами).
 
 ```kotlin
 val readOnly: List<String> = listOf("a", "b", "c")
@@ -1096,16 +1075,6 @@ val uniqueTags = allTags.toSet()         // [kotlin, jvm, spring]
 ## Q35. (!) Что такое корутины и чем они отличаются от потоков?
 
 Корутина — это вычисление, которое можно приостановить (`suspend`) и позже возобновить, не блокируя при этом поток. Ключевое отличие от потоков: пока корутина «ждёт» (например, ответ по сети), она освобождает поток ОС для другой работы, тогда как заблокированный поток просто простаивает. Поэтому корутины несравнимо легче — на одном пуле потоков их могут крутиться миллионы. По сути это инструмент для асинхронного кода, который выглядит как обычный последовательный. Подробные вопросы — в [Kotlin Coroutines](kotlin-coroutines-interview.md).
-
-```mermaid
-graph LR
-    subgraph Thread["Один поток ОС"]
-        C1["Coroutine 1<br>suspend...resume"]
-        C2["Coroutine 2<br>suspend...resume"]
-        C3["Coroutine 3<br>suspend...resume"]
-    end
-    style Thread fill:#e1f5fe
-```
 
 | | Потоки (Threads) | Корутины (Coroutines) |
 |---|---|---|
