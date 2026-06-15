@@ -111,16 +111,11 @@ updated: "2026-05-08"
 - **Инструменты этапа компиляции** -- `Lombok` по аннотации генерирует геттеры/сеттеры, `MapStruct` -- код мапперов.
 - **Runtime-фреймворки** -- `Spring` через рефлексию читает аннотации и на их основе делает `dependency injection`, оборачивает бины в прокси и т.д.
 
-```mermaid
-graph TD
-    A["Аннотация в исходном коде"] --> B{"RetentionPolicy?"}
-    B -->|SOURCE| C["Только компиляция<br/>Lombok, MapStruct"]
-    B -->|CLASS| D["Сохранена в .class<br/>Bytecode-инструментация"]
-    B -->|RUNTIME| E["Доступна через Reflection<br/>Spring, JPA, Jackson"]
-    C --> F["Удалена после компиляции"]
-    D --> G["Не загружается JVM"]
-    E --> H["Читается в runtime"]
-```
+Судьба аннотации из исходного кода зависит от её `RetentionPolicy`:
+
+- **`SOURCE`** — только компиляция (`Lombok`, `MapStruct`) → удалена после компиляции.
+- **`CLASS`** — сохранена в `.class` (bytecode-инструментация) → не загружается JVM.
+- **`RUNTIME`** — доступна через `Reflection` (`Spring`, `JPA`, `Jackson`) → читается в runtime.
 
 Пример использования аннотаций в реальном приложении:
 
@@ -341,20 +336,11 @@ public @interface Trackable {
 
 `RetentionPolicy` (задаётся через `@Retention`) определяет, **до какого этапа доживает аннотация**: остаётся только в исходнике, попадает в `.class`, или ещё и видна в runtime через рефлексию. Это ключевой выбор: если поставить не ту политику, фреймворк просто не увидит вашу аннотацию.
 
-```mermaid
-graph LR
-    subgraph "SOURCE"
-        S1["Исходный код"] -->|"javac"| S2["Удалена"]
-    end
-    subgraph "CLASS"
-        C1["Исходный код"] -->|"javac"| C2[".class файл"]
-        C2 -->|"JVM загрузка"| C3["Не загружена"]
-    end
-    subgraph "RUNTIME"
-        R1["Исходный код"] -->|"javac"| R2[".class файл"]
-        R2 -->|"JVM загрузка"| R3["Доступна через Reflection"]
-    end
-```
+Путь аннотации через `javac` и загрузку JVM по каждой политике:
+
+- **`SOURCE`**: исходный код → (`javac`) → удалена.
+- **`CLASS`**: исходный код → (`javac`) → `.class` файл → (JVM загрузка) → не загружена.
+- **`RUNTIME`**: исходный код → (`javac`) → `.class` файл → (JVM загрузка) → доступна через `Reflection`.
 
 | `RetentionPolicy` | Где доступна | Примеры использования |
 |-------------------|-------------|----------------------|
@@ -716,16 +702,15 @@ Annotation[][] paramAnnotations = method.getParameterAnnotations();
 
 `AnnotatedElement` -- общий интерфейс «над всем, что можно аннотировать»: его реализуют `Class`, `Method`, `Field`, `Constructor`, `Parameter`, `Package`. Благодаря этому методы чтения аннотаций (`getAnnotation`, `isAnnotationPresent`, `getAnnotationsByType`) у всех этих типов одинаковые, и можно написать один обработчик, принимающий `AnnotatedElement`, не зная конкретно, класс это или метод.
 
-```mermaid
-graph TD
-    AE["AnnotatedElement<br/>(interface)"] --> CL["Class"]
-    AE --> ME["Method"]
-    AE --> FI["Field"]
-    AE --> CO["Constructor"]
-    AE --> PA["Parameter"]
-    AE --> PK["Package"]
-    AE --> AM["AccessibleObject"]
-```
+Интерфейс `AnnotatedElement` реализуют:
+
+- `Class`
+- `Method`
+- `Field`
+- `Constructor`
+- `Parameter`
+- `Package`
+- `AccessibleObject`
 
 Ключевые методы:
 
@@ -755,15 +740,13 @@ inspect(User.class.getMethod("toString"));        // метод
 
 `Annotation Processor` -- ваш код, который `javac` вызывает **прямо во время компиляции**. Компилятор находит аннотации в исходниках и передаёт их зарегистрированным процессорам, объявившим, что поддерживают эти аннотации. Процессор может **сгенерировать новый код**, **создать файлы** (ресурсы, метаданные) и **сообщить об ошибке компиляции**. В отличие от runtime-рефлексии (Q16), вся работа происходит до запуска программы -- поэтому нет накладных расходов в runtime, а ошибки ловятся на этапе сборки.
 
-```mermaid
-graph LR
-    A["Исходный код<br/>с аннотациями"] --> B["javac"]
-    B --> C{"Annotation<br/>Processors"}
-    C -->|"Раунд 1"| D["Генерация<br/>новых файлов"]
-    D -->|"Новые файлы<br/>тоже компилируются"| C
-    C -->|"Раунд N<br/>(нет новых файлов)"| E["Финальный<br/>раунд"]
-    E --> F[".class файлы"]
-```
+Поток обработки по шагам:
+
+1. Исходный код с аннотациями поступает в `javac`.
+2. `javac` передаёт аннотации в `Annotation Processors`.
+3. **Раунд 1**: процессоры генерируют новые файлы. Эти новые файлы тоже компилируются и снова попадают к процессорам — начинается следующий раунд.
+4. **Раунд N** (когда новых файлов больше не создано) — финальный раунд.
+5. На выходе — `.class` файлы.
 
 Ключевые компоненты API (пакет `javax.annotation.processing`):
 
@@ -943,19 +926,14 @@ processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "!");  // OK
 
 Аннотации в `Spring` -- это декларативный способ настроить контейнер: вместо XML-конфигурации вы помечаете классы и методы, а `Spring` при старте контекста сканирует classpath и через рефлексию читает эти пометки. Поэтому все «спринговые» аннотации имеют `RetentionPolicy.RUNTIME` -- без этого фреймворк бы их не увидел.
 
-```mermaid
-graph TD
-    A["@ComponentScan"] --> B["Classpath scanning"]
-    B --> C{"Найден @Component<br/>@Service / @Repository<br/>@Controller?"}
-    C -->|Да| D["Создать BeanDefinition"]
-    D --> E["Instantiate bean"]
-    E --> F{"Есть @Autowired<br/>@Value?"}
-    F -->|Да| G["Inject dependencies"]
-    G --> H{"Есть @Transactional<br/>@Cacheable<br/>@Async?"}
-    H -->|Да| I["Создать Proxy<br/>(JDK / CGLIB)"]
-    I --> J["Bean готов"]
-    H -->|Нет| J
-```
+Как `Spring` обрабатывает аннотации при старте контекста, по шагам:
+
+1. `@ComponentScan` запускает classpath scanning.
+2. Если найден `@Component` / `@Service` / `@Repository` / `@Controller` → создаётся `BeanDefinition` (иначе класс пропускается).
+3. Бин инстанцируется (`Instantiate bean`).
+4. Если есть `@Autowired` / `@Value` → внедряются зависимости (`Inject dependencies`).
+5. Если есть `@Transactional` / `@Cacheable` / `@Async` → создаётся прокси (`JDK` / `CGLIB`), после чего бин готов.
+6. Если таких аннотаций нет → бин готов сразу, без прокси.
 
 Основные категории аннотаций в `Spring`:
 

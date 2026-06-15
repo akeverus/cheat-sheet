@@ -102,26 +102,23 @@ updated: "2026-05-08"
 
 Граница проходит по **8 примитивным типам** (`boolean`, `byte`, `short`, `char`, `int`, `float`, `long`, `double`): они **не наследуются от `Object`**, потому что это не объекты, а голые значения без заголовка и без методов. Именно из-за этого их нельзя напрямую положить в `Object` или коллекцию — нужна обёртка (см. Q5).
 
-```mermaid
-graph TD
-    Object["java.lang.Object"]
-    Object --> String["String"]
-    Object --> Number["Number"]
-    Object --> Boolean["Boolean"]
-    Object --> Character["Character"]
-    Object --> Enum["Enum&lt;E&gt;"]
-    Object --> Array["Arrays (int[], String[])"]
-    Number --> Integer["Integer"]
-    Number --> Long["Long"]
-    Number --> Double["Double"]
-    Number --> Float["Float"]
-    Number --> Short["Short"]
-    Number --> Byte["Byte"]
+Иерархия ссылочных типов с корнем `java.lang.Object`:
 
-    Primitives["Примитивы: int, long, double..."]
-    style Primitives fill:#f96,stroke:#333
-    style Object fill:#6af,stroke:#333
-```
+- `java.lang.Object` — корень, прямые потомки:
+  - `String`
+  - `Number` — общий супертип числовых обёрток:
+    - `Integer`
+    - `Long`
+    - `Double`
+    - `Float`
+    - `Short`
+    - `Byte`
+  - `Boolean`
+  - `Character`
+  - `Enum<E>`
+  - массивы (`int[]`, `String[]`) — тоже наследуются от `Object`
+
+Особняком стоят примитивы (`int`, `long`, `double` и т.д.) — они **вне** этой иерархии и от `Object` не наследуются.
 
 **Лямбда — особый случай.** Хотя в итоге это объект, присвоить её переменной типа `Object` напрямую нельзя: у лямбды нет собственного типа, её тип выводится из target type — функционального интерфейса. `Object` функциональным интерфейсом не является, поэтому компилятор не знает, какой интерфейс реализовать. Достаточно дать ему цель — и всё работает:
 
@@ -249,13 +246,10 @@ list.add(10);         // autoboxing: 10 → Integer.valueOf(10)
 int value = list.get(0); // unboxing: Integer → int
 ```
 
-```mermaid
-graph LR
-    P["Примитив (int)"] -->|"autoboxing<br>Integer.valueOf()"| W["Обёртка (Integer)"]
-    W -->|"unboxing<br>intValue()"| P
-    style P fill:#ffa,stroke:#333
-    style W fill:#adf,stroke:#333
-```
+Связь примитива и обёртки в обе стороны:
+
+- примитив (`int`) → обёртка (`Integer`): `autoboxing`, компилятор вставляет `Integer.valueOf()`;
+- обёртка (`Integer`) → примитив (`int`): `unboxing`, компилятор вставляет `intValue()`.
 
 Подробнее о влиянии обёрток на коллекции — в [вопросах по коллекциям](java-collections-interview.md).
 
@@ -479,15 +473,11 @@ Outer.Nested nested = new Outer.Nested();   // не нужен экземпля�
 
 Зато класс может реализовать **сколько угодно интерфейсов** (`implements`) — это множественное наследование **типов**, а с появлением `default`-методов (Java 8) ещё и **поведения**. С состоянием конфликта не возникает, потому что у интерфейсов нет полей экземпляра; а конфликт `default`-методов компилятор заставляет разрешить вручную (см. ниже и Q38).
 
-```mermaid
-graph TD
-    A["interface Flyable<br>default fly()"] 
-    B["interface Swimmable<br>default swim()"]
-    C["class Duck implements Flyable, Swimmable"]
-    A --> C
-    B --> C
-    style C fill:#afa,stroke:#333
-```
+Множественное наследование типов на примере: один класс реализует сразу два интерфейса с `default`-методами:
+
+- `interface Flyable` с `default fly()`;
+- `interface Swimmable` с `default swim()`;
+- оба наследуются классом `class Duck implements Flyable, Swimmable`, который получает обе реализации.
 
 При конфликте `default`-методов из разных интерфейсов класс **обязан** переопределить метод:
 
@@ -594,15 +584,10 @@ String s = (String) obj;       // downcast — OK
 Integer n = (Integer) obj;     // ClassCastException!
 ```
 
-```mermaid
-graph LR
-    byte --> short --> int --> long --> float --> double
-    char --> int
-    style byte fill:#ffa
-    style double fill:#adf
-```
+Направление неявного расширения примитивов (стрелка `→` ведёт к более широкому типу):
 
-*Стрелки — направление неявного расширения примитивов.*
+- `byte` → `short` → `int` → `long` → `float` → `double`;
+- `char` → `int` (далее по той же цепочке к `long`, `float`, `double`).
 
 ## Q16. (!) Что такое `record` и чем он отличается от обычного класса?
 
@@ -668,19 +653,12 @@ double area = switch (shape) {
 };
 ```
 
-```mermaid
-graph TD
-    S["sealed interface Shape<br>permits Circle, Rectangle, Triangle"]
-    C["record Circle"]
-    R["record Rectangle"]
-    T["final class Triangle"]
-    S --> C
-    S --> R
-    S --> T
-    X["class Hexagon"] -.->|"❌ запрещено"| S
-    style S fill:#adf,stroke:#333
-    style X fill:#faa,stroke:#333
-```
+Закрытая иерархия `sealed interface Shape` с `permits Circle, Rectangle, Triangle` и её разрешённые подтипы:
+
+- `record Circle` — разрешён (есть в `permits`);
+- `record Rectangle` — разрешён;
+- `final class Triangle` — разрешён;
+- `class Hexagon` — реализовать `Shape` **запрещено** (не указан в `permits`).
 
 **Подтипы `sealed` класса обязаны быть:**
 - `final` — закрытая ветка

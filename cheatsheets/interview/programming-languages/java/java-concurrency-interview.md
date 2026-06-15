@@ -186,20 +186,15 @@ new MyThread().start();
 
 **Тонкость для собеседования.** Поток, ждущий блокирующего I/O или сетевого ответа, остаётся в `RUNNABLE` — с точки зрения JVM он не заблокирован на мониторе. `BLOCKED` относится только к ожиданию монитора `synchronized`.
 
-```mermaid
-stateDiagram-v2
-    [*] --> NEW: new Thread()
-    NEW --> RUNNABLE: start()
-    RUNNABLE --> BLOCKED: ждёт монитора
-    BLOCKED --> RUNNABLE: монитор получен
-    RUNNABLE --> WAITING: wait() / join() / park()
-    WAITING --> RUNNABLE: notify() / unpark()
-    RUNNABLE --> TIMED_WAITING: sleep(ms) / wait(ms)
-    TIMED_WAITING --> RUNNABLE: таймаут / notify()
-    RUNNABLE --> TERMINATED: run() завершён
-    WAITING --> TERMINATED: interrupt()
-    TIMED_WAITING --> TERMINATED: interrupt()
-```
+Переходы между состояниями:
+
+- стартовое состояние → **`NEW`** по `new Thread()`
+- **`NEW`** → **`RUNNABLE`** по `start()`
+- **`RUNNABLE`** → **`BLOCKED`**, когда поток ждёт монитора; обратно **`BLOCKED`** → **`RUNNABLE`**, когда монитор получен
+- **`RUNNABLE`** → **`WAITING`** по `wait()` / `join()` / `park()`; обратно **`WAITING`** → **`RUNNABLE`** по `notify()` / `unpark()`
+- **`RUNNABLE`** → **`TIMED_WAITING`** по `sleep(ms)` / `wait(ms)`; обратно **`TIMED_WAITING`** → **`RUNNABLE`** по таймауту или `notify()`
+- **`RUNNABLE`** → **`TERMINATED`**, когда `run()` завершён
+- **`WAITING`** → **`TERMINATED`** и **`TIMED_WAITING`** → **`TERMINATED`** по `interrupt()`
 
 ## Q4. Что такое `Thread Priority`?
 
@@ -718,15 +713,12 @@ Deadlock возможен, только когда **одновременно** 
 - Избегать вложенных `synchronized` — не держать одну блокировку, запрашивая другую
 - Использовать готовые средства `java.util.concurrent` вместо ручной синхронизации
 
-```mermaid
-graph LR
-    T1[Поток 1] -->|держит| L1[Lock A]
-    T1 -->|ждёт| L2[Lock B]
-    T2[Поток 2] -->|держит| L2
-    T2 -->|ждёт| L1
-    style T1 fill:#f99
-    style T2 fill:#f99
-```
+Цикл ожидания при взаимоблокировке выглядит так:
+
+- **Поток 1** держит `Lock A` и ждёт `Lock B`
+- **Поток 2** держит `Lock B` и ждёт `Lock A`
+
+Получается замкнутый круг: каждый удерживает ресурс, нужный другому, и ни один не может продвинуться.
 
 ## Q24. В чем разница между `Deadlock`, `Livelock` и `Starvation`?
 
@@ -804,29 +796,19 @@ new Thread(() -> {
 
 `ExecutorService` — расширение `Executor`, добавляющее то, чего не хватает для реальной работы: управление жизненным циклом (`shutdown`), получение результатов (`submit` → `Future`) и пакетные операции (`invokeAll`/`invokeAny`):
 
-```mermaid
-classDiagram
-    class Executor {
-        <<interface>>
-        +execute(Runnable)
-    }
-    class ExecutorService {
-        <<interface>>
-        +submit(Callable~T~) Future~T~
-        +shutdown()
-        +shutdownNow() List~Runnable~
-        +awaitTermination(long, TimeUnit)
-        +invokeAll(Collection) List~Future~
-        +invokeAny(Collection) T
-    }
-    class ThreadPoolExecutor
-    class ScheduledThreadPoolExecutor
-    class ForkJoinPool
-    Executor <|-- ExecutorService
-    ExecutorService <|.. ThreadPoolExecutor
-    ThreadPoolExecutor <|-- ScheduledThreadPoolExecutor
-    ExecutorService <|.. ForkJoinPool
-```
+Иерархия интерфейсов и реализаций:
+
+- **`Executor`** (интерфейс) — метод `execute(Runnable)`
+- **`ExecutorService`** (интерфейс) расширяет `Executor` и добавляет методы:
+  - `submit(Callable<T>)` → `Future<T>`
+  - `shutdown()`
+  - `shutdownNow()` → `List<Runnable>`
+  - `awaitTermination(long, TimeUnit)`
+  - `invokeAll(Collection)` → `List<Future>`
+  - `invokeAny(Collection)` → `T`
+- Реализации `ExecutorService`:
+  - **`ThreadPoolExecutor`** реализует `ExecutorService`; от него наследуется **`ScheduledThreadPoolExecutor`**
+  - **`ForkJoinPool`** реализует `ExecutorService`
 
 ## Q29. (!) Какие реализации `ExecutorService` есть в стандартной библиотеке?
 
@@ -1299,19 +1281,15 @@ try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
 | `synchronized` | Нормально | Может pinning! |
 | Пулинг | Нужен (`ExecutorService`) | Не нужен (thread-per-task) |
 
-```mermaid
-graph TD
-    subgraph JVM
-        VT1[Virtual Thread 1] --> CT1[Carrier Thread 1]
-        VT2[Virtual Thread 2] --> CT1
-        VT3[Virtual Thread 3] --> CT2[Carrier Thread 2]
-        VT4[Virtual Thread 4<br>заблокирован I/O] -.->|unmounted| QUEUE[Очередь]
-    end
-    subgraph OS
-        CT1 --> OS1[OS Thread]
-        CT2 --> OS2[OS Thread]
-    end
-```
+Как virtual threads распределяются по carrier-потокам:
+
+- На уровне **JVM**:
+  - `Virtual Thread 1` и `Virtual Thread 2` смонтированы на `Carrier Thread 1`
+  - `Virtual Thread 3` смонтирован на `Carrier Thread 2`
+  - `Virtual Thread 4` заблокирован на I/O — снят с carrier (`unmounted`) и помещён в очередь, освободив carrier для других задач
+- На уровне **OS**:
+  - `Carrier Thread 1` исполняется на одном OS-потоке
+  - `Carrier Thread 2` — на другом OS-потоке
 
 ## Q47. Когда использовать и когда НЕ использовать `Virtual Threads`?
 

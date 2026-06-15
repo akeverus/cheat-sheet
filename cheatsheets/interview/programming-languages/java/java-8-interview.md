@@ -18,7 +18,7 @@ updated: "2026-05-20"
 ---
 # Вопросы на собеседовании: `Java 8`
 
-Комплексное руководство по вопросам собеседования на тему `Java 8` для `Senior Java Developer`. Включает детальные объяснения концепций, практические примеры кода, диаграммы и best practices.
+Комплексное руководство по вопросам собеседования на тему `Java 8` для `Senior Java Developer`. Включает детальные объяснения концепций, практические примеры кода и best practices.
 
 **`Java 8`** — одна из самых значимых версий платформы, которая принесла функциональное программирование в мир `Java`. Основные нововведения: лямбда-выражения, `Stream API`, `Optional`, default-методы в интерфейсах, новый `Date/Time API` и `CompletableFuture`. Эти темы — обязательная часть любого Java-собеседования.
 
@@ -121,19 +121,6 @@ updated: "2026-05-20"
 | **`CompletableFuture`** | Асинхронное программирование с цепочками |
 | **`Nashorn`** | JavaScript-движок (удалён в Java 15) |
 
-```mermaid
-graph LR
-    J8[Java 8] --> LAMBDA[Lambda & FI]
-    J8 --> STREAM[Stream API]
-    J8 --> OPT[Optional]
-    J8 --> DEF[Default Methods]
-    J8 --> DATE[Date/Time API]
-    J8 --> CF[CompletableFuture]
-    LAMBDA --> STREAM
-    LAMBDA --> CF
-    STREAM --> OPT
-```
-
 На собеседовании важно не просто перечислить фичи, а показать, как они связаны: лямбды — основа для `Stream API` и `CompletableFuture`; `Optional` — естественный результат терминальных операций стримов.
 
 ## Q2. Какие важные изменения появились в `Java 9–21`?
@@ -187,17 +174,14 @@ Converter<String, Integer> toInt = Integer::valueOf;
 Integer result = toInt.convert("123"); // 123
 ```
 
-```mermaid
-graph TD
-    FI["@FunctionalInterface"] --> PRED["Predicate&lt;T&gt;<br/>test(T) → boolean"]
-    FI --> FUNC["Function&lt;T,R&gt;<br/>apply(T) → R"]
-    FI --> CONS["Consumer&lt;T&gt;<br/>accept(T) → void"]
-    FI --> SUPP["Supplier&lt;T&gt;<br/>get() → T"]
-    FI --> UOPER["UnaryOperator&lt;T&gt;<br/>apply(T) → T"]
-    FI --> BIOP["BinaryOperator&lt;T&gt;<br/>apply(T,T) → T"]
-    FUNC --> UOPER
-    FUNC --> BIOP
-```
+Базовые функциональные интерфейсы, помеченные `@FunctionalInterface`, и их единственный абстрактный метод:
+
+- `Predicate<T>` — `test(T) → boolean`;
+- `Function<T,R>` — `apply(T) → R`;
+- `Consumer<T>` — `accept(T) → void`;
+- `Supplier<T>` — `get() → T`;
+- `UnaryOperator<T>` — `apply(T) → T` (частный случай `Function`, где входной и выходной типы совпадают);
+- `BinaryOperator<T>` — `apply(T,T) → T` (частный случай `Function` с двумя аргументами того же типа).
 
 Подробнее о коллекциях, использующих функциональные интерфейсы — в [вопросах по Java Collections](java-collections-interview.md).
 
@@ -644,18 +628,7 @@ List<String> filtered = names.stream()
 // filtered: ["ALICE", "CHARLIE"]
 ```
 
-```mermaid
-graph LR
-    SRC["Источник<br/>(Collection, Array, I/O)"] --> INT1["filter()"]
-    INT1 --> INT2["map()"]
-    INT2 --> INT3["sorted()"]
-    INT3 --> TERM["collect()<br/>Терминальная операция"]
-    style SRC fill:#e1f5fe
-    style TERM fill:#c8e6c9
-    style INT1 fill:#fff9c4
-    style INT2 fill:#fff9c4
-    style INT3 fill:#fff9c4
-```
+Поток данных через пайплайн идёт по порядку: источник (`Collection`, массив, I/O) → `filter()` → `map()` → `sorted()` → `collect()`. Источник лишь поставляет элементы, промежуточные операции `filter()` → `map()` → `sorted()` преобразуют их, а завершающий `collect()` — это терминальная операция, которая и запускает весь конвейер.
 
 Подробнее — в [отдельном файле по Stream API](java-stream-interview.md).
 
@@ -733,15 +706,10 @@ List<String> allTags = articles.stream()
     .collect(Collectors.toList());
 ```
 
-```mermaid
-graph LR
-    subgraph "map()"
-        A1["[1,2]"] -->|"map(x→x*2)"| B1["[2,4]"]
-    end
-    subgraph "flatMap()"
-        A2["[[1,2],[3]]"] -->|"flatMap(List::stream)"| B2["[1,2,3]"]
-    end
-```
+Наглядное сравнение на простых примерах:
+
+- `map()`: `map(x→x*2)` превращает `[1,2]` в `[2,4]` — каждый элемент заменяется одним результатом (1:1);
+- `flatMap()`: `flatMap(List::stream)` превращает `[[1,2],[3]]` в `[1,2,3]` — вложенные структуры «разворачиваются» в один плоский поток.
 
 ## Q22. Что такое `reduce()` и как его использовать?
 

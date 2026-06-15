@@ -242,12 +242,11 @@ List<String> sorted = sort(list, Comparator.comparing(String::length));
 
 **Зачем так сделали:** обратная совместимость. Дженерики добавили в Java 5, а до этого код десять лет писали на raw-коллекциях. Чтобы старый и новый байт-код работали вместе (старый `List` и новый `List<String>` — один и тот же класс), generic-информацию решили не тащить в runtime.
 
-```mermaid
-graph LR
-    A["List&lt;String&gt;<br/>исходный код"] -->|"Компилятор<br/>(type erasure)"| B["List<br/>байт-код"]
-    C["List&lt;Integer&gt;<br/>исходный код"] -->|"Компилятор<br/>(type erasure)"| B
-    B -->|"JVM"| D["Один и тот же<br/>List.class"]
-```
+Как это выглядит по шагам:
+
+- `List<String>` (исходный код) → компилятор (type erasure) → `List` (байт-код).
+- `List<Integer>` (исходный код) → компилятор (type erasure) → тот же `List` (байт-код).
+- `List` (байт-код) → JVM → один и тот же `List.class`.
 
 Это значит, что `List<String>` и `List<Integer>` — это **один и тот же класс** в runtime:
 
@@ -462,17 +461,6 @@ public abstract class Builder<T extends Builder<T>> {
 
 Три вида wildcards:
 
-```mermaid
-graph TD
-    W["Wildcard Types"] --> UB["Upper Bounded<br/>? extends T<br/>читаем как T"]
-    W --> UN["Unbounded<br/>?<br/>читаем как Object"]
-    W --> LB["Lower Bounded<br/>? super T<br/>пишем T"]
-
-    style UB fill:#d4edda
-    style UN fill:#fff3cd
-    style LB fill:#d1ecf1
-```
-
 | Вид | Синтаксис | Чтение | Запись | Пример |
 |-----|-----------|--------|--------|--------|
 | `Upper Bounded` | `? extends T` | Как `T` | Нельзя (кроме `null`) | `List<? extends Number>` |
@@ -601,18 +589,10 @@ public static void printAll(List<?> list) {
 
 Почему именно так: из `? extends T` безопасно читать (всё внутри — `T`), но опасно писать; в `? super T` безопасно писать `T`, но читать можно лишь как `Object`. PECS просто закрепляет это правило мнемоникой.
 
-```mermaid
-graph LR
-    subgraph "Producer Extends"
-        P["Collection&lt;? extends T&gt;"] -->|"get() → T"| C["Наш код"]
-    end
-    subgraph "Consumer Super"
-        C2["Наш код"] -->|"add(T)"| CS["Collection&lt;? super T&gt;"]
-    end
+Две роли в виде потока данных:
 
-    style P fill:#d4edda
-    style CS fill:#d1ecf1
-```
+- **Producer Extends:** `Collection<? extends T>` через `get()` отдаёт `T` нашему коду (читаем).
+- **Consumer Super:** наш код через `add(T)` передаёт `T` в `Collection<? super T>` (пишем).
 
 Примеры из JDK, следующие принципу PECS:
 
@@ -686,26 +666,10 @@ List<? super String> contravariant = strings;    // OK — контравари�
 | **Контравариантность** | Если `A <: B`, то `F<B> <: F<A>` (направление переворачивается) | `? super T` | Нет |
 | **Инвариантность** | `F<A>` и `F<B>` не связаны вообще | `List<T>` | — |
 
-```mermaid
-graph TD
-    subgraph "Иерархия типов"
-        O["Object"] --> N["Number"]
-        N --> I["Integer"]
-        N --> D["Double"]
-    end
+Покажем это на конкретной иерархии типов: `Object` → `Number`, а `Number` → `Integer` и `Number` → `Double` (стрелка → читается «супертип → подтип»).
 
-    subgraph "Ковариантность (? extends Number)"
-        LN["List&lt;? extends Number&gt;"]
-        LI["List&lt;Integer&gt;"] -.->|подтип| LN
-        LD["List&lt;Double&gt;"] -.->|подтип| LN
-    end
-
-    subgraph "Контравариантность (? super Integer)"
-        LSI["List&lt;? super Integer&gt;"]
-        LN2["List&lt;Number&gt;"] -.->|подтип| LSI
-        LO["List&lt;Object&gt;"] -.->|подтип| LSI
-    end
-```
+- **Ковариантность (`? extends Number`):** и `List<Integer>`, и `List<Double>` являются подтипами `List<? extends Number>`.
+- **Контравариантность (`? super Integer`):** и `List<Number>`, и `List<Object>` являются подтипами `List<? super Integer>`.
 
 **Подводный камень:** массивы в Java ковариантны (в отличие от дженериков), и за это приходится платить runtime-проверкой при каждой записи — а при нарушении прилетает `ArrayStoreException`. Именно из-за этой дыры дженерики сделали инвариантными:
 
