@@ -262,7 +262,7 @@ println(readOnly) // [a, b, c]
 
 **Настоящие immutable-коллекции** даёт библиотека `kotlinx.collections.immutable` — при попытке модификации выбрасывается `UnsupportedOperationException` (для обёрток вроде `Collections.unmodifiableList`) или создаётся новая версия (для persistent-коллекций).
 
-Фабрики `listOf()`, `setOf()`, `mapOf()` для 0–1 элементов могут возвращать действительно неизменяемые реализации, но для 2+ элементов — обычно обёртку над `ArrayList` / `LinkedHashSet` / `LinkedHashMap`.
+Фабрики `listOf()`, `setOf()`, `mapOf()` для 0–1 элементов могут возвращать действительно неизменяемые реализации, но для 2+ элементов — `listOf` отдаёт `Arrays.asList`-обёртку (`Arrays$ArrayList`, фиксированного размера), а `setOf`/`mapOf` — обёртки над `LinkedHashSet` / `LinkedHashMap`.
 
 > **Подводный камень**: read-only не защищает от конкурентной модификации в многопоточном коде — это не потокобезопасность. Для shared state берите `kotlinx.collections.immutable` или `ConcurrentHashMap`.
 

@@ -137,7 +137,7 @@
                 "what_actually": "В Kotlin `setOf` использует `LinkedHashSet`, и порядок вставки сохраняется, в отличие от Java `HashSet`.",
                 "source_of_confusion": "Привычка из Java, где `HashSet` — дефолт для `Set`, переносится на Kotlin.",
                 "if_it_were_true": "Тогда JSON-сериализация Set давала бы нестабильный порядок между запусками, но Kotlin его фиксирует.",
-                "how_it_should_be": "`setOf`/`mapOf` под капотом — `LinkedHashSet`/`LinkedHashMap` с порядком вставки; `listOf` — `ArrayList`."
+                "how_it_should_be": "`setOf`/`mapOf` под капотом — `LinkedHashSet`/`LinkedHashMap` с порядком вставки; `listOf` — `Arrays.asList`-обёртка (`Arrays$ArrayList`)."
               }
             },
             {
@@ -155,13 +155,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Под капотом `listOf` — `ArrayList`, `setOf`/`mapOf` — `LinkedHashSet`/`LinkedHashMap` (порядок вставки); Kotlin- и Java-интерфейсы реализуются одним классом, поэтому конвертация при интеропе не нужна.",
+              "text": "Под капотом `listOf` — `Arrays.asList`-обёртка (`Arrays$ArrayList`, фиксированного размера), `setOf`/`mapOf` — `LinkedHashSet`/`LinkedHashMap` (порядок вставки); Kotlin- и Java-интерфейсы реализуются одним классом, поэтому конвертация при интеропе не нужна.",
               "correct": true,
               "sections": {
                 "explanation": "Фабрики возвращают объекты, реализующие сразу и Kotlin-, и Java-интерфейсы, и `setOf`/`mapOf` сохраняют порядок вставки в отличие от Java `HashSet`/`HashMap`.",
                 "example": "`Spring`-контроллер на Kotlin возвращает `List<Dto>`, и `Jackson` сериализует его напрямую без `.toList()` или конвертеров.",
                 "when_to_apply": "Полагайся на это при передаче коллекций в Java-код и обратно; для предсказуемого порядка используй `setOf`/`mapOf`, для скорости — `hashSetOf`/`hashMapOf`.",
-                "edge_cases": "Для 0–1 элементов есть оптимизированные синглтоны (`emptyList`, одноэлементная обёртка), но для 2+ — обычный `ArrayList`.",
+                "edge_cases": "Для 0–1 элементов есть оптимизированные синглтоны (`emptyList`, одноэлементная обёртка), но для 2+ — `Arrays.asList()`-обёртка (`Arrays$ArrayList`) фиксированного размера: `set` по индексу работает, а `add`/`remove` бросают `UnsupportedOperationException`.",
                 "related": "[[kotlin-collections-interview#Q28]] LinkedHashMap vs TreeMap; [[kotlin-collections-interview#Q29]] hashSetOf/linkedSetOf/sortedSetOf; [[kotlin-collections-interview#Q22]] интероп с Java-коллекциями."
               }
             },
@@ -171,10 +171,10 @@
               "text": "`listOf(1, 2, 3)` оборачивается в `Collections.unmodifiableList`, поэтому `as MutableList` бросит `UnsupportedOperationException`.",
               "correct": false,
               "sections": {
-                "what_actually": "На JVM `listOf(2+)` возвращает обычный `ArrayList` без unmodifiable-обёртки, и cast c записью проходит.",
+                "what_actually": "На JVM `listOf(2+)` возвращает `Arrays$ArrayList` (обёртку `Arrays.asList`), а не `Collections.unmodifiableList`; сам cast `as MutableList` не бросает, но структурные `add`/`remove` дают `UnsupportedOperationException` (список фиксированного размера).",
                 "source_of_confusion": "Defensive-стиль из Java (`unmodifiableList`) ожидают и от `listOf`.",
                 "if_it_were_true": "Тогда `listOf` сам был бы защитной копией, но реально для защиты нужен `toList()` или persistent-коллекция.",
-                "how_it_should_be": "`listOf` — read-only view над `ArrayList`; для snapshot/защиты делают явный `toList()`."
+                "how_it_should_be": "`listOf` отдаёт `List` (read-only Kotlin-интерфейс) поверх `Arrays$ArrayList` фиксированного размера; для снимка/защиты делают явный `toList()` (создаёт независимый `ArrayList`)."
               }
             }
           ]
