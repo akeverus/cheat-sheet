@@ -103,16 +103,15 @@ updated: "2026-05-14"
 
 **API Gateway** -- единая точка входа для всех клиентских запросов в микросервисной архитектуре. Он принимает входящий запрос, маршрутизирует его к нужному backend-сервису (или сразу к нескольким), при необходимости агрегирует ответы и возвращает результат клиенту. По сути это фасад перед группой сервисов: клиент видит один API, а за ним скрыта вся внутренняя структура системы.
 
-```mermaid
-graph LR
-    C1[Web Client] --> GW[API Gateway]
-    C2[Mobile Client] --> GW
-    C3[Partner API] --> GW
-    GW --> S1[User Service]
-    GW --> S2[Order Service]
-    GW --> S3[Product Service]
-    GW --> S4[Payment Service]
-```
+Схема потока: разные клиенты обращаются к единому Gateway, а тот разводит запросы по backend-сервисам.
+
+- `Web Client` → `API Gateway`
+- `Mobile Client` → `API Gateway`
+- `Partner API` → `API Gateway`
+- `API Gateway` → `User Service`
+- `API Gateway` → `Order Service`
+- `API Gateway` → `Product Service`
+- `API Gateway` → `Payment Service`
 
 **Какие проблемы он решает:**
 
@@ -196,17 +195,11 @@ API Gateway берёт на себя инфраструктурные задач
 
 **BFF (Backend for Frontend)** -- вариация паттерна `API Gateway`, при которой вместо одного общего Gateway создаётся **отдельный Gateway под каждый тип клиента**, заточенный под его потребности. Web-приложение, мобильный клиент и IoT-устройство получают свои персональные backend'ы вместо «универсального» API, который пытается угодить всем сразу.
 
-```mermaid
-graph TD
-    WEB[Web App] --> BFF_WEB[BFF for Web]
-    MOB[Mobile App] --> BFF_MOB[BFF for Mobile]
-    IOT[IoT Device] --> BFF_IOT[BFF for IoT]
-    BFF_WEB --> S1[User Service]
-    BFF_WEB --> S2[Product Service]
-    BFF_MOB --> S1
-    BFF_MOB --> S3[Notification Service]
-    BFF_IOT --> S4[Telemetry Service]
-```
+Схема: у каждого типа клиента -- свой BFF, и каждый BFF обращается к нужному ему набору сервисов.
+
+- `Web App` → `BFF for Web` → `User Service`, `Product Service`
+- `Mobile App` → `BFF for Mobile` → `User Service`, `Notification Service`
+- `IoT Device` → `BFF for IoT` → `Telemetry Service`
 
 **Зачем разделять Gateway по клиентам:**
 
@@ -225,16 +218,12 @@ graph TD
 
 **Spring Cloud Gateway** -- реактивный API Gateway из экосистемы `Spring Cloud`, построенный на `Spring WebFlux` и `Project Reactor`. Ключевой момент: он работает на `Netty`, а не на `Tomcat`, поэтому обработка неблокирующая. Один поток не «висит» в ожидании ответа от backend, а обслуживает множество соединений -- это критично для Gateway, который по природе своей в основном ждёт ответы downstream-сервисов (I/O-bound нагрузка).
 
-```mermaid
-graph LR
-    CLIENT[Client] --> SCG[Spring Cloud Gateway<br/>Netty + WebFlux]
-    SCG --> HM[Handler Mapping]
-    HM --> WH[Web Handler]
-    WH --> PRE[Pre-Filters]
-    PRE --> PROXY[Proxied Service]
-    PROXY --> POST[Post-Filters]
-    POST --> CLIENT
-```
+Внутренний путь запроса через `Spring Cloud Gateway` (на `Netty + WebFlux`):
+
+- `Client` → `Spring Cloud Gateway` (`Netty + WebFlux`)
+- → `Handler Mapping` → `Web Handler` → `Pre-Filters`
+- → `Proxied Service` (целевой сервис)
+- → `Post-Filters` → обратно к `Client`
 
 **Ключевые характеристики:**
 
@@ -271,17 +260,12 @@ graph LR
 
 **Filter** (фильтр) -- компонент, который что-то делает с запросом или ответом: pre-filter правит запрос до отправки в backend, post-filter -- ответ перед возвратом клиенту. Именно фильтры выполняют всю «работу» Gateway: аутентификацию, добавление заголовков, rate limiting, трансформацию.
 
-```mermaid
-graph LR
-    REQ[HTTP Request] --> P{Predicate<br/>Match?}
-    P -->|Да| F1[Pre-Filter 1]
-    P -->|Нет| NEXT[Next Route]
-    F1 --> F2[Pre-Filter N]
-    F2 --> SVC[Backend Service]
-    SVC --> PF1[Post-Filter N]
-    PF1 --> PF2[Post-Filter 1]
-    PF2 --> RES[HTTP Response]
-```
+Как связаны Route, Predicate и Filter на пути запроса:
+
+- `HTTP Request` → проверка предиката (`Predicate Match?`):
+  - если **Да** → `Pre-Filter 1` → ... → `Pre-Filter N` → `Backend Service`;
+  - если **Нет** → переход к следующему маршруту (`Next Route`).
+- После ответа backend: `Post-Filter N` → ... → `Post-Filter 1` → `HTTP Response` клиенту.
 
 ---
 
@@ -509,19 +493,23 @@ public class RequestLoggingGlobalFilter implements GlobalFilter, Ordered {
 
 Все фильтры -- и глобальные, и привязанные к маршруту -- собираются в единую цепочку и сортируются по значению `order` (интерфейс `Ordered`). Порядок принципиален: аутентификация должна отработать раньше rate limiting, а логирование ответа -- позже всех. Ключевая особенность -- цепочка проходится **дважды**, «туда и обратно»:
 
-```mermaid
-graph TD
-    REQ[Входящий запрос] --> GF1[Global Pre-Filter<br/>order = -2]
-    GF1 --> GF2[Global Pre-Filter<br/>order = -1]
-    GF2 --> RF1[Route Pre-Filter<br/>order = 1]
-    RF1 --> RF2[Route Pre-Filter<br/>order = 2]
-    RF2 --> SVC[Backend Service]
-    SVC --> RF2P[Route Post-Filter<br/>order = 2]
-    RF2P --> RF1P[Route Post-Filter<br/>order = 1]
-    RF1P --> GF2P[Global Post-Filter<br/>order = -1]
-    GF2P --> GF1P[Global Post-Filter<br/>order = -2]
-    GF1P --> RES[Ответ клиенту]
-```
+Проход цепочки «туда» (pre-фаза, по возрастанию `order`):
+
+- `Входящий запрос`
+- → `Global Pre-Filter` (`order = -2`)
+- → `Global Pre-Filter` (`order = -1`)
+- → `Route Pre-Filter` (`order = 1`)
+- → `Route Pre-Filter` (`order = 2`)
+- → `Backend Service`
+
+Проход «обратно» (post-фаза, в обратном порядке -- по убыванию `order`):
+
+- `Backend Service`
+- → `Route Post-Filter` (`order = 2`)
+- → `Route Post-Filter` (`order = 1`)
+- → `Global Post-Filter` (`order = -1`)
+- → `Global Post-Filter` (`order = -2`)
+- → `Ответ клиенту`
 
 **Правила порядка:**
 
@@ -730,22 +718,16 @@ filters:
 
 **Token Relay** -- паттерн, при котором `API Gateway` сам выступает `OAuth 2.0 Client`: проводит пользователя через логин на Authorization Server, получает access token и затем «передаёт» (relay) его downstream-сервисам в заголовке `Authorization`. Ключевая выгода -- браузеру не отдаётся access token: он остаётся в защищённой сессии на Gateway, а наружу клиент работает по обычной cookie-сессии. Это основа BFF-паттерна безопасности для SPA.
 
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant GW as API Gateway<br/>(OAuth2 Client)
-    participant AS as Auth Server<br/>(Keycloak)
-    participant SVC as Backend Service<br/>(Resource Server)
+Поток Token Relay по шагам. Участники: `User`, `API Gateway` (выступает `OAuth2 Client`), `Auth Server` (`Keycloak`), `Backend Service` (`Resource Server`).
 
-    U->>GW: GET /api/resource (без токена)
-    GW->>AS: Redirect to login
-    U->>AS: Вводит credentials
-    AS->>GW: Authorization Code
-    GW->>AS: Exchange code → Access Token
-    GW->>SVC: GET /resource + Bearer Token
-    SVC->>GW: Response
-    GW->>U: Response
-```
+1. `User` → `API Gateway`: `GET /api/resource` (без токена).
+2. `API Gateway` → `Auth Server`: redirect на страницу логина (`Redirect to login`).
+3. `User` → `Auth Server`: вводит credentials.
+4. `Auth Server` → `API Gateway`: возвращает `Authorization Code`.
+5. `API Gateway` → `Auth Server`: обмен кода на токен (`Exchange code → Access Token`).
+6. `API Gateway` → `Backend Service`: `GET /resource` + `Bearer Token`.
+7. `Backend Service` → `API Gateway`: `Response`.
+8. `API Gateway` → `User`: `Response`.
 
 **Конфигурация:**
 
@@ -931,17 +913,12 @@ eureka:
       defaultZone: http://eureka:8761/eureka/
 ```
 
-```mermaid
-graph LR
-    GW[API Gateway] -->|"lb://user-service"| LB[Load Balancer<br/>Spring Cloud LoadBalancer]
-    LB -->|Round Robin| US1[User Service :8081]
-    LB -->|Round Robin| US2[User Service :8082]
-    LB -->|Round Robin| US3[User Service :8083]
-    GW <-->|Registry Lookup| EUR[Eureka Server]
-    US1 <-->|Registration| EUR
-    US2 <-->|Registration| EUR
-    US3 <-->|Registration| EUR
-```
+Схема интеграции с Service Discovery и балансировки:
+
+- `API Gateway` по `lb://user-service` обращается к `Load Balancer` (`Spring Cloud LoadBalancer`).
+- `Load Balancer` распределяет запросы по `Round Robin` между инстансами: `User Service :8081`, `User Service :8082`, `User Service :8083`.
+- `API Gateway` ↔ `Eureka Server`: поиск в реестре (`Registry Lookup`).
+- Каждый инстанс (`:8081`, `:8082`, `:8083`) ↔ `Eureka Server`: регистрация (`Registration`).
 
 **Нюанс auto-locator.** При `discovery.locator.enabled=true` Gateway сам генерирует маршрут для каждого сервиса в реестре: `/SERVICE-NAME/**` -> `lb://SERVICE-NAME`. Это удобно на старте и в dev, но в production опасно: наружу автоматически экспонируются **все** сервисы, включая внутренние, которые не должны быть доступны клиентам. Поэтому в проде локатор обычно выключают и объявляют маршруты явно -- так контролируешь, что именно публикуется.
 
@@ -1089,17 +1066,12 @@ routes:
 
 **API Composition** -- паттерн, при котором на один запрос клиента Gateway сам обращается к нескольким backend-сервисам, собирает их ответы и возвращает единый результат. Зачем: вместо 5 round-trip'ов от мобильного клиента по медленной сети делается 1, а параллельные внутренние вызовы происходят по быстрой сети дата-центра. Клиент получает готовую «склейку» для своего экрана.
 
-```mermaid
-graph LR
-    C[Client] -->|"GET /api/dashboard"| GW[API Gateway]
-    GW -->|parallel| US[User Service]
-    GW -->|parallel| OS[Order Service]
-    GW -->|parallel| RS[Recommendation Service]
-    US -->|user data| GW
-    OS -->|recent orders| GW
-    RS -->|recommendations| GW
-    GW -->|aggregated response| C
-```
+Схема агрегации одного запроса `GET /api/dashboard`:
+
+- `Client` → `API Gateway`: `GET /api/dashboard`.
+- `API Gateway` параллельно (`parallel`) обращается к трём сервисам: `User Service`, `Order Service`, `Recommendation Service`.
+- Ответы назад в `API Gateway`: от `User Service` -- `user data`, от `Order Service` -- `recent orders`, от `Recommendation Service` -- `recommendations`.
+- `API Gateway` → `Client`: объединённый ответ (`aggregated response`).
 
 **Реализация через WebClient в кастомном фильтре.** Ключевой приём -- `Mono.zip`: оба вызова стартуют параллельно, и Gateway ждёт оба сразу, а не последовательно. Так общая задержка равна максимуму из двух запросов, а не их сумме:
 
@@ -1263,15 +1235,10 @@ public class AccessLogGlobalFilter implements GlobalFilter, Ordered {
 
 Gateway пропускает весь трафик, поэтому без нескольких инстансов за балансировщиком и health checks он становится SPOF -- падает он, падает вся система. Лечится горизонтальным масштабированием:
 
-```mermaid
-graph LR
-    LB[Load Balancer] --> GW1[Gateway Instance 1]
-    LB --> GW2[Gateway Instance 2]
-    LB --> GW3[Gateway Instance 3]
-    GW1 --> SVCS[Backend Services]
-    GW2 --> SVCS
-    GW3 --> SVCS
-```
+Топология горизонтального масштабирования:
+
+- `Load Balancer` распределяет трафик на несколько инстансов: `Gateway Instance 1`, `Gateway Instance 2`, `Gateway Instance 3`.
+- Каждый инстанс Gateway → `Backend Services`.
 
 **3. Отсутствие timeouts и circuit breakers**
 
@@ -1462,12 +1429,11 @@ Observability для API Gateway критична потому, что он -- �
 
 **Три столпа observability:**
 
-```mermaid
-graph TB
-    GW[API Gateway] --> Metrics[Метрики\nPrometheus + Grafana]
-    GW --> Traces[Трейсинг\nOpenTelemetry + Jaeger]
-    GW --> Logs[Логи\nELK / Loki]
-```
+От `API Gateway` идут три столпа observability:
+
+- **Метрики** -- `Prometheus + Grafana`.
+- **Трейсинг** -- `OpenTelemetry + Jaeger`.
+- **Логи** -- `ELK / Loki`.
 
 **Spring Cloud Gateway + Micrometer + OpenTelemetry:**
 

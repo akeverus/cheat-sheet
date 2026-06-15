@@ -136,14 +136,13 @@ Client → Edge (CF PoP) → Regional Edge Cache → Origin Shield (опц.) →
 
 **Origin shield** включается отдельно (CloudFront — `OriginShield`, Cloudflare — `Tiered Cache`). Особенно важно при больших каталогах (Netflix, e-commerce) — иначе при cache MISS на 200 PoP получаете 200 одновременных GET-ов на origin.
 
-```mermaid
-graph LR
-    C[Client] -->|anycast| E[Edge PoP<br/>5-50ms]
-    E -->|MISS| R[Regional Cache<br/>30-100ms]
-    R -->|MISS| S[Origin Shield<br/>1 per region]
-    S -->|MISS| O[(Origin<br/>S3 / ALB)]
-    E -.HIT.-> C
-```
+Путь запроса по каскаду (на каждом уровне — либо HIT и ответ наверх, либо MISS и спуск глубже):
+
+- `Client` --anycast--> `Edge PoP` (5-50 мс).
+- `Edge PoP` при MISS --> `Regional Cache` (30-100 мс).
+- `Regional Cache` при MISS --> `Origin Shield` (1 на регион).
+- `Origin Shield` при MISS --> `Origin` (S3 / ALB).
+- `Edge PoP` при HIT отдаёт ответ прямо `Client` — не спускаясь ни на один уровень глубже.
 
 **Итог:** PoP принимает запрос, regional агрегирует MISS-ы, shield защищает origin от thundering herd.
 
@@ -250,24 +249,21 @@ graph LR
 
 **Гибрид:** большинство prod-систем — Pull CDN + ручной прогрев (prewarm) для известных горячих объектов (новый релиз, рекламная кампания).
 
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant E as Edge PoP
-    participant O as Origin
-    Note over C,O: Pull CDN
-    C->>E: GET /img/x.jpg
-    E->>O: MISS — fetch
-    O-->>E: 200 + Cache-Control
-    E-->>C: 200
-    C->>E: GET /img/x.jpg (повторно)
-    E-->>C: HIT (без origin)
-    Note over C,O: Push CDN
-    O->>E: PUT /img/x.jpg (publish pipeline)
-    Note right of E: origin может быть offline
-    C->>E: GET /img/x.jpg
-    E-->>C: 200 (no origin)
-```
+Поток запросов (участники: `Client`, `Edge PoP`, `Origin`):
+
+**Pull CDN:**
+1. `Client → Edge PoP`: `GET /img/x.jpg`.
+2. `Edge PoP → Origin`: MISS — fetch (на edge копии нет, идёт в origin).
+3. `Origin → Edge PoP`: `200` + `Cache-Control`.
+4. `Edge PoP → Client`: `200`.
+5. `Client → Edge PoP`: `GET /img/x.jpg` (повторно).
+6. `Edge PoP → Client`: HIT (без обращения к origin).
+
+**Push CDN:**
+1. `Origin → Edge PoP`: `PUT /img/x.jpg` (publish pipeline — контент заливается заранее).
+2. Примечание: после публикации origin может быть offline.
+3. `Client → Edge PoP`: `GET /img/x.jpg`.
+4. `Edge PoP → Client`: `200` (no origin — отдаётся из кэша без origin).
 
 **Итог:** Pull — default для большинства случаев; Push — для известного небольшого hot-set с критичной cold-start latency.
 
@@ -800,13 +796,12 @@ CDN — естественный щит от DDoS, потому что он и �
 - AWS Shield Standard: бесплатно; Advanced — $3000/мес.
 - Akamai Prolexic: enterprise-прайсинг.
 
-```mermaid
-graph LR
-    A[DDoS Source<br/>100k bots] -->|attack 5 Tbps| B{CDN<br/>300 PoP<br/>250 Tbps}
-    B -->|filtered 99.9%| C[Origin<br/>50 Gbps]
-    B -.->|scrubbing| D[Scrubbing<br/>Center]
-    D -.->|clean traffic| C
-```
+Как трафик атаки проходит через CDN:
+
+- `DDoS Source` (100k ботов) --attack 5 Tbps--> `CDN` (300 PoP, 250 Tbps ёмкости).
+- `CDN` --filtered 99.9%--> `Origin` (до origin доходит порядка 50 Gbps).
+- Параллельно `CDN` --scrubbing--> `Scrubbing Center` (подозрительный трафик уходит на очистку).
+- `Scrubbing Center` --clean traffic--> `Origin` (очищенный трафик возвращается к origin).
 
 ## Q21. WAF на CDN: Cloudflare WAF, AWS WAF, Imperva
 

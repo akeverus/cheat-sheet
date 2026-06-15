@@ -112,15 +112,13 @@ updated: "2026-04-25"
 
 Идея в том, что у чтения и записи разные требования: запись должна защищать инварианты и быть консистентной, чтение -- быть быстрым и удобным для конкретного экрана. Одна модель не может быть оптимальной для обоих; CQRS перестаёт идти на компромисс и оптимизирует каждую сторону отдельно.
 
-```mermaid
-graph LR
-    Client[Клиент]
-    Client -->|Command| CmdHandler[Command Handler]
-    Client -->|Query| QueryHandler[Query Handler]
-    CmdHandler --> WriteDB[(Write Model)]
-    WriteDB -->|Events / Sync| ReadDB[(Read Model)]
-    QueryHandler --> ReadDB
-```
+Поток данных в CQRS:
+
+- **Клиент** отправляет `Command` -> `Command Handler` -> `Write Model`.
+- **Клиент** отправляет `Query` -> `Query Handler` -> `Read Model`.
+- `Write Model` через события (`Events / Sync`) обновляет `Read Model`.
+
+То есть запись и чтение идут двумя независимыми путями, а связывает их односторонний поток событий из write-стороны в read-сторону.
 
 **Что это даёт:**
 
@@ -268,21 +266,14 @@ public class OrderSummaryView {
 
 Аналогия -- банковская выписка. Банк не хранит просто «остаток 1000 ₽»: он хранит каждую транзакцию (пополнения, списания), а остаток вычисляет как их сумму. При обычном подходе с UPDATE вы храните только итоговую цифру и теряете историю «как мы к ней пришли»; Event Sourcing хранит именно историю, а итог получает из неё.
 
-```mermaid
-graph LR
-    subgraph "Традиционный подход"
-        S1[State v1] -->|UPDATE| S2[State v2]
-        S2 -->|UPDATE| S3[State v3]
-    end
+**Традиционный подход** -- хранится только текущий снимок, перезаписываемый на месте:
 
-    subgraph "Event Sourcing"
-        E1[OrderCreated] --> E2[ItemAdded]
-        E2 --> E3[ItemAdded]
-        E3 --> E4[OrderConfirmed]
-        E4 --> E5[OrderShipped]
-        E5 -.->|Replay| CurrentState[Текущее состояние]
-    end
-```
+- `State v1` --(`UPDATE`)--> `State v2` --(`UPDATE`)--> `State v3`.
+
+**Event Sourcing** -- хранится цепочка неизменяемых событий, а текущее состояние выводится из неё:
+
+- `OrderCreated` -> `ItemAdded` -> `ItemAdded` -> `OrderConfirmed` -> `OrderShipped`.
+- Проигрывание (`Replay`) всей цепочки по порядку, от `OrderCreated` до `OrderShipped`, даёт `Текущее состояние`.
 
 **Ключевые свойства:**
 - **Immutability** -- события никогда не изменяются и не удаляются
@@ -430,18 +421,13 @@ public class OrderAggregate {
 
 **Снапшот** (Snapshot) -- сохранённый слепок состояния агрегата на определённой версии. Это оптимизация производительности: восстановление чисто через replay линейно по числу событий, и для «долгоживущих» агрегатов с тысячами событий загрузка становится недопустимо медленной. Снапшот -- кэшированная контрольная точка, от которой replay начинается не с нуля.
 
-```mermaid
-graph LR
-    E1[Event 1] --> E2[Event 2]
-    E2 --> E3[Event ...]
-    E3 --> E100[Event 100]
-    E100 -->|Snapshot| S[📸 Snapshot v100]
-    S --> E101[Event 101]
-    E101 --> E102[Event 102]
-    E102 --> Current[Текущее состояние]
+Как снапшот разрывает цепочку replay:
 
-    style S fill:#f9f,stroke:#333
-```
+- `Event 1` -> `Event 2` -> `Event ...` -> `Event 100`.
+- После `Event 100` делается `Snapshot v100` -- слепок состояния на версии 100.
+- Дальше идут только новые события: `Event 101` -> `Event 102` -> `Текущее состояние`.
+
+Восстановление стартует не с `Event 1`, а с `Snapshot v100`, и применяет только хвост (`Event 101`, `Event 102`).
 
 - **Без снапшотов:** загрузить и применить все N событий (могут быть тысячи) -- O(N) на каждое чтение агрегата.
 - **Со снапшотами:** загрузить последний снапшот + применить только события после него. Если снапшот делается каждые 100 событий, replay всегда укладывается в ~100 шагов независимо от общей длины истории.
@@ -572,19 +558,13 @@ keyStore.delete(userId); // события остались, но нечитае
 
 Ключевая мысль: проекция не хранит уникальных данных, она полностью производна от событий. Один поток событий можно спроецировать в несколько разных view одновременно -- таблицу для UI, агрегаты для аналитики, индекс для поиска -- и каждое из них в любой момент можно выбросить и пересобрать.
 
-```mermaid
-graph LR
-    ES[(Event Store)]
-    ES -->|OrderCreatedEvent| P1[Order Summary Projection]
-    ES -->|ItemAddedEvent| P1
-    ES -->|OrderConfirmedEvent| P1
-    ES -->|OrderCreatedEvent| P2[Analytics Projection]
-    ES -->|OrderShippedEvent| P3[Shipping Dashboard Projection]
+Один `Event Store` питает несколько независимых проекций, каждая со своим хранилищем:
 
-    P1 --> DB1[(PostgreSQL — order_summary)]
-    P2 --> DB2[(ClickHouse — analytics)]
-    P3 --> DB3[(Redis — dashboard)]
-```
+- `Order Summary Projection` слушает `OrderCreatedEvent`, `ItemAddedEvent`, `OrderConfirmedEvent` -> пишет в `PostgreSQL` (таблица `order_summary`).
+- `Analytics Projection` слушает `OrderCreatedEvent` -> пишет в `ClickHouse` (`analytics`).
+- `Shipping Dashboard Projection` слушает `OrderShippedEvent` -> пишет в `Redis` (`dashboard`).
+
+Одни и те же события проецируются в разные представления, каждое оптимизировано под своего потребителя.
 
 **Ключевые свойства проекций:**
 - **Производные** -- полностью вычисляются из событий, можно пересоздать в любой момент
@@ -828,23 +808,16 @@ public class OrderAggregate {
 }
 ```
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant CmdGateway as Command Gateway
-    participant Aggregate as Order Aggregate
-    participant Store as Event Store
-    participant Projection as Projection
+Поток обработки команды `ConfirmOrderCommand` по шагам (участники: `Client`, `Command Gateway`, `Order Aggregate`, `Event Store`, `Projection`):
 
-    Client->>CmdGateway: ConfirmOrderCommand
-    CmdGateway->>Store: load events for aggregateId
-    Store-->>CmdGateway: [OrderCreated, ItemAdded, ...]
-    CmdGateway->>Aggregate: reconstruct + handle(cmd)
-    Aggregate->>Aggregate: validate business rules
-    Aggregate->>Store: append(OrderConfirmedEvent)
-    Store-->>Projection: publish event
-    Projection->>Projection: update read model
-```
+1. `Client` -> `Command Gateway`: отправляет `ConfirmOrderCommand`.
+2. `Command Gateway` -> `Event Store`: запрашивает загрузку событий по `aggregateId` (`load events for aggregateId`).
+3. `Event Store` -> `Command Gateway`: возвращает историю `[OrderCreated, ItemAdded, ...]`.
+4. `Command Gateway` -> `Order Aggregate`: восстанавливает агрегат из событий и вызывает `handle(cmd)` (`reconstruct + handle(cmd)`).
+5. `Order Aggregate` (внутри себя): проверяет бизнес-правила (`validate business rules`).
+6. `Order Aggregate` -> `Event Store`: добавляет новое событие `append(OrderConfirmedEvent)`.
+7. `Event Store` -> `Projection`: публикует событие (`publish event`).
+8. `Projection` (внутри себя): обновляет read-модель (`update read model`).
 
 ## Q19. Что такое Axon Framework и какие компоненты он предоставляет?
 
@@ -1058,19 +1031,13 @@ public class OrderViewProjection {
 
 Зачем это нужно: в монолите хватило бы одной ACID-транзакции с `ROLLBACK`. Но в микросервисах каждый сервис владеет своей БД, а единой транзакции поверх них нет -- двухфазный коммит (2PC) блокирует ресурсы и не масштабируется. Saga -- способ получить согласованность между сервисами без распределённой блокировки, ценой перехода к eventual consistency.
 
-```mermaid
-graph LR
-    subgraph "Saga: Оформление заказа"
-        T1[Создать заказ] -->|ok| T2[Зарезервировать товар]
-        T2 -->|ok| T3[Списать оплату]
-        T3 -->|ok| T4[Подтвердить заказ]
-        T3 -->|fail| C3[Вернуть резерв]
-        C3 --> C1[Отменить заказ]
-        T2 -->|fail| C1
-    end
-```
+**Saga «Оформление заказа»** -- цепочка шагов с компенсациями:
 
-На диаграмме видно ключевое свойство: при сбое на шаге «Списать оплату» Saga не откатывает БД, а запускает компенсации в обратном порядке -- возвращает резерв и отменяет заказ. Пример Saga-оркестратора на Axon:
+- Прямой путь (всё успешно): `Создать заказ` --(`ok`)--> `Зарезервировать товар` --(`ok`)--> `Списать оплату` --(`ok`)--> `Подтвердить заказ`.
+- Сбой на шаге «Списать оплату» (`fail`): `Вернуть резерв` -> `Отменить заказ` (компенсации в обратном порядке).
+- Сбой на шаге «Зарезервировать товар» (`fail`): сразу `Отменить заказ`.
+
+Ключевое свойство: при сбое на шаге «Списать оплату» Saga не откатывает БД, а запускает компенсации в обратном порядке -- возвращает резерв и отменяет заказ. Пример Saga-оркестратора на Axon:
 
 ```java
 // Axon Saga
@@ -1130,27 +1097,18 @@ public class OrderSaga {
 | **Отладка** | Проще — весь flow в одном месте | Сложнее — flow размазан |
 | **Single point of failure** | Оркестратор | Нет |
 
-```mermaid
-graph TB
-    subgraph "Оркестрация"
-        Orch[Saga Orchestrator]
-        Orch -->|"1. CreateOrder"| OS[Order Service]
-        Orch -->|"2. ReserveStock"| SS[Stock Service]
-        Orch -->|"3. ProcessPayment"| PS[Payment Service]
-        OS -.->|result| Orch
-        SS -.->|result| Orch
-        PS -.->|result| Orch
-    end
+**Оркестрация** -- центральный `Saga Orchestrator` рассылает команды и собирает результаты:
 
-    subgraph "Хореография"
-        OS2[Order Service] -->|OrderCreated| Broker[Message Broker]
-        Broker -->|OrderCreated| SS2[Stock Service]
-        SS2 -->|StockReserved| Broker
-        Broker -->|StockReserved| PS2[Payment Service]
-        PS2 -->|PaymentProcessed| Broker
-        Broker -->|PaymentProcessed| OS2
-    end
-```
+- `Saga Orchestrator` --(`1. CreateOrder`)--> `Order Service`.
+- `Saga Orchestrator` --(`2. ReserveStock`)--> `Stock Service`.
+- `Saga Orchestrator` --(`3. ProcessPayment`)--> `Payment Service`.
+- Каждый сервис (`Order Service`, `Stock Service`, `Payment Service`) возвращает `result` обратно оркестратору.
+
+**Хореография** -- координатора нет, сервисы обмениваются событиями через `Message Broker`:
+
+- `Order Service` --(`OrderCreated`)--> `Message Broker` --(`OrderCreated`)--> `Stock Service`.
+- `Stock Service` --(`StockReserved`)--> `Message Broker` --(`StockReserved`)--> `Payment Service`.
+- `Payment Service` --(`PaymentProcessed`)--> `Message Broker` --(`PaymentProcessed`)--> `Order Service`.
 
 **Когда выбрать оркестрацию:**
 - Сложные flow с множеством шагов (5+)
@@ -1257,13 +1215,13 @@ public record OrderCreatedEvent(
 
 **Upcaster** -- компонент, который на лету преобразует событие из старой версии в новую в момент чтения из Event Store. Это «адаптер во времени»: события в хранилище остаются как были, но на выходе все они приводятся к актуальной схеме. Благодаря этому остальной код -- агрегаты, проекции -- знает только про последнюю версию события и не засоряется ветвлениями «если v1, то...».
 
-```mermaid
-graph LR
-    ES[(Event Store)]
-    ES -->|v1 JSON| U1[Upcaster v1→v2]
-    U1 -->|v2 JSON| U2[Upcaster v2→v3]
-    U2 -->|v3 Object| App[Приложение]
-```
+Цепочка upcasters поднимает событие через все версии при чтении:
+
+- `Event Store` отдаёт `v1 JSON` -> `Upcaster v1->v2`.
+- `Upcaster v1->v2` отдаёт `v2 JSON` -> `Upcaster v2->v3`.
+- `Upcaster v2->v3` отдаёт `v3 Object` -> `Приложение`.
+
+В приложение событие приходит уже в актуальной версии (`v3`), хотя в хранилище лежит в формате `v1`.
 
 ```java
 // Axon Framework — Upcaster
@@ -1327,22 +1285,12 @@ public EventUpcasterChain eventUpcasters() {
 | **Масштабирование** | -- | Множество read-реплик разгружают Event Store |
 | **Rebuild** | Пересчёт любой проекции из истории событий | -- |
 
-```mermaid
-graph TB
-    Cmd[Command] --> Agg[Aggregate]
-    Agg -->|apply| ES[(Event Store)]
-    ES -->|publish| P1[Projection 1]
-    ES -->|publish| P2[Projection 2]
-    ES -->|publish| P3[Projection 3]
-    P1 --> RM1[(Read Model 1<br/>PostgreSQL)]
-    P2 --> RM2[(Read Model 2<br/>Elasticsearch)]
-    P3 --> RM3[(Read Model 3<br/>Redis Cache)]
+Совместная работа CQRS и Event Sourcing -- write-путь через события, read-путь через проекции:
 
-    Query[Query] --> QH[Query Handler]
-    QH --> RM1
-    QH --> RM2
-    QH --> RM3
-```
+- **Write-сторона:** `Command` -> `Aggregate` --(`apply`)--> `Event Store`.
+- `Event Store` публикует события (`publish`) в три проекции: `Projection 1`, `Projection 2`, `Projection 3`.
+- `Projection 1` -> `Read Model 1` (`PostgreSQL`); `Projection 2` -> `Read Model 2` (`Elasticsearch`); `Projection 3` -> `Read Model 3` (`Redis Cache`).
+- **Read-сторона:** `Query` -> `Query Handler`, который читает из всех трёх read-моделей (`Read Model 1`, `Read Model 2`, `Read Model 3`).
 
 **Можно использовать отдельно:**
 - **CQRS без ES** -- write model в обычной БД, события публикуются через Outbox/CDC для обновления read model
@@ -1536,16 +1484,13 @@ public void on(ItemAddedEvent event) {
 
 В реальных системах один агрегат почти всегда нужен сразу в нескольких read-моделях: список заказов для UI, агрегаты для аналитики, триггеры для нотификаций. Идея в том, что один и тот же поток событий каждая проекция читает независимо и проецирует под свой потребитель. Главный вопрос на практике -- как изолировать эти проекции друг от друга, чтобы сбой или медленный rebuild одной не тормозил остальные.
 
-```mermaid
-graph LR
-    ES[(Event Store\norder_events)] --> P1[OrderListProjection\nUI-таблица заказов]
-    ES --> P2[OrderAnalyticsProjection\nAggregated stats]
-    ES --> P3[OrderNotificationProjection\nEmail/SMS triggers]
+Один `Event Store` (поток `order_events`) питает три независимые проекции:
 
-    P1 --> DB1[(order_list_view\nPostgreSQL)]
-    P2 --> DB2[(order_analytics\nClickHouse)]
-    P3 --> MQ[Notification Queue\nKafka]
-```
+- `OrderListProjection` (UI-таблица заказов) -> `order_list_view` в `PostgreSQL`.
+- `OrderAnalyticsProjection` (агрегированная статистика, `Aggregated stats`) -> `order_analytics` в `ClickHouse`.
+- `OrderNotificationProjection` (триггеры Email/SMS) -> `Notification Queue` в `Kafka`.
+
+Каждая проекция читает тот же поток событий независимо и пишет в своё хранилище.
 
 **Реализация с Axon Framework (несколько `@EventHandler` в разных классах):**
 
@@ -1649,14 +1594,11 @@ public class ProjectionAdminController {
 
 **3. Параллельный rebuild без даунтайма:**
 
-```mermaid
-graph LR
-    ES[(Event Store)] --> OldP[Old Processor\nold_view таблица]
-    ES --> NewP[New Processor\nnew_view таблица]
-    APP[Application] -->|пока rebuild| OldP
-    NewP -->|"когда caught up"| Switch{Switch}
-    Switch -->|теперь| APP
-```
+Параллельный rebuild без даунтайма:
+
+- `Event Store` питает одновременно `Old Processor` (таблица `old_view`) и `New Processor` (таблица `new_view`).
+- `Application` пока rebuild не завершён читает из `Old Processor`.
+- Когда `New Processor` догнал поток (`когда caught up`) -- срабатывает переключение (`Switch`), и `Application` теперь читает из новой проекции.
 
 **Важные соображения:**
 - Rebuild может занять часы для миллионов событий → нужна оценка времени
@@ -1673,14 +1615,12 @@ graph LR
 
 Персональные данные шифруются отдельным ключом для каждого пользователя. При удалении — уничтожается ключ шифрования, данные становятся нечитаемыми.
 
-```mermaid
-graph LR
-    Event["UserRegisteredEvent\n{email: encrypted(key_123),...}"] --> ES[(Event Store)]
-    Keys["key_123 → AES key"] --> KMS[Key Management Store\nHashiCorp Vault]
-    GDPR[GDPR Delete Request] --> KMS
-    KMS -->|Delete key_123| KMS
-    Note["Данные в Event Store:\nостаются, но нечитаемы"]
-```
+Схема Crypto Shredding:
+
+- Событие `UserRegisteredEvent` с зашифрованными полями (`{email: encrypted(key_123), ...}`) сохраняется в `Event Store`.
+- Ключ `key_123` (соответствующий `AES key`) хранится в `Key Management Store` (`HashiCorp Vault`), отдельно от событий.
+- `GDPR Delete Request` приходит в `Key Management Store` и удаляет `key_123` (`Delete key_123`).
+- Итог: данные в `Event Store` остаются, но становятся нечитаемыми -- расшифровать их без ключа нельзя.
 
 ```java
 @Service
@@ -1912,12 +1852,11 @@ LIMIT 1000;
 
 **Алгоритм восстановления со снапшотом:**
 
-```mermaid
-graph LR
-    S[(Snapshot Store)] -->|load latest snapshot| AG[Aggregate]
-    ES[(Event Store)] -->|load events after snapshot_version| AG
-    AG -->|apply events| AG2[Restored Aggregate]
-```
+Восстановление агрегата со снапшотом:
+
+- `Snapshot Store` -> `Aggregate`: загружается последний снапшот (`load latest snapshot`).
+- `Event Store` -> `Aggregate`: загружаются только события после версии снапшота (`load events after snapshot_version`).
+- `Aggregate` применяет эти события (`apply events`) и получается `Restored Aggregate` -- восстановленный агрегат.
 
 **Структура таблицы снапшотов:**
 
@@ -2336,14 +2275,12 @@ VALUES ('UserRegisteredEvent', 2, '{"firstName":"Иван","lastName":"Иван�
 
 **Стратегия 1 — Blue/Green Rebuild (рекомендуется для production):**
 
-```mermaid
-graph LR
-    ES[(Event Store)] --> OP[Old Projection\norders_view]
-    ES --> NP[New Projection\norders_view_v2]
-    APP[Application] -->|трафик| OP
-    NP -->|"когда caught up"| Switch{Switch}
-    Switch -->|после переключения| APP2[Application v2]
-```
+Blue/Green Rebuild:
+
+- `Event Store` питает обе проекции: `Old Projection` (`orders_view`) и `New Projection` (`orders_view_v2`).
+- `Application` весь трафик читает из `Old Projection`.
+- Когда `New Projection` догнала поток (`когда caught up`) -- срабатывает переключение (`Switch`).
+- После переключения трафик идёт в новую версию приложения (`Application v2`), читающую из `orders_view_v2`.
 
 ```java
 @Component

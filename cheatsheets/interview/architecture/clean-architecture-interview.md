@@ -111,26 +111,12 @@ updated: "2026-04-25"
 
 Лекарство -- **правило зависимостей** (Dependency Rule): зависимости в коде направлены только **внутрь**, к бизнес-логике. Внешний слой знает о внутреннем, но не наоборот. За счёт этого ядро ничего не знает о том, кто его вызывает и где хранятся данные, поэтому остаётся стабильным при смене любых внешних деталей.
 
-```mermaid
-graph TB
-    subgraph "Frameworks & Drivers (внешний)"
-        FW[Web Framework<br/>DB Driver<br/>UI]
-    end
-    subgraph "Interface Adapters"
-        IA[Controllers<br/>Presenters<br/>Gateways]
-    end
-    subgraph "Use Cases"
-        UC[Application<br/>Business Rules]
-    end
-    subgraph "Entities (ядро)"
-        E[Enterprise<br/>Business Rules]
-    end
-    FW --> IA --> UC --> E
-    style E fill:#2d5016,color:#fff
-    style UC fill:#4a7c2e,color:#fff
-    style IA fill:#6ba34a,color:#fff
-    style FW fill:#8cc665,color:#000
-```
+Зависимости направлены строго внутрь, от внешнего слоя к ядру (`Frameworks & Drivers` → `Interface Adapters` → `Use Cases` → `Entities`):
+
+- **Frameworks & Drivers** (внешний слой) -- `Web Framework`, `DB Driver`, `UI`.
+- **Interface Adapters** -- `Controllers`, `Presenters`, `Gateways`.
+- **Use Cases** -- `Application Business Rules`.
+- **Entities** (ядро) -- `Enterprise Business Rules`.
 
 > На собеседовании важно подчеркнуть: Clean Architecture -- это не конкретная структура папок, а **набор принципов** организации зависимостей. Конкретная реализация может варьироваться.
 
@@ -180,31 +166,17 @@ Clean Architecture определяет **четыре концентричес�
 | **Interface Adapters** | Контроллеры, презентеры, маперы, шлюзы | От Use Cases и Entities |
 | **Frameworks & Drivers** | Web-фреймворк, БД, UI, внешние API | От всех внутренних слоёв |
 
-```mermaid
-graph LR
-    subgraph "Entities"
-        E1[Order]
-        E2[Customer]
-        E3[Product]
-    end
-    subgraph "Use Cases"
-        U1[CreateOrderUseCase]
-        U2[CancelOrderUseCase]
-    end
-    subgraph "Interface Adapters"
-        C1[OrderController]
-        P1[OrderPresenter]
-        G1[OrderGateway]
-    end
-    subgraph "Frameworks"
-        F1[Spring MVC]
-        F2[PostgreSQL]
-        F3[RabbitMQ]
-    end
-    F1 --> C1 --> U1 --> E1
-    F2 --> G1 --> U1
-    U2 --> E1
-```
+Пример наполнения слоёв и потока зависимостей между ними:
+
+- **Entities** -- `Order`, `Customer`, `Product`.
+- **Use Cases** -- `CreateOrderUseCase`, `CancelOrderUseCase`.
+- **Interface Adapters** -- `OrderController`, `OrderPresenter`, `OrderGateway`.
+- **Frameworks** -- `Spring MVC`, `PostgreSQL`, `RabbitMQ`.
+
+Связи (всегда внутрь):
+- `Spring MVC` → `OrderController` → `CreateOrderUseCase` → `Order`;
+- `PostgreSQL` → `OrderGateway` → `CreateOrderUseCase`;
+- `CancelOrderUseCase` → `Order`.
 
 Ответственность каждого слоя:
 
@@ -431,38 +403,17 @@ public class OrderConfiguration {
 
 **Hexagonal Architecture (Ports & Adapters) -- паттерн, где приложение общается с внешним миром только через порты** (абстрактные интерфейсы), а конкретные технологии подключаются адаптерами (реализациями этих интерфейсов). Предложен Алистером Кокбёрном в 2005 году. Метафора шестиугольника подчёркивает, что граней (точек входа и выхода) много и все они равноправны: HTTP, CLI, тест -- лишь разные адаптеры к одному ядру.
 
-```mermaid
-graph LR
-    subgraph "Внешний мир"
-        HTTP[HTTP Client]
-        CLI[CLI]
-        MQ[Message Queue]
-        DB[(Database)]
-        EXT[External API]
-    end
-    subgraph "Primary Adapters"
-        WA[Web Adapter]
-        CA[CLI Adapter]
-        MA[MQ Listener]
-    end
-    subgraph "Application Core"
-        IP[Input Ports]
-        APP[Application<br/>Services]
-        DOM[Domain<br/>Model]
-        OP[Output Ports]
-    end
-    subgraph "Secondary Adapters"
-        PA[Persistence<br/>Adapter]
-        EA[External API<br/>Adapter]
-    end
-    HTTP --> WA --> IP
-    CLI --> CA --> IP
-    MQ --> MA --> IP
-    IP --> APP --> DOM
-    APP --> OP
-    OP --> PA --> DB
-    OP --> EA --> EXT
-```
+Структура и поток в гексагональной архитектуре:
+
+- **Внешний мир** -- `HTTP Client`, `CLI`, `Message Queue`, `Database`, `External API`.
+- **Primary Adapters** (входные) -- `Web Adapter`, `CLI Adapter`, `MQ Listener`.
+- **Application Core** (ядро) -- `Input Ports`, `Application Services`, `Domain Model`, `Output Ports`.
+- **Secondary Adapters** (выходные) -- `Persistence Adapter`, `External API Adapter`.
+
+Поток вызовов:
+- вход: `HTTP Client` → `Web Adapter` → `Input Ports`; `CLI` → `CLI Adapter` → `Input Ports`; `Message Queue` → `MQ Listener` → `Input Ports`;
+- ядро: `Input Ports` → `Application Services` → `Domain Model`; `Application Services` → `Output Ports`;
+- выход: `Output Ports` → `Persistence Adapter` → `Database`; `Output Ports` → `External API Adapter` → `External API`.
 
 Сравнение с Clean Architecture:
 
@@ -601,16 +552,12 @@ public class AccountPersistenceAdapter
 | **Примеры** | `CreateOrderUseCase`, `SendMoneyUseCase` | `OrderRepository`, `PaymentGateway` |
 | **Аналогия** | "Что я умею делать" | "Что мне нужно от внешнего мира" |
 
-```mermaid
-graph LR
-    PA[Primary Adapter<br/>Controller] -->|вызывает| IP[Input Port<br/>UseCase interface]
-    IS[Interactor<br/>реализует Input Port] -->|вызывает| OP[Output Port<br/>Repository interface]
-    SA[Secondary Adapter<br/>JPA Repository] -->|реализует| OP
-    IP -.->|implements| IS
-    style IP fill:#4a7c2e,color:#fff
-    style OP fill:#4a7c2e,color:#fff
-    style IS fill:#2d5016,color:#fff
-```
+Связи между портами и адаптерами:
+
+- `Primary Adapter` (Controller) **вызывает** `Input Port` (UseCase interface);
+- `Interactor` (реализует Input Port) **вызывает** `Output Port` (Repository interface);
+- `Secondary Adapter` (JPA Repository) **реализует** `Output Port`;
+- `Interactor` **реализует** `Input Port` (`Input Port` implements `Interactor`).
 
 Важный нюанс, который часто путают на собеседовании: Input Port Use Case **реализует**, а Output Port Use Case **использует**. Но объявлены оба интерфейса в ядре приложения -- именно поэтому ядро не зависит ни от контроллера, ни от репозитория.
 
@@ -628,22 +575,6 @@ graph LR
 
 В этом и фокус: направление вызова в рантайме (домен → БД) и направление зависимости в коде (БД → домен) противоположны. Порт-интерфейс -- та точка, где они расходятся.
 
-```mermaid
-graph TB
-    subgraph "Без DIP (плохо)"
-        UC1[Use Case] -->|зависит от| DB1[JpaRepository]
-    end
-    subgraph "С DIP (хорошо)"
-        UC2[Use Case] -->|зависит от| PORT[Port: OrderRepository]
-        ADAPTER[JpaOrderRepository] -->|реализует| PORT
-    end
-    style UC1 fill:#8b0000,color:#fff
-    style DB1 fill:#8b0000,color:#fff
-    style UC2 fill:#2d5016,color:#fff
-    style PORT fill:#4a7c2e,color:#fff
-    style ADAPTER fill:#6ba34a,color:#fff
-```
-
 Без DIP: `Use Case → JPA Repository` (домен зависит от инфраструктуры).
 С DIP: `Use Case → Port ← Adapter` (инфраструктура зависит от домена).
 
@@ -660,32 +591,17 @@ graph TB
 3. **Application Services** -- сценарии использования, оркестрация
 4. **Infrastructure** -- внешний слой (БД, UI, API)
 
-```mermaid
-graph TB
-    subgraph "Infrastructure"
-        I1[UI] 
-        I2[Database]
-        I3[External Services]
-    end
-    subgraph "Application Services"
-        AS[Use Cases<br/>DTOs]
-    end
-    subgraph "Domain Services"
-        DS[Domain Services<br/>Repositories interfaces]
-    end
-    subgraph "Domain Model"
-        DM[Entities<br/>Value Objects]
-    end
-    I1 --> AS --> DS --> DM
-    I2 --> AS
-    I3 --> AS
-    style DM fill:#2d5016,color:#fff
-    style DS fill:#4a7c2e,color:#fff
-    style AS fill:#6ba34a,color:#fff
-    style I1 fill:#8cc665,color:#000
-    style I2 fill:#8cc665,color:#000
-    style I3 fill:#8cc665,color:#000
-```
+Наполнение слоёв (от периферии к ядру) и поток зависимостей внутрь:
+
+- **Infrastructure** -- `UI`, `Database`, `External Services`.
+- **Application Services** -- `Use Cases`, `DTOs`.
+- **Domain Services** -- `Domain Services`, `Repositories interfaces`.
+- **Domain Model** -- `Entities`, `Value Objects`.
+
+Связи:
+- `UI` → `Application Services` → `Domain Services` → `Domain Model`;
+- `Database` → `Application Services`;
+- `External Services` → `Application Services`.
 
 Ключевое отличие от Hexagonal: Onion явно разводит **Domain Model** (сущности и value objects) и **Domain Services** (логику над несколькими сущностями), тогда как Hexagonal сваливает их в общий "Application Core". Практический смысл этого деления -- не дать доменным сервисам разрастись и проглотить логику, которая должна жить в самих сущностях.
 
@@ -712,15 +628,10 @@ graph TB
 
 **Главное отличие -- направление зависимостей.** В традиционной слоистой архитектуре (Layered / N-tier) зависимости идут **сверху вниз**: `Presentation → Business Logic → Data Access`, и бизнес-слой в итоге зависит от слоя данных. В Clean Architecture зависимости идут **снаружи внутрь**, к домену, и домен не зависит ни от чего.
 
-```mermaid
-graph TB
-    subgraph "Layered (традиционная)"
-        L1[Presentation Layer] --> L2[Business Logic Layer] --> L3[Data Access Layer] --> L4[(Database)]
-    end
-    subgraph "Clean Architecture"
-        C4[Frameworks] --> C3[Adapters] --> C2[Use Cases] --> C1[Entities]
-    end
-```
+Направление зависимостей в обоих подходах:
+
+- **Layered (традиционная):** `Presentation Layer` → `Business Logic Layer` → `Data Access Layer` → `Database` (сверху вниз, бизнес-слой в итоге зависит от данных).
+- **Clean Architecture:** `Frameworks` → `Adapters` → `Use Cases` → `Entities` (снаружи внутрь, к домену).
 
 Отсюда расходятся все остальные различия:
 
@@ -1062,14 +973,13 @@ public class UseCaseConfig {
 
 Главное правило: **у каждого слоя своя модель данных, и преобразование между ними происходит ровно на границе слоёв.** Один объект не путешествует через всю систему -- он перекладывается из формата в формат на каждом переходе.
 
-```mermaid
-graph LR
-    HTTP["HTTP DTO<br/>(JSON)"] -->|Controller Mapper| REQ[Use Case<br/>Request]
-    REQ -->|Interactor| DOM[Domain<br/>Model]
-    DOM -->|Persistence Mapper| JPA[JPA Entity<br/>(DB row)]
-    DOM -->|Interactor| RESP[Use Case<br/>Response]
-    RESP -->|Controller Mapper| JSON["HTTP DTO<br/>(JSON)"]
-```
+Цепочка преобразований данных (на каждой стрелке указан, кто выполняет маппинг):
+
+- `HTTP DTO` (JSON) --(Controller Mapper)→ `Use Case Request`;
+- `Use Case Request` --(Interactor)→ `Domain Model`;
+- `Domain Model` --(Persistence Mapper)→ `JPA Entity` (DB row);
+- `Domain Model` --(Interactor)→ `Use Case Response`;
+- `Use Case Response` --(Controller Mapper)→ `HTTP DTO` (JSON).
 
 Три типа моделей:
 
@@ -1493,20 +1403,11 @@ public class Account {
 
 **В микросервисах Clean Architecture работает внутри каждого сервиса, а не на уровне всей системы.** Один микросервис -- одно мини-приложение со своими слоями. На уровне системы границы задают уже не слои, а Bounded Context-ы и сетевые контракты.
 
-```mermaid
-graph TB
-    subgraph "Order Service"
-        OC[REST Adapter] --> OUC[Use Cases] --> OD[Domain]
-        OUC --> ODB[DB Adapter]
-        OUC --> OKA[Kafka Adapter]
-    end
-    subgraph "Payment Service"
-        PC[REST Adapter] --> PUC[Use Cases] --> PD[Domain]
-        PUC --> PDB[DB Adapter]
-        PUC --> PEA[External API Adapter]
-    end
-    OKA -->|event| PC
-```
+Каждый сервис имеет собственные слои, а связаны они событиями:
+
+- **Order Service:** `REST Adapter` → `Use Cases` → `Domain`; `Use Cases` → `DB Adapter`; `Use Cases` → `Kafka Adapter`.
+- **Payment Service:** `REST Adapter` → `Use Cases` → `Domain`; `Use Cases` → `DB Adapter`; `Use Cases` → `External API Adapter`.
+- Межсервисная связь: `Kafka Adapter` (Order Service) --(event)→ `REST Adapter` (Payment Service).
 
 Рекомендации:
 
@@ -1673,17 +1574,14 @@ public class PlaceOrderService implements PlaceOrderUseCase {
 }
 ```
 
-```mermaid
-graph LR
-    Controller -->|PlaceOrderCommand| PlaceOrderUseCase
-    PlaceOrderService -->|implements| PlaceOrderUseCase
-    PlaceOrderService -->|uses| OrderRepository
-    PlaceOrderService -->|uses| InventoryPort
-    PlaceOrderService -->|uses| OrderNotificationPort
-    JpaOrderRepository -->|implements| OrderRepository
-    KafkaNotifier -->|implements| OrderNotificationPort
-    InventoryServiceAdapter -->|implements| InventoryPort
-```
+Связи Interactor-а с портами и адаптерами:
+
+- `Controller` --(`PlaceOrderCommand`)→ `PlaceOrderUseCase`;
+- `PlaceOrderService` **implements** `PlaceOrderUseCase`;
+- `PlaceOrderService` **uses** `OrderRepository`, `InventoryPort`, `OrderNotificationPort`;
+- `JpaOrderRepository` **implements** `OrderRepository`;
+- `KafkaNotifier` **implements** `OrderNotificationPort`;
+- `InventoryServiceAdapter` **implements** `InventoryPort`.
 
 Обратите внимание на порядок шагов в `execute`: сначала бизнес-валидация (проверка наличия), потом создание агрегата, и только затем побочные эффекты (резерв, сохранение, уведомление). Это не случайность -- дешёвую проверку делаем раньше дорогих операций, чтобы не резервировать инвентарь под заведомо неудачный заказ.
 
@@ -1841,16 +1739,10 @@ com.example.order
 
 **Ключевое отличие:** Clean Architecture дополнительно разделяет Enterprise Business Rules (Entities) и Application Business Rules (Use Cases), тогда как Hexagonal видит их как единое ядро Application.
 
-```mermaid
-graph LR
-    subgraph "Clean Architecture"
-        E[Entities] --> UC[Use Cases] --> IA[Interface Adapters] --> FW[Frameworks]
-    end
-    subgraph "Hexagonal"
-        AP[Application Core] -->|Output Port| DA[Driven Adapter]
-        PA[Driving Adapter] -->|Input Port| AP
-    end
-```
+Структура каждого подхода:
+
+- **Clean Architecture:** `Entities` → `Use Cases` → `Interface Adapters` → `Frameworks`.
+- **Hexagonal:** `Application Core` --(Output Port)→ `Driven Adapter`; `Driving Adapter` --(Input Port)→ `Application Core`.
 
 **На практике** разница почти стирается: большинство команд называют это «Clean/Hexagonal» взаимозаменяемо и берут лучшее из обоих -- слово «порт» из Hexagonal и явное разделение Entities/Use Cases из Clean. Спорить, «что правильнее», на собеседовании смысла нет; ценнее показать, что вы понимаете общий принцип за обоими названиями.
 

@@ -194,28 +194,15 @@ class LoanApplication {
 
 **Bounded Context** (ограниченный контекст) -- центральный паттерн стратегического `DDD`. Это явная граница, внутри которой одна доменная модель и один `Ubiquitous Language` остаются согласованными и однозначными. За границей те же слова могут значить другое.
 
-Зачем он нужен: попытка построить единую модель на всю компанию проваливается, потому что одно понятие в разных отделах означает разное. На диаграмме `Customer` -- это разные модели: для заказов важны id и имя, для доставки -- адрес, для биллинга -- платёжные данные. `Bounded Context` разрешает этот конфликт: вместо одного раздутого `Customer` -- три узких, каждый под свою задачу.
+Зачем он нужен: попытка построить единую модель на всю компанию проваливается, потому что одно понятие в разных отделах означает разное. Здесь `Customer` -- это разные модели: для заказов важны id и имя, для доставки -- адрес, для биллинга -- платёжные данные. `Bounded Context` разрешает этот конфликт: вместо одного раздутого `Customer` -- три узких, каждый под свою задачу.
 
-```mermaid
-graph TB
-    subgraph "Bounded Context: Заказы"
-        O[Order]
-        OI[OrderItem]
-        C1[Customer — id + имя]
-    end
-    subgraph "Bounded Context: Доставка"
-        S[Shipment]
-        SI[ShipmentItem]
-        C2[Customer — id + адрес]
-    end
-    subgraph "Bounded Context: Биллинг"
-        I[Invoice]
-        P[Payment]
-        C3[Customer — id + платёжные данные]
-    end
-    O -.->|Integration Event| S
-    O -.->|Integration Event| I
-```
+Три `Bounded Context` с собственной моделью каждого, где `Customer` выглядит по-разному:
+
+- **Bounded Context: Заказы** -- `Order`, `OrderItem`, `Customer` (id + имя).
+- **Bounded Context: Доставка** -- `Shipment`, `ShipmentItem`, `Customer` (id + адрес).
+- **Bounded Context: Биллинг** -- `Invoice`, `Payment`, `Customer` (id + платёжные данные).
+
+Связи между контекстами идут через `Integration Event`: `Order` (из «Заказов») публикует событие в «Доставку» (`Order` → `Shipment`) и в «Биллинг» (`Order` → `Invoice`).
 
 Ключевые свойства:
 
@@ -239,19 +226,12 @@ graph TB
 
 Связь на карте описывается в терминах upstream/downstream: **upstream** -- поставщик модели (от него зависят), **downstream** -- потребитель (зависит от upstream). Паттерн интеграции определяет, как именно downstream справляется с этой зависимостью.
 
-```mermaid
-graph LR
-    subgraph "Upstream"
-        A[Identity Context<br/>OHS + PL]
-    end
-    subgraph "Downstream"
-        B[Orders Context<br/>CF]
-        C[Shipping Context<br/>ACL]
-    end
-    A -->|Published Language| B
-    A -->|Published Language| C
-    D[Legacy System] -->|ACL| C
-```
+Пример карты контекстов:
+
+- **Upstream**: `Identity Context` (использует `OHS` + `PL`).
+- **Downstream**: `Orders Context` (паттерн `Conformist`, `CF`) и `Shipping Context` (паттерн `Anti-Corruption Layer`, `ACL`).
+- `Identity Context` поставляет данные через `Published Language` обоим downstream: `Identity` → `Orders` и `Identity` → `Shipping`.
+- Отдельно `Legacy System` интегрируется с `Shipping Context` через `ACL`: `Legacy` → `Shipping`.
 
 Основные паттерны `Context Mapping`:
 
@@ -274,13 +254,12 @@ graph LR
 
 Зачем он нужен: без `ACL` чужие концепции и кривая модель внешней системы протекают внутрь и «загрязняют» ваш домен -- ваш код начинает говорить на чужом языке. `ACL` локализует эту чужеродность в одном слое: всё уродство интеграции остаётся снаружи, а ядро остаётся чистым. Бонус -- если внешний контракт изменится, чинить нужно только `ACL`, а не весь домен.
 
-```mermaid
-graph LR
-    A[Ваш Bounded Context] --> B[ACL]
-    B --> C[Legacy / Внешняя система]
-    B -->|Adapter| D[Translator]
-    D -->|Facade| C
-```
+Схема расположения слоя:
+
+- ваш `Bounded Context` обращается к `ACL` (`Ваш Bounded Context` → `ACL`);
+- `ACL` ходит в `Legacy / Внешнюю систему` (`ACL` → `Legacy`);
+- внутри `ACL` работает `Adapter`, который вызывает `Translator` (`ACL` → `Translator`);
+- `Translator` обращается к внешней системе через `Facade` (`Translator` → `Legacy`).
 
 Реализация на Java:
 
@@ -386,25 +365,12 @@ public record Money(BigDecimal amount, Currency currency) {
 | **Участники** | Архитекторы, доменные эксперты, тех-лиды | Разработчики |
 | **Ошибки дорогие?** | Да -- неправильные границы ведут к переписыванию | Менее болезненные -- рефакторинг в рамках контекста |
 
-```mermaid
-graph TB
-    subgraph "Стратегический DDD"
-        SD1[Bounded Context]
-        SD2[Context Map]
-        SD3[Subdomain]
-        SD4[Ubiquitous Language]
-    end
-    subgraph "Тактический DDD"
-        TD1[Entity]
-        TD2[Value Object]
-        TD3[Aggregate]
-        TD4[Repository]
-        TD5[Domain Event]
-        TD6[Domain Service]
-        TD7[Factory]
-    end
-    SD1 --> TD3
-```
+Состав каждого уровня:
+
+- **Стратегический DDD**: `Bounded Context`, `Context Map`, `Subdomain`, `Ubiquitous Language`.
+- **Тактический DDD**: `Entity`, `Value Object`, `Aggregate`, `Repository`, `Domain Event`, `Domain Service`, `Factory`.
+
+Уровни связаны: `Bounded Context` (стратегический) задаёт рамки, внутри которых живут `Aggregate` (тактический) -- то есть `Bounded Context` → `Aggregate`.
 
 > **Важно**: частая ошибка -- начинать с тактических паттернов (классов и интерфейсов), не определив стратегические границы. Правильный порядок: сначала `Bounded Context`, потом модели внутри.
 
@@ -598,22 +564,15 @@ void createUser(Email email, PhoneNumber phone, Age age) { ... }
 
 Зачем это нужно: в богатой модели объекты связаны и должны быть согласованы (например, сумма заказа = сумме его строк). Если разрешить менять внутренние объекты напрямую, никто не гарантирует эту согласованность. Агрегат решает проблему так: корень становится единственным входом и стражем инвариантов, а внутренности скрыты. Заодно агрегат задаёт **границу транзакции** -- то, что меняется и сохраняется атомарно.
 
-```mermaid
-graph TB
-    subgraph "Aggregate: Order"
-        AR[Order<br/>Aggregate Root]
-        OL1[OrderLine 1<br/>Entity]
-        OL2[OrderLine 2<br/>Entity]
-        A1[Address<br/>Value Object]
-        M1[Money<br/>Value Object]
-    end
-    AR --> OL1
-    AR --> OL2
-    AR --> A1
-    AR --> M1
-    EXT[Внешний код] -->|только через root| AR
-    EXT -.->|запрещено напрямую| OL1
-```
+Состав агрегата `Order`:
+
+- `Order` -- это `Aggregate Root` (корень).
+- Корень содержит внутренние объекты: `OrderLine 1` (`Entity`), `OrderLine 2` (`Entity`), `Address` (`Value Object`), `Money` (`Value Object`) -- то есть `Order` → `OrderLine`, `Order` → `Address`, `Order` → `Money`.
+
+Доступ к агрегату:
+
+- внешний код обращается к содержимому **только через root**: `Внешний код` → `Order`;
+- прямое обращение внешнего кода к внутренним объектам (например, к `OrderLine`) **запрещено**.
 
 Правила агрегата (и зачем каждое):
 
@@ -903,16 +862,12 @@ public void on(OrderPlacedEvent event) {
 | **Надёжность** | Гарантируется транзакцией | Требует `Outbox Pattern` для гарантий |
 | **Связность** | Знает о доменной модели | Не зависит от внутренней модели |
 
-```mermaid
-graph LR
-    subgraph "Bounded Context: Orders"
-        A[Order Aggregate] -->|Domain Event| B[OrderPlacedHandler]
-        B -->|Integration Event| C[Outbox Table]
-    end
-    C -->|Outbox Relay| D[Kafka]
-    D -->|Integration Event| E[Shipping Context]
-    D -->|Integration Event| F[Billing Context]
-```
+Поток события от агрегата до внешних контекстов:
+
+- внутри `Bounded Context: Orders` агрегат `Order Aggregate` публикует `Domain Event`, который ловит `OrderPlacedHandler` (`Order Aggregate` → `OrderPlacedHandler`);
+- обработчик формирует `Integration Event` и кладёт его в `Outbox Table` (`OrderPlacedHandler` → `Outbox Table`);
+- отдельный `Outbox Relay` вычитывает таблицу и отправляет событие в `Kafka` (`Outbox Table` → `Kafka`);
+- из `Kafka` `Integration Event` расходится по контекстам-потребителям: `Kafka` → `Shipping Context` и `Kafka` → `Billing Context`.
 
 Паттерн `Transactional Outbox`: доменное событие сохраняется в таблицу `outbox` в той же транзакции, что и изменение агрегата. Отдельный процесс вычитывает `outbox` и отправляет в брокер.
 
@@ -1079,15 +1034,12 @@ public class LoanApplicationFactory {
 
 Зачем: у чтения и записи разные требования. Запись должна защищать инварианты и работать с агрегатами; чтение должно быстро отдавать данные в удобной для UI форме, часто из нескольких агрегатов сразу. Одна модель не угождает обеим -- она либо тормозит на чтении, либо протекает на записи. `CQRS` снимает этот конфликт, разводя их.
 
-```mermaid
-graph TB
-    Client[Клиент]
-    Client -->|Command| CmdHandler[Command Handler]
-    Client -->|Query| QueryHandler[Query Handler]
-    CmdHandler -->|Write| WriteDB[(Write Store)]
-    QueryHandler -->|Read| ReadDB[(Read Store)]
-    WriteDB -->|Sync / Events| ReadDB
-```
+Схема разделения путей:
+
+- `Клиент` отправляет `Command` в `Command Handler` (`Клиент` → `Command Handler`) и `Query` в `Query Handler` (`Клиент` → `Query Handler`);
+- `Command Handler` пишет в `Write Store` (`Command Handler` → `Write Store`, путь Write);
+- `Query Handler` читает из `Read Store` (`Query Handler` → `Read Store`, путь Read);
+- `Write Store` синхронизирует данные в `Read Store` через `Sync / Events` (`Write Store` → `Read Store`).
 
 `CQRS` бывает разной глубины -- от лёгкой до радикальной. Берите минимально достаточную:
 
@@ -1137,17 +1089,14 @@ public class OrderQueryService {
 
 Аналогия -- банковская выписка: банк не держит просто число на счёте, а хранит все операции; баланс выводится из них. Главный выигрыш -- история не теряется: видно не только «что сейчас», но и «как к этому пришли».
 
-```mermaid
-graph LR
-    subgraph "Event Store"
-        E1[AccountOpened<br/>balance: 0]
-        E2[MoneyDeposited<br/>+1000]
-        E3[MoneyWithdrawn<br/>-300]
-        E4[MoneyDeposited<br/>+500]
-    end
-    E1 --> E2 --> E3 --> E4
-    E4 -->|Replay| S[Current State<br/>balance: 1200]
-```
+Пример журнала в `Event Store` -- цепочка событий по порядку:
+
+1. `AccountOpened` (balance: 0)
+2. `MoneyDeposited` (+1000)
+3. `MoneyWithdrawn` (-300)
+4. `MoneyDeposited` (+500)
+
+События идут последовательно: `AccountOpened` → `MoneyDeposited` → `MoneyWithdrawn` → `MoneyDeposited`. Проигрывание (`Replay`) всей цепочки даёт `Current State` с balance: 1200.
 
 ```java
 // Восстановление состояния из событий
@@ -1200,14 +1149,13 @@ public class BankAccount {
 - **`Event Sourcing` без `CQRS`**: события дают историю, но чтение и запись идут через одну модель (восстановили агрегат -- и читаем, и меняем).
 - **`CQRS` + `Event Sourcing`** (естественный союз): команды порождают события → события ложатся в Event Store (он же write-store) → проекции «раскладывают» их в read-модель под запросы. Event Store бесплатно даёт поток событий для построения проекций.
 
-```mermaid
-graph TB
-    CMD[Command] --> AGG[Aggregate]
-    AGG -->|Domain Events| ES[(Event Store)]
-    ES -->|Projection| RM[(Read Model)]
-    Q[Query] --> RM
-    ES -->|Snapshot| SNAP[(Snapshots)]
-```
+Поток в связке `CQRS` + `Event Sourcing`:
+
+- `Command` приходит в `Aggregate` (`Command` → `Aggregate`);
+- агрегат порождает `Domain Events`, которые ложатся в `Event Store` (`Aggregate` → `Event Store`);
+- из `Event Store` проекция (`Projection`) строит `Read Model` (`Event Store` → `Read Model`);
+- `Query` читает из `Read Model` (`Query` → `Read Model`);
+- параллельно `Event Store` формирует `Snapshots` (`Event Store` → `Snapshots`) для ускорения восстановления длинных потоков.
 
 Фреймворки для реализации в Java:
 
@@ -1226,24 +1174,21 @@ graph TB
 
 Почему не просто транзакция: каждый сервис владеет своей БД, и распределённая транзакция (`2PC`) держала бы их все заблокированными до конца -- это медленно и хрупко. Saga меняет атомарность на доступность: вместо «всё или ничего в один момент» -- «либо все шаги, либо все компенсации, но со временем». Откат тут не технический rollback, а явное бизнес-действие: не «отменили транзакцию», а «вернули деньги», «освободили резерв».
 
-```mermaid
-sequenceDiagram
-    participant OS as Order Service
-    participant PS as Payment Service
-    participant SS as Stock Service
-    participant DS as Delivery Service
+Участники: `Order Service` (`OS`), `Payment Service` (`PS`), `Stock Service` (`SS`), `Delivery Service` (`DS`).
 
-    OS->>PS: Списать оплату
-    PS-->>OS: Оплата успешна
-    OS->>SS: Зарезервировать товар
-    SS-->>OS: Товар зарезервирован
-    OS->>DS: Создать доставку
-    DS-->>OS: Доставка создана
+Прямой поток (happy path):
 
-    Note over OS,DS: Если шаг 3 (Delivery) падает:
-    OS->>SS: Компенсация: вернуть товар
-    OS->>PS: Компенсация: вернуть оплату
-```
+1. `Order Service` → `Payment Service`: «Списать оплату».
+2. `Payment Service` → `Order Service`: «Оплата успешна».
+3. `Order Service` → `Stock Service`: «Зарезервировать товар».
+4. `Stock Service` → `Order Service`: «Товар зарезервирован».
+5. `Order Service` → `Delivery Service`: «Создать доставку».
+6. `Delivery Service` → `Order Service`: «Доставка создана».
+
+Заметка по всем участникам (`Order Service` … `Delivery Service`): **если шаг 3 (Delivery) падает**, запускаются компенсирующие действия:
+
+1. `Order Service` → `Stock Service`: «Компенсация: вернуть товар».
+2. `Order Service` → `Payment Service`: «Компенсация: вернуть оплату».
 
 Каждый шаг Saga:
 1. Выполняет локальную транзакцию
@@ -1276,27 +1221,17 @@ sequenceDiagram
 | **Сложность** | Растёт экспоненциально с числом участников | Линейный рост |
 | **Когда использовать** | 2-3 шага, простые потоки | 4+ шагов, сложные потоки |
 
-```mermaid
-graph LR
-    subgraph "Хореография"
-        A1[Order Service] -->|OrderPlaced| B1[Payment Service]
-        B1 -->|PaymentCompleted| C1[Stock Service]
-        C1 -->|StockReserved| D1[Delivery Service]
-    end
-```
+**Хореография** -- цепочка реакций на события без центра:
 
-```mermaid
-graph TB
-    subgraph "Оркестрация"
-        O[Saga Orchestrator]
-        O -->|1. Pay| P[Payment]
-        O -->|2. Reserve| S[Stock]
-        O -->|3. Ship| D[Delivery]
-        P -->|Result| O
-        S -->|Result| O
-        D -->|Result| O
-    end
-```
+- `Order Service` публикует `OrderPlaced`, на него реагирует `Payment Service` (`Order Service` → `Payment Service`);
+- `Payment Service` публикует `PaymentCompleted`, на него реагирует `Stock Service` (`Payment Service` → `Stock Service`);
+- `Stock Service` публикует `StockReserved`, на него реагирует `Delivery Service` (`Stock Service` → `Delivery Service`).
+
+**Оркестрация** -- центральный `Saga Orchestrator` командует по шагам, каждый участник возвращает результат:
+
+- `Saga Orchestrator` → `Payment`: шаг «1. Pay»; `Payment` → `Saga Orchestrator`: `Result`;
+- `Saga Orchestrator` → `Stock`: шаг «2. Reserve»; `Stock` → `Saga Orchestrator`: `Result`;
+- `Saga Orchestrator` → `Delivery`: шаг «3. Ship»; `Delivery` → `Saga Orchestrator`: `Result`.
 
 ---
 
@@ -1410,28 +1345,17 @@ com.example.shop
 
 Идея в инверсии зависимостей через **порты**: домен объявляет интерфейсы (порты), а инфраструктура их реализует (адаптеры). Поэтому стрелки зависимостей всегда направлены внутрь, к домену -- ядро не знает ни про REST, ни про JPA, ни про Kafka. Их можно заменить, не трогая бизнес-логику.
 
-```mermaid
-graph TB
-    subgraph "Adapters (Infrastructure)"
-        REST[REST Controller<br/>Driving Adapter]
-        DB[JPA Repository<br/>Driven Adapter]
-        MQ[Kafka Publisher<br/>Driven Adapter]
-    end
-    subgraph "Ports"
-        IP[Input Port<br/>Use Case Interface]
-        OP[Output Port<br/>Repository Interface]
-        EP[Event Port<br/>Event Publisher Interface]
-    end
-    subgraph "Domain Core"
-        DM[Domain Model<br/>Aggregates, Entities,<br/>Value Objects,<br/>Domain Services]
-    end
-    REST --> IP
-    IP --> DM
-    DM --> OP
-    DM --> EP
-    OP --> DB
-    EP --> MQ
-```
+Слои и их элементы (стрелки зависимостей направлены внутрь, к домену):
+
+- **Adapters (Infrastructure)**: `REST Controller` (Driving Adapter), `JPA Repository` (Driven Adapter), `Kafka Publisher` (Driven Adapter).
+- **Ports**: `Input Port` (Use Case Interface), `Output Port` (Repository Interface), `Event Port` (Event Publisher Interface).
+- **Domain Core**: `Domain Model` -- `Aggregates`, `Entities`, `Value Objects`, `Domain Services`.
+
+Направление связей:
+
+- `REST Controller` → `Input Port` → `Domain Model` (входящий вызов через driving-адаптер и input-порт);
+- `Domain Model` → `Output Port` → `JPA Repository` (домен пишет в БД через output-порт и driven-адаптер);
+- `Domain Model` → `Event Port` → `Kafka Publisher` (домен публикует события через event-порт и driven-адаптер).
 
 ```java
 // Port (Input) — интерфейс use case
@@ -1585,26 +1509,17 @@ public class Order {
 - **`ACL` = адаптер между сервисами** -- защищает модель от чужих контрактов на границе.
 - **`Domain Events` = асинхронная коммуникация** -- сервисы общаются событиями через брокер, оставаясь слабо связанными.
 
-```mermaid
-graph TB
-    subgraph "Микросервис: Order"
-        BC1[Bounded Context: Order]
-        A1[Order Aggregate]
-    end
-    subgraph "Микросервис: Inventory"
-        BC2[Bounded Context: Inventory]
-        A2[Product Aggregate]
-    end
-    subgraph "Микросервис: Shipping"
-        BC3[Bounded Context: Shipping]
-        ACL[ACL]
-        A3[Shipment Aggregate]
-    end
-    BC1 -->|OrderPlaced Event| K[Kafka]
-    K --> BC2
-    K --> ACL
-    ACL --> A3
-```
+Каждый микросервис = один `Bounded Context` со своими агрегатами:
+
+- **Микросервис Order**: `Bounded Context: Order` с агрегатом `Order Aggregate`.
+- **Микросервис Inventory**: `Bounded Context: Inventory` с агрегатом `Product Aggregate`.
+- **Микросервис Shipping**: `Bounded Context: Shipping` с `ACL` и агрегатом `Shipment Aggregate`.
+
+Взаимодействие через события и брокер:
+
+- `Bounded Context: Order` публикует `OrderPlaced Event` в `Kafka` (`Order` → `Kafka`);
+- из `Kafka` событие идёт в `Bounded Context: Inventory` (`Kafka` → `Inventory`) и в `ACL` сервиса Shipping (`Kafka` → `ACL`);
+- `ACL` переводит событие и передаёт его агрегату `Shipment Aggregate` (`ACL` → `Shipment Aggregate`).
 
 Порядок проектирования:
 
@@ -1737,17 +1652,10 @@ public class ProductCatalogACL {
 }
 ```
 
-```mermaid
-graph LR
-    subgraph "Order Context"
-        OS[Order Service] -->|ProductId| ACL[ProductCatalogACL]
-        ACL -->|Product доменная модель| OS
-    end
-    subgraph "ERP System"
-        ACL -->|HTTP artNumber| ERP[ERP API]
-        ERP -->|ErpProductDto| ACL
-    end
-```
+Поток данных между контекстом заказа и ERP:
+
+- внутри **Order Context**: `Order Service` обращается к `ProductCatalogACL`, передавая `ProductId` (`Order Service` → `ProductCatalogACL`), а `ACL` возвращает обратно `Product` в виде доменной модели (`ProductCatalogACL` → `Order Service`);
+- в сторону **ERP System**: `ProductCatalogACL` вызывает `ERP API` по HTTP, передавая `artNumber` (`ProductCatalogACL` → `ERP API`), а `ERP API` отвечает чужим `ErpProductDto` (`ERP API` → `ProductCatalogACL`), который `ACL` и переводит в доменный `Product`.
 
 `ACL` -- удобное место и для устойчивости: раз все вызовы внешней системы идут через него, сюда же навешивают **Circuit Breaker**. При недоступности ERP он не роняет заказы, а отдаёт устаревшие данные из локального кэша.
 
@@ -1782,15 +1690,16 @@ private Optional<Product> fallback(ProductId id, Exception e) {
 | **Published Language** | Стандартный формат | Общий формат обмена (JSON Schema, AsyncAPI) |
 | **Separate Ways** | Нет интеграции | Контексты изолированы; максимальная автономность |
 
-```mermaid
-graph LR
-    CS[Catalog Service\nUpstream]
-    OS[Order Service\nDownstream]
-    ERP[Legacy ERP\nConformist Upstream]
+Пример карты отношений между контекстами:
 
-    CS -->|Open Host Service + Published Language| OS
-    ERP -->|Anti-Corruption Layer| OS
-```
+- `Catalog Service` -- Upstream;
+- `Order Service` -- Downstream;
+- `Legacy ERP` -- Conformist Upstream.
+
+Связи:
+
+- `Catalog Service` → `Order Service` через `Open Host Service` + `Published Language`;
+- `Legacy ERP` → `Order Service` через `Anti-Corruption Layer`.
 
 **Прагматичные рекомендации:**
 - Зафиксируйте карту контекстов (`Context Map`) до начала разработки
