@@ -384,13 +384,13 @@ RETURN close
 ## Q14. (!) Индексы в Neo4j?
 
 ```cypher
--- B-tree index (default, fastest)
+-- RANGE index — дефолтный general-purpose тип (bare CREATE INDEX создаёт именно его)
 CREATE INDEX FOR (p:Person) ON (p.email)
 
--- Composite index
+-- Composite index (тот же RANGE по нескольким свойствам)
 CREATE INDEX FOR (p:Person) ON (p.firstName, p.lastName)
 
--- Range index (для numerical ranges)
+-- Явный RANGE index (для диапазонов и сортировки)
 CREATE RANGE INDEX FOR (p:Person) ON (p.age)
 
 -- Drop

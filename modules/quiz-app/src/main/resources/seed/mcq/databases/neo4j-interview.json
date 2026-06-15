@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Native graph storage` означает, что для каждого перехода к соседу выполняется поиск по глобальному B-tree индексу по `id` узла.",
+              "text": "`Native graph storage` означает, что для каждого перехода к соседу выполняется поиск по глобальному RANGE индексу по `id` узла.",
               "correct": false,
               "sections": {
                 "what_actually": "Смысл index-free adjacency в том, что глобальный индекс для перехода не нужен — переход идёт по прямому указателю, что и даёт O(1).",
@@ -803,7 +803,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Индексы в `Neo4j` (B-tree по умолчанию, RANGE для числовых диапазонов, composite по нескольким свойствам) нужны на anchor-узлах запроса — точках входа в обход; без индекса поиск по свойству делает полный `SCAN` всех узлов label, с индексом — быстрый `INDEX SEEK`.",
+              "text": "Индексы в `Neo4j` (по умолчанию RANGE — general-purpose тип; composite по нескольким свойствам; TEXT/POINT/FULLTEXT для спец-случаев) нужны на anchor-узлах запроса — точках входа в обход; без индекса поиск по свойству делает полный `SCAN` всех узлов label, с индексом — быстрый `INDEX SEEK`.",
               "correct": true,
               "sections": {
                 "explanation": "Лучшая практика — индексировать свойства, по которым стартует traversal (search criteria). `CREATE INDEX FOR (p:Person) ON (p.email)` превращает scan всех Person в точечный seek по `email`.",
@@ -831,10 +831,10 @@
               "text": "В `Neo4j` существует только один тип индекса — full-text на базе `Lucene`, других индексов нет.",
               "correct": false,
               "sections": {
-                "what_actually": "Есть B-tree (default), RANGE, composite и отдельно full-text на `Lucene`; full-text — лишь один из видов.",
+                "what_actually": "Есть RANGE (default, general-purpose), composite, TEXT, POINT и отдельно full-text на `Lucene`; full-text — лишь один из видов.",
                 "source_of_confusion": "Full-text индекс заметен и часто упоминается, отсюда вывод, что он единственный.",
                 "if_it_were_true": "Тогда `CREATE RANGE INDEX ... ON (p.age)` был бы невозможен, но это валидный тип индекса.",
-                "how_it_should_be": "Дефолтный индекс — B-tree; full-text — отдельный специализированный тип для текстового поиска."
+                "how_it_should_be": "Дефолтный индекс — RANGE; full-text — отдельный специализированный тип для текстового поиска."
               }
             }
           ]
@@ -927,7 +927,7 @@
               "correct": false,
               "sections": {
                 "what_actually": "Синтаксис `ON EACH [n.title, n.content]` позволяет индексировать сразу несколько свойств (и несколько labels).",
-                "source_of_confusion": "Обычный B-tree чаще ставят на одно свойство, и это ограничение переносят на full-text.",
+                "source_of_confusion": "Обычный RANGE-индекс чаще ставят на одно свойство, и это ограничение переносят на full-text.",
                 "if_it_were_true": "Тогда нельзя было бы искать одновременно по `title` и `content`, но full-text это умеет.",
                 "how_it_should_be": "Full-text индексирует список свойств `ON EACH [...]`, покрывая несколько полей."
               }
@@ -935,7 +935,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Full-text index запрашивается обычным `MATCH (n:Article {title:'...'})`, как и любой B-tree индекс.",
+              "text": "Full-text index запрашивается обычным `MATCH (n:Article {title:'...'})`, как и любой RANGE индекс.",
               "correct": false,
               "sections": {
                 "what_actually": "Full-text запрашивается процедурой `CALL db.index.fulltext.queryNodes(...)`, а не паттерном с точным совпадением свойства.",
@@ -950,11 +950,11 @@
               "text": "Full-text index в `Neo4j` — индекс для полнотекстового поиска по нескольким свойствам узлов, построенный на Lucene; создаётся через `CREATE FULLTEXT INDEX ... FOR (n:Article) ON EACH [n.title, n.content]` и запрашивается процедурой `db.index.fulltext.queryNodes`.",
               "correct": true,
               "sections": {
-                "explanation": "В отличие от B-tree индекса (точное совпадение), full-text даёт релевантный поиск с ранжированием (`score`) по тексту в нескольких полях сразу — на движке `Lucene` под капотом.",
+                "explanation": "В отличие от RANGE индекса (точное совпадение), full-text даёт релевантный поиск с ранжированием (`score`) по тексту в нескольких полях сразу — на движке `Lucene` под капотом.",
                 "example": "`CALL db.index.fulltext.queryNodes('article_search', 'neo4j cypher') YIELD node, score RETURN node.title, score ORDER BY score DESC` ищет статьи по словам и сортирует по релевантности.",
                 "when_to_apply": "Full-text используют для текстового поиска по узлам внутри графа; для серьёзных поисковых нагрузок берут `OpenSearch`/`Elasticsearch` как специализированное решение.",
                 "edge_cases": "Full-text не заменяет полноценный поисковый движок: при больших объёмах и сложном ранжировании `Elasticsearch` мощнее; в `Neo4j` он удобен, когда поиск тесно связан с обходом графа.",
-                "related": "[[neo4j-interview#Q14]] обычные B-tree индексы; [[neo4j-interview#Q17]] PROFILE для анализа; [[neo4j-interview#Q27]] поиск по knowledge graph."
+                "related": "[[neo4j-interview#Q14]] обычные RANGE индексы; [[neo4j-interview#Q17]] PROFILE для анализа; [[neo4j-interview#Q27]] поиск по knowledge graph."
               }
             }
           ]
@@ -1056,7 +1056,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Index-free adjacency означает, что переход к соседу выполняется поиском по глобальному B-tree индексу за `O(log n)`.",
+              "text": "Index-free adjacency означает, что переход к соседу выполняется поиском по глобальному RANGE индексу за `O(log n)`.",
               "correct": false,
               "sections": {
                 "what_actually": "Смысл именно в отсутствии такого поиска: переход идёт по прямому указателю за O(1), без обращения к индексу.",
