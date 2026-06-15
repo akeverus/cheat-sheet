@@ -127,14 +127,7 @@ updated: "2026-05-08"
 2. **Целостность** — изменение данных в канале будет обнаружено через `MAC`/`AEAD`
 3. **Аутентификация** — клиент проверяет, что подключился именно к тому серверу, к которому хотел (через `X.509` сертификат)
 
-**Зачем это нужно.** Без `TLS` любой промежуточный узел (`ISP`, Wi-Fi-точка, корпоративный прокси) читал бы и модифицировал HTTP-трафик — пароли, cookies, платёжные данные шли бы открытым текстом. `TLS` закрывает все три бреши одновременно: подслушать нечего (шифрование), подменить незаметно нельзя (целостность), а к фальшивому серверу не подключишься (аутентификация).
-
-```mermaid
-graph LR
-    C[Client] -->|шифрованный канал TLS| S[Server]
-    A[Attacker: MITM] -.X.-> C
-    A -.X.-> S
-```
+**Зачем это нужно.** Без `TLS` любой промежуточный узел (`ISP`, Wi-Fi-точка, корпоративный прокси) читал бы и модифицировал HTTP-трафик — пароли, cookies, платёжные данные шли бы открытым текстом. `TLS` закрывает все три бреши одновременно: подслушать нечего (шифрование), подменить незаметно нельзя (целостность), а к фальшивому серверу не подключишься (аутентификация). Атакующий-`MITM` между клиентом и сервером не может ни прочитать канал, ни вклиниться в него.
 
 На транспорте данные выглядят как бинарный шум — но клиент и сервер видят исходный HTTP.
 
@@ -215,29 +208,21 @@ graph LR
 
 Цель handshake — за несколько обменов сообщениями договориться об общем симметричном ключе и проверить сертификат сервера, не передавая сам ключ по сети. В `TLS 1.2` на это уходит **2 round-trip** (2-RTT) — два полных похода туда-обратно поверх уже установленного TCP-соединения, и только потом можно слать данные приложения.
 
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant S as Server
+Поток сообщений между `Client` и `Server` по порядку:
 
-    Note over C,S: RTT 1
-    C->>S: ClientHello (версии, cipher suites, random, extensions)
-    S->>C: ServerHello (выбранная версия, cipher, random)
-    S->>C: Certificate (цепочка X.509)
-    S->>C: ServerKeyExchange (для DHE/ECDHE)
-    S->>C: ServerHelloDone
-
-    Note over C,S: RTT 2
-    C->>S: ClientKeyExchange (premaster secret)
-    C->>S: ChangeCipherSpec
-    C->>S: Finished (зашифрован)
-    S->>C: ChangeCipherSpec
-    S->>C: Finished (зашифрован)
-
-    Note over C,S: Application Data (шифрованное)
-    C->>S: HTTP-запрос
-    S->>C: HTTP-ответ
-```
+- **RTT 1:**
+  1. `Client → Server`: `ClientHello` (версии, cipher suites, random, extensions)
+  2. `Server → Client`: `ServerHello` (выбранная версия, cipher, random)
+  3. `Server → Client`: `Certificate` (цепочка X.509)
+  4. `Server → Client`: `ServerKeyExchange` (для DHE/ECDHE)
+  5. `Server → Client`: `ServerHelloDone`
+- **RTT 2:**
+  6. `Client → Server`: `ClientKeyExchange` (premaster secret)
+  7. `Client → Server`: `ChangeCipherSpec`
+  8. `Client → Server`: `Finished` (зашифрован)
+  9. `Server → Client`: `ChangeCipherSpec`
+  10. `Server → Client`: `Finished` (зашифрован)
+- **Application Data** (шифрованное): `Client → Server` HTTP-запрос, `Server → Client` HTTP-ответ
 
 Что происходит на каждом шаге:
 
@@ -255,20 +240,12 @@ sequenceDiagram
 
 `TLS 1.3` (`RFC 8446`) — крупнейший пересмотр протокола за всю его историю: handshake стал на круг короче, а все небезопасные опции вырезаны на уровне спецификации, а не настроек. Основные изменения:
 
-**1. Handshake за 1-RTT** (вместо 2-RTT):
+**1. Handshake за 1-RTT** (вместо 2-RTT). Поток сообщений в пределах одного RTT:
 
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant S as Server
-
-    Note over C,S: RTT 1
-    C->>S: ClientHello + KeyShare (угадывает алгоритм)
-    S->>C: ServerHello + KeyShare + {Certificate, CertVerify, Finished}
-    Note right of S: Всё после ServerHello уже зашифровано
-    C->>S: {Finished}
-    C->>S: {Application Data}
-```
+1. `Client → Server`: `ClientHello + KeyShare` (угадывает алгоритм)
+2. `Server → Client`: `ServerHello + KeyShare + {Certificate, CertVerify, Finished}` — всё после `ServerHello` уже зашифровано
+3. `Client → Server`: `{Finished}`
+4. `Client → Server`: `{Application Data}`
 
 Почему хватает одного RTT: клиент не ждёт, пока сервер выберет алгоритм, а сразу «угадывает» его и в первом же сообщении прикладывает `KeyShare` — свою эфемерную публичную часть. Если угадал (а ходовые алгоритмы наперечёт), сервер тут же отвечает своей частью и начинает шифровать всё последующее. Лишний обмен из `TLS 1.2` (отдельный `ClientKeyExchange`) просто исчезает.
 
@@ -383,12 +360,12 @@ MIID...base64...XYZ
 
 Chain of trust — это принцип, по которому доверие «передаётся по цепочке» от заранее доверенного корня к конкретному серверу. Клиент не доверяет серверному сертификату напрямую — он доверяет небольшому набору корневых CA, а те своей подписью ручаются за промежуточные, а промежуточные — за серверный. Проверка сертификата сводится к построению этой цепочки до доверенного корня.
 
-```mermaid
-graph TD
-    Root[Root CA<br/>self-signed<br/>в системном trust store] --> Intermediate1[Intermediate CA<br/>подписан Root]
-    Intermediate1 --> Intermediate2[Intermediate CA 2<br/>опционально]
-    Intermediate2 --> Leaf[Leaf / End-entity<br/>api.example.com<br/>подписан Intermediate]
-```
+Цепочка строится сверху вниз, каждое звено подписывает следующее:
+
+- **Root CA** (self-signed, в системном trust store) →
+  - **Intermediate CA** (подписан Root) →
+    - **Intermediate CA 2** (опционально) →
+      - **Leaf / End-entity** (`api.example.com`, подписан Intermediate)
 
 **Три типа сертификатов:**
 
@@ -499,22 +476,16 @@ openssl req -x509 -newkey rsa:2048 -nodes -days 365 \
 
 `PKI` (`Public Key Infrastructure`) — это вся инфраструктура вокруг сертификатов: кто их выпускает, как проверяет личность владельца, где публикует, как отзывает и кому в итоге доверяют клиенты. Сертификат сам по себе бесполезен без этой обвязки — `PKI` отвечает на вопрос «почему вообще можно верить чужому публичному ключу». Строится на асимметричной криптографии.
 
-```mermaid
-graph TB
-    CA[Certificate Authority<br/>выпускает и подписывает]
-    RA[Registration Authority<br/>проверяет identity]
-    VA[Validation Authority<br/>CRL / OCSP]
-    Repo[(Repository<br/>хранилище сертификатов)]
-    End[End Entities<br/>серверы, клиенты, пользователи]
-    Trust[Trust Stores<br/>OS / browser / JDK cacerts]
+Как компоненты связаны между собой (по стрелкам потока):
 
-    RA -->|identity OK| CA
-    CA -->|выпускает cert| End
-    CA -->|публикует| Repo
-    CA -->|revocation info| VA
-    End -->|проверка| VA
-    End -->|валидация цепочки| Trust
-```
+- **Registration Authority** (проверяет identity) → передаёт `CA` результат «identity OK»
+- **Certificate Authority** (выпускает и подписывает):
+  - → выпускает cert для **End Entities** (серверы, клиенты, пользователи)
+  - → публикует в **Repository** (хранилище сертификатов)
+  - → отдаёт revocation info в **Validation Authority** (CRL / OCSP)
+- **End Entities**:
+  - → идут на проверку в **Validation Authority**
+  - → выполняют валидацию цепочки против **Trust Stores** (OS / browser / JDK cacerts)
 
 **Компоненты:**
 
@@ -547,22 +518,15 @@ graph TB
 - Клиент получает подтверждение не-отзыва сразу, без отдельного похода к CA
 - **Чинит сразу обе беды OCSP:** приватность (CA больше не видит клиентов — он общается только с сервером) и производительность (нет лишнего round-trip на стороне клиента)
 
-```mermaid
-sequenceDiagram
-    participant Server
-    participant OCSP as OCSP Responder
-    participant Client
+Поток OCSP Stapling по шагам:
 
-    rect rgba(200,200,200,0.3)
-    Note over Server,OCSP: Периодически (раз в несколько часов)
-    Server->>OCSP: OCSP query для моего cert
-    OCSP-->>Server: signed response (cached)
-    end
-
-    Client->>Server: ClientHello (status_request extension)
-    Server-->>Client: Certificate + stapled OCSP response
-    Note over Client: Валидирует OCSP-ответ
-```
+- Периодически (раз в несколько часов), между `Server` и `OCSP Responder`:
+  1. `Server → OCSP Responder`: OCSP query для своего cert
+  2. `OCSP Responder → Server`: signed response (кешируется на сервере)
+- При подключении клиента:
+  3. `Client → Server`: `ClientHello` (с `status_request` extension)
+  4. `Server → Client`: `Certificate` + stapled OCSP response
+  5. `Client`: валидирует OCSP-ответ
 
 **Рекомендация:** **OCSP Stapling + Must-Staple extension**. Проблема голого stapling — его можно «отрезать»: MITM просто не приложит ответ, и многие клиенты это проглотят (soft-fail). Must-Staple помечает сертификат как «обязан идти со stapled OCSP», и тогда отсутствие ответа однозначно трактуется как ошибка.
 
@@ -666,18 +630,14 @@ Key exchange и signature договариваются через отдельн
 - Сертификат сервера используется лишь для **подписи** эфемерной части (доказать, кто её прислал), а не для её шифрования
 - После handshake эфемерные приватные ключи **стираются из памяти** — расшифровать запись больше нечем, даже зная долгосрочный ключ
 
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant S as Server (cert = RSA/EC priv long-term)
+Как это выглядит на handshake (`Server` держит долгосрочный приватный ключ `RSA/EC` из сертификата):
 
-    C->>C: генерирует eph_a (только для этой сессии)
-    S->>S: генерирует eph_b (только для этой сессии)
-    C->>S: ClientHello + g^a
-    S->>C: ServerHello + g^b + Sign(priv_longterm, g^b, ...)
-    Note over C,S: Общий секрет = g^(ab), невозможно извлечь из записи
-    Note over C,S: После сессии eph_a и eph_b удалены
-```
+1. `Client` генерирует эфемерную пару `eph_a` (только для этой сессии)
+2. `Server` генерирует эфемерную пару `eph_b` (только для этой сессии)
+3. `Client → Server`: `ClientHello + g^a`
+4. `Server → Client`: `ServerHello + g^b + Sign(priv_longterm, g^b, ...)` — эфемерная часть подписана долгосрочным ключом
+5. Общий секрет = `g^(ab)`, его невозможно извлечь из записи трафика
+6. После сессии `eph_a` и `eph_b` удаляются из памяти
 
 **Почему именно ECDHE.** `ECDHE` (Elliptic Curve Diffie-Hellman Ephemeral) — тот же эфемерный обмен, но на эллиптических кривых, поэтому при равной стойкости он быстрее и компактнее обычного `DHE` (кривая P-256 ≈ RSA 3072 по защите, но ключи на порядок короче). Это и сделало PFS дешёвым настолько, что в `TLS 1.3` он стал обязательным: RSA key exchange удалён, все cipher suites используют (EC)DHE.
 
@@ -717,23 +677,17 @@ AES-GCM на серверах/ноутбуках с AES-NI — выигрыва�
 
 **ACME** (`Automatic Certificate Management Environment`, `RFC 8555`) — это и есть тот протокол, который превращает выпуск/обновление сертификата из ручной операции в API-вызов. Именно автоматизация через `ACME` — главное, что отличает Let's Encrypt от классических CA.
 
-**Типичный flow** — клиент доказывает контроль над доменом, затем получает подписанный сертификат:
+**Типичный flow** — клиент доказывает контроль над доменом, затем получает подписанный сертификат. Между `ACME Client` (certbot / acme.sh) и `Let's Encrypt` (CA) по шагам:
 
-```mermaid
-sequenceDiagram
-    participant Client as ACME Client<br/>(certbot / acme.sh)
-    participant CA as Let's Encrypt
-
-    Client->>CA: регистрация account (публичный ключ)
-    Client->>CA: newOrder (домены: example.com)
-    CA-->>Client: authorizations + challenges
-    Client->>Client: выполняет challenge<br/>(кладёт файл / DNS-запись)
-    Client->>CA: challenge готов — проверяй
-    CA->>Client: верификация (HTTP/DNS запрос)
-    CA-->>Client: valid
-    Client->>CA: finalize order с CSR
-    CA-->>Client: signed certificate
-```
+1. `Client → CA`: регистрация account (публичный ключ)
+2. `Client → CA`: `newOrder` (домены: `example.com`)
+3. `CA → Client`: authorizations + challenges
+4. `Client`: выполняет challenge (кладёт файл / DNS-запись)
+5. `Client → CA`: challenge готов — проверяй
+6. `CA → Client`: верификация (HTTP/DNS запрос)
+7. `CA → Client`: `valid`
+8. `Client → CA`: finalize order с CSR
+9. `CA → Client`: signed certificate
 
 **Короткий срок жизни — это by design.** Сертификаты Let's Encrypt живут всего **90 дней** (с 2025 есть опция 6 дней). Это не неудобство, а часть модели: раз обновление автоматическое, короткий срок резко снижает ценность отзыва (скомпрометированный сертификат быстро протухает сам) и заставляет всех держать автоматизацию в порядке.
 
@@ -771,18 +725,10 @@ Challenge — это испытание, которым CA проверяет, �
 | Пароль | Важный — защищает приватные ключи | Менее критичный (там нет секретов, только публичные данные) |
 | Системное по умолчанию | Нет | `$JAVA_HOME/lib/security/cacerts` |
 
-```mermaid
-graph LR
-    subgraph Server
-      KS_S[KeyStore<br/>server.p12<br/>priv key + cert]
-    end
-    subgraph Client
-      TS_C[TrustStore<br/>cacerts<br/>Root CAs]
-    end
+Как KeyStore и TrustStore взаимодействуют в handshake:
 
-    KS_S -->|отправляет cert в handshake| TS_C
-    TS_C -->|валидирует цепочку| KS_S
-```
+- На стороне **Server** — `KeyStore` (`server.p12`: приватный ключ + сертификат): отправляет cert клиенту в handshake.
+- На стороне **Client** — `TrustStore` (`cacerts`: Root CAs): получает cert сервера и валидирует его цепочку.
 
 **Для mTLS клиента** нужны оба:
 - `KeyStore` — клиентский сертификат для аутентификации
@@ -1176,23 +1122,18 @@ public WebClient webClient(WebClient.Builder builder, SslBundles sslBundles) {
 
 **mTLS** (`Mutual TLS`) — это обычный TLS, но аутентификация двусторонняя: не только клиент проверяет сервер (как в HTTPS), но и сервер требует сертификат от клиента и проверяет его. В итоге обе стороны криптографически доказывают, кто они, ещё до обмена данными — отсюда «mutual».
 
-```mermaid
-sequenceDiagram
-    participant C as Client (с client cert)
-    participant S as Server (с server cert)
+Handshake между `Client` (с client cert) и `Server` (с server cert) по порядку:
 
-    C->>S: ClientHello
-    S->>C: ServerHello + ServerCert
-    Note over S: CertificateRequest — попроси client cert
-    S->>C: CertificateRequest
-    S->>C: ServerHelloDone
-    C->>S: ClientCert (X.509)
-    C->>S: ClientKeyExchange
-    C->>S: CertificateVerify (подпись приватным ключом клиента)
-    Note over C,S: Обе стороны аутентифицированы
-    C->>S: Finished
-    S->>C: Finished
-```
+1. `Client → Server`: `ClientHello`
+2. `Server → Client`: `ServerHello + ServerCert`
+3. `Server → Client`: `CertificateRequest` — сервер просит клиентский сертификат
+4. `Server → Client`: `ServerHelloDone`
+5. `Client → Server`: `ClientCert` (X.509)
+6. `Client → Server`: `ClientKeyExchange`
+7. `Client → Server`: `CertificateVerify` (подпись приватным ключом клиента)
+8. Обе стороны аутентифицированы
+9. `Client → Server`: `Finished`
+10. `Server → Client`: `Finished`
 
 **Когда применять:**
 

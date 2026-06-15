@@ -20,7 +20,7 @@ updated: "2026-05-08"
 
 Комплексное руководство по вопросам собеседования на тему паттернов аутентификации и авторизации
 для `Senior Java Developer`. Включает детальные объяснения концепций, практические примеры на `Java` + `Spring Security`,
-`mermaid`-диаграммы, best practices и типичные ошибки.
+пошаговые разборы потоков, best practices и типичные ошибки.
 
 ## Полезные ссылки
 
@@ -104,17 +104,12 @@ updated: "2026-05-08"
 
 Четыре базовых паттерна — `Basic`, `Session-Based`, `Token-Based` и `Certificate-Based`. Они отличаются тем, **где живёт состояние сессии** (на сервере или у клиента) и **что предъявляет клиент** (пароль, cookie, токен или сертификат). Это и определяет выбор: монолиту с браузером подходит session, микросервисам и `SPA` — токены, межсервисному трафику — сертификаты.
 
-```mermaid
-graph TB
-    A[Паттерны аутентификации] --> B[Basic Auth]
-    A --> C[Session-Based]
-    A --> D[Token-Based]
-    A --> E[Certificate-Based]
-    B --> B1[HTTP заголовок<br/>username:password]
-    C --> C1[Серверная сессия<br/>+ Cookie]
-    D --> D1[JWT / OAuth<br/>Stateless]
-    E --> E1[X.509 сертификаты<br/>mTLS]
-```
+Четыре паттерна и что именно предъявляет клиент:
+
+- **Basic Auth** → `HTTP`-заголовок `username:password`
+- **Session-Based** → серверная сессия + cookie
+- **Token-Based** → `JWT` / `OAuth`, stateless
+- **Certificate-Based** → `X.509`-сертификаты, `mTLS`
 
 ### 1. `Basic Authentication`
 
@@ -247,23 +242,17 @@ public class CertificateAuthConfig {
 
 Это самый безопасный поток для веб-приложений с backend. Суть: пользователь логинится **напрямую на Authorization Server**, а приложение получает сначала одноразовый `code` (через redirect в браузере), и только потом обменивает его на токены — уже по защищённому server-to-server запросу со своим `client_secret`. За счёт этого `access token` никогда не проходит через адресную строку браузера, где его мог бы перехватить.
 
-```mermaid
-sequenceDiagram
-    participant U as User (Browser)
-    participant C as Client App
-    participant AS as Authorization Server
-    participant RS as Resource Server
+Участники: `User (Browser)`, `Client App`, `Authorization Server` (`AS`), `Resource Server` (`RS`). По шагам:
 
-    U->>C: 1. Запрос защищённого ресурса
-    C->>AS: 2. Redirect на /authorize
-    AS->>U: 3. Страница входа + consent
-    U->>AS: 4. Логин + согласие
-    AS->>C: 5. Authorization Code (redirect)
-    C->>AS: 6. POST /token (code + client_secret)
-    AS->>C: 7. Access Token + Refresh Token
-    C->>RS: 8. GET /resource (Bearer token)
-    RS->>C: 9. Данные
-```
+1. `User → Client App`: запрос защищённого ресурса.
+2. `Client App → AS`: redirect на `/authorize`.
+3. `AS → User`: страница входа + consent.
+4. `User → AS`: логин + согласие.
+5. `AS → Client App`: `Authorization Code` (через redirect).
+6. `Client App → AS`: `POST /token` (`code` + `client_secret`).
+7. `AS → Client App`: `Access Token` + `Refresh Token`.
+8. `Client App → RS`: `GET /resource` (`Bearer token`).
+9. `RS → Client App`: данные.
 
 ### Реализация в `Spring Boot`
 
@@ -330,16 +319,11 @@ public class ServiceAuthenticationService {
 
 Три части, разделённые точками: `header.payload.signature`. Первые две — это просто `Base64url` от JSON (их **может прочитать кто угодно**, шифрования нет), а третья — подпись от `header.payload` секретом. Подпись гарантирует **целостность**: изменить payload, не зная ключа, нельзя.
 
-```mermaid
-graph LR
-    A["Header<br/>(alg, typ)"] -->|Base64| D[eyJhbGci...]
-    B["Payload<br/>(sub, exp, roles)"] -->|Base64| E[eyJzdWIi...]
-    C["Signature<br/>HMAC(header.payload, secret)"] --> F[SflKxwRJ...]
-    D --- G["."]
-    G --- E
-    E --- H["."]
-    H --- F
-```
+Из чего складывается токен `header.payload.signature` (части разделены точками `.`):
+
+- **Header** (`alg`, `typ`) → `Base64url` → `eyJhbGci...`
+- **Payload** (`sub`, `exp`, `roles`) → `Base64url` → `eyJzdWIi...`
+- **Signature** = `HMAC(header.payload, secret)` → `SflKxwRJ...`
 
 **Header:**
 ```json
@@ -488,16 +472,10 @@ public class TokenService {
 
 `RBAC` — доступ на основе ролей. Пользователю назначают роли, роли содержат разрешения (permissions), а проверка прав сводится к «есть ли у пользователя нужное разрешение». Промежуточный слой ролей — главное преимущество: права меняют на уровне роли, а не у каждого пользователя по отдельности.
 
-```mermaid
-graph LR
-    U[User] -->|назначена| R[Role]
-    R -->|содержит| P[Permission]
-    U2[User] -->|назначена| R
-    R2[Admin Role] -->|содержит| P1[READ]
-    R2 -->|содержит| P2[WRITE]
-    R2 -->|содержит| P3[DELETE]
-    R3[User Role] -->|содержит| P1
-```
+Связи модели: пользователю (`User`) **назначена** роль (`Role`), роль **содержит** разрешения (`Permission`); нескольким пользователям может быть назначена одна и та же роль. Пример распределения разрешений по ролям:
+
+- `Admin Role` **содержит** `READ`, `WRITE`, `DELETE`
+- `User Role` **содержит** `READ`
 
 #### Реализация `RBAC` — доменная модель
 
@@ -568,16 +546,13 @@ public class PostController {
 
 `ABAC` принимает решение, вычисляя политики на основе атрибутов четырёх видов: **субъекта** (роль, отдел, уровень), **объекта** (владелец, категория), **действия** (read/write/delete) и **окружения** (время, IP, локация). Это позволяет выразить правила, которые `RBAC` не покрывает, например «удалять можно только в рабочее время и только владельцу». Плата за гибкость — каждое правило надо вычислять при запросе, и аудит «кому что доступно» становится сложнее.
 
-```mermaid
-graph TB
-    R[Access Request] --> PE[Policy Engine]
-    SA[Subject Attributes<br/>роль, отдел, уровень] --> PE
-    OA[Object Attributes<br/>владелец, категория] --> PE
-    EA[Environment Attributes<br/>время, IP, локация] --> PE
-    PE -->|Evaluate| D{Решение}
-    D -->|Allow| A[Доступ разрешён]
-    D -->|Deny| DN[Доступ отклонён]
-```
+В `Policy Engine` сходятся `Access Request` и атрибуты:
+
+- **Subject Attributes** — роль, отдел, уровень
+- **Object Attributes** — владелец, категория
+- **Environment Attributes** — время, `IP`, локация
+
+`Policy Engine` вычисляет (`Evaluate`) решение: **Allow** → доступ разрешён, либо **Deny** → доступ отклонён.
 
 #### Реализация `ABAC`
 
@@ -648,14 +623,10 @@ public class OwnershipPolicy implements AccessPolicy {
 | Данные | Credentials (пароль, сертификат) | Permissions, roles, scopes |
 | HTTP-коды | `401 Unauthorized` | `403 Forbidden` |
 
-```mermaid
-graph LR
-    A[Запрос] --> B{Аутентификация<br/>Кто ты?}
-    B -->|Не пройдена| C[401 Unauthorized]
-    B -->|Пройдена| D{Авторизация<br/>Что можно?}
-    D -->|Нет прав| E[403 Forbidden]
-    D -->|Есть права| F[200 OK / Ресурс]
-```
+Порядок проверки запроса:
+
+1. **Аутентификация** («Кто ты?»): не пройдена → `401 Unauthorized`; пройдена → переход к авторизации.
+2. **Авторизация** («Что можно?»): нет прав → `403 Forbidden`; есть права → `200 OK` / ресурс.
 
 В `Spring Security` аутентификация обрабатывается `AuthenticationManager`, а авторизация — `AccessDecisionManager` / `AuthorizationManager` (Spring Security 6+). Подробнее — в [Spring Security](../frameworks/spring/spring-security-interview.md).
 
@@ -663,16 +634,13 @@ graph LR
 
 Безопасность в [микросервисах](../architecture/microservices-interview.md) выстраивается слоями, потому что одной точки контроля недостаточно: **edge** (`API Gateway` валидирует токен на входе), **межсервисный уровень** (сервисы аутентифицируют друг друга через `mTLS` / `JWT`, не доверяя «внутренней» сети) и **централизованная авторизация** (единый источник правил доступа). Ключевой принцип — gateway проверяет токен один раз и пробрасывает идентичность пользователя downstream-сервисам через заголовки.
 
-```mermaid
-graph TB
-    Client[Client] --> GW[API Gateway<br/>JWT валидация]
-    GW --> S1[Service A]
-    GW --> S2[Service B]
-    S1 <-->|mTLS + JWT| S2
-    S1 --> AuthZ[Authorization Service]
-    S2 --> AuthZ
-    GW --> IDP[Identity Provider<br/>Keycloak / Auth0]
-```
+Топология безопасности:
+
+- `Client` → `API Gateway` (выполняет `JWT`-валидацию).
+- `API Gateway` → `Service A` и `Service B`.
+- `Service A` ↔ `Service B`: межсервисный трафик по `mTLS` + `JWT`.
+- `Service A` и `Service B` → `Authorization Service` (централизованная авторизация).
+- `API Gateway` → `Identity Provider` (`Keycloak` / `Auth0`).
 
 ### 1. `API Gateway` — единая точка безопасности
 
@@ -768,19 +736,14 @@ public class SessionConfig {
 
 `SAML` (`Security Assertion Markup Language`) — `XML`-стандарт обмена данными об аутентификации между `Identity Provider` (`IdP`, тот, кто проверяет пользователя) и `Service Provider` (`SP`, приложение). Пользователь логинится один раз у `IdP`, а тот выдаёт подписанный `XML`-документ (`assertion`), которому доверяет `SP`. Это «старший» протокол enterprise-мира: проверенный временем, но громоздкий из-за `XML`.
 
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant SP as Service Provider
-    participant IdP as Identity Provider
+Участники: `User`, `Service Provider` (`SP`), `Identity Provider` (`IdP`). По шагам:
 
-    U->>SP: 1. Запрос доступа
-    SP->>IdP: 2. SAML AuthnRequest (redirect)
-    IdP->>U: 3. Страница входа
-    U->>IdP: 4. Логин/пароль
-    IdP->>SP: 5. SAML Response (assertion)
-    SP->>U: 6. Доступ к ресурсу
-```
+1. `User → SP`: запрос доступа.
+2. `SP → IdP`: `SAML AuthnRequest` (через redirect).
+3. `IdP → User`: страница входа.
+4. `User → IdP`: логин/пароль.
+5. `IdP → SP`: `SAML Response` (assertion).
+6. `SP → User`: доступ к ресурсу.
 
 ### Конфигурация `SAML` в `Spring Security`
 
@@ -815,21 +778,16 @@ public class SamlSecurityConfig {
 
 `MFA` требует подтвердить личность **несколькими независимыми факторами** разных категорий, чтобы кражи одного (например, пароля) было недостаточно. Три категории: **знание** — пароль или PIN (something you know); **владение** — телефон или аппаратный ключ (something you have); **биометрия** — отпечаток, лицо (something you are). Сила MFA именно в независимости факторов: украсть пароль и одновременно завладеть телефоном жертвы намного труднее.
 
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant S as Server
-    participant A as Authenticator App
+Участники: `User`, `Server`, `Authenticator App`. По шагам:
 
-    U->>S: 1. username + password
-    S->>S: 2. Проверка credentials
-    S->>U: 3. Запрос 2FA кода
-    U->>A: 4. Открывает приложение
-    A->>U: 5. TOTP-код (6 цифр)
-    U->>S: 6. Ввод TOTP-кода
-    S->>S: 7. Верификация TOTP
-    S->>U: 8. JWT-токен (аутентификация завершена)
-```
+1. `User → Server`: `username` + `password`.
+2. `Server`: проверка credentials.
+3. `Server → User`: запрос `2FA`-кода.
+4. `User → Authenticator App`: открывает приложение.
+5. `Authenticator App → User`: `TOTP`-код (6 цифр).
+6. `User → Server`: ввод `TOTP`-кода.
+7. `Server`: верификация `TOTP`.
+8. `Server → User`: `JWT`-токен (аутентификация завершена).
 
 ### Реализация `TOTP` (`Time-based One-Time Password`)
 
@@ -1124,18 +1082,10 @@ public RouteLocator routeLocator(RouteLocatorBuilder builder) {
 
 `OpenID Connect` (`OIDC`) — тонкий слой аутентификации поверх `OAuth 2.0`. Зачем он нужен: `OAuth 2.0` сам по себе решает только **авторизацию** (дать приложению доступ к ресурсам), но не говорит **кто** пользователь — `access token` непрозрачен для клиента. `OIDC` закрывает этот пробел, добавляя `ID Token` — подписанный `JWT` со стандартными claims о пользователе (`sub`, `name`, `email`). Именно `OIDC`, а не «голый» OAuth, стоит за кнопками «Войти через Google/GitHub».
 
-```mermaid
-graph TB
-    subgraph "OAuth 2.0"
-        AT[Access Token<br/>Доступ к ресурсам]
-    end
-    subgraph "OIDC = OAuth 2.0 + Identity"
-        AT2[Access Token]
-        IT[ID Token — JWT<br/>sub, name, email, aud]
-        UI[UserInfo Endpoint<br/>/userinfo]
-    end
-    style IT fill:#f9f,stroke:#333
-```
+Что даёт каждый из них:
+
+- **OAuth 2.0** — только `Access Token` (доступ к ресурсам).
+- **OIDC = OAuth 2.0 + Identity** — добавляет поверх `Access Token`: `ID Token` (`JWT` с claims `sub`, `name`, `email`, `aud`) и `UserInfo Endpoint` (`/userinfo`).
 
 ### Ключевые дополнения `OIDC` к `OAuth 2.0`
 
@@ -1194,23 +1144,16 @@ spring:
 
 `SSO` (`Single Sign-On`) — один вход для нескольких приложений. Механизм такой: пользователь логинится в `Identity Provider` (`IdP`) один раз, `IdP` заводит свою сессию, и при заходе в любое следующее приложение тот молча получает токен от `IdP` без повторного ввода пароля. Ключевая деталь — сессию держит именно `IdP`, а не каждое приложение по отдельности; приложения лишь доверяют его токенам.
 
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant A1 as App 1
-    participant A2 as App 2
-    participant IdP as Identity Provider
+Участники: `User`, `App 1`, `App 2`, `Identity Provider` (`IdP`). По шагам:
 
-    U->>A1: 1. Запрос
-    A1->>IdP: 2. Redirect для аутентификации
-    IdP->>U: 3. Логин
-    U->>IdP: 4. Credentials
-    IdP->>A1: 5. Токен / Assertion
-    Note over IdP: Сессия IdP создана
-    U->>A2: 6. Запрос
-    A2->>IdP: 7. Redirect
-    IdP->>A2: 8. Токен (без повторного логина!)
-```
+1. `User → App 1`: запрос.
+2. `App 1 → IdP`: redirect для аутентификации.
+3. `IdP → User`: логин.
+4. `User → IdP`: credentials.
+5. `IdP → App 1`: токен / assertion. *(Пометка: на этом шаге создаётся сессия `IdP`.)*
+6. `User → App 2`: запрос.
+7. `App 2 → IdP`: redirect.
+8. `IdP → App 2`: токен — без повторного логина!
 
 **Подходы к реализации:**
 
@@ -1257,22 +1200,21 @@ public class ClaimsController {
 
 ### Жизненный цикл токенов
 
-```mermaid
-stateDiagram-v2
-    [*] --> AccessToken: Аутентификация
-    AccessToken --> Expired: TTL 15 мин
-    Expired --> AccessToken: Refresh Token
-    AccessToken --> Revoked: Logout / компрометация
-    Revoked --> [*]
+Состояния и переходы `Access Token`:
 
-    state "Refresh Token" as RT {
-        [*] --> Active
-        Active --> Rotated: Использован
-        Rotated --> NewRefreshToken: Выпуск нового
-        Active --> Compromised: Повторное использование
-        Compromised --> AllRevoked: Отзыв всей цепочки
-    }
-```
+- *(старт)* → `AccessToken`: по аутентификации.
+- `AccessToken` → `Expired`: по истечении `TTL` (15 мин).
+- `Expired` → `AccessToken`: обновление по `Refresh Token`.
+- `AccessToken` → `Revoked`: при logout / компрометации.
+- `Revoked` → *(конец)*.
+
+Вложенная машина состояний `Refresh Token`:
+
+- *(старт)* → `Active`.
+- `Active` → `Rotated`: токен использован.
+- `Rotated` → `NewRefreshToken`: выпуск нового.
+- `Active` → `Compromised`: повторное использование.
+- `Compromised` → `AllRevoked`: отзыв всей цепочки.
 
 ### Ключевые практики
 
@@ -1316,23 +1258,9 @@ public class SecureTokenService {
 
 `Zero Trust` — модель «никогда не доверяй, всегда проверяй»: проверяется каждый запрос, даже изнутри сети. Это отказ от старой периметровой модели (castle-and-moat), где попавший за firewall автоматически считался «своим». Проблема периметра в том, что один взломанный сервис открывает злоумышленнику свободное горизонтальное перемещение по всей внутренней сети; `Zero Trust` это перекрывает, требуя аутентификацию и авторизацию на каждом шаге.
 
-```mermaid
-graph TB
-    subgraph "Традиционная модель"
-        FW[Firewall] --> TZ[Доверенная зона]
-        TZ --> S1[Service A]
-        TZ --> S2[Service B]
-        S1 ---|без проверки| S2
-    end
+**Традиционная модель:** `Firewall` → доверенная зона → `Service A` и `Service B`; между `Service A` и `Service B` связь **без проверки**.
 
-    subgraph "Zero Trust"
-        GW2[API Gateway] --> S3[Service A]
-        GW2 --> S4[Service B]
-        S3 ---|mTLS + JWT + проверка| S4
-        S3 --> PDP[Policy Decision Point]
-        S4 --> PDP
-    end
-```
+**Zero Trust:** `API Gateway` → `Service A` и `Service B`; между `Service A` и `Service B` связь по `mTLS` + `JWT` + проверка; оба сервиса обращаются к `Policy Decision Point` (`PDP`).
 
 **Принципы:**
 1. **Verify explicitly** — проверять каждый запрос (identity, device, location)
@@ -1391,19 +1319,14 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
 `mTLS` (`mutual TLS`) — двусторонняя аутентификация по сертификатам. Ключевое отличие от обычного `TLS`: там сервер доказывает свою подлинность клиенту (так работает HTTPS в браузере), но клиент остаётся анонимным. При `mTLS` сервер дополнительно посылает `Certificate Request`, и **клиент тоже предъявляет сертификат** — в итоге обе стороны криптографически уверены, с кем разговаривают, без всяких паролей.
 
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant S as Server
+Участники: `Client`, `Server`. По шагам:
 
-    C->>S: 1. ClientHello
-    S->>C: 2. ServerHello + Server Certificate
-    S->>C: 3. Certificate Request (отличие от TLS!)
-    C->>S: 4. Client Certificate
-    C->>S: 5. CertificateVerify (подпись)
-    Note over C,S: Обе стороны аутентифицированы
-    C->>S: 6. Encrypted communication
-```
+1. `Client → Server`: `ClientHello`.
+2. `Server → Client`: `ServerHello` + `Server Certificate`.
+3. `Server → Client`: `Certificate Request` — отличие от обычного `TLS`!
+4. `Client → Server`: `Client Certificate`.
+5. `Client → Server`: `CertificateVerify` (подпись).
+6. *(Здесь обе стороны аутентифицированы.)* `Client → Server`: `Encrypted communication`.
 
 ### Конфигурация `mTLS` в `Spring Boot`
 
@@ -1545,16 +1468,11 @@ spec:
 **Протоколы:** `SAML`, `WS-Federation`, `OIDC`.
 **Сценарии:** доступ партнёров к корпоративным ресурсам, мультиоблачная среда (`Azure AD` + `Google Workspace`), B2B-интеграции.
 
-```mermaid
-graph LR
-    U1[Employee] --> IdP1[Corporate IdP]
-    U2[Partner] --> IdP2[Partner IdP]
-    IdP1 -->|Trust| Hub[Federation Hub]
-    IdP2 -->|Trust| Hub
-    Hub --> SP1[App 1]
-    Hub --> SP2[App 2]
-    Hub --> SP3[App 3]
-```
+Топология федерации:
+
+- `Employee` → `Corporate IdP`; `Partner` → `Partner IdP`.
+- `Corporate IdP` и `Partner IdP` связаны доверием (**Trust**) с `Federation Hub`.
+- `Federation Hub` → `App 1`, `App 2`, `App 3`.
 
 Ключевая задача — **маппинг атрибутов**: роли и groups из одного `IdP` могут не совпадать с другим. Нужна таблица маппинга claims.
 
@@ -1792,19 +1710,15 @@ public class WebSocketSecurityConfig implements WebSocketMessageBrokerConfigurer
 
 `PKCE` (`RFC 7636`, читается «пикси») — расширение `OAuth 2.0`, защищающее `Authorization Code Flow` у **публичных клиентов** (`SPA`, мобильные приложения). Проблема, которую он решает: такие клиенты не могут безопасно хранить `client_secret` (код на устройстве можно вскрыть), поэтому перехваченный `authorization code` злоумышленник обменял бы на токен. `PKCE` добавляет одноразовый секрет (`code_verifier`), сгенерированный самим клиентом и **никогда не покидающий** его, — без него код бесполезен.
 
-```mermaid
-sequenceDiagram
-    participant C as Client (SPA)
-    participant AS as Authorization Server
+Участники: `Client (SPA)`, `Authorization Server` (`AS`). По шагам:
 
-    C->>C: 1. Генерация code_verifier (random)
-    C->>C: 2. code_challenge = SHA256(code_verifier)
-    C->>AS: 3. /authorize + code_challenge + method=S256
-    AS->>C: 4. Authorization Code
-    C->>AS: 5. /token + code + code_verifier
-    AS->>AS: 6. SHA256(code_verifier) == code_challenge?
-    AS->>C: 7. Access Token
-```
+1. `Client`: генерация `code_verifier` (random).
+2. `Client`: `code_challenge = SHA256(code_verifier)`.
+3. `Client → AS`: `/authorize` + `code_challenge` + `method=S256`.
+4. `AS → Client`: `Authorization Code`.
+5. `Client → AS`: `/token` + `code` + `code_verifier`.
+6. `AS`: проверка `SHA256(code_verifier) == code_challenge`?
+7. `AS → Client`: `Access Token`.
 
 ### Реализация клиентской части
 
@@ -2018,17 +1932,9 @@ public class MethodSecurityConfig {
 
 В `Spring Security 6` безопасность настраивается через bean `SecurityFilterChain` — компонентный стиль вместо удалённого `WebSecurityConfigurerAdapter`. Под капотом это **цепочка фильтров**, через которую проходит каждый запрос: аутентификация, авторизация, CSRF и т.д. — каждый фильтр отвечает за свой аспект. Полезный приём — несколько `SecurityFilterChain` с `@Order` и `securityMatcher`: например, отдельная stateless-цепочка для `/api/**` (JWT) и form-login цепочка для UI. Запрос попадает в первую подходящую по matcher цепочку.
 
-```mermaid
-graph LR
-    R[HTTP Request] --> DF[DelegatingFilterProxy]
-    DF --> FCSB[FilterChainProxy]
-    FCSB --> SF1[SecurityContextPersistenceFilter]
-    SF1 --> SF2[CsrfFilter]
-    SF2 --> SF3[UsernamePasswordAuthenticationFilter]
-    SF3 --> SF4[BearerTokenAuthenticationFilter]
-    SF4 --> SF5[AuthorizationFilter]
-    SF5 --> C[Controller]
-```
+Путь запроса по цепочке (по порядку):
+
+`HTTP Request` → `DelegatingFilterProxy` → `FilterChainProxy` → `SecurityContextPersistenceFilter` → `CsrfFilter` → `UsernamePasswordAuthenticationFilter` → `BearerTokenAuthenticationFilter` → `AuthorizationFilter` → `Controller`.
 
 ```java
 @Configuration
@@ -2167,12 +2073,11 @@ public JwtDecoder jwtDecoder() {
 
 `BFF` (`Backend for Frontend`) решает главную головную боль `SPA` — **где хранить токены в браузере**. `localStorage` уязвим к `XSS`, поэтому BFF просто не отдаёт токены фронтенду вовсе: `Spring Cloud Gateway` (или отдельный backend) сам выступает `OAuth2 Client`, держит токены на сервере, а `SPA` общается с ним через `httpOnly` cookie, недоступную JavaScript. По сути проблему хранения токена в браузере убирают, перенося токен на сервер.
 
-```mermaid
-graph LR
-    SPA[SPA / Browser] -->|httpOnly cookie| BFF[BFF / Gateway]
-    BFF -->|Access Token| RS[Resource Server]
-    BFF -->|Code + PKCE| AS[Authorization Server]
-```
+Потоки данных:
+
+- `SPA / Browser` → `BFF / Gateway`: через `httpOnly` cookie.
+- `BFF / Gateway` → `Resource Server`: с `Access Token`.
+- `BFF / Gateway` → `Authorization Server`: `Code` + `PKCE`.
 
 ```java
 // Spring Cloud Gateway как BFF
@@ -2798,19 +2703,14 @@ public class MethodSecurityConfig {
 
 ### Как работает mTLS
 
-```mermaid
-sequenceDiagram
-    participant A as Service A
-    participant B as Service B
+Участники: `Service A`, `Service B`. По шагам:
 
-    A->>B: TLS ClientHello
-    B->>A: Server Certificate (CN=service-b)
-    A->>A: Верифицирует сертификат B (truststore)
-    A->>B: Client Certificate (CN=service-a)
-    B->>B: Верифицирует сертификат A (truststore)
-    A->>B: Encrypted Request
-    B->>A: Encrypted Response
-```
+1. `Service A → Service B`: `TLS ClientHello`.
+2. `Service B → Service A`: `Server Certificate` (`CN=service-b`).
+3. `Service A`: верифицирует сертификат `B` по truststore.
+4. `Service A → Service B`: `Client Certificate` (`CN=service-a`).
+5. `Service B`: верифицирует сертификат `A` по truststore.
+6. `Service A → Service B`: `Encrypted Request`; `Service B → Service A`: `Encrypted Response`.
 
 ### Без Service Mesh: Spring Boot + X.509
 

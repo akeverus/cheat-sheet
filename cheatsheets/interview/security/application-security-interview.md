@@ -130,28 +130,17 @@ updated: "2026-05-08"
 
 ### Уровни безопасности
 
-```mermaid
-graph TB
-    subgraph "Application Level"
-        A1[Валидация ввода]
-        A2[Аутентификация / Авторизация]
-        A3[Шифрование данных]
-        A4[Безопасный код]
-    end
-    subgraph "Infrastructure Level"
-        I1[Firewall / WAF]
-        I2[Network segmentation]
-        I3[TLS / mTLS]
-    end
-    subgraph "Data Level"
-        D1[Encryption at rest]
-        D2[Encryption in transit]
-        D3[Key management]
-    end
-    A1 --> I1
-    A3 --> D1
-    I3 --> D2
-```
+Безопасность охватывает три уровня, и они связаны между собой:
+
+- **Application Level** (уровень приложения): валидация ввода, аутентификация / авторизация, шифрование данных, безопасный код.
+- **Infrastructure Level** (уровень инфраструктуры): `Firewall` / `WAF`, network segmentation, `TLS` / `mTLS`.
+- **Data Level** (уровень данных): encryption at rest, encryption in transit, key management.
+
+Связи между уровнями:
+
+- валидация ввода (Application) опирается на `Firewall` / `WAF` (Infrastructure);
+- шифрование данных (Application) реализуется через encryption at rest (Data);
+- `TLS` / `mTLS` (Infrastructure) обеспечивает encryption in transit (Data).
 
 На собеседовании важно показать, что безопасность -- это не чеклист, а непрерывный процесс, встроенный в разработку.
 
@@ -204,20 +193,9 @@ public ResponseEntity<?> getResource(@PathVariable Long id) {
 
 **`Defense in Depth`** (эшелонированная защита) -- принцип многослойной безопасности, где каждый уровень предоставляет дополнительную защиту. Компрометация одного слоя не приводит к полному взлому.
 
-```mermaid
-graph LR
-    Client[Клиент] --> WAF[WAF / CDN]
-    WAF --> LB[Load Balancer + TLS]
-    LB --> GW[API Gateway<br/>Rate limiting, Auth]
-    GW --> App[Spring Boot App<br/>Validation, AuthZ]
-    App --> DB[(БД<br/>Encryption at rest)]
-    
-    style WAF fill:#e74c3c,color:white
-    style LB fill:#e67e22,color:white
-    style GW fill:#f39c12,color:white
-    style App fill:#27ae60,color:white
-    style DB fill:#2980b9,color:white
-```
+Запрос проходит через цепочку слоёв, каждый из которых добавляет свою защиту:
+
+`Клиент` → `WAF / CDN` → `Load Balancer + TLS` → `API Gateway` (Rate limiting, Auth) → `Spring Boot App` (Validation, AuthZ) → `БД` (Encryption at rest).
 
 ### Слои защиты в Java/Spring-приложении
 
@@ -335,19 +313,15 @@ public class SecurityConfig {
 
 Комбинация двух и более факторов из разных категорий (знание + владение + биометрия). Смысл в том, что компрометация одного фактора (например, утечка пароля) не даёт доступа. Рекомендуется для критичных систем.
 
-```mermaid
-sequenceDiagram
-    participant U as Пользователь
-    participant App as Приложение
-    participant MFA as MFA Provider
-    U->>App: Логин + пароль
-    App->>App: Проверка пароля
-    App->>MFA: Запрос второго фактора
-    MFA->>U: SMS / TOTP код
-    U->>App: Ввод кода
-    App->>App: Проверка кода
-    App->>U: Доступ предоставлен
-```
+Поток `MFA` по шагам (участники: `Пользователь`, `Приложение`, `MFA Provider`):
+
+1. `Пользователь` → `Приложение`: логин + пароль.
+2. `Приложение`: проверка пароля.
+3. `Приложение` → `MFA Provider`: запрос второго фактора.
+4. `MFA Provider` → `Пользователь`: `SMS` / `TOTP` код.
+5. `Пользователь` → `Приложение`: ввод кода.
+6. `Приложение`: проверка кода.
+7. `Приложение` → `Пользователь`: доступ предоставлен.
 
 ## Q6. (!) Как реализовать безопасное хранение паролей?
 
@@ -467,25 +441,17 @@ public class JwtService {
 
 Refresh-токен -- долгоживущий токен, который обменивается на новый access-токен, когда тот истёк. Он решает дилемму: access-токен делают короткоживущим (15 мин), чтобы ограничить ущерб от его утечки, но тогда пользователю пришлось бы логиниться каждые 15 минут. Refresh-токен (живёт дни) обновляет access автоматически в фоне -- пользователь логинится один раз.
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Auth as Auth Server
-    participant API as Resource Server
-    
-    Client->>Auth: POST /login (credentials)
-    Auth->>Client: access_token (15 мин) + refresh_token (7 дней)
-    
-    Client->>API: GET /api/data + access_token
-    API->>Client: 200 OK
-    
-    Note over Client,API: access_token истёк
-    Client->>API: GET /api/data + expired access_token
-    API->>Client: 401 Unauthorized
-    
-    Client->>Auth: POST /refresh + refresh_token
-    Auth->>Client: new access_token + new refresh_token
-```
+Поток обновления токенов по шагам (участники: `Client`, `Auth Server`, `Resource Server`):
+
+1. `Client` → `Auth Server`: `POST /login` (credentials).
+2. `Auth Server` → `Client`: `access_token` (15 мин) + `refresh_token` (7 дней).
+3. `Client` → `Resource Server`: `GET /api/data` + `access_token`.
+4. `Resource Server` → `Client`: `200 OK`.
+5. `access_token` истёк.
+6. `Client` → `Resource Server`: `GET /api/data` + expired `access_token`.
+7. `Resource Server` → `Client`: `401 Unauthorized`.
+8. `Client` → `Auth Server`: `POST /refresh` + `refresh_token`.
+9. `Auth Server` → `Client`: new `access_token` + new `refresh_token`.
 
 ```java
 @RestController
@@ -646,19 +612,14 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
 `CSRF` (`Cross-Site Request Forgery`) -- атака, при которой злоумышленник заставляет аутентифицированного пользователя выполнить нежелательное действие на доверенном сайте. Работает из-за того, что браузер автоматически прикрепляет cookie сессии к любому запросу на `bank.com`, даже если запрос инициирован со страницы `evil.com`. Защита строится на том, чтобы сервер мог отличить «свой» запрос от чужого: CSRF-токен, который атакующий не может прочитать, и/или `SameSite`-cookie, которые браузер не отправляет с чужого origin.
 
-```mermaid
-sequenceDiagram
-    participant Victim as Жертва
-    participant Bank as Банк (bank.com)
-    participant Evil as Атакующий (evil.com)
-    
-    Victim->>Bank: Логин (получает session cookie)
-    Evil->>Victim: Ссылка на evil.com
-    Victim->>Evil: Открывает evil.com
-    Evil->>Victim: Скрытая форма: POST bank.com/transfer
-    Victim->>Bank: POST /transfer (cookie отправляется автоматически!)
-    Bank->>Bank: Перевод выполнен
-```
+Как разворачивается `CSRF`-атака по шагам (участники: `Жертва`, `Банк` (`bank.com`), `Атакующий` (`evil.com`)):
+
+1. `Жертва` → `Банк`: логин (получает session cookie).
+2. `Атакующий` → `Жертва`: ссылка на `evil.com`.
+3. `Жертва` → `Атакующий`: открывает `evil.com`.
+4. `Атакующий` → `Жертва`: скрытая форма `POST bank.com/transfer`.
+5. `Жертва` → `Банк`: `POST /transfer` (cookie отправляется автоматически!).
+6. `Банк`: перевод выполнен.
 
 ### Защита в Spring Security
 
@@ -898,19 +859,15 @@ public class AesEncryption {
 
 ### Гибридная схема (как в `TLS`)
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Server
-    Client->>Server: Client Hello (поддерживаемые алгоритмы)
-    Server->>Client: Server Hello + сертификат (RSA public key)
-    Client->>Client: Генерация AES session key
-    Client->>Server: Зашифрованный session key (RSA)
-    Server->>Server: Расшифровка session key (RSA private)
-    Note over Client,Server: Дальше всё шифруется AES session key
-    Client->>Server: Данные (AES)
-    Server->>Client: Данные (AES)
-```
+Обмен между `Client` и `Server` по шагам:
+
+1. `Client` → `Server`: `Client Hello` (поддерживаемые алгоритмы).
+2. `Server` → `Client`: `Server Hello` + сертификат (`RSA` public key).
+3. `Client`: генерация `AES` session key.
+4. `Client` → `Server`: зашифрованный session key (`RSA`).
+5. `Server`: расшифровка session key (`RSA` private).
+6. Дальше всё шифруется `AES` session key.
+7. `Client` ↔ `Server`: данные (`AES`) в обе стороны.
 
 На практике `RSA` используется для обмена ключами, а `AES` -- для шифрования самих данных.
 
@@ -1216,16 +1173,9 @@ public class CspReportController {
 
 ### Многослойная защита API
 
-```mermaid
-graph TB
-    Client[Клиент] --> TLS[TLS 1.3]
-    TLS --> RL[Rate Limiting]
-    RL --> Auth[Аутентификация<br/>JWT / OAuth 2.0]
-    Auth --> AuthZ[Авторизация<br/>RBAC / ABAC]
-    AuthZ --> Val[Валидация ввода<br/>Bean Validation]
-    Val --> Logic[Бизнес-логика]
-    Logic --> Audit[Аудит-лог]
-```
+Запрос проходит слои защиты по порядку:
+
+`Клиент` → `TLS 1.3` → `Rate Limiting` → Аутентификация (`JWT` / `OAuth 2.0`) → Авторизация (`RBAC` / `ABAC`) → Валидация ввода (`Bean Validation`) → Бизнес-логика → Аудит-лог.
 
 ### Чеклист безопасности API
 
@@ -1345,14 +1295,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
 ### Процесс
 
-```mermaid
-graph LR
-    A[Определить активы] --> B[Построить DFD]
-    B --> C[Применить STRIDE]
-    C --> D[Оценить риски<br/>DREAD/CVSS]
-    D --> E[Определить<br/>меры защиты]
-    E --> F[Валидировать<br/>в CI/CD]
-```
+Этапы threat modeling по порядку:
+
+Определить активы → построить `DFD` → применить `STRIDE` → оценить риски (`DREAD` / `CVSS`) → определить меры защиты → валидировать в `CI/CD`.
 
 `DFD` (Data Flow Diagram) -- диаграмма потоков данных, основа для threat modeling. Проводить на ранних этапах и при существенных изменениях архитектуры.
 
@@ -1504,20 +1449,15 @@ spotbugs {
 
 ### Pipeline с security gates
 
-```mermaid
-graph LR
-    Code[Код] --> SAST[SAST<br/>SonarQube]
-    SAST --> SCA[SCA<br/>Dependency Check]
-    SCA --> Build[Сборка]
-    Build --> Image[Docker Image Scan<br/>Trivy]
-    Image --> Deploy[Deploy to Staging]
-    Deploy --> DAST[DAST<br/>OWASP ZAP]
-    DAST --> Prod[Production]
-    
-    SAST -.->|Блокировка| Fail[Fail]
-    SCA -.->|Critical CVE| Fail
-    Image -.->|Vulnerabilities| Fail
-```
+Основной поток pipeline:
+
+`Код` → `SAST` (`SonarQube`) → `SCA` (`Dependency Check`) → Сборка → `Docker Image Scan` (`Trivy`) → Deploy to Staging → `DAST` (`OWASP ZAP`) → Production.
+
+Security gates останавливают pipeline (переход в `Fail`):
+
+- `SAST` -- по блокировке;
+- `SCA` -- при `Critical CVE`;
+- `Docker Image Scan` -- при найденных vulnerabilities.
 
 ### Метрики безопасности
 
@@ -1745,17 +1685,9 @@ public class SensitiveDataMasker {
 
 ## Q37. Что такое `Secure SDLC`?
 
-`Secure SDLC` -- интеграция безопасности во все фазы разработки:
+`Secure SDLC` -- интеграция безопасности во все фазы разработки. Фазы образуют замкнутый цикл:
 
-```mermaid
-graph LR
-    Req[Требования<br/>Security Requirements] --> Design[Дизайн<br/>Threat Modeling]
-    Design --> Code[Код<br/>Secure Coding + SAST]
-    Code --> Test[Тесты<br/>Security Tests + DAST]
-    Test --> Deploy[Деплой<br/>Hardening + Scanning]
-    Deploy --> Monitor[Мониторинг<br/>SIEM + Alerting]
-    Monitor --> Req
-```
+Требования (Security Requirements) → Дизайн (Threat Modeling) → Код (Secure Coding + `SAST`) → Тесты (Security Tests + `DAST`) → Деплой (Hardening + Scanning) → Мониторинг (`SIEM` + Alerting) → и обратно к требованиям.
 
 | Фаза | Активность | Инструменты |
 |------|-----------|-------------|
@@ -1767,17 +1699,6 @@ graph LR
 | Мониторинг | Аудит, алерты, incident response | `SIEM`, `Prometheus` |
 
 ## Q38. (!) Как реагировать на инциденты безопасности?
-
-### Процесс `Incident Response`
-
-```mermaid
-graph LR
-    D[1. Обнаружение<br/>Алерты, логи] --> I[2. Изоляция<br/>Блокировка доступа]
-    I --> Inv[3. Расследование<br/>Логи, форензика]
-    Inv --> Fix[4. Исправление<br/>Патч, обновление]
-    Fix --> Rec[5. Восстановление<br/>Откат, коммуникация]
-    Rec --> PM[6. Постмортем<br/>Причины, действия]
-```
 
 ### Практические шаги
 
@@ -1802,17 +1723,12 @@ graph LR
 
 ### Решения
 
-```mermaid
-graph TB
-    Client[Клиент] --> GW[API Gateway<br/>Аутентификация, Rate Limit]
-    GW --> S1[Service A]
-    GW --> S2[Service B]
-    S1 -->|mTLS| S2
-    S1 -->|mTLS| S3[Service C]
-    
-    IDP[Identity Provider<br/>Keycloak / Auth0] -.->|JWT validation| GW
-    IDP -.->|Token introspection| S1
-```
+Архитектура связей в защищённой микросервисной системе:
+
+- `Клиент` → `API Gateway` (Аутентификация, Rate Limit) -- единая точка входа.
+- `API Gateway` → `Service A` и `Service B` -- маршрутизация запросов.
+- `Service A` → `Service B` и `Service A` → `Service C` -- межсервисные вызовы по `mTLS`.
+- `Identity Provider` (`Keycloak` / `Auth0`) обеспечивает `JWT validation` для `API Gateway` и `Token introspection` для `Service A`.
 
 1. **API Gateway** -- единая точка аутентификации, rate limiting
 2. **`mTLS`** -- взаимная аутентификация между сервисами (service mesh: `Istio`, `Linkerd`)
