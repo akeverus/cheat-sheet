@@ -14,7 +14,7 @@
               "text": "`JPMS` (`Java Platform Module System`, проект `Jigsaw`, `Java 9`) — модульная система платформы: решает JAR Hell (один пакет принадлежит ровно одному модулю, `split packages` запрещены), даёт инкапсуляцию через `exports`, явные зависимости через `requires` и компактный runtime через `jlink`.",
               "correct": true,
               "sections": {
-                "explanation": "`JPMS` (`Java Platform Module System`, проект `Jigsaw`, `Java 9`) — модульная система платформы: решает JAR Hell (один пакет принадлежит ровно одному модулю, `split packages` запрещены), даёт инкапсуляцию через `exports`, явные зависимости через `requires` и компактный runtime через `jlink`.",
+                "explanation": "В основе лежит граф читаемости (`readability`): на этапе разрешения модулей JVM строит ориентированный граф по `requires`, и тип виден, только если экспортирующий модуль читается потребителем. Запрет `split packages` вытекает из правила «пакет принадлежит ровно одному модулю» — именно оно делает однозначным выбор владельца и устраняет конфликты одноимённых классов из разных JAR, которые на classpath раньше разрешались недетерминированно по порядку. `jlink` работает только потому, что граф зависимостей теперь явно объявлен и транзитивно вычислим.",
                 "example": "Модуль — именованная совокупность пакетов с явными зависимостями. Сам `JDK` разбит на модули (`java.base`, `java.sql`, `java.xml`), и приложение зависит только от того, что реально использует.",
                 "when_to_apply": "Самый показательный кейс: микросервис на `Java 9+`, для которого `jlink` собирает runtime-образ ~50 MB вместо полного JDK ~300 MB, и библиотеки с чёткими API-границами.",
                 "edge_cases": "Низкое adoption в application-коде создаёт иллюзию ненужности, но сам JDK построен на модулях, и `InaccessibleObjectException` всплывает в любом Spring-приложении на современной JVM.",
@@ -86,7 +86,7 @@
               "text": "`module-info.java` в корне source root содержит имя модуля и директивы: `requires` (зависимости), `exports` (публичный API для компиляции/вызова), `opens` (рефлексия), `uses`/`provides...with` (ServiceLoader).",
               "correct": true,
               "sections": {
-                "explanation": "`module-info.java` в корне source root содержит имя модуля и директивы: `requires` (зависимости), `exports` (публичный API для компиляции/вызова), `opens` (рефлексия), `uses`/`provides...with` (ServiceLoader).",
+                "explanation": "Файл компилируется в `module-info.class` и становится частью дескриптора модуля, который JVM читает при разрешении графа — поэтому директивы это не аннотации, а декларации, проверяемые компилятором и линкером. Разделение `exports` и `opens` отражает две независимые оси: статическую видимость типов на этапе компиляции и динамический рефлексивный доступ в runtime через `setAccessible`. `uses`/`provides` встраивают связывание сервисов прямо в граф, заменяя сканирование classpath декларативной записью.",
                 "example": "Полный набор: `requires`, `requires transitive`, `requires static`, `exports`, `exports...to`, `opens`, `opens...to`, `uses`, `provides...with`. На один модуль — ровно один `module-info.java`.",
                 "when_to_apply": "Любой именованный модуль `Java 9+`: например `module com.example.app { requires java.sql; exports com.example.app.api; opens com.example.app.entity to org.hibernate.orm; }`.",
                 "edge_cases": "Имя модуля по соглашению — обратное доменное имя (как для пакетов) и обязано быть уникальным; два модуля с одним именем не разрешатся.",
@@ -158,7 +158,7 @@
               "text": "`java.base` содержит `java.lang`/`util`/`io`/`nio`/`net`/`time` и подключается неявно; модули `java.*` — стандарт SE, а `jdk.*` специфичны для конкретной реализации JDK (не SE-стандарт).",
               "correct": true,
               "sections": {
-                "explanation": "`java.base` содержит `java.lang`/`util`/`io`/`nio`/`net`/`time` и подключается неявно; модули `java.*` — стандарт SE, а `jdk.*` специфичны для конкретной реализации JDK (не SE-стандарт).",
+                "explanation": "Неявное подключение `java.base` обеспечено правилом спецификации: каждый модуль автоматически `requires java.base`, потому что без `java.lang`/`Object` не существует ни одного класса. Разделение на `java.*` и `jdk.*` отражает границу JLS/JSR: `java.*` гарантированы любой SE-совместимой реализацией, а `jdk.*` — это имплементационные расширения конкретного вендора, не покрытые стандартом. Поэтому переносимость кода зависит от того, опирается он на `java.*` или на нестандартные `jdk.*`.",
                 "example": "Ключевые модули: `java.sql` (JDBC), `java.xml` (DOM/SAX/StAX), `java.logging`, `java.desktop` (AWT/Swing), `java.net.http`, `jdk.httpserver`, `jdk.jlink`.",
                 "when_to_apply": "При сборке custom `jlink`-образа в `--add-modules` включают только нужные `java.*` и `jdk.*` модули — это даёт компактный runtime.",
                 "edge_cases": "Различие `java.*` vs `jdk.*` важно при миграции между дистрибутивами: `jdk.*` может отличаться у Temurin, Corretto, Liberica.",
@@ -230,7 +230,7 @@
               "text": "`classpath`: нет инкапсуляции (все public видны), split packages допускаются, ошибки в runtime (`ClassNotFoundException`); `module path`: инкапсуляция через `exports`, split packages запрещены, ошибки при старте (`ResolutionException`).",
               "correct": true,
               "sections": {
-                "explanation": "`classpath`: нет инкапсуляции (все public видны), split packages допускаются, ошибки в runtime (`ClassNotFoundException`); `module path`: инкапсуляция через `exports`, split packages запрещены, ошибки при старте (`ResolutionException`).",
+                "explanation": "Разница в моменте проверки коренится в том, что classpath это плоский список без метаданных о владельце пакета, поэтому связи разрешаются лениво загрузчиком при первом обращении к классу. Module path несёт дескрипторы, и JVM на старте строит полный граф читаемости, отсюда fail-fast: недостающий `requires` или `split package` ловятся `ResolutionException` ещё до запуска `main`. Инкапсуляция возможна именно потому, что система знает границы каждого модуля и может отказать в доступе к неэкспортированному пакету.",
                 "example": "На module path зависимости явные и проверяются при запуске, рефлексия требует `opens`; на classpath зависимости неявные и проверяются лениво в runtime.",
                 "when_to_apply": "Переход на module path даёт fail-fast диагностику: отсутствие зависимости или split package выявляется при старте, а не в проде через час работы.",
                 "edge_cases": "При миграции часто используют гибрид: часть артефактов на module path, часть на classpath (как unnamed module) — это допустимо.",
@@ -254,7 +254,7 @@
               "text": "`exports` = публичный API для компиляции и runtime-вызовов (только `public` типы/члены); `opens` = рефлексия (`setAccessible`) для `Spring`/`Hibernate`, доступ ко всем членам включая `private`.",
               "correct": true,
               "sections": {
-                "explanation": "`exports` = публичный API для компиляции и runtime-вызовов (только `public` типы/члены); `opens` = рефлексия (`setAccessible`) для `Spring`/`Hibernate`, доступ ко всем членам включая `private`.",
+                "explanation": "Различие следует из того, что компилятору достаточно сигнатур `public`-типов, тогда как рефлексия обходит модификаторы доступа и читает даже `private`, поэтому требует более сильного разрешения. `exports` фиксируется в дескрипторе и проверяется и javac, и JVM, а `opens` нужен только в runtime, когда вызывается `setAccessible`. Они ортогональны, потому что экспорт открывает API для нормального вызова, но не снимает защиту JVM с приватных членов — это разные проверки в разных подсистемах.",
                 "example": "`exports` проверяется compile-time и runtime, `opens` — только runtime. Без `opens` вызов `field.setAccessible(true)` из другого модуля даёт `InaccessibleObjectException`.",
                 "when_to_apply": "На практике: `exports com.example.service.api;` для API и `opens com.example.service.model to org.hibernate.orm, spring.core;` для DI-фреймворков.",
                 "edge_cases": "`exports` и `opens` ортогональны: пакет может быть экспортирован, но рефлексия к его private-полям всё равно требует `opens` — это две разные оси доступа.",
@@ -326,7 +326,7 @@
               "text": "`exports pkg to M1, M2` ограничивает доступ к internal API только доверенными модулями; `opens pkg to org.hibernate.orm` даёт рефлексию только Hibernate. Это паттерн «друзья» (friend access).",
               "correct": true,
               "sections": {
-                "explanation": "`exports pkg to M1, M2` ограничивает доступ к internal API только доверенными модулями; `opens pkg to org.hibernate.orm` даёт рефлексию только Hibernate. Это паттерн «друзья» (friend access).",
+                "explanation": "Квалификация `to M1, M2` сужает множество читающих модулей в дескрипторе, поэтому проверка доступа на этапе разрешения пропускает только перечисленные имена, а всем прочим отказывает с тем же `IllegalAccessError`, что и для неэкспортированного пакета. Нетранзитивность возникает потому, что разрешение основано на конкретном имени модуля-получателя: клиенты `M` имеют другие имена и под условие не подпадают. Это даёт «friend access» — контролируемую утечку internal API без публикации его всему графу.",
                 "example": "Qualified-директивы предоставляют расширенный доступ только перечисленным модулям, не раскрывая пакет всему миру.",
                 "when_to_apply": "Полезно для test-модулей, которым нужен internal API, тесно связанных модулей одного проекта и фреймворков, которым нужна рефлексия к конкретным пакетам.",
                 "edge_cases": "Qualified exports не транзитивен: только сам модуль `M` может использовать пакет, а его клиенты — нет.",
@@ -398,7 +398,7 @@
               "text": "`requires M` — прямая нетранзитивная зависимость; `requires transitive M` делает зависимость транзитивной (клиенты тоже читают `M`). Transitive нужен, когда типы из `M` появляются в публичном API.",
               "correct": true,
               "sections": {
-                "explanation": "`requires M` — прямая нетранзитивная зависимость; `requires transitive M` делает зависимость транзитивной (клиенты тоже читают `M`). Transitive нужен, когда типы из `M` появляются в публичном API.",
+                "explanation": "Граф читаемости по умолчанию нетранзитивен: то, что `A` читает `B`, не делает `B` видимым для клиентов `A`. `requires transitive` добавляет в дескриптор `A` implied readability, и при разрешении JVM/javac автоматически прокидывают ребро от клиента к `B`. Это нужно именно когда типы из `B` стоят в сигнатурах публичного API `A`: без транзитивности клиент видит метод, но не может назвать тип его параметра, что и даёт ошибку компиляции.",
                 "example": "Без `requires` нельзя использовать типы целевого модуля — это проверяют компилятор и runtime. Зависимость по умолчанию не транзитивна.",
                 "when_to_apply": "Применяй `requires transitive model` в api-модуле, когда DTO из `model` фигурируют в сигнатурах методов API — иначе клиенты не скомпилируют код.",
                 "edge_cases": "Если тип из зависимости в публичном API (параметры, возвращаемые типы, наследование), а transitive забыт — клиент получит compile error при использовании этого типа.",
@@ -470,7 +470,7 @@
               "text": "`requires static M` — `M` нужен при компиляции, но не обязателен при запуске; подходит для `Lombok`, annotation processors, JetBrains/SpotBugs Annotations, опциональных интеграций.",
               "correct": true,
               "sections": {
-                "explanation": "`requires static M` — `M` нужен при компиляции, но не обязателен при запуске; подходит для `Lombok`, annotation processors, JetBrains/SpotBugs Annotations, опциональных интеграций.",
+                "explanation": "`requires static M` помечает зависимость флагом «только compile-time» в дескрипторе модуля: `javac` добавляет `M` в граф для разрешения типов, но при разрешении на старте JVM не требует присутствия `M` и не падает, если модуль отсутствует. Это уместно для аннотаций вроде `Lombok` (retention `SOURCE` — они удаляются ещё на этапе annotation processing и в байткод не попадают) и прочих compile-time артефактов, ненужных в runtime. Опциональные интеграции опираются на тот же механизм: код сам проверяет наличие зависимости, поэтому её отсутствие при запуске допустимо.",
                 "example": "Объявляет optional-зависимость: аннотации `Lombok` нужны компилятору, но в runtime бесполезны, поэтому модуль может отсутствовать при запуске.",
                 "when_to_apply": "Применяй для compile-time аннотаций и опциональных фич, где библиотека проверяет наличие зависимости (`Class.forName`) и включает функциональность, если модуль доступен.",
                 "edge_cases": "При отсутствии модуля в runtime обращение к его классам бросит `NoClassDefFoundError`, поэтому код должен корректно обрабатывать отсутствие через try-catch.",
@@ -494,7 +494,7 @@
               "text": "`open module M` открывает все пакеты для рефлексии (как `opens` для каждого пакета); при этом `exports` по-прежнему нужно указывать явно для compile-time доступа. Удобно для Spring Boot apps с обилием DI-рефлексии.",
               "correct": true,
               "sections": {
-                "explanation": "`open module M` открывает все пакеты для рефлексии (как `opens` для каждого пакета); при этом `exports` по-прежнему нужно указывать явно для compile-time доступа. Удобно для Spring Boot apps с обилием DI-рефлексии.",
+                "explanation": "`open` на уровне модуля эквивалентен неявному `opens` для каждого содержащегося пакета, поэтому рефлексия в runtime разрешена везде без перечисления. При этом `exports` остаётся обязательным, потому что открытость касается только рефлексивной оси доступа и никак не влияет на compile-time видимость `public`-типов — это разные подсистемы проверок. Для Spring-приложений это снимает каскад `InaccessibleObjectException`, поскольку DI-контейнер рефлексивно лезет в произвольные бины.",
                 "example": "Это компромисс: вы теряете часть инкапсуляции ради удобства, не прописывая `opens` для каждого пакета вручную.",
                 "when_to_apply": "Применяй на первом шаге модуляризации Spring Boot приложения, чтобы избежать каскада `InaccessibleObjectException`, вместо перечисления `opens` для всех пакетов.",
                 "edge_cases": "Внутри `open module` нельзя использовать директивы `opens` — они конфликтуют с `open` на уровне модуля и дают compile error.",
@@ -566,7 +566,7 @@
               "text": "Consumer объявляет `uses PaymentProvider`; provider объявляет `provides PaymentProvider with StripeProvider`; затем `ServiceLoader.load(PaymentProvider.class)` находит все реализации через модульный граф JPMS.",
               "correct": true,
               "sections": {
-                "explanation": "Consumer объявляет `uses PaymentProvider`; provider объявляет `provides PaymentProvider with StripeProvider`; затем `ServiceLoader.load(PaymentProvider.class)` находит все реализации через модульный граф JPMS.",
+                "explanation": "В модульном мире `ServiceLoader` не сканирует `META-INF/services` в JAR, а спрашивает у слоя модулей реализации, объявленные через `provides`, — связывание идёт по графу JPMS, а не по содержимому classpath. `uses PaymentProvider` обязателен потому, что без него `ServiceLoader.load()` в named-модуле не вернёт ни одного провайдера: директива декларирует факт потребления сервиса (а читаемость самого типа контракта обеспечивает `requires` на его модуль). Реализации находятся детерминированно — видны ровно те, чей модуль объявил `provides` нужного контракта.",
                 "example": "`uses` объявляет потребление сервиса, `provides...with` — его реализацию. Классика из JDK: `provides java.sql.Driver with ...` для JDBC-драйверов.",
                 "when_to_apply": "Применяй для plugin-архитектуры, DI-контейнеров и расширяемых систем без жёстких зависимостей между потребителем и реализациями.",
                 "edge_cases": "Provider-класс не требует `exports`: ServiceLoader получает к нему доступ через `provides`-декларацию, минуя обычный exports.",
@@ -638,7 +638,7 @@
               "text": "`classpath`: регистрация через файл `META-INF/services/<interface>`, обнаружение сканированием всех JAR, ошибки в runtime; `module path`: `provides...with` в `module-info.java`, обнаружение только модулей с `provides`, валидация при старте.",
               "correct": true,
               "sections": {
-                "explanation": "`classpath`: регистрация через файл `META-INF/services/<interface>`, обнаружение сканированием всех JAR, ошибки в runtime; `module path`: `provides...with` в `module-info.java`, обнаружение только модулей с `provides`, валидация при старте.",
+                "explanation": "На classpath обнаружение реализаций — это сканирование файлов `META-INF/services` во всех JAR загрузчиком, поэтому ошибки (опечатка в имени класса, отсутствие реализации) всплывают лениво при первом `iterator()`. На module path связывание встроено в дескриптор: `provides`/`uses` проверяются при разрешении графа, а значит несуществующий provider-класс или невидимый сервис выявляются на старте. Подменить SPI внешним файлом в named-модуле нельзя именно потому, что источник истины — дескриптор, а не файл в JAR.",
                 "example": "В модульном мире ServiceLoader предсказуемее: реализации видны только если модуль объявил `provides`, а потребитель — `uses`.",
                 "when_to_apply": "Применяй `provides`/`uses` для именованных модулей и `META-INF/services` для legacy на classpath; оба механизма поддерживаются.",
                 "edge_cases": "Декларация в `module-info` — часть модуля и проверяется при разрешении графа, поэтому подменить SPI файлом в JAR в named-модуле уже нельзя.",
@@ -710,7 +710,7 @@
               "text": "Без `opens` обращение `setAccessible` к чужим членам даёт `InaccessibleObjectException`; нужно `opens com.example.entities to spring.core, org.hibernate.orm`. Пакет должен быть либо `exports`, либо `opens` для рефлексирующего модуля.",
               "correct": true,
               "sections": {
-                "explanation": "Без `opens` обращение `setAccessible` к чужим членам даёт `InaccessibleObjectException`; нужно `opens com.example.entities to spring.core, org.hibernate.orm`. Пакет должен быть либо `exports`, либо `opens` для рефлексирующего модуля.",
+                "explanation": "`setAccessible(true)` пытается снять контроль доступа JVM, и для членов чужого модуля это разрешено только если пакет ему `opens` — иначе срабатывает та же проверка инкапсуляции, что и для обычного доступа, и летит `InaccessibleObjectException`. Поэтому одного `exports` мало: он открывает вызовы `public` API, но не разрешает рефлексию к `private`. Internal-пакеты самого JDK (`sun.*`, `jdk.internal.*`) не открыты по умолчанию в рамках строгой инкапсуляции, оттого тот же механизм блокирует и обращение к ним.",
                 "example": "Уровни доступа: не экспортирован → доступ запрещён; `exports` → public-члены доступны для вызова, но не для setAccessible на private; `opens` → полный рефлексивный доступ.",
                 "when_to_apply": "Spring DI и Hibernate ORM требуют `opens` для пакетов с бинами и entity; без этого фреймворк падает при инициализации.",
                 "edge_cases": "Обращение к internal-пакетам JDK (`sun.*`, `jdk.internal.*`) без флагов тоже падает: `module java.base does not opens java.lang to unnamed module`.",
@@ -734,7 +734,7 @@
               "text": "`--add-opens M/pkg=ALL-UNNAMED` открывает пакет для рефлексии; `--add-exports M/pkg=ALL-UNNAMED` — для compile/runtime доступа к public; `--add-reads` добавляет читаемость; `--illegal-access` удалён в Java 17.",
               "correct": true,
               "sections": {
-                "explanation": "`--add-opens M/pkg=ALL-UNNAMED` открывает пакет для рефлексии; `--add-exports M/pkg=ALL-UNNAMED` — для compile/runtime доступа к public; `--add-reads` добавляет читаемость; `--illegal-access` удалён в Java 17.",
+                "explanation": "Эти флаги — runtime-эквивалент директив дескриптора: `--add-opens`/`--add-exports`/`--add-reads` патчат граф модулей снаружи, потому что менять `module-info` чужих библиотек нельзя. `ALL-UNNAMED` адресует unnamed module, куда сливается весь classpath, — так открывают доступ legacy-коду без модульного дескриптора. `--illegal-access` удалён в Java 17, потому что строгая инкапсуляция стала безусловной: послаблений «по умолчанию» больше нет, и единственный путь — явные `--add-*` или `opens` в коде.",
                 "example": "Полный набор: `--add-opens`, `--add-exports`, `--add-reads`, `--add-modules`, `--patch-module`. `ALL-UNNAMED` — особая цель «все классы из classpath».",
                 "when_to_apply": "Применяй при запуске Spring Boot на Java 17+ без нужных `opens` в module-info: например `--add-opens java.base/java.lang=ALL-UNNAMED`.",
                 "edge_cases": "Эволюция `--illegal-access`: Java 9-15 default `permit`, Java 16 default `deny`, Java 17+ флаг удалён — строгая инкапсуляция; `--add-opens` остаётся.",
@@ -806,7 +806,7 @@
               "text": "`unnamed module` — совокупность всех классов с `classpath`: у него нет имени и `module-info.class`. Он exports/opens все свои пакеты, неявно читает все именованные модули, но именованные НЕ могут `requires` на него.",
               "correct": true,
               "sections": {
-                "explanation": "`unnamed module` — совокупность всех классов с `classpath`: у него нет имени и `module-info.class`. Он exports/opens все свои пакеты, неявно читает все именованные модули, но именованные НЕ могут `requires` на него.",
+                "explanation": "Unnamed module — это механизм обратной совместимости: чтобы код с classpath продолжал работать, JVM трактует его как один безымянный модуль, который читает всё и всё открывает. Отсутствие имени и есть причина, почему named-модуль не может на него `requires`: директива требует конкретного имени-цели, а его нет. При этом он привязан к ClassLoader, поэтому все JAR одного загрузчика сливаются в него, что и сохраняет старое поведение classpath.",
                 "example": "Один `unnamed module` на один `ClassLoader`; разные JAR на classpath объединяются в один unnamed module. Это обеспечивает обратную совместимость.",
                 "when_to_apply": "Применяй знание, когда legacy-код на classpath работает без изменений рядом с JPMS-модулями на module path.",
                 "edge_cases": "Все JAR на classpath сливаются в один unnamed module на ClassLoader, что становится источником split packages при дублировании пакетов.",
@@ -878,7 +878,7 @@
               "text": "`automatic module` — обычный JAR без `module-info.class` на `module path`. Имя — из `Automatic-Module-Name` в `MANIFEST.MF`, иначе из имени JAR (`gson-2.10.1.jar` → `gson`, версия отбрасывается, дефисы → точки). Exports/opens всё.",
               "correct": true,
               "sections": {
-                "explanation": "`automatic module` — обычный JAR без `module-info.class` на `module path`. Имя — из `Automatic-Module-Name` в `MANIFEST.MF`, иначе из имени JAR (`gson-2.10.1.jar` → `gson`, версия отбрасывается, дефисы → точки). Exports/opens всё.",
+                "explanation": "Automatic module — это адаптер для немодульного JAR на module path: раз дескриптора нет, JVM синтезирует его, открывая и экспортируя всё и делая `requires transitive` на остальные модули, чтобы код «просто работал». Имя выводится из манифеста или из имени файла именно потому, что в дескрипторе его взять негде. Право читать unnamed module (которого лишены named-модули) дано специально, чтобы автомодуль мог тянуть зависимости с classpath — это и делает его переходным мостом.",
                 "example": "Свойства: `requires transitive` всех других модулей, может читать unnamed module (в отличие от именованных), поддерживает `META-INF/services`.",
                 "when_to_apply": "Применяй как переходный этап миграции: именованный модуль может `requires` на automatic module, а тот читает код из classpath.",
                 "edge_cases": "Имя «выведено из файла» нестабильно: при переименовании JAR (`commons-lang3-3.12.0.jar` → `commons.lang3`) имя меняется и ломает `requires`; лучше задать `Automatic-Module-Name`.",
@@ -950,7 +950,7 @@
               "text": "Unnamed: classpath, нет имени, нельзя `requires`; Automatic: module path без module-info, есть имя, можно `requires`, читает unnamed; Named: module path + module-info, явные `exports`/`requires`, unnamed НЕ читает.",
               "correct": true,
               "sections": {
-                "explanation": "Unnamed: classpath, нет имени, нельзя `requires`; Automatic: module path без module-info, есть имя, можно `requires`, читает unnamed; Named: module path + module-info, явные `exports`/`requires`, unnamed НЕ читает.",
+                "explanation": "Иерархия прав определяется наличием дескриптора и местом артефакта: unnamed (classpath) безымянен и потому не адресуем директивой `requires`; automatic (module path без `module-info`) получает синтезированное имя и становится адресуемым; named несёт явный дескриптор и обязан декларировать `exports`/`requires`. Named не читает unnamed по правилу строгости — иначе модульная инкапсуляция протекала бы в classpath. Поэтому направление связей строго одностороннее, и автомодуль остаётся единственным легальным мостом.",
                 "example": "Ключевое: `automatic module` можно `requires` из именованного, а `unnamed module` — нельзя. Это делает automatic мостом для поэтапной миграции.",
                 "when_to_apply": "Применяй для понимания взаимодействия артефактов при гибридной миграции, когда часть на classpath, часть на module path.",
                 "edge_cases": "Направление зависимостей через мост строго одно: Named → requires → Automatic → читает → Unnamed; обратно `requires` на unnamed невозможен.",
@@ -974,7 +974,7 @@
               "text": "`split package` — один и тот же пакет (`com.example.util`) находится в нескольких модулях одновременно. В JPMS это запрещено: при обнаружении приложение не стартует с `ResolutionException`, потому что система не может однозначно выбрать модуль-владельца.",
               "correct": true,
               "sections": {
-                "explanation": "`split package` — один и тот же пакет (`com.example.util`) находится в нескольких модулях одновременно. В JPMS это запрещено: при обнаружении приложение не стартует с `ResolutionException`, потому что система не может однозначно выбрать модуль-владельца.",
+                "explanation": "Запрет вытекает из инварианта «один пакет — один модуль»: при построении графа JVM сопоставляет каждому пакету ровно один владеющий модуль, и два претендента делают сопоставление неоднозначным, отсюда `ResolutionException` ещё до старта. На classpath той же проблемы нет, потому что unnamed module плоский и просто берёт первый найденный класс по порядку загрузки. Поэтому split package — не баг исполнения, а нарушение структурного инварианта модели, которое ловится при разрешении.",
                 "example": "Классика: `javax.annotation` в `java.xml.ws.annotation` (JDK) и в `javax.annotation-api.jar` — оба экспортируют один пакет в один модуль.",
                 "when_to_apply": "Решения: переразбить пакеты (один пакет = один модуль), вынести общий пакет в отдельный модуль, `--patch-module` как временный workaround или Maven exclusions.",
                 "edge_cases": "В тестах на classpath (unnamed module) split packages допускаются; строгий запрет действует только для named-модулей на module path.",
@@ -1046,7 +1046,7 @@
               "text": "MRJAR (`Multi-Release: true` в `MANIFEST.MF`) содержит разные классы для разных Java-версий в `META-INF/versions/<N>/`; туда же кладут `module-info.class` для Java 9+, сохраняя базовую версию для Java 8 в корне.",
               "correct": true,
               "sections": {
-                "explanation": "MRJAR (`Multi-Release: true` в `MANIFEST.MF`) содержит разные классы для разных Java-версий в `META-INF/versions/<N>/`; туда же кладут `module-info.class` для Java 9+, сохраняя базовую версию для Java 8 в корне.",
+                "explanation": "MRJAR опирается на то, что загрузчик классов, увидев `Multi-Release: true`, при поиске класса предпочитает версию из `META-INF/versions/<N>/` для текущей версии рантайма, а на Java 8 эти каталоги игнорируются и берётся корень. Это и позволяет спрятать `module-info.class` под `versions/9`, оставив базу совместимой с classpath на Java 8. Механизм чисто загрузочный — он подменяет не модель модулей, а конкретные ресурсы при резолве класса.",
                 "example": "Структура: базовый `com/example/Util.class` (Java 8) в корне, версии для Java 9 и 17 — в `META-INF/versions/9/` и `META-INF/versions/17/`.",
                 "when_to_apply": "Применяй для библиотек, которые должны поддерживать и classpath (Java 8), и module path (Java 9+) одним артефактом.",
                 "edge_cases": "MRJAR — не замена модулям, а инструмент совместимости: JVM выбирает наиболее подходящую версию класса автоматически.",
@@ -1118,7 +1118,7 @@
               "text": "`jlink` создаёт custom runtime image только с нужными модулями: Docker-образ 40-60 MB против 200+ MB с полным JDK; меньше поверхность атаки; самодостаточный образ. Требует только named modules.",
               "correct": true,
               "sections": {
-                "explanation": "`jlink` создаёт custom runtime image только с нужными модулями: Docker-образ 40-60 MB против 200+ MB с полным JDK; меньше поверхность атаки; самодостаточный образ. Требует только named modules.",
+                "explanation": "`jlink` пользуется тем, что граф `requires` транзитивно вычислим, поэтому он включает в образ только достижимые модули и отбрасывает неиспользуемое — отсюда кратное уменьшение размера и сужение поверхности атаки. Самодостаточность образа возникает потому, что в него встроен сам runtime, и внешний JDK на хосте не нужен. Ограничение на named-модули принципиально: у automatic/unnamed нет точного дескриптора, и линкер не может надёжно вычислить замыкание зависимостей.",
                 "example": "Преимущества против полного JDK: размер 30-50 MB вместо ~300 MB, только используемые модули, не требует установленного JDK на хосте.",
                 "when_to_apply": "Применяй для контейнеризованных Java-микросервисов на JPMS, особенно где важен размер образа и cold start.",
                 "edge_cases": "Ограничение: jlink работает только с именованными модулями; automatic и unnamed модули он включить не сможет, что мешает модуляризации Spring Boot.",
@@ -1190,7 +1190,7 @@
               "text": "Плагины jlink: `--strip-debug` (убирает debug-инфо), `--compress zip-6` (сжатие), `--no-header-files`, `--no-man-pages`, `--launcher name=module/main` (создаёт launcher-скрипт), `--add-modules`, `--bind-services`.",
               "correct": true,
               "sections": {
-                "explanation": "Плагины jlink: `--strip-debug` (убирает debug-инфо), `--compress zip-6` (сжатие), `--no-header-files`, `--no-man-pages`, `--launcher name=module/main` (создаёт launcher-скрипт), `--add-modules`, `--bind-services`.",
+                "explanation": "Плагины `jlink` работают на этапе линковки образа, трансформируя содержимое модулей: `--strip-debug` вырезает `LineNumberTable`/`LocalVariableTable` из байткода, `--compress` пакует ресурсы в jimage, а `--no-header-files`/`--no-man-pages` отбрасывают артефакты, ненужные в runtime. `--launcher` генерирует скрипт, потому что точка входа (модуль/главный класс) известна заранее. `--bind-services` нужен оттого, что service-провайдеры не попадают в граф автоматически — их надо явно дотянуть.",
                 "example": "Комбинация `--compress` + `--strip-debug` + `--no-header-files` + `--no-man-pages` даёт максимально компактный runtime.",
                 "when_to_apply": "Применяй для оптимизации Docker-образов; `--launcher myapp=com.example.app/com.example.Main` создаёт удобный скрипт запуска.",
                 "edge_cases": "Перед jlink полезен `jdeps`: `jdeps -s my-app.jar` для анализа зависимостей и `jdeps --generate-module-info` для генерации шаблона module-info.",
@@ -1214,7 +1214,7 @@
               "text": "Две стратегии: Bottom-Up (рекомендуемая) — начать с leaf-библиотек графа зависимостей и двигаться к приложению, каждый шаг компилируется и тестируется; Top-Down — начать с приложения, зависимости временно как automatic modules, быстро видны границы.",
               "correct": true,
               "sections": {
-                "explanation": "Две стратегии: Bottom-Up (рекомендуемая) — начать с leaf-библиотек графа зависимостей и двигаться к приложению, каждый шаг компилируется и тестируется; Top-Down — начать с приложения, зависимости временно как automatic modules, быстро видны границы.",
+                "explanation": "Bottom-Up рекомендуется потому, что листья графа не зависят от ещё немодуляризованного кода, и на каждом шаге все зависимости уже named — это сохраняет компилируемость и тестируемость инкрементально. Top-Down переворачивает порядок: приложение модуляризуется первым, а зависимости временно подхватываются как automatic modules с именами, выведенными из JAR. Риск Top-Down — именно нестабильность этих derived-имён, из-за чего быстрый прототип граничит с ломкими `requires`.",
                 "example": "Bottom-Up: модуляризуем `utils.jar` → `service.jar` → `app.jar`; зависимости уже модульные на каждом шаге. Top-Down наоборот, но рискует нестабильными именами automatic modules.",
                 "when_to_apply": "Применяй Bottom-Up для библиотек с зависимостями только от JDK; Top-Down — для быстрого прототипа и оценки модульных границ.",
                 "edge_cases": "Чеклист: запустить `jdeps`, убрать `sun.*`/`com.sun.*`, решить split packages, добавить `Automatic-Module-Name`, создать module-info, добавить `--add-opens` для рефлексивных фреймворков, протестировать.",
@@ -1286,7 +1286,7 @@
               "text": "Maven: `maven-compiler-plugin` 3.6+ обрабатывает `module-info.java` автоматически, `maven-surefire` с `--add-opens` для тестов; Gradle: `modularity.inferModulePath = true` автоматически определяет module path.",
               "correct": true,
               "sections": {
-                "explanation": "Maven: `maven-compiler-plugin` 3.6+ обрабатывает `module-info.java` автоматически, `maven-surefire` с `--add-opens` для тестов; Gradle: `modularity.inferModulePath = true` автоматически определяет module path.",
+                "explanation": "Сборщики опираются на штатную поддержку javac: компилятор сам переключается в модульный режим, обнаружив `module-info.java` в source root, поэтому отдельные плагины не нужны. Maven и Gradle лишь корректно прокидывают артефакты на module path и добавляют `--add-opens` для тестов, потому что тестовый код, читающий internal-пакеты, иначе упрётся в инкапсуляцию. Gradle с `inferModulePath` автоматически решает, что положить на module path, а что на classpath, по наличию дескрипторов.",
                 "example": "`module-info.java` должен лежать в `src/main/java/`; обе системы поддерживают гибрид classpath + module path.",
                 "when_to_apply": "Применяй при наличии `module-info.java` в source root; обе системы сборки с версий ~2017 поддерживают JPMS без дополнительных плагинов.",
                 "edge_cases": "В Gradle для тестов добавляют `jvmArgs += ['--add-opens', 'com.example.app/com.example.internal=ALL-UNNAMED']`, чтобы тесты видели internal-пакеты.",
@@ -1358,7 +1358,7 @@
               "text": "`ModuleLayer` — дополнительный слой модулей поверх boot layer; каждый слой имеет свой ClassLoader. Применяется для плагинных систем (загрузка/выгрузка без рестарта), мультиверсионности и изоляции деплойментов.",
               "correct": true,
               "sections": {
-                "explanation": "`ModuleLayer` — дополнительный слой модулей поверх boot layer; каждый слой имеет свой ClassLoader. Применяется для плагинных систем (загрузка/выгрузка без рестарта), мультиверсионности и изоляции деплойментов.",
+                "explanation": "`ModuleLayer` существует потому, что boot layer фиксируется при старте JVM, а динамическим системам нужно добавлять и убирать модули в runtime — слой инкапсулирует отдельную конфигурацию графа поверх родительской. Свой ClassLoader на слой даёт изоляцию: одинаковые имена классов в разных слоях не конфликтуют, что и позволяет грузить несколько версий или выгружать плагин вместе со слоем. Резолвинг нового слоя выполняется относительно конфигурации родителя, поэтому базовые модули видны, а слой остаётся отдельным пространством.",
                 "example": "Создание: `ModuleFinder.of(path)` → `parent.configuration().resolve(...)` → `parent.defineModulesWithOneLoader(cfg, loader)`, затем `layer.findLoader(name).loadClass(...)`.",
                 "when_to_apply": "Применяй для Eclipse/IntelliJ plugin-систем, Jakarta EE серверов с изоляцией деплойментов и hot-reload плагинов в runtime.",
                 "edge_cases": "Каждый слой изолирован своим ClassLoader, что предотвращает конфликты версий; `ModuleLayer.boot()` — основа, новые слои — изолированные пространства.",
@@ -1430,7 +1430,7 @@
               "text": "JPMS запрещает циклы → `ResolutionException` («Cycle detected»); решения: выделить общий контракт в третий api-модуль, инвертировать зависимость через интерфейсы (DIP), использовать `ServiceLoader` (`uses`/`provides`) для слабой связности, либо объединить модули.",
               "correct": true,
               "sections": {
-                "explanation": "JPMS запрещает циклы → `ResolutionException` («Cycle detected»); решения: выделить общий контракт в третий api-модуль, инвертировать зависимость через интерфейсы (DIP), использовать `ServiceLoader` (`uses`/`provides`) для слабой связности, либо объединить модули.",
+                "explanation": "Запрет циклов следует из того, что граф читаемости должен быть разрешим как DAG: при обнаружении цикла алгоритм разрешения не может построить корректный порядок и падает с `ResolutionException`. Выделение третьего api-модуля разрывает цикл, потому что обе стороны начинают зависеть от общего контракта, а не друг от друга. `ServiceLoader` помогает по той же причине: `uses`/`provides` дают слабую связность без прямого `requires` между потребителем и реализацией, и ребро цикла исчезает.",
                 "example": "Цикл `A requires B` и `B requires A` одновременно невозможен; при сборке или запуске JVM сообщит о цикле и не стартует.",
                 "when_to_apply": "Применяй запрет как принудительную чистую архитектуру с однонаправленными зависимостями между модулями.",
                 "edge_cases": "Запрет циклов в JPMS заставляет проектировать чистую архитектуру; общий API-модуль ломает цикл, оставляя зависимости направленными к контракту.",
@@ -1454,7 +1454,7 @@
               "text": "Unit-тесты автоматически «патчатся» в модуль через `--patch-module` и `--add-reads` (Maven Surefire/Gradle делают это сами); для доступа к internal-пакетам нужен `--add-opens` в test argLine; интеграционные тесты лучше гонять в модульном режиме.",
               "correct": true,
               "sections": {
-                "explanation": "Unit-тесты автоматически «патчатся» в модуль через `--patch-module` и `--add-reads` (Maven Surefire/Gradle делают это сами); для доступа к internal-пакетам нужен `--add-opens` в test argLine; интеграционные тесты лучше гонять в модульном режиме.",
+                "explanation": "Тесты обычно лежат в том же модуле, что и тестируемый код, поэтому сборщики через `--patch-module` вливают тестовый source set в существующий модуль, а `--add-reads` дают ему видеть тест-фреймворк — иначе разные модули не читали бы друг друга. Доступ к не-экспортированным internal-пакетам требует `--add-opens`, потому что whitebox-тесты используют рефлексию, которую инкапсуляция блокирует. Прогон в модульном режиме ценен тем, что воспроизводит реальный граф и ловит split packages и нехватку `opens`, невидимые на плоском classpath.",
                 "example": "Surefire/Gradle добавляют тестовый source set в тот же модуль; для не-экспортируемых пакетов прописывают `--add-opens com.example.service/com.example.service.internal=ALL-UNNAMED`.",
                 "when_to_apply": "Применяй blackbox (только `exports` API) для проверки контракта и whitebox (`--add-opens`/`--add-exports`) для доступа к internal-классам.",
                 "edge_cases": "Интеграционный запуск в модульном режиме раньше ловит проблемы, невидимые на classpath: split packages, отсутствие `opens` для фреймворков.",
@@ -1526,7 +1526,7 @@
               "text": "Spring Boot + JPMS требует `open module` или точечные `opens ... to spring.core, spring.beans, spring.context`; большинство Spring Boot apps до сих пор работают на classpath без `module-info.java`.",
               "correct": true,
               "sections": {
-                "explanation": "Spring Boot + JPMS требует `open module` или точечные `opens ... to spring.core, spring.beans, spring.context`; большинство Spring Boot apps до сих пор работают на classpath без `module-info.java`.",
+                "explanation": "Требование `open module` или точечных `opens` вытекает из того, что Spring повсеместно использует рефлексию — для инстанцирования бинов, инъекции в поля и CGLIB-прокси, — а это обходит модификаторы доступа и упирается в инкапсуляцию JPMS. Открывать нужно именно `spring.core`/`spring.beans`/`spring.context`, потому что эти модули и выполняют рефлексивные операции. Большинство приложений остаются на classpath, поскольку там действует unnamed module, который всё открывает по умолчанию, и проблема просто не возникает.",
                 "example": "Spring использует рефлексию для создания бинов, инъекции, AOP-прокси (CGLIB создаёт подклассы) и classpath scanning через `@ComponentScan`.",
                 "when_to_apply": "Применяй полную модуляризацию с `open module` для связки jlink + Spring Boot; для обычного приложения classpath остаётся прагматичным выбором.",
                 "edge_cases": "Spring полноценно работает с JPMS, но требует много `opens`; `open module` удобнее, чем перечислять каждый пакет вручную.",
@@ -1598,7 +1598,7 @@
               "text": "Hibernate требует `opens com.example.entity to org.hibernate.orm.core` для доступа к private-полям; без этого — `InaccessibleObjectException` при создании entity-прокси и маппинге.",
               "correct": true,
               "sections": {
-                "explanation": "Hibernate требует `opens com.example.entity to org.hibernate.orm.core` для доступа к private-полям; без этого — `InaccessibleObjectException` при создании entity-прокси и маппинге.",
+                "explanation": "Hibernate работает через рефлексию на private-полях: lazy loading, dirty checking и инстанцирование entity требуют `setAccessible(true)`, что для чужого модуля разрешено только при `opens`, иначе срабатывает инкапсуляция и летит `InaccessibleObjectException`. Открывать надо именно пакет с entity и именно модулю `org.hibernate.orm.core`, который эту рефлексию выполняет. `exports` тут не помогает, потому что доступ к `private` — это рефлексивная ось, а не compile-time видимость `public` API.",
                 "example": "Через рефлексию Hibernate создаёт экземпляры entity (нужен default-конструктор), читает/пишет private-поля (lazy loading, dirty checking), создаёт прокси для lazy-коллекций, обрабатывает аннотации.",
                 "when_to_apply": "Применяй `opens entity.pkg to org.hibernate.orm.core, com.fasterxml.jackson.databind` в module-info, если entity ещё и сериализуются Jackson.",
                 "edge_cases": "Hibernate — reflection-heavy: каждый пакет с entity нужно отдельно указать в `opens`; embedded `@Embeddable` объекты в других пакетах тоже требуют `opens`.",
@@ -1670,7 +1670,7 @@
               "text": "Экспортировать только API-пакеты, скрывать `impl`/`internal`, использовать `requires transitive` для публичных зависимостей API, `opens` — точечно для конкретных фреймворков; модуль = осмысленная единица по домену, а не по слою.",
               "correct": true,
               "sections": {
-                "explanation": "Экспортировать только API-пакеты, скрывать `impl`/`internal`, использовать `requires transitive` для публичных зависимостей API, `opens` — точечно для конкретных фреймворков; модуль = осмысленная единица по домену, а не по слою.",
+                "explanation": "Экспорт только API-пакетов и сокрытие `impl`/`internal` опирается на то, что неэкспортированный пакет физически недоступен извне, — это превращает инкапсуляцию из соглашения в гарантию компилятора и JVM. `requires transitive` для публичных зависимостей нужен, потому что типы из них стоят в сигнатурах API, и без implied readability клиент не скомпилируется. Деление по домену, а не по слою, удерживает зависимости направленными и осмысленными, что снижает риск циклов и неявной связности через длинные транзитивные цепи.",
                 "example": "Структура: `com.example.api` (контракты, exports), `com.example.impl` (реализации, не exports), `com.example.spi` (точки расширения), `com.example.internal` (утилиты, скрыты).",
                 "when_to_apply": "Применяй для multi-module библиотек (как `jackson-databind`/`jackson-core`/`jackson-annotations`), plugin-систем через ServiceLoader и JDK-style модулей с очевидным контрактом.",
                 "edge_cases": "Подводные камни: длинные цепи `requires transitive` создают неявную связность; добавление метода в exported `interface` ломает downstream-реализации (помогают `default`-методы или `sealed`).",
@@ -1694,7 +1694,7 @@
               "text": "При `InaccessibleObjectException` (Hibernate не видит entity) корень — отсутствие `opens`, а не `requires`: нужно `opens com.example.entity to org.hibernate.orm.core`. Hibernate использует рефлексию для lazy loading, dirty checking, доступа к private-полям.",
               "correct": true,
               "sections": {
-                "explanation": "При `InaccessibleObjectException` (Hibernate не видит entity) корень — отсутствие `opens`, а не `requires`: нужно `opens com.example.entity to org.hibernate.orm.core`. Hibernate использует рефлексию для lazy loading, dirty checking, доступа к private-полям.",
+                "explanation": "Путаница `requires` и `opens` возникает оттого, что это решения двух разных проблем: `requires` чинит compile-time видимость типов в графе, а `InaccessibleObjectException` — runtime-ошибка от `setAccessible`, которую снимает только `opens`. Hibernate генерирует её, потому что рефлексивно лезет в private-поля entity. Каскад появляется из-за того, что инкапсуляция проверяется для каждого пакета отдельно: связанный `@Embeddable` в соседнем пакете требует своего `opens`, а второй уровень JVM в первом стеке не показывает.",
                 "example": "`requires` решает compile-time видимость типов; `InaccessibleObjectException` — runtime-ошибка от `setAccessible(true)`, лечится только `opens`.",
                 "when_to_apply": "Применяй `opens entity.pkg to org.hibernate.orm.core` для entity, `opens dto.pkg to com.fasterxml.jackson.databind` для DTO, `opens service.pkg to spring.core, spring.beans` для бинов.",
                 "edge_cases": "Reflection cascade: entity ссылается на `@Embeddable` в другом пакете, который тоже надо `opens`; JVM не показывает второй уровень автоматически — внимательно читать stack trace.",
@@ -1766,7 +1766,7 @@
               "text": "Adoption низкий из-за дороговизны миграции без бизнес-выгоды для типичного приложения, но JPMS критичен для: понимания `InaccessibleObjectException`, оптимизации Docker-образов через `jlink`, работы с JDK internals, native-image инструментов и собеседований.",
               "correct": true,
               "sections": {
-                "explanation": "Adoption низкий из-за дороговизны миграции без бизнес-выгоды для типичного приложения, но JPMS критичен для: понимания `InaccessibleObjectException`, оптимизации Docker-образов через `jlink`, работы с JDK internals, native-image инструментов и собеседований.",
+                "explanation": "Низкий adoption объясним экономикой: для типичного приложения миграция стоит дорого, а классический classpath с unnamed module и так работает, поэтому бизнес-выгоды нет. Тем не менее знать JPMS нужно, потому что сам JDK модулен, и его инкапсуляция проявляется как `InaccessibleObjectException` в любом рефлексивном фреймворке. Для `jlink`, AOT-инструментов и native-image модель важна, так как они опираются на явный, замкнутый граф зависимостей, который даёт только модульная система.",
                 "example": "JDK сам построен на модулях; `jlink` уменьшает Spring Boot-образ с ~350 MB до ~50 MB; GraalVM/Quarkus/Micronaut требуют чёткой модульной модели для AOT.",
                 "when_to_apply": "Применяй знание JPMS для отладки `InaccessibleObjectException`, оптимизации образов serverless/микросервисов и подготовки native-image (`reflect-config.json`).",
                 "edge_cases": "Развитие: строгая инкапсуляция (Java 16-17, `--illegal-access` удалён), Project Leyden (AOT, ещё в preview), Project Panama (FFI); рассчитывать на AOT через JPMS пока рано.",
@@ -1838,7 +1838,7 @@
               "text": "Положить `legacy.lib.jar` на module path — JVM превратит его в automatic module с именем из `Automatic-Module-Name` манифеста, либо выведет имя из имени JAR (с предупреждением о нестабильности). Тогда named-модуль может `requires` на него.",
               "correct": true,
               "sections": {
-                "explanation": "Положить `legacy.lib.jar` на module path — JVM превратит его в automatic module с именем из `Automatic-Module-Name` манифеста, либо выведет имя из имени JAR (с предупреждением о нестабильности). Тогда named-модуль может `requires` на него.",
+                "explanation": "Превращение JAR в automatic module — это синтез дескриптора на лету: раз `module-info` нет, JVM выводит имя из `Automatic-Module-Name` или из имени файла и открывает/экспортирует всё, чтобы legacy-код заработал на module path. Named-модуль может `requires` на него именно потому, что у автомодуля есть имя, тогда как unnamed безымянен и неадресуем. Отсюда роль моста: автомодуль адресуем сверху и при этом читает classpath снизу.",
                 "example": "Принцип: named не может `requires` на unnamed (classpath), но может на automatic; поэтому automatic module — мост между модульным миром и legacy classpath.",
                 "when_to_apply": "Применяй при миграции bottom-up, использовании SDK невендоров без module-info и старых версий тест-библиотек (JUnit/Mockito).",
                 "edge_cases": "Опасность derived-имени: переименование JAR (`legacy-2.0.jar` вместо `legacy-lib-1.2.jar`) меняет имя с `legacy.lib` на `legacy` и ломает `requires`; лучше задать `Automatic-Module-Name`.",
@@ -1910,7 +1910,7 @@
               "text": "Исключить конфликтующую зависимость (Maven `<exclusion>` / Gradle `exclude`) или применить `--patch-module java.xml.ws.annotation=javax.annotation-api.jar` для слияния пакетов; альтернативы — `relocate`, переход на Jakarta EE, вынос общего пакета в свой модуль.",
               "correct": true,
               "sections": {
-                "explanation": "Исключить конфликтующую зависимость (Maven `<exclusion>` / Gradle `exclude`) или применить `--patch-module java.xml.ws.annotation=javax.annotation-api.jar` для слияния пакетов; альтернативы — `relocate`, переход на Jakarta EE, вынос общего пакета в свой модуль.",
+                "explanation": "Исключение конфликтующей зависимости устраняет split package в корне, восстанавливая инвариант «пакет — один модуль», и граф снова разрешается без `ResolutionException`. `--patch-module` действует иначе: он сливает содержимое JAR в указанный модуль на этапе разрешения, так что пакет физически принадлежит одному владельцу. Это работает только в обычном запуске JVM и не применимо к `jlink`, потому что линкер строит образ из целостных дескрипторов и не знает о runtime-патчах.",
                 "example": "Split package — два модуля экспортируют один пакет (`javax.annotation`); загрузчик не может выбрать владельца, и JPMS запрещает это с `ResolutionException`.",
                 "when_to_apply": "Применяй при миграции Java 8 → 11+ (многие `javax.*` стали split с JDK-модулями), при дублях `javax.annotation`/`javax.xml.bind`, при сборке плагина с `relocate`.",
                 "edge_cases": "Транзитивные split packages не видны сразу (`library A` и `B` тянут `javax.activation`); `mvn dependency:tree` + `jdeps --check` обязательны; `--patch-module` не работает с jlink.",
@@ -1934,7 +1934,7 @@
               "text": "`--add-exports` даёт compile-time/runtime доступ к public API пакета (аналог `exports pkg to M`); `--add-opens` дополнительно разрешает рефлексию через `setAccessible(true)` (аналог `opens pkg to M`); `ALL-UNNAMED` означает «все классы classpath».",
               "correct": true,
               "sections": {
-                "explanation": "`--add-exports` даёт compile-time/runtime доступ к public API пакета (аналог `exports pkg to M`); `--add-opens` дополнительно разрешает рефлексию через `setAccessible(true)` (аналог `opens pkg to M`); `ALL-UNNAMED` означает «все классы classpath».",
+                "explanation": "Разделение флагов повторяет две оси доступа модели: `--add-exports` открывает `public` API пакета для компиляции и вызова, а `--add-opens` дополнительно снимает защиту с `private` для рефлексивного `setAccessible`. Для compile-time достаточно exports, потому что javac не делает рефлексию; на runtime выбор зависит от того, что именно делает фреймворк. `ALL-UNNAMED` адресует весь classpath как единый unnamed module — так послабление выдаётся коду без собственного дескриптора.",
                 "example": "Синтаксис обоих: `<module>/<package>=<target-module>`. Для compile-time нужен `--add-exports` (компилятору рефлексия не нужна); на runtime — тот, что требует фреймворк.",
                 "when_to_apply": "Применяй для Spring Boot/Hibernate/Mockito/Lombok с runtime-рефлексией к JDK internals: например `--add-opens java.base/java.lang=ALL-UNNAMED`.",
                 "edge_cases": "`--add-exports` к `sun.*` постепенно убирается (JEP «Strongly Encapsulate JDK Internals»); долгосрочно лучше `opens` в module-info или фреймворк без рефлексии (ASM/Byte Buddy).",
@@ -2006,7 +2006,7 @@
               "text": "Все модули в `--module-path` должны быть named (с `module-info.class`). Решение для automatic-зависимости: запросить module-info у автора, сгенерировать через `moditect`/`jdeps --generate-module-info`, либо заменить library на модуляризованную альтернативу.",
               "correct": true,
               "sections": {
-                "explanation": "Все модули в `--module-path` должны быть named (с `module-info.class`). Решение для automatic-зависимости: запросить module-info у автора, сгенерировать через `moditect`/`jdeps --generate-module-info`, либо заменить library на модуляризованную альтернативу.",
+                "explanation": "Требование named-модулей в `--module-path` для `jlink` обусловлено тем, что линкер вычисляет замыкание по `requires` и собирает образ из дескрипторов, а у automatic-зависимости дескриптор синтезирован и экспортирует/реквайрит «всё», что делает граф непригодным для надёжного отбора. Поэтому путь решения — добыть настоящий `module-info`: запросить у автора, сгенерировать через `jdeps`/`moditect` или заменить библиотеку модуляризованной. Без этого линковщик не может детерминированно определить состав образа.",
                 "example": "Workflow: `jdeps --print-module-deps app.jar` → `jar --describe-module` (выявить automatic) → обновить/сгенерировать module-info → собрать `jlink`.",
                 "when_to_apply": "Применяй для Docker-образов serverless (каждый MB = миллисекунды cold start), раздачи приложения с собственным JRE (как Eclipse) и high-density Kubernetes.",
                 "edge_cases": "Spring Boot не jlink-friendly из-за обилия automatic modules; `--strip-debug` ломает stack traces; cross-platform сборка возможна с JDK 19+ через `--target-platform`.",
@@ -2078,7 +2078,7 @@
               "text": "Это критический сигнал: нужно либо заменить на supported API (`MethodHandles`, `VarHandle`, `java.lang.foreign`), либо временно добавить `--add-exports java.base/sun.misc=ALL-UNNAMED`, либо обновить зависимость на версию без `Unsafe`.",
               "correct": true,
               "sections": {
-                "explanation": "Это критический сигнал: нужно либо заменить на supported API (`MethodHandles`, `VarHandle`, `java.lang.foreign`), либо временно добавить `--add-exports java.base/sun.misc=ALL-UNNAMED`, либо обновить зависимость на версию без `Unsafe`.",
+                "explanation": "Обращения к `sun.*`/`jdk.internal.*`/`com.sun.*` — критический сигнал, потому что эти классы не часть SE-контракта и в рамках строгой инкапсуляции (JEP по encapsulation JDK internals) могут быть запечатаны или удалены в любом релизе, ломая код. Поэтому замена на поддерживаемые `MethodHandles`/`VarHandle`/`java.lang.foreign` устраняет хрупкость, а `--add-exports` лишь временно отпирает пакет. `jdeps` находит такие зависимости статически в байткоде, что и делает шаг обязательным перед обновлением версии Java.",
                 "example": "`jdeps --jdk-internals` сканирует bytecode на `sun.*`, `jdk.internal.*`, `com.sun.*`; эти классы могут исчезнуть или быть запечатаны в любом релизе JDK.",
                 "when_to_apply": "Применяй при подготовке миграции Java 8/11 → 17/21, при анализе third-party библиотек на легальность с JEP 403 и compliance-аудите.",
                 "edge_cases": "`jdeps --jdk-internals` видит только compile-time обращения; runtime-рефлексия к `sun.*` через `Class.forName` не обнаруживается; версия jdeps должна совпадать с target Java.",
@@ -2150,7 +2150,7 @@
               "text": "Модуль-провайдер: `provides com.example.spi.PaymentProvider with com.example.stripe.StripeProvider`; потребитель: `uses com.example.spi.PaymentProvider`; обоим нужен `requires com.example.spi`; реализация НЕ экспортируется.",
               "correct": true,
               "sections": {
-                "explanation": "Модуль-провайдер: `provides com.example.spi.PaymentProvider with com.example.stripe.StripeProvider`; потребитель: `uses com.example.spi.PaymentProvider`; обоим нужен `requires com.example.spi`; реализация НЕ экспортируется.",
+                "explanation": "Декларации `provides...with` и `uses` встраивают связывание сервиса в граф модулей, поэтому проверка корректности происходит при module graph resolution, а не лениво при сканировании `META-INF/services`. Обоим нужен `requires` на модуль контракта, потому что тип сервиса должен быть читаем у обеих сторон. Реализация не экспортируется намеренно: `ServiceLoader` получает к ней привилегированный доступ через саму `provides`-декларацию, что и скрывает её от прямого использования потребителем.",
                 "example": "JPMS заменяет classpath-механизм (`META-INF/services`) декларативными директивами с проверкой на этапе module graph resolution и скрытием реализации от потребителя.",
                 "when_to_apply": "Применяй для plugin-систем (JDBC-драйверы, charsets), multi-vendor SDK (`PaymentProvider` для Stripe/Adyen) и hexagonal-архитектуры (порты как SPI, адаптеры как providers).",
                 "edge_cases": "`uses` без `provides` → пустой поток (compile-time не отловится, нужны интеграционные тесты); `ServiceLoader` не гарантирует порядок реализаций — для приоритета нужна своя аннотация и ручная сортировка.",
@@ -2174,7 +2174,7 @@
               "text": "Точечно открыть три пакета: `opens com.example.app.entity to org.hibernate.orm.core; opens com.example.app.dto to com.fasterxml.jackson.databind; opens com.example.app.service to spring.core, spring.beans;` — каждый фреймворк получает доступ только к своим пакетам.",
               "correct": true,
               "sections": {
-                "explanation": "Точечно открыть три пакета: `opens com.example.app.entity to org.hibernate.orm.core; opens com.example.app.dto to com.fasterxml.jackson.databind; opens com.example.app.service to spring.core, spring.beans;` — каждый фреймворк получает доступ только к своим пакетам.",
+                "explanation": "Точечные `opens` для каждого фреймворка реализуют принцип наименьших привилегий: рефлексия в JPMS квалифицируется по модулю-получателю, поэтому открыв пакет entity только `org.hibernate.orm.core`, а DTO — только Jackson, вы разрешаете легитимный `setAccessible` ровно там, где он нужен. Раздельное открытие сохраняет инкапсуляцию остальных границ. Каскад неизбежен потому, что инкапсуляция проверяется попакетно: `@Embeddable` и CGLIB-прокси `@Transactional` живут в своих пакетах и требуют отдельных `opens`.",
                 "example": "Принцип least privilege: каждому фреймворку открыть РОВНО нужные пакеты, сохраняя инкапсуляцию и разрешая легитимную рефлексию.",
                 "when_to_apply": "Применяй для production Spring Boot, мигрирующего на JPMS, библиотек, совместимых с JPMS-потребителями, и микросервисов на Quarkus/Helidon.",
                 "edge_cases": "Reflection cascade: `@Embeddable` внутри entity тоже требует `opens`; Spring AOP CGLIB-прокси для `@Transactional`-класса требует `opens` на пакет; GraalVM native-image нужен ещё и `reflect-config.json`.",
@@ -2246,7 +2246,7 @@
               "text": "Bottom-Up: начать с листьев графа (`utils.jar` без зависимостей на свой код), сделать named module, потом `service.jar`, потом `app.jar`. Внешние библиотеки временно как automatic modules, заменяются на named при поддержке upstream.",
               "correct": true,
               "sections": {
-                "explanation": "Bottom-Up: начать с листьев графа (`utils.jar` без зависимостей на свой код), сделать named module, потом `service.jar`, потом `app.jar`. Внешние библиотеки временно как automatic modules, заменяются на named при поддержке upstream.",
+                "explanation": "Bottom-Up выигрывает потому, что лист графа не зависит от ещё немодуляризованного собственного кода, и его дескриптор пишется с уже валидным окружением — каждый шаг компилируется и тестируется, давая локальность ошибок и дешёвый откат. Внешние библиотеки временно подключаются как automatic modules, поскольку им ещё нет named-альтернативы, и заменяются по мере поддержки upstream. Именно так шли Jackson, Hibernate и сам JDK, разбивая монолит от базовых модулей к зависящим.",
                 "example": "Bottom-Up даёт локальность ошибок, тестируемость каждого шага, раннее выявление split packages/internal API и малый откат при неудаче.",
                 "when_to_apply": "Применяй для production-миграции multi-module Spring Boot; именно так модуляризовались Jackson, Hibernate и сам JDK (`java.base` → `java.sql` → `java.xml`).",
                 "edge_cases": "Циклические зависимости в листьях блокируют Bottom-Up без рефакторинга; automatic-зависимости мешают jlink; иногда `app.jar` остаётся на classpath — hybrid-подход приемлем.",
