@@ -655,7 +655,7 @@ implementation 'org.springframework.boot:spring-boot-starter-actuator'
 - `/health` и `/metrics` → отдают данные в `Prometheus` / `Grafana`.
 - `/health` → используется как Kubernetes probes.
 
-**Безопасность:** по умолчанию по HTTP доступны только `/health` и `/info`. Расширение — через `management.endpoints.web.exposure.include`. В production обязательно защищать эндпоинты через [Spring Security](spring-security-interview.md).
+**Безопасность:** по умолчанию по HTTP доступны только `/health`. Расширение — через `management.endpoints.web.exposure.include`. В production обязательно защищать эндпоинты через [Spring Security](spring-security-interview.md).
 
 ## Q21. (!) Полный список `Actuator` endpoints и их категории
 
@@ -1547,7 +1547,7 @@ class ServiceTest { ... }
 
 ## Q42. Как ограничить экспозицию Actuator endpoints в production?
 
-По умолчанию Actuator открывает по HTTP только `/health` и `/info` — это безопасный минимум. Проблемы начинаются, когда ради удобства открывают `include: "*"`: тогда наружу торчат `/env` (раскрывает переменные окружения с секретами), `/heapdump` (дамп памяти процесса) и `/beans`. Поэтому в production действуют по трём линиям обороны: ограничить список endpoint-ов, закрыть их security и вынести на отдельный непубличный порт.
+По умолчанию Actuator открывает по HTTP только `/health` — это безопасный минимум. Проблемы начинаются, когда ради удобства открывают `include: "*"`: тогда наружу торчат `/env` (раскрывает переменные окружения с секретами), `/heapdump` (дамп памяти процесса) и `/beans`. Поэтому в production действуют по трём линиям обороны: ограничить список endpoint-ов, закрыть их security и вынести на отдельный непубличный порт.
 
 **Конфигурация экспозиции:**
 
