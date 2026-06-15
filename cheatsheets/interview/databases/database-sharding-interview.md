@@ -219,31 +219,23 @@ hash("user_42") = 0xA3F7...  ->  mod 4 = 3  ->  shard #3
 
 **Почему rebalancing минимален.** Добавление узла N+1 — это просто новая точка на кольце. Она «перехватывает» только те ключи, что лежат **между новым узлом и его предшественником на кольце**; все остальные ключи как принадлежали своим узлам, так и принадлежат. Удаление узла симметрично: его ключи достаются единственному соседу справа, остальное кольцо не трогается. В `hash mod N` так не выходит, потому что там позиция ключа зависит от N для всех ключей сразу.
 
-```mermaid
-graph TB
-    subgraph "Range sharding"
-        R1["shard A<br/>id 0..1M"]
-        R2["shard B<br/>id 1M..2M"]
-        R3["shard C<br/>id 2M..∞<br/>HOT - все новые"]
-        style R3 fill:#fbb,stroke:#c00,stroke-width:2px
-    end
+Сравнение трёх стратегий по распределению ключей:
 
-    subgraph "Hash sharding"
-        H1["shard A<br/>hash mod N = 0<br/>~25%"]
-        H2["shard B<br/>hash mod N = 1<br/>~25%"]
-        H3["shard C<br/>hash mod N = 2<br/>~25%"]
-        H4["shard D<br/>hash mod N = 3<br/>~25%"]
-    end
-
-    subgraph "Consistent hashing"
-        C1["node A<br/>arc 0..90"]
-        C2["node B<br/>arc 90..180"]
-        C3["node C<br/>arc 180..270"]
-        C4["node D<br/>arc 270..360"]
-        Cnew["+ node E<br/>забирает только<br/>arc 45..90 у A"]
-        style Cnew fill:#bfb,stroke:#0a0,stroke-width:2px
-    end
-```
+- **Range sharding** — данные раскладываются по непрерывным диапазонам:
+  - `shard A`: id 0..1M;
+  - `shard B`: id 1M..2M;
+  - `shard C`: id 2M..∞ — **HOT**, сюда идут все новые записи.
+- **Hash sharding** (`hash mod N`, N=4) — `hash` размазывает ключи примерно поровну:
+  - `shard A`: hash mod N = 0, ~25%;
+  - `shard B`: hash mod N = 1, ~25%;
+  - `shard C`: hash mod N = 2, ~25%;
+  - `shard D`: hash mod N = 3, ~25%.
+- **Consistent hashing** — узлы стоят на кольце, каждый владеет своей дугой:
+  - `node A`: arc 0..90;
+  - `node B`: arc 90..180;
+  - `node C`: arc 180..270;
+  - `node D`: arc 270..360;
+  - при добавлении `+ node E` он **забирает только arc 45..90 у A** — остальные дуги не двигаются.
 
 **Применение:** Cassandra, ScyllaDB, DynamoDB, Riak, memcached client libs (ketama).
 
@@ -262,23 +254,11 @@ node C: 50..100 (50%)      node C: суммарно ~33%
 
 **Бонус при отказе.** Когда узел выпадает, его токены разбросаны по всему кольцу, поэтому осиротевшие диапазоны достаются **многим разным соседям**, а не одному. Нагрузка упавшего узла размазывается по кластеру, и ребилд идёт параллельно — без «голых» vnodes весь его сегмент свалился бы на единственного соседа справа.
 
-```mermaid
-graph LR
-    subgraph "Consistent hashing ring (vnodes)"
-        direction LR
-        T0["token 0"] --> T1["A:vn1"]
-        T1 --> T2["B:vn1"]
-        T2 --> T3["C:vn1"]
-        T3 --> T4["A:vn2"]
-        T4 --> T5["B:vn2"]
-        T5 --> T6["C:vn2"]
-        T6 --> T7["A:vn3"]
-        T7 --> T8["..."]
-        T8 --> Tn["token 2^64"]
-        Tn -.-> T0
-    end
-    K1["key K<br/>hash попадает<br/>между B:vn1 и C:vn1"] --> T3
-```
+Кольцо токенов с vnodes (порядок по часовой стрелке): токены трёх узлов `A`, `B`, `C` чередуются на кольце, а не идут сплошными сегментами:
+
+`token 0` → `A:vn1` → `B:vn1` → `C:vn1` → `A:vn2` → `B:vn2` → `C:vn2` → `A:vn3` → `...` → `token 2^64`, и кольцо замыкается обратно на `token 0`.
+
+`key K`: `hash` ключа попадает между `B:vn1` и `C:vn1`, поэтому ключ достаётся `C:vn1` (первый узел по часовой стрелке).
 
 ## Q10. Как устроен directory-based sharding (lookup table)?
 
