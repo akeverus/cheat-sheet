@@ -125,18 +125,10 @@ updated: "2026-04-25"
 | Кэширование | Простое (HTTP-кэш по URL) | Сложное (нужны спец. решения) |
 | Типизация | Нет стандарта (OpenAPI опционально) | Строгая типизация через схему |
 
-```mermaid
-graph LR
-    subgraph REST
-        C1[Client] -->|GET /users/1| S1[Server]
-        C1 -->|GET /users/1/posts| S1
-        C1 -->|GET /users/1/followers| S1
-    end
+Например, чтобы собрать профиль с постами и подписчиками:
 
-    subgraph GraphQL
-        C2[Client] -->|POST /graphql<br/>query user, posts, followers| S2[Server]
-    end
-```
+- **REST** -- клиент шлёт три отдельных запроса на сервер: `GET /users/1`, `GET /users/1/posts`, `GET /users/1/followers`.
+- **GraphQL** -- клиент шлёт один `POST /graphql` с запросом, который сразу описывает `user`, `posts` и `followers`, и получает всё за один обмен с сервером.
 
 **Что хочет услышать интервьюер:** `GraphQL` решает проблемы over-fetching (сервер возвращает лишнее) и under-fetching (за данными нужно несколько запросов), но взамен приносит собственные сложности -- кэширование, защиту от произвольных дорогих запросов, более высокий порог входа. Это не замена `REST`, а альтернативный подход, который выигрывает на графовых, связанных данных и при разнородных клиентах (мобильные, веб, IoT) с разными потребностями в полях.
 
@@ -463,14 +455,15 @@ query {
 
 **Резолвер** -- функция, которая знает, как получить значение для одного конкретного поля схемы. Схема описывает *что* можно запросить, а резолверы реализуют *как* эти данные добываются (из БД, другого сервиса, кэша). У каждого поля есть свой резолвер; движок вызывает их по дереву запроса сверху вниз, и результат родительского резолвера становится входом (`parent`) для дочерних.
 
-```mermaid
-graph TD
-    Q[Query: user id=1] --> R1[Resolver: Query.user]
-    R1 -->|User| R2[Resolver: User.name]
-    R1 -->|User| R3[Resolver: User.posts]
-    R3 -->|List Post| R4[Resolver: Post.title]
-    R3 -->|List Post| R5[Resolver: Post.author]
-```
+Для запроса `user(id=1)` дерево вызовов резолверов разворачивается сверху вниз:
+
+- `Query: user id=1` вызывает резолвер `Query.user`, который возвращает `User`.
+- Результат `User` передаётся дочерним резолверам:
+  - `User.name` -- скалярное поле;
+  - `User.posts` -- возвращает `List<Post>`.
+- Каждый `Post` из списка передаётся своим резолверам:
+  - `Post.title` -- скалярное поле;
+  - `Post.author` -- вложенный объект.
 
 **Аргументы резолвера** (четыре стандартных):
 
@@ -505,12 +498,12 @@ public class BookController {
 
 Выполнение запроса проходит четыре стадии: текст разбирается в дерево (AST), дерево проверяется по схеме, затем движок обходит его сверху вниз, вызывая резолверы, и в конце собирает JSON-ответ той же формы, что и запрос.
 
-```mermaid
-graph TD
-    A[1. Parsing: текст → AST] --> B[2. Validation: проверка по схеме]
-    B --> C[3. Execution: обход дерева резолверов]
-    C --> D[4. Serialization: формирование JSON-ответа]
-```
+Стадии идут строго по порядку, одна за другой:
+
+1. **Parsing** -- текст запроса разбирается в AST.
+2. **Validation** -- AST проверяется по схеме.
+3. **Execution** -- обход дерева резолверов.
+4. **Serialization** -- формирование JSON-ответа.
 
 **Детали этапа Execution:**
 
@@ -576,14 +569,16 @@ SELECT * FROM authors WHERE id IN (1, 2, 3, ...)  -- 1 запрос
 
 **Принцип работы:**
 
-```mermaid
-graph LR
-    R1[Resolver 1<br/>load id=1] --> DL[DataLoader<br/>собирает id]
-    R2[Resolver 2<br/>load id=2] --> DL
-    R3[Resolver 3<br/>load id=1] --> DL
-    DL -->|batch: 1,2| DB[(Database)]
-    DL -->|id=1 из кэша| R3
-```
+Например, три резолвера независимо запрашивают данные через один `DataLoader`:
+
+- `Resolver 1` -- `load id=1`;
+- `Resolver 2` -- `load id=2`;
+- `Resolver 3` -- `load id=1` (тот же ключ).
+
+`DataLoader` собирает ключи и обрабатывает их так:
+
+- уникальные ключи уходят в БД одним батчем `batch: 1,2`;
+- повторный `id=1` обслуживается из кэша и не попадает в БД (`id=1 из кэша` возвращается в `Resolver 3`).
 
 1. Резолверы вызывают `dataLoader.load(key)` -- запрос откладывается
 2. В конце "тика" (event loop tick) все накопленные ключи передаются в batch-функцию
@@ -907,20 +902,13 @@ spring:
       path: /graphql        # путь для WebSocket subscriptions
 ```
 
-```mermaid
-graph TD
-    C[HTTP Client] -->|POST /graphql| SC[Spring Controller Layer]
-    SC --> GE[GraphQL Engine]
-    GE --> QM["@QueryMapping"]
-    GE --> MM["@MutationMapping"]
-    GE --> SM["@SchemaMapping"]
-    GE --> BM["@BatchMapping"]
-    QM --> S[Service Layer]
-    MM --> S
-    SM --> S
-    BM --> S
-    S --> R[(Repository)]
-```
+Поток обработки запроса по слоям:
+
+- `HTTP Client` шлёт `POST /graphql` в `Spring Controller Layer`.
+- Контроллерный слой передаёт запрос в `GraphQL Engine`.
+- Движок диспетчеризует поле на соответствующий резолвер-метод: `@QueryMapping`, `@MutationMapping`, `@SchemaMapping` или `@BatchMapping`.
+- Любой из этих резолверов обращается к `Service Layer`.
+- Сервисный слой работает с `Repository`.
 
 **Ключевые аннотации:**
 - `@QueryMapping` -- резолвер для Query-полей
@@ -1243,20 +1231,14 @@ public List<Book> books() {
 
 **Persisted Queries** -- механизм, при котором текст `GraphQL`-запроса регистрируется на сервере, а клиент в дальнейшем шлёт только его идентификатор (обычно SHA-256-хэш) вместо полного текста. Сервер по хэшу достаёт сохранённый запрос и выполняет его. Это бьёт сразу по трём болям `GraphQL`: безопасности, размеру запроса и кэшированию.
 
-**Процесс:**
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant S as Server
+**Процесс (на примере Automatic Persisted Queries, APQ),** обмен между `Client` (C) и `Server` (S) по шагам:
 
-    Note over C,S: Automatic Persisted Queries (APQ)
-    C->>S: GET /graphql?extensions={"persistedQuery":{"sha256Hash":"abc123"}}
-    S-->>C: PersistedQueryNotFound
-    C->>S: POST /graphql {query: "...", extensions: {"persistedQuery":{"sha256Hash":"abc123"}}}
-    S-->>C: {data: {...}} + сохраняет хэш
-    C->>S: GET /graphql?extensions={"persistedQuery":{"sha256Hash":"abc123"}}
-    S-->>C: {data: {...}} из кэша
-```
+1. **C → S:** `GET /graphql?extensions={"persistedQuery":{"sha256Hash":"abc123"}}` -- клиент сразу пробует отправить только хэш.
+2. **S → C:** `PersistedQueryNotFound` -- сервер ещё не знает этот запрос.
+3. **C → S:** `POST /graphql {query: "...", extensions: {"persistedQuery":{"sha256Hash":"abc123"}}}` -- клиент досылает полный текст вместе с хэшем.
+4. **S → C:** `{data: {...}}` -- сервер выполняет запрос и **сохраняет хэш**.
+5. **C → S:** `GET /graphql?extensions={"persistedQuery":{"sha256Hash":"abc123"}}` -- при следующем обращении клиент снова шлёт только хэш.
+6. **S → C:** `{data: {...}}` из кэша -- сервер находит запрос по хэшу и выполняет его.
 
 **Преимущества:**
 - **Безопасность:** сервер принимает только зарегистрированные запросы (белый список)
@@ -1276,15 +1258,13 @@ sequenceDiagram
 
 **`GraphQL Federation`** -- архитектурный подход, который собирает единый `GraphQL` API из нескольких микросервисов, где каждый владеет своей частью общей схемы. Клиент видит один graph, а под капотом шлюз (Router) раскладывает запрос по нужным сервисам (subgraph) и сшивает их ответы. Это даёт распределённую разработку без монолитного «графа на всех».
 
-```mermaid
-graph TD
-    C[Client] --> GW[GraphQL Gateway<br/>Apollo Router / Supergraph]
-    GW --> US[Users Service<br/>User, Profile]
-    GW --> PS[Products Service<br/>Product, Category]
-    GW --> OS[Orders Service<br/>Order, Payment]
+Топология выглядит так:
 
-    style GW fill:#f9f,stroke:#333
-```
+- `Client` обращается к единой точке входа -- `GraphQL Gateway` (Apollo Router / Supergraph).
+- Gateway маршрутизирует запрос по сервисам-владельцам частей схемы:
+  - `Users Service` -- типы `User`, `Profile`;
+  - `Products Service` -- типы `Product`, `Category`;
+  - `Orders Service` -- типы `Order`, `Payment`.
 
 **Ключевые концепции:**
 
@@ -1462,19 +1442,14 @@ type UploadUrl {
 }
 ```
 
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant G as GraphQL API
-    participant S3 as Object Storage
+Обмен между `Client` (C), `GraphQL API` (G) и `Object Storage` (S3) по шагам:
 
-    C->>G: mutation createUploadUrl(filename: "photo.jpg")
-    G-->>C: {uploadUrl: "https://s3.../presigned", fileId: "abc"}
-    C->>S3: PUT uploadUrl + файл
-    S3-->>C: 200 OK
-    C->>G: mutation attachFile(fileId: "abc", postId: "1")
-    G-->>C: {success: true}
-```
+1. **C → G:** `mutation createUploadUrl(filename: "photo.jpg")`.
+2. **G → C:** `{uploadUrl: "https://s3.../presigned", fileId: "abc"}` -- сервер возвращает pre-signed URL и идентификатор файла.
+3. **C → S3:** `PUT uploadUrl` + сам файл -- клиент загружает бинарные данные напрямую в хранилище.
+4. **S3 → C:** `200 OK`.
+5. **C → G:** `mutation attachFile(fileId: "abc", postId: "1")` -- клиент привязывает загруженный файл к сущности.
+6. **G → C:** `{success: true}`.
 
 **Рекомендация:** используйте signed URL для файлов. `GraphQL` оптимизирован для структурированных данных, а не для бинарных потоков. Подробнее о работе с REST-эндпоинтами для загрузки файлов -- в [вопросах по HTTP & REST](http-rest-interview.md).
 
@@ -1761,22 +1736,15 @@ public class OrderController {
 
 **Что происходит под капотом:**
 
-```mermaid
-sequenceDiagram
-    participant GQL as GraphQL Engine
-    participant DL as DataLoader
-    participant DB as Database
+Обмен между `GraphQL Engine` (GQL), `DataLoader` (DL) и `Database` (DB) по шагам:
 
-    GQL->>DL: load(customerId=1)
-    GQL->>DL: load(customerId=2)
-    GQL->>DL: load(customerId=3)
-    Note over DL: Batch dispatch (конец тика)
-    DL->>DB: SELECT * FROM customers WHERE id IN (1, 2, 3)
-    DB-->>DL: [Customer1, Customer2, Customer3]
-    DL-->>GQL: Customer1
-    DL-->>GQL: Customer2
-    DL-->>GQL: Customer3
-```
+1. **GQL → DL:** `load(customerId=1)`.
+2. **GQL → DL:** `load(customerId=2)`.
+3. **GQL → DL:** `load(customerId=3)` -- движок накапливает запросы по отдельным ключам.
+4. **DL:** *Batch dispatch* в конце тика -- накопленные ключи отправляются одним батчем.
+5. **DL → DB:** `SELECT * FROM customers WHERE id IN (1, 2, 3)`.
+6. **DB → DL:** `[Customer1, Customer2, Customer3]`.
+7. **DL → GQL:** возвращает `Customer1`, `Customer2`, `Customer3` по исходным запросам.
 
 **Результат:** вместо 1 + N запросов — ровно 2 запроса (1 на заказы + 1 батч на клиентов).
 

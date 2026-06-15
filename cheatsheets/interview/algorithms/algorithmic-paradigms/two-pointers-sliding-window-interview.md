@@ -95,13 +95,6 @@ Two Pointers и Sliding Window — два самых полезных патте
 
 ## Q2. (!) Какие виды Two Pointers существуют?
 
-```mermaid
-graph LR
-    A["← Встречные →<br/>left=0, right=n-1"] --> B["Two Sum,<br/>Палиндром"]
-    C["→ Fast/Slow →<br/>оба идут вперёд"] --> D["Cycle detection,<br/>middle node"]
-    E["→→ На двух массивах →<br/>i для arr1, j для arr2"] --> F["Merge sorted,<br/>Intersection"]
-```
-
 Различают четыре разновидности — отличаются тем, **куда и с какой скоростью движутся указатели**:
 
 | Тип | Как движутся | Применение |

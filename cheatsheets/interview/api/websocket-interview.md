@@ -123,18 +123,15 @@ updated: "2026-04-25"
 | Push от сервера | Нет (без SSE/polling) | Да |
 | Протокол | `http://` / `https://` | `ws://` / `wss://` |
 
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant S as Server
-    C->>S: HTTP GET /ws (Upgrade: websocket)
-    S->>C: 101 Switching Protocols
-    Note over C,S: WebSocket соединение установлено
-    C->>S: Frame: "hello"
-    S->>C: Frame: "world"
-    S->>C: Frame: push event
-    C->>S: Frame: close
-```
+**Обмен по шагам** (`C` — Client, `S` — Server):
+
+1. `C → S`: HTTP GET `/ws` с заголовком `Upgrade: websocket`.
+2. `S → C`: `101 Switching Protocols`.
+3. На этом этапе WebSocket-соединение установлено — дальше по тому же сокету идут уже фреймы, а не HTTP.
+4. `C → S`: фрейм `"hello"`.
+5. `S → C`: фрейм `"world"`.
+6. `S → C`: фрейм с push-событием (сервер пишет сам, без запроса клиента).
+7. `C → S`: фрейм `close` — закрытие соединения.
 
 ---
 
@@ -221,21 +218,11 @@ Sec-WebSocket-Protocol: stomp
 | Переподключение | Ручное | Автоматическое | Автоматическое | Ручное |
 | Применение | Чат, реалтайм UI, игры | Нотификации (legacy) | Лента событий | Межсервисный стриминг |
 
-```mermaid
-graph LR
-    subgraph Long Polling
-        LP_C[Client] -->|request| LP_S[Server]
-        LP_S -->|response when event| LP_C
-        LP_C -->|new request| LP_S
-    end
-    subgraph SSE
-        SSE_C[Client] -->|GET /events| SSE_S[Server]
-        SSE_S -->|event stream| SSE_C
-    end
-    subgraph WebSocket
-        WS_C[Client] <-->|frames| WS_S[Server]
-    end
-```
+**Схема обмена по технологиям:**
+
+- **Long Polling:** `Client → Server` (request) → `Server → Client` (response, когда появилось событие) → `Client → Server` (новый request). И так по кругу — каждый ответ требует нового запроса.
+- **SSE:** `Client → Server` (`GET /events`) → `Server → Client` (поток событий, event stream) — одно соединение, данные текут только в одну сторону.
+- **WebSocket:** `Client ↔ Server` — двусторонний обмен фреймами (frames) по одному соединению.
 
 ---
 
@@ -506,14 +493,12 @@ public class GreetingController {
 }
 ```
 
-**Поток обработки:**
-```mermaid
-graph LR
-    Client -->|SEND /app/hello| DispatcherServlet
-    DispatcherServlet --> MessageMapping["@MessageMapping(/hello)"]
-    MessageMapping -->|return Greeting| Broker["/topic/greetings"]
-    Broker -->|MESSAGE| AllSubscribers[Все подписчики]
-```
+**Поток обработки** (по порядку):
+
+1. `Client` отправляет `SEND /app/hello` → попадает в `DispatcherServlet`.
+2. `DispatcherServlet` → вызывает метод `@MessageMapping("/hello")`.
+3. Метод возвращает `Greeting` → результат публикуется в брокер на `/topic/greetings`.
+4. Брокер рассылает `MESSAGE` → всем подписчикам топика.
 
 ---
 
@@ -656,16 +641,15 @@ const stompClient = Stomp.over(socket);
 
 SockJS пробует транспорты сверху вниз и берёт первый рабочий — от самого эффективного (нативный WebSocket) к самому совместимому (polling для древних браузеров). Сначала клиент дёргает `/ws/info`, чтобы понять возможности окружения, затем выбирает транспорт:
 
-```mermaid
-graph TD
-    A[SockJS клиент] -->|1. Пробует| WS[WebSocket]
-    WS -->|недоступен| B[xhr-streaming]
-    B -->|недоступен| C[iframe-eventsource]
-    C -->|недоступен| D[iframe-htmlfile]
-    D -->|недоступен| E[xhr-polling]
-    E -->|недоступен| F[iframe-xhr-polling]
-    F -->|недоступен| G[jsonp-polling]
-```
+**Порядок перебора транспортов** (SockJS-клиент берёт первый доступный, при недоступности переходит к следующему):
+
+1. `WebSocket` (пробует первым) →
+2. `xhr-streaming` →
+3. `iframe-eventsource` →
+4. `iframe-htmlfile` →
+5. `xhr-polling` →
+6. `iframe-xhr-polling` →
+7. `jsonp-polling`.
 
 | Приоритет | Транспорт | Описание |
 |---|---|---|
@@ -758,18 +742,14 @@ public class RabbitMQWebSocketConfig implements WebSocketMessageBrokerConfigurer
 
 **Проблема:** допустим, у нас 3 инстанса. Клиент подключён к A. Событие, которое надо ему доставить, генерируется на инстансе B — но B не знает про этого клиента и физически не имеет с ним соединения. Сообщение теряется.
 
-```mermaid
-graph TD
-    LB[Load Balancer] --> A[Instance A<br/>Client 1, 2]
-    LB --> B[Instance B<br/>Client 3]
-    LB --> C[Instance C<br/>Client 4, 5]
-    A -->|pub/sub| MQ[External Broker<br/>RabbitMQ/Redis]
-    B -->|pub/sub| MQ
-    C -->|pub/sub| MQ
-    MQ -->|broadcast| A
-    MQ -->|broadcast| B
-    MQ -->|broadcast| C
-```
+**Топология решения через брокер:**
+
+- `Load Balancer` распределяет клиентов по инстансам:
+  - `Instance A` — Client 1, 2;
+  - `Instance B` — Client 3;
+  - `Instance C` — Client 4, 5.
+- Каждый инстанс (`A`, `B`, `C`) связан с внешним брокером (`External Broker` — RabbitMQ/Redis) по `pub/sub`.
+- Брокер делает `broadcast` обратно всем инстансам (`A`, `B`, `C`) — каждый доставляет сообщение своим клиентам.
 
 **Решения:**
 
@@ -783,21 +763,14 @@ graph TD
 
 ## Q21. Как работает pub/sub через внешний брокер при горизонтальном масштабировании?
 
-```mermaid
-sequenceDiagram
-    participant C1 as Client1 (→ App1)
-    participant App1
-    participant Broker as RabbitMQ
-    participant App2
-    participant C2 as Client2 (→ App2)
+**Поток сообщений по шагам** (`Client1` подключён к `App1`, `Client2` — к `App2`, брокер — RabbitMQ):
 
-    C1->>App1: SEND /app/chat
-    App1->>Broker: publish /topic/chat
-    Broker->>App1: MESSAGE /topic/chat
-    Broker->>App2: MESSAGE /topic/chat
-    App1->>C1: доставка сообщения
-    App2->>C2: доставка сообщения
-```
+1. `Client1 → App1`: `SEND /app/chat`.
+2. `App1 → Broker`: `publish /topic/chat`.
+3. `Broker → App1`: `MESSAGE /topic/chat`.
+4. `Broker → App2`: `MESSAGE /topic/chat` (тот же топик, второй инстанс тоже подписан).
+5. `App1 → Client1`: доставка сообщения.
+6. `App2 → Client2`: доставка сообщения.
 
 Механика по шагам: каждый инстанс Spring держит с брокером отдельное служебное TCP-соединение (`StompBrokerRelay`) и от имени своих клиентов подписывается на нужные топики. Когда клиент C1 на App1 шлёт сообщение, App1 не рассылает его сам, а публикует в брокер. Брокер видит, что на этот топик подписаны и App1, и App2, и отправляет копию обоим. Каждый инстанс дальше доставляет сообщение только тем WebSocket-клиентам, что подключены именно к нему. Так C2 на App2 получает сообщение, хотя физически с App1 не связан.
 
