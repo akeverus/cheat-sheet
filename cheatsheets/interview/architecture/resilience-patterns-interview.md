@@ -117,14 +117,11 @@ updated: "2026-05-05"
 
 Паттерны отказоустойчивости нужны потому, что в распределённой системе сбои -- не исключение, а норма: сеть ненадёжна, сервисы перегружаются, базы данных тормозят. Главная опасность -- не сам по себе единичный отказ, а **каскадный сбой** (cascading failure): отказ одного компонента "заваливает" все зависимые сервисы по цепочке, и падает вся система целиком, хотя сломалось лишь одно звено.
 
-```mermaid
-graph LR
-    A[Клиент] --> B[API Gateway]
-    B --> C[Сервис A]
-    C --> D[Сервис B ❌]
-    C -.->|Таймаут, потоки заняты| E[Сбой сервиса A]
-    E -.->|Каскадный эффект| F[Сбой Gateway]
-```
+Как разворачивается каскадный сбой по цепочке вызовов:
+
+- `Клиент` → `API Gateway` → `Сервис A` → `Сервис B` ❌ (отказал).
+- `Сервис A` упирается в недоступный `Сервис B`: таймаут, потоки заняты → сбой `Сервиса A`.
+- Каскадный эффект распространяется дальше: сбой `Сервиса A` → сбой `Gateway`.
 
 Каждый паттерн закрывает свой класс проблем, а вместе они решают три ключевые задачи:
 
@@ -184,14 +181,12 @@ graph LR
 
 `Circuit Breaker` -- это конечный автомат с тремя основными состояниями. Логика проста: пока всё хорошо -- пропускаем трафик; когда ошибок стало слишком много -- блокируем его на время; затем осторожно проверяем, не пора ли вернуться к нормальной работе.
 
-```mermaid
-stateDiagram-v2
-    [*] --> CLOSED
-    CLOSED --> OPEN: Порог ошибок превышен\n(failureRateThreshold)
-    OPEN --> HALF_OPEN: Истёк waitDurationInOpenState
-    HALF_OPEN --> CLOSED: Пробные вызовы успешны\n(ниже порога ошибок)
-    HALF_OPEN --> OPEN: Пробные вызовы провалились\n(порог ошибок превышен)
-```
+Переходы автомата (начальное состояние -- `CLOSED`):
+
+- `CLOSED` → `OPEN`: порог ошибок превышен (`failureRateThreshold`).
+- `OPEN` → `HALF_OPEN`: истёк `waitDurationInOpenState`.
+- `HALF_OPEN` → `CLOSED`: пробные вызовы успешны (доля ошибок ниже порога).
+- `HALF_OPEN` → `OPEN`: пробные вызовы провалились (порог ошибок превышен).
 
 ### Состояния:
 
@@ -554,24 +549,16 @@ resilience4j:
 
 Проблема, которую он решает: по умолчанию все исходящие вызовы делят один общий пул потоков. Стоит одной зависимости начать отвечать по 30 секунд -- и все потоки уходят на ожидание именно её, а вызовы ко всем остальным (исправным) сервисам встают в очередь и тоже начинают падать.
 
-```mermaid
-graph TB
-    subgraph "Без Bulkhead"
-        A1[Все запросы] --> P1[Общий пул потоков 200]
-        P1 --> S1[Сервис A]
-        P1 --> S2[Сервис B ❌ медленный]
-        P1 -.->|Все 200 потоков заняты<br>ожиданием Сервиса B| S3[Сервис C недоступен]
-    end
+**Без `Bulkhead`** -- все запросы делят один общий пул потоков (200):
 
-    subgraph "С Bulkhead"
-        A2[Все запросы] --> P2[Пул A: 50 потоков]
-        A2 --> P3[Пул B: 50 потоков]
-        A2 --> P4[Пул C: 50 потоков]
-        P2 --> S4[Сервис A ✅]
-        P3 --> S5[Сервис B ❌]
-        P4 --> S6[Сервис C ✅]
-    end
-```
+- Все запросы → общий пул потоков (200) → `Сервис A`, `Сервис B` ❌ (медленный), `Сервис C`.
+- Все 200 потоков заняты ожиданием `Сервиса B` → `Сервис C` становится недоступен (потоков для него не остаётся).
+
+**С `Bulkhead`** -- у каждого сервиса свой отдельный пул:
+
+- Все запросы → пул A (50 потоков) → `Сервис A` ✅.
+- Все запросы → пул B (50 потоков) → `Сервис B` ❌.
+- Все запросы → пул C (50 потоков) → `Сервис C` ✅.
 
 Без `Bulkhead`: медленный Сервис B может занять все потоки, и сервисы A и C тоже станут недоступны. С `Bulkhead`: каждый сервис получает свою "квоту" ресурсов, и проблемы одного не влияют на другие.
 
@@ -969,15 +956,6 @@ Retry → CircuitBreaker → RateLimiter → TimeLimiter → Bulkhead → Functi
 4. **`CircuitBreaker`** -- проверяет, не открыт ли circuit, и записывает результат в окно.
 5. **`Retry`** -- самый внешний слой: оборачивает всю цепочку и при ошибке повторяет её целиком.
 
-```mermaid
-graph LR
-    R[Retry] --> CB[CircuitBreaker]
-    CB --> RL[RateLimiter]
-    RL --> TL[TimeLimiter]
-    TL --> BH[Bulkhead]
-    BH --> F[Функция]
-```
-
 **Почему такой порядок важен:**
 - `Retry` снаружи `CircuitBreaker` -- повторная попытка может увидеть, что circuit уже открыт, и сразу получить `CallNotPermittedException`
 - `Bulkhead` внутри -- каждая retry-попытка проверяет наличие свободных ресурсов
@@ -996,25 +974,18 @@ Supplier<Response> decorated = Decorators.ofSupplier(() -> service.call())
 
 Комбинация `Circuit Breaker` + `Retry` -- самая распространённая, и на собеседовании любят спрашивать про их взаимодействие. Связка работает так: `Retry` повторяет вызов, а `Circuit Breaker` следит, не пора ли вообще прекратить попытки. Каждая попытка retry проходит сквозь circuit и учитывается в его статистике.
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Retry
-    participant CircuitBreaker
-    participant Service
+Поток взаимодействия `Client` → `Retry` → `CircuitBreaker` → `Service` по шагам:
 
-    Client->>Retry: Запрос
-    Retry->>CircuitBreaker: Попытка 1
-    CircuitBreaker->>Service: Вызов (CB CLOSED)
-    Service-->>CircuitBreaker: Ошибка 500
-    CircuitBreaker-->>Retry: IOException
-
-    Retry->>CircuitBreaker: Попытка 2 (после backoff)
-    CircuitBreaker->>Service: Вызов (CB CLOSED)
-    Service-->>CircuitBreaker: OK 200
-    CircuitBreaker-->>Retry: Успех
-    Retry-->>Client: Результат
-```
+1. `Client` → `Retry`: запрос.
+2. `Retry` → `CircuitBreaker`: попытка 1.
+3. `CircuitBreaker` → `Service`: вызов (CB `CLOSED`).
+4. `Service` → `CircuitBreaker`: ошибка 500.
+5. `CircuitBreaker` → `Retry`: `IOException`.
+6. `Retry` → `CircuitBreaker`: попытка 2 (после backoff).
+7. `CircuitBreaker` → `Service`: вызов (CB `CLOSED`).
+8. `Service` → `CircuitBreaker`: OK 200.
+9. `CircuitBreaker` → `Retry`: успех.
+10. `Retry` → `Client`: результат.
 
 **Ключевые моменты:**
 
@@ -1521,17 +1492,19 @@ public class DatabaseHealthIndicator implements HealthIndicator {
 
 **Разница liveness vs readiness:**
 
-```mermaid
-stateDiagram-v2
-    [*] --> Starting: Pod started
-    Starting --> Ready: Startup probe OK
-    Ready --> NotReady: Readiness fails\n(DB connection lost)
-    NotReady --> Ready: Readiness recovers
-    Ready --> Restarting: Liveness fails\n(deadlock detected)
-    Restarting --> Starting: Container restart
-    note right of NotReady: Трафик не идёт,\nпод не убивают
-    note right of Restarting: Kubernetes\nперезапускает контейнер
-```
+Жизненный цикл пода и переходы между состояниями:
+
+- `Pod started` → `Starting`.
+- `Starting` → `Ready`: startup probe прошёл.
+- `Ready` → `NotReady`: readiness fails (потеряно соединение с БД).
+- `NotReady` → `Ready`: readiness восстановился.
+- `Ready` → `Restarting`: liveness fails (обнаружен deadlock).
+- `Restarting` → `Starting`: контейнер перезапущен.
+
+Пометки к состояниям:
+
+- `NotReady`: трафик не идёт, под не убивают.
+- `Restarting`: Kubernetes перезапускает контейнер.
 
 **Правило:** liveness проверяет только состояние самого процесса (нет deadlock, нет OOM), readiness — зависимости (БД, кэш, downstream-сервисы).
 
@@ -1569,22 +1542,15 @@ lifecycle:
 terminationGracePeriodSeconds: 60       # суммарное время на завершение
 ```
 
-**Последовательность graceful shutdown в Spring Boot:**
+**Последовательность graceful shutdown в Spring Boot** (`Kubernetes` → `Spring Boot App`, параллельно с `Load Balancer`):
 
-```mermaid
-sequenceDiagram
-    participant K8s as Kubernetes
-    participant App as Spring Boot App
-    participant LB as Load Balancer
-
-    K8s->>App: SIGTERM
-    K8s->>LB: Remove pod from endpoints
-    App->>App: preStop hook (sleep 5s)
-    App->>App: Reject new requests (readiness=DOWN)
-    App->>App: Process in-flight requests (max 30s)
-    App->>App: Close DB connections, consumers
-    App->>K8s: Process exited (code 0)
-```
+1. `Kubernetes` → `App`: `SIGTERM`.
+2. `Kubernetes` → `Load Balancer`: убрать pod из endpoints.
+3. `App`: preStop hook (`sleep 5s`).
+4. `App`: отклоняет новые запросы (`readiness=DOWN`).
+5. `App`: дорабатывает in-flight запросы (максимум 30s).
+6. `App`: закрывает соединения с БД и consumers.
+7. `App` → `Kubernetes`: процесс завершился (код 0).
 
 **Кастомные shutdown hooks для Kafka-потребителей:**
 
@@ -1610,18 +1576,13 @@ public class KafkaConsumerShutdown {
 
 **Проблема, которую он решает** -- редкие, но болезненные "хвосты": p99-латентность в 5-10 раз превышает медиану из-за GC-пауз, перегрузки отдельных инстансов, сетевых флуктуаций. Большинству запросов быстро, но невезучим -- очень медленно, и именно они портят SLA. Hedged request "страхует" клиента от попадания на конкретный затормозивший инстанс.
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant S1 as Service Instance 1 (slow)
-    participant S2 as Service Instance 2
+Поток hedged-запроса (`Client`, `Service Instance 1` -- медленный, `Service Instance 2`):
 
-    Client->>S1: Request
-    Note over Client,S1: Ждём 50ms...
-    Client->>S2: Hedged Request (если S1 не ответил)
-    S2-->>Client: Response (200ms) ← победитель
-    Client->>S1: Cancel (если S1 ещё обрабатывает)
-```
+1. `Client` → `Service Instance 1`: запрос.
+2. Пометка: ждём 50ms...
+3. `Client` → `Service Instance 2`: hedged-запрос (если `Service Instance 1` не ответил).
+4. `Service Instance 2` → `Client`: ответ (200ms) -- победитель.
+5. `Client` → `Service Instance 1`: cancel (если `Service Instance 1` ещё обрабатывает).
 
 **Реализация с `CompletableFuture` и `ExecutorService`:**
 

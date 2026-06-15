@@ -104,14 +104,14 @@ updated: "2026-05-21"
 
 `Reverse proxy` — сервер, который принимает HTTP/TCP-запросы от клиентов и пересылает их одному или нескольким backend-сервисам, выдавая ответы обратно клиенту так, будто он сам их сгенерировал. Backend-серверы при этом не имеют прямого сетевого контакта с клиентом — публичный IP/DNS принадлежит только прокси.
 
-```mermaid
-flowchart LR
-    C1[Client A] -->|HTTPS :443| RP[Reverse Proxy<br/>Nginx / HAProxy / Envoy]
-    C2[Client B] -->|HTTPS :443| RP
-    RP -->|HTTP :8080| B1[Backend service-api]
-    RP -->|HTTP :9000| B2[Backend service-auth]
-    RP -->|HTTP :3000| B3[Backend service-search]
-```
+Поток запросов выглядит так:
+
+- `Client A` и `Client B` → по `HTTPS :443` → `Reverse Proxy` (`Nginx` / `HAProxy` / `Envoy`).
+- `Reverse Proxy` → по `HTTP :8080` → `Backend service-api`.
+- `Reverse Proxy` → по `HTTP :9000` → `Backend service-auth`.
+- `Reverse Proxy` → по `HTTP :3000` → `Backend service-search`.
+
+То есть несколько клиентов стучатся на один публичный `:443`, а прокси разводит их по разным backend-сервисам, каждый на своём порту.
 
 **Зачем нужен:**
 
@@ -143,20 +143,11 @@ flowchart LR
 
 Грань размытая: на практике большинство современных reverse proxy умеют балансировать, а большинство load balancer'ов работают как reverse proxy. Различие — в акценте.
 
-```mermaid
-flowchart LR
-    subgraph LB[Load Balancer]
-        LB1[Распределение трафика<br/>между N серверами<br/>+ health-check]
-    end
-    subgraph RP[Reverse Proxy]
-        RP1[TLS termination<br/>Caching<br/>Routing по URL<br/>Header rewriting<br/>Rate limiting]
-    end
-    subgraph BOTH[Пересечение]
-        BOTH1[Nginx / HAProxy / Envoy<br/>делают и то и другое]
-    end
-    LB --> BOTH
-    RP --> BOTH
-```
+Если разложить роли по акцентам:
+
+- **Load Balancer** — распределение трафика между N серверами + health-check.
+- **Reverse Proxy** — TLS termination, caching, routing по URL, header rewriting, rate limiting.
+- **Пересечение** — `Nginx` / `HAProxy` / `Envoy` делают и то и другое: обе ветки сходятся в этих продуктах.
 
 | Чистый load balancer | Чистый reverse proxy |
 |---|---|
@@ -624,24 +615,18 @@ static_resources:
 
 В `Istio` / `Linkerd` / `Consul Connect` каждый pod получает свой Envoy-контейнер (sidecar). Весь трафик pod-а (входящий и исходящий) проходит через него.
 
-```mermaid
-flowchart LR
-    subgraph Pod1[Pod: order-service]
-        APP1[App container]
-        ENV1[Envoy sidecar]
-    end
-    subgraph Pod2[Pod: payment-service]
-        ENV2[Envoy sidecar]
-        APP2[App container]
-    end
+Топология выглядит так. Есть два pod-а:
 
-    APP1 -->|localhost| ENV1
-    ENV1 -->|mTLS| ENV2
-    ENV2 -->|localhost| APP2
+- `Pod: order-service` — содержит `App container` и `Envoy sidecar`.
+- `Pod: payment-service` — содержит `Envoy sidecar` и `App container`.
 
-    CP[Istio Control Plane<br/>Pilot / Citadel] -.xDS gRPC.-> ENV1
-    CP -.xDS gRPC.-> ENV2
-```
+Путь запроса между сервисами:
+
+1. `App container` (order-service) → по `localhost` → свой `Envoy sidecar`.
+2. `Envoy sidecar` (order-service) → по `mTLS` → `Envoy sidecar` (payment-service).
+3. `Envoy sidecar` (payment-service) → по `localhost` → `App container` (payment-service).
+
+Параллельно `Istio Control Plane` (`Pilot` / `Citadel`) пушит конфигурацию обоим sidecar-ам по `xDS gRPC`.
 
 **Что даёт sidecar-подход:**
 
@@ -737,17 +722,10 @@ spec:
 
 Два способа обработать HTTPS на reverse proxy. При **termination** прокси сам расшифровывает TLS и видит запрос открытым; при **passthrough** — пропускает зашифрованный TCP насквозь, не вскрывая. Выбор определяет, доступны ли L7-функции прокси.
 
-```mermaid
-flowchart LR
-    subgraph Term[SSL Termination]
-        C1[Client] -->|HTTPS| P1[Proxy]
-        P1 -->|HTTP plain| B1[Backend]
-    end
-    subgraph Pass[SSL Passthrough]
-        C2[Client] -->|HTTPS| P2[Proxy<br/>L4 forward]
-        P2 -->|HTTPS encrypted| B2[Backend]
-    end
-```
+Два потока наглядно различаются тем, где обрывается шифрование:
+
+- **SSL Termination:** `Client` → по `HTTPS` → `Proxy` → по `HTTP plain` → `Backend`. Прокси расшифровывает TLS, и до backendа трафик идёт открытым HTTP.
+- **SSL Passthrough:** `Client` → по `HTTPS` → `Proxy` (`L4 forward`) → по `HTTPS encrypted` → `Backend`. Прокси лишь форвардит зашифрованный TCP, backend сам терминирует TLS.
 
 | Аспект | SSL Termination | SSL Passthrough |
 |---|---|---|

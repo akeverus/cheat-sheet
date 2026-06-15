@@ -113,25 +113,12 @@ updated: "2026-05-08"
 
 Исторически паттерн описан в статье Hector Garcia-Molina и Kenneth Salem (1987) для long-running transactions в базах данных; в микросервисную эпоху его адаптировал Chris Richardson.
 
-```mermaid
-graph LR
-    Start([Начало]) --> T1[T1: Создать заказ]
-    T1 --> T2[T2: Зарезервировать товар]
-    T2 --> T3[T3: Списать оплату]
-    T3 --> T4[T4: Отправить]
-    T4 --> Done([Успех])
+**Прямой путь (happy path):**
+- `Начало` → `T1: Создать заказ` → `T2: Зарезервировать товар` → `T3: Списать оплату` → `T4: Отправить` → `Успех`
 
-    T3 -.fail.-> C2[C2: Вернуть товар]
-    C2 -.-> C1[C1: Отменить заказ]
-    C1 -.-> Failed([Откат])
-
-    style T1 fill:#cde
-    style T2 fill:#cde
-    style T3 fill:#cde
-    style T4 fill:#cde
-    style C1 fill:#fcc
-    style C2 fill:#fcc
-```
+**Путь компенсаций при сбое** (например, `T3: Списать оплату` падает -- ветка `fail`):
+- от упавшего `T3` запускается `C2: Вернуть товар` → затем `C1: Отменить заказ` → `Откат`
+- то есть компенсации идут в обратном порядке относительно выполненных шагов `T1`, `T2`
 
 **Зачем нужен:**
 - В микросервисах каждый сервис владеет своей БД (`Database per Service`), поэтому единая ACID-транзакция поверх нескольких БД невозможна в принципе
@@ -195,23 +182,18 @@ public class OrderService {
 
 **Semantic consistency** (семантическая согласованность) -- система приходит к согласованности в конечном счёте, по бизнес-смыслу. Промежуточные состояния допустимы и наблюдаемы (заказ `PENDING`, товар «временно зарезервирован»), но бизнес-инвариант всегда соблюдается: процесс завершается либо полным успехом, либо полным откатом через компенсации. Несогласованность -- временная и ограниченная, «потерянных» денег или товара в финале не остаётся.
 
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant O as Order Service
-    participant I as Inventory Service
-    participant P as Payment Service
-    C->>O: POST /orders
-    O->>O: Order(PENDING)
-    O-->>C: 202 Accepted
-    Note over O,I: время t1: Order=PENDING, Inventory=resv
-    O->>I: ReserveItems
-    I-->>O: Reserved
-    O->>P: Charge
-    P-->>O: Charged
-    O->>O: Order(CONFIRMED)
-    Note over C: клиенту нужно polling/webhook для финального статуса
-```
+Поток по порядку (участники: `Client`, `Order Service`, `Inventory Service`, `Payment Service`):
+
+1. `Client` → `Order Service`: `POST /orders`
+2. `Order Service` создаёт `Order(PENDING)` локально
+3. `Order Service` → `Client`: `202 Accepted`
+4. *Заметка (момент t1):* `Order=PENDING`, `Inventory=resv` -- промежуточное состояние уже наблюдаемо
+5. `Order Service` → `Inventory Service`: `ReserveItems`
+6. `Inventory Service` → `Order Service`: `Reserved`
+7. `Order Service` → `Payment Service`: `Charge`
+8. `Payment Service` → `Order Service`: `Charged`
+9. `Order Service` переводит заказ в `Order(CONFIRMED)`
+10. *Заметка про клиента:* клиенту нужно polling/webhook, чтобы узнать финальный статус
 
 На собеседовании важно подчеркнуть: `Saga` требует переосмысления UX -- клиент получает 202 Accepted + идентификатор саги, статус узнаёт через polling/SSE/webhook.
 
@@ -219,24 +201,18 @@ sequenceDiagram
 
 В orchestration-based Saga есть **центральный координатор** (`Saga Orchestrator`), который хранит состояние процесса и по очереди отправляет командные сообщения участникам, дожидаясь ответа (`reply`). На основании ответов оркестратор решает, какой шаг выполнить дальше и какие компенсации запустить при ошибке.
 
-```mermaid
-sequenceDiagram
-    participant O as Orchestrator
-    participant Ord as Order Service
-    participant Inv as Inventory
-    participant Pay as Payment
+Пример обмена сообщениями со сбоем платежа (участники: `Orchestrator`, `Order Service`, `Inventory`, `Payment`):
 
-    O->>Ord: CreateOrderCmd
-    Ord-->>O: OrderCreated
-    O->>Inv: ReserveItemsCmd
-    Inv-->>O: ItemsReserved
-    O->>Pay: ChargeCmd
-    Pay-->>O: PaymentFailed
-    O->>Inv: ReleaseItemsCmd (компенсация)
-    Inv-->>O: ItemsReleased
-    O->>Ord: CancelOrderCmd (компенсация)
-    Ord-->>O: OrderCancelled
-```
+1. `Orchestrator` → `Order Service`: `CreateOrderCmd`
+2. `Order Service` → `Orchestrator`: `OrderCreated`
+3. `Orchestrator` → `Inventory`: `ReserveItemsCmd`
+4. `Inventory` → `Orchestrator`: `ItemsReserved`
+5. `Orchestrator` → `Payment`: `ChargeCmd`
+6. `Payment` → `Orchestrator`: `PaymentFailed`
+7. `Orchestrator` → `Inventory`: `ReleaseItemsCmd` (компенсация)
+8. `Inventory` → `Orchestrator`: `ItemsReleased`
+9. `Orchestrator` → `Order Service`: `CancelOrderCmd` (компенсация)
+10. `Order Service` → `Orchestrator`: `OrderCancelled`
 
 Главное отличие от хореографии: знание о том, «какой шаг идёт следующим и что делать при ошибке», собрано в одном месте, а не размазано по участникам.
 
@@ -345,19 +321,15 @@ public class CreateOrderSagaManager {
 
 В choreography-based Saga **нет центрального координатора**: каждый сервис публикует доменные события после своей локальной транзакции, а другие сервисы подписываются на эти события и реагируют. Координация распределена между участниками.
 
-```mermaid
-graph LR
-    A[Order Service] -->|OrderCreated| B[(Kafka)]
-    B --> C[Inventory Service]
-    C -->|ItemsReserved| B
-    B --> D[Payment Service]
-    D -->|PaymentCharged| B
-    B --> A
-    D -.PaymentFailed.-> B
-    B -.-> C
-    C -->|ItemsReleased| B
-    B --> A
-```
+Связи между участниками через `Kafka` (брокер выступает хабом, все события проходят через него):
+
+- `Order Service` --(`OrderCreated`)→ `Kafka` → `Inventory Service`
+- `Inventory Service` --(`ItemsReserved`)→ `Kafka` → `Payment Service`
+- `Payment Service` --(`PaymentCharged`)→ `Kafka` → `Order Service`
+
+Ветка сбоя:
+- `Payment Service` --(`PaymentFailed`)→ `Kafka` → `Inventory Service`
+- `Inventory Service` --(`ItemsReleased`)→ `Kafka` → `Order Service`
 
 **Пример flow `PlaceOrder`:**
 1. `Order Service` сохраняет `Order(PENDING)` и публикует `OrderCreated`
@@ -462,14 +434,15 @@ Chris Richardson выделяет три типа локальных транз�
 **3. Retryable transactions** -- шаги после pivot, которые ТОЛЬКО retry до успеха (никогда не падают бизнесово).
 - Пример: «отправить email», «начислить бонусы», «обновить аналитику»
 
-```mermaid
-graph LR
-    T1[T1 compensable<br/>Create Order] --> T2[T2 compensable<br/>Reserve Inventory]
-    T2 --> T3[T3 PIVOT<br/>Charge Payment]
-    T3 --> T4[T4 retryable<br/>Send Email]
-    T4 --> T5[T5 retryable<br/>Update Analytics]
-    style T3 fill:#fc9
-```
+Пример последовательности шагов с их типами (по порядку слева направо):
+
+- `T1` compensable -- `Create Order`
+- `T2` compensable -- `Reserve Inventory`
+- `T3` **PIVOT** -- `Charge Payment` (точка невозврата)
+- `T4` retryable -- `Send Email`
+- `T5` retryable -- `Update Analytics`
+
+До `T3` все шаги компенсируемые, на `T3` -- pivot, после него -- только retryable.
 
 Эта классификация помогает при проектировании: всё, что не вернуть -- pushni вправо за pivot.
 
@@ -611,22 +584,17 @@ public class Order {
 - **Confirm** -- финализировать (спишем удержанные 100 ₽)
 - **Cancel** -- освободить резерв (снимем удержание 100 ₽)
 
-```mermaid
-sequenceDiagram
-    participant O as Orchestrator
-    participant Inv as Inventory
-    participant Pay as Payment
+Поток для happy path (участники: `Orchestrator`, `Inventory`, `Payment`):
 
-    Note over O: Try phase
-    O->>Inv: Try(reserve items)
-    Inv-->>O: OK
-    O->>Pay: Try(authorize payment)
-    Pay-->>O: OK
+**Try phase:**
+1. `Orchestrator` → `Inventory`: `Try(reserve items)` → ответ `OK`
+2. `Orchestrator` → `Payment`: `Try(authorize payment)` → ответ `OK`
 
-    Note over O: Confirm phase
-    O->>Inv: Confirm(commit reservation)
-    O->>Pay: Confirm(capture payment)
-```
+**Confirm phase:**
+3. `Orchestrator` → `Inventory`: `Confirm(commit reservation)`
+4. `Orchestrator` → `Payment`: `Confirm(capture payment)`
+
+(если бы на Try-фазе кто-то ответил отказом, вместо Confirm пошла бы фаза Cancel с освобождением резервов.)
 
 **Saga vs TCC:**
 
@@ -729,14 +697,12 @@ Outbox решает проблему «dual write»: оркестратору н
 
 **Решение -- Outbox pattern:**
 
-```mermaid
-graph LR
-    S[Saga Orchestrator] -->|INSERT saga_state<br/>INSERT outbox| DB[(Service DB)]
-    DB -->|CDC / poll| R[Relay / Debezium]
-    R --> K[(Kafka)]
-    K --> P1[Inventory Service]
-    K --> P2[Payment Service]
-```
+Поток данных:
+
+- `Saga Orchestrator` --(одна транзакция: `INSERT saga_state` + `INSERT outbox`)→ `Service DB`
+- `Service DB` --(`CDC / poll`)→ `Relay / Debezium`
+- `Relay / Debezium` → `Kafka`
+- `Kafka` → `Inventory Service` и `Payment Service`
 
 ```java
 @Transactional
@@ -1199,15 +1165,14 @@ public void on(ReserveItemsTimeoutEvent event) {
 - State Saga хранится отдельно (как process manager), может сам быть event-sourced
 - Проекции для read model обновляются из тех же событий независимо от Saga
 
-```mermaid
-graph LR
-    C[Command] --> A[Aggregate]
-    A -->|events| ES[(Event Store)]
-    ES --> S[Saga]
-    S -->|commands| A2[Other Aggregate]
-    A2 -->|events| ES
-    ES --> P[Projection / Read Model]
-```
+Поток в связке CQRS + Event Sourcing:
+
+- `Command` → `Aggregate`
+- `Aggregate` --(`events`)→ `Event Store`
+- `Event Store` → `Saga`
+- `Saga` --(`commands`)→ `Other Aggregate`
+- `Other Aggregate` --(`events`)→ `Event Store`
+- `Event Store` → `Projection / Read Model`
 
 В `Axon Framework` всё это работает нативно: Saga -- first-class citizen наряду с Aggregate и Projection. Детали -- в [CQRS + Event Sourcing](cqrs-event-sourcing-interview.md).
 
