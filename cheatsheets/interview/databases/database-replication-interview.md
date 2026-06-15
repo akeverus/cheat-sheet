@@ -132,31 +132,18 @@ updated: "2026-05-21"
 
 Существуют три фундаментальные модели, и различаются они одним вопросом — **кто имеет право принимать запись**: один узел, несколько или вообще любой.
 
-```mermaid
-flowchart LR
-  subgraph SL["Single-leader"]
-    C1[Client] --> L1[Leader]
-    L1 --> R1[Replica 1]
-    L1 --> R2[Replica 2]
-  end
+Топологии трёх моделей (узлы и направления связей):
 
-  subgraph ML["Multi-leader"]
-    C2[Client] --> L2A[Leader A]
-    C2 --> L2B[Leader B]
-    L2A <--> L2B
-    L2A --> R3[Replica]
-    L2B --> R4[Replica]
-  end
-
-  subgraph LL["Leaderless"]
-    C3[Client] --> N1[Node 1]
-    C3 --> N2[Node 2]
-    C3 --> N3[Node 3]
-    N1 <--> N2
-    N2 <--> N3
-    N1 <--> N3
-  end
-```
+- **Single-leader**:
+  - `Client` → `Leader` (все записи идут в единственного лидера).
+  - `Leader` → `Replica 1` и `Leader` → `Replica 2` (лидер транслирует изменения репликам в одну сторону).
+- **Multi-leader**:
+  - `Client` пишет в `Leader A` и в `Leader B` (любой из лидеров).
+  - `Leader A` ↔ `Leader B` (лидеры обмениваются изменениями в обе стороны).
+  - `Leader A` → `Replica` и `Leader B` → `Replica` (каждый лидер кормит свою реплику).
+- **Leaderless**:
+  - `Client` обращается к `Node 1`, `Node 2` и `Node 3` напрямую (любой узел принимает запрос).
+  - Все узлы связаны между собой в обе стороны (полная сетка): `Node 1` ↔ `Node 2`, `Node 2` ↔ `Node 3`, `Node 1` ↔ `Node 3`.
 
 | Модель | Writes | Reads | Примеры | Конфликты |
 |---|---|---|---|---|
@@ -580,20 +567,15 @@ Client → Coordinator → query R=2 replicas
 - **IO thread** на replica — читает binlog с master и складывает его в локальный **relay log**.
 - **SQL thread** (или несколько workers) на replica — применяет relay log к данным.
 
-```mermaid
-sequenceDiagram
-    participant App as Client
-    participant M as MySQL Master
-    participant R as MySQL Replica
+Поток репликации по шагам (участники: `Client`, `MySQL Master`, `MySQL Replica`):
 
-    App->>M: INSERT / UPDATE
-    M->>M: write to binlog
-    M-->>App: OK (async) или ждёт ACK (semi-sync)
-    M->>R: stream binlog events
-    R->>R: write to relay log
-    R->>R: apply via SQL thread
-    R-->>M: ACK position
-```
+1. `Client` → `MySQL Master`: отправляет `INSERT` / `UPDATE`.
+2. `MySQL Master` → сам себе: пишет изменение в binlog (`write to binlog`).
+3. `MySQL Master` → `Client`: отвечает `OK` сразу (в режиме `async`) либо предварительно ждёт `ACK` от реплики (в режиме `semi-sync`).
+4. `MySQL Master` → `MySQL Replica`: стримит binlog-события (`stream binlog events`).
+5. `MySQL Replica` → сама себе: пишет полученные события в relay log (`write to relay log`).
+6. `MySQL Replica` → сама себе: применяет relay log через SQL thread (`apply via SQL thread`).
+7. `MySQL Replica` → `MySQL Master`: подтверждает применённую позицию (`ACK position`).
 
 **Конфиг master (`my.cnf`):**
 ```ini

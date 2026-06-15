@@ -142,23 +142,13 @@ updated: "2026-04-25"
 
 `Cassandra` использует **peer-to-peer** (masterless) архитектуру: в отличие от `MongoDB` или `HBase`, здесь нет выделенного master-узла. Все узлы равноправны и любой из них может принять запрос на чтение или запись. Это и обеспечивает отсутствие единой точки отказа: падение одного узла не выводит из строя ни запись, ни чтение.
 
-```mermaid
-graph TB
-    subgraph "Cassandra Cluster (Ring)"
-        N1[Node 1<br/>Token: 0-24]
-        N2[Node 2<br/>Token: 25-49]
-        N3[Node 3<br/>Token: 50-74]
-        N4[Node 4<br/>Token: 75-99]
-    end
+**Кольцо узлов (Ring).** Кластер организован в кольцо равноправных узлов, каждый отвечает за свой диапазон токенов:
+- `Node 1` — Token: 0-24
+- `Node 2` — Token: 25-49
+- `Node 3` — Token: 50-74
+- `Node 4` — Token: 75-99
 
-    C[Client] -->|"Любой узел =<br/>координатор"| N1
-    N1 <-->|Gossip| N2
-    N2 <-->|Gossip| N3
-    N3 <-->|Gossip| N4
-    N4 <-->|Gossip| N1
-    N1 <-->|Gossip| N3
-    N2 <-->|Gossip| N4
-```
+`Client` может подключиться к любому узлу — этот узел становится координатором запроса (выделенного координатора нет). Узлы постоянно обмениваются информацией о состоянии через `Gossip`: связи идут не только между соседями по кольцу (`Node 1` ↔ `Node 2` ↔ `Node 3` ↔ `Node 4` ↔ `Node 1`), но и накрест (`Node 1` ↔ `Node 3`, `Node 2` ↔ `Node 4`).
 
 **Основные компоненты кластера:**
 
@@ -176,18 +166,12 @@ graph TB
 
 **Gossip** — peer-to-peer протокол, которым узлы кластера `Cassandra` распространяют друг о друге информацию о состоянии. Раз в секунду каждый узел выбирает 1–3 случайных соседа и обменивается с ними тем, что знает о себе и об остальных. За счёт случайного выбора и эпидемического распространения сведения о любом изменении доходят до всего кластера за логарифмическое число раундов — без центрального реестра узлов.
 
-```mermaid
-sequenceDiagram
-    participant A as Node A
-    participant B as Node B (случайный)
-    participant C as Node C
+**Раунд обмена** (три участника: `Node A`, случайный `Node B`, `Node C`). Каждую секунду `Node A` инициирует обмен с выбранным случайным соседом:
+1. `Node A → Node B`: `SYN` — отправляет свои данные + дайджест о том, что знает про остальных.
+2. `Node B → Node A`: `ACK` — присылает новые данные от себя + запрос недостающих.
+3. `Node A → Node B`: `ACK2` — досылает недостающие данные.
 
-    Note over A: Каждую секунду
-    A->>B: SYN (мои данные + дайджест о других)
-    B->>A: ACK (новые данные от B + запрос недостающих)
-    A->>B: ACK2 (недостающие данные)
-    Note over A,C: Через несколько раундов<br/>информация распространяется<br/>по всему кластеру
-```
+Через несколько таких раундов информация распространяется по всему кластеру (от `Node A` до `Node C` и далее).
 
 **Что передаётся через Gossip:**
 - Состояние узла (UP / DOWN)
@@ -223,18 +207,9 @@ rack=rack1
 
 `Consistent Hashing` — механизм, который решает, на каком узле лежит каждая партиция, и при этом минимизирует переезд данных при изменении состава кластера. Хэш-пространство представляется в виде кольца (диапазон от -2^63 до 2^63-1), и каждому узлу назначается один или несколько **token** — позиций на этом кольце.
 
-```mermaid
-graph LR
-    subgraph "Hash Ring"
-        direction LR
-        T0["Token 0"] --> T25["Token 25"]
-        T25 --> T50["Token 50"]
-        T50 --> T75["Token 75"]
-        T75 --> T0
-    end
+**Кольцо хэшей (Hash Ring).** Токены образуют замкнутое кольцо: `Token 0` → `Token 25` → `Token 50` → `Token 75` → снова `Token 0`. Каждый узел отвечает за свой токен на этом кольце.
 
-    P1["partition_key='user_123'<br/>hash = 37"] -.->|"Попадает в<br/>диапазон 25-50"| T50
-```
+Пример: `partition_key='user_123'` даёт `hash = 37`. Это значение попадает в диапазон 25-50, поэтому за данные отвечает узел с `Token 50` (следующий по часовой стрелке токен).
 
 **Алгоритм:**
 1. Значение `partition_key` хэшируется функцией `Murmur3` (по умолчанию)
@@ -301,12 +276,9 @@ CREATE TABLE ecommerce.orders (
 
 `Primary Key` в `Cassandra` делает сразу два дела: гарантирует уникальность строки и определяет, **где** и **как** данные лежат физически. Он состоит из двух частей — `Partition Key` (на каком узле) и `Clustering Key` (в каком порядке внутри партиции). Понимание этого разделения — ключ к правильному моделированию.
 
-```mermaid
-graph LR
-    PK["PRIMARY KEY ((user_id, region), order_date, order_id)"]
-    PK --> PartK["Partition Key<br/>(user_id, region)<br/>→ Определяет узел"]
-    PK --> ClustK["Clustering Key<br/>(order_date, order_id)<br/>→ Сортировка внутри партиции"]
-```
+**Разбор `PRIMARY KEY ((user_id, region), order_date, order_id)`** на две части:
+- `Partition Key` — `(user_id, region)` → определяет узел, на котором лежат данные.
+- `Clustering Key` — `(order_date, order_id)` → задаёт сортировку строк внутри партиции.
 
 | Понятие | Назначение | Пример |
 |---------|-----------|--------|
@@ -553,18 +525,12 @@ CREATE FUNCTION avg_state(state tuple<int, double>, val double)
 
 Кратко: запись никогда не идёт точечной правкой данных на диске — она всегда дописывается последовательно (в лог и в память), а упорядочивание происходит позже. Это и есть `LSM-tree`, благодаря которому Cassandra так быстра на запись. Тема — одна из любимых на собеседованиях, поэтому важно знать цепочку шагов.
 
-```mermaid
-graph TD
-    Client[Client] -->|1. Write Request| Coord[Coordinator Node]
-    Coord -->|2. Forward| Replica1[Replica 1]
-    Coord -->|2. Forward| Replica2[Replica 2]
-    Coord -->|2. Forward| Replica3[Replica 3]
-
-    subgraph "На каждой реплике"
-        CL[3. Commit Log<br/>sequential write] --> MT[4. Memtable<br/>in-memory]
-        MT -->|5. Flush при<br/>пороге памяти| SST[SSTable<br/>immutable file on disk]
-    end
-```
+**Путь записи (поток):**
+- `Client` → (1. Write Request) → `Coordinator Node`.
+- `Coordinator Node` → (2. Forward) → рассылает запрос на `Replica 1`, `Replica 2`, `Replica 3`.
+- На каждой реплике данные проходят цепочку:
+  - 3. `Commit Log` (sequential write) → 4. `Memtable` (in-memory).
+  - 5. При достижении порога памяти `Memtable` сбрасывается (flush) на диск в `SSTable` (immutable file on disk).
 
 **Шаги записи:**
 1. Клиент отправляет запрос на **координатор**
@@ -584,22 +550,16 @@ graph TD
 
 Чтение в `Cassandra` дороже записи, и причина прямо вытекает из пути записи: одна и та же строка может быть размазана по нескольким `SSTable` плюс свежая версия в `Memtable`. Чтобы вернуть актуальное значение, движок должен найти все её фрагменты и слить их по timestamp — а чтобы не сканировать лишние файлы, на каждом шаге работают фильтры и кэши.
 
-```mermaid
-graph TD
-    Client[Client] -->|1. Read Request| Coord[Coordinator]
-    Coord -->|2. Запрос к репликам| R1[Replica 1]
-    Coord -->|2. Digest request| R2[Replica 2]
-
-    subgraph "На реплике"
-        BF[3. Bloom Filter<br/>SSTable содержит ключ?]
-        BF -->|Возможно да| PC[4. Partition Key Cache]
-        PC --> CI[5. Compression Info]
-        CI --> SST[6. Чтение SSTable]
-        MT[Memtable] --> Merge[7. Merge результатов<br/>по timestamp]
-        SST --> Merge
-        RC[Row Cache] -.->|Cache hit| Merge
-    end
-```
+**Путь чтения (поток):**
+- `Client` → (1. Read Request) → `Coordinator`.
+- `Coordinator` → (2.) → полный запрос к `Replica 1`, digest request к `Replica 2`.
+- На реплике запрос проходит цепочку:
+  - 3. `Bloom Filter` — проверяет, содержит ли `SSTable` ключ. При ответе «возможно да» →
+  - 4. `Partition Key Cache` →
+  - 5. `Compression Info` →
+  - 6. Чтение `SSTable`.
+  - 7. Merge результатов из `SSTable` и `Memtable` по timestamp.
+  - `Row Cache` при cache hit отдаёт строку напрямую в merge (минуя чтение с диска).
 
 **Шаги чтения:**
 1. Координатор определяет реплики и отправляет запросы
@@ -669,23 +629,15 @@ WITH compression = {
 
 **Репликация** — это сколько копий каждой записи Cassandra держит на разных узлах. Чем больше копий, тем выше отказоустойчивость и доступность: данные переживают падение узлов и остаются читаемыми. Число копий задаёт фактор репликации (`RF`) на уровне keyspace, а **стратегия** решает, на какие именно узлы эти копии лягут.
 
-```mermaid
-graph LR
-    subgraph "RF = 3, 6 узлов"
-        N1["Node 1<br/>Data A, F"] 
-        N2["Node 2<br/>Data A, B"]
-        N3["Node 3<br/>Data A, B, C"]
-        N4["Node 4<br/>Data B, C, D"]
-        N5["Node 5<br/>Data C, D, E"]
-        N6["Node 6<br/>Data D, E, F"]
-    end
+**Пример размещения реплик при `RF = 3` и 6 узлах.** Каждый кусок данных лежит на трёх узлах подряд по кольцу:
+- `Node 1` — Data A, F
+- `Node 2` — Data A, B
+- `Node 3` — Data A, B, C
+- `Node 4` — Data B, C, D
+- `Node 5` — Data C, D, E
+- `Node 6` — Data D, E, F
 
-    style N1 fill:#f9f
-    style N2 fill:#f9f
-    style N3 fill:#f9f
-    
-    Note["Data A реплицирована<br/>на Node 1, 2, 3"]
-```
+Так, Data A реплицирована на `Node 1`, `Node 2` и `Node 3`.
 
 **Стратегии репликации:**
 
@@ -821,13 +773,7 @@ nodetool repair ecommerce orders
 
 **Compaction** — фоновое слияние нескольких `SSTable` в один: оно выкидывает перекрытые старые версии и просроченные tombstone и тем самым ускоряет чтение (меньше файлов придётся объединять). Это плата за то, что запись неизменяема и плодит всё новые SSTable. Стратегия компакции выбирается под профиль нагрузки — это её и спрашивают на собеседовании.
 
-```mermaid
-graph LR
-    SST1[SSTable 1] --> Comp[Compaction]
-    SST2[SSTable 2] --> Comp
-    SST3[SSTable 3] --> Comp
-    Comp --> NewSST[Новый SSTable<br/>без дубликатов,<br/>без tombstones]
-```
+**Схема компакции:** несколько входных файлов (`SSTable 1`, `SSTable 2`, `SSTable 3`) подаются на вход `Compaction`, которая на выходе даёт один новый `SSTable` — без дубликатов и без tombstones.
 
 | Стратегия | Когда использовать | Характеристика |
 |-----------|-------------------|----------------|
@@ -907,26 +853,12 @@ IF balance = 1000;
 
 **Как работает LWT (Paxos):**
 
-```mermaid
-sequenceDiagram
-    participant C as Coordinator
-    participant R1 as Replica 1
-    participant R2 as Replica 2
-    participant R3 as Replica 3
-
-    C->>R1: Prepare (ballot)
-    C->>R2: Prepare (ballot)
-    C->>R3: Prepare (ballot)
-    R1-->>C: Promise
-    R2-->>C: Promise
-    C->>R1: Propose (value)
-    C->>R2: Propose (value)
-    R1-->>C: Accept
-    R2-->>C: Accept
-    C->>R1: Commit
-    C->>R2: Commit
-    C->>R3: Commit
-```
+Раунды Paxos (участники: `Coordinator`, `Replica 1`, `Replica 2`, `Replica 3`):
+1. **Prepare.** `Coordinator` шлёт `Prepare (ballot)` на `Replica 1`, `Replica 2`, `Replica 3`.
+2. **Promise.** `Replica 1` и `Replica 2` отвечают `Promise` координатору.
+3. **Propose.** `Coordinator` шлёт `Propose (value)` на `Replica 1` и `Replica 2`.
+4. **Accept.** `Replica 1` и `Replica 2` отвечают `Accept`.
+5. **Commit.** `Coordinator` рассылает `Commit` на `Replica 1`, `Replica 2` и `Replica 3`.
 
 **Подводные камни LWT:**
 - Латентность в **4–6 раз выше** обычной записи — Paxos требует ~4 сетевых раунда вместо одного.
@@ -1507,13 +1439,9 @@ SELECT * FROM events WHERE user_id = ? AND event_ts < ? ORDER BY event_ts DESC L
 
 **Token-aware routing** — политика выбора координатора, при которой драйвер сам вычисляет токен партиции и шлёт запрос **сразу на узел, который её хранит**. Это убирает лишний сетевой хоп: иначе случайный координатор был бы вынужден переслать запрос «правильному» узлу и дождаться его ответа. Координатор перестаёт быть посредником и становится исполнителем.
 
-```mermaid
-graph LR
-    Client -->|"Without token-aware: любой узел"| N1[Node 1 координатор]
-    N1 -->|"внутренний hops"| N3[Node 3 данные]
+**Без token-aware:** `Client` шлёт запрос на любой узел — `Node 1` (координатор), который внутренним хопом пересылает его на `Node 3`, где реально лежат данные.
 
-    Client2[Client] -->|"With token-aware: напрямую"| N3
-```
+**С token-aware:** `Client` шлёт запрос напрямую на `Node 3` (узел с данными), минуя лишний хоп через координатора.
 
 **Настройка в Java Driver v4:**
 
@@ -1629,14 +1557,11 @@ CREATE MATERIALIZED VIEW orders_by_status AS
 
 **Как работает CDC в Cassandra:**
 
-```mermaid
-graph LR
-    App -->|"write"| Cassandra
-    Cassandra -->|"CommitLog"| CDC_Raw[cdc_raw директория]
-    CDC_Raw -->|"Debezium Connector"| Kafka
-    Kafka -->|"consume"| ES[Elasticsearch]
-    Kafka -->|"consume"| DW[Data Warehouse]
-```
+**Поток CDC:**
+- `App` → (write) → `Cassandra`.
+- `Cassandra` → (через `CommitLog`) → каталог `cdc_raw`.
+- `cdc_raw` → (Debezium Connector) → `Kafka`.
+- `Kafka` → (consume) → расходится сразу в двух потребителей: `Elasticsearch` и `Data Warehouse`.
 
 **Включение CDC для таблицы:**
 
