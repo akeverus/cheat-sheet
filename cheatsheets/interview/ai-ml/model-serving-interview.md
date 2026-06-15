@@ -482,13 +482,11 @@ python -m vllm.entrypoints.openai.api_server \
 
 ## Q19. (!) Как горизонтально масштабировать LLM serving?
 
-```mermaid
-graph TD
-    LB[Load Balancer]
-    LB --> P1[vLLM Pod 1<br/>GPU]
-    LB --> P2[vLLM Pod 2<br/>GPU]
-    LB --> P3[vLLM Pod 3<br/>GPU]
-```
+**Топология:** `Load Balancer` раскидывает входящий трафик на несколько одинаковых реплик, каждая из которых сидит на своей GPU:
+
+- `Load Balancer` → `vLLM Pod 1` (GPU)
+- `Load Balancer` → `vLLM Pod 2` (GPU)
+- `Load Balancer` → `vLLM Pod 3` (GPU)
 
 Принцип тот же, что у любого stateless-сервиса: ставим несколько реплик за балансировщиком. Особенность LLM — реплика тяжёлая (целая GPU) и долго стартует.
 

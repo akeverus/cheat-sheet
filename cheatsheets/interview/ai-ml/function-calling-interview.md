@@ -86,22 +86,15 @@ updated: "2026-05-23"
 
 **Function calling** — режим работы LLM, в котором модель вместо обычного текста возвращает **structured JSON** с описанием вызова функции: имя и аргументы. Сам вызов выполняет приложение — модель только **предлагает** что вызвать.
 
-**Базовая идея цикла:**
+**Базовая идея цикла** (участники: `User`, `LLM`, `Tool / Function`):
 
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant L as LLM
-    participant T as Tool / Function
-    U->>L: вопрос ("какая погода в Москве?")
-    L->>L: решает: нужен tool
-    L-->>U: tool_call get_weather(city="Moscow")
-    Note over U,L: приложение перехватывает,<br/>само вызывает функцию
-    U->>T: get_weather("Moscow")
-    T-->>U: {"temp": -3, "wind": 5}
-    U->>L: tool_result {"temp": -3, "wind": 5}
-    L-->>U: "В Москве -3°C, ветер 5 м/с"
-```
+1. `User` → `LLM`: вопрос («какая погода в Москве?»).
+2. `LLM` сам с собой: решает, что нужен tool.
+3. `LLM` → `User`: возвращает `tool_call get_weather(city="Moscow")`. Здесь приложение перехватывает ответ и **само** вызывает функцию (модель код не исполняет).
+4. `User` (приложение) → `Tool`: `get_weather("Moscow")`.
+5. `Tool` → `User`: `{"temp": -3, "wind": 5}`.
+6. `User` → `LLM`: `tool_result {"temp": -3, "wind": 5}`.
+7. `LLM` → `User`: «В Москве -3°C, ветер 5 м/с».
 
 **Ключевой момент:** LLM **не** исполняет код. Она только заполняет аргументы по JSON Schema и возвращает их клиенту — а реальный вызов, безопасность, retry, RBAC остаются на стороне приложения. Это и есть граница ответственности: модель решает «что и с чем вызвать», приложение решает «можно ли и как».
 
@@ -126,17 +119,15 @@ sequenceDiagram
 
 ## Q3. Эволюция function calling в индустрии?
 
-```mermaid
-timeline
-    title Tool use / Function calling: ключевые вехи
-    2023 Jun : OpenAI Functions (1 функция, gpt-3.5/4-0613)
-    2023 Nov : OpenAI Tools (multi-tool, parallel calls, переименование)
-    2024 Apr : Anthropic Tool Use (beta -> GA)
-    2024 May : Gemini Function Calling GA
-    2024 Aug : OpenAI Structured Outputs + strict mode
-    2024 Nov : Anthropic выпускает MCP (стандарт поверх tool use)
-    2025     : MCP становится отраслевым стандартом, native в Claude/Cursor/Windsurf
-```
+Ключевые вехи tool use / function calling по годам:
+
+- **2023, июнь** — OpenAI Functions (1 функция, `gpt-3.5`/`4-0613`).
+- **2023, ноябрь** — OpenAI Tools (multi-tool, parallel calls, переименование).
+- **2024, апрель** — Anthropic Tool Use (beta → GA).
+- **2024, май** — Gemini Function Calling GA.
+- **2024, август** — OpenAI Structured Outputs + strict mode.
+- **2024, ноябрь** — Anthropic выпускает MCP (стандарт поверх tool use).
+- **2025** — MCP становится отраслевым стандартом, native в Claude/Cursor/Windsurf.
 
 Главная мысль: за два года индустрия прошла путь от «одна функция у одного провайдера» до общего стандарта (MCP), и сегодня сосуществуют три «уровня» абстракции — чем выше, тем переносимее:
 1. **Raw function calling** провайдера — OpenAI Tools, Anthropic `tool_use`, Gemini `function_declarations`. Максимум контроля, но код привязан к API конкретного вендора.
@@ -147,18 +138,13 @@ timeline
 
 Tool use — это не «один запрос — один ответ», а **цикл**: приложение крутит обращения к LLM до тех пор, пока модель не перестанет просить tools и не вернёт финальный текст. Каждая итерация добавляет результат вызова обратно в историю сообщений, чтобы на следующем шаге модель видела, что вернула функция.
 
-```mermaid
-flowchart TD
-    A[User message] --> B[Add to messages]
-    B --> C[LLM call с tools]
-    C --> D{stop_reason?}
-    D -->|stop / end_turn| E[Текст ответа -> User]
-    D -->|tool_use / tool_calls| F[Парсим tool_calls]
-    F --> G[Выполняем функции локально]
-    G --> H[Добавляем tool_result в messages]
-    H --> C
-    style D fill:#fff4d6
-```
+Поток цикла по шагам:
+
+1. `User message` → добавляем в `messages`.
+2. Делаем `LLM call` с tools.
+3. Смотрим на `stop_reason` — ветвление:
+   - если `stop` / `end_turn` → отдаём текст ответа `User`, цикл завершён;
+   - если `tool_use` / `tool_calls` → парсим `tool_calls`, выполняем функции локально, добавляем `tool_result` в `messages` и возвращаемся к шагу 2 (новый `LLM call` с tools).
 
 Псевдокод цикла:
 
@@ -513,23 +499,14 @@ Parallel function calling — это когда LLM в **одном** ответ
 }
 ```
 
-```mermaid
-sequenceDiagram
-    participant L as LLM
-    participant A as App
-    participant T1 as get_weather (Moscow)
-    participant T2 as get_weather (SPb)
-    L-->>A: tool_calls = [c1, c2]
-    par parallel
-        A->>T1: city=Moscow
-        T1-->>A: {-3, 5}
-    and
-        A->>T2: city=SPb
-        T2-->>A: {-1, 7}
-    end
-    A->>L: tool_result c1 + tool_result c2
-    L-->>A: "В Москве -3, в Питере -1"
-```
+Поток параллельного вызова (участники: `LLM`, `App`, `get_weather (Moscow)` — обозначим `T1`, `get_weather (SPb)` — `T2`):
+
+1. `LLM` → `App`: `tool_calls = [c1, c2]`.
+2. Дальше `App` выполняет оба вызова **параллельно**:
+   - ветка 1: `App` → `T1` с `city=Moscow`, `T1` → `App`: `{-3, 5}`;
+   - ветка 2 (одновременно): `App` → `T2` с `city=SPb`, `T2` → `App`: `{-1, 7}`.
+3. `App` → `LLM`: `tool_result c1` + `tool_result c2` (оба за один вызов).
+4. `LLM` → `App`: «В Москве -3, в Питере -1».
 
 **Что важно на практике:**
 - Вернуть **все** `tool_result` за один следующий вызов, сопоставив их с id-шниками вызовов. Пропустишь один — API ругнётся.
@@ -663,16 +640,14 @@ Zod в TypeScript устроен так же: `z.object(...)` → JSON Schema + 
 
 **MCP (Model Context Protocol)** — стандарт от Anthropic (Nov 2024) для **переносимого описания tools / resources / prompts**. Function calling — это **транспорт внутри одной LLM-сессии**. MCP — это **протокол между клиентом-агентом и любым MCP-сервером**.
 
-```mermaid
-flowchart LR
-    subgraph Host[Claude / Cursor / любой MCP-client]
-        Agent[LLM Agent]
-    end
-    Agent -- tool_use --> Bridge[MCP bridge]
-    Bridge -- list_tools / call_tool --> MCP1[MCP Server: filesystem]
-    Bridge -- list_tools / call_tool --> MCP2[MCP Server: github]
-    Bridge -- list_tools / call_tool --> MCP3[MCP Server: postgres]
-```
+Схема связей:
+
+- **Host** (`Claude` / `Cursor` / любой MCP-client) содержит внутри `LLM Agent`.
+- `LLM Agent` → через `tool_use` → `MCP bridge`.
+- `MCP bridge` → через `list_tools` / `call_tool` → подключается к нескольким MCP-серверам:
+  - `MCP Server: filesystem`,
+  - `MCP Server: github`,
+  - `MCP Server: postgres`.
 
 Поток показывает, как одно стыкуется с другим:
 1. Host подключается к MCP-серверам и получает их `list_tools`.

@@ -96,22 +96,16 @@ updated: "2026-05-23"
 - [Q29. Cost evaluation: как считать стоимость и латентность?](#q29-cost-evaluation-как-считать-стоимость-и-латентность)
 - [Q30. (!) Pitfalls и антипаттерны LLM eval?](#q30--pitfalls-и-антипаттерны-llm-eval)
 
-```mermaid
-flowchart LR
-    A[LLM output] --> B{Тип эваля}
-    B -->|Offline| C[Benchmarks<br/>MMLU/HumanEval/MT-Bench]
-    B -->|Reference-based| D[Golden dataset<br/>+ exact/BLEU/ROUGE]
-    B -->|Semantic| E[BERTScore<br/>embedding similarity]
-    B -->|Scalable subj| F[LLM-as-Judge<br/>GPT-4/Claude rubric]
-    B -->|Gold standard| G[Human eval]
-    B -->|Online| H[A/B test + user feedback]
-    C --> Z[Decision: ship / fix / rollback]
-    D --> Z
-    E --> Z
-    F --> Z
-    G --> Z
-    H --> Z
-```
+Карта подходов к оценке: от `LLM output` выбираем тип эваля, и все они сходятся к одному решению `Decision: ship / fix / rollback`.
+
+- **Offline** → `Benchmarks` (MMLU / HumanEval / MT-Bench).
+- **Reference-based** → `Golden dataset` + exact / BLEU / ROUGE.
+- **Semantic** → `BERTScore`, embedding similarity.
+- **Scalable subjective** → `LLM-as-Judge` (GPT-4 / Claude rubric).
+- **Gold standard** → `Human eval`.
+- **Online** → A/B test + user feedback.
+
+Любой из этих путей ведёт к решению: ship / fix / rollback.
 
 ## Q1. (!) Зачем оценивать LLM в проде?
 
@@ -321,19 +315,14 @@ LLM-судья — не объективный измеритель, а ещё �
 - Миллионы голосов → самый авторитетный leaderboard «по живому» восприятию.
 - Минус: голосуют энтузиасты, bias к красивому форматированию.
 
-```mermaid
-flowchart LR
-    U[User prompt] --> M1[Model A анон]
-    U --> M2[Model B анон]
-    M1 --> V{Vote}
-    M2 --> V
-    V -->|A win| EA[Update Elo A+, B-]
-    V -->|B win| EB[Update Elo A-, B+]
-    V -->|Tie| TT[Small Elo adjust]
-    EA --> LB[Leaderboard refresh]
-    EB --> LB
-    TT --> LB
-```
+Как работает голосование в Arena по шагам:
+
+1. `User prompt` уходит сразу в две анонимные модели — `Model A` и `Model B`.
+2. Пользователь видит оба ответа и голосует (`Vote`):
+   - **A win** → обновляем Elo: A+, B−.
+   - **B win** → обновляем Elo: A−, B+.
+   - **Tie** → небольшая корректировка Elo (`Small Elo adjust`).
+3. Любой исход голосования ведёт к пересчёту лидерборда (`Leaderboard refresh`).
 
 ## Q15. Что такое rubric / constitutional evaluation?
 
@@ -533,21 +522,15 @@ RAGAS оценивает RAG по двум независимым слоям —
 | **Answer Correctness** | Содержательная и фактическая близость к reference | Нужен ground truth |
 | **Noise Sensitivity** | Меняется ли ответ при добавлении нерелевантных чанков | Нужен ground truth |
 
-```mermaid
-flowchart LR
-    Q[Query] --> R[Retriever]
-    R --> C[Contexts]
-    C --> G[Generator LLM]
-    G --> A[Answer]
-    GT[Ground truth] --> M{RAGAS}
-    Q --> M
-    C --> M
-    A --> M
-    M --> CP[Context Precision/Recall<br/>retrieval quality]
-    M --> F[Faithfulness<br/>no hallucination]
-    M --> AR[Answer Relevancy<br/>on-topic]
-    M --> AC[Answer Correctness<br/>matches ground truth]
-```
+Как метрики RAGAS подключаются к RAG-конвейеру:
+
+- Основной поток данных: `Query` → `Retriever` → `Contexts` → `Generator LLM` → `Answer`.
+- На вход `RAGAS` подаются четыре сигнала: `Query`, `Contexts`, `Answer` и (опционально) `Ground truth`.
+- Из них RAGAS считает метрики:
+  - `Context Precision` / `Recall` — качество retrieval;
+  - `Faithfulness` — отсутствие галлюцинаций;
+  - `Answer Relevancy` — ответ по теме (on-topic);
+  - `Answer Correctness` — совпадение с ground truth.
 
 Reference-free метрики (faithfulness, relevancy) можно крутить в проде на свежем трафике без аннотации.
 
@@ -643,18 +626,16 @@ def evaluate_trajectory(trajectory, expected):
 
 Offline-эвал не ловит drift и edge-кейсы реального трафика. Решение — **online continuous eval**:
 
-```mermaid
-flowchart LR
-    P[Prod traffic] --> S{Sampler 1-5%}
-    S -->|skip| Z[Log only]
-    S -->|sample| J[LLM-as-Judge]
-    J --> M[Metrics aggregator]
-    M --> D[Dashboard Grafana/Langfuse]
-    M --> A{Alert?}
-    A -->|drop > 5%| ON[On-call notify]
-    A -->|ok| C[Continue]
-    M --> DS[Auto-add bad cases<br/>to golden dataset]
-```
+Поток online continuous eval по шагам:
+
+1. `Prod traffic` проходит через `Sampler` (1–5%):
+   - **skip** → только логируем запрос (`Log only`);
+   - **sample** → отправляем в `LLM-as-Judge`.
+2. Judge передаёт оценки в `Metrics aggregator`.
+3. Из агрегатора метрики расходятся в три стороны:
+   - `Dashboard` (Grafana / Langfuse) — визуализация;
+   - проверка алертов (`Alert?`): при падении > 5% → уведомление on-call (`On-call notify`), иначе — продолжаем (`Continue`);
+   - авто-добавление плохих кейсов в golden dataset (`Auto-add bad cases to golden dataset`).
 
 Шаги:
 

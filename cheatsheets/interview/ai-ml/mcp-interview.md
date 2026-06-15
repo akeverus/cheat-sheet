@@ -99,25 +99,22 @@ updated: "2026-05-23"
 - Каждая система пишется как **MCP-сервер один раз** — и сразу работает во всех MCP-хостах.
 - Любой клиент работает с любым сервером, как любое USB-C-устройство — с любым портом.
 
-```mermaid
-graph LR
-    subgraph "До MCP (N×M)"
-        C1[Claude Desktop] --> S1a[GitHub coupler]
-        C1 --> S2a[Slack coupler]
-        C2[Cursor] --> S1b[GitHub coupler]
-        C2 --> S2b[Slack coupler]
-        C3[Zed] --> S1c[GitHub coupler]
-        C3 --> S2c[Slack coupler]
-    end
-    subgraph "После MCP (N+M)"
-        D1[Claude Desktop] --> MCP[MCP Protocol]
-        D2[Cursor] --> MCP
-        D3[Zed] --> MCP
-        MCP --> SG[GitHub MCP server]
-        MCP --> SS[Slack MCP server]
-        MCP --> SP[Postgres MCP server]
-    end
-```
+Наглядно эти два мира выглядят так.
+
+**До MCP (N×M)** — каждый клиент тянет собственный коннектор к каждой системе:
+
+- `Claude Desktop` → `GitHub coupler`, `Slack coupler`
+- `Cursor` → `GitHub coupler`, `Slack coupler`
+- `Zed` → `GitHub coupler`, `Slack coupler`
+
+То есть на трёх клиентов и две системы уже шесть отдельных коннекторов.
+
+**После MCP (N+M)** — клиенты подключаются к общему `MCP Protocol`, а к нему — серверы:
+
+- `Claude Desktop`, `Cursor`, `Zed` → `MCP Protocol`
+- `MCP Protocol` → `GitHub MCP server`, `Slack MCP server`, `Postgres MCP server`
+
+Каждый клиент реализует протокол один раз, каждая система — один сервер, и они свободно комбинируются.
 
 **Аналогия:** MCP — это **LSP (Language Server Protocol)**, но для LLM-контекста. LSP в своё время убрал ту же N×M-проблему между редакторами и языками: один language server для языка работает со всеми IDE. MCP делает то же для пары «LLM-приложение ↔ внешняя система».
 
@@ -132,26 +129,13 @@ graph LR
 | **Client** | Компонент внутри Host. **1 client : 1 server** — держит один stateful-канал к одному серверу. | Внутренний модуль Claude Desktop |
 | **Server** | Отдельный процесс (локальный или удалённый), отдающий наружу resources / tools / prompts. | `filesystem-server`, `github-server` |
 
-```mermaid
-graph TB
-    subgraph Host["Host (Claude Desktop)"]
-        LLM[LLM core / chat UI]
-        C1[Client #1]
-        C2[Client #2]
-        C3[Client #3]
-    end
+Топология выглядит так. Внутри **Host (Claude Desktop)** живут `LLM core / chat UI` и три клиента — `Client #1`, `Client #2`, `Client #3`. `LLM core / chat UI` обращается к каждому из этих клиентов, а каждый клиент держит свой канал к одному серверу:
 
-    S1[Server: filesystem<br/>stdio subprocess]
-    S2[Server: github<br/>stdio subprocess]
-    S3[Server: postgres<br/>Streamable HTTP]
+- `Client #1` ←→ `Server: filesystem` (`stdio subprocess`) — по `JSON-RPC`
+- `Client #2` ←→ `Server: github` (`stdio subprocess`) — по `JSON-RPC`
+- `Client #3` ←→ `Server: postgres` (`Streamable HTTP`) — по `JSON-RPC`
 
-    LLM --> C1
-    LLM --> C2
-    LLM --> C3
-    C1 <-->|JSON-RPC| S1
-    C2 <-->|JSON-RPC| S2
-    C3 <-->|JSON-RPC| S3
-```
+То есть серверы могут жить на разных транспортах (`stdio` или `Streamable HTTP`), но связь клиент↔сервер всегда двусторонняя и идёт по `JSON-RPC`.
 
 **Ключевые свойства:**
 
@@ -273,18 +257,16 @@ MCP не привязан к одному транспорту: JSON-RPC-соо�
 | **HTTP + SSE** | Удалённый сервер | POST для запросов клиента, отдельный SSE-канал для server→client сообщений (двухканальная схема) | **Deprecated** (с 2025) |
 | **Streamable HTTP** | Удалённый сервер (новый) | Один `POST /mcp` endpoint: тело — JSON-RPC, ответ может быть `application/json` (одно сообщение) или `text/event-stream` (стрим/server-initiated) | Stable (заменил HTTP+SSE) |
 
-```mermaid
-sequenceDiagram
-    participant H as Host
-    participant S as Server (stdio)
-    H->>S: spawn process<br/>(npx @org/mcp-server)
-    H->>S: stdin: {"jsonrpc":"2.0","id":1,"method":"initialize",...}\n
-    S->>H: stdout: {"jsonrpc":"2.0","id":1,"result":{...}}\n
-    H->>S: stdin: {"method":"notifications/initialized"}\n
-    H->>S: stdin: {"id":2,"method":"tools/list"}\n
-    S->>H: stdout: {"id":2,"result":{"tools":[...]}}\n
-    Note over H,S: stderr используется для логов
-```
+По шагам обмен Host ↔ Server (stdio) выглядит так:
+
+1. **Host → Server:** запускает процесс (`spawn process`, например `npx @org/mcp-server`).
+2. **Host → Server** (через stdin): `{"jsonrpc":"2.0","id":1,"method":"initialize",...}\n`
+3. **Server → Host** (через stdout): `{"jsonrpc":"2.0","id":1,"result":{...}}\n`
+4. **Host → Server** (stdin): `{"method":"notifications/initialized"}\n`
+5. **Host → Server** (stdin): `{"id":2,"method":"tools/list"}\n`
+6. **Server → Host** (stdout): `{"id":2,"result":{"tools":[...]}}\n`
+
+Запросы и ответы идут через stdin/stdout, разделитель — newline (`\n`). Заметьте: `stderr` при этом используется для логов.
 
 **Почему HTTP+SSE признали устаревшим.** Все три минуса растут из его двухканальной схемы (POST для запросов + отдельный GET-канал SSE для ответов сервера):
 
@@ -325,30 +307,33 @@ sequenceDiagram
 
 Сессия MCP проходит четыре фазы строго по порядку: **handshake → discovery → operations → shutdown**. Сначала стороны договариваются о версии и возможностях, затем клиент узнаёт, что сервер умеет, и только потом идут реальные вызовы.
 
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant S as Server
+По шагам обмен Client ↔ Server идёт так.
 
-    Note over C,S: 1. Handshake
-    C->>S: initialize {protocolVersion, capabilities, clientInfo}
-    S->>C: result {protocolVersion, capabilities, serverInfo}
-    C->>S: notifications/initialized
-    Note over C,S: 2. Discovery
-    C->>S: tools/list
-    S->>C: result {tools: [...]}
-    C->>S: resources/list
-    S->>C: result {resources: [...]}
-    Note over C,S: 3. Operations
-    C->>S: tools/call {name, arguments}
-    S->>C: result {content: [...]}
-    S--)C: notifications/tools/list_changed
-    C->>S: tools/list
-    S->>C: result {tools: [updated]}
-    Note over C,S: 4. Shutdown
-    C->>S: close stdin / HTTP DELETE session
-    S->>S: cleanup и завершение
-```
+**1. Handshake:**
+
+1. **Client → Server:** `initialize {protocolVersion, capabilities, clientInfo}`
+2. **Server → Client:** `result {protocolVersion, capabilities, serverInfo}`
+3. **Client → Server:** `notifications/initialized`
+
+**2. Discovery:**
+
+4. **Client → Server:** `tools/list`
+5. **Server → Client:** `result {tools: [...]}`
+6. **Client → Server:** `resources/list`
+7. **Server → Client:** `result {resources: [...]}`
+
+**3. Operations:**
+
+8. **Client → Server:** `tools/call {name, arguments}`
+9. **Server → Client:** `result {content: [...]}`
+10. **Server → Client** (notification): `notifications/tools/list_changed`
+11. **Client → Server:** `tools/list`
+12. **Server → Client:** `result {tools: [updated]}`
+
+**4. Shutdown:**
+
+13. **Client → Server:** `close stdin` / `HTTP DELETE session`
+14. **Server:** cleanup и завершение.
 
 **Версия протокола** согласуется в `initialize`: клиент предлагает поддерживаемую версию, сервер отвечает совместимой (или ошибкой, если общей версии нет). Версии нумеруются датами: `2024-11-05`, `2025-03-26`, `2025-06-18`.
 
@@ -377,24 +362,25 @@ sequenceDiagram
 | **Tools** | **Действия** с побочными эффектами (запись, вызов API, выполнение кода). | LLM сам решает, когда вызвать (`tools/call`). | `POST` / `PUT` / `DELETE` |
 | **Prompts** | Готовые **шаблоны** для пользователя (slash-команды, кнопки). | Пользователь явно выбирает. | Сохранённый запрос / шаблон |
 
-```mermaid
-graph LR
-    subgraph "Server capabilities"
-        R[Resources<br/>read-only data<br/>files, DB rows, docs]
-        T[Tools<br/>side-effect actions<br/>create_issue, send_email]
-        P[Prompts<br/>templates for user<br/>/summarize, /refactor]
-    end
-    subgraph "Client capabilities"
-        S[Sampling<br/>server asks LLM]
-        Ro[Roots<br/>fs boundaries]
-    end
-    LLM[LLM decides]
-    User[User selects]
-    LLM -->|tools/call| T
-    LLM -->|resources/read| R
-    User -->|prompts/get| P
-    T -.->|optionally| S
-```
+Карта возможностей и кто их инициирует:
+
+**Server capabilities:**
+
+- **Resources** — read-only data (files, DB rows, docs).
+- **Tools** — side-effect actions (`create_issue`, `send_email`).
+- **Prompts** — templates for user (`/summarize`, `/refactor`).
+
+**Client capabilities:**
+
+- **Sampling** — server asks LLM.
+- **Roots** — fs boundaries.
+
+**Кто инициирует обращение:**
+
+- `LLM decides` → **Tools** (через `tools/call`).
+- `LLM decides` → **Resources** (через `resources/read`).
+- `User selects` → **Prompts** (через `prompts/get`).
+- **Tools** → опционально → **Sampling** (вызов tool может, в свою очередь, попросить клиента сделать LLM-вызов).
 
 **Resource или Tool — ключевой дизайн-выбор при проектировании сервера.** Правило простое: чтение без эффектов и с адресом → Resource; изменение состояния или сложные параметры → Tool.
 
@@ -553,21 +539,19 @@ graph LR
 
 **Sampling** — сервер просит клиента **сделать LLM-вызов** за него. Это нужно серверам, у которых нет своего ключа и доступа к модели:
 
-```mermaid
-sequenceDiagram
-    participant L as LLM
-    participant H as Host (client)
-    participant S as Server
-    L->>H: tool call: analyze_codebase
-    H->>S: tools/call {name: "analyze_codebase"}
-    S->>H: sampling/createMessage<br/>{messages: [...], maxTokens: 500}
-    H->>H: показать пользователю,<br/>получить approval
-    H->>L: вызвать LLM
-    L->>H: ответ
-    H->>S: result {content: "..."}
-    S->>H: tools/call result
-    H->>L: tool result
-```
+По шагам поток между LLM, Host (client) и Server:
+
+1. **LLM → Host:** tool call: `analyze_codebase`.
+2. **Host → Server:** `tools/call {name: "analyze_codebase"}`.
+3. **Server → Host:** `sampling/createMessage {messages: [...], maxTokens: 500}` — сервер просит сделать LLM-вызов.
+4. **Host:** показывает пользователю и получает approval.
+5. **Host → LLM:** вызвать LLM.
+6. **LLM → Host:** ответ.
+7. **Host → Server:** `result {content: "..."}`.
+8. **Server → Host:** `tools/call` result.
+9. **Host → LLM:** tool result.
+
+Инициатива на шаге 3 идёт от сервера к клиенту, а реальный LLM-вызов делает Host — и только после явного одобрения пользователя.
 
 **Зачем это нужно:**
 
@@ -915,22 +899,15 @@ claude mcp get filesystem
 - **Всегда разрешать tool X** — доверие к конкретному действию.
 - **Всегда разрешать сервер X** — полное доверие серверу; опасный вариант, фактически снимает защиту.
 
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant L as LLM
-    participant H as Host
-    participant S as Server
-    L->>H: tool_call: delete_file({path: "/etc/passwd"})
-    H->>U: «delete_file('/etc/passwd')» — Allow / Deny?
-    alt User approves
-        H->>S: tools/call
-        S->>H: result
-        H->>L: result
-    else User denies
-        H->>L: tool result: "User denied"
-    end
-```
+По шагам поток согласия между User, LLM, Host и Server:
+
+1. **LLM → Host:** `tool_call: delete_file({path: "/etc/passwd"})`.
+2. **Host → User:** «delete_file('/etc/passwd')» — Allow / Deny?
+
+Дальше — ветвление по решению пользователя:
+
+- **Если User approves:** Host → Server: `tools/call` → Server → Host: `result` → Host → LLM: `result`.
+- **Если User denies:** Host → LLM: tool result `"User denied"` (вызов до сервера не доходит).
 
 **Антипаттерн — авто-одобрение без UI.** Если убрать человека из цикла, первая же prompt injection превращает агента в самораспространяющегося червя: вредоносные инструкции из данных сразу становятся реальными действиями, и остановить их некому.
 
