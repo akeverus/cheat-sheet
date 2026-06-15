@@ -3,7 +3,7 @@
 <head th:replace="~{fragments/head :: head(title='Результат — Подготовка к собеседованию', includeChart=false)}"></head>
 <body class="result-page">
 <a class="skip-link" href="#main-content">Перейти к результату</a>
-<header th:replace="~{fragments/header :: header(pageTitle='Результат — Подготовка к собеседованию', statsPage=false, activePage='focus', showPrimaryNav=true)}"></header>
+<header th:replace="~{fragments/header :: header(pageTitle='Результат', statsPage=false, activePage='focus', showPrimaryNav=true)}"></header>
 <main id="main-content" class="ed-page">
 <!-- Stats + Session — compact top row -->
 <div class="top-row">
@@ -11,10 +11,10 @@
 
     <section class="card flex-shrink-0" th:if="${interviewSession != null}">
         <div class="session-bar">
-            <span>Сессия: <strong th:text="${interviewSession.mode}">MODE</strong></span>
-            <span>Прогресс: <span th:text="${(interviewSession != null ? interviewSession.getIndex() : 0) + 1}">1</span>/<span th:text="${interviewSession != null ? interviewSession.getTotal() : 0}">0</span></span>
-            <span><svg class="ed-icon ed-icon-success" aria-hidden="true"><use href="#i-circle-check"></use></svg> <span class="visually-hidden">Верно:</span> <span th:text="${interviewSession != null ? interviewSession.getCorrect() : 0}">0</span></span>
-            <span><svg class="ed-icon ed-icon-error" aria-hidden="true"><use href="#i-circle-x"></use></svg> <span class="visually-hidden">Неверно:</span> <span th:text="${interviewSession != null ? interviewSession.getWrong() : 0}">0</span></span>
+            <span>Сессия: <strong th:text="${@modeUtils.displayName(interviewSession.mode)}">MODE</strong></span>
+            <span>Прогресс: <span th:text="${interviewSession.getIndex() + 1}">1</span>/<span th:text="${interviewSession.getTotal()}">0</span></span>
+            <span><svg class="ed-icon ed-icon-success" aria-hidden="true"><use href="#i-circle-check"></use></svg> <span class="visually-hidden">Верно:</span> <span th:text="${interviewSession.getCorrect()}">0</span></span>
+            <span><svg class="ed-icon ed-icon-error" aria-hidden="true"><use href="#i-circle-x"></use></svg> <span class="visually-hidden">Неверно:</span> <span th:text="${interviewSession.getWrong()}">0</span></span>
             <form method="post" th:action="@{/finish}" class="d-inline">
                 <button type="submit" class="btn-finish">Завершить</button>
             </form>
@@ -24,7 +24,10 @@
 
 <!-- Result card — fills remaining space -->
 <section class="card" id="interview-card">
-    <div class="question-layout" th:classappend="${diagram != null or (result.question.questionType != null and result.question.questionType.name() == 'CODE' and result.question.codeSnippet() != null)} ? ' has-side' : ''">
+    <!-- Грид двухколонки включает CSS через :has(.question-side) (см. editorial.css,
+         WIDE LAYOUT) — отдельный класс-флаг не нужен. Раньше тут висел th:classappend
+         с мёртвым has-side и ссылкой на удалённый diagram (mermaid). Критика C24. -->
+    <div class="question-layout">
         <div class="question-main flow-stack-md">
             <div class="question-header">
                 <h2>
@@ -61,10 +64,10 @@
                 <div th:each="opt : ${result.options}"
                        role="listitem"
                        th:classappend="${opt.id == result.correct.id} ? 'option-correct' : (opt.id == result.selected.id ? 'option-wrong' : 'option-other')"
-                       th:aria-label="${(opt.id == result.correct.id ? 'Правильный: ' : (opt.id == result.selected.id ? 'Ваш ответ: ' : '')) + @markdownRenderService.toPlainText(opt.optionText)}">
+                       th:aria-label="${(opt.id == result.correct.id ? 'Правильный: ' : (opt.id == result.selected.id ? 'Твой ответ: ' : '')) + @markdownRenderService.toPlainText(opt.optionText)}">
                     <span th:utext="${@markdownRenderService.toInlineHtml(opt.optionText)}">Вариант</span>
                     <span th:if="${opt.id == result.correct.id}" class="option-status-label option-status-correct">Правильный ответ</span>
-                    <span th:if="${opt.id == result.selected.id and opt.id != result.correct.id}" class="option-status-label option-status-selected">Ваш выбор</span>
+                    <span th:if="${opt.id == result.selected.id and opt.id != result.correct.id}" class="option-status-label option-status-selected">Твой выбор</span>
                     <div th:if="${opt.explanation != null}"
                          th:class="${opt.correct} ? 'option-explanation markdown-content explanation-correct' : 'option-explanation markdown-content explanation-wrong'"
                          th:utext="${@markdownRenderService.toHtml(opt.explanation)}">Объяснение</div>
@@ -125,16 +128,21 @@
     </div>
 </section>
 
-<script th:src="@{/js/app.js(v=31)}"></script>
-
-<!-- Связанные вопросы -->
-<div th:if="${relatedQuestions != null and !relatedQuestions.isEmpty()}" id="result-related-questions" class="related-questions related-questions-block">
-    <h3 class="related-questions-title"><svg class="ed-icon ed-icon-lead" aria-hidden="true"><use href="#i-link"></use></svg>Похожие вопросы для закрепления:</h3>
+<!-- Связанные вопросы. Остаётся ПРЯМЫМ потомком .ed-page (id-якорь): на >=1200px
+     CSS уводит блок в правую sticky-рейку через `.ed-page > #result-related-questions`
+     и `:has(> #result-related-questions)` (editorial.css, WIDE LAYOUT) — обёртка в
+     .card сломала бы грид. Поэтому тег меняем div→section + aria-labelledby (region-
+     лендмарк с доступным именем), но БЕЗ card-класса. Критика round-01 C31. -->
+<section th:if="${relatedQuestions != null and !relatedQuestions.isEmpty()}" id="result-related-questions" class="related-questions related-questions-block" aria-labelledby="related-questions-heading">
+    <h3 id="related-questions-heading" class="related-questions-title"><svg class="ed-icon ed-icon-lead" aria-hidden="true"><use href="#i-link"></use></svg>Похожие вопросы для закрепления:</h3>
     <a th:each="rq : ${relatedQuestions}" class="related-question-item"
        th:href="@{/(topic=${rq.topic()},group=${filter?.group},ordered=${filter == null or filter.ordered != false},important=${filter?.importantOnly},onlyWrong=${filter?.onlyWrong},shuffle=${filter?.shuffle},weakTopics=${weakTopics})}"
        th:utext="${@markdownRenderService.toInlineHtml(rq.questionText())}">
     </a>
-</div>
+</section>
 </main>
+<!-- app.js перенесён в конец body (был внутри main между секциями — структурная
+     аномалия, см. остальные страницы: focus-training/settings). Критика C31. -->
+<script th:src="@{/js/app.js(v=31)}"></script>
 </body>
 </html>
