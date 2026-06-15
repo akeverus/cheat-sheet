@@ -122,22 +122,14 @@ updated: "2026-04-25"
 
 ### Связь компонентов стратегии
 
-```mermaid
-graph TB
-    A[Test Strategy] --> B[Test Scope]
-    A --> C[Test Types]
-    A --> D[Resources]
-    A --> E[Exit Criteria]
-    A --> F[Risk Assessment]
-    B --> G[In Scope]
-    B --> H[Out of Scope]
-    C --> I[Functional]
-    C --> J[Non-Functional]
-    F --> K[Risk Matrix]
-    K --> C
-    E --> L[Quality Gates]
-    L --> M[Release Decision]
-```
+`Test Strategy` раскрывается в пять составляющих, каждая из которых детализируется дальше:
+
+- `Test Strategy` →
+  - `Test Scope` → делится на `In Scope` и `Out of Scope`;
+  - `Test Types` → делится на `Functional` и `Non-Functional`;
+  - `Resources`;
+  - `Exit Criteria` → `Quality Gates` → `Release Decision` (решение о релизе);
+  - `Risk Assessment` → `Risk Matrix`, которая, в свою очередь, влияет на выбор `Test Types`.
 
 **На собеседовании** важно показать две вещи: стратегия — живой артефакт (пересматривается при смене scope, технологий, команды), и она связывает бизнес-цели с техническим подходом. Слабый ответ — перечислить типы тестов; сильный — объяснить, почему именно такой набор и пропорция для конкретного продукта.
 
@@ -146,20 +138,6 @@ graph TB
 `Testing Pyramid` — модель распределения тестов по уровням (Майк Кон, «Succeeding with Agile»): много быстрых и дешёвых тестов внизу, мало медленных и дорогих наверху.
 
 **Зачем такая форма.** Чем выше уровень, тем медленнее тест и тем шире зона, в которой он может «упасть по чужой вине» (хрупкость). Поэтому основную проверку логики выносят вниз, где обратная связь мгновенная и причина падения очевидна, а наверху оставляют лишь несколько тестов, подтверждающих, что система собрана в работающее целое.
-
-```mermaid
-graph TB
-    subgraph "Testing Pyramid"
-        E2E["E2E / UI Tests<br/>5-10% | Медленные | Дорогие"]
-        INT["Integration Tests<br/>15-20% | Средние"]
-        UNIT["Unit Tests<br/>70-80% | Быстрые | Дешёвые"]
-    end
-    E2E --- INT
-    INT --- UNIT
-    style E2E fill:#ff6b6b,color:#000
-    style INT fill:#ffd93d,color:#000
-    style UNIT fill:#6bcb77,color:#000
-```
 
 ### Характеристики уровней
 
@@ -189,16 +167,12 @@ stages:
 
 Пирамида отвечает «сколько каких тестов», квадранты — «какие именно цели мы вообще должны покрыть». Они дополняют друг друга.
 
-```mermaid
-quadrantChart
-    title Testing Quadrants
-    x-axis "Technology Facing" --> "Business Facing"
-    y-axis "Supporting the Team" --> "Critiquing the Product"
-    quadrant-1 Q3: Exploratory, Usability, UAT
-    quadrant-2 Q4: Performance, Security, Load
-    quadrant-3 Q2: Acceptance, BDD, Functional
-    quadrant-4 Q1: Unit, Integration, API
-```
+Оси читаются так: горизонтальная — от `Technology Facing` (слева) к `Business Facing` (справа); вертикальная — от `Supporting the Team` (внизу) к `Critiquing the Product` (вверху). Тогда четыре квадранта раскладываются так:
+
+- `Q1` (технология, поддержка команды): `Unit`, `Integration`, `API`;
+- `Q2` (бизнес, поддержка команды): `Acceptance`, `BDD`, `Functional`;
+- `Q3` (бизнес, критика продукта): `Exploratory`, `Usability`, `UAT`;
+- `Q4` (технология, критика продукта): `Performance`, `Security`, `Load`.
 
 | Квадрант | Фокус | Примеры тестов | Подход |
 |----------|-------|----------------|--------|
@@ -221,20 +195,6 @@ quadrantChart
 | `E2E` тесты | 5-10% | Минимум, критический путь |
 | `Static Analysis` | Отдельно | Основание трофея |
 | Лучше для | Библиотеки, утилиты, backend | Веб-приложения, API с БД |
-
-```mermaid
-graph TB
-    subgraph "Test Trophy"
-        E2E2["E2E"]
-        INT2["Integration Tests — основная масса"]
-        UNIT2["Unit Tests — только сложная логика"]
-        STATIC["Static Analysis — линтеры, типы"]
-    end
-    E2E2 --- INT2
-    INT2 --- UNIT2
-    UNIT2 --- STATIC
-    style INT2 fill:#ffd93d,color:#000
-```
 
 **Как выбрать.** Модель диктуется архитектурой, а не модой. Для библиотеки или утилиты с богатой логикой выигрывает пирамида: ценность — в корректности алгоритмов, их дешевле всего ловить юнит-тестами. Для веб-приложения с БД, где основной риск — на стыках слоёв (контроллер ↔ сервис ↔ репозиторий ↔ SQL), эффективнее `Test Trophy`: `@SpringBootTest` с `Testcontainers` проверяет реальное взаимодействие за один тест (подробнее в [вопросах по интеграционному тестированию](integration-testing-interview.md)).
 
@@ -263,17 +223,7 @@ graph TB
 
 - **Red** — пишем падающий тест на ещё не существующее поведение. Он должен упасть — это доказывает, что тест вообще что-то проверяет.
 - **Green** — пишем минимальный код, чтобы тест прошёл. На этом шаге «красиво» не нужно, нужно «зелёно».
-- **Refactor** — улучшаем дизайн, не меняя поведения. Зелёные тесты — страховка: если рефакторинг что-то сломал, они тут же покраснеют.
-
-```mermaid
-graph LR
-    RED["RED<br/>Написать<br/>падающий тест"] --> GREEN["GREEN<br/>Минимальный код<br/>для прохождения"]
-    GREEN --> REFACTOR["REFACTOR<br/>Улучшить код<br/>без изменения поведения"]
-    REFACTOR --> RED
-    style RED fill:#ff6b6b,color:#000
-    style GREEN fill:#6bcb77,color:#000
-    style REFACTOR fill:#4ecdc4,color:#000
-```
+- **Refactor** — улучшаем дизайн, не меняя поведения. Зелёные тесты — страховка: если рефакторинг что-то сломал, они тут же покраснеют. После рефакторинга цикл замыкается: возвращаемся к шагу **Red** для следующего поведения.
 
 ### Пример цикла `TDD` в Java
 
@@ -408,13 +358,12 @@ public class ShoppingCartSteps {
 
 ### Процесс `ATDD`
 
-```mermaid
-graph LR
-    DISCUSS["Discuss<br/>Обсуждение<br/>требований"] --> DISTILL["Distill<br/>Формализация<br/>критериев приёмки"]
-    DISTILL --> DEVELOP["Develop<br/>Разработка<br/>до прохождения тестов"]
-    DEVELOP --> DEMO["Demo<br/>Демонстрация<br/>бизнесу"]
-    DEMO --> DISCUSS
-```
+Цикл из четырёх шагов (4 D), который замыкается сам на себя:
+
+1. **Discuss** — обсуждение требований.
+2. **Distill** — формализация критериев приёмки.
+3. **Develop** — разработка до прохождения тестов.
+4. **Demo** — демонстрация бизнесу, после которой цикл возвращается к **Discuss** для следующей итерации.
 
 | Аспект | `TDD` | `BDD` | `ATDD` |
 |--------|-------|-------|--------|
@@ -523,17 +472,10 @@ class SortPropertyTest {
 
 **Зачем сдвигать.** Стоимость исправления дефекта растёт по мере его «старения»: ошибка в требованиях, найденная на дизайне, — это правка пары строк, а та же ошибка, найденная в production, — инцидент, откат и потеря доверия. Shift-Left не добавляет тестирование, а перераспределяет его: ловить дефекты там, где они дешевле всего.
 
-```mermaid
-graph LR
-    subgraph "Традиционный подход"
-        direction LR
-        P1[Planning] --> D1[Design] --> DEV1[Development] --> T1[Testing] --> DEP1[Deploy]
-    end
-    subgraph "Shift-Left"
-        direction LR
-        P2[Planning<br/>+ Review] --> D2[Design<br/>+ Test Design] --> DEV2[Development<br/>+ TDD/Unit] --> T2[Testing<br/>+ Integration] --> DEP2[Deploy]
-    end
-```
+Разница между подходами видна на одной и той же цепочке фаз:
+
+- **Традиционный подход** — `Planning` → `Design` → `Development` → `Testing` → `Deploy`: качество проверяется только на фазе `Testing`, ближе к концу.
+- **Shift-Left** — те же фазы, но проверки добавлены в каждую раньше: `Planning + Review` → `Design + Test Design` → `Development + TDD/Unit` → `Testing + Integration` → `Deploy`.
 
 ### Практики `Shift-Left`
 
@@ -743,18 +685,13 @@ void shouldProcessAsyncEvent() {
 
 Тестирование [микросервисов](../architecture/microservices-interview.md) добавляет уровни, которых нет в монолите, потому что главный риск смещается внутрь сети — в контракты между сервисами и их взаимодействие, а не в логику отдельного класса. Поэтому к привычным unit/integration/E2E добавляют **component** (сервис целиком в изоляции) и **contract** (совместимость API между парами сервисов).
 
-```mermaid
-graph TB
-    E2E["E2E Tests<br/>Полная цепочка сервисов"]
-    CONTRACT["Contract Tests<br/>Pact, Spring Cloud Contract"]
-    INTEGRATION["Integration Tests<br/>Testcontainers, WireMock"]
-    COMPONENT["Component Tests<br/>Сервис + зависимости в контейнерах"]
-    UNIT["Unit Tests"]
-    E2E --- CONTRACT
-    CONTRACT --- INTEGRATION
-    INTEGRATION --- COMPONENT
-    COMPONENT --- UNIT
-```
+Полная иерархия уровней — от верхнего (медленного) к нижнему (быстрому):
+
+- `E2E Tests` — полная цепочка сервисов;
+- `Contract Tests` — `Pact`, `Spring Cloud Contract`;
+- `Integration Tests` — `Testcontainers`, `WireMock`;
+- `Component Tests` — сервис + зависимости в контейнерах;
+- `Unit Tests`.
 
 ### Ключевые подходы
 
@@ -788,13 +725,13 @@ class OrderServiceTest {
 
 ### Пошаговый подход
 
-```mermaid
-graph LR
-    A["1. Characterization Tests<br/>Зафиксировать текущее поведение"] --> B["2. Identify Seams<br/>Найти точки расширения"]
-    B --> C["3. Break Dependencies<br/>Extract & Override"]
-    C --> D["4. Add Unit Tests<br/>Покрыть изменяемый участок"]
-    D --> E["5. Refactor<br/>Под защитой тестов"]
-```
+Пять шагов идут строго по порядку:
+
+1. **Characterization Tests** — зафиксировать текущее поведение.
+2. **Identify Seams** — найти точки расширения.
+3. **Break Dependencies** — `Extract & Override`.
+4. **Add Unit Tests** — покрыть изменяемый участок.
+5. **Refactor** — под защитой тестов.
 
 ### Техники
 
@@ -950,13 +887,12 @@ class OrderServiceContractTest {
 
 ### Workflow
 
-```mermaid
-graph LR
-    C[Consumer] -->|1. Генерирует Pact| PB[(Pact Broker)]
-    PB -->|2. Провайдер скачивает| P[Provider]
-    P -->|3. Верифицирует контракт| PB
-    PB -->|4. Can I Deploy?| CI[CI/CD]
-```
+Порядок шагов:
+
+1. `Consumer` генерирует `Pact` и публикует его в `Pact Broker`.
+2. `Provider` скачивает контракт из `Pact Broker`.
+3. `Provider` верифицирует контракт и отправляет результат обратно в `Pact Broker`.
+4. На этапе `CI/CD` брокер отвечает на запрос `Can I Deploy?` — можно ли деплоить совместимую версию.
 
 ## Q23. Что такое `Chaos Engineering`?
 
@@ -1037,14 +973,13 @@ class CircuitBreakerChaosTest {
 
 ### Тестирование в Scrum-цикле
 
-```mermaid
-graph LR
-    PLAN["Sprint Planning<br/>Определить acceptance criteria<br/>Оценить testing effort"] --> DEV["Development<br/>TDD + Unit Tests<br/>Code Review"]
-    DEV --> INT["Integration<br/>Integration Tests<br/>Contract Tests"]
-    INT --> ACC["Acceptance<br/>BDD Scenarios<br/>Exploratory Testing"]
-    ACC --> RETRO["Retrospective<br/>Обсуждение качества<br/>Улучшение процесса"]
-    RETRO --> PLAN
-```
+Тестовые активности вплетены в каждую фазу спринта, и цикл замыкается:
+
+1. **Sprint Planning** — определить acceptance criteria, оценить testing effort.
+2. **Development** — TDD + Unit Tests, Code Review.
+3. **Integration** — Integration Tests, Contract Tests.
+4. **Acceptance** — BDD Scenarios, Exploratory Testing.
+5. **Retrospective** — обсуждение качества, улучшение процесса; после неё цикл возвращается к **Sprint Planning** следующего спринта.
 
 ### Принципы
 
@@ -1311,15 +1246,14 @@ Order order = anOrder().withProduct("Book").withPrice(new BigDecimal("29.99")).c
 
 ### Архитектура фреймворка
 
-```mermaid
-graph TB
-    TESTS["Test Cases"] --> STEPS["Step Definitions / Helpers"]
-    STEPS --> PAGES["Page Objects / API Clients"]
-    PAGES --> DRIVER["Driver Layer<br/>Selenium, RestAssured, WebClient"]
-    DRIVER --> APP["Application Under Test"]
-    CONFIG["Configuration<br/>Environments, Credentials"] --> TESTS
-    REPORT["Reporting<br/>Allure, JUnit XML"] --> TESTS
-```
+Слои выстраиваются в цепочку сверху вниз, где каждый верхний опирается на нижний:
+
+- `Test Cases` → `Step Definitions / Helpers` → `Page Objects / API Clients` → `Driver Layer` (`Selenium`, `RestAssured`, `WebClient`) → `Application Under Test`.
+
+Два сквозных слоя подключаются к уровню `Test Cases`:
+
+- `Configuration` (`Environments`, `Credentials`) — питает тесты настройками;
+- `Reporting` (`Allure`, `JUnit XML`) — собирает результаты прогона.
 
 ### Принципы
 
@@ -1459,16 +1393,16 @@ security:
 
 ### Pipeline
 
-```mermaid
-graph LR
-    COMMIT[Commit] --> LINT["Static Analysis<br/>< 1 мин"]
-    LINT --> UNIT["Unit Tests<br/>< 3 мин"]
-    UNIT --> INT["Integration Tests<br/>< 10 мин"]
-    INT --> CONTRACT["Contract Tests<br/>< 5 мин"]
-    CONTRACT --> STAGING["Deploy Staging<br/>+ Smoke Tests"]
-    STAGING --> CANARY["Canary Deploy<br/>1-5% трафика"]
-    CANARY --> FULL["Full Deploy<br/>+ Monitoring"]
-```
+Этапы идут последовательно, и каждый предыдущий блокирует следующий при провале:
+
+1. `Commit`.
+2. `Static Analysis` — `< 1 мин`.
+3. `Unit Tests` — `< 3 мин`.
+4. `Integration Tests` — `< 10 мин`.
+5. `Contract Tests` — `< 5 мин`.
+6. `Deploy Staging` + `Smoke Tests`.
+7. `Canary Deploy` — 1-5% трафика.
+8. `Full Deploy` + `Monitoring`.
 
 ### Quality Gates
 
