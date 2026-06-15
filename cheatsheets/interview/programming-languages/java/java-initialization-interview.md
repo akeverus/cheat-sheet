@@ -354,14 +354,6 @@ new A();
 4. Вызывается `Parent` конструктор: `Parent` instance-поля + instance-блоки → тело конструктора.
 5. Вызывается `Child` конструктор: `Child` instance-поля + instance-блоки → тело конструктора.
 
-```mermaid
-flowchart TD
-    A[Parent static init] --> B[Child static init]
-    B --> C[Allocate Child object]
-    C --> D[Parent instance init + constructor]
-    D --> E[Child instance init + constructor]
-```
-
 **Подводный камень:** если конструктор `Parent` вызывает переопределяемый метод, сработает версия из **Child** (виртуальная диспетчеризация работает с момента аллокации объекта). Но конструктор Child ещё не отработал — его поля держат zero-значения. Это классический ловушечный interview-вопрос.
 
 ```java
@@ -562,17 +554,14 @@ public static final int SIZE = Integer.parseInt("100");   // уже не compile
 
 ## Q20. (!) Какие виды вложенных классов есть в Java?
 
-Главный водораздел — наличие модификатора `static`: статический вложенный класс не связан с экземпляром outer, а остальные три (inner-классы) держат скрытую ссылку на enclosing instance. Всего четыре вида:
+Главный водораздел — наличие модификатора `static`: статический вложенный класс не связан с экземпляром outer, а остальные три (inner-классы) держат скрытую ссылку на enclosing instance. Всего четыре вида, и они образуют такую иерархию:
 
-```mermaid
-graph TD
-    Nested[Nested Classes]
-    Nested --> Static[static nested class]
-    Nested --> Inner[Inner class - non-static]
-    Inner --> Member[Member inner]
-    Inner --> Local[Local inner]
-    Inner --> Anonymous[Anonymous inner]
-```
+- **Nested Classes** (вложенные классы) делятся на:
+  - **`static nested class`** — статический вложенный класс (без ссылки на outer);
+  - **Inner class** (non-static) — нестатический вложенный класс, который, в свою очередь, бывает трёх видов:
+    - **Member inner** — член-класс на уровне класса;
+    - **Local inner** — локальный класс внутри метода/блока;
+    - **Anonymous inner** — анонимный класс в выражении `new`.
 
 | Вид | Где объявлен | Имеет ссылку на outer? | Имя | Можно `static` члены |
 |---|---|---|---|---|

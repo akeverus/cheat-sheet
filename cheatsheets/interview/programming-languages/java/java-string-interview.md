@@ -255,28 +255,15 @@ StringBuffer sb = new StringBuffer(); // потокобезопасный
 
 `String Pool` (пул строк) -- внутренняя хэш-таблица JVM, где хранится по одному экземпляру каждого уникального строкового литерала. Смысл прост: одинаковые литералы не дублируются в памяти, а ссылаются на один и тот же объект. Это работает только потому, что строки иммутабельны (см. Q5) -- иначе общий объект нельзя было бы безопасно переиспользовать.
 
-```mermaid
-graph TB
-    subgraph JVM Memory
-        subgraph Heap
-            SP["String Pool<br/>(HashTable)"]
-            O1["new String('Hello')"]
-            O2["new String('World')"]
-        end
-    end
+Как это выглядит в памяти JVM. Внутри `Heap` живёт сам `String Pool` (хэш-таблица), и в нём же -- отдельные объекты, созданные через `new`:
 
-    L1["String a = 'Hello'"] --> SP
-    L2["String b = 'Hello'"] --> SP
-    N1["String c = new String('Hello')"] --> O1
-    N2["String d = new String('World')"] --> O2
-
-    SP --> |"содержит"| S1["'Hello'"]
-    SP --> |"содержит"| S2["'World'"]
-
-    style SP fill:#4CAF50,color:#fff
-    style O1 fill:#FF9800,color:#fff
-    style O2 fill:#FF9800,color:#fff
-```
+- `String Pool` (хэш-таблица в `Heap`) содержит по одному экземпляру каждого литерала: `'Hello'` и `'World'`.
+- Объявления-литералы ссылаются прямо в пул:
+  - `String a = 'Hello'` → `String Pool`
+  - `String b = 'Hello'` → `String Pool` (та же запись `'Hello'`, что и у `a`)
+- Объявления через `new` ссылаются на отдельные объекты в `Heap` (вне пула):
+  - `String c = new String('Hello')` → отдельный объект `new String('Hello')`
+  - `String d = new String('World')` → отдельный объект `new String('World')`
 
 **Где он лежит -- и почему это менялось.** Расположение важно потому, что от него зависит, может ли пул переполниться и собирается ли он GC:
 - **Java 6 и ранее**: в `PermGen` -- области фиксированного размера, не подлежащей сборке мусора. Активный `intern()` легко приводил к `OutOfMemoryError: PermGen space`
@@ -287,21 +274,12 @@ graph TB
 
 ## Q10. (!) Как `String` хранится в памяти?
 
-```mermaid
-graph LR
-    subgraph "String Pool (Heap)"
-        P1["'Hello'"]
-    end
+Картина размещения в памяти. Есть две области: `String Pool` (внутри `Heap`), где лежит литерал `'Hello'`, и обычный `Heap` (вне пула), где лежит объект `String obj` со ссылкой `value → 'Hello'`. Связи между объявлениями и этими областями:
 
-    subgraph "Heap (вне Pool)"
-        H1["String obj<br/>value → 'Hello'"]
-    end
-
-    A["String a = 'Hello'"] -->|"ссылка на pool"| P1
-    B["String b = 'Hello'"] -->|"та же ссылка"| P1
-    C["new String('Hello')"] -->|"новый объект"| H1
-    H1 -.->|"intern()"| P1
-```
+- `String a = 'Hello'` -- ссылка на pool → литерал `'Hello'` в `String Pool`.
+- `String b = 'Hello'` -- та же ссылка → тот же литерал `'Hello'` в пуле.
+- `new String('Hello')` -- новый объект → `String obj` в `Heap` (вне пула).
+- Вызов `intern()` на этом heap-объекте возвращает ссылку на литерал `'Hello'` в `String Pool` (переход из `Heap` обратно в пул).
 
 ```java
 String s1 = "Hello";              // литерал → String Pool
