@@ -106,22 +106,13 @@ updated: "2026-04-25"
 
 Логи проходят путь от приложения до дашборда по конвейеру **сбор → транспорт → парсинг → хранение → визуализация**. Ключевая идея: каждая стадия отделена от соседних, поэтому звенья можно добавлять, убирать и буферизировать независимо.
 
-```mermaid
-graph LR
-    Apps[Apps] --> FB[Filebeat]
-    K8s[K8s pods] --> FB
-    FB --> Logstash
-    FB -.optional.-> ES[Elasticsearch]
-    Logstash --> ES
-    ES --> Kibana
-    Kibana --> User
-```
+В общем виде поток выглядит так: `Apps` и `K8s pods` → `Filebeat` → `Logstash` → `Elasticsearch` → `Kibana` → `User`. Дополнительно есть опциональная ветка: `Filebeat` может слать данные напрямую в `Elasticsearch`, минуя `Logstash`.
 
 **Поток данных:**
 
 1. Приложения пишут логи в файлы или в `stdout`.
 2. **Filebeat** (как sidecar или DaemonSet) читает эти логи с хоста и отгружает дальше.
-3. **Logstash** парсит и обогащает события. Стадия опциональна: если приложение уже пишет структурированный JSON, Filebeat может слать прямо в Elasticsearch, минуя Logstash (на схеме — пунктирная стрелка).
+3. **Logstash** парсит и обогащает события. Стадия опциональна: если приложение уже пишет структурированный JSON, Filebeat может слать прямо в Elasticsearch, минуя Logstash (та самая опциональная ветка выше).
 4. **Elasticsearch** индексирует и хранит документы.
 5. **Kibana** выполняет запросы к Elasticsearch и визуализирует результат.
 
@@ -266,11 +257,11 @@ doc2 → "the dog ran"
 
 **Logstash** — серверный конвейер обработки данных, работающий по схеме **input → filter → output**: принимает события из разных источников, преобразует их и отправляет в назначение (обычно Elasticsearch). Его задача в стеке — превратить сырые разнородные логи в единообразные структурированные документы.
 
-```mermaid
-graph LR
-    I[Input plugins<br/>file, kafka, beats, ...] --> F[Filter plugins<br/>grok, mutate, geoip, ...]
-    F --> O[Output plugins<br/>elasticsearch, kafka, s3, ...]
-```
+Конвейер из трёх стадий по порядку:
+
+- **Input plugins** (`file`, `kafka`, `beats`, ...) →
+- **Filter plugins** (`grok`, `mutate`, `geoip`, ...) →
+- **Output plugins** (`elasticsearch`, `kafka`, `s3`, ...).
 
 **Конвейер на Ruby-подобном синтаксисе:**
 

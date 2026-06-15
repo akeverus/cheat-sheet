@@ -108,23 +108,22 @@ updated: "2026-04-25"
 
 Сигналы не заменяют, а дополняют друг друга и связаны общим `traceId`: по метрике видишь проблему, по трейсу — какой участок виноват, по логам (отфильтрованным по тому же `traceId`) — детали.
 
-```mermaid
-graph TD
-    subgraph "Три столпа Observability"
-        M["Метрики<br/>Агрегированные числа<br/>Counter, Gauge, Histogram"]
-        L["Логи<br/>Дискретные события<br/>Текст + контекст"]
-        T["Трейсы<br/>Цепочки операций<br/>Spans + traceId"]
-    end
+**Три столпа Observability и связи между ними:**
 
-    M -- "exemplar → traceId" --> T
-    T -- "traceId → фильтрация" --> L
-    L -- "агрегация → метрики" --> M
+- **Метрики** — агрегированные числа (`Counter`, `Gauge`, `Histogram`).
+- **Логи** — дискретные события (текст + контекст).
+- **Трейсы** — цепочки операций (spans + `traceId`).
 
-    A["Алерт:<br/>rate(errors) > 0.01"] --> M
-    M --> D["Дашборд Grafana"]
-    T --> J["Jaeger / Tempo"]
-    L --> E["ELK / Loki"]
-```
+Связи по кругу:
+- метрики → трейсы: через `exemplar → traceId`;
+- трейсы → логи: `traceId → фильтрация` логов;
+- логи → метрики: `агрегация → метрики`.
+
+Куда уходит каждый сигнал:
+- алерт `rate(errors) > 0.01` → срабатывает на метриках;
+- метрики → дашборд `Grafana`;
+- трейсы → `Jaeger / Tempo`;
+- логи → `ELK / Loki`.
 
 **Типичный сценарий расследования инцидента:** алерт по метрике (например, рост ошибок) -> открыть трейсы за период -> найти медленные/ошибочные запросы по `traceId` -> по `traceId` отфильтровать логи и локализовать причину. Подробнее о стратегиях логирования — в [вопросах по логированию](logging-strategies-interview.md).
 
@@ -137,28 +136,16 @@ graph TD
 - **Плюсы:** простой формат экспозиции; мощный `PromQL`; нативная интеграция с `Grafana` и `Alertmanager`.
 - **Минусы:** pull неудобен для short-lived задач и динамических сред — в `Kubernetes` это решает Service Discovery (автообнаружение целей).
 
-```mermaid
-graph LR
-    subgraph "Prometheus Pull Model"
-        P["Prometheus Server"]
-    end
+**Pull-модель Prometheus по шагам:**
 
-    subgraph "Targets"
-        A1["Service A<br/>/actuator/prometheus"]
-        A2["Service B<br/>/actuator/prometheus"]
-        A3["Service C<br/>/metrics"]
-        NE["Node Exporter<br/>/metrics"]
-    end
-
-    P -- "scrape каждые 15s" --> A1
-    P -- "scrape каждые 15s" --> A2
-    P -- "scrape каждые 15s" --> A3
-    P -- "scrape каждые 15s" --> NE
-
-    P --> AM["Alertmanager"]
-    P --> G["Grafana"]
-    AM --> S["Slack / PagerDuty"]
-```
+- `Prometheus Server` сам опрашивает (scrape каждые 15s) свои цели:
+  - `Service A` — `/actuator/prometheus`;
+  - `Service B` — `/actuator/prometheus`;
+  - `Service C` — `/metrics`;
+  - `Node Exporter` — `/metrics`.
+- Дальше сервер раздаёт данные:
+  - `Prometheus` → `Alertmanager` → `Slack / PagerDuty`;
+  - `Prometheus` → `Grafana`.
 
 **Пример конфигурации `prometheus.yml`:**
 
@@ -354,27 +341,19 @@ public class MetricsExamples {
 
 Зачем она нужна: в [микросервисах](../architecture/microservices-interview.md) без трассировки видна только латентность на входе («запрос занял 2 секунды»), а вся цепочка внутренних вызовов — «чёрный ящик». Трассировка вскрывает этот ящик и показывает, какой именно сервис или какая БД съели время, то есть позволяет точечно найти узкое место вместо угадывания.
 
-```mermaid
-gantt
-    title Trace: POST /api/orders (traceId: abc123)
-    dateFormat X
-    axisFormat %s ms
+**Пример трейса `POST /api/orders` (traceId: abc123)** — операции по слоям с интервалами времени (в мс от начала запроса):
 
-    section API Gateway
-    Входящий HTTP запрос        :a1, 0, 350
-
-    section Order Service
-    Валидация заказа            :a2, 10, 50
-    Сохранение в БД             :a3, 50, 150
-    Вызов Payment Service       :a4, 150, 300
-
-    section Payment Service
-    Обработка платежа           :a5, 160, 280
-    Вызов Bank API              :a6, 180, 260
-
-    section Bank API
-    Авторизация карты           :a7, 190, 250
-```
+- **API Gateway**
+  - Входящий HTTP запрос — 0…350.
+- **Order Service**
+  - Валидация заказа — 10…50;
+  - Сохранение в БД — 50…150;
+  - Вызов Payment Service — 150…300.
+- **Payment Service**
+  - Обработка платежа — 160…280;
+  - Вызов Bank API — 180…260.
+- **Bank API**
+  - Авторизация карты — 190…250.
 
 **Инструменты:** бэкенды для хранения и просмотра трейсов — `Jaeger`, `Zipkin`, `Tempo`; стандарт инструментирования кода — `OpenTelemetry`.
 
@@ -390,24 +369,16 @@ gantt
 - передаёт контекст между сервисами — через `HTTP`-заголовки, `gRPC` metadata, заголовки сообщений;
 - экспортирует собранные трейсы в бэкенд (`Jaeger`, `Zipkin` и др.).
 
-```mermaid
-graph TB
-    subgraph "Приложение (Spring Boot)"
-        SDK["OTel SDK / Agent"]
-        AUTO["Авто-инструментация<br/>HTTP, JDBC, Kafka"]
-        MANUAL["Ручные spans<br/>@WithSpan, Tracer API"]
-    end
+**Поток данных OpenTelemetry — от приложения к бэкендам:**
 
-    SDK --> OTLP["OTLP Exporter"]
-    AUTO --> SDK
-    MANUAL --> SDK
-
-    OTLP --> COLL["OTel Collector"]
-
-    COLL --> J["Jaeger / Tempo<br/>(трейсы)"]
-    COLL --> P["Prometheus<br/>(метрики)"]
-    COLL --> L["Loki / ELK<br/>(логи)"]
-```
+- Внутри приложения (`Spring Boot`) источники spans стекаются в `OTel SDK / Agent`:
+  - авто-инструментация (`HTTP`, `JDBC`, `Kafka`) → `SDK`;
+  - ручные spans (`@WithSpan`, `Tracer API`) → `SDK`.
+- `SDK` → `OTLP Exporter` → `OTel Collector`.
+- `OTel Collector` раздаёт сигналы по бэкендам:
+  - `Jaeger / Tempo` — трейсы;
+  - `Prometheus` — метрики;
+  - `Loki / ELK` — логи.
 
 **Пример кастомного span через OpenTelemetry API:**
 
@@ -461,15 +432,14 @@ public class NotificationService {
 
 Связь между ними иерархическая: span может иметь дочерние spans (вложенные вызовы), и по этому дереву виден полный путь запроса и время на каждом уровне — от корневого входящего HTTP до самого глубокого обращения к БД.
 
-```mermaid
-graph TD
-    ROOT["Span: API Gateway<br/>traceId: abc123<br/>spanId: span-1<br/>duration: 350ms"]
-    ROOT --> S2["Span: Order Service<br/>spanId: span-2<br/>parentSpanId: span-1<br/>duration: 300ms"]
-    S2 --> S3["Span: DB INSERT orders<br/>spanId: span-3<br/>parentSpanId: span-2<br/>duration: 80ms"]
-    S2 --> S4["Span: Payment Service<br/>spanId: span-4<br/>parentSpanId: span-2<br/>duration: 150ms"]
-    S4 --> S5["Span: Bank API call<br/>spanId: span-5<br/>parentSpanId: span-4<br/>duration: 70ms"]
-    S2 --> S6["Span: Kafka produce<br/>spanId: span-6<br/>parentSpanId: span-2<br/>duration: 5ms"]
-```
+**Дерево spans одного trace** (отступ = вложенность, у каждого span свой `spanId` и ссылка `parentSpanId` на родителя):
+
+- **Span: API Gateway** — `traceId: abc123`, `spanId: span-1`, duration: 350ms (корневой, родителя нет).
+  - **Span: Order Service** — `spanId: span-2`, `parentSpanId: span-1`, duration: 300ms.
+    - **Span: DB INSERT orders** — `spanId: span-3`, `parentSpanId: span-2`, duration: 80ms.
+    - **Span: Payment Service** — `spanId: span-4`, `parentSpanId: span-2`, duration: 150ms.
+      - **Span: Bank API call** — `spanId: span-5`, `parentSpanId: span-4`, duration: 70ms.
+    - **Span: Kafka produce** — `spanId: span-6`, `parentSpanId: span-2`, duration: 5ms.
 
 **Сценарий применения:** в `Jaeger / Zipkin` по `traceId` открывают дерево spans — корневой span обычно входящий `HTTP`, дочерние — вызовы к БД и другим сервисам. Длительность каждого span сразу показывает узкое место, а атрибуты (`http.method`, `db.statement`) позволяют фильтровать и искать нужные трейсы.
 
@@ -479,26 +449,17 @@ graph TD
 
 Механика проста и работает по принципу inject/extract: вызывающая сторона (клиент или шлюз) создаёт корневой span и инжектирует контекст в исходящие заголовки; принимающий сервис извлекает контекст из заголовков и создаёт дочерний span, продолжающий тот же trace.
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant ServiceA as Service A
-    participant ServiceB as Service B
-    participant DB as Database
+**Передача trace context между сервисами по шагам** (участники: `Client`, `Service A`, `Service B`, `Database`):
 
-    Client->>ServiceA: POST /api/orders
-    Note over ServiceA: Создаёт root span<br/>traceId: abc123<br/>spanId: span-1
-
-    ServiceA->>ServiceB: GET /api/inventory<br/>traceparent: 00-abc123-span1-01<br/>tracestate: vendor=value
-    Note over ServiceB: Извлекает контекст<br/>Создаёт child span<br/>spanId: span-2, parent: span-1
-
-    ServiceB->>DB: SELECT * FROM stock
-    Note over DB: spanId: span-3<br/>parent: span-2
-
-    DB-->>ServiceB: result
-    ServiceB-->>ServiceA: 200 OK
-    ServiceA-->>Client: 201 Created
-```
+1. `Client` → `Service A`: `POST /api/orders`.
+   - `Service A` создаёт root span: `traceId: abc123`, `spanId: span-1`.
+2. `Service A` → `Service B`: `GET /api/inventory` с заголовками `traceparent: 00-abc123-span1-01` и `tracestate: vendor=value`.
+   - `Service B` извлекает контекст и создаёт child span: `spanId: span-2`, parent: `span-1`.
+3. `Service B` → `Database`: `SELECT * FROM stock`.
+   - span БД: `spanId: span-3`, parent: `span-2`.
+4. `Database` возвращает `result` → `Service B`.
+5. `Service B` → `Service A`: `200 OK`.
+6. `Service A` → `Client`: `201 Created`.
 
 **Пример W3C `traceparent` заголовка:**
 
@@ -799,19 +760,12 @@ public class BusinessMetrics {
 
 Связать их можно на двух уровнях. Слабая связь — по времени и лейблам: в `Grafana` на одном дашборде рядом стоят запросы к `Prometheus` (метрики) и к `Jaeger / Tempo` (трейсы), и инженер вручную сопоставляет всплеск на графике с трейсами за тот же момент. Сильная связь — через `Exemplars`: это прямые ссылки от конкретной точки метрики к конкретному trace. По клику на пик на графике `Grafana` сразу открывает именно тот трейс, который дал этот выброс, без ручного поиска.
 
-```mermaid
-graph LR
-    subgraph "Grafana Dashboard"
-        PANEL["Панель: p99 latency<br/>PromQL запрос"]
-        EXEMPLAR["Exemplar точка<br/>traceId: abc123"]
-        TRACE["Trace View<br/>Jaeger / Tempo"]
-        LOGS["Log Panel<br/>Loki: {traceId=abc123}"]
-    end
+**Цепочка корреляции внутри дашборда Grafana:**
 
-    PANEL -- "клик по точке" --> EXEMPLAR
-    EXEMPLAR -- "ссылка на traceId" --> TRACE
-    TRACE -- "traceId → логи" --> LOGS
-```
+- Панель «p99 latency» (`PromQL` запрос) — клик по точке →
+- Exemplar точка (`traceId: abc123`) — ссылка на `traceId` →
+- Trace View (`Jaeger / Tempo`) — `traceId → логи` →
+- Log Panel (`Loki: {traceId=abc123}`).
 
 **Конфигурация Grafana datasources для корреляции:**
 
@@ -1056,16 +1010,14 @@ MeterRegistryCustomizer<MeterRegistry> uriNormalizer() {
 
 У них разные роли, и работают они в связке. Метрики отвечают на «что и где» в масштабе: алерт срабатывает на аномалию (рост ошибок, латентности), а дашборд показывает, какой сервис или эндпоинт деградировал. Но метрики агрегированы и не объясняют причину конкретного сбоя. Тут подключаются трейсы: они показывают путь конкретного запроса и точное место, где возникла задержка или ошибка. Метрики локализуют проблему до сервиса, трейсы — до строки в цепочке вызовов.
 
-```mermaid
-graph TD
-    subgraph "Процесс расследования инцидента"
-        A["1. Алерт: error_rate > 1%<br/>Prometheus Alertmanager"] --> B["2. Дашборд Grafana<br/>Какой сервис? Какой эндпоинт?"]
-        B --> C["3. Exemplar → traceId<br/>Переход к конкретному трейсу"]
-        C --> D["4. Дерево spans в Jaeger<br/>Где задержка / ошибка?"]
-        D --> E["5. Логи по traceId<br/>Loki / ELK: детали ошибки"]
-        E --> F["6. Исправление + проверка<br/>Метрики вернулись в норму"]
-    end
-```
+**Процесс расследования инцидента по шагам:**
+
+1. Алерт: `error_rate > 1%` (`Prometheus Alertmanager`).
+2. Дашборд `Grafana`: какой сервис? какой эндпоинт?
+3. Exemplar → `traceId`: переход к конкретному трейсу.
+4. Дерево spans в `Jaeger`: где задержка / ошибка?
+5. Логи по `traceId` (`Loki / ELK`): детали ошибки.
+6. Исправление + проверка: метрики вернулись в норму.
 
 **Что связывает их в один поток:** `Exemplars` в `Grafana` — они позволяют от точки на графике метрики перейти прямо к трейсу, который её породил, без ручного поиска по времени. Подробнее о процессе расследования инцидентов — в [вопросах по Observability](observability-interview.md).
 
@@ -1378,23 +1330,16 @@ processors:
 
 Это два набора «обязательного минимума» метрик, разделённых по объекту наблюдения. `RED` смотрит на **сервис глазами клиента**: `Rate` (запросов в секунду), `Errors` (доля ошибок), `Duration` (задержка, p50/p99). `USE` смотрит на **ресурс** (`CPU`, диск, сеть): `Utilization` (утилизация), `Saturation` (насыщенность — очереди и ожидание), `Errors` (ошибки ресурса). RED говорит, страдает ли пользователь; USE — упёрся ли какой-то ресурс. Вместе они закрывают и симптом, и причину.
 
-```mermaid
-graph TB
-    subgraph "RED — для сервисов"
-        R["Rate<br/>Запросы/сек<br/>rate(http_requests_total[5m])"]
-        E1["Errors<br/>Доля ошибок<br/>rate(errors)/rate(total)"]
-        D["Duration<br/>p50, p95, p99<br/>histogram_quantile(0.99, ...)"]
-    end
+**RED и USE — три сигнала каждый, с примерами PromQL:**
 
-    subgraph "USE — для ресурсов"
-        U["Utilization<br/>Загрузка CPU/Memory<br/>process_cpu_usage"]
-        S["Saturation<br/>Очереди, ожидание<br/>thread_pool_queue_size"]
-        E2["Errors<br/>Ошибки ресурсов<br/>disk_errors_total"]
-    end
-
-    SVC["HTTP API /<br/>Микросервисы"] --> R & E1 & D
-    INFRA["CPU / Memory /<br/>Disk / Network"] --> U & S & E2
-```
+- **RED — для сервисов** (источник: HTTP API / микросервисы):
+  - `Rate` — запросы/сек: `rate(http_requests_total[5m])`;
+  - `Errors` — доля ошибок: `rate(errors)/rate(total)`;
+  - `Duration` — p50, p95, p99: `histogram_quantile(0.99, ...)`.
+- **USE — для ресурсов** (источник: CPU / Memory / Disk / Network):
+  - `Utilization` — загрузка CPU/Memory: `process_cpu_usage`;
+  - `Saturation` — очереди, ожидание: `thread_pool_queue_size`;
+  - `Errors` — ошибки ресурсов: `disk_errors_total`.
 
 **Как снимать на практике:** оба набора согласуются с golden signals из SRE-практики. В `Micrometer` `Rate` и `Errors` берут из `Timer` и счётчиков с лейблом outcome, `Duration` — из гистограммы латентности. `USE` по `JVM` дают binder'ы памяти, потоков и `GC`; по инфраструктуре — `node_exporter` и `cAdvisor`.
 
@@ -1437,23 +1382,19 @@ service:
 
 `Sampling` — это решение, какие трейсы сохранять, а какие отбросить, чтобы не платить за хранение всех. Ключевое различие — момент принятия решения. `Head-based`: решаем в начале трейса, ещё не зная исхода (например, оставить случайные 10% запросов) — дёшево, но можно случайно выбросить ошибочный запрос. `Tail-based`: решаем в конце, когда исход известен, и поэтому можем прицельно сохранить все трейсы с ошибками или медленные.
 
-```mermaid
-graph LR
-    subgraph "Head-based Sampling"
-        REQ1["Запрос 1"] --> |"sampled=true (10%)"| SAVE1["Сохранить"]
-        REQ2["Запрос 2"] --> |"sampled=false"| DROP1["Отбросить"]
-        REQ3["Запрос 3"] --> |"sampled=false"| DROP2["Отбросить"]
-    end
+**Head-based sampling** (решение в начале, вслепую):
 
-    subgraph "Tail-based Sampling"
-        REQ4["Запрос 4<br/>200 OK, 50ms"] --> COLL["OTel Collector<br/>буфер 10s"]
-        REQ5["Запрос 5<br/>500 Error"] --> COLL
-        REQ6["Запрос 6<br/>200 OK, 3000ms"] --> COLL
-        COLL --> |"error"| SAVE2["Сохранить"]
-        COLL --> |"latency > 1s"| SAVE3["Сохранить"]
-        COLL --> |"нормальный"| DROP3["Отбросить"]
-    end
-```
+- Запрос 1 → `sampled=true (10%)` → Сохранить;
+- Запрос 2 → `sampled=false` → Отбросить;
+- Запрос 3 → `sampled=false` → Отбросить.
+
+**Tail-based sampling** (решение в конце, по исходу). Все запросы сначала попадают в `OTel Collector` (буфер 10s):
+
+- Запрос 4 (`200 OK, 50ms`), Запрос 5 (`500 Error`), Запрос 6 (`200 OK, 3000ms`) → в Collector;
+- из буфера Collector решает по политикам:
+  - `error` → Сохранить;
+  - `latency > 1s` → Сохранить;
+  - нормальный → Отбросить.
 
 **Где настраивается:** в dev обычно 100% для полной отладки; в prod — долевой head-based или tail-based. Head-based задаётся в `OpenTelemetry` через `Sampler` (`ParentBased`, `RateLimiting`) на стороне приложения. Tail-based живёт на коллекторе (`Jaeger / Tempo`, OTel Collector) и решает по атрибутам трейса (status=error, duration>threshold) — потому что только там доступна картина всего завершённого трейса.
 
@@ -1520,28 +1461,17 @@ sum(rate(business_order_amount_sum[5m])) by (region)
 
 Алертят почти всегда по метрикам — это пороги по latency, error rate и доступности. Трейсы для алертов используют редко (например, рост доли медленных трейсов), потому что они дороги и точечны: их роль — не поднять тревогу, а объяснить уже поднятую. Поэтому стандартная схема — алерт по метрике, а в теле алерта ссылка на пример трейса. Каналы доставки: `Alertmanager` -> `PagerDuty`, `Slack`, email.
 
-```mermaid
-graph TD
-    subgraph "Prometheus"
-        RULES["Alert Rules<br/>PromQL условия"]
-    end
+**Маршрутизация алертов от Prometheus до каналов:**
 
-    RULES --> |"firing"| AM["Alertmanager"]
-
-    AM --> |"group_by: alertname"| ROUTE["Routing"]
-
-    ROUTE --> |"severity: critical"| PD["PagerDuty<br/>Звонок дежурному"]
-    ROUTE --> |"severity: warning"| SLACK["Slack #alerts<br/>Уведомление"]
-    ROUTE --> |"severity: info"| EMAIL["Email<br/>Сводка"]
-
-    subgraph "В алерте"
-        LINK1["Ссылка на Grafana дашборд"]
-        LINK2["Ссылка на Runbook"]
-        LINK3["Exemplar → traceId"]
-    end
-
-    AM --> LINK1 & LINK2 & LINK3
-```
+- `Prometheus`: Alert Rules (`PromQL` условия) → при `firing` → `Alertmanager`.
+- `Alertmanager` группирует (`group_by: alertname`) и маршрутизирует по severity:
+  - `severity: critical` → `PagerDuty` (звонок дежурному);
+  - `severity: warning` → `Slack #alerts` (уведомление);
+  - `severity: info` → `Email` (сводка).
+- В тело алерта `Alertmanager` добавляет:
+  - ссылку на `Grafana` дашборд;
+  - ссылку на `Runbook`;
+  - Exemplar → `traceId`.
 
 **Рекомендации:** в алерт класть ссылку на дашборд и пример трейса (exemplar), а в описание — `Runbook`, чтобы дежурный начал чинить, а не разбираться. Главный враг — шум: его глушат малым числом порогов, агрегацией и условием подтверждения (`for`, например 2 из 3 точек), иначе на алерты перестают реагировать. На стороне `Alertmanager` помогают группировка по `alertname` и лейблам, inhibition (не слать вторичные при сработавшем корневом) и silence на время плановых работ.
 
@@ -1823,15 +1753,14 @@ try {
 
 **Архитектура:**
 
-```mermaid
-graph LR
-    A[Java App + OTel SDK] -->|OTLP gRPC/HTTP| C[OTel Collector]
-    B[Python App] -->|OTLP| C
-    C -->|Prometheus scrape| P[Prometheus]
-    C -->|Jaeger export| J[Jaeger]
-    C -->|OTLP| G[Grafana Tempo]
-    C -->|Loki| L[Grafana Loki]
-```
+- Источники шлют телеметрию в `OTel Collector`:
+  - `Java App + OTel SDK` → по `OTLP gRPC/HTTP` → `OTel Collector`;
+  - `Python App` → по `OTLP` → `OTel Collector`.
+- `OTel Collector` экспортирует в бэкенды:
+  - `Prometheus scrape` → `Prometheus`;
+  - `Jaeger export` → `Jaeger`;
+  - `OTLP` → `Grafana Tempo`;
+  - `Loki` → `Grafana Loki`.
 
 **Конфигурация Collector (otel-collector-config.yaml):**
 

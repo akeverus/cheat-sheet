@@ -144,14 +144,13 @@ Trace abc123
 
 Поток данных линейный: приложение отдаёт spans → они доходят до **Collector** → пишутся в **Storage** → **Query** читает их обратно → **UI** отрисовывает. Каждый компонент отвечает за свой участок этого конвейера.
 
-```mermaid
-graph LR
-    App[App + SDK] -->|UDP| Agent[Jaeger Agent]
-    Agent -->|gRPC| Collector[Jaeger Collector]
-    Collector --> Storage[(Storage<br/>Cassandra / ES)]
-    Storage --> Query[Jaeger Query]
-    Query --> UI[Jaeger UI]
-```
+Конвейер по порядку:
+
+- `App + SDK` → по **UDP** → `Jaeger Agent`
+- `Jaeger Agent` → по **gRPC** → `Jaeger Collector`
+- `Jaeger Collector` → `Storage` (Cassandra / ES)
+- `Storage` → `Jaeger Query`
+- `Jaeger Query` → `Jaeger UI`
 
 **Компоненты:**
 
@@ -324,16 +323,15 @@ Jaeger UI закрывает весь цикл расследования: от 
 
 **Service dependency graph** — граф зависимостей между сервисами, который backend строит автоматически из реальных trace, а не из конфигов или документации. Поэтому он показывает, как система устроена на самом деле, а не как её задумывали.
 
-```mermaid
-graph LR
-    Frontend --> APIGW
-    APIGW --> UserService
-    APIGW --> OrderService
-    OrderService --> PaymentService
-    OrderService --> Database
-    UserService --> Database
-    UserService --> Redis
-```
+Пример такого графа зависимостей:
+
+- `Frontend` → `APIGW`
+- `APIGW` → `UserService`
+- `APIGW` → `OrderService`
+- `OrderService` → `PaymentService`
+- `OrderService` → `Database`
+- `UserService` → `Database`
+- `UserService` → `Redis`
 
 **Зачем нужна:**
 - **Визуализация архитектуры** — увидеть систему целиком на одном экране.

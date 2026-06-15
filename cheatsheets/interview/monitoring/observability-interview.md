@@ -121,18 +121,12 @@ updated: "2026-05-15"
 
 Сам термин пришёл из теории управления: система observable, если по её внешним выходам можно восстановить внутреннее состояние. В software это значит, что телеметрии (метрики, логи, трейсы) достаточно, чтобы реконструировать, что происходило внутри, не подключаясь дебаггером к проду.
 
-```mermaid
-graph LR
-    subgraph Monitoring
-        A[Заранее определённые метрики] --> B[Пороговые алерты]
-        B --> C["Известные проблемы ✓"]
-    end
-    subgraph Observability
-        D[Метрики + Логи + Трейсы] --> E[Ad-hoc запросы]
-        E --> F["Неизвестные проблемы ✓"]
-    end
-    C -.-> |"Недостаточно для"| F
-```
+Наглядно два контура различаются цепочкой обработки:
+
+- **Monitoring:** заранее определённые метрики → пороговые алерты → ловит только *известные* проблемы ✓.
+- **Observability:** метрики + логи + трейсы → ad-hoc запросы → ловит и *неизвестные* проблемы ✓.
+
+При этом одного мониторинга **недостаточно для** покрытия неизвестных проблем — их закрывает только observability.
 
 ## Q2. Как построить сильный ответ на вопрос по observability?
 
@@ -158,16 +152,13 @@ graph LR
 
 **Типичный путь диагностики:** метрика-алерт даёт сигнал, что что-то не так и в каком сервисе → trace показывает, в каком именно span ушло время → логи по `traceId` объясняют root cause.
 
-```mermaid
-graph TD
-    Alert["🔔 Алерт: p99 > 500ms"] --> Metrics["📊 Метрики: RED дашборд"]
-    Metrics --> |"Какой endpoint?"| Traces["🔗 Трейсы: waterfall view"]
-    Traces --> |"Какой span медленный?"| Logs["📝 Логи: фильтр по traceId"]
-    Logs --> |"Root cause"| Fix["🔧 Исправление"]
+Поток диагностики по шагам:
 
-    style Alert fill:#f66,color:#fff
-    style Fix fill:#6c6,color:#fff
-```
+1. **Алерт:** `p99 > 500ms` — сигнал, что что-то не так.
+2. **Метрики (RED-дашборд)** → отвечают на вопрос «какой endpoint?».
+3. **Трейсы (waterfall view)** → отвечают на вопрос «какой span медленный?».
+4. **Логи (фильтр по `traceId`)** → дают root cause.
+5. **Исправление.**
 
 Связка работает только при наличии единого контекста (`traceId`), который пронизывает все три сигнала.
 
@@ -258,17 +249,16 @@ public class PaymentMetrics {
 - **Alertmanager** — маршрутизация, дедупликация и группировка алертов
 - **Push Gateway** — мост для short-lived jobs (batch, cron), которые завершаются раньше, чем сервер успеет их заскрейпить
 
-```mermaid
-graph LR
-    App1["Spring Boot /actuator/prometheus"] -->|pull| Prom[Prometheus Server]
-    App2["Node Exporter"] -->|pull| Prom
-    App3["JMX Exporter"] -->|pull| Prom
-    Batch["Batch Job"] -->|push| PGW[Push Gateway]
-    PGW -->|pull| Prom
-    Prom --> AM[Alertmanager]
-    Prom --> Grafana[Grafana]
-    AM --> PD[PagerDuty/Slack]
-```
+Поток данных в типичной топологии:
+
+- **Источники метрик** Prometheus Server забирает по `pull`:
+  - `Spring Boot /actuator/prometheus` → pull → Prometheus Server
+  - `Node Exporter` → pull → Prometheus Server
+  - `JMX Exporter` → pull → Prometheus Server
+- **Batch Job** → push → `Push Gateway`, а Prometheus Server уже забирает данные из Push Gateway по pull.
+- **Prometheus Server** дальше отдаёт данные:
+  - → `Alertmanager` → `PagerDuty`/`Slack`
+  - → `Grafana`
 
 Модель данных: каждая time series — это уникальная комбинация имени метрики и набора лейблов:
 
@@ -462,15 +452,11 @@ public class OrderService {
 
 Это два варианта одного конвейера «сбор → хранение → просмотр логов», различаются только средним звеном — агентом сбора. **ELK** = `Elasticsearch` (хранение и поиск) + `Logstash` (сбор и обработка) + `Kibana` (UI). **EFK** заменяет `Logstash` на `Fluentd`/`Fluent Bit`. Хранилище (`Elasticsearch`) и UI (`Kibana`) общие.
 
-**ELK** = `Elasticsearch` + `Logstash` + `Kibana`:
+**ELK** = `Elasticsearch` + `Logstash` + `Kibana`. Поток данных:
 
-```mermaid
-graph LR
-    App1[Приложение 1] -->|stdout/file| Logstash
-    App2[Приложение 2] -->|stdout/file| Logstash
-    Logstash -->|index| ES[Elasticsearch]
-    ES --> Kibana
-```
+- Приложения (Приложение 1, Приложение 2) → через `stdout`/файл → `Logstash`.
+- `Logstash` → индексирует (`index`) данные в `Elasticsearch`.
+- `Elasticsearch` → `Kibana` (UI для поиска и просмотра).
 
 **EFK** = `Elasticsearch` + `Fluentd`/`Fluent Bit` + `Kibana`:
 
@@ -563,25 +549,14 @@ public class OrderController {
 - **Parent SpanId** — ссылка на родительский span; именно она выстраивает span'ы в дерево
 - **Baggage** — пользовательские данные (например, tenant id), пробрасываемые через все сервисы вместе с контекстом
 
-```mermaid
-gantt
-    title Distributed Trace: POST /api/orders
-    dateFormat X
-    axisFormat %L ms
+Пример waterfall одного трейса `POST /api/orders` (время в миллисекундах от начала запроса, формат `старт → конец`), сгруппировано по сервисам:
 
-    section API Gateway
-    gateway.request           :0, 350
+- **API Gateway** — `gateway.request`: 0 → 350 ms (корневой span, охватывает весь запрос).
+- **Order Service** — `order.createOrder`: 20 → 320 ms; внутри него `order.validateRequest`: 30 → 80 ms.
+- **Payment Service** — `payment.charge`: 90 → 240 ms.
+- **Database** — `db.insertOrder`: 250 → 320 ms.
 
-    section Order Service
-    order.createOrder         :20, 300
-    order.validateRequest     :30, 50
-
-    section Payment Service
-    payment.charge            :90, 150
-
-    section Database
-    db.insertOrder            :250, 70
-```
+Видно, как span'ы разных сервисов перекрываются во времени и где именно его уходит больше всего.
 
 Формат контекста `W3C Trace Context` (стандарт):
 
@@ -685,26 +660,15 @@ Internal link → Tempo datasource
 - **CNCF Graduated** — поддержка от всех major vendors
 - **W3C Trace Context** — стандартизированный формат передачи контекста
 
-```mermaid
-graph TB
-    subgraph "Приложение (Java)"
-        SDK["OTel SDK / Java Agent"]
-        Auto["Auto-instrumentation"]
-        Manual["Manual instrumentation"]
-        Auto --> SDK
-        Manual --> SDK
-    end
+Сквозной поток телеметрии:
 
-    SDK -->|OTLP| Collector["OTel Collector"]
-
-    Collector -->|metrics| Prometheus
-    Collector -->|traces| Tempo["Grafana Tempo"]
-    Collector -->|logs| Loki["Grafana Loki"]
-
-    Prometheus --> Grafana
-    Tempo --> Grafana
-    Loki --> Grafana
-```
+- **Приложение (Java):** `Auto-instrumentation` и `Manual instrumentation` оба питают `OTel SDK / Java Agent`.
+- `OTel SDK / Java Agent` → по протоколу `OTLP` → `OTel Collector`.
+- `OTel Collector` разводит данные по типам сигналов:
+  - `metrics` → `Prometheus`
+  - `traces` → `Grafana Tempo`
+  - `logs` → `Grafana Loki`
+- Все три backend'а (`Prometheus`, `Tempo`, `Loki`) → `Grafana` для единой визуализации.
 
 ## Q18. Как устроена архитектура OpenTelemetry?
 
@@ -820,22 +784,15 @@ public class PaymentService {
 
 `OTel Collector` — это прокси/агрегатор телеметрии между приложениями и backend'ами. Идея в том, чтобы вынести всю логику обработки и маршрутизации телеметрии из приложений в отдельный процесс. Приложение шлёт сырые данные в одну точку (Collector по OTLP) и забывает о них; куда, как и сколько отправлять дальше — забота Collector. Это развязывает приложение и инфраструктуру наблюдаемости.
 
-```mermaid
-graph LR
-    App1[Service A] -->|OTLP| Collector
-    App2[Service B] -->|OTLP| Collector
-    App3[Service C] -->|OTLP| Collector
+Поток через Collector:
 
-    subgraph "OTel Collector"
-        R[Receivers] --> P[Processors]
-        P --> E[Exporters]
-    end
-
-    Collector -->|remote write| Prometheus
-    Collector -->|OTLP| Tempo
-    Collector -->|OTLP| Loki
-    Collector -->|OTLP| Datadog
-```
+- Сервисы (Service A, Service B, Service C) → по `OTLP` → `Collector`.
+- Внутри Collector данные идут по пайплайну `Receivers` → `Processors` → `Exporters`.
+- Collector экспортирует наружу в разные backend'ы:
+  - → `remote write` → `Prometheus`
+  - → `OTLP` → `Tempo`
+  - → `OTLP` → `Loki`
+  - → `OTLP` → `Datadog`
 
 Пайплайн Collector: **Receivers → Processors → Exporters**
 
@@ -907,26 +864,14 @@ service:
 | **T**empo | Хранение трейсов | `TraceQL` |
 | **M**imir | Long-term storage метрик (Prometheus-совместимый) | `PromQL` |
 
-```mermaid
-graph TB
-    subgraph "LGTM Stack"
-        Mimir["Mimir (Метрики)"]
-        Loki["Loki (Логи)"]
-        Tempo["Tempo (Трейсы)"]
-        Grafana["Grafana (UI)"]
-    end
+Поток данных в LGTM-стеке:
 
-    OTel["OTel Collector"] --> Mimir
-    OTel --> Loki
-    OTel --> Tempo
-
-    Mimir --> Grafana
-    Loki --> Grafana
-    Tempo --> Grafana
-
-    Grafana --> Alert["Alerting"]
-    Grafana --> Dash["Dashboards"]
-```
+- `OTel Collector` отправляет сигналы в соответствующие хранилища:
+  - → `Mimir` (метрики)
+  - → `Loki` (логи)
+  - → `Tempo` (трейсы)
+- Все три хранилища (`Mimir`, `Loki`, `Tempo`) → `Grafana` (UI).
+- `Grafana` поверх них даёт `Alerting` и `Dashboards`.
 
 Преимущества `LGTM` над `ELK`:
 - Единый UI для всех сигналов
@@ -1192,16 +1137,15 @@ Observability сокращает два ключевых времени: MTTD (�
 - **Rollback** по guardrail-метрикам (error rate, latency) — без ручного вмешательства
 - Хранить связь release → dashboard → trace samples, чтобы по каждому релизу был быстрый доступ к его телеметрии
 
-```mermaid
-graph LR
-    Deploy["Deploy (Canary 5%)"] --> Compare["Сравнить SLI"]
-    Compare -->|"SLI OK"| Promote["Promote → 100%"]
-    Compare -->|"SLI degraded"| Rollback["Auto Rollback"]
+Ветвление релизного потока:
 
-    Promote --> Validate["Post-deploy validation"]
-    Validate -->|"30 min OK"| Done["✓ Release complete"]
-    Validate -->|"Degradation"| Rollback
-```
+1. **Deploy (Canary 5%)** → **Сравнить SLI** новой и старой версии.
+2. Развилка по результату сравнения:
+   - **SLI OK** → **Promote → 100%**.
+   - **SLI degraded** → **Auto Rollback**.
+3. После Promote → **Post-deploy validation**:
+   - **30 min OK** → **Release complete** ✓.
+   - **Degradation** → **Auto Rollback**.
 
 Пример guardrail-проверки:
 

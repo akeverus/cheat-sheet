@@ -119,22 +119,14 @@ updated: "2026-04-25"
 
 Почему это важно сформулировать явно: без стратегии каждый сервис логирует по-своему, поля называются по-разному, в prod утекают пароли, а объём логов растёт неконтролируемо. Единые правила превращают логи в инструмент расследования инцидентов.
 
-```mermaid
-graph TD
-    A[Стратегия логирования] --> B[Уровни]
-    A --> C[Формат]
-    A --> D[Назначение]
-    A --> E[Контекст]
-    A --> F[Безопасность]
-    A --> G[Retention]
-    B --> B1[DEBUG / INFO / WARN / ERROR]
-    C --> C1[Text — dev]
-    C --> C2[JSON — prod]
-    D --> D1[Console / File / ELK / Loki]
-    E --> E1[MDC / Correlation ID / TraceId]
-    F --> F1[Маскирование PII]
-    G --> G1[Ротация / Архив / Удаление]
-```
+Стратегия логирования раскладывается на шесть составляющих, у каждой — свои конкретные значения:
+
+- **Уровни** → `DEBUG` / `INFO` / `WARN` / `ERROR`.
+- **Формат** → `Text` для dev, `JSON` для prod.
+- **Назначение** → `Console` / `File` / `ELK` / `Loki`.
+- **Контекст** → `MDC` / `Correlation ID` / `TraceId`.
+- **Безопасность** → маскирование PII.
+- **Retention** → ротация / архив / удаление.
 
 **Рекомендация.** Зафиксировать стратегию в `README` или отдельном документе: уровни по умолчанию для prod (`INFO / WARN`), формат (`JSON` в prod), список обязательных полей структурированного лога (service, `traceId`, timestamp, level, message), правила маскирования (пароли, токены), retention по окружениям. При онбординге разработчик получает готовый конфиг `Logback` и соглашения по именованию сообщений — а не изобретает свои.
 
@@ -295,23 +287,16 @@ implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
 - **Проброс** — при вызове другого сервиса добавляем заголовок с тем же id.
 - **Очистка** — обязательно убираем из `MDC` в `finally`, иначе id «протечёт» в следующий запрос на том же потоке (пул потоков переиспользуется).
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Gateway
-    participant ServiceA
-    participant ServiceB
-    participant ServiceC
+Поток запроса по сервисам (`Client` → `Gateway` → `ServiceA` → `ServiceB`/`ServiceC`):
 
-    Client->>Gateway: POST /order
-    Gateway->>Gateway: correlationId = UUID.randomUUID()
-    Gateway->>ServiceA: X-Correlation-Id: abc-123
-    ServiceA->>ServiceA: MDC.put("correlationId", "abc-123")
-    ServiceA->>ServiceB: X-Correlation-Id: abc-123
-    ServiceB->>ServiceB: MDC.put("correlationId", "abc-123")
-    ServiceA->>ServiceC: X-Correlation-Id: abc-123
-    ServiceC->>ServiceC: MDC.put("correlationId", "abc-123")
-```
+1. `Client` отправляет `POST /order` на `Gateway`.
+2. `Gateway` генерирует id: `correlationId = UUID.randomUUID()`.
+3. `Gateway` вызывает `ServiceA`, передавая заголовок `X-Correlation-Id: abc-123`.
+4. `ServiceA` кладёт id в свой контекст: `MDC.put("correlationId", "abc-123")`.
+5. `ServiceA` вызывает `ServiceB` с тем же заголовком `X-Correlation-Id: abc-123`; `ServiceB` делает `MDC.put("correlationId", "abc-123")`.
+6. `ServiceA` вызывает `ServiceC` с тем же заголовком `X-Correlation-Id: abc-123`; `ServiceC` делает `MDC.put("correlationId", "abc-123")`.
+
+Один и тот же `abc-123` проходит через всю цепочку — по нему в агрегаторе собираются логи всех сервисов.
 
 Реализация фильтра для `Spring Boot`:
 
@@ -633,18 +618,11 @@ logging:
 }
 ```
 
-Подходы к распространению конфига:
+Подходы к распространению конфига и их связи:
 
-```mermaid
-graph LR
-    A[Общий logging-starter] --> B[Service A]
-    A --> C[Service B]
-    A --> D[Service C]
-    E[Spring Cloud Config] --> B
-    E --> C
-    E --> D
-    F[Документация] --> G[Code Review]
-```
+- **Общий logging-starter** раздаёт формат во все сервисы: `Service A`, `Service B`, `Service C`.
+- **Spring Cloud Config** аналогично централизованно питает те же `Service A`, `Service B`, `Service C`.
+- **Документация** → **Code Review**: соглашения проверяются вручную на ревью.
 
 1. **Общий Spring Boot Starter** (самый надёжный) — артефакт с `logback-spring.xml` и `LogstashEncoder`; сервис подключает зависимость и получает формат «из коробки», ничего не настраивая.
 2. **Spring Cloud Config** — централизованная раздача конфига всем сервисам.
@@ -657,25 +635,11 @@ graph LR
 
 Зачем: в распределённой системе логи разбросаны по десяткам подов на разных узлах, поды эфемерны (умер под — пропали его файлы), а инцидент почти всегда задевает несколько сервисов. Заходить по SSH на каждый узел и грепать файлы невозможно. Агрегатор решает это: один интерфейс, один запрос по `traceId` показывает всю картину, логи переживают смерть пода.
 
-```mermaid
-graph LR
-    subgraph Applications
-        A1[Service A] -->|stdout/file| AG1[Agent]
-        A2[Service B] -->|stdout/file| AG2[Agent]
-        A3[Service C] -->|stdout/file| AG3[Agent]
-    end
+Схема агрегации по слоям:
 
-    subgraph Collection
-        AG1 -->|ship| P[Logstash / Fluentd]
-        AG2 -->|ship| P
-        AG3 -->|ship| P
-    end
-
-    subgraph Storage & UI
-        P -->|index| ES[Elasticsearch / Loki]
-        ES --> K[Kibana / Grafana]
-    end
-```
+- **Applications** — `Service A`, `Service B`, `Service C` пишут через stdout/file, каждый — своему `Agent`.
+- **Collection** — все агенты доставляют (`ship`) данные в `Logstash` / `Fluentd`.
+- **Storage & UI** — `Logstash`/`Fluentd` индексирует (`index`) в `Elasticsearch` / `Loki`, а оттуда данные идут в `Kibana` / `Grafana`.
 
 Основные стеки:
 
@@ -689,17 +653,13 @@ graph LR
 
 Пайплайн ELK состоит из четырёх звеньев: приложение пишет `JSON` → агент (`Filebeat`) собирает и доставляет → `Logstash` парсит и обогащает → `Elasticsearch` индексирует → `Kibana` визуализирует. Каждое звено отвечает за свою задачу, поэтому их можно масштабировать и менять независимо.
 
-Полный пайплайн от приложения до дашборда:
+Полный пайплайн от приложения до дашборда, по звеньям:
 
-```mermaid
-graph LR
-    App[Spring Boot App] -->|JSON stdout| FB[Filebeat]
-    FB -->|ship| LS[Logstash]
-    LS -->|filter/enrich| ES[Elasticsearch]
-    ES -->|query| KB[Kibana]
-
-    App2[Spring Boot App] -->|JSON file| FB
-```
+- `Spring Boot App` → (JSON stdout) → `Filebeat`.
+- `Filebeat` → (ship) → `Logstash`.
+- `Logstash` → (filter/enrich) → `Elasticsearch`.
+- `Elasticsearch` → (query) → `Kibana`.
+- Другой `Spring Boot App` может отдавать логи в тот же `Filebeat` через JSON file.
 
 Конфигурация `Filebeat` (`filebeat.yml`):
 
@@ -1249,22 +1209,12 @@ rate(log_events_total{level="ERROR", service="order-service"}[5m])
 - **SPOF (точка отказа)** — упал агрегатор, и наблюдаемость пропала у всех сразу. Лечится HA-кластером с репликами.
 - **Безопасность** — в одном месте собраны логи всех систем, включая чувствительные. Лечится шифрованием (in transit + at rest) и RBAC.
 
-```mermaid
-graph TD
-    subgraph Risks[Риски централизованного логирования]
-        R1[Сетевые потери]
-        R2[Стоимость хранения]
-        R3[SPOF агрегатора]
-        R4[Безопасность данных]
-    end
+Каждый риск централизованного логирования закрывается своей мерой:
 
-    subgraph Mitigations[Меры]
-        R1 --> M1[Буфер на агенте]
-        R2 --> M2[Retention + Sampling]
-        R3 --> M3[HA кластер + реплики]
-        R4 --> M4[Шифрование + RBAC]
-    end
-```
+- Сетевые потери → буфер на агенте.
+- Стоимость хранения → retention + sampling.
+- SPOF агрегатора → HA-кластер + реплики.
+- Безопасность данных → шифрование + RBAC.
 
 Эти же меры в развёрнутом виде:
 
@@ -1281,22 +1231,18 @@ graph TD
 
 Чеклист стартует с главного вопроса — **есть ли общий logging-starter** (Q11)? Если да — подключаете и почти всё работает из коробки; если нет — заводите `logback-spring.xml` по образцу. Дальше по шагам: имя сервиса → `JSON` в prod → `MDC` с `traceId`+`correlationId` → уровни (`INFO` prod / `DEBUG` dev) → маскирование PII → async appender в prod → интеграция с агрегатором.
 
-```mermaid
-graph TD
-    A[Новый микросервис] --> B{Есть общий starter?}
-    B -->|Да| C[Подключить logging-starter]
-    B -->|Нет| D[Создать logback-spring.xml]
+Чеклист для нового микросервиса по шагам:
 
-    C --> E[Настроить service name]
-    D --> E
-
-    E --> F[Формат: JSON в prod]
-    F --> G[MDC: traceId + correlationId]
-    G --> H[Уровни: INFO prod / DEBUG dev]
-    H --> I[Маскирование PII]
-    I --> J[Async appender для prod]
-    J --> K[Интеграция с агрегатором]
-```
+1. **Есть общий starter?**
+   - Да → подключить logging-starter.
+   - Нет → создать `logback-spring.xml`.
+2. Обе ветки сходятся: настроить service name.
+3. Формат: `JSON` в prod.
+4. `MDC`: `traceId` + `correlationId`.
+5. Уровни: `INFO` prod / `DEBUG` dev.
+6. Маскирование PII.
+7. Async appender для prod.
+8. Интеграция с агрегатором.
 
 Пример полного `logback-spring.xml` для нового сервиса:
 
@@ -1360,15 +1306,11 @@ graph TD
 
 Переводить весь зоопарк сервисов на `JSON` разом рискованно (можно сломать парсинг и дашборды), поэтому делают поэтапно — пилот, стандарт, масштабирование:
 
-```mermaid
-graph LR
-    A[Этап 1: Пилот] --> B[Этап 2: Критичные сервисы]
-    B --> C[Этап 3: Все сервисы]
+Этапность миграции на `JSON` (по порядку): **Этап 1: Пилот** → **Этап 2: Критичные сервисы** → **Этап 3: Все сервисы**. Содержимое каждого этапа:
 
-    A1[1 сервис + JSON + Kibana] --> A
-    B1[Стандарт полей + Starter] --> B
-    C1[Линтер + Мониторинг] --> C
-```
+- Этап 1 (Пилот) — 1 сервис + `JSON` + `Kibana`.
+- Этап 2 (Критичные сервисы) — стандарт полей + Starter.
+- Этап 3 (Все сервисы) — линтер + мониторинг.
 
 1. **Пилот** — один сервис переводим на `JSON`, проверяем парсинг в `Kibana`/`Grafana`
 2. **Стандарт** — фиксируем обязательные поля (`service`, `traceId`, `env`, `version`), создаём starter
@@ -1509,16 +1451,11 @@ logging:
 
 Логика расследования всегда идёт **от общего к частному**: метрики замечают, что что-то не так (аномалия), трейсы показывают, *где* в цепочке вызовов проблема, логи объясняют, *что именно* произошло. Зная этот маршрут, on-call инженер доходит от алерта до корневой причины за минуты.
 
-```mermaid
-graph LR
-    A[Метрики<br>Prometheus/VictoriaMetrics] -->|exemplar с traceId| B[Трейсы<br>Jaeger/Tempo]
-    B -->|traceId| C[Логи<br>Loki/Elasticsearch]
-    C -->|timestamp + service| A
+Три инструмента связаны в замкнутый цикл навигации:
 
-    style A fill:#e1f5fe
-    style B fill:#f3e5f5
-    style C fill:#e8f5e9
-```
+- **Метрики** (`Prometheus`/`VictoriaMetrics`) → (exemplar с `traceId`) → **Трейсы** (`Jaeger`/`Tempo`).
+- **Трейсы** → (`traceId`) → **Логи** (`Loki`/`Elasticsearch`).
+- **Логи** → (timestamp + service) → обратно к **Метрикам**.
 
 Последовательность расследования инцидента:
 
@@ -1555,17 +1492,12 @@ public Order createOrder(OrderRequest request) {
 
 Механика: container runtime пишет stdout каждого пода в файлы `/var/log/containers/*.log` на узле. Агент `Fluent Bit`/`Fluentd`, развёрнутый как `DaemonSet` (по одному на узел), читает эти файлы, через `kubernetes` filter добавляет namespace, pod name и labels, и шлёт в `Elasticsearch`/`Loki`.
 
-```mermaid
-graph LR
-    subgraph Node
-        POD1[Pod A<br/>stdout JSON] --> CRUN[Container Runtime]
-        POD2[Pod B<br/>stdout JSON] --> CRUN
-        CRUN --> FILE[/var/log/containers/*.log]
-        FILE --> DAEMON[Fluent Bit DaemonSet]
-    end
-    DAEMON --> ES[Elasticsearch]
-    DAEMON --> LOKI[Loki]
-```
+Путь логов внутри узла (`Node`) и наружу:
+
+- `Pod A` (stdout JSON) и `Pod B` (stdout JSON) → `Container Runtime`.
+- `Container Runtime` → файлы `/var/log/containers/*.log`.
+- Эти файлы → `Fluent Bit DaemonSet` (он живёт на узле).
+- `Fluent Bit DaemonSet` доставляет логи дальше — в `Elasticsearch` и в `Loki`.
 
 Паттерны развёртывания агентов:
 
@@ -1614,19 +1546,10 @@ graph LR
 
 Отсюда вытекает весь компромисс. Полнотекстовый индекс в `Elasticsearch` — самая дорогая часть: он раздувает хранилище и требует мощного железа. Loki этот индекс не строит, поэтому хранение получается примерно в 10 раз дешевле, агент (`Promtail`) лёгкий, а интеграция с `Grafana` нативная. Плата за это — поиск по содержимому медленнее: Loki сначала отбирает чанки по меткам, а потом grep'ает их линейно.
 
-```mermaid
-graph LR
-    subgraph ELK
-        FB1[Filebeat] --> LS[Logstash]
-        LS --> ES[Elasticsearch<br/>полнотекстовый индекс]
-        ES --> KB[Kibana]
-    end
+Два стека по звеньям:
 
-    subgraph PLG
-        PT[Promtail] --> LK[Loki<br/>индексирует только labels]
-        LK --> GF[Grafana]
-    end
-```
+- **ELK**: `Filebeat` → `Logstash` → `Elasticsearch` (полнотекстовый индекс) → `Kibana`.
+- **PLG**: `Promtail` → `Loki` (индексирует только labels) → `Grafana`.
 
 Сравнение стеков:
 
@@ -1817,15 +1740,12 @@ meterRegistry.counter("api.errors", "host", host).increment();
 
 Итог: в `Grafana` из проблемного трейса в `Tempo` по `traceId` мгновенно переходите к логам в `Loki` за тот же запрос. Главное преимущество перед `Sleuth`/`Zipkin` — OTel не привязывает к конкретному бэкенду: один и тот же экспорт через OTLP можно направить в Tempo, Jaeger или коммерческий APM.
 
-```mermaid
-graph LR
-    SVC_A[Service A] -->|traceId propagation<br/>W3C traceparent| SVC_B[Service B]
-    SVC_A -->|OTLP| COL[OTel Collector]
-    SVC_B -->|OTLP| COL
-    COL --> TEMPO[Grafana Tempo<br/>traces]
-    COL --> LOKI[Loki<br/>logs]
-    TEMPO -->|traceId link| LOKI
-```
+Поток сигналов в OTel-сетапе:
+
+- `Service A` → (`traceId` propagation через `W3C traceparent`) → `Service B`.
+- `Service A` и `Service B` оба экспортируют по `OTLP` в `OTel Collector`.
+- `OTel Collector` → `Grafana Tempo` (traces) и `Loki` (logs).
+- `Grafana Tempo` → (`traceId` link) → `Loki`: из трейса по `traceId` переходим к логам.
 
 Настройка `Spring Boot 3` + `Micrometer Tracing` + `OpenTelemetry`:
 
