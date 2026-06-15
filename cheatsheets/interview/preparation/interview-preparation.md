@@ -111,19 +111,9 @@ updated: "2026-04-13"
 
 Собеседование для `Senior Java Developer` — это воронка из нескольких этапов, выстроенных от дешёвых фильтров к дорогим. Сначала идут быстрые отсеивающие раунды (HR-звонок, technical screening), и только прошедших их зовут на дорогой `onsite` из 3-5 раундов. Каждый этап проверяет свою компетенцию, поэтому готовиться нужно тоже по этапам: бессмысленно полировать system design, если не пройдёшь phone screen.
 
-```mermaid
-graph LR
-    A[HR Screening<br/>30 мин] --> B[Technical<br/>Screening<br/>45-60 мин]
-    B --> C[Onsite /<br/>Virtual Onsite<br/>3-5 раундов]
-    C --> D[Финальный<br/>раунд]
-    D --> E[Оффер /<br/>Отказ]
+Воронка проходит линейно по этапам:
 
-    style A fill:#e1f5fe
-    style B fill:#fff3e0
-    style C fill:#e8f5e9
-    style D fill:#f3e5f5
-    style E fill:#fce4ec
-```
+`HR Screening` (30 мин) → `Technical Screening` (45-60 мин) → `Onsite / Virtual Onsite` (3-5 раундов) → Финальный раунд → Оффер / Отказ.
 
 ### Этапы интервью
 
@@ -164,20 +154,11 @@ graph LR
 
 Главная особенность `FAANG` (`Google`, `Amazon`, `Meta`, `Apple`, `Netflix`): итоговое решение принимает **не интервьюер, а Hiring Committee** на основе письменных отчётов (packets) со всех раундов. Это нивелирует bias одного человека — поэтому стараться угодить конкретному собеседующему бессмысленно, нужны сильные сигналы на каждом раунде. Весь цикл обычно занимает 4-8 недель.
 
-```mermaid
-graph TD
-    A[Подача заявки /<br/>Реферал] --> B[Recruiter Call<br/>15-30 мин]
-    B --> C[Phone Screen<br/>45 мин coding]
-    C -->|Passed| D[Virtual Onsite<br/>4-5 раундов]
-    C -->|Failed| X[Отказ]
-    D --> E[Hiring Committee]
-    E -->|Approved| F[Team Match]
-    E -->|Rejected| X
-    F --> G[Оффер]
+Поток найма с ветвлениями:
 
-    style X fill:#ffcdd2
-    style G fill:#c8e6c9
-```
+- Подача заявки / Реферал → `Recruiter Call` (15-30 мин) → `Phone Screen` (45 мин coding).
+- После `Phone Screen`: если `Passed` → `Virtual Onsite` (4-5 раундов); если `Failed` → Отказ.
+- `Virtual Onsite` → `Hiring Committee`: если `Approved` → `Team Match` → Оффер; если `Rejected` → Отказ.
 
 **Особенности по компаниям:**
 
@@ -214,29 +195,13 @@ graph TD
 
 Идите от базовых компетенций к сложным: алгоритмы → system design → domain → behavioral, а mock-интервью оставьте на последние недели для финальной полировки. Это не случайный порядок: без алгоритмов и SD технические раунды не пройти, поэтому behavioral идёт в конце; а параллельная учёба «по часу на всё» убивает глубину из-за постоянного переключения контекста. Ниже — рекомендуемый маршрут для `Senior Java Developer`.
 
-```mermaid
-gantt
-    title План подготовки к интервью (8 недель)
-    dateFormat  X
-    axisFormat %s нед.
+План подготовки к интервью на 8 недель по направлениям (недели указаны как интервал от старта):
 
-    section Алгоритмы
-    Основы (Arrays, Strings, Hash)    :a1, 0, 2
-    Деревья, графы, DP                :a2, 2, 2
-
-    section System Design
-    Основы (scaling, caching, DB)     :sd1, 2, 2
-    Практика задач                    :sd2, 4, 2
-
-    section Domain
-    Java/JVM/Spring                   :d1, 4, 2
-
-    section Behavioral
-    STAR-истории, mock                :b1, 6, 2
-
-    section Mock Interviews
-    Mock-интервью (2-3 в неделю)      :m1, 4, 4
-```
+- **Алгоритмы:** Основы (`Arrays`, `Strings`, `Hash`) — недели 1-2; Деревья, графы, `DP` — недели 3-4.
+- **System Design:** Основы (`scaling`, `caching`, `DB`) — недели 3-4; Практика задач — недели 5-6.
+- **Domain:** `Java` / `JVM` / `Spring` — недели 5-6.
+- **Behavioral:** STAR-истории, mock — недели 7-8.
+- **Mock Interviews:** mock-интервью (2-3 в неделю) — недели 5-8.
 
 ### Рекомендуемый маршрут (8 недель)
 
@@ -338,19 +303,14 @@ Coding-раунд — это не только про правильный ко�
 
 ### Пошаговый алгоритм
 
-```mermaid
-graph TD
-    A[1. Прочитать задачу<br/>1-2 мин] --> B[2. Уточнить требования<br/>и edge cases<br/>2-3 мин]
-    B --> C[3. Обсудить подход<br/>brute force → оптимальный<br/>3-5 мин]
-    C --> D[4. Написать код<br/>15-20 мин]
-    D --> E[5. Пройтись по коду<br/>с тестовым примером<br/>3-5 мин]
-    E --> F[6. Обсудить сложность<br/>и альтернативы<br/>2-3 мин]
+Пошаговый поток coding-раунда по порядку:
 
-    style A fill:#e1f5fe
-    style C fill:#fff3e0
-    style D fill:#e8f5e9
-    style F fill:#f3e5f5
-```
+1. Прочитать задачу — 1-2 мин.
+2. Уточнить требования и edge cases — 2-3 мин.
+3. Обсудить подход (brute force → оптимальный) — 3-5 мин.
+4. Написать код — 15-20 мин.
+5. Пройтись по коду с тестовым примером — 3-5 мин.
+6. Обсудить сложность и альтернативы — 2-3 мин.
 
 ### Ключевые правила
 
@@ -486,19 +446,9 @@ i=1: complement = 9-7 = 2, seen={2:0}, found! → return [0, 1] ✓
 
 ### Фреймворк RESHADED (45 мин)
 
-```mermaid
-graph LR
-    R[Requirements<br/>5 мин] --> E[Estimation<br/>5 мин]
-    E --> S[Storage<br/>schema]
-    S --> H[High-Level<br/>Design<br/>10 мин]
-    H --> A[API Design]
-    A --> D[Deep Dive<br/>20 мин]
-    D --> ED[Edge Cases &<br/>Bottlenecks<br/>5 мин]
+Шаги фреймворка по порядку (буквы `RESHADED`):
 
-    style R fill:#e1f5fe
-    style H fill:#e8f5e9
-    style D fill:#fff3e0
-```
+`Requirements` (5 мин) → `Estimation` (5 мин) → `Storage` (schema) → `High-Level Design` (10 мин) → `API Design` → `Deep Dive` (20 мин) → `Edge Cases & Bottlenecks` (5 мин).
 
 ### Детали каждого шага
 
@@ -516,20 +466,12 @@ graph LR
 - 5 лет: 50 × 365 × 5 = ~90 TB storage
 ```
 
-**3. High-Level Design (10 мин)** — нарисуйте основные компоненты:
+**3. High-Level Design (10 мин)** — нарисуйте основные компоненты. Связи между ними:
 
-```mermaid
-graph LR
-    Client --> LB[Load Balancer]
-    LB --> API[API Gateway]
-    API --> S1[Service A]
-    API --> S2[Service B]
-    S1 --> Cache[Redis Cache]
-    S1 --> DB[(Primary DB)]
-    S2 --> MQ[Message Queue]
-    MQ --> Worker[Worker Service]
-    Worker --> DB2[(Analytics DB)]
-```
+- `Client` → `Load Balancer` → `API Gateway`.
+- `API Gateway` → `Service A` и `API Gateway` → `Service B`.
+- `Service A` → `Redis Cache` и `Service A` → `Primary DB`.
+- `Service B` → `Message Queue` → `Worker Service` → `Analytics DB`.
 
 **4. Deep Dive (20 мин)** — выберите 2-3 компонента:
 - Схема БД, индексы
@@ -610,17 +552,12 @@ graph LR
 
 ### Структура рассказа
 
-```mermaid
-graph LR
-    C[Context<br/>Проблема, масштаб,<br/>роль] --> A[Action<br/>Технологии, решения,<br/>вызовы]
-    A --> R[Result<br/>Метрики,<br/>бизнес-импакт]
-    R --> L[Learning<br/>Выводы,<br/>что бы изменили]
+Структура рассказа по порядку:
 
-    style C fill:#e1f5fe
-    style A fill:#fff3e0
-    style R fill:#e8f5e9
-    style L fill:#f3e5f5
-```
+- **Context** — проблема, масштаб, роль.
+- **Action** — технологии, решения, вызовы.
+- **Result** — метрики, бизнес-импакт.
+- **Learning** — выводы, что бы изменили.
 
 ### Пример
 
@@ -904,13 +841,12 @@ Mock-интервью — **самый эффективный** способ п�
 
 ### Компоненты компенсации
 
-```mermaid
-pie title Total Compensation (пример)
-    "Base Salary" : 60
-    "Annual Bonus" : 10
-    "Equity / RSU" : 25
-    "Sign-on Bonus" : 5
-```
+Примерные доли в Total Compensation:
+
+- `Base Salary` — 60%.
+- `Annual Bonus` — 10%.
+- `Equity / RSU` — 25%.
+- `Sign-on Bonus` — 5%.
 
 ### Переговорная стратегия
 

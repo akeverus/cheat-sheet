@@ -212,21 +212,14 @@ vertx.deployVerticle(MyWorkerVerticle.class.getName(),
 
 **Multi-reactor (подход Vert.x)** — поднимается **N event loops** (по умолчанию по 2 на каждое ядро CPU). Каждый verticle жёстко закреплён за одним event loop, а события между разными event loops ходят через Event Bus. Так Vert.x утилизирует все ядра, сохраняя при этом простоту однопоточной модели внутри каждого loop.
 
-```mermaid
-graph LR
-    A[CPU Core 0] --> EL1[Event Loop 1]
-    B[CPU Core 1] --> EL2[Event Loop 2]
-    C[CPU Core 2] --> EL3[Event Loop 3]
-    D[CPU Core 3] --> EL4[Event Loop 4]
+Пример топологии на 4-ядерной машине:
 
-    EL1 --> V1[Verticle A]
-    EL2 --> V2[Verticle B]
-    EL3 --> V3[Verticle C]
-    EL4 --> V4[Verticle D]
+- `CPU Core 0` → `Event Loop 1` → `Verticle A`
+- `CPU Core 1` → `Event Loop 2` → `Verticle B`
+- `CPU Core 2` → `Event Loop 3` → `Verticle C`
+- `CPU Core 3` → `Event Loop 4` → `Verticle D`
 
-    V1 -.EventBus.- V2
-    V2 -.EventBus.- V3
-```
+Verticles общаются между собой через Event Bus: `Verticle A` ↔ `Verticle B`, `Verticle B` ↔ `Verticle C`.
 
 **Главная гарантия:** конкретный verticle всегда исполняется на одном и том же потоке. Значит, внутри verticle нет конкуренции за его состояние → не нужны `synchronized`, локи и атомики. Это сильно упрощает код по сравнению с классической многопоточностью.
 

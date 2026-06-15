@@ -123,41 +123,11 @@ updated: "2026-04-25"
 
 ## Q2. (!) Какие категории `GoF`-паттернов существуют?
 
-Всего 23 паттерна в трёх категориях:
+Всего 23 паттерна `GoF` распределены по трём категориям:
 
-```mermaid
-graph TD
-    GoF[GoF Design Patterns — 23 паттерна]
-    GoF --> C[Creational — 5]
-    GoF --> S[Structural — 7]
-    GoF --> B[Behavioral — 11]
-
-    C --> C1[Singleton]
-    C --> C2[Factory Method]
-    C --> C3[Abstract Factory]
-    C --> C4[Builder]
-    C --> C5[Prototype]
-
-    S --> S1[Adapter]
-    S --> S2[Bridge]
-    S --> S3[Composite]
-    S --> S4[Decorator]
-    S --> S5[Facade]
-    S --> S6[Flyweight]
-    S --> S7[Proxy]
-
-    B --> B1[Chain of Responsibility]
-    B --> B2[Command]
-    B --> B3[Interpreter]
-    B --> B4[Iterator]
-    B --> B5[Mediator]
-    B --> B6[Memento]
-    B --> B7[Observer]
-    B --> B8[State]
-    B --> B9[Strategy]
-    B --> B10[Template Method]
-    B --> B11[Visitor]
-```
+- **Creational — 5:** `Singleton`, `Factory Method`, `Abstract Factory`, `Builder`, `Prototype`
+- **Structural — 7:** `Adapter`, `Bridge`, `Composite`, `Decorator`, `Facade`, `Flyweight`, `Proxy`
+- **Behavioral — 11:** `Chain of Responsibility`, `Command`, `Interpreter`, `Iterator`, `Mediator`, `Memento`, `Observer`, `State`, `Strategy`, `Template Method`, `Visitor`
 
 **Порождающие (Creational)** — абстрагируют процесс создания объектов, делают систему независимой от способа создания, композиции и представления объектов.
 
@@ -215,16 +185,11 @@ graph TD
 
 ## Q6. (!) Что такое `Singleton` и как его правильно реализовать в Java?
 
-`Singleton` гарантирует, что у класса **ровно один экземпляр**, и предоставляет глобальную точку доступа к нему.
+`Singleton` гарантирует, что у класса **ровно один экземпляр**, и предоставляет глобальную точку доступа к нему. Структура класса `Singleton`:
 
-```mermaid
-classDiagram
-    class Singleton {
-        -static instance: Singleton
-        -Singleton()
-        +static getInstance(): Singleton
-    }
-```
+- приватное статическое поле `instance: Singleton` — хранит единственный экземпляр;
+- приватный конструктор `Singleton()` — запрещает создание извне;
+- публичный статический метод `getInstance(): Singleton` — точка доступа к экземпляру.
 
 **5 способов реализации в Java (от простого к рекомендуемому):**
 
@@ -346,32 +311,13 @@ public enum Singleton {
 
 **`Factory Method`** — выносит создание объекта в отдельный метод, который переопределяют подклассы, чтобы решить, какой именно класс инстанциировать. Базовый класс описывает алгоритм работы с продуктом (в примере `notify()`), но не знает его конкретного типа — за тип отвечает подкласс фабрики. Так логика «что мы делаем с объектом» отделяется от «какой объект создаём», и добавление нового продукта не требует менять существующий код, только добавить подкласс.
 
-```mermaid
-classDiagram
-    class Creator {
-        <<abstract>>
-        +factoryMethod(): Product
-        +someOperation()
-    }
-    class ConcreteCreatorA {
-        +factoryMethod(): Product
-    }
-    class ConcreteCreatorB {
-        +factoryMethod(): Product
-    }
-    class Product {
-        <<interface>>
-    }
-    class ConcreteProductA
-    class ConcreteProductB
+Структура паттерна:
 
-    Creator <|-- ConcreteCreatorA
-    Creator <|-- ConcreteCreatorB
-    Product <|.. ConcreteProductA
-    Product <|.. ConcreteProductB
-    ConcreteCreatorA ..> ConcreteProductA : creates
-    ConcreteCreatorB ..> ConcreteProductB : creates
-```
+- `Creator` (абстрактный класс) — объявляет `factoryMethod(): Product` и `someOperation()`.
+- `ConcreteCreatorA` и `ConcreteCreatorB` наследуют `Creator` и каждый переопределяет `factoryMethod(): Product`.
+- `Product` (интерфейс) — общий тип создаваемых объектов.
+- `ConcreteProductA` и `ConcreteProductB` реализуют интерфейс `Product`.
+- `ConcreteCreatorA` создаёт `ConcreteProductA`, а `ConcreteCreatorB` создаёт `ConcreteProductB` (связь `creates`).
 
 ```java
 // Продукт
@@ -577,17 +523,13 @@ public class GameUnit implements Cloneable {
 
 Структурные паттерны описывают, как собирать объекты и классы в более крупные структуры:
 
-```mermaid
-graph LR
-    SP[Structural Patterns]
-    SP --> Adapter[Adapter — совмещение интерфейсов]
-    SP --> Bridge[Bridge — разделение абстракции и реализации]
-    SP --> Composite[Composite — дерево объектов]
-    SP --> Decorator[Decorator — динамическое расширение]
-    SP --> Facade[Facade — упрощение интерфейса подсистемы]
-    SP --> Flyweight[Flyweight — разделение общего состояния]
-    SP --> Proxy[Proxy — подмена/контроль доступа]
-```
+- `Adapter` — совмещение интерфейсов
+- `Bridge` — разделение абстракции и реализации
+- `Composite` — дерево объектов
+- `Decorator` — динамическое расширение
+- `Facade` — упрощение интерфейса подсистемы
+- `Flyweight` — разделение общего состояния
+- `Proxy` — подмена/контроль доступа
 
 **Мнемоника для запоминания:** «ABCDFFP» — Adapter, Bridge, Composite, Decorator, Facade, Flyweight, Proxy.
 
@@ -595,22 +537,11 @@ graph LR
 
 `Adapter` (адаптер) преобразует интерфейс существующего класса в интерфейс, который ожидает клиент. Прямая аналогия — переходник для розетки: вилку менять нельзя, розетку тоже, а адаптер между ними делает их совместимыми. Так и в коде: есть готовый класс с «неудобным» API (legacy или сторонняя библиотека), который трогать нельзя, и клиент, ожидающий другой интерфейс — адаптер встаёт между ними и переводит вызовы.
 
-```mermaid
-classDiagram
-    class Target {
-        <<interface>>
-        +request()
-    }
-    class Adaptee {
-        +specificRequest()
-    }
-    class Adapter {
-        -adaptee: Adaptee
-        +request()
-    }
-    Target <|.. Adapter
-    Adapter --> Adaptee
-```
+Структура паттерна:
+
+- `Target` (интерфейс) — объявляет метод `request()`, который ожидает клиент.
+- `Adaptee` — существующий класс с «неудобным» методом `specificRequest()`.
+- `Adapter` реализует `Target`, хранит ссылку `adaptee: Adaptee` и в своём `request()` делегирует вызов методу `specificRequest()` адаптируемого объекта.
 
 ```java
 // Старый интерфейс (нельзя менять)
@@ -716,33 +647,12 @@ class RegularNotification extends Notification {
 
 `Decorator` (декоратор) динамически добавляет объекту новое поведение, **оборачивая** его в объект с тем же интерфейсом. Декоратор реализует тот же интерфейс, что и оборачиваемый объект, держит ссылку на него и делегирует ему вызовы, попутно добавляя что-то своё (до или после). Поскольку интерфейс общий, декораторы можно вкладывать друг в друга в любом сочетании — в примере `FileDataSource` оборачивается сначала шифрованием, затем сжатием. Это гибкая альтернатива наследованию: поведение комбинируется в runtime, без взрывного роста числа подклассов (см. Q19).
 
-```mermaid
-classDiagram
-    class Component {
-        <<interface>>
-        +operation(): String
-    }
-    class ConcreteComponent {
-        +operation(): String
-    }
-    class Decorator {
-        <<abstract>>
-        -wrapped: Component
-        +operation(): String
-    }
-    class ConcreteDecoratorA {
-        +operation(): String
-    }
-    class ConcreteDecoratorB {
-        +operation(): String
-    }
+Структура паттерна:
 
-    Component <|.. ConcreteComponent
-    Component <|.. Decorator
-    Decorator <|-- ConcreteDecoratorA
-    Decorator <|-- ConcreteDecoratorB
-    Decorator --> Component : wraps
-```
+- `Component` (интерфейс) — объявляет `operation(): String`, общий и для оборачиваемого объекта, и для декораторов.
+- `ConcreteComponent` реализует `Component` со своим `operation(): String` — это базовый объект, который оборачивают.
+- `Decorator` (абстрактный класс) реализует `Component`, хранит ссылку `wrapped: Component` на оборачиваемый объект (связь `wraps`) и делегирует ему `operation(): String`.
+- `ConcreteDecoratorA` и `ConcreteDecoratorB` наследуют `Decorator` и переопределяют `operation(): String`, добавляя своё поведение.
 
 ```java
 interface DataSource {
@@ -982,27 +892,11 @@ class TreeTypeFactory {
 
 `Strategy` (стратегия) выносит каждый из взаимозаменяемых алгоритмов в отдельный класс за общим интерфейсом и позволяет переключать их в runtime. Решает проблему «толстого» метода с разрастающимся `if/else` или `switch` по типу: вместо одного `PaymentService`, который внутри проверяет способ оплаты и ветвится, каждый способ инкапсулируется в свою стратегию (`CreditCardPayment`, `PayPalPayment`). Добавить новый способ — это новый класс, а не правка существующего метода (соблюдается OCP). Контекст хранит ссылку на интерфейс и не знает, какая конкретно реализация в нём лежит.
 
-```mermaid
-classDiagram
-    class Context {
-        -strategy: Strategy
-        +setStrategy(Strategy)
-        +executeStrategy()
-    }
-    class Strategy {
-        <<interface>>
-        +execute()
-    }
-    class ConcreteStrategyA {
-        +execute()
-    }
-    class ConcreteStrategyB {
-        +execute()
-    }
-    Context --> Strategy
-    Strategy <|.. ConcreteStrategyA
-    Strategy <|.. ConcreteStrategyB
-```
+Структура паттерна:
+
+- `Context` хранит ссылку `strategy: Strategy`, предоставляет методы `setStrategy(Strategy)` и `executeStrategy()`, делегируя выполнение текущей стратегии (связь с `Strategy`).
+- `Strategy` (интерфейс) — объявляет метод `execute()`.
+- `ConcreteStrategyA` и `ConcreteStrategyB` реализуют `Strategy`, каждый со своей версией `execute()`.
 
 ```java
 // Классический подход
@@ -1237,26 +1131,10 @@ class CommandHistory {
 
 `Template Method` (шаблонный метод) фиксирует **скелет алгоритма** в базовом классе, а отдельные шаги делегирует подклассам. Базовый класс владеет общим порядком действий (в примере: прочитать → распарсить → провалидировать → сохранить), а варьируемые детали оставляет абстрактными. Это реализация принципа «Hollywood Principle» — «не звоните нам, мы сами вам позвоним»: подкласс не управляет ходом алгоритма, а лишь поставляет реализацию конкретных шагов, которые базовый класс вызовет в нужный момент. Сам шаблонный метод делают `final`, чтобы подкласс не сломал порядок шагов. Шаги бывают двух видов: обязательные (`abstract`, подкласс **должен** реализовать) и hook-методы (с реализацией по умолчанию, переопределять необязательно — как `validate()` в примере).
 
-```mermaid
-classDiagram
-    class AbstractClass {
-        +templateMethod()
-        #step1()
-        #step2()*
-        #step3()*
-        +hook()
-    }
-    class ConcreteClassA {
-        #step2()
-        #step3()
-    }
-    class ConcreteClassB {
-        #step2()
-        #step3()
-    }
-    AbstractClass <|-- ConcreteClassA
-    AbstractClass <|-- ConcreteClassB
-```
+Структура паттерна:
+
+- `AbstractClass` содержит публичный `templateMethod()` (скелет алгоритма), защищённый шаг по умолчанию `step1()`, абстрактные шаги `step2()` и `step3()` (помечены как обязательные для переопределения) и публичный `hook()`.
+- `ConcreteClassA` и `ConcreteClassB` наследуют `AbstractClass` и реализуют абстрактные шаги `step2()` и `step3()`.
 
 ```java
 abstract class DataImporter {
@@ -1486,20 +1364,18 @@ class EditorHistory {
 
 ## Q36. (!) Какие `Design Patterns` используются в `Spring Framework`?
 
-```mermaid
-graph TD
-    Spring[Spring Framework]
-    Spring --> S1[Singleton — по умолчанию для всех бинов]
-    Spring --> S2["Factory — BeanFactory, ApplicationContext"]
-    Spring --> S3["Proxy — @Transactional, @Cacheable, AOP"]
-    Spring --> S4["Template Method — JdbcTemplate, RestTemplate"]
-    Spring --> S5["Observer — ApplicationEvent / @EventListener"]
-    Spring --> S6["Strategy — HandlerMapping, ViewResolver"]
-    Spring --> S7["Decorator — BeanPostProcessor"]
-    Spring --> S8["Adapter — HandlerAdapter"]
-    Spring --> S9["Composite — CompositeHealthIndicator"]
-    Spring --> S10["Chain of Responsibility — Security Filters"]
-```
+Паттерны, встроенные в `Spring Framework`:
+
+- `Singleton` — по умолчанию для всех бинов
+- `Factory` — `BeanFactory`, `ApplicationContext`
+- `Proxy` — `@Transactional`, `@Cacheable`, AOP
+- `Template Method` — `JdbcTemplate`, `RestTemplate`
+- `Observer` — `ApplicationEvent` / `@EventListener`
+- `Strategy` — `HandlerMapping`, `ViewResolver`
+- `Decorator` — `BeanPostProcessor`
+- `Adapter` — `HandlerAdapter`
+- `Composite` — `CompositeHealthIndicator`
+- `Chain of Responsibility` — Security Filters
 
 | Паттерн | Где в Spring | Пример |
 |---------|-------------|--------|
@@ -1589,42 +1465,11 @@ Spring `@Scope("singleton")` — это **не** GoF Singleton. Spring не за
 
 ## Q40. Как паттерны связаны друг с другом?
 
-```mermaid
-graph LR
-    AF[Abstract Factory] --> FM[Factory Method]
-    FM --> Prototype
-    Builder --> Composite
+Связи между паттернами (стрелка → означает «опирается на / переходит к / комбинируется с»):
 
-    Adapter --> Bridge
-    Decorator --> Composite
-    Proxy --> Decorator
-
-    Strategy --> State
-    Observer --> Mediator
-    Command --> Memento
-    Iterator --> Composite
-    Visitor --> Composite
-    TemplateMethod[Template Method] --> Strategy
-
-    style AF fill:#e1f5fe
-    style FM fill:#e1f5fe
-    style Prototype fill:#e1f5fe
-    style Builder fill:#e1f5fe
-    style Adapter fill:#fff3e0
-    style Bridge fill:#fff3e0
-    style Decorator fill:#fff3e0
-    style Composite fill:#fff3e0
-    style Proxy fill:#fff3e0
-    style Strategy fill:#e8f5e9
-    style State fill:#e8f5e9
-    style Observer fill:#e8f5e9
-    style Mediator fill:#e8f5e9
-    style Command fill:#e8f5e9
-    style Memento fill:#e8f5e9
-    style Iterator fill:#e8f5e9
-    style Visitor fill:#e8f5e9
-    style TemplateMethod fill:#e8f5e9
-```
+- Порождающие: `Abstract Factory` → `Factory Method`; `Factory Method` → `Prototype`; `Builder` → `Composite`.
+- Структурные: `Adapter` → `Bridge`; `Decorator` → `Composite`; `Proxy` → `Decorator`.
+- Поведенческие: `Strategy` → `State`; `Observer` → `Mediator`; `Command` → `Memento`; `Iterator` → `Composite`; `Visitor` → `Composite`; `Template Method` → `Strategy`.
 
 **Частые связи:**
 - `Abstract Factory` часто реализуется через `Factory Method`
@@ -1789,19 +1634,14 @@ try {
 - **Dirty state** — забыли сбросить состояние объекта перед возвратом
 - **Deadlock** — пул пуст, все потоки ждут освобождения, но освобождения нет
 
-```mermaid
-sequenceDiagram
-    participant C1 as Client 1
-    participant P as Pool
-    participant O1 as Object 1
+Жизненный цикл объекта в пуле (`Client 1` → `Pool` → `Object 1`):
 
-    C1->>P: acquire()
-    P->>O1: выдать из пула
-    P-->>C1: conn
-    C1->>O1: use()
-    C1->>P: release(conn)
-    P->>O1: reset() + вернуть в пул
-```
+1. `Client 1` вызывает `acquire()` у `Pool`.
+2. `Pool` выдаёт `Object 1` из пула.
+3. `Pool` возвращает `conn` клиенту `Client 1`.
+4. `Client 1` использует объект: `use()` на `Object 1`.
+5. `Client 1` вызывает `release(conn)` у `Pool`.
+6. `Pool` делает `reset()` на `Object 1` и возвращает его в пул.
 
 ## Q47. (!) Когда НЕ нужно применять паттерны проектирования?
 

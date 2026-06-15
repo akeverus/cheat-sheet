@@ -104,17 +104,13 @@ updated: "2026-04-25"
 | `Logback` | Преемник `Log4j 1.x` | Нативная реализация `SLF4J`, дефолт в `Spring Boot` |
 | `SLF4J` | Фасад (API) | Абстракция над реализациями, позволяет переключать бэкенд без смены кода |
 
-```mermaid
-graph TD
-    APP["Код приложения"] --> SLF4J["SLF4J API"]
-    SLF4J --> |slf4j-api| BIND{Binding}
-    BIND --> |logback-classic| LB["Logback"]
-    BIND --> |log4j-slf4j2-impl| L4J2["Log4j2"]
-    BIND --> |slf4j-jdk14| JUL["java.util.logging"]
-    
-    style SLF4J fill:#4CAF50,color:#fff
-    style APP fill:#2196F3,color:#fff
-```
+Как код связывается с реализацией:
+
+- **Код приложения** → обращается к **`SLF4J` API** (артефакт `slf4j-api`).
+- **`SLF4J` API** → через binding выбирает один бэкенд по тому, что лежит в classpath:
+  - binding `logback-classic` → **`Logback`**;
+  - binding `log4j-slf4j2-impl` → **`Log4j2`**;
+  - binding `slf4j-jdk14` → **`java.util.logging`**.
 
 Пример подключения `SLF4J` + `Logback` в `Spring Boot` (зависимости уже включены в `spring-boot-starter`):
 
@@ -138,20 +134,10 @@ public class OrderService {
 
 Любая система логирования (`Log4j`, `Log4j2`, `Logback`) построена из одних и тех же кирпичиков. Запись проходит конвейер: `Logger` создаёт событие → `Filter` решает, пропускать ли его → `Appender` доставляет в назначение → `Layout`/`Encoder` форматирует вывод. Три из них (`Logger`, `Appender`, `Layout`) обязательны, `Filter` опционален.
 
-```mermaid
-graph LR
-    CODE["Код приложения"] --> LOGGER["Logger"]
-    LOGGER --> FILTER["Filter"]
-    FILTER --> APPENDER["Appender"]
-    APPENDER --> LAYOUT["Layout / Encoder"]
-    LAYOUT --> OUT1["Console"]
-    LAYOUT --> OUT2["File"]
-    LAYOUT --> OUT3["Network"]
-    
-    style LOGGER fill:#FF9800,color:#fff
-    style APPENDER fill:#2196F3,color:#fff
-    style LAYOUT fill:#4CAF50,color:#fff
-```
+Конвейер записи по шагам:
+
+- **Код приложения** → **`Logger`** → **`Filter`** → **`Appender`** → **`Layout` / `Encoder`**.
+- от **`Layout` / `Encoder`** запись расходится по назначениям: **Console**, **File**, **Network**.
 
 1. **`Logger`** — создаёт лог-записи. Привязан к имени (обычно FQCN класса) и уровню. Образует иерархию: `com.example.service` наследует настройки от `com.example`, затем от `ROOT` — поэтому уровень можно задать для целого пакета сразу.
 
@@ -366,24 +352,17 @@ implementation 'org.apache.logging.log4j:log4j-slf4j2-impl'
 
 Зачем это нужно: иначе пришлось бы вручную тащить `traceId` параметром в каждый `log.info(...)`. С `MDC` достаточно один раз положить его на входе в запрос (в фильтре), и весь дальнейший лог запроса автоматически помечен — это и делает возможным сквозной поиск всех логов одного запроса.
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Filter
-    participant Service
-    participant Logger
-    participant Output
+Поток обработки запроса по порядку:
 
-    Client->>Filter: HTTP Request (X-Trace-Id: abc-123)
-    Filter->>Filter: MDC.put("traceId", "abc-123")
-    Filter->>Service: processRequest()
-    Service->>Logger: log.info("Processing order")
-    Logger->>Output: 2026-04-11 [traceId=abc-123] Processing order
-    Service->>Logger: log.info("Order saved")
-    Logger->>Output: 2026-04-11 [traceId=abc-123] Order saved
-    Service-->>Filter: response
-    Filter->>Filter: MDC.clear()
-```
+1. `Client` → `Filter`: приходит HTTP-запрос (`X-Trace-Id: abc-123`).
+2. `Filter`: кладёт значение в контекст — `MDC.put("traceId", "abc-123")`.
+3. `Filter` → `Service`: вызывает `processRequest()`.
+4. `Service` → `Logger`: `log.info("Processing order")` → вывод: `2026-04-11 [traceId=abc-123] Processing order`.
+5. `Service` → `Logger`: `log.info("Order saved")` → вывод: `2026-04-11 [traceId=abc-123] Order saved`.
+6. `Service` → `Filter`: возвращает ответ.
+7. `Filter`: очищает контекст — `MDC.clear()`.
+
+Оба лога автоматически получают один и тот же `traceId`, хотя в коде сервиса он нигде не передаётся явно.
 
 **Пример: фильтр для `traceId` в `Spring Boot`:**
 
@@ -628,20 +607,14 @@ if (log.isDebugEnabled()) {
 
 Разница двух идентификаторов: `traceId` — общий на весь запрос (один на всю цепочку сервисов), `spanId` — уникален для каждого участка (вызова отдельного сервиса/операции). Вместе они дают и сквозную корреляцию, и понимание, на каком шаге что произошло.
 
-```mermaid
-graph LR
-    CLIENT["Client"] -->|"X-Trace-Id: abc-123"| GW["API Gateway"]
-    GW -->|"X-Trace-Id: abc-123"| SVC_A["Order Service"]
-    SVC_A -->|"X-Trace-Id: abc-123"| SVC_B["Payment Service"]
-    SVC_A -->|"X-Trace-Id: abc-123"| SVC_C["Inventory Service"]
-    
-    SVC_A --> LOGS["ELK / Loki"]
-    SVC_B --> LOGS
-    SVC_C --> LOGS
-    
-    style LOGS fill:#FF5722,color:#fff
-    style GW fill:#4CAF50,color:#fff
-```
+Как `traceId` расходится по сервисам (заголовок `X-Trace-Id: abc-123` пробрасывается на каждом вызове):
+
+- `Client` → `API Gateway`
+- `API Gateway` → `Order Service`
+- `Order Service` → `Payment Service`
+- `Order Service` → `Inventory Service`
+
+Все три сервиса (`Order Service`, `Payment Service`, `Inventory Service`) пишут логи в общее хранилище `ELK` / `Loki` — и по одному `traceId` там собирается весь путь запроса.
 
 **Реализация с `Spring Boot` + `Micrometer Tracing`:**
 
@@ -793,25 +766,18 @@ logging:
 
 Механика стандартная: на входе кладём id в `MDC`, при исходящих вызовах прокидываем его HTTP-заголовком (`X-Trace-Id`, W3C `traceparent`), на принимающей стороне снова достаём из заголовка в `MDC`. По сути это тот же `traceId` из трассировки (Q14), но термин `correlation id` подчёркивает именно роль «сшивки» логов.
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Gateway as API Gateway
-    participant OrderSvc as Order Service
-    participant PaySvc as Payment Service
-    participant Kibana
+Жизненный цикл `correlation id` по шагам:
 
-    Client->>Gateway: POST /orders
-    Gateway->>Gateway: Generate traceId=abc-123
-    Gateway->>OrderSvc: X-Trace-Id: abc-123
-    OrderSvc->>OrderSvc: MDC.put("traceId", "abc-123")
-    OrderSvc->>PaySvc: X-Trace-Id: abc-123
-    PaySvc->>PaySvc: MDC.put("traceId", "abc-123")
-    PaySvc-->>OrderSvc: 200 OK
-    OrderSvc-->>Gateway: 201 Created
-    
-    Note over Kibana: Поиск: traceId=abc-123<br/>показывает логи из ВСЕХ сервисов
-```
+1. `Client` → `API Gateway`: `POST /orders`.
+2. `API Gateway`: генерирует `traceId=abc-123`.
+3. `API Gateway` → `Order Service`: передаёт `X-Trace-Id: abc-123`.
+4. `Order Service`: кладёт его в контекст — `MDC.put("traceId", "abc-123")`.
+5. `Order Service` → `Payment Service`: снова передаёт `X-Trace-Id: abc-123`.
+6. `Payment Service`: достаёт из заголовка — `MDC.put("traceId", "abc-123")`.
+7. `Payment Service` → `Order Service`: `200 OK`.
+8. `Order Service` → `API Gateway`: `201 Created`.
+
+В `Kibana` поиск по `traceId=abc-123` показывает логи из ВСЕХ сервисов — идентификатор един на всю цепочку.
 
 **Реализация `WebClient` filter для проброса `traceId`:**
 
@@ -880,20 +846,10 @@ public class GlobalExceptionHandler {
 
 Ключевое условие интеграции: приложение должно писать логи в `JSON` (через `LogstashEncoder`) — иначе их пришлось бы парсить хрупкими grok-шаблонами в `Logstash`.
 
-```mermaid
-graph LR
-    APP1["Service A<br/>JSON logs"] --> FB["Filebeat"]
-    APP2["Service B<br/>JSON logs"] --> FB
-    APP3["Service C<br/>JSON logs"] --> FB
-    FB --> LS["Logstash<br/>(обогащение, фильтрация)"]
-    LS --> ES["Elasticsearch<br/>(хранение, индексация)"]
-    ES --> KB["Kibana<br/>(поиск, дашборды)"]
-    
-    style ES fill:#FFC107,color:#000
-    style KB fill:#E91E63,color:#fff
-    style LS fill:#9C27B0,color:#fff
-    style FB fill:#4CAF50,color:#fff
-```
+Поток данных в `ELK`:
+
+- `Service A`, `Service B`, `Service C` (каждый пишет JSON-логи) → `Filebeat`
+- `Filebeat` → `Logstash` (обогащение, фильтрация) → `Elasticsearch` (хранение, индексация) → `Kibana` (поиск, дашборды)
 
 **Полный pipeline:**
 
@@ -1240,23 +1196,15 @@ management:
 
 `Log aggregation` — централизованный сбор логов со всех узлов в одно хранилище с единым поиском. Нужен потому, что в [распределённой системе](../architecture/distributed-systems-interview.md) логи одного запроса размазаны по десяткам подов; ходить `ssh` по каждой машине и читать локальные файлы нереально, тем более что поды в Kubernetes эфемерны — упал под, и его логи исчезли вместе с ним. Конвейер один и тот же: агент собирает → транспорт обогащает → хранилище индексирует → UI ищет, а `traceId` сшивает записи одного запроса.
 
-```mermaid
-graph TB
-    subgraph Kubernetes Cluster
-        POD1["Pod: order-svc<br/>stdout JSON"] --> AGENT1["DaemonSet:<br/>Filebeat/Promtail"]
-        POD2["Pod: payment-svc<br/>stdout JSON"] --> AGENT1
-        POD3["Pod: inventory-svc<br/>stdout JSON"] --> AGENT1
-    end
-    
-    AGENT1 --> |"push"| STORAGE{{"Хранилище"}}
-    
-    STORAGE --> ES["Elasticsearch<br/>+ Kibana"]
-    STORAGE --> LOKI["Grafana Loki<br/>+ Grafana"]
-    
-    style STORAGE fill:#FF9800,color:#fff
-    style ES fill:#FFC107,color:#000
-    style LOKI fill:#4CAF50,color:#fff
-```
+Схема сбора в `Kubernetes`:
+
+- внутри кластера `Kubernetes` поды пишут `stdout` в формате JSON и отдают его агенту-`DaemonSet`:
+  - `Pod: order-svc` (`stdout` JSON) → `DaemonSet: Filebeat/Promtail`
+  - `Pod: payment-svc` (`stdout` JSON) → `DaemonSet: Filebeat/Promtail`
+  - `Pod: inventory-svc` (`stdout` JSON) → `DaemonSet: Filebeat/Promtail`
+- агент-`DaemonSet` делает `push` в хранилище, которое может быть одним из двух вариантов:
+  - `Elasticsearch` + `Kibana`
+  - `Grafana Loki` + `Grafana`
 
 **Компоненты:**
 - **Агенты сбора:** `Filebeat`, `Fluentd`, `Promtail`, `Vector`
@@ -1628,18 +1576,10 @@ curl http://localhost:8080/actuator/loggers/com.company.app
 
 Разница принципиальная и сводится к механизму очереди. `Logback AsyncAppender` — это обёртка над обычным `BlockingQueue`: потоки конкурируют за блокировку при добавлении записи, что под нагрузкой становится узким местом. `Log4j2` пишет логи в `LMAX Disruptor` — lock-free кольцевой буфер, где запись добавляется через CAS без блокировок. Отсюда и разрыв в throughput на порядки (см. таблицу ниже). Плюс `Log4j2` умеет делать асинхронными **сами логгеры** (а не только аппендер), что убирает накладные расходы ещё раньше в конвейере.
 
-```mermaid
-graph LR
-    subgraph Logback
-        APP[Application Thread] -->|synchronized| QUEUE[BlockingQueue<br/>256 default]
-        QUEUE -->|single thread| FILE1[FileAppender]
-    end
+Сравнение механизмов очереди:
 
-    subgraph Log4j2
-        APP2[Application Thread] -->|CAS, no lock| RING[LMAX Disruptor<br/>Ring Buffer]
-        RING -->|multiple consumers| FILE2[FileAppender]
-    end
-```
+- `Logback`: поток приложения →(`synchronized`)→ `BlockingQueue` (256 по умолчанию) →(один поток)→ `FileAppender`.
+- `Log4j2`: поток приложения →(`CAS`, без блокировки)→ `LMAX Disruptor` Ring Buffer →(несколько consumer-ов)→ `FileAppender`.
 
 Конфигурация `Log4j2` async loggers (`log4j2.xml`):
 
@@ -1701,15 +1641,14 @@ implementation 'org.springframework.boot:spring-boot-starter-log4j2'
 
 При старте `Spring Boot` сам определяет, какой бэкенд лежит в classpath, и настраивает его — поэтому логирование «просто работает» без единой строки конфига. Делает это абстракция `LoggingSystem`: она детектит реализацию (`Logback`/`Log4j2`), находит её конфиг-файл и поверх него накатывает свойства из `application.yml` (`logging.level.*`, `logging.file.*`, `logging.pattern.*`). Знание этого порядка важно, чтобы понимать, что чего переопределяет.
 
-```mermaid
-graph TD
-    START[SpringApplication.run] --> DETECT[LoggingSystem.detect]
-    DETECT --> |logback-classic в classpath| LB[LogbackLoggingSystem]
-    DETECT --> |log4j-core в classpath| L4J[Log4j2LoggingSystem]
-    LB --> INIT[Инициализация logback-spring.xml<br/>или logback.xml]
-    INIT --> PROPS[Применение application.yml<br/>logging.level.*, logging.file.*, logging.pattern.*]
-    PROPS --> PROF[Активация springProfile секций]
-```
+Порядок авто-конфигурации при старте:
+
+1. `SpringApplication.run` → `LoggingSystem.detect` — детект реализации по classpath:
+   - есть `logback-classic` → `LogbackLoggingSystem`;
+   - есть `log4j-core` → `Log4j2LoggingSystem`.
+2. Для `Logback`: инициализация `logback-spring.xml` или `logback.xml`.
+3. Применение свойств из `application.yml`: `logging.level.*`, `logging.file.*`, `logging.pattern.*` (накатываются поверх конфиг-файла).
+4. Активация секций `springProfile`.
 
 Порядок поиска конфиг-файлов (`Logback`):
 1. `logback-spring.xml` — **рекомендуется**: поддерживает `<springProfile>`, `<springProperty>`
@@ -2024,12 +1963,11 @@ log.info("User {} placed order {}", userId, orderId)
 
 `Graylog` — альтернатива ELK/EFK для централизованного логирования с собственным протоколом доставки `GELF` (Graylog Extended Log Format). Ключевое отличие: приложение шлёт логи в Graylog **напрямую** по сети (UDP/TCP) через аппендер, без промежуточного файла и агента вроде Filebeat. Это проще в настройке, но за UDP-простоту платят возможной потерей логов — поэтому для надёжности берут TCP и оборачивают аппендер в async.
 
-```mermaid
-graph LR
-    APP[Java App] -->|GELF UDP/TCP| GL[Graylog Server]
-    GL --> ES2[Elasticsearch<br/>хранение]
-    GL --> UI[Graylog Web UI]
-```
+Путь логов в `Graylog`:
+
+- `Java App` →(`GELF` по UDP/TCP)→ `Graylog Server`
+- `Graylog Server` → `Elasticsearch` (хранение)
+- `Graylog Server` → `Graylog Web UI`
 
 `GELF` — компактный `JSON`-формат с обязательными полями: `version`, `host`, `short_message`, `timestamp`.
 
@@ -2088,13 +2026,13 @@ implementation 'de.siegmar:logback-gelf:6.0.1'
 
 `Kafka Appender` отправляет лог-записи прямо в топик `Kafka`, минуя файлы и агенты сбора. Зачем: `Kafka` как шина даёт то, чего нет у пути «файл → Filebeat → ELK» — буферизацию на брокере (логи переживут падение потребителя), огромный throughput и возможность нескольких независимых потребителей одного потока логов (ELK, алертинг, обогащение через Kafka Streams — одновременно). Цена — сложнее в настройке и при `acks=0` это fire-and-forget с риском потери под перегрузкой брокера, поэтому обязателен fallback-аппендер в файл.
 
-```mermaid
-graph LR
-    APP[Java App] -->|LogstashEncoder JSON| KAFKA[Kafka Topic<br/>app-logs]
-    KAFKA -->|Logstash/Kafka Connect| ES[Elasticsearch]
-    KAFKA -->|другие потребители| ALERT[Alerting Service]
-    KAFKA -->|Stream Processing| ENRICH[Log Enrichment<br/>Kafka Streams]
-```
+Один поток логов — несколько независимых потребителей:
+
+- `Java App` →(JSON через `LogstashEncoder`)→ топик `Kafka` `app-logs`
+- из топика `app-logs` параллельно читают:
+  - →(`Logstash` / `Kafka Connect`)→ `Elasticsearch`
+  - →(другие потребители)→ `Alerting Service`
+  - →(stream processing)→ `Log Enrichment` на `Kafka Streams`
 
 Конфигурация с `logback-kafka-appender`:
 
