@@ -1774,12 +1774,12 @@
               "order": 1
             },
             {
-              "text": "Опираться на один CDN без fallback, держать strong consistency между регионами и обходиться без chaos-тестов — всё это классические антипаттерны кейса Netflix.",
+              "text": "Один CDN без fallback и strong consistency между регионами — вполне надёжный выбор для сервиса масштаба Netflix, а chaos-тесты в проде только раскачивают стабильность, поэтому от них отказываются.",
               "correct": false,
               "sections": {
-                "what_actually": "Именно так: single CDN без fallback = outage обнуляет revenue (фикс multi-CDN); strong cross-region consistency = 100+ ms (фикс eventual + LOCAL_QUORUM); отсутствие chaos = непроверенный failover работает ~40% времени (фикс Chaos Monkey/Kong).",
+                "what_actually": "Наоборот — это три хрестоматийных антипаттерна: single CDN без fallback = outage обнуляет revenue (фикс — multi-CDN); strong cross-region consistency = 100+ ms задержки (фикс — eventual + LOCAL_QUORUM); отказ от chaos = непроверенный failover срабатывает лишь ~40% времени (фикс — Chaos Monkey/Kong).",
                 "source_of_confusion": "Каждый из этих пунктов по отдельности интуитивно выглядит как 'надёжное' решение (один проверенный CDN, строгая консистентность, отказ от 'ломания' прода).",
-                "if_it_were_true": "Это и есть верное утверждение: перечисленное действительно входит в список антипаттернов с известными фиксами.",
+                "if_it_were_true": "Утверждение было бы верным лишь в мире, где единственный CDN никогда не падает, межрегиональные линки дают нулевую задержку, а failover корректен по построению — тогда эти страховки были бы избыточны. В реальном Netflix-масштабе всё наоборот.",
                 "how_it_should_be": "Multi-CDN с fallback, eventual consistency + LOCAL_QUORUM и регулярный chaos engineering — корректные ответы на эти ловушки."
               },
               "label": "C",
