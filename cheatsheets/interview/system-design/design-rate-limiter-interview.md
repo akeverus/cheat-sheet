@@ -825,27 +825,12 @@ while attempt < max_attempts:
 
 Архитектура строится по принципу воронки: трафик проходит через три уровня (edge → gateway → service), и на каждом отсекается лишнее. Главный принцип — самый дешёвый и грубый фильтр стоит первым, чтобы массовый мусор (DDoS) отваливался ещё на edge и не доходил до дорогих точных проверок в сервисе.
 
-```mermaid
-graph LR
-    C[Client]
-    Edge[Edge: Cloudflare/AWS WAF<br/>per-IP, geo]
-    LB[Load Balancer]
-    GW[API Gateway / Envoy<br/>global + per-API-key]
-    Svc[Service<br/>per-user + per-endpoint]
-    Redis[(Redis Cluster<br/>shared state)]
-    Config[(Config Service<br/>tenant limits)]
-    Metrics[Prometheus]
+**Основной путь запроса (воронка):** `Client` → `Edge` (Cloudflare / AWS WAF: per-IP, geo) → `Load Balancer` → `API Gateway / Envoy` (global + per-API-key) → `Service` (per-user + per-endpoint).
 
-    C --> Edge --> LB --> GW --> Svc
-    Edge --> Redis
-    GW --> Redis
-    Svc --> Redis
-    GW --> Config
-    Svc --> Config
-    Edge -.metrics.-> Metrics
-    GW -.metrics.-> Metrics
-    Svc -.metrics.-> Metrics
-```
+**Связи с общим состоянием и инфраструктурой:**
+- За общим состоянием в `Redis Cluster` (shared state) обращаются три уровня независимо: `Edge` → `Redis`, `API Gateway` → `Redis`, `Service` → `Redis`.
+- За лимитами тенантов в `Config Service` (tenant limits) обращаются `API Gateway` → `Config` и `Service` → `Config`.
+- Метрики (пунктирные потоки `metrics`) каждый уровень шлёт в `Prometheus`: `Edge` → `Prometheus`, `API Gateway` → `Prometheus`, `Service` → `Prometheus`.
 
 **Уровни:**
 

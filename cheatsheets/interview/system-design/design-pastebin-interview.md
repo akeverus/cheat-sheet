@@ -904,42 +904,41 @@ GET /api/v1/gists/{gist_id}/compare/{rev1}..{rev2}
 
 Соберём всё вместе. Запрос на чтение по возможности обслуживается с CDN-edge (hit ratio 90%+) и до origin вообще не доходит. Промах идёт через LB → API Gateway (там авторизация и rate limit) → Read Service → cache → DB → blob. Запись проходит через Create Service: валидация → abuse-проверка → генерация кода → сжатие → запись blob → вставка метаданных, и параллельно публикует Kafka-событие для индексации в поиске. Фоновый GC чистит истёкшие pastes. Главный принцип — синхронно только то, что нужно ответить пользователю; индексация, аналитика и повторный abuse-скан вынесены в Kafka.
 
-```mermaid
-graph LR
-    Client[Browser / curl / IDE]
-    CDN[CDN<br/>Cloudflare / CloudFront]
-    LB[Load Balancer]
-    API[API Gateway]
-    Auth[Auth Service]
-    Create[Paste Create Service]
-    Read[Paste Read Service]
-    Highlight[Syntax Highlight Service<br/>Pygments]
-    Search[Search Service<br/>Elasticsearch]
-    Abuse[Abuse Detection]
-    DB[(Postgres<br/>metadata)]
-    Cache[(Redis<br/>hot pastes)]
-    Blob[(S3<br/>blob storage)]
-    Kafka[(Kafka<br/>events)]
-    GC[Expiration GC<br/>cron]
+**Компоненты и их подписи:**
+- `Client` — Browser / curl / IDE.
+- `CDN` — Cloudflare / CloudFront.
+- `LB` — Load Balancer.
+- `API` — API Gateway.
+- `Auth` — Auth Service.
+- `Create` — Paste Create Service.
+- `Read` — Paste Read Service.
+- `Highlight` — Syntax Highlight Service (Pygments).
+- `Search` — Search Service (Elasticsearch).
+- `Abuse` — Abuse Detection.
+- `DB` — Postgres (metadata).
+- `Cache` — Redis (hot pastes).
+- `Blob` — S3 (blob storage).
+- `Kafka` — события (events).
+- `GC` — Expiration GC (cron).
 
-    Client --> CDN
-    CDN -->|cache hit| Client
-    CDN -->|miss| LB --> API
-    API --> Auth
-    API --> Create
-    API --> Read
-    Create --> Abuse
-    Create --> DB
-    Create --> Blob
-    Create -->|event| Kafka
-    Kafka --> Search
-    Read --> Cache
-    Cache -->|miss| DB
-    DB --> Blob
-    Read --> Highlight
-    GC --> DB
-    GC --> Blob
-```
+**Связи и поток запросов (откуда → куда):**
+- `Client` → `CDN` — клиент сначала бьёт в CDN.
+- `CDN` → `Client` (при cache hit) — попадание в кеш отдаётся сразу клиенту.
+- `CDN` → `LB` → `API` (при miss) — промах уходит через Load Balancer в API Gateway.
+- `API` → `Auth` — Gateway проверяет авторизацию.
+- `API` → `Create` — запросы на создание.
+- `API` → `Read` — запросы на чтение.
+- `Create` → `Abuse` — создание проходит abuse-проверку.
+- `Create` → `DB` — вставка метаданных.
+- `Create` → `Blob` — запись blob.
+- `Create` → `Kafka` (event) — публикует событие.
+- `Kafka` → `Search` — событие уходит индексатору поиска.
+- `Read` → `Cache` — чтение сначала смотрит в кеш.
+- `Cache` → `DB` (при miss) — промах кеша спускается в DB.
+- `DB` → `Blob` — по метаданным достаётся blob.
+- `Read` → `Highlight` — содержимое идёт на подсветку.
+- `GC` → `DB` — фоновый GC чистит метаданные.
+- `GC` → `Blob` — фоновый GC чистит blob storage.
 
 **Сервисы:**
 - **CDN:** кеширует HTML-просмотр + raw-содержимое; hit ratio 90%+.
