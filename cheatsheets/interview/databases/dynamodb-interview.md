@@ -664,11 +664,13 @@ def handler(event, context):
 
 **DAX** — управляемый in-memory кеш, который ставится перед DynamoDB и снижает задержку чтений с миллисекунд до микросекунд. По сути это read-through кеш: при попадании ответ отдаётся из памяти, при промахе DAX сам ходит в DynamoDB и кладёт результат в кеш.
 
-Поток запроса (read-through кеш):
-- Приложение (`App`) обращается к кластеру DAX (`DAX Cluster`).
-- При промахе (`miss`) DAX идёт в DynamoDB (`DynamoDB`).
-- DynamoDB возвращает данные обратно в DAX.
-- DAX отдаёт ответ приложению (`App`).
+```mermaid
+graph LR
+    App --> DAX[DAX Cluster]
+    DAX -->|miss| DDB[(DynamoDB)]
+    DDB --> DAX
+    DAX --> App
+```
 
 ```
                    miss

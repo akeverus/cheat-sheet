@@ -61,7 +61,77 @@ def removal_commit(f):
             return h, before, after
     return None
 
+def collapse_to_other(merged_bytes):
+    """Схлопывает конфликт-хунки merge-file ИЗБИРАТЕЛЬНО:
+    - если other-сторона хунка содержит ```mermaid → берём other (восстанавливаем диаграмму);
+    - иначе → берём cur (сохраняем поздние правки прозы, не откатываем лишнее).
+    Формат: <<<<<<< cur \\n <cur> \\n ======= \\n <other> \\n >>>>>>> other
+    Возвращает (resolved_bytes, n_took_other, n_kept_cur)."""
+    lines = merged_bytes.split(b"\n")
+    out = []
+    i = 0
+    took = 0
+    kept = 0
+    while i < len(lines):
+        if lines[i].startswith(b"<<<<<<<"):
+            i += 1
+            cur_side = []
+            while i < len(lines) and not lines[i].startswith(b"======="):
+                cur_side.append(lines[i]); i += 1
+            i += 1  # скип =======
+            other_side = []
+            while i < len(lines) and not lines[i].startswith(b">>>>>>>"):
+                other_side.append(lines[i]); i += 1
+            i += 1  # скип >>>>>>>
+            if b"```mermaid" in b"\n".join(other_side):
+                out.extend(other_side); took += 1
+            else:
+                out.extend(cur_side); kept += 1
+        else:
+            out.append(lines[i]); i += 1
+    return b"\n".join(out), took, kept
+
+
+def resolve_conflicts():
+    import json as _json
+    rep = _json.load(open(os.path.join(ROOT, "scripts", "restore_mermaid_report.json")))
+    dirty = dirty_set()
+    res = {"resolved": [], "still_dirty": [], "mismatch": []}
+    for item in rep["conflict"]:
+        f = item["f"]; h = item["C"]
+        if f in dirty:
+            res["still_dirty"].append(f); continue
+        cur = pathlib.Path(ROOT, f).read_bytes()
+        # найти полный hash коммита-удаления (в отчёте короткий)
+        full = git_out("rev-parse", h)
+        h = full.strip() if full else h
+        base_b = show(f"{h}:{f}"); other_b = show(f"{h}^:{f}")
+        with tempfile.TemporaryDirectory() as td:
+            cp = os.path.join(td, "cur"); bp = os.path.join(td, "base"); op = os.path.join(td, "other")
+            pathlib.Path(cp).write_bytes(cur); pathlib.Path(bp).write_bytes(base_b); pathlib.Path(op).write_bytes(other_b)
+            r = subprocess.run(["git", "merge-file", "-p", cp, bp, op], cwd=ROOT, capture_output=True)
+            merged = r.stdout
+        resolved, took, kept = collapse_to_other(merged)
+        want = count_mermaid_bytes(other_b); got = count_mermaid_bytes(resolved)
+        # остались ли неразрешённые маркеры?
+        if b"<<<<<<<" in resolved or b">>>>>>>" in resolved:
+            res["mismatch"].append({"f": f, "want": want, "got": got, "note": "markers-left"}); continue
+        if got != want:
+            res["mismatch"].append({"f": f, "want": want, "got": got, "took": took, "kept": kept}); continue
+        if APPLY:
+            pathlib.Path(ROOT, f).write_bytes(resolved)
+        res["resolved"].append({"f": f, "took_other": took, "kept_cur": kept, "blocks": want})
+    print(json.dumps({k: (len(v) if isinstance(v, list) else v) for k, v in res.items()}, ensure_ascii=False, indent=2))
+    for x in res["resolved"]:
+        print(f"  resolved {x['f']}  took_other={x['took_other']}  kept_cur={x['kept_cur']}  blocks={x['blocks']}")
+    for x in res["mismatch"]:
+        print(f"  MISMATCH {x['f']}  want={x['want']} got={x['got']} hunks={x['hunks']}")
+    return
+
+
 def main():
+    if "--resolve-conflicts" in sys.argv:
+        resolve_conflicts(); return
     dirty = dirty_set()
     # текущие interview .md без mermaid
     files = []

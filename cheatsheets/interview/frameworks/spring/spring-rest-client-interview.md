@@ -75,11 +75,12 @@ updated: "2026-05-14"
 
 Ключевая мысль: `RestClient` создан как современная синхронная замена `RestTemplate` — он берёт fluent-API от `WebClient`, но работает блокирующе, без реактивных типов. Поэтому он может переиспользовать настройки старого `RestTemplate` (конвертеры, фабрику запросов, интерсепторы).
 
-Связи между клиентами:
-
-- `RestTemplate` (maintenance mode) → заменяется на → `RestClient` (Spring 6.1).
-- `WebClient` (reactive) → поддерживает → `RestClient` (fluent-API заимствован у `WebClient`).
-- `RestClient` → строится builder'ом из → `RestTemplate` (переиспользует его конвертеры, фабрику запросов и интерсепторы).
+```mermaid
+graph LR
+    RT[RestTemplate<br/>deprecated] -->|заменяется| RC[RestClient<br/>Spring 6.1]
+    WC[WebClient<br/>reactive] -->|поддерживает| RC
+    RC -->|builder из| RT
+```
 
 **Как выбрать:**
 - Новый проект на Spring 6.1+, классический блокирующий стек (Spring MVC) → **RestClient**.
