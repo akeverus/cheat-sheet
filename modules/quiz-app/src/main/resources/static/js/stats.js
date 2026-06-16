@@ -47,7 +47,6 @@
 
   function initCharts() {
     var topicStats = getTopicStats();
-    if (topicStats.length === 0) return;
 
     var progressFallback = document.getElementById('topicProgressChartFallback');
     var accuracyFallback = document.getElementById('topicAccuracyChartFallback');
@@ -57,6 +56,17 @@
         fallback.classList.remove('hidden');
         fallback.textContent = message || fallback.textContent;
       }
+    }
+
+    // Канвасы рендерятся сервером только когда темы ЕСТЬ (th:if в шаблоне), и мы
+    // попадаем сюда лишь при непустом JSON-блоке. Значит пустой topicStats тут =
+    // сбой парсинга встроенного JSON: показываем понятный fallback на оставшихся
+    // в DOM канвасах вместо немой пустой области. В истинно-пустом случае канвасов
+    // в DOM нет — getElementById вернёт null и showChartFallback просто ничего не сделает.
+    if (topicStats.length === 0) {
+      showChartFallback(document.getElementById('topicProgressChart'), progressFallback, 'Не удалось загрузить данные графика. Используй таблицу ниже.');
+      showChartFallback(document.getElementById('topicAccuracyChart'), accuracyFallback, 'Не удалось загрузить данные графика. Используй таблицу ниже.');
+      return;
     }
 
     // Графики строим не по всем ~305 темам (нечитаемая каша из тонких баров),

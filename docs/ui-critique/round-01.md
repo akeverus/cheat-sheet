@@ -496,4 +496,33 @@ base-правил, иначе их `background` перетёр бы стрелк
 селекты сохраняют стрелку (computed `background-image` = gradient, `padding-right:48px`,
 `appearance:none`); каскад не сломан.
 
+## Порция 8 — C17 graceful-degradation графиков статистики (2026-06-16)
+
+`stats.js` → `initCharts()` начинался с раннего выхода `if (topicStats.length === 0)
+return;` — ДО того, как определялся helper `showChartFallback` и ветки fallback.
+`getTopicStats()` возвращает `[]` в двух случаях: (а) данных нет; (б) встроенный
+JSON не распарсился (`try/catch` глотает ошибку и отдаёт `[]`). Канвасы рендерятся
+сервером только когда темы ЕСТЬ (`th:if="${topicStats != null and !topicStats.isEmpty()}"`
+в stats.html, строки 80/104), поэтому случай (а) безопасен — канвасов в DOM нет.
+А вот случай (б) — сервер отдал данные и отрисовал канвасы, но на клиенте JSON
+сломался — приводил к НЕМЫМ пустым областям графиков: ранний `return` срабатывал
+раньше всей готовой fallback-машинерии (строки 132/159), сообщение не показывалось.
+
+Фикс: helper `showChartFallback` + поиск fallback-элементов подняты ВЫШЕ проверки;
+ранний `return` заменён на показ fallback на обоих канвасах с понятным текстом
+(«Не удалось загрузить данные графика. Используй таблицу ниже.») и затем выход.
+Безопасно: в истинно-пустом случае (а) `getElementById` вернёт `null` и
+`showChartFallback` ничего не сделает — поведение не меняется. Happy-path не тронут.
+
+Верифицировано live (chrome-devtools, /stats):
+- Happy path: `v=9` загружен, оба канваса присутствуют и отрисованы (Chart.js задал
+  width/height>0), fallback скрыт, 306 тем распарсены.
+- Сбой парсинга (initScript подменил `topic-stats-data` на битый JSON, прогнан
+  реальный production stats.js): оба канваса скрыты, оба fallback показаны с верным
+  текстом. До фикса здесь оставались пустые канвасы.
+- Консоль чиста (кроме dev-only Chart.js sourcemap CSP — не в проде).
+
+Файлы: `static/js/stats.js` (реструктуризация раннего выхода), `templates/stats.html`
+(stats.js v8→v9). Синхронизировано в `build/resources/main` для live-bootRun.
+
 editorial.css v74→v75.
