@@ -378,7 +378,7 @@ class InterviewControllerTest {
                     "Нет вопросов с ошибками для review."
             );
             if (body.contains("class=\"zone-chip\"")) {
-                assertThat(body).contains("Review mode");
+                assertThat(body).contains("Повтор ошибок");
                 assertThat(body).contains("Режим review: отвечай на вопросы с ошибками.");
             }
         }
@@ -585,7 +585,7 @@ class InterviewControllerTest {
         if (result.getStatus() == 200) {
             String body = result.getContentAsString();
             if (body.contains("class=\"zone-chip\"")) {
-                assertThat(body).contains("Flashcard mode");
+                assertThat(body).contains("Флешкарты");
                 assertThat(body).contains("Флешкарты: сначала вспомни ответ, затем раскрой и оцени себя.");
                 assertThat(body).doesNotContain("Выбери один вариант. Проверка и разбор идут по шагам.");
             }
@@ -607,7 +607,7 @@ class InterviewControllerTest {
         if (result.getStatus() == 200) {
             String body = result.getContentAsString();
             if (body.contains("class=\"zone-chip\"")) {
-                assertThat(body).contains("Study mode");
+                assertThat(body).contains("Изучение");
                 assertThat(body).contains("Изучение: разберись с материалом, затем переходи к проверке.");
                 assertThat(body).doesNotContain("Выбери один вариант. Проверка и разбор идут по шагам.");
             }

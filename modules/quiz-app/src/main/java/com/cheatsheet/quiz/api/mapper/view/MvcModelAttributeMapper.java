@@ -1,5 +1,6 @@
 package com.cheatsheet.quiz.api.mapper.view;
 
+import com.cheatsheet.quiz.common.util.ModeUtils;
 import com.cheatsheet.quiz.config.app.AppProperties;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.SessionSummary;
@@ -21,6 +22,7 @@ import org.springframework.ui.Model;
 public class MvcModelAttributeMapper {
 
     private final AppProperties appProperties;
+    private final ModeUtils modeUtils;
 
     /**
      * Маппит общий surface-state (фильтры, топики, статистика) в модель.
@@ -68,17 +70,26 @@ public class MvcModelAttributeMapper {
         model.addAttribute("focusEmptyRetryText", resolveFocusEmptyRetryText(reviewMode, mode));
     }
 
+    /**
+     * Текст eyebrow-чипа фокус-страницы. Раньше возвращал англицизмы
+     * («Focus mode»/«Study mode»/…) в полностью русском UI и не различал режимы:
+     * EXAM/MARATHON/TRAINING все показывали «Focus mode» (критика round-01
+     * C-live-3). Теперь — русское имя реального режима из {@link ModeUtils}
+     * (единый словарь, как на /settings и в итогах), с приоритетом
+     * review/flashcard над session-mode (flashcard форсится при вопросе без
+     * вариантов независимо от режима сессии).
+     */
     private String resolveFocusModeChipText(boolean reviewMode, InterviewMode mode, boolean flashcard) {
         if (reviewMode) {
-            return "Review mode";
+            return "Повтор ошибок";
         }
         if (flashcard || mode == InterviewMode.FLASHCARD) {
-            return "Flashcard mode";
+            return "Флешкарты";
         }
-        if (mode == InterviewMode.STUDY) {
-            return "Study mode";
+        if (mode == null) {
+            return "Тренировка";
         }
-        return "Focus mode";
+        return modeUtils.displayName(mode);
     }
 
     private String resolveFocusModeHintText(boolean reviewMode, InterviewMode mode, boolean flashcard) {

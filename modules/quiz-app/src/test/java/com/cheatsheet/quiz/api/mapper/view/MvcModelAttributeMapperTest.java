@@ -1,5 +1,6 @@
 package com.cheatsheet.quiz.api.mapper.view;
 
+import com.cheatsheet.quiz.common.util.ModeUtils;
 import com.cheatsheet.quiz.config.app.AppProperties;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewMode;
@@ -22,7 +23,7 @@ import static org.mockito.Mockito.when;
 class MvcModelAttributeMapperTest {
 
     private final AppProperties appProperties = mock(AppProperties.class);
-    private final MvcModelAttributeMapper mapper = new MvcModelAttributeMapper(appProperties);
+    private final MvcModelAttributeMapper mapper = new MvcModelAttributeMapper(appProperties, new ModeUtils());
 
     @Test
     void appliesFocusPageStateAndReviewFlag() {
@@ -56,7 +57,7 @@ class MvcModelAttributeMapperTest {
         assertThat(model.getAttribute("reviewMode")).isEqualTo(true);
         assertThat(model.getAttribute("progressPercent")).isEqualTo(33.3);
         assertThat(model.getAttribute("stats")).isEqualTo(surfaceState.stats());
-        assertThat(model.getAttribute("focusModeChipText")).isEqualTo("Review mode");
+        assertThat(model.getAttribute("focusModeChipText")).isEqualTo("Повтор ошибок");
         assertThat(model.getAttribute("focusModeHintText")).isEqualTo("Режим review: отвечай на вопросы с ошибками.");
         assertThat(model.getAttribute("focusEmptyRetryHref")).isEqualTo("/review");
         assertThat(model.getAttribute("focusEmptyRetryText")).isEqualTo("Обновить review");
@@ -93,7 +94,7 @@ class MvcModelAttributeMapperTest {
 
         ExtendedModelMap flashcardModel = new ExtendedModelMap();
         mapper.applyFocusPageState(flashcardModel, flashcardState, false);
-        assertThat(flashcardModel.getAttribute("focusModeChipText")).isEqualTo("Flashcard mode");
+        assertThat(flashcardModel.getAttribute("focusModeChipText")).isEqualTo("Флешкарты");
         assertThat(flashcardModel.getAttribute("focusModeHintText"))
                 .isEqualTo("Флешкарты: сначала вспомни ответ, затем раскрой и оцени себя.");
         assertThat(flashcardModel.getAttribute("focusEmptyRetryHref")).isEqualTo("/training?mode=FLASHCARD");
@@ -101,7 +102,7 @@ class MvcModelAttributeMapperTest {
 
         ExtendedModelMap studyModel = new ExtendedModelMap();
         mapper.applyFocusPageState(studyModel, studyState, false);
-        assertThat(studyModel.getAttribute("focusModeChipText")).isEqualTo("Study mode");
+        assertThat(studyModel.getAttribute("focusModeChipText")).isEqualTo("Изучение");
         assertThat(studyModel.getAttribute("focusModeHintText"))
                 .isEqualTo("Изучение: разберись с материалом, затем переходи к проверке.");
         assertThat(studyModel.getAttribute("focusEmptyRetryHref")).isEqualTo("/training?mode=STUDY");
@@ -137,7 +138,7 @@ class MvcModelAttributeMapperTest {
         ExtendedModelMap model = new ExtendedModelMap();
         mapper.applyFocusPageState(model, trainingFlashcard, false);
 
-        assertThat(model.getAttribute("focusModeChipText")).isEqualTo("Flashcard mode");
+        assertThat(model.getAttribute("focusModeChipText")).isEqualTo("Флешкарты");
         assertThat(model.getAttribute("focusModeHintText"))
                 .isEqualTo("Флешкарты: сначала вспомни ответ, затем раскрой и оцени себя.");
     }
