@@ -7,44 +7,47 @@
 
 <main id="main-content" class="ed-page">
     <section class="focus-training" th:if="${current != null}">
-        <!-- Сессионная рейка: фолио-прогресс + трек + «сегодня»-чип. На узких экранах
-             aside не стилизуется (обычный блок — стек как раньше); на >=1200px CSS
-             уводит её в правую sticky-колонку (см. editorial.css, WIDE LAYOUT).
-             DOM-порядок блоков внутри не менялся — только нестинг. -->
-        <aside class="focus-session-rail" aria-label="Сессия">
-        <!-- Прогресс-строка и трек гейтятся th:if: вне сессии раньше в DOM висела
-             видимая пустая полоска 254×2px с aria-valuemax="0" (progressbar «0 из 0»
-             для скринридера). Критика round-01 C-live-1. -->
-        <div class="focus-progress-line" th:if="${interviewSession != null or reviewMode}">
-            <span th:if="${interviewSession != null}">
-                <span class="session-progress" th:text="${interviewSession.getIndex() + 1}">1</span>/<span th:text="${interviewSession.getTotal()}">1</span>
-            </span>
-            <span th:if="${reviewMode}">Режим review: только вопросы с ошибками</span>
-        </div>
-        <div class="session-progress-track"
-             role="progressbar"
-             aria-label="Прогресс сессии"
-             th:if="${interviewSession != null}"
-             th:attr="aria-valuemin=0,aria-valuemax=${interviewSession.getTotal()},aria-valuenow=${interviewSession.getIndex() + 1}">
-            <div class="session-progress-fill"
-                 th:attr="data-progress=${#numbers.formatDecimal(progressPercent, 1, 1)}"></div>
-        </div>
+        <!-- Топ-бар: eyebrow/подсказка слева ↔ статус сессии/«сегодня»-чип справа.
+             Полноширинный горизонтальный бар вместо прежней вертикальной правой
+             рейки: вне сессии та вырождалась в одинокий чип в мёртвом правом
+             жёлобе (выглядело по-любительски — прямая претензия пользователя).
+             Раскладка в ряд только на >=1200px (см. editorial.css, WIDE LAYOUT);
+             на узких — обычный стек (eyebrow → рейка → вопрос). -->
+        <div class="focus-topbar">
+            <div class="question-zone-head">
+                <span class="zone-chip" th:text="${focusModeChipText}">Focus mode</span>
+                <span class="zone-hint" id="options-flow-hint" th:text="${focusModeHintText}">Выбери один вариант. Проверка и разбор идут по шагам.</span>
+            </div>
+            <aside class="focus-session-rail" aria-label="Сессия">
+                <!-- Прогресс-строка и трек гейтятся th:if: вне сессии раньше в DOM
+                     висела видимая пустая полоска 254×2px с aria-valuemax="0"
+                     (progressbar «0 из 0» для скринридера). round-01 C-live-1. -->
+                <div class="focus-progress-line" th:if="${interviewSession != null or reviewMode}">
+                    <span th:if="${interviewSession != null}">
+                        <span class="session-progress" th:text="${interviewSession.getIndex() + 1}">1</span>/<span th:text="${interviewSession.getTotal()}">1</span>
+                    </span>
+                    <span th:if="${reviewMode}">Режим review: только вопросы с ошибками</span>
+                </div>
+                <div class="session-progress-track"
+                     role="progressbar"
+                     aria-label="Прогресс сессии"
+                     th:if="${interviewSession != null}"
+                     th:attr="aria-valuemin=0,aria-valuemax=${interviewSession.getTotal()},aria-valuenow=${interviewSession.getIndex() + 1}">
+                    <div class="session-progress-fill"
+                         th:attr="data-progress=${#numbers.formatDecimal(progressPercent, 1, 1)}"></div>
+                </div>
 
-        <!-- Компактный «сегодня»-чип: стрик (🔥) + due. Информативный, без CTA. -->
-        <div th:replace="~{fragments/today-widget :: today-chip(stats=${stats})}"></div>
+                <!-- Компактный «сегодня»-чип: стрик (🔥) + due. Информативный, без CTA. -->
+                <div th:replace="~{fragments/today-widget :: today-chip(stats=${stats})}"></div>
 
-        <!-- Выход из сессии там, где сессия живёт: раньше «Завершить…» была только
-             в /settings и в no-JS result.html — с фокус-страницы уйти к итогам было
-             нельзя. POST /finish сохраняет summary и редиректит на /session-summary.
-             Критика round-01 B3. -->
-        <form method="post" th:action="@{/finish}" class="rail-finish" th:if="${interviewSession != null and !interviewSession.finished}">
-            <button type="submit" class="btn secondary-btn rail-finish-btn">Завершить сессию</button>
-        </form>
-        </aside>
-
-        <div class="question-zone-head">
-            <span class="zone-chip" th:text="${focusModeChipText}">Focus mode</span>
-            <span class="zone-hint" id="options-flow-hint" th:text="${focusModeHintText}">Выбери один вариант. Проверка и разбор идут по шагам.</span>
+                <!-- Выход из сессии там, где сессия живёт: раньше «Завершить…» была
+                     только в /settings и в no-JS result.html — с фокус-страницы уйти
+                     к итогам было нельзя. POST /finish сохраняет summary и редиректит
+                     на /session-summary. round-01 B3. -->
+                <form method="post" th:action="@{/finish}" class="rail-finish" th:if="${interviewSession != null and !interviewSession.finished}">
+                    <button type="submit" class="btn secondary-btn rail-finish-btn">Завершить сессию</button>
+                </form>
+            </aside>
         </div>
         <h2 class="focus-question" th:utext="${@markdownRenderService.toInlineHtml(current.question.questionText)}">Вопрос</h2>
 

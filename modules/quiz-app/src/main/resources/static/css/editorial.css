@@ -2395,42 +2395,57 @@ html[data-design] .summary-tools-status {
      Един для шапки/прогресса/контента (см. --page-gutter в :root). */
   html[data-design] { --page-gutter: clamp(2rem, 4vw, 5rem); }
 
-  /* --- FOCUS: основная колонка (вопрос → опции → пост-разбор) + правая
-     sticky-рейка сессии (фолио-прогресс, трек, «сегодня»-чип). Рейка — первый
-     ребёнок секции (aside), грид кладёт её во 2-ю колонку на всю высоту. */
-  html[data-design] .focus-page .focus-training {
+  /* --- FOCUS: «широкая колонка + верхний бар» (выбор пользователя).
+     Прежде тут был 2-col grid с правой sticky-рейкой: вне сессии рейка
+     вырождалась в одинокий «сегодня»-чип в мёртвом правом жёлобе — пользователь
+     назвал раскладку любительской. Теперь — одна полноширинная колонка
+     (вопрос/опции/разбор край-в-край) с горизонтальным мета-баром сверху:
+     eyebrow+подсказка слева ↔ статус сессии/«сегодня» справа. */
+  html[data-design] .focus-page .focus-topbar {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-5) var(--space-8);
+    flex-wrap: wrap;
+    padding-bottom: var(--space-4);
+    margin-bottom: var(--space-6);
+    border-bottom: var(--rule-weight) solid var(--color-border-primary);
+  }
+  /* Лид (eyebrow + подсказка) слева; маржину низа гасит padding бара. */
+  html[data-design] .focus-page .focus-topbar > .question-zone-head { margin-bottom: 0; }
+  /* Рейка справа — горизонтальный кластер (была вертикальная колонка). */
+  html[data-design] .focus-page .focus-topbar > .focus-session-rail {
+    display: flex; flex-direction: row; align-items: center;
+    flex-wrap: wrap; gap: var(--space-3) var(--space-5);
+    margin-left: auto;
+  }
+  /* В горизонтальном баре блоки рейки без стек-маржинов; трек — фикс. ширина
+     (full-width 2px-полоса в строке смотрелась бы оборванной). */
+  html[data-design] .focus-page .focus-topbar .focus-progress-line,
+  html[data-design] .focus-page .focus-topbar .session-progress-track,
+  html[data-design] .focus-page .focus-topbar .rail-finish,
+  html[data-design] .focus-page .focus-topbar .today-chip { margin: 0; }
+  html[data-design] .focus-page .focus-topbar .session-progress-track { width: 8rem; }
+
+  /* Опции — экзаменационный бланк 2×2 на всю ширину колонки (раньше включалось
+     только с 1680px, из-за чего на 1200–1680 справа зияла мёртвая зона).
+     Буквенный CSS-счётчик идёт по DOM (A B / C D по строкам), клавиши 1–9 не
+     затронуты. На result-странице (/answer) НЕ применяем — там у вариантов
+     раскрыты объяснения, их удобнее сравнивать вертикальным сканом. */
+  html[data-design] .focus-page #interview-options {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 19rem;
-    column-gap: var(--space-8);
-    align-items: start;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+    max-width: none;
   }
-  html[data-design] .focus-page .focus-training > * { grid-column: 1; min-width: 0; }
-  html[data-design] .focus-page .focus-training > .focus-session-rail {
-    grid-column: 2;
-    /* 1 / 9: с запасом на все ряды основной колонки (zonehead, вопрос, код,
-       форма/флешкарта, пост-голова, пост-блок); лишние implicit-ряды пустые
-       и имеют нулевую высоту. align-self: start обязателен для sticky. */
-    grid-row: 1 / 9;
-    align-self: start;
-    position: sticky;
-    top: var(--space-5);
-    display: flex; flex-direction: column; gap: var(--space-3);
+  /* После ответа app.js дорисовывает в каждый вариант .option-explanation —
+     раскрытые объяснения удобнее читать вертикальным сканом (как на result-
+     странице /answer), а не сравнивать в 2×2 с рваными по высоте ячейками.
+     Возвращаем одну колонку с читаемым капом измерения. */
+  html[data-design] .focus-page #interview-options:has(.option-explanation) {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: var(--max-width-options);
   }
-  /* Хром панели — только когда в рейке есть содержимое (вне сессии и без stats
-     остаётся голый 2px-трек: рамка вокруг пустоты выглядела бы сиротливо). */
-  html[data-design] .focus-page .focus-session-rail:has(.session-progress, .today-chip-due, .streak-inline:not(.hidden)) {
-    border: var(--rule-weight) solid var(--color-border-primary);
-    border-radius: var(--border-radius-md);
-    background: var(--color-bg-secondary);
-    padding: var(--space-4) var(--space-5);
-  }
-  /* Внутри панели стек-маржины блоков гасим — ритм несёт gap рейки. */
-  html[data-design] .focus-page .focus-session-rail .focus-progress-line,
-  html[data-design] .focus-page .focus-session-rail .session-progress-track,
-  html[data-design] .focus-page .focus-session-rail .rail-finish,
-  html[data-design] .focus-page .focus-session-rail .today-chip { margin-bottom: 0; }
-  /* Кнопка завершения занимает всю ширину панели рейки. */
-  html[data-design] .focus-page .focus-session-rail .rail-finish-btn { width: 100%; }
 
   /* Пустое состояние фокуса: «окно» тянется на всю ширину (карточка-сообщение
      остаётся центрированной композицией внутри). */
@@ -2563,21 +2578,6 @@ html[data-design] .summary-tools-status {
   html[data-design] .summary-page .ed-page > section:has(.summary-table) { grid-column: 1; }
   html[data-design] .summary-page .ed-page > section:has(.summary-mistakes) { grid-column: 2; }
   html[data-design] .summary-page .ed-page > section.summary-recommendations { grid-column: 1; }
-}
-
-/* Ультраширокие (>=1680px): одна колонка опций с капом 60rem оставляла мёртвую
-   зону между вариантами и рейкой — раскладываем MCQ-варианты парами (2×2, как
-   экзаменационный бланк). Каждый label — самодостаточная карточка; буквенный
-   CSS-счётчик идёт по DOM (A B / C D по строкам), клавиши 1–9 не затронуты.
-   На result-странице (/answer) НЕ применяем: там варианты с раскрытыми
-   объяснениями — их удобнее сравнивать вертикальным сканом. */
-@media (min-width: 1680px) {
-  html[data-design] .focus-page #interview-options {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-3);
-    max-width: none;
-  }
 }
 
 /* Печать / сохранение в PDF: прячем навигацию/кнопки/хром, лист — чистый.
