@@ -495,8 +495,8 @@ public class GreetingController {
 
 **Поток обработки** (по порядку):
 
-1. `Client` отправляет `SEND /app/hello` → попадает в `DispatcherServlet`.
-2. `DispatcherServlet` → вызывает метод `@MessageMapping("/hello")`.
+1. `Client` отправляет `SEND /app/hello` → фрейм идёт по WebSocket-сессии в `StompSubProtocolHandler`, затем в `clientInboundChannel`.
+2. `SimpAnnotationMethodMessageHandler` из этого канала вызывает метод `@MessageMapping("/hello")` — STOMP-сообщения **не** проходят через `DispatcherServlet` (он обслуживает только HTTP-запросы MVC).
 3. Метод возвращает `Greeting` → результат публикуется в брокер на `/topic/greetings`.
 4. Брокер рассылает `MESSAGE` → всем подписчикам топика.
 
