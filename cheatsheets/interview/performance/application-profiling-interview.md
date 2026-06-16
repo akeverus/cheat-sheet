@@ -179,8 +179,8 @@ public void processOrder(Order order) {
 **В чём проблема:** стандартный `JVM TI GetStackTrace()` снимает стек только в `safepoint`. Если поток выполняет длинный цикл без safepoint-а, профайлер вынужден дождаться выхода из цикла — и в итоге «припишет» время не тому коду:
 
 ```java
-// Этот цикл с counted loop может НЕ содержать safepoint
-// до JDK 17 (JEP 401 добавил safepoints в counted loops)
+// counted loop традиционно не содержит safepoint-poll внутри тела;
+// loop strip mining (JDK 10+, по умолчанию) ограничивает time-to-safepoint
 for (int i = 0; i < array.length; i++) {
     sum += array[i]; // safepoint bias — профайлер не покажет этот код
 }
@@ -264,7 +264,7 @@ jcmd <PID> JFR.dump name=default filename=/tmp/dump.jfr
 jcmd <PID> JFR.stop name=profile
 ```
 
-**3. Программно из кода (JDK 14+)** (когда нужно записывать профиль по бизнес-событию):
+**3. Программно из кода (JDK 11+)** (когда нужно записывать профиль по бизнес-событию):
 
 ```java
 try (Recording recording = new Recording(Configuration.getConfiguration("profile"))) {
@@ -282,7 +282,7 @@ try (Recording recording = new Recording(Configuration.getConfiguration("profile
 
 `.jfr`-файл — это бинарный поток событий. Анализировать его можно тремя способами: быстрый CLI для разовых проверок, GUI-инструмент JMC для глубокого разбора и программный API для автоматизации.
 
-**1. CLI-инструмент `jfr` (JDK 17+)** — для быстрых проверок прямо в терминале:
+**1. CLI-инструмент `jfr` (JDK 12+; подкоманда `jfr view` — с JDK 21)** — для быстрых проверок прямо в терминале:
 
 ```bash
 # Вывод сводки
@@ -302,7 +302,7 @@ jfr print --events jdk.ExecutionSample --stack-depth 64 recording.jfr
 - GUI с heat map, histogram, dependency view.
 - Automated Analysis — автоматически прогоняет правила и подсвечивает подозрительные места (высокий allocation rate, длинные паузы, lock contention), так что не нужно знать заранее, что искать.
 
-**3. Программный доступ (JDK 14+)** — когда анализ нужно автоматизировать (например, в CI):
+**3. Программный доступ (JDK 11+)** — когда анализ нужно автоматизировать (например, в CI):
 
 ```java
 try (RecordingFile file = new RecordingFile(Path.of("recording.jfr"))) {

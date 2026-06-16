@@ -2141,7 +2141,7 @@ registry.config().meterFilter(
 
 **Context propagation** — это механизм, который переносит trace context (`traceId`, `spanId` родителя, решение о sampling) между сервисами через HTTP-заголовки или заголовки сообщений. Без него каждый сервис начинал бы новый, не связанный трейс, и склеить путь запроса было бы невозможно. Существуют два основных формата заголовков — современный `W3C TraceContext` и старый `B3` (Zipkin); ниже — оба, а также Baggage и типичные ошибки.
 
-**W3C TraceContext (рекомендуемый стандарт, RFC 7234):**
+**W3C TraceContext (рекомендуемый стандарт, W3C Recommendation):**
 
 ```http
 # HTTP заголовки W3C TraceContext
