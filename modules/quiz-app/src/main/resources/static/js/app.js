@@ -1924,6 +1924,26 @@ function initCopyCode() {
   // здесь недоступен — собираем тот же <svg><use> сами.
   const svgIcon = (name) => '<svg class="ed-icon" aria-hidden="true"><use href="#i-' + name + '"></use></svg>';
   const blocks = document.querySelectorAll('.markdown-content pre, .question-code-details pre, pre.question-code');
+  if (!blocks.length) return;
+  // Общий live-region на результат копирования. Смена innerHTML на сфокусированной
+  // кнопке скринридерами озвучивается ненадёжно (NVDA/VoiceOver по-разному), поэтому
+  // исход дублируем в role=status — единый на все блоки кода. Критика round-01 C19.
+  let copyStatus = document.getElementById('code-copy-status');
+  if (!copyStatus) {
+    copyStatus = document.createElement('div');
+    copyStatus.id = 'code-copy-status';
+    copyStatus.className = 'visually-hidden';
+    copyStatus.setAttribute('role', 'status');
+    copyStatus.setAttribute('aria-live', 'polite');
+    document.body.appendChild(copyStatus);
+  }
+  const announceCopy = (msg) => {
+    if (!copyStatus) return;
+    // Пусто → текст на следующем кадре: гарантирует переобъявление даже при
+    // повторном копировании того же блока (идентичный textContent иначе нем).
+    copyStatus.textContent = '';
+    requestAnimationFrame(() => { copyStatus.textContent = msg; });
+  };
   blocks.forEach((pre) => {
     if (pre.parentElement && pre.parentElement.classList.contains('code-copy-wrap')) return;
     const wrap = document.createElement('div');
@@ -1949,8 +1969,14 @@ function initCopyCode() {
     btn.addEventListener('click', () => {
       const codeEl = pre.querySelector('code') || pre;
       navigator.clipboard.writeText(codeEl.innerText)
-        .then(() => flash('is-copied', svgIcon('check') + '<span class="code-copy-label">Скопировано</span>'))
-        .catch(() => flash('is-error', svgIcon('x') + '<span class="code-copy-label">Ошибка</span>'));
+        .then(() => {
+          flash('is-copied', svgIcon('check') + '<span class="code-copy-label">Скопировано</span>');
+          announceCopy('Код скопирован в буфер обмена');
+        })
+        .catch(() => {
+          flash('is-error', svgIcon('x') + '<span class="code-copy-label">Ошибка</span>');
+          announceCopy('Не удалось скопировать код');
+        });
     });
   });
 }

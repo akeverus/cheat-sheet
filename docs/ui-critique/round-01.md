@@ -571,3 +571,30 @@ no-op-блока `if (answerFlowSteps) { … }`. `answer-flow-hint`/`answerFlowH
 
 Файлы: `static/js/app.js` (−174 строк), `templates/{result,settings,focus-training}.html`
 (app.js v33→v34). Синхронизировано в `build/resources/main`.
+
+## Порция 10 — C19: SR-озвучка результата копирования кода (2026-06-16)
+
+Фидбэк кнопки `.code-copy-btn` был чисто визуальный: `flash()` менял класс +
+innerHTML («Скопировано»/«Ошибка»), но live-region не было, а `aria-label` оставался
+«Копировать код» в обоих исходах. Озвучка смены innerHTML на сфокусированной кнопке
+скринридерами нестабильна (NVDA/VoiceOver по-разному) → незрячий не получал
+подтверждения, скопировался код или нет.
+
+Фикс (надёжный паттерн — обновление СУЩЕСТВУЮЩЕГО пустого live-региона, а не вставка
+региона с контентом): в `initCopyCode` создаётся один общий
+`<div id="code-copy-status" class="visually-hidden" role="status" aria-live="polite">`
+(как `#table-sort-status` на /stats), и хелпер `announceCopy(msg)` пишет в него исход.
+Паттерн «пусто → текст на следующем кадре (requestAnimationFrame)» гарантирует
+переобъявление даже при повторном копировании того же блока. Успех →
+«Код скопирован в буфер обмена», ошибка → «Не удалось скопировать код». `aria-label`
+кнопки не трогаем. Регион создаётся только при наличии блоков кода
+(`if (!blocks.length) return;`) — на страницах без кода лишнего узла нет.
+
+Верифицировано live (chrome-devtools, app.js v34→v35): прогнан реальный
+`window.initCopyCode()` на инъецированном `.markdown-content pre>code`, клик по
+кнопке → clipboard.writeText успешен (localhost secure-context), `flash` дал визуал
+«Скопировано», а `#code-copy-status` (role=status, aria-live=polite) получил текст
+«Код скопирован в буфер обмена». Консоль чиста.
+
+Файлы: `static/js/app.js` (+общий live-region + announceCopy),
+`templates/{result,settings,focus-training}.html` (app.js v34→v35). Синхронизировано.
