@@ -1098,8 +1098,8 @@ html[data-design] .empty-actions { display: flex; gap: var(--space-3); justify-c
 /* ===========================================================================
    SETTINGS (C4) — «Настроить сессию». Старый .app-layout — сломанный sidebar-rail
    (всё в 230px). В editorial разворачиваем в чистую читаемую колонку. Структуру и
-   ID шаблона сохраняем (app.js: #sidebar-collapse-toggle, #filter-mode-hint,
-   #shuffle-checkbox, streak-*, data-sidebar-form) — только relayout+restyle.
+   ID шаблона сохраняем (app.js: #filter-mode-hint, #shuffle-checkbox,
+   streak-*, data-sidebar-form) — только relayout+restyle.
    Гейт под .settings-page, чтобы не задеть .app-layout на ещё не мигрированных
    страницах (stats/result, если используют).
    ========================================================================== */
@@ -1117,9 +1117,11 @@ html[data-design] .settings-page .card {
   background: transparent; border: 0; border-radius: 0;
   box-shadow: none; backdrop-filter: none; padding: 0; margin: 0 0 var(--space-7);
 }
-/* В одной колонке свернуть-панель не нужна */
-html[data-design] .settings-page .sidebar-toggle-btn { display: none; }
-html[data-design] .settings-page #left-sidebar-content { display: block !important; }
+/* Кнопка «свернуть-панель» удалена (round-01 C20) — в одной колонке не нужна.
+   #left-sidebar-content просто блок; на >=1200px медиазапрос ниже по исходнику
+   делает его grid'ом (та же специфичность → выигрывает каскадом, без !important,
+   round-01 C10). */
+html[data-design] .settings-page #left-sidebar-content { display: block; }
 
 html[data-design] .settings-page .control-section {
   padding: var(--space-6) 0 0; margin: 0;
@@ -2515,10 +2517,12 @@ html[data-design] .summary-tools-status {
 
   /* --- SETTINGS: панель управления в 3 колонки (Фильтры | Сессия | Прогресс),
      совет-строка под ними; ниже «Управление данными» и «Персонализация» парой.
-     ID-шники сворачивания сайдбара (app.js) не трогаем — display:grid c
-     !important перебивает базовый display:block !important (L1090, каскад). */
+     Без !important (round-01 C10): базовое правило выше — display:block (та же
+     специфичность), этот медиазапрос ниже по исходнику → grid выигрывает каскадом
+     на >=1200px; на узких остаётся block. Война !important устранена вместе с
+     удалением мёртвого тоггла (C20). */
   html[data-design] .settings-page #left-sidebar-content {
-    display: grid !important;
+    display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     column-gap: var(--space-7);
     align-items: start;

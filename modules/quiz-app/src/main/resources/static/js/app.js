@@ -102,26 +102,6 @@
     alertEl.classList.remove('success');
   }
 
-  function initCollapsibleSidebar() {
-    const toggle = document.getElementById('sidebar-collapse-toggle');
-    const content = document.getElementById('left-sidebar-content');
-    const sidebarCard = document.getElementById('left-sidebar-card');
-    if (!toggle || !content || !sidebarCard) return;
-
-    const setCollapsed = (collapsed) => {
-      sidebarCard.classList.toggle('is-collapsed', collapsed);
-      content.hidden = collapsed;
-      toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
-      toggle.textContent = collapsed ? 'Развернуть панель' : 'Свернуть панель';
-    };
-
-    setCollapsed(false);
-    toggle.addEventListener('click', () => {
-      const collapsed = toggle.getAttribute('aria-expanded') === 'true';
-      setCollapsed(collapsed);
-    });
-  }
-
   function setInteractionBusy(busy) {
     if (form) {
       form.setAttribute('aria-busy', busy ? 'true' : 'false');
@@ -645,7 +625,6 @@
     initSessionFormSync();
     initSessionModeForm();
     initResultPageExtraAnalysis();
-    initCollapsibleSidebar();
     initExportButtons();
     initPersonalization();
     initDangerousFormGuard();

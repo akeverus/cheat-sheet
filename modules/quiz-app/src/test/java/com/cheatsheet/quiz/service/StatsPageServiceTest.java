@@ -67,4 +67,33 @@ class StatsPageServiceTest {
         assertThat(state.searchQuery()).isEqualTo("hashmap");
         assertThat(state.stats().correct()).isEqualTo(7);
     }
+
+    @Test
+    void escapesScriptBreakingCharsForHtmlEmbedding() throws Exception {
+        // C35: topicStatsJson встраивается literal-ом в <script id="topic-stats-data">.
+        // Имя темы с подстрокой "</script>" закрыло бы тег → пробой в HTML-контекст.
+        InterviewFilter filter = new InterviewFilter("java", "backend", false, false, false, true);
+        List<TopicStats> topicStats = List.of(new TopicStats("java", 10, 4, 3, 6, 1, 2));
+        when(facade.getStats(filter)).thenReturn(new InterviewStats(10, 5, 2, 7, 3));
+        when(questionRepository.findTopics()).thenReturn(List.of("java"));
+        when(topicCatalogService.normalizeGroup("backend")).thenReturn("backend");
+        when(topicCatalogService.filterAndSortTopics(List.of("java"), "backend", true)).thenReturn(List.of("java"));
+        when(topicCatalogService.groupOptions(List.of("java"))).thenReturn(List.of());
+        when(facade.getTopicStats()).thenReturn(topicStats);
+        when(searchService.search(eq("hashmap"), anyInt())).thenReturn(List.of());
+        when(objectMapper.writeValueAsString(topicStats))
+                .thenReturn("[{\"topic\":\"a</script><script>alert(1)&x\"}]");
+
+        StatsPageService.StatsPageState state = service.build(filter, "hashmap", 20);
+
+        String json = state.topicStatsJson();
+        // Ни одного literal-символа, способного закрыть/открыть <script> или внести
+        // HTML-сущность — всё заменено на юникод-эскейпы (JSON остаётся валидным).
+        assertThat(json).doesNotContain("<");
+        assertThat(json).doesNotContain(">");
+        assertThat(json).doesNotContain("</script>");
+        assertThat(json).contains("\\u003C");
+        assertThat(json).contains("\\u003E");
+        assertThat(json).contains("\\u0026");
+    }
 }

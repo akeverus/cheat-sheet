@@ -176,7 +176,7 @@ class InterviewControllerTest {
     }
 
     @Test
-    void settingsSidebarCollapseControlKeepsAccessibilityContract() throws Exception {
+    void settingsSidebarStructureKeepsAccessibilityContract() throws Exception {
         String body = mockMvc.perform(get("/settings"))
                 .andExpect(status().isOk())
                 .andReturn()
@@ -187,11 +187,11 @@ class InterviewControllerTest {
         assertThat(body).contains("id=\"main-content\"");
         assertThat(body).contains("class=\"app-layout\"");
         assertThat(body).contains("class=\"main-content settings-content\"");
-        assertThat(body).contains("id=\"sidebar-collapse-toggle\"");
-        assertThat(body).contains("aria-controls=\"left-sidebar-content\"");
-        assertThat(body).contains("aria-expanded=\"true\"");
         assertThat(body).contains("id=\"left-sidebar-content\"");
         assertThat(body).contains("id=\"left-sidebar-card\"");
+        // Тоггл «свернуть панель» удалён (round-01 C20): был мёртвым контролом
+        // (display:none + мёртвый JS-обработчик). Контент панели всегда виден.
+        assertThat(body).doesNotContain("id=\"sidebar-collapse-toggle\"");
     }
 
     @Test

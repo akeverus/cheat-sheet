@@ -49,7 +49,11 @@ public class StatsPageService {
         List<TopicStats> topicStats = facade.getTopicStats();
         String topicStatsJson = "[]";
         try {
-            topicStatsJson = objectMapper.writeValueAsString(topicStats);
+            // C35: JSON встраивается literal-ом в <script id="topic-stats-data"> (stats.html,
+            // через [(...)] без HTML-escape). Jackson по умолчанию НЕ экранирует '<' и '/',
+            // поэтому имя темы с подстрокой "</script>" закрыло бы тег и пробило бы в HTML-
+            // контекст. Экранируем юникод-эскейпами (OWASP JSON-in-HTML) — см. escapeForHtmlScript.
+            topicStatsJson = escapeForHtmlScript(objectMapper.writeValueAsString(topicStats));
         } catch (JsonProcessingException e) {
             log.error("stats_page_topic_stats_json_failed size={}", topicStats.size(), e);
         }
@@ -73,6 +77,21 @@ public class StatsPageService {
                 coverageGaps,
                 forecast
         );
+    }
+
+    /**
+     * Экранирует символы, способные пробить тег &lt;script&gt; при literal-вставке JSON
+     * в HTML (без th-escape): '&lt;', '&gt;', '&amp;' → юникод-эскейпы. Эти символы встречаются
+     * только внутри строковых значений JSON (структурные токены — {}[]:,"), поэтому
+     * замена по всей строке сохраняет валидность и семантику: JSON.parse даёт тот же
+     * текст, но подстрока "&lt;/script&gt;" появиться не может. Локально, не на общий
+     * бин objectMapper — чтобы не менять формат прочих JSON-ответов. См. round-01 C35.
+     */
+    private static String escapeForHtmlScript(String json) {
+        return json
+                .replace("<", "\\u003C")
+                .replace(">", "\\u003E")
+                .replace("&", "\\u0026");
     }
 
     @Builder(toBuilder = true)

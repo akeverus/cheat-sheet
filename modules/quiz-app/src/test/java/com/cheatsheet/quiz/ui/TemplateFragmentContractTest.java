@@ -122,17 +122,17 @@ class TemplateFragmentContractTest {
     }
 
     @Test
-    void settingsTemplateKeepsSidebarCollapseAccessibilityWiring() throws IOException {
+    void settingsTemplateKeepsSidebarStructure() throws IOException {
         String settings = readTemplate("templates/settings.html");
         assertThat(settings).contains("id=\"left-sidebar-card\"");
         assertThat(settings).contains("type=\"button\"");
-        assertThat(settings).contains("id=\"sidebar-collapse-toggle\"");
-        assertThat(settings).contains("aria-controls=\"left-sidebar-content\"");
-        assertThat(settings).contains("aria-expanded=\"true\"");
         assertThat(settings).contains("id=\"left-sidebar-content\"");
         assertThat(settings).contains("id=\"main-content\"");
         assertThat(settings).contains("class=\"app-layout\"");
         assertThat(settings).contains("class=\"main-content settings-content\"");
+        // Тоггл сворачивания панели удалён (round-01 C20): мёртвый контрол
+        // (display:none + мёртвый обработчик в app.js). Структура панели цела.
+        assertThat(settings).doesNotContain("id=\"sidebar-collapse-toggle\"");
     }
 
     @Test
