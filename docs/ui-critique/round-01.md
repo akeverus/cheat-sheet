@@ -727,4 +727,50 @@ TemplateFragmentContractTest, VisualBaseline settings-shell), переписан
 Версии: editorial.css v80→v81, app.js v35→v36 (settings/result/focus-training).
 `./gradlew test` (все модули) — BUILD SUCCESSFUL. bootRun перезапущен.
 
+## Порция 15 — C3 (дедуп page-рецептов кнопок) + D2 (мёртвые .hidden) (2026-06-17)
+
+Чистый CSS-дедуп, **поведение-сохраняющий** (computed-стили байт-в-байт во всех 4
+дизайнах). Только editorial.css; gradle не нужен (контракт-тесты CSS-внутренности не
+проверяют).
+
+**C3 — page-рецепты кнопок сведены к дельтам.** Три селектора дословно повторяли
+глобальный `.btn` (L889-903) для элементов, которые УЖЕ носят `class="btn …"`:
+- `.data-export-actions .btn` (settings, `btn secondary-btn`) — было 14 деклараций →
+  осталось `flex: 0 0 auto` + `border-radius: 0` (B5). Размер/цвет/шрифт/рамка/ховер —
+  из `.btn`/`.secondary-btn` (ховер на месте: у него отдельный гард `:not([aria-busy])`).
+- `.table-expander` (stats, `btn secondary-btn table-expander`) — было 12 деклараций +
+  дубль-ховер → осталось `margin-top: var(--space-4)` + `border-radius: 0`. Ховер удалён
+  (глобальный `.secondary-btn:hover` идентичен).
+- `.summary-actions .btn` (summary, `btn next-btn|secondary-btn`) — было 8 деклараций
+  базы + 4 sub-правила (`.next-btn`/`.secondary-btn` + их ховеры, дублировавшие
+  глобальные) → осталось `min-height: 48px` (C8) + `padding` + `flex` + `border-radius:
+  md`. Заливка/цвет/рамка next- и secondary-вариантов — из глобальных `.next-btn`/`.btn`.
+
+  _Known-smell (зафиксирован, не правлю молча):_ summary-`.btn` сохраняет `border-radius:
+  md` явной дельтой — её специфичность (0,4,1) перебивает editorial-сигнатуру B5 (0,2,1),
+  поэтому summary-кнопки остаются скруглёнными md, тогда как сигнатура для editorial
+  требует flat-0 (secondary) / асимметрию (primary CTA). Это давняя несогласованность,
+  которую дублированный рецепт маскировал; фиксить осознанно отдельным заходом с
+  проверкой на живой /session-summary, а не побочным эффектом дедупа.
+
+**D2 — шесть точечных `.X.hidden { display: none }` удалены.** Глобальное
+`html[data-design] .hidden { display: none !important }` (L395) с `!important` бьёт любой
+display независимо от специфичности → все шесть были гарантированными no-op:
+`.flashcard-answer`, `.result-zone-head`, `.result-feedback`, `.inline-alert`,
+`.settings-page .streak-bar`, `.stats-page .table-expander`.
+
+Верифицировано live (chrome-devtools, editorial dark, v81→v82):
+- /settings data-export-кнопка: `border-radius 0`, `min-height 44px`, `1px solid`,
+  `padding 24px`, `flex 0 0 auto`, bg transparent, текст ivory, weight 500 — всё из
+  глобального `.btn`.
+- /stats table-expander (снят `.hidden` для замера): `border-radius 0`, `margin-top 16px`,
+  `min-height 44px`, рамка/паддинг/Inter — на месте.
+- Синтетические summary-кнопки: next-btn `8px`/`48px`/terracotta-fill, secondary
+  `8px`/`48px`/transparent — md сохранён (дельта бьёт сигнатуру, как было).
+- `.hidden`-проба для result-feedback / inline-alert / streak-bar → `display: none`
+  (глобальное `!important` правило держит).
+- Баланс скобок editorial.css 574/574.
+
+Версии: editorial.css v81→v82. Синхронизировано в `build/resources/main`.
+
 Остаётся открытым: C3, C4, C9, C12, C13, C16, C18, C27, C36, D1–D10.

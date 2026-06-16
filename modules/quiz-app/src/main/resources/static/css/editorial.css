@@ -984,7 +984,6 @@ html[data-design] .answer {
 }
 html[data-design] .answer > *:first-child { margin-top: 0; }
 html[data-design] .answer > *:last-child { margin-bottom: 0; }
-html[data-design] .flashcard-answer.hidden { display: none; }
 html[data-design] .flashcard-grade-buttons {
   display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3);
   margin-top: var(--space-5);
@@ -1026,9 +1025,7 @@ html[data-design] .markdown-content th { background: var(--color-bg-tertiary); f
 
 /* Пост-ответная зона */
 html[data-design] .result-zone-head { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-1); margin: var(--space-6) 0 var(--space-3); padding-top: var(--space-5); border-top: var(--rule-weight) solid var(--color-border-primary); }
-html[data-design] .result-zone-head.hidden { display: none; }
 html[data-design] .result-feedback { margin-top: var(--space-4); }
-html[data-design] .result-feedback.hidden { display: none; }
 /* Заметка о штрафных вопросах EXAM (app.js appendPenaltyNotice, round-01 B2):
    warning-тон, мелкий кегль — сообщение о росте сессии, не часть вердикта. */
 html[data-design] .result-penalty-note {
@@ -1082,7 +1079,6 @@ html[data-design] .option-wrong .answer {
   background: transparent; border: 0; padding: 0; margin-top: var(--space-2);
 }
 html[data-design] .inline-alert { padding: var(--space-3) var(--space-4); border: var(--rule-weight) solid var(--color-status-error); border-radius: var(--border-radius-md); background: var(--color-status-error-wash); color: var(--color-text-primary); margin: var(--space-3) 0; }
-html[data-design] .inline-alert.hidden { display: none; }
 
 /* Empty-state */
 html[data-design] .empty-card-inner { max-width: 560px; margin: var(--space-8) auto; text-align: center; padding: var(--space-7) var(--space-5); border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-lg); background: var(--color-bg-secondary); }
@@ -1215,13 +1211,11 @@ html[data-design] .settings-page .btn-finish-small { margin-top: var(--space-3);
 html[data-design] .settings-page .data-export-block { margin: var(--space-3) 0 var(--space-5); }
 html[data-design] .settings-page .data-export-actions { display: flex; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-3); }
 html[data-design] .settings-page .data-export-actions .btn {
-  width: auto; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
-  min-height: 44px; padding: var(--space-2) var(--space-5);
-  font-family: var(--font-family-body); font-size: var(--font-size-base); font-weight: var(--font-weight-medium);
-  background: transparent; color: var(--color-text-primary); text-decoration: none;
-  border: var(--rule-weight) solid var(--color-border-primary); border-radius: 0; /* B5: утилитарная экспорт-кнопка → плоская */
-  box-shadow: none; text-transform: none; letter-spacing: 0;
-  transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
+  /* C3: только дельты к глобальному .btn (кнопка несёт class="btn secondary-btn") —
+     не растягиваться в ряду экспорта + плоский радиус (B5, глобальный .btn даёт md).
+     Размер/цвет/рамка/шрифт/ховер — из .btn/.secondary-btn (раньше дублировались здесь). */
+  flex: 0 0 auto;
+  border-radius: 0;
 }
 html[data-design] .settings-page .data-export-actions .btn:hover:not([aria-busy="true"]) { background: var(--color-bg-tertiary); border-color: var(--color-text-secondary); }
 /* «занято» во время fetch — aria-busy (не native disabled: тот выбрасывает фокус). */
@@ -1249,7 +1243,6 @@ html[data-design] .settings-page .streak-bar {
   border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-md);
   background: var(--color-bg-secondary);
 }
-html[data-design] .settings-page .streak-bar.hidden { display: none; }
 /* Иконка огонька серии — акцентом (тёплая терракота вместо нейтрального текста). */
 html[data-design] .settings-page .streak-fire { display: inline-flex; color: var(--color-accent-primary); font-size: var(--font-size-md); }
 html[data-design] .settings-page .streak-days,
@@ -1495,14 +1488,12 @@ html[data-design] .stats-page .topic-table-wrap { position: relative; overflow-x
 html[data-design] .stats-page .topic-table-wrap.is-collapsed { max-height: 540px; overflow-x: auto; overflow-y: hidden; }
 html[data-design] .stats-page .topic-table-wrap.is-collapsed::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 64px; background: linear-gradient(to bottom, transparent, var(--color-bg-secondary)); pointer-events: none; }
 html[data-design] .stats-page .table-expander {
-  display: inline-flex; align-items: center; justify-content: center; margin-top: var(--space-4);
-  min-height: 44px; padding: var(--space-2) var(--space-5);
-  font-family: var(--font-family-body); font-size: var(--font-size-base);
-  background: transparent; color: var(--color-text-primary);
-  border: var(--rule-weight) solid var(--color-border-primary); border-radius: 0; cursor: pointer; /* B5: утилитарная → плоская */
+  /* C3: дельты к .btn (class="btn secondary-btn table-expander") — отступ сверху + плоский
+     радиус (B5; во всех дизайнах, как было). Размер/цвет/рамка/ховер — из .btn/.secondary-btn;
+     .hidden — глобальное правило с !important (раньше всё это дублировалось здесь). */
+  margin-top: var(--space-4);
+  border-radius: 0;
 }
-html[data-design] .stats-page .table-expander:hover { background: var(--color-bg-tertiary); border-color: var(--color-text-secondary); }
-html[data-design] .stats-page .table-expander.hidden { display: none; }
 
 /* Прогноз 7 дней + пробелы */
 html[data-design] .stats-page .review-forecast-hint,
@@ -1604,24 +1595,15 @@ html[data-design] .summary-page .summary-duration { font-family: var(--font-fami
 /* Действия */
 html[data-design] .summary-page .summary-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin: 0 0 var(--space-7); }
 html[data-design] .summary-page .summary-actions .btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: auto; flex: 0 0 auto;
+  /* C3: дельты к .btn (class="btn next-btn|secondary-btn") — крупнее прочих primary (48px,
+     C8) и не тянуться в ряду; радиус md сохранён как было (specificity бьёт editorial-
+     сигнатуру — отдельный known-smell, фиксить осознанно). Заливка/цвет/рамка/ховер
+     next- и secondary-вариантов — из глобальных .next-btn/.secondary-btn (раньше
+     дословно дублировались здесь). */
   min-height: 48px; padding: var(--space-3) var(--space-6);
-  font-family: var(--font-family-body); font-size: var(--font-size-base); font-weight: var(--font-weight-medium);
-  border-radius: var(--border-radius-md); text-decoration: none;
-  text-transform: none; letter-spacing: 0; box-shadow: none; cursor: pointer;
-  transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
+  flex: 0 0 auto;
+  border-radius: var(--border-radius-md);
 }
-html[data-design] .summary-page .summary-actions .next-btn {
-  background: var(--color-accent-primary); color: var(--color-accent-on);
-  border: var(--rule-weight) solid var(--color-accent-primary);
-}
-html[data-design] .summary-page .summary-actions .next-btn:hover { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); }
-html[data-design] .summary-page .summary-actions .secondary-btn {
-  background: transparent; color: var(--color-text-primary);
-  border: var(--rule-weight) solid var(--color-border-primary);
-}
-html[data-design] .summary-page .summary-actions .secondary-btn:hover { background: var(--color-bg-tertiary); border-color: var(--color-text-secondary); }
 
 /* Заголовки секций */
 html[data-design] .summary-page .summary-section-title {
