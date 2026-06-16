@@ -112,9 +112,21 @@ updated: "2026-05-08"
 | Протоколы транзакций | `2PC`, `3PC`, `TCC`, `Saga` | Координация операций между сервисами |
 | Подходы к хранению | `Event Sourcing`, `CQRS`, `Outbox`, `CDC` | Способы записи и распространения изменений |
 
-**Спектр моделей согласованности** — от самой строгой к самой слабой (`Linearizability` — самая строгая, `Eventual Consistency` — самая слабая):
-
-`Linearizability` (самая строгая) → `Strong Consistency` → `Sequential Consistency` → `Causal Consistency` → `Session Consistency` (read-your-writes) → `Monotonic Reads` → `Eventual Consistency`
+```mermaid
+graph TD
+    subgraph "Спектр моделей согласованности"
+        L["Linearizability<br/>(самая строгая)"]
+        SC["Strong Consistency"]
+        SEQ["Sequential Consistency"]
+        CC["Causal Consistency"]
+        SES["Session Consistency<br/>(read-your-writes)"]
+        MR["Monotonic Reads"]
+        EC["Eventual Consistency"]
+        style L fill:#ff6b6b,color:#fff
+        style EC fill:#51cf66,color:#fff
+    end
+    L --> SC --> SEQ --> CC --> SES --> MR --> EC
+```
 
 > **Что хочет услышать интервьюер**: не только определение, но и понимание, что согласованность — это *спектр*, а не бинарный выбор. Каждая модель — компромисс между latency, availability и correctness.
 
@@ -158,12 +170,20 @@ public class QuorumWriter {
 
 **Eventual Consistency** (согласованность в конечном счёте) — если обновления прекратить, то со временем все реплики придут к одному состоянию. До этого момента чтения могут возвращать устаревшие данные. Обычно связана с асинхронной репликацией: запись подтверждается одним узлом, распространение на остальные идёт в фоне.
 
-Поток асинхронной репликации (участники: `Client`, `Node A (primary)`, `Node B (replica)`, `Node C (replica)`):
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Node_A as Node A (primary)
+    participant Node_B as Node B (replica)
+    participant Node_C as Node C (replica)
 
-1. `Client` → `Node A`: `write(x = 42)`.
-2. `Node A` → `Client`: `OK` (подтверждение). Клиент уже получил `OK`.
-3. `Node A` асинхронно реплицирует `x = 42` на `Node B` и `Node C`.
-4. Через `Δt` все реплики увидят `x = 42`.
+    Client->>Node_A: write(x = 42)
+    Node_A-->>Client: OK (подтверждение)
+    Note over Client: Клиент уже получил OK
+    Node_A--)Node_B: async replicate(x = 42)
+    Node_A--)Node_C: async replicate(x = 42)
+    Note over Node_B,Node_C: Через Δt все реплики<br/>увидят x = 42
+```
 
 Даёт высокую доступность и масштабируемость (AP в CAP), но усложняет логику:
 - Нужна стратегия разрешения конфликтов (`LWW`, `vector clocks`, `CRDT`)
@@ -210,21 +230,27 @@ public class CausalMessage {
 
 **Session Consistency** — в рамках одной сессии пользователь видит согласованную картину; разные сессии могут видеть разные версии. **Read-your-writes** — после своей записи пользователь при последующих чтениях всегда видит свои изменения. Это самая частая на практике гарантия: без неё после нажатия «Сохранить» пользователь рискует снова увидеть старые данные (чтение ушло на ещё не догнавшую реплику) и решит, что изменения потерялись.
 
-Поток read-your-writes (участники: `User`, `Load Balancer (LB)`, `Node A`, `Node B`):
+```mermaid
+sequenceDiagram
+    participant User
+    participant LB as Load Balancer
+    participant Node_A as Node A
+    participant Node_B as Node B
 
-1. `User` → `LB`: `POST /profile` (обновление).
-2. `LB` → `Node A`: `write(profile)`.
-3. `Node A` → `User`: `200 OK` (version=5).
+    User->>LB: POST /profile (обновление)
+    LB->>Node_A: write(profile)
+    Node_A-->>User: 200 OK (version=5)
 
-**Без read-your-writes:**
-4. `User` → `LB`: `GET /profile`.
-5. `LB` → `Node B`: `read(profile)`.
-6. `Node B` → `User`: version=4 (старые данные!).
+    Note over User: Без read-your-writes:
+    User->>LB: GET /profile
+    LB->>Node_B: read(profile)
+    Node_B-->>User: version=4 (старые данные!)
 
-**С read-your-writes:**
-4. `User` → `LB`: `GET /profile` (version≥5).
-5. `LB` → `Node A`: `read(profile)` [sticky session].
-6. `Node A` → `User`: version=5 ✓.
+    Note over User: С read-your-writes:
+    User->>LB: GET /profile (version≥5)
+    LB->>Node_A: read(profile) [sticky session]
+    Node_A-->>User: version=5 ✓
+```
 
 Способы реализации:
 - **Sticky sessions** — привязка пользователя к узлу, принявшему запись
@@ -299,18 +325,25 @@ public class MonotonicReadClient {
 
 **Two-Phase Commit (2PC)** — протокол распределённой транзакции, гарантирующий атомарность между несколькими узлами: либо все участники фиксируют изменения, либо все откатывают. Координирует процесс выделенный узел — **координатор**, остальные узлы — **участники**. Название из двух фаз: сначала голосование (Prepare), затем единое решение (Commit/Abort).
 
-Поток 2PC (участники: `Координатор`, `Участник 1`, `Участник 2`):
+```mermaid
+sequenceDiagram
+    participant C as Координатор
+    participant P1 as Участник 1
+    participant P2 as Участник 2
 
-**Фаза 1: Prepare (голосование)**
-1. `Координатор` → `Участник 1` и `Участник 2`: `PREPARE`.
-2. `Участник 1` → `Координатор`: `VOTE_COMMIT` ✓.
-3. `Участник 2` → `Координатор`: `VOTE_COMMIT` ✓.
+    Note over C,P2: Фаза 1: Prepare (голосование)
+    C->>P1: PREPARE
+    C->>P2: PREPARE
+    P1-->>C: VOTE_COMMIT ✓
+    P2-->>C: VOTE_COMMIT ✓
 
-**Фаза 2: Commit (решение)**
-4. `Координатор` → `Участник 1` и `Участник 2`: `COMMIT`.
-5. `Участник 1` → `Координатор`: `ACK`.
-6. `Участник 2` → `Координатор`: `ACK`.
-7. Транзакция завершена.
+    Note over C,P2: Фаза 2: Commit (решение)
+    C->>P1: COMMIT
+    C->>P2: COMMIT
+    P1-->>C: ACK
+    P2-->>C: ACK
+    Note over C: Транзакция завершена
+```
 
 ```java
 // Реализация координатора 2PC (упрощённо)
@@ -352,22 +385,30 @@ public class TwoPhaseCommitCoordinator {
 
 **Three-Phase Commit (3PC)** добавляет фазу `PreCommit` между `Prepare` и `Commit`:
 
-Поток 3PC (участники: `Координатор`, `Участник 1`, `Участник 2`):
+```mermaid
+sequenceDiagram
+    participant C as Координатор
+    participant P1 as Участник 1
+    participant P2 as Участник 2
 
-**Фаза 1: CanCommit?**
-1. `Координатор` → `Участник 1` и `Участник 2`: `CAN_COMMIT?`.
-2. `Участник 1` → `Координатор`: `YES`.
-3. `Участник 2` → `Координатор`: `YES`.
+    Note over C,P2: Фаза 1: CanCommit?
+    C->>P1: CAN_COMMIT?
+    C->>P2: CAN_COMMIT?
+    P1-->>C: YES
+    P2-->>C: YES
 
-**Фаза 2: PreCommit**
-4. `Координатор` → `Участник 1` и `Участник 2`: `PRE_COMMIT`.
-5. `Участник 1` → `Координатор`: `ACK`.
-6. `Участник 2` → `Координатор`: `ACK`.
+    Note over C,P2: Фаза 2: PreCommit
+    C->>P1: PRE_COMMIT
+    C->>P2: PRE_COMMIT
+    P1-->>C: ACK
+    P2-->>C: ACK
 
-**Фаза 3: DoCommit**
-7. `Координатор` → `Участник 1` и `Участник 2`: `DO_COMMIT`.
-8. `Участник 1` → `Координатор`: `DONE`.
-9. `Участник 2` → `Координатор`: `DONE`.
+    Note over C,P2: Фаза 3: DoCommit
+    C->>P1: DO_COMMIT
+    C->>P2: DO_COMMIT
+    P1-->>C: DONE
+    P2-->>C: DONE
+```
 
 **Ключевое отличие**: после `PreCommit` участники знают, что все проголосовали «за». Если координатор пропадает, участники могут самостоятельно зафиксировать транзакцию по таймауту — это уменьшает окно блокировки.
 
@@ -442,13 +483,23 @@ public class TccCoordinator {
 
 Ключевая мысль для собеседования: Saga меняет **атомарность** на **доступность и масштабируемость**. Жёсткой изоляции нет — промежуточные состояния видны другим, и согласованность достигается в конечном счёте (eventual), а не мгновенно.
 
-**Успешный сценарий** (шаги по порядку):
+```mermaid
+graph LR
+    subgraph "Успешный сценарий"
+        T1["T1: Создать заказ"] --> T2["T2: Резерв товара"]
+        T2 --> T3["T3: Списать оплату"]
+        T3 --> T4["T4: Запустить доставку"]
+    end
 
-`T1: Создать заказ` → `T2: Резерв товара` → `T3: Списать оплату` → `T4: Запустить доставку`.
+    subgraph "Сбой на T3 → компенсации"
+        T3_fail["T3: Ошибка оплаты"] --> C2["C2: Снять резерв"]
+        C2 --> C1["C1: Отменить заказ"]
+    end
 
-**Сбой на T3 → компенсации** (откат уже выполненных шагов в обратном порядке):
-
-`T3: Ошибка оплаты` → `C2: Снять резерв` → `C1: Отменить заказ`.
+    style T3_fail fill:#ff6b6b,color:#fff
+    style C2 fill:#ffa94d,color:#fff
+    style C1 fill:#ffa94d,color:#fff
+```
 
 ```java
 // Определение шагов Saga (Spring-подобный подход)
@@ -491,25 +542,29 @@ public class OrderSagaDefinition {
 
 **Оркестрация** — центральный координатор (orchestrator) управляет порядком шагов, отправляя команды участникам и обрабатывая ответы:
 
-`Saga Orchestrator` отправляет команды участникам по порядку, каждый отвечает `reply` обратно оркестратору:
-
-- `Saga Orchestrator` → `Order Service`: `1. createOrder` → `reply`
-- `Saga Orchestrator` → `Inventory Service`: `2. reserveStock` → `reply`
-- `Saga Orchestrator` → `Payment Service`: `3. processPayment` → `reply`
-- `Saga Orchestrator` → `Delivery Service`: `4. arrangeDelivery` → `reply`
+```mermaid
+graph TD
+    O["Saga Orchestrator"] -->|"1. createOrder"| OS[Order Service]
+    O -->|"2. reserveStock"| IS[Inventory Service]
+    O -->|"3. processPayment"| PS[Payment Service]
+    O -->|"4. arrangeDelivery"| DS[Delivery Service]
+    OS -->|"reply"| O
+    IS -->|"reply"| O
+    PS -->|"reply"| O
+    DS -->|"reply"| O
+```
 
 **Хореография** — сервисы общаются через события, каждый реагирует на события других:
 
-Сервисы общаются через события, каждый реагирует на событие соседа:
-
-- `Order Service` —`OrderCreated`→ `Inventory Service`
-- `Inventory Service` —`StockReserved`→ `Payment Service`
-- `Payment Service` —`PaymentProcessed`→ `Delivery Service`
-- `Delivery Service` —`DeliveryArranged`→ `Order Service`
-
-Путь сбоя (компенсация):
-- `Payment Service` —`PaymentFailed`→ `Inventory Service`
-- `Inventory Service` —`StockReleased`→ `Order Service`
+```mermaid
+graph LR
+    OS[Order Service] -->|"OrderCreated"| IS[Inventory Service]
+    IS -->|"StockReserved"| PS[Payment Service]
+    PS -->|"PaymentProcessed"| DS[Delivery Service]
+    DS -->|"DeliveryArranged"| OS
+    PS -->|"PaymentFailed"| IS
+    IS -->|"StockReleased"| OS
+```
 
 | Критерий | Оркестрация | Хореография |
 |----------|------------|-------------|
@@ -576,10 +631,17 @@ public class PaymentCompensationService {
 
 **Transactional Outbox** — паттерн гарантированной доставки событий: вместо прямой отправки в брокер (`Kafka`, `RabbitMQ`) событие записывается в таблицу `outbox` **в той же транзакции**, что и бизнес-данные. Отдельный процесс (polling publisher или `CDC`) вычитывает и отправляет события в брокер.
 
-Поток Outbox:
+```mermaid
+graph LR
+    subgraph "Одна транзакция"
+        A["UPDATE orders<br/>SET status='CREATED'"] --> B["INSERT INTO outbox<br/>(event_type, payload)"]
+    end
+    B --> C["Outbox Relay<br/>(Polling / CDC)"]
+    C --> D["Kafka / RabbitMQ"]
 
-- **В одной транзакции:** `UPDATE orders SET status='CREATED'` → `INSERT INTO outbox (event_type, payload)`.
-- Затем: `INSERT INTO outbox` → `Outbox Relay (Polling / CDC)` → `Kafka / RabbitMQ`.
+    style A fill:#74c0fc
+    style B fill:#74c0fc
+```
 
 ```java
 @Service
@@ -631,9 +693,15 @@ public class OutboxEvent {
 
 **Связь с `Outbox`**: `CDC` читает таблицу `outbox` через `WAL` (Write-Ahead Log) базы данных, без polling-запросов. Это эффективнее, чем периодический `SELECT`, и обеспечивает `at-least-once` доставку.
 
-Поток CDC:
+```mermaid
+graph LR
+    App["Приложение"] -->|"INSERT"| DB["PostgreSQL"]
+    DB -->|"WAL"| Debezium["Debezium<br/>CDC Connector"]
+    Debezium -->|"events"| Kafka["Kafka"]
+    Kafka --> Consumer["Consumer Service"]
 
-`Приложение` —`INSERT`→ `PostgreSQL` —`WAL`→ `Debezium CDC Connector` —`events`→ `Kafka` → `Consumer Service`.
+    style Debezium fill:#ff922b,color:#fff
+```
 
 **Два режима CDC**:
 
@@ -782,11 +850,31 @@ public class OrderAggregate {
 
 **CQRS** (Command Query Responsibility Segregation) — разделение модели записи (команды) и модели чтения (запросы) на две отдельные модели вместо одной общей. Команды меняют состояние, запросы читают из отдельных, оптимизированных под чтение проекций. Мотивация: у записи и чтения разные требования — запись хочет строгие инварианты и нормализацию, чтение хочет денормализованные, заранее «склеенные» представления под конкретные экраны. Натянуть одну модель на обе задачи трудно, поэтому их разводят.
 
-Схема CQRS:
+```mermaid
+graph TD
+    Client["Клиент"]
 
-**Command Side** (запись): `Клиент` —`POST/PUT/DELETE`→ `Command Controller` → `Command Handler` → `Event Store / БД`. Из `Event Store / БД` —`события`→ `Read Model (проекции)`.
+    subgraph "Command Side"
+        CC["Command Controller"]
+        CH["Command Handler"]
+        ES["Event Store / БД"]
+    end
 
-**Query Side** (чтение): `Клиент` —`GET`→ `Query Controller` → `Query Handler` → `Read Model (проекции)`.
+    subgraph "Query Side"
+        QC["Query Controller"]
+        QH["Query Handler"]
+        RM["Read Model<br/>(проекции)"]
+    end
+
+    Client -->|"POST/PUT/DELETE"| CC
+    CC --> CH
+    CH --> ES
+    ES -->|"события"| RM
+
+    Client -->|"GET"| QC
+    QC --> QH
+    QH --> RM
+```
 
 ```java
 // Command side
@@ -833,14 +921,22 @@ public class OrderProjector {
 
 Запись: команда → агрегат → событие → `event store` (append-only). Чтение: подписчики (projectors) обрабатывают события и обновляют проекции (read models) в отдельных хранилищах.
 
-Схема совмещения Event Sourcing и CQRS:
+```mermaid
+graph LR
+    subgraph "Write Path"
+        CMD["Command"] --> AGG["Aggregate"]
+        AGG --> EVT["Event"]
+        EVT --> STORE["Event Store"]
+    end
 
-**Write Path:** `Command` → `Aggregate` → `Event` → `Event Store`.
+    STORE -->|"subscribe"| P1["Projector:<br/>OrderList"]
+    STORE -->|"subscribe"| P2["Projector:<br/>Analytics"]
+    STORE -->|"subscribe"| P3["Projector:<br/>Search Index"]
 
-**Проекторы** подписываются (`subscribe`) на `Event Store` и пишут в свои хранилища:
-- `Projector: OrderList` → `PostgreSQL`
-- `Projector: Analytics` → `ClickHouse`
-- `Projector: Search Index` → `Elasticsearch`
+    P1 --> DB1["PostgreSQL"]
+    P2 --> DB2["ClickHouse"]
+    P3 --> DB3["Elasticsearch"]
+```
 
 **Eventual consistency** между event store и проекциями — задержка (обычно миллисекунды) допустима. Для `read-your-writes` можно:
 - Кэшировать запись на клиенте
@@ -915,13 +1011,18 @@ public class EventStore {
 
 Основные стратегии:
 
-Стратегии разрешения конфликта при Eventual Consistency:
+```mermaid
+graph TD
+    C["Конфликт при<br/>Eventual Consistency"]
+    C --> LWW["Last-Write-Wins (LWW)<br/>Простой, но теряет данные"]
+    C --> VC["Vector Clocks<br/>Определяют причинность"]
+    C --> CRDT["CRDT<br/>Автоматическое слияние"]
+    C --> MV["Multi-Value<br/>(сохранить все версии)"]
+    C --> APP["Application-level<br/>merge"]
 
-- **Last-Write-Wins (LWW)** — простой, но теряет данные
-- **Vector Clocks** — определяют причинность
-- **CRDT** — автоматическое слияние
-- **Multi-Value** — сохранить все версии
-- **Application-level merge**
+    style LWW fill:#ff6b6b,color:#fff
+    style CRDT fill:#51cf66,color:#fff
+```
 
 **Сравнение стратегий**:
 
@@ -1203,11 +1304,40 @@ public class OrderController {
 
 Реальная e-commerce система использует **разные модели** для разных поддоменов:
 
-Поддомены e-commerce по уровню согласованности:
+```mermaid
+graph TD
+    subgraph "Strong Consistency"
+        INV["Инвентарь<br/>(остатки товара)"]
+        PAY["Платежи<br/>(транзакции)"]
+        BAL["Баланс<br/>(кошелёк)"]
+    end
 
-- **Strong Consistency:** Инвентарь (остатки товара), Платежи (транзакции), Баланс (кошелёк).
-- **Session / Read-your-writes:** Корзина (сессия пользователя), Профиль (личные данные), Адреса доставки.
-- **Eventual Consistency:** Каталог (описания товаров), Поиск (Elasticsearch), Рекомендации, Лента уведомлений, Аналитика (счётчики).
+    subgraph "Session / Read-your-writes"
+        CART["Корзина<br/>(сессия пользователя)"]
+        PROF["Профиль<br/>(личные данные)"]
+        ADDR["Адреса<br/>доставки"]
+    end
+
+    subgraph "Eventual Consistency"
+        CAT["Каталог<br/>(описания товаров)"]
+        SEARCH["Поиск<br/>(Elasticsearch)"]
+        REC["Рекомендации"]
+        FEED["Лента<br/>уведомлений"]
+        STATS["Аналитика<br/>(счётчики)"]
+    end
+
+    style INV fill:#ff6b6b,color:#fff
+    style PAY fill:#ff6b6b,color:#fff
+    style BAL fill:#ff6b6b,color:#fff
+    style CART fill:#ffa94d,color:#fff
+    style PROF fill:#ffa94d,color:#fff
+    style ADDR fill:#ffa94d,color:#fff
+    style CAT fill:#51cf66,color:#fff
+    style SEARCH fill:#51cf66,color:#fff
+    style REC fill:#51cf66,color:#fff
+    style FEED fill:#51cf66,color:#fff
+    style STATS fill:#51cf66,color:#fff
+```
 
 **Конкретные решения**:
 
@@ -1233,14 +1363,21 @@ public class OrderController {
 PACELC = (P → A or C) else (L vs C)
 ```
 
-Дерево выбора PACELC — отвечаем на вопрос «Есть network partition?»:
+```mermaid
+graph TD
+    N{Есть<br/>network<br/>partition?}
+    N -->|Да| CAP{CAP-выбор}
+    CAP --> A[Availability<br/>AP-системы]
+    CAP --> C1[Consistency<br/>CP-системы]
+    N -->|Нет| ELSE{PACELC-выбор}
+    ELSE --> L[Low Latency<br/>EL-системы]
+    ELSE --> C2[Consistency<br/>EC-системы]
 
-- **Да** → CAP-выбор:
-  - `Availability` (AP-системы) → примеры: Cassandra (PA/EL), DynamoDB (PA/EL)
-  - `Consistency` (CP-системы) → примеры: HBase (PC/EC), Zookeeper (PC/EC)
-- **Нет** → PACELC-выбор (Else):
-  - `Low Latency` (EL-системы) → примеры: MongoDB (PA/EL), Riak (PA/EL)
-  - `Consistency` (EC-системы) → примеры: VoltDB (PC/EC), Spanner (PC/EC)
+    A --> Ex1["Cassandra (PA/EL)<br/>DynamoDB (PA/EL)"]
+    C1 --> Ex2["HBase (PC/EC)<br/>Zookeeper (PC/EC)"]
+    L --> Ex3["MongoDB (PA/EL)<br/>Riak (PA/EL)"]
+    C2 --> Ex4["VoltDB (PC/EC)<br/>Spanner (PC/EC)"]
+```
 
 | Система | Partition | Else |
 |---------|-----------|------|
@@ -1296,13 +1433,24 @@ Row row = session.execute(read.bind(orderId)
 
 **Bounded Staleness** (ограниченная устарелость) — модель согласованности, гарантирующая, что чтения отстают от записей не более чем на **заданный порог** — по времени или по числу версий.
 
-Поток Bounded Staleness (участники: `Writer`, `Primary`, `Replica`, `Client`):
+```mermaid
+sequenceDiagram
+    participant W as Writer
+    participant P as Primary
+    participant R as Replica
+    participant C as Client
 
-1. `Writer` → `Primary`: `write(x=42)` в момент T=0.
-2. `Primary` → `Writer`: `OK`.
-3. `Primary` асинхронно реплицирует на `Replica`; репликация занимает ~500ms.
-4. `Client` → `Replica`: `read(x)` в момент T=200ms. При Bounded Staleness (max 1s): T=200ms < 1s → допустимо вернуть `x=old` (старое значение).
-5. `Client` → `Replica`: `read(x)` в момент T=1200ms. Staleness > 1s → ждать синхронизации или переключиться на primary.
+    W->>P: write(x=42) at T=0
+    P-->>W: OK
+    P--)R: replicate (async)
+    Note over R: Репликация занимает ~500ms
+
+    C->>R: read(x) at T=200ms
+    Note over C: Bounded Staleness (max 1s):<br/>T=200ms < 1s → допустимо вернуть x=old
+
+    C->>R: read(x) at T=1200ms
+    Note over C: Staleness > 1s → ждать синхронизации<br/>или переключиться на primary
+```
 
 **Применение:**
 - `Azure Cosmos DB` — явная настройка `maxStalenessPrefix` (версии) и `maxIntervalInSeconds` (время)
@@ -1345,16 +1493,24 @@ public ProfileDto getProfile(
 
 4. **Клиентский кэш** — фронтенд хранит последнее записанное значение и показывает его до подтверждения от бэкенда
 
-Поток read-your-writes при межсервисных вызовах (участники: `UI`, `WriteService`, `ReadService`, `Primary`, `Replica`):
+```mermaid
+sequenceDiagram
+    participant UI
+    participant WriteService
+    participant ReadService
+    participant Primary
+    participant Replica
 
-1. `UI` → `WriteService`: `PUT /profile`.
-2. `WriteService` → `Primary`: `UPDATE` (LSN=42).
-3. `Primary` → `WriteService`: `OK`.
-4. `WriteService` → `UI`: `200 OK`, `X-Write-Token: 42`.
-5. `UI` → `ReadService`: `GET /profile`, `X-Min-Version: 42`.
-6. `ReadService` → `Replica`: `waitForLSN(42)`.
-7. `Replica` → `ReadService`: data (after replication).
-8. `ReadService` → `UI`: profile (fresh).
+    UI->>WriteService: PUT /profile
+    WriteService->>Primary: UPDATE (LSN=42)
+    Primary-->>WriteService: OK
+    WriteService-->>UI: 200 OK, X-Write-Token: 42
+
+    UI->>ReadService: GET /profile, X-Min-Version: 42
+    ReadService->>Replica: waitForLSN(42)
+    Replica-->>ReadService: data (after replication)
+    ReadService-->>UI: profile (fresh)
+```
 
 ## Q35. (!) Чем отличается согласованность на уровне строки от согласованности на уровне транзакции?
 

@@ -113,13 +113,18 @@ updated: "2026-05-08"
 - **Независимый деплой и масштабирование** -- узкое место масштабируют точечно, не разворачивая всё приложение
 - **Один сервис -- одна команда**, которая владеет им целиком (код, БД, деплой, дежурство)
 
-**Пример топологии:** клиент обращается к `API Gateway`, который маршрутизирует запросы к независимым сервисам, каждый со своим хранилищем:
-
-- `Клиент` → `API Gateway`
-- `API Gateway` → `Order Service` → `Order DB`
-- `API Gateway` → `Payment Service` → `Payment DB`
-- `API Gateway` → `Inventory Service` → `Inventory DB`
-- `API Gateway` → `Notification Service` → `Message Broker`
+```mermaid
+graph LR
+    Client[Клиент] --> GW[API Gateway]
+    GW --> OS[Order Service]
+    GW --> PS[Payment Service]
+    GW --> IS[Inventory Service]
+    GW --> NS[Notification Service]
+    OS --> DB1[(Order DB)]
+    PS --> DB2[(Payment DB)]
+    IS --> DB3[(Inventory DB)]
+    NS --> MQ[Message Broker]
+```
 
 **Практический критерий:** к микросервисам переходят, когда появляется реальная потребность в независимом деплое и масштабировании частей системы, а не «по моде». Подробнее о согласованности данных -- в [вопросах по распределённым системам](distributed-systems-interview.md).
 
@@ -180,10 +185,18 @@ updated: "2026-05-08"
 
 **Анти-паттерн -- Distributed Monolith:** формально микросервисы, но связаны так тесно, что требуют совместного деплоя, разделяют БД или модели. Признаки: одно изменение тянет правки в нескольких сервисах; нельзя выкатить сервис независимо. Это худший из миров -- сетевая сложность есть, а независимости нет.
 
-**Контраст двух подходов:**
-
-- **Правильные границы** — контексты связаны слабо, через события: `Order Context` → (`Event`) → `Payment Context` → (`Event`) → `Shipping Context`.
-- **Distributed Monolith** — сервисы связаны жёстко: `Service A` → (`Sync`) → `Service B` → (`Sync`) → `Service C`, и при этом все три (`Service A`, `Service B`, `Service C`) пишут в одну общую `Shared DB`.
+```mermaid
+graph TB
+    subgraph "Правильные границы"
+        A[Order Context] -->|Event| B[Payment Context]
+        B -->|Event| C[Shipping Context]
+    end
+    subgraph "Distributed Monolith"
+        D[Service A] -->|Sync| E[Service B]
+        E -->|Sync| F[Service C]
+        D & E & F --> DB[(Shared DB)]
+    end
+```
 
 ## Q5. Какие технологии используются для межсервисного взаимодействия?
 
@@ -208,19 +221,25 @@ updated: "2026-05-08"
 - **Плюсы:** слабая связанность (получатель может быть временно недоступен -- сообщение подождёт в очереди), сглаживание пиковых нагрузок (буфер брокера).
 - **Минусы:** сложнее отлаживать (нет единого стека вызова), и данные согласуются не сразу -- eventual consistency.
 
-Участники: `Client`, `Order Service`, `Payment Service`, `Kafka`.
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant O as Order Service
+    participant P as Payment Service
+    participant K as Kafka
 
-**Синхронный вызов** (клиент ждёт, пока пройдёт вся цепочка):
-1. `Client` → `Order Service`: `POST /orders`
-2. `Order Service` → `Payment Service`: `POST /payments` (REST)
-3. `Payment Service` → `Order Service`: `200 OK`
-4. `Order Service` → `Client`: `201 Created`
+    Note over C,P: Синхронный вызов
+    C->>O: POST /orders
+    O->>P: POST /payments (REST)
+    P-->>O: 200 OK
+    O-->>C: 201 Created
 
-**Асинхронный вызов** (клиент получает ответ сразу, обработка идёт позже):
-1. `Client` → `Order Service`: `POST /orders`
-2. `Order Service` → `Kafka`: публикует событие `OrderCreated`
-3. `Order Service` → `Client`: `202 Accepted`
-4. `Kafka` → `Payment Service`: доставляет событие `OrderCreated`
+    Note over C,K: Асинхронный вызов
+    C->>O: POST /orders
+    O->>K: OrderCreated event
+    O-->>C: 202 Accepted
+    K->>P: OrderCreated event
+```
 
 **Правило:** предпочитать асинхронное взаимодействие; синхронное -- только когда клиенту действительно нужен немедленный ответ.
 
@@ -247,11 +266,26 @@ updated: "2026-05-08"
 | `BFF` (`Backend for Frontend`) | Отдельный API-слой для каждого типа клиента |
 | `Database per Service` | Изоляция данных каждого сервиса |
 
-**Те же паттерны, сгруппированные по слоям:**
-
-- **Infrastructure Patterns:** `API Gateway`, `Service Discovery`, `Service Mesh`, `Config Server`.
-- **Reliability Patterns:** `Circuit Breaker`, `Bulkhead`, `Retry`.
-- **Data Patterns:** `Saga`, `CQRS`, `Event Sourcing`, `Database per Service`.
+```mermaid
+graph TB
+    subgraph "Infrastructure Patterns"
+        GW[API Gateway]
+        SD[Service Discovery]
+        SM[Service Mesh]
+        CS[Config Server]
+    end
+    subgraph "Reliability Patterns"
+        CB[Circuit Breaker]
+        BH[Bulkhead]
+        RT[Retry]
+    end
+    subgraph "Data Patterns"
+        SG[Saga]
+        CQ[CQRS]
+        ES[Event Sourcing]
+        DP[Database per Service]
+    end
+```
 
 ## Q8. (!) Что такое API Gateway и зачем он нужен?
 
@@ -261,11 +295,15 @@ updated: "2026-05-08"
 
 Реализации: `Spring Cloud Gateway`, `Kong`, `AWS API Gateway`, `NGINX`.
 
-**Маршрутизация через Gateway:**
-
-- `Web App` и `Mobile App` → `API Gateway` (единая точка входа).
-- `API Gateway` маршрутизирует по пути запроса: `/api/orders` → `Order Service`, `/api/users` → `User Service`, `/api/products` → `Product Service`.
-- На самом `API Gateway` выполняются сквозные задачи: `Auth`, `Rate Limit`, `Logging`.
+```mermaid
+graph LR
+    Web[Web App] --> GW[API Gateway]
+    Mobile[Mobile App] --> GW
+    GW -->|/api/orders| OS[Order Service]
+    GW -->|/api/users| US[User Service]
+    GW -->|/api/products| PS[Product Service]
+    GW -.->|Auth, Rate Limit, Logging| GW
+```
 
 **Конфигурация `Spring Cloud Gateway`:**
 
@@ -322,11 +360,15 @@ spring:
 - **Client-side discovery** -- клиент сам запрашивает реестр, получает список инстансов и сам балансирует между ними (`Eureka` + `Spring Cloud LoadBalancer`). Гибко, но логика балансировки живёт в каждом клиенте.
 - **Server-side discovery** -- запрос идёт через балансировщик, который сам знает реестр и прячет его от клиента (`Kubernetes Service`, `AWS ELB`). Клиент проще, но появляется ещё один сетевой хоп.
 
-**Client-side Discovery по шагам:**
-
-1. `Service A` → `Eureka Server`: запрос списка инстансов.
-2. `Eureka Server` → `Service A`: возвращает список инстансов.
-3. `Service A` сам выбирает инстанс и делает прямой вызов — `Service B - inst 1` либо (как альтернатива) `Service B - inst 2`.
+```mermaid
+graph LR
+    subgraph "Client-side Discovery"
+        A[Service A] -->|1. Запрос списка| ER[Eureka Server]
+        ER -->|2. Список инстансов| A
+        A -->|3. Прямой вызов| B1[Service B - inst 1]
+        A -.->|3. Или| B2[Service B - inst 2]
+    end
+```
 
 **Реализация с `Spring Cloud Eureka`:**
 
@@ -373,17 +415,18 @@ public class PaymentClient {
 
 Как именно он гасит каскад: без него каждый вызов к мёртвому сервису висит до таймаута, занимая поток и соединение вызывающего. Под нагрузкой пулы исчерпываются, и падает уже сам вызывающий -- сбой ползёт вверх по цепочке. `Circuit Breaker` обнаруживает высокий процент ошибок и начинает «отказывать быстро» (fail fast): вызывающий мгновенно получает fallback вместо зависания, его ресурсы свободны, а больной сервис не добивают запросами и дают ему восстановиться.
 
-**Состояния и переходы предохранителя** (начальное состояние — `Closed`):
+```mermaid
+stateDiagram-v2
+    [*] --> Closed
+    Closed --> Open: Порог ошибок превышен
+    Open --> HalfOpen: Timeout истёк
+    HalfOpen --> Closed: Успешный пробный вызов
+    HalfOpen --> Open: Пробный вызов неуспешен
 
-- `Closed` → `Open`, когда порог ошибок превышен.
-- `Open` → `HalfOpen`, когда истёк timeout.
-- `HalfOpen` → `Closed` при успешном пробном вызове.
-- `HalfOpen` → `Open`, если пробный вызов неуспешен.
-
-Пометки к состояниям:
-- `Closed` — все вызовы проходят.
-- `Open` — все вызовы блокируются, возвращается fallback.
-- `HalfOpen` — пропускается один пробный вызов.
+    note right of Closed: Все вызовы проходят
+    note right of Open: Все вызовы блокируются\nвозвращается fallback
+    note right of HalfOpen: Пропускается один\nпробный вызов
+```
 
 **Три состояния (как у электрического предохранителя):**
 1. **Closed** -- цепь замкнута, вызовы проходят, прерыватель считает долю ошибок. Превысила порог -- переходим в Open
@@ -438,12 +481,18 @@ resilience4j:
 
 Реализации: `Istio`, `Linkerd`, `Consul Connect`.
 
-**Топология Service Mesh:**
-
-- **Pod A:** `Service A` ↔ `Envoy Proxy` (sidecar).
-- **Pod B:** `Service B` ↔ `Envoy Proxy` (sidecar).
-- Прокси соседних подов общаются между собой по `mTLS`: `Envoy Proxy` (Pod A) ↔ `Envoy Proxy` (Pod B).
-- `Control Plane` (`Istiod`) раздаёт конфигурацию (`Config`) обоим прокси.
+```mermaid
+graph TB
+    subgraph "Pod A"
+        SA[Service A] <--> PA[Envoy Proxy]
+    end
+    subgraph "Pod B"
+        SB[Service B] <--> PB[Envoy Proxy]
+    end
+    PA <-->|mTLS| PB
+    CP[Control Plane<br>Istiod] -->|Config| PA
+    CP -->|Config| PB
+```
 
 **Как работает:** sidecar-прокси (`Envoy`) перехватывает весь входящий и исходящий трафик пода. Приложение «думает», что обращается на `localhost`; на деле прокси переправляет запрос к целевому сервису, по дороге применяя retry, таймауты и `mTLS`. Ключевая идея -- вся эта логика вынесена из кода приложения в инфраструктуру: разработчик пишет бизнес-код, а отказоустойчивость и безопасность настраивает платформенная команда декларативно.
 
@@ -455,13 +504,15 @@ resilience4j:
 
 Идея в том, что у чтения и записи противоположные требования. Запись хочет нормализованную модель с валидацией и инвариантами; чтение хочет данные, уже сложенные под конкретный экран, без дорогих JOIN'ов. В одной модели угодить обоим трудно -- CQRS разводит их, позволяя оптимизировать каждую сторону отдельно.
 
-**Поток данных в CQRS:**
-
-- `Клиент` отправляет `Command` в `Write Service`, а `Query` — в `Read Service` (две независимые стороны).
-- `Write Service` пишет в `Write DB` (`PostgreSQL`).
-- `Write DB` публикует `Events` в `Event Bus`.
-- `Event Bus` обновляет `Read DB` (`Elasticsearch`).
-- `Read Service` читает из `Read DB`.
+```mermaid
+graph LR
+    Client[Клиент] -->|Command| WS[Write Service]
+    Client -->|Query| RS[Read Service]
+    WS --> WDB[(Write DB<br>PostgreSQL)]
+    WDB -->|Events| SYNC[Event Bus]
+    SYNC --> RDB[(Read DB<br>Elasticsearch)]
+    RS --> RDB
+```
 
 **Что это даёт:**
 - Модель чтения оптимизирована под запросы (денормализация, кэш, отдельное хранилище вроде `Elasticsearch`)
@@ -527,11 +578,13 @@ public class OrderQueryController {
 
 Зачем так: переписать большую систему целиком и разом («big bang») -- почти гарантированный провал: долго, рискованно, нечем подстраховаться. Strangler Fig режет миграцию на маленькие безопасные шаги, на каждом из которых система работает. `API Gateway` -- ключевой элемент: он маршрутизирует трафик, направляя уже перенесённые маршруты в новые сервисы, а остальное -- по-прежнему в монолит. Откатить шаг -- это просто вернуть маршрут на монолит.
 
-**Маршрутизация в процессе миграции:**
-
-- `Client` → `API Gateway`.
-- `API Gateway` направляет уже перенесённые маршруты в новые сервисы: `/api/orders` (NEW) → `Order Microservice`, `/api/users` (NEW) → `User Microservice`.
-- Остальное по-прежнему идёт в монолит: `/api/legacy/*` (OLD) → `Monolith`.
+```mermaid
+graph LR
+    Client --> GW[API Gateway]
+    GW -->|/api/orders NEW| MS[Order Microservice]
+    GW -->|/api/legacy/* OLD| Mono[Monolith]
+    GW -->|/api/users NEW| US[User Microservice]
+```
 
 **Шаги:**
 1. Поставить `API Gateway` перед монолитом
@@ -622,16 +675,23 @@ public class OrderService {
 - **Choreography** -- децентрализованно: каждый сервис, завершив свой шаг, публикует событие, на которое подписан следующий. Нет единой точки отказа, но логику саги тяжело окинуть взглядом -- она «размазана» по сервисам.
 - **Orchestration** -- централизованно: оркестратор-дирижёр вызывает сервисы по очереди и сам решает, что делать при сбое. Логика в одном месте и проще для сложных саг, но оркестратор -- дополнительный компонент и потенциальное узкое место.
 
-**Пример оркестрации Saga со сбоем на шаге оплаты** (участники: `Saga Orchestrator`, `Order Service`, `Inventory Service`, `Payment Service`):
+```mermaid
+sequenceDiagram
+    participant Orch as Saga Orchestrator
+    participant O as Order Service
+    participant I as Inventory Service
+    participant P as Payment Service
 
-1. `Saga Orchestrator` → `Order Service`: Create Order → ответ `Order Created`.
-2. `Saga Orchestrator` → `Inventory Service`: Reserve Inventory → ответ `Inventory Reserved`.
-3. `Saga Orchestrator` → `Payment Service`: Process Payment → ответ `Payment Failed` ❌.
-
-После сбоя оркестратор запускает компенсации в обратном порядке:
-
-4. `Saga Orchestrator` → `Inventory Service`: Release Inventory (компенсация).
-5. `Saga Orchestrator` → `Order Service`: Cancel Order (компенсация).
+    Orch->>O: 1. Create Order
+    O-->>Orch: Order Created
+    Orch->>I: 2. Reserve Inventory
+    I-->>Orch: Inventory Reserved
+    Orch->>P: 3. Process Payment
+    P-->>Orch: Payment Failed ❌
+    Note over Orch: Запуск компенсаций
+    Orch->>I: 4. Release Inventory (compensate)
+    Orch->>O: 5. Cancel Order (compensate)
+```
 
 **Saga vs 2PC:**
 
@@ -684,19 +744,24 @@ public class CreateOrderSaga {
 
 **Фаза 2 (Commit/Rollback):** если все ответили `YES`, координатор рассылает `COMMIT`; если хоть один `NO` -- `ROLLBACK`. Решение единое для всех, поэтому транзакция атомарна.
 
-**Обмен сообщениями в 2PC** (участники: `Coordinator`, `Participant 1`, `Participant 2`):
+```mermaid
+sequenceDiagram
+    participant C as Coordinator
+    participant P1 as Participant 1
+    participant P2 as Participant 2
 
-*Phase 1: Prepare*
-1. `Coordinator` → `Participant 1`: Prepare.
-2. `Coordinator` → `Participant 2`: Prepare.
-3. `Participant 1` → `Coordinator`: `YES`.
-4. `Participant 2` → `Coordinator`: `YES`.
+    Note over C,P2: Phase 1: Prepare
+    C->>P1: Prepare
+    C->>P2: Prepare
+    P1-->>C: YES
+    P2-->>C: YES
 
-*Phase 2: Commit* (все ответили `YES`, поэтому фиксируем):
-5. `Coordinator` → `Participant 1`: Commit.
-6. `Coordinator` → `Participant 2`: Commit.
-7. `Participant 1` → `Coordinator`: `ACK`.
-8. `Participant 2` → `Coordinator`: `ACK`.
+    Note over C,P2: Phase 2: Commit
+    C->>P1: Commit
+    C->>P2: Commit
+    P1-->>C: ACK
+    P2-->>C: ACK
+```
 
 **Недостатки 2PC (все вытекают из блокировок и роли координатора):**
 - **Блокирующий** -- ресурсы заблокированы на всё время протокола, включая сетевые задержки между фазами
@@ -916,14 +981,20 @@ spring:
 
 **Паттерн с `API Gateway`:**
 
-Поток (участники: `User`, `API Gateway`, `Identity Provider`, `Service`):
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant GW as API Gateway
+    participant IdP as Identity Provider
+    participant S as Service
 
-1. `User` → `API Gateway`: Request + `JWT`.
-2. `API Gateway` → `Identity Provider`: Validate `JWT`.
-3. `Identity Provider` → `API Gateway`: Valid.
-4. `API Gateway` → `Service`: Request + заголовок `X-User-Id`.
-5. `Service` → `API Gateway`: Response.
-6. `API Gateway` → `User`: Response.
+    U->>GW: Request + JWT
+    GW->>IdP: Validate JWT
+    IdP-->>GW: Valid
+    GW->>S: Request + X-User-Id header
+    S-->>GW: Response
+    GW-->>U: Response
+```
 
 **Где здесь Gateway:** он -- граница доверия. Тяжёлую проверку токена (валидация подписи, обращение к Identity Provider) делают один раз на входе; внутрь Gateway пробрасывает уже проверенную личность пользователя в заголовке, и сервисам не нужно повторять полную проверку.
 
@@ -1045,12 +1116,12 @@ public class OrderController {
 
 **Пирамида тестирования микросервисов:**
 
-Снизу вверх (от многочисленных к редким):
-
-- **Unit тесты** — много (основание пирамиды).
-- **Component тесты** — средне.
-- **Интеграционные тесты** — средне.
-- **E2E тесты** — немного (вершина пирамиды).
+```mermaid
+graph TB
+    E2E[E2E тесты<br>Немного] --> INT[Интеграционные тесты<br>Средне]
+    INT --> COMP[Component тесты<br>Средне]
+    COMP --> UNIT[Unit тесты<br>Много]
+```
 
 | Уровень | Описание | Инструменты |
 |---------|----------|------------|
@@ -1102,7 +1173,13 @@ dependencies {
 | **Canary** | Часть трафика на новую версию | Низкий |
 | **A/B testing** | Разные версии для разных пользователей | Низкий |
 
-**Blue-Green Deployment:** `Load Balancer` направляет 100% трафика на `Blue` (`v1.0`) и 0% на `Green` (`v1.1`); переключение версии — это мгновенный перевод трафика с Blue на Green.
+```mermaid
+graph LR
+    subgraph "Blue-Green Deployment"
+        LB[Load Balancer] -->|100%| Blue[v1.0 Blue]
+        LB -.->|0%| Green[v1.1 Green]
+    end
+```
 
 **Чем отличаются по сути:** `Blue-Green` держит два полных окружения и переключает трафик мгновенно -- откат тоже мгновенный, но нужны двойные ресурсы. `Canary` выпускает новую версию небольшой доле пользователей и наблюдает за метриками: проблема затронет лишь часть трафика, а раскатку можно остановить. В `Kubernetes` стратегия по умолчанию -- `Rolling Update` (поинстансная замена). Для `Canary` берут `Istio VirtualService` или `Argo Rollouts`, постепенно повышая процент трафика на новую версию. Подробнее -- в [стратегиях деплоя](../cicd/deployment-strategies-interview.md).
 
@@ -1114,11 +1191,22 @@ dependencies {
 
 Простыми словами: **архитектура повторяет оргструктуру**, потому что границы кода прорастают по границам общения людей. Внутри команды договариваться легко -- код там связный; между командами договариваться дорого -- там естественно возникает интерфейс. Если команды нарезаны по техническому принципу (frontend, backend, DBA), то и система выйдет слоистой -- монолит из четырёх горизонтальных слоёв. Если команды нарезаны по доменным продуктам, архитектура тяготеет к вертикальным микросервисам. Вывод для собеседования: пытаться построить микросервисы при технически-слоёной оргструктуре -- бороться против закона Конвея и почти всегда проиграть.
 
-**Как оргструктура отображается в архитектуру:**
+```mermaid
+graph TB
+    subgraph "Неправильная организация (технические команды)"
+        FE[Frontend Team] -->|передают макеты| BE[Backend Team]
+        BE -->|схема| DBA[DBA Team]
+    end
+    subgraph "Результат: слоистый монолит"
+        UI[UI Layer] --> API[API Layer] --> DB[(DB Layer)]
+    end
 
-- **Неправильная организация (технические команды):** `Frontend Team` (передаёт макеты) → `Backend Team` (передаёт схему) → `DBA Team`.
-- **Результат — слоистый монолит:** `UI Layer` → `API Layer` → `DB Layer`.
-- **Правильная организация (продуктовые команды):** `Order Team` владеет `Order Service + DB`, `Payment Team` владеет `Payment Service + DB`, `User Team` владеет `User Service + DB`.
+    subgraph "Правильная организация (продуктовые команды)"
+        OT[Order Team] -->|владеет| OS[Order Service + DB]
+        PT[Payment Team] -->|владеет| PS[Payment Service + DB]
+        UT[User Team] -->|владеет| US[User Service + DB]
+    end
+```
 
 **"Обратный закон Конвея" (Inverse Conway Maneuver):**
 
@@ -1135,10 +1223,17 @@ dependencies {
 
 Зачем это жёсткое правило: владелец полностью контролирует схему и инварианты своих данных. Как только в его таблицу лезет другой сервис, схема замораживается (её правка ломает чужаков), а бизнес-правила можно обойти в обход кода владельца. Единоличное владение — то, что позволяет сервису эволюционировать независимо, ради чего микросервисы и затевались.
 
-**Правильный и неправильный доступ к чужим данным:**
+```mermaid
+graph LR
+    subgraph "Правильно: через API"
+        OS2[Order Service] -->|GET /users/42| US2[User Service]
+        US2 --> UDB2[(User DB)]
+    end
 
-- **Правильно (через API):** `Order Service` → (`GET /users/42`) → `User Service` → `User DB`. К данным обращаются только через API владельца.
-- **Антипаттерн (прямой доступ к чужой БД):** `Order Service` → (`SELECT * FROM users`) → `User DB` напрямую, в обход сервиса-владельца.
+    subgraph "Антипаттерн: прямой доступ к чужой БД"
+        OS1[Order Service] -->|SELECT * FROM users| UDB1[(User DB)]
+    end
+```
 
 **Антипаттерны, нарушающие Data Ownership:**
 
@@ -1174,13 +1269,14 @@ dependencies {
 
 **Distributed tracing** — механизм отслеживания пути запроса через цепочку микросервисов. Каждый запрос получает уникальный `trace ID`; каждая операция внутри — `span ID`.
 
-**Пропагация идентификаторов по дереву вызовов** (`traceId` один на весь запрос, `spanId` свой у каждой операции):
-
-- `Client` → `Gateway`: `traceId=abc`.
-- `Gateway` → `Order Svc`: `traceId=abc`, `spanId=1`.
-- `Order Svc` → `Payment Svc`: `traceId=abc`, `spanId=2`.
-- `Order Svc` → `Inventory Svc`: `traceId=abc`, `spanId=3`.
-- `Payment Svc` → `Payment DB`: `traceId=abc`, `spanId=4`.
+```mermaid
+graph LR
+    Client -->|traceId=abc| GW[Gateway]
+    GW -->|traceId=abc spanId=1| OS[Order Svc]
+    OS -->|traceId=abc spanId=2| PS[Payment Svc]
+    OS -->|traceId=abc spanId=3| IS[Inventory Svc]
+    PS -->|traceId=abc spanId=4| DB[(Payment DB)]
+```
 
 **Настройка в Spring Boot 3+ с Micrometer Tracing + OpenTelemetry:**
 

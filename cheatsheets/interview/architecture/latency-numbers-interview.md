@@ -135,15 +135,19 @@ updated: "2026-05-21"
 2. **CDN — единственный способ получить глобально низкую latency:** раз сигнал не ускорить, контент придвигают ближе к пользователю.
 3. **Multi-region active-active добавляет минимум `100-200 ms` к каждой cross-region операции.** Именно поэтому DynamoDB Global Tables реплицируются асинхронно — синхронная репликация между регионами означала бы сотни мс на каждую запись.
 
-Иерархия задержек по нарастанию (каждый следующий уровень дороже предыдущего):
-
-- `CPU L1` — `0.5 ns` →
-- `L2` — `7 ns` →
-- `Memory` — `100 ns` →
-- `SSD` — `100 μs` →
-- `HDD seek` — `10 ms` →
-- `Same DC RTT` — `500 μs` →
-- `Cross-DC RTT` — `150 ms`
+```mermaid
+graph LR
+    A[CPU L1<br/>0.5 ns] --> B[L2<br/>7 ns]
+    B --> C[Memory<br/>100 ns]
+    C --> D[SSD<br/>100 μs]
+    D --> E[HDD seek<br/>10 ms]
+    E --> F[Same DC RTT<br/>500 μs]
+    F --> G[Cross-DC RTT<br/>150 ms]
+    style A fill:#90EE90
+    style C fill:#FFD700
+    style F fill:#FFA500
+    style G fill:#FF6347
+```
 
 **Итог:** в любой geo-distributed системе `150 ms` cross-region — это «пол», который не убрать. Поэтому почти все паттерны, которые на бумаге называют «multi-region sync», на практике работают асинхронно с eventual consistency — иначе latency записи была бы неприемлемой.
 
@@ -361,12 +365,19 @@ Storage = Records/day × Bytes_per_record × Retention_days × Replication_facto
 - Сжатие `5×`: `~160 TB`
 - + репликация `3×`: `~480 TB`
 
-Порядок расчёта по этой формуле:
-
-1. Перемножаем `Records/day`, `Bytes/record` и `Retention days` → получаем `Raw storage` (сырой объём).
-2. Умножаем на `Replication` → объём с учётом репликации.
-3. Умножаем на `1 + Index overhead` → `Total storage` (итоговый объём).
-4. Если данные сжимаются — делим на `Compression` → `Stored bytes` (реально занятые на диске байты).
+```mermaid
+graph LR
+    A[Records/day] --> M[Multiply]
+    B[Bytes/record] --> M
+    C[Retention days] --> M
+    M --> D[Raw storage]
+    D --> E[× Replication]
+    E --> F[× 1 + Index overhead]
+    F --> G[Total storage]
+    G -.->|/ Compression| H[Stored bytes]
+    style G fill:#FFA500
+    style H fill:#90EE90
+```
 
 **Итог:** оценка, в которой забыли replication и index overhead, занижает реальный объём примерно в `4×`. Именно поэтому каждый из этих факторов — стандартный follow-up интервьюера: «а с учётом репликации?», «а индексы посчитал?». Назвав их сам, ты снимаешь вопрос заранее.
 
@@ -725,11 +736,19 @@ Error budget = (1 - SLO) × total_requests_in_period
 2. **Hedged requests** (Tail at Scale, Dean & Barroso 2013): если первый ответ не пришёл за p95, шлёшь дубль и берёшь тот, что вернётся первым — так отсекаешь случайные тормоза.
 3. **Backup requests** — те же hedged, но запускаются по короткому таймауту в миллисекундах.
 
-Схема fan-out по шагам:
-
-1. `User Request` (пользовательский запрос) приходит на `API Gateway`.
-2. `API Gateway` через fan-out параллельно вызывает все сервисы, у каждого `p99 = 100ms`: `Service 1`, `Service 2`, `Service 3`, …и так до `100 services`.
-3. Все ответы сходятся в общий результат: `User sees worst latency` — пользователь видит самую медленную задержку, `p99 ≈ p_max` (то есть p99 итогового запроса определяется максимальной задержкой среди всех сервисов).
+```mermaid
+graph TD
+    User[User Request] --> Gateway[API Gateway]
+    Gateway -->|fan-out| S1[Service 1<br/>p99=100ms]
+    Gateway -->|fan-out| S2[Service 2<br/>p99=100ms]
+    Gateway -->|fan-out| S3[Service 3<br/>p99=100ms]
+    Gateway -->|fan-out| SN[...100 services<br/>p99=100ms]
+    S1 --> Result[User sees<br/>worst latency<br/>p99 ≈ p_max]
+    S2 --> Result
+    S3 --> Result
+    SN --> Result
+    style Result fill:#FF6347
+```
 
 **Практика:**
 - Netflix Hystrix / Resilience4j — circuit breakers + таймауты, чтобы медленный сервис не убил весь запрос
@@ -863,6 +882,17 @@ Error budget = (1 - SLO) × total_requests_in_period
 - Материализованные агрегаты: `× 1.2-2`.
 - Метаданные range-партиционирования: пренебрежимо малы.
 - В сумме обычно `~2×` от сырого размера — против `~12×` для OLTP. Разница в том, что OLAP оптимизирован под сжатие, а OLTP — под надёжность и быстрый случайный доступ.
+
+```mermaid
+graph LR
+    A[Raw 1 TB] --> B[+ Indexes<br/>1.5 TB]
+    B --> C[× Replication<br/>4.5 TB]
+    C --> D[+ WAL<br/>5.4 TB]
+    D --> E[+ Snapshots<br/>10.4 TB]
+    E --> F[+ Compaction<br/>12.5 TB]
+    style A fill:#90EE90
+    style F fill:#FF6347
+```
 
 **Что отвечать на интервью:**
 - «Raw `1 TB` × RF=3 × `1.5` (indexes) × `1.2` (WAL+snapshots) ≈ `5-6 TB` минимум для OLTP. Для OLAP — `2-3 TB`».

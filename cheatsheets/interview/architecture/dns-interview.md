@@ -114,13 +114,14 @@ www.example.com.
 
 **Делегирование** работает через `NS`-записи: `com.` не хранит записи `example.com`, а лишь говорит «за эту зону отвечают `ns-1.example.com` и `ns-2.example.com` — иди к ним». Так ответственность спускается вниз по дереву.
 
-**Дерево делегирования (сверху вниз):**
-- `.` (root)
-  - `com.` (TLD, Verisign)
-    - `example.com.` (authoritative) — отдаёт конечные записи зоны:
-      - `www.example.com` → `93.184.216.34`
-      - `api.example.com` → `93.184.216.35`
-      - `MX` → `mail.example.com`
+```mermaid
+graph TD
+    R[". (root)"] --> TLD["com. (TLD, Verisign)"]
+    TLD --> AUTH["example.com. (authoritative)"]
+    AUTH --> WWW["www.example.com → 93.184.216.34"]
+    AUTH --> API["api.example.com → 93.184.216.35"]
+    AUTH --> MX["MX → mail.example.com"]
+```
 
 ## Q3. (!) Чем recursive resolver отличается от iterative
 
@@ -168,17 +169,26 @@ Client → Recursive resolver (1.1.1.1) → root (iterative: "go ask com.")
 - Тёплый кеш recursive resolver: 5–20 мс
 - Холодный кеш, полный обход иерархии: 50–200 мс
 
-**Поток сообщений (Browser → OS resolver → Recursive `1.1.1.1` → Root → TLD `com.` → Authoritative `ns-1`):**
-1. `Browser` → `OS resolver`: `www.example.com?`
-2. `OS resolver` → `Recursive (1.1.1.1)`: `www.example.com?` (cache miss)
-3. `Recursive` → `Root server`: `www.example.com?`
-4. `Root` → `Recursive`: NS for `com.` (iterative)
-5. `Recursive` → `TLD (com.)`: `www.example.com?`
-6. `TLD` → `Recursive`: NS for `example.com.`
-7. `Recursive` → `Authoritative (ns-1)`: `www.example.com?`
-8. `Authoritative` → `Recursive`: `A = 93.184.216.34` (TTL 300)
-9. `Recursive` → `OS resolver`: `93.184.216.34` (cached)
-10. `OS resolver` → `Browser`: `93.184.216.34`
+```mermaid
+sequenceDiagram
+    participant B as Browser
+    participant OS as OS resolver
+    participant R as Recursive (1.1.1.1)
+    participant ROOT as Root server
+    participant TLD as TLD (com.)
+    participant A as Authoritative (ns-1)
+
+    B->>OS: www.example.com?
+    OS->>R: www.example.com? (cache miss)
+    R->>ROOT: www.example.com?
+    ROOT-->>R: NS for com. (iterative)
+    R->>TLD: www.example.com?
+    TLD-->>R: NS for example.com.
+    R->>A: www.example.com?
+    A-->>R: A = 93.184.216.34 (TTL 300)
+    R-->>OS: 93.184.216.34 (cached)
+    OS-->>B: 93.184.216.34
+```
 
 **Команда для трассировки:**
 ```bash
@@ -452,11 +462,14 @@ example.com. 60 IN A 3.3.3.3
 - **Публичные resolver-ы:** `1.1.1.1` (300+ POP Cloudflare), `8.8.8.8` (Google).
 - **CDN:** Cloudflare, Akamai, Fastly.
 
-**Пример — один IP `1.1.1.1`, три POP, BGP уводит каждого в свой:**
-- `User in NYC` --(BGP route)--> `POP NYC: 1.1.1.1`
-- `User in Tokyo` --(BGP route)--> `POP Tokyo: 1.1.1.1`
-- `User in Moscow` --(BGP route)--> `POP Moscow: 1.1.1.1`
-- Все три POP отвечают по одному и тому же IP (same IP): `POP NYC` = `POP Tokyo` = `POP Moscow` = `1.1.1.1`.
+```mermaid
+graph LR
+    U1[User in NYC] -->|BGP route| P1[POP NYC: 1.1.1.1]
+    U2[User in Tokyo] -->|BGP route| P2[POP Tokyo: 1.1.1.1]
+    U3[User in Moscow] -->|BGP route| P3[POP Moscow: 1.1.1.1]
+    P1 -.same IP.- P2
+    P2 -.same IP.- P3
+```
 
 **Обратная сторона:** Cloudflare 2020 — один POP по ошибке анонсировал /24-префикс, и часть интернета потеряла маршрут до Cloudflare. Оборотная сторона anycast: ошибка в анонсе распространяется **глобально и мгновенно** — нет «локальной» поломки, которую можно изолировать.
 

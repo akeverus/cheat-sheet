@@ -100,10 +100,19 @@ updated: "2026-05-08"
 
 Механика проста: производитель (producer) публикует событие и сразу продолжает работу -- он не ждёт обработки и даже не знает, кто его прочитает. Потребители (consumers) подписываются на топики/очереди и разбирают события асинхронно, каждый в своём темпе. Источник и приёмник связаны только контрактом события, а не сетевым адресом друг друга.
 
-Два стиля взаимодействия наглядно:
+```mermaid
+graph LR
+    subgraph "Синхронный REST"
+        A[Service A] -->|"POST /orders"| B[Service B]
+        B -->|"200 OK"| A
+    end
 
-- **Синхронный REST:** `Service A` шлёт `POST /orders` в `Service B` → `Service B` отвечает `200 OK` обратно в `Service A`. Вызов адресный и двусторонний.
-- **Event-driven:** `Producer` публикует `OrderCreated` в `Broker`; тот доставляет событие (poll/push) сразу нескольким независимым потребителям -- `Consumer 1` и `Consumer 2`.
+    subgraph "Event-driven"
+        C[Producer] -->|"OrderCreated"| D[(Broker)]
+        D -->|poll/push| E[Consumer 1]
+        D -->|poll/push| F[Consumer 2]
+    end
+```
 
 Отличия от синхронного `REST`:
 
@@ -179,11 +188,14 @@ public record OrderCreatedEvent(
 - Не увеличивайте число партиций без необходимости -- `partition = hash(key) % numPartitions`, поэтому смена их числа перетасует распределение ключей и разорвёт порядок
 - Глобального порядка обычно не добиваются осознанно: достаточно порядка в рамках одного агрегата
 
-Как это работает по ключу:
-
-- `Producer` отправляет события с ключом `order-1` и `order-3` -- оба попадают в `Partition 0`.
-- События с ключом `order-2` уходят в `Partition 1`.
-- `Partition 0` читается последовательно одним `Consumer 1`, а `Partition 1` -- одним `Consumer 2`. Так порядок сохраняется внутри каждой партиции, а разные заказы обрабатываются параллельно.
+```mermaid
+graph TD
+    P[Producer] -->|"key=order-1"| PA[Partition 0]
+    P -->|"key=order-2"| PB[Partition 1]
+    P -->|"key=order-3"| PA
+    PA -->|последовательно| C1[Consumer 1]
+    PB -->|последовательно| C2[Consumer 2]
+```
 
 В `RabbitMQ` порядок в одной очереди сохраняется при одном потребителе; при нескольких -- порядок не гарантирован. Решения: `single active consumer`, `message groups` для группировки по ключу.
 
@@ -231,9 +243,13 @@ public class IdempotentEventHandler {
 
 `Event Sourcing` -- подход, при котором источником истины служит не текущее состояние, а полная **последовательность событий**, его породивших. Вместо того чтобы хранить «баланс = 400», система хранит цепочку фактов («открыт счёт», «+500», «-200», «+100»), а текущее состояние **вычисляет** на лету, проигрывая эти события поверх «нулевого» состояния (или поверх снапшота + последующие события).
 
-Цепочка событий и вычисление текущего баланса по порядку:
-
-`AccountOpened` (balance=0) → `MoneyDeposited` (+500) → `MoneyWithdrawn` (−200) → `MoneyDeposited` (+100) → текущий баланс: 400.
+```mermaid
+graph LR
+    E1["AccountOpened<br/>balance=0"] --> E2["MoneyDeposited<br/>+500"]
+    E2 --> E3["MoneyWithdrawn<br/>-200"]
+    E3 --> E4["MoneyDeposited<br/>+100"]
+    E4 --> S["Текущий баланс:<br/>400"]
+```
 
 Пример реализации на Java:
 
@@ -291,10 +307,15 @@ public class BankAccount {
 
 С `EDA` это сочетается естественно: именно события связывают две стороны -- command side их публикует, а проекция на query side подписывается и обновляет read-модель.
 
-Поток записи и чтения по шагам:
-
-- **Запись:** `Client` шлёт `CreateOrder` в `Command Side` → тот делает `INSERT event` в `Event Store` → событие `OrderCreated` уходит в `Projection` → она делает `UPDATE` денормализованной `Read Model`.
-- **Чтение:** `Client` шлёт `GET /orders` в `Query Side` → он делает `SELECT` из той же `Read Model`.
+```mermaid
+graph TB
+    Client -->|"CreateOrder"| CS[Command Side]
+    CS -->|"INSERT event"| ES[(Event Store)]
+    ES -->|"OrderCreated"| Proj[Projection]
+    Proj -->|"UPDATE"| RM[(Read Model<br/>Denormalized)]
+    Client -->|"GET /orders"| QS[Query Side]
+    QS -->|"SELECT"| RM
+```
 
 Пример реализации проекции на `Spring`:
 
@@ -334,20 +355,23 @@ public class OrderProjection {
 
 Saga нужна именно там, где двухфазный коммит (`2PC`) непрактичен: сервисы автономны, у каждого своя БД, а блокировать их все на время операции недопустимо.
 
-Участники: `Order Service`, `Inventory Service`, `Payment Service`, `Shipping Service`.
+```mermaid
+sequenceDiagram
+    participant OS as Order Service
+    participant IS as Inventory Service
+    participant PS as Payment Service
+    participant SS as Shipping Service
 
-Успешный поток по шагам:
+    OS->>IS: OrderCreated
+    IS->>PS: InventoryReserved
+    PS->>SS: PaymentProcessed
+    SS-->>OS: OrderShipped
 
-1. `Order Service` → `Inventory Service`: `OrderCreated`.
-2. `Inventory Service` → `Payment Service`: `InventoryReserved`.
-3. `Payment Service` → `Shipping Service`: `PaymentProcessed`.
-4. `Shipping Service` → `Order Service`: `OrderShipped`.
-
-При сбое платежа (компенсация) между `Payment Service` и `Inventory Service`:
-
-1. `Payment Service` → `Inventory Service`: `PaymentFailed`.
-2. `Inventory Service` → `Order Service`: `InventoryReleased`.
-3. `Order Service` помечает заказ как `OrderCancelled`.
+    Note over PS,IS: При сбое платежа:
+    PS->>IS: PaymentFailed
+    IS->>OS: InventoryReleased
+    OS->>OS: OrderCancelled
+```
 
 Два подхода:
 
@@ -400,10 +424,15 @@ public class OrderSagaOrchestrator {
 
 Решение: исходящее событие записывают в таблицу `outbox` в той же БД и в той же транзакции, что и бизнес-данные. Раз это одна локальная транзакция, либо сохраняется и заказ, и событие, либо ничего. А отдельный процесс (`polling` или `CDC`) уже надёжно читает `outbox` и публикует события в брокер с гарантией at-least-once.
 
-Поток по шагам:
-
-- **В одной транзакции:** `Service` делает `INSERT order` в таблицу `orders` и `INSERT event` в таблицу `outbox_events` -- обе записи коммитятся вместе.
-- **Асинхронно:** процесс `CDC / Polling` читает `outbox_events` и публикует события в `Kafka`.
+```mermaid
+graph LR
+    subgraph "Одна транзакция"
+        A[Service] -->|"INSERT order"| B[(orders)]
+        A -->|"INSERT event"| C[(outbox_events)]
+    end
+    D[CDC / Polling] -->|"читает"| C
+    D -->|"публикует"| E[(Kafka)]
+```
 
 Пример на `Spring Boot`:
 
@@ -609,10 +638,17 @@ public ProducerFactory<String, String> producerFactory() {
 - Использовать `Schema Registry` для автоматической проверки совместимости и версионирование типа события (`order.created.v2`) для несовместимых изменений
 - Потребители должны быть устойчивы к неизвестным полям (игнорировать) и к отсутствующим опциональным (подставлять дефолт) -- это правило Постеля «будь либерален к тому, что принимаешь»
 
-Два сценария эволюции схемы на примерах:
-
-- **Backward compatible:** `v1: orderId, amount` → `v2: orderId, amount, discount?` (добавлено опциональное поле). Старые consumers просто игнорируют `discount`.
-- **Breaking change:** `v1: amount (int)` → `v2: amount (string)` (сменился тип поля). Требует нового топика или нового типа события.
+```mermaid
+graph LR
+    subgraph "Backward compatible"
+        V1["v1: orderId, amount"] --> V2["v2: orderId, amount, discount?"]
+        V2 --> note1["Старые consumers<br/>игнорируют discount"]
+    end
+    subgraph "Breaking change"
+        V3["v1: amount (int)"] --> V4["v2: amount (string)"]
+        V4 --> note2["Требует новый<br/>топик или тип"]
+    end
+```
 
 **Breaking changes** (удаление поля, изменение типа) -- требуют версионирования типа события или отдельного топика.
 
@@ -651,13 +687,21 @@ kafkaTemplate.send("orders", orderId.toString(), orderEventJson);
 
 Через consumer group реализуются обе модели сразу: одна группа = work queue (нагрузка делится), а несколько групп на одном топике = publish/subscribe (каждая группа читает весь поток независимо).
 
-Пример распределения для топика `orders` с 3 партициями (`Partition 0`, `Partition 1`, `Partition 2`) и `Consumer Group A` из двух потребителей:
-
-- `Partition 0` → `Consumer 1`
-- `Partition 1` → `Consumer 1`
-- `Partition 2` → `Consumer 2`
-
-Каждая партиция назначена ровно одному потребителю; при этом один потребитель может держать несколько партиций.
+```mermaid
+graph TD
+    subgraph "Topic: orders (3 партиции)"
+        P0[Partition 0]
+        P1[Partition 1]
+        P2[Partition 2]
+    end
+    subgraph "Consumer Group A"
+        C1[Consumer 1]
+        C2[Consumer 2]
+    end
+    P0 --> C1
+    P1 --> C1
+    P2 --> C2
+```
 
 При добавлении или отказе потребителя происходит **rebalance** -- партиции автоматически перераспределяются между живыми инстансами (на время ребаланса обработка приостанавливается). Если потребителей больше, чем партиций, лишние просто простаивают -- параллелизм ограничен числом партиций. Offset (прогресс чтения) хранится по consumer group, поэтому при перезапуске потребитель продолжает с последнего закоммиченного offset, а не с начала.
 
@@ -801,10 +845,20 @@ public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerCont
 
 **Оркестрация** -- логика потока собрана в центральном оркестраторе, который вызывает сервисы и ведёт их по шагам. Плюс -- процесс виден и управляем в одном месте, отладка проще; минус -- оркестратор становится точкой отказа и узлом более жёсткой связности.
 
-Две схемы координации на одном наборе сервисов:
-
-- **Хореография** (сервисы передают управление через события по цепочке): `Order` →event→ `Inventory` →event→ `Payment` →event→ `Shipping`.
-- **Оркестрация** (центральный `Orchestrator` рассылает команды каждому сервису): `Orchestrator` →cmd→ `Order`, `Orchestrator` →cmd→ `Inventory`, `Orchestrator` →cmd→ `Payment`, `Orchestrator` →cmd→ `Shipping`.
+```mermaid
+graph LR
+    subgraph "Хореография"
+        A1[Order] -->|event| B1[Inventory]
+        B1 -->|event| C1[Payment]
+        C1 -->|event| D1[Shipping]
+    end
+    subgraph "Оркестрация"
+        O[Orchestrator] -->|cmd| A2[Order]
+        O -->|cmd| B2[Inventory]
+        O -->|cmd| C2[Payment]
+        O -->|cmd| D2[Shipping]
+    end
+```
 
 В контексте `Saga`: хореографическая -- каждый сервис публикует события; оркестрируемая -- оркестратор управляет потоком и компенсацией. Для сложных потоков с 4+ сервисами предпочитают оркестрацию.
 
@@ -823,11 +877,13 @@ public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerCont
 
 `Snapshot` -- сохранённый «слепок» состояния агрегата на определённую версию события. Он решает главную проблему производительности `Event Sourcing`: лог событий растёт бесконечно, и восстанавливать состояние, проигрывая тысячи событий с нуля при каждой загрузке, становится слишком дорого. Снапшот превращает это из O(N) в почти O(1): загружают последний снапшот и доигрывают только события, появившиеся после него.
 
-Восстановление со снапшотом по порядку:
-
-`Event 1` → `Event 2` → ... → `Event 100` → `Snapshot` (version=100) → `Event 101` → `Event 102` → текущее состояние.
-
-То есть вместо проигрывания всех 100+ событий загружают снапшот версии 100 и доигрывают только `Event 101` и `Event 102`.
+```mermaid
+graph LR
+    E1[Event 1] --> E2[Event 2] --> E3["..."] --> E100[Event 100]
+    E100 --> SNAP["Snapshot<br/>version=100"]
+    SNAP --> E101[Event 101] --> E102[Event 102]
+    E102 --> STATE[Текущее<br/>состояние]
+```
 
 Стратегии создания:
 - Периодически (каждые N событий или по времени)
@@ -1180,10 +1236,20 @@ public class JdbcEventStore implements EventStore {
 
 ## Q35. (!) Как реализовать CQRS с проекциями на Spring?
 
-Архитектура по сторонам:
-
-- **Command Side:** `REST Controller` шлёт `CreateOrder` в `OrderCommandService`; тот делает `save events` в `Event Store` и `publish` в `Kafka`.
-- **Query Side:** `OrderProjection` делает `consume` из `Kafka` и `upsert` в Read DB (`PostgreSQL`/`Redis`); отдельный `REST Controller` обрабатывает `GET` через `OrderQueryService`, который делает `select` из той же Read DB.
+```mermaid
+graph TB
+    subgraph "Command Side"
+        CMD[REST Controller] -->|"CreateOrder"| SVC[OrderCommandService]
+        SVC -->|"save events"| ES[(Event Store)]
+        SVC -->|"publish"| KF[(Kafka)]
+    end
+    subgraph "Query Side"
+        KF -->|"consume"| PROJ[OrderProjection]
+        PROJ -->|"upsert"| RM[(Read DB<br/>PostgreSQL/Redis)]
+        QRY[REST Controller] -->|"GET"| RS[OrderQueryService]
+        RS -->|"select"| RM
+    end
+```
 
 Command side (запись):
 
@@ -1274,20 +1340,27 @@ public class OrderQueryService {
 
 **Choreography (хореография)** — каждый сервис самостоятельно слушает события и публикует следующие. Нет центрального координатора, логика процесса не собрана в одном месте.
 
-Поток через брокер по шагам:
-
-1. `Order Service` публикует `OrderCreated` в `Broker`.
-2. `Broker` доставляет `OrderCreated` в `Payment Service`, тот публикует `PaymentDone` в `Broker`.
-3. `Broker` доставляет `PaymentDone` в `Inventory Service`, тот публикует `Reserved` в `Broker`.
-4. `Broker` доставляет `Reserved` в `Delivery Service`.
+```mermaid
+graph LR
+    O[Order Service] -->|OrderCreated| B[(Broker)]
+    B -->|OrderCreated| P[Payment Service]
+    P -->|PaymentDone| B
+    B -->|PaymentDone| I[Inventory Service]
+    I -->|Reserved| B
+    B -->|Reserved| D[Delivery Service]
+```
 
 **Orchestration (оркестрация)** — центральный `Saga Orchestrator` явно управляет шагами, вызывая команды и ожидая событий.
 
-Поток под управлением оркестратора по шагам:
-
-1. `Saga Orchestrator` шлёт команду `ProcessPayment` в `Payment Service`; тот отвечает событием `PaymentDone` оркестратору.
-2. `Saga Orchestrator` шлёт `ReserveInventory` в `Inventory Service`; тот отвечает `Reserved` оркестратору.
-3. `Saga Orchestrator` шлёт `CreateDelivery` в `Delivery Service`; тот отвечает `DeliveryCreated` оркестратору.
+```mermaid
+graph TD
+    Orch[Saga Orchestrator] -->|ProcessPayment| P[Payment Service]
+    P -->|PaymentDone| Orch
+    Orch -->|ReserveInventory| I[Inventory Service]
+    I -->|Reserved| Orch
+    Orch -->|CreateDelivery| D[Delivery Service]
+    D -->|DeliveryCreated| Orch
+```
 
 | Критерий | Choreography | Orchestration |
 |----------|-------------|---------------|
@@ -1308,19 +1381,21 @@ public class OrderQueryService {
 - `Saga Orchestrator` — линейный или слегка ветвящийся флоу с явными шагами
 - `Process Manager` — полноценная state machine с таймаутами, параллельными ветками, компенсациями и перезапусками
 
-State machine процесса заказа -- состояния и переходы (в скобках -- событие/команда перехода):
-
-- Старт → `OrderCreated`.
-- `OrderCreated` → `PaymentPending` (по `ProcessPayment`).
-- `PaymentPending` → `PaymentFailed` (по `PaymentFailed`).
-- `PaymentPending` → `InventoryPending` (по `PaymentDone`).
-- `PaymentFailed` → `OrderCancelled` (по `CompensateOrder`).
-- `InventoryPending` → `InventoryFailed` (по `ReservationFailed`).
-- `InventoryPending` → `DeliveryPending` (по `InventoryReserved`).
-- `InventoryFailed` → `RefundPending` (по `RefundPayment`).
-- `RefundPending` → `OrderCancelled` (по `RefundDone`).
-- `DeliveryPending` → `OrderCompleted` (по `DeliveryCreated`).
-- Финальные состояния: `OrderCompleted` и `OrderCancelled`.
+```mermaid
+stateDiagram-v2
+    [*] --> OrderCreated
+    OrderCreated --> PaymentPending: ProcessPayment
+    PaymentPending --> PaymentFailed: PaymentFailed
+    PaymentPending --> InventoryPending: PaymentDone
+    PaymentFailed --> OrderCancelled: CompensateOrder
+    InventoryPending --> InventoryFailed: ReservationFailed
+    InventoryPending --> DeliveryPending: InventoryReserved
+    InventoryFailed --> RefundPending: RefundPayment
+    RefundPending --> OrderCancelled: RefundDone
+    DeliveryPending --> OrderCompleted: DeliveryCreated
+    OrderCompleted --> [*]
+    OrderCancelled --> [*]
+```
 
 **Персистентное состояние** — Process Manager хранит текущий статус в БД (устойчив к перезапускам):
 
@@ -1349,10 +1424,20 @@ public class OrderProcess {
 
 **Сравнение с Event Notification:**
 
-Два подхода к содержимому события:
+```mermaid
+graph LR
+    subgraph "Event Notification (ссылка)"
+        P1[Producer] -->|"OrderUpdated {orderId: 42}"| B1[(Broker)]
+        B1 --> C1[Consumer]
+        C1 -->|"GET /orders/42"| P1
+    end
 
-- **Event Notification (ссылка):** `Producer` публикует `OrderUpdated {orderId: 42}` в `Broker`; `Broker` доставляет его `Consumer`, и тот вынужден сделать обратный вызов `GET /orders/42` к `Producer` за деталями.
-- **Event-Carried State Transfer (данные):** `Producer` публикует `OrderUpdated {id:42, status:'SHIPPED', items:[...]}` в `Broker`; `Broker` доставляет его `Consumer` -- обратный вызов не нужен, все данные уже в событии.
+    subgraph "Event-Carried State Transfer (данные)"
+        P2[Producer] -->|"OrderUpdated {id:42, status:'SHIPPED', items:[...]}"| B2[(Broker)]
+        B2 --> C2[Consumer]
+        Note2[Обратный вызов не нужен]
+    end
+```
 
 **Преимущества:**
 - Слабая связность: потребители автономны, не зависят от доступности источника
@@ -1459,11 +1544,14 @@ orders.v1   — старый контракт (потребители мигри
 orders.v2   — новый контракт
 ```
 
-Поток при двух версиях топика:
-
-- `Producer v2` пишет в `orders.v2` (новый контракт) и через bridge -- в `orders.v1` (старый контракт).
-- `orders.v1` читает `Consumer v1` (старый), `orders.v2` читает `Consumer v2` (новый).
-- Bridge -- это конвертер `v2→v1`, обеспечивающий обратную совместимость для ещё не мигрировавших потребителей.
+```mermaid
+graph LR
+    P[Producer v2] -->|"orders.v1 (bridge)"| BV1[(orders.v1)]
+    P -->|"orders.v2"| BV2[(orders.v2)]
+    BV1 --> C1[Consumer v1<br/>старый]
+    BV2 --> C2[Consumer v2<br/>новый]
+    Note[Bridge: конвертер v2→v1<br/>для обратной совместимости]
+```
 
 **Правила эволюции схемы Avro/Protobuf:**
 - Всегда добавляйте новые поля с `default` значением

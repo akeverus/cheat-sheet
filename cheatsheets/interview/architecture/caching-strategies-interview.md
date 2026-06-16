@@ -108,11 +108,20 @@ updated: "2026-05-08"
 - **Плюсы:** общий кэш для всех инстансов; централизованная инвалидация.
 - **Минусы:** сетевая задержка (1-5 мс), зависимость от доступности кэш-сервера, необходимость сериализации (см. [вопросы по Redis](../databases/redis-interview.md)).
 
-**Схема гибридного размещения (L1 + L2):**
-- **Локальный кэш:** `App Instance 1` → свой `Caffeine L1`; `App Instance 2` → свой `Caffeine L1` (у каждого инстанса собственный локальный кэш).
-- **Распределённый кэш:** оба инстанса (`App Instance 1` и `App Instance 2`) обращаются к общему `Redis`.
-- `Redis` → `Database` (распределённый кэш подкреплён БД).
-- При промахе (`miss`) в `Caffeine L1` каждого инстанса запрос проваливается в общий `Redis`.
+```mermaid
+graph LR
+    subgraph "Локальный кэш"
+        A1[App Instance 1] --> C1[Caffeine L1]
+        A2[App Instance 2] --> C2[Caffeine L1]
+    end
+    subgraph "Распределённый кэш"
+        A1 --> R[Redis]
+        A2 --> R
+    end
+    R --> DB[(Database)]
+    C1 -.->|miss| R
+    C2 -.->|miss| R
+```
 
 **На собеседовании:** ожидают, что кандидат объяснит компромисс между латентностью и согласованностью, и предложит гибридный подход (L1 + L2): локальный кэш для скорости, распределённый — для общего состояния.
 
@@ -122,12 +131,17 @@ updated: "2026-05-08"
 
 Логика чтения — сверху вниз: запрос сначала проверяет `L1`; при промахе — `L2`; при промахе в `L2` — источник данных (БД). Результат записывается в оба уровня, чтобы следующий запрос попал уже в `L1`.
 
-**Поток чтения по уровням:**
-- `Запрос` → проверка `L1 Caffeine`.
-  - `hit` в `L1` → сразу `Ответ`.
-  - `miss` в `L1` → проверка `L2 Redis`.
-    - `hit` в `L2` → записать в `L1` → `Ответ`.
-    - `miss` в `L2` → обращение к `БД` → записать в `L1 + L2` → `Ответ`.
+```mermaid
+flowchart LR
+    Client([Запрос]) --> L1{L1 Caffeine}
+    L1 -->|hit| Response([Ответ])
+    L1 -->|miss| L2{L2 Redis}
+    L2 -->|hit| WriteL1[Записать в L1]
+    WriteL1 --> Response
+    L2 -->|miss| DB[(БД)]
+    DB --> WriteBoth[Записать в L1 + L2]
+    WriteBoth --> Response
+```
 
 **Пример двухуровневого доступа:**
 
@@ -239,18 +253,29 @@ public class CacheConfig {
 }
 ```
 
-**Поток вызова через AOP-прокси** (участники: `Client`, `AOP Proxy`, `CacheManager`, `Метод сервиса`, `БД`):
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Proxy as AOP Proxy
+    participant Cache as CacheManager
+    participant Service as Метод сервиса
+    participant DB as БД
 
-1. `Client` вызывает `findById(42)` → попадает на `AOP Proxy`.
-2. `Proxy` обращается к `CacheManager`: `get("users::42")`.
-3. Ветка **cache hit**: `CacheManager` возвращает `User` прокси → `Proxy` отдаёт `User` клиенту (метод сервиса не вызывается).
-4. Ветка **cache miss**:
-   - `CacheManager` возвращает `null`.
-   - `Proxy` вызывает `Метод сервиса`: `findById(42)`.
-   - `Метод сервиса` идёт в `БД`: `SELECT ...` → `БД` возвращает `User`.
-   - `Метод сервиса` возвращает `User` прокси.
-   - `Proxy` кладёт результат в кэш: `put("users::42", User)`.
-   - `Proxy` отдаёт `User` клиенту.
+    Client->>Proxy: findById(42)
+    Proxy->>Cache: get("users::42")
+    alt cache hit
+        Cache-->>Proxy: User
+        Proxy-->>Client: User
+    else cache miss
+        Cache-->>Proxy: null
+        Proxy->>Service: findById(42)
+        Service->>DB: SELECT ...
+        DB-->>Service: User
+        Service-->>Proxy: User
+        Proxy->>Cache: put("users::42", User)
+        Proxy-->>Client: User
+    end
+```
 
 **Подводные камни (классические вопросы на собеседовании):**
 - **Самовызов не кэшируется.** Внутренний вызов `this.method()` идёт напрямую, минуя прокси, — кэш не сработает. Перехват возможен только когда метод дёргают извне, через бин. Лечится разнесением методов по разным бинам или `@Resource self`.
@@ -509,19 +534,27 @@ public class ProductService {
 
 `Cache-Aside` (он же Lazy Loading) — стратегия, где **кэшем управляет само приложение**, а не кэш-библиотека. Логика простая: при чтении сначала смотрим в кэш; промах — грузим из БД и кладём в кэш. При записи обновляем БД и удаляем ключ из кэша (инвалидируем), чтобы следующее чтение подтянуло свежие данные. «Lazy» — потому что кэш наполняется лениво, только теми данными, которые реально запросили.
 
-**Поток Cache-Aside** (участники: `Приложение`, `Кэш`, `БД`):
+```mermaid
+sequenceDiagram
+    participant App as Приложение
+    participant Cache as Кэш
+    participant DB as БД
 
-*Чтение (Cache-Aside):*
-1. `Приложение` → `Кэш`: `get(key)`.
-2. Ветка **hit**: `Кэш` возвращает `данные` приложению.
-3. Ветка **miss**:
-   - `Кэш` возвращает `null`.
-   - `Приложение` → `БД`: `SELECT` → `БД` возвращает `данные`.
-   - `Приложение` → `Кэш`: `put(key, данные)`.
+    Note over App,DB: Чтение (Cache-Aside)
+    App->>Cache: get(key)
+    alt hit
+        Cache-->>App: данные
+    else miss
+        Cache-->>App: null
+        App->>DB: SELECT
+        DB-->>App: данные
+        App->>Cache: put(key, данные)
+    end
 
-*Запись (Invalidate):*
-1. `Приложение` → `БД`: `UPDATE`.
-2. `Приложение` → `Кэш`: `delete(key)`.
+    Note over App,DB: Запись (Invalidate)
+    App->>DB: UPDATE
+    App->>Cache: delete(key)
+```
 
 **Реализация в `Spring`:**
 
@@ -550,11 +583,18 @@ public User update(User user) {
 
 **Write-Through** — при каждой записи приложение синхронно обновляет и БД, и кэш в рамках одной операции. Идея в том, чтобы кэш никогда не отставал от БД: записал — и сразу актуально в обоих местах. Порядок важен: сначала БД, потом кэш. Если упасть после БД, но до кэша, данные не разойдутся — следующее чтение просто промахнётся и подтянет свежее значение из БД.
 
-**Поток Write-Through** (участники: `Приложение`, `Кэш`, `БД`):
+```mermaid
+sequenceDiagram
+    participant App as Приложение
+    participant Cache as Кэш
+    participant DB as БД
 
-1. `Приложение` → `БД`: `UPDATE` (синхронно) → `БД` отвечает `OK`.
-2. `Приложение` → `Кэш`: `put(key, новые данные)` → `Кэш` отвечает `OK`.
-3. `Приложение` возвращает управление (`return`).
+    App->>DB: UPDATE (синхронно)
+    DB-->>App: OK
+    App->>Cache: put(key, новые данные)
+    Cache-->>App: OK
+    App-->>App: return
+```
 
 **Плюсы:** кэш и БД всегда согласованы — читатели получают актуальные данные прямо из кэша, без промахов после записи.
 
@@ -574,12 +614,20 @@ public User update(User user) {
 
 **Write-Behind** (Write-Back) — приложение пишет только в кэш и сразу возвращает успех, а в БД данные попадают позже, асинхронно (батчами или по расписанию). Это зеркальная противоположность `Write-Through`: там запись медленная, но всё сразу в БД; здесь запись мгновенная, но БД отстаёт. Батчинг ещё и разгружает БД — десятки изменений превращаются в один `batch UPDATE`.
 
-**Поток Write-Behind** (участники: `Приложение`, `Кэш`, `Очередь`, `Worker`, `БД`):
+```mermaid
+sequenceDiagram
+    participant App as Приложение
+    participant Cache as Кэш
+    participant Queue as Очередь
+    participant Worker as Worker
+    participant DB as БД
 
-1. `Приложение` → `Кэш`: `put(key, value)` → `Кэш` отвечает `OK (мгновенно)`.
-2. `Кэш` → `Очередь`: `async enqueue` (асинхронная постановка изменения в очередь).
-3. `Worker` → `Очередь`: `poll batch` (забирает пачку изменений).
-4. `Worker` → `БД`: `batch INSERT/UPDATE` (запись батчем).
+    App->>Cache: put(key, value)
+    Cache-->>App: OK (мгновенно)
+    Cache->>Queue: async enqueue
+    Worker->>Queue: poll batch
+    Worker->>DB: batch INSERT/UPDATE
+```
 
 **Плюсы:** минимальная латентность записи и разгрузка БД за счёт батчинга.
 
@@ -645,16 +693,23 @@ public User update(User user) {
 
 **Cache stampede** (он же thundering herd) — когда у популярного ключа истекает `TTL`, десятки параллельных запросов одновременно видят промах и все разом бьют в БД одним и тем же тяжёлым запросом. Опасность в том, что чем популярнее ключ, тем сильнее всплеск: пока первый поток считает значение, остальные не ждут, а дублируют его работу — и БД получает залп нагрузки на ровном месте.
 
-**Поток cache stampede** (участники: `Поток 1`, `Поток 2`, `Поток 3`, `Кэш`, `БД`):
+```mermaid
+sequenceDiagram
+    participant T1 as Поток 1
+    participant T2 as Поток 2
+    participant T3 as Поток 3
+    participant Cache as Кэш
+    participant DB as БД
 
-- *Пометка по `Кэш`:* `TTL истёк для key "hot"`.
-- `Поток 1` → `Кэш`: `get("hot")` → `miss`.
-- `Поток 2` → `Кэш`: `get("hot")` → `miss`.
-- `Поток 3` → `Кэш`: `get("hot")` → `miss`.
-- `Поток 1` → `БД`: `SELECT (тяжёлый запрос)`.
-- `Поток 2` → `БД`: `SELECT (тяжёлый запрос)`.
-- `Поток 3` → `БД`: `SELECT (тяжёлый запрос)`.
-- *Пометка по `БД`:* `Перегрузка!`
+    Note over Cache: TTL истёк для key "hot"
+    T1->>Cache: get("hot") → miss
+    T2->>Cache: get("hot") → miss
+    T3->>Cache: get("hot") → miss
+    T1->>DB: SELECT (тяжёлый запрос)
+    T2->>DB: SELECT (тяжёлый запрос)
+    T3->>DB: SELECT (тяжёлый запрос)
+    Note over DB: Перегрузка!
+```
 
 **Решения** (идея общая — пустить к БД только один поток, а остальные заставить ждать его результат):
 - В рамках одного процесса — `LoadingCache` у `Caffeine` или `sync = true` у `@Cacheable`.
@@ -726,11 +781,23 @@ private Duration ttlWithJitter(Duration base) {
 
 Почему не наоборот: если сначала удалить ключ, а потом писать в БД, между этими шагами другой поток может прочитать ключ, промахнуться, загрузить из БД **старое** значение (новое ещё не записано) и положить его обратно в кэш. Кэш «залипнет» на устаревших данных до следующей инвалидации.
 
-**Правильный порядок:**
-- `Запись данных` → `1. UPDATE в БД` → `2. DELETE из кэша` → `Готово`.
+```mermaid
+flowchart TD
+    Write[Запись данных] --> UpdateDB[1. UPDATE в БД]
+    UpdateDB --> EvictCache[2. DELETE из кэша]
+    EvictCache --> Done[Готово]
 
-**Антипаттерн** (приводит к устаревшим данным):
-- `1. DELETE из кэша` → `Другой поток читает — miss — загружает старые данные из БД` → `2. UPDATE в БД` → `Кэш содержит устаревшие данные!`
+    style UpdateDB fill:#4CAF50,color:white
+    style EvictCache fill:#FF9800,color:white
+
+    BadOrder[Антипаттерн] --> EvictFirst[1. DELETE из кэша]
+    EvictFirst --> Race[Другой поток читает — miss — загружает старые данные из БД]
+    Race --> UpdateLate[2. UPDATE в БД]
+    UpdateLate --> StaleData[Кэш содержит устаревшие данные!]
+
+    style BadOrder fill:#f44336,color:white
+    style StaleData fill:#f44336,color:white
+```
 
 **Подходы:**
 - `Cache-Aside` с инвалидацией — при записи в БД удалять ключ в кэше
@@ -907,12 +974,21 @@ public class TaggedCacheService {
 - Распределённый кэш (`Redis`) — общий для инстансов одного сервиса.
 - **Не кэшировать чужие данные без контракта на инвалидацию** — либо подписка на события владельца, либо короткий `TTL`.
 
-**Схема кэширования в микросервисах:**
-- **Service A:** `Сервис A` → `Caffeine L1`; `Сервис A` → `Redis L2`.
-- **Service B:** `Сервис B` → `Caffeine L1`; `Сервис B` → `Redis L2`.
-- `Сервис A` → `Сервис B` через `API call`.
-- `Сервис B` (владелец данных) при изменении публикует `Событие инвалидации` в `Kafka`.
-- `Kafka` → `invalidate` рассылает инвалидацию в `Caffeine L1` и `Redis L2` сервиса A.
+```mermaid
+graph TB
+    subgraph "Service A"
+        A[Сервис A] --> AL1[Caffeine L1]
+        A --> AR[Redis L2]
+    end
+    subgraph "Service B"
+        B[Сервис B] --> BL1[Caffeine L1]
+        B --> BR[Redis L2]
+    end
+    A -->|API call| B
+    B -->|Событие инвалидации| Kafka[Kafka]
+    Kafka -->|invalidate| AL1
+    Kafka -->|invalidate| AR
+```
 
 Часто комбинируют `L1` (локальный, короткий `TTL`) и `L2` (`Redis`); при публикации события подписчики инвалидируют свой `L1` и соответствующие ключи в `L2`. Подробнее в [вопросах по микросервисам](microservices-interview.md).
 
@@ -1068,16 +1144,20 @@ public CacheManager cacheManager(MeterRegistry meterRegistry) {
 
 **Стратегии:**
 
-**Поток обработки запроса при сбоях кэша:**
-- `Запрос` → проверка «`Redis` доступен?».
-  - **Да** → `Читать из Redis`:
-    - `hit` → `Ответ`.
-    - `miss` → `БД` → `Ответ`.
-  - **Нет** → проверка «`Circuit Breaker` открыт?»:
-    - **Открыт** → `Caffeine fallback` (короткий `TTL`); при промахе (`miss`) → `БД`.
-    - **Закрыт** → `Попытка Redis`:
-      - при `Ошибке` → `Открыть Circuit Breaker` → `БД`.
-- Все ветки, дошедшие до `БД`, завершаются `Ответом`.
+```mermaid
+flowchart TD
+    Request([Запрос]) --> CheckCache{Redis доступен?}
+    CheckCache -->|Да| Redis[Читать из Redis]
+    CheckCache -->|Нет| CB{Circuit Breaker<br/>открыт?}
+    CB -->|Открыт| LocalFallback[Caffeine fallback<br/>короткий TTL]
+    CB -->|Закрыт| TryRedis[Попытка Redis]
+    TryRedis -->|Ошибка| OpenCB[Открыть Circuit Breaker]
+    OpenCB --> DB[(БД)]
+    LocalFallback -.->|miss| DB
+    Redis -->|hit| Response([Ответ])
+    Redis -->|miss| DB
+    DB --> Response
+```
 
 ```java
 @Service
@@ -1310,16 +1390,23 @@ public class LockBasedCacheService {
 }
 ```
 
-**Поток distributed lock через `SETNX`** (участники: `Thread 1`, `Thread 2`, `Redis`, `Database`):
+```mermaid
+sequenceDiagram
+    participant T1 as Thread 1
+    participant T2 as Thread 2
+    participant Redis as Redis
+    participant DB as Database
 
-1. `Thread 1` → `Redis`: `GET product:1` → `null (miss)`.
-2. `Thread 2` → `Redis`: `GET product:1` → `null (miss)`.
-3. `Thread 1` → `Redis`: `SETNX lock:product:1` → `OK (lock acquired)`.
-4. `Thread 2` → `Redis`: `SETNX lock:product:1` → `FAIL (lock busy)`.
-5. `Thread 1` → `Database`: `SELECT product WHERE id=1` → возвращает `Product data`.
-6. `Thread 1` → `Redis`: `SET product:1 (data, TTL=10m)`.
-7. `Thread 1` → `Redis`: `DEL lock:product:1`.
-8. `Thread 2` → `Redis`: `GET product:1` → `HIT (stale or fresh)`.
+    T1->>Redis: GET product:1 → null (miss)
+    T2->>Redis: GET product:1 → null (miss)
+    T1->>Redis: SETNX lock:product:1 → OK (lock acquired)
+    T2->>Redis: SETNX lock:product:1 → FAIL (lock busy)
+    T1->>DB: SELECT product WHERE id=1
+    DB-->>T1: Product data
+    T1->>Redis: SET product:1 (data, TTL=10m)
+    T1->>Redis: DEL lock:product:1
+    T2->>Redis: GET product:1 → HIT (stale or fresh)
+```
 
 **Альтернативы:**
 - **Probabilistic early expiration** — обновлять кэш досрочно с вероятностью, пропорциональной близости к TTL
@@ -1466,14 +1553,19 @@ public class RedisCacheInvalidationListener {
 }
 ```
 
-**Поток инвалидации L1 через Keyspace Notifications** (участники: `App Instance 1`, `App Instance 2`, `Redis`):
+```mermaid
+sequenceDiagram
+    participant App1 as App Instance 1
+    participant App2 as App Instance 2
+    participant Redis as Redis
 
-1. `App Instance 1` → `Redis`: `SET product:1 (updated)`.
-2. `Redis` → `App Instance 1`: `keyevent: SET product:1`.
-3. `Redis` → `App Instance 2`: `keyevent: SET product:1` (событие рассылается всем подписчикам).
-4. `App Instance 1`: `Evict product:1 from L1 (Caffeine)`.
-5. `App Instance 2`: `Evict product:1 from L1 (Caffeine)`.
-- *Пометка по обоим инстансам:* `Следующий запрос заполнит L1 из Redis`.
+    App1->>Redis: SET product:1 (updated)
+    Redis->>App1: keyevent: SET product:1
+    Redis->>App2: keyevent: SET product:1
+    App1->>App1: Evict product:1 from L1 (Caffeine)
+    App2->>App2: Evict product:1 from L1 (Caffeine)
+    Note over App1,App2: Следующий запрос заполнит L1 из Redis
+```
 
 **Ограничения:**
 - Pub/sub не гарантирует доставку (fire-and-forget) — при падении инстанса события теряются
