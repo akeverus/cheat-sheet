@@ -194,9 +194,6 @@
       th.setAttribute('tabindex', '0');
       th.setAttribute('aria-keyshortcuts', 'Enter Space');
       th.setAttribute('aria-sort', 'none');
-      if (!th.dataset.baseAriaLabel) {
-        th.dataset.baseAriaLabel = th.getAttribute('aria-label') || '';
-      }
       var sortByColumn = function () {
         var sortLabel = th.dataset.sortLabel || (th.textContent ? th.textContent.trim() : 'колонка');
         var col = parseInt(th.dataset.col, 10);
@@ -205,14 +202,12 @@
         var rows = Array.from(tbody.querySelectorAll('tr'));
         var asc = th.dataset.dir !== 'asc';
         th.dataset.dir = asc ? 'asc' : 'desc';
+        // C28: имя колонки держим чистым; состояние — только в aria-sort, анонс — в
+        // live-region #table-sort-status ниже. aria-label больше не трогаем.
         table.querySelectorAll('th.sortable').forEach(function (h) {
           h.setAttribute('aria-sort', 'none');
-          if (h.dataset.baseAriaLabel) {
-            h.setAttribute('aria-label', h.dataset.baseAriaLabel);
-          }
         });
         th.setAttribute('aria-sort', asc ? 'ascending' : 'descending');
-        th.setAttribute('aria-label', 'Сортировка: ' + sortLabel + ', ' + (asc ? 'по возрастанию' : 'по убыванию'));
         rows.sort(function (a, b) {
           var aText = (a.children[col] && a.children[col].textContent ? a.children[col].textContent.trim() : '') || '';
           var bText = (b.children[col] && b.children[col].textContent ? b.children[col].textContent.trim() : '') || '';

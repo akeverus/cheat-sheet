@@ -454,3 +454,32 @@ table-expander = `0px`, stats-search-action = `0px 0px 8px 8px`. Today-hero CTA
 рассинхронизации нет.
 
 editorial.css v72→v73.
+
+## Порция 6 — C-блок: видимая иерархия + a11y (2026-06-16)
+
+- **C8** Иерархия размеров кнопок. Главное действие флоу (`#interview-submit`
+  «Проверить ответ», `.flashcard-reveal-btn` «Показать ответ») было `min-height:44px`,
+  тогда как все прочие primary-CTA (`#session-form submit`, `.summary-actions .btn`)
+  и даже вторичные кнопки самооценки (`.flashcard-grade-btn`, `.confidence-btn`) —
+  48px. Самая частая кнопка была мельче второстепенных. → 48px / padding space-3 6.
+  Верифицировано live: computed `min-height: 48px`.
+- **C1** Тап-цель кнопки копирования кода. В `@media (hover: none)` поднимали только
+  `min-height:44px`; на `<=600px` лейбл скрыт, остаётся иконка 14px + padding ≈ 32px
+  по горизонтали → цель 32×44 (нарушение WCAG 2.5.5, на которое сам комментарий и
+  ссылался). → добавлены `min-width:44px; justify-content:center`.
+- **C28** Многословный `aria-label` на сортируемых `<th>`. Скринридер объявлял
+  «Сортировать по колонке: Тема» вместо «Тема» в КАЖДОЙ ячейке; на сортировке
+  aria-label снова перетирался («Сортировка: …»). Приведено к W3C APG sortable-table:
+  имя = чистый текст `<th>`, состояние = `aria-sort` (ставит stats.js), транзиентный
+  анонс = live-region `#table-sort-status`. Убраны `role="columnheader"` (избыточен
+  у th в thead) и `aria-label` из шаблона + вся манипуляция aria-label в stats.js.
+  Верифицировано live: имена чистые, после клика «Точность» → `aria-sort=ascending`,
+  aria-label остаётся null, статус «Таблица отсортирована: Точность, по возрастанию».
+- **C29** `aria-live="polite"` на стрик-чипе (today-hero + today-chip). `initStreakBar`
+  наполняет чип при КАЖДОЙ загрузке (на /focus — каждый вопрос) → SR озвучивал
+  «N дней» после каждого перехода. Это загрузка контента, не смена состояния. Убран.
+  Верифицировано live: `aria-live` снят.
+- **C21** (mermaid `securityLevel: 'loose'`) — **снято**: `fragments/mermaid-init.html`
+  удалён вместе с фронтенд-mermaid (задача #48), XSS-поверхности больше нет.
+
+editorial.css v73→v74, stats.js v7→v8.

@@ -15,8 +15,11 @@
 <section th:fragment="today-hero(stats)" class="card today-hero" th:if="${stats != null}" aria-labelledby="today-hero-title">
     <div class="today-hero-head">
         <span class="ed-eyebrow">Сегодня</span>
-        <!-- Стрик: скрыт без JS (data приходит из /api/streak). -->
-        <span class="streak-inline hidden" data-streak-bar aria-live="polite">
+        <!-- Стрик: скрыт без JS (data приходит из /api/streak). C29: без aria-live —
+             initStreakBar наполняет чип при КАЖДОЙ загрузке (на /focus — каждый
+             вопрос), это обычная загрузка контента, а не смена состояния; live-region
+             заставлял SR озвучивать «N дней» после каждого перехода. -->
+        <span class="streak-inline hidden" data-streak-bar>
             <svg class="ed-icon" aria-hidden="true"><use href="#i-flame"></use></svg>
             <span class="streak-inline-days" data-streak-days>0 дней</span>
         </span>
@@ -38,7 +41,8 @@
 
 <!-- Компактный чип для /focus: стрик + due, без CTA. -->
 <div th:fragment="today-chip(stats)" class="today-chip" th:if="${stats != null}">
-    <span class="streak-inline hidden" data-streak-bar aria-live="polite">
+    <!-- C29: без aria-live (см. today-hero выше — тот же стрик, та же причина). -->
+    <span class="streak-inline hidden" data-streak-bar>
         <svg class="ed-icon" aria-hidden="true"><use href="#i-flame"></use></svg>
         <span class="streak-inline-days" data-streak-days>0 дней</span>
     </span>
