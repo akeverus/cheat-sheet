@@ -678,3 +678,53 @@ Guard был применён к settings и мобильной полосе, н
 Файлы: `api/mapper/view/MvcModelAttributeMapper.java` (+тесты, focus-training.html
 placeholder) — C-live-3; `static/css/editorial.css` + `fragments/head.html`
 (editorial.css v79→v80) — C5. CSS синхронизировано в build/resources/main.
+
+## Порция 14 — gradle-окно: зелёный suite + C20/C10/C35 (2026-06-16)
+
+Пользователь явно разрешил на пару минут остановить живой devtools-bootRun под
+gradle-тест (он держал демон → тесты давно не гонялись, wedge). Это вскрыло и
+позволило закрыть накопившийся дрейф.
+
+**C-live-3 — ПОДТВЕРЖДЁН зелёным.** В прогоне не было ни одного падения по именам
+режима — правка `3b41e7e7` (русский чип) корректна. Снимаем «проверка отложена».
+
+**Скрытый красный suite — 10 падений, устранены (коммит `23b3e48b`).** `./gradlew
+test` падал: контракт-тесты разошлись с эволюционировавшими шаблонами.
+- Реальный фикс шаблона: `icons.html` прятал SVG-спрайт инлайн-`style="display:none"`
+  — нарушение контракта «ноль inline style=» (`assertNoInlineUiAttributes`).
+  Заменено на `hidden` (тот же display:none, `<use>` ссылается на `<symbol>`).
+- Сверка устаревших контрактов с текущим намерением (тесты/baseline, НЕ
+  благословение регрессий — для каждого подтверждена интенция кодом/памятью):
+  `aria-controls`/`#details`→`extra-analysis-content`; экспорт переехал nav→/settings
+  (`data-export-format`, тест переименован); `statsTableHeaders` свёлся к серверным
+  маркерам (role/tabindex/aria-sort/keyshortcuts навешивает stats.js в рантайме —
+  C28 PE); `next-question` (<a>) честно «Enter», не «Enter Space»; `empty-action-retry`
+  стал динамическим классом → токен-матч; `training-actions` намеренно без aria-live
+  (D13) → `doesNotContain("aria-live=")`; VisualBaseline result `class="status` (на
+  `<p>` висит classappend) → префикс-детект; VisualBaseline stats title унифицирован
+  «Аналитика» (C33).
+
+**C20 — мёртвый «свернуть панель» удалён (коммит `f5ccd3d0`).** Кнопка
+`#sidebar-collapse-toggle` всегда была `display:none`, а обработчик
+`initCollapsibleSidebar` в app.js — мёртвым. Удалены кнопка, функция+вызов,
+orphan-правило `.sidebar-toggle-btn{display:none}`. Видимых изменений нет (контент
+панели и так всегда виден). 3 теста, требовавшие тоггл (InterviewControllerTest,
+TemplateFragmentContractTest, VisualBaseline settings-shell), переписаны на
+`doesNotContain` + структуру панели.
+
+**C10 — война !important снята (тем же коммитом, следствие C20).**
+`#left-sidebar-content`: было `display:block !important` (база) ↔ `display:grid
+!important` (@media ≥1200px). Оба `!important` убраны — база `block`, медиа-`grid`
+ниже по исходнику с той же специфичностью → выигрывает каскадом штатно. Защитный
+`!important` базы существовал ради JS `content.hidden`, который ушёл вместе с C20.
+
+**C35 — пробой `<script>` через имя темы (defense-in-depth, тем же коммитом).**
+`topicStatsJson` встраивается literal-ом в `<script id="topic-stats-data">`; Jackson
+не экранирует `<`/`/`, тема с `</script>` закрыла бы тег. `StatsPageService`
+экранирует `<,>,&` юникод-эскейпами (OWASP JSON-in-HTML) ЛОКАЛЬНО (не на общий
+`objectMapper`-бин). + unit-тест `escapesScriptBreakingCharsForHtmlEmbedding`.
+
+Версии: editorial.css v80→v81, app.js v35→v36 (settings/result/focus-training).
+`./gradlew test` (все модули) — BUILD SUCCESSFUL. bootRun перезапущен.
+
+Остаётся открытым: C3, C4, C9, C12, C13, C16, C18, C27, C36, D1–D10.
