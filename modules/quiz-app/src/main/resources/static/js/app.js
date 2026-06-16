@@ -256,12 +256,12 @@
           }
         } else {
           const err = await parseApiError(resp);
-          setInlineAlert(err.message || 'Не удалось получить подсказку. Попробуйте ещё раз.');
+          setInlineAlert(err.message || 'Не удалось получить подсказку. Попробуй ещё раз.');
           btn.textContent = '💡';
         }
       } catch (err) {
         console.error('Hint request failed:', err);
-        setInlineAlert('Не удалось получить подсказку. Проверьте сеть и повторите.');
+        setInlineAlert('Не удалось получить подсказку. Проверь сеть и повтори.');
         btn.textContent = '💡';
       }
 
@@ -506,7 +506,7 @@
           // Полный провал (все блоки упали): НЕ помечаем loaded='true' и НЕ пишем
           // «загружен» — иначе кнопка осталась бы заблокированной с ложной меткой
           // успеха. Возвращаем кнопку в исходное retryable-состояние.
-          setInlineAlert('Не удалось загрузить доп. анализ. Попробуйте ещё раз.');
+          setInlineAlert('Не удалось загрузить доп. анализ. Попробуй ещё раз.');
           btn.removeAttribute('aria-disabled');
           btn.textContent = EXTRA_ANALYSIS_BUTTON_INITIAL_TEXT;
           btn.setAttribute('aria-expanded', 'false');
@@ -521,7 +521,7 @@
         }
       } catch (err) {
         console.error('Result extra analysis failed:', err);
-        setInlineAlert('Не удалось загрузить доп. анализ. Попробуйте ещё раз.');
+        setInlineAlert('Не удалось загрузить доп. анализ. Попробуй ещё раз.');
         btn.removeAttribute('aria-disabled');
         btn.textContent = EXTRA_ANALYSIS_BUTTON_INITIAL_TEXT;
       } finally {
@@ -552,7 +552,7 @@
   function obtainAdminToken() {
     let token = readStoredToken();
     if (!token) {
-      token = (window.prompt('Введите admin-токен (APP_ADMIN_TOKEN) для экспорта:') || '').trim();
+      token = (window.prompt('Введи admin-токен (APP_ADMIN_TOKEN) для экспорта:') || '').trim();
       if (token) storeToken(token);
     }
     return token;
@@ -822,7 +822,7 @@
       .catch(e => {
         console.warn('Operation failed:', e);
         placeholder.remove();
-        setInlineAlert(errorMessage || e?.message || 'Не удалось загрузить дополнительные данные. Попробуйте ещё раз.');
+        setInlineAlert(errorMessage || e?.message || 'Не удалось загрузить дополнительные данные. Попробуй ещё раз.');
         if (rethrowOnError) {
           throw e;
         }
@@ -992,7 +992,7 @@
       }
     } catch (err) {
       console.error('Favorite toggle failed:', err);
-      setInlineAlert('Не удалось обновить избранное. Проверьте сеть и повторите.');
+      setInlineAlert('Не удалось обновить избранное. Проверь сеть и повтори.');
     }
   }
 
@@ -1068,7 +1068,7 @@
       button.innerHTML = icon('circle-x', 'ed-icon-error');
       button.title = 'Ошибка сети';
       console.error('Regenerate failed:', err);
-      setInlineAlert('Не удалось перегенерировать варианты. Проверьте сеть и повторите.');
+      setInlineAlert('Не удалось перегенерировать варианты. Проверь сеть и повтори.');
     }
   }
 
@@ -1440,7 +1440,7 @@
           answerFlowSteps.classList.add('hidden');
           answerFlowSteps.setAttribute('aria-hidden', 'true');
         }
-        setInlineAlert(err.message || 'Не удалось проверить ответ. Попробуйте ещё раз.');
+        setInlineAlert(err.message || 'Не удалось проверить ответ. Попробуй ещё раз.');
         return;
       }
 
@@ -1460,7 +1460,7 @@
         answerFlowSteps.classList.add('hidden');
         answerFlowSteps.setAttribute('aria-hidden', 'true');
       }
-      setInlineAlert('Сервер недоступен. Проверьте соединение и повторите отправку.');
+      setInlineAlert('Сервер недоступен. Проверь соединение и повтори отправку.');
     }
   }
 
@@ -1486,7 +1486,7 @@
         statusLabelText = 'Правильный ответ';
       } else if (optionId === data.selectedOptionId) {
         label.classList.add('option-wrong');
-        statusLabelText = 'Ваш выбор (ошибка)';
+        statusLabelText = 'Твой выбор (ошибка)';
       } else {
         label.classList.add('option-dimmed');
         statusLabelText = 'Не выбран';
@@ -1588,7 +1588,7 @@
           console.error('Confidence update failed:', err);
           confidenceSubmitted = false;
           confidenceBtns.forEach(b => { b.disabled = false; });
-          setInlineAlert('Не удалось сохранить уверенность. Попробуйте ещё раз.');
+          setInlineAlert('Не удалось сохранить уверенность. Попробуй ещё раз.');
           return;
         }
 
@@ -1866,7 +1866,7 @@
             extraAnalysisBtn.removeAttribute('aria-disabled');
             extraAnalysisBtn.setAttribute('aria-expanded', 'false');
             extraAnalysisBtn.textContent = EXTRA_ANALYSIS_BUTTON_INITIAL_TEXT;
-            setInlineAlert('Не удалось загрузить доп. анализ. Попробуйте ещё раз.');
+            setInlineAlert('Не удалось загрузить доп. анализ. Попробуй ещё раз.');
           } else {
             extraAnalysisBtn.textContent = EXTRA_ANALYSIS_BUTTON_DONE_TEXT;
             if (failedCount > 0) {
