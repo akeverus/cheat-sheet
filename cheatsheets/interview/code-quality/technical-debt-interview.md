@@ -1072,7 +1072,7 @@ stage('Quality Gate') {
 | `Ce` (Efferent coupling) | Сколько пакетов данный пакет зависит | Очень высокий → много зависимостей |
 | `I` (Instability) = Ce/(Ca+Ce) | 0 = стабильный, 1 = нестабильный | Критичные пакеты должны быть ближе к 0 |
 | `A` (Abstractness) | Доля абстрактных классов/интерфейсов | — |
-| `D` (Distance from main sequence) | `|A+I-1|` | < 0.1 — зона боли или бесполезности |
+| `D` (Distance from main sequence) | `|A+I-1|` | > 0.5–0.7 — далеко от главной последовательности (зона боли или бесполезности); ≈0 — баланс |
 
 **Cohesion — LCOM (Lack of Cohesion of Methods):**
 
