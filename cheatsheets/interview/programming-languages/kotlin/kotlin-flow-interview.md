@@ -133,7 +133,7 @@ flow.flatMapMerge { v -> flow { emit(v * 2); emit(v * 3) } }  // конкуре�
 // Фильтрация
 flow.filter { it % 2 == 0 }            // [2, 4]
 flow.take(3)                           // [1, 2, 3]
-flow.distinct()                        // убирает дубли
+flow.distinctUntilChanged()            // убирает подряд идущие дубли
 
 // Комбинирование
 flow1.zip(flow2) { a, b -> a + b }     // попарное объединение (ждёт оба)
@@ -141,7 +141,7 @@ flow1.combine(flow2) { a, b -> a + b } // последнее значение к
 
 // Управление временем
 flow.debounce(300)                     // ждёт 300ms паузу (поиск по мере ввода)
-flow.throttleFirst(1000)               // не чаще раза в секунду
+flow.sample(1000)                      // не чаще раза в секунду (последнее значение за интервал)
 flow.buffer(16)                        // буфер 16 элементов (backpressure)
 
 // Сбор
@@ -519,7 +519,7 @@ try {
 flow.catch { e -> emit(-1) }
     .collect { println(it) }  // 1, -1
 
-// islandFlow — исключения в collect НЕ ловятся catch
+// исключения в самом collect НЕ ловятся оператором catch
 flow.catch { emit(-1) }
     .collect {
         if (it == 1) throw IllegalStateException("in collect!")  // НЕ перехватывается catch

@@ -167,7 +167,7 @@ data class User(val name: String, val age: Int)
   - `Boolean`
   - `Char`
   - `Unit` (аналог `void`)
-  - `Collection` → `List`, `Set`, `Map`
+  - `Collection` → `List`, `Set` (`Map` — отдельная иерархия, НЕ наследует `Collection`)
 - `Nothing` — подтип всех типов (стоит особняком: он находится «ниже» любого типа в иерархии).
 
 Особую роль играют три «специальных» типа — их часто спрашивают именно для проверки понимания системы типов:
@@ -236,11 +236,11 @@ println(name?.length)    // null (без NPE)
 println(name?.uppercase()) // null
 ```
 
-**Not-null assertion `!!`** — выбрасывает `KotlinNullPointerException` если значение `null`:
+**Not-null assertion `!!`** — выбрасывает `NullPointerException` если значение `null` (с Kotlin 1.4; до этого был отдельный `KotlinNullPointerException`, ныне deprecated):
 
 ```kotlin
 val name: String? = null
-println(name!!.length)   // KotlinNullPointerException!
+println(name!!.length)   // NullPointerException!
 ```
 
 **Эмпирическое правило**: `!!` оправдан только когда вы абсолютно уверены, что значение не `null`, и сознательно предпочитаете немедленный crash тихому распространению ошибки. В production-коде это, как правило, анти-паттерн — почти всегда есть более выразительная замена (`?:`, `requireNotNull`, ранний `return`). Уместен он скорее в тестах, где падение «здесь и сейчас» удобнее, чем `null`, всплывший где-то дальше.
