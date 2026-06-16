@@ -598,3 +598,29 @@ innerHTML («Скопировано»/«Ошибка»), но live-region не �
 
 Файлы: `static/js/app.js` (+общий live-region + announceCopy),
 `templates/{result,settings,focus-training}.html` (app.js v34→v35). Синхронизировано.
+
+## Порция 11 — C2: PE-гейт грида result-страницы (2026-06-16)
+
+В `@media (min-width:1200px)` `.result-page .ed-page` становился `display:grid`
+с 2-колоночным шаблоном БЕЗ гейта, а возврат к полной ширине без related-рейки
+держался на `:not(:has(> #result-related-questions)) > #interview-card { grid-column:
+1 / -1 }`. Браузер без `:has()` отбрасывал это правило → карточка зажата в 1-й
+колонке, справа мёртвый жёлоб 16–22rem + column-gap. Это прямо противоречило
+задекларированному в шапке секции инварианту PE («браузер без :has() остаётся на
+полноширинном стеке»).
+
+Фикс: гейт перенесён на сам грид — `html[data-design] .result-page
+.ed-page:has(> #result-related-questions) { display:grid; … }`. Теперь грид
+включается ТОЛЬКО когда есть related-рейка; прежнее `:not(:has(...))`-правило
+удалено как избыточное (без related грид просто не применяется). Браузер без
+`:has()` не матчит гейт-селектор → всегда блочный полноширинный стек, как обещает
+комментарий. `#interview-card { grid-column: 1 }` сохранён (значим лишь когда грид
+активен).
+
+Верифицировано live (chrome-devtools, 1440px, `@media min-width:1200` активна,
+синтетический `.result-page > .ed-page`): без `#result-related-questions` —
+`display:block` (полная ширина, нет жёлоба); с ним — `display:grid` (911px + 352px).
+Консоль чиста.
+
+Файлы: `static/css/editorial.css` (editorial.css v75→v76), `fragments/head.html`
+(preload + stylesheet). Синхронизировано в `build/resources/main`.

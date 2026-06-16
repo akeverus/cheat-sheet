@@ -2440,7 +2440,12 @@ html[data-design] .summary-tools-status {
      «Похожие вопросы» уезжают в правую sticky-рейку. Грид включён ВСЕГДА
      (ширина карточки не прыгает между вопросами с related и без): без related
      карточка просто спанит обе колонки. */
-  html[data-design] .result-page .ed-page {
+  /* Грид включаем ТОЛЬКО когда есть related-рейка (:has-гейт на самом гриде) —
+     браузер без :has() остаётся на полноширинном блочном стеке (PE, как обещает
+     шапка секции), а не получает 2-колонку с мёртвым жёлобом справа. Round-01 C2.
+     Прежний :not(:has(...)) -> full-width больше не нужен: без related грид просто
+     не применяется. */
+  html[data-design] .result-page .ed-page:has(> #result-related-questions) {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
     column-gap: var(--space-7);
@@ -2448,7 +2453,6 @@ html[data-design] .summary-tools-status {
   }
   html[data-design] .result-page .ed-page > * { grid-column: 1 / -1; min-width: 0; }
   html[data-design] .result-page .ed-page > #interview-card { grid-column: 1; }
-  html[data-design] .result-page .ed-page:not(:has(> #result-related-questions)) > #interview-card { grid-column: 1 / -1; }
   /* Рейка related: из «блока после карточки» (border-top + отступ) превращается
      в editorial-панель; при длинном списке скроллится внутри вьюпорта. */
   html[data-design] .result-page .ed-page > #result-related-questions {
