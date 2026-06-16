@@ -18,7 +18,7 @@ updated: "2026-05-14"
 ---
 # Вопросы на собеседовании: `Spring REST Clients`
 
-В Spring существует три основных HTTP-клиента: `RestTemplate` (классический, deprecated в Spring 6), `WebClient` (реактивный, Spring 5+), и `RestClient` (новый синхронный, Spring 6.1). На собеседованиях проверяют понимание различий, миграцию с RestTemplate и декларативный подход через `@HttpExchange`.
+В Spring существует три основных HTTP-клиента: `RestTemplate` (классический, в maintenance mode с Spring 6), `WebClient` (реактивный, Spring 5+), и `RestClient` (новый синхронный, Spring 6.1). На собеседованиях проверяют понимание различий, миграцию с RestTemplate и декларативный подход через `@HttpExchange`.
 
 Дата последнего обновления: 2026-04-20
 
@@ -37,7 +37,7 @@ updated: "2026-05-14"
 
 **Сравнение клиентов**
 - [Q1. (!) Какие HTTP-клиенты есть в Spring и чем они отличаются?](#q1--какие-http-клиенты-есть-в-spring-и-чем-они-отличаются)
-- [Q2. Почему RestTemplate помечен как deprecated?](#q2-почему-resttemplate-помечен-как-deprecated)
+- [Q2. Почему RestTemplate перевели в maintenance mode?](#q2-почему-resttemplate-перевели-в-maintenance-mode)
 
 **RestClient (Spring 6.1)**
 - [Q3. (!) Как работает RestClient?](#q3--как-работает-restclient)
@@ -68,7 +68,7 @@ updated: "2026-05-14"
 |---|---|---|---|
 | Версия | Spring 3+ | Spring 6.1+ | Spring 5+ (WebFlux) |
 | Стиль | Синхронный | Синхронный fluent | Реактивный |
-| Статус | Deprecated | Актуальный | Актуальный |
+| Статус | Maintenance mode | Актуальный | Актуальный |
 | Стиль API | Методы перегрузки | Fluent builder chain | Reactive (Mono/Flux) |
 | Зависимость | spring-web | spring-web | spring-webflux |
 | Применение | Legacy код | Новые Spring 6 проекты | Реактивный стек |
@@ -77,7 +77,7 @@ updated: "2026-05-14"
 
 Связи между клиентами:
 
-- `RestTemplate` (deprecated) → заменяется на → `RestClient` (Spring 6.1).
+- `RestTemplate` (maintenance mode) → заменяется на → `RestClient` (Spring 6.1).
 - `WebClient` (reactive) → поддерживает → `RestClient` (fluent-API заимствован у `WebClient`).
 - `RestClient` → строится builder'ом из → `RestTemplate` (переиспользует его конвертеры, фабрику запросов и интерсепторы).
 
@@ -88,7 +88,7 @@ updated: "2026-05-14"
 
 ---
 
-## Q2. Почему RestTemplate помечен как deprecated?
+## Q2. Почему RestTemplate перевели в maintenance mode?
 
 Причина не в том, что он плохо работает, а в том, что его API родом из эпохи Java 5 и плохо стареет. Накопились дизайн-проблемы, которые невозможно исправить, не сломав обратную совместимость:
 
@@ -98,7 +98,7 @@ updated: "2026-05-14"
 
 `RestClient` решает всё это единым fluent builder и при этом совместим с той же инфраструктурой — `HttpMessageConverter`, `ClientHttpRequestFactory`. Поэтому миграция дёшева: ту же фабрику запросов и конвертеры можно передать в новый клиент.
 
-**Важно:** deprecated не значит «удалён». В Spring 6.x `RestTemplate` продолжит работать — новых фич ему просто не добавляют. Срочно переписывать рабочий код не нужно, но новый код стоит писать на `RestClient`.
+**Важно:** строго говоря, `RestTemplate` НЕ помечен аннотацией `@Deprecated` — он в режиме поддержки (maintenance mode): в Spring 6.x продолжает работать, но новых фич не получает (Javadoc лишь предупреждает, что класс «will be deprecated in a future version»). Срочно переписывать рабочий код не нужно, но новый код стоит писать на `RestClient`.
 
 ---
 
@@ -405,12 +405,7 @@ UserClient client = factory.createClient(UserClient.class);
 
 Интерфейс `UserClient` одинаков для обоих — отличается только конфигурация. Это и есть смысл декларативного подхода: смену синхронного клиента на реактивный (или наоборот) делают в одном бине, не трогая код вызывающих сервисов.
 
-**Через Spring Boot auto-config** базовый URL и часть настроек можно вынести в `application.yml`, не описывая фабрику руками:
-```yaml
-spring:
-  http.interface:
-    default-base-url: https://users.service
-```
+**Базовый URL** задаётся на самом клиенте перед оборачиванием в адаптер — `RestClient.builder().baseUrl("https://users.service")` (или `WebClient.builder().baseUrl(...)`). Отдельного property-шортката вроде `spring.http.interface.default-base-url` в Spring Boot нет; декларативная авто-регистрация HTTP-интерфейсов из конфигурации появилась только в Spring Boot 3.4.
 
 ---
 
@@ -491,8 +486,6 @@ ResponseEntity<List<User>> resp = restClient.get().uri(url)
 ```
 
 ---
-
-## See also
 
 ## See also
 

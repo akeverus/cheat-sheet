@@ -135,7 +135,7 @@ public class OrderFsmService {
             .setHeader("orderId", variables.get("orderId"))
             .build();
 
-        Mono<StateMachineEventResult<OrderState, OrderEvent>> result =
+        Flux<StateMachineEventResult<OrderState, OrderEvent>> result =
             stateMachine.sendEvent(Mono.just(message));
 
         return result.blockFirst().getResultType() == ResultType.ACCEPTED;
