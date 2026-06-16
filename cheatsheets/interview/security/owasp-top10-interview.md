@@ -156,11 +156,15 @@ updated: "2026-05-08"
 - **`Likelihood`** (насколько вероятна успешная атака) складывается из `Threat Agent` (кто атакует), `Vulnerability Prevalence` (как часто встречается уязвимость) и `Detectability` (легко ли её найти злоумышленнику)
 - **`Impact`** (что будет, если атака удалась) включает `Technical Impact` (компрометация системы) и `Business Impact` (потери для бизнеса)
 
-Как факторы складываются в итоговый риск:
-
-- `Threat Agent`, `Vulnerability Prevalence` и `Detectability` → вместе формируют `Likelihood`
-- `Technical Impact` → формирует `Impact`
-- `Likelihood` и `Impact` → вместе дают итоговый `Risk`
+```mermaid
+graph LR
+    A[Threat Agent] --> D[Likelihood]
+    B[Vulnerability<br/>Prevalence] --> D
+    C[Detectability] --> D
+    D --> G[Risk]
+    E[Technical<br/>Impact] --> F[Impact]
+    F --> G
+```
 
 Сам рейтинг 2021 года строится двумя путями — большинство мест определяется статистикой, но несколько категорий добавлены экспертно, потому что данных по ним пока мало:
 - **Анализ CVE** и инцидентов — data-driven для 8 категорий (объективные числа из реальных тестов)
@@ -179,13 +183,15 @@ updated: "2026-05-08"
 - **Обход проверок** — манипуляция с путями, HTTP-методами, параметрами
 - **`CORS` misconfiguration** — доступ с неавторизованного origin
 
-Логика проблемы по шагам: пользователь обращается к ресурсу → срабатывает (или нет) проверка авторизации:
-
-- **Авторизация проверена** → доступ только к своему ресурсу
-- **Авторизация НЕ проверена** → `IDOR` / эскалация, а через них:
-  - доступ к чужим данным;
-  - вызов admin-функций;
-  - удаление или изменение чужих объектов.
+```mermaid
+graph TD
+    A[Пользователь] --> B{Авторизация}
+    B -->|Проверена| C[Доступ к своему ресурсу]
+    B -->|НЕ проверена| D[IDOR / Эскалация]
+    D --> E[Чужие данные]
+    D --> F[Admin-функции]
+    D --> G[Удаление/изменение]
+```
 
 Принцип защиты — **deny-by-default** на каждом уровне: контроллер, сервис, база данных. Подробнее о паттернах авторизации — в [вопросах по авторизации](authentication-authorization-patterns-interview.md).
 
@@ -413,15 +419,22 @@ public class AesGcmEncryptor {
 
 ## Q11. (!) Какие виды Injection-атак существуют и как от них защищаться?
 
-`Injection` (`A03:2021`) — общий класс атак, где недоверенный ввод попадает в интерпретатор (SQL, shell, LDAP, HTML/JS-движок) и тот воспринимает часть данных как *команду*. Суть всегда одна: данные и код смешались в одной строке. Поэтому и универсальное лекарство одно — разделять данные и код, а не пытаться «вычистить» опасные символы. Основные виды Injection:
+`Injection` (`A03:2021`) — общий класс атак, где недоверенный ввод попадает в интерпретатор (SQL, shell, LDAP, HTML/JS-движок) и тот воспринимает часть данных как *команду*. Суть всегда одна: данные и код смешались в одной строке. Поэтому и универсальное лекарство одно — разделять данные и код, а не пытаться «вычистить» опасные символы. Основные виды:
 
-- **SQL Injection** — пример payload: `SELECT * FROM users WHERE id = '1 OR 1=1'`
-- **NoSQL Injection**
-- **Command Injection** — пример payload: `ping; rm -rf /`
-- **LDAP Injection**
-- **XSS** (`HTML/JS Injection`) — пример payload: `<script>steal(cookie)</script>`
-- **Expression Language Injection**
-- **Template Injection** (`SSTI`)
+```mermaid
+graph TD
+    A[Injection] --> B[SQL Injection]
+    A --> C[NoSQL Injection]
+    A --> D[Command Injection]
+    A --> E[LDAP Injection]
+    A --> F[XSS<br/>HTML/JS Injection]
+    A --> G[Expression Language<br/>Injection]
+    A --> H[Template Injection<br/>SSTI]
+    
+    B --> B1["SELECT * FROM users<br/>WHERE id = '1 OR 1=1'"]
+    D --> D1["ping; rm -rf /"]
+    F --> F1["<script>steal(cookie)</script>"]
+```
 
 **Универсальные принципы защиты** (от главного к вспомогательному):
 
@@ -604,14 +617,17 @@ public Booking createBooking(@RequestBody @Valid BookingRequest request,
 
 ## Q16. Что такое threat modeling и как его применять?
 
-`Threat modeling` — систематический разбор «что может пойти не так» в системе **до начала реализации**: вы заранее перечисляете угрозы и придумываете контрмеры, пока их ещё дёшево заложить в архитектуру. Самая популярная методология — **`STRIDE`**: она задаёт шесть категорий угроз как чек-лист, чтобы ничего не упустить. Каждой категории соответствует своя контрмера (mitigation):
+`Threat modeling` — систематический разбор «что может пойти не так» в системе **до начала реализации**: вы заранее перечисляете угрозы и придумываете контрмеры, пока их ещё дёшево заложить в архитектуру. Самая популярная методология — **`STRIDE`**: она задаёт шесть категорий угроз как чек-лист, чтобы ничего не упустить:
 
-- **`Spoofing`** (подмена идентичности) → аутентификация, `MFA`
-- **`Tampering`** (подмена данных) → контроль целостности, подписи
-- **`Repudiation`** (отказ от действий) → аудит-логи, подписи
-- **`Information Disclosure`** (утечка данных) → шифрование, `ACL`
-- **`Denial of Service`** → rate limiting, scaling
-- **`Elevation of Privilege`** → least privilege, `RBAC`
+```mermaid
+graph TD
+    S[Spoofing<br/>Подмена идентичности] --> M[Mitigation:<br/>Аутентификация, MFA]
+    T[Tampering<br/>Подмена данных] --> M2[Mitigation:<br/>Целостность, подписи]
+    R[Repudiation<br/>Отказ от действий] --> M3[Mitigation:<br/>Аудит-логи, подписи]
+    I[Information Disclosure<br/>Утечка данных] --> M4[Mitigation:<br/>Шифрование, ACL]
+    D[Denial of Service] --> M5[Mitigation:<br/>Rate limiting, scaling]
+    E[Elevation of Privilege] --> M6[Mitigation:<br/>Least privilege, RBAC]
+```
 
 **Практический процесс:**
 1. **Нарисовать DFD** (Data Flow Diagram) — компоненты, потоки данных, trust boundaries
@@ -820,15 +836,20 @@ dependencyCheck {
 // ./gradlew dependencies --configuration runtimeClasspath
 ```
 
-**Процесс управления** (по шагам):
+**Процесс управления:**
 
-1. `SCA scan` в CI/CD → проверка, найдены ли `CVE`.
-2. Если `CVE` **не найдены** → деплой.
-3. Если `CVE` **найдены** → разбор по severity:
-   - **Critical / High** → block release, исправить немедленно;
-   - **Medium** → создать задачу (SLA: 30 дней);
-   - **Low** → backlog.
-4. Для Critical/High: обновить зависимость → прогнать регрессионные тесты → вернуться к шагу 1 (повторный `SCA scan`).
+```mermaid
+graph LR
+    A[SCA scan<br/>в CI/CD] --> B{CVE найдены?}
+    B -->|Нет| C[Деплой]
+    B -->|Да| D{Severity}
+    D -->|Critical/High| E[Block release<br/>Исправить немедленно]
+    D -->|Medium| F[Создать задачу<br/>SLA: 30 дней]
+    D -->|Low| G[Backlog]
+    E --> H[Обновить зависимость]
+    H --> I[Регрессионные тесты]
+    I --> A
+```
 
 ## Q22. Что такое SBOM и зачем он нужен?
 
@@ -990,12 +1011,18 @@ public JwtDecoder jwtDecoder() {
 
 `Software and Data Integrity Failures` (`A08:2021`) — **новая категория** о том, что вы доверяете коду и данным, чьё происхождение не проверили. Supply-chain атака бьёт именно сюда: вредонос внедряют не в ваш код, а в звено, которому вы доверяете «по умолчанию» — пакет, CI/CD, Docker-образ, — и оно само заносит его в прод. Защита сводится к одному принципу: проверять целостность и подлинность всего, что попадает в сборку.
 
-Атакующий может выбрать любой из векторов, и каждый из них приводит к одному результату — вредоносному коду в продакшене:
-
-- компрометация `npm`/`Maven`-пакета → вредоносный код в продакшене;
-- компрометация CI/CD pipeline → вредоносный код в продакшене;
-- подмена Docker-образа → вредоносный код в продакшене;
-- `Dependency confusion` → вредоносный код в продакшене.
+```mermaid
+graph LR
+    A[Атакующий] --> B[Компрометация<br/>npm/Maven пакета]
+    A --> C[Компрометация<br/>CI/CD pipeline]
+    A --> D[Подмена<br/>Docker-образа]
+    A --> E[Dependency<br/>confusion]
+    
+    B --> F[Вредоносный код<br/>в продакшене]
+    C --> F
+    D --> F
+    E --> F
+```
 
 **Реальные примеры:**
 - **`SolarWinds`** (2020) — компрометация build-системы, вредоносный код в обновлении
@@ -1102,21 +1129,27 @@ security-scan:
 
 **Три компонента стратегии:**
 
-1. **Что логировать:**
-   - `Auth events` (события аутентификации);
-   - `Access denied` (отказы доступа);
-   - `Input validation failures` (провалы валидации ввода);
-   - `Sensitive operations` (чувствительные операции).
-2. **Как логировать:**
-   - `Structured JSON logs` (структурированные JSON-логи);
-   - `Correlation ID`;
-   - `Tamper-proof storage` (защищённое от подмены хранилище);
-   - `Retention policy` (политика хранения).
-3. **Как реагировать:**
-   - `Real-time alerts` (алерты в реальном времени);
-   - `SIEM correlation` (корреляция в SIEM);
-   - `Incident runbooks` (runbook-и по инцидентам);
-   - `On-call process` (процесс дежурств).
+```mermaid
+graph TD
+    A[Security Logging] --> B[Что логировать]
+    A --> C[Как логировать]
+    A --> D[Как реагировать]
+    
+    B --> B1[Auth events]
+    B --> B2[Access denied]
+    B --> B3[Input validation failures]
+    B --> B4[Sensitive operations]
+    
+    C --> C1[Structured JSON logs]
+    C --> C2[Correlation ID]
+    C --> C3[Tamper-proof storage]
+    C --> C4[Retention policy]
+    
+    D --> D1[Real-time alerts]
+    D --> D2[SIEM correlation]
+    D --> D3[Incident runbooks]
+    D --> D4[On-call process]
+```
 
 **Критическое правило**: логирование без процесса реагирования почти бесполезно. Нужны алерты, runbooks и on-call.
 
@@ -1232,13 +1265,19 @@ public class SecurityAlertService {
 
 В Top 10 SSRF попал из-за роста cloud-инфраструктуры: через него атакующий добирается до **metadata endpoints** (`169.254.169.254` в AWS/GCP), вытаскивает IAM-токены сервера и компрометирует всю облачную инфраструктуру.
 
-Как разворачивается атака по шагам (участники: `Атакующий`, `Сервер`, `InternalService`, `CloudMetadata`):
+```mermaid
+sequenceDiagram
+    participant Атакующий
+    participant Сервер
+    participant InternalService
+    participant CloudMetadata
 
-1. `Атакующий` → `Сервер`: `GET /api/fetch?url=http://169.254.169.254/latest/meta-data/iam`
-2. `Сервер` → `CloudMetadata`: `HTTP GET` (от имени сервера!)
-3. `CloudMetadata` → `Сервер`: возвращает `IAM credentials`
-4. `Сервер` → `Атакующий`: отдаёт `IAM credentials` (утечка!)
-5. `Атакующий` → `InternalService`: доступ с украденными credentials
+    Атакующий->>Сервер: GET /api/fetch?url=http://169.254.169.254/latest/meta-data/iam
+    Сервер->>CloudMetadata: HTTP GET (от имени сервера!)
+    CloudMetadata-->>Сервер: IAM credentials
+    Сервер-->>Атакующий: IAM credentials (утечка!)
+    Атакующий->>InternalService: Доступ с украденными credentials
+```
 
 **Типы SSRF:**
 - **Classic SSRF** — ответ внутреннего сервиса возвращается атакующему
@@ -1319,13 +1358,27 @@ public class SafeUrlFetcher {
 
 OWASP-риски нельзя закрыть одним пентестом в конце: чем позже найдена уязвимость, тем дороже её чинить. Поэтому проверки распределяют по всему SDLC — на каждом этапе свой инструмент ловит свой класс проблем (это принцип shift-left: сдвигаем безопасность как можно левее, к началу разработки):
 
-Этапы SDLC идут по порядку `Design` → `Development` → `CI/CD` → `Staging` → `Production`, и к каждому привязан свой набор security-проверок:
-
-- **`Design`** → `Threat Modeling`, `Security Requirements`
-- **`Development`** → `Code Review`, `IDE Plugins`
-- **`CI/CD`** → `SAST`, `SCA`, `Secret Scan`, `IaC Scan`
-- **`Staging`** → `DAST`, `Pentest`
-- **`Production`** → `WAF`, `Monitoring`, `Bug Bounty`
+```mermaid
+graph LR
+    A[Design] --> B[Development]
+    B --> C[CI/CD]
+    C --> D[Staging]
+    D --> E[Production]
+    
+    A -.-> A1[Threat Modeling]
+    A -.-> A2[Security Requirements]
+    B -.-> B1[Code Review]
+    B -.-> B2[IDE Plugins]
+    C -.-> C1[SAST]
+    C -.-> C2[SCA]
+    C -.-> C3[Secret Scan]
+    C -.-> C4[IaC Scan]
+    D -.-> D1[DAST]
+    D -.-> D2[Pentest]
+    E -.-> E1[WAF]
+    E -.-> E2[Monitoring]
+    E -.-> E3[Bug Bounty]
+```
 
 **Практический CI/CD pipeline:**
 
@@ -1422,16 +1475,19 @@ public class VaultConfig {
 
 `CVSS` оценивает уязвимость «в вакууме», но реальный приоритет задаёт **бизнес-контекст**: одна и та же CVE критична на публичном API и почти безобидна во внутреннем сервисе за VPN. Поэтому базовый CVSS-балл — лишь отправная точка, дальше его корректируют по эксплуатируемости и тому, что именно стоит за уязвимым кодом:
 
-Когда уязвимость обнаружена, приоритет определяется по `CVSS score`, а для верхних классов — ещё и по дополнительному вопросу:
-
-- **9–10 (Critical)** → уточняем: эксплуатируемая?
-  - **Да** → немедленно (SLA: 24 часа);
-  - **Нет** → SLA: 7 дней.
-- **7–8.9 (High)** → уточняем: публичный сервис?
-  - **Да** → SLA: 7 дней;
-  - **Нет** → SLA: 30 дней.
-- **4–6.9 (Medium)** → SLA: 30 дней.
-- **0–3.9 (Low)** → backlog.
+```mermaid
+graph TD
+    A[Уязвимость обнаружена] --> B{CVSS score}
+    B -->|9-10 Critical| C{Эксплуатируемая?}
+    B -->|7-8.9 High| D{Публичный сервис?}
+    B -->|4-6.9 Medium| E[SLA: 30 дней]
+    B -->|0-3.9 Low| F[Backlog]
+    
+    C -->|Да| G[Немедленно<br/>SLA: 24 часа]
+    C -->|Нет| H[SLA: 7 дней]
+    D -->|Да| I[SLA: 7 дней]
+    D -->|Нет| J[SLA: 30 дней]
+```
 
 **Факторы приоритизации:**
 - **Exploitability** — есть ли публичный эксплойт?
@@ -1446,16 +1502,20 @@ public class VaultConfig {
 
 ## Q39. Что такое Defense in Depth и как применять на практике?
 
-`Defense in Depth` — принцип многоуровневой защиты, где слои **независимы**: ни один не считается непробиваемым, поэтому за каждым стоит следующий. Если атакующий обошёл один (или разработчик ошибся в одном слое), систему всё ещё прикрывают остальные. Уровни защиты выстраиваются от внешнего периметра к данным, запрос проходит через них по порядку:
+`Defense in Depth` — принцип многоуровневой защиты, где слои **независимы**: ни один не считается непробиваемым, поэтому за каждым стоит следующий. Если атакующий обошёл один (или разработчик ошибся в одном слое), систему всё ещё прикрывают остальные:
 
-1. `WAF / CDN`
-2. `Network / Firewall`
-3. `Load Balancer / TLS`
-4. `API Gateway / Rate Limiting`
-5. `Spring Security Filter Chain`
-6. `@PreAuthorize` на методах
-7. `Business Logic Validation` (бизнес-валидация)
-8. `Row Level Security` в БД
+```mermaid
+graph TB
+    subgraph "Уровни защиты"
+        A[WAF / CDN] --> B[Network / Firewall]
+        B --> C[Load Balancer / TLS]
+        C --> D[API Gateway / Rate Limiting]
+        D --> E[Spring Security Filter Chain]
+        E --> F["@PreAuthorize на методах"]
+        F --> G[Business Logic Validation]
+        G --> H[Row Level Security в БД]
+    end
+```
 
 **Пример — защита API перевода денег:**
 

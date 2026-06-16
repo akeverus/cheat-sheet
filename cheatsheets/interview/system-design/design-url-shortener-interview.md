@@ -404,14 +404,15 @@ Table: urls
 
 Ответ — многослойный кеш, и других вариантов по сути нет. Один популярный URL может обслуживать миллиарды редиректов (read amplification), и доводить каждый из них до БД нереально. Идея: ловить чтение как можно ближе к пользователю и как можно раньше в цепочке (browser → CDN → Redis → DB), чтобы до origin-БД доходили доли процента трафика.
 
-Цепочка чтения по слоям (стрелки — путь запроса при промахе):
-
-- `User` → `CDN Edge`.
-- `CDN Edge` → при miss (~30%) → `Load Balancer`.
-- `Load Balancer` → `App Server`.
-- `App Server` → `Redis Cluster`.
-- `Redis Cluster` → при miss (~5%) → `DB Read Replica`.
-- `DB Read Replica` → при miss → `DB Primary`.
+```mermaid
+graph LR
+  User --> CDN[CDN Edge]
+  CDN -->|miss 30%| LB[Load Balancer]
+  LB --> App[App Server]
+  App --> Redis[Redis Cluster]
+  Redis -->|miss 5%| ReplicaDB[(DB Read Replica)]
+  ReplicaDB -->|miss| PrimaryDB[(DB Primary)]
+```
 
 **Слои:**
 
@@ -579,13 +580,14 @@ Cron в окне низкого трафика, батч 10K строк.
 
 **Конвейер (pipeline):**
 
-Поток данных по конвейеру:
-
-- `Redirect Service` → асинхронно (fire-and-forget) → `Kafka` (топик `url_clicks`).
-- `Kafka` → `Flink` (1-минутное tumbling window).
-- `Flink` → `ClickHouse` (таблица `clicks_aggregated`).
-- `ClickHouse` → батчем раз в минуту → `Main DB` (поле `click_count`).
-- `ClickHouse` → `Real-time Dashboard`.
+```mermaid
+graph LR
+  Redirect[Redirect Service] -->|async fire-and-forget| Kafka[(Kafka<br/>url_clicks)]
+  Kafka --> Flink[Flink<br/>1-min tumbling]
+  Flink --> CH[(ClickHouse<br/>clicks_aggregated)]
+  CH -->|batch /min| DB[(Main DB<br/>click_count)]
+  CH --> Dash[Real-time<br/>Dashboard]
+```
 
 **Путь редиректа остаётся read-only:**
 - После `302 Found` приложение асинхронно публикует событие в Kafka (fire-and-forget с локальным дисковым буфером ради durability при отказе Kafka).
@@ -799,37 +801,36 @@ Retry-After: 13
 
 Архитектура разделена на два независимых пути и асинхронный хвост аналитики. **Read-путь** (редирект, 99% трафика) идёт через слои кеша CDN → Redis → DB и максимально лёгкий. **Write-путь** (shorten) проходит тяжёлую логику — генерацию кода, скан Safe Browsing, вставку в БД. Аналитика отщеплена в Kafka → Flink → ClickHouse и никогда не блокирует редирект. Shorten- и Redirect-сервисы разделены намеренно: их можно масштабировать независимо (редирект-нагрузка в десятки раз выше).
 
-Узлы системы:
+```mermaid
+graph LR
+  C[Client]
+  CDN[CDN edge<br/>CloudFront/Cloudflare]
+  LB[Load Balancer<br/>ELB Multi-AZ]
+  GW[API Gateway<br/>auth + rate limit]
+  SS[Shorten Service<br/>Snowflake ID gen]
+  RS[Redirect Service<br/>read-only path]
+  Redis[(Redis Cluster<br/>hot URLs)]
+  DB[(DynamoDB<br/>primary store)]
+  Replica[(DB Read Replicas)]
+  Safe[Safe Browsing<br/>API]
+  Kafka[(Kafka<br/>url_clicks)]
+  Flink[Flink<br/>aggregation]
+  CH[(ClickHouse<br/>analytics)]
 
-- `Client` — клиент.
-- `CDN edge` (CloudFront/Cloudflare).
-- `Load Balancer` (ELB Multi-AZ).
-- `API Gateway` (auth + rate limit).
-- `Shorten Service` (генерация ID через Snowflake).
-- `Redirect Service` (read-only path).
-- `Redis Cluster` (hot URLs).
-- `DynamoDB` (primary store).
-- `DB Read Replicas`.
-- `Safe Browsing API`.
-- `Kafka` (топик `url_clicks`).
-- `Flink` (aggregation).
-- `ClickHouse` (analytics).
-
-Связи (стрелки — направление вызова):
-
-- `Client` → `CDN edge`.
-- `CDN edge` → при cache hit → возвращает ответ `Client`.
-- `CDN edge` → при miss → `Load Balancer` → `API Gateway`.
-- `API Gateway` → `Shorten Service`.
-- `API Gateway` → `Redirect Service`.
-- `Shorten Service` → `Safe Browsing API`.
-- `Shorten Service` → `DynamoDB`.
-- `Shorten Service` → `Redis Cluster`.
-- `Redirect Service` → `Redis Cluster`.
-- `Redirect Service` → `DynamoDB`.
-- `DynamoDB` → `DB Read Replicas`.
-- `Redirect Service` → асинхронно → `Kafka`.
-- `Kafka` → `Flink` → `ClickHouse`.
+  C --> CDN
+  CDN -->|cache hit| C
+  CDN -->|miss| LB --> GW
+  GW --> SS
+  GW --> RS
+  SS --> Safe
+  SS --> DB
+  SS --> Redis
+  RS --> Redis
+  RS --> DB
+  DB --> Replica
+  RS -.async.-> Kafka
+  Kafka --> Flink --> CH
+```
 
 **Границы сервисов:**
 - **CDN edge** — кеширует редиректы близко к пользователю (latency 5-20 ms).

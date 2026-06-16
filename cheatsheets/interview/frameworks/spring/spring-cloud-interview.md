@@ -131,14 +131,31 @@ updated: "2026-05-07"
 - **Трассировка** — сквозное отслеживание запроса через цепочку сервисов (`Micrometer Tracing` + `Zipkin`/`Jaeger`)
 - **Обмен сообщениями** — единая абстракция над брокерами (`Spring Cloud Stream`)
 
-Как это связано в типовой системе:
+```mermaid
+graph TB
+    Client[Клиент] --> GW[Spring Cloud Gateway]
+    GW --> S1[Service A]
+    GW --> S2[Service B]
+    GW --> S3[Service C]
+    S1 <--> S2
+    S2 <--> S3
+    S1 --> EUR[Eureka Server]
+    S2 --> EUR
+    S3 --> EUR
+    GW --> EUR
+    S1 --> CFG[Config Server]
+    S2 --> CFG
+    S3 --> CFG
+    CFG --> GIT[(Git Repo)]
+    S1 --> ZIP[Zipkin]
+    S2 --> ZIP
+    S3 --> ZIP
 
-- `Клиент` → `Spring Cloud Gateway` (единая точка входа).
-- `Spring Cloud Gateway` маршрутизирует запросы к `Service A`, `Service B`, `Service C`.
-- Сервисы общаются между собой: `Service A` ↔ `Service B`, `Service B` ↔ `Service C`.
-- Все сервисы и сам Gateway регистрируются и обращаются к `Eureka Server` (service discovery).
-- Все сервисы тянут настройки из `Config Server`, который, в свою очередь, читает их из `Git Repo`.
-- Все сервисы экспортируют спаны трассировки в `Zipkin`.
+    style GW fill:#4a9eff,color:#fff
+    style EUR fill:#ff6b6b,color:#fff
+    style CFG fill:#51cf66,color:#fff
+    style ZIP fill:#ffd43b,color:#000
+```
 
 **Важный нюанс для собеседования:** `Spring Cloud` — это не облачная платформа, а набор библиотек. Слово «Cloud» в названии вводит в заблуждение: код одинаково работает и в публичном облаке (AWS, Azure, GCP), и on-premise. Никакой привязки к конкретному провайдеру нет.
 
@@ -272,13 +289,18 @@ management:
 - **Config Server** — HTTP-сервер, раздаёт конфигурацию из Git, файловой системы или Vault
 - **Config Client** — встроен в каждый микросервис, при старте идёт к серверу и подтягивает свои настройки
 
-Порядок загрузки конфигурации (участники: микросервис-`Client`, `Config Server`, `Git Repository`):
+```mermaid
+sequenceDiagram
+    participant S as Микросервис (Client)
+    participant CS as Config Server
+    participant Git as Git Repository
 
-1. Микросервис (`Client`) отправляет `GET /{application}/{profile}` на `Config Server`.
-2. `Config Server` читает нужный файл конфигурации из `Git Repository`.
-3. `Git Repository` возвращает файл (например, `application-prod.yml`).
-4. `Config Server` отдаёт микросервису конфигурацию в виде JSON.
-5. Микросервис применяет полученные настройки.
+    S->>CS: GET /{application}/{profile}
+    CS->>Git: Читает файл конфигурации
+    Git-->>CS: application-prod.yml
+    CS-->>S: JSON с конфигурацией
+    Note over S: Применяет настройки
+```
 
 **Ключевые возможности:**
 - Профили окружений (`dev`, `staging`, `prod`) — один сервис, разные настройки по профилю
@@ -365,13 +387,23 @@ implementation 'org.springframework.cloud:spring-cloud-starter-config'
 
 `Spring Cloud Bus` связывает узлы распределённой системы через общую шину сообщений (`RabbitMQ` или [Kafka](../../messaging/kafka-interview.md)). Решает проблему масштаба: обновить конфигурацию через `/actuator/refresh` на каждом из сотни инстансов вручную невозможно. Bus позволяет послать одно событие — и оно само разойдётся по всем сервисам через брокер. Основное применение — **массовое обновление конфигурации** без рестарта.
 
-Порядок массового обновления через шину (участники: `Git Repo`, `Config Server`, `Message Broker` — RabbitMQ/Kafka, `Service A` инстанс 1, `Service A` инстанс 2, `Service B`):
+```mermaid
+sequenceDiagram
+    participant Git as Git Repo
+    participant CS as Config Server
+    participant Bus as Message Broker<br/>(RabbitMQ/Kafka)
+    participant S1 as Service A (inst 1)
+    participant S2 as Service A (inst 2)
+    participant S3 as Service B
 
-1. `Git Repo` дёргает `webhook` (на push) → `Config Server`.
-2. `Config Server` вызывает у себя `/actuator/busrefresh`.
-3. `Config Server` публикует `RefreshRemoteApplicationEvent` в `Message Broker`.
-4. `Message Broker` рассылает `Refresh` всем подписанным узлам: `Service A` (инстанс 1), `Service A` (инстанс 2), `Service B`.
-5. В итоге все сервисы перечитывают конфигурацию из `Config Server`.
+    Git->>CS: webhook (push)
+    CS->>CS: /actuator/busrefresh
+    CS->>Bus: RefreshRemoteApplicationEvent
+    Bus->>S1: Refresh
+    Bus->>S2: Refresh
+    Bus->>S3: Refresh
+    Note over S1,S3: Все сервисы перечитывают<br/>конфигурацию из Config Server
+```
 
 ```yaml
 # Подключение Spring Cloud Bus через RabbitMQ
@@ -398,13 +430,23 @@ management:
 
 `Eureka` — сервер обнаружения сервисов из экосистемы Netflix OSS. Реализует паттерн **Service Registry**: это «телефонная книга» системы. Каждый микросервис при старте регистрируется в Eureka (записывает свой адрес), а когда ему нужно вызвать другой сервис — спрашивает у Eureka список живых инстансов по имени, а не хранит адреса у себя. Так система переживает добавление, удаление и перезапуск инстансов без перенастройки.
 
-Схема взаимодействия:
+```mermaid
+graph LR
+    subgraph Eureka Cluster
+        E1[Eureka Server 1]
+        E2[Eureka Server 2]
+        E1 <-->|peer replication| E2
+    end
 
-- **Eureka Cluster** состоит из `Eureka Server 1` и `Eureka Server 2`, которые реплицируют реестр друг другу (`peer replication`, двусторонняя связь).
-- `Service A` (инстанс 1) — `register + heartbeat` → `Eureka Server 1`.
-- `Service A` (инстанс 2) — `register + heartbeat` → `Eureka Server 2`.
-- `Service B` — `register + heartbeat` → `Eureka Server 1`, а также `fetch registry` → `Eureka Server 1` (скачивает реестр).
-- Получив адрес из реестра, `Service B` напрямую вызывает `Service A` (инстанс 1).
+    SA1[Service A - inst 1] -->|register + heartbeat| E1
+    SA2[Service A - inst 2] -->|register + heartbeat| E2
+    SB[Service B] -->|register + heartbeat| E1
+    SB -->|fetch registry| E1
+    SB -->|вызывает Service A| SA1
+
+    style E1 fill:#ff6b6b,color:#fff
+    style E2 fill:#ff6b6b,color:#fff
+```
 
 **Механизм работы:**
 1. **Register** — сервис при старте отправляет POST в Eureka с метаданными (имя, хост, порт, health URL)
@@ -533,12 +575,22 @@ GET    /eureka/apps/{appId}          — инстансы конкретного
 
 Рекомендуется **минимум 3 инстанса** для отказоустойчивости. Каждый инстанс размещается в отдельной зоне доступности (Availability Zone).
 
-Топология кластера:
+```mermaid
+graph TB
+    subgraph AZ-1
+        E1[Eureka 1]
+    end
+    subgraph AZ-2
+        E2[Eureka 2]
+    end
+    subgraph AZ-3
+        E3[Eureka 3]
+    end
 
-- `Eureka 1` — в зоне доступности `AZ-1`.
-- `Eureka 2` — в зоне доступности `AZ-2`.
-- `Eureka 3` — в зоне доступности `AZ-3`.
-- Инстансы реплицируют реестр по кольцу: `Eureka 1` ↔ `Eureka 2` ↔ `Eureka 3` ↔ `Eureka 1`.
+    E1 <-->|replication| E2
+    E2 <-->|replication| E3
+    E3 <-->|replication| E1
+```
 
 При потере одного инстанса два оставшихся продолжают обслуживать запросы. Eureka — AP-система, поэтому при разделении сети каждая часть кластера продолжит отдавать (возможно, устаревший) реестр.
 
@@ -554,13 +606,23 @@ GET    /eureka/apps/{appId}          — инстансы конкретного
 - **WebSocket** — поддержка WebSocket-проксирования
 - **Rate Limiting** — встроенный `RequestRateLimiter` через Redis
 
-Как запрос проходит через Gateway:
+```mermaid
+graph LR
+    C[Client] --> GW[Spring Cloud Gateway]
+    GW -->|/api/orders/**| OS[Order Service]
+    GW -->|/api/products/**| PS[Product Service]
+    GW -->|/api/users/**| US[User Service]
 
-- `Client` → `Spring Cloud Gateway`, и далее Gateway маршрутизирует по path:
-  - `/api/orders/**` → `Order Service`;
-  - `/api/products/**` → `Product Service`;
-  - `/api/users/**` → `User Service`.
-- Перед попаданием в Gateway запрос от `Client` проходит цепочку фильтров по порядку: `Auth Filter` → `Rate Limiter` → `Logging Filter` → `Spring Cloud Gateway`.
+    subgraph Фильтры
+        F1[Auth Filter]
+        F2[Rate Limiter]
+        F3[Logging Filter]
+    end
+
+    C --> F1 --> F2 --> F3 --> GW
+
+    style GW fill:#4a9eff,color:#fff
+```
 
 Подробнее о реактивном стеке в [вопросах по Spring WebFlux](spring-webflux-interview.md).
 
@@ -667,14 +729,21 @@ implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
 
 `Spring Cloud` использует **клиентскую балансировку**: нет отдельного балансировщика-посредника — клиент сам берёт из реестра Eureka список инстансов нужного сервиса и сам решает, к какому обратиться (по умолчанию Round Robin). Отличие от серверной балансировки (nginx, k8s Service): там трафик идёт через общий прокси, здесь логика выбора живёт в каждом клиенте. Плюс — нет лишнего сетевого хопа и единой точки отказа; минус — балансировщик размазан по всем клиентам.
 
-Порядок клиентской балансировки (участники: `Order Service`, `LoadBalancer`, `Eureka`, `Product Service` инстанс 1, `Product Service` инстанс 2):
+```mermaid
+sequenceDiagram
+    participant C as Order Service
+    participant LB as LoadBalancer
+    participant E as Eureka
+    participant P1 as Product Service (inst 1)
+    participant P2 as Product Service (inst 2)
 
-1. `Order Service` запрашивает у `Eureka` инстансы `product-service`.
-2. `Eureka` возвращает список: `[inst1:8081, inst2:8082]`.
-3. `Order Service` просит `LoadBalancer` выбрать инстанс.
-4. `LoadBalancer` возвращает `inst1:8081` (по стратегии Round Robin).
-5. `Order Service` делает `GET /products/123` на `Product Service` (инстанс 1).
-6. `Product Service` (инстанс 1) возвращает данные продукта.
+    C->>E: Получить инстансы product-service
+    E-->>C: [inst1:8081, inst2:8082]
+    C->>LB: Выбрать инстанс
+    LB-->>C: inst1:8081 (Round Robin)
+    C->>P1: GET /products/123
+    P1-->>C: Product data
+```
 
 ```java
 @Configuration
@@ -749,18 +818,18 @@ spring:
 
 Состояния автомата:
 
-Состояния:
+```mermaid
+stateDiagram-v2
+    [*] --> CLOSED
+    CLOSED --> OPEN: Превышен порог ошибок<br/>(failureRateThreshold)
+    OPEN --> HALF_OPEN: Истёк таймаут ожидания<br/>(waitDurationInOpenState)
+    HALF_OPEN --> CLOSED: Пробные вызовы успешны
+    HALF_OPEN --> OPEN: Пробные вызовы неуспешны
 
-- **`CLOSED`** — запросы проходят нормально, ошибки считаются в sliding window. Начальное состояние.
-- **`OPEN`** — все запросы сразу отклоняются, вызывается fallback-метод.
-- **`HALF_OPEN`** — пропускается N пробных запросов для проверки, ожил ли сервис.
-
-Переходы:
-
-- `CLOSED` → `OPEN`: превышен порог ошибок (`failureRateThreshold`).
-- `OPEN` → `HALF_OPEN`: истёк таймаут ожидания (`waitDurationInOpenState`).
-- `HALF_OPEN` → `CLOSED`: пробные вызовы успешны.
-- `HALF_OPEN` → `OPEN`: пробные вызовы неуспешны.
+    CLOSED: Запросы проходят нормально.<br/>Считаются ошибки в sliding window.
+    OPEN: Все запросы сразу отклоняются.<br/>Вызывается fallback-метод.
+    HALF_OPEN: Пропускается N пробных<br/>запросов для проверки.
+```
 
 **Что даёт паттерн:**
 - **Предотвращение каскадных сбоев** — неработающий сервис не «утаскивает» за собой остальные
@@ -970,15 +1039,19 @@ implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-re
 
 Distributed tracing — это отслеживание пути одного запроса через всю цепочку микросервисов. Решает главную боль микросервисов: когда запрос проходит через 5–10 сервисов, по логам отдельных сервисов невозможно понять, где он замедлился или упал. Идея — присвоить запросу сквозной `traceId`, который пробрасывается во все вызовы, а каждый отдельный шаг (HTTP-вызов, запрос в БД) получает свой `spanId`. Собрав все спаны с одним `traceId` в трассировщике (Zipkin/Jaeger), вы видите полную картину: дерево вызовов и время каждого шага.
 
-Как `traceId` проходит по цепочке (один `traceId=abc123` на весь путь, у каждого шага свой `spanId`):
+```mermaid
+graph LR
+    C[Client] -->|traceId=abc123| GW[Gateway]
+    GW -->|traceId=abc123<br/>spanId=s1| OS[Order Service]
+    OS -->|traceId=abc123<br/>spanId=s2| PS[Product Service]
+    OS -->|traceId=abc123<br/>spanId=s3| IS[Inventory Service]
+    PS -->|traceId=abc123<br/>spanId=s4| DB[(Database)]
 
-- `Client` → `Gateway` (`traceId=abc123`).
-- `Gateway` → `Order Service` (`traceId=abc123`, `spanId=s1`).
-- `Order Service` → `Product Service` (`traceId=abc123`, `spanId=s2`).
-- `Order Service` → `Inventory Service` (`traceId=abc123`, `spanId=s3`).
-- `Product Service` → `Database` (`traceId=abc123`, `spanId=s4`).
-
-Параллельно каждый сервис (`Gateway`, `Order Service`, `Product Service`, `Inventory Service`) экспортирует свои спаны (`export spans`) в `Zipkin / Jaeger`.
+    OS -.->|export spans| ZIP[Zipkin / Jaeger]
+    PS -.->|export spans| ZIP
+    IS -.->|export spans| ZIP
+    GW -.->|export spans| ZIP
+```
 
 **Ключевые понятия:**
 - **Trace** — полный путь запроса (один `traceId` на весь путь)
@@ -1045,13 +1118,26 @@ public class OrderService {
 
 `Spring Cloud Stream` — фреймворк для event-driven микросервисов. Главная ценность: он отделяет бизнес-логику обработки сообщений от конкретного брокера. Вы пишете обычную `Function`/`Consumer`/`Supplier`, не зная, Kafka это или RabbitMQ; за подключение к брокеру отвечает **биндер** (binder) — сменная зависимость. Поменять Kafka на RabbitMQ — это замена стартера в `build.gradle` и пары строк конфигурации, без правок кода.
 
-Поток сообщения от производителя к потребителю:
+```mermaid
+graph LR
+    subgraph Producer
+        P[Order Service]
+        O[Function<br/>orderCreated]
+    end
 
-- **Producer**: `Order Service` с функцией `Function orderCreated`.
-- **Binder**: `Kafka / RabbitMQ` (адаптер к брокеру).
-- **Consumer**: `Notification Service` с функцией `Consumer processOrder`.
+    subgraph Binder
+        K[Kafka / RabbitMQ]
+    end
 
-По порядку: `Order Service` → `Function orderCreated` → `Kafka / RabbitMQ` (binder) → `Consumer processOrder` → `Notification Service`.
+    subgraph Consumer
+        C[Notification Service]
+        F[Consumer<br/>processOrder]
+    end
+
+    P --> O --> K --> F --> C
+
+    style K fill:#ffd43b,color:#000
+```
 
 **Ключевые концепции:**
 - **Binder** — адаптер к конкретному брокеру (`spring-cloud-stream-binder-kafka`, `...-rabbit`)

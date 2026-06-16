@@ -129,11 +129,15 @@ updated: "2026-04-25"
 
 **Коротко: data plane — это sidecar-прокси, несущие реальный трафик; control plane — управляющие компоненты, которые их конфигурируют и наблюдают.** Сам пользовательский трафик через control plane не идёт — это даёт отказоустойчивость: его падение не рвёт уже установленные соединения.
 
-Топология выглядит так:
-
-- **Control Plane** (`destination`, `identity`, `proxy-injector`) рассылает конфигурацию (`config`) каждому прокси — `linkerd2-proxy 1` и `linkerd2-proxy 2`.
-- Каждый прокси стоит рядом со своим приложением: `linkerd2-proxy 1` — у `App 1`, `linkerd2-proxy 2` — у `App 2`.
-- Между собой прокси общаются по `mTLS`: `linkerd2-proxy 1` ↔ `linkerd2-proxy 2`.
+```mermaid
+graph TD
+    Control[Control Plane<br/>destination, identity, proxy-injector]
+    Control -.config.- P1[linkerd2-proxy 1]
+    Control -.config.- P2[linkerd2-proxy 2]
+    P1 --- App1[App 1]
+    P2 --- App2[App 2]
+    P1 -.mTLS.- P2
+```
 
 **Компоненты control plane:**
 - **destination** — service discovery: подсказывает прокси, куда слать запрос.

@@ -125,16 +125,20 @@ updated: "2026-05-07"
 - **Аудит** — отслеживание событий безопасности (логины, отказы доступа).
 - **Управление** — изменение уровня логирования на лету и graceful shutdown без перезапуска.
 
-Как данные расходятся от приложения к инфраструктуре мониторинга:
-
-- `Spring Boot Application` → `Actuator Module`, который выставляет два транспорта:
-  - `HTTP Endpoints` — HTTP-эндпоинты;
-  - `JMX Beans` — JMX-бины.
-- Через `HTTP Endpoints` доступны эндпоинты: `/actuator/health`, `/actuator/metrics`, `/actuator/info`, `/actuator/prometheus`.
-- Дальше эндпоинты питают внешние системы:
-  - `/actuator/health` → `Kubernetes Probes` (liveness/readiness-пробы);
-  - `/actuator/metrics` → `Micrometer Registry`;
-  - `/actuator/prometheus` → `Prometheus Server` → `Grafana Dashboard`.
+```mermaid
+graph TB
+    A[Spring Boot Application] --> B[Actuator Module]
+    B --> C[HTTP Endpoints]
+    B --> D[JMX Beans]
+    C --> E["/actuator/health"]
+    C --> F["/actuator/metrics"]
+    C --> G["/actuator/info"]
+    C --> H["/actuator/prometheus"]
+    E --> I[Kubernetes Probes]
+    F --> J[Micrometer Registry]
+    H --> K[Prometheus Server]
+    K --> L[Grafana Dashboard]
+```
 
 В контексте [микросервисной архитектуры](../../architecture/microservices-interview.md) `Actuator` является ключевым элементом [observability](../../monitoring/observability-interview.md)-стека — он предоставляет данные для систем мониторинга и оркестрации.
 
@@ -507,6 +511,21 @@ management:
 - `/actuator/health/readiness`
 - `/actuator/health/critical`
 
+```mermaid
+graph LR
+    H["/actuator/health"] --> L["/health/liveness"]
+    H --> R["/health/readiness"]
+    H --> C["/health/critical"]
+    L --> LS[livenessState]
+    L --> P[ping]
+    R --> RS[readinessState]
+    R --> DB[db]
+    R --> RD[redis]
+    C --> DB2[db]
+    C --> RD2[redis]
+    C --> KF[kafka]
+```
+
 ---
 
 ## Q12. Какие встроенные Health Indicators есть в Spring Boot?
@@ -832,14 +851,20 @@ public class InfoWebExtension {
 
 Зачем это нужно: сменить бэкенд мониторинга (например, мигрировать с Datadog на Prometheus) можно заменой одной зависимости, не трогая код инструментации. Именно через Micrometer `Actuator` собирает все метрики.
 
-Как метрика проходит путь от кода до конкретного бэкенда:
-
-- `Application Code` пишет метрики через `Micrometer API`, а тот — в абстрактный `MeterRegistry`.
-- `MeterRegistry` — это точка подмены реализации; от того, какой registry в classpath, зависит конечный бэкенд:
-  - `PrometheusMeterRegistry` → `Prometheus` → `Grafana`;
-  - `DatadogMeterRegistry` → `Datadog`;
-  - `InfluxMeterRegistry` → `InfluxDB`;
-  - `JmxMeterRegistry` → `JMX Console`.
+```mermaid
+graph TB
+    A[Application Code] --> B[Micrometer API]
+    B --> C[MeterRegistry]
+    C --> D[PrometheusMeterRegistry]
+    C --> E[DatadogMeterRegistry]
+    C --> F[InfluxMeterRegistry]
+    C --> G[JmxMeterRegistry]
+    D --> H[Prometheus]
+    E --> I[Datadog]
+    F --> J[InfluxDB]
+    G --> K[JMX Console]
+    H --> L[Grafana]
+```
 
 `Spring Boot Actuator` автоматически настраивает `Micrometer` и из коробки регистрирует основные метрики приложения — их не нужно писать вручную:
 - **JVM** — память, GC, потоки, загрузка классов
@@ -1057,11 +1082,13 @@ http_server_requests_seconds_count{method="GET",uri="/api/users",status="200"} 1
 http_server_requests_seconds_sum{method="GET",uri="/api/users",status="200"} 12.345
 ```
 
-Поток данных в pull-модели по порядку:
-
-- `Spring Boot App` выставляет метрики на `/actuator/prometheus`, откуда их забирает (scrape) `Prometheus`.
-- `Prometheus` отдаёт данные в `Grafana` по `PromQL queries`.
-- `Grafana` на их основе строит `Dashboard` (графики) и `Alerts` (правила оповещений).
+```mermaid
+graph LR
+    A[Spring Boot App] -->|"/actuator/prometheus"| B[Prometheus]
+    B -->|"PromQL queries"| C[Grafana]
+    C --> D[Dashboard]
+    C --> E[Alerts]
+```
 
 ---
 
@@ -1153,12 +1180,16 @@ management:
       enabled: true             # отдельный SSL для management
 ```
 
-Как разносятся два порта одного `Spring Boot App` по сетям и потребителям:
-
-- Внешний контур: `Internet` обращается по порту `:8080` к `Load Balancer`, а тот — к `App Port 8080` (основной порт приложения).
-- Внутренний контур: `Internal Network` обращается по порту `:9090` к `Management Port 9090` (порт Actuator).
-- Оба порта — `App Port 8080` и `Management Port 9090` — принадлежат одному и тому же `Spring Boot App`.
-- К `Management Port 9090` подключаются только внутренние потребители: `Prometheus` (scrape метрик) и `Kubernetes Probes` (liveness/readiness).
+```mermaid
+graph LR
+    I[Internet] -->|":8080"| LB[Load Balancer]
+    LB --> A[App Port 8080]
+    N[Internal Network] -->|":9090"| M[Management Port 9090]
+    A --- APP[Spring Boot App]
+    M --- APP
+    M --> P[Prometheus]
+    M --> K[Kubernetes Probes]
+```
 
 При использовании отдельного порта `Actuator` запускает собственный embedded-сервер с независимой конфигурацией SSL и адресов.
 

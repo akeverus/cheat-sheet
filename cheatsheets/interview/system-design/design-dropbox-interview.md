@@ -417,17 +417,19 @@ hash(i+1) = hash(i) - byte_at(i) + byte_at(i + B)
 
 ## Q10. (!) Архитектура sync engine (watcher → diff → upload → notify)?
 
-Поток данных в конвейере (стрелка → читается как «передаёт дальше», подпись на стрелке — что именно передаётся):
-
-- `File System` --(события `inotify`/`FSEvents`)--> `Watcher`
-- `Watcher` --(change events)--> `Local queue`
-- `Local queue` --> `Diff engine` (chunk + hash)
-- `Diff engine` --(новые SHA256)--> `Server check` (which missing?)
-- `Server check` --(miss list)--> `Uploader` (parallel)
-- `Uploader` --(chunks)--> `Block Server`
-- `Uploader` --(commit)--> `Metadata Server`
-- `Metadata Server` --(notify)--> `Notification Service`
-- `Notification Service` --(push)--> `Peer devices`
+```mermaid
+graph LR
+    FS[File System]
+    FS -->|inotify/FSEvents| W[Watcher]
+    W -->|change events| Q[Local queue]
+    Q --> D[Diff engine<br/>chunk + hash]
+    D -->|new SHA256s| Check[Server check<br/>which missing?]
+    Check -->|miss list| Up[Uploader<br/>parallel]
+    Up -->|chunks| Block[Block Server]
+    Up -->|commit| Meta[Metadata Server]
+    Meta -->|notify| N[Notification Service]
+    N -->|push| Peers[Peer devices]
+```
 
 Sync engine — это конвейер на клиенте, который превращает «пользователь сохранил файл» в «файл появился на всех устройствах». Поток линейный: ОС сообщает об изменении → diff engine считает, что именно изменилось → uploader заливает только новые чанки → сервер коммитит метаданные и шлёт push остальным устройствам. Каждый компонент решает одну задачу, а локальная очередь делает весь конвейер устойчивым к падениям.
 
@@ -749,33 +751,32 @@ CREATE INDEX idx_deleted ON files (deleted_at) WHERE deleted_at IS NOT NULL;
 
 ## Q18. (!) Архитектура верхнего уровня (block + metadata + notification)?
 
-Узлы системы:
+```mermaid
+graph LR
+    Client[Desktop/Mobile/Web]
+    Edge[Edge POP<br/>connection LB]
+    Auth[Auth Service]
+    Meta[Metadata Service<br/>sharded Postgres/Vitess]
+    Block[Block Service]
+    MP[(Magic Pocket<br/>exabyte storage)]
+    Notif[Notification Service<br/>long-polling]
+    Search[Search Service<br/>Elasticsearch]
+    Cache[(EdgeCache<br/>metadata)]
+    Kafka[(Kafka<br/>events)]
+    Analytics[Analytics Pipeline]
 
-- `Client` (Desktop/Mobile/Web)
-- `Edge POP` (connection LB)
-- `Auth Service`
-- `Metadata Service` (sharded Postgres/Vitess)
-- `Block Service`
-- `Magic Pocket` (exabyte storage)
-- `Notification Service` (long-polling)
-- `Search Service` (Elasticsearch)
-- `EdgeCache` (metadata)
-- `Kafka` (events)
-- `Analytics Pipeline`
-
-Связи (стрелка → читается как «вызывает / шлёт в»):
-
-- `Client` --> `Edge POP`
-- `Edge POP` --> `Auth Service`
-- `Edge POP` --> `Metadata Service`
-- `Edge POP` --> `Block Service`
-- `Edge POP` --(long poll, постоянное соединение)--> `Notification Service`
-- `Metadata Service` --> `EdgeCache`
-- `Metadata Service` --(events)--> `Kafka`
-- `Block Service` --> `Magic Pocket`
-- `Kafka` --> `Notification Service`
-- `Kafka` --> `Search Service`
-- `Kafka` --> `Analytics Pipeline`
+    Client --> Edge
+    Edge --> Auth
+    Edge --> Meta
+    Edge --> Block
+    Edge -.long poll.-> Notif
+    Meta --> Cache
+    Meta -->|events| Kafka
+    Block --> MP
+    Kafka --> Notif
+    Kafka --> Search
+    Kafka --> Analytics
+```
 
 В основе — разделение на три независимых тракта: метаданные (Metadata Service), сами байты (Block Service → Magic Pocket) и оповещения об изменениях (Notification Service). Клиент ходит в каждый отдельно, а Kafka как шина событий связывает запись в метаданные с побочными эффектами — индексацией поиска, аналитикой и рассылкой уведомлений — не блокируя основной путь загрузки.
 

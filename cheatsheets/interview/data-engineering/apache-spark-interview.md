@@ -124,13 +124,17 @@ Hadoop MR ещё встречается в legacy-проектах, но все 
 
 ## Q3. (!) Архитектура Spark — Driver, Executor, Cluster Manager?
 
-Топология компонентов:
-
-- **Driver Program** (`SparkContext` / `SparkSession`) → запрашивает ресурсы у Cluster Manager
-- **Cluster Manager** (YARN / K8s / Standalone) → выделяет executor'ы на worker-узлах:
-  - **Executor 1** (Worker Node) → выполняет несколько Task параллельно (Task, Task)
-  - **Executor 2** (Worker Node) → выполняет Task
-  - **Executor 3** (Worker Node)
+```mermaid
+graph TD
+    Driver[Driver Program<br/>SparkContext / SparkSession]
+    Driver --> CM[Cluster Manager<br/>YARN / K8s / Standalone]
+    CM --> E1[Executor 1<br/>Worker Node]
+    CM --> E2[Executor 2<br/>Worker Node]
+    CM --> E3[Executor 3<br/>Worker Node]
+    E1 --> T1[Task]
+    E1 --> T2[Task]
+    E2 --> T3[Task]
+```
 
 Spark-приложение — это один **Driver** и несколько **Executor**'ов, а **Cluster Manager** связывает их, выделяя ресурсы. Driver — «мозг», который решает, что делать; executor'ы — «руки», которые считают.
 
@@ -269,16 +273,22 @@ val rdd3 = rdd2.filter(...)              // lineage: rdd2 → filter
 - `groupByKey`, `reduceByKey`, `join`, `repartition`, `distinct`
 - **Требуют shuffle** — данные перетасовываются по узлам через сеть и диск
 
-Схема зависимостей партиций:
-
-- **Narrow (`map`)** — один-к-одному, каждая входная партиция даёт ровно одну выходную:
-  - `Part 1` → `Part 1'`
-  - `Part 2` → `Part 2'`
-  - `Part 3` → `Part 3'`
-- **Wide (`groupByKey`)** — многие-ко-многим, каждая входная партиция вносит вклад в каждую выходную (это и есть shuffle):
-  - `Part 1` → `Part 1'`, `Part 2'`
-  - `Part 2` → `Part 1'`, `Part 2'`
-  - `Part 3` → `Part 1'`, `Part 2'`
+```mermaid
+graph LR
+    subgraph "Narrow (map)"
+        A1[Part 1] --> B1[Part 1']
+        A2[Part 2] --> B2[Part 2']
+        A3[Part 3] --> B3[Part 3']
+    end
+    subgraph "Wide (groupByKey)"
+        C1[Part 1] --> D1[Part 1']
+        C1 --> D2[Part 2']
+        C2[Part 2] --> D1
+        C2 --> D2
+        C3[Part 3] --> D1
+        C3 --> D2
+    end
+```
 
 Ключевой вывод: именно wide-операции создают границу stage (stage boundary) и запускают shuffle. Поэтому минимизация wide-операций — одна из главных оптимизаций Spark-джобы.
 

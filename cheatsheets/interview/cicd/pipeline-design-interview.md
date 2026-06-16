@@ -111,7 +111,20 @@ updated: "2026-04-25"
 
 Смысл pipeline — заменить ручные операции («собери, прогони тесты, выложи») воспроизводимым процессом, одинаковым для каждого коммита. Этапы выстроены по принципу «дёшево и быстро — раньше»: сначала компиляция и быстрые тесты, в конце — дорогой деплой.
 
-**Типичные этапы** идут линейной цепочкой: `Checkout` → `Build` → `Unit Tests` → `Integration Tests` → `Code Analysis` → `Build Image` → `Push to Registry` → `Deploy Dev` → `Deploy Staging` → `Deploy Prod`.
+**Типичные этапы:**
+
+```mermaid
+graph LR
+    A[Checkout] --> B[Build]
+    B --> C[Unit Tests]
+    C --> D[Integration Tests]
+    D --> E[Code Analysis]
+    E --> F[Build Image]
+    F --> G[Push to Registry]
+    G --> H[Deploy Dev]
+    H --> I[Deploy Staging]
+    I --> J[Deploy Prod]
+```
 
 1. **`Checkout`** — получение кода из репозитория
 2. **`Build`** — компиляция (`Gradle`, `Maven`)
@@ -151,11 +164,16 @@ updated: "2026-04-25"
 - **Последовательное** выполнение — каждый этап стартует после успеха предыдущего. Обязательно там, где есть зависимость по данным: сборка → тесты → образ (тесты нужен скомпилированный код, образ — собранный jar).
 - **Параллельное** — независимые проверки идут одновременно. Линтер, юнит-тесты и SpotBugs работают с одним и тем же исходником и не мешают друг другу, поэтому их можно запускать вместе. Это сокращает `pipeline` в 2-3 раза, потому что общее время становится равным самой долгой ветке, а не сумме всех.
 
-Граф зависимостей такого pipeline:
-
-- `Build` запускает параллельно три независимые проверки: `Unit Tests`, `Lint / Checkstyle`, `SpotBugs`.
-- `Integration Tests` стартуют только после того, как все три предыдущие проверки (`Unit Tests`, `Lint / Checkstyle`, `SpotBugs`) завершатся успешно.
-- После `Integration Tests` → `Build Docker Image`.
+```mermaid
+graph TD
+    A[Build] --> B[Unit Tests]
+    A --> C[Lint / Checkstyle]
+    A --> D[SpotBugs]
+    B --> E[Integration Tests]
+    C --> E
+    D --> E
+    E --> F[Build Docker Image]
+```
 
 **Пример параллельных этапов в `GitHub Actions`:**
 
@@ -244,9 +262,18 @@ pipeline {
 4. **Кэширование** — зависимости не скачиваются заново на каждом запуске, иначе быстрые этапы перестают быть быстрыми.
 5. **Инкрементальная сборка** — пересобирается только изменённое, а не весь проект целиком.
 
-Этапы выстраивают по возрастанию стоимости и длительности — от самых дешёвых и быстрых (зелёные) к самым дорогим и медленным (оранжевые):
-
-- `Lint` (~10s) → `Compile` (~30s) → `Unit Tests` (~1m) → `Integration Tests` (~5m) → `E2E Tests` (~15m).
+```mermaid
+graph LR
+    A[Lint<br/>10s] --> B[Compile<br/>30s]
+    B --> C[Unit Tests<br/>1m]
+    C --> D[Integration Tests<br/>5m]
+    D --> E[E2E Tests<br/>15m]
+    style A fill:#90EE90
+    style B fill:#90EE90
+    style C fill:#FFFF99
+    style D fill:#FFD700
+    style E fill:#FFA500
+```
 
 **Как это включается в `GitHub Actions`:** `fail-fast: true` в матрице отменяет остальные комбинации при падении одной. Зависимости между jobs (`needs`) гарантируют, что тяжёлые этапы вообще не стартуют при сломанной сборке — движок их пропускает.
 
@@ -948,11 +975,15 @@ buildCache {
 
 **Главный принцип — build once, deploy many:** образ собирается ровно один раз и затем продвигается по окружениям dev → staging → prod как есть, без пересборки. От окружения к окружению меняется только конфигурация (URL баз, секреты, фичефлаги), а сам бинарник один и тот же. Это критично: если под каждое окружение пересобирать заново, то в prod уедет не тот артефакт, который тестировали на staging, — и все проверки теряют смысл.
 
-Цепочка такого pipeline:
-
-- `Build & Test` → `Build Docker Image` (тег `myapp:abc1234`) → `Deploy Dev` (auto) → `Integration Tests` → `Deploy Staging` (auto) → `Smoke Tests` → `Deploy Prod` (manual approval).
-
-Один и тот же образ `myapp:abc1234` проходит все окружения без пересборки; деплой в dev и staging автоматический, а в prod — через ручной approval.
+```mermaid
+graph LR
+    A[Build & Test] --> B[Build Docker Image<br/>myapp:abc1234]
+    B --> C[Deploy Dev<br/>auto]
+    C --> D[Integration Tests]
+    D --> E[Deploy Staging<br/>auto]
+    E --> F[Smoke Tests]
+    F --> G[Deploy Prod<br/>manual approval]
+```
 
 **Два подхода к организации:**
 1. **Один pipeline с цепочкой этапов** — dev деплоится автоматически, staging после прохождения тестов, prod после ручного approval. Деплой выполняет сам pipeline (push-модель).
@@ -1012,18 +1043,23 @@ stage('Approve Prod Deploy') {
 
 ## Q21. (!) Как pipeline связан с ветками `Git` (`trunk-based`, `GitFlow`)?
 
-Потоки веток в двух моделях:
+```mermaid
+graph TD
+    subgraph "Trunk-based Development"
+        A[main] --> B[short-lived feature branch]
+        B -->|PR + CI| A
+        A -->|full pipeline| C[Deploy]
+    end
 
-- **Trunk-based Development:**
-  - `main` → ответвляется short-lived feature branch;
-  - feature branch вливается обратно в `main` через PR + CI;
-  - `main` запускает full pipeline → `Deploy`.
-- **GitFlow:**
-  - `develop` → ответвляется `feature/*`;
-  - `feature/*` вливается обратно в `develop` через PR;
-  - `develop` → ответвляется `release/*`;
-  - `release/*` деплоится на `Staging` (deploy staging) и вливается в `main` (merge);
-  - `main` деплоится на `Prod` (deploy prod).
+    subgraph "GitFlow"
+        D[develop] --> E[feature/*]
+        E -->|PR| D
+        D --> F[release/*]
+        F -->|deploy staging| G[Staging]
+        F -->|merge| H[main]
+        H -->|deploy prod| I[Prod]
+    end
+```
 
 | Аспект | `Trunk-based` | `GitFlow` |
 |--------|--------------|----------|
@@ -1077,11 +1113,14 @@ jobs:
 
 Тесты в pipeline располагают по пирамиде тестирования: много быстрых юнит-тестов в основании, меньше интеграционных в середине, совсем немного медленных e2e на вершине (подробнее в [стратегиях тестирования](../testing/test-strategies-interview.md)). В pipeline эта пирамида превращается в порядок запуска — снизу вверх, по принципу fail fast: дешёвое и быстрое раньше дорогого и медленного.
 
-Пирамида тестов сверху вниз (от вершины к основанию):
-
-- **E2E Tests** — немного, медленные, 5-15 мин (вершина);
-- **Integration Tests** — средне, умеренные, 2-5 мин (середина);
-- **Unit Tests** — много, быстрые, < 1 мин (основание, самые дешёвые).
+```mermaid
+graph TD
+    A[E2E Tests<br/>немного, медленные<br/>5-15 мин] --> B[Integration Tests<br/>средне, умеренные<br/>2-5 мин]
+    B --> C[Unit Tests<br/>много, быстрые<br/>< 1 мин]
+    style C fill:#90EE90
+    style B fill:#FFFF99
+    style A fill:#FFA500
+```
 
 **Порядок в pipeline и почему именно такой:**
 
@@ -1251,9 +1290,17 @@ withCredentials([
 
 Безопасность встраивают в pipeline по принципу shift-left — проверки сдвигают как можно левее (раньше), чтобы уязвимость нашлась при сборке, а не на проде. Каждый тип проверки смотрит на свой слой риска, поэтому в зрелом pipeline они дополняют друг друга, а не заменяют: `SAST` читает исходный код, dependency scan — чужие библиотеки, image scan — собранный образ, `DAST` — уже запущенное приложение.
 
-**Security gates в pipeline** выстраиваются в цепочку:
+**Security gates в pipeline:**
 
-- `Build` → `SAST` (SonarQube, SpotBugs) → `Dependency Check` (OWASP, Snyk) → `Build Image` → `Image Scan` (Trivy, Grype) → `DAST` (OWASP ZAP) → `Deploy`.
+```mermaid
+graph LR
+    A[Build] --> B[SAST<br/>SonarQube, SpotBugs]
+    B --> C[Dependency Check<br/>OWASP, Snyk]
+    C --> D[Build Image]
+    D --> E[Image Scan<br/>Trivy, Grype]
+    E --> F[DAST<br/>OWASP ZAP]
+    F --> G[Deploy]
+```
 
 | Тип проверки | Инструмент | Когда |
 |-------------|-----------|-------|
@@ -1388,11 +1435,16 @@ ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
 
 Обе стратегии решают одну проблему — как выкатить новую версию без даунтайма и с возможностью мгновенно откатиться, — но по-разному. `Blue-green` держит две полные среды и переключает трафик целиком; `canary` пускает на новую версию сначала малую долю трафика и постепенно её наращивает. Подробно стратегии разобраны в [стратегиях деплоя](deployment-strategies-interview.md); здесь — как pipeline их реализует на практике.
 
-**`Blue-Green`** — поток pipeline:
+**`Blue-Green`:**
 
-- `Build & Test` → `Deploy to Green` → `Smoke Test Green` → проверка результата `Passed?`:
-  - если **Yes** → `Switch Traffic` (Blue → Green);
-  - если **No** → `Rollback`.
+```mermaid
+graph LR
+    A[Build & Test] --> B[Deploy to Green]
+    B --> C[Smoke Test Green]
+    C --> D{Passed?}
+    D -->|Yes| E[Switch Traffic<br/>Blue → Green]
+    D -->|No| F[Rollback]
+```
 
 В `Kubernetes` это два `Deployment` (`blue` и `green`), между которыми `Service` переключает selector. Суть в том, что переключение — атомарное изменение одной метки в селекторе: весь трафик мгновенно уходит на новую версию, а старая остаётся прогретой и готовой принять трафик обратно при откате. В pipeline отдельным этапом ставят переключение `Service`, и делают его только после прохождения smoke test на green-среде.
 
@@ -1552,9 +1604,17 @@ build-order-service:
 
 Pipeline для `IaC` применяет изменения инфраструктуры (`Terraform`) через CI/CD — тот же подход, что и к коду: ревью, версионирование, автоматический выкат. Ключевое отличие от обычного pipeline — обязательная связка `plan` → approval → `apply`: прежде чем что-то менять в реальной инфраструктуре, человек видит точный список изменений (`terraform plan`) и подтверждает их. Ошибка в IaC может удалить базу или открыть security group наружу, поэтому «посмотреть, что будет, до того как это случится» здесь не опция, а необходимость (подробнее о `Kubernetes` — в [Kubernetes](../devops/kubernetes-interview.md)).
 
-**Этапы** идут последовательной цепочкой:
+**Этапы:**
 
-- `Checkout` → `terraform init` → `terraform validate` → `terraform plan` → `Manual Approval` → `terraform apply` → `Verify`.
+```mermaid
+graph LR
+    A[Checkout] --> B[terraform init]
+    B --> C[terraform validate]
+    C --> D[terraform plan]
+    D --> E[Manual Approval]
+    E --> F[terraform apply]
+    F --> G[Verify]
+```
 
 **В `GitHub Actions`:**
 
@@ -1635,17 +1695,28 @@ jobs:
 
 **GitOps-pipeline** разделяет CI и CD и меняет саму модель деплоя с push на pull. CI собирает образ и пушит, но не деплоит; вместо этого он фиксирует новый тег в отдельном `config`-репозитории. А `Argo CD` или `Flux`, работающий внутри кластера, непрерывно сравнивает кластер с этим репозиторием и подтягивает изменения сам. Желаемое состояние инфраструктуры всегда описано в Git — отсюда название: Git как единственный источник правды о том, что должно быть развёрнуто. Деплой превращается в обычный коммит, который проходит review и откатывается через `git revert`.
 
-**Порядок взаимодействия** участников (Developer, App Repo, CI Pipeline, Container Registry, Config Repo, Argo CD, Kubernetes):
+**Схема взаимодействия:**
 
-1. **Developer → App Repo:** `git push` (feature branch).
-2. **App Repo → CI Pipeline:** webhook trigger.
-3. **CI Pipeline (сам у себя):** build + test + analysis.
-4. **CI Pipeline → Container Registry:** `docker push myapp:abc123`.
-5. **CI Pipeline → Config Repo:** PR с обновлением `image.tag=abc123`.
-6. **Config Repo (сам у себя):** Review + Merge.
-7. **Argo CD → Config Repo:** poll / webhook.
-8. **Argo CD → Kubernetes:** sync (apply manifests).
-9. **Kubernetes → Argo CD:** возвращает resource status.
+```mermaid
+sequenceDiagram
+    participant Dev as Developer
+    participant AppRepo as App Repo
+    participant CI as CI Pipeline
+    participant Registry as Container Registry
+    participant CfgRepo as Config Repo
+    participant ArgoCD as Argo CD
+    participant K8s as Kubernetes
+
+    Dev->>AppRepo: git push (feature branch)
+    AppRepo->>CI: webhook trigger
+    CI->>CI: build + test + analysis
+    CI->>Registry: docker push myapp:abc123
+    CI->>CfgRepo: PR: update image.tag=abc123
+    CfgRepo->>CfgRepo: Review + Merge
+    ArgoCD->>CfgRepo: poll / webhook
+    ArgoCD->>K8s: sync (apply manifests)
+    K8s-->>ArgoCD: resource status
+```
 
 **Почему именно два репозитория, а не один?** Это частый уточняющий вопрос. Разделение `app` (код) и `config` (манифесты деплоя) даёт разграничение прав и чистую историю деплоев, отдельную от истории кода.
 
@@ -1713,12 +1784,15 @@ gitops-config/
 | **Change Failure Rate** | % деплоев с инцидентом | Canary/blue-green, quality gates, smoke тесты |
 | **Time to Restore** | Время восстановления | Автоматический rollback, on-call, Feature flags |
 
-**Уровни зрелости** (Low → Medium → High → Elite) по тройке показателей «Deploy frequency / Lead time / Change Failure Rate»:
+**Уровни зрелости:**
 
-- **Low:** Deploy freq 1/месяц; Lead time > 6 мес; CFR > 30%.
-- **Medium:** 1/неделю; от месяца до недели; < 30%.
-- **High:** 1/день; от недели до 1 дня; < 15%.
-- **Elite 🏆:** много раз в день; < 1 часа; < 5%.
+```mermaid
+graph LR
+    Low["Low\nDeploy freq: 1/месяц\nLead time: > 6 мес\nCFR: > 30%"] -->
+    Medium["Medium\n1/неделю\n1 мес – неделя\n< 30%"] -->
+    High["High\n1/день\n1 нед – 1 день\n< 15%"] -->
+    Elite["Elite 🏆\nМного раз в день\n< 1 часа\n< 5%"]
+```
 
 **Конкретные изменения в pipeline для улучшения метрик:**
 

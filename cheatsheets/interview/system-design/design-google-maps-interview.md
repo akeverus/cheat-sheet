@@ -372,10 +372,17 @@ WHERE ST_DWithin(geom, ST_MakePoint(37.6, 55.7)::geography, 1000);
 
 **Tile pyramid** — это иерархия предрендеренных квадратных тайлов: на каждом уровне зума мир нарезан на сетку, и при углублении каждый тайл делится на 4. Карта на экране — это всегда мозаика из ~10–20 готовых тайлов, а не отрисовка «на лету». Так достигается главное: тайл не зависит от пользователя, его можно закэшировать в CDN один раз для всех.
 
-Уровни пирамиды (каждый следующий зум вчетверо детальнее предыдущего):
-- `Zoom 0` — 1 тайл = весь мир.
-- `Zoom 1` — 4 тайла → `Zoom 2` — 16 тайлов → `Zoom 3` — 64 тайла.
-- … и так далее до `Zoom 21` — ~4.4T тайлов, детализация уровня отдельных зданий (building-level).
+```mermaid
+graph TD
+    Z0[Zoom 0<br/>1 tile = world]
+    Z1[Zoom 1<br/>4 tiles]
+    Z2[Zoom 2<br/>16 tiles]
+    Z3[Zoom 3<br/>64 tiles]
+    Z21[Zoom 21<br/>~4.4T tiles<br/>building-level]
+
+    Z0 --> Z1 --> Z2 --> Z3
+    Z3 -.-> Z21
+```
 
 **Сколько тайлов на уровне:** на zoom Z сетка `2^Z × 2^Z = 4^Z` тайлов — рост в 4 раза на уровень.
 - Zoom 0: 1, Zoom 10: 1M, Zoom 15: 1B, Zoom 18: 68B, Zoom 21: 4.4T.
@@ -701,14 +708,22 @@ ETA — это там, где карты выигрывают или проиг�
 
 **Поток предсказания ETA:**
 
-В центре потока — `ML ETA model` (DNN / Gradient Boosting). На её вход сходятся пять источников:
-- `Probe data` — данные с 1M телефонов.
-- `Historical speeds` — исторические скорости per edge × hour.
-- `Weather data` — погода.
-- `Calendar events` — события из календаря.
-- `Routing engine` — сам маршрут.
+```mermaid
+graph LR
+    Probe[Probe data<br/>1M phones]
+    Hist[Historical speeds<br/>per edge × hour]
+    Weather[Weather data]
+    Events[Calendar events]
+    ML[ML ETA model<br/>DNN / Gradient Boosting]
+    Route[Routing engine]
 
-Модель агрегирует все эти сигналы и на выходе даёт `Predicted ETA` — предсказанное время прибытия.
+    Probe --> ML
+    Hist --> ML
+    Weather --> ML
+    Events --> ML
+    Route --> ML
+    ML --> ETA[Predicted ETA]
+```
 
 **Признаки модели (что подаём на вход):**
 - Базовая скорость на ребро — историческое среднее.
@@ -779,14 +794,22 @@ ETA — это там, где карты выигрывают или проиг�
 
 **Архитектура:**
 
-Поток обработки по шагам:
-- `Query` (запрос) → `Query parser` (разбор запроса).
-- Парсер расщепляет запрос на три компонента:
-  - `Text component` (текстовая часть) → `Elasticsearch`.
-  - `Geo component` (гео-часть) → `S2/H3 lookup`.
-  - `Category extraction` (извлечение категории) → `Category filter`.
-- Результаты всех трёх веток (`Elasticsearch`, `S2/H3 lookup`, `Category filter`) сходятся в `Merge results` (слияние результатов).
-- `Merge results` → `ML ranking` (ML-ранжирование) → `Results` (итоговая выдача).
+```mermaid
+graph LR
+    Q[Query]
+    Q --> Parse[Query parser]
+    Parse --> Text[Text component]
+    Parse --> Geo[Geo component]
+    Parse --> Cat[Category extraction]
+    Text --> ES[Elasticsearch]
+    Geo --> S2[S2/H3 lookup]
+    Cat --> Filter[Category filter]
+    ES --> Merge[Merge results]
+    S2 --> Merge
+    Filter --> Merge
+    Merge --> Rank[ML ranking]
+    Rank --> Results
+```
 
 **Три стадии поиска** (классический retrieval → ranking → diversification):
 - **Отбор кандидатов (retrieval):** грубо сужаем до ~1000 кандидатов по гео и тексту. Дёшево и широко.
@@ -891,12 +914,30 @@ ETA — это там, где карты выигрывают или проиг�
 
 Архитектура карт собирается вокруг того самого водораздела из Q1: статические тайлы уходят на edge/CDN, а динамика (поиск, маршрутизация, трафик, ETA) живёт в независимых backend-сервисах. Каждый сервис масштабируется отдельно, потому что у них разные профили нагрузки.
 
-Связи между компонентами (поток запроса слева направо):
-- `Mobile / Web Client` → `Edge POP / CDN`. Обратно `Edge POP / CDN` → `Client` отдаёт ответ из кэша (cache 95%).
-- `Edge POP / CDN` маршрутизирует запросы на четыре backend-сервиса: `Tile Service` (Bigtable), `Search Service` (Elasticsearch + S2), `Geocoding Service`, `Routing Service` (CRP graph).
-- `Routing Service` обращается к `Traffic Service` (Real-time + Historical) и к `ETA Service` (ML inference).
-- `Search Service` и `Geocoding Service` обращаются к `Places Service` (Spanner).
-- Отдельно стоит `Auth Service`.
+```mermaid
+graph LR
+    Client[Mobile / Web Client]
+    Edge[Edge POP / CDN]
+    Tile[Tile Service<br/>Bigtable]
+    Search[Search Service<br/>Elasticsearch + S2]
+    Geocode[Geocoding Service]
+    Routing[Routing Service<br/>CRP graph]
+    Traffic[Traffic Service<br/>Real-time + Historical]
+    ETA[ETA Service<br/>ML inference]
+    Place[Places Service<br/>Spanner]
+    Auth[Auth Service]
+
+    Client --> Edge
+    Edge -->|cache 95%| Client
+    Edge --> Tile
+    Edge --> Search
+    Edge --> Geocode
+    Edge --> Routing
+    Routing --> Traffic
+    Routing --> ETA
+    Search --> Place
+    Geocode --> Place
+```
 
 **Компоненты:**
 - **Edge POP / CDN:** доставка тайлов (большинство запросов обслуживается здесь).

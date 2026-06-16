@@ -124,12 +124,17 @@ updated: "2026-05-15"
 
 Никакого моста не нужно: `Kotlin` компилируется в тот же байткод `JVM`, что и `Java`, поэтому `Kotlin`-классы видны из `Java` как обычные классы. Вся сложность — не в вызове, а в том, что одна `Kotlin`-конструкция может превратиться в неожиданный для `Java` элемент байткода: top-level функция станет статическим методом класса-обёртки, `object` — синглтоном с полем `INSTANCE`, свойство — парой геттер/сеттер. Чтобы вызывать `Kotlin` идиоматично, надо знать эти соответствия.
 
-Оба языка приходят к общему `JVM Runtime` двумя независимыми ветками компиляции:
-
-- `Kotlin source` (`MyClass.kt`) → `Kotlin compiler` (`kotlinc`) → `JVM bytecode` (`MyClass.class`) → `JVM Runtime`
-- `Java source` (`Main.java`) → `Java compiler` (`javac`) → `JVM bytecode` (`Main.class`) → `JVM Runtime`
-
-Оба `.class`-файла — один и тот же байткод `JVM`, поэтому в рантайме классы из обеих веток видят друг друга без какого-либо моста.
+```mermaid
+graph TD
+    A["Kotlin source<br/>MyClass.kt"] --> B["Kotlin compiler<br/>kotlinc"]
+    B --> C["JVM bytecode<br/>MyClass.class"]
+    D["Java source<br/>Main.java"] --> E["Java compiler<br/>javac"]
+    E --> F["JVM bytecode<br/>Main.class"]
+    C --> G["JVM Runtime"]
+    F --> G
+    style C fill:#e8f5e9
+    style F fill:#e3f2fd
+```
 
 | Конструкция `Kotlin` | Как выглядит из `Java` |
 |---|---|
@@ -325,13 +330,22 @@ String slug = Strings.toSlug("Hello World!");
 
 **Platform type** — это тип, пришедший из `Java`, про который компилятор `Kotlin` не знает, nullable он или нет (в `Java`-сигнатуре нет аннотации nullability). Чтобы не ломать интероп ложными ошибками, `Kotlin` снимает с такого типа проверки на `null` и доверяет их разработчику. В IDE это видно по восклицательному знаку: `String!`, `List<User>!`.
 
-По шагам, как `Java`-метод превращается в platform type на стороне `Kotlin` и какие два исхода даёт присваивание:
-
-- В `Java API` объявлен метод `String getName()`.
-- В `Kotlin` он виден как `getName(): String!` — это и есть platform type.
-- Дальше `String!` можно присвоить двумя способами:
-  - `val name: String = getName()` — non-null. ⚠ Если фактически вернулся `null`, будет `NPE`.
-  - `val name: String? = getName()` — nullable. ✅ Безопасно: `null` обрабатывается явно.
+```mermaid
+graph LR
+    subgraph "Java API"
+        A["String getName()"]
+    end
+    subgraph "Kotlin"
+        B["getName(): String!<br/>(platform type)"]
+        C["val name: String = getName()<br/>⚠ NPE если null"]
+        D["val name: String? = getName()<br/>✅ безопасно"]
+    end
+    A --> B
+    B --> C
+    B --> D
+    style C fill:#ffebee
+    style D fill:#e8f5e9
+```
 
 Главное свойство platform type: его можно присвоить и в `String` (non-null), и в `String?` — компилятор не возражает. Если вы выбрали non-null, а значение оказалось `null`, `NullPointerException` прилетит **в момент присваивания**, а не отложенно при первом использовании, как было бы в `Java`. Это и плюс (ошибка ближе к причине), и риск (никто не предупредил).
 
@@ -539,11 +553,13 @@ list.sortWith(Comparator { a, b -> a.length - b.length })
 button.setOnClickListener { view -> handleClick(view) }
 ```
 
-По порядку, что происходит с лямбдой при вызове `Java`-API:
-
-- `Kotlin lambda` (`{ x -> x + 1 }`) → `SAM conversion` → экземпляр `Java`-интерфейса (`Function<Int, Int>`) → `Java API call`.
-
-То есть компилятор берёт лямбду, оборачивает её в анонимную реализацию SAM-интерфейса и подставляет полученный объект в `Java`-вызов.
+```mermaid
+graph LR
+    A["Kotlin lambda<br/>{ x -> x + 1 }"] --> B["SAM conversion"]
+    B --> C["Java interface instance<br/>Function&lt;Int, Int&gt;"]
+    C --> D["Java API call"]
+    style B fill:#fff3e0
+```
 
 **Важные нюансы:**
 
@@ -652,14 +668,22 @@ fun process(items: List<@JvmWildcard String>) { /* ... */ }
 
 Суть в одном факте: разделение на read-only и mutable существует только в системе типов `Kotlin` на этапе компиляции, а в байткоде остаётся один и тот же `java.util.List`. `Kotlin` даёт два интерфейса — read-only (`List`, `Set`, `Map`) без мутирующих методов и `Mutable*` с ними, — но оба отображаются на одни и те же `Java`-классы. Из-за этого граница между языками теряет информацию о мутабельности, и отсюда растут все подводные камни ниже.
 
-Наглядно, как два разных `Kotlin`-интерфейса схлопываются в один `Java`-класс:
-
-- В системе типов `Kotlin`:
-  - `List<T>` — read-only;
-  - `MutableList<T>` — read-write; это подтип `List<T>` (`List<T>` → `MutableList<T>`).
-- В байткоде `JVM` оба отображаются на один и тот же тип `java.util.List<T>` (`List<T>` → `java.util.List<T>`, `MutableList<T>` → `java.util.List<T>`).
-
-Именно поэтому информация о мутабельности на границе языков теряется.
+```mermaid
+graph TD
+    subgraph "Kotlin type system"
+        A["List&lt;T&gt;<br/>(read-only)"]
+        B["MutableList&lt;T&gt;<br/>(read-write)"]
+        A --> B
+    end
+    subgraph "JVM bytecode"
+        C["java.util.List&lt;T&gt;"]
+    end
+    A -.-> C
+    B -.-> C
+    style A fill:#e8f5e9
+    style B fill:#ffebee
+    style C fill:#e3f2fd
+```
 
 **Из `Java` в `Kotlin`:**
 
@@ -859,11 +883,13 @@ fun findUserById(id: Long): User? = findUser(UserId(id))
 
 Напрямую — почти никак: правильный ответ в том, что из `Java` нужно вызывать не саму `suspend`-функцию, а её адаптер. Под капотом `suspend fun foo(): User` компилируется в `Object foo(Continuation<User>)` — компилятор добавляет скрытый параметр `Continuation` (механизм CPS, Continuation Passing Style) и меняет тип возврата на `Object`. Чтобы вызвать такой метод из `Java`, пришлось бы вручную реализовать `Continuation` и разобраться с маркером `COROUTINE_SUSPENDED` — на практике так не делают.
 
-По порядку, во что компилятор превращает `suspend`-функцию:
-
-- `suspend fun fetchUser(): User` → `fun fetchUser(cont: Continuation<User>): Any?` → из `Java` это видно как `Object fetchUser(Continuation)`.
-
-То есть добавляется скрытый параметр `Continuation`, а возвращаемый тип становится `Any?`/`Object`.
+```mermaid
+graph LR
+    A["suspend fun fetchUser(): User"] --> B["fun fetchUser(cont: Continuation&lt;User&gt;): Any?"]
+    B --> C["Java видит:<br/>Object fetchUser(Continuation)"]
+    style A fill:#e8f5e9
+    style C fill:#ffebee
+```
 
 **Способы вызова из `Java`:**
 
@@ -1033,6 +1059,18 @@ User updated = user.copy("Bob", user.getAge()); // нельзя пропусти
 
 Главный принцип — «Kotlin inside, Java-friendly edge»: внутри модуля пишите идиоматичный `Kotlin`, а на публичной границе адаптируйте API под `Java`. Конкретные правила сводятся к тому, чтобы расставить JVM-аннотации и не протаскивать наружу `Kotlin`-специфичные конструкции, недоступные из `Java`:
 
+```mermaid
+graph TD
+    A["Kotlin API Design<br/>для Java-клиентов"] --> B["@JvmStatic<br/>для factory/util методов"]
+    A --> C["@JvmOverloads<br/>для default-параметров"]
+    A --> D["@JvmField / const val<br/>для констант"]
+    A --> E["@JvmName<br/>для чистых имён"]
+    A --> F["@Throws<br/>для checked exceptions"]
+    A --> G["Не использовать<br/>Kotlin-специфичные типы<br/>в публичном API"]
+    A --> H["Nullability<br/>контракты"]
+    style A fill:#e3f2fd
+```
+
 **Чек-лист для `Java`-friendly API:**
 
 1. **`@JvmStatic`** на factory-методах и утилитах в `companion object`
@@ -1067,12 +1105,17 @@ sourceSets {
 
 **Порядок компиляции:**
 
-По порядку:
-
-- `Kotlin compiler` (`kotlinc`) делает две вещи:
-  - генерирует `Stubs для Java` (заглушки `Java`-классов с сигнатурами) → их подхватывает `Java compiler` (`javac`);
-  - выдаёт `Kotlin .class файлы` → они уходят в `JVM Runtime`.
-- `Java compiler` (`javac`) компилирует `Java .class файлы` → они тоже уходят в `JVM Runtime`.
+```mermaid
+graph LR
+    A["Kotlin compiler<br/>(kotlinc)"] --> B["Stubs для Java"]
+    B --> C["Java compiler<br/>(javac)"]
+    A --> D["Kotlin .class файлы"]
+    C --> E["Java .class файлы"]
+    D --> F["JVM Runtime"]
+    E --> F
+    style A fill:#e8f5e9
+    style C fill:#e3f2fd
+```
 
 Порядок решает проблему «курицы и яйца» — оба компилятора нуждаются в результатах друг друга. `Kotlin`-компилятор идёт первым и генерирует stubs (заглушки `Java`-классов только с сигнатурами), чтобы `javac` мог сослаться на `Kotlin`-типы. Затем `javac` компилирует `Java`-файлы, уже видя `Kotlin`-классы.
 

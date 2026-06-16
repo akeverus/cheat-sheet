@@ -127,14 +127,19 @@ updated: "2026-04-25"
 
 ## Q4. (!) Как устроено разделение compute и storage: брокеры и bookies?
 
-В Pulsar два независимых слоя: **брокеры** принимают и отдают трафик, но ничего не хранят, а **bookies** (узлы BookKeeper) хранят данные, но не знают про клиентов. Связи между узлами устроены так, что любой брокер может писать в любые bookies — данные не «прибиты» к конкретному брокеру:
+В Pulsar два независимых слоя: **брокеры** принимают и отдают трафик, но ничего не хранят, а **bookies** (узлы BookKeeper) хранят данные, но не знают про клиентов. Этот рисунок показывает, что любой брокер может писать в любые bookies — данные не «прибиты» к конкретному брокеру.
 
-- `Producer` → `Broker 1`
-- `Consumer` → `Broker 1`
-- `Broker 1` → `BookKeeper Bookie 1`, `BookKeeper Bookie 2`, `BookKeeper Bookie 3`
-- `Broker 2` → `BookKeeper Bookie 1`, `BookKeeper Bookie 2`, `BookKeeper Bookie 3`
-
-То есть и `Broker 1`, и `Broker 2` подключаются ко всем трём bookies — данные одного топика не привязаны к одному брокеру.
+```mermaid
+graph TD
+    Producer --> Broker1
+    Consumer --> Broker1
+    Broker1 --> Bookie1[BookKeeper Bookie 1]
+    Broker1 --> Bookie2[BookKeeper Bookie 2]
+    Broker1 --> Bookie3[BookKeeper Bookie 3]
+    Broker2[Broker 2] --> Bookie1
+    Broker2 --> Bookie2
+    Broker2 --> Bookie3
+```
 
 **Brokers (слой compute):**
 - **Stateless** — обслуживают соединения producer/consumer, но не держат данные

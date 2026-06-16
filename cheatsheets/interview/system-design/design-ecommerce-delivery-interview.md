@@ -210,29 +210,35 @@ OrderEvents / InventoryEvents / PaymentEvents / ShipmentEvents
 
 ## Q6. Высокоуровневая архитектура?
 
-Поток запросов и сервисы:
+```mermaid
+flowchart LR
+    App[Web / Mobile] --> GW[API Gateway<br/>auth, rate limit]
+    GW --> CAT[catalog/search<br/>AP, кэш]
+    GW --> PROMISE[delivery-promise<br/>ATP + transit + slot]
+    GW --> ORD[order-service<br/>CP, Saga-оркестратор]
 
-- **Web / Mobile** идёт в **API Gateway** (`auth`, `rate limit`).
-- API Gateway маршрутизирует на три ветки:
-  - **catalog/search** (`AP`, кэш);
-  - **delivery-promise** (`ATP` + transit + slot) → читает кэш промиса в **Redis**;
-  - **order-service** (`CP`, Saga-оркестратор) — критический write-path.
-- **order-service** вызывает:
-  - **inventory-service** (резерв, anti-oversell) → пишет в **PostgreSQL** (остатки, шард);
-  - **payment-service** (`ACID ledger`) → пишет в **PostgreSQL** (`ledger`);
-  - сам order-service пишет в **PostgreSQL** (заказы, шард);
-  - через **Outbox** публикует в **Kafka** (`OrderEvents`).
-- **Kafka** разветвляет события (fan-out) на:
-  - **fulfillment/sourcing** (какой склад, splits);
-  - **notification-service**;
-  - **ClickHouse** (аналитика).
-- **fulfillment/sourcing** обращается к:
-  - **WMS** (комплектация);
-  - **logistics/routing** (VRP, план line-haul).
-- **logistics/routing** ведёт в **tracking-service** (event-sourced). И **WMS**, и **logistics/routing** шлют в tracking-service сканы.
-- **tracking-service** хранит события в **PostgreSQL + ClickHouse**.
+    ORD --> INV[inventory-service<br/>резерв, anti-oversell]
+    ORD --> PAY[payment-service<br/>ACID ledger]
+    ORD -->|Outbox| K[(Kafka<br/>OrderEvents)]
 
-Принципы, на которых держится система:
+    K --> FUL[fulfillment/sourcing<br/>какой склад, splits]
+    K --> NOTIF[notification-service]
+    K --> ANALYTICS[ClickHouse]
+
+    FUL --> WMS[(WMS<br/>комплектация)]
+    FUL --> LOG[logistics/routing<br/>VRP, line-haul план]
+    LOG --> TRACK[tracking-service<br/>event-sourced]
+    WMS -->|сканы| TRACK
+    LOG -->|сканы| TRACK
+
+    INV --> PG[(PostgreSQL<br/>остатки, шард)]
+    ORD --> PGO[(PostgreSQL<br/>заказы, шард)]
+    PAY --> PGP[(PostgreSQL<br/>ledger)]
+    PROMISE --> RED[(Redis<br/>кэш промиса)]
+    TRACK --> TS[(события: PG + ClickHouse)]
+```
+
+Принципы, на которых держится схема:
 - **Каждый сервис владеет своей БД** (no shared DB), синхронное общение — через gRPC, асинхронное — через Kafka. Так сервисы не блокируют друг друга и деплоятся независимо.
 - **Read-path (каталог) отделён от write-path (заказ/остаток/оплата)** — у них разные SLA и разная консистентность, их нельзя масштабировать одинаково.
 - **Фулфилмент и логистика асинхронны** относительно чекаута: заказ подтвердился за < 200 мс, а дальше всё идёт событиями. Чекаут не ждёт склад.
@@ -265,23 +271,24 @@ Reservation(reservation_id, order_id, lines[], expires_at)    -- soft-резер
 
 Физическое движение посылки моделируется конечным автоматом; каждый переход — событие в Kafka и `TrackingEvent`.
 
-Состояния и переходы (от старта `[*]`):
-
-- `[*]` → **CREATED**: заказ подтверждён.
-- **CREATED** → **AT_WAREHOUSE**: скомплектовано, упаковано, этикетка.
-- **AT_WAREHOUSE** → **IN_SORTING_CENTER**: принято на СЦ.
-- **IN_SORTING_CENTER** → **LINE_HAUL**: магистраль между хабами.
-- **LINE_HAUL** → **AT_LAST_MILE_HUB**: прибыло в СЦ кластера назначения.
-- **AT_LAST_MILE_HUB** → **OUT_FOR_DELIVERY**: курьеру / в ПВЗ / постамат.
-- **OUT_FOR_DELIVERY** → **DELIVERED**: выдано (код/QR/подпись).
-- **OUT_FOR_DELIVERY** → **DELIVERY_FAILED**: получатель отсутствует.
-- **DELIVERY_FAILED** → **OUT_FOR_DELIVERY**: повтор (попытка 2/3).
-- **DELIVERY_FAILED** → **RETURN_INITIATED**: после финальной попытки.
-- **DELIVERED** → **RETURN_INITIATED**: возврат покупателем.
-- **RETURN_INITIATED** → **RETURN_RECEIVED**: принято на ПВЗ/СЦ.
-- **RETURN_RECEIVED** → **REFUND_PROCESSED**: рефанд + возврат в сток.
-- **REFUND_PROCESSED** → `[*]` (терминальное).
-- **DELIVERED** → `[*]` (терминальное, если возврата не было).
+```mermaid
+stateDiagram-v2
+    [*] --> CREATED: заказ подтверждён
+    CREATED --> AT_WAREHOUSE: скомплектовано, упаковано, этикетка
+    AT_WAREHOUSE --> IN_SORTING_CENTER: принято на СЦ
+    IN_SORTING_CENTER --> LINE_HAUL: магистраль между хабами
+    LINE_HAUL --> AT_LAST_MILE_HUB: прибыло в СЦ кластера назначения
+    AT_LAST_MILE_HUB --> OUT_FOR_DELIVERY: курьеру / в ПВЗ / постамат
+    OUT_FOR_DELIVERY --> DELIVERED: выдано (код/QR/подпись)
+    OUT_FOR_DELIVERY --> DELIVERY_FAILED: получатель отсутствует
+    DELIVERY_FAILED --> OUT_FOR_DELIVERY: повтор (попытка 2/3)
+    DELIVERY_FAILED --> RETURN_INITIATED: после финальной попытки
+    DELIVERED --> RETURN_INITIATED: возврат покупателем
+    RETURN_INITIATED --> RETURN_RECEIVED: принято на ПВЗ/СЦ
+    RETURN_RECEIVED --> REFUND_PROCESSED: рефанд + возврат в сток
+    REFUND_PROCESSED --> [*]
+    DELIVERED --> [*]
+```
 
 Что важно проговорить:
 - **Набор состояний зависит от модели фулфилмента.** Для FBO маркетплейс видит каждый скан и состояний больше; для DBS часть статусов **приходит от внешнего перевозчика** (СДЭК), поэтому единый трекинг приходится нормализовать к одной модели.
@@ -363,15 +370,18 @@ promise_date = max по сплитам(
 
 Физическая сеть строится как **hub-and-spoke с cross-dock**: посылки стекаются в хабы-сортировочные центры, едут магистралью между ними и расходятся на последней миле; на промежуточных узлах не хранятся, а лишь перегружаются (cross-dock).
 
-Путь посылки по сети:
-
-- **Продавец** → **Фулфилмент-центр** (хранение FBO) — для модели FBO.
-- **Продавец** → **Сортировочный центр** (приём, НЕ хранит) — для модели FBS (продавец сдаёт уже собранную посылку, минуя ФЦ).
-- **Фулфилмент-центр** → **Сортировочный центр**.
-- **Сортировочный центр** → **Магистраль line-haul** (между кластерами).
-- **Магистраль line-haul** → **СЦ кластера назначения**.
-- **СЦ кластера назначения** → **Хаб последней мили**.
-- **Хаб последней мили** разветвляется на три канала последней мили: **Курьер**, **ПВЗ**, **Постамат**.
+```mermaid
+flowchart LR
+    S[Продавец] --> FC[Фулфилмент-центр<br/>хранение FBO]
+    S -.FBS.-> SC1[Сортировочный центр<br/>приём, НЕ хранит]
+    FC --> SC1
+    SC1 --> LH{{Магистраль line-haul<br/>между кластерами}}
+    LH --> SC2[СЦ кластера назначения]
+    SC2 --> LMH[Хаб последней мили]
+    LMH --> COUR[Курьер]
+    LMH --> PVZ[ПВЗ]
+    LMH --> POST[Постамат]
+```
 
 Типы узлов (терминология Ozon):
 - **Фулфилмент-центр (ФЦ)** — хранение + комплектация FBO.
@@ -549,15 +559,15 @@ TrackingEvent(event_id, shipment_id, type, location, ts, status_code, reason_cod
 
 Ключевой принцип: деньги списываются не при заказе, а при отгрузке/выдаче — холд (pre-auth) на чекауте, реальное списание (capture) ближе к физической передаче товара. Поверх этого — два режима оплаты (предоплата и наложенный платёж) и многосторонний расчёт (payout продавцу за вычетом комиссии).
 
-Порядок шагов:
-
-1. **Заказ** →
-2. **pre-auth карты** (с `Idempotency-Key`) →
-3. **резерв стока** →
-4. **заказ CONFIRMED** →
-5. **фулфилмент** →
-6. **capture при отгрузке/выдаче** →
-7. **payout продавцу** минус комиссия.
+```mermaid
+flowchart LR
+    O[Заказ] --> AUTH[pre-auth карты<br/>Idempotency-Key]
+    AUTH --> RES[резерв стока]
+    RES --> CONF[заказ CONFIRMED]
+    CONF --> FUL[фулфилмент]
+    FUL --> CAP[capture при отгрузке/выдаче]
+    CAP --> PAYOUT[payout продавцу минус комиссия]
+```
 
 - **Предоплата.** Pre-auth (холд) при заказе, а реальное списание (**capture**) — при отгрузке или выдаче. Так не списываем деньги за то, что ещё не уехало, и легко отменяем холд при отказе.
 - **COD / оплата при получении (наложенный платёж).** Клиент платит на выдаче (карта/СБП), может осмотреть товар и отказаться. Это добавляет **обратный поток сверки**: собранные деньги привязываются к статусу посылки и переводятся продавцу, а у курьера возникает риск утечки наличных (cash-leakage).
@@ -568,12 +578,15 @@ TrackingEvent(event_id, shipment_id, type, location, ts, status_code, reason_cod
 
 Возврат — **отдельный пайплайн, не зеркало прямой доставки**. Частая ошибка кандидата — считать его инверсией.
 
-Поток возврата:
-
-- **Клиент** → **ПВЗ** (приём возврата) → **СЦ** (обратный поток) → **Контроль качества**.
-- На контроле качества поток ветвится:
-  - если **годен** → **Возврат в сток к продаже** → **Рефанд клиенту**;
-  - если **брак** → **Списание/утилизация**.
+```mermaid
+flowchart LR
+    C[Клиент] --> PVZ[ПВЗ: приём возврата]
+    PVZ --> SC[СЦ: обратный поток]
+    SC --> QC[Контроль качества]
+    QC -->|годен| STOCK[Возврат в сток к продаже]
+    QC -->|брак| WO[Списание/утилизация]
+    STOCK --> REFUND[Рефанд клиенту]
+```
 
 Особенности:
 - Возврат проходит **контроль качества и переупаковку** и только потом возвращается в `available`. Без этого шага товар «зависает» в подвешенном состоянии и фактически теряется для продажи.

@@ -110,16 +110,22 @@ updated: "2026-04-25"
 
 Память JVM — это не один большой блок, а несколько независимых областей. Каждая хранит свой тип данных, управляется по-своему и настраивается отдельным флагом. Понимать это деление важно потому, что переполнение разных областей даёт разные ошибки (`OutOfMemoryError: Java heap space` против `StackOverflowError`), и потому что суммарное потребление процесса намного больше, чем один `-Xmx`.
 
-Память процесса JVM делится на следующие области:
+```mermaid
+graph TD
+    JVM["JVM Process Memory"]
+    JVM --> Heap["Heap<br/>-Xms / -Xmx"]
+    JVM --> Metaspace["Metaspace<br/>-XX:MaxMetaspaceSize"]
+    JVM --> Stacks["Thread Stacks<br/>-Xss × N threads"]
+    JVM --> Direct["Direct Memory<br/>-XX:MaxDirectMemorySize"]
+    JVM --> CodeCache["Code Cache<br/>JIT-compiled code"]
+    JVM --> Internal["JVM Internal<br/>GC structs, symbols, etc."]
 
-- **Heap** (флаги `-Xms` / `-Xmx`) — делится на:
-  - **Young Generation** → Eden, Survivor 0, Survivor 1;
-  - **Old Generation**.
-- **Metaspace** (`-XX:MaxMetaspaceSize`).
-- **Thread Stacks** (`-Xss` × число потоков).
-- **Direct Memory** (`-XX:MaxDirectMemorySize`).
-- **Code Cache** — JIT-скомпилированный код.
-- **JVM Internal** — GC-структуры, symbols и прочее.
+    Heap --> Young["Young Generation"]
+    Heap --> Old["Old Generation"]
+    Young --> Eden["Eden"]
+    Young --> S0["Survivor 0"]
+    Young --> S1["Survivor 1"]
+```
 
 | Область | Хранит | Управление | Ключевой флаг |
 |---------|--------|------------|---------------|
@@ -253,13 +259,22 @@ Thread Stack (-Xss)
 
 **Generational hypothesis** (слабая гипотеза поколений): подавляющее большинство объектов «умирают молодыми» — создаются и становятся мусором в рамках одного вызова метода или запроса. Деление heap на поколения — прямое следствие этого наблюдения: раз почти весь мусор молодой, выгодно собирать только небольшую молодую область часто и быстро, а большую старую — трогать редко. Так сборщик делает много дешёвой работы вместо редкой, но очень дорогой полной сборки.
 
-Движение объектов между областями:
+```mermaid
+graph LR
+    subgraph Young["Young Generation"]
+        Eden["Eden"]
+        S0["Survivor 0"]
+        S1["Survivor 1"]
+    end
+    subgraph Old["Old Generation"]
+        Tenured["Tenured Space"]
+    end
 
-- **Young Generation** содержит Eden, Survivor 0 и Survivor 1; **Old Generation** — Tenured Space.
-- Eden → Survivor 0: при Minor GC переезжают выжившие объекты.
-- Survivor 0 → Survivor 1: при следующем Minor GC выжившие перемещаются дальше.
-- Survivor 1 → Tenured: когда `age >= threshold` (объект пережил достаточно сборок) — promotion в Old.
-- Eden → Tenured напрямую: слишком большой объект попадает в Old сразу, минуя Survivor.
+    Eden -->|"Minor GC<br/>выжившие"| S0
+    S0 -->|"Minor GC<br/>выжившие"| S1
+    S1 -->|"age >= threshold"| Tenured
+    Eden -->|"слишком большой<br/>объект"| Tenured
+```
 
 **Как это работает на практике.** Новый объект рождается в Eden. Переживший Minor GC переезжает в Survivor и копит «возраст» (age) — число пережитых сборок; дойдя до порога `MaxTenuringThreshold`, он повышается (promotion) в Old. Слишком крупный объект может попасть в Old сразу, минуя Survivor.
 
@@ -293,12 +308,22 @@ Thread Stack (-Xss)
 | Синхронизированные объекты | Объекты, по которым взята `synchronized` блокировка |
 | Classloader | Пока classloader жив, все его классы и их static-поля живы |
 
-Достижимость от GC Roots на примере:
+```mermaid
+graph TD
+    GCRoots["GC Roots"]
+    GCRoots --> |"stack local"| A["Object A"]
+    GCRoots --> |"static field"| B["Object B"]
+    A --> C["Object C"]
+    B --> D["Object D"]
+    C --> E["Object E"]
 
-- От **GC Roots** идут две ссылки: через stack local → `Object A`, через static field → `Object B`.
-- `Object A` → `Object C` → `Object E` — все достижимы и живы.
-- `Object B` → `Object D` — оба достижимы и живы.
-- `Object F` и `Object G` недостижимы от корней (это мусор). При этом `Object F` ссылается на `Object G`, но взаимная ссылка между двумя недостижимыми объектами не спасает их от сборки.
+    F["Object F<br/>(unreachable = мусор)"]
+    G["Object G<br/>(unreachable = мусор)"]
+    F -.-> G
+
+    style F fill:#f99,stroke:#900
+    style G fill:#f99,stroke:#900
+```
 
 Алгоритм **Mark-and-Sweep**:
 1. **Mark** — обход от всех GC roots, помечаем достижимые объекты
@@ -333,13 +358,18 @@ java -XX:+UseShenandoahGC -jar app.jar
 
 `G1` (Garbage First) делит heap не на сплошные поколения, а на множество одинаковых регионов (обычно 1–32 MB). Поколения становятся логическими: любой регион может быть Eden, Survivor или Old, и роли переназначаются по ходу работы. Это даёт G1 ключевую способность — собирать heap не целиком, а инкрементально, по нескольку регионов за раз, укладываясь в заданный бюджет паузы. Само имя «Garbage First» означает стратегию: в первую очередь собирать регионы с наибольшей долей мусора, чтобы за фиксированное время освободить максимум памяти.
 
-Heap в `G1` — это набор одинаковых регионов, каждый из которых играет одну из ролей:
-
-- **E** (Eden) — регионы под новые объекты.
-- **S** (Survivor) — регионы для переживших Minor GC.
-- **O** (Old) — регионы старого поколения.
-- **H** (Humongous) — регионы под крупные объекты.
-- **F** (Free) — свободные регионы.
+```mermaid
+graph TD
+    subgraph Heap["G1 Heap Regions"]
+        E1["E"] --> |Eden| E2["E"]
+        E2 --> E3["E"]
+        S1["S"] --> |Survivor| S2["S"]
+        O1["O"] --> |Old| O2["O"]
+        O2 --> O3["O"]
+        H1["H"] --> |Humongous| H2["H"]
+        F1["F"] --> |Free| F2["F"]
+    end
+```
 
 **Фазы работы `G1`:**
 1. **Young-only** — собирает только Eden + Survivor регионы, быстро и часто.
@@ -420,6 +450,23 @@ Thread 3: ──────────────────●─── (п
 ## Q12. (!) Какие типы ссылок существуют в Java и чем они отличаются?
 
 В Java четыре типа ссылок (пакет `java.lang.ref`), и различаются они «силой» — тем, насколько настойчиво ссылка удерживает объект от сборки. Идея в одной фразе: чем слабее ссылка, тем при первой же возможности GC её обнулит. Это даёт инструмент для кэшей и автоматической очистки ресурсов — держать объект «пока есть память» или «пока на него есть нормальная ссылка», не мешая GC делать своё дело.
+
+```mermaid
+graph LR
+    Strong["Strong Reference<br/>Object obj = new Object()"]
+    Soft["SoftReference<br/>new SoftReference<>(obj)"]
+    Weak["WeakReference<br/>new WeakReference<>(obj)"]
+    Phantom["PhantomReference<br/>new PhantomReference<>(obj, queue)"]
+
+    Strong -->|"Сильнее"| Soft
+    Soft -->|"Сильнее"| Weak
+    Weak -->|"Сильнее"| Phantom
+
+    style Strong fill:#4a4,stroke:#060
+    style Soft fill:#aa4,stroke:#660
+    style Weak fill:#a84,stroke:#840
+    style Phantom fill:#a44,stroke:#600
+```
 
 | Тип | Когда собирается GC | `get()` после сборки | Основное применение |
 |-----|---------------------|---------------------|---------------------|
@@ -561,16 +608,16 @@ public class NativeResource implements AutoCloseable {
 
 Утечку ищут не «по наитию», а по воспроизводимому процессу: сначала отличают реальную утечку от нормального пилообразного поведения heap, затем снимают несколько heap-дампов и сравнивают, кто из объектов растёт и кто их держит. Ключевая идея — найти не объект, который занял память, а цепочку ссылок от GC root, из-за которой он не собирается.
 
-Порядок диагностики:
-
-1. Симптом: heap растёт после каждого GC cycle.
-2. Снять heap dump (`jcmd`, JFR, `-XX:+HeapDumpOnOutOfMemoryError`).
-3. Открыть в Eclipse MAT.
-4. Посмотреть Leak Suspects Report.
-5. Проанализировать Dominator Tree.
-6. Построить Paths to GC Roots (исключив weak/soft refs).
-7. Найти корневую причину.
-8. Fix + regression test.
+```mermaid
+flowchart TD
+    A["Симптом: heap растёт<br/>после каждого GC cycle"] --> B["Снять heap dump<br/>(jcmd, JFR, -XX:+HeapDumpOnOutOfMemoryError)"]
+    B --> C["Открыть в Eclipse MAT"]
+    C --> D["Leak Suspects Report"]
+    D --> E["Анализ Dominator Tree"]
+    E --> F["Paths to GC Roots<br/>(exclude weak/soft refs)"]
+    F --> G["Найти корневую причину"]
+    G --> H["Fix + regression test"]
+```
 
 **Процесс:**
 1. **Зафиксировать симптом.** Главный признак утечки — растёт *baseline*, то есть уровень heap сразу после Full GC. Если он линейно ползёт вверх от сборки к сборке — это leak. А обычные «зубцы» (нарастание между сборками и резкое падение после) — нормальная работа GC, не утечка.
@@ -651,13 +698,17 @@ SELECT s FROM java.lang.String s WHERE s.value.@length > 1000000
 
 `Metaspace` растёт по мере загрузки классов. Classloader leak — одна из самых коварных утечек именно из-за эффекта домино: classloader жив, пока жив хоть один из загруженных им классов, а класс жив, пока на него или на любой его статический объект есть ссылка. Поэтому одна забытая ссылка на статическое поле удерживает весь classloader, все его классы, их static-поля и транзитивно — всё, на что они ссылаются. Утекают сразу мегабайты, причём в native-памяти Metaspace, а не в heap.
 
-Цепочка удержания при classloader leak:
+```mermaid
+graph TD
+    CL["ClassLoader<br/>(leaked)"]
+    CL --> C1["Class A"]
+    CL --> C2["Class B"]
+    C1 --> SF["static field:<br/>Map cache = ..."]
+    SF --> Data["100MB cached data"]
 
-- Утёкший **ClassLoader** держит загруженные им классы `Class A` и `Class B`.
-- `Class A` содержит static field `Map cache = ...`.
-- Это статическое поле ссылается на 100MB закэшированных данных.
-
-Итог: одна забытая ссылка на classloader транзитивно удерживает все его классы, их static-поля и все данные за ними.
+    style CL fill:#f99
+    style Data fill:#f99
+```
 
 **Типичные сценарии:**
 - **Hot-reload в dev** (Spring DevTools, JRebel) — при перезагрузке создаётся новый classloader, а старый не освобождается, если на него осталась ссылка.
@@ -1344,15 +1395,17 @@ java -Xmx1400m -Xms1400m \           # heap
 # Сумма: ~1720MB + thread stacks + GC overhead → укладываемся в 2GB
 ```
 
-Раскладка памяти под лимит контейнера **2GB**:
-
-- **Heap**: 1400MB (`-Xmx`).
-- **Metaspace**: 128MB.
-- **Direct Memory**: 128MB.
-- **Code Cache**: 64MB.
-- **Thread Stacks**: ~100MB (200 потоков × 512KB).
-- **GC Overhead**: ~100MB.
-- **Other Native**: ~80MB.
+```mermaid
+graph TD
+    Container["Container Memory Limit: 2GB"]
+    Container --> Heap["Heap: 1400MB<br/>(-Xmx)"]
+    Container --> Meta["Metaspace: 128MB"]
+    Container --> Direct["Direct Memory: 128MB"]
+    Container --> CC["Code Cache: 64MB"]
+    Container --> Stacks["Thread Stacks: ~100MB<br/>(200 threads × 512KB)"]
+    Container --> GC["GC Overhead: ~100MB"]
+    Container --> Other["Other Native: ~80MB"]
+```
 
 Критические ошибки:
 - `-Xmx` = container limit → OOM-kill, потому что non-heap memory не учтена

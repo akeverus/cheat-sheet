@@ -271,6 +271,17 @@ public final class Triangle implements Shape {
 2. **Exhaustiveness в `switch`** — зная полный список подтипов, компилятор проверяет, что обработаны все варианты, и не требует `default`. Добавили новый подтип — код перестаёт компилироваться, пока вы не добавите его обработку. Ошибка ловится в компайл-тайме, а не в проде.
 3. **Алгебраические типы данных** — в связке с records образуют sum types (закрытое «ИЛИ» вариантов), аналог `enum` Rust или `sealed trait` Scala.
 
+```mermaid
+graph TD
+    A["sealed interface Shape"] --> B["record Circle"]
+    A --> C["record Rectangle"]
+    A --> D["final class Triangle"]
+    style A fill:#f9f,stroke:#333
+    style B fill:#bbf,stroke:#333
+    style C fill:#bbf,stroke:#333
+    style D fill:#bfb,stroke:#333
+```
+
 **Правила размещения:** подклассы sealed-класса должны находиться в том же модуле (для модульного проекта) или в том же пакете (для немодульного). Подробнее о модулях — в [вопросах по Java Modules](java-modules-interview.md).
 
 ---
@@ -637,17 +648,23 @@ int numLetters = switch (day) {
 
 Виртуальные потоки снимают этот компромисс: можно остаться на простом блокирующем коде и при этом обслуживать десятки и сотни тысяч запросов, потому что заблокированный виртуальный поток почти ничего не стоит.
 
-Две модели в сравнении:
+```mermaid
+graph TD
+    subgraph "Платформенные потоки (OS Threads)"
+        PT1[Platform Thread 1<br/>~1 МБ стек] --> OS1[OS Thread 1]
+        PT2[Platform Thread 2<br/>~1 МБ стек] --> OS2[OS Thread 2]
+        PT3[Platform Thread N<br/>~1 МБ стек] --> OS3[OS Thread N]
+    end
 
-- **Платформенные потоки (OS Threads)** — отношение «один к одному». Каждый `Platform Thread` (по ~1 МБ стека) напрямую отображается на свой `OS Thread`:
-  - `Platform Thread 1` (~1 МБ стек) → `OS Thread 1`;
-  - `Platform Thread 2` (~1 МБ стек) → `OS Thread 2`;
-  - `Platform Thread N` (~1 МБ стек) → `OS Thread N`.
-- **Виртуальные потоки (Virtual Threads)** — отношение «много к малому»: множество виртуальных потоков мультиплексируются на небольшое число несущих (carrier) потоков, а те уже отображаются на OS-потоки:
-  - `Virtual Thread 1` и `Virtual Thread 2` → `Carrier Thread 1`;
-  - `Virtual Thread 3` и `Virtual Thread N` → `Carrier Thread 2`;
-  - `Carrier Thread 1` → `OS Thread 1`;
-  - `Carrier Thread 2` → `OS Thread 2`.
+    subgraph "Виртуальные потоки (Virtual Threads)"
+        VT1[Virtual Thread 1] --> CT1[Carrier Thread 1]
+        VT2[Virtual Thread 2] --> CT1
+        VT3[Virtual Thread 3] --> CT2[Carrier Thread 2]
+        VT4[Virtual Thread N] --> CT2
+        CT1 --> OST1[OS Thread 1]
+        CT2 --> OST2[OS Thread 2]
+    end
+```
 
 **Что делает их дешёвыми:**
 - Планирует JVM-шедулер, а не ОС, — переключение происходит в user space, без системных вызовов.
@@ -718,15 +735,22 @@ Thread.currentThread().isVirtual(); // true для виртуального по
 
 Главное в этой таблице — последние две строки и стоимость создания. Из-за того что виртуальный поток дешёв в создании и не привязывает к себе OS-поток на время блокировки, привычные приёмы оптимизации платформенных потоков (пулы, переиспользование) для него становятся ненужными, а то и вредными — об этом в примечании ниже.
 
-Сам цикл «mount → блокировка → unmount → mount» по шагам, между участниками `Virtual Thread (VT)`, `Carrier Thread (OS)` и `Database`:
+Сам цикл «mount → блокировка → unmount → mount» выглядит так:
 
-1. **VT → Carrier Thread:** `mount` — виртуальный поток монтируется на несущий и выполняет код.
-2. **Carrier Thread → Database:** уходит SQL-запрос (blocking I/O).
-3. *Заметка:* `unmount` — VT открепляется от несущего потока.
-4. *Заметка:* несущий (carrier) поток свободен для других VT.
-5. **Database → Carrier Thread:** приходит результат запроса.
-6. **Carrier Thread → VT:** `mount` — виртуальный поток монтируется обратно (на тот же или другой несущий) для продолжения.
-7. *Заметка:* VT продолжает выполнение с того же места.
+```mermaid
+sequenceDiagram
+    participant VT as Virtual Thread
+    participant CT as Carrier Thread (OS)
+    participant DB as Database
+
+    VT->>CT: mount (выполнение кода)
+    CT->>DB: SQL-запрос (blocking I/O)
+    Note over VT,CT: unmount — VT открепляется
+    Note over CT: Carrier thread свободен<br/>для других VT
+    DB-->>CT: Результат
+    CT->>VT: mount (продолжение)
+    Note over VT: Продолжает выполнение
+```
 
 > **Ключевой принцип:** не пулируйте виртуальные потоки. Они настолько дешёвые, что правильный подход — создавать новый поток для каждой задачи. Антипаттерн: `Executors.newFixedThreadPool()` с виртуальными потоками.
 
@@ -883,15 +907,17 @@ try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
 } // scope закрывается — все незавершённые задачи отменяются
 ```
 
-Поток выполнения по веткам:
-
-- **Родительская задача** запускает две подзадачи:
-  - `scope.fork: fetchUser`;
-  - `scope.fork: fetchOrder`.
-- Для каждой подзадачи проверяется «Успех?»:
-  - если `fetchUser` и `fetchOrder` завершились **успешно** → `scope.join` — оба завершены;
-  - если `fetchUser` завершился с **ошибкой** → scope автоматически отменяет `fetchOrder`;
-  - если `fetchOrder` завершился с **ошибкой** → scope автоматически отменяет `fetchUser`.
+```mermaid
+graph TD
+    A[Родительская задача] --> B[scope.fork: fetchUser]
+    A --> C[scope.fork: fetchOrder]
+    B --> D{Успех?}
+    C --> E{Успех?}
+    D -->|Да| F[scope.join — оба завершены]
+    E -->|Да| F
+    D -->|Нет| G[scope автоматически отменяет fetchOrder]
+    E -->|Нет| H[scope автоматически отменяет fetchUser]
+```
 
 ---
 
@@ -1022,12 +1048,19 @@ boolean bound = CURRENT_USER.isBound(); // Проверка наличия
 
 **Sequenced Collections** (JEP 431, Java 21) — три новых интерфейса в `java.util` (`SequencedCollection`, `SequencedSet`, `SequencedMap`), которые задают единый API для всех коллекций с определённым порядком элементов: единообразный доступ к первому и последнему элементу и к перевёрнутому представлению:
 
-Связи трёх интерфейсов и реализующих их типов:
-
-- **`SequencedCollection`** — корневой интерфейс, к нему ведут:
-  - `SequencedMap` (производный интерфейс), который реализуют `LinkedHashMap` и `SortedMap`;
-  - `SequencedSet` (производный интерфейс), который реализуют `LinkedHashSet` и `SortedSet`;
-  - напрямую реализует `List`.
+```mermaid
+graph TD
+    SC[SequencedCollection] --> SM[SequencedMap]
+    SC --> SS[SequencedSet]
+    SC -.-> List
+    SS -.-> LinkedHashSet
+    SS -.-> SortedSet
+    SM -.-> LinkedHashMap
+    SM -.-> SortedMap
+    style SC fill:#f9f,stroke:#333
+    style SM fill:#f9f,stroke:#333
+    style SS fill:#f9f,stroke:#333
+```
 
 **Проблема до Java 21.** Все эти коллекции упорядочены, но «первый» и «последний» получались по-разному — каждый тип изобретал свой способ, а у `LinkedHashSet` дойти до последнего элемента вообще можно было только итерацией до конца:
 
@@ -1293,9 +1326,14 @@ java --add-opens java.base/java.lang=ALL-UNNAMED \
 
 ### Пошаговый план миграции
 
-Порядок этапов, слева направо:
-
-`Java 8/11` → Обновить зависимости → Компиляция `Java 17` → Тесты и `--add-opens` → Рефакторинг (records, sealed, pattern matching) → `Java 21` + Virtual Threads.
+```mermaid
+graph LR
+    A[Java 8/11] --> B[Обновить зависимости]
+    B --> C[Компиляция Java 17]
+    C --> D[Тесты и --add-opens]
+    D --> E[Рефакторинг: records,<br/>sealed, pattern matching]
+    E --> F[Java 21 + Virtual Threads]
+```
 
 ### Ключевые шаги
 

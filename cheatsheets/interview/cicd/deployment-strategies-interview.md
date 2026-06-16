@@ -103,11 +103,16 @@ updated: "2026-04-25"
 
 Ключевая идея: **деплой и переключение трафика разнесены во времени**. Пока вы устанавливаете и проверяете green, ни один реальный запрос на него не идёт — поэтому ошибки сборки или конфигурации не задевают пользователей. Решение «переключать или нет» принимается по готовому, прогретому окружению.
 
-Схема трафика:
-
-- Пользователи → `Load Balancer`.
-- `Load Balancer` → **Blue (`v1.0`)** — активное окружение (весь трафик идёт сюда).
-- `Load Balancer` ⇢ **Green (`v1.1`)** — standby (трафик не идёт, окружение в резерве).
+```mermaid
+graph LR
+    U[Пользователи] --> LB[Load Balancer]
+    LB -->|"активен"| B["Blue (v1.0)"]
+    LB -.->|"standby"| G["Green (v1.1)"]
+    
+    style B fill:#4a90d9,color:#fff
+    style G fill:#7bc67e,color:#fff
+    style LB fill:#f5a623,color:#fff
+```
 
 **Плюсы:** мгновенный откат (одно переключение назад); полная изоляция новой версии до того, как её увидят пользователи; простая ментальная модель — «или старое, или новое».
 
@@ -206,12 +211,19 @@ spec:
 
 Смысл названия — «канарейка в шахте»: малая группа реальных пользователей выступает ранним детектором проблем. Так вы ограничиваете радиус поражения: если версия дефектна, её увидят 5% аудитории, а не все.
 
-Схема трафика и обратной связи:
-
-- Пользователи → `Load Balancer / Ingress`.
-- `Load Balancer` направляет 95% трафика на **`v1.0` (stable)** и 5% на **`v1.1` (canary)**.
-- Canary-версия `v1.1` отдаёт **`Prometheus` метрики**.
-- По метрикам решают: если **ОК** — увеличить долю canary (балансировщик повышает процент); если **ошибки** — откатить трафик обратно на `v1.0`.
+```mermaid
+graph LR
+    U[Пользователи] --> LB[Load Balancer / Ingress]
+    LB -->|"95% трафика"| V1["v1.0 (stable)"]
+    LB -->|"5% трафика"| V2["v1.1 (canary)"]
+    V2 --> M["Prometheus метрики"]
+    M -->|"ОК → увеличить %"| LB
+    M -->|"ошибки → откат"| V1
+    
+    style V1 fill:#4a90d9,color:#fff
+    style V2 fill:#e6a817,color:#000
+    style M fill:#e74c3c,color:#fff
+```
 
 **Чем отличается от Blue-Green.** Blue-Green переключает 100% трафика мгновенно и проверяет новую версию *до* того, как она увидит пользователей; Canary впускает реальный трафик *постепенно* и проверяет версию *в бою*, по живым метрикам. Отсюда три практических различия: Canary вводит версию плавно, требует меньше ресурсов (достаточно 1–2 canary-подов вместо второго полного окружения), но сложнее технически — нужен механизм взвешенного распределения трафика по версиям. Выбирают Canary, когда важно минимизировать риск и есть возможность наращивать долю по метрикам.
 
@@ -265,20 +277,26 @@ spec:
 
 `Rolling Update` — это стратегия по умолчанию в Kubernetes: новая версия выкатывается постепенно, под за подом. Kubernetes создаёт под новой версии, ждёт, пока он пройдёт `readinessProbe` и начнёт получать трафик, затем gracefully завершает один под старой версии — и так по кругу, пока все поды не обновятся. В любой момент часть подов уже на новой версии, часть ещё на старой, а суммарная ёмкость не проседает. Задаётся в `Deployment` через `strategy.type: RollingUpdate`.
 
-Порядок выкатки по шагам (участники: `Kubernetes`, поды `v1`, поды `v2`, `Service`):
-
-1. `Kubernetes` создаёт под `v2` #1.
-2. Под `v2` #1 проходит `readinessProbe` (OK) и сообщает об этом `Service`.
-3. `Service` направляет трафик на под `v2` #1.
-4. `Kubernetes` завершает под `v1` #1 (graceful).
-5. `Kubernetes` создаёт под `v2` #2.
-6. Под `v2` #2 проходит `readinessProbe` (OK) → `Service` направляет на него трафик.
-7. `Kubernetes` завершает под `v1` #2 (graceful).
-8. `Kubernetes` создаёт под `v2` #3.
-9. Под `v2` #3 проходит `readinessProbe` (OK).
-10. `Kubernetes` завершает под `v1` #3 (graceful).
-
-Итог: обновление завершено, все поды на `v2`.
+```mermaid
+sequenceDiagram
+    participant K as Kubernetes
+    participant Old as Поды v1
+    participant New as Поды v2
+    participant S as Service
+    
+    K->>New: Создать под v2 #1
+    New-->>S: readinessProbe OK
+    S->>New: Направить трафик
+    K->>Old: Завершить под v1 #1 (graceful)
+    K->>New: Создать под v2 #2
+    New-->>S: readinessProbe OK
+    S->>New: Направить трафик
+    K->>Old: Завершить под v1 #2 (graceful)
+    K->>New: Создать под v2 #3
+    New-->>S: readinessProbe OK
+    K->>Old: Завершить под v1 #3 (graceful)
+    Note over K,S: Обновление завершено: все поды v2
+```
 
 Темп выкатки регулируют два параметра — они задают компромисс между скоростью и доступностью:
 
@@ -373,11 +391,28 @@ Zero-downtime — это деплой, при котором ни один по�
 2. **`Blue-Green`** — трафик переключают только после того, как новое окружение полностью прогрето и проверено.
 3. **`Canary`** — трафик переводят постепенно, наблюдая за метриками.
 
-**Zero-Downtime деплой** строится на трёх стратегиях, каждая опирается на свой набор механизмов:
-
-- **`Rolling Update`** (`maxUnavailable: 0`) → `readinessProbe`, graceful shutdown, connection draining.
-- **`Blue-Green`** (мгновенное переключение) → `readinessProbe`, smoke tests.
-- **`Canary`** (постепенный трафик) → `readinessProbe`, анализ метрик.
+```mermaid
+graph TD
+    ZD["Zero-Downtime деплой"]
+    ZD --> RU["Rolling Update<br/>maxUnavailable: 0"]
+    ZD --> BG["Blue-Green<br/>мгновенное переключение"]
+    ZD --> CN["Canary<br/>постепенный трафик"]
+    
+    RU --> RP["readinessProbe"]
+    RU --> GS["graceful shutdown"]
+    RU --> CD["connection draining"]
+    
+    BG --> RP
+    BG --> ST["smoke tests"]
+    
+    CN --> RP
+    CN --> MA["анализ метрик"]
+    
+    style ZD fill:#2ecc71,color:#fff
+    style RU fill:#3498db,color:#fff
+    style BG fill:#9b59b6,color:#fff
+    style CN fill:#e67e22,color:#fff
+```
 
 Самой стратегии мало — без перечисленного ниже даже Rolling Update будет ронять запросы при каждом обновлении. Обязательные компоненты:
 
@@ -564,11 +599,27 @@ spec:
 
 **Deployment pipeline** — это автоматизированная цепочка этапов, проводящая изменение от коммита до продакшена. Центральный принцип — **build once, deploy many**: артефакт (образ с тегом по git SHA) собирается ровно один раз, а дальше один и тот же неизменный артефакт промотируется по окружениям. Так вы тестируете и катите в прод *именно тот бинарник*, что прошёл проверки, а не пересобранную копию, которая теоретически может отличаться.
 
-Этапы пайплайна по порядку:
-
-Коммит → Build → Unit Tests → Docker Build → Push Registry → Deploy Dev → Integration Tests → Deploy Staging → E2E Tests → **Approval** → (при «ОК») Deploy Prod → Smoke Tests → Мониторинг → (при ошибках) Rollback.
-
-Ключевые ветвления: на этапе **Approval** деплой в prod идёт только после подтверждения («ОК»); на этапе **Мониторинг** при обнаружении ошибок запускается **Rollback**.
+```mermaid
+graph LR
+    C[Коммит] --> B[Build]
+    B --> UT[Unit Tests]
+    UT --> DI[Docker Build]
+    DI --> PR[Push Registry]
+    PR --> DD[Deploy Dev]
+    DD --> IT[Integration Tests]
+    IT --> DS[Deploy Staging]
+    DS --> E2E[E2E Tests]
+    E2E --> AP{Approval}
+    AP -->|"ОК"| DP[Deploy Prod]
+    DP --> SM[Smoke Tests]
+    SM --> MN[Мониторинг]
+    MN -->|"ошибки"| RB[Rollback]
+    
+    style C fill:#2ecc71,color:#fff
+    style AP fill:#e67e22,color:#fff
+    style RB fill:#e74c3c,color:#fff
+    style DP fill:#3498db,color:#fff
+```
 
 Раз артефакт неизменен, то всё, что различается между окружениями, выносят наружу: конфигурация, переменные и секреты подставляются по окружению, а образ остаётся тем же. Этапы выстраивают по принципу «fail fast» — самые быстрые и дешёвые проверки (unit-тесты) идут первыми, дорогие (e2e, ручной approval) — ближе к проду. Подробнее о проектировании пайплайнов — в [вопросах по CI/CD пайплайнам](pipeline-design-interview.md).
 
@@ -650,11 +701,25 @@ images:
 
 **Безопасная последовательность при Rolling Update:**
 
-Последовательность по шагам (участники: `CI/CD Pipeline`, база данных, приложение `v1`, приложение `v2`):
-
-1. **Шаг 1 — backward-compatible миграция.** `CI/CD` применяет к БД `ALTER TABLE ADD COLUMN new_col` (nullable). С такой схемой работают и `v1`, и `v2`.
-2. **Шаг 2 — Rolling Update.** `CI/CD` деплоит `v2` (использует `new_col`). При этом `v1` продолжает работать с БД, игнорируя `new_col`, а `v2` работает, используя `new_col`.
-3. **Шаг 3 — cleanup миграция (следующий релиз).** `CI/CD` применяет к БД `ALTER TABLE DROP COLUMN old_col`.
+```mermaid
+sequenceDiagram
+    participant CI as CI/CD Pipeline
+    participant DB as База данных
+    participant V1 as Приложение v1
+    participant V2 as Приложение v2
+    
+    Note over CI: Шаг 1: backward-compatible миграция
+    CI->>DB: ALTER TABLE ADD COLUMN new_col (nullable)
+    Note over DB: v1 и v2 могут работать с этой схемой
+    
+    Note over CI: Шаг 2: Rolling Update
+    CI->>V2: Деплой v2 (использует new_col)
+    V1->>DB: Работает (игнорирует new_col)
+    V2->>DB: Работает (использует new_col)
+    
+    Note over CI: Шаг 3: cleanup миграция (следующий релиз)
+    CI->>DB: ALTER TABLE DROP COLUMN old_col
+```
 
 **Подходы:**
 1. **Backward-compatible миграции** — изменение схемы устроено так, что и старая, и новая версия приложения работают с ней; сначала применяют миграцию, потом катят код. Самый безопасный вариант.
@@ -722,12 +787,18 @@ echo "All smoke tests passed"
 
 Смысл — **проверить новый код под настоящей нагрузкой и на настоящих данных, ничем не рискуя для пользователя**. Вы видите реальные ошибки, latency и поведение под пиком ещё до того, как новая версия начнёт влиять на чей-либо опыт.
 
-Схема маршрутизации:
-
-- Пользователи → `Proxy / Ingress`.
-- `Proxy` отправляет **основной запрос** на **`v1` (production)**, и `v1` возвращает **ответ** пользователю.
-- Одновременно `Proxy` зеркалирует **shadow copy** запроса на **`v2` (dark launch)**.
-- `v2` не отвечает пользователю — её результат идёт **только в логи и метрики** (мониторинг).
+```mermaid
+graph LR
+    U[Пользователи] --> P[Proxy / Ingress]
+    P -->|"основной запрос"| V1["v1 (production)"]
+    P -.->|"shadow copy"| V2["v2 (dark launch)"]
+    V1 -->|"ответ"| U
+    V2 -->|"только логи и метрики"| M[Мониторинг]
+    
+    style V1 fill:#4a90d9,color:#fff
+    style V2 fill:#95a5a6,color:#fff
+    style M fill:#e74c3c,color:#fff
+```
 
 **Сценарий применения:** проверка нагрузки, ошибок и метрик новой версии без изменения пользовательского опыта — особенно когда переписан критичный путь (рекомендации, расчёт цены) и нужна уверенность под боевым трафиком. **Реализация:** feature flag «выполнить новый путь, но не показывать результат» либо зеркалирование запросов на уровне прокси (двойной вызов в коде или mirror в service mesh).
 
@@ -844,12 +915,17 @@ spec:
 - **Переключение соединений** без потери незавершённых транзакций.
 - **Откат не симметричен переключению вперёд:** если на green уже успели записать, простым возвратом на blue эти данные не вернуть — нужен обратный перенос.
 
-Схема:
-
-- Приложение → **`DB Proxy / PgBouncer`**.
-- Прокси активно указывает на **Blue DB (`v1` schema)**.
-- Прокси готов переключиться на **Green DB (`v2` schema)** — реплику, к которой уже применены миграции.
-- Между базами идёт **логическая репликация**: Blue DB → Green DB.
+```mermaid
+graph TD
+    APP["Приложение"] --> PX["DB Proxy / PgBouncer"]
+    PX -->|"активна"| BDB["Blue DB (v1 schema)"]
+    PX -.->|"реплика + миграция"| GDB["Green DB (v2 schema)"]
+    BDB -->|"логическая репликация"| GDB
+    
+    style BDB fill:#4a90d9,color:#fff
+    style GDB fill:#7bc67e,color:#fff
+    style PX fill:#f5a623,color:#fff
+```
 
 Типичный сценарий: blue — текущая prod БД; green — копия (реплика или дамп + репликация). На green выполняют миграции; приложение переключают на green (смена connection string или переключение прокси). Риски: расхождение данных за время репликации; откат приложения требует отката и данных (если на green уже писали). Для нулевого простоя используют логическую репликацию (`pg_logical`) и переключение с минимальным окном.
 
@@ -935,13 +1011,18 @@ spec:
 
 Из этого вытекает ключевое свойство: раз источник правды — Git, то **деплой = коммит, а откат = `git revert`**, и вся история изменений кластера лежит в репозитории.
 
-Поток GitOps:
-
-- Разработчик делает **push** в **`Git Repo`**.
-- `Argo CD` выполняет **sync** с `Git Repo`.
-- `Argo CD` делает **apply** в **`Kubernetes Cluster`**.
-- Кластер возвращает **status** в `Argo CD`.
-- `Argo CD` сверяет **diff / status** с `Git Repo` (контроль соответствия желаемого состояния).
+```mermaid
+graph LR
+    DEV[Разработчик] -->|"push"| GIT[Git Repo]
+    GIT -->|"sync"| ARGO[Argo CD]
+    ARGO -->|"apply"| K8S[Kubernetes Cluster]
+    K8S -->|"status"| ARGO
+    ARGO -->|"diff / status"| GIT
+    
+    style GIT fill:#f5a623,color:#fff
+    style ARGO fill:#e74c3c,color:#fff
+    style K8S fill:#3498db,color:#fff
+```
 
 **Argo CD Application:**
 
@@ -1048,9 +1129,16 @@ spec:
 
 При деплое микросервисов — трёхэтапный подход:
 
-1. **Этап 1:** деплой сервера `v2` (поддержка контракта `v1` + `v2`).
-2. **Этап 2:** деплой клиентов (переход на контракт `v2`).
-3. **Этап 3:** деплой сервера `v3` (удаление контракта `v1`).
+```mermaid
+sequenceDiagram
+    participant T1 as Этап 1
+    participant T2 as Этап 2
+    participant T3 as Этап 3
+    
+    Note over T1: Деплой сервера v2<br/>(поддержка v1 + v2 контракта)
+    Note over T2: Деплой клиентов<br/>(переход на v2 контракт)
+    Note over T3: Деплой сервера v3<br/>(удаление v1 контракта)
+```
 
 Нарушение совместимости требует версионирования API или координации «big bang» деплоя. Contract testing (`Pact`) проверяет совместимость до деплоя.
 
@@ -1202,12 +1290,20 @@ spec:
             }[2m]))
 ```
 
-Шаги выкатки и ветвления:
-
-1. **Rollout обновлён** → выставляется **10% canary**.
-2. Через 2 минуты — **анализ метрик**: при **OK** переход к **30% canary**; при **FAIL** — **откат**.
-3. Через 2 минуты — **анализ метрик**: при **OK** переход к **60% canary**; при **FAIL** — **откат**.
-4. Через 5 минут — **100% (promotion)**: версия полностью продвинута.
+```mermaid
+graph LR
+    R[Rollout обновлён] --> S1["10% canary"]
+    S1 -->|"2 мин"| A1{Анализ метрик}
+    A1 -->|"OK"| S2["30% canary"]
+    A1 -->|"FAIL"| RB[Откат]
+    S2 -->|"2 мин"| A2{Анализ метрик}
+    A2 -->|"OK"| S3["60% canary"]
+    A2 -->|"FAIL"| RB
+    S3 -->|"5 мин"| S4["100% — promotion"]
+    
+    style RB fill:#e74c3c,color:#fff
+    style S4 fill:#2ecc71,color:#fff
+```
 
 Управление:
 
@@ -1686,12 +1782,15 @@ public class CheckoutService {
 
 **Стратегии Unleash для постепенного rollout:**
 
-Постепенный rollout по стратегии Unleash:
-
-- Весь трафик (100%) проходит через **стратегию Unleash**.
-- Стратегия `gradualRollout` направляет 10% на **новую фичу**, остальные 90% — на **старую логику**.
-- Новая фича подключена к **мониторингу ошибок и метрик**.
-- По результатам мониторинга: при **OK** — увеличить процент (возврат к стратегии Unleash с большей долей); при **проблемах** — сбросить долю до 0% (весь трафик на старую логику).
+```mermaid
+flowchart LR
+    Traffic[100% трафика] --> Unleash{Unleash\nстратегия}
+    Unleash -->|"gradualRollout\n10%"| New["Новая фича"]
+    Unleash -->|"90%"| Old["Старая логика"]
+    New --> Monitor["Мониторинг\nошибок и метрик"]
+    Monitor -->|"OK → увеличить %"| Unleash
+    Monitor -->|"Проблемы → 0%"| Old
+```
 
 **Пример с `@ConditionalOnProperty` (простой вариант без Unleash):**
 
@@ -1725,17 +1824,24 @@ public class LegacyCheckoutController { ... }
 
 **Архитектура GitOps-деплоя:**
 
-Порядок шагов (участники: `Developer`, App Repo с CI, Config Repo, `Argo CD`, `Kubernetes`):
+```mermaid
+sequenceDiagram
+    participant Dev as Developer
+    participant App as App Repo (CI)
+    participant Conf as Config Repo
+    participant Argo as Argo CD
+    participant K8s as Kubernetes
 
-1. `Developer` делает `git push feature` в App Repo.
-2. App Repo (CI): build + test.
-3. App Repo (CI): docker build + push.
-4. App Repo создаёт PR в Config Repo — обновить `image.tag` в `values.yaml`.
-5. В Config Repo: Review + Merge.
-6. `Argo CD` опрашивает Config Repo — Poll (30s) или Webhook.
-7. `Argo CD` применяет изменения в `Kubernetes` (sync, Apply).
-8. `Kubernetes` возвращает статус ресурсов в `Argo CD`.
-9. `Argo CD` шлёт `Developer` уведомление о статусе.
+    Dev->>App: git push feature
+    App->>App: CI: build + test
+    App->>App: CI: docker build + push
+    App->>Conf: PR: обновить image.tag в values.yaml
+    Conf->>Conf: Review + Merge
+    Argo->>Conf: Poll (30s) или Webhook
+    Argo->>K8s: Apply изменений (sync)
+    K8s->>Argo: Статус ресурсов
+    Argo-->>Dev: Уведомление о статусе
+```
 
 **Структура config-репозитория:**
 
@@ -1928,14 +2034,15 @@ pipeline {
 
 **Как собирать метрики:**
 
-Где на пути изменения собираются метрики:
-
-- `git commit` — **начало Lead Time**.
-- → PR/MR создан → CI pipeline.
-- → **деплой в prod** — **конец Lead Time**.
-- → мониторинг — здесь считается **Change Failure Rate**.
-- При **инциденте** → отсчитывается **Time to Restore**.
-- После того как сервис **восстановлен** → фиксируется **DORA snapshot**.
+```mermaid
+flowchart LR
+    Commit["git commit\n(начало lead time)"] --> PR["PR/MR создан"]
+    PR --> CI["CI pipeline"]
+    CI --> Deploy["Деплой в prod\n(конец lead time)"]
+    Deploy --> Monitor["Мониторинг\n(change failure rate)"]
+    Monitor -->|"Инцидент"| Incident["Time to Restore"]
+    Incident -->|"Восстановлено"| End["DORA snapshot"]
+```
 
 **Примеры инструментов сбора:**
 

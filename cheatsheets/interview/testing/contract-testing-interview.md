@@ -140,18 +140,19 @@ updated: "2026-05-27"
 
 ### Как это работает
 
-Поток данных делится на две стороны.
-
-**Consumer side:**
-- `Consumer Test` запускается против `Mock Provider`.
-- `Mock Provider` генерирует `pact.json`.
-
-`pact.json` публикуется в `Pact Broker`.
-
-**Provider side:**
-- из `Pact Broker` pact скачивается в `Provider Verification`.
-- `Provider Verification` проверяет реальный `Provider API`.
-- `Provider Verification` публикует результат обратно в `Pact Broker`.
+```mermaid
+graph LR
+    subgraph "Consumer side"
+        CT[Consumer Test] -->|запускается против| MOCK[Mock Provider]
+        MOCK -->|генерирует| PACT[pact.json]
+    end
+    PACT -->|публикуется в| BROKER[(Pact Broker)]
+    subgraph "Provider side"
+        BROKER -->|pact скачивается| PV[Provider Verification]
+        PV -->|проверяет реальный| PROV[Provider API]
+    end
+    PV -->|публикует результат| BROKER
+```
 
 1. Consumer пишет тест, используя mock provider'а от Pact.
 2. Mock ловит запросы, возвращает ожидаемые ответы и записывает их в **pact-файл** (JSON).
@@ -192,12 +193,17 @@ Contract задаёт **только то, что consumer реально исп
 
 Контрактные тесты живут **между unit и integration** слоями (иногда их ставят рядом с integration). По стоимости и скорости они ближе к unit, по тому, что проверяют, — ближе к integration: формат взаимодействия двух сервисов, но без поднятия их обоих.
 
-Слои пирамиды сверху вниз (от самых редких и медленных к самым многочисленным и быстрым):
+```mermaid
+graph TB
+    E2E["E2E Tests<br/>единицы, минуты"]
+    CT["Contract Tests<br/>десятки, секунды"]
+    INT["Integration Tests<br/>сотни, секунды"]
+    UNIT["Unit Tests<br/>тысячи, миллисекунды"]
 
-- `E2E Tests` — единицы, минуты.
-- `Contract Tests` — десятки, секунды.
-- `Integration Tests` — сотни, секунды.
-- `Unit Tests` — тысячи, миллисекунды.
+    E2E --> CT
+    CT --> INT
+    INT --> UNIT
+```
 
 **Характеристики:**
 - Быстрее `integration`-тестов (нет реальной сети и реальных зависимостей на consumer side).
@@ -571,16 +577,21 @@ pact {
 
 ### Поток
 
-Участники: `Provider Test`, `Pact Broker` и запущенное приложение провайдера `Provider App (running)`. Порядок шагов:
-
-1. `Provider Test` запрашивает у `Pact Broker` пакты для `MyProvider` (`fetch pacts for "MyProvider"`).
-2. `Pact Broker` возвращает набор пактов — `[pact-from-consumer-A, pact-from-consumer-B]`.
-3. Далее для каждого interaction повторяется цикл:
-   - `Provider Test` готовит provider state в `Provider App` (`set up provider state`);
-   - `Provider Test` проигрывает запрос против `Provider App` (`replay request`);
-   - `Provider App` возвращает фактический ответ (`actual response`);
-   - `Provider Test` сравнивает ответ с ожиданием.
-4. По завершении `Provider Test` публикует результат верификации в `Pact Broker` (`publish verification result`).
+```mermaid
+sequenceDiagram
+    participant PT as Provider Test
+    participant PB as Pact Broker
+    participant APP as Provider App (running)
+    PT->>PB: fetch pacts for "MyProvider"
+    PB-->>PT: [pact-from-consumer-A, pact-from-consumer-B]
+    loop для каждого interaction
+        PT->>APP: set up provider state
+        PT->>APP: replay request
+        APP-->>PT: actual response
+        PT->>PT: сравнить с ожиданием
+    end
+    PT->>PB: publish verification result
+```
 
 ### Что именно проверяется
 
@@ -1231,14 +1242,14 @@ class OrderEventProducerPactTest {
 
 ### Как SCC работает
 
-Цепочка артефактов:
-
-- `contract.groovy` (на стороне провайдера) → плагин `spring-cloud-contract`.
-- Плагин `spring-cloud-contract` порождает две ветки:
-  - → авто-сгенерированный provider test (`Auto-generated Provider test`);
-  - → `WireMock stub` в виде JAR-артефакта.
-- `WireMock stub` (JAR) → публикуется в `Maven/Nexus`.
-- из `Maven/Nexus` → consumer test через `@AutoConfigureStubRunner`.
+```mermaid
+graph LR
+    CON[contract.groovy<br/>на стороне провайдера] --> PLUGIN[spring-cloud-contract<br/>plugin]
+    PLUGIN --> TEST[Auto-generated<br/>Provider test]
+    PLUGIN --> STUB[WireMock stub<br/>JAR-артефакт]
+    STUB --> NEXUS[(Maven/Nexus)]
+    NEXUS --> CONS[Consumer test<br/>через @AutoConfigureStubRunner]
+```
 
 1. Провайдер пишет `.groovy` или `.yml` контракт.
 2. `spring-cloud-contract-maven-plugin` (или Gradle):
@@ -1521,17 +1532,18 @@ Pipeline строится вокруг двух гейтов на брокере
 
 ### Consumer pipeline
 
-Этапы consumer pipeline по порядку:
-
-1. `Push to branch` → `Build + Unit tests`.
-2. → `Consumer Pact tests`.
-3. → проверка `tests OK?`:
-   - если `no` → `Fail`;
-   - если `yes` → `Publish pacts to broker`.
-4. → шаг `can-i-deploy?`:
-   - если `no` → `Fail`;
-   - если `yes` → `Deploy`.
-5. После `Deploy` → `record-deployment`.
+```mermaid
+graph LR
+    A[Push to branch] --> B[Build + Unit tests]
+    B --> C[Consumer Pact tests]
+    C --> D{tests OK?}
+    D -->|no| X[Fail]
+    D -->|yes| E[Publish pacts to broker]
+    E --> F[can-i-deploy ?]
+    F -->|no| X
+    F -->|yes| G[Deploy]
+    G --> H[record-deployment]
+```
 
 ```yaml
 # .gitlab-ci.yml (consumer)

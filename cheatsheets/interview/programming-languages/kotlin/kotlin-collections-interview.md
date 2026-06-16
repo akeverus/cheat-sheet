@@ -145,17 +145,32 @@ process(mutableListOf(1, 2, 3))
 
 Иерархия делится на две параллельные ветки — read-only и mutable, — где каждый mutable-интерфейс наследует свой read-only вариант и добавляет к нему методы изменения. Корень обеих веток — `Iterable<T>`.
 
-**Read-only ветка** (наследование сверху вниз):
-- `Iterable<T>` → `Collection<T>` → `List<T>`
-- `Iterable<T>` → `Collection<T>` → `Set<T>`
-- `Map<K, V>` — отдельный корень, ветку `Iterable`/`Collection` не наследует
+```mermaid
+graph TD
+    Iterable["Iterable&lt;T&gt;"]
+    Collection["Collection&lt;T&gt;"]
+    List["List&lt;T&gt;"]
+    Set["Set&lt;T&gt;"]
+    MutableIterable["MutableIterable&lt;T&gt;"]
+    MutableCollection["MutableCollection&lt;T&gt;"]
+    MutableList["MutableList&lt;T&gt;"]
+    MutableSet["MutableSet&lt;T&gt;"]
+    Map["Map&lt;K, V&gt;"]
+    MutableMap["MutableMap&lt;K, V&gt;"]
 
-**Mutable ветка** (наследование сверху вниз):
-- `MutableIterable<T>` → `MutableCollection<T>` → `MutableList<T>`
-- `MutableIterable<T>` → `MutableCollection<T>` → `MutableSet<T>`
-- `Map<K, V>` → `MutableMap<K, V>`
+    Iterable --> Collection
+    Collection --> List
+    Collection --> Set
+    MutableIterable --> MutableCollection
+    MutableCollection --> MutableList
+    MutableCollection --> MutableSet
+    Map --> MutableMap
 
-**Связь между ветками**: каждый mutable-интерфейс наследует свой read-only вариант и добавляет к нему методы изменения — `MutableIterable` наследует `Iterable`, `MutableCollection` наследует `Collection`, `MutableList` наследует `List`, `MutableSet` наследует `Set`.
+    Iterable -.-> MutableIterable
+    Collection -.-> MutableCollection
+    List -.-> MutableList
+    Set -.-> MutableSet
+```
 
 Что важно понимать в этой схеме:
 - `Collection<T>` наследует `Iterable<T>`, поэтому любую коллекцию можно обойти через `for`.
@@ -292,15 +307,20 @@ val updated2 = map.put("b", 2)
 
 `Sequence<T>` — **ленивая** последовательность. Ключевая разница с `List`: на `List` каждая операция в цепочке (`filter`, `map`) сразу прогоняет всю коллекцию и создаёт новый список; на `Sequence` промежуточные операции ничего не делают и не аллоцируют — пока не вызвана **терминальная** операция (`toList()`, `first()`, `count()`). Тогда каждый элемент по одному проходит всю цепочку до конца.
 
-**`List` (eager)** — каждый шаг прогоняет всю коллекцию и создаёт новый список:
-- `[1,2,3,4,5]` → `filter` → `[2,4]` → `map` → `[4,8]`
+```mermaid
+graph LR
+    subgraph "List (eager)"
+        L1["[1,2,3,4,5]"] -->|"filter"| L2["[2,4]"]
+        L2 -->|"map"| L3["[4,8]"]
+    end
 
-**`Sequence` (lazy)** — каждый элемент по одному проходит всю цепочку:
-- `1` → `filter` → skip
-- `2` → `filter` → pass → `map` → `4`
-- `3` → `filter` → skip
-- `4` → `filter` → pass → `map` → `8`
-- `5` → `filter` → skip
+    subgraph "Sequence (lazy)"
+        S1["1→filter→skip"] --> S2["2→filter→pass→map→4"]
+        S2 --> S3["3→filter→skip"]
+        S3 --> S4["4→filter→pass→map→8"]
+        S4 --> S5["5→filter→skip"]
+    end
+```
 
 | Аспект | `List` (eager) | `Sequence` (lazy) |
 |--------|---------------|-------------------|
@@ -511,6 +531,21 @@ words.groupingBy { it.first() }.eachCount()
 ## Q15. Как работают windowed, chunked и zipWithNext?
 
 Три функции для работы с «окнами» элементов:
+
+```mermaid
+graph LR
+    subgraph "chunked(3)"
+        C1["[1,2,3]"] --> C2["[4,5,6]"] --> C3["[7,8]"]
+    end
+
+    subgraph "windowed(3, step=1)"
+        W1["[1,2,3]"] --> W2["[2,3,4]"] --> W3["[3,4,5]"]
+    end
+
+    subgraph "zipWithNext"
+        Z1["(1,2)"] --> Z2["(2,3)"] --> Z3["(3,4)"]
+    end
+```
 
 ```kotlin
 val numbers = (1..8).toList()
@@ -777,19 +812,21 @@ println(deque.last())  // 5
 \* — амортизированная сложность  
 \** — O(1) если есть итератор, O(n) по значению
 
-**Практические правила выбора** (дерево решений):
+**Практические правила выбора:**
 
-- Нужен ли доступ по ключу?
-  - Да → `Map`
-    - Нужен порядок? → `TreeMap` / `sortedMapOf`
-    - Нет → `HashMap` / `mapOf`
-  - Нет → нужна ли уникальность?
-    - Да → `Set`
-      - Нужен порядок? → `TreeSet` / `sortedSetOf`
-      - Нет → `HashSet` / `setOf`
-    - Нет → `List`
-      - Частые вставки в начало? → `ArrayDeque`
-      - Нет → `ArrayList` / `listOf`
+```mermaid
+graph TD
+    A["Нужен ли доступ по ключу?"] -->|Да| B["Map"]
+    A -->|Нет| C["Нужна ли уникальность?"]
+    C -->|Да| D["Set"]
+    C -->|Нет| E["List"]
+    B -->|"Нужен порядок?"| F["TreeMap / sortedMapOf"]
+    B -->|"Нет"| G["HashMap / mapOf"]
+    D -->|"Нужен порядок?"| H["TreeSet / sortedSetOf"]
+    D -->|"Нет"| I["HashSet / setOf"]
+    E -->|"Частые вставки в начало?"| J["ArrayDeque"]
+    E -->|"Нет"| K["ArrayList / listOf"]
+```
 
 ## Q25. (!) Как проектировать API: возвращать List, Sequence или Flow?
 

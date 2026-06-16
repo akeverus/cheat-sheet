@@ -140,14 +140,24 @@ Response: "Согласно документу X (стр. 5), сотрудник
 
 ## Q4. Архитектура RAG системы?
 
-Архитектура делится на две фазы, которые сходятся в общем хранилище `Vector DB`.
+```mermaid
+graph TD
+    subgraph "Indexing (offline)"
+        Docs[Documents] --> Chunker[Chunker]
+        Chunker --> Embedder[Embedding model]
+        Embedder --> VDB[(Vector DB)]
+    end
 
-**Indexing (offline)** — поток подготовки данных:
-- `Documents` → `Chunker` (нарезка) → `Embedding model` → `Vector DB` (хранилище векторов)
-
-**Query (online)** — поток обработки запроса:
-- `User query` → `Embedding` (вектор запроса) → `Vector search` → обращается к `Vector DB`
-- `Vector DB` → `Reranker` → `Build prompt` → `LLM` → `Answer`
+    subgraph "Query (online)"
+        Q[User query] --> QEmbed[Embedding]
+        QEmbed --> Retrieve[Vector search]
+        Retrieve --> VDB
+        VDB --> Rerank[Reranker]
+        Rerank --> Prompt[Build prompt]
+        Prompt --> LLM
+        LLM --> Answer[Answer]
+    end
+```
 
 Архитектура делится на две фазы. **Indexing** идёт офлайн, заранее: документы превращаются в искомые embeddings. **Query** идёт онлайн, на каждый запрос: вопрос пользователя проходит тот же путь до вектора и сопоставляется с базой.
 

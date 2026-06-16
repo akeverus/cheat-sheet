@@ -119,10 +119,17 @@ updated: "2026-05-08"
 | Конфликты между параллельными запусками | Каждый тест получает изолированный контейнер |
 | Зависимость от shared test-сред | Контейнер одноразовый, состояние не протекает между запусками |
 
-Наглядно разница в двух подходах:
-
-- **Без `Testcontainers`:** `Тесты` → `H2 / Mock`, а `H2 / Mock` лишь частично совместим с `Production DB` (несовместимость диалектов и поведения).
-- **С `Testcontainers`:** `Тесты` → `Docker Container`, и `Docker Container` — это тот же движок, что и `Production DB`.
+```mermaid
+graph TB
+    subgraph "Без Testcontainers"
+        A[Тесты] --> B[H2 / Mock]
+        B -.->|несовместимость| C[Production DB]
+    end
+    subgraph "С Testcontainers"
+        D[Тесты] --> E[Docker Container]
+        E -->|тот же движок| F[Production DB]
+    end
+```
 
 **На собеседовании** важно подчеркнуть: `Testcontainers` не заменяет unit-тесты, а дополняет их на уровне интеграции. Unit-тесты проверяют бизнес-логику в изоляции и должны быть быстрыми; `Testcontainers` берёт на себя проверку тех мест, где код реально общается с инфраструктурой (SQL-запросы, сериализация в Kafka, TTL в Redis).
 
@@ -154,10 +161,16 @@ dependencies {
 
 `Testcontainers` — это тонкая прослойка между тестовым кодом и Docker-демоном. Тест работает с Java-объектами контейнеров, а библиотека транслирует вызовы в команды Docker API. Слои выстроены сверху вниз:
 
-Поток вызовов сверху вниз:
-
-- `Тестовый код JUnit 5` → `@Testcontainers / @Container` → `Testcontainers Core` → `Docker Client API` → `Docker Daemon` → `Контейнеры (PostgreSQL, Kafka, Redis...)`.
-- Параллельная ветка: `Testcontainers Core` → `Ryuk (Resource Reaper)`, который выполняет `cleanup` всех `Контейнеров`.
+```mermaid
+graph TB
+    A[Тестовый код JUnit 5] --> B["@Testcontainers / @Container"]
+    B --> C[Testcontainers Core]
+    C --> D[Docker Client API]
+    D --> E[Docker Daemon]
+    E --> F["Контейнеры (PostgreSQL, Kafka, Redis...)"]
+    C --> G["Ryuk (Resource Reaper)"]
+    G -.->|cleanup| F
+```
 
 **Основные компоненты:**
 
@@ -459,17 +472,23 @@ class DatabaseTest {
 3. Перед тестами вызывает `container.start()` — и момент старта зависит от `static`: для `static`-поля это `@BeforeAll` (один раз на класс), для instance-поля — `@BeforeEach` (перед каждым тестом). Разницу разбираем в [Q13](#q13-в-чём-разница-между-static-и-instance-полями-с-container).
 4. После тестов вызывает `container.stop()` — соответственно в `@AfterAll` или `@AfterEach`.
 
-Порядок взаимодействия `JUnit 5`, `TestcontainersExtension`, `Container` и `Docker Daemon`:
+```mermaid
+sequenceDiagram
+    participant JUnit as JUnit 5
+    participant Ext as TestcontainersExtension
+    participant C as Container
+    participant Docker as Docker Daemon
 
-1. `JUnit 5` на фазе `@BeforeAll` / `@BeforeEach` вызывает `TestcontainersExtension`.
-2. `TestcontainersExtension` вызывает `start()` у `Container`.
-3. `Container` отдаёт `Docker Daemon` команду `docker run ...`.
-4. `Docker Daemon` возвращает `Container` его `Container ID`.
-5. `Container` сообщает `TestcontainersExtension`, что готов (`Ready`).
-6. `JUnit 5` выполняет тесты.
-7. `JUnit 5` на фазе `@AfterAll` / `@AfterEach` снова обращается к `TestcontainersExtension`.
-8. `TestcontainersExtension` вызывает `stop()` у `Container`.
-9. `Container` отдаёт `Docker Daemon` команду `docker rm -f ...`.
+    JUnit->>Ext: @BeforeAll / @BeforeEach
+    Ext->>C: start()
+    C->>Docker: docker run ...
+    Docker-->>C: Container ID
+    C-->>Ext: Ready
+    JUnit->>JUnit: Выполнение тестов
+    JUnit->>Ext: @AfterAll / @AfterEach
+    Ext->>C: stop()
+    C->>Docker: docker rm -f ...
+```
 
 **Важно**: без `@Testcontainers` аннотация `@Container` не работает — контейнер не будет ни запущен, ни остановлен автоматически.
 
@@ -749,13 +768,19 @@ class OrderServiceTest extends AbstractIntegrationTest {
 }
 ```
 
-Структура связей в этом паттерне:
-
-- `AbstractIntegrationTest` (в `static`-инициализаторе) вызывает `start()` для `PostgreSQL Container` и для `Kafka Container`.
-- Конкретные тесты `OrderServiceTest`, `UserServiceTest` и `PaymentServiceTest` наследуют (`extends`) `AbstractIntegrationTest`.
-- `OrderServiceTest` использует `PostgreSQL Container` и `Kafka Container`.
-- `UserServiceTest` использует `PostgreSQL Container`.
-- `PaymentServiceTest` использует `PostgreSQL Container` и `Kafka Container`.
+```mermaid
+graph TD
+    A["AbstractIntegrationTest<br/>(static initializer)"] -->|start()| B[PostgreSQL Container]
+    A -->|start()| C[Kafka Container]
+    D[OrderServiceTest] -->|extends| A
+    E[UserServiceTest] -->|extends| A
+    F[PaymentServiceTest] -->|extends| A
+    D -.->|использует| B
+    D -.->|использует| C
+    E -.->|использует| B
+    F -.->|использует| B
+    F -.->|использует| C
+```
 
 **Критическая ошибка**: НЕ навешивайте `@Testcontainers` + `@Container` на singleton. Смысл паттерна — чтобы контейнер жил до конца JVM, а Extension как раз будет гасить его в `@AfterAll` после каждого класса. Первый же класс остановит общий контейнер, и все последующие упадут. Поэтому singleton стартуют вручную в `static`-блоке и не останавливают вовсе — за финальную уборку отвечает Ryuk.
 
@@ -899,10 +924,13 @@ class MultiContainerNetworkTest {
 }
 ```
 
-Как устроены связи:
-
-- Внутри `Docker Network` контейнер `app` (`my-app:latest`) ходит в контейнер `db` (`postgres:16`) по адресу `jdbc:postgresql://db:5432` — то есть по сетевому алиасу и оригинальному порту.
-- Тестовый код на `JUnit` обращается к `app` снаружи, через хост по `localhost:randomPort` (маппированный порт).
+```mermaid
+graph LR
+    subgraph Docker Network
+        A[app<br/>my-app:latest] -->|"jdbc:postgresql://db:5432"| B[db<br/>postgres:16]
+    end
+    C[Тестовый код<br/>JUnit] -->|"localhost:randomPort"| A
+```
 
 **Ключевые моменты:**
 - **`withNetworkAliases("db")`** — DNS-имя контейнера внутри сети. Соседи обращаются к нему по этому имени, а не по IP.

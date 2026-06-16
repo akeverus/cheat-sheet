@@ -117,10 +117,20 @@ updated: "2026-05-08"
 | Потребление ресурсов | Минимальный overhead | Значительный overhead |
 | Плотность | Сотни на хосте | Десятки на хосте |
 
-Различие наглядно видно в том, как выстроены слои:
-
-- **Виртуальная машина:** `Hardware` → `Hypervisor` → поверх гипервизора поднимается несколько полноценных гостевых ОС, в каждой своё приложение (`Guest OS + App 1`, `Guest OS + App 2`).
-- **Контейнеры:** `Hardware` → одна `Host OS + Docker Engine` → поверх неё параллельно работают контейнеры с приложениями и их библиотеками (`App 1 + Libs`, `App 2 + Libs`, `App 3 + Libs`), разделяющие общее ядро хоста.
+```mermaid
+graph TB
+    subgraph "Виртуальная машина"
+        HW1[Hardware] --> HV[Hypervisor]
+        HV --> VM1[Guest OS + App 1]
+        HV --> VM2[Guest OS + App 2]
+    end
+    subgraph "Контейнеры"
+        HW2[Hardware] --> OS[Host OS + Docker Engine]
+        OS --> C1[App 1 + Libs]
+        OS --> C2[App 2 + Libs]
+        OS --> C3[App 3 + Libs]
+    end
+```
 
 **Главный компромисс.** Контейнеры выигрывают в скорости, плотности и потреблении ресурсов, но проигрывают в изоляции: общее ядро означает общую поверхность атаки — уязвимость в ядре потенциально затрагивает все контейнеры на хосте. Поэтому там, где нужна жёсткая изоляция (мультитенантность с недоверенным кодом, разные ОС на одном железе), по-прежнему нужны `VM`. На практике их часто сочетают: контейнеры запускают внутри `VM`.
 
@@ -128,7 +138,17 @@ updated: "2026-05-08"
 
 `Docker` устроен по **клиент-серверной модели**: вы вводите команды в CLI (клиент), а всю работу выполняет фоновый демон (сервер). Это разделение позволяет управлять `Docker` удалённо — клиент и демон могут быть на разных машинах.
 
-Три основных компонента. По порядку взаимодействия: `Docker CLI` (клиент) отправляет запросы по `REST API` в `Docker Daemon` (`dockerd`); демон управляет четырьмя видами ресурсов — `Images`, `Containers`, `Networks`, `Volumes` — а также делает `pull`/`push` образов в `Registry` (`Docker Hub` / `Harbor`).
+Три основных компонента:
+
+```mermaid
+graph LR
+    CLI[Docker CLI<br/>клиент] -->|REST API| D[Docker Daemon<br/>dockerd]
+    D --> IMG[Images]
+    D --> CONT[Containers]
+    D --> NET[Networks]
+    D --> VOL[Volumes]
+    D -->|pull/push| REG[Registry<br/>Docker Hub / Harbor]
+```
 
 1. **`Docker Client`** (`docker` CLI) — командная строка, отправляет запросы к демону через `REST API` (unix-сокет `/var/run/docker.sock` или TCP).
 2. **`Docker Daemon`** (`dockerd`) — серверный процесс, управляет образами, контейнерами, сетями, томами. Использует `containerd` для управления жизненным циклом контейнеров и `runc` для их запуска.
@@ -142,13 +162,14 @@ updated: "2026-05-08"
 
 Образ строится из **слоёв (layers)**: каждая инструкция в `Dockerfile` (`FROM`, `RUN`, `COPY`, `ADD`) добавляет новый слой поверх предыдущих. Слои read-only и **разделяются между образами**: если десять образов используют один и тот же базовый `FROM`, на диске он хранится один раз. Отсюда два выигрыша — экономия места (общие слои не дублируются) и скорость (неизменившиеся слои берутся из кэша при сборке и из локального хранилища при `pull`).
 
-Стопка слоёв образа выглядит так (снизу вверх):
-
-- **Layer 1:** `FROM eclipse-temurin:17-jre-alpine` — базовый образ.
-- **Layer 2:** `COPY dependencies` — зависимости.
-- **Layer 3:** `COPY application code` — код приложения.
-- **Layer 4:** `CMD` / `ENTRYPOINT` — команда запуска.
-- Поверх всех read-only-слоёв при `docker run` надстраивается **Writable Container Layer** (writable-слой контейнера).
+```mermaid
+graph TB
+    L1["Layer 1: FROM eclipse-temurin:17-jre-alpine"] --> L2["Layer 2: COPY dependencies"]
+    L2 --> L3["Layer 3: COPY application code"]
+    L3 --> L4["Layer 4: CMD / ENTRYPOINT"]
+    L4 --> RW["Writable Container Layer<br/>(создаётся при docker run)"]
+    style RW fill:#f9f,stroke:#333
+```
 
 **Рекомендация для `Java`.** Фиксируйте конкретный тег базового образа (`eclipse-temurin:17-jre-alpine`), а не `latest` — иначе сборка невоспроизводима и образ может молча обновиться. `Multi-stage` сборка резко уменьшает размер: в первой стадии работают `Gradle` / `Maven` и `JDK`, а во вторую попадает только `JAR` поверх лёгкого `JRE`. Результат — типичные 200–400 MB вместо 600+ MB с полным `JDK` и инструментами сборки.
 
@@ -194,19 +215,20 @@ CMD ["python", "/myapp/app.py"]  # Layer 4: команда запуска
 
 ## Q6. (!) Опишите жизненный цикл контейнера `Docker`
 
-Контейнер проходит через несколько состояний, и переход между ними — это явные команды CLI. Стартовое — `Created`, рабочее — `Running`, конечное — `Deleted`. Понимание этих переходов помогает отвечать на смежные вопросы: почему остановленный контейнер всё ещё занимает место (его writable-слой не удалён до `docker rm`) и чем `pause` отличается от `stop`.
+Контейнер проходит через несколько состояний, и переход между ними — это явные команды CLI. Стартовое — `Created`, рабочее — `Running`, конечное — `Deleted`. Понимание этого графа помогает отвечать на смежные вопросы: почему остановленный контейнер всё ещё занимает место (его writable-слой не удалён до `docker rm`) и чем `pause` отличается от `stop`.
 
-Переходы между состояниями (каждый — отдельная команда CLI):
-
-- старт → `Created`: `docker create`
-- `Created` → `Running`: `docker start`
-- `Running` → `Paused`: `docker pause`
-- `Paused` → `Running`: `docker unpause`
-- `Running` → `Stopped`: `docker stop`
-- `Stopped` → `Running`: `docker start`
-- `Stopped` → `Deleted`: `docker rm`
-- `Running` → `Deleted`: `docker rm -f`
-- `Created` → `Deleted`: `docker rm`
+```mermaid
+stateDiagram-v2
+    [*] --> Created: docker create
+    Created --> Running: docker start
+    Running --> Paused: docker pause
+    Paused --> Running: docker unpause
+    Running --> Stopped: docker stop
+    Stopped --> Running: docker start
+    Stopped --> Deleted: docker rm
+    Running --> Deleted: docker rm -f
+    Created --> Deleted: docker rm
+```
 
 | Состояние | Описание |
 |---|---|
@@ -553,11 +575,17 @@ docker rm container_id         # удалить
 
 Writable-слой контейнера эфемерен — удалили контейнер, потеряли данные. Чтобы пережить пересоздание, данные выносят наружу. Для этого есть три механизма: **named volume** (управляет `Docker`, рекомендуется для персистентных данных), **bind mount** (монтирование произвольного пути хоста, удобно для разработки) и **tmpfs** (хранение в RAM, для временного и секретного).
 
-Все три механизма подключаются к контейнеру (`Container`), но живут по-разному на хосте (`Docker Host`):
-
-- **Named Volume** — хранится в `/var/lib/docker/volumes/`.
-- **Bind Mount** — любой путь хоста.
-- **tmpfs Mount** — только в RAM.
+```mermaid
+graph LR
+    subgraph "Docker Host"
+        V[Named Volume<br/>/var/lib/docker/volumes/] 
+        B[Bind Mount<br/>любой путь хоста]
+        T[tmpfs Mount<br/>только в RAM]
+    end
+    V --> C1[Container]
+    B --> C1
+    T --> C1
+```
 
 | Тип | Управление | Производительность | Переносимость |
 |---|---|---|---|
@@ -616,11 +644,20 @@ docker run --rm \
 
 Драйвер определяет, как контейнер подключён к сети. Дефолтный — `bridge` (изолированная виртуальная сеть на одном хосте), для максимальной скорости без изоляции — `host`, для связи контейнеров на разных хостах — `overlay`. Краткая шпаргалка: один хост → `bridge`, много хостов → `overlay`, нужна сеть хоста напрямую → `host`.
 
-Как подключаются контейнеры в трёх основных режимах:
-
-- **bridge (default):** мост `docker0 bridge` соединяет контейнеры на одном хосте, каждому выдаётся свой IP — `Container 1` (`172.17.0.2`), `Container 2` (`172.17.0.3`).
-- **host:** `Host Network Stack` напрямую — `Container 3` использует IP хоста (`uses host IP`).
-- **overlay (Swarm):** `VXLAN Tunnel` связывает контейнеры на разных хостах — `Container on Host 1` и `Container on Host 2`.
+```mermaid
+graph TB
+    subgraph "bridge (default)"
+        B[docker0 bridge] --> C1[Container 1<br/>172.17.0.2]
+        B --> C2[Container 2<br/>172.17.0.3]
+    end
+    subgraph "host"
+        H[Host Network Stack] --> C3[Container 3<br/>uses host IP]
+    end
+    subgraph "overlay (Swarm)"
+        O[VXLAN Tunnel] --> C4[Container on Host 1]
+        O --> C5[Container on Host 2]
+    end
+```
 
 | Драйвер | Описание | Когда использовать |
 |---|---|---|
@@ -1131,11 +1168,15 @@ build:
         .
 ```
 
-Поток между участниками — `CI Runner` (CI) и `Registry` (REG) — по шагам:
+```mermaid
+sequenceDiagram
+    participant CI as CI Runner
+    participant REG as Registry
 
-1. `CI Runner` → `Registry`: подтягивает кэш сборки (`Pull buildcache`, если он уже существует).
-2. `CI Runner` (локально): `docker buildx build` — при попадании в кэш (`cache hit`) пропускает неизменившиеся слои (`skip layers`).
-3. `CI Runner` → `Registry`: пушит новый образ вместе с обновлённым кэшем (`Push new image + updated buildcache`).
+    CI->>REG: Pull buildcache (if exists)
+    CI->>CI: docker buildx build (cache hit — skip layers)
+    CI->>REG: Push new image + updated buildcache
+```
 
 **В Spring Boot проектах** сочетайте registry cache с `--mount=type=cache` для Gradle: это покрывает оба уровня кэширования — кэш зависимостей на ноде и кэш слоёв образа в registry.
 

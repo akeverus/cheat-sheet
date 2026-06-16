@@ -99,11 +99,14 @@ updated: "2026-05-14"
 
 **DAG (Directed Acyclic Graph)** — это сам пайплайн: граф из **tasks**, связанных **направленными** рёбрами и **без циклов**. В Airflow один DAG = один Python-файл, который описывает задачи и порядок их выполнения.
 
-Пример простого пайплайна (стрелка `→` = «запускается после»):
-
-- `extract_users` → `transform_users` и `extract_users` → `transform_orders` (после извлечения данные расходятся на две параллельные ветки преобразования)
-- `transform_users` → `load_to_warehouse` и `transform_orders` → `load_to_warehouse` (обе ветки сходятся в одной загрузке в хранилище)
-- `load_to_warehouse` → `send_notification` (после загрузки отправляется уведомление)
+```mermaid
+graph LR
+    A[extract_users] --> B[transform_users]
+    A --> C[transform_orders]
+    B --> D[load_to_warehouse]
+    C --> D
+    D --> E[send_notification]
+```
 
 Почему именно такая структура:
 
@@ -114,13 +117,20 @@ updated: "2026-05-14"
 
 ## Q3. Архитектура Airflow — компоненты?
 
-Связи между компонентами (стрелка `→` = «обращается к»):
+```mermaid
+graph TD
+    UI[Web UI / API]
+    Scheduler[Scheduler<br/>планирует DAG runs]
+    Executor[Executor<br/>запускает tasks]
+    Workers[Workers<br/>исполняют tasks]
+    DB[(Metadata DB<br/>PostgreSQL/MySQL)]
 
-- **Web UI / API** → Metadata DB (читает состояние для отображения)
-- **Scheduler** (планирует DAG runs) → Metadata DB (читает/пишет состояние) и Scheduler → Executor (запускает tasks)
-- **Executor** (запускает tasks) → Workers (исполняют tasks)
-- **Workers** (исполняют tasks) → Metadata DB (пишут результаты)
-- **Metadata DB** — `PostgreSQL`/`MySQL`, общее хранилище состояния, к которому обращаются все остальные компоненты
+    UI --> DB
+    Scheduler --> DB
+    Scheduler --> Executor
+    Executor --> Workers
+    Workers --> DB
+```
 
 Как компоненты работают вместе: Scheduler решает *что и когда* запустить, передаёт это Executor'у (выбранная *стратегия* запуска), Executor поднимает Workers, которые делают саму работу, а Metadata DB хранит общее состояние, через которое все компоненты синхронизируются.
 
@@ -423,10 +433,13 @@ LocalExecutor хорош для **небольших инсталляций** (~
 
 `CeleryExecutor` распределяет tasks по **нескольким машинам** через очередь: Scheduler кладёт задачи в **брокер сообщений** (RabbitMQ или Redis), а отдельные **Celery-воркеры** разбирают их оттуда. Это снимает ограничение «одна машина» у LocalExecutor.
 
-Поток задач по порядку:
-
-- **Scheduler** кладёт задачу (`enqueue task`) в **Broker** (`Redis` / `RabbitMQ`)
-- **Broker** раздаёт задачи нескольким воркерам: `Celery Worker 1`, `Celery Worker 2`, `Celery Worker 3` — каждый забирает задачи из брокера и выполняет
+```mermaid
+graph LR
+    Scheduler -->|enqueue task| Broker[Redis / RabbitMQ]
+    Broker --> Worker1[Celery Worker 1]
+    Broker --> Worker2[Celery Worker 2]
+    Broker --> Worker3[Celery Worker 3]
+```
 
 **Workers** — отдельные долгоживущие процессы (часто на разных машинах), которые забирают tasks из брокера и выполняют. Запускаются командой:
 

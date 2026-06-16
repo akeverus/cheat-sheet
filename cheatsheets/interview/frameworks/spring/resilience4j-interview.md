@@ -122,11 +122,28 @@ updated: "2026-05-14"
 
 **Зачем это нужно.** Без брейкера каждый вызов к зависшему сервису висит до таймаута, занимая поток. Под нагрузкой потоки кончаются — и падает уже ваш сервис, тянет за собой соседей. Брейкер обрывает эту цепочку: лучше быстро вернуть деградированный ответ, чем медленно умереть всем вместе.
 
-Поток вызовов между `Client`, `CircuitBreaker` (CB) и `External Service` по состояниям:
+```mermaid
+sequenceDiagram
+    participant Client
+    participant CB as CircuitBreaker
+    participant Service as External Service
 
-1. **Состояние `CLOSED`.** `Client` вызывает `call()` → CB форвардит запрос (`forward`) к `External Service`. Сервис возвращает `ERROR` → CB пробрасывает ошибку клиенту и увеличивает счётчик отказов (`count++`).
-2. **Переход `failures >= threshold → OPEN`.** Когда доля отказов превысила порог, CB размыкается. Теперь `Client` вызывает `call()`, но CB сразу отвечает `CallNotPermittedException` (fast fail) — до сервиса запрос не доходит.
-3. **Переход `after waitDuration → HALF_OPEN`.** По истечении `waitDuration` CB пробует восстановиться. `Client` вызывает `call()` → CB пропускает тестовый вызов (`test call`) к сервису. Сервис отвечает `SUCCESS` → CB переходит `HALF_OPEN → CLOSED` и возвращается к нормальной работе.
+    Note over CB: State: CLOSED
+    Client->>CB: call()
+    CB->>Service: forward
+    Service-->>CB: ERROR
+    CB-->>Client: error (count++)
+
+    Note over CB: failures >= threshold → OPEN
+    Client->>CB: call()
+    CB-->>Client: CallNotPermittedException (fast fail)
+
+    Note over CB: after waitDuration → HALF_OPEN
+    Client->>CB: call()
+    CB->>Service: test call
+    Service-->>CB: SUCCESS
+    Note over CB: HALF_OPEN → CLOSED
+```
 
 ## Q4. (!) Какие состояния у CircuitBreaker?
 

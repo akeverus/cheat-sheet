@@ -72,16 +72,24 @@ updated: "2026-05-08"
 
 Ключевая мысль: сам класс ничего не знает о транзакциях — вся логика BEGIN/COMMIT/ROLLBACK живёт во внешнем прокси. Отсюда вытекают две главные ловушки темы: транзакция не работает при self-invocation (вызов минует прокси) и на `private`-методах (CGLIB не может переопределить их в подклассе). До Spring Framework 6.0 ограничение было шире — только `public`; с 6.0 на CGLIB-прокси (дефолт Spring Boot 3.x) `@Transactional` работает и на `protected`/package-private методах. При interface-based (JDK) прокси по-прежнему только `public`.
 
-Пошаговый поток вызова с участниками `Caller`, `Proxy`, `Service` и `DB`:
+```mermaid
+sequenceDiagram
+    participant Caller
+    participant Proxy
+    participant Service
+    participant DB
 
-1. `Caller` вызывает `save(entity)` — и попадает не в сам сервис, а в `Proxy`.
-2. `Proxy` отправляет в `DB` команду `BEGIN TRANSACTION`.
-3. `Proxy` делает реальный вызов `save(entity)` уже на `Service`.
-4. `Service` выполняет в `DB` запрос `INSERT INTO ...`.
-5. Дальше развилка по результату:
-   - **Success** (нормальный возврат): `Proxy` отправляет в `DB` `COMMIT`.
-   - **RuntimeException**: `Proxy` отправляет в `DB` `ROLLBACK`.
-6. `Proxy` возвращает `result` обратно `Caller`.
+    Caller->>Proxy: save(entity)
+    Proxy->>DB: BEGIN TRANSACTION
+    Proxy->>Service: save(entity) [реальный вызов]
+    Service->>DB: INSERT INTO ...
+    alt Success
+        Proxy->>DB: COMMIT
+    else RuntimeException
+        Proxy->>DB: ROLLBACK
+    end
+    Proxy-->>Caller: result
+```
 
 **Чем создаётся прокси:** JDK Dynamic Proxy, если бин реализует интерфейс, иначе CGLIB (подкласс самого класса). По умолчанию в Spring Boot включён CGLIB (`proxyTargetClass=true`). Под капотом `@Transactional` — это `@Around`-advice (`TransactionInterceptor`), который и оборачивает вызов в try/commit/catch-rollback.
 

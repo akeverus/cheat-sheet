@@ -340,10 +340,24 @@ channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
 
 gRPC поддерживает четыре типа вызовов — они отличаются тем, сколько сообщений (одно или поток) передаёт каждая из сторон:
 
-- **Unary RPC** — `Клиент` шлёт 1 запрос → `Сервер` отвечает 1 ответом.
-- **Server Streaming** — `Клиент` шлёт 1 запрос → `Сервер` возвращает поток ответов.
-- **Client Streaming** — `Клиент` шлёт поток запросов → `Сервер` отвечает 1 ответом.
-- **Bidirectional Streaming** — `Клиент` и `Сервер` обмениваются потоками в обе стороны независимо.
+```mermaid
+graph TD
+    subgraph "Unary RPC"
+        C1[Клиент] -->|1 запрос| S1[Сервер]
+        S1 -->|1 ответ| C1
+    end
+    subgraph "Server Streaming"
+        C2[Клиент] -->|1 запрос| S2[Сервер]
+        S2 -->|поток ответов| C2
+    end
+    subgraph "Client Streaming"
+        C3[Клиент] -->|поток запросов| S3[Сервер]
+        S3 -->|1 ответ| C3
+    end
+    subgraph "Bidirectional Streaming"
+        C4[Клиент] <-->|поток| S4[Сервер]
+    end
+```
 
 **1. Unary RPC** — классический запрос-ответ:
 
@@ -582,10 +596,20 @@ public StreamObserver<ChatMessage> chat(
 **5. Flow Control:**
 Встроенное управление потоком данных на уровне stream и соединения предотвращает перегрузку.
 
-Наглядно разница в модели соединений выглядит так:
-
-- **`HTTP/1.1`** — `Клиент` открывает отдельное соединение под каждый запрос: «Соединение 1» → «Запрос 1», «Соединение 2» → «Запрос 2», «Соединение 3» → «Запрос 3».
-- **`HTTP/2`** — `Клиент` держит одно соединение, внутри которого мультиплексор разводит трафик на независимые потоки: одно соединение → «Stream 1», «Stream 2», «Stream 3».
+```mermaid
+graph LR
+    subgraph "HTTP/1.1"
+        C1[Клиент] -->|Соединение 1| R1[Запрос 1]
+        C1 -->|Соединение 2| R2[Запрос 2]
+        C1 -->|Соединение 3| R3[Запрос 3]
+    end
+    subgraph "HTTP/2"
+        C2[Клиент] -->|Одно соединение| MUX[Мультиплексор]
+        MUX --> S1[Stream 1]
+        MUX --> S2[Stream 2]
+        MUX --> S3[Stream 3]
+    end
+```
 
 **Производительность gRPC vs REST:**
 - Payload: на 60-80% компактнее благодаря protobuf
@@ -620,11 +644,26 @@ ManagedChannel channel = ManagedChannelBuilder
 
 Архитектуру удобно читать как путь одного вызова: приложение зовёт метод стаба → клиентские интерсепторы добавляют cross-cutting логику → канал сериализует запрос в protobuf и шлёт по `HTTP/2` → на сервере данные десериализуются, проходят серверные интерсепторы и попадают в реализацию сервиса с бизнес-логикой. Ответ идёт тем же путём в обратную сторону.
 
-Развёрнутая цепочка компонентов в запросе:
+```mermaid
+graph TB
+    subgraph Клиент
+        APP[Приложение] --> STUB[Stub]
+        STUB --> CI[Client Interceptors]
+        CI --> CH[Channel]
+        CH --> LB[Load Balancer]
+        LB --> SER[Serializer / Protobuf]
+    end
 
-- **На стороне `Клиента`:** `Приложение` → `Stub` → `Client Interceptors` → `Channel` → `Load Balancer` → `Serializer / Protobuf`.
-- **Сеть:** сериализованный запрос уходит по `HTTP/2` → `Сеть` → обратно по `HTTP/2` к серверу.
-- **На стороне `Сервера`:** `Deserializer / Protobuf` → `Server Interceptors` → `Service Implementation` → `Бизнес-логика`.
+    SER -->|HTTP/2| NET((Сеть))
+
+    NET -->|HTTP/2| DSER
+
+    subgraph Сервер
+        DSER[Deserializer / Protobuf] --> SI[Server Interceptors]
+        SI --> IMPL[Service Implementation]
+        IMPL --> BL[Бизнес-логика]
+    end
+```
 
 **Основные компоненты:**
 
@@ -888,14 +927,19 @@ public void getUser(GetUserRequest request,
 }
 ```
 
-Пропагация дедлайна по цепочке `Client → ServiceA → ServiceB` по шагам:
+```mermaid
+sequenceDiagram
+    participant Client
+    participant ServiceA
+    participant ServiceB
 
-1. `Client` вызывает `ServiceA` с `deadline = 5s`.
-2. К моменту, когда `ServiceA` готов идти дальше, остаётся 4.8s (часть времени уже потрачена).
-3. `ServiceA` вызывает `ServiceB`, пробрасывая дедлайн: `deadline = 4.8s` (propagated).
-4. На стороне `ServiceB` остаётся уже 4.5s.
-5. `ServiceB` возвращает `Response` в `ServiceA`.
-6. `ServiceA` возвращает `Response` в `Client`.
+    Client->>ServiceA: RPC (deadline = 5s)
+    Note over ServiceA: Осталось 4.8s
+    ServiceA->>ServiceB: RPC (deadline = 4.8s, propagated)
+    Note over ServiceB: Осталось 4.5s
+    ServiceB-->>ServiceA: Response
+    ServiceA-->>Client: Response
+```
 
 **Рекомендации:**
 - Всегда задавайте deadline на клиенте — без него зависший сервер заставит вызов висеть бесконечно и держать ресурсы.
@@ -963,6 +1007,16 @@ ManagedChannel channel = ManagedChannelBuilder
     .forTarget("dns:///my-service.example.com")
     .defaultLoadBalancingPolicy("pick_first")
     .build();
+```
+
+```mermaid
+graph LR
+    subgraph "Proxy Load Balancing"
+        C1[Клиент] --> LB[Load Balancer]
+        LB --> S1[Server 1]
+        LB --> S2[Server 2]
+        LB --> S3[Server 3]
+    end
 ```
 
 **Нюанс с gRPC и L4 балансировщиками:** обычные TCP-балансировщики (L4) распределяют только *соединения*, а не отдельные RPC. Поскольку gRPC мультиплексирует вызовы в одном соединении, все вызовы попадут на один backend. Нужен L7-балансировщик (Envoy, Istio) или client-side балансировка.
@@ -1386,7 +1440,13 @@ grpcurl -plaintext -d '{"id": 1}' \
 
 `gRPC-Web` — протокол-адаптер, чтобы gRPC-сервисы можно было звать прямо из браузера. Причина, по которой нужен адаптер, конкретна: gRPC опирается на тонкое управление `HTTP/2`-фреймами и trailing metadata, а браузерные API (`fetch`/`XHR`) такого доступа не дают. Поэтому браузер говорит на упрощённом `gRPC-Web` поверх HTTP/1.1, а прокси (обычно Envoy) переводит это в полноценный gRPC к backend.
 
-**Архитектура:** `Браузер / JS` → (`gRPC-Web` поверх `HTTP/1.1`) → `Envoy Proxy` → (`gRPC` поверх `HTTP/2`) → `gRPC Server`.
+**Архитектура:**
+
+```mermaid
+graph LR
+    Browser[Браузер / JS] -->|gRPC-Web / HTTP/1.1| Proxy[Envoy Proxy]
+    Proxy -->|gRPC / HTTP/2| Server[gRPC Server]
+```
 
 **Ограничения gRPC-Web:**
 - Поддерживает только Unary и Server Streaming RPC
@@ -1493,9 +1553,15 @@ message User {
 
 **Гибридный подход (рекомендация):**
 
-- `Внешние клиенты / Браузер` обращаются к `API Gateway` по `REST / JSON`.
-- `API Gateway` дальше внутрь кластера ходит уже по `gRPC` — к `User Service` и `Order Service`.
-- Между внутренними сервисами тоже `gRPC`: `User Service` → `Notification Service`; `Order Service` → `Notification Service` и `Order Service` → `Payment Service`.
+```mermaid
+graph TB
+    EXT[Внешние клиенты / Браузер] -->|REST / JSON| GW[API Gateway]
+    GW -->|gRPC| SVC1[User Service]
+    GW -->|gRPC| SVC2[Order Service]
+    SVC1 -->|gRPC| SVC3[Notification Service]
+    SVC2 -->|gRPC| SVC3
+    SVC2 -->|gRPC| SVC4[Payment Service]
+```
 
 На практике часто используют `grpc-gateway` — reverse-proxy, автоматически генерирующий REST API из `.proto` файлов:
 

@@ -151,12 +151,16 @@ updated: "2026-05-23"
 
 Грубо подходы делятся на три семейства: **уменьшить вычисления** (1-2, 6), **переместить позиции** (4-5), **распределить по железу** (3, 7). Frontier-модели обычно комбинируют несколько: например, Gemini 1.5 — это Ring Attention поверх MoE.
 
-Если изобразить как ветвление от базового `Vanilla O(n²)`, развилка идёт по четырём направлениям:
-
-- `Vanilla O(n²)` → `Sparse O(n)`;
-- `Vanilla O(n²)` → `Sliding Window`;
-- `Vanilla O(n²)` → `Ring Attention`;
-- `Vanilla O(n²)` → `Position scaling`, которое в свою очередь распадается на три метода: `YaRN`, `NTK-aware` и `ALiBi`.
+```mermaid
+graph LR
+    A[Vanilla O(n²)] --> B[Sparse O(n)]
+    A --> C[Sliding Window]
+    A --> D[Ring Attention]
+    A --> E[Position scaling]
+    E --> F[YaRN]
+    E --> G[NTK-aware]
+    E --> H[ALiBi]
+```
 
 ## Q4. Как расширяют окно через YaRN / RoPE scaling / position interpolation?
 
@@ -197,13 +201,15 @@ def yarn_rope_freqs(dim, base=10000, scale=4.0, alpha=1, beta=32):
 
 Практический вывод: даже если факт **физически влез** в окно, это не гарантирует, что модель его «увидит» — позиция внутри окна важна.
 
-**Эксперимент:** 20 документов, ответ спрятан в одном из них. Двигаем релевантный документ по позициям от 1 до 20 и замеряем точность (accuracy). По мере сдвига позиции точность образует U-образную кривую:
+**Эксперимент:** 20 документов, ответ спрятан в одном из них. Двигаем релевантный документ по позициям от 1 до 20 и замеряем точность (accuracy):
 
-- `Position 1` → 75%;
-- `Position 5` → 55%;
-- `Position 10` → 50% (минимум, середина);
-- `Position 15` → 55%;
-- `Position 20` → 70%.
+```mermaid
+graph LR
+    A[Position 1: 75%] --> B[Position 5: 55%]
+    B --> C[Position 10: 50%]
+    C --> D[Position 15: 55%]
+    D --> E[Position 20: 70%]
+```
 
 **Причины:**
 
@@ -319,20 +325,18 @@ Gap между ними доходит до 4× — то есть из заяв�
 - Multi-tenant (изолированные базы знаний).
 - Критична latency (RAG ~200ms против long context ~30s).
 
-Тот же выбор по шагам, начиная с запроса:
-
-1. **Knowledge fits в effective context?**
-   - Нет → **RAG**.
-   - Да → переходим к вопросу про частоту обновления.
-2. **Часто меняется?**
-   - Да → **RAG**.
-   - Нет → переходим к вопросу про стоимость.
-3. **Cost критичен?**
-   - Нет → **Long context**.
-   - Да → переходим к вопросу про кэширование.
-4. **Можно cache?**
-   - Да → **Long context + prompt cache**.
-   - Нет → **RAG**.
+```mermaid
+graph TD
+    A[Запрос] --> B{Knowledge fits<br/>в effective context?}
+    B -->|Да| C{Часто меняется?}
+    B -->|Нет| D[RAG]
+    C -->|Нет| E{Cost критичен?}
+    C -->|Да| D
+    E -->|Нет| F[Long context]
+    E -->|Да| G{Можно cache?}
+    G -->|Да| H[Long context + prompt cache]
+    G -->|Нет| D
+```
 
 ## Q10. (!) RAG умер с приходом 2M-context Gemini?
 
@@ -684,14 +688,16 @@ def ask(query):
 
 Самый популярный продовый паттерн в 2026: **сначала retrieval сужает корпус до релевантного куска, затем long context глубоко анализирует этот кусок.** Гибрид берёт от RAG масштаб и дешевизну, а от long context — широкий контекст и multi-hop reasoning.
 
-**Конвейер** (по порядку):
+**Конвейер:**
 
-1. `User query` →
-2. `Embedding` →
-3. `Vector retrieval` (top-50 chunks ~100K tokens) →
-4. `Long context LLM` (200K window) →
-5. `Deep analysis + cite` →
-6. `Response`.
+```mermaid
+graph LR
+    A[User query] --> B[Embedding]
+    B --> C[Vector retrieval<br/>top-50 chunks ~100K tokens]
+    C --> D[Long context LLM<br/>200K window]
+    D --> E[Deep analysis + cite]
+    E --> F[Response]
+```
 
 **Почему работает:**
 
@@ -732,15 +738,17 @@ def hybrid_qa(query):
 
 **Cascading** — конвейер из моделей разного размера, где запрос идёт от дешёвой к дорогой и эскалируется только при необходимости. Смысл: большинство запросов простые, и за них незачем платить как за самую мощную модель — пусть их закрывает маленькая, а тяжёлую (с long context) включаем лишь для сложных случаев.
 
-**Паттерн** (эскалация по уровням), начиная с запроса `Query`:
+**Паттерн:**
 
-1. **Small model** (`Haiku`/`4o-mini`) — может ответить?
-   - Yes, confidence high → вернуть ответ маленькой модели.
-   - No / low confidence → передать дальше на medium model.
-2. **Medium model** (`Sonnet`/`GPT-4o`) — может ответить?
-   - Yes → вернуть ответ средней модели.
-   - No → передать дальше на large model.
-3. **Large model + long context** (`Opus`/`o1`) → вернуть ответ.
+```mermaid
+graph TD
+    A[Query] --> B{Small model<br/>Haiku/4o-mini<br/>can answer?}
+    B -->|Yes confidence high| C[Return small answer]
+    B -->|No / low confidence| D{Medium model<br/>Sonnet/GPT-4o<br/>can answer?}
+    D -->|Yes| E[Return medium answer]
+    D -->|No| F[Large model + long context<br/>Opus/o1]
+    F --> G[Return]
+```
 
 **Логика «может ли ответить»:**
 
@@ -818,6 +826,14 @@ Code-агенты — самый продвинутый гибридный сц�
 **Longformer (Beltagy, 2020):** local + global. Применяется для документов до 32K.
 
 **BigBird (Zaheer, 2020):** local + global + random. Теоретически доказана эквивалентность полному attention.
+
+```mermaid
+graph LR
+    A[Vanilla Full] --> B[BigBird]
+    B --> C[Local sliding]
+    B --> D[Global tokens]
+    B --> E[Random]
+```
 
 **Современный статус (2026):** sparse attention был популярен в 2020-2022. С приходом FlashAttention + ring attention + position scaling доминирующим в frontier-моделях стал dense attention с эффективными вычислениями. Sparse используется в специализированных архитектурах (Mistral Mixtral, локальные модели).
 
@@ -956,29 +972,34 @@ response = model.generate_content([
 
 ## Q29. (!) Decision tree: как выбирать архитектуру?
 
-Выбор архитектуры определяют четыре фактора в таком порядке: **размер knowledge → частота обновления → требования к свежести/citation → стоимость и QPS.** Прогон запроса `AI с knowledge` через эти факторы, шаг за шагом:
+Выбор архитектуры определяют четыре фактора в таком порядке: **размер knowledge → частота обновления → требования к свежести/citation → стоимость и QPS.** Дерево ниже прогоняет запрос через них и приводит к конкретному паттерну (in-prompt, CAG, long context, RAG или гибрид).
 
-1. **Размер knowledge?**
-   - `< 32K` → **In-prompt всегда**.
-   - `32K-1M` → перейти к вопросу про частоту обновления.
-   - `> 1M` → **RAG обязательно** (далее уточняется про citation, см. пункт 4).
-2. **Часто меняется?** (для размера `32K-1M`)
-   - Редко → перейти к вопросу про QPS.
-   - Часто → перейти к вопросу про свежесть.
-3. Ветка «редко меняется» — **High QPS?**
-   - Да → **CAG + prompt cache**.
-   - Нет → **Long context per query**.
-4. Ветка «часто меняется» — **Свежесть критична?**
-   - Да → **RAG обязательно** (далее про citation).
-   - Нет → **Cost критичен?**
-     - Да → **Hybrid: RAG → long context**.
-     - Нет → **CAG + prompt cache**.
-5. Для всех веток, ведущих к **RAG обязательно** (размер `> 1M` или критичная свежесть) — **Citation нужны?**
-   - Да → **Classic RAG + cite**; и дальше уточняется про multi-hop.
-   - Нет → **Hybrid RAG + long context**.
-6. Внутри ветки «Classic RAG + cite» — **Multi-hop QA?**
-   - Да → **Hybrid RAG + long context**.
-   - Нет → остаётся **Classic RAG + cite**.
+```mermaid
+graph TD
+    A[Запрос: AI с knowledge] --> B{Размер<br/>knowledge?}
+    B -->|< 32K| C[In-prompt всегда]
+    B -->|32K-1M| D{Часто меняется?}
+    B -->|> 1M| E[RAG обязательно]
+    
+    D -->|Редко| F{High QPS?}
+    D -->|Часто| G{Свежесть критична?}
+    
+    F -->|Да| H[CAG + prompt cache]
+    F -->|Нет| I[Long context per query]
+    
+    G -->|Да| E
+    G -->|Нет| J{Cost критичен?}
+    J -->|Да| K[Hybrid: RAG → long context]
+    J -->|Нет| H
+    
+    E --> L{Citation нужны?}
+    L -->|Да| M[Classic RAG + cite]
+    L -->|Нет| N[Hybrid RAG + long context]
+    
+    M --> O{Multi-hop QA?}
+    O -->|Да| N
+    O -->|Нет| M
+```
 
 **Cheat-sheet:**
 

@@ -185,14 +185,17 @@ User user = session.get(User.class, userId);
 
 ## Q3. (!) Назовите ключевые интерфейсы `Hibernate`
 
-Связи между ключевыми интерфейсами:
-
-- `Configuration` → создаёт → `SessionFactory`
-- `SessionFactory` → создаёт → `Session`
-- `Session` → создаёт → `Transaction`
-- `Session` → создаёт → `Query / Criteria`
-- `SessionFactory` → содержит → `Second Level Cache` (L2)
-- `Session` → содержит → `First Level Cache` (L1)
+```mermaid
+graph TB
+    subgraph "Ключевые интерфейсы Hibernate"
+        CF[Configuration] -->|создаёт| SF[SessionFactory]
+        SF -->|создаёт| S[Session]
+        S -->|создаёт| TX[Transaction]
+        S -->|создаёт| Q[Query / Criteria]
+    end
+    SF -->|содержит| L2[Second Level Cache]
+    S -->|содержит| L1[First Level Cache]
+```
 
 Те же связи как схема:
 
@@ -256,17 +259,26 @@ try (Session session = sf.openSession()) {
 
 ## Q6. Объясните архитектуру `Hibernate`
 
-Поток связей в рантайме:
+```mermaid
+graph TB
+    APP[Java Application] --> SF[SessionFactory]
+    SF --> S[Session]
+    S --> TX[Transaction]
+    S --> Q[Query / Criteria]
+    S --> L1[First Level Cache]
+    SF --> L2[Second Level Cache]
+    S --> JDBC[JDBC / Connection Pool]
+    JDBC --> DB[(Database)]
 
-- `Java Application` → `SessionFactory`
-- `SessionFactory` → `Session`
-- `Session` → `Transaction`
-- `Session` → `Query / Criteria`
-- `Session` → `First Level Cache` (L1)
-- `SessionFactory` → `Second Level Cache` (L2)
-- `Session` → `JDBC / Connection Pool` → `Database`
-
-При этом `SessionFactory`, `Session`, `Transaction`, `Query`, L1 и L2 образуют единый `Hibernate Runtime`.
+    subgraph "Hibernate Runtime"
+        SF
+        S
+        TX
+        Q
+        L1
+        L2
+    end
+```
 
 Тот же поток как схема:
 
@@ -311,15 +323,16 @@ try (Session session = sf.openSession()) {
 
 Сущность `Hibernate` живёт в одном из четырёх состояний — **Transient, Persistent, Detached, Removed** — и состояние определяет, отслеживаются ли изменения объекта и попадут ли они в БД. Это центральная концепция: непонимание состояний — источник большинства багов вроде «почему мои изменения не сохранились» или «почему сохранились без вызова `save()`».
 
-Переходы между состояниями:
-
-- Начало → `Transient`: `new Entity()`
-- `Transient` → `Persistent`: `persist()` / `save()`
-- `Persistent` → `Detached`: `detach()` / `close()` / `clear()`
-- `Persistent` → `Removed`: `remove()` / `delete()`
-- `Detached` → `Persistent`: `merge()`
-- `Removed` → `Persistent`: `persist()`
-- `Removed` → конец (объект удалён)
+```mermaid
+stateDiagram-v2
+    [*] --> Transient: new Entity()
+    Transient --> Persistent: persist() / save()
+    Persistent --> Detached: detach() / close() / clear()
+    Persistent --> Removed: remove() / delete()
+    Detached --> Persistent: merge()
+    Removed --> Persistent: persist()
+    Removed --> [*]
+```
 
 Те же переходы как диаграмма состояний (`[*]` — начало/конец жизни объекта):
 
@@ -534,11 +547,22 @@ public class Order {
 
 Inheritance Mapping — это способ уложить **иерархию Java-классов** (базовый класс и наследники) в реляционные таблицы, у которых наследования нет. `Hibernate` предлагает три стратегии, и каждая по-своему разменивает скорость запросов на нормализацию данных:
 
-Как каждая стратегия раскладывает иерархию по таблицам:
+```mermaid
+graph TD
+    subgraph "SINGLE_TABLE"
+        ST[vehicles<br/>id | type | make | payload | seats]
+    end
 
-- **SINGLE_TABLE** — одна таблица `vehicles` с колонками `id | type | make | payload | seats` (все поля наследников в одной таблице).
-- **JOINED** — базовая таблица `vehicles` (`id | make`) ссылается на дочерние таблицы: `trucks` (`id | payload`) и `cars` (`id | seats`); поля наследников вынесены в отдельные таблицы, связанные по `id`.
-- **TABLE_PER_CLASS** — отдельная полная таблица на каждый конкретный класс: `trucks` (`id | make | payload`) и `cars` (`id | make | seats`), каждая дублирует поля базового класса.
+    subgraph "JOINED"
+        JV[vehicles<br/>id | make] --> JT[trucks<br/>id | payload]
+        JV --> JC[cars<br/>id | seats]
+    end
+
+    subgraph "TABLE_PER_CLASS"
+        TT[trucks<br/>id | make | payload]
+        TC[cars<br/>id | make | seats]
+    end
+```
 
 Те же раскладки по таблицам как схема:
 
@@ -878,12 +902,21 @@ Order order = entityManager.find(Order.class, orderId, hints);
 
 Ключевое различие — **область видимости и время жизни**. L1 привязан к одной `Session` и живёт, пока та открыта; L2 общий для всего `SessionFactory` и переживает отдельные сессии. L1 включён всегда и не отключается; L2 по умолчанию выключен и требует отдельного провайдера.
 
-Как устроены уровни кэша и поток при промахе (miss):
+```mermaid
+graph TB
+    subgraph "First Level Cache (L1)"
+        S1[Session 1] --> L1_1[L1 Cache 1]
+        S2[Session 2] --> L1_2[L1 Cache 2]
+    end
 
-- **First Level Cache (L1)** — у каждой сессии свой кэш: `Session 1` → `L1 Cache 1`, `Session 2` → `L1 Cache 2`.
-- **Second Level Cache (L2)** — общий на `SessionFactory` → `L2 Cache` (`Ehcache / Infinispan / Redis`).
-- При промахе в L1 (`L1 Cache 1` или `L1 Cache 2`) запрос идёт в общий `L2 Cache`.
-- При промахе в L2 запрос идёт в `Database`.
+    subgraph "Second Level Cache (L2)"
+        SF[SessionFactory] --> L2C[L2 Cache<br/>Ehcache / Infinispan / Redis]
+    end
+
+    L1_1 -.->|miss| L2C
+    L1_2 -.->|miss| L2C
+    L2C -.->|miss| DB[(Database)]
+```
 
 Те же уровни и поток при промахе как схема:
 
@@ -1472,14 +1505,19 @@ spring:
 
 **Проблемы OSIV:**
 
-Поток HTTP-запроса при OSIV:
+```mermaid
+graph LR
+    Request[HTTP Request] --> Controller
+    Controller --> Service
+    Service --> Repository
+    Repository -->|"query"| DB[(Database)]
+    Service --> Controller
+    Controller --> View[View / Serializer]
+    View -->|"lazy load — доп. запросы!"| DB
+    View --> Response[HTTP Response]
 
-- `HTTP Request` → `Controller` → `Service` → `Repository`
-- `Repository` → `query` → `Database`
-- `Service` → возврат в `Controller`
-- `Controller` → `View / Serializer`
-- `View / Serializer` → `Database`: здесь происходит **lazy load — дополнительные запросы!** (именно это и есть проблема OSIV)
-- `View / Serializer` → `HTTP Response`
+    style DB fill:#f99
+```
 
 Тот же поток как схема (нижняя стрелка к БД из View — и есть проблема OSIV):
 

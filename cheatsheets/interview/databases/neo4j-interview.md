@@ -708,9 +708,13 @@ RETURN path
 
 **Causal Cluster (Enterprise) — это кластер из core-серверов для отказоустойчивых записей и read-реплик для масштабирования чтения, с гарантией causal consistency.** Разделение ролей здесь главное: запись идёт через консенсус небольшой группы, а чтение можно раздавать на сколько угодно реплик.
 
-Типичная топология кластера:
-- `Core 1` — **leader**; связан с `Core 2` (**follower**) и `Core 3` (**follower**) — это группа core-серверов, согласующих записи через Raft.
-- От `Core 1` данные расходятся на read-реплики: `Read Replica` и `Read Replica` (две и более) — они обслуживают чтение.
+```mermaid
+graph TD
+    Core1[Core 1: leader] --- Core2[Core 2: follower]
+    Core1 --- Core3[Core 3: follower]
+    Core1 --> ReadReplica1[Read Replica]
+    Core1 --> ReadReplica2[Read Replica]
+```
 
 Схема ролей и связей (`◀──▶` — консенсус Raft внутри core-группы, `──▶` — асинхронная репликация на read-реплики):
 

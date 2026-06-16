@@ -140,12 +140,16 @@ List<String> result = names.stream()
 
 Stream pipeline — это цепочка операций, всегда состоящая из трёх частей: **source** (источник), ноль или больше **intermediate operations** (промежуточных операций) и ровно одна **terminal operation** (терминальная операция). Источник поставляет элементы, промежуточные операции их преобразуют, терминальная — запускает обработку и выдаёт результат.
 
-Поток данных по pipeline идёт по порядку:
-
-- **Source** (`Collection`, массив, `Stream.of`, `generate`) → поставляет элементы.
-- **Intermediate ops** (`filter`, `map`, `flatMap`, `sorted`, `distinct`) → преобразуют элементы.
-- **Terminal op** (`collect`, `forEach`, `reduce`, `count`) → запускает обработку и выдаёт результат.
-- **Result** (`List`, `Map`, `int`, `Optional`, `void`) → итоговое значение или побочный эффект.
+```mermaid
+graph LR
+    A["Source<br/>Collection, Array,<br/>Stream.of, generate"] --> B["Intermediate ops<br/>filter, map, flatMap,<br/>sorted, distinct"]
+    B --> C["Terminal op<br/>collect, forEach,<br/>reduce, count"]
+    C --> D["Result<br/>List, Map, int,<br/>Optional, void"]
+    style A fill:#e1f5fe
+    style B fill:#fff3e0
+    style C fill:#e8f5e9
+    style D fill:#f3e5f5
+```
 
 Три правила, которые часто проверяют на собеседовании:
 - Intermediate-операции **ленивые** — не выполняются до вызова terminal-операции. Без terminal-операции pipeline вообще не запустится.
@@ -276,11 +280,18 @@ Stream.generate(Math::random)
 - **`map(Function)`** — преобразование один-к-одному: количество элементов то же, тип меняется. Берёте, когда нужно превратить каждый элемент в другой.
 - **`flatMap(Function)`** — преобразование один-ко-многим: каждый элемент разворачивается в `Stream`, и все результаты «сплющиваются» в один поток. Берёте, когда из одного элемента рождается несколько (или ноль) — например, развернуть вложенные коллекции.
 
-Наглядно на примерах:
-
-- **`filter`**: `[1, 2, 3, 4, 5]` --(`n > 2`)--> `[3, 4, 5]` — элементов стало меньше, тип не изменился.
-- **`map`**: `['hello', 'world']` --(`length()`)--> `[5, 5]` — количество то же, тип сменился.
-- **`flatMap`**: `[['a','b'], ['c']]` --(flatten)--> `['a','b','c']` — вложенные коллекции «сплющиваются» в один поток.
+```mermaid
+graph TD
+    subgraph filter
+        A1["[1, 2, 3, 4, 5]"] -->|"n > 2"| A2["[3, 4, 5]"]
+    end
+    subgraph map
+        B1["['hello', 'world']"] -->|"length()"| B2["[5, 5]"]
+    end
+    subgraph flatMap
+        C1["[['a','b'], ['c']]"] -->|"flatten"| C2["['a','b','c']"]
+    end
+```
 
 ```java
 // Типичная цепочка: filter → map → collect
@@ -527,14 +538,15 @@ Collector<String, ImmutableList.Builder<String>, ImmutableList<String>> toImmuta
 List<String> result = stream.collect(toImmutableList);
 ```
 
-Порядок работы четырёх функций:
-
-1. **`supplier()`** — создаёт контейнер.
-2. **`accumulator(container, element)`** — добавляет очередной элемент; вызывается в цикле, пока есть элементы.
-3. При параллельной обработке вместо одного контейнера получается несколько, и **`combiner(c1, c2)`** сливает два контейнера в один.
-4. **`finisher(container)`** — финальное преобразование контейнера в результат.
-
-То есть в последовательном случае поток идёт `supplier → accumulator (повторяется) → finisher → Result`, а в параллельном между `accumulator` и `finisher` добавляется шаг `combiner`, сливающий частичные контейнеры.
+```mermaid
+graph LR
+    S["supplier()<br/>Создать контейнер"] --> A["accumulator(container, element)<br/>Добавить элемент"]
+    A -->|"ещё элементы"| A
+    A --> F["finisher(container)<br/>Финальное преобразование"]
+    A -->|"parallel"| C["combiner(c1, c2)<br/>Слить два контейнера"]
+    C --> F
+    F --> R["Result"]
+```
 
 Характеристики (`Collector.Characteristics`):
 - `CONCURRENT` — accumulator потокобезопасный, один контейнер на все потоки
@@ -922,6 +934,13 @@ Stream.of(1, 2, 3, 4, 5, 6, 7, 8, 9)
 - **integrator** — обработка элемента (может emit 0..N результатов, может остановить pipeline)
 - **combiner** — опционально, для параллелизма
 - **finisher** — вызывается после всех элементов
+
+```mermaid
+graph LR
+    S["Source Stream<br/>1, 2, 3, 4, 5"] -->|".gather()"| G["Gatherer<br/>(stateful intermediate op)"]
+    G --> R["Result Stream<br/>[1,2], [3,4], [5]"]
+    style G fill:#fff3e0
+```
 
 ## Q30. Какие встроенные Gatherers доступны?
 

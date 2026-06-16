@@ -18,7 +18,7 @@ updated: "2026-05-08"
 ---
 # Вопросы на собеседовании: `OAuth2`
 
-Комплексное руководство по вопросам собеседования на тему `OAuth2` для `Senior Java Developer`. Включает пошаговый разбор всех flows, примеры конфигурации `Spring Security`, структуру `JWT` токенов, детали `OpenID Connect` и практические сценарии.
+Комплексное руководство по вопросам собеседования на тему `OAuth2` для `Senior Java Developer`. Включает mermaid-диаграммы всех flows, примеры конфигурации `Spring Security`, структуру `JWT` токенов, детали `OpenID Connect` и практические сценарии.
 
 **OAuth2** — один из самых частых топиков на собеседованиях по безопасности. Интервьюеры ожидают не только знание теории, но и умение объяснить конкретные flows, показать конфигурацию и обсудить trade-offs.
 
@@ -106,17 +106,23 @@ updated: "2026-05-08"
 
 **Ключевой принцип:** пользователь логинится напрямую на доверенном сервисе (Authorization Server), а стороннее приложение никогда не видит его пароль — только выданный токен.
 
-Порядок взаимодействия участников (`Пользователь` → `Клиент (App)` → `Authorization Server` → `Resource Server`):
+```mermaid
+sequenceDiagram
+    participant U as Пользователь
+    participant C as Клиент (App)
+    participant AS as Authorization Server
+    participant RS as Resource Server
 
-1. Пользователь → Клиент: «Хочу войти через Google».
-2. Клиент → `Authorization Server`: редирект на `/authorize`.
-3. `Authorization Server` → Пользователь: страница логина.
-4. Пользователь → `Authorization Server`: ввод логина/пароля + согласие.
-5. `Authorization Server` → Клиент: `Authorization Code`.
-6. Клиент → `Authorization Server`: `Code` + `client_secret` через `POST /token`.
-7. `Authorization Server` → Клиент: `Access Token` + `Refresh Token`.
-8. Клиент → `Resource Server`: `GET /api/resource` + `Bearer token`.
-9. `Resource Server` → Клиент: защищённые данные.
+    U->>C: Хочу войти через Google
+    C->>AS: Redirect на /authorize
+    AS->>U: Страница логина
+    U->>AS: Ввод логина/пароля + согласие
+    AS->>C: Authorization Code
+    C->>AS: Code + client_secret → POST /token
+    AS->>C: Access Token + Refresh Token
+    C->>RS: GET /api/resource + Bearer token
+    RS->>C: Защищённые данные
+```
 
 **Частая ошибка на собеседовании:** `OAuth2` отвечает на вопрос «что приложению разрешено делать», а не «кто этот пользователь». Аутентификацию (подтверждение личности) добавляет отдельный слой — [OIDC (OpenID Connect)](authentication-authorization-patterns-interview.md) поверх `OAuth2`.
 
@@ -163,13 +169,15 @@ updated: "2026-05-08"
 - Desktop-приложения
 - **Обязаны** использовать `Authorization Code Flow` + `PKCE` — раз секрета нет, защиту от перехвата кода даёт `PKCE`
 
-Выбор типа клиента и flow определяется одним вопросом — «может ли клиент хранить `client_secret`?»:
-
-- **Может хранить `client_secret`** → `Confidential Client`:
-  - `Authorization Code Flow`;
-  - `Client Credentials Flow` (`M2M` сценарии).
-- **Не может хранить `client_secret`** → `Public Client`:
-  - `Authorization Code Flow` + `PKCE`.
+```mermaid
+graph TD
+    A[Клиент OAuth2] --> B{Может хранить<br/>client_secret?}
+    B -->|Да| C[Confidential Client]
+    B -->|Нет| D[Public Client]
+    C --> E[Authorization Code Flow]
+    D --> F[Authorization Code Flow + PKCE]
+    C --> G[Client Credentials Flow<br/>M2M сценарии]
+```
 
 Важно: `Implicit Flow` для public clients **устарел** в `OAuth 2.1`. Всегда используйте `Authorization Code` + `PKCE`.
 
@@ -211,20 +219,26 @@ public List<Repository> getRepos() {
 
 `Authorization Code Flow` — основной и самый безопасный flow для приложений с backend-сервером. Главная идея: вместо того чтобы вернуть токен прямо в браузер, Authorization Server возвращает одноразовый **код**, а его обмен на токен происходит скрытно — server-to-server. Поэтому **токен никогда не проходит через браузер** и не оседает в истории, логах или referer.
 
-Пошаговый поток между участниками (`Браузер пользователя`, `Backend клиента`, `Authorization Server`, `Resource Server`):
+```mermaid
+sequenceDiagram
+    participant U as Браузер пользователя
+    participant C as Backend клиента
+    participant AS as Authorization Server
+    participant RS as Resource Server
 
-1. Браузер → `Backend клиента`: `GET /login`.
-2. `Backend клиента` → Браузер: `302 Redirect` → `Authorization Server` `/authorize`.
-3. Браузер → `Authorization Server`: `GET /authorize?response_type=code&client_id=...&redirect_uri=...&scope=...&state=abc`.
-4. `Authorization Server` → Браузер: страница логина + согласие (`consent`).
-5. Браузер → `Authorization Server`: `POST credentials` + согласие.
-6. `Authorization Server` → Браузер: `302 Redirect` → `redirect_uri?code=AUTH_CODE&state=abc`.
-7. Браузер → `Backend клиента`: `GET /callback?code=AUTH_CODE&state=abc`.
-8. `Backend клиента` проверяет `state`.
-9. `Backend клиента` → `Authorization Server`: `POST /token` (`code` + `client_id` + `client_secret`).
-10. `Authorization Server` → `Backend клиента`: `{ access_token, refresh_token, expires_in }`.
-11. `Backend клиента` → `Resource Server`: `GET /api/data` + `Authorization: Bearer <token>`.
-12. `Resource Server` → `Backend клиента`: данные.
+    U->>C: GET /login
+    C->>U: 302 Redirect → AS /authorize
+    U->>AS: GET /authorize?response_type=code&client_id=...&redirect_uri=...&scope=...&state=abc
+    AS->>U: Страница логина + consent
+    U->>AS: POST credentials + consent
+    AS->>U: 302 Redirect → redirect_uri?code=AUTH_CODE&state=abc
+    U->>C: GET /callback?code=AUTH_CODE&state=abc
+    C->>C: Проверить state
+    C->>AS: POST /token (code + client_id + client_secret)
+    AS->>C: { access_token, refresh_token, expires_in }
+    C->>RS: GET /api/data + Authorization: Bearer <token>
+    RS->>C: Данные
+```
 
 Ключевые моменты (и зачем каждый нужен):
 - **Authorization code одноразовый и короткоживущий** (обычно ~10 минут) — даже если код утечёт, окно для атаки минимально, а повторно его не использовать
@@ -236,15 +250,21 @@ public List<Repository> getRepos() {
 
 `PKCE` (`Proof Key for Code Exchange`, `RFC 7636`, произносится "pixy") — расширение `Authorization Code Flow`, которое заменяет `client_secret` там, где его не может быть. У public client (SPA, мобильное приложение) секрета нет, значит, перехваченный authorization code злоумышленник мог бы спокойно обменять на токен. `PKCE` это закрывает: клиент придумывает одноразовый секрет на лету и доказывает им владение кодом. **Обязателен** для public clients, а в `OAuth 2.1` — для всех клиентов.
 
-Поток `PKCE` между `Client (SPA / Mobile)` и `Authorization Server`:
+```mermaid
+sequenceDiagram
+    participant C as Client (SPA / Mobile)
+    participant AS as Authorization Server
 
-1. Клиент генерирует `code_verifier` (43–128 символов, случайная строка).
-2. Клиент вычисляет `code_challenge = BASE64URL(SHA256(code_verifier))`.
-3. Клиент → `Authorization Server`: `GET /authorize?...&code_challenge=HASH&code_challenge_method=S256`.
-4. `Authorization Server` → Клиент: `Authorization Code`.
-5. Клиент → `Authorization Server`: `POST /token { code, code_verifier }`.
-6. `Authorization Server` проверяет: `SHA256(code_verifier) == code_challenge`.
-7. `Authorization Server` → Клиент: `Access Token`.
+    Note over C: 1. Генерирует code_verifier<br/>(43-128 символов, случайная строка)
+    Note over C: 2. Вычисляет code_challenge<br/>= BASE64URL(SHA256(code_verifier))
+
+    C->>AS: GET /authorize?...&code_challenge=HASH&code_challenge_method=S256
+    AS->>C: Authorization Code
+
+    C->>AS: POST /token { code, code_verifier }
+    Note over AS: Проверяет:<br/>SHA256(code_verifier) == code_challenge
+    AS->>C: Access Token
+```
 
 Пример генерации `PKCE` в Java:
 
@@ -271,12 +291,17 @@ String codeChallenge = Base64.getUrlEncoder()
 
 `Client Credentials Flow` — для **machine-to-machine** (M2M) сценариев, когда сервис обращается к API другого сервиса **от своего имени** (не от имени пользователя). Никакого Resource Owner и согласия здесь нет — клиент сам и есть владелец «ресурса доступа». Поэтому flow максимально простой: один запрос с `client_id` + `client_secret` сразу возвращает access token.
 
-Поток между `Сервис A (Client)`, `Authorization Server` и `Сервис B (Resource Server)`:
+```mermaid
+sequenceDiagram
+    participant S as Сервис A (Client)
+    participant AS as Authorization Server
+    participant RS as Сервис B (Resource Server)
 
-1. Сервис A → `Authorization Server`: `POST /token` c `grant_type=client_credentials`, `client_id=service-a`, `client_secret=***`, `scope=read:orders`.
-2. `Authorization Server` → Сервис A: `{ access_token, expires_in }`.
-3. Сервис A → Сервис B: `GET /api/orders` + `Authorization: Bearer <token>`.
-4. Сервис B → Сервис A: данные.
+    S->>AS: POST /token<br/>grant_type=client_credentials<br/>client_id=service-a<br/>client_secret=***<br/>scope=read:orders
+    AS->>S: { access_token, expires_in }
+    S->>RS: GET /api/orders<br/>Authorization: Bearer <token>
+    RS->>S: Данные
+```
 
 Конфигурация в `Spring Boot`:
 
@@ -316,19 +341,28 @@ public WebClient serviceB(OAuth2AuthorizedClientManager clientManager) {
 
 `Device Authorization Flow` (`RFC 8628`) решает проблему устройств, где неудобно или невозможно ввести логин и пароль: Smart TV, IoT, CLI-утилиты, игровые консоли. Идея простая — авторизацию переносят на устройство с нормальным вводом (телефон или ноутбук), а само устройство только опрашивает сервер и ждёт результат.
 
-Поток между `Устройство (Smart TV)`, `Authorization Server` и `Пользователь (телефон)`:
+```mermaid
+sequenceDiagram
+    participant D as Устройство (Smart TV)
+    participant AS as Authorization Server
+    participant U as Пользователь (телефон)
 
-1. Устройство → `Authorization Server`: `POST /device/code` c `{ client_id, scope }`.
-2. `Authorization Server` → Устройство: `{ device_code, user_code: "WDJB-MJHT", verification_uri: "https://auth.example.com/device", interval: 5 }`.
-3. Устройство → Пользователь: отображает «Зайдите на `https://auth.example.com/device` и введите код WDJB-MJHT».
-4. Пользователь → `Authorization Server`: открывает URL, вводит `user_code`.
-5. Пользователь → `Authorization Server`: логин + согласие (`consent`).
-6. Опрос (`polling`) каждые 5 секунд (цикл, пока пользователь не подтвердил):
-   - Устройство → `Authorization Server`: `POST /token` c `{ grant_type=urn:ietf:params:oauth:grant-type:device_code, device_code, client_id }`;
-   - `Authorization Server` → Устройство: `{ "error": "authorization_pending" }`.
-7. Пользователь авторизовался.
-8. Устройство → `Authorization Server`: `POST /token { device_code }`.
-9. `Authorization Server` → Устройство: `{ access_token, refresh_token }`.
+    D->>AS: POST /device/code<br/>{ client_id, scope }
+    AS->>D: { device_code, user_code: "WDJB-MJHT",<br/>verification_uri: "https://auth.example.com/device",<br/>interval: 5 }
+    D->>U: Отображает: "Зайдите на<br/>https://auth.example.com/device<br/>и введите код WDJB-MJHT"
+
+    U->>AS: Открывает URL, вводит user_code
+    U->>AS: Логин + consent
+
+    loop Polling каждые 5 секунд
+        D->>AS: POST /token<br/>{ grant_type=urn:ietf:params:oauth:grant-type:device_code,<br/>device_code, client_id }
+        AS->>D: { "error": "authorization_pending" }
+    end
+
+    Note over U,AS: Пользователь авторизовался
+    D->>AS: POST /token { device_code }
+    AS->>D: { access_token, refresh_token }
+```
 
 Устройство **не открывает браузер** — пользователь вводит код на другом устройстве. Это единственный flow, где пользователь авторизуется **вне клиента**.
 
@@ -345,15 +379,19 @@ public WebClient serviceB(OAuth2AuthorizedClientManager clientManager) {
 | **PKCE** | Рекомендован / обязателен | Не применим |
 | **Статус** | Актуален | **Deprecated** в OAuth 2.1 |
 
-Сравнение потоков:
+```mermaid
+graph LR
+    subgraph "Authorization Code Flow ✓"
+        A1[Браузер] -->|code| B1[Backend]
+        B1 -->|code + secret| C1[Auth Server]
+        C1 -->|token| B1
+    end
 
-- **`Authorization Code Flow`** (актуален):
-  - `Браузер` → `Backend`: `code`;
-  - `Backend` → `Auth Server`: `code + secret`;
-  - `Auth Server` → `Backend`: `token`.
-- **`Implicit Flow`** (deprecated):
-  - `Браузер` → `Auth Server`: редирект;
-  - `Auth Server` → `Браузер`: `#access_token` (токен возвращается прямо в браузер).
+    subgraph "Implicit Flow ✗ deprecated"
+        A2[Браузер] -->|redirect| C2[Auth Server]
+        C2 -->|"#access_token"| A2
+    end
+```
 
 Рекомендация: **всегда** используйте `Authorization Code Flow` + `PKCE`, даже для SPA. `Implicit Flow` удалён из `OAuth 2.1`.
 
@@ -383,17 +421,26 @@ public WebClient serviceB(OAuth2AuthorizedClientManager clientManager) {
 | **Формат** | JWT или opaque | Обычно opaque |
 | **Хранение** | Память / httpOnly cookie | httpOnly cookie / secure storage |
 
-Поток между `Client`, `Authorization Server` и `Resource Server`:
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant AS as Authorization Server
+    participant RS as Resource Server
 
-1. `Client` → `Resource Server`: `GET /api` + `Bearer access_token`.
-2. `Resource Server` → `Client`: `200 OK` (данные).
-3. `access_token` истёк (15 мин).
-4. `Client` → `Resource Server`: `GET /api` + `Bearer access_token`.
-5. `Resource Server` → `Client`: `401 Unauthorized`.
-6. `Client` → `Authorization Server`: `POST /token` c `grant_type=refresh_token`, `refresh_token=...`.
-7. `Authorization Server` → `Client`: новый `access_token` + новый `refresh_token`.
-8. `Client` → `Resource Server`: `GET /api` + `Bearer новый_access_token`.
-9. `Resource Server` → `Client`: `200 OK` (данные).
+    C->>RS: GET /api + Bearer access_token
+    RS->>C: 200 OK (данные)
+
+    Note over C,RS: access_token истёк (15 мин)
+
+    C->>RS: GET /api + Bearer access_token
+    RS->>C: 401 Unauthorized
+
+    C->>AS: POST /token<br/>grant_type=refresh_token<br/>refresh_token=...
+    AS->>C: Новый access_token + новый refresh_token
+
+    C->>RS: GET /api + Bearer новый_access_token
+    RS->>C: 200 OK (данные)
+```
 
 Важно: `access_token` должен быть **короткоживущим** для минимизации окна компрометации. `refresh_token` хранить **только в безопасном месте** (`httpOnly` cookie с `Secure` и `SameSite=Strict`).
 
@@ -479,13 +526,20 @@ RSASHA256(
 
 Первые четыре провала дают `401`, недостаток scope — `403`:
 
-Цепочка проверок для полученного JWT (любой провал прерывает обработку):
-
-1. Подпись валидна? Нет → `401 Unauthorized`.
-2. `exp > now` (токен не истёк)? Нет → `401 Unauthorized`.
-3. `iss` совпадает? Нет → `401 Unauthorized`.
-4. `aud` содержит `client_id`? Нет → `401 Unauthorized`.
-5. `scope` достаточен? Нет → `403 Forbidden`; Да → `200 OK` — доступ разрешён.
+```mermaid
+flowchart TD
+    A[Получен JWT] --> B{Подпись валидна?}
+    B -->|Нет| Z[401 Unauthorized]
+    B -->|Да| C{exp > now?}
+    C -->|Нет| Z
+    C -->|Да| D{iss совпадает?}
+    D -->|Нет| Z
+    D -->|Да| E{aud содержит client_id?}
+    E -->|Нет| Z
+    E -->|Да| F{scope достаточен?}
+    F -->|Нет| Y[403 Forbidden]
+    F -->|Да| G[200 OK — доступ разрешён]
+```
 
 Ресурсный сервер получает публичные ключи из **JWKS endpoint** (JSON Web Key Set):
 
@@ -510,16 +564,22 @@ Spring Security автоматически кэширует ключи и обн
 
 `Refresh token rotation` — при каждом обновлении access token Authorization Server **выдаёт новый refresh token**, а старый немедленно инвалидирует. Зачем: refresh token долгоживущий, поэтому самый лакомый для кражи. Ротация превращает его в одноразовый, и главное — даёт **способ обнаружить кражу**: если кто-то использует уже отозванный токен, значит, его перехватили.
 
-Поток между `Client` и `Authorization Server`:
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant AS as Authorization Server
 
-1. `Client` → `Authorization Server`: `POST /token { refresh_token: RT-1 }`.
-2. `Authorization Server` инвалидирует `RT-1`.
-3. `Authorization Server` → `Client`: `{ access_token: AT-2, refresh_token: RT-2 }`.
-4. Если злоумышленник попробует использовать `RT-1`:
-   - `Client` → `Authorization Server`: `POST /token { refresh_token: RT-1 }`;
-   - `Authorization Server`: `RT-1` уже использован — срабатывает `Reuse Detection`;
-   - `Authorization Server` отзывает ВСЕ refresh-токены пользователя;
-   - `Authorization Server` → `Client`: `400 invalid_grant`.
+    C->>AS: POST /token { refresh_token: RT-1 }
+    AS->>AS: Инвалидировать RT-1
+    AS->>C: { access_token: AT-2, refresh_token: RT-2 }
+
+    Note over C,AS: Если злоумышленник попробует использовать RT-1
+
+    C->>AS: POST /token { refresh_token: RT-1 }
+    AS->>AS: RT-1 уже использован!<br/>Reuse Detection!
+    AS->>AS: Отозвать ВСЕ refresh tokens пользователя
+    AS->>C: 400 invalid_grant
+```
 
 **Reuse detection**: если уже использованный refresh token предъявляется повторно — это признак компрометации. Сервер отзывает **все** refresh tokens данного пользователя.
 
@@ -596,14 +656,21 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
 **DPoP** (`Demonstrating Proof-of-Possession`, `RFC 9449`) — клиент один раз генерирует пару ключей, токен привязывается к публичному ключу, а при каждом запросе клиент прикладывает подпись приватным ключом:
 
-Поток между `Client`, `Authorization Server` и `Resource Server`:
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant AS as Authorization Server
+    participant RS as Resource Server
 
-1. Клиент генерирует пару ключей (один раз).
-2. `Client` → `Authorization Server`: `POST /token` + `DPoP Proof` (подписан приватным ключом).
-3. `Authorization Server` → `Client`: `Access Token` (привязан к публичному ключу).
-4. `Client` → `Resource Server`: `GET /api` + `Bearer token` + `DPoP Proof`.
-5. `Resource Server` проверяет: `DPoP Proof` подписан тем же ключом, что и в токене.
-6. `Resource Server` → `Client`: `200 OK`.
+    Note over C: Генерирует пару ключей (один раз)
+
+    C->>AS: POST /token + DPoP Proof (подписан приватным ключом)
+    AS->>C: Access Token (привязан к публичному ключу)
+
+    C->>RS: GET /api + Bearer token + DPoP Proof
+    Note over RS: Проверяет: DPoP Proof подписан<br/>тем же ключом, что и в токене
+    RS->>C: 200 OK
+```
 
 **Итог:** даже перехваченный токен бесполезен — без приватного ключа клиента подделать DPoP-доказательство нельзя, и ресурсный сервер отвергнет запрос.
 
@@ -619,12 +686,14 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 | **UserInfo endpoint** | Нет | Да |
 | **Discovery** | Нет | `/.well-known/openid-configuration` |
 
-`OAuth2` (авторизация) дополняется слоем `OIDC` (аутентификация), который добавляет поверх:
-
-- `ID Token` — JWT с данными о пользователе;
-- `UserInfo Endpoint`;
-- `Discovery Document`;
-- стандартные Claims — `sub`, `email`, `name` и т. д.
+```mermaid
+graph TD
+    A[OAuth2 — Авторизация] --> B[OIDC — Аутентификация]
+    B --> C[ID Token — JWT с данными о пользователе]
+    B --> D[UserInfo Endpoint]
+    B --> E[Discovery Document]
+    B --> F[Стандартные Claims — sub, email, name...]
+```
 
 Когда вы делаете "Login with Google" — это `OIDC` поверх `OAuth2`:
 1. Запрос с `scope=openid profile email`
@@ -855,13 +924,25 @@ public class UserController {
 
 ## Q25. Как реализовать `OAuth2` в микросервисной архитектуре?
 
-Связи в микросервисной архитектуре:
+```mermaid
+graph TD
+    U[Пользователь] --> GW[API Gateway]
+    GW -->|JWT в заголовке| S1[Service A]
+    GW -->|JWT в заголовке| S2[Service B]
+    S1 -->|Client Credentials| S3[Service C]
+    S2 -->|Client Credentials| S3
 
-- `Пользователь` → `API Gateway`.
-- `API Gateway` → `Service A` и `Service B`: `JWT` в заголовке.
-- `Service A` и `Service B` → `Service C`: вызовы через `Client Credentials`.
-- `Authorization Server` (`Keycloak` / `Spring Auth Server`) раздаёт `JWKS` → `API Gateway`, `Service A`, `Service B`; и `Token` → `Service C`.
-- Локальную валидацию `JWT` по `JWKS` выполняют `API Gateway`, `Service A` и `Service B`.
+    AS[Authorization Server<br/>Keycloak / Spring Auth Server] -.->|JWKS| GW
+    AS -.->|JWKS| S1
+    AS -.->|JWKS| S2
+    AS -.->|Token| S3
+
+    subgraph "JWT валидация — локальная"
+        GW
+        S1
+        S2
+    end
+```
 
 Базовая идея: **один Authorization Server, общий JWKS, каждый сервис — это Resource Server**, валидирующий JWT локально. Тогда между сервисами нужно как-то передавать контекст пользователя — для этого есть несколько паттернов:
 
@@ -976,14 +1057,20 @@ public class AuthServerConfig {
 
 `state` — случайное криптостойкое значение, которое клиент генерирует перед редиректом на авторизацию и проверяет в callback. Его задача — **связать запрос авторизации с конкретной сессией пользователя** и тем самым защититься от CSRF: если `state` из callback не совпадает с сохранённым, значит, ответ пришёл не на наш запрос, и его надо отбросить.
 
-Поток между `Client` и `Authorization Server`:
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant AS as Authorization Server
 
-1. `Client` генерирует `state = SecureRandom` и сохраняет его в `session`/`cookie`.
-2. `Client` → `Authorization Server`: `GET /authorize?...&state=xYz9kL...`.
-3. `Authorization Server`: авторизация пользователя.
-4. `Authorization Server` → `Client`: `GET /callback?code=AUTH_CODE&state=xYz9kL...`.
-5. `Client` проверяет: `state` из `callback` `==` `state` из `session`?
-6. Если не совпадает → отклоняет запрос (возможная `CSRF`-атака).
+    C->>C: Генерирует state = SecureRandom<br/>Сохраняет в session/cookie
+    C->>AS: GET /authorize?...&state=xYz9kL...
+
+    Note over AS: Авторизация пользователя
+
+    AS->>C: GET /callback?code=AUTH_CODE&state=xYz9kL...
+    C->>C: Проверяет: state из callback == state из session?
+    Note over C: Если не совпадает → отклоняет запрос<br/>(возможная CSRF-атака)
+```
 
 Без `state` злоумышленник может подставить свой authorization code в callback URL жертвы, привязав аккаунт жертвы к аккаунту злоумышленника у провайдера.
 
@@ -1384,20 +1471,27 @@ SPA напрямую хранит токены:
 
 ### Архитектура BFF
 
-Поток между `Браузер (SPA)`, `BFF Server`, `Authorization Server` и `Resource Server`:
+```mermaid
+sequenceDiagram
+    participant B as Браузер (SPA)
+    participant BFF as BFF Server
+    participant AS as Authorization Server
+    participant API as Resource Server
 
-1. Браузер → `BFF`: `GET /login`.
-2. `BFF` → `Authorization Server`: редирект (`Authorization Code` + `PKCE`).
-3. `Authorization Server` → Браузер: страница логина.
-4. Браузер → `Authorization Server`: учётные данные.
-5. `Authorization Server` → `BFF`: `Authorization Code`.
-6. `BFF` → `Authorization Server`: `Code` + `PKCE verifier` → токены.
-7. `BFF` хранит токены в серверной сессии (`server-side session`).
-8. `BFF` → Браузер: `Session Cookie` (`HttpOnly`).
-9. Браузер → `BFF`: API-запрос + `Session Cookie`.
-10. `BFF` → `Resource Server`: запрос + `Bearer Token`.
-11. `Resource Server` → `BFF`: ответ.
-12. `BFF` → Браузер: ответ.
+    B->>BFF: GET /login
+    BFF->>AS: Redirect (Authorization Code + PKCE)
+    AS->>B: Login page
+    B->>AS: Credentials
+    AS->>BFF: Authorization Code
+    BFF->>AS: Code + PKCE verifier → Tokens
+    BFF->>BFF: Хранит токены в server-side session
+    BFF->>B: Session Cookie (HttpOnly)
+
+    B->>BFF: API request + Session Cookie
+    BFF->>API: Request + Bearer Token
+    API->>BFF: Response
+    BFF->>B: Response
+```
 
 ### Реализация BFF с Spring Boot
 
@@ -1829,18 +1923,27 @@ public ResponseEntity<TokenResponse> refresh(
 
 ### Поток
 
-Поток между `Device (TV/CLI)`, `Authorization Server` и `Пользователь (телефон/браузер)`:
+```mermaid
+sequenceDiagram
+    participant D as Device (TV/CLI)
+    participant AS as Authorization Server
+    participant U as Пользователь (телефон/браузер)
 
-1. `Device` → `Authorization Server`: `POST /device_authorization` (`client_id`, `scope`).
-2. `Authorization Server` → `Device`: `device_code`, `user_code`, `verification_uri`, `interval`.
-3. `Device` → Пользователь: показать «Перейди на `example.com/activate`, введи код BWPG-HJQK».
-4. Опрос (`polling`) каждые N секунд (цикл):
-   - `Device` → `Authorization Server`: `POST /token` (`device_code`, `grant_type=device_code`);
-   - `Authorization Server` → `Device`: `authorization_pending` / `slow_down` / `access_token`.
-5. Пользователь → `Authorization Server`: открыть `verification_uri`, ввести `user_code`.
-6. `Authorization Server` → Пользователь: страница подтверждения.
-7. Пользователь → `Authorization Server`: подтвердить.
-8. `Authorization Server` → `Device`: `access_token` + `refresh_token` (при следующем опросе).
+    D->>AS: POST /device_authorization (client_id, scope)
+    AS->>D: device_code, user_code, verification_uri, interval
+    D->>U: Показать: "Перейди на example.com/activate, введи код BWPG-HJQK"
+
+    loop Polling (каждые N секунд)
+        D->>AS: POST /token (device_code, grant_type=device_code)
+        AS->>D: authorization_pending / slow_down / access_token
+    end
+
+    U->>AS: Открыть verification_uri, ввести user_code
+    AS->>U: Страница подтверждения
+    U->>AS: Подтвердить
+
+    AS->>D: access_token + refresh_token (при следующем polling)
+```
 
 ### Запрос устройства
 

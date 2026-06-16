@@ -198,10 +198,15 @@ Content-Type: application/json
 
 Связь между ними: любой safe-метод автоматически идемпотентен (раз он ничего не меняет, повтор тем более ничего не меняет), но обратное неверно — `PUT` и `DELETE` идемпотентны, хотя и не safe.
 
-HTTP-методы по этим двум свойствам делятся на три группы:
-- **Safe + Idempotent** — `GET`, `HEAD`, `OPTIONS`.
-- **Idempotent, но не Safe** — `PUT`, `DELETE`.
-- **Не Safe и не Idempotent** — `POST`, `PATCH*`.
+```mermaid
+graph TD
+    A[HTTP-методы] --> B[Safe + Idempotent]
+    A --> C[Idempotent, но не Safe]
+    A --> D[Не Safe, не Idempotent]
+    B --> B1["GET, HEAD, OPTIONS"]
+    C --> C1["PUT, DELETE"]
+    D --> D1["POST, PATCH*"]
+```
 
 **Ключевой момент:** идемпотентность задаёт не название метода, а реальная реализация — включая retry и дедупликацию команд. Два примера на контрасте:
 - `DELETE /users/42` идемпотентен: повторный вызов вернёт `404` (другой статус!), но **состояние сервера то же** — пользователь удалён.
@@ -358,24 +363,27 @@ Content-Type: application/json
 
 ## Q9. (!) Как выбирать HTTP status code без хаоса?
 
-Чтобы коды не превращались в хаос, нужна одна короткая и стабильная политика на весь API. Главное — выбирать код по смыслу ответа (успех/ошибка, чья ошибка), а не «как привыкли в этом контроллере». Самые частые коды сводятся к простому дереву решений по запросу:
+Чтобы коды не превращались в хаос, нужна одна короткая и стабильная политика на весь API. Главное — выбирать код по смыслу ответа (успех/ошибка, чья ошибка), а не «как привыкли в этом контроллере». Схема ниже сводит самые частые коды к простому дереву решений:
 
-- **Запрос успешен?**
-  - **Да** → что нужно вернуть?
-    - Есть тело → `200 OK`
-    - Создали ресурс → `201 Created`
-    - Нет тела → `204 No Content`
-    - Ничего не изменилось → `304 Not Modified`
-  - **Нет** → чья ошибка?
-    - **Клиента** → какая именно?
-      - Плохой запрос → `400 Bad Request`
-      - Не аутентифицирован → `401 Unauthorized`
-      - Нет прав → `403 Forbidden`
-      - Не найдено → `404 Not Found`
-      - Метод не разрешён → `405 Method Not Allowed`
-      - Конфликт → `409 Conflict`
-      - Слишком много запросов → `429 Too Many Requests`
-    - **Сервера** → `500 Internal Server Error`
+```mermaid
+graph TD
+    R[Запрос] --> S{Успешно?}
+    S -->|Да| S2{Что вернуть?}
+    S2 -->|Есть тело| 200["200 OK"]
+    S2 -->|Создали ресурс| 201["201 Created"]
+    S2 -->|Нет тела| 204["204 No Content"]
+    S2 -->|Не изменилось| 304["304 Not Modified"]
+    S -->|Нет| E{Чья ошибка?}
+    E -->|Клиента| C{Какая?}
+    C -->|Плохой запрос| 400["400 Bad Request"]
+    C -->|Не аутентифицирован| 401["401 Unauthorized"]
+    C -->|Нет прав| 403["403 Forbidden"]
+    C -->|Не найдено| 404["404 Not Found"]
+    C -->|Метод не разрешен| 405["405 Method Not Allowed"]
+    C -->|Конфликт| 409["409 Conflict"]
+    C -->|Слишком много запросов| 429["429 Too Many Requests"]
+    E -->|Сервера| 500["500 Internal Server Error"]
+```
 
 **Золотое правило:** один и тот же тип ошибки всегда маппится в один и тот же status code — тогда клиент может реагировать на код, а не парсить текст. Самый вредный антипаттерн — отдавать `200 OK` и прятать ошибку в теле (`{"success": false}`): мониторинг видит «всё хорошо», retry-логика клиента ломается, а кэши и прокси могут закэшировать ошибочный ответ как успешный.
 
@@ -456,9 +464,13 @@ public class GlobalExceptionHandler {
 
 HTTP-кэширование позволяет не запрашивать или не пересылать данные, которые не изменились, — это снижает и нагрузку на сервер, и latency для клиента. Работает оно на нескольких уровнях, и ответ может прийти из любого из них, не доходя до приложения:
 
-Слои кэширования по порядку (запрос идёт слева направо и может вернуться с любого из них):
-
-`Клиент (Browser Cache)` → `CDN (Edge Cache)` → `API Gateway (Reverse Proxy)` → `Приложение (Application Cache)` → `База данных`
+```mermaid
+graph LR
+    Client[Клиент<br/>Browser Cache] --> CDN[CDN<br/>Edge Cache]
+    CDN --> GW[API Gateway<br/>Reverse Proxy]
+    GW --> App[Приложение<br/>Application Cache]
+    App --> DB[(База данных)]
+```
 
 Основные заголовки кэширования:
 
@@ -565,17 +577,21 @@ ETag: "xyz789"
 
 `CORS` (Cross-Origin Resource Sharing) — это механизм, которым сервер **разрешает** браузеру читать ответы с другого origin (origin = протокол + домен + порт). Важно понимать причинно-следственную связь: по умолчанию браузер действует по **Same-Origin Policy** и блокирует доступ к ответам с чужого origin; CORS — это набор заголовков, которыми сервер явно ослабляет это ограничение для доверенных origin. То есть CORS не «защищает API» — он, наоборот, аккуратно открывает доступ. И это правило браузера: серверные клиенты (curl, backend-to-backend) про CORS ничего не знают.
 
-Взаимодействие браузера (`https://app.com`) и API-сервера (`https://api.com`) по шагам.
-
-**Простой запрос** (`GET`, без custom-заголовков):
-1. Браузер → сервер: `GET /api/users` с `Origin: https://app.com`.
-2. Сервер → браузер: `200 OK` с `Access-Control-Allow-Origin: https://app.com`.
-
-**Запрос с preflight** (`PUT`, custom-заголовки):
-1. Браузер → сервер: `OPTIONS /api/users/42` с `Origin: https://app.com`, `Access-Control-Request-Method: PUT`, `Access-Control-Request-Headers: Authorization`.
-2. Сервер → браузер: `204 No Content` с `Access-Control-Allow-Origin: https://app.com`, `Access-Control-Allow-Methods: GET, PUT, DELETE`, `Access-Control-Allow-Headers: Authorization`, `Access-Control-Max-Age: 3600`.
-3. Браузер → сервер: основной `PUT /api/users/42` с `Origin: https://app.com` и `Authorization: Bearer eyJ...`.
-4. Сервер → браузер: `200 OK`.
+```mermaid
+sequenceDiagram
+    participant B as Браузер<br/>(https://app.com)
+    participant S as API-сервер<br/>(https://api.com)
+    
+    Note over B,S: Простой запрос (GET, без custom headers)
+    B->>S: GET /api/users<br/>Origin: https://app.com
+    S->>B: 200 OK<br/>Access-Control-Allow-Origin: https://app.com
+    
+    Note over B,S: Запрос с preflight (PUT, custom headers)
+    B->>S: OPTIONS /api/users/42<br/>Origin: https://app.com<br/>Access-Control-Request-Method: PUT<br/>Access-Control-Request-Headers: Authorization
+    S->>B: 204 No Content<br/>Access-Control-Allow-Origin: https://app.com<br/>Access-Control-Allow-Methods: GET, PUT, DELETE<br/>Access-Control-Allow-Headers: Authorization<br/>Access-Control-Max-Age: 3600
+    B->>S: PUT /api/users/42<br/>Origin: https://app.com<br/>Authorization: Bearer eyJ...
+    S->>B: 200 OK
+```
 
 В `Spring Boot`:
 
@@ -742,20 +758,24 @@ public EntityModel<User> getUser(@PathVariable Long id) {
 
 **Паттерн Idempotency-Key** — клиент присваивает запросу уникальный ключ, и сервер по нему отличает «новый запрос» от «повтор того же»:
 
-Поток между клиентом, сервером и БД по шагам.
-
-Первый запрос:
-1. Клиент → сервер: `POST /payments` с `Idempotency-Key: abc-123` и телом `{"amount": 1000}`.
-2. Сервер → БД: проверить ключ `abc-123`.
-3. БД → сервер: ключ не найден.
-4. Сервер → БД: создать платёж и сохранить ключ.
-5. Сервер → клиент: `201 Created`.
-
-Затем **timeout — клиент повторяет** тот же запрос:
-6. Клиент → сервер: `POST /payments` с тем же `Idempotency-Key: abc-123` и телом `{"amount": 1000}`.
-7. Сервер → БД: проверить ключ `abc-123`.
-8. БД → сервер: ключ найден, сохранённый результат — `201`.
-9. Сервер → клиент: `201 Created` (из кэша, новый платёж не создаётся).
+```mermaid
+sequenceDiagram
+    participant C as Клиент
+    participant S as Сервер
+    participant DB as БД
+    
+    C->>S: POST /payments<br/>Idempotency-Key: abc-123<br/>{"amount": 1000}
+    S->>DB: Проверить ключ abc-123
+    DB-->>S: Ключ не найден
+    S->>DB: Создать платеж + сохранить ключ
+    S->>C: 201 Created
+    
+    Note over C,S: Timeout — клиент повторяет
+    C->>S: POST /payments<br/>Idempotency-Key: abc-123<br/>{"amount": 1000}
+    S->>DB: Проверить ключ abc-123
+    DB-->>S: Ключ найден, результат: 201
+    S->>C: 201 Created (из кэша)
+```
 
 Реализация:
 
@@ -887,12 +907,18 @@ eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ1c2VyNDIiLCJyb2xlcyI6WyJBRE1JTiJdLCJleHAiOjE3MTg
 }
 ```
 
-Поток между клиентом, Auth Server и API Server по шагам:
-1. Клиент → Auth Server: `POST /oauth/token` с credentials.
-2. Auth Server → клиент: `200 OK` с телом `{"access_token": "eyJ...", "expires_in": 3600}`.
-3. Клиент → API Server: `GET /api/users` с заголовком `Authorization: Bearer eyJ...`.
-4. API Server (локально): проверить подпись, проверить `exp`, `iss`, `aud`.
-5. API Server → клиент: `200 OK`.
+```mermaid
+sequenceDiagram
+    participant C as Клиент
+    participant Auth as Auth Server
+    participant API as API Server
+
+    C->>Auth: POST /oauth/token<br/>(credentials)
+    Auth->>C: 200 OK<br/>{"access_token": "eyJ...", "expires_in": 3600}
+    C->>API: GET /api/users<br/>Authorization: Bearer eyJ...
+    API->>API: Проверить подпись<br/>Проверить exp, iss, aud
+    API->>C: 200 OK
+```
 
 **Плюсы:** валидация без БД и без сетевого вызова — каждый сервис проверяет подпись локально, что отлично масштабируется в микросервисах.
 **Минусы:** обратная сторона self-contained — токен **нельзя отозвать** до истечения `exp` (нужен дополнительный blacklist/revocation-список); плюс он крупнее, чем непрозрачный opaque-токен.
@@ -992,13 +1018,19 @@ public Bucket createBucket() {
 5. **Rate limiting** — quotas и backpressure на границе системы
 6. **Async для heavy operations** — `202 Accepted` + polling / webhook
 
-Типичная масштабируемая топология по слоям:
-- `Clients` → `Load Balancer`.
-- `Load Balancer` → `CDN / Edge Cache`.
-- `CDN / Edge Cache` → `API Gateway` (Rate Limiting, Auth).
-- `API Gateway` → несколько идентичных инстансов сервиса: `Service Instance 1`, `Service Instance 2`, `Service Instance 3`.
-- Все инстансы сервиса → общий `Redis Cache`.
-- `Redis Cache` → `Database` (с read replicas).
+```mermaid
+graph TB
+    C[Clients] --> LB[Load Balancer]
+    LB --> CDN[CDN / Edge Cache]
+    CDN --> GW[API Gateway<br/>Rate Limiting, Auth]
+    GW --> S1[Service Instance 1]
+    GW --> S2[Service Instance 2]
+    GW --> S3[Service Instance 3]
+    S1 --> Cache[(Redis Cache)]
+    S2 --> Cache
+    S3 --> Cache
+    Cache --> DB[(Database<br/>Read Replicas)]
+```
 
 **Не забудьте про эксплуатацию.** Архитектура — половина дела; вторая половина в том, что масштабируемость надо *видеть*: метрики `RPS`, error rate и latency p95/p99, распределённая трассировка и алерты по SLO. Без них деградация обнаруживается уже по жалобам пользователей, а не по графику.
 
@@ -1015,17 +1047,18 @@ public Bucket createBucket() {
 | Приоритизация | Нет | Да (stream priorities) |
 | TLS | Опционально | Фактически обязателен (все браузеры) |
 
-Наглядная разница в использовании соединений между клиентом и сервером.
-
-**HTTP/1.1** — на каждый запрос отдельное соединение:
-- Соединение 1: `GET /api`
-- Соединение 2: `GET /img`
-- Соединение 3: `GET /css`
-
-**HTTP/2** — одно соединение, внутри которого несколько параллельных потоков:
-- Stream 1: `GET /api`
-- Stream 2: `GET /img`
-- Stream 3: `GET /css`
+```mermaid
+graph LR
+    subgraph "HTTP/1.1"
+        C1[Клиент] -->|"Соединение 1: GET /api"| S1[Сервер]
+        C1 -->|"Соединение 2: GET /img"| S1
+        C1 -->|"Соединение 3: GET /css"| S1
+    end
+    
+    subgraph "HTTP/2"
+        C2[Клиент] -->|"1 соединение:<br/>Stream 1: GET /api<br/>Stream 2: GET /img<br/>Stream 3: GET /css"| S2[Сервер]
+    end
+```
 
 Для REST API переход на HTTP/2 дает:
 - Снижение latency за счет мультиплексирования (нет head-of-line blocking на уровне HTTP)
@@ -1108,11 +1141,20 @@ Cookie: session_id=abc123
 
 Системное тестирование REST API строят как **пирамиду**: много быстрых дешёвых тестов снизу, мало медленных дорогих сверху. Каждый уровень проверяет своё, и дублировать проверки между уровнями не нужно:
 
-Уровни пирамиды — сверху (мало тестов) вниз (много тестов):
-- **E2E / Smoke Tests** — мало, только критические пути.
-- **Integration Tests** — API-граница, БД, брокеры.
-- **Contract Tests** — соответствие OpenAPI-контракту.
-- **Unit Tests** — бизнес-логика, валидация (основание пирамиды, тестов больше всего).
+```mermaid
+graph TB
+    E2E["E2E / Smoke Tests<br/>(мало, критические пути)"]
+    INT["Integration Tests<br/>(API-граница, БД, брокеры)"]
+    CONTRACT["Contract Tests<br/>(OpenAPI compliance)"]
+    UNIT["Unit Tests<br/>(бизнес-логика, валидация)"]
+    
+    E2E --> INT --> CONTRACT --> UNIT
+    
+    style UNIT fill:#4CAF50,color:white
+    style CONTRACT fill:#8BC34A,color:white
+    style INT fill:#FF9800,color:white
+    style E2E fill:#F44336,color:white
+```
 
 **Примеры тестирования с `curl`:**
 
@@ -1199,13 +1241,13 @@ class UserControllerTest {
 
 **3. Трейсинг (Distributed Tracing) — где в цепочке проблема:**
 
-Пример трейса по цепочке вызовов с таймингами:
-- `API Gateway` (12ms) → `User Service` (45ms).
-- `User Service` → `Payment Service` (2300ms ⚠️ — аномально долго).
-- `Payment Service` → `Payment Gateway` (TIMEOUT ❌ — корень проблемы).
-- `User Service` → `Notification Service` (15ms, в норме).
-
-То есть по таймингам видно, что bottleneck — внешний вызов `Payment Service` → `Payment Gateway`, упавший по таймауту.
+```mermaid
+graph LR
+    GW[API Gateway<br/>12ms] --> US[User Service<br/>45ms]
+    US --> PS[Payment Service<br/>2300ms ⚠️]
+    PS --> PG[Payment Gateway<br/>TIMEOUT ❌]
+    US --> NS[Notification Service<br/>15ms]
+```
 
 Практический подход к диагностике:
 1. Алерт по SLO (например, p99 > 500ms)
@@ -1276,18 +1318,29 @@ REST по природе синхронный — запрос/ответ в р�
 
 **Паттерн Async Request-Reply.** Сервер принимает задачу, сразу отвечает `202 Accepted` со ссылкой на «ресурс-задачу», выполняет работу в фоне, а клиент опрашивает статус по этой ссылке:
 
-Поток между клиентом, API Server, очередью и worker'ом по шагам:
-1. Клиент → API: `POST /api/v1/reports` с телом `{"type": "annual", "year": 2025}`.
-2. API → очередь: поставить задачу в очередь.
-3. API → клиент: `202 Accepted` с `Location: /api/v1/reports/jobs/abc-123`.
-4. Worker → очередь: взять задачу.
-5. Worker (фоном): обработка (около 5 минут).
-6. Клиент → API: `GET /api/v1/reports/jobs/abc-123` (опрос статуса).
-7. API → клиент: `200 OK` с `{"status": "processing", "progress": 60}`.
-8. Клиент → API: повторный `GET /api/v1/reports/jobs/abc-123`.
-9. API → клиент: `200 OK` с `{"status": "completed", "resultUrl": "/api/v1/reports/abc-123"}`.
-10. Клиент → API: `GET /api/v1/reports/abc-123`.
-11. API → клиент: `200 OK` (файл отчёта).
+```mermaid
+sequenceDiagram
+    participant C as Клиент
+    participant API as API Server
+    participant Q as Очередь
+    participant W as Worker
+
+    C->>API: POST /api/v1/reports<br/>{"type": "annual", "year": 2025}
+    API->>Q: Поставить задачу в очередь
+    API->>C: 202 Accepted<br/>Location: /api/v1/reports/jobs/abc-123
+
+    W->>Q: Взять задачу
+    W->>W: Обработка (5 минут)
+
+    C->>API: GET /api/v1/reports/jobs/abc-123
+    API->>C: 200 OK<br/>{"status": "processing", "progress": 60}
+
+    C->>API: GET /api/v1/reports/jobs/abc-123
+    API->>C: 200 OK<br/>{"status": "completed",<br/>"resultUrl": "/api/v1/reports/abc-123"}
+
+    C->>API: GET /api/v1/reports/abc-123
+    API->>C: 200 OK<br/>(файл отчета)
+```
 
 Опрос статуса (polling) прост, но шлёт лишние запросы. Если это критично, его заменяют push-механизмами:
 - **Webhook** — сервер сам дёргает callback URL клиента, когда задача готова (клиент ничего не опрашивает).

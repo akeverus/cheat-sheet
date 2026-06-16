@@ -102,9 +102,17 @@ updated: "2026-05-19"
 
 ## Q2. (!) Как устроен жизненный цикл ML (ML lifecycle)?
 
-**Поток этапов** (по порядку):
-
-`Data collection` → `Preparation/cleaning` → `Feature engineering` → `Training` → `Evaluation` → `Model registry` → `Deployment` → `Monitoring`, а из `Monitoring` по ветке **drift detected** стрелка возвращается обратно в `Training`.
+```mermaid
+graph LR
+    Data[Data collection] --> Prep[Preparation/cleaning]
+    Prep --> Features[Feature engineering]
+    Features --> Train[Training]
+    Train --> Eval[Evaluation]
+    Eval --> Reg[Model registry]
+    Reg --> Deploy[Deployment]
+    Deploy --> Monitor[Monitoring]
+    Monitor -->|drift detected| Train
+```
 
 ML lifecycle — это **цикл** (а не линейный конвейер): мониторинг ловит дрейф и запускает переобучение, замыкая процесс на этап обучения.
 
@@ -213,7 +221,13 @@ for epoch in range(10):
 
 **Feature store** — централизованное хранилище признаков (features) для ML, единый источник истины и для обучения, и для inference. Главная его ценность в том, что один и тот же признак считается ровно одним кодом для обоих случаев, что устраняет training-serving skew (см. Q10).
 
-**Поток данных:** `Raw data` → `Feature engineering` (ETL) → `Feature Store`, а из `Feature Store` признаки расходятся по двум потребителям — `Training pipeline` и `Inference service`. За счёт общего хранилища оба берут признак из одного источника.
+```mermaid
+graph TD
+    Raw[Raw data] --> ETL[Feature engineering]
+    ETL --> FS[(Feature Store)]
+    FS --> Train[Training pipeline]
+    FS --> Serve[Inference service]
+```
 
 **Какие проблемы решает:**
 - **Training-serving skew** — единое определение признака для обучения и inference, а не два разных SQL

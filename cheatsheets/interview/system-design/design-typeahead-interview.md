@@ -275,24 +275,36 @@ radix tree:
 
 Система делится на два независимых контура: быстрый путь чтения (online) и медленный путь подготовки данных (offline). Они не блокируют друг друга — новый trie готовится в фоне и подменяется атомарно.
 
-**Компоненты и связи:**
+```mermaid
+flowchart LR
+    U[Client<br/>browser]
+    CDN[CDN Edge Cache<br/>5s TTL для hot prefixes]
+    LB[Load Balancer]
+    API[Autocomplete API<br/>stateless]
+    REDIS[(Redis Cache<br/>prefix → top-K JSON<br/>TTL 1h)]
+    TRIE[Trie Service<br/>in-memory trie<br/>50GB on each node]
+    USER_HIST[(User History<br/>Redis per-user)]
 
-Путь чтения (online):
+    LOGS[(Query Logs<br/>Kafka)]
+    BATCH[Spark / Hadoop<br/>daily aggregation]
+    STREAM[Flink<br/>real-time trending]
+    BUILDER[Trie Builder<br/>raw phrases → trie shards]
 
-- `Client (browser)` отправляет `prefix` → `CDN Edge Cache` (TTL 5s для hot prefixes).
-- `CDN Edge Cache` при промахе (`miss`) → `Load Balancer`.
-- `Load Balancer` → `Autocomplete API` (stateless).
-- `Autocomplete API` делает `cache get` → `Redis Cache` (хранит `prefix → top-K JSON`, TTL 1h); при `miss` Redis отдаёт управление обратно в API.
-- `Autocomplete API` делает `query trie` → `Trie Service` (in-memory trie, 50GB на каждом узле).
-- `Autocomplete API` для `merge personal` обращается к `User History` (Redis per-user).
+    U -->|prefix| CDN
+    CDN -->|miss| LB
+    LB --> API
+    API -->|cache get| REDIS
+    REDIS -.miss.-> API
+    API -->|query trie| TRIE
+    API -->|merge personal| USER_HIST
 
-Путь записи (offline):
-
-- `Client` пишет `search queries` → `Query Logs` (Kafka).
-- `Query Logs` → `Spark / Hadoop` (daily aggregation) и параллельно → `Flink` (real-time trending).
-- `Spark / Hadoop` → `Trie Builder` (raw phrases → trie shards).
-- `Flink` → `Trie Builder`.
-- `Trie Builder` делает `push shards` → `Trie Service`.
+    U -.search queries.-> LOGS
+    LOGS --> BATCH
+    LOGS --> STREAM
+    BATCH --> BUILDER
+    STREAM --> BUILDER
+    BUILDER -->|push shards| TRIE
+```
 
 **Две стороны:**
 
@@ -305,16 +317,25 @@ radix tree:
 
 Раз в сутки ночной Spark-джоб превращает сырые логи поисков в готовые шарды trie: агрегирует фразы по частоте, фильтрует мусор, применяет decay по свежести, шардирует и параллельно строит sub-trie с top-K. Каждый этап — чистая функция, поэтому пайплайн легко параллелится и воспроизводится.
 
-**Конвейер по порядку:**
+```mermaid
+flowchart TD
+    LOGS[Query Logs<br/>HDFS / S3<br/>partitioned by day]
+    SPARK[Spark Job<br/>daily]
+    AGG[Aggregated phrases<br/>phrase, count, last_seen]
+    FILTER[Filter<br/>profanity, spam,<br/>min_count threshold]
+    DECAY[Apply decay<br/>weight by recency]
+    SHARD[Shard by first letter<br/>26 shards]
+    BUILD[Build Trie shards<br/>parallel workers]
+    PUBLISH[Push shards to<br/>Trie Service nodes]
 
-1. `Query Logs` (HDFS / S3, partitioned by day) →
-2. `Spark Job` (daily) →
-3. `Aggregated phrases` (`phrase, count, last_seen`) →
-4. `Filter` (profanity, spam, min_count threshold) →
-5. `Apply decay` (weight by recency) →
-6. `Shard by first letter` (26 shards) →
-7. `Build Trie shards` (parallel workers) →
-8. `Push shards to Trie Service nodes`.
+    LOGS --> SPARK
+    SPARK --> AGG
+    AGG --> FILTER
+    FILTER --> DECAY
+    DECAY --> SHARD
+    SHARD --> BUILD
+    BUILD --> PUBLISH
+```
 
 **Шаг за шагом:**
 
@@ -434,12 +455,17 @@ GET /autocomplete?q=goo&locale=en-US&user_id=42
 
 Полный rebuild trie занимает часы. Чтобы свежие запросы (вечернее новостное событие, тренды) появлялись быстрее — **почасовая дельта**.
 
-**Конвейер дельты по порядку:**
+```mermaid
+flowchart LR
+    KAFKA[Kafka<br/>search queries stream]
+    FLINK[Flink<br/>1h tumbling window<br/>count + dedup]
+    DELTA[Delta:<br/>phrase, new_count]
+    MERGE[Merge into running trie<br/>online update]
 
-1. `Kafka` (search queries stream) →
-2. `Flink` (1h tumbling window, count + dedup) →
-3. `Delta` (`phrase, new_count`) →
-4. `Merge into running trie` (online update).
+    KAFKA --> FLINK
+    FLINK --> DELTA
+    DELTA --> MERGE
+```
 
 **Логика merge:**
 
@@ -482,14 +508,21 @@ Trending-подсказки (свежие новости, спортивные �
 
 **Схема стрима:**
 
-**Конвейер стрима по порядку:**
+```mermaid
+flowchart LR
+    SEARCH[search-events<br/>topic]
+    FLINK[Flink job]
+    HEAVY[Heavy Hitters<br/>Count-Min Sketch]
+    STATE[State store]
+    TOPK[Top-K phrases per minute]
+    UPDATE[Trie real-time update]
 
-1. `search-events` (topic) →
-2. `Flink job` →
-3. `Heavy Hitters` (Count-Min Sketch) →
-4. `State store` →
-5. `Top-K phrases per minute` →
-6. `Trie real-time update`.
+    SEARCH --> FLINK
+    FLINK --> HEAVY
+    HEAVY --> STATE
+    STATE --> TOPK
+    TOPK --> UPDATE
+```
 
 **Приёмы и зачем они нужны:**
 

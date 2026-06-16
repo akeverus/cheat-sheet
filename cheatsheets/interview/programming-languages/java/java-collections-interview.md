@@ -110,25 +110,47 @@ updated: "2026-05-20"
 
 Иерархия типов `Collection` в `Java` центрируется вокруг интерфейса `Iterable`, от которого наследуется `Collection` — базовый интерфейс, описывающий основные операции: добавление, удаление, проверка наличия элемента и перебор.
 
-Дерево наследования интерфейсов:
+```mermaid
+graph TD
+    Iterable["Iterable&lt;T&gt;"]
+    Collection["Collection&lt;T&gt;"]
+    List["List&lt;T&gt;"]
+    Set["Set&lt;T&gt;"]
+    Queue["Queue&lt;T&gt;"]
+    SortedSet["SortedSet&lt;T&gt;"]
+    NavigableSet["NavigableSet&lt;T&gt;"]
+    Deque["Deque&lt;T&gt;"]
+    Map["Map&lt;K,V&gt;"]
+    SortedMap["SortedMap&lt;K,V&gt;"]
+    NavigableMap["NavigableMap&lt;K,V&gt;"]
 
-- `Iterable<T>` → `Collection<T>` (корень всей ветви коллекций)
-  - `Collection<T>` → `List<T>`
-  - `Collection<T>` → `Set<T>` → `SortedSet<T>` → `NavigableSet<T>`
-  - `Collection<T>` → `Queue<T>` → `Deque<T>`
-- `Map<K,V>` стоит отдельно (не наследуется от `Collection`) → `SortedMap<K,V>` → `NavigableMap<K,V>`
+    Iterable --> Collection
+    Collection --> List
+    Collection --> Set
+    Collection --> Queue
+    Set --> SortedSet
+    SortedSet --> NavigableSet
+    Queue --> Deque
+    Map --> SortedMap
+    SortedMap --> NavigableMap
 
-Какие реализации соответствуют каждому интерфейсу:
+    List -.-> AL["ArrayList"]
+    List -.-> LL["LinkedList"]
+    List -.-> COWAL["CopyOnWriteArrayList"]
+    Set -.-> HS["HashSet"]
+    Set -.-> LHS["LinkedHashSet"]
+    NavigableSet -.-> TS["TreeSet"]
+    Queue -.-> PQ["PriorityQueue"]
+    Deque -.-> AD["ArrayDeque"]
+    Deque -.-> LL
+    Map -.-> HM["HashMap"]
+    Map -.-> LHM["LinkedHashMap"]
+    Map -.-> CHM["ConcurrentHashMap"]
+    NavigableMap -.-> TM["TreeMap"]
 
-- `List<T>` → `ArrayList`, `LinkedList`, `CopyOnWriteArrayList`
-- `Set<T>` → `HashSet`, `LinkedHashSet`
-- `NavigableSet<T>` → `TreeSet`
-- `Queue<T>` → `PriorityQueue`
-- `Deque<T>` → `ArrayDeque`, `LinkedList` (`LinkedList` реализует и `List`, и `Deque`)
-- `Map<K,V>` → `HashMap`, `LinkedHashMap`, `ConcurrentHashMap`
-- `NavigableMap<K,V>` → `TreeMap`
-
-Ключевые узлы этой иерархии — `Collection<T>` (общий корень коллекций) и `Map<K,V>` (отдельная ветвь пар ключ-значение).
+    style Map fill:#f9e79f
+    style Collection fill:#aed6f1
+```
 
 Основные ветви:
 
@@ -377,16 +399,21 @@ Set<String> hash = new HashSet<>(linked);
 
 `HashMap` — основная реализация `Map`, хранящая пары через **хэширование**: позиция элемента вычисляется из `hashCode()` ключа, поэтому средняя сложность `get`/`put` — `O(1)`. Внутри это массив bucket'ов (ячеек); каждый bucket может содержать связанный список или красно-чёрное дерево узлов, попавших в одну ячейку из-за коллизий.
 
-Пример раскладки по bucket'ам (`HashMap` с `capacity=8`, `size=5`):
+```mermaid
+graph TD
+    subgraph "HashMap (capacity=8, size=5)"
+        B0["Bucket 0: null"]
+        B1["Bucket 1: Entry(K1,V1)"]
+        B2["Bucket 2: null"]
+        B3["Bucket 3: Entry(K2,V2) → Entry(K5,V5)"]
+        B4["Bucket 4: null"]
+        B5["Bucket 5: Entry(K3,V3)"]
+        B6["Bucket 6: null"]
+        B7["Bucket 7: Entry(K4,V4)"]
+    end
 
-- `Bucket 0`: `null` (пусто)
-- `Bucket 1`: `Entry(K1,V1)`
-- `Bucket 2`: `null` (пусто)
-- `Bucket 3`: `Entry(K2,V2)` → `Entry(K5,V5)` — здесь коллизия: два ключа попали в одну ячейку и связаны в цепочку
-- `Bucket 4`: `null` (пусто)
-- `Bucket 5`: `Entry(K3,V3)`
-- `Bucket 6`: `null` (пусто)
-- `Bucket 7`: `Entry(K4,V4)`
+    style B3 fill:#f9e79f
+```
 
 **Алгоритм `put(key, value)`:**
 
@@ -407,7 +434,21 @@ Integer age = map.get("Alice"); // hash → bucket → equals → value
 
 ## Q13. (!) Что происходит при коллизиях в `HashMap` и как работает treeification?
 
-При коллизии (два ключа попали в один bucket) элементы хранятся в **цепочке** (`linked list`). В `Java 8+` введён механизм **treeification** — преобразование цепочки в красно-чёрное дерево: пока в bucket'е меньше 8 элементов, они лежат связным списком; при 8 и более — список перестраивается в красно-чёрное дерево.
+При коллизии (два ключа попали в один bucket) элементы хранятся в **цепочке** (`linked list`). В `Java 8+` введён механизм **treeification** — преобразование цепочки в красно-чёрное дерево:
+
+```mermaid
+graph LR
+    subgraph "Linked List (< 8 элементов)"
+        N1["Node1"] --> N2["Node2"] --> N3["Node3"]
+    end
+
+    subgraph "Red-Black Tree (≥ 8 элементов)"
+        T1["TreeNode"] --> T2["TreeNode"]
+        T1 --> T3["TreeNode"]
+        T2 --> T4["TreeNode"]
+        T2 --> T5["TreeNode"]
+    end
+```
 
 **Ключевые константы:**
 
@@ -1115,31 +1156,33 @@ System.out.println(map.size());   // 1 — элемент есть, но нед�
 
 ## Q39. Как выбрать правильную коллекцию для конкретной задачи?
 
-Выбор коллекции можно свести к дереву решений. Стартовый вопрос — «Нужны ли пары ключ-значение?»:
+```mermaid
+graph TD
+    Start["Нужна коллекция"] --> KV{"Пары ключ-значение?"}
+    KV -->|Да| Order{"Нужна сортировка?"}
+    Order -->|Да| TM["TreeMap"]
+    Order -->|Нет| Thread{"Многопоточность?"}
+    Thread -->|Да| CHM["ConcurrentHashMap"]
+    Thread -->|Нет| InsOrd{"Порядок вставки?"}
+    InsOrd -->|Да| LHM["LinkedHashMap"]
+    InsOrd -->|Нет| HM["HashMap"]
 
-- **Пары ключ-значение?**
-  - **Да** → нужна сортировка ключей?
-    - Нужна сортировка → `TreeMap`
-    - Сортировка не нужна → многопоточность?
-      - Многопоточность → `ConcurrentHashMap`
-      - Однопоточный → нужен порядок вставки?
-        - Порядок вставки нужен → `LinkedHashMap`
-        - Порядок не важен → `HashMap`
-  - **Нет** → нужна уникальность элементов?
-    - **Уникальные?**
-      - **Да** → нужна сортировка?
-        - Нужна сортировка → `TreeSet`
-        - Сортировка не нужна → нужен порядок вставки?
-          - Порядок вставки нужен → `LinkedHashSet`
-          - Порядок не важен → `HashSet`
-      - **Нет** → нужна семантика FIFO / стека?
-        - **FIFO / стек?**
-          - **Да** → нужна блокирующая очередь?
-            - Блокирующая → `BlockingQueue`
-            - Не блокирующая → `ArrayDeque`
-          - **Нет** → нужен произвольный доступ по индексу?
-            - Произвольный доступ нужен → `ArrayList`
-            - Произвольный доступ не нужен → `LinkedList`
+    KV -->|Нет| Unique{"Уникальные?"}
+    Unique -->|Да| SortU{"Нужна сортировка?"}
+    SortU -->|Да| TS["TreeSet"]
+    SortU -->|Нет| InsOrdS{"Порядок вставки?"}
+    InsOrdS -->|Да| LHS["LinkedHashSet"]
+    InsOrdS -->|Нет| HS["HashSet"]
+
+    Unique -->|Нет| FIFO{"FIFO / стек?"}
+    FIFO -->|Да| Blocking{"Блокирующая?"}
+    Blocking -->|Да| BQ["BlockingQueue"]
+    Blocking -->|Нет| AD["ArrayDeque"]
+
+    FIFO -->|Нет| RandAcc{"Произвольный доступ?"}
+    RandAcc -->|Да| AL["ArrayList"]
+    RandAcc -->|Нет| LL["LinkedList"]
+```
 
 ## Q40. Какие коллекции из сторонних библиотек стоит знать?
 

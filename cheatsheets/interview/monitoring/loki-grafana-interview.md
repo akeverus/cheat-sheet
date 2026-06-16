@@ -146,12 +146,18 @@ Loki индексирует **только labels**. Запрос сначала
 
 Loki — это набор слабосвязанных компонентов, через которые лог проходит по двум путям: **запись** (Distributor → Ingester → Storage) и **чтение** (Query Frontend → Querier → Storage). В крупных развёртываниях каждый компонент масштабируется независимо, в маленьких — все собраны в один процесс.
 
-Поток данных по компонентам:
-
-- **Запись:** `Apps` → `Promtail / Alloy` → `Distributor` → `Ingester` → `Object Storage (S3/GCS)`. Приложения отдают логи агенту (`Promtail / Alloy`), тот шлёт их в `Distributor`, который раздаёт `Ingester`'ам, а они сбрасывают сжатые chunks в `Object Storage`.
-- **Чтение:** `Grafana` → `Query Frontend` → `Querier` → `Object Storage (S3/GCS)`. Grafana адресует запрос `Query Frontend`, тот распараллеливает его на `Querier`'ы, которые достают chunks из того же `Object Storage`.
-
-Сами `Distributor`, `Ingester`, `Query Frontend` и `Querier` — это внутренние компоненты Loki, а `Object Storage` — общее хранилище для обоих путей.
+```mermaid
+graph LR
+    Apps --> Promtail[Promtail / Alloy]
+    Promtail --> Distributor
+    subgraph Loki
+        Distributor --> Ingester
+        Ingester --> Storage[(Object Storage<br/>S3/GCS)]
+        Querier --> Storage
+        QueryFrontend --> Querier
+    end
+    Grafana --> QueryFrontend
+```
 
 **Путь записи:**
 - **Distributor** — точка входа: принимает логи, валидирует, шардирует и раздаёт их Ingester'ам.

@@ -124,11 +124,18 @@ updated: "2026-04-25"
 - **Аудит изменений** — по истории миграций видно, кто, когда и какое изменение внёс
 - **Автоматизация** — миграции применяются при старте приложения или в CI/CD pipeline, без ручного запуска SQL на проде
 
-Схема развивается линейной цепочкой версий, применяемых по порядку:
-
-- `V1: Create tables` → `V2: Add indexes` → `V3: Add column` → `V4: Migrate data` → `V5: Drop old column`
-
-При этом меняется характер изменений: `V1`–`V3` безопасны (создание таблиц, индексов, добавление колонки), `V4` (`Migrate data`) — это уже перенос данных, требующий осторожности, а `V5` (`Drop old column`) — разрушающая операция с потерей данных.
+```mermaid
+graph LR
+    V1["V1: Create tables"] --> V2["V2: Add indexes"]
+    V2 --> V3["V3: Add column"]
+    V3 --> V4["V4: Migrate data"]
+    V4 --> V5["V5: Drop old column"]
+    style V1 fill:#4CAF50,color:white
+    style V2 fill:#4CAF50,color:white
+    style V3 fill:#4CAF50,color:white
+    style V4 fill:#FFC107,color:black
+    style V5 fill:#F44336,color:white
+```
 
 Визуально цепочка версий с уровнем риска каждого шага:
 
@@ -171,17 +178,22 @@ updated: "2026-04-25"
 4. Последовательно применяет каждую миграцию в отдельной транзакции
 5. Записывает результат (успех/ошибка, checksum, время) в `flyway_schema_history`
 
-Поток взаимодействия (участники: `Приложение` → `Flyway` → `База данных`) на конкретном примере:
+```mermaid
+sequenceDiagram
+    participant App as Приложение
+    participant F as Flyway
+    participant DB as База данных
 
-1. `Приложение` вызывает `flyway.migrate()`.
-2. `Flyway` читает таблицу `flyway_schema_history` в БД.
-3. БД отвечает: уже применены `V1`, `V2`.
-4. `Flyway` сканирует файлы миграций: `V1`, `V2`, `V3`, `V4`.
-5. `Flyway` применяет `V3` в БД.
-6. `Flyway` записывает `V3` в history-таблицу.
-7. `Flyway` применяет `V4` в БД.
-8. `Flyway` записывает `V4` в history-таблицу.
-9. `Flyway` возвращает `Приложению`: миграция завершена.
+    App->>F: flyway.migrate()
+    F->>DB: Читает flyway_schema_history
+    DB-->>F: Уже применены: V1, V2
+    F->>F: Сканирует файлы: V1, V2, V3, V4
+    F->>DB: Применяет V3
+    F->>DB: Записывает V3 в history
+    F->>DB: Применяет V4
+    F->>DB: Записывает V4 в history
+    F-->>App: Миграция завершена
+```
 
 Тот же обмен как диаграмма последовательности (дорожки участников — вертикальные `│`):
 
@@ -553,10 +565,21 @@ spring:
 | Кривая обучения | Низкая | Средняя |
 | Философия | SQL-first, простота | Абстракция, гибкость |
 
-Структурно подходы выглядят так:
-
-- **`Flyway`** — линейная цепочка отдельных файлов: `V1__create.sql` → `V2__alter.sql` → `V3__data.sql`.
-- **`Liquibase`** — дерево с корневым `master-changelog.xml`, из которого подключаются `changeset-1`, `changeset-2`, `changeset-3`; при этом отдельные changeset-ы несут свой откат: `changeset-1` → `rollback-1`, `changeset-2` → `rollback-2`.
+```mermaid
+graph TB
+    subgraph Flyway
+        F1[V1__create.sql] --> F2[V2__alter.sql]
+        F2 --> F3[V3__data.sql]
+    end
+    subgraph Liquibase
+        L1[master-changelog.xml]
+        L1 --> L2[changeset-1]
+        L1 --> L3[changeset-2]
+        L1 --> L4[changeset-3]
+        L2 --> L5[rollback-1]
+        L3 --> L6[rollback-2]
+    end
+```
 
 Те же два подхода рядом — линейная цепочка против дерева с откатами:
 
@@ -1011,15 +1034,20 @@ spring:
 
 ### Порядок инициализации
 
-Порядок инициализации с ветвлением:
-
-1. `Spring Boot` запускается → создаётся `DataSource`.
-2. Проверка: **`Flyway` в classpath?**
-   - **Да** → отрабатывает `FlywayAutoConfiguration` → выполняется `flyway.migrate` → переход к инициализации `Hibernate`/JPA.
-   - **Нет** → проверка: **`Liquibase` в classpath?**
-     - **Да** → отрабатывает `LiquibaseAutoConfiguration` → выполняется `liquibase.update` → переход к инициализации `Hibernate`/JPA.
-     - **Нет** → сразу переход к инициализации `Hibernate`/JPA.
-3. Инициализация `Hibernate`/JPA → приложение готово.
+```mermaid
+graph TD
+    A[Spring Boot запускается] --> B[DataSource создан]
+    B --> C{Flyway в classpath?}
+    C -->|Да| D[FlywayAutoConfiguration]
+    D --> E[flyway.migrate]
+    C -->|Нет| F{Liquibase в classpath?}
+    F -->|Да| G[LiquibaseAutoConfiguration]
+    G --> H[liquibase.update]
+    E --> I[Hibernate/JPA инициализация]
+    H --> I
+    F -->|Нет| I
+    I --> J[Приложение готово]
+```
 
 Тот же порядок инициализации как блок-схема с ветвлениями:
 
@@ -1160,12 +1188,16 @@ ALTER TABLE users RENAME COLUMN name TO full_name;
 
 **Правильно** — в 4 шага:
 
-Четыре последовательных шага:
-
-1. **Expand**: `ADD full_name` — добавить новую колонку (безопасное расширение).
-2. **Migrate data**: `COPY name → full_name` — скопировать данные из старой колонки в новую.
-3. **Deploy code**: задеплоить новую версию кода, которая читает из `full_name`.
-4. **Contract**: `DROP name` — удалить старую колонку (разрушающий шаг, только после полного вывода старого кода).
+```mermaid
+graph LR
+    E1["1. Expand:<br>ADD full_name"] --> E2["2. Migrate data:<br>COPY name→full_name"]
+    E2 --> E3["3. Deploy code:<br>read full_name"]
+    E3 --> E4["4. Contract:<br>DROP name"]
+    style E1 fill:#4CAF50,color:white
+    style E2 fill:#FFC107,color:black
+    style E3 fill:#2196F3,color:white
+    style E4 fill:#F44336,color:white
+```
 
 Те же четыре шага как цепочка (цвет = характер шага):
 

@@ -139,10 +139,20 @@ fun main() = runBlocking {
 | Масштабируемость | Тысячи — предел | Миллионы — реально |
 | Блокирование | Блокирует поток ОС | Приостанавливает, освобождая поток |
 
-Как это раскладывается на потоки: несколько корутин мультиплексируются на небольшое число потоков ОС, и каждая в точке `suspend` отдаёт свой поток другой корутине. Например, на двух потоках `Thread 1` и `Thread 2` пять корутин могут распределиться так:
-
-- `Thread 1` обслуживает `Coroutine A`, `Coroutine B` и `Coroutine E` — каждая из них в момент `suspend` освобождает поток для следующей.
-- `Thread 2` обслуживает `Coroutine C` и `Coroutine D` тем же образом.
+```mermaid
+graph TD
+    subgraph "Потоки ОС"
+        T1[Thread 1]
+        T2[Thread 2]
+    end
+    subgraph "Корутины"
+        C1[Coroutine A] -->|suspend| T1
+        C2[Coroutine B] -->|suspend| T1
+        C3[Coroutine C] -->|suspend| T2
+        C4[Coroutine D] -->|suspend| T2
+        C5[Coroutine E] -->|suspend| T1
+    end
+```
 
 Главное отличие на практике — поведение при ожидании I/O. Поток на время ожидания блокируется и просто простаивает, занимая память и место в пуле. Корутина в той же ситуации **приостанавливается** и отдаёт поток другой работе. Поэтому небольшим числом потоков можно обслуживать тысячи одновременных запросов — это и есть причина, по которой корутины масштабируются лучше потоков.
 
@@ -165,14 +175,15 @@ suspend fun fetchUserWithPosts(id: Long): UserWithPosts {
 
 **Под капотом** никакой магии нет — компилятор Kotlin превращает `suspend`-функцию в конечный автомат (state machine) с помощью **Continuation Passing Style (CPS)**. Каждый suspend-вызов становится отдельным состоянием (`label`): дойдя до точки приостановки, функция сохраняет своё состояние в объекте `Continuation` и возвращает управление; при возобновлении она входит заново и по сохранённому `label` прыгает на нужное состояние.
 
-Состояния и переходы такого автомата на примере `fetchUserWithPosts`:
-
-1. **`Label0`** — вход при вызове функции; выполняется код до первого suspend-вызова.
-2. suspend-вызов `fetchUser` приводит в состояние **`Suspended1`** (точка приостановки).
-3. Возобновление с результатом переводит в **`Label1`**; выполняется код до следующего suspend-вызова.
-4. suspend-вызов `fetchPosts` приводит в состояние **`Suspended2`**.
-5. Возобновление с результатом переводит в **`Label2`**.
-6. Из `Label2` функция выполняет `return` результата и завершается.
+```mermaid
+stateDiagram-v2
+    [*] --> Label0: вызов функции
+    Label0 --> Suspended1: suspend-вызов (fetchUser)
+    Suspended1 --> Label1: возобновление с результатом
+    Label1 --> Suspended2: suspend-вызов (fetchPosts)
+    Suspended2 --> Label2: возобновление с результатом
+    Label2 --> [*]: return результат
+```
 
 Технически компилятор добавляет каждой `suspend`-функции скрытый параметр `Continuation<T>` — «колбэк», которым она возобновляется. На уровне JVM сигнатура `suspend fun fetchUser(id: Long): User` превращается в `fun fetchUser(id: Long, cont: Continuation<User>): Any?`. Возвращаемое значение служит сигналом: если вернулся специальный маркер `COROUTINE_SUSPENDED` — функция приостановилась и результата пока нет; иначе вернулся готовый результат. Именно поэтому suspend-вызов не блокирует поток: при приостановке управление просто возвращается наверх.
 
@@ -293,6 +304,18 @@ suspend fun loadParallel() = coroutineScope {
 - `CoroutineName` — имя для отладки и логов.
 - `CoroutineExceptionHandler` — обработка необработанных исключений.
 
+```mermaid
+graph LR
+    CC[CoroutineContext] --> J[Job]
+    CC --> D[CoroutineDispatcher]
+    CC --> N[CoroutineName]
+    CC --> EH[CoroutineExceptionHandler]
+    J --> |"управление<br>жизненным циклом"| J
+    D --> |"на каком потоке<br>выполнять"| D
+    N --> |"имя для<br>отладки"| N
+    EH --> |"обработка<br>ошибок"| EH
+```
+
 ```kotlin
 // Контексты можно складывать оператором +
 val context = Dispatchers.IO + CoroutineName("data-loader") + SupervisorJob()
@@ -380,14 +403,18 @@ suspend fun loadAll() = coroutineScope {
 3. **Отмена распространяется вниз** — отмена scope отменяет всех детей и внуков.
 4. **Ошибки распространяются вверх** — исключение в ребёнке отменяет родителя, а через него и остальных детей (если это не `SupervisorJob`).
 
-Иерархия выглядит как дерево: `CoroutineScope` владеет корневым `Parent Job`, а у того есть дети и внуки:
+```mermaid
+graph TD
+    S[CoroutineScope] --> P[Parent Job]
+    P --> C1[Child 1<br>launch]
+    P --> C2[Child 2<br>async]
+    C2 --> C3[Grandchild<br>launch]
 
-- `Parent Job`
-  - `Child 1` (запущен через `launch`)
-  - `Child 2` (запущен через `async`)
-    - `Grandchild` (запущен через `launch` внутри `Child 2`)
-
-Отмена идёт вниз по этому дереву: `cancel()` на `Parent Job` отменяет `Child 1` и `Child 2`, а отмена `Child 2` доходит и до его `Grandchild`.
+    style S fill:#4a9eff,color:#fff
+    P -->|"cancel()"| C1
+    P -->|"cancel()"| C2
+    C2 -->|"cancel()"| C3
+```
 
 ```kotlin
 suspend fun fetchAllData() = coroutineScope {
@@ -515,14 +542,17 @@ scope.launch {
 
 `Job` — это «ручка управления» корутиной: элемент `CoroutineContext`, который представляет саму единицу работы и её состояние. Через `Job` корутину отменяют (`cancel`), ждут (`join`) и встраивают в иерархию родитель-дети. У каждой корутины свой `Job`; `launch` возвращает его напрямую, а `Deferred` от `async` — это `Job` с результатом.
 
-Переходы между состояниями:
-
-- старт → **New**: создание через `Job()`;
-- **New** → **Active**: `start()` или запуск через `launch`;
-- **Active** → **Completing**: собственный код корутины завершился;
-- **Completing** → **Completed**: все дочерние корутины завершились (финальное состояние);
-- **Active** → **Cancelling**: пришёл `cancel()` или исключение;
-- **Cancelling** → **Cancelled**: все дети отменены (финальное состояние).
+```mermaid
+stateDiagram-v2
+    [*] --> New: Job()
+    New --> Active: start() / launch
+    Active --> Completing: завершение кода
+    Completing --> Completed: все дети завершились
+    Active --> Cancelling: cancel() / исключение
+    Cancelling --> Cancelled: все дети отменены
+    Completed --> [*]
+    Cancelled --> [*]
+```
 
 Состояния жизненного цикла:
 - **New** — создан, но ещё не запущен (для лениво стартующих корутин).
@@ -652,13 +682,21 @@ val result = withTimeoutOrNull(3000) {
 - **`launch`** — исключение всплывает **немедленно**: отменяет родительский `Job` и вместе с ним всех соседних детей, после чего попадает в `CoroutineExceptionHandler`.
 - **`async`** — исключение **откладывается**: сохраняется в `Deferred` и пробрасывается тому, кто вызовет `await()`. (При этом с обычным `Job` оно всё равно отменит родителя — см. Q5.)
 
-Это можно представить так. У `Scope` есть `Parent Job` с тремя детьми, запущенными через `launch`:
+```mermaid
+graph TD
+    S[Scope] --> P[Parent Job]
+    P --> C1[Child 1<br>launch ✓]
+    P --> C2[Child 2<br>launch ✗ Exception]
+    P --> C3[Child 3<br>launch ✓]
 
-- `Child 1` — работает нормально;
-- `Child 2` — бросает исключение (✗);
-- `Child 3` — работает нормально.
+    C2 -->|"Exception<br>распространяется вверх"| P
+    P -->|"cancel()"| C1
+    P -->|"cancel()"| C3
 
-Исключение из `Child 2` распространяется вверх к `Parent Job`, и тот вызывает `cancel()` для `Child 1` и `Child 3` — то есть сбой одного ребёнка отменяет соседей.
+    style C2 fill:#ff4444,color:#fff
+    style C1 fill:#ffaa44,color:#fff
+    style C3 fill:#ffaa44,color:#fff
+```
 
 ```kotlin
 // Исключение в одном ребёнке отменяет всех
@@ -675,13 +713,21 @@ scope.launch {
 
 `SupervisorJob` — особая разновидность `Job`, которая разрывает «горизонтальную» отмену: **сбой одного ребёнка не отменяет соседних детей**. Обычный `Job` при ошибке ребёнка отменяет родителя, а тот — всех остальных детей; `SupervisorJob` эту цепочку прерывает — ошибка идёт только вверх к самому supervisor-у, но не «в стороны». Каждый ребёнок изолирован и отвечает за свои ошибки сам.
 
-С `SupervisorJob` картина другая. У `Scope` есть `SupervisorJob` с тремя детьми:
+```mermaid
+graph TD
+    S[Scope + SupervisorJob] --> SJ[SupervisorJob]
+    SJ --> C1[Child 1 ✓]
+    SJ --> C2[Child 2 ✗ Exception]
+    SJ --> C3[Child 3 ✓]
 
-- `Child 1` — работает нормально;
-- `Child 2` — бросает исключение (✗);
-- `Child 3` — работает нормально.
+    C2 -->|"Exception"| SJ
+    SJ -.->|"НЕ отменяет"| C1
+    SJ -.->|"НЕ отменяет"| C3
 
-Исключение из `Child 2` уходит вверх к `SupervisorJob`, но тот **не отменяет** `Child 1` и `Child 3` — они продолжают работать. Горизонтальная отмена разорвана.
+    style C2 fill:#ff4444,color:#fff
+    style C1 fill:#44bb44,color:#fff
+    style C3 fill:#44bb44,color:#fff
+```
 
 ```kotlin
 // SupervisorJob в scope — дети независимы
@@ -841,10 +887,18 @@ scope.launch { state.collect { println("Sub2: $it") } }
 _state.value = 42 // оба подписчика получат 42
 ```
 
-Разница в схеме «источник → подписчики»:
-
-- **Cold Flow** — у каждого коллектора свой отдельный прогон источника: `collect #1` запускает свою копию `Producer` для `Collector 1`, а `collect #2` — ещё одну копию `Producer` для `Collector 2`. Источники независимы.
-- **Hot Flow** — один общий `Producer` вещает на всех сразу: `Subscriber 1`, `Subscriber 2` и `Subscriber 3` получают данные от одного и того же источника.
+```mermaid
+graph LR
+    subgraph "Cold Flow"
+        P1[Producer] -->|"collect #1"| C1[Collector 1]
+        P2[Producer copy] -->|"collect #2"| C2[Collector 2]
+    end
+    subgraph "Hot Flow"
+        HP[Producer] --> SC1[Subscriber 1]
+        HP --> SC2[Subscriber 2]
+        HP --> SC3[Subscriber 3]
+    end
+```
 
 ## Q25. (!) В чём разница между `StateFlow` и `SharedFlow`?
 
@@ -1002,11 +1056,18 @@ searchQueryFlow
     }
 ```
 
-Наглядно три стратегии работают так:
-
-- **`buffer`** — быстрый `Producer` эмитирует `1, 2, 3, 4` в буфер (`capacity = N`), откуда медленный `Consumer` забирает значения по мере готовности; producer и consumer развязаны, ни одно значение не теряется (пока буфер не переполнен).
-- **`conflate`** — `Producer` эмитирует `1, 2, 3`, но промежуточное `2` пропускается, и медленный `Consumer` получит только `1` и `3` (последнее на момент готовности).
-- **`collectLatest`** — `Producer` эмитирует `A, B, C`; обработка `A` и `B` отменяется при поступлении следующего значения, и `Consumer` доводит до конца только обработку `C`.
+```mermaid
+graph LR
+    subgraph "buffer"
+        P1[Producer<br>быстрый] -->|"1,2,3,4"| B[Buffer<br>capacity=N] --> C1[Consumer<br>медленный]
+    end
+    subgraph "conflate"
+        P2[Producer<br>1,2,3] -->|"пропустить 2"| C2[Consumer<br>получит 1,3]
+    end
+    subgraph "collectLatest"
+        P3[Producer<br>A,B,C] -->|"отмена A,B"| C3[Consumer<br>обработает C]
+    end
+```
 
 Как выбрать: важны все значения — `buffer` (развязывает корутины, но при переполнении приостановит producer); важно только самое свежее — `conflate` (теряет промежуточные) или `collectLatest` (отменяет недоделанную обработку при новом значении, полезно для поиска/UI). `conflate` — это по сути `buffer(onBufferOverflow = DROP_OLDEST, capacity = 0)`.
 

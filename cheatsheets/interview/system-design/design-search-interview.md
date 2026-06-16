@@ -753,13 +753,18 @@ RRF_score(d) = Σ_query 1 / (k + rank(d, query))
 - Устойчив к выбросам (outliers).
 - В Elasticsearch управляется параметром `rank_constant=60`.
 
-**Архитектура (поток от запроса к выдаче):**
-- `Query` расходится на две ветки retrieval:
-  - Лексическая: `BM25 retrieval top-100`.
-  - Семантическая: `Embedding model` (BGE / e5 / OpenAI) → `ANN search` (HNSW, top-100).
-- Обе ветки сходятся в `RRF Fusion top-50` — слияние по рангам.
-- Далее `ML re-ranker` (cross-encoder, top-10) переупорядочивает кандидатов.
-- На выходе — финальный `Result`.
+**Архитектура:**
+```mermaid
+graph LR
+    Q[Query]
+    Q --> BM25[BM25 retrieval top-100]
+    Q --> EMB[Embedding model<br/>BGE / e5 / OpenAI]
+    EMB --> ANN[ANN search<br/>HNSW top-100]
+    BM25 --> RRF[RRF Fusion top-50]
+    ANN --> RRF
+    RRF --> ML[ML re-ranker<br/>cross-encoder top-10]
+    ML --> Result
+```
 
 **Хранение векторов:**
 - `Elasticsearch dense_vector` с HNSW-индексом (начиная с 8.0).
@@ -914,7 +919,17 @@ GET /restaurants/_search
 
 Прежде чем искать, запрос нужно «понять»: исправить опечатки, расширить синонимами, выделить сущности и намерение. Это отдельный конвейер перед retrieval — от того, насколько хорошо разобран запрос, сильно зависит качество выдачи.
 
-Поток конвейера по порядку: `Raw Query` → `Tokenization` → `Normalization` (lowercase, NFKC, accents) → `Spell correction` → `Query expansion` (synonyms, abbreviations) → `Entity extraction` → `Intent classification` → `Query plan` (lexical / semantic / hybrid).
+```mermaid
+graph LR
+    Q[Raw Query]
+    Q --> T[Tokenization]
+    T --> N[Normalization<br/>lowercase, NFKC, accents]
+    N --> SC[Spell correction]
+    SC --> EXP[Query expansion<br/>synonyms, abbreviations]
+    EXP --> NER[Entity extraction]
+    NER --> INT[Intent classification]
+    INT --> Plan[Query plan: lexical / semantic / hybrid]
+```
 
 **Стадии конвейера:**
 

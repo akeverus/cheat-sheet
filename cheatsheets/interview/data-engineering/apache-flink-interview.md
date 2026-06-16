@@ -122,11 +122,16 @@ updated: "2026-04-25"
 
 ## Q3. (!) Архитектура Flink — JobManager, TaskManager?
 
-Топология кластера по уровням:
-
-- `Client` отправляет job в `JobManager` (координация);
-- `JobManager` управляет несколькими TaskManager'ами — например, `TaskManager 1`, `TaskManager 2`, `TaskManager 3`, у каждого по 4 слота (slots: 4);
-- внутри TaskManager'ов слоты исполняют конкретные задачи (Task): на `TaskManager 1` идут две задачи, на `TaskManager 2` — одна, и так далее.
+```mermaid
+graph TD
+    Client --> JM[JobManager<br/>координация]
+    JM --> TM1[TaskManager 1<br/>slots: 4]
+    JM --> TM2[TaskManager 2<br/>slots: 4]
+    JM --> TM3[TaskManager 3<br/>slots: 4]
+    TM1 --> T1[Task]
+    TM1 --> T2[Task]
+    TM2 --> T3[Task]
+```
 
 Flink — классическая master-worker-система. **JobManager** дирижирует, **TaskManager** считают.
 
@@ -537,11 +542,12 @@ flink run -s s3://bucket/savepoints/savepoint-... newapp.jar
 
 **Barrier** — специальный маркер, который JobManager вставляет в поток данных для координации checkpoint. Barrier течёт по pipeline вместе с обычными событиями и проводит «линию отреза»: всё, что прошло до него, входит в текущий снимок, всё после — уже в следующий. За счёт этого Flink снимает согласованный снимок распределённого состояния, **не останавливая** поток.
 
-Как barrier течёт по pipeline:
-
-- из `Source` поток идёт в `Operator 1` с содержимым `e1, e2, BARRIER, e3, e4` — barrier стоит между событиями `e2` и `e3`;
-- из `Operator 1` в `Operator 2` уходит уже `e1, e2, BARRIER` — события до barrier'а вместе с самим маркером;
-- из `Operator 2` поток идёт в `Sink`.
+```mermaid
+graph LR
+    Source -->|e1, e2, BARRIER, e3, e4| Op1[Operator 1]
+    Op1 -->|"e1, e2, BARRIER"| Op2[Operator 2]
+    Op2 --> Sink
+```
 
 Когда оператор получил barrier со **всех** входных потоков, он пишет snapshot своего состояния. Это и есть **алгоритм Chandy-Lamport** для распределённых снимков (1985), адаптированный Flink под потоковую обработку.
 
@@ -624,6 +630,13 @@ CEP.pattern(stream, pattern).select(matches => alert(matches))
 ## Q26. (!) Backpressure в Flink?
 
 **Backpressure** (обратное давление) — это естественный механизм саморегуляции: когда downstream-оператор не успевает обрабатывать данные, он автоматически замедляет upstream, и торможение распространяется вверх по pipeline вплоть до источника. Работает это через network buffers: получатель не освобождает буферы, пока не обработает данные, поэтому отправитель не может в них писать и вынужден притормозить.
+
+```mermaid
+graph LR
+    Source -->|fast| Op1[Op1: fast]
+    Op1 -->|fast| Op2[Op2: SLOW]
+    Op2 --> Sink
+```
 
 Когда `Op2` не успевает — буферы перед ним заполняются → `Op1` не может писать → замедляется → давление доходит до источника, и тот замедляет чтение из Kafka.
 

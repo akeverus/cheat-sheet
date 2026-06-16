@@ -109,13 +109,14 @@ updated: "2026-05-05"
 - **Управление памятью** — сама выделяет память под объекты и освобождает её через `GC`; ручного `free`, как в C, нет
 - **Управление потоками** — отображает `Java`-потоки на потоки ОС и синхронизацию
 
-Полный конвейер от исходника до исполнения:
-
-- `Java Source` (`.java`) → компилятор `javac` → `Bytecode` (`.class`)
-- `Bytecode` поступает в `JVM`, где проходит три стадии:
-  - `ClassLoader` → **Загрузка**
-  - `Verifier` → **Верификация**
-  - `Interpreter` / `JIT` → **Исполнение**
+```mermaid
+graph LR
+    A["Java Source<br/>.java"] -->|javac| B["Bytecode<br/>.class"]
+    B --> C["JVM"]
+    C -->|ClassLoader| D[Загрузка]
+    D -->|Verifier| E[Верификация]
+    E -->|Interpreter/JIT| F[Исполнение]
+```
 
 **Ключевой акцент для собеседования:** `JVM` — это **спецификация** (документ, описывающий поведение), а `HotSpot`, `OpenJ9`, `GraalVM` — её конкретные **реализации**. Поэтому «JVM от Oracle» и «JVM от IBM» ведут себя одинаково по контракту, но различаются деталями GC и JIT.
 
@@ -123,22 +124,28 @@ updated: "2026-05-05"
 
 `JVM` состоит из трёх крупных блоков: **`ClassLoader Subsystem`** (загружает классы), **`Runtime Data Areas`** (области памяти, где живут классы, объекты и стеки) и **`Execution Engine`** (исполняет байткод — интерпретатор + `JIT` + `GC`). Связывает их с нативным миром **`JNI`** (`Native Interface`).
 
-Структура `Java Virtual Machine` по блокам:
-
-- **`ClassLoader Subsystem`** — подсистема загрузки классов
-- **`Runtime Data Areas`** (области памяти):
-  - `Method Area` / `Metaspace`
-  - `Heap`
-  - `Stack` (per thread)
-  - `PC Register` (per thread)
-  - `Native Method Stack`
-- **`Execution Engine`**:
-  - `Interpreter`
-  - `JIT Compiler` (`C1` + `C2`)
-  - `Garbage Collector`
-- **`Native Interface (JNI)`** — мост к нативному коду
-
-Поток данных между блоками: `ClassLoader Subsystem` → `Runtime Data Areas` → `Execution Engine` → `Native Interface (JNI)`.
+```mermaid
+graph TB
+    subgraph JVM["Java Virtual Machine"]
+        CL["ClassLoader Subsystem"]
+        subgraph RDA["Runtime Data Areas"]
+            MS["Method Area / Metaspace"]
+            HP["Heap"]
+            ST["Stack (per thread)"]
+            PC["PC Register (per thread)"]
+            NS["Native Method Stack"]
+        end
+        subgraph EE["Execution Engine"]
+            INT[Interpreter]
+            JIT["JIT Compiler<br/>C1 + C2"]
+            GC["Garbage Collector"]
+        end
+        NI["Native Interface (JNI)"]
+    end
+    CL --> RDA
+    RDA --> EE
+    EE --> NI
+```
 
 | Компонент | Назначение |
 |-----------|-----------|
@@ -282,13 +289,19 @@ private int multiply(int a, int b) {
 
 `ClassLoader` отвечает за загрузку `.class`-файлов в `JVM` по требованию (лениво, когда класс впервые понадобился). Загрузчики выстроены в иерархию «родитель-потомок» и работают по принципу делегирования (parent-first): прежде чем загрузить класс самому, загрузчик сначала просит это сделать родителя.
 
-Иерархия загрузчиков выстроена сверху вниз (каждый — родитель следующего):
+```mermaid
+graph TB
+    B["Bootstrap ClassLoader<br/>(C++ / JVM internal)<br/>java.lang, java.util"]
+    P["Platform ClassLoader<br/>(Java 9+, ранее Extension)<br/>javax.*, java.sql"]
+    A["Application ClassLoader<br/>(System ClassLoader)<br/>classpath приложения"]
+    C1["Custom ClassLoader 1<br/>(плагины, OSGi)"]
+    C2["Custom ClassLoader 2<br/>(hot reload)"]
 
-- **`Bootstrap ClassLoader`** (`C++` / JVM internal) — `java.lang`, `java.util`
-  - → **`Platform ClassLoader`** (`Java 9+`, ранее `Extension`) — `javax.*`, `java.sql`
-    - → **`Application ClassLoader`** (`System ClassLoader`) — classpath приложения
-      - → **`Custom ClassLoader 1`** (плагины, `OSGi`)
-      - → **`Custom ClassLoader 2`** (hot reload)
+    B --> P
+    P --> A
+    A --> C1
+    A --> C2
+```
 
 | `ClassLoader` | Что загружает | Путь |
 |--------------|--------------|------|
@@ -374,6 +387,20 @@ public class PluginClassLoader extends ClassLoader {
 ## Q11. (!) Какие области памяти существуют в `JVM`?
 
 Память `JVM` делится по принципу «что общее, а что приватно для потока». **Общие** области (`Heap`, `Metaspace`, `Code Cache`) видны всем потокам, и доступ к ним требует синхронизации. **Приватные** области (`Stack`, `PC Register`, `Native Method Stack`) создаются для каждого потока отдельно и не нуждаются в синхронизации.
+
+```mermaid
+graph TB
+    subgraph Shared["Общие для всех потоков"]
+        HEAP["Heap<br/>Объекты, массивы<br/>-Xms / -Xmx"]
+        META["Metaspace<br/>Метаданные классов<br/>Native memory"]
+        CC["Code Cache<br/>JIT-скомпилированный код"]
+    end
+    subgraph PerThread["На каждый поток"]
+        STACK["Stack<br/>Фреймы, локальные переменные<br/>-Xss"]
+        PC["PC Register<br/>Адрес текущей инструкции"]
+        NMS["Native Method Stack"]
+    end
+```
 
 | Область | Scope | Содержимое | Ключевые флаги |
 |---------|-------|-----------|----------------|
@@ -489,6 +516,22 @@ java.lang.OutOfMemoryError: Direct buffer memory
 **`Generational GC`** — стратегия, основанная на **гипотезе поколений**: подавляющее большинство объектов умирает молодыми (infant mortality), и лишь немногие живут долго. Раз так, выгодно не сканировать весь `Heap` каждый раз, а разделить его на поколения и часто/дёшево чистить «молодую» область, где почти всё уже мусор, и редко трогать «старую», где живут долгожители.
 
 `Heap` делится на поколения:
+
+```mermaid
+graph LR
+    subgraph Young["Young Generation"]
+        E["Eden"]
+        S0["Survivor 0"]
+        S1["Survivor 1"]
+    end
+    subgraph Old["Old Generation<br/>(Tenured)"]
+        OG["Long-lived objects"]
+    end
+
+    E -->|"Minor GC<br/>(выжившие)"| S0
+    S0 -->|"Следующий Minor GC"| S1
+    S1 -->|"age >= threshold"| OG
+```
 
 | Область | Назначение | Тип GC | Характеристика |
 |---------|-----------|--------|---------------|
@@ -640,13 +683,32 @@ node3 = null;
 
 **`G1`** (Garbage First) — сборщик по умолчанию с `Java 9`, рассчитанный на большой `Heap` и предсказуемые паузы. Ключевая идея в самом названии: он делит `Heap` не на две большие области, а на множество равных **регионов** (обычно 2048 штук, размер 1-32 MB) и сначала собирает те, где **больше всего мусора** (Garbage First) — так за фиксированное время паузы освобождается максимум памяти. Поколения (`Eden`/`Survivor`/`Old`) тут логические: любой регион может играть любую роль.
 
-`Heap` в `G1` — это набор регионов, каждый из которых отмаркирован одной из ролей:
+```mermaid
+graph TB
+    subgraph Heap["G1 Heap Regions"]
+        E1["E"] --> S1_["S"]
+        E2["E"] --> S2_["S"]
+        E3["E"]
+        O1["O"]
+        O2["O"]
+        O3["O"]
+        H1["H (Humongous)"]
+        F1["Free"]
+        F2["Free"]
+    end
 
-- `E` — `Eden` (выжившие при `Young GC` копируются в `Survivor`: `E` → `S`)
-- `S` — `Survivor`
-- `O` — `Old`
-- `H` — `Humongous` (крупные объекты)
-- `Free` — свободные, пока ни под что не выделенные регионы
+    style E1 fill:#90EE90
+    style E2 fill:#90EE90
+    style E3 fill:#90EE90
+    style S1_ fill:#FFD700
+    style S2_ fill:#FFD700
+    style O1 fill:#87CEEB
+    style O2 fill:#87CEEB
+    style O3 fill:#87CEEB
+    style H1 fill:#FF6347
+    style F1 fill:#FFFFFF
+    style F2 fill:#FFFFFF
+```
 
 Каждый регион в любой момент играет одну из ролей: `Eden`, `Survivor`, `Old` или `Humongous` — особый случай для крупных объектов, занимающих > 50% региона (они выделяются напрямую в Old-регионы и дороги в сборке).
 
@@ -1052,11 +1114,14 @@ public int sumCoordinates() {
 
 **GraalVM Native Image** — инструмент, который компилирует Java-приложение в самостоятельный нативный бинарник заранее (AOT — Ahead-Of-Time). Результат — исполняемый файл, который не нуждается в установленной `JVM` и запускается за миллисекунды вместо секунд. Цена за это — потеря рантайм-адаптивности `JIT` и жёсткие ограничения на динамику (рефлексия, прокси), о которых ниже.
 
-**Как это работает** — конвейер сборки и запуска:
+**Как это работает:**
 
-- `Java Source` (`.java`) → компилятор `javac` → `Bytecode` (`.class`)
-- `Bytecode` → `GraalVM` `native-image` → `Native Binary` (`./app`)
-- `Native Binary` запускается мгновенно (~50 ms против ~5 s у обычной `JVM`) → `Running Process`
+```mermaid
+graph LR
+    A["Java Source<br/>.java"] -->|javac| B["Bytecode<br/>.class"]
+    B -->|GraalVM<br/>native-image| C["Native Binary<br/>./app"]
+    C -->|"Мгновенный старт<br/>~50ms vs ~5s"| D["Running Process"]
+```
 
 В основе лежит **closed-world analysis** («анализ замкнутого мира»): на этапе сборки `native-image` статически прослеживает весь граф достижимых классов и методов от точки входа и компилирует **только** их. Всё, что нельзя увидеть статически, в бинарник не попадает — и именно отсюда растут все ограничения native image. Динамика, которую анализатор не может предсказать (рефлексия, прокси, загрузка классов в runtime), для него невидима, поэтому её нужно описывать заранее через конфигурацию и hints.
 

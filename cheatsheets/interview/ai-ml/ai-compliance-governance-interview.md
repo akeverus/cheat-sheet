@@ -87,12 +87,18 @@ updated: "2026-05-25"
 
 ## Q2. Какие четыре risk tier-а определяет EU AI Act? (!)
 
-**Пирамида рисков** — фундамент регламента. Четыре уровня, от запрещённого вниз до минимального — режим смягчается на каждой ступени:
+**Пирамида рисков** — фундамент регламента. Четыре уровня, от запрещённого до минимального:
 
-- **Unacceptable risk** — ЗАПРЕЩЕНО (Article 5): social scoring, manipulative AI, untargeted facial scraping.
-- → **High-risk** — Annex III (use cases) + Annex I (products): credit scoring, hiring, education, law enforcement, biometrics, medical.
-- → **Limited risk** — transparency obligations: chatbots, deepfakes, emotion recognition, synthetic content labeling.
-- → **Minimal/No risk** — без обязательств: spam filters, video game AI, inventory optimization.
+```mermaid
+graph TD
+    A["Unacceptable risk<br/>ЗАПРЕЩЕНО (Article 5)<br/>Social scoring, manipulative AI,<br/>untargeted facial scraping"] --> B["High-risk<br/>Annex III (use cases) + Annex I (products)<br/>Credit scoring, hiring, education,<br/>law enforcement, biometrics, medical"]
+    B --> C["Limited risk<br/>Transparency obligations<br/>Chatbots, deepfakes, emotion recognition,<br/>synthetic content labeling"]
+    C --> D["Minimal/No risk<br/>Без обязательств<br/>Spam filters, video game AI,<br/>inventory optimization"]
+    style A fill:#ff6b6b,color:#fff
+    style B fill:#feca57,color:#000
+    style C fill:#48dbfb,color:#000
+    style D fill:#1dd1a1,color:#000
+```
 
 Чем выше уровень, тем строже режим — от полного запрета до полной свободы:
 
@@ -195,12 +201,25 @@ High-risk — это не «нельзя», а «можно при выполн�
 
 **NIST AI RMF 1.0** (Jan 2023) — **добровольный** фреймворк от U.S. National Institute of Standards and Technology. Формально это не закон и штрафов за несоблюдение нет, но де-факто он стал стандартом в США: на него ссылаются федеральные контракты, executive orders и законы штатов (Colorado AI Act). Обязательность приходит косвенно — через документы, которые его требуют.
 
-**Четыре ключевые функции** — это не последовательные этапы, а взаимосвязанные блоки, где Govern пронизывает остальные три. Связи между ними:
+**Четыре ключевые функции** — это не последовательные этапы, а взаимосвязанные блоки, где Govern пронизывает остальные три:
 
-- **GOVERN** (политики, роли, культура риска) → питает каждую из трёх остальных функций: → MAP, → MEASURE, → MANAGE.
-- **MAP** (контекст, классификация рисков) → MEASURE.
-- **MEASURE** (метрики, evaluation, testing) → MANAGE.
-- **MANAGE** (treatment рисков, monitoring) -.feedback.→ MAP (петля обратной связи замыкает цикл).
+```mermaid
+graph LR
+    G[GOVERN<br/>политики, роли,<br/>культура риска]
+    M[MAP<br/>контекст,<br/>классификация рисков]
+    E[MEASURE<br/>метрики, evaluation,<br/>testing]
+    A[MANAGE<br/>treatment рисков,<br/>monitoring]
+    G --> M
+    G --> E
+    G --> A
+    M --> E
+    E --> A
+    A -.feedback.-> M
+    style G fill:#9b59b6,color:#fff
+    style M fill:#3498db,color:#fff
+    style E fill:#e67e22,color:#fff
+    style A fill:#27ae60,color:#fff
+```
 
 **Govern** — сквозная функция: стратегия управления AI-рисками, ответственность (accountability), политики, роли (RACI), культура, supply chain.
 
@@ -747,14 +766,19 @@ Bias audit — это не разовый прогон метрик, а восп
 
 ## Q25. Как построить AI compliance roadmap для компании? (!)
 
-**Шесть фаз** идут по порядку, а последняя замыкает цикл на первую:
+**Шесть фаз**:
 
-1. **Inventory** — AI systems used + provided →
-2. **Risk classification** — per EU AI Act tier →
-3. **Gap analysis** — vs requirements →
-4. **Remediation backlog** — prioritized →
-5. **Implementation** — technical + process →
-6. **Continuous monitoring** — ongoing audits -.update inventory.→ возврат к шагу 1 (Inventory).
+```mermaid
+graph LR
+    A[1. Inventory<br/>AI systems<br/>used + provided] --> B[2. Risk<br/>classification<br/>per EU AI Act tier]
+    B --> C[3. Gap<br/>analysis<br/>vs requirements]
+    C --> D[4. Remediation<br/>backlog<br/>prioritized]
+    D --> E[5. Implementation<br/>technical + process]
+    E --> F[6. Continuous<br/>monitoring<br/>ongoing audits]
+    F -.update inventory.-> A
+    style A fill:#3498db,color:#fff
+    style F fill:#27ae60,color:#fff
+```
 
 **1. Инвентаризация** (часто самое сложное):
 - AI-системы, которые компания **предоставляет** клиентам.

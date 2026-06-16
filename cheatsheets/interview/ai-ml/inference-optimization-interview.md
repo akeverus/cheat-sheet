@@ -233,15 +233,18 @@ Request B (50 tokens): blocks [42, 17, 81, ...]  # shared prefix!
 
 **Результат из paper:** до **×24 throughput** против HuggingFace transformers (там вообще без батчинга — поэтому цифра такая большая). Против уже батчащего TGI прирост скромнее, обычно 1.5-2×.
 
-Два подхода к раскладке памяти наглядно различаются так:
-
-- **Naive KV Cache** — каждый запрос резервирует место под `2K tokens` целиком:
-  - `Request 1`: reserved `2K tokens` → used `200`, wasted `1800`;
-  - `Request 2`: reserved `2K tokens` → used `500`, wasted `1500`.
-- **PagedAttention** — таблицы блоков указывают на общий пул 16-токенных страниц:
-  - `Block table A` → блоки `42, 17, 3` → ссылаются в `Block pool` (16-token pages);
-  - `Block table B` → блоки `42, 17, 81` → ссылаются в тот же `Block pool`;
-  - блок `42` — общий (shared block) для обоих, это `system prompt`.
+```mermaid
+graph TB
+    subgraph "Naive KV Cache"
+        N1[Request 1: reserved 2K tokens] --> NU1[used 200, wasted 1800]
+        N2[Request 2: reserved 2K tokens] --> NU2[used 500, wasted 1500]
+    end
+    subgraph "PagedAttention"
+        P1[Block table A: → 42, 17, 3] --> PB[Block pool 16-token pages]
+        P2[Block table B: → 42, 17, 81] --> PB
+        PB --> PM[Shared block 42 — system prompt]
+    end
+```
 
 
 ## Q8. KV cache fragmentation — что это?
@@ -265,20 +268,25 @@ Request B (50 tokens): blocks [42, 17, 81, ...]  # shared prefix!
 
 ## Q9. (!) Чем continuous batching лучше static batching?
 
-Таймлайн (Static vs Continuous Batching) показывает разницу по запросам наглядно.
+```mermaid
+gantt
+    title Static vs Continuous Batching
+    dateFormat X
+    axisFormat %s
 
-**Static** — все запросы стартуют в момент `0` и батч держится, пока не закончит самый длинный:
-- `Req A` (50 tok): `0` → `5`;
-- `Req B` (200 tok): `0` → `20`;
-- `Req C` (30 tok): `0` → `20` — закончил рано, но `wait` до конца батча;
-- `Req D` (queue): стартует только в `20`, после освобождения батча, идёт `20` → `25`.
+    section Static
+    Req A 50 tok        :0, 5
+    Req B 200 tok       :0, 20
+    Req C 30 tok (wait) :0, 20
+    Req D (queue)       :20, 5
 
-**Continuous** — слот освобождается сразу, новые запросы добавляются по ходу:
-- `Req A` (50 tok): `0` → `5`;
-- `Req B` (200 tok): `0` → `20`;
-- `Req C` (30 tok): `0` → `3` — завершился, слот свободен;
-- `Req D`: стартует в `3` → `11`;
-- `Req E`: стартует в `5` → `15`.
+    section Continuous
+    Req A 50 tok        :0, 5
+    Req B 200 tok       :0, 20
+    Req C 30 tok        :0, 3
+    Req D                :3, 8
+    Req E                :5, 10
+```
 
 Разница в том, на каком уровне гранулярности планируется работа: static — на уровне целого батча, continuous — на уровне каждого шага генерации.
 
@@ -340,13 +348,19 @@ Batch N+2:  [decode_A, decode_B, decode_C]  # prefill finished
 
 **Идея** (Leviathan et al., 2023): угадать N токенов **маленькой** моделью, а **большая** модель проверит их **за один проход**.
 
-Поток взаимодействия двух моделей — `Draft model (1B)` и `Target model (70B)` — по шагам:
+```mermaid
+sequenceDiagram
+    participant Draft as Draft model (1B)
+    participant Target as Target model (70B)
 
-1. **Дешёвый шаг** (Draft model): draft генерирует токены `[t1, t2, t3, t4]`.
-2. **Один forward pass** (Target model): target проверяет `[t1, t2, t3, t4]` параллельно.
-3. Target возвращает результат: accepted `[t1, t2]`, rejected at `t3`.
-4. **Sample correction for `t3`** (Target model): пересэмплирует правильный токен в позиции `t3`.
-5. Target говорит draft продолжать с `t3+` (continue from `t3+`).
+    Note over Draft: Дешёвый шаг
+    Draft->>Draft: Generate tokens [t1, t2, t3, t4]
+    Note over Target: Один forward pass
+    Target->>Target: Verify [t1, t2, t3, t4] параллельно
+    Target-->>Draft: Accepted [t1, t2], rejected at t3
+    Note over Target: Sample correction for t3
+    Target->>Draft: Continue from t3+
+```
 
 **Алгоритм:**
 1. Draft-модель быстро генерирует `k` токенов-кандидатов.

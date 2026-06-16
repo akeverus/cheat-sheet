@@ -265,17 +265,18 @@ String level = switch (exp) {
 
 `switch expression` (финальный в `Java 14`, JEP 361) — это форма `switch`, которая **возвращает значение**, тогда как классический `switch statement` лишь выполняет ветки ради побочных эффектов. Из этого вытекают все остальные отличия: стрелочный синтаксис без fall-through, `yield` для блоков и обязательная проверка полноты (exhaustiveness).
 
-`switch` делится на две формы:
-
-- **`switch statement`** (классический оператор):
-  - `case L:` с fall-through;
-  - не возвращает значение;
-  - `break` для выхода.
-- **`switch expression`** (выражение):
-  - `case L ->` без fall-through;
-  - возвращает значение;
-  - `yield` для блоков;
-  - exhaustive — проверка полноты.
+```mermaid
+graph TD
+    A[switch] --> B[switch statement]
+    A --> C[switch expression]
+    B --> D["case L: с fall-through"]
+    B --> E["Не возвращает значение"]
+    B --> F["break для выхода"]
+    C --> G["case L -> без fall-through"]
+    C --> H["Возвращает значение"]
+    C --> I["yield для блоков"]
+    C --> J["Exhaustive — проверка полноты"]
+```
 
 | Свойство | `switch statement` | `switch expression` |
 |---|---|---|
@@ -534,11 +535,14 @@ switch (obj) {
 }
 ```
 
-Проверка идёт сверху вниз по этому порядку:
-
-- `case String s` → если не совпало →
-- `case Number n` → если не совпало →
-- `default`.
+```mermaid
+graph TD
+    A["case String s"] -->|"если не совпало"| B["case Number n"]
+    B -->|"если не совпало"| C["default"]
+    style A fill:#4CAF50,color:#fff
+    style B fill:#FF9800,color:#fff
+    style C fill:#9E9E9E,color:#fff
+```
 
 Это правило также относится к `guarded patterns`: `case String s when s.isEmpty()` должен стоять **перед** `case String s`.
 
@@ -562,12 +566,29 @@ double area(Shape shape) {
 }
 ```
 
-Иерархия типов:
-
-- `Shape` — `<<sealed>>` интерфейс, наследники:
-  - `Circle` — `<<record>>`, поле `double radius`;
-  - `Rectangle` — `<<record>>`, поля `double width`, `double height`;
-  - `Triangle` — `<<record>>`, поля `double base`, `double height`.
+```mermaid
+classDiagram
+    class Shape {
+        <<sealed>>
+    }
+    class Circle {
+        <<record>>
+        +double radius
+    }
+    class Rectangle {
+        <<record>>
+        +double width
+        +double height
+    }
+    class Triangle {
+        <<record>>
+        +double base
+        +double height
+    }
+    Shape <|-- Circle
+    Shape <|-- Rectangle
+    Shape <|-- Triangle
+```
 
 **Преимущества связки `sealed` + `switch`:**
 - При добавлении нового подтипа (`Pentagon`) -- ошибка компиляции во всех switch
@@ -770,15 +791,18 @@ while (true) {
 
 ## Q24. (!) Опишите поток выполнения `try-catch-finally`.
 
-Поток выполнения по шагам:
-
-1. Начало `try`. Возникло ли исключение?
-   - **Нет** → `try` завершается нормально → переход к `finally`.
-   - **Да** → есть ли подходящий `catch`?
-     - **Да** → выполняется `catch` → переход к `finally`.
-     - **Нет** → исключение передаётся выше → переход к `finally`.
-2. `finally` выполняется во всех трёх случаях.
-3. Продолжение программы.
+```mermaid
+graph TD
+    A[Начало try] --> B{Исключение?}
+    B -->|Нет| C[try завершается нормально]
+    B -->|Да| D{Есть подходящий catch?}
+    D -->|Да| E[Выполняется catch]
+    D -->|Нет| F[Исключение передаётся выше]
+    C --> G[finally выполняется]
+    E --> G
+    F --> G
+    G --> H[Продолжение программы]
+```
 
 Логика проста: `try` — основной код, `catch` срабатывает только при исключении, `finally` выполняется в любом случае для гарантированной очистки ресурсов.
 
@@ -1074,16 +1098,18 @@ void process(Order order) {
 
 Кратко: `switch` прошёл путь от примитивной проверки `int` к полноценному pattern matching. Сначала расширялся набор допустимых типов (`enum` в 5, `String` в 7), затем `Java 14` сделала его выражением (стрелки, `yield`, exhaustiveness), а `Java 16-22` добавили сопоставление по типам, `sealed`-классы, guards, деконструкцию записей и `_`.
 
-Эволюция `switch` в `Java` по годам:
-
-- **`Java 1.0` (1996)** — `switch` по `int`/`byte`/`short`/`char`;
-- **`Java 5` (2004)** — + `enum`;
-- **`Java 7` (2011)** — + `String`;
-- **`Java 14` (2020)** — `switch expression` (JEP 361): стрелочный синтаксис, `yield`, exhaustive;
-- **`Java 16` (2021)** — pattern matching for instanceof (JEP 394);
-- **`Java 17` (2021)** — sealed classes (JEP 409);
-- **`Java 21` (2023)** — pattern matching for switch (JEP 441): type patterns, guarded patterns, null handling;
-- **`Java 22` (2024)** — unnamed patterns (JEP 456): underscore wildcard.
+```mermaid
+timeline
+    title Эволюция switch в Java
+    Java 1.0 (1996) : switch по int/byte/short/char
+    Java 5 (2004) : + enum
+    Java 7 (2011) : + String
+    Java 14 (2020) : switch expression (JEP 361) — стрелочный синтаксис, yield, exhaustive
+    Java 16 (2021) : pattern matching for instanceof (JEP 394)
+    Java 17 (2021) : sealed classes (JEP 409)
+    Java 21 (2023) : pattern matching for switch (JEP 441) — type patterns, guarded patterns, null handling
+    Java 22 (2024) : unnamed patterns (JEP 456) — underscore wildcard
+```
 
 | Версия | Что добавлено | JEP |
 |---|---|---|

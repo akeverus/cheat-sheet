@@ -147,7 +147,14 @@ updated: "2026-04-25"
 
 ### Мнемоника
 
-Порядок принципов как цикл: `Steady State Hypothesis` → `Vary Real Events` → `Run in Production` → `Automate Continuously` → `Minimize Blast Radius`. Последний шаг даёт обратную связь (feedback) обратно к первому: результаты эксперимента уточняют гипотезу о steady state, и цикл повторяется.
+```mermaid
+graph LR
+    A[Steady State<br/>Hypothesis] --> B[Vary Real<br/>Events]
+    B --> C[Run in<br/>Production]
+    C --> D[Automate<br/>Continuously]
+    D --> E[Minimize<br/>Blast Radius]
+    E -.feedback.-> A
+```
 
 На собеседовании часто спрашивают именно эти 5 пунктов — стоит знать их наизусть.
 
@@ -184,12 +191,18 @@ updated: "2026-04-25"
 
 ### Стратегии минимизации
 
-Четыре оси ограничения blast radius:
+```mermaid
+graph TB
+    A[Blast Radius<br/>стратегии] --> B[Географическое<br/>ограничение]
+    A --> C[Процентное<br/>ограничение]
+    A --> D[Временное<br/>ограничение]
+    A --> E[Таргетинг<br/>по атрибутам]
 
-- **Географическое ограничение** → один AZ / shard / cell.
-- **Процентное ограничение** → постепенный рост охвата: 1% трафика → 5% → 25%.
-- **Временное ограничение** → короткое окно (`duration 30s`, не часы).
-- **Таргетинг по атрибутам** → canary group, internal users.
+    B --> B1[один AZ / shard / cell]
+    C --> C1[1% трафика → 5% → 25%]
+    D --> D1[duration 30s, не часы]
+    E --> E1[canary group<br/>internal users]
+```
 
 ### Практические приёмы
 
@@ -229,7 +242,12 @@ duration: "60s"
 
 ### Уровни сред
 
-Зрелость растёт по цепочке сред: `Dev / Local` → `Staging` → `Production Canary` → `Production`.
+```mermaid
+graph LR
+    A[Dev / Local] --> B[Staging]
+    B --> C[Production Canary]
+    C --> D[Production]
+```
 
 ### Когда staging достаточен
 
@@ -320,7 +338,11 @@ duration: "60s"
 
 ### Эскалация
 
-Масштаб воздействия нарастает снизу вверх: `Chaos Monkey` (1 instance) → `Chaos Gorilla` (1 AZ) → `Chaos Kong` (1 Region).
+```mermaid
+graph BT
+    A[Chaos Monkey<br/>1 instance] --> B[Chaos Gorilla<br/>1 AZ]
+    B --> C[Chaos Kong<br/>1 Region]
+```
 
 Каждый уровень требует своего уровня зрелости архитектуры: Chaos Monkey — резилентные сервисы; Gorilla — multi-AZ; Kong — multi-region active-active. Смотри также [распределённые системы](../architecture/distributed-systems-interview.md).
 
@@ -343,13 +365,15 @@ duration: "60s"
 
 ### Матрица выбора
 
-Категорию эксперимента выбирают по тому, что нужно проверить:
-
-- Resilience к падению → `Infrastructure`.
-- Reaction на lag → `Network / Latency`.
-- Graceful degradation → `Dependency`.
-- Autoscaling → `Resource`.
-- Retry logic → `Application`.
+```mermaid
+graph TB
+    A[Что хочу проверить?] --> B{Категория}
+    B -->|Resilience к падению| C[Infrastructure]
+    B -->|Reaction на lag| D[Network / Latency]
+    B -->|Graceful degradation| E[Dependency]
+    B -->|Autoscaling| F[Resource]
+    B -->|Retry logic| G[Application]
+```
 
 **Вывод.** Хороший план экспериментов не зацикливается на одной категории (типичная ошибка — только pod-kill), а смешивает несколько: инфраструктура, сеть, зависимости, ресурсы. Реальные инциденты редко выглядят как чистое падение pod-а — они комбинируют latency, исчерпание ресурсов и отказ зависимостей.
 
@@ -631,10 +655,15 @@ management:
 
 `assaults.level: 5` означает "атакуй каждый 5-й вызов метода, подпадающего под watcher". Можно задать `deterministic: true` (каждый N-й) или случайный выбор.
 
-Поток обработки по шагам: `HTTP Request` приходит в `RestController` (помеченный watcher) → Chaos Monkey проверяет условие `level=5?`. Здесь развилка:
-
-- каждый 5-й вызов → срабатывает `Assault` (latency / exception) → `Response`;
-- остальные вызовы → обычная обработка → `Response`.
+```mermaid
+graph LR
+    A[HTTP Request] --> B[RestController<br/>@watcher]
+    B --> C{Chaos<br/>Monkey<br/>level=5?}
+    C -->|каждый 5-й| D[Assault<br/>latency/exception]
+    C -->|остальные| E[Обычная<br/>обработка]
+    D --> F[Response]
+    E --> F
+```
 
 ## Q18. Как настроить `Latency Assault` и `Exception Assault`?
 
@@ -811,12 +840,15 @@ chaos:
 
 ### Архитектура
 
-Компоненты и связи между ними:
-
-- `Chaos Dashboard` → `Chaos Controller Manager` (UI управляет контроллером).
-- `ChaosMesh CR` (YAML) → `Chaos Controller Manager` (декларативный эксперимент применяется к контроллеру).
-- `Chaos Controller Manager` → `Chaos Daemon` на каждом ноде (Node 1, Node 2, ...).
-- Каждый `Chaos Daemon` → `Target Pod` на своём ноде (демон непосредственно инжектирует fault в целевой pod).
+```mermaid
+graph TB
+    Dashboard[Chaos Dashboard] --> Controller[Chaos Controller<br/>Manager]
+    Controller --> Daemon1[Chaos Daemon<br/>Node 1]
+    Controller --> Daemon2[Chaos Daemon<br/>Node 2]
+    Daemon1 --> Pod1[Target Pod]
+    Daemon2 --> Pod2[Target Pod]
+    CR[ChaosMesh CR<br/>YAML] --> Controller
+```
 
 ### Преимущества
 
@@ -1063,7 +1095,14 @@ spec:
 
 ### Workflow
 
-Поток выполнения по порядку: `ChaosHub` → `ChaosExperiment` (template) → `ChaosEngine` (application) → `Chaos Runner Pod` → `ChaosResult` → `Prometheus metrics`.
+```mermaid
+graph LR
+    A[ChaosHub] --> B[ChaosExperiment<br/>template]
+    B --> C[ChaosEngine<br/>application]
+    C --> D[Chaos Runner<br/>Pod]
+    D --> E[ChaosResult]
+    E --> F[Prometheus<br/>metrics]
+```
 
 ## Q26. Что такое `Gremlin` и какие у него категории атак?
 
@@ -1151,11 +1190,13 @@ Pumba — это "kubectl для контейнерного хаоса", про�
 
 ### Архитектура
 
-Топология прокси:
-
-- `App` → `Toxiproxy` (localhost:8474) → `Real Dependency` (Postgres, Redis, Kafka): весь трафик приложения к зависимости идёт через прокси.
-- `App` управляет прокси через admin API (`Toxiproxy API :8474`).
-- `Test Code` тоже обращается к admin API — именно тест программно навешивает и снимает toxics.
+```mermaid
+graph LR
+    App[App] --> Proxy[Toxiproxy<br/>localhost:8474]
+    Proxy --> Real[Real Dependency<br/>Postgres, Redis, Kafka]
+    App -.admin API.-> API[Toxiproxy<br/>API :8474]
+    Test[Test Code] --> API
+```
 
 ### Пример с Testcontainers + Java client
 
@@ -1218,16 +1259,18 @@ Toxiproxy — мост между "обычными тестами" и наст�
 
 ### Дерево принятия решений
 
-Выбор инструмента начинается с вопроса о платформе:
-
-- **Kubernetes** → уточняем приоритет:
-  - приоритет на fault types → `Chaos Mesh`;
-  - приоритет на experiment hub → `Litmus`.
-- **Docker без K8s** → `Pumba`.
-- **Spring Boot приложение** → `Chaos Monkey SB`.
-- **TCP-зависимости в тестах** → `Toxiproxy`.
-- **AWS VM** → Netflix CM или AWS FIS.
-- **Enterprise SaaS** → `Gremlin`.
+```mermaid
+graph TB
+    A[Нужен chaos] --> B{Платформа?}
+    B -->|Kubernetes| C{Приоритет?}
+    C -->|Fault types| D[Chaos Mesh]
+    C -->|Experiment hub| E[Litmus]
+    B -->|Docker без K8s| F[Pumba]
+    B -->|Spring Boot приложение| G[Chaos Monkey SB]
+    B -->|TCP-зависимости в тестах| H[Toxiproxy]
+    B -->|AWS VM| I[Netflix CM или AWS FIS]
+    B -->|Enterprise SaaS| J[Gremlin]
+```
 
 В крупных командах чаще мультистэк: Toxiproxy в unit/integration, Chaos Mesh в staging/prod K8s, Gremlin для compliance-критичных сценариев.
 
@@ -1237,12 +1280,12 @@ Toxiproxy — мост между "обычными тестами" и наст�
 
 ### Фазы GameDay
 
-Четыре фазы по порядку с примерными длительностями:
-
-1. **Prepare** (неделя) →
-2. **Execute** (2-4 часа) →
-3. **Learn** (1-2 часа, post-mortem) →
-4. **Follow-up** (action items).
+```mermaid
+graph LR
+    A[1. Prepare<br/>неделя] --> B[2. Execute<br/>2-4 часа]
+    B --> C[3. Learn<br/>1-2 часа<br/>post-mortem]
+    C --> D[4. Follow-up<br/>action items]
+```
 
 ### 1. Подготовка
 
@@ -1410,20 +1453,24 @@ Runbook обязателен: без него эксперимент превр�
 
 ### Три столпа
 
-Требования к observability раскладываются на три столпа:
+```mermaid
+graph TB
+    A[Observability<br/>Requirements] --> M[Metrics]
+    A --> L[Logs]
+    A --> T[Traces]
 
-- **Metrics**:
-  - SLO / SLI dashboards;
-  - Infra: CPU, memory, network;
-  - Business: orders, revenue.
-- **Logs**:
-  - структурированные JSON;
-  - correlation ID;
-  - агрегация (ELK, Loki).
-- **Traces**:
-  - distributed tracing;
-  - span attributes;
-  - sampling с усилением.
+    M --> M1[SLO / SLI dashboards]
+    M --> M2[Infra: CPU, memory, network]
+    M --> M3[Business: orders, revenue]
+
+    L --> L1[Структурированные JSON]
+    L --> L2[Correlation ID]
+    L --> L3[Agregation: ELK, Loki]
+
+    T --> T1[Distributed tracing]
+    T --> T2[Span attributes]
+    T --> T3[Sampling с усилением]
+```
 
 ### Обязательный минимум
 
@@ -1462,12 +1509,15 @@ Runbook обязателен: без него эксперимент превр�
 
 ### Интеграция с SRE
 
-Цикл управления надёжностью: `SLO 99.9%` → `Error Budget` (43 min/month) → проверка «Budget осталось?». Здесь развилка:
-
-- да → запускаем `Chaos Experiments`;
-- нет → `Freeze`: стабилизация.
-
-После экспериментов собираются `SLI metrics`, которые возвращаются обратно к оценке SLO, и цикл повторяется.
+```mermaid
+graph LR
+    A[SLO 99.9%] --> B[Error Budget<br/>43 min/month]
+    B --> C{Budget<br/>осталось?}
+    C -->|да| D[Chaos Experiments]
+    C -->|нет| E[Freeze:<br/>стабилизация]
+    D --> F[SLI metrics]
+    F --> A
+```
 
 ### Пример политики
 
@@ -1553,10 +1603,22 @@ spec:
 
 ### Две оси
 
-Модель раскладывает зрелость по двум независимым осям:
+```mermaid
+graph TB
+    subgraph "Adoption / принятие"
+        A1[In the Shadows]
+        A2[Investment]
+        A3[Adoption]
+        A4[Cultural Expectation]
+    end
 
-- **Adoption / принятие**: In the Shadows → Investment → Adoption → Cultural Expectation.
-- **Sophistication / сложность**: Elementary → Simple → Advanced → Sophisticated.
+    subgraph "Sophistication / сложность"
+        S1[Elementary]
+        S2[Simple]
+        S3[Advanced]
+        S4[Sophisticated]
+    end
+```
 
 ### Уровни sophistication
 
@@ -1602,11 +1664,16 @@ spec:
 
 ### Модели организации
 
-Три модели распределения ответственности:
+```mermaid
+graph TB
+    A[Модели] --> B[Centralized]
+    A --> C[Federated]
+    A --> D[Embedded]
 
-- **Centralized** — SRE-team владеет платформой и проводит GameDays.
-- **Federated** — платформа централизована, а эксперименты пишут сами команды.
-- **Embedded** — каждая команда имеет своего chaos engineer.
+    B --> B1[SRE-team владеет платформой<br/>и проводит GameDays]
+    C --> C1[Платформа централизована<br/>эксперименты пишут команды]
+    D --> D1[Каждая команда имеет<br/>своего chaos engineer]
+```
 
 Маленькая компания: один SRE + вовлечённые service owners. Крупная: платформенная команда + "chaos champions" в каждом squad. Смотри также [вопросы по лидерству](../behavioral/behavioral-interview.md).
 
@@ -1755,10 +1822,14 @@ Chaos — это **валидация** resilience-паттернов. Патт�
 
 ### Процесс
 
-По шагам: `Design resilience pattern` → `Implement` → `Chaos experiment` → проверка «Pattern сработал?». Здесь развилка:
-
-- нет → возвращаемся к `Implement` (дорабатываем паттерн и повторяем);
-- да → закрепляем как `Регрессия в CI`.
+```mermaid
+graph LR
+    A[Design<br/>resilience pattern] --> B[Implement]
+    B --> C[Chaos<br/>experiment]
+    C --> D{Pattern<br/>сработал?}
+    D -->|нет| B
+    D -->|да| E[Регрессия<br/>в CI]
+```
 
 ### Антипример
 

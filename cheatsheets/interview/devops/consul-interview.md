@@ -142,9 +142,14 @@ Service A подключается к любому доступному инст
 - быстро обнаруживает отказы (failure detection) без явных health-проверок со стороны серверов;
 - работает на двух уровнях: **LAN gossip** внутри дата-центра и **WAN gossip** между дата-центрами.
 
-Пример топологии небольшого кластера:
-- **Server 1 (leader)** связан с **Server 2** и **Server 3** — три сервера образуют кворум Raft;
-- клиенты (`Client`) подключаются к серверу: в этом примере три клиентских агента присоединены к Server 1, через который форвардят свои запросы.
+```mermaid
+graph LR
+    Server1[Server 1<br/>leader] --- Server2[Server 2]
+    Server1 --- Server3[Server 3]
+    Client1[Client] --- Server1
+    Client2[Client] --- Server1
+    Client3[Client] --- Server1
+```
 
 ## Q4. (!) Как зарегистрировать сервис в Consul?
 

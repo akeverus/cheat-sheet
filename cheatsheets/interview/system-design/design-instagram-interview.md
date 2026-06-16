@@ -222,25 +222,39 @@ GET  /api/v1/explore                            # персонализирова
 - Удваивается исходящий трафик: client→server + server→S3.
 - App server тратит CPU просто на перекачку байт.
 
-**Как работает presigned URL** — клиент напрямую в S3. Участники: `Client`, `Upload Service` (API), `S3 Bucket`, `Kafka`, `Media Worker`, `CloudFront` (CDN). По порядку:
+**Как работает presigned URL** — клиент напрямую в S3:
 
-1. `Client → Upload Service`: `POST /upload-url` (contentType, size).
-2. `Upload Service` валидирует пользователя, применяет rate-limit, выделяет `photoId`.
-3. `Upload Service → S3`: `getSignedUrl(PUT, photoId.bin, exp=10min)`.
-4. `Upload Service → Client`: `{ uploadUrl, photoId }`.
-5. `Client → S3`: `PUT uploadUrl` + binary body.
-6. `S3 → Client`: `200 OK`.
-7. `Client → Upload Service`: `POST /photos/{photoId}/finalize` (caption, tags).
-8. `Upload Service` вставляет метаданные (status=PROCESSING).
-9. `Upload Service → Kafka`: emit `PhotoUploaded(photoId, s3Key)`.
-10. `Upload Service → Client`: `202 Accepted` (photoId).
-11. `Media Worker → Kafka`: consume `PhotoUploaded`.
-12. `Media Worker → S3`: GET original.
-13. `Media Worker` генерирует thumbnails (150, 320, 1080).
-14. `Media Worker` выполняет `HEIC → JPEG`, EXIF strip, content moderation.
-15. `Media Worker → S3`: PUT thumbnails (photoId_150.jpg, ...).
-16. `Media Worker → Upload Service`: status=READY.
-17. `Media Worker → CloudFront`: warm cache (опциональный prefetch).
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Client
+    participant API as Upload Service
+    participant S3 as S3 Bucket
+    participant Q as Kafka
+    participant W as Media Worker
+    participant CDN as CloudFront
+
+    C->>API: POST /upload-url (contentType, size)
+    API->>API: validate user, rate-limit, allocate photoId
+    API->>S3: getSignedUrl(PUT, photoId.bin, exp=10min)
+    API-->>C: { uploadUrl, photoId }
+
+    C->>S3: PUT uploadUrl + binary body
+    S3-->>C: 200 OK
+
+    C->>API: POST /photos/{photoId}/finalize (caption, tags)
+    API->>API: insert metadata (status=PROCESSING)
+    API->>Q: emit PhotoUploaded(photoId, s3Key)
+    API-->>C: 202 Accepted (photoId)
+
+    W->>Q: consume PhotoUploaded
+    W->>S3: GET original
+    W->>W: generate thumbnails (150, 320, 1080)
+    W->>W: HEIC → JPEG, EXIF strip, content moderation
+    W->>S3: PUT thumbnails (photoId_150.jpg, ...)
+    W->>API: status=READY
+    W->>CDN: warm cache (optional prefetch)
+```
 
 Пример генерации presigned URL (Java, AWS SDK v2):
 
@@ -505,30 +519,68 @@ CREATE TABLE messages (
 
 Система делится на пять слоёв: edge (DNS + CDN), API gateway (auth, rate-limit), stateless-микросервисы по доменам, асинхронная шина Kafka с воркерами (media, ML, fan-out) и гетерогенное хранилище. Главный приём — синхронный путь делает минимум (валидация + запись метаданных), а всё тяжёлое уходит в Kafka и обрабатывается воркерами в фоне.
 
-Компоненты и связи (стрелка `→` = направление вызова/потока, пунктир обозначен как «асинхронно»):
+```mermaid
+flowchart TB
+    subgraph Client
+        IOS[iOS App]
+        AND[Android App]
+        WEB[Web]
+    end
 
-- **Client** — `iOS App`, `Android App`, `Web`. Все три → `Global Load Balancer + Anycast DNS` (LB).
-- `LB` → `CloudFront CDN` (edge image resize).
-- `LB` → `API Gateway` (auth, rate-limit, routing).
-- `API Gateway` → все микросервисы: `Upload Service`, `Feed Service`, `Story Service`, `Social Graph Service`, `Search Service`, `Explore Service`, `Notification Service`, `DM Service` (WebSocket).
-- **Async-слой**: `Kafka`, `Media Workers` (thumbnails, transcoding), `ML Workers` (moderation, embeddings), `Fan-out Workers` (feed pre-compute).
-- **Storage**: `Sharded Postgres` (1024 shards, metadata, social graph), `S3 Object Storage` (media), `Redis Cluster` (feed, stories, counters), `Cassandra` (DMs), `Elasticsearch` (search index), `Faiss/pgvector` (embeddings).
+    LB[Global Load Balancer<br/>+ Anycast DNS]
+    CDN[CloudFront CDN<br/>edge image resize]
+    GW[API Gateway<br/>auth, rate-limit, routing]
 
-Потоки данных:
+    subgraph Services
+        UPL[Upload Service]
+        FEED[Feed Service]
+        STORY[Story Service]
+        SOC[Social Graph Service]
+        SEARCH[Search Service]
+        EXPL[Explore Service]
+        NOTIF[Notification Service]
+        DM[DM Service<br/>WebSocket]
+    end
 
-- `Upload Service → S3` (presigned URL).
-- `Upload Service ⇢ Kafka` (асинхронно, finalize).
-- `Kafka → Media Workers → S3`.
-- `Kafka → ML Workers → Faiss/pgvector`.
-- `Kafka → Fan-out Workers → Redis`.
-- `Feed Service → Redis` и `Feed Service → Postgres`.
-- `Story Service → Redis`.
-- `Social Graph Service → Postgres`.
-- `Search Service → Elasticsearch`.
-- `Explore Service → Faiss/pgvector` и `Explore Service → Redis`.
-- `DM Service → Cassandra`.
-- `Notification Service → Kafka`.
-- `S3 → CloudFront CDN`.
+    subgraph Async
+        KAFKA[(Kafka)]
+        MEDIAW[Media Workers<br/>thumbnails, transcoding]
+        MLW[ML Workers<br/>moderation, embeddings]
+        FANOUT[Fan-out Workers<br/>feed pre-compute]
+    end
+
+    subgraph Storage
+        PG[(Sharded Postgres<br/>1024 shards<br/>metadata, social graph)]
+        S3[(S3 Object Storage<br/>media)]
+        REDIS[(Redis Cluster<br/>feed, stories, counters)]
+        CASS[(Cassandra<br/>DMs)]
+        ES[(Elasticsearch<br/>search index)]
+        VEC[(Faiss/pgvector<br/>embeddings)]
+    end
+
+    IOS & AND & WEB --> LB
+    LB --> CDN
+    LB --> GW
+    GW --> UPL & FEED & STORY & SOC & SEARCH & EXPL & NOTIF & DM
+
+    UPL -->|presigned URL| S3
+    UPL -.->|finalize| KAFKA
+    KAFKA --> MEDIAW --> S3
+    KAFKA --> MLW --> VEC
+    KAFKA --> FANOUT --> REDIS
+
+    FEED --> REDIS
+    FEED --> PG
+    STORY --> REDIS
+    SOC --> PG
+    SEARCH --> ES
+    EXPL --> VEC
+    EXPL --> REDIS
+    DM --> CASS
+    NOTIF --> KAFKA
+
+    S3 --> CDN
+```
 
 **Слои**:
 
@@ -572,20 +624,34 @@ WHEN follower F открывает feed:
     return merge_and_rank(base + celeb_posts)
 ```
 
-Полный поток. Участники: `User upload`, `Feed Service`, `Fan-out Worker`, `Kafka`, `Redis ZSET feed:{follower}`, `Viewer`. По порядку:
+```mermaid
+sequenceDiagram
+    autonumber
+    participant U as User upload
+    participant FS as Feed Service
+    participant FO as Fan-out Worker
+    participant K as Kafka
+    participant R as Redis ZSET<br/>feed:{follower}
+    participant V as Viewer
 
-1. `User upload → Feed Service`: `POST /photos finalize`.
-2. `Feed Service → Kafka`: `PhotoPublished(photoId, authorId)`.
-3. `Fan-out Worker → Kafka`: consume.
-4. `Fan-out Worker` загружает `followers(authorId)`.
-5. Ветвление по числу подписчиков:
-   - если `followers < 100k` — для каждого follower `F`: `Fan-out Worker → Redis`: `ZADD feed:{F} ts photoId`;
-   - иначе (celebrity) — `Fan-out Worker → Redis`: `ZADD celeb_inbox:{authorId} ts photoId`.
-6. `Viewer → Feed Service`: `GET /feed`.
-7. `Feed Service → Redis`: `ZREVRANGE feed:{viewerId} 0 20`.
-8. `Feed Service → Redis`: для celebrities — `ZREVRANGE celeb_inbox:{C}`.
-9. `Feed Service` выполняет merge + ML rank.
-10. `Feed Service → Viewer`: feed items.
+    U->>FS: POST /photos finalize
+    FS->>K: PhotoPublished(photoId, authorId)
+    FO->>K: consume
+    FO->>FO: load followers(authorId)
+    alt followers < 100k
+        loop each follower
+            FO->>R: ZADD feed:{F} ts photoId
+        end
+    else celebrity
+        FO->>R: ZADD celeb_inbox:{authorId} ts photoId
+    end
+
+    V->>FS: GET /feed
+    FS->>R: ZREVRANGE feed:{viewerId} 0 20
+    FS->>R: для celebrities: ZREVRANGE celeb_inbox:{C}
+    FS->>FS: merge + ML rank
+    FS-->>V: feed items
+```
 
 Структура Redis ZSET:
 
@@ -668,13 +734,16 @@ public StoriesFeed getStoriesFeed(long viewerId) {
 
 **Проблема**: вирусное фото набирает 10_000 лайков/сек → UPDATE одной строки в Postgres = конкуренция за блокировку (row lock), лаг репликации.
 
-**Решение** — write-behind через Redis. Поток (стрелка `→` = вызов, пунктир = асинхронно):
+**Решение** — write-behind через Redis:
 
-- `User → API`: `POST /like`.
-- `API → Redis`: `INCR like_count:photo`.
-- `API → Redis`: `SADD likers:photo userId`.
-- `Redis ⇢ Flusher`: асинхронно через Kafka stream, каждые N ms.
-- `Flusher → Postgres`: batch UPDATE.
+```mermaid
+flowchart LR
+    User -->|POST /like| API
+    API -->|INCR like_count:photo| Redis
+    API -->|SADD likers:photo userId| Redis
+    Redis -.->|Kafka stream<br/>каждые N ms| Flusher
+    Flusher -->|batch UPDATE| Postgres
+```
 
 ```java
 public void like(UUID photoId, long userId) {
@@ -715,20 +784,35 @@ public void flush(List<LikeEvent> batch) {
 
 Доставка сообщений в реальном времени держится на двух опорах: **WebSocket** даёт постоянное двунаправленное соединение для мгновенного push, а **Cassandra** хранит историю — её модель «много записей, partition по conversation_id» идеальна под чат. Между ними Kafka разносит сообщение на тот gateway, к которому подключён получатель.
 
-Архитектура чата (детально в [Design Chat System](design-chat-system-interview.md)). Полный flow. Участники: `User A`, `Connection LB`, `Gateway-1` (WebSocket), `Gateway-2`, `Redis` (sessions map), `Kafka` (messages), `Cassandra` (persist), `User B`. По порядку:
+Архитектура чата (детально в [Design Chat System](design-chat-system-interview.md)), полный flow ниже:
 
-1. `User A → Connection LB`: WS Upgrade.
-2. `Connection LB → Gateway-1`: route by `hash(userA)`.
-3. `Gateway-1 → Redis`: `SET session:A → GW1`.
-4. `User A → Gateway-1`: `send msg(convId, to=B, body)`.
-5. `Gateway-1 → Kafka`: produce `ChatMessage`.
-6. `Gateway-1 → Cassandra`: `INSERT (convId, msgId, ...)`.
-7. `Gateway-1 → User A`: `ack(msgId)`.
-8. `Kafka → Gateway-2`: consume (gateway-shard получателя B).
-9. `Gateway-2 → Redis`: `LOOKUP session:B → GW2`.
-10. `Gateway-2 → User B`: push via WS.
-11. `User B → Gateway-2`: ack delivered.
-12. `Gateway-2 → Cassandra`: `UPDATE delivered=true`.
+```mermaid
+sequenceDiagram
+    autonumber
+    participant A as User A
+    participant LB as Connection LB
+    participant GW1 as Gateway-1<br/>(WebSocket)
+    participant GW2 as Gateway-2
+    participant REDIS as Redis<br/>(sessions map)
+    participant K as Kafka<br/>messages
+    participant CASS as Cassandra<br/>(persist)
+    participant B as User B
+
+    A->>LB: WS Upgrade
+    LB->>GW1: route by hash(userA)
+    GW1->>REDIS: SET session:A → GW1
+
+    A->>GW1: send msg(convId, to=B, body)
+    GW1->>K: produce ChatMessage
+    GW1->>CASS: INSERT (convId, msgId, ...)
+    GW1-->>A: ack(msgId)
+
+    K->>GW2: consume (B's gateway shard)
+    GW2->>REDIS: LOOKUP session:B → GW2
+    GW2->>B: push via WS
+    B->>GW2: ack delivered
+    GW2->>CASS: UPDATE delivered=true
+```
 
 **Схема Cassandra**:
 
@@ -898,11 +982,31 @@ Latency: ~1 sec eventually consistent
 
 Explore работает в две ступени: **ночной batch** заранее отбирает топ-500 кандидатов на каждого пользователя (collaborative filtering + content-based по эмбеддингам), а **онлайн-ранжирование** на каждый запрос пересортировывает их моделью и отдаёт топ-30. Тяжёлый отбор кандидатов вынесен в офлайн, чтобы на чтении оставалась лишь быстрая дешёвая пересортировка.
 
-Архитектура и алгоритм. Компоненты: `User events` (like, comment, save, dwell time), `Data Lake` (S3 Parquet), `Spark/Flink batch jobs` (nightly), `Embedding model` (collaborative + content), `Vector store` (Faiss/Milvus), `Pre-compute candidates per user`, `Redis` (`explore:user_id`), `Explore API`, `User device`. Потоки (стрелка `→`, пунктир = асинхронно):
+Архитектура и алгоритм ниже:
 
-- **Offline-ветка**: `User events → Data Lake → Spark/Flink batch jobs → Embedding model → Vector store → Pre-compute candidates per user → Redis`.
-- **Online-ветка**: `User device → Explore API`; `Explore API → Redis` (готовые кандидаты) и `Explore API → Embedding model`.
-- `Embedding model ⇢ Explore API`: real-time rerank (асинхронно).
+```mermaid
+flowchart TB
+    EVENTS[User events<br/>like, comment, save, dwell time]
+    LAKE[(Data Lake<br/>S3 Parquet)]
+    SPARK[Spark/Flink batch jobs<br/>nightly]
+    EMB[Embedding model<br/>collaborative + content]
+    VEC[(Vector store<br/>Faiss/Milvus)]
+    PRECOMPUTE[Pre-compute candidates<br/>per user]
+    REDIS[(Redis<br/>explore:user_id)]
+    API[Explore API]
+    USER[User device]
+
+    EVENTS --> LAKE
+    LAKE --> SPARK
+    SPARK --> EMB
+    EMB --> VEC
+    VEC --> PRECOMPUTE
+    PRECOMPUTE --> REDIS
+    USER --> API
+    API --> REDIS
+    API --> EMB
+    EMB -.real-time rerank.-> API
+```
 
 **Двухступенчатая модель**:
 
@@ -1085,16 +1189,34 @@ UPDATE users SET deleted_at = now(), pii_redacted = true WHERE user_id = ?;
 
 Каждый пользователь привязан к home-региону (по IP при регистрации): туда идут все его записи, чтения берутся из локальной реплики. Между регионами — асинхронная репликация с лагом ~100ms–1s, поэтому консистентность eventual. Локальная задержка важнее мгновенной глобальной согласованности.
 
-Архитектура. Три региона, в каждом свой стек:
+Архитектура ниже:
 
-- **us-east**: `App tier`, `Postgres primary`, `Redis cluster`.
-- **eu-west**: `App tier`, `Postgres primary` (для EU users), `Redis cluster`.
-- **apac**: `App tier`, `Postgres primary` (для APAC users), `Redis cluster`.
+```mermaid
+flowchart TB
+    subgraph us-east
+        USAPP[App tier]
+        USPG[(Postgres primary)]
+        USREDIS[(Redis cluster)]
+    end
+    subgraph eu-west
+        EUAPP[App tier]
+        EUPG[(Postgres primary<br/>для EU users)]
+        EUREDIS[(Redis cluster)]
+    end
+    subgraph apac
+        APAPP[App tier]
+        APPG[(Postgres primary<br/>для APAC users)]
+        APREDIS[(Redis cluster)]
+    end
 
-Связи:
-
-- Кольцевая async-репликация Postgres cross-region: `us-east ↔ eu-west`, `eu-west ↔ apac`, `apac ↔ us-east` (двунаправленная, async repl).
-- `S3 with cross-region replication` — общий; `App tier` каждого региона (us-east, eu-west, apac) → этот S3.
+    USPG <-->|async repl<br/>cross-region| EUPG
+    EUPG <-->|async repl| APPG
+    APPG <-->|async repl| USPG
+    S3GLOBAL[(S3 with cross-region replication)]
+    USAPP --> S3GLOBAL
+    EUAPP --> S3GLOBAL
+    APAPP --> S3GLOBAL
+```
 
 **Подход** — geo-partitioning по home-региону пользователя:
 

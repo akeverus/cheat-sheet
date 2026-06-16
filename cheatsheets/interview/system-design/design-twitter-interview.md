@@ -172,23 +172,38 @@ POST   /api/v1/media (multipart) -> returns media_id
 
 Архитектура — набор узких микросервисов за API Gateway, связанных через Kafka. Ключевая идея: **синхронный путь публикации твита максимально короткий** (записал в store, кинул событие в Kafka, ответил клиенту), а вся тяжёлая работа — fan-out, индексация, trends, уведомления — висит асинхронными консьюмерами на одном и том же потоке событий `tweets.created`. Так латентность записи изолирована от downstream-нагрузки.
 
-Поток запросов и связи компонентов:
+```mermaid
+flowchart LR
+    Client[Mobile / Web client] --> CDN[CDN<br/>media + static]
+    Client --> LB[Load balancer]
+    LB --> GW[API Gateway<br/>auth, rate limit, routing]
 
-- `Mobile / Web client` ходит в две точки: в `CDN` (media + static) и в `Load balancer`.
-- `Load balancer` → `API Gateway` (auth, rate limit, routing).
-- `API Gateway` маршрутизирует в шесть сервисов: `user-service`, `tweet-service`, `timeline-service`, `search-service`, `notification-service`, `media-service`.
-- Сервисы → свои хранилища:
-  - `user-service` → `User DB (PostgreSQL)`.
-  - `tweet-service` → `Tweet store (Manhattan / Cassandra)` и параллельно `Kafka (tweet events)`.
-  - `timeline-service` → `Redis (timeline ZSETs)` и `Timeline store (Cassandra)`.
-  - `search-service` → `Elasticsearch`.
-  - `notification-service` → `APNs / FCM / Email`.
-  - `media-service` → `S3 / GCS` и `CDN`.
-- Асинхронные консьюмеры на потоке `Kafka`:
-  - `Kafka` → `fan-out workers` → пишут в `Redis (timeline ZSETs)` и в `Timeline store (Cassandra)`.
-  - `Kafka` → `Indexer` → `Elasticsearch`.
-  - `Kafka` → `Trends pipeline (Flink)` → `Trends store (Redis)`.
-  - `Kafka` → `notification-service`.
+    GW --> US[user-service]
+    GW --> TS[tweet-service]
+    GW --> TLS[timeline-service]
+    GW --> SS[search-service]
+    GW --> NS[notification-service]
+    GW --> MS[media-service]
+
+    US --> UDB[(User DB<br/>PostgreSQL)]
+    TS --> TDB[(Tweet store<br/>Manhattan / Cassandra)]
+    TS --> Kafka[(Kafka<br/>tweet events)]
+    TLS --> Redis[(Redis<br/>timeline ZSETs)]
+    TLS --> TLDB[(Timeline store<br/>Cassandra)]
+    SS --> ES[(Elasticsearch)]
+    NS --> Push[APNs / FCM / Email]
+    MS --> S3[(S3 / GCS)]
+    MS --> CDN
+
+    Kafka --> FO[fan-out workers]
+    FO --> Redis
+    FO --> TLDB
+    Kafka --> Indexer[Indexer]
+    Indexer --> ES
+    Kafka --> Trends[Trends pipeline<br/>Flink]
+    Trends --> TRDB[(Trends store<br/>Redis)]
+    Kafka --> NS
+```
 
 Главные сервисы:
 
@@ -277,15 +292,21 @@ CREATE TABLE home_timeline (
 
 **Суть:** timeline нигде заранее не хранится. Всю работу делаем в момент чтения — при запросе `/timeline/home` на лету собираем последние твиты у всех, на кого подписан пользователь, сливаем и сортируем. Отсюда и название fan-in: лента «втягивается» из многих источников на чтении.
 
-Поток чтения (участники: `User`, `timeline-service`, `follow graph`, `tweet store`):
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant TLS as timeline-service
+    participant FG as follow graph
+    participant TS as tweet store
 
-1. `User` → `timeline-service`: `GET /timeline/home`.
-2. `timeline-service` → `follow graph`: запрос списка following (например, 500 users).
-3. `follow graph` → `timeline-service`: возвращает `[u1, u2, ..., u500]`.
-4. `timeline-service` → `tweet store`: параллельный `SELECT` последних твитов `u1..u500`.
-5. `tweet store` → `timeline-service`: 500 × N твитов.
-6. `timeline-service` (внутри себя): `merge + sort by created_at desc`.
-7. `timeline-service` → `User`: top-50 твитов.
+    U->>TLS: GET /timeline/home
+    TLS->>FG: список following (e.g. 500 users)
+    FG-->>TLS: [u1, u2, ..., u500]
+    TLS->>TS: parallel SELECT последние твиты u1..u500
+    TS-->>TLS: 500 × N твитов
+    TLS->>TLS: merge + sort by created_at desc
+    TLS-->>U: top-50 твитов
+```
 
 **Плюсы:**
 
@@ -306,16 +327,26 @@ CREATE TABLE home_timeline (
 
 **Суть:** работу переносим с чтения на запись. При публикации твита **сразу** размножаем его в предрассчитанный timeline каждого фолловера (precomputed feed). Чтение потом становится тривиальным — лента уже собрана и лежит в Redis.
 
-Поток записи (участники: `Author`, `tweet-service`, `Kafka`, `fan-out worker`, `follow graph`, `Redis timeline`):
+```mermaid
+sequenceDiagram
+    participant U as Author
+    participant TS as tweet-service
+    participant K as Kafka
+    participant FO as fan-out worker
+    participant FG as follow graph
+    participant R as Redis timeline
 
-1. `Author` → `tweet-service`: `POST /tweets`.
-2. `tweet-service` (внутри себя): `persist tweet`.
-3. `tweet-service` → `Kafka`: publish `TweetCreated{tweet_id, author_id}`.
-4. `tweet-service` → `Author`: `200 OK` (синхронный путь на этом заканчивается).
-5. `Kafka` → `fan-out worker`: consume event.
-6. `fan-out worker` → `follow graph`: get followers of author (например, 200).
-7. `follow graph` → `fan-out worker`: `[f1..f200]`.
-8. Параллельно на каждого фолловера (`par on each follower`): `fan-out worker` → `Redis timeline`: `ZADD timeline:{f_i} score=tweet_id`.
+    U->>TS: POST /tweets
+    TS->>TS: persist tweet
+    TS->>K: publish TweetCreated{tweet_id, author_id}
+    TS-->>U: 200 OK
+    K->>FO: consume event
+    FO->>FG: get followers of author (e.g. 200)
+    FG-->>FO: [f1..f200]
+    par on each follower
+        FO->>R: ZADD timeline:{f_i} score=tweet_id
+    end
+```
 
 **Плюсы:**
 
@@ -345,14 +376,27 @@ CREATE TABLE home_timeline (
 2. Параллельно достаём **последние твиты селебрити**, на которых подписан пользователь, из tweet store (это обычно ≤ 50 человек).
 3. **Сливаем по timestamp** → отдаём top-50.
 
-Поток чтения (участники: `User`, `timeline-service`, `Redis ZSET`, `tweet store`, `following list`):
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant TLS as timeline-service
+    participant R as Redis ZSET
+    participant TS as tweet store
+    participant FG as following list
 
-1. `User` → `timeline-service`: `GET /timeline/home`.
-2. Дальше две ветки идут параллельно (`par`):
-   - **push branch:** `timeline-service` → `Redis ZSET`: `ZREVRANGE timeline:{u} 0 99` → `Redis ZSET` возвращает 100 `tweet_ids` from non-celeb.
-   - **pull branch:** `timeline-service` → `following list`: list of followed celebrities → возвращает ~10-50 celeb ids; затем `timeline-service` → `tweet store`: last 20 tweets per celeb → возвращает ~500 tweet objects.
-3. `timeline-service` (внутри себя): `merge by timestamp desc, dedup, top-50`.
-4. `timeline-service` → `User`: 50 tweets.
+    U->>TLS: GET /timeline/home
+    par push branch
+        TLS->>R: ZREVRANGE timeline:{u} 0 99
+        R-->>TLS: 100 tweet_ids from non-celeb
+    and pull branch
+        TLS->>FG: list of followed celebrities
+        FG-->>TLS: ~10-50 celeb ids
+        TLS->>TS: last 20 tweets per celeb
+        TS-->>TLS: ~500 tweet objects
+    end
+    TLS->>TLS: merge by timestamp desc, dedup, top-50
+    TLS-->>U: 50 tweets
+```
 
 **Как выбрать порог** (компромисс):
 

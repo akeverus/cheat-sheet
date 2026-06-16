@@ -138,11 +138,14 @@ updated: "2026-05-08"
 git init --bare project.git
 ```
 
-Обычный (не bare) репозиторий состоит из трёх зон, и понимание границ между ними — ключ ко всему остальному в `Git`: **рабочая директория** (working directory), **индекс** (staging area) и сам **репозиторий** (`.git`). Изменения проходят их по очереди:
+Обычный (не bare) репозиторий состоит из трёх зон, и понимание границ между ними — ключ ко всему остальному в `Git`: **рабочая директория** (working directory), **индекс** (staging area) и сам **репозиторий** (`.git`). Изменения проходят их по очереди: правка файла → `git add` в индекс → `git commit` в репозиторий.
 
-- `Working Directory` → (`git add`) → `Staging Area / Index`
-- `Index` → (`git commit`) → `Repository .git`
-- `Repository .git` → (`git checkout`) → `Working Directory` (обратный путь: коммит разворачивается в рабочие файлы)
+```mermaid
+graph LR
+    WD[Working Directory] -->|git add| IDX[Staging Area / Index]
+    IDX -->|git commit| REPO[Repository .git]
+    REPO -->|git checkout| WD
+```
 
 ## Q3. Как создать Git `Repository`?
 
@@ -191,16 +194,15 @@ git clone --depth 1 https://github.com/user/repo.git
 
 Связаны они иерархично: `commit` ссылается на корневой `tree`, `tree` — на `blob`-ы (файлы) и вложенные `tree` (поддиректории). Имя файла хранится не в `blob`, а в ссылающемся на него `tree` — поэтому переименование файла без правки содержимого не создаёт новый `blob`.
 
-Граф ссылок на примере (хеши условны):
-
-- `Commit` (`sha: a1b2c3`) ссылается на:
-  - корневой `Tree` (`sha: d4e5f6`)
-  - `Parent Commit` (`sha: 789abc`) — родительский коммит
-- корневой `Tree` (`sha: d4e5f6`) ссылается на:
-  - `Blob: README.md` (`sha: 111222`)
-  - `Blob: App.java` (`sha: 333444`)
-  - вложенный `Tree: src/` (`sha: 555666`)
-    - `Blob: Main.java` (`sha: 777888`)
+```mermaid
+graph TD
+    C[Commit<br/>sha: a1b2c3] --> T[Tree<br/>sha: d4e5f6]
+    C --> PC[Parent Commit<br/>sha: 789abc]
+    T --> B1[Blob: README.md<br/>sha: 111222]
+    T --> B2[Blob: App.java<br/>sha: 333444]
+    T --> ST[Tree: src/<br/>sha: 555666]
+    ST --> B3[Blob: Main.java<br/>sha: 777888]
+```
 
 Посмотреть на любой объект изнутри можно через `git cat-file`:
 
@@ -297,10 +299,13 @@ git log --oneline --graph --all
 
 `Index` (стейджинг-область) — промежуточная зона между рабочей директорией и репозиторием, куда вы заранее собираете будущий коммит. `git commit` фиксирует не то, что лежит в рабочей директории, а именно содержимое индекса — это и есть смысл «стейджинга».
 
-- `Working Directory` (изменённые файлы) → (`git add`) → `Index / Staging Area` (подготовленные изменения)
-- `Index / Staging Area` → (`git commit`) → `Repository` (зафиксированные коммиты)
-- `git diff` показывает разницу между `Working Directory` и `Index`
-- `git diff --cached` показывает разницу между `Index` и последним коммитом
+```mermaid
+graph LR
+    A[Working Directory<br/>Измененные файлы] -->|git add| B[Index / Staging Area<br/>Подготовленные изменения]
+    B -->|git commit| C[Repository<br/>Зафиксированные коммиты]
+    A -->|git diff| D[Разница с index]
+    B -->|git diff --cached| E[Разница с последним коммитом]
+```
 
 **Зачем нужен отдельный индекс:** он даёт контроль над тем, что попадёт в коммит. Можно изменить десяток файлов, но застейджить и закоммитить только связанную часть — вплоть до отдельных кусков (`hunks`) внутри одного файла. Так получаются атомарные, осмысленные коммиты вместо «свалки всего сразу»:
 
@@ -492,12 +497,17 @@ git branch --merged main   # ветки, слитые в main
 git branch --no-merged     # ветки, не слитые
 ```
 
-Пример жизненного цикла ветки `feature/login`, ответвлённой от `main`:
-
-1. В `main` делаются коммиты `C1`, `C2`.
-2. От `C2` ответвляется `feature/login`, в ней появляются коммиты `C3`, `C4`.
-3. Параллельно в `main` добавляется коммит `C5` (истории разошлись).
-4. `feature/login` сливается обратно в `main` merge-коммитом `M1` (у него два родителя: `C5` из `main` и `C4` из ветки).
+```mermaid
+gitGraph
+    commit id: "C1"
+    commit id: "C2"
+    branch feature/login
+    commit id: "C3"
+    commit id: "C4"
+    checkout main
+    commit id: "C5"
+    merge feature/login id: "M1"
+```
 
 **Соглашения по именованию.** Префикс по типу работы и номер задачи делают историю и список веток читаемыми, а часто ещё и автоматизируют связку с трекером:
 
@@ -583,15 +593,17 @@ git checkout -b feature/old origin/feature/old
 
 Обе команды интегрируют изменения из одной ветки в другую, но принципиально по-разному. `merge` сводит две ветки в новый **merge-коммит** с двумя родителями — история ветвится и сохраняет факт слияния. `rebase` же **переписывает** коммиты ветки так, будто их сделали поверх свежей вершины целевой ветки — история остаётся линейной, но коммиты получают новые хеши.
 
-Наглядно на истории с общим началом `A → B`, где затем одна ветка ушла в `C`, а другая — в `D → E`:
-
-- **`git merge`** — обе линии сохраняются и сходятся в merge-коммите:
-  - основная ветка: `A → B → C → Merge Commit`
-  - вливаемая ветка: `B → D → E → Merge Commit`
-  - то есть `Merge Commit` имеет двух родителей (`C` и `E`), история ветвится.
-- **`git rebase`** — коммиты `D`, `E` переписываются поверх `C` как новые `D'`, `E'`, история выпрямляется в одну линию:
-  - `A → B → C → D' → E'`
-  - исходные коммиты `A → B → C` остаются как есть, а `D`, `E` заменены на `D'`, `E'` с новыми хешами.
+```mermaid
+graph TD
+    subgraph "git merge"
+        M_A[A] --> M_B[B] --> M_C[C] --> M_M[Merge Commit]
+        M_B --> M_D[D] --> M_E[E] --> M_M
+    end
+    subgraph "git rebase"
+        R_A[A] --> R_B[B] --> R_D["D'"] --> R_E["E'"]
+        R_B --> R_C[C]
+    end
+```
 
 | Аспект | `git merge` | `git rebase` |
 |--------|-------------|--------------|
@@ -715,7 +727,16 @@ git cherry-pick A..B
 git cherry-pick --no-commit <hash>
 ```
 
-Например, в `feature branch` лежит цепочка `C1 → C2 → C3 (bugfix) → C4`, а в `main branch` — `M1 → M2`. Командой `cherry-pick` берётся только коммит `C3 (bugfix)` и применяется поверх `main`, превращаясь в новый коммит `C3' (cherry-picked)`: `M1 → M2 → C3'`. Остальные коммиты ветки (`C1`, `C2`, `C4`) не переносятся, а `C3'` имеет другой хеш, чем исходный `C3`.
+```mermaid
+graph LR
+    subgraph "feature branch"
+        F1[C1] --> F2[C2] --> F3["C3 (bugfix)"] --> F4[C4]
+    end
+    subgraph "main branch"
+        M1[M1] --> M2[M2] --> M3["C3' (cherry-picked)"]
+    end
+    F3 -.->|cherry-pick| M3
+```
 
 **Сценарии применения:**
 - Перенос hotfix из `release` в `main` (когда мержить всю release-ветку рано)
@@ -764,10 +785,18 @@ git commit -m "feat: add complete login feature"
 
 `Fast-forward merge` случается, когда целевая ветка не получила ни одного нового коммита с момента ответвления — то есть история вливаемой ветки целиком «вырастает» из текущей вершины. Сливать нечего: `Git` просто двигает указатель ветки вперёд на последний коммит, без создания merge-коммита. Если же в целевой ветке появились свои коммиты, истории разошлись и fast-forward невозможен — нужен полноценный merge.
 
-Например, история линейна `C1 → C2 → C3`:
-
-- **До merge:** `main` указывает на `C2`, а `feature` ушла вперёд на `C3` (новых коммитов в `main` после ответвления нет).
-- **После fast-forward:** `Git` просто двигает указатель `main` вперёд на `C3`, и теперь обе ветки `main` и `feature` указывают на один и тот же коммит `C3`. Новый merge-коммит не создаётся.
+```mermaid
+graph LR
+    subgraph "До merge"
+        A1[C1] --> A2[C2] --> A3[C3]
+        A2 -.->|main| A2
+        A3 -.->|feature| A3
+    end
+    subgraph "Fast-forward"
+        B1[C1] --> B2[C2] --> B3[C3]
+        B3 -.->|main, feature| B3
+    end
+```
 
 ```bash
 # Обычный merge (fast-forward если возможно)
@@ -803,11 +832,14 @@ git merge --ff-only feature
 
 ## Q26. В чём разница между `git reset --soft`, `--mixed` и `--hard`?
 
-Что затрагивает каждый режим `git reset`:
-
-- **`--soft`** — `HEAD` перемещён; `Index` не тронут; `Working dir` не тронут.
-- **`--mixed`** (по умолчанию) — `HEAD` перемещён; `Index` сброшен; `Working dir` не тронут.
-- **`--hard`** — `HEAD` перемещён; `Index` сброшен; `Working dir` сброшен.
+```mermaid
+graph TD
+    subgraph "git reset"
+        SOFT["--soft<br/>HEAD перемещён<br/>Index: не тронут<br/>Working dir: не тронут"]
+        MIXED["--mixed (default)<br/>HEAD перемещён<br/>Index: сброшен<br/>Working dir: не тронут"]
+        HARD["--hard<br/>HEAD перемещён<br/>Index: сброшен<br/>Working dir: сброшен"]
+    end
+```
 
 Все три режима одинаково двигают `HEAD` назад; различаются они тем, насколько далеко «откатывают» изменения — до индекса, до рабочей директории или нигде. Удобно держать в голове так: `--soft` трогает только историю, `--mixed` ещё и индекс, `--hard` — вдобавок рабочие файлы.
 
@@ -874,16 +906,18 @@ git remote remove upstream                       # удалить
 
 `Pull Request` (`GitHub`) / `Merge Request` (`GitLab`) — это запрос «влейте мою ветку в целевую», вокруг которого выстроен процесс code review. Сам по себе PR/MR — функция хостинга, а не `Git`: он связывает изменения с обсуждением, проверками CI и правом на merge, превращая слияние веток в контролируемый, ревьюируемый шаг.
 
-**Типичный процесс** (по шагам):
+**Типичный процесс:**
 
-1. Создать ветку.
-2. Написать код.
-3. Запушить ветку.
-4. Открыть PR/MR.
-5. Code Review.
-6. Решение `Approved?`:
-   - **Нет** → вернуться к шагу «Написать код» (доработать по замечаниям) и пройти цикл заново.
-   - **Да** → Merge в `main`.
+```mermaid
+graph LR
+    A[Создать ветку] --> B[Написать код]
+    B --> C[Запушить ветку]
+    C --> D[Открыть PR/MR]
+    D --> E[Code Review]
+    E --> F{Approved?}
+    F -->|Нет| B
+    F -->|Да| G[Merge в main]
+```
 
 **Типы merge в PR/MR:**
 
@@ -922,18 +956,30 @@ git push --force-with-lease --force-if-includes
 
 `Git Flow` — стратегия ветвления, предложенная Винсентом Дриссеном в 2010 году. Её идея — строго разделить роли веток: разработка, подготовка релиза и production живут отдельно. За это платят сложностью: веток много, и каждое изменение проходит через несколько слияний.
 
-Полный цикл по веткам `Git Flow`:
-
-1. В `main` — начальный коммит `init`.
-2. От `main` ответвляется `develop`, в ней коммит `dev-1`.
-3. От `develop` ответвляется `feature/login`, в ней коммиты `feat-1`, `feat-2`.
-4. `feature/login` сливается обратно в `develop` (`merge-feat`).
-5. От `develop` ответвляется `release/1.0`, в ней коммит `bump version`.
-6. `release/1.0` сливается в `main` — это релиз `v1.0` (ставится тег `v1.0`).
-7. `release/1.0` сливается обратно в `develop` (`back-merge`), чтобы исправления релиза вернулись в разработку.
-8. От `main` ответвляется `hotfix/critical`, в ней коммит `fix`.
-9. `hotfix/critical` сливается в `main` — это релиз `v1.0.1` (тег `v1.0.1`).
-10. `hotfix/critical` сливается и в `develop` (`hotfix-to-dev`), чтобы фикс не потерялся в следующем релизе.
+```mermaid
+gitGraph
+    commit id: "init"
+    branch develop
+    commit id: "dev-1"
+    branch feature/login
+    commit id: "feat-1"
+    commit id: "feat-2"
+    checkout develop
+    merge feature/login id: "merge-feat"
+    branch release/1.0
+    commit id: "bump version"
+    checkout main
+    merge release/1.0 id: "v1.0" tag: "v1.0"
+    checkout develop
+    merge release/1.0 id: "back-merge"
+    checkout main
+    branch hotfix/critical
+    commit id: "fix"
+    checkout main
+    merge hotfix/critical id: "v1.0.1" tag: "v1.0.1"
+    checkout develop
+    merge hotfix/critical id: "hotfix-to-dev"
+```
 
 **Ветки `Git Flow`:**
 
@@ -952,12 +998,18 @@ git push --force-with-lease --force-if-includes
 
 `Trunk-Based Development` (`TBD`) — стратегия, противоположная `Git Flow`: все коммитят в одну ветку (`main`/`trunk`), а feature-ветки если и заводятся, то живут **меньше 1-2 дней** и сразу вливаются. Цель — чтобы код разработчиков не успевал сильно разойтись, а значит не накапливались тяжёлые конфликты и не задерживалась интеграция.
 
-Пример потока в `TBD`:
-
-1. В `main` идут частые коммиты `C1`, `C2`.
-2. От `main` ненадолго ответвляется `short-lived-feature` с единственным коммитом `F1`.
-3. Эта короткоживущая ветка почти сразу сливается обратно в `main` (`merge`).
-4. Работа продолжается прямыми коммитами в `main`: `C3`, `C4`, `C5`.
+```mermaid
+gitGraph
+    commit id: "C1"
+    commit id: "C2"
+    branch short-lived-feature
+    commit id: "F1"
+    checkout main
+    merge short-lived-feature id: "merge"
+    commit id: "C3"
+    commit id: "C4"
+    commit id: "C5"
+```
 
 **Ключевые принципы** (каждый держит `main` стабильным при частых вливаниях):
 - Частые коммиты в `trunk` (несколько раз в день)
@@ -1198,12 +1250,13 @@ git subtree pull --prefix=libs/utils https://github.com/lib/utils.git main --squ
 3. **Автоматическая синхронизация** — оператор (`ArgoCD`, `Flux`) следит за Git и применяет изменения
 4. **Самовосстановление** — drift detection и автоматический откат
 
-Поток `GitOps` по шагам:
-
-- `Developer` → (`git push`) → `Git Repository`
-- `Git Repository` → (webhook) → `ArgoCD / Flux`
-- `ArgoCD / Flux` → (apply) → `Kubernetes Cluster`
-- `Kubernetes Cluster` → (drift detection) → `ArgoCD / Flux` (оператор постоянно сверяет реальное состояние кластера с описанным в `Git` и устраняет расхождения)
+```mermaid
+graph LR
+    DEV[Developer] -->|git push| GIT[Git Repository]
+    GIT -->|webhook| ARGO[ArgoCD / Flux]
+    ARGO -->|apply| K8S[Kubernetes Cluster]
+    K8S -->|drift detection| ARGO
+```
 
 `GitOps` тесно связан с [Kubernetes](kubernetes-interview.md) и [стратегиями деплоя](../cicd/deployment-strategies-interview.md).
 
@@ -1232,11 +1285,12 @@ git worktree prune   # очистить устаревшие записи
 | Параллельный запуск разных версий | Один процесс на ветку `v1`, другой на `v2` |
 | CI/CD на одном хосте | Несколько checkouts без нескольких клонов |
 
-Структура: единый `.git/` обслуживает несколько рабочих директорий, по одной ветке в каждой:
-
-- `.git/` → `main branch` в `~/project/`
-- `.git/` → `hotfix branch` в `~/hotfix-branch/`
-- `.git/` → `feature branch` в `~/feature-branch/`
+```mermaid
+graph LR
+    GIT[.git/] --> W1[main branch<br/>~/project/]
+    GIT --> W2[hotfix branch<br/>~/hotfix-branch/]
+    GIT --> W3[feature branch<br/>~/feature-branch/]
+```
 
 **Ограничения:**
 - Одна ветка не может быть checked out в двух worktree одновременно

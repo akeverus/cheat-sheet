@@ -367,7 +367,12 @@ Architectures:
 
 Это **самая частая** интеграция: API Gateway принимает HTTP-запрос, вызывает Lambda, та возвращает ответ. Gateway берёт на себя сетевую обвязку (TLS, маршрутизация, авторизация, throttling), а Lambda — только бизнес-логику.
 
-Поток запроса по шагам: `Client` → `API Gateway` → `Lambda` → ответ возвращается обратно `Client`.
+```mermaid
+graph LR
+    Client --> APIGW[API Gateway]
+    APIGW --> Lambda
+    Lambda --> Client
+```
 
 Есть два типа API Gateway, и выбор между ними — это компромисс «возможности против цены»:
 

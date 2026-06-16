@@ -123,12 +123,25 @@ updated: "2026-05-14"
 | **Неявные зависимости** — класс может случайно использовать чужой JAR | `requires` делает зависимости явными и проверяемыми |
 | **Монолитный JDK** — полный runtime даже для микросервиса | `jlink` создаёт компактный runtime только с нужными модулями |
 
-**До `JPMS` (classpath):** `JAR A`, `JAR B`, `JAR C` связаны без направления и контракта — каждый ненаправленно соединён с каждым (`A` — `B`, `B` — `C`, `A` — `C`), границ и явных зависимостей нет.
+```mermaid
+graph TB
+    subgraph "До JPMS (classpath)"
+        J1[JAR A] --- J2[JAR B]
+        J2 --- J3[JAR C]
+        J1 --- J3
+        style J1 fill:#ffcccc
+        style J2 fill:#ffcccc
+        style J3 fill:#ffcccc
+    end
 
-**После `JPMS` (module path):** связи становятся направленными и явными:
-
-- `Module A` (`exports api`) — `requires` → `Module B` (`exports spi`);
-- `Module A` (`exports api`) — `requires` → `Module C` (`exports util`).
+    subgraph "После JPMS (module path)"
+        M1[Module A<br/>exports api] -->|requires| M2[Module B<br/>exports spi]
+        M1 -->|requires| M3[Module C<br/>exports util]
+        style M1 fill:#ccffcc
+        style M2 fill:#ccffcc
+        style M3 fill:#ccffcc
+    end
+```
 
 Сама платформа `JDK` тоже разбита на модули: `java.base` (неявно подключается всегда), `java.sql`, `java.xml`, `java.logging` и др. Благодаря этому приложение может зависеть только от того, что реально использует, а не тянуть весь runtime целиком — именно это и делает возможным `jlink`.
 
@@ -192,16 +205,15 @@ module com.example.app {
 | `jdk.httpserver` | Встроенный HTTP-сервер |
 | `jdk.jlink` | Утилита `jlink` |
 
-Граф зависимостей между ключевыми модулями `JDK` (стрелка — «зависит от»):
-
-- `java.sql` → `java.base`
-- `java.xml` → `java.base`
-- `java.logging` → `java.base`
-- `java.net.http` → `java.base`
-- `java.desktop` → `java.base`
-- `java.naming` → `java.sql`
-
-`java.base` — корень: от него прямо или транзитивно зависят все остальные модули.
+```mermaid
+graph BT
+    A[java.base] --> B[java.sql]
+    A --> C[java.xml]
+    A --> D[java.logging]
+    A --> E[java.net.http]
+    B --> F[java.naming]
+    A --> G[java.desktop]
+```
 
 Различать префиксы важно на практике: `java.*` — это стандарт Java SE, гарантированный любым совместимым JDK; `jdk.*` — модули конкретной реализации, которых в другом дистрибутиве может не быть. Поэтому зависеть от `jdk.*` в портируемом коде рискованно — при смене дистрибутива модуль может пропасть.
 
@@ -281,17 +293,16 @@ module com.example.core {
 
 **`requires transitive`** как раз пробрасывает зависимость дальше: всякий, кто требует ваш модуль, автоматически получает доступ и к транзитивному модулю. Это способ сказать «мой API нельзя использовать без вот этого модуля».
 
-Транзитивный случай (`requires transitive` пробрасывает зависимость):
-
-- `Module App` — `requires` → `Module API`;
-- `Module API` — `requires transitive` → `Module Model`;
-- в итоге `Module App` **автоматически читает** `Module Model`, хотя напрямую его не объявлял.
-
-Обычный случай (`requires` не пробрасывается):
-
-- `Module App` — `requires` → `Module Impl`;
-- `Module Impl` — `requires` → `Module Utils`;
-- `Module App` при этом **НЕ видит** `Module Utils`, потому что `Impl` объявил его обычным `requires`, а не транзитивным.
+```mermaid
+graph LR
+    A[Module App] -->|requires| B[Module API]
+    B -->|requires transitive| C[Module Model]
+    A -.->|автоматически читает| C
+    
+    A -->|requires| D[Module Impl]
+    D -->|requires| E[Module Utils]
+    A -.-x|НЕ видит| E
+```
 
 ```java
 // module-info.java модуля API
@@ -400,14 +411,17 @@ PaymentProvider provider = ServiceLoader
     .orElseThrow(() -> new RuntimeException("No payment provider found"));
 ```
 
-Связи между участниками механизма сервисов:
-
-- `com.example.spi` — содержит интерфейс `PaymentProvider`.
-- `com.example.app` (`uses PaymentProvider`) — через `ServiceLoader.load` обращается к контракту из `com.example.spi`.
-- `com.example.stripe` (`provides PaymentProvider with StripeProvider`) — через `provides...with` поставляет реализацию для интерфейса из `com.example.spi`.
-- `com.example.paypal` (`provides PaymentProvider with PayPalProvider`) — аналогично поставляет вторую реализацию того же интерфейса.
-
-Потребитель `app` напрямую с `stripe`/`paypal` не связан — их соединяет только общий контракт из `spi`.
+```mermaid
+graph LR
+    SPI[com.example.spi<br/>PaymentProvider interface] 
+    STRIPE[com.example.stripe<br/>provides PaymentProvider<br/>with StripeProvider]
+    PAYPAL[com.example.paypal<br/>provides PaymentProvider<br/>with PayPalProvider]
+    APP[com.example.app<br/>uses PaymentProvider]
+    
+    APP -->|ServiceLoader.load| SPI
+    STRIPE -->|provides...with| SPI
+    PAYPAL -->|provides...with| SPI
+```
 
 Классический пример из самого `JDK`: `JDBC`-драйверы публикуют себя через `provides java.sql.Driver with ...`, а `DriverManager` находит их через `ServiceLoader` — поэтому драйвер достаточно положить на путь, без явной регистрации.
 
@@ -428,9 +442,13 @@ PaymentProvider provider = ServiceLoader
 
 **Уровни доступа:**
 
-- **Пакет не экспортирован** → доступ запрещён → `InaccessibleObjectException`.
-- **`exports pkg`** → для `public` типов/членов → компиляция + runtime ОК; но `setAccessible` на `private` → всё равно `InaccessibleObjectException`.
-- **`opens pkg`** → любой доступ через рефлексию → полный рефлексивный доступ.
+```mermaid
+graph TD
+    A[Пакет не экспортирован] -->|"Доступ запрещён"| X[InaccessibleObjectException]
+    B[exports pkg] -->|"public типы/члены"| Y[Компиляция + Runtime ОК]
+    B -->|"setAccessible на private"| X
+    C[opens pkg] -->|"Любой доступ через рефлексию"| Z[Полный рефлексивный доступ]
+```
 
 Обращение к внутренним пакетам `JDK` (`sun.*`, `jdk.internal.*`) без специальных флагов приводит к ошибке:
 
@@ -483,16 +501,22 @@ java --add-opens java.base/java.lang=ALL-UNNAMED \
 - Разные JAR на `classpath` объединяются в один `unnamed module`
 - Именованные модули **не могут** объявить `requires` на `unnamed module`
 
-Расстановка модулей и связи между ними:
-
-- **Module Path** — именованные модули `com.example.api` и `com.example.service`.
-- **Classpath** — единый `Unnamed Module` из `legacy-lib.jar` + `old-util.jar`, где всё видно и всё открыто.
-
-Связи:
-
-- `Unnamed Module` **читает** `com.example.api` и `com.example.service` (неявно видит все именованные модули).
-- `com.example.api` **НЕ может** объявить `requires` на `Unnamed Module`.
-- `com.example.service` дотягивается до `Unnamed Module` только опосредованно — **через automatic module**.
+```mermaid
+graph TB
+    subgraph "Module Path"
+        M1[com.example.api<br/>именованный модуль]
+        M2[com.example.service<br/>именованный модуль]
+    end
+    
+    subgraph "Classpath"
+        U[Unnamed Module<br/>legacy-lib.jar + old-util.jar<br/>всё видно, всё открыто]
+    end
+    
+    U -->|"читает"| M1
+    U -->|"читает"| M2
+    M1 -.-x|"НЕ может requires"| U
+    M2 -->|"через automatic module"| U
+```
 
 Последнее свойство — ключевое ограничение: раз именованный модуль не может объявить `requires` на безымянный, чисто модульный код не может зависеть от того, что лежит на classpath. Именно эту стену обходят через `automatic module` (см. Q15). А благодаря «всё видно, всё открыто» старые приложения без `module-info.java` запускаются на новом JDK без единой правки.
 
@@ -666,12 +690,12 @@ jdeps --generate-module-info out my-lib.jar
 
 Идём от листьев графа — библиотек без собственных зависимостей — вверх, к приложению. К моменту, когда вы модуляризуете очередной модуль, всё, от чего он зависит, уже стало именованными модулями:
 
-Порядок модуляризации снизу вверх (стрелка — «от чего зависит вышестоящий»):
-
-- `utils.jar` — шаг 1: добавить `module-info`.
-- `service.jar` — шаг 2: добавить `module-info`; зависит от `utils.jar`.
-- `app.jar` — шаг 3: добавить `module-info`; зависит от `service.jar`.
-- `external-lib.jar` остаётся `automatic module`, и от него зависит `service.jar`.
+```mermaid
+graph BT
+    A[utils.jar<br/>1. Добавить module-info] --> B[service.jar<br/>2. Добавить module-info]
+    B --> C[app.jar<br/>3. Добавить module-info]
+    D[external-lib.jar<br/>automatic module] --> B
+```
 
 **Плюсы**: каждый шаг компилируется и тестируется в полностью модульном окружении — никаких костылей.
 **Минусы**: если корневая сторонняя библиотека ещё не модуляризована, она может застопорить весь процесс снизу.
@@ -680,11 +704,12 @@ jdeps --generate-module-info out my-lib.jar
 
 Идём от приложения верхнего уровня вниз. Его зависимости временно оставляем `automatic modules` и модуляризуем потом:
 
-Порядок модуляризации сверху вниз (стрелка — «зависит от»):
-
-- `app.jar` — шаг 1: добавить `module-info`, объявить `requires` на automatic-модули.
-- `app.jar` зависит от `service.jar` (`automatic module`) и от `utils.jar` (`automatic module`).
-- `service.jar` зависит от `external-lib.jar` (`automatic module`).
+```mermaid
+graph TB
+    A[app.jar<br/>1. Добавить module-info<br/>requires automatic modules] --> B[service.jar<br/>automatic module]
+    A --> C[utils.jar<br/>automatic module]
+    B --> D[external-lib.jar<br/>automatic module]
+```
 
 **Плюсы**: сразу проявляются модульные границы самого приложения, можно стартовать, не дожидаясь модуляризации всех зависимостей.
 **Минусы**: вы временно опираетесь на `automatic modules`, а их имена (если выведены из имени файла) нестабильны — обновление зависимости может сломать `requires`.
@@ -776,13 +801,15 @@ Class<?> pluginClass = layer.findLoader("com.example.plugin")
     .loadClass("com.example.plugin.MyPlugin");
 ```
 
-Иерархия слоёв (стрелка — «родитель → дочерний слой»):
-
-- **Boot Layer** — `java.base`, `java.sql`, … и `com.example.app`; создаётся JVM при старте.
-- **Plugin Layer 1** (`com.example.plugin.a`) — дочерний слой поверх boot layer.
-- **Plugin Layer 2** (`com.example.plugin.b`) — ещё один дочерний слой поверх того же boot layer.
-
-Оба плагинных слоя имеют boot layer родителем, но друг от друга изолированы.
+```mermaid
+graph TB
+    BL[Boot Layer<br/>java.base, java.sql, ...<br/>com.example.app]
+    PL1[Plugin Layer 1<br/>com.example.plugin.a]
+    PL2[Plugin Layer 2<br/>com.example.plugin.b]
+    
+    BL --> PL1
+    BL --> PL2
+```
 
 **Сценарии применения:**
 
@@ -804,12 +831,19 @@ java.lang.module.ResolutionException:
 
 **Решения:**
 
-**Проблема (цикл):** `Module A` — `requires` → `Module B`, и одновременно `Module B` — `requires` → `Module A`.
+```mermaid
+graph LR
+    subgraph "Проблема: цикл"
+        A1[Module A] -->|requires| B1[Module B]
+        B1 -->|requires| A1
+    end
 
-**Решение (общий API):** выделяем `Module API` с общими интерфейсами, и тогда обе стрелки идут в одну сторону:
-
-- `Module A` — `requires` → `Module API`;
-- `Module B` — `requires` → `Module API`.
+    subgraph "Решение: общий API"
+        API[Module API<br/>общие интерфейсы]
+        A2[Module A] -->|requires| API
+        B2[Module B] -->|requires| API
+    end
+```
 
 1. **Выделить общий контракт** в третий модуль `api`, от которого зависят оба — цикл превращается в две стрелки в одну сторону.
 2. **Инвертировать зависимость** через интерфейсы (принцип DIP): один модуль зависит от абстракции, а не от конкретного соседа.
@@ -1350,12 +1384,12 @@ module com.example.app {
 
 Идём от листьев графа — модулей, которые не зависят от другого вашего кода. К моменту модуляризации очередного модуля все его собственные зависимости уже именованные, поэтому шаг проходит в «чистом» модульном окружении.
 
-Порядок превращения в `Named module` снизу вверх (стрелка — «от чего зависит вышестоящий»):
-
-- `utils.jar` → `Named module` (шаг 1).
-- `service.jar` → `Named module` (шаг 2); зависит от `utils.jar`.
-- `app.jar` → `Named module` (шаг 3); зависит от `service.jar`.
-- `external-lib.jar` остаётся `Automatic module`, и от него зависит `service.jar`.
+```mermaid
+graph BT
+    A["utils.jar → Named module<br/>(шаг 1)"] --> B["service.jar → Named module<br/>(шаг 2)"]
+    B --> C["app.jar → Named module<br/>(шаг 3)"]
+    D["external-lib.jar<br/>Automatic module"] --> B
+```
 
 ```java
 // Шаг 1: utils — нет зависимостей на свой код

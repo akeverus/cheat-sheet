@@ -541,16 +541,17 @@ models:
 
 ## Q19. (!) Что такое data lineage в dbt?
 
-**Lineage — это граф происхождения данных: какая модель из чего собрана и на что влияет.** dbt строит его автоматически, разбирая ссылки `ref()` и `source()` в коде, — отдельно вести схему зависимостей не нужно. Например, цепочка зависимостей может выглядеть так (связь `source` показана пунктиром, `ref` — стрелкой):
+**Lineage — это граф происхождения данных: какая модель из чего собрана и на что влияет.** dbt строит его автоматически, разбирая ссылки `ref()` и `source()` в коде, — отдельно вести схему зависимостей не нужно:
 
-- `raw_users` (source) ⋯ `stg_users`
-- `raw_orders` (source) ⋯ `stg_orders`
-- `stg_users` → `dim_customers`
-- `stg_orders` → `fact_orders`
-- `dim_customers` → `customer_orders_summary`
-- `fact_orders` → `customer_orders_summary`
-
-То есть `customer_orders_summary` собирается из `dim_customers` и `fact_orders`, которые, в свою очередь, строятся из staging-моделей `stg_users` и `stg_orders`, а те — из сырых источников `raw_users` и `raw_orders`.
+```mermaid
+graph LR
+    raw_users -.source.- stg_users
+    raw_orders -.source.- stg_orders
+    stg_users --> dim_customers
+    stg_orders --> fact_orders
+    dim_customers --> customer_orders_summary
+    fact_orders --> customer_orders_summary
+```
 
 **Зачем это нужно:**
 - видно, **на какие данные опирается** каждая модель (зависимости вверх по графу);

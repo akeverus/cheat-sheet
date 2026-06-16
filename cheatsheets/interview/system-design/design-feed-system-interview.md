@@ -491,35 +491,42 @@ score = Σ_e (affinity_e × weight_e × time_decay_e)
 
 Систему удобно представить как два пути, разделённых через Kafka. Путь записи: клиент → API Gateway → Post Service → Posts DB + эмит события в Kafka → fanout-воркеры раскладывают timeline. Путь чтения: клиент → Feed Service, который собирает push-timeline из Redis, подтягивает celebrity-посты, ранжирует и обогащает. Kafka между ними развязывает запись от чтения и даёт async-fanout.
 
-**Узлы (компоненты):**
-- `Mobile / Web Clients` — клиенты.
-- `Load Balancer / CDN` — балансировщик/CDN.
-- `API Gateway`.
-- `Feed Service`, `Post Service`, `User Service`, `Ranking Service`.
-- `Fanout Workers`.
-- `Kafka` (шина событий).
-- `Posts DB (Cassandra)`, `User DB (Postgres)`, `Graph DB`.
-- `Redis Cluster (Timelines)`.
-- `S3 Media`, `Elasticsearch (Search)`.
-- `Flink Stream Aggregator`.
+```mermaid
+graph LR
+  C[Mobile / Web Clients]
+  LB[Load Balancer / CDN]
+  API[API Gateway]
+  Feed[Feed Service]
+  Post[Post Service]
+  User[User Service]
+  Rank[Ranking Service]
+  FO[Fanout Workers]
+  K[(Kafka)]
+  Posts[(Posts DB Cassandra)]
+  UserDB[(User DB Postgres)]
+  Graph[(Graph DB)]
+  Redis[(Redis Cluster Timelines)]
+  Media[(S3 Media)]
+  ES[(Elasticsearch Search)]
+  Flink[Flink Stream Aggregator]
 
-**Связи (поток данных):**
-- `Mobile / Web Clients` → `Load Balancer / CDN` → `API Gateway`.
-- `API Gateway` → `Feed Service`.
-- `API Gateway` → `Post Service`.
-- `Post Service` → `Posts DB (Cassandra)`.
-- `Post Service` → `Kafka`.
-- `Kafka` → `Fanout Workers`.
-- `Fanout Workers` → `Redis Cluster (Timelines)`.
-- `Fanout Workers` → `Elasticsearch (Search)`.
-- `Feed Service` → `Redis Cluster (Timelines)`.
-- `Feed Service` → `Ranking Service`.
-- `Feed Service` → `Posts DB (Cassandra)`.
-- `Feed Service` → `User Service`.
-- `User Service` → `User DB (Postgres)`.
-- `User Service` → `Graph DB`.
-- `Kafka` → `Flink Stream Aggregator`.
-- `Flink Stream Aggregator` → `Posts DB (Cassandra)`.
+  C --> LB --> API
+  API --> Feed
+  API --> Post
+  Post --> Posts
+  Post --> K
+  K --> FO
+  FO --> Redis
+  FO --> ES
+  Feed --> Redis
+  Feed --> Rank
+  Feed --> Posts
+  Feed --> User
+  User --> UserDB
+  User --> Graph
+  K --> Flink
+  Flink --> Posts
+```
 
 **Ключевые сервисы:**
 - `Feed Service` — путь чтения, объединяет push-timeline + celebrity-pull + ранжирование.

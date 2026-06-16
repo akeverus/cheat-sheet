@@ -20,7 +20,7 @@ updated: "2026-05-05"
 
 Полный гайд по `Spring Framework`: `IoC`-контейнер, `DI`, жизненный цикл бинов, `AOP`, прокси, профили, события, `@Conditional`, конфигурация.
 
-**`Spring Framework`** — базовый фреймворк для enterprise-разработки на `Java`. Вопросы по `IoC`, `DI`, бинам, жизненному циклу, `AOP` и модулям `Spring` регулярно встречаются на собеседованиях всех уровней — от junior до senior. Этот файл покрывает ключевые темы с примерами кода и практическими нюансами.
+**`Spring Framework`** — базовый фреймворк для enterprise-разработки на `Java`. Вопросы по `IoC`, `DI`, бинам, жизненному циклу, `AOP` и модулям `Spring` регулярно встречаются на собеседованиях всех уровней — от junior до senior. Этот файл покрывает ключевые темы с диаграммами, примерами кода и практическими нюансами.
 
 ## Полезные ссылки
 
@@ -115,15 +115,27 @@ updated: "2026-05-05"
 | `Spring AOP` | Аспектно-ориентированное программирование |
 | `Spring TX` | Управление транзакциями |
 
-Зависимости между модулями (стрелка — «зависит от»):
-
-- `Spring Core` (`IoC` / `DI`) — фундамент, от него зависят остальные модули.
-- `Spring MVC` → `Spring Core`
-- `Spring Data` → `Spring Core`
-- `Spring Security` → `Spring Core`
-- `Spring AOP` → `Spring Core`
-- `Spring TX` → `Spring AOP`
-- `Spring Boot` → `Spring Core`, `Spring MVC`, `Spring Data`, `Spring Security` (надстройка, тянущая остальные модули).
+```mermaid
+graph TB
+    subgraph "Spring Framework — модули"
+        Core["Spring Core<br/>IoC / DI"]
+        AOP["Spring AOP"]
+        MVC["Spring MVC"]
+        Data["Spring Data"]
+        Security["Spring Security"]
+        TX["Spring TX"]
+        Boot["Spring Boot"]
+    end
+    Boot --> Core
+    Boot --> MVC
+    Boot --> Data
+    Boot --> Security
+    MVC --> Core
+    Data --> Core
+    Security --> Core
+    AOP --> Core
+    TX --> AOP
+```
 
 Конфигурация возможна через `@Configuration` + `@Bean`, компонентное сканирование (`@Component`, `@Service`, `@Repository`) или XML. Зависимости внедряются через конструктор (рекомендуется), сеттер или поле.
 
@@ -165,10 +177,18 @@ public class OrderService {
 }
 ```
 
-Сравнение двух подходов:
-
-- **Без IoC:** `OrderService` сам через `new` создаёт `JdbcOrderRepository` — жёсткая связь с конкретной реализацией.
-- **С IoC-контейнером:** `Spring IoC Container` создаёт и `OrderService`, и `OrderRepository`, а затем внедряет репозиторий в сервис — зависимость подаётся извне.
+```mermaid
+graph LR
+    subgraph "Без IoC"
+        A1[OrderService] -->|"new"| B1[JdbcOrderRepository]
+    end
+    subgraph "С IoC-контейнером"
+        Container[Spring IoC Container]
+        Container -->|создаёт| A2[OrderService]
+        Container -->|создаёт| B2[OrderRepository]
+        Container -->|внедряет| A2
+    end
+```
 
 Преимущества:
 - **Слабая связанность** — зависимость от абстракций, а не реализаций (подробнее в [ООП: SOLID](../../programming-languages/java/java-oop-interview.md))
@@ -211,15 +231,21 @@ public class PaymentService {
 
 `Spring` предоставляет два основных контейнера: `BeanFactory` и `ApplicationContext`.
 
-Иерархия контейнеров:
+```mermaid
+graph TB
+    BF["BeanFactory<br/>(базовый контейнер)"]
+    AC["ApplicationContext<br/>(расширенный контейнер)"]
+    CAC["ClassPathXmlApplicationContext"]
+    FSAC["FileSystemXmlApplicationContext"]
+    AAC["AnnotationConfigApplicationContext"]
+    WAC["WebApplicationContext"]
 
-- `BeanFactory` — базовый контейнер.
-- `ApplicationContext` (расширенный контейнер) `extends` `BeanFactory`.
-- Реализации `ApplicationContext`:
-  - `ClassPathXmlApplicationContext` `implements` `ApplicationContext`
-  - `FileSystemXmlApplicationContext` `implements` `ApplicationContext`
-  - `AnnotationConfigApplicationContext` `implements` `ApplicationContext`
-  - `WebApplicationContext` `extends` `ApplicationContext`
+    AC -->|extends| BF
+    CAC -->|implements| AC
+    FSAC -->|implements| AC
+    AAC -->|implements| AC
+    WAC -->|extends| AC
+```
 
 | Характеристика | `BeanFactory` | `ApplicationContext` |
 |----------------|--------------|---------------------|
@@ -236,19 +262,18 @@ public class PaymentService {
 
 Жизненный цикл `ApplicationContext` можно разделить на три основные фазы:
 
-Основные фазы по порядку:
+```mermaid
+graph LR
+    A["1. Создание<br/>new AnnotationConfig..."] --> B["2. Refresh<br/>context.refresh()"]
+    B --> C["3. Работа<br/>getBean(), events"]
+    C --> D["4. Закрытие<br/>context.close()"]
 
-1. **Создание** — `new AnnotationConfig...`
-2. **Refresh** — `context.refresh()`
-3. **Работа** — `getBean()`, events
-4. **Закрытие** — `context.close()`
-
-Ключевая фаза `Refresh` внутри состоит из шагов (по порядку):
-
-1. Загрузка `BeanDefinitions`
-2. Регистрация `BeanPostProcessors`
-3. Инициализация singleton-бинов
-4. Публикация `ContextRefreshedEvent`
+    subgraph "Фаза Refresh (ключевая)"
+        B1["Загрузка BeanDefinitions"] --> B2["Регистрация BeanPostProcessors"]
+        B2 --> B3["Инициализация singleton-бинов"]
+        B3 --> B4["Публикация ContextRefreshedEvent"]
+    end
+```
 
 **Детализация фазы `refresh()`:**
 
@@ -365,22 +390,26 @@ public class AppConfig {
 
 Жизненный цикл бина — одна из самых частых тем на собеседованиях. Важно знать не только этапы, но и порядок вызова callback-ов.
 
-Этапы жизненного цикла по порядку:
+```mermaid
+graph TB
+    A["1. Instantiation<br/>Создание экземпляра"] --> B["2. Populate Properties<br/>Внедрение зависимостей (DI)"]
+    B --> C["3. BeanNameAware<br/>.setBeanName()"]
+    C --> D["4. BeanFactoryAware<br/>.setBeanFactory()"]
+    D --> E["5. ApplicationContextAware<br/>.setApplicationContext()"]
+    E --> F["6. BeanPostProcessor<br/>.postProcessBeforeInitialization()"]
+    F --> G["7. @PostConstruct"]
+    G --> H["8. InitializingBean<br/>.afterPropertiesSet()"]
+    H --> I["9. custom init-method"]
+    I --> J["10. BeanPostProcessor<br/>.postProcessAfterInitialization()"]
+    J --> K["11. Bean готов к использованию"]
+    K --> L["12. @PreDestroy"]
+    L --> M["13. DisposableBean<br/>.destroy()"]
+    M --> N["14. custom destroy-method"]
 
-1. **Instantiation** — создание экземпляра
-2. **Populate Properties** — внедрение зависимостей (DI)
-3. **BeanNameAware** — `.setBeanName()`
-4. **BeanFactoryAware** — `.setBeanFactory()`
-5. **ApplicationContextAware** — `.setApplicationContext()`
-6. **BeanPostProcessor** — `.postProcessBeforeInitialization()`
-7. **@PostConstruct**
-8. **InitializingBean** — `.afterPropertiesSet()`
-9. **custom init-method**
-10. **BeanPostProcessor** — `.postProcessAfterInitialization()`
-11. **Bean готов к использованию**
-12. **@PreDestroy**
-13. **DisposableBean** — `.destroy()`
-14. **custom destroy-method**
+    style A fill:#e1f5fe
+    style K fill:#c8e6c9
+    style N fill:#ffcdd2
+```
 
 **Ключевые callback-и в коде:**
 
@@ -484,17 +513,21 @@ public class LegacyService {
 
 **Алгоритм разрешения зависимости:**
 
-Алгоритм для `@Autowired` поля/параметра типа `T` — по числу бинов типа `T` в контексте:
-
-- **0 бинов** — проверяется `required`:
-  - `required = true` → `NoSuchBeanDefinitionException`
-  - `required = false` → `null` / зависимость не внедряется
-- **1 бин** — внедряется единственный бин.
-- **> 1 бина** — разрешение неоднозначности по приоритету:
-  - есть `@Primary` → внедряется `@Primary`-бин;
-  - иначе есть `@Qualifier` → внедряется по имени из `@Qualifier`;
-  - иначе имя параметра совпадает с именем бина → внедряется по имени параметра;
-  - иначе → `NoUniqueBeanDefinitionException`.
+```mermaid
+graph TD
+    A["@Autowired поле/параметр типа T"] --> B{"Сколько бинов типа T<br/>в контексте?"}
+    B -->|"0"| C{"required = true?"}
+    C -->|"Да"| D["NoSuchBeanDefinitionException"]
+    C -->|"Нет"| E["null / не внедряется"]
+    B -->|"1"| F["Внедряет единственный бин"]
+    B -->|"> 1"| G{"Есть @Primary?"}
+    G -->|"Да"| H["Внедряет @Primary бин"]
+    G -->|"Нет"| I{"Есть @Qualifier?"}
+    I -->|"Да"| J["Внедряет по имени из @Qualifier"]
+    I -->|"Нет"| K{"Имя параметра<br/>совпадает с именем бина?"}
+    K -->|"Да"| L["Внедряет по имени параметра"]
+    K -->|"Нет"| M["NoUniqueBeanDefinitionException"]
+```
 
 ```java
 @Service
@@ -790,13 +823,17 @@ public class PerformanceAspect {
 
 `Spring AOP` работает через прокси-объекты. При наличии аспекта `Spring` оборачивает целевой бин прокси, который перехватывает вызовы методов.
 
-Поток вызова через прокси (по порядку):
+```mermaid
+graph LR
+    Client["Клиент"] --> Proxy["AOP Proxy"]
+    Proxy --> Before["@Before advice"]
+    Before --> Target["Целевой метод"]
+    Target --> AfterReturning["@AfterReturning advice"]
+    AfterReturning --> Proxy
 
-1. **Клиент** вызывает метод не напрямую, а через `AOP Proxy`.
-2. `AOP Proxy` выполняет `@Before advice`.
-3. Затем вызывается **целевой метод**.
-4. После него выполняется `@AfterReturning advice`.
-5. Управление возвращается в `AOP Proxy`, и результат отдаётся клиенту.
+    style Proxy fill:#fff3e0
+    style Target fill:#e8f5e9
+```
 
 **Два типа прокси:**
 
@@ -962,13 +999,19 @@ public class HealthChecker implements ApplicationRunner {
 
 Все четыре аннотации — **стереотипы**, наследующие от `@Component`. Функционально они эквивалентны с точки зрения регистрации бинов, но отличаются **семантикой** и **дополнительным поведением**:
 
-Иерархия наследования стереотипов (стрелка — «является основой для»):
+```mermaid
+graph TB
+    Component["@Component<br/>Базовый компонент"]
+    Service["@Service<br/>Бизнес-логика"]
+    Repository["@Repository<br/>Доступ к данным"]
+    Controller["@Controller<br/>Веб-контроллер"]
+    RestController["@RestController<br/>= @Controller + @ResponseBody"]
 
-- `@Component` (базовый компонент) — основа для:
-  - `@Service` (бизнес-логика)
-  - `@Repository` (доступ к данным)
-  - `@Controller` (веб-контроллер)
-- `@Controller` — основа для `@RestController` (`= @Controller + @ResponseBody`).
+    Component --> Service
+    Component --> Repository
+    Component --> Controller
+    Controller --> RestController
+```
 
 | Аннотация | Слой | Дополнительное поведение |
 |-----------|------|------------------------|
@@ -1178,13 +1221,13 @@ public class DataSourceAutoConfiguration {
 
 Механизм событий в `Spring` реализует паттерн **Observer** (подробнее в [Design Patterns](../../design-patterns/design-patterns-interview.md)). Позволяет компонентам обмениваться информацией без прямых зависимостей.
 
-Поток доставки события:
-
-- `Publisher` через `publishEvent()` отправляет событие в `ApplicationEventMulticaster`.
-- `ApplicationEventMulticaster` рассылает его всем подходящим обработчикам `@EventListener`:
-  - `UserCreatedHandler`
-  - `EmailNotifier`
-  - `AuditLogger`
+```mermaid
+graph LR
+    Publisher["Publisher<br/>publishEvent()"] --> Multicaster["ApplicationEventMulticaster"]
+    Multicaster --> L1["@EventListener<br/>UserCreatedHandler"]
+    Multicaster --> L2["@EventListener<br/>EmailNotifier"]
+    Multicaster --> L3["@EventListener<br/>AuditLogger"]
+```
 
 **Определение события:**
 ```java
@@ -1276,11 +1319,19 @@ public void afterOrderCommitted(OrderCreated event) {
 
 `Spring` поддерживает иерархию контекстов, где дочерний контекст видит бины родительского, но **не наоборот**.
 
-Структура иерархии (стрелка — «родитель для»):
+```mermaid
+graph TB
+    Root["Root ApplicationContext<br/>(services, repositories, infrastructure)"]
+    Web1["WebApplicationContext #1<br/>(DispatcherServlet — API)"]
+    Web2["WebApplicationContext #2<br/>(DispatcherServlet — Admin)"]
 
-- `Root ApplicationContext` (services, repositories, infrastructure) — родитель для двух дочерних веб-контекстов:
-  - `WebApplicationContext #1` (`DispatcherServlet` — API)
-  - `WebApplicationContext #2` (`DispatcherServlet` — Admin)
+    Root --> Web1
+    Root --> Web2
+
+    style Root fill:#e8f5e9
+    style Web1 fill:#e1f5fe
+    style Web2 fill:#e1f5fe
+```
 
 **Классический пример в Spring MVC (подробнее в [Spring MVC](spring-mvc-interview.md)):**
 - **Root context** — `ContextLoaderListener` создаёт контекст с бизнес-логикой: `@Service`, `@Repository`, `DataSource`, `TransactionManager`

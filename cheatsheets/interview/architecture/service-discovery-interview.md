@@ -244,12 +244,33 @@ readinessProbe:
 
 **Client-side discovery** — клиент сам опрашивает registry, держит у себя список инстансов и сам выбирает, в какой пойти. Балансировка живёт внутри клиента, между ним и сервером нет посредника.
 
-Участники: `Client (order-service)`, `Service Registry`, три инстанса `payments #1/#2/#3`. Поток по шагам:
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Client (order-service)
+    participant R as Service Registry
+    participant S1 as payments #1
+    participant S2 as payments #2
+    participant S3 as payments #3
 
-1. **Старт клиента — подписка.** `Client` → `Registry`: `GET /services/payments`. `Registry` отвечает списком `[#1@10.0.0.1, #2@10.0.0.2, #3@10.0.0.3]`. Клиент кеширует список и запускает refresh-таймер (30 сек).
-2. **Каждый запрос — локальный LB.** Клиент локально выбирает инстанс: `pickInstance()` round-robin → `#2`. Затем `Client` → `payments #2`: `POST /pay`, `#2` отвечает `200 OK`.
-3. **`#2` умирает.** Heartbeat от `#2` к `Registry` теряется (`heartbeat lost`); `Registry` выселяет `#2` по истечении TTL (`evict #2 after TTL`).
-4. **Клиент обновляет cache.** `Client` → `Registry`: `GET /services/payments` (refresh). `Registry` возвращает уже `[#1, #3]`.
+    Note over C,R: 1. Старт клиента — подписка
+    C->>R: GET /services/payments
+    R-->>C: [#1@10.0.0.1, #2@10.0.0.2, #3@10.0.0.3]
+    C->>C: Cache + start refresh timer (30s)
+
+    Note over C: 2. Каждый запрос — локальный LB
+    C->>C: pickInstance() — round-robin → #2
+    C->>S2: POST /pay
+    S2-->>C: 200 OK
+
+    Note over R,S2: 3. #2 умирает
+    S2--xR: heartbeat lost
+    R->>R: evict #2 after TTL
+
+    Note over C,R: 4. Клиент обновляет cache
+    C->>R: GET /services/payments (refresh)
+    R-->>C: [#1, #3]
+```
 
 **Примеры:**
 
@@ -270,13 +291,30 @@ readinessProbe:
 
 **Server-side discovery** — клиент шлёт запрос на один известный endpoint (LB / proxy), а уже тот опрашивает registry и сам решает, в какой инстанс переслать. Клиент про реестр и инстансы не знает — вся логика discovery вынесена в посредника.
 
-Участники: `Client (order-service)`, `Load Balancer / Proxy`, `Service Registry`, инстансы `payments #1/#2`. Поток по шагам:
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Client (order-service)
+    participant LB as Load Balancer / Proxy
+    participant R as Service Registry
+    participant S1 as payments #1
+    participant S2 as payments #2
 
-1. **`LB` подписан на registry** (long-polling / watch). `LB` → `Registry`: `WATCH /services/payments`; `Registry` отдаёт список `[#1, #2]`.
-2. `Client` → `LB`: `POST /payments/pay`.
-3. `LB` локально выбирает инстанс: `pickInstance()` → `#1`.
-4. `LB` → `payments #1`: `POST /pay`; `#1` отвечает `200 OK`; `LB` → `Client`: `200 OK`.
-5. **`#1` умирает.** Heartbeat от `#1` к `Registry` теряется (`heartbeat lost`); `Registry` шлёт `LB` событие WATCH `remove #1`; `LB` обновляет кеш без `#1` (`cache without #1`).
+    Note over LB,R: LB подписан на registry (long-polling/watch)
+    LB->>R: WATCH /services/payments
+    R-->>LB: [#1, #2]
+
+    C->>LB: POST /payments/pay
+    LB->>LB: pickInstance() → #1
+    LB->>S1: POST /pay
+    S1-->>LB: 200 OK
+    LB-->>C: 200 OK
+
+    Note over R,S1: #1 умирает
+    S1--xR: heartbeat lost
+    R-->>LB: WATCH event: remove #1
+    LB->>LB: cache without #1
+```
 
 **Примеры:**
 
@@ -365,15 +403,22 @@ readinessProbe:
 
 **Multi-datacenter** — несколько server-кластеров, объединённых через WAN gossip; запросы между DC — через RPC forwarding.
 
-Топология на примере двух датацентров:
-
-- **Datacenter 1:**
-  - Три server-агента в полной взаимной связке (Raft-кластер): `Server 1` ↔ `Server 2`, `Server 2` ↔ `Server 3 (leader)`, `Server 1` ↔ `Server 3`.
-  - `Client agent host A` связан gossip-ом с `Server 1`; `Client agent host B` — gossip-ом с `Server 2`.
-  - Приложения подключаются к локальным client-агентам: `App` → `Client agent host A`, `App` → `Client agent host B`.
-- **Datacenter 2:**
-  - Два server-агента: `Server 4 (leader)` ↔ `Server 5`.
-- **Между DC:** `Server 3` ↔ `Server 4` через **WAN gossip**.
+```mermaid
+flowchart LR
+    subgraph DC1[Datacenter 1]
+        S1[(Server 1)] <--> S2[(Server 2)]
+        S2 <--> S3[(Server 3 leader)]
+        S1 <--> S3
+        C1[Client agent host A] -.gossip.- S1
+        C2[Client agent host B] -.gossip.- S2
+        APP1[App] --> C1
+        APP2[App] --> C2
+    end
+    subgraph DC2[Datacenter 2]
+        S4[(Server 4 leader)] <--> S5[(Server 5)]
+    end
+    S3 <-.WAN gossip.-> S4
+```
 
 ---
 
@@ -811,11 +856,15 @@ dig SRV _http._tcp.payments-headless.default.svc.cluster.local
 - **Envoy sidecar** в каждом pod-е (injection через mutating webhook).
 - **xDS API** (gRPC streaming) — istiod пушит конфиг в Envoy: CDS (clusters), EDS (endpoints), LDS (listeners), RDS (routes), SDS (secrets).
 
-Поток конфигурации и трафика:
-
-- `K8s API server` → `istiod`: istiod через watch читает `Service` / `Endpoint`.
-- `istiod` → `Envoy sidecar #1` и `istiod` → `Envoy sidecar #2`: пуш конфига через **xDS push**.
-- Трафик приложений: `App #1` → `Envoy sidecar #1` → `Envoy sidecar #2` → `App #2` (запрос выходит через локальный sidecar и приходит в sidecar получателя).
+```mermaid
+flowchart LR
+    K8sAPI[(K8s API server)] -->|watch Service/Endpoint| ISTIOD[istiod]
+    ISTIOD -->|xDS push| E1[Envoy sidecar #1]
+    ISTIOD -->|xDS push| E2[Envoy sidecar #2]
+    APP1[App #1] --> E1
+    E1 --> E2
+    E2 --> APP2[App #2]
+```
 
 **Что меняется по сравнению с «голым» k8s discovery:**
 

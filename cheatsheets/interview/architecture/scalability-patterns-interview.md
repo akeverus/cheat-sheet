@@ -119,10 +119,17 @@ updated: "2026-05-08"
 - **Минусы:** нужна stateless-архитектура, балансировка, согласованность данных и более сложная эксплуатация.
 - **Когда применять:** веб-приложения, микросервисы, воркеры очередей. Масштабируется добавлением реплик за [балансировщиком](load-balancing-interview.md) (`Kubernetes Deployment`, облачные группы).
 
-Наглядно:
-
-- **Вертикальное (Scale Up):** один и тот же узел `Сервер 2 CPU / 4 GB` через `upgrade` превращается в `Сервер 16 CPU / 64 GB` — мощность наращивается, узел остаётся один.
-- **Горизонтальное (Scale Out):** `Load Balancer` распределяет трафик на несколько узлов — `Instance 1`, `Instance 2`, … `Instance N`.
+```mermaid
+graph LR
+    subgraph "Вертикальное (Scale Up)"
+        A1[Сервер 2 CPU / 4 GB] -->|upgrade| A2[Сервер 16 CPU / 64 GB]
+    end
+    subgraph "Горизонтальное (Scale Out)"
+        LB[Load Balancer] --> B1[Instance 1]
+        LB --> B2[Instance 2]
+        LB --> B3[Instance N]
+    end
+```
 
 | Характеристика | Вертикальное | Горизонтальное |
 |----------------|-------------|----------------|
@@ -169,7 +176,16 @@ spring:
 
 С `spring-session-data-redis` серия запросов с одним session cookie обрабатывается разными инстансами — сессия подгружается из `Redis` по id. Без него при масштабировании до N инстансов пришлось бы держать `sticky session` и терять сессии при падении узла.
 
-Топология получается такой: `Client` идёт на `Load Balancer`, тот распределяет запросы между `Instance 1`, `Instance 2` и `Instance 3`, а все три инстанса читают и пишут сессии в общий `Redis — Sessions`. Любой инстанс обслуживает любой запрос, подгружая сессию из `Redis` по id.
+```mermaid
+graph LR
+    C[Client] --> LB[Load Balancer]
+    LB --> S1[Instance 1]
+    LB --> S2[Instance 2]
+    LB --> S3[Instance 3]
+    S1 --> R[(Redis — Sessions)]
+    S2 --> R
+    S3 --> R
+```
 
 ## Q3. Когда предпочтительнее вертикальное, а когда горизонтальное масштабирование?
 
@@ -218,7 +234,15 @@ spring:
 3. **Трассировка** — `Jaeger`, `Zipkin`: показывают, какое именно звено в цепочке вызовов тормозит
 4. **Нагрузочное тестирование** — постепенно повышают `RPS` и ловят точку насыщения
 
-Рассмотрим цепочку: `Client 1000 RPS` → `API Gateway` → `Service 800 RPS max` → `DB 200 RPS max`. Здесь БД — узкое место: из 1000 `RPS` она обработает лишь 200, остальное уйдёт в таймауты. Масштабировать `API Gateway` и сервис бессмысленно — расширять надо именно БД: кэш, `read replicas`, шардирование.
+```mermaid
+graph LR
+    A[Client 1000 RPS] --> B[API Gateway]
+    B --> C[Service 800 RPS max]
+    C --> D[(DB 200 RPS max)]
+    style D fill:#f66,stroke:#333
+```
+
+В примере выше БД — узкое место: из 1000 `RPS` она обработает лишь 200, остальное уйдёт в таймауты. Масштабировать `API Gateway` и сервис бессмысленно — расширять надо именно БД: кэш, `read replicas`, шардирование.
 
 ## Q6. (!) Как кэширование помогает масштабированию?
 
@@ -262,14 +286,17 @@ public class ProductService {
 
 **Подводный камень при масштабировании:** каждый инстанс держит свой локальный кэш, и при обновлении данных остальные инстансы об этом не знают — у них останется устаревшая копия. Чтобы синхронизировать их, используют распределённый кэш или инвалидацию по событиям ([Kafka](../messaging/kafka-interview.md), `Redis Pub/Sub`).
 
-Поток запроса по уровням:
-
-- `Запрос` сначала идёт в `L1 Caffeine`.
-- `HIT` в `L1` → сразу `Ответ`.
-- `MISS` в `L1` → запрос уходит в `L2 Redis`.
-- `HIT` в `L2` → `Ответ`.
-- `MISS` в `L2` → обращение к `Database`.
-- После чтения из БД значение возвращается обратно вверх: `Database` → `L2` → `L1` → `Ответ` (кэши заполняются по пути).
+```mermaid
+graph TD
+    REQ[Запрос] --> L1{L1 Caffeine}
+    L1 -->|HIT| RES[Ответ]
+    L1 -->|MISS| L2{L2 Redis}
+    L2 -->|HIT| RES
+    L2 -->|MISS| DB[(Database)]
+    DB --> L2
+    L2 --> L1
+    L1 --> RES
+```
 
 ## Q7. Как реализовать двухуровневый кэш в Spring Boot?
 
@@ -327,11 +354,13 @@ public class TwoLevelCacheManager implements CacheManager {
 
 Сердце шардирования — **ключ шардирования**: он определяет, на какой шард попадёт запись. От него зависит равномерность распределения и отсутствие «горячих» шардов. В БД шардируют по доменному ключу (`user_id`, `tenant_id`); в `Kafka` ключ сообщения задаёт партицию.
 
-Маршрутизация по ключу: `Application` обращается к `Shard Router`, а тот по остатку от деления направляет запись на нужный шард:
-
-- `user_id % 3 = 0` → `Shard 0`
-- `user_id % 3 = 1` → `Shard 1`
-- `user_id % 3 = 2` → `Shard 2`
+```mermaid
+graph TD
+    APP[Application] --> ROUTER{Shard Router}
+    ROUTER -->|user_id % 3 = 0| S0[(Shard 0)]
+    ROUTER -->|user_id % 3 = 1| S1[(Shard 1)]
+    ROUTER -->|user_id % 3 = 2| S2[(Shard 2)]
+```
 
 **Пример — маршрутизация по шарду в `Spring`:**
 
@@ -414,13 +443,19 @@ CREATE TABLE orders_2026_q2 PARTITION OF orders
 
 Они разрывают жёсткую связку «клиент ждёт, пока всё посчитается». Синхронный запрос держит поток занятым до полного ответа; на пике потоки заканчиваются, новые запросы встают в очередь и `latency` растёт. При асинхронной обработке `API` принимает запрос, кладёт задачу в очередь ([Kafka](../messaging/kafka-interview.md), `RabbitMQ`) и сразу отвечает `202 Accepted`, а воркеры разбирают очередь параллельно в своём темпе.
 
-Порядок взаимодействия участников (`Client`, `API Service`, очередь `Kafka / RabbitMQ`, `Worker 1..N`):
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant API as API Service
+    participant Q as Kafka / RabbitMQ
+    participant W as Worker 1..N
 
-1. `Client` → `API Service`: `POST /orders`.
-2. `API Service` → очередь `Kafka / RabbitMQ`: `publish OrderCreated`.
-3. `API Service` → `Client`: `202 Accepted` (ответ возвращается сразу, не дожидаясь обработки).
-4. Очередь → `Worker 1..N`: `consume OrderCreated`.
-5. `Worker` обрабатывает заказ (`process order`) в своём темпе, параллельно с другими воркерами.
+    C->>API: POST /orders
+    API->>Q: publish OrderCreated
+    API-->>C: 202 Accepted
+    Q->>W: consume OrderCreated
+    W->>W: process order
+```
 
 Очередь работает буфером между продюсерами и потребителями: она поглощает всплески и отдаёт работу ровным потоком. Поэтому пики сглаживаются, а воркеров можно масштабировать независимо от числа клиентов — под текущую глубину очереди, а не под мгновенный трафик.
 
@@ -530,7 +565,15 @@ public class OrderService {
 }
 ```
 
-Топология маршрутизации: `Application` обращается к `Routing DataSource`, который направляет операции `write` в единственный `Primary`, а операции `read` — на `Replica 1` и `Replica 2`. Сам `Primary` асинхронно реплицирует изменения на обе реплики (`async replication`).
+```mermaid
+graph LR
+    APP[Application] --> RDS{Routing DataSource}
+    RDS -->|write| PRI[(Primary)]
+    RDS -->|read| REP1[(Replica 1)]
+    RDS -->|read| REP2[(Replica 2)]
+    PRI -->|async replication| REP1
+    PRI -->|async replication| REP2
+```
 
 ## Q16. (!) Что такое CQRS в контексте масштабирования?
 
@@ -538,10 +581,16 @@ public class OrderService {
 
 Главный выигрыш для масштабирования: чтение и запись масштабируются независимо. Под чтение можно держать много `read replicas` или вовсе отдельное хранилище, заточенное под конкретные запросы (например, `Elasticsearch` для поиска), не трогая write-сторону.
 
-Поток данных в `CQRS`:
-
-- **Сторона записи:** `Client` отправляет `Command` в `Command Service`, тот пишет в `Write DB - PostgreSQL`. Из write-БД через `Events` события идут в `Kafka`, далее `Projection Builder` строит из них денормализованную проекцию в `Read DB - Elasticsearch`.
-- **Сторона чтения:** `Client` отправляет `Query` в `Query Service`, который читает из `Read DB - Elasticsearch`.
+```mermaid
+graph TD
+    C[Client] -->|Command| CS[Command Service]
+    C -->|Query| QS[Query Service]
+    CS --> WDB[(Write DB - PostgreSQL)]
+    WDB -->|Events| MQ[Kafka]
+    MQ --> PROJ[Projection Builder]
+    PROJ --> RDB[(Read DB - Elasticsearch)]
+    QS --> RDB
+```
 
 **Пример — `CQRS` со `Spring Modulith`:**
 
@@ -607,7 +656,16 @@ public class OrderProjectionUpdater {
 
 **Circuit breaker** («предохранитель») — паттерн по аналогии с электрическим автоматом: когда вызовы сервиса начинают массово падать, он «размыкает цепь» и на время вообще перестаёт его вызывать, мгновенно отдавая ошибку или fallback. Это разрывает каскад сбоев и снимает нагрузку с уже падающего сервиса, давая ему шанс восстановиться.
 
-Состояния: **Closed** (вызовы идут как обычно) → при серии ошибок (N ошибок подряд) **Open** (вызовы блокируются, сразу fallback) → когда истёк timeout **HalfOpen** (пробный вызов: успех — возврат в Closed, провал — снова Open).
+```mermaid
+stateDiagram-v2
+    [*] --> Closed
+    Closed --> Open : N ошибок подряд
+    Open --> HalfOpen : timeout истёк
+    HalfOpen --> Closed : пробный вызов OK
+    HalfOpen --> Open : пробный вызов failed
+```
+
+Состояния: **Closed** (вызовы идут как обычно) → при серии ошибок **Open** (вызовы блокируются, сразу fallback) → по таймауту **HalfOpen** (пробный вызов: успех — возврат в Closed, провал — снова Open).
 
 **Связь с масштабируемостью.** Без `circuit breaker` сотни потоков повисают в ожидании ответа от падающего сервиса, исчерпывают пул и тянут на дно даже здоровые эндпоинты — так локальный сбой становится общим. С ним отказ быстрый, потоки сразу освобождаются, а падающий сервис перестаёт получать добивающую нагрузку.
 
@@ -921,13 +979,18 @@ spec:
 
 **Компромисс:** `read replicas` и кэш дают быстрый выигрыш и просты в откате, но решают в основном проблему чтения. Для write-heavy сценариев они упираются в потолок единственного `primary`, и почти всегда приходится идти дальше — к шардированию и пересмотру модели данных.
 
-Дерево решений по шагам (от `Проблемы с БД`):
-
-- **Оптимизация запросов?** Если ещё не делали — `Индексы, EXPLAIN, slow query log`. Если уже сделано — переходим к следующему шагу.
-- **Кэширование?** Если ещё нет — `Redis / Caffeine L1+L2`. Если уже есть — переходим дальше.
-- **Read-heavy?** Если да — `Read Replicas`. Если нагрузка write-heavy — сразу `Шардирование`.
-- Если `Read Replicas` уже не хватает — `Шардирование`.
-- Если и `Шардирования` не хватает — `CQRS + Event Sourcing`.
+```mermaid
+graph TD
+    START[Проблема с БД] --> OPT{Оптимизация запросов?}
+    OPT -->|Да| IDX[Индексы, EXPLAIN, slow query log]
+    OPT -->|Уже сделано| CACHE{Кэширование?}
+    CACHE -->|Да| REDIS[Redis / Caffeine L1+L2]
+    CACHE -->|Уже есть| READ{Read-heavy?}
+    READ -->|Да| REPL[Read Replicas]
+    READ -->|Write-heavy| SHARD[Шардирование]
+    REPL -->|Не хватает| SHARD
+    SHARD -->|Не хватает| CQRS_DB[CQRS + Event Sourcing]
+```
 
 Подходы (в порядке возрастания сложности — снизу вверх по лестнице):
 1. **Оптимизация запросов** — индексы, `EXPLAIN`, [SQL](../databases/sql-interview.md)-оптимизация (часто снимает проблему без всякого «масштабирования»)
@@ -1007,7 +1070,14 @@ public DataSource dataSource() {
 3. **Read replicas** — увести часть соединений (чтения) на реплики
 4. **Увеличить лимит БД** — крайняя мера: каждое соединение потребляет память, безоглядно поднимать `max_connections` нельзя
 
-Топология с прокси: множество инстансов — `Instance 1` (pool: 5), `Instance 2` (pool: 5), `Instance 3` (pool: 5), … `Instance N` (pool: 5) — все подключаются к `PgBouncer` (pool: 20), а тот держит соединения к `PostgreSQL` (max_conn: 100).
+```mermaid
+graph LR
+    I1[Instance 1<br>pool: 5] --> PGB[PgBouncer<br>pool: 20]
+    I2[Instance 2<br>pool: 5] --> PGB
+    I3[Instance 3<br>pool: 5] --> PGB
+    I4[Instance N<br>pool: 5] --> PGB
+    PGB --> PG[(PostgreSQL<br>max_conn: 100)]
+```
 
 `PgBouncer` мультиплексирует соединения: 50 инстансов с пулом 5 = 250 виртуальных соединений, но `PgBouncer` держит лишь 20 реальных соединений к `PostgreSQL`, переиспользуя их.
 
@@ -1025,7 +1095,7 @@ public DataSource dataSource() {
 
 ## Q32. Как масштабировать микросервисы?
 
-Главное преимущество микросервисов для масштабирования — независимость: расширяют только тот [сервис](microservices-interview.md), который стал узким местом, а не всю систему. Каждый масштабируется горизонтально за [балансировщиком](load-balancing-interview.md) ([Kubernetes](../devops/kubernetes-interview.md) `Deployment`, облачные группы), с автоскейлингом по `CPU`, памяти или кастомным метрикам — поэтому у разных сервисов разное число реплик (×2, ×3, ×5).
+Главное преимущество микросервисов для масштабирования — независимость: расширяют только тот [сервис](microservices-interview.md), который стал узким местом, а не всю систему. Каждый масштабируется горизонтально за [балансировщиком](load-balancing-interview.md) ([Kubernetes](../devops/kubernetes-interview.md) `Deployment`, облачные группы), с автоскейлингом по `CPU`, памяти или кастомным метрикам — поэтому на схеме ниже у сервисов разное число реплик (×2, ×3, ×5).
 
 Ключевые принципы (те же, что в Q25, но в межсервисном масштабе):
 - Состояние — во внешних хранилищах (БД, кэш, очереди), а не в инстансе
@@ -1034,11 +1104,18 @@ public DataSource dataSource() {
 - Circuit breaker и таймауты при межсервисных вызовах, чтобы сбой одного сервиса не каскадировал
 - Мониторинг и трассировка для каждого сервиса (иначе не понять, какой из них узкое место)
 
-Пример топологии:
-
-- `API Gateway` направляет трафик на три сервиса: `Order Service` (×3 реплики), `Payment Service` (×2), `Inventory Service` (×5).
-- `Order Service` и `Payment Service` публикуют события в `Kafka`, откуда их потребляет `Notification Service` (×2).
-- У каждого сервиса своя БД: `Order Service` → `Orders DB`, `Payment Service` → `Payments DB`, `Inventory Service` → `Inventory DB`.
+```mermaid
+graph TD
+    GW[API Gateway] --> A[Order Service x3]
+    GW --> B[Payment Service x2]
+    GW --> C[Inventory Service x5]
+    A --> K[Kafka]
+    B --> K
+    K --> D[Notification Service x2]
+    A --> DB1[(Orders DB)]
+    B --> DB2[(Payments DB)]
+    C --> DB3[(Inventory DB)]
+```
 
 **Подводный камень:** с ростом числа сервисов растёт и число межсервисных вызовов, и их нужно держать под контролем — лимиты соединений, общая политика таймаутов и retry. Это удобно вынести в `service mesh` (`Istio`, `Linkerd`), который управляет трафиком, балансировкой и устойчивостью на уровне инфраструктуры, а не в коде каждого сервиса.
 
@@ -1145,10 +1222,22 @@ db_connections = instances_needed * pool_size_per_instance
 
 Это пара зеркальных операций: **Fan-out** разветвляет один запрос на множество параллельных подзапросов, **Fan-in** собирает их результаты обратно в один ответ. Смысл — заменить последовательную работу параллельной: вместо того чтобы опросить N источников по очереди (сумма задержек), опрашивают все сразу, и общая latency сводится к самому медленному из них.
 
-Структура потока:
-
-- **Fan-out:** один `Запрос` разветвляется на параллельные подзапросы — `Worker 1`, `Worker 2`, `Worker 3`, … `Worker N`.
-- **Fan-in:** результаты всех воркеров (`Worker 1`…`Worker N`) стекаются в `Aggregator`, который собирает их в единый `Ответ`.
+```mermaid
+graph LR
+    subgraph "Fan-out"
+        R[Запрос] --> W1[Worker 1]
+        R --> W2[Worker 2]
+        R --> W3[Worker 3]
+        R --> W4[Worker N]
+    end
+    subgraph "Fan-in"
+        W1 --> A[Aggregator]
+        W2 --> A
+        W3 --> A
+        W4 --> A
+        A --> Resp[Ответ]
+    end
+```
 
 **Типичные применения:**
 - **Scatter-Gather** в поисковых системах: запрос → N шардов индекса → merge результатов
@@ -1187,6 +1276,16 @@ public SearchResult search(SearchRequest request, List<ShardClient> shards) {
 ## Q38. Что такое Write-Behind (Write-Back) кэширование?
 
 **Write-Behind** (`Write-Back`) — стратегия записи, при которой данные сначала ложатся в кэш, клиент сразу получает подтверждение, а в БД они попадают асинхронно и с задержкой. Это противоположность `Write-Through`, где кэш и БД пишутся синхронно вместе. Выигрыш — латентность записи определяется быстрым кэшем (миллисекунды), а не медленной БД; плата — окно, в котором подтверждённые данные ещё не сохранены в БД.
+
+```mermaid
+graph LR
+    Client -->|write| Cache[(Cache)]
+    Cache -->|"async (delay)"| DB[(Database)]
+    Cache -->|ack| Client
+
+    style Cache fill:#51cf66,color:#fff
+    style DB fill:#74c0fc,color:#000
+```
 
 **Сравнение стратегий записи:**
 
@@ -1232,13 +1331,22 @@ public void persistCounter(WriteEvent event) {
 
 **Cell-Based Architecture** (клеточная архитектура) — система разбивается на **независимые изолированные ячейки** (`cells`), и каждая обслуживает свой срез пользователей или данных целиком, полным стеком. Главная цель — ограничить `blast radius`: отказ одной ячейки затрагивает только её пользователей, а не всю систему. Вместо «один большой кластер на всех» получается набор маленьких, изолированных друг от друга.
 
-Структура: `Global Router` направляет пользователей по диапазонам в изолированные ячейки:
+```mermaid
+graph TD
+    Router[Global Router] -->|"user 1-1M"| Cell1
+    Router -->|"user 1M-2M"| Cell2
+    Router -->|"user 2M-3M"| Cell3
 
-- `user 1-1M` → `Cell1`
-- `user 1M-2M` → `Cell2`
-- `user 2M-3M` → `Cell3`
-
-Каждая ячейка содержит полный стек: `Service A`, `Service B` и собственный шард БД (`Cell1` → `DB Shard 1`, `Cell2` → `DB Shard 2`, `Cell3` → `DB Shard 3`). Общих компонентов между ячейками нет.
+    subgraph Cell1
+        S1[Service A] & S2[Service B] & DB1[(DB Shard 1)]
+    end
+    subgraph Cell2
+        S3[Service A] & S4[Service B] & DB2[(DB Shard 2)]
+    end
+    subgraph Cell3
+        S5[Service A] & S6[Service B] & DB3[(DB Shard 3)]
+    end
+```
 
 **Ключевые свойства:**
 - **Изоляция отказов** — проблема в Cell 2 не затрагивает Cell 1 и Cell 3
@@ -1273,11 +1381,20 @@ public class CellRouter {
 
 **Multi-Region** — развёртывание системы сразу в нескольких географических регионах. Решает три задачи разом: снижает latency (пользователя обслуживает ближайший регион), повышает доступность (выживает падение целого региона) и даёт disaster recovery. Главная сложность — не сами серверы, а согласование данных между регионами через высокую сетевую задержку.
 
-Схема маршрутизации и репликации:
+```mermaid
+graph TD
+    Users_EU[Пользователи EU] --> DNS{GeoDNS / Anycast}
+    Users_US[Пользователи US] --> DNS
+    Users_APAC[Пользователи APAC] --> DNS
 
-- Пользователи всех регионов (`Пользователи EU`, `Пользователи US`, `Пользователи APAC`) направляются через `GeoDNS / Anycast`.
-- `GeoDNS / Anycast` раскидывает их по ближайшим регионам: `Region: eu-west-1`, `Region: us-east-1`, `Region: ap-southeast-1`.
-- Регионы связаны взаимной cross-region репликацией: `eu-west-1` ↔ `us-east-1`, `us-east-1` ↔ `ap-southeast-1`, `ap-southeast-1` ↔ `eu-west-1`.
+    DNS --> EU[Region: eu-west-1]
+    DNS --> US[Region: us-east-1]
+    DNS --> APAC[Region: ap-southeast-1]
+
+    EU <-->|"Cross-region<br/>replication"| US
+    US <-->|replication| APAC
+    APAC <-->|replication| EU
+```
 
 **Стратегии согласованности данных:**
 
@@ -1318,10 +1435,19 @@ public class RegionAwareRouter {
 
 **Hotspot** (горячая партиция) — один шард принимает несоразмерно большую долю нагрузки и становится узким местом, пока остальные простаивают. Это прямое отрицание цели шардирования: данные распределены, а нагрузка — нет. Типичные причины: плохой ключ шардирования (монотонный или с малой кардинальностью), «звёздные» данные знаменитостей, временные пики. Лечение всегда сводится к одному — сделать распределение нагрузки равномернее.
 
-Сравнение распределения нагрузки:
-
-- **Hotspot (плохой ключ: `timestamp`):** `Запросы` падают неравномерно — `Shard 1` (старые данные, LOW), `Shard 2` (вчера, MEDIUM), `Shard 3` (сегодня, перегружен — OVERLOADED). Весь свежий трафик стекается в один шард.
-- **Равномерно (хэш-ключ):** `Запросы` распределяются ровно — `Shard 1`, `Shard 2`, `Shard 3` получают примерно по ~33% каждый.
+```mermaid
+graph LR
+    subgraph "Hotspot (плохой ключ: timestamp)"
+        Req1[Запросы] --> HS1[Shard 1<br/>Старые данные<br/>LOW]
+        Req1 --> HS2[Shard 2<br/>Вчера<br/>MEDIUM]
+        Req1 --> HS3[Shard 3<br/>Сегодня<br/>🔥 OVERLOADED]
+    end
+    subgraph "Равномерно (хэш ключ)"
+        Req2[Запросы] --> GS1[Shard 1<br/>~33%]
+        Req2 --> GS2[Shard 2<br/>~33%]
+        Req2 --> GS3[Shard 3<br/>~33%]
+    end
+```
 
 **Причины и решения:**
 

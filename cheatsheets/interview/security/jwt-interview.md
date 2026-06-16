@@ -131,12 +131,17 @@ SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
 | **Payload** | Claims — данные о субъекте и метаданные токена |
 | **Signature** | Криптографическая подпись от header + payload |
 
-Как собирается токен:
-
-- `Header` (`{alg, typ}`) → `Base64URL encode`.
-- `Payload` (`{claims}`) → `Base64URL encode`.
-- Закодированные `Header` и `Payload` подаются в `HMAC/RSA/ECDSA` → получается `Signature`.
-- Итоговый токен — конкатенация трёх частей: `header.payload.signature` (закодированный header, закодированный payload и подпись).
+```mermaid
+graph LR
+    A["Header\n{alg, typ}"] --> D["Base64URL encode"]
+    B["Payload\n{claims}"] --> E["Base64URL encode"]
+    D --> F["HMAC/RSA/ECDSA"]
+    E --> F
+    F --> G["Signature"]
+    D --> H["header.payload.signature"]
+    E --> H
+    G --> H
+```
 
 **Главное, что нужно запомнить:** JWT — это **подпись, а не шифрование**. Payload не скрыт: любой, кто получил токен, может декодировать Base64 и прочитать содержимое. Подпись лишь гарантирует, что claims не подменили, — но не прячет их.
 
@@ -272,17 +277,20 @@ echo "eyJzdWIiOiJ1c2VyMTIzIn0" | base64 -d
 
 Коротко: **HS256 использует один общий секрет** для подписи и проверки, а **RS256 — пару ключей**, где подписывают приватным, а проверяют публичным. Из этого вытекают все остальные различия — масштабируемость, риск компрометации, производительность.
 
-**HS256** (один общий секрет):
+```mermaid
+graph LR
+    subgraph HS256
+        A1[Auth Server] -- "sign(secret)" --> T1[Token]
+        T1 -- "verify(secret)" --> R1[Resource Server]
+        A1 -. "shared secret" .- R1
+    end
 
-- `Auth Server` подписывает `Token` секретом: `sign(secret)`.
-- `Resource Server` проверяет тот же `Token` тем же секретом: `verify(secret)`.
-- `Auth Server` и `Resource Server` делят один и тот же `shared secret`.
-
-**RS256** (пара ключей):
-
-- `Auth Server` подписывает `Token` приватным ключом: `sign(privateKey)`.
-- `Resource Server` проверяет `Token` публичным ключом: `verify(publicKey)`.
-- Публичный ключ `Auth Server` передаёт `Resource Server` через `JWKS` (`publicKey via JWKS`), приватный ключ остаётся только у `Auth Server`.
+    subgraph RS256
+        A2[Auth Server] -- "sign(privateKey)" --> T2[Token]
+        T2 -- "verify(publicKey)" --> R2[Resource Server]
+        A2 -. "publicKey via JWKS" .-> R2
+    end
+```
 
 | Критерий | HS256 | RS256 |
 |----------|-------|-------|
@@ -328,13 +336,21 @@ KeyPair keyPair = keyGen.generateKeyPair();
 | **JWS** | JSON Web Signature | JWT с **подписью** payload (RFC 7515) — целостность, но не конфиденциальность |
 | **JWE** | JSON Web Encryption | JWT с **зашифрованным** payload (RFC 7516) — конфиденциальность + целостность |
 
-Семейство стандартов **JOSE** (JSON Object Signing and Encryption) включает:
+```mermaid
+graph TD
+    JOSE["JOSE (семейство стандартов)"]
+    JWT["JWT — общий формат токена"]
+    JWS["JWS — подписанный JWT\nheader.payload.signature"]
+    JWE["JWE — зашифрованный JWT\nheader.encrypted_key.iv.ciphertext.tag"]
+    JWK["JWK — формат ключей"]
+    JWA["JWA — алгоритмы"]
 
-- **JWT** — общий формат токена. Делится на две реализации:
-  - **JWS** — подписанный JWT, структура `header.payload.signature`.
-  - **JWE** — зашифрованный JWT, структура `header.encrypted_key.iv.ciphertext.tag`.
-- **JWK** — формат ключей.
-- **JWA** — алгоритмы.
+    JOSE --> JWT
+    JOSE --> JWK
+    JOSE --> JWA
+    JWT --> JWS
+    JWT --> JWE
+```
 
 **На практике:** когда говорят «JWT», почти всегда подразумевают **JWS** — подписанный токен. JWE встречается заметно реже — его берут, только когда нужно скрыть сам payload от тех, кто держит токен в руках (например, от клиента, который не должен видеть содержимое).
 
@@ -379,17 +395,23 @@ Resource Server кэширует JWKS и подтягивает заново п�
 
 Идея проста: из заголовка токена берётся `kid`, по нему в наборе JWKS находится нужный публичный ключ, и им проверяется подпись. Если ключа с таким `kid` в кэше нет (например, ключ только что ротировали) — Resource Server перезапрашивает JWKS у Authorization Server. Полный процесс:
 
-Полный процесс по шагам (участники: `Resource Server`, `Auth Server`, `JWKS Cache`):
+```mermaid
+sequenceDiagram
+    participant RS as Resource Server
+    participant AS as Auth Server
+    participant Cache as JWKS Cache
 
-1. `Resource Server` получает JWT из запроса.
-2. `Resource Server` декодирует header и извлекает `kid`.
-3. `Resource Server` ищет ключ по `kid` в `JWKS Cache`.
-4. **Если ключ не найден или устарел:**
-   - `Resource Server` запрашивает `GET /.well-known/jwks.json` у `Auth Server`.
-   - `Auth Server` возвращает `{"keys": [...]}`.
-   - `Resource Server` сохраняет ключи в `JWKS Cache`.
-5. `Resource Server` верифицирует подпись публичным ключом.
-6. `Resource Server` проверяет `exp`, `iss`, `aud`.
+    RS->>RS: Получить JWT из запроса
+    RS->>RS: Декодировать header, извлечь kid
+    RS->>Cache: Найти ключ по kid
+    alt Ключ не найден или устарел
+        RS->>AS: GET /.well-known/jwks.json
+        AS-->>RS: {"keys": [...]}
+        RS->>Cache: Сохранить ключи
+    end
+    RS->>RS: Верифицировать подпись публичным ключом
+    RS->>RS: Проверить exp, iss, aud
+```
 
 В Spring Security это автоматизировано через `NimbusJwtDecoder`:
 
@@ -417,17 +439,24 @@ public JwtDecoder jwtDecoder() {
 | **Тип** | Обычно JWT (stateless) | Обычно opaque (непрозрачный) |
 | **Отзыв** | Проблематичен (stateless) | Хранится в БД, легко отзывается |
 
-Поток по шагам (участники: `Client`, `Auth Server`, `Resource Server`):
+```mermaid
+sequenceDiagram
+    participant Client
+    participant AS as Auth Server
+    participant RS as Resource Server
 
-1. `Client` логинится в `Auth Server`: `Login (credentials)`.
-2. `Auth Server` возвращает `Client` пару: `Access Token (15 min)` + `Refresh Token (30 days)`.
-3. `Client` обращается к `Resource Server`: `GET /api/data` + `Access Token`.
-4. `Resource Server` отвечает `200 OK`.
-5. Проходит время — у `Client` истекает `Access Token`.
-6. `Client` обновляет токен у `Auth Server`: `POST /token/refresh` + `Refresh Token`.
-7. `Auth Server` возвращает `New Access Token` + `New Refresh Token`.
-8. `Client` повторяет запрос к `Resource Server`: `GET /api/data` + `New Access Token`.
-9. `Resource Server` отвечает `200 OK`.
+    Client->>AS: Login (credentials)
+    AS-->>Client: Access Token (15 min) + Refresh Token (30 days)
+    Client->>RS: GET /api/data + Access Token
+    RS-->>Client: 200 OK
+
+    Note over Client: Access Token истёк
+
+    Client->>AS: POST /token/refresh + Refresh Token
+    AS-->>Client: New Access Token + New Refresh Token
+    Client->>RS: GET /api/data + New Access Token
+    RS-->>Client: 200 OK
+```
 
 ---
 
@@ -437,16 +466,22 @@ public JwtDecoder jwtDecoder() {
 
 **Зачем это нужно:** так система обнаруживает кражу токена. Если злоумышленник похитил Refresh Token и использовал его, то старый токен уже аннулирован — и когда legitimate-клиент попытается обновиться своим (теперь старым) токеном, сервер увидит повторное использование. Это сигнал кражи: в ответ можно отозвать всю «семью» токенов и заставить пользователя перелогиниться. Без ротации украденный Refresh Token работал бы незаметно весь свой срок жизни.
 
-Сценарий обнаружения кражи по шагам (участники: `Client`, `Auth Server`, `Attacker`):
+```mermaid
+sequenceDiagram
+    participant Client
+    participant AS as Auth Server
+    participant Attacker
 
-1. `Client` обновляет токен у `Auth Server`: `POST /token/refresh` + `RT_v1`.
-2. `Auth Server` возвращает `Client` пару `AT_new` + `RT_v2`, при этом `RT_v1` аннулирован.
-3. `Attacker` пытается использовать украденный токен у `Auth Server`: `POST /token/refresh` + `RT_v1 (украден)`.
-4. `Auth Server` видит, что `RT_v1` уже использован — это подозрение на кражу.
-5. `Auth Server` отвечает `Attacker`: `401 Unauthorized`.
-6. `Auth Server` отзывает всю семью токенов (включая `RT_v2`).
-7. `Client` обращается к `Auth Server` со своим `RT_v2`: `POST /token/refresh` + `RT_v2`.
-8. `Auth Server` отвечает `Client`: `401` — требуется повторный логин.
+    Client->>AS: POST /token/refresh + RT_v1
+    AS-->>Client: AT_new + RT_v2 (RT_v1 аннулирован)
+
+    Attacker->>AS: POST /token/refresh + RT_v1 (украден)
+    AS->>AS: RT_v1 уже использован — подозрение!
+    AS-->>Attacker: 401 Unauthorized
+    AS->>AS: Отозвать всю семью токенов (RT_v2 тоже)
+    Client->>AS: POST /token/refresh + RT_v2
+    AS-->>Client: 401 — требуется повторный логин
+```
 
 **Реализация в Spring Authorization Server:**
 ```java
@@ -628,12 +663,17 @@ public class JwtBlacklistFilter extends OncePerRequestFilter {
 
 **Token Introspection** (RFC 7662) — механизм, при котором Resource Server спрашивает у Authorization Server, валиден ли токен прямо сейчас, вместо того чтобы проверять его локально по подписи. Это противоположность stateless-проверке JWT: источником истины снова становится сервер, который выдал токен, — а значит, отзыв работает мгновенно.
 
-Поток интроспекции по шагам (участники: `Client`, `Resource Server`, `Auth Server / Introspection Endpoint`):
+```mermaid
+sequenceDiagram
+    participant Client
+    participant RS as Resource Server
+    participant AS as Auth Server / Introspection Endpoint
 
-1. `Client` обращается к `Resource Server`: `GET /api/data` + `Token`.
-2. `Resource Server` спрашивает `Auth Server / Introspection Endpoint`: `POST /introspect` + `Token`.
-3. `Auth Server` отвечает `Resource Server`: `{"active": true, "sub": "user123", "exp": ...}`.
-4. `Resource Server` отвечает `Client` `200 OK`, если `active=true`.
+    Client->>RS: GET /api/data + Token
+    RS->>AS: POST /introspect + Token
+    AS-->>RS: {"active": true, "sub": "user123", "exp": ...}
+    RS-->>Client: 200 OK (если active=true)
+```
 
 **Когда применять вместо локальной проверки JWT:**
 
@@ -773,13 +813,13 @@ processor.setJWSKeySelector(new JWSAlgorithmFamilyKeySelector<>(
 4. Уязвимая библиотека, доверяя заголовку, считает `HMAC(payload, publicKey)` тем же ключом — и подпись сходится.
 5. Злоумышленник получает валидный токен с любыми claims.
 
-Цепочка атаки по шагам:
-
-- Публичный RSA-ключ (открытый, доступен всем) →
-- злоумышленник использует его как HMAC secret →
-- создаёт `HS256` JWT с admin claims →
-- уязвимый сервер верифицирует `HS256(payload, publicKey)` →
-- успешная верификация — полный доступ.
+```mermaid
+graph LR
+    A["Публичный RSA ключ\n(открытый)"] --> B["Злоумышленник использует\nкак HMAC secret"]
+    B --> C["Создаёт HS256 JWT\nс admin claims"]
+    C --> D["Уязвимый сервер\nверифицирует HS256(payload, publicKey)"]
+    D --> E["Успешная верификация!\nПолный доступ"]
+```
 
 **Защита:**
 ```java
@@ -1089,12 +1129,12 @@ class SecuredControllerTest {
 
 **OpenID Connect (OIDC)** — это тонкий слой аутентификации поверх OAuth2: OAuth2 отвечает на вопрос «что клиенту разрешено делать», а OIDC добавляет ответ на вопрос «кто этот пользователь». Ключевой вклад OIDC — **ID Token**, и он по стандарту всегда представлен именно как JWT. То есть JWT в OIDC — не один из вариантов, а обязательный формат удостоверения личности.
 
-Как связаны слои:
-
-- `OAuth2` (Authorization) → надстраивается слоем `OpenID Connect` (Authentication + Identity).
-- `OpenID Connect` даёт два токена:
-  - `ID Token (JWT)` = кто такой пользователь (who the user is).
-  - `Access Token` = что пользователю разрешено делать (what user can do).
+```mermaid
+graph LR
+    OAuth2["OAuth2\n(Authorization)"] --> OIDC["OpenID Connect\n(Authentication + Identity)"]
+    OIDC --> IDToken["ID Token (JWT)\n= Who the user is"]
+    OIDC --> AccessToken["Access Token\n= What user can do"]
+```
 
 **ID Token** — JWT, содержащий информацию об аутентификации пользователя:
 ```json

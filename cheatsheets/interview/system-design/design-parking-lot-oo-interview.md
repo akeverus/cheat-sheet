@@ -480,43 +480,101 @@ public class ParkingRate {
 
 ## Q10. Class diagram целиком (!) <a id="q10"></a>
 
-Собранная картина классов и их связей. Обратите внимание на типы связей: композиция означает «часть владеет целым и не живёт без него» (этаж без парковки не существует), наследование — «is-a», слабая ассоциация — билет ссылается на платёж, но не владеет им.
+Собранная картина классов и их связей. Обратите внимание на типы связей: `*--` (композиция) означает «часть владеет целым и не живёт без него» (этаж без парковки не существует), `<|--` — наследование, `-->` — слабую ассоциацию (билет ссылается на платёж, но не владеет им).
 
-**Классы и их члены:**
+```mermaid
+classDiagram
+    class ParkingLot {
+        -List~ParkingFloor~ floors
+        -List~EntrancePanel~ entrances
+        -List~ExitPanel~ exits
+        -ParkingRate rate
+        +parkVehicle(Vehicle) Ticket
+        +exitVehicle(Ticket, Payment) boolean
+    }
 
-- `ParkingLot` — поля: `floors: List<ParkingFloor>`, `entrances: List<EntrancePanel>`, `exits: List<ExitPanel>`, `rate: ParkingRate`; методы: `parkVehicle(Vehicle): Ticket`, `exitVehicle(Ticket, Payment): boolean`.
-- `ParkingFloor` — поля: `floorId: String`, `spots: Map<SpotSize, List<ParkingSpot>>`, `board: DisplayBoard`; методы: `assignVehicleToSpot(Vehicle): Optional<ParkingSpot>`, `freeSpot(ParkingSpot)`.
-- `ParkingSpot` (`<<abstract>>`) — поля: `id: String`, `size: SpotSize`, `parkedVehicle: Vehicle`; методы: `canFitVehicle(Vehicle): boolean`, `assignVehicle(Vehicle): boolean`.
-  - Подклассы: `MotorcycleSpot`, `CompactSpot`, `LargeSpot`, `HandicappedSpot`.
-- `Vehicle` (`<<abstract>>`) — поля: `licenseNumber: String`, `type: VehicleType`.
-  - Подклассы: `Motorcycle`, `Car`, `Truck`.
-- `Ticket` — поля: `ticketId: String`, `spotId: String`, `entryTime: Instant`, `status: TicketStatus`; метод: `markPaid()`.
-- `Payment` (`<<abstract>>`) — поля: `amount: BigDecimal`, `status: PaymentStatus`; метод: `initiateTransaction(): boolean`.
-  - Подклассы: `CashPayment`, `CreditCardPayment`.
-- `ParkingRate` — поле: `tiers: List<Tier>`; метод: `calculate(Duration): BigDecimal`.
-- `EntrancePanel` — метод: `printTicket(Vehicle): Ticket`.
-- `ExitPanel` — методы: `scanTicket(String): Ticket`, `processPayment(Ticket, Payment)`.
-- `DisplayBoard` — метод: `showFreeSpots()`.
+    class ParkingFloor {
+        -String floorId
+        -Map~SpotSize, List~ParkingSpot~~ spots
+        -DisplayBoard board
+        +assignVehicleToSpot(Vehicle) Optional~ParkingSpot~
+        +freeSpot(ParkingSpot)
+    }
 
-**Связи (композиция — владение, кардинальности в кавычках):**
+    class ParkingSpot {
+        <<abstract>>
+        -String id
+        -SpotSize size
+        -Vehicle parkedVehicle
+        +canFitVehicle(Vehicle) boolean
+        +assignVehicle(Vehicle) boolean
+    }
 
-- `ParkingLot` `"1"` композиция `"1..*"` `ParkingFloor`;
-- `ParkingLot` `"1"` композиция `"1..*"` `EntrancePanel`;
-- `ParkingLot` `"1"` композиция `"1..*"` `ExitPanel`;
-- `ParkingLot` `"1"` композиция `"1"` `ParkingRate`;
-- `ParkingFloor` `"1"` композиция `"1..*"` `ParkingSpot`;
-- `ParkingFloor` `"1"` композиция `"1"` `DisplayBoard`.
+    class MotorcycleSpot
+    class CompactSpot
+    class LargeSpot
+    class HandicappedSpot
 
-**Связи (наследование):**
+    class Vehicle {
+        <<abstract>>
+        -String licenseNumber
+        -VehicleType type
+    }
+    class Motorcycle
+    class Car
+    class Truck
 
-- `ParkingSpot` ← `MotorcycleSpot`, `CompactSpot`, `LargeSpot`, `HandicappedSpot`;
-- `Vehicle` ← `Motorcycle`, `Car`, `Truck`;
-- `Payment` ← `CashPayment`, `CreditCardPayment`.
+    class Ticket {
+        -String ticketId
+        -String spotId
+        -Instant entryTime
+        -TicketStatus status
+        +markPaid()
+    }
 
-**Связи (слабая ассоциация, направленная):**
+    class Payment {
+        <<abstract>>
+        -BigDecimal amount
+        -PaymentStatus status
+        +initiateTransaction() boolean
+    }
+    class CashPayment
+    class CreditCardPayment
 
-- `Ticket` `"1"` → `"0..1"` `Payment` (роль `paidWith`);
-- `ParkingSpot` `"1"` → `"0..1"` `Vehicle` (роль `parks`).
+    class ParkingRate {
+        -List~Tier~ tiers
+        +calculate(Duration) BigDecimal
+    }
+
+    class EntrancePanel {
+        +printTicket(Vehicle) Ticket
+    }
+    class ExitPanel {
+        +scanTicket(String) Ticket
+        +processPayment(Ticket, Payment)
+    }
+    class DisplayBoard {
+        +showFreeSpots()
+    }
+
+    ParkingLot "1" *-- "1..*" ParkingFloor
+    ParkingLot "1" *-- "1..*" EntrancePanel
+    ParkingLot "1" *-- "1..*" ExitPanel
+    ParkingLot "1" *-- "1" ParkingRate
+    ParkingFloor "1" *-- "1..*" ParkingSpot
+    ParkingFloor "1" *-- "1" DisplayBoard
+    ParkingSpot <|-- MotorcycleSpot
+    ParkingSpot <|-- CompactSpot
+    ParkingSpot <|-- LargeSpot
+    ParkingSpot <|-- HandicappedSpot
+    Vehicle <|-- Motorcycle
+    Vehicle <|-- Car
+    Vehicle <|-- Truck
+    Payment <|-- CashPayment
+    Payment <|-- CreditCardPayment
+    Ticket "1" --> "0..1" Payment : paidWith
+    ParkingSpot "1" --> "0..1" Vehicle : parks
+```
 
 **Направленность связей** — главное, что стоит проговорить: `ParkingLot` знает про `ParkingFloor`, но не наоборот (зависимости идут сверху вниз). Однонаправленность убирает циклы и позволяет тестировать `ParkingFloor` изолированно, без поднятия всей парковки.
 
@@ -524,70 +582,88 @@ public class ParkingRate {
 
 Happy path въезда: водитель жмёт кнопку → `ParkingLot` обходит этажи → этаж атомарно подбирает и занимает место → создаётся и сохраняется билет → печатается на въезде. `DisplayBoard` обновляется через подписку (Observer).
 
-Участники: `Driver` (actor), `EntrancePanel` (EP), `ParkingLot` (Lot), `ParkingFloor` (Floor), `ParkingSpot` (Spot), `TicketRepository` (Repo), `DisplayBoard` (Board).
+```mermaid
+sequenceDiagram
+    actor Driver
+    participant EP as EntrancePanel
+    participant Lot as ParkingLot
+    participant Floor as ParkingFloor
+    participant Spot as ParkingSpot
+    participant Repo as TicketRepository
+    participant Board as DisplayBoard
 
-По шагам:
-
-1. `Driver` → `EntrancePanel`: нажимает кнопку (`Car: A123BC`).
-2. `EntrancePanel` → `ParkingLot`: `parkVehicle(car)`.
-3. Цикл по каждому floor, пока не нашли spot:
-   1. `ParkingLot` → `ParkingFloor`: `assignVehicleToSpot(car)`.
-   2. `ParkingFloor` (сам себе): захватывает `floorLock` (acquire).
-   3. `ParkingFloor` → `ParkingSpot`: `assignVehicle(car)`.
-   4. `ParkingSpot` ⇢ `ParkingFloor`: возвращает `true / false`.
-   5. `ParkingFloor` (сам себе): отпускает `floorLock` (release).
-   6. `ParkingFloor` ⇢ `ParkingLot`: возвращает `Optional<Spot>`.
-4. `ParkingLot` → `TicketRepository`: `save(ticket)`.
-5. `ParkingLot` ⇢ `EntrancePanel`: `Ticket(id, entryTime, spotId)`.
-6. `EntrancePanel` ⇢ `Driver`: печать билета.
-7. `ParkingFloor` → `DisplayBoard`: `notifySpotTaken(spot)`.
-8. `DisplayBoard` (сам себе): обновляет счётчики (update counters).
+    Driver->>EP: press button (Car: A123BC)
+    EP->>Lot: parkVehicle(car)
+    loop по каждому floor пока не нашли spot
+        Lot->>Floor: assignVehicleToSpot(car)
+        Floor->>Floor: acquire floorLock
+        Floor->>Spot: assignVehicle(car)
+        Spot-->>Floor: true / false
+        Floor->>Floor: release floorLock
+        Floor-->>Lot: Optional<Spot>
+    end
+    Lot->>Repo: save(ticket)
+    Lot-->>EP: Ticket(id, entryTime, spotId)
+    EP-->>Driver: печать билета
+    Floor->>Board: notifySpotTaken(spot)
+    Board->>Board: update counters
+```
 
 **Что критично:** блок `assignVehicleToSpot` целиком атомарен — выполняется под одним `floorLock`. Без этого два параллельных потока могли бы увидеть одно и то же свободное место и оба отдать его водителям — классическая гонка «check-then-act».
 
 ## Q12. Sequence: выезд и оплата <a id="q12"></a>
 
-Выезд сложнее въезда из-за денег: сканируем билет → считаем стоимость по `ParkingRate` → проводим оплату выбранным способом (Strategy) → и только при успехе освобождаем место и открываем барьер. Ключевая развилка — ветка success/fail: провал платежа не должен ни выпускать машину, ни освобождать место.
+Выезд сложнее въезда из-за денег: сканируем билет → считаем стоимость по `ParkingRate` → проводим оплату выбранным способом (Strategy) → и только при успехе освобождаем место и открываем барьер. Обратите внимание на ветку `alt success/fail` — провал платежа не должен ни выпускать машину, ни освобождать место.
 
-Участники: `Driver` (actor), `ExitPanel` (XP), `ParkingLot` (Lot), `TicketRepository` (Repo), `ParkingRate` (Rate), `Payment (Strategy)` (Pay), `PaymentGateway` (GW), `ParkingFloor` (Floor), `DisplayBoard` (Board).
+```mermaid
+sequenceDiagram
+    actor Driver
+    participant XP as ExitPanel
+    participant Lot as ParkingLot
+    participant Repo as TicketRepository
+    participant Rate as ParkingRate
+    participant Pay as Payment (Strategy)
+    participant GW as PaymentGateway
+    participant Floor as ParkingFloor
+    participant Board as DisplayBoard
 
-По шагам:
-
-1. `Driver` → `ExitPanel`: `scan ticket`.
-2. `ExitPanel` → `TicketRepository`: `findById(ticketId)`.
-3. `TicketRepository` ⇢ `ExitPanel`: `Ticket(ACTIVE)`.
-4. `ExitPanel` → `ParkingRate`: `calculate(duration)`.
-5. `ParkingRate` ⇢ `ExitPanel`: `amount`.
-6. `Driver` → `ExitPanel`: выбирает способ оплаты (`card`).
-7. `ExitPanel` → `Payment (Strategy)`: `new CreditCardPayment(amount)`.
-8. `Payment` → `PaymentGateway`: `charge(card, amount)`.
-9. `PaymentGateway` ⇢ `Payment`: `success / fail`.
-10. Развилка по результату платежа:
-    - **alt success** (платёж прошёл):
-      1. `Payment` ⇢ `ExitPanel`: `COMPLETED`.
-      2. `ExitPanel` → `TicketRepository`: `ticket.markPaid()`.
-      3. `ExitPanel` → `ParkingFloor`: `freeSpot(spotId)`.
-      4. `ParkingFloor` → `DisplayBoard`: `notifySpotFreed(spot)`.
-      5. `ExitPanel` ⇢ `Driver`: `barrier opens` (барьер открывается).
-    - **else fail** (платёж не прошёл):
-      1. `Payment` ⇢ `ExitPanel`: `FAILED`.
-      2. `ExitPanel` ⇢ `Driver`: `try another method` (предложить другой способ).
+    Driver->>XP: scan ticket
+    XP->>Repo: findById(ticketId)
+    Repo-->>XP: Ticket(ACTIVE)
+    XP->>Rate: calculate(duration)
+    Rate-->>XP: amount
+    Driver->>XP: choose method (card)
+    XP->>Pay: new CreditCardPayment(amount)
+    Pay->>GW: charge(card, amount)
+    GW-->>Pay: success / fail
+    alt success
+        Pay-->>XP: COMPLETED
+        XP->>Repo: ticket.markPaid()
+        XP->>Floor: freeSpot(spotId)
+        Floor->>Board: notifySpotFreed(spot)
+        XP-->>Driver: barrier opens
+    else fail
+        Pay-->>XP: FAILED
+        XP-->>Driver: try another method
+    end
+```
 
 **Порядок шагов — не косметика, а защита от потери денег:** `freeSpot` и открытие барьера вызываются **строго** после статуса `COMPLETED`. Если открыть барьер до подтверждения платежа — получим худший сценарий: с водителя списали деньги, а место уже отдали и машина уехала (или наоборот — уехал бесплатно). Поэтому освобождение места идёт после оплаты, а не параллельно с ней.
 
 ## Q13. State diagram билета <a id="q13"></a>
 
-Билет проходит конечный набор состояний, и для каждого зафиксировано, какие переходы вообще разрешены. Это не украшение: каждый переход — это бизнес-правило, которое потом превращается в код (см. State-паттерн в Q18).
+Билет проходит конечный набор состояний, и диаграмма фиксирует, какие переходы вообще разрешены. Это не украшение: каждый переход — это бизнес-правило, которое потом превращается в код (см. State-паттерн в Q18).
 
-Состояния и разрешённые переходы:
-
-- **начало** → `ACTIVE`: билет создан на въезде;
-- `ACTIVE` → `PAID`: оплата успешна;
-- `ACTIVE` → `LOST`: водитель заявил утерю;
-- `ACTIVE` → `EXPIRED`: прошло > 30 дней без выезда;
-- `LOST` → `PAID`: оплачен штраф за утерю;
-- `PAID` → **терминальное** (конечное состояние);
-- `EXPIRED` → **терминальное** (конечное состояние).
+```mermaid
+stateDiagram-v2
+    [*] --> ACTIVE: создан на въезде
+    ACTIVE --> PAID: оплата успешна
+    ACTIVE --> LOST: водитель заявил утерю
+    ACTIVE --> EXPIRED: > 30 дней без выезда
+    LOST --> PAID: оплачен штраф за утерю
+    PAID --> [*]
+    EXPIRED --> [*]
+```
 
 Состояние билета — не просто метка, а то, на чём держатся инварианты: из `PAID` нельзя оплатить второй раз; из `LOST` нельзя выехать без штрафа; `EXPIRED` и `PAID` — терминальные. Поэтому переходы делаем через явные методы (`markPaid`, `markLost`), а не через публичный `setStatus`: открытый сеттер позволил бы перевести билет в любое состояние в обход правил и сломать инвариант.
 

@@ -19,7 +19,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `System Design`
 
-Комплексное руководство по вопросам собеседования на тему `System Design` для `Senior Java Developer`. Включает фреймворк проектирования, классические задачи, распределённые паттерны, описания архитектур, примеры кода и `trade-offs`.
+Комплексное руководство по вопросам собеседования на тему `System Design` для `Senior Java Developer`. Включает фреймворк проектирования, классические задачи, распределённые паттерны, `mermaid`-диаграммы архитектур, примеры кода и `trade-offs`.
 
 **`System Design`** -- один из ключевых этапов собеседования на позиции `Senior`/`Staff` уровня. Оценивается не столько знание конкретных технологий, сколько умение структурировать задачу, делать осознанные компромиссы и коммуницировать решение. Тесно связан с [распределёнными системами](../architecture/distributed-systems-interview.md), [паттернами масштабируемости](../architecture/scalability-patterns-interview.md) и [CAP-теоремой](../architecture/cap-theorem-interview.md).
 
@@ -115,7 +115,17 @@ updated: "2026-04-25"
 | 5. Deep Dive | 15-20 мин | Критичные компоненты |
 | 6. Wrap Up | 5 мин | Bottlenecks, trade-offs, эволюция |
 
-Этапы идут строго по порядку: Requirements → Estimation → API & Data Model → High-Level Design → Deep Dive → Wrap Up.
+```mermaid
+graph LR
+    A["1. Requirements"] --> B["2. Estimation"]
+    B --> C["3. API & Data Model"]
+    C --> D["4. High-Level Design"]
+    D --> E["5. Deep Dive"]
+    E --> F["6. Wrap Up"]
+    style A fill:#e1f5fe
+    style D fill:#fff9c4
+    style E fill:#ffccbc
+```
 
 Главная мысль: интервьюер оценивает не финальную диаграмму, а **процесс мышления**. Поэтому каждый этап должен быть проговорён вслух.
 
@@ -237,13 +247,33 @@ CREATE INDEX idx_short_code ON urls(short_code);
 
 Нарисуй диаграмму с основными компонентами и проследи по ней путь одного запроса от клиента до хранилища и обратно. Это центральный этап интервью и момент, где проверяют системное мышление. Задача -- расставить блоки (балансировщик, шлюз, сервисы, кэш, БД, очередь) и показать, как между ними течёт запрос. Глубоко в детали пока не уходишь: их разберёшь на следующем этапе.
 
-**Типичные компоненты и потоки между ними:**
+**Типичные компоненты:**
 
-- `Client (Web/Mobile)` → `CDN` (статика и edge-контент).
-- `Client` → `Load Balancer` → `API Gateway` → сервисы `Service A` и `Service B`.
-- `Service A` → `Cache (Redis)`, `Service A` → `Database`, `Service A` → `Message Queue`.
-- `Message Queue` → `Service B` (асинхронная обработка).
-- `Service B` → `Database` и `Service B` → `Object Storage (S3)`.
+```mermaid
+graph TB
+    Client["Client (Web/Mobile)"]
+    LB["Load Balancer"]
+    API["API Gateway"]
+    S1["Service A"]
+    S2["Service B"]
+    Cache["Cache (Redis)"]
+    DB["Database"]
+    MQ["Message Queue"]
+    S3["Object Storage (S3)"]
+    CDN["CDN"]
+
+    Client --> CDN
+    Client --> LB
+    LB --> API
+    API --> S1
+    API --> S2
+    S1 --> Cache
+    S1 --> DB
+    S1 --> MQ
+    MQ --> S2
+    S2 --> DB
+    S2 --> S3
+```
 
 **Что нужно показать:**
 1. **Клиент** -- откуда приходят запросы
@@ -301,16 +331,25 @@ Cache: 20% hot URLs × daily reads × 500B ≈ 3.5 GB
 
 ### Архитектура
 
-Базовый поток: `Client` → `Load Balancer` → `API Service`, а `API Service` обращается к трём зависимостям -- `Redis Cache`, `Database` и `ID Generator`.
+```mermaid
+graph LR
+    Client --> LB["Load Balancer"]
+    LB --> API["API Service"]
+    API --> Cache["Redis Cache"]
+    API --> DB["Database"]
+    API --> IDGen["ID Generator"]
 
-**Write Path (создание ссылки):**
-1. `API Service` → `ID Generator` (запрос `POST /shorten`).
-2. `ID Generator` → `API Service` (возвращает `unique ID`).
-3. `API Service` → `Database` (`save` записи).
+    subgraph "Write Path"
+        API -->|"POST /shorten"| IDGen
+        IDGen -->|"unique ID"| API
+        API -->|"save"| DB
+    end
 
-**Read Path (редирект):**
-1. `API Service` → `Redis Cache` (запрос `GET /:code`).
-2. При промахе (`miss`) `Redis Cache` → `Database`.
+    subgraph "Read Path"
+        API -->|"GET /:code"| Cache
+        Cache -->|"miss"| DB
+    end
+```
 
 ### Генерация короткого `URL`
 
@@ -360,12 +399,17 @@ public class Base62Encoder {
 
 ### Где размещать?
 
-Логика прохождения запроса: `Client` → `Rate Limiter`. Если лимит не превышен (`allow`), запрос идёт дальше в `API Service`; если превышен -- `Rate Limiter` сразу возвращает `429` клиенту.
+```mermaid
+graph LR
+    Client --> RL["Rate Limiter"]
+    RL -->|"allow"| API["API Service"]
+    RL -->|"429"| Client
 
-Возможные точки размещения:
-1. `Client-side` -- на стороне клиента.
-2. `Server-side` -- внутри самого сервиса.
-3. `Middleware / API Gateway` -- отдельным слоем перед сервисами.
+    subgraph "Варианты размещения"
+        A["1. Client-side"] ~~~ B["2. Server-side"]
+        B ~~~ C["3. Middleware / API Gateway"]
+    end
+```
 
 **Рекомендация:** middleware / `API Gateway` -- централизованно, не зависит от клиентов, легко конфигурируется.
 
@@ -467,15 +511,22 @@ Storage:  5B × 200B × 365 дней = ~365 TB/год
 
 ### Архитектура
 
-Связи компонентов:
-- `Client A` ↔ `WS Server 1` и `Client B` ↔ `WS Server 2` -- по `WebSocket`.
-- `WS Server 1` и `WS Server 2` ↔ `Message Queue (Kafka)` -- маршрутизация сообщений между серверами.
-- `Message Queue` → `Message Service`.
-- `Message Service` → `Message DB (Cassandra)` (хранение) и `Message Service` → `Push Notification Service` (доставка офлайн-получателям).
+```mermaid
+graph TB
+    A["Client A"] <-->|"WebSocket"| WS1["WS Server 1"]
+    B["Client B"] <-->|"WebSocket"| WS2["WS Server 2"]
+    WS1 <--> MQ["Message Queue (Kafka)"]
+    WS2 <--> MQ
+    MQ --> MS["Message Service"]
+    MS --> DB["Message DB (Cassandra)"]
+    MS --> Push["Push Notification Service"]
 
-**Connection Management (управление соединениями):**
-- `WS Server 1` и `WS Server 2` → `Service Discovery`.
-- `Service Discovery` → `Connection Registry (Redis)` -- хранит mapping `userId → server`.
+    subgraph "Connection Management"
+        WS1 --> SD["Service Discovery"]
+        WS2 --> SD
+        SD -->|"userId → server"| Registry["Connection Registry (Redis)"]
+    end
+```
 
 ### `Real-time` коммуникация
 
@@ -512,7 +563,12 @@ CREATE TABLE messages (
 
 ### Статусы доставки
 
-Сообщение последовательно проходит три состояния: `Sent` (сервер получил) → `Delivered` (получатель получил) → `Read` (получатель прочитал).
+```mermaid
+stateDiagram-v2
+    [*] --> Sent: сервер получил
+    Sent --> Delivered: получатель получил
+    Delivered --> Read: получатель прочитал
+```
 
 - **Sent:** сервер подтвердил получение (ACK)
 - **Delivered:** устройство получателя подтвердило получение
@@ -543,12 +599,27 @@ CREATE TABLE messages (
 
 ### Архитектура
 
-Конвейер обработки нотификации идёт по порядку:
-1. Источники событий -- `Service 1..N` (отправляют `event`) и `Scheduler` (отправляет `scheduled`) → `Notification API`.
-2. `Notification API` → `Validation & Enrichment` → `User Preferences Filter` → `Rate Limiter / Throttle` → `Channel Router`.
-3. `Channel Router` маршрутизирует по каналам в отдельные очереди: `push` → `Push Queue`, `sms` → `SMS Queue`, `email` → `Email Queue`.
-4. Каждую очередь разбирает свой worker: `Push Queue` → `Push Worker (APNS/FCM)`, `SMS Queue` → `SMS Worker (Twilio)`, `Email Queue` → `Email Worker (SES)`.
-5. Все воркеры пишут результат в общий `Delivery Log DB`.
+```mermaid
+graph TB
+    Svc["Service 1..N"] -->|"event"| API["Notification API"]
+    Scheduler["Scheduler"] -->|"scheduled"| API
+    API --> Valid["Validation & Enrichment"]
+    Valid --> Pref["User Preferences Filter"]
+    Pref --> Throttle["Rate Limiter / Throttle"]
+    Throttle --> Router["Channel Router"]
+
+    Router -->|"push"| PushQ["Push Queue"]
+    Router -->|"sms"| SmsQ["SMS Queue"]
+    Router -->|"email"| EmailQ["Email Queue"]
+
+    PushQ --> PushW["Push Worker (APNS/FCM)"]
+    SmsQ --> SmsW["SMS Worker (Twilio)"]
+    EmailQ --> EmailW["Email Worker (SES)"]
+
+    PushW --> Log["Delivery Log DB"]
+    SmsW --> Log
+    EmailW --> Log
+```
 
 ### Ключевые компоненты
 
@@ -598,10 +669,23 @@ Feed QPS:    1B / 86400 ≈ 12K/сек (пик ~30K)
 
 ### Генерация `Feed` -- главный design decision
 
-Механика двух подходов:
+```mermaid
+graph TB
+    subgraph "Fan-out on Write (Push)"
+        U1["User publishes"] --> FW["Fan-out Worker"]
+        FW -->|"write to each follower's feed"| T1["Timeline Cache User A"]
+        FW --> T2["Timeline Cache User B"]
+        FW --> T3["Timeline Cache User C"]
+    end
 
-- **`Fan-out on Write` (Push):** `User publishes` → `Fan-out Worker`, который пишет пост в timeline-кэш каждого подписчика (`write to each follower's feed`) -- `Timeline Cache User A`, `User B`, `User C` и т.д.
-- **`Fan-out on Read` (Pull):** `User requests feed` → `Feed Service`, который на лету собирает посты всех подписок (`fetch posts from followees` -- `Posts User X`, `User Y`, `User Z`), затем `merge & rank` и отдаёт результат обратно пользователю.
+    subgraph "Fan-out on Read (Pull)"
+        R1["User requests feed"] --> FS["Feed Service"]
+        FS -->|"fetch posts from followees"| P1["Posts User X"]
+        FS --> P2["Posts User Y"]
+        FS --> P3["Posts User Z"]
+        FS -->|"merge & rank"| R1
+    end
+```
 
 | Подход | Read latency | Write latency | Когда использовать |
 |--------|-------------|---------------|-------------------|
@@ -627,12 +711,25 @@ Redis:
 
 ### Архитектура
 
-Поток запросов и данных:
-- `Client` → `Load Balancer` → три сервиса: `Post Service`, `Feed Service`, `Follow Service`.
-- `Post Service` публикует `new post event` → `Kafka` → `Fan-out Service`.
-- `Fan-out Service` пишет посты в timeline подписчиков (`write to follower timelines`) → `Redis (Timeline Cache)`, при этом пропускает знаменитостей (`skip celebrities`), сверяясь с `Celebrity Registry`.
-- `Feed Service` читает готовые ленты из `Redis`, отдельно подтягивает посты знаменитостей (`celebrity posts`) из `Post DB`, затем `merge & rank` и отдаёт результат `Client`.
-- `Post Service` также пишет в `Post DB` и обращается к `Media Service (S3 + CDN)` для медиа.
+```mermaid
+graph TB
+    Client --> LB["Load Balancer"]
+    LB --> PostSvc["Post Service"]
+    LB --> FeedSvc["Feed Service"]
+    LB --> FollowSvc["Follow Service"]
+
+    PostSvc -->|"new post event"| Kafka["Kafka"]
+    Kafka --> FanoutSvc["Fan-out Service"]
+    FanoutSvc -->|"write to follower timelines"| Redis["Redis (Timeline Cache)"]
+    FanoutSvc -->|"skip celebrities"| CelebList["Celebrity Registry"]
+
+    FeedSvc --> Redis
+    FeedSvc -->|"celebrity posts"| PostDB["Post DB"]
+    FeedSvc -->|"merge & rank"| Client
+
+    PostSvc --> PostDB
+    PostSvc --> MediaSvc["Media Service (S3 + CDN)"]
+```
 
 ### `Trade-offs`
 
@@ -653,11 +750,18 @@ Redis:
 
 ### Архитектура
 
-Онлайн-путь запроса: `Client` отправляет запрос (`q=sys`) → `Autocomplete Service` → `Trie Cache (in-memory)`; при промахе (`miss`) -- обращение к `Trie Storage (DB)`.
+```mermaid
+graph TB
+    Client -->|"q=sys"| API["Autocomplete Service"]
+    API --> TrieCache["Trie Cache (in-memory)"]
+    TrieCache -->|"miss"| TrieDB["Trie Storage (DB)"]
 
-**Offline Pipeline (фоновое обновление):**
-- `Search Query Logs` → `Aggregation (Spark/Flink)` → считает `top-K per prefix` → `Trie Storage (DB)`.
-- `Trie Storage (DB)` периодически загружается (`periodic load`) в `Trie Cache (in-memory)`.
+    subgraph "Offline Pipeline"
+        Logs["Search Query Logs"] --> Agg["Aggregation (Spark/Flink)"]
+        Agg -->|"top-K per prefix"| TrieDB
+        TrieDB -->|"periodic load"| TrieCache
+    end
+```
 
 ### Структура данных: `Trie`
 
@@ -723,13 +827,22 @@ Read:Write = 3:1
 
 ### Архитектура
 
-Поток компонентов:
-- `Desktop/Mobile Client` → `API Gateway`, который маршрутизирует к `Metadata Service` и `Upload Service`.
-- `Upload Service` режет файл на блоки (`chunks`) и кладёт их в `Block Storage (S3)`.
-- `Metadata Service` → `Metadata DB (PostgreSQL)` (метаданные) и `Metadata Service` → `Redis Cache`.
+```mermaid
+graph TB
+    Client["Desktop/Mobile Client"]
+    Client --> API["API Gateway"]
+    API --> MetaSvc["Metadata Service"]
+    API --> UploadSvc["Upload Service"]
 
-**Sync (синхронизация между устройствами):**
-- `Metadata Service` → `Notification Service` → `Client` по `WebSocket/Long Poll` (оповещение об изменениях).
+    UploadSvc -->|"chunks"| BlockStore["Block Storage (S3)"]
+    MetaSvc --> MetaDB["Metadata DB (PostgreSQL)"]
+    MetaSvc --> Cache["Redis Cache"]
+
+    subgraph "Sync"
+        MetaSvc --> NotifSvc["Notification Service"]
+        NotifSvc -->|"WebSocket/Long Poll"| Client
+    end
+```
 
 ### Хранение файлов: `Chunking`
 
@@ -800,9 +913,23 @@ CREATE TABLE file_versions (
 
 ### Архитектура: Offline + Online Pipeline
 
-**Offline (Batch):** `Interaction Logs` → `ETL (Spark)` → `Model Training`; обучение наполняет `Model Store` и предрасчитанные рекомендации `Pre-computed Recs (Redis)`.
+```mermaid
+graph LR
+    subgraph "Offline (Batch)"
+        Logs["Interaction Logs"] --> ETL["ETL (Spark)"]
+        ETL --> Train["Model Training"]
+        Train --> Models["Model Store"]
+        Train --> PreCalc["Pre-computed Recs (Redis)"]
+    end
 
-**Online (Real-time):** `Client` → `Rec API`, который обращается к `Pre-computed Recs (Redis)`, `Model Store` и `Real-time Ranker`; `Real-time Ranker` возвращает отранжированный результат обратно `Client`.
+    subgraph "Online (Real-time)"
+        Client --> API["Rec API"]
+        API --> PreCalc
+        API --> Models
+        API --> Ranker["Real-time Ranker"]
+        Ranker --> Client
+    end
+```
 
 Идея разделения проста: тяжёлое обучение и подсчёт рекомендаций делаются заранее (батчем), а в момент запроса остаётся только быстрая лёгкая операция -- достать готовое и подправить под текущий контекст. Так online-путь укладывается в требуемые < 200ms.
 
@@ -823,10 +950,20 @@ CREATE TABLE file_versions (
 
 ### Принцип работы
 
-Пример кольца (`Hash Ring`) из четырёх узлов: `Node A (hash=30)`, `Node B (hash=120)`, `Node C (hash=210)`, `Node D (hash=300)`. Ключ назначается первому узлу по часовой стрелке от своей позиции:
-- `Key 'user:1' (hash=50)` → `Node B`.
-- `Key 'user:2' (hash=150)` → `Node C`.
-- `Key 'user:3' (hash=280)` → `Node D`.
+```mermaid
+graph TD
+    subgraph "Hash Ring"
+        direction TB
+        N1["Node A (hash=30)"]
+        N2["Node B (hash=120)"]
+        N3["Node C (hash=210)"]
+        N4["Node D (hash=300)"]
+    end
+
+    K1["Key 'user:1' (hash=50) → Node B"] -.-> N2
+    K2["Key 'user:2' (hash=150) → Node C"] -.-> N3
+    K3["Key 'user:3' (hash=280) → Node D"] -.-> N4
+```
 
 1. Серверы и ключи хешируются на одно общее кольцо (0..2^32).
 2. Ключ назначается первому серверу по часовой стрелке от своей позиции.
@@ -889,10 +1026,25 @@ public class ConsistentHashRing<T> {
 
 ### Стратегии шардирования
 
-Три способа распределения данных по шардам:
-- **Key-based (Hash):** `hash(userId) % N` направляет запись в один из шардов (`Shard 0`, `Shard 1`, `Shard 2`).
-- **Range-based:** по диапазону `userId range` -- например, `Shard A: 1-1M`, `Shard B: 1M-2M`, `Shard C: 2M-3M`.
-- **Directory-based:** отдельный `Lookup Service` решает, в какой шард (`Shard X`, `Shard Y`) идёт запись.
+```mermaid
+graph TB
+    subgraph "Key-based (Hash)"
+        H["hash(userId) % N"] --> S1["Shard 0"]
+        H --> S2["Shard 1"]
+        H --> S3["Shard 2"]
+    end
+
+    subgraph "Range-based"
+        R["userId range"] --> R1["Shard A: 1-1M"]
+        R --> R2["Shard B: 1M-2M"]
+        R --> R3["Shard C: 2M-3M"]
+    end
+
+    subgraph "Directory-based"
+        D["Lookup Service"] --> D1["Shard X"]
+        D --> D2["Shard Y"]
+    end
+```
 
 | Стратегия | Плюсы | Минусы |
 |-----------|-------|--------|
@@ -953,12 +1105,14 @@ SELECT * FROM orders WHERE amount > 1000 ORDER BY created_at LIMIT 10;
 
 **1. `Raft` (наиболее понятный):**
 
-Состояния узла и переходы между ними:
-- Старт -- в состоянии `Follower`.
-- `Follower` → `Candidate`: по `election timeout` (не пришёл heartbeat).
-- `Candidate` → `Leader`: получил большинство голосов.
-- `Candidate` → `Follower`: обнаружил лидера или новый term.
-- `Leader` → `Follower`: обнаружил больший term.
+```mermaid
+stateDiagram-v2
+    [*] --> Follower
+    Follower --> Candidate: election timeout
+    Candidate --> Leader: получил большинство голосов
+    Candidate --> Follower: обнаружил лидера / новый term
+    Leader --> Follower: обнаружил больший term
+```
 
 Принцип `Raft`:
 1. Все узлы начинают как `Follower`
@@ -1015,9 +1169,19 @@ selector.start();
 
 ### Архитектура
 
-- Серверы приложения `App Server 1`, `App Server 2`, `App Server 3` обращаются к общему `Cache Router`.
-- `Cache Router` по `consistent hashing` распределяет ключи между `Cache Node 1`, `Cache Node 2`, `Cache Node 3`.
-- Узлы реплицируются: `Cache Node 1` → `Replica 1`, `Cache Node 2` → `Replica 2` (`replication`).
+```mermaid
+graph TB
+    App1["App Server 1"] --> Router["Cache Router"]
+    App2["App Server 2"] --> Router
+    App3["App Server 3"] --> Router
+
+    Router -->|"consistent hashing"| C1["Cache Node 1"]
+    Router --> C2["Cache Node 2"]
+    Router --> C3["Cache Node 3"]
+
+    C1 -.->|"replication"| C1R["Replica 1"]
+    C2 -.->|"replication"| C2R["Replica 2"]
+```
 
 ### Стратегии кэширования
 
@@ -1076,9 +1240,19 @@ public String getWithLock(String key) {
 
 ### Архитектура
 
-- Пользователь попадает на ближайший edge: `User (Москва)` → `CDN Edge (Москва)`, `User (Нью-Йорк)` → `CDN Edge (Нью-Йорк)`.
-- При промахе (`cache miss`) edge обращается к `Origin Server`.
-- Внутри `CDN PoP (Point of Presence)`: `CDN Edge` соединён с `Load Balancer`, а тот -- с `Cache Storage`.
+```mermaid
+graph TB
+    User1["User (Москва)"] --> Edge1["CDN Edge (Москва)"]
+    User2["User (Нью-Йорк)"] --> Edge2["CDN Edge (Нью-Йорк)"]
+
+    Edge1 -->|"cache miss"| Origin["Origin Server"]
+    Edge2 -->|"cache miss"| Origin
+
+    subgraph "CDN PoP (Point of Presence)"
+        Edge1 --- LB1["Load Balancer"]
+        LB1 --- CS1["Cache Storage"]
+    end
+```
 
 ### Push vs Pull CDN
 
@@ -1195,10 +1369,22 @@ Observability -- способность по внешним сигналам п�
 
 ### Три столпа
 
-Три столпа observability: `Metrics (Prometheus/VictoriaMetrics)`, `Logs (ELK/Loki)`, `Traces (Jaeger/Zipkin)`. Вокруг них:
-- `Alerting (Alertmanager)` строится поверх метрик (`Metrics`).
-- `Dashboards (Grafana)` визуализируют все три столпа -- `Metrics`, `Logs`, `Traces`.
-- Сигналы связываются между собой (`correlate`): от `Metrics` к `Traces`, далее от `Traces` к `Logs`.
+```mermaid
+graph LR
+    subgraph "Observability"
+        M["Metrics (Prometheus/VictoriaMetrics)"]
+        L["Logs (ELK/Loki)"]
+        T["Traces (Jaeger/Zipkin)"]
+    end
+
+    Alert["Alerting (Alertmanager)"] --> M
+    Dash["Dashboards (Grafana)"] --> M
+    Dash --> L
+    Dash --> T
+
+    M -.->|"correlate"| T
+    T -.->|"correlate"| L
+```
 
 **Metrics (RED/USE):**
 - **RED:** Rate, Errors, Duration -- для сервисов
@@ -1312,10 +1498,17 @@ DELETE /:shortCode (аутентификация)
 
 **Шаг 4 — High-Level Design:**
 
-- `Клиент` → `Load Balancer` → `URL Shortener API` (несколько инстансов).
-- `URL Shortener API` обращается к: `Redis Cache` (`shortCode → longUrl`), `PostgreSQL / DynamoDB` (поля `shortCode, longUrl, userId, ttl, clicks`), `ID Generator` (`Snowflake / Zookeeper`).
-- `Браузер` → `CDN / Edge` → `URL Shortener API`.
-- `URL Shortener API` → `Kafka → ClickHouse` (аналитика кликов).
+```mermaid
+graph TD
+    Client["Клиент"] --> LB["Load Balancer"]
+    LB --> API["URL Shortener API\n(несколько инстансов)"]
+    API --> Cache["Redis Cache\n(shortCode → longUrl)"]
+    API --> DB["PostgreSQL / DynamoDB\n(shortCode, longUrl, userId, ttl, clicks)"]
+    API --> Counter["ID Generator\n(Snowflake / Zookeeper)"]
+    Client2["Браузер"] --> CDN["CDN / Edge"]
+    CDN --> API
+    API --> Analytics["Kafka → ClickHouse\n(аналитика кликов)"]
+```
 
 **Шаг 5 — Deep Dive:**
 
@@ -1373,16 +1566,16 @@ Cache-Aside: при GET /xYz1234
 ```
 
 **Гибридный подход (Twitter использует):**
-
-Путь записи (`Новый твит`) ветвится по проверке `Celebrity?` (`>1M followers`):
-- Ветка `Обычный` → `Fan-out Worker`: записать в Redis Feed всех фолловеров.
-- Ветка `Celebrity` → не push в индивидуальные feeds.
-
-Путь чтения (`Запрос Feed`) → `Merge Service`, который собирает ленту из двух источников:
-- `Redis: pre-computed feed` -- готовая лента обычных авторов.
-- `Fetch from Celebrity Posts` -- посты знаменитостей на лету.
-
-Результат `Merge Service` → `Merged & Sorted Feed`.
+```mermaid
+graph TD
+    Tweet["Новый твит"] --> Check{"Celebrity?\n(>1M followers)"}
+    Check -->|"Обычный"| Fanout["Fan-out Worker\nZaписать в Redis Feed\nвсех фолловеров"]
+    Check -->|"Celebrity"| NoFanout["Не push\nв индивидуальные feeds"]
+    Read["Запрос Feed"] --> Merge["Merge Service"]
+    Merge --> PreCalc["Redis: pre-computed feed\n(обычные авторы)"]
+    Merge --> CelebFetch["Fetch from Celebrity Posts\n(на лету)"]
+    Merge --> Result["Merged & Sorted Feed"]
+```
 
 **Шаг 3 — Data Model:**
 
@@ -1431,10 +1624,16 @@ ZREVRANGE feed:user:456 0 19
 
 **Шаг 2 — Ключевые компоненты:**
 
-- `Мобильный клиент` ↔ `WebSocket Gateway` (stateful) -- по `WebSocket`.
-- `WebSocket Gateway` → `Kafka / Queue` → `Message Service`.
-- `Message Service` обращается к: `Cassandra` (messages by chat_id), `Redis` (online status, session), `Push Service` (`FCM / APNs`).
-- Шлюзы связаны между собой: `WebSocket Gateway` ↔ `WebSocket Gateway` (другой инстанс) -- по `WebSocket`.
+```mermaid
+graph TD
+    Phone["Мобильный клиент"] <-->|"WebSocket"| GW["WebSocket Gateway\n(stateful)"]
+    GW --> MQ["Kafka / Queue"]
+    MQ --> MS["Message Service"]
+    MS --> DB["Cassandra\n(messages by chat_id)"]
+    MS --> Cache["Redis\n(online status, session)"]
+    MS --> Push["Push Service\n(FCM / APNs)"]
+    GW <-->|"WebSocket"| GW2["WebSocket Gateway\n(другой инстанс)"]
+```
 
 **Шаг 3 — Доставка сообщений:**
 
@@ -1544,7 +1743,13 @@ public class RateLimiter {
 
 **Шаг 4 — Distributed Rate Limiting:**
 
-`Клиент` балансируется между `API Instance 1` и `API Instance 2`, и оба инстанса делают `INCR / check` против общего `Redis Cluster` (shared counter) -- единый счётчик на весь кластер.
+```mermaid
+graph LR
+    Client["Клиент"] --> API1["API Instance 1"]
+    Client --> API2["API Instance 2"]
+    API1 -->|"INCR / check"| Redis["Redis Cluster\n(shared counter)"]
+    API2 -->|"INCR / check"| Redis
+```
 
 **Sharding:** один Redis — SPOF. Решение: `Redis Cluster` с key sharding по `user_id`.
 
@@ -1599,14 +1804,20 @@ Conflict resolution: Last-Write-Wins (LWW), CRDT, или application-level merge
 
 **4. Saga Pattern для распределённых транзакций:**
 
-Участники: `Order Service` (OS), `Inventory Service` (IS), `Payment Service` (PS). Поток по шагам:
-1. `Order Service` → `Inventory Service`: `Reserve Stock`.
-2. `Inventory Service` → `Order Service`: `Stock Reserved`.
-3. `Order Service` → `Payment Service`: `Process Payment`.
-4. `Payment Service` → `Order Service`: `Payment OK`.
-5. `Order Service` → `Inventory Service`: `Confirm Stock Deduction`.
+```mermaid
+sequenceDiagram
+    participant OS as Order Service
+    participant IS as Inventory Service
+    participant PS as Payment Service
 
-Note (компенсация между `Order Service` и `Payment Service`): если `Payment Failed`, то `Order Service` → `Inventory Service`: `Compensate (Release Stock)`.
+    OS->>IS: Reserve Stock
+    IS-->>OS: Stock Reserved
+    OS->>PS: Process Payment
+    PS-->>OS: Payment OK
+    OS->>IS: Confirm Stock Deduction
+    Note over OS,PS: Если Payment Failed:
+    OS->>IS: Compensate (Release Stock)
+```
 
 **Выбор стратегии на интервью:**
 
@@ -1778,23 +1989,33 @@ try {
 
 **1. Choreography (хореография) — события без центрального координатора:**
 
-Участники -- `Order Service` (OS), `Inventory Service` (IS), `Payment Service` (PS) -- общаются через события в `Kafka`. Успешный поток:
-1. `Order Service` → `Kafka`: `OrderCreated`.
-2. `Inventory Service` → `Kafka`: `StockReserved` (или `StockFailed`).
-3. `Payment Service` → `Kafka`: `PaymentProcessed` (или `PaymentFailed`).
-4. `Order Service` → `Kafka`: `OrderConfirmed`.
+```mermaid
+sequenceDiagram
+    participant OS as Order Service
+    participant IS as Inventory Service
+    participant PS as Payment Service
 
-При ошибке Payment (компенсация, затрагивает `Inventory Service` и `Payment Service`):
-- `Payment Service` → `Kafka`: `PaymentFailed`.
-- `Inventory Service` → `Kafka`: `StockReleased` (компенсация).
-- `Order Service` → `Kafka`: `OrderCancelled` (компенсация).
+    OS->>Kafka: OrderCreated
+    IS->>Kafka: StockReserved (или StockFailed)
+    PS->>Kafka: PaymentProcessed (или PaymentFailed)
+    OS->>Kafka: OrderConfirmed
+
+    Note over IS,PS: При ошибке Payment:
+    PS->>Kafka: PaymentFailed
+    IS->>Kafka: StockReleased (компенсация)
+    OS->>Kafka: OrderCancelled (компенсация)
+```
 
 **2. Orchestration (оркестрация) — центральный координатор (Saga Orchestrator):**
 
-`Saga Orchestrator` управляет шагами централизованно:
-1. `Saga Orchestrator` → `Inventory Service`: `Reserve Stock`; в ответ `Inventory Service` → `Saga Orchestrator`: `StockReserved`.
-2. `Saga Orchestrator` → `Payment Service`: `Process Payment`; в ответ `Payment Service` → `Saga Orchestrator`: `PaymentFailed`.
-3. При сбое `Saga Orchestrator` → `Inventory Service`: `Compensate: Release Stock`.
+```mermaid
+graph TD
+    Orch["Saga Orchestrator"] -->|"1. Reserve Stock"| IS["Inventory Service"]
+    IS -->|"StockReserved"| Orch
+    Orch -->|"2. Process Payment"| PS["Payment Service"]
+    PS -->|"PaymentFailed"| Orch
+    Orch -->|"Compensate: Release Stock"| IS
+```
 
 ### Сравнение подходов
 
@@ -1851,11 +2072,20 @@ public void handlePaymentResult(PaymentResultEvent event) {
 
 ### Архитектура
 
-Путь поиска: `Клиент` → `Search API` → `Elasticsearch Cluster` (3 master + 6 data nodes); `Elasticsearch Cluster` → `Search API` (`search results`). Популярные запросы `Search API` кэширует в `Redis` (popular queries).
+```mermaid
+graph TB
+    Client["Клиент"] --> API["Search API"]
+    API --> ES["Elasticsearch Cluster\n(3 master + 6 data nodes)"]
 
-**Индексирование (синхронизация):**
-- `PostgreSQL (source of truth)` → `Kafka` через `CDC / Debezium`.
-- `Kafka` → `Indexer Service` → `Elasticsearch Cluster`.
+    subgraph "Индексирование (синхронизация)"
+        DB["PostgreSQL (source of truth)"] -->|"CDC / Debezium"| Kafka["Kafka"]
+        Kafka --> Indexer["Indexer Service"]
+        Indexer --> ES
+    end
+
+    ES -->|"search results"| API
+    API --> Cache["Redis\n(popular queries)"]
+```
 
 ### Mapping и оптимизация индекса
 
@@ -1927,11 +2157,16 @@ public void handlePaymentResult(PaymentResultEvent event) {
 
 ### CQRS без Event Sourcing (базовый вариант)
 
-`Client` работает с двумя сторонами:
-- **Command Side** (Write Model): `Client` → `Command Side` → `PostgreSQL` (source of truth).
-- **Query Side** (Read Model): `Client` → `Query Side` → `Read DB` (`Redis / ES / denormalized`).
+```mermaid
+graph LR
+    Client --> CmdSide["Command Side\n(Write Model)"]
+    Client --> QrySide["Query Side\n(Read Model)"]
 
-Связь между сторонами: `PostgreSQL` через `CDC / events` → `Projector` → `Read DB`. Так write-модель остаётся источником правды, а read-модель обновляется асинхронно.
+    CmdSide --> WriteDB["PostgreSQL\n(source of truth)"]
+    WriteDB -->|"CDC / events"| Proj["Projector"]
+    Proj --> ReadDB["Read DB\n(Redis / ES / denormalized)"]
+    QrySide --> ReadDB
+```
 
 Команды (`CreateOrder`, `PayOrder`) изменяют состояние и публикуют события. Проекторы строят read-модели, оптимизированные под конкретные запросы.
 
@@ -2004,10 +2239,23 @@ CREATE TABLE event_store (
 
 ### Архитектура Service Mesh
 
-- В каждом поде сервис общается со своим sidecar: `Pod A` -- `Service A` ↔ `Envoy Proxy (sidecar)`; `Pod B` -- `Service B` ↔ `Envoy Proxy (sidecar)`.
-- Прокси разных подов общаются между собой по `mTLS`: `Envoy Proxy` (Pod A) ↔ `Envoy Proxy` (Pod B).
-- `Control Plane (Istiod)` раздаёт `config` обоим прокси.
-- Прокси шлют `telemetry` в `Observability (Jaeger, Prometheus)`.
+```mermaid
+graph TB
+    subgraph "Pod A"
+        SA["Service A"] <--> PA["Envoy Proxy\n(sidecar)"]
+    end
+    subgraph "Pod B"
+        SB["Service B"] <--> PB["Envoy Proxy\n(sidecar)"]
+    end
+
+    PA <-->|"mTLS"| PB
+
+    CP["Control Plane\n(Istiod)"] -->|"config"| PA
+    CP -->|"config"| PB
+
+    PA -->|"telemetry"| OBS["Observability\n(Jaeger, Prometheus)"]
+    PB --> OBS
+```
 
 ### Что даёт Service Mesh
 
@@ -2082,10 +2330,18 @@ spec:
 
 ### Архитектура
 
-- `Клиент` → `Payment API` (идемпотентные ключи) → `Payment Service`.
-- `Payment Service` → `Ledger Service` (двойная запись) и `Payment Service` → `External Provider` (`Stripe / Acquiring Bank`).
-- `Ledger Service` → `PostgreSQL` (serializable isolation).
-- `Payment Service` → `Kafka` (async events), откуда события расходятся в три сервиса: `Notification Service`, `Risk / Fraud Service`, `Reconciliation Service`.
+```mermaid
+graph TB
+    Client["Клиент"] --> API["Payment API\n(идемпотентные ключи)"]
+    API --> PS["Payment Service"]
+    PS --> Ledger["Ledger Service\n(двойная запись)"]
+    PS --> Ext["External Provider\n(Stripe / Acquiring Bank)"]
+    Ledger --> DB["PostgreSQL\n(serializable isolation)"]
+    PS --> MQ["Kafka\n(async events)"]
+    MQ --> Notify["Notification Service"]
+    MQ --> Risk["Risk / Fraud Service"]
+    MQ --> Reconcile["Reconciliation Service"]
+```
 
 ### Двойная бухгалтерская запись (Double-Entry Ledger)
 
@@ -2258,9 +2514,19 @@ Geo-distributed архитектура решает три задачи сраз
 
 ### Паттерны Multi-Region
 
-**Active-Passive:** `Primary Region (EU)` → `async replication` → `Secondary Region (US)`. Все reads/writes идут в Primary, а Secondary включается при failover.
+```mermaid
+graph TB
+    subgraph "Active-Passive"
+        PrimReg["Primary Region (EU)"] -->|"async replication"| SecReg["Secondary Region (US)"]
+        Note1["Reads/Writes → Primary\nFailover → Secondary"]
+    end
 
-**Active-Active:** регионы синхронизируются двунаправленно (`bidirectional sync`): `Region EU` ↔ `Region US` ↔ `Region AP`. Reads/writes идут в ближайший регион (`nearest region`), но требуется разрешение конфликтов записи (`conflict resolution needed`).
+    subgraph "Active-Active"
+        RegEU["Region EU"] <-->|"bidirectional sync"| RegUS["Region US"]
+        RegUS <-->|"bidirectional sync"| RegAP["Region AP"]
+        Note2["Reads/Writes → nearest region\nConflict resolution needed"]
+    end
+```
 
 ### Routing и DNS
 
@@ -2353,9 +2619,16 @@ WAN latency: 50-150 мс между регионами
 
 ### Масштабирование WebSocket
 
-- Клиенты держат `WS`-соединения с разными шлюзами: `Client 1` ↔ `Gateway 1`, `Client 2` ↔ `Gateway 2`.
-- Шлюзы подключены к общему `Redis Cluster` по `Pub/Sub`: `Gateway 1` ↔ `Redis Cluster`, `Gateway 2` ↔ `Redis Cluster`.
-- `Backend Service` публикует сообщения (`PUBLISH channel`) в `Redis Cluster`, откуда нужный шлюз доставит их получателю.
+```mermaid
+graph LR
+    Client1["Client 1"] <-->|WS| GW1["Gateway 1"]
+    Client2["Client 2"] <-->|WS| GW2["Gateway 2"]
+
+    GW1 <-->|"Pub/Sub"| Redis["Redis Cluster"]
+    GW2 <-->|"Pub/Sub"| Redis
+
+    Svc["Backend Service"] -->|"PUBLISH channel"| Redis
+```
 
 ```java
 // При отправке сообщения другому пользователю:
@@ -2439,11 +2712,14 @@ public void consume(ConsumerRecord<String, Event> record, Acknowledgment ack) {
 
 ### Системные паттерны Backpressure
 
-Сквозной контур обратного давления:
-- `Producer` (10K msg/sec) → `Queue` (bounded).
-- При переполнении `Queue` сигналит обратно producer-у (`full → block/drop`) -- блокирует или отбрасывает.
-- `Queue` → `Consumer` (1K msg/sec).
-- `Queue` отдаёт `lag metrics` в `Alerting / Auto-scaling`, а тот `scale up consumers` -- добавляет потребителей.
+```mermaid
+graph LR
+    Prod["Producer\n10K msg/sec"] --> Queue["Queue\n(bounded)"]
+    Queue -->|"full → block/drop"| Prod
+    Queue --> Cons["Consumer\n1K msg/sec"]
+    Queue -->|"lag metrics"| Alert["Alerting / Auto-scaling"]
+    Alert -->|"scale up consumers"| Cons
+```
 
 **Circuit Breaker как backpressure**:
 ```

@@ -130,11 +130,21 @@ updated: "2026-05-05"
 
 `Spring Security` встраивается в запрос как **цепочка `Servlet`-фильтров**, а не как магия внутри контроллеров. Один-единственный `Servlet`-фильтр (`DelegatingFilterProxy`) делегирует управление в `FilterChainProxy`, а тот прогоняет запрос через нужный `SecurityFilterChain`. Каждый фильтр в цепочке отвечает строго за свою задачу и передаёт запрос дальше:
 
-Путь запроса по цепочке (каждая стрелка — передача дальше):
-
-- `HTTP Request` → `DelegatingFilterProxy` → `FilterChainProxy` → `SecurityFilterChain`
-- внутри `SecurityFilterChain` фильтры идут по порядку: `DisableEncodeUrlFilter` → `CorsFilter` → `CsrfFilter` → `LogoutFilter` → `UsernamePasswordAuthenticationFilter` → `BearerTokenAuthenticationFilter` → `ExceptionTranslationFilter` → `AuthorizationFilter`
-- после прохождения цепочки запрос попадает в `DispatcherServlet`
+```mermaid
+graph TD
+    A[HTTP Request] --> B[DelegatingFilterProxy]
+    B --> C[FilterChainProxy]
+    C --> D[SecurityFilterChain]
+    D --> E[DisableEncodeUrlFilter]
+    E --> F[CorsFilter]
+    F --> G[CsrfFilter]
+    G --> H[LogoutFilter]
+    H --> I[UsernamePasswordAuthenticationFilter]
+    I --> J[BearerTokenAuthenticationFilter]
+    J --> K[ExceptionTranslationFilter]
+    K --> L[AuthorizationFilter]
+    L --> M[DispatcherServlet]
+```
 
 Ключевые фильтры:
 
@@ -165,16 +175,26 @@ updated: "2026-05-05"
 | Результат | `Authentication` объект | Разрешение или `AccessDeniedException` |
 | HTTP-код ошибки | `401 Unauthorized` | `403 Forbidden` |
 
-По шагам, как это проходит через `Authentication Filter`, `AuthenticationManager`, `Authorization Filter` и контроллер:
+```mermaid
+sequenceDiagram
+    participant Client
+    participant AuthFilter as Authentication Filter
+    participant AuthManager as AuthenticationManager
+    participant AuthzFilter as Authorization Filter
+    participant Controller
 
-1. `Client` → `Authentication Filter`: запрос с credentials.
-2. `Authentication Filter` → `AuthenticationManager`: `authenticate(Authentication)`.
-3. `AuthenticationManager` → `Authentication Filter`: возвращает `Authentication` (principal + authorities).
-4. `Authentication Filter`: кладёт результат в контекст — `SecurityContextHolder.setContext(...)`.
-5. `Authentication Filter` → `Authorization Filter`: продолжение цепочки.
-6. `Authorization Filter`: проверка authorities. Дальше — ветвление:
-   - **доступ разрешён** → `Authorization Filter` → `Controller`: запрос проходит к контроллеру;
-   - **доступ запрещён** → `Authorization Filter` → `Client`: `403 Forbidden`.
+    Client->>AuthFilter: Запрос с credentials
+    AuthFilter->>AuthManager: authenticate(Authentication)
+    AuthManager-->>AuthFilter: Authentication (principal + authorities)
+    AuthFilter->>AuthFilter: SecurityContextHolder.setContext(...)
+    AuthFilter->>AuthzFilter: Продолжение цепочки
+    AuthzFilter->>AuthzFilter: Проверка authorities
+    alt Доступ разрешён
+        AuthzFilter->>Controller: Запрос
+    else Доступ запрещён
+        AuthzFilter-->>Client: 403 Forbidden
+    end
+```
 
 Подробнее о паттернах авторизации — в [вопросах по паттернам аутентификации и авторизации](../../security/authentication-authorization-patterns-interview.md).
 
@@ -263,16 +283,28 @@ public UserDto currentUser(@AuthenticationPrincipal UserDetails user) {
 
 Поток для входа по логину/паролю:
 
-По шагам, как это проходит через `AuthenticationFilter`, `AuthenticationManager`, `AuthenticationProvider`, `UserDetailsService` и `PasswordEncoder`:
+```mermaid
+sequenceDiagram
+    participant Filter as AuthenticationFilter
+    participant AM as AuthenticationManager
+    participant AP as AuthenticationProvider
+    participant UDS as UserDetailsService
+    participant PE as PasswordEncoder
 
-1. `AuthenticationFilter` → `AuthenticationManager`: `authenticate(UsernamePasswordAuthenticationToken)`.
-2. `AuthenticationManager` → `AuthenticationProvider`: `authenticate(token)`.
-3. `AuthenticationProvider` → `UserDetailsService`: `loadUserByUsername(username)`.
-4. `UserDetailsService` → `AuthenticationProvider`: возвращает `UserDetails`.
-5. `AuthenticationProvider` → `PasswordEncoder`: `matches(rawPassword, encodedPassword)`.
-6. `PasswordEncoder` → `AuthenticationProvider`: `true`/`false`. Дальше — ветвление:
-   - **пароль верный**: `AuthenticationProvider` → `AuthenticationManager` возвращает `Authentication` (`authenticated=true`); `AuthenticationManager` → `AuthenticationFilter` отдаёт `Authentication`; `AuthenticationFilter` кладёт результат в контекст — `SecurityContextHolder.setContext(auth)`;
-   - **пароль неверный**: `AuthenticationProvider` → `AuthenticationManager` бросает `BadCredentialsException`.
+    Filter->>AM: authenticate(UsernamePasswordAuthenticationToken)
+    AM->>AP: authenticate(token)
+    AP->>UDS: loadUserByUsername(username)
+    UDS-->>AP: UserDetails
+    AP->>PE: matches(rawPassword, encodedPassword)
+    PE-->>AP: true/false
+    alt Пароль верный
+        AP-->>AM: Authentication (authenticated=true)
+        AM-->>Filter: Authentication
+        Filter->>Filter: SecurityContextHolder.setContext(auth)
+    else Пароль неверный
+        AP-->>AM: throw BadCredentialsException
+    end
+```
 
 Роли участников:
 
@@ -446,21 +478,24 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
 Схема состоит из двух частей: эндпоинт логина выдаёт токен, а фильтр на каждом последующем запросе его проверяет и наполняет `SecurityContext`.
 
-По шагам, как это проходит через `Client`, `AuthController`, `JwtFilter`, `SecurityContext` и `API`.
+```mermaid
+sequenceDiagram
+    participant Client
+    participant AuthController
+    participant JwtFilter
+    participant SecurityContext
+    participant API
 
-Сначала логин (выдача токена):
-
-1. `Client` → `AuthController`: `POST /api/auth/login {username, password}`.
-2. `AuthController`: проверка credentials.
-3. `AuthController` → `Client`: `200 OK {accessToken, refreshToken}`.
-
-Затем каждый последующий запрос:
-
-1. `Client` → `JwtFilter`: `GET /api/data` (`Authorization: Bearer <token>`).
-2. `JwtFilter`: парсинг и валидация JWT.
-3. `JwtFilter` → `SecurityContext`: установка `Authentication`.
-4. `JwtFilter` → `API`: продолжение цепочки.
-5. `API` → `Client`: `200 OK {data}`.
+    Client->>AuthController: POST /api/auth/login {username, password}
+    AuthController->>AuthController: Проверка credentials
+    AuthController-->>Client: 200 OK {accessToken, refreshToken}
+    
+    Client->>JwtFilter: GET /api/data (Authorization: Bearer <token>)
+    JwtFilter->>JwtFilter: Парсинг и валидация JWT
+    JwtFilter->>SecurityContext: Установка Authentication
+    JwtFilter->>API: Продолжение цепочки
+    API-->>Client: 200 OK {data}
+```
 
 Конфигурация `SecurityFilterChain` под JWT отличается от сессионной тремя вещами: `csrf` отключён (токен не отправляется браузером автоматически, значит CSRF не грозит), сессии — `STATELESS`, и в цепочку добавлен собственный JWT-фильтр перед стандартным `UsernamePasswordAuthenticationFilter`:
 

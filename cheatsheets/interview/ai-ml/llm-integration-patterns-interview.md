@@ -92,14 +92,15 @@ updated: "2026-05-19"
 - **Fallback** — переключение на запасного провайдера при сбое
 - **Учёт затрат** — кто и сколько потратил
 
-Поток выглядит так: приложение (`App`) обращается не к провайдерам напрямую, а к единому слою `LLM Gateway`. От gateway расходятся все направления:
-
-- `App` → `LLM Gateway` — весь трафик идёт через одну точку
-- `LLM Gateway` → `Cache` — кэш ответов
-- `LLM Gateway` → `OpenAI` — провайдер
-- `LLM Gateway` → `Anthropic` — провайдер
-- `LLM Gateway` → `Self-hosted Llama` — локально развёрнутая модель
-- `LLM Gateway` → `Observability` — логи, метрики, трейсы
+```mermaid
+graph LR
+    App --> Gateway[LLM Gateway]
+    Gateway --> Cache[(Cache)]
+    Gateway --> OpenAI
+    Gateway --> Anthropic
+    Gateway --> Local[Self-hosted Llama]
+    Gateway --> Logs[(Observability)]
+```
 
 Идея та же, что у обычного API gateway: вынести инфраструктурную логику из приложения в один управляемый слой.
 

@@ -132,20 +132,23 @@ updated: "2026-05-07"
 
 Поток запускается только при вызове `subscribe()` — до этого ничего не происходит. Данные идут не «как попало», а по запросу подписчика, что и даёт backpressure. Reactor реализует этот контракт и добавляет сверху сотни операторов (`map`, `flatMap`, `zip` и т.д.).
 
-Контракт `Reactive Streams` — обмен сигналами между `Publisher` (`Flux` / `Mono`) и `Subscriber`, по порядку:
+```mermaid
+graph LR
+    subgraph "Reactive Streams — контракт"
+        PUB["Publisher<br/>(Flux / Mono)"] -->|"subscribe()"| SUB["Subscriber"]
+        SUB -->|"onSubscribe(Subscription)"| PUB
+        SUB -->|"request(n)"| PUB
+        PUB -->|"onNext(item)"| SUB
+        PUB -->|"onComplete() / onError()"| SUB
+    end
 
-- `Subscriber` вызывает `subscribe()` у `Publisher`;
-- `Publisher` отвечает сигналом `onSubscribe(Subscription)`;
-- `Subscriber` запрашивает данные через `request(n)`;
-- `Publisher` отдаёт элементы через `onNext(item)`;
-- завершение — терминальный сигнал `onComplete()` или `onError()`.
-
-Слои самого `Project Reactor` (сверху вниз):
-
-- `Reactive Streams API` → `reactor-core` (`Flux`, `Mono`, `Schedulers`);
-- `reactor-core` → операторы (`map`, `flatMap`, `filter`, `zip`...);
-- операторы → `reactor-extra` (`retry`, `cache`, `math`);
-- `reactor-core` → `reactor-netty` (`HTTP`, `TCP`).
+    subgraph "Project Reactor — слои"
+        RS["Reactive Streams API"] --> CORE["reactor-core<br/>(Flux, Mono, Schedulers)"]
+        CORE --> OPS["Операторы<br/>(map, flatMap, filter, zip...)"]
+        OPS --> EXT["reactor-extra<br/>(retry, cache, math)"]
+        CORE --> NETTY["reactor-netty<br/>(HTTP, TCP)"]
+    end
+```
 
 **Связь с Java:** сам `Reactive Streams` API вошёл в JDK 9+ как `java.util.concurrent.Flow` (см. [Java Concurrency](../../programming-languages/java/java-concurrency-interview.md)). Reactor совместим с ним и даёт мост через `JdkFlowAdapter` — поэтому его типы можно стыковать со стандартными `Flow.Publisher`/`Flow.Subscriber`.
 
@@ -162,19 +165,27 @@ updated: "2026-05-07"
 
 **Важно: WebFlux не привязан к Netty.** `Netty` — лишь сервер по умолчанию; тот же реактивный стек работает и на Servlet-контейнерах с поддержкой неблокирующего I/O (Servlet 3.1+) — `Tomcat`, `Jetty`, а также на `Undertow`. Мост обеспечивает адаптер (`ServletHttpHandlerAdapter`), который транслирует неблокирующий Servlet API в реактивные `ServerHttpRequest`/`ServerHttpResponse`. Это частый вопрос-ловушка: «WebFlux работает только на Netty?» — нет, Netty просто дефолт.
 
-Обработка запроса в `Spring WebFlux`, по шагам:
+```mermaid
+graph TB
+    subgraph "Spring WebFlux — обработка запроса"
+        Client["Клиент<br/>(HTTP-запрос)"] --> Netty["Netty Server<br/>(Event Loop)"]
+        Netty --> DH["DispatcherHandler"]
+        DH --> HM["HandlerMapping<br/>(маршрутизация)"]
+        HM --> HA["HandlerAdapter"]
+        HA --> HC{Тип обработчика}
+        HC -->|Аннотации| RC["@RestController<br/>@GetMapping"]
+        HC -->|Функциональный| RF["RouterFunction<br/>+ HandlerFunction"]
+        RC --> MonoFlux["Mono / Flux<br/>(реактивный ответ)"]
+        RF --> MonoFlux
+        MonoFlux --> RW["ResultHandler<br/>(запись ответа)"]
+        RW --> Netty
+    end
 
-1. Клиент шлёт HTTP-запрос на `Netty Server` (event loop).
-2. `Netty` передаёт запрос в `DispatcherHandler`.
-3. `DispatcherHandler` → `HandlerMapping` (маршрутизация).
-4. `HandlerMapping` → `HandlerAdapter`.
-5. `HandlerAdapter` выбирает тип обработчика:
-   - аннотации → `@RestController` / `@GetMapping`;
-   - функциональный → `RouterFunction` + `HandlerFunction`.
-6. Любой из обработчиков возвращает реактивный ответ `Mono` / `Flux`.
-7. `Mono` / `Flux` → `ResultHandler` (запись ответа) → обратно в `Netty` клиенту.
-
-Внешние вызовы из контроллера (`@RestController`): через `WebClient` — к внешнему API; через `R2DBC` — к базе данных.
+    subgraph "Внешние вызовы"
+        RC -.->|WebClient| ExtAPI["Внешний API"]
+        RC -.->|R2DBC| DB["База данных"]
+    end
+```
 
 **Главное отличие от [Spring MVC](spring-mvc-interview.md):** `MVC` стоит на `DispatcherServlet` и Servlet API (модель «поток на запрос»), а `WebFlux` — на `DispatcherHandler` и неблокирующем I/O (горстка потоков на event loop). Имена компонентов почти совпадают, но семантика выполнения принципиально разная.
 
@@ -234,14 +245,24 @@ updated: "2026-05-07"
 3. **Реактивные контроллеры.** `@GetMapping` и прочие маппинги выглядят как в [Spring MVC](spring-mvc-interview.md), но метод возвращает `Mono`/`Flux`, а не синхронный объект.
 4. **Сервер на event loop (`Netty`).** По умолчанию WebFlux работает на `Netty`: 1–2 потока на ядро в цикле событий обслуживают тысячи соединений, переключаясь между ними по готовности I/O.
 
-Модель Event Loop (`Netty`): `Event Loop` (1–2 потока на ядро) разбирает очередь событий и по готовности I/O выполняет фазы обработки:
+```mermaid
+graph LR
+    subgraph "Модель Event Loop (Netty)"
+        EL["Event Loop<br/>(1-2 потока на ядро)"]
+        Q1["Очередь<br/>событий"]
+        Q1 --> EL
+        EL -->|"read"| R["Чтение<br/>запроса"]
+        EL -->|"decode"| D["Декодирование"]
+        EL -->|"handler"| H["Обработчик<br/>(Mono/Flux)"]
+        EL -->|"write"| W["Запись<br/>ответа"]
+    end
 
-- `read` — чтение запроса;
-- `decode` — декодирование;
-- `handler` — обработчик (`Mono` / `Flux`);
-- `write` — запись ответа.
-
-Для сравнения, модель Thread-per-Request (`MVC`): отдельный поток на каждый запрос, и поток блокирован на I/O всё время обработки — поток 1 ↔ запрос 1, поток 2 ↔ запрос 2, ..., поток N ↔ запрос N.
+    subgraph "Сравнение: Thread-per-Request (MVC)"
+        T1["Поток 1 → Запрос 1<br/>(блокирован на I/O)"]
+        T2["Поток 2 → Запрос 2<br/>(блокирован на I/O)"]
+        T3["Поток N → Запрос N<br/>(блокирован на I/O)"]
+    end
+```
 
 **Ключевое отличие от thread-per-request:** в модели [Spring MVC](spring-mvc-interview.md) каждый запрос держит отдельный поток на всё время обработки, включая простой в ожидании I/O — под нагрузкой пул потоков становится узким местом. В event-loop-модели один поток обслуживает множество запросов, переключаясь между ними по завершении I/O-событий. Именно поэтому WebFlux держит тысячи соединений малым числом потоков и эффективнее под высокой нагрузкой.
 
@@ -267,15 +288,22 @@ Mono<String> greeting = Mono.just("Hello");
 greeting.map(s -> s + " World").subscribe(System.out::println);
 ```
 
-Конвейер `Mono` (0..1 элемент): `Mono.just(x)` → операторы (`map` / `flatMap` / `filter` / `zipWith`) → сигналы `onNext(x)` → `onComplete()`.
+```mermaid
+graph LR
+    subgraph "Mono — 0..1 элемент"
+        MS["Mono.just(x)"] --> MOP["map / flatMap /<br/>filter / zipWith"] --> MR["onNext(x) → onComplete()"]
+    end
 
-Конвейер `Flux` (0..N элементов): `Flux.just(1,2,3)` → операторы (`map` / `flatMap` / `filter` / `take` / `reduce`) → сигналы `onNext(1)` → `onNext(2)` → `onNext(3)` → `onComplete()`.
+    subgraph "Flux — 0..N элементов"
+        FS["Flux.just(1,2,3)"] --> FOP["map / flatMap /<br/>filter / take / reduce"] --> FR["onNext(1) → onNext(2) →<br/>onNext(3) → onComplete()"]
+    end
 
-Преобразования между типами:
-
-- `Mono` → `Flux` через `flatMapMany()`;
-- `Flux` → `Mono` через `next()` / `single()`;
-- `Flux` → `Mono<List>` через `collectList()`.
+    subgraph "Преобразования"
+        MONO2["Mono"] -->|"flatMapMany()"| FLUX2["Flux"]
+        FLUX3["Flux"] -->|"next() / single()"| MONO3["Mono"]
+        FLUX4["Flux"] -->|"collectList()"| MONO4["Mono&lt;List&gt;"]
+    end
+```
 
 Оба типа предоставляют методы `map`, `filter`, `flatMap`, `reduce` и другие. Аналогия со [Java Stream API](../../programming-languages/java/java-stream-interview.md): `Flux` похож на `Stream<T>`, а `Mono` — на `Optional<T>`, но с поддержкой асинхронности и backpressure.
 
@@ -409,15 +437,36 @@ public class GlobalExceptionHandler implements HandlerExceptionResolver {
 
 **Backpressure** — механизм протокола `Reactive Streams`, при котором подписчик через `Subscription.request(n)` сообщает издателю, сколько элементов он готов принять. Это предотвращает переполнение потребителя, когда издатель выдаёт данные быстрее, чем потребитель их обрабатывает.
 
-Обмен сигналами между `Publisher` (`Flux`) и `Subscriber`, по порядку:
+```mermaid
+sequenceDiagram
+    participant P as Publisher (Flux)
+    participant S as Subscriber
 
-1. `Subscriber` → `Publisher`: `subscribe()`.
-2. `Publisher` → `Subscriber`: `onSubscribe(Subscription)`.
-3. `Subscriber` → `Publisher`: `request(3)`.
-4. `Publisher` → `Subscriber`: `onNext(item1)`, `onNext(item2)`, `onNext(item3)`.
-5. Дальше `Publisher` ждёт нового `request()` — больше элементов не шлёт, пока его не запросят.
-6. `Subscriber` → `Publisher`: `request(2)`.
-7. `Publisher` → `Subscriber`: `onNext(item4)`, `onNext(item5)`, затем `onComplete()`.
+    S->>P: subscribe()
+    P->>S: onSubscribe(Subscription)
+    S->>P: request(3)
+    P->>S: onNext(item1)
+    P->>S: onNext(item2)
+    P->>S: onNext(item3)
+    Note over P: Ждёт request()
+    S->>P: request(2)
+    P->>S: onNext(item4)
+    P->>S: onNext(item5)
+    P->>S: onComplete()
+```
+
+```mermaid
+graph LR
+    subgraph "Стратегии backpressure"
+        Fast["Быстрый Publisher<br/>1000 элементов/сек"] --> Strategy{Стратегия}
+        Strategy -->|buffer| BUF["onBackpressureBuffer(100)<br/>📦 Буферизация до лимита"]
+        Strategy -->|drop| DROP["onBackpressureDrop()<br/>🗑️ Отброс лишних"]
+        Strategy -->|latest| LAT["onBackpressureLatest()<br/>📌 Только последний"]
+        BUF --> Slow["Медленный Subscriber<br/>10 элементов/сек"]
+        DROP --> Slow
+        LAT --> Slow
+    end
+```
 
 В `Project Reactor backpressure` поддерживается из коробки: при подписке передаётся запрос на объём данных. Операторы обратной связи:
 
@@ -544,12 +593,35 @@ Mono.fromCallable(() -> blockingService.call())
 
 `Mono.zip(a, b)` — объединить два `Mono` в один. `Flux.merge(flux1, flux2)` — элементы по мере появления. `Flux.concat(flux1, flux2)` — сначала flux1, потом flux2. `Mono.zipWith`, `Flux.zipWith` — комбинировать с другим источником. `flatMap` — преобразовать элемент в новый поток и слить.
 
-Как работают операторы комбинирования на конкретных входах:
+```mermaid
+graph TB
+    subgraph "Операторы комбинирования"
+        direction TB
 
-- **`zip` — параллельно, попарно.** `Mono A` (User) и `Mono B` (Orders) → `Mono.zip(A, B)` → `Tuple2(User, Orders)`.
-- **`merge` — чередование по готовности.** `Flux 1` (A₁ A₂ A₃) и `Flux 2` (B₁ B₂) → `Flux.merge(1, 2)` → A₁ B₁ A₂ B₂ A₃ (элементы вперемешку, по мере появления).
-- **`concat` — последовательно.** `Flux 1` (A₁ A₂) и `Flux 2` (B₁ B₂) → `Flux.concat(1, 2)` → A₁ A₂ B₁ B₂ (сначала весь первый поток, потом второй).
-- **`flatMap` — трансформация 1:N.** `Flux` (id₁ id₂ id₃) → `flatMap(id → getOrders(id))` → Order₁₁ Order₂₁ Order₁₂ ... (каждый id разворачивается в свой поток заказов, результаты сливаются).
+        subgraph "zip — параллельно, попарно"
+            ZA["Mono A: 👤 User"] --> ZIP["Mono.zip(A, B)"]
+            ZB["Mono B: 📋 Orders"] --> ZIP
+            ZIP --> ZR["Tuple2(User, Orders)"]
+        end
+
+        subgraph "merge — чередование по готовности"
+            MA["Flux 1: A₁ A₂ A₃"] --> MERGE["Flux.merge(1, 2)"]
+            MB["Flux 2: B₁ B₂"] --> MERGE
+            MERGE --> MR["A₁ B₁ A₂ B₂ A₃"]
+        end
+
+        subgraph "concat — последовательно"
+            CA["Flux 1: A₁ A₂"] --> CONCAT["Flux.concat(1, 2)"]
+            CB["Flux 2: B₁ B₂"] --> CONCAT
+            CONCAT --> CR["A₁ A₂ B₁ B₂"]
+        end
+
+        subgraph "flatMap — 1:N трансформация"
+            FM["Flux: id₁ id₂ id₃"] --> FMAP["flatMap(id → getOrders(id))"]
+            FMAP --> FR["Order₁₁ Order₂₁ Order₁₂ ..."]
+        end
+    end
+```
 
 **Когда что использовать:**
 

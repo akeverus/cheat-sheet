@@ -157,13 +157,20 @@ updated: "2026-04-25"
 
 **Почему именно так.** Низкий уровень даёт точную локализацию (упал unit -- сразу видно, какой метод сломан) и мгновенный прогон, поэтому им покрывают логику массово. Высокий уровень проверяет систему целиком, но падает по куче причин и долго гоняется -- значит, его берут точечно, для критичных пользовательских путей.
 
-Уровни пирамиды снизу вверх -- основание широкое, верхушка узкая:
+```mermaid
+graph TB
+    subgraph Пирамида тестирования
+        E2E["🔺 E2E / UI тесты<br/>5-10% | медленные, хрупкие"]
+        INT["🔶 Интеграционные тесты<br/>20-30% | средняя скорость"]
+        UNIT["🟩 Unit-тесты<br/>60-70% | быстрые, дешёвые"]
+    end
 
-- **Unit-тесты** -- основание (60-70%): быстрые, дешёвые;
-- **Интеграционные тесты** -- середина (20-30%): средняя скорость;
-- **E2E / UI тесты** -- верхушка (5-10%): медленные, хрупкие.
+    UNIT --> INT --> E2E
 
-Набор строят от основания к верхушке: сначала массово покрывают логику unit-тестами, затем интеграционными, и лишь точечно -- E2E.
+    style E2E fill:#ff6b6b,color:#fff
+    style INT fill:#ffa726,color:#fff
+    style UNIT fill:#66bb6a,color:#fff
+```
 
 | Уровень | Количество | Скорость | Стоимость поддержки | Примеры |
 |---------|-----------|----------|--------------------| --------|
@@ -267,11 +274,18 @@ ROI = (Экономия - Затраты) / Затраты × 100%
 | `Keyword-Driven` | Действия как ключевые слова | BDD, нетехнические стейкхолдеры |
 | `Component Object` | Переиспользуемые UI-компоненты | Header, footer, навигация |
 
-Архитектура тестового фреймворка связывает эти паттерны в слои. **Тестовый класс** опирается на три абстракции:
-
-- **Page Objects** -- через них тест работает с UI; Page Object, в свою очередь, обращается к `WebDriver`, а тот -- к **браузеру**.
-- **API Client** -- через него тест работает с REST API; клиент опирается на `REST Assured`.
-- **Test Data Builder** -- через него тест получает тестовые данные; билдер обращается к **БД / Fixtures**.
+```mermaid
+graph LR
+    subgraph Архитектура тестового фреймворка
+        TEST[Тестовый класс] --> PO[Page Objects]
+        TEST --> API[API Client]
+        TEST --> DATA[Test Data Builder]
+        PO --> DRIVER[WebDriver]
+        API --> REST[REST Assured]
+        DATA --> DB[(БД / Fixtures)]
+        DRIVER --> BROWSER[Браузер]
+    end
+```
 
 ## Q7. (!) Как работает Selenium WebDriver?
 
@@ -279,17 +293,23 @@ ROI = (Экономия - Затраты) / Затраты × 100%
 
 **Почему через драйвер, а не напрямую.** Каждый браузер устроен по-своему, но протокол `W3C WebDriver` един для всех. Ваш Java-код шлёт драйверу обычные HTTP-команды («найди элемент по id», «кликни»), драйвер переводит их в команды конкретного браузера и возвращает результат в JSON. Благодаря этому один и тот же тест работает в Chrome, Firefox и Edge -- меняется только драйвер. Платой за такую развязку становится сетевой round-trip на каждое действие, отсюда и относительная медлительность Selenium.
 
-Поток одного действия проходит через четыре участника -- **Тест (Java)**, **WebDriver API**, **ChromeDriver** и **Браузер**:
+```mermaid
+sequenceDiagram
+    participant Test as Тест (Java)
+    participant Driver as WebDriver API
+    participant Browser as ChromeDriver
+    participant Page as Браузер
 
-1. Тест зовёт `findElement(By.id("login"))` у WebDriver API.
-2. WebDriver API шлёт ChromeDriver запрос `HTTP POST /session/{id}/element`.
-3. ChromeDriver просит браузер найти элемент в DOM.
-4. Браузер возвращает ChromeDriver Element ID.
-5. ChromeDriver отдаёт WebDriver API JSON Response.
-6. WebDriver API возвращает тесту `WebElement`.
-7. Тест зовёт `element.click()` у WebDriver API.
-8. WebDriver API шлёт ChromeDriver запрос `HTTP POST /element/{id}/click`.
-9. ChromeDriver выполняет клик по элементу в браузере.
+    Test->>Driver: findElement(By.id("login"))
+    Driver->>Browser: HTTP POST /session/{id}/element
+    Browser->>Page: Найти элемент в DOM
+    Page-->>Browser: Element ID
+    Browser-->>Driver: JSON Response
+    Driver-->>Test: WebElement
+    Test->>Driver: element.click()
+    Driver->>Browser: HTTP POST /element/{id}/click
+    Browser->>Page: Клик по элементу
+```
 
 ```java
 // Базовый пример Selenium-теста с JUnit 5
@@ -457,13 +477,22 @@ WebElement element = fluentWait.until(d -> d.findElement(By.id("dynamic-content"
 
 `Selenium Grid` -- способ распараллелить UI-тесты по нескольким машинам и браузерам. Без него прогон сотен медленных E2E-тестов на одной машине занимает часы; Grid распределяет их по узлам и даёт заодно покрытие разных браузеров. Архитектура состоит из двух ролей: **Hub** (центральный узел -- принимает запросы и раздаёт их) и **Nodes** (исполнители -- на них реально запускаются браузеры).
 
-В `Selenium Grid 4` несколько тестов (Тест 1, Тест 2, Тест 3) направляют запросы в один центральный **Router / Hub**, а тот раздаёт их по узлам-исполнителям:
+```mermaid
+graph LR
+    subgraph Selenium Grid 4
+        HUB[Router / Hub]
+        N1[Node: Chrome]
+        N2[Node: Firefox]
+        N3[Node: Edge]
+    end
 
-- **Node: Chrome**;
-- **Node: Firefox**;
-- **Node: Edge**.
-
-Так Hub распределяет параллельные прогоны по узлам с разными браузерами.
+    TEST1[Тест 1] --> HUB
+    TEST2[Тест 2] --> HUB
+    TEST3[Тест 3] --> HUB
+    HUB --> N1
+    HUB --> N2
+    HUB --> N3
+```
 
 ```java
 // Подключение к Selenium Grid
@@ -670,10 +699,13 @@ void shouldMatchUserSchema() {
 
 **Как это обходится.** Consumer записывает свои ожидания в pact-файл («когда я запрошу `/users/123`, жду такой-то ответ»), а provider потом отдельно проверяет, что реально умеет так отвечать. Сервисы тестируются независимо, но контракт между ними гарантированно соблюдён. Основные инструменты -- `Pact` и `Spring Cloud Contract`.
 
-Поток contract testing по шагам:
-
-1. **Consumer** (Order Service) генерирует pact-файл и публикует его в **Pact Broker**.
-2. **Pact Broker** отдаёт контракт **Provider'у** (User Service), который верифицирует, что реально умеет отвечать так, как записано в контракте.
+```mermaid
+graph LR
+    subgraph Contract Testing Flow
+        CONSUMER[Consumer<br/>Order Service] -->|Генерирует pact-файл| PACT[(Pact Broker)]
+        PACT -->|Верифицирует контракт| PROVIDER[Provider<br/>User Service]
+    end
+```
 
 ```java
 // Consumer-тест (Order Service) -- определяет ожидания
@@ -1013,11 +1045,23 @@ public class LoginSteps {
 
 Тесты в пайплайне выстраивают по принципу пирамиды и **fail-fast**: сначала быстрые и дешёвые (unit), потом всё более медленные и дорогие (integration -> API -> E2E -> performance). Смысл порядка -- ловить ошибку как можно раньше и дешевле: если ломается unit-тест, пайплайн падает за секунды и не тратит десятки минут на запуск E2E. Каждый этап выступает gate'ом -- следующий не стартует, пока не пройден предыдущий, а падение шлёт уведомление команде.
 
-CI/CD-пайплайн с тестами проходит этапы строго по порядку, от дешёвых к дорогим:
+```mermaid
+graph LR
+    subgraph CI/CD Pipeline с тестами
+        COMMIT[Git Push] --> BUILD[Build]
+        BUILD --> UNIT[Unit-тесты]
+        UNIT --> INT[Интеграционные]
+        INT --> API[API-тесты]
+        API --> E2E[E2E / UI]
+        E2E --> PERF[Performance]
+        PERF --> DEPLOY[Deploy]
+    end
 
-`Git Push` → `Build` → `Unit-тесты` → `Интеграционные` → `API-тесты` → `E2E / UI` → `Performance` → `Deploy`.
-
-Каждый тестовый этап -- gate: при падении (`fail`) на этапах Unit, Интеграционные, API или E2E пайплайн останавливается и шлёт **Уведомление** команде.
+    UNIT -->|fail| NOTIFY[Уведомление]
+    INT -->|fail| NOTIFY
+    API -->|fail| NOTIFY
+    E2E -->|fail| NOTIFY
+```
 
 ### `GitHub Actions` Pipeline
 
@@ -1101,14 +1145,15 @@ pipeline {
 
 **Зачем так.** Чем позже найден дефект, тем дороже его починка. Continuous Testing встраивает контроль качества в каждый шаг, поэтому баг ловится близко к моменту, когда его внесли, а не на демо за день до релиза. На каждом этапе свой набор тестов и свой gate -- критерий, без выполнения которого изменение дальше не идёт.
 
-Проверки сопровождают изменение на всём пути и замыкаются в петлю обратной связи:
-
-1. **Разработка** → **Commit**: pre-commit hooks, unit-тесты.
-2. **Commit** → **Build**: CI -- unit + integration.
-3. **Build** → **Staging**: CD -- API + E2E.
-4. **Staging** → **Production**: smoke + canary.
-5. **Production** → **Feedback**: мониторинг, synthetic tests.
-6. **Feedback** → **Разработка**: фидбэк возвращается в начало цикла.
+```mermaid
+graph LR
+    DEV[Разработка] -->|pre-commit hooks<br/>unit-тесты| COMMIT[Commit]
+    COMMIT -->|CI<br/>unit + integration| BUILD[Build]
+    BUILD -->|CD<br/>API + E2E| STAGING[Staging]
+    STAGING -->|smoke + canary| PROD[Production]
+    PROD -->|мониторинг<br/>synthetic tests| FEEDBACK[Feedback]
+    FEEDBACK --> DEV
+```
 
 **Уровни Continuous Testing:**
 
@@ -1572,16 +1617,23 @@ check.dependsOn jacocoTestCoverageVerification
 
 Тестовый код -- такой же продукт, как и боевой, и без архитектуры он быстро превращается в копипасту, которую больно поддерживать. Решение -- слои с чёткой ответственностью: тест описывает сценарий, шаги собирают его из действий, Page Object'ы и API-клиенты знают «как», а инфраструктура (WebDriver, RestAssured, Testcontainers) спрятана в самом низу. Зависимости идут только сверху вниз: при смене инструмента правится один слой, а тесты остаются нетронутыми.
 
-Слои тестового фреймворка (сверху вниз):
+```mermaid
+graph TB
+    subgraph Слои тестового фреймворка
+        TESTS[Тесты<br/>LoginTest, OrderApiTest]
+        STEPS[Step Library<br/>LoginSteps, OrderSteps]
+        PAGES[Page Objects / API Clients<br/>LoginPage, OrderApi]
+        UTILS[Утилиты<br/>TestDataBuilder, WaitHelper]
+        CONFIG[Конфигурация<br/>BaseTest, TestConfig]
+        INFRA[Инфраструктура<br/>WebDriver, RestAssured, Testcontainers]
+    end
 
-- **Тесты** -- `LoginTest`, `OrderApiTest`;
-- **Step Library** -- `LoginSteps`, `OrderSteps`;
-- **Page Objects / API Clients** -- `LoginPage`, `OrderApi`;
-- **Утилиты** -- `TestDataBuilder`, `WaitHelper`;
-- **Конфигурация** -- `BaseTest`, `TestConfig`;
-- **Инфраструктура** -- `WebDriver`, `RestAssured`, `Testcontainers`.
-
-Зависимости идут сверху вниз: основная цепочка -- Тесты → Step Library → Page Objects / API Clients → Инфраструктура. Дополнительно Тесты опираются на Утилиты и на Конфигурацию, Page Objects / API Clients -- на Утилиты, а Конфигурация -- на Инфраструктуру.
+    TESTS --> STEPS --> PAGES --> INFRA
+    TESTS --> UTILS
+    TESTS --> CONFIG
+    PAGES --> UTILS
+    CONFIG --> INFRA
+```
 
 **Принципы хорошего фреймворка:**
 1. **DRY** -- общие действия в базовых классах и утилитах
@@ -1610,12 +1662,17 @@ check.dependsOn jacocoTestCoverageVerification
 
 В микросервисах E2E-тесты особенно дороги и хрупки: чтобы прогнать один сценарий, нужно поднять десяток сервисов, и падение может случиться по любой из множества причин. Поэтому пирамиду адаптируют -- основную проверку смещают вниз, а сквозной слой делают тонким. Ключевую роль играет contract testing: он заменяет львиную долю интеграционных E2E, проверяя совместимость пары сервисов без поднятия всей системы.
 
-Стратегия тестирования микросервисов выстраивается по уровням снизу вверх:
+```mermaid
+graph TB
+    subgraph Стратегия тестирования микросервисов
+        UNIT[Unit-тесты<br/>Внутри каждого сервиса]
+        COMPONENT[Component-тесты<br/>Один сервис + Testcontainers]
+        CONTRACT[Contract-тесты<br/>Pact / Spring Cloud Contract]
+        E2E[E2E-тесты<br/>Все сервисы + staging]
+    end
 
-1. **Unit-тесты** -- внутри каждого сервиса;
-2. **Component-тесты** -- один сервис + `Testcontainers`;
-3. **Contract-тесты** -- `Pact` / `Spring Cloud Contract`;
-4. **E2E-тесты** -- все сервисы + staging.
+    UNIT --> COMPONENT --> CONTRACT --> E2E
+```
 
 | Уровень | Что тестирует | Инструменты | Кто владеет |
 |---------|-------------|------------|-------------|

@@ -105,23 +105,35 @@ updated: "2026-05-27"
 
 Исключение (`Exception`) — это событие во время выполнения программы, которое прерывает нормальный поток инструкций (например, обращение к `null` или ошибка чтения файла). В Java любое исключение — это объект, и все они наследуются от класса `Throwable`, поэтому исключение можно создать, бросить, поймать и передать как обычный объект.
 
-Иерархия исключений в Java по порядку наследования:
+Иерархия исключений в Java:
 
-- `java.lang.Throwable` — корень иерархии. От него наследуются две ветки:
-  - `java.lang.Error`:
-    - `OutOfMemoryError`
-    - `StackOverflowError`
-    - `NoClassDefFoundError`
-  - `java.lang.Exception`:
-    - `RuntimeException` (unchecked):
-      - `NullPointerException`
-      - `IllegalArgumentException`
-      - `IllegalStateException`
-      - `ArrayIndexOutOfBoundsException`
-      - `ClassCastException`
-    - `IOException` (checked):
-      - `FileNotFoundException`
-    - `SQLException` (checked)
+```mermaid
+graph TD
+    Throwable["java.lang.Throwable"]
+    Throwable --> Error["java.lang.Error"]
+    Throwable --> Exception["java.lang.Exception"]
+
+    Error --> OOM["OutOfMemoryError"]
+    Error --> SOE["StackOverflowError"]
+    Error --> NCDFE["NoClassDefFoundError"]
+
+    Exception --> RE["RuntimeException<br/>(unchecked)"]
+    Exception --> IOE["IOException<br/>(checked)"]
+    Exception --> SQLE["SQLException<br/>(checked)"]
+
+    RE --> NPE["NullPointerException"]
+    RE --> IAE["IllegalArgumentException"]
+    RE --> ISE["IllegalStateException"]
+    RE --> AIOOBE["ArrayIndexOutOfBoundsException"]
+    RE --> CCE["ClassCastException"]
+
+    IOE --> FNFE["FileNotFoundException"]
+
+    style Error fill:#f66,stroke:#333
+    style RE fill:#fc9,stroke:#333
+    style IOE fill:#9cf,stroke:#333
+    style SQLE fill:#9cf,stroke:#333
+```
 
 Ключевые моменты:
 - `Throwable` — корень иерархии; имеет два прямых наследника: `Error` и `Exception`
@@ -394,12 +406,16 @@ try (reader) {  // reader — effectively final
 
 Порядок работы:
 
-1. Создание ресурсов в порядке объявления.
-2. Выполнение блока `try`. Дальше два сценария:
-   - **Нормальное завершение** → закрытие ресурсов в обратном порядке → продолжение выполнения.
-   - **Исключение в `try`** → закрытие ресурсов в обратном порядке. Здесь снова две ветки:
-     - `close()` успешен → выброс основного исключения.
-     - `close()` тоже бросает → исключение из `close()` добавляется как suppressed к основному, после чего основное исключение выбрасывается.
+```mermaid
+graph TD
+    A["Создание ресурсов<br/>(в порядке объявления)"] --> B["Выполнение блока try"]
+    B -->|"Нормальное завершение"| C["Закрытие ресурсов<br/>(в обратном порядке)"]
+    B -->|"Исключение в try"| D["Закрытие ресурсов<br/>(в обратном порядке)"]
+    D -->|"close() успешен"| E["Выброс основного исключения"]
+    D -->|"close() тоже бросает"| F["Исключение close() добавляется<br/>как suppressed к основному"]
+    F --> E
+    C --> G["Продолжение выполнения"]
+```
 
 Преимущества перед ручным `finally`:
 - Нет boilerplate-кода проверки на `null` и вызова `close()`
@@ -674,11 +690,17 @@ try {
 
 Порядок выполнения:
 
-- Выполняется блок `try`. Дальше два сценария:
-  - **Нет исключения** → выполняется блок `finally` → продолжение программы.
-  - **Исключение** → проверяется, соответствует ли ему `catch`:
-    - **Да** → выполняется блок `catch`, затем блок `finally` → продолжение программы.
-    - **Нет** → выполняется блок `finally`, после чего исключение пробрасывается выше.
+```mermaid
+graph TD
+    A["try блок"] -->|"Нет исключения"| B["finally блок"]
+    A -->|"Исключение"| C{"catch соответствует?"}
+    C -->|"Да"| D["catch блок"]
+    C -->|"Нет"| E["finally блок"]
+    D --> F["finally блок"]
+    B --> G["Продолжение программы"]
+    F --> G
+    E --> H["Исключение пробрасывается выше"]
+```
 
 ```java
 public String readFirstLine(String path) {

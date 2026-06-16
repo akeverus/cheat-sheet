@@ -146,12 +146,14 @@ counter.increment(); // записывается в оба реестра
 | `LongTaskTimer` | Активные долгие задачи | Batch-задачи, фоновые процессы |
 | `FunctionCounter` | Обёртка над monotonic function | Метрики из внешних объектов |
 
-Иерархия типов — все они наследники общего интерфейса `Meter`:
-- `Meter` → `Counter` — только `increment`;
-- `Meter` → `Gauge` — любое значение;
-- `Meter` → `Timer` — время + count;
-- `Meter` → `DistributionSummary` — распределение;
-- `Meter` → `LongTaskTimer` — активные задачи.
+```mermaid
+graph TD
+    M[Meter] --> C[Counter<br/>только increment]
+    M --> G[Gauge<br/>любое значение]
+    M --> T[Timer<br/>время + count]
+    M --> DS[DistributionSummary<br/>распределение]
+    M --> LT[LongTaskTimer<br/>активные задачи]
+```
 
 ## Q5. (!) Как работает Counter?
 

@@ -120,20 +120,28 @@ updated: "2026-05-08"
 | Стабильность | Высокая | Может быть flaky |
 | Цель | Логика, алгоритмы | Интеграция, контракты, SQL |
 
-**Тестовая пирамида** (сверху вниз — от редких медленных к многочисленным быстрым):
+```mermaid
+graph TB
+    subgraph "Тестовая пирамида"
+        E2E["E2E Tests<br/>мало, медленные"]
+        INT["Integration Tests<br/>средне, секунды"]
+        UNIT["Unit Tests<br/>много, быстрые"]
+    end
 
-- `E2E Tests` — мало, медленные;
-- `Integration Tests` — средне, секунды;
-- `Unit Tests` — много, быстрые.
+    E2E --- INT --- UNIT
 
-Уровни связаны последовательно: `E2E` опирается на `Integration`, тот — на `Unit`.
+    subgraph "Integration Testing покрывает"
+        DB["База данных"]
+        MQ["Очереди сообщений"]
+        HTTP["HTTP-сервисы"]
+        CACHE["Кеш"]
+    end
 
-**Что покрывает Integration Testing** — взаимодействие с реальной инфраструктурой:
-
-- База данных;
-- Очереди сообщений;
-- HTTP-сервисы;
-- Кеш.
+    INT --> DB
+    INT --> MQ
+    INT --> HTTP
+    INT --> CACHE
+```
 
 ### Пример: `unit` vs `integration`
 
@@ -210,15 +218,20 @@ class OrderIntegrationTest {
 
 Группу связанных компонентов тестируют как единый блок. Именно так строят тесты в `Spring Boot`: `@SpringBootTest` поднимает весь контекст, а test slices (`@WebMvcTest`, `@DataJpaTest`) — только нужный срез.
 
-Как это выглядит на практике. Реальная цепочка `Component Integration Test`:
+```mermaid
+graph LR
+    subgraph "Component Integration Test"
+        C[Controller] --> S[Service]
+        S --> R[Repository]
+        R --> DB[(PostgreSQL<br/>Testcontainers)]
+    end
 
-- `Controller` → `Service` → `Repository` → `PostgreSQL` (через `Testcontainers`).
+    subgraph "Mocked"
+        EXT[Внешний API<br/>WireMock]
+    end
 
-При этом `Service` обращается к замоканному внешнему API:
-
-- `Service` → внешний API (`WireMock`, блок `Mocked`).
-
-То есть собственная инфраструктура (БД) поднимается по-настоящему, а соседний внешний сервис заменяется заглушкой.
+    S --> EXT
+```
 
 На собеседовании обычно спрашивают не о классификации, а о практическом подходе: какие слои тестируете вместе, какие мокируете, и почему.
 
@@ -545,11 +558,31 @@ class UserApiTemplateTest {
 
 `Testcontainers` — Java-библиотека, которая поднимает `Docker`-контейнеры прямо из кода теста и сама гасит их после прогона. Идея простая: вместо in-memory заменителей (`H2`, embedded-брокеров) тест работает с **той же** базой, очередью или кешем, что и production — настоящим PostgreSQL, Kafka, Redis. Жизненным циклом контейнера управляет библиотека, разработчику не нужно вручную поднимать `docker compose`.
 
-Как устроено по слоям:
+```mermaid
+graph TB
+    subgraph "JUnit Test"
+        TEST[Тестовый класс]
+    end
 
-- **JUnit Test** — тестовый класс. Он обращается к `Testcontainers Library`, а нужные параметры подключения получает через `@DynamicPropertySource` (к `PostgreSQL` и `Redis` в примере).
-- **Testcontainers управляет** — `Testcontainers Library` поднимает и контролирует контейнеры: `PostgreSQL`, `Redis`, `Kafka`.
-- **Docker** — сами контейнеры (`PostgreSQL`, `Redis`, `Kafka`) исполняются как Docker-контейнеры.
+    subgraph "Testcontainers управляет"
+        TC[Testcontainers Library]
+        TC --> PG[(PostgreSQL)]
+        TC --> RD[(Redis)]
+        TC --> KF[(Kafka)]
+    end
+
+    subgraph "Docker"
+        PG
+        RD
+        KF
+    end
+
+    TEST --> TC
+    TEST -- "@DynamicPropertySource" --> PG
+    TEST -- "@DynamicPropertySource" --> RD
+
+    style TC fill:#4a9,stroke:#333
+```
 
 ### Преимущества перед `H2` / embedded
 
@@ -1097,7 +1130,14 @@ class PaymentClientTest {
 }
 ```
 
-Поток вызовов по порядку: тест дёргает `PaymentClient`, тот шлёт HTTP-запрос на `WireMock` (`localhost:random_port`), а `WireMock` возвращает клиенту заранее заданный stub-ответ.
+```mermaid
+graph LR
+    TEST[Тест] --> SVC[PaymentClient]
+    SVC --> WM[WireMock<br/>localhost:random_port]
+    WM -- "stub response" --> SVC
+
+    style WM fill:#f96,stroke:#333
+```
 
 ## Q19. В чём разница между `@MockBean` и `@SpyBean`?
 
@@ -1216,11 +1256,25 @@ class PaymentErrorScenariosTest {
 
 Зачем так, а не E2E: контракт ловит breaking change в API **на стороне provider'а до деплоя**, без общего стенда и без подъёма обеих систем. Если provider случайно убрал поле или сменил тип — его сборка покраснеет, ещё до того как consumer об этом узнает в проде.
 
-Поток данных между сторонами:
+```mermaid
+graph LR
+    subgraph "Consumer (OrderService)"
+        CT[Consumer Test]
+        CT -- "генерирует" --> PACT[Pact-файл]
+    end
 
-- **Consumer (`OrderService`)** — `Consumer Test` генерирует `Pact-файл`.
-- `Pact-файл` публикуется в **`Pact Broker`**.
-- **Provider (`UserService`)** — `Pact Broker` отдаёт `Pact-файл` в `Provider Test`, который верифицирует им реальный API. (Без брокера тот же `Pact-файл` может попадать в `Provider Test` напрямую.)
+    subgraph "Provider (UserService)"
+        PT[Provider Test]
+        PACT -- "верифицирует" --> PT
+    end
+
+    subgraph "Pact Broker"
+        PB[Pact Broker]
+    end
+
+    PACT --> PB
+    PB --> PT
+```
 
 ### Зачем нужно
 
@@ -1551,11 +1605,23 @@ class AsyncIntegrationTest {
 
 ### Стратегия тестирования
 
-Три уровня проверки и потоки данных в каждом:
+```mermaid
+graph LR
+    subgraph "Producer Test"
+        P[Producer] -- "отправляет" --> T1[Topic]
+        T1 -- "проверяем" --> ASSERT1[Assert: сообщение<br/>отправлено]
+    end
 
-- **Producer Test**: `Producer` отправляет в `Topic` → проверяем (assert: сообщение отправлено).
-- **Consumer Test**: подаём сообщение из `Topic` в `Consumer` → он обрабатывает и пишет в `DB` → проверяем (assert: данные сохранены).
-- **E2E Test**: полная цепочка `Producer` → `Topic` → `Consumer` → `DB`.
+    subgraph "Consumer Test"
+        T2[Topic] -- "подаём" --> C[Consumer]
+        C -- "обрабатывает" --> DB[(DB)]
+        DB -- "проверяем" --> ASSERT2[Assert: данные<br/>сохранены]
+    end
+
+    subgraph "E2E Test"
+        P2[Producer] --> T3[Topic] --> C2[Consumer] --> DB2[(DB)]
+    end
+```
 
 1. **Тест продюсера**: отправляем сообщение, проверяем, что оно попало в топик
 2. **Тест консьюмера**: кладём сообщение в топик, проверяем обработку (данные в БД, вызов сервиса)
@@ -1569,11 +1635,17 @@ class AsyncIntegrationTest {
 
 ### Разделение тестов по стадиям
 
-Стадии `CI Pipeline` идут по нарастанию стоимости, каждая после предыдущей:
+```mermaid
+graph LR
+    subgraph "CI Pipeline"
+        UNIT["Unit Tests<br/>1-2 мин"] --> INT["Integration Tests<br/>5-10 мин"]
+        INT --> CT["Contract Tests<br/>2-3 мин"]
+        CT --> E2E["E2E Tests<br/>10-20 мин"]
+    end
 
-- `Unit Tests` (1-2 мин) → `Integration Tests` (5-10 мин) → `Contract Tests` (2-3 мин) → `E2E Tests` (10-20 мин).
-
-Принцип fail fast обрывает пайплайн на первом провале: если падают `Unit Tests` или `Integration Tests`, дальнейшие стадии не запускаются (Stop).
+    UNIT -- "fail fast" --> STOP1[Stop]
+    INT -- "fail" --> STOP2[Stop]
+```
 
 ### Gradle конфигурация
 

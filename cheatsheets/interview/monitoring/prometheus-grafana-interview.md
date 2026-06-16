@@ -107,20 +107,36 @@ updated: "2026-04-25"
 
 **Prometheus** — система мониторинга на pull-архитектуре: сервер сам ходит к таргетам по HTTP, забирает метрики, кладёт их в свою TSDB и проверяет правила алертов. Вокруг этого ядра работает несколько вспомогательных компонентов.
 
-Связи в экосистеме удобно разложить на три группы — само ядро `Prometheus`, опрашиваемые таргеты и потребители данных:
+```mermaid
+graph TB
+    subgraph "Prometheus Ecosystem"
+        PS[Prometheus Server]
+        TSDB[(TSDB)]
+        AM[Alertmanager]
+        PG[Pushgateway]
+    end
+    subgraph "Targets"
+        T1[Spring Boot App /actuator/prometheus]
+        T2[Node Exporter]
+        T3[Custom Exporter]
+        T4[Short-lived Job]
+    end
+    subgraph "Consumers"
+        G[Grafana]
+        API[API / PromQL clients]
+    end
 
-- **Prometheus Ecosystem (ядро):** `Prometheus Server`, встроенная `TSDB`, `Alertmanager` и `Pushgateway`.
-- **Targets (источники метрик):** `Spring Boot App` (эндпоинт `/actuator/prometheus`), `Node Exporter`, `Custom Exporter`, а также `Short-lived Job`.
-- **Consumers (потребители):** `Grafana` и `API / PromQL clients`.
-
-Потоки данных между ними:
-
-- `Prometheus Server` → **scrape** → `Spring Boot App`, `Node Exporter`, `Custom Exporter` и сам `Pushgateway` (сервер забирает метрики со всех таргетов и из буфера).
-- `Short-lived Job` → **push** → `Pushgateway` (короткоживущая задача толкает метрики в буфер, откуда их потом заберёт сервер).
-- `Prometheus Server` ↔ **store/query** ↔ `TSDB` (двусторонне: сервер пишет сэмплы в TSDB и читает их при выполнении запросов).
-- `Prometheus Server` → **fire alerts** → `Alertmanager` (сработавшие правила уходят в Alertmanager).
-- `Alertmanager` → **notify** → `Email` / `Slack` / `PagerDuty` (доставка уведомлений в каналы).
-- `Grafana` → **PromQL** → `Prometheus Server` и `API / PromQL clients` → **PromQL** → `Prometheus Server` (потребители читают данные через PromQL).
+    PS -->|scrape| T1
+    PS -->|scrape| T2
+    PS -->|scrape| T3
+    PS -->|scrape| PG
+    T4 -->|push| PG
+    PS <-->|store/query| TSDB
+    PS -->|fire alerts| AM
+    AM -->|notify| Email/Slack/PD
+    G -->|PromQL| PS
+    API -->|PromQL| PS
+```
 
 | Компонент | Роль |
 |-----------|------|
@@ -1174,12 +1190,13 @@ remote_read:
 
 **Federation** — иерархия серверов: один «глобальный» `Prometheus` опрашивает (scrape) другие, «локальные» серверы через специальный эндпоинт `/federate`. Смысл — собрать в одном месте *агрегаты* со множества кластеров (а не сырые метрики целиком), чтобы получить общую картину, не дублируя все данные.
 
-Топология двухуровневая:
-
-- `Global Prometheus` → **/federate** → `Prometheus EU` (глобальный сервер тянет агрегаты с локального EU-сервера через эндпоинт `/federate`).
-- `Global Prometheus` → **/federate** → `Prometheus US` (то же самое с локальным US-сервером).
-- `Prometheus EU` → **scrape** → `Services EU` (локальный сервер обычным scrape собирает метрики со своих сервисов в регионе EU).
-- `Prometheus US` → **scrape** → `Services US` (аналогично для региона US).
+```mermaid
+graph TB
+    GP[Global Prometheus] -->|/federate| LP1[Prometheus EU]
+    GP -->|/federate| LP2[Prometheus US]
+    LP1 -->|scrape| S1[Services EU]
+    LP2 -->|scrape| S2[Services US]
+```
 
 **Конфигурация на global Prometheus:**
 ```yaml

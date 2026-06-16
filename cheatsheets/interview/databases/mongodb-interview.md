@@ -554,9 +554,14 @@ db.notifications.createIndex({ expireAt: 1 }, { expireAfterSeconds: 0 })
 
 **Aggregation pipeline** — конвейер из этапов (stages): документы коллекции проходят их по очереди, и каждый этап трансформирует поток — фильтрует, группирует, считает, переформатирует. Выход одного этапа становится входом следующего, как в Unix-пайпах. Это основной инструмент для аналитики и сложных преобразований там, где `find` уже не справляется.
 
-Поток данных через конвейер (выход каждого этапа — вход следующего):
-
-`Коллекция` → `$match` → `$group` → `$sort` → `$limit` → `Результат`
+```mermaid
+graph LR
+    A[Коллекция] --> B["$match"]
+    B --> C["$group"]
+    C --> D["$sort"]
+    D --> E["$limit"]
+    E --> F[Результат]
+```
 
 ```
 ┌───────────┐   ┌────────┐   ┌────────┐   ┌───────┐   ┌────────┐   ┌───────────┐
@@ -684,12 +689,19 @@ db.products.aggregate([
 
 **Replica Set** — группа узлов `MongoDB`, поддерживающих одинаковую копию данных для высокой доступности и отказоустойчивости.
 
-Схема потоков в `Replica Set` из 3 узлов (`Primary`, `Secondary 1`, `Secondary 2`):
-
-- Клиент → `write` → `Primary` (все записи идут только на `Primary`).
-- Клиент → `read (optional)` → `Secondary 1` (чтение с реплик опционально, при настройке `Read Preference`).
-- `Primary` → `Oplog replication` → `Secondary 1`.
-- `Primary` → `Oplog replication` → `Secondary 2`.
+```mermaid
+graph TB
+    Client[Клиент] -->|"write"| Primary
+    Client -->|"read (optional)"| Secondary1
+    Primary -->|"Oplog replication"| Secondary1[Secondary 1]
+    Primary -->|"Oplog replication"| Secondary2[Secondary 2]
+    
+    subgraph "Replica Set (3 узла)"
+        Primary
+        Secondary1
+        Secondary2
+    end
+```
 
 ```
                     ┌──────────┐
@@ -796,11 +808,22 @@ db.oplog.rs.find().sort({ $natural: -1 }).limit(5)
 
 **Sharding** — горизонтальное распределение данных одной коллекции по нескольким серверам (шардам). Применяют, когда данные или нагрузка перестают помещаться на один сервер: вместо покупки всё более мощной машины (вертикальное масштабирование, у которого есть потолок) кластер растят, добавляя узлы. `MongoDB` сама раскидывает документы по шардам и маршрутизирует запросы, так что для приложения кластер выглядит как одна БД.
 
-Топология шардированного кластера:
-
-- Приложение обращается к нескольким роутерам `mongos (роутер)` — `mongos 1` и `mongos 2`.
-- Каждый `mongos` маршрутизирует запросы на все шарды: `Shard 1 (Replica Set)`, `Shard 2 (Replica Set)`, `Shard 3 (Replica Set)` (каждый шард — отдельный `Replica Set`).
-- `Config Servers (Replica Set)` поставляют метаданные обоим роутерам — `mongos 1` и `mongos 2`.
+```mermaid
+graph TB
+    App[Приложение] --> Mongos1["mongos (роутер)"]
+    App --> Mongos2["mongos (роутер)"]
+    
+    Mongos1 --> Shard1["Shard 1<br/>(Replica Set)"]
+    Mongos1 --> Shard2["Shard 2<br/>(Replica Set)"]
+    Mongos1 --> Shard3["Shard 3<br/>(Replica Set)"]
+    
+    Mongos2 --> Shard1
+    Mongos2 --> Shard2
+    Mongos2 --> Shard3
+    
+    ConfigSrv["Config Servers<br/>(Replica Set)"] -.->|"метаданные"| Mongos1
+    ConfigSrv -.->|"метаданные"| Mongos2
+```
 
 ```
                         ┌─────────────┐
@@ -1519,10 +1542,13 @@ db.orders.aggregate([
 ])
 ```
 
-Как это работает на примере `Order {items:[A,B,C]}`:
-
-- `$unwind` разворачивает один документ в три: `Order + item A`, `Order + item B`, `Order + item C`.
-- `$group` сворачивает эти три документа в итоговый `Aggregated result`.
+```mermaid
+graph LR
+    D1["Order {items:[A,B,C]}"] -->|"$unwind"| R1["Order + item A"]
+    D1 -->|"$unwind"| R2["Order + item B"]
+    D1 -->|"$unwind"| R3["Order + item C"]
+    R1 & R2 & R3 -->|"$group"| G["Aggregated result"]
+```
 
 ```
                           $unwind                       $group
@@ -1779,15 +1805,16 @@ sh.updateZoneKeyRange("mydb.users",
 
 **Выбор стратегии:**
 
-Дерево выбора стратегии:
-
-- **Нужны range-запросы по shard key?**
-  - **Да** → **Range sharding**. Далее: **монотонный ключ?**
-    - **Да** → риск горячего шарда → добавить рандомизацию или composite key.
-    - **Нет** → оптимально.
-  - **Нет** → **есть требования к локализации данных?**
-    - **Да** → **Zone sharding**.
-    - **Нет** → **Hashed sharding**.
+```mermaid
+graph TD
+    A["Нужны range-запросы по shard key?"] -->|Да| B["Range sharding"]
+    A -->|Нет| C["Есть требования к локализации данных?"]
+    C -->|Да| D["Zone sharding"]
+    C -->|Нет| E["Hashed sharding"]
+    B --> F{"Монотонный ключ?"}
+    F -->|Да| G["Риск горячего шарда\n→ добавить рандомизацию\nили composite key"]
+    F -->|Нет| H["Оптимально"]
+```
 
 ```
             ┌─────────────────────────────────┐

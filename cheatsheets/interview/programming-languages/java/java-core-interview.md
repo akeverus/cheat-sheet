@@ -624,12 +624,19 @@ public class InitOrder {
 
 ## Q21. (!) Как работает загрузка классов в JVM?
 
-`ClassLoader` — компонент JVM, который по требованию находит `.class`-файл, читает его байткод и превращает в объект `Class` в памяти. Классы грузятся лениво — только когда впервые понадобятся. Три стандартных загрузчика образуют иерархию «родитель → потомок», где каждый следующий — потомок предыдущего:
+`ClassLoader` — компонент JVM, который по требованию находит `.class`-файл, читает его байткод и превращает в объект `Class` в памяти. Классы грузятся лениво — только когда впервые понадобятся. Три стандартных загрузчика образуют иерархию «родитель → потомок»:
 
-- **Bootstrap ClassLoader** (нативный, C++) →
-- **Platform ClassLoader** (бывш. Extension) →
-- **Application ClassLoader** (System) →
-- **Custom ClassLoader** (пользовательский)
+```mermaid
+graph TD
+    A["Bootstrap ClassLoader<br/>(нативный, C++)"] --> B["Platform ClassLoader<br/>(бывш. Extension)"]
+    B --> C["Application ClassLoader<br/>(System)"]
+    C --> D["Custom ClassLoader<br/>(пользовательский)"]
+
+    style A fill:#e8d5b7,stroke:#8b6914
+    style B fill:#d4e8d4,stroke:#2e7d32
+    style C fill:#d4d4e8,stroke:#3f51b5
+    style D fill:#e8d4d4,stroke:#c62828
+```
 
 | ClassLoader | Загружает |
 |-------------|-----------|
@@ -648,14 +655,17 @@ public class InitOrder {
 
 **Parent-first delegation** (модель делегирования) — базовый принцип работы `ClassLoader`: прежде чем грузить класс самому, загрузчик **поднимает запрос вверх** — отдаёт его родителю, тот своему родителю, и так до самого верхнего `Bootstrap`. Сам загрузчик берётся за дело только если ни один из родителей класс не нашёл. То есть поиск идёт сверху вниз по иерархии.
 
-По шагам, на примере запроса «загрузить `MyClass`»:
+```mermaid
+graph TD
+    A["Запрос: загрузить MyClass"] --> B["Application ClassLoader"]
+    B -->|"делегирует"| C["Platform ClassLoader"]
+    C -->|"делегирует"| D["Bootstrap ClassLoader"]
+    D -->|"не найден"| C
+    C -->|"не найден"| B
+    B -->|"загружает из classpath"| E["MyClass.class"]
 
-1. Запрос приходит в `Application ClassLoader`.
-2. `Application ClassLoader` **делегирует** его родителю — `Platform ClassLoader`.
-3. `Platform ClassLoader` **делегирует** дальше вверх — `Bootstrap ClassLoader`.
-4. `Bootstrap ClassLoader` класс **не нашёл** → возвращает запрос обратно вниз, в `Platform ClassLoader`.
-5. `Platform ClassLoader` тоже **не нашёл** → возвращает запрос в `Application ClassLoader`.
-6. `Application ClassLoader` **загружает `MyClass.class` из classpath** — он первый, кто реально нашёл класс.
+    style E fill:#d4e8d4,stroke:#2e7d32
+```
 
 Зачем так сделано:
 - **Безопасность** — пользовательский класс с именем `java.lang.String` никогда не подменит настоящий: его сначала найдёт и загрузит `Bootstrap` из JDK.

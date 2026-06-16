@@ -226,12 +226,15 @@ plugins {
 1. **Подтягивает совместимые библиотеки** через транзитивные зависимости (версии согласованы между собой через BOM).
 2. **Активирует автоконфигурацию** — как только классы из этих библиотек оказываются в classpath, `Spring Boot` сам создаёт нужные бины по условиям. Именно из-за этой связки добавление зависимости сразу даёт работающую функциональность, а не просто jar-файлы на полке.
 
-Например, что тянет за собой `spring-boot-starter-web`:
-
-- `spring-boot-starter-web` → `spring-web`, `spring-webmvc`
-- `spring-boot-starter-web` → `spring-boot-starter-tomcat` → `tomcat-embed-core`
-- `spring-boot-starter-web` → `spring-boot-starter-json` → `jackson-databind`
-- `spring-boot-starter-web` (по auto-config) → активирует `WebMvcAutoConfiguration`, `ServletWebServerFactoryAutoConfiguration`
+```mermaid
+graph LR
+    A["spring-boot-starter-web"] --> B["spring-web<br/>spring-webmvc"]
+    A --> C["spring-boot-starter-tomcat"]
+    A --> D["spring-boot-starter-json"]
+    C --> E["tomcat-embed-core"]
+    D --> F["jackson-databind"]
+    A -.->|"auto-config"| G["WebMvcAutoConfiguration<br/>ServletWebServerFactoryAutoConfiguration"]
+```
 
 Соглашение по именованию:
 - **Официальные:** `spring-boot-starter-{name}` (web, data-jpa, security)
@@ -295,12 +298,13 @@ com.example.MyAutoConfiguration
 
 **3. Модуль starter** (`my-spring-boot-starter`) — пустой POM, подтягивающий модуль автоконфигурации и нужные библиотеки.
 
-Связи между модулями:
-
-- `my-spring-boot-starter` (пустой POM) → зависит от `my-spring-boot-autoconfigure`
-- `my-spring-boot-starter` (пустой POM) → зависит от `my-library`
-- `my-spring-boot-autoconfigure` → зависит от `spring-boot-autoconfigure`
-- `my-spring-boot-autoconfigure` → через `@ConditionalOnClass` опирается на наличие `my-library` в classpath
+```mermaid
+graph TD
+    A["my-spring-boot-starter<br/>(пустой POM)"] --> B["my-spring-boot-autoconfigure"]
+    A --> C["my-library"]
+    B --> D["spring-boot-autoconfigure"]
+    B -.->|"@ConditionalOnClass"| C
+```
 
 ---
 
@@ -308,18 +312,22 @@ com.example.MyAutoConfiguration
 
 Автоконфигурация — это механизм, который сам создаёт бины на основе того, что лежит в classpath: увидел `Tomcat` — поднял веб-сервер, увидел `DataSource` — настроил пул соединений. Идея простая: `Spring Boot` несёт в себе ~150 готовых конфигураций «на все случаи», но включает только те, чьи условия выполнены. Полный поток:
 
-Поток по шагам:
-
-1. `SpringApplication.run()` создаёт `ApplicationContext`.
-2. Через `@SpringBootApplication` срабатывает `@EnableAutoConfiguration`, который подключает `AutoConfigurationImportSelector`.
-3. `AutoConfigurationImportSelector` загружает кандидатов из `META-INF/spring/...AutoConfiguration.imports` и `spring.factories`.
-4. Кандидаты фильтруются по `@Conditional`-аннотациям. Для каждой конфигурации проверяется:
-   - `@ConditionalOnClass`: есть ли нужный класс в classpath?
-     - **Нет** → конфигурация пропускается.
-     - **Да** → проверяется `@ConditionalOnMissingBean`: бин ещё не создан вручную?
-       - **Да** (бин не создан) → бины регистрируются.
-       - **Нет** (пользователь определил свой бин) → конфигурация пропускается.
-5. После обработки всех кандидатов (зарегистрированных, пропущенных по classpath и пропущенных из-за пользовательского бина) `ApplicationContext` готов.
+```mermaid
+graph TD
+    A["SpringApplication.run()"] --> B["Создание ApplicationContext"]
+    B --> C["@EnableAutoConfiguration<br/>через @SpringBootApplication"]
+    C --> D["AutoConfigurationImportSelector"]
+    D --> E["Загрузка кандидатов из<br/>META-INF/spring/...AutoConfiguration.imports<br/>и spring.factories"]
+    E --> F["Фильтрация по @Conditional"]
+    F --> G{"@ConditionalOnClass<br/>есть в classpath?"}
+    G -->|Да| H{"@ConditionalOnMissingBean<br/>бин не создан вручную?"}
+    G -->|Нет| I["Пропуск конфигурации"]
+    H -->|Да| J["Регистрация бинов"]
+    H -->|Нет| K["Пропуск — пользователь<br/>определил свой бин"]
+    J --> L["ApplicationContext готов"]
+    K --> L
+    I --> L
+```
 
 Ключевые этапы:
 
@@ -450,18 +458,20 @@ public WebServerFactoryCustomizer<TomcatServletWebServerFactory> customizer() {
 
 ## Q14. (!) Архитектура встроенного сервера — как `Spring Boot` запускает `Tomcat`?
 
-Процесс запуска встроенного сервера по шагам:
+Процесс запуска встроенного сервера:
 
-1. `SpringApplication.run()` — старт приложения.
-2. Определение типа приложения: `SERVLET` / `REACTIVE` / `NONE`.
-3. Создание `ApplicationContext` (`ServletWebServerApplicationContext`).
-4. Refresh контекста.
-5. Создаётся бин `ServletWebServerFactory` (`TomcatServletWebServerFactory`).
-6. Вызывается `factory.getWebServer(initializers)`.
-7. Создаётся instance `Tomcat`.
-8. `DispatcherServlet` регистрируется как `Servlet`.
-9. Вызывается `Tomcat.start()`.
-10. Приложение слушает порт.
+```mermaid
+graph TD
+    A["SpringApplication.run()"] --> B["Определение типа приложения:<br/>SERVLET / REACTIVE / NONE"]
+    B --> C["Создание ApplicationContext<br/>(ServletWebServerApplicationContext)"]
+    C --> D["Refresh контекста"]
+    D --> E["ServletWebServerFactory bean<br/>(TomcatServletWebServerFactory)"]
+    E --> F["factory.getWebServer(initializers)"]
+    F --> G["Создание Tomcat instance"]
+    G --> H["Регистрация DispatcherServlet<br/>как Servlet"]
+    H --> I["Tomcat.start()"]
+    I --> J["Приложение слушает порт"]
+```
 
 Ключевые классы:
 
@@ -478,21 +488,26 @@ public WebServerFactoryCustomizer<TomcatServletWebServerFactory> customizer() {
 
 Идея externalized configuration: одну и ту же сборку приложения можно запускать в любом окружении, меняя только внешние настройки, а не код. Для этого `Spring Boot` читает свойства из **14+ источников** и накладывает их друг на друга по чёткому порядку приоритета (от высшего к низшему):
 
-Порядок приоритета источников (от высшего к низшему):
+```mermaid
+graph TD
+    A["1. Аргументы командной строки<br/>--server.port=9090"] --> B
+    B["2. SPRING_APPLICATION_JSON"] --> C
+    C["3. Свойства ServletConfig /<br/>ServletContext"] --> D
+    D["4. JNDI-атрибуты<br/>java:comp/env"] --> E
+    E["5. System.getProperties()"] --> F
+    F["6. Переменные окружения ОС<br/>SPRING_DATASOURCE_URL"] --> G
+    G["7. RandomValuePropertySource<br/>random.*"] --> H
+    H["8. Profile-specific файлы<br/>вне JAR: application-prod.yml"] --> I
+    I["9. application.yml вне JAR"] --> J
+    J["10. Profile-specific файлы<br/>внутри JAR"] --> K
+    K["11. application.yml внутри JAR"] --> L
+    L["12. @PropertySource<br/>на @Configuration"] --> M
+    M["13. SpringApplication<br/>.setDefaultProperties()"]
 
-1. Аргументы командной строки (`--server.port=9090`) — наивысший приоритет.
-2. `SPRING_APPLICATION_JSON`.
-3. Свойства `ServletConfig` / `ServletContext`.
-4. JNDI-атрибуты (`java:comp/env`).
-5. `System.getProperties()`.
-6. Переменные окружения ОС (`SPRING_DATASOURCE_URL`).
-7. `RandomValuePropertySource` (`random.*`).
-8. Profile-specific файлы вне JAR (`application-prod.yml`).
-9. `application.yml` вне JAR.
-10. Profile-specific файлы внутри JAR.
-11. `application.yml` внутри JAR.
-12. `@PropertySource` на `@Configuration`.
-13. `SpringApplication.setDefaultProperties()` — низший приоритет.
+    style A fill:#ff6b6b,color:#fff
+    style F fill:#ffa07a,color:#fff
+    style H fill:#98fb98,color:#000
+```
 
 **Правило:** источник с более высоким приоритетом перезаписывает значение того же свойства из источника с более низким. То есть значение из `application.yml` — это лишь дефолт, который любой более приоритетный источник может переопределить.
 
@@ -649,11 +664,18 @@ implementation 'org.springframework.boot:spring-boot-starter-actuator'
 - **Информация об окружении** — конфигурация, переменные, бины
 - **Управление** — изменение уровня логирования, thread dump, heap dump
 
-Как это связано на практике:
-
-- `Spring Boot App` → подключает `Actuator`, который открывает endpoint-ы: `/health`, `/metrics`, `/info`, `/env`, `/loggers`.
-- `/health` и `/metrics` → отдают данные в `Prometheus` / `Grafana`.
-- `/health` → используется как Kubernetes probes.
+```mermaid
+graph LR
+    A["Spring Boot App"] --> B["Actuator"]
+    B --> C["/health"]
+    B --> D["/metrics"]
+    B --> E["/info"]
+    B --> F["/env"]
+    B --> G["/loggers"]
+    C --> H["Prometheus /<br/>Grafana"]
+    D --> H
+    C --> I["Kubernetes<br/>probes"]
+```
 
 **Безопасность:** по умолчанию по HTTP доступны только `/health`. Расширение — через `management.endpoints.web.exposure.include`. В production обязательно защищать эндпоинты через [Spring Security](spring-security-interview.md).
 
@@ -868,14 +890,14 @@ my-app.jar
 └── BOOT-INF/layers.idx     (если включены layers)
 ```
 
-Что происходит при запуске, по порядку:
-
-1. `java -jar app.jar` — старт.
-2. Запускается `JarLauncher` (он указан как `Main-Class` в `MANIFEST.MF`).
-3. `JarLauncher` настраивает `ClassLoader` для вложенных JAR.
-4. Загружаются `BOOT-INF/lib/*.jar`.
-5. Запускается `Start-Class` (ваш класс с `@SpringBootApplication`).
-6. Вызывается `SpringApplication.run()`.
+```mermaid
+graph TD
+    A["java -jar app.jar"] --> B["JarLauncher<br/>(Main-Class из MANIFEST.MF)"]
+    B --> C["Настройка ClassLoader<br/>для вложенных JAR"]
+    C --> D["Загрузка BOOT-INF/lib/*.jar"]
+    D --> E["Запуск Start-Class<br/>(ваш @SpringBootApplication)"]
+    E --> F["SpringApplication.run()"]
+```
 
 **Layers** (для оптимизации Docker-образов):
 
@@ -1147,13 +1169,13 @@ curl -X POST http://localhost:8080/actuator/loggers/com.example \
 
 **AOT-обработка** (`Ahead-of-Time`):
 
-Этапы обработки по порядку:
-
-1. Исходный код.
-2. `AOT Processing` (на этапе компиляции, compile time).
-3. Сгенерированный код + metadata.
-4. `GraalVM Native Image Compiler`.
-5. Нативный бинарник (старт ~50 мс).
+```mermaid
+graph LR
+    A["Исходный код"] --> B["AOT Processing<br/>(compile time)"]
+    B --> C["Сгенерированный код<br/>+ metadata"]
+    C --> D["GraalVM Native<br/>Image Compiler"]
+    D --> E["Нативный бинарник<br/>(~50ms startup)"]
+```
 
 `Spring Boot` 3.x выполняет AOT-обработку: генерирует код для создания бинов без рефлексии, анализирует `@Conditional` на этапе компиляции. Результат — нативный бинарник, не требующий JVM.
 
@@ -1161,22 +1183,22 @@ curl -X POST http://localhost:8080/actuator/loggers/com.example \
 
 Понимание жизненного цикла нужно, чтобы знать, в какой момент срабатывают ваши хуки: где читать конфигурацию, когда контекст уже готов, а когда приложение начинает принимать трафик. Полный путь от запуска до остановки:
 
-Полный путь от запуска до остановки, по порядку:
-
-1. `main()` → `SpringApplication.run()`.
-2. Подготовка `Environment` (загрузка property sources).
-3. Публикация `ApplicationEnvironmentPreparedEvent`.
-4. Создание `ApplicationContext`.
-5. Загрузка `@Configuration` и Auto-configuration.
-6. Refresh контекста (создание бинов).
-7. Запуск встроенного сервера.
-8. Вызов `CommandLineRunner` / `ApplicationRunner`.
-9. Публикация `ApplicationReadyEvent`.
-10. Приложение работает.
-11. Получение `SIGTERM`.
-12. Graceful Shutdown (завершение запросов).
-13. Закрытие `ApplicationContext` (вызов `@PreDestroy`).
-14. Остановка.
+```mermaid
+graph TD
+    A["main() → SpringApplication.run()"] --> B["Подготовка Environment<br/>(загрузка property sources)"]
+    B --> C["Публикация<br/>ApplicationEnvironmentPreparedEvent"]
+    C --> D["Создание ApplicationContext"]
+    D --> E["Загрузка @Configuration,<br/>Auto-configuration"]
+    E --> F["Refresh контекста<br/>(создание бинов)"]
+    F --> G["Запуск встроенного сервера"]
+    G --> H["Вызов CommandLineRunner /<br/>ApplicationRunner"]
+    H --> I["Публикация<br/>ApplicationReadyEvent"]
+    I --> J["Приложение работает"]
+    J --> K["Получение SIGTERM"]
+    K --> L["Graceful Shutdown<br/>(завершение запросов)"]
+    L --> M["Закрытие ApplicationContext<br/>(вызов @PreDestroy)"]
+    M --> N["Остановка"]
+```
 
 **Ключевые события (listeners):**
 
