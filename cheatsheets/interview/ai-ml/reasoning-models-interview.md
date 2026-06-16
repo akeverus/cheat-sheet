@@ -377,7 +377,7 @@ import anthropic
 client = anthropic.Anthropic()
 
 response = client.messages.create(
-    model="claude-opus-4-7",
+    model="claude-3-7-sonnet-20250219",
     max_tokens=20000,
     thinking={
         "type": "enabled",
@@ -707,7 +707,7 @@ Then translate to Python. Use the following template...
 
 ```python
 with client.messages.stream(
-    model="claude-opus-4-7",
+    model="claude-3-7-sonnet-20250219",
     thinking={"type": "enabled", "budget_tokens": 10000},
     messages=[...]
 ) as stream:
@@ -741,7 +741,7 @@ with client.messages.stream(
 
 ```python
 response = client.messages.create(
-    model="claude-opus-4-7",
+    model="claude-3-7-sonnet-20250219",
     thinking={"type": "enabled", "budget_tokens": 5000},
     tools=[{"name": "search_web", "input_schema": {...}}],
     messages=[{"role": "user", "content": "Что сейчас в Москве по погоде и +5 дней?"}]
