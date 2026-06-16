@@ -373,6 +373,10 @@ updated: "2026-04-20"
 
 - [Вопросы на собеседовании: `TypeScript`](programming-languages/typescript/typescript-interview.md) — `33` вопроса
 
+## programming-languages/rust
+
+- [Вопросы на собеседовании: `Rust`](programming-languages/rust/rust-interview.md) — `33` вопроса
+
 ## reactive
 
 - [Вопросы на собеседовании: `Project Reactor`](reactive/project-reactor-interview.md) — `47` вопросов
