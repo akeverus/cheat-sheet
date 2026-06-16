@@ -369,6 +369,10 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Kotlin + Spring`](programming-languages/kotlin/kotlin-spring-interview.md) — `15` вопросов
 - [Вопросы на собеседовании: `Kotlin Value Classes`](programming-languages/kotlin/kotlin-value-classes-interview.md) — `15` вопросов
 
+## programming-languages/typescript
+
+- [Вопросы на собеседовании: `TypeScript`](programming-languages/typescript/typescript-interview.md) — `33` вопроса
+
 ## reactive
 
 - [Вопросы на собеседовании: `Project Reactor`](reactive/project-reactor-interview.md) — `47` вопросов

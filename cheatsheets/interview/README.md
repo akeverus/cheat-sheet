@@ -45,11 +45,12 @@ updated: "2026-04-18"
 - [Мониторинг](monitoring/) - вопросы по метрикам, трейсингу и наблюдаемости
 - [Производительность](performance/) - вопросы по профилированию, тюнингу JVM, управлению памятью
 - [Подготовка](preparation/) - советы и стратегии подготовки к собеседованию
-- [Языки программирования](programming-languages/) - JVM-языки:
+- [Языки программирования](programming-languages/) - JVM и не только:
   - [`java/`](programming-languages/java/) — Core, Concurrency, Collections, Stream API, IO/NIO, JPMS, OOP, Generics, Annotations, Exceptions, String, Java 8/17-21
   - [`kotlin/`](programming-languages/kotlin/) — основы, Coroutines, DSL, исключения, коллекции, сериализация, интероп с Java
   - [`scala/`](programming-languages/scala/) — основы Scala 2.x/3.x
   - [`go/`](programming-languages/go/) — Go (базовый), concurrency, memory & GC, generics, stdlib, testing, modules
+  - [`typescript/`](programming-languages/typescript/) — TypeScript (базовый): система типов, generics, utility/conditional types, tsconfig
 - [Реактивное программирование](reactive/) - вопросы по RxJava и реактивным подходам
 - [Безопасность](security/) - вопросы по безопасности приложений, OAuth2, OWASP Top 10
 - [Системный дизайн](system-design/) - вопросы по проектированию систем
