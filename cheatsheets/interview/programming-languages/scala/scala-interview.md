@@ -90,7 +90,7 @@ updated: "2026-04-25"
 
 **Effect systems**
 - [Q34. (!) Что такое ZIO и Cats Effect?](#q34--что-такое-zio-и-cats-effect)
-- [Q35. ZIO[R, E, A] — три типа?](#q35-zior-e-a--три-типа)
+- [Q35. Что означают три параметра в ZIO[R, E, A]?](#q35-что-означают-три-параметра-в-zior-e-a)
 
 **Java интероп**
 - [Q36. (!) Как Scala взаимодействует с Java?](#q36--как-scala-взаимодействует-с-java)
@@ -266,7 +266,7 @@ Scala 3 выводит типы точнее, особенно для джене
                    /   \
               AnyVal   AnyRef
               /  |       \
-          Int Boolean   ScalaObject
+          Int Boolean   String List
             \  |         /
              Nothing (subtype of all)
             (Null - subtype of AnyRef)

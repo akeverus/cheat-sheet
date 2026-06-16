@@ -591,6 +591,8 @@ void shouldReturnUserWhenFound() {
 
 `@MockBean` и `@SpyBean` — аннотации Spring Boot Test, которые подменяют **бин** в `ApplicationContext` на mock/spy. В отличие от обычного `@Mock`, мок попадает прямо в Spring-контекст, поэтому его получат все бины, которым он внедряется через `@Autowired`. `@MockBean` заменяет бин полностью, `@SpyBean` оборачивает реальный бин, сохраняя его поведение по умолчанию.
 
+**Spring Boot 3.4+ (важно для senior):** `@MockBean` и `@SpyBean` помечены `@Deprecated` начиная со Spring Boot 3.4 (ноябрь 2024). Рекомендуемая замена — `@MockitoBean` и `@MockitoSpyBean` из пакета `org.springframework.test.context.bean.override.mockito` (общий механизм bean override в Spring Framework 6.2). Семантика подмены бина и инвалидации кеша контекста та же; в новом коде используйте `@MockitoBean`/`@MockitoSpyBean`.
+
 ```java
 @SpringBootTest
 class UserServiceIntegrationTest {
