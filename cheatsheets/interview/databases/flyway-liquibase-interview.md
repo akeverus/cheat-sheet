@@ -1997,9 +1997,10 @@ void migrationsAreIdempotent() {
 ### Проблема: ALTER TABLE блокирует таблицу
 
 ```sql
--- ОПАСНО на большой таблице (AccessExclusiveLock):
+-- ОПАСНО на PostgreSQL < 11 (или при волатильном DEFAULT вроде clock_timestamp()):
+-- переписывает всю таблицу под AccessExclusiveLock, блокируя чтение и запись на всё время.
 ALTER TABLE orders ADD COLUMN status VARCHAR(20) DEFAULT 'pending' NOT NULL;
--- Блокирует все запросы на чтение и запись на время выполнения
+-- В PostgreSQL 11+ константный DEFAULT, наоборот, безопасен — это быстрое изменение каталога без rewrite.
 ```
 
 ### Решение 1: Добавление nullable колонки + backfill батчами

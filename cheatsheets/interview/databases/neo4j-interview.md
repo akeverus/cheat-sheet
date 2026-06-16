@@ -216,7 +216,7 @@ MATCH (n:Customer) RETURN n  -- all Customers
 
 **Индексы привязаны к label** — индексируется свойство в рамках конкретной категории, что и делает фильтр по label быстрым:
 ```cypher
-CREATE INDEX ON :Person(name)
+CREATE INDEX FOR (p:Person) ON (p.name)
 ```
 
 ## Q7. Как устроено направление relationships?
@@ -695,7 +695,7 @@ RETURN path
 
 **Neo4j Aura (управляемое облако):**
 - Полностью управляемая
-- Бесплатный уровень (50K узлов)
+- Бесплатный уровень (до 200K узлов и 400K связей)
 - Оплата по мере роста (pay-as-you-grow)
 - Несколько регионов (multi-region)
 
