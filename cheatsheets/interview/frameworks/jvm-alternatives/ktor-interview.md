@@ -473,8 +473,8 @@ get("/aggregate") {
 
 ```kotlin
 get("/long") {
-    // launch создаёт fire-and-forget корутину в scope запроса
-    call.application.launch {
+    // launch создаёт fire-and-forget корутину в scope запроса (сам call — это CoroutineScope)
+    call.launch {
         // Эта работа отменится, если соединение оборвётся
         backgroundTask()
     }
