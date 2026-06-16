@@ -1848,7 +1848,7 @@ Client → API Gateway → Lambda Function → Response
 
 **Rate Limiting:** встроен на уровне Usage Plans — `throttlingBurstLimit` (burst) + `throttlingRateLimit` (steady-state rps).
 
-**Стоимость:** оплата за вызов (~$3.5 за млн запросов для HTTP API). При высоком трафике сравнивать с Fargate/EKS.
+**Стоимость:** оплата за вызов (~$1.0 за млн запросов для HTTP API, ~$3.5 для REST API). При высоком трафике сравнивать с Fargate/EKS.
 
 ### Когда AWS API Gateway уместен
 
