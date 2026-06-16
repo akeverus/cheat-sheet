@@ -526,3 +526,48 @@ JSON не распарсился (`try/catch` глотает ошибку и о�
 (stats.js v8→v9). Синхронизировано в `build/resources/main` для live-bootRun.
 
 editorial.css v74→v75.
+
+## Порция 9 — C11+C14+C15: удаление мёртвого JS (2026-06-16)
+
+Три находки «мёртвый код» из дизайн-ревью (вводит в заблуждение + раздувает
+hot-path ответа). Перед удалением каждая DOM-зависимость проверена отдельным grep
+по `templates/` (loop-grep ненадёжен — проверял прямыми вызовами): все id/классы
+подтверждённо отсутствуют. Итог: app.js 2167→1993 строк (−174), `node --check` OK.
+
+**C11 — initHintButton (вся фича подсказок).** `#btn-hint`/`#hint-container` нет ни
+в одном шаблоне (0 вхождений) → guard `if (!btn || !container) return;` срабатывал
+всегда, `window.__resetHintState` никогда не определялся, его вызов в
+`regenerateQuestion` — тоже мёртв. Удалено: функция `initHintButton` (~90 строк
+с эмодзи-иконками и POST /api/hint), её вызов из DOMContentLoaded, ветка
+`__resetHintState`, осиротевшая константа `API.HINT`. _Бэкенд-эндпоинт /api/hint
+не трогал — это отдельная задача (требует build-цикла), безвреден как dead-route._
+
+**C14 — мёртвые привязки.** (1) `window.submitAnswer` — 0 внешних вызовов, удалён.
+(2) фолбэк `|| getElementById('submitBtn')` — id `submitBtn` отсутствует (реальный
+всегда `interview-submit`), убран. (3) `answerFlowSteps` (`#answer-flow-steps`
+отсутствует) → `setAnswerFlowStep` всегда no-op (ранний `return` на null); удалены
+сама функция, 5 вызовов (`selected`/`checking`/`result`/`explanation`×2) и два
+no-op-блока `if (answerFlowSteps) { … }`. `answer-flow-hint`/`answerFlowHint` —
+реальный элемент (focus-training.html:142), НЕ тронут.
+
+**C15 — trackUxMetric (write-only телеметрия).** Писала в sessionStorage
+(`quiz.ux.metrics.v2`) и диспатчила `quiz:ux-metric`, но 0 читателей ключа и 0
+слушателей события во всём проекте. На каждый сабмит делала JSON.parse/stringify —
+мёртвый вес в горячем пути. Удалено: функция `trackUxMetric`, обе константы
+`METRICS_STORAGE_KEY`, блок `.question-support` (класса нет в шаблонах), 6 вызовов.
+Каскадом мертвы стали `questionStartedAt` и `firstAnswerTracked` (существовали лишь
+ради метрики `first_answer_latency_ms`) — тоже удалены. _Не трогал orphaned
+`onLearningPrefChange`/таймер/mode-toggle (B7-наследие) — отдельная бóльшая чистка._
+
+Верифицировано live (chrome-devtools, app.js v33→v34):
+- `/` MCQ: submit заблокирован до выбора → разблокирован после; неверный ответ —
+  вердикт «Неверно» + разбор, «Следующий вопрос» виден, submit скрыт; верный ответ —
+  вердикт «Верно» + 3 confidence-кнопки (Угадал/С трудом/Знал точно). Полный
+  hot-path цел в обеих ветках.
+- `attachConfidenceButtons` (рендер confidence) и его вызов в showResult — не тронуты
+  правками; confidence гейтится `if (!isCorrect) return;` (для неверного — 0 кнопок
+  by design, не регрессия).
+- Консоль чиста на `/` и `/settings` (0 errors/warnings).
+
+Файлы: `static/js/app.js` (−174 строк), `templates/{result,settings,focus-training}.html`
+(app.js v33→v34). Синхронизировано в `build/resources/main`.

@@ -11,8 +11,7 @@
     // прятал confidence-кнопки (L1825) и доп.анализ (L1832), timerSeconds>0 запускал
     // неотключаемый таймер. Бамп ключа осиротляет старые v2-данные (их больше не читают),
     // а v3 никто не пишет (onLearningPrefChange недостижим) → prefs всегда = defaults.
-    LEARNING_PREFS_STORAGE_KEY: 'quiz.learning.prefs.v3',
-    METRICS_STORAGE_KEY: 'quiz.ux.metrics.v2'
+    LEARNING_PREFS_STORAGE_KEY: 'quiz.learning.prefs.v3'
   });
   const API = {
     ANSWER: '/api/answer',
@@ -20,7 +19,6 @@
     STATS: '/api/stats',
     TOPIC_STATS: '/api/topic-stats',
     REGENERATE: '/api/regenerate',
-    HINT: '/api/hint',
     CONFIDENCE: '/api/confidence',
     WRONG_FEEDBACK: '/api/wrong-feedback',
     FAVORITE: '/api/favorite',
@@ -35,7 +33,6 @@
   const FAVORITE_ADD_LABEL = UI_CONSTANTS.FAVORITE_ADD_LABEL;
   const FAVORITE_REMOVE_LABEL = UI_CONSTANTS.FAVORITE_REMOVE_LABEL;
   const LEARNING_PREFS_STORAGE_KEY = UI_CONSTANTS.LEARNING_PREFS_STORAGE_KEY;
-  const METRICS_STORAGE_KEY = UI_CONSTANTS.METRICS_STORAGE_KEY;
   const defaultLearningPrefs = Object.freeze({
     instantMode: false,
     hardMode: false,
@@ -134,26 +131,6 @@
     }
   }
 
-  function trackUxMetric(metricName, payload = {}) {
-    if (!metricName) return;
-    try {
-      const raw = sessionStorage.getItem(METRICS_STORAGE_KEY);
-      const metrics = raw ? JSON.parse(raw) : {};
-      metrics[metricName] = (metrics[metricName] || 0) + 1;
-      metrics.__lastPayload = payload;
-      metrics.__updatedAt = Date.now();
-      sessionStorage.setItem(METRICS_STORAGE_KEY, JSON.stringify(metrics));
-      window.dispatchEvent(new CustomEvent('quiz:ux-metric', {
-        detail: {
-          name: metricName,
-          payload
-        }
-      }));
-    } catch (_) {
-      // Silent: telemetry must never break user flow.
-    }
-  }
-
   /**
    * Streak bar: fetch /api/streak and update DOM. No-op if #streak-bar is missing.
    */
@@ -183,96 +160,6 @@
         });
       })
       .catch(() => { /* прогресс за день не критичен — тихо пропускаем */ });
-  }
-
-  /**
-   * Hint button: progressive AI hints. No-op if #btn-hint or #hint-container missing.
-   */
-  function initHintButton() {
-    const btn = document.getElementById('btn-hint');
-    const container = document.getElementById('hint-container');
-    if (!btn || !container) return;
-
-    btn.dataset.hintLevel = '0';
-    const maxLevel = 3;
-    const icons = ['💡', '💡💡', '💡💡💡'];
-
-    window.__resetHintState = function resetHintState() {
-      btn.dataset.hintLevel = '0';
-      btn.disabled = false;
-      btn.classList.remove('used', 'loading');
-      btn.textContent = '💡';
-      btn.title = 'Подсказка';
-      container.innerHTML = '';
-      container.classList.add('hidden');
-      container.style.display = '';
-    };
-
-    btn.addEventListener('click', async () => {
-      const currentLevel = Number.parseInt(btn.dataset.hintLevel || '0', 10);
-      if (currentLevel >= maxLevel) return;
-
-      const questionId = btn.getAttribute('data-question-id');
-      if (!questionId) return;
-
-      const nextLevel = currentLevel + 1;
-      btn.classList.add('loading');
-      btn.textContent = '⏳';
-
-      try {
-        const resp = await apiFetch(API.HINT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: 'questionId=' + encodeURIComponent(questionId) + '&level=' + nextLevel
-        });
-
-        if (resp.ok) {
-          clearInlineAlert();
-          const data = await resp.json();
-          container.classList.remove('hidden');
-          container.style.display = 'block';
-
-          // Уровень из ответа сервера: валидируем, иначе icons[level-1]===undefined
-          // отрендерил бы текст «undefined» вместо иконки.
-          const lvl = Number(data.level);
-          const safeLvl = Number.isInteger(lvl) && lvl >= 1 && lvl <= icons.length ? lvl : 1;
-          const item = document.createElement('div');
-          item.className = 'hint-item level-' + safeLvl;
-          const iconSpan = document.createElement('span');
-          iconSpan.className = 'hint-icon';
-          iconSpan.textContent = icons[safeLvl - 1];
-          const textSpan = document.createElement('span');
-          textSpan.className = 'hint-text';
-          textSpan.textContent = data.hint;
-          item.appendChild(iconSpan);
-          item.appendChild(document.createTextNode(' '));
-          item.appendChild(textSpan);
-          container.appendChild(item);
-
-          btn.dataset.hintLevel = String(data.level);
-
-          if (data.level >= maxLevel) {
-            btn.classList.add('used');
-            btn.textContent = '💡';
-            btn.title = 'Все подсказки использованы';
-            btn.disabled = true;
-          } else {
-            btn.textContent = '💡';
-            btn.title = 'Подсказка (уровень ' + (data.level + 1) + '/' + maxLevel + ')';
-          }
-        } else {
-          const err = await parseApiError(resp);
-          setInlineAlert(err.message || 'Не удалось получить подсказку. Попробуй ещё раз.');
-          btn.textContent = '💡';
-        }
-      } catch (err) {
-        console.error('Hint request failed:', err);
-        setInlineAlert('Не удалось получить подсказку. Проверь сеть и повтори.');
-        btn.textContent = '💡';
-      }
-
-      btn.classList.remove('loading');
-    });
   }
 
   /**
@@ -754,19 +641,10 @@
     });
     initBrowseFlashcardReveal();
     initStreakBar();
-    initHintButton();
     initShuffleTopic();
     initSessionFormSync();
     initSessionModeForm();
     initResultPageExtraAnalysis();
-    const supportDetails = document.querySelector('.question-support');
-    if (supportDetails) {
-      supportDetails.addEventListener('toggle', () => {
-        if (supportDetails.open) {
-          trackUxMetric('support_opened');
-        }
-      });
-    }
     initCollapsibleSidebar();
     initExportButtons();
     initPersonalization();
@@ -1039,9 +917,6 @@
             nextQuestionLink.textContent = 'Загрузить новый вопрос';
             nextQuestionLink.classList.remove('hidden');
           }
-          if (typeof window.__resetHintState === 'function') {
-            window.__resetHintState();
-          }
           const interviewOptions = document.getElementById('interview-options');
           if (interviewOptions) {
             interviewOptions.setAttribute('aria-disabled', 'true');
@@ -1097,12 +972,11 @@
 
   const form = document.getElementById('interview-form');
   const optionsContainer = document.getElementById('interview-options');
-  const submitBtn = document.getElementById('interview-submit') || document.getElementById('submitBtn');
+  const submitBtn = document.getElementById('interview-submit');
   const feedbackDiv = document.getElementById('result-feedback');
   const nextLink = document.getElementById('next-question');
   const extraAnalysisBtn = document.getElementById('extra-analysis-toggle');
   const answerFlowHint = document.getElementById('answer-flow-hint');
-  const answerFlowSteps = document.getElementById('answer-flow-steps');
   const instantModeToggle = document.getElementById('instant-mode-toggle');
   const hardModeToggle = document.getElementById('hard-mode-toggle');
   const reviewModeToggle = document.getElementById('review-mode-toggle');
@@ -1117,26 +991,6 @@
   const optionInputs = Array.from(form.querySelectorAll('input[name="optionId"]'));
   let answered = false;
   let timerInterval = null;
-  const questionStartedAt = Date.now();
-  let firstAnswerTracked = false;
-
-  function setAnswerFlowStep(step) {
-    if (!answerFlowSteps) return;
-    answerFlowSteps.classList.remove('hidden');
-    answerFlowSteps.setAttribute('aria-hidden', 'false');
-    const orderedSteps = ['selected', 'checking', 'result', 'explanation'];
-    const currentIndex = orderedSteps.indexOf(step);
-    answerFlowSteps.querySelectorAll('.answer-flow-step').forEach((el) => {
-      const stepName = el.getAttribute('data-step');
-      const idx = orderedSteps.indexOf(stepName);
-      el.classList.remove('is-active', 'is-done');
-      if (idx < currentIndex) {
-        el.classList.add('is-done');
-      } else if (idx === currentIndex) {
-        el.classList.add('is-active');
-      }
-    });
-  }
 
   function upsertFormHidden(name, value) {
     let hidden = form.querySelector('input[type="hidden"][name="' + name + '"]');
@@ -1225,7 +1079,6 @@
         stopQuestionTimer();
         timerBadge.textContent = 'Время вышло';
         setInlineAlert('Время вышло. Выбери вариант и отправь ответ.');
-        trackUxMetric('timer_expired', { durationSeconds });
         return;
       }
       timerBadge.textContent = 'Осталось: ' + remaining + 'с';
@@ -1241,7 +1094,6 @@
     saveLearningPrefs();
     syncLearningPrefsToRequest();
     startQuestionTimer();
-    trackUxMetric('learning_pref_changed', { ...learningPrefs });
   }
 
   loadLearningPrefs();
@@ -1408,7 +1260,6 @@
     }
 
     answered = true;
-    setAnswerFlowStep('selected');
     stopQuestionTimer();
     // Запоминаем реальную подпись кнопки (шаблон рендерит «Проверить ответ»),
     // чтобы при ошибке вернуть её, а не хардкод «Ответить» (рассинхрон меток).
@@ -1417,15 +1268,9 @@
     submitBtn.textContent = 'Проверяю…';
     submitBtn.setAttribute('aria-busy', 'true');
     setInteractionBusy(true);
-    setAnswerFlowStep('checking');
     clearInlineAlert();
 
     const formData = new FormData(form);
-    if (!firstAnswerTracked) {
-      firstAnswerTracked = true;
-      trackUxMetric('first_answer_latency_ms', { value: Date.now() - questionStartedAt });
-    }
-    trackUxMetric('answer_submitted', { hardMode: !!learningPrefs.hardMode, instantMode: !!learningPrefs.instantMode });
     try {
       const response = await apiFetch(API.ANSWER, {
         method: 'POST',
@@ -1442,10 +1287,6 @@
         setInteractionBusy(false);
         updateSubmitAvailability();
         startQuestionTimer();
-        if (answerFlowSteps) {
-          answerFlowSteps.classList.add('hidden');
-          answerFlowSteps.setAttribute('aria-hidden', 'true');
-        }
         setInlineAlert(err.message || 'Не удалось проверить ответ. Попробуй ещё раз.');
         return;
       }
@@ -1462,10 +1303,6 @@
       setInteractionBusy(false);
       updateSubmitAvailability();
       startQuestionTimer();
-      if (answerFlowSteps) {
-        answerFlowSteps.classList.add('hidden');
-        answerFlowSteps.setAttribute('aria-hidden', 'true');
-      }
       setInlineAlert('Сервер недоступен. Проверь соединение и повтори отправку.');
     }
   }
@@ -1802,7 +1639,6 @@
     nextLink.href = buildNextQuestionHref(questionId);
     delete nextLink.dataset.finishSession;
     renderFeedbackHtml(data);
-    setAnswerFlowStep('result');
     if (answerFlowHint) {
       answerFlowHint.classList.remove('hidden');
     }
@@ -1844,7 +1680,6 @@
         fetchWrongFeedback(questionId, data.selectedOptionId);
         fetchComparison(questionId, data.selectedOptionId);
       }
-      setAnswerFlowStep('explanation');
       let loaded = false;
       extraAnalysisBtn.onclick = async () => {
         if (loaded) return;
@@ -1901,7 +1736,6 @@
       if (extraAnalysisBtn && learningPrefs.hardMode) {
         extraAnalysisBtn.classList.add('hidden');
       }
-      setAnswerFlowStep('explanation');
     }
 
     nextLink.onclick = (e) => {
@@ -1926,7 +1760,6 @@
         finishForm.submit();
         return;
       }
-      trackUxMetric('next_question_click');
       window.location.href = nextLink.href;
     };
     nextLink.onkeydown = (e) => {
@@ -1961,13 +1794,6 @@
       }
     });
   }
-
-  window.submitAnswer = function submitAnswer() {
-    const activeForm = document.getElementById('interview-form');
-    if (activeForm) {
-      activeForm.dispatchEvent(new Event('submit', { cancelable: true }));
-    }
-  };
 
 })();
 
