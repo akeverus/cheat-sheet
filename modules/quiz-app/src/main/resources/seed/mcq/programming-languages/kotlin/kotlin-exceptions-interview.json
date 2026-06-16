@@ -2286,16 +2286,16 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как `Arrow Either`/`Validated` используются для функциональной обработки ошибок?",
+          "question_text": "Как `Arrow Either` и `zipOrAccumulate` используются для функциональной обработки ошибок?",
           "options": [
             {
-              "text": "`Either` аккумулирует все ошибки цепочки в список, а `Validated` останавливается на первой — поэтому для форм используют `Either`.",
+              "text": "`either { bind() }` аккумулирует все ошибки цепочки в список, а `zipOrAccumulate` останавливается на первой — поэтому для форм используют `bind`.",
               "correct": false,
               "sections": {
-                "what_actually": "Стратегии перепутаны: `Either` через `bind` короткозамыкается на первой ошибке (fail-fast), а накапливает все ошибки именно `Validated`; для форм берут `Validated`.",
-                "source_of_confusion": "Оба типа про ошибки, и их режимы (fail-fast/accumulating) легко поменять местами.",
+                "what_actually": "Стратегии перепутаны: `bind` короткозамыкается на первой ошибке (fail-fast), а накапливает все ошибки именно `zipOrAccumulate`; для форм берут его.",
+                "source_of_confusion": "Оба приёма про ошибки, и их режимы (fail-fast/accumulating) легко поменять местами.",
                 "if_it_were_true": "Тогда `validateForm` на `Either` показывал бы все ошибки разом, но `bind` остановится на первой, скрыв остальные.",
-                "how_it_should_be": "`Either` — fail-fast (первая ошибка); `Validated` — accumulating (все ошибки); формы валидируют через `Validated`."
+                "how_it_should_be": "`bind` — fail-fast (первая ошибка); `zipOrAccumulate` — accumulating (все ошибки); формы валидируют через `zipOrAccumulate`."
               },
               "label": "A",
               "order": 0
@@ -2313,26 +2313,26 @@
               "order": 1
             },
             {
-              "text": "`Either<E, A>` представляет либо ошибку (`Left<E>`), либо успех (`Right<A>`) с явно заданным типом ошибки `E` и работает fail-fast (первая ошибка останавливает цепочку через `bind`), а `Validated`/`ValidatedNel` аккумулирует ВСЕ ошибки сразу (например, при валидации формы), собирая их в `NonEmptyList`.",
+              "text": "`Either<E, A>` представляет либо ошибку (`Left<E>`), либо успех (`Right<A>`) с явно заданным типом ошибки `E` и работает fail-fast (первая ошибка останавливает цепочку через `bind`); чтобы собрать ВСЕ ошибки сразу (например, при валидации формы), берут `Either.zipOrAccumulate`, который копит их в `NonEmptyList`.",
               "correct": true,
               "sections": {
-                "explanation": "Различие в стратегии: `Either` — fail-fast для зависимых шагов (последующий шаг нужен только при успехе предыдущего), `Validated` — accumulating для независимых проверок, где нужно показать пользователю все ошибки разом. Тип ошибки `E` в обоих случаях явный, не обязательно `Throwable`.",
-                "example": "`validateName(form.name).zip(validateEmail(form.email), validateAge(form.age)) { n, e, a -> Form(n, e, a) }` вернёт `Invalid(NonEmptyList([\"Name must not be blank\", \"Invalid email\", \"Must be 18+\"]))` — все ошибки сразу.",
-                "when_to_apply": "Брать `Either` для бизнес-логики с зависимыми шагами через `bind`/`flatMap`; `Validated` — для форм и валидации данных, где важно собрать все нарушения за один проход.",
-                "edge_cases": "`Either` через `bind` короткозамыкается на первой ошибке, поэтому для накопления он не годится; `Validated` для накопления требует комбинаторов вроде `zip`, а не последовательного `bind`.",
+                "explanation": "Различие в стратегии: `bind` в `either { }` — fail-fast для зависимых шагов (последующий шаг нужен только при успехе предыдущего), `zipOrAccumulate` — accumulating для независимых проверок, где нужно показать пользователю все ошибки разом. Тип ошибки `E` явный, не обязательно `Throwable`.",
+                "example": "`Either.zipOrAccumulate(validateName(form.name), validateEmail(form.email), validateAge(form.age)) { n, e, a -> Form(n, e, a) }` вернёт `Left(NonEmptyList(\"Name must not be blank\", \"Invalid email\", \"Must be 18+\"))` — все ошибки сразу.",
+                "when_to_apply": "Брать fail-fast `either { bind() }` для бизнес-логики с зависимыми шагами; `zipOrAccumulate` — для форм и валидации данных, где важно собрать все нарушения за один проход.",
+                "edge_cases": "`bind` короткозамыкается на первой ошибке, поэтому для накопления не годится; накопление требует комбинатора `zipOrAccumulate` (или `mapOrAccumulate` для коллекций), а не последовательного `bind`.",
                 "related": "[[kotlin-exceptions-interview#Q24]] Either и его преимущества; [[kotlin-exceptions-interview#Q25]] Raise DSL и bind; [[kotlin-exceptions-interview#Q32]] Either против kotlin.Result."
               },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`Validated` при накоплении ошибок собирает их в обычный `List`, который может быть пустым, поэтому различить успех и провал можно только по флагу `isValid`.",
+              "text": "`zipOrAccumulate` при накоплении ошибок собирает их в обычный `List`, который может быть пустым, поэтому различить успех и провал можно только по флагу вроде `isValid`.",
               "correct": false,
               "sections": {
-                "what_actually": "`Validated` аккумулирует ошибки в `NonEmptyList` (`Nel`) — непустой список: при наличии ошибок он гарантированно содержит хотя бы один элемент, а успех представлен веткой `Valid`.",
+                "what_actually": "`zipOrAccumulate` аккумулирует ошибки в `NonEmptyList` (`Nel`) — непустой список: при наличии ошибок он гарантированно содержит хотя бы один элемент, а успех представлен веткой `Right`.",
                 "source_of_confusion": "Накопление ошибок ассоциируют с обычной коллекцией `List`, которая бывает пустой.",
-                "if_it_were_true": "Тогда `Invalid` мог бы нести пустой список ошибок, что бессмысленно, но `Nel` исключает такой случай типом.",
-                "how_it_should_be": "Ошибки `Validated` накапливаются в `NonEmptyList`; пустого набора ошибок в ветке `Invalid` быть не может."
+                "if_it_were_true": "Тогда `Left` мог бы нести пустой список ошибок, что бессмысленно, но `Nel` исключает такой случай типом.",
+                "how_it_should_be": "Ошибки `zipOrAccumulate` накапливаются в `NonEmptyList`; пустого набора ошибок в ветке `Left` быть не может."
               },
               "label": "D",
               "order": 3

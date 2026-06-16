@@ -1689,11 +1689,11 @@
           "question_text": "Какие quality metrics у поиска — recall@k, MRR, NDCG, p99 latency?",
           "options": [
             {
-              "text": "Recall@k — доля релевантных в top-k (`recall@10 = 7/10`). Precision@k — доля найденных релевантных из всех релевантных (сложнее измерить). MRR — среднее `1/rank` первого релевантного (хорошо для navigational). NDCG — учитывает позицию И градацию релевантности: `DCG = Σ (2^rel-1)/log2(rank+1)`, `NDCG = DCG/ideal_DCG`. Click-based: CTR@1, mean clicked rank, abandonment rate, reformulation rate. Latency: p50/p95/p99/p999, target p99 < 200ms (e-commerce), indexing_lag < 5s.",
+              "text": "Precision@k — доля релевантных среди top-k (`precision@10 = 7/10`). Recall@k — доля найденных релевантных из всех релевантных в корпусе (сложнее измерить — нужна полная разметка). MRR — среднее `1/rank` первого релевантного (хорошо для navigational). NDCG — учитывает позицию И градацию релевантности: `DCG = Σ (2^rel-1)/log2(rank+1)`, `NDCG = DCG/ideal_DCG`. Click-based: CTR@1, mean clicked rank, abandonment rate, reformulation rate. Latency: p50/p95/p99/p999, target p99 < 200ms (e-commerce), indexing_lag < 5s.",
               "correct": true,
               "sections": {
                 "explanation": "Метрики делятся на offline-релевантность (recall@k, MRR, NDCG по разметке), production click-based (CTR, abandonment) и latency (p99) — все три группы нужны вместе.",
-                "example": "По запросу с 7 релевантными из 10 показанных recall@10 = 0.7; если первый релевантный на 3-м месте, MRR-вклад = 1/3, а NDCG учтёт и позицию, и градацию релевантности.",
+                "example": "По запросу с 7 релевантными из 10 показанных precision@10 = 0.7 (а если в корпусе всего 20 релевантных, recall@10 = 7/20 = 0.35); если первый релевантный на 3-м месте, MRR-вклад = 1/3, а NDCG учтёт и позицию, и градацию релевантности.",
                 "when_to_apply": "Эти метрики считают при оценке качества ранжирования и SLA: offline — для сравнения ранкеров, click-based и latency — для production-мониторинга.",
                 "edge_cases": "Failure modes отслеживают отдельно: `search_timeout_total` (slow shard), `zero_result_rate` (target < 5%), `cache_hit_ratio` (target > 60%) — это сигналы деградации.",
                 "related": "[[design-search-interview#Q18]] analytics и LTR, использующие эти метрики; [[design-search-interview#Q1]] non-functional требование p99 < 200ms; [[design-search-interview#Q9]] scatter-gather как источник tail-latency."
@@ -1726,13 +1726,13 @@
               "order": 2
             },
             {
-              "text": "Precision@k измерить проще, чем recall@k, потому что для precision не нужна полная разметка релевантности корпуса.",
+              "text": "Recall@k измерить проще, чем precision@k, потому что для recall не нужна полная разметка релевантности корпуса.",
               "correct": false,
               "sections": {
-                "what_actually": "Наоборот: precision@k сложнее измерить — нужна полная разметка всех релевантных в корпусе; recall@k считается по top-k.",
+                "what_actually": "Наоборот: recall@k сложнее — его знаменатель это ВСЕ релевантные документы корпуса, что требует полной разметки; precision@k считается только по top-k выдачи.",
                 "source_of_confusion": "Названия похожи, и их сложность измерения путают местами.",
-                "if_it_were_true": "Если бы precision была проще, её бы и использовали как основную offline-метрику вместо recall@k и NDCG.",
-                "how_it_should_be": "Recall@k считают по top-k результатам, а precision@k требует знать ВСЕ релевантные документы корпуса — это дороже."
+                "if_it_were_true": "Если бы recall был проще, не пришлось бы размечать весь корпус — но именно полная разметка даёт знаменатель recall@k.",
+                "how_it_should_be": "Precision@k считают по top-k результатам, а recall@k требует знать ВСЕ релевантные документы корпуса — это дороже."
               },
               "label": "D",
               "order": 3
