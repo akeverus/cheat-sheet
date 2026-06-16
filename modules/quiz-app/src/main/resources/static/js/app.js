@@ -5,7 +5,13 @@
     EXTRA_ANALYSIS_BUTTON_DONE_TEXT: 'Доп. анализ загружен',
     FAVORITE_ADD_LABEL: 'Добавить в избранное',
     FAVORITE_REMOVE_LABEL: 'Убрать из избранного',
-    LEARNING_PREFS_STORAGE_KEY: 'quiz.learning.prefs.v2',
+    // v2→v3: ловушка round-01 B7. Контролы режимов (instant/hard/review/adaptive/timer)
+    // удалены из шаблонов вместе со старым index.html — UI для их изменения больше нет,
+    // но loadLearningPrefs продолжал ПРИМЕНЯТЬ stale-значения v2: hardMode=true навсегда
+    // прятал confidence-кнопки (L1825) и доп.анализ (L1832), timerSeconds>0 запускал
+    // неотключаемый таймер. Бамп ключа осиротляет старые v2-данные (их больше не читают),
+    // а v3 никто не пишет (onLearningPrefChange недостижим) → prefs всегда = defaults.
+    LEARNING_PREFS_STORAGE_KEY: 'quiz.learning.prefs.v3',
     METRICS_STORAGE_KEY: 'quiz.ux.metrics.v2'
   });
   const API = {
@@ -2133,6 +2139,14 @@ function initFlashcardShortcuts() {
     // (Space/Enter/1-4) не должны утекать под оверлей.
     if (document.querySelector('.kbd-help-overlay:not(.hidden)')) return;
     if (event.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName)) {
+      return;
+    }
+    // Тот же гард, что в MCQ-обработчике (см. выше): элементы со своей семантикой
+    // Enter/Space (нативный <summary> «Пример кода», кнопки, nav-ссылки шапки) не
+    // перехватываем — иначе Enter/Space на них раскрывал бы флешкарту (или слал
+    // POST /flashcard-reveal) вместо нативного действия. Критика round-01 B6 (WCAG 2.1.1).
+    if (event.target && (event.key === 'Enter' || event.key === ' ') &&
+        ['SUMMARY', 'BUTTON', 'A'].includes(event.target.tagName)) {
       return;
     }
     if (event.metaKey || event.ctrlKey || event.altKey) return;

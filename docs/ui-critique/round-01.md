@@ -407,3 +407,26 @@ flow на /focus отрисован чисто.
   сеть/соединение», «Введи admin-токен», и чип «Твой выбор (ошибка)».
 
 editorial.css v71→v72, app.js v31→v32 (result/settings/focus-training).
+
+## Порция 4 — B6 клавиатурный гард + B7 ловушка localStorage (2026-06-16)
+
+- **B6** WCAG 2.1.1 (Keyboard): `initFlashcardShortcuts` вешал глобальный
+  `keydown`-листенер, который ловил Enter/Space ВЕЗДЕ. На флешкард-странице это
+  означало: Enter/Space на nav-ссылке шапки, на `<summary>` «Пример кода» или на
+  любой `<button>` не выполнял нативное действие, а слал `revealBtn.click()` (POST
+  /flashcard-reveal). Добавлен тот же гард, что уже стоял в MCQ-обработчике
+  (app.js:1294): если `event.target` — `SUMMARY`/`BUTTON`/`A`, выходим до
+  перехвата. Теперь нативная семантика этих элементов сохраняется.
+- **B7** Ловушка localStorage. Контролы режимов обучения (instant/hard/review/
+  adaptive/timer) были удалены вместе со старым `index.html` — UI, чтобы их
+  изменить, больше нет. Но `loadLearningPrefs` продолжал ПРИМЕНЯТЬ значения,
+  записанные старой версией под ключом `v2`: у кого в localStorage висел
+  `hardMode=true`, тот НАВСЕГДА терял confidence-кнопки (app.js:1825) и доп.анализ
+  (app.js:1832); `timerSeconds>0` запускал неотключаемый таймер. Бамп ключа
+  `quiz.learning.prefs.v2`→`v3` осиротляет stale-данные (их больше никто не
+  читает), а `v3` никто не пишет (`onLearningPrefChange` недостижим) → prefs всегда
+  = безопасные defaults. Верифицировано live: верный ответ на /focus → confidence-
+  блок «Насколько ты уверен…» и кнопка «Показать доп. анализ» появляются (раньше
+  при stale-hardMode были скрыты); консоль чистая.
+
+app.js v32→v33 (result/settings/focus-training).
