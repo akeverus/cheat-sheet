@@ -483,3 +483,17 @@ editorial.css v72→v73.
   удалён вместе с фронтенд-mermaid (задача #48), XSS-поверхности больше нет.
 
 editorial.css v73→v74, stats.js v7→v8.
+
+## Порция 7 — C6 дедуп select-стрелки (2026-06-16)
+
+Рецепт кастомной select-стрелки (`appearance:none` + два `linear-gradient` +
+позиции/размеры + `padding-right`) был продублирован дословно для `.settings-page
+select` и `.stats-page select`. Объединён в один селектор. Тонкость каскада: base-
+правила страниц различаются (`background: bg-secondary` vs `bg-primary` — это shorthand,
+сбрасывающий `background-image`), поэтому общий arrow-рул должен стоять ПОСЛЕ обоих
+base-правил, иначе их `background` перетёр бы стрелку. Размещён на позиции stats
+(после обоих base), settings-дубль удалён. Верифицировано live: на /settings и /stats
+селекты сохраняют стрелку (computed `background-image` = gradient, `padding-right:48px`,
+`appearance:none`); каскад не сломан.
+
+editorial.css v74→v75.
