@@ -145,6 +145,26 @@ updated: "2026-05-21"
   - `Client` обращается к `Node 1`, `Node 2` и `Node 3` напрямую (любой узел принимает запрос).
   - Все узлы связаны между собой в обе стороны (полная сетка): `Node 1` ↔ `Node 2`, `Node 2` ↔ `Node 3`, `Node 1` ↔ `Node 3`.
 
+Те же три топологии визуально (стрелки — направление потока изменений):
+
+```
+Single-leader                  Multi-leader                       Leaderless
+─────────────                  ────────────                       ──────────
+
+   Client                         Client                            Client
+     │                          ┌───┴───┐                       ┌─────┼─────┐
+     ▼ write                    ▼ write ▼ write                 ▼      ▼      ▼
+ ┌────────┐               ┌────────┐   ┌────────┐          ┌──────┐┌──────┐┌──────┐
+ │ Leader │               │Leader A│◀─▶│Leader B│          │Node 1││Node 2││Node 3│
+ └───┬────┘               └───┬────┘   └───┬────┘          └──────┘└──────┘└──────┘
+   ┌─┴──┐                     │            │                полная сетка (узлы
+   ▼    ▼                     ▼            ▼                синхронизируются друг
+┌──────┐┌──────┐         ┌────────┐   ┌────────┐           с другом в обе стороны):
+│Repl 1││Repl 2│         │Replica │   │Replica │           Node1 ◀─▶ Node2
+└──────┘└──────┘         └────────┘   └────────┘           Node2 ◀─▶ Node3
+                                                           Node1 ◀─▶ Node3
+```
+
 | Модель | Writes | Reads | Примеры | Конфликты |
 |---|---|---|---|---|
 | **Single-leader** | только primary | primary + replicas | `PostgreSQL`, `MySQL`, `MongoDB` (replica set) | нет |
@@ -576,6 +596,32 @@ Client → Coordinator → query R=2 replicas
 5. `MySQL Replica` → сама себе: пишет полученные события в relay log (`write to relay log`).
 6. `MySQL Replica` → сама себе: применяет relay log через SQL thread (`apply via SQL thread`).
 7. `MySQL Replica` → `MySQL Master`: подтверждает применённую позицию (`ACK position`).
+
+Тот же обмен как диаграмма последовательности (время идёт сверху вниз, дорожки — участники):
+
+```
+   Client              MySQL Master                MySQL Replica
+     │                       │                           │
+     │  INSERT / UPDATE      │                           │
+     │──────────────────────▶│                           │
+     │                       │ write to binlog           │
+     │                       │──┐                         │
+     │                       │◀─┘                         │
+     │   OK (async) /        │                           │
+     │   ждёт ACK (semi-sync)│                           │
+     │◀──────────────────────│                           │
+     │                       │  stream binlog events     │
+     │                       │──────────────────────────▶│
+     │                       │                           │ write to relay log
+     │                       │                           │──┐
+     │                       │                           │◀─┘
+     │                       │                           │ apply via SQL thread
+     │                       │                           │──┐
+     │                       │                           │◀─┘
+     │                       │        ACK position       │
+     │                       │◀──────────────────────────│
+     │                       │                           │
+```
 
 **Конфиг master (`my.cnf`):**
 ```ini

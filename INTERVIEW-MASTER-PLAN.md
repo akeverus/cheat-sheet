@@ -56,6 +56,7 @@ supersedes:
 | **LANE 8A** | отказ от mermaid в контенте `.md` (конверт в прозу+списки / удаление декоративных) | ✅ done (verify_nomermaid.py, phaseA-strip) |
 | **LANE 8B** | инфраструктура mermaid в app-коде (`MermaidSanitizer`/`Validator`/`DiagramService`, CSP) | ⚠️ внешний auto-improve — **НЕ трогать** |
 | **LANE 9** | сплошной ре-аудит полноты раскрытия темы в прозе `.md` новой моделью | ✅ done 2026-06-16 (306/306, волны 1–18, R1–R15) |
+| **LANE 10** | вернуть удалённые в LANE 8A диаграммы как НЕ-mermaid (ASCII/box-drawing/таблицы) — 1244 блока в 199 файлах | 🟡 в работе 2026-06-17 (пилот database-transactions +8 done d962c061; тулчейн extract_mermaid.py + verify_diagrams.py; воркфлоу wf-restore-diagrams.js по категориям) |
 
 ### Ключевые находки/решения (НЕ переоткрывать)
 1. **Билингвальный регистр — НЕ дефект.** Русская связка + англо-термины (`high-risk`, `use case`, `human-in-the-loop`, имена API/продуктов) в `backticks` — принятый стиль. Форсить кириллицу на термины = churn + потеря узнаваемости. Флагать только целые англ. ПРЕДЛОЖЕНИЯ в прозе.
