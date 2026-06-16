@@ -241,33 +241,37 @@ class InterviewControllerTest {
     }
 
     @Test
-    void exportActionsRenderOnlyOnStatsRoute() throws Exception {
-        String statsBody = mockMvc.perform(get("/stats"))
-                .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-        assertThat(statsBody).contains("class=\"nav-export\"");
-        assertThat(statsBody).contains("Экспорт JSON");
-        assertThat(statsBody).contains("Экспорт CSV");
-
-        var indexResult = mockMvc.perform(get("/")).andReturn().getResponse();
-        assertThat(indexResult.getStatus()).isIn(200, 503);
-        if (indexResult.getStatus() == 200) {
-            assertThat(indexResult.getContentAsString()).doesNotContain("class=\"nav-export\"");
-        }
-
+    void exportActionsRenderOnlyOnSettingsRoute() throws Exception {
+        // Экспорт прогресса (JSON/CSV) живёт на /settings → «Управление данными».
+        // Раньше дублировался ссылками nav-export в шапке; перенесён в единую точку,
+        // шапка очищена (header.html). Маркер теперь — data-export-format на кнопках.
         String settingsBody = mockMvc.perform(get("/settings"))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        assertThat(settingsBody).doesNotContain("class=\"nav-export\"");
+        assertThat(settingsBody).contains("data-export-format=\"json\"");
+        assertThat(settingsBody).contains("data-export-format=\"csv\"");
+        assertThat(settingsBody).contains("Экспорт JSON");
+        assertThat(settingsBody).contains("Экспорт CSV");
+
+        String statsBody = mockMvc.perform(get("/stats"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat(statsBody).doesNotContain("data-export-format=");
+
+        var indexResult = mockMvc.perform(get("/")).andReturn().getResponse();
+        assertThat(indexResult.getStatus()).isIn(200, 503);
+        if (indexResult.getStatus() == 200) {
+            assertThat(indexResult.getContentAsString()).doesNotContain("data-export-format=");
+        }
 
         var trainingResult = mockMvc.perform(get("/training")).andReturn().getResponse();
         assertThat(trainingResult.getStatus()).isIn(200, 503);
         if (trainingResult.getStatus() == 200) {
-            assertThat(trainingResult.getContentAsString()).doesNotContain("class=\"nav-export\"");
+            assertThat(trainingResult.getContentAsString()).doesNotContain("data-export-format=");
         }
     }
 
@@ -442,16 +446,14 @@ class InterviewControllerTest {
                 .getResponse()
                 .getContentAsString();
 
+        // Сервер рендерит «скелет» сортируемой таблицы: класс .sortable + data-метки
+        // на каждой сортируемой колонке + скрытый live-region для анонса сортировки.
+        // Клавиатурные ARIA-атрибуты (role=columnheader / tabindex / aria-sort /
+        // aria-keyshortcuts="Enter Space") навешивает stats.js при инициализации —
+        // это progressive enhancement, в серверном HTML их НЕТ (round-01 C28:
+        // role=columnheader у нативного <th> избыточен, состояние держит aria-sort).
         assertThat(body).contains("th class=\"sortable\"");
         assertThat(countOccurrences(body, "class=\"sortable")).isGreaterThanOrEqualTo(4);
-        assertThat(body).contains("role=\"columnheader\"");
-        assertThat(countOccurrences(body, "role=\"columnheader\"")).isGreaterThanOrEqualTo(5);
-        assertThat(body).contains("aria-sort=\"none\"");
-        assertThat(countOccurrences(body, "aria-sort=\"none\"")).isGreaterThanOrEqualTo(4);
-        assertThat(body).contains("tabindex=\"0\"");
-        assertThat(countOccurrences(body, "tabindex=\"0\"")).isGreaterThanOrEqualTo(4);
-        assertThat(body).contains("aria-keyshortcuts=\"Enter Space\"");
-        assertThat(countOccurrences(body, "aria-keyshortcuts=\"Enter Space\"")).isGreaterThanOrEqualTo(4);
         assertThat(body).contains("data-sort-label=");
         assertThat(body).contains("id=\"table-sort-status\"");
         assertThat(body).contains("id=\"table-sort-status\" class=\"visually-hidden\"");
@@ -473,7 +475,10 @@ class InterviewControllerTest {
             }
             if (body.contains("id=\"next-question\"")) {
                 assertThat(body).contains("id=\"next-question\"");
-                assertThat(body).contains("aria-keyshortcuts=\"Enter Space\"");
+                // next-question — это <a href>: нативно активируется Enter, не Space
+                // (app.js на Space для тегов A обработчик не вешает). aria-keyshortcuts
+                // честно обещает только Enter — паритет с submit-кнопкой выше.
+                assertThat(body).contains("aria-keyshortcuts=\"Enter\"");
             }
         }
     }
@@ -568,7 +573,7 @@ class InterviewControllerTest {
         if (result.getStatus() == 200) {
             String body = result.getContentAsString();
             if (body.contains("Нет вопросов с ошибками для review.")) {
-                assertThat(body).contains("class=\"btn empty-action-retry\"");
+                assertThat(body).contains("empty-action-retry");
                 assertThat(body).contains("href=\"/review\"");
                 assertThat(body).contains("Обновить review");
             }
@@ -590,7 +595,7 @@ class InterviewControllerTest {
                 assertThat(body).doesNotContain("Выбери один вариант. Проверка и разбор идут по шагам.");
             }
             if (body.contains("Нет доступных вопросов") || body.contains("AI временно недоступен")) {
-                assertThat(body).contains("class=\"btn empty-action-retry\"");
+                assertThat(body).contains("empty-action-retry");
                 assertThat(body).contains("href=\"/training?mode=FLASHCARD\"");
                 assertThat(body).contains("Обновить флешкарты");
             }
@@ -612,7 +617,7 @@ class InterviewControllerTest {
                 assertThat(body).doesNotContain("Выбери один вариант. Проверка и разбор идут по шагам.");
             }
             if (body.contains("Нет доступных вопросов") || body.contains("AI временно недоступен")) {
-                assertThat(body).contains("class=\"btn empty-action-retry\"");
+                assertThat(body).contains("empty-action-retry");
                 assertThat(body).contains("href=\"/training?mode=STUDY\"");
                 assertThat(body).contains("Обновить изучение");
             }
@@ -652,9 +657,9 @@ class InterviewControllerTest {
                 assertThat(body).contains("id=\"interview-alert\"");
                 assertThat(body).contains("id=\"result-feedback\"");
                 assertThat(body).contains("id=\"extra-analysis-toggle\"");
-                assertThat(body).contains("aria-controls=\"result-feedback\"");
+                assertThat(body).contains("aria-controls=\"extra-analysis-content\"");
                 assertThat(body).contains("aria-atomic=\"true\"");
-                assertThat(body).contains("id=\"details\"");
+                assertThat(body).contains("id=\"extra-analysis-content\"");
             }
         }
 
@@ -666,9 +671,9 @@ class InterviewControllerTest {
                 assertThat(body).contains("id=\"interview-alert\"");
                 assertThat(body).contains("id=\"result-feedback\"");
                 assertThat(body).contains("id=\"extra-analysis-toggle\"");
-                assertThat(body).contains("aria-controls=\"result-feedback\"");
+                assertThat(body).contains("aria-controls=\"extra-analysis-content\"");
                 assertThat(body).contains("aria-atomic=\"true\"");
-                assertThat(body).contains("id=\"details\"");
+                assertThat(body).contains("id=\"extra-analysis-content\"");
             }
         }
     }

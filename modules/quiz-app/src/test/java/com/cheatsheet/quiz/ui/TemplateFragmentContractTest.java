@@ -27,7 +27,11 @@ class TemplateFragmentContractTest {
         assertThat(trainingActions).contains("id=\"action-footer\"");
         assertThat(trainingActions).contains("id=\"question-timer\"");
         assertThat(trainingActions).contains("class=\"keyboard-hint\"");
-        assertThat(trainingActions).contains("aria-live=\"polite\"");
+        // Намеренно БЕЗ aria-live-атрибута в этом фрагменте: таймер озвучивался бы
+        // каждую секунду, а подсказка статична — live-region был бы шумом (критика
+        // D13). Проверяем именно атрибут (aria-live="), а не слово — в комментарии
+        // фрагмента «Без aria-live» строка aria-live встречается легально.
+        assertThat(trainingActions).doesNotContain("aria-live=\"");
         assertThat(trainingActions).contains("id=\"next-question\"");
         // Кнопки активируются Enter (Space — нативное поведение <button>, в
         // aria-keyshortcuts не дублируется).

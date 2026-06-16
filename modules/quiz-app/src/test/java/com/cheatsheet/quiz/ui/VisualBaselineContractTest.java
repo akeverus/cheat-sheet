@@ -136,7 +136,10 @@ class VisualBaselineContractTest {
                 "navLabels=" + String.join("|", allGroups(body, "<nav[^>]*aria-label=\"([^\"]+)\"")),
                 "fragments=" + String.join("|", allGroups(body, "data-ui-fragment=\"([^\"]+)\"")),
                 "hasInterviewCard=" + body.contains("id=\"interview-card\""),
-                "hasStatusLine=" + body.contains("class=\"status\""),
+                // Префикс class="status (без закрывающей кавычки): на p висит
+                // th:classappend status-correct/status-wrong → точного class="status"
+                // в рендере нет, но строка результата (вердикт) присутствует.
+                "hasStatusLine=" + body.contains("class=\"status"),
                 "hasResultActionsContainer=" + body.contains("class=\"result-actions\""),
                 "hasNextQuestionLink=" + body.contains("class=\"btn next-btn\""),
                 "hasSecondaryAnalysisButton=" + body.contains("id=\"extra-analysis-toggle-result\""),
