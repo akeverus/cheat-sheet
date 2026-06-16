@@ -648,3 +648,33 @@ Guard был применён к settings и мобильной полосе, н
 
 Файлы: `static/css/editorial.css` (3 рецепта .stats-grid, editorial.css v76→v77),
 `fragments/head.html`. Синхронизировано.
+
+## Порция 13 — C-live-3 чип режима + C5 (z-слой модалки, мёртвые токены) (2026-06-16)
+
+Сделано после редизайна раскладки фокус-страницы («широкая колонка + верх. бар»,
+см. `relayout-wide-column.md`), где eyebrow-чип стал крупным элементом верхнего
+бара — и его дефекты стали заметнее.
+
+- **C-live-3** Чип-eyebrow показывал англицизмы в русском UI и не различал режимы:
+  EXAM/MARATHON/TRAINING → все «Focus mode», плюс «Study/Flashcard/Review mode».
+  `MvcModelAttributeMapper.resolveFocusModeChipText` переведён на русские имена
+  реального режима через уже существующий `@modeUtils.displayName` (единый словарь
+  C22): Тренировка / Изучение / Флешкарты / Экзамен / Интенсив; приоритет
+  review→«Повтор ошибок» и forced-flashcard→«Флешкарты» сохранён. ModeUtils
+  инжектится в маппер; тесты (MvcModelAttributeMapperTest, InterviewControllerTest)
+  приведены к новым строкам. Коммит `3b41e7e7`. Live/gradle-проверка отложена:
+  запущенный devtools-bootRun держит gradle-демон (рекомпиляция из 2-го процесса
+  вешает обе стороны) — вступит в силу при следующей пересборке.
+- **C5 (частично)** Модалка `.kbd-help-overlay` (role=dialog, единственная в
+  приложении) сидела на `--z-overlay` (40), а семантический `--z-modal` (100) был
+  мёртв → любой будущий элемент overlay-слоя встал бы поверх диалога. Переведена
+  на `--z-modal`. Верифицировано live (chrome-devtools, /stats, «?» → оверлей):
+  computed `z-index: 100`, диалог корректно поверх контента с подложкой.
+  Удалены мёртвые НЕ-шкальные токены `--measure-narrow`/`--drop-cap-size`/
+  `--column-gap` (0 var()-потребителей). Шкалы (spacing, motion, z-лестница)
+  оставлены целиком как системы; к z-блоку добавлен страж-комментарий, чтобы
+  следующий аудит не вырезал резервные ступени (--z-base/--z-sticky/--z-overlay).
+
+Файлы: `api/mapper/view/MvcModelAttributeMapper.java` (+тесты, focus-training.html
+placeholder) — C-live-3; `static/css/editorial.css` + `fragments/head.html`
+(editorial.css v79→v80) — C5. CSS синхронизировано в build/resources/main.

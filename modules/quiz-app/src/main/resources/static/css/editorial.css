@@ -111,9 +111,9 @@
      тянется на всю ширину контейнера. Прежние 68ch/60ch (читаемая мера) сохранены
      в комментарии для быстрого отката к колоночному режиму. */
   --measure: none;          /* было 68ch */
-  --measure-narrow: none;   /* было 60ch (не используется) */
-  --drop-cap-size: 3.2em;
-  --column-gap: 2.5rem;
+  /* Удалены мёртвые токены --measure-narrow / --drop-cap-size / --column-gap
+     (round-01 C5): 0 var()-потребителей во всех css/js/шаблонах — наследие
+     колоночно-буквичного режима, которого в проекте нет. */
 
   /* Spacing — база 8px */
   --space-0: 0;
@@ -178,6 +178,9 @@
   --easing-out:     cubic-bezier(0, 0, 0.2, 1);
   --easing-bounce:  cubic-bezier(0.34, 1.56, 0.64, 1);
 
+  /* Лестница z-слоёв — система стекинга. Потребляются --z-dropdown, --z-modal
+     (.kbd-help-overlay), --z-toast; --z-base/--z-sticky/--z-overlay держим
+     намеренно как полную шкалу — НЕ удалять как «мёртвые» (round-01 C5). */
   --z-base: 0;
   --z-sticky: 10;
   --z-dropdown: 20;
@@ -2122,7 +2125,10 @@ html[data-design] .result-page .comparison-table th {
    карточка по центру. .hidden (global, display:none !important) гасит её → отдельное
    правило на .hidden не нужно. Подложка/тень/z — из общих токенов. */
 html[data-design] .kbd-help-overlay {
-  position: fixed; inset: 0; z-index: var(--z-overlay);
+  /* role=dialog — единственная модалка приложения; место ей на modal-слое.
+     Раньше сидела на --z-overlay (40), а семантический --z-modal (100) был мёртв
+     (round-01 C5): любой будущий элемент на overlay-слое встал бы поверх диалога. */
+  position: fixed; inset: 0; z-index: var(--z-modal);
   display: flex; align-items: center; justify-content: center;
   padding: var(--space-4); background: var(--color-surface-overlay);
 }
