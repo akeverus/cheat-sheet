@@ -57,25 +57,29 @@ class MarkdownRenderServiceTest {
     }
 
     @Test
-    void stripsMermaidFenceEntirely() {
-        // Проект отказался от mermaid: блок ```mermaid``` вырезается целиком,
-        // в выводе нет ни диаграммы, ни сырого исходника.
+    void convertsMermaidFenceToDiagramDiv() {
+        // Mermaid возвращён (2026-06-17): блок ```mermaid``` оборачивается в
+        // <div class="mermaid"> для рендера mermaid.js; окружающая проза цела.
         String html = service.toHtml("Текст до.\n\n```mermaid\ngraph TD; A-->B;\n```\n\nТекст после.");
 
-        assertThat(html).doesNotContain("mermaid");
-        assertThat(html).doesNotContain("graph TD");
+        assertThat(html).contains("<div class=\"mermaid\">");
+        assertThat(html).contains("graph TD");
+        assertThat(html).contains("A--&gt;B");
         assertThat(html).contains("Текст до");
         assertThat(html).contains("Текст после");
     }
 
     @Test
-    void stripsMultilineMermaidWithoutLeakingSource() {
-        // Многострочная диаграмма тоже вырезается полностью — окружающая проза цела.
+    void preservesNewlinesInMermaidSource() {
+        // Регрессия: Jsoup prettyPrint схлопывал переводы строк в mermaid-источнике
+        // в пробелы → mermaid.js не мог распарсить многострочную диаграмму.
         String md = "Описание.\n\n```mermaid\nflowchart LR\n    A --> B\n    B --> C\n```\n\nИтог.";
         String html = service.toHtml(md);
 
-        assertThat(html).doesNotContain("flowchart");
-        assertThat(html).doesNotContain("mermaid");
+        assertThat(html).contains("<div class=\"mermaid\">");
+        // statements должны остаться на разных строках (а не «flowchart LR A --> B B --> C»)
+        assertThat(html).contains("flowchart LR\n");
+        assertThat(html).doesNotContain("flowchart LR     A");
         assertThat(html).contains("Описание");
         assertThat(html).contains("Итог");
     }

@@ -1023,6 +1023,19 @@ html[data-design] .markdown-content table { width: 100%; border-collapse: collap
 html[data-design] .markdown-content th, html[data-design] .markdown-content td { border: var(--rule-weight) solid var(--color-border-primary); padding: var(--space-2) var(--space-3); text-align: left; }
 html[data-design] .markdown-content th { background: var(--color-bg-tertiary); font-family: var(--font-family-mono); font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: var(--letter-spacing-wide); }
 
+/* Mermaid-диаграммы (возвращены 2026-06-17). Источник: ```mermaid в .md →
+   MarkdownRenderService оборачивает в <div class="mermaid"> → mermaid.js рисует SVG
+   (fragments/mermaid-init + app.js renderDynamicContent для AJAX-контента).
+   До рендера .mermaid держит сырой текст графа — прячем, чтобы не мелькал
+   `graph LR ...`; после рендера data-rendered=true показывает SVG. .question-diagram —
+   обёртка для выделенного diagramMermaid-поля (pathway 1, если будет включён рендер). */
+html[data-design] .markdown-content .mermaid:not([data-rendered="true"]) { visibility: hidden; }
+html[data-design] .markdown-content .mermaid {
+  display: block; margin: var(--space-4) 0; overflow-x: auto; text-align: center;
+}
+html[data-design] .markdown-content .mermaid svg { max-width: 100%; height: auto; }
+html[data-design] .question-diagram { overflow-x: auto; }
+
 /* Пост-ответная зона */
 html[data-design] .result-zone-head { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-1); margin: var(--space-6) 0 var(--space-3); padding-top: var(--space-5); border-top: var(--rule-weight) solid var(--color-border-primary); }
 html[data-design] .result-feedback { margin-top: var(--space-4); }

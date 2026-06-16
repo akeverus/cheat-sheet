@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:fragment="head(title, includeChart)">
+<head th:fragment="head(title, includeMermaid, includeChart)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Цвет браузерного chrome для мобильных (Android Chrome, iOS Safari). -->
@@ -140,8 +140,8 @@
     <!-- editorial.css — общая структурная база + дефолт-дизайн (Anthropic-якорь).
          Самодостаточна: reset, типошкала, утилиты, обе темы, reduced-motion.
          Preload — браузер скачивает её параллельно с парсингом head → меньше FOUC. -->
-    <link rel="preload" as="style" th:href="@{/css/editorial.css(v=82)}">
-    <link rel="stylesheet" th:href="@{/css/editorial.css(v=82)}">
+    <link rel="preload" as="style" th:href="@{/css/editorial.css(v=83)}">
+    <link rel="stylesheet" th:href="@{/css/editorial.css(v=83)}">
     <!-- Дизайн-оверлеи мульти-дизайн-системы (см. window.__design выше). Грузятся
          ПОСЛЕ базы editorial.css; активен только тот, чей html[data-design] выбран.
          Перебивают дефолтные editorial-токены по специфичности (0,1,1 > :root 0,1,0). -->
@@ -172,6 +172,16 @@
             document.querySelectorAll('.markdown-content pre code').forEach(function(b) { hljs.highlightElement(b); });
         });
     </script>
+    <th:block th:if="${includeMermaid}">
+        <!-- mermaid НЕ deferим (mermaid-init вызывает initialize() инлайн во время
+             парсинга, и рендерит .mermaid-блоки в DOMContentLoaded). Exact-pin
+             11.12.0 (= то, что отдавал диапазон @11) + SRI. securityLevel задаёт
+             mermaid-init: 'antiscript' (round-01 C21). -->
+        <script src="https://cdn.jsdelivr.net/npm/mermaid@11.12.0/dist/mermaid.min.js"
+                integrity="sha512-5TKaYvhenABhlGIKSxAWLFJBZCSQw7HTV7aL1dJcBokM/+3PNtfgJFlv8E6Us/B1VMlQ4u8sPzjudL9TEQ06ww=="
+                crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script th:replace="~{fragments/mermaid-init :: mermaid-init}"></script>
+    </th:block>
     <th:block th:if="${includeChart}">
         <!-- Exact-pin 4.5.0 UMD-min (раньше был unversioned /npm/chart.js = latest:
              авто-обновлялся, мог сломать графики без предупреждения) + SRI.

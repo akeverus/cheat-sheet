@@ -1160,9 +1160,10 @@
   // sanitizeHtml схлопывал таблицу в плоский текст ячеек — пользователь видел
   // мешанину вместо разметки в пояснениях и чек-листах.
   const ALLOWED_TAGS = new Set(['P', 'BR', 'STRONG', 'EM', 'B', 'I', 'UL', 'OL', 'LI', 'CODE', 'PRE', 'A', 'BLOCKQUOTE', 'H1', 'H2', 'H3', 'H4', 'TABLE', 'THEAD', 'TBODY', 'TR', 'TH', 'TD', 'HR', 'DIV', 'SPAN']);
-  // На этих тегах сохраняем class: <code class="language-java"> (подсветка
-  // highlight.js). Без class динамически вставленный ответ терял подсветку кода.
-  // class не исполняет JS — безопасно.
+  // На этих тегах сохраняем class: <div class="mermaid"> (диаграммы) и
+  // <code class="language-java"> (подсветка highlight.js). Без class
+  // динамически вставленный ответ терял диаграммы (mermaid показывался сырым
+  // текстом graph TD...) и подсветку кода. class не исполняет JS — безопасно.
   const CLASS_PRESERVE_TAGS = new Set(['DIV', 'SPAN', 'CODE', 'PRE']);
 
   function sanitizeNode(node) {
@@ -1213,14 +1214,39 @@
     return wrapper.innerHTML;
   }
 
-  // Дорисовывает highlight.js-подсветку в контенте, вставленном ПОСЛЕ
-  // DOMContentLoaded (ответ/пояснения приходят через AJAX, и начальный
-  // hljs-инициализатор их уже не трогает). Без этого код оставался без подсветки.
+  // Дорисовывает mermaid-диаграммы и highlight.js в контенте, вставленном
+  // ПОСЛЕ DOMContentLoaded (ответ/пояснения приходят через AJAX, и начальные
+  // инициализаторы mermaid/hljs их уже не трогают). Без этого диаграмма
+  // оставалась сырым `graph TD ...`, а код — без подсветки.
   function renderDynamicContent(container) {
     if (!container) return;
     if (typeof hljs !== 'undefined') {
       container.querySelectorAll('pre code').forEach(function (block) {
         try { hljs.highlightElement(block); } catch (_) { /* подсветка не критична */ }
+      });
+    }
+    if (typeof mermaid !== 'undefined') {
+      container.querySelectorAll('.mermaid').forEach(async function (el) {
+        if (el.getAttribute('data-rendered') === 'true') return;
+        try {
+          const id = 'mmd-dyn-' + Math.random().toString(36).slice(2);
+          const res = await mermaid.render(id, el.textContent);
+          // text/html-парсинг (как innerHTML, но без присваивания): достаём <svg>
+          // и переносим узлом — избегаем innerHTML на живом элементе.
+          const parsed = new DOMParser().parseFromString(res.svg, 'text/html');
+          const svg = parsed.body.querySelector('svg');
+          if (svg) {
+            svg.removeAttribute('height');
+            svg.style.width = '100%';
+            svg.style.height = 'auto';
+            el.replaceChildren(document.importNode(svg, true));
+            el.setAttribute('data-rendered', 'true');
+          } else {
+            el.remove();
+          }
+        } catch (_) {
+          el.remove();
+        }
       });
     }
   }

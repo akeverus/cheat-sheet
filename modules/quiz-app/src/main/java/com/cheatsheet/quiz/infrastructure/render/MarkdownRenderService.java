@@ -55,8 +55,10 @@ public class MarkdownRenderService {
 
     private final AppProperties appProperties;
 
-    // prettyPrint=false: Jsoup НЕ переформатирует пробелы при выводе — сохраняет
-    // переводы строк внутри <pre>/<code> как есть (без схлопывания в пробелы).
+    // prettyPrint=false: Jsoup НЕ переформатирует пробелы при выводе. Критично
+    // для <div class="mermaid"> — иначе Jsoup схлопывал переводы строк в
+    // mermaid-источнике в пробелы, и mermaid.js не мог распарсить диаграмму
+    // (каждый statement должен быть на своей строке) → диаграмма не рисовалась.
     private static final Document.OutputSettings NO_PRETTY_PRINT =
             new Document.OutputSettings().prettyPrint(false);
 
@@ -64,6 +66,7 @@ public class MarkdownRenderService {
     private static final Safelist HTML_SAFELIST = Safelist.relaxed()
             .addTags("pre", "code", "table", "thead", "tbody", "tr", "th", "td")
             .removeTags("script", "iframe", "object", "embed", "form")
+            .addAttributes("div", "class")   // mermaid diagrams: <div class="mermaid">
             .addAttributes("code", "class")  // highlight.js language hints: <code class="language-java">
             .addAttributes("a", "class")
             // wiki-link даёт relative href вида /?topic=foo — без preserveRelativeLinks
@@ -84,15 +87,14 @@ public class MarkdownRenderService {
     private static final Safelist INLINE_SAFELIST = new Safelist()
             .addTags("code", "strong", "em", "b", "i", "sub", "sup", "del", "ins", "mark", "br");
 
-    /** Паттерн для mermaid code-блоков (```mermaid ... ```) — вырезаются из вывода. */
+    /** Паттерн для mermaid code-блоков: ```mermaid ... ```. */
     private static final java.util.regex.Pattern MERMAID_BLOCK =
             java.util.regex.Pattern.compile("```mermaid\\s*\n([\\s\\S]*?)```", java.util.regex.Pattern.MULTILINE);
 
     /**
      * Конвертирует markdown в HTML, санитизированный для безопасного отображения (th:utext / innerHTML).
      * Удаляются script, iframe, event-атрибуты и опасные теги.
-     * Mermaid-блоки (```mermaid) вырезаются: проект отказался от mermaid-диаграмм
-     * (CDN-зависимость mermaid.js убрана); проза вокруг диаграммы остаётся.
+     * Mermaid-блоки (```mermaid) конвертируются в {@code <div class="mermaid">} для рендеринга mermaid.js.
      *
      * @param markdown исходный markdown
      * @return HTML, безопасный для вставки в страницу
@@ -101,7 +103,7 @@ public class MarkdownRenderService {
         if (markdown == null || markdown.isBlank()) {
             return "";
         }
-        String processed = stripMermaid(markdown);
+        String processed = preprocessMermaid(markdown);
         processed = preprocessWikiLinks(processed);
         Node document = PARSER.parse(processed);
         String html = HTML_RENDERER.render(document);
@@ -144,13 +146,10 @@ public class MarkdownRenderService {
         return Jsoup.clean(doc.body().html(), "", INLINE_SAFELIST, NO_PRETTY_PRINT).trim();
     }
 
-    /**
-     * Вырезает ```mermaid ... ``` блоки целиком. Проект отказался от mermaid-диаграмм
-     * (убрана CDN-зависимость mermaid.js): в приложении диаграммы не показываются,
-     * исходник остаётся в .md для истории/Obsidian. Проза вокруг диаграммы сохраняется.
-     */
-    private String stripMermaid(String markdown) {
-        return MERMAID_BLOCK.matcher(markdown).replaceAll("");
+    /** Заменяет ```mermaid ... ``` блоки на &lt;div class="mermaid"&gt; для рендеринга mermaid.js. */
+    private String preprocessMermaid(String markdown) {
+        return MERMAID_BLOCK.matcher(markdown).replaceAll(
+                mr -> "\n<div class=\"mermaid\">\n" + java.util.regex.Matcher.quoteReplacement(mr.group(1).trim()) + "\n</div>\n\n");
     }
 
     /**
