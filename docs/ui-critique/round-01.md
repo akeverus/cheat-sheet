@@ -430,3 +430,27 @@ editorial.css v71→v72, app.js v31→v32 (result/settings/focus-training).
   при stale-hardMode были скрыты); консоль чистая.
 
 app.js v32→v33 (result/settings/focus-training).
+
+## Порция 5 — B5 сигнатура радиусов кнопок (2026-06-16)
+
+Editorial-сигнатура (editorial.css L2612): утилитарные/secondary кнопки — плоские
+`0`, accent-залитые primary-CTA — асимметричный `0 0 8px 8px` («Try Claude»). На
+деле одинаковые кнопки имели `0` / `8px` / `0 0 8px 8px` вразнобой. Корень (как
+показал верификатор): flat-список сигнатуры (0,2,1) проигрывал по специфичности
+page-правилам (0,3,1 … 1,3,2), которые заново объявляли `border-radius-md`.
+
+Фикс — правил радиус в **самих побеждающих page-правилах**, а не во flat-списке:
+- → плоские `0`: `#filters-form submit` («Применить»), `.btn-finish-small`,
+  `.data-export-actions .btn` (Экспорт JSON/CSV), `.danger-btn` («Сбросить банк»),
+  `.stats-action-btn` (база), `.table-expander`, `.result-page .btn-finish`,
+  `.confidence-btn` (обещание комментария «единообразно с .flashcard-grade-btn»).
+- → асимметричные `0 0 8px 8px`: `#session-form submit` («Начать сессию/
+  тренировку»), `.stats-search-action` («Искать») — оба accent-fill primary.
+
+Верифицировано live (computed `border-radius`): settings — Применить/Экспорт/
+Сбросить = `0px`, «Начать тренировку» = `0px 0px 8px 8px`; stats — stats-action-btn/
+table-expander = `0px`, stats-search-action = `0px 0px 8px 8px`. Today-hero CTA
+(«Начать повторение») = `.btn.next-btn` → уже асимметричный через сигнатуру, новой
+рассинхронизации нет.
+
+editorial.css v72→v73.
