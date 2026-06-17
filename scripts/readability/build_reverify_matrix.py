@@ -60,9 +60,31 @@ for rel, p in md_by_rel.items():
 
 # seeder questions per rel
 seed_q = {}     # rel -> {qnum: question_obj}
+seed_doc = {}   # rel -> full doc (for C9 schema check)
 for rel, p in seed_by_rel.items():
     d = json.load(open(p, encoding="utf-8"))
     seed_q[rel] = {q["q_number"]: q for q in d["questions"]}
+    seed_doc[rel] = d
+
+# C9: валидация по той же схеме, что использует McqJsonLoader на старте (Draft-07)
+# + topic_slug == имя файла (loader тоже это требует). Это «load smoke» без boot.
+c9_status = {}
+try:
+    from jsonschema import Draft7Validator
+    _schema = json.load(open("modules/quiz-app/src/main/resources/seed/mcq-schema.json", encoding="utf-8"))
+    _val = Draft7Validator(_schema)
+    for rel, d in seed_doc.items():
+        errs = list(_val.iter_errors(d))
+        slug_ok = d.get("topic_slug") == rel.split("/")[-1]
+        if errs:
+            c9_status[rel] = f"SCHEMA-FAIL {list(errs[0].path)}"
+        elif not slug_ok:
+            c9_status[rel] = f"SLUG-FAIL {d.get('topic_slug')}"
+        else:
+            c9_status[rel] = "LOAD-OK"
+except Exception as e:
+    for rel in seed_doc:
+        c9_status[rel] = "PENDING"
 
 # valid Q targets per basename (union of md + seeder)
 valid_q = collections.defaultdict(set)
@@ -141,7 +163,7 @@ for rel in all_rels:
     add(rel, "FILE",
         A1_dupcorrect="", A2_xlinks=("" if md_p is None else ("PASS" if not bad_links else f"BROKEN {len(bad_links)}")),
         A3_parity=a3, A4_balance=a4, A5_sections="",
-        C9_load=("PENDING" if sd else "N/A"),
+        C9_load=(c9_status.get(rel, "PENDING") if sd else "N/A"),
         notes="; ".join(notes + ([("md-bad-links: " + ", ".join(bad_links[:6])) ] if bad_links else [])))
     if bad_links: findings["A2_md_broken"] += len(bad_links)
 
