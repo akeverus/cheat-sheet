@@ -611,13 +611,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`request(0)` бросит `IllegalArgumentException` синхронно прямо из метода, а `request(-1)` будет проигнорирован как no-op.",
+              "text": "`request(0)` — безобидный no-op (легитимный нулевой запрос), и только `request(-1)` (строго отрицательное) обязывает вызвать `onError(IllegalArgumentException)`.",
               "correct": false,
               "sections": {
-                "what_actually": "Всё наоборот: `request(0)` — no-op, а неположительный `request(-1)` обязан привести к сигналу `onError(IllegalArgumentException)`, а не к синхронному throw.",
-                "source_of_confusion": "Кажется, что ноль «явно неверен», а отрицательное «можно простить», но контракт обратный.",
-                "if_it_were_true": "Если бы `request(0)` бросал исключение синхронно, это нарушило бы правило о доставке ошибок через `onError`.",
-                "how_it_should_be": "`request(0)` ничего не делает; `request(-1)` (и любой `n <= 0`) ведёт к `onError(IllegalArgumentException)`."
+                "what_actually": "Правило 3.9 говорит про `n <= 0`, а не `n < 0`: `request(0)` тоже обязан привести к `onError(IllegalArgumentException)` — нулевой запрос НЕ является легитимным no-op.",
+                "source_of_confusion": "Интуитивно ноль кажется «ничего не прошу — ничего не ломаю», но спецификация запрещает и его.",
+                "if_it_were_true": "Если бы `request(0)` был валиден, нулевой запрос из ошибочной арифметики проходил бы молча, и реализация не была бы fail-fast.",
+                "how_it_should_be": "И `request(0)`, и `request(-1)` (весь диапазон `n <= 0`) ведут к `onError(IllegalArgumentException)`."
               }
             },
             {
@@ -626,22 +626,22 @@
               "text": "И `request(0)`, и `request(-1)` полностью эквивалентны: оба просто ничего не делают (no-op), не вызывая никаких сигналов.",
               "correct": false,
               "sections": {
-                "what_actually": "`request(0)` действительно no-op, но `request(-1)` обязан привести к `onError(IllegalArgumentException)` — это не одно и то же.",
-                "source_of_confusion": "Оба значения «не запрашивают элементы», поэтому кажутся одинаково безобидными.",
-                "if_it_were_true": "Если бы `request(-1)` был no-op, баг с арифметикой давал бы отрицательный запрос молча, и его было бы не поймать.",
-                "how_it_should_be": "Ноль безопасен (no-op), а отрицательный запрос — явная ошибка с сигналом `onError`."
+                "what_actually": "Наоборот: оба значения (`n <= 0`) обязаны привести к `onError(IllegalArgumentException)` по правилу 3.9 — ни одно не является молчаливым no-op.",
+                "source_of_confusion": "Оба значения «не запрашивают элементы», поэтому кажутся одинаково безобидными — но спецификация считает оба ошибкой.",
+                "if_it_were_true": "Если бы неположительный запрос был no-op, баг с арифметикой давал бы нулевой/отрицательный запрос молча, и его было бы не поймать.",
+                "how_it_should_be": "Любой `n <= 0` — явная ошибка с сигналом `onError(IllegalArgumentException)`; запрашивает элементы только `n >= 1`."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`request(0)` — это no-op (ничего не происходит), а `request(n)` при `n <= 0` (например, `request(-1)`) обязывает `Publisher` вызвать `onError(IllegalArgumentException)`. Это правило 3.9 спецификации: запрос неположительного числа — сигнал ошибки.",
+              "text": "И `request(0)`, и `request(-1)` — любой `n <= 0` — обязывают `Publisher` вызвать `onError(IllegalArgumentException)`. Это правило 3.9 спецификации Reactive Streams: запрос неположительного числа (включая ноль) — сигнал ошибки, а не no-op.",
               "correct": true,
               "sections": {
-                "explanation": "Ноль формально валиден и просто ничего не запрашивает, а отрицательное число — это явная ошибка, которую нужно сообщить через терминальный сигнал `onError`. Так баг ловится сразу, а не тихо ломает поток.",
-                "example": "Чаще всего `request(0)` или `request(-1)` — случайный результат арифметики (`request(buffer.remaining())`, где `remaining` ушёл в минус); правило 3.9 делает такой баг заметным.",
-                "when_to_apply": "Это проверяют при реализации `Subscription` и `TCK`-тестами на fail-fast: неположительный запрос должен вести к ошибке, а не к зависанию.",
-                "edge_cases": "Граница важна: ровно `0` — допустимый no-op, любое `n < 0` — обязательный `onError(IllegalArgumentException)`.",
+                "explanation": "Спецификация (правило 3.9) трактует весь диапазон `n <= 0` как ошибку: и ноль, и отрицательное число обязаны привести к терминальному сигналу `onError(IllegalArgumentException)`. Так баг ловится сразу, а не тихо ломает поток.",
+                "example": "Чаще всего неположительный запрос — случайный результат арифметики (`request(buffer.remaining())`, где `remaining` ушёл в 0 или минус); правило 3.9 делает такой баг заметным.",
+                "when_to_apply": "Это проверяют при реализации `Subscription` и TCK-тестами на fail-fast: любой запрос `n <= 0` должен вести к ошибке, а не к зависанию.",
+                "edge_cases": "Граница строгая: ровно `0` — уже ошибка (`n <= 0`), а не валидный no-op; запрашивает элементы только `n >= 1`.",
                 "related": "[[reactive-streams-interview#Q9]] `request` как часть `Subscription`; [[reactive-streams-interview#Q10]] backpressure через `request`; [[reactive-streams-interview#Q20]] правила для `Subscription`."
               }
             },

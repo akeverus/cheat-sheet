@@ -1056,13 +1056,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Использование одного managed DNS провайдера для критичной зоны делает его single point of failure; именно поэтому после Dyn DDoS 2016 распространилась практика multi-DNS (NS на двух провайдерах).",
+              "text": "Cloudflare использует EDNS Client Subnet (ECS) для геомаршрутизации, а Route 53 геомаршрутизацию не поддерживает и умеет только простой round-robin.",
               "correct": false,
               "sections": {
-                "what_actually": "Это верно: Dyn-инцидент показал, что падение единственного провайдера роняет все зависящие сервисы, и индустрия перешла к размещению NS-записей на двух независимых провайдерах.",
-                "source_of_confusion": "Не путать с защитой от DDoS внутри одного провайдера — multi-DNS защищает именно от отказа всего провайдера целиком.",
-                "if_it_were_true": "Здесь утверждение и есть корректное: multi-DNS убирает зависимость от единственного оператора.",
-                "how_it_should_be": "Для критичных зон NS размещают у двух независимых провайдеров, чтобы отказ одного не валил резолюцию."
+                "what_actually": "Наоборот: Route 53 поддерживает weighted/latency/geo-маршрутизацию, а Cloudflare как раз НЕ передаёт ECS — это его осознанный выбор ради приватности.",
+                "source_of_confusion": "ECS ассоциируется с «умной геолокацией», и кажется, что без него геомаршрутизации нет — хотя Route 53 делает её на своих anycast-узлах.",
+                "if_it_were_true": "Если бы Route 53 умел только round-robin, его latency- и geo-политики в консоли AWS просто не существовали бы.",
+                "how_it_should_be": "Route 53 поддерживает weighted/latency/geo; Cloudflare намеренно без ECS, но со своей anycast-геолокацией."
               }
             },
             {
@@ -1128,13 +1128,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Service discovery вроде Consul или Kubernetes CoreDNS обновляет список живых узлов каждую секунду и встроенно учитывает health-статус на уровне instance/pod, чего обычный private DNS на managed health-check сделать так быстро не может.",
+              "text": "Service discovery вроде Consul или Kubernetes CoreDNS не отслеживает health узлов — он лишь раздаёт статический список адресов, как обычная DNS-зона, поэтому по актуальности не отличается от private DNS.",
               "correct": false,
               "sections": {
-                "what_actually": "Это и есть корректное различие: Consul/k8s дают live-обновление и built-in health-awareness по узлам, а private DNS реагирует медленнее и грубее.",
-                "source_of_confusion": "Не путать с тем, что private DNS вовсе не умеет health-check — умеет, но через managed-проверки и заметно медленнее.",
-                "if_it_were_true": "Здесь утверждение и есть верное: динамика и гранулярность — ключевое преимущество service discovery.",
-                "how_it_should_be": "Consul/k8s обновляют endpoints ежесекундно с health-awareness по pod/instance; private DNS делает это реже и грубее."
+                "what_actually": "Наоборот: именно service discovery встроенно отслеживает health на уровне instance/pod и обновляет список живых узлов за секунды — это его ключевое отличие от private DNS.",
+                "source_of_confusion": "И то, и другое отвечает на DNS-запрос именем→адресом, поэтому кажется, что механика одинаковая.",
+                "if_it_were_true": "Если бы Consul не знал о health, не было бы смысла в его health-checks и автоматическом выводе мёртвых узлов из выдачи.",
+                "how_it_should_be": "Service discovery: секундные обновления + built-in health на уровне instance/pod; private DNS: обновления часы/дни, health только через managed health-check."
               }
             }
           ]
@@ -1296,13 +1296,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В DNSSEC KSK (Key Signing Key) подписывает только записи `DNSKEY` и живёт долго (1-2 года), а ZSK (Zone Signing Key) подписывает остальные RRset и ротируется чаще; разделение нужно, чтобы менять ZSK без участия registrar.",
+              "text": "В DNSSEC ZSK (Zone Signing Key) подписывает запись `DNSKEY` и публикует свой хеш как `DS` в родителе, а KSK подписывает остальные RRset и ротируется каждые несколько часов.",
               "correct": false,
               "sections": {
-                "what_actually": "Это и есть корректное разделение: ZSK ротируют часто без правки DS в родителе, а KSK (привязанный к DS) меняют редко, потому что это затрагивает registrar.",
-                "source_of_confusion": "Не путать роли: подмена «KSK подписывает всё» сломала бы возможность частой ротации без registrar.",
-                "if_it_were_true": "Здесь утверждение и есть верное: именно поэтому ключи разделяют на KSK и ZSK.",
-                "how_it_should_be": "KSK подписывает DNSKEY и привязан к DS в родителе; ZSK подписывает остальные RRset и ротируется чаще."
+                "what_actually": "Роли перепутаны: `DNSKEY` подписывает KSK (его хеш идёт в `DS` родителя, живёт 1-2 года), а ZSK подписывает остальные RRset и ротируется чаще.",
+                "source_of_confusion": "Оба ключа подписывают и называются похоже, поэтому их функции легко перепутать.",
+                "if_it_were_true": "Если бы хеш ZSK лежал в `DS` родителя, его частая ротация требовала бы каждый раз обновлять запись у registrar — что обесценивает само разделение ключей.",
+                "how_it_should_be": "KSK → подписывает `DNSKEY`, его `DS` в родителе, живёт долго; ZSK → подписывает RRset, ротируется чаще, меняется без registrar."
               }
             },
             {
@@ -1368,13 +1368,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "DoT работает на TCP-порту 853 и легче контролируется firewall, DoH идёт по 443 и трудно блокируется, а DoQ использует QUIC на UDP/443 с преимуществом 0-RTT.",
+              "text": "DoT и DoH используют один и тот же порт 853, а DoQ работает поверх TCP на порту 53, поэтому DoH блокируется firewall так же легко, как классический DNS.",
               "correct": false,
               "sections": {
-                "what_actually": "Это корректное разграничение: DoT (853, контролируемый), DoH (443, неотличим от HTTPS), DoQ (QUIC/UDP 443 с 0-RTT и меньшей latency).",
-                "source_of_confusion": "Не путать порты: именно 853 принадлежит DoT, а 443 — DoH и DoQ.",
-                "if_it_were_true": "Здесь утверждение и есть верное: пороговое различие — порт и блокируемость.",
-                "how_it_should_be": "DoT — 853 (контролируемый), DoH — 443 (трудноблокируемый), DoQ — QUIC/443 с 0-RTT."
+                "what_actually": "Порты разные: DoT — TCP/853, DoH — 443 (неотличим от HTTPS, блокировать трудно), DoQ — QUIC поверх UDP/443; именно поэтому DoH блокировать сложнее всего.",
+                "source_of_confusion": "Все три — «шифрованный DNS», поэтому кажется, что и порт у них общий.",
+                "if_it_were_true": "Если бы DoH сидел на выделенном 853, его нельзя было бы маскировать под обычный веб-трафик — а весь смысл DoH именно в этом.",
+                "how_it_should_be": "DoT — TCP/853, DoH — HTTPS/443, DoQ — QUIC/UDP/443; блокировать труднее всего DoH."
               }
             }
           ]
@@ -1536,13 +1536,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`dig` — стандарт де-факто с богатым выводом (`+trace`, `+short`, `+dnssec`, `-x`), `nslookup` проще и есть везде включая Windows, `drill` удобен для DNSSEC-tracing, а `kdig` поддерживает DoT/DoH через `+tls` и `+https`.",
+              "text": "`nslookup` — самый мощный инструмент с DNSSEC-tracing и поддержкой DoT/DoH, а `dig` устарел и не умеет показывать иерархию через `+trace`.",
               "correct": false,
               "sections": {
-                "what_actually": "Это корректное распределение ролей: `dig` универсален, `nslookup` повсеместен, `drill` силён в DNSSEC, `kdig` умеет шифрованный транспорт.",
-                "source_of_confusion": "Не путать: именно `kdig` (Knot), а не `dig`, штатно ходит по DoT/DoH.",
-                "if_it_were_true": "Здесь утверждение и есть верное: каждый инструмент закрывает свою нишу диагностики.",
-                "how_it_should_be": "`dig` — основной, `nslookup` — везде, `drill` — для DNSSEC, `kdig` — для DoT/DoH."
+                "what_actually": "Наоборот: `dig` — стандарт де-факто с `+trace`, `+dnssec`, `-x`; `nslookup` — простейший и старый, без DNSSEC-tracing и без DoT/DoH (для них нужен `kdig`).",
+                "source_of_confusion": "`nslookup` всем знаком и есть в Windows из коробки, поэтому кажется основным инструментом.",
+                "if_it_were_true": "Если бы `nslookup` поддерживал DoT/DoH и DNSSEC-tracing, не было бы нужды в `kdig` и `drill`.",
+                "how_it_should_be": "`dig` — основной богатый инструмент; `drill` — для DNSSEC-tracing; `kdig` — для DoT/DoH; `nslookup` — простейший, есть везде."
               }
             },
             {
@@ -1608,13 +1608,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Warm cache (browser/OS) даёт резолюцию за <1ms, а cold-обход всей иерархии типично занимает 50-200ms; сократить cold-задержку помогают dns-prefetch, preconnect, HTTP/3 (0-RTT) и близкий CDN-edge.",
+              "text": "Тёплый кэш (browser/OS) и холодный обход иерархии занимают примерно одинаковое время (~50ms), потому что результат всё равно кэшируется на стороне authoritative-сервера, а не клиента.",
               "correct": false,
               "sections": {
-                "what_actually": "Это и есть корректный бюджет: тёплый кеш — доли миллисекунды, холодный обход — десятки-сотни миллисекунд, а перечисленные приёмы убирают cold-lookup из критического пути.",
-                "source_of_confusion": "Не путать: <1ms относится к warm-cache, а не к cold-обходу иерархии.",
-                "if_it_were_true": "Здесь утверждение и есть верное: разница cold/warm и способы её сократить названы точно.",
-                "how_it_should_be": "Warm — <1ms, cold — 50-200ms; ускоряют prefetch/preconnect, HTTP/3 0-RTT и близкий edge."
+                "what_actually": "Времена сильно разные: warm — <1ms (browser/OS) до 5-20ms (recursive), cold — 50-200ms и больше; экономящий время кэш находится у клиента/резолвера, а не у authoritative.",
+                "source_of_confusion": "Кажется, что «кэш где-то есть всегда», поэтому разница cold/warm размывается.",
+                "if_it_were_true": "Если бы cold и warm были равны, не имели бы смысла `dns-prefetch`/`preconnect`, которые прогревают именно клиентский кэш.",
+                "how_it_should_be": "warm <1ms (browser/OS), recursive warm 5-20ms; cold 50-200ms+; ускоряют `dns-prefetch`, `preconnect`, HTTP/3 0-RTT, близкий edge."
               }
             }
           ]
@@ -1776,13 +1776,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Dyn DDoS 2016 (Mirai botnet положил Twitter/Reddit/GitHub) показал, что единственный managed DNS-провайдер — это single point of failure, и индустрия перешла к multi-DNS (NS на двух независимых провайдерах).",
+              "text": "Главный урок Dyn DDoS 2016 в том, что managed-провайдеры ненадёжны, и индустрия после него массово вернулась к self-hosted BIND вместо managed DNS.",
               "correct": false,
               "sections": {
-                "what_actually": "Это и есть ключевой урок Dyn-инцидента: отказ одного провайдера обрушил все зависящие сервисы, после чего размещение NS у двух независимых операторов стало практикой.",
-                "source_of_confusion": "Не свести вывод к «нужна DDoS-защита у провайдера» — суть именно в устранении зависимости от единственного оператора.",
-                "if_it_were_true": "Здесь утверждение и есть верное: multi-DNS убирает single point of failure на уровне провайдера.",
-                "how_it_should_be": "Критичные зоны держат NS у двух независимых провайдеров, чтобы отказ одного не валил резолюцию."
+                "what_actually": "Урок Dyn — не отказ от managed, а избегание единственного провайдера: индустрия перешла к multi-DNS (NS у двух независимых managed-провайдеров), а не к self-hosted BIND.",
+                "source_of_confusion": "Раз упал managed-провайдер, кажется логичным «вернуться к своему» — но self-hosting не решает ни SPOF, ни DDoS-устойчивость.",
+                "if_it_were_true": "Если бы вывод был «managed ненадёжны», крупные сайты не строили бы failover на двух managed-провайдерах (Route 53 + NS1/Cloudflare).",
+                "how_it_should_be": "Вывод Dyn 2016: один провайдер = SPOF → держать NS у двух независимых managed-провайдеров (multi-DNS), а не уходить в self-hosted."
               }
             },
             {

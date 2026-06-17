@@ -11,14 +11,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В Spring три основных клиента: `RestTemplate` (синхронный, классический, deprecated в Spring 6), `WebClient` (реактивный, Spring 5+, на WebFlux) и `RestClient` (синхронный fluent, Spring 6.1+), и выбирают их по стилю стека и статусу поддержки.",
+              "text": "В Spring три основных клиента: `RestTemplate` (синхронный, классический, в maintenance mode — НЕ `@Deprecated`), `WebClient` (реактивный, Spring 5+, на WebFlux) и `RestClient` (синхронный fluent, Spring 6.1+), и выбирают их по стилю стека и статусу поддержки.",
               "correct": true,
               "sections": {
                 "explanation": "`RestTemplate` — старый синхронный API на перегрузках методов; `WebClient` — реактивный с `Mono`/`Flux` поверх `spring-webflux`; `RestClient` — новый синхронный fluent-builder из `spring-web`, заменяющий `RestTemplate`.",
                 "example": "Для нового нереактивного проекта на Spring 6.1 берут `RestClient`, для WebFlux с высокой конкурентностью — `WebClient`, а `RestTemplate` оставляют только в ещё не мигрированном legacy.",
                 "when_to_apply": "Выбор делают по стеку: thread-per-request MVC → `RestClient`, реактивный стек со стримингом → `WebClient`, существующий старый код → `RestTemplate` до миграции.",
                 "edge_cases": "`WebClient` можно вызвать и в нереактивном коде через `.block()`, но это антипаттерн: правильный синхронный выбор — `RestClient`, а не блокирующий `WebClient`.",
-                "related": "[[spring-rest-client-interview#Q2]] почему `RestTemplate` deprecated; [[spring-rest-client-interview#Q3]] как работает `RestClient`; [[spring-rest-client-interview#Q7]] когда `WebClient` вместо `RestClient`."
+                "related": "[[spring-rest-client-interview#Q2]] почему `RestTemplate` в maintenance mode; [[spring-rest-client-interview#Q3]] как работает `RestClient`; [[spring-rest-client-interview#Q7]] когда `WebClient` вместо `RestClient`."
               }
             },
             {
@@ -53,7 +53,7 @@
               "sections": {
                 "what_actually": "Различия существенные: разный стиль API (перегрузки vs fluent vs reactive), разные зависимости (`spring-web` vs `spring-webflux`) и разный статус поддержки.",
                 "source_of_confusion": "Все три решают одну задачу — HTTP-вызовы, поэтому поверхностно кажутся взаимозаменяемыми деталями.",
-                "if_it_were_true": "Если бы всё было идентично, не было бы смысла вводить `RestClient` и помечать `RestTemplate` как deprecated.",
+                "if_it_were_true": "Если бы всё было идентично, не было бы смысла вводить `RestClient` и переводить `RestTemplate` в maintenance mode.",
                 "how_it_should_be": "Разделять клиенты по стилю, зависимости и статусу, а не считать их одинаковыми с точностью до имени."
               }
             }
@@ -66,55 +66,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Почему `RestTemplate` помечен как deprecated и что это значит на практике?",
+          "question_text": "Почему `RestTemplate` перевели в maintenance mode и что это значит на практике?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "`RestTemplate` deprecated потому, что Spring полностью удалил его из `spring-web`, и любой код на нём перестаёт компилироваться в Spring 6.",
+              "text": "`RestTemplate` убрали, потому что Spring полностью удалил его из `spring-web`, и код на нём перестаёт компилироваться в Spring 6.",
               "correct": false,
               "sections": {
-                "what_actually": "`RestTemplate` не удалён: deprecated означает «не развивается», но класс остаётся в `spring-web` и работает в Spring 6.x.",
-                "source_of_confusion": "Слово deprecated часто воспринимают как «удалён», особенно если путать с removal в будущих версиях.",
-                "if_it_were_true": "Если бы его удалили, существующие проекты не собирались бы, но они продолжают компилироваться и работать.",
-                "how_it_should_be": "Понимать deprecated как «рекомендуется не использовать в новом коде», а не как немедленное удаление."
+                "what_actually": "`RestTemplate` не удалён и НЕ помечен `@Deprecated`: maintenance mode означает «не развивается», но класс остаётся в `spring-web` и работает в Spring 6.x.",
+                "source_of_confusion": "«Maintenance mode» часто путают с удалением или с аннотацией `@Deprecated`, ожидая скорого removal.",
+                "if_it_were_true": "Если бы класс удалили, существующий код на `RestTemplate` не компилировался бы — но он компилируется и работает.",
+                "how_it_should_be": "Понимать maintenance mode как «остаётся ради совместимости и поддерживается, но новых фич не получает», а не как удаление."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`RestTemplate` deprecated из-за устаревшего дизайна эпохи Java 5: перегрузка методов вместо fluent API, сложная расширяемость и слабая поддержка современных паттернов; `RestClient` решает это единым fluent-builder, оставаясь совместимым по инфраструктуре.",
+              "text": "`RestTemplate` перевели в maintenance mode из-за устаревшего дизайна эпохи Java 5: перегрузка методов вместо fluent API, сложная расширяемость и слабая поддержка современных паттернов; `RestClient` решает это единым fluent-builder, оставаясь совместимым по инфраструктуре. Важно: `RestTemplate` НЕ помечен `@Deprecated`, он просто не развивается.",
               "correct": true,
               "sections": {
-                "explanation": "Главные претензии — куча перегрузок (`getForObject`, `getForEntity`, `exchange`) для похожих задач и трудная кастомизация; `RestClient` даёт один builder и совместим с теми же `HttpMessageConverter` и `ClientHttpRequestFactory`.",
-                "example": "Вместо выбора между `getForObject()` и `getForEntity()` в `RestClient` пишут единую цепочку `get().uri(...).retrieve().body(...)`, читаемую и расширяемую.",
-                "when_to_apply": "Этот аргумент приводят на собеседовании, объясняя, почему в новых проектах берут `RestClient`, а `RestTemplate` оставляют для legacy.",
-                "edge_cases": "Deprecated не значит удалён: `RestTemplate` продолжит работать в Spring 6.x, но новых возможностей в нём не появится.",
-                "related": "[[spring-rest-client-interview#Q1]] сравнение клиентов; [[spring-rest-client-interview#Q3]] fluent-API `RestClient`; [[spring-rest-client-interview#Q13]] миграция с `RestTemplate`."
+                "explanation": "Maintenance mode — это решение «заморозить» развитие: класс поддерживают ради обратной совместимости, но новые возможности идут в `RestClient`. Аннотации `@Deprecated` на `RestTemplate` нет.",
+                "example": "Старый код `restTemplate.getForObject(url, Type.class)` продолжает работать в Spring 6.x; новые эндпоинты пишут на `RestClient` с fluent-API.",
+                "when_to_apply": "В новых проектах брать `RestClient` (синхронный) или `WebClient` (реактивный); существующий код на `RestTemplate` мигрировать по мере необходимости, без спешки.",
+                "edge_cases": "Maintenance mode ≠ удаление и ≠ `@Deprecated`: `RestTemplate` продолжит работать в Spring 6.x, но новых возможностей в нём не появится.",
+                "related": "[[spring-rest-client-interview#Q1]] три клиента Spring; [[spring-rest-client-interview#Q3]] как работает `RestClient`; [[spring-rest-client-interview#Q13]] миграция на `RestClient`."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`RestTemplate` deprecated, потому что он медленнее всех клиентов из-за внутренней блокировки на каждом запросе, и Spring не смог это исправить.",
+              "text": "`RestTemplate` отправили в maintenance mode, потому что он медленнее всех клиентов из-за внутренней блокировки на каждом запросе, и Spring не смог это исправить.",
               "correct": false,
               "sections": {
-                "what_actually": "Причина deprecation — устаревший дизайн API, а не мнимая блокировка: производительность синхронных клиентов сопоставима, дело в эргономике и расширяемости.",
-                "source_of_confusion": "Синхронность `RestTemplate` ассоциируется с «блокирующим и медленным», и это переносят на причину deprecation.",
-                "if_it_were_true": "Если бы причина была в скорости, `RestClient` (тоже синхронный) был бы deprecated по той же логике, но он актуален.",
-                "how_it_should_be": "Объяснять deprecation дизайном API на перегрузках, а не выдуманными проблемами производительности."
+                "what_actually": "Причина — устаревший дизайн API, а не мнимая блокировка: производительность синхронных клиентов сопоставима, дело в эргономике и расширяемости.",
+                "source_of_confusion": "Синхронность `RestTemplate` ассоциируется с «блокирующим и медленным», и это переносят на причину заморозки.",
+                "if_it_were_true": "Если бы причина была в скорости, `RestClient` (тоже синхронный) заморозили бы по той же логике — но он актуален и развивается.",
+                "how_it_should_be": "Объяснять maintenance mode дизайном API на перегрузках, а не выдуманными проблемами производительности."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`RestTemplate` deprecated, потому что он не реактивный, и Spring требует переписать весь синхронный код на `WebClient` с `.block()`.",
+              "text": "`RestTemplate` заморозили, потому что он не реактивный, и Spring требует переписать весь синхронный код на `WebClient` с `.block()`.",
               "correct": false,
               "sections": {
-                "what_actually": "Замена `RestTemplate` — это синхронный `RestClient`, а не блокирующий `WebClient`; реактивность не является причиной deprecation.",
-                "source_of_confusion": "Хайп вокруг реактивности рождает мысль, что Spring отказывается от всего синхронного в пользу `WebClient`.",
-                "if_it_were_true": "Если бы так было, Spring не вводил бы синхронный `RestClient`, а сразу толкал бы всех на `WebClient.block()`.",
-                "how_it_should_be": "Считать рекомендованной заменой синхронный `RestClient`, а `.block()` на `WebClient` — антипаттерном."
+                "what_actually": "Замена `RestTemplate` — синхронный `RestClient`, а не блокирующий `WebClient`; реактивность не является причиной maintenance mode.",
+                "source_of_confusion": "Раз `WebClient` появился раньше `RestClient`, кажется, что синхронику «обязали» уйти в реактивность.",
+                "if_it_were_true": "Если бы требовался переход на реактивность, не было бы смысла вводить синхронный `RestClient` как прямую замену.",
+                "how_it_should_be": "Для синхронного кода прямая замена — `RestClient`; `WebClient` нужен там, где действительно нужен реактивный стек."
               }
             }
           ]
@@ -738,7 +738,7 @@
                 "example": "`String r = restTemplate.getForObject(url, String.class);` превращается в `String r = restClient.get().uri(url).retrieve().body(String.class);`, а `exchange(..., ParameterizedTypeReference)` — в `get().uri(url).retrieve().toEntity(new ParameterizedTypeReference<>(){})`.",
                 "when_to_apply": "Подходит для поэтапной миграции: сначала оборачивают старый `RestTemplate` в `RestClient`, затем по одному переписывают вызовы на fluent-API.",
                 "edge_cases": "`RestClient.create(oldTemplate)` копирует конфигурацию, но не отслеживает её дальнейшие изменения в исходном `RestTemplate`; после создания клиента менять старый шаблон бессмысленно.",
-                "related": "[[spring-rest-client-interview#Q2]] почему `RestTemplate` deprecated; [[spring-rest-client-interview#Q3]] fluent-вызовы `RestClient`; [[spring-rest-client-interview#Q6]] `ParameterizedTypeReference` для коллекций."
+                "related": "[[spring-rest-client-interview#Q2]] почему `RestTemplate` в maintenance mode; [[spring-rest-client-interview#Q3]] fluent-вызовы `RestClient`; [[spring-rest-client-interview#Q6]] `ParameterizedTypeReference` для коллекций."
               }
             },
             {
