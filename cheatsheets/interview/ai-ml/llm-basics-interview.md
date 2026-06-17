@@ -663,8 +663,8 @@ for chunk in stream:
 
 ```
 GPT-4o (2024):
-  $5  / 1M input tokens
-  $15 / 1M output tokens
+  $2.50 / 1M input tokens
+  $10   / 1M output tokens
 
 Claude Opus 4 (2025):
   $15 / 1M input tokens

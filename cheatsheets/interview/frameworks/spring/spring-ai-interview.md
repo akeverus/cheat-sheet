@@ -173,17 +173,22 @@ public class EmbeddingService {
     }
 
     public List<float[]> embedBatch(List<String> texts) {
-        EmbeddingResponse response = embeddingModel.embedForResponse(
-            List.of(new TextSegment(texts.get(0)), new TextSegment(texts.get(1)))
-        );
+        // embedForResponse принимает List<String> напрямую
+        EmbeddingResponse response = embeddingModel.embedForResponse(texts);
         return response.getResults().stream()
             .map(r -> r.getOutput())
             .toList();
     }
 
-    // Косинусное сходство двух эмбеддингов
+    // Косинусное сходство двух эмбеддингов (считаем сами — это просто формула)
     public double similarity(float[] a, float[] b) {
-        return EmbeddingUtil.cossineSimilarity(a, b);
+        double dot = 0, na = 0, nb = 0;
+        for (int i = 0; i < a.length; i++) {
+            dot += a[i] * b[i];
+            na  += a[i] * a[i];
+            nb  += b[i] * b[i];
+        }
+        return dot / (Math.sqrt(na) * Math.sqrt(nb));
     }
 }
 ```

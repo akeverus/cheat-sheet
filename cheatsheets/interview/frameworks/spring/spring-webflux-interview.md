@@ -470,7 +470,7 @@ graph LR
 
 В `Project Reactor backpressure` поддерживается из коробки: при подписке передаётся запрос на объём данных. Операторы обратной связи:
 
-- **`onBackpressureBuffer(int capacity)`** — буферизует элементы до заданного лимита; при переполнении по умолчанию — `BufferOverflowError`; можно задать стратегию переполнения (DROP_OLDEST и т.д.).
+- **`onBackpressureBuffer(int capacity)`** — буферизует элементы до заданного лимита; при переполнении по умолчанию бросает overflow-ошибку (`Exceptions.failWithOverflow()` → сигнал `onError` с `IllegalStateException`); можно задать стратегию переполнения (DROP_OLDEST и т.д.).
 - **`onBackpressureDrop()`** — отбрасывает элементы, которые потребитель не успел запросить; подходит, когда допустима потеря части данных (например, сенсорные сэмплы).
 - **`onBackpressureLatest()`** — хранит только последний необработанный элемент; старые отбрасываются; полезно для «текущего значения» (например, курс, температура).
 
@@ -1519,7 +1519,7 @@ public class UserService {
 ```java
 RestTemplate restTemplate = new RestTemplate();
 User user = restTemplate.getForObject("/users/{id}", User.class, 1L);
-// Не используйте в новых проектах — deprecated в пользу RestClient
+// В maintenance mode (НЕ @Deprecated); для новых проектов предпочитают RestClient
 ```
 
 **WebClient (реактивный стек):**

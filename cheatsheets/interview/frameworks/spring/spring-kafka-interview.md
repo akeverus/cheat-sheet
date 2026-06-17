@@ -98,21 +98,21 @@ spring:
 public class OrderProducer {
     private final KafkaTemplate<String, OrderEvent> kafkaTemplate;
 
-    public void sendOrder(OrderEvent event) {
-        // Синхронная отправка (ожидаем подтверждения)
-        ListenableFuture<SendResult<String, OrderEvent>> future =
-            kafkaTemplate.send("orders", event.orderId(), event);
-
-        future.addCallback(
-            result -> log.info("Sent offset: {}", result.getRecordMetadata().offset()),
-            ex -> log.error("Failed to send: {}", event.orderId(), ex)
-        );
+    public void sendOrderSync(OrderEvent event) throws Exception {
+        // Синхронная отправка: блокируемся на .get() до подтверждения брокера
+        SendResult<String, OrderEvent> result =
+            kafkaTemplate.send("orders", event.orderId(), event).get();
+        log.info("Sent offset: {}", result.getRecordMetadata().offset());
     }
 
-    // Асинхронная (Java 8+ CompletableFuture API)
+    // Асинхронная (Spring Kafka 3.x: send() возвращает CompletableFuture;
+    // старые ListenableFuture/addCallback удалены)
     public CompletableFuture<SendResult<String, OrderEvent>> sendAsync(OrderEvent event) {
         return kafkaTemplate.send("orders", event.orderId(), event)
-            .completable();
+            .whenComplete((result, ex) -> {
+                if (ex == null) log.info("Sent offset: {}", result.getRecordMetadata().offset());
+                else log.error("Failed to send: {}", event.orderId(), ex);
+            });
     }
 }
 ```
@@ -226,11 +226,11 @@ DLT (Dead Letter Topic) — отдельный топик, куда склады
 `DeadLetterPublishingRecoverer` при публикации добавляет в заголовки контекст ошибки: исходный топик/партицию/offset и класс исключения. Поэтому отдельный потребитель DLT может разобрать причину сбоя, поднять алерт и при необходимости вручную перезалить сообщение.
 
 ```java
-// Автоматически создаётся суффикс "-dlt" при DeadLetterPublishingRecoverer
-// orders → orders-dlt
+// Суффикс по умолчанию у DeadLetterPublishingRecoverer — ".DLT"
+// orders → orders.DLT (в Q5 recoverer как раз и формирует record.topic() + ".DLT")
 
 // Потребитель DLT для разбора проблем
-@KafkaListener(topics = "orders-dlt", groupId = "orders-dlt-handler")
+@KafkaListener(topics = "orders.DLT", groupId = "orders-dlt-handler")
 public void handleDlt(
         @Payload OrderEvent event,
         @Header(KafkaHeaders.DLT_EXCEPTION_CAUSE_FQCN) String causeClass,
@@ -376,7 +376,7 @@ public ConsumerFactory<String, Object> consumerFactory() {
 ```java
 @EmbeddedKafka(
     partitions = 1,
-    topics = {"orders", "orders-dlt"},
+    topics = {"orders", "orders.DLT"},
     brokerProperties = {"listeners=PLAINTEXT://localhost:9092"}
 )
 @SpringBootTest

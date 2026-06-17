@@ -200,7 +200,7 @@ module com.example.app {
 | `java.sql` | JDBC API: `java.sql`, `javax.sql` |
 | `java.xml` | XML-парсинг: DOM, SAX, StAX, XSLT |
 | `java.logging` | `java.util.logging` |
-| `java.desktop` | AWT, Swing, JavaFX-мост |
+| `java.desktop` | AWT, Swing, Java2D, `java.beans`, доступность, звук (JavaFX сюда НЕ входит — он вынесен в отдельный OpenJFX после Java 11) |
 | `java.net.http` | HTTP Client API (с Java 11) |
 | `jdk.httpserver` | Встроенный HTTP-сервер |
 | `jdk.jlink` | Утилита `jlink` |

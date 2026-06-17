@@ -440,8 +440,9 @@ public abstract class Enum<E extends Enum<E>> implements Comparable<E> {
     public final int compareTo(E o) { ... }
 }
 
-// Конкретный enum
-public enum Color extends Enum<Color> { RED, GREEN, BLUE }
+// Конкретный enum: компилятор НЕЯВНО подставляет Enum<Color>,
+// поэтому писать "extends Enum<Color>" руками нельзя — это ошибка компиляции
+public enum Color { RED, GREEN, BLUE }
 ```
 
 Паттерн используется в Builder-ах, чтобы метод базового билдера возвращал тип наследника, а не базового класса (тогда цепочка `.withName(...).withAge(...)` сохраняет конкретный тип):
