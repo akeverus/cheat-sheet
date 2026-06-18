@@ -242,16 +242,20 @@ pre code` — селектор highlight.js.
 
 | id | характер | accent | display / body / mono | bg light / dark | open-design источник |
 |----|----------|--------|----------------------|-----------------|----------------------|
-| **anthropic** (default) | тёплая бумага, серифный display, интеллектуально-спокойно | terracotta `#C96442`/`#D97757` | Lora · Inter · JetBrains Mono | `#FAF9F5` / `#262624` | claude, warm-editorial |
+| **editorial** (default) | тёплая бумага, серифный display, интеллектуально-спокойно (Anthropic-якорь) | terracotta `#C96442`/`#D97757` | Lora · Inter · JetBrains Mono | `#FAF9F5` / `#262624` | claude, warm-editorial |
 | **linear** | dark-native, инженерная точность, ахроматика | indigo `#5E6AD2`/`#7170FF` | Inter(510) · Inter · Berkeley/Geist Mono | `#FFFFFF` / `#08090A` | linear-app |
 | **swiss** | интернац. типографика, сетка, B/W + 1 красный, flat, rules | red `#E5231B` | Geist · Geist · Geist Mono | `#FFFFFF` / `#0A0A0A` | swiss philosophy / shadcn |
 | **notion** | тёплый минимализм, near-black, whisper-рамки, soft | blue `#0075DE` | Inter · Inter · JetBrains Mono | `#FFFFFF` / `#191919` | notion |
 | **mintlify** | docs-as-product, воздух, крупные радиусы, mono-CAPS лейблы | green `#18E299`/`#0FA76E` | Inter · Inter · Geist Mono | `#FFFFFF` / `#0D0D0D` | mintlify |
 | **broadsheet** | газетный editorial, Source Serif, фолио-детали, сдержанно | ink + 1 тон | Source Serif 4 · Inter · JetBrains Mono | `#FEFFFC` / `#15151D` | theverge, wired, publication |
 
-Дефолт SSR — `anthropic` (эволюция текущего editorial-якоря). Старые id
-`editorial`→переименовать в `anthropic`; `broadsheet` остаётся; `swiss`/`linear`
-переоснастить полноценными токен-наборами (не тонкие рекраски).
+**Решение по id (минимум churn):** дефолтный warm-paper дизайн оставляем под id
+`editorial` (он = `:root` в tokens.css; уже зашит в head SSR, base.css signature,
+`data-design` шаблонов, NAMES-map тоггла, seg-control). НЕ переименовываем в
+`anthropic`. Итоговый роестр id: `editorial` (default), `swiss`, `linear`,
+`notion`, `mintlify`, `broadsheet`. `swiss`/`linear`/`broadsheet` переоснащаются
+полноценными токен-наборами (вместо тонких рекрасок-оверлеев); `notion`/`mintlify`
+— новые. Спека warm-paper лежит как `systems/editorial.md` (Anthropic/claude-якорь).
 
 ---
 
