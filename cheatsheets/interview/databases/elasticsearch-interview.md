@@ -1735,7 +1735,7 @@ DELETE /_pit
 | `from/size` | < 10 000 документов, UI с номерами страниц |
 | `search_after` | > 10 000 документов, infinite scroll, без PIT |
 | `search_after` + `PIT` | Экспорт данных, согласованная пагинация |
-| Scroll API | Устаревший, заменён на PIT (deprecated в 7.x) |
+| Scroll API | Не рекомендуется для глубокой пагинации (use `search_after` + PIT instead) |
 
 ## Q42. (!) Что такое `Runtime Fields` и когда их использовать?
 

@@ -1166,8 +1166,10 @@ public WebClient webClient() throws Exception {
 
 ```java
 @Bean
-public WebClient webClient(WebClient.Builder builder, SslBundles sslBundles) {
-    return builder.apply(WebClientSsl.fromBundle(sslBundles.getBundle("mybundle")))
+public WebClient webClient(WebClient.Builder builder, WebClientSsl ssl) {
+    // WebClientSsl — авто-конфигурируемый бин; fromBundle — instance-метод,
+    // принимает имя бандла (String), а не сам SslBundle
+    return builder.apply(ssl.fromBundle("mybundle"))
         .build();
 }
 ```

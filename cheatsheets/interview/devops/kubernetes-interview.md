@@ -884,7 +884,7 @@ spec:
 
 **Популярные Ingress-контроллеры:** `Nginx Ingress Controller`, `Traefik`, `HAProxy`, `Istio Gateway`, `AWS ALB Ingress Controller`.
 
-**`Ingress` vs `Gateway API`:** `Gateway API` — новый стандарт K8s (GA с v1.1), более гибкий и расширяемый. Поддерживает TCP/UDP, не только HTTP.
+**`Ingress` vs `Gateway API`:** `Gateway API` — новый стандарт K8s (core-ресурсы `GatewayClass`/`Gateway`/`HTTPRoute` GA с v1.0), более гибкий и расширяемый. Поддерживает TCP/UDP, не только HTTP.
 
 ## Q23. В чём разница между `targetPort`, `port` и `nodePort`?
 

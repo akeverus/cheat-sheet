@@ -1018,7 +1018,7 @@ String formatted = FMT."Price: %.2f\{price} EUR";
 
 **Преимущество перед конкатенацией**: безопасность. Template processor (`STR`, `FMT` или ваш собственный) получает части шаблона и значения по отдельности и может их валидировать и экранировать -- например, защититься от SQL-инъекции или XSS, чего голая конкатенация не умеет.
 
-**Важно**: это preview feature, API ещё может измениться. На Java 21-23 требуется флаг `--enable-preview`, поэтому в стабильных проектах пока используйте `String.format()` или `formatted()`.
+**Важно**: фича была preview только в JDK 21 (JEP 430) и JDK 22 (JEP 459), а в JDK 23 её полностью изъяли из-за пересмотра дизайна — preview-итерацию не выпустили, и в последующих JDK она не вернулась. То есть на JDK 23+ синтаксис `STR."..."` не компилируется даже с флагом `--enable-preview`. В стабильных проектах используйте `String.format()` или `formatted()`.
 
 ## Q39. (!) Почему безопаснее хранить пароли в `char[]`, а не в `String`?
 
@@ -1060,7 +1060,7 @@ try {
 - [Java Stream API](java-stream-interview.md) — методы `String.chars()`, `String.lines()` возвращают стримы
 - [Java Types](java-types-interview.md) — `String` vs примитивы, `char[]`, `CharSequence` иерархия
 - [Java 17-21](java-17-21-interview.md) — text blocks (Java 15+), форматирование ``, `String.formatted()`
-- [JVM](../../jvm/jvm-interview.md) — `String Pool` в `Metaspace`, `intern()`, влияние на GC и память
+- [JVM](../../jvm/jvm-interview.md) — `String Pool` в `Heap` (с Java 7), `intern()`, влияние на GC и память
 
 - [Java 17-21](java-17-21-interview.md)
 - [Java 8](java-8-interview.md)

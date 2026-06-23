@@ -523,7 +523,7 @@ Encoding job queue (SQS) → Spot fleet (10K instances) → S3 output
 - Просто, но слепо к буферу (может быстро его опустошить).
 
 **На основе буфера (BOLA):**
-- BOLA = Buffer Occupancy based Lyapunov Algorithm (Bo Wei, 2016).
+- BOLA = Buffer Occupancy based Lyapunov Algorithm (Spiteri et al., 2016).
 - Максимизирует полезность = log(quality) - штраф(риск rebuffering).
 - Переключение на более высокий bitrate, когда буфер высокий.
 - Переключение на более низкий bitrate, когда буфер низкий.

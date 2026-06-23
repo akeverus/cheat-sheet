@@ -182,7 +182,7 @@ graph TD
 **Особенности по компаниям:**
 
 - **`Google`**: Hiring Committee принимает решение, не интервьюер. Сильный фокус на `Googleyness` (коллаборация, скромность)
-- **`Amazon`**: `Bar Raiser` — независимый интервьюер из другой команды. 14 Leadership Principles
+- **`Amazon`**: `Bar Raiser` — независимый интервьюер из другой команды. 16 Leadership Principles
 - **`Meta`**: Coding + System Design + Behavioral. Быстрый процесс (2-3 недели)
 - **`Apple`**: Больше domain-specific вопросов. Фокус на конкретной команде
 - **`Netflix`**: Сильный culture fit. Высокие ожидания по автономности

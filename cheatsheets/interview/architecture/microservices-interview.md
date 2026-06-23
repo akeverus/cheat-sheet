@@ -1149,9 +1149,9 @@ graph TB
 management:
   tracing:
     sampling:
-      probability: 1.0  // 100% трейсов (для prod ставить 0.1-0.5)
+      probability: 1.0  # 100% трейсов (для prod ставить 0.1-0.5)
 
-// build.gradle
+# build.gradle
 dependencies {
     implementation 'io.micrometer:micrometer-tracing-bridge-otel'
     implementation 'io.opentelemetry:opentelemetry-exporter-zipkin'

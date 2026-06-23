@@ -1853,7 +1853,7 @@ class OrderComponentTest {
             .willReturn(aResponse()
                 .withStatus(200)
                 .withHeader("Content-Type", "application/json")
-                .withBody("""{"transactionId": "txn-ok", "status": "SUCCESS"}""")));
+                .withBody("{\"transactionId\": \"txn-ok\", \"status\": \"SUCCESS\"}")));
     }
 
     @Test
@@ -1861,7 +1861,7 @@ class OrderComponentTest {
         // Создаём заказ через реальный HTTP
         String orderId = given()
             .contentType(ContentType.JSON)
-            .body("""{"customerId": 1, "amount": 99.99}""")
+            .body("{\"customerId\": 1, \"amount\": 99.99}")
         .when()
             .post("/api/v1/orders")
         .then()

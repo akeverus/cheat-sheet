@@ -451,7 +451,8 @@ import clip
 model, preprocess = clip.load("ViT-B/32")
 
 image_features = model.encode_image(image)  # 512d
-text_features = model.encode_text(["a photo of a cat"])
+text_tokens = clip.tokenize(["a photo of a cat"])  # encode_text ждёт токены, не строки
+text_features = model.encode_text(text_tokens)
 
 similarity = (image_features @ text_features.T)
 ```

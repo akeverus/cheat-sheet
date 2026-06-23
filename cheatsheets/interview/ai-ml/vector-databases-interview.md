@@ -318,9 +318,9 @@ Result: 32 bytes (vs 4096 bytes original)
 - Sparse-dense hybrid (с 2024).
 
 ```python
-import pinecone
-pinecone.init(api_key="...")
-index = pinecone.Index("my-index")
+from pinecone import Pinecone
+pc = Pinecone(api_key="...")
+index = pc.Index("my-index")
 
 index.upsert([
     ("id1", [0.1, 0.2, ...], {"category": "tech"}),

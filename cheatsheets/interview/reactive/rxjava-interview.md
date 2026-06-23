@@ -709,7 +709,7 @@ Observable.range(1, 5)
 // toMap
 Observable.just("apple", "banana", "cherry")
     .toMap(String::length) // ключ = длина
-    .subscribe(System.out::println); // {5=apple, 6=banana, 6=cherry}
+    .subscribe(System.out::println); // {5=apple, 6=cherry} — banana перезаписан cherry (коллизия ключа 6)
 ```
 
 ## Q21. (!) Можно ли создавать собственные операторы в `RxJava`?

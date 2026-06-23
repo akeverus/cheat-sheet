@@ -1818,7 +1818,7 @@ CREATE TABLE events_2026_04 PARTITION OF events
 **CockroachDB:**
 
 - Distributed SQL, совместим с PostgreSQL-протоколом
-- Данные шардированы на "ranges" (~64 MB), каждый реплицирован через `Raft`
+- Данные шардированы на "ranges" (~512 MiB), каждый реплицирован через `Raft`
 - Serializable Snapshot Isolation (`SSI`) из коробки
 - Multi-region: данные пинятся к ближайшему региону
 

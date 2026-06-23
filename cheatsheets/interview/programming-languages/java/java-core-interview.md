@@ -348,7 +348,7 @@ new Child().execute(); // "Parent" — вызывается Parent.doWork()
 | `toString()` | Строковое представление |
 | `getClass()` | Класс объекта в runtime |
 | `clone()` | Копирование объекта (shallow) |
-| `finalize()` | **Deprecated** с `Java 9`, удалён в `Java 18` |
+| `finalize()` | **Deprecated** с `Java 9`; deprecated for removal с `Java 18` (JEP 421), но ещё не удалён |
 | `wait()` / `notify()` / `notifyAll()` | Механизм ожидания/уведомления потоков |
 
 На собеседовании ожидают знание контракта `equals()`/`hashCode()` (см. Q13) и понимание, почему `finalize()` — антипаттерн (непредсказуемое время вызова, проблемы с производительностью `GC`). Подробнее о потоках и `wait/notify` — в [вопросах по многопоточности](java-concurrency-interview.md).

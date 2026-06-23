@@ -805,7 +805,7 @@ sequenceDiagram
 
 ## Q22. (!) Как защитить WebSocket-соединение: CORS, аутентификация, Spring Security?
 
-Защита делится на два уровня, и важно их не путать. **Первый уровень — handshake**: это обычный HTTP-запрос, поэтому здесь работают привычные механизмы — проверка `Origin`, аутентификация по куке/JWT через `HandshakeInterceptor`, правила в `SecurityFilterChain`. **Второй уровень — STOMP-сообщения** уже внутри открытого соединения: их авторизуют отдельно, по destination, через `AbstractSecurityWebSocketMessageBrokerConfigurer`. Браузерный CORS на WebSocket не распространяется, поэтому контроль источника берёт на себя проверка `Origin` (см. Q23).
+Защита делится на два уровня, и важно их не путать. **Первый уровень — handshake**: это обычный HTTP-запрос, поэтому здесь работают привычные механизмы — проверка `Origin`, аутентификация по куке/JWT через `HandshakeInterceptor`, правила в `SecurityFilterChain`. **Второй уровень — STOMP-сообщения** уже внутри открытого соединения: их авторизуют отдельно, по destination, через аннотацию `@EnableWebSocketSecurity` и бин `AuthorizationManager<Message<?>>`. Браузерный CORS на WebSocket не распространяется, поэтому контроль источника берёт на себя проверка `Origin` (см. Q23).
 
 **CORS / контроль источника для WebSocket:**
 ```java
@@ -856,17 +856,20 @@ public class AuthHandshakeInterceptor implements HandshakeInterceptor {
 }
 ```
 
-**Защита STOMP-сообщений:**
+**Защита STOMP-сообщений** (Spring Security 6.x): аннотация `@EnableWebSocketSecurity` + бин `AuthorizationManager<Message<?>>`, собранный через `MessageMatcherDelegatingAuthorizationManager.builder()`:
 ```java
 @Configuration
-public class WebSocketSecurityConfig extends AbstractSecurityWebSocketMessageBrokerConfigurer {
+@EnableWebSocketSecurity
+public class WebSocketSecurityConfig {
 
-    @Override
-    protected void configureInbound(MessageSecurityMetadataSourceRegistry messages) {
+    @Bean
+    public AuthorizationManager<Message<?>> messageAuthorizationManager(
+            MessageMatcherDelegatingAuthorizationManager.Builder messages) {
         messages
             .simpDestMatchers("/app/**").authenticated()
             .simpSubscribeDestMatchers("/topic/**").authenticated()
             .anyMessage().denyAll();
+        return messages.build();
     }
 }
 ```

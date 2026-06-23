@@ -1475,7 +1475,7 @@ System.out.println(ruFmt.format(1_000_000)); // "1 млн"
 **Какую версию выбрать для нового проекта в 2026?**
 - **Java 21** — для новых проектов (virtual threads, полный pattern matching)
 - **Java 17** — если зависимости ещё не поддерживают Java 21
-- **Java 25** — следующая LTS (ожидается в сентябре 2025), где многие preview-фичи станут стабильными
+- **Java 25** — актуальная LTS (выпущена в сентябре 2025), где многие preview-фичи стали стабильными; следующая LTS по графику — Java 29
 
 ---
 
@@ -2014,7 +2014,7 @@ java HelloWorld.java
 java --enable-preview --source 21 hello.java
 ```
 
-**Статус:** Preview в Java 21-22, финализировано в Java 25 (ожидается) как часть Project Amber.
+**Статус:** Preview в Java 21-22, финализировано в выпущенной Java 25 (JEP 512, «Compact Source Files and Instance Main Methods») как часть Project Amber.
 
 ---
 

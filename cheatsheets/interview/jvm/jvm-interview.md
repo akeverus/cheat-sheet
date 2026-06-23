@@ -1190,8 +1190,9 @@ class MyRuntimeHints implements RuntimeHintsRegistrar {
 «Горячий» — значит часто исполняемый. `HotSpot JVM` определяет это не эвристически, а буквально считая выполнение двумя счётчиками на каждый метод: **invocation counter** (сколько раз метод вызвали) и **backedge counter** (сколько раз выполнился «обратный переход» цикла — то есть как долго крутятся циклы внутри метода). Когда сумма переходит порог, метод признаётся горячим и ставится в очередь на компиляцию:
 
 ```
-Порог компиляции C1 (клиентский): -XX:CompileThreshold=1500 (Tiered: ~2000)
-Порог компиляции C2 (серверный):  -XX:CompileThreshold=10000 (Tiered: ~15000)
+Tiered (по умолчанию): порог C1 с полным профилем — -XX:Tier3CompileThreshold≈2000
+Tiered (по умолчанию): порог C2                       — -XX:Tier4CompileThreshold≈15000
+Non-tiered C2 (при -XX:-TieredCompilation):              -XX:CompileThreshold=10000
 ```
 
 **Tiered Compilation (5 уровней):**

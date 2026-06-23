@@ -1224,12 +1224,15 @@ if (authentication != null
 // Нечитаемо — вложенный тернарный
 String label = a > b ? a > c ? "a max" : "c max" : b > c ? "b max" : "c max";
 
-// Лучше — switch expression или if-else с именованными переменными
-String label = switch (Math.max(a, Math.max(b, c))) {
-    case int x when x == a -> "a max";
-    case int x when x == b -> "b max";
-    default -> "c max";
-};
+// Лучше — обычный if-else по a/b/c, читается с первого взгляда
+String label;
+if (a >= b && a >= c) {
+    label = "a max";
+} else if (b >= c) {
+    label = "b max";
+} else {
+    label = "c max";
+}
 ```
 
 **Антипаттерн 2: Тернарный с side effects**

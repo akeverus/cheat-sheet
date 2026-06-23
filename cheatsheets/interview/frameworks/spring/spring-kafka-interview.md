@@ -244,7 +244,7 @@ public void handleDlt(
 
 Kafka-транзакции делают набор отправок атомарным: либо все сообщения становятся видны консьюмерам (читающим с `isolation.level=read_committed`), либо ни одно. Это даёт **exactly-once semantics** при записи сразу в несколько топиков. Включаются заданием `transaction-id-prefix` — после этого продюсер становится транзакционным, и отправки внутри `@Transactional` коммитятся/откатываются вместе.
 
-Отдельный сценарий — **«Kafka + БД» в одной транзакции**. Здесь используют `ChainedKafkaTransactionManager`: он связывает транзакцию JPA и транзакцию Kafka так, что при откате одной откатывается и другая. Но это не настоящий распределённый коммит (2PC): между коммитом БД и коммитом Kafka есть окно, в котором возможен сбой. Поэтому это «best-effort» консистентность, и для строгих гарантий чаще предпочитают паттерн transactional outbox.
+Отдельный сценарий — **«Kafka + БД» в одной транзакции**. В Spring Kafka 3.x для этого используют один `@Transactional` поверх DataSource/JPA-транзакции: когда задан `transaction-id-prefix`, `KafkaTemplate` подключает транзакцию продюсера к активной транзакции через transaction synchronization, и Kafka-транзакция коммитится/откатывается вместе с БД. (`ChainedKafkaTransactionManager`, который связывал два менеджера, был deprecated в 2.7 и удалён в 3.0.) Но это не настоящий распределённый коммит (2PC): между коммитом БД и коммитом Kafka есть окно, в котором возможен сбой. Поэтому это «best-effort» консистентность, и для строгих гарантий чаще предпочитают паттерн transactional outbox.
 
 ```yaml
 spring:
@@ -260,8 +260,10 @@ public KafkaTransactionManager<String, Object> kafkaTransactionManager(
     return new KafkaTransactionManager<>(pf);
 }
 
-// Транзакция Kafka + JPA в одной транзакции (ChainedKafkaTransactionManager)
-@Transactional("chainedKafkaTxManager")
+// Kafka + JPA в одной транзакции (Spring Kafka 3.x): один @Transactional поверх
+// DataSource/JPA. При заданном transaction-id-prefix KafkaTemplate подключает
+// транзакцию продюсера к активной транзакции через transaction synchronization.
+@Transactional // DataSourceTransactionManager / JpaTransactionManager
 public void processAndPublish(OrderCommand cmd) {
     Order order = orderRepository.save(new Order(cmd));  // JPA
     kafkaTemplate.send("orders", order.getId(), new OrderCreated(order)); // Kafka

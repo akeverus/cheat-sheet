@@ -428,10 +428,10 @@ Flux<String> callbackFlux = Flux.push(sink -> {
 ```java
 // Генерация последовательности Фибоначчи
 Flux<Long> fibonacci = Flux.generate(
-    () -> Tuple2.of(0L, 1L), // начальное состояние (a, b)
+    () -> Tuples.of(0L, 1L), // начальное состояние (a, b)
     (state, sink) -> {
         sink.next(state.getT1());         // эмитируем текущее значение
-        return Tuple2.of(state.getT2(),   // переходим к следующей паре
+        return Tuples.of(state.getT2(),   // переходим к следующей паре
             state.getT1() + state.getT2());
     }
 );

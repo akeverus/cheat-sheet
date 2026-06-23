@@ -178,7 +178,7 @@ public class OrderQueryService {
             .matching(query(where("id").is(id)))
             .apply(update("status", newStatus))
             .thenReturn(id)
-            .flatMap(template.selectOne(query(where("id").is(id)), Order.class));
+            .flatMap(ignored -> template.selectOne(query(where("id").is(id)), Order.class));
     }
 
     // DELETE с условием

@@ -857,7 +857,7 @@ val page = createHTML().html {
 
 ## Q21. (!) Что такое context receivers и как они расширяют возможности DSL?
 
-**Context receivers** (experimental, `Kotlin 2.x`) — механизм, позволяющий функции требовать **несколько контекстов** одновременно, без наследования и без передачи их параметрами.
+**Context receivers** (experimental) — механизм, позволяющий функции требовать **несколько контекстов** одновременно, без наследования и без передачи их параметрами. Исходный дизайн с флагом `-Xcontext-receivers` объявлен устаревшим, а на смену ему пришли **context parameters** (синтаксис `context(name: Type)`, флаг `-Xcontext-parameters`) — преемник для тех же задач.
 
 **Какую проблему решают.** Обычная extension-функция имеет ровно **один** receiver. Если функция логически нужна сразу в контексте `Transaction` и `Logger`, один из них приходится тащить параметром — это шумит в сигнатуре и в каждом вызове. Context receivers убирают этот компромисс: оба контекста становятся неявными.
 
@@ -890,7 +890,7 @@ transaction {
 // userRepo.findActive()  // ❌ Вне transaction — ошибка компиляции
 ```
 
-**Статус.** На момент `Kotlin 2.1` context receivers остаются experimental и включаются флагом `-Xcontext-receivers`. В перспективе они закроют часть сценариев `@DslMarker` и extension-функций, позволяя строить более выразительные и безопасные DSL без подмены контекста параметрами.
+**Статус.** Фича остаётся experimental, и сам дизайн пережил смену: ранний вариант с флагом `-Xcontext-receivers` признан устаревшим, его заменили **context parameters** (`context(name: Type)`, флаг `-Xcontext-parameters`). Идея сохраняется: несколько неявных контекстов закрывают часть сценариев `@DslMarker` и extension-функций, позволяя строить более выразительные и безопасные DSL без подмены контекста параметрами. При подготовке к собеседованию проверяйте текущий статус фичи и актуальный флаг по официальной документации.
 
 ## Q22. Extension properties в контексте DSL — зачем и примеры?
 
@@ -1169,7 +1169,7 @@ fun UserCard(user: User) {
 
 // Spring Security Kotlin DSL
 http {
-    authorizeRequests {
+    authorizeHttpRequests {
         authorize("/api/public/**", permitAll)
         authorize("/api/admin/**", hasRole("ADMIN"))
         authorize(anyRequest, authenticated)
@@ -1725,7 +1725,8 @@ object Users : Table() {
 
 // Query DSL — composable, типобезопасный
 val activeUsers = Users
-    .select { Users.name like "%admin%" }
+    .select(Users.name)
+    .where { Users.name like "%admin%" }
     .orderBy(Users.name)
     .limit(10)
     .map { it[Users.name] }

@@ -477,7 +477,7 @@ StepVerifier.create(publisher.flux())
 
 Здесь `TestPublisher` решает две задачи. Первая — играть роль источника, у которого тест точно контролирует запросы: `StepVerifier.create(flux, n)` задаёт начальный `request(n)`, а `thenRequest(...)` досыпает спрос — так проверяется, что цепочка отдаёт ровно столько, сколько запрошено. Вторая — проверить **сам контракт спроса** методами `assertMinRequested` / `assertMaxRequested`: убедиться, что подписчик действительно запросил столько, сколько ожидалось.
 
-Если же нужно смоделировать **нарушителя** backpressure (источник эмитит больше запрошенного), берут `TestPublisher.Behavior.REQUEST_OVERFLOW` через `createNoncompliant` (см. Q18) — так проверяют, что защитный оператор корректно реагирует на overflow.
+Если же нужно смоделировать **нарушителя** backpressure (источник эмитит больше запрошенного), берут `TestPublisher.Violation.REQUEST_OVERFLOW` через `createNoncompliant` (см. Q18) — так проверяют, что защитный оператор корректно реагирует на overflow.
 
 ```java
 // Проверить что оператор корректно обрабатывает backpressure
@@ -501,7 +501,7 @@ publisher.assertMaxRequested(Long.MAX_VALUE);
 
 По умолчанию `TestPublisher` сам соблюдает спецификацию `Reactive Streams` и бросает исключение, если попытаться её нарушить (эмитировать `null`, превысить спрос, продолжить после `complete`). Но иногда именно нарушитель и нужен — чтобы проверить, как поведёт себя ваш оператор, столкнувшись с некорректным источником.
 
-`TestPublisher.createNoncompliant(Behavior...)` отключает соответствующие проверки. Доступные нарушения:
+`TestPublisher.createNoncompliant(Violation...)` отключает соответствующие проверки. Доступные нарушения:
 - `ALLOW_NULL` — разрешить эмиссию `null`.
 - `REQUEST_OVERFLOW` — эмитировать больше, чем запрошено.
 - `DEFER_CANCELLATION` — продолжить эмиссию после сигнала завершения.
@@ -509,15 +509,15 @@ publisher.assertMaxRequested(Long.MAX_VALUE);
 ```java
 // Нарушение: эмитировать null (обычно запрещено)
 TestPublisher<String> noncompliant = TestPublisher.createNoncompliant(
-        TestPublisher.Behavior.ALLOW_NULL);
+        TestPublisher.Violation.ALLOW_NULL);
 
 // Нарушение: эмитировать больше чем запрошено (overflow)
 TestPublisher<Integer> overflowing = TestPublisher.createNoncompliant(
-        TestPublisher.Behavior.REQUEST_OVERFLOW);
+        TestPublisher.Violation.REQUEST_OVERFLOW);
 
 // Нарушение: эмитировать после complete
 TestPublisher<String> postComplete = TestPublisher.createNoncompliant(
-        TestPublisher.Behavior.DEFER_CANCELLATION);
+        TestPublisher.Violation.DEFER_CANCELLATION);
 ```
 
 ## Q19. Что такое WebTestClient?

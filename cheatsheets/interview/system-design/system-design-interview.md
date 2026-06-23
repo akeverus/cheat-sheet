@@ -1710,19 +1710,27 @@ Sequence number на чат — порядок гарантирован
 **Шаг 3 — Реализация с Redis:**
 
 ```lua
--- Lua-скрипт для атомарной проверки и инкремента
-local key = KEYS[1]         -- "rate:user:123:1713000"  (current second)
+-- Lua-скрипт для атомарной проверки sliding window поверх ZSET.
+-- В ZSET лежат таймстампы запросов; на каждом вызове выкидываем всё,
+-- что старше окна, считаем остаток и добавляем текущий запрос.
+local key = KEYS[1]               -- "rate:user:123"  (один ключ на пользователя)
 local limit = tonumber(ARGV[1])
-local window = tonumber(ARGV[2])  -- seconds
+local window = tonumber(ARGV[2])  -- размер окна в миллисекундах
+local now = tonumber(ARGV[3])     -- текущее время в миллисекундах
 
-local current = redis.call("INCR", key)
-if current == 1 then
-    redis.call("EXPIRE", key, window)
+-- 1) убрать таймстампы за пределами скользящего окна [now-window; now]
+redis.call("ZREMRANGEBYSCORE", key, 0, now - window)
+
+-- 2) сколько запросов осталось внутри окна
+local current = redis.call("ZCARD", key)
+
+if current >= limit then
+    return 0  -- rejected: лимит исчерпан в текущем окне
 end
 
-if current > limit then
-    return 0  -- rejected
-end
+-- 3) учесть текущий запрос и продлить TTL ключа на длину окна
+redis.call("ZADD", key, now, now)
+redis.call("PEXPIRE", key, window)
 return 1  -- allowed
 ```
 
@@ -1734,8 +1742,10 @@ public class RateLimiter {
     private final DefaultRedisScript<Long> script;
 
     public boolean isAllowed(String userId) {
-        String key = "rate:" + userId + ":" + (System.currentTimeMillis() / 1000);
-        Long result = redis.execute(script, List.of(key), "100", "1");
+        String key = "rate:" + userId;          // один ключ на пользователя
+        long now = System.currentTimeMillis();
+        // limit=100, window=1000 мс (100 req/sec), now — для границ окна
+        Long result = redis.execute(script, List.of(key), "100", "1000", String.valueOf(now));
         return result != null && result == 1;
     }
 }
@@ -2272,7 +2282,7 @@ graph TB
 
 ```yaml
 # Canary-деплой: 90% → v1, 10% → v2
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: order-service
@@ -2289,7 +2299,7 @@ spec:
       weight: 10
 
 # Circuit Breaker через DestinationRule
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 spec:
   trafficPolicy:

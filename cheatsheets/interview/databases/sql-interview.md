@@ -1840,7 +1840,7 @@ SELECT * FROM events WHERE period && '[2026-01-01, 2026-12-31]';  -- перес�
 
 ```sql
 -- Эффективен если значения физически упорядочены (напр., created_at SERIAL)
-CREATE INDEX idx_logs_created BRIN (created_at);
+CREATE INDEX idx_logs_created ON logs USING BRIN (created_at);
 -- Очень маленький (128 байт на блок vs B-tree с его размером)
 -- Только для данных с высокой физической корреляцией с порядком вставки
 ```

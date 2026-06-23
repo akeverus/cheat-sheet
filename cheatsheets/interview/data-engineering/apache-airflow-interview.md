@@ -358,9 +358,9 @@ Scheduler крутится в бесконечном цикле и на кажд
 
 ```python
 DAG(
-    schedule_interval='0 2 * * *',     # cron — каждый день в 2:00
-    schedule_interval='@daily',         # preset
-    schedule_interval=timedelta(hours=6), # каждые 6 часов
+    schedule='0 2 * * *',          # cron — каждый день в 2:00
+    schedule='@daily',              # preset
+    schedule=timedelta(hours=6),    # каждые 6 часов
     start_date=datetime(2025, 1, 1),
     catchup=False,
 )
@@ -368,7 +368,7 @@ DAG(
 
 Эти три параметра вместе определяют, *когда* и *за какие периоды* пойдут запуски:
 
-- **`schedule_interval`** — как часто запускать. Задаётся cron-строкой, пресетом (`@daily`, `@hourly`) или `timedelta`.
+- **`schedule`** — как часто запускать. Задаётся cron-строкой, пресетом (`@daily`, `@hourly`) или `timedelta`. Параметр `schedule_interval` — это устаревший алиас (deprecated с 2.x); в Airflow 3.x основной параметр — `schedule`, а дефолт расписания — `None`.
 - **`start_date`** — с какой даты DAG считается «активным»; от неё отсчитываются интервалы.
 - **`catchup`** — что делать с периодами, которые уже прошли к моменту включения DAG. При `catchup=True` Airflow выполнит **все пропущенные** запуски от `start_date` до текущего момента (доганивает историю); при `catchup=False` — только **последний** пропущенный.
 
@@ -411,15 +411,16 @@ Executor — это стратегия, *где и как* физически з
 | **CeleryExecutor** | Распределённо: воркеры забирают tasks из брокера (Redis/RabbitMQ) | Средний и крупный масштаб |
 | **KubernetesExecutor** | Каждый task — отдельный pod в K8s | Cloud-native деплои |
 | **CeleryKubernetesExecutor** | Гибрид Celery + K8s | Смешанные нагрузки |
-| **DaskExecutor** | На Dask-кластере (deprecated) | — |
+
+**Изменения в Airflow 3.0:** SequentialExecutor и DebugExecutor **удалены** — дефолтным локальным executor'ом стал LocalExecutor (он же работает с SQLite через WAL-режим). DaskExecutor вынесен из ядра ещё раньше. То есть в актуальной 3.x ветке дефолт — LocalExecutor, а SequentialExecutor больше не существует.
 
 ## Q16. Чем SequentialExecutor отличается от LocalExecutor?
 
 Оба запускают tasks локально (на той же машине, что и Scheduler), но различаются параллелизмом:
 
-**SequentialExecutor** — выполняет строго **один task за раз**. Это единственный executor, совместимый с **SQLite** (которая не умеет конкурентный доступ), поэтому он дефолтный «из коробки», но годится только для dev/отладки. В production не используется.
+**SequentialExecutor** — выполняет строго **один task за раз**, годится только для dev/отладки и в production не используется. Исторически он был дефолтным «из коробки» и единственным, совместимым с **SQLite** (которая не умеет конкурентный доступ). В Airflow 3.0 SequentialExecutor (вместе с DebugExecutor) **удалён**: дефолтным локальным executor'ом стал LocalExecutor, а SQLite теперь работает с ним через WAL-режим.
 
-**LocalExecutor** — запускает tasks **параллельно** через `multiprocessing` на одной машине; требует «настоящую» БД (PostgreSQL/MySQL).
+**LocalExecutor** — запускает tasks **параллельно** через `multiprocessing` на одной машине; в production его используют с «настоящей» БД (PostgreSQL/MySQL), для локальной отладки в Airflow 3.x допустим и SQLite.
 
 ```python
 # airflow.cfg

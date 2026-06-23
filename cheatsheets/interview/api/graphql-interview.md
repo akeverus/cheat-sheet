@@ -1718,15 +1718,16 @@ query {
 **Полная реализация в Spring for GraphQL:**
 
 ```java
-// 1. Определяем BatchLoaderRegistry
+// 1. Регистрируем batch loader на инжектированном BatchLoaderRegistry
 @Configuration
 public class DataLoaderConfig {
 
+    // BatchLoaderRegistry — бин, который предоставляет сам Spring; его инжектят
     @Bean
-    public BatchLoaderRegistry batchLoaderRegistry(CustomerRepository repo) {
-        return BatchLoaderRegistry.newInstance()
-            .forTypePair(Long.class, CustomerDto.class)
-            .withName("customerLoader")
+    public RuntimeWiringConfigurer customerLoaderConfigurer(
+            BatchLoaderRegistry registry,
+            CustomerRepository repo) {
+        registry.forTypePair(Long.class, CustomerDto.class)
             .registerMappedBatchLoader((customerIds, env) -> {
                 // Один запрос вместо N
                 List<Customer> customers = repo.findAllById(customerIds);
@@ -1736,6 +1737,7 @@ public class DataLoaderConfig {
                         c -> new CustomerDto(c.getId(), c.getName(), c.getEmail())
                     )));
             });
+        return wiringBuilder -> {};
     }
 }
 

@@ -571,7 +571,7 @@ Reasoning стоит дороже и медленнее, поэтому он и�
 |--------|----------------------|-------------------|--------------|------------------|------------|
 | **OpenAI o1** | $15 / $60 | 10-60 сек | No | No | Math, science |
 | **OpenAI o1-mini** | $3 / $12 | 5-20 сек | No | No | Code, фоновое reasoning |
-| **OpenAI o3** | ~$15 / $60 (o3 high), варьируется | 20-90 сек | No | No | ARC-AGI, FrontierMath, SWE-Bench |
+| **OpenAI o3** | $2 / $8 (после снижения цены в июне 2025, ранее ~$10 / $40) | 20-90 сек | No | No | ARC-AGI, FrontierMath, SWE-Bench |
 | **OpenAI o3-mini** | $1.10 / $4.40 | 3-15 сек | No | No | Дешёвое reasoning |
 | **DeepSeek-R1** | $0.55 / $2.19 | 10-40 сек | **Yes (MIT)** | **Yes** (`<think>`) | Math/code, OSS |
 | **Claude 3.7 Sonnet thinking** | $3 / $15 + thinking | 5-30 сек | No | **Yes** | SWE-Bench, structured reasoning |

@@ -616,7 +616,7 @@ lombok.sneakyThrows.flagUsage = warning
 # Изменить имя поля логгера
 lombok.log.fieldName = logger
 
-# Отключить Lombok в конкретном пакете
+# Не добавлять @SuppressWarnings("all") к сгенерированному коду
 lombok.addSuppressWarnings = false
 ```
 

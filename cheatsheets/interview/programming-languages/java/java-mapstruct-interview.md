@@ -692,7 +692,7 @@ annotationProcessor("org.projectlombok:lombok-mapstruct-binding:0.2.0")
 
 ## Q25. Как MapStruct поддерживает Lombok `@Builder`?
 
-Начиная с версии 1.4, MapStruct распознаёт builder и при наличии предпочитает его обычному конструктору с сеттерами. Это и нужно для immutable-DTO (`@Value` + `@Builder`), у которых сеттеров нет вовсе:
+Начиная с версии 1.3, MapStruct распознаёт builder и при наличии предпочитает его обычному конструктору с сеттерами. Это и нужно для immutable-DTO (`@Value` + `@Builder`), у которых сеттеров нет вовсе:
 
 ```java
 @Value  // Lombok: immutable + @Builder

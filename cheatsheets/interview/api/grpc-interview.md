@@ -1166,7 +1166,7 @@ public class JwtServerInterceptor implements ServerInterceptor {
 
 Голый gRPC ничего не знает о Spring: сервер и каналы пришлось бы поднимать руками и связывать с бинами самому. Стартеры снимают эту рутину — поднимают gRPC-сервер как часть жизненного цикла приложения, регистрируют сервисы и стабы через DI по аннотациям. Есть два основных подхода:
 
-**1. `grpc-spring-boot-starter` (LogNet) — зрелый, широко используемый:**
+**1. `net.devh:grpc-spring-boot-starter` (yidongnan) — зрелый, широко используемый:**
 
 ```groovy
 dependencies {
@@ -1237,7 +1237,7 @@ dependencies {
 Предоставляет нативную интеграцию со Spring ecosystem: `@GrpcService`, auto-configuration, Spring Security integration, `@GrpcClient`.
 
 **Выбор подхода:**
-- `grpc-spring-boot-starter` (LogNet) — проверен временем, большое сообщество, стабилен
+- `net.devh:grpc-spring-boot-starter` (yidongnan) — проверен временем, большое сообщество, стабилен
 - Spring gRPC — официальный проект Spring, активно развивается, лучшая интеграция с Spring экосистемой
 
 Подробнее об экосистеме Spring — в [вопросах по Spring Boot](../frameworks/spring/spring-boot-interview.md).

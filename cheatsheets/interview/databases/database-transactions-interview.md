@@ -1415,12 +1415,14 @@ public void processScheduledTask() {
 **Участники:** Transaction Manager (TM) координирует фиксацию; Resource Managers (RM) — конкретные ресурсы (БД, брокеры сообщений), каждый из которых должен реализовывать `XAResource`.
 
 ```java
-// Spring Boot + Atomikos (JTA)
-// Зависимость: spring-boot-starter-jta-atomikos
+// Spring Boot 3.x + Atomikos (JTA)
+// spring-boot-starter-jta-atomikos удалён в Spring Boot 3.0;
+// используйте стартер самого Atomikos: com.atomikos:transactions-spring-boot3-starter
+// (префикс свойств — atomikos.*, а не spring.jta.atomikos.*)
 
-// application.yml
-// spring.jta.atomikos.datasource.xa-data-source-class-name: org.postgresql.xa.PGXADataSource
-// spring.jta.atomikos.connectionfactory.xa-connection-factory-class-name: ...ActiveMQXAConnectionFactory
+// XA DataSource настраивается бином AtomikosDataSourceBean
+// с xaDataSourceClassName = org.postgresql.xa.PGXADataSource
+// (для JMS — аналогичный AtomikosConnectionFactoryBean с ActiveMQXAConnectionFactory)
 
 @Service
 public class OrderSagaService {

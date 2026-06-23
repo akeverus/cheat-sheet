@@ -226,18 +226,22 @@ public class DocumentService {
     // Семантический поиск
     public List<Document> search(String query, int topK) {
         return vectorStore.similaritySearch(
-            SearchRequest.query(query)
-                .withTopK(topK)
-                .withSimilarityThreshold(0.7)
+            SearchRequest.builder()
+                .query(query)
+                .topK(topK)
+                .similarityThreshold(0.7)
+                .build()
         );
     }
 
     // Поиск с метаданным фильтром
     public List<Document> searchByTopic(String query, String topic) {
         return vectorStore.similaritySearch(
-            SearchRequest.query(query)
-                .withTopK(5)
-                .withFilterExpression("topic == '" + topic + "'")
+            SearchRequest.builder()
+                .query(query)
+                .topK(5)
+                .filterExpression("topic == '" + topic + "'")
+                .build()
         );
     }
 }
@@ -265,12 +269,12 @@ public class RagService {
     public String answerWithContext(String question) {
         // 1. Поиск релевантных документов
         List<Document> docs = vectorStore.similaritySearch(
-            SearchRequest.query(question).withTopK(5)
+            SearchRequest.builder().query(question).topK(5).build()
         );
 
         // 2. Формирование контекста
         String context = docs.stream()
-            .map(Document::getContent)
+            .map(Document::getText)
             .collect(Collectors.joining("\n\n"));
 
         // 3. Генерация ответа с контекстом
@@ -294,8 +298,9 @@ public class RagService {
 @Bean
 public ChatClient ragChatClient(ChatClient.Builder builder, VectorStore vectorStore) {
     return builder
-        .defaultAdvisors(new QuestionAnswerAdvisor(vectorStore,
-            SearchRequest.defaults().withTopK(5)))
+        .defaultAdvisors(QuestionAnswerAdvisor.builder(vectorStore)
+            .searchRequest(SearchRequest.builder().topK(5).build())
+            .build())
         .build();
 }
 ```
@@ -306,16 +311,19 @@ public ChatClient ragChatClient(ChatClient.Builder builder, VectorStore vectorSt
 
 **Function Calling (tool calling)** даёт модели доступ к вашему коду. Сама по себе модель не умеет ходить в БД, дёргать API или узнавать текущую погоду — она лишь генерирует текст. Function calling это решает: вы описываете функции, а модель, видя их сигнатуры, сама решает, какую вызвать и с какими аргументами.
 
-Важно понимать, что **модель не выполняет код** — она лишь возвращает «вызови `weatherFunction` с такими аргументами». Дальше Spring AI выполняет вашу функцию, отдаёт результат обратно модели, и та формирует финальный ответ. Весь этот round-trip фреймворк делает прозрачно.
+Важно понимать, что **модель не выполняет код** — она лишь возвращает «вызови `getWeather` с такими аргументами». Дальше Spring AI выполняет ваш метод, отдаёт результат обратно модели, и та формирует финальный ответ. Весь этот round-trip фреймворк делает прозрачно.
 
-Функцию объявляют обычным Spring-бином. Ключевой элемент — `@Description`: модель по этому тексту понимает, **когда** функцию звать, поэтому описание должно быть осмысленным. Типы аргументов и результата (record-ы) Spring AI превращает в JSON-схему для модели.
+Инструмент объявляют методом с аннотацией `@Tool`. Ключевой элемент — `description`: модель по этому тексту понимает, **когда** инструмент звать, поэтому описание должно быть осмысленным. Типы аргументов и результата (record-ы) Spring AI превращает в JSON-схему для модели.
 
 ```java
-// Определяем функцию как Spring Bean
-@Bean
-@Description("Get current weather for a given city")
-public Function<WeatherRequest, WeatherResponse> weatherFunction(WeatherService service) {
-    return request -> service.getWeather(request.city(), request.unit());
+// Определяем инструмент как @Tool-метод в Spring-бине
+@Component
+public class WeatherTools {
+
+    @Tool(description = "Get current weather for a given city")
+    public WeatherResponse getWeather(WeatherRequest request) {
+        return service.getWeather(request.city(), request.unit());
+    }
 }
 
 public record WeatherRequest(String city, String unit) {}
@@ -331,16 +339,16 @@ public class AssistantService {
     public String askWithTools(String question) {
         return chatClient.prompt()
             .user(question)
-            .functions("weatherFunction")  // имя Spring bean
+            .tools(new WeatherTools())  // объект с @Tool-методами
             .call()
             .content();
-        // Если вопрос про погоду → модель вызовет weatherFunction,
+        // Если вопрос про погоду → модель вызовет getWeather,
         // получит результат и сформирует финальный ответ
     }
 }
 ```
 
-`.functions("weatherFunction")` подключает функции к запросу по имени бина. Передать можно несколько — модель сама выберет нужную (или ни одной, если вопрос не требует инструмента). Это фундамент для AI-агентов (Q15).
+`.tools(new WeatherTools())` подключает инструменты к запросу (либо `.toolNames("...")` — по имени бина). Передать можно несколько — модель сама выберет нужный (или ни одного, если вопрос не требует инструмента). Это фундамент для AI-агентов (Q15).
 
 ## Q8. Как работает потоковая генерация (Streaming)?
 
@@ -401,23 +409,25 @@ public ChatClient chatClient(ChatClient.Builder builder, VectorStore vectorStore
 }
 ```
 
-Можно написать и свой advisor. Метод `aroundCall` получает запрос и цепочку: проверив условие, advisor либо вызывает `chain.nextAroundCall()` (пропускает дальше), либо возвращает ответ сам, не доходя до модели. В примере ниже — модерация: запрещённый ввод сразу разворачивается отказом, экономя вызов к LLM.
+Можно написать и свой advisor. Метод `adviseCall` получает запрос и цепочку: проверив условие, advisor либо вызывает `chain.nextCall()` (пропускает дальше), либо возвращает ответ сам, не доходя до модели. В примере ниже — модерация: запрещённый ввод сразу разворачивается отказом, экономя вызов к LLM.
 
 ```java
 // Кастомный Advisor (например, для Content Moderation)
 @Component
-public class ModerationAdvisor implements CallAroundAdvisor {
+public class ModerationAdvisor implements CallAdvisor {
 
     @Override
-    public AdvisedResponse aroundCall(AdvisedRequest request, CallAroundAdvisorChain chain) {
-        String userInput = request.userText();
+    public ChatClientResponse adviseCall(ChatClientRequest request, CallAdvisorChain chain) {
+        String userInput = request.prompt().getUserMessage().getText();
         if (containsProhibitedContent(userInput)) {
-            return AdvisedResponse.from(request,
-                ChatResponse.builder()
-                    .withGenerations(List.of(new Generation("I cannot help with that.")))
-                    .build());
+            return ChatClientResponse.builder()
+                .chatResponse(ChatResponse.builder()
+                    .generations(List.of(new Generation(
+                        new AssistantMessage("I cannot help with that."))))
+                    .build())
+                .build();
         }
-        return chain.nextAroundCall(request);
+        return chain.nextCall(request);
     }
 }
 ```
@@ -426,19 +436,23 @@ public class ModerationAdvisor implements CallAroundAdvisor {
 
 LLM **не имеет состояния** — каждый запрос обрабатывается изолированно, без памяти о предыдущих. Чтобы модель «помнила» диалог, всю историю нужно слать ей заново при каждом сообщении. `ChatMemory` автоматизирует это: хранит сообщения разговора и сам подмешивает их в промпт через `MessageChatMemoryAdvisor` (Q9).
 
-Реализацию выбирают по окружению: `InMemoryChatMemory` живёт в памяти процесса (теряется при рестарте — годится для разработки и тестов), а персистентные `JdbcChatMemory` / `CassandraChatMemory` переживают рестарт и работают на нескольких инстансах — это для production.
+Реализацию выбирают по окружению через `ChatMemoryRepository`: `InMemoryChatMemoryRepository` живёт в памяти процесса (теряется при рестарте — годится для разработки и тестов), а персистентные `JdbcChatMemoryRepository` / `CassandraChatMemoryRepository` переживают рестарт и работают на нескольких инстансах — это для production. Сам `ChatMemory` собирают через `MessageWindowChatMemory`, передав ему нужный repository.
 
 ```java
-// InMemoryChatMemory — для разработки/тестирования
+// InMemoryChatMemoryRepository — для разработки/тестирования
 @Bean
 public ChatMemory chatMemory() {
-    return new InMemoryChatMemory();
+    return MessageWindowChatMemory.builder()
+        .chatMemoryRepository(new InMemoryChatMemoryRepository())
+        .build();
 }
 
-// CassandraChatMemory, JdbcChatMemory — для production
+// JdbcChatMemoryRepository, CassandraChatMemoryRepository — для production
 @Bean
-public ChatMemory persistentChatMemory(JdbcTemplate jdbc) {
-    return new JdbcChatMemory(jdbc);
+public ChatMemory persistentChatMemory(JdbcChatMemoryRepository repository) {
+    return MessageWindowChatMemory.builder()
+        .chatMemoryRepository(repository)
+        .build();
 }
 ```
 
@@ -451,8 +465,8 @@ public class ConversationService {
     public String chat(String conversationId, String message) {
         return chatClient.prompt()
             .user(message)
-            .advisors(a -> a.param(CHAT_MEMORY_CONVERSATION_ID_KEY, conversationId)
-                           .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
+            .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId)
+                           .param(ChatMemory.TOP_K, 10))
             .call()
             .content();
     }
@@ -462,7 +476,7 @@ public class ConversationService {
 Два параметра управляют выборкой истории:
 
 - **`conversationId`** изолирует диалоги: история привязана к этому ключу, поэтому пользователи (или сессии) не видят чужих сообщений. Передавать его обязательно — без него все запросы смешаются в одну ленту.
-- **`RETRIEVE_SIZE`** ограничивает, сколько последних сообщений подмешать в контекст. Это компромисс: больше истории — лучше связность, но дороже (платим за каждый токен) и риск упереться в context window модели.
+- **`TOP_K`** ограничивает, сколько последних сообщений подмешать в контекст. Это компромисс: больше истории — лучше связность, но дороже (платим за каждый токен) и риск упереться в context window модели.
 
 ## Q11. Как тестировать Spring AI приложения?
 
@@ -547,7 +561,7 @@ public class DocumentIndexingService {
     public void indexMarkdown(Resource mdFile, Map<String, Object> metadata) {
         DocumentReader reader = new MarkdownDocumentReader(mdFile);
         List<Document> docs = reader.get().stream()
-            .map(d -> new Document(d.getContent(), metadata))
+            .map(d -> new Document(d.getText(), metadata))
             .toList();
         TextSplitter splitter = new TokenTextSplitter();
         vectorStore.add(splitter.apply(docs));
@@ -635,17 +649,20 @@ public class AgentService {
                 Use them to accomplish the task.
                 """)
             .user(task)
-            .functions("searchOrders", "getProductInfo", "createTicket")
+            .tools(orderTools)  // объект(ы) с @Tool-методами
             .call()
             .content();
     }
 }
 
 // ReAct pattern — цикл рассуждений
-@Bean
-@Description("Search orders by customer ID")
-public Function<OrderSearchRequest, OrderSearchResult> searchOrders(OrderRepository repo) {
-    return req -> new OrderSearchResult(repo.findByCustomerId(req.customerId()));
+@Component
+public class OrderTools {
+
+    @Tool(description = "Search orders by customer ID")
+    public OrderSearchResult searchOrders(OrderSearchRequest req) {
+        return new OrderSearchResult(repo.findByCustomerId(req.customerId()));
+    }
 }
 ```
 

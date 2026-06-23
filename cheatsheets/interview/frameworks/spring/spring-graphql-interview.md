@@ -456,7 +456,7 @@ public class AuthDirectiveWiring implements SchemaDirectiveWiring {
 
 Спецификация задаёт стандартную обёртку **Connection**: `edges` (узел + его курсор), `pageInfo` (`hasNextPage`, `endCursor` для подгрузки следующей страницы) и опционально `totalCount`. Клиент листает вперёд аргументами `first` + `after`.
 
-Spring GraphQL поддерживает это нативно: резолвер возвращает `Connection<T>`, а под капотом данные берутся через Spring Data `ScrollPosition`/`Window` (keyset-пагинация), курсоры кодируются/декодируются `CursorStrategy`.
+Spring GraphQL поддерживает это нативно: резолвер возвращает напрямую `Window<T>` (или `Slice<T>`), а Spring сам оборачивает результат в Relay `Connection` через сконфигурированный `ConnectionFieldTypeVisitor` и `CursorStrategy` — вручную строить `Connection` в контроллере не нужно. Под капотом данные берутся через Spring Data `ScrollPosition`/`Window` (keyset-пагинация), курсоры кодирует/декодирует `CursorStrategy`.
 
 ```graphql
 type Query {
@@ -484,16 +484,13 @@ type PageInfo {
 
 ```java
 @QueryMapping
-public Connection<Order> orders(
-        @Argument int first,
-        @Argument String after) {
-    // Spring GraphQL поддерживает ScrollPosition для cursor pagination
-    ScrollPosition position = after != null
-        ? ScrollPosition.forward(CursorEncoder.decode(after))
-        : ScrollPosition.keyset();
-
-    Window<Order> window = orderService.findPage(first, position);
-    return DefaultConnection.create(window, CursorStrategy.withEncoder(CursorEncoder.base64()));
+public Window<Order> orders(ScrollSubrange subrange) {
+    // ScrollSubrange собирается Spring GraphQL из аргументов first/after.
+    // Возвращаем Window<Order> напрямую — Spring сам обернёт его
+    // в Relay Connection через сконфигурированный CursorStrategy.
+    ScrollPosition position = subrange.position().orElse(ScrollPosition.keyset());
+    int count = subrange.count().orElse(20);
+    return orderService.findPage(count, position);
 }
 ```
 

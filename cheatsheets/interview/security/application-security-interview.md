@@ -1714,7 +1714,7 @@ public class SensitiveDataMasker {
 
     public static String mask(String message) {
         return CARD_PATTERN.matcher(message)
-                .replaceAll("****-****-****-$0".substring(message.length() - 4));
+                .replaceAll("****-****-****-****");
     }
 }
 ```

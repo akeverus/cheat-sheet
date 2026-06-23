@@ -673,7 +673,7 @@ A_i = (r_i - mean({r_1, ..., r_G})) / std({r_1, ..., r_G})
 - **Дешевле PPO примерно вдвое** — нет value-модели, а это половина обучаемых сетей и памяти.
 - **Проверяемая награда → нет reward hacking.** Ground truth нельзя обмануть: ответ либо верен, либо нет, поэтому модели нечего «взламывать».
 - **Reasoning возникает сам.** Чтобы чаще давать верный ответ, модель самостоятельно начинает писать длинные цепочки рассуждений (CoT) — это эмерджентное поведение, ему не учили напрямую.
-- Лёг в основу **DeepSeek-R1-Zero** — чистый RL вообще без SFT, прорыв конца 2024.
+- Лёг в основу **DeepSeek-R1-Zero** — чистый RL вообще без SFT, прорыв января 2025.
 
 **Минусы:**
 
@@ -1298,7 +1298,7 @@ flowchart LR
 - **SFT** для `gpt-3.5-turbo`, `gpt-4o-mini`, `gpt-4o` (с 2024).
 - **RFT (Reinforcement Fine-Tuning)** для o-серии — с 2024, через partner program.
 - Под капотом — multi-LoRA, общий base на всех клиентов.
-- Цена SFT: обучение ~$25 за миллион токенов, inference в 1.5-2× от base.
+- Цена SFT: обучение gpt-4o-mini ~$3 за миллион токенов (полный gpt-4o ~$25/M), inference в 1.5-2× от base.
 - API: `client.fine_tuning.jobs.create(...)`.
 
 **Anthropic:**
@@ -1340,7 +1340,7 @@ flowchart TD
 | **Mistral / Mixtral** | 7B, 8x7B, 8x22B, Large | Apache 2.0 (Mistral 7B) | Mixtral MoE — для скорости |
 | **Qwen 2.5 / 3** | 0.5B-72B + MoE | Apache 2.0 | Сильны в коде и multilingual |
 | **DeepSeek V3, R1, V3.1** | 671B MoE (37B active) | MIT | Frontier-уровень open-source |
-| **Gemma 2 / 3 (Google)** | 2B, 9B, 27B, 70B | Gemma Terms (commercial OK) | Хорошие small models |
+| **Gemma 2 / 3 (Google)** | Gemma 2: 2B, 9B, 27B; Gemma 3: 1B, 4B, 12B, 27B | Gemma Terms (commercial OK) | Хорошие small models |
 | **Phi-3 / Phi-4 (Microsoft)** | 3.8B-14B | MIT | Сильны на синтетических данных |
 | **Yi (01.AI)** | 6B-34B | Apache 2.0 | Bilingual EN/CN |
 | **Command R (Cohere)** | 35B, 104B | CC-BY-NC | Multilingual, tool use |
@@ -1392,7 +1392,7 @@ Cost = (Train_hours × GPU_price/hr) + (Tokens_in_training × storage)
 
 **Пример 4: OpenAI gpt-4o-mini SFT, 1M training tokens.**
 
-- Training: 1M × $0.025/1K = **$25** (по прайсу 2025).
+- Training: 1M × $0.003/1K = **$3** (по прайсу 2025; полный gpt-4o — $0.025/1K = $25).
 - Inference: $0.30/M input, $1.20/M output — 1.5× от base.
 - Без забот о GPU.
 

@@ -444,7 +444,7 @@ class OpenAddressingMap<K, V> {
 }
 ```
 
-Используется в **C++ `std::unordered_map`** (некоторые реализации), Python **`dict`**, Go **`map`**.
+Используется в Python **`dict`**, Go **`map`** (bucketized) и Rust **`HashMap`** (SwissTable). А вот C++ **`std::unordered_map`** по стандарту обязан использовать chaining (требуется bucket-интерфейс и стабильность ссылок при rehash), поэтому open addressing для него неприменим.
 
 
 ## Q17. Что такое double hashing и чем он лучше квадратичного пробирования?

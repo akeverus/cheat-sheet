@@ -1878,7 +1878,7 @@ Client → API Gateway → Lambda Function → Response
 
 **Cold Start:** Lambda функция «засыпает» при отсутствии трафика — первый запрос медленнее (100-500мс). Решение: Provisioned Concurrency.
 
-**Тайм-аут:** AWS API Gateway имеет жёсткий timeout 29 секунд на интеграцию — Lambda не может выполняться дольше для синхронных запросов.
+**Тайм-аут:** у AWS API Gateway лимит на интеграцию по умолчанию 29 секунд. Для REST API его можно увеличить выше 29 с через запрос на повышение квоты (Service Quotas); для HTTP API 29 с -- фиксированный максимум. Для синхронных запросов Lambda не может выполняться дольше этого лимита.
 
 **Rate Limiting:** встроен на уровне Usage Plans — `throttlingBurstLimit` (burst) + `throttlingRateLimit` (steady-state rps).
 
