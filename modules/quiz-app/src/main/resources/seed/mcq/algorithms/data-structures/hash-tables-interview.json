@@ -949,7 +949,7 @@
               "text": "В open addressing все элементы хранятся в самом массиве; при коллизии ищут следующую свободную ячейку. Linear probing: `(hash + i) % size`, страдает от primary clustering (соседние занятые ячейки сливаются в кластеры). Quadratic probing: `(hash + i²) % size`, уменьшает primary clustering, но даёт secondary clustering (одинаковый стартовый hash → одинаковая последовательность проб).",
               "sections": {
                 "explanation": "Так как данные лежат прямо в массиве без узлов, достигается отличная cache locality; цена — кластеризация занятых ячеек, замедляющая поиск свободного места.",
-                "example": "Эту стратегию применяют Python `dict`, Go `map` и некоторые реализации C++ `std::unordered_map` ради плотного хранения и кэш-эффективности.",
+                "example": "Эту стратегию применяют Python `dict`, Go `map` и Rust `HashMap` (SwissTable) ради плотного хранения и кэш-эффективности (а C++ `std::unordered_map` по стандарту использует chaining, не open addressing).",
                 "when_to_apply": "Open addressing берут при плотных данных и хорошей хеш-функции, когда важна cache locality и приемлем load factor ниже ~0.7.",
                 "edge_cases": "Удаление сложное: нельзя просто очистить ячейку (порвётся цепочка проб), поэтому используют tombstones — пометки «здесь было удалено».",
                 "related": "[[hash-tables-interview#Q15]] chaining; [[hash-tables-interview#Q17]] double hashing; [[hash-tables-interview#Q18]] выбор стратегии разрешения коллизий."
