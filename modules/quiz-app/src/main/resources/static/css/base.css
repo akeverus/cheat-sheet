@@ -818,12 +818,25 @@ html[data-design] #extra-analysis-toggle { margin-top: var(--space-5); }
    Editorial: статус-wash + левая цветная линейка, крупный сериф-вердикт.
    Вложенный .answer делаем плоским, чтобы не было панели-в-панели и терракоты
    внутри зелёного/красного. */
+/* Peak-end момент петли MCQ: вердикт раскрывается app.js'ом (снимает .hidden) и
+   до этого ВСТАВАЛ мгновенно. Один сдержанный fade+сдвиг (250ms, штатный easing-out)
+   = «информация прибывает», а не «выпрыгивает» — спокойная уверенность бренда, без
+   дофаминовой хореографии. ОДИН слой (не каскад). reduced-motion уже покрыт глобально
+   (@media ~стр.251 глушит animation-duration до 0.001ms для html[data-design] *),
+   отдельный guard не нужен. both: держит from-кадр (opacity:0) до старта — без
+   вспышки. Анимация играет на месте (контент видим по умолчанию) → на скрытой
+   вкладке/headless вердикт всё равно отрисован, не залипает невидимым. */
+@keyframes verdictReveal {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 html[data-design] .result-correct,
 html[data-design] .result-wrong {
   padding: var(--space-4) var(--space-5);
   border: var(--rule-weight) solid var(--color-border-primary);
   border-radius: var(--border-radius-md);
   margin-top: var(--space-2);
+  animation: verdictReveal var(--duration-normal) var(--easing-out) both;
 }
 html[data-design] .result-correct {
   background: var(--color-status-success-wash);
@@ -1634,6 +1647,15 @@ html[data-design] .result-page .status {
   margin: var(--space-5) 0 0; padding-top: var(--space-5);
   border-top: var(--rule-weight) solid var(--color-border-primary);
 }
+/* Семантический цвет вердикта в no-JS фоллбэке (/answer без JS): иконка уже
+   красится через .ed-icon-success/error, но само слово «Верно!/Неверно» сидело
+   нейтральным --color-text-primary — единственный пост-ответный сигнал нёс только
+   мелкий значок. Красим слово статус-чернилами, как делает primary JS-флоу для
+   .result-correct/.result-wrong > strong (см. ~844). Тона restrained (forest/brick),
+   AA-проверены — честно, без наказывающего alarm-red. .status.status-* = (0,4,1),
+   перебивает базовое .result-page .status (0,3,1). */
+html[data-design] .result-page .status.status-correct { color: var(--color-status-success); }
+html[data-design] .result-page .status.status-wrong { color: var(--color-status-error); }
 
 /* Варианты-результат (.options[role=list], элементы — div[role=listitem],
    без #interview-options-маркера). */

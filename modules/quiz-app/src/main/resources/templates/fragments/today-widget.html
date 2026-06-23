@@ -46,9 +46,15 @@
         <svg class="ed-icon" aria-hidden="true"><use href="#i-flame"></use></svg>
         <span class="streak-inline-days" data-streak-days>0 дней</span>
     </span>
+    <!-- «N из M к повтору» вместо голого «N к повтору»: знаменатель даёт честную
+         пропорцию (сколько из всего банка ждёт повтора), а не интимидирующую стену
+         в 4-5 цифр. stats.total уже в модели (InterviewStats.total). Бренд:
+         информативный прогресс, без дофамина. Знаменатель показываем только когда он
+         осмыслен (total > due); если всё просрочено (total == due) — нейтральное
+         «N к повтору», чтобы не подсвечивать «ты не сделал ничего». -->
     <span class="today-chip-due" th:if="${stats.due > 0}">
         <svg class="ed-icon" aria-hidden="true"><use href="#i-target"></use></svg>
-        <span th:text="${stats.due} + ' к повтору'">0 к повтору</span>
+        <span th:text="${stats.total > stats.due} ? |${stats.due} из ${stats.total} к повтору| : |${stats.due} к повтору|">0 к повтору</span>
     </span>
 </div>
 </body>
