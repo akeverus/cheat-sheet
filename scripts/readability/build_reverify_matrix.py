@@ -203,6 +203,58 @@ for rel in all_rels:
                 A3_parity="", A4_balance="", A5_sections=("ISSUE " + "; ".join(a5[:4])) if a5 else "PASS",
                 C9_load="")
 
+# ---- fold in B6/B7 review+fix results (все 308 .md перепроверены) ----
+# b6b7_results.json: {files:[{rel, gate, fixes:[{q,kind,action}], rejected:[...]}]}.
+# rel НЕ в files = reviewed-clean. fixes.q вида "Q4" мапятся на per-Q строки;
+# не-Q правки (secD) и rejected уходят в notes FILE-строки.
+b6b7 = {}
+try:
+    _r = json.load(open("scripts/readability/b6b7_results.json", encoding="utf-8"))
+    for f in _r.get("files", []):
+        b6b7[f["rel"]] = f
+    findings["B6B7_flagged_files"] = len(b6b7)
+    findings["B6B7_fixes"] = sum(len(f.get("fixes", [])) for f in b6b7.values())
+except FileNotFoundError:
+    pass
+
+def _qfix(rel):
+    m = collections.defaultdict(lambda: {"code": None, "freshness": None})
+    for fx in b6b7.get(rel, {}).get("fixes", []):
+        m[fx["q"]][fx["kind"]] = fx["action"]
+    return m
+
+for r in rows:
+    rel = r["file"]
+    fr = b6b7.get(rel)
+    if r["scope"] == "FILE":
+        if fr:
+            fx = fr.get("fixes", [])
+            nc = sum(1 for x in fx if x["kind"] == "code")
+            nf = sum(1 for x in fx if x["kind"] == "freshness")
+            r["B7_code"] = f"FIXED:{nc}" if nc else "OK"
+            r["B6_freshness"] = f"FIXED:{nf}" if nf else "OK"
+            extra = []
+            secd = [x["q"] for x in fx if not str(x["q"]).startswith("Q")]
+            if secd:
+                extra.append("B6B7-nonQ-fix: " + ",".join(secd))
+            rej = fr.get("rejected", [])
+            if rej:
+                extra.append("B6B7-rejected: " + "; ".join(str(x["q"]) for x in rej))
+            if extra:
+                r["notes"] = (r["notes"] + "; " if r["notes"] else "") + "; ".join(extra)
+        else:
+            r["B6_freshness"] = "OK"
+            r["B7_code"] = "OK"
+    else:  # per-Q
+        qf = _qfix(rel)
+        q = r["scope"]
+        if q in qf:
+            r["B7_code"] = qf[q]["code"] or "OK"
+            r["B6_freshness"] = qf[q]["freshness"] or "OK"
+        else:
+            r["B6_freshness"] = "OK"
+            r["B7_code"] = "OK"
+
 # ---- write CSV ----
 out = "scripts/readability/reverify_matrix.csv"
 cols = ["file", "scope", "A1_dupcorrect", "A2_xlinks", "A3_parity", "A4_balance",
