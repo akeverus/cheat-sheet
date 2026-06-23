@@ -458,7 +458,10 @@ html[data-design] .focus-progress-line .session-progress { color: var(--color-te
 
 html[data-design] .session-progress-track {
   height: 2px;
-  background: var(--color-border-secondary);
+  /* bg-tertiary (как у ВСЕХ прочих треков прогресса: streak/accuracy/topic/forecast).
+     Прежний border-secondary под hairline-дизайнами (notion/mintlify/linear) —
+     почти прозрачная rgba ~5% → пустой трек был невидим. */
+  background: var(--color-bg-tertiary);
   margin-bottom: var(--space-6);
   overflow: hidden;
 }
@@ -966,9 +969,11 @@ html[data-design] .settings-page #session-form button[type="submit"] {
   min-height: 48px; padding: var(--space-3) var(--space-6); margin-top: var(--space-2);
   font-family: var(--font-family-body); font-size: var(--font-size-md); font-weight: var(--font-weight-medium);
   background: var(--color-accent-primary); color: var(--color-accent-on);
-  /* B5: accent-залитый primary-CTA («Начать сессию/тренировку») → асимметричный
-     радиус «Try Claude» (flat-верх, скруглённый низ), как .next-btn/#interview-submit. */
-  border: var(--rule-weight) solid var(--color-accent-primary); border-radius: 0 0 var(--border-radius-md) var(--border-radius-md);
+  /* Симметричный радиус токена в design-agnostic слое (как у всех кнопок).
+     Асимметричная «Try Claude»-форма — editorial-сигнатура, вынесена в
+     html[data-design="editorial"]-блок (иначе под linear/notion/mintlify CTA
+     получал чужую «вкладочную» форму flat-верх+скруглённый-низ). */
+  border: var(--rule-weight) solid var(--color-accent-primary); border-radius: var(--border-radius-md);
   cursor: pointer; box-shadow: none; text-transform: none; letter-spacing: 0; touch-action: manipulation;
   transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
 }
@@ -1153,8 +1158,8 @@ html[data-design] .stats-page .stats-action-btn {
 html[data-design] .stats-page .stats-action-btn:hover { background: var(--color-bg-tertiary); border-color: var(--color-text-secondary); }
 html[data-design] .stats-page .stats-search-action {
   background: var(--color-accent-primary); color: var(--color-accent-on); border-color: var(--color-accent-primary);
-  /* B5: accent-залитый primary («Искать») → асимметричный радиус, как #session-form submit. */
-  border-radius: 0 0 var(--border-radius-md) var(--border-radius-md);
+  /* Симметричный токен-радиус; асимметрию даёт editorial-сигнатурный блок. */
+  border-radius: var(--border-radius-md);
 }
 html[data-design] .stats-page .stats-search-action:hover { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); }
 
@@ -2403,7 +2408,22 @@ html[data-design="editorial"] #extra-analysis-toggle { border-radius: 0; }
    скруглённый низ 8px. */
 html[data-design="editorial"] .next-btn,
 html[data-design="editorial"] .focus-page #interview-submit,
-html[data-design="editorial"] .flashcard-reveal-btn { border-radius: 0 0 8px 8px; }
+html[data-design="editorial"] .flashcard-reveal-btn,
+html[data-design="editorial"] .settings-page #session-form button[type="submit"],
+html[data-design="editorial"] .stats-page .stats-search-action { border-radius: 0 0 8px 8px; }
+
+/* Дисплейный вес editorial [spec §5/§8]: Lora — «single-weight serif voice»,
+   «no bold serif headings» → ВСЕ заголовки 500 (иерархия размером, не жирностью).
+   Скоупим строго к editorial: общий слой h1=bold/h2+=semibold оставляет
+   sans-дизайнам (linear 590, notion 680, swiss 650, mintlify 600) и газетному
+   broadsheet (700/600) их намеренно более плотный display — не трогаем.
+   Та же специфичность (0,1,1), но правило ниже по файлу → перебивает общий блок. */
+html[data-design="editorial"] h1,
+html[data-design="editorial"] h2,
+html[data-design="editorial"] h3,
+html[data-design="editorial"] h4,
+html[data-design="editorial"] h5,
+html[data-design="editorial"] h6 { font-weight: var(--font-weight-medium); }
 
 /* Бренд-кикер и флешкарт-бейдж — чернила, не Clay: «pure typographic label»
    [spec]; к тому же Clay 3.0:1 на ivory — не AA для 12px caps. */
