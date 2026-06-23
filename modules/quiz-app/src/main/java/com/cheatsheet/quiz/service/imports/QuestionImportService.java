@@ -77,6 +77,13 @@ public class QuestionImportService {
         int updated = 0;
         int unchanged = 0;
         Set<String> actualPaths = new HashSet<>();
+        // Признак ПОЛНОСТЬЮ успешного скана: выставляется ТОЛЬКО после того, как
+        // walk прошёл целиком и все файлы обработаны. Без него orphan-cleanup ниже
+        // выполнялся безусловно: при IOException скана (например, директория
+        // app.interview-path существует, но нечитаема) actualPaths оставался
+        // пустым, и cleanup удалял ВЕСЬ банк вопросов, каскадом затирая
+        // answer_options/question_hints/review_state (невосстановимый SM-2 прогресс).
+        boolean scanCompleted = false;
 
         try (var fileStream = Files.walk(root)) {
             List<Path> files = fileStream
@@ -90,19 +97,31 @@ public class QuestionImportService {
                 updated += result.updated();
                 unchanged += result.unchanged();
             }
+            scanCompleted = true;
         } catch (IOException e) {
             log.error("Ошибка сканирования директории с вопросами", e);
         }
 
         // --- Orphan cleanup: удаляем вопросы, чьи MD-файлы удалены ---
+        // Гард безопасности: чистим осиротевшие вопросы ТОЛЬКО когда скан прошёл
+        // целиком И нашёл хотя бы один файл. Пустой actualPaths (сбой скана или
+        // случайно пустая/нечитаемая директория) НЕ должен приводить к удалению
+        // всей базы — это деструктивно и почти всегда означает misconfiguration,
+        // а не намеренное удаление всех вопросов.
         int deletedOrphans = 0;
-        List<String> existingPaths = questionRepository.findAllFilePaths();
-        for (String dbPath : existingPaths) {
-            if (!actualPaths.contains(dbPath)) {
-                int count = questionRepository.deleteByFilePath(dbPath);
-                log.info("Orphan cleanup: удалено {} вопросов из файла {}", count, dbPath);
-                deletedOrphans += count;
+        if (scanCompleted && !actualPaths.isEmpty()) {
+            List<String> existingPaths = questionRepository.findAllFilePaths();
+            for (String dbPath : existingPaths) {
+                if (!actualPaths.contains(dbPath)) {
+                    int count = questionRepository.deleteByFilePath(dbPath);
+                    log.info("Orphan cleanup: удалено {} вопросов из файла {}", count, dbPath);
+                    deletedOrphans += count;
+                }
             }
+        } else {
+            log.warn("Orphan cleanup пропущен: скан не завершён успешно или не найдено ни одного файла "
+                    + "(scanCompleted={}, найдено путей={}). Банк вопросов не тронут.",
+                    scanCompleted, actualPaths.size());
         }
 
         long total = questionRepository.countAll();

@@ -3,6 +3,7 @@ package com.cheatsheet.quiz.service.imports;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -200,5 +201,38 @@ class QuestionImportServiceTest {
         service.importAll();
 
         verify(questionExpansionService).expandFromBase(existing, "topic/sample", "topic/sample.md");
+    }
+
+    @Test
+    void importAllSkipsOrphanCleanupWhenScanFindsNoFiles() throws Exception {
+        // Регресс-гард data-loss: если скан не нашёл ни одного .md (пустая или
+        // нечитаемая директория, сбой обхода) — orphan-cleanup ОБЯЗАН быть
+        // пропущен, иначе пустой actualPaths удалил бы весь банк вопросов
+        // каскадом по FK (answer_options/question_hints/review_state).
+        Path root = Files.createTempDirectory("question-import-empty");
+        when(interviewPathResolver.getBasePath()).thenReturn(root);
+
+        Clock clock = Clock.fixed(Instant.parse("2026-02-28T00:00:00Z"), ZoneOffset.UTC);
+        QuestionImportService service = new QuestionImportService(
+                interviewPathResolver,
+                questionRepository,
+                answerOptionRepository,
+                reviewStateRepository,
+                fullTextSearchRepository,
+                optionCache,
+                clock,
+                parser,
+                hashingService,
+                questionExpansionService,
+                aiQuestionClient,
+                transactionTemplate,
+                mcqJsonLoader
+        );
+
+        service.importAll();
+
+        // Cleanup пропущен целиком: ни запроса всех путей, ни единого удаления.
+        verify(questionRepository, never()).findAllFilePaths();
+        verify(questionRepository, never()).deleteByFilePath(any());
     }
 }
