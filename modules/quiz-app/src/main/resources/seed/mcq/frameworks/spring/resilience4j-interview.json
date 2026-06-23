@@ -875,11 +875,11 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Несколько аннотаций оборачиваются в цепочку декораторов в фиксированном порядке (внешний → внутренний): `TimeLimiter → CircuitBreaker → RateLimiter → Bulkhead → Retry → Method`; явный порядок задаётся через `Decorators`.",
+              "text": "Несколько аннотаций оборачиваются в цепочку декораторов в фиксированном порядке (внешний → внутренний): `Retry → CircuitBreaker → RateLimiter → TimeLimiter → Bulkhead → Method`; явный порядок задаётся через `Decorators`. Раз `Retry` самый внешний, каждая retry-попытка заново проходит через `CircuitBreaker`.",
               "correct": true,
               "sections": {
-                "explanation": "Несколько аннотаций можно повесить на один метод — они оборачиваются в цепочку декораторов в фиксированном порядке (внешний → внутренний): `TimeLimiter → CircuitBreaker → RateLimiter → Bulkhead → Retry → Method`. Для явного контроля порядка используют программный API `Decorators`.",
-                "example": "Порядок важен: например `Retry` находится ВНУТРИ `CircuitBreaker`, поэтому повторы происходят до того, как CB засчитает финальный сбой. Читается как: если rate limit пройден и цепь замкнута → выполнить с retry → если всё равно ошибка, CB засчитывает failure.",
+                "explanation": "Несколько аннотаций можно повесить на один метод — они оборачиваются в цепочку декораторов в фиксированном порядке (внешний → внутренний): `Retry( CircuitBreaker( RateLimiter( TimeLimiter( Bulkhead( метод )))))`. Для явного контроля порядка используют программный API `Decorators`.",
+                "example": "Порядок важен: `Retry` находится СНАРУЖИ `CircuitBreaker`, поэтому каждая повторная попытка заново проходит через CB и засчитывается им как отдельный вызов. Известный подвох: агрессивные ретраи сами накручивают статистику отказов и могут разомкнуть цепь — тогда очередная попытка получит `CallNotPermittedException`.",
                 "when_to_apply": "Комбинируют, когда нужны несколько паттернов на одном вызове: ограничить частоту, защитить от каскада и повторять временные сбои.",
                 "edge_cases": "Пример: `@CircuitBreaker(name=\"paymentCB\") @RateLimiter(name=\"paymentRL\") @Retry(name=\"paymentRetry\")` над `processPayment`; программно — `Decorators.ofSupplier(...).withCircuitBreaker(cb).withRetry(retry).withRateLimiter(rl).decorate()`.",
                 "related": "[[resilience4j-interview#Q8]] Retry vs Spring Retry; [[resilience4j-interview#Q16]] fallback; [[resilience4j-interview#Q20]] ограничения аннотаций."
@@ -888,13 +888,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В цепочке декораторов `Retry` находится снаружи `CircuitBreaker`, поэтому повторяется и срабатывание разомкнутой цепи.",
+              "text": "Порядок декораторов произвольный: `Retry`, `CircuitBreaker` и остальные аннотации применяются независимо друг от друга, поэтому повторные попытки никак не влияют на статистику circuit breaker'а.",
               "correct": false,
               "sections": {
-                "what_actually": "По умолчанию `Retry` находится ВНУТРИ `CircuitBreaker` (`CircuitBreaker → ... → Retry → Method`): повторы идут до того, как CB фиксирует финальный сбой.",
-                "source_of_confusion": "Логически 'повторить весь защищённый вызов' звучит как retry снаружи.",
-                "if_it_were_true": "Если бы `Retry` был снаружи CB, `CallNotPermittedException` при разомкнутой цепи бессмысленно повторялась бы, нагружая систему.",
-                "how_it_should_be": "Стандартный порядок ставит `Retry` внутрь `CircuitBreaker`; иной порядок задают через `Decorators`."
+                "what_actually": "Порядок фиксирован библиотекой: `Retry` — самый внешний (`Retry( CircuitBreaker( … ( Bulkhead( метод )))`), поэтому каждая retry-попытка проходит через `CircuitBreaker` и учитывается им; ретраи напрямую влияют на статистику CB.",
+                "source_of_confusion": "Кажется, что независимые аннотации работают изолированно, но Resilience4j оборачивает их в строгую вложенную цепочку с заданным порядком.",
+                "if_it_were_true": "Если бы порядок не имел значения, нельзя было бы объяснить, почему агрессивные ретраи сами размыкают цепь и получают `CallNotPermittedException`.",
+                "how_it_should_be": "Порядок по умолчанию: `Retry( CircuitBreaker( RateLimiter( TimeLimiter( Bulkhead( метод )))))`; переопределяется только программным API `Decorators`."
               }
             }
           ]
