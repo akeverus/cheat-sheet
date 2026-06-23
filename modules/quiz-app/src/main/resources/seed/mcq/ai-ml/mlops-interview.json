@@ -634,12 +634,12 @@
             },
             {
               "correct": true,
-              "text": "Model registry — БД моделей с версионированием, стадиями и метаданными. Стадии: `None` (только зарегистрирована), `Staging` (тестируется), `Production` (используется inference-сервисом), `Archived` (старая версия). Нужен ради lineage (откуда взялась модель — данные, код), promotion (`Staging` → `Production` через approval), rollback (быстрый откат к предыдущей версии) и одновременной работы нескольких моделей в проде (A/B-тесты). Инструменты: `MLflow Registry`, `W&B Artifacts`, `SageMaker`/`Vertex AI`.",
+              "text": "Model registry — БД моделей с версионированием, алиасами/тегами и метаданными. Вместо старых стадий (`None`/`Staging`/`Production`/`Archived`, задепрекейчены в MLflow 2.9 и убраны в 3.x) используют **алиасы** — изменяемые указатели (`champion`, `challenger`): inference берёт модель по алиасу, промоушен = переназначение алиаса. Нужен ради lineage (откуда взялась модель — данные, код), promotion (через approval), rollback (быстрый откат к предыдущей версии) и одновременной работы нескольких моделей в проде (A/B-тесты). Инструменты: `MLflow Registry`, `W&B Artifacts`, `SageMaker`/`Vertex AI`.",
               "sections": {
-                "explanation": "Registry превращает обученные веса в управляемый артефакт с историей: видно, какая версия в проде, откуда она, и как быстро откатиться при проблеме.",
-                "example": "В `MLflow`: `register_model('runs:/abc123/model','fraud_detector')`, затем `transition_model_version_stage(name='fraud_detector', version=3, stage='Production')` переводит версию в прод.",
+                "explanation": "Registry превращает обученные веса в управляемый артефакт с историей: видно, какая версия в проде (по алиасу), откуда она, и как быстро откатиться при проблеме.",
+                "example": "В `MLflow`: `register_model('runs:/abc123/model','fraud_detector')`, затем `client.set_registered_model_alias('fraud_detector', 'champion', version=3)` указывает alias на прод-версию (старый `transition_model_version_stage` убран в MLflow 3.x).",
                 "when_to_apply": "Внедряют, когда в проде живёт больше одной модели или нужен контролируемый promotion с approval и быстрый rollback — без registry это превращается в ручной хаос с файлами весов.",
-                "edge_cases": "Тонкость: registry хранит модели и стадии, но lineage полезен только если в run залогированы версия данных и кода; иначе «откуда модель» не восстановить даже из registry.",
+                "edge_cases": "Тонкость: registry хранит модели, алиасы и теги, но lineage полезен только если в run залогированы версия данных и кода; иначе «откуда модель» не восстановить даже из registry.",
                 "related": "[[mlops-interview#Q5]] MLflow Registry; [[mlops-interview#Q12]] стратегии versioning; [[mlops-interview#Q14]] A/B-тесты нескольких моделей."
               },
               "label": "C",
