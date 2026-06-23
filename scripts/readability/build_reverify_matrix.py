@@ -100,7 +100,7 @@ def add(rel, scope, **cols):
     r = {"file": rel, "scope": scope,
          "A1_dupcorrect": "", "A2_xlinks": "", "A3_parity": "", "A4_balance": "",
          "A5_sections": "", "B6_freshness": "PENDING", "B7_code": "PENDING",
-         "C9_load": "PENDING", "notes": ""}
+         "akey": "PENDING", "C9_load": "PENDING", "notes": ""}
     r.update(cols)
     rows.append(r)
     return r
@@ -255,10 +255,53 @@ for r in rows:
             r["B6_freshness"] = "OK"
             r["B7_code"] = "OK"
 
+# ---- fold in answer-key (akey) seeder audit (все 307 сидеров перепроверены новой моделью) ----
+# akey_results.json: тот же shape {files:[{rel, gate, fixes:[{q,kind,action}], rejected:[...]}]}.
+# Проверяет САМ сидер: верен ли correct:true как ответ на ## Q, истинные дистракторы,
+# drift, code/freshness внутри option-секций. rel НЕ в files = reviewed-clean (akey=OK).
+import glob as _glob
+akey = {}
+try:
+    _a = json.load(open("scripts/readability/akey_results.json", encoding="utf-8"))
+    for f in _a.get("files", []):
+        akey[f["rel"]] = f
+    findings["AKEY_flagged_files"] = len(akey)
+    findings["AKEY_fixes"] = sum(len(f.get("fixes", [])) for f in akey.values())
+    findings["AKEY_rejected"] = sum(len(f.get("rejected", [])) for f in akey.values())
+except FileNotFoundError:
+    pass
+
+_seed_rels = {p[len(SEED_DIR) + 1:-5] for p in _glob.glob(SEED_DIR + "/**/*.json", recursive=True)}
+
+def _aqfix(rel):
+    m = {}
+    for fx in akey.get(rel, {}).get("fixes", []):
+        m[fx["q"]] = fx["action"]
+    for rj in akey.get(rel, {}).get("rejected", []):
+        m[rj["q"]] = "reverted"
+    return m
+
+for r in rows:
+    rel = r["file"]
+    fr = akey.get(rel)
+    has_seed = rel in _seed_rels
+    if r["scope"] == "FILE":
+        if fr:
+            nfix = len(fr.get("fixes", []))
+            r["akey"] = f"FIXED:{nfix}" if nfix else "OK"
+            rej = fr.get("rejected", [])
+            if rej:
+                note = "akey-reverted: " + "; ".join(str(x["q"]) for x in rej)
+                r["notes"] = (r["notes"] + "; " if r["notes"] else "") + note
+        else:
+            r["akey"] = "OK" if has_seed else "N/A"
+    else:  # per-Q
+        r["akey"] = _aqfix(rel).get(r["scope"], "OK" if has_seed else "N/A")
+
 # ---- write CSV ----
 out = "scripts/readability/reverify_matrix.csv"
 cols = ["file", "scope", "A1_dupcorrect", "A2_xlinks", "A3_parity", "A4_balance",
-        "A5_sections", "B6_freshness", "B7_code", "C9_load", "notes"]
+        "A5_sections", "B6_freshness", "B7_code", "akey", "C9_load", "notes"]
 with open(out, "w", newline="", encoding="utf-8") as f:
     w = csv.DictWriter(f, fieldnames=cols)
     w.writeheader()
