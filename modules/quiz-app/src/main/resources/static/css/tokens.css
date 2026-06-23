@@ -168,11 +168,14 @@
   --border-radius-lg: 16px;
   --border-radius-full: 999px;
 
-  /* «Zero box-shadows throughout» [spec] — elevation несут hairline-рамки.
-     Focus-ring остаётся (a11y, не декоративная тень). */
+  /* Elevation = RING [spec §6]. Плоские поверхности (карты/MCQ/код/панели) —
+     ring-only через hairline border. Drop-shadow разрешён ТОЛЬКО на истинных
+     оверлеях (popover/dropdown/modal) = --elevation-popover: ring + whisper
+     (0.10 opacity, 24px blur). shadow-md → ring (back-to-top FAB), shadow-lg →
+     ring+whisper (.kbd-help-modal). Это единственные потребители md/lg. */
   --shadow-sm: none;
-  --shadow-md: none;
-  --shadow-lg: none;
+  --shadow-md: 0 0 0 1px var(--color-border-primary);
+  --shadow-lg: 0 0 0 1px var(--color-border-primary), 0 4px 24px rgba(38, 38, 36, 0.10);
   --shadow-focus: 0 0 0 3px rgba(198, 97, 63, 0.40);
 
   /* Motion */
@@ -236,9 +239,10 @@
 
   --color-surface-overlay: rgba(0, 0, 0, 0.6);
 
+  /* dark: overlay whisper чернее под тёмную базу (см. §6 light выше). */
   --shadow-sm: none;
-  --shadow-md: none;
-  --shadow-lg: none;
+  --shadow-md: 0 0 0 1px var(--color-border-primary);
+  --shadow-lg: 0 0 0 1px var(--color-border-primary), 0 6px 28px rgba(0, 0, 0, 0.55);
   --shadow-focus: 0 0 0 3px rgba(217, 119, 87, 0.45);
 }
 
@@ -274,8 +278,8 @@
     --color-status-info:        #6FA8D6;
     --color-surface-overlay: rgba(0, 0, 0, 0.6);
     --shadow-sm: none;
-    --shadow-md: none;
-    --shadow-lg: none;
+    --shadow-md: 0 0 0 1px var(--color-border-primary);
+    --shadow-lg: 0 0 0 1px var(--color-border-primary), 0 6px 28px rgba(0, 0, 0, 0.55);
     --shadow-focus: 0 0 0 3px rgba(217, 119, 87, 0.45);
   }
 }
@@ -362,6 +366,13 @@ html[data-design="linear"] {
   --shadow-md: 0 0 0 1px var(--color-border-primary), 0 1px 2px rgba(8, 9, 10, 0.04);
   --shadow-lg: 0 8px 24px rgba(8, 9, 10, 0.12), 0 0 0 1px var(--color-border-primary);
   --shadow-focus: 0 0 0 2px var(--color-bg-primary), 0 0 0 4px var(--color-border-focus);
+
+  /* Motion [spec §7]: фирменное Linear-easing «снэпа» — резкий старт, мягкая
+     остановка (дефолтный :root даёт Material-кривую 0.4/0/0.2/1 — не сигнатурно).
+     normal ужесточён 250→200ms «инженерная резкость». Тема-независимо: dark
+     наследует. */
+  --easing-default: cubic-bezier(0.2, 0, 0, 1);
+  --duration-normal: 200ms;
 }
 html[data-design="linear"][data-theme="dark"] {
   color-scheme: dark;
@@ -475,6 +486,11 @@ html[data-design="swiss"] {
   --shadow-md: none;
   --shadow-lg: 0 0 0 1px var(--color-border-primary); /* поповер — жёсткий 1px край, без blur */
   --shadow-focus: 0 0 0 2px var(--color-bg-primary), 0 0 0 4px var(--color-border-focus);
+
+  /* Motion [spec §7]: «crisp, not springy» — длительности ужесточены под
+     механический/grid-характер (fast 150→120, normal 250→200). */
+  --duration-fast:   120ms;
+  --duration-normal: 200ms;
 }
 html[data-design="swiss"][data-theme="dark"] {
   color-scheme: dark;
