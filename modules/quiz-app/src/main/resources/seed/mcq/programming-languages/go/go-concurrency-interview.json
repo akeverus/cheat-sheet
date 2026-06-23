@@ -254,7 +254,7 @@
               "text": "GOMAXPROCS — максимальное число OS threads, которые scheduler использует для параллельного исполнения goroutines. По умолчанию равен `runtime.NumCPU()`. В контейнере с CPU-limit `NumCPU()` может вернуть число всех ядер хоста, поэтому ставят больше P, чем реально доступно.",
               "correct": true,
               "sections": {
-                "explanation": "Лишние P создают overhead на планирование и context switch, поэтому в Kubernetes-поде с CPU-лимитом значение приводят к лимиту через `uber-go/automaxprocs` или авто-детект из cgroups (Go 1.21+).",
+                "explanation": "Лишние P создают overhead на планирование и context switch, поэтому в Kubernetes-поде с CPU-лимитом значение приводят к лимиту через `uber-go/automaxprocs` или авто-детект из cgroups (Go 1.25+).",
                 "example": "В Kubernetes-поде с лимитом 2 CPU на 64-ядерном узле `NumCPU()` вернёт 64, поэтому подключают `uber-go/automaxprocs`, чтобы GOMAXPROCS стал равен 2.",
                 "when_to_apply": "Применяется при деплое Go-сервиса в Docker/Kubernetes с CPU-квотой: добавляют `automaxprocs`, чтобы GOMAXPROCS совпал с лимитом, а не с числом ядер хоста.",
                 "edge_cases": "GOMAXPROCS ограничивает только OS threads для исполнения, но не число goroutines: их по-прежнему могут быть сотни тысяч поверх немногих потоков.",

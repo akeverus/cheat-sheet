@@ -879,7 +879,7 @@
               "correct": true,
               "sections": {
                 "explanation": "Scope, привязанный к вызову, гарантирует, что фоновые корутины не переживут запрос: оборвалось соединение — отменилась и связанная работа. Это предотвращает утечки корутин и лишнюю нагрузку на уже неактуальные запросы.",
-                "example": "`get(\"/long\") { call.application.launch { /* отменится при обрыве соединения */ backgroundTask() }; call.respondText(\"Started\") }` — fire-and-forget в scope запроса.",
+                "example": "`get(\"/long\") { call.launch { /* отменится при обрыве соединения */ backgroundTask() }; call.respondText(\"Started\") }` — fire-and-forget в scope запроса.",
                 "when_to_apply": "Scope вызова используют для побочной работы, которая должна жить ровно столько, сколько актуален запрос: стриминг, дочерние задачи, агрегация ответов.",
                 "edge_cases": "Если фоновая задача должна пережить запрос (например, отправка события), её нельзя запускать в scope `call` — нужен application-scope или внешний `CoroutineScope`, иначе её отменят при завершении ответа.",
                 "related": "[[ktor-interview#Q14]] как Ktor использует корутины; [[ktor-interview#Q16]] structured concurrency; [[ktor-interview#Q8]] жизненный цикл запроса."
@@ -891,7 +891,7 @@
               "text": "`ApplicationCall` не является `CoroutineScope`, поэтому запустить корутину, привязанную к запросу, в `Ktor` принципиально нельзя.",
               "correct": false,
               "sections": {
-                "what_actually": "`ApplicationCall` реализует `CoroutineScope`, что и позволяет запускать привязанные к запросу корутины (`call.application.launch`).",
+                "what_actually": "`ApplicationCall` реализует `CoroutineScope`, что и позволяет запускать привязанные к запросу корутины (`call.launch`).",
                 "source_of_confusion": "Не все объекты являются scope, и это обобщают на `call`.",
                 "if_it_were_true": "Тогда не существовало бы scope, отменяемого с запросом, но он есть и используется.",
                 "how_it_should_be": "`call` — это `CoroutineScope`, привязанный к жизненному циклу запроса."

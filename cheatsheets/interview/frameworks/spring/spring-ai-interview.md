@@ -465,18 +465,17 @@ public class ConversationService {
     public String chat(String conversationId, String message) {
         return chatClient.prompt()
             .user(message)
-            .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId)
-                           .param(ChatMemory.TOP_K, 10))
+            .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))
             .call()
             .content();
     }
 }
 ```
 
-Два параметра управляют выборкой истории:
+Выборкой истории управляют два механизма:
 
-- **`conversationId`** изолирует диалоги: история привязана к этому ключу, поэтому пользователи (или сессии) не видят чужих сообщений. Передавать его обязательно — без него все запросы смешаются в одну ленту.
-- **`TOP_K`** ограничивает, сколько последних сообщений подмешать в контекст. Это компромисс: больше истории — лучше связность, но дороже (платим за каждый токен) и риск упереться в context window модели.
+- **`conversationId`** (per-request) изолирует диалоги: история привязана к этому ключу, поэтому пользователи (или сессии) не видят чужих сообщений. Передавать его обязательно — без него все запросы смешаются в одну ленту.
+- **Размер окна** задаётся при сборке памяти — `MessageWindowChatMemory.builder().maxMessages(N)` (по умолчанию последние 20 сообщений): сколько последних сообщений подмешать в контекст. Это компромисс: больше истории — лучше связность, но дороже (платим за каждый токен) и риск упереться в context window модели. (Параметр `TOP_K` есть только у `VectorStoreChatMemoryAdvisor` для vector-store-памяти, не у оконной.)
 
 ## Q11. Как тестировать Spring AI приложения?
 

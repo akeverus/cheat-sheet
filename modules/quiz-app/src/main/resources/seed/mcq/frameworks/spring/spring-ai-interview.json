@@ -383,38 +383,38 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Функция должна быть статическим методом, помеченным `@FunctionMapping`; обычный `@Bean` типа `Function<>` не подойдёт.",
+              "text": "Инструмент должен быть статическим методом, помеченным `@FunctionMapping`; обычный метод `@Tool` в Spring-бине не подойдёт.",
               "correct": false,
               "sections": {
-                "what_actually": "Функцию определяют как `@Bean` типа `Function<Req, Resp>` с аннотацией `@Description`; аннотации `@FunctionMapping` нет.",
-                "source_of_confusion": "По аналогии с `@RequestMapping` ожидают специальную аннотацию-маппинг для функций.",
-                "if_it_were_true": "Тогда пример с `@Bean @Description Function<WeatherRequest, WeatherResponse>` не работал бы, но это канонический способ.",
-                "how_it_should_be": "Функция — это `@Bean` `Function<>` с человекочитаемым `@Description`, по которому модель решает её вызвать."
+                "what_actually": "Инструмент определяют методом с аннотацией `@Tool` в обычном Spring-бине; аннотации `@FunctionMapping` не существует.",
+                "source_of_confusion": "По аналогии с `@RequestMapping` ожидают специальную аннотацию-маппинг для инструментов.",
+                "if_it_were_true": "Тогда пример с `@Tool`-методом в `@Component WeatherTools`, подключаемым через `.tools(...)`, не работал бы, но это канонический способ.",
+                "how_it_should_be": "Инструмент — это метод с человекочитаемым `@Tool(description=...)`, по которому модель решает его вызвать."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`Function Calling` — механизм, где модель решает вызвать внешнюю функцию вместо генерации текста; функцию объявляют как `@Bean` типа `Function<Req, Resp>` с `@Description`, а в запросе подключают по имени бина через `.functions(\"weatherFunction\")`, и модель сама выбирает, когда её вызвать.",
+              "text": "`Function Calling` — механизм, где модель решает вызвать внешнюю функцию вместо генерации текста; инструмент объявляют методом с аннотацией `@Tool` в Spring-бине, а в запросе подключают объект с этими методами через `.tools(new WeatherTools())` (или по имени бина через `.toolNames(\"...\")`), и модель сама выбирает, когда его вызвать.",
               "correct": true,
               "sections": {
-                "explanation": "Модель по `@Description` понимает назначение функции, формирует аргументы, Spring AI исполняет бин и возвращает результат модели для финального ответа.",
-                "example": "`@Bean @Description(\"Get current weather\") Function<WeatherRequest, WeatherResponse> weatherFunction(...)`, затем `chatClient.prompt().user(q).functions(\"weatherFunction\").call().content()`.",
+                "explanation": "Модель по тексту `@Tool(description=...)` понимает назначение инструмента, формирует аргументы, Spring AI исполняет метод бина и возвращает результат модели для финального ответа.",
+                "example": "`@Tool(description=\"Get current weather for a given city\") WeatherResponse getWeather(WeatherRequest request)` в `@Component WeatherTools`, затем `chatClient.prompt().user(q).tools(new WeatherTools()).call().content()`.",
                 "when_to_apply": "Применяют, когда модель должна получать актуальные данные или выполнять действия (погода, поиск заказов, создание тикета), а не отвечать из памяти.",
-                "edge_cases": "Поддержка function calling зависит от модели/провайдера; качество `@Description` и схемы аргументов напрямую влияет на то, выберет ли модель функцию правильно.",
+                "edge_cases": "Поддержка tool calling зависит от модели/провайдера; качество `description` в `@Tool` и схемы аргументов напрямую влияет на то, выберет ли модель инструмент правильно.",
                 "related": "[[spring-ai-interview#Q9]] Advisors; [[spring-ai-interview#Q13]] декларативность против ручного SDK; [[spring-ai-interview#Q15]] агенты на функциях."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "В один запрос можно подключить ровно одну функцию; передать несколько имён в `.functions(...)` нельзя.",
+              "text": "В один запрос можно подключить ровно один инструмент; передать несколько `@Tool`-методов через `.tools(...)` нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "В запрос можно подключить несколько функций, и модель сама выберет нужную (или несколько при parallel calling).",
                 "source_of_confusion": "Минимальные примеры показывают одну функцию, и это принимают за жёсткое ограничение.",
                 "if_it_were_true": "Тогда агент с несколькими инструментами был бы невозможен, но это типовой сценарий Spring AI.",
-                "how_it_should_be": "В `.functions(...)` передают несколько имён бинов; модель решает, какую и когда вызвать."
+                "how_it_should_be": "В `.tools(...)` передают объект(ы) с несколькими `@Tool`-методами; модель решает, какой и когда вызвать."
               }
             }
           ]
@@ -491,11 +491,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Advisors` — это middleware для `ChatClient`, перехватывающее запросы и ответы и добавляющее cross-cutting поведение (RAG, память диалога, логирование, модерация); регистрируются через `defaultAdvisors(...)`, а кастомные реализуют интерфейс вроде `CallAroundAdvisor` и встраиваются в цепочку обработки.",
+              "text": "`Advisors` — это middleware для `ChatClient`, перехватывающее запросы и ответы и добавляющее cross-cutting поведение (RAG, память диалога, логирование, модерация); регистрируются через `defaultAdvisors(...)`, а кастомные реализуют интерфейс вроде `CallAdvisor` и встраиваются в цепочку обработки.",
               "correct": true,
               "sections": {
                 "explanation": "Advisor оборачивает вызов модели: может изменить запрос до отправки, ответ после получения или вовсе короткозамкнуть запрос, вернув свой ответ — как фильтры/перехватчики в Spring.",
-                "example": "Встроенные: `QuestionAnswerAdvisor` (RAG), `MessageChatMemoryAdvisor` (история), `SimpleLoggerAdvisor` (логи). Кастомный `ModerationAdvisor implements CallAroundAdvisor` блокирует запрещённый ввод в `aroundCall`.",
+                "example": "Встроенные: `QuestionAnswerAdvisor` (RAG), `MessageChatMemoryAdvisor` (история), `SimpleLoggerAdvisor` (логи). Кастомный `ModerationAdvisor implements CallAdvisor` блокирует запрещённый ввод в `adviseCall`.",
                 "when_to_apply": "Применяют для сквозной логики вокруг каждого запроса: подмешать контекст RAG, добавить историю, залогировать, провести модерацию — без дублирования в каждом сервисе.",
                 "edge_cases": "Порядок advisor-ов важен: например, модерацию обычно ставят раньше RAG; неверный порядок может пропустить вредный ввод дальше по цепочке.",
                 "related": "[[spring-ai-interview#Q6]] RAG через QuestionAnswerAdvisor; [[spring-ai-interview#Q10]] память через MessageChatMemoryAdvisor; [[spring-ai-interview#Q7]] function calling."
@@ -519,10 +519,10 @@
               "text": "Кастомный advisor нельзя написать самому — доступны только встроенные `QuestionAnswerAdvisor` и `SimpleLoggerAdvisor`.",
               "correct": false,
               "sections": {
-                "what_actually": "Кастомные advisor-ы пишут, реализуя интерфейс (например, `CallAroundAdvisor`) и метод `aroundCall(...)`.",
+                "what_actually": "Кастомные advisor-ы пишут, реализуя интерфейс (например, `CallAdvisor`) и метод `adviseCall(...)`.",
                 "source_of_confusion": "Встроенные advisor-ы покрывают частые задачи, поэтому кажется, что расширение невозможно.",
                 "if_it_were_true": "Тогда нельзя было бы добавить, например, модерацию контента, но это типовой кастомный advisor.",
-                "how_it_should_be": "Реализуют интерфейс advisor, добавляют свою логику в `aroundCall` и регистрируют его в билдере."
+                "how_it_should_be": "Реализуют интерфейс advisor, добавляют свою логику в `adviseCall` и регистрируют его в билдере."
               }
             },
             {
@@ -534,7 +534,7 @@
                 "what_actually": "Advisor может модифицировать запрос/ответ и даже короткозамкнуть цепочку, вернув собственный `ChatResponse` без вызова модели.",
                 "source_of_confusion": "Пример `SimpleLoggerAdvisor` только логирует, и это поведение обобщают на все advisor-ы.",
                 "if_it_were_true": "Тогда `ModerationAdvisor` не мог бы вернуть «I cannot help with that» без обращения к модели, но он именно это и делает.",
-                "how_it_should_be": "Advisor через `aroundCall` управляет цепочкой: вызывает `chain.nextAroundCall(...)` или возвращает свой ответ."
+                "how_it_should_be": "Advisor через `adviseCall` управляет цепочкой: вызывает `chain.nextCall(...)` или возвращает свой ответ."
               }
             }
           ]
@@ -555,32 +555,32 @@
               "correct": false,
               "sections": {
                 "what_actually": "Диалоги изолируют по `conversationId`, передаваемому в advisor; у каждого пользователя/сессии своя история.",
-                "source_of_confusion": "`InMemoryChatMemory` ассоциируется с одним глобальным состоянием на приложение.",
+                "source_of_confusion": "`InMemoryChatMemoryRepository` ассоциируется с одним глобальным состоянием на приложение.",
                 "if_it_were_true": "Тогда ответы разных пользователей смешивались бы, но `conversationId` как раз разделяет контексты.",
-                "how_it_should_be": "Каждому диалогу задают `CHAT_MEMORY_CONVERSATION_ID_KEY`, и память хранится отдельно по этому ключу."
+                "how_it_should_be": "Каждому диалогу задают `ChatMemory.CONVERSATION_ID`, и память хранится отдельно по этому ключу."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Нужен бин `ChatMemory` (`InMemoryChatMemory` для разработки, `JdbcChatMemory`/`CassandraChatMemory` для прода), а в запросе через advisor задают `CHAT_MEMORY_CONVERSATION_ID_KEY` для изоляции диалога и `CHAT_MEMORY_RETRIEVE_SIZE_KEY`, ограничивающий число сообщений в контексте.",
+              "text": "Нужен бин `ChatMemory`, собранный через `MessageWindowChatMemory` поверх `ChatMemoryRepository` (`InMemoryChatMemoryRepository` для разработки, `JdbcChatMemoryRepository`/`CassandraChatMemoryRepository` для прода), а в запросе через advisor задают `ChatMemory.CONVERSATION_ID` для изоляции диалога; размер окна истории (сколько последних сообщений подмешивать) задаётся при сборке памяти — `MessageWindowChatMemory.builder().maxMessages(N)` (по умолчанию 20).",
               "correct": true,
               "sections": {
-                "explanation": "`ChatMemory` хранит историю, advisor подмешивает её в запрос; `conversationId` разделяет пользователей, а `RETRIEVE_SIZE` контролирует, сколько прошлых сообщений попадёт в промпт.",
-                "example": "`.advisors(a -> a.param(CHAT_MEMORY_CONVERSATION_ID_KEY, conversationId).param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))` подтянет последние 10 сообщений именно этого диалога.",
+                "explanation": "`ChatMemory` хранит историю, advisor подмешивает её в запрос; `conversationId` разделяет пользователей, а окно `MessageWindowChatMemory` (`maxMessages`) контролирует, сколько прошлых сообщений попадёт в промпт.",
+                "example": "`MessageWindowChatMemory.builder().maxMessages(10).build()` хранит последние 10 сообщений, а `.advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))` изолирует диалог.",
                 "when_to_apply": "Память нужна для чат-ботов и ассистентов, где модель должна помнить предыдущие реплики в рамках одной сессии пользователя.",
-                "edge_cases": "Большой `RETRIEVE_SIZE` раздувает контекст и стоимость токенов, а `InMemoryChatMemory` теряет историю при рестарте — для прода берут персистентную реализацию.",
+                "edge_cases": "Большое окно (`maxMessages`) раздувает контекст и стоимость токенов, а `InMemoryChatMemoryRepository` теряет историю при рестарте — для прода берут персистентный repository (`JdbcChatMemoryRepository`/`CassandraChatMemoryRepository`).",
                 "related": "[[spring-ai-interview#Q9]] Advisors как механизм памяти; [[spring-ai-interview#Q14]] контроль токенов; [[spring-ai-interview#Q8]] streaming ответов."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Для production-памяти подходит только `InMemoryChatMemory`; персистентных реализаций в `Spring AI` нет.",
+              "text": "Для production-памяти подходит только `InMemoryChatMemoryRepository`; персистентных реализаций `ChatMemoryRepository` в `Spring AI` нет.",
               "correct": false,
               "sections": {
-                "what_actually": "Для прода есть персистентные реализации, например `JdbcChatMemory` и `CassandraChatMemory`; `InMemoryChatMemory` — для разработки.",
-                "source_of_confusion": "`InMemoryChatMemory` — самый частый пример в туториалах, и его принимают за единственный.",
+                "what_actually": "Для прода есть персистентные реализации `ChatMemoryRepository`, например `JdbcChatMemoryRepository` и `CassandraChatMemoryRepository`; `InMemoryChatMemoryRepository` — для разработки.",
+                "source_of_confusion": "`InMemoryChatMemoryRepository` — самый частый пример в туториалах, и его принимают за единственный.",
                 "if_it_were_true": "Тогда история терялась бы при каждом рестарте инстанса, что неприемлемо в проде.",
                 "how_it_should_be": "В проде используют персистентное хранилище памяти, переживающее перезапуски и работающее в нескольких инстансах."
               }
@@ -588,13 +588,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`CHAT_MEMORY_RETRIEVE_SIZE_KEY` задаёт максимальную длину одного сообщения в символах, а не число сообщений.",
+              "text": "Окно `MessageWindowChatMemory` (`maxMessages`) задаёт максимальную длину одного сообщения в символах, а не число хранимых сообщений.",
               "correct": false,
               "sections": {
-                "what_actually": "`RETRIEVE_SIZE` ограничивает количество извлекаемых из истории сообщений, а не длину каждого из них.",
+                "what_actually": "`maxMessages` ограничивает количество хранимых в окне сообщений, а не длину каждого из них.",
                 "source_of_confusion": "Слово «size» неоднозначно — его легко принять за размер сообщения в символах.",
                 "if_it_were_true": "Тогда он обрезал бы текст реплик, но он управляет глубиной истории, попадающей в контекст.",
-                "how_it_should_be": "Чем больше `RETRIEVE_SIZE`, тем больше прошлых сообщений модель учитывает — и тем дороже запрос."
+                "how_it_should_be": "Чем больше окно (`maxMessages`), тем больше прошлых сообщений модель учитывает — и тем дороже запрос."
               }
             }
           ]

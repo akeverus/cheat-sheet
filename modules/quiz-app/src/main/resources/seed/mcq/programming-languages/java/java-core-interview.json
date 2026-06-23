@@ -639,7 +639,7 @@
                 "explanation": "Эти методы дают каждому объекту логическое равенство, хэш для коллекций, строковое представление, доступ к runtime-классу и механизм координации потоков.",
                 "example": "`equals()` и `hashCode()` отвечают за корректную работу в `HashMap`/`HashSet`, `toString()` — за читаемый вывод, `getClass()` — за тип в runtime.",
                 "when_to_apply": "Знание контракта `equals()`/`hashCode()` и понимание, почему `finalize()` — антипаттерн, ожидают на собеседовании по самым основам Java.",
-                "edge_cases": "`finalize()` объявлен deprecated с `Java 9` и удалён в `Java 18` из-за непредсказуемого времени вызова и проблем с производительностью GC.",
+                "edge_cases": "`finalize()` объявлен deprecated с `Java 9`, а с `Java 18` помечен deprecated for removal (JEP 421), но из `Object` ещё не удалён — он по-прежнему присутствует в современных версиях JDK; избегают его из-за непредсказуемого времени вызова и проблем с производительностью GC.",
                 "related": "[[java-core-interview#Q12]] разница == и equals; [[java-core-interview#Q13]] контракт equals и hashCode; [[java-core-interview#Q14]] метод clone и его проблемы."
               },
               "label": "C",
@@ -649,10 +649,10 @@
               "text": "`Object` определяет `finalize()` как современный рекомендуемый способ освобождения ресурсов вместо `try-with-resources`.",
               "correct": false,
               "sections": {
-                "what_actually": "`finalize()` — устаревший антипаттерн (deprecated с `Java 9`, удалён в `Java 18`); ресурсы освобождают через `try-with-resources` и `AutoCloseable`.",
+                "what_actually": "`finalize()` — устаревший антипаттерн (deprecated с `Java 9`, deprecated for removal с `Java 18`, JEP 421, но ещё не удалён из `Object`); ресурсы освобождают через `try-with-resources` и `AutoCloseable`.",
                 "source_of_confusion": "Наличие `finalize()` в `Object` создаёт впечатление, что это штатный механизм очистки.",
-                "if_it_were_true": "Если бы это было так, его не пометили бы deprecated и не удалили из JDK, но именно это и произошло.",
-                "how_it_should_be": "Для детерминированного освобождения ресурсов используют `try-with-resources`, а `finalize()` считается ошибкой проектирования."
+                "if_it_were_true": "Если бы это было так, его не помечали бы deprecated for removal, но именно это с ним и сделали.",
+                "how_it_should_be": "Для детерминированного освобождения ресурсов используют `try-with-resources`, а `finalize()` считается ошибкой проектирования и помечен deprecated for removal."
               },
               "label": "D",
               "order": 3

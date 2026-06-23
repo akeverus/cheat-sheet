@@ -132,8 +132,8 @@
               "text": "`Safepoint bias` — это баг в `VisualVM`, исправленный в `JDK 17`.",
               "correct": false,
               "sections": {
-                "what_actually": "Это не баг одного инструмента, а свойство всех `JVMTI GetStackTrace`-based профайлеров: они снимают стек только в safepoint; JEP 401 добавил safepoints в counted loops, но проблема выборки осталась.",
-                "source_of_confusion": "Версия `JDK 17` (JEP 401) действительно улучшила ситуацию с counted loops, поэтому кажется, что проблему «закрыли».",
+                "what_actually": "Это не баг одного инструмента, а свойство всех `JVMTI GetStackTrace`-based профайлеров: они снимают стек только в safepoint; loop strip mining (JDK 10+) ограничил time-to-safepoint в counted loops, но проблема выборки осталась.",
+                "source_of_confusion": "Loop strip mining (JDK 10+, по умолчанию в C2) действительно улучшил ситуацию с counted loops, поэтому кажется, что проблему «закрыли».",
                 "if_it_were_true": "Если бы это был баг VisualVM, после апдейта `JDK` до 21 bias бы исчез — но `JVMTI`-based профайлеры всё равно ждут safepoint, горячие counted-loops остаются невидимыми.",
                 "how_it_should_be": "Это общее ограничение safepoint-based выборки; решается `AsyncGetCallTrace` (`async-profiler`) или `perf`, а не апдейтом одного инструмента."
               },
@@ -157,9 +157,9 @@
               "correct": true,
               "sections": {
                 "explanation": "JVM может безопасно снять стек потока лишь в safepoint — точке с полностью определённым состоянием. Длинный цикл без safepoint-а профайлер «не видит», и hot path смещается на соседние методы.",
-                "example": "Например, в `for (int i=0; i<array.length; i++) sum += array[i];` (counted loop до `JDK 17`) safepoint мог отсутствовать — VisualVM/JProfiler (sampling) такой цикл не покажут, а `async-profiler` через `AsyncGetCallTrace` снимет его честно.",
-                "when_to_apply": "Это объясняет, почему `async-profiler` точнее `VisualVM`/`JProfiler` (sampling): команды `Twitter` и `LinkedIn` перешли на него именно из-за safepoint bias в counted-loops до JEP 401.",
-                "edge_cases": "JEP 401 (`JDK 17`) добавил safepoints в counted loops, уменьшив bias для них, но `JVMTI`-based профайлеры всё равно ждут safepoint — гарантию даёт только `AsyncGetCallTrace`/`perf`.",
+                "example": "Например, в `for (int i=0; i<array.length; i++) sum += array[i];` (counted loop без loop strip mining) safepoint мог отсутствовать — VisualVM/JProfiler (sampling) такой цикл не покажут, а `async-profiler` через `AsyncGetCallTrace` снимет его честно.",
+                "when_to_apply": "Это объясняет, почему `async-profiler` точнее `VisualVM`/`JProfiler` (sampling): команды `Twitter` и `LinkedIn` перешли на него именно из-за safepoint bias в counted-loops до loop strip mining.",
+                "edge_cases": "Loop strip mining (JDK 10+, по умолчанию в C2) ограничил time-to-safepoint в counted loops, уменьшив bias для них, но `JVMTI`-based профайлеры всё равно ждут safepoint — гарантию даёт только `AsyncGetCallTrace`/`perf`.",
                 "related": "[[application-profiling-interview#Q2]] sampling как класс, где возникает bias; [[application-profiling-interview#Q9]] как async-profiler обходит safepoint; [[application-profiling-interview#Q11]] выбор JFR vs async-profiler."
               },
               "order": 2,

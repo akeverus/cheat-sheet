@@ -86,8 +86,8 @@
               "text": "`KafkaTemplate` настраивается через `spring.kafka.producer` (`bootstrap-servers`, key/value-сериализаторы), затем внедряется как бин; сообщение шлётся через `kafkaTemplate.send(\"orders\", key, value)`, который возвращает future с `SendResult` для добавления callback-ов.",
               "correct": true,
               "sections": {
-                "explanation": "Сериализаторы в YAML (`StringSerializer` для ключа, `JsonSerializer` для значения) задают формат, а `send(...)` возвращает асинхронный future, на который вешают обработчики успеха и ошибки.",
-                "example": "`kafkaTemplate.send(\"orders\", event.orderId(), event)` возвращает future; через `.addCallback(...)` или `.completable()` логируют offset при успехе и ошибку при сбое отправки.",
+                "explanation": "Сериализаторы в YAML (`StringSerializer` для ключа, `JsonSerializer` для значения) задают формат, а `send(...)` в Spring Kafka 3.x возвращает `CompletableFuture<SendResult>`, на который вешают обработчики успеха и ошибки.",
+                "example": "`kafkaTemplate.send(\"orders\", event.orderId(), event)` возвращает `CompletableFuture`; через `.whenComplete((result, ex) -> ...)` (или `.thenAccept(...)`) логируют offset при успехе и ошибку при сбое отправки.",
                 "when_to_apply": "Используют для любой отправки в Kafka из Spring-сервиса: достаточно внедрить типизированный `KafkaTemplate<String, OrderEvent>` и вызвать `send` с ключом и значением.",
                 "edge_cases": "`send(...)` асинхронен: без обработки future или `get()` ошибки отправки можно не заметить, а ключ влияет на выбор партиции и порядок сообщений.",
                 "related": "[[spring-kafka-interview#Q1]] ключевые абстракции; [[spring-kafka-interview#Q10]] сериализация значения; [[spring-kafka-interview#Q14]] idempotent producer."
@@ -395,11 +395,11 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Транзакции дают exactly-once при записи в несколько топиков или совместно с БД: включают `spring.kafka.producer.transaction-id-prefix`, создают `KafkaTransactionManager`, а связку Kafka+JPA оборачивают одним менеджером (`ChainedKafkaTransactionManager`), чтобы откат БД откатывал и Kafka.",
+              "text": "Транзакции дают exactly-once при записи в несколько топиков или совместно с БД: включают `spring.kafka.producer.transaction-id-prefix`, создают `KafkaTransactionManager`, а связку Kafka+JPA в современных версиях оборачивают одним `@Transactional` поверх `DataSource`/JPA-транзакции — при заданном `transaction-id-prefix` `KafkaTemplate` подключает транзакцию producer-а к активной транзакции через transaction synchronization, так что откат БД откатывает и Kafka.",
               "correct": true,
               "sections": {
-                "explanation": "Транзакционный producer атомарно фиксирует группу send-ов и offset-коммитов; при цепочке менеджеров JPA-сохранение и Kafka-публикация коммитятся/откатываются вместе.",
-                "example": "`@Transactional(\"chainedKafkaTxManager\")` поверх метода, где сначала `orderRepository.save(...)` (JPA), затем `kafkaTemplate.send(...)`: при ошибке откатываются обе операции.",
+                "explanation": "Транзакционный producer атомарно фиксирует группу send-ов и offset-коммитов; для связки Kafka+JPA один `@Transactional` поверх DataSource/JPA-транзакции синхронизирует Kafka-транзакцию с транзакцией БД, и они коммитятся/откатываются вместе.",
+                "example": "`@Transactional` (с `DataSourceTransactionManager`/`JpaTransactionManager`) поверх метода, где сначала `orderRepository.save(...)` (JPA), затем `kafkaTemplate.send(...)`: при заданном `transaction-id-prefix` обе операции откатываются вместе при ошибке.",
                 "when_to_apply": "Применяют, когда нельзя допустить рассинхрон БД и Kafka (например, сохранили заказ, но не отправили событие) или нужна атомарная запись в несколько топиков.",
                 "edge_cases": "Транзакции дороже по латентности и требуют уникального `transaction-id-prefix` на инстанс; consumer должен читать с `read_committed`, иначе увидит незакоммиченные записи.",
                 "related": "[[spring-kafka-interview#Q14]] idempotent producer как основа транзакций; [[spring-kafka-interview#Q9]] offset-коммиты; [[spring-kafka-interview#Q2]] базовая отправка."

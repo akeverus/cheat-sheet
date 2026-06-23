@@ -977,7 +977,7 @@
                 "explanation": "`StepVerifier.create(publisher.flux(), 1).then(() -> publisher.next(1)).expectNext(1).thenRequest(2).then(() -> publisher.next(2, 3)).expectNext(2, 3).thenCancel().verify();`.",
                 "example": "Проверка числа запросов: `publisher.assertMinRequested(1); publisher.assertMaxRequested(Long.MAX_VALUE);` — подтверждает, что подписчик запросил ожидаемый объём.",
                 "when_to_apply": "Нужен при проверке корректной реализации backpressure в кастомных операторах и потребителях.",
-                "edge_cases": "Чтобы намеренно нарушить backpressure (эмитить больше запрошенного), нужен `Behavior.REQUEST_OVERFLOW` через `createNoncompliant`; обычный `TestPublisher` такое не позволит.",
+                "edge_cases": "Чтобы намеренно нарушить backpressure (эмитить больше запрошенного), нужен `TestPublisher.Violation.REQUEST_OVERFLOW` через `createNoncompliant`; обычный `TestPublisher` такое не позволит.",
                 "related": "[[reactive-testing-interview#Q23]] проверка соблюдения backpressure; [[reactive-testing-interview#Q24]] `onBackpressureDrop`; [[reactive-testing-interview#Q18]] `createNoncompliant`."
               }
             },
@@ -1034,20 +1034,20 @@
               "text": "Нужно вызвать обычный `TestPublisher.create()` и передать флаг `strict = false` в его конструктор.",
               "correct": false,
               "sections": {
-                "what_actually": "Несоблюдающий publisher создаётся отдельной фабрикой `TestPublisher.createNoncompliant(Behavior...)`, а не флагом в `create()`.",
+                "what_actually": "Несоблюдающий publisher создаётся отдельной фабрикой `TestPublisher.createNoncompliant(Violation...)`, а не флагом в `create()`.",
                 "source_of_confusion": "Привычка к булевым флагам конфигурации подсказывает несуществующий параметр.",
                 "if_it_were_true": "Если бы был флаг `strict`, не понадобилась бы отдельная фабрика `createNoncompliant`.",
-                "how_it_should_be": "Используйте `TestPublisher.createNoncompliant(Behavior...)` для отключения проверок."
+                "how_it_should_be": "Используйте `TestPublisher.createNoncompliant(Violation...)` для отключения проверок."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "По умолчанию `TestPublisher` соблюдает правила `Reactive Streams` и бросает исключение при нарушении. `TestPublisher.createNoncompliant(Behavior...)` отключает выбранные проверки, позволяя сэмулировать «плохой» publisher и проверить устойчивость потребителя.",
+              "text": "По умолчанию `TestPublisher` соблюдает правила `Reactive Streams` и бросает исключение при нарушении. `TestPublisher.createNoncompliant(Violation...)` отключает выбранные проверки, позволяя сэмулировать «плохой» publisher и проверить устойчивость потребителя.",
               "correct": true,
               "sections": {
-                "explanation": "`TestPublisher.createNoncompliant(TestPublisher.Behavior.ALLOW_NULL)` разрешает эмитить `null`; `createNoncompliant(TestPublisher.Behavior.REQUEST_OVERFLOW)` — эмитить больше запрошенного.",
-                "example": "`createNoncompliant(TestPublisher.Behavior.DEFER_CANCELLATION)` позволяет проверить поведение при отложенной отмене/эмиссии после терминала.",
+                "explanation": "`TestPublisher.createNoncompliant(TestPublisher.Violation.ALLOW_NULL)` разрешает эмитить `null`; `createNoncompliant(TestPublisher.Violation.REQUEST_OVERFLOW)` — эмитить больше запрошенного.",
+                "example": "`createNoncompliant(TestPublisher.Violation.DEFER_CANCELLATION)` позволяет проверить поведение при отложенной отмене/эмиссии после терминала.",
                 "when_to_apply": "Берут для негативных тестов: как код реагирует на нарушающий спецификацию источник (`null`, overflow).",
                 "edge_cases": "Несоблюдающий режим включают только для негативных тестов; для штатных сценариев используют обычный `create()`, чтобы ловить реальные нарушения контракта.",
                 "related": "[[reactive-testing-interview#Q15]] базовый `TestPublisher`; [[reactive-testing-interview#Q16]] эмиссия сигналов; [[reactive-testing-interview#Q17]] тест backpressure."
@@ -1059,10 +1059,10 @@
               "text": "`createNoncompliant()` отключает все проверки сразу и не принимает параметров — режим единый «всё разрешено».",
               "correct": false,
               "sections": {
-                "what_actually": "Метод принимает один или несколько `Behavior`, выборочно ослабляя конкретные проверки (`ALLOW_NULL`, `REQUEST_OVERFLOW`, `DEFER_CANCELLATION`).",
+                "what_actually": "Метод принимает один или несколько `Violation`, выборочно ослабляя конкретные проверки (`ALLOW_NULL`, `REQUEST_OVERFLOW`, `DEFER_CANCELLATION`).",
                 "source_of_confusion": "Кажется, что «noncompliant» — это один глобальный переключатель.",
                 "if_it_were_true": "Если бы он отключал всё разом, нельзя было бы проверить реакцию именно на overflow, не разрешая `null`.",
-                "how_it_should_be": "Передавайте нужные `Behavior`-флаги, чтобы ослабить только выбранные правила."
+                "how_it_should_be": "Передавайте нужные `Violation`-флаги, чтобы ослабить только выбранные правила."
               }
             },
             {

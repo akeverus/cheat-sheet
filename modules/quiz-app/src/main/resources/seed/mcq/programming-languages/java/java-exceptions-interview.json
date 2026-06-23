@@ -744,13 +744,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Если тело `try` бросило исключение и `close()` тоже бросил, основным становится исключение из `try`, а исключение `close()` добавляется к нему как suppressed и доступно через `getSuppressed()`.",
+              "text": "Если тело `try` бросило исключение и `close()` тоже бросил, то исключение из `close()` полностью затирает исключение тела `try`: наверх летит только ошибка `close()`, а первопричина из тела навсегда теряется.",
               "correct": false,
               "sections": {
-                "what_actually": "Именно так работает suppressed-механизм: ошибка тела — основная, ошибка `close()` — подавленная, и обе сохраняются.",
-                "source_of_confusion": "Иногда думают, что выживает только одно исключение, но сохраняются оба.",
-                "if_it_were_true": "Тогда ошибка `close()` терялась бы, но `try-with-resources` специально её сохраняет.",
-                "how_it_should_be": "Основное — из тела, подавленное — из `close()`, доступно через `getSuppressed()`."
+                "what_actually": "Наоборот: основным остаётся исключение тела `try`, а ошибка `close()` не теряется и не затирает его — она присоединяется как подавленная и доступна через `getSuppressed()`.",
+                "source_of_confusion": "Так ведёт себя ручной `finally` без suppressed-механизма, и это поведение ошибочно переносят на `try-with-resources`.",
+                "if_it_were_true": "Тогда `try-with-resources` ничем не отличался бы от старого ручного `finally`, но он специально вводит suppressed, чтобы первопричина не пропадала.",
+                "how_it_should_be": "Главным остаётся исключение тела `try`; ошибка `close()` сохраняется как suppressed, а не затирает основное."
               }
             },
             {
@@ -816,13 +816,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`addSuppressed(Throwable)` добавляет подавленное исключение к текущему, а `getSuppressed()` возвращает массив `Throwable[]` всех подавленных; JVM зовёт их автоматически в `try-with-resources`.",
+              "text": "`addSuppressed(Throwable)` устанавливает причину (`cause`) текущего исключения, а `getSuppressed()` возвращает эту единственную причину как объект `Throwable`.",
               "correct": false,
               "sections": {
-                "what_actually": "Это точное описание контракта методов и их роли в suppressed-механизме.",
-                "source_of_confusion": "Иногда их считают чисто внутренними и не знают, что они доступны и в пользовательском коде.",
-                "if_it_were_true": "Тогда нельзя было бы вручную накапливать ошибки `close()`, но `addSuppressed` для того и публичен.",
-                "how_it_should_be": "`addSuppressed` копит подавленные, `getSuppressed` их отдаёт; в TWR это делает JVM."
+                "what_actually": "`addSuppressed`/`getSuppressed` работают с подавленными исключениями, а не с `cause`: `getSuppressed()` возвращает массив `Throwable[]`, а причину задают `initCause`/конструктором.",
+                "source_of_confusion": "И подавленные, и `cause` хранят «дополнительное» исключение, поэтому две пары методов путают между собой.",
+                "if_it_were_true": "Тогда `addSuppressed` дублировал бы `initCause`, но это разные механизмы: причина одна, а подавленных может быть несколько.",
+                "how_it_should_be": "`addSuppressed` копит подавленные исключения, `getSuppressed()` отдаёт их массивом; за `cause` отвечают `initCause`/`getCause`."
               }
             },
             {
@@ -1536,13 +1536,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Thread.UncaughtExceptionHandler` — интерфейс, который JVM вызывает при завершении потока из-за необработанного исключения; ставится на поток или глобально (`setDefaultUncaughtExceptionHandler`).",
+              "text": "`Thread.UncaughtExceptionHandler` можно задать только глобально через `setDefaultUncaughtExceptionHandler`; повесить отдельный обработчик на конкретный поток нельзя.",
               "correct": false,
               "sections": {
-                "what_actually": "Это точное определение: последняя точка для логирования/алертинга перед завершением потока.",
-                "source_of_confusion": "Иногда не знают про разделение на per-thread и default-обработчик.",
-                "if_it_were_true": "Тогда нельзя было бы централизованно ловить падения всех потоков, но `setDefaultUncaughtExceptionHandler` это и делает.",
-                "how_it_should_be": "Хендлер вызывается JVM при необработанном исключении; бывает per-thread и глобальный."
+                "what_actually": "Обработчик ставят и на конкретный поток (`thread.setUncaughtExceptionHandler(...)`), и глобально; per-thread-обработчик имеет приоритет над дефолтным.",
+                "source_of_confusion": "Глобальный `setDefaultUncaughtExceptionHandler` встречается чаще, отсюда мысль, что это единственный способ.",
+                "if_it_were_true": "Тогда `thread.setUncaughtExceptionHandler(...)` не существовал бы, но это рабочий метод класса `Thread`.",
+                "how_it_should_be": "Хендлер можно задать и на конкретный поток, и глобально; JVM ищет per-thread, затем `ThreadGroup`, затем дефолтный."
               }
             },
             {
@@ -1704,13 +1704,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`getCause()` возвращает исключение-причину (или `null`), а `initCause(Throwable)` устанавливает её один раз; повторный `initCause()` бросает `IllegalStateException`.",
+              "text": "`initCause(Throwable)` возвращает исключение-причину, а `getCause()` устанавливает её; при этом `getCause()` можно вызвать только один раз.",
               "correct": false,
               "sections": {
-                "what_actually": "Это точный контракт обоих методов работы с `cause`.",
-                "source_of_confusion": "Иногда не знают про ограничение «только один раз» у `initCause`.",
-                "if_it_were_true": "Тогда причину можно было бы переопределять многократно, но второй вызов даёт `IllegalStateException`.",
-                "how_it_should_be": "`getCause()` читает причину, `initCause()` задаёт её однократно."
+                "what_actually": "Роли перепутаны: причину читает `getCause()` (без ограничений на число вызовов), а устанавливает её однократно `initCause(Throwable)`.",
+                "source_of_confusion": "Оба метода работают с `cause`, поэтому их назначение легко поменять местами.",
+                "if_it_were_true": "Тогда `getCause()` принимал бы аргумент и менял состояние, но он лишь возвращает ранее заданную причину.",
+                "how_it_should_be": "`getCause()` читает причину (сколько угодно раз), `initCause(Throwable)` задаёт её ровно один раз."
               }
             },
             {
@@ -2016,13 +2016,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Антипаттерны: пустой `catch` (swallowing), `catch (Exception)` везде, double logging (лог + проброс), исключения для flow control и `throw new Exception(...)` с потерей типизации.",
+              "text": "Антипаттерны: передача `cause` при оборачивании исключения, использование конкретных доменных типов вместо общего `Exception` и логирование исключения через `log.error(msg, ex)`.",
               "correct": false,
               "sections": {
-                "what_actually": "Это и есть классический список антипаттернов обработки исключений.",
-                "source_of_confusion": "Иногда называют лишь один пункт (например, пустой catch), упуская остальные.",
-                "if_it_were_true": "Тогда другие ошибки (double logging, flow control) оставались бы незамеченными, но все они вредны.",
-                "how_it_should_be": "Swallowing, широкий catch, double logging, flow control и нетипизированный `throw` — основные антипаттерны."
+                "what_actually": "Всё перечисленное — наоборот, best practices: сохранять `cause`, бросать конкретные типы и логировать через `log.error(msg, ex)`; настоящие антипаттерны — пустой catch, double logging, flow control.",
+                "source_of_confusion": "Хорошие практики выдают за антипаттерны, перепутав рекомендации с тем, чего следует избегать.",
+                "if_it_were_true": "Тогда chaining (Q8) и типизированные исключения были бы вредны, но их прямо рекомендуют.",
+                "how_it_should_be": "Антипаттерны — это swallowing, `catch (Exception)` везде, double logging, flow control и `throw new Exception(...)`; сохранение `cause` и конкретные типы — правильно."
               }
             },
             {

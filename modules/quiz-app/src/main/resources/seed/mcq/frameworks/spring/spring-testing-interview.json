@@ -875,13 +875,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В Spring Boot 3.1+ есть нативная интеграция: контейнер объявляют `@Bean` с `@ServiceConnection`, и он автоматически настраивает `spring.datasource.*` (или Redis/Kafka). Тест подключает конфиг через `@ImportTestcontainers`. В старом подходе использовали `@Container` + `@DynamicPropertySource` для ручной передачи URL/креденшелов.",
+              "text": "В Spring Boot 3.1+ есть нативная интеграция: контейнер объявляют `@Bean` с `@ServiceConnection`, и он автоматически настраивает `spring.datasource.*` (или Redis/Kafka). Конфигурацию с `@Bean`-методами тест подключает обычным `@Import`. В старом подходе использовали `@Container` + `@DynamicPropertySource` для ручной передачи URL/креденшелов.",
               "correct": true,
               "sections": {
-                "explanation": "С 3.1 Spring Boot умеет сам конфигурировать соединение из контейнера: бин `PostgreSQLContainer` с `@ServiceConnection` выставляет `spring.datasource.url/username/password`. Тест подтягивает такую конфигурацию через `@ImportTestcontainers`, а до 3.1 то же делали руками через `@DynamicPropertySource`.",
-                "example": "`@Bean @ServiceConnection PostgreSQLContainer<?> postgres(){ return new PostgreSQLContainer<>(\"postgres:16\"); }` плюс `@SpringBootTest @ImportTestcontainers(TestcontainersConfig.class)` дают тест на реальном PostgreSQL.",
+                "explanation": "С 3.1 Spring Boot умеет сам конфигурировать соединение из контейнера: бин `PostgreSQLContainer` с `@ServiceConnection` выставляет `spring.datasource.url/username/password`. Тест подтягивает такую `@TestConfiguration` с `@Bean`-методами через обычный `@Import`, а до 3.1 то же делали руками через `@DynamicPropertySource`.",
+                "example": "`@Bean @ServiceConnection PostgreSQLContainer<?> postgres(){ return new PostgreSQLContainer<>(\"postgres:16\"); }` плюс `@SpringBootTest @Import(TestcontainersConfig.class)` дают тест на реальном PostgreSQL.",
                 "when_to_apply": "Берут, когда in-memory H2 недостаточно: нужны специфика PostgreSQL (типы, миграции `Flyway`), реальный Redis/Kafka или проверка SQL, не работающего в H2.",
-                "edge_cases": "Старый стиль `@Container static PostgreSQLContainer<?> postgres` + `@DynamicPropertySource` всё ещё нужен, когда `@ServiceConnection` не покрывает тип контейнера или требуется тонкая настройка свойств вручную.",
+                "edge_cases": "Старый стиль `@Container static PostgreSQLContainer<?> postgres` + `@DynamicPropertySource` всё ещё нужен, когда `@ServiceConnection` не покрывает тип контейнера или требуется тонкая настройка свойств вручную. Отдельная `@ImportTestcontainers` — для другого случая: класс со static-полями контейнеров (без `@Bean`-методов); смешивать её с `@Import` `@Bean`-конфигурации нельзя.",
                 "related": "[[spring-testing-interview#Q5]] `@DataJpaTest` с `replace=NONE` на реальной БД; [[spring-testing-interview#Q1]] `@SpringBootTest` как окружение для контейнеров; [[spring-testing-interview#Q2]] `RANDOM_PORT` для end-to-end поверх реальной БД."
               }
             },

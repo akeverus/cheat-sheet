@@ -1449,10 +1449,10 @@
           "question_text": "Как `MapStruct` поддерживает Lombok `@Builder`?",
           "options": [
             {
-              "text": "`MapStruct` умеет работать с builder-паттерном Lombok начиная с версии 1.4 и по умолчанию предпочитает builder, если он есть: для `@Value @Builder` DTO сгенерированный код вызывает `UserDto.builder().name(...).email(...).build()` вместо конструктора/сеттеров.",
+              "text": "`MapStruct` умеет работать с builder-паттерном Lombok начиная с версии 1.3 и по умолчанию предпочитает builder, если он есть: для `@Value @Builder` DTO сгенерированный код вызывает `UserDto.builder().name(...).email(...).build()` вместо конструктора/сеттеров.",
               "correct": true,
               "sections": {
-                "explanation": "С версии 1.4 `MapStruct` по умолчанию предпочитает builder, если он есть, и сам собирает immutable-DTO через цепочку `builder()...build()`.",
+                "explanation": "С версии 1.3 `MapStruct` по умолчанию предпочитает builder, если он есть, и сам собирает immutable-DTO через цепочку `builder()...build()`.",
                 "example": "Для immutable `@Value @Builder class UserDto { String name; String email; }` `MapStruct` сам соберёт объект через `builder()`...`build()`; нестандартный build-метод задают через `@BeanMapping(builder = @Builder(buildMethod = \"create\"))`.",
                 "when_to_apply": "Полезно для immutable-DTO без сеттеров: если у target только builder, `MapStruct` корректно его использует без ручной настройки в обычном случае.",
                 "edge_cases": "Для `@SuperBuilder` (наследование) нужна дополнительная настройка через `BuilderProvider`; нестандартное имя build-метода тоже требует явного указания в `@BeanMapping`.",
@@ -1465,10 +1465,10 @@
               "text": "`MapStruct` не поддерживает Lombok `@Builder`: для immutable-DTO с builder приходится писать `default`-метод, вручную вызывающий цепочку builder.",
               "correct": false,
               "sections": {
-                "what_actually": "Поддержка builder есть с версии 1.4 — `MapStruct` сам генерирует вызов `builder()...build()`, ручной `default`-метод не нужен.",
+                "what_actually": "Поддержка builder есть с версии 1.3 — `MapStruct` сам генерирует вызов `builder()...build()`, ручной `default`-метод не нужен.",
                 "source_of_confusion": "Старые версии действительно не умели в builder, и это устаревшее знание сохраняется.",
                 "if_it_were_true": "Тогда не было бы атрибута `builder` у `@BeanMapping`, но он есть именно для настройки builder-маппинга.",
-                "how_it_should_be": "С 1.4 builder поддерживается автоматически; для immutable-DTO `MapStruct` сам использует цепочку builder."
+                "how_it_should_be": "С 1.3 builder поддерживается автоматически; для immutable-DTO `MapStruct` сам использует цепочку builder."
               },
               "label": "B",
               "order": 1

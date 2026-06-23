@@ -83,11 +83,11 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Подключают зависимость `spring-session-data-redis`, ставят `spring.session.store-type: redis`, задают `timeout`, `namespace`, `flush-mode` и координаты `Redis`; после этого `Spring Session` перехватывает `getSession()` и грузит сессию из `Redis` как hash вместо памяти контейнера.",
+              "text": "Подключают зависимость `spring-session-data-redis` — в Spring Boot 3.x стор определяется автоматически по наличию зависимости на classpath (свойство `spring.session.store-type` из Boot 2.x удалено); задают `timeout`, `namespace`, `flush-mode` и координаты `Redis`; при коллизии нескольких сторов выбор фиксируют аннотацией `@EnableRedisHttpSession`. После этого `Spring Session` перехватывает `getSession()` и грузит сессию из `Redis` как hash вместо памяти контейнера.",
               "correct": true,
               "sections": {
-                "explanation": "Достаточно зависимости `spring-session-data-redis` и свойства `store-type: redis` — `Spring Boot` сам поднимает `RedisSessionRepository` и фильтр, заменяющий хранилище сессии.",
-                "example": "Сессия лежит в `Redis` под ключом `myapp:session:sessions:<sessionId>` с полями `lastAccessedTime`, `maxInactiveInterval`, `sessionAttr:<name>`.",
+                "explanation": "Достаточно стартера `spring-session-data-redis` на classpath — `Spring Boot` 3.x сам выбирает стор по зависимости и поднимает `RedisSessionRepository` и фильтр, заменяющий хранилище сессии; задавать `store-type` не нужно, это свойство Boot 2.x удалено.",
+                "example": "Сессия лежит в `Redis` под ключом `myapp:session:sessions:<sessionId>` с полями `lastAccessedTime`, `maxInactiveInterval`, `sessionAttr:<name>`; при коллизии сторов стор фиксируют аннотацией `@EnableRedisHttpSession`.",
                 "when_to_apply": "Используют, когда нужно общее быстрое хранилище сессий для кластера с низкой задержкой и поддержкой TTL/событий истечения.",
                 "edge_cases": "`flush-mode: on-save` пишет в `Redis` в конце запроса; при `immediate` запись идёт сразу, что повышает нагрузку, но снижает риск потери при сбое.",
                 "related": "[[spring-session-interview#Q1]] зачем нужен `Spring Session`; [[spring-session-interview#Q3]] аналогичная настройка `JDBC`; [[spring-session-interview#Q8]] сериализация значений в `Redis`."
@@ -155,10 +155,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Подключают `spring-session-jdbc`, ставят `store-type: jdbc`, при необходимости `initialize-schema: always` для авто-создания таблиц `SPRING_SESSION` и `SPRING_SESSION_ATTRIBUTES`; истёкшие сессии чистит периодическая задача по `spring.session.jdbc.cleanup-cron`.",
+              "text": "Подключают `spring-session-jdbc` — в Spring Boot 3.x стор выбирается автоматически по зависимости на classpath (свойство `store-type` удалено в Boot 3.0, задавать его не нужно); при необходимости ставят `initialize-schema: always` для авто-создания таблиц `SPRING_SESSION` и `SPRING_SESSION_ATTRIBUTES`; истёкшие сессии чистит периодическая задача по `spring.session.jdbc.cleanup-cron`.",
               "correct": true,
               "sections": {
-                "explanation": "`JDBC` store кладёт сессию в две таблицы реляционной БД, переиспользуя существующий `DataSource`, и не требует отдельного `Redis`-кластера.",
+                "explanation": "`JDBC` стор подключают стартером `spring-session-jdbc`, и `Spring Boot` 3.x выбирает его по classpath (явный `store-type` не задают — он удалён в Boot 3.0); сессия кладётся в две таблицы реляционной БД, переиспользуя существующий `DataSource`, без отдельного `Redis`-кластера.",
                 "example": "С `initialize-schema: always` `Spring Boot` создаёт `SPRING_SESSION` (с `SESSION_ID`, `EXPIRY_TIME`, `PRINCIPAL_NAME`) и `SPRING_SESSION_ATTRIBUTES` (с `ATTRIBUTE_BYTES`).",
                 "when_to_apply": "Применяют, когда уже есть надёжная СУБД (`PostgreSQL`) и не хочется вводить новый инфраструктурный компонент ради сессий.",
                 "edge_cases": "В отличие от `Redis`, у `JDBC` нет нативного TTL, поэтому нужна задача очистки (`cleanup-cron`), иначе таблицы распухнут истёкшими записями.",

@@ -446,7 +446,7 @@
               "text": "Если `Java`-код передаст `null` в non-null `Kotlin`-параметр, `NullPointerException` возникнет позже — при первом фактическом использовании значения внутри метода.",
               "correct": false,
               "sections": {
-                "what_actually": "`Kotlin` вставляет intrinsic-проверку на входе в метод и бросает `IllegalArgumentException` немедленно, до использования значения.",
+                "what_actually": "`Kotlin` вставляет intrinsic-проверку на входе в метод и бросает `NullPointerException` немедленно, до использования значения.",
                 "source_of_confusion": "В `Java` NPE обычно случается при разыменовании, и эту модель переносят на `Kotlin`-методы.",
                 "if_it_were_true": "Тогда `process(null)` падал бы только на `name.uppercase()`, но он падает сразу на входе.",
                 "how_it_should_be": "Проверка стоит в начале метода; нарушение контракта обнаруживается на входе, а не отложенно."
@@ -467,11 +467,11 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Ничего вручную делать не нужно: `Kotlin`-компилятор сам добавляет `@NotNull` в байткод для `String`-параметров и `@Nullable` для `String?`, плюс runtime-проверку на входе; передача `null` из `Java` в non-null параметр немедленно бросает `IllegalArgumentException` на входе в метод.",
+              "text": "Ничего вручную делать не нужно: `Kotlin`-компилятор сам добавляет `@NotNull` в байткод для `String`-параметров и `@Nullable` для `String?`, плюс runtime-проверку на входе; передача `null` из `Java` в non-null параметр немедленно бросает `NullPointerException` на входе в метод.",
               "correct": true,
               "sections": {
                 "explanation": "Компилятор автоматически материализует nullability-контракт в байткоде: non-null тип → `@NotNull` + intrinsic-проверка в начале метода, nullable → `@Nullable`; разработчику не нужно расставлять аннотации руками.",
-                "example": "Для `fun process(name: String): String = name.uppercase()` вызов `UserKt.process(null)` из `Java` сразу даёт `IllegalArgumentException: Parameter specified as non-null is null`.",
+                "example": "Для `fun process(name: String): String = name.uppercase()` вызов `UserKt.process(null)` из `Java` сразу даёт `NullPointerException: Parameter specified as non-null is null`.",
                 "when_to_apply": "На это опираются, проектируя `Kotlin`-API для `Java`-клиентов: nullability видна на той стороне без ручных аннотаций, а нарушение контракта ловится рано.",
                 "edge_cases": "Проверка срабатывает именно на входе в метод (а не позже при использовании); для публичных библиотек nullability всё равно полезно документировать, т.к. не все `Java`-IDE покажут предупреждения.",
                 "related": "[[kotlin-interop-java-interview#Q6]] platform types; [[kotlin-interop-java-interview#Q7]] распознавание аннотаций; [[kotlin-interop-java-interview#Q26]] Java-friendly API."
