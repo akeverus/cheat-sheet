@@ -44,39 +44,32 @@ public class UserTopicStatsRepository {
         if (topic == null || topic.isBlank()) {
             return;
         }
-        Optional<UserTopicStats> existing = findByTopic(topic);
-        if (existing.isEmpty()) {
-            int correct = correctAnswer ? 1 : 0;
-            int incorrect = correctAnswer ? 0 : 1;
-            double mastery = calculateMastery(correct, incorrect);
-            jdbcTemplate.update(
-                    "INSERT INTO user_topic_stats (topic, correct, incorrect, mastery, last_seen) VALUES (?, ?, ?, ?, ?)",
-                    topic,
-                    correct,
-                    incorrect,
-                    mastery,
-                    Timestamp.valueOf(LocalDateTime.now())
-            );
-            return;
-        }
-        UserTopicStats current = existing.get();
-        int nextCorrect = current.getCorrect() + (correctAnswer ? 1 : 0);
-        int nextIncorrect = current.getIncorrect() + (correctAnswer ? 0 : 1);
+        int correct = correctAnswer ? 1 : 0;
+        int incorrect = correctAnswer ? 0 : 1;
+        // Атомарный upsert вместо read-modify-write (findByTopic + INSERT/UPDATE).
+        // Прежний вариант имел гонку: два конкурентных первых ответа по одной теме
+        // оба видели empty → оба INSERT → второй падал на UNIQUE(topic), откатывая
+        // весь @Transactional submitAnswer вместе с SM-2 ReviewState; в ветке UPDATE
+        // параллельные ответы давали lost update, искажая mastery (питает границы
+        // AdaptiveDifficultyService). ON CONFLICT инкрементирует и пересчитывает
+        // mastery одним statement. PostgreSQL-only (CLAUDE.md) → ON CONFLICT доступен.
+        // На первичной вставке total=1 → mastery = correct (1.0|0.0), как раньше;
+        // COALESCE/NULLIF — защита от деления на 0 (теоретическая, total всегда ≥1).
         jdbcTemplate.update(
-                "UPDATE user_topic_stats SET correct = ?, incorrect = ?, mastery = ?, last_seen = ? WHERE topic = ?",
-                nextCorrect,
-                nextIncorrect,
-                calculateMastery(nextCorrect, nextIncorrect),
-                Timestamp.valueOf(LocalDateTime.now()),
-                topic
+                "INSERT INTO user_topic_stats (topic, correct, incorrect, mastery, last_seen) "
+                        + "VALUES (?, ?, ?, ?, ?) "
+                        + "ON CONFLICT (topic) DO UPDATE SET "
+                        + "correct = user_topic_stats.correct + EXCLUDED.correct, "
+                        + "incorrect = user_topic_stats.incorrect + EXCLUDED.incorrect, "
+                        + "mastery = COALESCE((user_topic_stats.correct + EXCLUDED.correct)::double precision "
+                        + "/ NULLIF(user_topic_stats.correct + EXCLUDED.correct "
+                        + "+ user_topic_stats.incorrect + EXCLUDED.incorrect, 0), 0), "
+                        + "last_seen = EXCLUDED.last_seen",
+                topic,
+                correct,
+                incorrect,
+                (double) correct,
+                Timestamp.valueOf(LocalDateTime.now())
         );
-    }
-
-    private static double calculateMastery(int correct, int incorrect) {
-        int total = correct + incorrect;
-        if (total == 0) {
-            return 0.0;
-        }
-        return (double) correct / total;
     }
 }

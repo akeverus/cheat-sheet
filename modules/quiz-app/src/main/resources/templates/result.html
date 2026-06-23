@@ -12,7 +12,10 @@
     <section class="card flex-shrink-0" th:if="${interviewSession != null}">
         <div class="session-bar">
             <span>Сессия: <strong th:text="${@modeUtils.displayName(interviewSession.mode)}">MODE</strong></span>
-            <span>Прогресс: <span th:text="${interviewSession.getIndex() + 1}">1</span>/<span th:text="${interviewSession.getTotal()}">0</span></span>
+            <!-- getIndex() уже инкрементирован в registerAnswer ДО рендера /answer →
+                 = число отвеченных = 1-based номер только что отвеченного вопроса.
+                 БЕЗ +1 (на странице-вопроса +1 верен, тут переполнял бы: «11/10»). -->
+            <span>Прогресс: <span th:text="${interviewSession.getIndex()}">1</span>/<span th:text="${interviewSession.getTotal()}">0</span></span>
             <span><svg class="ed-icon ed-icon-success" aria-hidden="true"><use href="#i-circle-check"></use></svg> <span class="visually-hidden">Верно:</span> <span th:text="${interviewSession.getCorrect()}">0</span></span>
             <span><svg class="ed-icon ed-icon-error" aria-hidden="true"><use href="#i-circle-x"></use></svg> <span class="visually-hidden">Неверно:</span> <span th:text="${interviewSession.getWrong()}">0</span></span>
             <form method="post" th:action="@{/finish}" class="d-inline">
