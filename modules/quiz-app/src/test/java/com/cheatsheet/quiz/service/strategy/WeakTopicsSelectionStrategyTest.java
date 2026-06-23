@@ -58,7 +58,11 @@ class WeakTopicsSelectionStrategyTest {
 
     @Test
     void returnsDueFromWeakTopic() {
-        InterviewFilter filter = new InterviewFilter("java", false, false);
+        // Каноничный сценарий «Слабые темы»: тема НЕ зафиксирована (topic=null),
+        // система сама уводит в глобально слабейшую. Раньше тут стоял topic="java"
+        // — несовпадающий со слабой "spring" — что незаметно покрывало баг (стратегия
+        // выдавала чужую тему). Конфликт topic≠weak теперь проверяет отдельный тест.
+        InterviewFilter filter = new InterviewFilter(null, false, false);
         when(questionStatsRepository.findWeakestTopic(QuizConstants.WEAK_TOPIC_THRESHOLD))
                 .thenReturn("spring");
         when(questionRepository.findDueQuestions("spring", false, false, NOW, 1))
@@ -72,7 +76,7 @@ class WeakTopicsSelectionStrategyTest {
 
     @Test
     void returnsNextFromWeakTopicWhenNoDue() {
-        InterviewFilter filter = new InterviewFilter("java", true, false);
+        InterviewFilter filter = new InterviewFilter(null, true, false);
         when(questionStatsRepository.findWeakestTopic(QuizConstants.WEAK_TOPIC_THRESHOLD))
                 .thenReturn("sql");
         when(questionRepository.findDueQuestions("sql", true, false, NOW, 1))
@@ -83,6 +87,27 @@ class WeakTopicsSelectionStrategyTest {
         Optional<Long> result = strategy.selectNextQuestionId(filter, NOW);
 
         assertThat(result).contains(20L);
+    }
+
+    @Test
+    void delegatesToDefaultWhenWeakTopicDiffersFromSelectedTopic() {
+        // Регресс-гард: пользователь зафиксировал тему "java", но глобально слабейшая
+        // — "spring". Стратегия НЕ должна подсовывать вопросы из чужой темы; она
+        // делегирует в default-стратегию, которая чтит выбранную тему. Симметрично
+        // существующему групповому guard'у (слабая тема вне выбранной группы → default).
+        InterviewFilter filter = new InterviewFilter("java", false, false);
+        when(questionStatsRepository.findWeakestTopic(QuizConstants.WEAK_TOPIC_THRESHOLD))
+                .thenReturn("spring");
+        when(defaultStrategy.selectNextQuestionId(filter, NOW))
+                .thenReturn(Optional.of(42L));
+
+        Optional<Long> result = strategy.selectNextQuestionId(filter, NOW);
+
+        assertThat(result).contains(42L);
+        verify(defaultStrategy).selectNextQuestionId(filter, NOW);
+        // Подтверждаем, что вопросы из слабой "spring" вообще не запрашивались.
+        verify(questionRepository, never()).findDueQuestions(any(), any(), any(), anyLong(), anyInt());
+        verify(questionRepository, never()).findNextQuestions(any(), any(), any(), anyLong(), anyInt());
     }
 
     @Test

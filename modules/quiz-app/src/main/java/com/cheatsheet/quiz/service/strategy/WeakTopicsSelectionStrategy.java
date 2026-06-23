@@ -41,6 +41,20 @@ public class WeakTopicsSelectionStrategy implements QuestionSelectionStrategy {
             return defaultStrategy.selectNextQuestionId(filter, nowEpoch);
         }
 
+        // Симметрично групповому guard'у ниже: если пользователь зафиксировал
+        // конкретную тему, нельзя подсовывать вопросы из глобально слабейшей
+        // (findWeakestTopic фильтр-агностичен). topic и group — НЕЗАВИСИМЫЕ
+        // параметры запроса, поэтому при выбранной теме без группы
+        // effectiveGroup()==null и групповой guard эту ситуацию не ловит —
+        // без этой проверки «Слабые темы» молча выдавали бы вопросы из чужой
+        // темы. Делегируем в default-стратегию (она чтит выбранную тему);
+        // приоритет слабых тем сохраняется для режимов «вся база»/«только группа».
+        if (filter.effectiveTopic() != null && !filter.effectiveTopic().equals(weakTopic)) {
+            log.debug("Слабая тема '{}' не совпадает с выбранной '{}', используем стратегию по умолчанию",
+                    weakTopic, filter.effectiveTopic());
+            return defaultStrategy.selectNextQuestionId(filter, nowEpoch);
+        }
+
         if (filter.effectiveGroup() != null) {
             var allowedTopics = topicCatalogService.topicsForFilter(filter, questionRepository.findTopics());
             if (!allowedTopics.contains(weakTopic)) {
