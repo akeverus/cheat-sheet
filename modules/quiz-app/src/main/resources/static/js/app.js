@@ -563,9 +563,10 @@
       syncTheme();
     }
 
-    // Выбор дизайна (editorial/swiss/linear) — radiogroup, как сегмент темы.
-    // Источник истины — window.__design (head.html), переключение мгновенное
-    // (флип data-design на <html>, без перезагрузки).
+    // Выбор дизайна (editorial/linear/swiss/notion/mintlify/broadsheet) —
+    // radiogroup, как сегмент темы. Кнопки читаются из DOM по [data-design-pref],
+    // роестр не захардкожен здесь. Источник истины — window.__design (head.html),
+    // переключение мгновенное (флип data-design на <html>, без перезагрузки).
     const designCtl = document.getElementById('design-pref-control');
     if (designCtl && window.__design) {
       const designBtns = Array.from(designCtl.querySelectorAll('[data-design-pref]'));

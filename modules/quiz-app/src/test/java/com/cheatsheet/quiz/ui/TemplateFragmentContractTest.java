@@ -153,16 +153,16 @@ class TemplateFragmentContractTest {
     }
 
     @Test
-    void editorialCssScopesPageOverridesToBodyClassAndIsSelfContained() throws IOException {
-        // R3: старый styles.css/mobile-fixes.css/ui-refinements.css удалены —
-        // editorial.css теперь единственная таблица стилей. Контракт:
-        // (1) страничные оверрайды неймспейснуты body-классом под data-design
-        //     (чтобы не протекать между страницами и не цеплять чужой каркас),
-        // (2) файл самодостаточен (bare-reset + порт утилит после сноса styles.css).
-        String css = readTemplate("static/css/editorial.css");
+    void baseCssScopesPageOverridesToBodyClassAndIsSelfContained() throws IOException {
+        // Двухслойная архитектура switchable-дизайнов: tokens.css определяет ВСЕ
+        // токены, base.css — design-agnostic структуру (потребляет только
+        // var(--token)). Контракт base.css:
+        // (1) страничные оверрайды неймспейснуты body-классом под нейтральным
+        //     html[data-design] (не протекают между страницами, не цепляют чужой
+        //     каркас, работают под любым дизайном),
+        // (2) самодостаточен: bare-reset + утилиты, на которые опираются шаблоны.
+        String css = readTemplate("static/css/base.css");
 
-        // Мульти-дизайн: структурные правила скоупятся НЕЙТРАЛЬНЫМ html[data-design]
-        // (работают под editorial/swiss/linear/broadsheet; оверлеи задают только токены).
         assertThat(css).contains("html[data-design] .focus-page");
         assertThat(css).contains("html[data-design] .result-page");
         assertThat(css).contains("html[data-design] .stats-page");
@@ -178,5 +178,29 @@ class TemplateFragmentContractTest {
         assertThat(css).contains(".mt-3");
         assertThat(css).contains(".overflow-x-auto");
         assertThat(css).contains(".hidden");
+    }
+
+    @Test
+    void tokensCssDefinesDefaultDesignAndSwitchableRoster() throws IOException {
+        // tokens.css — токен-слой switchable-дизайнов. Контракт:
+        // (1) дефолт-дизайн editorial живёт в :root (без [data-design] обёртки),
+        // (2) каждый не-дефолтный дизайн роестра имеет свой scoped-блок,
+        // (3) у каждого есть dark-вариант (полный набор цветов под [data-theme=dark]).
+        String css = readTemplate("static/css/tokens.css");
+
+        // Дефолт: editorial = :root, ключевые семантические токены определены.
+        assertThat(css).contains(":root");
+        assertThat(css).contains("--color-bg-primary");
+        assertThat(css).contains("--color-accent-primary");
+
+        // Роестр switchable-дизайнов: light + dark на каждый.
+        for (String design : new String[] { "linear", "swiss", "notion", "mintlify", "broadsheet" }) {
+            assertThat(css)
+                .as("light-блок дизайна " + design)
+                .contains("html[data-design=\"" + design + "\"] {");
+            assertThat(css)
+                .as("dark-блок дизайна " + design)
+                .contains("html[data-design=\"" + design + "\"][data-theme=\"dark\"]");
+        }
     }
 }
