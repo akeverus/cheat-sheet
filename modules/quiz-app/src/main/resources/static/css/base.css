@@ -2446,6 +2446,13 @@ html[data-design="editorial"] .stats-page .stats-search-action:hover { box-shado
 /* [spec §2]: font-feature-settings cv01/ss03 на body — identity-critical
    (геометричные альтернаты a/g «laser-cut» Inter), НЕ декор. */
 html[data-design="linear"] body { font-feature-settings: "cv01", "ss03"; }
+/* [spec §8]: выбранный/правильный MCQ-ряд — indigo «активный индикатор» как 2px
+   indigo border вокруг ряда (намеренная трата акцента, одно из ≤2 появлений), а
+   не generic 1px смена цвета. box-sizing:border-box (L70) → 2px не двигает layout.
+   Только pre-answer selected (checked); post-answer success/error не трогаем. */
+html[data-design="linear"] #interview-options label:has(input:checked) {
+  border-width: var(--rule-weight-strong);
+}
 
 /* ===========================================================================
    SWISS — SIGNATURES. «red never becomes chrome» — красный только под CTA +
@@ -2461,3 +2468,18 @@ html[data-design="swiss"] a:hover { color: var(--color-text-link); }
    (в light оба = #0A0A0A; в dark border-primary — деликатный hairline, тогда
    как accent-secondary #EDEDED дал бы слишком тяжёлый белый контур). */
 html[data-design="swiss"] .zone-chip { color: var(--color-accent-secondary); }
+/* [spec §8.4]: MCQ-состояния — marker-only, НИКОГДА не tinted full-row wash.
+   База (L560/579/581) заливает всю строку accent/success/error-wash — для swiss
+   глушим фон. Selected = красный left-edge RULE (inset, без сдвига layout) + ink
+   ring; красный маркер наследуется из базового ::before. Post-answer correct/wrong
+   красят ТОЛЬКО маркер (::before из базы) — рамку держим структурным ink. */
+html[data-design="swiss"] #interview-options label:has(input:checked) {
+  background: transparent;
+  border-color: var(--color-border-primary);
+  box-shadow: inset 3px 0 0 0 var(--color-accent-primary);
+}
+html[data-design="swiss"] .option-correct,
+html[data-design="swiss"] .option-wrong {
+  background: transparent !important;
+  border-color: var(--color-border-primary) !important;
+}
