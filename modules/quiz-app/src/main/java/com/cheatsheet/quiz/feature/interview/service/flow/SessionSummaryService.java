@@ -142,8 +142,14 @@ public class SessionSummaryService {
 
     private void addFinalRecommendationIfAllGood(SessionSummary.Builder builder,
                                                  List<SessionSummary.TopicResult> topicResults) {
-        if (topicResults.stream().allMatch(tr ->
-                tr.total() == 0 || tr.accuracy() >= QuizConstants.WEAK_TOPIC_THRESHOLD)) {
+        // anyAnswered ОБЯЗАТЕЛЕН: allMatch на пустом потоке возвращает true
+        // (vacuous truth), из-за чего сессия без ответов (0/0) ложно показывала
+        // «Отличный результат! Все темы выше порога 70%» при точности 0%.
+        // Хвалим только когда реально были отвечены вопросы И все темы ≥ порога.
+        boolean anyAnswered = topicResults.stream().anyMatch(tr -> tr.total() > 0);
+        boolean allGood = topicResults.stream().allMatch(tr ->
+                tr.total() == 0 || tr.accuracy() >= QuizConstants.WEAK_TOPIC_THRESHOLD);
+        if (anyAnswered && allGood) {
             builder.addRecommendation("Отличный результат! Все темы выше порога " + (int) QuizConstants.WEAK_TOPIC_THRESHOLD + "%.");
         }
     }

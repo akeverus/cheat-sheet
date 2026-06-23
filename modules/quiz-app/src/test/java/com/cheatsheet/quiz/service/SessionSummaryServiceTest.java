@@ -94,6 +94,11 @@ class SessionSummaryServiceTest {
         assertThat(summary.getCorrectCount()).isEqualTo(0);
         assertThat(summary.getTopicResults()).isEmpty();
         assertThat(summary.getMistakes()).isEmpty();
+        // Регресс-гард: сессия без ответов (0/0, точность 0%) НЕ должна хвалить
+        // «Отличный результат!». Раньше allMatch на пустом потоке темрезультатов
+        // возвращал true (vacuous truth) → ложная похвала. Рекомендаций быть не должно.
+        assertThat(summary.getRecommendations()).noneMatch(r -> r.contains("Отличный результат"));
+        assertThat(summary.getRecommendations()).isEmpty();
     }
 
     @Test
