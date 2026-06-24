@@ -113,7 +113,7 @@ graph LR
 
 ## Q4. Как сделать checkpoint и restore на практике?
 
-Нужен JDK со сборкой `CRaC` (например, `Azul Zulu` с поддержкой CRaC или `Liberica` NIK). Базовый сценарий:
+Нужен JDK со сборкой `CRaC` (например, `Azul Zulu` с поддержкой CRaC или `BellSoft Liberica` (CRaC-сборка)). Базовый сценарий:
 
 ```bash
 # 1. Запускаем приложение, указывая, куда положить снимок
@@ -133,10 +133,10 @@ java -XX:CRaCRestoreFrom=/app/checkpoint
 
 ## Q5. (!) Что такое Resource API и коллбэки beforeCheckpoint/afterRestore?
 
-Не всё состояние можно «заморозить»: открытый сокет или файловый дескриптор после restore станет невалидным. Чтобы приложение управляло этим, есть интерфейс `jdk.crac.Resource` с двумя коллбэками.
+Не всё состояние можно «заморозить»: открытый сокет или файловый дескриптор после restore станет невалидным. Чтобы приложение управляло этим, есть интерфейс `org.crac.Resource` с двумя коллбэками.
 
 ```java
-import jdk.crac.*;
+import org.crac.*;
 
 public class DbConnectionResource implements Resource {
     public DbConnectionResource() {
@@ -239,7 +239,7 @@ Spring поддерживает два режима снятия checkpoint.
 Spring отображает события `CRaC` на `Lifecycle`-контракт:
 
 - Бины, реализующие `SmartLifecycle`, получают `stop(Runnable)` перед checkpoint и `start()` после restore.
-- Для тонкого контроля можно реализовать `org.springframework.context.Lifecycle` или напрямую `jdk.crac.Resource`.
+- Для тонкого контроля можно реализовать `org.springframework.context.Lifecycle` или напрямую `org.crac.Resource`.
 - Порядок остановки/запуска управляется через `getPhase()` (как и при обычном shutdown/startup) — ресурсы останавливаются в обратном порядке относительно запуска.
 
 ```java

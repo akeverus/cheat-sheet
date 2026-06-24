@@ -209,7 +209,7 @@
                 "explanation": "Это базовый сценарий CRaC: приложение запускается с `-XX:CRaCCheckpointTo`, прогревается, после чего внешняя команда `jcmd ... JDK.checkpoint` снимает снимок и завершает процесс. Восстановление идёт отдельным запуском с `-XX:CRaCRestoreFrom`. Те же два флага задают только пути, а сам момент снятия снимка определяет именно `jcmd`.",
                 "example": "java -XX:CRaCCheckpointTo=/app/checkpoint -jar app.jar\njcmd app.jar JDK.checkpoint\njava -XX:CRaCRestoreFrom=/app/checkpoint",
                 "when_to_apply": "Когда нужно сократить время холодного старта JVM-приложения: прогреть его синтетическими запросами, снять checkpoint и затем в рантайме стартовать сразу из restore.",
-                "edge_cases": "Нужен специальный JDK со сборкой CRaC (например, `Azul Zulu` с поддержкой CRaC или `Liberica` NIK) — на обычном JDK эти флаги не сработают. После `JDK.checkpoint` процесс завершается.",
+                "edge_cases": "Нужен специальный JDK со сборкой CRaC (например, `Azul Zulu` с поддержкой CRaC или `BellSoft Liberica` (CRaC-сборка)) — на обычном JDK эти флаги не сработают. После `JDK.checkpoint` процесс завершается.",
                 "related": "В CI/CD снимок обычно делают на этапе сборки образа: прогрели приложение, сняли checkpoint, упаковали снимок в Docker-образ, а контейнер в рантайме стартует из restore. Checkpoint можно инициировать и программно, не только через `jcmd`."
               }
             },
@@ -282,7 +282,7 @@
                 "example": "@Override\npublic void beforeCheckpoint(Context<? extends Resource> ctx) {\n    connectionPool.close();   // перед снимком закрываем\n}\n\n@Override\npublic void afterRestore(Context<? extends Resource> ctx) {\n    connectionPool.reopen();  // после restore переоткрываем\n}",
                 "when_to_apply": "Реализуйте `Resource` для каждого внешнего ресурса — пулов БД, HTTP-клиентов, таймеров: закрывайте их в `beforeCheckpoint` и переоткрывайте в `afterRestore`, не забыв подписаться через `Core.getGlobalContext().register(this)`.",
                 "edge_cases": "После `afterRestore` окружение может отличаться от того, что было при снимке: другой IP, другие секреты. Поэтому переоткрытие ресурсов нельзя делать с закешированными старыми параметрами — нужно перечитать актуальную конфигурацию.",
-                "related": "Это два коллбэка интерфейса `jdk.crac.Resource`; регистрация слушателя выполняется через `Core.getGlobalContext().register(this)`, что связывает приложение с механизмом `CRaC` (Coordinated Restore at Checkpoint)."
+                "related": "Это два коллбэка интерфейса `org.crac.Resource`; регистрация слушателя выполняется через `Core.getGlobalContext().register(this)`, что связывает приложение с механизмом `CRaC` (Coordinated Restore at Checkpoint)."
               }
             },
             {
@@ -627,9 +627,9 @@
               "correct": false,
               "sections": {
                 "what_actually": "В тексте `CRaC`-события отображаются именно на методы `Lifecycle`-контракта (`stop`/`start`), а не на отдельные методы `beforeCheckpoint`/`afterRestore` у `SmartLifecycle`. Реакция бина описана через `start()`/`stop()`.",
-                "source_of_confusion": "Имена `beforeCheckpoint`/`afterRestore` действительно существуют у низкоуровневого интерфейса `jdk.crac.Resource`, и их легко ошибочно приписать `SmartLifecycle`. Текст упоминает `afterRestore` как момент, когда срабатывает `start()`, что усиливает смешение.",
+                "source_of_confusion": "Имена `beforeCheckpoint`/`afterRestore` действительно существуют у интерфейса `org.crac.Resource`, и их легко ошибочно приписать `SmartLifecycle`. Текст упоминает `afterRestore` как момент, когда срабатывает `start()`, что усиливает смешение.",
                 "if_it_were_true": "Тогда для реакции на checkpoint пришлось бы реализовывать специальные `CRaC`-методы вместо привычного `Lifecycle`, и тезис «тот же контракт, что и обычный старт/останов» был бы неверен — каждый бин требовал бы отдельной `CRaC`-обвязки.",
-                "how_it_should_be": "У `SmartLifecycle` Spring дёргает `stop(Runnable)` и `start()`. Методы `beforeCheckpoint`/`afterRestore` относятся к `jdk.crac.Resource`, который реализуют напрямую только для тонкого контроля."
+                "how_it_should_be": "У `SmartLifecycle` Spring дёргает `stop(Runnable)` и `start()`. Методы `beforeCheckpoint`/`afterRestore` относятся к `org.crac.Resource`, который реализуют напрямую только для тонкого контроля."
               }
             },
             {
@@ -653,7 +653,7 @@
                 "explanation": "Spring отображает события `CRaC` на свой `Lifecycle`-контракт. Для `SmartLifecycle` это означает, что перед снятием checkpoint вызывается `stop(Runnable)`, а после restore — `start()`. Таким образом, бин освобождает летучие ресурсы до образа и заново инициализируется после восстановления, используя уже знакомый механизм жизненного цикла.",
                 "example": "@Component\npublic class CacheWarmer implements SmartLifecycle {\n    public void start() { warmUpCache(); }   // вызовется и при старте, и при afterRestore\n    public void stop()  { clearVolatile(); } // вызовется перед checkpoint\n    public boolean isRunning() { return running; }\n}",
                 "when_to_apply": "Применяйте, когда бин держит летучее состояние (прогретый кэш, открытые соединения), которое нельзя сохранять в образ checkpoint и нужно пересоздать после restore. Если бин уже корректно реализует `Lifecycle`/`SmartLifecycle` для обычного старта/останова, он, скорее всего, корректно отработает и `CRaC`.",
-                "edge_cases": "Для более тонкого контроля можно реализовать напрямую `org.springframework.context.Lifecycle` или `jdk.crac.Resource`. Порядок остановки и запуска управляется через `getPhase()`: ресурсы останавливаются в обратном порядке относительно запуска — это важно для зависимых бинов.",
+                "edge_cases": "Для более тонкого контроля можно реализовать напрямую `org.springframework.context.Lifecycle` или `org.crac.Resource`. Порядок остановки и запуска управляется через `getPhase()`: ресурсы останавливаются в обратном порядке относительно запуска — это важно для зависимых бинов.",
                 "related": "Это тот же контракт, что и при обычном shutdown/startup приложения: `start()`/`stop()` и фазирование через `getPhase()`. `CRaC` не вводит отдельного механизма — он переиспользует `Lifecycle`, поэтому корректная реализация для старта/останова автоматически покрывает checkpoint/restore."
               }
             }
