@@ -2622,10 +2622,22 @@ html[data-design] .summary-tools-status {
     grid-template-columns: minmax(0, 1fr);
     max-width: none;
   }
-  /* Вердикт/разбор и его «голова» — полноширинной лентой ПОД обоими пейнами. */
-  html[data-design][data-layout="split"] .focus-page [data-ui-fragment="result-zone-head"],
+  /* Вердикт/разбор и его «голова» — полноширинной лентой ПОД обоими пейнами.
+     ЯВНЫЕ grid-row (6/7 — неявные ряды после 5 explicit-треков) обязательны: при
+     auto-row grid-авторазмещение definite-column-элемента (1/-1) с занятой формой
+     в col2 кладёт «голову» в верхний 1fr-спейсер (col1) — лента всплывала НАД
+     вопросом 368px-обрезком (регресс от spacer-центрирования). Явный ряд ниже формы
+     детерминирует ленту под пейнами. Скрытые (.hidden=display:none) ряды не
+     резервируют — до ответа пустот нет.
+     ВАЖНО про обёртку: result-zone-head несёт data-ui-fragment на ВНУТРЕННЕМ div,
+     а grid-ребёнок — безымянная обёртка th:fragment → таргетим её через
+     :has(> [marker]). У post-answer-controls маркер на самой обёртке (grid-ребёнок),
+     поэтому селектор прямой. */
+  html[data-design][data-layout="split"] .focus-page .focus-training > :has(> [data-ui-fragment="result-zone-head"]) {
+    grid-column: 1 / -1; grid-row: 6;
+  }
   html[data-design][data-layout="split"] .focus-page [data-ui-fragment="post-answer-controls"] {
-    grid-column: 1 / -1;
+    grid-column: 1 / -1; grid-row: 7;
   }
 
   /* ---- SETTINGS / flow: одна контейнированная колонка (читаемо, без асимметрии).
