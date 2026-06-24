@@ -2580,6 +2580,186 @@
           ]
         }
       ]
+    },
+    {
+      "q_number": 44,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить вход по passkeys (WebAuthn) в Spring Security?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Passkeys включаются декларативно через DSL `http.oauth2Login()`, появившийся в `Spring Security 6.4`, где задаются `rpName`, `rpId` и `allowedOrigins`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`http.oauth2Login()` отвечает за вход через внешнего OAuth2/OpenID-провайдера (Google, GitHub и т.п.), а не за `WebAuthn`/passkeys. Для passkeys в тексте указан отдельный DSL `http.webAuthn()`.",
+                "source_of_confusion": "И OAuth2-логин, и passkeys — это «беспарольные» или «внешние» способы входа, поэтому их легко спутать как одну и ту же фичу.",
+                "if_it_were_true": "Тогда настройка passkeys требовала бы регистрации OAuth2 client-id/secret и редиректа к стороннему провайдеру, а методов `rpName`/`rpId`/`allowedOrigins` у него бы не было.",
+                "how_it_should_be": "Passkeys настраиваются через `http.webAuthn()` с `rpName`, `rpId` и `allowedOrigins`; `oauth2Login()` — это про делегированную аутентификацию у внешнего IdP."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Passkeys включаются декларативно через DSL `http.formLogin()`, появившийся в `Spring Security 6.4`, где задаются `rpName`, `rpId` и `allowedOrigins`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`http.formLogin()` настраивает классический вход по логину и паролю через HTML-форму. Passkeys, наоборот, убирают пароль целиком и настраиваются через `http.webAuthn()`.",
+                "source_of_confusion": "`formLogin()` — самый известный DSL входа в Spring Security, поэтому его по привычке приписывают любому механизму аутентификации, включая новый passkeys.",
+                "if_it_were_true": "Тогда для passkeys всё равно существовал бы пароль и поле его ввода, что противоречит сути `FIDO2`/`WebAuthn`, где серверу уходит только подпись, а пароля нет вообще.",
+                "how_it_should_be": "Для passkeys используется `http.webAuthn()` с `rpName`/`rpId`/`allowedOrigins`; `formLogin()` остаётся для парольного входа по форме."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Passkeys включаются декларативно через DSL `http.x509()`, появившийся в `Spring Security 6.4`, где задаются `rpName`, `rpId` и `allowedOrigins`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`http.x509()` настраивает аутентификацию по клиентским X.509-сертификатам на уровне TLS, а не passkeys. По тексту passkeys включаются через `http.webAuthn()`.",
+                "source_of_confusion": "И X.509, и passkeys опираются на криптографию открытого ключа, поэтому кажется, что это один и тот же механизм Spring Security.",
+                "if_it_were_true": "Тогда passkeys настраивались бы выдачей клиентских сертификатов и проверкой их на TLS-хэндшейке, без `rpId`-привязки подписи к домену и без репозиториев `PublicKeyCredentialUserEntityRepository`/`UserCredentialRepository`.",
+                "how_it_should_be": "Passkeys (`FIDO2`/`WebAuthn`) включаются через `http.webAuthn()` с `rpName`/`rpId`/`allowedOrigins`; `x509()` — это отдельный механизм входа по клиентским сертификатам."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Passkeys включаются декларативно через DSL `http.webAuthn()`, появившийся в `Spring Security 6.4`, где задаются `rpName`, `rpId` и `allowedOrigins`.",
+              "correct": true,
+              "sections": {
+                "explanation": "По тексту ответа нативная поддержка `WebAuthn`/passkeys пришла в `Spring Security 6.4` именно через DSL `http.webAuthn()`. Внутри лямбды настраиваются `rpName` (имя relying party), `rpId` (домен) и `allowedOrigins` (разрешённые origin-ы). Это работает без сторонних библиотек.",
+                "example": "http.webAuthn(webAuthn -> webAuthn\n    .rpName(\"My App\")\n    .rpId(\"example.com\")\n    .allowedOrigins(\"https://example.com\"));",
+                "when_to_apply": "Когда нужно дать вход по passkeys (Touch ID, Windows Hello, аппаратный ключ) на `Spring Security 6.4+` без пароля и без внешних зависимостей: добавляете блок `http.webAuthn()` и реализуете два репозитория для хранения учётных данных.",
+                "edge_cases": "Для хранения нужны два репозитория: `PublicKeyCredentialUserEntityRepository` (пользователи) и `UserCredentialRepository` (публичные ключи). Подпись привязана к домену через `rpId`, поэтому `allowedOrigins` и `rpId` должны соответствовать реальному домену, иначе фишинг-защита заодно отвергнет легитимный origin.",
+                "related": "WebAuthn/passkeys строятся на `FIDO2`: приватный ключ не покидает устройство, серверу уходит только подпись. Главный эффект — устойчивость к фишингу (подпись привязана к `rpId`), а пароль как фактор исчезает целиком, обесценивая брутфорс и утечки паролей."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 45,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое One-Time Token Login в Spring Security 6.4?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это passwordless-вход по одноразовому токену: пользователь вводит логин, получает одноразовую ссылку (обычно по email), переходит по ней и оказывается аутентифицирован.",
+              "correct": true,
+              "sections": {
+                "explanation": "Согласно тексту, One-Time Token Login — это вход без пароля по схеме «magic link»: сервер не хранит пароль, а выпускает одноразовый токен и доставляет его пользователю (как правило, по email). Пользователь переходит по ссылке с токеном и тем самым проходит аутентификацию. Включается такой вход через DSL `http.oneTimeTokenLogin()`.",
+                "example": "Пользователь вводит логин на странице входа, бэкенд через `GeneratedOneTimeTokenHandler` отправляет ему письмо со ссылкой вида `https://app/login/ott?token=abc123`. Кликнув по ней, пользователь аутентифицируется без ввода пароля.",
+                "when_to_apply": "Применяйте, когда нужен passwordless-сценарий: вход по «magic link» из письма, восстановление доступа без пароля или сокращение хранимых на сервере секретов. Подключается через `http.oneTimeTokenLogin(...)` с настройкой `tokenGeneratingUrl` и `generatedOneTimeTokenHandler` для доставки токена.",
+                "edge_cases": "Безопасность держится на коротком TTL токена и защищённости канала доставки: если почта пользователя скомпрометирована, скомпрометирован и вход. Токен одноразовый — повторное использование должно отвергаться `OneTimeTokenService`.",
+                "related": "Связан с `OneTimeTokenService` (генерация и проверка одноразовости/TTL) и `GeneratedOneTimeTokenHandler` (доставка токена письмом/SMS, есть готовый редирект-handler и кастомные реализации, например через Redis-хранилище токенов)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это вход по постоянному API-токену: пользователь один раз получает долгоживущий токен и предъявляет его в каждом запросе вместо ввода логина и пароля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "One-Time Token Login использует именно одноразовый токен с коротким TTL, доставляемый по email, а не долгоживущий многоразовый API-токен. После одного использования токен становится невалидным.",
+                "source_of_confusion": "Слово «токен» ассоциируется с привычными bearer/API-токенами для сервис-аутентификации, которые предъявляются многократно в каждом запросе.",
+                "if_it_were_true": "Тогда токен можно было бы переиспользовать в произвольном числе запросов, а компрометация почты не давала бы доступа — но безопасность схемы строилась бы на хранении секрета на клиенте, а не на TTL и канале доставки.",
+                "how_it_should_be": "Токен одноразовый (одноразовость и TTL обеспечивает `OneTimeTokenService`), доставляется по email и аутентифицирует пользователя один раз при переходе по ссылке."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это второй фактор аутентификации поверх пароля: пользователь сначала вводит логин и пароль, а одноразовый токен из письма подтверждает вход как дополнительный шаг.",
+              "correct": false,
+              "sections": {
+                "what_actually": "One-Time Token Login — это passwordless-вход вместо пароля, а не добавочный второй фактор поверх него. Сервер вообще не хранит паролей, аутентификация происходит по самому токену.",
+                "source_of_confusion": "Одноразовые коды из письма/SMS привычны именно как 2FA-фактор, поэтому возникает ощущение, что токен дополняет пароль, а не заменяет его.",
+                "if_it_were_true": "Тогда на сервере по-прежнему хранились бы пароли, а итог «passwordless-вход без хранения паролей на сервере» из текста был бы неверен.",
+                "how_it_should_be": "Пользователь вводит только логин, получает одноразовую ссылку и аутентифицируется по ней — это самостоятельный passwordless-способ входа без пароля."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это вход по одноразовому токену, который включается через DSL-метод `http.magicLinkLogin()` и настраивается отдельным компонентом `MagicLinkService`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Функциональность включается методом `http.oneTimeTokenLogin()`, а за генерацию и проверку токена отвечает `OneTimeTokenService` — метода `magicLinkLogin()` и класса `MagicLinkService` в описании нет.",
+                "source_of_confusion": "Схему неформально называют «magic link», поэтому возникает ложное ожидание, что и API названо по этому термину.",
+                "if_it_were_true": "Тогда конфигурация выглядела бы как `http.magicLinkLogin(...)`, а компоненты назывались бы `MagicLinkService`/`MagicLinkHandler` вместо `OneTimeTokenService`/`GeneratedOneTimeTokenHandler`.",
+                "how_it_should_be": "Включение делается через `http.oneTimeTokenLogin(ott -> ott.tokenGeneratingUrl(...).generatedOneTimeTokenHandler(...))`, а ключевые компоненты — `OneTimeTokenService` и `GeneratedOneTimeTokenHandler`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 46,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое OAuth 2.0 Token Exchange (RFC 8693) и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Слепой проброс исходного токена пользователя дальше по цепочке сервисов без изменений у Authorization Server, чтобы каждый сервис видел те же права.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это как раз тот антипаттерн, который Token Exchange призван заменить: при слепом пробросе сервис B получает токен с лишними правами и не той аудиторией. Token Exchange, наоборот, обменивает исходный токен на новый, специально выписанный для B с суженным `scope`.",
+                "source_of_confusion": "Оба подхода решают задачу «как сервис B узнает пользователя». Кажется, что проще всего просто передать тот же токен дальше, но это и есть небезопасная альтернатива, против которой существует RFC 8693.",
+                "if_it_were_true": "Тогда не было бы нужды в отдельном grant-типе и в поддержке в Authorization Server — токен просто переходил бы из сервиса в сервис, и каждый сервис имел бы полный набор прав исходного токена.",
+                "how_it_should_be": "A должен обменять исходный токен на новый у Authorization Server через grant `urn:ietf:params:oauth:grant-type:token-exchange`, получив токен с нужным `audience` и суженным `scope`, а не пробрасывать исходный токен."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Обмен одного токена на другой у Authorization Server через grant `urn:ietf:params:oauth:grant-type:token-exchange`, чтобы пробросить identity по цепочке сервисов с сужением прав.",
+              "correct": true,
+              "sections": {
+                "explanation": "Token Exchange — это grant-тип из `RFC 8693`, при котором сервис A обменивает полученный токен пользователя на новый токен, специально выписанный для сервиса B. Новый токен имеет нужную аудиторию (`audience`) и суженный набор `scope`, в отличие от слепого проброса исходного «всемогущего» токена. Это корректный способ передать identity по цепочке микросервисов вместо раздачи лишних прав.",
+                "example": "Сервис A получил токен пользователя и должен вызвать сервис B от имени пользователя. Вместо проброса исходного токена A обращается к Authorization Server с grant_type=urn:ietf:params:oauth:grant-type:token-exchange и получает новый токен с audience=service-b и суженным scope. В Spring Security 6.3 это подключается через соответствующий OAuth2AuthorizedClientProvider в OAuth2AuthorizedClientManager.",
+                "when_to_apply": "Применяй в цепочке микросервисов, когда сервис A должен вызвать сервис B от имени пользователя, но с другой аудиторией и меньшим набором прав, чем были у исходного токена. Вместо проброса исходного токена выпускай новый, специально выписанный для B.",
+                "edge_cases": "Token Exchange поддерживает два режима: делегирование (`delegation` — «A действует от имени user») и имперсонацию (`impersonation`). Их нужно различать, потому что они по-разному отражают, кто фактически инициирует вызов. До `Spring Security 6.3` token-exchange не был first-class в OAuth2 Client.",
+                "related": "Альтернатива — слепой проброс исходного токена дальше по цепочке, что небезопасно: B получает токен с лишними правами и не той аудиторией. Token Exchange решает эту проблему через выпуск суженного токена у Authorization Server и интегрирован в `OAuth2AuthorizedClientManager`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Обновление истёкшего access-токена через refresh-токен у Authorization Server, чтобы продлить сессию пользователя без повторного логина.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Token Exchange — это обмен одного токена на другой с изменением аудитории и сужением прав для вызова другого сервиса, а не продление сессии. У него собственный grant `urn:ietf:params:oauth:grant-type:token-exchange` из `RFC 8693`, отдельный от refresh-flow.",
+                "source_of_confusion": "И там, и там у Authorization Server происходит «обмен токена на токен». Слово «обмен» наводит на мысль о привычном refresh-flow, хотя цель и grant-тип у Token Exchange совсем другие.",
+                "if_it_were_true": "Тогда Token Exchange использовался бы при истечении токена и не нёс бы смысла смены `audience` и сужения `scope` для цепочки сервисов — он просто выдавал бы свежий токен с теми же правами.",
+                "how_it_should_be": "Token Exchange нужен, чтобы пробросить identity по цепочке сервисов с другой аудиторией и суженным набором прав, а продление сессии — это отдельный refresh-token grant."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Шифрование содержимого access-токена при передаче между сервисами через Authorization Server, чтобы промежуточные узлы не читали `claims`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Token Exchange не про шифрование, а про выпуск нового токена с другой аудиторией (`audience`) и суженным набором `scope`. Он меняет права и адресата токена, а не скрывает его содержимое от промежуточных узлов.",
+                "source_of_confusion": "Обе темы относятся к безопасности токенов в цепочке сервисов, и обе вовлекают Authorization Server. Это создаёт впечатление, что Token Exchange защищает данные токена, хотя он управляет правами.",
+                "if_it_were_true": "Тогда смысл grant `urn:ietf:params:oauth:grant-type:token-exchange` сводился бы к криптографии, а понятия делегирования (`delegation`) и имперсонации (`impersonation`) были бы лишними — они описывают, чьи права несёт токен, а не его шифрование.",
+                "how_it_should_be": "Token Exchange обменивает исходный токен на новый с суженными правами и нужной аудиторией для конкретного сервиса, а защита содержимого токена решается другими механизмами."
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

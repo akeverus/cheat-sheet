@@ -2880,6 +2880,126 @@
           ]
         }
       ]
+    },
+    {
+      "q_number": 49,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как маппить JSON-колонки в Hibernate 6 через `@JdbcTypeCode`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Поле помечается `@JdbcTypeCode(SqlTypes.JSON)`, и `Hibernate 6` сам сериализует объект, `Map` или коллекцию в JSON-колонку без сторонней библиотеки.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Hibernate 6` встроил поддержку JSON-маппинга прямо в ядро, поэтому отдельная библиотека `hibernate-types` больше не нужна. Аннотация `@JdbcTypeCode(SqlTypes.JSON)` на поле говорит Hibernate сериализовать его значение в JSON-документ. Работает не только с `Map`, но и с embeddable/POJO и коллекциями.",
+                "example": "@Entity\npublic class Product {\n    @Id @GeneratedValue\n    private Long id;\n\n    @JdbcTypeCode(SqlTypes.JSON)\n    @Column(columnDefinition = \"jsonb\")\n    private Map<String, Object> attributes;\n}",
+                "when_to_apply": "Когда нужно сохранить гибкую/полуструктурированную структуру (атрибуты товара, настройки, метаданные) в одной колонке на `Hibernate 6`. Для `PostgreSQL` объявляйте колонку как `jsonb` через `columnDefinition`.",
+                "edge_cases": "Маппиться может не только `Map`, но и embeddable/POJO и коллекции — все они складываются в один JSON-документ. В `PostgreSQL` выбирайте `jsonb` (индексируемо и компактнее), а не текстовый `json`.",
+                "related": "Связано с переходом от внешней библиотеки `hibernate-types` к нативной поддержке ядра, а также с типами хранения JSON в `PostgreSQL` (`jsonb` против `json`)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Поле помечается `@Type(JsonType.class)` из библиотеки `hibernate-types`, и только она умеет сериализовать объект, `Map` или коллекцию в JSON-колонку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Hibernate 6` JSON-маппинг встроен в ядро и сторонняя `hibernate-types` больше не нужна — используется нативная аннотация `@JdbcTypeCode(SqlTypes.JSON)`.",
+                "source_of_confusion": "До `Hibernate 6` именно `hibernate-types` с `@Type(JsonType.class)` была стандартным способом маппить JSON, поэтому привычка осталась.",
+                "if_it_were_true": "Тогда любому проекту на `Hibernate 6` пришлось бы тянуть лишнюю зависимость ради JSON, хотя ядро уже умеет это сам.",
+                "how_it_should_be": "Используйте `@JdbcTypeCode(SqlTypes.JSON)` из ядра `Hibernate 6` и уберите зависимость от `hibernate-types`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Поле помечается `@JdbcTypeCode(SqlTypes.JSON)`, но это работает только с типом `Map`, а embeddable/POJO и коллекции так маппить нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нативный JSON-маппинг работает не только с `Map`, но и с embeddable/POJO и коллекциями — `Hibernate` складывает их в один JSON-документ.",
+                "source_of_confusion": "Канонический пример обычно показывают на `Map<String, Object>`, и кажется, будто это единственный поддерживаемый тип.",
+                "if_it_were_true": "Тогда для хранения POJO в JSON-колонке пришлось бы вручную конвертировать его в `Map`, что лишало бы смысла нативный маппинг.",
+                "how_it_should_be": "Помечайте `@JdbcTypeCode(SqlTypes.JSON)` любое поле — `Map`, embeddable/POJO или коллекцию — и `Hibernate` сериализует его в один JSON-документ."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Поле помечается `@JdbcTypeCode(SqlTypes.JSON)`, и для `PostgreSQL` его следует хранить в текстовой колонке `json`, а не в `jsonb`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для `PostgreSQL` JSON рекомендуется хранить в `jsonb` — он индексируемый и компактнее, чем текстовый `json`.",
+                "source_of_confusion": "Названия `json` и `jsonb` похожи, и легко перепутать, какой из них предпочтителен для хранения.",
+                "if_it_were_true": "Тогда нельзя было бы эффективно индексировать JSON-данные, а хранение было бы менее компактным.",
+                "how_it_should_be": "Объявляйте колонку как `jsonb` (например, через `@Column(columnDefinition = \"jsonb\")`) — индексируемо и компактнее текстового `json`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 50,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@Struct` в Hibernate 6?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Аннотация `@Struct` раскладывает `@Embeddable` на отдельные плоские колонки `street`/`city`/`zip` с заданным общим префиксом имени для всех колонок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Раскладку на отдельные плоские колонки делает обычный `@Embeddable` без `@Struct`. `@Struct`, наоборот, сохраняет embeddable в одну колонку структурного типа БД, где поля становятся атрибутами этой структуры.",
+                "source_of_confusion": "По умолчанию `@Embeddable` действительно даёт несколько колонок, и кажется, что `@Struct` лишь добавляет к этому префикс имён, а не меняет способ хранения.",
+                "if_it_were_true": "Тогда `@Struct` не требовал бы объявления `CREATE TYPE ... AS (...)` и не отличался бы по смыслу от плоского `@Embeddable` — атрибут `name` задавал бы префикс, а не имя SQL-структуры.",
+                "how_it_should_be": "`@Struct` маппит embeddable на единый структурный тип БД (одна колонка типа `address_type`), а поля становятся атрибутами этой структуры, а не отдельными колонками."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Аннотация `@Struct` маппит `@Embeddable` не на отдельные колонки, а на структурный пользовательский тип БД (`CREATE TYPE ... AS (...)` в `PostgreSQL`, object types в `Oracle`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Поля embeddable становятся атрибутами структурного типа, а вся вложенная сущность сохраняется в одну колонку этого типа. Это противоположность обычному `@Embeddable`, который раскладывает поля по плоским колонкам. `@Struct` опирается на нативную поддержку composite/object типов конкретной СУБД.",
+                "example": "@Embeddable\n@Struct(name = \"address_type\")\npublic record Address(String street, String city, String zip) {}\n\n// address сохранится в одну колонку структурного типа address_type,\n// а не в три отдельные колонки street/city/zip",
+                "when_to_apply": "Применяйте, когда в схеме БД уже используется структурный тип (например, `address_type` объявлен через `CREATE TYPE` в `PostgreSQL` или как object type в `Oracle`) и embeddable должен лечь именно в одну колонку такого типа.",
+                "edge_cases": "Если требования к структурному типу нет — обычный `@Embeddable` с плоскими колонками проще и портируемее между СУБД. `@Struct` завязан на нативную поддержку composite/object типов, поэтому переносимость между разными СУБД снижается.",
+                "related": "Контрастирует с обычным `@Embeddable`, который раскладывает поля по отдельным колонкам. Тесно связан с понятием пользовательских типов БД: composite types в `PostgreSQL` и object types в `Oracle`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Аннотация `@Struct` маппит `@Embeddable` на отдельную дочернюю таблицу, связанную с основной по внешнему ключу, где каждое поле embeddable становится колонкой этой таблицы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Struct` не создаёт отдельную таблицу и не вводит внешний ключ: embeddable сохраняется в одну колонку структурного типа той же таблицы, а поля становятся атрибутами этой структуры.",
+                "source_of_confusion": "Идея «вынести вложенную сущность в отдельное хранилище» ассоциируется с дочерней таблицей и внешним ключом, как при маппинге коллекций или ассоциаций.",
+                "if_it_were_true": "Тогда для чтения `Address` требовался бы JOIN с дочерней таблицей, а схема включала бы внешний ключ — вместо одной колонки структурного типа в той же таблице.",
+                "how_it_should_be": "`@Struct` хранит embeddable в одной колонке структурного типа (`CREATE TYPE ... AS (...)` в `PostgreSQL`, object type в `Oracle`) без отдельной таблицы и внешнего ключа."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Аннотация `@Struct` сериализует `@Embeddable` в одну текстовую колонку формата `JSON`, где поля embeddable становятся ключами JSON-объекта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Struct` использует нативный структурный тип БД (composite type в `PostgreSQL`, object type в `Oracle`), а не текстовую JSON-сериализацию: поля становятся атрибутами SQL-структуры, а не ключами JSON.",
+                "source_of_confusion": "И JSON-маппинг, и `@Struct` укладывают вложенную сущность в одну колонку, поэтому структурный тип легко перепутать с JSON-сериализацией.",
+                "if_it_were_true": "Тогда не требовался бы `CREATE TYPE ... AS (...)`, колонка имела бы тип `json`/`jsonb` или текст, а доступ к полям шёл бы через JSON-операторы, а не как к атрибутам структуры.",
+                "how_it_should_be": "`@Struct` маппит embeddable на структурный пользовательский тип БД, объявленный через `CREATE TYPE ... AS (...)`, где поля становятся атрибутами этой структуры, а не ключами JSON."
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

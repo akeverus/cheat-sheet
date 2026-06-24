@@ -900,6 +900,186 @@
           ]
         }
       ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Spring AI интегрируется с MCP (Model Context Protocol)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring AI` поддерживает только роль `MCP`-клиента (`spring-ai-starter-mcp-client`), подключаясь к внешним MCP-серверам, но не умеет сам экспонировать свои `@Tool`-методы как MCP-сервер для других клиентов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По тексту `Spring AI` поддерживает обе роли: есть отдельный стартер `spring-ai-starter-mcp-server`, который экспонирует `@Tool`-методы приложения как MCP-инструменты для любых MCP-клиентов.",
+                "source_of_confusion": "Клиентская роль чаще обсуждается, так как именно через неё модель получает доступ к внешним инструментам, и серверная сторона остаётся в тени.",
+                "if_it_were_true": "Тогда приложение на `Spring AI` нельзя было бы подключить к Claude Desktop или IDE как поставщика инструментов — потребовалась бы ручная реализация MCP-сервера.",
+                "how_it_should_be": "`Spring AI` поддерживает обе роли: и клиент (`spring-ai-starter-mcp-client`), и сервер (`spring-ai-starter-mcp-server`)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring AI` поддерживает обе роли `MCP`, но единственным транспортом является `stdio` для локального процесса, а сетевой транспорт через `SSE`/HTTP не предусмотрен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По тексту поддерживаются оба транспорта: `stdio` для локального процесса и `SSE`/HTTP для сетевого взаимодействия.",
+                "source_of_confusion": "`stdio` упоминается первым и ассоциируется с типовым локальным запуском MCP-серверов как дочерних процессов, из-за чего сетевой транспорт легко упустить.",
+                "if_it_were_true": "Тогда MCP-сервер и клиент могли бы работать только на одной машине через локальный процесс, и удалённое подключение по сети было бы невозможно.",
+                "how_it_should_be": "Транспорты — это `stdio` (локальный процесс) и `SSE`/HTTP (сетевой)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring AI` поддерживает обе роли `MCP`, но инструменты с внешних MCP-серверов нужно регистрировать в `ChatClient` вручную, а не получать автоматически как function callbacks.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По тексту инструменты внешних MCP-серверов автоматически становятся доступны `ChatClient` как function callbacks, и модель может их вызывать без ручной интеграции под каждый инструмент.",
+                "source_of_confusion": "Привычка вручную регистрировать обычные `@Tool`-методы переносится на MCP, хотя весь смысл протокола — снять необходимость писать интеграцию под каждый инструмент.",
+                "if_it_were_true": "Тогда теряется главное преимущество MCP: пришлось бы вручную описывать каждый инструмент внешнего сервера, и стандартизация подключения не давала бы выигрыша.",
+                "how_it_should_be": "Инструменты MCP-серверов подключаются к `ChatClient` через `mcpToolCallbackProvider.getToolCallbacks()` и автоматически становятся доступны модели."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring AI` поддерживает обе роли `MCP`: как клиент (`spring-ai-starter-mcp-client`), подключаясь к внешним MCP-серверам, так и сервер (`spring-ai-starter-mcp-server`), экспонируя свои `@Tool`-методы для других клиентов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Согласно тексту, `MCP` — открытый протокол для подключения инструментов и источников данных к `LLM`, и `Spring AI` поддерживает обе роли одновременно. В роли клиента инструменты внешних MCP-серверов становятся доступны `ChatClient` как function callbacks. В роли сервера приложение публикует свои `@Tool`-методы для любых MCP-клиентов, включая Claude Desktop и IDE.",
+                "example": "Клиентская сторона подключает tools с MCP-серверов к `ChatClient`:\n\nChatClient.builder(chatModel)\n    .defaultTools(mcpToolCallbackProvider.getToolCallbacks())\n    .build();\n\nСерверная сторона подключает стартер `spring-ai-starter-mcp-server` и публикует `@Tool`-методы наружу.",
+                "when_to_apply": "Используйте MCP-клиент, когда нужно дать модели доступ к готовым внешним инструментам (Brave Search, Filesystem, GitHub) без ручной интеграции под каждый. Используйте MCP-сервер, когда хотите, чтобы ваши `@Tool`-методы вызывали внешние клиенты вроде Claude Desktop или IDE.",
+                "edge_cases": "Нужно выбрать транспорт: `stdio` для локального процесса или `SSE`/HTTP для сетевого взаимодействия. Клиентская и серверная роли используют разные стартеры и могут сосуществовать в одном приложении.",
+                "related": "MCP-инструменты на клиенте интегрируются через тот же механизм function callbacks, что и обычные `@Tool`-методы `ChatClient`; MCP лишь стандартизирует то, как модель получает инструменты и контекст."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Evaluators в Spring AI?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Evaluator` — это компонент для автоматической проверки качества ответа `LLM`, и `Spring AI` даёт готовые реализации `RelevancyEvaluator` и `FactCheckingEvaluator`, особенно полезные для `RAG`.",
+              "correct": true,
+              "sections": {
+                "explanation": "По тексту evaluator — компонент автоматической проверки качества ответа `LLM` (в тестах или рантайме). `Spring AI` предоставляет готовые реализации: `RelevancyEvaluator` (релевантность контексту) и `FactCheckingEvaluator` (фактическая согласованность, anti-hallucination). Это даёт воспроизводимую проверку генерации, без которой регрессии видны только при ручном просмотре.",
+                "example": "Вызов выглядит так:\n\n```java\nEvaluationResponse response = relevancyEvaluator.evaluate(\n    new EvaluationRequest(userQuestion, retrievedDocuments, aiAnswer));\n\nassertThat(response.isPass()).isTrue();\n```\n\nТакой блок встраивают в интеграционный тест RAG-пайплайна: прогнали набор вопросов, evaluator проверил релевантность, провал теста ловит регрессию качества.",
+                "when_to_apply": "Применяй, когда нужно автоматически отлавливать регрессии качества RAG-пайплайна: прогоняешь набор вопросов в интеграционных тестах, а `RelevancyEvaluator`/`FactCheckingEvaluator` проверяют релевантность и фактичность ответов вместо ручного просмотра.",
+                "edge_cases": "Evaluator сам обращается к `LLM` для оценки, поэтому проверка качества стоит дополнительных вызовов модели. `RelevancyEvaluator` проверяет, использовала ли модель retrieved-документы, а `FactCheckingEvaluator` — фактическую согласованность с контекстом; это разные проверки, и для anti-hallucination нужен именно второй.",
+                "related": "Тесно связан с `RAG`: на вход `EvaluationRequest` подаются userQuestion, retrievedDocuments (контекст из ретривера) и aiAnswer. Без evaluators регрессии в промптах или ретривере остаются незаметными до ручного ревью."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Evaluator` — это компонент для автоматической проверки качества ответа `LLM`, и `Spring AI` даёт готовые реализации `RetryEvaluator` и `TimeoutEvaluator`, особенно полезные для `RAG`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В тексте названы только две готовые реализации — `RelevancyEvaluator` (релевантность контексту) и `FactCheckingEvaluator` (фактическая согласованность). `RetryEvaluator` и `TimeoutEvaluator` в ответе не упоминаются вовсе.",
+                "source_of_confusion": "Retry и timeout действительно фигурируют в инфраструктуре `Spring AI` (например, `app.ai.maxRetries`, `app.ai.timeoutSeconds`), но это настройки клиента, а не реализации evaluator.",
+                "if_it_were_true": "Тогда evaluators отвечали бы за повторные попытки и тайм-ауты вызовов, то есть были бы про надёжность транспорта, а не про качество генерации.",
+                "how_it_should_be": "Правильные готовые реализации — `RelevancyEvaluator` и `FactCheckingEvaluator`, оценивающие качество и фактичность ответа."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Evaluator` — это компонент для автоматической проверки качества ответа `LLM`, где `RelevancyEvaluator` проверяет фактическую согласованность ответа с контекстом, а `FactCheckingEvaluator` — релевантность retrieved-документам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Роли перепутаны: по тексту `RelevancyEvaluator` проверяет именно релевантность (использовала ли модель retrieved-документы), а `FactCheckingEvaluator` — фактическую согласованность с контекстом (anti-hallucination).",
+                "source_of_confusion": "Обе реализации работают с контекстом и звучат похоже, поэтому легко перепутать, какой evaluator отвечает за релевантность, а какой за фактчекинг.",
+                "if_it_were_true": "Тогда для проверки на галлюцинации брали бы `RelevancyEvaluator`, а имя `FactChecking` относилось бы к релевантности — что прямо противоречит названиям.",
+                "how_it_should_be": "`RelevancyEvaluator` отвечает за релевантность контексту, а `FactCheckingEvaluator` — за фактическую согласованность (anti-hallucination)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Evaluator` — это компонент для автоматической проверки качества ответа `LLM`, который вызывается только в продакшен-рантайме и не предназначен для использования в интеграционных тестах `RAG`-пайплайна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По тексту evaluator работает и в тестах, и в рантайме, и его прямо встраивают в интеграционные тесты RAG-пайплайна, чтобы провал отлавливал регрессию качества.",
+                "source_of_confusion": "Слово «в рантайме» в определении создаёт впечатление, что это исключительно продакшен-инструмент, хотя в тексте рядом стоит «в тестах».",
+                "if_it_were_true": "Тогда нельзя было бы прогонять набор вопросов в CI и ловить регрессии до релиза — проверка качества жила бы только в проде.",
+                "how_it_should_be": "Evaluator применяется и в тестах, и в рантайме; ключевой сценарий — встраивание в интеграционные тесты RAG для воспроизводимой проверки качества."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие паттерны построения агентов документирует Spring AI (Building Effective Agents)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring AI` документирует пять паттернов компоновки агентов на базе `ChatClient`: `Chain workflow`, `Routing`, `Parallelization`, `Orchestrator-workers` и `ReAct reasoning`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пятый паттерн в перечне — `Evaluator-optimizer` (цикл «генерация → оценка → улучшение»), а не `ReAct reasoning`. `ReAct` в этом наборе паттернов компоновки не упоминается.",
+                "source_of_confusion": "`ReAct` (reasoning + acting) — широко известная агентная техника из общей литературы по LLM-агентам, поэтому её легко ошибочно подставить в любой список «агентных паттернов».",
+                "if_it_were_true": "Тогда среди паттернов был бы отдельный цикл рассуждения-действия с трассировкой мыслей, а не итеративный самооценочный цикл улучшения результата.",
+                "how_it_should_be": "Пятый паттерн — `Evaluator-optimizer`: цикл генерации, оценки и улучшения результата до приемлемого качества."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring AI` документирует пять паттернов компоновки агентов на базе `ChatClient`: `Chain workflow`, `Routing`, `Parallelization`, `Orchestrator-workers` и `Evaluator-optimizer`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Именно эти пять паттернов перечислены в разделе по мотивам подхода Anthropic «Building Effective Agents». Это не отдельный API, а способы собрать предсказуемого агента из простых шагов поверх существующего `ChatClient`. Каждый паттерн описывает свою схему компоновки: от линейной цепочки до цикла генерация-оценка.",
+                "example": "Скелет паттерна Chain workflow на `ChatClient`:\n\nString step1 = chatClient.prompt().user(input).call().content();\nString step2 = chatClient.prompt().user(step1).call().content();\nString result = chatClient.prompt().user(step2).call().content();\n// выход одного шага становится входом следующего",
+                "when_to_apply": "Когда нужен надёжный и тестируемый пайплайн на LLM вместо одного «всемогущего» промпта: разбейте задачу на предсказуемые шаги и выберите паттерн под топологию — цепочка для последовательной обработки, `Routing` для ветвления по классу запроса, `Parallelization` для независимых параллельных вызовов с агрегацией.",
+                "edge_cases": "Это не отдельный фреймворк или API, а рекомендованные способы компоновки поверх `ChatClient`; паттерны можно комбинировать (например, `Routing` внутри `Orchestrator-workers`). `Evaluator-optimizer` требует критерия остановки, иначе цикл «генерация → оценка → улучшение» рискует не сойтись.",
+                "related": "`Orchestrator-workers` (декомпозиция оркестратором и исполнение подзадач воркерами) и `Evaluator-optimizer` (итеративный цикл с оценкой) — более сложные паттерны, тогда как `Chain workflow`, `Routing` и `Parallelization` относятся к базовым строительным блокам той же системы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring AI` документирует пять паттернов компоновки агентов на базе `ChatClient`: `Chain workflow`, `Routing`, `Parallelization`, `Orchestrator-workers` и `Retrieval-augmented generation`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пятый паттерн набора — `Evaluator-optimizer`, а не `Retrieval-augmented generation`. RAG относится к подаче контекста модели и не входит в этот перечень паттернов построения агентов.",
+                "source_of_confusion": "RAG — одна из самых обсуждаемых тем в Spring AI и LLM в целом, поэтому возникает соблазн включить её в любой список «паттернов».",
+                "if_it_were_true": "Тогда пятый паттерн описывал бы подмешивание извлечённых документов в промпт, а не итеративный цикл оценки и улучшения ответа.",
+                "how_it_should_be": "Пятый паттерн — `Evaluator-optimizer`, цикл «генерация → оценка → улучшение» до приемлемого результата."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring AI` документирует пять паттернов компоновки агентов на базе `ChatClient`: `Chain workflow`, `Routing`, `Parallelization`, `Orchestrator-workers` и `Human-in-the-loop`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пятым в перечне идёт `Evaluator-optimizer`, а не `Human-in-the-loop`. Согласие/проверка человеком в этом наборе паттернов не фигурирует.",
+                "source_of_confusion": "`Human-in-the-loop` — частый приём в продакшен-агентах для контроля рискованных действий, поэтому его легко принять за один из канонических паттернов.",
+                "if_it_were_true": "Тогда пятый паттерн вводил бы шаг ручного подтверждения оператором, а не автоматический цикл самооценки и улучшения результата моделью.",
+                "how_it_should_be": "Пятый паттерн — `Evaluator-optimizer`: автоматический цикл генерации, оценки и улучшения результата без участия человека."
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

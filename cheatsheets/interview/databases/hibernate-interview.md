@@ -114,6 +114,8 @@ updated: "2026-04-25"
 - [Q46. Что такое `StatelessSession` и когда его использовать?](#q46-что-такое-statelesssession-и-когда-его-использовать)
 - [Q47. (!) Какие типичные ошибки производительности в `Hibernate`?](#q47--какие-типичные-ошибки-производительности-в-hibernate)
 - [Q48. Как тестировать `Hibernate`-код?](#q48-как-тестировать-hibernate-код)
+- [Q49. (!) Как маппить JSON-колонки в Hibernate 6 через `@JdbcTypeCode`?](#q49--как-маппить-json-колонки-в-hibernate-6-через-jdbctypecode)
+- [Q50. Что такое `@Struct` в Hibernate 6?](#q50-что-такое-struct-в-hibernate-6)
 
 ---
 
@@ -2077,6 +2079,40 @@ void shouldUseSecondLevelCache() {
     assertThat(stats.getSecondLevelCacheMissCount()).isEqualTo(1);
 }
 ```
+
+## Q49. (!) Как маппить JSON-колонки в Hibernate 6 через `@JdbcTypeCode`?
+
+`Hibernate 6` встроил поддержку JSON-маппинга в ядро — больше не нужна сторонняя библиотека `hibernate-types`. Поле помечается `@JdbcTypeCode(SqlTypes.JSON)`, и `Hibernate` сам сериализует объект/`Map`/коллекцию в JSON-колонку (`jsonb` в `PostgreSQL`).
+
+```java
+@Entity
+public class Product {
+    @Id @GeneratedValue
+    private Long id;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private Map<String, Object> attributes;
+}
+```
+
+Работает не только с `Map`, но и с embeddable/POJO и коллекциями — `Hibernate` маппит их в один JSON-документ.
+
+**Итог:** нативный JSON-маппинг в ядре `Hibernate 6` (`@JdbcTypeCode(SqlTypes.JSON)`) убирает зависимость от сторонней `hibernate-types`. Для `PostgreSQL` храните в `jsonb` — индексируемо и компактнее, чем текстовый `json`.
+
+## Q50. Что такое `@Struct` в Hibernate 6?
+
+`@Struct` маппит `@Embeddable` не на отдельные колонки, а на **структурный пользовательский тип БД** (SQL-структуру: `CREATE TYPE ... AS (...)` в `PostgreSQL` composite types, object types в `Oracle`). Поля embeddable становятся атрибутами этой структуры.
+
+```java
+@Embeddable
+@Struct(name = "address_type")
+public record Address(String street, String city, String zip) {}
+```
+
+Здесь `address` сохранится в одну колонку структурного типа `address_type`, а не в три отдельные колонки `street`/`city`/`zip`.
+
+**Итог:** `@Struct` нужен, когда в схеме БД уже используется структурный тип. Если такого требования нет — обычный `@Embeddable` (плоские колонки) проще и портируемее между СУБД.
 
 ---
 

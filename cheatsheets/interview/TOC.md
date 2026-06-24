@@ -184,7 +184,7 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: Транзакции и уровни изоляции](databases/database-transactions-interview.md) — `42` вопроса
 - [Вопросы на собеседовании: `Elasticsearch`](databases/elasticsearch-interview.md) — `44` вопроса
 - [Вопросы на собеседовании: `Flyway` и `Liquibase`](databases/flyway-liquibase-interview.md) — `42` вопроса
-- [Вопросы на собеседовании: `Hibernate`](databases/hibernate-interview.md) — `48` вопросов
+- [Вопросы на собеседовании: `Hibernate`](databases/hibernate-interview.md) — `50` вопросов
 - [Вопросы на собеседовании: `Hibernate Caching`](databases/hibernate-caching-interview.md) — `15` вопросов
 - [Вопросы на собеседовании: `Hibernate Relationships`](databases/hibernate-relationships-interview.md) — `15` вопросов
 - [Вопросы на собеседовании: `Hibernate JPQL & Criteria`](databases/hibernate-jpql-criteria-interview.md) — `15` вопросов
@@ -236,7 +236,7 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Spring Framework`](frameworks/spring/spring-framework-interview.md) — `40` вопросов
 - [Вопросы на собеседовании: `Spring MVC`](frameworks/spring/spring-mvc-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `Spring REST Clients`](frameworks/spring/spring-rest-client-interview.md) — `13` вопросов
-- [Вопросы на собеседовании: `Spring Security`](frameworks/spring/spring-security-interview.md) — `43` вопроса
+- [Вопросы на собеседовании: `Spring Security`](frameworks/spring/spring-security-interview.md) — `46` вопросов
 - [Вопросы на собеседовании: `Spring Scheduling`](frameworks/spring/spring-scheduling-interview.md) — `16` вопросов
 - [Вопросы на собеседовании: `Spring Testing`](frameworks/spring/spring-testing-interview.md) — `15` вопросов
 - [Вопросы на собеседовании: `Spring Transactions`](frameworks/spring/spring-transaction-interview.md) — `15` вопросов
@@ -247,7 +247,7 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Spring Kafka`](frameworks/spring/spring-kafka-interview.md) — `15` вопросов
 - [Вопросы на собеседовании: `Spring R2DBC`](frameworks/spring/spring-r2dbc-interview.md) — `15` вопросов
 - [Вопросы на собеседовании: `Spring GraphQL`](frameworks/spring/spring-graphql-interview.md) — `15` вопросов
-- [Вопросы на собеседовании: `Spring AI`](frameworks/spring/spring-ai-interview.md) — `15` вопросов
+- [Вопросы на собеседовании: `Spring AI`](frameworks/spring/spring-ai-interview.md) — `18` вопросов
 - [Вопросы на собеседовании: `Spring State Machine`](frameworks/spring/spring-state-machine-interview.md) — `15` вопросов
 - [Вопросы на собеседовании: `Spring Integration`](frameworks/spring/spring-integration-interview.md) — `15` вопросов
 - [Вопросы на собеседовании: `Spring Session`](frameworks/spring/spring-session-interview.md) — `15` вопросов
@@ -295,7 +295,7 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Loki` и `Grafana`](monitoring/loki-grafana-interview.md) — `28` вопросов
 - [Вопросы на собеседовании: Стратегии логирования](monitoring/logging-strategies-interview.md) — `38` вопросов
 - [Вопросы на собеседовании: Метрики и трейсинг](monitoring/metrics-tracing-interview.md) — `41` вопрос
-- [Вопросы на собеседовании: `Observability`](monitoring/observability-interview.md) — `40` вопросов
+- [Вопросы на собеседовании: `Observability`](monitoring/observability-interview.md) — `42` вопроса
 - [Вопросы на собеседовании: `Prometheus` и `Grafana`](monitoring/prometheus-grafana-interview.md) — `39` вопросов
 - [Вопросы на собеседовании: `Micrometer`](monitoring/micrometer-interview.md) — `20` вопросов
 

@@ -110,6 +110,11 @@ updated: "2026-05-05"
 - [Q42. Как передавать SecurityContext между потоками и в реактивном стеке?](#q42-как-передавать-securitycontext-между-потоками-и-в-реактивном-стеке)
 - [Q43. Что такое @PostAuthorize и @Secured — когда использовать вместо @PreAuthorize?](#q43-что-такое-postauthorize-и-secured--когда-использовать-вместо-preauthorize)
 
+**Современные механизмы аутентификации (Spring Security 6.3+)**
+- [Q44. (!) Как настроить вход по passkeys (WebAuthn) в Spring Security?](#q44--как-настроить-вход-по-passkeys-webauthn-в-spring-security)
+- [Q45. Что такое One-Time Token Login в Spring Security 6.4?](#q45-что-такое-one-time-token-login-в-spring-security-64)
+- [Q46. (!) Что такое OAuth 2.0 Token Exchange (RFC 8693) и зачем он нужен?](#q46--что-такое-oauth-20-token-exchange-rfc-8693-и-зачем-он-нужен)
+
 ---
 
 ## Q1. (!) Что такое `Spring Security` и какие задачи он решает?
@@ -2318,6 +2323,61 @@ public List<User> getAllUsers() {
 )
 public class MethodSecurityConfig {}
 ```
+
+---
+
+## Q44. (!) Как настроить вход по passkeys (WebAuthn) в Spring Security?
+
+`Spring Security 6.4` добавил нативную поддержку `WebAuthn`/passkeys через DSL `http.webAuthn()`. Passkey — это аутентификация по паре ключей (`FIDO2`/`WebAuthn`): приватный ключ не покидает устройство (Touch ID, Windows Hello, аппаратный ключ), серверу уходит только подпись. Паролей нет вообще.
+
+Главное преимущество — **устойчивость к фишингу**: подпись привязана к домену (`rpId`), поэтому фишинговый сайт не сможет её переиспользовать, а красть «пароль» нечего.
+
+```java
+http.webAuthn(webAuthn -> webAuthn
+    .rpName("My App")
+    .rpId("example.com")                         // домен relying party
+    .allowedOrigins("https://example.com"));
+```
+
+Для хранения учётных данных нужны два репозитория:
+
+- `PublicKeyCredentialUserEntityRepository` — пользователи (WebAuthn user entity).
+- `UserCredentialRepository` — сами публичные ключи (credentials), привязанные к пользователю.
+
+**Итог:** passkeys убирают пароль как фактор — фишинг, брутфорс и утечки паролей теряют смысл. На `Spring Security 6.4+` это включается декларативно через `http.webAuthn()`, без сторонних библиотек.
+
+---
+
+## Q45. Что такое One-Time Token Login в Spring Security 6.4?
+
+Вход по одноразовому токену (passwordless, «magic link»): пользователь вводит логин, получает одноразовую ссылку/токен (обычно по email), переходит по ней — и аутентифицирован. Включается через DSL `http.oneTimeTokenLogin()`.
+
+```java
+http.oneTimeTokenLogin(ott -> ott
+    .tokenGeneratingUrl("/ott/generate")
+    .generatedOneTimeTokenHandler(emailSendingHandler)); // доставка токена
+```
+
+Ключевые компоненты:
+
+- `OneTimeTokenService` — генерация и проверка токена (одноразовость, TTL).
+- `GeneratedOneTimeTokenHandler` — что сделать с выпущенным токеном (отправить письмо/SMS). Есть готовый редирект-handler и кастомные реализации (например, через Redis-хранилище токенов).
+
+**Итог:** passwordless-вход без хранения паролей на сервере. Безопасность держится на коротком TTL и защищённости канала доставки (email) — если почта скомпрометирована, скомпрометирован и вход.
+
+---
+
+## Q46. (!) Что такое OAuth 2.0 Token Exchange (RFC 8693) и зачем он нужен?
+
+Token Exchange — это grant `urn:ietf:params:oauth:grant-type:token-exchange` из `RFC 8693`: обмен одного токена на другой у Authorization Server.
+
+Сценарий — цепочка микросервисов. Сервис A получил токен пользователя и должен вызвать сервис B **от имени пользователя**, но с другой аудиторией (`audience`) и суженным набором `scope`. Вместо того чтобы слепо пробрасывать исходный токен дальше (плохо: B получает токен с лишними правами и не той аудиторией), A обменивает его на новый, специально выписанный для B.
+
+Поддерживает делегирование (`delegation` — «A действует от имени user») и имперсонацию (`impersonation`).
+
+`Spring Security 6.3` сделал token-exchange first-class в OAuth2 Client: появился соответствующий `OAuth2AuthorizedClientProvider`, токен-обмен подключается в `OAuth2AuthorizedClientManager`.
+
+**Итог:** Token Exchange — корректный способ пробросить identity по цепочке сервисов с сужением прав, вместо раздачи исходного «всемогущего» токена всем подряд.
 
 ---
 

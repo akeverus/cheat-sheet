@@ -109,6 +109,10 @@ updated: "2026-05-15"
 - [Q39. FinOps и Observability: стоимость телеметрии и sampling для снижения затрат?](#q39-finops-и-observability-стоимость-телеметрии-и-sampling-для-снижения-затрат)
 - [Q40. Synthetic Monitoring: что это и когда нужно?](#q40-synthetic-monitoring-что-это-и-когда-нужно)
 
+**Micrometer Observation API**
+- [Q41. (!) Что такое Micrometer Observation API и какую проблему он решает?](#q41--что-такое-micrometer-observation-api-и-какую-проблему-он-решает)
+- [Q42. Как работают ObservationRegistry и ObservationHandler?](#q42-как-работают-observationregistry-и-observationhandler)
+
 ## Q1. (!) Как коротко объяснить observability и отличие от мониторинга?
 
 Главное отличие — в типе вопросов, на которые система может ответить. `Monitoring` отвечает на заранее известные вопросы («вышли ли мы за порог?»), а `observability` позволяет расследовать сценарии, которые вы не предусмотрели заранее («почему именно этот поток запросов деградировал?»).
@@ -1697,6 +1701,45 @@ await expect(page).toHaveURL('/confirmation');
 - Требует поддержки скриптов при изменении UI/API
 
 **Практика:** synthetic monitoring дополняет, а не заменяет RUM и метрики. Минимум для production — HTTP health check каждые 60 секунд с алертом на P1.
+
+## Q41. (!) Что такое Micrometer Observation API и какую проблему он решает?
+
+`Observation API` (`Micrometer 1.10+`) — единая абстракция инструментации: вы описываете «наблюдение» ОДИН раз, а оно порождает И метрики, И трейс-спаны (опционально и логи) одновременно. До него метрики (`Micrometer`) и трейсинг (`Spring Cloud Sleuth`/`OpenTelemetry`) инструментировались отдельно, дублируя один и тот же код вокруг операции.
+
+```java
+Observation.createNotStarted("order.process", registry)
+    .lowCardinalityKeyValue("type", orderType)   // тег метрики + атрибут спана
+    .highCardinalityKeyValue("orderId", id)      // только атрибут спана
+    .observe(() -> processOrder());
+```
+
+Ключевое различие тегов:
+
+- **low cardinality** (`lowCardinalityKeyValue`) → попадает и в теги метрик, и в атрибуты спанов.
+- **high cardinality** (`highCardinalityKeyValue`) → только в атрибуты спанов, не в метрики (иначе уникальные значения вроде `orderId` взорвали бы кардинальность метрик).
+
+`Spring Boot 3` использует `Observation API` под капотом — аннотация `@Observed`, авто-инструментация web-эндпоинтов и HTTP-клиентов.
+
+**Итог:** одна инструментация → метрики + трейсы из одного места. `Observation API` убирает дублирование, которое было при раздельных `Micrometer` и `Sleuth`.
+
+## Q42. Как работают ObservationRegistry и ObservationHandler?
+
+- `ObservationRegistry` — точка входа: через неё создаются `Observation` и к ней подключаются обработчики.
+- `ObservationHandler` — реагирует на события жизненного цикла наблюдения (`onStart`/`onStop`/`onError`/scope). Именно хендлеры превращают наблюдение в конкретные сигналы: один хендлер пишет метрики в `MeterRegistry`, другой строит спаны в трейсинге.
+
+То есть набор подключённых хендлеров определяет, **какие сигналы** рождаются из наблюдения. Дополнительно есть `ObservationPredicate` (фильтрация — какие наблюдения вообще обрабатывать) и `ObservationFilter` (обогащение общими тегами).
+
+Для тестов есть `TestObservationRegistry`:
+
+```java
+TestObservationRegistry registry = TestObservationRegistry.create();
+// ... код под наблюдением ...
+assertThat(registry)
+    .hasObservationWithNameEqualTo("order.process")
+    .that().hasLowCardinalityKeyValue("type", "online");
+```
+
+**Итог:** хендлеры — это «куда уходит наблюдение». Добавив новый `ObservationHandler`, вы получаете новый сигнал (метрику, спан, лог) из той же инструментации, не трогая бизнес-код.
 
 ## See also
 
