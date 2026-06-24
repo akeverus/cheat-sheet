@@ -50,7 +50,8 @@ def parse_tokens(body):
 root = parse_tokens(block_body(r":root"))
 ed_dark = parse_tokens(block_body(r"\[data-theme=\"dark\"\]"))
 
-DESIGNS = ["editorial", "linear", "swiss", "notion", "mintlify", "broadsheet"]
+DESIGNS = ["editorial", "linear", "swiss", "notion", "mintlify", "broadsheet",
+           "superhuman", "stripe", "claude", "theverge"]
 design_light, design_dark = {}, {}
 for d in DESIGNS:
     if d == "editorial":
