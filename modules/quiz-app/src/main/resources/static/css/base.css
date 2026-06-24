@@ -2319,36 +2319,44 @@ html[data-design] .summary-tools-status {
   html[data-design] .stats-page .main-content > .review-forecast,
   html[data-design] .stats-page .main-content > .coverage-gaps { grid-column: 2; }
 
-  /* --- SETTINGS: панель управления в 3 колонки (Фильтры | Сессия | Прогресс),
-     совет-строка под ними; ниже «Управление данными» и «Персонализация» парой.
-     Без !important (round-01 C10): базовое правило выше — display:block (та же
-     специфичность), этот медиазапрос ниже по исходнику → grid выигрывает каскадом
-     на >=1200px; на узких остаётся block. Война !important устранена вместе с
-     удалением мёртвого тоггла (C20). */
+  /* --- SETTINGS: асимметричная панель ВМЕСТО 3 равных колонок. Прежде «Сессия»
+     (один селект + кнопка «Начать») была почти пустой третью → между «Фильтрами»
+     (высокие) и «Прогрессом» (средний) ЗИЯЛА дыра по центру: классическое
+     «накидали блоков в колонки, забыли про композицию» — прямая претензия
+     пользователя. Теперь по реальному объёму контента: слева — высокая колонка
+     «Фильтры» (span 2 ряда), справа СТОПКОЙ — главный CTA «Сессия» (сверху,
+     остаётся на виду) и карточки «Прогресс» под ним. Высоты сходятся
+     (фильтры ≈ сессия+прогресс), середина больше не пустует. align-items:start.
+     Без !important (round-01 C10): базовое display:block (та же специфичность)
+     выше по исходнику → grid выигрывает каскадом на >=1200px, узкие — block. */
   html[data-design] .settings-page #left-sidebar-content {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
     column-gap: var(--space-7);
     align-items: start;
   }
   html[data-design] .settings-page #left-sidebar-content > .control-section {
-    grid-column: auto;
     border-top: 0;
     padding-top: 0;
   }
+  html[data-design] .settings-page #left-sidebar-filters { grid-column: 1; grid-row: 1 / span 2; }
+  html[data-design] .settings-page #left-sidebar-session { grid-column: 2; grid-row: 1; }
+  html[data-design] .settings-page #left-sidebar-progress { grid-column: 2; grid-row: 2; margin-top: var(--space-7); }
   html[data-design] .settings-page #left-sidebar-content > .control-section-tips {
     grid-column: 1 / -1;
+    grid-row: 3;
     border-top: var(--rule-weight) solid var(--color-border-primary);
     padding-top: var(--space-5);
     margin-top: var(--space-6);
   }
-  /* Вертикальные hairline-разделители между колонками панели. */
+  /* Вертикальный hairline отделяет правую колонку (Сессия+Прогресс) от Фильтров. */
   html[data-design] .settings-page #left-sidebar-session,
   html[data-design] .settings-page #left-sidebar-progress {
     border-left: var(--rule-weight) solid var(--color-border-primary);
     padding-left: var(--space-7);
   }
-  /* В колонке ~1/3 ширины два селекта в ряд тесно — поля одно под другим. */
+  /* Поля группа/тема — одно под другим: держат высоту левой колонки под span
+     и не тесняются (в широкой колонке два селекта в ряд смотрелись бы рыхло). */
   html[data-design] .settings-page .filters-fields { grid-template-columns: 1fr; }
   /* Нижние карточки парой; гейт на видимую Персонализацию (без JS она hidden —
      display:none не порождает grid-item, и «Управление данными» осталась бы
