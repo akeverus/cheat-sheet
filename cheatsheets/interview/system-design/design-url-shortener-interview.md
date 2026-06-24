@@ -1302,3 +1302,4 @@ def get_url(short_code):
 - [API Security](../security/api-security-interview.md) — Safe Browsing, rate limiting, CAPTCHA
 - [Load Balancing](../architecture/load-balancing-interview.md) — ELB Multi-AZ, DNS routing
 - [Kafka](../messaging/kafka-interview.md) — async analytics pipeline
+- [Design Pastebin](design-pastebin-interview.md) — парный канонический кейс: хранение пасты, генерация short-code, TTL-экспирация.

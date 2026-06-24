@@ -1365,3 +1365,4 @@ CREATE TABLE user_quota (
 - [Kafka](../messaging/kafka-interview.md) — event backbone
 - [Elasticsearch](../databases/elasticsearch-interview.md) — search, file content indexing
 - [Cassandra](../databases/cassandra-interview.md) — alternative metadata store
+- [Design Pastebin](design-pastebin-interview.md) — blob-хранение и тиринг, TTL-экспирация пасты.
