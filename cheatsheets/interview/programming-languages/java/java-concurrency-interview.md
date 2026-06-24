@@ -1758,3 +1758,4 @@ Response fetchWithTimeout(long userId) throws Exception {
 - [Java Collections](java-collections-interview.md)
 - [Java Conditional Statements](java-conditional-statements-interview.md)
 - [Java Core](java-core-interview.md)
+- [Rust](../rust/rust-interview.md) — ownership и borrowing, lifetimes, move/Copy/Clone, типы, struct и enum,…

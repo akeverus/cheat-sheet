@@ -1829,3 +1829,4 @@ public Flux<ServerSentEvent<String>> streamEvents() {
 - [Spring Cloud](spring-cloud-interview.md)
 - [Spring Data JPA](spring-data-jpa-interview.md)
 - [Шпаргалка: Spring MVC: Полное руководство по веб-фр](../../../frameworks/java-frameworks/spring/spring-mvc.md) — теория
+- [Spring Validation](spring-validation-interview.md) — Bean Validation (JSR 380), @Valid vs @Validated, кастомные…

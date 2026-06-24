@@ -2274,3 +2274,4 @@ void shouldQueryGraphQLWithRestAssured() {
 - [Load Testing](load-testing-interview.md)
 - [Mockito](mockito-interview.md)
 - [Mutation Testing](mutation-testing-interview.md)
+- [Selenium WebDriver](selenium-interview.md) — локаторы (By), ожидания (implicit/explicit/fluent), Page Object Model,…

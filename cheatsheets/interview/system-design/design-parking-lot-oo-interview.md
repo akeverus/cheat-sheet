@@ -1144,3 +1144,4 @@ public class ParkingController {
 - [Clean Code Practices Interview](../code-quality/clean-code-practices-interview.md) — практики чистого кода
 - [Code Smells Interview](../code-quality/code-smells-interview.md) — антипаттерны
 - [Refactoring Patterns Interview](../code-quality/refactoring-patterns-interview.md) — техники рефакторинга
+- [OO Design: Vending Machine](design-vending-machine-oo-interview.md) — State pattern, payment processing, change-making, inventory, thread safety,…

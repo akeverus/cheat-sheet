@@ -711,3 +711,4 @@ class OrderRepositoryTest {
 - [Database Transactions](database-transactions-interview.md) — транзакции и видимость изменений
 - [Spring @Transactional](../frameworks/spring/spring-transaction-interview.md) — управление транзакциями в Spring
 - [Domain-Driven Design](../architecture/ddd-interview.md) — aggregate boundaries и relationships
+- [Hibernate JPQL & Criteria API](hibernate-jpql-criteria-interview.md) — синтаксис, subqueries, Criteria Query, JPA Metamodel, Spring Data…

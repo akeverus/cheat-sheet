@@ -551,3 +551,4 @@ management:
 - [RabbitMQ](../../messaging/rabbitmq-interview.md) — основы AMQP для RabbitMQ channel adapter
 - [Spring @Transactional](spring-transaction-interview.md) — транзакции в интеграционных потоках
 - [Spring Testing](spring-testing-interview.md) — тестирование Spring Integration потоков
+- [Spring State Machine](spring-state-machine-interview.md) — конфигурация состояний и переходов, Guards, Actions, Extended State,…

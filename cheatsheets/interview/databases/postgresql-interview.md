@@ -1625,3 +1625,4 @@ WHERE installed_version IS NOT NULL;
 - [ClickHouse](clickhouse-interview.md)
 - [CockroachDB](cockroachdb-interview.md)
 - [DynamoDB](dynamodb-interview.md)
+- [Neo4j](neo4j-interview.md) — graph database, nodes, relationships, properties, Cypher query language,…

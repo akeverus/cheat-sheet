@@ -1701,3 +1701,4 @@ class UserServiceTest {
 
 - [Spring AOP](spring-aop-interview.md) — аспектно-ориентированное программирование
 - [Шпаргалка: Spring WebFlux для Java](../../../frameworks/java-frameworks/spring/spring-webflux.md) — теория
+- [Spring for GraphQL](spring-graphql-interview.md) — @QueryMapping, @MutationMapping, @SchemaMapping, DataLoader для N+1,…

@@ -648,3 +648,4 @@ public class TestOrderCreatedListener {
 - [Распределённые системы](../../architecture/distributed-systems-interview.md) — transactional outbox, at-least-once delivery
 - [Unit Testing](../../testing/unit-testing-interview.md) — @RecordApplicationEvents, ApplicationEvents, тестирование listeners
 - [Шпаргалка: Spring Events — события приложения](../../../frameworks/java-frameworks/spring/spring-events.md) — теория
+- [Spring State Machine](spring-state-machine-interview.md) — конфигурация состояний и переходов, Guards, Actions, Extended State,…

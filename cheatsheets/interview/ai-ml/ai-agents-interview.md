@@ -793,4 +793,5 @@ response = client.messages.create(
 - [Event-driven](../architecture/event-driven-patterns-interview.md) — agent communication
 - [Application Security](../security/application-security-interview.md) — agent risks
 - [Saga Pattern](../architecture/saga-pattern-interview.md) — multi-step transactions
+- [Code Agents](code-agents-interview.md) — архитектура, SWE-Bench, tool use, edit strategies, sandboxing, production…
 - [[testing-strategies-interview|Test Strategies]] — нестандартное тестирование

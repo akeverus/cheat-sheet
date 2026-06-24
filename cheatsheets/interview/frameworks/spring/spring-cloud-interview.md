@@ -2223,3 +2223,4 @@ spring:
 - [Spring Data JPA](spring-data-jpa-interview.md)
 - [Spring Framework](spring-framework-interview.md)
 - [Шпаргалка: Spring Cloud](../../../frameworks/java-frameworks/spring/spring-cloud.md) — теория
+- [Spring Vault](spring-vault-interview.md) — VaultTemplate, dynamic secrets, transit encryption, PKI, интеграция со Spring…

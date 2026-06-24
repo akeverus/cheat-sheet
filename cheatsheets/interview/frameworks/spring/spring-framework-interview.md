@@ -1876,3 +1876,4 @@ class AppConfig {}
 - [Spring Boot](spring-boot-interview.md)
 - [Spring Cloud](spring-cloud-interview.md)
 - [Spring Data JPA](spring-data-jpa-interview.md)
+- [Spring Boot 3 Migration](spring-boot-3-migration-interview.md) — Java 17 baseline, javax→jakarta, GraalVM Native, AOT, HTTP Interface Clients,…

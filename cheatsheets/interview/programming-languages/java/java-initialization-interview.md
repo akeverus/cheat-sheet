@@ -785,3 +785,4 @@ public enum Singleton {
 - [jvm-interview](../../jvm/jvm-interview.md) — загрузка классов, `<clinit>`, `<init>`, ClassLoader, Metaspace
 - [java-annotations-interview](java-annotations-interview.md) — `@PostConstruct` и порядок инициализации бинов в Spring
 - [java-exceptions-interview](java-exceptions-interview.md) — `ExceptionInInitializerError`, ошибки в static-блоках
+- [Java Reflection](java-reflection-interview.md) — Class, Method, Field, Constructor, InvocationHandler, динамические прокси,…

@@ -1209,3 +1209,4 @@ set.getFirst(); // элемент с наименьшим порядком вс�
 - [Java Collections](java-collections-interview.md)
 - [Java Concurrency](java-concurrency-interview.md)
 - [Java Conditional Statements](java-conditional-statements-interview.md)
+- [Java Reflection](java-reflection-interview.md) — Class, Method, Field, Constructor, InvocationHandler, динамические прокси,…

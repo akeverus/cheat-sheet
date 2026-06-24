@@ -1954,3 +1954,4 @@ kubectl kustomize k8s/overlays/prod
 - [HashiCorp Consul](consul-interview.md)
 - [Git](git-interview.md)
 - [Gradle и Maven](gradle-maven-interview.md)
+- [Linux и Bash](linux-interview.md) — файловая система, права, пользователи, процессы и сигналы, shell scripting,…

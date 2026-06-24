@@ -841,3 +841,4 @@ LLM не отличает «контент для анализа» от «ком
 - [Application Security](../security/application-security-interview.md) — prompt injection
 - [Caching](../architecture/caching-strategies-interview.md) — LLM response caching
 - [Микросервисы](../architecture/microservices-interview.md) — где интегрируем LLM
+- [Open-Source LLM Ecosystem 2025-2026](open-source-llms-interview.md) — Llama 3.x/4, Mistral/Mixtral, Qwen 2.5/3, DeepSeek-V3/R1, Gemma 3, Phi-4;…

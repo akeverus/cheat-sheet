@@ -1581,3 +1581,4 @@ linkerd inject deployment.yaml | kubectl apply -f -
 - [CAP-теорема](cap-theorem-interview.md)
 - [Clean Architecture](clean-architecture-interview.md)
 - [Паттерны согласованности](consistency-patterns-interview.md)
+- [Reverse Proxy](reverse-proxy-interview.md) — Nginx, HAProxy, Envoy, Traefik как обратный прокси; SSL termination,…

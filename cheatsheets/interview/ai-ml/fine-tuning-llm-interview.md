@@ -1433,3 +1433,4 @@ Cost = (Train_hours × GPU_price/hr) + (Tokens_in_training × storage)
 - [LLM Integration Patterns](llm-integration-patterns-interview.md) — routing, fallback fine-tuned моделей
 - [System Design](../system-design/system-design-interview.md) — архитектура систем с FT-моделями
 - [AI Agents](ai-agents-interview.md) — fine-tuning для агентного поведения
+- [Open-Source LLM Ecosystem 2025-2026](open-source-llms-interview.md) — Llama 3.x/4, Mistral/Mixtral, Qwen 2.5/3, DeepSeek-V3/R1, Gemma 3, Phi-4;…

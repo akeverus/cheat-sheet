@@ -1898,4 +1898,5 @@ spec:
 - [CAP-теорема](cap-theorem-interview.md) — компромиссы согласованности и доступности
 - [Clean Architecture](clean-architecture-interview.md) — слои приложения за балансировщиком
 - [Паттерны согласованности](consistency-patterns-interview.md) — eventual consistency между регионами
+- [Reverse Proxy](reverse-proxy-interview.md) — Nginx, HAProxy, Envoy, Traefik как обратный прокси; SSL termination,…
 

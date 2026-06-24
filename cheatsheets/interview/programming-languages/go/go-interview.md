@@ -1070,3 +1070,4 @@ Go — фактически язык по умолчанию для cloud-native
 - [Go Modules](go-modules-interview.md)
 - [Go Standard Library](go-stdlib-interview.md)
 - [Go Testing](go-testing-interview.md)
+- [Rust](../rust/rust-interview.md) — ownership и borrowing, lifetimes, move/Copy/Clone, типы, struct и enum,…

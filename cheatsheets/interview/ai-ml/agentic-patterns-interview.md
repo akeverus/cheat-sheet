@@ -895,3 +895,4 @@ Reasoning models (o1, o3, R1, Claude extended thinking, Gemini Deep Think) вы�
 - [LLM Basics](llm-basics-interview.md) — основы LLM
 - [MCP](mcp-interview.md) — Model Context Protocol для tool ecosystem
 - [System Design Interview](../system-design/system-design-interview.md) — общий контекст для system-design разговоров
+- [Code Agents](code-agents-interview.md) — архитектура, SWE-Bench, tool use, edit strategies, sandboxing, production…

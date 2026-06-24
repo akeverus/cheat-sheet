@@ -1175,3 +1175,4 @@ graph LR
 - [LLM Basics](../ai-ml/llm-basics-interview.md) — semantic search for RAG
 - [Embeddings](../ai-ml/embeddings-interview.md) — vector search
 - [MLOps](../ai-ml/mlops-interview.md) — LTR model deployment
+- [System Design: Распределённый Web Crawler](design-web-crawler-interview.md) — URL frontier (Mercator), politeness, robots.txt, dedup (Bloom + SimHash),…

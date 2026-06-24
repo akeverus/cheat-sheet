@@ -1253,3 +1253,4 @@ trivy-scan:
 - [Git](git-interview.md)
 - [Gradle и Maven](gradle-maven-interview.md)
 - [Helm](helm-interview.md)
+- [Linux и Bash](linux-interview.md) — файловая система, права, пользователи, процессы и сигналы, shell scripting,…

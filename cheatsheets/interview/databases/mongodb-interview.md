@@ -1936,3 +1936,4 @@ db.products.aggregate([
 - [Транзакции и уровни изоляции](database-transactions-interview.md)
 - [DynamoDB](dynamodb-interview.md)
 - [Шпаргалка: MongoDB: Полное руководство по документо](../../databases/nosql/mongodb/mongodb.md) — теория
+- [Neo4j](neo4j-interview.md) — graph database, nodes, relationships, properties, Cypher query language,…
